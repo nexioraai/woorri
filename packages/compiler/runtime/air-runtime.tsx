@@ -477,7 +477,19 @@ export function AirHeader({ screen, blockId }: BlockRef) {
   if (!visible) return null;
   const title = str(props.title);
   if (title === undefined) throw new Error(`AIR_RUNTIME_PROP_MISSING:${blockId}:title`);
-  return <HeaderBlock testID={b.id} title={title} subtitle={str(props.subtitle)} />;
+  // MAILLON MANQUANT CORRIGÉ : `accroche` et `logoUri` étaient déclarés au
+  // document, portés par l'artefact et acceptés par le bloc — mais le runtime
+  // ne les TRANSMETTAIT pas. Rien n'échouait : l'en-tête rendait simplement
+  // sa forme de 1.6.0, sans marque et sans accroche.
+  return (
+    <HeaderBlock
+      testID={b.id}
+      title={title}
+      subtitle={str(props.subtitle)}
+      accroche={props.accroche === true}
+      logoUri={str(props.logoUri)}
+    />
+  );
 }
 
 export function AirButton({ screen, blockId }: BlockRef) {
