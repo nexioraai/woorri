@@ -19,7 +19,9 @@ const screen = (
 
 describe("pont AIR ↔ registre de blocs", () => {
   it("API du registre : référence connue / inconnue", () => {
-    expect(listBlockIds()).toHaveLength(6);
+    // 1.8.0 : `spacer` porte le nombre à 7 — premier ajout de TYPE depuis le
+    // gel, additif, sans contenu ni action.
+    expect(listBlockIds()).toHaveLength(7);
     expect(getBlock("list")?.entity).toBe("required");
     expect(getBlock("carousel")).toBeUndefined();
   });

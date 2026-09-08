@@ -14,6 +14,7 @@ import { z } from "zod";
 // devient impossible par construction, et non plus seulement détectable.
 import {
   BUTTON_BLOCK_STATES,
+  SPACER_BLOCK_STATES,
   DETAIL_HEADER_BLOCK_STATES,
   EMPTY_STATE_BLOCK_STATES,
   FORM_BLOCK_STATES,
@@ -44,7 +45,10 @@ import {
 // 1.6.0 — le bouton d'un formulaire DIT si l'action est possible (`required`
 // sur les champs), et un bouton peut porter un SIGNE (`icon`, vocabulaire
 // fermé partagé avec les onglets). Strictement additifs.
-export const BLOCK_REGISTRY_VERSION = "1.7.0";
+// 1.8.0 — NOUVEAU type de bloc : `spacer`. Premier ajout de TYPE depuis le
+// gel ; strictement additif (aucun bloc existant ne change), et c'est ce qui
+// rend enfin la MISE EN PAGE exprimable.
+export const BLOCK_REGISTRY_VERSION = "1.8.0";
 
 // Motifs d'identités stables — IDENTIQUES à @deribfy/air-schema (ids.ts) ;
 // redéclarés structurellement (patron AirCapabilitySlice : pas de couplage
@@ -330,6 +334,20 @@ export const BLOCKS: readonly BlockDefinition[] = [
     actionRefProps: [],
     states: LIST_BLOCK_STATES,
     porteAffordance: true,
+  },
+  {
+    // 1.8.0 — MISE EN PAGE. Le seul bloc SANS contenu : il occupe la place
+    // restante pour que le reste descende. Mesuré sur l'accueil produit :
+    // sans lui, 1170 px de vide sous le dernier bouton, tout collé en haut.
+    id: "spacer",
+    version: "1.0.0",
+    description: "Espace extensible — pousse les blocs suivants vers le bas.",
+    entity: "forbidden",
+    propsSchema: z.strictObject({}),
+    fieldRefProps: [],
+    actionRefProps: [],
+    states: SPACER_BLOCK_STATES,
+    porteAffordance: false,
   },
 ];
 

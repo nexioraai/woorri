@@ -14,8 +14,6 @@ import { KeyboardAvoidingView, ScrollView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ScreenShell } from "../lib/primitives";
 import { AirButton, AirEmptyState, AirForm, AirHeader } from "../lib/runtime/air-runtime";
-import { PrimaryNav } from "../lib/runtime/primary-nav";
-import { primaryNav } from "../nav.data";
 import type { AirScreenProps } from "../lib/runtime/air-runtime";
 import { screenData } from "./scr_inscription.data";
 
@@ -34,7 +32,6 @@ export default function ScrInscriptionScreen({ route }: AirScreenProps) {
         <AirButton screen={screenData} blockId="blk_inscription_vers_connexion" />
       </ScrollView>
       </KeyboardAvoidingView>
-      <PrimaryNav destinations={primaryNav} currentScreenId="scr_inscription" />
     </ScreenShell>
   );
 }

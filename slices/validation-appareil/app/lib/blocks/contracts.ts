@@ -141,6 +141,14 @@ export interface FormBlockProps extends BlockA11yProps {
   emptyTitle?: string;
 }
 
+/**
+ * ESPACE EXTENSIBLE (1.8.0) — occupe la place restante. Sans lui, tous les
+ * blocs s'empilent en haut et le bas de l'écran reste vide : mesuré sur
+ * l'accueil produit, 1170 px de vide sous le dernier bouton. Aucun contenu,
+ * aucun texte : c'est une intention de MISE EN PAGE, et rien d'autre.
+ */
+export type SpacerBlockProps = BlockA11yProps;
+
 export interface ButtonBlockProps extends BlockA11yProps {
   label: string;
   /**
@@ -199,6 +207,7 @@ export interface Blocks {
   ListBlock: ComponentType<ListBlockProps>;
   FormBlock: ComponentType<FormBlockProps>;
   ButtonBlock: ComponentType<ButtonBlockProps>;
+  SpacerBlock: ComponentType<SpacerBlockProps>;
   EmptyStateBlock: ComponentType<EmptyStateBlockProps>;
   DetailHeaderBlock: ComponentType<DetailHeaderBlockProps>;
 }
@@ -227,4 +236,6 @@ type _DetailLie = MemeEnsemble<
 // contracts.ts reste l'unique source des six blocs.
 export const BUTTON_BLOCK_STATES = ["ready"] as const;
 export const HEADER_BLOCK_STATES = ["ready"] as const;
+/** 1.8.0 — le spacer n'a qu'un état : il est là, ou il ne l'est pas. */
+export const SPACER_BLOCK_STATES = ["ready"] as const;
 export const EMPTY_STATE_BLOCK_STATES = ["empty"] as const;

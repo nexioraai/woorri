@@ -79,6 +79,9 @@ describe("le runtime ÉMIS sait évaluer la condition", () => {
   it("chaque wrapper de bloc consulte la visibilité", () => {
     const runtime = compileProject(resto).files.get("lib/runtime/air-runtime.tsx") ?? "";
     const occurrences = [...runtime.matchAll(/useBlockVisible\(screen, blockId\)/g)].length;
-    expect(occurrences).toBe(6);
+    // 1.8.0 : 7 wrappers — `AirSpacer` a rejoint les six autres. La règle
+    // vaut aussi pour lui : un bloc de MISE EN PAGE conditionnel doit pouvoir
+    // disparaître, sinon l'espace resterait quand son voisin s'efface.
+    expect(occurrences).toBe(7);
   });
 });

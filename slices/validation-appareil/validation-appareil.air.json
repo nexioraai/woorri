@@ -378,7 +378,7 @@
       }
     }
   ],
-  "airSchemaVersion": "1.14.0",
+  "airSchemaVersion": "1.15.0",
   "app": {
     "description": [
       {
@@ -1863,6 +1863,10 @@
           ]
         },
         {
+          "blockType": "spacer",
+          "id": "blk_bienvenue_espace"
+        },
+        {
           "blockType": "button",
           "id": "blk_bienvenue_inscription",
           "visibleWhen": {
@@ -1958,7 +1962,8 @@
             }
           ]
         }
-      ]
+      ],
+      "showsPrimaryNav": false
     },
     {
       "blocks": [
@@ -2940,7 +2945,8 @@
             }
           ]
         }
-      ]
+      ],
+      "showsPrimaryNav": false
     },
     {
       "id": "scr_inscription",
@@ -3050,7 +3056,8 @@
             "kind": "session_anonymous"
           }
         }
-      ]
+      ],
+      "showsPrimaryNav": false
     }
   ],
   "slots": [

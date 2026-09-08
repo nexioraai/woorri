@@ -162,6 +162,9 @@ export const EXECUTION_ENVELOPE_V1: ExecutionEnvelope = {
     form: ["ready", "loading", "empty", "error"],
     header: ["ready"],
     list: ["ready", "loading", "empty", "error"],
+    // 1.8.0 — le spacer n'a qu'un état, et il est ATTEINT dès qu'il est rendu :
+    // il n'a ni donnée à charger, ni vide à signaler, ni erreur possible.
+    spacer: ["ready"],
   },
 
   // Mesuré : ajouter la capability `maps` (implémentation `react-native-maps`)

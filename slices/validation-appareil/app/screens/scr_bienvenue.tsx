@@ -13,9 +13,7 @@
 import { KeyboardAvoidingView, ScrollView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ScreenShell } from "../lib/primitives";
-import { AirButton, AirEmptyState, AirHeader } from "../lib/runtime/air-runtime";
-import { PrimaryNav } from "../lib/runtime/primary-nav";
-import { primaryNav } from "../nav.data";
+import { AirButton, AirEmptyState, AirHeader, AirSpacer } from "../lib/runtime/air-runtime";
 import { screenData } from "./scr_bienvenue.data";
 
 export default function ScrBienvenueScreen() {
@@ -28,13 +26,13 @@ export default function ScrBienvenueScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <AirHeader screen={screenData} blockId="blk_bienvenue_accroche" />
+        <AirSpacer screen={screenData} blockId="blk_bienvenue_espace" />
         <AirButton screen={screenData} blockId="blk_bienvenue_inscription" />
         <AirButton screen={screenData} blockId="blk_bienvenue_connexion" />
         <AirButton screen={screenData} blockId="blk_bienvenue_continuer" />
         <AirEmptyState screen={screenData} blockId="blk_bienvenue_attente" />
       </ScrollView>
       </KeyboardAvoidingView>
-      <PrimaryNav destinations={primaryNav} currentScreenId="scr_bienvenue" />
     </ScreenShell>
   );
 }

@@ -11,6 +11,12 @@ import { BLOCK_REGISTRY_VERSION, BLOCKS, blocks } from "../src";
 const SRC = join(dirname(fileURLToPath(import.meta.url)), "..", "src");
 
 // Liste v1 EXACTE — GELÉE (L2 + D-024, revue propriétaire du 2026-08-28).
+// ÉDITION CONSCIENTE (1.8.0) : `spacer` entre au registre. PREMIER ajout de
+// TYPE depuis le gel, et il est justifié par un fait mesuré sur appareil —
+// sans notion de mise en page, tous les blocs s'empilent en haut et le bas de
+// l'écran reste vide (1170 px sous le dernier bouton de l'accueil produit).
+// Strictement additif : aucun bloc existant ne change, un document 1.7.0 est
+// inchangé. Le bloc ne porte NI contenu, NI donnée, NI action.
 const V1_BLOCK_IDS = [
   "button",
   "detail_header",
@@ -18,6 +24,7 @@ const V1_BLOCK_IDS = [
   "form",
   "header",
   "list",
+  "spacer",
 ];
 
 describe("cliquets du registre de blocs", () => {
@@ -55,7 +62,7 @@ describe("cliquets du registre de blocs", () => {
     // est inchangé.
     // 1.7.0 : septième montée additive — `accroche` sur l'en-tête (le titre
     // monte d'un cran typographique, pour la PREMIÈRE phrase qu'on lit).
-    expect(BLOCK_REGISTRY_VERSION).toBe("1.7.0");
+    expect(BLOCK_REGISTRY_VERSION).toBe("1.8.0");
     expect(BLOCKS.map((b) => b.id)).toEqual(V1_BLOCK_IDS);
   });
 

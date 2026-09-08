@@ -639,6 +639,25 @@ export function validateAir(air: ProjectAir): AirDiagnostic[] {
     });
   }
 
+  // 7quater. UNE DESTINATION PRINCIPALE NE PEUT PAS MASQUER LA BARRE (1.15.0).
+  // Elle deviendrait inatteignable depuis elle-même : l'onglet actif serait
+  // le seul chemin, et il n'existerait plus.
+  const ecransDestinations = new Set(
+    (air.navigation.primary?.destinations ?? []).flatMap((d) => {
+      const route = air.navigation.routes.find((r) => r.id === d.routeId);
+      return route === undefined ? [] : [route.screenId];
+    }),
+  );
+  air.screens.forEach((screen, i) => {
+    if (screen.showsPrimaryNav === false && ecransDestinations.has(screen.id)) {
+      push(
+        "AIR_NAV_DESTINATION_SANS_BARRE",
+        `screens[${i}].showsPrimaryNav`,
+        `l'écran "${screen.id}" est une destination principale : masquer la barre le rendrait inatteignable`,
+      );
+    }
+  });
+
   // 8. Règles : entité existante, champs des assertions appartenant à
   // l'entité ciblée.
   air.rules.forEach((r, i) => {

@@ -114,6 +114,9 @@ export const SECTIONS_CORRECTIVES: Readonly<Record<string, readonly SectionEmiss
   AIR_NAV_ROUTE_MISSING: ["base", "ecrans"],
   AIR_NAV_SCREEN_MISSING: ["base", "ecrans"],
   AIR_NAV_SCREEN_UNKNOWN: ["base", "ecrans"],
+  // Masquer la barre sur une destination se répare là où l'écran et la
+  // navigation sont décrits — mêmes sections que son voisin symétrique.
+  AIR_NAV_DESTINATION_SANS_BARRE: ["base", "ecrans"],
   AIR_NAV_ENTRY_UNKNOWN: ["base", "ecrans"],
   AIR_NAV_ORDER_DUPLICATE: ["base"],
   AIR_NAV_ORDER_NOT_CONTIGUOUS: ["base"],

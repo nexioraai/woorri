@@ -21,7 +21,7 @@ import {
 // 1.7.1 (E3.3, D-131) : provenance APLANIE (sourceKind/sourceIntegrationId/
 //   sourceDomain/sourceRefreshSeconds) — l'union 1.7.0 dépassait la limite
 //   réelle de grammaire de l'API (classe D-078) ; sémantique inchangée.
-export const AIR_SCHEMA_VERSION = "1.14.0";
+export const AIR_SCHEMA_VERSION = "1.15.0";
 
 export const semverSchema = z.string().regex(/^\d+\.\d+\.\d+$/);
 export const sha256Schema = z.string().regex(/^[0-9a-f]{64}$/);
@@ -177,6 +177,21 @@ const blockInstanceSchema = z.strictObject({
 const screenSchema = z.strictObject({
   id: screenIdSchema,
   title: localizedTextSchema,
+  /**
+   * CHROME DE L'ÉCRAN (1.15.0) — la barre d'onglets est-elle rendue ici ?
+   *
+   * Fait mesuré sur appareil : la barre était posée sur TOUS les écrans dès
+   * que le document déclarait une navigation principale. Un écran d'accueil
+   * produit affichait donc quatre onglets à un visiteur non connecté — une
+   * faute que toute application de référence évite.
+   *
+   * OPTIONNEL, défaut `true` : un document existant est inchangé. Le seul
+   * usage légitime de `false` est un écran HORS du parcours principal
+   * (accueil produit, connexion) ; le validateur refuse de masquer la barre
+   * sur un écran qui EST une destination principale — sinon l'onglet
+   * deviendrait inatteignable depuis lui-même.
+   */
+  showsPrimaryNav: z.boolean().optional(),
   blocks: z.array(blockInstanceSchema).min(1),
 });
 

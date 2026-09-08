@@ -71,6 +71,7 @@ const WRAPPER_BY_BLOCK_TYPE: Readonly<Record<string, string>> = {
   detail_header: "AirDetailHeader",
   empty_state: "AirEmptyState",
   form: "AirForm",
+  spacer: "AirSpacer",
   header: "AirHeader",
   list: "AirList",
 };
@@ -891,7 +892,13 @@ export function emitProject(
   for (const screen of [...air.screens].sort((a, b) => byCodeUnit(a.id, b.id))) {
     const slice = buildScreenSlice(air, screen, locale);
     files.set(`screens/${screen.id}.data.ts`, emitScreenData(slice));
-    files.set(`screens/${screen.id}.tsx`, emitScreen(slice, air.navigation.primary !== undefined));
+    // 1.15.0 — la barre est rendue SAUF si l'écran la refuse explicitement.
+    // Un écran d'accueil produit n'est pas une destination : lui coller quatre
+    // onglets était la faute la plus visible de l'artefact.
+    files.set(
+      `screens/${screen.id}.tsx`,
+      emitScreen(slice, air.navigation.primary !== undefined && screen.showsPrimaryNav !== false),
+    );
   }
 
   // Code Slots : émission FAIL-CLOSED et déterministe (tri par point de

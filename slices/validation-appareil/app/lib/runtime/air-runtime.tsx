@@ -20,6 +20,7 @@ import {
   FormBlock,
   HeaderBlock,
   ListBlock,
+  SpacerBlock,
 } from "../blocks/components";
 import type { FormFieldSpec, ListItemData } from "../blocks/contracts";
 import { useDataProvider } from "./data-provider";
@@ -509,6 +510,14 @@ export function AirButton({ screen, blockId }: BlockRef) {
       onPress={inerte ? undefined : () => dispatch(actionId)}
     />
   );
+}
+
+/** 1.8.0 — MISE EN PAGE : aucun contenu, aucune donnée, aucune action. */
+export function AirSpacer({ screen, blockId }: BlockRef) {
+  const visible = useBlockVisible(screen, blockId);
+  const b = block(screen, blockId);
+  if (!visible) return null;
+  return <SpacerBlock testID={b.id} />;
 }
 
 export function AirEmptyState({ screen, blockId }: BlockRef) {

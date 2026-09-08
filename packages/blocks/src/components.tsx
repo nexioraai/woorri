@@ -24,6 +24,7 @@ import type {
   FormBlockProps,
   HeaderBlockProps,
   ListBlockProps,
+  SpacerBlockProps,
 } from "./contracts.ts";
 
 export function HeaderBlock({ title, subtitle, accroche, testID }: HeaderBlockProps) {
@@ -233,6 +234,15 @@ export function FormBlock({
   );
 }
 
+// ESPACE EXTENSIBLE (1.8.0). Le bloc DECLARE une intention de mise en page ;
+// la primitive porte la forme. Le cliquet d'etancheite reste tenu : aucun
+// style ici. Commentaire volontairement sans accents ni tournure longue — la
+// sonde F3 cherche des chaines linguistiques par motif et ne distingue pas un
+// commentaire (lecon deja consignee sur l'en-tete de detail).
+export function SpacerBlock({ testID }: SpacerBlockProps) {
+  return <Section testID={testID} fill />;
+}
+
 export function ButtonBlock({ label, icon, kind, onPress, testID }: ButtonBlockProps) {
   return <AppButton label={label} icon={icon} kind={kind} onPress={onPress} testID={testID} />;
 }
@@ -314,4 +324,5 @@ export const blocks: Blocks = {
   ButtonBlock,
   EmptyStateBlock,
   DetailHeaderBlock,
+  SpacerBlock,
 };

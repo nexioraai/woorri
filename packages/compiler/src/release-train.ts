@@ -55,7 +55,10 @@ export const RELEASE_TRAIN_V1 = {
   // 1.13.0 -> 1.14.0 : prédicat `session_pending_confirmation`. Mesuré sur
   // appareil : une inscription RÉUSSIE retombait sur « anonyme », rien ne
   // bougeait, et le parcours ressemblait à une panne.
-  airSchemaVersion: "1.14.0",
+  // 1.14.0 -> 1.15.0 : `showsPrimaryNav` sur l'écran. La barre d'onglets était
+  // posée sur TOUS les écrans — un accueil produit montrait quatre onglets à
+  // un visiteur non connecté.
+  airSchemaVersion: "1.15.0",
   // Porté à 1.1.0 le 2026-08-31 (D-060) : montée STRICTEMENT ADDITIVE du
   // registre de blocs — `form` gagne `loading`/`empty`, `detail_header` gagne un
   // état, les trois blocs à données gagnent les props de titres. Rien n'est
@@ -77,7 +80,11 @@ export const RELEASE_TRAIN_V1 = {
   // ÉDITION CONSCIENTE (1.7.0) : `accroche` sur l'en-tête — le titre monte
   // d'un cran typographique (`display`), pour la PREMIÈRE phrase qu'une
   // personne lit. Additif ; sans lui, l'en-tête est celui de 1.6.0.
-  blockRegistryVersion: "1.7.0",
+  // ÉDITION CONSCIENTE (1.8.0) : PREMIER ajout de TYPE depuis le gel —
+  // `spacer`. Sans notion de mise en page, tous les blocs s'empilaient en haut
+  // et le bas de l'écran restait vide (1170 px mesurés sous le dernier bouton
+  // de l'accueil produit). Additif : aucun bloc existant ne change.
+  blockRegistryVersion: "1.8.0",
   // Ré-scellé le 2026-08-29 (DET-006 / D-039) : `ListBlock` DÉCLARE désormais
   // `fill` sur sa Section, afin que la liste virtualisée reçoive un parent
   // BORNÉ. Cause démontrée : imbriquée dans un ScrollView de même axe, une
@@ -147,7 +154,8 @@ export const RELEASE_TRAIN_V1 = {
   // Ré-scellé (1.6.0) : `required` traverse le bloc formulaire jusqu'au
   // bouton, et `icon` entre au registre du bouton.
   // Ré-scellé (1.7.0) : l'en-tête consomme la variante `display`.
-  "3c57aa63e9cec01506399885e9faecfce6d71f74627e63ef18a8405c341edcbf",
+  // Ré-scellé (1.8.0) : le composant `SpacerBlock` entre aux sources gelées.
+  "e38ec158c65c8abebb3f99e591b9f9fa6c1b06509b8bab5e764978cdbaf0de7f",
   capabilityRegistryVersion: "1.0.0",
   capabilitySourcesHash:
     "6c28599246abde6e7010704f23f273aafe50d17c5483133709c9065f2777346c",

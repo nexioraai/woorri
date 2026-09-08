@@ -202,6 +202,17 @@ export const AIR_MIGRATIONS: readonly AirMigration[] = [
       "envoyé. Migration IDENTITÉ : aucun document existant ne l'utilise.",
     migrate: (document) => document,
   },
+  {
+    from: "1.14.0",
+    to: "1.15.0",
+    description:
+      "AIR 1.15.0 : `showsPrimaryNav` OPTIONNEL sur l'écran. Mesuré sur " +
+      "appareil : la barre d'onglets était posée sur TOUS les écrans dès " +
+      "qu'une navigation principale existait — un écran d'accueil produit " +
+      "montrait donc quatre onglets à un visiteur non connecté. Migration " +
+      "IDENTITÉ : sans déclaration, la barre reste rendue partout.",
+    migrate: (document) => document,
+  },
 ];
 
 export class AirMigrationError extends Error {
