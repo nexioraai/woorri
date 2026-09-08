@@ -122,7 +122,12 @@ export interface ListRowProps extends A11yProps {
  */
 export interface AppImageProps extends A11yProps {
   uri: string;
-  variant: "thumb" | "header";
+  /**
+   * `brand` (1.4.0) — la MARQUE : petite, alignée au début, hauteur bornée.
+   * Ni une vignette de ligne, ni une image d'en-tête pleine largeur — un
+   * logo a sa propre contrainte : rester lisible sans jamais dominer.
+   */
+  variant: "thumb" | "header" | "brand";
 }
 
 export interface BadgeProps extends A11yProps {

@@ -27,9 +27,12 @@ import type {
   SpacerBlockProps,
 } from "./contracts.ts";
 
-export function HeaderBlock({ title, subtitle, accroche, testID }: HeaderBlockProps) {
+export function HeaderBlock({ title, subtitle, accroche, logoUri, testID }: HeaderBlockProps) {
   return (
     <Section testID={testID}>
+      {logoUri === undefined ? null : (
+        <AppImage uri={logoUri} variant="brand" testID={`${testID ?? "header"}-brand`} />
+      )}
       {/* 1.7.0 — une ACCROCHE monte d'un cran typographique. Le bloc choisit
           un RÔLE, la primitive porte la forme : aucun style ici. */}
       <AppText variant={accroche === true ? "display" : "heading"}>{title}</AppText>

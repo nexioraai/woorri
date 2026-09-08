@@ -84,7 +84,12 @@ export const RELEASE_TRAIN_V1 = {
   // `spacer`. Sans notion de mise en page, tous les blocs s'empilaient en haut
   // et le bas de l'écran restait vide (1170 px mesurés sous le dernier bouton
   // de l'accueil produit). Additif : aucun bloc existant ne change.
-  blockRegistryVersion: "1.8.0",
+  // ÉDITION CONSCIENTE (1.9.0) : `logoUri` sur l'en-tête — la MARQUE. Aucun
+  // document ne pouvait en déclarer une, donc aucune app générée n'avait
+  // d'identité visible. URL https EXIGÉE par la forme, et le validateur exige
+  // en plus que l'hôte soit dans `network.allowedDomains` : la politique
+  // fail-closed vaut pour TOUT ce que l'app va chercher, pas que ses données.
+  blockRegistryVersion: "1.9.0",
   // Ré-scellé le 2026-08-29 (DET-006 / D-039) : `ListBlock` DÉCLARE désormais
   // `fill` sur sa Section, afin que la liste virtualisée reçoive un parent
   // BORNÉ. Cause démontrée : imbriquée dans un ScrollView de même axe, une
@@ -155,7 +160,9 @@ export const RELEASE_TRAIN_V1 = {
   // bouton, et `icon` entre au registre du bouton.
   // Ré-scellé (1.7.0) : l'en-tête consomme la variante `display`.
   // Ré-scellé (1.8.0) : le composant `SpacerBlock` entre aux sources gelées.
-  "e38ec158c65c8abebb3f99e591b9f9fa6c1b06509b8bab5e764978cdbaf0de7f",
+  // Ré-scellé (1.9.0) : l'en-tête rend une marque, la primitive image gagne
+  // sa variante `brand`.
+  "5100cf2db27931ec9bfff7ab2b051b302d597ea741de4ba8e68701f4843b5f3f",
   capabilityRegistryVersion: "1.0.0",
   capabilitySourcesHash:
     "6c28599246abde6e7010704f23f273aafe50d17c5483133709c9065f2777346c",

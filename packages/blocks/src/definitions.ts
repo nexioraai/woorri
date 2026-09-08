@@ -48,7 +48,9 @@ import {
 // 1.8.0 — NOUVEAU type de bloc : `spacer`. Premier ajout de TYPE depuis le
 // gel ; strictement additif (aucun bloc existant ne change), et c'est ce qui
 // rend enfin la MISE EN PAGE exprimable.
-export const BLOCK_REGISTRY_VERSION = "1.8.0";
+// 1.9.0 — l'en-tête peut porter une MARQUE (`logoUri`). Additif : sans elle,
+// l'en-tête est celui de 1.8.0 au caractère près.
+export const BLOCK_REGISTRY_VERSION = "1.9.0";
 
 // Motifs d'identités stables — IDENTIQUES à @deribfy/air-schema (ids.ts) ;
 // redéclarés structurellement (patron AirCapabilitySlice : pas de couplage
@@ -248,6 +250,12 @@ export const BLOCKS: readonly BlockDefinition[] = [
       // 1.7.0 — ACCROCHE : le titre monte d'un cran typographique. Réservé à
       // la première phrase qu'une personne lit ; optionnel, donc additif.
       accroche: z.boolean().optional(),
+      // MARQUE (1.9.0) — URL https EXIGÉE par la forme : un logo en clair
+      // serait un contenu mixte, refusé par la plateforme. Le validateur
+      // sémantique va plus loin et exige que l'hôte soit dans
+      // `network.allowedDomains` : une app ne charge pas une image depuis un
+      // domaine qu'elle n'a pas déclaré.
+      logoUri: z.string().regex(/^https:\/\/[a-z0-9-]+(\.[a-z0-9-]+)+\/\S*$/).optional(),
     }),
     fieldRefProps: [],
     actionRefProps: [],

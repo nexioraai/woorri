@@ -208,6 +208,15 @@ const makeSheet = (c: Palette) =>
       backgroundColor: c.border,
       marginBottom: theme.space.md,
     },
+    // MARQUE (1.4.0) : hauteur bornée, largeur libre, alignée au DÉBUT (le
+    // miroir RTL est donc automatique). Aucun fond : un logo se pose, il ne
+    // s'encadre pas.
+    imageBrand: {
+      width: theme.size.tapTarget * 2.5,
+      height: theme.size.tapTarget,
+      alignSelf: "flex-start",
+      marginBottom: theme.space.lg,
+    },
     imageThumb: {
       width: theme.size.tapTarget,
       height: theme.size.tapTarget,

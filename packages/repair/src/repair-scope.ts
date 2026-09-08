@@ -185,6 +185,9 @@ export const SECTIONS_CORRECTIVES: Readonly<Record<string, readonly SectionEmiss
   AIR_DUP_ID: ["donnees", "ecrans", "actions"],
   AIR_CONFIG_DUP_KEY: ["cablage"],
   AIR_INTEGRATION_SECRET_LIKE_KEY: ["cablage"],
+  // Une marque hors allowlist se répare dans le CÂBLAGE (politique réseau)
+  // ou dans l'écran qui la porte.
+  AIR_BRAND_DOMAIN_NOT_ALLOWED: ["cablage", "ecrans"],
   AIR_COMMERCE_DIGITAL_PSP_FORBIDDEN: ["cablage", "base"],
   AIR_LOCALE_DEFAULT_NOT_DECLARED: ["base"],
   AIR_INTENT_REQUISE: ["intention"],

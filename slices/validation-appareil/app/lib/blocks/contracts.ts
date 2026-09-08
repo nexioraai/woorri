@@ -24,6 +24,13 @@ export interface HeaderBlockProps extends BlockA11yProps {
    * un écran d'accueil produit. Absent = comportement 1.6.0 inchangé.
    */
   accroche?: boolean;
+  /**
+   * MARQUE (1.9.0) — l'image d'identité, posée AU-DESSUS du titre. Aucun
+   * document ne pouvait en déclarer une : les applications générées n'avaient
+   * donc aucune identité visible, alors que toute application de référence
+   * ouvre sur la sienne. L'URL vient du DOCUMENT, jamais du moteur.
+   */
+  logoUri?: string;
 }
 
 /**

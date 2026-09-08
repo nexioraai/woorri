@@ -658,6 +658,25 @@ export function validateAir(air: ProjectAir): AirDiagnostic[] {
     }
   });
 
+  // 7quinquies. LA MARQUE RESPECTE LA POLITIQUE RÉSEAU (1.9.0). Charger un
+  // logo depuis un domaine non déclaré contredirait `deny_by_default` : la
+  // politique vaut pour TOUT ce que l'app va chercher, pas seulement pour ses
+  // données. Fail-closed, comme le reste.
+  air.screens.forEach((screen, si) => {
+    screen.blocks.forEach((b, bi) => {
+      const logo = (b.props ?? []).find((pr) => pr.key === "logoUri");
+      if (logo === undefined || typeof logo.value !== "string") return;
+      const hote = /^https:\/\/([^/]+)\//.exec(logo.value)?.[1];
+      if (hote === undefined || !air.network.allowedDomains.includes(hote)) {
+        push(
+          "AIR_BRAND_DOMAIN_NOT_ALLOWED",
+          `screens[${si}].blocks[${bi}].props.logoUri`,
+          `hôte "${String(hote)}" absent de network.allowedDomains`,
+        );
+      }
+    });
+  });
+
   // 8. Règles : entité existante, champs des assertions appartenant à
   // l'entité ciblée.
   air.rules.forEach((r, i) => {

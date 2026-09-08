@@ -1859,6 +1859,10 @@
             {
               "key": "accroche",
               "value": true
+            },
+            {
+              "key": "logoUri",
+              "value": "https://psxbilpmnojtlzosokzz.supabase.co/storage/v1/object/public/marque/bus-intercites.png"
             }
           ]
         },

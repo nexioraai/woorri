@@ -219,7 +219,15 @@ export function AppImage({ uri, variant, testID, accessibilityLabel }: AppImageP
       testID={testID}
       accessibilityLabel={accessibilityLabel}
       source={{ uri }}
-      style={variant === "thumb" ? s.imageThumb : s.imageHeader}
+      style={
+        variant === "thumb"
+          ? s.imageThumb
+          : variant === "brand"
+            ? s.imageBrand
+            : s.imageHeader
+      }
+      // Une MARQUE se lit entière : elle ne se recadre pas.
+      resizeMode={variant === "brand" ? "contain" : "cover"}
       accessibilityIgnoresInvertColors
     />
   );
