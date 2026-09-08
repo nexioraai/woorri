@@ -1366,6 +1366,10 @@
         {
           "key": "anonKey",
           "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBzeGJpbHBtbm9qdGx6b3Nva3p6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg2NjM2OTcsImV4cCI6MjEwNDIzOTY5N30.Ea24JkCSgTHKaD613nWj0KE7nF728QP-4tocP9mn38w"
+        },
+        {
+          "key": "profileEntityId",
+          "value": "ent_voyageur"
         }
       ]
     }

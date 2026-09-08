@@ -74,6 +74,11 @@ export const EMBEDDED_SOURCES: readonly EmbeddedSourceSpec[] = [
   {
     // Phase 4 — la session : contrat, implémentation locale, et le
     // fournisseur de capabilities qui honore `auth`.
+    source: "compiler/runtime/lecture-profil.ts",
+    target: "lib/runtime/lecture-profil.ts",
+    rewrites: {},
+  },
+  {
     source: "compiler/runtime/ecriture-supabase.ts",
     target: "lib/runtime/ecriture-supabase.ts",
     rewrites: {},

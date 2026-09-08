@@ -641,6 +641,13 @@ function emitApp(
           anonKey: String(
             (integrationAuth.config ?? []).find((c) => c.key === "anonKey")?.value ?? "",
           ),
+          // Le document DÉCLARE quelle entité porte le profil de la personne
+          // connectée. Le deviner — « la première entité écrite depuis un
+          // écran de compte » — serait une convention, donc une supposition.
+          profil: (() => {
+            const v = (integrationAuth.config ?? []).find((c) => c.key === "profileEntityId")?.value;
+            return typeof v === "string" ? v : undefined;
+          })(),
         };
   // Champs SENSIBLES du document : ils ne partent jamais vers le backend.
   const champsSensibles = air.entities
@@ -708,6 +715,9 @@ function emitApp(
                 'import { creerCapabilitesAuthVerifiee } from "./lib/runtime/capabilites-auth";',
                 'import { createClient } from "@supabase/supabase-js";',
                 'import { creerSessionSupabase } from "./lib/runtime/session-supabase";',
+                ...(configAuth.profil === undefined
+                  ? []
+                  : ['import { armerLectureProfil } from "./lib/runtime/lecture-profil";']),
                 ...(avecRemote ? ['import { creerMagasinEcrivain } from "./lib/runtime/ecriture-supabase";'] : []),
               ]),
         ]
@@ -764,6 +774,22 @@ function emitApp(
                   "  },",
                   "  champsSensibles: CHAMPS_SENSIBLES,",
                   "});",
+                  // RELECTURE de la ligne de la personne connectée : sans
+                  // elle, l'écriture atteignait la base et l'app rouvrait sur
+                  // un formulaire vide.
+                  ...(configAuth.profil === undefined
+                    ? []
+                    : [
+                        "armerLectureProfil({",
+                        "  magasin: provider,",
+                        "  session,",
+                        "  port: {",
+                        "    lire: (table, id) =>",
+                        '      clientAuth.from(table).select("*").eq("id", id).maybeSingle(),',
+                        "  },",
+                        `  entityId: ${JSON.stringify(configAuth.profil)},`,
+                        "});",
+                      ]),
                 ]
               : []),
           ]

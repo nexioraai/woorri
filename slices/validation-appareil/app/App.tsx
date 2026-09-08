@@ -17,6 +17,7 @@ import { SessionRoot } from "./lib/runtime/session-provider";
 import { creerCapabilitesAuthVerifiee } from "./lib/runtime/capabilites-auth";
 import { createClient } from "@supabase/supabase-js";
 import { creerSessionSupabase } from "./lib/runtime/session-supabase";
+import { armerLectureProfil } from "./lib/runtime/lecture-profil";
 import { creerMagasinEcrivain } from "./lib/runtime/ecriture-supabase";
 import { demoData } from "./demo.data";
 import { Navigation } from "./navigation";
@@ -51,6 +52,15 @@ const providerEcrivain = creerMagasinEcrivain({
     supprimer: (table, id) => clientAuth.from(table).delete().eq("id", id),
   },
   champsSensibles: CHAMPS_SENSIBLES,
+});
+armerLectureProfil({
+  magasin: provider,
+  session,
+  port: {
+    lire: (table, id) =>
+      clientAuth.from(table).select("*").eq("id", id).maybeSingle(),
+  },
+  entityId: "ent_voyageur",
 });
 
 export default function App() {

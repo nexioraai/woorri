@@ -730,13 +730,17 @@ export function AirList({ screen, blockId, itemId }: BlockRef & { itemId?: strin
 export function AirForm({ screen, blockId, itemId }: BlockRef & { itemId?: string }) {
   const visible = useBlockVisible(screen, blockId);
   const b = block(screen, blockId);
+  const provider = useDataProvider();
+  // L'instance à ÉDITER : la ligne ouverte, ou celle de la personne connectée.
+  // Lue inconditionnellement — un hook ne se place pas derrière une condition.
+  const identiteSession = useSessionProvider().identifiant();
   // Props SURCHARGÉES par les sorties des slots liés (1.3.0, D-058).
   const props = useBlockProps(screen, blockId);
   const dispatch = useDispatch(screen);
   const statut = useDataStatus(b.entityId);
   // D-066 : l'état vit AU-DESSUS des écrans. Un retour en arrière ne vide plus
   // le formulaire — défaut mesuré sur le parcours de commande.
-  const [values, changer] = useFormValues(blockId);
+  const [saisies, changer] = useFormValues(blockId);
   if (!visible) return null;
   if (b.entityId === undefined) throw new Error(`AIR_RUNTIME_ENTITY_MISSING:${blockId}`);
   const fieldsById = new Map(
@@ -763,6 +767,18 @@ export function AirForm({ screen, blockId, itemId }: BlockRef & { itemId?: strin
       },
     ];
   });
+  // PRÉREMPLISSAGE — la ligne existante fournit les VALEURS PAR DÉFAUT, la
+  // saisie l'emporte toujours. Sans cela, la relecture serveur restait
+  // invisible : les données étaient là, l'écran restait vide.
+  // `getInstance` sans identifiant retomberait sur `rows[0]` (contrat
+  // historique du magasin) — on ne l'appelle donc QUE si l'on sait qui éditer.
+  const idEdite = itemId ?? identiteSession;
+  const existant =
+    idEdite === undefined || b.entityId === undefined
+      ? undefined
+      : provider.getInstance(b.entityId, idEdite);
+  const values: Readonly<Record<string, string>> =
+    existant === undefined ? saisies : { ...existant.values, ...saisies };
   const submitLabel = str(props.submitLabel);
   if (submitLabel === undefined) {
     throw new Error(`AIR_RUNTIME_PROP_MISSING:${blockId}:submitLabel`);
