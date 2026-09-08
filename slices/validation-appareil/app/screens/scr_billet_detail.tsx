@@ -26,7 +26,7 @@ export default function ScrBilletDetailScreen({ route }: AirScreenProps) {
       <AirScreenLifecycle screen={screenData} />
       <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
       <ScrollView
-        contentContainerStyle={{ paddingBottom: insets.bottom }}
+        contentContainerStyle={{ flexGrow: 1, paddingBottom: insets.bottom }}
         keyboardShouldPersistTaps="handled"
       >
         <AirDetailHeader screen={screenData} blockId="blk_billet_detail_header" itemId={route?.params?.itemId} />

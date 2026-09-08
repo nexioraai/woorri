@@ -459,7 +459,13 @@ function emitScreen(slice: ScreenSlice, aBarre: boolean): string {
     ? "      <View style={{ flex: 1, paddingBottom: insets.bottom }}>"
     : '      <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>\n' +
       "      <ScrollView\n" +
-      "        contentContainerStyle={{ paddingBottom: insets.bottom }}\n" +
+      // MISE EN PAGE (1.8.0) : `flexGrow: 1` sur le CONTENU. Sans lui, un
+      // `flex: 1` d'enfant ne s'étend PAS dans un ScrollView — son contenu se
+      // dimensionne au contenu, et l'espace extensible n'occupait que sa
+      // hauteur naturelle (mesuré sur appareil : 90 px au lieu de remplir).
+      // Le défilement reste intact : un contenu plus haut que l'écran défile
+      // comme avant, un contenu plus court remplit désormais la page.
+      "        contentContainerStyle={{ flexGrow: 1, paddingBottom: insets.bottom }}\n" +
       '        keyboardShouldPersistTaps="handled"\n' +
       "      >";
   const containerClose = hasList

@@ -25,7 +25,7 @@ export default function ScrReservationScreen({ route }: AirScreenProps) {
     <ScreenShell testID="scr_reservation" title={screenData.title}>
       <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
       <ScrollView
-        contentContainerStyle={{ paddingBottom: insets.bottom }}
+        contentContainerStyle={{ flexGrow: 1, paddingBottom: insets.bottom }}
         keyboardShouldPersistTaps="handled"
       >
         <AirHeader screen={screenData} blockId="blk_reservation_header" />
