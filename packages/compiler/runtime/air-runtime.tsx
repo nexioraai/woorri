@@ -504,7 +504,17 @@ export function AirButton({ screen, blockId }: BlockRef) {
   if (label === undefined || actionId === undefined) {
     throw new Error(`AIR_RUNTIME_PROP_MISSING:${blockId}:label|actionId`);
   }
-  const kind = props.kind === "ghost" ? ("ghost" as const) : ("primary" as const);
+  // VALEUR NARROWED, PAS SEULEMENT LUE : cette ligne ne reconnaissait que
+  // `ghost` et rabattait TOUT le reste sur `primary`. Un `link` déclaré au
+  // document devenait donc un gros bouton plein — l'inverse exact de ce qu'il
+  // demandait. La prop était bien LUE : c'est sa VALEUR qui était perdue, ce
+  // que le cliquet `props-cablees` ne pouvait pas voir.
+  const kind =
+    props.kind === "ghost"
+      ? ("ghost" as const)
+      : props.kind === "link"
+        ? ("link" as const)
+        : ("primary" as const);
   // AFFORDANCE (D-084) — un effet `slot` est calculé AU RENDU, jamais sur un
   // appui : le dispatcher n'a aucune branche pour lui. Un bouton « Appliquer les
   // filtres » câblé sur un slot était donc PRESSABLE ET MUET. Mesuré sur les

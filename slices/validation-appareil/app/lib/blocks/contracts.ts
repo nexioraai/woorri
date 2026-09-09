@@ -165,7 +165,7 @@ export interface ButtonBlockProps extends BlockA11yProps {
    * Absent = bouton purement textuel, comportement 1.5.0 inchangé.
    */
   icon?: string;
-  kind?: "primary" | "ghost";
+  kind?: "primary" | "ghost" | "link";
   /**
    * OPTIONNEL depuis 1.1.0 (D-084) — même patron que `onItemPress` du bloc
    * liste : sans gestionnaire, le bouton n'est PAS pressable. Un effet que le

@@ -455,8 +455,13 @@ function emitScreen(slice: ScreenSlice, aBarre: boolean): string {
   // QUITTE ces écrans — le cumul aurait compensé DEUX fois sur iOS. La
   // FlatList du bloc list, elle, conserve son ajustement (verrou 2).
   const containerImport = hasList ? "View" : "KeyboardAvoidingView, ScrollView";
+  // EN-TÊTE NATIF MASQUÉ (1.16.0) : la fenêtre est BORD À BORD, donc le
+  // contenu passe SOUS la barre d'état — mesuré à l'écran, le logo se
+  // retrouvait derrière l'horloge. Sans en-tête, l'inset HAUT devient la
+  // responsabilité de l'écran ; avec en-tête, la barre native le portait.
+  const hautSansEntete = slice.screen.showsScreenTitle === false ? "paddingTop: insets.top, " : "";
   const containerOpen = hasList
-    ? "      <View style={{ flex: 1, paddingBottom: insets.bottom }}>"
+    ? `      <View style={{ flex: 1, ${hautSansEntete}paddingBottom: insets.bottom }}>`
     : '      <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>\n' +
       "      <ScrollView\n" +
       // MISE EN PAGE (1.8.0) : `flexGrow: 1` sur le CONTENU. Sans lui, un
@@ -465,7 +470,7 @@ function emitScreen(slice: ScreenSlice, aBarre: boolean): string {
       // hauteur naturelle (mesuré sur appareil : 90 px au lieu de remplir).
       // Le défilement reste intact : un contenu plus haut que l'écran défile
       // comme avant, un contenu plus court remplit désormais la page.
-      "        contentContainerStyle={{ flexGrow: 1, paddingBottom: insets.bottom }}\n" +
+      `        contentContainerStyle={{ flexGrow: 1, ${hautSansEntete}paddingBottom: insets.bottom }}\n` +
       '        keyboardShouldPersistTaps="handled"\n' +
       "      >";
   const containerClose = hasList

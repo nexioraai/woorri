@@ -174,7 +174,7 @@ export const RELEASE_TRAIN_V1 = {
   // Ré-scellé : `ButtonBlock` passe enfin par `Section`. Mesuré sur appareil,
   // il rendait le bouton NU — donc collé aux bords de l'écran, seul bloc à
   // ne pas porter les marges communes. Le `testID` reste sur le pressable.
-  "77680e46e9786e8f438324b24f6da7cca6c280b26d8fd877ddf3c91d6dda53db",
+  "c276c94cfd191498cf23b5c7d8997566fcdc8c2e1e68414bc719c6f9cdb0ab14",
   capabilityRegistryVersion: "1.0.0",
   capabilitySourcesHash:
     "6c28599246abde6e7010704f23f273aafe50d17c5483133709c9065f2777346c",
