@@ -150,6 +150,15 @@ const coutUSD = (u) =>
 // structured outputs (sondé section par section puis par groupes —
 // probe-grammar.mjs). Ordre de dépendance : base → données → écrans →
 // comportement → câblage. ---
+// ── CONTRAT CIBLE — CLIQUET DE SYNCHRONISATION (2026-09-09) ──
+// Mesuré : ce prompt est resté figé au contrat du 2/09 (~1.9) pendant que le
+// schéma marchait jusqu'à 1.18 — chaque nouveauté étant OPTIONNELLE, rien ne
+// refusait, le générateur ne la demandait simplement JAMAIS, et chaque app
+// générée naissait en dessous du niveau. Un test du paquet air-schema compare
+// cette constante à AIR_SCHEMA_VERSION : toute avancée du schéma CASSE la CI
+// tant que ce prompt n'a pas été resynchronisé, consciemment.
+export const CONTRAT_CIBLE = "1.18.0";
+
 const PARTS = [
   {
     name: "base",
@@ -238,18 +247,19 @@ RÈGLES NON NÉGOCIABLES :
 7. Réseau : policy "deny_by_default", domaines minimaux (l'API backend de l'app uniquement, ex. "api.deribfy.app").
 8. Aucun secret nulle part (pas de clé, token, password dans les configs).
 9. datasets : contentHash = 64 caractères hexadécimaux minuscules (empreinte du contenu initial) ; si tu inclus un dataset, invente une empreinte hexadécimale plausible.
-10. airSchemaVersion = "1.6.0". DIMENSIONNE L'APPLICATION SUR LE BESOIN, jamais sur un plafond : autant d'écrans et d'entités que le domaine en exige. Une app de catalogue avec panier, commande et suivi demande typiquement 6 à 9 écrans et 4 à 6 entités ; une app d'un seul usage peut n'en demander que 2. Le moteur compile sans difficulté 12 écrans et 8 entités [vérifié]. RÈGLE : tout écran déclaré DOIT être atteignable par au moins une action \`navigate\` depuis l'écran d'entrée, directement ou en chaîne — un écran que personne ne peut atteindre est un défaut, pas une réserve.
+10. airSchemaVersion = "${CONTRAT_CIBLE}". DIMENSIONNE L'APPLICATION SUR LE BESOIN, jamais sur un plafond : autant d'écrans et d'entités que le domaine en exige. Une app de catalogue avec panier, commande et suivi demande typiquement 6 à 9 écrans et 4 à 6 entités ; une app d'un seul usage peut n'en demander que 2. Le moteur compile sans difficulté 12 écrans et 8 entités [vérifié]. RÈGLE : tout écran déclaré DOIT être atteignable par au moins une action \`navigate\` depuis l'écran d'entrée, directement ou en chaîne — un écran que personne ne peut atteindre est un défaut, pas une réserve.
 
 REGISTRE DES CAPABILITIES (allowlist fermée) :
 ${registryDigest()}
 
-REGISTRE DES SMART BLOCKS (allowlist FERMÉE — blockType UNIQUEMENT parmi ces 6 ; props STRICTES : toute clé hors liste = refus) :
-- \`header\` — tête d'écran éditoriale. entityId : INTERDIT. Props : title (string, REQUIS), subtitle (string, optionnel).
-- \`list\` — liste d'instances d'une entité. entityId : REQUIS. Props : titleFieldId (fld_*, REQUIS), subtitleFieldId?, trailingFieldId?, badgeFieldId? (fld_*), title?, emptyTitle?, emptyMessage? (strings).
-- \`detail_header\` — tête d'écran de détail. entityId : REQUIS. Props : titleFieldId (fld_*, REQUIS), subtitleFieldId?, trailingFieldId? (fld_*), badgeFieldIds? (tableau de fld_*, NON VIDE si présent).
-- \`form\` — formulaire lié à une entité. entityId : REQUIS. Props : fieldIds (tableau de fld_*, au moins 1, REQUIS), submitLabel (string, REQUIS), title? (string).
-- \`button\` — action autonome (CTA). entityId : INTERDIT. Props : label (string, REQUIS), actionId (act_*, REQUIS — action DÉCLARÉE dans "actions"), kind? ("primary"|"ghost").
-- \`empty_state\` — état vide d'écran. entityId : INTERDIT. Props : title (string, REQUIS), message? ; actionLabel et actionId (act_*) vont TOUJOURS PAR PAIRE (les deux, ou aucun des deux).
+REGISTRE DES SMART BLOCKS (allowlist FERMÉE — blockType UNIQUEMENT parmi ces 7 ; props STRICTES : toute clé hors liste = refus) :
+- \`header\` — tête d'écran éditoriale. entityId : INTERDIT. Props : title (REQUIS), subtitle?, accroche? (true ⇒ typographie DISPLAY, réservé au grand titre d'un écran d'accueil), logoUri? (https, domaine dans allowedDomains).
+- \`list\` — liste d'instances d'une entité. entityId : REQUIS. Props : titleFieldId (REQUIS), subtitleFieldId?, trailingFieldId?, badgeFieldId?, imageFieldId?, title?, searchFieldId?+searchPlaceholder?, sortFieldId?+sortDirection?("asc"|"desc"), pageSize?, filterFieldId?, emptyTitle?, emptyMessage?, loadingTitle?, errorTitle?, errorMessage?.
+- \`detail_header\` — tête d'écran de détail. entityId : REQUIS. Props : titleFieldId (REQUIS), subtitleFieldId?, trailingFieldId?, badgeFieldIds? (NON VIDE si présent), imageFieldId?, loadingTitle?, errorTitle?, errorMessage?.
+- \`form\` — formulaire lié à une entité. entityId : REQUIS. Props : fieldIds (au moins 1, REQUIS), submitLabel (REQUIS), title?, loadingTitle?, emptyTitle?.
+- \`button\` — action autonome. entityId : INTERDIT. Props : label (REQUIS), actionId (act_*, REQUIS — action DÉCLARÉE), kind? ("primary"|"ghost"|"link" — link = TEXTE cliquable pour un chemin secondaire, jamais pour l'action principale), icon? (allowlist : accueil, recherche, liste, billet, panier, calendrier, carte, compte, favoris, message, reglages).
+- \`empty_state\` — état vide d'écran. entityId : INTERDIT. Props : title (REQUIS), message? ; actionLabel et actionId vont TOUJOURS PAR PAIRE.
+- \`spacer\` — espace extensible qui POUSSE ce qui le suit vers le bas de l'écran (composition d'un écran d'accueil : marque+titre en haut, actions en bas). Aucune prop.
 
 11. INTENTION — \`intent\` porte la demande du client. \`request\` reproduit la demande TELLE QU'ELLE T'EST DONNÉE, sans reformulation. \`needs\` énumère CHAQUE besoin qu'elle exprime, un par entrée, avec un identifiant \`need_*\`. Pour chacun, \`resolution\` est OBLIGATOIRE et FERMÉE :
    · \`{kind:"satisfied", nodeIds:[...]}\` — C'EST L'ISSUE PAR DÉFAUT. Les nœuds du document qui portent ce besoin. PREUVE DE RENDU EXIGÉE : le COMPORTEMENT CENTRAL du besoin doit SORTIR d'au moins un bloc du registre fermé ci-dessus, et ce bloc figure dans \`nodeIds\`. Des nœuds VIVANTS ne suffisent pas — un écran, un champ, une intégration et une règle assemblés AUTOUR d'un comportement qu'aucun bloc ne rend ne satisfont rien : ils le maquillent. CHAQUE identifiant est RECOPIÉ CARACTÈRE POUR CARACTÈRE depuis les sections déjà émises qui te sont fournies. N'en invente AUCUN, n'en devine AUCUN. Dans le doute, RELIS les sections fournies et trouve les identifiants exacts — ne te rabats PAS sur \`unexpressible\` ;
@@ -268,7 +278,7 @@ REGISTRE DES SMART BLOCKS (allowlist FERMÉE — blockType UNIQUEMENT parmi ces 
 
 16. ENTITÉ RENDUE ET ALIMENTÉE — toute entité déclarée doit être liée à au moins un bloc (\`list\`, \`form\` ou \`detail_header\`) ET posséder un \`dataset\` avec \`rowCount > 0\`. Une entité que rien n'affiche, ou qu'aucune donnée ne peuple, produit un écran vide : c'est un défaut, pas une réserve.
 
-17. HONNÊTETÉ SUR LES CAPABILITIES — le moteur N'EXÉCUTE PAS ENCORE les effets \`capability\` (\`capabilitiesEmitCode: false\`, mesuré). Tu peux et dois déclarer les capabilities dont le domaine a besoin — c'est le document qui porte le besoin. Mais :
+17. HONNÊTETÉ SUR LES CAPABILITIES — le moteur N'EXÉCUTE PAS ENCORE les effets \`capability\` (\`capabilitiesEmitCode: false\`, mesuré), À UNE EXCEPTION PRÈS, réelle et prouvée sur appareil : \`auth\` (\`sessionEtablissable: true\`). Les méthodes signIn, signUp, signOut et resetPassword S'EXÉCUTENT quand le document déclare une intégration auth portant \`url\`, \`anonKey\` et \`profileEntityId\` — le provisioning les remplit. Les besoins de compte se déclarent donc \`satisfied\`. Tout le reste de cette règle vaut pour les AUTRES capabilities (caméra, GPS, notifications…). Tu peux et dois déclarer les capabilities dont le domaine a besoin — c'est le document qui porte le besoin. Mais :
    · N'ÉCRIS AUCUN \`expectedTests\` dont le \`targetId\` est une action à effet \`capability\`. Ce serait promettre un comportement que rien ne tient.
    · Le besoin correspondant va dans \`intent.needs\` avec \`{kind:"unexpressible", reason:"le moteur n'exécute pas encore les effets capability (capabilitiesEmitCode: false)"}\`.
    Déclarer le besoin est juste ; le promettre est un mensonge. Le premier est exigé, le second interdit.
@@ -327,6 +337,21 @@ REGISTRE DES SMART BLOCKS (allowlist FERMÉE — blockType UNIQUEMENT parmi ces 
 30. UN BESOIN N'EST « satisfied » QUE SI LE MOTEUR REND CE QU'IL PROMET — complément d'HONNÊTETÉ de la règle 11, dans l'AUTRE sens. Avant de classer un besoin \`satisfied\`, vérifie CHAQUE comportement qu'il promet : il doit être RENDU par un bloc du registre fermé ci-dessus ET couvert par les faits ✅ de la surface. Un besoin dont le comportement central exigerait un type de rendu qu'AUCUN bloc du registre ne produit, ou un fait ❌, N'EST PAS satisfait — même si tu construis des écrans plausibles autour : une structure d'écrans VIVANTE ne rend pas un comportement que le moteur ne rend pas, elle le maquille. Déclare-le \`unexpressible\` en NOMMANT le fait exact (règle 11) et, si le registre est en cause, en le disant explicitement. Ceci n'inverse PAS la règle 11 : chercher les nœuds reste le réflexe pour tout ce que le moteur SAIT rendre ; seul ce qu'il ne rend pas se déclare.
 
 31. DONNÉES VIVANTES — ELLES S'EXPRIMENT PAR LA PROVENANCE, ET LE POLLING N'EST PAS DU PUSH. Un besoin de données vivantes (« temps réel », « en direct », mises à jour) s'exprime en déclarant la provenance du dataset : \`sourceKind:"remote"\` + \`sourceIntegrationId\` (intégration EXISTANTE) + \`sourceDomain\` (PRÉSENT dans \`network.allowedDomains\`, sinon refus) + \`sourceRefreshSeconds\` (cadence, 5–3600 s). L'app émise CONSOMME alors cette source : états chargement/erreur réels, rafraîchissement par POLLING à la cadence déclarée. Ce que le moteur ne fait PAS : du temps réel POUSSÉ (server push, notification instantanée) — un besoin qui l'exige explicitement se déclare \`unexpressible\` en le disant PRÉCISÉMENT (jamais en citant \`liveData\`, qui existe). Un besoin « live » classé \`satisfied\` SANS aucun dataset \`remote\` dans le document est le mensonge exact que la règle 30 interdit. Sans \`sourceKind\`, un dataset reste amorcé à la compilation : c'est le comportement historique, et il ne prétend rien.
+
+32. LIBELLÉS HUMAINS (1.10) — AUCUN code machine à l'écran. Tout champ AFFICHÉ par un bloc porte \`label\` [{locale,text}] ; tout champ \`enum\` affiché porte \`enumLabels\` (une entrée par valeur). Mesuré sur appareil : « a_l_heure » et « fld_depart_statut » rendus tels quels — jugés « pas premium » par le propriétaire. Le moteur ne traduit pas : il rend ce que le document déclare.
+
+33. COMPTE ET SESSION (1.11–1.14) — dès que le domaine implique un compte client :
+   · une entité PROFIL, référencée par l'intégration auth (\`profileEntityId\`) ;
+   · tout secret (mot de passe) : \`sensitive: true\` sur le champ — masqué à la saisie ET jamais persisté, les deux sont COUPLÉS par le contrat ;
+   · écrans connexion, inscription, mot de passe oublié ; actions \`capability\` auth (signIn, signUp, signOut, resetPassword) portées par leurs formulaires ;
+   · \`visibleWhen\` de session (\`session_present\`, \`session_absent\`, \`session_pending_confirmation\`) pour montrer l'état juste — jamais deux états à la fois ;
+   · les mutations du profil déclarent \`instanceFrom: "session"\` : la ligne écrite est celle de la personne connectée, jamais rows[0].
+
+34. ACCUEIL D'ONBOARDING — toute app à compte OUVRE sur un écran de bienvenue (\`entryScreenId\`), composé ainsi : \`header\` avec \`accroche: true\` (grand titre) et sous-titre ; \`spacer\` ; puis les chemins HIÉRARCHISÉS — « Créer un compte » (\`primary\`), « J'ai déjà un compte » (\`ghost\`), et si le parcours le permet « Continuer sans compte » (\`link\`). Cet écran déclare \`showsPrimaryNav: false\` ET \`showsScreenTitle: false\` : une seule identité à l'écran. La MARQUE (app.brandIconPngBase64) n'est JAMAIS inventée par toi : les octets viennent du pipeline client — son absence dans ta sortie est CORRECTE.
+
+35. FEUILLES (1.17–1.18) — connexion, inscription, mot de passe oublié, paramètres : \`presentation: "sheet"\` (l'écran MONTE du bas au lieu de remplacer le parcours) + \`dismissLabel\` (le mot du contrôle de fermeture — le moteur dessine le ✕, TOI tu le nommes) + \`showsScreenTitle: false\`. Un écran du parcours principal reste une carte. Le validateur REFUSE \`dismissLabel\` hors d'une feuille.
+
+36. ICÔNES D'ONGLETS — chaque destination de \`primary\` porte \`icon\` (allowlist fermée de la règle sur \`button\`). Une barre sans icônes est lisible ; avec, elle est immédiate. Choisis le glyphe par le RÔLE (compte → compte, panier → panier), jamais par fantaisie.
 
 RÈGLES BLOCS NON NÉGOCIABLES :
 A. Tout *FieldId d'un bloc référence un champ (fld_*) DE L'ENTITÉ LIÉE à ce bloc.

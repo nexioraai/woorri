@@ -2,4 +2,4 @@
 export const navData = {"entryScreenId":"scr_menu","locale":"fr-FR","routes":[{"routeId":"nav_commande","screenId":"scr_commande","title":"Détail de la commande"},{"routeId":"nav_commandes","screenId":"scr_commandes","title":"Mes commandes"},{"routeId":"nav_confirmation","screenId":"scr_confirmation","title":"Commande envoyée"},{"routeId":"nav_form","screenId":"scr_form","title":"Vos coordonnées"},{"routeId":"nav_menu","screenId":"scr_menu","title":"Menu"},{"routeId":"nav_panier","screenId":"scr_panier","title":"Panier"},{"routeId":"nav_plat","screenId":"scr_plat","title":"Le plat"}]} as const;
 
 // Destinations principales — vide si le document n'en déclare aucune.
-export const primaryNav = [] as const;
+export const primaryNav = [{"icon":"accueil","label":"Carte","order":0,"routeId":"nav_menu","screenId":"scr_menu"},{"icon":"panier","label":"Panier","order":1,"routeId":"nav_panier","screenId":"scr_panier"},{"icon":"liste","label":"Commandes","order":2,"routeId":"nav_commandes","screenId":"scr_commandes"}] as const;

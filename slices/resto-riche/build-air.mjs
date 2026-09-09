@@ -2,6 +2,11 @@
 // Aucune dépense LLM. But : isoler la cause. Si l'app sort riche, le moteur
 // n'est pas le plafond — c'est ce qu'on demande au générateur.
 const R = "/Users/yia/Documents/woorri/";
+// Marque PROVISOIRE (même statut que l'étoile de Bus Intercités) : une
+// assiette stylisée aux couleurs du thème. Un vrai logo la remplacera par
+// ce seul fichier.
+const { readFileSync } = await import("node:fs");
+const MARQUE = readFileSync(R + "slices/resto-riche/marque.b64", "utf8").trim();
 const { assertValidAir, migrateAirDocument } = await import(R + "packages/air-schema/src/index.ts");
 const { compileProject } = await import(R + "packages/compiler/src/index.ts");
 const L = (t) => [{ locale: "fr-FR", text: t }];
@@ -34,9 +39,14 @@ const screens = [
     { id:"blk_menu_header", blockType:"header", props:P({ title:"Notre carte", subtitle:"Cuisine maison, préparée à la commande" }) },
     { id:"blk_menu_liste", blockType:"list", entityId:"ent_plat", props:P({ title:"Plats du jour",
       titleFieldId:"fld_plat_nom", subtitleFieldId:"fld_plat_description", trailingFieldId:"fld_plat_prix",
+      imageFieldId:"fld_plat_photo",
       emptyTitle:"Carte indisponible", emptyMessage:"Le service reprend à 11h30." , loadingTitle:"Chargement de la carte", errorTitle:"Carte indisponible", errorMessage:"Vérifiez votre connexion."}) },
-    { id:"blk_menu_panier", blockType:"button", props:P({ label:"Voir mon panier", actionId:"act_ouvrir_panier", kind:"primary" }) },
-    { id:"blk_menu_commandes", blockType:"button", props:P({ label:"Mes commandes", actionId:"act_ouvrir_commandes", kind:"ghost" }) } ] },
+    // Les DEUX boutons de navigation pure (« Voir mon panier », « Mes
+    // commandes ») sont RETIRÉS : la barre du bas porte ces destinations, et
+    // le validateur AIR_NAV_TAB_DUPLICATE refuse — à raison — un bouton qui
+    // double un onglet. C'était le défaut D-086 mesuré : 184 boutons de
+    // navigation sur 235.
+    ] },
   { id:"scr_plat", title:L("Le plat"), blocks:[
     { id:"blk_plat_entete", blockType:"detail_header", entityId:"ent_plat", props:P({
       titleFieldId:"fld_plat_nom", subtitleFieldId:"fld_plat_description",
@@ -57,7 +67,7 @@ const screens = [
   { id:"scr_confirmation", title:L("Commande envoyée"), blocks:[
     { id:"blk_conf_entete", blockType:"detail_header", entityId:"ent_commande", props:P({
       titleFieldId:"fld_commande_numero", subtitleFieldId:"fld_commande_statut", trailingFieldId:"fld_commande_total" }) },
-    { id:"blk_conf_suivi", blockType:"button", props:P({ label:"Suivre ma commande", actionId:"act_ouvrir_commandes", kind:"primary" }) } ] },
+    { id:"blk_conf_suivi", blockType:"button", props:P({ label:"Suivre ma commande", actionId:"act_suivre", kind:"primary" }) } ] },
   { id:"scr_commandes", title:L("Mes commandes"), blocks:[
     { id:"blk_cmd_header", blockType:"header", props:P({ title:"Mes commandes", subtitle:"En cours et passées" }) },
     { id:"blk_cmd_liste", blockType:"list", entityId:"ent_commande", props:P({ titleFieldId:"fld_commande_numero",
@@ -74,8 +84,6 @@ const screens = [
 ];
 const actions = [
   { id:"act_ouvrir_plat", name:"ouvrir un plat", trigger:{kind:"ui",blockId:"blk_menu_liste"}, effect:{kind:"navigate",screenId:"scr_plat"} },
-  { id:"act_ouvrir_panier", name:"ouvrir le panier", trigger:{kind:"ui",blockId:"blk_menu_panier"}, effect:{kind:"navigate",screenId:"scr_panier"} },
-  { id:"act_ouvrir_commandes", name:"mes commandes", trigger:{kind:"ui",blockId:"blk_menu_commandes"}, effect:{kind:"navigate",screenId:"scr_commandes"} },
   { id:"act_ajouter_panier", name:"ajouter au panier", trigger:{kind:"ui",blockId:"blk_plat_ajouter"}, effect:{kind:"navigate",screenId:"scr_panier"} },
   { id:"act_retour_menu", name:"retour carte", trigger:{kind:"ui",blockId:"blk_plat_retour"}, effect:{kind:"navigate",screenId:"scr_menu"} },
   { id:"act_ouvrir_form", name:"ouvrir le formulaire", trigger:{kind:"ui",blockId:"blk_panier_commander"}, effect:{kind:"navigate",screenId:"scr_form"} },
@@ -147,7 +155,7 @@ const actionSlot = {
 };
 
 const air = { airSchemaVersion:"1.5.0", projectId:"prj_resto_riche", intent,
-  app:{ name:"Chez Nous",
+  app:{ name:"Chez Nous", brandIconPngBase64: MARQUE,
     // Slug CHANGÉ (2026-09-09, Phase 11) : « chez-nous » a existé sur le compte
     // EAS puis a été supprimé — la plateforme met les slugs supprimés au
     // tombeau et refuse leur recréation. Le NOM affiché ne change pas.
@@ -158,7 +166,15 @@ const air = { airSchemaVersion:"1.5.0", projectId:"prj_resto_riche", intent,
     distribution:{ owner:"deribfy-apps-team", projectId:"7c1194b7-05b3-4edd-bc86-c16359b065b9" },
     locales:{ userLanguage:"fr-FR", appLocales:["fr-FR"],
     defaultAppLocale:"fr-FR", contentLocales:["fr-FR"], rtlSupported:false } },
-  screens, navigation:{ entryScreenId:"scr_menu", routes: screens.map((s)=>({ id:`nav_${s.id.slice(4)}`, screenId:s.id })) },
+  screens, navigation:{ entryScreenId:"scr_menu",
+    routes: screens.map((s)=>({ id:`nav_${s.id.slice(4)}`, screenId:s.id })),
+    // BARRE PRINCIPALE (D-086) : les trois lieux de vie de l'app. Le panier et
+    // les commandes cessent d'être des boutons posés dans le corps de la carte.
+    primary:{ destinations:[
+      { routeId:"nav_menu", label:L("Carte"), order:0, icon:"accueil" },
+      { routeId:"nav_panier", label:L("Panier"), order:1, icon:"panier" },
+      { routeId:"nav_commandes", label:L("Commandes"), order:2, icon:"liste" },
+    ] } },
   entities, relations:[], datasets, actions:[...actions, actionSlot], rules:[{ id:"rule_client_tel", description:"Le téléphone est obligatoire pour rappeler le client.",
     kind:"validation", entityId:"ent_client",
     assertions:[{ fieldId:"fld_client_telephone", operator:"required" }] }], slots, capabilities:[], permissions:[],
@@ -211,6 +227,10 @@ const c = compileProject(v, undefined, {
 console.log("② compilation .......... 🟢", c.files.size, "fichiers · rootHash", c.rootHash.slice(0,12)+"…");
 const { writeFileSync, mkdirSync } = await import("node:fs");
 const OUT = R + "slices/resto-riche/app/";
-for (const [f, contenu] of c.files) { const p = OUT + f; mkdirSync(p.slice(0, p.lastIndexOf("/")), {recursive:true}); writeFileSync(p, contenu); }
+for (const [f, contenu] of c.files) { const p = OUT + f; mkdirSync(p.slice(0, p.lastIndexOf("/")), {recursive:true});
+  // Un .png est émis en BASE64 : l'écrire tel quel produirait un fichier
+  // TEXTE que le prebuild refuserait (même piège déjà fermé sur l'autre
+  // slice). Vérifié à l'octet après écriture.
+  writeFileSync(p, f.endsWith(".png") ? Buffer.from(contenu, "base64") : contenu); }
 writeFileSync(R + "slices/resto-riche/chez-nous.air.json", JSON.stringify(v, null, 2));
 console.log("③ projet écrit ......... slices/resto-riche/app/ —", c.files.size, "fichiers");

@@ -14,6 +14,8 @@ import { View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ScreenShell } from "../lib/primitives";
 import { AirButton, AirEmptyState, AirHeader, AirList, AirScreenLifecycle } from "../lib/runtime/air-runtime";
+import { PrimaryNav } from "../lib/runtime/primary-nav";
+import { primaryNav } from "../nav.data";
 import type { AirScreenProps } from "../lib/runtime/air-runtime";
 import { screenData } from "./scr_panier.data";
 
@@ -28,6 +30,7 @@ export default function ScrPanierScreen({ route }: AirScreenProps) {
         <AirEmptyState screen={screenData} blockId="blk_panier_vide" />
         <AirButton screen={screenData} blockId="blk_panier_commander" />
       </View>
+      <PrimaryNav destinations={primaryNav} currentScreenId="scr_panier" />
     </ScreenShell>
   );
 }

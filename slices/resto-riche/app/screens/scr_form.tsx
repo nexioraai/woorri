@@ -14,6 +14,8 @@ import { KeyboardAvoidingView, ScrollView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ScreenShell } from "../lib/primitives";
 import { AirForm, AirHeader } from "../lib/runtime/air-runtime";
+import { PrimaryNav } from "../lib/runtime/primary-nav";
+import { primaryNav } from "../nav.data";
 import type { AirScreenProps } from "../lib/runtime/air-runtime";
 import { screenData } from "./scr_form.data";
 
@@ -30,6 +32,7 @@ export default function ScrFormScreen({ route }: AirScreenProps) {
         <AirForm screen={screenData} blockId="blk_form_client" itemId={route?.params?.itemId} />
       </ScrollView>
       </KeyboardAvoidingView>
+      <PrimaryNav destinations={primaryNav} currentScreenId="scr_form" />
     </ScreenShell>
   );
 }

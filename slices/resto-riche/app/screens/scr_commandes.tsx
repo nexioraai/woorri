@@ -14,6 +14,8 @@ import { View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ScreenShell } from "../lib/primitives";
 import { AirEmptyState, AirHeader, AirList } from "../lib/runtime/air-runtime";
+import { PrimaryNav } from "../lib/runtime/primary-nav";
+import { primaryNav } from "../nav.data";
 import type { AirScreenProps } from "../lib/runtime/air-runtime";
 import { screenData } from "./scr_commandes.data";
 
@@ -26,6 +28,7 @@ export default function ScrCommandesScreen({ route }: AirScreenProps) {
         <AirList screen={screenData} blockId="blk_cmd_liste" itemId={route?.params?.itemId} />
         <AirEmptyState screen={screenData} blockId="blk_cmd_vide" />
       </View>
+      <PrimaryNav destinations={primaryNav} currentScreenId="scr_commandes" />
     </ScreenShell>
   );
 }

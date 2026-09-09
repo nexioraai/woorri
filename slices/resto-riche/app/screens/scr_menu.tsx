@@ -13,7 +13,9 @@
 import { View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ScreenShell } from "../lib/primitives";
-import { AirButton, AirHeader, AirList } from "../lib/runtime/air-runtime";
+import { AirHeader, AirList } from "../lib/runtime/air-runtime";
+import { PrimaryNav } from "../lib/runtime/primary-nav";
+import { primaryNav } from "../nav.data";
 import type { AirScreenProps } from "../lib/runtime/air-runtime";
 import { screenData } from "./scr_menu.data";
 
@@ -24,9 +26,8 @@ export default function ScrMenuScreen({ route }: AirScreenProps) {
       <View style={{ flex: 1, paddingBottom: insets.bottom }}>
         <AirHeader screen={screenData} blockId="blk_menu_header" />
         <AirList screen={screenData} blockId="blk_menu_liste" itemId={route?.params?.itemId} />
-        <AirButton screen={screenData} blockId="blk_menu_panier" />
-        <AirButton screen={screenData} blockId="blk_menu_commandes" />
       </View>
+      <PrimaryNav destinations={primaryNav} currentScreenId="scr_menu" />
     </ScreenShell>
   );
 }

@@ -14,6 +14,8 @@ import { View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ScreenShell } from "../lib/primitives";
 import { AirDetailHeader, AirList } from "../lib/runtime/air-runtime";
+import { PrimaryNav } from "../lib/runtime/primary-nav";
+import { primaryNav } from "../nav.data";
 import type { AirScreenProps } from "../lib/runtime/air-runtime";
 import { screenData } from "./scr_commande.data";
 
@@ -25,6 +27,7 @@ export default function ScrCommandeScreen({ route }: AirScreenProps) {
         <AirDetailHeader screen={screenData} blockId="blk_det_entete" itemId={route?.params?.itemId} />
         <AirList screen={screenData} blockId="blk_det_lignes" itemId={route?.params?.itemId} />
       </View>
+      <PrimaryNav destinations={primaryNav} currentScreenId="scr_commande" />
     </ScreenShell>
   );
 }
