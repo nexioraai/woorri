@@ -21,7 +21,9 @@ rmSync(APP, { recursive: true, force: true });
 for (const [f, contenu] of c.files) {
   const p = APP + f;
   mkdirSync(p.slice(0, p.lastIndexOf("/")), { recursive: true });
-  writeFileSync(p, contenu);
+  // Les BINAIRES (marque) sont portés en base64 par le document : les écrire
+  // tels quels produirait un fichier texte que le prebuild refuserait.
+  writeFileSync(p, f.endsWith(".png") ? Buffer.from(contenu, "base64") : contenu);
 }
 // Profil EAS : patron v3-resto-quartier (APK interne). AUCUN build lancé ici.
 writeFileSync(APP + "eas.json", JSON.stringify({

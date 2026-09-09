@@ -60,7 +60,11 @@ export const RELEASE_TRAIN_V1 = {
   // un visiteur non connecté.
   // 1.15.0 -> 1.16.0 : `showsScreenTitle`. Sur un accueil portant une MARQUE,
   // le titre de route s'affichait au-dessus du logo — deux identités empilées.
-  airSchemaVersion: "1.16.0",
+  // 1.16.0 -> 1.17.0 : `app.brandIconPngBase64` (les OCTETS du logo : icône
+  // et écran de démarrage sont posés au BUILD, et le chemin de compilation
+  // est zéro réseau) et `screen.presentation` (une ÉTAPE monte du bas au lieu
+  // de remplacer le parcours).
+  airSchemaVersion: "1.17.0",
   // Porté à 1.1.0 le 2026-08-31 (D-060) : montée STRICTEMENT ADDITIVE du
   // registre de blocs — `form` gagne `loading`/`empty`, `detail_header` gagne un
   // état, les trois blocs à données gagnent les props de titres. Rien n'est

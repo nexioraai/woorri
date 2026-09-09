@@ -594,6 +594,13 @@ function emitNavData(air: ProjectAir, locale: string): string {
 }
 
 function emitNavigation(air: ProjectAir): string {
+  // Écrans qui SONT des destinations principales (résolus par leur route).
+  const destinationsPrincipales = new Set(
+    (air.navigation.primary?.destinations ?? []).flatMap((d) => {
+      const route = air.navigation.routes.find((r) => r.id === d.routeId);
+      return route === undefined ? [] : [route.screenId];
+    }),
+  );
   const routes = [...air.navigation.routes].sort((a, b) => byCodeUnit(a.screenId, b.screenId));
   const importLines = routes.map(
     (r) => `import ${pascal(r.screenId)}Screen from "./screens/${assertId(r.screenId, "navigation")}";`,
@@ -606,6 +613,21 @@ function emitNavigation(air: ProjectAir): string {
     `        options={{ title: navData.routes.find((x) => x.screenId === "${r.screenId}")!.title${
       air.screens.find((sc) => sc.id === r.screenId)?.showsScreenTitle === false
         ? ", headerShown: false"
+        : ""
+    }${
+      // DESTINATIONS PRINCIPALES : aucun retour par GLISSEMENT. Chacune est
+      // une racine atteinte en touchant son onglet ; un balayage latéral les
+      // faisait défiler l'une après l'autre, comme un carrousel qu'aucun
+      // document n'a demandé.
+      destinationsPrincipales.has(r.screenId) ? ", gestureEnabled: false" : ""
+    }${
+      // FEUILLE (1.17.0) : l'écran monte du bas et se referme, au lieu de
+      // remplacer le parcours. `presentation: "modal"` est la forme native
+      // des deux plateformes ; le geste de fermeture par glissement vers le
+      // bas est fourni par iOS — sur Android, la fermeture passe par le
+      // contrôle explicite de l'écran. Dit ici, pas promis ailleurs.
+      air.screens.find((sc) => sc.id === r.screenId)?.presentation === "sheet"
+        ? ', presentation: "modal"'
         : ""
     } }} />`,
   ]);
@@ -903,6 +925,11 @@ export function emitProject(
     files.set("lib/tokens/theme.generated.ts", emitThemeModule(air));
   }
   files.set("app.json", emitAppJson(air, train));
+  // MARQUE (1.17.0) : le FICHIER que le manifeste désigne. Le déclarer sans
+  // le produire ferait échouer le prebuild — fail-closed inversé.
+  if (air.app.brandIconPngBase64 !== undefined) {
+    files.set("assets/marque.png", air.app.brandIconPngBase64);
+  }
   files.set("demo.data.ts", emitDemoData(air));
   files.set("manifests/permissions.manifest.json", emitPermissionsManifest(air));
   files.set("nav.data.ts", emitNavData(air, locale));

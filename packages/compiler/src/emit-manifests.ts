@@ -114,6 +114,20 @@ export function emitAppJson(air: ProjectAir, train: ReleaseTrain): string {
     name: air.app.name,
     newArchEnabled: true,
     orientation: "portrait",
+    // MARQUE (1.17.0) — icône de l'app ET écran de démarrage, tirés du MÊME
+    // fichier que la marque affichée dans l'app. Sans cela, l'icône était
+    // celle d'Expo et l'ouverture ne montrait aucune identité : trois images
+    // différentes pour une seule application.
+    ...(air.app.brandIconPngBase64 === undefined
+      ? {}
+      : {
+          icon: "./assets/marque.png",
+          splash: {
+            image: "./assets/marque.png",
+            resizeMode: "contain",
+            backgroundColor: "#FFFFFF",
+          },
+        }),
     plugins: [
       [
         "expo-build-properties",

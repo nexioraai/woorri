@@ -21,7 +21,7 @@ import {
 // 1.7.1 (E3.3, D-131) : provenance APLANIE (sourceKind/sourceIntegrationId/
 //   sourceDomain/sourceRefreshSeconds) — l'union 1.7.0 dépassait la limite
 //   réelle de grammaire de l'API (classe D-078) ; sémantique inchangée.
-export const AIR_SCHEMA_VERSION = "1.16.0";
+export const AIR_SCHEMA_VERSION = "1.17.0";
 
 export const semverSchema = z.string().regex(/^\d+\.\d+\.\d+$/);
 export const sha256Schema = z.string().regex(/^[0-9a-f]{64}$/);
@@ -104,6 +104,18 @@ const appSchema = z.strictObject({
   slug: z.string().regex(/^[a-z0-9][a-z0-9-]{1,62}$/),
   description: localizedTextSchema.optional(),
   locales: appLocalesSchema,
+  /**
+   * MARQUE EMBARQUÉE (1.17.0) — les OCTETS du logo, en base64.
+   *
+   * Mesuré sur appareil : l'icône de l'app était celle d'Expo par défaut, et
+   * l'ouverture ne montrait aucune identité. Une URL ne conviendrait pas —
+   * icône et écran de démarrage sont posés au moment du BUILD, pas au
+   * runtime, et le chemin de compilation est ZÉRO RÉSEAU. Le document porte
+   * donc l'image, comme il porte ses textes.
+   *
+   * OPTIONNEL : sans elle, l'artefact est celui de 1.16.0 au caractère près.
+   */
+  brandIconPngBase64: z.string().regex(/^[A-Za-z0-9+/]+=*$/).min(64).optional(),
   distribution: appDistributionSchema.optional(),
 });
 
@@ -203,6 +215,17 @@ const screenSchema = z.strictObject({
    * OPTIONNEL, défaut `true` : un document existant est inchangé.
    */
   showsScreenTitle: z.boolean().optional(),
+  /**
+   * PRÉSENTATION (1.17.0) — `card` (défaut) ou `sheet`.
+   *
+   * Une FEUILLE se superpose au parcours au lieu de le remplacer : elle monte
+   * du bas, et l'on en sort sans « revenir en arrière ». C'est la forme
+   * attendue d'une étape qui interrompt — connexion, réglages — par
+   * opposition à une destination, qui EST le parcours.
+   *
+   * OPTIONNEL : sans déclaration, l'écran reste une carte poussée.
+   */
+  presentation: z.enum(["card", "sheet"]).optional(),
   blocks: z.array(blockInstanceSchema).min(1),
 });
 

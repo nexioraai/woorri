@@ -223,6 +223,17 @@ export const AIR_MIGRATIONS: readonly AirMigration[] = [
       "IDENTITÉ : sans déclaration, l'en-tête natif reste rendu partout.",
     migrate: (document) => document,
   },
+  {
+    from: "1.16.0",
+    to: "1.17.0",
+    description:
+      "AIR 1.17.0 : `app.brandIconPngBase64` OPTIONNEL — les octets du logo. " +
+      "Mesuré sur appareil : l'icône de l'app était celle d'Expo par défaut. " +
+      "Une URL ne convient pas : icône et écran de démarrage sont posés au " +
+      "BUILD, et le chemin de compilation est zéro réseau. Migration " +
+      "IDENTITÉ : sans image, l'artefact est celui de 1.16.0.",
+    migrate: (document) => document,
+  },
 ];
 
 export class AirMigrationError extends Error {
