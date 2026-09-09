@@ -13,6 +13,7 @@ import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { lignesVisibles, optionsDistinctes } from "./list-pipeline";
 import type { FiltreEffectif, OperateurFiltre } from "./list-pipeline";
 import { useNavigation } from "@react-navigation/native";
+import { allerVers } from "./racines-navigation";
 import {
   ButtonBlock,
   DetailHeaderBlock,
@@ -364,7 +365,10 @@ function useDispatch(screen: AirScreenData) {
       if (actionId === undefined) return;
       const effect = screen.actions[actionId];
       if (effect?.kind === "navigate" && effect.screenId !== undefined) {
-        (navigation.navigate as (name: string) => void)(effect.screenId);
+        // Une DESTINATION PRINCIPALE est une racine : y aller remplace la pile
+        // au lieu de s'empiler dessus. C'est ce qui retire la flèche de retour
+        // en haut à gauche des quatre pages principales.
+        allerVers(navigation, effect.screenId);
         return;
       }
       // CAPABILITY (D-059) : l'effet n'est plus AVALÉ. Il est présenté au
@@ -416,7 +420,7 @@ function useDispatch(screen: AirScreenData) {
         // sur un écran de confirmation après un refus serait un mensonge de
         // l'interface — la faute exacte que ce chantier traque.
         if (ecrit && effect.thenScreenId !== undefined) {
-          (navigation.navigate as (name: string) => void)(effect.thenScreenId);
+          allerVers(navigation, effect.thenScreenId);
         }
         return;
       }
@@ -440,9 +444,7 @@ function useItemNavigate(screen: AirScreenData, blockId: string) {
   if (effect?.kind !== "navigate" || effect.screenId === undefined) return undefined;
   const cible = effect.screenId;
   return (itemId: string) => {
-    (
-      navigation.navigate as (name: string, params: { itemId: string }) => void
-    )(cible, { itemId });
+    allerVers(navigation, cible, { itemId });
   };
 }
 

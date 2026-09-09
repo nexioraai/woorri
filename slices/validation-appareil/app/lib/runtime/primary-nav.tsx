@@ -12,14 +12,22 @@
 // `useNavigation` (@react-navigation/native), `Pressable`/`View`/`Text`
 // (react-native), `useSafeAreaInsets` (react-native-safe-area-context).
 //
-// CONTREPARTIE ASSUMÉE : un vrai tab navigator conserve l'historique de chaque
-// onglet ; une pile + barre RE-NAVIGUE. Pour l'utilisateur — persistante,
-// compacte, en bas, toujours visible — le comportement est identique.
+// CONTREPARTIE, MESURÉE ET CORRIGÉE : la première version appelait
+// `navigate`, qui EMPILE. Les quatre pages s'accumulaient et l'en-tête natif
+// affichait une flèche de retour — défaut vu à l'écran sur A17. Le texte qui
+// tenait ici prétendait le comportement « identique » à celui d'un vrai
+// gestionnaire d'onglets : c'était faux. Une bascule d'onglet passe désormais
+// par `allerVers`, qui REMPLACE la pile par la racine touchée.
+//
+// Ce qui reste réellement en moins face à un vrai gestionnaire d'onglets :
+// l'historique PROPRE À CHAQUE onglet. Ouvrir une fiche depuis Départs puis
+// toucher Accueil perd la fiche. Dit ici, une fois, sans être maquillé.
 import { Pressable, Text, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useStyles } from "../primitives/theme-bridge";
+import { allerVers } from "./racines-navigation";
 
 /**
  * TABLE DE CORRESPONDANCE — un rôle déclaré par le document, un glyphe connu
@@ -83,7 +91,7 @@ export function PrimaryNav({ destinations, currentScreenId }: PrimaryNavProps) {
             accessibilityState={{ selected: actif }}
             style={actif ? s.primaryNavItemActive : s.primaryNavItem}
             onPress={() => {
-              (navigation.navigate as (name: string) => void)(d.screenId);
+              allerVers(navigation, d.screenId);
             }}
           >
             {/* AUCUNE limite de lignes ici (D-086) — la dimension A++ E l'a

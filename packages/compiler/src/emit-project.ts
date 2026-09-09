@@ -631,15 +631,25 @@ function emitNavigation(air: ProjectAir): string {
         : ""
     } }} />`,
   ]);
+  // RACINES (déclarées, jamais devinées) : les écrans des destinations
+  // principales. Triées pour que l'artefact reste déterministe.
+  const racines = [...destinationsPrincipales].sort(byCodeUnit);
   return [
     "// GÉNÉRÉ — NE PAS ÉDITER (navigation : verdict S1 D-026 — native-stack,",
     "// config EXPLICITE émise depuis l'AIR, patron prouvé au banc V4).",
     'import { NavigationContainer } from "@react-navigation/native";',
     'import { createNativeStackNavigator } from "@react-navigation/native-stack";',
+    'import { declarerRacines } from "./lib/runtime/racines-navigation";',
     'import { navData } from "./nav.data";',
     ...importLines,
     "",
     "const Stack = createNativeStackNavigator();",
+    "",
+    "// Les quatre pages principales sont des RACINES : y aller REMPLACE la pile.",
+    "// Sans cela `navigate` les empile, et l'en-tête natif dessine une flèche de",
+    "// retour qui fait défiler les onglets à l'envers — défaut vu sur appareil.",
+    "// Déclaré au chargement du module, donc avant tout rendu.",
+    `declarerRacines(${canonicalJson(racines)});`,
     "",
     "export function Navigation() {",
     "  return (",

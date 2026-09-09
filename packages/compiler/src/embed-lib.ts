@@ -119,6 +119,13 @@ export const EMBEDDED_SOURCES: readonly EmbeddedSourceSpec[] = [
     rewrites: {},
   },
   {
+    // Règle UNIQUE de navigation : une destination principale est une racine.
+    // Copiée avant `primary-nav` et `air-runtime`, ses deux seuls appelants.
+    source: "compiler/runtime/racines-navigation.ts",
+    target: "lib/runtime/racines-navigation.ts",
+    rewrites: {},
+  },
+  {
     source: "compiler/runtime/primary-nav.tsx",
     target: "lib/runtime/primary-nav.tsx",
     // `useStyles` vit dans le pont de thème, pas dans l'index des primitives :
