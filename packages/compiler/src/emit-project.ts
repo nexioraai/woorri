@@ -343,8 +343,10 @@ function buildScreenSlice(air: ProjectAir, screen: ProjectAir["screens"][number]
         ...(f.enumLabels === undefined
           ? {}
           : {
+              // 1.19.0 — le DOCUMENT porte une liste de paires ; l'ARTEFACT
+              // reste un objet plat : le runtime n'a pas changé de contrat.
               enumLabels: Object.fromEntries(
-                Object.entries(f.enumLabels).map(([valeur, texte]) => [
+                f.enumLabels.map(({ value: valeur, label: texte }) => [
                   valeur,
                   resolveLocalized(texte, locale, `${entity.id}.${f.id}.enumLabels.${valeur}`),
                 ]),

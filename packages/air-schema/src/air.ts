@@ -21,7 +21,7 @@ import {
 // 1.7.1 (E3.3, D-131) : provenance APLANIE (sourceKind/sourceIntegrationId/
 //   sourceDomain/sourceRefreshSeconds) — l'union 1.7.0 dépassait la limite
 //   réelle de grammaire de l'API (classe D-078) ; sémantique inchangée.
-export const AIR_SCHEMA_VERSION = "1.18.0";
+export const AIR_SCHEMA_VERSION = "1.19.0";
 
 export const semverSchema = z.string().regex(/^\d+\.\d+\.\d+$/);
 export const sha256Schema = z.string().regex(/^[0-9a-f]{64}$/);
@@ -394,8 +394,18 @@ const fieldSchema = z.strictObject({
    * continuent de porter le code — seul l'AFFICHAGE change.
    *
    * OPTIONNEL, et partiel autorisé : une valeur sans libellé s'affiche brute.
+   *
+   * 1.19.0 — LISTE DE PAIRES, plus un dictionnaire ouvert. Mesuré : l'API de
+   * sorties structurées REFUSE désormais tout `additionalProperties` ouvert
+   * (400, campagne du 2026-09-09) — le générateur ne pouvait donc plus émettre
+   * de libellés DU TOUT. Le dictionnaire était de toute façon une entorse à la
+   * philosophie du contrat, énoncée plus haut : listes plates {key, value},
+   * précisément pour cette API. Migration RÉELLE 1.18 → 1.19.
    */
-  enumLabels: z.record(z.string().min(1), localizedTextSchema).optional(),
+  enumLabels: z
+    .array(z.strictObject({ value: z.string().min(1), label: localizedTextSchema }))
+    .min(1)
+    .optional(),
   /**
    * CHAMP SENSIBLE (1.12.0, Phase 4) — saisi, JAMAIS conservé.
    *

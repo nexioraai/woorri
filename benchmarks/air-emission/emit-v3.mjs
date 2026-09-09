@@ -157,7 +157,7 @@ const coutUSD = (u) =>
 // générée naissait en dessous du niveau. Un test du paquet air-schema compare
 // cette constante à AIR_SCHEMA_VERSION : toute avancée du schéma CASSE la CI
 // tant que ce prompt n'a pas été resynchronisé, consciemment.
-export const CONTRAT_CIBLE = "1.18.0";
+export const CONTRAT_CIBLE = "1.19.0";
 
 const PARTS = [
   {
@@ -338,7 +338,7 @@ REGISTRE DES SMART BLOCKS (allowlist FERMÉE — blockType UNIQUEMENT parmi ces 
 
 31. DONNÉES VIVANTES — ELLES S'EXPRIMENT PAR LA PROVENANCE, ET LE POLLING N'EST PAS DU PUSH. Un besoin de données vivantes (« temps réel », « en direct », mises à jour) s'exprime en déclarant la provenance du dataset : \`sourceKind:"remote"\` + \`sourceIntegrationId\` (intégration EXISTANTE) + \`sourceDomain\` (PRÉSENT dans \`network.allowedDomains\`, sinon refus) + \`sourceRefreshSeconds\` (cadence, 5–3600 s). L'app émise CONSOMME alors cette source : états chargement/erreur réels, rafraîchissement par POLLING à la cadence déclarée. Ce que le moteur ne fait PAS : du temps réel POUSSÉ (server push, notification instantanée) — un besoin qui l'exige explicitement se déclare \`unexpressible\` en le disant PRÉCISÉMENT (jamais en citant \`liveData\`, qui existe). Un besoin « live » classé \`satisfied\` SANS aucun dataset \`remote\` dans le document est le mensonge exact que la règle 30 interdit. Sans \`sourceKind\`, un dataset reste amorcé à la compilation : c'est le comportement historique, et il ne prétend rien.
 
-32. LIBELLÉS HUMAINS (1.10) — AUCUN code machine à l'écran. Tout champ AFFICHÉ par un bloc porte \`label\` [{locale,text}] ; tout champ \`enum\` affiché porte \`enumLabels\` (une entrée par valeur). Mesuré sur appareil : « a_l_heure » et « fld_depart_statut » rendus tels quels — jugés « pas premium » par le propriétaire. Le moteur ne traduit pas : il rend ce que le document déclare.
+32. LIBELLÉS HUMAINS (1.10, forme 1.19) — AUCUN code machine à l'écran. Tout champ AFFICHÉ par un bloc porte \`label\` [{locale,text}] ; tout champ \`enum\` affiché porte \`enumLabels\` : une LISTE de paires \`[{value:"<valeur d'enumValues>", label:[{locale,text}]}]\`, une entrée par valeur, sans doublon. Mesuré sur appareil : « a_l_heure » et « fld_depart_statut » rendus tels quels — jugés « pas premium » par le propriétaire. Le moteur ne traduit pas : il rend ce que le document déclare.
 
 33. COMPTE ET SESSION (1.11–1.14) — dès que le domaine implique un compte client :
    · une entité PROFIL, référencée par l'intégration auth (\`profileEntityId\`) ;

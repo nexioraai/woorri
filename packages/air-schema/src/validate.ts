@@ -477,7 +477,18 @@ export function validateAir(air: ProjectAir): AirDiagnostic[] {
         if (f.type !== "enum") {
           push("AIR_FIELD_ENUM_LABELS_UNEXPECTED", path, `enumLabels sur un champ non-enum "${f.id}"`);
         }
-        for (const [valeur, texte] of Object.entries(f.enumLabels)) {
+        // 1.19.0 — liste de paires : mêmes vérifications, plus l'UNICITÉ des
+        // valeurs, qu'un dictionnaire garantissait par construction.
+        const valeursVues = new Set<string>();
+        for (const { value: valeur, label: texte } of f.enumLabels) {
+          if (valeursVues.has(valeur)) {
+            push(
+              "AIR_FIELD_ENUM_LABEL_DUPLICATE",
+              `${path}.enumLabels`,
+              `libellé déclaré deux fois pour "${valeur}" sur "${f.id}"`,
+            );
+          }
+          valeursVues.add(valeur);
           if (f.enumValues !== undefined && !f.enumValues.includes(valeur)) {
             push(
               "AIR_FIELD_ENUM_LABEL_UNKNOWN_VALUE",

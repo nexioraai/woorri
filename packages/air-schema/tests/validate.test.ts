@@ -53,20 +53,30 @@ describe("validateAir — cohérence référentielle", () => {
     // Bien formés : aucun diagnostic.
     const ok = buildValidAir();
     at(at(ok.entities, 0).fields, 2).label = [{ locale: "fr", text: "Catégorie" }];
-    at(at(ok.entities, 0).fields, 2).enumLabels = {
-      plat: [{ locale: "fr", text: "Plat" }],
-      boisson: [{ locale: "fr", text: "Boisson" }],
-    };
+    // 1.19.0 — liste de paires (l'API de sorties structurées refuse les
+    // dictionnaires ouverts ; le contrat prescrit les listes plates).
+    at(at(ok.entities, 0).fields, 2).enumLabels = [
+      { value: "plat", label: [{ locale: "fr", text: "Plat" }] },
+      { value: "boisson", label: [{ locale: "fr", text: "Boisson" }] },
+    ];
     expect(validateAir(ok)).toEqual([]);
 
     // enumLabels sur un champ non-enum.
     const air = buildValidAir();
-    at(at(air.entities, 0).fields, 0).enumLabels = { x: [{ locale: "fr", text: "X" }] };
+    at(at(air.entities, 0).fields, 0).enumLabels = [{ value: "x", label: [{ locale: "fr", text: "X" }] }];
     expect(codes(air)).toContain("AIR_FIELD_ENUM_LABELS_UNEXPECTED");
 
     // Libellé pour une valeur absente de enumValues.
     const air2 = buildValidAir();
-    at(at(air2.entities, 0).fields, 2).enumLabels = { fantome: [{ locale: "fr", text: "?" }] };
+    at(at(air2.entities, 0).fields, 2).enumLabels = [{ value: "fantome", label: [{ locale: "fr", text: "?" }] }];
+    // 1.19.0 — CONTRÔLE : un doublon de valeur, indétectable du temps du
+    // dictionnaire, est désormais REFUSÉ.
+    const air2bis = buildValidAir();
+    at(at(air2bis.entities, 0).fields, 2).enumLabels = [
+      { value: "plat", label: [{ locale: "fr", text: "Plat" }] },
+      { value: "plat", label: [{ locale: "fr", text: "Encore" }] },
+    ];
+    expect(codes(air2bis)).toContain("AIR_FIELD_ENUM_LABEL_DUPLICATE");
     expect(codes(air2)).toContain("AIR_FIELD_ENUM_LABEL_UNKNOWN_VALUE");
 
     // Libellé sans la locale par défaut — même exigence que tout texte localisé.

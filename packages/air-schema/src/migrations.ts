@@ -246,6 +246,37 @@ export const AIR_MIGRATIONS: readonly AirMigration[] = [
       "Migration IDENTITÉ : sans déclaration, l'artefact est celui de 1.17.0.",
     migrate: (document) => document,
   },
+  {
+    from: "1.18.0",
+    to: "1.19.0",
+    description:
+      "AIR 1.19.0 : `enumLabels` devient une LISTE DE PAIRES {value, label} — " +
+      "l'API de sorties structurées refuse désormais tout dictionnaire ouvert " +
+      "(mesuré, 400 du 2026-09-09), et le contrat prescrit les listes plates. " +
+      "Migration RÉELLE : chaque dictionnaire existant est converti, trié par " +
+      "valeur (déterminisme) ; rien d'autre ne bouge.",
+    migrate: (document) => {
+      const d = document as {
+        entities?: { fields?: { enumLabels?: unknown }[] }[];
+      };
+      for (const entity of d.entities ?? []) {
+        for (const field of entity.fields ?? []) {
+          const labels = field.enumLabels;
+          if (
+            labels !== undefined &&
+            !Array.isArray(labels) &&
+            typeof labels === "object" &&
+            labels !== null
+          ) {
+            field.enumLabels = Object.entries(labels as Record<string, unknown>)
+              .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+              .map(([value, label]) => ({ value, label }));
+          }
+        }
+      }
+      return document;
+    },
+  },
 ];
 
 export class AirMigrationError extends Error {

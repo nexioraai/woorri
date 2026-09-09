@@ -433,7 +433,7 @@
    }
   }
  ],
- "airSchemaVersion": "1.18.0",
+ "airSchemaVersion": "1.19.0",
  "app": {
   "description": [
    {
@@ -711,26 +711,35 @@
        "text": "Statut"
       }
      ],
-     "enumLabels": {
-      "a_l_heure": [
-       {
-        "locale": "fr",
-        "text": "À l'heure"
-       }
-      ],
-      "retarde": [
-       {
-        "locale": "fr",
-        "text": "Retardé"
-       }
-      ],
-      "annule": [
-       {
-        "locale": "fr",
-        "text": "Annulé"
-       }
-      ]
-     }
+     "enumLabels": [
+      {
+       "value": "a_l_heure",
+       "label": [
+        {
+         "locale": "fr",
+         "text": "À l'heure"
+        }
+       ]
+      },
+      {
+       "value": "annule",
+       "label": [
+        {
+         "locale": "fr",
+         "text": "Annulé"
+        }
+       ]
+      },
+      {
+       "value": "retarde",
+       "label": [
+        {
+         "locale": "fr",
+         "text": "Retardé"
+        }
+       ]
+      }
+     ]
     },
     {
      "id": "fld_depart_quai",
@@ -936,32 +945,44 @@
        "text": "Statut"
       }
      ],
-     "enumLabels": {
-      "en_attente_paiement": [
-       {
-        "locale": "fr",
-        "text": "En attente de paiement"
-       }
-      ],
-      "paye": [
-       {
-        "locale": "fr",
-        "text": "Payé"
-       }
-      ],
-      "utilise": [
-       {
-        "locale": "fr",
-        "text": "Utilisé"
-       }
-      ],
-      "annule": [
-       {
-        "locale": "fr",
-        "text": "Annulé"
-       }
-      ]
-     }
+     "enumLabels": [
+      {
+       "value": "annule",
+       "label": [
+        {
+         "locale": "fr",
+         "text": "Annulé"
+        }
+       ]
+      },
+      {
+       "value": "en_attente_paiement",
+       "label": [
+        {
+         "locale": "fr",
+         "text": "En attente de paiement"
+        }
+       ]
+      },
+      {
+       "value": "paye",
+       "label": [
+        {
+         "locale": "fr",
+         "text": "Payé"
+        }
+       ]
+      },
+      {
+       "value": "utilise",
+       "label": [
+        {
+         "locale": "fr",
+         "text": "Utilisé"
+        }
+       ]
+      }
+     ]
     },
     {
      "id": "fld_billet_prix_total",
@@ -1096,32 +1117,44 @@
        "text": "Statut"
       }
      ],
-     "enumLabels": {
-      "en_attente": [
-       {
-        "locale": "fr",
-        "text": "En attente"
-       }
-      ],
-      "autorise": [
-       {
-        "locale": "fr",
-        "text": "Autorisé"
-       }
-      ],
-      "refuse": [
-       {
-        "locale": "fr",
-        "text": "Refusé"
-       }
-      ],
-      "rembourse": [
-       {
-        "locale": "fr",
-        "text": "Remboursé"
-       }
-      ]
-     }
+     "enumLabels": [
+      {
+       "value": "autorise",
+       "label": [
+        {
+         "locale": "fr",
+         "text": "Autorisé"
+        }
+       ]
+      },
+      {
+       "value": "en_attente",
+       "label": [
+        {
+         "locale": "fr",
+         "text": "En attente"
+        }
+       ]
+      },
+      {
+       "value": "refuse",
+       "label": [
+        {
+         "locale": "fr",
+         "text": "Refusé"
+        }
+       ]
+      },
+      {
+       "value": "rembourse",
+       "label": [
+        {
+         "locale": "fr",
+         "text": "Remboursé"
+        }
+       ]
+      }
+     ]
     },
     {
      "id": "fld_paiement_date",

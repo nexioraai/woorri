@@ -114,4 +114,19 @@ export const INTENTIONS = [
       "dans l'app, puis présente le billet avec un code à montrer au contrôleur. " +
       "En français.",
   },
+  {
+    // AJOUTÉE 2026-09-09 — exigence propriétaire : la première génération du
+    // prompt resynchronisé (1.18) porte sur une MARKETPLACE. Additive : les
+    // 13 intentions précédentes restent byte-identiques, la campagne
+    // historique reste rejouable.
+    slug: "marketplace-artisans",
+    commerce: "physical_or_offapp",
+    text:
+      "Je lance une marketplace d'artisans en Côte d'Ivoire. Plusieurs vendeurs y proposent " +
+      "leurs créations : bijoux, tissus, mobilier, déco. Les clients créent un compte, " +
+      "parcourent les produits par catégorie avec photos et prix, recherchent, voient la " +
+      "fiche d'un produit avec sa description et son vendeur, ajoutent au panier, paient " +
+      "par carte, et suivent l'état de leurs commandes. Chaque client gère son profil " +
+      "(nom, téléphone, adresse de livraison). En français.",
+  },
 ];
