@@ -152,7 +152,12 @@ describe("V2 — A et G ne concluent JAMAIS à la conformité", () => {
     // 8ᵉ surface : l'ŒIL DE RÉVÉLATION du mot de passe. Il porte `tapTarget`
     // comme les autres, et l'instrument le VOIT — un contrôle ajouté à
     // l'aveugle aurait fait baisser ce compte, pas monter.
-    expect(a?.detail).toContain("8 surface(s) contrainte(s)");
+    // ÉDITION CONSCIENTE (2026-09-09, 1.18.0) : 8 → 9. Le contrôle de
+    // FERMETURE d'une feuille (`fermerFeuille`) porte `tapTarget` en largeur
+    // ET en hauteur. Un signe discret n'est pas une cible petite : c'est
+    // précisément le compromis que la dimension A interdit. 9ᵉ surface
+    // contrainte — le compte monte parce que le contrôle est né contraint.
+    expect(a?.detail).toContain("9 surface(s) contrainte(s)");
     expect(a?.detail).toContain("NON MESURÉ : zones sûres");
     expect(g?.detail).toContain("0 encapsulé dans un ScrollView");
     expect(g?.detail).toContain("NON MESURÉ : jank au défilement");

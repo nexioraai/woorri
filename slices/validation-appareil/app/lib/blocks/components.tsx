@@ -255,7 +255,11 @@ export function ButtonBlock({ label, icon, kind, onPress, testID }: ButtonBlockP
     // Le `testID` reste sur l'ELEMENT PRESSABLE : sondes d'affordance et
     // selecteurs de campagne le ciblent. Le poser sur la Section aurait
     // casse les deux sans rien apporter.
-    <Section>
+    // UN LIEN N'EST PAS UNE ACTION DE BLOC (1.18.0) : il ne prend pas la
+    // respiration d'un bloc. Mesure a l'ecran — « Mot de passe oublie »
+    // flottait a ~62 dp du bouton d'envoi, deux sections empilant leurs
+    // marges. Le bloc declare le ROLE, la primitive resserre.
+    <Section tight={kind === "link"}>
       <AppButton label={label} icon={icon} kind={kind} onPress={onPress} testID={testID} />
     </Section>
   );

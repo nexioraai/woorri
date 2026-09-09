@@ -409,6 +409,20 @@ function emitScreenData(slice: ScreenSlice): string {
   ].join("\n");
 }
 
+/**
+ * EN-TÊTE NATIF MASQUÉ — règle UNIQUE, lue par l'écran (pour l'inset du haut)
+ * et par la navigation (pour `headerShown`). Un écran sans en-tête doit porter
+ * lui-même l'inset de la barre d'état ; un écran qui en a un ne le doit pas.
+ *
+ * Une FEUILLE fait exception (1.18.0) : même sans titre, elle garde son
+ * en-tête, parce que c'est lui qui porte le contrôle de fermeture. Sans cette
+ * exception, le ✕ n'aurait nulle part où se poser sur les écrans qui en ont
+ * justement le plus besoin — connexion, inscription, mot de passe oublié.
+ */
+function enteteMasquee(screen: { showsScreenTitle?: boolean; presentation?: string }): boolean {
+  return screen.showsScreenTitle === false && screen.presentation !== "sheet";
+}
+
 function emitScreen(slice: ScreenSlice, aBarre: boolean): string {
   const screenId = assertId(slice.screen.id, "screens");
   // D-086 : la barre est rendue par CHAQUE écran, en DERNIÈRE position dans la
@@ -459,7 +473,11 @@ function emitScreen(slice: ScreenSlice, aBarre: boolean): string {
   // contenu passe SOUS la barre d'état — mesuré à l'écran, le logo se
   // retrouvait derrière l'horloge. Sans en-tête, l'inset HAUT devient la
   // responsabilité de l'écran ; avec en-tête, la barre native le portait.
-  const hautSansEntete = slice.screen.showsScreenTitle === false ? "paddingTop: insets.top, " : "";
+  // 1.18.0 — une FEUILLE garde son en-tête natif : c'est lui qui porte le
+  // contrôle de fermeture. Le titre y est simplement vidé quand le document
+  // n'en veut pas. Les deux étages (ici et `emitNavigation`) lisent la MÊME
+  // règle ; les dissocier ferait cumuler l'inset avec la barre native.
+  const hautSansEntete = enteteMasquee(slice.screen) ? "paddingTop: insets.top, " : "";
   const containerOpen = hasList
     ? `      <View style={{ flex: 1, ${hautSansEntete}paddingBottom: insets.bottom }}>`
     : '      <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>\n' +
@@ -593,7 +611,7 @@ function emitNavData(air: ProjectAir, locale: string): string {
   ].join("\n");
 }
 
-function emitNavigation(air: ProjectAir): string {
+function emitNavigation(air: ProjectAir, locale: string): string {
   // Écrans qui SONT des destinations principales (résolus par leur route).
   const destinationsPrincipales = new Set(
     (air.navigation.primary?.destinations ?? []).flatMap((d) => {
@@ -605,16 +623,27 @@ function emitNavigation(air: ProjectAir): string {
   const importLines = routes.map(
     (r) => `import ${pascal(r.screenId)}Screen from "./screens/${assertId(r.screenId, "navigation")}";`,
   );
-  const screenLines = routes.flatMap((r) => [
+  const screenLines = routes.flatMap((r) => {
+    const ecran = air.screens.find((sc) => sc.id === r.screenId);
+    const estFeuille = ecran?.presentation === "sheet";
+    // 1.18.0 — le mot de la fermeture vient du DOCUMENT, jamais du moteur.
+    // Absent, le contrôle est rendu sans libellé annoncé : rien n'est inventé.
+    const motFermeture =
+      ecran?.dismissLabel === undefined
+        ? undefined
+        : resolveLocalized(ecran.dismissLabel, locale, `screens.${r.screenId}.dismissLabel`);
+    return [
     `      <Stack.Screen name="${r.screenId}" component={${pascal(r.screenId)}Screen}`,
     // 1.16.0 — un écran peut refuser l'en-tête natif : sur un accueil portant
     // une marque, le titre de route empilait une seconde identité au-dessus
-    // du logo.
-    `        options={{ title: navData.routes.find((x) => x.screenId === "${r.screenId}")!.title${
-      air.screens.find((sc) => sc.id === r.screenId)?.showsScreenTitle === false
-        ? ", headerShown: false"
-        : ""
-    }${
+    // du logo. 1.18.0 : une FEUILLE garde son en-tête même sans titre — c'est
+    // lui qui porte le ✕ ; son titre est alors VIDE, pas absent.
+    `        options={{ title: ${
+      // `estFeuille` implique `ecran` défini : le typage le sait, l'accès est direct.
+      estFeuille && ecran.showsScreenTitle === false
+        ? '""'
+        : `navData.routes.find((x) => x.screenId === "${r.screenId}")!.title`
+    }${enteteMasquee(ecran ?? {}) ? ", headerShown: false" : ""}${
       // DESTINATIONS PRINCIPALES : aucun retour par GLISSEMENT. Chacune est
       // une racine atteinte en touchant son onglet ; un balayage latéral les
       // faisait défiler l'une après l'autre, comme un carrousel qu'aucun
@@ -626,11 +655,23 @@ function emitNavigation(air: ProjectAir): string {
       // des deux plateformes ; le geste de fermeture par glissement vers le
       // bas est fourni par iOS — sur Android, la fermeture passe par le
       // contrôle explicite de l'écran. Dit ici, pas promis ailleurs.
-      air.screens.find((sc) => sc.id === r.screenId)?.presentation === "sheet"
-        ? ', presentation: "modal"'
+      estFeuille ? ', presentation: "modal"' : ""
+    }${
+      // CONTRÔLE DE FERMETURE (1.18.0) : posé à la FIN de l'en-tête natif.
+      // Sur iOS le glissement vers le bas existe déjà ; sur Android il
+      // n'existe pas, et sans ce signe rien n'indiquait comment sortir.
+      // `headerBackVisible: false` : une feuille n'offre QU'UNE sortie. Vu à
+      // l'écran au premier build — la pile native dessinait sa flèche de
+      // retour À GAUCHE pendant que le ✕ s'affichait à droite. Deux contrôles
+      // pour un seul geste, là où la demande était précisément d'en avoir un.
+      estFeuille
+        ? `, headerBackVisible: false, headerShadowVisible: false, headerRight: () => <FermerFeuille testID="fermer-${r.screenId}"${
+            motFermeture === undefined ? "" : ` label=${JSON.stringify(motFermeture)}`
+          } />`
         : ""
     } }} />`,
-  ]);
+    ];
+  });
   // RACINES (déclarées, jamais devinées) : les écrans des destinations
   // principales. Triées pour que l'artefact reste déterministe.
   const racines = [...destinationsPrincipales].sort(byCodeUnit);
@@ -639,6 +680,9 @@ function emitNavigation(air: ProjectAir): string {
     "// config EXPLICITE émise depuis l'AIR, patron prouvé au banc V4).",
     'import { NavigationContainer } from "@react-navigation/native";',
     'import { createNativeStackNavigator } from "@react-navigation/native-stack";',
+    ...(air.screens.some((sc) => sc.presentation === "sheet")
+      ? ['import { FermerFeuille } from "./lib/runtime/fermer-feuille";']
+      : []),
     'import { declarerRacines } from "./lib/runtime/racines-navigation";',
     'import { navData } from "./nav.data";',
     ...importLines,
@@ -935,6 +979,14 @@ export function emitProject(
     files.set("lib/tokens/theme.generated.ts", emitThemeModule(air));
   }
   files.set("app.json", emitAppJson(air, train));
+  // LES DÉPENDANCES NE MONTENT JAMAIS AU SERVICE DE BUILD (mesuré 2026-09-09) :
+  // le service les réinstalle depuis le verrou, les envoyer est inutile. Le
+  // motif du gabarit gelé (`node_modules/`, barre finale) ne couvre pas un LIEN
+  // symbolique — le patron d'emprunt de dépendances (D-074) en pose un, et
+  // 346 Mo partaient donc à chaque envoi : deux échecs `EPIPE` consécutifs
+  // avant que la cause soit vue. Fichier SÉPARÉ, hors gabarit : le scellé du
+  // train n'est pas rouvert pour de l'outillage de build.
+  files.set(".easignore", "node_modules\n");
   // MARQUE (1.17.0) : le FICHIER que le manifeste désigne. Le déclarer sans
   // le produire ferait échouer le prebuild — fail-closed inversé.
   if (air.app.brandIconPngBase64 !== undefined) {
@@ -943,7 +995,7 @@ export function emitProject(
   files.set("demo.data.ts", emitDemoData(air));
   files.set("manifests/permissions.manifest.json", emitPermissionsManifest(air));
   files.set("nav.data.ts", emitNavData(air, locale));
-  files.set("navigation.tsx", emitNavigation(air));
+  files.set("navigation.tsx", emitNavigation(air, locale));
   for (const screen of [...air.screens].sort((a, b) => byCodeUnit(a.id, b.id))) {
     const slice = buildScreenSlice(air, screen, locale);
     files.set(`screens/${screen.id}.data.ts`, emitScreenData(slice));

@@ -64,7 +64,7 @@ export const RELEASE_TRAIN_V1 = {
   // et écran de démarrage sont posés au BUILD, et le chemin de compilation
   // est zéro réseau) et `screen.presentation` (une ÉTAPE monte du bas au lieu
   // de remplacer le parcours).
-  airSchemaVersion: "1.17.0",
+  airSchemaVersion: "1.18.0",
   // Porté à 1.1.0 le 2026-08-31 (D-060) : montée STRICTEMENT ADDITIVE du
   // registre de blocs — `form` gagne `loading`/`empty`, `detail_header` gagne un
   // état, les trois blocs à données gagnent les props de titres. Rien n'est
@@ -122,6 +122,13 @@ export const RELEASE_TRAIN_V1 = {
   // TAIRE le diagnostic d'image orpheline sans rien afficher.
   // Aucune prop n'est ajoutée ni retirée : seule leur VÉRIFICATION est rétablie.
   blocksSourcesHash:
+    // Ré-scellé 2026-09-09 (1.18.0) : `ButtonBlock` demande une section
+    // RESSERRÉE quand le rôle déclaré est `link`. Mesure à l'écran (SM-A175F) :
+    // « Mot de passe oublié » flottait à ~62 dp du bouton d'envoi — le
+    // formulaire fermait sa section, le lien en ouvrait une autre, et les deux
+    // respirations s'additionnaient. Le bloc ne gagne AUCUN style (cliquet
+    // d'étanchéité toujours vert) : il déclare un rôle, la primitive resserre.
+    // Aucun type de bloc, aucune prop, aucun état ajouté ni retiré.
     // Ré-scellé 2026-09-05 (phase 2, refonte UX) : les options d'un filtre à
     // CHOIX passent d'un empilement pleine largeur à une rangée qui va à la
     // ligne — `<Section inline>`. Le bloc ne gagne AUCUN style : il déclare un
@@ -178,7 +185,7 @@ export const RELEASE_TRAIN_V1 = {
   // Ré-scellé : `ButtonBlock` passe enfin par `Section`. Mesuré sur appareil,
   // il rendait le bouton NU — donc collé aux bords de l'écran, seul bloc à
   // ne pas porter les marges communes. Le `testID` reste sur le pressable.
-  "c276c94cfd191498cf23b5c7d8997566fcdc8c2e1e68414bc719c6f9cdb0ab14",
+  "9023538fad395dcbfc7cab63cb53cda2582d04736494ab6142657b82f0df4256",
   capabilityRegistryVersion: "1.0.0",
   capabilitySourcesHash:
     "6c28599246abde6e7010704f23f273aafe50d17c5483133709c9065f2777346c",

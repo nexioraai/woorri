@@ -658,6 +658,20 @@ export function validateAir(air: ProjectAir): AirDiagnostic[] {
     }
   });
 
+  // 7sexies. UN LIBELLÉ DE FERMETURE SUPPOSE UNE FEUILLE (1.18.0). Déclaré sur
+  // une carte poussée, il ne serait rendu nulle part : le document promettrait
+  // un contrôle que l'écran n'a pas. On REFUSE plutôt que d'ignorer — c'est la
+  // même règle que partout ailleurs, une déclaration morte est un défaut.
+  air.screens.forEach((screen, i) => {
+    if (screen.dismissLabel !== undefined && screen.presentation !== "sheet") {
+      push(
+        "AIR_SHEET_DISMISS_SANS_FEUILLE",
+        `screens[${i}].dismissLabel`,
+        `l'écran "${screen.id}" n'est pas une feuille : son libellé de fermeture ne serait rendu nulle part`,
+      );
+    }
+  });
+
   // 7quinquies. LA MARQUE RESPECTE LA POLITIQUE RÉSEAU (1.9.0). Charger un
   // logo depuis un domaine non déclaré contredirait `deny_by_default` : la
   // politique vaut pour TOUT ce que l'app va chercher, pas seulement pour ses

@@ -1,3315 +1,3339 @@
 {
-  "actions": [
-    {
-      "effect": {
-        "kind": "navigate",
-        "screenId": "scr_depart_detail"
-      },
-      "id": "act_accueil_ouvrir_depart",
-      "name": "Ouvrir le détail d'un départ depuis l'accueil",
-      "trigger": {
-        "blockId": "blk_accueil_liste_departs",
-        "kind": "ui"
-      }
-    },
-    {
-      "effect": {
-        "kind": "navigate",
-        "screenId": "scr_billet_detail"
-      },
-      "id": "act_billets_ouvrir_billet",
-      "name": "Ouvrir un billet depuis mes billets",
-      "trigger": {
-        "blockId": "blk_billets_liste",
-        "kind": "ui"
-      }
-    },
-    {
-      "effect": {
-        "kind": "navigate",
-        "screenId": "scr_departs"
-      },
-      "id": "act_billets_vide_voir_departs",
-      "name": "Voir les départs depuis l'état vide",
-      "trigger": {
-        "blockId": "blk_billets_vide",
-        "kind": "ui"
-      }
-    },
-    {
-      "effect": {
-        "binding": {
-          "inputs": [
-            {
-              "port": "billets",
-              "source": {
-                "entityId": "ent_billet",
-                "kind": "entity_rows"
-              }
-            },
-            {
-              "port": "prefixeCompagnie",
-              "source": {
-                "kind": "literal",
-                "value": "BIC"
-              }
-            }
-          ],
-          "outputs": [
-            {
-              "blockId": "blk_billet_code_header",
-              "port": "codeAffiche",
-              "prop": "subtitle"
-            },
-            {
-              "blockId": "blk_billet_code_header",
-              "port": "detailValidite",
-              "prop": "title"
-            }
-          ]
-        },
-        "kind": "slot",
-        "slotId": "slot_code_controleur"
-      },
-      "id": "act_code_controleur",
-      "name": "Composer le code à présenter au contrôleur",
-      "trigger": {
-        "event": "screen_open",
-        "kind": "lifecycle",
-        "screenId": "scr_billet_detail"
-      }
-    },
-    {
-      "effect": {
-        "kind": "navigate",
-        "screenId": "scr_depart_detail"
-      },
-      "id": "act_departs_ouvrir_depart",
-      "name": "Ouvrir le détail d'un départ depuis la liste des départs",
-      "trigger": {
-        "blockId": "blk_departs_liste",
-        "kind": "ui"
-      }
-    },
-    {
-      "effect": {
-        "entityId": "ent_voyageur",
-        "kind": "mutation",
-        "operation": "update",
-        "thenScreenId": "scr_compte",
-        "instanceFrom": "session"
-      },
-      "id": "act_enregistrer_compte",
-      "name": "Enregistrer mes informations de voyageur",
-      "trigger": {
-        "blockId": "blk_compte_form",
-        "kind": "ui"
-      }
-    },
-    {
-      "effect": {
+ "actions": [
+  {
+   "effect": {
+    "kind": "navigate",
+    "screenId": "scr_depart_detail"
+   },
+   "id": "act_accueil_ouvrir_depart",
+   "name": "Ouvrir le détail d'un départ depuis l'accueil",
+   "trigger": {
+    "blockId": "blk_accueil_liste_departs",
+    "kind": "ui"
+   }
+  },
+  {
+   "effect": {
+    "kind": "navigate",
+    "screenId": "scr_billet_detail"
+   },
+   "id": "act_billets_ouvrir_billet",
+   "name": "Ouvrir un billet depuis mes billets",
+   "trigger": {
+    "blockId": "blk_billets_liste",
+    "kind": "ui"
+   }
+  },
+  {
+   "effect": {
+    "kind": "navigate",
+    "screenId": "scr_departs"
+   },
+   "id": "act_billets_vide_voir_departs",
+   "name": "Voir les départs depuis l'état vide",
+   "trigger": {
+    "blockId": "blk_billets_vide",
+    "kind": "ui"
+   }
+  },
+  {
+   "effect": {
+    "binding": {
+     "inputs": [
+      {
+       "port": "billets",
+       "source": {
         "entityId": "ent_billet",
-        "kind": "mutation",
-        "operation": "create",
-        "thenScreenId": "scr_paiement"
+        "kind": "entity_rows"
+       }
       },
-      "id": "act_enregistrer_reservation",
-      "name": "Enregistrer la réservation du passager",
-      "trigger": {
-        "blockId": "blk_reservation_form",
-        "kind": "ui"
-      }
-    },
-    {
-      "effect": {
-        "kind": "navigate",
-        "screenId": "scr_parametres"
-      },
-      "id": "act_ouvrir_parametres",
-      "name": "Ouvrir les paramètres du compte",
-      "trigger": {
-        "blockId": "blk_compte_parametres",
-        "kind": "ui"
-      }
-    },
-    {
-      "effect": {
-        "kind": "navigate",
-        "screenId": "scr_reservation"
-      },
-      "id": "act_ouvrir_reservation",
-      "name": "Réserver ce billet",
-      "trigger": {
-        "blockId": "blk_depart_detail_reserver",
-        "kind": "ui"
-      }
-    },
-    {
-      "effect": {
-        "entityId": "ent_paiement",
-        "kind": "mutation",
-        "operation": "create",
-        "thenScreenId": "scr_billet_detail"
-      },
-      "id": "act_payer_par_carte",
-      "name": "Payer le billet par carte",
-      "trigger": {
-        "blockId": "blk_paiement_form",
-        "kind": "ui"
-      }
-    },
-    {
-      "effect": {
-        "binding": {
-          "inputs": [
-            {
-              "port": "departs",
-              "source": {
-                "entityId": "ent_depart",
-                "kind": "entity_rows"
-              }
-            },
-            {
-              "port": "libelleVide",
-              "source": {
-                "kind": "literal",
-                "value": "Aucun départ programmé pour le moment"
-              }
-            }
-          ],
-          "outputs": [
-            {
-              "blockId": "blk_accueil_header",
-              "port": "resume",
-              "prop": "subtitle"
-            }
-          ]
-        },
-        "kind": "slot",
-        "slotId": "slot_resume_departs"
-      },
-      "id": "act_resume_accueil",
-      "name": "Calculer le résumé des prochains départs",
-      "trigger": {
-        "event": "screen_open",
-        "kind": "lifecycle",
-        "screenId": "scr_accueil"
-      }
-    },
-    {
-      "effect": {
-        "entityId": "ent_voyageur",
-        "kind": "mutation",
-        "operation": "delete",
-        "thenScreenId": "scr_accueil"
-      },
-      "id": "act_supprimer_compte",
-      "name": "Supprimer mon compte voyageur",
-      "trigger": {
-        "blockId": "blk_compte_supprimer",
-        "kind": "ui"
-      }
-    },
-    {
-      "effect": {
-        "kind": "navigate",
-        "screenId": "scr_billets"
-      },
-      "id": "act_voir_mes_billets",
-      "name": "Retour à mes billets",
-      "trigger": {
-        "blockId": "blk_billet_detail_retour",
-        "kind": "ui"
-      }
-    },
-    {
-      "id": "act_aller_connexion",
-      "name": "Aller à la connexion",
-      "trigger": {
-        "blockId": "blk_compte_visiteur",
-        "kind": "ui"
-      },
-      "effect": {
-        "kind": "navigate",
-        "screenId": "scr_connexion"
-      }
-    },
-    {
-      "id": "act_aller_inscription",
-      "name": "Aller à l'inscription",
-      "trigger": {
-        "blockId": "blk_connexion_vers_inscription",
-        "kind": "ui"
-      },
-      "effect": {
-        "kind": "navigate",
-        "screenId": "scr_inscription"
-      }
-    },
-    {
-      "id": "act_connexion",
-      "name": "Établir la session",
-      "trigger": {
-        "blockId": "blk_connexion_form",
-        "kind": "ui"
-      },
-      "effect": {
-        "kind": "capability",
-        "capability": "auth",
-        "method": "signIn",
-        "params": [
-          {
-            "key": "identifiantFieldId",
-            "value": "fld_voyageur_email"
-          },
-          {
-            "key": "motDePasseFieldId",
-            "value": "fld_voyageur_mot_de_passe"
-          }
-        ]
-      }
-    },
-    {
-      "id": "act_inscription",
-      "name": "Créer le compte et ouvrir la session",
-      "trigger": {
-        "blockId": "blk_inscription_form",
-        "kind": "ui"
-      },
-      "effect": {
-        "kind": "capability",
-        "capability": "auth",
-        "method": "signUp",
-        "params": [
-          {
-            "key": "identifiantFieldId",
-            "value": "fld_voyageur_email"
-          },
-          {
-            "key": "motDePasseFieldId",
-            "value": "fld_voyageur_mot_de_passe"
-          }
-        ]
-      }
-    },
-    {
-      "id": "act_deconnexion",
-      "name": "Fermer la session",
-      "trigger": {
-        "blockId": "blk_compte_deconnexion",
-        "kind": "ui"
-      },
-      "effect": {
-        "kind": "capability",
-        "capability": "auth",
-        "method": "signOut"
-      }
-    },
-    {
-      "id": "act_attente_vers_connexion",
-      "name": "Revenir à la connexion après confirmation",
-      "trigger": {
-        "blockId": "blk_inscription_attente",
-        "kind": "ui"
-      },
-      "effect": {
-        "kind": "navigate",
-        "screenId": "scr_connexion"
-      }
-    },
-    {
-      "id": "act_inscription_vers_connexion",
-      "name": "Aller à la connexion depuis l'inscription",
-      "trigger": {
-        "blockId": "blk_inscription_vers_connexion",
-        "kind": "ui"
-      },
-      "effect": {
-        "kind": "navigate",
-        "screenId": "scr_connexion"
-      }
-    },
-    {
-      "id": "act_bienvenue_inscription",
-      "name": "Créer un compte depuis l'accueil produit",
-      "trigger": {
-        "blockId": "blk_bienvenue_inscription",
-        "kind": "ui"
-      },
-      "effect": {
-        "kind": "navigate",
-        "screenId": "scr_inscription"
-      }
-    },
-    {
-      "id": "act_bienvenue_connexion",
-      "name": "Se connecter depuis l'accueil produit",
-      "trigger": {
-        "blockId": "blk_bienvenue_connexion",
-        "kind": "ui"
-      },
-      "effect": {
-        "kind": "navigate",
-        "screenId": "scr_connexion"
-      }
-    },
-    {
-      "id": "act_bienvenue_connexion_attente",
-      "name": "Se connecter après confirmation",
-      "trigger": {
-        "blockId": "blk_bienvenue_attente",
-        "kind": "ui"
-      },
-      "effect": {
-        "kind": "navigate",
-        "screenId": "scr_connexion"
-      }
-    },
-    {
-      "id": "act_bienvenue_continuer",
-      "name": "Entrer dans l'app",
-      "trigger": {
-        "blockId": "blk_bienvenue_continuer",
-        "kind": "ui"
-      },
-      "effect": {
-        "kind": "navigate",
-        "screenId": "scr_departs"
-      }
-    },
-    {
-      "id": "act_bienvenue_sans_compte",
-      "name": "Découvrir sans compte",
-      "trigger": {
-        "blockId": "blk_bienvenue_sans_compte",
-        "kind": "ui"
-      },
-      "effect": {
-        "kind": "navigate",
-        "screenId": "scr_departs"
-      }
-    },
-    {
-      "id": "act_mot_de_passe_oublie",
-      "name": "Aller à la réinitialisation",
-      "trigger": {
-        "blockId": "blk_connexion_oubli",
-        "kind": "ui"
-      },
-      "effect": {
-        "kind": "navigate",
-        "screenId": "scr_oubli"
-      }
-    },
-    {
-      "id": "act_oubli_envoyer",
-      "name": "Envoyer le lien de réinitialisation",
-      "trigger": {
-        "blockId": "blk_oubli_form",
-        "kind": "ui"
-      },
-      "effect": {
-        "kind": "capability",
-        "capability": "auth",
-        "method": "resetPassword",
-        "params": [
-          {
-            "key": "identifiantFieldId",
-            "value": "fld_voyageur_email"
-          }
-        ]
-      }
-    },
-    {
-      "id": "act_oubli_retour",
-      "name": "Retour à la connexion",
-      "trigger": {
-        "blockId": "blk_oubli_retour",
-        "kind": "ui"
-      },
-      "effect": {
-        "kind": "navigate",
-        "screenId": "scr_connexion"
-      }
-    }
-  ],
-  "airSchemaVersion": "1.17.0",
-  "app": {
-    "description": [
       {
-        "locale": "fr",
-        "text": "Consultez les départs à venir de la compagnie de bus intercités, recherchez une destination, réservez un billet au nom du passager, payez par carte et présentez votre billet avec son code au contrôleur."
+       "port": "prefixeCompagnie",
+       "source": {
+        "kind": "literal",
+        "value": "BIC"
+       }
       }
-    ],
-    "locales": {
-      "appLocales": [
-        "fr"
-      ],
-      "contentLocales": [
-        "fr"
-      ],
-      "defaultAppLocale": "fr",
-      "rtlSupported": false,
-      "userLanguage": "fr"
+     ],
+     "outputs": [
+      {
+       "blockId": "blk_billet_code_header",
+       "port": "codeAffiche",
+       "prop": "subtitle"
+      },
+      {
+       "blockId": "blk_billet_code_header",
+       "port": "detailValidite",
+       "prop": "title"
+      }
+     ]
     },
-    "name": "Bus Intercités",
-    "slug": "bus-intercites",
-    "distribution": {
-      "owner": "deribfy-apps-team",
-      "projectId": "33c58f7a-f68f-4f18-a7f3-360d4847baf2"
-    },
-    "brandIconPngBase64": "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"
+    "kind": "slot",
+    "slotId": "slot_code_controleur"
+   },
+   "id": "act_code_controleur",
+   "name": "Composer le code à présenter au contrôleur",
+   "trigger": {
+    "event": "screen_open",
+    "kind": "lifecycle",
+    "screenId": "scr_billet_detail"
+   }
   },
-  "capabilities": [
-    {
-      "capability": "auth",
-      "config": [
-        {
-          "key": "methods",
-          "value": [
-            "email_password"
-          ]
-        },
-        {
-          "key": "accountDeletionEnabled",
-          "value": true
-        },
-        {
-          "key": "sessionScope",
-          "value": "voyageur"
-        }
-      ]
+  {
+   "effect": {
+    "kind": "navigate",
+    "screenId": "scr_depart_detail"
+   },
+   "id": "act_departs_ouvrir_depart",
+   "name": "Ouvrir le détail d'un départ depuis la liste des départs",
+   "trigger": {
+    "blockId": "blk_departs_liste",
+    "kind": "ui"
+   }
+  },
+  {
+   "effect": {
+    "entityId": "ent_voyageur",
+    "kind": "mutation",
+    "operation": "update",
+    "thenScreenId": "scr_compte",
+    "instanceFrom": "session"
+   },
+   "id": "act_enregistrer_compte",
+   "name": "Enregistrer mes informations de voyageur",
+   "trigger": {
+    "blockId": "blk_compte_form",
+    "kind": "ui"
+   }
+  },
+  {
+   "effect": {
+    "entityId": "ent_billet",
+    "kind": "mutation",
+    "operation": "create",
+    "thenScreenId": "scr_paiement"
+   },
+   "id": "act_enregistrer_reservation",
+   "name": "Enregistrer la réservation du passager",
+   "trigger": {
+    "blockId": "blk_reservation_form",
+    "kind": "ui"
+   }
+  },
+  {
+   "effect": {
+    "kind": "navigate",
+    "screenId": "scr_parametres"
+   },
+   "id": "act_ouvrir_parametres",
+   "name": "Ouvrir les paramètres du compte",
+   "trigger": {
+    "blockId": "blk_compte_parametres",
+    "kind": "ui"
+   }
+  },
+  {
+   "effect": {
+    "kind": "navigate",
+    "screenId": "scr_reservation"
+   },
+   "id": "act_ouvrir_reservation",
+   "name": "Réserver ce billet",
+   "trigger": {
+    "blockId": "blk_depart_detail_reserver",
+    "kind": "ui"
+   }
+  },
+  {
+   "effect": {
+    "entityId": "ent_paiement",
+    "kind": "mutation",
+    "operation": "create",
+    "thenScreenId": "scr_billet_detail"
+   },
+   "id": "act_payer_par_carte",
+   "name": "Payer le billet par carte",
+   "trigger": {
+    "blockId": "blk_paiement_form",
+    "kind": "ui"
+   }
+  },
+  {
+   "effect": {
+    "binding": {
+     "inputs": [
+      {
+       "port": "departs",
+       "source": {
+        "entityId": "ent_depart",
+        "kind": "entity_rows"
+       }
+      },
+      {
+       "port": "libelleVide",
+       "source": {
+        "kind": "literal",
+        "value": "Aucun départ programmé pour le moment"
+       }
+      }
+     ],
+     "outputs": [
+      {
+       "blockId": "blk_accueil_header",
+       "port": "resume",
+       "prop": "subtitle"
+      }
+     ]
     },
-    {
-      "capability": "payments.psp",
-      "config": [
-        {
-          "key": "commerceClass",
-          "value": "physical_or_offapp"
-        },
-        {
-          "key": "methods",
-          "value": [
-            "card"
-          ]
-        },
-        {
-          "key": "currency",
-          "value": "EUR"
-        },
-        {
-          "key": "captureMode",
-          "value": "immediate"
-        }
-      ]
-    },
-    {
-      "capability": "offline_storage",
-      "config": [
-        {
-          "key": "cachedEntities",
-          "value": [
-            "ent_billet",
-            "ent_depart"
-          ]
-        },
-        {
-          "key": "purpose",
-          "value": "presentation_billet_hors_ligne"
-        }
-      ]
-    },
-    {
-      "capability": "push_notifications",
-      "config": [
-        {
-          "key": "topics",
-          "value": [
-            "rappel_depart",
-            "changement_horaire"
-          ]
-        },
-        {
-          "key": "optInField",
-          "value": "fld_voyageur_notifications"
-        }
-      ]
-    },
-    {
-      "capability": "analytics",
-      "config": [
-        {
-          "key": "events",
-          "value": [
-            "consultation_depart",
-            "reservation_billet",
-            "paiement_billet"
-          ]
-        },
-        {
-          "key": "anonymizeIp",
-          "value": true
-        }
-      ]
-    }
-  ],
-  "compliance": {
-    "accountDeletionRequired": true,
-    "commerceClass": "physical_or_offapp",
-    "dataCollected": [
-      "contact_info",
-      "identifiers",
-      "purchases",
-      "usage_data"
+    "kind": "slot",
+    "slotId": "slot_resume_departs"
+   },
+   "id": "act_resume_accueil",
+   "name": "Calculer le résumé des prochains départs",
+   "trigger": {
+    "event": "screen_open",
+    "kind": "lifecycle",
+    "screenId": "scr_accueil"
+   }
+  },
+  {
+   "effect": {
+    "entityId": "ent_voyageur",
+    "kind": "mutation",
+    "operation": "delete",
+    "thenScreenId": "scr_accueil"
+   },
+   "id": "act_supprimer_compte",
+   "name": "Supprimer mon compte voyageur",
+   "trigger": {
+    "blockId": "blk_compte_supprimer",
+    "kind": "ui"
+   }
+  },
+  {
+   "effect": {
+    "kind": "navigate",
+    "screenId": "scr_billets"
+   },
+   "id": "act_voir_mes_billets",
+   "name": "Retour à mes billets",
+   "trigger": {
+    "blockId": "blk_billet_detail_retour",
+    "kind": "ui"
+   }
+  },
+  {
+   "id": "act_aller_connexion",
+   "name": "Aller à la connexion",
+   "trigger": {
+    "blockId": "blk_compte_visiteur",
+    "kind": "ui"
+   },
+   "effect": {
+    "kind": "navigate",
+    "screenId": "scr_connexion"
+   }
+  },
+  {
+   "id": "act_aller_inscription",
+   "name": "Aller à l'inscription",
+   "trigger": {
+    "blockId": "blk_connexion_vers_inscription",
+    "kind": "ui"
+   },
+   "effect": {
+    "kind": "navigate",
+    "screenId": "scr_inscription"
+   }
+  },
+  {
+   "id": "act_connexion",
+   "name": "Établir la session",
+   "trigger": {
+    "blockId": "blk_connexion_form",
+    "kind": "ui"
+   },
+   "effect": {
+    "kind": "capability",
+    "capability": "auth",
+    "method": "signIn",
+    "params": [
+     {
+      "key": "identifiantFieldId",
+      "value": "fld_voyageur_email"
+     },
+     {
+      "key": "motDePasseFieldId",
+      "value": "fld_voyageur_mot_de_passe"
+     }
     ]
+   }
   },
-  "datasets": [
-    {
-      "contentHash": "3f9c1a7d5b28e40a6cd1fb8347e259a0d4c6b71e8f230a95cd47b6e1f8302a5d",
-      "entityId": "ent_depart",
-      "id": "data_departs",
-      "rowCount": 24,
-      "sourceKind": "remote",
-      "sourceIntegrationId": "intg_cache_billets",
-      "sourceDomain": "www.deribfy.com",
-      "sourceRefreshSeconds": 30
-    },
-    {
-      "contentHash": "a71e4c09b8d5236fae90c1b74d38f56201ea9c7b3d4f6081925ac3ed7b0f4c68",
-      "entityId": "ent_voyageur",
-      "id": "data_voyageurs",
-      "rowCount": 3
-    },
-    {
-      "contentHash": "c05d8b3172ea946f0b7d1c8534af62e9017bd4a6f83c25190e6ab7d3f451c082",
-      "entityId": "ent_billet",
-      "id": "data_billets",
-      "rowCount": 5
-    },
-    {
-      "contentHash": "9b2f7d461ac30e58f1b6924d075cae83f24b1d906e5a3c78041fb2e6a97d5c31",
-      "entityId": "ent_paiement",
-      "id": "data_paiements",
-      "rowCount": 4
-    }
-  ],
-  "design": {
-    "theme": "transit_light"
-  },
-  "entities": [
-    {
-      "fields": [
-        {
-          "id": "fld_depart_ville_depart",
-          "name": "ville_depart",
-          "required": true,
-          "type": "string",
-          "label": [
-            {
-              "locale": "fr",
-              "text": "Ville de départ"
-            }
-          ]
-        },
-        {
-          "id": "fld_depart_destination",
-          "name": "destination",
-          "required": true,
-          "type": "string",
-          "label": [
-            {
-              "locale": "fr",
-              "text": "Destination"
-            }
-          ]
-        },
-        {
-          "id": "fld_depart_date",
-          "name": "date_depart",
-          "required": true,
-          "type": "date",
-          "label": [
-            {
-              "locale": "fr",
-              "text": "Date de départ"
-            }
-          ]
-        },
-        {
-          "id": "fld_depart_heure",
-          "name": "heure_depart",
-          "required": true,
-          "type": "string",
-          "label": [
-            {
-              "locale": "fr",
-              "text": "Heure de départ"
-            }
-          ]
-        },
-        {
-          "id": "fld_depart_heure_arrivee",
-          "name": "heure_arrivee",
-          "required": false,
-          "type": "string",
-          "label": [
-            {
-              "locale": "fr",
-              "text": "Heure d'arrivée"
-            }
-          ]
-        },
-        {
-          "id": "fld_depart_duree",
-          "name": "duree_trajet",
-          "required": false,
-          "type": "string",
-          "label": [
-            {
-              "locale": "fr",
-              "text": "Durée du trajet"
-            }
-          ]
-        },
-        {
-          "id": "fld_depart_prix",
-          "name": "prix",
-          "required": true,
-          "type": "decimal",
-          "label": [
-            {
-              "locale": "fr",
-              "text": "Prix"
-            }
-          ]
-        },
-        {
-          "id": "fld_depart_places",
-          "name": "places_restantes",
-          "required": true,
-          "type": "number",
-          "label": [
-            {
-              "locale": "fr",
-              "text": "Places restantes"
-            }
-          ]
-        },
-        {
-          "enumValues": [
-            "a_l_heure",
-            "retarde",
-            "annule"
-          ],
-          "id": "fld_depart_statut",
-          "name": "statut",
-          "required": true,
-          "type": "enum",
-          "label": [
-            {
-              "locale": "fr",
-              "text": "Statut"
-            }
-          ],
-          "enumLabels": {
-            "a_l_heure": [
-              {
-                "locale": "fr",
-                "text": "À l'heure"
-              }
-            ],
-            "retarde": [
-              {
-                "locale": "fr",
-                "text": "Retardé"
-              }
-            ],
-            "annule": [
-              {
-                "locale": "fr",
-                "text": "Annulé"
-              }
-            ]
-          }
-        },
-        {
-          "id": "fld_depart_quai",
-          "name": "quai",
-          "required": false,
-          "type": "string",
-          "label": [
-            {
-              "locale": "fr",
-              "text": "Quai"
-            }
-          ]
-        },
-        {
-          "id": "fld_depart_photo",
-          "name": "photo_destination",
-          "required": false,
-          "type": "asset",
-          "label": [
-            {
-              "locale": "fr",
-              "text": "Photo de la destination"
-            }
-          ]
-        },
-        {
-          "id": "fld_depart_description",
-          "name": "description",
-          "required": false,
-          "type": "text",
-          "label": [
-            {
-              "locale": "fr",
-              "text": "Description"
-            }
-          ]
-        }
-      ],
-      "id": "ent_depart",
-      "name": "depart"
-    },
-    {
-      "fields": [
-        {
-          "id": "fld_voyageur_nom",
-          "name": "nom_complet",
-          "required": true,
-          "type": "string",
-          "label": [
-            {
-              "locale": "fr",
-              "text": "Nom complet"
-            }
-          ]
-        },
-        {
-          "id": "fld_voyageur_email",
-          "name": "email",
-          "required": true,
-          "type": "string",
-          "unique": true,
-          "label": [
-            {
-              "locale": "fr",
-              "text": "Adresse e-mail"
-            }
-          ]
-        },
-        {
-          "id": "fld_voyageur_telephone",
-          "name": "telephone",
-          "required": false,
-          "type": "string",
-          "label": [
-            {
-              "locale": "fr",
-              "text": "Téléphone"
-            }
-          ]
-        },
-        {
-          "id": "fld_voyageur_ville_favorite",
-          "name": "ville_favorite",
-          "required": false,
-          "type": "string",
-          "label": [
-            {
-              "locale": "fr",
-              "text": "Ville favorite"
-            }
-          ]
-        },
-        {
-          "id": "fld_voyageur_notifications",
-          "name": "notifications_actives",
-          "required": false,
-          "type": "boolean",
-          "label": [
-            {
-              "locale": "fr",
-              "text": "Notifications actives"
-            }
-          ]
-        },
-        {
-          "id": "fld_voyageur_mot_de_passe",
-          "name": "mot_de_passe",
-          "type": "string",
-          "required": true,
-          "sensitive": true,
-          "label": [
-            {
-              "locale": "fr",
-              "text": "Mot de passe"
-            }
-          ]
-        }
-      ],
-      "id": "ent_voyageur",
-      "name": "voyageur"
-    },
-    {
-      "fields": [
-        {
-          "id": "fld_billet_reference",
-          "name": "reference",
-          "required": true,
-          "type": "string",
-          "unique": true,
-          "label": [
-            {
-              "locale": "fr",
-              "text": "Référence"
-            }
-          ]
-        },
-        {
-          "id": "fld_billet_passager",
-          "name": "passager_nom",
-          "required": true,
-          "type": "string",
-          "label": [
-            {
-              "locale": "fr",
-              "text": "Nom du passager"
-            }
-          ]
-        },
-        {
-          "id": "fld_billet_depart",
-          "name": "depart",
-          "referenceDisplayFieldId": "fld_depart_destination",
-          "referencesEntityId": "ent_depart",
-          "required": true,
-          "type": "reference",
-          "label": [
-            {
-              "locale": "fr",
-              "text": "Départ"
-            }
-          ]
-        },
-        {
-          "id": "fld_billet_voyageur",
-          "name": "voyageur",
-          "referenceDisplayFieldId": "fld_voyageur_nom",
-          "referencesEntityId": "ent_voyageur",
-          "required": false,
-          "type": "reference",
-          "label": [
-            {
-              "locale": "fr",
-              "text": "Voyageur"
-            }
-          ]
-        },
-        {
-          "id": "fld_billet_code",
-          "name": "code_controleur",
-          "required": true,
-          "type": "string",
-          "label": [
-            {
-              "locale": "fr",
-              "text": "Code contrôleur"
-            }
-          ]
-        },
-        {
-          "enumValues": [
-            "en_attente_paiement",
-            "paye",
-            "utilise",
-            "annule"
-          ],
-          "id": "fld_billet_statut",
-          "name": "statut",
-          "required": true,
-          "type": "enum",
-          "label": [
-            {
-              "locale": "fr",
-              "text": "Statut"
-            }
-          ],
-          "enumLabels": {
-            "en_attente_paiement": [
-              {
-                "locale": "fr",
-                "text": "En attente de paiement"
-              }
-            ],
-            "paye": [
-              {
-                "locale": "fr",
-                "text": "Payé"
-              }
-            ],
-            "utilise": [
-              {
-                "locale": "fr",
-                "text": "Utilisé"
-              }
-            ],
-            "annule": [
-              {
-                "locale": "fr",
-                "text": "Annulé"
-              }
-            ]
-          }
-        },
-        {
-          "id": "fld_billet_prix_total",
-          "name": "prix_total",
-          "required": true,
-          "type": "decimal",
-          "label": [
-            {
-              "locale": "fr",
-              "text": "Prix total"
-            }
-          ]
-        },
-        {
-          "id": "fld_billet_email",
-          "name": "email_confirmation",
-          "required": false,
-          "type": "string",
-          "label": [
-            {
-              "locale": "fr",
-              "text": "E-mail de confirmation"
-            }
-          ]
-        },
-        {
-          "id": "fld_billet_siege",
-          "name": "siege",
-          "required": false,
-          "type": "string",
-          "label": [
-            {
-              "locale": "fr",
-              "text": "Siège"
-            }
-          ]
-        },
-        {
-          "id": "fld_billet_date_achat",
-          "name": "date_achat",
-          "required": false,
-          "type": "datetime",
-          "label": [
-            {
-              "locale": "fr",
-              "text": "Date d'achat"
-            }
-          ]
-        }
-      ],
-      "id": "ent_billet",
-      "name": "billet"
-    },
-    {
-      "fields": [
-        {
-          "id": "fld_paiement_billet",
-          "name": "billet",
-          "referenceDisplayFieldId": "fld_billet_reference",
-          "referencesEntityId": "ent_billet",
-          "required": true,
-          "type": "reference",
-          "label": [
-            {
-              "locale": "fr",
-              "text": "Billet"
-            }
-          ]
-        },
-        {
-          "id": "fld_paiement_titulaire",
-          "name": "titulaire_carte",
-          "required": true,
-          "type": "string",
-          "label": [
-            {
-              "locale": "fr",
-              "text": "Titulaire de la carte"
-            }
-          ]
-        },
-        {
-          "id": "fld_paiement_carte_masquee",
-          "name": "carte_masquee",
-          "required": true,
-          "type": "string",
-          "label": [
-            {
-              "locale": "fr",
-              "text": "Numéro de carte"
-            }
-          ]
-        },
-        {
-          "id": "fld_paiement_expiration",
-          "name": "expiration",
-          "required": true,
-          "type": "string",
-          "label": [
-            {
-              "locale": "fr",
-              "text": "Expiration (MM/AA)"
-            }
-          ]
-        },
-        {
-          "id": "fld_paiement_montant",
-          "name": "montant",
-          "required": true,
-          "type": "decimal",
-          "label": [
-            {
-              "locale": "fr",
-              "text": "Montant"
-            }
-          ]
-        },
-        {
-          "enumValues": [
-            "en_attente",
-            "autorise",
-            "refuse",
-            "rembourse"
-          ],
-          "id": "fld_paiement_statut",
-          "name": "statut",
-          "required": true,
-          "type": "enum",
-          "label": [
-            {
-              "locale": "fr",
-              "text": "Statut"
-            }
-          ],
-          "enumLabels": {
-            "en_attente": [
-              {
-                "locale": "fr",
-                "text": "En attente"
-              }
-            ],
-            "autorise": [
-              {
-                "locale": "fr",
-                "text": "Autorisé"
-              }
-            ],
-            "refuse": [
-              {
-                "locale": "fr",
-                "text": "Refusé"
-              }
-            ],
-            "rembourse": [
-              {
-                "locale": "fr",
-                "text": "Remboursé"
-              }
-            ]
-          }
-        },
-        {
-          "id": "fld_paiement_date",
-          "name": "date_paiement",
-          "required": false,
-          "type": "datetime",
-          "label": [
-            {
-              "locale": "fr",
-              "text": "Date de paiement"
-            }
-          ]
-        }
-      ],
-      "id": "ent_paiement",
-      "name": "paiement"
-    }
-  ],
-  "expectedTests": [
-    {
-      "description": "L'écran d'accueil affiche les prochains départs triés par date croissante, avec destination, date, prix, statut et vignette de destination, limités à 5 lignes (bloc blk_accueil_liste_departs).",
-      "id": "test_liste_departs_accueil",
-      "kind": "deterministic",
-      "targetId": "scr_accueil"
-    },
-    {
-      "description": "L'écran Départs liste les trajets avec destination, date, heure, prix et image via le bloc blk_departs_liste, exclut les départs annulés et pagine par 20.",
-      "id": "test_liste_departs_catalogue",
-      "kind": "deterministic",
-      "targetId": "scr_departs"
-    },
-    {
-      "description": "Saisir une destination dans le champ de recherche du bloc blk_departs_liste de l'écran Départs filtre réellement la liste sur le champ destination.",
-      "id": "test_recherche_destination",
-      "kind": "e2e",
-      "targetId": "scr_departs"
-    },
-    {
-      "description": "Appuyer sur une ligne de la liste des départs ouvre l'écran de détail du départ correspondant.",
-      "id": "test_ligne_depart_ouvre_detail",
-      "kind": "e2e",
-      "targetId": "act_departs_ouvrir_depart"
-    },
-    {
-      "description": "Appuyer sur une ligne de la liste des départs de l'accueil ouvre le détail de ce départ.",
-      "id": "test_ligne_depart_accueil_ouvre_detail",
-      "kind": "e2e",
-      "targetId": "act_accueil_ouvrir_depart"
-    },
-    {
-      "description": "L'écran de détail du départ affiche, via le bloc blk_depart_detail_header, l'image de destination, l'heure, le prix et les badges statut, places restantes et quai.",
-      "id": "test_detail_depart_visuel",
-      "kind": "deterministic",
-      "targetId": "scr_depart_detail"
-    },
-    {
-      "description": "Le bouton « Réserver ce billet » du détail d'un départ conduit à l'écran de réservation.",
-      "id": "test_bouton_reserver",
-      "kind": "e2e",
-      "targetId": "act_ouvrir_reservation"
-    },
-    {
-      "description": "La soumission du formulaire de réservation crée un billet au nom du passager puis ouvre l'écran de paiement.",
-      "id": "test_reservation_cree_billet",
-      "kind": "e2e",
-      "targetId": "act_enregistrer_reservation"
-    },
-    {
-      "description": "La règle rule_billet_passager refuse un billet sans nom de passager, sans départ, sans code de contrôle ou avec un montant nul.",
-      "id": "test_regle_billet_passager",
-      "kind": "deterministic",
-      "targetId": "ent_billet"
-    },
-    {
-      "description": "Les informations saisies dans le formulaire blk_reservation_form de l'écran de réservation sont conservées lors d'un aller-retour vers le détail du départ.",
-      "id": "test_etat_formulaire_reservation",
-      "kind": "e2e",
-      "targetId": "scr_reservation"
-    },
-    {
-      "description": "La soumission du formulaire « Payer par carte » enregistre le paiement du billet puis affiche l'écran du billet.",
-      "id": "test_paiement_carte_cree_paiement",
-      "kind": "e2e",
-      "targetId": "act_payer_par_carte"
-    },
-    {
-      "description": "La règle rule_paiement_carte rejette un paiement dont la carte masquée ou la date d'expiration est mal formée, ou dont le montant est nul.",
-      "id": "test_regle_paiement_carte",
-      "kind": "deterministic",
-      "targetId": "ent_paiement"
-    },
-    {
-      "description": "Le paiement par carte s'appuie sur l'intégration intg_paiement_carte : débit en euros avec capture immédiate sur le domaine autorisé, sans secret embarqué.",
-      "id": "test_contrat_paiement_psp",
-      "kind": "contract",
-      "targetId": "act_payer_par_carte"
-    },
-    {
-      "description": "La liste et le détail des billets affichent, pour le champ de référence fld_billet_depart, la destination du départ référencé plutôt que son identifiant technique.",
-      "id": "test_billet_reference_lisible",
-      "kind": "deterministic",
-      "targetId": "ent_billet"
-    },
-    {
-      "description": "Appuyer sur une ligne de la liste « Mes billets » ouvre le billet correspondant.",
-      "id": "test_ligne_billet_ouvre_detail",
-      "kind": "e2e",
-      "targetId": "act_billets_ouvrir_billet"
-    },
-    {
-      "description": "À l'ouverture du billet, le slot de code de contrôle est invoqué et ses sorties alimentent le titre et le sous-titre du bloc de code présenté au contrôleur.",
-      "id": "test_code_controleur_slot",
-      "kind": "e2e",
-      "targetId": "act_code_controleur"
-    },
-    {
-      "description": "À l'ouverture de l'accueil, le slot de résumé des départs est invoqué et son résultat remplit le sous-titre de l'en-tête.",
-      "id": "test_resume_departs_slot",
-      "kind": "e2e",
-      "targetId": "act_resume_accueil"
-    },
-    {
-      "description": "L'écran du billet affiche, via le bloc blk_billet_detail_header, la destination, le nom du passager, le prix total et les badges statut, siège et référence.",
-      "id": "test_detail_billet_infos",
-      "kind": "deterministic",
-      "targetId": "scr_billet_detail"
-    },
-    {
-      "description": "La barre de navigation persistante présente Accueil, Départs, Mes billets et Compte dans cet ordre sur chaque écran, à partir de l'écran d'entrée.",
-      "id": "test_navigation_principale",
-      "kind": "deterministic",
-      "targetId": "scr_accueil"
-    },
-    {
-      "description": "La soumission du formulaire de compte met à jour les informations du voyageur et revient sur l'écran Mon compte.",
-      "id": "test_compte_enregistrement",
-      "kind": "e2e",
-      "targetId": "act_enregistrer_compte"
-    },
-    {
-      "description": "Le bouton « Supprimer mon compte » supprime le voyageur et renvoie à l'accueil.",
-      "id": "test_suppression_compte",
-      "kind": "e2e",
-      "targetId": "act_supprimer_compte"
-    },
-    {
-      "description": "Sur l'écran Mes billets, l'état vide blk_billets_vide « Vous n'avez pas encore de billet » ne s'affiche que lorsque aucun billet n'est enregistré.",
-      "id": "test_etat_vide_billets",
-      "kind": "deterministic",
-      "targetId": "scr_billets"
-    },
-    {
-      "description": "L'intégration d'authentification intg_auth_voyageur s'appuie uniquement sur le domaine autorisé et expose la suppression de compte exigée, exercée par la suppression du compte voyageur.",
-      "id": "test_contrat_auth_voyageur",
-      "kind": "contract",
-      "targetId": "act_supprimer_compte"
-    }
-  ],
-  "integrations": [
-    {
-      "capability": "payments.psp",
-      "config": [
-        {
-          "key": "provider",
-          "value": "generic_psp"
-        },
-        {
-          "key": "environment",
-          "value": "production"
-        },
-        {
-          "key": "currency",
-          "value": "EUR"
-        },
-        {
-          "key": "methods",
-          "value": [
-            "card"
-          ]
-        },
-        {
-          "key": "captureMode",
-          "value": "immediate"
-        },
-        {
-          "key": "apiBaseUrl",
-          "value": "https://api.bus-intercites.app/paiements"
-        }
-      ],
-      "id": "intg_paiement_carte",
-      "providerClass": "payment_gateway"
-    },
-    {
-      "capability": "auth",
-      "config": [
-        {
-          "key": "methods",
-          "value": [
-            "email_password"
-          ]
-        },
-        {
-          "key": "apiBaseUrl",
-          "value": "https://api.bus-intercites.app/auth"
-        },
-        {
-          "key": "accountDeletionEndpoint",
-          "value": "/compte/suppression"
-        },
-        {
-          "key": "sessionTtlMinutes",
-          "value": 10080
-        }
-      ],
-      "id": "intg_auth_voyageur",
-      "providerClass": "identity_provider"
-    },
-    {
-      "capability": "push_notifications",
-      "config": [
-        {
-          "key": "apiBaseUrl",
-          "value": "https://api.bus-intercites.app/notifications"
-        },
-        {
-          "key": "topics",
-          "value": [
-            "rappel_depart",
-            "changement_horaire"
-          ]
-        },
-        {
-          "key": "defaultLocale",
-          "value": "fr"
-        }
-      ],
-      "id": "intg_notifications_departs",
-      "providerClass": "push_service"
-    },
-    {
-      "capability": "analytics",
-      "config": [
-        {
-          "key": "apiBaseUrl",
-          "value": "https://api.bus-intercites.app/analytics"
-        },
-        {
-          "key": "events",
-          "value": [
-            "consultation_depart",
-            "reservation_billet",
-            "paiement_billet"
-          ]
-        },
-        {
-          "key": "anonymizeIp",
-          "value": true
-        },
-        {
-          "key": "batchIntervalSeconds",
-          "value": 30
-        }
-      ],
-      "id": "intg_analytics_produit",
-      "providerClass": "analytics_collector"
-    },
-    {
-      "capability": "offline_storage",
-      "config": [
-        {
-          "key": "engine",
-          "value": "sqlite"
-        },
-        {
-          "key": "cachedEntities",
-          "value": [
-            "ent_billet",
-            "ent_depart"
-          ]
-        },
-        {
-          "key": "maxAgeHours",
-          "value": 72
-        }
-      ],
-      "id": "intg_cache_billets",
-      "providerClass": "local_store"
-    },
-    {
-      "id": "intg_auth",
-      "providerClass": "auth",
-      "capability": "auth",
-      "config": [
-        {
-          "key": "url",
-          "value": "https://psxbilpmnojtlzosokzz.supabase.co"
-        },
-        {
-          "key": "anonKey",
-          "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBzeGJpbHBtbm9qdGx6b3Nva3p6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg2NjM2OTcsImV4cCI6MjEwNDIzOTY5N30.Ea24JkCSgTHKaD613nWj0KE7nF728QP-4tocP9mn38w"
-        },
-        {
-          "key": "profileEntityId",
-          "value": "ent_voyageur"
-        }
-      ]
-    }
-  ],
-  "intent": {
-    "needs": [
-      {
-        "id": "need_liste_departs",
-        "resolution": {
-          "kind": "satisfied",
-          "nodeIds": [
-            "scr_departs",
-            "blk_departs_liste",
-            "blk_accueil_liste_departs",
-            "ent_depart",
-            "fld_depart_destination",
-            "fld_depart_date",
-            "fld_depart_heure",
-            "fld_depart_prix",
-            "data_departs"
-          ]
-        },
-        "statement": "L'application liste les départs à venir avec destination, date, heure et prix."
-      },
-      {
-        "id": "need_recherche_destination",
-        "resolution": {
-          "kind": "satisfied",
-          "nodeIds": [
-            "blk_departs_liste",
-            "fld_depart_destination"
-          ]
-        },
-        "statement": "L'utilisateur peut chercher un départ par destination."
-      },
-      {
-        "id": "need_detail_depart",
-        "resolution": {
-          "kind": "satisfied",
-          "nodeIds": [
-            "scr_depart_detail",
-            "blk_depart_detail_header",
-            "blk_departs_liste",
-            "act_departs_ouvrir_depart",
-            "act_accueil_ouvrir_depart",
-            "blk_depart_detail_reserver"
-          ]
-        },
-        "statement": "Consulter le détail d'un départ choisi dans la liste avant de réserver."
-      },
-      {
-        "id": "need_reserver_billet",
-        "resolution": {
-          "kind": "satisfied",
-          "nodeIds": [
-            "scr_reservation",
-            "blk_reservation_form",
-            "act_enregistrer_reservation",
-            "ent_billet",
-            "fld_billet_passager",
-            "fld_billet_depart",
-            "rule_billet_passager",
-            "act_ouvrir_reservation"
-          ]
-        },
-        "statement": "Réserver un billet au nom du passager pour un départ donné."
-      },
-      {
-        "id": "need_paiement_carte",
-        "resolution": {
-          "kind": "satisfied",
-          "nodeIds": [
-            "scr_paiement",
-            "blk_paiement_form",
-            "act_payer_par_carte",
-            "ent_paiement",
-            "rule_paiement_carte",
-            "intg_paiement_carte"
-          ]
-        },
-        "statement": "Payer le billet par carte bancaire directement dans l'application."
-      },
-      {
-        "id": "need_billet_avec_code",
-        "resolution": {
-          "kind": "satisfied",
-          "nodeIds": [
-            "scr_billet_detail",
-            "blk_billet_detail_header",
-            "blk_billet_code_header",
-            "fld_billet_code",
-            "fld_billet_reference",
-            "slot_code_controleur",
-            "act_code_controleur",
-            "scr_billets",
-            "blk_billets_liste",
-            "act_billets_ouvrir_billet"
-          ]
-        },
-        "statement": "Présenter le billet acheté avec un code à montrer au contrôleur."
-      },
-      {
-        "id": "need_application_en_francais",
-        "resolution": {
-          "kind": "satisfied",
-          "nodeIds": [
-            "prj_bus_intercites_billets",
-            "scr_accueil",
-            "blk_accueil_header",
-            "blk_departs_liste",
-            "blk_reservation_form",
-            "blk_paiement_form",
-            "blk_billet_detail_header"
-          ]
-        },
-        "statement": "L'application est intégralement en français."
-      }
-    ],
-    "request": "Ma compagnie de bus intercités vend des billets : l'app liste les départs à venir avec destination, date, heure et prix, permet de chercher un départ par destination, de réserver un billet au nom du passager, de payer par carte dans l'app, puis présente le billet avec un code à montrer au contrôleur. En français.",
-    "requestLocale": "fr"
-  },
-  "native": {
-    "minAndroidSdk": 24,
-    "minIosVersion": "15.0"
-  },
-  "navigation": {
-    "entryScreenId": "scr_bienvenue",
-    "primary": {
-      "destinations": [
-        {
-          "label": [
-            {
-              "locale": "fr",
-              "text": "Accueil"
-            }
-          ],
-          "order": 0,
-          "routeId": "nav_accueil",
-          "icon": "accueil"
-        },
-        {
-          "label": [
-            {
-              "locale": "fr",
-              "text": "Départs"
-            }
-          ],
-          "order": 1,
-          "routeId": "nav_departs",
-          "icon": "recherche"
-        },
-        {
-          "label": [
-            {
-              "locale": "fr",
-              "text": "Réserver"
-            }
-          ],
-          "order": 2,
-          "routeId": "nav_billets",
-          "icon": "billet"
-        },
-        {
-          "label": [
-            {
-              "locale": "fr",
-              "text": "Compte"
-            }
-          ],
-          "order": 3,
-          "routeId": "nav_compte",
-          "icon": "compte"
-        }
-      ]
-    },
-    "routes": [
-      {
-        "id": "nav_accueil",
-        "screenId": "scr_accueil",
-        "title": [
-          {
-            "locale": "fr",
-            "text": "Accueil"
-          }
-        ]
-      },
-      {
-        "id": "nav_departs",
-        "screenId": "scr_departs",
-        "title": [
-          {
-            "locale": "fr",
-            "text": "Prochains départs"
-          }
-        ]
-      },
-      {
-        "id": "nav_billets",
-        "screenId": "scr_billets",
-        "title": [
-          {
-            "locale": "fr",
-            "text": "Mes billets"
-          }
-        ]
-      },
-      {
-        "id": "nav_compte",
-        "screenId": "scr_compte",
-        "title": [
-          {
-            "locale": "fr",
-            "text": "Mon compte"
-          }
-        ]
-      },
-      {
-        "id": "nav_depart_detail",
-        "screenId": "scr_depart_detail",
-        "title": [
-          {
-            "locale": "fr",
-            "text": "Détail du départ"
-          }
-        ]
-      },
-      {
-        "id": "nav_reservation",
-        "screenId": "scr_reservation",
-        "title": [
-          {
-            "locale": "fr",
-            "text": "Réserver un billet"
-          }
-        ]
-      },
-      {
-        "id": "nav_paiement",
-        "screenId": "scr_paiement",
-        "title": [
-          {
-            "locale": "fr",
-            "text": "Paiement par carte"
-          }
-        ]
-      },
-      {
-        "id": "nav_billet_detail",
-        "screenId": "scr_billet_detail",
-        "title": [
-          {
-            "locale": "fr",
-            "text": "Mon billet"
-          }
-        ]
-      },
-      {
-        "id": "nav_parametres",
-        "screenId": "scr_parametres",
-        "title": [
-          {
-            "locale": "fr",
-            "text": "Paramètres"
-          }
-        ]
-      },
-      {
-        "id": "nav_connexion",
-        "screenId": "scr_connexion",
-        "title": [
-          {
-            "locale": "fr",
-            "text": "Connexion"
-          }
-        ]
-      },
-      {
-        "id": "nav_inscription",
-        "screenId": "scr_inscription",
-        "title": [
-          {
-            "locale": "fr",
-            "text": "Créer un compte"
-          }
-        ]
-      },
-      {
-        "id": "nav_bienvenue",
-        "screenId": "scr_bienvenue",
-        "title": [
-          {
-            "locale": "fr",
-            "text": "Bienvenue"
-          }
-        ]
-      },
-      {
-        "id": "nav_oubli",
-        "screenId": "scr_oubli",
-        "title": [
-          {
-            "locale": "fr",
-            "text": "Mot de passe oublié"
-          }
-        ]
-      }
+  {
+   "id": "act_inscription",
+   "name": "Créer le compte et ouvrir la session",
+   "trigger": {
+    "blockId": "blk_inscription_form",
+    "kind": "ui"
+   },
+   "effect": {
+    "kind": "capability",
+    "capability": "auth",
+    "method": "signUp",
+    "params": [
+     {
+      "key": "identifiantFieldId",
+      "value": "fld_voyageur_email"
+     },
+     {
+      "key": "motDePasseFieldId",
+      "value": "fld_voyageur_mot_de_passe"
+     }
     ]
+   }
   },
-  "network": {
-    "allowedDomains": [
-      "api.bus-intercites.app",
-      "psxbilpmnojtlzosokzz.supabase.co",
-      "www.deribfy.com"
-    ],
-    "policy": "deny_by_default"
+  {
+   "id": "act_deconnexion",
+   "name": "Fermer la session",
+   "trigger": {
+    "blockId": "blk_compte_deconnexion",
+    "kind": "ui"
+   },
+   "effect": {
+    "kind": "capability",
+    "capability": "auth",
+    "method": "signOut"
+   }
   },
-  "permissions": [
-    {
-      "permission": "android.permission.POST_NOTIFICATIONS",
-      "platform": "android",
-      "reason": [
-        {
-          "locale": "fr",
-          "text": "Pour vous prévenir avant votre départ et vous informer d'un retard ou d'un changement de quai concernant votre billet."
-        }
-      ],
-      "requiredByCapability": "push_notifications"
-    }
+  {
+   "id": "act_attente_vers_connexion",
+   "name": "Revenir à la connexion après confirmation",
+   "trigger": {
+    "blockId": "blk_inscription_attente",
+    "kind": "ui"
+   },
+   "effect": {
+    "kind": "navigate",
+    "screenId": "scr_connexion"
+   }
+  },
+  {
+   "id": "act_inscription_vers_connexion",
+   "name": "Aller à la connexion depuis l'inscription",
+   "trigger": {
+    "blockId": "blk_inscription_vers_connexion",
+    "kind": "ui"
+   },
+   "effect": {
+    "kind": "navigate",
+    "screenId": "scr_connexion"
+   }
+  },
+  {
+   "id": "act_bienvenue_inscription",
+   "name": "Créer un compte depuis l'accueil produit",
+   "trigger": {
+    "blockId": "blk_bienvenue_inscription",
+    "kind": "ui"
+   },
+   "effect": {
+    "kind": "navigate",
+    "screenId": "scr_inscription"
+   }
+  },
+  {
+   "id": "act_bienvenue_connexion",
+   "name": "Se connecter depuis l'accueil produit",
+   "trigger": {
+    "blockId": "blk_bienvenue_connexion",
+    "kind": "ui"
+   },
+   "effect": {
+    "kind": "navigate",
+    "screenId": "scr_connexion"
+   }
+  },
+  {
+   "id": "act_bienvenue_connexion_attente",
+   "name": "Se connecter après confirmation",
+   "trigger": {
+    "blockId": "blk_bienvenue_attente",
+    "kind": "ui"
+   },
+   "effect": {
+    "kind": "navigate",
+    "screenId": "scr_connexion"
+   }
+  },
+  {
+   "id": "act_bienvenue_continuer",
+   "name": "Entrer dans l'app",
+   "trigger": {
+    "blockId": "blk_bienvenue_continuer",
+    "kind": "ui"
+   },
+   "effect": {
+    "kind": "navigate",
+    "screenId": "scr_departs"
+   }
+  },
+  {
+   "id": "act_bienvenue_sans_compte",
+   "name": "Découvrir sans compte",
+   "trigger": {
+    "blockId": "blk_bienvenue_sans_compte",
+    "kind": "ui"
+   },
+   "effect": {
+    "kind": "navigate",
+    "screenId": "scr_departs"
+   }
+  },
+  {
+   "id": "act_mot_de_passe_oublie",
+   "name": "Aller à la réinitialisation",
+   "trigger": {
+    "blockId": "blk_connexion_oubli",
+    "kind": "ui"
+   },
+   "effect": {
+    "kind": "navigate",
+    "screenId": "scr_oubli"
+   }
+  },
+  {
+   "id": "act_oubli_envoyer",
+   "name": "Envoyer le lien de réinitialisation",
+   "trigger": {
+    "blockId": "blk_oubli_form",
+    "kind": "ui"
+   },
+   "effect": {
+    "kind": "capability",
+    "capability": "auth",
+    "method": "resetPassword",
+    "params": [
+     {
+      "key": "identifiantFieldId",
+      "value": "fld_voyageur_email"
+     }
+    ]
+   }
+  },
+  {
+   "id": "act_oubli_retour",
+   "name": "Retour à la connexion",
+   "trigger": {
+    "blockId": "blk_oubli_retour",
+    "kind": "ui"
+   },
+   "effect": {
+    "kind": "navigate",
+    "screenId": "scr_connexion"
+   }
+  }
+ ],
+ "airSchemaVersion": "1.18.0",
+ "app": {
+  "description": [
+   {
+    "locale": "fr",
+    "text": "Consultez les départs à venir de la compagnie de bus intercités, recherchez une destination, réservez un billet au nom du passager, payez par carte et présentez votre billet avec son code au contrôleur."
+   }
   ],
-  "projectId": "prj_bus_intercites_billets",
-  "relations": [
+  "locales": {
+   "appLocales": [
+    "fr"
+   ],
+   "contentLocales": [
+    "fr"
+   ],
+   "defaultAppLocale": "fr",
+   "rtlSupported": false,
+   "userLanguage": "fr"
+  },
+  "name": "Bus Intercités",
+  "slug": "bus-intercites",
+  "distribution": {
+   "owner": "deribfy-apps-team",
+   "projectId": "33c58f7a-f68f-4f18-a7f3-360d4847baf2"
+  },
+  "brandIconPngBase64": "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"
+ },
+ "capabilities": [
+  {
+   "capability": "auth",
+   "config": [
     {
-      "fromEntityId": "ent_depart",
-      "id": "rel_depart_billets",
-      "kind": "one_to_many",
-      "toEntityId": "ent_billet"
+     "key": "methods",
+     "value": [
+      "email_password"
+     ]
     },
     {
-      "fromEntityId": "ent_voyageur",
-      "id": "rel_voyageur_billets",
-      "kind": "one_to_many",
-      "toEntityId": "ent_billet"
+     "key": "accountDeletionEnabled",
+     "value": true
     },
     {
-      "fromEntityId": "ent_billet",
-      "id": "rel_billet_paiement",
-      "kind": "one_to_one",
-      "toEntityId": "ent_paiement"
+     "key": "sessionScope",
+     "value": "voyageur"
     }
-  ],
-  "rules": [
+   ]
+  },
+  {
+   "capability": "payments.psp",
+   "config": [
     {
-      "assertions": [
-        {
-          "fieldId": "fld_depart_destination",
-          "operator": "required"
-        },
-        {
-          "fieldId": "fld_depart_prix",
-          "operator": "gt",
-          "value": 0
-        },
-        {
-          "fieldId": "fld_depart_places",
-          "operator": "gte",
-          "value": 0
-        }
-      ],
-      "description": "Le prix d'un départ doit être strictement positif et la destination renseignée.",
-      "entityId": "ent_depart",
-      "id": "rule_depart_prix_positif",
-      "kind": "validation"
+     "key": "commerceClass",
+     "value": "physical_or_offapp"
     },
     {
-      "assertions": [
-        {
-          "fieldId": "fld_depart_statut",
-          "operator": "neq",
-          "value": "annule"
-        }
-      ],
-      "description": "Un départ annulé ne peut pas être proposé à la réservation.",
-      "entityId": "ent_depart",
-      "id": "rule_depart_reservable",
-      "kind": "validation"
+     "key": "methods",
+     "value": [
+      "card"
+     ]
     },
     {
-      "assertions": [
-        {
-          "fieldId": "fld_billet_passager",
-          "operator": "required"
-        },
-        {
-          "fieldId": "fld_billet_depart",
-          "operator": "required"
-        },
-        {
-          "fieldId": "fld_billet_code",
-          "operator": "required"
-        },
-        {
-          "fieldId": "fld_billet_prix_total",
-          "operator": "gt",
-          "value": 0
-        }
-      ],
-      "description": "Un billet exige le nom du passager, un départ associé, un code de contrôle et un montant positif.",
-      "entityId": "ent_billet",
-      "id": "rule_billet_passager",
-      "kind": "validation"
+     "key": "currency",
+     "value": "EUR"
     },
     {
-      "assertions": [
-        {
-          "fieldId": "fld_billet_statut",
-          "operator": "in",
-          "value": [
-            "en_attente_paiement",
-            "paye",
-            "utilise",
-            "annule"
-          ]
-        }
-      ],
-      "description": "Le statut d'un billet doit appartenir au cycle de vie autorisé.",
-      "entityId": "ent_billet",
-      "id": "rule_billet_statut_valide",
-      "kind": "validation"
-    },
-    {
-      "assertions": [
-        {
-          "fieldId": "fld_paiement_titulaire",
-          "operator": "required"
-        },
-        {
-          "fieldId": "fld_paiement_carte_masquee",
-          "operator": "matches",
-          "value": "^[0-9\\*\\s]{4,25}$"
-        },
-        {
-          "fieldId": "fld_paiement_expiration",
-          "operator": "matches",
-          "value": "^(0[1-9]|1[0-2])/[0-9]{2}$"
-        },
-        {
-          "fieldId": "fld_paiement_montant",
-          "operator": "gt",
-          "value": 0
-        }
-      ],
-      "description": "Un paiement par carte exige le titulaire, une carte masquée, une date d'expiration et un montant positif.",
-      "entityId": "ent_paiement",
-      "id": "rule_paiement_carte",
-      "kind": "validation"
-    },
-    {
-      "assertions": [
-        {
-          "fieldId": "fld_voyageur_nom",
-          "operator": "required"
-        },
-        {
-          "fieldId": "fld_voyageur_email",
-          "operator": "matches",
-          "value": "^[^@\\s]+@[^@\\s]+\\.[a-z]{2,}$"
-        }
-      ],
-      "description": "Le compte voyageur exige un nom et une adresse e-mail valide.",
-      "entityId": "ent_voyageur",
-      "id": "rule_voyageur_email",
-      "kind": "validation"
+     "key": "captureMode",
+     "value": "immediate"
     }
-  ],
-  "screens": [
+   ]
+  },
+  {
+   "capability": "offline_storage",
+   "config": [
     {
-      "id": "scr_bienvenue",
-      "title": [
-        {
-          "locale": "fr",
-          "text": "Bienvenue"
-        }
-      ],
-      "blocks": [
-        {
-          "blockType": "header",
-          "id": "blk_bienvenue_accroche",
-          "props": [
-            {
-              "key": "title",
-              "value": "Voyagez léger, réservez en trois gestes"
-            },
-            {
-              "key": "subtitle",
-              "value": "Trouvez votre départ, réservez votre place et présentez votre billet depuis votre téléphone."
-            },
-            {
-              "key": "accroche",
-              "value": true
-            },
-            {
-              "key": "logoUri",
-              "value": "https://psxbilpmnojtlzosokzz.supabase.co/storage/v1/object/public/marque/marque-v2.png"
-            }
-          ]
-        },
-        {
-          "blockType": "spacer",
-          "id": "blk_bienvenue_espace"
-        },
-        {
-          "blockType": "button",
-          "id": "blk_bienvenue_inscription",
-          "visibleWhen": {
-            "kind": "session_anonymous"
-          },
-          "props": [
-            {
-              "key": "label",
-              "value": "Créer un compte"
-            },
-            {
-              "key": "kind",
-              "value": "primary"
-            },
-            {
-              "key": "icon",
-              "value": "person-outline"
-            },
-            {
-              "key": "actionId",
-              "value": "act_bienvenue_inscription"
-            }
-          ]
-        },
-        {
-          "blockType": "button",
-          "id": "blk_bienvenue_connexion",
-          "visibleWhen": {
-            "kind": "session_anonymous"
-          },
-          "props": [
-            {
-              "key": "label",
-              "value": "J'ai déjà un compte"
-            },
-            {
-              "key": "kind",
-              "value": "ghost"
-            },
-            {
-              "key": "actionId",
-              "value": "act_bienvenue_connexion"
-            }
-          ]
-        },
-        {
-          "blockType": "button",
-          "id": "blk_bienvenue_sans_compte",
-          "visibleWhen": {
-            "kind": "session_anonymous"
-          },
-          "props": [
-            {
-              "key": "label",
-              "value": "Continuer sans compte"
-            },
-            {
-              "key": "kind",
-              "value": "link"
-            },
-            {
-              "key": "actionId",
-              "value": "act_bienvenue_sans_compte"
-            }
-          ]
-        },
-        {
-          "blockType": "button",
-          "id": "blk_bienvenue_continuer",
-          "visibleWhen": {
-            "kind": "session_authenticated"
-          },
-          "props": [
-            {
-              "key": "label",
-              "value": "Voir les départs"
-            },
-            {
-              "key": "kind",
-              "value": "primary"
-            },
-            {
-              "key": "icon",
-              "value": "ticket-outline"
-            },
-            {
-              "key": "actionId",
-              "value": "act_bienvenue_continuer"
-            }
-          ]
-        },
-        {
-          "blockType": "empty_state",
-          "id": "blk_bienvenue_attente",
-          "visibleWhen": {
-            "kind": "session_pending_confirmation"
-          },
-          "props": [
-            {
-              "key": "title",
-              "value": "Vérifiez votre boîte mail"
-            },
-            {
-              "key": "message",
-              "value": "Votre compte est créé. Confirmez-le depuis l'e-mail reçu, puis connectez-vous."
-            },
-            {
-              "key": "actionLabel",
-              "value": "Me connecter"
-            },
-            {
-              "key": "actionId",
-              "value": "act_bienvenue_connexion_attente"
-            }
-          ]
-        }
-      ],
-      "showsPrimaryNav": false,
-      "showsScreenTitle": false
+     "key": "cachedEntities",
+     "value": [
+      "ent_billet",
+      "ent_depart"
+     ]
     },
     {
-      "blocks": [
-        {
-          "blockType": "header",
-          "id": "blk_accueil_header",
-          "props": [
-            {
-              "key": "title",
-              "value": "Bus Intercités"
-            },
-            {
-              "key": "subtitle",
-              "value": "Vos prochains trajets, en un coup d'œil"
-            }
-          ]
-        },
-        {
-          "blockType": "list",
-          "entityId": "ent_depart",
-          "id": "blk_accueil_liste_departs",
-          "props": [
-            {
-              "key": "title",
-              "value": "À l'affiche"
-            },
-            {
-              "key": "titleFieldId",
-              "value": "fld_depart_destination"
-            },
-            {
-              "key": "subtitleFieldId",
-              "value": "fld_depart_date"
-            },
-            {
-              "key": "trailingFieldId",
-              "value": "fld_depart_prix"
-            },
-            {
-              "key": "badgeFieldId",
-              "value": "fld_depart_statut"
-            },
-            {
-              "key": "imageFieldId",
-              "value": "fld_depart_photo"
-            },
-            {
-              "key": "sortFieldId",
-              "value": "fld_depart_date"
-            },
-            {
-              "key": "sortDirection",
-              "value": "asc"
-            },
-            {
-              "key": "pageSize",
-              "value": 3
-            },
-            {
-              "key": "loadingTitle",
-              "value": "Chargement des départs…"
-            },
-            {
-              "key": "errorTitle",
-              "value": "Départs indisponibles"
-            },
-            {
-              "key": "errorMessage",
-              "value": "Impossible de récupérer les prochains départs. Réessayez dans un instant."
-            },
-            {
-              "key": "emptyTitle",
-              "value": "Aucun départ programmé"
-            },
-            {
-              "key": "emptyMessage",
-              "value": "Les prochains départs seront affichés ici dès leur mise en vente."
-            }
-          ]
-        },
-        {
-          "blockType": "empty_state",
-          "id": "blk_accueil_vide",
-          "props": [
-            {
-              "key": "title",
-              "value": "Aucun trajet à l'affiche"
-            },
-            {
-              "key": "message",
-              "value": "Aucun départ n'est actuellement programmé par la compagnie."
-            }
-          ],
-          "visibleWhen": {
-            "entityId": "ent_depart",
-            "kind": "entity_empty"
-          }
-        }
-      ],
-      "id": "scr_accueil",
-      "title": [
-        {
-          "locale": "fr",
-          "text": "Accueil"
-        }
-      ]
-    },
-    {
-      "blocks": [
-        {
-          "blockType": "header",
-          "id": "blk_departs_header",
-          "props": [
-            {
-              "key": "title",
-              "value": "Trouver un trajet"
-            },
-            {
-              "key": "subtitle",
-              "value": "Filtrez par statut ou cherchez votre destination"
-            }
-          ]
-        },
-        {
-          "blockType": "list",
-          "entityId": "ent_depart",
-          "id": "blk_departs_liste",
-          "props": [
-            {
-              "key": "titleFieldId",
-              "value": "fld_depart_destination"
-            },
-            {
-              "key": "subtitleFieldId",
-              "value": "fld_depart_date"
-            },
-            {
-              "key": "trailingFieldId",
-              "value": "fld_depart_prix"
-            },
-            {
-              "key": "badgeFieldId",
-              "value": "fld_depart_statut"
-            },
-            {
-              "key": "imageFieldId",
-              "value": "fld_depart_photo"
-            },
-            {
-              "key": "searchFieldId",
-              "value": "fld_depart_destination"
-            },
-            {
-              "key": "searchPlaceholder",
-              "value": "Rechercher une destination…"
-            },
-            {
-              "key": "sortFieldId",
-              "value": "fld_depart_date"
-            },
-            {
-              "key": "sortDirection",
-              "value": "asc"
-            },
-            {
-              "key": "filterFieldId",
-              "value": "fld_depart_statut"
-            },
-            {
-              "key": "filterOperator",
-              "value": "neq"
-            },
-            {
-              "key": "filterValue",
-              "value": "annule"
-            },
-            {
-              "key": "pageSize",
-              "value": 20
-            },
-            {
-              "key": "loadingTitle",
-              "value": "Chargement des départs…"
-            },
-            {
-              "key": "errorTitle",
-              "value": "Départs indisponibles"
-            },
-            {
-              "key": "errorMessage",
-              "value": "La liste des départs n'a pas pu être chargée."
-            },
-            {
-              "key": "emptyTitle",
-              "value": "Aucun départ trouvé"
-            },
-            {
-              "key": "emptyMessage",
-              "value": "Modifiez votre recherche de destination pour voir d'autres trajets."
-            },
-            {
-              "key": "userFilterFieldIds",
-              "value": [
-                "fld_depart_statut"
-              ]
-            },
-            {
-              "key": "userFilterOperators",
-              "value": [
-                "eq"
-              ]
-            },
-            {
-              "key": "userFilterInputTypes",
-              "value": [
-                "choice"
-              ]
-            }
-          ]
-        },
-        {
-          "blockType": "empty_state",
-          "id": "blk_departs_vide",
-          "props": [
-            {
-              "key": "title",
-              "value": "Aucun départ disponible"
-            },
-            {
-              "key": "message",
-              "value": "Aucun trajet n'est proposé pour le moment. Revenez bientôt."
-            }
-          ],
-          "visibleWhen": {
-            "entityId": "ent_depart",
-            "kind": "entity_empty"
-          }
-        }
-      ],
-      "id": "scr_departs",
-      "title": [
-        {
-          "locale": "fr",
-          "text": "Prochains départs"
-        }
-      ]
-    },
-    {
-      "blocks": [
-        {
-          "blockType": "detail_header",
-          "entityId": "ent_depart",
-          "id": "blk_depart_detail_header",
-          "props": [
-            {
-              "key": "titleFieldId",
-              "value": "fld_depart_destination"
-            },
-            {
-              "key": "subtitleFieldId",
-              "value": "fld_depart_date"
-            },
-            {
-              "key": "trailingFieldId",
-              "value": "fld_depart_prix"
-            },
-            {
-              "key": "badgeFieldIds",
-              "value": [
-                "fld_depart_statut",
-                "fld_depart_duree",
-                "fld_depart_quai",
-                "fld_depart_places"
-              ]
-            },
-            {
-              "key": "imageFieldId",
-              "value": "fld_depart_photo"
-            },
-            {
-              "key": "loadingTitle",
-              "value": "Chargement du départ…"
-            },
-            {
-              "key": "errorTitle",
-              "value": "Départ indisponible"
-            },
-            {
-              "key": "errorMessage",
-              "value": "Les informations de ce départ n'ont pas pu être chargées."
-            }
-          ]
-        },
-        {
-          "blockType": "button",
-          "id": "blk_depart_detail_reserver",
-          "props": [
-            {
-              "key": "label",
-              "value": "Réserver ce billet"
-            },
-            {
-              "key": "actionId",
-              "value": "act_ouvrir_reservation"
-            },
-            {
-              "key": "kind",
-              "value": "primary"
-            },
-            {
-              "key": "icon",
-              "value": "ticket-outline"
-            }
-          ]
-        },
-        {
-          "blockType": "list",
-          "entityId": "ent_billet",
-          "id": "blk_detail_billets_scopes",
-          "props": [
-            {
-              "key": "title",
-              "value": "Billets de ce départ"
-            },
-            {
-              "key": "titleFieldId",
-              "value": "fld_billet_passager"
-            },
-            {
-              "key": "subtitleFieldId",
-              "value": "fld_billet_date_achat"
-            },
-            {
-              "key": "trailingFieldId",
-              "value": "fld_billet_prix_total"
-            },
-            {
-              "key": "badgeFieldId",
-              "value": "fld_billet_statut"
-            },
-            {
-              "key": "scopeFieldId",
-              "value": "fld_billet_depart"
-            },
-            {
-              "key": "sortFieldId",
-              "value": "fld_billet_date_achat"
-            },
-            {
-              "key": "sortDirection",
-              "value": "desc"
-            },
-            {
-              "key": "pageSize",
-              "value": 10
-            },
-            {
-              "key": "loadingTitle",
-              "value": "Chargement des billets…"
-            },
-            {
-              "key": "errorTitle",
-              "value": "Billets indisponibles"
-            },
-            {
-              "key": "errorMessage",
-              "value": "Les billets de ce départ n'ont pas pu être chargés."
-            },
-            {
-              "key": "emptyTitle",
-              "value": "Aucun billet pour ce départ"
-            },
-            {
-              "key": "emptyMessage",
-              "value": "Ce départ n'a encore aucun billet réservé."
-            }
-          ]
-        }
-      ],
-      "id": "scr_depart_detail",
-      "title": [
-        {
-          "locale": "fr",
-          "text": "Détail du départ"
-        }
-      ]
-    },
-    {
-      "blocks": [
-        {
-          "blockType": "header",
-          "id": "blk_reservation_header",
-          "props": [
-            {
-              "key": "title",
-              "value": "Confirmez votre trajet"
-            },
-            {
-              "key": "subtitle",
-              "value": "Vérifiez les informations avant de réserver"
-            }
-          ]
-        },
-        {
-          "blockType": "form",
-          "entityId": "ent_billet",
-          "id": "blk_reservation_form",
-          "props": [
-            {
-              "key": "title",
-              "value": "Informations du passager"
-            },
-            {
-              "key": "fieldIds",
-              "value": [
-                "fld_billet_passager",
-                "fld_billet_depart",
-                "fld_billet_code",
-                "fld_billet_email",
-                "fld_billet_siege",
-                "fld_billet_prix_total"
-              ]
-            },
-            {
-              "key": "submitLabel",
-              "value": "Continuer vers le paiement"
-            },
-            {
-              "key": "loadingTitle",
-              "value": "Préparation de la réservation…"
-            },
-            {
-              "key": "errorTitle",
-              "value": "Réservation impossible"
-            },
-            {
-              "key": "errorMessage",
-              "value": "Vérifiez le nom du passager et le départ sélectionné."
-            },
-            {
-              "key": "emptyTitle",
-              "value": "Rien à afficher pour le moment"
-            }
-          ]
-        }
-      ],
-      "id": "scr_reservation",
-      "title": [
-        {
-          "locale": "fr",
-          "text": "Réserver un billet"
-        }
-      ]
-    },
-    {
-      "blocks": [
-        {
-          "blockType": "header",
-          "id": "blk_paiement_header",
-          "props": [
-            {
-              "key": "title",
-              "value": "Régler votre réservation"
-            },
-            {
-              "key": "subtitle",
-              "value": "Paiement par carte bancaire"
-            }
-          ]
-        },
-        {
-          "blockType": "form",
-          "entityId": "ent_paiement",
-          "id": "blk_paiement_form",
-          "props": [
-            {
-              "key": "title",
-              "value": "Carte bancaire"
-            },
-            {
-              "key": "fieldIds",
-              "value": [
-                "fld_paiement_billet",
-                "fld_paiement_titulaire",
-                "fld_paiement_carte_masquee",
-                "fld_paiement_expiration",
-                "fld_paiement_montant"
-              ]
-            },
-            {
-              "key": "submitLabel",
-              "value": "Payer par carte"
-            },
-            {
-              "key": "loadingTitle",
-              "value": "Chargement du paiement…"
-            },
-            {
-              "key": "errorTitle",
-              "value": "Paiement refusé"
-            },
-            {
-              "key": "errorMessage",
-              "value": "Le paiement n'a pas pu être validé. Vérifiez les informations de la carte."
-            },
-            {
-              "key": "emptyTitle",
-              "value": "Rien à afficher pour le moment"
-            }
-          ]
-        }
-      ],
-      "id": "scr_paiement",
-      "title": [
-        {
-          "locale": "fr",
-          "text": "Paiement par carte"
-        }
-      ]
-    },
-    {
-      "blocks": [
-        {
-          "blockType": "header",
-          "id": "blk_billets_header",
-          "props": [
-            {
-              "key": "title",
-              "value": "Vos trajets réservés"
-            },
-            {
-              "key": "subtitle",
-              "value": "Retrouvez ici chaque réservation confirmée"
-            }
-          ]
-        },
-        {
-          "blockType": "list",
-          "entityId": "ent_billet",
-          "id": "blk_billets_liste",
-          "props": [
-            {
-              "key": "titleFieldId",
-              "value": "fld_billet_depart"
-            },
-            {
-              "key": "subtitleFieldId",
-              "value": "fld_billet_passager"
-            },
-            {
-              "key": "trailingFieldId",
-              "value": "fld_billet_prix_total"
-            },
-            {
-              "key": "badgeFieldId",
-              "value": "fld_billet_statut"
-            },
-            {
-              "key": "sortFieldId",
-              "value": "fld_billet_date_achat"
-            },
-            {
-              "key": "sortDirection",
-              "value": "desc"
-            },
-            {
-              "key": "pageSize",
-              "value": 15
-            },
-            {
-              "key": "loadingTitle",
-              "value": "Chargement de vos billets…"
-            },
-            {
-              "key": "errorTitle",
-              "value": "Billets indisponibles"
-            },
-            {
-              "key": "errorMessage",
-              "value": "Vos billets n'ont pas pu être chargés."
-            },
-            {
-              "key": "emptyTitle",
-              "value": "Aucun billet"
-            },
-            {
-              "key": "emptyMessage",
-              "value": "Vos billets réservés apparaîtront ici."
-            }
-          ]
-        },
-        {
-          "blockType": "empty_state",
-          "id": "blk_billets_vide",
-          "props": [
-            {
-              "key": "title",
-              "value": "Vous n'avez pas encore de billet"
-            },
-            {
-              "key": "message",
-              "value": "Choisissez un départ pour réserver votre premier trajet."
-            },
-            {
-              "key": "actionId",
-              "value": "act_billets_vide_voir_departs"
-            },
-            {
-              "key": "actionLabel",
-              "value": "Voir les départs"
-            }
-          ],
-          "visibleWhen": {
-            "entityId": "ent_billet",
-            "kind": "entity_empty"
-          }
-        }
-      ],
-      "id": "scr_billets",
-      "title": [
-        {
-          "locale": "fr",
-          "text": "Mes réservations"
-        }
-      ]
-    },
-    {
-      "blocks": [
-        {
-          "blockType": "detail_header",
-          "entityId": "ent_billet",
-          "id": "blk_billet_detail_header",
-          "props": [
-            {
-              "key": "titleFieldId",
-              "value": "fld_billet_depart"
-            },
-            {
-              "key": "subtitleFieldId",
-              "value": "fld_billet_passager"
-            },
-            {
-              "key": "trailingFieldId",
-              "value": "fld_billet_prix_total"
-            },
-            {
-              "key": "badgeFieldIds",
-              "value": [
-                "fld_billet_statut",
-                "fld_billet_siege",
-                "fld_billet_reference"
-              ]
-            },
-            {
-              "key": "loadingTitle",
-              "value": "Chargement du billet…"
-            },
-            {
-              "key": "errorTitle",
-              "value": "Billet indisponible"
-            },
-            {
-              "key": "errorMessage",
-              "value": "Ce billet n'a pas pu être chargé."
-            }
-          ]
-        },
-        {
-          "blockType": "header",
-          "id": "blk_billet_code_header",
-          "props": [
-            {
-              "key": "title",
-              "value": "Code à présenter au contrôleur"
-            },
-            {
-              "key": "subtitle",
-              "value": "Code en cours de génération…"
-            }
-          ]
-        },
-        {
-          "blockType": "button",
-          "id": "blk_billet_detail_retour",
-          "props": [
-            {
-              "key": "label",
-              "value": "Retour à mes billets"
-            },
-            {
-              "key": "actionId",
-              "value": "act_voir_mes_billets"
-            },
-            {
-              "key": "kind",
-              "value": "ghost"
-            },
-            {
-              "key": "icon",
-              "value": "arrow-back-outline"
-            }
-          ]
-        }
-      ],
-      "id": "scr_billet_detail",
-      "title": [
-        {
-          "locale": "fr",
-          "text": "Mon billet"
-        }
-      ]
-    },
-    {
-      "blocks": [
-        {
-          "blockType": "header",
-          "id": "blk_compte_header",
-          "props": [
-            {
-              "key": "title",
-              "value": "Votre espace"
-            },
-            {
-              "key": "subtitle",
-              "value": "Vos informations de voyageur"
-            }
-          ]
-        },
-        {
-          "blockType": "empty_state",
-          "id": "blk_compte_visiteur",
-          "visibleWhen": {
-            "kind": "session_anonymous"
-          },
-          "props": [
-            {
-              "key": "title",
-              "value": "Vous n'êtes pas connecté"
-            },
-            {
-              "key": "message",
-              "value": "Connectez-vous pour retrouver vos billets et vos informations."
-            },
-            {
-              "key": "actionLabel",
-              "value": "Se connecter"
-            },
-            {
-              "key": "actionId",
-              "value": "act_aller_connexion"
-            }
-          ]
-        },
-        {
-          "blockType": "form",
-          "entityId": "ent_voyageur",
-          "id": "blk_compte_form",
-          "props": [
-            {
-              "key": "title",
-              "value": "Mes informations"
-            },
-            {
-              "key": "fieldIds",
-              "value": [
-                "fld_voyageur_nom",
-                "fld_voyageur_email",
-                "fld_voyageur_telephone",
-                "fld_voyageur_ville_favorite",
-                "fld_voyageur_notifications"
-              ]
-            },
-            {
-              "key": "submitLabel",
-              "value": "Enregistrer mes informations"
-            },
-            {
-              "key": "loadingTitle",
-              "value": "Chargement de votre profil…"
-            },
-            {
-              "key": "errorTitle",
-              "value": "Profil indisponible"
-            },
-            {
-              "key": "errorMessage",
-              "value": "Vos informations n'ont pas pu être enregistrées."
-            },
-            {
-              "key": "emptyTitle",
-              "value": "Rien à afficher pour le moment"
-            }
-          ],
-          "visibleWhen": {
-            "kind": "session_authenticated"
-          }
-        },
-        {
-          "blockType": "button",
-          "id": "blk_compte_parametres",
-          "props": [
-            {
-              "key": "label",
-              "value": "Paramètres du compte"
-            },
-            {
-              "key": "actionId",
-              "value": "act_ouvrir_parametres"
-            },
-            {
-              "key": "kind",
-              "value": "ghost"
-            },
-            {
-              "key": "icon",
-              "value": "settings-outline"
-            }
-          ],
-          "visibleWhen": {
-            "kind": "session_authenticated"
-          }
-        }
-      ],
-      "id": "scr_compte",
-      "title": [
-        {
-          "locale": "fr",
-          "text": "Mon compte"
-        }
-      ]
-    },
-    {
-      "blocks": [
-        {
-          "blockType": "header",
-          "id": "blk_parametres_header",
-          "props": [
-            {
-              "key": "title",
-              "value": "Gestion du compte"
-            },
-            {
-              "key": "subtitle",
-              "value": "Actions définitives sur vos données"
-            }
-          ]
-        },
-        {
-          "blockType": "button",
-          "id": "blk_compte_deconnexion",
-          "visibleWhen": {
-            "kind": "session_authenticated"
-          },
-          "props": [
-            {
-              "key": "label",
-              "value": "Se déconnecter"
-            },
-            {
-              "key": "kind",
-              "value": "ghost"
-            },
-            {
-              "key": "actionId",
-              "value": "act_deconnexion"
-            },
-            {
-              "key": "icon",
-              "value": "log-out-outline"
-            }
-          ]
-        },
-        {
-          "blockType": "button",
-          "id": "blk_compte_supprimer",
-          "props": [
-            {
-              "key": "label",
-              "value": "Supprimer mon compte"
-            },
-            {
-              "key": "actionId",
-              "value": "act_supprimer_compte"
-            },
-            {
-              "key": "kind",
-              "value": "ghost"
-            },
-            {
-              "key": "icon",
-              "value": "trash-outline"
-            }
-          ],
-          "visibleWhen": {
-            "kind": "session_authenticated"
-          }
-        }
-      ],
-      "id": "scr_parametres",
-      "title": [
-        {
-          "locale": "fr",
-          "text": "Paramètres"
-        }
-      ],
-      "presentation": "sheet"
-    },
-    {
-      "id": "scr_connexion",
-      "title": [
-        {
-          "locale": "fr",
-          "text": "Connexion"
-        }
-      ],
-      "blocks": [
-        {
-          "blockType": "header",
-          "id": "blk_connexion_header",
-          "props": [
-            {
-              "key": "title",
-              "value": "Bon retour"
-            },
-            {
-              "key": "subtitle",
-              "value": "Connectez-vous pour retrouver vos billets."
-            }
-          ]
-        },
-        {
-          "blockType": "form",
-          "id": "blk_connexion_form",
-          "entityId": "ent_voyageur",
-          "props": [
-            {
-              "key": "title",
-              "value": "Vos identifiants"
-            },
-            {
-              "key": "fieldIds",
-              "value": [
-                "fld_voyageur_email",
-                "fld_voyageur_mot_de_passe"
-              ]
-            },
-            {
-              "key": "submitLabel",
-              "value": "Se connecter"
-            },
-            {
-              "key": "loadingTitle",
-              "value": "Un instant…"
-            },
-            {
-              "key": "emptyTitle",
-              "value": "Rien à afficher pour le moment"
-            }
-          ]
-        },
-        {
-          "blockType": "button",
-          "id": "blk_connexion_oubli",
-          "props": [
-            {
-              "key": "label",
-              "value": "Mot de passe oublié"
-            },
-            {
-              "key": "kind",
-              "value": "link"
-            },
-            {
-              "key": "actionId",
-              "value": "act_mot_de_passe_oublie"
-            }
-          ]
-        },
-        {
-          "blockType": "button",
-          "id": "blk_connexion_vers_inscription",
-          "props": [
-            {
-              "key": "label",
-              "value": "Créer un compte"
-            },
-            {
-              "key": "kind",
-              "value": "ghost"
-            },
-            {
-              "key": "actionId",
-              "value": "act_aller_inscription"
-            },
-            {
-              "key": "icon",
-              "value": "person-outline"
-            }
-          ]
-        }
-      ],
-      "showsPrimaryNav": false,
-      "showsScreenTitle": false,
-      "presentation": "sheet"
-    },
-    {
-      "id": "scr_inscription",
-      "title": [
-        {
-          "locale": "fr",
-          "text": "Créer un compte"
-        }
-      ],
-      "blocks": [
-        {
-          "blockType": "header",
-          "id": "blk_inscription_header",
-          "props": [
-            {
-              "key": "title",
-              "value": "Bienvenue"
-            },
-            {
-              "key": "subtitle",
-              "value": "Quelques informations et vous voyagez."
-            }
-          ]
-        },
-        {
-          "blockType": "empty_state",
-          "id": "blk_inscription_attente",
-          "visibleWhen": {
-            "kind": "session_pending_confirmation"
-          },
-          "props": [
-            {
-              "key": "title",
-              "value": "Vérifiez votre boîte mail"
-            },
-            {
-              "key": "message",
-              "value": "Votre compte est créé. Ouvrez l'e-mail de Bus Intercités et cliquez sur le lien de confirmation, puis revenez vous connecter."
-            },
-            {
-              "key": "actionLabel",
-              "value": "J'ai confirmé, me connecter"
-            },
-            {
-              "key": "actionId",
-              "value": "act_attente_vers_connexion"
-            }
-          ]
-        },
-        {
-          "blockType": "form",
-          "id": "blk_inscription_form",
-          "entityId": "ent_voyageur",
-          "props": [
-            {
-              "key": "title",
-              "value": "Vos informations"
-            },
-            {
-              "key": "fieldIds",
-              "value": [
-                "fld_voyageur_nom",
-                "fld_voyageur_email",
-                "fld_voyageur_telephone",
-                "fld_voyageur_mot_de_passe"
-              ]
-            },
-            {
-              "key": "submitLabel",
-              "value": "Créer mon compte"
-            },
-            {
-              "key": "loadingTitle",
-              "value": "Un instant…"
-            },
-            {
-              "key": "emptyTitle",
-              "value": "Rien à afficher pour le moment"
-            }
-          ],
-          "visibleWhen": {
-            "kind": "session_anonymous"
-          }
-        },
-        {
-          "blockType": "button",
-          "id": "blk_inscription_vers_connexion",
-          "props": [
-            {
-              "key": "label",
-              "value": "J'ai déjà un compte"
-            },
-            {
-              "key": "kind",
-              "value": "ghost"
-            },
-            {
-              "key": "actionId",
-              "value": "act_aller_connexion"
-            },
-            {
-              "key": "icon",
-              "value": "arrow-back-outline"
-            }
-          ],
-          "visibleWhen": {
-            "kind": "session_anonymous"
-          }
-        }
-      ],
-      "showsPrimaryNav": false,
-      "showsScreenTitle": false,
-      "presentation": "sheet"
-    },
-    {
-      "id": "scr_oubli",
-      "title": [
-        {
-          "locale": "fr",
-          "text": "Mot de passe oublié"
-        }
-      ],
-      "showsPrimaryNav": false,
-      "blocks": [
-        {
-          "blockType": "header",
-          "id": "blk_oubli_header",
-          "props": [
-            {
-              "key": "title",
-              "value": "Réinitialiser votre mot de passe"
-            },
-            {
-              "key": "subtitle",
-              "value": "Indiquez votre adresse : si un compte existe, vous recevrez un lien pour choisir un nouveau mot de passe."
-            }
-          ]
-        },
-        {
-          "blockType": "form",
-          "id": "blk_oubli_form",
-          "entityId": "ent_voyageur",
-          "props": [
-            {
-              "key": "title",
-              "value": "Votre adresse"
-            },
-            {
-              "key": "fieldIds",
-              "value": [
-                "fld_voyageur_email"
-              ]
-            },
-            {
-              "key": "submitLabel",
-              "value": "Envoyer le lien"
-            },
-            {
-              "key": "loadingTitle",
-              "value": "Un instant…"
-            },
-            {
-              "key": "emptyTitle",
-              "value": "Rien à afficher pour le moment"
-            }
-          ]
-        },
-        {
-          "blockType": "spacer",
-          "id": "blk_oubli_espace"
-        },
-        {
-          "blockType": "button",
-          "id": "blk_oubli_retour",
-          "props": [
-            {
-              "key": "label",
-              "value": "Retour à la connexion"
-            },
-            {
-              "key": "kind",
-              "value": "ghost"
-            },
-            {
-              "key": "icon",
-              "value": "arrow-back-outline"
-            },
-            {
-              "key": "actionId",
-              "value": "act_oubli_retour"
-            }
-          ]
-        }
-      ],
-      "showsScreenTitle": false,
-      "presentation": "sheet"
+     "key": "purpose",
+     "value": "presentation_billet_hors_ligne"
     }
-  ],
-  "slots": [
+   ]
+  },
+  {
+   "capability": "push_notifications",
+   "config": [
     {
-      "allowedImports": [],
-      "description": "Compose le code de contrôle lisible à présenter au contrôleur (référence du billet, initiales du passager et clé de vérification) à partir des billets enregistrés.",
-      "id": "slot_code_controleur",
-      "inputs": [
-        {
-          "name": "billets",
-          "type": "json"
-        },
-        {
-          "name": "prefixeCompagnie",
-          "type": "string"
-        }
-      ],
-      "outputs": [
-        {
-          "name": "codeAffiche",
-          "type": "string"
-        },
-        {
-          "name": "detailValidite",
-          "type": "string"
-        }
-      ]
+     "key": "topics",
+     "value": [
+      "rappel_depart",
+      "changement_horaire"
+     ]
     },
     {
-      "allowedImports": [
-        "date-fns"
-      ],
-      "description": "Calcule un résumé textuel des prochains départs (nombre de départs du jour, prochaine destination et heure) pour l'en-tête de l'accueil.",
-      "id": "slot_resume_departs",
-      "inputs": [
-        {
-          "name": "departs",
-          "type": "json"
-        },
-        {
-          "name": "libelleVide",
-          "type": "string"
-        }
-      ],
-      "outputs": [
-        {
-          "name": "resume",
-          "type": "string"
-        },
-        {
-          "name": "prochaineDestination",
-          "type": "string"
-        }
-      ]
+     "key": "optInField",
+     "value": "fld_voyageur_notifications"
     }
+   ]
+  },
+  {
+   "capability": "analytics",
+   "config": [
+    {
+     "key": "events",
+     "value": [
+      "consultation_depart",
+      "reservation_billet",
+      "paiement_billet"
+     ]
+    },
+    {
+     "key": "anonymizeIp",
+     "value": true
+    }
+   ]
+  }
+ ],
+ "compliance": {
+  "accountDeletionRequired": true,
+  "commerceClass": "physical_or_offapp",
+  "dataCollected": [
+   "contact_info",
+   "identifiers",
+   "purchases",
+   "usage_data"
   ]
+ },
+ "datasets": [
+  {
+   "contentHash": "3f9c1a7d5b28e40a6cd1fb8347e259a0d4c6b71e8f230a95cd47b6e1f8302a5d",
+   "entityId": "ent_depart",
+   "id": "data_departs",
+   "rowCount": 5,
+   "sourceKind": "remote",
+   "sourceIntegrationId": "intg_cache_billets",
+   "sourceDomain": "www.deribfy.com",
+   "sourceRefreshSeconds": 30
+  },
+  {
+   "contentHash": "a71e4c09b8d5236fae90c1b74d38f56201ea9c7b3d4f6081925ac3ed7b0f4c68",
+   "entityId": "ent_voyageur",
+   "id": "data_voyageurs",
+   "rowCount": 3
+  },
+  {
+   "contentHash": "c05d8b3172ea946f0b7d1c8534af62e9017bd4a6f83c25190e6ab7d3f451c082",
+   "entityId": "ent_billet",
+   "id": "data_billets",
+   "rowCount": 5
+  },
+  {
+   "contentHash": "9b2f7d461ac30e58f1b6924d075cae83f24b1d906e5a3c78041fb2e6a97d5c31",
+   "entityId": "ent_paiement",
+   "id": "data_paiements",
+   "rowCount": 4
+  }
+ ],
+ "design": {
+  "theme": "transit_light"
+ },
+ "entities": [
+  {
+   "fields": [
+    {
+     "id": "fld_depart_ville_depart",
+     "name": "ville_depart",
+     "required": true,
+     "type": "string",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Ville de départ"
+      }
+     ]
+    },
+    {
+     "id": "fld_depart_destination",
+     "name": "destination",
+     "required": true,
+     "type": "string",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Destination"
+      }
+     ]
+    },
+    {
+     "id": "fld_depart_date",
+     "name": "date_depart",
+     "required": true,
+     "type": "date",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Date de départ"
+      }
+     ]
+    },
+    {
+     "id": "fld_depart_heure",
+     "name": "heure_depart",
+     "required": true,
+     "type": "string",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Heure de départ"
+      }
+     ]
+    },
+    {
+     "id": "fld_depart_heure_arrivee",
+     "name": "heure_arrivee",
+     "required": false,
+     "type": "string",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Heure d'arrivée"
+      }
+     ]
+    },
+    {
+     "id": "fld_depart_duree",
+     "name": "duree_trajet",
+     "required": false,
+     "type": "string",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Durée du trajet"
+      }
+     ]
+    },
+    {
+     "id": "fld_depart_prix",
+     "name": "prix",
+     "required": true,
+     "type": "decimal",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Prix"
+      }
+     ]
+    },
+    {
+     "id": "fld_depart_places",
+     "name": "places_restantes",
+     "required": true,
+     "type": "number",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Places restantes"
+      }
+     ]
+    },
+    {
+     "enumValues": [
+      "a_l_heure",
+      "retarde",
+      "annule"
+     ],
+     "id": "fld_depart_statut",
+     "name": "statut",
+     "required": true,
+     "type": "enum",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Statut"
+      }
+     ],
+     "enumLabels": {
+      "a_l_heure": [
+       {
+        "locale": "fr",
+        "text": "À l'heure"
+       }
+      ],
+      "retarde": [
+       {
+        "locale": "fr",
+        "text": "Retardé"
+       }
+      ],
+      "annule": [
+       {
+        "locale": "fr",
+        "text": "Annulé"
+       }
+      ]
+     }
+    },
+    {
+     "id": "fld_depart_quai",
+     "name": "quai",
+     "required": false,
+     "type": "string",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Quai"
+      }
+     ]
+    },
+    {
+     "id": "fld_depart_photo",
+     "name": "photo_destination",
+     "required": false,
+     "type": "asset",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Photo de la destination"
+      }
+     ]
+    },
+    {
+     "id": "fld_depart_description",
+     "name": "description",
+     "required": false,
+     "type": "text",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Description"
+      }
+     ]
+    }
+   ],
+   "id": "ent_depart",
+   "name": "depart"
+  },
+  {
+   "fields": [
+    {
+     "id": "fld_voyageur_nom",
+     "name": "nom_complet",
+     "required": true,
+     "type": "string",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Nom complet"
+      }
+     ]
+    },
+    {
+     "id": "fld_voyageur_email",
+     "name": "email",
+     "required": true,
+     "type": "string",
+     "unique": true,
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Adresse e-mail"
+      }
+     ]
+    },
+    {
+     "id": "fld_voyageur_telephone",
+     "name": "telephone",
+     "required": false,
+     "type": "string",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Téléphone"
+      }
+     ]
+    },
+    {
+     "id": "fld_voyageur_ville_favorite",
+     "name": "ville_favorite",
+     "required": false,
+     "type": "string",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Ville favorite"
+      }
+     ]
+    },
+    {
+     "id": "fld_voyageur_notifications",
+     "name": "notifications_actives",
+     "required": false,
+     "type": "boolean",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Notifications actives"
+      }
+     ]
+    },
+    {
+     "id": "fld_voyageur_mot_de_passe",
+     "name": "mot_de_passe",
+     "type": "string",
+     "required": true,
+     "sensitive": true,
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Mot de passe"
+      }
+     ]
+    }
+   ],
+   "id": "ent_voyageur",
+   "name": "voyageur"
+  },
+  {
+   "fields": [
+    {
+     "id": "fld_billet_reference",
+     "name": "reference",
+     "required": true,
+     "type": "string",
+     "unique": true,
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Référence"
+      }
+     ]
+    },
+    {
+     "id": "fld_billet_passager",
+     "name": "passager_nom",
+     "required": true,
+     "type": "string",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Nom du passager"
+      }
+     ]
+    },
+    {
+     "id": "fld_billet_depart",
+     "name": "depart",
+     "referenceDisplayFieldId": "fld_depart_destination",
+     "referencesEntityId": "ent_depart",
+     "required": true,
+     "type": "reference",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Départ"
+      }
+     ]
+    },
+    {
+     "id": "fld_billet_voyageur",
+     "name": "voyageur",
+     "referenceDisplayFieldId": "fld_voyageur_nom",
+     "referencesEntityId": "ent_voyageur",
+     "required": false,
+     "type": "reference",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Voyageur"
+      }
+     ]
+    },
+    {
+     "id": "fld_billet_code",
+     "name": "code_controleur",
+     "required": true,
+     "type": "string",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Code contrôleur"
+      }
+     ]
+    },
+    {
+     "enumValues": [
+      "en_attente_paiement",
+      "paye",
+      "utilise",
+      "annule"
+     ],
+     "id": "fld_billet_statut",
+     "name": "statut",
+     "required": true,
+     "type": "enum",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Statut"
+      }
+     ],
+     "enumLabels": {
+      "en_attente_paiement": [
+       {
+        "locale": "fr",
+        "text": "En attente de paiement"
+       }
+      ],
+      "paye": [
+       {
+        "locale": "fr",
+        "text": "Payé"
+       }
+      ],
+      "utilise": [
+       {
+        "locale": "fr",
+        "text": "Utilisé"
+       }
+      ],
+      "annule": [
+       {
+        "locale": "fr",
+        "text": "Annulé"
+       }
+      ]
+     }
+    },
+    {
+     "id": "fld_billet_prix_total",
+     "name": "prix_total",
+     "required": true,
+     "type": "decimal",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Prix total"
+      }
+     ]
+    },
+    {
+     "id": "fld_billet_email",
+     "name": "email_confirmation",
+     "required": false,
+     "type": "string",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "E-mail de confirmation"
+      }
+     ]
+    },
+    {
+     "id": "fld_billet_siege",
+     "name": "siege",
+     "required": false,
+     "type": "string",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Siège"
+      }
+     ]
+    },
+    {
+     "id": "fld_billet_date_achat",
+     "name": "date_achat",
+     "required": false,
+     "type": "datetime",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Date d'achat"
+      }
+     ]
+    }
+   ],
+   "id": "ent_billet",
+   "name": "billet"
+  },
+  {
+   "fields": [
+    {
+     "id": "fld_paiement_billet",
+     "name": "billet",
+     "referenceDisplayFieldId": "fld_billet_reference",
+     "referencesEntityId": "ent_billet",
+     "required": true,
+     "type": "reference",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Billet"
+      }
+     ]
+    },
+    {
+     "id": "fld_paiement_titulaire",
+     "name": "titulaire_carte",
+     "required": true,
+     "type": "string",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Titulaire de la carte"
+      }
+     ]
+    },
+    {
+     "id": "fld_paiement_carte_masquee",
+     "name": "carte_masquee",
+     "required": true,
+     "type": "string",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Numéro de carte"
+      }
+     ]
+    },
+    {
+     "id": "fld_paiement_expiration",
+     "name": "expiration",
+     "required": true,
+     "type": "string",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Expiration (MM/AA)"
+      }
+     ]
+    },
+    {
+     "id": "fld_paiement_montant",
+     "name": "montant",
+     "required": true,
+     "type": "decimal",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Montant"
+      }
+     ]
+    },
+    {
+     "enumValues": [
+      "en_attente",
+      "autorise",
+      "refuse",
+      "rembourse"
+     ],
+     "id": "fld_paiement_statut",
+     "name": "statut",
+     "required": true,
+     "type": "enum",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Statut"
+      }
+     ],
+     "enumLabels": {
+      "en_attente": [
+       {
+        "locale": "fr",
+        "text": "En attente"
+       }
+      ],
+      "autorise": [
+       {
+        "locale": "fr",
+        "text": "Autorisé"
+       }
+      ],
+      "refuse": [
+       {
+        "locale": "fr",
+        "text": "Refusé"
+       }
+      ],
+      "rembourse": [
+       {
+        "locale": "fr",
+        "text": "Remboursé"
+       }
+      ]
+     }
+    },
+    {
+     "id": "fld_paiement_date",
+     "name": "date_paiement",
+     "required": false,
+     "type": "datetime",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Date de paiement"
+      }
+     ]
+    }
+   ],
+   "id": "ent_paiement",
+   "name": "paiement"
+  }
+ ],
+ "expectedTests": [
+  {
+   "description": "L'écran d'accueil affiche les prochains départs triés par date croissante, avec destination, date, prix, statut et vignette de destination, limités à 5 lignes (bloc blk_accueil_liste_departs).",
+   "id": "test_liste_departs_accueil",
+   "kind": "deterministic",
+   "targetId": "scr_accueil"
+  },
+  {
+   "description": "L'écran Départs liste les trajets avec destination, date, heure, prix et image via le bloc blk_departs_liste, exclut les départs annulés et pagine par 20.",
+   "id": "test_liste_departs_catalogue",
+   "kind": "deterministic",
+   "targetId": "scr_departs"
+  },
+  {
+   "description": "Saisir une destination dans le champ de recherche du bloc blk_departs_liste de l'écran Départs filtre réellement la liste sur le champ destination.",
+   "id": "test_recherche_destination",
+   "kind": "e2e",
+   "targetId": "scr_departs"
+  },
+  {
+   "description": "Appuyer sur une ligne de la liste des départs ouvre l'écran de détail du départ correspondant.",
+   "id": "test_ligne_depart_ouvre_detail",
+   "kind": "e2e",
+   "targetId": "act_departs_ouvrir_depart"
+  },
+  {
+   "description": "Appuyer sur une ligne de la liste des départs de l'accueil ouvre le détail de ce départ.",
+   "id": "test_ligne_depart_accueil_ouvre_detail",
+   "kind": "e2e",
+   "targetId": "act_accueil_ouvrir_depart"
+  },
+  {
+   "description": "L'écran de détail du départ affiche, via le bloc blk_depart_detail_header, l'image de destination, l'heure, le prix et les badges statut, places restantes et quai.",
+   "id": "test_detail_depart_visuel",
+   "kind": "deterministic",
+   "targetId": "scr_depart_detail"
+  },
+  {
+   "description": "Le bouton « Réserver ce billet » du détail d'un départ conduit à l'écran de réservation.",
+   "id": "test_bouton_reserver",
+   "kind": "e2e",
+   "targetId": "act_ouvrir_reservation"
+  },
+  {
+   "description": "La soumission du formulaire de réservation crée un billet au nom du passager puis ouvre l'écran de paiement.",
+   "id": "test_reservation_cree_billet",
+   "kind": "e2e",
+   "targetId": "act_enregistrer_reservation"
+  },
+  {
+   "description": "La règle rule_billet_passager refuse un billet sans nom de passager, sans départ, sans code de contrôle ou avec un montant nul.",
+   "id": "test_regle_billet_passager",
+   "kind": "deterministic",
+   "targetId": "ent_billet"
+  },
+  {
+   "description": "Les informations saisies dans le formulaire blk_reservation_form de l'écran de réservation sont conservées lors d'un aller-retour vers le détail du départ.",
+   "id": "test_etat_formulaire_reservation",
+   "kind": "e2e",
+   "targetId": "scr_reservation"
+  },
+  {
+   "description": "La soumission du formulaire « Payer par carte » enregistre le paiement du billet puis affiche l'écran du billet.",
+   "id": "test_paiement_carte_cree_paiement",
+   "kind": "e2e",
+   "targetId": "act_payer_par_carte"
+  },
+  {
+   "description": "La règle rule_paiement_carte rejette un paiement dont la carte masquée ou la date d'expiration est mal formée, ou dont le montant est nul.",
+   "id": "test_regle_paiement_carte",
+   "kind": "deterministic",
+   "targetId": "ent_paiement"
+  },
+  {
+   "description": "Le paiement par carte s'appuie sur l'intégration intg_paiement_carte : débit en euros avec capture immédiate sur le domaine autorisé, sans secret embarqué.",
+   "id": "test_contrat_paiement_psp",
+   "kind": "contract",
+   "targetId": "act_payer_par_carte"
+  },
+  {
+   "description": "La liste et le détail des billets affichent, pour le champ de référence fld_billet_depart, la destination du départ référencé plutôt que son identifiant technique.",
+   "id": "test_billet_reference_lisible",
+   "kind": "deterministic",
+   "targetId": "ent_billet"
+  },
+  {
+   "description": "Appuyer sur une ligne de la liste « Mes billets » ouvre le billet correspondant.",
+   "id": "test_ligne_billet_ouvre_detail",
+   "kind": "e2e",
+   "targetId": "act_billets_ouvrir_billet"
+  },
+  {
+   "description": "À l'ouverture du billet, le slot de code de contrôle est invoqué et ses sorties alimentent le titre et le sous-titre du bloc de code présenté au contrôleur.",
+   "id": "test_code_controleur_slot",
+   "kind": "e2e",
+   "targetId": "act_code_controleur"
+  },
+  {
+   "description": "À l'ouverture de l'accueil, le slot de résumé des départs est invoqué et son résultat remplit le sous-titre de l'en-tête.",
+   "id": "test_resume_departs_slot",
+   "kind": "e2e",
+   "targetId": "act_resume_accueil"
+  },
+  {
+   "description": "L'écran du billet affiche, via le bloc blk_billet_detail_header, la destination, le nom du passager, le prix total et les badges statut, siège et référence.",
+   "id": "test_detail_billet_infos",
+   "kind": "deterministic",
+   "targetId": "scr_billet_detail"
+  },
+  {
+   "description": "La barre de navigation persistante présente Accueil, Départs, Mes billets et Compte dans cet ordre sur chaque écran, à partir de l'écran d'entrée.",
+   "id": "test_navigation_principale",
+   "kind": "deterministic",
+   "targetId": "scr_accueil"
+  },
+  {
+   "description": "La soumission du formulaire de compte met à jour les informations du voyageur et revient sur l'écran Mon compte.",
+   "id": "test_compte_enregistrement",
+   "kind": "e2e",
+   "targetId": "act_enregistrer_compte"
+  },
+  {
+   "description": "Le bouton « Supprimer mon compte » supprime le voyageur et renvoie à l'accueil.",
+   "id": "test_suppression_compte",
+   "kind": "e2e",
+   "targetId": "act_supprimer_compte"
+  },
+  {
+   "description": "Sur l'écran Mes billets, l'état vide blk_billets_vide « Vous n'avez pas encore de billet » ne s'affiche que lorsque aucun billet n'est enregistré.",
+   "id": "test_etat_vide_billets",
+   "kind": "deterministic",
+   "targetId": "scr_billets"
+  },
+  {
+   "description": "L'intégration d'authentification intg_auth_voyageur s'appuie uniquement sur le domaine autorisé et expose la suppression de compte exigée, exercée par la suppression du compte voyageur.",
+   "id": "test_contrat_auth_voyageur",
+   "kind": "contract",
+   "targetId": "act_supprimer_compte"
+  }
+ ],
+ "integrations": [
+  {
+   "capability": "payments.psp",
+   "config": [
+    {
+     "key": "provider",
+     "value": "generic_psp"
+    },
+    {
+     "key": "environment",
+     "value": "production"
+    },
+    {
+     "key": "currency",
+     "value": "EUR"
+    },
+    {
+     "key": "methods",
+     "value": [
+      "card"
+     ]
+    },
+    {
+     "key": "captureMode",
+     "value": "immediate"
+    },
+    {
+     "key": "apiBaseUrl",
+     "value": "https://api.bus-intercites.app/paiements"
+    }
+   ],
+   "id": "intg_paiement_carte",
+   "providerClass": "payment_gateway"
+  },
+  {
+   "capability": "auth",
+   "config": [
+    {
+     "key": "methods",
+     "value": [
+      "email_password"
+     ]
+    },
+    {
+     "key": "apiBaseUrl",
+     "value": "https://api.bus-intercites.app/auth"
+    },
+    {
+     "key": "accountDeletionEndpoint",
+     "value": "/compte/suppression"
+    },
+    {
+     "key": "sessionTtlMinutes",
+     "value": 10080
+    }
+   ],
+   "id": "intg_auth_voyageur",
+   "providerClass": "identity_provider"
+  },
+  {
+   "capability": "push_notifications",
+   "config": [
+    {
+     "key": "apiBaseUrl",
+     "value": "https://api.bus-intercites.app/notifications"
+    },
+    {
+     "key": "topics",
+     "value": [
+      "rappel_depart",
+      "changement_horaire"
+     ]
+    },
+    {
+     "key": "defaultLocale",
+     "value": "fr"
+    }
+   ],
+   "id": "intg_notifications_departs",
+   "providerClass": "push_service"
+  },
+  {
+   "capability": "analytics",
+   "config": [
+    {
+     "key": "apiBaseUrl",
+     "value": "https://api.bus-intercites.app/analytics"
+    },
+    {
+     "key": "events",
+     "value": [
+      "consultation_depart",
+      "reservation_billet",
+      "paiement_billet"
+     ]
+    },
+    {
+     "key": "anonymizeIp",
+     "value": true
+    },
+    {
+     "key": "batchIntervalSeconds",
+     "value": 30
+    }
+   ],
+   "id": "intg_analytics_produit",
+   "providerClass": "analytics_collector"
+  },
+  {
+   "capability": "offline_storage",
+   "config": [
+    {
+     "key": "engine",
+     "value": "sqlite"
+    },
+    {
+     "key": "cachedEntities",
+     "value": [
+      "ent_billet",
+      "ent_depart"
+     ]
+    },
+    {
+     "key": "maxAgeHours",
+     "value": 72
+    }
+   ],
+   "id": "intg_cache_billets",
+   "providerClass": "local_store"
+  },
+  {
+   "id": "intg_auth",
+   "providerClass": "auth",
+   "capability": "auth",
+   "config": [
+    {
+     "key": "url",
+     "value": "https://psxbilpmnojtlzosokzz.supabase.co"
+    },
+    {
+     "key": "anonKey",
+     "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBzeGJpbHBtbm9qdGx6b3Nva3p6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg2NjM2OTcsImV4cCI6MjEwNDIzOTY5N30.Ea24JkCSgTHKaD613nWj0KE7nF728QP-4tocP9mn38w"
+    },
+    {
+     "key": "profileEntityId",
+     "value": "ent_voyageur"
+    }
+   ]
+  }
+ ],
+ "intent": {
+  "needs": [
+   {
+    "id": "need_liste_departs",
+    "resolution": {
+     "kind": "satisfied",
+     "nodeIds": [
+      "scr_departs",
+      "blk_departs_liste",
+      "blk_accueil_liste_departs",
+      "ent_depart",
+      "fld_depart_destination",
+      "fld_depart_date",
+      "fld_depart_heure",
+      "fld_depart_prix",
+      "data_departs"
+     ]
+    },
+    "statement": "L'application liste les départs à venir avec destination, date, heure et prix."
+   },
+   {
+    "id": "need_recherche_destination",
+    "resolution": {
+     "kind": "satisfied",
+     "nodeIds": [
+      "blk_departs_liste",
+      "fld_depart_destination"
+     ]
+    },
+    "statement": "L'utilisateur peut chercher un départ par destination."
+   },
+   {
+    "id": "need_detail_depart",
+    "resolution": {
+     "kind": "satisfied",
+     "nodeIds": [
+      "scr_depart_detail",
+      "blk_depart_detail_header",
+      "blk_departs_liste",
+      "act_departs_ouvrir_depart",
+      "act_accueil_ouvrir_depart",
+      "blk_depart_detail_reserver"
+     ]
+    },
+    "statement": "Consulter le détail d'un départ choisi dans la liste avant de réserver."
+   },
+   {
+    "id": "need_reserver_billet",
+    "resolution": {
+     "kind": "satisfied",
+     "nodeIds": [
+      "scr_reservation",
+      "blk_reservation_form",
+      "act_enregistrer_reservation",
+      "ent_billet",
+      "fld_billet_passager",
+      "fld_billet_depart",
+      "rule_billet_passager",
+      "act_ouvrir_reservation"
+     ]
+    },
+    "statement": "Réserver un billet au nom du passager pour un départ donné."
+   },
+   {
+    "id": "need_paiement_carte",
+    "resolution": {
+     "kind": "satisfied",
+     "nodeIds": [
+      "scr_paiement",
+      "blk_paiement_form",
+      "act_payer_par_carte",
+      "ent_paiement",
+      "rule_paiement_carte",
+      "intg_paiement_carte"
+     ]
+    },
+    "statement": "Payer le billet par carte bancaire directement dans l'application."
+   },
+   {
+    "id": "need_billet_avec_code",
+    "resolution": {
+     "kind": "satisfied",
+     "nodeIds": [
+      "scr_billet_detail",
+      "blk_billet_detail_header",
+      "blk_billet_code_header",
+      "fld_billet_code",
+      "fld_billet_reference",
+      "slot_code_controleur",
+      "act_code_controleur",
+      "scr_billets",
+      "blk_billets_liste",
+      "act_billets_ouvrir_billet"
+     ]
+    },
+    "statement": "Présenter le billet acheté avec un code à montrer au contrôleur."
+   },
+   {
+    "id": "need_application_en_francais",
+    "resolution": {
+     "kind": "satisfied",
+     "nodeIds": [
+      "prj_bus_intercites_billets",
+      "scr_accueil",
+      "blk_accueil_header",
+      "blk_departs_liste",
+      "blk_reservation_form",
+      "blk_paiement_form",
+      "blk_billet_detail_header"
+     ]
+    },
+    "statement": "L'application est intégralement en français."
+   }
+  ],
+  "request": "Ma compagnie de bus intercités vend des billets : l'app liste les départs à venir avec destination, date, heure et prix, permet de chercher un départ par destination, de réserver un billet au nom du passager, de payer par carte dans l'app, puis présente le billet avec un code à montrer au contrôleur. En français.",
+  "requestLocale": "fr"
+ },
+ "native": {
+  "minAndroidSdk": 24,
+  "minIosVersion": "15.0"
+ },
+ "navigation": {
+  "entryScreenId": "scr_bienvenue",
+  "primary": {
+   "destinations": [
+    {
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Accueil"
+      }
+     ],
+     "order": 0,
+     "routeId": "nav_accueil",
+     "icon": "accueil"
+    },
+    {
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Départs"
+      }
+     ],
+     "order": 1,
+     "routeId": "nav_departs",
+     "icon": "recherche"
+    },
+    {
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Réserver"
+      }
+     ],
+     "order": 2,
+     "routeId": "nav_billets",
+     "icon": "billet"
+    },
+    {
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Compte"
+      }
+     ],
+     "order": 3,
+     "routeId": "nav_compte",
+     "icon": "compte"
+    }
+   ]
+  },
+  "routes": [
+   {
+    "id": "nav_accueil",
+    "screenId": "scr_accueil",
+    "title": [
+     {
+      "locale": "fr",
+      "text": "Accueil"
+     }
+    ]
+   },
+   {
+    "id": "nav_departs",
+    "screenId": "scr_departs",
+    "title": [
+     {
+      "locale": "fr",
+      "text": "Prochains départs"
+     }
+    ]
+   },
+   {
+    "id": "nav_billets",
+    "screenId": "scr_billets",
+    "title": [
+     {
+      "locale": "fr",
+      "text": "Mes billets"
+     }
+    ]
+   },
+   {
+    "id": "nav_compte",
+    "screenId": "scr_compte",
+    "title": [
+     {
+      "locale": "fr",
+      "text": "Mon compte"
+     }
+    ]
+   },
+   {
+    "id": "nav_depart_detail",
+    "screenId": "scr_depart_detail",
+    "title": [
+     {
+      "locale": "fr",
+      "text": "Détail du départ"
+     }
+    ]
+   },
+   {
+    "id": "nav_reservation",
+    "screenId": "scr_reservation",
+    "title": [
+     {
+      "locale": "fr",
+      "text": "Réserver un billet"
+     }
+    ]
+   },
+   {
+    "id": "nav_paiement",
+    "screenId": "scr_paiement",
+    "title": [
+     {
+      "locale": "fr",
+      "text": "Paiement par carte"
+     }
+    ]
+   },
+   {
+    "id": "nav_billet_detail",
+    "screenId": "scr_billet_detail",
+    "title": [
+     {
+      "locale": "fr",
+      "text": "Mon billet"
+     }
+    ]
+   },
+   {
+    "id": "nav_parametres",
+    "screenId": "scr_parametres",
+    "title": [
+     {
+      "locale": "fr",
+      "text": "Paramètres"
+     }
+    ]
+   },
+   {
+    "id": "nav_connexion",
+    "screenId": "scr_connexion",
+    "title": [
+     {
+      "locale": "fr",
+      "text": "Connexion"
+     }
+    ]
+   },
+   {
+    "id": "nav_inscription",
+    "screenId": "scr_inscription",
+    "title": [
+     {
+      "locale": "fr",
+      "text": "Créer un compte"
+     }
+    ]
+   },
+   {
+    "id": "nav_bienvenue",
+    "screenId": "scr_bienvenue",
+    "title": [
+     {
+      "locale": "fr",
+      "text": "Bienvenue"
+     }
+    ]
+   },
+   {
+    "id": "nav_oubli",
+    "screenId": "scr_oubli",
+    "title": [
+     {
+      "locale": "fr",
+      "text": "Mot de passe oublié"
+     }
+    ]
+   }
+  ]
+ },
+ "network": {
+  "allowedDomains": [
+   "api.bus-intercites.app",
+   "psxbilpmnojtlzosokzz.supabase.co",
+   "www.deribfy.com"
+  ],
+  "policy": "deny_by_default"
+ },
+ "permissions": [
+  {
+   "permission": "android.permission.POST_NOTIFICATIONS",
+   "platform": "android",
+   "reason": [
+    {
+     "locale": "fr",
+     "text": "Pour vous prévenir avant votre départ et vous informer d'un retard ou d'un changement de quai concernant votre billet."
+    }
+   ],
+   "requiredByCapability": "push_notifications"
+  }
+ ],
+ "projectId": "prj_bus_intercites_billets",
+ "relations": [
+  {
+   "fromEntityId": "ent_depart",
+   "id": "rel_depart_billets",
+   "kind": "one_to_many",
+   "toEntityId": "ent_billet"
+  },
+  {
+   "fromEntityId": "ent_voyageur",
+   "id": "rel_voyageur_billets",
+   "kind": "one_to_many",
+   "toEntityId": "ent_billet"
+  },
+  {
+   "fromEntityId": "ent_billet",
+   "id": "rel_billet_paiement",
+   "kind": "one_to_one",
+   "toEntityId": "ent_paiement"
+  }
+ ],
+ "rules": [
+  {
+   "assertions": [
+    {
+     "fieldId": "fld_depart_destination",
+     "operator": "required"
+    },
+    {
+     "fieldId": "fld_depart_prix",
+     "operator": "gt",
+     "value": 0
+    },
+    {
+     "fieldId": "fld_depart_places",
+     "operator": "gte",
+     "value": 0
+    }
+   ],
+   "description": "Le prix d'un départ doit être strictement positif et la destination renseignée.",
+   "entityId": "ent_depart",
+   "id": "rule_depart_prix_positif",
+   "kind": "validation"
+  },
+  {
+   "assertions": [
+    {
+     "fieldId": "fld_depart_statut",
+     "operator": "neq",
+     "value": "annule"
+    }
+   ],
+   "description": "Un départ annulé ne peut pas être proposé à la réservation.",
+   "entityId": "ent_depart",
+   "id": "rule_depart_reservable",
+   "kind": "validation"
+  },
+  {
+   "assertions": [
+    {
+     "fieldId": "fld_billet_passager",
+     "operator": "required"
+    },
+    {
+     "fieldId": "fld_billet_depart",
+     "operator": "required"
+    },
+    {
+     "fieldId": "fld_billet_code",
+     "operator": "required"
+    },
+    {
+     "fieldId": "fld_billet_prix_total",
+     "operator": "gt",
+     "value": 0
+    }
+   ],
+   "description": "Un billet exige le nom du passager, un départ associé, un code de contrôle et un montant positif.",
+   "entityId": "ent_billet",
+   "id": "rule_billet_passager",
+   "kind": "validation"
+  },
+  {
+   "assertions": [
+    {
+     "fieldId": "fld_billet_statut",
+     "operator": "in",
+     "value": [
+      "en_attente_paiement",
+      "paye",
+      "utilise",
+      "annule"
+     ]
+    }
+   ],
+   "description": "Le statut d'un billet doit appartenir au cycle de vie autorisé.",
+   "entityId": "ent_billet",
+   "id": "rule_billet_statut_valide",
+   "kind": "validation"
+  },
+  {
+   "assertions": [
+    {
+     "fieldId": "fld_paiement_titulaire",
+     "operator": "required"
+    },
+    {
+     "fieldId": "fld_paiement_carte_masquee",
+     "operator": "matches",
+     "value": "^[0-9\\*\\s]{4,25}$"
+    },
+    {
+     "fieldId": "fld_paiement_expiration",
+     "operator": "matches",
+     "value": "^(0[1-9]|1[0-2])/[0-9]{2}$"
+    },
+    {
+     "fieldId": "fld_paiement_montant",
+     "operator": "gt",
+     "value": 0
+    }
+   ],
+   "description": "Un paiement par carte exige le titulaire, une carte masquée, une date d'expiration et un montant positif.",
+   "entityId": "ent_paiement",
+   "id": "rule_paiement_carte",
+   "kind": "validation"
+  },
+  {
+   "assertions": [
+    {
+     "fieldId": "fld_voyageur_nom",
+     "operator": "required"
+    },
+    {
+     "fieldId": "fld_voyageur_email",
+     "operator": "matches",
+     "value": "^[^@\\s]+@[^@\\s]+\\.[a-z]{2,}$"
+    }
+   ],
+   "description": "Le compte voyageur exige un nom et une adresse e-mail valide.",
+   "entityId": "ent_voyageur",
+   "id": "rule_voyageur_email",
+   "kind": "validation"
+  }
+ ],
+ "screens": [
+  {
+   "id": "scr_bienvenue",
+   "title": [
+    {
+     "locale": "fr",
+     "text": "Bienvenue"
+    }
+   ],
+   "blocks": [
+    {
+     "blockType": "header",
+     "id": "blk_bienvenue_accroche",
+     "props": [
+      {
+       "key": "title",
+       "value": "Voyagez léger, réservez en trois gestes"
+      },
+      {
+       "key": "subtitle",
+       "value": "Trouvez votre départ, réservez votre place et présentez votre billet depuis votre téléphone."
+      },
+      {
+       "key": "accroche",
+       "value": true
+      },
+      {
+       "key": "logoUri",
+       "value": "https://psxbilpmnojtlzosokzz.supabase.co/storage/v1/object/public/marque/marque-v2.png"
+      }
+     ]
+    },
+    {
+     "blockType": "spacer",
+     "id": "blk_bienvenue_espace"
+    },
+    {
+     "blockType": "button",
+     "id": "blk_bienvenue_inscription",
+     "visibleWhen": {
+      "kind": "session_anonymous"
+     },
+     "props": [
+      {
+       "key": "label",
+       "value": "Créer un compte"
+      },
+      {
+       "key": "kind",
+       "value": "primary"
+      },
+      {
+       "key": "icon",
+       "value": "person-outline"
+      },
+      {
+       "key": "actionId",
+       "value": "act_bienvenue_inscription"
+      }
+     ]
+    },
+    {
+     "blockType": "button",
+     "id": "blk_bienvenue_connexion",
+     "visibleWhen": {
+      "kind": "session_anonymous"
+     },
+     "props": [
+      {
+       "key": "label",
+       "value": "J'ai déjà un compte"
+      },
+      {
+       "key": "kind",
+       "value": "ghost"
+      },
+      {
+       "key": "actionId",
+       "value": "act_bienvenue_connexion"
+      }
+     ]
+    },
+    {
+     "blockType": "button",
+     "id": "blk_bienvenue_sans_compte",
+     "visibleWhen": {
+      "kind": "session_anonymous"
+     },
+     "props": [
+      {
+       "key": "label",
+       "value": "Continuer sans compte"
+      },
+      {
+       "key": "kind",
+       "value": "link"
+      },
+      {
+       "key": "actionId",
+       "value": "act_bienvenue_sans_compte"
+      }
+     ]
+    },
+    {
+     "blockType": "button",
+     "id": "blk_bienvenue_continuer",
+     "visibleWhen": {
+      "kind": "session_authenticated"
+     },
+     "props": [
+      {
+       "key": "label",
+       "value": "Voir les départs"
+      },
+      {
+       "key": "kind",
+       "value": "primary"
+      },
+      {
+       "key": "icon",
+       "value": "ticket-outline"
+      },
+      {
+       "key": "actionId",
+       "value": "act_bienvenue_continuer"
+      }
+     ]
+    },
+    {
+     "blockType": "empty_state",
+     "id": "blk_bienvenue_attente",
+     "visibleWhen": {
+      "kind": "session_pending_confirmation"
+     },
+     "props": [
+      {
+       "key": "title",
+       "value": "Vérifiez votre boîte mail"
+      },
+      {
+       "key": "message",
+       "value": "Votre compte est créé. Confirmez-le depuis l'e-mail reçu, puis connectez-vous."
+      },
+      {
+       "key": "actionLabel",
+       "value": "Me connecter"
+      },
+      {
+       "key": "actionId",
+       "value": "act_bienvenue_connexion_attente"
+      }
+     ]
+    }
+   ],
+   "showsPrimaryNav": false,
+   "showsScreenTitle": false
+  },
+  {
+   "blocks": [
+    {
+     "blockType": "header",
+     "id": "blk_accueil_header",
+     "props": [
+      {
+       "key": "title",
+       "value": "Bus Intercités"
+      },
+      {
+       "key": "subtitle",
+       "value": "Vos prochains trajets, en un coup d'œil"
+      }
+     ]
+    },
+    {
+     "blockType": "list",
+     "entityId": "ent_depart",
+     "id": "blk_accueil_liste_departs",
+     "props": [
+      {
+       "key": "title",
+       "value": "À l'affiche"
+      },
+      {
+       "key": "titleFieldId",
+       "value": "fld_depart_destination"
+      },
+      {
+       "key": "subtitleFieldId",
+       "value": "fld_depart_date"
+      },
+      {
+       "key": "trailingFieldId",
+       "value": "fld_depart_prix"
+      },
+      {
+       "key": "badgeFieldId",
+       "value": "fld_depart_statut"
+      },
+      {
+       "key": "imageFieldId",
+       "value": "fld_depart_photo"
+      },
+      {
+       "key": "sortFieldId",
+       "value": "fld_depart_date"
+      },
+      {
+       "key": "sortDirection",
+       "value": "asc"
+      },
+      {
+       "key": "pageSize",
+       "value": 3
+      },
+      {
+       "key": "loadingTitle",
+       "value": "Chargement des départs…"
+      },
+      {
+       "key": "errorTitle",
+       "value": "Départs indisponibles"
+      },
+      {
+       "key": "errorMessage",
+       "value": "Impossible de récupérer les prochains départs. Réessayez dans un instant."
+      },
+      {
+       "key": "emptyTitle",
+       "value": "Aucun départ programmé"
+      },
+      {
+       "key": "emptyMessage",
+       "value": "Les prochains départs seront affichés ici dès leur mise en vente."
+      }
+     ]
+    },
+    {
+     "blockType": "empty_state",
+     "id": "blk_accueil_vide",
+     "props": [
+      {
+       "key": "title",
+       "value": "Aucun trajet à l'affiche"
+      },
+      {
+       "key": "message",
+       "value": "Aucun départ n'est actuellement programmé par la compagnie."
+      }
+     ],
+     "visibleWhen": {
+      "entityId": "ent_depart",
+      "kind": "entity_empty"
+     }
+    }
+   ],
+   "id": "scr_accueil",
+   "title": [
+    {
+     "locale": "fr",
+     "text": "Accueil"
+    }
+   ]
+  },
+  {
+   "blocks": [
+    {
+     "blockType": "header",
+     "id": "blk_departs_header",
+     "props": [
+      {
+       "key": "title",
+       "value": "Trouver un trajet"
+      },
+      {
+       "key": "subtitle",
+       "value": "Filtrez par statut ou cherchez votre destination"
+      }
+     ]
+    },
+    {
+     "blockType": "list",
+     "entityId": "ent_depart",
+     "id": "blk_departs_liste",
+     "props": [
+      {
+       "key": "titleFieldId",
+       "value": "fld_depart_destination"
+      },
+      {
+       "key": "subtitleFieldId",
+       "value": "fld_depart_date"
+      },
+      {
+       "key": "trailingFieldId",
+       "value": "fld_depart_prix"
+      },
+      {
+       "key": "badgeFieldId",
+       "value": "fld_depart_statut"
+      },
+      {
+       "key": "imageFieldId",
+       "value": "fld_depart_photo"
+      },
+      {
+       "key": "searchFieldId",
+       "value": "fld_depart_destination"
+      },
+      {
+       "key": "searchPlaceholder",
+       "value": "Rechercher une destination…"
+      },
+      {
+       "key": "sortFieldId",
+       "value": "fld_depart_date"
+      },
+      {
+       "key": "sortDirection",
+       "value": "asc"
+      },
+      {
+       "key": "filterFieldId",
+       "value": "fld_depart_statut"
+      },
+      {
+       "key": "filterOperator",
+       "value": "neq"
+      },
+      {
+       "key": "filterValue",
+       "value": "annule"
+      },
+      {
+       "key": "pageSize",
+       "value": 20
+      },
+      {
+       "key": "loadingTitle",
+       "value": "Chargement des départs…"
+      },
+      {
+       "key": "errorTitle",
+       "value": "Départs indisponibles"
+      },
+      {
+       "key": "errorMessage",
+       "value": "La liste des départs n'a pas pu être chargée."
+      },
+      {
+       "key": "emptyTitle",
+       "value": "Aucun départ trouvé"
+      },
+      {
+       "key": "emptyMessage",
+       "value": "Modifiez votre recherche de destination pour voir d'autres trajets."
+      },
+      {
+       "key": "userFilterFieldIds",
+       "value": [
+        "fld_depart_statut"
+       ]
+      },
+      {
+       "key": "userFilterOperators",
+       "value": [
+        "eq"
+       ]
+      },
+      {
+       "key": "userFilterInputTypes",
+       "value": [
+        "choice"
+       ]
+      }
+     ]
+    },
+    {
+     "blockType": "empty_state",
+     "id": "blk_departs_vide",
+     "props": [
+      {
+       "key": "title",
+       "value": "Aucun départ disponible"
+      },
+      {
+       "key": "message",
+       "value": "Aucun trajet n'est proposé pour le moment. Revenez bientôt."
+      }
+     ],
+     "visibleWhen": {
+      "entityId": "ent_depart",
+      "kind": "entity_empty"
+     }
+    }
+   ],
+   "id": "scr_departs",
+   "title": [
+    {
+     "locale": "fr",
+     "text": "Prochains départs"
+    }
+   ]
+  },
+  {
+   "blocks": [
+    {
+     "blockType": "detail_header",
+     "entityId": "ent_depart",
+     "id": "blk_depart_detail_header",
+     "props": [
+      {
+       "key": "titleFieldId",
+       "value": "fld_depart_destination"
+      },
+      {
+       "key": "subtitleFieldId",
+       "value": "fld_depart_date"
+      },
+      {
+       "key": "trailingFieldId",
+       "value": "fld_depart_prix"
+      },
+      {
+       "key": "badgeFieldIds",
+       "value": [
+        "fld_depart_statut",
+        "fld_depart_duree",
+        "fld_depart_quai",
+        "fld_depart_places"
+       ]
+      },
+      {
+       "key": "imageFieldId",
+       "value": "fld_depart_photo"
+      },
+      {
+       "key": "loadingTitle",
+       "value": "Chargement du départ…"
+      },
+      {
+       "key": "errorTitle",
+       "value": "Départ indisponible"
+      },
+      {
+       "key": "errorMessage",
+       "value": "Les informations de ce départ n'ont pas pu être chargées."
+      }
+     ]
+    },
+    {
+     "blockType": "button",
+     "id": "blk_depart_detail_reserver",
+     "props": [
+      {
+       "key": "label",
+       "value": "Réserver ce billet"
+      },
+      {
+       "key": "actionId",
+       "value": "act_ouvrir_reservation"
+      },
+      {
+       "key": "kind",
+       "value": "primary"
+      },
+      {
+       "key": "icon",
+       "value": "ticket-outline"
+      }
+     ]
+    },
+    {
+     "blockType": "list",
+     "entityId": "ent_billet",
+     "id": "blk_detail_billets_scopes",
+     "props": [
+      {
+       "key": "title",
+       "value": "Billets de ce départ"
+      },
+      {
+       "key": "titleFieldId",
+       "value": "fld_billet_passager"
+      },
+      {
+       "key": "subtitleFieldId",
+       "value": "fld_billet_date_achat"
+      },
+      {
+       "key": "trailingFieldId",
+       "value": "fld_billet_prix_total"
+      },
+      {
+       "key": "badgeFieldId",
+       "value": "fld_billet_statut"
+      },
+      {
+       "key": "scopeFieldId",
+       "value": "fld_billet_depart"
+      },
+      {
+       "key": "sortFieldId",
+       "value": "fld_billet_date_achat"
+      },
+      {
+       "key": "sortDirection",
+       "value": "desc"
+      },
+      {
+       "key": "pageSize",
+       "value": 10
+      },
+      {
+       "key": "loadingTitle",
+       "value": "Chargement des billets…"
+      },
+      {
+       "key": "errorTitle",
+       "value": "Billets indisponibles"
+      },
+      {
+       "key": "errorMessage",
+       "value": "Les billets de ce départ n'ont pas pu être chargés."
+      },
+      {
+       "key": "emptyTitle",
+       "value": "Aucun billet pour ce départ"
+      },
+      {
+       "key": "emptyMessage",
+       "value": "Ce départ n'a encore aucun billet réservé."
+      }
+     ]
+    }
+   ],
+   "id": "scr_depart_detail",
+   "title": [
+    {
+     "locale": "fr",
+     "text": "Détail du départ"
+    }
+   ]
+  },
+  {
+   "blocks": [
+    {
+     "blockType": "header",
+     "id": "blk_reservation_header",
+     "props": [
+      {
+       "key": "title",
+       "value": "Confirmez votre trajet"
+      },
+      {
+       "key": "subtitle",
+       "value": "Vérifiez les informations avant de réserver"
+      }
+     ]
+    },
+    {
+     "blockType": "form",
+     "entityId": "ent_billet",
+     "id": "blk_reservation_form",
+     "props": [
+      {
+       "key": "title",
+       "value": "Informations du passager"
+      },
+      {
+       "key": "fieldIds",
+       "value": [
+        "fld_billet_passager",
+        "fld_billet_depart",
+        "fld_billet_code",
+        "fld_billet_email",
+        "fld_billet_siege",
+        "fld_billet_prix_total"
+       ]
+      },
+      {
+       "key": "submitLabel",
+       "value": "Continuer vers le paiement"
+      },
+      {
+       "key": "loadingTitle",
+       "value": "Préparation de la réservation…"
+      },
+      {
+       "key": "errorTitle",
+       "value": "Réservation impossible"
+      },
+      {
+       "key": "errorMessage",
+       "value": "Vérifiez le nom du passager et le départ sélectionné."
+      },
+      {
+       "key": "emptyTitle",
+       "value": "Rien à afficher pour le moment"
+      }
+     ]
+    }
+   ],
+   "id": "scr_reservation",
+   "title": [
+    {
+     "locale": "fr",
+     "text": "Réserver un billet"
+    }
+   ]
+  },
+  {
+   "blocks": [
+    {
+     "blockType": "header",
+     "id": "blk_paiement_header",
+     "props": [
+      {
+       "key": "title",
+       "value": "Régler votre réservation"
+      },
+      {
+       "key": "subtitle",
+       "value": "Paiement par carte bancaire"
+      }
+     ]
+    },
+    {
+     "blockType": "form",
+     "entityId": "ent_paiement",
+     "id": "blk_paiement_form",
+     "props": [
+      {
+       "key": "title",
+       "value": "Carte bancaire"
+      },
+      {
+       "key": "fieldIds",
+       "value": [
+        "fld_paiement_billet",
+        "fld_paiement_titulaire",
+        "fld_paiement_carte_masquee",
+        "fld_paiement_expiration",
+        "fld_paiement_montant"
+       ]
+      },
+      {
+       "key": "submitLabel",
+       "value": "Payer par carte"
+      },
+      {
+       "key": "loadingTitle",
+       "value": "Chargement du paiement…"
+      },
+      {
+       "key": "errorTitle",
+       "value": "Paiement refusé"
+      },
+      {
+       "key": "errorMessage",
+       "value": "Le paiement n'a pas pu être validé. Vérifiez les informations de la carte."
+      },
+      {
+       "key": "emptyTitle",
+       "value": "Rien à afficher pour le moment"
+      }
+     ]
+    }
+   ],
+   "id": "scr_paiement",
+   "title": [
+    {
+     "locale": "fr",
+     "text": "Paiement par carte"
+    }
+   ]
+  },
+  {
+   "blocks": [
+    {
+     "blockType": "header",
+     "id": "blk_billets_header",
+     "props": [
+      {
+       "key": "title",
+       "value": "Vos trajets réservés"
+      },
+      {
+       "key": "subtitle",
+       "value": "Retrouvez ici chaque réservation confirmée"
+      }
+     ]
+    },
+    {
+     "blockType": "list",
+     "entityId": "ent_billet",
+     "id": "blk_billets_liste",
+     "props": [
+      {
+       "key": "titleFieldId",
+       "value": "fld_billet_depart"
+      },
+      {
+       "key": "subtitleFieldId",
+       "value": "fld_billet_passager"
+      },
+      {
+       "key": "trailingFieldId",
+       "value": "fld_billet_prix_total"
+      },
+      {
+       "key": "badgeFieldId",
+       "value": "fld_billet_statut"
+      },
+      {
+       "key": "sortFieldId",
+       "value": "fld_billet_date_achat"
+      },
+      {
+       "key": "sortDirection",
+       "value": "desc"
+      },
+      {
+       "key": "pageSize",
+       "value": 15
+      },
+      {
+       "key": "loadingTitle",
+       "value": "Chargement de vos billets…"
+      },
+      {
+       "key": "errorTitle",
+       "value": "Billets indisponibles"
+      },
+      {
+       "key": "errorMessage",
+       "value": "Vos billets n'ont pas pu être chargés."
+      },
+      {
+       "key": "emptyTitle",
+       "value": "Aucun billet"
+      },
+      {
+       "key": "emptyMessage",
+       "value": "Vos billets réservés apparaîtront ici."
+      }
+     ]
+    },
+    {
+     "blockType": "empty_state",
+     "id": "blk_billets_vide",
+     "props": [
+      {
+       "key": "title",
+       "value": "Vous n'avez pas encore de billet"
+      },
+      {
+       "key": "message",
+       "value": "Choisissez un départ pour réserver votre premier trajet."
+      },
+      {
+       "key": "actionId",
+       "value": "act_billets_vide_voir_departs"
+      },
+      {
+       "key": "actionLabel",
+       "value": "Voir les départs"
+      }
+     ],
+     "visibleWhen": {
+      "entityId": "ent_billet",
+      "kind": "entity_empty"
+     }
+    }
+   ],
+   "id": "scr_billets",
+   "title": [
+    {
+     "locale": "fr",
+     "text": "Mes réservations"
+    }
+   ]
+  },
+  {
+   "blocks": [
+    {
+     "blockType": "detail_header",
+     "entityId": "ent_billet",
+     "id": "blk_billet_detail_header",
+     "props": [
+      {
+       "key": "titleFieldId",
+       "value": "fld_billet_depart"
+      },
+      {
+       "key": "subtitleFieldId",
+       "value": "fld_billet_passager"
+      },
+      {
+       "key": "trailingFieldId",
+       "value": "fld_billet_prix_total"
+      },
+      {
+       "key": "badgeFieldIds",
+       "value": [
+        "fld_billet_statut",
+        "fld_billet_siege",
+        "fld_billet_reference"
+       ]
+      },
+      {
+       "key": "loadingTitle",
+       "value": "Chargement du billet…"
+      },
+      {
+       "key": "errorTitle",
+       "value": "Billet indisponible"
+      },
+      {
+       "key": "errorMessage",
+       "value": "Ce billet n'a pas pu être chargé."
+      }
+     ]
+    },
+    {
+     "blockType": "header",
+     "id": "blk_billet_code_header",
+     "props": [
+      {
+       "key": "title",
+       "value": "Code à présenter au contrôleur"
+      },
+      {
+       "key": "subtitle",
+       "value": "Code en cours de génération…"
+      }
+     ]
+    },
+    {
+     "blockType": "button",
+     "id": "blk_billet_detail_retour",
+     "props": [
+      {
+       "key": "label",
+       "value": "Retour à mes billets"
+      },
+      {
+       "key": "actionId",
+       "value": "act_voir_mes_billets"
+      },
+      {
+       "key": "kind",
+       "value": "ghost"
+      },
+      {
+       "key": "icon",
+       "value": "arrow-back-outline"
+      }
+     ]
+    }
+   ],
+   "id": "scr_billet_detail",
+   "title": [
+    {
+     "locale": "fr",
+     "text": "Mon billet"
+    }
+   ]
+  },
+  {
+   "blocks": [
+    {
+     "blockType": "header",
+     "id": "blk_compte_header",
+     "props": [
+      {
+       "key": "title",
+       "value": "Votre espace"
+      },
+      {
+       "key": "subtitle",
+       "value": "Vos informations de voyageur"
+      }
+     ]
+    },
+    {
+     "blockType": "empty_state",
+     "id": "blk_compte_visiteur",
+     "visibleWhen": {
+      "kind": "session_anonymous"
+     },
+     "props": [
+      {
+       "key": "title",
+       "value": "Vous n'êtes pas connecté"
+      },
+      {
+       "key": "message",
+       "value": "Connectez-vous pour retrouver vos billets et vos informations."
+      },
+      {
+       "key": "actionLabel",
+       "value": "Se connecter"
+      },
+      {
+       "key": "actionId",
+       "value": "act_aller_connexion"
+      }
+     ]
+    },
+    {
+     "blockType": "form",
+     "entityId": "ent_voyageur",
+     "id": "blk_compte_form",
+     "props": [
+      {
+       "key": "title",
+       "value": "Mes informations"
+      },
+      {
+       "key": "fieldIds",
+       "value": [
+        "fld_voyageur_nom",
+        "fld_voyageur_email",
+        "fld_voyageur_telephone",
+        "fld_voyageur_ville_favorite",
+        "fld_voyageur_notifications"
+       ]
+      },
+      {
+       "key": "submitLabel",
+       "value": "Enregistrer mes informations"
+      },
+      {
+       "key": "loadingTitle",
+       "value": "Chargement de votre profil…"
+      },
+      {
+       "key": "errorTitle",
+       "value": "Profil indisponible"
+      },
+      {
+       "key": "errorMessage",
+       "value": "Vos informations n'ont pas pu être enregistrées."
+      },
+      {
+       "key": "emptyTitle",
+       "value": "Rien à afficher pour le moment"
+      }
+     ],
+     "visibleWhen": {
+      "kind": "session_authenticated"
+     }
+    },
+    {
+     "blockType": "button",
+     "id": "blk_compte_parametres",
+     "props": [
+      {
+       "key": "label",
+       "value": "Paramètres du compte"
+      },
+      {
+       "key": "actionId",
+       "value": "act_ouvrir_parametres"
+      },
+      {
+       "key": "kind",
+       "value": "ghost"
+      },
+      {
+       "key": "icon",
+       "value": "settings-outline"
+      }
+     ],
+     "visibleWhen": {
+      "kind": "session_authenticated"
+     }
+    }
+   ],
+   "id": "scr_compte",
+   "title": [
+    {
+     "locale": "fr",
+     "text": "Mon compte"
+    }
+   ]
+  },
+  {
+   "blocks": [
+    {
+     "blockType": "header",
+     "id": "blk_parametres_header",
+     "props": [
+      {
+       "key": "title",
+       "value": "Gestion du compte"
+      },
+      {
+       "key": "subtitle",
+       "value": "Actions définitives sur vos données"
+      }
+     ]
+    },
+    {
+     "blockType": "button",
+     "id": "blk_compte_deconnexion",
+     "visibleWhen": {
+      "kind": "session_authenticated"
+     },
+     "props": [
+      {
+       "key": "label",
+       "value": "Se déconnecter"
+      },
+      {
+       "key": "kind",
+       "value": "ghost"
+      },
+      {
+       "key": "actionId",
+       "value": "act_deconnexion"
+      },
+      {
+       "key": "icon",
+       "value": "log-out-outline"
+      }
+     ]
+    },
+    {
+     "blockType": "button",
+     "id": "blk_compte_supprimer",
+     "props": [
+      {
+       "key": "label",
+       "value": "Supprimer mon compte"
+      },
+      {
+       "key": "actionId",
+       "value": "act_supprimer_compte"
+      },
+      {
+       "key": "kind",
+       "value": "ghost"
+      },
+      {
+       "key": "icon",
+       "value": "trash-outline"
+      }
+     ],
+     "visibleWhen": {
+      "kind": "session_authenticated"
+     }
+    }
+   ],
+   "id": "scr_parametres",
+   "title": [
+    {
+     "locale": "fr",
+     "text": "Paramètres"
+    }
+   ],
+   "presentation": "sheet",
+   "dismissLabel": [
+    {
+     "locale": "fr",
+     "text": "Fermer"
+    }
+   ]
+  },
+  {
+   "id": "scr_connexion",
+   "title": [
+    {
+     "locale": "fr",
+     "text": "Connexion"
+    }
+   ],
+   "blocks": [
+    {
+     "blockType": "header",
+     "id": "blk_connexion_header",
+     "props": [
+      {
+       "key": "title",
+       "value": "Bon retour"
+      },
+      {
+       "key": "subtitle",
+       "value": "Connectez-vous pour retrouver vos billets."
+      }
+     ]
+    },
+    {
+     "blockType": "form",
+     "id": "blk_connexion_form",
+     "entityId": "ent_voyageur",
+     "props": [
+      {
+       "key": "title",
+       "value": "Vos identifiants"
+      },
+      {
+       "key": "fieldIds",
+       "value": [
+        "fld_voyageur_email",
+        "fld_voyageur_mot_de_passe"
+       ]
+      },
+      {
+       "key": "submitLabel",
+       "value": "Se connecter"
+      },
+      {
+       "key": "loadingTitle",
+       "value": "Un instant…"
+      },
+      {
+       "key": "emptyTitle",
+       "value": "Rien à afficher pour le moment"
+      }
+     ]
+    },
+    {
+     "blockType": "button",
+     "id": "blk_connexion_oubli",
+     "props": [
+      {
+       "key": "label",
+       "value": "Mot de passe oublié"
+      },
+      {
+       "key": "kind",
+       "value": "link"
+      },
+      {
+       "key": "actionId",
+       "value": "act_mot_de_passe_oublie"
+      }
+     ]
+    },
+    {
+     "blockType": "button",
+     "id": "blk_connexion_vers_inscription",
+     "props": [
+      {
+       "key": "label",
+       "value": "Créer un compte"
+      },
+      {
+       "key": "kind",
+       "value": "ghost"
+      },
+      {
+       "key": "actionId",
+       "value": "act_aller_inscription"
+      },
+      {
+       "key": "icon",
+       "value": "person-outline"
+      }
+     ]
+    }
+   ],
+   "showsPrimaryNav": false,
+   "showsScreenTitle": false,
+   "presentation": "sheet",
+   "dismissLabel": [
+    {
+     "locale": "fr",
+     "text": "Fermer"
+    }
+   ]
+  },
+  {
+   "id": "scr_inscription",
+   "title": [
+    {
+     "locale": "fr",
+     "text": "Créer un compte"
+    }
+   ],
+   "blocks": [
+    {
+     "blockType": "header",
+     "id": "blk_inscription_header",
+     "props": [
+      {
+       "key": "title",
+       "value": "Bienvenue"
+      },
+      {
+       "key": "subtitle",
+       "value": "Quelques informations et vous voyagez."
+      }
+     ]
+    },
+    {
+     "blockType": "empty_state",
+     "id": "blk_inscription_attente",
+     "visibleWhen": {
+      "kind": "session_pending_confirmation"
+     },
+     "props": [
+      {
+       "key": "title",
+       "value": "Vérifiez votre boîte mail"
+      },
+      {
+       "key": "message",
+       "value": "Votre compte est créé. Ouvrez l'e-mail de Bus Intercités et cliquez sur le lien de confirmation, puis revenez vous connecter."
+      },
+      {
+       "key": "actionLabel",
+       "value": "J'ai confirmé, me connecter"
+      },
+      {
+       "key": "actionId",
+       "value": "act_attente_vers_connexion"
+      }
+     ]
+    },
+    {
+     "blockType": "form",
+     "id": "blk_inscription_form",
+     "entityId": "ent_voyageur",
+     "props": [
+      {
+       "key": "title",
+       "value": "Vos informations"
+      },
+      {
+       "key": "fieldIds",
+       "value": [
+        "fld_voyageur_nom",
+        "fld_voyageur_email",
+        "fld_voyageur_telephone",
+        "fld_voyageur_mot_de_passe"
+       ]
+      },
+      {
+       "key": "submitLabel",
+       "value": "Créer mon compte"
+      },
+      {
+       "key": "loadingTitle",
+       "value": "Un instant…"
+      },
+      {
+       "key": "emptyTitle",
+       "value": "Rien à afficher pour le moment"
+      }
+     ],
+     "visibleWhen": {
+      "kind": "session_anonymous"
+     }
+    },
+    {
+     "blockType": "button",
+     "id": "blk_inscription_vers_connexion",
+     "props": [
+      {
+       "key": "label",
+       "value": "J'ai déjà un compte"
+      },
+      {
+       "key": "kind",
+       "value": "ghost"
+      },
+      {
+       "key": "actionId",
+       "value": "act_aller_connexion"
+      },
+      {
+       "key": "icon",
+       "value": "arrow-back-outline"
+      }
+     ],
+     "visibleWhen": {
+      "kind": "session_anonymous"
+     }
+    }
+   ],
+   "showsPrimaryNav": false,
+   "showsScreenTitle": false,
+   "presentation": "sheet",
+   "dismissLabel": [
+    {
+     "locale": "fr",
+     "text": "Fermer"
+    }
+   ]
+  },
+  {
+   "id": "scr_oubli",
+   "title": [
+    {
+     "locale": "fr",
+     "text": "Mot de passe oublié"
+    }
+   ],
+   "showsPrimaryNav": false,
+   "blocks": [
+    {
+     "blockType": "header",
+     "id": "blk_oubli_header",
+     "props": [
+      {
+       "key": "title",
+       "value": "Réinitialiser votre mot de passe"
+      },
+      {
+       "key": "subtitle",
+       "value": "Indiquez votre adresse : si un compte existe, vous recevrez un lien pour choisir un nouveau mot de passe."
+      }
+     ]
+    },
+    {
+     "blockType": "form",
+     "id": "blk_oubli_form",
+     "entityId": "ent_voyageur",
+     "props": [
+      {
+       "key": "title",
+       "value": "Votre adresse"
+      },
+      {
+       "key": "fieldIds",
+       "value": [
+        "fld_voyageur_email"
+       ]
+      },
+      {
+       "key": "submitLabel",
+       "value": "Envoyer le lien"
+      },
+      {
+       "key": "loadingTitle",
+       "value": "Un instant…"
+      },
+      {
+       "key": "emptyTitle",
+       "value": "Rien à afficher pour le moment"
+      }
+     ]
+    },
+    {
+     "blockType": "spacer",
+     "id": "blk_oubli_espace"
+    },
+    {
+     "blockType": "button",
+     "id": "blk_oubli_retour",
+     "props": [
+      {
+       "key": "label",
+       "value": "Retour à la connexion"
+      },
+      {
+       "key": "kind",
+       "value": "ghost"
+      },
+      {
+       "key": "icon",
+       "value": "arrow-back-outline"
+      },
+      {
+       "key": "actionId",
+       "value": "act_oubli_retour"
+      }
+     ]
+    }
+   ],
+   "showsScreenTitle": false,
+   "presentation": "sheet",
+   "dismissLabel": [
+    {
+     "locale": "fr",
+     "text": "Fermer"
+    }
+   ]
+  }
+ ],
+ "slots": [
+  {
+   "allowedImports": [],
+   "description": "Compose le code de contrôle lisible à présenter au contrôleur (référence du billet, initiales du passager et clé de vérification) à partir des billets enregistrés.",
+   "id": "slot_code_controleur",
+   "inputs": [
+    {
+     "name": "billets",
+     "type": "json"
+    },
+    {
+     "name": "prefixeCompagnie",
+     "type": "string"
+    }
+   ],
+   "outputs": [
+    {
+     "name": "codeAffiche",
+     "type": "string"
+    },
+    {
+     "name": "detailValidite",
+     "type": "string"
+    }
+   ]
+  },
+  {
+   "allowedImports": [
+    "date-fns"
+   ],
+   "description": "Calcule un résumé textuel des prochains départs (nombre de départs du jour, prochaine destination et heure) pour l'en-tête de l'accueil.",
+   "id": "slot_resume_departs",
+   "inputs": [
+    {
+     "name": "departs",
+     "type": "json"
+    },
+    {
+     "name": "libelleVide",
+     "type": "string"
+    }
+   ],
+   "outputs": [
+    {
+     "name": "resume",
+     "type": "string"
+    },
+    {
+     "name": "prochaineDestination",
+     "type": "string"
+    }
+   ]
+  }
+ ]
 }

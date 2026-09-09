@@ -234,6 +234,18 @@ export const AIR_MIGRATIONS: readonly AirMigration[] = [
       "IDENTITÉ : sans image, l'artefact est celui de 1.16.0.",
     migrate: (document) => document,
   },
+  {
+    from: "1.17.0",
+    to: "1.18.0",
+    description:
+      "AIR 1.18.0 : `screen.dismissLabel` OPTIONNEL — le mot du contrôle qui " +
+      "referme une feuille. Mesuré à l'écran : une feuille montait du bas et " +
+      "rien n'indiquait comment en sortir sur Android. Le moteur dessine le " +
+      "signe, le document le NOMME — écrire « Fermer » dans le moteur serait " +
+      "du texte de langue naturelle produit par le compilateur (F3). " +
+      "Migration IDENTITÉ : sans déclaration, l'artefact est celui de 1.17.0.",
+    migrate: (document) => document,
+  },
 ];
 
 export class AirMigrationError extends Error {

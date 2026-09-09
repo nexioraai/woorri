@@ -2,6 +2,7 @@
 // config EXPLICITE émise depuis l'AIR, patron prouvé au banc V4).
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { FermerFeuille } from "./lib/runtime/fermer-feuille";
 import { declarerRacines } from "./lib/runtime/racines-navigation";
 import { navData } from "./nav.data";
 import ScrAccueilScreen from "./screens/scr_accueil";
@@ -41,19 +42,19 @@ export function Navigation() {
       <Stack.Screen name="scr_compte" component={ScrCompteScreen}
         options={{ title: navData.routes.find((x) => x.screenId === "scr_compte")!.title, gestureEnabled: false }} />
       <Stack.Screen name="scr_connexion" component={ScrConnexionScreen}
-        options={{ title: navData.routes.find((x) => x.screenId === "scr_connexion")!.title, headerShown: false, presentation: "modal" }} />
+        options={{ title: "", presentation: "modal", headerBackVisible: false, headerShadowVisible: false, headerRight: () => <FermerFeuille testID="fermer-scr_connexion" label="Fermer" /> }} />
       <Stack.Screen name="scr_depart_detail" component={ScrDepartDetailScreen}
         options={{ title: navData.routes.find((x) => x.screenId === "scr_depart_detail")!.title }} />
       <Stack.Screen name="scr_departs" component={ScrDepartsScreen}
         options={{ title: navData.routes.find((x) => x.screenId === "scr_departs")!.title, gestureEnabled: false }} />
       <Stack.Screen name="scr_inscription" component={ScrInscriptionScreen}
-        options={{ title: navData.routes.find((x) => x.screenId === "scr_inscription")!.title, headerShown: false, presentation: "modal" }} />
+        options={{ title: "", presentation: "modal", headerBackVisible: false, headerShadowVisible: false, headerRight: () => <FermerFeuille testID="fermer-scr_inscription" label="Fermer" /> }} />
       <Stack.Screen name="scr_oubli" component={ScrOubliScreen}
-        options={{ title: navData.routes.find((x) => x.screenId === "scr_oubli")!.title, headerShown: false, presentation: "modal" }} />
+        options={{ title: "", presentation: "modal", headerBackVisible: false, headerShadowVisible: false, headerRight: () => <FermerFeuille testID="fermer-scr_oubli" label="Fermer" /> }} />
       <Stack.Screen name="scr_paiement" component={ScrPaiementScreen}
         options={{ title: navData.routes.find((x) => x.screenId === "scr_paiement")!.title }} />
       <Stack.Screen name="scr_parametres" component={ScrParametresScreen}
-        options={{ title: navData.routes.find((x) => x.screenId === "scr_parametres")!.title, presentation: "modal" }} />
+        options={{ title: navData.routes.find((x) => x.screenId === "scr_parametres")!.title, presentation: "modal", headerBackVisible: false, headerShadowVisible: false, headerRight: () => <FermerFeuille testID="fermer-scr_parametres" label="Fermer" /> }} />
       <Stack.Screen name="scr_reservation" component={ScrReservationScreen}
         options={{ title: navData.routes.find((x) => x.screenId === "scr_reservation")!.title }} />
       </Stack.Navigator>

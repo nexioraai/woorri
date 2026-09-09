@@ -27,6 +27,16 @@ const makeSheet = (c: Palette) =>
     // DET-006 : section qui remplit et BORNE sa hauteur, plus conteneur
     // d'enfants borné — la liste virtualisée y retrouve une fenêtre finie.
     sectionFill: { flex: 1 },
+    // SECTION RESSERRÉE (1.18.0) — la gouttière LATÉRALE reste celle de toutes
+    // les autres sections (les bords ne bougent pas d'un bloc à l'autre) ; seule
+    // la respiration VERTICALE se réduit. Un lien de texte prolonge le bloc
+    // qu'il suit, il n'en ouvre pas un nouveau.
+    // ASYMÉTRIQUE, et c'est le point : peu d'air AU-DESSUS (le lien continue le
+    // bloc qu'il suit), davantage EN DESSOUS (il ne se confond pas avec ce qui
+    // vient après). Mesuré au premier build : une réduction symétrique laissait
+    // l'écart du haut ÉGAL à celui du bas — le lien flottait toujours entre les
+    // deux, exactement le défaut jugé.
+    sectionTight: { paddingTop: theme.space.xxs, paddingBottom: theme.space.xl },
     sectionFillBody: { flex: 1 },
     // Disposition EN LIGNE (1.3.0) : les enfants se suivent et passent à la
     // ligne. `gap` remplace des marges par enfant — aucune propriété physique,
@@ -93,6 +103,16 @@ const makeSheet = (c: Palette) =>
       justifyContent: "center",
     },
     fieldRevelIcone: { fontSize: theme.font.title, color: c.muted },
+    // FERMETURE D'UNE FEUILLE (1.18.0) — posée dans l'en-tête natif, à la fin
+    // (propriété LOGIQUE via `alignItems`, aucun côté physique). Cible PLEINE :
+    // un contrôle discret n'est pas un contrôle petit.
+    fermerFeuille: {
+      minWidth: theme.size.tapTarget,
+      minHeight: theme.size.tapTarget,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    fermerFeuilleIcone: { fontSize: theme.font.title, color: c.text },
     // — chip (1.5.0, DET-034) : la CIBLE garde tapTarget, le VISUEL est un
     // badge. La discrétion est dans le rendu, jamais dans la zone de toucher.
     // Style de BASE du chip (jamais empilé sur `button` : rien à écraser,

@@ -119,6 +119,13 @@ export const EMBEDDED_SOURCES: readonly EmbeddedSourceSpec[] = [
     rewrites: {},
   },
   {
+    // Contrôle de fermeture d'une FEUILLE (1.18.0) — même réécriture que
+    // `primary-nav` : `useStyles` vit dans le pont de thème.
+    source: "compiler/runtime/fermer-feuille.tsx",
+    target: "lib/runtime/fermer-feuille.tsx",
+    rewrites: { "@deribfy/primitives/theme-bridge": "../primitives/theme-bridge" },
+  },
+  {
     // Règle UNIQUE de navigation : une destination principale est une racine.
     // Copiée avant `primary-nav` et `air-runtime`, ses deux seuls appelants.
     source: "compiler/runtime/racines-navigation.ts",

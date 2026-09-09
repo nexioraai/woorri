@@ -57,6 +57,21 @@ export type SectionProps = PropsWithChildren<
      * le cliquet d'étanchéité interdit tout style chez les blocs, à raison.
      */
     inline?: boolean;
+    /**
+     * SECTION RESSERRÉE (1.18.0) — même gouttière latérale, respiration
+     * verticale réduite.
+     *
+     * Mesuré à l'écran (SM-A175F) : « Mot de passe oublié » FLOTTAIT. Le
+     * formulaire fermait sa section, le lien en ouvrait une autre, et les deux
+     * respirations s'additionnaient — ~62 dp entre le bouton d'envoi et un
+     * simple lien de texte. Le lien n'appartenait plus visuellement au
+     * formulaire qu'il prolonge.
+     *
+     * Un LIEN n'est pas une action de bloc : il ne mérite pas la respiration
+     * d'un bloc. Le bloc choisit le RÔLE (`kind: "link"`), la primitive choisit
+     * la forme — le cliquet d'étanchéité interdit tout style chez les blocs.
+     */
+    tight?: boolean;
   }
 >;
 

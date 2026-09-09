@@ -21,7 +21,7 @@ import {
 // 1.7.1 (E3.3, D-131) : provenance APLANIE (sourceKind/sourceIntegrationId/
 //   sourceDomain/sourceRefreshSeconds) — l'union 1.7.0 dépassait la limite
 //   réelle de grammaire de l'API (classe D-078) ; sémantique inchangée.
-export const AIR_SCHEMA_VERSION = "1.17.0";
+export const AIR_SCHEMA_VERSION = "1.18.0";
 
 export const semverSchema = z.string().regex(/^\d+\.\d+\.\d+$/);
 export const sha256Schema = z.string().regex(/^[0-9a-f]{64}$/);
@@ -226,6 +226,27 @@ const screenSchema = z.strictObject({
    * OPTIONNEL : sans déclaration, l'écran reste une carte poussée.
    */
   presentation: z.enum(["card", "sheet"]).optional(),
+  /**
+   * LIBELLÉ DE FERMETURE (1.18.0) — le mot que porte le contrôle qui referme
+   * une feuille.
+   *
+   * Mesuré à l'écran (SM-A175F) : une feuille montait du bas et RIEN n'y
+   * annonçait comment en sortir. iOS fournit le glissement vers le bas ;
+   * Android ne fournit rien pour une pile native — seul le bouton matériel,
+   * qu'aucun pixel n'indique. Le moteur peut donc dessiner un signe de
+   * fermeture, mais il ne peut pas le NOMMER : écrire « Fermer » dans le
+   * moteur serait du texte de langue naturelle produit par le compilateur
+   * (F3), et ce texte partirait tel quel dans toutes les langues.
+   *
+   * Le DOCUMENT le nomme, le moteur le dessine. Sans déclaration, le contrôle
+   * est rendu avec son seul rôle d'accessibilité — la fermeture reste
+   * possible et visible, mais elle n'est pas ANNONCÉE. Aucune valeur par
+   * défaut n'est inventée.
+   *
+   * N'a de sens que sur `presentation: "sheet"` : le validateur refuse la
+   * déclaration ailleurs, plutôt que de l'ignorer en silence.
+   */
+  dismissLabel: localizedTextSchema.optional(),
   blocks: z.array(blockInstanceSchema).min(1),
 });
 

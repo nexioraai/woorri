@@ -23,7 +23,7 @@ export default function ScrOubliScreen({ route }: AirScreenProps) {
     <ScreenShell testID="scr_oubli" title={screenData.title}>
       <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
       <ScrollView
-        contentContainerStyle={{ flexGrow: 1, paddingTop: insets.top, paddingBottom: insets.bottom }}
+        contentContainerStyle={{ flexGrow: 1, paddingBottom: insets.bottom }}
         keyboardShouldPersistTaps="handled"
       >
         <AirHeader screen={screenData} blockId="blk_oubli_header" />

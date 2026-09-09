@@ -68,6 +68,7 @@ export function Section({
   accessibilityLabel,
   fill = false,
   inline = false,
+  tight = false,
 }: SectionProps) {
   const s = useStyles();
   // DET-025 — `fill` était DÉCLARÉ par le contrat, PORTÉ par les styles,
@@ -79,7 +80,13 @@ export function Section({
   // faite : le contrat et les styles étaient bons, le câblage manquait.
   return (
     <View
-      style={fill ? [s.section, s.sectionFill] : s.section}
+      style={
+        fill
+          ? [s.section, s.sectionFill]
+          : tight
+            ? [s.section, s.sectionTight]
+            : s.section
+      }
       testID={testID}
       accessibilityLabel={accessibilityLabel}
     >

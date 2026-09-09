@@ -117,6 +117,10 @@ export const SECTIONS_CORRECTIVES: Readonly<Record<string, readonly SectionEmiss
   // Masquer la barre sur une destination se répare là où l'écran et la
   // navigation sont décrits — mêmes sections que son voisin symétrique.
   AIR_NAV_DESTINATION_SANS_BARRE: ["base", "ecrans"],
+  // Un libellé de fermeture déclaré hors d'une feuille : les deux moitiés du
+  // défaut — le libellé et la présentation — vivent dans la même section
+  // d'écran. Réémettre `ecrans` suffit ; `base` l'accompagne comme partout.
+  AIR_SHEET_DISMISS_SANS_FEUILLE: ["base", "ecrans"],
   AIR_NAV_ENTRY_UNKNOWN: ["base", "ecrans"],
   AIR_NAV_ORDER_DUPLICATE: ["base"],
   AIR_NAV_ORDER_NOT_CONTIGUOUS: ["base"],
