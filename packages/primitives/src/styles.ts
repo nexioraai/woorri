@@ -77,6 +77,15 @@ const makeSheet = (c: Palette) =>
       borderColor: c.primary,
     },
     buttonDisabled: { opacity: theme.opacity.disabled },
+    // Révélation du secret : cible tactile PLEINE (48 dp), posée dans la
+    // rangée du champ — la contrainte A vaut aussi pour ce contrôle.
+    fieldRevele: {
+      minWidth: theme.size.tapTarget,
+      minHeight: theme.size.tapTarget,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    fieldRevelIcone: { fontSize: theme.font.title, color: c.muted },
     // — chip (1.5.0, DET-034) : la CIBLE garde tapTarget, le VISUEL est un
     // badge. La discrétion est dans le rendu, jamais dans la zone de toucher.
     // Style de BASE du chip (jamais empilé sur `button` : rien à écraser,

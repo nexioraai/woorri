@@ -3,6 +3,7 @@
 // « au cas où » : chaque primitive est exigée par un bloc de 3.3 ou par le
 // harnais 3.4. Les rôles a11y sont posés ici (C2) ; les contrats n'exposent
 // que testID/accessibilityLabel.
+import { useState } from "react";
 import { ActivityIndicator, Image, Pressable, Text, TextInput, View } from "react-native";
 // 1.6.0 — SIGNE des boutons. Même paquet, même vocabulaire fermé et même
 // police EMBARQUÉE que les onglets : aucun accès réseau, et le moteur ne
@@ -186,6 +187,11 @@ export function TextField({
   accessibilityLabel,
 }: TextFieldProps) {
   const s = useStyles();
+  // RÉVÉLATION DU SECRET (1.5.0) — une saisie masquée sans moyen de la relire
+  // se corrige à l'aveugle : c'est la première cause d'échec de connexion.
+  // L'état est LOCAL au champ et repart masqué à chaque montage : il ne se
+  // conserve pas, il ne se propage pas.
+  const [revele, setRevele] = useState(false);
   return (
     <View style={s.fieldWrap} testID={testID}>
       {/* DET-033 : un libellé VIDE ne rend rien — un champ compact (recherche)
@@ -198,9 +204,28 @@ export function TextField({
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
-          secureTextEntry={secure}
+          secureTextEntry={secure && !revele}
           accessibilityLabel={accessibilityLabel ?? label}
         />
+        {secure && (
+          <Pressable
+            style={s.fieldRevele}
+            onPress={() => {
+              setRevele((v) => !v);
+            }}
+            testID={testID === undefined ? undefined : `${testID}-revele`}
+            accessibilityRole="button"
+            accessibilityState={{ selected: revele }}
+            // F3 : aucun texte naturel dans une primitive — le nom accessible
+            // vient de l'appelant, jamais d'une chaîne écrite ici.
+            accessibilityLabel={accessibilityLabel ?? label}
+          >
+            <Ionicons
+              name={revele ? "eye-off-outline" : "eye-outline"}
+              style={s.fieldRevelIcone}
+            />
+          </Pressable>
+        )}
         {loading && <ActivityIndicator size="small" style={s.fieldSpinner} />}
       </View>
       {error !== undefined && (

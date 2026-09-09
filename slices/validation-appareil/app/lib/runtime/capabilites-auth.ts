@@ -72,6 +72,19 @@ export function creerCapabilitesAuthVerifiee(session: SessionVerifiee): Capabili
         void session.fermer();
         return true;
       }
+      if (call.method === "resetPassword") {
+        // Le mot de passe oublié n'exige QUE l'identifiant : demander le
+        // secret à quelqu'un qui l'a perdu n'aurait aucun sens.
+        const champ = call.params.identifiantFieldId;
+        if (typeof champ !== "string") {
+          console.warn("AIR_CAPABILITY_AUTH_FIELDS_MISSING");
+          return false;
+        }
+        const adresse = call.params[champ];
+        if (typeof adresse !== "string" || adresse.trim() === "") return false;
+        void session.reinitialiser(adresse);
+        return true;
+      }
       if (call.method !== "signIn" && call.method !== "signUp") {
         console.warn(`AIR_CAPABILITY_NOT_IMPLEMENTED:${call.capability}.${call.method}`);
         return false;

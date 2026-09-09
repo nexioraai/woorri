@@ -149,7 +149,10 @@ describe("V2 — A et G ne concluent JAMAIS à la conformité", () => {
     // · row · imageHeader — puis `buttonChip` (DET-034) : le chip de filtre
     // garde `tapTarget` par construction, et l'instrument le VOIT — 7ᵉ surface
     // contrainte, pas une exemption.
-    expect(a?.detail).toContain("7 surface(s) contrainte(s)");
+    // 8ᵉ surface : l'ŒIL DE RÉVÉLATION du mot de passe. Il porte `tapTarget`
+    // comme les autres, et l'instrument le VOIT — un contrôle ajouté à
+    // l'aveugle aurait fait baisser ce compte, pas monter.
+    expect(a?.detail).toContain("8 surface(s) contrainte(s)");
     expect(a?.detail).toContain("NON MESURÉ : zones sûres");
     expect(g?.detail).toContain("0 encapsulé dans un ScrollView");
     expect(g?.detail).toContain("NON MESURÉ : jank au défilement");

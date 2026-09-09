@@ -376,6 +376,61 @@
         "kind": "navigate",
         "screenId": "scr_departs"
       }
+    },
+    {
+      "id": "act_bienvenue_sans_compte",
+      "name": "Découvrir sans compte",
+      "trigger": {
+        "blockId": "blk_bienvenue_sans_compte",
+        "kind": "ui"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_departs"
+      }
+    },
+    {
+      "id": "act_mot_de_passe_oublie",
+      "name": "Aller à la réinitialisation",
+      "trigger": {
+        "blockId": "blk_connexion_oubli",
+        "kind": "ui"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_oubli"
+      }
+    },
+    {
+      "id": "act_oubli_envoyer",
+      "name": "Envoyer le lien de réinitialisation",
+      "trigger": {
+        "blockId": "blk_oubli_form",
+        "kind": "ui"
+      },
+      "effect": {
+        "kind": "capability",
+        "capability": "auth",
+        "method": "resetPassword",
+        "params": [
+          {
+            "key": "identifiantFieldId",
+            "value": "fld_voyageur_email"
+          }
+        ]
+      }
+    },
+    {
+      "id": "act_oubli_retour",
+      "name": "Retour à la connexion",
+      "trigger": {
+        "blockId": "blk_oubli_retour",
+        "kind": "ui"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_connexion"
+      }
     }
   ],
   "airSchemaVersion": "1.15.0",
@@ -1665,6 +1720,16 @@
             "text": "Bienvenue"
           }
         ]
+      },
+      {
+        "id": "nav_oubli",
+        "screenId": "scr_oubli",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Mot de passe oublié"
+          }
+        ]
       }
     ]
   },
@@ -1913,6 +1978,31 @@
             {
               "key": "actionId",
               "value": "act_bienvenue_connexion"
+            }
+          ]
+        },
+        {
+          "blockType": "button",
+          "id": "blk_bienvenue_sans_compte",
+          "visibleWhen": {
+            "kind": "session_anonymous"
+          },
+          "props": [
+            {
+              "key": "label",
+              "value": "Continuer sans compte"
+            },
+            {
+              "key": "kind",
+              "value": "ghost"
+            },
+            {
+              "key": "icon",
+              "value": "close-outline"
+            },
+            {
+              "key": "actionId",
+              "value": "act_bienvenue_sans_compte"
             }
           ]
         },
@@ -2948,6 +3038,28 @@
               "value": "person-outline"
             }
           ]
+        },
+        {
+          "blockType": "button",
+          "id": "blk_connexion_oubli",
+          "props": [
+            {
+              "key": "label",
+              "value": "Mot de passe oublié"
+            },
+            {
+              "key": "kind",
+              "value": "ghost"
+            },
+            {
+              "key": "icon",
+              "value": "help-circle-outline"
+            },
+            {
+              "key": "actionId",
+              "value": "act_mot_de_passe_oublie"
+            }
+          ]
         }
       ],
       "showsPrimaryNav": false
@@ -3062,6 +3174,87 @@
         }
       ],
       "showsPrimaryNav": false
+    },
+    {
+      "id": "scr_oubli",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Mot de passe oublié"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "blocks": [
+        {
+          "blockType": "header",
+          "id": "blk_oubli_header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Réinitialiser votre mot de passe"
+            },
+            {
+              "key": "subtitle",
+              "value": "Indiquez votre adresse : si un compte existe, vous recevrez un lien pour choisir un nouveau mot de passe."
+            }
+          ]
+        },
+        {
+          "blockType": "form",
+          "id": "blk_oubli_form",
+          "entityId": "ent_voyageur",
+          "props": [
+            {
+              "key": "title",
+              "value": "Votre adresse"
+            },
+            {
+              "key": "fieldIds",
+              "value": [
+                "fld_voyageur_email"
+              ]
+            },
+            {
+              "key": "submitLabel",
+              "value": "Envoyer le lien"
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Un instant…"
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Rien à afficher pour le moment"
+            }
+          ]
+        },
+        {
+          "blockType": "spacer",
+          "id": "blk_oubli_espace"
+        },
+        {
+          "blockType": "button",
+          "id": "blk_oubli_retour",
+          "props": [
+            {
+              "key": "label",
+              "value": "Retour à la connexion"
+            },
+            {
+              "key": "kind",
+              "value": "ghost"
+            },
+            {
+              "key": "icon",
+              "value": "arrow-back-outline"
+            },
+            {
+              "key": "actionId",
+              "value": "act_oubli_retour"
+            }
+          ]
+        }
+      ]
     }
   ],
   "slots": [

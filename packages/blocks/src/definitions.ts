@@ -50,7 +50,9 @@ import {
 // rend enfin la MISE EN PAGE exprimable.
 // 1.9.0 — l'en-tête peut porter une MARQUE (`logoUri`). Additif : sans elle,
 // l'en-tête est celui de 1.8.0 au caractère près.
-export const BLOCK_REGISTRY_VERSION = "1.9.0";
+// 1.10.0 — deux signes de plus au vocabulaire fermé : `close-outline`
+// (passer l'étape) et `help-circle-outline` (aide). Additif.
+export const BLOCK_REGISTRY_VERSION = "1.10.0";
 
 // Motifs d'identités stables — IDENTIQUES à @deribfy/air-schema (ids.ts) ;
 // redéclarés structurellement (patron AirCapabilitySlice : pas de couplage
@@ -119,6 +121,10 @@ export const BLOCKS: readonly BlockDefinition[] = [
           "card-outline",
           "checkmark-outline",
           "arrow-back-outline",
+          // 1.10.0 — passer l'étape, et demander de l'aide : deux chemins
+          // qu'aucune application ne devrait refuser à son utilisateur.
+          "close-outline",
+          "help-circle-outline",
         ])
         .optional(),
       kind: z.enum(["primary", "ghost"]).optional(),

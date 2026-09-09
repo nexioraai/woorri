@@ -13,25 +13,23 @@
 import { KeyboardAvoidingView, ScrollView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ScreenShell } from "../lib/primitives";
-import { AirButton, AirEmptyState, AirHeader, AirSpacer } from "../lib/runtime/air-runtime";
-import { screenData } from "./scr_bienvenue.data";
+import { AirButton, AirForm, AirHeader, AirSpacer } from "../lib/runtime/air-runtime";
+import type { AirScreenProps } from "../lib/runtime/air-runtime";
+import { screenData } from "./scr_oubli.data";
 
-export default function ScrBienvenueScreen() {
+export default function ScrOubliScreen({ route }: AirScreenProps) {
   const insets = useSafeAreaInsets();
   return (
-    <ScreenShell testID="scr_bienvenue" title={screenData.title}>
+    <ScreenShell testID="scr_oubli" title={screenData.title}>
       <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
       <ScrollView
         contentContainerStyle={{ flexGrow: 1, paddingBottom: insets.bottom }}
         keyboardShouldPersistTaps="handled"
       >
-        <AirHeader screen={screenData} blockId="blk_bienvenue_accroche" />
-        <AirSpacer screen={screenData} blockId="blk_bienvenue_espace" />
-        <AirButton screen={screenData} blockId="blk_bienvenue_inscription" />
-        <AirButton screen={screenData} blockId="blk_bienvenue_connexion" />
-        <AirButton screen={screenData} blockId="blk_bienvenue_sans_compte" />
-        <AirButton screen={screenData} blockId="blk_bienvenue_continuer" />
-        <AirEmptyState screen={screenData} blockId="blk_bienvenue_attente" />
+        <AirHeader screen={screenData} blockId="blk_oubli_header" />
+        <AirForm screen={screenData} blockId="blk_oubli_form" itemId={route?.params?.itemId} />
+        <AirSpacer screen={screenData} blockId="blk_oubli_espace" />
+        <AirButton screen={screenData} blockId="blk_oubli_retour" />
       </ScrollView>
       </KeyboardAvoidingView>
     </ScreenShell>

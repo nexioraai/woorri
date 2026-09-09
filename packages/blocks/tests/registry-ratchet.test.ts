@@ -64,7 +64,9 @@ describe("cliquets du registre de blocs", () => {
     // monte d'un cran typographique, pour la PREMIÈRE phrase qu'on lit).
     // 1.9.0 : `logoUri` sur l'en-tête — la MARQUE. Aucun document ne pouvait
     // en déclarer une : les apps générées n'avaient aucune identité visible.
-    expect(BLOCK_REGISTRY_VERSION).toBe("1.9.0");
+    // 1.10.0 : deux signes de plus au vocabulaire fermé — `close-outline`
+    // (passer l'étape) et `help-circle-outline` (aide). Additif.
+    expect(BLOCK_REGISTRY_VERSION).toBe("1.10.0");
     expect(BLOCKS.map((b) => b.id)).toEqual(V1_BLOCK_IDS);
   });
 

@@ -31,6 +31,10 @@ function client(scenario: {
         appels.push("signOut");
         return Promise.resolve({ error: null });
       },
+      resetPasswordForEmail: (email) => {
+        appels.push(`reset:${email}`);
+        return Promise.resolve({ error: null });
+      },
       onAuthStateChange: () => {
         appels.push("onAuthStateChange");
         return { data: { subscription: { unsubscribe: () => undefined } } };
@@ -122,6 +126,15 @@ describe("session vérifiée — l'identité vient du SERVEUR, jamais de l'appar
     expect(await s.creer("neuf@b.fr", "motdepasse")).toBe(true);
     expect(appels).toContain("signUp:neuf@b.fr");
     expect(appels).not.toContain("signIn:neuf@b.fr");
+  });
+
+  it("🟢 mot de passe oublié : le serveur est appelé, AUCUNE session n'est ouverte", async () => {
+    const { c, appels } = client({});
+    const s = creerSessionSupabase(c);
+    expect(await s.reinitialiser("perdu@b.fr")).toBe(true);
+    expect(appels).toContain("reset:perdu@b.fr");
+    // Le piège : croire qu'un envoi réussi vaut connexion.
+    expect(s.estAuthentifie()).toBe(false);
   });
 
   it("🟢 déconnexion : le serveur est appelé ET l'état local retombe", async () => {

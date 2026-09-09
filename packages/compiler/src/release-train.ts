@@ -89,7 +89,11 @@ export const RELEASE_TRAIN_V1 = {
   // d'identité visible. URL https EXIGÉE par la forme, et le validateur exige
   // en plus que l'hôte soit dans `network.allowedDomains` : la politique
   // fail-closed vaut pour TOUT ce que l'app va chercher, pas que ses données.
-  blockRegistryVersion: "1.9.0",
+  // ÉDITION CONSCIENTE (1.10.0) : deux signes au vocabulaire fermé —
+  // `close-outline` (passer l'étape) et `help-circle-outline` (aide). Deux
+  // chemins qu'aucune application ne devrait refuser : découvrir sans compte,
+  // et retrouver un mot de passe perdu.
+  blockRegistryVersion: "1.10.0",
   // Ré-scellé le 2026-08-29 (DET-006 / D-039) : `ListBlock` DÉCLARE désormais
   // `fill` sur sa Section, afin que la liste virtualisée reçoive un parent
   // BORNÉ. Cause démontrée : imbriquée dans un ScrollView de même axe, une
@@ -162,7 +166,7 @@ export const RELEASE_TRAIN_V1 = {
   // Ré-scellé (1.8.0) : le composant `SpacerBlock` entre aux sources gelées.
   // Ré-scellé (1.9.0) : l'en-tête rend une marque, la primitive image gagne
   // sa variante `brand`.
-  "5100cf2db27931ec9bfff7ab2b051b302d597ea741de4ba8e68701f4843b5f3f",
+  "5622d4b0feab0232f0500555620355c20437e86ee3542e0470be03338bab0403",
   capabilityRegistryVersion: "1.0.0",
   capabilitySourcesHash:
     "6c28599246abde6e7010704f23f273aafe50d17c5483133709c9065f2777346c",

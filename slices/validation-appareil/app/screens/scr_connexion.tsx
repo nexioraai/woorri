@@ -29,6 +29,7 @@ export default function ScrConnexionScreen({ route }: AirScreenProps) {
         <AirHeader screen={screenData} blockId="blk_connexion_header" />
         <AirForm screen={screenData} blockId="blk_connexion_form" itemId={route?.params?.itemId} />
         <AirButton screen={screenData} blockId="blk_connexion_vers_inscription" />
+        <AirButton screen={screenData} blockId="blk_connexion_oubli" />
       </ScrollView>
       </KeyboardAvoidingView>
     </ScreenShell>

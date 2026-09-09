@@ -25,6 +25,7 @@ export interface ClientAuth {
       error: { message: string } | null;
     }>;
     signOut(): Promise<{ error: { message: string } | null }>;
+    resetPasswordForEmail(email: string): Promise<{ error: { message: string } | null }>;
     onAuthStateChange(
       cb: (evenement: string, session: { user: { id: string } } | null) => void,
     ): { data: { subscription: { unsubscribe(): void } } };
@@ -37,6 +38,12 @@ export interface SessionVerifiee extends SessionProvider {
   ouvrir(email: string, motDePasse: string): Promise<boolean>;
   creer(email: string, motDePasse: string): Promise<boolean>;
   fermer(): Promise<void>;
+  /**
+   * MOT DE PASSE OUBLIÉ (1.5.0) — le serveur envoie un lien de
+   * réinitialisation. Rend `true` si l'envoi a été ACCEPTÉ, jamais si le
+   * compte existe : révéler l'existence d'une adresse serait une fuite.
+   */
+  reinitialiser(email: string): Promise<boolean>;
 }
 
 export function creerSessionSupabase(client: ClientAuth): SessionVerifiee {
@@ -96,6 +103,14 @@ export function creerSessionSupabase(client: ClientAuth): SessionVerifiee {
       if (r.data.session === null) {
         attenteConfirmation = true;
         notifier();
+      }
+      return true;
+    },
+    reinitialiser: async (email) => {
+      const r = await client.auth.resetPasswordForEmail(email);
+      if (r.error !== null) {
+        console.warn(`AIR_AUTH_RESET_REFUSED:${r.error.message}`);
+        return false;
       }
       return true;
     },
