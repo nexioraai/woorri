@@ -28,6 +28,11 @@ for (const [f, contenu] of c.files) {
 // Profil EAS : patron v3-resto-quartier (APK interne). AUCUN build lancé ici.
 writeFileSync(APP + "eas.json", JSON.stringify({
   cli: { version: ">= 16.0.0", appVersionSource: "local" },
-  build: { preview: { distribution: "internal", android: { buildType: "apk" } } },
+  // CANAL (Phase 11) : dès que `app.json` porte une adresse de livraison, le
+  // build DOIT déclarer quel flux il écoute. Sans lui, la phase
+  // « Configure expo-updates » échoue — mesuré, build 6fd9f394.
+  build: {
+    preview: { distribution: "internal", channel: "preview", android: { buildType: "apk" } },
+  },
 }, null, 2) + "\n");
 console.log(`🟢 app émise : ${c.files.size} fichiers · rootHash ${c.rootHash.slice(0, 12)}… · lock ${c.lock.lockSchemaVersion}`);

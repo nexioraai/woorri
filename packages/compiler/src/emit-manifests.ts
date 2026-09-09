@@ -139,6 +139,14 @@ export function emitAppJson(air: ProjectAir, train: ReleaseTrain): string {
     ],
     // deep links : schéma émis ssi la capability est déclarée (D-029).
     ...(capabilityIds.includes("deep_links") ? { scheme: air.app.slug } : {}),
+    // PLATEFORMES EXPLICITES (Phase 11) — sans cette ligne, la liste est
+    // DEVINÉE par la résolution de modules : dans le monorepo, react-native-web
+    // est résolvable depuis un parent et « web » apparaissait — mais seulement
+    // sur la machine locale, pas sur le serveur de build. L'empreinte
+    // d'exécution divergeait donc selon l'ENDROIT où l'on calculait (mesuré,
+    // builds 33d9b538/164f0bfc : diff serveur « platforms »). Le moteur émet
+    // ce que le document cible ; il ne laisse pas l'environnement décider.
+    platforms: ["android", "ios"],
     slug: air.app.slug,
     userInterfaceStyle: "light",
     version: "1.0.0",
@@ -151,6 +159,17 @@ export function emitAppJson(air: ProjectAir, train: ReleaseTrain): string {
       : {
           owner: air.app.distribution.owner,
           extra: { eas: { projectId: air.app.distribution.projectId } },
+          // LIVRAISON SANS RECONSTRUCTION (Phase 11) — l'adresse est DÉRIVÉE
+          // du projet déclaré, jamais saisie à part : deux sources pour la
+          // même liaison finiraient par diverger, et une app irait chercher
+          // ses mises à jour chez quelqu'un d'autre.
+          updates: { url: `https://u.expo.dev/${air.app.distribution.projectId}` },
+          // EMPREINTE NATIVE COMME VERSION D'EXÉCUTION. Une livraison
+          // n'atteint QUE les builds dont la surface native est identique :
+          // c'est la plateforme elle-même qui refuse, en plus du routeur du
+          // dépôt. Deux gardes indépendantes valent mieux qu'une promesse —
+          // et celle-ci tient même si le routeur se trompe.
+          runtimeVersion: { policy: "fingerprint" },
         }),
   };
   return canonicalJson({ expo }) + "\n";

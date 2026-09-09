@@ -386,9 +386,9 @@ critères exigent une livraison OTA réelle vers un appareil installé.
 | **profils de runtime versionnés** | 🟢 | `core` / `standard` / `extended`, ordonnés par surface native croissante. Mesuré : 11 documents `extended`, 1 `standard`. **Un document sans capability reste `core`, sans aucun module natif** |
 | **ajout d'une capability native → rebuild routé** | 🟢 **preuve par tentative** | `attemptOta` avec `camera` ajoutée : **🔴 OTA REFUSÉE** — *« capability ajoutée : camera · module natif ajouté : expo-camera »* |
 | **tentative OTA d'un changement d'empreinte → REFUSÉE** | 🟢 **6 cas-tueurs** | capability ajoutée · retirée · permission ajoutée · plancher d'OS monté · **train de release changé, document inchangé** · aucune compensation |
-| modification UI livrée en OTA en < 15 min sur les 2 slices | 🔴 **OUVERT** | exige `eas update` réel **vers une application INSTALLÉE** — dépend du même constat appareil que la Phase 10 |
-| rollback OTA testé | 🔴 **OUVERT** | idem |
-| *(amendement A++)* grille avant/après livraison | 🟠 **non déterminé** | sans livraison réelle, il n'y a pas d'« après » à mesurer |
+| modification UI livrée en OTA en < 15 min sur les 2 slices | 🟡 **PROUVÉ SUR 1 SLICE / 2** (2026-09-09) | LIVRAISON RÉELLE sur SM-A175F : sous-titre de `scr_bienvenue` modifié, verdict routeur 🟢 OTA ACCEPTÉE **avant** publication, `eas update` canal `preview`, runtime `a592ce07…` identique build/mise à jour (vérifié), **publié 15:49:02 → à l'écran 15:51:56, < 3 min** (captures 50/51). La 2ᵉ slice n'a AUCUN build installé porteur du runtime de livraison — le critère reste ouvert pour elle, sans extrapolation. |
+| rollback OTA testé | 🟢 **PROUVÉ** (2026-09-09) | `update:roll-back-to-embedded` canal `preview` : **publié 15:55:56 → texte d'origine à l'écran 15:57:58, ~2 min** (capture 52). Le document a été remis au texte d'origine après la preuve — document, version embarquée et appareil sont réalignés. |
+| *(amendement A++)* grille avant/après livraison | 🟠 **non déterminé** | la livraison réelle existe désormais, mais la grille n'a été passée ni avant ni après cette modification — l'amendement reste à exécuter tel quel |
 
 **Contrôle positif inclus** : un changement purement UI (libellé de bouton) est
 **🟢 OTA ACCEPTÉE**. Sans lui, « tout refuser » suffirait à faire verdir la suite.

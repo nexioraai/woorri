@@ -987,6 +987,13 @@ export function emitProject(
   // avant que la cause soit vue. Fichier SÉPARÉ, hors gabarit : le scellé du
   // train n'est pas rouvert pour de l'outillage de build.
   files.set(".easignore", "node_modules\n");
+  // EMPREINTE D'EXÉCUTION STABLE (Phase 11) : les dossiers natifs sont
+  // RÉGÉNÉRÉS par prebuild à chaque build — les hacher ferait dépendre
+  // l'empreinte de la machine qui a lancé prebuild, pas de la déclaration.
+  // Mesuré (diff serveur, build 33d9b538) : le serveur, post-prebuild, ajoutait
+  // `android` en source « bareNativeDir » et l'empreinte locale ne pouvait
+  // JAMAIS l'égaler. Un projet géré se décrit par sa config et son verrou.
+  files.set(".fingerprintignore", "android/**\nios/**\n");
   // MARQUE (1.17.0) : le FICHIER que le manifeste désigne. Le déclarer sans
   // le produire ferait échouer le prebuild — fail-closed inversé.
   if (air.app.brandIconPngBase64 !== undefined) {

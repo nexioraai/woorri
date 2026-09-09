@@ -53,6 +53,19 @@ describe("release train v1 — pins exacts (cliquet)", () => {
       // appliquée au prebuild — bundledNativeModules SDK 57.
       "expo-build-properties": "57.0.15",
       "expo-status-bar": "3.0.9",
+      // ÉDITION CONSCIENTE DU CLIQUET (2026-09-09, Phase 11 — FEU VERT
+      // PROPRIÉTAIRE, demandé en langage clair et obtenu). Même classe de
+      // décision que `@supabase/supabase-js` : le train GRANDIT pour TOUTES
+      // les apps émises. Coût mesuré : 520 -> 527 paquets (+7).
+      // Contrepartie : une correction purement JavaScript cesse d'exiger un
+      // build. Mesure du 2026-09-09 — trois défauts jugés à l'écran, tous en
+      // JavaScript, ont coûté QUATRE builds et ~1 h 30.
+      // Empreinte NATIVE : elle CHANGE (module natif). C'est pourquoi son
+      // installation demande un build, et un seul — après quoi le routeur
+      // `@deribfy/router`, déjà construit et prouvé, a enfin un destinataire.
+      // Version EXACTE dans la fourchette `~57.0.18` déclarée par le SDK 57.
+      // Lock régénéré DEUX FOIS DEPUIS ZÉRO, byte-identique.
+      "expo-updates": "57.0.21",
       react: "19.2.3",
       "react-native": "0.86.3",
       "@react-navigation/native": "7.3.18",

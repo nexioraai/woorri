@@ -1738,6 +1738,7 @@
   "allowedDomains": [
    "api.bus-intercites.app",
    "psxbilpmnojtlzosokzz.supabase.co",
+   "u.expo.dev",
    "www.deribfy.com"
   ],
   "policy": "deny_by_default"

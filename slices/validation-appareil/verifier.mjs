@@ -73,12 +73,24 @@ for (const r of v1) {
   console.log(`    ${r.values.fld_depart_destination.padEnd(14)} (${r.id}) → ${n} billet(s)${n === 0 ? "  [VIDE attendu]" : ""}`);
 }
 
-// 6. tsc RÉEL de l'app émise (dépendances empruntées, patron D-074).
-const BASE = R + "slices/resto-riche/app/node_modules";
-check("dépendances empruntables présentes", existsSync(BASE + "/typescript"));
+// 6. tsc RÉEL de l'app émise.
+// Phase 11 : l'app possède désormais sa PROPRE installation (`npm ci` depuis
+// SON verrou) — exigée par l'empreinte d'exécution, qui hache l'arbre réel des
+// modules ; l'arbre emprunté d'une autre app la faisait diverger (mesuré,
+// builds 164f0bfc/33d9b538). Si l'installation réelle est là, on l'utilise.
+// L'EMPRUNT (patron D-074) ne reste qu'un REPLI pour un poste vierge.
 const lien = join(ICI, "app", "node_modules");
-rmSync(lien, { force: true });
-symlinkSync(BASE, lien, "dir");
+const installationReelle = existsSync(join(lien, "expo-updates", "package.json"));
+let lienPose = false;
+if (installationReelle) {
+  check("installation réelle présente (npm ci)", true, "expo-updates inclus");
+} else {
+  const BASE = R + "slices/resto-riche/app/node_modules";
+  check("dépendances empruntables présentes", existsSync(BASE + "/typescript"));
+  rmSync(lien, { force: true });
+  symlinkSync(BASE, lien, "dir");
+  lienPose = true;
+}
 try {
   execFileSync("npx", ["tsc", "--noEmit"], { cwd: join(ICI, "app"), stdio: "pipe", timeout: 180000 });
   check("tsc app émise", true, "EXIT=0");
@@ -86,10 +98,10 @@ try {
   const lignes = String(e.stdout ?? "").split("\n").filter((l) => l.includes("error TS"));
   check("tsc app émise", false, lignes[0] ?? "sortie vide");
 }
-// Démontage du lien : un SYMLINK n'est pas couvert par le motif
-// `node_modules/` du .gitignore émis — le laisser ferait entrer un chemin
-// absolu machine dans un futur `git add`.
-rmSync(lien, { force: true });
+// Démontage du lien EMPRUNTÉ seulement : un SYMLINK n'est pas couvert par le
+// motif `node_modules/` du .gitignore émis. Une installation réelle, elle,
+// est un vrai dossier, couvert, et REQUISE pour le calcul d'empreinte.
+if (lienPose) rmSync(lien, { force: true });
 
 console.log(`\n${echecs === 0 ? "🟢 PRÉ-BUILD : TOUT EST VERT — build EAS autorisable" : `🔴 ${echecs} échec(s) — NE PAS BUILDER`}`);
 process.exitCode = echecs === 0 ? 0 : 1;

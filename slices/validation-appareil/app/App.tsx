@@ -27,7 +27,7 @@ import { Navigation } from "./navigation";
 // l'état du magasin dit la vérité (loading/error).
 const provider = creerMagasin(demoData);
 const CIBLES_REMOTE = [{"datasetId":"data_departs","entityId":"ent_depart","integrationId":"intg_cache_billets","refreshSeconds":30,"url":"https://www.deribfy.com/air/v1/entities/ent_depart/rows"}] as const;
-const DOMAINES_AUTORISES = ["api.bus-intercites.app","psxbilpmnojtlzosokzz.supabase.co","www.deribfy.com"] as const;
+const DOMAINES_AUTORISES = ["api.bus-intercites.app","psxbilpmnojtlzosokzz.supabase.co","u.expo.dev","www.deribfy.com"] as const;
 // Transport et polling APPAREIL fournis par le runtime embarqué —
 // l'adaptateur revérifie chaque hôte contre DOMAINES_AUTORISES.
 const adaptateur = creerAdaptateurReseau({

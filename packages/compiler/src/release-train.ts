@@ -267,7 +267,31 @@ export const RELEASE_TRAIN_V1 = {
     // ce que le registre de capabilities déclarait déjà (`impact: "none"`).
     // Lock regénéré DEUX FOIS DEPUIS ZÉRO, byte-identique — la condition du
     // scellé, vérifiée et non supposée.
-    "20ea9521b0ee38d14160c0cad6138e55211c20c898c47aeb74a3318bb2ee928d",
+    // Ré-scellé 2026-09-09 (Phase 11, EXTENSION DU LOCK — feu vert propriétaire
+    // explicite, demandé et obtenu en langage clair). Le gabarit gagne
+    // `expo-updates` en **57.0.21**, version EXACTE comme toutes les autres et
+    // dans la fourchette `~57.0.18` que le SDK 57 déclare lui-même
+    // (`bundledNativeModules`).
+    //
+    // POURQUOI : sans ce module, une correction purement JavaScript exige un
+    // build complet. Mesuré sur la journée du 2026-09-09 : TROIS défauts jugés
+    // à l'écran ont coûté QUATRE builds, ~1 h 30. Les trois étaient du
+    // JavaScript. Le routeur `@deribfy/router` existe et sait déjà refuser une
+    // livraison dès que l'empreinte NATIVE change (6 cas-tueurs, 1 contrôle
+    // positif) — il lui manquait seulement un runtime capable de recevoir.
+    //
+    // COÛT ASSUMÉ : le train grandit pour TOUTES les apps émises, 520 -> 527
+    // paquets (+7 : expo-updates, expo-manifests, expo-eas-client,
+    // expo-json-utils, expo-structured-headers, expo-updates-interface, arg).
+    // `npm ci` refuse un lock qui diverge du manifeste : une dépendance
+    // conditionnelle reste impossible, comme pour `@supabase/supabase-js`.
+    //
+    // Empreinte NATIVE : elle CHANGE — `expo-updates` porte du code natif.
+    // C'est précisément pourquoi son installation exige un build, et un seul.
+    //
+    // Lock régénéré DEUX FOIS DEPUIS ZÉRO, byte-identique (vérifié, non
+    // supposé) : la condition du scellé est tenue.
+    "b9fea52c0be543ec1ac20b07cef21c9bb9ed002c13dd5ece47043a03daeca50d",
   templateDevDependencies: {
     "@types/react": "19.2.15",
     typescript: "5.9.3",
@@ -288,6 +312,10 @@ export const RELEASE_TRAIN_V1 = {
     expo: "57.0.17",
     "expo-build-properties": "57.0.15",
     "expo-status-bar": "3.0.9",
+    // AJOUTÉE 2026-09-09 (Phase 11, feu vert propriétaire) — le runtime qui
+    // REÇOIT une livraison. Sans lui, le routeur savait décider et n'avait
+    // rien à qui livrer.
+    "expo-updates": "57.0.21",
     react: "19.2.3",
     "react-native": "0.86.3",
     "@react-navigation/native": "7.3.18",
