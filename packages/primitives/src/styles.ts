@@ -212,8 +212,11 @@ const makeSheet = (c: Palette) =>
     // miroir RTL est donc automatique). Aucun fond : un logo se pose, il ne
     // s'encadre pas.
     imageBrand: {
-      width: theme.size.tapTarget * 2.5,
-      height: theme.size.tapTarget,
+      // Cadre CARRÉ : une marque symbolique remplit sa boîte. Un cadre plus
+      // large la laisserait flotter — `contain` la réduirait à la hauteur et
+      // le reste de la largeur resterait vide.
+      width: theme.size.tapTarget * 1.5,
+      height: theme.size.tapTarget * 1.5,
       alignSelf: "flex-start",
       marginBottom: theme.space.lg,
     },
