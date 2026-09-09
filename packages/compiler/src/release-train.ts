@@ -166,7 +166,10 @@ export const RELEASE_TRAIN_V1 = {
   // Ré-scellé (1.8.0) : le composant `SpacerBlock` entre aux sources gelées.
   // Ré-scellé (1.9.0) : l'en-tête rend une marque, la primitive image gagne
   // sa variante `brand`.
-  "5622d4b0feab0232f0500555620355c20437e86ee3542e0470be03338bab0403",
+  // Ré-scellé : `ButtonBlock` passe enfin par `Section`. Mesuré sur appareil,
+  // il rendait le bouton NU — donc collé aux bords de l'écran, seul bloc à
+  // ne pas porter les marges communes. Le `testID` reste sur le pressable.
+  "33956576180dafbf1e1e45560b13476cb47a9440d305edc48b65fc5dafa03fa6",
   capabilityRegistryVersion: "1.0.0",
   capabilitySourcesHash:
     "6c28599246abde6e7010704f23f273aafe50d17c5483133709c9065f2777346c",

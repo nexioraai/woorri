@@ -247,7 +247,18 @@ export function SpacerBlock({ testID }: SpacerBlockProps) {
 }
 
 export function ButtonBlock({ label, icon, kind, onPress, testID }: ButtonBlockProps) {
-  return <AppButton label={label} icon={icon} kind={kind} onPress={onPress} testID={testID} />;
+  // MESURE SUR APPAREIL : ce bloc rendait le bouton NU, donc collé aux bords
+  // de l'ecran — seul bloc a ne pas passer par `Section`, qui porte les
+  // marges de tous les autres. La difference se voyait a l'oeil et nulle
+  // part ailleurs. Le bloc declare un ROLE, la primitive porte la forme.
+  return (
+    // Le `testID` reste sur l'ELEMENT PRESSABLE : sondes d'affordance et
+    // selecteurs de campagne le ciblent. Le poser sur la Section aurait
+    // casse les deux sans rien apporter.
+    <Section>
+      <AppButton label={label} icon={icon} kind={kind} onPress={onPress} testID={testID} />
+    </Section>
+  );
 }
 
 export function EmptyStateBlock({
