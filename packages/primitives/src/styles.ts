@@ -79,9 +79,16 @@ const makeSheet = (c: Palette) =>
     buttonDisabled: { opacity: theme.opacity.disabled },
     // Révélation du secret : cible tactile PLEINE (48 dp), posée dans la
     // rangée du champ — la contrainte A vaut aussi pour ce contrôle.
+    // L'oeil se SUPERPOSE a la fin du champ au lieu de le pousser : sans
+    // cela, un champ masque etait plus etroit qu'un champ ordinaire, et deux
+    // champs voisins n'avaient pas la meme largeur. Mesure a l'oeil sur
+    // l'ecran de connexion. `end` est LOGIQUE : miroir RTL automatique.
     fieldRevele: {
+      position: "absolute",
+      end: 0,
+      top: 0,
+      bottom: 0,
       minWidth: theme.size.tapTarget,
-      minHeight: theme.size.tapTarget,
       alignItems: "center",
       justifyContent: "center",
     },
@@ -102,6 +109,15 @@ const makeSheet = (c: Palette) =>
       paddingVertical: theme.space.xxs,
     },
     buttonChipVisuelActif: { backgroundColor: c.primary },
+    // LIEN (1.5.0) : du TEXTE cliquable. Ni fond, ni bordure, ni pleine
+    // largeur — un chemin secondaire ne doit pas peser autant qu'une action.
+    // La cible tactile reste PLEINE : discret ne veut pas dire inatteignable.
+    buttonLien: {
+      minHeight: theme.size.tapTarget,
+      alignItems: "flex-start",
+      justifyContent: "center",
+    },
+    buttonLienText: { color: c.primaryText, fontSize: theme.font.body },
     buttonChipText: { color: c.primaryText, fontWeight: theme.fontWeight.semibold, fontSize: theme.font.label },
     buttonChipTextActif: { color: c.onPrimary },
     buttonText: { color: c.onPrimary, fontWeight: theme.fontWeight.semibold, fontSize: theme.font.body },

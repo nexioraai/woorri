@@ -58,7 +58,9 @@ export const RELEASE_TRAIN_V1 = {
   // 1.14.0 -> 1.15.0 : `showsPrimaryNav` sur l'écran. La barre d'onglets était
   // posée sur TOUS les écrans — un accueil produit montrait quatre onglets à
   // un visiteur non connecté.
-  airSchemaVersion: "1.15.0",
+  // 1.15.0 -> 1.16.0 : `showsScreenTitle`. Sur un accueil portant une MARQUE,
+  // le titre de route s'affichait au-dessus du logo — deux identités empilées.
+  airSchemaVersion: "1.16.0",
   // Porté à 1.1.0 le 2026-08-31 (D-060) : montée STRICTEMENT ADDITIVE du
   // registre de blocs — `form` gagne `loading`/`empty`, `detail_header` gagne un
   // état, les trois blocs à données gagnent les props de titres. Rien n'est
@@ -93,7 +95,10 @@ export const RELEASE_TRAIN_V1 = {
   // `close-outline` (passer l'étape) et `help-circle-outline` (aide). Deux
   // chemins qu'aucune application ne devrait refuser : découvrir sans compte,
   // et retrouver un mot de passe perdu.
-  blockRegistryVersion: "1.10.0",
+  // ÉDITION CONSCIENTE (1.11.0) : `kind: "link"` — du TEXTE cliquable. Mesuré
+  // à l'écran : un chemin secondaire rendu en gros bouton pèse autant qu'une
+  // action principale et brouille la hiérarchie.
+  blockRegistryVersion: "1.11.0",
   // Ré-scellé le 2026-08-29 (DET-006 / D-039) : `ListBlock` DÉCLARE désormais
   // `fill` sur sa Section, afin que la liste virtualisée reçoive un parent
   // BORNÉ. Cause démontrée : imbriquée dans un ScrollView de même axe, une
@@ -169,7 +174,7 @@ export const RELEASE_TRAIN_V1 = {
   // Ré-scellé : `ButtonBlock` passe enfin par `Section`. Mesuré sur appareil,
   // il rendait le bouton NU — donc collé aux bords de l'écran, seul bloc à
   // ne pas porter les marges communes. Le `testID` reste sur le pressable.
-  "33956576180dafbf1e1e45560b13476cb47a9440d305edc48b65fc5dafa03fa6",
+  "77680e46e9786e8f438324b24f6da7cca6c280b26d8fd877ddf3c91d6dda53db",
   capabilityRegistryVersion: "1.0.0",
   capabilitySourcesHash:
     "6c28599246abde6e7010704f23f273aafe50d17c5483133709c9065f2777346c",

@@ -138,10 +138,15 @@ export function AppButton({
   const s = useStyles();
   const ghost = kind === "ghost";
   const chip = kind === "chip";
+  const lien = kind === "link";
   const inactive = disabled || loading;
   return (
     <Pressable
-      style={[chip ? s.buttonChip : s.button, ghost && s.buttonGhost, inactive && s.buttonDisabled]}
+      style={[
+        chip ? s.buttonChip : lien ? s.buttonLien : s.button,
+        ghost && s.buttonGhost,
+        inactive && s.buttonDisabled,
+      ]}
       onPress={inactive ? undefined : onPress}
       disabled={inactive}
       testID={testID}
@@ -168,7 +173,9 @@ export function AppButton({
               style={[s.buttonIcon, ghost ? s.buttonGhostText : s.buttonText]}
             />
           )}
-          <Text style={[s.buttonText, ghost && s.buttonGhostText]}>{label}</Text>
+          <Text style={[lien ? s.buttonLienText : s.buttonText, ghost && s.buttonGhostText]}>
+            {label}
+          </Text>
         </>
       )}
     </Pressable>

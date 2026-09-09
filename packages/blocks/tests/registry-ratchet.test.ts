@@ -66,7 +66,10 @@ describe("cliquets du registre de blocs", () => {
     // en déclarer une : les apps générées n'avaient aucune identité visible.
     // 1.10.0 : deux signes de plus au vocabulaire fermé — `close-outline`
     // (passer l'étape) et `help-circle-outline` (aide). Additif.
-    expect(BLOCK_REGISTRY_VERSION).toBe("1.10.0");
+    // 1.11.0 : `kind: "link"` — du TEXTE cliquable pour un chemin secondaire.
+    // Mesuré à l'écran : « Mot de passe oublié » et « Continuer sans compte »
+    // pesaient autant qu'une action principale.
+    expect(BLOCK_REGISTRY_VERSION).toBe("1.11.0");
     expect(BLOCKS.map((b) => b.id)).toEqual(V1_BLOCK_IDS);
   });
 

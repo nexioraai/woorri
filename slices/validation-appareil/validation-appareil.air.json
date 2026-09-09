@@ -433,7 +433,7 @@
       }
     }
   ],
-  "airSchemaVersion": "1.15.0",
+  "airSchemaVersion": "1.16.0",
   "app": {
     "description": [
       {
@@ -1994,11 +1994,7 @@
             },
             {
               "key": "kind",
-              "value": "ghost"
-            },
-            {
-              "key": "icon",
-              "value": "close-outline"
+              "value": "link"
             },
             {
               "key": "actionId",
@@ -2057,7 +2053,8 @@
           ]
         }
       ],
-      "showsPrimaryNav": false
+      "showsPrimaryNav": false,
+      "showsScreenTitle": false
     },
     {
       "blocks": [
@@ -3019,6 +3016,24 @@
         },
         {
           "blockType": "button",
+          "id": "blk_connexion_oubli",
+          "props": [
+            {
+              "key": "label",
+              "value": "Mot de passe oublié"
+            },
+            {
+              "key": "kind",
+              "value": "link"
+            },
+            {
+              "key": "actionId",
+              "value": "act_mot_de_passe_oublie"
+            }
+          ]
+        },
+        {
+          "blockType": "button",
           "id": "blk_connexion_vers_inscription",
           "props": [
             {
@@ -3038,31 +3053,10 @@
               "value": "person-outline"
             }
           ]
-        },
-        {
-          "blockType": "button",
-          "id": "blk_connexion_oubli",
-          "props": [
-            {
-              "key": "label",
-              "value": "Mot de passe oublié"
-            },
-            {
-              "key": "kind",
-              "value": "ghost"
-            },
-            {
-              "key": "icon",
-              "value": "help-circle-outline"
-            },
-            {
-              "key": "actionId",
-              "value": "act_mot_de_passe_oublie"
-            }
-          ]
         }
       ],
-      "showsPrimaryNav": false
+      "showsPrimaryNav": false,
+      "showsScreenTitle": false
     },
     {
       "id": "scr_inscription",
@@ -3173,7 +3167,8 @@
           }
         }
       ],
-      "showsPrimaryNav": false
+      "showsPrimaryNav": false,
+      "showsScreenTitle": false
     },
     {
       "id": "scr_oubli",
@@ -3254,7 +3249,8 @@
             }
           ]
         }
-      ]
+      ],
+      "showsScreenTitle": false
     }
   ],
   "slots": [

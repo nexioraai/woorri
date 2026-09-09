@@ -81,7 +81,12 @@ export interface AppButtonProps extends A11yProps {
    * onglets. Absent = bouton purement textuel, comportement 1.5.0 inchangé.
    */
   icon?: string;
-  kind?: "primary" | "ghost" | "chip";
+  /**
+   * `link` (1.5.0) — du TEXTE cliquable. Un chemin secondaire ne doit pas
+   * peser autant qu'une action : ni fond, ni bordure, ni pleine largeur.
+   * La cible tactile reste PLEINE — discret ne veut pas dire inatteignable.
+   */
+  kind?: "primary" | "ghost" | "chip" | "link";
   /**
    * État SÉLECTIONNÉ (1.5.0) — porté par `accessibilityState.selected`, comme
    * la navigation. Ferme l'observation consignée le 2026-09-05 : un chip de

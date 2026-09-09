@@ -21,7 +21,7 @@ import {
 // 1.7.1 (E3.3, D-131) : provenance APLANIE (sourceKind/sourceIntegrationId/
 //   sourceDomain/sourceRefreshSeconds) — l'union 1.7.0 dépassait la limite
 //   réelle de grammaire de l'API (classe D-078) ; sémantique inchangée.
-export const AIR_SCHEMA_VERSION = "1.15.0";
+export const AIR_SCHEMA_VERSION = "1.16.0";
 
 export const semverSchema = z.string().regex(/^\d+\.\d+\.\d+$/);
 export const sha256Schema = z.string().regex(/^[0-9a-f]{64}$/);
@@ -192,6 +192,17 @@ const screenSchema = z.strictObject({
    * deviendrait inatteignable depuis lui-même.
    */
   showsPrimaryNav: z.boolean().optional(),
+  /**
+   * EN-TÊTE NATIF (1.16.0) — la barre de titre de la navigation est-elle
+   * rendue ici ?
+   *
+   * Mesuré à l'écran : sur un accueil produit portant une MARQUE, le titre de
+   * route s'affichait AU-DESSUS du logo — deux identités empilées, là où
+   * toute application de référence n'en montre qu'une.
+   *
+   * OPTIONNEL, défaut `true` : un document existant est inchangé.
+   */
+  showsScreenTitle: z.boolean().optional(),
   blocks: z.array(blockInstanceSchema).min(1),
 });
 

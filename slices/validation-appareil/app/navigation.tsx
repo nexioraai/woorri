@@ -26,7 +26,7 @@ export function Navigation() {
       <Stack.Screen name="scr_accueil" component={ScrAccueilScreen}
         options={{ title: navData.routes.find((x) => x.screenId === "scr_accueil")!.title }} />
       <Stack.Screen name="scr_bienvenue" component={ScrBienvenueScreen}
-        options={{ title: navData.routes.find((x) => x.screenId === "scr_bienvenue")!.title }} />
+        options={{ title: navData.routes.find((x) => x.screenId === "scr_bienvenue")!.title, headerShown: false }} />
       <Stack.Screen name="scr_billet_detail" component={ScrBilletDetailScreen}
         options={{ title: navData.routes.find((x) => x.screenId === "scr_billet_detail")!.title }} />
       <Stack.Screen name="scr_billets" component={ScrBilletsScreen}
@@ -34,15 +34,15 @@ export function Navigation() {
       <Stack.Screen name="scr_compte" component={ScrCompteScreen}
         options={{ title: navData.routes.find((x) => x.screenId === "scr_compte")!.title }} />
       <Stack.Screen name="scr_connexion" component={ScrConnexionScreen}
-        options={{ title: navData.routes.find((x) => x.screenId === "scr_connexion")!.title }} />
+        options={{ title: navData.routes.find((x) => x.screenId === "scr_connexion")!.title, headerShown: false }} />
       <Stack.Screen name="scr_depart_detail" component={ScrDepartDetailScreen}
         options={{ title: navData.routes.find((x) => x.screenId === "scr_depart_detail")!.title }} />
       <Stack.Screen name="scr_departs" component={ScrDepartsScreen}
         options={{ title: navData.routes.find((x) => x.screenId === "scr_departs")!.title }} />
       <Stack.Screen name="scr_inscription" component={ScrInscriptionScreen}
-        options={{ title: navData.routes.find((x) => x.screenId === "scr_inscription")!.title }} />
+        options={{ title: navData.routes.find((x) => x.screenId === "scr_inscription")!.title, headerShown: false }} />
       <Stack.Screen name="scr_oubli" component={ScrOubliScreen}
-        options={{ title: navData.routes.find((x) => x.screenId === "scr_oubli")!.title }} />
+        options={{ title: navData.routes.find((x) => x.screenId === "scr_oubli")!.title, headerShown: false }} />
       <Stack.Screen name="scr_paiement" component={ScrPaiementScreen}
         options={{ title: navData.routes.find((x) => x.screenId === "scr_paiement")!.title }} />
       <Stack.Screen name="scr_parametres" component={ScrParametresScreen}

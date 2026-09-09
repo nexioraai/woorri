@@ -52,7 +52,8 @@ import {
 // l'en-tête est celui de 1.8.0 au caractère près.
 // 1.10.0 — deux signes de plus au vocabulaire fermé : `close-outline`
 // (passer l'étape) et `help-circle-outline` (aide). Additif.
-export const BLOCK_REGISTRY_VERSION = "1.10.0";
+// 1.11.0 — `kind: "link"` sur le bouton. Additif.
+export const BLOCK_REGISTRY_VERSION = "1.11.0";
 
 // Motifs d'identités stables — IDENTIQUES à @deribfy/air-schema (ids.ts) ;
 // redéclarés structurellement (patron AirCapabilitySlice : pas de couplage
@@ -127,7 +128,10 @@ export const BLOCKS: readonly BlockDefinition[] = [
           "help-circle-outline",
         ])
         .optional(),
-      kind: z.enum(["primary", "ghost"]).optional(),
+      // 1.11.0 — `link` : du TEXTE cliquable, pour un chemin secondaire qui
+      // ne doit pas peser autant qu'une action (mot de passe oublie, passer
+      // l'etape). Cible tactile pleine conservee.
+      kind: z.enum(["primary", "ghost", "link"]).optional(),
       actionId: actionRef,
     }),
     fieldRefProps: [],

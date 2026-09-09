@@ -595,7 +595,14 @@ function emitNavigation(air: ProjectAir): string {
   );
   const screenLines = routes.flatMap((r) => [
     `      <Stack.Screen name="${r.screenId}" component={${pascal(r.screenId)}Screen}`,
-    `        options={{ title: navData.routes.find((x) => x.screenId === "${r.screenId}")!.title }} />`,
+    // 1.16.0 — un écran peut refuser l'en-tête natif : sur un accueil portant
+    // une marque, le titre de route empilait une seconde identité au-dessus
+    // du logo.
+    `        options={{ title: navData.routes.find((x) => x.screenId === "${r.screenId}")!.title${
+      air.screens.find((sc) => sc.id === r.screenId)?.showsScreenTitle === false
+        ? ", headerShown: false"
+        : ""
+    } }} />`,
   ]);
   return [
     "// GÉNÉRÉ — NE PAS ÉDITER (navigation : verdict S1 D-026 — native-stack,",

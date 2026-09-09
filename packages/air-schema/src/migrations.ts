@@ -213,6 +213,16 @@ export const AIR_MIGRATIONS: readonly AirMigration[] = [
       "IDENTITÉ : sans déclaration, la barre reste rendue partout.",
     migrate: (document) => document,
   },
+  {
+    from: "1.15.0",
+    to: "1.16.0",
+    description:
+      "AIR 1.16.0 : `showsScreenTitle` OPTIONNEL sur l'écran. Mesuré à " +
+      "l'écran : sur un accueil portant une MARQUE, le titre de route " +
+      "s'affichait au-dessus du logo — deux identités empilées. Migration " +
+      "IDENTITÉ : sans déclaration, l'en-tête natif reste rendu partout.",
+    migrate: (document) => document,
+  },
 ];
 
 export class AirMigrationError extends Error {
