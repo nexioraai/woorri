@@ -1,9 +1,9 @@
 {
-  "airSchemaVersion": "1.5.0",
+  "airSchemaVersion": "1.18.0",
   "projectId": "prj_resto_riche",
   "app": {
     "name": "Chez Nous",
-    "slug": "chez-nous",
+    "slug": "chez-nous-resto",
     "locales": {
       "userLanguage": "fr-FR",
       "appLocales": [
@@ -14,6 +14,10 @@
         "fr-FR"
       ],
       "rtlSupported": false
+    },
+    "distribution": {
+      "owner": "deribfy-apps-team",
+      "projectId": "7c1194b7-05b3-4edd-bc86-c16359b065b9"
     }
   },
   "screens": [

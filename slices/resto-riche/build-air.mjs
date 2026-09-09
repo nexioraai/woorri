@@ -2,7 +2,7 @@
 // Aucune dépense LLM. But : isoler la cause. Si l'app sort riche, le moteur
 // n'est pas le plafond — c'est ce qu'on demande au générateur.
 const R = "/Users/yia/Documents/woorri/";
-const { assertValidAir } = await import(R + "packages/air-schema/src/index.ts");
+const { assertValidAir, migrateAirDocument } = await import(R + "packages/air-schema/src/index.ts");
 const { compileProject } = await import(R + "packages/compiler/src/index.ts");
 const L = (t) => [{ locale: "fr-FR", text: t }];
 const P = (o) => Object.entries(o).map(([key, value]) => ({ key, value }));
@@ -147,7 +147,16 @@ const actionSlot = {
 };
 
 const air = { airSchemaVersion:"1.5.0", projectId:"prj_resto_riche", intent,
-  app:{ name:"Chez Nous", slug:"chez-nous", locales:{ userLanguage:"fr-FR", appLocales:["fr-FR"],
+  app:{ name:"Chez Nous",
+    // Slug CHANGÉ (2026-09-09, Phase 11) : « chez-nous » a existé sur le compte
+    // EAS puis a été supprimé — la plateforme met les slugs supprimés au
+    // tombeau et refuse leur recréation. Le NOM affiché ne change pas.
+    slug:"chez-nous-resto",
+    // Liaison de build DÉCLARÉE (patron DET-004) : projet créé le 2026-09-09.
+    // Elle active aussi la livraison sans reconstruction (updates.url dérivée,
+    // runtimeVersion par empreinte) — même câblage que l'app de validation.
+    distribution:{ owner:"deribfy-apps-team", projectId:"7c1194b7-05b3-4edd-bc86-c16359b065b9" },
+    locales:{ userLanguage:"fr-FR", appLocales:["fr-FR"],
     defaultAppLocale:"fr-FR", contentLocales:["fr-FR"], rtlSupported:false } },
   screens, navigation:{ entryScreenId:"scr_menu", routes: screens.map((s)=>({ id:`nav_${s.id.slice(4)}`, screenId:s.id })) },
   entities, relations:[], datasets, actions:[...actions, actionSlot], rules:[{ id:"rule_client_tel", description:"Le téléphone est obligatoire pour rappeler le client.",
@@ -185,7 +194,9 @@ const air = { airSchemaVersion:"1.5.0", projectId:"prj_resto_riche", intent,
 console.log("DOCUMENT ÉCRIT À LA MAIN — restaurant « Chez Nous »");
 console.log("  écrans:", screens.length, "· entités:", entities.length, "· blocs:", screens.flatMap(s=>s.blocks).length,
   "· actions:", actions.length, "· champs:", entities.flatMap(e=>e.fields).length);
-let v; try { v = assertValidAir(air); console.log("① validateurs .......... 🟢 ACCEPTÉ"); }
+// Le document est écrit en 1.5.0 : on le MIGRE (migrations d'identité,
+// prouvées au registre) avant validation — comme le ferait le pipeline réel.
+let v; try { v = assertValidAir(migrateAirDocument(air)); console.log("① validateurs .......... 🟢 ACCEPTÉ (migré 1.5.0 → courant)"); }
 catch (e) { console.log("① validateurs .......... 🔴", e.message?.slice(0,300)); for(const d of (e.diagnostics??[])) console.log("   ",d.code,d.path,d.message); process.exit(1); }
 // IMPLÉMENTATION du slot — code d'auteur, soumis à la politique AST de
 // l'Oracle comme n'importe quel slot. Il est désormais RÉELLEMENT APPELÉ.

@@ -14,15 +14,16 @@ import { View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ScreenShell } from "../lib/primitives";
 import { AirButton, AirHeader, AirList } from "../lib/runtime/air-runtime";
+import type { AirScreenProps } from "../lib/runtime/air-runtime";
 import { screenData } from "./scr_menu.data";
 
-export default function ScrMenuScreen() {
+export default function ScrMenuScreen({ route }: AirScreenProps) {
   const insets = useSafeAreaInsets();
   return (
     <ScreenShell testID="scr_menu" title={screenData.title}>
       <View style={{ flex: 1, paddingBottom: insets.bottom }}>
         <AirHeader screen={screenData} blockId="blk_menu_header" />
-        <AirList screen={screenData} blockId="blk_menu_liste" />
+        <AirList screen={screenData} blockId="blk_menu_liste" itemId={route?.params?.itemId} />
         <AirButton screen={screenData} blockId="blk_menu_panier" />
         <AirButton screen={screenData} blockId="blk_menu_commandes" />
       </View>

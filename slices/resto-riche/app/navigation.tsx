@@ -2,6 +2,7 @@
 // config EXPLICITE émise depuis l'AIR, patron prouvé au banc V4).
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { declarerRacines } from "./lib/runtime/racines-navigation";
 import { navData } from "./nav.data";
 import ScrCommandeScreen from "./screens/scr_commande";
 import ScrCommandesScreen from "./screens/scr_commandes";
@@ -12,6 +13,12 @@ import ScrPanierScreen from "./screens/scr_panier";
 import ScrPlatScreen from "./screens/scr_plat";
 
 const Stack = createNativeStackNavigator();
+
+// Les quatre pages principales sont des RACINES : y aller REMPLACE la pile.
+// Sans cela `navigate` les empile, et l'en-tête natif dessine une flèche de
+// retour qui fait défiler les onglets à l'envers — défaut vu sur appareil.
+// Déclaré au chargement du module, donc avant tout rendu.
+declarerRacines([]);
 
 export function Navigation() {
   return (

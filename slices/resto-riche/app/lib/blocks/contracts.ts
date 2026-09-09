@@ -18,10 +18,58 @@ export interface BlockA11yProps {
 export interface HeaderBlockProps extends BlockA11yProps {
   title: string;
   subtitle?: string;
+  /**
+   * ACCROCHE (1.7.0) — le titre est rendu dans la variante `display`, un cran
+   * au-dessus de `heading`. Réservé à la PREMIÈRE phrase qu'une personne lit :
+   * un écran d'accueil produit. Absent = comportement 1.6.0 inchangé.
+   */
+  accroche?: boolean;
+  /**
+   * MARQUE (1.9.0) — l'image d'identité, posée AU-DESSUS du titre. Aucun
+   * document ne pouvait en déclarer une : les applications générées n'avaient
+   * donc aucune identité visible, alors que toute application de référence
+   * ouvre sur la sienne. L'URL vient du DOCUMENT, jamais du moteur.
+   */
+  logoUri?: string;
+}
+
+/**
+ * RECHERCHE DANS UNE LISTE (1.2.0, D-087) — état tenu par l'appelant.
+ *
+ * Le bloc ne possède pas la saisie : il la reçoit et la restitue. C'est ce qui
+ * lui permet de rester un composant PUR, testable sans monter d'application.
+ */
+export interface ListSearchSpec {
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+}
+
+/**
+ * FILTRE PILOTÉ PAR L'UTILISATEUR (E1, D-129) — même contrat que la
+ * recherche : le bloc ne possède pas la saisie, il la reçoit et la restitue.
+ * `text` rend un champ de saisie ; `choice` rend les options FOURNIES
+ * (valeurs distinctes du périmètre, calculées par l'appelant) — re-presser
+ * l'option active la désactive. Une valeur vide = filtre inactif.
+ */
+export interface ListFilterSpec {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  inputType: "text" | "choice";
+  options?: readonly string[];
+  /**
+   * LIBELLÉS D'AFFICHAGE des options (1.4.0, DET-032) — clé = option BRUTE.
+   * L'option reste la VALEUR (filtrage, testID) ; seul le texte rendu change.
+   * Absent ou partiel : l'option brute est affichée — appelant 1.3.0 inchangé.
+   */
+  optionLabels?: Readonly<Record<string, string>>;
 }
 
 export interface ListItemData {
   id: string;
+  /** Vignette de la ligne (1.2.0) — absente = ligne purement textuelle. */
+  imageUri?: string;
   title: string;
   subtitle?: string;
   trailing?: string;
@@ -33,6 +81,7 @@ export interface ListItemData {
 // (le compilateur, depuis l'AIR/les locales). AUCUN texte par défaut dans
 // le moteur : une chaîne codée en dur fuiterait la langue du moteur dans
 // des apps de langue arbitraire (i18n structurel, non-négociable 16).
+export const LIST_BLOCK_STATES = ["ready", "loading", "empty", "error"] as const;
 export type ListBlockState =
   | { kind: "ready" }
   | { kind: "loading"; title: string }
@@ -46,6 +95,10 @@ export type ListBlockState =
     };
 
 export interface ListBlockProps extends BlockA11yProps {
+  /** Recherche rendue EN TÊTE de la liste (1.2.0) — absente = pas de champ. */
+  search?: ListSearchSpec;
+  /** Filtres pilotés (E1, D-129) — rendus sous la recherche, ≤ 3. */
+  filters?: readonly ListFilterSpec[];
   title?: string;
   items: readonly ListItemData[];
   /** État EXPLICITE (défaut { kind: "ready" }) — jamais déduit des données. */
@@ -58,6 +111,12 @@ export interface FormFieldSpec {
   label: string;
   placeholder?: string;
   secure?: boolean;
+  /**
+   * CHAMP OBLIGATOIRE (1.6.0) — le bloc en dérive si l'action est POSSIBLE.
+   * Sans lui, le bouton d'envoi était toujours actif : il promettait une
+   * action que la validation refusait ensuite en silence.
+   */
+  required?: boolean;
 }
 
 // REGISTRE 1.1.0 (D-060) : `loading` et `empty` entrent dans l'union.
@@ -66,7 +125,12 @@ export interface FormFieldSpec {
 // dimension était donc INATTEIGNABLE, pas seulement non atteinte (APP-D003).
 // Ajout STRICTEMENT ADDITIF : aucun état retiré, `state` reste optionnel, défaut
 // "ready" — un appelant 1.0.0 se comporte à l'identique.
-export type FormBlockState = "ready" | "loading" | "empty" | "submitting" | "error";
+// D-095 — SOURCE UNIQUE DES ÉTATS. Le tableau est la déclaration ; le type en
+// DÉRIVE. Le registre pointe sur ce même tableau. Il n'existe donc plus de
+// seconde liste à tenir à jour, et la dérive mesurée en F5 devient impossible
+// par construction — pas seulement détectée.
+export const FORM_BLOCK_STATES = ["ready", "loading", "empty", "submitting", "error"] as const;
+export type FormBlockState = (typeof FORM_BLOCK_STATES)[number];
 
 export interface FormBlockProps extends BlockA11yProps {
   title?: string;
@@ -84,10 +148,31 @@ export interface FormBlockProps extends BlockA11yProps {
   emptyTitle?: string;
 }
 
+/**
+ * ESPACE EXTENSIBLE (1.8.0) — occupe la place restante. Sans lui, tous les
+ * blocs s'empilent en haut et le bas de l'écran reste vide : mesuré sur
+ * l'accueil produit, 1170 px de vide sous le dernier bouton. Aucun contenu,
+ * aucun texte : c'est une intention de MISE EN PAGE, et rien d'autre.
+ */
+export type SpacerBlockProps = BlockA11yProps;
+
 export interface ButtonBlockProps extends BlockA11yProps {
   label: string;
-  kind?: "primary" | "ghost";
-  onPress: () => void;
+  /**
+   * SIGNE DU BOUTON (1.6.0) — même vocabulaire FERMÉ que les onglets : le
+   * moteur doit savoir DESSINER ce que le document nomme, un nom libre
+   * ferait revenir la classe de défaut « promettre ce qu'on ne rend pas ».
+   * Absent = bouton purement textuel, comportement 1.5.0 inchangé.
+   */
+  icon?: string;
+  kind?: "primary" | "ghost" | "link";
+  /**
+   * OPTIONNEL depuis 1.1.0 (D-084) — même patron que `onItemPress` du bloc
+   * liste : sans gestionnaire, le bouton n'est PAS pressable. Un effet que le
+   * moteur n'exécute pas ne doit pas offrir d'affordance. Additif : un appelant
+   * qui fournit `onPress` est inchangé.
+   */
+  onPress?: () => void;
 }
 
 export interface EmptyStateBlockProps extends BlockA11yProps {
@@ -100,6 +185,7 @@ export interface EmptyStateBlockProps extends BlockA11yProps {
 // REGISTRE 1.1.0 (D-060) — même motif que `form` : `detail_header` consomme des
 // données et ne portait AUCUN état. Les titres viennent des DONNÉES, jamais du
 // moteur (F3) : un état sans titre déclaré n'est donc pas rendu.
+export const DETAIL_HEADER_BLOCK_STATES = ["ready", "loading", "empty", "error"] as const;
 export type DetailHeaderBlockState =
   | { kind: "ready" }
   | { kind: "loading"; title: string }
@@ -113,6 +199,12 @@ export interface DetailHeaderBlockProps extends BlockA11yProps {
   trailing?: string;
   /** État EXPLICITE (défaut { kind: "ready" }) — jamais déduit des données. */
   state?: DetailHeaderBlockState;
+  /**
+   * VISUEL D'EN-TÊTE (1.2.0, D-087) — une fiche de plat, de bien ou d'article
+   * sans image n'est pas une fiche. Absent = aucun visuel rendu, comportement
+   * 1.1.0 inchangé.
+   */
+  imageUri?: string;
 }
 
 // Le record complet — la conformité de l'implémentation est vérifiée par le
@@ -122,6 +214,35 @@ export interface Blocks {
   ListBlock: ComponentType<ListBlockProps>;
   FormBlock: ComponentType<FormBlockProps>;
   ButtonBlock: ComponentType<ButtonBlockProps>;
+  SpacerBlock: ComponentType<SpacerBlockProps>;
   EmptyStateBlock: ComponentType<EmptyStateBlockProps>;
   DetailHeaderBlock: ComponentType<DetailHeaderBlockProps>;
 }
+
+// ── D-095 · LIAISON VÉRIFIÉE PAR LE COMPILATEUR.
+//
+// Pour les unions DISCRIMINÉES, chaque variante porte des champs différents :
+// le tableau ne peut pas engendrer l'union. Il l'ENCADRE. Ces deux assertions
+// échouent à la compilation si le tableau et l'union divergent, dans un sens
+// comme dans l'autre — c'est la garantie que `BLOCKS[].states` n'avait pas.
+type MemeEnsemble<A extends string, B extends string> = [A] extends [B]
+  ? [B] extends [A]
+    ? true
+    : never
+  : never;
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+type _ListeLiee = MemeEnsemble<ListBlockState["kind"], (typeof LIST_BLOCK_STATES)[number]>;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+type _DetailLie = MemeEnsemble<
+  DetailHeaderBlockState["kind"],
+  (typeof DETAIL_HEADER_BLOCK_STATES)[number]
+>;
+
+// Blocs SANS prop `state` : ils ne rendent qu'un état, déclaré ici pour que
+// contracts.ts reste l'unique source des six blocs.
+export const BUTTON_BLOCK_STATES = ["ready"] as const;
+export const HEADER_BLOCK_STATES = ["ready"] as const;
+/** 1.8.0 — le spacer n'a qu'un état : il est là, ou il ne l'est pas. */
+export const SPACER_BLOCK_STATES = ["ready"] as const;
+export const EMPTY_STATE_BLOCK_STATES = ["empty"] as const;

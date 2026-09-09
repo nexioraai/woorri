@@ -27,7 +27,26 @@ const makeSheet = (c: Palette) =>
     // DET-006 : section qui remplit et BORNE sa hauteur, plus conteneur
     // d'enfants borné — la liste virtualisée y retrouve une fenêtre finie.
     sectionFill: { flex: 1 },
+    // SECTION RESSERRÉE (1.18.0) — la gouttière LATÉRALE reste celle de toutes
+    // les autres sections (les bords ne bougent pas d'un bloc à l'autre) ; seule
+    // la respiration VERTICALE se réduit. Un lien de texte prolonge le bloc
+    // qu'il suit, il n'en ouvre pas un nouveau.
+    // ASYMÉTRIQUE, et c'est le point : peu d'air AU-DESSUS (le lien continue le
+    // bloc qu'il suit), davantage EN DESSOUS (il ne se confond pas avec ce qui
+    // vient après). Mesuré au premier build : une réduction symétrique laissait
+    // l'écart du haut ÉGAL à celui du bas — le lien flottait toujours entre les
+    // deux, exactement le défaut jugé.
+    sectionTight: { paddingTop: theme.space.xxs, paddingBottom: theme.space.xl },
     sectionFillBody: { flex: 1 },
+    // Disposition EN LIGNE (1.3.0) : les enfants se suivent et passent à la
+    // ligne. `gap` remplace des marges par enfant — aucune propriété physique,
+    // la dimension F (RTL par propriétés logiques) reste tenue.
+    sectionInlineBody: {
+      flexDirection: "row",
+      flexWrap: "wrap",
+      alignItems: "center",
+      gap: theme.space.sm,
+    },
     sectionTitle: {
       fontSize: theme.font.title,
       fontWeight: theme.fontWeight.semibold,
@@ -39,6 +58,7 @@ const makeSheet = (c: Palette) =>
     textBody: { fontSize: theme.font.body, color: c.text },
     textTitle: { fontSize: theme.font.title, fontWeight: theme.fontWeight.semibold, color: c.text },
     textHeading: { fontSize: theme.font.heading, fontWeight: theme.fontWeight.bold, color: c.text },
+    textDisplay: { fontSize: theme.font.display, fontWeight: theme.fontWeight.bold, color: c.text },
     toneMuted: { color: c.muted },
     tonePrimary: { color: c.primaryText },
     toneError: { color: c.error },
@@ -67,7 +87,64 @@ const makeSheet = (c: Palette) =>
       borderColor: c.primary,
     },
     buttonDisabled: { opacity: theme.opacity.disabled },
+    // Révélation du secret : cible tactile PLEINE (48 dp), posée dans la
+    // rangée du champ — la contrainte A vaut aussi pour ce contrôle.
+    // L'oeil se SUPERPOSE a la fin du champ au lieu de le pousser : sans
+    // cela, un champ masque etait plus etroit qu'un champ ordinaire, et deux
+    // champs voisins n'avaient pas la meme largeur. Mesure a l'oeil sur
+    // l'ecran de connexion. `end` est LOGIQUE : miroir RTL automatique.
+    fieldRevele: {
+      position: "absolute",
+      end: 0,
+      top: 0,
+      bottom: 0,
+      minWidth: theme.size.tapTarget,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    fieldRevelIcone: { fontSize: theme.font.title, color: c.muted },
+    // FERMETURE D'UNE FEUILLE (1.18.0) — posée dans l'en-tête natif, à la fin
+    // (propriété LOGIQUE via `alignItems`, aucun côté physique). Cible PLEINE :
+    // un contrôle discret n'est pas un contrôle petit.
+    fermerFeuille: {
+      minWidth: theme.size.tapTarget,
+      minHeight: theme.size.tapTarget,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    fermerFeuilleIcone: { fontSize: theme.font.title, color: c.text },
+    // — chip (1.5.0, DET-034) : la CIBLE garde tapTarget, le VISUEL est un
+    // badge. La discrétion est dans le rendu, jamais dans la zone de toucher.
+    // Style de BASE du chip (jamais empilé sur `button` : rien à écraser,
+    // donc aucune valeur en dur — l'instrument E le vérifie).
+    buttonChip: {
+      minHeight: theme.size.tapTarget,
+      justifyContent: "center",
+      alignItems: "flex-start",
+    },
+    buttonChipVisuel: {
+      backgroundColor: c.badgeBg,
+      borderRadius: theme.radius.sm,
+      paddingHorizontal: theme.space.sm,
+      paddingVertical: theme.space.xxs,
+    },
+    buttonChipVisuelActif: { backgroundColor: c.primary },
+    // LIEN (1.5.0) : du TEXTE cliquable. Ni fond, ni bordure, ni pleine
+    // largeur — un chemin secondaire ne doit pas peser autant qu'une action.
+    // La cible tactile reste PLEINE : discret ne veut pas dire inatteignable.
+    buttonLien: {
+      minHeight: theme.size.tapTarget,
+      alignItems: "flex-start",
+      justifyContent: "center",
+    },
+    buttonLienText: { color: c.primaryText, fontSize: theme.font.body },
+    buttonChipText: { color: c.primaryText, fontWeight: theme.fontWeight.semibold, fontSize: theme.font.label },
+    buttonChipTextActif: { color: c.onPrimary },
     buttonText: { color: c.onPrimary, fontWeight: theme.fontWeight.semibold, fontSize: theme.font.body },
+    // 1.6.0 — le signe s'aligne au texte, il ne le remplace pas.
+    // Propriété LOGIQUE (`marginEnd`), pas physique : le cliquet RTL l'exige,
+    // et il a raison — en arabe le signe doit passer à droite tout seul.
+    buttonIcon: { fontSize: theme.font.body, marginEnd: theme.space.sm },
     buttonGhostText: { color: c.primaryText },
     // — TextField —
     fieldWrap: { marginBottom: theme.space.md },
@@ -96,6 +173,58 @@ const makeSheet = (c: Palette) =>
       marginTop: theme.space.xs,
     },
     fieldSpinner: { marginStart: theme.space.sm },
+    // — NAVIGATION PRINCIPALE (D-086) — compacte PAR CONSTRUCTION : sa hauteur
+    // est bornée par la cible tactile, pas par le contenu. C'est ce qui la
+    // distingue des quatre gros boutons qu'elle remplace, lesquels grandissaient
+    // avec leur libellé.
+    // PANNEAU DE NAVIGATION (1.3.0) — la barre était un simple filet posé au
+    // bas de l'écran : quatre libellés séparés du contenu par un trait. Elle
+    // devient un PANNEAU détaché, posé sur le fond, avec un état actif porté
+    // par une pastille et non par la seule graisse du texte.
+    // Contraintes tenues, et vérifiées : `minHeight` reste `tapTarget` (48 dp,
+    // mesuré conforme sur A17) ; aucune valeur en dur, tout vient des tokens
+    // (dimension D) ; aucune propriété physique (dimension F) ; aucune limite
+    // de lignes sur les libellés (dimension E — le mot exact est volontairement
+    // absent, l'instrument le cherche par sous-chaîne sans distinguer un
+    // commentaire du code).
+    primaryNav: {
+      flexDirection: "row",
+      backgroundColor: c.surface,
+      borderTopWidth: 1,
+      borderTopColor: c.border,
+      paddingTop: theme.space.sm,
+      paddingHorizontal: theme.space.sm,
+      gap: theme.space.xs,
+    },
+    primaryNavItem: {
+      flex: 1,
+      minHeight: theme.size.tapTarget,
+      alignItems: "center",
+      justifyContent: "center",
+      paddingHorizontal: theme.space.xs,
+      paddingVertical: theme.space.xs,
+      borderRadius: theme.radius.md,
+    },
+    // ÉTAT ACTIF LISIBLE SANS LIRE — pastille pleine sur l'onglet courant.
+    primaryNavItemActive: {
+      flex: 1,
+      minHeight: theme.size.tapTarget,
+      alignItems: "center",
+      justifyContent: "center",
+      paddingHorizontal: theme.space.xs,
+      paddingVertical: theme.space.xs,
+      borderRadius: theme.radius.md,
+      backgroundColor: c.badgeBg,
+    },
+    // Taille du glyphe d'onglet — portée par un TOKEN, jamais par un nombre
+    // écrit dans le composant : la dimension D interdit toute valeur en dur.
+    primaryNavIcon: { fontSize: theme.font.heading },
+    primaryNavLabel: { fontSize: theme.font.label, color: c.muted },
+    primaryNavLabelActive: {
+      fontSize: theme.font.label,
+      color: c.primaryText,
+      fontWeight: theme.fontWeight.semibold,
+    },
     // — ListRow —
     row: {
       minHeight: theme.size.tapTarget,
@@ -110,6 +239,38 @@ const makeSheet = (c: Palette) =>
       alignItems: "center",
     },
     rowLeading: { marginEnd: theme.space.md },
+    // VIGNETTE DE LIGNE (1.2.0, D-087) — carrée, bornée, à gauche du texte.
+    // C'est la composition d'un catalogue : image à gauche, titre et
+    // description au centre qui prennent tout l'espace restant (`rowBody`
+    // flex:1), prix à droite. Rien n'est centré, rien ne reste étroit.
+    // VISUEL D'EN-TÊTE — pleine largeur, hauteur bornée : c'est la hiérarchie
+    // d'une fiche produit. `width: "100%"` exploite l'espace horizontal au lieu
+    // de laisser un visuel étroit centré.
+    imageHeader: {
+      width: "100%",
+      minHeight: theme.size.tapTarget * 3,
+      borderRadius: theme.radius.md,
+      backgroundColor: c.border,
+      marginBottom: theme.space.md,
+    },
+    // MARQUE (1.4.0) : hauteur bornée, largeur libre, alignée au DÉBUT (le
+    // miroir RTL est donc automatique). Aucun fond : un logo se pose, il ne
+    // s'encadre pas.
+    imageBrand: {
+      // Cadre CARRÉ : une marque symbolique remplit sa boîte. Un cadre plus
+      // large la laisserait flotter — `contain` la réduirait à la hauteur et
+      // le reste de la largeur resterait vide.
+      width: theme.size.tapTarget * 1.5,
+      height: theme.size.tapTarget * 1.5,
+      alignSelf: "flex-start",
+      marginBottom: theme.space.lg,
+    },
+    imageThumb: {
+      width: theme.size.tapTarget,
+      height: theme.size.tapTarget,
+      borderRadius: theme.radius.sm,
+      backgroundColor: c.border,
+    },
     rowBody: { flex: 1 },
     rowTitle: { fontSize: theme.font.body, fontWeight: theme.fontWeight.semibold, color: c.text },
     rowSubtitle: {

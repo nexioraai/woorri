@@ -8,8 +8,12 @@
 // Effets d'actions en v1 compilateur : `navigate` est câblé ; les effets
 // `capability`/`mutation`/`slot` sont des non-opérations STRUCTURÉES
 // (implémentations : Phases 5+/9 — lecture consignée D-028).
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
+// E1/E2 (D-129) — la vérité des lignes visibles vit dans un module PUR.
+import { lignesVisibles, optionsDistinctes } from "./list-pipeline";
+import type { FiltreEffectif, OperateurFiltre } from "./list-pipeline";
 import { useNavigation } from "@react-navigation/native";
+import { allerVers } from "./racines-navigation";
 import {
   ButtonBlock,
   DetailHeaderBlock,
@@ -17,12 +21,14 @@ import {
   FormBlock,
   HeaderBlock,
   ListBlock,
+  SpacerBlock,
 } from "../blocks/components";
 import type { FormFieldSpec, ListItemData } from "../blocks/contracts";
 import { useDataProvider } from "./data-provider";
 import { useSlotRegistry } from "./slot-provider";
 import { useCapabilityProvider } from "./capability-provider";
-import { useFormValues } from "./form-state";
+import { useSessionProvider } from "./session-provider";
+import { useAllFormValues, useFormValues } from "./form-state";
 
 export interface AirEffectData {
   kind: "navigate" | "capability" | "mutation" | "slot";
@@ -32,16 +38,20 @@ export interface AirEffectData {
   operation?: string;
   /** Écran atteint UNE FOIS l'écriture réussie (1.5.0, D-070). */
   thenScreenId?: string;
+  /** 1.13.0 — `route` (défaut) ou `session` : d'où vient la ligne à écrire. */
+  instanceFrom?: string;
   /** Effet `capability` (D-059) — transporté pour être INVOQUÉ, plus ignoré. */
   capability?: string;
   method?: string;
   params?: Readonly<Record<string, unknown>>;
 }
 
-export interface AirBlockVisibility {
-  kind: "entity_empty" | "entity_not_empty";
-  entityId: string;
-}
+export type AirBlockVisibility =
+  | { kind: "entity_empty" | "entity_not_empty"; entityId: string }
+  /** 1.11.0 (Phase 4) — prédicat de SESSION : aucune entité interrogée. */
+  | {
+      kind: "session_authenticated" | "session_anonymous" | "session_pending_confirmation";
+    };
 
 export interface AirBlockInstanceData {
   id: string;
@@ -58,7 +68,14 @@ export interface AirRuleData {
   assertions: readonly {
     fieldId: string;
     operator: string;
-    value?: string | number | boolean | null;
+    /**
+     * DÉFAUT CORRIGÉ (D-072) — ce type était écrit à la main et **plus étroit
+     * que le schéma** : `jsonLeafSchema` autorise les TABLEAUX, qu'emploie
+     * l'opérateur `in` (`value: ["payee", "annulee", …]`). Résultat : toute
+     * application portant une règle `in` **ne compilait pas**. Mesuré sur le
+     * corpus : 11 documents sur 14.
+     */
+    value?: string | number | boolean | null | readonly (string | number | boolean | null)[];
   }[];
 }
 
@@ -69,6 +86,14 @@ export interface AirFieldData {
   /** Traversée de relation (1.4.0, D-064) — vers quoi, et quoi montrer. */
   referencesEntityId?: string;
   referenceDisplayFieldId?: string;
+  /** Libellés d'affichage (AIR 1.10.0, DET-032) — RÉSOLUS par le compilateur
+      dans la langue de l'app ; absents = comportement 1.9.0 (name/valeur). */
+  label?: string;
+  enumLabels?: Readonly<Record<string, string>>;
+  /** 1.12.0 — saisie MASQUÉE, valeur jamais conservée. */
+  sensitive?: boolean;
+  /** 1.6.0 du registre — champ OBLIGATOIRE : le bouton d'envoi en dérive. */
+  required?: boolean;
 }
 
 export interface AirSlotInvocationData {
@@ -258,10 +283,31 @@ function useDataStatus(entityId: string | undefined): "loading" | "ready" | "err
  */
 function useBlockVisible(screen: AirScreenData, blockId: string): boolean {
   const provider = useDataProvider();
+  // 1.11.0 — la session est lue INCONDITIONNELLEMENT : un hook ne se place pas
+  // derrière une condition. Sans fournisseur, elle répond ANONYME.
+  const session = useSessionProvider();
+  const abonnerSession = useMemo(
+    () => (ecouteur: () => void) => session.abonner(ecouteur),
+    [session],
+  );
+  // Un SEUL abonnement, un SEUL instantané : deux `useSyncExternalStore`
+  // pourraient être lus à des instants différents et se contredire.
+  const etat = useSyncExternalStore(
+    abonnerSession,
+    () => (session.estAuthentifie() ? "auth" : session.enAttenteConfirmation?.() === true ? "attente" : "anon"),
+    () => (session.estAuthentifie() ? "auth" : session.enAttenteConfirmation?.() === true ? "attente" : "anon"),
+  );
+  const authentifie = etat === "auth";
   const condition = block(screen, blockId).visibleWhen;
   if (condition === undefined) return true;
-  const vide = provider.listInstances(condition.entityId).length === 0;
-  return condition.kind === "entity_empty" ? vide : !vide;
+  // Discrimination POSITIVE sur les prédicats de DONNÉES : eux seuls portent
+  // une entité. Exclure les autres ne suffit pas à restreindre le type.
+  if (condition.kind === "entity_empty" || condition.kind === "entity_not_empty") {
+    const vide = provider.listInstances(condition.entityId).length === 0;
+    return condition.kind === "entity_empty" ? vide : !vide;
+  }
+  if (condition.kind === "session_pending_confirmation") return etat === "attente";
+  return condition.kind === "session_authenticated" ? authentifie : !authentifie;
 }
 
 /**
@@ -282,8 +328,13 @@ function useResolveField(
     const champ = screen.entities[entityId]?.fields.find((f) => f.id === fieldId);
     const cible = champ?.referencesEntityId;
     const affiche = champ?.referenceDisplayFieldId;
-    if (cible === undefined || affiche === undefined) return brut;
-    return provider.getInstance(cible, brut)?.values[affiche] ?? brut;
+    if (cible !== undefined && affiche !== undefined) {
+      return provider.getInstance(cible, brut)?.values[affiche] ?? brut;
+    }
+    // DET-032 — un code d'enum ne se montre pas : si le document a déclaré un
+    // libellé pour cette valeur, c'est LUI qui s'affiche. Données, filtrage et
+    // testID continuent de porter la valeur brute.
+    return champ?.enumLabels?.[brut] ?? brut;
   };
 }
 
@@ -291,26 +342,48 @@ function str(value: unknown): string | undefined {
   return typeof value === "string" ? value : undefined;
 }
 
+/** E1 (D-129) — lecture sûre d'un prop tableau de chaînes du flat config. */
+function strArray(value: unknown): readonly string[] {
+  return Array.isArray(value) ? value.filter((v): v is string => typeof v === "string") : [];
+}
+
 function useDispatch(screen: AirScreenData) {
   const navigation = useNavigation();
   const capabilities = useCapabilityProvider();
   const data = useDataProvider();
+  // D-083 : une action `mutation` portée par un BOUTON n'a aucune valeur propre.
+  // Les documents générés câblent pourtant « Valider » sur un bouton, pas sur le
+  // formulaire. Sans cette lecture, l'écriture partait vide et la règle de
+  // validation la refusait — en silence.
+  const saisies = useAllFormValues();
+  // 1.13.0 — l'identité courante, pour les mutations dont l'instance EST la
+  // personne connectée. Lue inconditionnellement : un hook ne se place pas
+  // derrière une condition.
+  const identiteSession = useSessionProvider().identifiant();
   return useMemo(
     () => (actionId: string | undefined, values?: Readonly<Record<string, string>>) => {
       if (actionId === undefined) return;
       const effect = screen.actions[actionId];
       if (effect?.kind === "navigate" && effect.screenId !== undefined) {
-        (navigation.navigate as (name: string) => void)(effect.screenId);
+        // Une DESTINATION PRINCIPALE est une racine : y aller remplace la pile
+        // au lieu de s'empiler dessus. C'est ce qui retire la flèche de retour
+        // en haut à gauche des quatre pages principales.
+        allerVers(navigation, effect.screenId);
         return;
       }
       // CAPABILITY (D-059) : l'effet n'est plus AVALÉ. Il est présenté au
       // fournisseur, qui répond s'il l'a honoré. Sans implémentation fournie,
       // le défaut REFUSE ET TRACE — il ne prétend jamais avoir agi.
       if (effect?.kind === "capability" && effect.capability !== undefined) {
+        // Phase 4 : les valeurs SAISIES accompagnent l'appel, exactement comme
+        // pour les mutations (D-061/D-083). Sans elles, une connexion partirait
+        // sans identité — l'effet s'exécuterait, et ne pourrait rien établir.
+        // Les params DÉCLARÉS restent prioritaires : ils sont la configuration
+        // du document, la saisie est la donnée de l'instant.
         capabilities.invoke({
           capability: effect.capability,
           method: effect.method ?? "",
-          params: effect.params ?? {},
+          params: { ...(values ?? saisies), ...(effect.params ?? {}) },
         });
         return;
       }
@@ -320,14 +393,25 @@ function useDispatch(screen: AirScreenData) {
       // faux succès.
       if (effect?.kind === "mutation" && effect.entityId !== undefined) {
         const cible = effect.entityId;
-        const saisie = values ?? {};
+        const saisie = values ?? saisies;
         // D-062 : une écriture qui viole une règle déclarée est ANNULÉE.
         if (!reglesRespectees(screen.rules, cible, saisie)) return;
         let ecrit = false;
         if (effect.operation === "create") ecrit = data.create?.(cible, saisie) ?? false;
         else if (effect.operation === "update") {
-          const id = saisie.id;
-          if (id !== undefined) ecrit = data.update?.(cible, id, saisie) ?? false;
+          // 1.13.0 — l'instance vient de la SESSION ou de la route. Sans
+          // identité établie, on n'écrit RIEN : écrire « quelque part » serait
+          // écrire la ligne de quelqu'un d'autre.
+          const id = effect.instanceFrom === "session" ? identiteSession : saisie.id;
+          if (id !== undefined) {
+            // UPSERT quand l'instance est la SESSION : au premier
+            // enregistrement, la ligne n'existe pas encore — un `update` seul
+            // échouerait en silence, exactement le défaut qu'on corrige.
+            const misAJour = data.update?.(cible, id, saisie) ?? false;
+            ecrit =
+              misAJour ||
+              (effect.instanceFrom === "session" && data.upsert?.(cible, id, saisie) === true);
+          }
         } else if (effect.operation === "delete") {
           const id = saisie.id;
           if (id !== undefined) ecrit = data.remove?.(cible, id) ?? false;
@@ -336,13 +420,13 @@ function useDispatch(screen: AirScreenData) {
         // sur un écran de confirmation après un refus serait un mensonge de
         // l'interface — la faute exacte que ce chantier traque.
         if (ecrit && effect.thenScreenId !== undefined) {
-          (navigation.navigate as (name: string) => void)(effect.thenScreenId);
+          allerVers(navigation, effect.thenScreenId);
         }
         return;
       }
       // slot : invoqué au RENDU, pas ici.
     },
-    [navigation, screen, capabilities, data],
+    [navigation, screen, capabilities, data, saisies],
   );
 }
 
@@ -360,9 +444,7 @@ function useItemNavigate(screen: AirScreenData, blockId: string) {
   if (effect?.kind !== "navigate" || effect.screenId === undefined) return undefined;
   const cible = effect.screenId;
   return (itemId: string) => {
-    (
-      navigation.navigate as (name: string, params: { itemId: string }) => void
-    )(cible, { itemId });
+    allerVers(navigation, cible, { itemId });
   };
 }
 
@@ -397,7 +479,19 @@ export function AirHeader({ screen, blockId }: BlockRef) {
   if (!visible) return null;
   const title = str(props.title);
   if (title === undefined) throw new Error(`AIR_RUNTIME_PROP_MISSING:${blockId}:title`);
-  return <HeaderBlock testID={b.id} title={title} subtitle={str(props.subtitle)} />;
+  // MAILLON MANQUANT CORRIGÉ : `accroche` et `logoUri` étaient déclarés au
+  // document, portés par l'artefact et acceptés par le bloc — mais le runtime
+  // ne les TRANSMETTAIT pas. Rien n'échouait : l'en-tête rendait simplement
+  // sa forme de 1.6.0, sans marque et sans accroche.
+  return (
+    <HeaderBlock
+      testID={b.id}
+      title={title}
+      subtitle={str(props.subtitle)}
+      accroche={props.accroche === true}
+      logoUri={str(props.logoUri)}
+    />
+  );
 }
 
 export function AirButton({ screen, blockId }: BlockRef) {
@@ -412,10 +506,42 @@ export function AirButton({ screen, blockId }: BlockRef) {
   if (label === undefined || actionId === undefined) {
     throw new Error(`AIR_RUNTIME_PROP_MISSING:${blockId}:label|actionId`);
   }
-  const kind = props.kind === "ghost" ? ("ghost" as const) : ("primary" as const);
+  // VALEUR NARROWED, PAS SEULEMENT LUE : cette ligne ne reconnaissait que
+  // `ghost` et rabattait TOUT le reste sur `primary`. Un `link` déclaré au
+  // document devenait donc un gros bouton plein — l'inverse exact de ce qu'il
+  // demandait. La prop était bien LUE : c'est sa VALEUR qui était perdue, ce
+  // que le cliquet `props-cablees` ne pouvait pas voir.
+  const kind =
+    props.kind === "ghost"
+      ? ("ghost" as const)
+      : props.kind === "link"
+        ? ("link" as const)
+        : ("primary" as const);
+  // AFFORDANCE (D-084) — un effet `slot` est calculé AU RENDU, jamais sur un
+  // appui : le dispatcher n'a aucune branche pour lui. Un bouton « Appliquer les
+  // filtres » câblé sur un slot était donc PRESSABLE ET MUET. Mesuré sur les
+  // 26 applications : c'est l'une des deux causes des 201 contrôles fantômes.
+  // On ne fabrique aucun comportement — on retire une promesse que rien ne
+  // fonde. Exactement le remède d'`APP-D002`, appliqué à un second effet.
+  const effet = screen.actions[actionId]?.kind;
+  const inerte = effet === "slot";
   return (
-    <ButtonBlock testID={b.id} label={label} kind={kind} onPress={() => dispatch(actionId)} />
+    <ButtonBlock
+      testID={b.id}
+      label={label}
+      icon={str(props.icon)}
+      kind={kind}
+      onPress={inerte ? undefined : () => dispatch(actionId)}
+    />
   );
+}
+
+/** 1.8.0 — MISE EN PAGE : aucun contenu, aucune donnée, aucune action. */
+export function AirSpacer({ screen, blockId }: BlockRef) {
+  const visible = useBlockVisible(screen, blockId);
+  const b = block(screen, blockId);
+  if (!visible) return null;
+  return <SpacerBlock testID={b.id} />;
 }
 
 export function AirEmptyState({ screen, blockId }: BlockRef) {
@@ -475,11 +601,25 @@ export function AirDetailHeader({
     <DetailHeaderBlock
       testID={b.id}
       state={etat}
+      {...(str(props.imageFieldId) !== undefined &&
+      value(props.imageFieldId) !== ""
+        ? { imageUri: value(props.imageFieldId) }
+        : {})}
       title={value(props.titleFieldId)}
       subtitle={
         props.subtitleFieldId === undefined ? undefined : value(props.subtitleFieldId)
       }
-      badges={badgeIds?.map((id) => value(id))}
+      // D-076 : un badge VIDE n'est pas un badge — il rendait une pastille sans
+      // texte et provoquait une collision de clés. On ne rend que les valeurs
+      // réellement présentes ; `undefined` si aucune ne l'est.
+      badges={
+        badgeIds === undefined
+          ? undefined
+          : (() => {
+              const v = badgeIds.map((id) => value(id)).filter((x) => x !== "");
+              return v.length === 0 ? undefined : v;
+            })()
+      }
       trailing={
         props.trailingFieldId === undefined ? undefined : value(props.trailingFieldId)
       }
@@ -487,7 +627,7 @@ export function AirDetailHeader({
   );
 }
 
-export function AirList({ screen, blockId }: BlockRef) {
+export function AirList({ screen, blockId, itemId }: BlockRef & { itemId?: string }) {
   const visible = useBlockVisible(screen, blockId);
   const b = block(screen, blockId);
   // Props SURCHARGÉES par les sorties des slots liés (1.3.0, D-058).
@@ -495,6 +635,12 @@ export function AirList({ screen, blockId }: BlockRef) {
   const provider = useDataProvider();
   const statut = useDataStatus(b.entityId);
   const resoudre = useResolveField(screen, b.entityId);
+  // Saisie de recherche — LOCALE à la liste : chercher dans un catalogue n'est
+  // pas un état d'application, et le partager entre écrans surprendrait.
+  const [recherche, setRecherche] = useState("");
+  // E1 (D-129) — saisies des filtres PILOTÉS, locales à la liste comme la
+  // recherche. Une valeur vide = filtre inactif.
+  const [saisiesFiltres, setSaisiesFiltres] = useState<Readonly<Record<number, string>>>({});
   const onItemNavigate = useItemNavigate(screen, blockId);
   if (!visible) return null;
   if (b.entityId === undefined) throw new Error(`AIR_RUNTIME_ENTITY_MISSING:${blockId}`);
@@ -502,41 +648,83 @@ export function AirList({ screen, blockId }: BlockRef) {
   if (titleFieldId === undefined) {
     throw new Error(`AIR_RUNTIME_PROP_MISSING:${blockId}:titleFieldId`);
   }
-  // TRI / FILTRE / PAGINATION (D-065) — appliqués sur les instances AVANT le
-  // rendu. Fermé par construction : trois opérateurs, une direction, une borne.
-  // Ordre volontaire : filtrer, puis trier, puis borner — l'inverse tronquerait
-  // avant d'avoir vu toutes les lignes.
-  const brutes = provider.listInstances(b.entityId);
+  // E1/E2 (D-129) — TRI / FILTRES / PAGINATION / PORTÉE : la vérité vit dans
+  // `lignesVisibles` (module pur, testé sans rendu). Ici : lire les props,
+  // tenir les saisies, déléguer.
+  const brutes0 = provider.listInstances(b.entityId);
+  const rechercheChamp = str(props.searchFieldId);
   const filtreChamp = str(props.filterFieldId);
   const filtreValeur = str(props.filterValue);
-  const filtrees =
-    filtreChamp === undefined || filtreValeur === undefined
-      ? brutes
-      : brutes.filter((i) => {
-          const v = i.values[filtreChamp] ?? "";
-          if (props.filterOperator === "neq") return v !== filtreValeur;
-          if (props.filterOperator === "contains") return v.includes(filtreValeur);
-          return v === filtreValeur;
-        });
-  const triChamp = str(props.sortFieldId);
-  const triees =
-    triChamp === undefined
-      ? filtrees
-      : [...filtrees].sort((x, y) => {
-          const a = x.values[triChamp] ?? "";
-          const c = y.values[triChamp] ?? "";
-          const na = Number(a);
-          const nc = Number(c);
-          const ordre =
-            Number.isFinite(na) && Number.isFinite(nc) ? na - nc : a.localeCompare(c);
-          return props.sortDirection === "desc" ? -ordre : ordre;
-        });
-  const borne = typeof props.pageSize === "number" ? props.pageSize : undefined;
-  const instances = borne === undefined ? triees : triees.slice(0, borne);
+  const champsPilotes = strArray(props.userFilterFieldIds);
+  const operateursPilotes = strArray(props.userFilterOperators);
+  const typesPilotes = strArray(props.userFilterInputTypes);
+  const filtres: FiltreEffectif[] = [
+    ...(filtreChamp !== undefined && filtreValeur !== undefined
+      ? [{
+          fieldId: filtreChamp,
+          operator: (str(props.filterOperator) ?? "eq") as OperateurFiltre,
+          valeur: filtreValeur,
+        }]
+      : []),
+    ...champsPilotes.map((fieldId, i) => ({
+      fieldId,
+      operator: (operateursPilotes[i] ?? "eq") as OperateurFiltre,
+      valeur: saisiesFiltres[i] ?? "",
+    })),
+  ];
+  const scopeChamp = str(props.scopeFieldId);
+  const instances = lignesVisibles(brutes0, {
+    scopeFieldId: scopeChamp,
+    instanceId: itemId,
+    rechercheChamp,
+    recherche,
+    filtres,
+    triChamp: str(props.sortFieldId),
+    triDesc: props.sortDirection === "desc",
+    borne: typeof props.pageSize === "number" ? props.pageSize : undefined,
+  });
+  // Options des filtres `choice` — valeurs distinctes du PÉRIMÈTRE scopé,
+  // jamais du dataset entier d'un autre parent.
+  const scopees =
+    scopeChamp === undefined
+      ? brutes0
+      : itemId === undefined
+        ? []
+        : brutes0.filter((i) => (i.values[scopeChamp] ?? "") === itemId);
+  // DET-032 : le TITRE d'un filtre est le libellé déclaré du champ — `name`
+  // (identifiant machine) ne sert que de repli 1.9.0.
+  const champsEntite = screen.entities[b.entityId]?.fields ?? [];
+  const nomsChamps = new Map(champsEntite.map((f) => [f.id, f.label ?? f.name]));
+  const enumLabelsParChamp = new Map(champsEntite.map((f) => [f.id, f.enumLabels]));
+  const filtresSpec =
+    champsPilotes.length === 0
+      ? undefined
+      : champsPilotes.map((fieldId, i) => ({
+          label: nomsChamps.get(fieldId) ?? fieldId,
+          value: saisiesFiltres[i] ?? "",
+          onChange: (v: string) =>
+            setSaisiesFiltres((s) => ({ ...s, [i]: v })),
+          inputType: (typesPilotes[i] === "choice" ? "choice" : "text") as "text" | "choice",
+          ...(typesPilotes[i] === "choice"
+            ? {
+                options: optionsDistinctes(scopees, fieldId),
+                // DET-032 — les chips affichent le libellé, filtrent la valeur.
+                ...(enumLabelsParChamp.get(fieldId) === undefined
+                  ? {}
+                  : { optionLabels: enumLabelsParChamp.get(fieldId) }),
+              }
+            : {}),
+        }));
   const pick = (fieldId: unknown, values: Readonly<Record<string, string>>) =>
     typeof fieldId === "string" ? resoudre(fieldId, values[fieldId]) : undefined;
+  const imageFieldId = str(props.imageFieldId);
   const items: ListItemData[] = instances.map((instance) => ({
     id: instance.id,
+    // VIGNETTE (D-087) — seulement si le document a DÉCLARÉ quel champ porter.
+    // Une valeur vide n'est pas une image : on n'en rend aucune.
+    ...(imageFieldId !== undefined && (instance.values[imageFieldId] ?? "") !== ""
+      ? { imageUri: instance.values[imageFieldId] }
+      : {}),
     title: resoudre(titleFieldId, instance.values[titleFieldId]) ?? "",
     subtitle: pick(props.subtitleFieldId, instance.values),
     trailing: pick(props.trailingFieldId, instance.values),
@@ -559,34 +747,71 @@ export function AirList({ screen, blockId }: BlockRef) {
       title={str(props.title)}
       items={items}
       state={state}
+      // RECHERCHE (D-087) — rendue EN TÊTE de la liste, donc en haut de l'écran
+      // de catalogue. Filtre client sur le champ DÉCLARÉ par le document.
+      search={
+        rechercheChamp === undefined
+          ? undefined
+          : { value: recherche, onChange: setRecherche, placeholder: str(props.searchPlaceholder) }
+      }
+      filters={filtresSpec}
       onItemPress={onItemNavigate}
     />
   );
 }
 
-export function AirForm({ screen, blockId }: BlockRef) {
+export function AirForm({ screen, blockId, itemId }: BlockRef & { itemId?: string }) {
   const visible = useBlockVisible(screen, blockId);
   const b = block(screen, blockId);
+  const provider = useDataProvider();
+  // L'instance à ÉDITER : la ligne ouverte, ou celle de la personne connectée.
+  // Lue inconditionnellement — un hook ne se place pas derrière une condition.
+  const identiteSession = useSessionProvider().identifiant();
   // Props SURCHARGÉES par les sorties des slots liés (1.3.0, D-058).
   const props = useBlockProps(screen, blockId);
   const dispatch = useDispatch(screen);
   const statut = useDataStatus(b.entityId);
   // D-066 : l'état vit AU-DESSUS des écrans. Un retour en arrière ne vide plus
   // le formulaire — défaut mesuré sur le parcours de commande.
-  const [values, changer] = useFormValues(blockId);
+  const [saisies, changer] = useFormValues(blockId);
   if (!visible) return null;
   if (b.entityId === undefined) throw new Error(`AIR_RUNTIME_ENTITY_MISSING:${blockId}`);
   const fieldsById = new Map(
     (screen.entities[b.entityId]?.fields ?? []).map((f) => [f.id, f]),
   );
   const fieldIds = Array.isArray(props.fieldIds) ? props.fieldIds : [];
-  // Lecture D-028 : l'AIR v1 ne porte pas de libellés humains de champs —
-  // le libellé rendu est `field.name` (donnée AIR), jamais un texte moteur.
+  // DET-032 (AIR 1.10.0) : le libellé rendu est celui que le document DÉCLARE
+  // (`field.label`, résolu par le compilateur) ; `field.name` reste le repli
+  // 1.9.0 — donnée AIR dans les deux cas, jamais un texte moteur (D-028/F3).
   const fields: FormFieldSpec[] = fieldIds.flatMap((fieldId) => {
     if (typeof fieldId !== "string") return [];
     const field = fieldsById.get(fieldId);
-    return field === undefined ? [] : [{ id: field.id, label: field.name }];
+    if (field === undefined) return [];
+    return [
+      {
+        id: field.id,
+        label: field.label ?? field.name,
+        // 1.6.0 — le caractère OBLIGATOIRE vient du document : le bloc en
+        // dérive si l'action est possible, il ne le devine pas.
+        required: field.required,
+        // 1.12.0 — un champ sensible se saisit en clair pour la personne, pas
+        // pour l'épaule d'à côté.
+        ...(field.sensitive === true ? { secure: true } : {}),
+      },
+    ];
   });
+  // PRÉREMPLISSAGE — la ligne existante fournit les VALEURS PAR DÉFAUT, la
+  // saisie l'emporte toujours. Sans cela, la relecture serveur restait
+  // invisible : les données étaient là, l'écran restait vide.
+  // `getInstance` sans identifiant retomberait sur `rows[0]` (contrat
+  // historique du magasin) — on ne l'appelle donc QUE si l'on sait qui éditer.
+  const idEdite = itemId ?? identiteSession;
+  const existant =
+    idEdite === undefined || b.entityId === undefined
+      ? undefined
+      : provider.getInstance(b.entityId, idEdite);
+  const values: Readonly<Record<string, string>> =
+    existant === undefined ? saisies : { ...existant.values, ...saisies };
   const submitLabel = str(props.submitLabel);
   if (submitLabel === undefined) {
     throw new Error(`AIR_RUNTIME_PROP_MISSING:${blockId}:submitLabel`);
@@ -602,7 +827,10 @@ export function AirForm({ screen, blockId }: BlockRef) {
       submitLabel={submitLabel}
       // D-061 : les valeurs SAISIES accompagnent l'action — sans elles, une
       // création écrirait un enregistrement vide.
-      onSubmit={() => dispatch(actionId, values)}
+      // VOLET 1 — l'instance COURANTE accompagne la saisie : sans elle, une
+      // mutation `update` n'avait aucune ligne à modifier. `id` n'est pas un
+      // champ du formulaire : il vient de la ROUTE, pas d'une saisie.
+      onSubmit={() => dispatch(actionId, itemId === undefined ? values : { ...values, id: itemId })}
       // États du registre 1.1.0 (D-060) : `loading` et `error` deviennent
       // atteignables dès que la source les rapporte ET que le titre est déclaré.
       // `empty` pour un formulaire = AUCUN champ à saisir. État réel, pas une

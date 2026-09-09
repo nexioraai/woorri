@@ -14,16 +14,17 @@ import { View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ScreenShell } from "../lib/primitives";
 import { AirButton, AirEmptyState, AirHeader, AirList, AirScreenLifecycle } from "../lib/runtime/air-runtime";
+import type { AirScreenProps } from "../lib/runtime/air-runtime";
 import { screenData } from "./scr_panier.data";
 
-export default function ScrPanierScreen() {
+export default function ScrPanierScreen({ route }: AirScreenProps) {
   const insets = useSafeAreaInsets();
   return (
     <ScreenShell testID="scr_panier" title={screenData.title}>
       <AirScreenLifecycle screen={screenData} />
       <View style={{ flex: 1, paddingBottom: insets.bottom }}>
         <AirHeader screen={screenData} blockId="blk_panier_header" />
-        <AirList screen={screenData} blockId="blk_panier_lignes" />
+        <AirList screen={screenData} blockId="blk_panier_lignes" itemId={route?.params?.itemId} />
         <AirEmptyState screen={screenData} blockId="blk_panier_vide" />
         <AirButton screen={screenData} blockId="blk_panier_commander" />
       </View>

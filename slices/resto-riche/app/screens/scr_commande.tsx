@@ -23,7 +23,7 @@ export default function ScrCommandeScreen({ route }: AirScreenProps) {
     <ScreenShell testID="scr_commande" title={screenData.title}>
       <View style={{ flex: 1, paddingBottom: insets.bottom }}>
         <AirDetailHeader screen={screenData} blockId="blk_det_entete" itemId={route?.params?.itemId} />
-        <AirList screen={screenData} blockId="blk_det_lignes" />
+        <AirList screen={screenData} blockId="blk_det_lignes" itemId={route?.params?.itemId} />
       </View>
     </ScreenShell>
   );
