@@ -145,4 +145,21 @@ export const INTENTIONS = [
       "prix et vendeur, ajoutent au panier, paient par carte et suivent leurs commandes. " +
       "Chaque client gère son profil et son adresse de livraison. En français.",
   },
+  {
+    // AJOUTÉE 2026-09-10 — TEST INDÉPENDANT du moteur (commande propriétaire).
+    // Formulée DIFFÉREMMENT de dougplace, volontairement : même archétype,
+    // autre voix de client — le moteur doit assembler, pas réciter.
+    slug: "marketa",
+    commerce: "physical_or_offapp",
+    text:
+      "Mon entreprise lance Marketa (le nom exact de l'application est « Marketa »). " +
+      "C'est une place de marché mobile généraliste pour l'Afrique de l'Ouest : on y " +
+      "achète de l'électronique, des vêtements, de l'électroménager et des articles de " +
+      "sport auprès de marchands vérifiés. Je veux que dès l'ouverture on comprenne où " +
+      "on est et qu'on puisse chercher un article tout de suite. Il faut des photos " +
+      "réalistes sur chaque produit, les prix en francs CFA, un panier, le suivi des " +
+      "commandes avec leurs statuts, la création de compte et un profil avec adresse de " +
+      "livraison. Les fiches produit montrent la photo, la description, le prix, l'état " +
+      "(neuf ou occasion) et le marchand. Tout en français.",
+  },
 ];

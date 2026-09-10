@@ -1,0 +1,4422 @@
+{
+  "airSchemaVersion": "1.21.0",
+  "projectId": "prj_marketa",
+  "app": {
+    "name": "Marketa",
+    "slug": "marketa",
+    "description": [
+      {
+        "locale": "fr",
+        "text": "Marketa est une place de marché mobile généraliste pour l'Afrique de l'Ouest : électronique, vêtements, électroménager et articles de sport vendus par des marchands vérifiés. Recherche immédiate, photos réalistes, prix en francs CFA, panier, suivi des commandes et compte client avec adresse de livraison."
+      }
+    ],
+    "locales": {
+      "userLanguage": "fr",
+      "appLocales": [
+        "fr"
+      ],
+      "defaultAppLocale": "fr",
+      "contentLocales": [
+        "fr"
+      ],
+      "rtlSupported": false
+    }
+  },
+  "navigation": {
+    "entryScreenId": "scr_bienvenue",
+    "primary": {
+      "destinations": [
+        {
+          "routeId": "nav_accueil",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Accueil"
+            }
+          ],
+          "order": 0,
+          "icon": "accueil"
+        },
+        {
+          "routeId": "nav_catalogue",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Produits"
+            }
+          ],
+          "order": 1,
+          "icon": "recherche"
+        },
+        {
+          "routeId": "nav_panier",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Panier"
+            }
+          ],
+          "order": 2,
+          "icon": "panier"
+        },
+        {
+          "routeId": "nav_commandes",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Commandes"
+            }
+          ],
+          "order": 3,
+          "icon": "liste"
+        },
+        {
+          "routeId": "nav_compte",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Compte"
+            }
+          ],
+          "order": 4,
+          "icon": "compte"
+        }
+      ]
+    },
+    "routes": [
+      {
+        "id": "nav_bienvenue",
+        "screenId": "scr_bienvenue",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Bienvenue"
+          }
+        ]
+      },
+      {
+        "id": "nav_accueil",
+        "screenId": "scr_accueil",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Accueil"
+          }
+        ]
+      },
+      {
+        "id": "nav_catalogue",
+        "screenId": "scr_catalogue",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Produits"
+          }
+        ]
+      },
+      {
+        "id": "nav_produit_detail",
+        "screenId": "scr_produit_detail",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Fiche produit"
+          }
+        ]
+      },
+      {
+        "id": "nav_marchand_detail",
+        "screenId": "scr_marchand_detail",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Marchand"
+          }
+        ]
+      },
+      {
+        "id": "nav_panier",
+        "screenId": "scr_panier",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Panier"
+          }
+        ]
+      },
+      {
+        "id": "nav_commande_creation",
+        "screenId": "scr_commande_creation",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Validation de la commande"
+          }
+        ]
+      },
+      {
+        "id": "nav_commandes",
+        "screenId": "scr_commandes",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Mes commandes"
+          }
+        ]
+      },
+      {
+        "id": "nav_commande_detail",
+        "screenId": "scr_commande_detail",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Suivi de commande"
+          }
+        ]
+      },
+      {
+        "id": "nav_compte",
+        "screenId": "scr_compte",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Mon compte"
+          }
+        ]
+      },
+      {
+        "id": "nav_profil",
+        "screenId": "scr_profil",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Profil et livraison"
+          }
+        ]
+      },
+      {
+        "id": "nav_connexion",
+        "screenId": "scr_connexion",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Connexion"
+          }
+        ]
+      },
+      {
+        "id": "nav_inscription",
+        "screenId": "scr_inscription",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Créer un compte"
+          }
+        ]
+      },
+      {
+        "id": "nav_mot_de_passe_oublie",
+        "screenId": "scr_mot_de_passe_oublie",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Mot de passe oublié"
+          }
+        ]
+      }
+    ]
+  },
+  "design": {
+    "theme": "marketa_commerce"
+  },
+  "network": {
+    "policy": "deny_by_default",
+    "allowedDomains": [
+      "api.marketa.app",
+      "picsum.photos"
+    ]
+  },
+  "native": {
+    "minIosVersion": "15.0",
+    "minAndroidSdk": 24
+  },
+  "compliance": {
+    "commerceClass": "physical_or_offapp",
+    "accountDeletionRequired": true,
+    "dataCollected": [
+      "contact_info",
+      "identifiers",
+      "usage_data",
+      "purchases",
+      "diagnostics"
+    ]
+  },
+  "entities": [
+    {
+      "id": "ent_profil",
+      "name": "profil",
+      "fields": [
+        {
+          "id": "fld_profil_nom_complet",
+          "name": "nom_complet",
+          "type": "string",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Nom complet"
+            }
+          ],
+          "demoValues": [
+            "Awa Traoré",
+            "Ibrahim Diallo",
+            "Fatou Ndiaye",
+            "Kwame Mensah",
+            "Aminata Koné"
+          ]
+        },
+        {
+          "id": "fld_profil_email",
+          "name": "email",
+          "type": "string",
+          "required": true,
+          "unique": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Adresse e-mail"
+            }
+          ],
+          "demoValues": [
+            "awa.traore@example.com",
+            "ibrahim.diallo@example.com",
+            "fatou.ndiaye@example.com",
+            "kwame.mensah@example.com"
+          ]
+        },
+        {
+          "id": "fld_profil_mot_de_passe",
+          "name": "mot_de_passe",
+          "type": "string",
+          "required": true,
+          "sensitive": true
+        },
+        {
+          "id": "fld_profil_telephone",
+          "name": "telephone",
+          "type": "string",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Téléphone"
+            }
+          ],
+          "demoValues": [
+            "+225 07 45 12 88",
+            "+226 70 22 31 09",
+            "+221 77 641 20 55",
+            "+233 24 887 41 02"
+          ]
+        },
+        {
+          "id": "fld_profil_adresse_livraison",
+          "name": "adresse_livraison",
+          "type": "text",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Adresse de livraison"
+            }
+          ],
+          "demoValues": [
+            "Rue 12, Cocody Angré, près de la pharmacie Saint-Jacques",
+            "Secteur 15, Ouaga 2000, villa 42",
+            "Sicap Liberté 6, immeuble Diarra, 3e étage",
+            "Quartier Bè-Kpota, non loin du marché"
+          ]
+        },
+        {
+          "id": "fld_profil_ville",
+          "name": "ville",
+          "type": "string",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Ville"
+            }
+          ],
+          "demoValues": [
+            "Abidjan",
+            "Ouagadougou",
+            "Dakar",
+            "Lomé",
+            "Bamako",
+            "Accra"
+          ]
+        },
+        {
+          "id": "fld_profil_pays",
+          "name": "pays",
+          "type": "enum",
+          "required": true,
+          "enumValues": [
+            "cote_ivoire",
+            "burkina_faso",
+            "senegal",
+            "mali",
+            "togo",
+            "benin",
+            "ghana"
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Pays"
+            }
+          ],
+          "enumLabels": [
+            {
+              "value": "cote_ivoire",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Côte d'Ivoire"
+                }
+              ]
+            },
+            {
+              "value": "burkina_faso",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Burkina Faso"
+                }
+              ]
+            },
+            {
+              "value": "senegal",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Sénégal"
+                }
+              ]
+            },
+            {
+              "value": "mali",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Mali"
+                }
+              ]
+            },
+            {
+              "value": "togo",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Togo"
+                }
+              ]
+            },
+            {
+              "value": "benin",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Bénin"
+                }
+              ]
+            },
+            {
+              "value": "ghana",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Ghana"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "fld_profil_date_inscription",
+          "name": "date_inscription",
+          "type": "datetime",
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Membre depuis"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ent_marchand",
+      "name": "marchand",
+      "fields": [
+        {
+          "id": "fld_marchand_nom",
+          "name": "nom",
+          "type": "string",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Marchand"
+            }
+          ],
+          "demoValues": [
+            "Sahel Électronique",
+            "Boutique Wend-Kuuni",
+            "Dakar Mode Store",
+            "Abidjan Électroménager",
+            "Sport Faso Diffusion",
+            "Golfe Digital Shop"
+          ]
+        },
+        {
+          "id": "fld_marchand_description",
+          "name": "description",
+          "type": "text",
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "À propos du marchand"
+            }
+          ],
+          "demoValues": [
+            "Importateur de téléphones et accessoires depuis 2016, boutique au Plateau.",
+            "Prêt-à-porter africain et wax de qualité, atelier à Ouagadougou.",
+            "Électroménager neuf garanti 12 mois, livraison dans tout le pays.",
+            "Équipements sportifs et maillots officiels pour clubs et particuliers."
+          ]
+        },
+        {
+          "id": "fld_marchand_ville",
+          "name": "ville",
+          "type": "string",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Ville"
+            }
+          ],
+          "demoValues": [
+            "Abidjan",
+            "Ouagadougou",
+            "Dakar",
+            "Lomé",
+            "Bamako",
+            "Cotonou"
+          ]
+        },
+        {
+          "id": "fld_marchand_verifie",
+          "name": "verifie",
+          "type": "boolean",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Vérification"
+            }
+          ],
+          "enumLabels": [
+            {
+              "value": "true",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Marchand vérifié"
+                }
+              ]
+            },
+            {
+              "value": "false",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "En cours de vérification"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "fld_marchand_note",
+          "name": "note",
+          "type": "decimal",
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Note des acheteurs"
+            }
+          ],
+          "unit": "/5",
+          "sensitive": false
+        },
+        {
+          "id": "fld_marchand_logo",
+          "name": "logo",
+          "type": "asset",
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Logo du marchand"
+            }
+          ],
+          "demoValues": [
+            "https://picsum.photos/seed/boutique-sahel-electronique/600/600",
+            "https://picsum.photos/seed/boutique-wend-kuuni-mode/600/600",
+            "https://picsum.photos/seed/boutique-dakar-mode-store/600/600",
+            "https://picsum.photos/seed/boutique-abidjan-electromenager/600/600",
+            "https://picsum.photos/seed/boutique-sport-faso-diffusion/600/600",
+            "https://picsum.photos/seed/boutique-golfe-digital-shop/600/600"
+          ]
+        },
+        {
+          "id": "fld_marchand_nombre_ventes",
+          "name": "nombre_ventes",
+          "type": "number",
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Ventes réalisées"
+            }
+          ],
+          "unit": "ventes",
+          "sensitive": false
+        }
+      ]
+    },
+    {
+      "id": "ent_produit",
+      "name": "produit",
+      "fields": [
+        {
+          "id": "fld_produit_nom",
+          "name": "nom",
+          "type": "string",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Nom de l'article"
+            }
+          ],
+          "demoValues": [
+            "Smartphone Tecno Spark 10 — 128 Go",
+            "Ensemble wax femme cousu main",
+            "Réfrigérateur Hisense 220 L",
+            "Ballon de football Adidas taille 5",
+            "Téléviseur LED 43 pouces Samsung",
+            "Baskets de running Puma Velocity",
+            "Ventilateur brasseur d'air Nasco",
+            "Casque audio Bluetooth JBL Tune"
+          ]
+        },
+        {
+          "id": "fld_produit_description",
+          "name": "description",
+          "type": "text",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Description"
+            }
+          ],
+          "demoValues": [
+            "Écran 6,6 pouces, double SIM, batterie 5000 mAh, garantie 6 mois en boutique.",
+            "Tissu wax authentique, coupe sur mesure, disponible du 38 au 46.",
+            "Congélateur séparé, classe A+, livraison et installation incluses à Abidjan.",
+            "Ballon cousu machine, pression conservée, idéal terrain dur et gazon.",
+            "Résolution Full HD, deux ports HDMI, support mural fourni.",
+            "Semelle amortie, respirante, pointures 39 à 45, modèle 2024."
+          ]
+        },
+        {
+          "id": "fld_produit_prix",
+          "name": "prix",
+          "type": "decimal",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Prix"
+            }
+          ],
+          "unit": "FCFA",
+          "sensitive": false
+        },
+        {
+          "id": "fld_produit_photo",
+          "name": "photo",
+          "type": "asset",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Photo du produit"
+            }
+          ],
+          "demoValues": [
+            "https://picsum.photos/seed/produit-smartphone-tecno-spark/600/600",
+            "https://picsum.photos/seed/produit-ensemble-wax-femme/600/600",
+            "https://picsum.photos/seed/produit-refrigerateur-hisense/600/600",
+            "https://picsum.photos/seed/produit-ballon-football-adidas/600/600",
+            "https://picsum.photos/seed/produit-televiseur-led-43-pouces/600/600",
+            "https://picsum.photos/seed/produit-baskets-running-puma/600/600",
+            "https://picsum.photos/seed/produit-ventilateur-brasseur-nasco/600/600",
+            "https://picsum.photos/seed/produit-casque-bluetooth-jbl/600/600",
+            "https://picsum.photos/seed/produit-machine-a-laver-lg/600/600",
+            "https://picsum.photos/seed/produit-maillot-sport-homme/600/600"
+          ]
+        },
+        {
+          "id": "fld_produit_categorie",
+          "name": "categorie",
+          "type": "enum",
+          "required": true,
+          "enumValues": [
+            "electronique",
+            "vetements",
+            "electromenager",
+            "sport"
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Catégorie"
+            }
+          ],
+          "enumLabels": [
+            {
+              "value": "electronique",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Électronique"
+                }
+              ]
+            },
+            {
+              "value": "vetements",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Vêtements"
+                }
+              ]
+            },
+            {
+              "value": "electromenager",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Électroménager"
+                }
+              ]
+            },
+            {
+              "value": "sport",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Sport"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "fld_produit_etat",
+          "name": "etat",
+          "type": "enum",
+          "required": true,
+          "enumValues": [
+            "neuf",
+            "occasion"
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "État"
+            }
+          ],
+          "enumLabels": [
+            {
+              "value": "neuf",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Neuf"
+                }
+              ]
+            },
+            {
+              "value": "occasion",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Occasion"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "fld_produit_marchand",
+          "name": "marchand",
+          "type": "reference",
+          "required": true,
+          "referencesEntityId": "ent_marchand",
+          "referenceDisplayFieldId": "fld_marchand_nom",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Vendu par"
+            }
+          ]
+        },
+        {
+          "id": "fld_produit_disponible",
+          "name": "disponible",
+          "type": "boolean",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Disponibilité"
+            }
+          ],
+          "enumLabels": [
+            {
+              "value": "true",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "En stock"
+                }
+              ]
+            },
+            {
+              "value": "false",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Épuisé"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "fld_produit_date_ajout",
+          "name": "date_ajout",
+          "type": "datetime",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Mis en ligne le"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ent_panier_ligne",
+      "name": "panier_ligne",
+      "fields": [
+        {
+          "id": "fld_panier_produit",
+          "name": "produit",
+          "type": "reference",
+          "required": true,
+          "referencesEntityId": "ent_produit",
+          "referenceDisplayFieldId": "fld_produit_nom",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Article"
+            }
+          ]
+        },
+        {
+          "id": "fld_panier_photo",
+          "name": "photo",
+          "type": "asset",
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Photo de l'article"
+            }
+          ],
+          "demoValues": [
+            "https://picsum.photos/seed/panier-smartphone-tecno-spark/600/600",
+            "https://picsum.photos/seed/panier-ensemble-wax-femme/600/600",
+            "https://picsum.photos/seed/panier-refrigerateur-hisense/600/600",
+            "https://picsum.photos/seed/panier-ballon-football-adidas/600/600",
+            "https://picsum.photos/seed/panier-televiseur-led-43-pouces/600/600",
+            "https://picsum.photos/seed/panier-baskets-running-puma/600/600"
+          ]
+        },
+        {
+          "id": "fld_panier_quantite",
+          "name": "quantite",
+          "type": "number",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Quantité"
+            }
+          ],
+          "unit": "article(s)",
+          "sensitive": false
+        },
+        {
+          "id": "fld_panier_prix_unitaire",
+          "name": "prix_unitaire",
+          "type": "decimal",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Prix unitaire"
+            }
+          ],
+          "unit": "FCFA",
+          "sensitive": false
+        },
+        {
+          "id": "fld_panier_sous_total",
+          "name": "sous_total",
+          "type": "decimal",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Sous-total"
+            }
+          ],
+          "unit": "FCFA",
+          "sensitive": false
+        },
+        {
+          "id": "fld_panier_acheteur",
+          "name": "acheteur",
+          "type": "reference",
+          "required": false,
+          "referencesEntityId": "ent_profil",
+          "referenceDisplayFieldId": "fld_profil_nom_complet",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Acheteur"
+            }
+          ]
+        },
+        {
+          "id": "fld_panier_date_ajout",
+          "name": "date_ajout",
+          "type": "datetime",
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Ajouté le"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ent_commande",
+      "name": "commande",
+      "fields": [
+        {
+          "id": "fld_commande_reference",
+          "name": "reference",
+          "type": "string",
+          "required": true,
+          "unique": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Référence de commande"
+            }
+          ],
+          "demoValues": [
+            "MKT-2026-004182",
+            "MKT-2026-004175",
+            "MKT-2026-004160",
+            "MKT-2026-004143",
+            "MKT-2026-004128",
+            "MKT-2026-004109"
+          ]
+        },
+        {
+          "id": "fld_commande_date",
+          "name": "date",
+          "type": "datetime",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Passée le"
+            }
+          ]
+        },
+        {
+          "id": "fld_commande_total",
+          "name": "total",
+          "type": "decimal",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Total"
+            }
+          ],
+          "unit": "FCFA",
+          "sensitive": false
+        },
+        {
+          "id": "fld_commande_statut",
+          "name": "statut",
+          "type": "enum",
+          "required": true,
+          "enumValues": [
+            "en_attente_paiement",
+            "payee",
+            "en_preparation",
+            "expediee",
+            "en_livraison",
+            "livree",
+            "annulee"
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Statut"
+            }
+          ],
+          "enumLabels": [
+            {
+              "value": "en_attente_paiement",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "En attente de paiement"
+                }
+              ]
+            },
+            {
+              "value": "payee",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Payée"
+                }
+              ]
+            },
+            {
+              "value": "en_preparation",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "En préparation"
+                }
+              ]
+            },
+            {
+              "value": "expediee",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Expédiée"
+                }
+              ]
+            },
+            {
+              "value": "en_livraison",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "En cours de livraison"
+                }
+              ]
+            },
+            {
+              "value": "livree",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Livrée"
+                }
+              ]
+            },
+            {
+              "value": "annulee",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Annulée"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "fld_commande_adresse_livraison",
+          "name": "adresse_livraison",
+          "type": "text",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Adresse de livraison"
+            }
+          ],
+          "demoValues": [
+            "Rue 12, Cocody Angré, près de la pharmacie Saint-Jacques",
+            "Secteur 15, Ouaga 2000, villa 42",
+            "Sicap Liberté 6, immeuble Diarra, 3e étage",
+            "Quartier Bè-Kpota, non loin du marché"
+          ]
+        },
+        {
+          "id": "fld_commande_ville",
+          "name": "ville",
+          "type": "string",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Ville de livraison"
+            }
+          ],
+          "demoValues": [
+            "Abidjan",
+            "Ouagadougou",
+            "Dakar",
+            "Lomé",
+            "Bamako",
+            "Cotonou"
+          ]
+        },
+        {
+          "id": "fld_commande_telephone",
+          "name": "telephone",
+          "type": "string",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Téléphone du destinataire"
+            }
+          ],
+          "demoValues": [
+            "+225 07 45 12 88",
+            "+226 70 22 31 09",
+            "+221 77 641 20 55",
+            "+233 24 887 41 02"
+          ]
+        },
+        {
+          "id": "fld_commande_mode_paiement",
+          "name": "mode_paiement",
+          "type": "enum",
+          "required": true,
+          "enumValues": [
+            "mobile_money",
+            "carte_bancaire",
+            "paiement_a_la_livraison"
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Mode de paiement"
+            }
+          ],
+          "enumLabels": [
+            {
+              "value": "mobile_money",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Mobile Money"
+                }
+              ]
+            },
+            {
+              "value": "carte_bancaire",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Carte bancaire"
+                }
+              ]
+            },
+            {
+              "value": "paiement_a_la_livraison",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Paiement à la livraison"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "fld_commande_nombre_articles",
+          "name": "nombre_articles",
+          "type": "number",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Articles commandés"
+            }
+          ],
+          "unit": "article(s)",
+          "sensitive": false
+        },
+        {
+          "id": "fld_commande_acheteur",
+          "name": "acheteur",
+          "type": "reference",
+          "required": false,
+          "referencesEntityId": "ent_profil",
+          "referenceDisplayFieldId": "fld_profil_nom_complet",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Acheteur"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "relations": [
+    {
+      "id": "rel_marchand_produits",
+      "fromEntityId": "ent_marchand",
+      "toEntityId": "ent_produit",
+      "kind": "one_to_many"
+    },
+    {
+      "id": "rel_produit_panier_lignes",
+      "fromEntityId": "ent_produit",
+      "toEntityId": "ent_panier_ligne",
+      "kind": "one_to_many"
+    },
+    {
+      "id": "rel_profil_panier_lignes",
+      "fromEntityId": "ent_profil",
+      "toEntityId": "ent_panier_ligne",
+      "kind": "one_to_many"
+    },
+    {
+      "id": "rel_profil_commandes",
+      "fromEntityId": "ent_profil",
+      "toEntityId": "ent_commande",
+      "kind": "one_to_many"
+    }
+  ],
+  "datasets": [
+    {
+      "id": "data_profil",
+      "entityId": "ent_profil",
+      "contentHash": "7c1f9a3e5b204d8ca6f0e2b71d93845cf6ab027e91d4c583ba7e60f2d5c48193",
+      "rowCount": 5,
+      "sourceKind": "seed"
+    },
+    {
+      "id": "data_marchand",
+      "entityId": "ent_marchand",
+      "contentHash": "2e8b41d70c96af35b1e7d284c05f9a63be47102d8fc35ea9d7016b4c82f5390a",
+      "rowCount": 6,
+      "sourceKind": "seed"
+    },
+    {
+      "id": "data_produit",
+      "entityId": "ent_produit",
+      "contentHash": "93af5c1b6d20e874f3a90c5be1d47206ba98f31c05e7d4a2986bf07c31d5e648",
+      "rowCount": 24,
+      "sourceKind": "remote",
+      "sourceIntegrationId": "intg_api_marketa",
+      "sourceDomain": "api.marketa.app",
+      "sourceRefreshSeconds": 300
+    },
+    {
+      "id": "data_panier_ligne",
+      "entityId": "ent_panier_ligne",
+      "contentHash": "41d0be7c9852f36a1704cbd9e25f8340a7c61be093df254867a0b1c9e3f57204",
+      "rowCount": 4,
+      "sourceKind": "seed"
+    },
+    {
+      "id": "data_commande",
+      "entityId": "ent_commande",
+      "contentHash": "b6e309d417c852af0731de95c24b06f8a13c7e40db952f6817ac03e5d472901b",
+      "rowCount": 6,
+      "sourceKind": "remote",
+      "sourceIntegrationId": "intg_api_marketa",
+      "sourceDomain": "api.marketa.app",
+      "sourceRefreshSeconds": 120
+    }
+  ],
+  "rules": [
+    {
+      "id": "rule_profil_email_valide",
+      "description": "L'adresse e-mail du compte est obligatoire et doit avoir un format valide avant toute création ou mise à jour du profil.",
+      "kind": "validation",
+      "entityId": "ent_profil",
+      "assertions": [
+        {
+          "fieldId": "fld_profil_email",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_profil_email",
+          "operator": "matches",
+          "value": "^[^@\\s]+@[^@\\s]+\\.[A-Za-z]{2,}$"
+        }
+      ]
+    },
+    {
+      "id": "rule_profil_mot_de_passe_robuste",
+      "description": "Le mot de passe est obligatoire et doit comporter au moins 8 caractères.",
+      "kind": "validation",
+      "entityId": "ent_profil",
+      "assertions": [
+        {
+          "fieldId": "fld_profil_mot_de_passe",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_profil_mot_de_passe",
+          "operator": "matches",
+          "value": "^.{8,}$"
+        }
+      ]
+    },
+    {
+      "id": "rule_profil_identite_complete",
+      "description": "Le nom complet et un numéro de téléphone joignable sont exigés pour identifier l'acheteur.",
+      "kind": "validation",
+      "entityId": "ent_profil",
+      "assertions": [
+        {
+          "fieldId": "fld_profil_nom_complet",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_profil_telephone",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_profil_telephone",
+          "operator": "matches",
+          "value": "^\\+?[0-9][0-9 ]{7,19}$"
+        }
+      ]
+    },
+    {
+      "id": "rule_profil_livraison_complete",
+      "description": "L'adresse de livraison, la ville et le pays desservi sont obligatoires pour pouvoir livrer une commande.",
+      "kind": "validation",
+      "entityId": "ent_profil",
+      "assertions": [
+        {
+          "fieldId": "fld_profil_adresse_livraison",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_profil_ville",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_profil_pays",
+          "operator": "in",
+          "value": [
+            "cote_ivoire",
+            "burkina_faso",
+            "senegal",
+            "mali",
+            "togo",
+            "benin",
+            "ghana"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "rule_marchand_identite_complete",
+      "description": "Un marchand doit porter un nom commercial et une ville de rattachement.",
+      "kind": "validation",
+      "entityId": "ent_marchand",
+      "assertions": [
+        {
+          "fieldId": "fld_marchand_nom",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_marchand_ville",
+          "operator": "required"
+        }
+      ]
+    },
+    {
+      "id": "rule_marchand_note_bornee",
+      "description": "La note des acheteurs est comprise entre 0 et 5.",
+      "kind": "validation",
+      "entityId": "ent_marchand",
+      "assertions": [
+        {
+          "fieldId": "fld_marchand_note",
+          "operator": "gte",
+          "value": 0
+        },
+        {
+          "fieldId": "fld_marchand_note",
+          "operator": "lte",
+          "value": 5
+        }
+      ]
+    },
+    {
+      "id": "rule_marchand_verifie_publiable",
+      "description": "Seuls les marchands vérifiés peuvent être présentés aux acheteurs dans la place de marché.",
+      "kind": "authorization",
+      "entityId": "ent_marchand",
+      "assertions": [
+        {
+          "fieldId": "fld_marchand_verifie",
+          "operator": "eq",
+          "value": true
+        }
+      ]
+    },
+    {
+      "id": "rule_produit_fiche_complete",
+      "description": "Une fiche produit exige un nom, une description, une photo et un marchand vendeur avant publication.",
+      "kind": "validation",
+      "entityId": "ent_produit",
+      "assertions": [
+        {
+          "fieldId": "fld_produit_nom",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_produit_description",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_produit_photo",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_produit_marchand",
+          "operator": "required"
+        }
+      ]
+    },
+    {
+      "id": "rule_produit_prix_positif",
+      "description": "Le prix d'un article est obligatoire et strictement supérieur à zéro, exprimé en francs CFA.",
+      "kind": "validation",
+      "entityId": "ent_produit",
+      "assertions": [
+        {
+          "fieldId": "fld_produit_prix",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_produit_prix",
+          "operator": "gt",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": "rule_produit_categorie_et_etat",
+      "description": "Chaque article appartient à l'une des quatre familles de la place de marché et déclare son état, neuf ou occasion.",
+      "kind": "validation",
+      "entityId": "ent_produit",
+      "assertions": [
+        {
+          "fieldId": "fld_produit_categorie",
+          "operator": "in",
+          "value": [
+            "electronique",
+            "vetements",
+            "electromenager",
+            "sport"
+          ]
+        },
+        {
+          "fieldId": "fld_produit_etat",
+          "operator": "in",
+          "value": [
+            "neuf",
+            "occasion"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "rule_produit_disponible_achetable",
+      "description": "Seul un article marqué en stock peut être ajouté au panier et commandé.",
+      "kind": "authorization",
+      "entityId": "ent_produit",
+      "assertions": [
+        {
+          "fieldId": "fld_produit_disponible",
+          "operator": "eq",
+          "value": true
+        }
+      ]
+    },
+    {
+      "id": "rule_panier_ligne_valide",
+      "description": "Une ligne de panier référence un article, une quantité d'au moins un et un prix unitaire positif.",
+      "kind": "validation",
+      "entityId": "ent_panier_ligne",
+      "assertions": [
+        {
+          "fieldId": "fld_panier_produit",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_panier_quantite",
+          "operator": "gte",
+          "value": 1
+        },
+        {
+          "fieldId": "fld_panier_prix_unitaire",
+          "operator": "gt",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": "rule_panier_quantite_maximale",
+      "description": "La quantité commandée par ligne de panier est plafonnée à 10 articles.",
+      "kind": "validation",
+      "entityId": "ent_panier_ligne",
+      "assertions": [
+        {
+          "fieldId": "fld_panier_quantite",
+          "operator": "lte",
+          "value": 10
+        }
+      ]
+    },
+    {
+      "id": "rule_panier_sous_total_present",
+      "description": "Le sous-total de la ligne est obligatoire et positif pour permettre le calcul du total en francs CFA.",
+      "kind": "validation",
+      "entityId": "ent_panier_ligne",
+      "assertions": [
+        {
+          "fieldId": "fld_panier_sous_total",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_panier_sous_total",
+          "operator": "gt",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": "rule_commande_livraison_complete",
+      "description": "Une commande exige une adresse de livraison, une ville et un téléphone de destinataire joignable.",
+      "kind": "validation",
+      "entityId": "ent_commande",
+      "assertions": [
+        {
+          "fieldId": "fld_commande_adresse_livraison",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_commande_ville",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_commande_telephone",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_commande_telephone",
+          "operator": "matches",
+          "value": "^\\+?[0-9][0-9 ]{7,19}$"
+        }
+      ]
+    },
+    {
+      "id": "rule_commande_paiement_supporte",
+      "description": "Le mode de paiement doit faire partie des moyens acceptés : Mobile Money, carte bancaire ou paiement à la livraison.",
+      "kind": "validation",
+      "entityId": "ent_commande",
+      "assertions": [
+        {
+          "fieldId": "fld_commande_mode_paiement",
+          "operator": "in",
+          "value": [
+            "mobile_money",
+            "carte_bancaire",
+            "paiement_a_la_livraison"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "rule_commande_montant_et_articles",
+      "description": "Une commande porte au moins un article et un total strictement positif en francs CFA.",
+      "kind": "validation",
+      "entityId": "ent_commande",
+      "assertions": [
+        {
+          "fieldId": "fld_commande_nombre_articles",
+          "operator": "gte",
+          "value": 1
+        },
+        {
+          "fieldId": "fld_commande_total",
+          "operator": "gt",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": "rule_commande_statut_suivi",
+      "description": "Le statut de suivi d'une commande appartient au cycle de vie déclaré, de l'attente de paiement à la livraison ou à l'annulation.",
+      "kind": "validation",
+      "entityId": "ent_commande",
+      "assertions": [
+        {
+          "fieldId": "fld_commande_reference",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_commande_statut",
+          "operator": "in",
+          "value": [
+            "en_attente_paiement",
+            "payee",
+            "en_preparation",
+            "expediee",
+            "en_livraison",
+            "livree",
+            "annulee"
+          ]
+        }
+      ]
+    }
+  ],
+  "slots": [
+    {
+      "id": "slot_confiance_marchand",
+      "description": "Calcule un indice de confiance lisible pour un marchand à partir de sa note acheteurs, de son nombre de ventes et de son statut de vérification, et renvoie un libellé prêt à afficher (ex. « Marchand vérifié · 4,7/5 · 312 ventes »).",
+      "inputs": [
+        {
+          "name": "marchands",
+          "type": "json"
+        },
+        {
+          "name": "seuilNote",
+          "type": "decimal"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "libelleConfiance",
+          "type": "string"
+        },
+        {
+          "name": "indice",
+          "type": "decimal"
+        }
+      ],
+      "allowedImports": []
+    },
+    {
+      "id": "slot_montant_fcfa",
+      "description": "Formate un montant numérique en francs CFA avec séparateur de milliers et suffixe FCFA (ex. « 145 000 FCFA ») pour les libellés récapitulatifs.",
+      "inputs": [
+        {
+          "name": "montant",
+          "type": "decimal"
+        },
+        {
+          "name": "devise",
+          "type": "string"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "montantFormate",
+          "type": "string"
+        }
+      ],
+      "allowedImports": []
+    }
+  ],
+  "screens": [
+    {
+      "id": "scr_bienvenue",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Bienvenue"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": false,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_bienvenue_header",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Marketa"
+            },
+            {
+              "key": "subtitle",
+              "value": "La place de marché d'Afrique de l'Ouest : électronique, mode, électroménager et sport, chez des marchands vérifiés."
+            },
+            {
+              "key": "accroche",
+              "value": true
+            }
+          ]
+        },
+        {
+          "id": "blk_bienvenue_espace",
+          "blockType": "spacer"
+        },
+        {
+          "id": "blk_bienvenue_inscription",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Créer un compte"
+            },
+            {
+              "key": "actionId",
+              "value": "act_ouvrir_inscription"
+            },
+            {
+              "key": "kind",
+              "value": "primary"
+            },
+            {
+              "key": "icon",
+              "value": "compte"
+            }
+          ]
+        },
+        {
+          "id": "blk_bienvenue_connexion",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "J'ai déjà un compte"
+            },
+            {
+              "key": "actionId",
+              "value": "act_ouvrir_connexion"
+            },
+            {
+              "key": "kind",
+              "value": "ghost"
+            }
+          ]
+        },
+        {
+          "id": "blk_bienvenue_visiteur",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Continuer sans compte"
+            },
+            {
+              "key": "actionId",
+              "value": "act_ouvrir_accueil"
+            },
+            {
+              "key": "kind",
+              "value": "link"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_accueil",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Accueil"
+        }
+      ],
+      "showsPrimaryNav": true,
+      "showsScreenTitle": false,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_accueil_header",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Marketa"
+            },
+            {
+              "key": "subtitle",
+              "value": "Achetez en confiance auprès de marchands vérifiés, prix en francs CFA."
+            }
+          ]
+        },
+        {
+          "id": "blk_accueil_recherche",
+          "blockType": "search_entry",
+          "props": [
+            {
+              "key": "placeholder",
+              "value": "Rechercher un article, une marque…"
+            },
+            {
+              "key": "actionId",
+              "value": "act_ouvrir_catalogue"
+            }
+          ]
+        },
+        {
+          "id": "blk_accueil_selection",
+          "blockType": "list",
+          "entityId": "ent_produit",
+          "props": [
+            {
+              "key": "title",
+              "value": "Sélection du moment"
+            },
+            {
+              "key": "titleFieldId",
+              "value": "fld_produit_nom"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_produit_marchand"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_produit_prix"
+            },
+            {
+              "key": "badgeFieldId",
+              "value": "fld_produit_etat"
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_produit_photo"
+            },
+            {
+              "key": "layout",
+              "value": "grid"
+            },
+            {
+              "key": "sortFieldId",
+              "value": "fld_produit_date_ajout"
+            },
+            {
+              "key": "sortDirection",
+              "value": "desc"
+            },
+            {
+              "key": "pageSize",
+              "value": 6
+            },
+            {
+              "key": "seeAllLabel",
+              "value": "Voir tous les produits"
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement de la sélection…"
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Aucun produit en vitrine"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "La sélection sera disponible dès la mise en ligne des premières offres."
+            },
+            {
+              "key": "errorTitle",
+              "value": "Sélection indisponible"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Impossible de charger la sélection. Vérifiez votre connexion puis réessayez."
+            }
+          ]
+        },
+        {
+          "id": "blk_accueil_marchands",
+          "blockType": "list",
+          "entityId": "ent_marchand",
+          "props": [
+            {
+              "key": "title",
+              "value": "Marchands vérifiés"
+            },
+            {
+              "key": "titleFieldId",
+              "value": "fld_marchand_nom"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_marchand_ville"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_marchand_note"
+            },
+            {
+              "key": "badgeFieldId",
+              "value": "fld_marchand_verifie"
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_marchand_logo"
+            },
+            {
+              "key": "layout",
+              "value": "row"
+            },
+            {
+              "key": "sortFieldId",
+              "value": "fld_marchand_note"
+            },
+            {
+              "key": "sortDirection",
+              "value": "desc"
+            },
+            {
+              "key": "pageSize",
+              "value": 8
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement des marchands…"
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Aucun marchand vérifié"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Les boutiques vérifiées apparaîtront ici."
+            },
+            {
+              "key": "errorTitle",
+              "value": "Marchands indisponibles"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Impossible de charger les boutiques pour le moment."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_catalogue",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Produits"
+        }
+      ],
+      "showsPrimaryNav": true,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_catalogue_liste",
+          "blockType": "list",
+          "entityId": "ent_produit",
+          "props": [
+            {
+              "key": "title",
+              "value": "Tous les produits"
+            },
+            {
+              "key": "titleFieldId",
+              "value": "fld_produit_nom"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_produit_marchand"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_produit_prix"
+            },
+            {
+              "key": "badgeFieldId",
+              "value": "fld_produit_etat"
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_produit_photo"
+            },
+            {
+              "key": "layout",
+              "value": "grid"
+            },
+            {
+              "key": "searchFieldId",
+              "value": "fld_produit_nom"
+            },
+            {
+              "key": "searchPlaceholder",
+              "value": "Rechercher un article, une marque…"
+            },
+            {
+              "key": "userFilterFieldIds",
+              "value": [
+                "fld_produit_categorie",
+                "fld_produit_etat",
+                "fld_produit_disponible"
+              ]
+            },
+            {
+              "key": "userFilterOperators",
+              "value": [
+                "eq",
+                "eq",
+                "eq"
+              ]
+            },
+            {
+              "key": "userFilterInputTypes",
+              "value": [
+                "choice",
+                "choice",
+                "choice"
+              ]
+            },
+            {
+              "key": "sortFieldId",
+              "value": "fld_produit_date_ajout"
+            },
+            {
+              "key": "sortDirection",
+              "value": "desc"
+            },
+            {
+              "key": "pageSize",
+              "value": 20
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement du catalogue…"
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Aucun produit ne correspond"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Modifiez votre recherche ou vos filtres pour voir plus d'articles."
+            },
+            {
+              "key": "errorTitle",
+              "value": "Catalogue indisponible"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Impossible de charger les produits. Réessayez dans un instant."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_produit_detail",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Fiche produit"
+        }
+      ],
+      "showsPrimaryNav": true,
+      "showsScreenTitle": false,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_produit_entete",
+          "blockType": "detail_header",
+          "entityId": "ent_produit",
+          "props": [
+            {
+              "key": "titleFieldId",
+              "value": "fld_produit_nom"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_produit_description"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_produit_prix"
+            },
+            {
+              "key": "badgeFieldIds",
+              "value": [
+                "fld_produit_etat",
+                "fld_produit_marchand",
+                "fld_produit_disponible"
+              ]
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_produit_photo"
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement de la fiche produit…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Fiche indisponible"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Impossible d'afficher ce produit pour le moment."
+            }
+          ]
+        },
+        {
+          "id": "blk_produit_ajouter",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Ajouter au panier"
+            },
+            {
+              "key": "actionId",
+              "value": "act_ajouter_au_panier"
+            },
+            {
+              "key": "kind",
+              "value": "primary"
+            },
+            {
+              "key": "icon",
+              "value": "panier"
+            }
+          ]
+        },
+        {
+          "id": "blk_produit_voir_panier",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Voir mon panier"
+            },
+            {
+              "key": "actionId",
+              "value": "act_ouvrir_panier"
+            },
+            {
+              "key": "kind",
+              "value": "link"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_marchand_detail",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Marchand"
+        }
+      ],
+      "showsPrimaryNav": true,
+      "showsScreenTitle": false,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_marchand_entete",
+          "blockType": "detail_header",
+          "entityId": "ent_marchand",
+          "props": [
+            {
+              "key": "titleFieldId",
+              "value": "fld_marchand_nom"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_marchand_description"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_marchand_note"
+            },
+            {
+              "key": "badgeFieldIds",
+              "value": [
+                "fld_marchand_verifie",
+                "fld_marchand_nombre_ventes"
+              ]
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_marchand_logo"
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement de la boutique…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Boutique indisponible"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Impossible d'afficher ce marchand pour le moment."
+            }
+          ]
+        },
+        {
+          "id": "blk_marchand_produits",
+          "blockType": "list",
+          "entityId": "ent_produit",
+          "props": [
+            {
+              "key": "title",
+              "value": "Les produits de ce marchand"
+            },
+            {
+              "key": "titleFieldId",
+              "value": "fld_produit_nom"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_produit_categorie"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_produit_prix"
+            },
+            {
+              "key": "badgeFieldId",
+              "value": "fld_produit_etat"
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_produit_photo"
+            },
+            {
+              "key": "layout",
+              "value": "grid"
+            },
+            {
+              "key": "scopeFieldId",
+              "value": "fld_produit_marchand"
+            },
+            {
+              "key": "searchFieldId",
+              "value": "fld_produit_nom"
+            },
+            {
+              "key": "searchPlaceholder",
+              "value": "Rechercher dans cette boutique…"
+            },
+            {
+              "key": "pageSize",
+              "value": 12
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement des produits de la boutique…"
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Cette boutique n'a pas encore d'article"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Revenez bientôt : ce marchand met ses offres en ligne régulièrement."
+            },
+            {
+              "key": "errorTitle",
+              "value": "Produits indisponibles"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Impossible de charger les articles de ce marchand."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_panier",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Panier"
+        }
+      ],
+      "showsPrimaryNav": true,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_panier_lignes",
+          "blockType": "list",
+          "entityId": "ent_panier_ligne",
+          "props": [
+            {
+              "key": "title",
+              "value": "Articles dans votre panier"
+            },
+            {
+              "key": "titleFieldId",
+              "value": "fld_panier_produit"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_panier_quantite"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_panier_sous_total"
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_panier_photo"
+            },
+            {
+              "key": "pageSize",
+              "value": 20
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement du panier…"
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Votre panier est vide"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Ajoutez des articles depuis le catalogue pour commander."
+            },
+            {
+              "key": "errorTitle",
+              "value": "Panier indisponible"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Impossible de charger votre panier pour le moment."
+            }
+          ]
+        },
+        {
+          "id": "blk_panier_vide",
+          "blockType": "empty_state",
+          "visibleWhen": {
+            "kind": "entity_empty",
+            "entityId": "ent_panier_ligne"
+          },
+          "props": [
+            {
+              "key": "title",
+              "value": "Votre panier est vide"
+            },
+            {
+              "key": "message",
+              "value": "Parcourez les produits des marchands vérifiés et ajoutez vos articles."
+            },
+            {
+              "key": "actionLabel",
+              "value": "Parcourir les produits"
+            },
+            {
+              "key": "actionId",
+              "value": "act_ouvrir_catalogue"
+            }
+          ]
+        },
+        {
+          "id": "blk_panier_valider",
+          "blockType": "button",
+          "visibleWhen": {
+            "kind": "entity_not_empty",
+            "entityId": "ent_panier_ligne"
+          },
+          "props": [
+            {
+              "key": "label",
+              "value": "Valider ma commande"
+            },
+            {
+              "key": "actionId",
+              "value": "act_valider_panier"
+            },
+            {
+              "key": "kind",
+              "value": "primary"
+            },
+            {
+              "key": "icon",
+              "value": "billet"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_commande_creation",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Validation de la commande"
+        }
+      ],
+      "showsPrimaryNav": true,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_commande_creation_header",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Finaliser la commande"
+            },
+            {
+              "key": "subtitle",
+              "value": "Vérifiez votre adresse de livraison et choisissez votre mode de paiement. Montants en francs CFA."
+            }
+          ]
+        },
+        {
+          "id": "blk_commande_creation_recap",
+          "blockType": "list",
+          "entityId": "ent_panier_ligne",
+          "props": [
+            {
+              "key": "title",
+              "value": "Récapitulatif de votre panier"
+            },
+            {
+              "key": "titleFieldId",
+              "value": "fld_panier_produit"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_panier_quantite"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_panier_sous_total"
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_panier_photo"
+            },
+            {
+              "key": "pageSize",
+              "value": 20
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement du récapitulatif…"
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Aucun article à commander"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Ajoutez d'abord des produits à votre panier."
+            },
+            {
+              "key": "errorTitle",
+              "value": "Récapitulatif indisponible"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Impossible de charger les articles de votre panier."
+            }
+          ]
+        },
+        {
+          "id": "blk_commande_creation_form",
+          "blockType": "form",
+          "entityId": "ent_commande",
+          "props": [
+            {
+              "key": "title",
+              "value": "Livraison et paiement"
+            },
+            {
+              "key": "fieldIds",
+              "value": [
+                "fld_commande_adresse_livraison",
+                "fld_commande_ville",
+                "fld_commande_telephone",
+                "fld_commande_mode_paiement"
+              ]
+            },
+            {
+              "key": "submitLabel",
+              "value": "Confirmer et payer"
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Enregistrement de la commande…"
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Informations de livraison à compléter"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Commande non enregistrée"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_commandes",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Mes commandes"
+        }
+      ],
+      "showsPrimaryNav": true,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_commandes_liste",
+          "blockType": "list",
+          "entityId": "ent_commande",
+          "props": [
+            {
+              "key": "title",
+              "value": "Suivi de vos commandes"
+            },
+            {
+              "key": "titleFieldId",
+              "value": "fld_commande_reference"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_commande_date"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_commande_total"
+            },
+            {
+              "key": "badgeFieldId",
+              "value": "fld_commande_statut"
+            },
+            {
+              "key": "sortFieldId",
+              "value": "fld_commande_date"
+            },
+            {
+              "key": "sortDirection",
+              "value": "desc"
+            },
+            {
+              "key": "pageSize",
+              "value": 20
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement de vos commandes…"
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Aucune commande pour le moment"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Vos achats et leurs statuts apparaîtront ici."
+            },
+            {
+              "key": "errorTitle",
+              "value": "Commandes indisponibles"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Impossible de charger vos commandes. Réessayez dans un instant."
+            }
+          ]
+        },
+        {
+          "id": "blk_commandes_vide",
+          "blockType": "empty_state",
+          "visibleWhen": {
+            "kind": "entity_empty",
+            "entityId": "ent_commande"
+          },
+          "props": [
+            {
+              "key": "title",
+              "value": "Aucune commande pour le moment"
+            },
+            {
+              "key": "message",
+              "value": "Découvrez les produits des marchands vérifiés et passez votre première commande."
+            },
+            {
+              "key": "actionLabel",
+              "value": "Découvrir les produits"
+            },
+            {
+              "key": "actionId",
+              "value": "act_ouvrir_catalogue"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_commande_detail",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Suivi de commande"
+        }
+      ],
+      "showsPrimaryNav": true,
+      "showsScreenTitle": false,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_commande_entete",
+          "blockType": "detail_header",
+          "entityId": "ent_commande",
+          "props": [
+            {
+              "key": "titleFieldId",
+              "value": "fld_commande_reference"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_commande_adresse_livraison"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_commande_total"
+            },
+            {
+              "key": "badgeFieldIds",
+              "value": [
+                "fld_commande_statut",
+                "fld_commande_mode_paiement",
+                "fld_commande_nombre_articles"
+              ]
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement du suivi…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Suivi indisponible"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Impossible d'afficher cette commande pour le moment."
+            }
+          ]
+        },
+        {
+          "id": "blk_commande_retour",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Continuer mes achats"
+            },
+            {
+              "key": "actionId",
+              "value": "act_retour_catalogue"
+            },
+            {
+              "key": "kind",
+              "value": "link"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_compte",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Mon compte"
+        }
+      ],
+      "showsPrimaryNav": true,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_compte_header",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Mon compte"
+            },
+            {
+              "key": "subtitle",
+              "value": "Vos informations, votre adresse de livraison et votre sécurité."
+            }
+          ]
+        },
+        {
+          "id": "blk_compte_invite",
+          "blockType": "empty_state",
+          "visibleWhen": {
+            "kind": "session_anonymous"
+          },
+          "props": [
+            {
+              "key": "title",
+              "value": "Vous n'êtes pas connecté"
+            },
+            {
+              "key": "message",
+              "value": "Connectez-vous pour retrouver vos commandes et votre adresse de livraison."
+            },
+            {
+              "key": "actionLabel",
+              "value": "Se connecter"
+            },
+            {
+              "key": "actionId",
+              "value": "act_ouvrir_connexion"
+            }
+          ]
+        },
+        {
+          "id": "blk_compte_inscription",
+          "blockType": "button",
+          "visibleWhen": {
+            "kind": "session_anonymous"
+          },
+          "props": [
+            {
+              "key": "label",
+              "value": "Créer un compte"
+            },
+            {
+              "key": "actionId",
+              "value": "act_ouvrir_inscription"
+            },
+            {
+              "key": "kind",
+              "value": "ghost"
+            },
+            {
+              "key": "icon",
+              "value": "compte"
+            }
+          ]
+        },
+        {
+          "id": "blk_compte_confirmation",
+          "blockType": "empty_state",
+          "visibleWhen": {
+            "kind": "session_pending_confirmation"
+          },
+          "props": [
+            {
+              "key": "title",
+              "value": "Confirmez votre adresse e-mail"
+            },
+            {
+              "key": "message",
+              "value": "Un lien de confirmation vous a été envoyé. Validez-le pour activer votre compte Marketa."
+            }
+          ]
+        },
+        {
+          "id": "blk_compte_profil",
+          "blockType": "button",
+          "visibleWhen": {
+            "kind": "session_authenticated"
+          },
+          "props": [
+            {
+              "key": "label",
+              "value": "Profil et adresse de livraison"
+            },
+            {
+              "key": "actionId",
+              "value": "act_ouvrir_profil"
+            },
+            {
+              "key": "kind",
+              "value": "primary"
+            },
+            {
+              "key": "icon",
+              "value": "compte"
+            }
+          ]
+        },
+        {
+          "id": "blk_compte_deconnexion",
+          "blockType": "button",
+          "visibleWhen": {
+            "kind": "session_authenticated"
+          },
+          "props": [
+            {
+              "key": "label",
+              "value": "Se déconnecter"
+            },
+            {
+              "key": "actionId",
+              "value": "act_deconnexion"
+            },
+            {
+              "key": "kind",
+              "value": "ghost"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_profil",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Profil et livraison"
+        }
+      ],
+      "showsPrimaryNav": true,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_profil_form",
+          "blockType": "form",
+          "entityId": "ent_profil",
+          "props": [
+            {
+              "key": "title",
+              "value": "Mes informations et ma livraison"
+            },
+            {
+              "key": "fieldIds",
+              "value": [
+                "fld_profil_nom_complet",
+                "fld_profil_email",
+                "fld_profil_telephone",
+                "fld_profil_adresse_livraison",
+                "fld_profil_ville",
+                "fld_profil_pays"
+              ]
+            },
+            {
+              "key": "submitLabel",
+              "value": "Enregistrer mes informations"
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement de votre profil…"
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Profil à compléter"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Profil non enregistré"
+            }
+          ]
+        },
+        {
+          "id": "blk_profil_supprimer",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Supprimer mon compte"
+            },
+            {
+              "key": "actionId",
+              "value": "act_supprimer_compte"
+            },
+            {
+              "key": "kind",
+              "value": "link"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_connexion",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Connexion"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": false,
+      "presentation": "sheet",
+      "dismissLabel": [
+        {
+          "locale": "fr",
+          "text": "Fermer"
+        }
+      ],
+      "blocks": [
+        {
+          "id": "blk_connexion_header",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Bon retour sur Marketa"
+            },
+            {
+              "key": "subtitle",
+              "value": "Connectez-vous pour retrouver votre panier et vos commandes."
+            }
+          ]
+        },
+        {
+          "id": "blk_connexion_form",
+          "blockType": "form",
+          "entityId": "ent_profil",
+          "props": [
+            {
+              "key": "fieldIds",
+              "value": [
+                "fld_profil_email",
+                "fld_profil_mot_de_passe"
+              ]
+            },
+            {
+              "key": "submitLabel",
+              "value": "Se connecter"
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Connexion en cours…"
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Identifiants requis"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Connexion impossible"
+            }
+          ]
+        },
+        {
+          "id": "blk_connexion_oubli",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Mot de passe oublié ?"
+            },
+            {
+              "key": "actionId",
+              "value": "act_ouvrir_mot_de_passe_oublie"
+            },
+            {
+              "key": "kind",
+              "value": "link"
+            }
+          ]
+        },
+        {
+          "id": "blk_connexion_vers_inscription",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Créer un compte"
+            },
+            {
+              "key": "actionId",
+              "value": "act_ouvrir_inscription"
+            },
+            {
+              "key": "kind",
+              "value": "link"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_inscription",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Créer un compte"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": false,
+      "presentation": "sheet",
+      "dismissLabel": [
+        {
+          "locale": "fr",
+          "text": "Fermer"
+        }
+      ],
+      "blocks": [
+        {
+          "id": "blk_inscription_header",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Créer mon compte Marketa"
+            },
+            {
+              "key": "subtitle",
+              "value": "Quelques informations suffisent pour commander et suivre vos livraisons."
+            }
+          ]
+        },
+        {
+          "id": "blk_inscription_form",
+          "blockType": "form",
+          "entityId": "ent_profil",
+          "props": [
+            {
+              "key": "fieldIds",
+              "value": [
+                "fld_profil_nom_complet",
+                "fld_profil_email",
+                "fld_profil_telephone",
+                "fld_profil_mot_de_passe"
+              ]
+            },
+            {
+              "key": "submitLabel",
+              "value": "Créer mon compte"
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Création du compte…"
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Informations requises"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Création impossible"
+            }
+          ]
+        },
+        {
+          "id": "blk_inscription_vers_connexion",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "J'ai déjà un compte"
+            },
+            {
+              "key": "actionId",
+              "value": "act_ouvrir_connexion"
+            },
+            {
+              "key": "kind",
+              "value": "link"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_mot_de_passe_oublie",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Mot de passe oublié"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": false,
+      "presentation": "sheet",
+      "dismissLabel": [
+        {
+          "locale": "fr",
+          "text": "Fermer"
+        }
+      ],
+      "blocks": [
+        {
+          "id": "blk_mdp_header",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Mot de passe oublié"
+            },
+            {
+              "key": "subtitle",
+              "value": "Indiquez votre adresse e-mail : nous vous envoyons un lien de réinitialisation."
+            }
+          ]
+        },
+        {
+          "id": "blk_mdp_form",
+          "blockType": "form",
+          "entityId": "ent_profil",
+          "props": [
+            {
+              "key": "fieldIds",
+              "value": [
+                "fld_profil_email"
+              ]
+            },
+            {
+              "key": "submitLabel",
+              "value": "Recevoir un lien de réinitialisation"
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Envoi du lien…"
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Adresse e-mail requise"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Envoi impossible"
+            }
+          ]
+        },
+        {
+          "id": "blk_mdp_retour",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Retour à la connexion"
+            },
+            {
+              "key": "actionId",
+              "value": "act_ouvrir_connexion"
+            },
+            {
+              "key": "kind",
+              "value": "link"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "actions": [
+    {
+      "id": "act_ouvrir_inscription",
+      "name": "Ouvrir la création de compte",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_bienvenue_inscription"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_inscription"
+      }
+    },
+    {
+      "id": "act_ouvrir_connexion",
+      "name": "Ouvrir la connexion",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_bienvenue_connexion"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_connexion"
+      }
+    },
+    {
+      "id": "act_ouvrir_mot_de_passe_oublie",
+      "name": "Ouvrir la réinitialisation du mot de passe",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_connexion_oubli"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_mot_de_passe_oublie"
+      }
+    },
+    {
+      "id": "act_ouvrir_accueil",
+      "name": "Continuer sans compte vers l'accueil",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_bienvenue_visiteur"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_accueil"
+      }
+    },
+    {
+      "id": "act_ouvrir_catalogue",
+      "name": "Ouvrir le catalogue des produits",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_panier_vide"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_catalogue"
+      }
+    },
+    {
+      "id": "act_voir_tous_produits",
+      "name": "Voir tous les produits depuis la sélection",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_accueil_selection",
+        "role": "secondary"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_catalogue"
+      }
+    },
+    {
+      "id": "act_ouvrir_produit_depuis_accueil",
+      "name": "Ouvrir la fiche produit depuis la sélection",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_accueil_selection"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_produit_detail"
+      }
+    },
+    {
+      "id": "act_ouvrir_produit",
+      "name": "Ouvrir la fiche produit depuis le catalogue",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_catalogue_liste"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_produit_detail"
+      }
+    },
+    {
+      "id": "act_ouvrir_marchand",
+      "name": "Ouvrir la boutique du marchand",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_accueil_marchands"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_marchand_detail"
+      }
+    },
+    {
+      "id": "act_ouvrir_produit_marchand",
+      "name": "Ouvrir la fiche produit depuis la boutique",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_marchand_produits"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_produit_detail"
+      }
+    },
+    {
+      "id": "act_ajouter_au_panier",
+      "name": "Ajouter le produit au panier",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_produit_ajouter"
+      },
+      "effect": {
+        "kind": "mutation",
+        "entityId": "ent_panier_ligne",
+        "operation": "create",
+        "thenScreenId": "scr_panier"
+      }
+    },
+    {
+      "id": "act_ouvrir_panier",
+      "name": "Ouvrir le panier",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_produit_voir_panier"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_panier"
+      }
+    },
+    {
+      "id": "act_valider_panier",
+      "name": "Valider le panier et passer à la commande",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_panier_valider"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_commande_creation"
+      }
+    },
+    {
+      "id": "act_enregistrer_commande",
+      "name": "Confirmer et enregistrer la commande",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_commande_creation_form"
+      },
+      "effect": {
+        "kind": "mutation",
+        "entityId": "ent_commande",
+        "operation": "create",
+        "thenScreenId": "scr_commandes"
+      }
+    },
+    {
+      "id": "act_ouvrir_commande",
+      "name": "Ouvrir le suivi d'une commande",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_commandes_liste"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_commande_detail"
+      }
+    },
+    {
+      "id": "act_retour_catalogue",
+      "name": "Continuer les achats depuis le suivi de commande",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_commande_retour"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_catalogue"
+      }
+    },
+    {
+      "id": "act_ouvrir_profil",
+      "name": "Ouvrir le profil et l'adresse de livraison",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_compte_profil"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_profil"
+      }
+    },
+    {
+      "id": "act_enregistrer_profil",
+      "name": "Enregistrer le profil et l'adresse de livraison",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_profil_form"
+      },
+      "effect": {
+        "kind": "mutation",
+        "entityId": "ent_profil",
+        "operation": "update",
+        "instanceFrom": "session",
+        "thenScreenId": "scr_compte"
+      }
+    },
+    {
+      "id": "act_supprimer_compte",
+      "name": "Supprimer mon compte",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_profil_supprimer"
+      },
+      "effect": {
+        "kind": "mutation",
+        "entityId": "ent_profil",
+        "operation": "delete",
+        "instanceFrom": "session",
+        "thenScreenId": "scr_bienvenue"
+      }
+    },
+    {
+      "id": "act_connexion",
+      "name": "Se connecter",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_connexion_form"
+      },
+      "effect": {
+        "kind": "capability",
+        "capability": "auth",
+        "method": "signIn",
+        "params": [
+          {
+            "key": "emailFieldId",
+            "value": "fld_profil_email"
+          },
+          {
+            "key": "passwordFieldId",
+            "value": "fld_profil_mot_de_passe"
+          }
+        ]
+      }
+    },
+    {
+      "id": "act_inscription",
+      "name": "Créer mon compte",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_inscription_form"
+      },
+      "effect": {
+        "kind": "capability",
+        "capability": "auth",
+        "method": "signUp",
+        "params": [
+          {
+            "key": "emailFieldId",
+            "value": "fld_profil_email"
+          },
+          {
+            "key": "passwordFieldId",
+            "value": "fld_profil_mot_de_passe"
+          },
+          {
+            "key": "nameFieldId",
+            "value": "fld_profil_nom_complet"
+          }
+        ]
+      }
+    },
+    {
+      "id": "act_reinitialiser_mot_de_passe",
+      "name": "Recevoir un lien de réinitialisation",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_mdp_form"
+      },
+      "effect": {
+        "kind": "capability",
+        "capability": "auth",
+        "method": "resetPassword",
+        "params": [
+          {
+            "key": "emailFieldId",
+            "value": "fld_profil_email"
+          }
+        ]
+      }
+    },
+    {
+      "id": "act_deconnexion",
+      "name": "Se déconnecter",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_compte_deconnexion"
+      },
+      "effect": {
+        "kind": "capability",
+        "capability": "auth",
+        "method": "signOut"
+      }
+    },
+    {
+      "id": "act_calculer_confiance_marchand",
+      "name": "Calculer l'indice de confiance des marchands",
+      "trigger": {
+        "kind": "lifecycle",
+        "event": "screen_open",
+        "screenId": "scr_accueil"
+      },
+      "effect": {
+        "kind": "slot",
+        "slotId": "slot_confiance_marchand",
+        "binding": {
+          "inputs": [
+            {
+              "port": "marchands",
+              "source": {
+                "kind": "entity_rows",
+                "entityId": "ent_marchand"
+              }
+            },
+            {
+              "port": "seuilNote",
+              "source": {
+                "kind": "literal",
+                "value": 4
+              }
+            }
+          ],
+          "outputs": [
+            {
+              "port": "libelleConfiance",
+              "blockId": "blk_accueil_marchands",
+              "prop": "title"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "act_formater_total_panier",
+      "name": "Formater le total du panier en francs CFA",
+      "trigger": {
+        "kind": "lifecycle",
+        "event": "screen_open",
+        "screenId": "scr_panier"
+      },
+      "effect": {
+        "kind": "slot",
+        "slotId": "slot_montant_fcfa",
+        "binding": {
+          "inputs": [
+            {
+              "port": "montant",
+              "source": {
+                "kind": "entity_rows",
+                "entityId": "ent_panier_ligne"
+              }
+            },
+            {
+              "port": "devise",
+              "source": {
+                "kind": "literal",
+                "value": "FCFA"
+              }
+            }
+          ],
+          "outputs": [
+            {
+              "port": "montantFormate",
+              "blockId": "blk_panier_valider",
+              "prop": "label"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "capabilities": [
+    {
+      "capability": "auth",
+      "config": [
+        {
+          "key": "providers",
+          "value": [
+            "email_password"
+          ]
+        },
+        {
+          "key": "profileEntityId",
+          "value": "ent_profil"
+        },
+        {
+          "key": "emailConfirmationRequired",
+          "value": true
+        },
+        {
+          "key": "allowsAnonymousBrowsing",
+          "value": true
+        },
+        {
+          "key": "accountDeletionEnabled",
+          "value": true
+        }
+      ]
+    },
+    {
+      "capability": "payments.psp",
+      "config": [
+        {
+          "key": "commerceClass",
+          "value": "physical_or_offapp"
+        },
+        {
+          "key": "currency",
+          "value": "XOF"
+        },
+        {
+          "key": "currencyLabel",
+          "value": "FCFA"
+        },
+        {
+          "key": "methods",
+          "value": [
+            "mobile_money",
+            "carte_bancaire",
+            "paiement_a_la_livraison"
+          ]
+        },
+        {
+          "key": "apiDomain",
+          "value": "api.marketa.app"
+        }
+      ]
+    },
+    {
+      "capability": "offline_storage",
+      "config": [
+        {
+          "key": "cachedEntities",
+          "value": [
+            "ent_produit",
+            "ent_marchand",
+            "ent_panier_ligne",
+            "ent_commande"
+          ]
+        },
+        {
+          "key": "maxCacheAgeSeconds",
+          "value": 86400
+        }
+      ]
+    },
+    {
+      "capability": "analytics",
+      "config": [
+        {
+          "key": "scope",
+          "value": "product_usage"
+        },
+        {
+          "key": "anonymizeUserIdentifiers",
+          "value": true
+        },
+        {
+          "key": "trackedScreens",
+          "value": [
+            "scr_accueil",
+            "scr_catalogue",
+            "scr_produit_detail",
+            "scr_panier",
+            "scr_commandes"
+          ]
+        }
+      ]
+    }
+  ],
+  "permissions": [],
+  "integrations": [
+    {
+      "id": "intg_auth_marketa",
+      "providerClass": "supabase_auth",
+      "capability": "auth",
+      "config": [
+        {
+          "key": "providers",
+          "value": [
+            "email_password"
+          ]
+        },
+        {
+          "key": "profileEntityId",
+          "value": "ent_profil"
+        },
+        {
+          "key": "emailConfirmationRequired",
+          "value": true
+        },
+        {
+          "key": "allowsAnonymousBrowsing",
+          "value": true
+        },
+        {
+          "key": "accountDeletionEnabled",
+          "value": true
+        },
+        {
+          "key": "sessionPersistence",
+          "value": "device_secure_store"
+        },
+        {
+          "key": "defaultLocale",
+          "value": "fr"
+        }
+      ]
+    },
+    {
+      "id": "intg_paiement_psp",
+      "providerClass": "psp_gateway",
+      "capability": "payments.psp",
+      "config": [
+        {
+          "key": "commerceClass",
+          "value": "physical_or_offapp"
+        },
+        {
+          "key": "currency",
+          "value": "XOF"
+        },
+        {
+          "key": "currencyLabel",
+          "value": "FCFA"
+        },
+        {
+          "key": "methods",
+          "value": [
+            "mobile_money",
+            "carte_bancaire",
+            "paiement_a_la_livraison"
+          ]
+        },
+        {
+          "key": "apiDomain",
+          "value": "api.marketa.app"
+        },
+        {
+          "key": "checkoutPath",
+          "value": "/v1/paiements/checkout"
+        },
+        {
+          "key": "captureMode",
+          "value": "immediate"
+        }
+      ]
+    },
+    {
+      "id": "intg_api_marketa",
+      "providerClass": "rest_api",
+      "config": [
+        {
+          "key": "baseUrl",
+          "value": "https://api.marketa.app"
+        },
+        {
+          "key": "domain",
+          "value": "api.marketa.app"
+        },
+        {
+          "key": "catalogPath",
+          "value": "/v1/produits"
+        },
+        {
+          "key": "merchantsPath",
+          "value": "/v1/marchands"
+        },
+        {
+          "key": "ordersPath",
+          "value": "/v1/commandes"
+        },
+        {
+          "key": "timeoutSeconds",
+          "value": 15
+        },
+        {
+          "key": "authMode",
+          "value": "session_bearer"
+        },
+        {
+          "key": "defaultLocale",
+          "value": "fr"
+        }
+      ]
+    },
+    {
+      "id": "intg_medias_demo",
+      "providerClass": "image_cdn",
+      "config": [
+        {
+          "key": "domain",
+          "value": "picsum.photos"
+        },
+        {
+          "key": "seedPattern",
+          "value": "https://picsum.photos/seed/<sujet>/600/600"
+        },
+        {
+          "key": "usage",
+          "value": "demo_catalog_images"
+        }
+      ]
+    },
+    {
+      "id": "intg_stockage_hors_ligne",
+      "providerClass": "device_storage",
+      "capability": "offline_storage",
+      "config": [
+        {
+          "key": "cachedEntities",
+          "value": [
+            "ent_produit",
+            "ent_marchand",
+            "ent_panier_ligne",
+            "ent_commande"
+          ]
+        },
+        {
+          "key": "maxCacheAgeSeconds",
+          "value": 86400
+        },
+        {
+          "key": "evictionPolicy",
+          "value": "least_recently_used"
+        }
+      ]
+    },
+    {
+      "id": "intg_analytics_produit",
+      "providerClass": "analytics_collector",
+      "capability": "analytics",
+      "config": [
+        {
+          "key": "scope",
+          "value": "product_usage"
+        },
+        {
+          "key": "anonymizeUserIdentifiers",
+          "value": true
+        },
+        {
+          "key": "domain",
+          "value": "api.marketa.app"
+        },
+        {
+          "key": "ingestPath",
+          "value": "/v1/analytics/evenements"
+        },
+        {
+          "key": "trackedScreens",
+          "value": [
+            "scr_accueil",
+            "scr_catalogue",
+            "scr_produit_detail",
+            "scr_panier",
+            "scr_commandes"
+          ]
+        }
+      ]
+    }
+  ],
+  "expectedTests": [
+    {
+      "id": "test_bienvenue_onboarding",
+      "description": "À la première ouverture, l'écran de bienvenue s'affiche sans barre de navigation ni titre d'écran, avec le grand titre « Marketa », puis les trois chemins hiérarchisés : Créer un compte, J'ai déjà un compte, Continuer sans compte.",
+      "kind": "e2e",
+      "targetId": "scr_bienvenue"
+    },
+    {
+      "id": "test_nav_barre_persistante",
+      "description": "Depuis l'accueil, la barre persistante en bas de l'écran présente les cinq destinations dans l'ordre Accueil, Produits, Panier, Commandes, Compte, et reste visible sur chaque écran du parcours principal.",
+      "kind": "e2e",
+      "targetId": "scr_accueil"
+    },
+    {
+      "id": "test_accueil_comprendre_ou_on_est",
+      "description": "L'accueil affiche l'en-tête de marque Marketa, l'entrée de recherche en tête, puis la sélection de produits en grille avec photos et prix : on comprend immédiatement qu'il s'agit d'une place de marché.",
+      "kind": "deterministic",
+      "targetId": "blk_accueil_header"
+    },
+    {
+      "id": "test_accueil_entree_recherche",
+      "description": "Appuyer sur l'entrée de recherche de l'accueil ouvre l'écran Produits où la recherche s'exécute réellement.",
+      "kind": "e2e",
+      "targetId": "blk_accueil_recherche"
+    },
+    {
+      "id": "test_accueil_selection_grille_images",
+      "description": "La sélection du moment de l'accueil s'affiche en grille de cartes avec la vignette du produit, son nom, le marchand, l'état en badge et le prix, limitée à 6 articles triés par date d'ajout décroissante.",
+      "kind": "deterministic",
+      "targetId": "blk_accueil_selection"
+    },
+    {
+      "id": "test_accueil_voir_tous_produits",
+      "description": "Le libellé « Voir tous les produits » de la section sélection navigue vers l'écran catalogue complet sans déclencher l'ouverture d'une fiche.",
+      "kind": "e2e",
+      "targetId": "act_voir_tous_produits"
+    },
+    {
+      "id": "test_accueil_ligne_ouvre_fiche",
+      "description": "Appuyer sur une carte de la sélection de l'accueil ouvre la fiche du produit correspondant, avec l'identifiant de l'instance transmis.",
+      "kind": "e2e",
+      "targetId": "act_ouvrir_produit_depuis_accueil"
+    },
+    {
+      "id": "test_accueil_marchands_verifies",
+      "description": "La rangée horizontale des marchands vérifiés affiche logo, nom, ville, note et le badge de vérification en libellé humain (« Marchand vérifié » / « En cours de vérification »), triée par note décroissante.",
+      "kind": "deterministic",
+      "targetId": "blk_accueil_marchands"
+    },
+    {
+      "id": "test_catalogue_recherche_filtre",
+      "description": "Saisir un terme dans le champ de recherche du catalogue filtre réellement la liste des produits sur le nom ; un terme sans correspondance affiche l'état vide « Aucun produit ne correspond ».",
+      "kind": "deterministic",
+      "targetId": "blk_catalogue_liste"
+    },
+    {
+      "id": "test_catalogue_filtres_utilisateur",
+      "description": "Les trois filtres pilotés du catalogue (catégorie égale, état égal, prix maximum) se combinent en conjonction ; une valeur vide laisse le filtre inactif.",
+      "kind": "deterministic",
+      "targetId": "blk_catalogue_liste"
+    },
+    {
+      "id": "test_catalogue_grille_photos_prix",
+      "description": "Le catalogue présente les articles en grille deux colonnes : photo réelle en haut, nom, marchand, état en badge et prix formaté en francs CFA, 20 articles par page.",
+      "kind": "deterministic",
+      "targetId": "blk_catalogue_liste"
+    },
+    {
+      "id": "test_catalogue_ligne_ouvre_fiche",
+      "description": "Appuyer sur une carte du catalogue ouvre la fiche du produit pressé (et non le premier enregistrement).",
+      "kind": "e2e",
+      "targetId": "act_ouvrir_produit"
+    },
+    {
+      "id": "test_fiche_produit_contenu",
+      "description": "La fiche produit affiche la photo en visuel d'en-tête, le nom, la description, le prix en francs CFA et les badges état (neuf/occasion), marchand et disponibilité.",
+      "kind": "deterministic",
+      "targetId": "blk_produit_entete"
+    },
+    {
+      "id": "test_fiche_produit_etats_chargement",
+      "description": "La fiche produit rend le titre de chargement puis, en cas d'échec réseau, le titre et le message d'erreur déclarés au lieu d'un écran blanc.",
+      "kind": "deterministic",
+      "targetId": "blk_produit_entete"
+    },
+    {
+      "id": "test_marchand_ouverture_boutique",
+      "description": "Appuyer sur un marchand de la rangée d'accueil ouvre sa boutique avec logo, description, note, badge de vérification et nombre de ventes.",
+      "kind": "e2e",
+      "targetId": "act_ouvrir_marchand"
+    },
+    {
+      "id": "test_marchand_produits_scopes",
+      "description": "La liste de produits de l'écran marchand est bornée à l'instance courante par le champ de référence marchand : seuls les articles de cette boutique apparaissent.",
+      "kind": "deterministic",
+      "targetId": "blk_marchand_produits"
+    },
+    {
+      "id": "test_marchand_recherche_boutique",
+      "description": "La recherche interne à la boutique filtre les produits du marchand courant sans sortir de son périmètre.",
+      "kind": "deterministic",
+      "targetId": "blk_marchand_produits"
+    },
+    {
+      "id": "test_marchand_ligne_ouvre_fiche",
+      "description": "Appuyer sur un article de la boutique ouvre sa fiche produit avec l'identifiant transmis.",
+      "kind": "e2e",
+      "targetId": "act_ouvrir_produit_marchand"
+    },
+    {
+      "id": "test_ajout_au_panier",
+      "description": "Depuis la fiche produit, « Ajouter au panier » crée une ligne de panier puis conduit à l'écran Panier où l'article apparaît avec sa vignette, sa quantité et son sous-total.",
+      "kind": "e2e",
+      "targetId": "act_ajouter_au_panier"
+    },
+    {
+      "id": "test_panier_lignes_affichage",
+      "description": "Le panier liste chaque ligne avec la photo du produit, son nom, la quantité et le sous-total en francs CFA, et rend ses états chargement et erreur déclarés.",
+      "kind": "deterministic",
+      "targetId": "blk_panier_lignes"
+    },
+    {
+      "id": "test_panier_etat_vide",
+      "description": "Quand aucune ligne de panier n'existe, l'état vide « Votre panier est vide » s'affiche avec son action « Parcourir les produits », et le bouton de validation reste masqué.",
+      "kind": "deterministic",
+      "targetId": "blk_panier_vide"
+    },
+    {
+      "id": "test_panier_vers_catalogue",
+      "description": "L'action de l'état vide du panier navigue vers l'écran catalogue des produits.",
+      "kind": "e2e",
+      "targetId": "act_ouvrir_catalogue"
+    },
+    {
+      "id": "test_panier_validation",
+      "description": "Avec au moins une ligne, « Valider ma commande » conduit à l'écran de validation portant le récapitulatif et le formulaire livraison/paiement.",
+      "kind": "e2e",
+      "targetId": "act_valider_panier"
+    },
+    {
+      "id": "test_commande_recapitulatif",
+      "description": "L'écran de validation affiche le récapitulatif des lignes du panier (photo, produit, quantité, sous-total) au-dessus du formulaire de livraison.",
+      "kind": "deterministic",
+      "targetId": "blk_commande_creation_recap"
+    },
+    {
+      "id": "test_commande_enregistrement",
+      "description": "Soumettre « Confirmer et payer » enregistre une commande (mutation create) puis conduit à l'écran Mes commandes où la nouvelle référence apparaît avec son statut.",
+      "kind": "e2e",
+      "targetId": "act_enregistrer_commande"
+    },
+    {
+      "id": "test_commande_formulaire_champs",
+      "description": "Le formulaire de commande présente adresse de livraison, ville, téléphone et mode de paiement avec des libellés humains, et rend ses états chargement et erreur.",
+      "kind": "deterministic",
+      "targetId": "blk_commande_creation_form"
+    },
+    {
+      "id": "test_commandes_liste_statuts",
+      "description": "La liste des commandes affiche référence, date, total en francs CFA et le statut en badge lisible, triée par date décroissante.",
+      "kind": "deterministic",
+      "targetId": "blk_commandes_liste"
+    },
+    {
+      "id": "test_commandes_etat_vide",
+      "description": "Sans commande, l'état vide « Aucune commande pour le moment » s'affiche avec son action de découverte des produits.",
+      "kind": "deterministic",
+      "targetId": "blk_commandes_vide"
+    },
+    {
+      "id": "test_commande_ouverture_suivi",
+      "description": "Appuyer sur une ligne de la liste des commandes ouvre le suivi de cette commande précise.",
+      "kind": "e2e",
+      "targetId": "act_ouvrir_commande"
+    },
+    {
+      "id": "test_commande_detail_suivi",
+      "description": "L'écran de suivi affiche la référence, l'adresse de livraison, le total et les badges statut, mode de paiement et nombre d'articles.",
+      "kind": "deterministic",
+      "targetId": "blk_commande_entete"
+    },
+    {
+      "id": "test_commande_detail_retour",
+      "description": "Depuis le suivi de commande, « Continuer mes achats » ramène au catalogue des produits.",
+      "kind": "e2e",
+      "targetId": "act_retour_catalogue"
+    },
+    {
+      "id": "test_compte_etats_session",
+      "description": "L'écran Compte n'affiche jamais deux états de session à la fois : invitation à se connecter hors session, message de confirmation d'e-mail en attente, accès profil et déconnexion une fois connecté.",
+      "kind": "deterministic",
+      "targetId": "scr_compte"
+    },
+    {
+      "id": "test_inscription_feuille",
+      "description": "L'écran de création de compte monte en feuille depuis le bas, sans titre d'écran, avec un contrôle de fermeture nommé « Fermer ».",
+      "kind": "deterministic",
+      "targetId": "scr_inscription"
+    },
+    {
+      "id": "test_inscription_execution",
+      "description": "Soumettre le formulaire d'inscription exécute signUp avec e-mail, mot de passe et nom complet, et établit la session (ou l'état de confirmation d'e-mail en attente).",
+      "kind": "e2e",
+      "targetId": "act_inscription"
+    },
+    {
+      "id": "test_connexion_feuille",
+      "description": "L'écran de connexion se présente en feuille avec son contrôle de fermeture, le champ mot de passe étant masqué à la saisie.",
+      "kind": "deterministic",
+      "targetId": "scr_connexion"
+    },
+    {
+      "id": "test_connexion_execution",
+      "description": "Soumettre le formulaire de connexion exécute signIn et établit une session valide donnant accès au profil et aux commandes.",
+      "kind": "e2e",
+      "targetId": "act_connexion"
+    },
+    {
+      "id": "test_mot_de_passe_oublie",
+      "description": "Soumettre l'adresse e-mail sur l'écran mot de passe oublié exécute resetPassword et envoie le lien de réinitialisation.",
+      "kind": "e2e",
+      "targetId": "act_reinitialiser_mot_de_passe"
+    },
+    {
+      "id": "test_deconnexion",
+      "description": "« Se déconnecter » exécute signOut : la session est effacée et l'écran Compte repasse à l'état non connecté.",
+      "kind": "e2e",
+      "targetId": "act_deconnexion"
+    },
+    {
+      "id": "test_profil_enregistrement",
+      "description": "Enregistrer le profil met à jour la ligne de la personne connectée (instanceFrom session), avec nom, e-mail, téléphone, adresse de livraison, ville et pays, puis retourne à l'écran Compte.",
+      "kind": "e2e",
+      "targetId": "act_enregistrer_profil"
+    },
+    {
+      "id": "test_profil_formulaire_libelles",
+      "description": "Le formulaire de profil affiche des libellés humains pour chaque champ et les pays en libellés lisibles (« Côte d'Ivoire », « Burkina Faso »…), jamais les valeurs techniques.",
+      "kind": "deterministic",
+      "targetId": "blk_profil_form"
+    },
+    {
+      "id": "test_suppression_compte",
+      "description": "« Supprimer mon compte » supprime la ligne de profil de la session et ramène à l'écran de bienvenue.",
+      "kind": "e2e",
+      "targetId": "act_supprimer_compte"
+    },
+    {
+      "id": "test_regle_email_valide",
+      "description": "La création ou la mise à jour d'un profil est refusée si l'adresse e-mail est absente ou mal formée.",
+      "kind": "deterministic",
+      "targetId": "rule_profil_email_valide"
+    },
+    {
+      "id": "test_regle_mot_de_passe_robuste",
+      "description": "L'inscription est refusée si le mot de passe est absent ou compte moins de 8 caractères.",
+      "kind": "deterministic",
+      "targetId": "rule_profil_mot_de_passe_robuste"
+    },
+    {
+      "id": "test_regle_identite_complete",
+      "description": "Le profil est refusé sans nom complet ou avec un téléphone au format invalide.",
+      "kind": "deterministic",
+      "targetId": "rule_profil_identite_complete"
+    },
+    {
+      "id": "test_regle_livraison_complete",
+      "description": "L'enregistrement du profil est refusé sans adresse de livraison, sans ville, ou avec un pays hors de la zone desservie.",
+      "kind": "deterministic",
+      "targetId": "rule_profil_livraison_complete"
+    },
+    {
+      "id": "test_regle_marchand_verifie",
+      "description": "Seuls les marchands vérifiés sont présentés aux acheteurs : un marchand non vérifié n'apparaît pas dans les listes.",
+      "kind": "deterministic",
+      "targetId": "rule_marchand_verifie_publiable"
+    },
+    {
+      "id": "test_regle_note_bornee",
+      "description": "Une note de marchand hors de l'intervalle 0 à 5 est refusée à l'écriture.",
+      "kind": "deterministic",
+      "targetId": "rule_marchand_note_bornee"
+    },
+    {
+      "id": "test_slot_confiance_marchand",
+      "description": "À l'ouverture de l'accueil, le slot d'indice de confiance est réellement invoqué avec les lignes marchands et le seuil 4, et sa sortie alimente le titre de la section des marchands vérifiés.",
+      "kind": "deterministic",
+      "targetId": "act_calculer_confiance_marchand"
+    },
+    {
+      "id": "test_slot_montant_fcfa",
+      "description": "À l'ouverture du panier, le slot de formatage est invoqué avec la devise FCFA et sa sortie alimente le libellé du bouton de validation (ex. « 145 000 FCFA »).",
+      "kind": "deterministic",
+      "targetId": "act_formater_total_panier"
+    },
+    {
+      "id": "test_contract_auth_sans_secret",
+      "description": "L'intégration d'authentification ne contient aucune clé ni jeton : url, anonKey et profileEntityId sont fournis par le provisioning, et le profil ciblé est bien l'entité profil.",
+      "kind": "contract",
+      "targetId": "intg_auth_marketa"
+    },
+    {
+      "id": "test_contract_psp_devise",
+      "description": "L'intégration de paiement déclare la classe commerce physical_or_offapp, la devise XOF libellée FCFA et ses modes de paiement, sans aucun secret.",
+      "kind": "contract",
+      "targetId": "intg_paiement_psp"
+    },
+    {
+      "id": "test_contract_api_domaines",
+      "description": "Les appels sortants ne visent que api.marketa.app, conformément à la politique deny_by_default et aux domaines autorisés.",
+      "kind": "contract",
+      "targetId": "intg_api_marketa"
+    },
+    {
+      "id": "test_contract_medias_picsum",
+      "description": "Les URLs d'images de démonstration pointent vers picsum.photos avec des graines descriptives par sujet, domaine explicitement autorisé.",
+      "kind": "contract",
+      "targetId": "intg_medias_demo"
+    },
+    {
+      "id": "test_contract_hors_ligne",
+      "description": "Le cache hors-ligne couvre produits, marchands, lignes de panier et commandes avec une ancienneté maximale de 24 heures.",
+      "kind": "contract",
+      "targetId": "intg_stockage_hors_ligne"
+    },
+    {
+      "id": "test_contract_analytics_anonyme",
+      "description": "La collecte analytique se limite à l'usage produit sur les écrans déclarés et anonymise les identifiants utilisateurs.",
+      "kind": "contract",
+      "targetId": "intg_analytics_produit"
+    }
+  ],
+  "intent": {
+    "request": "Mon entreprise lance Marketa (le nom exact de l'application est « Marketa »). C'est une place de marché mobile généraliste pour l'Afrique de l'Ouest : on y achète de l'électronique, des vêtements, de l'électroménager et des articles de sport auprès de marchands vérifiés. Je veux que dès l'ouverture on comprenne où on est et qu'on puisse chercher un article tout de suite. Il faut des photos réalistes sur chaque produit, les prix en francs CFA, un panier, le suivi des commandes avec leurs statuts, la création de compte et un profil avec adresse de livraison. Les fiches produit montrent la photo, la description, le prix, l'état (neuf ou occasion) et le marchand. Tout en français.",
+    "requestLocale": "fr",
+    "needs": [
+      {
+        "id": "need_place_de_marche_generaliste",
+        "statement": "Offrir une place de marché mobile généraliste pour l'Afrique de l'Ouest couvrant l'électronique, les vêtements, l'électroménager et les articles de sport.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "scr_catalogue",
+            "blk_catalogue_liste",
+            "scr_accueil",
+            "blk_accueil_selection",
+            "scr_produit_detail",
+            "blk_produit_entete"
+          ]
+        }
+      },
+      {
+        "id": "need_categories_produits",
+        "statement": "Permettre de retrouver les articles par famille (électronique, vêtements, électroménager, sport).",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "blk_catalogue_liste",
+            "blk_marchand_produits"
+          ]
+        }
+      },
+      {
+        "id": "need_marchands_verifies",
+        "statement": "N'acheter qu'auprès de marchands vérifiés, et voir cette vérification.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "blk_accueil_marchands",
+            "scr_marchand_detail",
+            "blk_marchand_entete",
+            "blk_marchand_produits",
+            "act_ouvrir_marchand",
+            "rule_marchand_verifie_publiable",
+            "slot_confiance_marchand",
+            "act_calculer_confiance_marchand"
+          ]
+        }
+      },
+      {
+        "id": "need_comprendre_des_ouverture",
+        "statement": "Dès l'ouverture de l'application, comprendre immédiatement où l'on est.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "scr_bienvenue",
+            "blk_bienvenue_header",
+            "scr_accueil",
+            "blk_accueil_header",
+            "blk_accueil_selection"
+          ]
+        }
+      },
+      {
+        "id": "need_recherche_immediate",
+        "statement": "Pouvoir chercher un article tout de suite, dès l'accueil.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "blk_accueil_recherche",
+            "act_ouvrir_catalogue",
+            "scr_catalogue",
+            "blk_catalogue_liste",
+            "blk_marchand_produits"
+          ]
+        }
+      },
+      {
+        "id": "need_photos_realistes",
+        "statement": "Afficher des photos réalistes sur chaque produit.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "blk_accueil_selection",
+            "blk_catalogue_liste",
+            "blk_produit_entete",
+            "blk_marchand_produits",
+            "blk_panier_lignes",
+            "intg_medias_demo"
+          ]
+        }
+      },
+      {
+        "id": "need_prix_francs_cfa",
+        "statement": "Afficher les prix en francs CFA.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "blk_catalogue_liste",
+            "blk_accueil_selection",
+            "blk_produit_entete",
+            "blk_panier_lignes",
+            "blk_commandes_liste",
+            "blk_commande_entete",
+            "slot_montant_fcfa",
+            "act_formater_total_panier",
+            "intg_paiement_psp"
+          ]
+        }
+      },
+      {
+        "id": "need_panier",
+        "statement": "Disposer d'un panier où l'on ajoute les articles avant de commander.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "blk_produit_ajouter",
+            "act_ajouter_au_panier",
+            "scr_panier",
+            "blk_panier_lignes",
+            "blk_panier_vide",
+            "blk_panier_valider",
+            "act_valider_panier",
+            "act_ouvrir_panier"
+          ]
+        }
+      },
+      {
+        "id": "need_commande_et_paiement",
+        "statement": "Passer commande depuis le panier, avec adresse de livraison et mode de paiement.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "scr_commande_creation",
+            "blk_commande_creation_recap",
+            "blk_commande_creation_form",
+            "act_enregistrer_commande"
+          ]
+        }
+      },
+      {
+        "id": "need_suivi_commandes_statuts",
+        "statement": "Suivre ses commandes avec leurs statuts.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "scr_commandes",
+            "blk_commandes_liste",
+            "blk_commandes_vide",
+            "act_ouvrir_commande",
+            "scr_commande_detail",
+            "blk_commande_entete"
+          ]
+        }
+      },
+      {
+        "id": "need_creation_de_compte",
+        "statement": "Créer un compte (et se connecter à ce compte).",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "scr_inscription",
+            "blk_inscription_form",
+            "act_inscription",
+            "scr_connexion",
+            "blk_connexion_form",
+            "act_connexion",
+            "scr_mot_de_passe_oublie",
+            "blk_mdp_form",
+            "act_reinitialiser_mot_de_passe",
+            "act_deconnexion",
+            "blk_compte_deconnexion",
+            "intg_auth_marketa",
+            "rule_profil_mot_de_passe_robuste"
+          ]
+        }
+      },
+      {
+        "id": "need_profil_adresse_livraison",
+        "statement": "Disposer d'un profil contenant l'adresse de livraison.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "scr_profil",
+            "blk_profil_form",
+            "act_enregistrer_profil",
+            "act_ouvrir_profil",
+            "blk_compte_profil",
+            "rule_profil_livraison_complete",
+            "rule_profil_identite_complete"
+          ]
+        }
+      },
+      {
+        "id": "need_fiche_produit_complete",
+        "statement": "La fiche produit montre la photo, la description, le prix, l'état (neuf ou occasion) et le marchand.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "scr_produit_detail",
+            "blk_produit_entete",
+            "act_ouvrir_produit",
+            "act_ouvrir_produit_depuis_accueil",
+            "act_ouvrir_produit_marchand"
+          ]
+        }
+      },
+      {
+        "id": "need_tout_en_francais",
+        "statement": "Toute l'application est en français.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "blk_bienvenue_header",
+            "blk_accueil_header",
+            "blk_catalogue_liste",
+            "blk_produit_entete",
+            "blk_panier_lignes",
+            "blk_commandes_liste",
+            "blk_profil_form",
+            "blk_commande_creation_form"
+          ]
+        }
+      }
+    ]
+  }
+}

@@ -26,7 +26,7 @@ import { Pressable, Text, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { useStyles } from "@deribfy/primitives/theme-bridge";
+import { useStyles } from "../primitives/theme-bridge";
 import { allerVers } from "./racines-navigation";
 
 /**

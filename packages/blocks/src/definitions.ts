@@ -113,8 +113,24 @@ export const BLOCKS: readonly BlockDefinition[] = [
       // accès réseau). Un nom libre ferait revenir la classe de défaut que
       // `D-088` a corrigée : un document qui promet ce que le moteur ne rend
       // pas. Optionnel — sans lui, le bouton reste celui de 1.5.0.
+      // UNIFICATION (2026-09-10, mesurée sur marketa) : le contrat parlait
+      // DEUX langues d'icônes — noms Ionicons bruts ici, RÔLES sur les
+      // onglets. Le générateur, enseigné en rôles, a écrit « compte » sur un
+      // bouton : refusé. Superset ADDITIF — les rôles entrent, les noms
+      // existants restent, le moteur traduit (GLYPHE_PAR_ROLE, primitives).
       icon: z
         .enum([
+          "accueil",
+          "recherche",
+          "liste",
+          "billet",
+          "panier",
+          "calendrier",
+          "carte",
+          "compte",
+          "favoris",
+          "message",
+          "reglages",
           "settings-outline",
           "log-out-outline",
           "trash-outline",
