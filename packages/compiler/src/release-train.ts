@@ -64,7 +64,7 @@ export const RELEASE_TRAIN_V1 = {
   // et écran de démarrage sont posés au BUILD, et le chemin de compilation
   // est zéro réseau) et `screen.presentation` (une ÉTAPE monte du bas au lieu
   // de remplacer le parcours).
-  airSchemaVersion: "1.19.0",
+  airSchemaVersion: "1.20.0",
   // Porté à 1.1.0 le 2026-08-31 (D-060) : montée STRICTEMENT ADDITIVE du
   // registre de blocs — `form` gagne `loading`/`empty`, `detail_header` gagne un
   // état, les trois blocs à données gagnent les props de titres. Rien n'est
@@ -185,7 +185,14 @@ export const RELEASE_TRAIN_V1 = {
   // Ré-scellé : `ButtonBlock` passe enfin par `Section`. Mesuré sur appareil,
   // il rendait le bouton NU — donc collé aux bords de l'écran, seul bloc à
   // ne pas porter les marges communes. Le `testID` reste sur le pressable.
-  "9023538fad395dcbfc7cab63cb53cda2582d04736494ab6142657b82f0df4256",
+  // Ré-scellé 2026-09-09 (lot premium/1.20) : GridCard (grille de catalogue,
+    // deux colonnes) + prop `layout` du bloc list + retrait du composant de
+    // fermeture dessiné (arbitrage propriétaire : la flèche native suffit).
+    // Ré-scellé de nouveau le 2026-09-10 (capture propriétaire) : recherche et
+    // filtres ÉPINGLÉS sous le titre (plus en-tête défilant), pied de liste
+    // par primitive (ListFooter) — le dernier rang finit sa course au-dessus
+    // de la barre.
+    "b106ecd0467ad1299041f066fdfd183df6c950597df902158efc5a92e4849606",
   capabilityRegistryVersion: "1.0.0",
   capabilitySourcesHash:
     "6c28599246abde6e7010704f23f273aafe50d17c5483133709c9065f2777346c",
@@ -211,7 +218,9 @@ export const RELEASE_TRAIN_V1 = {
   // changé de type — la compatibilité mineure reste donc mécanique.
   designTokensSourcesHash:
     // Ré-scellé (tokens 1.3.0) : ajout de `font.display`.
-  "392e3bc34f834808da88bd31db5abb5f727d0af7eaa930bcc21713e1d0f36458",
+  // Ré-scellé 2026-09-09 (lot premium) : token `size.controlHeight` (54 dp,
+    // consommé par `button`) — jugement propriétaire « boutons pas premium ».
+    "2d1d23ea91876aa25756b9ea392b39c22518cb2b6a32f77ca49e13a4479f1446",
 
   // Toolchain du projet généré (pins exacts démontrés — lock.toolchain).
   // Planchers RÉELS de plateforme du train (mesurés sur le prebuild du

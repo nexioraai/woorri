@@ -87,6 +87,17 @@ function fixtureValue(
   refs: RefContext,
 ): string {
   const n = index + 1;
+  // 1.20.0 — le DOCUMENT déclare ses valeurs de démo : on les cycle,
+  // déterministe. Sans déclaration, la forme historique reste.
+  if (
+    field.demoValues !== undefined &&
+    (field.type === "string" || field.type === "text" || field.type === "asset")
+  ) {
+    // 1.20 — pour un champ IMAGE, les demoValues sont des URLs https RÉELLES
+    // (exigence propriétaire : « je veux voir de vraies images ») ; leur hôte
+    // est vérifié contre allowedDomains par le validateur, fail-closed.
+    return field.demoValues[index % field.demoValues.length] ?? "";
+  }
   switch (field.type) {
     case "string":
     case "text":

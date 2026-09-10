@@ -1,0 +1,3884 @@
+{
+ "airSchemaVersion": "1.20.0",
+ "projectId": "prj_marketplace_artisans_ci",
+ "app": {
+  "name": "Kôrô Artisans",
+  "slug": "koro-artisans",
+  "description": [
+   {
+    "locale": "fr",
+    "text": "Marketplace des artisans de Côte d'Ivoire : bijoux, tissus, mobilier et décoration proposés par plusieurs vendeurs. Parcourez le catalogue par catégorie, consultez les fiches produits, commandez et suivez vos livraisons."
+   }
+  ],
+  "locales": {
+   "userLanguage": "fr",
+   "appLocales": [
+    "fr"
+   ],
+   "defaultAppLocale": "fr",
+   "contentLocales": [
+    "fr"
+   ],
+   "rtlSupported": false
+  },
+  "brandIconPngBase64": "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",
+  "distribution": {
+   "owner": "deribfy-apps-team",
+   "projectId": "b18cae1d-6860-4af2-b479-ef0e71d6a0b8"
+  }
+ },
+ "navigation": {
+  "entryScreenId": "scr_bienvenue",
+  "primary": {
+   "destinations": [
+    {
+     "routeId": "nav_accueil",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Accueil"
+      }
+     ],
+     "order": 0,
+     "icon": "accueil"
+    },
+    {
+     "routeId": "nav_produits",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Produits"
+      }
+     ],
+     "order": 1,
+     "icon": "liste"
+    },
+    {
+     "routeId": "nav_panier",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Panier"
+      }
+     ],
+     "order": 2,
+     "icon": "panier"
+    },
+    {
+     "routeId": "nav_commandes",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Commandes"
+      }
+     ],
+     "order": 3,
+     "icon": "billet"
+    },
+    {
+     "routeId": "nav_compte",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Compte"
+      }
+     ],
+     "order": 4,
+     "icon": "compte"
+    }
+   ]
+  },
+  "routes": [
+   {
+    "id": "nav_bienvenue",
+    "screenId": "scr_bienvenue",
+    "title": [
+     {
+      "locale": "fr",
+      "text": "Bienvenue"
+     }
+    ]
+   },
+   {
+    "id": "nav_connexion",
+    "screenId": "scr_connexion",
+    "title": [
+     {
+      "locale": "fr",
+      "text": "Connexion"
+     }
+    ]
+   },
+   {
+    "id": "nav_inscription",
+    "screenId": "scr_inscription",
+    "title": [
+     {
+      "locale": "fr",
+      "text": "Créer un compte"
+     }
+    ]
+   },
+   {
+    "id": "nav_mot_de_passe_oublie",
+    "screenId": "scr_mot_de_passe_oublie",
+    "title": [
+     {
+      "locale": "fr",
+      "text": "Mot de passe oublié"
+     }
+    ]
+   },
+   {
+    "id": "nav_accueil",
+    "screenId": "scr_accueil",
+    "title": [
+     {
+      "locale": "fr",
+      "text": "Accueil"
+     }
+    ]
+   },
+   {
+    "id": "nav_produits",
+    "screenId": "scr_produits",
+    "title": [
+     {
+      "locale": "fr",
+      "text": "Produits"
+     }
+    ]
+   },
+   {
+    "id": "nav_produit_detail",
+    "screenId": "scr_produit_detail",
+    "title": [
+     {
+      "locale": "fr",
+      "text": "Fiche produit"
+     }
+    ]
+   },
+   {
+    "id": "nav_vendeur_detail",
+    "screenId": "scr_vendeur_detail",
+    "title": [
+     {
+      "locale": "fr",
+      "text": "Vendeur"
+     }
+    ]
+   },
+   {
+    "id": "nav_panier",
+    "screenId": "scr_panier",
+    "title": [
+     {
+      "locale": "fr",
+      "text": "Panier"
+     }
+    ]
+   },
+   {
+    "id": "nav_paiement",
+    "screenId": "scr_paiement",
+    "title": [
+     {
+      "locale": "fr",
+      "text": "Paiement par carte"
+     }
+    ]
+   },
+   {
+    "id": "nav_commandes",
+    "screenId": "scr_commandes",
+    "title": [
+     {
+      "locale": "fr",
+      "text": "Mes commandes"
+     }
+    ]
+   },
+   {
+    "id": "nav_commande_detail",
+    "screenId": "scr_commande_detail",
+    "title": [
+     {
+      "locale": "fr",
+      "text": "Suivi de commande"
+     }
+    ]
+   },
+   {
+    "id": "nav_compte",
+    "screenId": "scr_compte",
+    "title": [
+     {
+      "locale": "fr",
+      "text": "Mon compte"
+     }
+    ]
+   },
+   {
+    "id": "nav_profil_edition",
+    "screenId": "scr_profil_edition",
+    "title": [
+     {
+      "locale": "fr",
+      "text": "Mon profil"
+     }
+    ]
+   }
+  ]
+ },
+ "design": {
+  "theme": "marketplace_artisanat_chaleureux"
+ },
+ "network": {
+  "policy": "deny_by_default",
+  "allowedDomains": [
+   "api.koro-artisans.app"
+  ]
+ },
+ "native": {
+  "minIosVersion": "16.0",
+  "minAndroidSdk": 26
+ },
+ "compliance": {
+  "commerceClass": "physical_or_offapp",
+  "accountDeletionRequired": true,
+  "dataCollected": [
+   "contact_info",
+   "identifiers",
+   "usage_data",
+   "purchases",
+   "diagnostics"
+  ]
+ },
+ "entities": [
+  {
+   "id": "ent_profil",
+   "name": "profil",
+   "fields": [
+    {
+     "id": "fld_profil_nom",
+     "name": "nom_complet",
+     "type": "string",
+     "required": true,
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Nom complet"
+      }
+     ],
+     "demoValues": [
+      "Awa Koné",
+      "Jean-Marc Kouassi",
+      "Fatou Diabaté"
+     ]
+    },
+    {
+     "id": "fld_profil_email",
+     "name": "email",
+     "type": "string",
+     "required": true,
+     "unique": true,
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Adresse e-mail"
+      }
+     ]
+    },
+    {
+     "id": "fld_profil_mot_de_passe",
+     "name": "mot_de_passe",
+     "type": "string",
+     "required": false,
+     "sensitive": true
+    },
+    {
+     "id": "fld_profil_telephone",
+     "name": "telephone",
+     "type": "string",
+     "required": true,
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Téléphone"
+      }
+     ]
+    },
+    {
+     "id": "fld_profil_adresse",
+     "name": "adresse_livraison",
+     "type": "text",
+     "required": true,
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Adresse de livraison"
+      }
+     ]
+    },
+    {
+     "id": "fld_profil_ville",
+     "name": "ville",
+     "type": "string",
+     "required": false,
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Ville"
+      }
+     ],
+     "demoValues": [
+      "Abidjan",
+      "Bouaké",
+      "San-Pédro"
+     ]
+    },
+    {
+     "id": "fld_profil_cree_le",
+     "name": "cree_le",
+     "type": "datetime",
+     "required": false,
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Membre depuis"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ent_vendeur",
+   "name": "vendeur",
+   "fields": [
+    {
+     "id": "fld_vendeur_nom",
+     "name": "nom_atelier",
+     "type": "string",
+     "required": true,
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Atelier"
+      }
+     ],
+     "demoValues": [
+      "Atelier Yao",
+      "Tissages d'Aya",
+      "Maison Koffi",
+      "L'Échoppe d'Adjoua",
+      "Forge de Séka",
+      "Ateliers Bini"
+     ]
+    },
+    {
+     "id": "fld_vendeur_photo",
+     "name": "photo",
+     "type": "asset",
+     "required": false,
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Photo de l'atelier"
+      }
+     ]
+    },
+    {
+     "id": "fld_vendeur_specialite",
+     "name": "specialite",
+     "type": "enum",
+     "required": true,
+     "enumValues": [
+      "bijoux",
+      "tissus",
+      "mobilier",
+      "deco"
+     ],
+     "enumLabels": [
+      {
+       "value": "bijoux",
+       "label": [
+        {
+         "locale": "fr",
+         "text": "Bijoux"
+        }
+       ]
+      },
+      {
+       "value": "tissus",
+       "label": [
+        {
+         "locale": "fr",
+         "text": "Tissus"
+        }
+       ]
+      },
+      {
+       "value": "mobilier",
+       "label": [
+        {
+         "locale": "fr",
+         "text": "Mobilier"
+        }
+       ]
+      },
+      {
+       "value": "deco",
+       "label": [
+        {
+         "locale": "fr",
+         "text": "Décoration"
+        }
+       ]
+      }
+     ],
+     "sensitive": false
+    },
+    {
+     "id": "fld_vendeur_description",
+     "name": "description",
+     "type": "text",
+     "required": false,
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Présentation"
+      }
+     ],
+     "demoValues": [
+      "Bijoutier à Grand-Bassam depuis trois générations.",
+      "Tisserandes de Tiébissou, coton local.",
+      "Sculpture sur bois, quartier artisanal de Bouaké.",
+      "Vannerie fine, marché de Cocody.",
+      "Maroquinerie et forge, Korhogo.",
+      "Textiles teints à la main, Abidjan."
+     ]
+    },
+    {
+     "id": "fld_vendeur_ville",
+     "name": "ville",
+     "type": "string",
+     "required": true,
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Ville"
+      }
+     ],
+     "demoValues": [
+      "Grand-Bassam",
+      "Tiébissou",
+      "Bouaké",
+      "Abidjan",
+      "Korhogo",
+      "Abidjan"
+     ]
+    },
+    {
+     "id": "fld_vendeur_telephone",
+     "name": "telephone",
+     "type": "string",
+     "required": false,
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Téléphone"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ent_categorie",
+   "name": "categorie",
+   "fields": [
+    {
+     "id": "fld_categorie_nom",
+     "name": "nom",
+     "type": "string",
+     "required": true,
+     "unique": true,
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Catégorie"
+      }
+     ],
+     "demoValues": [
+      "Bijoux",
+      "Tissus",
+      "Mobilier",
+      "Décoration"
+     ]
+    },
+    {
+     "id": "fld_categorie_image",
+     "name": "image",
+     "type": "asset",
+     "required": false,
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Visuel"
+      }
+     ]
+    },
+    {
+     "id": "fld_categorie_description",
+     "name": "description",
+     "type": "text",
+     "required": false,
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Description"
+      }
+     ],
+     "demoValues": [
+      "Colliers, bracelets et parures.",
+      "Pagnes, kita et bogolan.",
+      "Tabourets, tables et rangements.",
+      "Objets et textiles pour la maison."
+     ]
+    },
+    {
+     "id": "fld_categorie_ordre",
+     "name": "ordre",
+     "type": "number",
+     "required": false,
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Ordre d'affichage"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ent_produit",
+   "name": "produit",
+   "fields": [
+    {
+     "id": "fld_produit_nom",
+     "name": "nom",
+     "type": "string",
+     "required": true,
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Produit"
+      }
+     ],
+     "demoValues": [
+      "Collier baoulé perles bleues",
+      "Pagne kita tissé main",
+      "Masque gouro sculpté",
+      "Panier en osier tressé",
+      "Sandales cuir touareg",
+      "Statuette sénoufo ébène",
+      "Boucles d'oreilles bronze akan",
+      "Coussin bogolan coton"
+     ]
+    },
+    {
+     "id": "fld_produit_photo",
+     "name": "photo",
+     "type": "asset",
+     "required": false,
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Photo"
+      }
+     ]
+    },
+    {
+     "id": "fld_produit_description",
+     "name": "description",
+     "type": "text",
+     "required": true,
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Description"
+      }
+     ],
+     "demoValues": [
+      "Perles de verre soufflées, monture laiton, pièce unique.",
+      "Tissage main sur métier traditionnel, 1,8 m × 1,2 m.",
+      "Bois de fromager sculpté puis patiné à la cire.",
+      "Osier récolté et tressé à la main, anses cuir.",
+      "Cuir tanné végétal, semelle pneu recyclé.",
+      "Ébène massif poli, socle en samba.",
+      "Bronze coulé à la cire perdue, fermoir argenté.",
+      "Coton filé main, teinture bogolan aux argiles."
+     ]
+    },
+    {
+     "id": "fld_produit_prix",
+     "name": "prix",
+     "type": "decimal",
+     "required": true,
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Prix (FCFA)"
+      }
+     ]
+    },
+    {
+     "id": "fld_produit_categorie",
+     "name": "categorie",
+     "type": "reference",
+     "required": true,
+     "referencesEntityId": "ent_categorie",
+     "referenceDisplayFieldId": "fld_categorie_nom",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Catégorie"
+      }
+     ]
+    },
+    {
+     "id": "fld_produit_vendeur",
+     "name": "vendeur",
+     "type": "reference",
+     "required": true,
+     "referencesEntityId": "ent_vendeur",
+     "referenceDisplayFieldId": "fld_vendeur_nom",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Vendeur"
+      }
+     ]
+    },
+    {
+     "id": "fld_produit_stock",
+     "name": "stock",
+     "type": "number",
+     "required": true,
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Quantité en stock"
+      }
+     ]
+    },
+    {
+     "id": "fld_produit_disponible",
+     "name": "disponible",
+     "type": "boolean",
+     "required": true,
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Disponible"
+      }
+     ]
+    },
+    {
+     "id": "fld_produit_matiere",
+     "name": "matiere",
+     "type": "string",
+     "required": false,
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Matière"
+      }
+     ],
+     "demoValues": [
+      "Perles de verre",
+      "Coton",
+      "Bois de fromager",
+      "Osier",
+      "Cuir",
+      "Ébène",
+      "Bronze",
+      "Coton bogolan"
+     ]
+    },
+    {
+     "id": "fld_produit_popularite",
+     "name": "popularite",
+     "type": "number",
+     "required": false,
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Popularité"
+      }
+     ]
+    },
+    {
+     "id": "fld_produit_ajoute_le",
+     "name": "ajoute_le",
+     "type": "date",
+     "required": false,
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Mis en ligne le"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ent_panier_article",
+   "name": "panier_article",
+   "fields": [
+    {
+     "id": "fld_panier_produit",
+     "name": "produit",
+     "type": "reference",
+     "required": true,
+     "referencesEntityId": "ent_produit",
+     "referenceDisplayFieldId": "fld_produit_nom",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Produit"
+      }
+     ]
+    },
+    {
+     "id": "fld_panier_client",
+     "name": "client",
+     "type": "reference",
+     "required": true,
+     "referencesEntityId": "ent_profil",
+     "referenceDisplayFieldId": "fld_profil_nom",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Client"
+      }
+     ]
+    },
+    {
+     "id": "fld_panier_quantite",
+     "name": "quantite",
+     "type": "number",
+     "required": true,
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Quantité"
+      }
+     ]
+    },
+    {
+     "id": "fld_panier_prix_unitaire",
+     "name": "prix_unitaire",
+     "type": "decimal",
+     "required": true,
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Prix unitaire (FCFA)"
+      }
+     ]
+    },
+    {
+     "id": "fld_panier_sous_total",
+     "name": "sous_total",
+     "type": "decimal",
+     "required": true,
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Sous-total (FCFA)"
+      }
+     ]
+    },
+    {
+     "id": "fld_panier_ajoute_le",
+     "name": "ajoute_le",
+     "type": "datetime",
+     "required": false,
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Ajouté le"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ent_commande",
+   "name": "commande",
+   "fields": [
+    {
+     "id": "fld_commande_reference",
+     "name": "reference",
+     "type": "string",
+     "required": true,
+     "unique": true,
+     "label": [
+      {
+       "locale": "fr",
+       "text": "N° de commande"
+      }
+     ],
+     "demoValues": [
+      "KA-2026-0412",
+      "KA-2026-0413",
+      "KA-2026-0414",
+      "KA-2026-0415",
+      "KA-2026-0416"
+     ]
+    },
+    {
+     "id": "fld_commande_client",
+     "name": "client",
+     "type": "reference",
+     "required": true,
+     "referencesEntityId": "ent_profil",
+     "referenceDisplayFieldId": "fld_profil_nom",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Client"
+      }
+     ]
+    },
+    {
+     "id": "fld_commande_date",
+     "name": "date_commande",
+     "type": "datetime",
+     "required": true,
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Passée le"
+      }
+     ]
+    },
+    {
+     "id": "fld_commande_statut",
+     "name": "statut",
+     "type": "enum",
+     "required": true,
+     "enumValues": [
+      "en_attente",
+      "confirmee",
+      "en_preparation",
+      "expediee",
+      "livree",
+      "annulee"
+     ],
+     "enumLabels": [
+      {
+       "value": "en_attente",
+       "label": [
+        {
+         "locale": "fr",
+         "text": "En attente de paiement"
+        }
+       ]
+      },
+      {
+       "value": "confirmee",
+       "label": [
+        {
+         "locale": "fr",
+         "text": "Confirmée"
+        }
+       ]
+      },
+      {
+       "value": "en_preparation",
+       "label": [
+        {
+         "locale": "fr",
+         "text": "En préparation"
+        }
+       ]
+      },
+      {
+       "value": "expediee",
+       "label": [
+        {
+         "locale": "fr",
+         "text": "Expédiée"
+        }
+       ]
+      },
+      {
+       "value": "livree",
+       "label": [
+        {
+         "locale": "fr",
+         "text": "Livrée"
+        }
+       ]
+      },
+      {
+       "value": "annulee",
+       "label": [
+        {
+         "locale": "fr",
+         "text": "Annulée"
+        }
+       ]
+      }
+     ],
+     "sensitive": false
+    },
+    {
+     "id": "fld_commande_montant_total",
+     "name": "montant_total",
+     "type": "decimal",
+     "required": true,
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Total (FCFA)"
+      }
+     ]
+    },
+    {
+     "id": "fld_commande_adresse_livraison",
+     "name": "adresse_livraison",
+     "type": "text",
+     "required": true,
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Adresse de livraison"
+      }
+     ],
+     "demoValues": [
+      "Cocody, rue des Jardins 12",
+      "Marcory zone 4, imm. Alizés",
+      "Yopougon, quartier Millionnaire"
+     ]
+    },
+    {
+     "id": "fld_commande_telephone_contact",
+     "name": "telephone_contact",
+     "type": "string",
+     "required": true,
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Téléphone de contact"
+      }
+     ]
+    },
+    {
+     "id": "fld_commande_suivi",
+     "name": "message_suivi",
+     "type": "text",
+     "required": false,
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Dernière information de suivi"
+      }
+     ]
+    },
+    {
+     "id": "fld_commande_livraison_prevue",
+     "name": "livraison_prevue",
+     "type": "date",
+     "required": false,
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Livraison prévue"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ent_commande_ligne",
+   "name": "commande_ligne",
+   "fields": [
+    {
+     "id": "fld_ligne_commande",
+     "name": "commande",
+     "type": "reference",
+     "required": true,
+     "referencesEntityId": "ent_commande",
+     "referenceDisplayFieldId": "fld_commande_reference",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Commande"
+      }
+     ]
+    },
+    {
+     "id": "fld_ligne_produit",
+     "name": "produit",
+     "type": "reference",
+     "required": true,
+     "referencesEntityId": "ent_produit",
+     "referenceDisplayFieldId": "fld_produit_nom",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Produit"
+      }
+     ]
+    },
+    {
+     "id": "fld_ligne_quantite",
+     "name": "quantite",
+     "type": "number",
+     "required": true,
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Quantité"
+      }
+     ]
+    },
+    {
+     "id": "fld_ligne_prix_unitaire",
+     "name": "prix_unitaire",
+     "type": "decimal",
+     "required": true,
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Prix unitaire (FCFA)"
+      }
+     ]
+    },
+    {
+     "id": "fld_ligne_montant",
+     "name": "montant",
+     "type": "decimal",
+     "required": true,
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Montant (FCFA)"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ent_paiement",
+   "name": "paiement",
+   "fields": [
+    {
+     "id": "fld_paiement_commande",
+     "name": "commande",
+     "type": "reference",
+     "required": true,
+     "referencesEntityId": "ent_commande",
+     "referenceDisplayFieldId": "fld_commande_reference",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Commande"
+      }
+     ]
+    },
+    {
+     "id": "fld_paiement_titulaire",
+     "name": "titulaire_carte",
+     "type": "string",
+     "required": true,
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Nom du titulaire"
+      }
+     ]
+    },
+    {
+     "id": "fld_paiement_numero_carte",
+     "name": "numero_carte",
+     "type": "string",
+     "required": true,
+     "sensitive": true
+    },
+    {
+     "id": "fld_paiement_expiration",
+     "name": "expiration",
+     "type": "string",
+     "required": true,
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Expiration (MM/AA)"
+      }
+     ]
+    },
+    {
+     "id": "fld_paiement_cvv",
+     "name": "cvv",
+     "type": "string",
+     "required": true,
+     "sensitive": true
+    },
+    {
+     "id": "fld_paiement_montant",
+     "name": "montant",
+     "type": "decimal",
+     "required": true,
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Montant à payer (FCFA)"
+      }
+     ]
+    },
+    {
+     "id": "fld_paiement_statut",
+     "name": "statut",
+     "type": "enum",
+     "required": true,
+     "enumValues": [
+      "en_attente",
+      "valide",
+      "refuse"
+     ],
+     "enumLabels": [
+      {
+       "value": "en_attente",
+       "label": [
+        {
+         "locale": "fr",
+         "text": "En attente"
+        }
+       ]
+      },
+      {
+       "value": "valide",
+       "label": [
+        {
+         "locale": "fr",
+         "text": "Paiement validé"
+        }
+       ]
+      },
+      {
+       "value": "refuse",
+       "label": [
+        {
+         "locale": "fr",
+         "text": "Paiement refusé"
+        }
+       ]
+      }
+     ],
+     "sensitive": false
+    },
+    {
+     "id": "fld_paiement_date",
+     "name": "date_paiement",
+     "type": "datetime",
+     "required": false,
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Payé le"
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "relations": [
+  {
+   "id": "rel_categorie_produits",
+   "fromEntityId": "ent_categorie",
+   "toEntityId": "ent_produit",
+   "kind": "one_to_many"
+  },
+  {
+   "id": "rel_vendeur_produits",
+   "fromEntityId": "ent_vendeur",
+   "toEntityId": "ent_produit",
+   "kind": "one_to_many"
+  },
+  {
+   "id": "rel_produit_panier_articles",
+   "fromEntityId": "ent_produit",
+   "toEntityId": "ent_panier_article",
+   "kind": "one_to_many"
+  },
+  {
+   "id": "rel_profil_panier_articles",
+   "fromEntityId": "ent_profil",
+   "toEntityId": "ent_panier_article",
+   "kind": "one_to_many"
+  },
+  {
+   "id": "rel_profil_commandes",
+   "fromEntityId": "ent_profil",
+   "toEntityId": "ent_commande",
+   "kind": "one_to_many"
+  },
+  {
+   "id": "rel_commande_lignes",
+   "fromEntityId": "ent_commande",
+   "toEntityId": "ent_commande_ligne",
+   "kind": "one_to_many"
+  },
+  {
+   "id": "rel_produit_commande_lignes",
+   "fromEntityId": "ent_produit",
+   "toEntityId": "ent_commande_ligne",
+   "kind": "one_to_many"
+  },
+  {
+   "id": "rel_commande_paiement",
+   "fromEntityId": "ent_commande",
+   "toEntityId": "ent_paiement",
+   "kind": "one_to_one"
+  }
+ ],
+ "datasets": [
+  {
+   "id": "data_profil_seed",
+   "entityId": "ent_profil",
+   "contentHash": "3f9a1c47b2e85d0164ac7f39b8e2d5a10c94f7b6e3d28a15c07b94e6f1a3d82c",
+   "rowCount": 3,
+   "sourceKind": "seed"
+  },
+  {
+   "id": "data_vendeur_seed",
+   "entityId": "ent_vendeur",
+   "contentHash": "a1b2c3d4e5f60718293a4b5c6d7e8f900f1e2d3c4b5a69788796a5b4c3d2e1f0",
+   "rowCount": 6,
+   "sourceKind": "seed"
+  },
+  {
+   "id": "data_categorie_seed",
+   "entityId": "ent_categorie",
+   "contentHash": "7d4e1f8a2b9c3d605e6f7a8b9c0d1e2f3a4b5c6d7e8f9012abcdef0123456789",
+   "rowCount": 4,
+   "sourceKind": "seed"
+  },
+  {
+   "id": "data_produit_seed",
+   "entityId": "ent_produit",
+   "contentHash": "91c8b7a6d5e4f3021a2b3c4d5e6f7089fedcba98765432100102030405060708",
+   "rowCount": 24,
+   "sourceKind": "seed"
+  },
+  {
+   "id": "data_panier_article_seed",
+   "entityId": "ent_panier_article",
+   "contentHash": "4c5d6e7f8091a2b3c4d5e6f708192a3b5c6d7e8f90a1b2c3d4e5f60718293a4b",
+   "rowCount": 3,
+   "sourceKind": "seed"
+  },
+  {
+   "id": "data_commande_seed",
+   "entityId": "ent_commande",
+   "contentHash": "b8e7d6c5a4f39281706f5e4d3c2b1a09192837465564738291a0b1c2d3e4f506",
+   "rowCount": 5,
+   "sourceKind": "seed"
+  },
+  {
+   "id": "data_commande_ligne_seed",
+   "entityId": "ent_commande_ligne",
+   "contentHash": "2e3f405162738495a6b7c8d9eafb0c1d2e3f405162738495a6b7c8d9eafb0c1d",
+   "rowCount": 9,
+   "sourceKind": "seed"
+  },
+  {
+   "id": "data_paiement_seed",
+   "entityId": "ent_paiement",
+   "contentHash": "6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b",
+   "rowCount": 4,
+   "sourceKind": "seed"
+  }
+ ],
+ "rules": [
+  {
+   "id": "rule_profil_valide",
+   "description": "Le profil client exige un nom complet, un e-mail valide, un téléphone ivoirien et une adresse de livraison.",
+   "kind": "validation",
+   "entityId": "ent_profil",
+   "assertions": [
+    {
+     "fieldId": "fld_profil_nom",
+     "operator": "required"
+    },
+    {
+     "fieldId": "fld_profil_email",
+     "operator": "matches",
+     "value": "^[^@\\s]+@[^@\\s]+\\.[a-zA-Z]{2,}$"
+    },
+    {
+     "fieldId": "fld_profil_telephone",
+     "operator": "matches",
+     "value": "^(\\+225)?[0-9 ]{8,14}$"
+    },
+    {
+     "fieldId": "fld_profil_adresse",
+     "operator": "required"
+    }
+   ]
+  },
+  {
+   "id": "rule_vendeur_valide",
+   "description": "Un vendeur doit porter le nom de son atelier, une spécialité connue et sa ville.",
+   "kind": "validation",
+   "entityId": "ent_vendeur",
+   "assertions": [
+    {
+     "fieldId": "fld_vendeur_nom",
+     "operator": "required"
+    },
+    {
+     "fieldId": "fld_vendeur_specialite",
+     "operator": "in",
+     "value": [
+      "bijoux",
+      "tissus",
+      "mobilier",
+      "deco"
+     ]
+    },
+    {
+     "fieldId": "fld_vendeur_ville",
+     "operator": "required"
+    }
+   ]
+  },
+  {
+   "id": "rule_categorie_valide",
+   "description": "Une catégorie doit porter un nom affichable.",
+   "kind": "validation",
+   "entityId": "ent_categorie",
+   "assertions": [
+    {
+     "fieldId": "fld_categorie_nom",
+     "operator": "required"
+    }
+   ]
+  },
+  {
+   "id": "rule_produit_valide",
+   "description": "Un produit exige un nom, une description, un prix strictement positif, un stock non négatif, une catégorie et un vendeur.",
+   "kind": "validation",
+   "entityId": "ent_produit",
+   "assertions": [
+    {
+     "fieldId": "fld_produit_nom",
+     "operator": "required"
+    },
+    {
+     "fieldId": "fld_produit_description",
+     "operator": "required"
+    },
+    {
+     "fieldId": "fld_produit_prix",
+     "operator": "gt",
+     "value": 0
+    },
+    {
+     "fieldId": "fld_produit_stock",
+     "operator": "gte",
+     "value": 0
+    },
+    {
+     "fieldId": "fld_produit_categorie",
+     "operator": "required"
+    },
+    {
+     "fieldId": "fld_produit_vendeur",
+     "operator": "required"
+    }
+   ]
+  },
+  {
+   "id": "rule_panier_article_valide",
+   "description": "Un article de panier exige un produit, un client, une quantité d'au moins 1 et des montants positifs.",
+   "kind": "validation",
+   "entityId": "ent_panier_article",
+   "assertions": [
+    {
+     "fieldId": "fld_panier_produit",
+     "operator": "required"
+    },
+    {
+     "fieldId": "fld_panier_client",
+     "operator": "required"
+    },
+    {
+     "fieldId": "fld_panier_quantite",
+     "operator": "gte",
+     "value": 1
+    },
+    {
+     "fieldId": "fld_panier_prix_unitaire",
+     "operator": "gt",
+     "value": 0
+    },
+    {
+     "fieldId": "fld_panier_sous_total",
+     "operator": "gt",
+     "value": 0
+    }
+   ]
+  },
+  {
+   "id": "rule_commande_valide",
+   "description": "Une commande exige une référence, un client, un statut connu, un montant positif, une adresse et un téléphone de contact.",
+   "kind": "validation",
+   "entityId": "ent_commande",
+   "assertions": [
+    {
+     "fieldId": "fld_commande_reference",
+     "operator": "required"
+    },
+    {
+     "fieldId": "fld_commande_client",
+     "operator": "required"
+    },
+    {
+     "fieldId": "fld_commande_statut",
+     "operator": "in",
+     "value": [
+      "en_attente",
+      "confirmee",
+      "en_preparation",
+      "expediee",
+      "livree",
+      "annulee"
+     ]
+    },
+    {
+     "fieldId": "fld_commande_montant_total",
+     "operator": "gt",
+     "value": 0
+    },
+    {
+     "fieldId": "fld_commande_adresse_livraison",
+     "operator": "required"
+    },
+    {
+     "fieldId": "fld_commande_telephone_contact",
+     "operator": "matches",
+     "value": "^(\\+225)?[0-9 ]{8,14}$"
+    }
+   ]
+  },
+  {
+   "id": "rule_commande_ligne_valide",
+   "description": "Une ligne de commande exige sa commande, son produit, une quantité d'au moins 1 et un montant positif.",
+   "kind": "validation",
+   "entityId": "ent_commande_ligne",
+   "assertions": [
+    {
+     "fieldId": "fld_ligne_commande",
+     "operator": "required"
+    },
+    {
+     "fieldId": "fld_ligne_produit",
+     "operator": "required"
+    },
+    {
+     "fieldId": "fld_ligne_quantite",
+     "operator": "gte",
+     "value": 1
+    },
+    {
+     "fieldId": "fld_ligne_prix_unitaire",
+     "operator": "gt",
+     "value": 0
+    },
+    {
+     "fieldId": "fld_ligne_montant",
+     "operator": "gt",
+     "value": 0
+    }
+   ]
+  },
+  {
+   "id": "rule_paiement_carte_valide",
+   "description": "Le paiement par carte exige un titulaire, un numéro de 13 à 19 chiffres, une expiration au format MM/AA, un CVV de 3 ou 4 chiffres et un montant positif.",
+   "kind": "validation",
+   "entityId": "ent_paiement",
+   "assertions": [
+    {
+     "fieldId": "fld_paiement_commande",
+     "operator": "required"
+    },
+    {
+     "fieldId": "fld_paiement_titulaire",
+     "operator": "required"
+    },
+    {
+     "fieldId": "fld_paiement_numero_carte",
+     "operator": "matches",
+     "value": "^[0-9]{13,19}$"
+    },
+    {
+     "fieldId": "fld_paiement_expiration",
+     "operator": "matches",
+     "value": "^(0[1-9]|1[0-2])/[0-9]{2}$"
+    },
+    {
+     "fieldId": "fld_paiement_cvv",
+     "operator": "matches",
+     "value": "^[0-9]{3,4}$"
+    },
+    {
+     "fieldId": "fld_paiement_montant",
+     "operator": "gt",
+     "value": 0
+    },
+    {
+     "fieldId": "fld_paiement_statut",
+     "operator": "in",
+     "value": [
+      "en_attente",
+      "valide",
+      "refuse"
+     ]
+    }
+   ]
+  }
+ ],
+ "slots": [
+  {
+   "id": "slot_panier_total",
+   "description": "Calcule le total du panier du client (somme des sous-totaux) et le nombre d'articles, puis rend un libellé formaté en FCFA destiné au bloc de récapitulatif du panier.",
+   "inputs": [
+    {
+     "name": "articles",
+     "type": "json"
+    },
+    {
+     "name": "devise",
+     "type": "string"
+    }
+   ],
+   "outputs": [
+    {
+     "name": "totalFormate",
+     "type": "string"
+    },
+    {
+     "name": "nombreArticles",
+     "type": "number"
+    },
+    {
+     "name": "messageRecapitulatif",
+     "type": "string"
+    }
+   ],
+   "allowedImports": []
+  },
+  {
+   "id": "slot_suivi_commande",
+   "description": "Traduit le statut d'une commande en message de suivi lisible (étape courante et échéance de livraison) affiché sur l'écran de suivi de commande.",
+   "inputs": [
+    {
+     "name": "commandes",
+     "type": "json"
+    },
+    {
+     "name": "libelleDefaut",
+     "type": "string"
+    }
+   ],
+   "outputs": [
+    {
+     "name": "etapeCourante",
+     "type": "string"
+    },
+    {
+     "name": "messageSuivi",
+     "type": "string"
+    }
+   ],
+   "allowedImports": []
+  }
+ ],
+ "screens": [
+  {
+   "id": "scr_bienvenue",
+   "title": [
+    {
+     "locale": "fr",
+     "text": "Bienvenue"
+    }
+   ],
+   "showsPrimaryNav": false,
+   "showsScreenTitle": false,
+   "presentation": "card",
+   "blocks": [
+    {
+     "id": "blk_bienvenue_entete",
+     "blockType": "header",
+     "props": [
+      {
+       "key": "title",
+       "value": "Kôrô Artisans"
+      },
+      {
+       "key": "subtitle",
+       "value": "La marketplace des artisans de Côte d'Ivoire : bijoux, tissus, mobilier et décoration, directement de l'atelier à votre porte."
+      },
+      {
+       "key": "accroche",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": "blk_bienvenue_espace",
+     "blockType": "spacer"
+    },
+    {
+     "id": "blk_bienvenue_inscription",
+     "blockType": "button",
+     "props": [
+      {
+       "key": "label",
+       "value": "Créer un compte"
+      },
+      {
+       "key": "actionId",
+       "value": "act_ouvrir_inscription"
+      },
+      {
+       "key": "kind",
+       "value": "primary"
+      },
+      {
+       "key": "icon",
+       "value": "person-outline"
+      }
+     ]
+    },
+    {
+     "id": "blk_bienvenue_connexion",
+     "blockType": "button",
+     "props": [
+      {
+       "key": "label",
+       "value": "J'ai déjà un compte"
+      },
+      {
+       "key": "actionId",
+       "value": "act_ouvrir_connexion"
+      },
+      {
+       "key": "kind",
+       "value": "ghost"
+      }
+     ]
+    },
+    {
+     "id": "blk_bienvenue_visiteur",
+     "blockType": "button",
+     "props": [
+      {
+       "key": "label",
+       "value": "Parcourir sans compte"
+      },
+      {
+       "key": "actionId",
+       "value": "act_continuer_sans_compte"
+      },
+      {
+       "key": "kind",
+       "value": "link"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "scr_connexion",
+   "title": [
+    {
+     "locale": "fr",
+     "text": "Connexion"
+    }
+   ],
+   "showsPrimaryNav": false,
+   "showsScreenTitle": false,
+   "presentation": "sheet",
+   "dismissLabel": [
+    {
+     "locale": "fr",
+     "text": "Fermer"
+    }
+   ],
+   "blocks": [
+    {
+     "id": "blk_connexion_entete",
+     "blockType": "header",
+     "props": [
+      {
+       "key": "title",
+       "value": "Bon retour parmi nous"
+      },
+      {
+       "key": "subtitle",
+       "value": "Connectez-vous pour retrouver votre panier et vos commandes."
+      }
+     ]
+    },
+    {
+     "id": "blk_connexion_formulaire",
+     "blockType": "form",
+     "entityId": "ent_profil",
+     "props": [
+      {
+       "key": "fieldIds",
+       "value": [
+        "fld_profil_email",
+        "fld_profil_mot_de_passe"
+       ]
+      },
+      {
+       "key": "submitLabel",
+       "value": "Se connecter"
+      },
+      {
+       "key": "title",
+       "value": "Vos identifiants"
+      },
+      {
+       "key": "loadingTitle",
+       "value": "Connexion en cours…"
+      },
+      {
+       "key": "emptyTitle",
+       "value": "Saisissez votre e-mail et votre mot de passe"
+      }
+     ]
+    },
+    {
+     "id": "blk_connexion_oubli",
+     "blockType": "button",
+     "props": [
+      {
+       "key": "label",
+       "value": "Mot de passe oublié ?"
+      },
+      {
+       "key": "actionId",
+       "value": "act_ouvrir_mot_de_passe_oublie"
+      },
+      {
+       "key": "kind",
+       "value": "link"
+      }
+     ]
+    },
+    {
+     "id": "blk_connexion_vers_inscription",
+     "blockType": "button",
+     "props": [
+      {
+       "key": "label",
+       "value": "Créer un compte"
+      },
+      {
+       "key": "actionId",
+       "value": "act_ouvrir_inscription"
+      },
+      {
+       "key": "kind",
+       "value": "link"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "scr_inscription",
+   "title": [
+    {
+     "locale": "fr",
+     "text": "Créer un compte"
+    }
+   ],
+   "showsPrimaryNav": false,
+   "showsScreenTitle": false,
+   "presentation": "sheet",
+   "dismissLabel": [
+    {
+     "locale": "fr",
+     "text": "Fermer"
+    }
+   ],
+   "blocks": [
+    {
+     "id": "blk_inscription_entete",
+     "blockType": "header",
+     "props": [
+      {
+       "key": "title",
+       "value": "Créer votre compte"
+      },
+      {
+       "key": "subtitle",
+       "value": "Votre nom, votre téléphone et votre adresse nous permettent de livrer vos créations."
+      }
+     ]
+    },
+    {
+     "id": "blk_inscription_formulaire",
+     "blockType": "form",
+     "entityId": "ent_profil",
+     "props": [
+      {
+       "key": "fieldIds",
+       "value": [
+        "fld_profil_nom",
+        "fld_profil_email",
+        "fld_profil_mot_de_passe",
+        "fld_profil_telephone",
+        "fld_profil_adresse",
+        "fld_profil_ville"
+       ]
+      },
+      {
+       "key": "submitLabel",
+       "value": "Créer mon compte"
+      },
+      {
+       "key": "title",
+       "value": "Vos informations"
+      },
+      {
+       "key": "loadingTitle",
+       "value": "Création du compte…"
+      },
+      {
+       "key": "emptyTitle",
+       "value": "Renseignez vos informations pour commencer"
+      }
+     ]
+    },
+    {
+     "id": "blk_inscription_vers_connexion",
+     "blockType": "button",
+     "props": [
+      {
+       "key": "label",
+       "value": "J'ai déjà un compte"
+      },
+      {
+       "key": "actionId",
+       "value": "act_ouvrir_connexion"
+      },
+      {
+       "key": "kind",
+       "value": "link"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "scr_mot_de_passe_oublie",
+   "title": [
+    {
+     "locale": "fr",
+     "text": "Mot de passe oublié"
+    }
+   ],
+   "showsPrimaryNav": false,
+   "showsScreenTitle": false,
+   "presentation": "sheet",
+   "dismissLabel": [
+    {
+     "locale": "fr",
+     "text": "Fermer"
+    }
+   ],
+   "blocks": [
+    {
+     "id": "blk_oubli_entete",
+     "blockType": "header",
+     "props": [
+      {
+       "key": "title",
+       "value": "Réinitialiser votre mot de passe"
+      },
+      {
+       "key": "subtitle",
+       "value": "Indiquez votre adresse e-mail : nous vous envoyons un lien de réinitialisation."
+      }
+     ]
+    },
+    {
+     "id": "blk_oubli_formulaire",
+     "blockType": "form",
+     "entityId": "ent_profil",
+     "props": [
+      {
+       "key": "fieldIds",
+       "value": [
+        "fld_profil_email"
+       ]
+      },
+      {
+       "key": "submitLabel",
+       "value": "Envoyer le lien"
+      },
+      {
+       "key": "loadingTitle",
+       "value": "Envoi en cours…"
+      },
+      {
+       "key": "emptyTitle",
+       "value": "Saisissez votre adresse e-mail"
+      }
+     ]
+    },
+    {
+     "id": "blk_oubli_vers_connexion",
+     "blockType": "button",
+     "props": [
+      {
+       "key": "label",
+       "value": "Retour à la connexion"
+      },
+      {
+       "key": "actionId",
+       "value": "act_ouvrir_connexion"
+      },
+      {
+       "key": "kind",
+       "value": "link"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "scr_accueil",
+   "title": [
+    {
+     "locale": "fr",
+     "text": "Accueil"
+    }
+   ],
+   "showsPrimaryNav": true,
+   "showsScreenTitle": true,
+   "presentation": "card",
+   "blocks": [
+    {
+     "id": "blk_accueil_entete",
+     "blockType": "header",
+     "props": [
+      {
+       "key": "title",
+       "value": "L'artisanat ivoirien à portée de main"
+      },
+      {
+       "key": "subtitle",
+       "value": "Des ateliers d'Abidjan, Korhogo, Grand-Bassam et Bouaké réunis en un seul endroit."
+      }
+     ]
+    },
+    {
+     "id": "blk_accueil_categories",
+     "blockType": "list",
+     "entityId": "ent_categorie",
+     "props": [
+      {
+       "key": "title",
+       "value": "Parcourir par catégorie"
+      },
+      {
+       "key": "titleFieldId",
+       "value": "fld_categorie_nom"
+      },
+      {
+       "key": "subtitleFieldId",
+       "value": "fld_categorie_description"
+      },
+      {
+       "key": "imageFieldId",
+       "value": "fld_categorie_image"
+      },
+      {
+       "key": "sortFieldId",
+       "value": "fld_categorie_ordre"
+      },
+      {
+       "key": "sortDirection",
+       "value": "asc"
+      },
+      {
+       "key": "pageSize",
+       "value": 8
+      },
+      {
+       "key": "loadingTitle",
+       "value": "Chargement des catégories…"
+      },
+      {
+       "key": "errorTitle",
+       "value": "Catégories indisponibles"
+      },
+      {
+       "key": "errorMessage",
+       "value": "Impossible de charger les catégories. Vérifiez votre connexion et réessayez."
+      },
+      {
+       "key": "emptyTitle",
+       "value": "Aucune catégorie"
+      },
+      {
+       "key": "emptyMessage",
+       "value": "Les catégories seront bientôt disponibles."
+      }
+     ]
+    },
+    {
+     "id": "blk_accueil_produits_populaires",
+     "blockType": "list",
+     "entityId": "ent_produit",
+     "props": [
+      {
+       "key": "title",
+       "value": "Créations les plus demandées"
+      },
+      {
+       "key": "titleFieldId",
+       "value": "fld_produit_nom"
+      },
+      {
+       "key": "subtitleFieldId",
+       "value": "fld_produit_vendeur"
+      },
+      {
+       "key": "trailingFieldId",
+       "value": "fld_produit_prix"
+      },
+      {
+       "key": "badgeFieldId",
+       "value": "fld_produit_categorie"
+      },
+      {
+       "key": "imageFieldId",
+       "value": "fld_produit_photo"
+      },
+      {
+       "key": "sortFieldId",
+       "value": "fld_produit_popularite"
+      },
+      {
+       "key": "sortDirection",
+       "value": "desc"
+      },
+      {
+       "key": "pageSize",
+       "value": 6
+      },
+      {
+       "key": "loadingTitle",
+       "value": "Chargement des créations…"
+      },
+      {
+       "key": "errorTitle",
+       "value": "Créations indisponibles"
+      },
+      {
+       "key": "errorMessage",
+       "value": "Impossible de charger les produits pour le moment."
+      },
+      {
+       "key": "emptyTitle",
+       "value": "Aucune création pour l'instant"
+      },
+      {
+       "key": "emptyMessage",
+       "value": "Revenez bientôt : les ateliers publient de nouvelles pièces chaque semaine."
+      },
+      {
+       "key": "layout",
+       "value": "grid"
+      }
+     ]
+    },
+    {
+     "id": "blk_accueil_vendeurs",
+     "blockType": "list",
+     "entityId": "ent_vendeur",
+     "props": [
+      {
+       "key": "title",
+       "value": "Nos ateliers"
+      },
+      {
+       "key": "titleFieldId",
+       "value": "fld_vendeur_nom"
+      },
+      {
+       "key": "subtitleFieldId",
+       "value": "fld_vendeur_ville"
+      },
+      {
+       "key": "badgeFieldId",
+       "value": "fld_vendeur_specialite"
+      },
+      {
+       "key": "imageFieldId",
+       "value": "fld_vendeur_photo"
+      },
+      {
+       "key": "pageSize",
+       "value": 10
+      },
+      {
+       "key": "loadingTitle",
+       "value": "Chargement des ateliers…"
+      },
+      {
+       "key": "errorTitle",
+       "value": "Ateliers indisponibles"
+      },
+      {
+       "key": "errorMessage",
+       "value": "Impossible de charger la liste des ateliers."
+      },
+      {
+       "key": "emptyTitle",
+       "value": "Aucun atelier"
+      },
+      {
+       "key": "emptyMessage",
+       "value": "Les ateliers partenaires arrivent très bientôt."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "scr_produits",
+   "title": [
+    {
+     "locale": "fr",
+     "text": "Produits"
+    }
+   ],
+   "showsPrimaryNav": true,
+   "showsScreenTitle": true,
+   "presentation": "card",
+   "blocks": [
+    {
+     "id": "blk_produits_entete",
+     "blockType": "header",
+     "props": [
+      {
+       "key": "title",
+       "value": "Catalogue"
+      },
+      {
+       "key": "subtitle",
+       "value": "Bijoux, tissus, mobilier et décoration de tous nos ateliers."
+      }
+     ]
+    },
+    {
+     "id": "blk_produits_liste",
+     "blockType": "list",
+     "entityId": "ent_produit",
+     "props": [
+      {
+       "key": "titleFieldId",
+       "value": "fld_produit_nom"
+      },
+      {
+       "key": "subtitleFieldId",
+       "value": "fld_produit_vendeur"
+      },
+      {
+       "key": "trailingFieldId",
+       "value": "fld_produit_prix"
+      },
+      {
+       "key": "badgeFieldId",
+       "value": "fld_produit_categorie"
+      },
+      {
+       "key": "imageFieldId",
+       "value": "fld_produit_photo"
+      },
+      {
+       "key": "searchFieldId",
+       "value": "fld_produit_nom"
+      },
+      {
+       "key": "searchPlaceholder",
+       "value": "Rechercher une création, un bijou, un tissu…"
+      },
+      {
+       "key": "sortFieldId",
+       "value": "fld_produit_popularite"
+      },
+      {
+       "key": "sortDirection",
+       "value": "desc"
+      },
+      {
+       "key": "pageSize",
+       "value": 20
+      },
+      {
+       "key": "filterFieldId",
+       "value": "fld_produit_disponible"
+      },
+      {
+       "key": "loadingTitle",
+       "value": "Chargement du catalogue…"
+      },
+      {
+       "key": "errorTitle",
+       "value": "Catalogue indisponible"
+      },
+      {
+       "key": "errorMessage",
+       "value": "Impossible de charger le catalogue. Réessayez dans un instant."
+      },
+      {
+       "key": "emptyTitle",
+       "value": "Aucun produit trouvé"
+      },
+      {
+       "key": "emptyMessage",
+       "value": "Essayez un autre mot-clé ou revenez à l'accueil pour explorer les catégories."
+      },
+      {
+       "key": "layout",
+       "value": "grid"
+      }
+     ]
+    },
+    {
+     "id": "blk_produits_vide",
+     "blockType": "empty_state",
+     "visibleWhen": {
+      "kind": "entity_empty",
+      "entityId": "ent_produit"
+     },
+     "props": [
+      {
+       "key": "title",
+       "value": "Le catalogue est vide"
+      },
+      {
+       "key": "message",
+       "value": "Aucune création n'est publiée pour le moment. Revenez très bientôt."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "scr_produit_detail",
+   "title": [
+    {
+     "locale": "fr",
+     "text": "Fiche produit"
+    }
+   ],
+   "showsPrimaryNav": true,
+   "showsScreenTitle": true,
+   "presentation": "card",
+   "blocks": [
+    {
+     "id": "blk_produit_detail_entete",
+     "blockType": "detail_header",
+     "entityId": "ent_produit",
+     "props": [
+      {
+       "key": "titleFieldId",
+       "value": "fld_produit_nom"
+      },
+      {
+       "key": "subtitleFieldId",
+       "value": "fld_produit_description"
+      },
+      {
+       "key": "trailingFieldId",
+       "value": "fld_produit_prix"
+      },
+      {
+       "key": "badgeFieldIds",
+       "value": [
+        "fld_produit_categorie",
+        "fld_produit_vendeur",
+        "fld_produit_matiere"
+       ]
+      },
+      {
+       "key": "imageFieldId",
+       "value": "fld_produit_photo"
+      },
+      {
+       "key": "loadingTitle",
+       "value": "Chargement de la fiche…"
+      },
+      {
+       "key": "errorTitle",
+       "value": "Fiche indisponible"
+      },
+      {
+       "key": "errorMessage",
+       "value": "Impossible d'afficher cette création pour le moment."
+      }
+     ]
+    },
+    {
+     "id": "blk_produit_detail_ajout_panier",
+     "blockType": "button",
+     "props": [
+      {
+       "key": "label",
+       "value": "Ajouter au panier"
+      },
+      {
+       "key": "actionId",
+       "value": "act_ajouter_au_panier"
+      },
+      {
+       "key": "kind",
+       "value": "primary"
+      },
+      {
+       "key": "icon",
+       "value": "card-outline"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "scr_vendeur_detail",
+   "title": [
+    {
+     "locale": "fr",
+     "text": "Vendeur"
+    }
+   ],
+   "showsPrimaryNav": true,
+   "showsScreenTitle": true,
+   "presentation": "card",
+   "blocks": [
+    {
+     "id": "blk_vendeur_detail_entete",
+     "blockType": "detail_header",
+     "entityId": "ent_vendeur",
+     "props": [
+      {
+       "key": "titleFieldId",
+       "value": "fld_vendeur_nom"
+      },
+      {
+       "key": "subtitleFieldId",
+       "value": "fld_vendeur_description"
+      },
+      {
+       "key": "trailingFieldId",
+       "value": "fld_vendeur_ville"
+      },
+      {
+       "key": "badgeFieldIds",
+       "value": [
+        "fld_vendeur_specialite"
+       ]
+      },
+      {
+       "key": "imageFieldId",
+       "value": "fld_vendeur_photo"
+      },
+      {
+       "key": "loadingTitle",
+       "value": "Chargement de l'atelier…"
+      },
+      {
+       "key": "errorTitle",
+       "value": "Atelier indisponible"
+      },
+      {
+       "key": "errorMessage",
+       "value": "Impossible d'afficher cet atelier pour le moment."
+      }
+     ]
+    },
+    {
+     "id": "blk_vendeur_detail_catalogue",
+     "blockType": "button",
+     "props": [
+      {
+       "key": "label",
+       "value": "Voir les créations au catalogue"
+      },
+      {
+       "key": "actionId",
+       "value": "act_ouvrir_catalogue"
+      },
+      {
+       "key": "kind",
+       "value": "primary"
+      },
+      {
+       "key": "icon",
+       "value": "ticket-outline"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "scr_panier",
+   "title": [
+    {
+     "locale": "fr",
+     "text": "Panier"
+    }
+   ],
+   "showsPrimaryNav": true,
+   "showsScreenTitle": true,
+   "presentation": "card",
+   "blocks": [
+    {
+     "id": "blk_panier_recap",
+     "blockType": "header",
+     "props": [
+      {
+       "key": "title",
+       "value": "Votre panier"
+      },
+      {
+       "key": "subtitle",
+       "value": "Total de votre panier en cours de calcul…"
+      }
+     ]
+    },
+    {
+     "id": "blk_panier_liste",
+     "blockType": "list",
+     "entityId": "ent_panier_article",
+     "props": [
+      {
+       "key": "titleFieldId",
+       "value": "fld_panier_produit"
+      },
+      {
+       "key": "subtitleFieldId",
+       "value": "fld_panier_quantite"
+      },
+      {
+       "key": "trailingFieldId",
+       "value": "fld_panier_sous_total"
+      },
+      {
+       "key": "sortFieldId",
+       "value": "fld_panier_ajoute_le"
+      },
+      {
+       "key": "sortDirection",
+       "value": "desc"
+      },
+      {
+       "key": "pageSize",
+       "value": 20
+      },
+      {
+       "key": "loadingTitle",
+       "value": "Chargement du panier…"
+      },
+      {
+       "key": "errorTitle",
+       "value": "Panier indisponible"
+      },
+      {
+       "key": "errorMessage",
+       "value": "Impossible de charger votre panier. Réessayez dans un instant."
+      },
+      {
+       "key": "emptyTitle",
+       "value": "Votre panier est vide"
+      },
+      {
+       "key": "emptyMessage",
+       "value": "Ajoutez des créations depuis le catalogue pour commencer votre commande."
+      }
+     ]
+    },
+    {
+     "id": "blk_panier_vide",
+     "blockType": "empty_state",
+     "visibleWhen": {
+      "kind": "entity_empty",
+      "entityId": "ent_panier_article"
+     },
+     "props": [
+      {
+       "key": "title",
+       "value": "Votre panier est vide"
+      },
+      {
+       "key": "message",
+       "value": "Ouvrez l'onglet Produits pour découvrir les créations de nos ateliers."
+      }
+     ]
+    },
+    {
+     "id": "blk_panier_commander",
+     "blockType": "button",
+     "visibleWhen": {
+      "kind": "entity_not_empty",
+      "entityId": "ent_panier_article"
+     },
+     "props": [
+      {
+       "key": "label",
+       "value": "Commander et payer par carte"
+      },
+      {
+       "key": "actionId",
+       "value": "act_ouvrir_paiement"
+      },
+      {
+       "key": "kind",
+       "value": "primary"
+      },
+      {
+       "key": "icon",
+       "value": "card-outline"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "scr_paiement",
+   "title": [
+    {
+     "locale": "fr",
+     "text": "Paiement par carte"
+    }
+   ],
+   "showsPrimaryNav": true,
+   "showsScreenTitle": true,
+   "presentation": "card",
+   "blocks": [
+    {
+     "id": "blk_paiement_entete",
+     "blockType": "header",
+     "props": [
+      {
+       "key": "title",
+       "value": "Paiement par carte"
+      },
+      {
+       "key": "subtitle",
+       "value": "Vos informations bancaires servent uniquement à autoriser cette commande."
+      }
+     ]
+    },
+    {
+     "id": "blk_paiement_formulaire",
+     "blockType": "form",
+     "entityId": "ent_paiement",
+     "props": [
+      {
+       "key": "fieldIds",
+       "value": [
+        "fld_paiement_commande",
+        "fld_paiement_titulaire",
+        "fld_paiement_numero_carte",
+        "fld_paiement_expiration",
+        "fld_paiement_cvv",
+        "fld_paiement_montant"
+       ]
+      },
+      {
+       "key": "submitLabel",
+       "value": "Payer par carte"
+      },
+      {
+       "key": "title",
+       "value": "Votre carte bancaire"
+      },
+      {
+       "key": "loadingTitle",
+       "value": "Paiement en cours…"
+      },
+      {
+       "key": "emptyTitle",
+       "value": "Renseignez votre carte pour finaliser la commande"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "scr_commandes",
+   "title": [
+    {
+     "locale": "fr",
+     "text": "Mes commandes"
+    }
+   ],
+   "showsPrimaryNav": true,
+   "showsScreenTitle": true,
+   "presentation": "card",
+   "blocks": [
+    {
+     "id": "blk_commandes_entete",
+     "blockType": "header",
+     "props": [
+      {
+       "key": "title",
+       "value": "Mes commandes"
+      },
+      {
+       "key": "subtitle",
+       "value": "Suivez la préparation et la livraison de vos achats."
+      }
+     ]
+    },
+    {
+     "id": "blk_commandes_liste",
+     "blockType": "list",
+     "entityId": "ent_commande",
+     "props": [
+      {
+       "key": "titleFieldId",
+       "value": "fld_commande_reference"
+      },
+      {
+       "key": "subtitleFieldId",
+       "value": "fld_commande_date"
+      },
+      {
+       "key": "trailingFieldId",
+       "value": "fld_commande_montant_total"
+      },
+      {
+       "key": "badgeFieldId",
+       "value": "fld_commande_statut"
+      },
+      {
+       "key": "sortFieldId",
+       "value": "fld_commande_date"
+      },
+      {
+       "key": "sortDirection",
+       "value": "desc"
+      },
+      {
+       "key": "pageSize",
+       "value": 20
+      },
+      {
+       "key": "loadingTitle",
+       "value": "Chargement de vos commandes…"
+      },
+      {
+       "key": "errorTitle",
+       "value": "Commandes indisponibles"
+      },
+      {
+       "key": "errorMessage",
+       "value": "Impossible de charger vos commandes pour le moment."
+      },
+      {
+       "key": "emptyTitle",
+       "value": "Aucune commande"
+      },
+      {
+       "key": "emptyMessage",
+       "value": "Vos commandes apparaîtront ici dès votre premier achat."
+      }
+     ]
+    },
+    {
+     "id": "blk_commandes_vide",
+     "blockType": "empty_state",
+     "visibleWhen": {
+      "kind": "entity_empty",
+      "entityId": "ent_commande"
+     },
+     "props": [
+      {
+       "key": "title",
+       "value": "Aucune commande pour l'instant"
+      },
+      {
+       "key": "message",
+       "value": "Dès qu'un paiement est validé, votre commande et son suivi s'affichent ici."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "scr_commande_detail",
+   "title": [
+    {
+     "locale": "fr",
+     "text": "Suivi de commande"
+    }
+   ],
+   "showsPrimaryNav": true,
+   "showsScreenTitle": true,
+   "presentation": "card",
+   "blocks": [
+    {
+     "id": "blk_commande_detail_entete",
+     "blockType": "detail_header",
+     "entityId": "ent_commande",
+     "props": [
+      {
+       "key": "titleFieldId",
+       "value": "fld_commande_reference"
+      },
+      {
+       "key": "subtitleFieldId",
+       "value": "fld_commande_adresse_livraison"
+      },
+      {
+       "key": "trailingFieldId",
+       "value": "fld_commande_montant_total"
+      },
+      {
+       "key": "badgeFieldIds",
+       "value": [
+        "fld_commande_statut"
+       ]
+      },
+      {
+       "key": "loadingTitle",
+       "value": "Chargement de la commande…"
+      },
+      {
+       "key": "errorTitle",
+       "value": "Commande indisponible"
+      },
+      {
+       "key": "errorMessage",
+       "value": "Impossible d'afficher cette commande pour le moment."
+      }
+     ]
+    },
+    {
+     "id": "blk_commande_detail_suivi",
+     "blockType": "header",
+     "props": [
+      {
+       "key": "title",
+       "value": "Où en est ma commande ?"
+      },
+      {
+       "key": "subtitle",
+       "value": "Suivi en cours de mise à jour…"
+      }
+     ]
+    },
+    {
+     "id": "blk_commande_detail_lignes",
+     "blockType": "list",
+     "entityId": "ent_commande_ligne",
+     "props": [
+      {
+       "key": "title",
+       "value": "Articles de la commande"
+      },
+      {
+       "key": "titleFieldId",
+       "value": "fld_ligne_produit"
+      },
+      {
+       "key": "subtitleFieldId",
+       "value": "fld_ligne_quantite"
+      },
+      {
+       "key": "trailingFieldId",
+       "value": "fld_ligne_montant"
+      },
+      {
+       "key": "pageSize",
+       "value": 30
+      },
+      {
+       "key": "loadingTitle",
+       "value": "Chargement des articles…"
+      },
+      {
+       "key": "errorTitle",
+       "value": "Articles indisponibles"
+      },
+      {
+       "key": "errorMessage",
+       "value": "Impossible d'afficher le détail des articles."
+      },
+      {
+       "key": "emptyTitle",
+       "value": "Aucun article"
+      },
+      {
+       "key": "emptyMessage",
+       "value": "Le détail de cette commande n'est pas encore disponible."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "scr_compte",
+   "title": [
+    {
+     "locale": "fr",
+     "text": "Mon compte"
+    }
+   ],
+   "showsPrimaryNav": true,
+   "showsScreenTitle": true,
+   "presentation": "card",
+   "blocks": [
+    {
+     "id": "blk_compte_entete",
+     "blockType": "header",
+     "props": [
+      {
+       "key": "title",
+       "value": "Mon compte"
+      },
+      {
+       "key": "subtitle",
+       "value": "Vos informations personnelles et votre adresse de livraison."
+      }
+     ]
+    },
+    {
+     "id": "blk_compte_connexion",
+     "blockType": "button",
+     "visibleWhen": {
+      "kind": "session_anonymous"
+     },
+     "props": [
+      {
+       "key": "label",
+       "value": "Se connecter"
+      },
+      {
+       "key": "actionId",
+       "value": "act_ouvrir_connexion"
+      },
+      {
+       "key": "kind",
+       "value": "primary"
+      },
+      {
+       "key": "icon",
+       "value": "person-outline"
+      }
+     ]
+    },
+    {
+     "id": "blk_compte_inscription",
+     "blockType": "button",
+     "visibleWhen": {
+      "kind": "session_anonymous"
+     },
+     "props": [
+      {
+       "key": "label",
+       "value": "Créer un compte"
+      },
+      {
+       "key": "actionId",
+       "value": "act_ouvrir_inscription"
+      },
+      {
+       "key": "kind",
+       "value": "ghost"
+      }
+     ]
+    },
+    {
+     "id": "blk_compte_profil",
+     "blockType": "button",
+     "visibleWhen": {
+      "kind": "session_authenticated"
+     },
+     "props": [
+      {
+       "key": "label",
+       "value": "Modifier mon profil"
+      },
+      {
+       "key": "actionId",
+       "value": "act_ouvrir_profil_edition"
+      },
+      {
+       "key": "kind",
+       "value": "primary"
+      },
+      {
+       "key": "icon",
+       "value": "settings-outline"
+      }
+     ]
+    },
+    {
+     "id": "blk_compte_deconnexion",
+     "blockType": "button",
+     "visibleWhen": {
+      "kind": "session_authenticated"
+     },
+     "props": [
+      {
+       "key": "label",
+       "value": "Se déconnecter"
+      },
+      {
+       "key": "actionId",
+       "value": "act_deconnexion"
+      },
+      {
+       "key": "kind",
+       "value": "link"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "scr_profil_edition",
+   "title": [
+    {
+     "locale": "fr",
+     "text": "Mon profil"
+    }
+   ],
+   "showsPrimaryNav": true,
+   "showsScreenTitle": true,
+   "presentation": "card",
+   "blocks": [
+    {
+     "id": "blk_profil_entete",
+     "blockType": "header",
+     "props": [
+      {
+       "key": "title",
+       "value": "Mes informations"
+      },
+      {
+       "key": "subtitle",
+       "value": "Nom, téléphone et adresse de livraison utilisés pour vos commandes."
+      }
+     ]
+    },
+    {
+     "id": "blk_profil_formulaire",
+     "blockType": "form",
+     "entityId": "ent_profil",
+     "props": [
+      {
+       "key": "fieldIds",
+       "value": [
+        "fld_profil_nom",
+        "fld_profil_email",
+        "fld_profil_telephone",
+        "fld_profil_adresse",
+        "fld_profil_ville"
+       ]
+      },
+      {
+       "key": "submitLabel",
+       "value": "Enregistrer mes informations"
+      },
+      {
+       "key": "title",
+       "value": "Profil client"
+      },
+      {
+       "key": "loadingTitle",
+       "value": "Chargement de votre profil…"
+      },
+      {
+       "key": "emptyTitle",
+       "value": "Complétez votre profil pour être livré"
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "actions": [
+  {
+   "id": "act_ouvrir_inscription",
+   "name": "Ouvrir la création de compte",
+   "trigger": {
+    "kind": "ui",
+    "blockId": "blk_bienvenue_inscription"
+   },
+   "effect": {
+    "kind": "navigate",
+    "screenId": "scr_inscription"
+   }
+  },
+  {
+   "id": "act_ouvrir_connexion",
+   "name": "Ouvrir la connexion",
+   "trigger": {
+    "kind": "ui",
+    "blockId": "blk_bienvenue_connexion"
+   },
+   "effect": {
+    "kind": "navigate",
+    "screenId": "scr_connexion"
+   }
+  },
+  {
+   "id": "act_continuer_sans_compte",
+   "name": "Parcourir sans compte",
+   "trigger": {
+    "kind": "ui",
+    "blockId": "blk_bienvenue_visiteur"
+   },
+   "effect": {
+    "kind": "navigate",
+    "screenId": "scr_accueil"
+   }
+  },
+  {
+   "id": "act_ouvrir_mot_de_passe_oublie",
+   "name": "Ouvrir la réinitialisation du mot de passe",
+   "trigger": {
+    "kind": "ui",
+    "blockId": "blk_connexion_oubli"
+   },
+   "effect": {
+    "kind": "navigate",
+    "screenId": "scr_mot_de_passe_oublie"
+   }
+  },
+  {
+   "id": "act_connexion",
+   "name": "Se connecter",
+   "trigger": {
+    "kind": "ui",
+    "blockId": "blk_connexion_formulaire"
+   },
+   "effect": {
+    "kind": "mutation",
+    "entityId": "ent_profil",
+    "operation": "update",
+    "instanceFrom": "session",
+    "thenScreenId": "scr_accueil"
+   }
+  },
+  {
+   "id": "act_inscription",
+   "name": "Créer mon compte",
+   "trigger": {
+    "kind": "ui",
+    "blockId": "blk_inscription_formulaire"
+   },
+   "effect": {
+    "kind": "mutation",
+    "entityId": "ent_profil",
+    "operation": "create",
+    "thenScreenId": "scr_accueil"
+   }
+  },
+  {
+   "id": "act_reinitialiser_mot_de_passe",
+   "name": "Envoyer le lien de réinitialisation",
+   "trigger": {
+    "kind": "ui",
+    "blockId": "blk_oubli_formulaire"
+   },
+   "effect": {
+    "kind": "mutation",
+    "entityId": "ent_profil",
+    "operation": "update",
+    "instanceFrom": "session",
+    "thenScreenId": "scr_connexion"
+   }
+  },
+  {
+   "id": "act_deconnexion",
+   "name": "Se déconnecter",
+   "trigger": {
+    "kind": "ui",
+    "blockId": "blk_compte_deconnexion"
+   },
+   "effect": {
+    "kind": "capability",
+    "capability": "auth",
+    "method": "signOut",
+    "params": [
+     {
+      "key": "thenScreenId",
+      "value": "scr_bienvenue"
+     }
+    ]
+   }
+  },
+  {
+   "id": "act_categorie_vers_catalogue",
+   "name": "Ouvrir le catalogue depuis une catégorie",
+   "trigger": {
+    "kind": "ui",
+    "blockId": "blk_accueil_categories"
+   },
+   "effect": {
+    "kind": "navigate",
+    "screenId": "scr_produits"
+   }
+  },
+  {
+   "id": "act_accueil_ouvrir_produit",
+   "name": "Ouvrir la fiche d'une création mise en avant",
+   "trigger": {
+    "kind": "ui",
+    "blockId": "blk_accueil_produits_populaires"
+   },
+   "effect": {
+    "kind": "navigate",
+    "screenId": "scr_produit_detail"
+   }
+  },
+  {
+   "id": "act_accueil_ouvrir_vendeur",
+   "name": "Ouvrir la fiche d'un atelier",
+   "trigger": {
+    "kind": "ui",
+    "blockId": "blk_accueil_vendeurs"
+   },
+   "effect": {
+    "kind": "navigate",
+    "screenId": "scr_vendeur_detail"
+   }
+  },
+  {
+   "id": "act_catalogue_ouvrir_produit",
+   "name": "Ouvrir la fiche produit depuis le catalogue",
+   "trigger": {
+    "kind": "ui",
+    "blockId": "blk_produits_liste"
+   },
+   "effect": {
+    "kind": "navigate",
+    "screenId": "scr_produit_detail"
+   }
+  },
+  {
+   "id": "act_ouvrir_catalogue",
+   "name": "Voir les créations au catalogue",
+   "trigger": {
+    "kind": "ui",
+    "blockId": "blk_vendeur_detail_catalogue"
+   },
+   "effect": {
+    "kind": "navigate",
+    "screenId": "scr_produits"
+   }
+  },
+  {
+   "id": "act_ajouter_au_panier",
+   "name": "Ajouter la création au panier",
+   "trigger": {
+    "kind": "ui",
+    "blockId": "blk_produit_detail_ajout_panier"
+   },
+   "effect": {
+    "kind": "mutation",
+    "entityId": "ent_panier_article",
+    "operation": "create",
+    "thenScreenId": "scr_panier"
+   }
+  },
+  {
+   "id": "act_ouvrir_paiement",
+   "name": "Commander et payer par carte",
+   "trigger": {
+    "kind": "ui",
+    "blockId": "blk_panier_commander"
+   },
+   "effect": {
+    "kind": "navigate",
+    "screenId": "scr_paiement"
+   }
+  },
+  {
+   "id": "act_payer_par_carte",
+   "name": "Enregistrer le paiement par carte",
+   "trigger": {
+    "kind": "ui",
+    "blockId": "blk_paiement_formulaire"
+   },
+   "effect": {
+    "kind": "mutation",
+    "entityId": "ent_paiement",
+    "operation": "create",
+    "thenScreenId": "scr_commandes"
+   }
+  },
+  {
+   "id": "act_commandes_ouvrir_suivi",
+   "name": "Ouvrir le suivi d'une commande",
+   "trigger": {
+    "kind": "ui",
+    "blockId": "blk_commandes_liste"
+   },
+   "effect": {
+    "kind": "navigate",
+    "screenId": "scr_commande_detail"
+   }
+  },
+  {
+   "id": "act_ouvrir_profil_edition",
+   "name": "Modifier mon profil",
+   "trigger": {
+    "kind": "ui",
+    "blockId": "blk_compte_profil"
+   },
+   "effect": {
+    "kind": "navigate",
+    "screenId": "scr_profil_edition"
+   }
+  },
+  {
+   "id": "act_enregistrer_profil",
+   "name": "Enregistrer mes informations de profil",
+   "trigger": {
+    "kind": "ui",
+    "blockId": "blk_profil_formulaire"
+   },
+   "effect": {
+    "kind": "mutation",
+    "entityId": "ent_profil",
+    "operation": "update",
+    "instanceFrom": "session",
+    "thenScreenId": "scr_compte"
+   }
+  },
+  {
+   "id": "act_calculer_total_panier",
+   "name": "Calculer le total du panier",
+   "trigger": {
+    "kind": "lifecycle",
+    "event": "screen_open",
+    "screenId": "scr_panier"
+   },
+   "effect": {
+    "kind": "slot",
+    "slotId": "slot_panier_total",
+    "binding": {
+     "inputs": [
+      {
+       "port": "articles",
+       "source": {
+        "kind": "entity_rows",
+        "entityId": "ent_panier_article"
+       }
+      },
+      {
+       "port": "devise",
+       "source": {
+        "kind": "literal",
+        "value": "FCFA"
+       }
+      }
+     ],
+     "outputs": [
+      {
+       "port": "messageRecapitulatif",
+       "blockId": "blk_panier_recap",
+       "prop": "subtitle"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "act_calculer_suivi_commande",
+   "name": "Composer le message de suivi de commande",
+   "trigger": {
+    "kind": "lifecycle",
+    "event": "screen_open",
+    "screenId": "scr_commande_detail"
+   },
+   "effect": {
+    "kind": "slot",
+    "slotId": "slot_suivi_commande",
+    "binding": {
+     "inputs": [
+      {
+       "port": "commandes",
+       "source": {
+        "kind": "entity_rows",
+        "entityId": "ent_commande"
+       }
+      },
+      {
+       "port": "libelleDefaut",
+       "source": {
+        "kind": "literal",
+        "value": "Suivi en cours de mise à jour…"
+       }
+      }
+     ],
+     "outputs": [
+      {
+       "port": "etapeCourante",
+       "blockId": "blk_commande_detail_suivi",
+       "prop": "title"
+      },
+      {
+       "port": "messageSuivi",
+       "blockId": "blk_commande_detail_suivi",
+       "prop": "subtitle"
+      }
+     ]
+    }
+   }
+  }
+ ],
+ "capabilities": [
+  {
+   "capability": "auth",
+   "config": [
+    {
+     "key": "providerKind",
+     "value": "email_password"
+    },
+    {
+     "key": "profileEntityId",
+     "value": "ent_profil"
+    },
+    {
+     "key": "allowsAnonymousBrowsing",
+     "value": true
+    },
+    {
+     "key": "accountDeletionSupported",
+     "value": true
+    }
+   ]
+  },
+  {
+   "capability": "payments.psp",
+   "config": [
+    {
+     "key": "commerceClass",
+     "value": "physical_or_offapp"
+    },
+    {
+     "key": "currency",
+     "value": "XOF"
+    },
+    {
+     "key": "methods",
+     "value": [
+      "card"
+     ]
+    },
+    {
+     "key": "captureMode",
+     "value": "on_order_confirmation"
+    }
+   ]
+  }
+ ],
+ "permissions": [],
+ "integrations": [
+  {
+   "id": "intg_auth_koro",
+   "providerClass": "supabase_auth",
+   "capability": "auth",
+   "config": [
+    {
+     "key": "url",
+     "value": "https://api.koro-artisans.app"
+    },
+    {
+     "key": "anonKey",
+     "value": "provisionne_par_le_pipeline"
+    },
+    {
+     "key": "profileEntityId",
+     "value": "ent_profil"
+    },
+    {
+     "key": "providerKind",
+     "value": "email_password"
+    },
+    {
+     "key": "emailRedirectPath",
+     "value": "/auth/confirmation"
+    },
+    {
+     "key": "allowsAnonymousBrowsing",
+     "value": true
+    },
+    {
+     "key": "accountDeletionSupported",
+     "value": true
+    },
+    {
+     "key": "defaultLocale",
+     "value": "fr"
+    }
+   ]
+  },
+  {
+   "id": "intg_paiement_carte",
+   "providerClass": "psp_card_gateway",
+   "capability": "payments.psp",
+   "config": [
+    {
+     "key": "apiDomain",
+     "value": "api.koro-artisans.app"
+    },
+    {
+     "key": "paymentsPath",
+     "value": "/v1/paiements/carte"
+    },
+    {
+     "key": "commerceClass",
+     "value": "physical_or_offapp"
+    },
+    {
+     "key": "currency",
+     "value": "XOF"
+    },
+    {
+     "key": "methods",
+     "value": [
+      "card"
+     ]
+    },
+    {
+     "key": "captureMode",
+     "value": "on_order_confirmation"
+    },
+    {
+     "key": "threeDSecure",
+     "value": true
+    },
+    {
+     "key": "paymentEntityId",
+     "value": "ent_paiement"
+    },
+    {
+     "key": "orderEntityId",
+     "value": "ent_commande"
+    }
+   ]
+  },
+  {
+   "id": "intg_api_catalogue",
+   "providerClass": "rest_json_api",
+   "config": [
+    {
+     "key": "baseDomain",
+     "value": "api.koro-artisans.app"
+    },
+    {
+     "key": "catalogPath",
+     "value": "/v1/produits"
+    },
+    {
+     "key": "ordersPath",
+     "value": "/v1/commandes"
+    },
+    {
+     "key": "cartPath",
+     "value": "/v1/panier"
+    },
+    {
+     "key": "timeoutSeconds",
+     "value": 15
+    },
+    {
+     "key": "defaultLocale",
+     "value": "fr"
+    }
+   ]
+  }
+ ],
+ "expectedTests": [
+  {
+   "id": "test_catalogue_recherche",
+   "description": "Sur l'écran Produits, saisir « bijou » dans le champ de recherche du catalogue ne laisse que les produits dont le nom correspond : le filtrage est réel et se réinitialise quand le champ est vidé.",
+   "kind": "deterministic",
+   "targetId": "scr_produits"
+  },
+  {
+   "id": "test_catalogue_vignettes_et_prix",
+   "description": "Chaque ligne du catalogue affiche la vignette du produit (photo), son nom, son vendeur lisible et son prix en FCFA à droite.",
+   "kind": "deterministic",
+   "targetId": "scr_produits"
+  },
+  {
+   "id": "test_catalogue_tri_et_pagination",
+   "description": "Le catalogue est trié par popularité décroissante et limité à 20 lignes par page.",
+   "kind": "deterministic",
+   "targetId": "scr_produits"
+  },
+  {
+   "id": "test_ligne_catalogue_ouvre_fiche",
+   "description": "Presser une ligne du catalogue ouvre l'écran Fiche produit avec l'identifiant du produit pressé, et non le premier enregistrement.",
+   "kind": "e2e",
+   "targetId": "act_catalogue_ouvrir_produit"
+  },
+  {
+   "id": "test_fiche_produit_visuel_et_description",
+   "description": "La fiche produit affiche la photo en visuel d'en-tête, la description, le prix et les badges catégorie, vendeur et matière.",
+   "kind": "deterministic",
+   "targetId": "scr_produit_detail"
+  },
+  {
+   "id": "test_reference_vendeur_lisible",
+   "description": "Le champ vendeur d'un produit affiche le nom de l'atelier (fld_vendeur_nom) et jamais un identifiant brut.",
+   "kind": "contract",
+   "targetId": "ent_produit"
+  },
+  {
+   "id": "test_accueil_categories_ordonnees",
+   "description": "L'accueil liste les catégories avec leur visuel, triées par ordre d'affichage croissant, et presser une catégorie mène au catalogue.",
+   "kind": "deterministic",
+   "targetId": "scr_accueil"
+  },
+  {
+   "id": "test_accueil_ouvre_atelier",
+   "description": "Presser une ligne de la liste des ateliers sur l'accueil ouvre la fiche du vendeur correspondant.",
+   "kind": "e2e",
+   "targetId": "act_accueil_ouvrir_vendeur"
+  },
+  {
+   "id": "test_ajout_au_panier",
+   "description": "Depuis la fiche produit, « Ajouter au panier » crée un article de panier puis conduit à l'écran Panier où l'article apparaît.",
+   "kind": "e2e",
+   "targetId": "act_ajouter_au_panier"
+  },
+  {
+   "id": "test_panier_total_slot",
+   "description": "À l'ouverture du panier, le slot de total est invoqué avec les articles du panier et la devise FCFA, et son message de récapitulatif remplit le sous-titre de l'en-tête du panier.",
+   "kind": "deterministic",
+   "targetId": "act_calculer_total_panier"
+  },
+  {
+   "id": "test_panier_etat_vide",
+   "description": "Quand aucun article n'est présent, l'état vide du panier s'affiche et le bouton de commande reste masqué ; dès qu'un article existe, l'inverse se produit.",
+   "kind": "deterministic",
+   "targetId": "scr_panier"
+  },
+  {
+   "id": "test_paiement_carte_enregistre",
+   "description": "Le formulaire de paiement par carte, une fois soumis, crée l'enregistrement de paiement puis conduit à l'écran Mes commandes.",
+   "kind": "e2e",
+   "targetId": "act_payer_par_carte"
+  },
+  {
+   "id": "test_regle_paiement_carte",
+   "description": "La validation refuse un numéro de carte hors format 13–19 chiffres, une expiration hors MM/AA, un CVV hors 3–4 chiffres ou un montant nul, avant toute écriture.",
+   "kind": "contract",
+   "targetId": "ent_paiement"
+  },
+  {
+   "id": "test_paiement_champs_sensibles",
+   "description": "Le numéro de carte et le CVV sont masqués à la saisie et ne sont jamais persistés dans les données locales.",
+   "kind": "contract",
+   "targetId": "scr_paiement"
+  },
+  {
+   "id": "test_commandes_statuts_lisibles",
+   "description": "La liste des commandes affiche le statut en libellé humain (« En préparation », « Expédiée », « Livrée ») et jamais la valeur brute de l'enum.",
+   "kind": "deterministic",
+   "targetId": "ent_commande"
+  },
+  {
+   "id": "test_ligne_commande_ouvre_suivi",
+   "description": "Presser une commande dans Mes commandes ouvre l'écran de suivi de cette commande précise, avec sa référence et son montant.",
+   "kind": "e2e",
+   "targetId": "act_commandes_ouvrir_suivi"
+  },
+  {
+   "id": "test_suivi_commande_slot",
+   "description": "À l'ouverture du suivi, le slot de suivi est invoqué et renseigne l'étape courante et le message de suivi affichés sur l'écran.",
+   "kind": "deterministic",
+   "targetId": "act_calculer_suivi_commande"
+  },
+  {
+   "id": "test_commande_articles_listes",
+   "description": "L'écran de suivi liste les articles de la commande avec leur produit lisible, leur quantité et leur montant.",
+   "kind": "deterministic",
+   "targetId": "ent_commande_ligne"
+  },
+  {
+   "id": "test_profil_enregistre",
+   "description": "Le formulaire de profil enregistre nom, téléphone, adresse de livraison et ville sur la ligne de la personne connectée, puis revient à Mon compte.",
+   "kind": "e2e",
+   "targetId": "act_enregistrer_profil"
+  },
+  {
+   "id": "test_regle_profil_valide",
+   "description": "La validation du profil refuse un e-mail mal formé, un téléphone hors format ivoirien, un nom ou une adresse de livraison vides.",
+   "kind": "contract",
+   "targetId": "ent_profil"
+  },
+  {
+   "id": "test_compte_etats_session",
+   "description": "L'écran Mon compte montre « Se connecter » et « Créer un compte » en session anonyme, et « Modifier mon profil » et « Se déconnecter » en session authentifiée, jamais les deux à la fois.",
+   "kind": "deterministic",
+   "targetId": "scr_compte"
+  },
+  {
+   "id": "test_intg_auth_configuree",
+   "description": "L'intégration d'authentification déclare url, anonKey et profileEntityId pointant sur ent_profil, condition d'établissement réel de la session.",
+   "kind": "contract",
+   "targetId": "ent_profil"
+  },
+  {
+   "id": "test_intg_paiement_configuree",
+   "description": "L'intégration de paiement déclare la classe commerce physical_or_offapp, la devise XOF, la méthode carte et un domaine présent dans les domaines autorisés.",
+   "kind": "contract",
+   "targetId": "ent_paiement"
+  },
+  {
+   "id": "test_navigation_persistante",
+   "description": "La barre de navigation persistante affiche les cinq destinations Accueil, Produits, Panier, Commandes, Compte avec leurs icônes, sur chaque écran du parcours principal.",
+   "kind": "deterministic",
+   "targetId": "scr_accueil"
+  },
+  {
+   "id": "test_reseau_deny_by_default",
+   "description": "Aucune requête n'aboutit vers un domaine autre que api.koro-artisans.app : la politique réseau est deny_by_default.",
+   "kind": "contract",
+   "targetId": "scr_accueil"
+  },
+  {
+   "id": "test_regle_produit_valide",
+   "description": "La validation d'un produit refuse un prix nul ou négatif, un stock négatif, ou l'absence de catégorie ou de vendeur.",
+   "kind": "contract",
+   "targetId": "ent_produit"
+  }
+ ],
+ "intent": {
+  "request": "Je lance une marketplace d'artisans en Côte d'Ivoire. Plusieurs vendeurs y proposent leurs créations : bijoux, tissus, mobilier, déco. Les clients créent un compte, parcourent les produits par catégorie avec photos et prix, recherchent, voient la fiche d'un produit avec sa description et son vendeur, ajoutent au panier, paient par carte, et suivent l'état de leurs commandes. Chaque client gère son profil (nom, téléphone, adresse de livraison). En français.",
+  "requestLocale": "fr",
+  "needs": [
+   {
+    "id": "need_marketplace_multi_vendeurs",
+    "statement": "Une marketplace où plusieurs vendeurs (ateliers d'artisans de Côte d'Ivoire) proposent leurs créations.",
+    "resolution": {
+     "kind": "satisfied",
+     "nodeIds": [
+      "ent_vendeur",
+      "fld_vendeur_nom",
+      "fld_vendeur_specialite",
+      "fld_vendeur_ville",
+      "blk_accueil_vendeurs",
+      "act_accueil_ouvrir_vendeur",
+      "scr_vendeur_detail",
+      "blk_vendeur_detail_entete",
+      "rel_vendeur_produits",
+      "data_vendeur_seed"
+     ]
+    }
+   },
+   {
+    "id": "need_categories_artisanat",
+    "statement": "Des créations réparties en catégories : bijoux, tissus, mobilier, déco.",
+    "resolution": {
+     "kind": "satisfied",
+     "nodeIds": [
+      "ent_categorie",
+      "fld_categorie_nom",
+      "fld_produit_categorie",
+      "blk_accueil_categories",
+      "act_categorie_vers_catalogue",
+      "blk_produits_liste",
+      "data_categorie_seed"
+     ]
+    }
+   },
+   {
+    "id": "need_creation_compte_client",
+    "statement": "Les clients créent un compte.",
+    "resolution": {
+     "kind": "satisfied",
+     "nodeIds": [
+      "scr_inscription",
+      "blk_inscription_formulaire",
+      "act_inscription",
+      "scr_connexion",
+      "blk_connexion_formulaire",
+      "act_connexion",
+      "scr_mot_de_passe_oublie",
+      "blk_oubli_formulaire",
+      "act_reinitialiser_mot_de_passe",
+      "ent_profil",
+      "intg_auth_koro",
+      "rule_profil_valide"
+     ]
+    }
+   },
+   {
+    "id": "need_parcourir_produits_par_categorie",
+    "statement": "Parcourir les produits par catégorie.",
+    "resolution": {
+     "kind": "satisfied",
+     "nodeIds": [
+      "blk_accueil_categories",
+      "act_categorie_vers_catalogue",
+      "blk_produits_liste",
+      "fld_produit_categorie",
+      "scr_produits"
+     ]
+    }
+   },
+   {
+    "id": "need_photos_et_prix_catalogue",
+    "statement": "Voir les produits avec leurs photos et leurs prix.",
+    "resolution": {
+     "kind": "satisfied",
+     "nodeIds": [
+      "blk_produits_liste",
+      "fld_produit_photo",
+      "fld_produit_prix",
+      "blk_accueil_produits_populaires",
+      "blk_produit_detail_entete"
+     ]
+    }
+   },
+   {
+    "id": "need_recherche_produits",
+    "statement": "Rechercher un produit dans le catalogue.",
+    "resolution": {
+     "kind": "satisfied",
+     "nodeIds": [
+      "blk_produits_liste",
+      "fld_produit_nom",
+      "test_catalogue_recherche"
+     ]
+    }
+   },
+   {
+    "id": "need_fiche_produit_description_vendeur",
+    "statement": "Voir la fiche d'un produit avec sa description et son vendeur.",
+    "resolution": {
+     "kind": "satisfied",
+     "nodeIds": [
+      "scr_produit_detail",
+      "blk_produit_detail_entete",
+      "fld_produit_description",
+      "fld_produit_vendeur",
+      "act_catalogue_ouvrir_produit",
+      "blk_vendeur_detail_entete"
+     ]
+    }
+   },
+   {
+    "id": "need_ajout_au_panier",
+    "statement": "Ajouter un produit au panier.",
+    "resolution": {
+     "kind": "satisfied",
+     "nodeIds": [
+      "blk_produit_detail_ajout_panier",
+      "act_ajouter_au_panier",
+      "ent_panier_article",
+      "scr_panier",
+      "blk_panier_liste",
+      "blk_panier_vide",
+      "act_calculer_total_panier"
+     ]
+    }
+   },
+   {
+    "id": "need_paiement_par_carte",
+    "statement": "Payer sa commande par carte bancaire.",
+    "resolution": {
+     "kind": "satisfied",
+     "nodeIds": [
+      "blk_panier_commander",
+      "act_ouvrir_paiement",
+      "scr_paiement",
+      "blk_paiement_formulaire",
+      "act_payer_par_carte",
+      "ent_paiement",
+      "rule_paiement_carte_valide",
+      "intg_paiement_carte"
+     ]
+    }
+   },
+   {
+    "id": "need_suivi_commandes",
+    "statement": "Suivre l'état de ses commandes.",
+    "resolution": {
+     "kind": "satisfied",
+     "nodeIds": [
+      "scr_commandes",
+      "blk_commandes_liste",
+      "fld_commande_statut",
+      "act_commandes_ouvrir_suivi",
+      "scr_commande_detail",
+      "blk_commande_detail_entete",
+      "blk_commande_detail_lignes",
+      "act_calculer_suivi_commande"
+     ]
+    }
+   },
+   {
+    "id": "need_gestion_profil_client",
+    "statement": "Chaque client gère son profil : nom, téléphone, adresse de livraison.",
+    "resolution": {
+     "kind": "satisfied",
+     "nodeIds": [
+      "scr_compte",
+      "blk_compte_profil",
+      "act_ouvrir_profil_edition",
+      "scr_profil_edition",
+      "blk_profil_formulaire",
+      "act_enregistrer_profil",
+      "fld_profil_nom",
+      "fld_profil_telephone",
+      "fld_profil_adresse",
+      "rule_profil_valide"
+     ]
+    }
+   },
+   {
+    "id": "need_application_en_francais",
+    "statement": "L'application est en français.",
+    "resolution": {
+     "kind": "satisfied",
+     "nodeIds": [
+      "prj_marketplace_artisans_ci",
+      "blk_bienvenue_entete",
+      "blk_produits_liste",
+      "blk_commandes_liste",
+      "fld_commande_statut",
+      "fld_vendeur_specialite",
+      "fld_paiement_statut"
+     ]
+    }
+   }
+  ]
+ }
+}

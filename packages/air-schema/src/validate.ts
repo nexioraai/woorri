@@ -499,6 +499,21 @@ export function validateAir(air: ProjectAir): AirDiagnostic[] {
           checkLocalized(texte, `${path}.enumLabels.${valeur}`);
         }
       }
+      // 1.20 — les demoValues d'un champ IMAGE sont des URLs https dont
+      // l'hôte est DÉCLARÉ : la politique deny_by_default vaut pour tout ce
+      // que l'app affichera, données de démo comprises.
+      if (f.type === "asset" && f.demoValues !== undefined) {
+        f.demoValues.forEach((u, di) => {
+          const hote = /^https:\/\/([^/]+)\//.exec(u)?.[1];
+          if (hote === undefined || !air.network.allowedDomains.includes(hote)) {
+            push(
+              "AIR_FIELD_DEMO_IMAGE_DOMAIN",
+              `${path}.demoValues[${String(di)}]`,
+              `image de démo hors politique réseau : "${u.slice(0, 60)}"`,
+            );
+          }
+        });
+      }
       if (f.type === "reference") {
         if (f.referencesEntityId === undefined) {
           push("AIR_FIELD_REFERENCE_TARGET_MISSING", path, `champ reference "${f.id}" sans cible`);
@@ -742,7 +757,17 @@ export function validateAir(air: ProjectAir): AirDiagnostic[] {
     }
     if (x.config !== undefined) {
       x.config.forEach((pair, j) => {
-        if (SECRET_LIKE_KEY.test(pair.key)) {
+        // FAUX POSITIF MESURÉ (dougplace, 2026-09-10) : « credentialFieldId »
+        // est un POINTEUR DE CHAMP — il désigne quel champ du formulaire
+        // porte le secret, il n'en contient aucun. Exemption STRICTE : la clé
+        // se termine par « FieldId » ET la valeur a la forme d'un identifiant
+        // de champ. Une valeur libre sous un nom en « …FieldId » reste
+        // refusée — la contrebande ne passe pas par ce trou.
+        const pointeurDeChamp =
+          pair.key.endsWith("FieldId") &&
+          typeof pair.value === "string" &&
+          /^fld_[a-z0-9_]+$/.test(pair.value);
+        if (SECRET_LIKE_KEY.test(pair.key) && !pointeurDeChamp) {
           push(
             "AIR_INTEGRATION_SECRET_LIKE_KEY",
             `integrations[${i}].config[${j}]`,
@@ -767,18 +792,31 @@ export function validateAir(air: ProjectAir): AirDiagnostic[] {
     });
   }
 
-  // 11. Tests attendus : la cible est un écran, une action ou une entité.
+  // 11. Tests attendus : la cible est un NŒUD DÉCLARÉ du document.
+  //
+  // ÉLARGI le 2026-09-10 (mesuré sur dougplace : 28 refus pour des tests
+  // visant des blocs, des règles et des intégrations qui EXISTAIENT toutes).
+  // Le but de ce contrôle est « aucune promesse sur une cible morte » —
+  // pas « seules trois familles de nœuds méritent des tests ». Un test sur
+  // un bloc vivant (« la liste du catalogue montre les produits »), une
+  // règle ou une intégration est une promesse parfaitement vérifiable.
+  // Élargir n'ACCEPTE que davantage : le corpus gelé reste jugé à
+  // l'identique, aucun document accepté hier n'est refusé aujourd'hui.
   const testTargets = new Set<string>([
     ...screenIds,
     ...air.actions.map((a) => a.id),
     ...entityById.keys(),
+    ...air.screens.flatMap((sc) => sc.blocks.map((b) => b.id)),
+    ...air.rules.map((r) => r.id),
+    ...air.integrations.map((x) => x.id),
+    ...air.datasets.map((ds) => ds.id),
   ]);
   air.expectedTests.forEach((t, i) => {
     if (!testTargets.has(t.targetId)) {
       push(
         "AIR_TEST_TARGET_UNKNOWN",
         `expectedTests[${i}].targetId`,
-        `cible "${t.targetId}" introuvable (écran, action ou entité)`,
+        `cible "${t.targetId}" introuvable parmi les nœuds déclarés du document`,
       );
     }
   });

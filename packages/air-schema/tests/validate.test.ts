@@ -148,6 +148,18 @@ describe("validateAir — cohérence référentielle", () => {
     expect(codes(air2)).toContain("AIR_RULE_FIELD_UNKNOWN");
   });
 
+  it("2026-09-10 — une cible de test peut être un BLOC, une RÈGLE ou une INTÉGRATION vivants", () => {
+    const air = buildValidAir();
+    const bloc = at(at(air.screens, 0).blocks, 0).id;
+    at(air.expectedTests, 0).targetId = bloc;
+    expect(codes(air)).not.toContain("AIR_TEST_TARGET_UNKNOWN");
+
+    // CONTRÔLE NÉGATIF — une cible réellement absente reste refusée.
+    const air2 = buildValidAir();
+    at(air2.expectedTests, 0).targetId = "blk_fantome_inexistant";
+    expect(codes(air2)).toContain("AIR_TEST_TARGET_UNKNOWN");
+  });
+
   it("détecte une permission exigée par une capability non déclarée", () => {
     const air = buildValidAir();
     at(air.permissions, 0).requiredByCapability = "camera";
@@ -162,6 +174,18 @@ describe("validateAir — cohérence référentielle", () => {
     const air2 = buildValidAir();
     at(air2.integrations, 0).config = [{ key: "options.accessToken", value: "x" }];
     expect(codes(air2)).toContain("AIR_INTEGRATION_SECRET_LIKE_KEY");
+
+    // FAUX POSITIF MESURÉ (dougplace, 2026-09-10) : un POINTEUR DE CHAMP
+    // (« credentialFieldId » → fld_*) n'est pas un secret. Accepté.
+    const air3 = buildValidAir();
+    at(air3.integrations, 0).config = [{ key: "credentialFieldId", value: "fld_client_mot_de_passe" }];
+    expect(codes(air3)).not.toContain("AIR_INTEGRATION_SECRET_LIKE_KEY");
+
+    // CONTRÔLE NÉGATIF — la contrebande sous un nom en « …FieldId » avec une
+    // valeur LIBRE reste refusée : l'exemption exige la forme fld_*.
+    const air4 = buildValidAir();
+    at(air4.integrations, 0).config = [{ key: "apiKeyFieldId", value: "sk_live_abc123" }];
+    expect(codes(air4)).toContain("AIR_INTEGRATION_SECRET_LIKE_KEY");
   });
 
   it("refuse un PSP quand la classe commerce est digital (IAP obligatoire)", () => {

@@ -184,6 +184,11 @@ export const SECTIONS_CORRECTIVES: Readonly<Record<string, readonly SectionEmiss
   // 1.19.0 — un doublon de valeur dans la liste de paires : même section que
   // ses voisins, le libellé vit avec le champ.
   AIR_FIELD_ENUM_LABEL_DUPLICATE: ["donnees"],
+  // L'URL vit avec le champ ; le domaine vit dans `base` (network).
+  AIR_FIELD_DEMO_IMAGE_DOMAIN: ["base", "donnees"],
+  // La matière manquante se répare là où les entités et leurs affichages
+  // vivent : données ET écrans.
+  CAMPAGNE_MATIERE_INSUFFISANTE: ["donnees", "ecrans"],
   // Un champ sensible affiché se répare là où il est AFFICHÉ : dans l'écran.
   AIR_FIELD_SENSITIVE_DISPLAYED: ["ecrans"],
   AIR_FIELD_REFERENCE_TARGET_MISSING: ["donnees"],

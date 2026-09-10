@@ -1,0 +1,257 @@
+{
+  "airSchemaVersion": "1.19.0",
+  "projectId": "prj_artisans_ci",
+  "app": {
+    "name": "Kôrô Artisans",
+    "slug": "koro-artisans",
+    "description": [
+      {
+        "locale": "fr",
+        "text": "La marketplace des artisans de Côte d'Ivoire : bijoux, tissus, mobilier et déco de plusieurs vendeurs. Parcourez les produits par catégorie avec photos et prix, recherchez, consultez la fiche d'un produit et son vendeur, ajoutez au panier, payez par carte et suivez vos commandes."
+      }
+    ],
+    "locales": {
+      "userLanguage": "fr",
+      "appLocales": [
+        "fr"
+      ],
+      "defaultAppLocale": "fr",
+      "contentLocales": [
+        "fr"
+      ],
+      "rtlSupported": false
+    },
+    "distribution": {
+      "owner": "koro-artisans",
+      "projectId": "prj_artisans_ci"
+    }
+  },
+  "navigation": {
+    "entryScreenId": "scr_bienvenue",
+    "primary": {
+      "destinations": [
+        {
+          "routeId": "nav_accueil",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Accueil"
+            }
+          ],
+          "order": 0,
+          "icon": "accueil"
+        },
+        {
+          "routeId": "nav_produits",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Produits"
+            }
+          ],
+          "order": 1,
+          "icon": "liste"
+        },
+        {
+          "routeId": "nav_panier",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Panier"
+            }
+          ],
+          "order": 2,
+          "icon": "panier"
+        },
+        {
+          "routeId": "nav_commandes",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Commandes"
+            }
+          ],
+          "order": 3,
+          "icon": "billet"
+        },
+        {
+          "routeId": "nav_compte",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Compte"
+            }
+          ],
+          "order": 4,
+          "icon": "compte"
+        }
+      ]
+    },
+    "routes": [
+      {
+        "id": "nav_bienvenue",
+        "screenId": "scr_bienvenue",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Bienvenue"
+          }
+        ]
+      },
+      {
+        "id": "nav_accueil",
+        "screenId": "scr_accueil",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Accueil"
+          }
+        ]
+      },
+      {
+        "id": "nav_produits",
+        "screenId": "scr_produits",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Produits"
+          }
+        ]
+      },
+      {
+        "id": "nav_produit_detail",
+        "screenId": "scr_produit_detail",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Fiche produit"
+          }
+        ]
+      },
+      {
+        "id": "nav_vendeur_detail",
+        "screenId": "scr_vendeur_detail",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Vendeur"
+          }
+        ]
+      },
+      {
+        "id": "nav_panier",
+        "screenId": "scr_panier",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Panier"
+          }
+        ]
+      },
+      {
+        "id": "nav_paiement",
+        "screenId": "scr_paiement",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Paiement par carte"
+          }
+        ]
+      },
+      {
+        "id": "nav_commandes",
+        "screenId": "scr_commandes",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Mes commandes"
+          }
+        ]
+      },
+      {
+        "id": "nav_commande_detail",
+        "screenId": "scr_commande_detail",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Suivi de commande"
+          }
+        ]
+      },
+      {
+        "id": "nav_compte",
+        "screenId": "scr_compte",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Mon compte"
+          }
+        ]
+      },
+      {
+        "id": "nav_profil_edition",
+        "screenId": "scr_profil_edition",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Mon profil"
+          }
+        ]
+      },
+      {
+        "id": "nav_connexion",
+        "screenId": "scr_connexion",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Connexion"
+          }
+        ]
+      },
+      {
+        "id": "nav_inscription",
+        "screenId": "scr_inscription",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Créer un compte"
+          }
+        ]
+      },
+      {
+        "id": "nav_mot_de_passe_oublie",
+        "screenId": "scr_mot_de_passe_oublie",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Mot de passe oublié"
+          }
+        ]
+      }
+    ]
+  },
+  "design": {
+    "theme": "artisanat_ivoirien"
+  },
+  "network": {
+    "policy": "deny_by_default",
+    "allowedDomains": [
+      "api.koro-artisans.ci"
+    ]
+  },
+  "native": {
+    "minIosVersion": "16.0",
+    "minAndroidSdk": 26
+  },
+  "compliance": {
+    "commerceClass": "physical_or_offapp",
+    "accountDeletionRequired": true,
+    "dataCollected": [
+      "contact_info",
+      "identifiers",
+      "usage_data",
+      "purchases",
+      "diagnostics"
+    ]
+  }
+}

@@ -1,0 +1,374 @@
+// LES 6 SMART BLOCKS v1 — composites DE PRIMITIVES exclusivement (D-023).
+// RÈGLE MÉCANISÉE (tests/etancheite-ratchet.test.ts) : tout le visuel passe
+// par @deribfy/primitives ; seul composant react-native autorisé ici :
+// FlatList (structurel). AUCUN StyleSheet, AUCUN style en dur — le moteur
+// de styling reste remplaçable (D-021) et les tokens restent la seule
+// source visuelle. AUCUNE syntaxe Maestro/Detox : les blocs sont
+// E2E-agnostiques (D-022/D-023), seuls les testID standard sont exposés.
+import { FlatList } from "react-native";
+import {GridCard, AppButton,
+  AppText,
+  Badge,
+  ListRow,
+  Section,
+  StateView,
+  AppImage,
+  TextField, ListFooter} from "../primitives";
+import type {
+  Blocks,
+  ButtonBlockProps,
+  DetailHeaderBlockProps,
+  EmptyStateBlockProps,
+  FormBlockProps,
+  HeaderBlockProps,
+  ListBlockProps,
+  SpacerBlockProps,
+} from "./contracts.ts";
+
+export function HeaderBlock({ title, subtitle, accroche, logoUri, testID }: HeaderBlockProps) {
+  return (
+    <Section testID={testID}>
+      {logoUri === undefined ? null : (
+        <AppImage uri={logoUri} variant="brand" testID={`${testID ?? "header"}-brand`} />
+      )}
+      {/* 1.7.0 — une ACCROCHE monte d'un cran typographique. Le bloc choisit
+          un RÔLE, la primitive porte la forme : aucun style ici. */}
+      <AppText variant={accroche === true ? "display" : "heading"}>{title}</AppText>
+      {subtitle !== undefined && <AppText tone="muted">{subtitle}</AppText>}
+    </Section>
+  );
+}
+
+export function ListBlock({
+  title,
+  items,
+  state = { kind: "ready" },
+  search,
+  filters,
+  onItemPress,
+  layout,
+  testID,
+}: ListBlockProps) {
+  // DET-033 (jugement propriétaire sur appareil) : les états ne remplacent
+  // plus le BLOC ENTIER — ils ne remplacent que la ZONE DE CONTENU. Avant,
+  // une saisie sans correspondance faisait rendre l'état vide À LA PLACE du
+  // champ de recherche : le champ disparaissait sous les doigts, clavier
+  // fermé. Recherche et filtres restent MONTÉS quel que soit l'état, et
+  // vivent DANS la liste (en-tête défilant) : une seule surface de
+  // défilement, plus deux régions étanches.
+  const etatContenu =
+    state.kind === "loading" ? (
+      <StateView state="loading" title={state.title} />
+    ) : state.kind === "empty" ? (
+      <StateView state="empty" title={state.title} message={state.message} />
+    ) : state.kind === "error" ? (
+      <StateView
+        state="error"
+        title={state.title}
+        message={state.message}
+        actionLabel={state.retryLabel}
+        onAction={state.onRetry}
+      />
+    ) : null;
+  // Contrôles TOUJOURS montés (élément stable : l'identité du TextField
+  // survit aux rendus — le focus et le clavier survivent avec elle).
+  // FIXES depuis 2026-09-10 (jugement propriétaire sur capture) : la
+  // recherche et les filtres restent SOUS LE TITRE pendant que le contenu
+  // défile — patron des applications de référence. DET-033 reste tenu :
+  // montés quel que soit l'état, l'état ne remplace que la zone de contenu.
+  // Seule la POSITION change : région fixe, plus en-tête défilant.
+  const controles = (
+    <>
+      {search === undefined ? null : (
+        <TextField
+          testID={`${testID ?? "list"}-search`}
+          // DET-033 : champ compact — le sens passe par `placeholder`, la
+          // ligne de libellé disparaît, l'accessibilité garde son nom.
+          label=""
+          accessibilityLabel={search.placeholder}
+          placeholder={search.placeholder}
+          value={search.value}
+          onChangeText={search.onChange}
+        />
+      )}
+      {/* E1 (D-129) — filtres pilotés : la saisie appartient à l'appelant. */}
+      {(filters ?? []).map((f, i) =>
+        f.inputType === "text" ? (
+          <TextField
+            key={`${testID ?? "list"}-filter-${String(i)}`}
+            testID={`${testID ?? "list"}-filter-${String(i)}`}
+            label={f.label}
+            value={f.value}
+            onChangeText={f.onChange}
+          />
+        ) : (
+          // DET-034 : un filtre n'est pas une action — les options sont des
+          // CHIPS (visuel de badge, cible tactile intacte), la rangée perd son
+          // titre VISIBLE (la hiérarchie revient à la recherche) mais garde son
+          // nom pour l'accessibilité, et l'état sélectionné se dit.
+          <Section
+            key={`${testID ?? "list"}-filter-${String(i)}`}
+            accessibilityLabel={f.label}
+            inline
+          >
+            {(f.options ?? []).map((option) => (
+              <AppButton
+                key={option}
+                testID={`${testID ?? "list"}-filter-${String(i)}-${option}`}
+                // DET-032 : le libellé peut différer de la VALEUR — le testID,
+                // le filtrage et onChange restent sur l'option brute.
+                label={f.optionLabels?.[option] ?? option}
+                kind="chip"
+                selected={f.value === option}
+                onPress={() => {
+                  f.onChange(f.value === option ? "" : option);
+                }}
+              />
+            ))}
+          </Section>
+        ),
+      )}
+    </>
+  );
+  return (
+    // `fill` (DET-006) : la section BORNE la hauteur de la liste virtualisée.
+    // Sans parent borné, la FlatList rend tous ses éléments. L'intention est
+    // DÉCLARÉE ici ; le style reste entièrement porté par les primitives —
+    // la contrainte « aucun StyleSheet, aucun style en dur » est préservée.
+    <Section title={title} testID={testID} fill>
+      {controles}
+      <FlatList
+        // GRILLE (1.20) : deux colonnes de cartes pour un catalogue. `key`
+        // force la FlatList a se recreer si le layout changeait — il est
+        // statique par document, la cle est donc constante a l'execution.
+        key={layout === "grid" ? "grid" : "rows"}
+        numColumns={layout === "grid" ? 2 : 1}
+        // DET-016 (D-039, dimension A étendue) : ajustement natif aux insets
+        // du clavier. Propriété VÉRIFIÉE sur RN 0.86.3 — déclarée dans
+        // `ScrollViewPropsIOS`, sans implémentation Android : elle agit sur
+        // iOS et reste INERTE sur Android, qui est couvert par le mode de
+        // redimensionnement déclaré au manifeste. Aucun `Platform.OS` requis.
+        // `keyboardShouldPersistTaps` évite qu'un appui sur un contrôle
+        // pendant l'édition soit absorbé par la fermeture du clavier.
+        // Ce sont des PROPRIÉTÉS structurelles, jamais des styles.
+        // DET-033 : recherche et filtres vivent EN-TÊTE DE LISTE — une seule
+        // surface de défilement — et l'état (chargement/vide/erreur) ne
+        // remplace que la zone de contenu, via ListEmptyComponent.
+        automaticallyAdjustKeyboardInsets
+        keyboardShouldPersistTaps="handled"
+        ListEmptyComponent={etatContenu}
+        ListFooterComponent={ListFooter}
+        data={state.kind === "ready" ? items : []}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) =>
+          layout === "grid" ? (
+            <GridCard
+              title={item.title}
+              subtitle={item.subtitle}
+              trailing={item.trailing}
+              badge={item.badge}
+              imageUri={item.imageUri}
+              onPress={
+                onItemPress === undefined
+                  ? undefined
+                  : () => {
+                      onItemPress(item.id);
+                    }
+              }
+              testID={`${testID ?? "list"}-card-${item.id}`}
+            />
+          ) : (
+          <ListRow
+            // VIGNETTE (1.2.0, D-087) : `leading` existait deja au contrat de
+            // la primitive. Sans `imageUri`, la ligne reste celle de 1.1.0.
+            leading={
+              item.imageUri === undefined ? undefined : (
+                <AppImage uri={item.imageUri} variant="thumb" />
+              )
+            }
+            title={item.title}
+            subtitle={item.subtitle}
+            trailing={item.trailing}
+            badge={item.badge}
+            onPress={
+              onItemPress === undefined
+                ? undefined
+                : () => {
+                    onItemPress(item.id);
+                  }
+            }
+            testID={`${testID ?? "list"}-row-${item.id}`}
+          />
+          )
+        }
+      />
+    </Section>
+  );
+}
+
+export function FormBlock({
+  title,
+  fields,
+  values,
+  onChangeField,
+  submitLabel,
+  onSubmit,
+  state = "ready",
+  errorMessage,
+  fieldErrors,
+  loadingTitle,
+  emptyTitle,
+  testID,
+}: FormBlockProps) {
+  // REGISTRE 1.1.0 (D-060) : `loading` et `empty` entrent dans l'union. Comme
+  // ailleurs, un état sans titre DÉCLARÉ n'est pas rendu — le moteur n'invente
+  // aucun texte (F3).
+  if (state === "loading" && loadingTitle !== undefined) {
+    return <StateView state="loading" title={loadingTitle} testID={testID} />;
+  }
+  if (state === "empty" && emptyTitle !== undefined) {
+    return <StateView state="empty" title={emptyTitle} testID={testID} />;
+  }
+  return (
+    <Section title={title} testID={testID}>
+      {fields.map((field) => (
+        <TextField
+          key={field.id}
+          label={field.label}
+          placeholder={field.placeholder}
+          secure={field.secure}
+          value={values[field.id] ?? ""}
+          onChangeText={(v) => {
+            onChangeField(field.id, v);
+          }}
+          error={fieldErrors?.[field.id]}
+          testID={`${testID ?? "form"}-field-${field.id}`}
+        />
+      ))}
+      {state === "error" && errorMessage !== undefined && (
+        <AppText tone="error" testID={`${testID ?? "form"}-error`}>
+          {errorMessage}
+        </AppText>
+      )}
+      {/* 1.6.0 — le bouton DIT si l'action est possible. Un champ obligatoire
+          vide rendait le bouton actif : il promettait une écriture que la
+          validation refusait ensuite EN SILENCE. La couleur porte désormais
+          l'information, et `accessibilityState.disabled` la dit aussi. */}
+      <AppButton
+        label={submitLabel}
+        onPress={onSubmit}
+        disabled={fields.some((f) => f.required === true && (values[f.id] ?? "").trim() === "")}
+        loading={state === "submitting"}
+        testID={`${testID ?? "form"}-submit`}
+      />
+    </Section>
+  );
+}
+
+// ESPACE EXTENSIBLE (1.8.0). Le bloc DECLARE une intention de mise en page ;
+// la primitive porte la forme. Le cliquet d'etancheite reste tenu : aucun
+// style ici. Commentaire volontairement sans accents ni tournure longue — la
+// sonde F3 cherche des chaines linguistiques par motif et ne distingue pas un
+// commentaire (lecon deja consignee sur l'en-tete de detail).
+export function SpacerBlock({ testID }: SpacerBlockProps) {
+  return <Section testID={testID} fill />;
+}
+
+export function ButtonBlock({ label, icon, kind, onPress, testID }: ButtonBlockProps) {
+  // MESURE SUR APPAREIL : ce bloc rendait le bouton NU, donc collé aux bords
+  // de l'ecran — seul bloc a ne pas passer par `Section`, qui porte les
+  // marges de tous les autres. La difference se voyait a l'oeil et nulle
+  // part ailleurs. Le bloc declare un ROLE, la primitive porte la forme.
+  return (
+    // Le `testID` reste sur l'ELEMENT PRESSABLE : sondes d'affordance et
+    // selecteurs de campagne le ciblent. Le poser sur la Section aurait
+    // casse les deux sans rien apporter.
+    // UN LIEN N'EST PAS UNE ACTION DE BLOC (1.18.0) : il ne prend pas la
+    // respiration d'un bloc. Mesure a l'ecran — « Mot de passe oublie »
+    // flottait a ~62 dp du bouton d'envoi, deux sections empilant leurs
+    // marges. Le bloc declare le ROLE, la primitive resserre.
+    <Section tight={kind === "link"}>
+      <AppButton label={label} icon={icon} kind={kind} onPress={onPress} testID={testID} />
+    </Section>
+  );
+}
+
+export function EmptyStateBlock({
+  title,
+  message,
+  actionLabel,
+  onAction,
+  testID,
+}: EmptyStateBlockProps) {
+  return (
+    <StateView
+      state="empty"
+      title={title}
+      message={message}
+      actionLabel={actionLabel}
+      onAction={onAction}
+      testID={testID}
+    />
+  );
+}
+
+export function DetailHeaderBlock({
+  title,
+  subtitle,
+  badges,
+  trailing,
+  state = { kind: "ready" },
+  imageUri,
+  testID,
+}: DetailHeaderBlockProps) {
+  // REGISTRE 1.1.0 (D-060) : les trois états que la dimension C nomme. Titres
+  // issus des DONNÉES — aucun texte moteur (F3).
+  if (state.kind === "loading") {
+    return <StateView state="loading" title={state.title} testID={testID} />;
+  }
+  if (state.kind === "empty") {
+    return (
+      <StateView state="empty" title={state.title} message={state.message} testID={testID} />
+    );
+  }
+  if (state.kind === "error") {
+    return (
+      <StateView state="error" title={state.title} message={state.message} testID={testID} />
+    );
+  }
+  return (
+    <Section testID={testID}>
+      {/* VISUEL D'EN-TETE (1.2.0, D-087). Le style vit dans la PRIMITIVE : le
+          cliquet d'etancheite interdit tout style ici, et il a raison — le bloc
+          choisit un ROLE, la primitive choisit la forme. Commentaire volontai-
+          rement sans accents ni phrase longue : le cliquet F3 cherche des
+          chaines linguistiques par motif et ne distingue pas un commentaire. */}
+      {imageUri === undefined ? null : (
+        <AppImage uri={imageUri} variant="header" testID={`${testID ?? "detail"}-image`} />
+      )}
+      <AppText variant="heading">{title}</AppText>
+      {subtitle !== undefined && <AppText tone="muted">{subtitle}</AppText>}
+      {trailing !== undefined && (
+        <AppText variant="title" tone="primary">
+          {trailing}
+        </AppText>
+      )}
+      {/* CLÉ STABLE (D-076) — `key={badge}` collait deux badges de même valeur,
+          et React refusait : « two children with the same key `` ». Le cas réel
+          était deux champs de badge VIDES. La position rend la clé unique par
+          construction, quelles que soient les valeurs. */}
+      {badges?.map((badge, i) => <Badge key={`${String(i)}:${badge}`} label={badge} />)}
+    </Section>
+  );
+}
+
+// Conformité au contrat vérifiée par le compilateur (patron 3.2 / banc P-003).
+export const blocks: Blocks = {
+  HeaderBlock,
+  ListBlock,
+  FormBlock,
+  ButtonBlock,
+  EmptyStateBlock,
+  DetailHeaderBlock,
+  SpacerBlock,
+};

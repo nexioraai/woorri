@@ -314,6 +314,10 @@ export const BLOCKS: readonly BlockDefinition[] = [
       userFilterOperators: z.array(z.enum(["eq", "neq", "contains"])).max(3).optional(),
       userFilterInputTypes: z.array(z.enum(["text", "choice"])).max(3).optional(),
       scopeFieldId: fieldRef.optional(),
+      // 1.6.0 (2026-09-09, jugé à l'écran sur la première app générée) : un
+      // CATALOGUE se présente en CARTES sur deux colonnes — image dessus,
+      // nom, prix — pas en lignes. Le document choisit ; défaut = lignes.
+      layout: z.enum(["rows", "grid"]).optional(),
     }).superRefine((v, ctx) => {
       const n = v.userFilterFieldIds?.length ?? 0;
       if ((v.userFilterOperators !== undefined || v.userFilterInputTypes !== undefined) && n === 0) {

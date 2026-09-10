@@ -53,6 +53,10 @@ describe("cliquet — générateur synchronisé sur le contrat", () => {
       "brandIconPngBase64",      // 1.17 — la marque vient du pipeline, JAMAIS inventée
       "spacer",                  // composition d'accueil
       "sessionEtablissable",     // l'auth est réelle — règle 17 amendée
+      "demoValues",              // 1.20 — le document déclare son contenu de démo
+      'layout: "grid"',          // 1.20 — cartes de catalogue sur deux colonnes
+      "picsum.photos",           // images de démo RÉELLES, domaine déclaré
+      "L'ACCUEIL MONTRE LE PRODUIT", // l'accueil porte la marchandise
     ]) {
       expect(source, marqueur).toContain(marqueur);
     }

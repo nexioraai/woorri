@@ -1,3 +1,4 @@
+export { preuveDeMatiere, type DiagnosticMatiere } from "./matiere.ts";
 export {
   evaluatePromises,
   type PromiseCoverage,

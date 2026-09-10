@@ -115,11 +115,17 @@ describe("cliquet de surface de majeure — compatibilité mineure MÉCANIQUE", 
     // 1.3.0 : `font.display`, un cran au-dessus de `heading`, ajouté AVEC son
     // consommateur réel — l'accroche de l'écran d'accueil produit. La règle de
     // DET-023 tient : aucun token « au cas où ».
+    // 1.4.0 (2026-09-09, jugement propriétaire « boutons pas premium ») :
+    // `size.controlHeight` — hauteur des contrôles PRINCIPAUX, au-dessus du
+    // minimum tactile qui reste la borne basse. Consommateur réel : `button`
+    // dans les primitives. La règle de DET-023 tient : pas de token « au cas
+    // où ».
     expect(added).toEqual([
       "font.display",
       "fontWeight.bold",
       "fontWeight.semibold",
       "opacity.disabled",
+      "size.controlHeight",
       "size.tapTarget",
       "space.xxs",
     ]);

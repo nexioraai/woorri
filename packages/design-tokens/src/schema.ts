@@ -86,7 +86,10 @@ export const designTokensSchema = z.strictObject({
   // ce qui évite toute ramification `Platform.OS` : le code généré reste
   // strictement identique sur les deux plateformes (propriété prouvée au
   // scorecard du slice 1).
-  size: z.strictObject({ tapTarget: dimension }),
+  // `controlHeight` (2026-09-09, jugement propriétaire « les boutons ne sont
+  // pas premium ») : la hauteur d'un CONTRÔLE PRINCIPAL — au-dessus du
+  // minimum tactile, qui reste la borne basse de TOUTES les surfaces.
+  size: z.strictObject({ tapTarget: dimension, controlHeight: dimension }),
 });
 
 export type DesignTokens = z.infer<typeof designTokensSchema>;

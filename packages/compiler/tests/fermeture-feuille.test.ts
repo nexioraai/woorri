@@ -1,24 +1,19 @@
-// CLIQUET — UNE FEUILLE OFFRE UNE SORTIE VISIBLE, ET SON MOT VIENT DU DOCUMENT.
+// CLIQUET — UNE FEUILLE GARDE UNE SORTIE VISIBLE : LA FLÈCHE NATIVE.
 //
-// Défaut RÉEL vu à l'écran (SM-A175F, 2026-09-09) : la feuille de connexion
-// montait du bas et RIEN n'indiquait comment en sortir — pas d'en-tête, pas de
-// signe. iOS fournit le glissement vers le bas ; Android ne fournit rien pour
-// une pile native. La demande du propriétaire, capture Apple à l'appui, était
-// explicite : « tirer vers le bas pour fermer ou cliqué x en haut à droite ».
-//
-// Trois faits verrouillés, chacun avec son contrôle négatif :
-//   1. une feuille GARDE son en-tête natif (c'est lui qui porte le ✕), même
-//      quand le document refuse le titre — sinon le contrôle n'a nulle part
-//      où se poser, précisément sur les écrans qui en ont le plus besoin ;
-//   2. le contrôle est ÉMIS pour une feuille, et pour elle seule ;
-//   3. le mot annoncé vient du DOCUMENT (F3) — absent du document, absent de
-//      l'artefact : le moteur n'écrit aucun mot à sa place.
+// HISTOIRE, en deux temps : DET-037 a posé un ✕ dessiné (demande propriétaire,
+// capture Apple à l'appui) ; puis, JUGÉ À L'ÉCRAN le 2026-09-09, le ✕ a été
+// RETIRÉ par le même propriétaire — la flèche native redevient l'unique
+// sortie, standard et suffisante. Ce cliquet verrouille l'état ARBITRÉ :
+//   1. une feuille est bien MODALE (elle monte du bas) ;
+//   2. AUCUN contrôle de fermeture dessiné n'est émis (le ✕ ne revient pas
+//      par accident) — et la flèche native n'est PAS supprimée ;
+//   3. une feuille garde son en-tête (il porte la flèche), une carte sans
+//      titre masque le sien.
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { emitProject } from "../src/emit-project.ts";
-import { EMBEDDED_ASSETS } from "../src/embedded-assets.generated.ts";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const DOC = join(
@@ -48,34 +43,24 @@ describe("cliquet — une feuille offre une sortie visible", () => {
     expect(cartes.length).toBeGreaterThan(0);
   });
 
-  it("chaque FEUILLE émet son contrôle de fermeture", () => {
+  it("chaque FEUILLE est émise MODALE", () => {
     const source = nav(base);
     for (const f of feuilles) {
-      expect(optionsDe(source, f.id), f.id).toContain("<FermerFeuille");
+      expect(optionsDe(source, f.id), f.id).toContain('presentation: "modal"');
     }
   });
 
-  it("CONTRÔLE NÉGATIF — aucune CARTE n'en reçoit", () => {
+  it("AUCUN ✕ dessiné, et la flèche native n'est PAS supprimée", () => {
+    const source = nav(base);
+    expect(source).not.toContain("FermerFeuille");
+    expect(source).not.toContain("headerRight");
+    expect(source).not.toContain("headerBackVisible");
+  });
+
+  it("CONTRÔLE NÉGATIF — une CARTE n'est pas modale", () => {
     const source = nav(base);
     for (const c of cartes) {
-      expect(optionsDe(source, c.id), c.id).not.toContain("FermerFeuille");
-    }
-  });
-
-  it("une feuille n'offre QU'UNE sortie : le ✕, jamais la flèche de retour", () => {
-    // Vu à l'écran au premier build : la pile native dessinait sa flèche de
-    // retour À GAUCHE pendant que le ✕ s'affichait à droite. Deux contrôles
-    // pour un seul geste — la demande était d'en avoir un.
-    const source = nav(base);
-    for (const f of feuilles) {
-      expect(optionsDe(source, f.id), f.id).toContain("headerBackVisible: false");
-    }
-  });
-
-  it("CONTRÔLE NÉGATIF — une CARTE garde sa flèche de retour", () => {
-    const source = nav(base);
-    for (const c of cartes) {
-      expect(optionsDe(source, c.id), c.id).not.toContain("headerBackVisible");
+      expect(optionsDe(source, c.id), c.id).not.toContain("modal");
     }
   });
 
@@ -100,48 +85,5 @@ describe("cliquet — une feuille offre une sortie visible", () => {
     for (const c of carteSansTitre) {
       expect(optionsDe(source, c.id), c.id).toContain("headerShown: false");
     }
-  });
-});
-
-describe("cliquet — F3 : le mot vient du document, jamais du moteur", () => {
-  it("le libellé émis est EXACTEMENT celui du document", () => {
-    const source = nav(base);
-    for (const f of feuilles.filter((s) => s.dismissLabel !== undefined)) {
-      const mot = f.dismissLabel?.[0]?.text ?? "";
-      expect(mot.length).toBeGreaterThan(0);
-      expect(optionsDe(source, f.id), f.id).toContain(`label=${JSON.stringify(mot)}`);
-    }
-  });
-
-  it("CONTRÔLE NÉGATIF — sans déclaration, AUCUN libellé n'est inventé", () => {
-    const sansMot = {
-      ...base,
-      screens: base.screens.map((s) => {
-        if (s.presentation !== "sheet") return s;
-        const copie = { ...s };
-        delete copie.dismissLabel;
-        return copie;
-      }),
-    };
-    const source = nav(sansMot);
-    for (const f of feuilles) {
-      const o = optionsDe(source, f.id);
-      // Le contrôle est toujours là — la sortie reste possible…
-      expect(o, f.id).toContain("<FermerFeuille");
-      // …mais aucun mot n'est annoncé à sa place.
-      expect(o, f.id).not.toContain("label=");
-    }
-  });
-
-  it("le composant embarqué n'écrit lui-même aucun mot", () => {
-    const source = EMBEDDED_ASSETS["lib/runtime/fermer-feuille.tsx"] ?? "";
-    expect(source.length).toBeGreaterThan(0);
-    // Il REÇOIT un libellé, il n'en fabrique pas.
-    expect(source).toContain("accessibilityLabel={label}");
-    // Les seuls littéraux du CODE (hors commentaires) restent techniques :
-    // aucune chaîne porteuse d'espace ou de diacritique latin.
-    const code = source.replace(/\/\/[^\n]*/g, "").replace(/\/\*[\s\S]*?\*\//g, "");
-    const litteraux = [...code.matchAll(/"([^"\n]*)"|'([^'\n]*)'/g)].map((m) => m[1] ?? m[2] ?? "");
-    expect(litteraux.filter((l) => /[ À-ɏ…]/.test(l))).toEqual([]);
   });
 });

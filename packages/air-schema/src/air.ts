@@ -21,7 +21,7 @@ import {
 // 1.7.1 (E3.3, D-131) : provenance APLANIE (sourceKind/sourceIntegrationId/
 //   sourceDomain/sourceRefreshSeconds) — l'union 1.7.0 dépassait la limite
 //   réelle de grammaire de l'API (classe D-078) ; sémantique inchangée.
-export const AIR_SCHEMA_VERSION = "1.19.0";
+export const AIR_SCHEMA_VERSION = "1.20.0";
 
 export const semverSchema = z.string().regex(/^\d+\.\d+\.\d+$/);
 export const sha256Schema = z.string().regex(/^[0-9a-f]{64}$/);
@@ -406,6 +406,16 @@ const fieldSchema = z.strictObject({
     .array(z.strictObject({ value: z.string().min(1), label: localizedTextSchema }))
     .min(1)
     .optional(),
+  /**
+   * VALEURS DE DÉMO (1.20.0) — jugé à l'écran sur la première app 100 %
+   * générée : les fixtures du moteur fabriquaient « nom 17 », « nom 20 » —
+   * des valeurs machine dans une interface qui se veut premium. Le moteur ne
+   * peut pas inventer du contenu métier (il ne connaît pas le secteur) ; le
+   * DOCUMENT le déclare. Le générateur de fixtures les cycle en boucle,
+   * déterministe comme avant. Champs texte uniquement — les nombres, dates
+   * et enums ont déjà des formes plausibles.
+   */
+  demoValues: z.array(z.string().min(1)).min(1).max(24).optional(),
   /**
    * CHAMP SENSIBLE (1.12.0, Phase 4) — saisi, JAMAIS conservé.
    *

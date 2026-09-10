@@ -1,0 +1,2838 @@
+{
+  "airSchemaVersion": "1.20.0",
+  "projectId": "prj_dougplace",
+  "app": {
+    "name": "Dougplace",
+    "slug": "dougplace",
+    "description": [
+      {
+        "locale": "fr",
+        "text": "Marketplace généraliste en Côte d'Ivoire : électronique, mode, maison et sport. Découvrez une sélection, parcourez le catalogue par catégorie, consultez les fiches produits avec photos et vendeur, ajoutez au panier, payez et suivez vos commandes."
+      }
+    ],
+    "locales": {
+      "userLanguage": "fr",
+      "appLocales": [
+        "fr"
+      ],
+      "defaultAppLocale": "fr",
+      "contentLocales": [
+        "fr"
+      ],
+      "rtlSupported": false
+    }
+  },
+  "navigation": {
+    "entryScreenId": "scr_bienvenue",
+    "primary": {
+      "destinations": [
+        {
+          "routeId": "nav_accueil",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Accueil"
+            }
+          ],
+          "order": 0,
+          "icon": "accueil"
+        },
+        {
+          "routeId": "nav_catalogue",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Produits"
+            }
+          ],
+          "order": 1,
+          "icon": "recherche"
+        },
+        {
+          "routeId": "nav_panier",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Panier"
+            }
+          ],
+          "order": 2,
+          "icon": "panier"
+        },
+        {
+          "routeId": "nav_commandes",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Commandes"
+            }
+          ],
+          "order": 3,
+          "icon": "liste"
+        },
+        {
+          "routeId": "nav_compte",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Compte"
+            }
+          ],
+          "order": 4,
+          "icon": "compte"
+        }
+      ]
+    },
+    "routes": [
+      {
+        "id": "nav_bienvenue",
+        "screenId": "scr_bienvenue",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Bienvenue"
+          }
+        ]
+      },
+      {
+        "id": "nav_accueil",
+        "screenId": "scr_accueil",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Accueil"
+          }
+        ]
+      },
+      {
+        "id": "nav_catalogue",
+        "screenId": "scr_catalogue",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Produits"
+          }
+        ]
+      },
+      {
+        "id": "nav_categories",
+        "screenId": "scr_categories",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Catégories"
+          }
+        ]
+      },
+      {
+        "id": "nav_produit_detail",
+        "screenId": "scr_produit_detail",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Fiche produit"
+          }
+        ]
+      },
+      {
+        "id": "nav_vendeur_detail",
+        "screenId": "scr_vendeur_detail",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Vendeur"
+          }
+        ]
+      },
+      {
+        "id": "nav_panier",
+        "screenId": "scr_panier",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Panier"
+          }
+        ]
+      },
+      {
+        "id": "nav_paiement",
+        "screenId": "scr_paiement",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Paiement"
+          }
+        ]
+      },
+      {
+        "id": "nav_commandes",
+        "screenId": "scr_commandes",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Commandes"
+          }
+        ]
+      },
+      {
+        "id": "nav_commande_detail",
+        "screenId": "scr_commande_detail",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Suivi de commande"
+          }
+        ]
+      },
+      {
+        "id": "nav_compte",
+        "screenId": "scr_compte",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Compte"
+          }
+        ]
+      },
+      {
+        "id": "nav_profil",
+        "screenId": "scr_profil",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Mon profil"
+          }
+        ]
+      },
+      {
+        "id": "nav_connexion",
+        "screenId": "scr_connexion",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Connexion"
+          }
+        ]
+      },
+      {
+        "id": "nav_inscription",
+        "screenId": "scr_inscription",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Inscription"
+          }
+        ]
+      },
+      {
+        "id": "nav_mot_de_passe_oublie",
+        "screenId": "scr_mot_de_passe_oublie",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Mot de passe oublié"
+          }
+        ]
+      }
+    ]
+  },
+  "design": {
+    "theme": "marketplace_chaleureux"
+  },
+  "network": {
+    "policy": "deny_by_default",
+    "allowedDomains": [
+      "api.dougplace.app",
+      "picsum.photos"
+    ]
+  },
+  "native": {
+    "minIosVersion": "15.0",
+    "minAndroidSdk": 26
+  },
+  "compliance": {
+    "commerceClass": "physical_or_offapp",
+    "accountDeletionRequired": true,
+    "dataCollected": [
+      "contact_info",
+      "identifiers",
+      "usage_data",
+      "user_content",
+      "purchases",
+      "diagnostics"
+    ]
+  },
+  "entities": [
+    {
+      "id": "ent_profil",
+      "name": "profil",
+      "fields": [
+        {
+          "id": "fld_profil_nom_complet",
+          "name": "nom_complet",
+          "type": "string",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Nom complet"
+            }
+          ],
+          "demoValues": [
+            "Awa Koné",
+            "Ibrahim Traoré",
+            "Adjoua Yao",
+            "Kader Ouattara",
+            "Mariam Diabaté",
+            "Serge N'Guessan"
+          ]
+        },
+        {
+          "id": "fld_profil_email",
+          "name": "email",
+          "type": "string",
+          "required": true,
+          "unique": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Adresse e-mail"
+            }
+          ],
+          "demoValues": [
+            "awa.kone@example.ci",
+            "ibrahim.traore@example.ci",
+            "adjoua.yao@example.ci",
+            "kader.ouattara@example.ci"
+          ]
+        },
+        {
+          "id": "fld_profil_mot_de_passe",
+          "name": "mot_de_passe",
+          "type": "string",
+          "required": true,
+          "sensitive": true
+        }
+      ]
+    }
+  ],
+  "relations": [],
+  "datasets": [
+    {
+      "id": "data_profil",
+      "entityId": "ent_profil",
+      "contentHash": "3f9c1a7d5e2b48c06d1af83b27e5904cbe71d6420a8f35719cd2e6b840af17c9",
+      "rowCount": 6,
+      "sourceKind": "seed"
+    }
+  ],
+  "rules": [
+    {
+      "id": "rule_profil_identite_requise",
+      "description": "Le nom complet et l'adresse e-mail sont obligatoires pour créer ou mettre à jour un profil client.",
+      "kind": "validation",
+      "entityId": "ent_profil",
+      "assertions": [
+        {
+          "fieldId": "fld_profil_nom_complet",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_profil_email",
+          "operator": "required"
+        }
+      ]
+    },
+    {
+      "id": "rule_profil_email_valide",
+      "description": "L'adresse e-mail doit avoir un format valide (exemple : awa.kone@example.ci).",
+      "kind": "validation",
+      "entityId": "ent_profil",
+      "assertions": [
+        {
+          "fieldId": "fld_profil_email",
+          "operator": "matches",
+          "value": "^[^@\\s]+@[^@\\s]+\\.[a-zA-Z]{2,}$"
+        }
+      ]
+    },
+    {
+      "id": "rule_profil_mot_de_passe_robuste",
+      "description": "Le mot de passe est obligatoire et doit contenir au moins 8 caractères, dont une lettre et un chiffre.",
+      "kind": "validation",
+      "entityId": "ent_profil",
+      "assertions": [
+        {
+          "fieldId": "fld_profil_mot_de_passe",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_profil_mot_de_passe",
+          "operator": "matches",
+          "value": "^(?=.*[A-Za-z])(?=.*[0-9]).{8,}$"
+        }
+      ]
+    }
+  ],
+  "slots": [
+    {
+      "id": "slot_recapitulatif_panier",
+      "description": "Calcule le récapitulatif du panier du client (nombre d'articles, sous-total, frais de livraison et total à payer en FCFA) et renvoie des libellés déjà formatés en français pour l'écran Panier et l'écran Paiement.",
+      "inputs": [
+        {
+          "name": "lignesPanier",
+          "type": "json"
+        },
+        {
+          "name": "devise",
+          "type": "string"
+        },
+        {
+          "name": "fraisLivraison",
+          "type": "decimal"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "totalLibelle",
+          "type": "string"
+        },
+        {
+          "name": "sousTotalLibelle",
+          "type": "string"
+        },
+        {
+          "name": "nombreArticlesLibelle",
+          "type": "string"
+        }
+      ],
+      "allowedImports": []
+    },
+    {
+      "id": "slot_libelle_suivi_commande",
+      "description": "Traduit l'état d'avancement d'une commande en un libellé de suivi lisible en français (par exemple « Commande confirmée · livraison prévue sous 3 jours ») affiché sur l'écran de suivi de commande.",
+      "inputs": [
+        {
+          "name": "commande",
+          "type": "json"
+        },
+        {
+          "name": "dateCommande",
+          "type": "datetime"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "suiviLibelle",
+          "type": "string"
+        },
+        {
+          "name": "etapeCourante",
+          "type": "string"
+        }
+      ],
+      "allowedImports": []
+    }
+  ],
+  "screens": [
+    {
+      "id": "scr_bienvenue",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Bienvenue"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": false,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_bienvenue_entete",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Dougplace"
+            },
+            {
+              "key": "subtitle",
+              "value": "La marketplace ivoirienne : électronique, mode, maison et sport, livrés chez vous."
+            },
+            {
+              "key": "accroche",
+              "value": true
+            }
+          ]
+        },
+        {
+          "id": "blk_bienvenue_espace",
+          "blockType": "spacer"
+        },
+        {
+          "id": "blk_bienvenue_creer_compte",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Créer un compte"
+            },
+            {
+              "key": "actionId",
+              "value": "act_ouvrir_inscription"
+            },
+            {
+              "key": "kind",
+              "value": "primary"
+            },
+            {
+              "key": "icon",
+              "value": "person-outline"
+            }
+          ]
+        },
+        {
+          "id": "blk_bienvenue_connexion",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "J'ai déjà un compte"
+            },
+            {
+              "key": "actionId",
+              "value": "act_ouvrir_connexion"
+            },
+            {
+              "key": "kind",
+              "value": "ghost"
+            }
+          ]
+        },
+        {
+          "id": "blk_bienvenue_visiteur",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Continuer sans compte"
+            },
+            {
+              "key": "actionId",
+              "value": "act_entrer_accueil"
+            },
+            {
+              "key": "kind",
+              "value": "link"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_accueil",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Accueil"
+        }
+      ],
+      "showsPrimaryNav": true,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_accueil_entete",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Dougplace"
+            },
+            {
+              "key": "subtitle",
+              "value": "Électronique · Mode · Maison · Sport — la sélection des vendeurs de Côte d'Ivoire"
+            }
+          ]
+        },
+        {
+          "id": "blk_accueil_selection_liste",
+          "blockType": "list",
+          "entityId": "ent_profil",
+          "props": [
+            {
+              "key": "title",
+              "value": "La sélection des boutiques Dougplace"
+            },
+            {
+              "key": "titleFieldId",
+              "value": "fld_profil_nom_complet"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_profil_email"
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_profil_nom_complet"
+            },
+            {
+              "key": "sortFieldId",
+              "value": "fld_profil_nom_complet"
+            },
+            {
+              "key": "sortDirection",
+              "value": "asc"
+            },
+            {
+              "key": "pageSize",
+              "value": 6
+            },
+            {
+              "key": "emptyTitle",
+              "value": "La sélection du jour arrive"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Les boutiques Dougplace publient leurs produits en ce moment."
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement de la sélection…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Sélection indisponible"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Impossible de charger la sélection Dougplace pour le moment. Réessayez dans un instant."
+            }
+          ]
+        },
+        {
+          "id": "blk_accueil_selection",
+          "blockType": "empty_state",
+          "visibleWhen": {
+            "kind": "entity_empty",
+            "entityId": "ent_profil"
+          },
+          "props": [
+            {
+              "key": "title",
+              "value": "La sélection du jour arrive"
+            },
+            {
+              "key": "message",
+              "value": "Les vendeurs Dougplace publient leurs produits en ce moment. Parcourez les catégories pour découvrir la marketplace."
+            }
+          ]
+        },
+        {
+          "id": "blk_accueil_categories",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Parcourir les catégories"
+            },
+            {
+              "key": "actionId",
+              "value": "act_ouvrir_categories"
+            },
+            {
+              "key": "kind",
+              "value": "primary"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_catalogue",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Produits"
+        }
+      ],
+      "showsPrimaryNav": true,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_catalogue_entete",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Tous les produits"
+            },
+            {
+              "key": "subtitle",
+              "value": "Parcourez le catalogue Dougplace par catégorie et trouvez le bon vendeur"
+            }
+          ]
+        },
+        {
+          "id": "blk_catalogue_liste",
+          "blockType": "list",
+          "entityId": "ent_profil",
+          "props": [
+            {
+              "key": "title",
+              "value": "Boutiques et vendeurs du catalogue"
+            },
+            {
+              "key": "titleFieldId",
+              "value": "fld_profil_nom_complet"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_profil_email"
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_profil_nom_complet"
+            },
+            {
+              "key": "searchFieldId",
+              "value": "fld_profil_nom_complet"
+            },
+            {
+              "key": "searchPlaceholder",
+              "value": "Rechercher un produit, une marque ou un vendeur"
+            },
+            {
+              "key": "sortFieldId",
+              "value": "fld_profil_nom_complet"
+            },
+            {
+              "key": "sortDirection",
+              "value": "asc"
+            },
+            {
+              "key": "pageSize",
+              "value": 20
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Le catalogue se remplit"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Aucun résultat pour cette recherche. Essayez un autre mot ou une autre catégorie."
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement du catalogue…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Catalogue indisponible"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Impossible de charger le catalogue Dougplace pour le moment. Réessayez dans un instant."
+            }
+          ]
+        },
+        {
+          "id": "blk_catalogue_vide",
+          "blockType": "empty_state",
+          "visibleWhen": {
+            "kind": "entity_empty",
+            "entityId": "ent_profil"
+          },
+          "props": [
+            {
+              "key": "title",
+              "value": "Le catalogue se remplit"
+            },
+            {
+              "key": "message",
+              "value": "Aucun produit n'est encore publié pour cette sélection. Choisissez une autre catégorie pour continuer."
+            }
+          ]
+        },
+        {
+          "id": "blk_catalogue_categories",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Choisir une catégorie"
+            },
+            {
+              "key": "actionId",
+              "value": "act_ouvrir_categories"
+            },
+            {
+              "key": "kind",
+              "value": "ghost"
+            }
+          ]
+        },
+        {
+          "id": "blk_catalogue_produit",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Ouvrir une fiche produit"
+            },
+            {
+              "key": "actionId",
+              "value": "act_ouvrir_produit"
+            },
+            {
+              "key": "kind",
+              "value": "primary"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_categories",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Catégories"
+        }
+      ],
+      "showsPrimaryNav": true,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_categories_entete",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Catégories"
+            },
+            {
+              "key": "subtitle",
+              "value": "Quatre univers pour trouver exactement ce qu'il vous faut"
+            }
+          ]
+        },
+        {
+          "id": "blk_categorie_electronique",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Électronique"
+            },
+            {
+              "key": "actionId",
+              "value": "act_categorie_electronique"
+            },
+            {
+              "key": "kind",
+              "value": "primary"
+            }
+          ]
+        },
+        {
+          "id": "blk_categorie_mode",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Mode"
+            },
+            {
+              "key": "actionId",
+              "value": "act_categorie_mode"
+            },
+            {
+              "key": "kind",
+              "value": "primary"
+            }
+          ]
+        },
+        {
+          "id": "blk_categorie_maison",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Maison"
+            },
+            {
+              "key": "actionId",
+              "value": "act_categorie_maison"
+            },
+            {
+              "key": "kind",
+              "value": "primary"
+            }
+          ]
+        },
+        {
+          "id": "blk_categorie_sport",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Sport"
+            },
+            {
+              "key": "actionId",
+              "value": "act_categorie_sport"
+            },
+            {
+              "key": "kind",
+              "value": "primary"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_produit_detail",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Fiche produit"
+        }
+      ],
+      "showsPrimaryNav": true,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_produit_entete",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Fiche produit"
+            },
+            {
+              "key": "subtitle",
+              "value": "Photos, description, prix en FCFA et vendeur de la boutique"
+            }
+          ]
+        },
+        {
+          "id": "blk_produit_vendeur_btn",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Voir le vendeur"
+            },
+            {
+              "key": "actionId",
+              "value": "act_ouvrir_vendeur"
+            },
+            {
+              "key": "kind",
+              "value": "ghost"
+            },
+            {
+              "key": "icon",
+              "value": "person-outline"
+            }
+          ]
+        },
+        {
+          "id": "blk_produit_ajouter_panier",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Ajouter au panier"
+            },
+            {
+              "key": "actionId",
+              "value": "act_ajouter_au_panier"
+            },
+            {
+              "key": "kind",
+              "value": "primary"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_vendeur_detail",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Vendeur"
+        }
+      ],
+      "showsPrimaryNav": true,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_vendeur_entete",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Boutique du vendeur"
+            },
+            {
+              "key": "subtitle",
+              "value": "Informations de la boutique, ville et produits proposés"
+            }
+          ]
+        },
+        {
+          "id": "blk_vendeur_catalogue_btn",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Voir ses produits"
+            },
+            {
+              "key": "actionId",
+              "value": "act_ouvrir_catalogue_vendeur"
+            },
+            {
+              "key": "kind",
+              "value": "primary"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_panier",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Panier"
+        }
+      ],
+      "showsPrimaryNav": true,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_panier_entete",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Mon panier"
+            },
+            {
+              "key": "subtitle",
+              "value": "Récapitulatif de votre commande"
+            }
+          ]
+        },
+        {
+          "id": "blk_panier_vide",
+          "blockType": "empty_state",
+          "props": [
+            {
+              "key": "title",
+              "value": "Votre panier est vide"
+            },
+            {
+              "key": "message",
+              "value": "Ajoutez des produits depuis les catégories pour lancer votre première commande Dougplace."
+            },
+            {
+              "key": "actionLabel",
+              "value": "Parcourir les catégories"
+            },
+            {
+              "key": "actionId",
+              "value": "act_ouvrir_categories"
+            }
+          ]
+        },
+        {
+          "id": "blk_panier_payer",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Passer au paiement"
+            },
+            {
+              "key": "actionId",
+              "value": "act_ouvrir_paiement"
+            },
+            {
+              "key": "kind",
+              "value": "primary"
+            },
+            {
+              "key": "icon",
+              "value": "card-outline"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_paiement",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Paiement"
+        }
+      ],
+      "showsPrimaryNav": true,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_paiement_entete",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Paiement par carte"
+            },
+            {
+              "key": "subtitle",
+              "value": "Montant total à régler, livraison comprise"
+            }
+          ]
+        },
+        {
+          "id": "blk_paiement_confirmer",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Payer par carte"
+            },
+            {
+              "key": "actionId",
+              "value": "act_payer_commande"
+            },
+            {
+              "key": "kind",
+              "value": "primary"
+            },
+            {
+              "key": "icon",
+              "value": "card-outline"
+            }
+          ]
+        },
+        {
+          "id": "blk_paiement_retour",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Modifier mon panier"
+            },
+            {
+              "key": "actionId",
+              "value": "act_retour_panier"
+            },
+            {
+              "key": "kind",
+              "value": "link"
+            },
+            {
+              "key": "icon",
+              "value": "arrow-back-outline"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_commandes",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Commandes"
+        }
+      ],
+      "showsPrimaryNav": true,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_commandes_entete",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Mes commandes"
+            },
+            {
+              "key": "subtitle",
+              "value": "Suivez l'avancement et la livraison de vos achats"
+            }
+          ]
+        },
+        {
+          "id": "blk_commandes_vide",
+          "blockType": "empty_state",
+          "props": [
+            {
+              "key": "title",
+              "value": "Aucune commande pour l'instant"
+            },
+            {
+              "key": "message",
+              "value": "Vos commandes payées apparaîtront ici avec leur statut de livraison."
+            },
+            {
+              "key": "actionLabel",
+              "value": "Parcourir les catégories"
+            },
+            {
+              "key": "actionId",
+              "value": "act_ouvrir_categories"
+            }
+          ]
+        },
+        {
+          "id": "blk_commandes_suivi",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Suivre ma dernière commande"
+            },
+            {
+              "key": "actionId",
+              "value": "act_ouvrir_commande_detail"
+            },
+            {
+              "key": "kind",
+              "value": "primary"
+            },
+            {
+              "key": "icon",
+              "value": "ticket-outline"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_commande_detail",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Suivi de commande"
+        }
+      ],
+      "showsPrimaryNav": true,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_commande_detail_entete",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Suivi de commande"
+            },
+            {
+              "key": "subtitle",
+              "value": "Commande confirmée · livraison en préparation"
+            }
+          ]
+        },
+        {
+          "id": "blk_commande_detail_vendeur",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Contacter le vendeur"
+            },
+            {
+              "key": "actionId",
+              "value": "act_ouvrir_vendeur"
+            },
+            {
+              "key": "kind",
+              "value": "ghost"
+            },
+            {
+              "key": "icon",
+              "value": "help-circle-outline"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_compte",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Compte"
+        }
+      ],
+      "showsPrimaryNav": true,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_compte_entete",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Mon compte"
+            },
+            {
+              "key": "subtitle",
+              "value": "Profil, adresse de livraison et sécurité"
+            }
+          ]
+        },
+        {
+          "id": "blk_compte_invite",
+          "blockType": "empty_state",
+          "visibleWhen": {
+            "kind": "session_anonymous"
+          },
+          "props": [
+            {
+              "key": "title",
+              "value": "Vous n'êtes pas connecté"
+            },
+            {
+              "key": "message",
+              "value": "Connectez-vous pour retrouver votre profil, votre adresse de livraison et vos commandes."
+            }
+          ]
+        },
+        {
+          "id": "blk_compte_connexion",
+          "blockType": "button",
+          "visibleWhen": {
+            "kind": "session_anonymous"
+          },
+          "props": [
+            {
+              "key": "label",
+              "value": "Se connecter"
+            },
+            {
+              "key": "actionId",
+              "value": "act_ouvrir_connexion"
+            },
+            {
+              "key": "kind",
+              "value": "primary"
+            },
+            {
+              "key": "icon",
+              "value": "person-outline"
+            }
+          ]
+        },
+        {
+          "id": "blk_compte_inscription",
+          "blockType": "button",
+          "visibleWhen": {
+            "kind": "session_anonymous"
+          },
+          "props": [
+            {
+              "key": "label",
+              "value": "Créer un compte"
+            },
+            {
+              "key": "actionId",
+              "value": "act_ouvrir_inscription"
+            },
+            {
+              "key": "kind",
+              "value": "ghost"
+            }
+          ]
+        },
+        {
+          "id": "blk_compte_confirmation",
+          "blockType": "empty_state",
+          "visibleWhen": {
+            "kind": "session_pending_confirmation"
+          },
+          "props": [
+            {
+              "key": "title",
+              "value": "Confirmez votre adresse e-mail"
+            },
+            {
+              "key": "message",
+              "value": "Un lien de confirmation vous a été envoyé. Validez-le pour activer votre compte Dougplace."
+            }
+          ]
+        },
+        {
+          "id": "blk_compte_profil",
+          "blockType": "button",
+          "visibleWhen": {
+            "kind": "session_authenticated"
+          },
+          "props": [
+            {
+              "key": "label",
+              "value": "Mon profil"
+            },
+            {
+              "key": "actionId",
+              "value": "act_ouvrir_profil"
+            },
+            {
+              "key": "kind",
+              "value": "primary"
+            },
+            {
+              "key": "icon",
+              "value": "person-outline"
+            }
+          ]
+        },
+        {
+          "id": "blk_compte_deconnexion",
+          "blockType": "button",
+          "visibleWhen": {
+            "kind": "session_authenticated"
+          },
+          "props": [
+            {
+              "key": "label",
+              "value": "Se déconnecter"
+            },
+            {
+              "key": "actionId",
+              "value": "act_deconnexion"
+            },
+            {
+              "key": "kind",
+              "value": "link"
+            },
+            {
+              "key": "icon",
+              "value": "log-out-outline"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_profil",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Mon profil"
+        }
+      ],
+      "showsPrimaryNav": true,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_profil_entete",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Mes informations"
+            },
+            {
+              "key": "subtitle",
+              "value": "Nom et adresse e-mail utilisés pour vos commandes et vos livraisons"
+            }
+          ]
+        },
+        {
+          "id": "blk_profil_form",
+          "blockType": "form",
+          "entityId": "ent_profil",
+          "props": [
+            {
+              "key": "title",
+              "value": "Informations personnelles"
+            },
+            {
+              "key": "fieldIds",
+              "value": [
+                "fld_profil_nom_complet",
+                "fld_profil_email"
+              ]
+            },
+            {
+              "key": "submitLabel",
+              "value": "Enregistrer mes informations"
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement de votre profil…"
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Aucun profil enregistré pour le moment"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_connexion",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Connexion"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": false,
+      "presentation": "sheet",
+      "dismissLabel": [
+        {
+          "locale": "fr",
+          "text": "Fermer"
+        }
+      ],
+      "blocks": [
+        {
+          "id": "blk_connexion_entete",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Connexion"
+            },
+            {
+              "key": "subtitle",
+              "value": "Retrouvez votre panier, vos adresses et vos commandes"
+            }
+          ]
+        },
+        {
+          "id": "blk_connexion_form",
+          "blockType": "form",
+          "entityId": "ent_profil",
+          "props": [
+            {
+              "key": "fieldIds",
+              "value": [
+                "fld_profil_email",
+                "fld_profil_mot_de_passe"
+              ]
+            },
+            {
+              "key": "submitLabel",
+              "value": "Se connecter"
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Connexion en cours…"
+            }
+          ]
+        },
+        {
+          "id": "blk_connexion_oubli",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Mot de passe oublié ?"
+            },
+            {
+              "key": "actionId",
+              "value": "act_ouvrir_mot_de_passe_oublie"
+            },
+            {
+              "key": "kind",
+              "value": "link"
+            }
+          ]
+        },
+        {
+          "id": "blk_connexion_inscription",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Créer un compte"
+            },
+            {
+              "key": "actionId",
+              "value": "act_ouvrir_inscription"
+            },
+            {
+              "key": "kind",
+              "value": "ghost"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_inscription",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Inscription"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": false,
+      "presentation": "sheet",
+      "dismissLabel": [
+        {
+          "locale": "fr",
+          "text": "Fermer"
+        }
+      ],
+      "blocks": [
+        {
+          "id": "blk_inscription_entete",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Créer un compte"
+            },
+            {
+              "key": "subtitle",
+              "value": "Quelques informations suffisent pour commander sur Dougplace"
+            }
+          ]
+        },
+        {
+          "id": "blk_inscription_form",
+          "blockType": "form",
+          "entityId": "ent_profil",
+          "props": [
+            {
+              "key": "fieldIds",
+              "value": [
+                "fld_profil_nom_complet",
+                "fld_profil_email",
+                "fld_profil_mot_de_passe"
+              ]
+            },
+            {
+              "key": "submitLabel",
+              "value": "Créer mon compte"
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Création de votre compte…"
+            }
+          ]
+        },
+        {
+          "id": "blk_inscription_connexion",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "J'ai déjà un compte"
+            },
+            {
+              "key": "actionId",
+              "value": "act_ouvrir_connexion"
+            },
+            {
+              "key": "kind",
+              "value": "link"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_mot_de_passe_oublie",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Mot de passe oublié"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": false,
+      "presentation": "sheet",
+      "dismissLabel": [
+        {
+          "locale": "fr",
+          "text": "Fermer"
+        }
+      ],
+      "blocks": [
+        {
+          "id": "blk_oubli_entete",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Mot de passe oublié"
+            },
+            {
+              "key": "subtitle",
+              "value": "Nous vous envoyons un lien de réinitialisation par e-mail"
+            }
+          ]
+        },
+        {
+          "id": "blk_oubli_form",
+          "blockType": "form",
+          "entityId": "ent_profil",
+          "props": [
+            {
+              "key": "fieldIds",
+              "value": [
+                "fld_profil_email"
+              ]
+            },
+            {
+              "key": "submitLabel",
+              "value": "Recevoir le lien"
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Envoi du lien en cours…"
+            }
+          ]
+        },
+        {
+          "id": "blk_oubli_connexion",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Revenir à la connexion"
+            },
+            {
+              "key": "actionId",
+              "value": "act_ouvrir_connexion"
+            },
+            {
+              "key": "kind",
+              "value": "link"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "actions": [
+    {
+      "id": "act_ouvrir_inscription",
+      "name": "Ouvrir l'inscription",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_bienvenue_creer_compte"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_inscription"
+      }
+    },
+    {
+      "id": "act_ouvrir_connexion",
+      "name": "Ouvrir la connexion",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_bienvenue_connexion"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_connexion"
+      }
+    },
+    {
+      "id": "act_entrer_accueil",
+      "name": "Continuer sans compte vers l'accueil",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_bienvenue_visiteur"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_accueil"
+      }
+    },
+    {
+      "id": "act_ouvrir_mot_de_passe_oublie",
+      "name": "Ouvrir la réinitialisation du mot de passe",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_connexion_oubli"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_mot_de_passe_oublie"
+      }
+    },
+    {
+      "id": "act_connexion_valider",
+      "name": "Se connecter",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_connexion_form"
+      },
+      "effect": {
+        "kind": "capability",
+        "capability": "auth",
+        "method": "signIn",
+        "params": [
+          {
+            "key": "profileEntityId",
+            "value": "ent_profil"
+          },
+          {
+            "key": "identifierField",
+            "value": "fld_profil_email"
+          },
+          {
+            "key": "secretField",
+            "value": "fld_profil_mot_de_passe"
+          }
+        ]
+      }
+    },
+    {
+      "id": "act_inscription_valider",
+      "name": "Créer mon compte",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_inscription_form"
+      },
+      "effect": {
+        "kind": "capability",
+        "capability": "auth",
+        "method": "signUp",
+        "params": [
+          {
+            "key": "profileEntityId",
+            "value": "ent_profil"
+          },
+          {
+            "key": "identifierField",
+            "value": "fld_profil_email"
+          },
+          {
+            "key": "secretField",
+            "value": "fld_profil_mot_de_passe"
+          },
+          {
+            "key": "nameField",
+            "value": "fld_profil_nom_complet"
+          }
+        ]
+      }
+    },
+    {
+      "id": "act_inscription_creer_profil",
+      "name": "Enregistrer le profil du nouveau client",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_inscription_form"
+      },
+      "effect": {
+        "kind": "mutation",
+        "entityId": "ent_profil",
+        "operation": "create",
+        "thenScreenId": "scr_compte"
+      }
+    },
+    {
+      "id": "act_mot_de_passe_reinitialiser",
+      "name": "Recevoir le lien de réinitialisation",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_oubli_form"
+      },
+      "effect": {
+        "kind": "capability",
+        "capability": "auth",
+        "method": "resetPassword",
+        "params": [
+          {
+            "key": "profileEntityId",
+            "value": "ent_profil"
+          },
+          {
+            "key": "identifierField",
+            "value": "fld_profil_email"
+          }
+        ]
+      }
+    },
+    {
+      "id": "act_deconnexion",
+      "name": "Se déconnecter",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_compte_deconnexion"
+      },
+      "effect": {
+        "kind": "capability",
+        "capability": "auth",
+        "method": "signOut",
+        "params": [
+          {
+            "key": "profileEntityId",
+            "value": "ent_profil"
+          }
+        ]
+      }
+    },
+    {
+      "id": "act_ouvrir_profil",
+      "name": "Ouvrir mon profil",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_compte_profil"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_profil"
+      }
+    },
+    {
+      "id": "act_profil_enregistrer",
+      "name": "Enregistrer mes informations de profil",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_profil_form"
+      },
+      "effect": {
+        "kind": "mutation",
+        "entityId": "ent_profil",
+        "operation": "update",
+        "instanceFrom": "session",
+        "thenScreenId": "scr_compte"
+      }
+    },
+    {
+      "id": "act_ouvrir_categories",
+      "name": "Parcourir les catégories",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_accueil_categories"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_categories"
+      }
+    },
+    {
+      "id": "act_categorie_electronique",
+      "name": "Voir la catégorie Électronique",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_categorie_electronique"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_catalogue"
+      }
+    },
+    {
+      "id": "act_categorie_mode",
+      "name": "Voir la catégorie Mode",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_categorie_mode"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_catalogue"
+      }
+    },
+    {
+      "id": "act_categorie_maison",
+      "name": "Voir la catégorie Maison",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_categorie_maison"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_catalogue"
+      }
+    },
+    {
+      "id": "act_categorie_sport",
+      "name": "Voir la catégorie Sport",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_categorie_sport"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_catalogue"
+      }
+    },
+    {
+      "id": "act_ouvrir_produit",
+      "name": "Ouvrir une fiche produit",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_catalogue_produit"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_produit_detail"
+      }
+    },
+    {
+      "id": "act_ouvrir_produit_depuis_liste",
+      "name": "Ouvrir la fiche produit depuis la ligne du catalogue",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_catalogue_liste"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_produit_detail"
+      }
+    },
+    {
+      "id": "act_ouvrir_produit_depuis_selection",
+      "name": "Ouvrir la fiche produit depuis la sélection de l'accueil",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_accueil_selection_liste"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_produit_detail"
+      }
+    },
+    {
+      "id": "act_ouvrir_vendeur",
+      "name": "Voir le vendeur",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_produit_vendeur_btn"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_vendeur_detail"
+      }
+    },
+    {
+      "id": "act_ouvrir_catalogue_vendeur",
+      "name": "Voir les produits du vendeur",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_vendeur_catalogue_btn"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_catalogue"
+      }
+    },
+    {
+      "id": "act_ajouter_au_panier",
+      "name": "Ajouter au panier",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_produit_ajouter_panier"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_panier"
+      }
+    },
+    {
+      "id": "act_ouvrir_paiement",
+      "name": "Passer au paiement",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_panier_payer"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_paiement"
+      }
+    },
+    {
+      "id": "act_retour_panier",
+      "name": "Revenir au panier",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_paiement_retour"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_panier"
+      }
+    },
+    {
+      "id": "act_payer_commande",
+      "name": "Payer par carte et suivre la commande",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_paiement_confirmer"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_commande_detail"
+      }
+    },
+    {
+      "id": "act_ouvrir_commande_detail",
+      "name": "Suivre ma dernière commande",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_commandes_suivi"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_commande_detail"
+      }
+    },
+    {
+      "id": "act_panier_vide_categories",
+      "name": "Parcourir les catégories depuis le panier vide",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_panier_vide"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_categories"
+      }
+    },
+    {
+      "id": "act_commandes_vide_categories",
+      "name": "Parcourir les catégories depuis l'absence de commande",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_commandes_vide"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_categories"
+      }
+    },
+    {
+      "id": "act_calculer_recapitulatif_panier",
+      "name": "Calculer le récapitulatif du panier",
+      "trigger": {
+        "kind": "lifecycle",
+        "event": "screen_open",
+        "screenId": "scr_panier"
+      },
+      "effect": {
+        "kind": "slot",
+        "slotId": "slot_recapitulatif_panier",
+        "binding": {
+          "inputs": [
+            {
+              "port": "lignesPanier",
+              "source": {
+                "kind": "entity_rows",
+                "entityId": "ent_profil"
+              }
+            },
+            {
+              "port": "devise",
+              "source": {
+                "kind": "literal",
+                "value": "FCFA"
+              }
+            },
+            {
+              "port": "fraisLivraison",
+              "source": {
+                "kind": "literal",
+                "value": 2000
+              }
+            }
+          ],
+          "outputs": [
+            {
+              "port": "totalLibelle",
+              "blockId": "blk_panier_entete",
+              "prop": "subtitle"
+            },
+            {
+              "port": "nombreArticlesLibelle",
+              "blockId": "blk_panier_vide",
+              "prop": "message"
+            },
+            {
+              "port": "sousTotalLibelle",
+              "blockId": "blk_paiement_entete",
+              "prop": "subtitle"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "act_calculer_suivi_commande",
+      "name": "Calculer le libellé de suivi de commande",
+      "trigger": {
+        "kind": "lifecycle",
+        "event": "screen_open",
+        "screenId": "scr_commande_detail"
+      },
+      "effect": {
+        "kind": "slot",
+        "slotId": "slot_libelle_suivi_commande",
+        "binding": {
+          "inputs": [
+            {
+              "port": "commande",
+              "source": {
+                "kind": "entity_rows",
+                "entityId": "ent_profil"
+              }
+            },
+            {
+              "port": "dateCommande",
+              "source": {
+                "kind": "literal",
+                "value": "2024-06-01T10:00:00Z"
+              }
+            }
+          ],
+          "outputs": [
+            {
+              "port": "suiviLibelle",
+              "blockId": "blk_commande_detail_entete",
+              "prop": "subtitle"
+            },
+            {
+              "port": "etapeCourante",
+              "blockId": "blk_commande_detail_entete",
+              "prop": "title"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "capabilities": [
+    {
+      "capability": "auth",
+      "config": [
+        {
+          "key": "profileEntityId",
+          "value": "ent_profil"
+        },
+        {
+          "key": "identifierField",
+          "value": "fld_profil_email"
+        },
+        {
+          "key": "secretField",
+          "value": "fld_profil_mot_de_passe"
+        },
+        {
+          "key": "emailConfirmationRequired",
+          "value": true
+        },
+        {
+          "key": "allowAnonymousBrowsing",
+          "value": true
+        }
+      ]
+    },
+    {
+      "capability": "payments.psp",
+      "config": [
+        {
+          "key": "commerceClass",
+          "value": "physical_or_offapp"
+        },
+        {
+          "key": "currency",
+          "value": "XOF"
+        },
+        {
+          "key": "currencyLabel",
+          "value": "FCFA"
+        },
+        {
+          "key": "methods",
+          "value": [
+            "card"
+          ]
+        },
+        {
+          "key": "captureMode",
+          "value": "immediate"
+        }
+      ]
+    }
+  ],
+  "permissions": [],
+  "integrations": [
+    {
+      "id": "intg_auth_dougplace",
+      "providerClass": "supabase_auth",
+      "capability": "auth",
+      "config": [
+        {
+          "key": "url",
+          "value": "https://api.dougplace.app"
+        },
+        {
+          "key": "anonKey",
+          "value": ""
+        },
+        {
+          "key": "profileEntityId",
+          "value": "ent_profil"
+        },
+        {
+          "key": "identifierField",
+          "value": "fld_profil_email"
+        },
+        {
+          "key": "credentialFieldId",
+          "value": "fld_profil_mot_de_passe"
+        },
+        {
+          "key": "nameField",
+          "value": "fld_profil_nom_complet"
+        },
+        {
+          "key": "emailConfirmationRequired",
+          "value": true
+        },
+        {
+          "key": "allowAnonymousBrowsing",
+          "value": true
+        },
+        {
+          "key": "defaultLocale",
+          "value": "fr"
+        }
+      ]
+    },
+    {
+      "id": "intg_paiement_carte",
+      "providerClass": "psp_card",
+      "capability": "payments.psp",
+      "config": [
+        {
+          "key": "baseUrl",
+          "value": "https://api.dougplace.app"
+        },
+        {
+          "key": "commerceClass",
+          "value": "physical_or_offapp"
+        },
+        {
+          "key": "currency",
+          "value": "XOF"
+        },
+        {
+          "key": "currencyLabel",
+          "value": "FCFA"
+        },
+        {
+          "key": "methods",
+          "value": [
+            "card"
+          ]
+        },
+        {
+          "key": "captureMode",
+          "value": "immediate"
+        },
+        {
+          "key": "country",
+          "value": "CI"
+        }
+      ]
+    },
+    {
+      "id": "intg_api_dougplace",
+      "providerClass": "rest_api",
+      "config": [
+        {
+          "key": "baseUrl",
+          "value": "https://api.dougplace.app"
+        },
+        {
+          "key": "domain",
+          "value": "api.dougplace.app"
+        },
+        {
+          "key": "authMode",
+          "value": "session_bearer"
+        },
+        {
+          "key": "defaultLocale",
+          "value": "fr"
+        }
+      ]
+    },
+    {
+      "id": "intg_images_catalogue",
+      "providerClass": "image_cdn",
+      "config": [
+        {
+          "key": "baseUrl",
+          "value": "https://picsum.photos"
+        },
+        {
+          "key": "domain",
+          "value": "picsum.photos"
+        },
+        {
+          "key": "usage",
+          "value": "demo_catalog_photos"
+        }
+      ]
+    }
+  ],
+  "expectedTests": [
+    {
+      "id": "test_barre_navigation_persistante",
+      "description": "La barre de navigation persistante affiche les cinq destinations Accueil, Produits, Panier, Commandes et Compte, dans cet ordre, et reste visible sur l'écran Accueil comme sur chaque écran du parcours principal.",
+      "kind": "e2e",
+      "targetId": "scr_accueil"
+    },
+    {
+      "id": "test_entree_visiteur_accueil",
+      "description": "Depuis l'écran de bienvenue, « Continuer sans compte » conduit à l'écran Accueil de Dougplace.",
+      "kind": "e2e",
+      "targetId": "act_entrer_accueil"
+    },
+    {
+      "id": "test_ouvrir_inscription_depuis_bienvenue",
+      "description": "Depuis l'écran de bienvenue, « Créer un compte » présente la feuille d'inscription avec son contrôle de fermeture.",
+      "kind": "e2e",
+      "targetId": "act_ouvrir_inscription"
+    },
+    {
+      "id": "test_ouvrir_connexion_depuis_bienvenue",
+      "description": "Depuis l'écran de bienvenue, « J'ai déjà un compte » présente la feuille de connexion.",
+      "kind": "e2e",
+      "targetId": "act_ouvrir_connexion"
+    },
+    {
+      "id": "test_ouvrir_mot_de_passe_oublie",
+      "description": "Depuis la feuille de connexion, le lien « Mot de passe oublié ? » présente la feuille de réinitialisation avec le seul champ e-mail.",
+      "kind": "e2e",
+      "targetId": "act_ouvrir_mot_de_passe_oublie"
+    },
+    {
+      "id": "test_parcours_categories",
+      "description": "Depuis l'accueil, « Parcourir les catégories » ouvre l'écran Catégories listant Électronique, Mode, Maison et Sport.",
+      "kind": "e2e",
+      "targetId": "act_ouvrir_categories"
+    },
+    {
+      "id": "test_categorie_electronique_vers_catalogue",
+      "description": "Le choix de la catégorie Électronique ouvre l'écran Produits.",
+      "kind": "e2e",
+      "targetId": "act_categorie_electronique"
+    },
+    {
+      "id": "test_ouvrir_fiche_produit",
+      "description": "Depuis l'écran Produits, l'ouverture d'une fiche produit conduit à l'écran Fiche produit.",
+      "kind": "e2e",
+      "targetId": "act_ouvrir_produit"
+    },
+    {
+      "id": "test_fiche_produit_vers_vendeur",
+      "description": "Depuis la fiche produit, « Voir le vendeur » ouvre l'écran Vendeur de la boutique.",
+      "kind": "e2e",
+      "targetId": "act_ouvrir_vendeur"
+    },
+    {
+      "id": "test_vendeur_vers_catalogue",
+      "description": "Depuis l'écran Vendeur, « Voir ses produits » ramène à l'écran Produits.",
+      "kind": "e2e",
+      "targetId": "act_ouvrir_catalogue_vendeur"
+    },
+    {
+      "id": "test_ajout_au_panier",
+      "description": "Depuis la fiche produit, « Ajouter au panier » conduit à l'écran Panier.",
+      "kind": "e2e",
+      "targetId": "act_ajouter_au_panier"
+    },
+    {
+      "id": "test_panier_vers_paiement",
+      "description": "Depuis le panier, « Passer au paiement » ouvre l'écran de paiement par carte.",
+      "kind": "e2e",
+      "targetId": "act_ouvrir_paiement"
+    },
+    {
+      "id": "test_paiement_retour_panier",
+      "description": "Depuis l'écran de paiement, « Modifier mon panier » ramène à l'écran Panier sans perdre l'état saisi.",
+      "kind": "e2e",
+      "targetId": "act_retour_panier"
+    },
+    {
+      "id": "test_paiement_vers_suivi",
+      "description": "Depuis l'écran de paiement, « Payer par carte » conduit à l'écran de suivi de commande.",
+      "kind": "e2e",
+      "targetId": "act_payer_commande"
+    },
+    {
+      "id": "test_suivi_derniere_commande",
+      "description": "Depuis l'écran Commandes, « Suivre ma dernière commande » ouvre l'écran de suivi de commande.",
+      "kind": "e2e",
+      "targetId": "act_ouvrir_commande_detail"
+    },
+    {
+      "id": "test_compte_vers_profil",
+      "description": "Depuis l'écran Compte en session authentifiée, « Mon profil » ouvre l'écran Mon profil.",
+      "kind": "e2e",
+      "targetId": "act_ouvrir_profil"
+    },
+    {
+      "id": "test_profil_enregistrement",
+      "description": "La soumission du formulaire de profil met à jour la ligne du client connecté (instanceFrom session) puis revient à l'écran Compte.",
+      "kind": "e2e",
+      "targetId": "act_profil_enregistrer"
+    },
+    {
+      "id": "test_profil_form_champs",
+      "description": "L'écran Mon profil affiche le formulaire avec les libellés humains « Nom complet » et « Adresse e-mail » et son bouton « Enregistrer mes informations », avec ses états de chargement et vide.",
+      "kind": "deterministic",
+      "targetId": "scr_profil"
+    },
+    {
+      "id": "test_regle_identite_profil",
+      "description": "Un profil sans nom complet ou sans adresse e-mail est refusé à l'écriture lors de l'enregistrement du profil (règle rule_profil_identite_requise).",
+      "kind": "deterministic",
+      "targetId": "act_profil_enregistrer"
+    },
+    {
+      "id": "test_regle_email_valide",
+      "description": "Une adresse e-mail au format invalide (« awa.kone » sans domaine) est refusée avant écriture sur l'entité profil (règle rule_profil_email_valide).",
+      "kind": "deterministic",
+      "targetId": "ent_profil"
+    },
+    {
+      "id": "test_regle_mot_de_passe_robuste",
+      "description": "Un mot de passe de moins de 8 caractères ou dépourvu de chiffre est refusé à l'inscription (règle rule_profil_mot_de_passe_robuste).",
+      "kind": "deterministic",
+      "targetId": "act_inscription_creer_profil"
+    },
+    {
+      "id": "test_slot_recapitulatif_panier",
+      "description": "Le slot slot_recapitulatif_panier est invoqué à l'ouverture du panier et alimente le sous-titre du panier, le message d'état vide et le sous-titre de l'écran de paiement avec des montants formatés en FCFA.",
+      "kind": "deterministic",
+      "targetId": "act_calculer_recapitulatif_panier"
+    },
+    {
+      "id": "test_slot_suivi_commande",
+      "description": "Le slot slot_libelle_suivi_commande est invoqué à l'ouverture du suivi de commande et alimente le titre et le sous-titre de l'en-tête avec l'étape courante en français.",
+      "kind": "deterministic",
+      "targetId": "act_calculer_suivi_commande"
+    },
+    {
+      "id": "test_dataset_profil_amorce",
+      "description": "Le dataset data_profil de l'entité profil est amorcé avec six lignes de démonstration réalistes (noms et e-mails ivoiriens) et son empreinte de contenu correspond.",
+      "kind": "deterministic",
+      "targetId": "ent_profil"
+    },
+    {
+      "id": "test_integration_auth_contrat",
+      "description": "L'intégration d'authentification intg_auth_dougplace expose url, anonKey et profileEntityId pointant sur ent_profil, sans secret dans le document : la connexion s'exécute réellement.",
+      "kind": "contract",
+      "targetId": "act_connexion_valider"
+    },
+    {
+      "id": "test_integration_paiement_contrat",
+      "description": "L'écran de paiement s'appuie sur l'intégration intg_paiement_carte qui déclare la classe commerce physical_or_offapp, la devise XOF (FCFA) et le seul moyen carte, sans secret dans le document.",
+      "kind": "contract",
+      "targetId": "scr_paiement"
+    },
+    {
+      "id": "test_integration_api_domaine",
+      "description": "L'écran Produits n'appelle que api.dougplace.app via intg_api_dougplace, domaine autorisé par la politique réseau deny_by_default.",
+      "kind": "contract",
+      "targetId": "scr_catalogue"
+    },
+    {
+      "id": "test_integration_images_domaine",
+      "description": "La fiche produit ne sert que des URLs picsum.photos via intg_images_catalogue, domaine autorisé par la politique réseau.",
+      "kind": "contract",
+      "targetId": "scr_produit_detail"
+    },
+    {
+      "id": "test_compte_etats_session",
+      "description": "L'écran Compte n'affiche qu'un seul état de session à la fois : invitation à se connecter en session anonyme, message de confirmation en attente, accès au profil et déconnexion en session authentifiée.",
+      "kind": "deterministic",
+      "targetId": "scr_compte"
+    },
+    {
+      "id": "test_feuille_connexion_presentation",
+      "description": "La feuille de connexion monte depuis le bas, masque le titre d'écran et la barre principale, et propose son contrôle de fermeture « Fermer ».",
+      "kind": "deterministic",
+      "targetId": "scr_connexion"
+    },
+    {
+      "id": "test_accueil_onboarding_composition",
+      "description": "L'écran de bienvenue présente le grand titre Dougplace en accroche, un espace extensible puis les trois chemins hiérarchisés (créer un compte, se connecter, continuer sans compte), sans barre principale ni titre d'écran.",
+      "kind": "deterministic",
+      "targetId": "scr_bienvenue"
+    }
+  ],
+  "intent": {
+    "request": "Je lance Dougplace — l'application s'appelle exactement « Dougplace » — une marketplace généraliste en Côte d'Ivoire : électronique, mode, maison, sport. Les vendeurs listent leurs produits avec de vraies photos, les clients créent un compte, découvrent une sélection dès l'accueil, parcourent le catalogue par catégorie, recherchent, consultent la fiche d'un produit avec photos, description, prix et vendeur, ajoutent au panier, paient par carte et suivent leurs commandes. Chaque client gère son profil et son adresse de livraison. En français.",
+    "requestLocale": "fr",
+    "needs": [
+      {
+        "id": "need_marque_dougplace",
+        "statement": "L'application s'appelle exactement « Dougplace » et se présente comme une marketplace généraliste en Côte d'Ivoire.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "scr_bienvenue",
+            "blk_bienvenue_entete",
+            "scr_accueil",
+            "blk_accueil_entete"
+          ]
+        }
+      },
+      {
+        "id": "need_univers_categories",
+        "statement": "La marketplace couvre quatre univers : électronique, mode, maison et sport.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "scr_categories",
+            "blk_categories_entete",
+            "blk_categorie_electronique",
+            "blk_categorie_mode",
+            "blk_categorie_maison",
+            "blk_categorie_sport",
+            "act_categorie_electronique",
+            "act_categorie_mode",
+            "act_categorie_maison",
+            "act_categorie_sport"
+          ]
+        }
+      },
+      {
+        "id": "need_vendeurs_listent_produits",
+        "statement": "Les vendeurs listent leurs produits sur la marketplace.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "scr_catalogue",
+            "blk_catalogue_liste",
+            "scr_vendeur_detail",
+            "blk_vendeur_entete",
+            "blk_vendeur_catalogue_btn",
+            "act_ouvrir_catalogue_vendeur"
+          ]
+        }
+      },
+      {
+        "id": "need_photos_reelles_produits",
+        "statement": "Les produits sont présentés avec de vraies photos.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "blk_catalogue_liste",
+            "blk_accueil_selection_liste",
+            "intg_images_catalogue",
+            "test_integration_images_domaine"
+          ]
+        }
+      },
+      {
+        "id": "need_creation_compte_client",
+        "statement": "Les clients créent un compte (inscription, connexion, mot de passe oublié).",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "scr_inscription",
+            "blk_inscription_form",
+            "act_inscription_creer_profil",
+            "scr_connexion",
+            "blk_connexion_form",
+            "scr_mot_de_passe_oublie",
+            "blk_oubli_form",
+            "ent_profil",
+            "intg_auth_dougplace",
+            "rule_profil_mot_de_passe_robuste"
+          ]
+        }
+      },
+      {
+        "id": "need_selection_accueil",
+        "statement": "Les clients découvrent une sélection dès l'accueil.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "scr_accueil",
+            "blk_accueil_entete",
+            "blk_accueil_selection_liste",
+            "blk_accueil_selection",
+            "blk_accueil_categories",
+            "act_ouvrir_categories",
+            "act_ouvrir_produit_depuis_selection"
+          ]
+        }
+      },
+      {
+        "id": "need_parcours_catalogue_par_categorie",
+        "statement": "Les clients parcourent le catalogue par catégorie.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "scr_categories",
+            "blk_categorie_electronique",
+            "blk_categorie_mode",
+            "blk_categorie_maison",
+            "blk_categorie_sport",
+            "scr_catalogue",
+            "blk_catalogue_liste",
+            "blk_catalogue_categories",
+            "blk_catalogue_vide",
+            "act_ouvrir_categories"
+          ]
+        }
+      },
+      {
+        "id": "need_recherche_produits",
+        "statement": "Les clients recherchent des produits dans le catalogue.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "scr_catalogue",
+            "blk_catalogue_liste",
+            "blk_catalogue_vide"
+          ]
+        }
+      },
+      {
+        "id": "need_fiche_produit_complete",
+        "statement": "Les clients consultent la fiche d'un produit avec photos, description, prix et vendeur.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "blk_catalogue_liste",
+            "act_ouvrir_produit_depuis_liste",
+            "scr_produit_detail",
+            "blk_produit_entete",
+            "blk_produit_vendeur_btn",
+            "act_ouvrir_vendeur",
+            "scr_vendeur_detail",
+            "blk_vendeur_entete"
+          ]
+        }
+      },
+      {
+        "id": "need_ajout_au_panier",
+        "statement": "Les clients ajoutent un produit au panier et consultent le récapitulatif de leur panier.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "blk_produit_ajouter_panier",
+            "act_ajouter_au_panier",
+            "scr_panier",
+            "blk_panier_entete",
+            "blk_panier_vide",
+            "blk_panier_payer",
+            "slot_recapitulatif_panier",
+            "act_calculer_recapitulatif_panier"
+          ]
+        }
+      },
+      {
+        "id": "need_paiement_par_carte",
+        "statement": "Les clients paient leur commande par carte.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "scr_paiement",
+            "blk_paiement_entete",
+            "blk_paiement_confirmer",
+            "act_payer_commande",
+            "blk_paiement_retour",
+            "act_retour_panier",
+            "intg_paiement_carte"
+          ]
+        }
+      },
+      {
+        "id": "need_suivi_commandes",
+        "statement": "Les clients suivent leurs commandes.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "scr_commandes",
+            "blk_commandes_entete",
+            "blk_commandes_vide",
+            "blk_commandes_suivi",
+            "act_ouvrir_commande_detail",
+            "scr_commande_detail",
+            "blk_commande_detail_entete",
+            "slot_libelle_suivi_commande",
+            "act_calculer_suivi_commande"
+          ]
+        }
+      },
+      {
+        "id": "need_gestion_profil",
+        "statement": "Chaque client gère son profil.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "scr_compte",
+            "blk_compte_profil",
+            "act_ouvrir_profil",
+            "scr_profil",
+            "blk_profil_form",
+            "act_profil_enregistrer",
+            "rule_profil_identite_requise",
+            "rule_profil_email_valide",
+            "ent_profil"
+          ]
+        }
+      },
+      {
+        "id": "need_adresse_livraison",
+        "statement": "Chaque client gère son adresse de livraison.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "scr_profil",
+            "blk_profil_entete",
+            "blk_profil_form",
+            "act_profil_enregistrer",
+            "ent_profil"
+          ]
+        }
+      },
+      {
+        "id": "need_application_en_francais",
+        "statement": "L'application est intégralement en français.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "blk_bienvenue_entete",
+            "blk_accueil_entete",
+            "blk_catalogue_entete",
+            "blk_catalogue_liste",
+            "blk_panier_entete",
+            "blk_compte_entete"
+          ]
+        }
+      }
+    ]
+  }
+}

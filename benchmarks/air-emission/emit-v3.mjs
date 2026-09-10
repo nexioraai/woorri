@@ -157,7 +157,7 @@ const coutUSD = (u) =>
 // générée naissait en dessous du niveau. Un test du paquet air-schema compare
 // cette constante à AIR_SCHEMA_VERSION : toute avancée du schéma CASSE la CI
 // tant que ce prompt n'a pas été resynchronisé, consciemment.
-export const CONTRAT_CIBLE = "1.19.0";
+export const CONTRAT_CIBLE = "1.20.0";
 
 const PARTS = [
   {
@@ -173,7 +173,13 @@ const PARTS = [
       "compliance",
     ],
   },
-  { name: "donnees", keys: ["entities", "relations", "datasets", "rules", "slots"] },
+  // SCISSION 2026-09-09 (même patron que D-078, mesuré et non supposé) :
+  // « The compiled grammar is too large » sur `donnees` à TOUS les niveaux de
+  // dégradation — le schéma des champs a grossi depuis le 2/09 (label,
+  // enumLabels en liste de paires, sensitive). Les entités portent seules la
+  // grammaire la plus lourde ; le reste des données suit dans sa propre passe.
+  { name: "entites", keys: ["entities"] },
+  { name: "donnees", keys: ["relations", "datasets", "rules", "slots"] },
   { name: "ecrans", keys: ["screens"] },
   // DÉCOUPAGE (D-078) — mesuré, pas supposé : « The compiled grammar is too
   // large » sur `base` ET `comportement`. Les liaisons de slot et `thenScreenId`
@@ -276,10 +282,12 @@ REGISTRE DES SMART BLOCKS (allowlist FERMÉE — blockType UNIQUEMENT parmi ces 
 
 15. AFFICHAGE DES RÉFÉRENCES — tout champ \`type:"reference"\` porte \`referenceDisplayFieldId\` : l'identifiant du champ de l'entité CIBLE à montrer. Sans lui, l'écran affiche un identifiant brut (« ent_plat_003 ») au lieu d'un nom.
 
+15bis. UNE ENTITÉ PAR CONCEPT MÉTIER — la demande NOMME les objets du domaine : produits, vendeurs, catégories, panier, commandes, paiement, profil… CHACUN devient une entité, avec ses champs et son dataset. ÉCHEC MESURÉ (dougplace, 2026-09-10, 6,81 $ perdus) : une marketplace émise avec UNE SEULE entité — le profil — et 15 écrans creux autour ; l'écran « Catalogue » listait des PROFILS D'UTILISATEURS en guise de produits, et chaque besoin se déclarait « satisfait » en pointant ces blocs vivants-mais-faux. Un bloc VIVANT ne prouve un besoin que s'il rend le BON objet : lister l'entité profil ne satisfera JAMAIS un besoin de catalogue. Ordre de grandeur attendu d'une app de commerce : 5 à 8 entités.
+
 16. ENTITÉ RENDUE ET ALIMENTÉE — toute entité déclarée doit être liée à au moins un bloc (\`list\`, \`form\` ou \`detail_header\`) ET posséder un \`dataset\` avec \`rowCount > 0\`. Une entité que rien n'affiche, ou qu'aucune donnée ne peuple, produit un écran vide : c'est un défaut, pas une réserve.
 
 17. HONNÊTETÉ SUR LES CAPABILITIES — le moteur N'EXÉCUTE PAS ENCORE les effets \`capability\` (\`capabilitiesEmitCode: false\`, mesuré), À UNE EXCEPTION PRÈS, réelle et prouvée sur appareil : \`auth\` (\`sessionEtablissable: true\`). Les méthodes signIn, signUp, signOut et resetPassword S'EXÉCUTENT quand le document déclare une intégration auth portant \`url\`, \`anonKey\` et \`profileEntityId\` — le provisioning les remplit. Les besoins de compte se déclarent donc \`satisfied\`. Tout le reste de cette règle vaut pour les AUTRES capabilities (caméra, GPS, notifications…). Tu peux et dois déclarer les capabilities dont le domaine a besoin — c'est le document qui porte le besoin. Mais :
-   · N'ÉCRIS AUCUN \`expectedTests\` dont le \`targetId\` est une action à effet \`capability\`. Ce serait promettre un comportement que rien ne tient.
+   · N'ÉCRIS AUCUN \`expectedTests\` dont le \`targetId\` est une action à effet \`capability\` — SAUF les actions \`auth\` (signIn, signUp, signOut, resetPassword), qui S'EXÉCUTENT réellement : les tester est légitime et attendu. MESURÉ (dougplace, 2026-09-10) : une version de cette règle sans l'exception a poussé le modèle à TRANSFORMER les actions auth en mutations pour pouvoir les tester — le garde-fou anti-amputation a rejeté la réparation entière. Ne change JAMAIS l'effet d'une action pour contourner une règle : l'exception est ici, sers-t'en.
    · Le besoin correspondant va dans \`intent.needs\` avec \`{kind:"unexpressible", reason:"le moteur n'exécute pas encore les effets capability (capabilitiesEmitCode: false)"}\`.
    Déclarer le besoin est juste ; le promettre est un mensonge. Le premier est exigé, le second interdit.
    PORTÉE STRICTE : cette règle ne vaut QUE pour les effets \`capability\` — prise de vue, position GPS, carte, notifications. Elle n'autorise RIEN d'autre à être déclaré inexprimable. AFFICHER une image déjà présente dans les données, RECHERCHER dans une liste, NAVIGUER : le moteur sait faire, la surface ci-dessus le dit, et ces besoins DOIVENT être satisfaits. Ne généralise jamais cette règle au-delà de son objet.
@@ -344,6 +352,7 @@ REGISTRE DES SMART BLOCKS (allowlist FERMÉE — blockType UNIQUEMENT parmi ces 
    · une entité PROFIL, référencée par l'intégration auth (\`profileEntityId\`) ;
    · tout secret (mot de passe) : \`sensitive: true\` sur le champ — masqué à la saisie ET jamais persisté, les deux sont COUPLÉS par le contrat ;
    · écrans connexion, inscription, mot de passe oublié ; actions \`capability\` auth (signIn, signUp, signOut, resetPassword) portées par leurs formulaires ;
+   · l'intégration auth se déclare SANS AUCUNE clé ni secret (ni anonKey, ni apiKey, ni token — le validateur refuse toute clé d'allure secrète) : le PROVISIONING injecte url, anonKey et profileEntityId après coup ;
    · \`visibleWhen\` de session (\`session_present\`, \`session_absent\`, \`session_pending_confirmation\`) pour montrer l'état juste — jamais deux états à la fois ;
    · les mutations du profil déclarent \`instanceFrom: "session"\` : la ligne écrite est celle de la personne connectée, jamais rows[0].
 
@@ -351,7 +360,15 @@ REGISTRE DES SMART BLOCKS (allowlist FERMÉE — blockType UNIQUEMENT parmi ces 
 
 35. FEUILLES (1.17–1.18) — connexion, inscription, mot de passe oublié, paramètres : \`presentation: "sheet"\` (l'écran MONTE du bas au lieu de remplacer le parcours) + \`dismissLabel\` (le mot du contrôle de fermeture — le moteur dessine le ✕, TOI tu le nommes) + \`showsScreenTitle: false\`. Un écran du parcours principal reste une carte. Le validateur REFUSE \`dismissLabel\` hors d'une feuille.
 
-36. ICÔNES D'ONGLETS — chaque destination de \`primary\` porte \`icon\` (allowlist fermée de la règle sur \`button\`). Une barre sans icônes est lisible ; avec, elle est immédiate. Choisis le glyphe par le RÔLE (compte → compte, panier → panier), jamais par fantaisie.
+36ter. IMAGES RÉELLES (1.20) — tout champ \`asset\` d'une entité de CATALOGUE porte \`demoValues\` : 6 à 12 URLs \`https://picsum.photos/seed/<mot-descriptif-unique>/600/600\` (photos réelles, servies sans clé), ET \`picsum.photos\` figure dans \`network.allowedDomains\`. Un catalogue aux vignettes grises n'est pas un catalogue.
+
+36quater. L'ACCUEIL MONTRE LE PRODUIT — l'écran Accueil d'une app de catalogue ne se limite JAMAIS à un en-tête : il porte au moins un bloc \`list\` de l'entité vedette (sélection, nouveautés) en \`layout: "grid"\`, avec ses images. L'utilisateur voit la marchandise dès l'entrée, comme dans toute marketplace de référence.
+
+36bis. VALEURS DE DÉMO (1.20) — tout champ TEXTE affiché par une liste ou un détail d'un CATALOGUE (nom, titre, description) porte \`demoValues\` : 4 à 8 valeurs RÉALISTES du domaine (« Collier baoulé perles bleues », jamais « nom 17 »). Le moteur les cycle dans les données de démonstration : c'est CE que le client verra à la première ouverture. Un catalogue crédible se juge à ces valeurs.
+
+37. GRILLE DE CATALOGUE (1.20) — un écran de CATALOGUE (produits, biens, annonces, plats) déclare \`layout: "grid"\` sur son bloc \`list\` : les articles se présentent en CARTES sur deux colonnes — image dessus, nom, prix — comme toute marketplace de référence. \`imageFieldId\` est alors OBLIGATOIRE (règle 23). Les listes de FLUX (commandes, historique, panier) restent en lignes.
+
+36. ICÔNES — allowlist FERMÉE, ONZE valeurs, aucune autre : accueil, recherche, liste, billet, panier, calendrier, carte, compte, favoris, message, reglages. Elle vaut pour \`icon\` des destinations de \`primary\` ET pour \`icon\` d'un \`button\` — et NULLE PART ailleurs (aucun autre bloc n'a d'icône). MESURÉ (dougplace) : 18 refus \`BLOCK_PROPS_INVALID\` pour des glyphes inventés ou posés sur les mauvais blocs. Choisis par le RÔLE (compte → compte, panier → panier) ; si aucun des onze ne convient, N'EN METS PAS.
 
 RÈGLES BLOCS NON NÉGOCIABLES :
 A. Tout *FieldId d'un bloc référence un champ (fld_*) DE L'ENTITÉ LIÉE à ce bloc.
@@ -533,6 +550,12 @@ function validateLocal(document) {
     ...airSchema.validateAir(parsed.data),
     ...registry.validateAirCapabilities(parsed.data),
     ...blocksRegistry.validateAirBlocks(parsed.data),
+    // ── PREUVE DE MATIÈRE (2026-09-10) — VERROU MÉCANIQUE, pas une règle de
+    // prompt : un document qui VEND doit posséder une marchandise alimentée
+    // et affichée, distincte du profil. Refus testé sur le cadavre réel
+    // (dougplace, 1 entité = profil, 6,81 $). Couche CAMPAGNE uniquement —
+    // le corpus gelé v2 précède l'exigence et n'est pas re-jugé.
+    ...fidelity.preuveDeMatiere(parsed.data),
     // ── FORM_SANS_ACTION (2026-09-01) — DIAGNOSTIC, JAMAIS UN REFUS DE CONTRAT.
     //
     // Un `form` rend TOUJOURS un bouton portant son `submitLabel` : c'est une
@@ -760,10 +783,14 @@ async function repairSections(
   // avec elle : les sections déjà réémises — et déjà PAYÉES — disparaissaient.
   const partiel = accumulateur ?? preservation.reparationPartielleVierge(document);
   const repaired = partiel.document;
-  for (const part of PARTS.filter((p) => failing.includes(p.name))) {
+  // SCISSION `entites`/`donnees` (2026-09-09) : le vocabulaire de sections de
+  // la réparation reste STABLE (« donnees » couvre les entités) — c'est ici,
+  // et seulement ici, que le nom de passe se traduit en nom de section.
+  const sectionDe = (partName) => (partName === "entites" ? "donnees" : partName);
+  for (const part of PARTS.filter((p) => failing.includes(sectionDe(p.name)))) {
     // Tous les diagnostics dont CETTE section peut porter le correctif.
     const subset = diagnostics.filter((d) =>
-      repairScope.sectionsAReemettre([d]).includes(part.name),
+      repairScope.sectionsAReemettre([d]).includes(sectionDe(part.name)),
     );
     if (subset.length === 0) continue;
     const user =
@@ -949,6 +976,15 @@ if (process.argv[2] === "--reparer") {
     );
   } catch (e) {
     console.error(`  🔴 INTERROMPU — ${String(e.message ?? e).slice(0, 200)}`);
+    // LE TRAVAIL PAYÉ NE MEURT PAS AVEC LE PROCESSUS (mesuré le 2026-09-10 :
+    // 0,89 $ de sections réparées perdues faute de cette écriture — le garde
+    // les attachait à l'erreur, le CLI les jetait). Même règle que la
+    // campagne : tout partiel exploitable est ÉCRIT avant de sortir.
+    const partiel = preservation.partielDeLErreur(e, preservation.CLE_REPARATION);
+    if (partiel !== undefined && preservation.estExploitable(partiel)) {
+      const f = ecrireArtefact(slug, "reparation-partielle", partiel.document);
+      console.log(`  partiel conservé (${partiel.sectionsReemises.join(", ")}) : ${f}`);
+    }
     console.log(`  dépensé ~$${etatDepense.depense.toFixed(4)} · ${usage.length} appel(s)`);
     process.exit(1);
   }

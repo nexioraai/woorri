@@ -1,0 +1,4782 @@
+{
+  "airSchemaVersion": "1.20.0",
+  "projectId": "prj_dougplace",
+  "app": {
+    "name": "Dougplace",
+    "slug": "dougplace",
+    "description": [
+      {
+        "locale": "fr",
+        "text": "Dougplace est une marketplace généraliste ivoirienne : électronique, mode, maison et sport. Les clients créent un compte, découvrent une sélection dès l'accueil, parcourent le catalogue par catégorie, recherchent un article, consultent la fiche produit avec photos, description, prix et vendeur, ajoutent au panier, paient par carte et suivent leurs commandes depuis leur profil."
+      }
+    ],
+    "locales": {
+      "userLanguage": "fr",
+      "appLocales": [
+        "fr"
+      ],
+      "defaultAppLocale": "fr",
+      "contentLocales": [
+        "fr"
+      ],
+      "rtlSupported": false
+    }
+  },
+  "navigation": {
+    "entryScreenId": "scr_bienvenue",
+    "primary": {
+      "destinations": [
+        {
+          "routeId": "nav_accueil",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Accueil"
+            }
+          ],
+          "order": 0,
+          "icon": "accueil"
+        },
+        {
+          "routeId": "nav_catalogue",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Catalogue"
+            }
+          ],
+          "order": 1,
+          "icon": "recherche"
+        },
+        {
+          "routeId": "nav_panier",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Panier"
+            }
+          ],
+          "order": 2,
+          "icon": "panier"
+        },
+        {
+          "routeId": "nav_commandes",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Commandes"
+            }
+          ],
+          "order": 3,
+          "icon": "liste"
+        },
+        {
+          "routeId": "nav_compte",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Compte"
+            }
+          ],
+          "order": 4,
+          "icon": "compte"
+        }
+      ]
+    },
+    "routes": [
+      {
+        "id": "nav_bienvenue",
+        "screenId": "scr_bienvenue",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Bienvenue"
+          }
+        ]
+      },
+      {
+        "id": "nav_connexion",
+        "screenId": "scr_connexion",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Connexion"
+          }
+        ]
+      },
+      {
+        "id": "nav_inscription",
+        "screenId": "scr_inscription",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Créer un compte"
+          }
+        ]
+      },
+      {
+        "id": "nav_mot_de_passe_oublie",
+        "screenId": "scr_mot_de_passe_oublie",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Mot de passe oublié"
+          }
+        ]
+      },
+      {
+        "id": "nav_accueil",
+        "screenId": "scr_accueil",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Accueil"
+          }
+        ]
+      },
+      {
+        "id": "nav_catalogue",
+        "screenId": "scr_catalogue",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Catalogue"
+          }
+        ]
+      },
+      {
+        "id": "nav_produit",
+        "screenId": "scr_produit_detail",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Fiche produit"
+          }
+        ]
+      },
+      {
+        "id": "nav_vendeur",
+        "screenId": "scr_vendeur_detail",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Boutique du vendeur"
+          }
+        ]
+      },
+      {
+        "id": "nav_panier",
+        "screenId": "scr_panier",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Mon panier"
+          }
+        ]
+      },
+      {
+        "id": "nav_paiement",
+        "screenId": "scr_paiement",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Paiement par carte"
+          }
+        ]
+      },
+      {
+        "id": "nav_commandes",
+        "screenId": "scr_commandes",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Mes commandes"
+          }
+        ]
+      },
+      {
+        "id": "nav_commande",
+        "screenId": "scr_commande_detail",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Suivi de commande"
+          }
+        ]
+      },
+      {
+        "id": "nav_compte",
+        "screenId": "scr_compte",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Mon compte"
+          }
+        ]
+      },
+      {
+        "id": "nav_adresse",
+        "screenId": "scr_adresse_livraison",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Adresse de livraison"
+          }
+        ]
+      }
+    ]
+  },
+  "design": {
+    "theme": "marketplace_moderne"
+  },
+  "network": {
+    "policy": "deny_by_default",
+    "allowedDomains": [
+      "api.dougplace.app",
+      "picsum.photos"
+    ]
+  },
+  "native": {
+    "minIosVersion": "16.0",
+    "minAndroidSdk": 26
+  },
+  "compliance": {
+    "commerceClass": "physical_or_offapp",
+    "accountDeletionRequired": true,
+    "dataCollected": [
+      "contact_info",
+      "identifiers",
+      "usage_data",
+      "user_content",
+      "purchases",
+      "diagnostics"
+    ]
+  },
+  "entities": [
+    {
+      "id": "ent_profil",
+      "name": "profil",
+      "fields": [
+        {
+          "id": "fld_profil_nom",
+          "name": "nom_complet",
+          "type": "string",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Nom complet"
+            }
+          ],
+          "demoValues": [
+            "Aïcha Koné",
+            "Yao Kouassi",
+            "Fatou Traoré",
+            "Serge N'Guessan",
+            "Mariam Bakayoko"
+          ]
+        },
+        {
+          "id": "fld_profil_email",
+          "name": "email",
+          "type": "string",
+          "required": true,
+          "unique": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Adresse e-mail"
+            }
+          ],
+          "demoValues": [
+            "aicha.kone@example.ci",
+            "yao.kouassi@example.ci",
+            "fatou.traore@example.ci",
+            "serge.nguessan@example.ci"
+          ]
+        },
+        {
+          "id": "fld_profil_telephone",
+          "name": "telephone",
+          "type": "string",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Numéro de téléphone"
+            }
+          ],
+          "demoValues": [
+            "+225 07 01 23 45 67",
+            "+225 05 44 88 12 90",
+            "+225 01 02 33 44 55",
+            "+225 27 22 41 60 30"
+          ]
+        },
+        {
+          "id": "fld_profil_mot_de_passe",
+          "name": "mot_de_passe",
+          "type": "string",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Mot de passe"
+            }
+          ],
+          "sensitive": true
+        },
+        {
+          "id": "fld_profil_ville",
+          "name": "ville",
+          "type": "string",
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Ville"
+            }
+          ],
+          "demoValues": [
+            "Abidjan",
+            "Bouaké",
+            "Yamoussoukro",
+            "San-Pédro",
+            "Korhogo"
+          ]
+        },
+        {
+          "id": "fld_profil_membre_depuis",
+          "name": "membre_depuis",
+          "type": "date",
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Membre depuis"
+            }
+          ],
+          "demoValues": [
+            "2024-02-11",
+            "2024-07-03",
+            "2025-01-19",
+            "2025-05-27"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ent_categorie",
+      "name": "categorie",
+      "fields": [
+        {
+          "id": "fld_categorie_nom",
+          "name": "nom",
+          "type": "string",
+          "required": true,
+          "unique": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Catégorie"
+            }
+          ],
+          "demoValues": [
+            "Électronique",
+            "Mode",
+            "Maison",
+            "Sport"
+          ]
+        },
+        {
+          "id": "fld_categorie_description",
+          "name": "description",
+          "type": "text",
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Description"
+            }
+          ],
+          "demoValues": [
+            "Téléphones, audio, télévisions et accessoires connectés.",
+            "Vêtements pagne, prêt-à-porter, chaussures et sacs.",
+            "Cuisine, décoration, ventilation et rangement.",
+            "Équipements de sport, chaussures et tenues d'entraînement."
+          ]
+        },
+        {
+          "id": "fld_categorie_visuel",
+          "name": "visuel",
+          "type": "asset",
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Visuel de la catégorie"
+            }
+          ],
+          "demoValues": [
+            "https://picsum.photos/seed/categorie-electronique/600/600",
+            "https://picsum.photos/seed/categorie-mode/600/600",
+            "https://picsum.photos/seed/categorie-maison/600/600",
+            "https://picsum.photos/seed/categorie-sport/600/600",
+            "https://picsum.photos/seed/categorie-audio/600/600",
+            "https://picsum.photos/seed/categorie-cuisine/600/600",
+            "https://picsum.photos/seed/categorie-chaussures/600/600",
+            "https://picsum.photos/seed/categorie-fitness/600/600"
+          ]
+        },
+        {
+          "id": "fld_categorie_nb_produits",
+          "name": "nombre_produits",
+          "type": "number",
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Produits disponibles"
+            }
+          ],
+          "demoValues": [
+            "48",
+            "126",
+            "73",
+            "39"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ent_vendeur",
+      "name": "vendeur",
+      "fields": [
+        {
+          "id": "fld_vendeur_nom",
+          "name": "nom_boutique",
+          "type": "string",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Boutique"
+            }
+          ],
+          "demoValues": [
+            "Adjamé Électro",
+            "Wax & Style Cocody",
+            "Maison Djeni",
+            "Sport Plus Treichville",
+            "Yopougon Digital",
+            "Abidjan Déco"
+          ]
+        },
+        {
+          "id": "fld_vendeur_description",
+          "name": "description",
+          "type": "text",
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "À propos de la boutique"
+            }
+          ],
+          "demoValues": [
+            "Vendeur d'électronique installé au marché d'Adjamé depuis 2016, garantie 6 mois.",
+            "Atelier de couture wax sur mesure, livraison dans tout Abidjan en 48 h.",
+            "Articles de maison et petits appareils sélectionnés, prix négociés.",
+            "Équipement sportif officiel pour clubs et particuliers.",
+            "Smartphones neufs et reconditionnés vérifiés avant expédition.",
+            "Décoration artisanale ivoirienne et mobilier léger."
+          ]
+        },
+        {
+          "id": "fld_vendeur_ville",
+          "name": "ville",
+          "type": "string",
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Ville"
+            }
+          ],
+          "demoValues": [
+            "Abidjan",
+            "Bouaké",
+            "San-Pédro",
+            "Yamoussoukro"
+          ]
+        },
+        {
+          "id": "fld_vendeur_telephone",
+          "name": "telephone",
+          "type": "string",
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Téléphone de la boutique"
+            }
+          ],
+          "demoValues": [
+            "+225 07 88 12 45 30",
+            "+225 05 60 77 22 18",
+            "+225 01 45 90 33 12",
+            "+225 27 21 35 44 08"
+          ]
+        },
+        {
+          "id": "fld_vendeur_note",
+          "name": "note",
+          "type": "decimal",
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Note moyenne"
+            }
+          ],
+          "demoValues": [
+            "4.8",
+            "4.5",
+            "4.2",
+            "4.9",
+            "4.0",
+            "4.6"
+          ]
+        },
+        {
+          "id": "fld_vendeur_logo",
+          "name": "logo",
+          "type": "asset",
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Logo de la boutique"
+            }
+          ],
+          "demoValues": [
+            "https://picsum.photos/seed/boutique-adjame-electro/600/600",
+            "https://picsum.photos/seed/boutique-wax-style/600/600",
+            "https://picsum.photos/seed/boutique-maison-djeni/600/600",
+            "https://picsum.photos/seed/boutique-sport-plus/600/600",
+            "https://picsum.photos/seed/boutique-yopougon-digital/600/600",
+            "https://picsum.photos/seed/boutique-abidjan-deco/600/600",
+            "https://picsum.photos/seed/boutique-marche-bouake/600/600",
+            "https://picsum.photos/seed/boutique-san-pedro-store/600/600"
+          ]
+        },
+        {
+          "id": "fld_vendeur_verifie",
+          "name": "verifie",
+          "type": "boolean",
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Vendeur vérifié"
+            }
+          ],
+          "demoValues": [
+            "true",
+            "false",
+            "true",
+            "true"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ent_produit",
+      "name": "produit",
+      "fields": [
+        {
+          "id": "fld_produit_nom",
+          "name": "nom",
+          "type": "string",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Nom du produit"
+            }
+          ],
+          "demoValues": [
+            "Smartphone Tecno Camon 20 - 256 Go",
+            "Casque Bluetooth JBL Tune 520",
+            "Robe en pagne wax cousue main",
+            "Sneakers Adidas Duramo 10",
+            "Ventilateur sur pied 3 vitesses",
+            "Set de 6 verres à thé gravés",
+            "Ballon de football Mikasa taille 5",
+            "Téléviseur LED 43 pouces Full HD"
+          ]
+        },
+        {
+          "id": "fld_produit_description",
+          "name": "description",
+          "type": "text",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Description"
+            }
+          ],
+          "demoValues": [
+            "Écran 6,7 pouces, double SIM, batterie 5000 mAh, chargeur rapide inclus. Garantie 6 mois.",
+            "Casque sans fil pliable, 40 h d'autonomie, micro intégré pour les appels.",
+            "Pagne wax authentique cousu par notre atelier de Cocody, tailles 36 à 46 disponibles.",
+            "Chaussures de course légères et respirantes, semelle amortissante, du 39 au 45.",
+            "Ventilateur 45 cm, hauteur réglable, moteur silencieux, oscillation automatique.",
+            "Verres épais gravés, vendus par lot de 6 dans un coffret cadeau.",
+            "Ballon cousu main homologué, taille 5, idéal pour terrain sablonneux ou gazon."
+          ]
+        },
+        {
+          "id": "fld_produit_prix",
+          "name": "prix",
+          "type": "decimal",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Prix (FCFA)"
+            }
+          ],
+          "demoValues": [
+            "129000",
+            "34500",
+            "28000",
+            "52000",
+            "24500",
+            "12000",
+            "15500",
+            "185000"
+          ]
+        },
+        {
+          "id": "fld_produit_photo",
+          "name": "photo",
+          "type": "asset",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Photo du produit"
+            }
+          ],
+          "demoValues": [
+            "https://picsum.photos/seed/produit-smartphone-tecno/600/600",
+            "https://picsum.photos/seed/produit-casque-jbl/600/600",
+            "https://picsum.photos/seed/produit-robe-wax/600/600",
+            "https://picsum.photos/seed/produit-sneakers-adidas/600/600",
+            "https://picsum.photos/seed/produit-ventilateur-pied/600/600",
+            "https://picsum.photos/seed/produit-verres-the/600/600",
+            "https://picsum.photos/seed/produit-ballon-mikasa/600/600",
+            "https://picsum.photos/seed/produit-televiseur-led/600/600",
+            "https://picsum.photos/seed/produit-sac-cuir-abidjan/600/600",
+            "https://picsum.photos/seed/produit-mixeur-cuisine/600/600",
+            "https://picsum.photos/seed/produit-tapis-yoga/600/600",
+            "https://picsum.photos/seed/produit-montre-connectee/600/600"
+          ]
+        },
+        {
+          "id": "fld_produit_categorie",
+          "name": "categorie",
+          "type": "reference",
+          "required": true,
+          "referencesEntityId": "ent_categorie",
+          "referenceDisplayFieldId": "fld_categorie_nom",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Catégorie"
+            }
+          ]
+        },
+        {
+          "id": "fld_produit_vendeur",
+          "name": "vendeur",
+          "type": "reference",
+          "required": true,
+          "referencesEntityId": "ent_vendeur",
+          "referenceDisplayFieldId": "fld_vendeur_nom",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Vendeur"
+            }
+          ]
+        },
+        {
+          "id": "fld_produit_etat",
+          "name": "etat",
+          "type": "enum",
+          "required": true,
+          "enumValues": [
+            "neuf",
+            "reconditionne",
+            "occasion"
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "État de l'article"
+            }
+          ],
+          "enumLabels": [
+            {
+              "value": "neuf",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Neuf"
+                }
+              ]
+            },
+            {
+              "value": "reconditionne",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Reconditionné"
+                }
+              ]
+            },
+            {
+              "value": "occasion",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Occasion"
+                }
+              ]
+            }
+          ],
+          "demoValues": [
+            "neuf",
+            "neuf",
+            "occasion",
+            "reconditionne"
+          ]
+        },
+        {
+          "id": "fld_produit_stock",
+          "name": "stock",
+          "type": "number",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Quantité en stock"
+            }
+          ],
+          "demoValues": [
+            "12",
+            "5",
+            "3",
+            "24",
+            "8",
+            "40"
+          ]
+        },
+        {
+          "id": "fld_produit_en_vedette",
+          "name": "en_vedette",
+          "type": "boolean",
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Mis en avant sur l'accueil"
+            }
+          ],
+          "demoValues": [
+            "true",
+            "true",
+            "false",
+            "true",
+            "false",
+            "true"
+          ]
+        },
+        {
+          "id": "fld_produit_ville_expedition",
+          "name": "ville_expedition",
+          "type": "string",
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Expédié depuis"
+            }
+          ],
+          "demoValues": [
+            "Abidjan",
+            "Bouaké",
+            "San-Pédro",
+            "Yamoussoukro"
+          ]
+        },
+        {
+          "id": "fld_produit_publie_le",
+          "name": "publie_le",
+          "type": "datetime",
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Mis en ligne le"
+            }
+          ],
+          "demoValues": [
+            "2026-01-08T09:30:00Z",
+            "2026-01-15T14:05:00Z",
+            "2026-02-02T11:45:00Z",
+            "2026-02-20T16:20:00Z"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ent_panier_article",
+      "name": "panier_article",
+      "fields": [
+        {
+          "id": "fld_panier_produit",
+          "name": "produit",
+          "type": "reference",
+          "required": true,
+          "referencesEntityId": "ent_produit",
+          "referenceDisplayFieldId": "fld_produit_nom",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Produit"
+            }
+          ]
+        },
+        {
+          "id": "fld_panier_photo",
+          "name": "photo",
+          "type": "asset",
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Visuel de l'article"
+            }
+          ],
+          "demoValues": [
+            "https://picsum.photos/seed/panier-smartphone-tecno/600/600",
+            "https://picsum.photos/seed/panier-casque-jbl/600/600",
+            "https://picsum.photos/seed/panier-robe-wax/600/600",
+            "https://picsum.photos/seed/panier-sneakers-adidas/600/600",
+            "https://picsum.photos/seed/panier-ventilateur-pied/600/600",
+            "https://picsum.photos/seed/panier-verres-the/600/600"
+          ]
+        },
+        {
+          "id": "fld_panier_client",
+          "name": "client",
+          "type": "reference",
+          "required": true,
+          "referencesEntityId": "ent_profil",
+          "referenceDisplayFieldId": "fld_profil_nom",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Client"
+            }
+          ]
+        },
+        {
+          "id": "fld_panier_quantite",
+          "name": "quantite",
+          "type": "number",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Quantité"
+            }
+          ],
+          "demoValues": [
+            "1",
+            "2",
+            "1",
+            "3"
+          ]
+        },
+        {
+          "id": "fld_panier_prix_unitaire",
+          "name": "prix_unitaire",
+          "type": "decimal",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Prix unitaire (FCFA)"
+            }
+          ],
+          "demoValues": [
+            "129000",
+            "34500",
+            "28000",
+            "52000",
+            "24500"
+          ]
+        },
+        {
+          "id": "fld_panier_total_ligne",
+          "name": "total_ligne",
+          "type": "decimal",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Total de la ligne (FCFA)"
+            }
+          ],
+          "demoValues": [
+            "129000",
+            "69000",
+            "28000",
+            "156000",
+            "24500"
+          ]
+        },
+        {
+          "id": "fld_panier_ajoute_le",
+          "name": "ajoute_le",
+          "type": "datetime",
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Ajouté au panier le"
+            }
+          ],
+          "demoValues": [
+            "2026-03-01T10:12:00Z",
+            "2026-03-01T10:14:00Z",
+            "2026-03-02T18:40:00Z"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ent_adresse",
+      "name": "adresse",
+      "fields": [
+        {
+          "id": "fld_adresse_libelle",
+          "name": "libelle",
+          "type": "string",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Libellé de l'adresse"
+            }
+          ],
+          "demoValues": [
+            "Domicile - Cocody Angré",
+            "Bureau - Plateau",
+            "Chez maman - Yopougon",
+            "Boutique - Marcory Zone 4"
+          ]
+        },
+        {
+          "id": "fld_adresse_destinataire",
+          "name": "destinataire",
+          "type": "string",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Nom du destinataire"
+            }
+          ],
+          "demoValues": [
+            "Aïcha Koné",
+            "Yao Kouassi",
+            "Fatou Traoré",
+            "Serge N'Guessan"
+          ]
+        },
+        {
+          "id": "fld_adresse_telephone",
+          "name": "telephone",
+          "type": "string",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Téléphone du destinataire"
+            }
+          ],
+          "demoValues": [
+            "+225 07 01 23 45 67",
+            "+225 05 44 88 12 90",
+            "+225 01 02 33 44 55"
+          ]
+        },
+        {
+          "id": "fld_adresse_quartier",
+          "name": "quartier",
+          "type": "string",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Quartier"
+            }
+          ],
+          "demoValues": [
+            "Angré 7e Tranche",
+            "Plateau Dokui",
+            "Niangon Sud",
+            "Zone 4"
+          ]
+        },
+        {
+          "id": "fld_adresse_ville",
+          "name": "ville",
+          "type": "string",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Ville"
+            }
+          ],
+          "demoValues": [
+            "Abidjan",
+            "Bouaké",
+            "San-Pédro",
+            "Yamoussoukro"
+          ]
+        },
+        {
+          "id": "fld_adresse_indications",
+          "name": "indications",
+          "type": "text",
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Indications pour le livreur"
+            }
+          ],
+          "demoValues": [
+            "Immeuble bleu en face de la pharmacie, 2e étage.",
+            "Portail vert après la station-service, demander le gardien.",
+            "Rue derrière l'école primaire, maison à véranda.",
+            "Appeler à l'arrivée, la cour est fermée."
+          ]
+        },
+        {
+          "id": "fld_adresse_client",
+          "name": "client",
+          "type": "reference",
+          "required": true,
+          "referencesEntityId": "ent_profil",
+          "referenceDisplayFieldId": "fld_profil_nom",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Client"
+            }
+          ]
+        },
+        {
+          "id": "fld_adresse_par_defaut",
+          "name": "par_defaut",
+          "type": "boolean",
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Adresse de livraison par défaut"
+            }
+          ],
+          "demoValues": [
+            "true",
+            "false",
+            "false",
+            "true"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ent_commande",
+      "name": "commande",
+      "fields": [
+        {
+          "id": "fld_commande_numero",
+          "name": "numero",
+          "type": "string",
+          "required": true,
+          "unique": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Numéro de commande"
+            }
+          ],
+          "demoValues": [
+            "DGP-2026-1041",
+            "DGP-2026-1042",
+            "DGP-2026-1057",
+            "DGP-2026-1063",
+            "DGP-2026-1088"
+          ]
+        },
+        {
+          "id": "fld_commande_client",
+          "name": "client",
+          "type": "reference",
+          "required": true,
+          "referencesEntityId": "ent_profil",
+          "referenceDisplayFieldId": "fld_profil_nom",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Client"
+            }
+          ]
+        },
+        {
+          "id": "fld_commande_adresse",
+          "name": "adresse_livraison",
+          "type": "reference",
+          "required": true,
+          "referencesEntityId": "ent_adresse",
+          "referenceDisplayFieldId": "fld_adresse_libelle",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Adresse de livraison"
+            }
+          ]
+        },
+        {
+          "id": "fld_commande_date",
+          "name": "date_commande",
+          "type": "datetime",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Passée le"
+            }
+          ],
+          "demoValues": [
+            "2026-02-18T09:05:00Z",
+            "2026-02-24T15:40:00Z",
+            "2026-03-02T08:20:00Z",
+            "2026-03-05T19:10:00Z"
+          ]
+        },
+        {
+          "id": "fld_commande_nb_articles",
+          "name": "nombre_articles",
+          "type": "number",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Nombre d'articles"
+            }
+          ],
+          "demoValues": [
+            "1",
+            "2",
+            "3",
+            "4"
+          ]
+        },
+        {
+          "id": "fld_commande_montant_total",
+          "name": "montant_total",
+          "type": "decimal",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Montant total (FCFA)"
+            }
+          ],
+          "demoValues": [
+            "129000",
+            "97500",
+            "206500",
+            "46500",
+            "185000"
+          ]
+        },
+        {
+          "id": "fld_commande_statut",
+          "name": "statut",
+          "type": "enum",
+          "required": true,
+          "enumValues": [
+            "en_preparation",
+            "expediee",
+            "en_livraison",
+            "livree",
+            "annulee"
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Statut de la commande"
+            }
+          ],
+          "enumLabels": [
+            {
+              "value": "en_preparation",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "En préparation"
+                }
+              ]
+            },
+            {
+              "value": "expediee",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Expédiée"
+                }
+              ]
+            },
+            {
+              "value": "en_livraison",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "En cours de livraison"
+                }
+              ]
+            },
+            {
+              "value": "livree",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Livrée"
+                }
+              ]
+            },
+            {
+              "value": "annulee",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Annulée"
+                }
+              ]
+            }
+          ],
+          "demoValues": [
+            "en_preparation",
+            "expediee",
+            "en_livraison",
+            "livree",
+            "annulee"
+          ]
+        },
+        {
+          "id": "fld_commande_code_suivi",
+          "name": "code_suivi",
+          "type": "string",
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Code de suivi du colis"
+            }
+          ],
+          "demoValues": [
+            "CI-AB-88231",
+            "CI-AB-88245",
+            "CI-BK-11902",
+            "CI-SP-40318"
+          ]
+        },
+        {
+          "id": "fld_commande_livraison_prevue",
+          "name": "livraison_prevue",
+          "type": "date",
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Livraison prévue le"
+            }
+          ],
+          "demoValues": [
+            "2026-02-21",
+            "2026-02-27",
+            "2026-03-05",
+            "2026-03-09"
+          ]
+        },
+        {
+          "id": "fld_commande_mode_paiement",
+          "name": "mode_paiement",
+          "type": "enum",
+          "required": true,
+          "enumValues": [
+            "carte_bancaire"
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Mode de paiement"
+            }
+          ],
+          "enumLabels": [
+            {
+              "value": "carte_bancaire",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Carte bancaire"
+                }
+              ]
+            }
+          ],
+          "demoValues": [
+            "carte_bancaire"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ent_paiement",
+      "name": "paiement",
+      "fields": [
+        {
+          "id": "fld_paiement_commande",
+          "name": "commande",
+          "type": "reference",
+          "required": true,
+          "referencesEntityId": "ent_commande",
+          "referenceDisplayFieldId": "fld_commande_numero",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Commande réglée"
+            }
+          ]
+        },
+        {
+          "id": "fld_paiement_titulaire",
+          "name": "titulaire_carte",
+          "type": "string",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Nom du titulaire de la carte"
+            }
+          ],
+          "demoValues": [
+            "AICHA KONE",
+            "YAO KOUASSI",
+            "FATOU TRAORE",
+            "SERGE NGUESSAN"
+          ]
+        },
+        {
+          "id": "fld_paiement_numero_carte",
+          "name": "numero_carte",
+          "type": "string",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Numéro de carte"
+            }
+          ],
+          "sensitive": true
+        },
+        {
+          "id": "fld_paiement_expiration",
+          "name": "expiration",
+          "type": "string",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Date d'expiration (MM/AA)"
+            }
+          ],
+          "sensitive": true
+        },
+        {
+          "id": "fld_paiement_cvv",
+          "name": "code_securite",
+          "type": "string",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Code de sécurité"
+            }
+          ],
+          "sensitive": true
+        },
+        {
+          "id": "fld_paiement_montant",
+          "name": "montant",
+          "type": "decimal",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Montant débité (FCFA)"
+            }
+          ],
+          "demoValues": [
+            "129000",
+            "97500",
+            "206500",
+            "46500"
+          ]
+        },
+        {
+          "id": "fld_paiement_statut",
+          "name": "statut",
+          "type": "enum",
+          "required": true,
+          "enumValues": [
+            "en_attente",
+            "autorise",
+            "refuse",
+            "rembourse"
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Statut du paiement"
+            }
+          ],
+          "enumLabels": [
+            {
+              "value": "en_attente",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "En attente de validation"
+                }
+              ]
+            },
+            {
+              "value": "autorise",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Paiement accepté"
+                }
+              ]
+            },
+            {
+              "value": "refuse",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Paiement refusé"
+                }
+              ]
+            },
+            {
+              "value": "rembourse",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Remboursé"
+                }
+              ]
+            }
+          ],
+          "demoValues": [
+            "autorise",
+            "autorise",
+            "en_attente",
+            "refuse"
+          ]
+        },
+        {
+          "id": "fld_paiement_date",
+          "name": "date_paiement",
+          "type": "datetime",
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Payé le"
+            }
+          ],
+          "demoValues": [
+            "2026-02-18T09:07:00Z",
+            "2026-02-24T15:43:00Z",
+            "2026-03-02T08:22:00Z",
+            "2026-03-05T19:12:00Z"
+          ]
+        }
+      ]
+    }
+  ],
+  "relations": [
+    {
+      "id": "rel_categorie_produits",
+      "fromEntityId": "ent_categorie",
+      "toEntityId": "ent_produit",
+      "kind": "one_to_many"
+    },
+    {
+      "id": "rel_vendeur_produits",
+      "fromEntityId": "ent_vendeur",
+      "toEntityId": "ent_produit",
+      "kind": "one_to_many"
+    },
+    {
+      "id": "rel_profil_panier",
+      "fromEntityId": "ent_profil",
+      "toEntityId": "ent_panier_article",
+      "kind": "one_to_many"
+    },
+    {
+      "id": "rel_produit_panier",
+      "fromEntityId": "ent_produit",
+      "toEntityId": "ent_panier_article",
+      "kind": "one_to_many"
+    },
+    {
+      "id": "rel_profil_adresses",
+      "fromEntityId": "ent_profil",
+      "toEntityId": "ent_adresse",
+      "kind": "one_to_many"
+    },
+    {
+      "id": "rel_profil_commandes",
+      "fromEntityId": "ent_profil",
+      "toEntityId": "ent_commande",
+      "kind": "one_to_many"
+    },
+    {
+      "id": "rel_adresse_commandes",
+      "fromEntityId": "ent_adresse",
+      "toEntityId": "ent_commande",
+      "kind": "one_to_many"
+    },
+    {
+      "id": "rel_commande_paiement",
+      "fromEntityId": "ent_commande",
+      "toEntityId": "ent_paiement",
+      "kind": "one_to_one"
+    }
+  ],
+  "datasets": [
+    {
+      "id": "data_profil",
+      "entityId": "ent_profil",
+      "contentHash": "3f9c1a7b5d2e48c06a1f7e93b4d5c8a2109fe7d3b6c4a5980f1e2d3c4b5a6978",
+      "rowCount": 5,
+      "sourceKind": "seed"
+    },
+    {
+      "id": "data_categorie",
+      "entityId": "ent_categorie",
+      "contentHash": "a1b2c3d4e5f607182931a4b5c6d7e8f901a2b3c4d5e6f708192a3b4c5d6e7f80",
+      "rowCount": 4,
+      "sourceKind": "seed"
+    },
+    {
+      "id": "data_vendeur",
+      "entityId": "ent_vendeur",
+      "contentHash": "7c4e91af20d5b638e1f0a2c394b58d670a1b2c3d4e5f60718293a4b5c6d7e8f9",
+      "rowCount": 6,
+      "sourceKind": "seed"
+    },
+    {
+      "id": "data_produit",
+      "entityId": "ent_produit",
+      "contentHash": "b8d3f0a16c9e2b745a08d1e3f27c4b690d1e2f3041526374859607a1b2c3d4e5",
+      "rowCount": 24,
+      "sourceKind": "seed"
+    },
+    {
+      "id": "data_panier_article",
+      "entityId": "ent_panier_article",
+      "contentHash": "0e5a7c923b1d84f6c7028e5b9a4f61d32c3d4e5f60718293a4b5c6d7e8f90a1b",
+      "rowCount": 4,
+      "sourceKind": "seed"
+    },
+    {
+      "id": "data_adresse",
+      "entityId": "ent_adresse",
+      "contentHash": "5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8192a3b4c6d7e8f90a1b2c3d4e",
+      "rowCount": 4,
+      "sourceKind": "seed"
+    },
+    {
+      "id": "data_commande",
+      "entityId": "ent_commande",
+      "contentHash": "f1e2d3c4b5a69788796a5b4c3d2e1f00112233445566778899aabbccddeeff01",
+      "rowCount": 5,
+      "sourceKind": "seed"
+    },
+    {
+      "id": "data_paiement",
+      "entityId": "ent_paiement",
+      "contentHash": "9a8b7c6d5e4f30211234567890abcdeffedcba09876543210f1e2d3c4b5a6978",
+      "rowCount": 5,
+      "sourceKind": "seed"
+    }
+  ],
+  "rules": [
+    {
+      "id": "rule_produit_identite",
+      "description": "Un produit publié doit porter un nom, une description, une photo, une catégorie et un vendeur.",
+      "kind": "validation",
+      "entityId": "ent_produit",
+      "assertions": [
+        {
+          "fieldId": "fld_produit_nom",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_produit_description",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_produit_photo",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_produit_categorie",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_produit_vendeur",
+          "operator": "required"
+        }
+      ]
+    },
+    {
+      "id": "rule_produit_prix_stock",
+      "description": "Le prix d'un produit doit être strictement positif, le stock ne peut pas être négatif et l'état doit appartenir à la liste autorisée.",
+      "kind": "validation",
+      "entityId": "ent_produit",
+      "assertions": [
+        {
+          "fieldId": "fld_produit_prix",
+          "operator": "gt",
+          "value": 0
+        },
+        {
+          "fieldId": "fld_produit_stock",
+          "operator": "gte",
+          "value": 0
+        },
+        {
+          "fieldId": "fld_produit_etat",
+          "operator": "in",
+          "value": [
+            "neuf",
+            "reconditionne",
+            "occasion"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "rule_profil_coordonnees",
+      "description": "Le compte client exige un nom complet, une adresse e-mail valide et un numéro de téléphone ivoirien.",
+      "kind": "validation",
+      "entityId": "ent_profil",
+      "assertions": [
+        {
+          "fieldId": "fld_profil_nom",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_profil_email",
+          "operator": "matches",
+          "value": "^[^@\\s]+@[^@\\s]+\\.[A-Za-z]{2,}$"
+        },
+        {
+          "fieldId": "fld_profil_telephone",
+          "operator": "matches",
+          "value": "^\\+?[0-9 ]{8,20}$"
+        }
+      ]
+    },
+    {
+      "id": "rule_profil_mot_de_passe",
+      "description": "Le mot de passe du compte est obligatoire et doit compter au moins 8 caractères.",
+      "kind": "validation",
+      "entityId": "ent_profil",
+      "assertions": [
+        {
+          "fieldId": "fld_profil_mot_de_passe",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_profil_mot_de_passe",
+          "operator": "matches",
+          "value": "^.{8,}$"
+        }
+      ]
+    },
+    {
+      "id": "rule_panier_ligne_valide",
+      "description": "Une ligne de panier référence un produit, appartient à un client et porte une quantité d'au moins 1 avec un prix unitaire positif.",
+      "kind": "validation",
+      "entityId": "ent_panier_article",
+      "assertions": [
+        {
+          "fieldId": "fld_panier_produit",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_panier_client",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_panier_quantite",
+          "operator": "gte",
+          "value": 1
+        },
+        {
+          "fieldId": "fld_panier_prix_unitaire",
+          "operator": "gt",
+          "value": 0
+        },
+        {
+          "fieldId": "fld_panier_total_ligne",
+          "operator": "gt",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": "rule_panier_proprietaire",
+      "description": "Seul le client connecté peut consulter et modifier les lignes de son propre panier.",
+      "kind": "authorization",
+      "entityId": "ent_panier_article",
+      "assertions": [
+        {
+          "fieldId": "fld_panier_client",
+          "operator": "required"
+        }
+      ]
+    },
+    {
+      "id": "rule_adresse_complete",
+      "description": "Une adresse de livraison doit indiquer un libellé, un destinataire, un téléphone joignable, un quartier et une ville.",
+      "kind": "validation",
+      "entityId": "ent_adresse",
+      "assertions": [
+        {
+          "fieldId": "fld_adresse_libelle",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_adresse_destinataire",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_adresse_telephone",
+          "operator": "matches",
+          "value": "^\\+?[0-9 ]{8,20}$"
+        },
+        {
+          "fieldId": "fld_adresse_quartier",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_adresse_ville",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_adresse_client",
+          "operator": "required"
+        }
+      ]
+    },
+    {
+      "id": "rule_adresse_proprietaire",
+      "description": "Les adresses de livraison ne sont visibles et modifiables que par le client auquel elles appartiennent.",
+      "kind": "authorization",
+      "entityId": "ent_adresse",
+      "assertions": [
+        {
+          "fieldId": "fld_adresse_client",
+          "operator": "required"
+        }
+      ]
+    },
+    {
+      "id": "rule_commande_valide",
+      "description": "Une commande exige un numéro, un client, une adresse de livraison, au moins un article, un montant positif et un statut connu.",
+      "kind": "validation",
+      "entityId": "ent_commande",
+      "assertions": [
+        {
+          "fieldId": "fld_commande_numero",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_commande_client",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_commande_adresse",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_commande_nb_articles",
+          "operator": "gte",
+          "value": 1
+        },
+        {
+          "fieldId": "fld_commande_montant_total",
+          "operator": "gt",
+          "value": 0
+        },
+        {
+          "fieldId": "fld_commande_statut",
+          "operator": "in",
+          "value": [
+            "en_preparation",
+            "expediee",
+            "en_livraison",
+            "livree",
+            "annulee"
+          ]
+        },
+        {
+          "fieldId": "fld_commande_mode_paiement",
+          "operator": "eq",
+          "value": "carte_bancaire"
+        }
+      ]
+    },
+    {
+      "id": "rule_commande_proprietaire",
+      "description": "Le suivi d'une commande n'est accessible qu'au client qui l'a passée.",
+      "kind": "authorization",
+      "entityId": "ent_commande",
+      "assertions": [
+        {
+          "fieldId": "fld_commande_client",
+          "operator": "required"
+        }
+      ]
+    },
+    {
+      "id": "rule_paiement_carte",
+      "description": "Le paiement par carte exige un titulaire, un numéro de carte, une date d'expiration au format MM/AA et un code de sécurité à 3 ou 4 chiffres.",
+      "kind": "validation",
+      "entityId": "ent_paiement",
+      "assertions": [
+        {
+          "fieldId": "fld_paiement_titulaire",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_paiement_numero_carte",
+          "operator": "matches",
+          "value": "^[0-9 ]{13,23}$"
+        },
+        {
+          "fieldId": "fld_paiement_expiration",
+          "operator": "matches",
+          "value": "^(0[1-9]|1[0-2])\\/[0-9]{2}$"
+        },
+        {
+          "fieldId": "fld_paiement_cvv",
+          "operator": "matches",
+          "value": "^[0-9]{3,4}$"
+        }
+      ]
+    },
+    {
+      "id": "rule_paiement_montant",
+      "description": "Le montant débité doit être strictement positif, rattaché à une commande, et le statut du paiement doit appartenir à la liste autorisée.",
+      "kind": "validation",
+      "entityId": "ent_paiement",
+      "assertions": [
+        {
+          "fieldId": "fld_paiement_commande",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_paiement_montant",
+          "operator": "gt",
+          "value": 0
+        },
+        {
+          "fieldId": "fld_paiement_statut",
+          "operator": "in",
+          "value": [
+            "en_attente",
+            "autorise",
+            "refuse",
+            "rembourse"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "rule_categorie_nom",
+      "description": "Chaque catégorie du catalogue porte un nom lisible obligatoire.",
+      "kind": "validation",
+      "entityId": "ent_categorie",
+      "assertions": [
+        {
+          "fieldId": "fld_categorie_nom",
+          "operator": "required"
+        }
+      ]
+    },
+    {
+      "id": "rule_vendeur_boutique",
+      "description": "Une boutique vendeuse doit afficher son nom et un numéro de téléphone de contact.",
+      "kind": "validation",
+      "entityId": "ent_vendeur",
+      "assertions": [
+        {
+          "fieldId": "fld_vendeur_nom",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_vendeur_telephone",
+          "operator": "matches",
+          "value": "^\\+?[0-9 ]{8,20}$"
+        }
+      ]
+    }
+  ],
+  "slots": [
+    {
+      "id": "slot_panier_total",
+      "description": "Calcule le récapitulatif du panier du client : nombre d'articles et montant total en FCFA, formaté pour affichage.",
+      "inputs": [
+        {
+          "name": "lignesPanier",
+          "type": "json"
+        },
+        {
+          "name": "devise",
+          "type": "string"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "montantTotal",
+          "type": "string"
+        },
+        {
+          "name": "resumePanier",
+          "type": "string"
+        }
+      ],
+      "allowedImports": []
+    },
+    {
+      "id": "slot_suivi_commande",
+      "description": "Traduit le statut et la date de livraison prévue d'une commande en une phrase de suivi lisible par le client.",
+      "inputs": [
+        {
+          "name": "commandes",
+          "type": "json"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "prochaineEtape",
+          "type": "string"
+        },
+        {
+          "name": "delaiEstime",
+          "type": "string"
+        }
+      ],
+      "allowedImports": []
+    }
+  ],
+  "screens": [
+    {
+      "id": "scr_bienvenue",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Bienvenue"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": false,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_bienvenue_accroche",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Dougplace"
+            },
+            {
+              "key": "subtitle",
+              "value": "La marketplace de Côte d'Ivoire : électronique, mode, maison et sport, livrés chez vous."
+            },
+            {
+              "key": "accroche",
+              "value": true
+            }
+          ]
+        },
+        {
+          "id": "blk_bienvenue_spacer",
+          "blockType": "spacer"
+        },
+        {
+          "id": "blk_bienvenue_creer_compte",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Créer un compte"
+            },
+            {
+              "key": "actionId",
+              "value": "act_ouvrir_inscription"
+            },
+            {
+              "key": "kind",
+              "value": "primary"
+            },
+            {
+              "key": "icon",
+              "value": "compte"
+            }
+          ]
+        },
+        {
+          "id": "blk_bienvenue_connexion",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "J'ai déjà un compte"
+            },
+            {
+              "key": "actionId",
+              "value": "act_ouvrir_connexion"
+            },
+            {
+              "key": "kind",
+              "value": "ghost"
+            }
+          ]
+        },
+        {
+          "id": "blk_bienvenue_visiteur",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Continuer sans compte"
+            },
+            {
+              "key": "actionId",
+              "value": "act_continuer_sans_compte"
+            },
+            {
+              "key": "kind",
+              "value": "link"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_connexion",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Connexion"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": false,
+      "presentation": "sheet",
+      "dismissLabel": [
+        {
+          "locale": "fr",
+          "text": "Fermer"
+        }
+      ],
+      "blocks": [
+        {
+          "id": "blk_connexion_entete",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Content de vous revoir"
+            },
+            {
+              "key": "subtitle",
+              "value": "Connectez-vous pour retrouver votre panier et vos commandes."
+            }
+          ]
+        },
+        {
+          "id": "blk_connexion_form",
+          "blockType": "form",
+          "entityId": "ent_profil",
+          "props": [
+            {
+              "key": "fieldIds",
+              "value": [
+                "fld_profil_email",
+                "fld_profil_mot_de_passe"
+              ]
+            },
+            {
+              "key": "submitLabel",
+              "value": "Se connecter"
+            },
+            {
+              "key": "title",
+              "value": "Vos identifiants"
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Connexion en cours…"
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Saisissez vos identifiants"
+            }
+          ]
+        },
+        {
+          "id": "blk_connexion_oubli",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Mot de passe oublié ?"
+            },
+            {
+              "key": "actionId",
+              "value": "act_ouvrir_mot_de_passe_oublie"
+            },
+            {
+              "key": "kind",
+              "value": "link"
+            }
+          ]
+        },
+        {
+          "id": "blk_connexion_vers_inscription",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Créer un compte Dougplace"
+            },
+            {
+              "key": "actionId",
+              "value": "act_ouvrir_inscription"
+            },
+            {
+              "key": "kind",
+              "value": "ghost"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_inscription",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Créer un compte"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": false,
+      "presentation": "sheet",
+      "dismissLabel": [
+        {
+          "locale": "fr",
+          "text": "Fermer"
+        }
+      ],
+      "blocks": [
+        {
+          "id": "blk_inscription_entete",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Créer mon compte"
+            },
+            {
+              "key": "subtitle",
+              "value": "Quelques informations suffisent pour commander sur Dougplace."
+            }
+          ]
+        },
+        {
+          "id": "blk_inscription_form",
+          "blockType": "form",
+          "entityId": "ent_profil",
+          "props": [
+            {
+              "key": "fieldIds",
+              "value": [
+                "fld_profil_nom",
+                "fld_profil_email",
+                "fld_profil_telephone",
+                "fld_profil_ville",
+                "fld_profil_mot_de_passe"
+              ]
+            },
+            {
+              "key": "submitLabel",
+              "value": "Créer mon compte"
+            },
+            {
+              "key": "title",
+              "value": "Vos informations"
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Création du compte…"
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Renseignez vos informations"
+            }
+          ]
+        },
+        {
+          "id": "blk_inscription_vers_connexion",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "J'ai déjà un compte"
+            },
+            {
+              "key": "actionId",
+              "value": "act_ouvrir_connexion"
+            },
+            {
+              "key": "kind",
+              "value": "link"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_mot_de_passe_oublie",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Mot de passe oublié"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": false,
+      "presentation": "sheet",
+      "dismissLabel": [
+        {
+          "locale": "fr",
+          "text": "Fermer"
+        }
+      ],
+      "blocks": [
+        {
+          "id": "blk_oubli_entete",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Réinitialiser mon mot de passe"
+            },
+            {
+              "key": "subtitle",
+              "value": "Indiquez l'adresse e-mail de votre compte : vous recevrez un lien de réinitialisation."
+            }
+          ]
+        },
+        {
+          "id": "blk_oubli_form",
+          "blockType": "form",
+          "entityId": "ent_profil",
+          "props": [
+            {
+              "key": "fieldIds",
+              "value": [
+                "fld_profil_email"
+              ]
+            },
+            {
+              "key": "submitLabel",
+              "value": "Recevoir le lien"
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Envoi du lien…"
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Saisissez votre adresse e-mail"
+            }
+          ]
+        },
+        {
+          "id": "blk_oubli_vers_connexion",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Retour à la connexion"
+            },
+            {
+              "key": "actionId",
+              "value": "act_ouvrir_connexion"
+            },
+            {
+              "key": "kind",
+              "value": "link"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_accueil",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Accueil"
+        }
+      ],
+      "showsPrimaryNav": true,
+      "showsScreenTitle": false,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_accueil_entete",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Dougplace"
+            },
+            {
+              "key": "subtitle",
+              "value": "Électronique, mode, maison, sport : la sélection du jour de nos vendeurs ivoiriens."
+            }
+          ]
+        },
+        {
+          "id": "blk_accueil_categories",
+          "blockType": "list",
+          "entityId": "ent_categorie",
+          "props": [
+            {
+              "key": "title",
+              "value": "Parcourir par catégorie"
+            },
+            {
+              "key": "titleFieldId",
+              "value": "fld_categorie_nom"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_categorie_description"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_categorie_nb_produits"
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_categorie_visuel"
+            },
+            {
+              "key": "sortFieldId",
+              "value": "fld_categorie_nom"
+            },
+            {
+              "key": "sortDirection",
+              "value": "asc"
+            },
+            {
+              "key": "pageSize",
+              "value": 4
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement des catégories…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Catégories indisponibles"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Impossible de charger les catégories. Vérifiez votre connexion et réessayez."
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Aucune catégorie"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Les catégories seront bientôt disponibles."
+            }
+          ]
+        },
+        {
+          "id": "blk_accueil_selection",
+          "blockType": "list",
+          "entityId": "ent_produit",
+          "props": [
+            {
+              "key": "title",
+              "value": "La sélection Dougplace"
+            },
+            {
+              "key": "titleFieldId",
+              "value": "fld_produit_nom"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_produit_vendeur"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_produit_prix"
+            },
+            {
+              "key": "badgeFieldId",
+              "value": "fld_produit_etat"
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_produit_photo"
+            },
+            {
+              "key": "layout",
+              "value": "grid"
+            },
+            {
+              "key": "filterFieldId",
+              "value": "fld_produit_en_vedette"
+            },
+            {
+              "key": "sortFieldId",
+              "value": "fld_produit_publie_le"
+            },
+            {
+              "key": "sortDirection",
+              "value": "desc"
+            },
+            {
+              "key": "pageSize",
+              "value": 8
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement de la sélection…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Sélection indisponible"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Les produits mis en avant n'ont pas pu être chargés. Réessayez dans un instant."
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Aucun produit en vedette"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Ouvrez le catalogue pour découvrir tous les articles."
+            }
+          ]
+        },
+        {
+          "id": "blk_accueil_boutiques",
+          "blockType": "list",
+          "entityId": "ent_vendeur",
+          "props": [
+            {
+              "key": "title",
+              "value": "Boutiques à découvrir"
+            },
+            {
+              "key": "titleFieldId",
+              "value": "fld_vendeur_nom"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_vendeur_ville"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_vendeur_note"
+            },
+            {
+              "key": "badgeFieldId",
+              "value": "fld_vendeur_verifie"
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_vendeur_logo"
+            },
+            {
+              "key": "sortFieldId",
+              "value": "fld_vendeur_note"
+            },
+            {
+              "key": "sortDirection",
+              "value": "desc"
+            },
+            {
+              "key": "pageSize",
+              "value": 6
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement des boutiques…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Boutiques indisponibles"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Impossible de charger les boutiques pour le moment."
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Aucune boutique"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Les vendeurs arrivent très bientôt sur Dougplace."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_catalogue",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Catalogue"
+        }
+      ],
+      "showsPrimaryNav": true,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_catalogue_entete",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Tout le catalogue"
+            },
+            {
+              "key": "subtitle",
+              "value": "Recherchez un article, filtrez par catégorie, état ou budget maximum."
+            }
+          ]
+        },
+        {
+          "id": "blk_catalogue_liste",
+          "blockType": "list",
+          "entityId": "ent_produit",
+          "props": [
+            {
+              "key": "titleFieldId",
+              "value": "fld_produit_nom"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_produit_vendeur"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_produit_prix"
+            },
+            {
+              "key": "badgeFieldId",
+              "value": "fld_produit_etat"
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_produit_photo"
+            },
+            {
+              "key": "layout",
+              "value": "grid"
+            },
+            {
+              "key": "searchFieldId",
+              "value": "fld_produit_nom"
+            },
+            {
+              "key": "searchPlaceholder",
+              "value": "Rechercher un produit, une marque…"
+            },
+            {
+              "key": "userFilterFieldIds",
+              "value": [
+                "fld_produit_categorie",
+                "fld_produit_etat",
+                "fld_produit_prix"
+              ]
+            },
+            {
+              "key": "userFilterOperators",
+              "value": [
+                "eq",
+                "eq",
+                "lte"
+              ]
+            },
+            {
+              "key": "userFilterInputTypes",
+              "value": [
+                "select",
+                "select",
+                "number"
+              ]
+            },
+            {
+              "key": "sortFieldId",
+              "value": "fld_produit_publie_le"
+            },
+            {
+              "key": "sortDirection",
+              "value": "desc"
+            },
+            {
+              "key": "pageSize",
+              "value": 20
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement du catalogue…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Catalogue indisponible"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Le catalogue n'a pas pu être chargé. Vérifiez votre connexion et réessayez."
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Aucun produit trouvé"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Modifiez votre recherche ou vos filtres pour voir plus d'articles."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_produit_detail",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Fiche produit"
+        }
+      ],
+      "showsPrimaryNav": true,
+      "showsScreenTitle": false,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_produit_entete",
+          "blockType": "detail_header",
+          "entityId": "ent_produit",
+          "props": [
+            {
+              "key": "titleFieldId",
+              "value": "fld_produit_nom"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_produit_description"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_produit_prix"
+            },
+            {
+              "key": "badgeFieldIds",
+              "value": [
+                "fld_produit_etat",
+                "fld_produit_vendeur",
+                "fld_produit_ville_expedition",
+                "fld_produit_stock"
+              ]
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_produit_photo"
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement du produit…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Produit indisponible"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Cette fiche produit n'a pas pu être chargée. Réessayez dans un instant."
+            }
+          ]
+        },
+        {
+          "id": "blk_produit_ajout_panier",
+          "blockType": "form",
+          "entityId": "ent_panier_article",
+          "props": [
+            {
+              "key": "fieldIds",
+              "value": [
+                "fld_panier_produit",
+                "fld_panier_quantite"
+              ]
+            },
+            {
+              "key": "submitLabel",
+              "value": "Ajouter au panier"
+            },
+            {
+              "key": "title",
+              "value": "Commander cet article"
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Ajout au panier…"
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Choisissez une quantité"
+            }
+          ]
+        },
+        {
+          "id": "blk_produit_vers_panier",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Voir mon panier"
+            },
+            {
+              "key": "actionId",
+              "value": "act_ouvrir_panier"
+            },
+            {
+              "key": "kind",
+              "value": "ghost"
+            },
+            {
+              "key": "icon",
+              "value": "panier"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_vendeur_detail",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Boutique du vendeur"
+        }
+      ],
+      "showsPrimaryNav": true,
+      "showsScreenTitle": false,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_vendeur_entete",
+          "blockType": "detail_header",
+          "entityId": "ent_vendeur",
+          "props": [
+            {
+              "key": "titleFieldId",
+              "value": "fld_vendeur_nom"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_vendeur_description"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_vendeur_note"
+            },
+            {
+              "key": "badgeFieldIds",
+              "value": [
+                "fld_vendeur_verifie",
+                "fld_vendeur_ville",
+                "fld_vendeur_telephone"
+              ]
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_vendeur_logo"
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement de la boutique…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Boutique indisponible"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Cette boutique n'a pas pu être chargée. Réessayez dans un instant."
+            }
+          ]
+        },
+        {
+          "id": "blk_vendeur_produits",
+          "blockType": "list",
+          "entityId": "ent_produit",
+          "props": [
+            {
+              "key": "title",
+              "value": "Les produits de cette boutique"
+            },
+            {
+              "key": "titleFieldId",
+              "value": "fld_produit_nom"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_produit_categorie"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_produit_prix"
+            },
+            {
+              "key": "badgeFieldId",
+              "value": "fld_produit_etat"
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_produit_photo"
+            },
+            {
+              "key": "layout",
+              "value": "grid"
+            },
+            {
+              "key": "scopeFieldId",
+              "value": "fld_produit_vendeur"
+            },
+            {
+              "key": "searchFieldId",
+              "value": "fld_produit_nom"
+            },
+            {
+              "key": "searchPlaceholder",
+              "value": "Rechercher dans cette boutique"
+            },
+            {
+              "key": "sortFieldId",
+              "value": "fld_produit_prix"
+            },
+            {
+              "key": "sortDirection",
+              "value": "asc"
+            },
+            {
+              "key": "pageSize",
+              "value": 20
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement des produits…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Produits indisponibles"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Les produits de cette boutique n'ont pas pu être chargés."
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Aucun produit en ligne"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Cette boutique n'a pas encore publié d'article."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_panier",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Mon panier"
+        }
+      ],
+      "showsPrimaryNav": true,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_panier_resume",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Récapitulatif du panier"
+            },
+            {
+              "key": "subtitle",
+              "value": "Vérifiez vos articles avant de payer."
+            }
+          ]
+        },
+        {
+          "id": "blk_panier_liste",
+          "blockType": "list",
+          "entityId": "ent_panier_article",
+          "props": [
+            {
+              "key": "titleFieldId",
+              "value": "fld_panier_produit"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_panier_quantite"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_panier_total_ligne"
+            },
+            {
+              "key": "badgeFieldId",
+              "value": "fld_panier_prix_unitaire"
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_panier_photo"
+            },
+            {
+              "key": "sortFieldId",
+              "value": "fld_panier_ajoute_le"
+            },
+            {
+              "key": "sortDirection",
+              "value": "desc"
+            },
+            {
+              "key": "pageSize",
+              "value": 20
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement du panier…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Panier indisponible"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Votre panier n'a pas pu être chargé. Réessayez dans un instant."
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Votre panier est vide"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Ajoutez des articles depuis le catalogue pour commander."
+            }
+          ]
+        },
+        {
+          "id": "blk_panier_vide",
+          "blockType": "empty_state",
+          "visibleWhen": {
+            "kind": "entity_empty",
+            "entityId": "ent_panier_article"
+          },
+          "props": [
+            {
+              "key": "title",
+              "value": "Votre panier est vide"
+            },
+            {
+              "key": "message",
+              "value": "Découvrez les produits de nos vendeurs et ajoutez vos articles favoris."
+            },
+            {
+              "key": "actionLabel",
+              "value": "Parcourir le catalogue"
+            },
+            {
+              "key": "actionId",
+              "value": "act_ouvrir_catalogue"
+            }
+          ]
+        },
+        {
+          "id": "blk_panier_vers_paiement",
+          "blockType": "button",
+          "visibleWhen": {
+            "kind": "entity_not_empty",
+            "entityId": "ent_panier_article"
+          },
+          "props": [
+            {
+              "key": "label",
+              "value": "Passer au paiement"
+            },
+            {
+              "key": "actionId",
+              "value": "act_ouvrir_paiement"
+            },
+            {
+              "key": "kind",
+              "value": "primary"
+            },
+            {
+              "key": "icon",
+              "value": "panier"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_paiement",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Paiement par carte"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_paiement_entete",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Finaliser ma commande"
+            },
+            {
+              "key": "subtitle",
+              "value": "Confirmez la livraison, puis réglez par carte bancaire. Vos données de carte ne sont pas conservées."
+            }
+          ]
+        },
+        {
+          "id": "blk_paiement_commande_form",
+          "blockType": "form",
+          "entityId": "ent_commande",
+          "props": [
+            {
+              "key": "fieldIds",
+              "value": [
+                "fld_commande_adresse",
+                "fld_commande_nb_articles",
+                "fld_commande_montant_total",
+                "fld_commande_mode_paiement"
+              ]
+            },
+            {
+              "key": "submitLabel",
+              "value": "Confirmer la livraison"
+            },
+            {
+              "key": "title",
+              "value": "Livraison"
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Préparation de la commande…"
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Choisissez votre adresse de livraison"
+            }
+          ]
+        },
+        {
+          "id": "blk_paiement_carte_form",
+          "blockType": "form",
+          "entityId": "ent_paiement",
+          "props": [
+            {
+              "key": "fieldIds",
+              "value": [
+                "fld_paiement_commande",
+                "fld_paiement_titulaire",
+                "fld_paiement_numero_carte",
+                "fld_paiement_expiration",
+                "fld_paiement_cvv",
+                "fld_paiement_montant"
+              ]
+            },
+            {
+              "key": "submitLabel",
+              "value": "Payer par carte"
+            },
+            {
+              "key": "title",
+              "value": "Carte bancaire"
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Paiement en cours…"
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Renseignez votre carte"
+            }
+          ]
+        },
+        {
+          "id": "blk_paiement_retour_panier",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Modifier mon panier"
+            },
+            {
+              "key": "actionId",
+              "value": "act_ouvrir_panier"
+            },
+            {
+              "key": "kind",
+              "value": "link"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_commandes",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Mes commandes"
+        }
+      ],
+      "showsPrimaryNav": true,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_commandes_entete",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Mes commandes"
+            },
+            {
+              "key": "subtitle",
+              "value": "Suivez la préparation, l'expédition et la livraison de vos achats."
+            }
+          ]
+        },
+        {
+          "id": "blk_commandes_liste",
+          "blockType": "list",
+          "entityId": "ent_commande",
+          "props": [
+            {
+              "key": "titleFieldId",
+              "value": "fld_commande_numero"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_commande_date"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_commande_montant_total"
+            },
+            {
+              "key": "badgeFieldId",
+              "value": "fld_commande_statut"
+            },
+            {
+              "key": "sortFieldId",
+              "value": "fld_commande_date"
+            },
+            {
+              "key": "sortDirection",
+              "value": "desc"
+            },
+            {
+              "key": "pageSize",
+              "value": 20
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement de vos commandes…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Commandes indisponibles"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Vos commandes n'ont pas pu être chargées. Réessayez dans un instant."
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Aucune commande"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Vos futures commandes s'afficheront ici avec leur suivi."
+            }
+          ]
+        },
+        {
+          "id": "blk_commandes_vide",
+          "blockType": "empty_state",
+          "visibleWhen": {
+            "kind": "entity_empty",
+            "entityId": "ent_commande"
+          },
+          "props": [
+            {
+              "key": "title",
+              "value": "Vous n'avez pas encore commandé"
+            },
+            {
+              "key": "message",
+              "value": "Parcourez le catalogue et passez votre première commande sur Dougplace."
+            },
+            {
+              "key": "actionLabel",
+              "value": "Parcourir le catalogue"
+            },
+            {
+              "key": "actionId",
+              "value": "act_ouvrir_catalogue"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_commande_detail",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Suivi de commande"
+        }
+      ],
+      "showsPrimaryNav": true,
+      "showsScreenTitle": false,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_commande_entete",
+          "blockType": "detail_header",
+          "entityId": "ent_commande",
+          "props": [
+            {
+              "key": "titleFieldId",
+              "value": "fld_commande_numero"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_commande_adresse"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_commande_montant_total"
+            },
+            {
+              "key": "badgeFieldIds",
+              "value": [
+                "fld_commande_statut",
+                "fld_commande_code_suivi",
+                "fld_commande_livraison_prevue",
+                "fld_commande_nb_articles"
+              ]
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement de la commande…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Commande indisponible"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Le suivi de cette commande n'a pas pu être chargé. Réessayez dans un instant."
+            }
+          ]
+        },
+        {
+          "id": "blk_commande_suivi",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Suivi du colis"
+            },
+            {
+              "key": "subtitle",
+              "value": "Étape en cours et délai estimé de livraison."
+            }
+          ]
+        },
+        {
+          "id": "blk_commande_paiement",
+          "blockType": "list",
+          "entityId": "ent_paiement",
+          "props": [
+            {
+              "key": "title",
+              "value": "Paiement de la commande"
+            },
+            {
+              "key": "titleFieldId",
+              "value": "fld_paiement_titulaire"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_paiement_date"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_paiement_montant"
+            },
+            {
+              "key": "badgeFieldId",
+              "value": "fld_paiement_statut"
+            },
+            {
+              "key": "scopeFieldId",
+              "value": "fld_paiement_commande"
+            },
+            {
+              "key": "pageSize",
+              "value": 5
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement du paiement…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Paiement indisponible"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Le détail du paiement n'a pas pu être chargé."
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Aucun paiement enregistré"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Le règlement de cette commande n'a pas encore été enregistré."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_compte",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Mon compte"
+        }
+      ],
+      "showsPrimaryNav": true,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_compte_entete",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Mon compte"
+            },
+            {
+              "key": "subtitle",
+              "value": "Vos informations personnelles et votre adresse de livraison."
+            }
+          ]
+        },
+        {
+          "id": "blk_compte_non_connecte",
+          "blockType": "empty_state",
+          "visibleWhen": {
+            "kind": "session_anonymous"
+          },
+          "props": [
+            {
+              "key": "title",
+              "value": "Vous n'êtes pas connecté"
+            },
+            {
+              "key": "message",
+              "value": "Connectez-vous pour gérer votre profil, votre adresse et vos commandes."
+            },
+            {
+              "key": "actionLabel",
+              "value": "Se connecter"
+            },
+            {
+              "key": "actionId",
+              "value": "act_ouvrir_connexion"
+            }
+          ]
+        },
+        {
+          "id": "blk_compte_confirmation",
+          "blockType": "empty_state",
+          "visibleWhen": {
+            "kind": "session_pending_confirmation"
+          },
+          "props": [
+            {
+              "key": "title",
+              "value": "Confirmez votre adresse e-mail"
+            },
+            {
+              "key": "message",
+              "value": "Nous vous avons envoyé un lien de confirmation. Validez-le pour activer votre compte Dougplace."
+            }
+          ]
+        },
+        {
+          "id": "blk_compte_profil_form",
+          "blockType": "form",
+          "entityId": "ent_profil",
+          "visibleWhen": {
+            "kind": "session_authenticated"
+          },
+          "props": [
+            {
+              "key": "fieldIds",
+              "value": [
+                "fld_profil_nom",
+                "fld_profil_email",
+                "fld_profil_telephone",
+                "fld_profil_ville"
+              ]
+            },
+            {
+              "key": "submitLabel",
+              "value": "Enregistrer mes informations"
+            },
+            {
+              "key": "title",
+              "value": "Mes informations"
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement de votre profil…"
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Complétez votre profil"
+            }
+          ]
+        },
+        {
+          "id": "blk_compte_vers_adresse",
+          "blockType": "button",
+          "visibleWhen": {
+            "kind": "session_authenticated"
+          },
+          "props": [
+            {
+              "key": "label",
+              "value": "Gérer mon adresse de livraison"
+            },
+            {
+              "key": "actionId",
+              "value": "act_ouvrir_adresse"
+            },
+            {
+              "key": "kind",
+              "value": "primary"
+            },
+            {
+              "key": "icon",
+              "value": "carte"
+            }
+          ]
+        },
+        {
+          "id": "blk_compte_deconnexion",
+          "blockType": "button",
+          "visibleWhen": {
+            "kind": "session_authenticated"
+          },
+          "props": [
+            {
+              "key": "label",
+              "value": "Se déconnecter"
+            },
+            {
+              "key": "actionId",
+              "value": "act_deconnexion"
+            },
+            {
+              "key": "kind",
+              "value": "ghost"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_adresse_livraison",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Adresse de livraison"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_adresse_entete",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Mes adresses de livraison"
+            },
+            {
+              "key": "subtitle",
+              "value": "Ajoutez l'adresse où le livreur doit déposer vos colis."
+            }
+          ]
+        },
+        {
+          "id": "blk_adresse_liste",
+          "blockType": "list",
+          "entityId": "ent_adresse",
+          "props": [
+            {
+              "key": "titleFieldId",
+              "value": "fld_adresse_libelle"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_adresse_quartier"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_adresse_ville"
+            },
+            {
+              "key": "badgeFieldId",
+              "value": "fld_adresse_par_defaut"
+            },
+            {
+              "key": "pageSize",
+              "value": 10
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement de vos adresses…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Adresses indisponibles"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Vos adresses n'ont pas pu être chargées. Réessayez dans un instant."
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Aucune adresse enregistrée"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Ajoutez une adresse pour recevoir vos commandes."
+            }
+          ]
+        },
+        {
+          "id": "blk_adresse_form",
+          "blockType": "form",
+          "entityId": "ent_adresse",
+          "props": [
+            {
+              "key": "fieldIds",
+              "value": [
+                "fld_adresse_libelle",
+                "fld_adresse_destinataire",
+                "fld_adresse_telephone",
+                "fld_adresse_quartier",
+                "fld_adresse_ville",
+                "fld_adresse_indications",
+                "fld_adresse_par_defaut"
+              ]
+            },
+            {
+              "key": "submitLabel",
+              "value": "Enregistrer l'adresse"
+            },
+            {
+              "key": "title",
+              "value": "Nouvelle adresse"
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Enregistrement de l'adresse…"
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Renseignez votre adresse"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "actions": [
+    {
+      "id": "act_ouvrir_inscription",
+      "name": "Ouvrir la création de compte",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_bienvenue_creer_compte"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_inscription"
+      }
+    },
+    {
+      "id": "act_ouvrir_connexion",
+      "name": "Ouvrir la connexion",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_bienvenue_connexion"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_connexion"
+      }
+    },
+    {
+      "id": "act_continuer_sans_compte",
+      "name": "Continuer sans compte",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_bienvenue_visiteur"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_accueil"
+      }
+    },
+    {
+      "id": "act_ouvrir_mot_de_passe_oublie",
+      "name": "Ouvrir la réinitialisation du mot de passe",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_connexion_oubli"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_mot_de_passe_oublie"
+      }
+    },
+    {
+      "id": "act_connexion_compte",
+      "name": "Se connecter à son compte Dougplace",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_connexion_form"
+      },
+      "effect": {
+        "kind": "capability",
+        "capability": "auth",
+        "method": "signIn",
+        "params": [
+          {
+            "key": "emailFieldId",
+            "value": "fld_profil_email"
+          },
+          {
+            "key": "passwordFieldId",
+            "value": "fld_profil_mot_de_passe"
+          },
+          {
+            "key": "thenScreenId",
+            "value": "scr_accueil"
+          }
+        ]
+      }
+    },
+    {
+      "id": "act_inscription_compte",
+      "name": "Créer son compte Dougplace",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_inscription_form"
+      },
+      "effect": {
+        "kind": "capability",
+        "capability": "auth",
+        "method": "signUp",
+        "params": [
+          {
+            "key": "emailFieldId",
+            "value": "fld_profil_email"
+          },
+          {
+            "key": "passwordFieldId",
+            "value": "fld_profil_mot_de_passe"
+          },
+          {
+            "key": "thenScreenId",
+            "value": "scr_accueil"
+          }
+        ]
+      }
+    },
+    {
+      "id": "act_reinitialiser_mot_de_passe",
+      "name": "Recevoir le lien de réinitialisation",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_oubli_form"
+      },
+      "effect": {
+        "kind": "capability",
+        "capability": "auth",
+        "method": "resetPassword",
+        "params": [
+          {
+            "key": "emailFieldId",
+            "value": "fld_profil_email"
+          },
+          {
+            "key": "thenScreenId",
+            "value": "scr_connexion"
+          }
+        ]
+      }
+    },
+    {
+      "id": "act_deconnexion",
+      "name": "Se déconnecter",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_compte_deconnexion"
+      },
+      "effect": {
+        "kind": "capability",
+        "capability": "auth",
+        "method": "signOut",
+        "params": [
+          {
+            "key": "thenScreenId",
+            "value": "scr_bienvenue"
+          }
+        ]
+      }
+    },
+    {
+      "id": "act_categorie_vers_catalogue",
+      "name": "Ouvrir le catalogue d'une catégorie",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_accueil_categories"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_catalogue"
+      }
+    },
+    {
+      "id": "act_selection_vers_produit",
+      "name": "Ouvrir la fiche d'un produit de la sélection",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_accueil_selection"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_produit_detail"
+      }
+    },
+    {
+      "id": "act_boutique_vers_vendeur",
+      "name": "Ouvrir la boutique d'un vendeur",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_accueil_boutiques"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_vendeur_detail"
+      }
+    },
+    {
+      "id": "act_catalogue_vers_produit",
+      "name": "Ouvrir la fiche produit depuis le catalogue",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_catalogue_liste"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_produit_detail"
+      }
+    },
+    {
+      "id": "act_boutique_vers_produit",
+      "name": "Ouvrir la fiche produit depuis la boutique",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_vendeur_produits"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_produit_detail"
+      }
+    },
+    {
+      "id": "act_ajouter_au_panier",
+      "name": "Ajouter le produit au panier",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_produit_ajout_panier"
+      },
+      "effect": {
+        "kind": "mutation",
+        "entityId": "ent_panier_article",
+        "operation": "create",
+        "thenScreenId": "scr_panier"
+      }
+    },
+    {
+      "id": "act_ouvrir_panier",
+      "name": "Ouvrir mon panier",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_produit_vers_panier"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_panier"
+      }
+    },
+    {
+      "id": "act_ouvrir_catalogue",
+      "name": "Parcourir le catalogue",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_panier_vide"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_catalogue"
+      }
+    },
+    {
+      "id": "act_commandes_vide_vers_catalogue",
+      "name": "Parcourir le catalogue depuis les commandes",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_commandes_vide"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_catalogue"
+      }
+    },
+    {
+      "id": "act_ouvrir_paiement",
+      "name": "Passer au paiement",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_panier_vers_paiement"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_paiement"
+      }
+    },
+    {
+      "id": "act_confirmer_commande",
+      "name": "Confirmer la livraison et créer la commande",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_paiement_commande_form"
+      },
+      "effect": {
+        "kind": "mutation",
+        "entityId": "ent_commande",
+        "operation": "create",
+        "thenScreenId": "scr_paiement"
+      }
+    },
+    {
+      "id": "act_payer_par_carte",
+      "name": "Payer la commande par carte bancaire",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_paiement_carte_form"
+      },
+      "effect": {
+        "kind": "mutation",
+        "entityId": "ent_paiement",
+        "operation": "create",
+        "thenScreenId": "scr_commandes"
+      }
+    },
+    {
+      "id": "act_commande_vers_suivi",
+      "name": "Ouvrir le suivi d'une commande",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_commandes_liste"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_commande_detail"
+      }
+    },
+    {
+      "id": "act_enregistrer_profil",
+      "name": "Enregistrer mes informations de profil",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_compte_profil_form"
+      },
+      "effect": {
+        "kind": "mutation",
+        "entityId": "ent_profil",
+        "operation": "update",
+        "instanceFrom": "session",
+        "thenScreenId": "scr_compte"
+      }
+    },
+    {
+      "id": "act_ouvrir_adresse",
+      "name": "Gérer mon adresse de livraison",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_compte_vers_adresse"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_adresse_livraison"
+      }
+    },
+    {
+      "id": "act_enregistrer_adresse",
+      "name": "Enregistrer une adresse de livraison",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_adresse_form"
+      },
+      "effect": {
+        "kind": "mutation",
+        "entityId": "ent_adresse",
+        "operation": "create",
+        "thenScreenId": "scr_compte"
+      }
+    },
+    {
+      "id": "act_calcul_total_panier",
+      "name": "Calculer le total du panier",
+      "trigger": {
+        "kind": "lifecycle",
+        "event": "screen_open",
+        "screenId": "scr_panier"
+      },
+      "effect": {
+        "kind": "slot",
+        "slotId": "slot_panier_total",
+        "binding": {
+          "inputs": [
+            {
+              "port": "lignesPanier",
+              "source": {
+                "kind": "entity_rows",
+                "entityId": "ent_panier_article"
+              }
+            },
+            {
+              "port": "devise",
+              "source": {
+                "kind": "literal",
+                "value": "FCFA"
+              }
+            }
+          ],
+          "outputs": [
+            {
+              "port": "resumePanier",
+              "blockId": "blk_panier_resume",
+              "prop": "title"
+            },
+            {
+              "port": "montantTotal",
+              "blockId": "blk_panier_resume",
+              "prop": "subtitle"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "act_suivi_commande_lisible",
+      "name": "Traduire le suivi de la commande",
+      "trigger": {
+        "kind": "lifecycle",
+        "event": "screen_open",
+        "screenId": "scr_commande_detail"
+      },
+      "effect": {
+        "kind": "slot",
+        "slotId": "slot_suivi_commande",
+        "binding": {
+          "inputs": [
+            {
+              "port": "commandes",
+              "source": {
+                "kind": "entity_rows",
+                "entityId": "ent_commande"
+              }
+            }
+          ],
+          "outputs": [
+            {
+              "port": "prochaineEtape",
+              "blockId": "blk_commande_suivi",
+              "prop": "title"
+            },
+            {
+              "port": "delaiEstime",
+              "blockId": "blk_commande_suivi",
+              "prop": "subtitle"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "capabilities": [
+    {
+      "capability": "auth"
+    },
+    {
+      "capability": "payments.psp"
+    }
+  ],
+  "permissions": [],
+  "integrations": [
+    {
+      "id": "intg_auth_dougplace",
+      "providerClass": "managed_auth",
+      "capability": "auth",
+      "config": [
+        {
+          "key": "profileEntityId",
+          "value": "ent_profil"
+        },
+        {
+          "key": "emailFieldId",
+          "value": "fld_profil_email"
+        },
+        {
+          "key": "passwordFieldId",
+          "value": "fld_profil_mot_de_passe"
+        },
+        {
+          "key": "confirmationRequired",
+          "value": true
+        },
+        {
+          "key": "defaultLocale",
+          "value": "fr"
+        }
+      ]
+    },
+    {
+      "id": "intg_paiement_carte",
+      "providerClass": "card_psp",
+      "capability": "payments.psp",
+      "config": [
+        {
+          "key": "mode",
+          "value": "hosted_card_form"
+        },
+        {
+          "key": "currency",
+          "value": "XOF"
+        },
+        {
+          "key": "country",
+          "value": "CI"
+        },
+        {
+          "key": "captureMethod",
+          "value": "automatic"
+        },
+        {
+          "key": "paymentEntityId",
+          "value": "ent_paiement"
+        },
+        {
+          "key": "orderEntityId",
+          "value": "ent_commande"
+        },
+        {
+          "key": "apiDomain",
+          "value": "api.dougplace.app"
+        }
+      ]
+    },
+    {
+      "id": "intg_api_dougplace",
+      "providerClass": "rest_api",
+      "config": [
+        {
+          "key": "baseUrl",
+          "value": "https://api.dougplace.app"
+        },
+        {
+          "key": "domain",
+          "value": "api.dougplace.app"
+        },
+        {
+          "key": "authMode",
+          "value": "session_bearer"
+        },
+        {
+          "key": "timeoutSeconds",
+          "value": 20
+        }
+      ]
+    },
+    {
+      "id": "intg_images_catalogue",
+      "providerClass": "image_cdn",
+      "config": [
+        {
+          "key": "domain",
+          "value": "picsum.photos"
+        },
+        {
+          "key": "format",
+          "value": "square_600"
+        }
+      ]
+    }
+  ],
+  "expectedTests": [
+    {
+      "id": "test_inscription_compte",
+      "description": "Depuis l'écran d'inscription, la soumission du formulaire crée un compte Dougplace (signUp) avec e-mail, mot de passe masqué et coordonnées, puis conduit à l'accueil.",
+      "kind": "e2e",
+      "targetId": "act_inscription_compte"
+    },
+    {
+      "id": "test_connexion_compte",
+      "description": "Depuis la feuille de connexion, la saisie d'un e-mail et d'un mot de passe valides ouvre une session (signIn) et affiche l'accueil.",
+      "kind": "e2e",
+      "targetId": "act_connexion_compte"
+    },
+    {
+      "id": "test_reinitialiser_mot_de_passe",
+      "description": "La soumission du formulaire « Mot de passe oublié » déclenche resetPassword pour l'adresse saisie et ramène à la connexion.",
+      "kind": "e2e",
+      "targetId": "act_reinitialiser_mot_de_passe"
+    },
+    {
+      "id": "test_deconnexion_compte",
+      "description": "Le bouton « Se déconnecter » de l'écran Compte ferme la session (signOut) et renvoie à l'écran de bienvenue.",
+      "kind": "e2e",
+      "targetId": "act_deconnexion"
+    },
+    {
+      "id": "test_contract_auth",
+      "description": "L'intégration d'authentification est déclarée sans aucun secret et référence bien l'entité profil ent_profil ainsi que les champs e-mail et mot de passe.",
+      "kind": "contract",
+      "targetId": "intg_auth_dougplace"
+    },
+    {
+      "id": "test_contract_psp",
+      "description": "L'intégration de paiement par carte est déclarée sans clé, en devise XOF, et rattache le paiement à l'entité ent_paiement et la commande à ent_commande.",
+      "kind": "contract",
+      "targetId": "intg_paiement_carte"
+    },
+    {
+      "id": "test_contract_api",
+      "description": "L'intégration backend n'utilise que le domaine api.dougplace.app, présent dans network.allowedDomains, et ne transporte aucun secret.",
+      "kind": "contract",
+      "targetId": "intg_api_dougplace"
+    },
+    {
+      "id": "test_contract_images",
+      "description": "L'intégration d'images pointe uniquement vers picsum.photos, domaine autorisé, source des photos de produits, catégories et boutiques.",
+      "kind": "contract",
+      "targetId": "intg_images_catalogue"
+    },
+    {
+      "id": "test_accueil_selection_vedette",
+      "description": "L'accueil affiche en grille la sélection des produits marqués en vedette, avec photo, nom, vendeur lisible et prix, triés du plus récent au plus ancien et limités à 8 articles.",
+      "kind": "deterministic",
+      "targetId": "blk_accueil_selection"
+    },
+    {
+      "id": "test_accueil_categories",
+      "description": "L'accueil liste les quatre catégories (Électronique, Mode, Maison, Sport) avec leur visuel et le nombre de produits disponibles, triées par nom croissant.",
+      "kind": "deterministic",
+      "targetId": "blk_accueil_categories"
+    },
+    {
+      "id": "test_accueil_boutiques",
+      "description": "L'accueil liste les boutiques avec leur logo, leur ville et leur note, triées par note décroissante.",
+      "kind": "deterministic",
+      "targetId": "blk_accueil_boutiques"
+    },
+    {
+      "id": "test_categorie_ouvre_catalogue",
+      "description": "Presser une ligne de catégorie sur l'accueil ouvre l'écran Catalogue.",
+      "kind": "e2e",
+      "targetId": "act_categorie_vers_catalogue"
+    },
+    {
+      "id": "test_selection_ouvre_produit",
+      "description": "Presser une carte de la sélection de l'accueil ouvre la fiche du produit correspondant.",
+      "kind": "e2e",
+      "targetId": "act_selection_vers_produit"
+    },
+    {
+      "id": "test_boutique_ouvre_vendeur",
+      "description": "Presser une boutique sur l'accueil ouvre l'écran de la boutique du vendeur.",
+      "kind": "e2e",
+      "targetId": "act_boutique_vers_vendeur"
+    },
+    {
+      "id": "test_catalogue_recherche",
+      "description": "La saisie d'un terme dans le champ de recherche du catalogue filtre réellement les produits sur leur nom.",
+      "kind": "deterministic",
+      "targetId": "blk_catalogue_liste"
+    },
+    {
+      "id": "test_catalogue_filtres_utilisateur",
+      "description": "Les trois filtres pilotés du catalogue (catégorie égale, état égal, prix maximum) se combinent en conjonction et restent inactifs lorsque leur valeur est vide.",
+      "kind": "deterministic",
+      "targetId": "blk_catalogue_liste"
+    },
+    {
+      "id": "test_catalogue_grille_images",
+      "description": "Le catalogue se présente en grille de cartes avec la photo du produit, son nom, son prix et son badge d'état traduit en libellé humain.",
+      "kind": "deterministic",
+      "targetId": "blk_catalogue_liste"
+    },
+    {
+      "id": "test_catalogue_ouvre_produit",
+      "description": "Presser une carte du catalogue ouvre la fiche du produit sélectionné, avec le bon enregistrement.",
+      "kind": "e2e",
+      "targetId": "act_catalogue_vers_produit"
+    },
+    {
+      "id": "test_fiche_produit_visuel",
+      "description": "La fiche produit affiche la photo en visuel d'en-tête, le nom, la description, le prix et les badges état, vendeur, ville d'expédition et stock.",
+      "kind": "deterministic",
+      "targetId": "blk_produit_entete"
+    },
+    {
+      "id": "test_vendeur_produits_scope",
+      "description": "La boutique d'un vendeur ne liste que les produits de ce vendeur (portée sur le champ vendeur) et permet d'y rechercher un article.",
+      "kind": "deterministic",
+      "targetId": "blk_vendeur_produits"
+    },
+    {
+      "id": "test_boutique_ouvre_produit",
+      "description": "Presser un produit dans la boutique d'un vendeur ouvre la fiche de ce produit.",
+      "kind": "e2e",
+      "targetId": "act_boutique_vers_produit"
+    },
+    {
+      "id": "test_ajouter_au_panier",
+      "description": "La soumission du formulaire de la fiche produit crée une ligne de panier avec le produit et la quantité choisie, puis affiche le panier.",
+      "kind": "e2e",
+      "targetId": "act_ajouter_au_panier"
+    },
+    {
+      "id": "test_regle_panier_ligne",
+      "description": "Une ligne de panier sans produit, sans client, avec une quantité inférieure à 1 ou un prix unitaire nul est refusée avant écriture.",
+      "kind": "deterministic",
+      "targetId": "rule_panier_ligne_valide"
+    },
+    {
+      "id": "test_panier_liste",
+      "description": "Le panier liste chaque article avec sa vignette, le nom du produit résolu, la quantité, le prix unitaire et le total de ligne, du plus récemment ajouté au plus ancien.",
+      "kind": "deterministic",
+      "targetId": "blk_panier_liste"
+    },
+    {
+      "id": "test_panier_total_slot",
+      "description": "À l'ouverture du panier, le slot de calcul reçoit les lignes du panier et la devise FCFA et alimente le titre et le sous-titre du récapitulatif.",
+      "kind": "deterministic",
+      "targetId": "act_calcul_total_panier"
+    },
+    {
+      "id": "test_panier_etat_vide",
+      "description": "Lorsque le panier ne contient aucune ligne, l'état vide s'affiche seul et son action renvoie au catalogue.",
+      "kind": "deterministic",
+      "targetId": "blk_panier_vide"
+    },
+    {
+      "id": "test_panier_vers_paiement",
+      "description": "Le bouton « Passer au paiement », visible uniquement quand le panier contient des articles, ouvre l'écran de paiement.",
+      "kind": "e2e",
+      "targetId": "act_ouvrir_paiement"
+    },
+    {
+      "id": "test_confirmer_commande",
+      "description": "La confirmation de la livraison crée une commande avec l'adresse choisie, le nombre d'articles, le montant total et le mode de paiement carte bancaire.",
+      "kind": "e2e",
+      "targetId": "act_confirmer_commande"
+    },
+    {
+      "id": "test_regle_commande_valide",
+      "description": "Une commande sans numéro, sans client, sans adresse, avec zéro article, un montant nul ou un statut inconnu est refusée avant écriture.",
+      "kind": "deterministic",
+      "targetId": "rule_commande_valide"
+    },
+    {
+      "id": "test_payer_par_carte",
+      "description": "La soumission du formulaire de carte enregistre le paiement rattaché à la commande puis conduit à l'écran Mes commandes.",
+      "kind": "e2e",
+      "targetId": "act_payer_par_carte"
+    },
+    {
+      "id": "test_regle_paiement_carte",
+      "description": "Le paiement refuse un numéro de carte hors format, une expiration qui n'est pas au format MM/AA et un code de sécurité qui n'a pas 3 ou 4 chiffres ; les champs carte sont marqués sensibles.",
+      "kind": "deterministic",
+      "targetId": "rule_paiement_carte"
+    },
+    {
+      "id": "test_regle_paiement_montant",
+      "description": "Un paiement sans commande rattachée, avec un montant nul ou négatif, ou un statut hors liste, est refusé avant écriture.",
+      "kind": "deterministic",
+      "targetId": "rule_paiement_montant"
+    },
+    {
+      "id": "test_commandes_liste",
+      "description": "L'écran Mes commandes liste les commandes du plus récent au plus ancien avec numéro, date, montant et statut affiché en libellé humain (« En préparation », « Expédiée »…).",
+      "kind": "deterministic",
+      "targetId": "blk_commandes_liste"
+    },
+    {
+      "id": "test_commandes_etat_vide",
+      "description": "Sans aucune commande, l'état vide de l'écran Commandes s'affiche et son action ouvre le catalogue.",
+      "kind": "deterministic",
+      "targetId": "blk_commandes_vide"
+    },
+    {
+      "id": "test_commande_ouvre_suivi",
+      "description": "Presser une ligne de commande ouvre l'écran de suivi de cette commande précise.",
+      "kind": "e2e",
+      "targetId": "act_commande_vers_suivi"
+    },
+    {
+      "id": "test_commande_suivi_slot",
+      "description": "À l'ouverture du suivi, le slot traduit statut et date prévue en une prochaine étape et un délai estimé affichés dans l'en-tête de suivi.",
+      "kind": "deterministic",
+      "targetId": "act_suivi_commande_lisible"
+    },
+    {
+      "id": "test_commande_paiement_scope",
+      "description": "L'écran de suivi n'affiche que le paiement rattaché à la commande courante (portée sur le champ commande).",
+      "kind": "deterministic",
+      "targetId": "blk_commande_paiement"
+    },
+    {
+      "id": "test_profil_mise_a_jour",
+      "description": "L'enregistrement du profil met à jour la ligne du client connecté (instance issue de la session), jamais le premier enregistrement.",
+      "kind": "e2e",
+      "targetId": "act_enregistrer_profil"
+    },
+    {
+      "id": "test_regle_profil_coordonnees",
+      "description": "Le profil refuse un nom vide, une adresse e-mail mal formée ou un numéro de téléphone hors format ivoirien.",
+      "kind": "deterministic",
+      "targetId": "rule_profil_coordonnees"
+    },
+    {
+      "id": "test_regle_mot_de_passe",
+      "description": "Le mot de passe est obligatoire, doit compter au moins 8 caractères, est masqué à la saisie et n'est jamais persisté.",
+      "kind": "deterministic",
+      "targetId": "rule_profil_mot_de_passe"
+    },
+    {
+      "id": "test_compte_etats_session",
+      "description": "L'écran Compte affiche un seul état à la fois : invitation à se connecter si la session est absente, message de confirmation si elle est en attente, formulaire de profil si elle est ouverte.",
+      "kind": "deterministic",
+      "targetId": "blk_compte_profil_form"
+    },
+    {
+      "id": "test_ouvrir_adresse",
+      "description": "Le bouton « Gérer mon adresse de livraison » de l'écran Compte ouvre l'écran des adresses.",
+      "kind": "e2e",
+      "targetId": "act_ouvrir_adresse"
+    },
+    {
+      "id": "test_adresse_enregistrement",
+      "description": "La soumission du formulaire d'adresse crée une adresse de livraison complète pour le client puis revient à l'écran Compte.",
+      "kind": "e2e",
+      "targetId": "act_enregistrer_adresse"
+    },
+    {
+      "id": "test_regle_adresse_complete",
+      "description": "Une adresse sans libellé, destinataire, quartier, ville ou avec un téléphone hors format est refusée avant écriture.",
+      "kind": "deterministic",
+      "targetId": "rule_adresse_complete"
+    },
+    {
+      "id": "test_adresse_liste",
+      "description": "L'écran Adresse liste les adresses enregistrées avec leur libellé, leur quartier, leur ville et le marquage d'adresse par défaut.",
+      "kind": "deterministic",
+      "targetId": "blk_adresse_liste"
+    },
+    {
+      "id": "test_regle_produit_prix_stock",
+      "description": "Un produit avec un prix nul ou négatif, un stock négatif ou un état hors de la liste neuf/reconditionné/occasion est refusé.",
+      "kind": "deterministic",
+      "targetId": "rule_produit_prix_stock"
+    },
+    {
+      "id": "test_regle_produit_identite",
+      "description": "Un produit sans nom, description, photo, catégorie ou vendeur est refusé avant publication.",
+      "kind": "deterministic",
+      "targetId": "rule_produit_identite"
+    },
+    {
+      "id": "test_bienvenue_parcours",
+      "description": "L'écran de bienvenue, sans barre de navigation ni titre d'écran, propose « Créer un compte » en action principale, « J'ai déjà un compte » en action secondaire et « Continuer sans compte » en lien vers l'accueil.",
+      "kind": "e2e",
+      "targetId": "act_continuer_sans_compte"
+    }
+  ],
+  "intent": {
+    "request": "Je lance Dougplace — l'application s'appelle exactement « Dougplace » — une marketplace généraliste en Côte d'Ivoire : électronique, mode, maison, sport. Les vendeurs listent leurs produits avec de vraies photos, les clients créent un compte, découvrent une sélection dès l'accueil, parcourent le catalogue par catégorie, recherchent, consultent la fiche d'un produit avec photos, description, prix et vendeur, ajoutent au panier, paient par carte et suivent leurs commandes. Chaque client gère son profil et son adresse de livraison. En français.",
+    "requestLocale": "fr",
+    "needs": [
+      {
+        "id": "need_nom_application_dougplace",
+        "statement": "L'application s'appelle exactement « Dougplace » et porte ce nom à l'écran.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "prj_dougplace",
+            "blk_bienvenue_accroche",
+            "blk_accueil_entete"
+          ]
+        }
+      },
+      {
+        "id": "need_marketplace_generaliste_categories",
+        "statement": "Une marketplace généraliste en Côte d'Ivoire couvrant les catégories électronique, mode, maison et sport.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "ent_categorie",
+            "fld_categorie_nom",
+            "fld_categorie_description",
+            "fld_categorie_nb_produits",
+            "data_categorie",
+            "blk_accueil_categories",
+            "rule_categorie_nom"
+          ]
+        }
+      },
+      {
+        "id": "need_vendeurs_listent_produits_photos",
+        "statement": "Les vendeurs listent leurs produits avec de vraies photos.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "ent_vendeur",
+            "ent_produit",
+            "fld_produit_photo",
+            "fld_vendeur_logo",
+            "fld_produit_vendeur",
+            "data_produit",
+            "data_vendeur",
+            "blk_accueil_boutiques",
+            "blk_vendeur_entete",
+            "blk_vendeur_produits",
+            "act_boutique_vers_vendeur",
+            "rule_produit_identite",
+            "intg_images_catalogue"
+          ]
+        }
+      },
+      {
+        "id": "need_client_cree_un_compte",
+        "statement": "Les clients créent un compte (et se connectent, avec récupération du mot de passe).",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "ent_profil",
+            "fld_profil_email",
+            "fld_profil_mot_de_passe",
+            "blk_inscription_form",
+            "act_inscription_compte",
+            "blk_connexion_form",
+            "act_connexion_compte",
+            "blk_oubli_form",
+            "act_reinitialiser_mot_de_passe",
+            "blk_compte_deconnexion",
+            "act_deconnexion",
+            "intg_auth_dougplace",
+            "rule_profil_mot_de_passe"
+          ]
+        }
+      },
+      {
+        "id": "need_selection_des_l_accueil",
+        "statement": "Les clients découvrent une sélection de produits dès l'accueil.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "scr_accueil",
+            "blk_accueil_entete",
+            "blk_accueil_selection",
+            "fld_produit_en_vedette",
+            "act_selection_vers_produit"
+          ]
+        }
+      },
+      {
+        "id": "need_parcours_catalogue_par_categorie",
+        "statement": "Les clients parcourent le catalogue par catégorie.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "scr_catalogue",
+            "blk_catalogue_liste",
+            "fld_produit_categorie",
+            "blk_accueil_categories",
+            "act_categorie_vers_catalogue"
+          ]
+        }
+      },
+      {
+        "id": "need_recherche_produit",
+        "statement": "Les clients recherchent un article dans le catalogue.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "blk_catalogue_liste",
+            "fld_produit_nom",
+            "blk_vendeur_produits"
+          ]
+        }
+      },
+      {
+        "id": "need_fiche_produit_complete",
+        "statement": "Les clients consultent la fiche d'un produit avec photos, description, prix et vendeur.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "scr_produit_detail",
+            "blk_produit_entete",
+            "fld_produit_photo",
+            "fld_produit_description",
+            "fld_produit_prix",
+            "fld_produit_vendeur",
+            "act_catalogue_vers_produit",
+            "act_selection_vers_produit",
+            "act_boutique_vers_produit"
+          ]
+        }
+      },
+      {
+        "id": "need_ajout_au_panier",
+        "statement": "Les clients ajoutent des produits au panier et consultent leur panier.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "ent_panier_article",
+            "blk_produit_ajout_panier",
+            "act_ajouter_au_panier",
+            "scr_panier",
+            "blk_panier_liste",
+            "blk_panier_resume",
+            "act_calcul_total_panier",
+            "blk_panier_vide",
+            "rule_panier_ligne_valide"
+          ]
+        }
+      },
+      {
+        "id": "need_paiement_par_carte",
+        "statement": "Les clients paient par carte bancaire.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "scr_paiement",
+            "blk_panier_vers_paiement",
+            "act_ouvrir_paiement",
+            "blk_paiement_commande_form",
+            "act_confirmer_commande",
+            "blk_paiement_carte_form",
+            "act_payer_par_carte",
+            "ent_paiement",
+            "intg_paiement_carte",
+            "rule_paiement_carte",
+            "rule_paiement_montant"
+          ]
+        }
+      },
+      {
+        "id": "need_suivi_des_commandes",
+        "statement": "Les clients suivent leurs commandes.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "ent_commande",
+            "scr_commandes",
+            "blk_commandes_liste",
+            "blk_commandes_vide",
+            "act_commande_vers_suivi",
+            "scr_commande_detail",
+            "blk_commande_entete",
+            "blk_commande_suivi",
+            "act_suivi_commande_lisible",
+            "blk_commande_paiement",
+            "fld_commande_statut"
+          ]
+        }
+      },
+      {
+        "id": "need_gestion_du_profil",
+        "statement": "Chaque client gère son profil.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "scr_compte",
+            "blk_compte_profil_form",
+            "act_enregistrer_profil",
+            "fld_profil_nom",
+            "fld_profil_telephone",
+            "fld_profil_ville",
+            "rule_profil_coordonnees"
+          ]
+        }
+      },
+      {
+        "id": "need_adresse_de_livraison",
+        "statement": "Chaque client gère son adresse de livraison.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "ent_adresse",
+            "blk_compte_vers_adresse",
+            "act_ouvrir_adresse",
+            "scr_adresse_livraison",
+            "blk_adresse_liste",
+            "blk_adresse_form",
+            "act_enregistrer_adresse",
+            "rule_adresse_complete",
+            "fld_commande_adresse"
+          ]
+        }
+      },
+      {
+        "id": "need_application_en_francais",
+        "statement": "L'application est entièrement en français.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "prj_dougplace",
+            "blk_bienvenue_accroche",
+            "blk_catalogue_liste",
+            "blk_commandes_liste"
+          ]
+        }
+      }
+    ]
+  }
+}

@@ -129,4 +129,20 @@ export const INTENTIONS = [
       "par carte, et suivent l'état de leurs commandes. Chaque client gère son profil " +
       "(nom, téléphone, adresse de livraison). En français.",
   },
+  {
+    // AJOUTÉE 2026-09-10 — commande propriétaire : deuxième marketplace,
+    // NOMMÉE par le client, générée APRÈS la resynchronisation 36ter/36quater
+    // (images réelles, accueil marchand). Elle mesure ce que le système
+    // produit SEUL — aucune retouche d'app générée n'est autorisée.
+    slug: "dougplace",
+    commerce: "physical_or_offapp",
+    text:
+      "Je lance Dougplace — l'application s'appelle exactement « Dougplace » — une " +
+      "marketplace généraliste en Côte d'Ivoire : électronique, mode, maison, sport. " +
+      "Les vendeurs listent leurs produits avec de vraies photos, les clients créent un " +
+      "compte, découvrent une sélection dès l'accueil, parcourent le catalogue par " +
+      "catégorie, recherchent, consultent la fiche d'un produit avec photos, description, " +
+      "prix et vendeur, ajoutent au panier, paient par carte et suivent leurs commandes. " +
+      "Chaque client gère son profil et son adresse de livraison. En français.",
+  },
 ];

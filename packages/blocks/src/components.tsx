@@ -6,16 +6,14 @@
 // source visuelle. AUCUNE syntaxe Maestro/Detox : les blocs sont
 // E2E-agnostiques (D-022/D-023), seuls les testID standard sont exposés.
 import { FlatList } from "react-native";
-import {
-  AppButton,
+import {GridCard, AppButton,
   AppText,
   Badge,
   ListRow,
   Section,
   StateView,
   AppImage,
-  TextField,
-} from "@deribfy/primitives";
+  TextField, ListFooter} from "@deribfy/primitives";
 import type {
   Blocks,
   ButtonBlockProps,
@@ -48,6 +46,7 @@ export function ListBlock({
   search,
   filters,
   onItemPress,
+  layout,
   testID,
 }: ListBlockProps) {
   // DET-033 (jugement propriétaire sur appareil) : les états ne remplacent
@@ -73,6 +72,11 @@ export function ListBlock({
     ) : null;
   // Contrôles TOUJOURS montés (élément stable : l'identité du TextField
   // survit aux rendus — le focus et le clavier survivent avec elle).
+  // FIXES depuis 2026-09-10 (jugement propriétaire sur capture) : la
+  // recherche et les filtres restent SOUS LE TITRE pendant que le contenu
+  // défile — patron des applications de référence. DET-033 reste tenu :
+  // montés quel que soit l'état, l'état ne remplace que la zone de contenu.
+  // Seule la POSITION change : région fixe, plus en-tête défilant.
   const controles = (
     <>
       {search === undefined ? null : (
@@ -132,7 +136,13 @@ export function ListBlock({
     // DÉCLARÉE ici ; le style reste entièrement porté par les primitives —
     // la contrainte « aucun StyleSheet, aucun style en dur » est préservée.
     <Section title={title} testID={testID} fill>
+      {controles}
       <FlatList
+        // GRILLE (1.20) : deux colonnes de cartes pour un catalogue. `key`
+        // force la FlatList a se recreer si le layout changeait — il est
+        // statique par document, la cle est donc constante a l'execution.
+        key={layout === "grid" ? "grid" : "rows"}
+        numColumns={layout === "grid" ? 2 : 1}
         // DET-016 (D-039, dimension A étendue) : ajustement natif aux insets
         // du clavier. Propriété VÉRIFIÉE sur RN 0.86.3 — déclarée dans
         // `ScrollViewPropsIOS`, sans implémentation Android : elle agit sur
@@ -146,11 +156,28 @@ export function ListBlock({
         // remplace que la zone de contenu, via ListEmptyComponent.
         automaticallyAdjustKeyboardInsets
         keyboardShouldPersistTaps="handled"
-        ListHeaderComponent={controles}
         ListEmptyComponent={etatContenu}
+        ListFooterComponent={ListFooter}
         data={state.kind === "ready" ? items : []}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
+        renderItem={({ item }) =>
+          layout === "grid" ? (
+            <GridCard
+              title={item.title}
+              subtitle={item.subtitle}
+              trailing={item.trailing}
+              badge={item.badge}
+              imageUri={item.imageUri}
+              onPress={
+                onItemPress === undefined
+                  ? undefined
+                  : () => {
+                      onItemPress(item.id);
+                    }
+              }
+              testID={`${testID ?? "list"}-card-${item.id}`}
+            />
+          ) : (
           <ListRow
             // VIGNETTE (1.2.0, D-087) : `leading` existait deja au contrat de
             // la primitive. Sans `imageUri`, la ligne reste celle de 1.1.0.
@@ -172,7 +199,8 @@ export function ListBlock({
             }
             testID={`${testID ?? "list"}-row-${item.id}`}
           />
-        )}
+          )
+        }
       />
     </Section>
   );

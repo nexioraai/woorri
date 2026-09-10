@@ -19,7 +19,7 @@
 import { Pressable } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { useStyles } from "@deribfy/primitives/theme-bridge";
+import { useStyles } from "../primitives/theme-bridge";
 
 export interface FermerFeuilleProps {
   /** Mot déclaré par le document. Absent ⇒ aucun libellé inventé. */

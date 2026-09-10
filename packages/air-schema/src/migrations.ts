@@ -277,6 +277,16 @@ export const AIR_MIGRATIONS: readonly AirMigration[] = [
       return document;
     },
   },
+  {
+    from: "1.19.0",
+    to: "1.20.0",
+    description:
+      "AIR 1.20.0 : `field.demoValues` OPTIONNEL — le document déclare des " +
+      "valeurs de démo réalistes pour ses champs texte ; les fixtures du " +
+      "moteur les cyclent au lieu de fabriquer « nom 17 ». Jugé à l'écran " +
+      "sur la première app générée. Migration IDENTITÉ.",
+    migrate: (document) => document,
+  },
 ];
 
 export class AirMigrationError extends Error {

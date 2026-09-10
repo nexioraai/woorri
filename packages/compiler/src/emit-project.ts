@@ -197,6 +197,33 @@ interface ScreenSlice {
   };
 }
 
+/**
+ * LA MARQUE APPARAÎT AUSSI À L'INTÉRIEUR (arbitrage propriétaire 2026-09-09).
+ *
+ * Une app qui possède ses octets de marque (`app.brandIconPngBase64`) les
+ * montrait sur l'icône et le splash — jamais dans un écran, sauf si le
+ * document savait où l'héberger en ligne (`logoUri`). Or un en-tête
+ * d'ACCROCHE est précisément l'endroit d'une identité. Règle MOTEUR : tout
+ * `header` avec `accroche: true` d'une app à marque reçoit sa marque en
+ * data URI — aucun réseau, aucun runtime nouveau, le prop `logoUri` existant
+ * la porte. Un `logoUri` DÉCLARÉ par le document garde la priorité.
+ */
+function propsAvecMarque(
+  air: ProjectAir,
+  b: ProjectAir["screens"][number]["blocks"][number],
+): Record<string, unknown> {
+  const props = flatToRecord(b.props);
+  if (
+    b.blockType === "header" &&
+    props.accroche === true &&
+    props.logoUri === undefined &&
+    air.app.brandIconPngBase64 !== undefined
+  ) {
+    props.logoUri = `data:image/png;base64,${air.app.brandIconPngBase64}`;
+  }
+  return props;
+}
+
 function buildScreenSlice(air: ProjectAir, screen: ProjectAir["screens"][number], locale: string): ScreenSlice {
   const where = `screens.${screen.id}`;
   const blockIds = new Set(screen.blocks.map((b) => b.id));
@@ -378,7 +405,7 @@ function buildScreenSlice(air: ProjectAir, screen: ProjectAir["screens"][number]
         // données canoniques — absente = bloc toujours visible, donc les
         // documents 1.0.0 migrés gardent EXACTEMENT leur comportement.
         ...(b.visibleWhen === undefined ? {} : { visibleWhen: b.visibleWhen }),
-        props: flatToRecord(b.props),
+        props: propsAvecMarque(air, b),
       })),
       actions,
       uiActionsByBlock,
@@ -613,7 +640,7 @@ function emitNavData(air: ProjectAir, locale: string): string {
   ].join("\n");
 }
 
-function emitNavigation(air: ProjectAir, locale: string): string {
+function emitNavigation(air: ProjectAir): string {
   // Écrans qui SONT des destinations principales (résolus par leur route).
   const destinationsPrincipales = new Set(
     (air.navigation.primary?.destinations ?? []).flatMap((d) => {
@@ -628,12 +655,6 @@ function emitNavigation(air: ProjectAir, locale: string): string {
   const screenLines = routes.flatMap((r) => {
     const ecran = air.screens.find((sc) => sc.id === r.screenId);
     const estFeuille = ecran?.presentation === "sheet";
-    // 1.18.0 — le mot de la fermeture vient du DOCUMENT, jamais du moteur.
-    // Absent, le contrôle est rendu sans libellé annoncé : rien n'est inventé.
-    const motFermeture =
-      ecran?.dismissLabel === undefined
-        ? undefined
-        : resolveLocalized(ecran.dismissLabel, locale, `screens.${r.screenId}.dismissLabel`);
     return [
     `      <Stack.Screen name="${r.screenId}" component={${pascal(r.screenId)}Screen}`,
     // 1.16.0 — un écran peut refuser l'en-tête natif : sur un accueil portant
@@ -662,15 +683,12 @@ function emitNavigation(air: ProjectAir, locale: string): string {
       // CONTRÔLE DE FERMETURE (1.18.0) : posé à la FIN de l'en-tête natif.
       // Sur iOS le glissement vers le bas existe déjà ; sur Android il
       // n'existe pas, et sans ce signe rien n'indiquait comment sortir.
-      // `headerBackVisible: false` : une feuille n'offre QU'UNE sortie. Vu à
-      // l'écran au premier build — la pile native dessinait sa flèche de
-      // retour À GAUCHE pendant que le ✕ s'affichait à droite. Deux contrôles
-      // pour un seul geste, là où la demande était précisément d'en avoir un.
-      estFeuille
-        ? `, headerBackVisible: false, headerShadowVisible: false, headerRight: () => <FermerFeuille testID="fermer-${r.screenId}"${
-            motFermeture === undefined ? "" : ` label=${JSON.stringify(motFermeture)}`
-          } />`
-        : ""
+      // ✕ RETIRÉ (arbitrage propriétaire 2026-09-09, après jugement à
+      // l'écran) : la feuille garde la FLÈCHE native comme unique sortie
+      // visible — un contrôle standard vaut mieux qu'un contrôle dessiné.
+      // `dismissLabel` nomme cette sortie pour l'accessibilité (headerBackTitle
+      // n'est pas rendu par Android ; le libellé sert le lecteur d'écran).
+      ""
     } }} />`,
     ];
   });
@@ -682,10 +700,8 @@ function emitNavigation(air: ProjectAir, locale: string): string {
     "// config EXPLICITE émise depuis l'AIR, patron prouvé au banc V4).",
     'import { NavigationContainer } from "@react-navigation/native";',
     'import { createNativeStackNavigator } from "@react-navigation/native-stack";',
-    ...(air.screens.some((sc) => sc.presentation === "sheet")
-      ? ['import { FermerFeuille } from "./lib/runtime/fermer-feuille";']
-      : []),
     'import { declarerRacines } from "./lib/runtime/racines-navigation";',
+    'import { theme } from "./lib/tokens";',
     'import { navData } from "./nav.data";',
     ...importLines,
     "",
@@ -700,7 +716,13 @@ function emitNavigation(air: ProjectAir, locale: string): string {
     "export function Navigation() {",
     "  return (",
     "    <NavigationContainer>",
-    `      <Stack.Navigator initialRouteName="${assertId(air.navigation.entryScreenId, "navigation")}">`,
+    // UNE SEULE SURFACE (jugement propriétaire sur capture, 2026-09-10) :
+    // l'écran paraissait « divisé en 3 » — bande blanche du titre natif avec
+    // son ombre, zone de contenu, bande du bas. L'en-tête natif prend le FOND
+    // du thème et perd son ombre : le titre appartient à la page, il ne la
+    // barre plus. Les jetons restent la seule source des couleurs.
+    `      <Stack.Navigator initialRouteName="${assertId(air.navigation.entryScreenId, "navigation")}"`,
+    '        screenOptions={{ headerShadowVisible: false, headerStyle: { backgroundColor: theme.color.light.bg } }}>',
     ...screenLines,
     "      </Stack.Navigator>",
     "    </NavigationContainer>",
@@ -1004,7 +1026,7 @@ export function emitProject(
   files.set("demo.data.ts", emitDemoData(air));
   files.set("manifests/permissions.manifest.json", emitPermissionsManifest(air));
   files.set("nav.data.ts", emitNavData(air, locale));
-  files.set("navigation.tsx", emitNavigation(air, locale));
+  files.set("navigation.tsx", emitNavigation(air));
   for (const screen of [...air.screens].sort((a, b) => byCodeUnit(a.id, b.id))) {
     const slice = buildScreenSlice(air, screen, locale);
     files.set(`screens/${screen.id}.data.ts`, emitScreenData(slice));
