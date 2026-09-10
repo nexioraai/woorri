@@ -189,6 +189,7 @@ export const SECTIONS_CORRECTIVES: Readonly<Record<string, readonly SectionEmiss
   // La matière manquante se répare là où les entités et leurs affichages
   // vivent : données ET écrans.
   CAMPAGNE_MATIERE_INSUFFISANTE: ["donnees", "ecrans"],
+  CAMPAGNE_ACCUEIL_FRACTIONNE: ["ecrans"],
   // Un champ sensible affiché se répare là où il est AFFICHÉ : dans l'écran.
   AIR_FIELD_SENSITIVE_DISPLAYED: ["ecrans"],
   AIR_FIELD_REFERENCE_TARGET_MISSING: ["donnees"],

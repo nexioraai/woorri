@@ -30,6 +30,46 @@ export interface DiagnosticMatiere {
  *   · AFFICHÉE (un bloc list ou detail_header la rend).
  * Sans elle, l'app promet un commerce et ne montre rien à vendre.
  */
+export interface DiagnosticComposition {
+  code: "CAMPAGNE_ACCUEIL_FRACTIONNE";
+  path: string;
+  message: string;
+}
+
+/**
+ * L'ACCUEIL COULE, IL NE SE PARTAGE PAS — verrou de COMPOSITION, générique.
+ *
+ * Cause mesurée (dougplace, capture propriétaire) : le moteur rendait un
+ * écran à listes comme un View non défilant où chaque liste VERTICALE prend
+ * `fill` — trois listes = trois tiers d'écran qui défilent chacun dans son
+ * couloir. Depuis la mission composition, la rangée horizontale
+ * (`layout:"row"`) rend l'accueil-fleuve exprimable ; ce verrou interdit de
+ * retomber dans l'écran fractionné : AU PLUS UNE liste verticale par écran.
+ * Tous archétypes — un fil social, un catalogue, une liste de réservations
+ * restent exprimables (une seule liste verticale, ou des rangées).
+ */
+export function accueilNonFractionne(air: ProjectAir): DiagnosticComposition[] {
+  const out: DiagnosticComposition[] = [];
+  air.screens.forEach((s, i) => {
+    const verticales = s.blocks.filter(
+      (b) =>
+        b.blockType === "list" &&
+        (b.props ?? []).find((p) => p.key === "layout")?.value !== "row",
+    );
+    if (verticales.length > 1) {
+      out.push({
+        code: "CAMPAGNE_ACCUEIL_FRACTIONNE",
+        path: `screens[${String(i)}]`,
+        message:
+          `écran "${s.id}" : ${String(verticales.length)} listes VERTICALES empilées — ` +
+          "elles se partagent la hauteur au lieu de couler. Une seule liste verticale " +
+          'par écran ; les sections d\'un accueil sont des rangées (layout: "row").',
+      });
+    }
+  });
+  return out;
+}
+
 export function preuveDeMatiere(air: ProjectAir): DiagnosticMatiere[] {
   if (air.compliance.commerceClass === "none") return [];
   const profils = new Set(

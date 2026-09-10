@@ -1,4 +1,4 @@
-export { preuveDeMatiere, type DiagnosticMatiere } from "./matiere.ts";
+export { preuveDeMatiere, accueilNonFractionne, type DiagnosticMatiere, type DiagnosticComposition } from "./matiere.ts";
 export {
   evaluatePromises,
   type PromiseCoverage,

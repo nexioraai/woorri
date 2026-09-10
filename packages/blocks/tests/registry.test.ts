@@ -19,9 +19,10 @@ const screen = (
 
 describe("pont AIR ↔ registre de blocs", () => {
   it("API du registre : référence connue / inconnue", () => {
-    // 1.8.0 : `spacer` porte le nombre à 7 — premier ajout de TYPE depuis le
-    // gel, additif, sans contenu ni action.
-    expect(listBlockIds()).toHaveLength(7);
+    // 1.8.0 : `spacer` → 7. Mission composition 2026-09-10 : `search_entry`
+    // → 8 — la recherche comme élément structurel d'un accueil (références
+    // propriétaire : Amazon, marketplace d'annonces). Additif.
+    expect(listBlockIds()).toHaveLength(8);
     expect(getBlock("list")?.entity).toBe("required");
     expect(getBlock("carousel")).toBeUndefined();
   });

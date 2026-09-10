@@ -95,8 +95,10 @@ export type ListBlockState =
     };
 
 export interface ListBlockProps extends BlockA11yProps {
-  /** 1.6.0 — présentation du contenu : lignes (défaut) ou cartes 2 colonnes. */
-  layout?: "rows" | "grid";
+  /** 1.21.0 — lien d'en-tête de section (« Voir plus » ), libellé du document. */
+  seeAll?: { label: string; onPress: () => void };
+  /** 1.6.0 — lignes (défaut), cartes 2 colonnes, ou RANGÉE horizontale. */
+  layout?: "rows" | "grid" | "row";
   /** Recherche rendue EN TÊTE de la liste (1.2.0) — absente = pas de champ. */
   search?: ListSearchSpec;
   /** Filtres pilotés (E1, D-129) — rendus sous la recherche, ≤ 3. */
@@ -214,6 +216,7 @@ export interface DetailHeaderBlockProps extends BlockA11yProps {
 export interface Blocks {
   HeaderBlock: ComponentType<HeaderBlockProps>;
   ListBlock: ComponentType<ListBlockProps>;
+  SearchEntryBlock: ComponentType<SearchEntryBlockProps>;
   FormBlock: ComponentType<FormBlockProps>;
   ButtonBlock: ComponentType<ButtonBlockProps>;
   SpacerBlock: ComponentType<SpacerBlockProps>;
@@ -247,4 +250,17 @@ export const BUTTON_BLOCK_STATES = ["ready"] as const;
 export const HEADER_BLOCK_STATES = ["ready"] as const;
 /** 1.8.0 — le spacer n'a qu'un état : il est là, ou il ne l'est pas. */
 export const SPACER_BLOCK_STATES = ["ready"] as const;
+export const SEARCH_ENTRY_BLOCK_STATES = ["ready"] as const;
+
+/**
+ * ENTRÉE DE RECHERCHE (mission composition, 2026-09-10) — la recherche comme
+ * ÉLÉMENT STRUCTUREL d'un accueil, pas comme champ d'une liste : un contrôle
+ * à l'allure de champ qui NAVIGUE vers l'écran de recherche réel. Le patron
+ * de toute app de référence — marketplace, réservation, éducation — où
+ * l'accueil OFFRE la recherche et le catalogue l'EXÉCUTE.
+ */
+export interface SearchEntryBlockProps extends BlockA11yProps {
+  placeholder: string;
+  onPress?: () => void;
+}
 export const EMPTY_STATE_BLOCK_STATES = ["empty"] as const;

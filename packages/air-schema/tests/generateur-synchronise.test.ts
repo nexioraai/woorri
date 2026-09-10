@@ -57,6 +57,11 @@ describe("cliquet — générateur synchronisé sur le contrat", () => {
       'layout: "grid"',          // 1.20 — cartes de catalogue sur deux colonnes
       "picsum.photos",           // images de démo RÉELLES, domaine déclaré
       "L'ACCUEIL MONTRE LE PRODUIT", // l'accueil porte la marchandise
+      "search_entry",            // la recherche comme élément structurel
+      'layout: "row"',           // rangées horizontales d'un accueil-fleuve
+      "seeAllLabel",             // 1.21 — « Voir plus » d'un en-tête de section
+      'role:"secondary"',        // 1.21 — le geste secondaire d'un bloc
+      "unit",                    // 1.21 — « 160 000 FCFA », pas « 622.44 »
     ]) {
       expect(source, marqueur).toContain(marqueur);
     }

@@ -39,7 +39,7 @@ describe("V1 — le bornage de la liste est vérifié STRUCTURELLEMENT", () => {
     const source = files.get(BLOCKS) ?? "";
     // L'artefact réel porte bien la forme attendue : la garde ci-dessous
     // empêche le test de rester vert si l'émetteur cessait de l'émettre.
-    expect(source).toContain("<Section title={title} testID={testID} fill>");
+    expect(source).toContain("<Section title={title} testID={testID} fill titleAction={seeAll}>");
     const g = dim(files, "G");
     expect(g?.detail).toContain("<Section fill> encadrant une <FlatList>");
     // ÉDITION CONSCIENTE (V3) : le libellé provient désormais du lecteur de
@@ -51,7 +51,7 @@ describe("V1 — le bornage de la liste est vérifié STRUCTURELLEMENT", () => {
     const files = artefact();
     const source = files.get(BLOCKS) ?? "";
     const mute = source.replace(
-      "<Section title={title} testID={testID} fill>",
+      "<Section title={title} testID={testID} fill titleAction={seeAll}>",
       "<Section title={title} testID={testID}>",
     );
     expect(mute).not.toBe(source);
@@ -98,7 +98,7 @@ describe("V1 — le bornage de la liste est vérifié STRUCTURELLEMENT", () => {
     const files = artefact();
     const source = files.get(BLOCKS) ?? "";
     const deplace = source
-      .replace("<Section title={title} testID={testID} fill>", "<Section title={title} testID={testID}>")
+      .replace("<Section title={title} testID={testID} fill titleAction={seeAll}>", "<Section title={title} testID={testID} titleAction={seeAll}>")
       .concat("\nexport const Ailleurs = () => <Section fill><Badge label=\"x\" /></Section>;\n");
     const g = dim(files.set(BLOCKS, deplace), "G");
     expect(g?.state).toBe("non_conforme");
@@ -107,14 +107,14 @@ describe("V1 — le bornage de la liste est vérifié STRUCTURELLEMENT", () => {
 
   it("⑥ `fill={false}` ne conclut pas ; `fill={true}` conclut", () => {
     const source = artefact().get(BLOCKS) ?? "";
-    const cible = "<Section title={title} testID={testID} fill>";
+    const cible = "<Section title={title} testID={testID} fill titleAction={seeAll}>";
 
     const faux = artefact();
-    faux.set(BLOCKS, source.replace(cible, "<Section title={title} testID={testID} fill={false}>"));
+    faux.set(BLOCKS, source.replace(cible, "<Section title={title} testID={testID} fill={false} titleAction={seeAll}>"));
     expect(dim(faux, "G")?.state).toBe("non_conforme");
 
     const vrai = artefact();
-    vrai.set(BLOCKS, source.replace(cible, "<Section title={title} testID={testID} fill={true}>"));
+    vrai.set(BLOCKS, source.replace(cible, "<Section title={title} testID={testID} fill={true} titleAction={seeAll}>"));
     expect(dim(vrai, "G")?.detail).toContain("<Section fill> encadrant une <FlatList>");
   });
 });
@@ -158,7 +158,10 @@ describe("V2 — A et G ne concluent JAMAIS à la conformité", () => {
     // (surface système). Le bouton principal, lui, passe à `controlHeight`
     // (54 dp > 48) : la contrainte A est tenue PAR CONSTRUCTION, la borne
     // basse reste le minimum tactile.
-    expect(a?.detail).toContain("8 surface(s) contrainte(s)");
+    // ÉDITION CONSCIENTE (2026-09-10, mission composition) : 8 → 9. Le LIEN
+    // d'en-tête de section (« Voir plus ») porte `tapTarget` — un lien
+    // discret n'est pas une cible petite. 9ᵉ surface, née contrainte.
+    expect(a?.detail).toContain("9 surface(s) contrainte(s)");
     expect(a?.detail).toContain("NON MESURÉ : zones sûres");
     expect(g?.detail).toContain("0 encapsulé dans un ScrollView");
     expect(g?.detail).toContain("NON MESURÉ : jank au défilement");

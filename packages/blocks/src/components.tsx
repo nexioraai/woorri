@@ -13,17 +13,15 @@ import {GridCard, AppButton,
   Section,
   StateView,
   AppImage,
-  TextField, ListFooter} from "@deribfy/primitives";
-import type {
-  Blocks,
+  TextField, ListFooter, SearchEntry} from "@deribfy/primitives";
+import type {Blocks,
   ButtonBlockProps,
   DetailHeaderBlockProps,
   EmptyStateBlockProps,
   FormBlockProps,
   HeaderBlockProps,
   ListBlockProps,
-  SpacerBlockProps,
-} from "./contracts.ts";
+  SpacerBlockProps, SearchEntryBlockProps} from "./contracts.ts";
 
 export function HeaderBlock({ title, subtitle, accroche, logoUri, testID }: HeaderBlockProps) {
   return (
@@ -47,6 +45,7 @@ export function ListBlock({
   filters,
   onItemPress,
   layout,
+  seeAll,
   testID,
 }: ListBlockProps) {
   // DET-033 (jugement propriétaire sur appareil) : les états ne remplacent
@@ -130,12 +129,50 @@ export function ListBlock({
       )}
     </>
   );
+  if (layout === "row") {
+    // RANGÉE HORIZONTALE (mission composition, 2026-09-10) — la section d'un
+    // accueil-fleuve : axe PERPENDICULAIRE au défilement de l'écran, donc
+    // hauteur naturelle, pas de `fill`, et DET-006 hors sujet. Les états
+    // restent scopés au contenu (DET-033).
+    return (
+      <Section title={title} testID={testID} titleAction={seeAll}>
+        {controles}
+        {etatContenu ?? (
+          <FlatList
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            data={state.kind === "ready" ? items : []}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <GridCard
+                compact
+                title={item.title}
+                subtitle={item.subtitle}
+                trailing={item.trailing}
+                badge={item.badge}
+                imageUri={item.imageUri}
+                onPress={
+                  onItemPress === undefined
+                    ? undefined
+                    : () => {
+                        onItemPress(item.id);
+                      }
+                }
+                testID={`${testID ?? "list"}-card-${item.id}`}
+              />
+            )}
+          />
+        )}
+      </Section>
+    );
+  }
   return (
     // `fill` (DET-006) : la section BORNE la hauteur de la liste virtualisée.
     // Sans parent borné, la FlatList rend tous ses éléments. L'intention est
     // DÉCLARÉE ici ; le style reste entièrement porté par les primitives —
     // la contrainte « aucun StyleSheet, aucun style en dur » est préservée.
-    <Section title={title} testID={testID} fill>
+    <Section title={title} testID={testID} fill titleAction={seeAll}>
       {controles}
       <FlatList
         // GRILLE (1.20) : deux colonnes de cartes pour un catalogue. `key`
@@ -270,6 +307,14 @@ export function FormBlock({
 // style ici. Commentaire volontairement sans accents ni tournure longue — la
 // sonde F3 cherche des chaines linguistiques par motif et ne distingue pas un
 // commentaire (lecon deja consignee sur l'en-tete de detail).
+export function SearchEntryBlock({ placeholder, onPress, testID }: SearchEntryBlockProps) {
+  return (
+    <Section>
+      <SearchEntry placeholder={placeholder} onPress={onPress} testID={testID} />
+    </Section>
+  );
+}
+
 export function SpacerBlock({ testID }: SpacerBlockProps) {
   return <Section testID={testID} fill />;
 }
@@ -366,6 +411,7 @@ export function DetailHeaderBlock({
 export const blocks: Blocks = {
   HeaderBlock,
   ListBlock,
+  SearchEntryBlock,
   FormBlock,
   ButtonBlock,
   EmptyStateBlock,

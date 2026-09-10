@@ -64,7 +64,7 @@ export const RELEASE_TRAIN_V1 = {
   // et écran de démarrage sont posés au BUILD, et le chemin de compilation
   // est zéro réseau) et `screen.presentation` (une ÉTAPE monte du bas au lieu
   // de remplacer le parcours).
-  airSchemaVersion: "1.20.0",
+  airSchemaVersion: "1.21.0",
   // Porté à 1.1.0 le 2026-08-31 (D-060) : montée STRICTEMENT ADDITIVE du
   // registre de blocs — `form` gagne `loading`/`empty`, `detail_header` gagne un
   // état, les trois blocs à données gagnent les props de titres. Rien n'est
@@ -192,7 +192,12 @@ export const RELEASE_TRAIN_V1 = {
     // filtres ÉPINGLÉS sous le titre (plus en-tête défilant), pied de liste
     // par primitive (ListFooter) — le dernier rang finit sa course au-dessus
     // de la barre.
-    "b106ecd0467ad1299041f066fdfd183df6c950597df902158efc5a92e4849606",
+    // Ré-scellé 2026-09-10 (mission composition, références propriétaire) :
+    // rangée horizontale (layout "row" + GridCard compacte), bloc
+    // , écran-fleuve. Le registre passe à HUIT blocs.
+    // Ré-scellé 2026-09-10 (1.21) : lien d'en-tête « Voir plus » (seeAllLabel
+    // + geste secondaire).
+    "e4aaf01fddb0fa9a1346b5be8a0188225ae01e51c2af7ea86ed8e57b171bc19d",
   capabilityRegistryVersion: "1.0.0",
   capabilitySourcesHash:
     "6c28599246abde6e7010704f23f273aafe50d17c5483133709c9065f2777346c",

@@ -287,6 +287,16 @@ export const AIR_MIGRATIONS: readonly AirMigration[] = [
       "sur la première app générée. Migration IDENTITÉ.",
     migrate: (document) => document,
   },
+  {
+    from: "1.20.0",
+    to: "1.21.0",
+    description:
+      "AIR 1.21.0 : `field.unit` (« 160 000 FCFA », pas « 622.44 ») et " +
+      "`trigger.role` (« Voir plus » d'un en-tête de section) — deux patrons " +
+      "des références marketplace fournies par le propriétaire. Migration " +
+      "IDENTITÉ.",
+    migrate: (document) => document,
+  },
 ];
 
 export class AirMigrationError extends Error {

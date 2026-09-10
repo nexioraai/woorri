@@ -17,6 +17,11 @@ const SRC = join(dirname(fileURLToPath(import.meta.url)), "..", "src");
 // l'écran reste vide (1170 px sous le dernier bouton de l'accueil produit).
 // Strictement additif : aucun bloc existant ne change, un document 1.7.0 est
 // inchangé. Le bloc ne porte NI contenu, NI donnée, NI action.
+// ÉDITION CONSCIENTE (mission composition, 2026-09-10) : `search_entry`
+// entre au registre. Justifié par les RÉFÉRENCES fournies par le
+// propriétaire (Amazon, marketplace d'annonces) : la recherche y est un
+// élément STRUCTUREL de l'accueil — un contrôle à l'allure de champ qui
+// NAVIGUE vers l'écran où la recherche s'exécute. Strictement additif.
 const V1_BLOCK_IDS = [
   "button",
   "detail_header",
@@ -24,6 +29,7 @@ const V1_BLOCK_IDS = [
   "form",
   "header",
   "list",
+  "search_entry",
   "spacer",
 ];
 

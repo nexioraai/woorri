@@ -51,6 +51,19 @@ const makeSheet = (c: Palette) =>
       alignItems: "center",
       gap: theme.space.sm,
     },
+    // EN-TÊTE DE SECTION AVEC LIEN (1.21.0) — titre à gauche, « Voir plus »
+    // à droite, cible tactile pleine sur le lien.
+    sectionTitleRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+    },
+    sectionTitleLien: {
+      minHeight: theme.size.tapTarget,
+      justifyContent: "center",
+      paddingHorizontal: theme.space.xs,
+    },
+    sectionTitleLienTexte: { color: c.primaryText, fontSize: theme.font.label },
     sectionTitle: {
       fontSize: theme.font.title,
       fontWeight: theme.fontWeight.semibold,
@@ -235,6 +248,21 @@ const makeSheet = (c: Palette) =>
       color: c.primaryText,
       fontWeight: theme.fontWeight.semibold,
     },
+    // — SearchEntry — l'allure du champ `input`, la hauteur d'un contrôle
+    // principal : c'est l'invitation majeure d'un accueil.
+    searchEntry: {
+      minHeight: theme.size.controlHeight,
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: theme.radius.lg,
+      backgroundColor: c.surface,
+      paddingHorizontal: theme.space.md,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: theme.space.sm,
+    },
+    searchEntryIcone: { fontSize: theme.font.title, color: c.muted },
+    searchEntryTexte: { fontSize: theme.font.body, color: c.muted },
     // — GridCard (1.20) — la cellule d'un catalogue : image pleine largeur
     // de carte, corps textuel, valeur en pied. Les colonnes sont posées par
     // la FlatList ; la carte remplit sa cellule (flex: 1) et respire par sa
@@ -254,6 +282,17 @@ const makeSheet = (c: Palette) =>
       backgroundColor: c.border,
     },
     gridCardBody: { padding: theme.space.md, gap: theme.space.xs },
+    // Carte COMPACTE d'une rangée horizontale : largeur bornée (jeton), la
+    // rangée en montre plusieurs et invite au geste. Même anatomie sinon.
+    gridCardCompact: {
+      width: theme.size.tapTarget * 3.25,
+      backgroundColor: c.surface,
+      borderColor: c.border,
+      borderWidth: 1,
+      borderRadius: theme.radius.md,
+      marginEnd: theme.space.sm,
+      overflow: "hidden",
+    },
     gridCardTrailing: {
       fontSize: theme.font.body,
       fontWeight: theme.fontWeight.bold,

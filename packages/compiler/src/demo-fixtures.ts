@@ -91,7 +91,13 @@ function fixtureValue(
   // déterministe. Sans déclaration, la forme historique reste.
   if (
     field.demoValues !== undefined &&
-    (field.type === "string" || field.type === "text" || field.type === "asset")
+    (field.type === "string" ||
+      field.type === "text" ||
+      field.type === "asset" ||
+      // 1.21 — un prix de démo réaliste (« 145000 ») vaut mieux qu'un tirage
+      // décimal (« 622.44 ») : les valeurs d'instance sont des chaînes.
+      field.type === "number" ||
+      field.type === "decimal")
   ) {
     // 1.20 — pour un champ IMAGE, les demoValues sont des URLs https RÉELLES
     // (exigence propriétaire : « je veux voir de vraies images ») ; leur hôte

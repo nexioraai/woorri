@@ -13,15 +13,13 @@ export type {
   ListBlockState,
   ListItemData,
 } from "./contracts.ts";
-export {
-  blocks,
+export {blocks,
   ButtonBlock,
   DetailHeaderBlock,
   EmptyStateBlock,
   FormBlock,
   HeaderBlock,
-  ListBlock,
-} from "./components.tsx";
+  ListBlock, SearchEntryBlock} from "./components.tsx";
 export {
   BLOCK_REGISTRY_VERSION,
   BLOCKS,

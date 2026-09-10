@@ -71,6 +71,7 @@ const WRAPPER_BY_BLOCK_TYPE: Readonly<Record<string, string>> = {
   detail_header: "AirDetailHeader",
   empty_state: "AirEmptyState",
   form: "AirForm",
+  search_entry: "AirSearchEntry",
   spacer: "AirSpacer",
   header: "AirHeader",
   list: "AirList",
@@ -231,9 +232,14 @@ function buildScreenSlice(air: ProjectAir, screen: ProjectAir["screens"][number]
   // Actions UI ciblant un bloc de CET écran — ambiguïté = refus net
   // (comportement non spécifié par l'AIR ; corpus v2 mesuré : 0 cas).
   const uiActionsByBlock: Record<string, string> = {};
+  // 1.21.0 — le geste SECONDAIRE d'un bloc (« Voir plus » d'un en-tête de
+  // section). Table séparée : l'ambiguïté reste refusée PAR RÔLE.
+  const uiSecondaryActionsByBlock: Record<string, string> = {};
   for (const action of [...air.actions].sort((a, b) => byCodeUnit(a.id, b.id))) {
     if (action.trigger.kind === "ui" && blockIds.has(action.trigger.blockId)) {
-      const existing = uiActionsByBlock[action.trigger.blockId];
+      const table =
+        action.trigger.role === "secondary" ? uiSecondaryActionsByBlock : uiActionsByBlock;
+      const existing = table[action.trigger.blockId];
       if (existing !== undefined) {
         throw new EmitError(
           "EMIT_UI_ACTION_AMBIGUOUS",
@@ -241,7 +247,7 @@ function buildScreenSlice(air: ProjectAir, screen: ProjectAir["screens"][number]
           `${existing} et ${action.id}`,
         );
       }
-      uiActionsByBlock[action.trigger.blockId] = action.id;
+      table[action.trigger.blockId] = action.id;
     }
   }
 
@@ -367,6 +373,8 @@ function buildScreenSlice(air: ProjectAir, screen: ProjectAir["screens"][number]
         ...(f.label === undefined
           ? {}
           : { label: resolveLocalized(f.label, locale, `${entity.id}.${f.id}.label`) }),
+        // 1.21.0 — l'unité voyage telle quelle : donnée du document.
+        ...(f.unit === undefined ? {} : { unit: f.unit }),
         ...(f.enumLabels === undefined
           ? {}
           : {
@@ -409,6 +417,9 @@ function buildScreenSlice(air: ProjectAir, screen: ProjectAir["screens"][number]
       })),
       actions,
       uiActionsByBlock,
+      ...(Object.keys(uiSecondaryActionsByBlock).length === 0
+        ? {}
+        : { uiSecondaryActionsByBlock }),
       entities,
       // Omise quand vide : les documents sans liaison de slot gardent des
       // données d'écran EXACTEMENT identiques à celles de 1.2.0.
@@ -486,7 +497,17 @@ function emitScreen(slice: ScreenSlice, aBarre: boolean): string {
   // défileur de l'écran (Section `fill` la borne), les blocs voisins
   // devenant des régions fixes. Effet secondaire favorable : les contrôles
   // post-liste restent toujours atteignables (dimension A de la grille).
-  const hasList = slice.screen.blocks.some((b) => b.blockType === "list");
+  // MISSION COMPOSITION (2026-09-10) — seule une liste VERTICALE impose le
+  // patron « la liste est le défileur » (DET-006). Une rangée HORIZONTALE
+  // défile sur l'autre axe : elle vit très bien dans un écran ScrollView.
+  // C'est ce qui rend l'ACCUEIL-FLEUVE exprimable — un défilement vertical
+  // de sections hétérogènes, le patron de toute marketplace de référence —
+  // pour N'IMPORTE quel type d'application.
+  const hasList = slice.screen.blocks.some(
+    (b) =>
+      b.blockType === "list" &&
+      (b.props ?? []).find((pr) => pr.key === "layout")?.value !== "row",
+  );
   // DET-030 (jugement propriétaire sur SM-A175F, 2026-09-05) : le clavier
   // RECOUVRAIT les champs de formulaire sur Android. Cause démontrée par
   // recoupement : DET-016 confiait Android à `softwareKeyboardLayoutMode:

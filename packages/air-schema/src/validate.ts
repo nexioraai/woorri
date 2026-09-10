@@ -474,7 +474,9 @@ export function validateAir(air: ProjectAir): AirDiagnostic[] {
       // que tout texte localisé, et cohérence stricte avec enumValues.
       checkLocalized(f.label, `${path}.label`);
       if (f.enumLabels !== undefined) {
-        if (f.type !== "enum") {
+        // 1.21.0 — les BOOLÉENS aussi : « true »/« false » à l'écran est le
+        // même défaut que « a_l_heure » (badge « false » mesuré sur capture).
+        if (f.type !== "enum" && f.type !== "boolean") {
           push("AIR_FIELD_ENUM_LABELS_UNEXPECTED", path, `enumLabels sur un champ non-enum "${f.id}"`);
         }
         // 1.19.0 — liste de paires : mêmes vérifications, plus l'UNICITÉ des

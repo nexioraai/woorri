@@ -157,7 +157,7 @@ const coutUSD = (u) =>
 // générée naissait en dessous du niveau. Un test du paquet air-schema compare
 // cette constante à AIR_SCHEMA_VERSION : toute avancée du schéma CASSE la CI
 // tant que ce prompt n'a pas été resynchronisé, consciemment.
-export const CONTRAT_CIBLE = "1.20.0";
+export const CONTRAT_CIBLE = "1.21.0";
 
 const PARTS = [
   {
@@ -265,6 +265,7 @@ REGISTRE DES SMART BLOCKS (allowlist FERMÉE — blockType UNIQUEMENT parmi ces 
 - \`form\` — formulaire lié à une entité. entityId : REQUIS. Props : fieldIds (au moins 1, REQUIS), submitLabel (REQUIS), title?, loadingTitle?, emptyTitle?.
 - \`button\` — action autonome. entityId : INTERDIT. Props : label (REQUIS), actionId (act_*, REQUIS — action DÉCLARÉE), kind? ("primary"|"ghost"|"link" — link = TEXTE cliquable pour un chemin secondaire, jamais pour l'action principale), icon? (allowlist : accueil, recherche, liste, billet, panier, calendrier, carte, compte, favoris, message, reglages).
 - \`empty_state\` — état vide d'écran. entityId : INTERDIT. Props : title (REQUIS), message? ; actionLabel et actionId vont TOUJOURS PAR PAIRE.
+- \`search_entry\` — ENTRÉE de recherche : l'allure d'un champ, le geste d'une navigation. Props : placeholder (REQUIS), actionId (act_*, REQUIS — un \`navigate\` vers l'écran où la recherche s'EXÉCUTE). C'est l'élément structurel d'un accueil ; le champ \`searchFieldId\` d'une liste reste la recherche EXÉCUTÉE.
 - \`spacer\` — espace extensible qui POUSSE ce qui le suit vers le bas de l'écran (composition d'un écran d'accueil : marque+titre en haut, actions en bas). Aucune prop.
 
 11. INTENTION — \`intent\` porte la demande du client. \`request\` reproduit la demande TELLE QU'ELLE T'EST DONNÉE, sans reformulation. \`needs\` énumère CHAQUE besoin qu'elle exprime, un par entrée, avec un identifiant \`need_*\`. Pour chacun, \`resolution\` est OBLIGATOIRE et FERMÉE :
@@ -346,6 +347,13 @@ REGISTRE DES SMART BLOCKS (allowlist FERMÉE — blockType UNIQUEMENT parmi ces 
 
 31. DONNÉES VIVANTES — ELLES S'EXPRIMENT PAR LA PROVENANCE, ET LE POLLING N'EST PAS DU PUSH. Un besoin de données vivantes (« temps réel », « en direct », mises à jour) s'exprime en déclarant la provenance du dataset : \`sourceKind:"remote"\` + \`sourceIntegrationId\` (intégration EXISTANTE) + \`sourceDomain\` (PRÉSENT dans \`network.allowedDomains\`, sinon refus) + \`sourceRefreshSeconds\` (cadence, 5–3600 s). L'app émise CONSOMME alors cette source : états chargement/erreur réels, rafraîchissement par POLLING à la cadence déclarée. Ce que le moteur ne fait PAS : du temps réel POUSSÉ (server push, notification instantanée) — un besoin qui l'exige explicitement se déclare \`unexpressible\` en le disant PRÉCISÉMENT (jamais en citant \`liveData\`, qui existe). Un besoin « live » classé \`satisfied\` SANS aucun dataset \`remote\` dans le document est le mensonge exact que la règle 30 interdit. Sans \`sourceKind\`, un dataset reste amorcé à la compilation : c'est le comportement historique, et il ne prétend rien.
 
+31bis. RIEN DE BRUT À L'ÉCRAN — trois défauts MESURÉS sur captures (2026-09-10) et leurs remèdes, tous portés par le document :
+   · un badge « false »/« true » : tout champ \`boolean\` AFFICHÉ porte \`enumLabels\` sur "true" et "false" (« Ouvert »/« Fermé », « En stock »/« Épuisé ») ;
+   · « 622.44 » sans monnaie quand la référence affiche « 160 000 FCFA » : tout champ de PRIX ou de MESURE porte \`unit\` (« FCFA », « kg », « km ») — le moteur formate le nombre, TOI tu donnes l'unité — ET des \`demoValues\` réalistes du domaine (« 145000 », jamais « 622.44 ») ;
+   · une photo de drapeau dans une sélection de produits : les URLs d'images de démo portent le SUJET dans leur graine — \`https://picsum.photos/seed/<produit-precis>/600/600\` reste servi, mais préfère des graines DESCRIPTIVES et STABLES par ligne.
+
+31ter. EN-TÊTE DE SECTION AVEC « VOIR PLUS » (1.21) — patron des références : une section d'accueil qui tronque (rangée, sélection) porte \`seeAllLabel\` sur son bloc \`list\` ET une action \`{trigger:{kind:"ui",blockId:<ce bloc>,role:"secondary"}, effect:{kind:"navigate",screenId:<l'écran complet>}}\`. Le geste PRINCIPAL du bloc (ouvrir une ligne) reste \`role\` absent. L'un sans l'autre est une déclaration morte.
+
 32. LIBELLÉS HUMAINS (1.10, forme 1.19) — AUCUN code machine à l'écran. Tout champ AFFICHÉ par un bloc porte \`label\` [{locale,text}] ; tout champ \`enum\` affiché porte \`enumLabels\` : une LISTE de paires \`[{value:"<valeur d'enumValues>", label:[{locale,text}]}]\`, une entrée par valeur, sans doublon. Mesuré sur appareil : « a_l_heure » et « fld_depart_statut » rendus tels quels — jugés « pas premium » par le propriétaire. Le moteur ne traduit pas : il rend ce que le document déclare.
 
 33. COMPTE ET SESSION (1.11–1.14) — dès que le domaine implique un compte client :
@@ -362,11 +370,13 @@ REGISTRE DES SMART BLOCKS (allowlist FERMÉE — blockType UNIQUEMENT parmi ces 
 
 36ter. IMAGES RÉELLES (1.20) — tout champ \`asset\` d'une entité de CATALOGUE porte \`demoValues\` : 6 à 12 URLs \`https://picsum.photos/seed/<mot-descriptif-unique>/600/600\` (photos réelles, servies sans clé), ET \`picsum.photos\` figure dans \`network.allowedDomains\`. Un catalogue aux vignettes grises n'est pas un catalogue.
 
+36quinquies. L'ACCUEIL EST UN FLEUVE DE SECTIONS — PRINCIPE GÉNÉRAL, TOUS ARCHÉTYPES. L'écran d'accueil d'une application de référence est un DÉFILEMENT VERTICAL de sections HÉTÉROGÈNES, chacune courte et typée. La grammaire : \`search_entry\` en tête quand l'app a un écran de recherche ; puis des sections \`list\` en \`layout: "row"\` (rangées horizontales de cartes — catégories, sélection, à découvrir…) ; une grille ou une liste verticale SEULEMENT sur les écrans de catalogue dédiés. PROSCRIT : plusieurs listes VERTICALES empilées sur un même écran — elles se partagent la hauteur au lieu de couler (défaut mesuré sur le cas dougplace : trois listes pleines en tiers d'écran). ADAPTE les sections à l'archétype : une réservation ouvre sur « à venir » puis « explorer » ; une app éducative sur « reprendre » puis « parcours » ; une livraison sur « commander à nouveau » puis « autour de vous ». Les EXEMPLES ne sont pas des gabarits : déduis les sections du BESOIN.
+
 36quater. L'ACCUEIL MONTRE LE PRODUIT — l'écran Accueil d'une app de catalogue ne se limite JAMAIS à un en-tête : il porte au moins un bloc \`list\` de l'entité vedette (sélection, nouveautés) en \`layout: "grid"\`, avec ses images. L'utilisateur voit la marchandise dès l'entrée, comme dans toute marketplace de référence.
 
 36bis. VALEURS DE DÉMO (1.20) — tout champ TEXTE affiché par une liste ou un détail d'un CATALOGUE (nom, titre, description) porte \`demoValues\` : 4 à 8 valeurs RÉALISTES du domaine (« Collier baoulé perles bleues », jamais « nom 17 »). Le moteur les cycle dans les données de démonstration : c'est CE que le client verra à la première ouverture. Un catalogue crédible se juge à ces valeurs.
 
-37. GRILLE DE CATALOGUE (1.20) — un écran de CATALOGUE (produits, biens, annonces, plats) déclare \`layout: "grid"\` sur son bloc \`list\` : les articles se présentent en CARTES sur deux colonnes — image dessus, nom, prix — comme toute marketplace de référence. \`imageFieldId\` est alors OBLIGATOIRE (règle 23). Les listes de FLUX (commandes, historique, panier) restent en lignes.
+37. GRILLE DE CATALOGUE (1.20) — un écran de CATALOGUE (produits, biens, annonces, plats) déclare \`layout: "grid"\` sur son bloc \`list\` (et \`layout: "row"\` pour une RANGÉE horizontale de cartes) : les articles se présentent en CARTES sur deux colonnes — image dessus, nom, prix — comme toute marketplace de référence. \`imageFieldId\` est alors OBLIGATOIRE (règle 23). Les listes de FLUX (commandes, historique, panier) restent en lignes.
 
 36. ICÔNES — allowlist FERMÉE, ONZE valeurs, aucune autre : accueil, recherche, liste, billet, panier, calendrier, carte, compte, favoris, message, reglages. Elle vaut pour \`icon\` des destinations de \`primary\` ET pour \`icon\` d'un \`button\` — et NULLE PART ailleurs (aucun autre bloc n'a d'icône). MESURÉ (dougplace) : 18 refus \`BLOCK_PROPS_INVALID\` pour des glyphes inventés ou posés sur les mauvais blocs. Choisis par le RÔLE (compte → compte, panier → panier) ; si aucun des onze ne convient, N'EN METS PAS.
 
@@ -556,6 +566,10 @@ function validateLocal(document) {
     // (dougplace, 1 entité = profil, 6,81 $). Couche CAMPAGNE uniquement —
     // le corpus gelé v2 précède l'exigence et n'est pas re-jugé.
     ...fidelity.preuveDeMatiere(parsed.data),
+    // ── COMPOSITION (mission 2026-09-10) : au plus UNE liste verticale par
+    // écran — l'écran fractionné en couloirs est refusé, l'accueil-fleuve
+    // (rangées horizontales) est le chemin offert.
+    ...fidelity.accueilNonFractionne(parsed.data),
     // ── FORM_SANS_ACTION (2026-09-01) — DIAGNOSTIC, JAMAIS UN REFUS DE CONTRAT.
     //
     // Un `form` rend TOUJOURS un bouton portant son `submitLabel` : c'est une

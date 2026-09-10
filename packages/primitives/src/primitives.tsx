@@ -15,6 +15,7 @@ import type {
   AppTextProps,
   BadgeProps,
   GridCardProps,
+  SearchEntryProps,
   ListRowProps,
   Primitives,
   ScreenShellProps,
@@ -70,6 +71,7 @@ export function Section({
   fill = false,
   inline = false,
   tight = false,
+  titleAction,
 }: SectionProps) {
   const s = useStyles();
   // DET-025 — `fill` était DÉCLARÉ par le contrat, PORTÉ par les styles,
@@ -91,7 +93,22 @@ export function Section({
       testID={testID}
       accessibilityLabel={accessibilityLabel}
     >
-      {title !== undefined && <Text style={s.sectionTitle}>{title}</Text>}
+      {title !== undefined &&
+        (titleAction === undefined ? (
+          <Text style={s.sectionTitle}>{title}</Text>
+        ) : (
+          <View style={s.sectionTitleRow}>
+            <Text style={s.sectionTitle}>{title}</Text>
+            <Pressable
+              onPress={titleAction.onPress}
+              accessibilityRole="button"
+              accessibilityLabel={titleAction.label}
+              style={s.sectionTitleLien}
+            >
+              <Text style={s.sectionTitleLienTexte}>{titleAction.label}</Text>
+            </Pressable>
+          </View>
+        ))}
       {fill ? (
         <View style={s.sectionFillBody}>{children}</View>
       ) : inline ? (
@@ -285,7 +302,29 @@ export function ListFooter() {
   return <View style={s.listContent} />;
 }
 
+/**
+ * ENTRÉE DE RECHERCHE — visuellement un champ, structurellement un bouton :
+ * l'accueil OFFRE la recherche, l'écran cible l'EXÉCUTE. Cible tactile
+ * pleine, rôle bouton annoncé, placeholder comme nom accessible.
+ */
+export function SearchEntry({ placeholder, onPress, testID, accessibilityLabel }: SearchEntryProps) {
+  const s = useStyles();
+  return (
+    <Pressable
+      style={s.searchEntry}
+      onPress={onPress}
+      testID={testID}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel ?? placeholder}
+    >
+      <Ionicons name="search-outline" size={s.searchEntryIcone.fontSize} color={s.searchEntryIcone.color} />
+      <Text style={s.searchEntryTexte}>{placeholder}</Text>
+    </Pressable>
+  );
+}
+
 export function GridCard({
+  compact,
   title,
   subtitle,
   trailing,
@@ -316,16 +355,17 @@ export function GridCard({
       </View>
     </>
   );
+  const forme = compact === true ? s.gridCardCompact : s.gridCard;
   if (onPress === undefined) {
     return (
-      <View style={s.gridCard} testID={testID} accessibilityLabel={accessibilityLabel}>
+      <View style={forme} testID={testID} accessibilityLabel={accessibilityLabel}>
         {corps}
       </View>
     );
   }
   return (
     <Pressable
-      style={s.gridCard}
+      style={forme}
       onPress={onPress}
       testID={testID}
       accessibilityRole="button"

@@ -21,7 +21,7 @@ import {
 // 1.7.1 (E3.3, D-131) : provenance APLANIE (sourceKind/sourceIntegrationId/
 //   sourceDomain/sourceRefreshSeconds) — l'union 1.7.0 dépassait la limite
 //   réelle de grammaire de l'API (classe D-078) ; sémantique inchangée.
-export const AIR_SCHEMA_VERSION = "1.20.0";
+export const AIR_SCHEMA_VERSION = "1.21.0";
 
 export const semverSchema = z.string().regex(/^\d+\.\d+\.\d+$/);
 export const sha256Schema = z.string().regex(/^[0-9a-f]{64}$/);
@@ -417,6 +417,16 @@ const fieldSchema = z.strictObject({
    */
   demoValues: z.array(z.string().min(1)).min(1).max(24).optional(),
   /**
+   * UNITÉ D'AFFICHAGE (1.21.0) — « 160 000 FCFA », pas « 622.44 ».
+   *
+   * Jugé sur captures de référence (propriétaire, 2026-09-10) : les deux
+   * marketplaces de référence affichent le prix EN VEDETTE avec sa monnaie ;
+   * le moteur affichait la valeur brute. L'unité est une DONNÉE du document
+   * (monnaie, kg, km…) — le moteur formate le nombre (séparateurs de la
+   * locale), il n'invente jamais l'unité (F3).
+   */
+  unit: z.string().min(1).max(12).optional(),
+  /**
    * CHAMP SENSIBLE (1.12.0, Phase 4) — saisi, JAMAIS conservé.
    *
    * Fait mesuré avant cette montée : tout champ d'entité devient une COLONNE
@@ -519,7 +529,18 @@ const datasetSchema = z
   });
 
 const actionTriggerSchema = z.discriminatedUnion("kind", [
-  z.strictObject({ kind: z.literal("ui"), blockId: blockIdSchema }),
+  z.strictObject({
+    kind: z.literal("ui"),
+    blockId: blockIdSchema,
+    /**
+     * RÔLE (1.21.0) — un bloc peut porter DEUX gestes : son geste principal
+     * (appui sur la ligne, soumission du formulaire) et un geste SECONDAIRE
+     * (« Voir plus » d'un en-tête de section — patron des deux références
+     * marketplace fournies par le propriétaire). Absent = "primary" ; deux
+     * actions de même rôle sur un bloc restent une ambiguïté refusée.
+     */
+    role: z.enum(["primary", "secondary"]).optional(),
+  }),
   z.strictObject({
     kind: z.literal("lifecycle"),
     event: z.enum(["app_start", "screen_open", "screen_close"]),

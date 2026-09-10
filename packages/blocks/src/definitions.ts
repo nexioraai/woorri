@@ -14,6 +14,7 @@ import { z } from "zod";
 // devient impossible par construction, et non plus seulement détectable.
 import {
   BUTTON_BLOCK_STATES,
+  SEARCH_ENTRY_BLOCK_STATES,
   SPACER_BLOCK_STATES,
   DETAIL_HEADER_BLOCK_STATES,
   EMPTY_STATE_BLOCK_STATES,
@@ -317,7 +318,14 @@ export const BLOCKS: readonly BlockDefinition[] = [
       // 1.6.0 (2026-09-09, jugé à l'écran sur la première app générée) : un
       // CATALOGUE se présente en CARTES sur deux colonnes — image dessus,
       // nom, prix — pas en lignes. Le document choisit ; défaut = lignes.
-      layout: z.enum(["rows", "grid"]).optional(),
+      // "row" (2026-09-10, mission composition) : RANGÉE HORIZONTALE de
+      // cartes — la section d'un accueil-fleuve. Axe différent du défilement
+      // d'écran : DET-006 (liste virtualisée non bornée) ne s'applique pas.
+      layout: z.enum(["rows", "grid", "row"]).optional(),
+      // 1.21.0 — libellé du lien d'en-tête ; le GESTE vient d'une action au
+      // rôle "secondary" sur ce bloc. L'un sans l'autre = déclaration morte,
+      // refusée par le validateur de campagne des contrôles fantômes.
+      seeAllLabel: z.string().min(1).optional(),
     }).superRefine((v, ctx) => {
       const n = v.userFilterFieldIds?.length ?? 0;
       if ((v.userFilterOperators !== undefined || v.userFilterInputTypes !== undefined) && n === 0) {
@@ -355,6 +363,25 @@ export const BLOCKS: readonly BlockDefinition[] = [
     ],
     actionRefProps: [],
     states: LIST_BLOCK_STATES,
+    porteAffordance: true,
+  },
+  {
+    // MISSION COMPOSITION (2026-09-10) — la recherche comme élément
+    // STRUCTUREL : un contrôle à l'allure de champ qui NAVIGUE vers l'écran
+    // où la recherche s'exécute. Sans lui, « recherche » n'existait qu'À
+    // L'INTÉRIEUR d'une liste — l'accueil d'une app de référence ne pouvait
+    // pas l'offrir.
+    id: "search_entry",
+    version: "1.0.0",
+    description: "Entrée de recherche — navigue vers l'écran de recherche.",
+    entity: "forbidden",
+    propsSchema: z.strictObject({
+      placeholder: z.string().min(1),
+      actionId: actionRef,
+    }),
+    fieldRefProps: [],
+    actionRefProps: ["actionId"],
+    states: SEARCH_ENTRY_BLOCK_STATES,
     porteAffordance: true,
   },
   {
