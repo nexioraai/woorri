@@ -486,3 +486,17 @@ INCIDENT EP-065 : mon import d'emit-v3 a lancé une campagne sans GO
 (0,3601 $ journalisés, tuée en vol) — garde GO_CAMPAGNE=OUI-JE-PAIE
 posée : un import ne dépense plus. Batteries 399+165+95, 28/28 apps.
 Mission journalisée : 10,7769 $.
+
+--- 2026-09-11 · RE-CAMPAGNE KAVIVA (GO EP-066, plafond 8,50 $) ---
+FAIL-CLOSED À P2 SUR TIRAGE FRAIS : 0,1538 $ dépensés, ~8 $ épargnés.
+Q1 NON · Q2/Q3 sans objet — LA question (juges R6 sur génération
+fraîche) reste due. Attribution par rejeu : 2 refus LÉGITIMES (variance
+P0 — parcours elliptiques : consulter sans source, là où les modèles
+acceptés écrivaient decouvrir→consulter et historique→choisir) + 1
+ANGLE MORT (retirer absent des SOURCES de consulter — liste à la main ;
+EP-059 n'avait dérivé que les consommateurs). Livrable : sources
+dérivées de la table, fixture 16-09-56, passe 0 $. Fait budgétaire R8 :
+passage P2 sur frais = 1/2 ; l'échec coûte 0,15 $. Option consignée non
+exécutée : prompt P0 v6 « chaque identité naît dans son parcours »
+(contrat inchangé ⇒ décision humaine, EP-043). Garde GO_CAMPAGNE
+exercée ; BILAN honnête R6 vu en production. Mission : 10,9307 $.
