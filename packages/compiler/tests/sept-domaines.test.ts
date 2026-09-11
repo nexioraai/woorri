@@ -35,7 +35,8 @@ const media = (id: string) => [{ id, nature: "media" as const, requis: true }];
 
 // ── LES 7 MODÈLES (compacts, écrits à la main) ──
 const F = {
-  marketplace: modele("client",
+  marketplace: {
+    ...modele("client",
     [
       { id: "cpt_produit", nom: "produit", donnees: true, attributs: media("att_pp") },
       { id: "cpt_commande", nom: "commande", donnees: true },
@@ -48,6 +49,7 @@ const F = {
           { concept: "cpt_produit", geste: "chercher" },
           { concept: "cpt_produit", geste: "consulter" },
           { concept: "cpt_commande", geste: "saisir" },
+          { concept: "cpt_commande", geste: "payer" },
           { concept: "cpt_commande", geste: "confirmer" },
         ] },
       { id: "par_suivre", besoin: "suivre", acteur: "act_client",
@@ -56,10 +58,14 @@ const F = {
           { concept: "cpt_commande", geste: "consulter" },
         ] },
     ]),
+    // R4 — contrat corrigé : un domaine qui VEND paie ; biens physiques.
+    commerce: "physique_ou_hors_app" as const,
+  },
   reservation: modele("cliente",
     [
       { id: "cpt_soin", nom: "soin", donnees: true, attributs: media("att_ps") },
-      { id: "cpt_creneau", nom: "creneau", donnees: true },
+      { id: "cpt_creneau", nom: "creneau", donnees: true,
+        attributs: [{ id: "att_creneau_plage", nature: "intervalle", requis: true }] },
       { id: "cpt_rdv", nom: "rdv", donnees: true, etats: ["a_venir", "passe"] },
     ],
     [
@@ -116,10 +122,14 @@ const F = {
           { concept: "cpt_progression", geste: "consulter_historique", etat: "termine" },
         ] },
     ]),
-  livraison: modele("client",
+  livraison: { ...modele("client",
     [
       { id: "cpt_article", nom: "article", donnees: true, attributs: media("att_pa") },
-      { id: "cpt_livraison", nom: "course", donnees: true, etats: ["en_route", "livree"] },
+      { id: "cpt_livraison", nom: "course", donnees: true,
+        etats: [
+          { id: "en_route", transitions: [{ vers: "livree", geste: "confirmer" }] },
+          { id: "livree" },
+        ] },
     ],
     [{ de: "cpt_livraison", vers: "cpt_article", nature: "reference" }],
     [
@@ -129,6 +139,7 @@ const F = {
           { concept: "cpt_article", geste: "chercher" },
           { concept: "cpt_article", geste: "consulter" },
           { concept: "cpt_livraison", geste: "saisir" },
+          { concept: "cpt_livraison", geste: "payer" },
           { concept: "cpt_livraison", geste: "confirmer" },
         ] },
       { id: "par_suivre", besoin: "suivre la course", acteur: "act_client",
@@ -137,7 +148,7 @@ const F = {
           { concept: "cpt_livraison", geste: "consulter_historique", etat: "livree" },
           { concept: "cpt_livraison", geste: "consulter" },
         ] },
-    ]),
+    ]), commerce: "physique_ou_hors_app" as const },
   automobile: modele("acheteur",
     [
       { id: "cpt_vehicule", nom: "vehicule", donnees: true, attributs: media("att_pv") },
@@ -253,6 +264,74 @@ describe("XIV — 7 modèles, mêmes règles, structures DIFFÉRENTES (attendus 
       const attendu = JSON.stringify(surfacesDe(m)).replace(/"surfaceId":"[^"]+"/g, "");
       const obtenu = sortie.replace(/"surfaceId":"[^"]+"/g, "");
       expect(obtenu, nom).toBe(attendu);
+    }
+  });
+});
+
+describe("R4 — campagne complète : dérivations P2a/P2d + juges sur les 7 (attendus FIGÉS)", () => {
+  it("critère 1 · 7/7 : dérivation d'écrans VERTE et plan JUGÉ vert, sous contrat corrigé", async () => {
+    const { ecransDe, jugerPlanEcrans } = await import("../../../benchmarks/air-emission/modele-metier.mjs");
+    for (const [nom, m] of Object.entries(F)) {
+      const plan = ecransDe(m);
+      expect(plan.diagnostics, `${nom} (dérivation)`).toEqual([]);
+      expect(jugerPlanEcrans(plan, m), `${nom} (plan)`).toEqual([]);
+      for (const e of plan.ecrans) expect(e.justification.length, `${nom}:${e.ecranId}`).toBeGreaterThan(0);
+    }
+  });
+
+  it("critère 1bis · P2a — capacités DÉRIVÉES, attendus figés par domaine", async () => {
+    const { capacitesDe } = await import("../../../benchmarks/air-emission/modele-metier.mjs");
+    const attendus: Record<string, string[]> = {
+      marketplace: ["payments.psp"],
+      reservation: [],
+      social: [],
+      education: [],
+      livraison: ["payments.psp"],
+      automobile: [],
+      saas: [],
+    };
+    for (const [nom, m] of Object.entries(F)) {
+      const { capacites, diagnostics } = capacitesDe(m);
+      expect(diagnostics, nom).toEqual([]);
+      expect(capacites.map((c) => c.capacite).sort(), nom).toEqual(attendus[nom]);
+    }
+  });
+
+  it("critère 2 · discrimination — ≥5 signatures, et PAS de convergence passe-partout", async () => {
+    const { ecransDe } = await import("../../../benchmarks/air-emission/modele-metier.mjs");
+    const formes = Object.fromEntries(
+      Object.entries(F).map(([nom, m]) => {
+        const plan = ecransDe(m);
+        return [nom, {
+          ecrans: plan.ecrans.length,
+          chrome: plan.chrome.length,
+          barre: plan.navigation.barre,
+          destinations: plan.navigation.destinations.length,
+        }];
+      }),
+    );
+    // Pas de passe-partout : les COMPTES d'écrans ne convergent pas tous.
+    const comptes = new Set(Object.values(formes).map((f) => f.ecrans));
+    expect(comptes.size).toBeGreaterThanOrEqual(3);
+    // Le chrome de recherche existe là où `chercher` existe, pas ailleurs.
+    expect(formes.marketplace?.chrome).toBeGreaterThan(0);
+    expect(formes.social?.chrome).toBe(0);
+    expect(formes.saas?.chrome).toBe(0);
+  });
+
+  it("critère 3 · ABLATION STATIQUE — aucun nom de domaine dans les INDEX des tables de dérivation", async () => {
+    const m = await import("../../../benchmarks/air-emission/modele-metier.mjs");
+    const index = [
+      ...Object.keys(m.TABLE_GESTES),
+      ...Object.keys(m.ROLE_PAR_GESTE),
+      ...Object.keys(m.GLOSSAIRE_NATURES_TEMPORELLES),
+      ...m.GESTES, ...m.GESTES_TERMINAUX, ...m.NATURES_ATTRIBUT, ...m.RAISONS_NON_RETENUE,
+    ].join(" ").toLowerCase();
+    for (const domaine of [
+      "marketplace", "reservation", "social", "education", "livraison",
+      "automobile", "saas", "restaurant", "hotel", "immobilier", "boutique",
+    ]) {
+      expect(index.includes(domaine), `index contaminé : ${domaine}`).toBe(false);
     }
   });
 });

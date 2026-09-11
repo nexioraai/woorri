@@ -192,6 +192,11 @@ export function migrerModele(brut) {
   // contrat meurent ici ; le schéma strict refuse de toute façon.
   return {
     version: "modele-metier/1.1.0",
+    // F-R4-1 : `commerce` manquait à cette liste (ajouté au contrat APRÈS
+    // elle) — un 1.0.0 portant le fait le perdait EN SILENCE. La liste est
+    // désormais tenue par un CLIQUET DE COMPLÉTUDE (test : clés de
+    // migration ≡ clés du schéma).
+    ...(brut.commerce === undefined ? {} : { commerce: brut.commerce }),
     couverture: brut.couverture,
     acteurs: brut.acteurs,
     concepts: (brut.concepts ?? []).map((c) =>

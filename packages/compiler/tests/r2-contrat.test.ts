@@ -108,6 +108,24 @@ describe("R2 — contrat v1.1.0, migration fermée", () => {
   });
 });
 
+describe("R4 · F-R4-1 — CLIQUET : la migration couvre TOUTES les clés du contrat", () => {
+  it("un 1.0.0 portant chaque clé optionnelle du contrat ne perd RIEN à la migration", async () => {
+    const { modeleMetierSchema } = await import("../../../benchmarks/air-emission/modele-metier.mjs");
+    const clesContrat = Object.keys(
+      (modeleMetierSchema as { shape: Record<string, unknown> }).shape,
+    ).filter((k) => k !== "version");
+    const complet = {
+      ...structuredClone(MODELE_KAVIVA),
+      commerce: "physique_ou_hors_app",
+    } as Record<string, unknown>;
+    const migre = migrerModele(complet) as Record<string, unknown>;
+    for (const cle of clesContrat) {
+      if (complet[cle] === undefined) continue;
+      expect(cle in migre, `la migration PERD la clé du contrat « ${cle} »`).toBe(true);
+    }
+  });
+});
+
 describe("R2/C1 — la frontière lexicale : inventaire déterministe, P1 compare", () => {
   // LE VRAI brief kaviva (données de test — aucune règle ne lit ce texte).
   const BRIEF =

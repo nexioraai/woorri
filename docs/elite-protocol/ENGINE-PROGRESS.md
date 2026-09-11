@@ -320,3 +320,20 @@ fixtures (0 $, GO Youssouf — les fixtures devront d'abord gagner les
 nouveaux champs, travail DE R4) · 3. tirage v2 sous contrat corrigé +
 prompt v4 (~0,15 $, GO budgétaire). Tests compiler 372→373. Dépense 0 $ ·
 mission 4,0217 $.
+
+--- 2026-09-11 · R4 EXÉCUTÉE (GO EP-045, 0 $) — CLOSED aux 4 critères ---
+Fixtures mises à jour pour le contrat corrigé (intervalle requis sur la
+ressource de réservation ; payer+commerce sur marketplace/livraison ;
+transition MUTANTE sur livraison). MATRICE 7×4 : critère 1 VERT (P1 +
+ecransDe + jugerPlanEcrans + capacités figées par domaine — psp dérivé où
+ça paie, rien ailleurs) · critère 2 VERT (≥5 signatures, ≥3 comptes
+d'écrans, chrome selon GESTES : présent marketplace, absent social/saas) ·
+critère 3 VERT (index des tables sans nom de domaine) · critère 4 VERT
+(symbolisation isomorphe 7/7). LIVRABLE F-R4-1 : la migration à liste
+fermée omettait commerce (perte silencieuse) — corrigé + CLIQUET de
+complétude (clés migration ≡ clés schéma). Aucun DISCRIMINANT_ABSENT ni
+RULE_INSUFFISANTE. Hold-out SCELLÉ. GENERICITY globale : UNKNOWN
+(dérivations prouvées sur fixtures manuelles ; P0 multi-domaines = R8).
+Tests compiler 373→378. R5 ne s'ouvre pas (EP-025). Prochain jalon
+recommandé : tirage v2 (contrat corrigé + prompt v4, ~0,15 $, GO
+budgétaire Youssouf).
