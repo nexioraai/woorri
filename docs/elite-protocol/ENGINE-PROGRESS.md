@@ -337,3 +337,14 @@ RULE_INSUFFISANTE. Hold-out SCELLÉ. GENERICITY globale : UNKNOWN
 Tests compiler 373→378. R5 ne s'ouvre pas (EP-025). Prochain jalon
 recommandé : tirage v2 (contrat corrigé + prompt v4, ~0,15 $, GO
 budgétaire Youssouf).
+
+--- 2026-09-11 · TIRAGE v2.1 (GO EP-047) — FAIL PAR TRONCATURE, QUALIFICATION DUE ---
+0,1725 $ · stop_reason=max_tokens (6000/6000) · JSON coupé en plein objet ·
+P0_SORTIE_NON_JSON · observations 1-3 INDISPONIBLES (aucun signal sur P0
+sous v4 — le tirage a mesuré notre plafond). Erreur d'estimation
+consignée (EP-033-bis : « ~800 tokens » falsifiée dès le tirage 1, jamais
+révisée). Deux lectures écrites AVANT décision (EP-048) : (a) FAIL 1/3
+comptant → série prévisiblement sans signal ; (b) défaut d'instrument
+(précédent EP-033-ter) → réglage amendé + NOUVEAU plafond ⇒ nouveau GO
+budgétaire requis dans les deux cas. STOP — décision arbitre/Youssouf.
+Dépense mission : 4,1942 $.

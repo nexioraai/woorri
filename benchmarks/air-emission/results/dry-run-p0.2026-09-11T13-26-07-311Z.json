@@ -1,0 +1,40 @@
+{
+  "reglages": {
+    "model": "claude-opus-5",
+    "max_tokens": 6000,
+    "prixParMtok": {
+      "in": 5,
+      "out": 25
+    },
+    "plafondUsd": 0.2
+  },
+  "hashPromptUtilise": "7ece34cbabc048c6bf38b3d4632cb8c87d0757edcc58c56a0111a2336868643d",
+  "dureeMs": 66900,
+  "coutUsd": 0.172465,
+  "usage": {
+    "input_tokens": 4493,
+    "cache_creation_input_tokens": 0,
+    "cache_read_input_tokens": 0,
+    "cache_creation": {
+      "ephemeral_5m_input_tokens": 0,
+      "ephemeral_1h_input_tokens": 0
+    },
+    "output_tokens": 6000,
+    "output_tokens_details": {
+      "thinking_tokens": 3182
+    },
+    "service_tier": "standard",
+    "inference_geo": "global"
+  },
+  "sortieBrute": "{\"version\":\"modele-metier/1.1.0\",\"couverture\":{\"couverts\":[{\"terme\":\"clientes\",\"noeuds\":[\"act_cliente\",\"cpt_compte\"]},{\"terme\":\"soins proposés\",\"noeuds\":[\"cpt_soin\"]},{\"terme\":\"liste des soins\",\"noeuds\":[\"cpt_soin\",\"par_decouvrir_soins\"]},{\"terme\":\"massages\",\"noeuds\":[\"cpt_categorie\"]},{\"terme\":\"soins du visage\",\"noeuds\":[\"cpt_categorie\"]},{\"terme\":\"manucure\",\"noeuds\":[\"cpt_categorie\"]},{\"terme\":\"hammam\",\"noeuds\":[\"cpt_categorie\"]},{\"terme\":\"photo\",\"noeuds\":[\"att_soin_photo\"]},{\"terme\":\"durée\",\"noeuds\":[\"att_soin_duree\"]},{\"terme\":\"prix\",\"noeuds\":[\"att_soin_prix\"]},{\"terme\":\"chercher un soin\",\"noeuds\":[\"cpt_soin\",\"par_decouvrir_soins\"]},{\"terme\":\"recherche accessible immédiatement\",\"noeuds\":[\"cpt_soin\",\"par_decouvrir_soins\"]},{\"terme\":\"fiche détaillée d'un soin\",\"noeuds\":[\"cpt_soin\",\"att_soin_description\"]},{\"terme\":\"choisir un créneau\",\"noeuds\":[\"cpt_creneau\"]},{\"terme\":\"créneau\",\"noeuds\":[\"cpt_creneau\",\"att_creneau_plage\"]},{\"terme\":\"réserver un rendez-vous\",\"noeuds\":[\"cpt_rendez_vous\",\"par_reserver_rendez_vous\"]},{\"terme\":\"rendez-vous à leur nom\",\"noeuds\":[\"att_rdv_nom_client\",\"cpt_compte\"]},{\"terme\":\"date et heure\",\"noeuds\":[\"att_creneau_plage\",\"att_rdv_date\"]},{\"terme\":\"rendez-vous à venir\",\"noeuds\":[\"cpt_rendez_vous\",\"par_mes_rendez_vous\"]},{\"terme\":\"rendez-vous passés\",\"noeuds\":[\"cpt_rendez_vous\",\"par_mes_rendez_vous\"]},{\"terme\":\"annuler un rendez-vous\",\"noeuds\":[\"par_annuler_rendez_vous\"]},{\"terme\":\"créer un compte\",\"noeuds\":[\"cpt_compte\",\"par_gerer_profil\"]},{\"terme\":\"gérer son profil\",\"noeuds\":[\"cpt_compte\",\"par_gerer_profil\"]},{\"terme\":\"téléphone\",\"noeuds\":[\"att_compte_telephone\"]},{\"terme\":\"soins vedettes en avant\",\"noeuds\":[\"att_soin_vedette\",\"par_decouvrir_soins\"]}],\"nonRetenus\":[{\"terme\":\"Kaviva (nom de l'application)\",\"raison\":\"expression_visuelle\"},{\"terme\":\"institut de beauté et spa à Abidjan\",\"raison\":\"capacite_hors_enveloppe\"},{\"terme\":\"l'accueil doit donner tout de suite envie\",\"raison\":\"expression_visuelle\"},{\"terme\":\"tout en français\",\"raison\":\"expression_visuelle\"}]},\"acteurs\":[{\"id\":\"act_cliente\",\"nom\":\"Cliente\"}],\"concepts\":[{\"id\":\"cpt_soin\",\"nom\":\"Soin\",\"donnees\":true,\"identifiant\":\"att_soin_nom\",\"attributs\":[{\"id\":\"att_soin_nom\",\"nature\":\"texte\",\"requis\":true},{\"id\":\"att_soin_description\",\"nature\":\"texte\",\"requis\":true},{\"id\":\"att_soin_photo\",\"nature\":\"media\",\"requis\":true},{\"id\":\"att_soin_duree\",\"nature\":\"duree\",\"requis\":true},{\"id\":\"att_soin_prix\",\"nature\":\"nombre\",\"requis\":true},{\"id\":\"att_soin_vedette\",\"nature\":\"booleen\",\"requis\":false},{\"id\":\"att_soin_categorie\",\"nature\":\"reference\",\"requis\":true}]},{\"id\":\"cpt_categorie\",\"nom\":\"Catégorie de soin\",\"donnees\":true,\"identifiant\":\"att_categorie_nom\",\"attributs\":[{\"id\":\"att_categorie_nom\",\"nature\":\"texte\",\"requis\":true},{\"id\":\"att_categorie_visuel\",\"nature\":\"media\",\"requis\":false}]},{\"id\":\"cpt_creneau\",\"nom\":\"Créneau\",\"donnees\":true,\"identifiant\":\"att_creneau_reference\",\"attributs\":[{\"id\":\"att_creneau_reference\",\"nature\":\"texte\",\"requis\":true},{\"id\":\"att_creneau_plage\",\"nature\":\"intervalle\",\"requis\":true},{\"id\":\"att_creneau_soin\",\"nature\":\"reference\",\"requis\":true}],\"etats\":[{\"id\":\"libre\",\"transitions\":[{\"vers\":\"reserve\",\"geste\":\"confirmer\"}]},{\"id\":\"reserve\"}]},{\"id\":\"cpt_rendez_vous\",\"nom\":\"Rendez-vous\",\"donnees\":true,\"identifiant\":\"att_rdv_reference\",\"attributs\":[{\"id\":\"att_rdv_reference\",\"nature\":\"texte\",\"requis\":true},{\"id\":\"att_rdv_nom_client\",\"nature\":\"texte\",\"requis\":true},{\"id\":\"att_rdv_date\",\"nature\":\"date\",\"requis\":true},{\"id\":\"att_rdv_soin\",\"nature\":\"reference\",\"requis\":true},{\"id\":\"att_rdv_creneau\",\"nature\":\"reference\",\"requis\":true},{\"id\":\"att_rdv_note\",\"nature\":\"texte\",\"requis\":false}],\"etats\":[{\"id\":\"brouillon\",\"transitions\":[{\"vers\":\"confirme\",\"geste\":\"confirmer\"}]},{\"id\":\"confirme\",\"transitions\":[{\"vers\":\"annule\",\"geste\":\"retirer\"}]},{\"id\":\"annule\"}]},{\"id\":\"cpt_compte\",\"nom\":\"Compte cliente\",\"donnees\":true,\"identifiant\":\"att_compte_telephone\",\"attributs\":[{\"id\":\"att_compte_nom\",\"nature\":\"texte\",\"requis\":true},{\"id\":\"att_compte_telephone\",\"nature\":\"texte\",\"requis\":true},{\"id\":\"att_compte_photo\",\"nature\":\"media\",\"requis\":false}],\"etats\":[{\"id\":\"nouveau\",\"transitions\":[{\"vers\":\"actif\",\"geste\":\"confirmer\"}]},{\"id\":\"actif\"}]}],\"relations\":[{\"de\":\"cpt_soin\",\"vers\":\"cpt_categorie\",\"nature\":\"reference\"},{\"de\":\"cpt_soin\",\"vers\":\"cpt_creneau\",\"nature\":\"possede\"},{\"de\":\"cpt_compte\",\"vers\":\"cpt_rendez_vous\",\"nature\":\"possede\"},{\"de\":\"cpt_rendez_vous\",\"vers\":\"cpt_soin\",\"nature\":\"reference\"},{\"de\":\"cpt_rendez_vous\",\"vers\":\"cpt_creneau\",\"nature\":\"reference\"}],\"parcours\":[{\"id\":\"par_decouvrir_soins\",\"besoin\":\"découvrir les soins vedettes, filtrer par catégorie, chercher un soin et consulter sa fiche détaillée\",\"acteur\":\"act_cliente\",\"priorite\":1,\"etapes\":[{\"concept\":\"cpt_soin\",\"geste\":\"decouvrir\"},{\"concept\":\"cpt_categorie\",\"geste\":\"choisir\"},{\"concept\":\"cpt_soin\",\"geste\":\"chercher\"},{\"concept\":\"cpt_soin\",\"geste\":\"consulter\"}]},{\"id\":\"par_reserver_rendez_vous\",\"besoin\":\"choisir un créneau et réserver un rendez-vous à son nom pour un soin\",\"acteur\":\"act_cliente\",\"priorite\":2,\"etapes\":[{\"concept\":\"cpt_compte\",\"geste\":\"s_identifier\",\"preconditions\":[{\"concept\":\"cpt_compte\",\"etat\":\"actif\"}]},{\"concept\":\"cpt_soin\",\"geste\":\"consulter\"},{\"concept\":\"cpt_creneau\",\"geste\":\"choisir\",\"preconditions\":[{\"concept\":\"cpt_creneau\",\"etat\":\"libre\"}]},{\"concept\":\"cpt_rendez_vous\",\"geste\":\"saisir\",\"etat\":\"brouillon\"},{\"concept\":\"cpt_creneau\",\"geste\":\"confirmer\",\"etat\":\"reserve\"},{\"concept\":\"cpt_rendez_vous\",\"geste\":\"confirmer\",\"etat\":\"confirme\"},{\"concept\":\"cpt_rendez_vous\",\"geste\":\"consulter\"}]},{\"id\":\"par_mes_rendez_vous\",\"besoin\":\"retrouver ses rendez-vous à venir et passés\",\"acteur\":\"act_cliente\",\"priorite\":3",
+  "verdict": {
+    "ok": false,
+    "diagnostics": [
+      {
+        "code": "P0_SORTIE_NON_JSON",
+        "path": "",
+        "message": "sortie non parsable"
+      }
+    ]
+  }
+}
