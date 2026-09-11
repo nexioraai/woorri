@@ -261,3 +261,13 @@ avec suffixe morphologique ; contrôles négatifs testés : réservations,
 hôtelière, livraisons, soins, créneaux DÉTECTÉS ; besoin/association
 toujours exclus. Tests compiler 362→365. Prêt pour le GO budgétaire
 dry-run (~0,15 $), critère EP-030-A figé, portée EP-032 pré-rédigée.
+
+--- 2026-09-11 · CONDUITE DU TIRAGE ARRÊTÉE (0 $, 0 appel) ---
+Lanceur dry-run-p0.mjs ARMÉ sous garde mécanique (jeton GO_DRY_RUN_P0
+requis — refus prouvé exit 1 sans jeton ; hash du prompt recomparé au
+scellé à l'exécution ; plafond 0,20 $ estimé avant appel ; archive brute).
+Réglages consignés AVANT l'appel (EP-033) : claude-opus-5, max_tokens
+24000, température absente (défaut, comme la campagne). PASS ⇒ compléter
+EP-032 (kaviva, rien d'autre) + relever 2.3 même bonne. FAIL ⇒ STOP, règle
+2.2. EN ATTENTE DU GO BUDGÉTAIRE DE YOUSSOUF. Rien d'autre n'est ouvert :
+payer/EP-029 hors périmètre, R4 bloqué.
