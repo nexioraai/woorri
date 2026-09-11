@@ -83,6 +83,10 @@ describe("cliquet statique zéro-réseau (chemin de compilation)", () => {
       "@deribfy/blocks",
       "@deribfy/capability-registry",
       "@deribfy/design-tokens",
+      // R5 · L6 (édition CONSCIENTE) — les rôles du plan CONSOMMENT
+      // screenTraits : execution-contract est un paquet d'ANALYSE PURE
+      // (aucun réseau, cliquet zéro-réseau propre chez lui).
+      "@deribfy/execution-contract",
       "@deribfy/provider-registry",
       "zod",
     ]);

@@ -389,3 +389,17 @@ AUCUNE transition par lecture — le 3/3 systématique pré-v4 a disparu
 témoin. Règle asymétrique : 1 PASS suffit — série close. Dépense mission :
 4,3348 $. SUITE (décisions humaines) : second adaptateur/productibilité
 croisée · R5 (GO dédié) · hold-out scellé.
+
+--- 2026-09-11 · R5 EXÉCUTÉE (GO EP-055, 0 $) — CLOSED (construction) ---
+Vérification préalable : hors_perimetre_mobile ∈ enum fermée (aucune
+fuite). ① P0 câblé en tête d'intention (fail-closed avant les passes) +
+obligations PRESCRIPTIVES (base/entites/ecrans) ② navigation MÉCANISÉE
+depuis P2d + vérificateur fail-closed (5 mutations) — F8/O.3/EP-027a
+soldés ③ table sectorielle cachée TROUVÉE et dé-sectorisée (+2
+exemplaires), anecdote de preuve conservée, cliquet étendu ④ L6 unifié par
+consommation — la gate d'égalité a disparu d'elle-même. L-R5-1 consigné
+(libellés = stylo générateur ; stylo complet = AIR 2.x). 3 cliquets ont
+mordu et ont été honorés par extension consciente. Chemin campagne
+NON EXERCÉ (prochain run payé). Tests compiler 378→385, paquets verts,
+27/27 apps. Second adaptateur DIFFÉRÉ (raison consignée EP-055). Hold-out
+scellé. Dépense passe : 0 $ · mission 4,3348 $.

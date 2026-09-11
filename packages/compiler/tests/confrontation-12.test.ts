@@ -5,9 +5,8 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { migrateAirDocument, projectAirSchema } from "@deribfy/air-schema";
-import { collectionsSurFiche, navigationsDeLigne, screenTraits } from "@deribfy/execution-contract";
+import { collectionsSurFiche, navigationsDeLigne } from "@deribfy/execution-contract";
 import { emitProject } from "../src/emit-project.ts";
-import { planifierComposition } from "../src/plan-composition.ts";
 import {
   porteeDe,
   repetitionsSuspectes,
@@ -171,35 +170,19 @@ describe("C6 — portée DÉRIVÉE, anti-répétition par quadruplet", () => {
   });
 });
 
-describe("C8 — ÉGALITÉ des deux dérivations de rôles (plan vs traits)", () => {
-  const DOCS = [
-    "slices/marketa/marketa.air.json",
-    "slices/dougplace/dougplace.air.json",
-    "slices/validation-appareil/validation-appareil.air.json",
-    "slices/resto-riche/chez-nous.air.json",
-  ];
-  it("sources : plan-composition.roles ↔ execution-contract.screenTraits — cohérence exigée", () => {
-    for (const chemin of DOCS) {
-      const air = lireAir(chemin);
-      const plan = planifierComposition(air);
-      const traits = new Map(screenTraits(air).map((t) => [t.screenId, new Set(t.traits)]));
-      for (const e of plan.ecrans) {
-        const t = traits.get(e.screenId);
-        expect(t, `${chemin}:${e.screenId}`).toBeDefined();
-        if (t === undefined) continue;
-        const attendu: Record<string, () => boolean> = {
-          fiche: () => t.has("detail"),
-          fenetre: () => t.has("listing"),
-          fleuve: () => t.has("listing"),
-          formulaire: () => t.has("form"),
-          porte: () => t.has("entry"),
-          page: () => !t.has("detail") && !t.has("listing") && !t.has("form"),
-        };
-        const verif = attendu[e.role];
-        expect(verif, `${chemin}:${e.screenId} rôle ${e.role}`).toBeDefined();
-        expect(verif?.(), `${chemin}:${e.screenId} rôle ${e.role} vs traits ${[...t].join(",")}`).toBe(true);
-      }
-    }
+describe("C8/L6 — UNIFIÉ par consommation : la gate d'égalité a disparu d'elle-même", () => {
+  it("les rôles du plan CONSOMMENT screenTraits — plus aucun recompte local", () => {
+    // R5 · L6 : l'égalité n'a plus à être testée entre deux dérivations —
+    // il n'y en a plus qu'UNE. Ce test garde la CONSOMMATION : le planner
+    // importe screenTraits et ne re-dérive plus detail/form pour les rôles.
+    const source = readFileSync(join(R, "packages", "compiler", "src", "plan-composition.ts"), "utf8");
+    expect(source).toContain('screenTraits } from "@deribfy/execution-contract"');
+    expect(source).toContain('traits.has("detail")');
+    expect(source).toContain('traits.has("form")');
+    // le recompte local des blockTypes pour les RÔLES a disparu :
+    const zoneRoles = source.slice(source.indexOf("const role: RoleEcran"));
+    expect(zoneRoles.slice(0, 600).includes('blockType === "detail_header"')).toBe(false);
+    expect(zoneRoles.slice(0, 600).includes('blockType === "form"')).toBe(false);
   });
 });
 

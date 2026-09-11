@@ -13,6 +13,9 @@
 // fleuve, fiche, formulaire) — un fil social et un catalogue partagent le
 // rôle « fenêtre » parce que c'est la MÊME décision d'assemblage.
 import type { ProjectAir } from "@deribfy/air-schema";
+// R5 · L6 — les rôles CONSOMMENT la dérivation de traits (une source) :
+// detail/form/entry se lisent dans screenTraits, plus jamais recomptés ici.
+import { screenTraits } from "@deribfy/execution-contract";
 import { modeListe, tailleApercu, type ModeListe } from "../runtime/list-pipeline.ts";
 
 export type ZoneEcran = "chrome" | "contenu";
@@ -102,6 +105,9 @@ export function planifierComposition(air: ProjectAir): CompositionPlan {
       .filter((a) => a.trigger.kind === "ui" && a.trigger.role === "secondary")
       .map((a) => (a.trigger.kind === "ui" ? a.trigger.blockId : "")),
   );
+  const traitsParEcran = new Map(
+    screenTraits(air).map((t) => [t.screenId, new Set<string>(t.traits)]),
+  );
   const ecrans = air.screens.map((s): EcranPlan => {
     const listes = s.blocks.filter((b) => b.blockType === "list");
     const nbListes = listes.length;
@@ -125,16 +131,21 @@ export function planifierComposition(air: ProjectAir): CompositionPlan {
       };
     });
     const verticales = sections.filter((x) => x.mode === "fenetre" || x.mode === "apercu");
+    // R5 · L6 (unification par CONSOMMATION) : detail/form viennent des
+    // TRAITS dérivés (execution-contract) — l'ancienne double dérivation
+    // (recompte local des blockTypes) disparaît ; fenetre/fleuve restent le
+    // RAFFINEMENT propre au plan du trait « listing » (modes de flux).
+    const traits = traitsParEcran.get(s.id) ?? new Set<string>();
     const role: RoleEcran =
       s.showsPrimaryNav === false && s.id === air.navigation.entryScreenId
         ? "porte"
-        : s.blocks.some((b) => b.blockType === "detail_header")
+        : traits.has("detail")
           ? "fiche"
           : nbListes === 1 && verticales.some((x) => x.mode === "fenetre")
             ? "fenetre"
             : nbListes >= 2
               ? "fleuve"
-              : s.blocks.some((b) => b.blockType === "form")
+              : traits.has("form")
                 ? "formulaire"
                 : "page";
     // Un écran DÉFILE sauf quand sa liste unique est la fenêtre (elle est le

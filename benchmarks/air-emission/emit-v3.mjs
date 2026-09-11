@@ -46,6 +46,10 @@ const blocksRegistry = await import(join(REPO, "packages/blocks/src/registry.ts"
 // la liste des rôles d'icônes et le NOMBRE de blocs viennent des sources.
 const { ROLES_ICONES } = await import(join(REPO, "packages/primitives/src/roles-icones.ts"));
 const { obligationsPourPasse } = await import(join(HERE, "obligations-passes.mjs"));
+// R5 (EP-055) — P0 + dérivations + prescriptions : le générateur perd le
+// stylo structurel quand un MODÈLE existe.
+const passe0 = await import(join(HERE, "passe0.mjs"));
+const modeleMetier = await import(join(HERE, "modele-metier.mjs"));
 const repairScope = await import(join(REPO, "packages/repair/src/repair-scope.ts"));
 const budgetUsd = await import(join(REPO, "packages/repair/src/budget-usd.ts"));
 // EP-051 — LA frontière fournisseur : tout dialecte passe par lui.
@@ -376,13 +380,13 @@ REGISTRE DES SMART BLOCKS (allowlist FERMÉE — blockType UNIQUEMENT parmi ces 
 
 36ter. IMAGES RÉELLES (1.20) — tout champ \`asset\` d'une entité de CATALOGUE porte \`demoValues\` : 6 à 12 URLs \`https://picsum.photos/seed/<mot-descriptif-unique>/600/600\` (photos réelles, servies sans clé), ET \`picsum.photos\` figure dans \`network.allowedDomains\`. Un catalogue aux vignettes grises n'est pas un catalogue.
 
-36quinquies. L'ACCUEIL EST UN FLEUVE DE SECTIONS — PRINCIPE GÉNÉRAL, TOUS ARCHÉTYPES. L'écran d'accueil d'une application de référence est un DÉFILEMENT VERTICAL de sections HÉTÉROGÈNES, chacune courte et typée. La grammaire : \`search_entry\` en tête quand l'app a un écran de recherche ; puis des sections \`list\` en \`layout: "row"\` (rangées horizontales de cartes — catégories, sélection, à découvrir…) ; une grille VERTICALE en section d'accueil est un APERÇU : borne-la par \`pageSize\` (4 à 6) et donne-lui \`seeAllLabel\` + geste secondaire vers l'écran complet ; la fenêtre pleine (catalogue, fil, historique) vit sur un écran dont la liste est l'UNIQUE liste. PROSCRIT : plusieurs listes VERTICALES empilées sur un même écran — elles se partagent la hauteur au lieu de couler (défaut mesuré sur le cas dougplace : trois listes pleines en tiers d'écran). ADAPTE les sections à l'archétype : une réservation ouvre sur « à venir » puis « explorer » ; une app éducative sur « reprendre » puis « parcours » ; une livraison sur « commander à nouveau » puis « autour de vous ». Les EXEMPLES ne sont pas des gabarits : déduis les sections du BESOIN.
+36quinquies. L'ACCUEIL EST UN FLEUVE DE SECTIONS — PRINCIPE GÉNÉRAL, TOUS ARCHÉTYPES. L'écran d'accueil d'une application de référence est un DÉFILEMENT VERTICAL de sections HÉTÉROGÈNES, chacune courte et typée. La grammaire : \`search_entry\` en tête quand l'app a un écran de recherche ; puis des sections \`list\` en \`layout: "row"\` (rangées horizontales de cartes — catégories, sélection, à découvrir…) ; une grille VERTICALE en section d'accueil est un APERÇU : borne-la par \`pageSize\` (4 à 6) et donne-lui \`seeAllLabel\` + geste secondaire vers l'écran complet ; la fenêtre pleine (catalogue, fil, historique) vit sur un écran dont la liste est l'UNIQUE liste. PROSCRIT : plusieurs listes VERTICALES empilées sur un même écran — elles se partagent la hauteur au lieu de couler (défaut mesuré sur le cas dougplace : trois listes pleines en tiers d'écran). Adapte les sections aux PARCOURS, jamais à un secteur : quand l'utilisateur a un historique à REPRENDRE (objets qu'il a créés), l'écran ouvre sur cette reprise puis sur la découverte ; quand le parcours est une PROGRESSION, il ouvre sur « reprendre » puis sur le catalogue ; quand la découverte prime, elle ouvre l'écran. La forme suit la structure des parcours du besoin. Les EXEMPLES ne sont pas des gabarits : déduis les sections du BESOIN.
 
-36quater. L'ACCUEIL MONTRE LE PRODUIT — l'écran Accueil d'une app de catalogue ne se limite JAMAIS à un en-tête : il porte au moins un bloc \`list\` de l'entité vedette (sélection, nouveautés) en \`layout: "grid"\`, avec ses images. L'utilisateur voit la marchandise dès l'entrée, comme dans toute marketplace de référence.
+36quater. L'ACCUEIL MONTRE LE PRODUIT — l'écran Accueil d'une app de catalogue ne se limite JAMAIS à un en-tête : il porte au moins un bloc \`list\` de l'entité vedette (sélection, nouveautés) en \`layout: "grid"\`, avec ses images. L'utilisateur voit la marchandise dès l'entrée, comme dans toute application de référence à catalogue.
 
 36bis. VALEURS DE DÉMO (1.20) — tout champ TEXTE affiché par une liste ou un détail d'un CATALOGUE (nom, titre, description) porte \`demoValues\` : 4 à 8 valeurs RÉALISTES du domaine (« Collier baoulé perles bleues », jamais « nom 17 »). Le moteur les cycle dans les données de démonstration : c'est CE que le client verra à la première ouverture. Un catalogue crédible se juge à ces valeurs.
 
-37. GRILLE DE CATALOGUE (1.20) — un écran de CATALOGUE (produits, biens, annonces, plats) déclare \`layout: "grid"\` sur son bloc \`list\` (et \`layout: "row"\` pour une RANGÉE horizontale de cartes) : les articles se présentent en CARTES sur deux colonnes — image dessus, nom, prix — comme toute marketplace de référence. \`imageFieldId\` est alors OBLIGATOIRE (règle 23). Les listes de FLUX (commandes, historique, panier) restent en lignes.
+37. GRILLE DE CATALOGUE (1.20) — un écran de CATALOGUE (produits, biens, annonces, plats) déclare \`layout: "grid"\` sur son bloc \`list\` (et \`layout: "row"\` pour une RANGÉE horizontale de cartes) : les articles se présentent en CARTES sur deux colonnes — image dessus, nom, prix — comme toute application de référence à catalogue. \`imageFieldId\` est alors OBLIGATOIRE (règle 23). Les listes de FLUX (commandes, historique, panier) restent en lignes.
 
 36. ICÔNES — allowlist FERMÉE, ONZE rôles, aucune autre : accueil, recherche, liste, billet, panier, calendrier, carte, compte, favoris, message, reglages. Elle vaut pour \`icon\` des destinations de \`primary\` ET pour \`icon\` d'un \`button\` — et NULLE PART ailleurs (aucun autre bloc n'a d'icône). Le contrat parle UNE seule langue : les RÔLES — le moteur traduit vers les glyphes embarqués (unifié le 2026-09-10, mesuré sur marketa). Choisis par le RÔLE ; si aucun des onze ne convient, N'EN METS PAS.
 
@@ -787,12 +791,18 @@ function validateLocal(document) {
   return { air: parsed.data, diagnostics };
 }
 
-async function emitSections(system, contextText, label, usage, refusals, accumulateur) {
+async function emitSections(system, contextText, label, usage, refusals, accumulateur, prescriptif) {
   const assembled = accumulateur ?? {};
   for (const part of PARTS) {
     // Étape ⑤ — les OBLIGATIONS dérivées mécaniquement des sections émises :
     // identifiants promis, cibles autorisées. Zéro coût, zéro supposition.
-    const obligations = obligationsPourPasse(part.name, assembled);
+    const obligations = [
+      obligationsPourPasse(part.name, assembled),
+      // R5 — quand un modèle existe, la STRUCTURE est PRESCRITE.
+      prescriptif === undefined
+        ? ""
+        : modeleMetier.obligationsPrescriptives(part.name, prescriptif.modele, prescriptif.plan),
+    ].filter((x) => x !== "").join("\n\n");
     const user =
       `${contextText}\n\nSECTIONS À ÉMETTRE MAINTENANT : ${part.keys.join(", ")}.` +
       (Object.keys(assembled).length
@@ -819,10 +829,10 @@ async function emitSections(system, contextText, label, usage, refusals, accumul
  * obtenues ont été FACTURÉES. Les jeter reviendrait à payer sans conserver la
  * preuve. L'assemblage partiel voyage donc avec l'erreur.
  */
-async function emitSectionsAvecPartiel(system, contextText, label, usage, refusals) {
+async function emitSectionsAvecPartiel(system, contextText, label, usage, refusals, prescriptif) {
   const partiel = {};
   return preservation.avecPreservation(preservation.CLE_EMISSION, partiel, () =>
-    emitSections(system, contextText, label, usage, refusals, partiel),
+    emitSections(system, contextText, label, usage, refusals, partiel, prescriptif),
   );
 }
 
@@ -1088,14 +1098,60 @@ for (const intention of INTENTIONS.slice(start, end)) {
   const usage = [];
   const refusals = { count: 0 };
   try {
+    // ── R5 (EP-055/EP-027a) — PASSE 0 : comprendre AVANT d'émettre. UN
+    // appel, grammaire canonique dégradée par l'adaptateur (écarts
+    // déclarés) ; un modèle refusé par P1 ARRÊTE l'intention à ~0,1 $ au
+    // lieu de payer huit passes. Fail-closed : aucun modèle ⇒ aucune
+    // prescription ⇒ pipeline historique (consigné au journal).
+    let prescriptif;
+    {
+      const requeteP0 = passe0.construireRequeteP0(intention.text);
+      const { grammaire } = adaptateur.degraderGrammaire(requeteP0.grammaire);
+      // COMPTABILITÉ : la passe 0 passe par callPart — LE seul propriétaire
+      // du garde, du push et du cumul (cliquet de préservation honoré, pas
+      // édité) ; la troncature y est traitée comme partout (corps préservé).
+      const partP0 = {
+        name: "p0",
+        keys: ["modele"],
+        levels: [{ name: "canonique-degradee-adaptateur", schema: grammaire }],
+        levelIndex: 0,
+      };
+      const reponseP0 = await callPart(partP0, requeteP0.system, requeteP0.user, `${intention.slug}:p0`, usage);
+      const neutreP0 = adaptateur.lireReponse(reponseP0);
+      const verdictP0 = passe0.jugerSortieP0(neutreP0.texte, intention.text, { tronquee: neutreP0.tronquee });
+      journal.passe0 = {
+        ok: verdictP0.ok,
+        diagnostics: verdictP0.diagnostics.map((x) => x.code),
+        observation: verdictP0.observation ?? null,
+      };
+      ecrireArtefact(intention.slug, "modele-p0", verdictP0.ok ? verdictP0.modele : { brut: neutreP0.texte });
+      if (!verdictP0.ok) {
+        throw new Error(`P0 refusé (${verdictP0.diagnostics.map((x) => x.code).join(", ")}) — intention arrêtée AVANT les passes AIR`);
+      }
+      const plan = modeleMetier.ecransDe(verdictP0.modele);
+      const diagnosticsPlan = [...plan.diagnostics, ...modeleMetier.jugerPlanEcrans(plan, verdictP0.modele)];
+      if (diagnosticsPlan.length > 0) {
+        throw new Error(`plan P2 refusé (${diagnosticsPlan.map((x) => x.code).join(", ")}) — intention arrêtée AVANT les passes AIR`);
+      }
+      prescriptif = { modele: verdictP0.modele, plan };
+    }
     let document = await emitSectionsAvecPartiel(
       SYSTEM_EMIT,
       `DEMANDE DU CLIENT :\n${intention.text}`,
       intention.slug,
       usage,
       refusals,
+      prescriptif,
     );
     let { air, diagnostics } = validateLocal(document);
+    // R5 — la STRUCTURE de navigation prescrite est VÉRIFIÉE fail-closed :
+    // la gate de correspondance est une vérification, plus un garde-fou.
+    if (air !== null && prescriptif !== undefined) {
+      diagnostics = [
+        ...diagnostics,
+        ...modeleMetier.verifierNavigationPrescrite(air, modeleMetier.prescriptionsNavigation(prescriptif.plan)),
+      ];
+    }
     journal.diagnosticsPremierePasse = diagnostics.length;
     journal.attempts = 1;
 

@@ -121,13 +121,18 @@ describe("intégration minimale P0 — l'instrument, pas l'exécution", () => {
     expect(fuiteDetectee("association de quartier", "social")).toBe(false);
   });
 
-  it("RIEN N'EST BRANCHÉ : emit-v3 n'importe pas passe0 ; passe0 n'importe aucun SDK", () => {
-    const emitV3 = readFileSync(join(R, "benchmarks", "air-emission", "emit-v3.mjs"), "utf8");
-    expect(emitV3.includes("passe0")).toBe(false);
+  it("passe0 reste PUR (aucun SDK) ; son branchement campagne est FAIL-CLOSED", () => {
+    // ÉDITION CONSCIENTE (R5, EP-055/EP-027a) : l'invariant « rien n'est
+    // branché » valait pour la passe INSTRUMENT — R5 ordonne le câblage.
+    // Ce qui reste invariant : passe0 ne touche AUCUN SDK/réseau (le
+    // dialecte vit dans l'adaptateur), et le branchement s'arrête AVANT
+    // les passes AIR sur refus de P1 (testé aussi dans r5-prescriptions).
     const source = readFileSync(join(R, "benchmarks", "air-emission", "passe0.mjs"), "utf8");
-    for (const interdit of ["anthropic", "Anthropic", "fetch(", "node:http"]) {
+    for (const interdit of ["anthropic", "Anthropic", "fetch(", "node:http", "@anthropic"]) {
       expect(source.includes(interdit), interdit).toBe(false);
     }
+    const emitV3 = readFileSync(join(R, "benchmarks", "air-emission", "emit-v3.mjs"), "utf8");
+    expect(emitV3).toContain("intention arrêtée AVANT les passes AIR");
   });
 
   it("FAIL-CLOSED — sortie sans couverture : REFUSÉE, jamais complétée par défaut", () => {

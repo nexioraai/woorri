@@ -26,6 +26,11 @@ describe("C7 — aucun routeur sectoriel dans les chemins décisionnels", () => 
     expect(src).not.toContain("catalogue, marketplace, restauration, livraison, réservation");
     // La règle 19 raisonne désormais en STRUCTURE (racines de parcours).
     expect(src).toContain("RACINE d'un parcours");
+    // R5 — la table archétype→sections (cachée dans une autre règle) et les
+    // exemplaires « marketplace de référence » sont dé-sectorisés aussi.
+    expect(src.toLowerCase().includes("une réservation ouvre sur")).toBe(false);
+    expect(src.toLowerCase().includes("marketplace de référence")).toBe(false);
+    expect(src).toContain("jamais à un secteur");
   });
 
   it("les DÉRIVATIONS ne contiennent aucun nom de secteur", () => {

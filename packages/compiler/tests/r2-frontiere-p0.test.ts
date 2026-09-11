@@ -86,6 +86,20 @@ describe("B/C — les dérivations ne travaillent QUE sur le MODEL (balayage COM
     capacitesDe: (m) => derivationsModele.capacitesDe(m),
     ecransDe: (m) => derivationsModele.ecransDe(m),
     jugerPlanEcrans: (m) => derivationsModele.jugerPlanEcrans(derivationsModele.ecransDe(m)),
+    // R5 (édition CONSCIENTE) — prescriptions et vérificateur : modèle+plan
+    // seuls, comme tout le reste.
+    ecranAirDe: () => derivationsModele.ecranAirDe("ecr_entree"),
+    prescriptionsNavigation: (m) => derivationsModele.prescriptionsNavigation(derivationsModele.ecransDe(m)),
+    verifierNavigationPrescrite: (m) => {
+      const plan = derivationsModele.ecransDe(m);
+      const p2 = derivationsModele.prescriptionsNavigation(plan);
+      return derivationsModele.verifierNavigationPrescrite(
+        { navigation: { entryScreenId: p2.entree, routes: [], primary: undefined }, screens: [] },
+        p2,
+      );
+    },
+    obligationsPrescriptives: (m) =>
+      derivationsModele.obligationsPrescriptives("base", m, derivationsModele.ecransDe(m)),
   };
 
   it("COMPLÉTUDE — la batterie couvre CHAQUE fonction exportée des dérivations", () => {

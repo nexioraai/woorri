@@ -871,3 +871,101 @@ export function jugerPlanEcrans(plan, modele) {
   }
   return out;
 }
+
+// ────────────────── R5 — NAVIGATION MÉCANISÉE DEPUIS P2d ──
+//
+// LE GÉNÉRATEUR PERD LE STYLO sur la STRUCTURE de navigation (F8/O.3) :
+// entrée, jeu d'écrans, routes, destinations et leur ORDRE se PRESCRIVENT
+// depuis le plan P2d, et toute divergence est REFUSÉE (fail-closed) — la
+// gate de correspondance devient une vérification pure. ARBITRAGE CONSIGNÉ
+// (L-R5-1) : les LIBELLÉS restent au générateur — le moteur n'écrit pas de
+// texte naturel, et le modèle ne porte pas de libellés d'onglets ; le stylo
+// COMPLET exigerait des libellés dérivables (AIR 2.x, décision séparée).
+
+/** ecr_* du plan → scr_* de l'AIR — bijection MÉCANIQUE, zéro invention. */
+export function ecranAirDe(ecranId) {
+  return "scr_" + ecranId.slice(4);
+}
+
+/** Les PRESCRIPTIONS de navigation dérivées du plan P2d. */
+export function prescriptionsNavigation(plan) {
+  const ecrans = plan.ecrans.map((e) => ecranAirDe(e.ecranId));
+  const destinations = plan.navigation.destinations.map(ecranAirDe);
+  return {
+    entree: destinations[0] ?? ecrans[0],
+    ecrans,
+    destinations,
+    barre: plan.navigation.barre,
+  };
+}
+
+/**
+ * R5 — VÉRIFICATEUR FAIL-CLOSED : le document DOIT porter exactement la
+ * structure prescrite (le générateur n'écrit que les libellés).
+ */
+export function verifierNavigationPrescrite(air, prescriptions) {
+  const out = [];
+  if (air.navigation.entryScreenId !== prescriptions.entree)
+    out.push(d("NAVIGATION_ENTREE_HORS_PLAN", "navigation.entryScreenId",
+      `${air.navigation.entryScreenId} ≠ prescrit ${prescriptions.entree}`));
+  const idsEcrans = new Set(air.screens.map((x) => x.id));
+  for (const scr of prescriptions.ecrans) {
+    if (!idsEcrans.has(scr))
+      out.push(d("NAVIGATION_ECRAN_PRESCRIT_MANQUANT", `screens[${scr}]`, "écran du plan absent du document"));
+  }
+  for (const scr of idsEcrans) {
+    if (!prescriptions.ecrans.includes(scr))
+      out.push(d("NAVIGATION_ECRAN_HORS_PLAN", `screens[${scr}]`, "écran absent du plan — aucun stylo libre"));
+  }
+  const routesVers = new Set(air.navigation.routes.map((r) => r.screenId));
+  for (const scr of prescriptions.ecrans) {
+    if (!routesVers.has(scr))
+      out.push(d("NAVIGATION_ROUTE_PRESCRITE_MANQUANTE", `navigation.routes[${scr}]`, "route du plan absente"));
+  }
+  const declarees = (air.navigation.primary?.destinations ?? [])
+    .slice()
+    .sort((a, b) => a.order - b.order)
+    .map((dst) => air.navigation.routes.find((r) => r.id === dst.routeId)?.screenId);
+  if (prescriptions.barre) {
+    const attendues = prescriptions.destinations;
+    if (JSON.stringify(declarees) !== JSON.stringify(attendues))
+      out.push(d("NAVIGATION_DESTINATIONS_HORS_PLAN", "navigation.primary",
+        `ordre déclaré [${declarees.join(",")}] ≠ prescrit [${attendues.join(",")}]`));
+  } else if (air.navigation.primary !== undefined) {
+    out.push(d("NAVIGATION_BARRE_HORS_PLAN", "navigation.primary", "barre déclarée alors que le plan n'en prescrit pas"));
+  }
+  return out;
+}
+
+/**
+ * R5 — OBLIGATIONS PRESCRIPTIVES dérivées du MODÈLE + PLAN, par passe :
+ * le générateur NOMME et REMPLIT ; il ne choisit plus la structure.
+ */
+export function obligationsPrescriptives(nomPasse, modele, plan) {
+  const p = prescriptionsNavigation(plan);
+  if (nomPasse === "base") {
+    return [
+      "PRESCRIPTIONS DE NAVIGATION (dérivées du plan — STRUCTURE NON NÉGOCIABLE, seuls les libellés t'appartiennent) :",
+      `· entryScreenId = ${p.entree}`,
+      `· écrans EXACTS du document : ${p.ecrans.join(", ")} — ni plus, ni moins`,
+      `· une route par écran ; destinations principales DANS CET ORDRE : ${p.destinations.join(" → ")}${p.barre ? "" : " (AUCUNE barre primaire)"}`,
+      "Toute divergence structurelle est REFUSÉE mécaniquement.",
+    ].join("\n");
+  }
+  if (nomPasse === "entites") {
+    const concepts = modele.concepts.filter((c) => c.donnees);
+    return [
+      "PRESCRIPTIONS D'ENTITÉS (dérivées du modèle — une entité PAR concept porteur de données) :",
+      ...concepts.map((c) => `· ent_${c.id.slice(4)} ← concept « ${c.nom} » (${c.id})${(c.attributs ?? []).length ? " — attributs attendus : " + (c.attributs ?? []).map((a) => a.nature).join(", ") : ""}`),
+      "N'en invente aucune autre porteuse de données ; n'en omets aucune.",
+    ].join("\n");
+  }
+  if (nomPasse === "ecrans") {
+    return [
+      "PRESCRIPTIONS D'ÉCRANS (dérivés du plan — chaque écran est JUSTIFIÉ par ses étapes) :",
+      ...plan.ecrans.map((e) => `· ${ecranAirDe(e.ecranId)} — surfaces : ${e.surfaces.join(", ")} (justifié par ${e.justification.length} étape(s))`),
+      "Le NOMBRE d'écrans est une sortie du plan : ni écran libre, ni écran manquant.",
+    ].join("\n");
+  }
+  return "";
+}
