@@ -527,3 +527,16 @@ variance journalisée par tentative, juges identiques à chaque tour,
 taux P0→P2 publié au BILAN. 2 cliquets mordus, honorés. Batteries
 414+557, 28/28 apps. Prochain pas : UN tirage unique sur GO séparé —
 si T3-équivalent passe P2, Q3 devient mesurable. Mission : 11,4256 $.
+
+--- 2026-09-11 · TIRAGE UNIQUE + RELANCE (GO EP-071, cumul 8,1227/8,50 $) ---
+Run 1 tué par le réseau à 2,17 $ (t2 avait PASSÉ P0→P2). Relance
+consignée au plafond cumulé (6,32) : t2 PASSE encore, pipeline complet
++ réparations, ALERTE 90 % a mordu (première fois), INTERROMPU par le
+plafond à 0,38 $ près. Q1 NON (budget, pas juge) · Q2 tenue sur
+attempt1 (0 diagnostic de structure) · Q3 formel NON MESURÉ — mais les
+juges R6 ont tourné sur du frais : 5/6 familles de la passe B PROPRES
+(0 data, 0 param fantôme, 0 référence brute, 0 commerce, 0 mort) ; 1
+rouge : ARCS PRESCRITS INEXÉCUTABLES ×7 (familles connues ⇒ correction
+0 $, pas re-tirage). TAUX PUBLIÉ : P0→P2 sous v7 = 2/4 contre 1/5
+(v5+v6). Budget : 8,50 = plancher (surcroît réparations R6 confirmé).
+Mission : 19,5483 $.
