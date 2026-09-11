@@ -45,6 +45,7 @@ const blocksRegistry = await import(join(REPO, "packages/blocks/src/registry.ts"
 // Étape ③ (EP-008) — le digest INTERPOLE le registre au lieu de le recopier :
 // la liste des rôles d'icônes et le NOMBRE de blocs viennent des sources.
 const { ROLES_ICONES } = await import(join(REPO, "packages/primitives/src/roles-icones.ts"));
+const { obligationsPourPasse } = await import(join(HERE, "obligations-passes.mjs"));
 const repairScope = await import(join(REPO, "packages/repair/src/repair-scope.ts"));
 const budgetUsd = await import(join(REPO, "packages/repair/src/budget-usd.ts"));
 const preservation = await import(join(REPO, "packages/repair/src/preservation.ts"));
@@ -184,6 +185,14 @@ const PARTS = [
   // grammaire la plus lourde ; le reste des données suit dans sa propre passe.
   { name: "entites", keys: ["entities"] },
   { name: "donnees", keys: ["relations", "datasets", "rules", "slots"] },
+  // ÉTAPE ⑤ (EP-005, 2026-09-11) — RÉORDONNÉ après démonstration des
+  // dépendances : la règle 5 exige que `actions.effect.capability` référence
+  // une capability DÉCLARÉE — or `capacites` s'émettait APRÈS `actions`
+  // (promesse avant déclaration). Les capacités ne dépendent d'aucune section
+  // aval : elles passent AVANT les écrans. Le cycle écrans↔actions, lui, ne
+  // se réordonne pas (blocs→actionId ET actions→blockId) : il est CONTRAINT
+  // par les obligations mécaniques (obligations-passes.mjs).
+  { name: "capacites", keys: ["capabilities", "permissions"] },
   { name: "ecrans", keys: ["screens"] },
   // DÉCOUPAGE (D-078) — mesuré, pas supposé : « The compiled grammar is too
   // large » sur `base` ET `comportement`. Les liaisons de slot et `thenScreenId`
@@ -191,7 +200,6 @@ const PARTS = [
   // structurées, même au niveau le plus dégradé. Chaque section porte désormais
   // une grammaire que le service accepte.
   { name: "actions", keys: ["actions"] },
-  { name: "capacites", keys: ["capabilities", "permissions"] },
   { name: "cablage", keys: ["integrations", "expectedTests"] },
   // INTENTION EN DERNIER — ses `nodeIds` désignent des écrans, actions et
   // entités : on ne peut dire QUELS nœuds portent un besoin qu'une fois ces
@@ -756,11 +764,15 @@ function validateLocal(document) {
 async function emitSections(system, contextText, label, usage, refusals, accumulateur) {
   const assembled = accumulateur ?? {};
   for (const part of PARTS) {
+    // Étape ⑤ — les OBLIGATIONS dérivées mécaniquement des sections émises :
+    // identifiants promis, cibles autorisées. Zéro coût, zéro supposition.
+    const obligations = obligationsPourPasse(part.name, assembled);
     const user =
       `${contextText}\n\nSECTIONS À ÉMETTRE MAINTENANT : ${part.keys.join(", ")}.` +
       (Object.keys(assembled).length
         ? `\n\nSECTIONS DÉJÀ ÉMISES (à respecter strictement, ne pas réémettre) :\n${JSON.stringify(assembled)}`
-        : "");
+        : "") +
+      (obligations === "" ? "" : `\n\n${obligations}`);
     let response = await callPart(part, system, user, `${label}:${part.name}`, usage);
     if (response.stop_reason === "refusal") {
       refusals.count++;
@@ -818,8 +830,10 @@ async function repairSections(
       repairScope.sectionsAReemettre([d]).includes(sectionDe(part.name)),
     );
     if (subset.length === 0) continue;
+    const obligations = obligationsPourPasse(part.name, repaired);
     const user =
       `${intentionText}\n\nDocument complet actuel :\n${JSON.stringify(repaired)}\n\n` +
+      (obligations === "" ? "" : `${obligations}\n\n`) +
       `Les validateurs déterministes signalent ces incohérences dans les sections ${part.keys.join(", ")} :\n` +
       `${JSON.stringify(subset, null, 2)}\n\n` +
       `Réémets UNIQUEMENT les sections ${part.keys.join(", ")}, corrigées : corrige ce que les diagnostics signalent, conserve tout le reste à l'identique.\n\n` +
