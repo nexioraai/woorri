@@ -467,3 +467,22 @@ honorés. Aucune correction générateur (hors périmètre honoré). Batteries :
 20+160+393, paquets 552, 28/28 apps. Re-campagne = GO budgétaire séparé
 (plafond à dériver de 5,9025 $ observé + surcroît de réparations attendu
 sous les juges R6). Dépense passe : 0 $ · mission 10,4168 $.
+
+--- 2026-09-11 · PASSES A+B (directive dépense minimale) + INCIDENT EP-065 ---
+PASSE A (EP-063) : R8 re-chiffré — le plan initial (33 runs complets ≈
+195 $) séparé en 4 volets : paraphrases P0-seul 21×0,18 ≈ 3,78 $ ·
+hold-out ≈ 1,08 $ · ablation dynamique ≈ 1,44 $ (différable) · runs
+complets minimum 2 domaines choisis par axes (payer/psp, iap,
+multi-acteur) ≈ 14 $ plafonné. Total ≈ 18-23 $ (~10× moins) ; minimum
+12 $. Ce qui est à 0 $ et ce qui ne peut pas l'être : dit. PASSE B
+(EP-064) : les six défauts corrigés côté moteur+enseignement — règles 38
+(déclencheurs interpolés de l'enveloppe), 39 (références jamais
+affichées), 40 (commerce = modèle économique), 17 étendue (clés auth
+interpolées) ; thenScreenId TRANCHÉ honoré : AIR 1.22.0, runtime navigue
+sur appel honoré (D-070), oracle à arête capability (granularité R1) ;
+round-trip TRANCHÉ nommé-sans-chiffre. Preuves fixtures+mutations ; le
+suivi par le modèle reste NON vérifiable à 0 $ — re-campagne unique.
+INCIDENT EP-065 : mon import d'emit-v3 a lancé une campagne sans GO
+(0,3601 $ journalisés, tuée en vol) — garde GO_CAMPAGNE=OUI-JE-PAIE
+posée : un import ne dépense plus. Batteries 399+165+95, 28/28 apps.
+Mission journalisée : 10,7769 $.

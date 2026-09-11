@@ -84,7 +84,9 @@ export function jugerVivacite(
   }
 
   // ── 2 · ÉCRANS — l'atteignabilité sous l'enveloppe, pas sous la déclaration.
-  const atteignables = new Set(reachableScreens(air, envelope.triggers));
+  const atteignables = new Set(
+    reachableScreens(air, envelope.triggers, envelope.capabilityMethodsExecutees),
+  );
   for (const screen of air.screens) {
     if (!atteignables.has(screen.id)) {
       out.push({
@@ -168,7 +170,7 @@ export function jugerVivacite(
   const arcs = options.arcsPrescrits ?? [];
   if (arcs.length > 0) {
     const aretes = air.actions
-      .map((a) => areteExecutable(air, a, activable))
+      .map((a) => areteExecutable(air, a, activable, envelope.capabilityMethodsExecutees))
       .filter((a): a is NonNullable<typeof a> => a !== undefined);
     const ecranDeRoute = new Map(air.navigation.routes.map((r) => [r.id, r.screenId]));
     const racinesPrimaires = new Set(

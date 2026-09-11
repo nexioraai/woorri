@@ -77,6 +77,18 @@ describe("véracité de l'enveloppe — effets", () => {
   });
 });
 
+describe("véracité de l'enveloppe — capability honorée puis navigation (1.22.0)", () => {
+  // EP-064 — le dispatcher navigue vers `thenScreenId` d'un effet capability
+  // UNIQUEMENT quand le fournisseur a HONORÉ l'appel (même contrat que la
+  // mutation, D-070). Mesuré avant : navigation post-connexion morte (8 arcs,
+  // EP-061/R6).
+  it("le runtime navigue sur appel honoré, jamais sur refus", () => {
+    const runtime = read("compiler/runtime/air-runtime.tsx");
+    expect(runtime).toContain("const honore = capabilities.invoke(");
+    expect(runtime).toContain("if (honore && effect.thenScreenId !== undefined)");
+  });
+});
+
 describe("véracité de l'enveloppe — déclencheurs", () => {
   // ÉDITION CONSCIENTE (2026-08-31, D-068) : 62 actions du corpus étaient
   // déclarées avec un déclencheur de CYCLE DE VIE et purement IGNORÉES — un pan

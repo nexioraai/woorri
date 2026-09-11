@@ -269,6 +269,67 @@ describe("BASE VERTE puis mutations isolées — chaque juge, son diagnostic, se
   });
 });
 
+describe("B3 (EP-064) — une capability HONORÉE est une arête : thenScreenId sur l'EFFET", () => {
+  // La correction du contrat (AIR 1.22.0) rend les arcs post-connexion
+  // SATISFIABLES : l'arête capability n'existe que si la MÉTHODE s'exécute
+  // (granularité R1) — preuve par fixture transformée + mutation isolée.
+  interface ActionCap {
+    id: string;
+    effect: {
+      kind: string;
+      method?: string;
+      thenScreenId?: string;
+      params?: { key: string; value: unknown }[];
+    };
+  }
+  const ARC_CONNEXION = "navigation[scr_cpt_compte_s_identifier->scr_cpt_compte_consulter]";
+  const corrige = (methode?: string): AirDoc => {
+    const air = lireAir() as unknown as { actions: ActionCap[] };
+    const a = air.actions.find((x) => x.id === "act_compte_se_connecter");
+    expect(a).toBeDefined();
+    if (a) {
+      if (methode !== undefined) a.effect.method = methode;
+      a.effect.thenScreenId = "scr_cpt_compte_consulter";
+      a.effect.params = [
+        { key: "identifiantFieldId", value: "fld_compte_email" },
+        { key: "motDePasseFieldId", value: "fld_compte_mot_de_passe" },
+      ];
+    }
+    return air as unknown as AirDoc;
+  };
+
+  it("l'arc s_identifier→consulter, mort sur l'archive, est SATISFAIT une fois l'effet corrigé", () => {
+    expect(juger(lireAir()).map((f) => f.path)).toContain(ARC_CONNEXION);
+    expect(juger(corrige()).map((f) => f.path)).not.toContain(ARC_CONNEXION);
+  });
+
+  it("MUTATION — même forme, méthode NON exécutée : l'arête n'existe pas, l'arc reste refusé", () => {
+    const air = corrige("captureDePrise");
+    expect(juger(air).map((f) => f.path)).toContain(ARC_CONNEXION);
+  });
+
+  it("l'écran mort devient atteignable par la capability honorée (signUp → confirmer)", () => {
+    const air = lireAir() as unknown as { actions: ActionCap[] };
+    const a = air.actions.find((x) => x.id === "act_compte_creer");
+    if (a) {
+      a.effect.thenScreenId = "scr_cpt_compte_confirmer";
+      a.effect.params = [
+        { key: "identifiantFieldId", value: "fld_compte_email" },
+        { key: "motDePasseFieldId", value: "fld_compte_mot_de_passe" },
+      ];
+    }
+    const codes = juger(air as unknown as AirDoc);
+    expect(codes.map((f) => f.path)).not.toContain("screens[scr_cpt_compte_confirmer]");
+  });
+
+  it("thenScreenId en PARAM reste un param mort (le juge des params ne bouge pas)", () => {
+    const morts = juger(lireAir())
+      .filter((f) => f.code === "VIVACITE_PARAM_CAPABILITY_NON_CONSOMME")
+      .map((f) => f.path);
+    expect(morts).toContain("actions[act_compte_se_connecter].params[thenScreenId]");
+  });
+});
+
 describe("branchement — un juge hors acceptation ne juge pas", () => {
   const emitV3 = readFileSync(join(R, "benchmarks", "air-emission", "emit-v3.mjs"), "utf8");
   it("jugerAcceptation tourne aux DEUX attempts, et consomme jugerVivacite", () => {

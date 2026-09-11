@@ -297,6 +297,18 @@ export const AIR_MIGRATIONS: readonly AirMigration[] = [
       "IDENTITÉ.",
     migrate: (document) => document,
   },
+  {
+    from: "1.21.0",
+    to: "1.22.0",
+    description:
+      "AIR 1.22.0 (EP-064) : `thenScreenId` OPTIONNEL sur l'effet " +
+      "`capability` — même contrat que la mutation (D-070) : navigation " +
+      "UNIQUEMENT si l'appel est honoré. Défaut mesuré sur la première " +
+      "traversée réelle (EP-061/R6) : navigation post-connexion morte, le " +
+      "générateur portait l'intention dans un param que rien ne lisait. " +
+      "Migration IDENTITÉ.",
+    migrate: (document) => document,
+  },
 ];
 
 export class AirMigrationError extends Error {

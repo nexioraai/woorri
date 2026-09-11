@@ -407,11 +407,19 @@ function useDispatch(screen: AirScreenData) {
         // sans identité — l'effet s'exécuterait, et ne pourrait rien établir.
         // Les params DÉCLARÉS restent prioritaires : ils sont la configuration
         // du document, la saisie est la donnée de l'instant.
-        capabilities.invoke({
+        const honore = capabilities.invoke({
           capability: effect.capability,
           method: effect.method ?? "",
           params: { ...(values ?? saisies), ...(effect.params ?? {}) },
         });
+        // 1.22.0 (EP-064) — MÊME CONTRAT QUE LA MUTATION (D-070) : on ne
+        // navigue QUE si le fournisseur a HONORÉ l'appel. Mesuré sur la
+        // première traversée réelle (EP-061/R6) : sans ce chemin, la
+        // navigation post-connexion était morte — 8 arcs prescrits
+        // inexécutables, l'intention portée par un param que rien ne lisait.
+        if (honore && effect.thenScreenId !== undefined) {
+          allerVers(navigation, effect.thenScreenId);
+        }
         return;
       }
       // MUTATION (D-061) : l'effet n'est plus une non-opération. L'écriture est

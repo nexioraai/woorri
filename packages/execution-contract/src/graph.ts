@@ -84,13 +84,21 @@ export function areteExecutable(
   air: Air,
   action: Air["actions"][number],
   allowed: ReadonlySet<TriggerKind>,
+  // 1.22.0 (EP-064) — une capability HONORÉE navigue vers son `thenScreenId`
+  // (même contrat que la mutation, D-070). L'arête n'existe que si la MÉTHODE
+  // s'exécute réellement (granularité R1) : sans la table, aucune arête de
+  // capability — comportement antérieur inchangé.
+  methodesExecutees: Readonly<Record<string, readonly string[]>> = {},
 ): AreteExecutable | undefined {
   const cible =
     action.effect.kind === "navigate"
       ? action.effect.screenId
       : action.effect.kind === "mutation"
         ? action.effect.thenScreenId
-        : undefined;
+        : action.effect.kind === "capability" &&
+            (methodesExecutees[action.effect.capability] ?? []).includes(action.effect.method)
+          ? action.effect.thenScreenId
+          : undefined;
   if (cible === undefined) return undefined;
   if (!allowed.has(action.trigger.kind)) return undefined;
   const origine =
@@ -105,6 +113,7 @@ export function areteExecutable(
 export function reachableScreens(
   air: Air,
   allowedTriggers: readonly TriggerKind[],
+  methodesExecutees: Readonly<Record<string, readonly string[]>> = {},
 ): readonly string[] {
   const allowed = new Set<TriggerKind>(allowedTriggers);
   const screenIds = new Set(air.screens.map((s) => s.id));
@@ -146,7 +155,7 @@ export function reachableScreens(
       // d'atteignabilite existe pour trouver.
       // R6 (EP-062) : la sémantique de l'arête vit dans `areteExecutable`,
       // écrite UNE fois — le juge de vivacité lit la même.
-      const arete = areteExecutable(air, action, allowed);
+      const arete = areteExecutable(air, action, allowed, methodesExecutees);
       if (arete === undefined) continue;
       if (reached.has(arete.cible) || !screenIds.has(arete.cible)) continue;
 

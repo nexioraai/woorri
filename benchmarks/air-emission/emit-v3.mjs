@@ -163,7 +163,7 @@ const coutUSD = (u) => adaptateur.coutUsd(adaptateur.lireUsage(u));
 // générée naissait en dessous du niveau. Un test du paquet air-schema compare
 // cette constante à AIR_SCHEMA_VERSION : toute avancée du schéma CASSE la CI
 // tant que ce prompt n'a pas été resynchronisé, consciemment.
-export const CONTRAT_CIBLE = "1.21.0";
+export const CONTRAT_CIBLE = "1.22.0";
 
 const PARTS = [
   {
@@ -304,6 +304,7 @@ REGISTRE DES SMART BLOCKS (allowlist FERMÉE — blockType UNIQUEMENT parmi ces 
 17. HONNÊTETÉ SUR LES CAPABILITIES — le moteur N'EXÉCUTE PAS ENCORE les effets \`capability\` (\`capabilitiesEmitCode: false\`, mesuré), À UNE EXCEPTION PRÈS, réelle et prouvée sur appareil : \`auth\` (\`sessionEtablissable: true\`). Les méthodes signIn, signUp, signOut et resetPassword S'EXÉCUTENT quand le document déclare une intégration auth portant \`url\`, \`anonKey\` et \`profileEntityId\` — le provisioning les remplit. Les besoins de compte se déclarent donc \`satisfied\`. Tout le reste de cette règle vaut pour les AUTRES capabilities (caméra, GPS, notifications…). Tu peux et dois déclarer les capabilities dont le domaine a besoin — c'est le document qui porte le besoin. Mais :
    · N'ÉCRIS AUCUN \`expectedTests\` dont le \`targetId\` est une action à effet \`capability\` — SAUF les actions \`auth\` (signIn, signUp, signOut, resetPassword), qui S'EXÉCUTENT réellement : les tester est légitime et attendu. MESURÉ (dougplace, 2026-09-10) : une version de cette règle sans l'exception a poussé le modèle à TRANSFORMER les actions auth en mutations pour pouvoir les tester — le garde-fou anti-amputation a rejeté la réparation entière. Ne change JAMAIS l'effet d'une action pour contourner une règle : l'exception est ici, sers-t'en.
    · Le besoin correspondant va dans \`intent.needs\` avec \`{kind:"unexpressible", reason:"le moteur n'exécute pas encore les effets capability (capabilitiesEmitCode: false)"}\`.
+   · FORME EXACTE D'UNE ACTION \`auth\` (EP-064, mesuré : 9 params fantômes sur la première traversée réelle — l'identité n'était JAMAIS établissable) : \`params\` porte UNIQUEMENT les clés que le fournisseur LIT — ${executionContract.EXECUTION_ENVELOPE_V1.capabilityParamsConsommes.auth.join(" et ")} — dont les VALEURS sont les IDS DES CHAMPS du formulaire (identifiant, mot de passe). \`url\`, \`anonKey\`, \`profileEntityId\` appartiennent à l'INTÉGRATION (le provisioning les remplit), JAMAIS aux params d'une action. Et la navigation post-connexion se déclare \`thenScreenId\` SUR L'EFFET \`capability\` (1.22.0, même contrat que la mutation D-070 : on n'y va QUE si l'appel est honoré) — JAMAIS dans les params.
    Déclarer le besoin est juste ; le promettre est un mensonge. Le premier est exigé, le second interdit.
    PORTÉE STRICTE : cette règle ne vaut QUE pour les effets \`capability\` — prise de vue, position GPS, carte, notifications. Elle n'autorise RIEN d'autre à être déclaré inexprimable. AFFICHER une image déjà présente dans les données, RECHERCHER dans une liste, NAVIGUER : le moteur sait faire, la surface ci-dessus le dit, et ces besoins DOIVENT être satisfaits. Ne généralise jamais cette règle au-delà de son objet.
 
@@ -388,6 +389,12 @@ REGISTRE DES SMART BLOCKS (allowlist FERMÉE — blockType UNIQUEMENT parmi ces 
 36bis. VALEURS DE DÉMO (1.20) — tout champ TEXTE affiché par une liste ou un détail d'un CATALOGUE (nom, titre, description) porte \`demoValues\` : 4 à 8 valeurs RÉALISTES du domaine (« Collier baoulé perles bleues », jamais « nom 17 »). Le moteur les cycle dans les données de démonstration : c'est CE que le client verra à la première ouverture. Un catalogue crédible se juge à ces valeurs.
 
 37. GRILLE DE CATALOGUE (1.20) — un écran de CATALOGUE (produits, biens, annonces, plats) déclare \`layout: "grid"\` sur son bloc \`list\` (et \`layout: "row"\` pour une RANGÉE horizontale de cartes) : les articles se présentent en CARTES sur deux colonnes — image dessus, nom, prix — comme toute application de référence à catalogue. \`imageFieldId\` est alors OBLIGATOIRE (règle 23). Les listes de FLUX (commandes, historique, panier) restent en lignes.
+
+38. DÉCLENCHEURS — LES SEULS QUI EXISTENT : ${executionContract.EXECUTION_ENVELOPE_V1.triggers.join(" et ")}. \`data\` n'est câblé à AUCUN mécanisme d'activation (aucune source ne notifie) : une action à déclencheur \`data\` ne part JAMAIS — le juge de vivacité la REFUSE (VIVACITE_DECLENCHEUR_HORS_ENVELOPPE). Un \`empty_state\` qui porte \`actionLabel\`/\`actionId\` déclare son action \`{trigger:{kind:"ui",blockId:<ce bloc>}}\`. MESURÉ (EP-061/R6) : 3 actions \`data\` = un écran mort + deux contrôles morts.
+
+39. UNE RÉFÉRENCE NE S'AFFICHE JAMAIS — un champ \`reference\` ne va dans AUCUN emplacement d'affichage ni de saisie (\`titleFieldId\`, \`subtitleFieldId\`, \`imageFieldId\`, \`fieldIds\` d'un \`form\`…) : le moteur ne traverse pas les relations à l'affichage (\`relationTraversal: false\`) — il rendrait l'IDENTIFIANT BRUT (\`ent_x_row_2\`). L'identité voyage par la NAVIGATION (règles 18/C4) ; l'affichage n'utilise que les champs PROPRES de l'entité. MESURÉ (EP-061/R6) : 11 références brutes sur la première traversée réelle.
+
+40. CLASSE DE COMMERCE — \`compliance.commerceClass\` décrit le MODÈLE ÉCONOMIQUE DU DOMAINE, pas les écrans : \`physical_or_offapp\` dès que des biens ou services SE PAIENT hors application ou physiquement, MÊME SI l'app ne porte aucune étape de paiement (réserver une prestation payée sur place = \`physical_or_offapp\`) ; \`digital\` quand du contenu digital se vend dans l'app ; \`none\` SEULEMENT quand rien ne se paie nulle part. MESURÉ (EP-061) : \`none\` émis pour un domaine de prestations payées sur place — divergence refusée (CONFORMANCE_COMMERCE_DIVERGENT).
 
 36. ICÔNES — allowlist FERMÉE, ONZE rôles, aucune autre : accueil, recherche, liste, billet, panier, calendrier, carte, compte, favoris, message, reglages. Elle vaut pour \`icon\` des destinations de \`primary\` ET pour \`icon\` d'un \`button\` — et NULLE PART ailleurs (aucun autre bloc n'a d'icône). Le contrat parle UNE seule langue : les RÔLES — le moteur traduit vers les glyphes embarqués (unifié le 2026-09-10, mesuré sur marketa). Choisis par le RÔLE ; si aucun des onze ne convient, N'EN METS PAS.
 
@@ -1021,6 +1028,19 @@ function ecrireArtefact(slug, phase, contenu) {
     flag: "wx",
   });
   return fichier;
+}
+
+// EP-065 — JETON DE GO OBLIGATOIRE. Ce module DÉPENSAIT AU CHARGEMENT : un
+// import réflexe (vérification d'interpolation, outillage, test) a lancé une
+// campagne réelle sans GO (0,3601 $ journalisés, tuée en vol). Même patron
+// que dry-run-p0.mjs (EP-030) : aucun appel payant ne part sans un jeton
+// explicite posé PAR le lanceur humain — un import ne le possède jamais.
+if (process.env.GO_CAMPAGNE !== "OUI-JE-PAIE") {
+  console.error(
+    "REFUS (EP-065) : lancer une campagne exige GO_CAMPAGNE=OUI-JE-PAIE " +
+      "(GO budgétaire explicite). Un import de ce module ne dépense plus.",
+  );
+  process.exit(2);
 }
 
 const start = Number(process.argv[2] ?? 0);

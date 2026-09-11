@@ -21,7 +21,7 @@ import {
 // 1.7.1 (E3.3, D-131) : provenance APLANIE (sourceKind/sourceIntegrationId/
 //   sourceDomain/sourceRefreshSeconds) — l'union 1.7.0 dépassait la limite
 //   réelle de grammaire de l'API (classe D-078) ; sémantique inchangée.
-export const AIR_SCHEMA_VERSION = "1.21.0";
+export const AIR_SCHEMA_VERSION = "1.22.0";
 
 export const semverSchema = z.string().regex(/^\d+\.\d+\.\d+$/);
 export const sha256Schema = z.string().regex(/^[0-9a-f]{64}$/);
@@ -588,6 +588,21 @@ const actionEffectSchema = z.discriminatedUnion("kind", [
     capability: capabilityRefSchema,
     method: z.string().regex(/^[a-z][a-zA-Z0-9]*$/),
     params: flatConfigSchema.optional(),
+    /**
+     * ÉCRAN SUIVANT (1.22.0, EP-064) — où aller UNE FOIS l'appel HONORÉ.
+     *
+     * Défaut MESURÉ sur la première traversée réelle du pipeline (campagne
+     * EP-061, re-jugée R6) : la navigation post-connexion était ENTIÈREMENT
+     * morte — 8 arcs prescrits inexécutables. Le générateur avait porté cette
+     * intention dans un PARAM (`thenScreenId`) que rien ne lisait, parce que
+     * l'effet `capability` n'offrait AUCUNE place au « et ensuite ».
+     *
+     * Même contrat que la mutation (D-070) : OPTIONNEL, et la navigation n'a
+     * lieu QUE SI le fournisseur a HONORÉ l'appel (`invoke` rend true) — un
+     * refus garde l'utilisateur sur place, jamais d'écran de confirmation
+     * mensonger.
+     */
+    thenScreenId: screenIdSchema.optional(),
   }),
   z.strictObject({
     kind: z.literal("slot"),
