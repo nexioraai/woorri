@@ -245,3 +245,19 @@ ratifié) + fixture calibrée. Tests compiler 353→362. Prochaine étape :
 3. dry-run P0 unique — GO BUDGÉTAIRE de Youssouf (~0,15 $) ·
 4. payer/EP-029 (D6, 0 $) · 5. R4 (bloqué par 3 et 4). Aucune fermeture
 n'ouvre l'étape suivante (EP-025).
+
+--- 2026-09-11 · TROIS VÉRIFICATIONS PRÉ-DRY-RUN (0 $) ---
+V-A : l'écart contrat/grammaire est EXACTEMENT énuméré par cliquet — UNE
+contrainte clampée ($.parcours.items.etapes.minItems 2→1) — et REFERMÉ :
+une sortie à 1 étape (admise par la grammaire) est REFUSÉE par P1
+(MODELE_SCHEMA nommant etapes), jamais complétée. Toute future min(N)
+ajoutée au contrat cassera le cliquet sans sa paire de tests.
+V-B : diff de la fixture PUBLIÉ (git 75d8150→7d38448) : UNE ligne —
+l'attribut déjà temporel du créneau (nature date→intervalle ET id
+att_creneau_date→att_creneau_intervalle, id référencé nulle part ailleurs,
+vérifié) ; concepts, relations, parcours, étapes INCHANGÉS.
+V-C : scan borné — normalisation NFD+minuscules, détection en DÉBUT DE MOT
+avec suffixe morphologique ; contrôles négatifs testés : réservations,
+hôtelière, livraisons, soins, créneaux DÉTECTÉS ; besoin/association
+toujours exclus. Tests compiler 362→365. Prêt pour le GO budgétaire
+dry-run (~0,15 $), critère EP-030-A figé, portée EP-032 pré-rédigée.

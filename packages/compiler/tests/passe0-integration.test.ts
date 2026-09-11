@@ -15,13 +15,18 @@ import {
   jugerSortieP0,
   PROMPT_P0,
 } from "../../../benchmarks/air-emission/passe0.mjs";
+import { z } from "zod";
 import {
   GESTES,
   migrerModele,
+  modeleMetierSchema,
   NATURES_ATTRIBUT,
   RAISONS_NON_RETENUE,
   type ModeleMetier,
 } from "../../../benchmarks/air-emission/modele-metier.mjs";
+
+const zToJson = (): unknown =>
+  z.toJSONSchema(modeleMetierSchema as never, { target: "draft-2020-12" });
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const R = join(HERE, "..", "..", "..");
@@ -58,19 +63,37 @@ describe("intégration minimale P0 — l'instrument, pas l'exécution", () => {
     expect(PROMPT_P0).toContain("ambigu » ne classe pas : il BLOQUE");
   });
 
-  it("SCAN ANTI-SECTEUR sur le prompt + AUCUN nom d'app (la fixture n'a pas fui)", () => {
-    const bas = PROMPT_P0.toLowerCase();
-    for (const interdit of [
-      "marketplace", "restaurant", "boutique", "social", "education", "éducation",
-      "livraison", "automobile", "saas", "hotel", "hôtel", "immobilier",
-      "réservation", "reservation",
-      "kaviva", "dougplace", "marketa", "soin", "créneau", "creneau", "rendez-vous",
-    ]) {
-      // MOTS ENTIERS : « besoin » contient « soin » — un scan par sous-chaîne
-      // produirait de faux positifs, pas des preuves.
-      const motEntier = new RegExp(`(^|[^\\p{L}-])${interdit}($|[^\\p{L}-])`, "u");
-      expect(motEntier.test(bas), `fuite : « ${interdit} »`).toBe(false);
+  // V-C — le scan est BORNÉ : normalisation (NFD, minuscules) puis détection
+  // au DÉBUT DE MOT avec suffixe morphologique libre — « réservations »,
+  // « hôtelière », « livraisons » sont détectés comme leur forme de base ;
+  // « besoin » ne matche toujours pas « soin » (frontière de début de mot).
+  const normaliserScan = (t: string) =>
+    t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const TERMES_INTERDITS = [
+    "marketplace", "restaurant", "boutique", "social", "education",
+    "livraison", "automobile", "saas", "hotel", "immobilier", "reservation",
+    "kaviva", "dougplace", "marketa", "soin", "creneau", "rendez-vous",
+  ];
+  const fuiteDetectee = (texte: string, terme: string): boolean => {
+    const base = normaliserScan(terme);
+    return new RegExp(`(^|[^a-z-])${base}[a-z]*`).test(normaliserScan(texte));
+  };
+
+  it("V-C · SCAN ANTI-SECTEUR/ANTI-FUITE sur le prompt (normalisé, morphologique)", () => {
+    for (const interdit of TERMES_INTERDITS) {
+      expect(fuiteDetectee(PROMPT_P0, interdit), `fuite : « ${interdit} »`).toBe(false);
     }
+  });
+
+  it("V-C · CONTRÔLES NÉGATIFS — les variantes morphologiques SONT détectées", () => {
+    expect(fuiteDetectee("gérer les réservations du salon", "reservation")).toBe(true);
+    expect(fuiteDetectee("une offre hôtelière complète", "hotel")).toBe(true);
+    expect(fuiteDetectee("suivre les livraisons", "livraison")).toBe(true);
+    expect(fuiteDetectee("les soins du visage", "soin")).toBe(true);
+    expect(fuiteDetectee("choisir des créneaux", "creneau")).toBe(true);
+    // et les faux positifs d'hier restent exclus :
+    expect(fuiteDetectee("le besoin du client", "soin")).toBe(false);
+    expect(fuiteDetectee("association de quartier", "social")).toBe(false);
   });
 
   it("RIEN N'EST BRANCHÉ : emit-v3 n'importe pas passe0 ; passe0 n'importe aucun SDK", () => {
@@ -128,6 +151,39 @@ describe("intégration minimale P0 — l'instrument, pas l'exécution", () => {
     expect(b).toBeGreaterThan(a);
     // et le PASS/FAIL n'en dépend PAS (non jugée) :
     expect(verdictDeverse.ok).toBe(verdictPropre.ok);
+  });
+
+  it("V-A · CLIQUET — l'écart contrat/grammaire est EXACTEMENT énuméré", () => {
+    // Le clamp relâche la grammaire ; chaque relâchement DOIT être listé ici
+    // et refermé par un test de refus P1 (ci-dessous). Une contrainte min(N)
+    // ajoutée au contrat sans sa paire de tests fera échouer ce cliquet.
+    const brut = zToJson();
+    const clampe = grammaireP0();
+    const ecarts: string[] = [];
+    const marcher = (a: unknown, b: unknown, chemin: string) => {
+      if (a === null || typeof a !== "object") return;
+      for (const k of Object.keys(a)) {
+        const av = (a as Record<string, unknown>)[k];
+        const bv = (b as Record<string, unknown> | undefined)?.[k];
+        if (k === "minItems" && av !== bv) ecarts.push(`${chemin}.minItems ${String(av)}→${String(bv)}`);
+        else if (typeof av === "object") marcher(av, bv, `${chemin}.${k}`);
+      }
+    };
+    marcher(brut, clampe, "$");
+    expect(ecarts).toEqual([
+      "$.properties.parcours.items.properties.etapes.minItems 2→1",
+    ]);
+  });
+
+  it("V-A · REFUS — une sortie conforme à la grammaire mais violant le contrat (1 étape) est REFUSÉE par P1", () => {
+    const sortie = structuredClone(FIXTURE);
+    const p0 = sortie.parcours[0];
+    if (p0) p0.etapes = p0.etapes.slice(0, 1); // admis par la grammaire clampée (minItems 1)
+    const verdict = jugerSortieP0(JSON.stringify(sortie), "brief");
+    expect(verdict.ok).toBe(false);
+    expect(verdict.modele).toBeUndefined();
+    const schema = verdict.diagnostics.find((d) => d.code === "MODELE_SCHEMA");
+    expect(schema?.path).toContain("etapes");
   });
 
   it("la requête assemble système + brief + grammaire — sans rien exécuter", () => {
