@@ -448,3 +448,22 @@ réparation. Six défauts consignés avec fixtures, AUCUNE correction
 (EP-043/EP-057). Round-trip découvert DÉBRANCHÉ (consigné). R6 se
 concevra contre ces fixtures, sur GO séparé. Dépense campagne 5,9025 $ ·
 mission 10,4168 $.
+
+--- 2026-09-11 · R6 — JUGE UNIFIÉ DE VIVACITÉ (GO EP-062, 0 $) ---
+VIVANT = EXÉCUTABLE, PAS DÉCLARÉ. Le juge unifié (vivacite.ts, 7
+diagnostics + attestation d'instruments) confronte le document à
+l'ENVELOPPE dans le chemin d'acceptation, aux DEUX attempts (lacune
+découverte : la navigation prescrite ne re-tournait pas après
+réparation). Enveloppe 1.1.0 : les params de capability consommés sont
+déclarés et confrontés au code par envelope-truth (deux sens). La
+sémantique d'arête est factorisée (areteExecutable), consommée par
+l'atteignabilité ET les arcs prescrits. Le BILAN ne rend plus de chiffre
+sans attestation (round-trip NON EXÉCUTÉ nommé). LA PREUVE : le run
+archivé re-jugé rend ROUGE sur les six défauts — et révèle 9 params
+fantômes (l'identité n'était jamais établissable) et 8 arcs post-login
+morts. Base verte + 8 mutations isolées, diagnostic seul. Alerte 90 %
+vérifiée sur le CUMUL (un seul site de dépense). 2 cliquets mordus,
+honorés. Aucune correction générateur (hors périmètre honoré). Batteries :
+20+160+393, paquets 552, 28/28 apps. Re-campagne = GO budgétaire séparé
+(plafond à dériver de 5,9025 $ observé + surcroît de réparations attendu
+sous les juges R6). Dépense passe : 0 $ · mission 10,4168 $.

@@ -34,7 +34,13 @@
 import type { ProjectAir } from "@deribfy/air-schema";
 
 /** Version du CONTRAT d'enveloppe (scellée au train, patron D-027). */
-export const EXECUTION_ENVELOPE_VERSION = "1.0.0";
+// 1.1.0 — R6 (EP-062) : `capabilityParamsConsommes` entre. ÉLARGISSEMENT au
+// sens D-020 (version MINEURE) : la déclaration devient PLUS précise pour
+// REFUSER plus, jamais pour faire passer un document. La campagne EP-061 a
+// montré un signUp jugé « exécuté » (méthode dans l'enveloppe, dispatch réel)
+// dont AUCUN des quatre params déclarés n'était lu par le fournisseur — appel
+// parti, identité jamais établie : mort en silence au niveau du PARAM.
+export const EXECUTION_ENVELOPE_VERSION = "1.1.0";
 
 export type EffectKind = ProjectAir["actions"][number]["effect"]["kind"];
 export type TriggerKind = ProjectAir["actions"][number]["trigger"]["kind"];
@@ -69,6 +75,15 @@ export interface ExecutionEnvelope {
    * est PAR MÉTHODE : ce que le fournisseur embarqué honore, rien de plus.
    */
   readonly capabilityMethodsExecutees: Readonly<Record<string, readonly string[]>>;
+  /**
+   * R6 (EP-062) — CLÉS DE PARAMS RÉELLEMENT LUES par le fournisseur embarqué,
+   * par capability. Même leçon qu'aux méthodes : une clé déclarée que rien ne
+   * lit est une promesse morte AU NIVEAU DU PARAM — l'appel part, le
+   * fournisseur ne trouve pas sa configuration, et refuse. Le cliquet
+   * `envelope-truth` confronte cette table au code source du fournisseur
+   * (lectures statiques `call.params.<clé>`), dans les deux sens.
+   */
+  readonly capabilityParamsConsommes: Readonly<Record<string, readonly string[]>>;
   /** Le bloc `list` peut-il GROUPER ses lignes (sections, agenda par jour) ? */
   readonly listGrouping: boolean;
   /** Un Code Slot déclaré est-il INVOQUÉ par l'application générée ? */
@@ -225,6 +240,14 @@ export const EXECUTION_ENVELOPE_V1: ExecutionEnvelope = {
   // GPS, notifications restent mortes (capabilitiesEmitCode: false).
   capabilityMethodsExecutees: {
     auth: ["resetPassword", "signIn", "signOut", "signUp"],
+  },
+  // R6 (EP-062) — lu dans `capabilites-auth.ts` : `identifiantFieldId` (les 4
+  // méthodes) et `motDePasseFieldId` (variante vérifiée signIn/signUp). Les
+  // valeurs saisies voyagent sous les IDS DE CHAMPS (lectures dynamiques
+  // `call.params[champ]`) : elles ne sont pas des clés de configuration et
+  // n'entrent pas ici.
+  capabilityParamsConsommes: {
+    auth: ["identifiantFieldId", "motDePasseFieldId"],
   },
 
   // AJOUT DU 2026-09-04 — lacune NOMMÉE, découverte en qualifiant les motifs

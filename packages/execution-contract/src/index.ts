@@ -38,6 +38,10 @@ export type {
   ScreenTrait,
   ScreenTraitFinding,
 } from "./graph.ts";
+export { jugerVivacite, jugerAttestations } from "./vivacite.ts";
+export type { ArcPrescrit, OptionsVivacite, VivaciteFinding } from "./vivacite.ts";
+export { areteExecutable } from "./graph.ts";
+export type { AreteExecutable } from "./graph.ts";
 export {
   FeasibilityRefusedError,
   analyzeFeasibility,

@@ -131,6 +131,11 @@ describe("pureté et indépendance", () => {
       "./envelope.ts",
       "./feasibility.ts",
       "./graph.ts",
+      // R6 (EP-062) — ÉDITION CONSCIENTE : le juge unifié de vivacité entre.
+      // Même nature que graph.ts : analyse PURE de la description contre
+      // l'enveloppe — les juges de pureté (temps, aléa, réseau, fs) de ce
+      // fichier tournent sur lui comme sur les autres.
+      "./vivacite.ts",
     ]);
     for (const { file, code } of sources) {
       for (const match of code.matchAll(/from "([^"]+)"/g)) {

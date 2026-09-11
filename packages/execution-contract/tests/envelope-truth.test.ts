@@ -205,6 +205,28 @@ describe("véracité de l'enveloppe — capabilities", () => {
     // acceptable : le paquet est pur JS, il ne change aucun build natif.
     expect(EXECUTION_ENVELOPE_V1.capabilitiesEmitCode).toBe(false);
   });
+
+  // R6 (EP-062) — ÉDITION CONSCIENTE : `capabilityParamsConsommes` entre
+  // (enveloppe 1.1.0). La campagne EP-061 a montré un signUp « exécuté » au
+  // sens de `controls()` dont AUCUN des quatre params déclarés
+  // (identifierFieldId, passwordFieldId, profileEntityId, thenScreenId)
+  // n'était lu par le fournisseur : l'appel partait, la configuration était
+  // perdue, l'identité jamais établie. La déclaration est confrontée au CODE
+  // dans les deux sens : toute clé déclarée est LUE, toute clé lue est
+  // DÉCLARÉE.
+  it("les params consommés déclarés sont EXACTEMENT les lectures statiques du fournisseur", () => {
+    const source = read("compiler/runtime/capabilites-auth.ts");
+    const codeSansCommentaires = source
+      .split("\n")
+      .filter((l) => !l.trim().startsWith("//") && !l.trim().startsWith("*"))
+      .join("\n");
+    const lues = [...new Set([...codeSansCommentaires.matchAll(/call\.params\.(\w+)/g)].map((m) => m[1]))].sort();
+    const declarees = [...(EXECUTION_ENVELOPE_V1.capabilityParamsConsommes.auth ?? [])].sort();
+    expect(declarees).toEqual(lues);
+    // Et la table ne couvre QUE les fournisseurs qui émettent du code : une
+    // capability sans fournisseur n'a pas de vérité de params à déclarer.
+    expect(Object.keys(EXECUTION_ENVELOPE_V1.capabilityParamsConsommes)).toEqual(["auth"]);
+  });
 });
 
 describe("véracité de l'enveloppe — slots, règles, RTL, thème", () => {

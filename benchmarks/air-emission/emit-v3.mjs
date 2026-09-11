@@ -58,6 +58,7 @@ const preservation = await import(join(REPO, "packages/repair/src/preservation.t
 // EP-051 — l'échelle vient de l'adaptateur (degradationsPourEchelle).
 const executionContract = await import(join(REPO, "packages/execution-contract/src/envelope.ts"));
 const executionGraph = await import(join(REPO, "packages/execution-contract/src/graph.ts"));
+const vivacite = await import(join(REPO, "packages/execution-contract/src/vivacite.ts"));
 const fidelity = await import(join(REPO, "packages/fidelity/src/index.ts"));
 const compiler = await import(join(REPO, "packages/compiler/src/index.ts"));
 
@@ -561,6 +562,39 @@ function extractJson(response) {
 }
 
 // Validation locale fail-closed sur le document COMPLET assemblé.
+// R6 (EP-062) — JUGES D'ACCEPTATION, écrits UNE fois pour les DEUX attempts.
+//
+// La campagne EP-061 avait la navigation prescrite à l'attempt 1 et PAS à
+// l'attempt 2 (seul `validateLocal` re-tournait après réparation) : un juge
+// présent à un attempt sur deux ne juge pas. Ici vivent TOUS les juges
+// au-delà du schéma : navigation prescrite (R5), vivacité et conformance
+// (R6, document confronté à l'ENVELOPPE — un déclencheur hors enveloppe ne
+// satisfait aucun arc, un contrôle non câblé est refusé, un param non
+// consommé est refusé, une référence affichée brute est refusée).
+function jugerAcceptation(air, prescriptif, intention) {
+  if (air === null) return [];
+  const out = [];
+  if (prescriptif !== undefined) {
+    out.push(
+      ...modeleMetier.verifierNavigationPrescrite(
+        air,
+        modeleMetier.prescriptionsNavigation(prescriptif.plan),
+      ),
+    );
+  }
+  const arcsPrescrits = (prescriptif?.plan?.navigation?.arcs ?? []).map((a) => ({
+    de: modeleMetier.ecranAirDe(a.de),
+    vers: modeleMetier.ecranAirDe(a.vers),
+  }));
+  out.push(
+    ...vivacite.jugerVivacite(air, executionContract.EXECUTION_ENVELOPE_V1, {
+      arcsPrescrits,
+      commerceAttendu: intention?.commerce,
+    }),
+  );
+  return out;
+}
+
 function validateLocal(document) {
   const parsed = airSchema.projectAirSchema.safeParse(document);
   if (!parsed.success) {
@@ -1154,14 +1188,9 @@ for (const intention of INTENTIONS.slice(start, end)) {
       prescriptif,
     );
     let { air, diagnostics } = validateLocal(document);
-    // R5 — la STRUCTURE de navigation prescrite est VÉRIFIÉE fail-closed :
-    // la gate de correspondance est une vérification, plus un garde-fou.
-    if (air !== null && prescriptif !== undefined) {
-      diagnostics = [
-        ...diagnostics,
-        ...modeleMetier.verifierNavigationPrescrite(air, modeleMetier.prescriptionsNavigation(prescriptif.plan)),
-      ];
-    }
+    // R5+R6 — l'acceptation COMPLÈTE (navigation prescrite, vivacité,
+    // conformance) tourne ici ET après réparation : mêmes juges, un seul code.
+    diagnostics = [...diagnostics, ...jugerAcceptation(air, prescriptif, intention)];
     journal.diagnosticsPremierePasse = diagnostics.length;
     journal.attempts = 1;
 
@@ -1218,6 +1247,10 @@ for (const intention of INTENTIONS.slice(start, end)) {
         );
       }
       ({ air, diagnostics } = validateLocal(document));
+      // R6 — les MÊMES juges qu'à l'attempt 1 : un juge absent après
+      // réparation ne jugeait pas (mesuré EP-061 : la navigation prescrite
+      // ne re-tournait pas sur l'attempt 2).
+      diagnostics = [...diagnostics, ...jugerAcceptation(air, prescriptif, intention)];
       journal.diagnosticsApresReparation = diagnostics.length;
       journal.diagnosticsRestantsCodes = [...new Set(diagnostics.map((d) => d.code))];
       journal.identiqueAvantApres = avantReparation === document;
@@ -1339,10 +1372,20 @@ for (const intention of INTENTIONS.slice(start, end)) {
 }
 
 const valid = summary.filter((j) => j.valid).length;
-const identical = summary.filter((j) => j.roundTrip?.identical).length;
-const rtValid = summary.filter((j) => j.roundTrip?.ok).length;
+// R6 (EP-062) — UN CHIFFRE EXIGE UNE ATTESTATION. Le round-trip est
+// DÉBRANCHÉ (roundTrip() n'est appelé nulle part — EP-061f) : afficher
+// « conformes 0/N » pour un instrument jamais appelé était un faux négatif
+// silencieux. Le BILAN ne rend un compte QUE sur les journaux où
+// l'instrument a réellement tourné, et NOMME l'absence sinon.
+const rtJournaux = summary.filter((j) => j.roundTrip !== undefined);
+const identical = rtJournaux.filter((j) => j.roundTrip.identical).length;
+const rtValid = rtJournaux.filter((j) => j.roundTrip.ok).length;
+const rtBilan =
+  rtJournaux.length === 0
+    ? "round-trip NON EXÉCUTÉ (instrument débranché — EP-061f)"
+    : `round-trip conformes ${rtValid}/${rtJournaux.length} · identiques ${identical}/${rtJournaux.length}`;
 console.log(
   `\nBILAN tranche [${start},${end}) : ${valid}/${summary.length} AIR valides · ` +
-    `round-trip conformes ${rtValid}/${valid} · identiques ${identical}/${valid} · ` +
+    `${rtBilan} · ` +
     `coût ~$${etatDepense.depense.toFixed(4)} · ${etatDepense.appels} appels · journal ${JOURNAL}`,
 );

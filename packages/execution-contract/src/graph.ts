@@ -62,6 +62,46 @@ function screenOfBlock(air: Air, blockId: string): Screen | undefined {
  * l'ensemble complet donne l'atteignabilité DÉCLARÉE, passer l'enveloppe
  * donne l'atteignabilité EFFECTIVE.
  */
+/**
+ * R6 (EP-062) — L'ARÊTE EXÉCUTABLE, écrite UNE fois.
+ *
+ * Une action ne transporte l'utilisateur que si TROIS conditions tiennent :
+ * elle vise un écran (`navigate.screenId` ou `mutation.thenScreenId`), son
+ * déclencheur est ACTIVABLE (dans `allowed`), et son origine existe (`ui` :
+ * l'écran du bloc ; `lifecycle` : l'écran déclaré ; origine `undefined` =
+ * déclenchable dès l'app vivante). `reachableScreens` et le juge de vivacité
+ * consomment LA MÊME fonction — une sémantique d'arête écrite deux fois
+ * aurait divergé (précédent : la liste des consommateurs d'identité, EP-059).
+ */
+export interface AreteExecutable {
+  readonly actionId: string;
+  /** Écran d'origine, ou `undefined` si le déclencheur est global. */
+  readonly origine: string | undefined;
+  readonly cible: string;
+}
+
+export function areteExecutable(
+  air: Air,
+  action: Air["actions"][number],
+  allowed: ReadonlySet<TriggerKind>,
+): AreteExecutable | undefined {
+  const cible =
+    action.effect.kind === "navigate"
+      ? action.effect.screenId
+      : action.effect.kind === "mutation"
+        ? action.effect.thenScreenId
+        : undefined;
+  if (cible === undefined) return undefined;
+  if (!allowed.has(action.trigger.kind)) return undefined;
+  const origine =
+    action.trigger.kind === "ui"
+      ? screenOfBlock(air, action.trigger.blockId)?.id
+      : action.trigger.kind === "lifecycle"
+        ? action.trigger.screenId
+        : undefined;
+  return { actionId: action.id, origine, cible };
+}
+
 export function reachableScreens(
   air: Air,
   allowedTriggers: readonly TriggerKind[],
@@ -104,30 +144,19 @@ export function reachableScreens(
       // reussie. Ignorer ce chemin declarerait `scr_confirmation` MORT alors
       // que l'utilisateur y arrive — l'inverse exact du defaut que la mesure
       // d'atteignabilite existe pour trouver.
-      const target =
-        action.effect.kind === "navigate"
-          ? action.effect.screenId
-          : action.effect.kind === "mutation"
-            ? action.effect.thenScreenId
-            : undefined;
-      if (target === undefined) continue;
-      if (!allowed.has(action.trigger.kind)) continue;
-      if (reached.has(target) || !screenIds.has(target)) continue;
+      // R6 (EP-062) : la sémantique de l'arête vit dans `areteExecutable`,
+      // écrite UNE fois — le juge de vivacité lit la même.
+      const arete = areteExecutable(air, action, allowed);
+      if (arete === undefined) continue;
+      if (reached.has(arete.cible) || !screenIds.has(arete.cible)) continue;
 
       // L'origine doit elle-même être atteignable, sinon l'action ne peut
       // jamais être déclenchée — un chemin partant d'un écran mort est mort.
-      const origin =
-        action.trigger.kind === "ui"
-          ? screenOfBlock(air, action.trigger.blockId)?.id
-          : action.trigger.kind === "lifecycle"
-            ? action.trigger.screenId
-            : undefined;
-      // `data` (et `lifecycle` sans screenId) sont globaux : leur origine
-      // n'est pas un écran, ils sont donc déclenchables dès l'app vivante.
-      const originReachable = origin === undefined || reached.has(origin);
-      if (!originReachable) continue;
+      // Origine `undefined` (déclencheur global) = déclenchable dès l'app
+      // vivante.
+      if (arete.origine !== undefined && !reached.has(arete.origine)) continue;
 
-      reached.add(target);
+      reached.add(arete.cible);
       grew = true;
     }
   }
