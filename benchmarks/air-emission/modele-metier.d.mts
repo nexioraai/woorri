@@ -51,3 +51,21 @@ export function mailleDe(concept: Concept, geste: string): "grille" | "lignes";
 export function strategieInitiale(modele: ModeleMetier, conceptId: string): "seed" | "vide";
 export function producteurDe(modele: ModeleMetier, conceptId: string): string | undefined;
 export function etatVideObligatoire(modele: ModeleMetier, conceptId: string): boolean;
+export const ROLE_PAR_GESTE: Record<string, string>;
+export function porteeDe(modele: ModeleMetier, parcours: Parcours, index: number): string;
+export interface SurfaceContrat {
+  surfaceId: string;
+  role: string;
+  acteur: string;
+  concept: string;
+  cardinalite: "collection" | "instance" | "singleton";
+  identite: string;
+  etat?: string;
+  portee: string;
+  exclusions: string[];
+  origine: { parcours: string; etape: number }[];
+}
+export function surfacesDe(modele: ModeleMetier): SurfaceContrat[];
+export function repetitionsSuspectes(
+  surfaces: readonly { concept: string; geste?: string; role?: string; etat?: string; portee: string }[],
+): { cle: string; premiere: unknown; doublon: unknown }[];

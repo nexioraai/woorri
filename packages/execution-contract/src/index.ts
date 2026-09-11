@@ -24,8 +24,12 @@ export {
   rawReferences,
   reachableScreens,
   screenTraits,
+  navigationsDeLigne,
+  collectionsSurFiche,
 } from "./graph.ts";
 export type {
+  NavigationDeLigneFinding,
+  CollectionSurFicheFinding,
   ControlFinding,
   DataBindingFinding,
   DetailScreenFinding,

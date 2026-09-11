@@ -254,3 +254,123 @@ export function etatVideObligatoire(modele, conceptId) {
     p.etapes.some((e) => e.concept === conceptId && e.geste === "retirer"),
   );
 }
+
+// ────────────────── C6/C9 (confrontation #12) — SURFACES, PORTÉE, RÉPÉTITION ──
+
+/** Rôle de surface DÉRIVÉ du geste (jamais déclaré, jamais sectoriel). */
+export const ROLE_PAR_GESTE = {
+  decouvrir: "decouverte",
+  chercher: "recherche",
+  consulter: "detail",
+  choisir: "choix",
+  saisir: "saisie",
+  confirmer: "confirmation",
+  consulter_historique: "historique",
+  s_identifier: "identite",
+  payer: "paiement",
+  retirer: "retrait",
+};
+
+/** Cardinalité de la surface d'un geste : une instance identifiée, ou N. */
+const CARDINALITE_PAR_GESTE = {
+  consulter: "instance",
+  saisir: "instance",
+  confirmer: "singleton",
+  s_identifier: "singleton",
+};
+
+/**
+ * C6 — PORTÉE DÉRIVÉE (jamais un champ) :
+ *  · `resultat:<concept>` pour un résultat de recherche (geste chercher) ;
+ *  · `acteur:<id>` pour une collection PERSONNELLE — historique, ou concept
+ *    produit en app par l'acteur du parcours (producteurDe) ;
+ *  · `instance:<concept>` quand l'étape suit un consulter/choisir d'un
+ *    concept RELIÉ (relation déclarée) — surface liée à une instance ;
+ *  · `globale` sinon.
+ */
+export function porteeDe(modele, parcours, index) {
+  const e = parcours.etapes[index];
+  if (e === undefined) return "globale";
+  if (e.geste === "chercher") return `resultat:${e.concept}`;
+  if (e.geste === "consulter_historique") return `acteur:${parcours.acteur}`;
+  if (producteurDe(modele, e.concept) === parcours.acteur && e.geste !== "saisir") {
+    return `acteur:${parcours.acteur}`;
+  }
+  const prec = parcours.etapes[index - 1];
+  if (
+    prec !== undefined &&
+    (prec.geste === "consulter" || prec.geste === "choisir") &&
+    prec.concept !== e.concept &&
+    modele.relations.some(
+      (r) =>
+        (r.de === e.concept && r.vers === prec.concept) ||
+        (r.de === prec.concept && r.vers === e.concept),
+    )
+  ) {
+    return `instance:${prec.concept}`;
+  }
+  return "globale";
+}
+
+/**
+ * C9 — SURFACE CONTRACT (contrat de P2c, v0) : dérivé de MODEL × JOURNEY ×
+ * STEP, RIEN d'autre. Chaque surface porte son rôle, sa cardinalité, son
+ * identité, ses exclusions et son ORIGINE (les étapes qui la justifient).
+ * Dédoublonnage par quadruplet (concept, geste, état, portée) — les
+ * origines s'ACCUMULENT : une surface partagée sert N parcours (R-éc2).
+ */
+export function surfacesDe(modele) {
+  const table = new Map();
+  for (const p of modele.parcours) {
+    for (const [i, e] of p.etapes.entries()) {
+      const portee = porteeDe(modele, p, i);
+      const cle = `${e.concept}|${e.geste}|${e.etat ?? ""}|${portee}`;
+      const origine = { parcours: p.id, etape: i };
+      const existante = table.get(cle);
+      if (existante !== undefined) {
+        existante.origine.push(origine);
+        continue;
+      }
+      const role = ROLE_PAR_GESTE[e.geste];
+      const cardinalite = CARDINALITE_PAR_GESTE[e.geste] ?? "collection";
+      table.set(cle, {
+        surfaceId: `srf_${e.concept}_${e.geste}${e.etat ? `_${e.etat}` : ""}`,
+        role,
+        acteur: p.acteur,
+        concept: e.concept,
+        cardinalite,
+        // L'identité est CONSOMMÉE par une surface d'instance, PRODUITE par
+        // la ligne d'une collection qui mène à un consulter/choisir.
+        identite: cardinalite === "instance" ? "consommee" : "produite_ou_absente",
+        etat: e.etat,
+        portee,
+        // EXCLUSIONS : ce que la surface NE DOIT PAS absorber (C5) —
+        // une surface d'instance n'absorbe JAMAIS une collection pleine ;
+        // une collection n'absorbe pas une autre identité.
+        exclusions:
+          cardinalite === "instance"
+            ? ["collection_pleine", "autre_identite"]
+            : ["exercice_plein_dautre_responsabilite"],
+        origine: [origine],
+      });
+    }
+  }
+  return [...table.values()];
+}
+
+/**
+ * C6 — RÉPÉTITION SUSPECTE : deux surfaces au MÊME quadruplet
+ * (concept, geste, état, portée) dans le même contexte. `surfacesDe`
+ * dédoublonne par construction — cette fonction juge une liste de surfaces
+ * DÉJÀ posées (un plan d'écran, une composition) : mêmes quadruplets = refus.
+ */
+export function repetitionsSuspectes(surfaces) {
+  const vus = new Map();
+  const out = [];
+  for (const s of surfaces) {
+    const cle = `${s.concept}|${s.geste ?? s.role}|${s.etat ?? ""}|${s.portee}`;
+    if (vus.has(cle)) out.push({ cle, premiere: vus.get(cle), doublon: s });
+    else vus.set(cle, s);
+  }
+  return out;
+}

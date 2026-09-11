@@ -427,6 +427,102 @@ export function controls(air: Air, envelope: ExecutionEnvelope): readonly Contro
   return out.sort((a, b) => byCodeUnit(a.blockId + a.actionId, b.blockId + b.actionId));
 }
 
+export interface NavigationDeLigneFinding {
+  readonly screenId: string;
+  readonly blockId: string;
+  readonly entityId: string;
+  readonly targetScreenId: string;
+  /**
+   * Comment la cible CONSOMME l'identité transportée (C4, confrontation #12) :
+   *  · `detail_meme_entite`  — detail_header de la MÊME entité : itemId direct ;
+   *  · `liste_scopee_relation` — liste scopée dont le champ de scope RÉFÉRENCE
+   *    l'entité source : r(itemId), le patron « catégorie → catalogue filtré » ;
+   *  · `aucune` — l'identité est JETÉE : le détail aval retombera sur rows[0]
+   *    en silence, ou la collection s'ouvrira non filtrée. C'est le bug
+   *    « Produit A → Catalogue » mesuré sur 29 sites du corpus gelé
+   *    (marketa panier→produit compris — espaces d'identité incompatibles).
+   */
+  readonly consommation: "detail_meme_entite" | "liste_scopee_relation" | "aucune";
+}
+
+/**
+ * C4 (confrontation #12) — NAVIGATIONS DE LIGNE : une ligne pressée
+ * transporte `{itemId}` (useItemNavigate, APP-D002) ; la cible doit le
+ * CONSOMMER. Dérivé du document seul — aucun secteur, aucun nom d'app.
+ * Formule : identité(destination) ∈ {itemId} ∪ {r(itemId) | r relation
+ * déclarée}. Fonction PURE : elle DIT, les gates de campagne refusent.
+ */
+export function navigationsDeLigne(air: Air): readonly NavigationDeLigneFinding[] {
+  const ecranDe = new Map(air.screens.map((s) => [s.id, s]));
+  const entites = new Map(air.entities.map((e) => [e.id, e]));
+  const out: NavigationDeLigneFinding[] = [];
+  for (const screen of air.screens) {
+    for (const block of screen.blocks) {
+      if (block.blockType !== "list" || block.entityId === undefined) continue;
+      const entityId = block.entityId;
+      for (const action of air.actions) {
+        if (
+          action.trigger.kind !== "ui" ||
+          action.trigger.blockId !== block.id ||
+          action.trigger.role === "secondary" ||
+          action.effect.kind !== "navigate"
+        )
+          continue;
+        const cible = ecranDe.get(action.effect.screenId);
+        if (cible === undefined) continue; // référence brisée : refusée ailleurs
+        const detailMeme = cible.blocks.some(
+          (x) => x.blockType === "detail_header" && x.entityId === entityId,
+        );
+        const listeScopee = cible.blocks.some((x) => {
+          if (x.blockType !== "list" || x.entityId === undefined) return false;
+          const scope = (x.props ?? []).find((pp) => pp.key === "scopeFieldId")?.value;
+          if (typeof scope !== "string") return false;
+          const champ = entites.get(x.entityId)?.fields.find((f) => f.id === scope);
+          return champ?.type === "reference" && champ.referencesEntityId === entityId;
+        });
+        out.push({
+          screenId: screen.id,
+          blockId: block.id,
+          entityId,
+          targetScreenId: action.effect.screenId,
+          consommation: detailMeme
+            ? "detail_meme_entite"
+            : listeScopee
+              ? "liste_scopee_relation"
+              : "aucune",
+        });
+      }
+    }
+  }
+  return out.sort((a, b) => byCodeUnit(a.blockId + a.targetScreenId, b.blockId + b.targetScreenId));
+}
+
+export interface CollectionSurFicheFinding {
+  readonly screenId: string;
+  readonly blockId: string;
+  readonly contextualisee: boolean;
+}
+
+/**
+ * C5 (confrontation #12) — une COLLECTION co-localisée avec une FICHE n'est
+ * légitime qu'en ACCÈS CONTEXTUALISÉ (scopée à l'instance) : une collection
+ * pleine absorbée dans un détail mélange deux responsabilités. Mesuré :
+ * 24 listes non scopées sur fiches dans le corpus GELÉ (consigné, jamais
+ * re-jugé) — la gate vaut pour les générations FUTURES.
+ */
+export function collectionsSurFiche(air: Air): readonly CollectionSurFicheFinding[] {
+  const out: CollectionSurFicheFinding[] = [];
+  for (const screen of air.screens) {
+    if (!screen.blocks.some((b) => b.blockType === "detail_header")) continue;
+    for (const block of screen.blocks) {
+      if (block.blockType !== "list") continue;
+      const contextualisee = (block.props ?? []).some((p) => p.key === "scopeFieldId");
+      out.push({ screenId: screen.id, blockId: block.id, contextualisee });
+    }
+  }
+  return out.sort((a, b) => byCodeUnit(a.blockId, b.blockId));
+}
+
 export interface RawReferenceFinding {
   readonly screenId: string;
   readonly blockId: string;

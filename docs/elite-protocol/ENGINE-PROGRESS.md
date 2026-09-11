@@ -105,3 +105,25 @@ COMPOSITION CONTRACT = CompositionPlan existant. Trouvaille L5 : règle 19
 du prompt nomme des secteurs (références) → retrait en R5. Lacunes L1–L6
 consignées avec propriétaires. GENERICITE toujours UNKNOWN. R0→R8 : ordre
 inchangé, contenus enrichis. 0 code · 0 $ · 0 build.
+
+--- 2026-09-11 · CONFRONTATION #12 — fermeture C1→C9 (GO humain, cette passe seule) ---
+C1 CLOSED (complément COUVERTURE_VIDE) · C2 CLOSED (table 5/5 réaffichée,
+critère inverse : R1 juge / R2 modèle) · C3 CLOSED (preuve DYNAMIQUE :
+piège Proxy sur les dérivations = 0 accès ; altérer intent.request ⇒
+émission byte-identique — + cliquet statique existant) · C4 CLOSED (règle
+d'identité DÉRIVÉE : consommation ∈ {détail même entité, liste scopée par
+reference} ; navigationsDeLigne ; mutation Produit→Catalogue signalée
+« aucune » ; drill scopé accepté ; diagnostic campagne
+AIR_CIBLE_IDENTITE_PERDUE ; corpus gelé : 29 sites consignés EP-022) ·
+C5 CLOSED (collectionsSurFiche + diagnostic campagne ; matrice amendée :
+DETAIL×COLLECTION = accès contextualisé borné ; DETAIL×DETAIL =
+non-feature v1 ; 24 sites gelés consignés) · C6 CLOSED (porteeDe dérivée
+∅/resultat/acteur/instance + repetitionsSuspectes par quadruplet) ·
+C7 : dérivations PROUVÉ, prompt dé-sectorisé (règles 19/25) + cliquet ;
+P0 = UNKNOWN (ablation dynamique payante, R8) · C8 CLOSED (gate d'égalité
+plan-composition ↔ screenTraits sur 4 documents réels) · C9 CLOSED
+(surfacesDe : Surface Contract v0 de P2c avec origine: étape[], exclusions,
+cardinalité, identité). XIV : 7 fixtures de modèle EXÉCUTÉES (mêmes règles,
+≥5 signatures distinctes, ablation par symbolisation isomorphe) —
+GENERICITE globale reste UNKNOWN (P2d/P3 non exécutés). Tests compiler
+289→308. 0 génération · 0 $ · 0 push.

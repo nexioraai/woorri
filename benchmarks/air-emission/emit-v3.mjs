@@ -307,11 +307,7 @@ REGISTRE DES SMART BLOCKS (allowlist FERMÉE — blockType UNIQUEMENT parmi ces 
 
 18. LIGNE DE LISTE PRESSABLE — quand une entité possède un écran de détail, la LIGNE de la liste ouvre ce détail : déclare une action \`{trigger:{kind:"ui",blockId:<le bloc list>}, effect:{kind:"navigate",screenId:<le détail>}}\`. N'ÉCRIS JAMAIS un bouton « Voir le détail de X » pour cela. Mesuré sur le corpus précédent : 103 navigations sur 108 partaient d'un bouton, UNE SEULE d'une ligne de liste — l'inverse de ce qu'attend un utilisateur d'application mobile.
 
-19. ARCHITECTURE — tu es responsable de transformer l'intention en ARCHITECTURE, pas seulement en liste d'écrans. Identifie l'archétype, puis déduis les destinations principales, leur rôle et leur ORDRE. Références conceptuelles, à ADAPTER au besoin réellement exprimé — jamais à recopier :
-   · Restaurant   : Accueil | Menu | Commandes | Offres | Compte
-   · Boutique     : Accueil | Produits | Panier | Commandes | Compte
-   · Réservation  : Accueil | Services | Réservations | Compte
-   « Accueil » est le point commun structurel des trois. N'INVENTE AUCUNE destination que le besoin n'exige pas : une app sans programme de fidélité n'a pas d'onglet « Offres ».
+19. ARCHITECTURE — tu es responsable de transformer l'intention en ARCHITECTURE, pas seulement en liste d'écrans. Déduis les destinations principales DE LA STRUCTURE DU BESOIN, jamais d'un secteur (C7, confrontation #12 — les exemples sectoriels sont RETIRÉS : ils poussaient à recopier une forme au lieu de la dériver). Règle STRUCTURELLE : une destination principale est la RACINE d'un parcours que l'utilisateur reprend à tout moment — l'entrée/découverte en est toujours une ; chaque famille d'objets que l'on consulte librement en est une ; l'historique de ce que l'utilisateur a créé (commandes, réservations, dossiers…) en est une ; le compte en est une quand une session existe. Leur ORDRE suit l'importance des parcours dans la demande. N'INVENTE AUCUNE destination que le besoin n'exige pas.
 
 20. NAVIGATION PRINCIPALE — déclare \`navigation.primary.destinations\` : 3 à 5 entrées, chacune \`{routeId, label, order}\`, \`order\` contigu depuis 0. Le compilateur en fait une BARRE PERSISTANTE EN BAS DE L'ÉCRAN, comme toute application mobile de référence. RÈGLE GÉNÉRALE : **les destinations principales d'une application mobile sont regroupées dans une navigation persistante située en bas de l'écran ; elles ne doivent jamais être représentées par des boutons de navigation empilés dans le contenu.**
 
@@ -329,7 +325,7 @@ REGISTRE DES SMART BLOCKS (allowlist FERMÉE — blockType UNIQUEMENT parmi ces 
 
 24. RECHERCHE — quand une liste présente un CATALOGUE (plats, produits, biens, services, annonces), déclare \`searchFieldId\` sur le bloc liste, plus \`searchPlaceholder\`. Le champ est rendu EN TÊTE de la liste, donc en haut de l'écran de catalogue. N'en mets PAS sur une liste courte et fermée (les 3 étapes d'une commande, un historique de 5 lignes) : une recherche inutile encombre.
 
-25. DENSITÉ ET COMPOSITION — un écran principal ne se limite pas à deux blocs centrés. Compose comme les applications de référence du domaine — catalogue, marketplace, restauration, livraison, réservation : en-tête porteur de contexte, recherche si pertinente, liste dense qui exploite la largeur, actions attachées à leur contexte. Utilise \`pageSize\` quand une liste serait trop longue, \`sortFieldId\` quand un ordre a du sens (prix, date, popularité). EXTRAIS LES PRINCIPES de ces applications — hiérarchie, emplacement, densité, relation liste→détail — NE COPIE NI LEUR DESIGN NI LEUR CONTENU.
+25. DENSITÉ ET COMPOSITION — un écran principal ne se limite pas à deux blocs centrés. Compose comme les meilleures applications mobiles, quel que soit le domaine : en-tête porteur de contexte, recherche si pertinente, liste dense qui exploite la largeur, actions attachées à leur contexte. Utilise \`pageSize\` quand une liste serait trop longue, \`sortFieldId\` quand un ordre a du sens (prix, date, popularité). EXTRAIS LES PRINCIPES de ces applications — hiérarchie, emplacement, densité, relation liste→détail — NE COPIE NI LEUR DESIGN NI LEUR CONTENU.
 
 26. LISTE → DÉTAIL → ACTION — le parcours doit être complet : la liste montre, la ligne ouvre le détail (règle 18), le détail présente davantage d'informations ET porte l'action pertinente. L'action dépend du modèle commercial RÉELLEMENT exprimé : commande et paiement quand ils existent, prise de contact quand le commerce fonctionne ainsi. N'invente aucune fonction que l'intention n'exprime pas.
 
@@ -589,6 +585,38 @@ function validateLocal(document) {
     // AVANT toute acceptation — un aperçu qui tronque offre sa suite, une
     // vitrine vide est refusée. Réponse locale à « est-ce bien planifié ? ».
     ...compiler.validerPlan(compiler.planifierComposition(parsed.data)),
+    // ── C4 (confrontation #12) — CONSERVATION DE L'IDENTITÉ : la cible d'une
+    // ligne doit CONSOMMER l'identité transportée (détail même entité, ou
+    // liste scopée par un champ reference — r(itemId)). Mesuré : 29 sites du
+    // corpus GELÉ jettent l'identité (consignés, jamais re-jugés) — la barre
+    // vaut pour les générations FUTURES.
+    ...executionGraph.navigationsDeLigne(parsed.data)
+      .filter((n) => n.consommation === "aucune")
+      .map((n) => ({
+        code: "AIR_CIBLE_IDENTITE_PERDUE",
+        path: `screens[${n.screenId}].blocks[${n.blockId}]`,
+        message:
+          `la ligne de "${n.blockId}" (entité "${n.entityId}") navigue vers ` +
+          `"${n.targetScreenId}" qui ne CONSOMME PAS l'identité transportée : ` +
+          `ni detail_header de la même entité, ni liste scopée par un champ ` +
+          `reference vers elle. L'instance pressée serait PERDUE (repli rows[0] ` +
+          `silencieux). Répare en ciblant le DÉTAIL de l'instance, ou en scopant ` +
+          `la collection cible par un champ \`reference\` (règle 18). NE ` +
+          `SUPPRIME NI LA LIGNE NI SA NAVIGATION (règle 27).`,
+      })),
+    // ── C5 (confrontation #12) — une collection sur une FICHE n'est légitime
+    // qu'en ACCÈS CONTEXTUALISÉ (scopée à l'instance). 24 sites gelés consignés.
+    ...executionGraph.collectionsSurFiche(parsed.data)
+      .filter((x) => !x.contextualisee)
+      .map((x) => ({
+        code: "AIR_FICHE_COLLECTION_NON_CONTEXTUALISEE",
+        path: `screens[${x.screenId}].blocks[${x.blockId}]`,
+        message:
+          `l'écran "${x.screenId}" est une FICHE et la liste "${x.blockId}" n'est ` +
+          `pas scopée à l'instance (\`scopeFieldId\` absent) : une collection ` +
+          `PLEINE absorbée dans un détail mélange deux responsabilités. Scope-la ` +
+          `par le champ reference qui la relie à l'instance affichée.`,
+      })),
     // ── FORM_SANS_ACTION (2026-09-01) — DIAGNOSTIC, JAMAIS UN REFUS DE CONTRAT.
     //
     // Un `form` rend TOUJOURS un bouton portant son `submitLabel` : c'est une
