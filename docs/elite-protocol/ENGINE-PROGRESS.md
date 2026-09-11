@@ -77,3 +77,18 @@ hors enveloppe v1 ; gate-refus ≠ autorité ; mécanisation AIR 2.x tracée) ·
 O.4 CLOSED (7 paramètres fermés via le seul module de thème ; invariance
 déjà mesurable : 1 fichier au plus diffère). ARCHITECTURE_CONSTRUCTION_
 CLOSED = YES. 0 code · 0 $ · 0 build.
+
+--- 2026-09-11 · CONFRONTATION #9 — FERMETURE F1→F10 (GO humain, cette passe seule) ---
+F1 CLOSED (contrat modele-metier.mjs : couverture traçable, raisons
+fermées, ambigu bloquant, suffisance déterministe ; fixture de stress
+kaviva-attempt1 REFUSÉE) · F2 CLOSED (table 5/5 = couche JUGEMENT ;
+critère inversé appliqué : R1 = juge, PAS cause racine → preuve en R3) ·
+F3 CLOSED (cliquet statique ×3 vert ; volet dynamique = critère R2) ·
+F4 CLOSED (visuel dérivé, champ déclaré refusé) · F5 CLOSED (grille sans
+proxy producteur, 3 cas + 3 mutations) · F6 CLOSED (FLUX = P2d seul) ·
+F7 CLOSED (vide-né OU vidable ; retirer entre aux gestes ;
+producteur/stratégie DÉRIVÉS) · F8 CLOSED (dette datée R5, critères) ·
+F9 = UNKNOWN (déclaré ; protocole prêt ; exécution = R4) · F10 CLOSED
+(ordre justifié par F2). Non-fonctionnalités v1 déclarées. Gates K
+consolidées. Hold-out NON EXERCÉ. Tests : compiler 289/289 (+17 nouveaux),
+paquets verts. 0 génération · 0 $ · 0 build · 0 push.
