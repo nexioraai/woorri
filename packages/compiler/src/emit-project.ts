@@ -520,7 +520,18 @@ function emitScreen(slice: ScreenSlice, aBarre: boolean, planEcran: EcranPlan): 
   // (aucun Platform.OS, verrou 4) ; `automaticallyAdjustKeyboardInsets`
   // QUITTE ces écrans — le cumul aurait compensé DEUX fois sur iOS. La
   // FlatList du bloc list, elle, conserve son ajustement (verrou 2).
-  const containerImport = hasList ? "View" : "KeyboardAvoidingView, ScrollView";
+  // MISSION CHROME (2026-09-11, mesuré à l'écran) : l'inset du HAUT
+  // appartient à l'ÉCRAN, pas au conteneur défilant — le chrome persistant,
+  // émis avant le conteneur, mordait la status bar (horloge derrière la
+  // barre de recherche). Un wrapper d'écran porte l'inset ; les conteneurs
+  // ne le portent plus jamais.
+  const sansEntete = enteteMasquee(slice.screen);
+  const hautSansEntete = "";
+  const containerImport = hasList
+    ? "View"
+    : sansEntete
+      ? "KeyboardAvoidingView, ScrollView, View"
+      : "KeyboardAvoidingView, ScrollView";
   // EN-TÊTE NATIF MASQUÉ (1.16.0) : la fenêtre est BORD À BORD, donc le
   // contenu passe SOUS la barre d'état — mesuré à l'écran, le logo se
   // retrouvait derrière l'horloge. Sans en-tête, l'inset HAUT devient la
@@ -529,7 +540,7 @@ function emitScreen(slice: ScreenSlice, aBarre: boolean, planEcran: EcranPlan): 
   // contrôle de fermeture. Le titre y est simplement vidé quand le document
   // n'en veut pas. Les deux étages (ici et `emitNavigation`) lisent la MÊME
   // règle ; les dissocier ferait cumuler l'inset avec la barre native.
-  const hautSansEntete = enteteMasquee(slice.screen) ? "paddingTop: insets.top, " : "";
+
   const containerOpen = hasList
     ? `      <View style={{ flex: 1, ${hautSansEntete}paddingBottom: insets.bottom }}>`
     : '      <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>\n' +
@@ -581,6 +592,7 @@ function emitScreen(slice: ScreenSlice, aBarre: boolean, planEcran: EcranPlan): 
     // D-068 : composant SANS RENDU, monté en tête d'écran. Il exécute les
     // actions d'ouverture au montage et celles de sortie au démontage.
     ...(aCycle ? ["      <AirScreenLifecycle screen={screenData} />"] : []),
+    ...(sansEntete ? ["      <View style={{ flex: 1, paddingTop: insets.top }}>"] : []),
     // CHROME PERSISTANT (mission chrome) — émis AVANT le conteneur : la
     // recherche appartient au viewport, le contenu défile derrière elle.
     // Aucune position absolue : c'est l'ORDRE DE L'ARBRE qui fait la
@@ -600,6 +612,7 @@ function emitScreen(slice: ScreenSlice, aBarre: boolean, planEcran: EcranPlan): 
       return `        <${wrapper} screen={screenData} blockId="${assertId(b.id, screenId)}"${itemId} />`;
     }),
     containerClose,
+    ...(sansEntete ? ["      </View>"] : []),
     // POSITION STRUCTURELLE (D-086) : la barre est le DERNIER enfant de la
     // coquille, après tout le contenu. Ce n'est pas un style qui la place en
     // bas — c'est l'ORDRE DE L'ARBRE, ce qu'une preuve de rendu peut vérifier

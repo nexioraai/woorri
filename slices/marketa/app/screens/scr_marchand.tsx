@@ -23,9 +23,11 @@ export default function ScrMarchandScreen({ route }: AirScreenProps) {
   const insets = useSafeAreaInsets();
   return (
     <ScreenShell testID="scr_marchand" title={screenData.title}>
-      <View style={{ flex: 1, paddingTop: insets.top, paddingBottom: insets.bottom }}>
+      <View style={{ flex: 1, paddingTop: insets.top }}>
+      <View style={{ flex: 1, paddingBottom: insets.bottom }}>
         <AirDetailHeader screen={screenData} blockId="blk_marchand_entete" itemId={route?.params?.itemId} />
         <AirList screen={screenData} blockId="blk_marchand_produits" itemId={route?.params?.itemId} />
+      </View>
       </View>
       <PrimaryNav destinations={primaryNav} currentScreenId="scr_marchand" />
     </ScreenShell>

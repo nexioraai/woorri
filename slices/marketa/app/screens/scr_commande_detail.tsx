@@ -24,10 +24,12 @@ export default function ScrCommandeDetailScreen({ route }: AirScreenProps) {
   return (
     <ScreenShell testID="scr_commande_detail" title={screenData.title}>
       <AirScreenLifecycle screen={screenData} />
-      <View style={{ flex: 1, paddingTop: insets.top, paddingBottom: insets.bottom }}>
+      <View style={{ flex: 1, paddingTop: insets.top }}>
+      <View style={{ flex: 1, paddingBottom: insets.bottom }}>
         <AirDetailHeader screen={screenData} blockId="blk_commande_entete" itemId={route?.params?.itemId} />
         <AirHeader screen={screenData} blockId="blk_commande_suivi" />
         <AirList screen={screenData} blockId="blk_commande_lignes" itemId={route?.params?.itemId} />
+      </View>
       </View>
       <PrimaryNav destinations={primaryNav} currentScreenId="scr_commande_detail" />
     </ScreenShell>
