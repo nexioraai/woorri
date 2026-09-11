@@ -9,6 +9,8 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import {
   conceptsRelies,
+  ecranAirDe,
+  obligationsPrescriptives,
   consommateursDIdentite,
   ecransDe,
   GESTES,
@@ -62,6 +64,29 @@ describe("MUTATION ISOLÉE (EP-028) — base verte T3", () => {
     p?.etapes.splice(4, 0, { concept: "cpt_compte", geste: "decouvrir" });
     const codes = ecransDe(m).diagnostics.map((x) => x.code);
     expect(codes).toContain("DERIVATION_IDENTITE_NON_CONSOMMEE");
+  });
+});
+
+describe("EP-073 · ① — les ARCS sont TRANSMIS aux obligations, dérivés du plan", () => {
+  // Le POURQUOI mesuré : 5 familles tenues par règles INTERPOLÉES, la seule
+  // rouge (arcs) était jugée sur une donnée JAMAIS transmise au générateur.
+  it("chaque arc non trivial du plan est dans le texte, l'exigence d'exécutabilité aussi", () => {
+    const plan = ecransDe(T3);
+    const texte = obligationsPrescriptives("base", T3, plan);
+    expect(texte).toContain("ARCS DE NAVIGATION EXACTS");
+    expect(texte).toContain("action EXÉCUTABLE");
+    const arcs = plan.navigation.arcs as { de: string; vers: string }[];
+    for (const a of arcs.filter((x) => x.de !== x.vers).slice(0, 5)) {
+      expect(texte).toContain(`${ecranAirDe(a.de)}->${ecranAirDe(a.vers)}`);
+    }
+  });
+  it("MUTATION — un parcours retiré du modèle : ses arcs DISPARAISSENT du texte (dérivation, pas copie)", () => {
+    const m = structuredClone(T3);
+    m.parcours = m.parcours.filter((p) => p.id !== "par_annuler_rendezvous");
+    const avant = obligationsPrescriptives("base", T3, ecransDe(T3));
+    const apres = obligationsPrescriptives("base", m, ecransDe(m));
+    expect(avant).toContain("scr_cpt_rendezvous_retirer");
+    expect(apres).not.toContain("scr_cpt_rendezvous_retirer");
   });
 });
 

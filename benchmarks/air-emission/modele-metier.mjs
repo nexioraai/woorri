@@ -1056,6 +1056,13 @@ export function obligationsPrescriptives(nomPasse, modele, plan) {
       `· entryScreenId = ${p.entree}`,
       `· écrans EXACTS du document : ${p.ecrans.join(", ")} — ni plus, ni moins`,
       `· une route par écran ; destinations principales DANS CET ORDRE : ${p.destinations.join(" → ")}${p.barre ? "" : " (AUCUNE barre primaire)"}`,
+      // EP-073 · ① — LES ARCS SONT TRANSMIS, plus seulement jugés. Le juge R6
+      // exigeait l'exécutabilité d'arcs que le générateur ne recevait JAMAIS
+      // (les prescriptions portaient entrée/écrans/destinations/barre, pas les
+      // arcs) : 5 familles tenues par règles INTERPOLÉES, la seule rouge était
+      // jugée sur une donnée non transmise — précédent v3/v4, une prose ne
+      // transmet pas. La liste est DÉRIVÉE du plan (P2d), jamais recopiée.
+      `· ARCS DE NAVIGATION EXACTS — chaque arc exige une action EXÉCUTABLE (déclencheur ui dispatché depuis l'écran source, ou thenScreenId d'une mutation/capability honorée) ; un navigate à déclencheur non câblé ne satisfait RIEN : ${[...new Set(plan.navigation.arcs.filter((a) => a.de !== a.vers).map((a) => `${ecranAirDe(a.de)}->${ecranAirDe(a.vers)}`))].join(", ")}`,
       "Toute divergence structurelle est REFUSÉE mécaniquement.",
     ].join("\n");
   }

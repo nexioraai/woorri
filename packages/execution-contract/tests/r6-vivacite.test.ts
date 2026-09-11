@@ -335,8 +335,20 @@ describe("branchement — un juge hors acceptation ne juge pas", () => {
   it("jugerAcceptation tourne aux DEUX attempts, et consomme jugerVivacite", () => {
     // Les CONSOMMATIONS (spread dans les diagnostics), pas la définition.
     const appels = emitV3.match(/\.\.\.jugerAcceptation\(air, prescriptif, intention\)/g) ?? [];
-    expect(appels.length).toBe(2);
-    expect(emitV3).toContain("vivacite.jugerVivacite(");
+    // EP-073 (édition consciente) : 3 consommations — attempt 1, attempt 2,
+    // et la RE-VALIDATION du document d'origine quand la gate anti-oscillation
+    // rejette une réparation qui introduisait des diagnostics.
+    expect(appels.length).toBe(3);
+    // EP-073 (édition consciente) : les juges vivent dans acceptation.mjs,
+    // importable SANS la garde — pour re-juger les archives à 0 $. emit-v3
+    // les consomme depuis ce module ; la consommation de jugerVivacite s'y
+    // vérifie désormais.
+    const acceptation = readFileSync(
+      join(R, "benchmarks", "air-emission", "acceptation.mjs"),
+      "utf8",
+    );
+    expect(acceptation).toContain("vivacite.jugerVivacite(");
+    expect(emitV3).toContain('await import(join(HERE, "acceptation.mjs"))');
   });
   it("le BILAN ne rend AUCUN chiffre pour un instrument non exécuté", () => {
     expect(emitV3).toContain("round-trip NON EXÉCUTÉ (instrument débranché — EP-061f)");

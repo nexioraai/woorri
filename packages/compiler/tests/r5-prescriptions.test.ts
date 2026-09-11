@@ -81,11 +81,16 @@ describe("R5 — prescriptions de navigation dérivées de P2d", () => {
   });
 
   it("le chemin campagne est CÂBLÉ (P0 → plan → prescriptions → vérificateur) — NON EXERCÉ", () => {
+    // EP-073 (édition consciente) : les juges d'acceptation vivent dans
+    // acceptation.mjs (importable sans la garde, pour re-juger les archives
+    // à 0 $) — le câblage se vérifie sur les DEUX fichiers.
     const src = readFileSync(join(R, "benchmarks", "air-emission", "emit-v3.mjs"), "utf8");
+    const juges = readFileSync(join(R, "benchmarks", "air-emission", "acceptation.mjs"), "utf8");
     expect(src).toContain("passe0.construireRequeteP0(intention.text)");
     expect(src).toContain("jugerSortieP0");
     expect(src).toContain("obligationsPrescriptives(part.name");
-    expect(src).toContain("verifierNavigationPrescrite(");
+    expect(juges).toContain("verifierNavigationPrescrite(");
+    expect(src).toContain('await import(join(HERE, "acceptation.mjs"))');
     // fail-closed : P0 refusé ⇒ l'intention S'ARRÊTE avant les passes AIR.
     expect(src).toContain("intention arrêtée AVANT les passes AIR");
   });

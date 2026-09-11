@@ -540,3 +540,17 @@ rouge : ARCS PRESCRITS INEXÉCUTABLES ×7 (familles connues ⇒ correction
 0 $, pas re-tirage). TAUX PUBLIÉ : P0→P2 sous v7 = 2/4 contre 1/5
 (v5+v6). Budget : 8,50 = plancher (surcroît réparations R6 confirmé).
 Mission : 19,5483 $.
+
+--- 2026-09-11 · CONVERGENCE + ARCS (GO EP-073, 0 $) ---
+LA COURBE (re-jugement exact des archives via acceptation.mjs, extraite
+d'emit-v3) : 14-40/R5 : 14→0 convergée · 22-09/R6 : 17→12 en façade =
+14 corrigés − 10 RÉINTRODUITS (3 écrans rendus inatteignables dont
+s_identifier). VERDICT : OSCILLATION — pas de relance (règle du GO).
+Causes mesurées, corrigées : la réparation ne recevait PAS le
+prescriptif (il la traverse désormais) ; aucune gate anti-oscillation
+(posée, patron D-088 : réparation introduisant du neuf = REJETÉE,
+journalisée) ; courbe par run désormais journalisée (reparationBilan).
+① Arcs : jamais transmis (prose seule) — désormais DÉRIVÉS du plan
+dans les obligations, preuve fixture+mutation. Non vérifiable à 0 $ :
+le suivi générateur et la convergence réelle — prochain run sur GO.
+Batteries 418+, 28/28 apps. Mission : 19,5483 $.

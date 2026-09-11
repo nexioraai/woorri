@@ -76,12 +76,19 @@ describe("étape ④ — aucune émission d'un plan incohérent", () => {
   });
 
   it("CLIQUET — la campagne payante garde la barre HAUTE (qualité comprise)", () => {
+    // EP-073 (édition consciente) : les juges vivent dans acceptation.mjs —
+    // la barre se vérifie là où elle est tenue, emit-v3 les consomme.
     const emitV3 = readFileSync(
       join(HERE, "..", "..", "..", "benchmarks", "air-emission", "emit-v3.mjs"),
       "utf8",
     );
-    expect(emitV3).toContain("validerPlan(");
+    const juges = readFileSync(
+      join(HERE, "..", "..", "..", "benchmarks", "air-emission", "acceptation.mjs"),
+      "utf8",
+    );
+    expect(juges).toContain("validerPlan(");
     // Le chemin campagne ne filtre PAS par sévérité : tout diagnostic refuse.
+    expect(juges.includes('severite === "bloquant"')).toBe(false);
     expect(emitV3.includes('severite === "bloquant"')).toBe(false);
   });
 });

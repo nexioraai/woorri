@@ -1,0 +1,293 @@
+// EP-073 — JUGES D'ACCEPTATION DE LA CAMPAGNE, extraits d'emit-v3.
+//
+// POURQUOI CE MODULE EXISTE : emit-v3 refuse tout import (garde EP-065 — un
+// script qui dépense au chargement est une arme posée sur la table), mais la
+// convergence des réparations se mesure en RE-JUGEANT des artefacts archivés,
+// à 0 $. Les juges n'ont ni dialecte fournisseur ni dépense : ils vivent ici,
+// importables ; emit-v3 les consomme — mêmes objets aux deux attempts (R6).
+// AUCUNE règle n'a bougé dans l'extraction : le corps est celui d'emit-v3,
+// déplacé tel quel (les cliquets de contenu le vérifient).
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const HERE = join(fileURLToPath(import.meta.url), "..");
+const REPO = join(HERE, "..", "..");
+const airSchema = await import(join(REPO, "packages/air-schema/src/index.ts"));
+const blocksRegistry = await import(join(REPO, "packages/blocks/src/registry.ts"));
+const registry = await import(join(REPO, "packages/capability-registry/src/index.ts"));
+const compiler = await import(join(REPO, "packages/compiler/src/index.ts"));
+const fidelity = await import(join(REPO, "packages/fidelity/src/index.ts"));
+const executionGraph = await import(join(REPO, "packages/execution-contract/src/graph.ts"));
+const executionContract = await import(join(REPO, "packages/execution-contract/src/envelope.ts"));
+const vivacite = await import(join(REPO, "packages/execution-contract/src/vivacite.ts"));
+const ENV = executionContract.EXECUTION_ENVELOPE_V1;
+const modeleMetier = await import(join(HERE, "modele-metier.mjs"));
+
+// R6 (EP-062) — JUGES D'ACCEPTATION, écrits UNE fois pour les DEUX attempts.
+//
+// La campagne EP-061 avait la navigation prescrite à l'attempt 1 et PAS à
+// l'attempt 2 (seul `validateLocal` re-tournait après réparation) : un juge
+// présent à un attempt sur deux ne juge pas. Ici vivent TOUS les juges
+// au-delà du schéma : navigation prescrite (R5), vivacité et conformance
+// (R6, document confronté à l'ENVELOPPE — un déclencheur hors enveloppe ne
+// satisfait aucun arc, un contrôle non câblé est refusé, un param non
+// consommé est refusé, une référence affichée brute est refusée).
+export function jugerAcceptation(air, prescriptif, intention) {
+  if (air === null) return [];
+  const out = [];
+  if (prescriptif !== undefined) {
+    out.push(
+      ...modeleMetier.verifierNavigationPrescrite(
+        air,
+        modeleMetier.prescriptionsNavigation(prescriptif.plan),
+      ),
+    );
+  }
+  const arcsPrescrits = (prescriptif?.plan?.navigation?.arcs ?? []).map((a) => ({
+    de: modeleMetier.ecranAirDe(a.de),
+    vers: modeleMetier.ecranAirDe(a.vers),
+  }));
+  out.push(
+    ...vivacite.jugerVivacite(air, executionContract.EXECUTION_ENVELOPE_V1, {
+      arcsPrescrits,
+      commerceAttendu: intention?.commerce,
+    }),
+  );
+  return out;
+}
+
+export function validateLocal(document) {
+  const parsed = airSchema.projectAirSchema.safeParse(document);
+  if (!parsed.success) {
+    return {
+      air: null,
+      diagnostics: parsed.error.issues.map((issue) => ({
+        code: "SCHEMA",
+        path: issue.path.join("."),
+        message: issue.message,
+      })),
+    };
+  }
+  const diagnostics = [
+    ...airSchema.validateAir(parsed.data),
+    ...registry.validateAirCapabilities(parsed.data),
+    ...blocksRegistry.validateAirBlocks(parsed.data),
+    // ── PREUVE DE MATIÈRE (2026-09-10) — VERROU MÉCANIQUE, pas une règle de
+    // prompt : un document qui VEND doit posséder une marchandise alimentée
+    // et affichée, distincte du profil. Refus testé sur le cadavre réel
+    // (dougplace, 1 entité = profil, 6,81 $). Couche CAMPAGNE uniquement —
+    // le corpus gelé v2 précède l'exigence et n'est pas re-jugé.
+    ...fidelity.preuveDeMatiere(parsed.data),
+    // ── COMPOSITION II : sections nommées · recherche offerte à l'entrée ·
+    // états du distant déclarés. Le couloir, lui, est devenu IRREPRÉSENTABLE
+    // (aperçus bornés) — plus besoin de l'interdire.
+    ...fidelity.principesDeComposition(parsed.data),
+    ...fidelity.imagesDeVitrine(parsed.data),
+    ...fidelity.rechercheVisuelleComplete(parsed.data),
+    // ── BLUEPRINT (engine hardening) : le PLAN d'assemblage est validé
+    // AVANT toute acceptation — un aperçu qui tronque offre sa suite, une
+    // vitrine vide est refusée. Réponse locale à « est-ce bien planifié ? ».
+    ...compiler.validerPlan(compiler.planifierComposition(parsed.data)),
+    // ── C4 (confrontation #12) — CONSERVATION DE L'IDENTITÉ : la cible d'une
+    // ligne doit CONSOMMER l'identité transportée (détail même entité, ou
+    // liste scopée par un champ reference — r(itemId)). Mesuré : 29 sites du
+    // corpus GELÉ jettent l'identité (consignés, jamais re-jugés) — la barre
+    // vaut pour les générations FUTURES.
+    ...executionGraph.navigationsDeLigne(parsed.data)
+      .filter((n) => n.consommation === "aucune")
+      .map((n) => ({
+        code: "AIR_CIBLE_IDENTITE_PERDUE",
+        path: `screens[${n.screenId}].blocks[${n.blockId}]`,
+        message:
+          `la ligne de "${n.blockId}" (entité "${n.entityId}") navigue vers ` +
+          `"${n.targetScreenId}" qui ne CONSOMME PAS l'identité transportée : ` +
+          `ni detail_header de la même entité, ni liste scopée par un champ ` +
+          `reference vers elle. L'instance pressée serait PERDUE (repli rows[0] ` +
+          `silencieux). Répare en ciblant le DÉTAIL de l'instance, ou en scopant ` +
+          `la collection cible par un champ \`reference\` (règle 18). NE ` +
+          `SUPPRIME NI LA LIGNE NI SA NAVIGATION (règle 27).`,
+      })),
+    // ── C5 (confrontation #12) — une collection sur une FICHE n'est légitime
+    // qu'en ACCÈS CONTEXTUALISÉ (scopée à l'instance). 24 sites gelés consignés.
+    ...executionGraph.collectionsSurFiche(parsed.data)
+      .filter((x) => !x.contextualisee)
+      .map((x) => ({
+        code: "AIR_FICHE_COLLECTION_NON_CONTEXTUALISEE",
+        path: `screens[${x.screenId}].blocks[${x.blockId}]`,
+        message:
+          `l'écran "${x.screenId}" est une FICHE et la liste "${x.blockId}" n'est ` +
+          `pas scopée à l'instance (\`scopeFieldId\` absent) : une collection ` +
+          `PLEINE absorbée dans un détail mélange deux responsabilités. Scope-la ` +
+          `par le champ reference qui la relie à l'instance affichée.`,
+      })),
+    // ── FORM_SANS_ACTION (2026-09-01) — DIAGNOSTIC, JAMAIS UN REFUS DE CONTRAT.
+    //
+    // Un `form` rend TOUJOURS un bouton portant son `submitLabel` : c'est une
+    // promesse faite à l'utilisateur. Or le registre impose `actionId` à un
+    // `button` et RIEN à un `form` — mesuré : 7 formulaires muets sur 45, contre
+    // 0 bouton muet sur 259. Trois portaient un paiement ou une confirmation.
+    //
+    // Le diagnostic vit ICI, dans la validation de la campagne, et NON dans
+    // `validateAirBlocks` : ce pont est consommé en fail-closed par le
+    // compilateur (`resolve-lock`) et par le cliquet du corpus gelé, qui exige
+    // zéro diagnostic. L'y placer aurait REFUSÉ trois documents existants et
+    // détruit la base de comparaison — l'erreur d'étage de D-105, à l'identique.
+    // Même patron que `OVERRIDES_NON_VIDE` ci-dessous.
+    ...executionGraph.formulairesSansAction(parsed.data).map((f) => ({
+      code: "FORM_SANS_ACTION",
+      path: `screens[${f.screenId}].blocks[${f.blockId}]`,
+      message:
+        `le formulaire "${f.blockId}" (écran "${f.screenId}") rend un bouton de ` +
+        `soumission qu'AUCUNE action ne déclenche : la pression ne produit RIEN. ` +
+        `Déclare une action \`{trigger:{kind:"ui",blockId:"${f.blockId}"}, ` +
+        `effect:{kind:"mutation",entityId:<l'entité du formulaire>,operation:"create"|"update"}}\`. ` +
+        `NE RETIRE NI LE FORMULAIRE NI SON BOUTON : la réparation attendue est de ` +
+        `CONSTRUIRE l'action manquante (règle 27).`,
+    })),
+    // ── DETAIL_SANS_SOURCE (2026-09-01) — DIAGNOSTIC, comme FORM_SANS_ACTION.
+    //
+    // Un écran de détail n'apprend QUELLE instance afficher que d'une chose :
+    // `useItemNavigate` transmet `{itemId}` quand une LIGNE DE LISTE est
+    // pressée. Vérifié dans le runtime compilé : la navigation par BOUTON
+    // appelle `navigation.navigate(screenId)` SANS aucun paramètre. Un détail
+    // qu'aucune ligne n'atteint ne peut donc JAMAIS recevoir d'identifiant.
+    //
+    // Le fournisseur retombe alors sur `rows[0]`, EN SILENCE : l'écran affiche
+    // toujours le premier enregistrement. Presser « le troisième » montre « le
+    // premier », sans erreur ni état vide. Mesuré sur le corpus v3 : **28 écrans
+    // de détail sur 34 (82 %)**, dont **27 sur une entité à plusieurs lignes**.
+    //
+    // Le 28e porte un jeu de démo d'UNE ligne — il n'est non ambigu que par
+    // accident de fixture, jamais par le contrat. Aucune exemption n'est donc
+    // accordée : la règle reste STRUCTURELLE.
+    ...executionGraph
+      .detailScreens(parsed.data)
+      .filter((d) => !d.hasItemIdSource)
+      .map((d) => ({
+        code: "DETAIL_SANS_SOURCE",
+        path: `screens[${d.screenId}].blocks[${d.blockId}]`,
+        message:
+          `l'écran de détail "${d.screenId}" n'est atteint par AUCUNE ligne de liste : ` +
+          `il ne recevra jamais d'identifiant et affichera TOUJOURS le premier ` +
+          `enregistrement, en silence. Déclare une action ` +
+          `\`{trigger:{kind:"ui",blockId:<le bloc list de l'entité>}, ` +
+          `effect:{kind:"navigate",screenId:"${d.screenId}"}}\` (règle 18). ` +
+          `NE RETIRE NI L'ÉCRAN NI SON EN-TÊTE : la réparation attendue est de ` +
+          `CÂBLER la ligne (règle 27).`,
+      })),
+    // ── ACTION_DECLENCHEUR_DECORATIF (2026-09-02, D-123) — DIAGNOSTIC, même étage.
+    //
+    // CAUSE RACINE PAYÉE (run refusé 2026-09-02T11-33-00-222Z) : la réparation
+    // a créé une action à déclencheur `ui` sur un `empty_state` dont la prop
+    // `actionId` dispatchait une AUTRE action. D-105 le dit : `button` et
+    // `empty_state` dispatchent par LEUR prop — le déclencheur y est DÉCORATIF.
+    // D-104 ne le voit pas (il vérifie le TYPE du bloc, pas la cohérence de
+    // dispatch) ; la promesse visant l'action a fini en AIR_TEST_TARGET_MORTE
+    // après réparation, trop tard pour une seconde passe. La condition est
+    // DÉRIVÉE DU REGISTRE (`actionRefProps`), jamais d'une liste de types.
+    ...parsed.data.actions.flatMap((a, ai) => {
+      if (a.trigger.kind !== "ui") return [];
+      const bloc = parsed.data.screens
+        .flatMap((s) => s.blocks)
+        .find((b) => b.id === a.trigger.blockId);
+      if (bloc === undefined) return []; // référence brisée : refusée ailleurs
+      const def = blocksRegistry.getBlock(bloc.blockType);
+      if (def === undefined || !def.actionRefProps.includes("actionId")) return [];
+      const dispatchee = (bloc.props ?? []).find((p) => p.key === "actionId")?.value;
+      if (dispatchee === a.id) return [];
+      return [
+        {
+          code: "ACTION_DECLENCHEUR_DECORATIF",
+          path: `actions[${ai}].trigger.blockId`,
+          message:
+            `l'action "${a.id}" déclare un déclencheur sur le bloc "${bloc.id}" ` +
+            `(type "${bloc.blockType}"), mais ce type de bloc dispatche l'action nommée ` +
+            `par SA prop \`actionId\`` +
+            (dispatchee === undefined ? ` — qui est ABSENTE` : ` — ici "${String(dispatchee)}"`) +
+            ` : le déclencheur est DÉCORATIF, rien n'exécutera jamais "${a.id}". ` +
+            `Répare en ALIGNANT : fais porter la prop \`actionId\` du bloc sur "${a.id}", ` +
+            `OU re-cible déclencheur et promesses vers l'action réellement dispatchée, ` +
+            `OU place le déclencheur sur un bloc qui dispatche "${a.id}". ` +
+            `NE SUPPRIME NI L'ACTION NI LA PROMESSE QUI LA VISE (règle 27).`,
+        },
+      ];
+    }),
+    // ── PARITÉ F4 À LA GÉNÉRATION (2026-09-02, D-123) — même patron que D-118
+    // pour F1. CAUSE RACINE PAYÉE (même run) : la section `intention` est émise
+    // en attempt1 et jamais réémise ; la réparation renomme des nœuds et les
+    // `nodeIds` des besoins se périment (2 `reference_brisee`) — sans la
+    // promesse morte, ce document serait entré au corpus `valid=true` puis
+    // aurait rougi la gate F4 : la divergence pipeline↔gate que D-118 a fermée
+    // pour F1 existait à l'identique pour F4. L'AUTORITÉ est l'instrument de
+    // la gate LUI-MÊME (`evaluateIntentCoverage`) — aucun faux positif nouveau
+    // par construction. La pseudo-satisfaction SÉMANTIQUE reste hors de portée
+    // de tout instrument (mesuré : 14 nœuds vivants autour d'un comportement
+    // irrendable) — c'est l'objet de la règle 30 et du contrôle d'acceptation.
+    ...(parsed.data.intent === undefined
+      ? []
+      : fidelity.evaluateIntentCoverage(parsed.data, ENV).verdicts.flatMap((v) => {
+          const PARITE = {
+            reference_brisee: "AIR_INTENT_REFERENCE_BRISEE",
+            motif_refute: "AIR_INTENT_MOTIF_REFUTE",
+            satisfaction_non_prouvee: "AIR_INTENT_SATISFACTION_NON_PROUVEE",
+            satisfait_par_du_mort: "AIR_INTENT_SATISFAIT_PAR_DU_MORT",
+          };
+          const code = PARITE[v.state];
+          if (code === undefined) return [];
+          return [
+            {
+              code,
+              path: `intent.needs[${v.needId}]`,
+              message:
+                `${v.motif}. Le besoin "${v.needId}" reste DÛ : satisfais-le sur des ` +
+                `nœuds RÉELS recopiés caractère pour caractère (règle 11), ou déclare-le ` +
+                `avec le fait exact (règles 11 et 30). NE LE SUPPRIME PAS (règle 27).`,
+            },
+          ];
+        })),
+    // ── AIR_TEST_TARGET_MORTE (2026-09-02, D-118) — DIAGNOSTIC, même étage.
+    //
+    // CAUSE RACINE PAYÉE : billetterie-concerts (runId 2026-09-01T22-53-00-610Z)
+    // a promis `test_billet_emis_apres_paiement` sur une action à déclencheur
+    // `data` — schéma-valide, JAMAIS exécutée (l'enveloppe n'exécute que
+    // `ui`/`lifecycle`). `AIR_TEST_TARGET_UNKNOWN` vérifie que la cible EXISTE,
+    // jamais qu'elle VIT : le pipeline a dit `valid=true`, la gate F1 a dit
+    // rouge. Un document ne doit plus pouvoir être accepté ici et refusé là.
+    //
+    // L'AUTORITÉ EST L'INSTRUMENT DE LA GATE LUI-MÊME : `evaluatePromises`,
+    // même contrat, mêmes verdicts — aucun faux positif nouveau par
+    // construction, et le diagnostic se relâche TOUT SEUL quand l'enveloppe
+    // gagne un déclencheur. Seul `cible_morte` est rapporté ici : l'inexistence
+    // appartient à `AIR_TEST_TARGET_UNKNOWN` — jamais deux signaux par
+    // promesse. Une action morte que RIEN ne promet n'est pas rapportée : la
+    // gate F1 la tolère, le diagnostic ne juge pas plus sévèrement qu'elle.
+    ...fidelity
+      .evaluatePromises(parsed.data, ENV)
+      .verdicts.flatMap((v, i) =>
+        v.state === "cible_morte"
+          ? [
+              {
+                code: "AIR_TEST_TARGET_MORTE",
+                path: `expectedTests[${i}].targetId`,
+                message:
+                  `la promesse "${v.testId}" cible "${v.targetId}", qui EXISTE mais ne VIT pas : ` +
+                  `${v.motif}. NE SUPPRIME NI LA PROMESSE NI SA CIBLE : rends la cible ` +
+                  `VIVANTE — recâble son déclencheur dans l'enveloppe (\`ui\` sur un bloc ` +
+                  `existant, ou \`lifecycle\`), câble l'action sur un bloc, relie l'écran ` +
+                  `depuis un chemin exécutable — ou re-cible la promesse vers le nœud ` +
+                  `VIVANT qui rend le même service (règle 27).`,
+              },
+            ]
+          : [],
+      ),
+  ];
+  const overrides = parsed.data.design?.overrides;
+  if (overrides !== undefined && overrides.length > 0) {
+    diagnostics.push({
+      code: "OVERRIDES_NON_VIDE",
+      path: "design.overrides",
+      message: "D-025 : design.overrides doit être absent en corpus-v2",
+    });
+  }
+  return { air: parsed.data, diagnostics };
+}

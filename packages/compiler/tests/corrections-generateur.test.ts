@@ -70,6 +70,23 @@ describe("PASSE B — le prompt enseigne les corrections, depuis l'enveloppe", (
     expect(passe0).toContain("gestesParcoursDeCollection().join");
   });
 
+  it("EP-073 · ② la réparation reçoit les MÊMES prescriptions que l'émission", () => {
+    // Cause racine mesurée de l'oscillation (22-09 : 14 corrigés, 10
+    // réintroduits) : la section réparée était réécrite AVEUGLE à la
+    // structure prescrite. Les deux consommations doivent exister.
+    const occurrences = SOURCE.match(/obligationsPrescriptives\(part\.name/g) ?? [];
+    expect(occurrences.length).toBeGreaterThanOrEqual(2);
+    expect(SOURCE).toContain("repairSections(document, diagnostics, intentionText, label, usage, refusals, partiel, prescriptif)");
+  });
+
+  it("EP-073 · ② gate anti-oscillation : une réparation qui introduit du neuf est REJETÉE", () => {
+    expect(SOURCE).toContain("RÉPARATION REJETÉE — OSCILLATION");
+    expect(SOURCE).toContain("journal.reparationOscillante");
+    // le bilan de réparation est journalisé (avant/après/introduits) — la
+    // courbe de convergence existe désormais par run.
+    expect(SOURCE).toContain("journal.reparationBilan");
+  });
+
   it("B6/EP-065 · la garde de GO : une campagne ne part JAMAIS sans jeton", () => {
     expect(SOURCE).toContain('process.env.GO_CAMPAGNE !== "OUI-JE-PAIE"');
     expect(SOURCE).toContain("process.exit(2)");
