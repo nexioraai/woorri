@@ -39,3 +39,19 @@ structurels, etats/origine, doublon besoins, traçabilité, « juge d'abord »),
 contrat du modèle métier v1, table des gestes, vivacité V1–V5, plan R0→R8.
 CONSENSUS_REACHED = NO — contre-analyse externe attendue, décisions R1–R6.
 STOP ABSOLU toujours en vigueur (EP-018).
+
+--- 2026-09-11 · CONFRONTATION #6 (arbitrage, analyse seule) ---
+CONFRONTATION-6-ARBITRAGE.md : points communs ratifiés (chaîne, A–J) ;
+désaccord #1 confirmé côté Claude Chat (cerveau=P0 seul, dérivations
+contractuelles D1–D6 + frontière de type « le texte libre meurt à P0 ») ;
+#2 accepté (M3 = responsabilité lexicale ; qualité = invariants+mutations+
+conformance+hold-out) ; #3 LIVRÉ : table d'attribution des 5 diagnostics
+kaviva, 5/5 DÉMONTRÉES sur le code (cause unique : envelope.effects ne sait
+pas dire « auth exécutable » que sessionEtablissable affirme — EP-020) ;
+#4 frontière nette du modèle (DISCRIMINANT_ABSENT = seul canal d'extension,
+4 pièces exigées, aucune propriété sans consommateur) ; #5 preuve mécanique
+structure/expression (projection structurelle invariante) ; #6 protocole
+hold-out hostile (séquestre, gel taggé antérieur, symbolisation isomorphe,
+ablation) ; intent.needs → OPTION B avec critère de retrait. Kaviva :
+fixture à double verdict (ENVELOPE GREEN / MODEL RED acceptable). Sections
+10+ TRONQUÉES à la réception — dues. 0 code · 0 $ · 0 build.
