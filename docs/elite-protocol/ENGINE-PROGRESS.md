@@ -5,10 +5,10 @@
 ③ Capacité → rôle      🟢 (table ZONE_PAR_BLOCK_TYPE, icônes 6→1 source, digest dérivé)
 ④ Validation émission  🟢 (validerPlan inconditionnel, sévérité intrinsèque)
 ⑤ Générateur (passes)  🟢 (capacites réordonnée, cycle contraint par obligations)
-⑥ Chemins parallèles   🔵 EN COURS
-⑦ Génération réservation (payante, ≤4 $) ⚪
+⑥ Chemins parallèles   🟢 (construire-fixture neutralisé, 6 legacy en attic, écrivain consolidé)
+⑦ Génération réservation (payante, ≤4 $) 🔵 PRÊTE — attend le geste propriétaire (clé API + build EAS, EP-013)
 
-Découverts : EP-001…EP-016. Résolus : EP-001, EP-002*, EP-003, EP-004, EP-005, EP-012*, EP-014. Dettes conscientes : EP-008 (prose digest), EP-015, EP-016 (navigation dans base — mesurer en ⑦).
+Découverts : EP-001…EP-016. RÉSOLUS : EP-001..007, EP-012, EP-014 (9). Dettes conscientes : EP-008, EP-015, EP-016. Préexistants hors mission : EP-010, EP-011. Différé : EP-013 (preuves appareil).
 Tests ① : compiler 249/249 (dont plan-transport ×4 nouveaux) · packages:test 17/17 verts ·
 packages:typecheck 0 erreur · gate:app-compile 27/27 · composition/navigation/invariants/
 app-rendu/controles/session verts · fidelite+e33 rouges PRÉEXISTANTS à HEAD (EP-010/011).

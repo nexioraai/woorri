@@ -14,6 +14,9 @@ import type {
   AppButtonProps,
   AppTextProps,
   BadgeProps,
+  GridCardProps,
+  RangeeProps,
+  SearchEntryProps,
   ListRowProps,
   Primitives,
   ScreenShellProps,
@@ -24,6 +27,7 @@ import type {
   TextVariant,
 } from "./contracts.ts";
 import { useStyles } from "./theme-bridge.tsx";
+import { GLYPHE_PAR_ROLE } from "./roles-icones.ts";
 import type { Sheet } from "./styles.ts";
 
 const VARIANT_STYLE: Record<TextVariant, keyof Sheet> = {
@@ -69,6 +73,7 @@ export function Section({
   fill = false,
   inline = false,
   tight = false,
+  titleAction,
 }: SectionProps) {
   const s = useStyles();
   // DET-025 — `fill` était DÉCLARÉ par le contrat, PORTÉ par les styles,
@@ -90,7 +95,22 @@ export function Section({
       testID={testID}
       accessibilityLabel={accessibilityLabel}
     >
-      {title !== undefined && <Text style={s.sectionTitle}>{title}</Text>}
+      {title !== undefined &&
+        (titleAction === undefined ? (
+          <Text style={s.sectionTitle}>{title}</Text>
+        ) : (
+          <View style={s.sectionTitleRow}>
+            <Text style={s.sectionTitle}>{title}</Text>
+            <Pressable
+              onPress={titleAction.onPress}
+              accessibilityRole="button"
+              accessibilityLabel={titleAction.label}
+              style={s.sectionTitleLien}
+            >
+              <Text style={s.sectionTitleLienTexte}>{titleAction.label}</Text>
+            </Pressable>
+          </View>
+        ))}
       {fill ? (
         <View style={s.sectionFillBody}>{children}</View>
       ) : inline ? (
@@ -176,7 +196,7 @@ export function AppButton({
         <>
           {icon === undefined ? null : (
             <Ionicons
-              name={icon as never}
+              name={((GLYPHE_PAR_ROLE as Readonly<Record<string, string>>)[icon] ?? icon) as never}
               style={[s.buttonIcon, ghost ? s.buttonGhostText : s.buttonText]}
             />
           )}
@@ -269,6 +289,121 @@ export function AppImage({ uri, variant, testID, accessibilityLabel }: AppImageP
       resizeMode={variant === "brand" ? "contain" : "cover"}
       accessibilityIgnoresInvertColors
     />
+  );
+}
+
+/**
+ * CARTE DE CATALOGUE (1.20) — image dessus, texte dessous, valeur en pied.
+ * La cellule d'une grille deux colonnes : c'est la FlatList du bloc qui pose
+ * les colonnes, la carte ne connaît que sa propre forme.
+ */
+/** Pied de liste — un espace, rien d'autre : le dernier rang finit sa course
+ * au-dessus de la barre au lieu d'être tranché contre elle. */
+export function ListFooter() {
+  const s = useStyles();
+  return <View style={s.listContent} />;
+}
+
+/**
+ * ENTRÉE DE RECHERCHE — visuellement un champ, structurellement un bouton :
+ * l'accueil OFFRE la recherche, l'écran cible l'EXÉCUTE. Cible tactile
+ * pleine, rôle bouton annoncé, placeholder comme nom accessible.
+ */
+/**
+ * UNE SEULE LANGUE D'ICÔNES (2026-09-10) — le document parle en RÔLES
+ * (compte, panier…), le moteur traduit vers les glyphes embarqués. Table
+ * FERMÉE, partagée par la barre de navigation et les boutons. Un nom
+ * Ionicons brut, hérité des documents antérieurs, passe tel quel.
+ */
+// Étape ③ (EP-003) — la table vit dans `roles-icones.ts`, LA source unique,
+// importée en tête et RÉ-EXPORTÉE par l'index (compatibilité inchangée).
+
+export function SearchEntry({ placeholder, onPress, visual, testID, accessibilityLabel }: SearchEntryProps) {
+  const s = useStyles();
+  return (
+    <Pressable
+      style={s.searchEntry}
+      onPress={onPress}
+      testID={testID}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel ?? placeholder}
+    >
+      <Ionicons name="search-outline" size={s.searchEntryIcone.fontSize} color={s.searchEntryIcone.color} />
+      <Text style={s.searchEntryTexte}>{placeholder}</Text>
+      {visual !== undefined && (
+        <Pressable
+          style={s.searchEntryVisuel}
+          onPress={visual.onPress}
+          accessibilityRole="button"
+          accessibilityLabel={visual.label}
+          testID={testID === undefined ? undefined : `${testID}-visuel`}
+        >
+          <Ionicons
+            name="camera-outline"
+            size={s.searchEntryIcone.fontSize}
+            color={s.searchEntryIcone.color}
+          />
+        </Pressable>
+      )}
+    </Pressable>
+  );
+}
+
+export function Rangee({ children }: RangeeProps) {
+  const s = useStyles();
+  return <View style={s.rangeeApercu}>{children}</View>;
+}
+
+export function GridCard({
+  compact,
+  title,
+  subtitle,
+  trailing,
+  badge,
+  imageUri,
+  onPress,
+  testID,
+  accessibilityLabel,
+}: GridCardProps) {
+  const s = useStyles();
+  const corps = (
+    <>
+      {imageUri !== undefined && (
+        <Image
+          source={{ uri: imageUri }}
+          style={s.gridCardImage}
+          resizeMode="cover"
+          accessibilityIgnoresInvertColors
+        />
+      )}
+      <View style={s.gridCardBody}>
+        <Text style={s.rowTitle}>{title}</Text>
+        {subtitle !== undefined && (
+          <Text style={s.rowSubtitle}>{subtitle}</Text>
+        )}
+        {badge !== undefined && <Badge label={badge} />}
+        {trailing !== undefined && <Text style={s.gridCardTrailing}>{trailing}</Text>}
+      </View>
+    </>
+  );
+  const forme = compact === true ? s.gridCardCompact : s.gridCard;
+  if (onPress === undefined) {
+    return (
+      <View style={forme} testID={testID} accessibilityLabel={accessibilityLabel}>
+        {corps}
+      </View>
+    );
+  }
+  return (
+    <Pressable
+      style={forme}
+      onPress={onPress}
+      testID={testID}
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel ?? title}
+    >
+      {corps}
+    </Pressable>
   );
 }
 

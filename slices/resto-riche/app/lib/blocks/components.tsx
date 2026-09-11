@@ -6,26 +6,22 @@
 // source visuelle. AUCUNE syntaxe Maestro/Detox : les blocs sont
 // E2E-agnostiques (D-022/D-023), seuls les testID standard sont exposés.
 import { FlatList } from "react-native";
-import {
-  AppButton,
+import {GridCard, AppButton,
   AppText,
   Badge,
   ListRow,
   Section,
   StateView,
   AppImage,
-  TextField,
-} from "../primitives";
-import type {
-  Blocks,
+  TextField, ListFooter, SearchEntry, Rangee} from "../primitives";
+import type {Blocks,
   ButtonBlockProps,
   DetailHeaderBlockProps,
   EmptyStateBlockProps,
   FormBlockProps,
   HeaderBlockProps,
   ListBlockProps,
-  SpacerBlockProps,
-} from "./contracts.ts";
+  SpacerBlockProps, SearchEntryBlockProps} from "./contracts.ts";
 
 export function HeaderBlock({ title, subtitle, accroche, logoUri, testID }: HeaderBlockProps) {
   return (
@@ -48,6 +44,9 @@ export function ListBlock({
   search,
   filters,
   onItemPress,
+  layout,
+  bounded,
+  seeAll,
   testID,
 }: ListBlockProps) {
   // DET-033 (jugement propriétaire sur appareil) : les états ne remplacent
@@ -73,6 +72,11 @@ export function ListBlock({
     ) : null;
   // Contrôles TOUJOURS montés (élément stable : l'identité du TextField
   // survit aux rendus — le focus et le clavier survivent avec elle).
+  // FIXES depuis 2026-09-10 (jugement propriétaire sur capture) : la
+  // recherche et les filtres restent SOUS LE TITRE pendant que le contenu
+  // défile — patron des applications de référence. DET-033 reste tenu :
+  // montés quel que soit l'état, l'état ne remplace que la zone de contenu.
+  // Seule la POSITION change : région fixe, plus en-tête défilant.
   const controles = (
     <>
       {search === undefined ? null : (
@@ -126,13 +130,120 @@ export function ListBlock({
       )}
     </>
   );
+  if (bounded === true && layout !== "row") {
+    // APERÇU BORNÉ (mission composition II) — la liste COULE dans un écran
+    // composé : pas de FlatList (DET-006 : jamais de virtualisée non bornée
+    // dans un ScrollView), pas de fill. L'appelant a déjà tronqué les items ;
+    // « Voir plus » emmène au complet. États et contrôles : mêmes règles.
+    const rangees: (typeof items)[] = [];
+    if (layout === "grid") {
+      for (let i = 0; i < items.length; i += 2) rangees.push(items.slice(i, i + 2));
+    }
+    return (
+      <Section title={title} testID={testID} titleAction={seeAll}>
+        {controles}
+        {etatContenu ??
+          (layout === "grid" ? (
+            rangees.map((paire) => (
+              <Rangee key={paire[0]?.id ?? "r"}>
+                {paire.map((item) => (
+                  <GridCard
+                    key={item.id}
+                    title={item.title}
+                    subtitle={item.subtitle}
+                    trailing={item.trailing}
+                    badge={item.badge}
+                    imageUri={item.imageUri}
+                    onPress={
+                      onItemPress === undefined
+                        ? undefined
+                        : () => {
+                            onItemPress(item.id);
+                          }
+                    }
+                    testID={`${testID ?? "list"}-card-${item.id}`}
+                  />
+                ))}
+              </Rangee>
+            ))
+          ) : (
+            items.map((item) => (
+              <ListRow
+                key={item.id}
+                leading={
+                  item.imageUri === undefined ? undefined : (
+                    <AppImage uri={item.imageUri} variant="thumb" />
+                  )
+                }
+                title={item.title}
+                subtitle={item.subtitle}
+                trailing={item.trailing}
+                badge={item.badge}
+                onPress={
+                  onItemPress === undefined
+                    ? undefined
+                    : () => {
+                        onItemPress(item.id);
+                      }
+                }
+                testID={`${testID ?? "list"}-row-${item.id}`}
+              />
+            ))
+          ))}
+      </Section>
+    );
+  }
+  if (layout === "row") {
+    // RANGÉE HORIZONTALE (mission composition, 2026-09-10) — la section d'un
+    // accueil-fleuve : axe PERPENDICULAIRE au défilement de l'écran, donc
+    // hauteur naturelle, pas de `fill`, et DET-006 hors sujet. Les états
+    // restent scopés au contenu (DET-033).
+    return (
+      <Section title={title} testID={testID} titleAction={seeAll}>
+        {controles}
+        {etatContenu ?? (
+          <FlatList
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            data={state.kind === "ready" ? items : []}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <GridCard
+                compact
+                title={item.title}
+                subtitle={item.subtitle}
+                trailing={item.trailing}
+                badge={item.badge}
+                imageUri={item.imageUri}
+                onPress={
+                  onItemPress === undefined
+                    ? undefined
+                    : () => {
+                        onItemPress(item.id);
+                      }
+                }
+                testID={`${testID ?? "list"}-card-${item.id}`}
+              />
+            )}
+          />
+        )}
+      </Section>
+    );
+  }
   return (
     // `fill` (DET-006) : la section BORNE la hauteur de la liste virtualisée.
     // Sans parent borné, la FlatList rend tous ses éléments. L'intention est
     // DÉCLARÉE ici ; le style reste entièrement porté par les primitives —
     // la contrainte « aucun StyleSheet, aucun style en dur » est préservée.
-    <Section title={title} testID={testID} fill>
+    <Section title={title} testID={testID} fill titleAction={seeAll}>
+      {controles}
       <FlatList
+        // GRILLE (1.20) : deux colonnes de cartes pour un catalogue. `key`
+        // force la FlatList a se recreer si le layout changeait — il est
+        // statique par document, la cle est donc constante a l'execution.
+        key={layout === "grid" ? "grid" : "rows"}
+        numColumns={layout === "grid" ? 2 : 1}
         // DET-016 (D-039, dimension A étendue) : ajustement natif aux insets
         // du clavier. Propriété VÉRIFIÉE sur RN 0.86.3 — déclarée dans
         // `ScrollViewPropsIOS`, sans implémentation Android : elle agit sur
@@ -146,11 +257,28 @@ export function ListBlock({
         // remplace que la zone de contenu, via ListEmptyComponent.
         automaticallyAdjustKeyboardInsets
         keyboardShouldPersistTaps="handled"
-        ListHeaderComponent={controles}
         ListEmptyComponent={etatContenu}
+        ListFooterComponent={ListFooter}
         data={state.kind === "ready" ? items : []}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
+        renderItem={({ item }) =>
+          layout === "grid" ? (
+            <GridCard
+              title={item.title}
+              subtitle={item.subtitle}
+              trailing={item.trailing}
+              badge={item.badge}
+              imageUri={item.imageUri}
+              onPress={
+                onItemPress === undefined
+                  ? undefined
+                  : () => {
+                      onItemPress(item.id);
+                    }
+              }
+              testID={`${testID ?? "list"}-card-${item.id}`}
+            />
+          ) : (
           <ListRow
             // VIGNETTE (1.2.0, D-087) : `leading` existait deja au contrat de
             // la primitive. Sans `imageUri`, la ligne reste celle de 1.1.0.
@@ -172,7 +300,8 @@ export function ListBlock({
             }
             testID={`${testID ?? "list"}-row-${item.id}`}
           />
-        )}
+          )
+        }
       />
     </Section>
   );
@@ -242,6 +371,14 @@ export function FormBlock({
 // style ici. Commentaire volontairement sans accents ni tournure longue — la
 // sonde F3 cherche des chaines linguistiques par motif et ne distingue pas un
 // commentaire (lecon deja consignee sur l'en-tete de detail).
+export function SearchEntryBlock({ placeholder, onPress, visual, testID }: SearchEntryBlockProps) {
+  return (
+    <Section>
+      <SearchEntry placeholder={placeholder} onPress={onPress} visual={visual} testID={testID} />
+    </Section>
+  );
+}
+
 export function SpacerBlock({ testID }: SpacerBlockProps) {
   return <Section testID={testID} fill />;
 }
@@ -338,6 +475,7 @@ export function DetailHeaderBlock({
 export const blocks: Blocks = {
   HeaderBlock,
   ListBlock,
+  SearchEntryBlock,
   FormBlock,
   ButtonBlock,
   EmptyStateBlock,

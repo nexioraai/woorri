@@ -10,7 +10,7 @@
 // exigerait d'ouvrir le lock de 504 paquets — la même décision que les
 // capabilities. Cette barre n'utilise QUE ce qui est déjà là :
 // `useNavigation` (@react-navigation/native), `Pressable`/`View`/`Text`
-// (react-native), `useSafeAreaInsets` (react-native-safe-area-context).
+// (react-native). L'inset du bas appartient à l'AppShell (étape ②).
 //
 // CONTREPARTIE, MESURÉE ET CORRIGÉE : la première version appelait
 // `navigate`, qui EMPILE. Les quatre pages s'accumulaient et l'en-tête natif
@@ -24,32 +24,14 @@
 // toucher Accueil perd la fiche. Dit ici, une fois, sans être maquillé.
 import { Pressable, Text, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useStyles } from "../primitives/theme-bridge";
+import { GLYPHE_PAR_ROLE, type RoleIcone } from "../primitives/roles-icones";
 import { allerVers } from "./racines-navigation";
 
-/**
- * TABLE DE CORRESPONDANCE — un rôle déclaré par le document, un glyphe connu
- * du moteur (1.8.0). Elle est FERMÉE et exhaustive : le schéma n'admet que ces
- * onze valeurs, et chacune trouve ici son dessin. Aucune valeur libre, aucune
- * URL, aucun accès réseau — la police d'icônes est embarquée par le paquet.
- */
-const GLYPHE = {
-  accueil: "home-outline",
-  recherche: "search-outline",
-  liste: "list-outline",
-  billet: "ticket-outline",
-  panier: "cart-outline",
-  calendrier: "calendar-outline",
-  carte: "map-outline",
-  compte: "person-outline",
-  favoris: "heart-outline",
-  message: "chatbubble-outline",
-  reglages: "settings-outline",
-} as const;
-
-export type IconeOnglet = keyof typeof GLYPHE;
+// Étape ③ (EP-003) — la table rôle → glyphe vient de LA source unique
+// (primitives/roles-icones) : plus aucune copie locale.
+export type IconeOnglet = RoleIcone;
 
 export interface PrimaryDestinationData {
   routeId: string;
@@ -68,7 +50,6 @@ export interface PrimaryNavProps {
 
 export function PrimaryNav({ destinations, currentScreenId }: PrimaryNavProps) {
   const navigation = useNavigation();
-  const insets = useSafeAreaInsets();
   const s = useStyles();
   if (destinations.length === 0) return null;
   // L'ORDRE déclaré par le document fait foi. Trier ici, et non à l'émission,
@@ -78,7 +59,9 @@ export function PrimaryNav({ destinations, currentScreenId }: PrimaryNavProps) {
   return (
     <View
       testID="primary-nav"
-      style={[s.primaryNav, { paddingBottom: insets.bottom }]}
+      // ÉTAPE ② — l'inset du BAS appartient à l'AppShell, plus jamais ici :
+      // la barre ne connaît que son propre dessin, le shell la pose.
+      style={s.primaryNav}
       accessibilityRole="tablist"
     >
       {triees.map((d) => {
@@ -102,7 +85,7 @@ export function PrimaryNav({ destinations, currentScreenId }: PrimaryNavProps) {
                 sous-chaîne et ne distingue pas un commentaire du code. */}
             {d.icon === undefined ? null : (
               <Ionicons
-                name={GLYPHE[d.icon]}
+                name={GLYPHE_PAR_ROLE[d.icon]}
                 size={s.primaryNavIcon.fontSize}
                 color={actif ? s.primaryNavLabelActive.color : s.primaryNavLabel.color}
               />

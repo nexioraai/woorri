@@ -38,6 +38,10 @@ const makeSheet = (c: Palette) =>
     // deux, exactement le défaut jugé.
     sectionTight: { paddingTop: theme.space.xxs, paddingBottom: theme.space.xl },
     sectionFillBody: { flex: 1 },
+    // PIED DE LISTE (2026-09-10, capture propriétaire) : sans lui, le dernier
+    // rang restait tranché net contre la barre du bas. L'espace laisse le
+    // contenu finir sa course au-dessus d'elle.
+    listContent: { height: theme.space.xl },
     // Disposition EN LIGNE (1.3.0) : les enfants se suivent et passent à la
     // ligne. `gap` remplace des marges par enfant — aucune propriété physique,
     // la dimension F (RTL par propriétés logiques) reste tenue.
@@ -47,6 +51,19 @@ const makeSheet = (c: Palette) =>
       alignItems: "center",
       gap: theme.space.sm,
     },
+    // EN-TÊTE DE SECTION AVEC LIEN (1.21.0) — titre à gauche, « Voir plus »
+    // à droite, cible tactile pleine sur le lien.
+    sectionTitleRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+    },
+    sectionTitleLien: {
+      minHeight: theme.size.tapTarget,
+      justifyContent: "center",
+      paddingHorizontal: theme.space.xs,
+    },
+    sectionTitleLienTexte: { color: c.primaryText, fontSize: theme.font.label },
     sectionTitle: {
       fontSize: theme.font.title,
       fontWeight: theme.fontWeight.semibold,
@@ -231,6 +248,30 @@ const makeSheet = (c: Palette) =>
       color: c.primaryText,
       fontWeight: theme.fontWeight.semibold,
     },
+    // — SearchEntry — l'allure du champ `input`, la hauteur d'un contrôle
+    // principal : c'est l'invitation majeure d'un accueil.
+    searchEntry: {
+      minHeight: theme.size.controlHeight,
+      borderWidth: 1,
+      borderColor: c.border,
+      borderRadius: theme.radius.lg,
+      backgroundColor: c.surface,
+      paddingHorizontal: theme.space.md,
+      flexDirection: "row",
+      alignItems: "center",
+      gap: theme.space.sm,
+    },
+    searchEntryIcone: { fontSize: theme.font.title, color: c.muted },
+    // Caméra de recherche visuelle : cible PLEINE au bout de la barre —
+    // poussée à la fin par marginStart auto (propriété logique, RTL sûr).
+    searchEntryVisuel: {
+      minWidth: theme.size.tapTarget,
+      minHeight: theme.size.tapTarget,
+      alignItems: "center",
+      justifyContent: "center",
+      marginStart: "auto",
+    },
+    searchEntryTexte: { fontSize: theme.font.body, color: c.muted },
     // — GridCard (1.20) — la cellule d'un catalogue : image pleine largeur
     // de carte, corps textuel, valeur en pied. Les colonnes sont posées par
     // la FlatList ; la carte remplit sa cellule (flex: 1) et respire par sa
@@ -250,6 +291,20 @@ const makeSheet = (c: Palette) =>
       backgroundColor: c.border,
     },
     gridCardBody: { padding: theme.space.md, gap: theme.space.xs },
+    // Carte COMPACTE d'une rangée horizontale : largeur bornée (jeton), la
+    // rangée en montre plusieurs et invite au geste. Même anatomie sinon.
+    // Rangée d'APERÇU (mesuré à l'écran : paires à largeur fixe débordant de
+    // ~8 dp → fausse colonne). Les cartes partagent la largeur par flex.
+    rangeeApercu: { flexDirection: "row", gap: theme.space.sm },
+    gridCardCompact: {
+      width: theme.size.tapTarget * 3.25,
+      backgroundColor: c.surface,
+      borderColor: c.border,
+      borderWidth: 1,
+      borderRadius: theme.radius.md,
+      marginEnd: theme.space.sm,
+      overflow: "hidden",
+    },
     gridCardTrailing: {
       fontSize: theme.font.body,
       fontWeight: theme.fontWeight.bold,

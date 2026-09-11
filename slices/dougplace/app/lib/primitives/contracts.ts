@@ -72,6 +72,12 @@ export type SectionProps = PropsWithChildren<
      * la forme — le cliquet d'étanchéité interdit tout style chez les blocs.
      */
     tight?: boolean;
+    /**
+     * LIEN D'EN-TÊTE (1.21.0) — « Voir plus › » à droite du titre : le patron
+     * des références marketplace (Amazon, annonces). Le libellé vient du
+     * DOCUMENT ; sans gestionnaire, rien n'est rendu.
+     */
+    titleAction?: { label: string; onPress: () => void };
   }
 >;
 
@@ -142,7 +148,21 @@ export interface ListRowProps extends A11yProps {
 /** Pied de liste (2026-09-10) — la respiration qui évite le rang tranché. */
 export type ListFooterProps = Record<string, never>;
 
+/** Entrée de recherche — l'allure d'un champ, le geste d'une navigation. */
+export interface SearchEntryProps extends A11yProps {
+  placeholder: string;
+  onPress?: () => void;
+  /** Action de recherche visuelle (caméra) — nommée par le document. */
+  visual?: { label: string; onPress: () => void };
+}
+
+/** Rangée d'aperçu — deux cartes qui PARTAGENT la largeur (flex), gap par
+ * jeton : la paire ne peut pas déborder, donc jamais de fausse colonne. */
+export type RangeeProps = PropsWithChildren<Record<never, never>>;
+
 export interface GridCardProps extends A11yProps {
+  /** Carte de RANGÉE horizontale : largeur bornée par jeton, image carrée. */
+  compact?: boolean;
   title: string;
   subtitle?: string;
   trailing?: string;

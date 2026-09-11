@@ -227,10 +227,9 @@ const c = compileProject(v, undefined, {
 console.log("② compilation .......... 🟢", c.files.size, "fichiers · rootHash", c.rootHash.slice(0,12)+"…");
 const { writeFileSync, mkdirSync } = await import("node:fs");
 const OUT = R + "slices/resto-riche/app/";
-for (const [f, contenu] of c.files) { const p = OUT + f; mkdirSync(p.slice(0, p.lastIndexOf("/")), {recursive:true});
-  // Un .png est émis en BASE64 : l'écrire tel quel produirait un fichier
-  // TEXTE que le prebuild refuserait (même piège déjà fermé sur l'autre
-  // slice). Vérifié à l'octet après écriture.
-  writeFileSync(p, f.endsWith(".png") ? Buffer.from(contenu, "base64") : contenu); }
+// ÉTAPE ⑥ (EP-012) — écriture + ÉLAGAGE par l'écrivain UNIQUE.
+const { ecrireApp } = await import(R + "slices/lib/ecrire-app.mjs");
+const { elagues: elaguesApp } = ecrireApp(OUT, c.files);
+if (elaguesApp.length > 0) console.log("🧹 élagués (périmés) :", elaguesApp.join(", "));
 writeFileSync(R + "slices/resto-riche/chez-nous.air.json", JSON.stringify(v, null, 2));
 console.log("③ projet écrit ......... slices/resto-riche/app/ —", c.files.size, "fichiers");

@@ -10,7 +10,7 @@
 // (implémentations : Phases 5+/9 — lecture consignée D-028).
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 // E1/E2 (D-129) — la vérité des lignes visibles vit dans un module PUR.
-import { lignesVisibles, optionsDistinctes } from "./list-pipeline";
+import {lignesVisibles, optionsDistinctes, formatValeur} from "./list-pipeline";
 import type { FiltreEffectif, OperateurFiltre } from "./list-pipeline";
 import { useNavigation } from "@react-navigation/native";
 import { allerVers } from "./racines-navigation";
@@ -22,6 +22,7 @@ import {
   HeaderBlock,
   ListBlock,
   SpacerBlock,
+  SearchEntryBlock,
 } from "../blocks/components";
 import type { FormFieldSpec, ListItemData } from "../blocks/contracts";
 import { useDataProvider } from "./data-provider";
@@ -90,6 +91,9 @@ export interface AirFieldData {
       dans la langue de l'app ; absents = comportement 1.9.0 (name/valeur). */
   label?: string;
   enumLabels?: Readonly<Record<string, string>>;
+  /** 1.21.0 — unité d'affichage (« FCFA ») : le nombre se formate, l'unité
+      vient du document. */
+  unit?: string;
   /** 1.12.0 — saisie MASQUÉE, valeur jamais conservée. */
   sensitive?: boolean;
   /** 1.6.0 du registre — champ OBLIGATOIRE : le bouton d'envoi en dérive. */
@@ -107,12 +111,28 @@ export interface AirSlotInvocationData {
   outputs: readonly { port: string; blockId: string; prop: string }[];
 }
 
+/**
+ * ÉTAPE ① (2026-09-11) — le CompositionPlan TRANSPORTÉ. Le planner a décidé à
+ * l'émission ; le runtime LIT et n'a plus le droit de reconstruire (EP-001 :
+ * le mode de liste était recalculé ici — deux sources pour une même décision).
+ */
+export interface AirCompositionData {
+  role: string;
+  defile: boolean;
+  sections: Readonly<
+    Record<string, { zone: "chrome" | "contenu"; mode?: "fenetre" | "apercu" | "rangee"; apercu?: number }>
+  >;
+}
+
 export interface AirScreenData {
   screenId: string;
   title: string;
+  composition: AirCompositionData;
   blocks: readonly AirBlockInstanceData[];
   actions: Readonly<Record<string, AirEffectData>>;
   uiActionsByBlock: Readonly<Record<string, string>>;
+  /** 1.21.0 — gestes SECONDAIRES (« Voir plus » d'un en-tête de section). */
+  uiSecondaryActionsByBlock?: Readonly<Record<string, string>>;
   entities: Readonly<Record<string, { fields: readonly AirFieldData[] }>>;
   /** Slots LIÉS dont au moins une sortie alimente un bloc de cet écran (1.3.0). */
   slotInvocations?: readonly AirSlotInvocationData[];
@@ -331,12 +351,19 @@ function useResolveField(
     if (cible !== undefined && affiche !== undefined) {
       return provider.getInstance(cible, brut)?.values[affiche] ?? brut;
     }
+    // 1.21.0 — UNITÉ : « 160 000 FCFA », pas « 622.44 » (captures de
+    // référence). Le nombre prend les séparateurs de la locale ; l'unité est
+    // une DONNÉE du document — le moteur n'en invente aucune (F3).
+    if (champ?.unit !== undefined) {
+      return formatValeur(brut, champ.unit);
+    }
     // DET-032 — un code d'enum ne se montre pas : si le document a déclaré un
     // libellé pour cette valeur, c'est LUI qui s'affiche. Données, filtrage et
     // testID continuent de porter la valeur brute.
     return champ?.enumLabels?.[brut] ?? brut;
   };
 }
+
 
 function str(value: unknown): string | undefined {
   return typeof value === "string" ? value : undefined;
@@ -537,6 +564,30 @@ export function AirButton({ screen, blockId }: BlockRef) {
 }
 
 /** 1.8.0 — MISE EN PAGE : aucun contenu, aucune donnée, aucune action. */
+export function AirSearchEntry({ screen, blockId }: BlockRef) {
+  const b = screen.blocks.find((x) => x.id === blockId);
+  const dispatch = useDispatch(screen);
+  if (b === undefined) return null;
+  const props = b.props;
+  const actionId = screen.uiActionsByBlock[blockId];
+  // RECHERCHE VISUELLE — libellé du DOCUMENT + geste SECONDAIRE du bloc.
+  // L'un sans l'autre ne rend RIEN : aucune caméra morte à l'écran.
+  const visuelLabel = str(props.visualSearchLabel);
+  const visuelAction = screen.uiSecondaryActionsByBlock?.[blockId];
+  return (
+    <SearchEntryBlock
+      testID={b.id}
+      placeholder={str(props.placeholder) ?? ""}
+      onPress={actionId === undefined ? undefined : () => { dispatch(actionId); }}
+      visual={
+        visuelLabel !== undefined && visuelAction !== undefined
+          ? { label: visuelLabel, onPress: () => { dispatch(visuelAction); } }
+          : undefined
+      }
+    />
+  );
+}
+
 export function AirSpacer({ screen, blockId }: BlockRef) {
   const visible = useBlockVisible(screen, blockId);
   const b = block(screen, blockId);
@@ -630,6 +681,8 @@ export function AirDetailHeader({
 export function AirList({ screen, blockId, itemId }: BlockRef & { itemId?: string }) {
   const visible = useBlockVisible(screen, blockId);
   const b = block(screen, blockId);
+  // 1.21.0 — le geste « Voir plus » passe par le dispatcher commun.
+  const dispatch = useDispatch(screen);
   // Props SURCHARGÉES par les sorties des slots liés (1.3.0, D-058).
   const props = useBlockProps(screen, blockId);
   const provider = useDataProvider();
@@ -644,6 +697,15 @@ export function AirList({ screen, blockId, itemId }: BlockRef & { itemId?: strin
   const onItemNavigate = useItemNavigate(screen, blockId);
   if (!visible) return null;
   if (b.entityId === undefined) throw new Error(`AIR_RUNTIME_ENTITY_MISSING:${blockId}`);
+  // ÉTAPE ① — le MODE vient du PLAN transporté (`composition`), plus aucun
+  // recalcul : une décision = une source. Une liste sans décision transportée
+  // est une erreur de PIPELINE — on refuse net, on ne devine pas.
+  const compo = screen.composition.sections[blockId];
+  const mode = compo?.mode;
+  if (mode === undefined) throw new Error(`AIR_RUNTIME_COMPOSITION_MISSING:${blockId}`);
+  if (mode === "apercu" && typeof compo?.apercu !== "number") {
+    throw new Error(`AIR_RUNTIME_COMPOSITION_MISSING:${blockId}:apercu`);
+  }
   const titleFieldId = str(props.titleFieldId);
   if (titleFieldId === undefined) {
     throw new Error(`AIR_RUNTIME_PROP_MISSING:${blockId}:titleFieldId`);
@@ -745,10 +807,30 @@ export function AirList({ screen, blockId, itemId }: BlockRef & { itemId?: strin
     <ListBlock
       testID={b.id}
       title={str(props.title)}
-      items={items}
+      items={mode === "apercu" && typeof compo?.apercu === "number" ? items.slice(0, compo.apercu) : items}
       state={state}
+      bounded={mode === "apercu"}
+      // 1.21.0 — « Voir plus » : libellé du DOCUMENT + geste SECONDAIRE du
+      // bloc. L'un sans l'autre ne rend rien : aucune promesse muette.
+      seeAll={
+        str(props.seeAllLabel) !== undefined &&
+        screen.uiSecondaryActionsByBlock?.[blockId] !== undefined
+          ? {
+              label: str(props.seeAllLabel) ?? "",
+              onPress: () => {
+                dispatch(screen.uiSecondaryActionsByBlock?.[blockId]);
+              },
+            }
+          : undefined
+      }
       // GRILLE (1.20) — le document choisit la présentation ; défaut lignes.
-      layout={props.layout === "grid" ? ("grid" as const) : undefined}
+      layout={
+        props.layout === "grid"
+          ? ("grid" as const)
+          : props.layout === "row"
+            ? ("row" as const)
+            : undefined
+      }
       // RECHERCHE (D-087) — rendue EN TÊTE de la liste, donc en haut de l'écran
       // de catalogue. Filtre client sur le champ DÉCLARÉ par le document.
       search={

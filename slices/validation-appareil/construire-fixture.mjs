@@ -21,7 +21,7 @@ export const REFRESH_SECONDS = 30;
 // après-midi, restauré par git). NE PAS L'EXÉCUTER avant qu'il soit rebasé
 // sur le document de la refonte. Les corrections produit se font DANS
 // validation-appareil.air.json, puis se reportent ici.
-import { readFileSync, writeFileSync } from "node:fs";
+import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 const ICI = join(fileURLToPath(import.meta.url), "..");
@@ -97,6 +97,19 @@ const executeDirectement =
   pathToFileURL(process.argv[1]).href === import.meta.url;
 
 if (executeDirectement) {
-  writeFileSync(join(ICI, "validation-appareil.air.json"), JSON.stringify(brut, null, 2) + "\n");
-  console.log(`🟢 fixture écrite — domaine ${DOMAINE} · refresh ${REFRESH_SECONDS}s · E1+E2+E3.1+E3.3`);
+  // ⛔ NEUTRALISÉ (étape ⑥, EP-006 — 2026-09-11). Ce script était le DERNIER
+  // constructeur parallèle de document vivant : il reconstruit depuis le
+  // corpus-v3 d'AVANT-refonte et a DÉTRUIT validation-appareil.air.json deux
+  // fois (DET-031, mesuré). Le document OFFICIEL est validation-appareil
+  // .air.json, propriété du pipeline — les corrections se font DEDANS.
+  // Importé, ce module n'expose que ses constantes : cela reste permis.
+  console.error(
+    [
+      "⛔ REFUS — construire-fixture est NEUTRALISÉ (EP-006/DET-031).",
+      "Ce constructeur parallèle a écrasé deux fois le document officiel.",
+      "Source de vérité : slices/validation-appareil/validation-appareil.air.json.",
+      "Voir docs/elite-protocol/ENGINE-PROBLEM-LOG.md (EP-006).",
+    ].join("\n"),
+  );
+  process.exit(1);
 }

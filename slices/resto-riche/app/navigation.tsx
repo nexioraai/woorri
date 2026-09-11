@@ -3,6 +3,7 @@
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { declarerRacines } from "./lib/runtime/racines-navigation";
+import { theme } from "./lib/tokens";
 import { navData } from "./nav.data";
 import ScrCommandeScreen from "./screens/scr_commande";
 import ScrCommandesScreen from "./screens/scr_commandes";
@@ -23,7 +24,8 @@ declarerRacines(["scr_commandes","scr_menu","scr_panier"]);
 export function Navigation() {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="scr_menu">
+      <Stack.Navigator initialRouteName="scr_menu"
+        screenOptions={{ headerShadowVisible: false, headerStyle: { backgroundColor: theme.color.light.bg } }}>
       <Stack.Screen name="scr_commande" component={ScrCommandeScreen}
         options={{ title: navData.routes.find((x) => x.screenId === "scr_commande")!.title }} />
       <Stack.Screen name="scr_commandes" component={ScrCommandesScreen}

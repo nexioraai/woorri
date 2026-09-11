@@ -3,16 +3,10 @@
 // DÉFILEMENT (D-031-R47 puis DET-006/D-039) : un écran SANS bloc list
 // reste une page défilante ; un écran AVEC bloc list confie le
 // défilement à la liste virtualisée elle-même, bornée par Section fill.
-// SAFE AREA DU BAS (D-037) : défaut DÉMONTRÉ sur appareil physique
-// (Galaxy A17 / Android 16) — la fenêtre est bord à bord, donc le
-// DERNIER bloc était rendu sous la barre de navigation gestuelle et
-// restait inatteignable. Le contenu défilant est décalé de l'inset bas
-// réel. `useSafeAreaInsets` est disponible sans SafeAreaProvider ajouté :
-// NativeStackView enveloppe déjà ses écrans dans SafeAreaProviderCompat
-// [vérifié dans le paquet installé].
-import { View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+// SHELL (étape ②, EP-002) : status bar, safe area et zones persistantes
+// appartiennent à AppShell — cet écran ne touche JAMAIS à la safe area.
 import { ScreenShell } from "../lib/primitives";
+import { AppShell } from "../lib/runtime/app-shell";
 import { AirDetailHeader, AirList } from "../lib/runtime/air-runtime";
 import { PrimaryNav } from "../lib/runtime/primary-nav";
 import { primaryNav } from "../nav.data";
@@ -20,14 +14,15 @@ import type { AirScreenProps } from "../lib/runtime/air-runtime";
 import { screenData } from "./scr_vendeur_detail.data";
 
 export default function ScrVendeurDetailScreen({ route }: AirScreenProps) {
-  const insets = useSafeAreaInsets();
   return (
     <ScreenShell testID="scr_vendeur_detail" title={screenData.title}>
-      <View style={{ flex: 1, paddingTop: insets.top, paddingBottom: insets.bottom }}>
+      <AppShell
+        avecEntete={false}
+        navigation={<PrimaryNav destinations={primaryNav} currentScreenId="scr_vendeur_detail" />}
+      >
         <AirDetailHeader screen={screenData} blockId="blk_vendeur_entete" itemId={route?.params?.itemId} />
         <AirList screen={screenData} blockId="blk_vendeur_produits" itemId={route?.params?.itemId} />
-      </View>
-      <PrimaryNav destinations={primaryNav} currentScreenId="scr_vendeur_detail" />
+      </AppShell>
     </ScreenShell>
   );
 }

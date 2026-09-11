@@ -3,16 +3,10 @@
 // DÉFILEMENT (D-031-R47 puis DET-006/D-039) : un écran SANS bloc list
 // reste une page défilante ; un écran AVEC bloc list confie le
 // défilement à la liste virtualisée elle-même, bornée par Section fill.
-// SAFE AREA DU BAS (D-037) : défaut DÉMONTRÉ sur appareil physique
-// (Galaxy A17 / Android 16) — la fenêtre est bord à bord, donc le
-// DERNIER bloc était rendu sous la barre de navigation gestuelle et
-// restait inatteignable. Le contenu défilant est décalé de l'inset bas
-// réel. `useSafeAreaInsets` est disponible sans SafeAreaProvider ajouté :
-// NativeStackView enveloppe déjà ses écrans dans SafeAreaProviderCompat
-// [vérifié dans le paquet installé].
-import { View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+// SHELL (étape ②, EP-002) : status bar, safe area et zones persistantes
+// appartiennent à AppShell — cet écran ne touche JAMAIS à la safe area.
 import { ScreenShell } from "../lib/primitives";
+import { AppShell } from "../lib/runtime/app-shell";
 import { AirButton, AirEmptyState, AirHeader, AirList, AirScreenLifecycle } from "../lib/runtime/air-runtime";
 import { PrimaryNav } from "../lib/runtime/primary-nav";
 import { primaryNav } from "../nav.data";
@@ -20,17 +14,18 @@ import type { AirScreenProps } from "../lib/runtime/air-runtime";
 import { screenData } from "./scr_panier.data";
 
 export default function ScrPanierScreen({ route }: AirScreenProps) {
-  const insets = useSafeAreaInsets();
   return (
     <ScreenShell testID="scr_panier" title={screenData.title}>
       <AirScreenLifecycle screen={screenData} />
-      <View style={{ flex: 1, paddingBottom: insets.bottom }}>
+      <AppShell
+        avecEntete={true}
+        navigation={<PrimaryNav destinations={primaryNav} currentScreenId="scr_panier" />}
+      >
         <AirHeader screen={screenData} blockId="blk_panier_recap" />
         <AirList screen={screenData} blockId="blk_panier_liste" itemId={route?.params?.itemId} />
         <AirEmptyState screen={screenData} blockId="blk_panier_vide" />
         <AirButton screen={screenData} blockId="blk_panier_commander" />
-      </View>
-      <PrimaryNav destinations={primaryNav} currentScreenId="scr_panier" />
+      </AppShell>
     </ScreenShell>
   );
 }

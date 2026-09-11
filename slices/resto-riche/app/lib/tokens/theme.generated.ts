@@ -61,7 +61,8 @@ export const theme = {
     "disabled": 0.5
   },
   "size": {
-    "tapTarget": 48
+    "tapTarget": 48,
+    "controlHeight": 54
   }
 } as const;
 export type SchemeName = keyof typeof theme.color;

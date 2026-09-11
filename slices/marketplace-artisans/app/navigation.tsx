@@ -3,6 +3,7 @@
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { declarerRacines } from "./lib/runtime/racines-navigation";
+import { theme } from "./lib/tokens";
 import { navData } from "./nav.data";
 import ScrAccueilScreen from "./screens/scr_accueil";
 import ScrBienvenueScreen from "./screens/scr_bienvenue";
@@ -30,7 +31,8 @@ declarerRacines(["scr_accueil","scr_commandes","scr_compte","scr_panier","scr_pr
 export function Navigation() {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="scr_bienvenue">
+      <Stack.Navigator initialRouteName="scr_bienvenue"
+        screenOptions={{ headerShadowVisible: false, headerStyle: { backgroundColor: theme.color.light.bg } }}>
       <Stack.Screen name="scr_accueil" component={ScrAccueilScreen}
         options={{ title: navData.routes.find((x) => x.screenId === "scr_accueil")!.title, gestureEnabled: false }} />
       <Stack.Screen name="scr_bienvenue" component={ScrBienvenueScreen}
@@ -42,11 +44,11 @@ export function Navigation() {
       <Stack.Screen name="scr_compte" component={ScrCompteScreen}
         options={{ title: navData.routes.find((x) => x.screenId === "scr_compte")!.title, gestureEnabled: false }} />
       <Stack.Screen name="scr_connexion" component={ScrConnexionScreen}
-        options={{ title: "", presentation: "modal", headerShadowVisible: false }} />
+        options={{ title: "", presentation: "modal" }} />
       <Stack.Screen name="scr_inscription" component={ScrInscriptionScreen}
-        options={{ title: "", presentation: "modal", headerShadowVisible: false }} />
+        options={{ title: "", presentation: "modal" }} />
       <Stack.Screen name="scr_mot_de_passe_oublie" component={ScrMotDePasseOublieScreen}
-        options={{ title: "", presentation: "modal", headerShadowVisible: false }} />
+        options={{ title: "", presentation: "modal" }} />
       <Stack.Screen name="scr_paiement" component={ScrPaiementScreen}
         options={{ title: navData.routes.find((x) => x.screenId === "scr_paiement")!.title }} />
       <Stack.Screen name="scr_panier" component={ScrPanierScreen}
