@@ -474,8 +474,15 @@ export function evaluateApxxGrid(
   //     retour visuel ne sont pas des propriétés du texte source. Même
   //     requalification que pour `A` : échec ⇒ `non_conforme` (défaut démontré,
   //     c'est exactement `DET-025`), succès ⇒ `non_determinee`, jamais `conforme`.
+  // ÉDITION CONSCIENTE (mission composition II, 2026-09-10) — l'invariant
+  // se reformule : la fenêtre VIRTUALISÉE appartient à l'écran dont la liste
+  // est l'UNIQUE liste ; un écran multi-listes DÉFILE et rend ses listes en
+  // APERÇUS BORNÉS (sans FlatList — décision pure `modeListe`, cliquetée).
+  // La pré-condition G ne surveille donc que les écrans à liste UNIQUE :
+  // c'est là, et là seulement, qu'une virtualisée peut se faire encapsuler.
   const listScreens = air.screens.filter((s) => s.blocks.some((b) => b.blockType === "list"));
   const wrapped = listScreens
+    .filter((s) => s.blocks.filter((b) => b.blockType === "list").length === 1)
     .filter((s) => (files.get(`screens/${s.id}.tsx`) ?? "").includes("ScrollView"))
     .map((s) => s.id);
   const bornage = listeBornee(blocks);

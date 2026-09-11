@@ -31,41 +31,95 @@ export interface DiagnosticMatiere {
  * Sans elle, l'app promet un commerce et ne montre rien à vendre.
  */
 export interface DiagnosticComposition {
-  code: "CAMPAGNE_ACCUEIL_FRACTIONNE";
+  code:
+    | "CAMPAGNE_SECTION_SANS_TITRE"
+    | "CAMPAGNE_RECHERCHE_NON_STRUCTURELLE"
+    | "CAMPAGNE_ETATS_REMOTE_MANQUANTS";
   path: string;
   message: string;
 }
 
 /**
- * L'ACCUEIL COULE, IL NE SE PARTAGE PAS — verrou de COMPOSITION, générique.
+ * TROIS PRINCIPES DE COMPOSITION — mécaniques, aveugles au domaine.
+ * (Mission composition II, 2026-09-10. L'ancien verrou « accueil
+ * fractionné » est retiré : le moteur rend désormais toute liste d'un écran
+ * composé en APERÇU BORNÉ — le couloir est devenu IRREPRÉSENTABLE, un verrou
+ * qui interdit l'impossible ne verrouille rien.)
  *
- * Cause mesurée (dougplace, capture propriétaire) : le moteur rendait un
- * écran à listes comme un View non défilant où chaque liste VERTICALE prend
- * `fill` — trois listes = trois tiers d'écran qui défilent chacun dans son
- * couloir. Depuis la mission composition, la rangée horizontale
- * (`layout:"row"`) rend l'accueil-fleuve exprimable ; ce verrou interdit de
- * retomber dans l'écran fractionné : AU PLUS UNE liste verticale par écran.
- * Tous archétypes — un fil social, un catalogue, une liste de réservations
- * restent exprimables (une seule liste verticale, ou des rangées).
+ * ① UNE SECTION SE NOMME — une liste qui cohabite avec d'autres blocs porte
+ *   un `title` : une section sans rôle annoncé est un bloc posé là.
+ * ② LA RECHERCHE S'OFFRE À L'ENTRÉE — si un écran EXÉCUTE une recherche
+ *   (searchFieldId) et que la première destination principale est un AUTRE
+ *   écran, celle-ci doit l'OFFRIR (search_entry). Marketplace, réservation,
+ *   éducation : même principe partout où la recherche existe.
+ * ③ LE DISTANT DÉCLARE SES ÉTATS — une liste branchée sur un dataset
+ *   `remote` porte loadingTitle ET errorTitle : le réseau échoue, l'écran
+ *   doit savoir le dire.
  */
-export function accueilNonFractionne(air: ProjectAir): DiagnosticComposition[] {
+export function principesDeComposition(air: ProjectAir): DiagnosticComposition[] {
   const out: DiagnosticComposition[] = [];
+  const prop = (b: { props?: readonly { key: string; value: unknown }[] }, k: string) =>
+    (b.props ?? []).find((p) => p.key === k)?.value;
+
+  // ① sections nommées
   air.screens.forEach((s, i) => {
-    const verticales = s.blocks.filter(
-      (b) =>
+    if (s.blocks.length < 2) return;
+    s.blocks.forEach((b, j) => {
+      if (b.blockType === "list" && typeof prop(b, "title") !== "string") {
+        out.push({
+          code: "CAMPAGNE_SECTION_SANS_TITRE",
+          path: `screens[${String(i)}].blocks[${String(j)}]`,
+          message: `écran "${s.id}" : la liste "${b.id}" cohabite avec d'autres blocs sans titre de section`,
+        });
+      }
+    });
+  });
+
+  // ② recherche structurelle
+  const ecransRecherche = new Set(
+    air.screens
+      .filter((s) => s.blocks.some((b) => b.blockType === "list" && prop(b, "searchFieldId") !== undefined))
+      .map((s) => s.id),
+  );
+  const premiere = air.navigation.primary?.destinations
+    .slice()
+    .sort((a, b) => a.order - b.order)[0];
+  const routePremiere = air.navigation.routes.find((r) => r.id === premiere?.routeId);
+  const accueil = air.screens.find((s) => s.id === routePremiere?.screenId);
+  if (
+    accueil !== undefined &&
+    ecransRecherche.size > 0 &&
+    !ecransRecherche.has(accueil.id) &&
+    !accueil.blocks.some((b) => b.blockType === "search_entry")
+  ) {
+    out.push({
+      code: "CAMPAGNE_RECHERCHE_NON_STRUCTURELLE",
+      path: `screens[${air.screens.indexOf(accueil)}]`,
+      message:
+        `l'app exécute une recherche (${[...ecransRecherche].join(", ")}) mais l'accueil ` +
+        `"${accueil.id}" ne l'OFFRE pas (aucun search_entry)`,
+    });
+  }
+
+  // ③ états du distant
+  const remotes = new Set(
+    air.datasets.filter((d) => d.sourceKind === "remote").map((d) => d.entityId),
+  );
+  air.screens.forEach((s, i) => {
+    s.blocks.forEach((b, j) => {
+      if (
         b.blockType === "list" &&
-        (b.props ?? []).find((p) => p.key === "layout")?.value !== "row",
-    );
-    if (verticales.length > 1) {
-      out.push({
-        code: "CAMPAGNE_ACCUEIL_FRACTIONNE",
-        path: `screens[${String(i)}]`,
-        message:
-          `écran "${s.id}" : ${String(verticales.length)} listes VERTICALES empilées — ` +
-          "elles se partagent la hauteur au lieu de couler. Une seule liste verticale " +
-          'par écran ; les sections d\'un accueil sont des rangées (layout: "row").',
-      });
-    }
+        b.entityId !== undefined &&
+        remotes.has(b.entityId) &&
+        (prop(b, "loadingTitle") === undefined || prop(b, "errorTitle") === undefined)
+      ) {
+        out.push({
+          code: "CAMPAGNE_ETATS_REMOTE_MANQUANTS",
+          path: `screens[${String(i)}].blocks[${String(j)}]`,
+          message: `liste "${b.id}" sur source distante sans loadingTitle/errorTitle`,
+        });
+      }
+    });
   });
   return out;
 }

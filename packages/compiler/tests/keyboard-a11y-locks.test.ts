@@ -133,7 +133,10 @@ describe("DET-016 — verrous clavier (7 propriétés mécaniques)", () => {
     for (const c of compiled) {
       for (const { screen, path } of screensOf(c)) {
         if (path === undefined) continue;
-        if (!screen.blocks.some((b) => b.blockType === "list")) continue;
+        // ÉDITION CONSCIENTE (composition II) : l'invariant devient
+        // « fenêtre virtualisée ⇔ liste UNIQUE » — un écran multi-listes
+        // défile et rend ses listes BORNÉES (modeListe, décision pure).
+        if (screen.blocks.filter((b) => b.blockType === "list").length !== 1) continue;
         if (String(c.out.files.get(path)).includes("ScrollView")) bad.push(`${c.f}:${screen.id}`);
       }
     }

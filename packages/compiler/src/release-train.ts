@@ -197,7 +197,9 @@ export const RELEASE_TRAIN_V1 = {
     // , écran-fleuve. Le registre passe à HUIT blocs.
     // Ré-scellé 2026-09-10 (1.21) : lien d'en-tête « Voir plus » (seeAllLabel
     // + geste secondaire).
-    "e4aaf01fddb0fa9a1346b5be8a0188225ae01e51c2af7ea86ed8e57b171bc19d",
+    // Ré-scellé 2026-09-10 (composition II) : rendu APERÇU BORNÉ des listes
+    // d'écrans composés (sans FlatList — DET-006 reformulé).
+    "982937c33d8821799362c7ea573ccc895346868a4c99ec3059d88dadf1b0e1ab",
   capabilityRegistryVersion: "1.0.0",
   capabilitySourcesHash:
     "6c28599246abde6e7010704f23f273aafe50d17c5483133709c9065f2777346c",

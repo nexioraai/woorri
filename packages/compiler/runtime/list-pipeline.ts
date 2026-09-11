@@ -89,3 +89,28 @@ export function optionsDistinctes(
 ): readonly string[] {
   return [...new Set(instances.map((i) => i.values[fieldId] ?? "").filter((v) => v !== ""))].sort();
 }
+
+// ── MODE D'ASSEMBLAGE D'UNE LISTE (mission composition II, 2026-09-10) ──
+//
+// RÈGLE MÉCANIQUE, tous archétypes : la FENÊTRE PLEINE (Section fill +
+// virtualisation) appartient à l'écran dont la liste est l'UNIQUE liste —
+// catalogue dédié, fil social, historique. Partout ailleurs, une liste
+// verticale est un APERÇU BORNÉ qui coule dans l'écran : c'est ce qui rend
+// un accueil-fleuve composable sans couloirs. Une rangée horizontale reste
+// une rangée. Décidé ICI, pur et testé — jamais au juger d'un composant.
+export type ModeListe = "fenetre" | "apercu" | "rangee";
+
+export function modeListe(
+  layout: string | undefined,
+  nbListesDeLEcran: number,
+): ModeListe {
+  if (layout === "row") return "rangee";
+  return nbListesDeLEcran <= 1 ? "fenetre" : "apercu";
+}
+
+/** Nombre d'éléments d'un aperçu : le document (pageSize) décide, sinon une
+ * grille montre 4 cartes (2×2) et une pile 3 lignes. */
+export function tailleApercu(layout: string | undefined, pageSize: number | undefined): number {
+  if (pageSize !== undefined && pageSize > 0) return pageSize;
+  return layout === "grid" ? 4 : 3;
+}

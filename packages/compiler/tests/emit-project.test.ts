@@ -305,11 +305,19 @@ describe("DET-006 — virtualisation : bornage des écrans porteurs de liste", (
       };
       const { files } = compileProject(air);
       for (const screen of air.screens) {
-        const hasList = screen.blocks.some((b) => b.blockType === "list");
+        // ÉDITION CONSCIENTE (mission composition II, 2026-09-10) —
+        // l'invariant DET-006 se REFORMULE : la fenêtre VIRTUALISÉE
+        // appartient à l'écran dont la liste est l'UNIQUE liste ; un écran
+        // MULTI-listes défile, et ses listes se rendent BORNÉES (aperçus,
+        // sans FlatList — décision pure `modeListe`, testée). Le danger visé
+        // par DET-006 — une virtualisée non bornée dans un ScrollView de
+        // même axe — reste interdit : c'est la liste UNIQUE qui virtualise,
+        // et elle n'a jamais de ScrollView.
+        const nbListes = screen.blocks.filter((b) => b.blockType === "list").length;
         const path = [...files.keys()].find((k) => k.endsWith(`${screen.id}.tsx`));
         if (path === undefined) continue;
         const code = String(files.get(path));
-        if (hasList && code.includes("ScrollView")) {
+        if (nbListes === 1 && code.includes("ScrollView")) {
           offenders.push(`${file}:${screen.id}`);
         }
       }

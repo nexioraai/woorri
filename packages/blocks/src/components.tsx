@@ -45,6 +45,7 @@ export function ListBlock({
   filters,
   onItemPress,
   layout,
+  bounded,
   seeAll,
   testID,
 }: ListBlockProps) {
@@ -129,6 +130,70 @@ export function ListBlock({
       )}
     </>
   );
+  if (bounded === true && layout !== "row") {
+    // APERÇU BORNÉ (mission composition II) — la liste COULE dans un écran
+    // composé : pas de FlatList (DET-006 : jamais de virtualisée non bornée
+    // dans un ScrollView), pas de fill. L'appelant a déjà tronqué les items ;
+    // « Voir plus » emmène au complet. États et contrôles : mêmes règles.
+    const rangees: (typeof items)[] = [];
+    if (layout === "grid") {
+      for (let i = 0; i < items.length; i += 2) rangees.push(items.slice(i, i + 2));
+    }
+    return (
+      <Section title={title} testID={testID} titleAction={seeAll}>
+        {controles}
+        {etatContenu ??
+          (layout === "grid" ? (
+            rangees.map((paire) => (
+              <Section key={paire[0]?.id ?? "r"} inline>
+                {paire.map((item) => (
+                  <GridCard
+                    key={item.id}
+                    compact
+                    title={item.title}
+                    subtitle={item.subtitle}
+                    trailing={item.trailing}
+                    badge={item.badge}
+                    imageUri={item.imageUri}
+                    onPress={
+                      onItemPress === undefined
+                        ? undefined
+                        : () => {
+                            onItemPress(item.id);
+                          }
+                    }
+                    testID={`${testID ?? "list"}-card-${item.id}`}
+                  />
+                ))}
+              </Section>
+            ))
+          ) : (
+            items.map((item) => (
+              <ListRow
+                key={item.id}
+                leading={
+                  item.imageUri === undefined ? undefined : (
+                    <AppImage uri={item.imageUri} variant="thumb" />
+                  )
+                }
+                title={item.title}
+                subtitle={item.subtitle}
+                trailing={item.trailing}
+                badge={item.badge}
+                onPress={
+                  onItemPress === undefined
+                    ? undefined
+                    : () => {
+                        onItemPress(item.id);
+                      }
+                }
+                testID={`${testID ?? "list"}-row-${item.id}`}
+              />
+            ))
+          ))}
+      </Section>
+    );
+  }
   if (layout === "row") {
     // RANGÉE HORIZONTALE (mission composition, 2026-09-10) — la section d'un
     // accueil-fleuve : axe PERPENDICULAIRE au défilement de l'écran, donc

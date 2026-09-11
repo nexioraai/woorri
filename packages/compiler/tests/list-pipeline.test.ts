@@ -99,3 +99,22 @@ describe("E2 — le scope est RÉELLEMENT relationnel", () => {
     }))).toBe("t1");
   });
 });
+
+describe("mode d'assemblage d'une liste (mission composition II)", () => {
+  it("la fenêtre pleine appartient à la liste UNIQUE ; ailleurs, aperçu", async () => {
+    const { modeListe, tailleApercu } = await import("../runtime/list-pipeline.ts");
+    // Catalogue dédié, fil social, historique : une seule liste → fenêtre.
+    expect(modeListe(undefined, 1)).toBe("fenetre");
+    expect(modeListe("grid", 1)).toBe("fenetre");
+    // Accueil composé : la même grille devient un APERÇU qui coule.
+    expect(modeListe("grid", 2)).toBe("apercu");
+    expect(modeListe(undefined, 3)).toBe("apercu");
+    // Une rangée reste une rangée, seule ou accompagnée.
+    expect(modeListe("row", 1)).toBe("rangee");
+    expect(modeListe("row", 4)).toBe("rangee");
+    // Taille d'aperçu : le document d'abord, sinon 2×2 ou 3 lignes.
+    expect(tailleApercu("grid", undefined)).toBe(4);
+    expect(tailleApercu(undefined, undefined)).toBe(3);
+    expect(tailleApercu("grid", 6)).toBe(6);
+  });
+});

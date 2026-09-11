@@ -115,10 +115,15 @@ function docArchetype(graine: string, sections: readonly string[]) {
   };
 }
 
+// SEPT archétypes — nombres de sections DIFFÉRENTS, aucun gabarit :
+// la composition suit le besoin déclaré, le mécanisme est commun.
 const ARCHETYPES = [
   { graine: "marche", sections: ["categories", "selection", "boutiques"] },
   { graine: "resa", sections: ["a_venir", "explorer"] },
   { graine: "cours", sections: ["reprendre", "parcours", "nouveautes"] },
+  { graine: "livraison", sections: ["recommander", "autour", "offres", "recents"] },
+  { graine: "auto", sections: ["occasions", "neuves"] },
+  { graine: "saas", sections: ["taches", "equipes", "rapports"] },
 ] as const;
 
 describe("généralisation — trois archétypes, mêmes capacités, zéro gabarit", () => {
@@ -137,6 +142,51 @@ describe("généralisation — trois archétypes, mêmes capacités, zéro gabar
       }
     });
   }
+
+  it("RÉSEAU SOCIAL — le FIL est une liste UNIQUE : fenêtre pleine, pas d'aperçu", () => {
+    // Le mécanisme n'est pas un gabarit marketplace déguisé : un archétype
+    // dont l'écran VIT par une seule liste (fil, historique) garde la
+    // fenêtre virtualisée DET-006 — c'est la MÊME règle, l'autre branche.
+    const doc = docArchetype("social", []);
+    // le fil : une seule liste verticale sur son écran
+    const accueilSocial = doc.screens[0];
+    if (accueilSocial === undefined) throw new Error("accueil absent");
+    accueilSocial.blocks = [
+      { id: "blk_social_fil", blockType: "list", entityId: "ent_social",
+        props: [
+          { key: "titleFieldId", value: "fld_social_nom" },
+          { key: "loadingTitle", value: "…" },
+          { key: "errorTitle", value: "!" },
+        ] },
+    ];
+    doc.actions = [];
+    const { files } = emitProject(doc);
+    const fil = files.get("screens/scr_social_accueil.tsx") ?? "";
+    expect(fil).not.toContain("ScrollView");
+    expect(fil).toContain("<View");
+  });
+
+  it("ACCUEIL COMPOSÉ — grille + rangées = ScrollView, l'aperçu coule (pas de fenêtre)", () => {
+    // Un accueil mêlant une GRILLE verticale et des rangées : l'écran DÉFILE
+    // (la grille devient aperçu borné au runtime — décision pure testée dans
+    // list-pipeline). C'est la composition de Marketa/Amazon, par MÉCANISME.
+    const doc = docArchetype("mixte", ["vedettes"]);
+    const accueilMixte = doc.screens[0];
+    if (accueilMixte === undefined) throw new Error("accueil absent");
+    accueilMixte.blocks.push({
+      id: "blk_mixte_grille", blockType: "list", entityId: "ent_mixte",
+      props: [
+        { key: "title", value: "Grille" },
+        { key: "titleFieldId", value: "fld_mixte_nom" },
+        { key: "layout", value: "grid" },
+        { key: "loadingTitle", value: "…" },
+        { key: "errorTitle", value: "!" },
+      ],
+    });
+    const { files } = emitProject(doc);
+    const ecran = files.get("screens/scr_mixte_accueil.tsx") ?? "";
+    expect(ecran).toContain("ScrollView");
+  });
 
   it("CONTRÔLE NÉGATIF — une liste VERTICALE garde le patron défileur DET-006", () => {
     const doc = docArchetype("controle", ["rangee"]);

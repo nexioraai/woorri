@@ -9,7 +9,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { migrateAirDocument, projectAirSchema } from "@deribfy/air-schema";
-import { accueilNonFractionne, preuveDeMatiere } from "../src/matiere.ts";
+import { principesDeComposition, preuveDeMatiere } from "../src/matiere.ts";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const R = join(HERE, "..", "..", "..");
@@ -18,34 +18,63 @@ const lire = (p: string) =>
     migrateAirDocument(JSON.parse(readFileSync(join(R, p), "utf8")) as Record<string, unknown>),
   );
 
-describe("composition — l'accueil coule, il ne se partage pas", () => {
-  it("REFUSE l'écran fractionné RÉEL (dougplace : 3 listes verticales en tiers)", () => {
-    const air = lire("slices/dougplace/dougplace.air.json");
-    const d = accueilNonFractionne(air);
-    expect(d.length).toBeGreaterThan(0);
-    expect(d[0]?.code).toBe("CAMPAGNE_ACCUEIL_FRACTIONNE");
+describe("principes de composition — mécaniques, aveugles au domaine", () => {
+  it("LES GATES DISCRIMINENT : marketa (après enseignement) passe, dougplace (avant) échoue", () => {
+    // La preuve que ces principes mesurent un PROGRÈS RÉEL et non une
+    // tautologie : la génération POSTÉRIEURE à l'enseignement de la
+    // composition les satisfait d'elle-même (0 violation), la génération
+    // ANTÉRIEURE en viole 5 — sections muettes et recherche non offerte à
+    // l'accueil. Dougplace reste le cas HISTORIQUE de comparaison ; les
+    // gates ne jugent que les générations futures.
+    expect(principesDeComposition(lire("slices/marketa/marketa.air.json"))).toEqual([]);
+    const historique = principesDeComposition(lire("slices/dougplace/dougplace.air.json"));
+    expect(historique.filter((x) => x.code === "CAMPAGNE_SECTION_SANS_TITRE").length).toBe(4);
+    expect(historique.filter((x) => x.code === "CAMPAGNE_RECHERCHE_NON_STRUCTURELLE").length).toBe(1);
   });
 
-  it("ACCEPTE le même contenu recomposé en rangées horizontales", () => {
-    const air = lire("slices/dougplace/dougplace.air.json");
-    const recompose = {
+  it("CONTRÔLE — une section muette est nommée par son diagnostic", () => {
+    const air = lire("slices/marketa/marketa.air.json");
+    const muette = {
+      ...air,
+      screens: air.screens.map((s) => ({
+        ...s,
+        blocks: s.blocks.map((b) =>
+          b.blockType !== "list" ? b : { ...b, props: (b.props ?? []).filter((p) => p.key !== "title") },
+        ),
+      })),
+    };
+    const d = principesDeComposition(muette);
+    expect(d.some((x) => x.code === "CAMPAGNE_SECTION_SANS_TITRE")).toBe(true);
+  });
+
+  it("CONTRÔLE — un accueil qui n'offre pas la recherche est refusé", () => {
+    const air = lire("slices/marketa/marketa.air.json");
+    const sansEntree = {
+      ...air,
+      screens: air.screens.map((s) => ({
+        ...s,
+        blocks: s.blocks.filter((b) => b.blockType !== "search_entry"),
+      })),
+    };
+    const d = principesDeComposition(sansEntree);
+    expect(d.some((x) => x.code === "CAMPAGNE_RECHERCHE_NON_STRUCTURELLE")).toBe(true);
+  });
+
+  it("CONTRÔLE — une liste distante sans états est refusée", () => {
+    const air = lire("slices/marketa/marketa.air.json");
+    const sansEtats = {
       ...air,
       screens: air.screens.map((s) => ({
         ...s,
         blocks: s.blocks.map((b) =>
           b.blockType !== "list"
             ? b
-            : {
-                ...b,
-                props: [
-                  ...(b.props ?? []).filter((p) => p.key !== "layout"),
-                  { key: "layout", value: "row" },
-                ],
-              },
+            : { ...b, props: (b.props ?? []).filter((p) => p.key !== "errorTitle") },
         ),
       })),
     };
-    expect(accueilNonFractionne(recompose)).toEqual([]);
+    const d = principesDeComposition(sansEtats);
+    expect(d.some((x) => x.code === "CAMPAGNE_ETATS_REMOTE_MANQUANTS")).toBe(true);
   });
 });
 

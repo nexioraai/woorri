@@ -503,11 +503,14 @@ function emitScreen(slice: ScreenSlice, aBarre: boolean): string {
   // C'est ce qui rend l'ACCUEIL-FLEUVE exprimable — un défilement vertical
   // de sections hétérogènes, le patron de toute marketplace de référence —
   // pour N'IMPORTE quel type d'application.
-  const hasList = slice.screen.blocks.some(
-    (b) =>
-      b.blockType === "list" &&
-      (b.props ?? []).find((pr) => pr.key === "layout")?.value !== "row",
-  );
+  // Mission composition II — MÊME règle que le runtime (modeListe) : la
+  // fenêtre pleine appartient à l'écran dont la liste est l'UNIQUE liste.
+  // Un accueil composé (plusieurs listes) DÉFILE, et ses listes verticales
+  // deviennent des aperçus bornés — plus aucun couloir possible.
+  const listes = slice.screen.blocks.filter((b) => b.blockType === "list");
+  const hasList =
+    listes.length === 1 &&
+    (listes[0]?.props ?? []).find((pr) => pr.key === "layout")?.value !== "row";
   // DET-030 (jugement propriétaire sur SM-A175F, 2026-09-05) : le clavier
   // RECOUVRAIT les champs de formulaire sur Android. Cause démontrée par
   // recoupement : DET-016 confiait Android à `softwareKeyboardLayoutMode:
