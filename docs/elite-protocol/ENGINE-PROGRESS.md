@@ -55,3 +55,15 @@ hold-out hostile (séquestre, gel taggé antérieur, symbolisation isomorphe,
 ablation) ; intent.needs → OPTION B avec critère de retrait. Kaviva :
 fixture à double verdict (ENVELOPE GREEN / MODEL RED acceptable). Sections
 10+ TRONQUÉES à la réception — dues. 0 code · 0 $ · 0 build.
+
+--- 2026-09-11 · CONFRONTATION #7 (architecture de construction, analyse seule) ---
+CONFRONTATION-7-CONSTRUCTION.md : primitives triées (universelles/
+conditionnelles/spécifiques/anti-primitives), grammaire de construction,
+dérivation des écrans (plan de surfaces → co-localisation → écrans
+justifiés, « pourquoi cet écran » mécanique), règles de placement
+structurelles (R-chrome/R-nav/R-collection), pipeline P0→P8 avec interdits
+par étage et règle de modification (producteur seul, ré-exécution aval),
+chaîne données→actions→états, navigation planifiée, AppShell vérifié
+contre le code ②, planner tranché (moteur de composition contrôlé),
+démonstration multi-domaines sur dérivations manuelles (7 domaines, formes
+différentes des mêmes règles), R0→R8 consolidé. 0 code · 0 $ · 0 build.
