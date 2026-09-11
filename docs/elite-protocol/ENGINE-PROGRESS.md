@@ -31,3 +31,11 @@ EP-021 (échelle de grammaires périmée : 400 maxItems).
 Livrables : NATURE-DU-PROJET.md · CONTRE-EXPERTISE-3-ARCHITECTURE.md
 (cartographie A→K, plan R0→R6 NON exécuté). Prochaine étape : contre-analyse
 externe puis décisions humaines K1–K5. ARCHITECTURE_ANALYSIS_ONLY=PASS.
+
+--- 2026-09-11 · CONFRONTATION #4 (analyse seule) ---
+CONFRONTATION-4-CONSENSUS.md livré : critique des DEUX hypothèses (la
+proposition Claude #3 corrigée sur 5 défauts réels — gestes en patrons
+structurels, etats/origine, doublon besoins, traçabilité, « juge d'abord »),
+contrat du modèle métier v1, table des gestes, vivacité V1–V5, plan R0→R8.
+CONSENSUS_REACHED = NO — contre-analyse externe attendue, décisions R1–R6.
+STOP ABSOLU toujours en vigueur (EP-018).
