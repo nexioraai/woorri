@@ -19,3 +19,15 @@ Tests ① : compiler 249/249 (dont plan-transport ×4 nouveaux) · packages:test
 packages:typecheck 0 erreur · gate:app-compile 27/27 · composition/navigation/invariants/
 app-rendu/controles/session verts · fidelite+e33 rouges PRÉEXISTANTS à HEAD (EP-010/011).
 Coût API mission : 3,5509 $ (kaviva-spa, plafond 4 $ respecté — mordu avant dépassement).
+
+--- MISE À JOUR 2026-09-11 (contre-expertise #3, analyse seule) ---
+STOP ABSOLU en vigueur : aucune génération, aucune dépense API, aucun build,
+aucune reprise Kaviva sans GO explicite. EP-018 (gouvernance : fermeture
+d'étape ≠ autorisation — la génération ⑦ est documentée comme sortie de
+protocole). Nouveaux : EP-019 (cause racine app creuse : aucun artefact de
+compréhension amont), EP-020 (contradiction enveloppe/règle 17 — boucle de
+réparation ingagnable sur les actions auth ; réfute partiellement EP-017),
+EP-021 (échelle de grammaires périmée : 400 maxItems).
+Livrables : NATURE-DU-PROJET.md · CONTRE-EXPERTISE-3-ARCHITECTURE.md
+(cartographie A→K, plan R0→R6 NON exécuté). Prochaine étape : contre-analyse
+externe puis décisions humaines K1–K5. ARCHITECTURE_ANALYSIS_ONLY=PASS.
