@@ -118,3 +118,20 @@ describe("mode d'assemblage d'une liste (mission composition II)", () => {
     expect(tailleApercu("grid", 6)).toBe(6);
   });
 });
+
+describe("adversarial — formatage des valeurs à unité", () => {
+  it("grands, petits, décimaux, non-numériques : une décision cohérente partout", async () => {
+    const { formatValeur } = await import("../runtime/list-pipeline.ts");
+    // fr-FR sépare les milliers par l'ESPACE FINE INSÉCABLE (U+202F).
+    const fine = "\u202f";
+    expect(formatValeur("160000", "FCFA")).toBe(`160${fine}000 FCFA`);
+    expect(formatValeur("12500000", "FCFA")).toBe(`12${fine}500${fine}000 FCFA`);
+    expect(formatValeur("0.5", "kg")).toBe("0,5 kg");
+    expect(formatValeur("592.25", "FCFA")).toBe("592,25 FCFA");
+    expect(formatValeur("4.8", "/5")).toBe("4,8 /5");
+    // non-numérique : la valeur reste, l'unité s'annonce — jamais « NaN ».
+    expect(formatValeur("sur devis", "FCFA")).toBe("sur devis FCFA");
+    // sans unité : aucune transformation — le moteur n'invente rien.
+    expect(formatValeur("592.25", undefined)).toBe("592.25");
+  });
+});

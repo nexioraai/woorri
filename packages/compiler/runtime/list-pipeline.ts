@@ -114,3 +114,14 @@ export function tailleApercu(layout: string | undefined, pageSize: number | unde
   if (pageSize !== undefined && pageSize > 0) return pageSize;
   return layout === "grid" ? 4 : 3;
 }
+
+/**
+ * FORMATAGE D'UNE VALEUR À UNITÉ — pur, adversarial-testé : très grands
+ * nombres, très petits, décimales, non-numérique. Le nombre prend les
+ * séparateurs fr-FR ; l'unité vient du DOCUMENT, jamais du moteur.
+ */
+export function formatValeur(brut: string, unit: string | undefined): string {
+  if (unit === undefined) return brut;
+  const n = Number(brut);
+  return Number.isFinite(n) ? `${n.toLocaleString("fr-FR")} ${unit}` : `${brut} ${unit}`;
+}

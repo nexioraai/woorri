@@ -194,6 +194,9 @@ export const SECTIONS_CORRECTIVES: Readonly<Record<string, readonly SectionEmiss
   CAMPAGNE_ETATS_REMOTE_MANQUANTS: ["ecrans"],
   // Les URLs de démo vivent sur les CHAMPS ; le domaine dans `base`.
   CAMPAGNE_IMAGES_DEMO_MANQUANTES: ["base", "donnees"],
+  // Le plan se répare là où sections et gestes vivent.
+  PLAN_APERCU_SANS_SUITE: ["ecrans", "actions"],
+  PLAN_VITRINE_VIDE: ["donnees", "ecrans"],
   // Un champ sensible affiché se répare là où il est AFFICHÉ : dans l'écran.
   AIR_FIELD_SENSITIVE_DISPLAYED: ["ecrans"],
   AIR_FIELD_REFERENCE_TARGET_MISSING: ["donnees"],

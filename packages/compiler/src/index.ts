@@ -4,7 +4,15 @@ export { RELEASE_TRAIN_V1 } from "./release-train.ts";
 export type { ReleaseTrain } from "./release-train.ts";
 export { LockResolutionError, normalizeAir, resolveLock } from "./resolve-lock.ts";
 export type { LockDiagnostic } from "./resolve-lock.ts";
-export { EmitError, emitProject } from "./emit-project.ts";
+export { EmitError, emitProject, WRAPPER_BY_BLOCK_TYPE } from "./emit-project.ts";
+export {
+  planifierComposition,
+  validerPlan,
+  type CompositionPlan,
+  type DiagnosticPlan,
+  type EcranPlan,
+  type RoleEcran,
+} from "./plan-composition.ts";
 export {
   emitAppJson,
   emitPermissionsManifest,

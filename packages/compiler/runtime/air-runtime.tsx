@@ -10,7 +10,7 @@
 // (implémentations : Phases 5+/9 — lecture consignée D-028).
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 // E1/E2 (D-129) — la vérité des lignes visibles vit dans un module PUR.
-import {lignesVisibles, optionsDistinctes, modeListe, tailleApercu} from "./list-pipeline";
+import {lignesVisibles, optionsDistinctes, modeListe, tailleApercu, formatValeur} from "./list-pipeline";
 import type { FiltreEffectif, OperateurFiltre } from "./list-pipeline";
 import { useNavigation } from "@react-navigation/native";
 import { allerVers } from "./racines-navigation";
@@ -341,8 +341,7 @@ function useResolveField(
     // référence). Le nombre prend les séparateurs de la locale ; l'unité est
     // une DONNÉE du document — le moteur n'en invente aucune (F3).
     if (champ?.unit !== undefined) {
-      const n = Number(brut);
-      return Number.isFinite(n) ? `${n.toLocaleString("fr-FR")} ${champ.unit}` : `${brut} ${champ.unit}`;
+      return formatValeur(brut, champ.unit);
     }
     // DET-032 — un code d'enum ne se montre pas : si le document a déclaré un
     // libellé pour cette valeur, c'est LUI qui s'affiche. Données, filtrage et

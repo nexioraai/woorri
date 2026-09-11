@@ -202,3 +202,51 @@ describe("généralisation — trois archétypes, mêmes capacités, zéro gabar
     expect(files.size).toBeGreaterThan(50);
   });
 });
+
+describe("le PLAN distingue les archétypes — rôles structurels, zéro gabarit", () => {
+  it("fleuve ≠ fenêtre ≠ porte : chaque archétype reçoit SA forme, du même mécanisme", async () => {
+    const { planifierComposition } = await import("../src/plan-composition.ts");
+    // L'accueil composé d'un marché : FLEUVE qui défile.
+    const marche = planifierComposition(
+      // le même docArchetype que plus haut — 3 rangées + entrée de recherche
+      (await import("@deribfy/air-schema")).projectAirSchema.parse(
+        (await import("@deribfy/air-schema")).migrateAirDocument(
+          docArchetype("planmarche", ["categories", "selection", "boutiques"]),
+        ),
+      ),
+    );
+    const accueilMarche = marche.ecrans.find((e) => e.screenId === "scr_planmarche_accueil");
+    expect(accueilMarche?.role).toBe("fleuve");
+    expect(accueilMarche?.defile).toBe(true);
+    // L'écran de recherche : FENÊTRE — sa liste unique est le défileur.
+    const rechercheMarche = marche.ecrans.find((e) => e.screenId === "scr_planmarche_recherche");
+    expect(rechercheMarche?.role).toBe("fenetre");
+    expect(rechercheMarche?.defile).toBe(false);
+  });
+
+  it("les documents RÉELS reçoivent des plans DIFFÉRENTS — pas un moule commun", async () => {
+    const { planifierComposition } = await import("../src/plan-composition.ts");
+    const { projectAirSchema, migrateAirDocument } = await import("@deribfy/air-schema");
+    const lireDoc = (p: string) =>
+      projectAirSchema.parse(
+        migrateAirDocument(
+          JSON.parse(
+            readFileSync(join(HERE, "..", "..", "..", p), "utf8"),
+          ) as Record<string, unknown>,
+        ),
+      );
+    const marketa = planifierComposition(lireDoc("slices/marketa/marketa.air.json"));
+    const bus = planifierComposition(lireDoc("slices/validation-appareil/validation-appareil.air.json"));
+    const rolesMarketa = marketa.ecrans.map((e) => e.role);
+    const rolesBus = bus.ecrans.map((e) => e.role);
+    // Deux apps réelles, deux SIGNATURES de composition distinctes.
+    expect(rolesMarketa).not.toEqual(rolesBus);
+    // Et chacune contient les rôles que sa nature exige :
+    expect(rolesMarketa).toContain("fleuve"); // accueil marchand composé
+    expect(rolesMarketa).toContain("porte"); // onboarding
+    expect(rolesBus).toContain("fenetre"); // départs = liste-écran
+    // Provision : marketa v2 n'exige RIEN ; le bus exige son endpoint.
+    expect(marketa.provisionRequise).toEqual([]);
+    expect(bus.provisionRequise).toEqual(["www.deribfy.com"]);
+  });
+});

@@ -49,6 +49,7 @@ const { makeLevels } = await import(join(HERE, "schema-levels.mjs"));
 const executionContract = await import(join(REPO, "packages/execution-contract/src/envelope.ts"));
 const executionGraph = await import(join(REPO, "packages/execution-contract/src/graph.ts"));
 const fidelity = await import(join(REPO, "packages/fidelity/src/index.ts"));
+const compiler = await import(join(REPO, "packages/compiler/src/index.ts"));
 
 // D-088 — LE PROMPT LIT L'ENVELOPPE, IL NE LA PARAPHRASE PLUS.
 //
@@ -572,6 +573,10 @@ function validateLocal(document) {
     // (aperçus bornés) — plus besoin de l'interdire.
     ...fidelity.principesDeComposition(parsed.data),
     ...fidelity.imagesDeVitrine(parsed.data),
+    // ── BLUEPRINT (engine hardening) : le PLAN d'assemblage est validé
+    // AVANT toute acceptation — un aperçu qui tronque offre sa suite, une
+    // vitrine vide est refusée. Réponse locale à « est-ce bien planifié ? ».
+    ...compiler.validerPlan(compiler.planifierComposition(parsed.data)),
     // ── FORM_SANS_ACTION (2026-09-01) — DIAGNOSTIC, JAMAIS UN REFUS DE CONTRAT.
     //
     // Un `form` rend TOUJOURS un bouton portant son `submitLabel` : c'est une

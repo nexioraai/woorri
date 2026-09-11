@@ -15,6 +15,7 @@ import { applyThemeOverrides, emitThemeModule, hasThemeOverrides } from "./emit-
 import { EMBEDDED_ASSETS } from "./embedded-assets.generated.ts";
 import { normalizeAir, resolveLock } from "./resolve-lock.ts";
 import { RELEASE_TRAIN_V1, type ReleaseTrain } from "./release-train.ts";
+import { planifierComposition, type EcranPlan } from "./plan-composition.ts";
 import type { CibleRemoteResolue } from "./resolve-lock.ts";
 
 // Syntaxe EFFAÇABLE uniquement (pas de parameter properties) : les bancs
@@ -66,7 +67,7 @@ const flatToRecord = (
   Object.fromEntries((props ?? []).map((p) => [p.key, p.value]));
 
 // blockType (registre gelé) → composant du runtime copié.
-const WRAPPER_BY_BLOCK_TYPE: Readonly<Record<string, string>> = {
+export const WRAPPER_BY_BLOCK_TYPE: Readonly<Record<string, string>> = {
   button: "AirButton",
   detail_header: "AirDetailHeader",
   empty_state: "AirEmptyState",
@@ -463,7 +464,7 @@ function enteteMasquee(screen: { showsScreenTitle?: boolean; presentation?: stri
   return screen.showsScreenTitle === false && screen.presentation !== "sheet";
 }
 
-function emitScreen(slice: ScreenSlice, aBarre: boolean): string {
+function emitScreen(slice: ScreenSlice, aBarre: boolean, planEcran: EcranPlan): string {
   const screenId = assertId(slice.screen.id, "screens");
   // D-086 : la barre est rendue par CHAQUE écran, en DERNIÈRE position dans la
   // coquille. Un bloc l'aurait placée dans le corps — répétée ou oubliée selon
@@ -507,10 +508,8 @@ function emitScreen(slice: ScreenSlice, aBarre: boolean): string {
   // fenêtre pleine appartient à l'écran dont la liste est l'UNIQUE liste.
   // Un accueil composé (plusieurs listes) DÉFILE, et ses listes verticales
   // deviennent des aperçus bornés — plus aucun couloir possible.
-  const listes = slice.screen.blocks.filter((b) => b.blockType === "list");
-  const hasList =
-    listes.length === 1 &&
-    (listes[0]?.props ?? []).find((pr) => pr.key === "layout")?.value !== "row";
+  // ENGINE HARDENING — la décision vient du PLAN, écrite UNE fois.
+  const hasList = !planEcran.defile;
   // DET-030 (jugement propriétaire sur SM-A175F, 2026-09-05) : le clavier
   // RECOUVRAIT les champs de formulaire sur Android. Cause démontrée par
   // recoupement : DET-016 confiait Android à `softwareKeyboardLayoutMode:
@@ -1006,6 +1005,9 @@ export function emitProject(
   // versions du même document (airHash d'un côté, code de l'autre).
   const air = normalizeAir(input) as ProjectAir;
   const locale = air.app.locales.defaultAppLocale;
+  // ENGINE HARDENING — le PLAN d'assemblage : dérivé UNE fois du document,
+  // consommé par l'émission, consultable par les gates avant tout appel.
+  const plan = planifierComposition(air);
 
   const files = new Map<string, string>();
   for (const [target, content] of Object.entries(EMBEDDED_ASSETS)) {
@@ -1035,6 +1037,13 @@ export function emitProject(
   // avant que la cause soit vue. Fichier SÉPARÉ, hors gabarit : le scellé du
   // train n'est pas rouvert pour de l'outillage de build.
   files.set(".easignore", "node_modules\n");
+  // CONTRAT DE PROVISION (engine hardening) — la frontière preview/vivant
+  // devient un ARTEFACT : les domaines distants que le pipeline doit
+  // provisionner avant tout build. Vide = l'app vit de ses données amorcées.
+  files.set(
+    "manifests/provision-requise.json",
+    JSON.stringify({ domaines: plan.provisionRequise }, null, 2) + "\n",
+  );
   // EMPREINTE D'EXÉCUTION STABLE (Phase 11) : les dossiers natifs sont
   // RÉGÉNÉRÉS par prebuild à chaque build — les hacher ferait dépendre
   // l'empreinte de la machine qui a lancé prebuild, pas de la déclaration.
@@ -1059,7 +1068,16 @@ export function emitProject(
     // onglets était la faute la plus visible de l'artefact.
     files.set(
       `screens/${screen.id}.tsx`,
-      emitScreen(slice, air.navigation.primary !== undefined && screen.showsPrimaryNav !== false),
+      emitScreen(
+        slice,
+        air.navigation.primary !== undefined && screen.showsPrimaryNav !== false,
+        plan.ecrans.find((e) => e.screenId === screen.id) ?? {
+          screenId: screen.id,
+          role: "page",
+          defile: true,
+          sections: [],
+        },
+      ),
     );
   }
 
