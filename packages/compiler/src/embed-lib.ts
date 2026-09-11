@@ -126,6 +126,13 @@ export const EMBEDDED_SOURCES: readonly EmbeddedSourceSpec[] = [
     rewrites: {},
   },
   {
+    // ÉTAPE ② — LE propriétaire du shell mobile : status bar + insets + zones.
+    // Copié avant les écrans, ses seuls consommateurs.
+    source: "compiler/runtime/app-shell.tsx",
+    target: "lib/runtime/app-shell.tsx",
+    rewrites: { "@deribfy/primitives/theme-bridge": "../primitives/theme-bridge" },
+  },
+  {
     source: "compiler/runtime/primary-nav.tsx",
     target: "lib/runtime/primary-nav.tsx",
     // `useStyles` vit dans le pont de thème, pas dans l'index des primitives :

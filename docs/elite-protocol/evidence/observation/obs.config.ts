@@ -14,6 +14,8 @@ export default defineConfig({
       // le bundler du harnais refuse. Le stub rend un élément NOMMÉ : une
       // observation peut vérifier quelle icône est demandée.
       { find: /^@expo\/vector-icons(\/.*)?$/, replacement: ici("./stub-icones.ts") },
+      // Étape ② — la barre d'état déclarée par AppShell, observable en node.
+      { find: "expo-status-bar", replacement: ici("./stub-status-bar.ts") },
       { find: "react-native", replacement: ici("./stub-rn.ts") },
       // Une SEULE instance de react, partagée par le rendu et les composants émis.
       { find: "react-test-renderer", replacement: ici("../../../../packages/blocks/node_modules/react-test-renderer") },

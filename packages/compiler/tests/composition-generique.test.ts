@@ -163,7 +163,9 @@ describe("généralisation — trois archétypes, mêmes capacités, zéro gabar
     const { files } = emitProject(doc);
     const fil = files.get("screens/scr_social_accueil.tsx") ?? "";
     expect(fil).not.toContain("ScrollView");
-    expect(fil).toContain("<View");
+    // Étape ② — le conteneur d'écran a disparu : la zone contenu d'AppShell
+    // EST le cadre de la fenêtre ; la FlatList reste le défileur (DET-006).
+    expect(fil).toContain("<AppShell");
   });
 
   it("ACCUEIL COMPOSÉ — grille + rangées = ScrollView, l'aperçu coule (pas de fenêtre)", () => {
@@ -193,7 +195,7 @@ describe("généralisation — trois archétypes, mêmes capacités, zéro gabar
     const { files } = emitProject(doc);
     const recherche = files.get("screens/scr_controle_recherche.tsx") ?? "";
     expect(recherche).not.toContain("ScrollView");
-    expect(recherche).toContain("<View");
+    expect(recherche).toContain("<AppShell");
   });
 
   it("le document RÉEL dougplace compile avec le moteur enrichi, inchangé", () => {

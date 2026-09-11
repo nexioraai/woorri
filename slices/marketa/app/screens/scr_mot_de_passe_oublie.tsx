@@ -3,34 +3,32 @@
 // DÉFILEMENT (D-031-R47 puis DET-006/D-039) : un écran SANS bloc list
 // reste une page défilante ; un écran AVEC bloc list confie le
 // défilement à la liste virtualisée elle-même, bornée par Section fill.
-// SAFE AREA DU BAS (D-037) : défaut DÉMONTRÉ sur appareil physique
-// (Galaxy A17 / Android 16) — la fenêtre est bord à bord, donc le
-// DERNIER bloc était rendu sous la barre de navigation gestuelle et
-// restait inatteignable. Le contenu défilant est décalé de l'inset bas
-// réel. `useSafeAreaInsets` est disponible sans SafeAreaProvider ajouté :
-// NativeStackView enveloppe déjà ses écrans dans SafeAreaProviderCompat
-// [vérifié dans le paquet installé].
+// SHELL (étape ②, EP-002) : status bar, safe area et zones persistantes
+// appartiennent à AppShell — cet écran ne touche JAMAIS à la safe area.
 import { KeyboardAvoidingView, ScrollView } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ScreenShell } from "../lib/primitives";
+import { AppShell } from "../lib/runtime/app-shell";
 import { AirButton, AirForm, AirHeader } from "../lib/runtime/air-runtime";
 import type { AirScreenProps } from "../lib/runtime/air-runtime";
 import { screenData } from "./scr_mot_de_passe_oublie.data";
 
 export default function ScrMotDePasseOublieScreen({ route }: AirScreenProps) {
-  const insets = useSafeAreaInsets();
   return (
     <ScreenShell testID="scr_mot_de_passe_oublie" title={screenData.title}>
-      <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
-      <ScrollView
-        contentContainerStyle={{ flexGrow: 1, paddingBottom: insets.bottom }}
-        keyboardShouldPersistTaps="handled"
+      <AppShell
+        avecEntete={true}
       >
-        <AirHeader screen={screenData} blockId="blk_oubli_header" />
-        <AirForm screen={screenData} blockId="blk_oubli_form" itemId={route?.params?.itemId} />
-        <AirButton screen={screenData} blockId="blk_oubli_vers_connexion" />
-      </ScrollView>
-      </KeyboardAvoidingView>
+        <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
+        <ScrollView
+          contentContainerStyle={{ flexGrow: 1 }}
+          keyboardShouldPersistTaps="handled"
+        >
+          <AirHeader screen={screenData} blockId="blk_oubli_header" />
+          <AirForm screen={screenData} blockId="blk_oubli_form" itemId={route?.params?.itemId} />
+          <AirButton screen={screenData} blockId="blk_oubli_vers_connexion" />
+        </ScrollView>
+        </KeyboardAvoidingView>
+      </AppShell>
     </ScreenShell>
   );
 }

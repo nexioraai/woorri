@@ -3,16 +3,11 @@
 // DÉFILEMENT (D-031-R47 puis DET-006/D-039) : un écran SANS bloc list
 // reste une page défilante ; un écran AVEC bloc list confie le
 // défilement à la liste virtualisée elle-même, bornée par Section fill.
-// SAFE AREA DU BAS (D-037) : défaut DÉMONTRÉ sur appareil physique
-// (Galaxy A17 / Android 16) — la fenêtre est bord à bord, donc le
-// DERNIER bloc était rendu sous la barre de navigation gestuelle et
-// restait inatteignable. Le contenu défilant est décalé de l'inset bas
-// réel. `useSafeAreaInsets` est disponible sans SafeAreaProvider ajouté :
-// NativeStackView enveloppe déjà ses écrans dans SafeAreaProviderCompat
-// [vérifié dans le paquet installé].
-import { KeyboardAvoidingView, ScrollView, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+// SHELL (étape ②, EP-002) : status bar, safe area et zones persistantes
+// appartiennent à AppShell — cet écran ne touche JAMAIS à la safe area.
+import { KeyboardAvoidingView, ScrollView } from "react-native";
 import { ScreenShell } from "../lib/primitives";
+import { AppShell } from "../lib/runtime/app-shell";
 import { AirHeader, AirList, AirSearchEntry } from "../lib/runtime/air-runtime";
 import { PrimaryNav } from "../lib/runtime/primary-nav";
 import { primaryNav } from "../nav.data";
@@ -20,24 +15,25 @@ import type { AirScreenProps } from "../lib/runtime/air-runtime";
 import { screenData } from "./scr_accueil.data";
 
 export default function ScrAccueilScreen({ route }: AirScreenProps) {
-  const insets = useSafeAreaInsets();
   return (
     <ScreenShell testID="scr_accueil" title={screenData.title}>
-      <View style={{ flex: 1, paddingTop: insets.top }}>
-      <AirSearchEntry screen={screenData} blockId="blk_accueil_recherche" />
-      <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
-      <ScrollView
-        contentContainerStyle={{ flexGrow: 1, paddingBottom: insets.bottom }}
-        keyboardShouldPersistTaps="handled"
+      <AppShell
+        avecEntete={false}
+        chrome={<AirSearchEntry screen={screenData} blockId="blk_accueil_recherche" />}
+        navigation={<PrimaryNav destinations={primaryNav} currentScreenId="scr_accueil" />}
       >
-        <AirHeader screen={screenData} blockId="blk_accueil_header" />
-        <AirList screen={screenData} blockId="blk_accueil_categories" itemId={route?.params?.itemId} />
-        <AirList screen={screenData} blockId="blk_accueil_selection" itemId={route?.params?.itemId} />
-        <AirList screen={screenData} blockId="blk_accueil_marchands" itemId={route?.params?.itemId} />
-      </ScrollView>
-      </KeyboardAvoidingView>
-      </View>
-      <PrimaryNav destinations={primaryNav} currentScreenId="scr_accueil" />
+        <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
+        <ScrollView
+          contentContainerStyle={{ flexGrow: 1 }}
+          keyboardShouldPersistTaps="handled"
+        >
+          <AirHeader screen={screenData} blockId="blk_accueil_header" />
+          <AirList screen={screenData} blockId="blk_accueil_categories" itemId={route?.params?.itemId} />
+          <AirList screen={screenData} blockId="blk_accueil_selection" itemId={route?.params?.itemId} />
+          <AirList screen={screenData} blockId="blk_accueil_marchands" itemId={route?.params?.itemId} />
+        </ScrollView>
+        </KeyboardAvoidingView>
+      </AppShell>
     </ScreenShell>
   );
 }

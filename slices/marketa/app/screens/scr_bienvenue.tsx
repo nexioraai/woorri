@@ -3,37 +3,33 @@
 // DÉFILEMENT (D-031-R47 puis DET-006/D-039) : un écran SANS bloc list
 // reste une page défilante ; un écran AVEC bloc list confie le
 // défilement à la liste virtualisée elle-même, bornée par Section fill.
-// SAFE AREA DU BAS (D-037) : défaut DÉMONTRÉ sur appareil physique
-// (Galaxy A17 / Android 16) — la fenêtre est bord à bord, donc le
-// DERNIER bloc était rendu sous la barre de navigation gestuelle et
-// restait inatteignable. Le contenu défilant est décalé de l'inset bas
-// réel. `useSafeAreaInsets` est disponible sans SafeAreaProvider ajouté :
-// NativeStackView enveloppe déjà ses écrans dans SafeAreaProviderCompat
-// [vérifié dans le paquet installé].
-import { KeyboardAvoidingView, ScrollView, View } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+// SHELL (étape ②, EP-002) : status bar, safe area et zones persistantes
+// appartiennent à AppShell — cet écran ne touche JAMAIS à la safe area.
+import { KeyboardAvoidingView, ScrollView } from "react-native";
 import { ScreenShell } from "../lib/primitives";
+import { AppShell } from "../lib/runtime/app-shell";
 import { AirButton, AirHeader, AirSpacer } from "../lib/runtime/air-runtime";
 import { screenData } from "./scr_bienvenue.data";
 
 export default function ScrBienvenueScreen() {
-  const insets = useSafeAreaInsets();
   return (
     <ScreenShell testID="scr_bienvenue" title={screenData.title}>
-      <View style={{ flex: 1, paddingTop: insets.top }}>
-      <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
-      <ScrollView
-        contentContainerStyle={{ flexGrow: 1, paddingBottom: insets.bottom }}
-        keyboardShouldPersistTaps="handled"
+      <AppShell
+        avecEntete={false}
       >
-        <AirHeader screen={screenData} blockId="blk_bienvenue_header" />
-        <AirSpacer screen={screenData} blockId="blk_bienvenue_spacer" />
-        <AirButton screen={screenData} blockId="blk_bienvenue_inscription" />
-        <AirButton screen={screenData} blockId="blk_bienvenue_connexion" />
-        <AirButton screen={screenData} blockId="blk_bienvenue_visiteur" />
-      </ScrollView>
-      </KeyboardAvoidingView>
-      </View>
+        <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
+        <ScrollView
+          contentContainerStyle={{ flexGrow: 1 }}
+          keyboardShouldPersistTaps="handled"
+        >
+          <AirHeader screen={screenData} blockId="blk_bienvenue_header" />
+          <AirSpacer screen={screenData} blockId="blk_bienvenue_spacer" />
+          <AirButton screen={screenData} blockId="blk_bienvenue_inscription" />
+          <AirButton screen={screenData} blockId="blk_bienvenue_connexion" />
+          <AirButton screen={screenData} blockId="blk_bienvenue_visiteur" />
+        </ScrollView>
+        </KeyboardAvoidingView>
+      </AppShell>
     </ScreenShell>
   );
 }

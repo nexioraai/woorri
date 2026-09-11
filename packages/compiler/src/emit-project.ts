@@ -557,53 +557,63 @@ function emitScreen(slice: ScreenSlice, aBarre: boolean, planEcran: EcranPlan): 
   // barre de recherche). Un wrapper d'écran porte l'inset ; les conteneurs
   // ne le portent plus jamais.
   const sansEntete = enteteMasquee(slice.screen);
-  const hautSansEntete = "";
-  const containerImport = hasList
-    ? "View"
-    : sansEntete
-      ? "KeyboardAvoidingView, ScrollView, View"
-      : "KeyboardAvoidingView, ScrollView";
-  // EN-TÊTE NATIF MASQUÉ (1.16.0) : la fenêtre est BORD À BORD, donc le
-  // contenu passe SOUS la barre d'état — mesuré à l'écran, le logo se
-  // retrouvait derrière l'horloge. Sans en-tête, l'inset HAUT devient la
-  // responsabilité de l'écran ; avec en-tête, la barre native le portait.
-  // 1.18.0 — une FEUILLE garde son en-tête natif : c'est lui qui porte le
-  // contrôle de fermeture. Le titre y est simplement vidé quand le document
-  // n'en veut pas. Les deux étages (ici et `emitNavigation`) lisent la MÊME
-  // règle ; les dissocier ferait cumuler l'inset avec la barre native.
-
+  // ÉTAPE ② (EP-002) — le SHELL a UN propriétaire : `AppShell` (lib/runtime).
+  // Les écrans n'écrivent PLUS JAMAIS un inset : la zone status (haut), le
+  // chrome persistant, l'inset du bas (sous la barre quand elle existe, sous
+  // le contenu sinon) et la barre d'état appartiennent au shell. L'en-tête
+  // natif (1.16.0/1.18.0 : une feuille le garde — `enteteMasquee`, règle
+  // unique) est simplement DÉCLARÉ au shell via `avecEntete`.
+  const containerImport = hasList ? undefined : "KeyboardAvoidingView, ScrollView";
   const containerOpen = hasList
-    ? `      <View style={{ flex: 1, ${hautSansEntete}paddingBottom: insets.bottom }}>`
-    : '      <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>\n' +
-      "      <ScrollView\n" +
+    ? undefined
+    : '        <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>\n' +
+      "        <ScrollView\n" +
       // MISE EN PAGE (1.8.0) : `flexGrow: 1` sur le CONTENU. Sans lui, un
       // `flex: 1` d'enfant ne s'étend PAS dans un ScrollView — son contenu se
       // dimensionne au contenu, et l'espace extensible n'occupait que sa
       // hauteur naturelle (mesuré sur appareil : 90 px au lieu de remplir).
       // Le défilement reste intact : un contenu plus haut que l'écran défile
       // comme avant, un contenu plus court remplit désormais la page.
-      `        contentContainerStyle={{ flexGrow: 1, ${hautSansEntete}paddingBottom: insets.bottom }}\n` +
-      '        keyboardShouldPersistTaps="handled"\n' +
-      "      >";
+      "          contentContainerStyle={{ flexGrow: 1 }}\n" +
+      '          keyboardShouldPersistTaps="handled"\n' +
+      "        >";
   const containerClose = hasList
-    ? "      </View>"
-    : "      </ScrollView>\n      </KeyboardAvoidingView>";
+    ? undefined
+    : "        </ScrollView>\n        </KeyboardAvoidingView>";
+  // ÉTAPE ② — les blocs de CHROME deviennent la zone `chrome` du shell ; le
+  // contenu va dans sa zone défilante. La persistance reste l'ORDRE DE
+  // L'ARBRE (aucune position absolue), désormais garanti par AppShell.
+  const blocsChrome = slice.screen.blocks.filter(
+    (b) => planEcran.sections.find((x) => x.blockId === b.id)?.zone === "chrome",
+  );
+  const jsxChrome = blocsChrome.map(
+    (b) =>
+      `<${WRAPPER_BY_BLOCK_TYPE[b.blockType] ?? ""} screen={screenData} blockId="${assertId(b.id, screenId)}" />`,
+  );
+  const attrChrome =
+    jsxChrome.length === 0
+      ? []
+      : jsxChrome.length === 1
+        ? [`        chrome={${jsxChrome[0]}}`]
+        : [
+            "        chrome={",
+            "          <>",
+            ...jsxChrome.map((j) => `            ${j}`),
+            "          </>",
+            "        }",
+          ];
+  const indentBloc = hasList ? "        " : "          ";
   const lines = [
     "// GÉNÉRÉ — NE PAS ÉDITER (code structurel d'écran : ScreenShell + blocs,",
     "// contrainte 3.4 ; les points d'insertion de Code Slots arrivent en Phase 9).",
     "// DÉFILEMENT (D-031-R47 puis DET-006/D-039) : un écran SANS bloc list",
     "// reste une page défilante ; un écran AVEC bloc list confie le",
     "// défilement à la liste virtualisée elle-même, bornée par Section fill.",
-    "// SAFE AREA DU BAS (D-037) : défaut DÉMONTRÉ sur appareil physique",
-    "// (Galaxy A17 / Android 16) — la fenêtre est bord à bord, donc le",
-    "// DERNIER bloc était rendu sous la barre de navigation gestuelle et",
-    "// restait inatteignable. Le contenu défilant est décalé de l'inset bas",
-    "// réel. `useSafeAreaInsets` est disponible sans SafeAreaProvider ajouté :",
-    "// NativeStackView enveloppe déjà ses écrans dans SafeAreaProviderCompat",
-    "// [vérifié dans le paquet installé].",
-    `import { ${containerImport} } from "react-native";`,
-    'import { useSafeAreaInsets } from "react-native-safe-area-context";',
+    "// SHELL (étape ②, EP-002) : status bar, safe area et zones persistantes",
+    "// appartiennent à AppShell — cet écran ne touche JAMAIS à la safe area.",
+    ...(containerImport === undefined ? [] : [`import { ${containerImport} } from "react-native";`]),
     'import { ScreenShell } from "../lib/primitives";',
+    'import { AppShell } from "../lib/runtime/app-shell";',
     `import { ${[...wrappers, ...(aCycle ? ["AirScreenLifecycle"] : [])].sort().join(", ")} } from "../lib/runtime/air-runtime";`,
     ...(aBarre
       ? [
@@ -617,20 +627,22 @@ function emitScreen(slice: ScreenSlice, aBarre: boolean, planEcran: EcranPlan): 
     usesRoute
       ? `export default function ${pascal(screenId)}Screen({ route }: AirScreenProps) {`
       : `export default function ${pascal(screenId)}Screen() {`,
-    "  const insets = useSafeAreaInsets();",
     "  return (",
     `    <ScreenShell testID="${screenId}" title={screenData.title}>`,
     // D-068 : composant SANS RENDU, monté en tête d'écran. Il exécute les
     // actions d'ouverture au montage et celles de sortie au démontage.
     ...(aCycle ? ["      <AirScreenLifecycle screen={screenData} />"] : []),
-    ...(sansEntete ? ["      <View style={{ flex: 1, paddingTop: insets.top }}>"] : []),
-    // CHROME PERSISTANT (mission chrome) — émis AVANT le conteneur : la
-    // recherche appartient au viewport, le contenu défile derrière elle.
-    // Aucune position absolue : c'est l'ORDRE DE L'ARBRE qui fait la
-    // persistance, vérifiable sans lire un style.
-    ...slice.screen.blocks
-      .filter((b) => planEcran.sections.find((x) => x.blockId === b.id)?.zone === "chrome")
-      .map((b) => `      <${WRAPPER_BY_BLOCK_TYPE[b.blockType] ?? ""} screen={screenData} blockId="${assertId(b.id, screenId)}" />`),
+    "      <AppShell",
+    `        avecEntete={${sansEntete ? "false" : "true"}}`,
+    ...attrChrome,
+    // POSITION STRUCTURELLE (D-086) : la barre vit dans la ZONE navigation du
+    // shell — après tout le contenu, jamais dedans.
+    ...(aBarre
+      ? [
+          `        navigation={<PrimaryNav destinations={primaryNav} currentScreenId="${screenId}" />}`,
+        ]
+      : []),
+    "      >",
     containerOpen,
     ...slice.screen.blocks
       .filter((b) => planEcran.sections.find((x) => x.blockId === b.id)?.zone !== "chrome")
@@ -640,23 +652,17 @@ function emitScreen(slice: ScreenSlice, aBarre: boolean, planEcran: EcranPlan): 
         b.blockType === "detail_header" || b.blockType === "list" || b.blockType === "form"
           ? " itemId={route?.params?.itemId}"
           : "";
-      return `        <${wrapper} screen={screenData} blockId="${assertId(b.id, screenId)}"${itemId} />`;
+      return `${indentBloc}<${wrapper} screen={screenData} blockId="${assertId(b.id, screenId)}"${itemId} />`;
     }),
     containerClose,
-    ...(sansEntete ? ["      </View>"] : []),
-    // POSITION STRUCTURELLE (D-086) : la barre est le DERNIER enfant de la
-    // coquille, après tout le contenu. Ce n'est pas un style qui la place en
-    // bas — c'est l'ORDRE DE L'ARBRE, ce qu'une preuve de rendu peut vérifier
-    // sans lire une seule feuille de style.
-    ...(aBarre
-      ? [`      <PrimaryNav destinations={primaryNav} currentScreenId="${screenId}" />`]
-      : []),
+    "      </AppShell>",
     "    </ScreenShell>",
     "  );",
     "}",
     "",
   ];
-  return lines.join("\n");
+  // hasList : pas de conteneur — les entrées `undefined` disparaissent.
+  return lines.filter((l): l is string => l !== undefined).join("\n");
 }
 
 function emitNavData(air: ProjectAir, locale: string): string {
