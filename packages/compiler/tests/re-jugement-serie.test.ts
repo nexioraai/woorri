@@ -16,9 +16,17 @@ const R = join(HERE, "..", "..", "..");
 const DOSSIER = join(R, "benchmarks", "air-emission", "results");
 
 describe("matrice de re-jugement (archives scellées, contrat courant)", () => {
-  const archives = readdirSync(DOSSIER).filter((f) => f.startsWith("dry-run-p0.")).sort();
-  it("les trois archives existent — la série est le témoin de variance R8", () => {
-    expect(archives).toHaveLength(3);
+  // La série-témoin v1 est SCELLÉE PAR NOMS — un glob aurait absorbé les
+  // tirages v2+ (mesuré : l'archive tronquée v2.1 est entrée dans la
+  // matrice). Le témoin de variance ne grandit pas en silence.
+  const archives = [
+    "dry-run-p0.2026-09-11T12-36-34-536Z.json",
+    "dry-run-p0.2026-09-11T12-52-08-902Z.json",
+    "dry-run-p0.2026-09-11T12-52-55-681Z.json",
+  ];
+  it("les trois archives de la série v1 existent — le témoin de variance R8", () => {
+    const presentes = readdirSync(DOSSIER);
+    for (const a of archives) expect(presentes, a).toContain(a);
   });
   it("MATRICE — pré-D6 : FAIL·PASS·PASS ; post-D6+O-2 : FAIL·FAIL·FAIL (transition par lecture)", () => {
     const attendus = [

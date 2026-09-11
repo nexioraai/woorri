@@ -128,6 +128,11 @@ describe("intégration minimale P0 — l'instrument, pas l'exécution", () => {
     const nonJson = jugerSortieP0("pas du json", "brief");
     expect(nonJson.ok).toBe(false);
     expect(nonJson.diagnostics[0]?.code).toBe("P0_SORTIE_NON_JSON");
+    // §2 — la TRONCATURE est DISTINCTE du JSON malformé : signal neutre,
+    // prioritaire (même un JSON valide-par-chance coupé est un artefact).
+    const tronquee = jugerSortieP0(JSON.stringify(structuredClone(FIXTURE)), "brief", { tronquee: true });
+    expect(tronquee.ok).toBe(false);
+    expect(tronquee.diagnostics[0]?.code).toBe("P0_SORTIE_TRONQUEE");
   });
 
   it("CRITÈRE 2.1 CALIBRÉ — la fixture manuelle PASSE (structurel, pas nominal) ; mutations : échec", () => {

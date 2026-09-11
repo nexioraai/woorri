@@ -14,6 +14,7 @@ export function critereDryRunKaviva(modele: ModeleMetier): {
 export function jugerSortieP0(
   texteBrut: string,
   brief: string,
+  meta?: { tronquee?: boolean },
 ): {
   ok: boolean;
   modele?: ModeleMetier;

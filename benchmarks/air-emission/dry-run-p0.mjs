@@ -18,13 +18,14 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 // ── RÉGLAGES CONSIGNÉS (EP-033) — identiques à la campagne, rien d'improvisé ──
 const REGLAGES = {
   model: "claude-opus-5",
-  // EP-033-bis (consigné AVANT l'appel) : 24000 copiait la campagne et
-  // faisait sauter la garde (pire cas 0,60 $) — réduit, jamais augmenté.
-  max_tokens: 6000,
+  // §2 (décision arbitre, post-EP-048) — borne JUSTIFIÉE, plus estimée :
+  // max(sorties P0 observées) = 6000 (tronquée) × 1,5 de marge = 9000.
+  // Calcul consigné au registre (EP-050) ; règle des 90 % active.
+  max_tokens: 9000,
   // température : ABSENTE (défaut du service, comme la campagne emit-v3 —
   // aucun réglage improvisé ; consigné tel quel).
   prixParMtok: { in: 5, out: 25 },
-  plafondUsd: 0.2,
+  plafondUsd: 0.3, // pire cas recalculé : 9000×25/1e6 + 4493×5/1e6 ≈ 0,2475 $
 };
 // v2 post-D6 (glossaire temporel) — v1 98014b65… = estampille de la série close.
 const HASH_PROMPT_SCELLE = "7ece34cbabc048c6bf38b3d4632cb8c87d0757edcc58c56a0111a2336868643d";
@@ -93,7 +94,14 @@ const cout =
     (usage.output_tokens ?? 0) * REGLAGES.prixParMtok.out) / 1e6;
 
 // ── ARCHIVE BRUTE + VERDICT, rien de retouché ──
-const verdict = jugerSortieP0(texte, intention.text);
+// ADAPTATEUR (de fait) : le dialecte fournisseur se mappe ICI en signal
+// neutre — le juge ne connaît aucun stop_reason (§1).
+const verdict = jugerSortieP0(texte, intention.text, {
+  tronquee: reponse.stop_reason === "max_tokens",
+});
+// Règle des 90 % (EP-050) : une marge frôlée est une borne falsifiée.
+const taux = (usage.output_tokens ?? 0) / REGLAGES.max_tokens;
+if (taux >= 0.9) console.log(`⚠ RÈGLE 90 % : sortie à ${(taux * 100).toFixed(0)} % de la borne — réviser AVANT la mesure suivante.`);
 const horodatage = new Date().toISOString().replace(/[:.]/g, "-");
 const artefact = join(HERE, "results", `dry-run-p0.${horodatage}.json`);
 writeFileSync(

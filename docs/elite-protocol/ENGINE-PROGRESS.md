@@ -348,3 +348,17 @@ comptant → série prévisiblement sans signal ; (b) défaut d'instrument
 (précédent EP-033-ter) → réglage amendé + NOUVEAU plafond ⇒ nouveau GO
 budgétaire requis dans les deux cas. STOP — décision arbitre/Youssouf.
 Dépense mission : 4,1942 $.
+
+--- 2026-09-11 · DÉCISIONS §1/§2 EXÉCUTÉES (0 $) ---
+§1 EP-049 : exigence d'INDÉPENDANCE FOURNISSEUR (premier rang) + AUDIT DE
+PORTABILITÉ rendu (faits seuls) : AUCUN adaptateur n'existe — inventaire
+complet des suppositions (SDK, formats, stop_reason, usage, erreurs-par-
+texte pilotant l'échelle, prix, modèles en dur) ; seuls
+construireRequeteP0/jugerSortieP0 sont neutres ; moteur VIERGE ; gate de
+productibilité croisée consignée pour plus tard ; RIEN corrigé (passe
+dédiée à ordonnancer). §2 EP-050 : v2.1 = DÉFAUT D'INSTRUMENT ; règle
+permanente des 90 % (câblée au lanceur) ; P0_SORTIE_TRONQUEE ≠ NON_JSON
+(signal neutre, testé) ; plafond JUSTIFIÉ par calcul consigné : 9000
+tokens / 0,30 $ ; série-témoin v1 scellée par noms. Tests 378/378.
+RELANCE : GO budgétaire NEUF requis (~0,25-0,30 $). 0 $ cette passe ·
+mission 4,1942 $.

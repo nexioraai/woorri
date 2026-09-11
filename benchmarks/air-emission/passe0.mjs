@@ -136,7 +136,18 @@ export function critereDryRunKaviva(modele) {
  * aussi l'OBSERVATION 2.3 (enregistrée, non jugée) : part de l'inventaire
  * versée dans nonRetenus, distribution des raisons.
  */
-export function jugerSortieP0(texteBrut, brief) {
+export function jugerSortieP0(texteBrut, brief, meta) {
+  // §2 (décision arbitre) — une TRONCATURE n'est pas un JSON malformé :
+  // confondre les deux fait passer un défaut d'INSTRUMENT pour un défaut
+  // de modèle. Le signal est NEUTRE (meta.tronquee) : c'est l'ADAPTATEUR
+  // qui mappe le dialecte du fournisseur (stop_reason, finish_reason…) —
+  // ce module n'en connaît aucun (§1, indépendance fournisseur).
+  if (meta?.tronquee === true) {
+    return {
+      ok: false,
+      diagnostics: [{ code: "P0_SORTIE_TRONQUEE", path: "", message: "sortie coupée par une borne d'instrument — le tirage a mesuré le plafond, pas P0" }],
+    };
+  }
   let brut;
   try {
     brut = JSON.parse(texteBrut);
