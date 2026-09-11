@@ -162,4 +162,23 @@ export const INTENTIONS = [
       "livraison. Les fiches produit montrent la photo, la description, le prix, l'état " +
       "(neuf ou occasion) et le marchand. Tout en français.",
   },
+  {
+    // AJOUTÉE 2026-09-11 — PREUVE DU MOTEUR FINAL (mission Elite A++++,
+    // étape ⑦) : premier archétype NON marketplace généré APRÈS les six
+    // étapes (plan→runtime scellé, AppShell, contrats, validation avant
+    // émission, passes réordonnées + obligations, chaîne unique). Aucune
+    // retouche d'app générée n'est autorisée — ce document mesure le moteur.
+    slug: "kaviva-spa",
+    commerce: "physical_or_offapp",
+    text:
+      "J'ouvre Kaviva, un institut de beauté et spa à Abidjan — l'application " +
+      "s'appelle exactement « Kaviva ». Mes clientes doivent voir la liste des " +
+      "soins proposés (massages, soins du visage, manucure, hammam) avec photo, " +
+      "durée et prix, chercher un soin, consulter la fiche détaillée d'un soin, " +
+      "choisir un créneau et réserver un rendez-vous à leur nom avec date et " +
+      "heure, puis retrouver leurs rendez-vous à venir et passés. Chaque cliente " +
+      "crée un compte et gère son profil avec son téléphone. L'accueil doit " +
+      "donner tout de suite envie : les soins vedettes en avant et la recherche " +
+      "accessible immédiatement. Tout en français.",
+  },
 ];

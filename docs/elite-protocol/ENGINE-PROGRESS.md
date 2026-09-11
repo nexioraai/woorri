@@ -6,10 +6,16 @@
 ④ Validation émission  🟢 (validerPlan inconditionnel, sévérité intrinsèque)
 ⑤ Générateur (passes)  🟢 (capacites réordonnée, cycle contraint par obligations)
 ⑥ Chemins parallèles   🟢 (construire-fixture neutralisé, 6 legacy en attic, écrivain consolidé)
-⑦ Génération réservation (payante, ≤4 $) 🔵 PRÊTE — attend le geste propriétaire (clé API + build EAS, EP-013)
+⑦ Génération réservation (payante, ≤4 $) 🟠 PLAFOND ATTEINT — 3,5509 $/4 $ :
+   attempt1 creuse REFUSÉE par preuveDeMatiere (la garde travaille), matière
+   RÉPARÉE (4 entités), interrompue avant actions#repair (D-103 : partiel
+   conservé, 0 $ perdu). Restent 5 diagnostics (vivacité). REPRISE = décision
+   propriétaire : `BUDGET_USD=1.5 node emit-v3.mjs --reparer
+   results/kaviva-spa.2026-09-11T06-32-03-705Z.reparation-partielle.air.json
+   kaviva-spa` (≈2-4 appels) puis slices/kaviva/emettre.mjs → tsc → build.
 
 Découverts : EP-001…EP-016. RÉSOLUS : EP-001..007, EP-012, EP-014 (9). Dettes conscientes : EP-008, EP-015, EP-016. Préexistants hors mission : EP-010, EP-011. Différé : EP-013 (preuves appareil).
 Tests ① : compiler 249/249 (dont plan-transport ×4 nouveaux) · packages:test 17/17 verts ·
 packages:typecheck 0 erreur · gate:app-compile 27/27 · composition/navigation/invariants/
 app-rendu/controles/session verts · fidelite+e33 rouges PRÉEXISTANTS à HEAD (EP-010/011).
-Coût API mission : 0 $.
+Coût API mission : 3,5509 $ (kaviva-spa, plafond 4 $ respecté — mordu avant dépassement).
