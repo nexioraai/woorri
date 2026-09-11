@@ -65,9 +65,6 @@ export const GESTES = [
   "retirer",
 ];
 
-/** Gestes dont la preuve est OBSERVABLE — un parcours doit finir par l'un d'eux. */
-export const GESTES_TERMINAUX = ["confirmer", "consulter", "consulter_historique"];
-
 // `.strict()` PARTOUT : toute clé hors contrat est un REFUS — c'est le
 // verrou F4 (un `visuel` déclaré ne passe pas) et l'anti-fourre-tout.
 export const modeleMetierSchema = z
@@ -465,7 +462,6 @@ const CARDINALITE_PAR_GESTE = {
 // HYPOTHÈSE, pas en exceptions : « choisir → se connecter → réserver » ne
 // perd plus l'identité, et une étape interposée qui touche une AUTRE
 // identité ROMPT la chaîne (mutation exigée).
-const GESTES_TRANSPARENTS = new Set(["s_identifier", "confirmer", "payer"]);
 
 /** J3 — les CONSOMMATEURS d'une identité élue, DÉRIVÉS DE LA TABLE (une
  * liste écrite deux fois diverge — précédent v3/v4) : gestes à transport
@@ -611,17 +607,40 @@ export function repetitionsSuspectes(surfaces) {
 // d'ici (forme normale : décisions dans le modèle, conclusions dans la
 // table) — aucune étape ne les redéclare.
 export const TABLE_GESTES = {
-  decouvrir:            { bloc: "list",         declencheur: null, effet: null,         transport: null,      preuve: "section rendue, données présentes" },
-  chercher:             { bloc: "search_entry", declencheur: "ui", effet: "navigate",   transport: null,      preuve: "paire structurelle complète" },
-  consulter:            { bloc: "list",         declencheur: "ui", effet: "navigate",   transport: "itemId",  preuve: "détail de l'instance identifiée" },
-  choisir:              { bloc: "list",         declencheur: "ui", effet: "navigate",   transport: "itemId",  preuve: "identité élue consommée en aval" },
-  saisir:               { bloc: "form",         declencheur: "ui", effet: "mutation",   transport: "instance",preuve: "écriture réelle (règle 13)" },
-  confirmer:            { bloc: null,           declencheur: null, effet: "mutation",   transport: null,      preuve: "écran de confirmation atteint (thenScreenId)" },
-  consulter_historique: { bloc: "list",         declencheur: "ui", effet: "navigate",   transport: null,      preuve: "collection filtrée sur l'état nommé" },
-  s_identifier:         { bloc: "form",         declencheur: "ui", effet: "capability", transport: null,      preuve: "méthode auth exécutée (enveloppe véridique R1)" },
-  payer:                { bloc: "form",         declencheur: "ui", effet: "mutation",   transport: null,      preuve: "capacité déclarée, honnêteté règle 17" },
-  retirer:              { bloc: "list",         declencheur: "ui", effet: "mutation",   transport: "itemId",  preuve: "collection réduite, état vide atteignable" },
+  decouvrir:            { bloc: "list",         declencheur: null, effet: null,         transport: null,      terminal: false, preuve: "section rendue, données présentes" },
+  chercher:             { bloc: "search_entry", declencheur: "ui", effet: "navigate",   transport: null,      terminal: false, preuve: "paire structurelle complète" },
+  consulter:            { bloc: "list",         declencheur: "ui", effet: "navigate",   transport: "itemId",  terminal: true,  preuve: "détail de l'instance identifiée" },
+  choisir:              { bloc: "list",         declencheur: "ui", effet: "navigate",   transport: "itemId",  terminal: false, preuve: "identité élue consommée en aval" },
+  saisir:               { bloc: "form",         declencheur: "ui", effet: "mutation",   transport: "instance",terminal: false, preuve: "écriture réelle (règle 13)" },
+  confirmer:            { bloc: null,           declencheur: null, effet: "mutation",   transport: null,      terminal: true,  preuve: "écran de confirmation atteint (thenScreenId)" },
+  consulter_historique: { bloc: "list",         declencheur: "ui", effet: "navigate",   transport: null,      terminal: true,  preuve: "collection filtrée sur l'état nommé" },
+  s_identifier:         { bloc: "form",         declencheur: "ui", effet: "capability", transport: null,      terminal: false, preuve: "méthode auth exécutée (enveloppe véridique R1)" },
+  payer:                { bloc: "form",         declencheur: "ui", effet: "mutation",   transport: null,      terminal: false, preuve: "capacité déclarée, honnêteté règle 17" },
+  retirer:              { bloc: "list",         declencheur: "ui", effet: "mutation",   transport: "itemId",  terminal: false, preuve: "collection réduite, état vide atteignable" },
 };
+
+// ────────────────── EP-068 — LES LISTES DE GESTES SE DÉRIVENT DE LA TABLE ──
+//
+// TROISIÈME divergence liste-écrite-à-la-main / table (prompt v3-v4, J3/EP-059,
+// retirer-source/EP-067) : le MOTIF est traité, plus seulement le cas. Un seul
+// PRÉDICAT porte l'identité : un geste est SOURCE s'il TRANSPORTE une identité
+// (colonne transport) ou s'il PRÉSENTE le concept (bloc de présentation :
+// list, search_entry). Son COMPLÉMENT est exactement l'ensemble des gestes
+// TRANSPARENTS (J1) — deux ensembles, une dérivation, zéro énumération.
+// Le cliquet (tests) recalcule ces dérivations ET refuse toute nouvelle liste
+// de gestes écrite à la main dans ce module.
+export function estSourceDIdentite(geste) {
+  const patron = TABLE_GESTES[geste];
+  if (patron === undefined) return false;
+  return patron.transport !== null || patron.bloc === "list" || patron.bloc === "search_entry";
+}
+export function sourcesDIdentite() {
+  return GESTES.filter(estSourceDIdentite);
+}
+/** Gestes dont la preuve est OBSERVABLE — un parcours doit finir par l'un d'eux. */
+export const GESTES_TERMINAUX = GESTES.filter((g) => TABLE_GESTES[g].terminal);
+/** J1 — les gestes SANS identité propre : le COMPLÉMENT du prédicat source. */
+const GESTES_TRANSPARENTS = new Set(GESTES.filter((g) => !estSourceDIdentite(g)));
 
 /** R2 — le CONTRAT D'UNE ÉTAPE : dérivé (table × modèle), jamais redéclaré. */
 export function contratDEtape(modele, parcours, index) {
@@ -833,7 +852,7 @@ export function ecransDe(modele) {
         const sourceValide =
           prec !== undefined &&
           prec.concept === e.concept &&
-          ["decouvrir", "chercher", "consulter_historique", "choisir", "consulter", "saisir"].includes(prec.geste);
+          estSourceDIdentite(prec.geste);
         if (!sourceValide) {
           diagnostics.push(
             d("DERIVATION_IDENTITE_SANS_SOURCE", `parcours[${p.id}].etapes[${i}]`,

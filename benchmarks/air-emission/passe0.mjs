@@ -16,6 +16,7 @@ import { z } from "zod";
 import {
   GESTES,
   GESTES_TERMINAUX,
+  sourcesDIdentite,
   TABLE_GESTES,
   GLOSSAIRE_NATURES_TEMPORELLES,
   NATURES_ATTRIBUT,
@@ -50,6 +51,12 @@ export const PROMPT_P0 = [
     GESTES.filter((g) => TABLE_GESTES[g].effet === "mutation").join(", ") +
     " ; les autres gestes LISENT et ne transitent jamais un état.",
   "· `etat` sur une ÉTAPE = FILTRE CONSOMMÉ (gestes de lecture uniquement) ; l'état-CIBLE d'une écriture se déclare dans les transitions du concept, JAMAIS sur l'étape.",
+  "· CHAQUE IDENTITÉ CONSOMMÉE NAÎT DANS SON PARCOURS : une étape " +
+    GESTES.filter((g) => TABLE_GESTES[g].transport === "itemId").join("/") +
+    " sur un concept exige, EN AMONT DU MÊME PARCOURS, une étape du MÊME concept parmi " +
+    sourcesDIdentite().join(", ") +
+    " (les gestes " + GESTES.filter((g) => !sourcesDIdentite().includes(g)).join("/") +
+    " sont traversés sans rompre la chaîne). Un parcours qui consomme une identité venue d'ailleurs est REFUSÉ.",
   "· commerce (\"digital\" | \"physique_ou_hors_app\") — REQUIS si un parcours contient payer, interdit sinon",
   "· couverture (voir ci-dessous).",
   "",

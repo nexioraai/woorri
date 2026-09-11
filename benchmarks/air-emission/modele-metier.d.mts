@@ -82,7 +82,8 @@ export function repetitionsSuspectes(
 export function migrerModele(brut: unknown): unknown;
 export const TABLE_GESTES: Record<string, {
   bloc: string | null; declencheur: string | null; effet: string | null;
-  transport: string | null; preuve: string;
+  transport: string | null; terminal: boolean;
+    preuve: string;
 }>;
 export function contratDEtape(modele: ModeleMetier, parcours: Parcours, index: number):
   | { acteur: string; geste: string; conceptCible: string;
@@ -128,3 +129,5 @@ export function obligationsPrescriptives(
 ): string;
 export function consommateursDIdentite(): string[];
 export function estConceptIdentite(modele: ModeleMetier, conceptId: string): boolean;
+export function estSourceDIdentite(geste: string): boolean;
+export function sourcesDIdentite(): string[];

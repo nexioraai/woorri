@@ -102,6 +102,9 @@ describe("B/C — les dérivations ne travaillent QUE sur le MODEL (balayage COM
       derivationsModele.obligationsPrescriptives("base", m, derivationsModele.ecransDe(m)),
     // EP-059 (édition consciente) — juges J2/J3, modèle seul.
     consommateursDIdentite: () => derivationsModele.consommateursDIdentite(),
+    // EP-068 (édition consciente) — sources d'identité dérivées de la table.
+    estSourceDIdentite: () => derivationsModele.estSourceDIdentite("retirer"),
+    sourcesDIdentite: () => derivationsModele.sourcesDIdentite(),
     estConceptIdentite: (m) => derivationsModele.estConceptIdentite(m, m.concepts[0]?.id ?? ""),
   };
 
