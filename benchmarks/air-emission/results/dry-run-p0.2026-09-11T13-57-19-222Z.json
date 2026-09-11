@@ -1,0 +1,53 @@
+{
+  "reglages": {
+    "max_tokens": 9000,
+    "plafondUsd": 0.3,
+    "model": "claude-opus-5"
+  },
+  "ecartsAdaptateur": [
+    "$.properties.concepts.items.properties.attributs.items.properties.cardinalite.maximum 9007199254740991→retiré",
+    "$.properties.concepts.items.properties.attributs.items.properties.cardinalite.minimum 1→retiré",
+    "$.properties.parcours.items.properties.etapes.minItems 2→1",
+    "$.properties.parcours.items.properties.priorite.maximum 9007199254740991→retiré",
+    "$.properties.parcours.items.properties.priorite.minimum 0→retiré"
+  ],
+  "hashPromptUtilise": "7ece34cbabc048c6bf38b3d4632cb8c87d0757edcc58c56a0111a2336868643d",
+  "dureeMs": 47131,
+  "coutUsd": 0.14059,
+  "usage": {
+    "entree": 4493,
+    "sortie": 4725,
+    "ecritureCache": 0,
+    "lectureCache": 0
+  },
+  "sortieBrute": "{\"version\":\"modele-metier/1.1.0\",\"couverture\":{\"couverts\":[{\"terme\":\"soins proposés\",\"noeuds\":[\"cpt_soin\"]},{\"terme\":\"massages\",\"noeuds\":[\"cpt_soin\",\"att_soin_categorie\"]},{\"terme\":\"soins du visage\",\"noeuds\":[\"cpt_soin\",\"att_soin_categorie\"]},{\"terme\":\"manucure\",\"noeuds\":[\"cpt_soin\",\"att_soin_categorie\"]},{\"terme\":\"hammam\",\"noeuds\":[\"cpt_soin\",\"att_soin_categorie\"]},{\"terme\":\"photo\",\"noeuds\":[\"att_soin_photo\"]},{\"terme\":\"durée\",\"noeuds\":[\"att_soin_duree\"]},{\"terme\":\"prix\",\"noeuds\":[\"att_soin_prix\"]},{\"terme\":\"chercher un soin\",\"noeuds\":[\"par_decouverte_soins\"]},{\"terme\":\"fiche détaillée d'un soin\",\"noeuds\":[\"cpt_soin\",\"par_decouverte_soins\"]},{\"terme\":\"choisir un créneau\",\"noeuds\":[\"cpt_creneau\",\"par_reservation\"]},{\"terme\":\"réserver un rendez-vous\",\"noeuds\":[\"cpt_rendez_vous\",\"par_reservation\"]},{\"terme\":\"à leur nom\",\"noeuds\":[\"att_rdv_nom_cliente\"]},{\"terme\":\"date et heure\",\"noeuds\":[\"att_rdv_moment\",\"att_creneau_plage\"]},{\"terme\":\"rendez-vous à venir et passés\",\"noeuds\":[\"par_mes_rendez_vous\",\"cpt_rendez_vous\"]},{\"terme\":\"cliente\",\"noeuds\":[\"act_cliente\"]},{\"terme\":\"crée un compte\",\"noeuds\":[\"cpt_compte\",\"par_compte\"]},{\"terme\":\"gère son profil\",\"noeuds\":[\"cpt_compte\",\"par_compte\"]},{\"terme\":\"téléphone\",\"noeuds\":[\"att_compte_telephone\"]},{\"terme\":\"soins vedettes en avant\",\"noeuds\":[\"att_soin_vedette\",\"par_decouverte_soins\"]},{\"terme\":\"recherche accessible immédiatement\",\"noeuds\":[\"par_decouverte_soins\"]}],\"nonRetenus\":[{\"terme\":\"Kaviva\",\"raison\":\"expression_visuelle\"},{\"terme\":\"institut de beauté et spa\",\"raison\":\"hors_perimetre_mobile\"},{\"terme\":\"Abidjan\",\"raison\":\"hors_perimetre_mobile\"},{\"terme\":\"l'accueil doit donner tout de suite envie\",\"raison\":\"expression_visuelle\"},{\"terme\":\"tout en français\",\"raison\":\"expression_visuelle\"}]},\"acteurs\":[{\"id\":\"act_cliente\",\"nom\":\"Cliente\"}],\"concepts\":[{\"id\":\"cpt_soin\",\"nom\":\"Soin\",\"donnees\":true,\"identifiant\":\"att_soin_nom\",\"attributs\":[{\"id\":\"att_soin_nom\",\"nature\":\"texte\",\"requis\":true},{\"id\":\"att_soin_categorie\",\"nature\":\"texte\",\"requis\":true},{\"id\":\"att_soin_photo\",\"nature\":\"media\",\"requis\":true},{\"id\":\"att_soin_duree\",\"nature\":\"duree\",\"requis\":true},{\"id\":\"att_soin_prix\",\"nature\":\"nombre\",\"requis\":true},{\"id\":\"att_soin_description\",\"nature\":\"texte\",\"requis\":false},{\"id\":\"att_soin_vedette\",\"nature\":\"booleen\",\"requis\":false}]},{\"id\":\"cpt_creneau\",\"nom\":\"Créneau\",\"donnees\":true,\"identifiant\":\"att_creneau_plage\",\"attributs\":[{\"id\":\"att_creneau_plage\",\"nature\":\"intervalle\",\"requis\":true},{\"id\":\"att_creneau_soin\",\"nature\":\"reference\",\"requis\":true}],\"etats\":[{\"id\":\"libre\",\"transitions\":[{\"vers\":\"reserve\",\"geste\":\"confirmer\"}]},{\"id\":\"reserve\"}]},{\"id\":\"cpt_rendez_vous\",\"nom\":\"Rendez-vous\",\"donnees\":true,\"identifiant\":\"att_rdv_reference\",\"attributs\":[{\"id\":\"att_rdv_reference\",\"nature\":\"texte\",\"requis\":true},{\"id\":\"att_rdv_nom_cliente\",\"nature\":\"texte\",\"requis\":true},{\"id\":\"att_rdv_moment\",\"nature\":\"date\",\"requis\":true},{\"id\":\"att_rdv_soin\",\"nature\":\"reference\",\"requis\":true},{\"id\":\"att_rdv_creneau\",\"nature\":\"reference\",\"requis\":true}],\"etats\":[{\"id\":\"en_saisie\",\"transitions\":[{\"vers\":\"confirme\",\"geste\":\"confirmer\"}]},{\"id\":\"confirme\",\"transitions\":[{\"vers\":\"annule\",\"geste\":\"retirer\"}]},{\"id\":\"annule\"}]},{\"id\":\"cpt_compte\",\"nom\":\"Compte cliente\",\"donnees\":true,\"identifiant\":\"att_compte_telephone\",\"attributs\":[{\"id\":\"att_compte_nom\",\"nature\":\"texte\",\"requis\":true},{\"id\":\"att_compte_telephone\",\"nature\":\"texte\",\"requis\":true},{\"id\":\"att_compte_photo\",\"nature\":\"media\",\"requis\":false}],\"etats\":[{\"id\":\"brouillon\",\"transitions\":[{\"vers\":\"actif\",\"geste\":\"confirmer\"}]},{\"id\":\"actif\"}]}],\"relations\":[{\"de\":\"cpt_soin\",\"vers\":\"cpt_creneau\",\"nature\":\"possede\"},{\"de\":\"cpt_rendez_vous\",\"vers\":\"cpt_soin\",\"nature\":\"reference\"},{\"de\":\"cpt_rendez_vous\",\"vers\":\"cpt_creneau\",\"nature\":\"reference\"},{\"de\":\"cpt_compte\",\"vers\":\"cpt_rendez_vous\",\"nature\":\"possede\"}],\"parcours\":[{\"id\":\"par_decouverte_soins\",\"besoin\":\"découvrir les soins vedettes, chercher un soin et consulter sa fiche détaillée\",\"acteur\":\"act_cliente\",\"priorite\":1,\"etapes\":[{\"concept\":\"cpt_soin\",\"geste\":\"decouvrir\"},{\"concept\":\"cpt_soin\",\"geste\":\"chercher\"},{\"concept\":\"cpt_soin\",\"geste\":\"choisir\"},{\"concept\":\"cpt_soin\",\"geste\":\"consulter\"}]},{\"id\":\"par_reservation\",\"besoin\":\"choisir un créneau et réserver un rendez-vous pour un soin\",\"acteur\":\"act_cliente\",\"priorite\":2,\"etapes\":[{\"concept\":\"cpt_compte\",\"geste\":\"s_identifier\",\"preconditions\":[{\"concept\":\"cpt_compte\",\"etat\":\"actif\"}]},{\"concept\":\"cpt_soin\",\"geste\":\"consulter\"},{\"concept\":\"cpt_creneau\",\"geste\":\"choisir\",\"preconditions\":[{\"concept\":\"cpt_creneau\",\"etat\":\"libre\"}]},{\"concept\":\"cpt_rendez_vous\",\"geste\":\"saisir\",\"etat\":\"en_saisie\"},{\"concept\":\"cpt_creneau\",\"geste\":\"confirmer\",\"etat\":\"reserve\"},{\"concept\":\"cpt_rendez_vous\",\"geste\":\"confirmer\",\"etat\":\"confirme\"}]},{\"id\":\"par_mes_rendez_vous\",\"besoin\":\"retrouver ses rendez-vous à venir et passés\",\"acteur\":\"act_cliente\",\"priorite\":3,\"etapes\":[{\"concept\":\"cpt_compte\",\"geste\":\"s_identifier\"},{\"concept\":\"cpt_rendez_vous\",\"geste\":\"consulter_historique\"},{\"concept\":\"cpt_rendez_vous\",\"geste\":\"consulter\",\"etat\":\"confirme\"}]},{\"id\":\"par_compte\",\"besoin\":\"créer son compte et gérer son profil avec son téléphone\",\"acteur\":\"act_cliente\",\"priorite\":4,\"etapes\":[{\"concept\":\"cpt_compte\",\"geste\":\"saisir\",\"etat\":\"brouillon\"},{\"concept\":\"cpt_compte\",\"geste\":\"confirmer\",\"etat\":\"actif\"},{\"concept\":\"cpt_compte\",\"geste\":\"consulter\"}]},{\"id\":\"par_annulation\",\"besoin\":\"annuler un rendez-vous à venir\",\"acteur\":\"act_cliente\",\"priorite\":5,\"etapes\":[{\"concept\":\"cpt_compte\",\"geste\":\"s_identifier\"},{\"concept\":\"cpt_rendez_vous\",\"geste\":\"choisir\",\"preconditions\":[{\"concept\":\"cpt_rendez_vous\",\"etat\":\"confirme\"}]},{\"concept\":\"cpt_rendez_vous\",\"geste\":\"retirer\",\"etat\":\"annule\"},{\"concept\":\"cpt_rendez_vous\",\"geste\":\"consulter\",\"etat\":\"annule\"}]}]}",
+  "verdict": {
+    "ok": true,
+    "diagnostics": [],
+    "critereKaviva": {
+      "pass": true,
+      "trouves": {
+        "prestation": [
+          "cpt_soin",
+          "cpt_creneau",
+          "cpt_rendez_vous",
+          "cpt_compte"
+        ],
+        "ressourceTemporelle": [
+          "cpt_creneau"
+        ],
+        "engagement": [
+          "cpt_rendez_vous"
+        ]
+      }
+    },
+    "observation": {
+      "tailleInventaire": 49,
+      "partInventaireEnNonRetenus": 0.20408163265306123,
+      "distributionRaisons": {
+        "expression_visuelle": 3,
+        "hors_perimetre_mobile": 2
+      }
+    }
+  }
+}

@@ -376,3 +376,16 @@ Tests compiler 380/380, repair 38/38. SUITE : 2. tirage (grammaire
 canonique + dialecte déclaré) — GO budgétaire NEUF, plafond 0,30 $ ·
 3. second adaptateur/productibilité croisée — à arbitrer. 0 $ · mission
 4,1942 $.
+
+--- 2026-09-11 · TIRAGE CANONIQUE (GO EP-053) — PASS ---
+0,1406 $ · 52 % de la borne · non tronquée. DEUX ÉNONCÉS SÉPARÉS : (1) LE
+CONTRAT EST PRODUCTIBLE — transférable ; (2) ce fournisseur a dégradé 5
+contraintes déclarées — non transférable. T2 = VERT (kaviva seul) sous
+QUATRE estampilles (contrat 421af714, prompt v4 7ece34cb, modèle
+claude-opus-5 — divergence du rappel tracée EP-053 —, adaptateur+écarts).
+MESURES D'EFFET : intervalle requis:true posé par P0 (D6 O-1 efficace) ;
+AUCUNE transition par lecture — le 3/3 systématique pré-v4 a disparu
+(effet v4 mesuré) ; 2.3 = 20,4 % dans la plage témoin ; 4 concepts dans le
+témoin. Règle asymétrique : 1 PASS suffit — série close. Dépense mission :
+4,3348 $. SUITE (décisions humaines) : second adaptateur/productibilité
+croisée · R5 (GO dédié) · hold-out scellé.
