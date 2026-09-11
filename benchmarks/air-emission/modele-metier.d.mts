@@ -126,3 +126,5 @@ export function obligationsPrescriptives(
   modele: ModeleMetier,
   plan: PlanEcrans,
 ): string;
+export function consommateursDIdentite(): string[];
+export function estConceptIdentite(modele: ModeleMetier, conceptId: string): boolean;

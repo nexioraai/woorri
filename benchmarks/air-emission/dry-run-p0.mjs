@@ -23,7 +23,7 @@ const REGLAGES = {
   plafondUsd: 0.3, // pire cas : 9000×25/1e6 + 4493×5/1e6 ≈ 0,2475 $
 };
 // v2 post-D6 (glossaire temporel) — v1 98014b65… = estampille de la série close.
-const HASH_PROMPT_SCELLE = "7ece34cbabc048c6bf38b3d4632cb8c87d0757edcc58c56a0111a2336868643d";
+const HASH_PROMPT_SCELLE = "392e571cce108aa80094dfca79e5a0fbc2a381314c7d4c90ae46178189c70766";
 
 // ── GARDE 1 : le jeton du GO budgétaire ──
 if (process.env.GO_DRY_RUN_P0 !== "OUI-15-CENTIMES") {

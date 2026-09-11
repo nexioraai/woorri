@@ -49,6 +49,7 @@ export const PROMPT_P0 = [
   "· états métier structurés (etats: [{id, transitions: [{vers, geste}]}]) — une transition d'état est causée par un geste MUTANT ; gestes mutants (dérivés de la table) : " +
     GESTES.filter((g) => TABLE_GESTES[g].effet === "mutation").join(", ") +
     " ; les autres gestes LISENT et ne transitent jamais un état.",
+  "· `etat` sur une ÉTAPE = FILTRE CONSOMMÉ (gestes de lecture uniquement) ; l'état-CIBLE d'une écriture se déclare dans les transitions du concept, JAMAIS sur l'étape.",
   "· commerce (\"digital\" | \"physique_ou_hors_app\") — REQUIS si un parcours contient payer, interdit sinon",
   "· couverture (voir ci-dessous).",
   "",

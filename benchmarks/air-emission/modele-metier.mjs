@@ -248,6 +248,16 @@ export function validerModele(brut) {
         !(concept.etats ?? []).some((x) => x.id === e.etat)
       ) {
         out.push(d("MODELE_ETAT_INCONNU", `parcours[${p.id}].etapes[${ei}].etat`, e.etat));
+      } else if (e.etat !== undefined && TABLE_GESTES[e.geste]?.effet === "mutation") {
+        // D6 (EP-058, usage réel observé : confirmer créneau [etat=reserve]) —
+        // les DEUX sens sont légitimes et ont CHACUN leur champ : le FILTRE
+        // consommé vit sur l'étape (gestes de LECTURE) ; l'état-CIBLE d'une
+        // écriture vit dans concept.etats[].transitions — le redéclarer sur
+        // l'étape serait une conclusion dupliquée (forme normale).
+        out.push(
+          d("MODELE_ETAT_SUR_GESTE_MUTANT", `parcours[${p.id}].etapes[${ei}].etat`,
+            `${e.geste} est une écriture : son état-cible se déclare dans les transitions du concept, pas sur l'étape`),
+        );
       }
     }
   }
@@ -448,6 +458,49 @@ const CARDINALITE_PAR_GESTE = {
   s_identifier: "singleton",
 };
 
+// ── J1/J2/J3 (EP-059, fixture réelle kaviva-spa…modele-p0) — LE REGISTRE
+// D'IDENTITÉ SE PROPAGE le long du parcours : une étape qui ne touche pas
+// à l'identité est TRANSPARENTE (s_identifier, confirmer, payer) ; toute
+// étape de DONNÉES (source, électeur, consommateur) la touche. Corrigé en
+// HYPOTHÈSE, pas en exceptions : « choisir → se connecter → réserver » ne
+// perd plus l'identité, et une étape interposée qui touche une AUTRE
+// identité ROMPT la chaîne (mutation exigée).
+const GESTES_TRANSPARENTS = new Set(["s_identifier", "confirmer", "payer"]);
+
+/** J3 — les CONSOMMATEURS d'une identité élue, DÉRIVÉS DE LA TABLE (une
+ * liste écrite deux fois diverge — précédent v3/v4) : gestes à transport
+ * itemId qui ne sont pas eux-mêmes ÉLECTEURS, plus la saisie liée. */
+export function consommateursDIdentite() {
+  return GESTES.filter((g) => TABLE_GESTES[g].transport === "itemId" && g !== "choisir");
+}
+
+/** J2 — concept d'IDENTITÉ DE L'ACTEUR : discriminant STRUCTUREL (le
+ * concept que s_identifier touche), jamais un nom. Singleton de soi :
+ * aucune ligne à presser pour se consulter. */
+export function estConceptIdentite(modele, conceptId) {
+  return modele.parcours.some((p) =>
+    p.etapes.some((e) => e.geste === "s_identifier" && e.concept === conceptId),
+  );
+}
+
+/** L'étape IDENTITAIRE la plus proche en amont (transparentes ignorées). */
+function amontIdentitaire(parcours, index) {
+  for (let i = index - 1; i >= 0; i--) {
+    const e = parcours.etapes[i];
+    if (!GESTES_TRANSPARENTS.has(e.geste)) return e;
+  }
+  return undefined;
+}
+
+/** L'étape IDENTITAIRE la plus proche en aval (transparentes ignorées). */
+function avalIdentitaire(parcours, index) {
+  for (let i = index + 1; i < parcours.etapes.length; i++) {
+    const e = parcours.etapes[i];
+    if (!GESTES_TRANSPARENTS.has(e.geste)) return { etape: e, index: i };
+  }
+  return undefined;
+}
+
 /**
  * C6 — PORTÉE DÉRIVÉE (jamais un champ) :
  *  · `resultat:<concept>` pour un résultat de recherche (geste chercher) ;
@@ -465,7 +518,9 @@ export function porteeDe(modele, parcours, index) {
   if (producteurDe(modele, e.concept) === parcours.acteur && e.geste !== "saisir") {
     return `acteur:${parcours.acteur}`;
   }
-  const prec = parcours.etapes[index - 1];
+  // J1 — PROPAGATION : l'étape identitaire la plus proche en amont (les
+  // transparentes s'ignorent), plus jamais la seule adjacente.
+  const prec = amontIdentitaire(parcours, index);
   if (
     prec !== undefined &&
     (prec.geste === "consulter" || prec.geste === "choisir") &&
@@ -769,38 +824,40 @@ export function ecransDe(modele) {
     // la première rédaction exigeait la consommation APRÈS `consulter`,
     // alors que `consulter` EST le consommateur — l'arc y entre).
     for (const [i, e] of p.etapes.entries()) {
-      // (a) `consulter` CONSOMME : il lui faut une SOURCE d'identité — une
-      // étape précédente de collection du MÊME concept (ligne pressée).
-      if (e.geste === "consulter") {
-        const prec = p.etapes[i - 1];
+      // (a) `consulter` CONSOMME : source d'identité en amont PROPAGÉ (J1 —
+      // les transparentes s'ignorent), du MÊME concept. J2 : un concept
+      // d'IDENTITÉ DE L'ACTEUR (discriminant structurel s_identifier) se
+      // consulte sans ligne — singleton de soi, aucune source exigée.
+      if (e.geste === "consulter" && !estConceptIdentite(modele, e.concept)) {
+        const prec = amontIdentitaire(p, i);
         const sourceValide =
           prec !== undefined &&
           prec.concept === e.concept &&
-          ["decouvrir", "chercher", "consulter_historique", "choisir"].includes(prec.geste);
+          ["decouvrir", "chercher", "consulter_historique", "choisir", "consulter", "saisir"].includes(prec.geste);
         if (!sourceValide) {
           diagnostics.push(
             d("DERIVATION_IDENTITE_SANS_SOURCE", `parcours[${p.id}].etapes[${i}]`,
-              `consulter ${e.concept} sans étape de collection du même concept juste avant : aucune ligne ne fournit l'identité`),
+              `consulter ${e.concept} sans étape de données du même concept en amont : aucune ligne ne fournit l'identité`),
           );
         }
       }
-      // (b) `choisir` PRODUIT : l'identité élue doit être CONSOMMÉE en aval
-      // — une saisie de portée instance:<concept>, ou un consulter du même
-      // concept. Sinon le choix est jeté (le symptôme kaviva).
+      // (b) `choisir` PRODUIT : l'identité élue se PROPAGE (J1) jusqu'à sa
+      // consommation — par un consommateur DÉRIVÉ DE LA TABLE (J3 :
+      // consulter, retirer — transport itemId non électeur) du même
+      // concept, ou une saisie de portée instance. Une étape identitaire
+      // interposée qui touche une AUTRE identité ROMPT la chaîne.
       if (e.geste === "choisir") {
-        const aval = p.etapes.slice(i + 1);
-        const consomme = aval.some((x, j) => {
-          if (x.geste === "consulter" && x.concept === e.concept) return true;
-          if (x.geste === "saisir") {
-            const sf = surfaceDeLEtape(p.id, i + 1 + j);
-            return sf?.portee === `instance:${e.concept}`;
-          }
-          return false;
-        });
+        const suivant = avalIdentitaire(p, i);
+        const consommateurs = consommateursDIdentite();
+        const consomme =
+          suivant !== undefined &&
+          ((consommateurs.includes(suivant.etape.geste) && suivant.etape.concept === e.concept) ||
+            (suivant.etape.geste === "saisir" &&
+              surfaceDeLEtape(p.id, suivant.index)?.portee === `instance:${e.concept}`));
         if (!consomme) {
           diagnostics.push(
             d("DERIVATION_IDENTITE_NON_CONSOMMEE", `parcours[${p.id}].etapes[${i}]`,
-              `l'identité de ${e.concept} élue par choisir n'est consommée ni par une saisie de portée instance:${e.concept} ni par un détail du même concept`),
+              `l'identité de ${e.concept} élue par choisir n'atteint aucun consommateur (${consommateursDIdentite().join("/")} du même concept, ou saisie de portée instance:${e.concept}) — la première étape identitaire aval la remplace ou la jette`),
           );
         }
       }

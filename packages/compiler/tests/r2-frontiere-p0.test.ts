@@ -100,6 +100,9 @@ describe("B/C — les dérivations ne travaillent QUE sur le MODEL (balayage COM
     },
     obligationsPrescriptives: (m) =>
       derivationsModele.obligationsPrescriptives("base", m, derivationsModele.ecransDe(m)),
+    // EP-059 (édition consciente) — juges J2/J3, modèle seul.
+    consommateursDIdentite: () => derivationsModele.consommateursDIdentite(),
+    estConceptIdentite: (m) => derivationsModele.estConceptIdentite(m, m.concepts[0]?.id ?? ""),
   };
 
   it("COMPLÉTUDE — la batterie couvre CHAQUE fonction exportée des dérivations", () => {

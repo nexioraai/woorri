@@ -415,3 +415,20 @@ consommateurs d'identité) + 1 ambiguïté de contrat (etat-cible sur gestes
 mutants, famille O-1). Rien corrigé (interdit) ; fixture archivée ;
 traitement = passe dédiée sur GO. R6 se concevra contre CE réel. Dépense
 campagne 0,1795 $ · mission 4,5143 $.
+
+--- 2026-09-11 · PASSE JUGES J1–J3 + D6 etat (GO EP-059, 0 $) ---
+LA FIXTURE RÉELLE EST L'ATTENDU. J1 : la portée et la consommation
+d'identité se PROPAGENT à travers les gestes transparents (s_identifier,
+confirmer, payer) — pas de liste d'exceptions ; une étape interposée
+touchant une AUTRE identité rompt (mutation verte). J2 : singleton-de-soi
+par discriminant STRUCTUREL (concept touché par s_identifier) ; le
+concept-collection sans source reste refusé (mutation verte). J3 :
+consommateurs d'identité DÉRIVÉS de la table des gestes (retirer y entre
+par sa colonne transport, pas par énumération). D6 : etat d'étape = filtre
+consommé (lecture) ; l'état-cible a déjà son champ (transitions[].vers) ;
+invariant MODELE_ETAT_SUR_GESTE_MUTANT — la fixture réelle l'exhibe à P1
+(conséquence assumée, précédent EP-042 : le tirage canonique est ROUGE à
+P1 sous contrat corrigé). Prompt v5 re-scellé (EP-043). Cliquet de
+complétude honoré (24→26). Les 4 diagnostics de campagne DISPARUS sur le
+réel ; 8 tests dédiés ; compiler 393/393 ; paquets verts ; 27/27 apps.
+Re-campagne = GO séparé. Dépense passe : 0 $ · mission 4,5143 $.
