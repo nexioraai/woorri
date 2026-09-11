@@ -26,7 +26,7 @@
     },
     { "id": "cpt_creneau", "nom": "Créneau", "donnees": true,
       "attributs": [
-        { "id": "att_creneau_date", "nature": "date", "requis": true }
+        { "id": "att_creneau_intervalle", "nature": "intervalle", "requis": true }
       ] },
     { "id": "cpt_rendez_vous", "nom": "Rendez-vous", "donnees": true,
       "etats": ["a_venir", "passe"] },

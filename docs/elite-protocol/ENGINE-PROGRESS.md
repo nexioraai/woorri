@@ -233,3 +233,15 @@ videObligatoire voyage avec la surface (mutation : sans retirer, il tombe)
 · V4 : MODELE_ETAT_NON_OBSERVABLE (« annulé » atteint mais invisible —
 seul ; contrôle positif vert). EP-028/029/030 consignés ; EP-027 amendé
 (dry-run après R3). H couverte 8/8 — R3 = CLOSED plein. Tests 347→353.
+
+--- 2026-09-11 · INTÉGRATION MINIMALE P0 (0 $, EXECUTION_P0 = 0) ---
+Instrument du dry-run CONSTRUIT sans être exécuté : passe0.mjs (grammaire
+dérivée 3 750 o, prompt figé sha256 98014b65…, critère 2.1 structurel
+calibré sur la fixture — base verte + 2 mutations, observation 2.3
+instrumentée non jugée, fail-closed prouvé, rien de branché). EP-030
+amendé TEXTUELLEMENT (2.1/2.2/2.3), EP-031 (hash+déclarations), EP-032
+(portée pré-rédigée). Nature `intervalle` ajoutée (additive, amendement
+ratifié) + fixture calibrée. Tests compiler 353→362. Prochaine étape :
+3. dry-run P0 unique — GO BUDGÉTAIRE de Youssouf (~0,15 $) ·
+4. payer/EP-029 (D6, 0 $) · 5. R4 (bloqué par 3 et 4). Aucune fermeture
+n'ouvre l'étape suivante (EP-025).

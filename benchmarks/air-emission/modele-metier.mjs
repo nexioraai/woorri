@@ -33,7 +33,9 @@ export const RAISONS_NON_RETENUE = [
   "ambigu",
 ];
 
-export const NATURES_ATTRIBUT = ["texte", "nombre", "media", "date", "booleen", "reference"];
+// « intervalle » entre par l'amendement 2.1 d'EP-030 (ratifié) : une
+// ressource temporelle BORNÉE se décrit par un intervalle, pas une date.
+export const NATURES_ATTRIBUT = ["texte", "nombre", "media", "date", "intervalle", "booleen", "reference"];
 
 /**
  * TABLE DES GESTES — patrons structurels FERMÉS, dérivés de l'enveloppe

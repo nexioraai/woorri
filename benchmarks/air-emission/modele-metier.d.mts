@@ -1,7 +1,7 @@
 // Types du contrat modèle métier v1 (confrontation #9) — ombre du .mjs.
 export interface AttributConcept {
   id: string;
-  nature: "texte" | "nombre" | "media" | "date" | "booleen" | "reference";
+  nature: "texte" | "nombre" | "media" | "date" | "intervalle" | "booleen" | "reference";
   requis: boolean;
   cardinalite?: number;
   producteur?: string;
