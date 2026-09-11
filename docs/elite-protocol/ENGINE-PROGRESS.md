@@ -127,3 +127,18 @@ cardinalité, identité). XIV : 7 fixtures de modèle EXÉCUTÉES (mêmes règle
 ≥5 signatures distinctes, ablation par symbolisation isomorphe) —
 GENERICITE globale reste UNKNOWN (P2d/P3 non exécutés). Tests compiler
 289→308. 0 génération · 0 $ · 0 push.
+
+--- 2026-09-11 · R1 EXÉCUTÉ (GO humain, R1 uniquement) ---
+R1 = CLOSED. Enveloppe véridique PAR MÉTHODE (capabilityMethodsExecutees,
+données seules, cliquet de véracité étendu consciemment + contrôle négatif
+« aucun nom en dur dans le graphe »). ENVELOPE = GREEN prouvé par les
+instruments réels (evaluatePromises/evaluateIntentCoverage : 4 cibles auth
+vivantes, 0 morte, 0 satisfait-par-du-mort ; validateLocal réel : 5→0
+diagnostics, 0 $) ; contrôle négatif camera = morte. MODEL = RED prouvé
+sur la fixture MÉTIER slices/kaviva/kaviva-modele.json (P1 vert — bon
+modèle) : le document kaviva JETTE l'identité du créneau choisi (toutes
+les navigations de listes ent_creneau → saisie : consommation « aucune »).
+gate:fidelite : même silhouette qu'avant (12/2/3 — EP-010 préexistant,
+aucune amélioration silencieuse revendiquée). R0 NON entrepris (permis en
+parallèle, écarté pour garder la passe mono-périmètre). GO R2 : NON
+ACCORDÉ. Tests compiler 308→314, execution-contract 138→139.

@@ -56,6 +56,19 @@ export interface ExecutionEnvelope {
   readonly capabilitiesEmitCode: boolean;
   /** L'app peut-elle distinguer visiteur/connecté ET établir l'identité ? */
   readonly sessionEtablissable: boolean;
+  /**
+   * R1 (EP-020, 2026-09-11) — MÉTHODES DE CAPACITÉ RÉELLEMENT EXÉCUTÉES,
+   * par capability. `effects` ne peut pas porter `capability` en bloc (le
+   * cliquet de véracité l'a refusé, à raison : 61 promesses du corpus
+   * seraient passées vivantes sans qu'une ligne s'exécute). Mais l'inverse
+   * mentait AUSSI : les méthodes auth S'EXÉCUTENT (fournisseur embarqué,
+   * prouvé sur appareil), `sessionEtablissable: true` l'affirmait, et le
+   * juge (`controls`) les déclarait mortes — la règle 17 ordonnait de les
+   * tester et la validation refusait le document : boucle de réparation
+   * INGAGNABLE, mesurée sur kaviva (5 diagnostics). La granularité juste
+   * est PAR MÉTHODE : ce que le fournisseur embarqué honore, rien de plus.
+   */
+  readonly capabilityMethodsExecutees: Readonly<Record<string, readonly string[]>>;
   /** Le bloc `list` peut-il GROUPER ses lignes (sections, agenda par jour) ? */
   readonly listGrouping: boolean;
   /** Un Code Slot déclaré est-il INVOQUÉ par l'application générée ? */
@@ -204,6 +217,15 @@ export const EXECUTION_ENVELOPE_V1: ExecutionEnvelope = {
   // (D-059). Les règles `authorization` restent NON appliquées : une identité
   // non vérifiée ne peut pas fonder une autorisation.
   sessionEtablissable: true,
+
+  // R1 — la VÉRITÉ par méthode : exactement ce que `capabilites-auth.ts`
+  // honore (signIn, signOut, signUp, resetPassword — fournisseur local ET
+  // Supabase, mêmes branches). Le cliquet de véracité confronte cette liste
+  // aux branches réelles du fournisseur. AUCUNE autre capability : caméra,
+  // GPS, notifications restent mortes (capabilitiesEmitCode: false).
+  capabilityMethodsExecutees: {
+    auth: ["resetPassword", "signIn", "signOut", "signUp"],
+  },
 
   // AJOUT DU 2026-09-04 — lacune NOMMÉE, découverte en qualifiant les motifs
   // réfutés de `D-125`. Un besoin de PRÉSENTATION GROUPÉE — afficher les

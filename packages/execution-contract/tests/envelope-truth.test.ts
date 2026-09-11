@@ -536,9 +536,31 @@ describe("anti-dérive des oracles (D-101)", () => {
     );
   });
 
-  it("CONTRÔLE NÉGATIF : le cliquet sait détecter un effet non statué", () => {
-    // Sans lui, un `toContain` qui ne trouve jamais rien passerait pour preuve.
-    expect(GRAPHE.includes('"capability"')).toBe(false);
+  // ÉDITION CONSCIENTE (R1, EP-020, 2026-09-11) : le graphe STATUE désormais
+  // les effets `capability` — mais UNIQUEMENT par les données de l'enveloppe
+  // (`capabilityMethodsExecutees`). Le contrôle négatif évolue : aucun nom de
+  // capability ni de méthode ne doit exister EN DUR dans le graphe.
+  it("CONTRÔLE NÉGATIF : la branche capability du graphe est pilotée par les DONNÉES", () => {
+    expect(GRAPHE).toContain("capabilityMethodsExecutees");
+    for (const interdit of ['"auth"', '"signIn"', '"signUp"', '"signOut"', '"resetPassword"', '"camera"']) {
+      expect(GRAPHE.includes(interdit), `nom en dur ${interdit} dans le graphe`).toBe(false);
+    }
+  });
+
+  it("R1 — chaque méthode DÉCLARÉE exécutée a sa branche dans le fournisseur embarqué", () => {
+    const fournisseur = read("compiler/runtime/capabilites-auth.ts");
+    const declarees = EXECUTION_ENVELOPE_V1.capabilityMethodsExecutees;
+    expect(Object.keys(declarees)).toEqual(["auth"]);
+    for (const methode of declarees.auth ?? []) {
+      expect(fournisseur, `méthode ${methode} sans branche réelle`).toContain(
+        `call.method === "${methode}"`,
+      );
+    }
+    // CONTRÔLE NÉGATIF : rien d'autre n'est déclaré — la caméra, le GPS et
+    // les notifications restent MORTS (capabilitiesEmitCode: false), les
+    // promesses correspondantes du corpus restent cibles mortes.
+    expect(declarees.camera).toBeUndefined();
+    expect(EXECUTION_ENVELOPE_V1.capabilitiesEmitCode).toBe(false);
   });
 });
 

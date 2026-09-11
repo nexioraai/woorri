@@ -416,8 +416,15 @@ export function controls(air: Air, envelope: ExecutionEnvelope): readonly Contro
           // aurait invalidé le corpus GELÉ, qui en porte 3 et sert de base de
           // comparaison à toutes les mesures historiques. L'oracle doit dire la
           // vérité ; les gates en tirent les conséquences.
+          // R1 (EP-020) — un effet `capability` est exécuté SI l'enveloppe
+          // déclare sa MÉTHODE (données, jamais un cas nommé dans ce code) ;
+          // les deux autres conjonctions restent inchangées.
           executed:
-            executable.has(action.effect.kind) &&
+            (action.effect.kind === "capability"
+              ? (envelope.capabilityMethodsExecutees[action.effect.capability] ?? []).includes(
+                  action.effect.method,
+                )
+              : executable.has(action.effect.kind)) &&
             activable.has(action.trigger.kind) &&
             dispatcheReellement(air, block, action.id),
         });

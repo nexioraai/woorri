@@ -1,0 +1,75 @@
+{
+  "version": "modele-metier/1.0.0",
+  "couverture": {
+    "couverts": [
+      { "terme": "soins avec photo, durée et prix", "noeuds": ["cpt_soin"] },
+      { "terme": "créneaux", "noeuds": ["cpt_creneau"] },
+      { "terme": "rendez-vous à venir et passés", "noeuds": ["cpt_rendez_vous", "par_retrouver"] },
+      { "terme": "réserver à son nom avec date et heure", "noeuds": ["par_reserver"] },
+      { "terme": "compte et profil de la cliente", "noeuds": ["act_cliente", "par_identite"] }
+    ],
+    "nonRetenus": [
+      { "terme": "donner envie dès l'accueil", "raison": "expression_visuelle" }
+    ]
+  },
+  "acteurs": [{ "id": "act_cliente", "nom": "Cliente" }],
+  "concepts": [
+    {
+      "id": "cpt_soin",
+      "nom": "Soin",
+      "donnees": true,
+      "attributs": [
+        { "id": "att_soin_photo", "nature": "media", "requis": true },
+        { "id": "att_soin_duree", "nature": "nombre", "requis": true },
+        { "id": "att_soin_prix", "nature": "nombre", "requis": true }
+      ]
+    },
+    { "id": "cpt_creneau", "nom": "Créneau", "donnees": true,
+      "attributs": [
+        { "id": "att_creneau_date", "nature": "date", "requis": true }
+      ] },
+    { "id": "cpt_rendez_vous", "nom": "Rendez-vous", "donnees": true,
+      "etats": ["a_venir", "passe"] },
+    { "id": "cpt_profil", "nom": "Profil", "donnees": true,
+      "attributs": [{ "id": "att_profil_tel", "nature": "texte", "requis": true }] }
+  ],
+  "relations": [
+    { "de": "cpt_rendez_vous", "vers": "cpt_soin", "nature": "reference" },
+    { "de": "cpt_rendez_vous", "vers": "cpt_creneau", "nature": "reference" },
+    { "de": "cpt_rendez_vous", "vers": "cpt_profil", "nature": "reference" }
+  ],
+  "parcours": [
+    {
+      "id": "par_reserver",
+      "besoin": "choisir un créneau et réserver un rendez-vous à son nom avec date et heure",
+      "acteur": "act_cliente",
+      "etapes": [
+        { "concept": "cpt_soin", "geste": "decouvrir" },
+        { "concept": "cpt_soin", "geste": "chercher" },
+        { "concept": "cpt_soin", "geste": "consulter" },
+        { "concept": "cpt_creneau", "geste": "choisir" },
+        { "concept": "cpt_rendez_vous", "geste": "saisir" },
+        { "concept": "cpt_rendez_vous", "geste": "confirmer" }
+      ]
+    },
+    {
+      "id": "par_retrouver",
+      "besoin": "retrouver ses rendez-vous à venir et passés",
+      "acteur": "act_cliente",
+      "etapes": [
+        { "concept": "cpt_rendez_vous", "geste": "consulter_historique", "etat": "a_venir" },
+        { "concept": "cpt_rendez_vous", "geste": "consulter_historique", "etat": "passe" }
+      ]
+    },
+    {
+      "id": "par_identite",
+      "besoin": "créer un compte et gérer son profil",
+      "acteur": "act_cliente",
+      "etapes": [
+        { "concept": "cpt_profil", "geste": "s_identifier" },
+        { "concept": "cpt_profil", "geste": "saisir" },
+        { "concept": "cpt_profil", "geste": "confirmer" }
+      ]
+    }
+  ]
+}
