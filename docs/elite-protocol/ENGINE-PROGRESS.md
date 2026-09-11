@@ -92,3 +92,16 @@ F9 = UNKNOWN (déclaré ; protocole prêt ; exécution = R4) · F10 CLOSED
 (ordre justifié par F2). Non-fonctionnalités v1 déclarées. Gates K
 consolidées. Hold-out NON EXERCÉ. Tests : compiler 289/289 (+17 nouveaux),
 paquets verts. 0 génération · 0 $ · 0 build · 0 push.
+
+--- 2026-09-11 · CONFRONTATION #10 (surfaces/assemblage/identité, analyse seule) ---
+Verdict PARTIAL. Vérifié au code : la mécanique d'identité EXISTE
+(useItemNavigate, itemId, DETAIL_SANS_SOURCE) mais la cible d'une ligne
+n'est PAS contrainte au détail du même concept (L1 — le bug « Produit A →
+Catalogue » est représentable). Formalisé : SURFACE_ROLE dérivé, règle
+ACCÈS ≠ ABSORPTION (une responsabilité pleine max/écran — HOME/ACCOUNT
+structurels), anti-répétition par quadruplet (concept, geste, état,
+portée), SURFACE CONTRACT = schéma de P2c (pas une couche nouvelle),
+COMPOSITION CONTRACT = CompositionPlan existant. Trouvaille L5 : règle 19
+du prompt nomme des secteurs (références) → retrait en R5. Lacunes L1–L6
+consignées avec propriétaires. GENERICITE toujours UNKNOWN. R0→R8 : ordre
+inchangé, contenus enrichis. 0 code · 0 $ · 0 build.
