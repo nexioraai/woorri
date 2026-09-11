@@ -13,7 +13,6 @@
 // kaviva-modele.json N'A PAS été consultée pour le rédiger — elle est la
 // RÉPONSE ATTENDUE du dry-run, pas une pièce de l'énoncé.
 import { z } from "zod";
-import { clampMinItems, stripKeys } from "./schema-levels.mjs";
 import {
   GESTES,
   GESTES_TERMINAUX,
@@ -27,18 +26,14 @@ import {
   validerModele,
 } from "./modele-metier.mjs";
 
-/** Grammaire DÉRIVÉE du contrat — jamais réécrite à côté. Le seul
- * traitement est `clampMinItems` (transformation RATIFIÉE de l'échelle,
- * leçon EP-021 : l'API refuse minItems > 1 ; le contrat porte des min(2)). */
+/** Grammaire DÉRIVÉE du contrat — CANONIQUE, sans aucun traitement :
+ * les dégradations de dialecte appartiennent à l'ADAPTATEUR (EP-051). */
 export function grammaireP0() {
-  // EP-033-ter (mesuré au premier lancement, 400 AVANT facturation) : l'API
-  // refuse minimum/maximum sur les entiers — retirés par l'outil RATIFIÉ de
-  // l'échelle (stripKeys). Chaque contrainte retirée est ÉNUMÉRÉE par le
-  // cliquet V-A et REFERMÉE par P1 (le contrat complet juge la sortie).
-  return stripKeys(
-    clampMinItems(z.toJSONSchema(modeleMetierSchema, { target: "draft-2020-12" })),
-    ["minimum", "maximum", "exclusiveMinimum", "exclusiveMaximum"],
-  );
+  // EP-051 — la grammaire est CANONIQUE : le contrat, rien que le contrat
+  // (min(2), bornes numériques : PRÉSENTS — preuve qu'aucun dialecte n'a
+  // fui ici). Les dégradations fournisseur vivent dans l'ADAPTATEUR, qui
+  // les DÉCLARE (degraderGrammaire) ; chaque écart reste refermé par P1.
+  return z.toJSONSchema(modeleMetierSchema, { target: "draft-2020-12" });
 }
 
 export const PROMPT_P0 = [

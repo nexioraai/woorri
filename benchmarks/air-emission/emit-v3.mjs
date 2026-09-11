@@ -32,7 +32,7 @@
 import { mkdirSync, readFileSync, writeFileSync, appendFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import Anthropic from "@anthropic-ai/sdk";
+// EP-051 — le SDK vit dans l'ADAPTATEUR ; ce script n'en connaît plus le nom.
 import { z } from "zod";
 import { INTENTIONS } from "./intentions.mjs";
 
@@ -48,8 +48,10 @@ const { ROLES_ICONES } = await import(join(REPO, "packages/primitives/src/roles-
 const { obligationsPourPasse } = await import(join(HERE, "obligations-passes.mjs"));
 const repairScope = await import(join(REPO, "packages/repair/src/repair-scope.ts"));
 const budgetUsd = await import(join(REPO, "packages/repair/src/budget-usd.ts"));
+// EP-051 — LA frontière fournisseur : tout dialecte passe par lui.
+const adaptateur = await import(join(HERE, "adaptateur-anthropic.mjs"));
 const preservation = await import(join(REPO, "packages/repair/src/preservation.ts"));
-const { makeLevels } = await import(join(HERE, "schema-levels.mjs"));
+// EP-051 — l'échelle vient de l'adaptateur (degradationsPourEchelle).
 const executionContract = await import(join(REPO, "packages/execution-contract/src/envelope.ts"));
 const executionGraph = await import(join(REPO, "packages/execution-contract/src/graph.ts"));
 const fidelity = await import(join(REPO, "packages/fidelity/src/index.ts"));
@@ -101,15 +103,9 @@ const surfaceEnveloppe = () => {
   );
 };
 
-// --- Clé : lue depuis apps/web/.env.local, jamais journalisée. ---
-function apiKey() {
-  const env = readFileSync(join(REPO, "apps/web/.env.local"), "utf8");
-  const m = env.match(/^ANTHROPIC_API_KEY=("?)([^"\n]+)\1$/m);
-  if (!m) throw new Error("ANTHROPIC_API_KEY introuvable dans apps/web/.env.local");
-  return m[2].trim();
-}
+// EP-051 — la clé appartient à l'adaptateur (CONFIG.cheminCle/motifCle).
 
-const MODEL = "claude-opus-5";
+const MODEL = adaptateur.CONFIG.model; // EP-051 — paramètre d'adaptateur, plus une hypothèse.
 // PORTÉ À 16000 (D-078) — mesuré, pas supposé : la campagne a échoué sur son
 // PREMIER domaine avec « Unexpected end of JSON input » après 202 s et 0,53 $.
 // La réponse était TRONQUÉE. Les sept règles ajoutées demandent bien plus de
@@ -137,19 +133,19 @@ const MAX_TOKENS = 24000;
 // dépassent. Un abandon coûte le domaine ENTIER et ce qui a déjà été facturé
 // (1,47 $ perdu sur `boutique-mode`). 20 minutes et deux reprises : le SDK
 // rejoue lui-même, sans relancer toute la campagne.
-const client = new Anthropic({
-  apiKey: apiKey(),
-  timeout: 20 * 60 * 1000,
-  maxRetries: 2,
-});
+const client = await adaptateur.creerClient(
+  (chemin) => readFileSync(join(REPO, ...chemin), "utf8"),
+  { timeout: 20 * 60 * 1000, maxRetries: 2 },
+);
 
-// Tarifs publics claude-opus-5, $/MTok (mêmes valeurs que le banc coûts).
-const PRIX = { in: 5, cacheWrite: 6.25, cacheRead: 0.5, out: 25 };
-const coutUSD = (u) =>
-  ((u.input_tokens ?? 0) * PRIX.in +
-    (u.cache_creation_input_tokens ?? 0) * PRIX.cacheWrite +
-    (u.cache_read_input_tokens ?? 0) * PRIX.cacheRead +
-    (u.output_tokens ?? 0) * PRIX.out) / 1e6;
+// EP-051 — tarifs et lecture d'usage : dialecte de l'adaptateur.
+const PRIX = {
+  in: adaptateur.CONFIG.prixParMtok.entree,
+  cacheWrite: adaptateur.CONFIG.prixParMtok.ecritureCache,
+  cacheRead: adaptateur.CONFIG.prixParMtok.lectureCache,
+  out: adaptateur.CONFIG.prixParMtok.sortie,
+};
+const coutUSD = (u) => adaptateur.coutUsd(adaptateur.lireUsage(u));
 
 // --- Découpage en sections : 5 groupes, chacun ACCEPTÉ par la grammaire
 // structured outputs (sondé section par section puis par groupes —
@@ -232,7 +228,8 @@ const PARTS = [
 for (const part of PARTS) {
   const pick = Object.fromEntries(part.keys.map((k) => [k, true]));
   part.zod = airSchema.projectAirSchema.pick(pick);
-  part.levels = makeLevels(z.toJSONSchema(part.zod, { target: "draft-2020-12" }));
+  // EP-051 — l'ÉCHELLE de dégradation est DÉCLARÉE par l'adaptateur.
+  part.levels = adaptateur.degradationsPourEchelle(z.toJSONSchema(part.zod, { target: "draft-2020-12" }));
   part.levelIndex = 0;
 }
 
@@ -451,13 +448,14 @@ async function callPart(part, system, userText, label, usage) {
       label,
     );
     try {
-      const response = await client.messages.create({
-        model: MODEL,
-        max_tokens: MAX_TOKENS,
-        system: [{ type: "text", text: system, cache_control: { type: "ephemeral" } }],
-        messages: [{ role: "user", content: userText }],
-        output_config: { format: { type: "json_schema", schema: level.schema } },
-      });
+      // EP-051 — la charge utile est CONSTRUITE PAR L'ADAPTATEUR (cache du
+      // système compris : capacité déclarée, plus un savoir local).
+      const response = await client.messages.create(
+        adaptateur.construireAppelCampagne(
+          { system, user: userText, grammaire: level.schema },
+          { max_tokens: MAX_TOKENS },
+        ),
+      );
       // ── UN APPEL QUI A EU LIEU EST UN APPEL FACTURÉ (2026-09-01).
       //
       // CAUSE RACINE MESURÉE : la comptabilité vivait APRÈS le `throw` de
@@ -486,7 +484,7 @@ async function callPart(part, system, userText, label, usage) {
       // « Unexpected end of JSON input » : le JSON n'était pas invalide, il
       // était COUPÉ. Nommer la cause au bon endroit évite de chercher un défaut
       // de schéma là où il n'y a qu'un plafond de jetons.
-      if (response.stop_reason === "max_tokens") {
+      if (adaptateur.lireReponse(response).tronquee) {
         // ── LE CORPS PAYÉ VOYAGE AVEC L'ERREUR (2026-09-01).
         //
         // CAUSE RACINE : cette erreur était levée sans son contenu. Les jetons
@@ -517,7 +515,7 @@ async function callPart(part, system, userText, label, usage) {
       return response;
     } catch (error) {
       const msg = String(error?.message ?? error);
-      if (error?.status === 400 && part.levelIndex < part.levels.length - 1) {
+      if (adaptateur.estErreurGrammaire(error) && part.levelIndex < part.levels.length - 1) {
         console.log(`  [${label}] niveau "${level.name}" refusé — dégradation : ${msg.slice(0, 140)}`);
         continue;
       }
@@ -802,10 +800,10 @@ async function emitSections(system, contextText, label, usage, refusals, accumul
         : "") +
       (obligations === "" ? "" : `\n\n${obligations}`);
     let response = await callPart(part, system, user, `${label}:${part.name}`, usage);
-    if (response.stop_reason === "refusal") {
+    if (adaptateur.lireReponse(response).refusee) {
       refusals.count++;
       response = await callPart(part, system, user, `${label}:${part.name}#retry`, usage);
-      if (response.stop_reason === "refusal") {
+      if (adaptateur.lireReponse(response).refusee) {
         refusals.count++;
         throw new Error(`refus persistant sur ${part.name}`);
       }
@@ -872,7 +870,7 @@ async function repairSections(
       "est détectée et la réparation REJETÉE. Si une exigence te semble " +
       "impossible à tenir, construis-la quand même dans la section qui la porte.";
     let response = await callPart(part, SYSTEM_EMIT, user, `${label}:${part.name}#repair`, usage);
-    if (response.stop_reason === "refusal") {
+    if (adaptateur.lireReponse(response).refusee) {
       refusals.count++;
       continue;
     }

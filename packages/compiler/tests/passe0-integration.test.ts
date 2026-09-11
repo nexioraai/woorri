@@ -15,18 +15,14 @@ import {
   jugerSortieP0,
   PROMPT_P0,
 } from "../../../benchmarks/air-emission/passe0.mjs";
-import { z } from "zod";
 import {
   GESTES,
   migrerModele,
-  modeleMetierSchema,
   NATURES_ATTRIBUT,
   RAISONS_NON_RETENUE,
   type ModeleMetier,
 } from "../../../benchmarks/air-emission/modele-metier.mjs";
 
-const zToJson = (): unknown =>
-  z.toJSONSchema(modeleMetierSchema as never, { target: "draft-2020-12" });
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const R = join(HERE, "..", "..", "..");
@@ -45,18 +41,34 @@ describe("intégration minimale P0 — l'instrument, pas l'exécution", () => {
     expect(createHash("sha256").update(PROMPT_P0).digest("hex")).toBe(HASH_PROMPT_FIGE);
   });
 
-  it("la grammaire est DÉRIVÉE du contrat (pas dupliquée) et acceptable par l'API", () => {
+  it("EP-051 · la grammaire du CONTRAT est CANONIQUE — le dialecte n'y a pas fui", () => {
     const source = readFileSync(join(R, "benchmarks", "air-emission", "passe0.mjs"), "utf8");
     expect(source).toContain("z.toJSONSchema(modeleMetierSchema");
-    expect(source).toContain("clampMinItems");
-    const g = grammaireP0();
-    const json = JSON.stringify(g);
-    // couverture est EXIGÉE par la grammaire ; aucun minItems > 1 (EP-021).
+    // PREUVE D'IMPOSSIBILITÉ (forme R2) : plus AUCUNE transformation de
+    // dialecte dans le module contrat — et la grammaire porte encore ses
+    // contraintes PLEINES (min(2) présent, bornes numériques présentes).
+    expect(source.includes("clampMinItems")).toBe(false);
+    expect(source.includes("stripKeys")).toBe(false);
+    const json = JSON.stringify(grammaireP0());
     expect(json).toContain('"couverture"');
-    const minItems = [...json.matchAll(/"minItems":(\d+)/g)].map((m) => Number(m[1]));
-    expect(minItems.length).toBeGreaterThan(0);
+    expect(json).toContain('"minItems":2');
+    expect(json).toContain('"minimum"');
+  });
+
+  it("EP-051 · l'ADAPTATEUR dégrade et DÉCLARE — écarts déclarés ≡ mesurés ≡ épinglés", async () => {
+    const adaptateur = await import("../../../benchmarks/air-emission/adaptateur-anthropic.mjs");
+    const { grammaire, ecarts } = adaptateur.degraderGrammaire(grammaireP0());
+    const json = JSON.stringify(grammaire);
+    const minItems = [...json.matchAll(/"minItems":(\d+)/g)].map((x) => Number(x[1]));
     for (const v of minItems) expect(v).toBeLessThanOrEqual(1);
-    expect(json.includes("maxItems")).toBe(false);
+    expect(json.includes('"minimum"')).toBe(false);
+    expect(ecarts).toEqual([
+      "$.properties.concepts.items.properties.attributs.items.properties.cardinalite.maximum 9007199254740991→retiré",
+      "$.properties.concepts.items.properties.attributs.items.properties.cardinalite.minimum 1→retiré",
+      "$.properties.parcours.items.properties.etapes.minItems 2→1",
+      "$.properties.parcours.items.properties.priorite.maximum 9007199254740991→retiré",
+      "$.properties.parcours.items.properties.priorite.minimum 0→retiré",
+    ]);
   });
 
   it("§2 post-matrice — la règle O-2 du prompt est DÉRIVÉE de la table des gestes", async () => {
@@ -169,38 +181,6 @@ describe("intégration minimale P0 — l'instrument, pas l'exécution", () => {
     expect(b).toBeGreaterThan(a);
     // et le PASS/FAIL n'en dépend PAS (non jugée) :
     expect(verdictDeverse.ok).toBe(verdictPropre.ok);
-  });
-
-  it("V-A · CLIQUET — l'écart contrat/grammaire est EXACTEMENT énuméré", () => {
-    // Le clamp relâche la grammaire ; chaque relâchement DOIT être listé ici
-    // et refermé par un test de refus P1 (ci-dessous). Une contrainte min(N)
-    // ajoutée au contrat sans sa paire de tests fera échouer ce cliquet.
-    const brut = zToJson();
-    const clampe = grammaireP0();
-    const ecarts: string[] = [];
-    const marcher = (a: unknown, b: unknown, chemin: string) => {
-      if (a === null || typeof a !== "object") return;
-      for (const k of Object.keys(a)) {
-        const av = (a as Record<string, unknown>)[k];
-        const bv = (b as Record<string, unknown> | undefined)?.[k];
-        if (k === "minItems" && av !== bv) ecarts.push(`${chemin}.minItems ${String(av)}→${String(bv)}`);
-        else if (["minimum", "maximum", "exclusiveMinimum", "exclusiveMaximum"].includes(k) && bv === undefined)
-          ecarts.push(`${chemin}.${k} ${String(av)}→retiré`);
-        else if (typeof av === "object") marcher(av, bv, `${chemin}.${k}`);
-      }
-    };
-    marcher(brut, clampe, "$");
-    expect(ecarts.sort()).toEqual([
-      // EP-033-ter — l'API refuse les bornes numériques sur les entiers :
-      // retirées de la GRAMMAIRE, tenues par le CONTRAT (refus P1 ci-dessous).
-      // (les maximum MAX_SAFE_INTEGER viennent de z.int() lui-même — retirés
-      // au même titre, refermés par le même schéma strict.)
-      "$.properties.concepts.items.properties.attributs.items.properties.cardinalite.maximum 9007199254740991→retiré",
-      "$.properties.concepts.items.properties.attributs.items.properties.cardinalite.minimum 1→retiré",
-      "$.properties.parcours.items.properties.etapes.minItems 2→1",
-      "$.properties.parcours.items.properties.priorite.maximum 9007199254740991→retiré",
-      "$.properties.parcours.items.properties.priorite.minimum 0→retiré",
-    ]);
   });
 
   it("V-A · REFUS — une sortie conforme à la grammaire mais violant le contrat (1 étape) est REFUSÉE par P1", () => {

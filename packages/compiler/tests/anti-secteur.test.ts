@@ -68,3 +68,37 @@ describe("C7 — aucun routeur sectoriel dans les chemins décisionnels", () => 
     }
   });
 });
+
+describe("EP-049/EP-051 — cliquet FOURNISSEUR : aucun nom hors adaptateur+config", () => {
+  const normaliser = (t: string) =>
+    t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const detecte = (texte: string, terme: string): boolean =>
+    new RegExp(`(^|[^a-z-])${terme}[a-z-]*`).test(normaliser(texte));
+  const TERMES = ["anthropic", "claude", "openai", "gpt-", "gemini", "mistral"];
+  // PÉRIMÈTRE DÉCLARÉ : modules contrat + pipeline actif. EXCLUS et pourquoi :
+  // adaptateur-*.mjs (LA frontière — le dialecte y VIT), intentions.mjs
+  // (données de test), attic/ et probe-*.mjs (instruments historiques gelés),
+  // results/ (archives).
+  const CIBLES = [
+    "modele-metier.mjs", "passe0.mjs", "obligations-passes.mjs",
+    "schema-levels.mjs", "dry-run-p0.mjs", "emit-v3.mjs",
+  ];
+  it("les modules contrat et le pipeline actif ignorent tout nom de fournisseur/modèle", () => {
+    for (const f of CIBLES) {
+      const code = readFileSync(join(R, "benchmarks", "air-emission", f), "utf8")
+        .split("\n")
+        // le nom du FICHIER adaptateur est le seul toponyme permis (import).
+        .map((l) => l.replace(/adaptateur-anthropic/g, "adaptateur-FRONTIERE"))
+        .filter((l) => !l.trim().startsWith("//") && !l.trim().startsWith("*"))
+        .join("\n");
+      for (const t of TERMES) {
+        expect(detecte(code, t), `${f} : « ${t} »`).toBe(false);
+      }
+    }
+  });
+  it("CONTRÔLES NÉGATIFS — le scan détecte bien les variantes", () => {
+    expect(detecte('model: "claude-opus-5"', "claude")).toBe(true);
+    expect(detecte("import Anthropic from", "anthropic")).toBe(true);
+    expect(detecte("un mot anodin", "claude")).toBe(false);
+  });
+});

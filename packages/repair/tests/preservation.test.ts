@@ -329,8 +329,11 @@ describe("cliquet de véracité — le harnais d'émission RÉEL est confronté 
 
   it("🔴 le corps d'une réponse TRONQUÉE est attaché à l'erreur, pas jeté", () => {
     expect(code).toContain("preservation.CLE_CORPS_TRONQUE");
-    // L'attache se fait AVANT le `throw`, sur l'erreur de troncature elle-même.
-    const bloc = code.slice(code.indexOf('stop_reason === "max_tokens"'));
+    // ÉDITION CONSCIENTE (EP-051) : l'ancre `stop_reason === "max_tokens"`
+    // était du DIALECTE — la troncature se lit désormais par l'adaptateur
+    // (`lireReponse(response).tronquee`). La PROPRIÉTÉ gardée est la même :
+    // l'attache se fait AVANT le `throw`, sur l'erreur de troncature.
+    const bloc = code.slice(code.indexOf("lireReponse(response).tronquee"));
     expect(bloc.slice(0, 1400)).toContain("preservation.attacherPartiel(tronquee");
     // Et le rattrapage le relit pour le déposer.
     expect(code).toContain("preservation.partielDeLErreur(error, preservation.CLE_CORPS_TRONQUE)");
@@ -356,7 +359,8 @@ describe("cliquet de véracité — le harnais d'émission RÉEL est confronté 
     const corps = code.slice(code.indexOf("async function callPart"));
     const iPush = corps.indexOf("usage.push(response.usage)");
     const iAjout = corps.indexOf("etatDepense = budgetUsd.ajouter");
-    const iTronc = corps.indexOf('stop_reason === "max_tokens"');
+    // ÉDITION CONSCIENTE (EP-051) : ancre de troncature neutre (adaptateur).
+    const iTronc = corps.indexOf("lireReponse(response).tronquee");
     expect(iPush, "usage.push absent de callPart").toBeGreaterThan(-1);
     expect(iPush, "la comptabilité doit PRÉCÉDER la troncature").toBeLessThan(iTronc);
     expect(iAjout, "le cumul doit PRÉCÉDER la troncature").toBeLessThan(iTronc);
@@ -408,12 +412,17 @@ describe("cliquet de véracité — le harnais d'émission RÉEL est confronté 
   });
 
   it("🔴 l'échelle de dégradation vit dans un module PUR, testable", () => {
-    // Tant que ces fonctions vivaient dans le harnais — qui exécute sa campagne
-    // au chargement — seul un cliquet textuel pouvait les voir, jamais leur
-    // comportement.
-    expect(code).toContain('await import(join(HERE, "schema-levels.mjs"))');
-    expect(occurrences("function makeLevels")).toBe(0);
-    expect(occurrences("function clampMinItems")).toBe(0);
+    // ÉDITION CONSCIENTE (EP-051) : l'échelle est désormais DÉCLARÉE par
+    // l'ADAPTATEUR (degradationsPourEchelle), qui consomme lui-même le
+    // module PUR schema-levels — la propriété (échelle testable hors appel)
+    // est inchangée, la chaîne passe par la frontière fournisseur.
+    expect(code).toContain("adaptateur.degradationsPourEchelle(");
+    const adaptateurSrc = readFileSync(
+      join(REPO, "benchmarks", "air-emission", "adaptateur-anthropic.mjs"),
+      "utf8",
+    );
+    expect(adaptateurSrc).toContain('from "./schema-levels.mjs"');
+    expect(adaptateurSrc).toContain("makeLevels");
   });
 
   it("🔴 tout artefact déposé porte son `runId` et ne peut pas en écraser un autre", () => {

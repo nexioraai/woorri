@@ -362,3 +362,17 @@ permanente des 90 % (câblée au lanceur) ; P0_SORTIE_TRONQUEE ≠ NON_JSON
 tokens / 0,30 $ ; série-témoin v1 scellée par noms. Tests 378/378.
 RELANCE : GO budgétaire NEUF requis (~0,25-0,30 $). 0 $ cette passe ·
 mission 4,1942 $.
+
+--- 2026-09-11 · PASSE ADAPTATEUR (GO EP-051, 0 $) — FERMÉE ---
+LA frontière existe : tout dialecte (SDK, formats, json_schema, clamps,
+stop_reason, usage, tarifs, modèle, clé, erreurs) vit dans
+adaptateur-anthropic.mjs ; grammaireP0 = CANONIQUE (min(2)/bornes présents,
+prouvé) ; écarts EP-037 = PAR ADAPTATEUR (déclarés ≡ mesurés ≡ épinglés,
+refermés P1) ; échelle DÉCLARÉE ; erreurs par STATUT ; emit-v3/dry-run :
+0 occurrence de dialecte (mesuré) ; cliquet fournisseur + contrôles
+négatifs ; 3 cliquets de préservation ré-ancrés consciemment ; garde sans
+GO revérifiée. Chemin campagne adapté NON EXERCÉ (prochain run payé).
+Tests compiler 380/380, repair 38/38. SUITE : 2. tirage (grammaire
+canonique + dialecte déclaré) — GO budgétaire NEUF, plafond 0,30 $ ·
+3. second adaptateur/productibilité croisée — à arbitrer. 0 $ · mission
+4,1942 $.
