@@ -185,3 +185,20 @@ inchangée ; suffisance verte sur modèle sain, rouge sur modèle amputé).
 AUCUNE violation trouvée à l'audit — aucune correction moteur nécessaire.
 AUCUNE exécution P0 (aurait été payante — non requise). Tests 321→329.
 R2 = CLOSED (13 critères tenus) · R3 = NON COMMENCÉ · 0 $ · 0 push.
+
+--- 2026-09-11 · RÉPONSES AU VERDICT R2 (registre seul, 0 code) ---
+Q1 (posée 3×, RÉPONDUE) : l'inventaire est produit par `inventaireDe(brief)`
+— modele-metier.mjs:548 — lexicalisation DÉTERMINISTE du brief BRUT
+(normalisation, tokens ≥3, STOPWORDS_FR fermés) ; AUCUNE sortie de P0 n'y
+entre : P0 ne peut pas influencer son contenu (redevabilité réelle ; la
+liste de mots-outils est du code versionné, modifiable seulement par
+édition consciente). Q2 (RÉPONDUE) : NON — P0 n'émet pas `couverture`
+aujourd'hui car P0 n'existe pas comme passe branchée (ni schéma de sortie,
+ni prompt) ; intégration DUE, réattribuée par EP-027 (construction R5 à
+0 $, premier dry-run sous GO dédié AVANT R8). Registre : EP-024 et EP-025
+existaient DÉJÀ (commit 91a619b — le « pourquoi » du contrôle négatif et
+« l'ordre contraint les fermetures » y sont textuels) ; la seule ligne
+réellement manquante était #6-10+ → EP-026 (décision propriétaire :
+retransmettre ou déclarer nulles). R3 : PRÊT (dizaine de fixtures de
+mutation du juge, une par invariant de H, 0 $) — NON COMMENCÉ :
+« RECOMMANDÉ » n'est pas « ACCORDÉ » (EP-018/EP-025), GO explicite attendu.
