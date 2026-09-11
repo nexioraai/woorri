@@ -271,3 +271,16 @@ Réglages consignés AVANT l'appel (EP-033) : claude-opus-5, max_tokens
 EP-032 (kaviva, rien d'autre) + relever 2.3 même bonne. FAIL ⇒ STOP, règle
 2.2. EN ATTENTE DU GO BUDGÉTAIRE DE YOUSSOUF. Rien d'autre n'est ouvert :
 payer/EP-029 hors périmètre, R4 bloqué.
+
+--- 2026-09-11 · DRY-RUN P0 — TIRAGE 1/3 EXÉCUTÉ (GO délégué EP-034) ---
+Deux gardes ont mordu AVANT toute dépense : plafond (max_tokens 24000
+copié de la campagne → 0,60 $ estimé — amendé 6000, EP-033-bis) puis API
+400 à la validation (bornes numériques sur entiers refusées — 0 token
+facturé, classe EP-021 — grammaire ajustée par l'outil ratifié, cliquet
+V-A étendu à 5 écarts tous refermés par P1, EP-033-ter). TIRAGE :
+0,1630 $ · P1 VERT (0 diagnostic) · critère 2.1 FAIL (intervalle posé en
+requis:false sur la durée — à un booléen du PASS) · observation 2.3 :
+14,3 %, zéro déversement. VERDICT = FAIL 1/3. CONDUITE : STOP — tirages
+2-3 sous GO DISTINCT, RIEN n'est modifié entre (prompt/grammaire/contrat/
+fixture scellés). T2 non vert. payer/EP-029 toujours bloquant R4.
+Dépense totale mission : 3,5509 + 0,1630 = 3,7139 $.

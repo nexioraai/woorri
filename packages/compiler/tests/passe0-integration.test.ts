@@ -166,12 +166,22 @@ describe("intégration minimale P0 — l'instrument, pas l'exécution", () => {
         const av = (a as Record<string, unknown>)[k];
         const bv = (b as Record<string, unknown> | undefined)?.[k];
         if (k === "minItems" && av !== bv) ecarts.push(`${chemin}.minItems ${String(av)}→${String(bv)}`);
+        else if (["minimum", "maximum", "exclusiveMinimum", "exclusiveMaximum"].includes(k) && bv === undefined)
+          ecarts.push(`${chemin}.${k} ${String(av)}→retiré`);
         else if (typeof av === "object") marcher(av, bv, `${chemin}.${k}`);
       }
     };
     marcher(brut, clampe, "$");
-    expect(ecarts).toEqual([
+    expect(ecarts.sort()).toEqual([
+      // EP-033-ter — l'API refuse les bornes numériques sur les entiers :
+      // retirées de la GRAMMAIRE, tenues par le CONTRAT (refus P1 ci-dessous).
+      // (les maximum MAX_SAFE_INTEGER viennent de z.int() lui-même — retirés
+      // au même titre, refermés par le même schéma strict.)
+      "$.properties.concepts.items.properties.attributs.items.properties.cardinalite.maximum 9007199254740991→retiré",
+      "$.properties.concepts.items.properties.attributs.items.properties.cardinalite.minimum 1→retiré",
       "$.properties.parcours.items.properties.etapes.minItems 2→1",
+      "$.properties.parcours.items.properties.priorite.maximum 9007199254740991→retiré",
+      "$.properties.parcours.items.properties.priorite.minimum 0→retiré",
     ]);
   });
 
@@ -184,6 +194,15 @@ describe("intégration minimale P0 — l'instrument, pas l'exécution", () => {
     expect(verdict.modele).toBeUndefined();
     const schema = verdict.diagnostics.find((d) => d.code === "MODELE_SCHEMA");
     expect(schema?.path).toContain("etapes");
+  });
+
+  it("V-A · REFUS — une cardinalite hors borne (admise par la grammaire) est REFUSÉE par P1", () => {
+    const sortie = structuredClone(FIXTURE);
+    const soin = sortie.concepts.find((c) => c.id === "cpt_soin");
+    if (soin?.attributs?.[0]) soin.attributs[0].cardinalite = 0;
+    const verdict = jugerSortieP0(JSON.stringify(sortie), "brief");
+    expect(verdict.ok).toBe(false);
+    expect(verdict.diagnostics.some((d) => d.code === "MODELE_SCHEMA" && d.path.includes("cardinalite"))).toBe(true);
   });
 
   it("la requête assemble système + brief + grammaire — sans rien exécuter", () => {

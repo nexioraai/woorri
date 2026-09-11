@@ -18,7 +18,9 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 // ── RÉGLAGES CONSIGNÉS (EP-033) — identiques à la campagne, rien d'improvisé ──
 const REGLAGES = {
   model: "claude-opus-5",
-  max_tokens: 24000,
+  // EP-033-bis (consigné AVANT l'appel) : 24000 copiait la campagne et
+  // faisait sauter la garde (pire cas 0,60 $) — réduit, jamais augmenté.
+  max_tokens: 6000,
   // température : ABSENTE (défaut du service, comme la campagne emit-v3 —
   // aucun réglage improvisé ; consigné tel quel).
   prixParMtok: { in: 5, out: 25 },

@@ -13,7 +13,7 @@
 // kaviva-modele.json N'A PAS été consultée pour le rédiger — elle est la
 // RÉPONSE ATTENDUE du dry-run, pas une pièce de l'énoncé.
 import { z } from "zod";
-import { clampMinItems } from "./schema-levels.mjs";
+import { clampMinItems, stripKeys } from "./schema-levels.mjs";
 import {
   GESTES,
   GESTES_TERMINAUX,
@@ -29,7 +29,14 @@ import {
  * traitement est `clampMinItems` (transformation RATIFIÉE de l'échelle,
  * leçon EP-021 : l'API refuse minItems > 1 ; le contrat porte des min(2)). */
 export function grammaireP0() {
-  return clampMinItems(z.toJSONSchema(modeleMetierSchema, { target: "draft-2020-12" }));
+  // EP-033-ter (mesuré au premier lancement, 400 AVANT facturation) : l'API
+  // refuse minimum/maximum sur les entiers — retirés par l'outil RATIFIÉ de
+  // l'échelle (stripKeys). Chaque contrainte retirée est ÉNUMÉRÉE par le
+  // cliquet V-A et REFERMÉE par P1 (le contrat complet juge la sortie).
+  return stripKeys(
+    clampMinItems(z.toJSONSchema(modeleMetierSchema, { target: "draft-2020-12" })),
+    ["minimum", "maximum", "exclusiveMinimum", "exclusiveMaximum"],
+  );
 }
 
 export const PROMPT_P0 = [
