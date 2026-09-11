@@ -403,3 +403,15 @@ mordu et ont été honorés par extension consciente. Chemin campagne
 NON EXERCÉ (prochain run payé). Tests compiler 378→385, paquets verts,
 27/27 apps. Second adaptateur DIFFÉRÉ (raison consignée EP-055). Hold-out
 scellé. Dépense passe : 0 $ · mission 4,3348 $.
+
+--- 2026-09-11 · CAMPAGNE 1re EXÉCUTION (GO EP-057, plafond 6 $) ---
+FAIL-CLOSED À LA PREMIÈRE BARRIÈRE : P0 (0,1795 $) → modèle P1-VALIDE →
+plan P2 REFUSÉ (4 diagnostics) → arrêt avant les huit passes (~4,8 $
+épargnés). Q1 = NON · Q2/Q3 = sans objet. ATTRIBUTION (EP-058) : les 4
+motifs du modèle sont LÉGITIMES — trois ANGLES MORTS DE JUGE (J1
+infrastructure interposée casse l'adjacence de portée ; J2 consultation
+singleton de soi sans source-collection ; J3 retirer absent des
+consommateurs d'identité) + 1 ambiguïté de contrat (etat-cible sur gestes
+mutants, famille O-1). Rien corrigé (interdit) ; fixture archivée ;
+traitement = passe dédiée sur GO. R6 se concevra contre CE réel. Dépense
+campagne 0,1795 $ · mission 4,5143 $.
