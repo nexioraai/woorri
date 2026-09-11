@@ -639,6 +639,27 @@ export function sourcesDIdentite() {
 }
 /** Gestes dont la preuve est OBSERVABLE — un parcours doit finir par l'un d'eux. */
 export const GESTES_TERMINAUX = GESTES.filter((g) => TABLE_GESTES[g].terminal);
+/** EP-070 — gestes qui PARCOURENT une collection (bloc de présentation) sans
+ * exiger d'identité amont : les consommateurs (transport itemId hors électeur)
+ * en sont EXCLUS — ils réclament leur propre instance, une portée ne suffit pas. */
+export function gestesParcoursDeCollection() {
+  const consommateurs = consommateursDIdentite();
+  return GESTES.filter((g) => {
+    const patron = TABLE_GESTES[g];
+    return (
+      (patron.bloc === "list" || patron.bloc === "search_entry") &&
+      !consommateurs.includes(g)
+    );
+  });
+}
+/** EP-070 — un lien structurel DÉCLARÉ entre deux concepts, dans l'un ou
+ * l'autre sens (T3 écrit « creneau référence soin », T2 « categorie possède
+ * soin » : même lien, deux sens — la déclaration fait foi, pas sa direction). */
+export function conceptsRelies(modele, a, b) {
+  return modele.relations.some(
+    (r) => (r.de === a && r.vers === b) || (r.de === b && r.vers === a),
+  );
+}
 /** J1 — les gestes SANS identité propre : le COMPLÉMENT du prédicat source. */
 const GESTES_TRANSPARENTS = new Set(GESTES.filter((g) => !estSourceDIdentite(g)));
 
@@ -872,11 +893,21 @@ export function ecransDe(modele) {
           suivant !== undefined &&
           ((consommateurs.includes(suivant.etape.geste) && suivant.etape.concept === e.concept) ||
             (suivant.etape.geste === "saisir" &&
-              surfaceDeLEtape(p.id, suivant.index)?.portee === `instance:${e.concept}`));
+              surfaceDeLEtape(p.id, suivant.index)?.portee === `instance:${e.concept}`) ||
+            // EP-070 · CONSOMMATION-PAR-PORTÉE — « élire X pour parcourir Y
+            // relié à X » (trou d'expressivité démontré PAR LA VARIANCE,
+            // T2 categorie→chercher(soin), T3 soin→decouvrir(creneau)).
+            // La relation doit être DÉCLARÉE au modèle : sans elle, élire
+            // n'importe quoi pour parcourir n'importe quoi serait légal et
+            // le juge ne jugerait plus. porteeDe sait DÉJÀ dire
+            // instance:X pour ces surfaces (C6) — aucun champ nouveau.
+            (suivant.etape.concept !== e.concept &&
+              gestesParcoursDeCollection().includes(suivant.etape.geste) &&
+              conceptsRelies(modele, e.concept, suivant.etape.concept)));
         if (!consomme) {
           diagnostics.push(
             d("DERIVATION_IDENTITE_NON_CONSOMMEE", `parcours[${p.id}].etapes[${i}]`,
-              `l'identité de ${e.concept} élue par choisir n'atteint aucun consommateur (${consommateursDIdentite().join("/")} du même concept, ou saisie de portée instance:${e.concept}) — la première étape identitaire aval la remplace ou la jette`),
+              `l'identité de ${e.concept} élue par choisir n'atteint aucun consommateur (${consommateursDIdentite().join("/")} du même concept, saisie de portée instance:${e.concept}, ou parcours de collection — ${gestesParcoursDeCollection().join("/")} — d'un concept RELIÉ par une relation déclarée) — la première étape identitaire aval la remplace ou la jette`),
           );
         }
       }

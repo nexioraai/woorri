@@ -513,3 +513,17 @@ Chiffre R8 : passage P2 frais = 1/5 (≈2/5 sous contrat étendu) ; échec
 = 0,15-0,18 $ ⇒ provisionner 3-5 tentatives P0 par run complet ou
 boucle bornée au lanceur (décisions dues). v7 transitions : décision
 due. Mission : 11,4256 $.
+
+--- 2026-09-11 · TROIS DÉCISIONS (GO EP-070, 0 $) ---
+① Consommation-par-portée : porteeDe savait DÉJÀ dire instance:X —
+extension de l'existant, aucun champ nouveau ; consommation jugée sur
+relation DÉCLARÉE (les deux sens — fait des fixtures) + prédicat dérivé
+{decouvrir, chercher, choisir, consulter_historique}. T3 re-jugé VERT,
+T2 = le seul elliptique légitime ; mutations isolées (relation retirée,
+concept non relié) vertes. ② Prompt v7 : transitions-exercées +
+élire-X-pour-parcourir-Y, interpolées ; hash 7b41480e re-scellé (un
+seul geste). ③ Boucle bornée conçue, non exécutée : 3 tirages max,
+variance journalisée par tentative, juges identiques à chaque tour,
+taux P0→P2 publié au BILAN. 2 cliquets mordus, honorés. Batteries
+414+557, 28/28 apps. Prochain pas : UN tirage unique sur GO séparé —
+si T3-équivalent passe P2, Q3 devient mesurable. Mission : 11,4256 $.

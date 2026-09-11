@@ -1169,35 +1169,70 @@ for (const intention of INTENTIONS.slice(start, end)) {
     // prescription ⇒ pipeline historique (consigné au journal).
     let prescriptif;
     {
+      // EP-070 · ③ — BOUCLE BORNÉE DE TIRAGE P0 : 3 tentatives MAXIMUM,
+      // jamais plus. La boucle ne MASQUE pas la variance, elle la COMPTE :
+      // chaque tentative est journalisée avec son arrêt et ses diagnostics,
+      // et le taux de passage est PUBLIÉ au BILAN — c'est le chiffre qui
+      // dimensionne R8 (EP-069 : 1/5 observé en tirages isolés). À
+      // l'épuisement : arrêt et rapport. JAMAIS de dégradation ni
+      // d'assouplissement de juge pour « faire passer » — les juges sont
+      // les mêmes à chaque tentative, seul le tirage change.
+      const P0_TENTATIVES_MAX = 3;
+      journal.p0Tentatives = [];
       const requeteP0 = passe0.construireRequeteP0(intention.text);
       const { grammaire } = adaptateur.degraderGrammaire(requeteP0.grammaire);
-      // COMPTABILITÉ : la passe 0 passe par callPart — LE seul propriétaire
-      // du garde, du push et du cumul (cliquet de préservation honoré, pas
-      // édité) ; la troncature y est traitée comme partout (corps préservé).
-      const partP0 = {
-        name: "p0",
-        keys: ["modele"],
-        levels: [{ name: "canonique-degradee-adaptateur", schema: grammaire }],
-        levelIndex: 0,
-      };
-      const reponseP0 = await callPart(partP0, requeteP0.system, requeteP0.user, `${intention.slug}:p0`, usage);
-      const neutreP0 = adaptateur.lireReponse(reponseP0);
-      const verdictP0 = passe0.jugerSortieP0(neutreP0.texte, intention.text, { tronquee: neutreP0.tronquee });
-      journal.passe0 = {
-        ok: verdictP0.ok,
-        diagnostics: verdictP0.diagnostics.map((x) => x.code),
-        observation: verdictP0.observation ?? null,
-      };
-      ecrireArtefact(intention.slug, "modele-p0", verdictP0.ok ? verdictP0.modele : { brut: neutreP0.texte });
-      if (!verdictP0.ok) {
-        throw new Error(`P0 refusé (${verdictP0.diagnostics.map((x) => x.code).join(", ")}) — intention arrêtée AVANT les passes AIR`);
+      for (let tentative = 1; ; tentative++) {
+        // COMPTABILITÉ : la passe 0 passe par callPart — LE seul propriétaire
+        // du garde, du push et du cumul (cliquet de préservation honoré, pas
+        // édité) ; la troncature y est traitée comme partout (corps préservé).
+        const partP0 = {
+          name: "p0",
+          keys: ["modele"],
+          levels: [{ name: "canonique-degradee-adaptateur", schema: grammaire }],
+          levelIndex: 0,
+        };
+        const coutAvant = etatDepense.depense;
+        const reponseP0 = await callPart(partP0, requeteP0.system, requeteP0.user, `${intention.slug}:p0#t${tentative}`, usage);
+        const neutreP0 = adaptateur.lireReponse(reponseP0);
+        const verdictP0 = passe0.jugerSortieP0(neutreP0.texte, intention.text, { tronquee: neutreP0.tronquee });
+        ecrireArtefact(
+          intention.slug, `modele-p0-t${tentative}`,
+          verdictP0.ok ? verdictP0.modele : { brut: neutreP0.texte },
+        );
+        const diagnosticsPlan = verdictP0.ok
+          ? (() => {
+              const plan = modeleMetier.ecransDe(verdictP0.modele);
+              return [...plan.diagnostics, ...modeleMetier.jugerPlanEcrans(plan, verdictP0.modele)];
+            })()
+          : [];
+        const arret = !verdictP0.ok ? "P1" : diagnosticsPlan.length > 0 ? "P2" : "passe";
+        journal.p0Tentatives.push({
+          tentative,
+          coutUSD: Number((etatDepense.depense - coutAvant).toFixed(4)),
+          arret,
+          diagnostics: !verdictP0.ok
+            ? verdictP0.diagnostics.map((x) => x.code)
+            : diagnosticsPlan.map((x) => x.code),
+        });
+        journal.passe0 = {
+          ok: verdictP0.ok,
+          diagnostics: verdictP0.diagnostics.map((x) => x.code),
+          observation: verdictP0.observation ?? null,
+        };
+        if (arret === "passe") {
+          const plan = modeleMetier.ecransDe(verdictP0.modele);
+          prescriptif = { modele: verdictP0.modele, plan };
+          break;
+        }
+        console.log(
+          `  [${intention.slug}] tirage P0 ${tentative}/${P0_TENTATIVES_MAX} arrêté à ${arret} — la boucle compte la variance, elle ne la masque pas`,
+        );
+        if (tentative >= P0_TENTATIVES_MAX) {
+          throw new Error(
+            `P0/P2 refusés ${P0_TENTATIVES_MAX} fois (arrêts : ${journal.p0Tentatives.map((t) => t.arret).join(", ")}) — intention arrêtée AVANT les passes AIR`,
+          );
+        }
       }
-      const plan = modeleMetier.ecransDe(verdictP0.modele);
-      const diagnosticsPlan = [...plan.diagnostics, ...modeleMetier.jugerPlanEcrans(plan, verdictP0.modele)];
-      if (diagnosticsPlan.length > 0) {
-        throw new Error(`plan P2 refusé (${diagnosticsPlan.map((x) => x.code).join(", ")}) — intention arrêtée AVANT les passes AIR`);
-      }
-      prescriptif = { modele: verdictP0.modele, plan };
     }
     let document = await emitSectionsAvecPartiel(
       SYSTEM_EMIT,
@@ -1404,8 +1439,16 @@ const rtBilan =
   rtJournaux.length === 0
     ? "round-trip NON EXÉCUTÉ (instrument débranché — EP-061f)"
     : `round-trip conformes ${rtValid}/${rtJournaux.length} · identiques ${identical}/${rtJournaux.length}`;
+// EP-070 · ③ — le taux de passage P0→P2 est PUBLIÉ à chaque campagne :
+// c'est le chiffre qui dimensionne R8, jamais un détail interne.
+const tiragesP0 = summary.flatMap((j) => j.p0Tentatives ?? []);
+const passagesP0 = tiragesP0.filter((t) => t.arret === "passe").length;
+const bilanP0 =
+  tiragesP0.length === 0
+    ? "P0 NON TIRÉ"
+    : `passage P0→P2 : ${passagesP0}/${tiragesP0.length} tirages`;
 console.log(
   `\nBILAN tranche [${start},${end}) : ${valid}/${summary.length} AIR valides · ` +
-    `${rtBilan} · ` +
+    `${bilanP0} · ${rtBilan} · ` +
     `coût ~$${etatDepense.depense.toFixed(4)} · ${etatDepense.appels} appels · journal ${JOURNAL}`,
 );

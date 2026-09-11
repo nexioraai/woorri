@@ -45,6 +45,31 @@ describe("PASSE B — le prompt enseigne les corrections, depuis l'enveloppe", (
     expect(SOURCE).toContain("MÊME SI l'app ne porte aucune étape de paiement");
   });
 
+  it("EP-070 · ③ boucle bornée : 3 tirages P0 max, variance COMPTÉE et PUBLIÉE, juges intacts", () => {
+    expect(SOURCE).toContain("const P0_TENTATIVES_MAX = 3;");
+    // chaque tentative journalisée avec arrêt + diagnostics + coût.
+    expect(SOURCE).toContain("journal.p0Tentatives.push({");
+    // le taux de passage est une MESURE publiée au BILAN, pas un détail.
+    expect(SOURCE).toContain("passage P0→P2");
+    // à l'épuisement : arrêt et rapport — aucune dégradation de juge : la
+    // grammaire est construite UNE fois HORS boucle, les juges appelés dans
+    // la boucle sont les mêmes objets à chaque tour.
+    expect(SOURCE).toContain("JAMAIS de dégradation ni");
+    const debut = SOURCE.indexOf("for (let tentative");
+    const boucle = SOURCE.slice(debut, SOURCE.indexOf("emitSectionsAvecPartiel", debut));
+    expect(boucle).not.toContain("degraderGrammaire");
+    expect(boucle).toContain("jugerSortieP0");
+    expect(boucle).toContain("jugerPlanEcrans");
+  });
+
+  it("EP-070 · ② prompt v7 : transitions exercées + élire-X-pour-parcourir-Y, interpolés", () => {
+    const passe0 = readFileSync(join(R, "benchmarks", "air-emission", "passe0.mjs"), "utf8");
+    expect(passe0).toContain("CHAQUE TRANSITION DÉCLARÉE EST EXERCÉE");
+    expect(passe0).toContain('TABLE_GESTES[g].effet === "mutation"');
+    expect(passe0).toContain("ÉLIRE X POUR PARCOURIR Y RELIÉ À X");
+    expect(passe0).toContain("gestesParcoursDeCollection().join");
+  });
+
   it("B6/EP-065 · la garde de GO : une campagne ne part JAMAIS sans jeton", () => {
     expect(SOURCE).toContain('process.env.GO_CAMPAGNE !== "OUI-JE-PAIE"');
     expect(SOURCE).toContain("process.exit(2)");

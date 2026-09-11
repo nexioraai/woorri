@@ -105,6 +105,10 @@ describe("B/C — les dérivations ne travaillent QUE sur le MODEL (balayage COM
     // EP-068 (édition consciente) — sources d'identité dérivées de la table.
     estSourceDIdentite: () => derivationsModele.estSourceDIdentite("retirer"),
     sourcesDIdentite: () => derivationsModele.sourcesDIdentite(),
+    // EP-070 (édition consciente) — consommation-par-portée : prédicat de
+    // parcours de collection + lien déclaré, dérivés du modèle seul.
+    gestesParcoursDeCollection: () => derivationsModele.gestesParcoursDeCollection(),
+    conceptsRelies: (m) => derivationsModele.conceptsRelies(m, m.concepts[0]?.id ?? "", m.concepts[1]?.id ?? ""),
     estConceptIdentite: (m) => derivationsModele.estConceptIdentite(m, m.concepts[0]?.id ?? ""),
   };
 

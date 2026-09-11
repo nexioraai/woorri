@@ -17,6 +17,7 @@ import {
   GESTES,
   GESTES_TERMINAUX,
   sourcesDIdentite,
+  gestesParcoursDeCollection,
   TABLE_GESTES,
   GLOSSAIRE_NATURES_TEMPORELLES,
   NATURES_ATTRIBUT,
@@ -57,6 +58,12 @@ export const PROMPT_P0 = [
     sourcesDIdentite().join(", ") +
     " (les gestes " + GESTES.filter((g) => !sourcesDIdentite().includes(g)).join("/") +
     " sont traversés sans rompre la chaîne). Un parcours qui consomme une identité venue d'ailleurs est REFUSÉ.",
+  "· CHAQUE TRANSITION DÉCLARÉE EST EXERCÉE : une transition {vers, geste} d'un concept exige, dans un parcours, une étape de CE geste (" +
+    GESTES.filter((g) => TABLE_GESTES[g].effet === "mutation").join("/") +
+    ") sur CE concept — une machine à états plus riche que les parcours est REFUSÉE.",
+  "· ÉLIRE X POUR PARCOURIR Y RELIÉ À X : une élection (choisir X) est aussi consommée par une étape " +
+    gestesParcoursDeCollection().join("/") +
+    " sur un concept Y ≠ X, À CONDITION qu'une relation entre X et Y soit DÉCLARÉE dans relations — déclare le lien, sinon l'élection est refusée.",
   "· commerce (\"digital\" | \"physique_ou_hors_app\") — REQUIS si un parcours contient payer, interdit sinon",
   "· couverture (voir ci-dessous).",
   "",
