@@ -15,7 +15,7 @@ import { applyThemeOverrides, emitThemeModule, hasThemeOverrides } from "./emit-
 import { EMBEDDED_ASSETS } from "./embedded-assets.generated.ts";
 import { normalizeAir, resolveLock } from "./resolve-lock.ts";
 import { RELEASE_TRAIN_V1, type ReleaseTrain } from "./release-train.ts";
-import { planifierComposition, type EcranPlan } from "./plan-composition.ts";
+import { planifierComposition, validerPlan, type EcranPlan } from "./plan-composition.ts";
 import type { CibleRemoteResolue } from "./resolve-lock.ts";
 
 // Syntaxe EFFAÇABLE uniquement (pas de parameter properties) : les bancs
@@ -1067,6 +1067,19 @@ export function emitProject(
   // ENGINE HARDENING — le PLAN d'assemblage : dérivé UNE fois du document,
   // consommé par l'émission, consultable par les gates avant tout appel.
   const plan = planifierComposition(air);
+  // ÉTAPE ④ (EP-004) — le blueprint est VALIDÉ dans le vrai chemin :
+  // document → plan → validation du plan → émission. Une incohérence
+  // structurelle (sévérité `bloquant`) n'atteint JAMAIS le runtime. Les
+  // défauts de qualité restent l'affaire de la campagne (barre payante).
+  const diagnosticsPlan = validerPlan(plan).filter((d) => d.severite === "bloquant");
+  if (diagnosticsPlan.length > 0) {
+    const premier = diagnosticsPlan[0];
+    throw new EmitError(
+      "EMIT_PLAN_INVALIDE",
+      premier?.path ?? "plan",
+      diagnosticsPlan.map((d) => `${d.code}@${d.path}`).join(" · "),
+    );
+  }
 
   const files = new Map<string, string>();
   for (const [target, content] of Object.entries(EMBEDDED_ASSETS)) {

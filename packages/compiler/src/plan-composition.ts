@@ -156,6 +156,18 @@ export interface DiagnosticPlan {
   code: "PLAN_APERCU_SANS_SUITE" | "PLAN_VITRINE_VIDE" | "PLAN_CHROME_DUPLIQUE";
   path: string;
   message: string;
+  /**
+   * ÉTAPE ④ (2026-09-11) — la sévérité appartient au DIAGNOSTIC, jamais à
+   * l'appelant (aucun drapeau de contournement possible) :
+   *   `bloquant` — incohérence structurelle : l'ÉMISSION refuse ;
+   *   `qualite`  — indigne d'une génération payante : la CAMPAGNE refuse,
+   *                mais un document historique gelé reste émissible.
+   * Mesuré sur le corpus réel : PLAN_APERCU_SANS_SUITE touche 21 documents
+   * dont dougplace (antérieurs à seeAllLabel 1.21) — bloquer l'émission
+   * aurait cassé des références gelées ; PLAN_CHROME_DUPLIQUE n'en touche
+   * aucun et décrit deux promesses persistantes empilées : bloquant.
+   */
+  severite: "bloquant" | "qualite";
 }
 
 /**
@@ -176,6 +188,7 @@ export function validerPlan(plan: CompositionPlan): DiagnosticPlan[] {
     if (chromes.length > 1) {
       out.push({
         code: "PLAN_CHROME_DUPLIQUE",
+        severite: "bloquant",
         path: e.screenId,
         message: `${String(chromes.length)} éléments de chrome persistant sur un même écran`,
       });
@@ -190,6 +203,7 @@ export function validerPlan(plan: CompositionPlan): DiagnosticPlan[] {
       ) {
         out.push({
           code: "PLAN_APERCU_SANS_SUITE",
+          severite: "qualite",
           path: `${e.screenId}.${s.blockId}`,
           message: `aperçu de ${String(s.apercu)} sur ${String(s.lignesDisponibles)} disponibles sans « Voir plus » câblé`,
         });
@@ -200,6 +214,7 @@ export function validerPlan(plan: CompositionPlan): DiagnosticPlan[] {
       ) {
         out.push({
           code: "PLAN_VITRINE_VIDE",
+          severite: "qualite",
           path: `${e.screenId}.${s.blockId}`,
           message: `la section "${s.blockId}" n'a AUCUNE ligne à montrer à la première ouverture`,
         });
