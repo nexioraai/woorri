@@ -228,10 +228,14 @@ describe("C3 — suppression du texte : preuve DYNAMIQUE", () => {
     const avecTexte = { surfaces: surfacesDe(piege as never), diags: validerModele(piege) };
     const sansTexte = { surfaces: surfacesDe(M2 as never), diags: validerModele(M2) };
     expect(acces).toEqual([]); // AUCUNE dérivation n'a lu le texte
-    // texteOriginal est aussi une clé INCONNUE : la forme la refuse (strict).
-    expect(avecTexte.diags.some((d) => d.code === "MODELE_SCHEMA")).toBe(true);
+    // Défense à DEUX étages : en 1.0.0, la MIGRATION (copie par liste fermée
+    // de clés) fait mourir la clé étrangère avant le schéma — le texte ne
+    // peut pas survivre ; en 1.1.0 (sans migration), le schéma STRICT refuse.
     expect(sansTexte.diags).toEqual([]);
+    expect(avecTexte.diags).toEqual([]); // le texte est MORT à la migration
     expect(JSON.stringify(avecTexte.surfaces)).toBe(JSON.stringify(sansTexte.surfaces));
+    const v11 = { ...M2, version: "modele-metier/1.1.0", texteOriginal: "BRIEF" };
+    expect(validerModele(v11).some((d) => d.code === "MODELE_SCHEMA")).toBe(true);
   });
 
   it("l'ÉMISSION ignore le texte libre : altérer intent.request ne change pas UN octet émis", () => {

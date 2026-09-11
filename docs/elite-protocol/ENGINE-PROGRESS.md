@@ -142,3 +142,27 @@ gate:fidelite : même silhouette qu'avant (12/2/3 — EP-010 préexistant,
 aucune amélioration silencieuse revendiquée). R0 NON entrepris (permis en
 parallèle, écarté pour garder la passe mono-périmètre). GO R2 : NON
 ACCORDÉ. Tests compiler 308→314, execution-contract 138→139.
+
+--- 2026-09-11 · R2 EXÉCUTÉ (GO humain — message TRONQUÉ à « P0 — FRONTI… ») ---
+R0-préalable : EP-023 (indicateurs SÉPARÉS : MODEL_CONFORMITY ≠
+MODEL_SUFFICIENCY_FROM_INTENT ; troncatures #6-10+ et GO-R2 consignées),
+EP-024 (capabilityMethodsExecutees = vérité déclarée, gardée par LE cliquet
+envelope-truth ; justification durable de l'édition du contrôle négatif),
+EP-025 (artefact ≠ clôture ; ordre strict R0→R8).
+R2 : contrat v1.1.0 ADDITIF avec migration par LISTE FERMÉE de clés (le
+spread blanchissait une clé étrangère — mesuré par le piège C3, corrigé) :
+identifiant, attribut.producteur, ÉTATS STRUCTURÉS à transitions +
+invariants E (4 mutations mordantes — et l'invariant a attrapé 3 fixtures
+malhonnêtes des 7 domaines, corrigées), priorité, préconditions validées.
+transport/effet/résultat DÉRIVÉS de TABLE_GESTES (contratDEtape) — jamais
+redéclarés. C1 : lexicalisation DÉTERMINISTE indépendante de P0
+(inventaireDe + STOPWORDS fermés) ; verifierCouvertureLexicale compare
+inventaire ↔ couverture — la prose des besoins ne justifie PAS un terme
+(mutation « créneau retiré » = MODELE_TERME_NON_JUSTIFIE) ; ambigu reste
+bloquant. PORTÉE : sections reçues UNIQUEMENT — la fin du GO (« P0 —
+FRONTIÈRE… ») n'est jamais arrivée : l'intégration P0 (grammaire/prompt/
+branchement emit-v3) reste DUE sous ces exigences manquantes ; AUCUNE
+exécution P0 (elle serait payante — R2_BLOCKED_BUDGET_GO_REQUIRED aurait
+été déclaré si nécessaire ; elle ne l'était pas pour ce périmètre).
+R2 = PARTIAL (sections reçues fermées ; frontière P0 due sur re-soumission).
+Tests compiler 314→321. 0 génération · 0 $ · 0 push.

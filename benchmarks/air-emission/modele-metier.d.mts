@@ -4,18 +4,26 @@ export interface AttributConcept {
   nature: "texte" | "nombre" | "media" | "date" | "booleen" | "reference";
   requis: boolean;
   cardinalite?: number;
+  producteur?: string;
+}
+export interface EtatConcept {
+  id: string;
+  transitions?: { vers: string; geste: string }[];
 }
 export interface Concept {
   id: string;
   nom: string;
   donnees: boolean;
+  identifiant?: string;
   attributs?: AttributConcept[];
-  etats?: string[];
+  etats?: (string | EtatConcept)[];
 }
 export interface Etape {
   concept: string;
   geste: string;
   etat?: string;
+  acteur?: string;
+  preconditions?: { concept: string; etat: string }[];
 }
 export interface Parcours {
   id: string;
@@ -24,7 +32,7 @@ export interface Parcours {
   etapes: Etape[];
 }
 export interface ModeleMetier {
-  version: "modele-metier/1.0.0";
+  version: "modele-metier/1.0.0" | "modele-metier/1.1.0";
   couverture: {
     couverts: { terme: string; noeuds: string[] }[];
     nonRetenus: { terme: string; raison: string }[];
@@ -69,3 +77,20 @@ export function surfacesDe(modele: ModeleMetier): SurfaceContrat[];
 export function repetitionsSuspectes(
   surfaces: readonly { concept: string; geste?: string; role?: string; etat?: string; portee: string }[],
 ): { cle: string; premiere: unknown; doublon: unknown }[];
+export function migrerModele(brut: unknown): unknown;
+export const TABLE_GESTES: Record<string, {
+  bloc: string | null; declencheur: string | null; effet: string | null;
+  transport: string | null; preuve: string;
+}>;
+export function contratDEtape(modele: ModeleMetier, parcours: Parcours, index: number):
+  | { acteur: string; geste: string; conceptCible: string;
+      preconditions: { concept: string; etat: string }[];
+      transport: string | null; effet: string | null;
+      resultatAttendu: string; portee: string }
+  | undefined;
+export const STOPWORDS_FR: Set<string>;
+export function inventaireDe(brief: string): string[];
+export function verifierCouvertureLexicale(
+  inventaire: readonly string[],
+  modele: ModeleMetier,
+): DiagnosticModele[];

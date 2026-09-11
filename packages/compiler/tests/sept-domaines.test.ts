@@ -113,6 +113,7 @@ const F = {
         etapes: [
           { concept: "cpt_progression", geste: "saisir" },
           { concept: "cpt_progression", geste: "consulter_historique", etat: "en_cours" },
+          { concept: "cpt_progression", geste: "consulter_historique", etat: "termine" },
         ] },
     ]),
   livraison: modele("client",
@@ -133,6 +134,7 @@ const F = {
       { id: "par_suivre", besoin: "suivre la course", acteur: "act_client",
         etapes: [
           { concept: "cpt_livraison", geste: "consulter_historique", etat: "en_route" },
+          { concept: "cpt_livraison", geste: "consulter_historique", etat: "livree" },
           { concept: "cpt_livraison", geste: "consulter" },
         ] },
     ]),
@@ -173,6 +175,7 @@ const F = {
       { id: "par_suivre", besoin: "suivre", acteur: "act_gestionnaire",
         etapes: [
           { concept: "cpt_dossier", geste: "consulter_historique", etat: "ouvert" },
+          { concept: "cpt_dossier", geste: "consulter_historique", etat: "clos" },
           { concept: "cpt_dossier", geste: "consulter" },
         ] },
     ]),

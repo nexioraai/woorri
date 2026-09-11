@@ -60,7 +60,7 @@ export const GESTES_TERMINAUX = ["confirmer", "consulter", "consulter_historique
 // verrou F4 (un `visuel` déclaré ne passe pas) et l'anti-fourre-tout.
 export const modeleMetierSchema = z
   .object({
-    version: z.literal("modele-metier/1.0.0"),
+    version: z.literal("modele-metier/1.1.0"),
     couverture: z
       .object({
         couverts: z.array(
@@ -83,6 +83,8 @@ export const modeleMetierSchema = z
           id,
           nom: z.string().min(1),
           donnees: z.boolean(),
+          /** R2 — l'attribut qui IDENTIFIE une instance (optionnel, additif). */
+          identifiant: id.optional(),
           attributs: z
             .array(
               z
@@ -91,11 +93,32 @@ export const modeleMetierSchema = z
                   nature: z.enum(NATURES_ATTRIBUT),
                   requis: z.boolean(),
                   cardinalite: z.number().int().min(1).optional(),
+                  /** R2 — l'acteur qui PRODUIT la valeur (optionnel, additif). */
+                  producteur: id.optional(),
                 })
                 .strict(),
             )
             .optional(),
-          etats: z.array(z.string().min(1)).optional(),
+          /**
+           * R2 — ÉTATS MÉTIER STRUCTURÉS : un état porte ses TRANSITIONS
+           * (vers quel état, par quel geste). Les invariants E (#6) deviennent
+           * vérifiables : atteignable, sortie des non-finaux, déclencheur
+           * cohérent, transition représentée par un parcours.
+           */
+          etats: z
+            .array(
+              z
+                .object({
+                  id: z.string().min(1),
+                  transitions: z
+                    .array(
+                      z.object({ vers: z.string().min(1), geste: z.enum(GESTES) }).strict(),
+                    )
+                    .optional(),
+                })
+                .strict(),
+            )
+            .optional(),
         })
         .strict(),
     ),
@@ -108,9 +131,23 @@ export const modeleMetierSchema = z
           id,
           besoin: z.string().min(1),
           acteur: id,
+          /** R2 — priorité EXPLICITE (additive ; l'ordre du tableau fait foi sinon). */
+          priorite: z.number().int().min(0).optional(),
           etapes: z
             .array(
-              z.object({ concept: id, geste: z.enum(GESTES), etat: z.string().optional() }).strict(),
+              z
+                .object({
+                  concept: id,
+                  geste: z.enum(GESTES),
+                  etat: z.string().optional(),
+                  /** R2 — acteur de l'étape s'il diffère de celui du parcours. */
+                  acteur: id.optional(),
+                  /** R2 — préconditions STRUCTURELLES (référencées, validées). */
+                  preconditions: z
+                    .array(z.object({ concept: id, etat: z.string().min(1) }).strict())
+                    .optional(),
+                })
+                .strict(),
             )
             .min(2),
         })
@@ -122,11 +159,37 @@ export const modeleMetierSchema = z
 const d = (code, path, message) => ({ code, path, message });
 
 /**
+ * R2 — MIGRATION 1.0.0 → 1.1.0, même patron que l'AIR : additive, jamais
+ * inventive. Seule transformation : les états chaînes deviennent des états
+ * structurés SANS transitions (aucune n'est inventée).
+ */
+export function migrerModele(brut) {
+  if (brut === null || typeof brut !== "object") return brut;
+  if (brut.version !== "modele-metier/1.0.0") return brut;
+  // COPIE PAR LISTE FERMÉE de clés — jamais un spread : une migration qui
+  // recopierait des clés inconnues BLANCHIRAIT un champ étranger (mesuré :
+  // le piège C3 a vu le spread énumérer `texteOriginal`). Les clés hors
+  // contrat meurent ici ; le schéma strict refuse de toute façon.
+  return {
+    version: "modele-metier/1.1.0",
+    couverture: brut.couverture,
+    acteurs: brut.acteurs,
+    concepts: (brut.concepts ?? []).map((c) =>
+      Array.isArray(c?.etats) && c.etats.every((e) => typeof e === "string")
+        ? { ...c, etats: c.etats.map((e) => ({ id: e })) }
+        : c,
+    ),
+    relations: brut.relations,
+    parcours: brut.parcours,
+  };
+}
+
+/**
  * P1 — validation DÉTERMINISTE : forme, références, SUFFISANCE (F1).
  * Aucun jugement libre : chaque refus est un invariant nommé.
  */
 export function validerModele(brut) {
-  const parsed = modeleMetierSchema.safeParse(brut);
+  const parsed = modeleMetierSchema.safeParse(migrerModele(brut));
   if (!parsed.success) {
     return parsed.error.issues.map((i) => d("MODELE_SCHEMA", i.path.join("."), i.message));
   }
@@ -155,7 +218,10 @@ export function validerModele(brut) {
       const concept = m.concepts.find((c) => c.id === e.concept);
       if (concept === undefined) {
         out.push(d("MODELE_REFERENCE_INCONNUE", `parcours[${p.id}].etapes[${ei}].concept`, e.concept));
-      } else if (e.etat !== undefined && !(concept.etats ?? []).includes(e.etat)) {
+      } else if (
+        e.etat !== undefined &&
+        !(concept.etats ?? []).some((x) => x.id === e.etat)
+      ) {
         out.push(d("MODELE_ETAT_INCONNU", `parcours[${p.id}].etapes[${ei}].etat`, e.etat));
       }
     }
@@ -190,6 +256,48 @@ export function validerModele(brut) {
   for (const a of m.acteurs) {
     if (!acteursActifs.has(a.id))
       out.push(d("MODELE_ACTEUR_MUET", `acteurs[${a.id}]`, "aucun parcours ne le fait agir"));
+  }
+  // ── R2 — INVARIANTS DES ÉTATS MÉTIER (E, #6) ──
+  for (const c of m.concepts) {
+    const etats = c.etats ?? [];
+    const ids = new Set(etats.map((x) => x.id));
+    const atteints = new Set(etats.flatMap((x) => (x.transitions ?? []).map((t) => t.vers)));
+    for (const e of etats) {
+      for (const [ti, t] of (e.transitions ?? []).entries()) {
+        if (!ids.has(t.vers))
+          out.push(d("MODELE_TRANSITION_INCONNUE", `concepts[${c.id}].etats[${e.id}].transitions[${ti}]`, t.vers));
+        // Transition REPRÉSENTÉE : un parcours porte le geste sur ce concept.
+        const representee = m.parcours.some((p) =>
+          p.etapes.some((s2) => s2.concept === c.id && s2.geste === t.geste),
+        );
+        if (!representee)
+          out.push(
+            d("MODELE_TRANSITION_NON_REPRESENTEE", `concepts[${c.id}].etats[${e.id}]`, `${t.geste}→${t.vers} sans étape de parcours`),
+          );
+      }
+    }
+    // Atteignabilité : tout état non-initial (index > 0) doit être la cible
+    // d'une transition OU être consommé par une étape (historique filtré).
+    for (const [i, e] of etats.entries()) {
+      if (i === 0 || atteints.has(e.id)) continue;
+      const consomme = m.parcours.some((p) => p.etapes.some((s2) => s2.etat === e.id));
+      if (!consomme)
+        out.push(d("MODELE_ETAT_INATTEIGNABLE", `concepts[${c.id}].etats[${e.id}]`, "ni cible d'une transition, ni consommé"));
+    }
+  }
+  // ── R2 — PRÉCONDITIONS : références valides ──
+  for (const p2 of m.parcours) {
+    for (const [ei, e] of p2.etapes.entries()) {
+      for (const [pi, pre] of (e.preconditions ?? []).entries()) {
+        const cible = m.concepts.find((c) => c.id === pre.concept);
+        if (cible === undefined)
+          out.push(d("MODELE_REFERENCE_INCONNUE", `parcours[${p2.id}].etapes[${ei}].preconditions[${pi}]`, pre.concept));
+        else if (!(cible.etats ?? []).some((x) => x.id === pre.etat))
+          out.push(d("MODELE_ETAT_INCONNU", `parcours[${p2.id}].etapes[${ei}].preconditions[${pi}]`, pre.etat));
+      }
+      if (e.acteur !== undefined && !idsActeurs.has(e.acteur))
+        out.push(d("MODELE_REFERENCE_INCONNUE", `parcours[${p2.id}].etapes[${ei}].acteur`, e.acteur));
+    }
   }
   // F1 — le blocage sur `ambigu` est EXPLICITE : un terme ambigu ne se
   // classe pas en silence, il se résout (modèle) ou refuse (ici).
@@ -371,6 +479,103 @@ export function repetitionsSuspectes(surfaces) {
     const cle = `${s.concept}|${s.geste ?? s.role}|${s.etat ?? ""}|${s.portee}`;
     if (vus.has(cle)) out.push({ cle, premiere: vus.get(cle), doublon: s });
     else vus.set(cle, s);
+  }
+  return out;
+}
+
+// ────────────────── R2 — LA TABLE DES GESTES, STRUCTURÉE ──
+//
+// Un geste EST un patron structurel (confrontations #4/#8) : le NOM n'est
+// qu'une clé. transport/effet/résultat attendus par une étape se DÉRIVENT
+// d'ici (forme normale : décisions dans le modèle, conclusions dans la
+// table) — aucune étape ne les redéclare.
+export const TABLE_GESTES = {
+  decouvrir:            { bloc: "list",         declencheur: null, effet: null,         transport: null,      preuve: "section rendue, données présentes" },
+  chercher:             { bloc: "search_entry", declencheur: "ui", effet: "navigate",   transport: null,      preuve: "paire structurelle complète" },
+  consulter:            { bloc: "list",         declencheur: "ui", effet: "navigate",   transport: "itemId",  preuve: "détail de l'instance identifiée" },
+  choisir:              { bloc: "list",         declencheur: "ui", effet: "navigate",   transport: "itemId",  preuve: "identité élue consommée en aval" },
+  saisir:               { bloc: "form",         declencheur: "ui", effet: "mutation",   transport: "instance",preuve: "écriture réelle (règle 13)" },
+  confirmer:            { bloc: null,           declencheur: null, effet: "mutation",   transport: null,      preuve: "écran de confirmation atteint (thenScreenId)" },
+  consulter_historique: { bloc: "list",         declencheur: "ui", effet: "navigate",   transport: null,      preuve: "collection filtrée sur l'état nommé" },
+  s_identifier:         { bloc: "form",         declencheur: "ui", effet: "capability", transport: null,      preuve: "méthode auth exécutée (enveloppe véridique R1)" },
+  payer:                { bloc: "form",         declencheur: "ui", effet: "mutation",   transport: null,      preuve: "capacité déclarée, honnêteté règle 17" },
+  retirer:              { bloc: "list",         declencheur: "ui", effet: "mutation",   transport: "itemId",  preuve: "collection réduite, état vide atteignable" },
+};
+
+/** R2 — le CONTRAT D'UNE ÉTAPE : dérivé (table × modèle), jamais redéclaré. */
+export function contratDEtape(modele, parcours, index) {
+  const e = parcours.etapes[index];
+  if (e === undefined) return undefined;
+  const patron = TABLE_GESTES[e.geste];
+  return {
+    acteur: e.acteur ?? parcours.acteur,
+    geste: e.geste,
+    conceptCible: e.concept,
+    preconditions: e.preconditions ?? [],
+    transport: patron.transport,
+    effet: patron.effet,
+    resultatAttendu: patron.preuve,
+    portee: porteeDe(modele, parcours, index),
+  };
+}
+
+// ────────────────── R2/C1 — LEXICALISATION DÉTERMINISTE ──
+//
+// LA FRONTIÈRE : l'inventaire des termes du brief est produit par une règle
+// FERMÉE, indépendante des décisions de P0 — P0 ne choisit jamais quels
+// termes comptent. P1 compare ensuite inventaire ↔ couverture du modèle.
+// LIMITE ASSUMÉE : c'est un mécanisme de RESPONSABILITÉ lexicale (M3),
+// jamais une preuve sémantique — la suffisance réelle de P0 se juge en R8.
+export const STOPWORDS_FR = new Set([
+  "les", "des", "une", "aux", "est", "son", "ses", "leur", "leurs", "avec",
+  "pour", "dans", "par", "sur", "qui", "que", "quoi", "dont", "mes", "mon",
+  "ma", "ils", "elles", "elle", "lui", "nous", "vous", "tout", "tous",
+  "toute", "toutes", "puis", "donc", "mais", "aussi", "ainsi", "etre",
+  "avoir", "faire", "doit", "doivent", "peut", "peuvent", "veut", "veulent",
+  "chaque", "leur", "cette", "ces", "cet", "sans", "sous", "plus", "tres",
+  "bien", "comme", "afin", "ensuite", "apres", "avant", "entre", "chez",
+  "dune", "dun", "lapp", "application", "appli", "app", "besoin", "exactement",
+]);
+
+const normaliser = (t) =>
+  t
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9\s-]/g, " ");
+
+/** R2/C1 — l'inventaire : tokens normalisés ≥ 3 lettres, hors mots-outils. */
+export function inventaireDe(brief) {
+  const tokens = normaliser(brief).split(/[\s-]+/).filter((t) => t.length >= 3 && !/^\d+$/.test(t));
+  return [...new Set(tokens.filter((t) => !STOPWORDS_FR.has(t)))].sort();
+}
+
+/**
+ * R2/C1 — P1 compare l'INVENTAIRE (déterministe) à la COUVERTURE du modèle.
+ * Un terme est JUSTIFIÉ s'il apparaît (normalisé) dans un terme couvert,
+ * un terme non retenu (raison fermée), ou le nom/id d'un nœud du modèle.
+ * Sinon : MODELE_TERME_NON_JUSTIFIE — l'omission silencieuse est refusée.
+ */
+export function verifierCouvertureLexicale(inventaire, modele) {
+  const textes = [
+    ...modele.couverture.couverts.map((x) => x.terme),
+    ...modele.couverture.nonRetenus.map((x) => x.terme),
+    ...modele.concepts.flatMap((c) => [c.nom, c.id]),
+    ...modele.acteurs.flatMap((a) => [a.nom, a.id]),
+    // Les BESOINS (prose de P0) ne justifient PAS un terme : la
+    // responsabilité passe par la couverture EXPLICITE ou un nœud NOMMÉ —
+    // sinon une phrase suffirait à faire disparaître un concept (mesuré :
+    // la mutation « créneau retiré » passait par la prose du besoin).
+  ]
+    .map(normaliser)
+    .join(" ");
+  const out = [];
+  for (const terme of inventaire) {
+    // Justifié si le corps du terme (ou son radical sans pluriel) apparaît.
+    const radical = terme.replace(/s$/, "");
+    if (!textes.includes(terme) && !textes.includes(radical)) {
+      out.push(d("MODELE_TERME_NON_JUSTIFIE", `couverture[${terme}]`, "ni couvert, ni non-retenu, ni porté par un nœud"));
+    }
   }
   return out;
 }
