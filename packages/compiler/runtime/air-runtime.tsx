@@ -10,7 +10,7 @@
 // (implémentations : Phases 5+/9 — lecture consignée D-028).
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 // E1/E2 (D-129) — la vérité des lignes visibles vit dans un module PUR.
-import {lignesVisibles, optionsDistinctes, modeListe, tailleApercu, formatValeur} from "./list-pipeline";
+import {lignesVisibles, optionsDistinctes, formatValeur} from "./list-pipeline";
 import type { FiltreEffectif, OperateurFiltre } from "./list-pipeline";
 import { useNavigation } from "@react-navigation/native";
 import { allerVers } from "./racines-navigation";
@@ -111,9 +111,23 @@ export interface AirSlotInvocationData {
   outputs: readonly { port: string; blockId: string; prop: string }[];
 }
 
+/**
+ * ÉTAPE ① (2026-09-11) — le CompositionPlan TRANSPORTÉ. Le planner a décidé à
+ * l'émission ; le runtime LIT et n'a plus le droit de reconstruire (EP-001 :
+ * le mode de liste était recalculé ici — deux sources pour une même décision).
+ */
+export interface AirCompositionData {
+  role: string;
+  defile: boolean;
+  sections: Readonly<
+    Record<string, { zone: "chrome" | "contenu"; mode?: "fenetre" | "apercu" | "rangee"; apercu?: number }>
+  >;
+}
+
 export interface AirScreenData {
   screenId: string;
   title: string;
+  composition: AirCompositionData;
   blocks: readonly AirBlockInstanceData[];
   actions: Readonly<Record<string, AirEffectData>>;
   uiActionsByBlock: Readonly<Record<string, string>>;
@@ -350,9 +364,6 @@ function useResolveField(
   };
 }
 
-function nombre(value: unknown): number | undefined {
-  return typeof value === "number" && Number.isFinite(value) ? value : undefined;
-}
 
 function str(value: unknown): string | undefined {
   return typeof value === "string" ? value : undefined;
@@ -672,11 +683,6 @@ export function AirList({ screen, blockId, itemId }: BlockRef & { itemId?: strin
   const b = block(screen, blockId);
   // 1.21.0 — le geste « Voir plus » passe par le dispatcher commun.
   const dispatch = useDispatch(screen);
-  // Mission composition II — le MODE d'assemblage se décide par l'écran :
-  // fenêtre pleine pour la liste UNIQUE, aperçu borné qui coule partout
-  // ailleurs. Décision PURE (list-pipeline), testée sans monter React.
-  const nbListes = screen.blocks.filter((x) => x.blockType === "list").length;
-  const mode = modeListe(str(useBlockProps(screen, blockId).layout), nbListes);
   // Props SURCHARGÉES par les sorties des slots liés (1.3.0, D-058).
   const props = useBlockProps(screen, blockId);
   const provider = useDataProvider();
@@ -691,6 +697,15 @@ export function AirList({ screen, blockId, itemId }: BlockRef & { itemId?: strin
   const onItemNavigate = useItemNavigate(screen, blockId);
   if (!visible) return null;
   if (b.entityId === undefined) throw new Error(`AIR_RUNTIME_ENTITY_MISSING:${blockId}`);
+  // ÉTAPE ① — le MODE vient du PLAN transporté (`composition`), plus aucun
+  // recalcul : une décision = une source. Une liste sans décision transportée
+  // est une erreur de PIPELINE — on refuse net, on ne devine pas.
+  const compo = screen.composition.sections[blockId];
+  const mode = compo?.mode;
+  if (mode === undefined) throw new Error(`AIR_RUNTIME_COMPOSITION_MISSING:${blockId}`);
+  if (mode === "apercu" && typeof compo?.apercu !== "number") {
+    throw new Error(`AIR_RUNTIME_COMPOSITION_MISSING:${blockId}:apercu`);
+  }
   const titleFieldId = str(props.titleFieldId);
   if (titleFieldId === undefined) {
     throw new Error(`AIR_RUNTIME_PROP_MISSING:${blockId}:titleFieldId`);
@@ -792,7 +807,7 @@ export function AirList({ screen, blockId, itemId }: BlockRef & { itemId?: strin
     <ListBlock
       testID={b.id}
       title={str(props.title)}
-      items={mode === "apercu" ? items.slice(0, tailleApercu(str(props.layout), nombre(props.pageSize))) : items}
+      items={mode === "apercu" && typeof compo?.apercu === "number" ? items.slice(0, compo.apercu) : items}
       state={state}
       bounded={mode === "apercu"}
       // 1.21.0 — « Voir plus » : libellé du DOCUMENT + geste SECONDAIRE du

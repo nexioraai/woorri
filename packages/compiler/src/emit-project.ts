@@ -147,6 +147,18 @@ interface ScreenSlice {
   data: {
     screenId: string;
     title: string;
+    /**
+     * ÉTAPE ① (2026-09-11) — le CompositionPlan SÉRIALISÉ. Le planner DÉCIDE,
+     * l'émission TRANSPORTE, le runtime LIT. Avant : le runtime recalculait
+     * `modeListe` de son côté (EP-001) — deux calculs de la même décision,
+     * convergence non contractuelle. Désormais la décision voyage ici et le
+     * recalcul runtime n'existe plus.
+     */
+    composition: {
+      role: string;
+      defile: boolean;
+      sections: Record<string, { zone: "chrome" | "contenu"; mode?: string; apercu?: number }>;
+    };
     blocks: readonly {
       id: string;
       blockType: string;
@@ -226,7 +238,7 @@ function propsAvecMarque(
   return props;
 }
 
-function buildScreenSlice(air: ProjectAir, screen: ProjectAir["screens"][number], locale: string): ScreenSlice {
+function buildScreenSlice(air: ProjectAir, screen: ProjectAir["screens"][number], locale: string, planEcran: EcranPlan): ScreenSlice {
   const where = `screens.${screen.id}`;
   const blockIds = new Set(screen.blocks.map((b) => b.id));
 
@@ -400,12 +412,30 @@ function buildScreenSlice(air: ProjectAir, screen: ProjectAir["screens"][number]
     };
   }
 
+  // ÉTAPE ① — sérialisation du plan : uniquement ce que le runtime LIT
+  // (zone, mode, aperçu) plus le rôle et `defile` pour la traçabilité.
+  const composition: ScreenSlice["data"]["composition"] = {
+    role: planEcran.role,
+    defile: planEcran.defile,
+    sections: Object.fromEntries(
+      planEcran.sections.map((sec) => [
+        sec.blockId,
+        {
+          zone: sec.zone,
+          ...(sec.mode === undefined ? {} : { mode: sec.mode }),
+          ...(sec.apercu === undefined ? {} : { apercu: sec.apercu }),
+        },
+      ]),
+    ),
+  };
+
   return {
     screen,
     title: resolveLocalized(screen.title, locale, where),
     data: {
       screenId: screen.id,
       title: resolveLocalized(screen.title, locale, where),
+      composition,
       blocks: screen.blocks.map((b) => ({
         id: b.id,
         blockType: b.blockType,
@@ -504,8 +534,9 @@ function emitScreen(slice: ScreenSlice, aBarre: boolean, planEcran: EcranPlan): 
   // C'est ce qui rend l'ACCUEIL-FLEUVE exprimable — un défilement vertical
   // de sections hétérogènes, le patron de toute marketplace de référence —
   // pour N'IMPORTE quel type d'application.
-  // Mission composition II — MÊME règle que le runtime (modeListe) : la
-  // fenêtre pleine appartient à l'écran dont la liste est l'UNIQUE liste.
+  // Mission composition II / ÉTAPE ① — la fenêtre pleine appartient à
+  // l'écran dont la liste est l'UNIQUE liste ; le runtime LIT désormais la
+  // même décision, TRANSPORTÉE dans `composition` (plus aucun recalcul).
   // Un accueil composé (plusieurs listes) DÉFILE, et ses listes verticales
   // deviennent des aperçus bornés — plus aucun couloir possible.
   // ENGINE HARDENING — la décision vient du PLAN, écrite UNE fois.
@@ -1083,7 +1114,13 @@ export function emitProject(
   files.set("nav.data.ts", emitNavData(air, locale));
   files.set("navigation.tsx", emitNavigation(air));
   for (const screen of [...air.screens].sort((a, b) => byCodeUnit(a.id, b.id))) {
-    const slice = buildScreenSlice(air, screen, locale);
+    // ÉTAPE ① — le plan couvre chaque écran PAR CONSTRUCTION ; un trou est
+    // une erreur de pipeline, jamais un cas à deviner par un repli.
+    const planEcran = plan.ecrans.find((e) => e.screenId === screen.id);
+    if (planEcran === undefined) {
+      throw new EmitError("EMIT_PLAN_ECRAN_MANQUANT", `screens.${screen.id}`, "le plan ne couvre pas cet écran");
+    }
+    const slice = buildScreenSlice(air, screen, locale, planEcran);
     files.set(`screens/${screen.id}.data.ts`, emitScreenData(slice));
     // 1.15.0 — la barre est rendue SAUF si l'écran la refuse explicitement.
     // Un écran d'accueil produit n'est pas une destination : lui coller quatre
@@ -1093,12 +1130,7 @@ export function emitProject(
       emitScreen(
         slice,
         air.navigation.primary !== undefined && screen.showsPrimaryNav !== false,
-        plan.ecrans.find((e) => e.screenId === screen.id) ?? {
-          screenId: screen.id,
-          role: "page",
-          defile: true,
-          sections: [],
-        },
+        planEcran,
       ),
     );
   }
