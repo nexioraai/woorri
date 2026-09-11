@@ -500,3 +500,16 @@ passage P2 sur frais = 1/2 ; l'échec coûte 0,15 $. Option consignée non
 exécutée : prompt P0 v6 « chaque identité naît dans son parcours »
 (contrat inchangé ⇒ décision humaine, EP-043). Garde GO_CAMPAGNE
 exercée ; BILAN honnête R6 vu en production. Mission : 10,9307 $.
+
+--- 2026-09-11 · RE-TIRAGES SOUS v6 (GO EP-068, série close 3/3) ---
+Q1 NON ×3 (P1 transitions · P2 ×2 · P2 ×1), 0,4949 $, plafond intact.
+MAIS la lecture « v6 n'a pas transmis » est réfutée par la progression :
+T3 est parfaitement sourcé PARTOUT — l'unique refus est un TROU
+D'EXPRESSIVITÉ du contrat, démontré par la variance (2 tirages
+indépendants) : une identité élue consommée comme PORTÉE d'un autre
+concept (categorie→chercher(soin) ; soin→decouvrir(creneau)→saisir(
+rendezvous)). Candidat consigné non tranché : consommation-par-portée.
+Chiffre R8 : passage P2 frais = 1/5 (≈2/5 sous contrat étendu) ; échec
+= 0,15-0,18 $ ⇒ provisionner 3-5 tentatives P0 par run complet ou
+boucle bornée au lanceur (décisions dues). v7 transitions : décision
+due. Mission : 11,4256 $.
