@@ -4,12 +4,7 @@
 import { ThemeRoot } from "./lib/primitives";
 import { DataRoot } from "./lib/runtime/data-provider";
 import { FormStateRoot } from "./lib/runtime/form-state";
-import { creerMagasin } from "./lib/runtime/magasin-donnees";
-import {
-  creerAdaptateurReseau,
-  planificateurIntervalle,
-  transportHttp,
-} from "./lib/runtime/source-reseau";
+import { buildDemoProvider } from "./lib/runtime/demo-provider";
 import { CapabilityRoot } from "./lib/runtime/capability-provider";
 import { SessionRoot } from "./lib/runtime/session-provider";
 import { creerCapabilitesAuth } from "./lib/runtime/capabilites-auth";
@@ -17,22 +12,7 @@ import { creerSessionLocale } from "./lib/runtime/session-locale";
 import { demoData } from "./demo.data";
 import { Navigation } from "./navigation";
 
-// Amorçage : fixtures de démo (D-013) — la source distante les
-// remplace dès la première consommation réussie ; en attendant,
-// l'état du magasin dit la vérité (loading/error).
-const provider = creerMagasin(demoData);
-const CIBLES_REMOTE = [{"datasetId":"data_commande","entityId":"ent_commande","integrationId":"intg_api_marketa","refreshSeconds":120,"url":"https://api.marketa.app/air/v1/entities/ent_commande/rows"},{"datasetId":"data_produit","entityId":"ent_produit","integrationId":"intg_api_marketa","refreshSeconds":300,"url":"https://api.marketa.app/air/v1/entities/ent_produit/rows"}] as const;
-const DOMAINES_AUTORISES = ["api.marketa.app","picsum.photos"] as const;
-// Transport et polling APPAREIL fournis par le runtime embarqué —
-// l'adaptateur revérifie chaque hôte contre DOMAINES_AUTORISES.
-const adaptateur = creerAdaptateurReseau({
-  magasin: provider,
-  cibles: CIBLES_REMOTE,
-  domainesAutorises: DOMAINES_AUTORISES,
-  transport: transportHttp,
-  planificateur: planificateurIntervalle,
-});
-void adaptateur.demarrer();
+const provider = buildDemoProvider(demoData);
 // Session LOCALE : identité DÉCLARÉE par la personne, non vérifiée
 // par un serveur — équivalent de demo.data pour l'identité. Le
 // document ne déclare aucune intégration d'authentification.

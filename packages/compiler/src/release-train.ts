@@ -199,7 +199,9 @@ export const RELEASE_TRAIN_V1 = {
     // + geste secondaire).
     // Ré-scellé 2026-09-10 (composition II) : rendu APERÇU BORNÉ des listes
     // d'écrans composés (sans FlatList — DET-006 reformulé).
-    "982937c33d8821799362c7ea573ccc895346868a4c99ec3059d88dadf1b0e1ab",
+    // Ré-scellé 2026-09-11 : Rangee (paire d'aperçu en flex — le débordement
+    // de ~8 dp qui cassait la grille en fausse colonne, mesuré à l'écran).
+    "d00c5039e7c5b365ad17b30cefcd0f9e74c9eb8bc8222363108a1b2906acf277",
   capabilityRegistryVersion: "1.0.0",
   capabilitySourcesHash:
     "6c28599246abde6e7010704f23f273aafe50d17c5483133709c9065f2777346c",

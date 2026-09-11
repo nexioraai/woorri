@@ -9,7 +9,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { migrateAirDocument, projectAirSchema } from "@deribfy/air-schema";
-import { principesDeComposition, preuveDeMatiere } from "../src/matiere.ts";
+import { imagesDeVitrine, principesDeComposition, preuveDeMatiere } from "../src/matiere.ts";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const R = join(HERE, "..", "..", "..");
@@ -61,7 +61,8 @@ describe("principes de composition — mécaniques, aveugles au domaine", () => 
   });
 
   it("CONTRÔLE — une liste distante sans états est refusée", () => {
-    const air = lire("slices/marketa/marketa.air.json");
+    // v1 est la génération qui déclarait du distant — c'est elle le banc.
+    const air = lire("benchmarks/air-emission/results/marketa.air.valide.json");
     const sansEtats = {
       ...air,
       screens: air.screens.map((s) => ({
@@ -75,6 +76,32 @@ describe("principes de composition — mécaniques, aveugles au domaine", () => 
     };
     const d = principesDeComposition(sansEtats);
     expect(d.some((x) => x.code === "CAMPAGNE_ETATS_REMOTE_MANQUANTS")).toBe(true);
+  });
+});
+
+describe("images de vitrine — le verrou que la prose n'a pas su tenir", () => {
+  it("les deux générations RÉELLES portent leurs URLs ; les retirer déclenche le verrou", () => {
+    // v1 ET v2 portent leurs images (graines descriptives — 36ter tenue par
+    // le modèle deux fois). Le verrou garantit que ça RESTE vrai : générique,
+    // il tombe si une génération future les perd.
+    expect(imagesDeVitrine(lire("benchmarks/air-emission/results/marketa.air.valide.json"))).toEqual([]);
+    const v2 = lire("benchmarks/air-emission/results/marketa2.air.valide.json");
+    expect(imagesDeVitrine(v2)).toEqual([]);
+    const sansImages = {
+      ...v2,
+      entities: v2.entities.map((e) => ({
+        ...e,
+        fields: e.fields.map((f) => {
+          if (f.type !== "asset") return f;
+          const copie = { ...f };
+          delete copie.demoValues;
+          return copie;
+        }),
+      })),
+    };
+    const d = imagesDeVitrine(sansImages);
+    expect(d.length).toBeGreaterThan(0);
+    expect(d[0]?.code).toBe("CAMPAGNE_IMAGES_DEMO_MANQUANTES");
   });
 });
 

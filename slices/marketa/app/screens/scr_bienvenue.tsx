@@ -26,7 +26,7 @@ export default function ScrBienvenueScreen() {
         keyboardShouldPersistTaps="handled"
       >
         <AirHeader screen={screenData} blockId="blk_bienvenue_header" />
-        <AirSpacer screen={screenData} blockId="blk_bienvenue_espace" />
+        <AirSpacer screen={screenData} blockId="blk_bienvenue_spacer" />
         <AirButton screen={screenData} blockId="blk_bienvenue_inscription" />
         <AirButton screen={screenData} blockId="blk_bienvenue_connexion" />
         <AirButton screen={screenData} blockId="blk_bienvenue_visiteur" />

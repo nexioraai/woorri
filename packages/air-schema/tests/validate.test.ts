@@ -154,6 +154,14 @@ describe("validateAir — cohérence référentielle", () => {
     at(air.expectedTests, 0).targetId = bloc;
     expect(codes(air)).not.toContain("AIR_TEST_TARGET_UNKNOWN");
 
+    // 2026-09-11 — un CHAMP et une ROUTE déclarés sont des cibles vivantes.
+    const airChamp = buildValidAir();
+    at(airChamp.expectedTests, 0).targetId = at(at(airChamp.entities, 0).fields, 0).id;
+    expect(codes(airChamp)).not.toContain("AIR_TEST_TARGET_UNKNOWN");
+    const airRoute = buildValidAir();
+    at(airRoute.expectedTests, 0).targetId = at(airRoute.navigation.routes, 0).id;
+    expect(codes(airRoute)).not.toContain("AIR_TEST_TARGET_UNKNOWN");
+
     // CONTRÔLE NÉGATIF — une cible réellement absente reste refusée.
     const air2 = buildValidAir();
     at(air2.expectedTests, 0).targetId = "blk_fantome_inexistant";
@@ -186,6 +194,12 @@ describe("validateAir — cohérence référentielle", () => {
     const air4 = buildValidAir();
     at(air4.integrations, 0).config = [{ key: "apiKeyFieldId", value: "sk_live_abc123" }];
     expect(codes(air4)).toContain("AIR_INTEGRATION_SECRET_LIKE_KEY");
+
+    // 2026-09-11 — une valeur NUMÉRIQUE sous un nom évocateur est une règle,
+    // pas une fuite (« passwordMinLength: 8 », mesuré sur marketa v2).
+    const air5 = buildValidAir();
+    at(air5.integrations, 0).config = [{ key: "passwordMinLength", value: 8 }];
+    expect(codes(air5)).not.toContain("AIR_INTEGRATION_SECRET_LIKE_KEY");
   });
 
   it("refuse un PSP quand la classe commerce est digital (IAP obligatoire)", () => {

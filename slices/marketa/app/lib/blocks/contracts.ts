@@ -99,6 +99,10 @@ export interface ListBlockProps extends BlockA11yProps {
   seeAll?: { label: string; onPress: () => void };
   /** 1.6.0 — lignes (défaut), cartes 2 colonnes, ou RANGÉE horizontale. */
   layout?: "rows" | "grid" | "row";
+  /** Mission composition II — APERÇU BORNÉ : la liste coule dans un écran
+   * composé (items déjà tronqués par l'appelant), aucune virtualisation ;
+   * la fenêtre pleine reste le rendu de la liste unique d'un écran. */
+  bounded?: boolean;
   /** Recherche rendue EN TÊTE de la liste (1.2.0) — absente = pas de champ. */
   search?: ListSearchSpec;
   /** Filtres pilotés (E1, D-129) — rendus sous la recherche, ≤ 3. */

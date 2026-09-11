@@ -26,9 +26,9 @@ export default function ScrMotDePasseOublieScreen({ route }: AirScreenProps) {
         contentContainerStyle={{ flexGrow: 1, paddingBottom: insets.bottom }}
         keyboardShouldPersistTaps="handled"
       >
-        <AirHeader screen={screenData} blockId="blk_mdp_header" />
-        <AirForm screen={screenData} blockId="blk_mdp_form" itemId={route?.params?.itemId} />
-        <AirButton screen={screenData} blockId="blk_mdp_retour" />
+        <AirHeader screen={screenData} blockId="blk_oubli_header" />
+        <AirForm screen={screenData} blockId="blk_oubli_form" itemId={route?.params?.itemId} />
+        <AirButton screen={screenData} blockId="blk_oubli_vers_connexion" />
       </ScrollView>
       </KeyboardAvoidingView>
     </ScreenShell>

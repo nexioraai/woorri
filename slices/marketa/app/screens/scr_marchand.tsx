@@ -13,25 +13,21 @@
 import { View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ScreenShell } from "../lib/primitives";
-import { AirButton, AirEmptyState, AirHeader, AirList, AirScreenLifecycle } from "../lib/runtime/air-runtime";
+import { AirDetailHeader, AirList } from "../lib/runtime/air-runtime";
 import { PrimaryNav } from "../lib/runtime/primary-nav";
 import { primaryNav } from "../nav.data";
 import type { AirScreenProps } from "../lib/runtime/air-runtime";
-import { screenData } from "./scr_panier.data";
+import { screenData } from "./scr_marchand.data";
 
-export default function ScrPanierScreen({ route }: AirScreenProps) {
+export default function ScrMarchandScreen({ route }: AirScreenProps) {
   const insets = useSafeAreaInsets();
   return (
-    <ScreenShell testID="scr_panier" title={screenData.title}>
-      <AirScreenLifecycle screen={screenData} />
-      <View style={{ flex: 1, paddingBottom: insets.bottom }}>
-        <AirHeader screen={screenData} blockId="blk_panier_header" />
-        <AirList screen={screenData} blockId="blk_panier_liste" itemId={route?.params?.itemId} />
-        <AirEmptyState screen={screenData} blockId="blk_panier_vide" />
-        <AirHeader screen={screenData} blockId="blk_panier_recap" />
-        <AirButton screen={screenData} blockId="blk_panier_commander" />
+    <ScreenShell testID="scr_marchand" title={screenData.title}>
+      <View style={{ flex: 1, paddingTop: insets.top, paddingBottom: insets.bottom }}>
+        <AirDetailHeader screen={screenData} blockId="blk_marchand_entete" itemId={route?.params?.itemId} />
+        <AirList screen={screenData} blockId="blk_marchand_produits" itemId={route?.params?.itemId} />
       </View>
-      <PrimaryNav destinations={primaryNav} currentScreenId="scr_panier" />
+      <PrimaryNav destinations={primaryNav} currentScreenId="scr_marchand" />
     </ScreenShell>
   );
 }

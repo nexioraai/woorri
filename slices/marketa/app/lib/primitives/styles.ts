@@ -284,6 +284,9 @@ const makeSheet = (c: Palette) =>
     gridCardBody: { padding: theme.space.md, gap: theme.space.xs },
     // Carte COMPACTE d'une rangée horizontale : largeur bornée (jeton), la
     // rangée en montre plusieurs et invite au geste. Même anatomie sinon.
+    // Rangée d'APERÇU (mesuré à l'écran : paires à largeur fixe débordant de
+    // ~8 dp → fausse colonne). Les cartes partagent la largeur par flex.
+    rangeeApercu: { flexDirection: "row", gap: theme.space.sm },
     gridCardCompact: {
       width: theme.size.tapTarget * 3.25,
       backgroundColor: c.surface,

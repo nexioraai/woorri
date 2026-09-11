@@ -10,7 +10,7 @@
 // (implémentations : Phases 5+/9 — lecture consignée D-028).
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 // E1/E2 (D-129) — la vérité des lignes visibles vit dans un module PUR.
-import { lignesVisibles, optionsDistinctes } from "./list-pipeline";
+import {lignesVisibles, optionsDistinctes, modeListe, tailleApercu} from "./list-pipeline";
 import type { FiltreEffectif, OperateurFiltre } from "./list-pipeline";
 import { useNavigation } from "@react-navigation/native";
 import { allerVers } from "./racines-navigation";
@@ -351,6 +351,10 @@ function useResolveField(
   };
 }
 
+function nombre(value: unknown): number | undefined {
+  return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+}
+
 function str(value: unknown): string | undefined {
   return typeof value === "string" ? value : undefined;
 }
@@ -660,6 +664,11 @@ export function AirList({ screen, blockId, itemId }: BlockRef & { itemId?: strin
   const b = block(screen, blockId);
   // 1.21.0 — le geste « Voir plus » passe par le dispatcher commun.
   const dispatch = useDispatch(screen);
+  // Mission composition II — le MODE d'assemblage se décide par l'écran :
+  // fenêtre pleine pour la liste UNIQUE, aperçu borné qui coule partout
+  // ailleurs. Décision PURE (list-pipeline), testée sans monter React.
+  const nbListes = screen.blocks.filter((x) => x.blockType === "list").length;
+  const mode = modeListe(str(useBlockProps(screen, blockId).layout), nbListes);
   // Props SURCHARGÉES par les sorties des slots liés (1.3.0, D-058).
   const props = useBlockProps(screen, blockId);
   const provider = useDataProvider();
@@ -775,8 +784,9 @@ export function AirList({ screen, blockId, itemId }: BlockRef & { itemId?: strin
     <ListBlock
       testID={b.id}
       title={str(props.title)}
-      items={items}
+      items={mode === "apercu" ? items.slice(0, tailleApercu(str(props.layout), nombre(props.pageSize))) : items}
       state={state}
+      bounded={mode === "apercu"}
       // 1.21.0 — « Voir plus » : libellé du DOCUMENT + geste SECONDAIRE du
       // bloc. L'un sans l'autre ne rend rien : aucune promesse muette.
       seeAll={

@@ -29,6 +29,7 @@ export default function ScrCompteScreen() {
       >
         <AirHeader screen={screenData} blockId="blk_compte_header" />
         <AirEmptyState screen={screenData} blockId="blk_compte_invite" />
+        <AirButton screen={screenData} blockId="blk_compte_connexion" />
         <AirButton screen={screenData} blockId="blk_compte_inscription" />
         <AirEmptyState screen={screenData} blockId="blk_compte_confirmation" />
         <AirButton screen={screenData} blockId="blk_compte_profil" />

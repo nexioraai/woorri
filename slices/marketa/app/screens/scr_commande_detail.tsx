@@ -10,10 +10,10 @@
 // réel. `useSafeAreaInsets` est disponible sans SafeAreaProvider ajouté :
 // NativeStackView enveloppe déjà ses écrans dans SafeAreaProviderCompat
 // [vérifié dans le paquet installé].
-import { KeyboardAvoidingView, ScrollView } from "react-native";
+import { View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ScreenShell } from "../lib/primitives";
-import { AirButton, AirDetailHeader } from "../lib/runtime/air-runtime";
+import { AirDetailHeader, AirHeader, AirList, AirScreenLifecycle } from "../lib/runtime/air-runtime";
 import { PrimaryNav } from "../lib/runtime/primary-nav";
 import { primaryNav } from "../nav.data";
 import type { AirScreenProps } from "../lib/runtime/air-runtime";
@@ -23,15 +23,12 @@ export default function ScrCommandeDetailScreen({ route }: AirScreenProps) {
   const insets = useSafeAreaInsets();
   return (
     <ScreenShell testID="scr_commande_detail" title={screenData.title}>
-      <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
-      <ScrollView
-        contentContainerStyle={{ flexGrow: 1, paddingTop: insets.top, paddingBottom: insets.bottom }}
-        keyboardShouldPersistTaps="handled"
-      >
+      <AirScreenLifecycle screen={screenData} />
+      <View style={{ flex: 1, paddingTop: insets.top, paddingBottom: insets.bottom }}>
         <AirDetailHeader screen={screenData} blockId="blk_commande_entete" itemId={route?.params?.itemId} />
-        <AirButton screen={screenData} blockId="blk_commande_retour" />
-      </ScrollView>
-      </KeyboardAvoidingView>
+        <AirHeader screen={screenData} blockId="blk_commande_suivi" />
+        <AirList screen={screenData} blockId="blk_commande_lignes" itemId={route?.params?.itemId} />
+      </View>
       <PrimaryNav destinations={primaryNav} currentScreenId="scr_commande_detail" />
     </ScreenShell>
   );

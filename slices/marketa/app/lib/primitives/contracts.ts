@@ -154,6 +154,10 @@ export interface SearchEntryProps extends A11yProps {
   onPress?: () => void;
 }
 
+/** Rangée d'aperçu — deux cartes qui PARTAGENT la largeur (flex), gap par
+ * jeton : la paire ne peut pas déborder, donc jamais de fausse colonne. */
+export type RangeeProps = PropsWithChildren<Record<never, never>>;
+
 export interface GridCardProps extends A11yProps {
   /** Carte de RANGÉE horizontale : largeur bornée par jeton, image carrée. */
   compact?: boolean;

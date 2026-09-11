@@ -13,7 +13,7 @@
 import { View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ScreenShell } from "../lib/primitives";
-import { AirList } from "../lib/runtime/air-runtime";
+import { AirEmptyState, AirHeader, AirList } from "../lib/runtime/air-runtime";
 import { PrimaryNav } from "../lib/runtime/primary-nav";
 import { primaryNav } from "../nav.data";
 import type { AirScreenProps } from "../lib/runtime/air-runtime";
@@ -24,7 +24,9 @@ export default function ScrCatalogueScreen({ route }: AirScreenProps) {
   return (
     <ScreenShell testID="scr_catalogue" title={screenData.title}>
       <View style={{ flex: 1, paddingBottom: insets.bottom }}>
+        <AirHeader screen={screenData} blockId="blk_catalogue_header" />
         <AirList screen={screenData} blockId="blk_catalogue_liste" itemId={route?.params?.itemId} />
+        <AirEmptyState screen={screenData} blockId="blk_catalogue_vide" />
       </View>
       <PrimaryNav destinations={primaryNav} currentScreenId="scr_catalogue" />
     </ScreenShell>

@@ -56,6 +56,41 @@ export interface DiagnosticComposition {
  *   `remote` porte loadingTitle ET errorTitle : le réseau échoue, l'écran
  *   doit savoir le dire.
  */
+export interface DiagnosticImages {
+  code: "CAMPAGNE_IMAGES_DEMO_MANQUANTES";
+  path: string;
+  message: string;
+}
+
+/**
+ * ④ UNE VITRINE MONTRE DE VRAIES IMAGES — un champ `asset` RÉFÉRENCÉ par un
+ * `imageFieldId` (liste ou fiche) doit porter des `demoValues` (URLs) : la
+ * première ouverture d'une app générée est sa démonstration. MESURÉ : la
+ * même intention a produit une génération AVEC (v1) puis SANS (v2) — la
+ * prose ne suffit pas, le verrou décide.
+ */
+export function imagesDeVitrine(air: ProjectAir): DiagnosticImages[] {
+  const referencés = new Set<string>();
+  for (const s of air.screens)
+    for (const b of s.blocks) {
+      const v = (b.props ?? []).find((p) => p.key === "imageFieldId")?.value;
+      if (typeof v === "string") referencés.add(v);
+    }
+  const out: DiagnosticImages[] = [];
+  air.entities.forEach((e, i) => {
+    e.fields.forEach((f, j) => {
+      if (f.type === "asset" && referencés.has(f.id) && f.demoValues === undefined) {
+        out.push({
+          code: "CAMPAGNE_IMAGES_DEMO_MANQUANTES",
+          path: `entities[${String(i)}].fields[${String(j)}]`,
+          message: `champ image "${f.id}" affiché par un bloc sans demoValues (URLs réelles)`,
+        });
+      }
+    });
+  });
+  return out;
+}
+
 export function principesDeComposition(air: ProjectAir): DiagnosticComposition[] {
   const out: DiagnosticComposition[] = [];
   const prop = (b: { props?: readonly { key: string; value: unknown }[] }, k: string) =>

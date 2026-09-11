@@ -769,7 +769,11 @@ export function validateAir(air: ProjectAir): AirDiagnostic[] {
           pair.key.endsWith("FieldId") &&
           typeof pair.value === "string" &&
           /^fld_[a-z0-9_]+$/.test(pair.value);
-        if (SECRET_LIKE_KEY.test(pair.key) && !pointeurDeChamp) {
+        // Un secret est une CHAÎNE : une valeur numérique ou booléenne sous
+        // un nom évocateur (« passwordMinLength: 8 », mesuré sur marketa v2)
+        // est une RÈGLE, pas une fuite.
+        const valeurNonSecrete = typeof pair.value !== "string";
+        if (SECRET_LIKE_KEY.test(pair.key) && !pointeurDeChamp && !valeurNonSecrete) {
           push(
             "AIR_INTEGRATION_SECRET_LIKE_KEY",
             `integrations[${i}].config[${j}]`,
@@ -804,6 +808,10 @@ export function validateAir(air: ProjectAir): AirDiagnostic[] {
   // règle ou une intégration est une promesse parfaitement vérifiable.
   // Élargir n'ACCEPTE que davantage : le corpus gelé reste jugé à
   // l'identique, aucun document accepté hier n'est refusé aujourd'hui.
+  // COMPLÉTÉ le 2026-09-11 (mesuré sur marketa v2 : 8 refus visant des
+  // CHAMPS, une ROUTE et une CAPABILITY déclarés — tous vivants). Le principe
+  // reste « aucune promesse sur une cible morte » ; la liste est désormais
+  // TOUS les nœuds déclarés du document.
   const testTargets = new Set<string>([
     ...screenIds,
     ...air.actions.map((a) => a.id),
@@ -812,6 +820,9 @@ export function validateAir(air: ProjectAir): AirDiagnostic[] {
     ...air.rules.map((r) => r.id),
     ...air.integrations.map((x) => x.id),
     ...air.datasets.map((ds) => ds.id),
+    ...air.entities.flatMap((e) => e.fields.map((f) => f.id)),
+    ...air.navigation.routes.map((r) => r.id),
+    ...air.capabilities.map((c) => c.capability),
   ]);
   air.expectedTests.forEach((t, i) => {
     if (!testTargets.has(t.targetId)) {

@@ -571,6 +571,7 @@ function validateLocal(document) {
     // états du distant déclarés. Le couloir, lui, est devenu IRREPRÉSENTABLE
     // (aperçus bornés) — plus besoin de l'interdire.
     ...fidelity.principesDeComposition(parsed.data),
+    ...fidelity.imagesDeVitrine(parsed.data),
     // ── FORM_SANS_ACTION (2026-09-01) — DIAGNOSTIC, JAMAIS UN REFUS DE CONTRAT.
     //
     // Un `form` rend TOUJOURS un bouton portant son `submitLabel` : c'est une

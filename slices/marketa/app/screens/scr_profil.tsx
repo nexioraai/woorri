@@ -13,7 +13,7 @@
 import { KeyboardAvoidingView, ScrollView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ScreenShell } from "../lib/primitives";
-import { AirButton, AirForm } from "../lib/runtime/air-runtime";
+import { AirForm, AirHeader } from "../lib/runtime/air-runtime";
 import { PrimaryNav } from "../lib/runtime/primary-nav";
 import { primaryNav } from "../nav.data";
 import type { AirScreenProps } from "../lib/runtime/air-runtime";
@@ -28,8 +28,8 @@ export default function ScrProfilScreen({ route }: AirScreenProps) {
         contentContainerStyle={{ flexGrow: 1, paddingBottom: insets.bottom }}
         keyboardShouldPersistTaps="handled"
       >
+        <AirHeader screen={screenData} blockId="blk_profil_header" />
         <AirForm screen={screenData} blockId="blk_profil_form" itemId={route?.params?.itemId} />
-        <AirButton screen={screenData} blockId="blk_profil_supprimer" />
       </ScrollView>
       </KeyboardAvoidingView>
       <PrimaryNav destinations={primaryNav} currentScreenId="scr_profil" />

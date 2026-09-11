@@ -10,28 +10,30 @@
 // réel. `useSafeAreaInsets` est disponible sans SafeAreaProvider ajouté :
 // NativeStackView enveloppe déjà ses écrans dans SafeAreaProviderCompat
 // [vérifié dans le paquet installé].
-import { View } from "react-native";
+import { KeyboardAvoidingView, ScrollView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ScreenShell } from "../lib/primitives";
-import { AirButton, AirEmptyState, AirHeader, AirList, AirScreenLifecycle } from "../lib/runtime/air-runtime";
+import { AirButton, AirDetailHeader, AirHeader } from "../lib/runtime/air-runtime";
 import { PrimaryNav } from "../lib/runtime/primary-nav";
 import { primaryNav } from "../nav.data";
 import type { AirScreenProps } from "../lib/runtime/air-runtime";
-import { screenData } from "./scr_panier.data";
+import { screenData } from "./scr_produit.data";
 
-export default function ScrPanierScreen({ route }: AirScreenProps) {
+export default function ScrProduitScreen({ route }: AirScreenProps) {
   const insets = useSafeAreaInsets();
   return (
-    <ScreenShell testID="scr_panier" title={screenData.title}>
-      <AirScreenLifecycle screen={screenData} />
-      <View style={{ flex: 1, paddingBottom: insets.bottom }}>
-        <AirHeader screen={screenData} blockId="blk_panier_header" />
-        <AirList screen={screenData} blockId="blk_panier_liste" itemId={route?.params?.itemId} />
-        <AirEmptyState screen={screenData} blockId="blk_panier_vide" />
-        <AirHeader screen={screenData} blockId="blk_panier_recap" />
-        <AirButton screen={screenData} blockId="blk_panier_commander" />
-      </View>
-      <PrimaryNav destinations={primaryNav} currentScreenId="scr_panier" />
+    <ScreenShell testID="scr_produit" title={screenData.title}>
+      <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
+      <ScrollView
+        contentContainerStyle={{ flexGrow: 1, paddingTop: insets.top, paddingBottom: insets.bottom }}
+        keyboardShouldPersistTaps="handled"
+      >
+        <AirDetailHeader screen={screenData} blockId="blk_produit_entete" itemId={route?.params?.itemId} />
+        <AirHeader screen={screenData} blockId="blk_produit_infos" />
+        <AirButton screen={screenData} blockId="blk_produit_ajouter" />
+      </ScrollView>
+      </KeyboardAvoidingView>
+      <PrimaryNav destinations={primaryNav} currentScreenId="scr_produit" />
     </ScreenShell>
   );
 }

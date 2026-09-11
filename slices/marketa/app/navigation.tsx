@@ -8,16 +8,16 @@ import { navData } from "./nav.data";
 import ScrAccueilScreen from "./screens/scr_accueil";
 import ScrBienvenueScreen from "./screens/scr_bienvenue";
 import ScrCatalogueScreen from "./screens/scr_catalogue";
-import ScrCommandeCreationScreen from "./screens/scr_commande_creation";
 import ScrCommandeDetailScreen from "./screens/scr_commande_detail";
 import ScrCommandesScreen from "./screens/scr_commandes";
 import ScrCompteScreen from "./screens/scr_compte";
 import ScrConnexionScreen from "./screens/scr_connexion";
 import ScrInscriptionScreen from "./screens/scr_inscription";
-import ScrMarchandDetailScreen from "./screens/scr_marchand_detail";
+import ScrMarchandScreen from "./screens/scr_marchand";
 import ScrMotDePasseOublieScreen from "./screens/scr_mot_de_passe_oublie";
+import ScrPaiementScreen from "./screens/scr_paiement";
 import ScrPanierScreen from "./screens/scr_panier";
-import ScrProduitDetailScreen from "./screens/scr_produit_detail";
+import ScrProduitScreen from "./screens/scr_produit";
 import ScrProfilScreen from "./screens/scr_profil";
 
 const Stack = createNativeStackNavigator();
@@ -39,8 +39,6 @@ export function Navigation() {
         options={{ title: navData.routes.find((x) => x.screenId === "scr_bienvenue")!.title, headerShown: false }} />
       <Stack.Screen name="scr_catalogue" component={ScrCatalogueScreen}
         options={{ title: navData.routes.find((x) => x.screenId === "scr_catalogue")!.title, gestureEnabled: false }} />
-      <Stack.Screen name="scr_commande_creation" component={ScrCommandeCreationScreen}
-        options={{ title: navData.routes.find((x) => x.screenId === "scr_commande_creation")!.title }} />
       <Stack.Screen name="scr_commande_detail" component={ScrCommandeDetailScreen}
         options={{ title: navData.routes.find((x) => x.screenId === "scr_commande_detail")!.title, headerShown: false }} />
       <Stack.Screen name="scr_commandes" component={ScrCommandesScreen}
@@ -51,14 +49,16 @@ export function Navigation() {
         options={{ title: "", presentation: "modal" }} />
       <Stack.Screen name="scr_inscription" component={ScrInscriptionScreen}
         options={{ title: "", presentation: "modal" }} />
-      <Stack.Screen name="scr_marchand_detail" component={ScrMarchandDetailScreen}
-        options={{ title: navData.routes.find((x) => x.screenId === "scr_marchand_detail")!.title, headerShown: false }} />
+      <Stack.Screen name="scr_marchand" component={ScrMarchandScreen}
+        options={{ title: navData.routes.find((x) => x.screenId === "scr_marchand")!.title, headerShown: false }} />
       <Stack.Screen name="scr_mot_de_passe_oublie" component={ScrMotDePasseOublieScreen}
         options={{ title: "", presentation: "modal" }} />
+      <Stack.Screen name="scr_paiement" component={ScrPaiementScreen}
+        options={{ title: navData.routes.find((x) => x.screenId === "scr_paiement")!.title }} />
       <Stack.Screen name="scr_panier" component={ScrPanierScreen}
         options={{ title: navData.routes.find((x) => x.screenId === "scr_panier")!.title, gestureEnabled: false }} />
-      <Stack.Screen name="scr_produit_detail" component={ScrProduitDetailScreen}
-        options={{ title: navData.routes.find((x) => x.screenId === "scr_produit_detail")!.title, headerShown: false }} />
+      <Stack.Screen name="scr_produit" component={ScrProduitScreen}
+        options={{ title: navData.routes.find((x) => x.screenId === "scr_produit")!.title, headerShown: false }} />
       <Stack.Screen name="scr_profil" component={ScrProfilScreen}
         options={{ title: navData.routes.find((x) => x.screenId === "scr_profil")!.title }} />
       </Stack.Navigator>

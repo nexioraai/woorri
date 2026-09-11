@@ -15,6 +15,7 @@ import type {
   AppTextProps,
   BadgeProps,
   GridCardProps,
+  RangeeProps,
   SearchEntryProps,
   ListRowProps,
   Primitives,
@@ -341,6 +342,11 @@ export function SearchEntry({ placeholder, onPress, testID, accessibilityLabel }
       <Text style={s.searchEntryTexte}>{placeholder}</Text>
     </Pressable>
   );
+}
+
+export function Rangee({ children }: RangeeProps) {
+  const s = useStyles();
+  return <View style={s.rangeeApercu}>{children}</View>;
 }
 
 export function GridCard({

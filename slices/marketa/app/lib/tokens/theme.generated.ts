@@ -9,28 +9,28 @@ export const theme = {
       "surface": "#FFFFFF",
       "text": "#16181D",
       "muted": "#5A616E",
-      "primary": "#E11EFA",
+      "primary": "#FA7E1E",
       "onPrimary": "#16181D",
       "border": "#D9DDE3",
       "error": "#C42B1C",
       "success": "#1F7A3D",
       "warn": "#866A00",
       "badgeBg": "#EEF1F5",
-      "primaryText": "#BF1AD5"
+      "primaryText": "#B25915"
     },
     "dark": {
       "bg": "#0A050E",
       "surface": "#17121C",
       "text": "#F2F0F4",
       "muted": "#A49FAC",
-      "primary": "#E11EFA",
+      "primary": "#FA7E1E",
       "onPrimary": "#16181D",
       "border": "#2E2836",
       "error": "#FF6B5E",
       "success": "#4CC17A",
       "warn": "#E3C25A",
       "badgeBg": "#241E2B",
-      "primaryText": "#E11EFA"
+      "primaryText": "#FA7E1E"
     }
   },
   "space": {

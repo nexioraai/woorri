@@ -10,10 +10,10 @@
 // réel. `useSafeAreaInsets` est disponible sans SafeAreaProvider ajouté :
 // NativeStackView enveloppe déjà ses écrans dans SafeAreaProviderCompat
 // [vérifié dans le paquet installé].
-import { View } from "react-native";
+import { KeyboardAvoidingView, ScrollView } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ScreenShell } from "../lib/primitives";
-import { AirHeader, AirList, AirScreenLifecycle, AirSearchEntry } from "../lib/runtime/air-runtime";
+import { AirHeader, AirList, AirSearchEntry } from "../lib/runtime/air-runtime";
 import { PrimaryNav } from "../lib/runtime/primary-nav";
 import { primaryNav } from "../nav.data";
 import type { AirScreenProps } from "../lib/runtime/air-runtime";
@@ -23,13 +23,18 @@ export default function ScrAccueilScreen({ route }: AirScreenProps) {
   const insets = useSafeAreaInsets();
   return (
     <ScreenShell testID="scr_accueil" title={screenData.title}>
-      <AirScreenLifecycle screen={screenData} />
-      <View style={{ flex: 1, paddingTop: insets.top, paddingBottom: insets.bottom }}>
+      <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
+      <ScrollView
+        contentContainerStyle={{ flexGrow: 1, paddingTop: insets.top, paddingBottom: insets.bottom }}
+        keyboardShouldPersistTaps="handled"
+      >
         <AirHeader screen={screenData} blockId="blk_accueil_header" />
         <AirSearchEntry screen={screenData} blockId="blk_accueil_recherche" />
+        <AirList screen={screenData} blockId="blk_accueil_categories" itemId={route?.params?.itemId} />
         <AirList screen={screenData} blockId="blk_accueil_selection" itemId={route?.params?.itemId} />
         <AirList screen={screenData} blockId="blk_accueil_marchands" itemId={route?.params?.itemId} />
-      </View>
+      </ScrollView>
+      </KeyboardAvoidingView>
       <PrimaryNav destinations={primaryNav} currentScreenId="scr_accueil" />
     </ScreenShell>
   );

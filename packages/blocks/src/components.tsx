@@ -13,7 +13,7 @@ import {GridCard, AppButton,
   Section,
   StateView,
   AppImage,
-  TextField, ListFooter, SearchEntry} from "@deribfy/primitives";
+  TextField, ListFooter, SearchEntry, Rangee} from "@deribfy/primitives";
 import type {Blocks,
   ButtonBlockProps,
   DetailHeaderBlockProps,
@@ -145,11 +145,10 @@ export function ListBlock({
         {etatContenu ??
           (layout === "grid" ? (
             rangees.map((paire) => (
-              <Section key={paire[0]?.id ?? "r"} inline>
+              <Rangee key={paire[0]?.id ?? "r"}>
                 {paire.map((item) => (
                   <GridCard
                     key={item.id}
-                    compact
                     title={item.title}
                     subtitle={item.subtitle}
                     trailing={item.trailing}
@@ -165,7 +164,7 @@ export function ListBlock({
                     testID={`${testID ?? "list"}-card-${item.id}`}
                   />
                 ))}
-              </Section>
+              </Rangee>
             ))
           ) : (
             items.map((item) => (
