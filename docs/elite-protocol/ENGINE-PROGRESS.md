@@ -202,3 +202,25 @@ réellement manquante était #6-10+ → EP-026 (décision propriétaire :
 retransmettre ou déclarer nulles). R3 : PRÊT (dizaine de fixtures de
 mutation du juge, une par invariant de H, 0 $) — NON COMMENCÉ :
 « RECOMMANDÉ » n'est pas « ACCORDÉ » (EP-018/EP-025), GO explicite attendu.
+
+--- 2026-09-11 · R3 EXÉCUTÉ (GO humain) — R3 = CLOSED ---
+Dérivations structurelles complétées (0 $, modèle seul) : P2a capacitesDe
+(s_identifier→auth+profil ; payer→DISCRIMINANT_ABSENT — la classe commerce
+n'est pas un fait du modèle, aucun défaut silencieux) · P2d ecransDe v0
+(écrans JUSTIFIÉS par leurs étapes — le nombre est une sortie ; entrée =
+découverte du premier parcours + chrome recherche R-chrome ; destinations
+= ordre des parcours, barre ssi ≥2 ; arcs avec TRANSPORT de la table) ·
+jugerPlanEcrans (écran sans justification, route hors plan) · P2c/P2e
+inchangés. NOUVEAUX INVARIANTS : MODELE_IDENTIFIANT_INCONNU,
+producteur d'attribut référencé, DERIVATION_IDENTITE_SANS_SOURCE
+(consulter sans collection-source — DETAIL_SANS_SOURCE remonté en amont),
+DERIVATION_IDENTITE_NON_CONSOMMEE (choisir jeté — le symptôme kaviva),
+DERIVATION_CONFIRMATION_SANS_ECRITURE. CORRECTION PROUVÉE EN PASSE : le
+sens du transport C4 était FAUX dans ma première rédaction (consulter
+consomme, choisir produit) — la base verte l'a démontré avant toute
+narration ; M8 ré-isolée (ajout, pas retrait). BATTERIE : 12 mutations
+isolées, chacune refusée par LE juge attendu avec LE diagnostic attendu,
+base verte prouvée ; chaîne H portée par les artefacts (arc choisir
+itemId→saisie, arc saisir→confirmation). Cliquet de complétude frontière
+P0 a MORDU sur les 3 nouveaux exports (édition consciente, batterie 17→20).
+Tests compiler 329→347. R4 NON commencé. 0 $ · 0 génération · 0 push.

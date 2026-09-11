@@ -80,6 +80,12 @@ describe("B/C — les dérivations ne travaillent QUE sur le MODEL (balayage COM
     actionsPromises: () => derivationsObligations.actionsPromises([]),
     ciblesVivantes: () => derivationsObligations.ciblesVivantes({}),
     obligationsPourPasse: () => derivationsObligations.obligationsPourPasse("actions", { screens: [] }),
+    // R3 (édition CONSCIENTE du cliquet de complétude) — les dérivations
+    // P2a/P2d et le juge du plan entrent dans la batterie : elles aussi ne
+    // voient QUE le modèle.
+    capacitesDe: (m) => derivationsModele.capacitesDe(m),
+    ecransDe: (m) => derivationsModele.ecransDe(m),
+    jugerPlanEcrans: (m) => derivationsModele.jugerPlanEcrans(derivationsModele.ecransDe(m)),
   };
 
   it("COMPLÉTUDE — la batterie couvre CHAQUE fonction exportée des dérivations", () => {

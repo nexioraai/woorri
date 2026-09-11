@@ -257,6 +257,16 @@ export function validerModele(brut) {
     if (!acteursActifs.has(a.id))
       out.push(d("MODELE_ACTEUR_MUET", `acteurs[${a.id}]`, "aucun parcours ne le fait agir"));
   }
+  // ── R3 — RÉFÉRENCES INTERNES DES CONCEPTS ──
+  for (const c of m.concepts) {
+    const idsAttributs = new Set((c.attributs ?? []).map((a) => a.id));
+    if (c.identifiant !== undefined && !idsAttributs.has(c.identifiant))
+      out.push(d("MODELE_IDENTIFIANT_INCONNU", `concepts[${c.id}].identifiant`, c.identifiant));
+    for (const a of c.attributs ?? []) {
+      if (a.producteur !== undefined && !idsActeurs.has(a.producteur))
+        out.push(d("MODELE_REFERENCE_INCONNUE", `concepts[${c.id}].attributs[${a.id}].producteur`, a.producteur));
+    }
+  }
   // ── R2 — INVARIANTS DES ÉTATS MÉTIER (E, #6) ──
   for (const c of m.concepts) {
     const etats = c.etats ?? [];
@@ -576,6 +586,189 @@ export function verifierCouvertureLexicale(inventaire, modele) {
     if (!textes.includes(terme) && !textes.includes(radical)) {
       out.push(d("MODELE_TERME_NON_JUSTIFIE", `couverture[${terme}]`, "ni couvert, ni non-retenu, ni porté par un nœud"));
     }
+  }
+  return out;
+}
+
+// ────────────────── R3 — P2a : CAPACITÉS DÉRIVÉES DES GESTES ──
+//
+// s_identifier ⇒ auth (avec le concept de profil touché) ; payer ⇒ une
+// capacité de paiement dont la VARIANTE (psp|iap) exige la classe commerce
+// — ABSENTE du modèle : DISCRIMINANT_ABSENT, jamais un défaut silencieux.
+export function capacitesDe(modele) {
+  const capacites = [];
+  const diagnostics = [];
+  const gestesPresents = new Set(modele.parcours.flatMap((p) => p.etapes.map((e) => e.geste)));
+  if (gestesPresents.has("s_identifier")) {
+    const etape = modele.parcours
+      .flatMap((p) => p.etapes)
+      .find((e) => e.geste === "s_identifier");
+    capacites.push({ capacite: "auth", profilConceptId: etape?.concept });
+  }
+  if (gestesPresents.has("payer")) {
+    diagnostics.push(
+      d("DISCRIMINANT_ABSENT", "capacites[payer]",
+        "variante de paiement (psp|iap) indécidable : la classe commerce n'est pas un fait du modèle — sorties candidates : payments.psp, payments.iap"),
+    );
+  }
+  return { capacites, diagnostics };
+}
+
+// ────────────────── R3 — P2d : ÉCRANS + NAVIGATION DÉRIVÉS (v0) ──
+//
+// LE NOMBRE D'ÉCRANS EST UNE SORTIE. Chaque écran porte sa JUSTIFICATION
+// (surfaces → origines/étapes) — un écran sans étape est irreprésentable
+// par construction et REFUSÉ par le juge (jugerPlanEcrans). Règles v0 :
+// l'ENTRÉE agrège les surfaces de découverte de l'étape 0 du PREMIER
+// parcours + le chrome de recherche (R-chrome) ; toute autre surface a son
+// écran ; les destinations suivent l'ORDRE des parcours (R-nav, ≥2 ⇒
+// barre) ; les arcs relient les étapes consécutives, avec leur TRANSPORT
+// (table des gestes) ; une identité produite DOIT être consommée en aval.
+export function ecransDe(modele) {
+  const surfaces = surfacesDe(modele);
+  const diagnostics = [];
+  const parSurface = new Map(surfaces.map((sf) => [sf.surfaceId, sf]));
+  const surfaceDeLEtape = (parcoursId, index) =>
+    surfaces.find((sf) => sf.origine.some((o) => o.parcours === parcoursId && o.etape === index));
+
+  // ── chrome (R-chrome) : la recherche, hors du flux ──
+  const chrome = surfaces.filter((sf) => sf.role === "recherche").map((sf) => sf.surfaceId);
+
+  // ── écrans ──
+  const premier = modele.parcours[0];
+  const surfacesEntree = new Set(
+    (premier === undefined ? [] : surfaces
+      .filter((sf) => sf.role === "decouverte" &&
+        sf.origine.some((o) => o.parcours === premier.id && o.etape === 0))
+      .map((sf) => sf.surfaceId)),
+  );
+  const ecrans = [];
+  if (surfacesEntree.size > 0) {
+    ecrans.push({
+      ecranId: "ecr_entree",
+      surfaces: [...surfacesEntree, ...chrome.filter((c) => !surfacesEntree.has(c))],
+      justification: [...surfacesEntree, ...chrome].flatMap(
+        (id) => parSurface.get(id)?.origine ?? [],
+      ),
+    });
+  }
+  for (const sf of surfaces) {
+    if (surfacesEntree.has(sf.surfaceId) || chrome.includes(sf.surfaceId)) continue;
+    ecrans.push({
+      ecranId: `ecr_${sf.surfaceId.slice(4)}`,
+      surfaces: [sf.surfaceId],
+      justification: sf.origine,
+    });
+  }
+  const ecranDeSurface = new Map(
+    ecrans.flatMap((e) => e.surfaces.map((sid) => [sid, e.ecranId])),
+  );
+
+  // ── navigation (R-nav) : racines = étape 0 de chaque parcours, dans l'ordre ──
+  const destinations = [];
+  for (const p of modele.parcours) {
+    const sf = surfaceDeLEtape(p.id, 0);
+    const ecran = sf === undefined ? undefined : ecranDeSurface.get(sf.surfaceId);
+    if (ecran !== undefined && !destinations.includes(ecran)) destinations.push(ecran);
+  }
+  const barre = destinations.length >= 2;
+
+  // ── arcs + invariants de chaîne ──
+  const arcs = [];
+  for (const p of modele.parcours) {
+    for (let i = 0; i + 1 < p.etapes.length; i++) {
+      const de = surfaceDeLEtape(p.id, i);
+      const vers = surfaceDeLEtape(p.id, i + 1);
+      const geste = p.etapes[i].geste;
+      const transport = TABLE_GESTES[geste].transport;
+      if (de === undefined || vers === undefined) continue;
+      arcs.push({
+        parcours: p.id,
+        de: ecranDeSurface.get(de.surfaceId),
+        vers: ecranDeSurface.get(vers.surfaceId),
+        geste,
+        transport,
+      });
+    }
+    // C4 au niveau DÉRIVATION — LE SENS DU TRANSPORT (corrigé après preuve :
+    // la première rédaction exigeait la consommation APRÈS `consulter`,
+    // alors que `consulter` EST le consommateur — l'arc y entre).
+    for (const [i, e] of p.etapes.entries()) {
+      // (a) `consulter` CONSOMME : il lui faut une SOURCE d'identité — une
+      // étape précédente de collection du MÊME concept (ligne pressée).
+      if (e.geste === "consulter") {
+        const prec = p.etapes[i - 1];
+        const sourceValide =
+          prec !== undefined &&
+          prec.concept === e.concept &&
+          ["decouvrir", "chercher", "consulter_historique", "choisir"].includes(prec.geste);
+        if (!sourceValide) {
+          diagnostics.push(
+            d("DERIVATION_IDENTITE_SANS_SOURCE", `parcours[${p.id}].etapes[${i}]`,
+              `consulter ${e.concept} sans étape de collection du même concept juste avant : aucune ligne ne fournit l'identité`),
+          );
+        }
+      }
+      // (b) `choisir` PRODUIT : l'identité élue doit être CONSOMMÉE en aval
+      // — une saisie de portée instance:<concept>, ou un consulter du même
+      // concept. Sinon le choix est jeté (le symptôme kaviva).
+      if (e.geste === "choisir") {
+        const aval = p.etapes.slice(i + 1);
+        const consomme = aval.some((x, j) => {
+          if (x.geste === "consulter" && x.concept === e.concept) return true;
+          if (x.geste === "saisir") {
+            const sf = surfaceDeLEtape(p.id, i + 1 + j);
+            return sf?.portee === `instance:${e.concept}`;
+          }
+          return false;
+        });
+        if (!consomme) {
+          diagnostics.push(
+            d("DERIVATION_IDENTITE_NON_CONSOMMEE", `parcours[${p.id}].etapes[${i}]`,
+              `l'identité de ${e.concept} élue par choisir n'est consommée ni par une saisie de portée instance:${e.concept} ni par un détail du même concept`),
+          );
+        }
+      }
+    }
+    // Une CONFIRMATION observe une ÉCRITURE : sans saisir/payer/retirer en
+    // amont dans le MÊME parcours, il n'y a rien à confirmer.
+    for (const [i, e] of p.etapes.entries()) {
+      if (e.geste !== "confirmer") continue;
+      const ecritAvant = p.etapes.slice(0, i).some((x) =>
+        x.geste === "saisir" || x.geste === "payer" || x.geste === "retirer",
+      );
+      if (!ecritAvant) {
+        diagnostics.push(
+          d("DERIVATION_CONFIRMATION_SANS_ECRITURE", `parcours[${p.id}].etapes[${i}]`,
+            "confirmer sans écriture en amont : aucun résultat à observer"),
+        );
+      }
+    }
+  }
+  return { ecrans, chrome, navigation: { destinations, barre, arcs }, diagnostics };
+}
+
+/**
+ * R3 — LE JUGE DU PLAN D'ÉCRANS : refuse un écran SANS justification par
+ * une étape, une destination ou un arc HORS PLAN. Une gate refuse ou
+ * valide — elle ne décide jamais.
+ */
+export function jugerPlanEcrans(plan) {
+  const out = [];
+  const connus = new Set(plan.ecrans.map((e) => e.ecranId));
+  for (const e of plan.ecrans) {
+    if (e.justification.length === 0)
+      out.push(d("PLAN_ECRAN_SANS_JUSTIFICATION", `ecrans[${e.ecranId}]`, "aucune étape de parcours ne justifie cet écran"));
+  }
+  for (const dst of plan.navigation.destinations) {
+    if (!connus.has(dst))
+      out.push(d("NAVIGATION_ROUTE_HORS_PLAN", `navigation.destinations[${dst}]`, "destination hors du plan"));
+  }
+  for (const [ai, arc] of plan.navigation.arcs.entries()) {
+    if (arc.de !== undefined && !connus.has(arc.de))
+      out.push(d("NAVIGATION_ROUTE_HORS_PLAN", `navigation.arcs[${ai}].de`, String(arc.de)));
+    if (arc.vers !== undefined && !connus.has(arc.vers))
+      out.push(d("NAVIGATION_ROUTE_HORS_PLAN", `navigation.arcs[${ai}].vers`, String(arc.vers)));
   }
   return out;
 }

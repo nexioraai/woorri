@@ -94,3 +94,19 @@ export function verifierCouvertureLexicale(
   inventaire: readonly string[],
   modele: ModeleMetier,
 ): DiagnosticModele[];
+export interface PlanEcrans {
+  ecrans: { ecranId: string; surfaces: string[]; justification: { parcours: string; etape: number }[] }[];
+  chrome: string[];
+  navigation: {
+    destinations: string[];
+    barre: boolean;
+    arcs: { parcours: string; de?: string; vers?: string; geste: string; transport: string | null }[];
+  };
+  diagnostics: DiagnosticModele[];
+}
+export function capacitesDe(modele: ModeleMetier): {
+  capacites: { capacite: string; profilConceptId?: string }[];
+  diagnostics: DiagnosticModele[];
+};
+export function ecransDe(modele: ModeleMetier): PlanEcrans;
+export function jugerPlanEcrans(plan: PlanEcrans): DiagnosticModele[];
