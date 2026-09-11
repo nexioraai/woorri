@@ -328,7 +328,7 @@ export const GLYPHE_PAR_ROLE: Readonly<Record<string, string>> = {
   reglages: "settings-outline",
 };
 
-export function SearchEntry({ placeholder, onPress, testID, accessibilityLabel }: SearchEntryProps) {
+export function SearchEntry({ placeholder, onPress, visual, testID, accessibilityLabel }: SearchEntryProps) {
   const s = useStyles();
   return (
     <Pressable
@@ -340,6 +340,21 @@ export function SearchEntry({ placeholder, onPress, testID, accessibilityLabel }
     >
       <Ionicons name="search-outline" size={s.searchEntryIcone.fontSize} color={s.searchEntryIcone.color} />
       <Text style={s.searchEntryTexte}>{placeholder}</Text>
+      {visual !== undefined && (
+        <Pressable
+          style={s.searchEntryVisuel}
+          onPress={visual.onPress}
+          accessibilityRole="button"
+          accessibilityLabel={visual.label}
+          testID={testID === undefined ? undefined : `${testID}-visuel`}
+        >
+          <Ionicons
+            name="camera-outline"
+            size={s.searchEntryIcone.fontSize}
+            color={s.searchEntryIcone.color}
+          />
+        </Pressable>
+      )}
     </Pressable>
   );
 }

@@ -91,6 +91,44 @@ export function imagesDeVitrine(air: ProjectAir): DiagnosticImages[] {
   return out;
 }
 
+export interface DiagnosticRecherche {
+  code: "CAMPAGNE_RECHERCHE_VISUELLE_INCOMPLETE";
+  path: string;
+  message: string;
+}
+
+/**
+ * ⑤ LA RECHERCHE VISUELLE EST UNE PAIRE — le libellé (document) ET le geste
+ * (action au rôle secondaire). L'un sans l'autre : une caméra morte à
+ * l'écran, ou un geste que rien n'annonce. Indépendant du nom de l'app.
+ */
+export function rechercheVisuelleComplete(air: ProjectAir): DiagnosticRecherche[] {
+  const secondaires = new Set(
+    air.actions
+      .filter((a) => a.trigger.kind === "ui" && a.trigger.role === "secondary")
+      .map((a) => (a.trigger.kind === "ui" ? a.trigger.blockId : "")),
+  );
+  const out: DiagnosticRecherche[] = [];
+  air.screens.forEach((s, i) =>{
+    s.blocks.forEach((b, j) => {
+      if (b.blockType !== "search_entry") return;
+      const label = (b.props ?? []).find((p) => p.key === "visualSearchLabel");
+      const geste = secondaires.has(b.id);
+      if ((label !== undefined) !== geste) {
+        out.push({
+          code: "CAMPAGNE_RECHERCHE_VISUELLE_INCOMPLETE",
+          path: `screens[${String(i)}].blocks[${String(j)}]`,
+          message:
+            label !== undefined
+              ? `"${b.id}" : libellé de recherche visuelle sans geste secondaire`
+              : `"${b.id}" : geste secondaire sans libellé de recherche visuelle`,
+        });
+      }
+    });
+  });
+  return out;
+}
+
 export function principesDeComposition(air: ProjectAir): DiagnosticComposition[] {
   const out: DiagnosticComposition[] = [];
   const prop = (b: { props?: readonly { key: string; value: unknown }[] }, k: string) =>

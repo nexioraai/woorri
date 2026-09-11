@@ -161,7 +161,10 @@ describe("V2 — A et G ne concluent JAMAIS à la conformité", () => {
     // ÉDITION CONSCIENTE (2026-09-10, mission composition) : 8 → 9. Le LIEN
     // d'en-tête de section (« Voir plus ») porte `tapTarget` — un lien
     // discret n'est pas une cible petite. 9ᵉ surface, née contrainte.
-    expect(a?.detail).toContain("9 surface(s) contrainte(s)");
+    // ÉDITION CONSCIENTE (mission chrome, 2026-09-11) : 9 → 10. La CAMÉRA
+    // de recherche visuelle porte `tapTarget` en largeur ET hauteur —
+    // née contrainte, comme chaque surface qui entre.
+    expect(a?.detail).toContain("10 surface(s) contrainte(s)");
     expect(a?.detail).toContain("NON MESURÉ : zones sûres");
     expect(g?.detail).toContain("0 encapsulé dans un ScrollView");
     expect(g?.detail).toContain("NON MESURÉ : jank au défilement");

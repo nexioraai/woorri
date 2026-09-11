@@ -581,8 +581,17 @@ function emitScreen(slice: ScreenSlice, aBarre: boolean, planEcran: EcranPlan): 
     // D-068 : composant SANS RENDU, monté en tête d'écran. Il exécute les
     // actions d'ouverture au montage et celles de sortie au démontage.
     ...(aCycle ? ["      <AirScreenLifecycle screen={screenData} />"] : []),
+    // CHROME PERSISTANT (mission chrome) — émis AVANT le conteneur : la
+    // recherche appartient au viewport, le contenu défile derrière elle.
+    // Aucune position absolue : c'est l'ORDRE DE L'ARBRE qui fait la
+    // persistance, vérifiable sans lire un style.
+    ...slice.screen.blocks
+      .filter((b) => planEcran.sections.find((x) => x.blockId === b.id)?.zone === "chrome")
+      .map((b) => `      <${WRAPPER_BY_BLOCK_TYPE[b.blockType] ?? ""} screen={screenData} blockId="${assertId(b.id, screenId)}" />`),
     containerOpen,
-    ...slice.screen.blocks.map((b) => {
+    ...slice.screen.blocks
+      .filter((b) => planEcran.sections.find((x) => x.blockId === b.id)?.zone !== "chrome")
+      .map((b) => {
       const wrapper = WRAPPER_BY_BLOCK_TYPE[b.blockType] ?? "";
       const itemId =
         b.blockType === "detail_header" || b.blockType === "list" || b.blockType === "form"

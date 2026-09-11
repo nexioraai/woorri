@@ -371,10 +371,10 @@ export function FormBlock({
 // style ici. Commentaire volontairement sans accents ni tournure longue — la
 // sonde F3 cherche des chaines linguistiques par motif et ne distingue pas un
 // commentaire (lecon deja consignee sur l'en-tete de detail).
-export function SearchEntryBlock({ placeholder, onPress, testID }: SearchEntryBlockProps) {
+export function SearchEntryBlock({ placeholder, onPress, visual, testID }: SearchEntryBlockProps) {
   return (
     <Section>
-      <SearchEntry placeholder={placeholder} onPress={onPress} testID={testID} />
+      <SearchEntry placeholder={placeholder} onPress={onPress} visual={visual} testID={testID} />
     </Section>
   );
 }

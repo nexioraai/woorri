@@ -394,6 +394,10 @@ export const BLOCKS: readonly BlockDefinition[] = [
     propsSchema: z.strictObject({
       placeholder: z.string().min(1),
       actionId: actionRef,
+      // RECHERCHE VISUELLE (mission chrome) — le DOCUMENT la nomme ; le
+      // GESTE vient de l'action au rôle "secondary" du bloc. L'un sans
+      // l'autre = déclaration morte, refusée par le gate de campagne.
+      visualSearchLabel: z.string().min(1).optional(),
     }),
     fieldRefProps: [],
     actionRefProps: ["actionId"],

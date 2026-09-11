@@ -197,6 +197,8 @@ export const SECTIONS_CORRECTIVES: Readonly<Record<string, readonly SectionEmiss
   // Le plan se répare là où sections et gestes vivent.
   PLAN_APERCU_SANS_SUITE: ["ecrans", "actions"],
   PLAN_VITRINE_VIDE: ["donnees", "ecrans"],
+  PLAN_CHROME_DUPLIQUE: ["ecrans"],
+  CAMPAGNE_RECHERCHE_VISUELLE_INCOMPLETE: ["ecrans", "actions"],
   // Un champ sensible affiché se répare là où il est AFFICHÉ : dans l'écran.
   AIR_FIELD_SENSITIVE_DISPLAYED: ["ecrans"],
   AIR_FIELD_REFERENCE_TARGET_MISSING: ["donnees"],

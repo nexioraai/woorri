@@ -1,4 +1,4 @@
-export { preuveDeMatiere, principesDeComposition, imagesDeVitrine, type DiagnosticImages, type DiagnosticMatiere, type DiagnosticComposition } from "./matiere.ts";
+export { preuveDeMatiere, principesDeComposition, imagesDeVitrine, rechercheVisuelleComplete, type DiagnosticImages, type DiagnosticRecherche, type DiagnosticMatiere, type DiagnosticComposition } from "./matiere.ts";
 export {
   evaluatePromises,
   type PromiseCoverage,

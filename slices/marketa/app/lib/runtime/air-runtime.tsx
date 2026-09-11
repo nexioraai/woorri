@@ -559,11 +559,20 @@ export function AirSearchEntry({ screen, blockId }: BlockRef) {
   if (b === undefined) return null;
   const props = b.props;
   const actionId = screen.uiActionsByBlock[blockId];
+  // RECHERCHE VISUELLE — libellé du DOCUMENT + geste SECONDAIRE du bloc.
+  // L'un sans l'autre ne rend RIEN : aucune caméra morte à l'écran.
+  const visuelLabel = str(props.visualSearchLabel);
+  const visuelAction = screen.uiSecondaryActionsByBlock?.[blockId];
   return (
     <SearchEntryBlock
       testID={b.id}
       placeholder={str(props.placeholder) ?? ""}
       onPress={actionId === undefined ? undefined : () => { dispatch(actionId); }}
+      visual={
+        visuelLabel !== undefined && visuelAction !== undefined
+          ? { label: visuelLabel, onPress: () => { dispatch(visuelAction); } }
+          : undefined
+      }
     />
   );
 }

@@ -23,13 +23,13 @@ export default function ScrAccueilScreen({ route }: AirScreenProps) {
   const insets = useSafeAreaInsets();
   return (
     <ScreenShell testID="scr_accueil" title={screenData.title}>
+      <AirSearchEntry screen={screenData} blockId="blk_accueil_recherche" />
       <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
       <ScrollView
         contentContainerStyle={{ flexGrow: 1, paddingTop: insets.top, paddingBottom: insets.bottom }}
         keyboardShouldPersistTaps="handled"
       >
         <AirHeader screen={screenData} blockId="blk_accueil_header" />
-        <AirSearchEntry screen={screenData} blockId="blk_accueil_recherche" />
         <AirList screen={screenData} blockId="blk_accueil_categories" itemId={route?.params?.itemId} />
         <AirList screen={screenData} blockId="blk_accueil_selection" itemId={route?.params?.itemId} />
         <AirList screen={screenData} blockId="blk_accueil_marchands" itemId={route?.params?.itemId} />

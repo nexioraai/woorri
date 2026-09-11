@@ -250,3 +250,85 @@ describe("le PLAN distingue les archétypes — rôles structurels, zéro gabari
     expect(bus.provisionRequise).toEqual(["www.deribfy.com"]);
   });
 });
+
+describe("CHROME PERSISTANT — la recherche appartient au viewport, pas au flux", () => {
+  it("A. accueil composé AVEC recherche : search_entry émis HORS du ScrollView, une seule fois", () => {
+    const { files } = emitProject(docArchetype("chromea", ["s1", "s2"]));
+    const ecran = files.get("screens/scr_chromea_accueil.tsx") ?? "";
+    const posChrome = ecran.indexOf("<AirSearchEntry");
+    const posScroll = ecran.indexOf("<ScrollView");
+    expect(posChrome).toBeGreaterThan(-1);
+    expect(posScroll).toBeGreaterThan(-1);
+    // AVANT le conteneur défilant : c'est l'ordre de l'arbre qui persiste.
+    expect(posChrome).toBeLessThan(posScroll);
+    // Une seule barre : pas de doublon dans le flux.
+    expect(ecran.match(/<AirSearchEntry/g)?.length).toBe(1);
+    // Le CONTENU, lui, défile : les sections sont APRÈS le ScrollView.
+    expect(ecran.indexOf("blk_chromea_s1")).toBeGreaterThan(posScroll);
+  });
+
+  it("B. écran SANS recherche : aucune barre forcée", () => {
+    const doc = docArchetype("chromeb", ["seule"]);
+    const accueil = doc.screens[0];
+    if (accueil === undefined) throw new Error("accueil absent");
+    accueil.blocks = accueil.blocks.filter((b) => b.blockType !== "search_entry");
+    doc.actions = [];
+    const { files } = emitProject(doc);
+    expect(files.get("screens/scr_chromeb_accueil.tsx") ?? "").not.toContain("AirSearchEntry");
+  });
+
+  it("D. FIL social : la fenêtre reste la fenêtre, le chrome n'entre pas dans le feed", () => {
+    const doc = docArchetype("chromed", []);
+    const accueil = doc.screens[0];
+    if (accueil === undefined) throw new Error("accueil absent");
+    const entreeFil = accueil.blocks[0];
+    if (entreeFil === undefined) throw new Error("entrée absente");
+    accueil.blocks = [
+      entreeFil, // search_entry
+      { id: "blk_chromed_fil", blockType: "list", entityId: "ent_chromed",
+        props: [
+          { key: "titleFieldId", value: "fld_chromed_nom" },
+          { key: "loadingTitle", value: "…" },
+          { key: "errorTitle", value: "!" },
+        ] },
+    ];
+    const { files } = emitProject(doc);
+    const ecran = files.get("screens/scr_chromed_accueil.tsx") ?? "";
+    // fenêtre : pas de ScrollView — et la recherche est ÉMISE AVANT la liste
+    expect(ecran).not.toContain("ScrollView");
+    expect(ecran.indexOf("<AirSearchEntry")).toBeLessThan(ecran.indexOf("blk_chromed_fil"));
+  });
+
+  it("E. un écran de FICHE ne reçoit aucune recherche automatique", () => {
+    const { files } = emitProject(docArchetype("chromee", ["x"]));
+    const recherche = files.get("screens/scr_chromee_recherche.tsx") ?? "";
+    expect(recherche).not.toContain("AirSearchEntry");
+  });
+
+  it("F/G. recherche VISUELLE : paire déclarée → présente au contrat ; absente → rien", async () => {
+    const { rechercheVisuelleComplete } = await import("@deribfy/fidelity");
+    const { projectAirSchema, migrateAirDocument } = await import("@deribfy/air-schema");
+    const doc = docArchetype("chromef", ["v"]);
+    const accueil = doc.screens[0];
+    if (accueil === undefined) throw new Error("accueil absent");
+    const entree = accueil.blocks[0];
+    if (entree === undefined) throw new Error("entrée absente");
+    // G. sans déclaration : aucune caméra, gate silencieux.
+    expect(rechercheVisuelleComplete(projectAirSchema.parse(migrateAirDocument(doc)))).toEqual([]);
+    // F. paire complète : libellé + geste secondaire → contrat porté.
+    entree.props = [...entree.props, { key: "visualSearchLabel", value: "Chercher par photo" }];
+    (doc.actions as unknown[]).push({
+      id: "act_chromef_visuel", name: "recherche par photo",
+      trigger: { kind: "ui", blockId: entree.id, role: "secondary" },
+      effect: { kind: "navigate", screenId: "scr_chromef_recherche" },
+    });
+    const complet = projectAirSchema.parse(migrateAirDocument(doc));
+    expect(rechercheVisuelleComplete(complet)).toEqual([]);
+    const { files } = emitProject(doc);
+    expect(files.get("screens/scr_chromef_accueil.data.ts") ?? "").toContain("visualSearchLabel");
+    // CONTRÔLE — libellé SANS geste : la paire casse, le gate tire.
+    doc.actions = doc.actions.filter((a) => a.id !== "act_chromef_visuel");
+    const casse = projectAirSchema.parse(migrateAirDocument(doc));
+    expect(rechercheVisuelleComplete(casse).length).toBe(1);
+  });
+});

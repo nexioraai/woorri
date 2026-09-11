@@ -266,5 +266,7 @@ export const SEARCH_ENTRY_BLOCK_STATES = ["ready"] as const;
 export interface SearchEntryBlockProps extends BlockA11yProps {
   placeholder: string;
   onPress?: () => void;
+  /** Recherche VISUELLE — libellé du document + geste secondaire câblé. */
+  visual?: { label: string; onPress: () => void };
 }
 export const EMPTY_STATE_BLOCK_STATES = ["empty"] as const;

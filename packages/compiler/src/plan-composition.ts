@@ -15,9 +15,18 @@
 import type { ProjectAir } from "@deribfy/air-schema";
 import { modeListe, tailleApercu, type ModeListe } from "../runtime/list-pipeline.ts";
 
+export type ZoneEcran = "chrome" | "contenu";
+
 export interface SectionPlan {
   blockId: string;
   blockType: string;
+  /**
+   * CHROME PERSISTANT (mission chrome, 2026-09-11) — la référence l'exige :
+   * la recherche appartient au VIEWPORT de l'écran, pas à son flux. Un
+   * `search_entry` est du chrome ; tout le reste défile. La navigation
+   * basse est déjà persistante par construction (hors conteneur, D-086).
+   */
+  zone: ZoneEcran;
   mode?: ModeListe;
   /** Éléments montrés quand la section est un aperçu. */
   apercu?: number;
@@ -73,6 +82,7 @@ export function planifierComposition(air: ProjectAir): CompositionPlan {
       return {
         blockId: b.id,
         blockType: b.blockType,
+        zone: b.blockType === "search_entry" ? "chrome" : "contenu",
         ...(mode === undefined ? {} : { mode }),
         ...(mode === "apercu"
           ? { apercu: tailleApercu(layout, prop(b, "pageSize") as number | undefined) }
@@ -113,7 +123,7 @@ export function planifierComposition(air: ProjectAir): CompositionPlan {
 }
 
 export interface DiagnosticPlan {
-  code: "PLAN_APERCU_SANS_SUITE" | "PLAN_VITRINE_VIDE";
+  code: "PLAN_APERCU_SANS_SUITE" | "PLAN_VITRINE_VIDE" | "PLAN_CHROME_DUPLIQUE";
   path: string;
   message: string;
 }
@@ -130,6 +140,16 @@ export interface DiagnosticPlan {
 export function validerPlan(plan: CompositionPlan): DiagnosticPlan[] {
   const out: DiagnosticPlan[] = [];
   for (const e of plan.ecrans) {
+    // ③ UN chrome de recherche par écran — deux barres persistantes sont
+    // deux promesses identiques empilées.
+    const chromes = e.sections.filter((s) => s.zone === "chrome");
+    if (chromes.length > 1) {
+      out.push({
+        code: "PLAN_CHROME_DUPLIQUE",
+        path: e.screenId,
+        message: `${String(chromes.length)} éléments de chrome persistant sur un même écran`,
+      });
+    }
     for (const s of e.sections) {
       if (
         s.mode === "apercu" &&

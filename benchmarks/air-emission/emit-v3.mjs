@@ -573,6 +573,7 @@ function validateLocal(document) {
     // (aperçus bornés) — plus besoin de l'interdire.
     ...fidelity.principesDeComposition(parsed.data),
     ...fidelity.imagesDeVitrine(parsed.data),
+    ...fidelity.rechercheVisuelleComplete(parsed.data),
     // ── BLUEPRINT (engine hardening) : le PLAN d'assemblage est validé
     // AVANT toute acceptation — un aperçu qui tronque offre sa suite, une
     // vitrine vide est refusée. Réponse locale à « est-ce bien planifié ? ».

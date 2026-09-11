@@ -152,6 +152,8 @@ export type ListFooterProps = Record<string, never>;
 export interface SearchEntryProps extends A11yProps {
   placeholder: string;
   onPress?: () => void;
+  /** Action de recherche visuelle (caméra) — nommée par le document. */
+  visual?: { label: string; onPress: () => void };
 }
 
 /** Rangée d'aperçu — deux cartes qui PARTAGENT la largeur (flex), gap par

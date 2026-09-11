@@ -201,7 +201,9 @@ export const RELEASE_TRAIN_V1 = {
     // d'écrans composés (sans FlatList — DET-006 reformulé).
     // Ré-scellé 2026-09-11 : Rangee (paire d'aperçu en flex — le débordement
     // de ~8 dp qui cassait la grille en fausse colonne, mesuré à l'écran).
-    "d00c5039e7c5b365ad17b30cefcd0f9e74c9eb8bc8222363108a1b2906acf277",
+    // Ré-scellé 2026-09-11 (mission chrome) : recherche VISUELLE au bloc
+    // search_entry (paire libellé+geste), caméra en cible pleine.
+    "2e624035bdc5eeb836cdccf8b87e4f651c44f4dd9588fca4d2ad2d6802dfe780",
   capabilityRegistryVersion: "1.0.0",
   capabilitySourcesHash:
     "6c28599246abde6e7010704f23f273aafe50d17c5483133709c9065f2777346c",

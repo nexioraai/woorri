@@ -262,6 +262,15 @@ const makeSheet = (c: Palette) =>
       gap: theme.space.sm,
     },
     searchEntryIcone: { fontSize: theme.font.title, color: c.muted },
+    // Caméra de recherche visuelle : cible PLEINE au bout de la barre —
+    // poussée à la fin par marginStart auto (propriété logique, RTL sûr).
+    searchEntryVisuel: {
+      minWidth: theme.size.tapTarget,
+      minHeight: theme.size.tapTarget,
+      alignItems: "center",
+      justifyContent: "center",
+      marginStart: "auto",
+    },
     searchEntryTexte: { fontSize: theme.font.body, color: c.muted },
     // — GridCard (1.20) — la cellule d'un catalogue : image pleine largeur
     // de carte, corps textuel, valeur en pied. Les colonnes sont posées par
