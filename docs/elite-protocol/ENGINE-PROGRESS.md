@@ -294,3 +294,17 @@ tirages ont eu lieu malgré le PASS du 2 (anti-arrêt-optionnel). Variance
 2.3 : 10,2 %→26,5 %. Dépense série 0,4708 $ · mission 4,0217 $.
 DÉGELABLES sur GO : D6 d'O-1 (4 pièces, 0 $) · invariant O-2 (0 $) ·
 payer/EP-029 (0 $, bloque R4). R4 fermé.
+
+--- 2026-09-11 · SUITE À 0 $ (GO arbitre) — O-1/O-2/payer RÉSOLUS, MATRICE PUBLIÉE ---
+EP-032 estampillé (contrat pré-D6 7461373…, prompt 98014b65…, commit
+49d0ff1) · EP-040 (anti-arrêt-optionnel = règle permanente, justification
+mesurée) · EP-041 (2.3 = PLAGE [10,2 ; 26,5] n=3, seuil 26,5 % ; série =
+CONTRÔLE DE VARIANCE de R8). D6 O-1 : duree + glossaire temporel (4
+pièces, mutations testées) · Invariant O-2 : transition ⇒ geste MUTANT ·
+D6 payer/EP-029 : fait commerce ⟺ payer, dérivation univoque iap/psp — LE
+DERNIER VERROU CONTRAT DE R4 EST LEVÉ. RE-JUGEMENT (EP-042) : matrice
+FAIL·FAIL·FAIL sous contrat corrigé — T2 REPASSE AU ROUGE (le vert devait
+partiellement au trou O-2) ; matrice épinglée par test ; prompt re-scellé
+v3 990a81d1… ; écarts grammaire stables à 5. Tests compiler 365→372.
+Dépense passe : 0 $ · mission inchangée 4,0217 $. R4 : verrou contrat levé,
+GO humain requis ; un tirage v2 (contrat corrigé) = GO budgétaire distinct.

@@ -26,7 +26,8 @@ const REGLAGES = {
   prixParMtok: { in: 5, out: 25 },
   plafondUsd: 0.2,
 };
-const HASH_PROMPT_SCELLE = "98014b65bf4a19385bcb1612c4e8178afed9a458fb7479863b8859b6cbab8428";
+// v2 post-D6 (glossaire temporel) — v1 98014b65… = estampille de la série close.
+const HASH_PROMPT_SCELLE = "990a81d18933614d7f9416ce8b2fbd6c769d56bcc7e55fc34768e422d2fd30f3";
 
 // ── GARDE 1 : le jeton du GO budgétaire ──
 if (process.env.GO_DRY_RUN_P0 !== "OUI-15-CENTIMES") {

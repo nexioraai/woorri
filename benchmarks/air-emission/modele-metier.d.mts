@@ -1,7 +1,7 @@
 // Types du contrat modèle métier v1 (confrontation #9) — ombre du .mjs.
 export interface AttributConcept {
   id: string;
-  nature: "texte" | "nombre" | "media" | "date" | "intervalle" | "booleen" | "reference";
+  nature: "texte" | "nombre" | "media" | "date" | "intervalle" | "duree" | "booleen" | "reference";
   requis: boolean;
   cardinalite?: number;
   producteur?: string;
@@ -33,6 +33,7 @@ export interface Parcours {
 }
 export interface ModeleMetier {
   version: "modele-metier/1.0.0" | "modele-metier/1.1.0";
+  commerce?: "digital" | "physique_ou_hors_app";
   couverture: {
     couverts: { terme: string; noeuds: string[] }[];
     nonRetenus: { terme: string; raison: string }[];
@@ -111,3 +112,4 @@ export function capacitesDe(modele: ModeleMetier): {
 };
 export function ecransDe(modele: ModeleMetier): PlanEcrans;
 export function jugerPlanEcrans(plan: PlanEcrans, modele?: ModeleMetier): DiagnosticModele[];
+export const GLOSSAIRE_NATURES_TEMPORELLES: Record<string, string>;

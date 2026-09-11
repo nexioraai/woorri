@@ -17,6 +17,7 @@ import { clampMinItems, stripKeys } from "./schema-levels.mjs";
 import {
   GESTES,
   GESTES_TERMINAUX,
+  GLOSSAIRE_NATURES_TEMPORELLES,
   NATURES_ATTRIBUT,
   RAISONS_NON_RETENUE,
   inventaireDe,
@@ -47,7 +48,10 @@ export const PROMPT_P0 = [
   "acteurs · concepts (donnees, identifiant, attributs — natures fermées : " + NATURES_ATTRIBUT.join(", ") + ")",
   "· relations (possede|reference) · parcours ordonnés par importance (acteur, besoin, étapes)",
   "· étapes (concept × geste — gestes FERMÉS : " + GESTES.join(", ") + " ; etat et preconditions si utiles)",
-  "· états métier structurés (etats: [{id, transitions: [{vers, geste}]}])",
+  "GLOSSAIRE TEMPOREL (D6 O-1 — ces trois mots ne sont pas interchangeables) : " +
+    Object.entries(GLOSSAIRE_NATURES_TEMPORELLES).map(([k, v]) => k + " = " + v).join(" · ") + ".",
+  "· états métier structurés (etats: [{id, transitions: [{vers, geste}]}] — une transition est causée par un geste qui ÉCRIT, jamais par une lecture)",
+  "· commerce (\"digital\" | \"physique_ou_hors_app\") — REQUIS si un parcours contient payer, interdit sinon",
   "· couverture (voir ci-dessous).",
   "",
   "DÉCISIONS INTERDITES — elles appartiennent aux dérivations mécaniques, toute clé hors contrat est REFUSÉE :",

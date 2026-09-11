@@ -35,7 +35,10 @@ const FIXTURE = migrerModele(
 ) as ModeleMetier;
 
 // HASH FIGÉ (consigné au registre EP-031) — édition = échec visible.
-const HASH_PROMPT_FIGE = "98014b65bf4a19385bcb1612c4e8178afed9a458fb7479863b8859b6cbab8428";
+// RE-SCELLEMENT CONSCIENT (post-série, D6 O-1) : le glossaire temporel
+// entre au prompt — v1 98014b65… reste l'estampille de la mesure T2
+// (EP-032) ; v2 est le prompt des exécutions FUTURES.
+const HASH_PROMPT_FIGE = "990a81d18933614d7f9416ce8b2fbd6c769d56bcc7e55fc34768e422d2fd30f3";
 
 describe("intégration minimale P0 — l'instrument, pas l'exécution", () => {
   it("CLIQUET — le hash du prompt est figé", () => {

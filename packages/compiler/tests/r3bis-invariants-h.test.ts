@@ -206,3 +206,96 @@ describe("V4 — observabilité des ÉTATS atteints", () => {
     expect(validerModele(repare)).toEqual([]);
   });
 });
+
+describe("post-série — D6 O-1 et invariant O-2 (mutations isolées)", () => {
+  it("O-1 · MUTATION — une DURÉE requise ne borne pas la ressource : critère FAIL ; l'INTERVALLE la borne : PASS", async () => {
+    const { critereDryRunKaviva } = await import("../../../benchmarks/air-emission/passe0.mjs");
+    const base = structuredClone(KAVIVA);
+    expect(critereDryRunKaviva(base).pass).toBe(true);
+    // La lecture « durée » du tirage 1, rejouée : nature duree, même requis.
+    const lectureDuree = structuredClone(KAVIVA);
+    for (const c of lectureDuree.concepts) {
+      c.attributs = (c.attributs ?? []).map((a) =>
+        a.nature === "intervalle" ? { ...a, nature: "duree" } : a,
+      );
+    }
+    expect(validerModele(lectureDuree)).toEqual([]); // duree est un mot VALIDE désormais…
+    expect(critereDryRunKaviva(lectureDuree).pass).toBe(false); // …mais ne borne pas.
+  });
+
+  it("O-2 · MUTATION — une transition déclenchée par une LECTURE est refusée, seule", () => {
+    const base: ModeleMetier = {
+      version: "modele-metier/1.1.0",
+      couverture: { couverts: [{ terme: "colis", noeuds: ["cpt_colis"] }], nonRetenus: [] },
+      acteurs: [{ id: "act_a", nom: "A" }],
+      concepts: [{
+        id: "cpt_colis", nom: "Colis", donnees: true,
+        etats: [
+          { id: "prepare", transitions: [{ vers: "expedie", geste: "confirmer" }] },
+          { id: "expedie" },
+        ],
+      }],
+      relations: [],
+      parcours: [{
+        id: "par_suivre", besoin: "suivre", acteur: "act_a",
+        etapes: [
+          { concept: "cpt_colis", geste: "saisir" },
+          { concept: "cpt_colis", geste: "confirmer" },
+          { concept: "cpt_colis", geste: "consulter_historique", etat: "expedie" },
+        ],
+      }],
+    };
+    expect(validerModele(base)).toEqual([]); // base verte (confirmer MUTE)
+    const mute = structuredClone(base);
+    const colis = mute.concepts[0];
+    if (colis?.etats?.[0] !== undefined && typeof colis.etats[0] !== "string") {
+      colis.etats[0].transitions = [{ vers: "expedie", geste: "consulter_historique" }];
+    }
+    const codes = validerModele(mute).map((x) => x.code);
+    expect(codes).toContain("MODELE_TRANSITION_DECLENCHEE_PAR_LECTURE");
+    expect(codes).not.toContain("MODELE_TRANSITION_NON_REPRESENTEE"); // le geste EST représenté : seule la lecture est refusée
+    expect(codes).not.toContain("MODELE_TRANSITION_INCONNUE");
+  });
+});
+
+describe("post-série — D6 payer/EP-029 (commerce ⟺ payer, 4 pièces)", () => {
+  const avecPayer = (commerce?: "digital" | "physique_ou_hors_app"): ModeleMetier => ({
+    version: "modele-metier/1.1.0",
+    ...(commerce === undefined ? {} : { commerce }),
+    couverture: { couverts: [{ terme: "articles", noeuds: ["cpt_article"] }], nonRetenus: [] },
+    acteurs: [{ id: "act_client", nom: "Client" }],
+    concepts: [
+      { id: "cpt_article", nom: "Article", donnees: true },
+      { id: "cpt_commande", nom: "Commande", donnees: true },
+    ],
+    relations: [{ de: "cpt_commande", vers: "cpt_article", nature: "reference" }],
+    parcours: [{
+      id: "par_acheter", besoin: "acheter", acteur: "act_client",
+      etapes: [
+        { concept: "cpt_article", geste: "decouvrir" },
+        { concept: "cpt_article", geste: "consulter" },
+        { concept: "cpt_commande", geste: "saisir" },
+        { concept: "cpt_commande", geste: "payer" },
+        { concept: "cpt_commande", geste: "confirmer" },
+      ],
+    }],
+  });
+  it("payer SANS commerce → MODELE_COMMERCE_ABSENT ; commerce SANS payer → SANS_OBJET", async () => {
+    const { validerModele: vm } = await import("../../../benchmarks/air-emission/modele-metier.mjs");
+    expect(vm(avecPayer()).map((x) => x.code)).toContain("MODELE_COMMERCE_ABSENT");
+    const sansPayer = structuredClone(avecPayer("digital"));
+    const p0 = sansPayer.parcours[0];
+    if (p0) p0.etapes = p0.etapes.filter((e) => e.geste !== "payer");
+    expect(vm(sansPayer).map((x) => x.code)).toContain("MODELE_COMMERCE_SANS_OBJET");
+  });
+  it("dérivation : digital → payments.iap ; physique → payments.psp ; plus AUCUN DISCRIMINANT_ABSENT", async () => {
+    const { capacitesDe: cd, validerModele: vm } = await import("../../../benchmarks/air-emission/modele-metier.mjs");
+    const digital = avecPayer("digital");
+    expect(vm(digital)).toEqual([]);
+    expect(cd(digital).capacites.map((c) => c.capacite)).toContain("payments.iap");
+    expect(cd(digital).diagnostics).toEqual([]);
+    const physique = avecPayer("physique_ou_hors_app");
+    expect(cd(physique).capacites.map((c) => c.capacite)).toContain("payments.psp");
+    expect(cd(physique).diagnostics).toEqual([]);
+  });
+});

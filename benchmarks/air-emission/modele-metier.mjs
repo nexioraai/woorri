@@ -33,9 +33,19 @@ export const RAISONS_NON_RETENUE = [
   "ambigu",
 ];
 
-// « intervalle » entre par l'amendement 2.1 d'EP-030 (ratifié) : une
-// ressource temporelle BORNÉE se décrit par un intervalle, pas une date.
-export const NATURES_ATTRIBUT = ["texte", "nombre", "media", "date", "intervalle", "booleen", "reference"];
+// « intervalle » entre par l'amendement 2.1 d'EP-030 (ratifié) ; « duree »
+// entre par la D6 d'O-1 (EP-035) : la série de tirages a DÉMONTRÉ que le
+// mot seul était ambigu (le même prompt a produit les deux lectures). Le
+// GLOSSAIRE tranche — et l'alternative existe désormais dans le vocabulaire.
+export const NATURES_ATTRIBUT = ["texte", "nombre", "media", "date", "intervalle", "duree", "booleen", "reference"];
+
+/** D6 O-1 — le GLOSSAIRE des natures TEMPORELLES, interpolé dans le prompt
+ * P0 : la définition vit ICI, une fois. */
+export const GLOSSAIRE_NATURES_TEMPORELLES = {
+  date: "un POINT dans le temps (jour, éventuellement heure)",
+  intervalle: "une PLAGE SITUÉE dans le temps — un début ET une fin (ce qui borne une ressource réservable)",
+  duree: "une LONGUEUR de temps SANS position (90 minutes) — jamais ce qui situe une ressource",
+};
 
 /**
  * TABLE DES GESTES — patrons structurels FERMÉS, dérivés de l'enveloppe
@@ -63,6 +73,14 @@ export const GESTES_TERMINAUX = ["confirmer", "consulter", "consulter_historique
 export const modeleMetierSchema = z
   .object({
     version: z.literal("modele-metier/1.1.0"),
+    /**
+     * D6 EP-029 (payer) — LE FAIT que la variante de paiement exige : ce
+     * qui est vendu est-il consommé DANS l'app (digital) ou hors d'elle
+     * (physique/service) ? C'est un fait du BRIEF, décidé par P0 —
+     * REQUIS si un parcours paie, INTERDIT sinon (aucun fait sans
+     * consommateur) : deux invariants dédiés.
+     */
+    commerce: z.enum(["digital", "physique_ou_hors_app"]).optional(),
     couverture: z
       .object({
         couverts: z.array(
@@ -278,6 +296,15 @@ export function validerModele(brut) {
       for (const [ti, t] of (e.transitions ?? []).entries()) {
         if (!ids.has(t.vers))
           out.push(d("MODELE_TRANSITION_INCONNUE", `concepts[${c.id}].etats[${e.id}].transitions[${ti}]`, t.vers));
+        // O-2 (EP-036, dégelée post-tirage-3) : une transition d'état est
+        // causée par une ÉCRITURE — un geste de LECTURE qui transite un
+        // état est un non-sens des patrons (mesuré : a_venir→passe via
+        // consulter_historique au tirage 1, accepté à tort par P1).
+        if (TABLE_GESTES[t.geste]?.effet !== "mutation") {
+          out.push(
+            d("MODELE_TRANSITION_DECLENCHEE_PAR_LECTURE", `concepts[${c.id}].etats[${e.id}]`, `${t.geste}→${t.vers} : le geste ${t.geste} ne mute pas`),
+          );
+        }
         // Transition REPRÉSENTÉE : un parcours porte le geste sur ce concept.
         const representee = m.parcours.some((p) =>
           p.etapes.some((s2) => s2.concept === c.id && s2.geste === t.geste),
@@ -322,6 +349,12 @@ export function validerModele(brut) {
         out.push(d("MODELE_REFERENCE_INCONNUE", `parcours[${p2.id}].etapes[${ei}].acteur`, e.acteur));
     }
   }
+  // D6 EP-029 — commerce ⟺ payer, dans LES DEUX sens.
+  const paie = m.parcours.some((p) => p.etapes.some((e) => e.geste === "payer"));
+  if (paie && m.commerce === undefined)
+    out.push(d("MODELE_COMMERCE_ABSENT", "commerce", "un parcours paie : la variante (digital | physique_ou_hors_app) est un fait requis du modèle"));
+  if (!paie && m.commerce !== undefined)
+    out.push(d("MODELE_COMMERCE_SANS_OBJET", "commerce", "aucun parcours ne paie : fait sans consommateur"));
   // F1 — le blocage sur `ambigu` est EXPLICITE : un terme ambigu ne se
   // classe pas en silence, il se résout (modèle) ou refuse (ici).
   for (const [ni, nr] of m.couverture.nonRetenus.entries()) {
@@ -624,10 +657,18 @@ export function capacitesDe(modele) {
     capacites.push({ capacite: "auth", profilConceptId: etape?.concept });
   }
   if (gestesPresents.has("payer")) {
-    diagnostics.push(
-      d("DISCRIMINANT_ABSENT", "capacites[payer]",
-        "variante de paiement (psp|iap) indécidable : la classe commerce n'est pas un fait du modèle — sorties candidates : payments.psp, payments.iap"),
-    );
+    // D6 EP-029 : le discriminant EXISTE désormais au modèle (commerce).
+    // Sans lui, P1 a déjà refusé (MODELE_COMMERCE_ABSENT) — ici, dériver.
+    if (modele.commerce === "digital") {
+      capacites.push({ capacite: "payments.iap" });
+    } else if (modele.commerce === "physique_ou_hors_app") {
+      capacites.push({ capacite: "payments.psp" });
+    } else {
+      diagnostics.push(
+        d("DISCRIMINANT_ABSENT", "capacites[payer]",
+          "commerce absent du modèle — refusé en amont par MODELE_COMMERCE_ABSENT"),
+      );
+    }
   }
   return { capacites, diagnostics };
 }

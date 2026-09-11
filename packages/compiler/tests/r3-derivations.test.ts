@@ -151,13 +151,19 @@ describe("R3 — BATTERIE DE MUTATIONS ISOLÉES (juge attendu, diagnostic attend
     expect(codesModele(m)).toContain("MODELE_PARCOURS_SANS_PREUVE");
   });
 
-  it("M12 · capacité indécidable (payer sans classe commerce) → DISCRIMINANT_ABSENT", () => {
+  it("M12 · payer sans le fait commerce → P1 refuse (MODELE_COMMERCE_ABSENT) — D6 EP-029", () => {
+    // ÉVOLUTION CONSCIENTE : avant la D6, cette mutation prouvait le
+    // DISCRIMINANT_ABSENT de capacitesDe ; le discriminant est ENTRÉ au
+    // contrat (commerce) — l'absence se refuse désormais EN AMONT, à P1.
     const m = propre();
     const reserver = m.parcours.find((p) => p.id === "par_reserver");
     reserver?.etapes.splice(5, 0, { concept: "cpt_rendez_vous", geste: "payer" });
-    expect(validerModele(m)).toEqual([]);
-    const { diagnostics } = capacitesDe(m);
-    expect(diagnostics.map((x) => x.code)).toContain("DISCRIMINANT_ABSENT");
+    expect(validerModele(m).map((x) => x.code)).toContain("MODELE_COMMERCE_ABSENT");
+    // Et avec le fait déclaré, la dérivation est UNIVOQUE (plus d'absence).
+    const avecCommerce = { ...structuredClone(m), commerce: "physique_ou_hors_app" as const };
+    expect(validerModele(avecCommerce)).toEqual([]);
+    expect(capacitesDe(avecCommerce).diagnostics).toEqual([]);
+    expect(capacitesDe(avecCommerce).capacites.map((c) => c.capacite)).toContain("payments.psp");
   });
 });
 
