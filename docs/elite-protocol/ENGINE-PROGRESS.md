@@ -284,3 +284,13 @@ requis:false sur la durée — à un booléen du PASS) · observation 2.3 :
 2-3 sous GO DISTINCT, RIEN n'est modifié entre (prompt/grammaire/contrat/
 fixture scellés). T2 non vert. payer/EP-029 toujours bloquant R4.
 Dépense totale mission : 3,5509 + 0,1630 = 3,7139 $.
+
+--- 2026-09-11 · TIRAGES 2-3 (GO délégué EP-038) — SÉRIE CLOSE ---
+FAIL·PASS·PASS. Productibilité du contrat par P0 : ÉTABLIE (T2 vert pour
+kaviva SEULEMENT, portée EP-032). Fait décisif consigné : le MÊME prompt
+scellé a produit deux lectures d'`intervalle` (durée en 1, borne en 2-3)
+— l'ambiguïté O-1 est démontrée par la variance elle-même. Les deux
+tirages ont eu lieu malgré le PASS du 2 (anti-arrêt-optionnel). Variance
+2.3 : 10,2 %→26,5 %. Dépense série 0,4708 $ · mission 4,0217 $.
+DÉGELABLES sur GO : D6 d'O-1 (4 pièces, 0 $) · invariant O-2 (0 $) ·
+payer/EP-029 (0 $, bloque R4). R4 fermé.
