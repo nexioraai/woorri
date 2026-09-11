@@ -26,31 +26,12 @@ import { Pressable, Text, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useStyles } from "@deribfy/primitives/theme-bridge";
+import { GLYPHE_PAR_ROLE, type RoleIcone } from "@deribfy/primitives/roles-icones";
 import { allerVers } from "./racines-navigation";
 
-/**
- * TABLE DE CORRESPONDANCE — un rôle déclaré par le document, un glyphe connu
- * du moteur (1.8.0). Elle est FERMÉE et exhaustive : le schéma n'admet que ces
- * onze valeurs, et chacune trouve ici son dessin. Aucune valeur libre, aucune
- * URL, aucun accès réseau — la police d'icônes est embarquée par le paquet.
- */
-// 2026-09-10 — la table vit désormais dans les PRIMITIVES (une seule langue
-// d'icônes pour la barre ET les boutons) ; ce module la consomme.
-const GLYPHE = {
-  accueil: "home-outline",
-  recherche: "search-outline",
-  liste: "list-outline",
-  billet: "ticket-outline",
-  panier: "cart-outline",
-  calendrier: "calendar-outline",
-  carte: "map-outline",
-  compte: "person-outline",
-  favoris: "heart-outline",
-  message: "chatbubble-outline",
-  reglages: "settings-outline",
-} as const;
-
-export type IconeOnglet = keyof typeof GLYPHE;
+// Étape ③ (EP-003) — la table rôle → glyphe vient de LA source unique
+// (primitives/roles-icones) : plus aucune copie locale.
+export type IconeOnglet = RoleIcone;
 
 export interface PrimaryDestinationData {
   routeId: string;
@@ -104,7 +85,7 @@ export function PrimaryNav({ destinations, currentScreenId }: PrimaryNavProps) {
                 sous-chaîne et ne distingue pas un commentaire du code. */}
             {d.icon === undefined ? null : (
               <Ionicons
-                name={GLYPHE[d.icon]}
+                name={GLYPHE_PAR_ROLE[d.icon]}
                 size={s.primaryNavIcon.fontSize}
                 color={actif ? s.primaryNavLabelActive.color : s.primaryNavLabel.color}
               />

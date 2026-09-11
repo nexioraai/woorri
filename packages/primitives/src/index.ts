@@ -26,7 +26,6 @@ export {
   AppImage,
   AppText,
   Badge,
-  GLYPHE_PAR_ROLE,
   GridCard,
   Rangee,
   SearchEntry,
@@ -43,3 +42,5 @@ export {
 // vignette de ligne, et importer un sous-chemin depuis un paquet aurait créé
 // une seconde porte d'entrée là où il n'en faut qu'une.
 export { ThemeRoot, useStyles, useThemeBridge } from "./theme-bridge.tsx";
+export { GLYPHE_PAR_ROLE, ROLES_ICONES } from "./roles-icones.ts";
+export type { RoleIcone } from "./roles-icones.ts";

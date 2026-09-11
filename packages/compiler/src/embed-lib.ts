@@ -47,6 +47,13 @@ export const EMBEDDED_SOURCES: readonly EmbeddedSourceSpec[] = [
     rewrites: {},
   },
   {
+    // Étape ③ (EP-003) — LA source des rôles d'icônes, copiée à côté des
+    // primitives : barre d'onglets et boutons lisent la MÊME table.
+    source: "primitives/src/roles-icones.ts",
+    target: "lib/primitives/roles-icones.ts",
+    rewrites: {},
+  },
+  {
     source: "primitives/src/primitives.tsx",
     target: "lib/primitives/primitives.tsx",
     rewrites: {},
@@ -138,7 +145,10 @@ export const EMBEDDED_SOURCES: readonly EmbeddedSourceSpec[] = [
     // `useStyles` vit dans le pont de thème, pas dans l'index des primitives :
     // la copie doit viser le MÊME module que celui embarqué, sinon l'app émise
     // ne compile pas — défaut attrapé par le `tsc` du projet témoin.
-    rewrites: { "@deribfy/primitives/theme-bridge": "../primitives/theme-bridge" },
+    rewrites: {
+      "@deribfy/primitives/theme-bridge": "../primitives/theme-bridge",
+      "@deribfy/primitives/roles-icones": "../primitives/roles-icones",
+    },
   },
   {
     source: "compiler/runtime/demo-provider.ts",

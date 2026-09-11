@@ -27,6 +27,7 @@ import type {
   TextVariant,
 } from "./contracts.ts";
 import { useStyles } from "./theme-bridge.tsx";
+import { GLYPHE_PAR_ROLE } from "./roles-icones.ts";
 import type { Sheet } from "./styles.ts";
 
 const VARIANT_STYLE: Record<TextVariant, keyof Sheet> = {
@@ -195,7 +196,7 @@ export function AppButton({
         <>
           {icon === undefined ? null : (
             <Ionicons
-              name={(GLYPHE_PAR_ROLE[icon] ?? icon) as never}
+              name={((GLYPHE_PAR_ROLE as Readonly<Record<string, string>>)[icon] ?? icon) as never}
               style={[s.buttonIcon, ghost ? s.buttonGhostText : s.buttonText]}
             />
           )}
@@ -314,19 +315,8 @@ export function ListFooter() {
  * FERMÉE, partagée par la barre de navigation et les boutons. Un nom
  * Ionicons brut, hérité des documents antérieurs, passe tel quel.
  */
-export const GLYPHE_PAR_ROLE: Readonly<Record<string, string>> = {
-  accueil: "home-outline",
-  recherche: "search-outline",
-  liste: "list-outline",
-  billet: "ticket-outline",
-  panier: "cart-outline",
-  calendrier: "calendar-outline",
-  carte: "map-outline",
-  compte: "person-outline",
-  favoris: "heart-outline",
-  message: "chatbubble-outline",
-  reglages: "settings-outline",
-};
+// Étape ③ (EP-003) — la table vit dans `roles-icones.ts`, LA source unique,
+// importée en tête et RÉ-EXPORTÉE par l'index (compatibilité inchangée).
 
 export function SearchEntry({ placeholder, onPress, visual, testID, accessibilityLabel }: SearchEntryProps) {
   const s = useStyles();

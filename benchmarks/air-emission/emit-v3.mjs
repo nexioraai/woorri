@@ -42,6 +42,9 @@ const REPO = join(HERE, "..", "..");
 const airSchema = await import(join(REPO, "packages/air-schema/src/index.ts"));
 const registry = await import(join(REPO, "packages/capability-registry/src/index.ts"));
 const blocksRegistry = await import(join(REPO, "packages/blocks/src/registry.ts"));
+// Étape ③ (EP-008) — le digest INTERPOLE le registre au lieu de le recopier :
+// la liste des rôles d'icônes et le NOMBRE de blocs viennent des sources.
+const { ROLES_ICONES } = await import(join(REPO, "packages/primitives/src/roles-icones.ts"));
 const repairScope = await import(join(REPO, "packages/repair/src/repair-scope.ts"));
 const budgetUsd = await import(join(REPO, "packages/repair/src/budget-usd.ts"));
 const preservation = await import(join(REPO, "packages/repair/src/preservation.ts"));
@@ -259,12 +262,12 @@ RÈGLES NON NÉGOCIABLES :
 REGISTRE DES CAPABILITIES (allowlist fermée) :
 ${registryDigest()}
 
-REGISTRE DES SMART BLOCKS (allowlist FERMÉE — blockType UNIQUEMENT parmi ces 7 ; props STRICTES : toute clé hors liste = refus) :
+REGISTRE DES SMART BLOCKS (allowlist FERMÉE — blockType UNIQUEMENT parmi ces ${blocksRegistry.listBlockIds().length} ; props STRICTES : toute clé hors liste = refus) :
 - \`header\` — tête d'écran éditoriale. entityId : INTERDIT. Props : title (REQUIS), subtitle?, accroche? (true ⇒ typographie DISPLAY, réservé au grand titre d'un écran d'accueil), logoUri? (https, domaine dans allowedDomains).
 - \`list\` — liste d'instances d'une entité. entityId : REQUIS. Props : titleFieldId (REQUIS), subtitleFieldId?, trailingFieldId?, badgeFieldId?, imageFieldId?, title?, searchFieldId?+searchPlaceholder?, sortFieldId?+sortDirection?("asc"|"desc"), pageSize?, filterFieldId?, filtres PILOTÉS : userFilterFieldIds?+userFilterOperators? (chaque valeur : "eq"|"neq"|"contains", RIEN d'autre)+userFilterInputTypes? (chaque valeur : "text"|"choice", RIEN d'autre), emptyTitle?, emptyMessage?, loadingTitle?, errorTitle?, errorMessage?.
 - \`detail_header\` — tête d'écran de détail. entityId : REQUIS. Props : titleFieldId (REQUIS), subtitleFieldId?, trailingFieldId?, badgeFieldIds? (NON VIDE si présent), imageFieldId?, loadingTitle?, errorTitle?, errorMessage?.
 - \`form\` — formulaire lié à une entité. entityId : REQUIS. Props : fieldIds (au moins 1, REQUIS), submitLabel (REQUIS), title?, loadingTitle?, emptyTitle?.
-- \`button\` — action autonome. entityId : INTERDIT. Props : label (REQUIS), actionId (act_*, REQUIS — action DÉCLARÉE), kind? ("primary"|"ghost"|"link" — link = TEXTE cliquable pour un chemin secondaire, jamais pour l'action principale), icon? (allowlist : accueil, recherche, liste, billet, panier, calendrier, carte, compte, favoris, message, reglages).
+- \`button\` — action autonome. entityId : INTERDIT. Props : label (REQUIS), actionId (act_*, REQUIS — action DÉCLARÉE), kind? ("primary"|"ghost"|"link" — link = TEXTE cliquable pour un chemin secondaire, jamais pour l'action principale), icon? (allowlist : ${ROLES_ICONES.join(", ")}).
 - \`empty_state\` — état vide d'écran. entityId : INTERDIT. Props : title (REQUIS), message? ; actionLabel et actionId vont TOUJOURS PAR PAIRE.
 - \`search_entry\` — ENTRÉE de recherche : l'allure d'un champ, le geste d'une navigation. Props : placeholder (REQUIS), actionId (act_*, REQUIS — un \`navigate\` vers l'écran où la recherche s'EXÉCUTE). C'est l'élément structurel d'un accueil ; le champ \`searchFieldId\` d'une liste reste la recherche EXÉCUTÉE.
 - \`spacer\` — espace extensible qui POUSSE ce qui le suit vers le bas de l'écran (composition d'un écran d'accueil : marque+titre en haut, actions en bas). Aucune prop.

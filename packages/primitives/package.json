@@ -5,7 +5,9 @@
   "description": "Primitives contractuelles du design system (ROADMAP Phase 3.2) \u2014 contrats sans aucun type de biblioth\u00e8que de styling (\u00a722, prouv\u00e9 6/6 au banc P-003), impl\u00e9mentation StyleSheet + tokens (D-021)",
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./theme-bridge": "./src/theme-bridge.tsx",
+    "./roles-icones": "./src/roles-icones.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",

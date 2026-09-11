@@ -203,7 +203,11 @@ export const RELEASE_TRAIN_V1 = {
     // de ~8 dp qui cassait la grille en fausse colonne, mesuré à l'écran).
     // Ré-scellé 2026-09-11 (mission chrome) : recherche VISUELLE au bloc
     // search_entry (paire libellé+geste), caméra en cible pleine.
-    "2e624035bdc5eeb836cdccf8b87e4f651c44f4dd9588fca4d2ad2d6802dfe780",
+    // Ré-scellé 2026-09-11 (étape ③, EP-003) : l'enum des rôles d'icônes du
+    // bloc `button` DÉRIVE de la source unique (primitives/roles-icones) au
+    // lieu d'en être la 2e copie. Vocabulaire INCHANGÉ (mêmes 11 rôles +
+    // noms hérités) : seul le lieu de la vérité change.
+    "a3a30ee6f55090fac54e37ed6cc84bfadf7563cedf77215ffdc24bb8a97b401d",
   capabilityRegistryVersion: "1.0.0",
   capabilitySourcesHash:
     "6c28599246abde6e7010704f23f273aafe50d17c5483133709c9065f2777346c",

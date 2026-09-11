@@ -17,6 +17,36 @@ import { modeListe, tailleApercu, type ModeListe } from "../runtime/list-pipelin
 
 export type ZoneEcran = "chrome" | "contenu";
 
+/**
+ * ÉTAPE ③ (2026-09-11) — LE CONTRAT CAPACITÉ → RÔLE → PLACE, écrit en table
+ * et plus en conditions éparses. La chaîne complète, couche par couche :
+ *
+ *   CAPABILITY  — le GÉNÉRATEUR déclare (document : capabilities, blocs,
+ *                 navigation) ; rien n'apparaît sans déclaration ;
+ *   ROLE        — le PLANNER décide ici : rôle structurel de l'écran
+ *                 (porte|fenetre|fleuve|fiche|formulaire|page) et zone de
+ *                 chaque section (table ci-dessous) ;
+ *   PLACEMENT   — l'ÉMETTEUR exécute le plan : zone chrome → AppShell.chrome,
+ *                 zone contenu → conteneur défilant, navigation → AppShell ;
+ *   COMPONENT   — le REGISTRE résout (WRAPPER_BY_BLOCK_TYPE → blocs gelés) ;
+ *   PROPS/STATE — transportés par screens/*.data.ts (composition comprise) ;
+ *   ACTIONS     — uiActionsByBlock/uiSecondaryActionsByBlock, dispatcher.
+ *
+ * Aucune couche ne réinvente la décision d'une couche amont : le cliquet
+ * contrat-capacite-role.test vérifie la table contre le registre des blocs.
+ */
+export const ZONE_PAR_BLOCK_TYPE: Readonly<Record<string, ZoneEcran>> = {
+  header: "contenu",
+  list: "contenu",
+  detail_header: "contenu",
+  form: "contenu",
+  button: "contenu",
+  empty_state: "contenu",
+  // La recherche appartient au VIEWPORT, pas au flux (mission chrome).
+  search_entry: "chrome",
+  spacer: "contenu",
+};
+
 export interface SectionPlan {
   blockId: string;
   blockType: string;
@@ -82,7 +112,7 @@ export function planifierComposition(air: ProjectAir): CompositionPlan {
       return {
         blockId: b.id,
         blockType: b.blockType,
-        zone: b.blockType === "search_entry" ? "chrome" : "contenu",
+        zone: ZONE_PAR_BLOCK_TYPE[b.blockType] ?? "contenu",
         ...(mode === undefined ? {} : { mode }),
         ...(mode === "apercu"
           ? { apercu: tailleApercu(layout, prop(b, "pageSize") as number | undefined) }

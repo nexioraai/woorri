@@ -8,6 +8,7 @@
 // Pas d'élargissement « au cas où » : ajout = décision consignée + édition
 // consciente du cliquet + version mineure (règle d'évolution D-020).
 import { z } from "zod";
+import { ROLES_ICONES } from "@deribfy/primitives/roles-icones";
 // D-095 — SOURCE UNIQUE DES ÉTATS. Le registre ne redéclare plus aucune liste :
 // il pointe sur les tableaux de `contracts.ts`, d'où les types DÉRIVENT aussi.
 // La dérive mesurée en F5 (detail_header déclarait 1 état sur 4, form 3 sur 5)
@@ -118,19 +119,11 @@ export const BLOCKS: readonly BlockDefinition[] = [
       // onglets. Le générateur, enseigné en rôles, a écrit « compte » sur un
       // bouton : refusé. Superset ADDITIF — les rôles entrent, les noms
       // existants restent, le moteur traduit (GLYPHE_PAR_ROLE, primitives).
+      // Étape ③ (EP-003) — les RÔLES viennent de LA source (roles-icones) ;
+      // seuls les noms Ionicons HÉRITÉS restent locaux (superset additif).
       icon: z
         .enum([
-          "accueil",
-          "recherche",
-          "liste",
-          "billet",
-          "panier",
-          "calendrier",
-          "carte",
-          "compte",
-          "favoris",
-          "message",
-          "reglages",
+          ...ROLES_ICONES,
           "settings-outline",
           "log-out-outline",
           "trash-outline",
