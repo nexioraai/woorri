@@ -554,3 +554,15 @@ journalisée) ; courbe par run désormais journalisée (reparationBilan).
 dans les obligations, preuve fixture+mutation. Non vérifiable à 0 $ :
 le suivi générateur et la convergence réelle — prochain run sur GO.
 Batteries 418+, 28/28 apps. Mission : 19,5483 $.
+
+--- 2026-09-11 · RELANCE BOUCLE CORRIGÉE (GO EP-074) — Q3 VERT ATTESTÉ ---
+PREMIÈRE TRAVERSÉE VERTE DE BOUT EN BOUT : valid=true, 3,3748 $, un
+round de réparation (5→0, 0 introduit, gate silencieuse), P0→P2 au
+premier tirage. La génération BRUTE n'avait AUCUN diagnostic R6 : les
+arcs transmis ont été câblés dès l'émission — l'attribution EP-073
+(« jamais donné ») était la bonne. Q3 attesté famille par famille avec
+objets (32 actions, 16/16 écrans, 32 promesses vivantes, 14 arcs
+câblés, 0 partout) ; Q2 bijection exacte ; 28/28 apps. Taux P0→P2 v7 :
+3/5 (vs 1/5 v5+v6). Coûts par phase : P0 0,19 · passes 2,41 · répar.
+0,78. Portée : kaviva, ce tirage, ces estampilles — généricité = R8.
+Mission : 22,9231 $.
