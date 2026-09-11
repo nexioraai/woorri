@@ -308,3 +308,15 @@ partiellement au trou O-2) ; matrice épinglée par test ; prompt re-scellé
 v3 990a81d1… ; écarts grammaire stables à 5. Tests compiler 365→372.
 Dépense passe : 0 $ · mission inchangée 4,0217 $. R4 : verrou contrat levé,
 GO humain requis ; un tirage v2 (contrat corrigé) = GO budgétaire distinct.
+
+--- 2026-09-11 · POST-MATRICE §2/§3 (0 $) ---
+§2 : VÉRIFIÉ — v3 portait O-2 en prose seulement ; CORRIGÉ — la règle est
+désormais INTERPOLÉE depuis TABLE_GESTES (gestes mutants dérivés, testé) ;
+prompt v4 scellé 7ece34cb… ; distinction retouche/mise-à-jour consignée
+(EP-043, permanente). §3 : commerce accepté, cardinal 2 SOUS VEILLE
+(EP-044 — fait vs classificateur). ORDRE RECOMMANDÉ À YOUSSOUF (arbitre) :
+1. ✅ prompt v4 (cette passe, 0 $) · 2. R4 campagne 7 domaines sur
+fixtures (0 $, GO Youssouf — les fixtures devront d'abord gagner les
+nouveaux champs, travail DE R4) · 3. tirage v2 sous contrat corrigé +
+prompt v4 (~0,15 $, GO budgétaire). Tests compiler 372→373. Dépense 0 $ ·
+mission 4,0217 $.

@@ -38,7 +38,7 @@ const FIXTURE = migrerModele(
 // RE-SCELLEMENT CONSCIENT (post-série, D6 O-1) : le glossaire temporel
 // entre au prompt — v1 98014b65… reste l'estampille de la mesure T2
 // (EP-032) ; v2 est le prompt des exécutions FUTURES.
-const HASH_PROMPT_FIGE = "990a81d18933614d7f9416ce8b2fbd6c769d56bcc7e55fc34768e422d2fd30f3";
+const HASH_PROMPT_FIGE = "7ece34cbabc048c6bf38b3d4632cb8c87d0757edcc58c56a0111a2336868643d";
 
 describe("intégration minimale P0 — l'instrument, pas l'exécution", () => {
   it("CLIQUET — le hash du prompt est figé", () => {
@@ -57,6 +57,16 @@ describe("intégration minimale P0 — l'instrument, pas l'exécution", () => {
     expect(minItems.length).toBeGreaterThan(0);
     for (const v of minItems) expect(v).toBeLessThanOrEqual(1);
     expect(json.includes("maxItems")).toBe(false);
+  });
+
+  it("§2 post-matrice — la règle O-2 du prompt est DÉRIVÉE de la table des gestes", async () => {
+    const { TABLE_GESTES } = await import("../../../benchmarks/air-emission/modele-metier.mjs");
+    const mutants = Object.entries(TABLE_GESTES)
+      .filter(([, v]) => (v as { effet: string | null }).effet === "mutation")
+      .map(([k]) => k);
+    expect(mutants.length).toBeGreaterThan(2);
+    expect(PROMPT_P0).toContain("gestes mutants (dérivés de la table) : " + mutants.join(", "));
+    expect(PROMPT_P0).toContain("ne transitent jamais un état");
   });
 
   it("le prompt interpole le CONTRAT (une source) : gestes, raisons, natures", () => {

@@ -27,7 +27,7 @@ const REGLAGES = {
   plafondUsd: 0.2,
 };
 // v2 post-D6 (glossaire temporel) — v1 98014b65… = estampille de la série close.
-const HASH_PROMPT_SCELLE = "990a81d18933614d7f9416ce8b2fbd6c769d56bcc7e55fc34768e422d2fd30f3";
+const HASH_PROMPT_SCELLE = "7ece34cbabc048c6bf38b3d4632cb8c87d0757edcc58c56a0111a2336868643d";
 
 // ── GARDE 1 : le jeton du GO budgétaire ──
 if (process.env.GO_DRY_RUN_P0 !== "OUI-15-CENTIMES") {

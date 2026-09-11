@@ -17,6 +17,7 @@ import { clampMinItems, stripKeys } from "./schema-levels.mjs";
 import {
   GESTES,
   GESTES_TERMINAUX,
+  TABLE_GESTES,
   GLOSSAIRE_NATURES_TEMPORELLES,
   NATURES_ATTRIBUT,
   RAISONS_NON_RETENUE,
@@ -50,7 +51,9 @@ export const PROMPT_P0 = [
   "· étapes (concept × geste — gestes FERMÉS : " + GESTES.join(", ") + " ; etat et preconditions si utiles)",
   "GLOSSAIRE TEMPOREL (D6 O-1 — ces trois mots ne sont pas interchangeables) : " +
     Object.entries(GLOSSAIRE_NATURES_TEMPORELLES).map(([k, v]) => k + " = " + v).join(" · ") + ".",
-  "· états métier structurés (etats: [{id, transitions: [{vers, geste}]}] — une transition est causée par un geste qui ÉCRIT, jamais par une lecture)",
+  "· états métier structurés (etats: [{id, transitions: [{vers, geste}]}]) — une transition d'état est causée par un geste MUTANT ; gestes mutants (dérivés de la table) : " +
+    GESTES.filter((g) => TABLE_GESTES[g].effet === "mutation").join(", ") +
+    " ; les autres gestes LISENT et ne transitent jamais un état.",
   "· commerce (\"digital\" | \"physique_ou_hors_app\") — REQUIS si un parcours contient payer, interdit sinon",
   "· couverture (voir ci-dessous).",
   "",
