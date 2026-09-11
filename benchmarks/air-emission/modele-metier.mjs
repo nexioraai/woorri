@@ -294,6 +294,17 @@ export function validerModele(brut) {
       if (!consomme)
         out.push(d("MODELE_ETAT_INATTEIGNABLE", `concepts[${c.id}].etats[${e.id}]`, "ni cible d'une transition, ni consommé"));
     }
+    // R3-bis · V4 — OBSERVABILITÉ : un état ATTEINT par transition doit être
+    // DISTINGUÉ par au moins une surface (étape consommant cet état) — le
+    // cas mesuré du verdict : « annulé » atteint sans qu'aucune surface ne
+    // le montre. Distinct de M4 (une transition représentée peut mener à un
+    // état d'arrivée invisible).
+    for (const e of etats) {
+      if (!atteints.has(e.id)) continue;
+      const observe = m.parcours.some((p) => p.etapes.some((s2) => s2.etat === e.id));
+      if (!observe)
+        out.push(d("MODELE_ETAT_NON_OBSERVABLE", `concepts[${c.id}].etats[${e.id}]`, "atteint par transition mais distingué par aucune surface"));
+    }
   }
   // ── R2 — PRÉCONDITIONS : références valides ──
   for (const p2 of m.parcours) {
@@ -457,6 +468,11 @@ export function surfacesDe(modele) {
         acteur: p.acteur,
         concept: e.concept,
         cardinalite,
+        // R3-bis · V3 — l'obligation F7 VOYAGE avec la surface : une
+        // collection vide-née OU vidable doit déclarer son état vide.
+        ...(cardinalite === "collection"
+          ? { videObligatoire: etatVideObligatoire(modele, e.concept) }
+          : {}),
         // L'identité est CONSOMMÉE par une surface d'instance, PRODUITE par
         // la ligne d'une collection qui mène à un consulter/choisir.
         identite: cardinalite === "instance" ? "consommee" : "produite_ou_absente",
@@ -660,6 +676,17 @@ export function ecransDe(modele) {
       justification: sf.origine,
     });
   }
+  // R3-bis · V1 — le CHROME est TOUJOURS hébergé : si aucune entrée de
+  // découverte n'existe (premier parcours commençant autrement), l'entrée
+  // est créée pour porter le chrome — aucune étape ne peut rester sans
+  // écran, PAR CONSTRUCTION (prouvé par le test de couverture totale).
+  if (chrome.length > 0 && !ecrans.some((e) => e.ecranId === "ecr_entree")) {
+    ecrans.unshift({
+      ecranId: "ecr_entree",
+      surfaces: [...chrome],
+      justification: chrome.flatMap((id) => parSurface.get(id)?.origine ?? []),
+    });
+  }
   const ecranDeSurface = new Map(
     ecrans.flatMap((e) => e.surfaces.map((sid) => [sid, e.ecranId])),
   );
@@ -753,9 +780,33 @@ export function ecransDe(modele) {
  * une étape, une destination ou un arc HORS PLAN. Une gate refuse ou
  * valide — elle ne décide jamais.
  */
-export function jugerPlanEcrans(plan) {
+export function jugerPlanEcrans(plan, modele) {
   const out = [];
   const connus = new Set(plan.ecrans.map((e) => e.ecranId));
+  if (modele !== undefined) {
+    // R3-bis · V1 (sens direct) — CHAQUE étape de CHAQUE parcours doit être
+    // matérialisée par un écran qui la justifie.
+    for (const p of modele.parcours) {
+      for (let i = 0; i < p.etapes.length; i++) {
+        const materialisee = plan.ecrans.some((e) =>
+          e.justification.some((j) => j.parcours === p.id && j.etape === i),
+        );
+        if (!materialisee)
+          out.push(d("DERIVATION_ETAPE_SANS_ECRAN", `parcours[${p.id}].etapes[${i}]`, "aucun écran ne matérialise cette étape"));
+      }
+    }
+    // R3-bis · V2 — TRAVERSABILITÉ PAR ACTEUR : un écran ne mélange pas les
+    // acteurs (C1) — un chemin qui n'existe que pour un autre rôle ne compte
+    // pas comme traversable.
+    const acteurDeParcours = new Map(modele.parcours.map((p) => [p.id, p.acteur]));
+    for (const e of plan.ecrans) {
+      const acteurs = new Set(
+        e.justification.map((j) => acteurDeParcours.get(j.parcours)).filter((a) => a !== undefined),
+      );
+      if (acteurs.size > 1)
+        out.push(d("DERIVATION_TRAVERSEE_ACTEUR", `ecrans[${e.ecranId}]`, `écran traversé par ${acteurs.size} acteurs : ${[...acteurs].join(", ")}`));
+    }
+  }
   for (const e of plan.ecrans) {
     if (e.justification.length === 0)
       out.push(d("PLAN_ECRAN_SANS_JUSTIFICATION", `ecrans[${e.ecranId}]`, "aucune étape de parcours ne justifie cet écran"));

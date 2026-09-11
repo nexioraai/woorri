@@ -68,6 +68,7 @@ export interface SurfaceContrat {
   concept: string;
   cardinalite: "collection" | "instance" | "singleton";
   identite: string;
+  videObligatoire?: boolean;
   etat?: string;
   portee: string;
   exclusions: string[];
@@ -109,4 +110,4 @@ export function capacitesDe(modele: ModeleMetier): {
   diagnostics: DiagnosticModele[];
 };
 export function ecransDe(modele: ModeleMetier): PlanEcrans;
-export function jugerPlanEcrans(plan: PlanEcrans): DiagnosticModele[];
+export function jugerPlanEcrans(plan: PlanEcrans, modele?: ModeleMetier): DiagnosticModele[];

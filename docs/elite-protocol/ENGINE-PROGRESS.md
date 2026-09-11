@@ -224,3 +224,12 @@ base verte prouvée ; chaîne H portée par les artefacts (arc choisir
 itemId→saisie, arc saisir→confirmation). Cliquet de complétude frontière
 P0 a MORDU sur les 3 nouveaux exports (édition consciente, batterie 17→20).
 Tests compiler 329→347. R4 NON commencé. 0 $ · 0 génération · 0 push.
+
+--- 2026-09-11 · R3-BIS EXÉCUTÉ (critère de fermeture de R3 lui-même, 0 $) ---
+V1 : impossibilité par construction (cas limite chrome-sans-hôte trouvé en
+passe et corrigé) + juge + mutation · V2 : traversabilité PAR ACTEUR
+(fixture 2 acteurs + mutation DERIVATION_TRAVERSEE_ACTEUR seule) · V3 :
+videObligatoire voyage avec la surface (mutation : sans retirer, il tombe)
+· V4 : MODELE_ETAT_NON_OBSERVABLE (« annulé » atteint mais invisible —
+seul ; contrôle positif vert). EP-028/029/030 consignés ; EP-027 amendé
+(dry-run après R3). H couverte 8/8 — R3 = CLOSED plein. Tests 347→353.
