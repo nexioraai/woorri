@@ -67,3 +67,13 @@ chaîne données→actions→états, navigation planifiée, AppShell vérifié
 contre le code ②, planner tranché (moteur de composition contrôlé),
 démonstration multi-domaines sur dérivations manuelles (7 domaines, formes
 différentes des mêmes règles), R0→R8 consolidé. 0 code · 0 $ · 0 build.
+
+--- 2026-09-11 · CONFRONTATION #8 (fermeture O.1→O.4, analyse seule) ---
+O.1 CLOSED (table de décision flux/maille ; enrichissement `visuel` par la
+procédure D6 avec les 4 pièces ; pagination déclarée non-structurelle v1) ·
+O.2 CLOSED (C1–C6 + matrice fermée de compatibilité des surfaces) ·
+O.3 CLOSED (autorité = plan d'écrans ; retour = plateforme ; deep links
+hors enveloppe v1 ; gate-refus ≠ autorité ; mécanisation AIR 2.x tracée) ·
+O.4 CLOSED (7 paramètres fermés via le seul module de thème ; invariance
+déjà mesurable : 1 fichier au plus diffère). ARCHITECTURE_CONSTRUCTION_
+CLOSED = YES. 0 code · 0 $ · 0 build.
