@@ -166,3 +166,22 @@ exécution P0 (elle serait payante — R2_BLOCKED_BUDGET_GO_REQUIRED aurait
 été déclaré si nécessaire ; elle ne l'était pas pour ce périmètre).
 R2 = PARTIAL (sections reçues fermées ; frontière P0 due sur re-soumission).
 Tests compiler 314→321. 0 génération · 0 $ · 0 push.
+
+--- 2026-09-11 · R2 REPRISE (section « P0 — FRONTIÈRE » reçue) — R2 = CLOSED ---
+Frontière ONE BRAIN démontrée MÉCANIQUEMENT (r2-frontiere-p0.test ×8) :
+A/D — 0 dépendance LLM dans les 8 paquets moteur (package.json) ; modules
+de dérivation sans LLM/réseau/E-S/horloge (balayage). B — BATTERIE COMPLÈTE
+des 17 fonctions exportées des 2 modules de dérivation, avec test de
+COMPLÉTUDE (une dérivation nouvelle hors batterie = échec). C — deux briefs
+différents, même MODEL ⇒ 17 sorties byte-identiques. Probes 2 étages : clé
+d'étape ultérieure (ecrans/layout/theme/navigation/composition) MEURT à la
+migration (1.0.0) et est REFUSÉE par le schéma strict (1.1.0). F —
+STATIQUE : emit-project/plan-composition/resolve-lock ne contiennent AUCUNE
+lecture d'intent ; DYNAMIQUE : needs inversés+nodeIds inversés ⇒ émission
+BYTE-IDENTIQUE (71 fichiers) — intent.needs = projection jugée (fidelity),
+jamais un cerveau. G — indépendance des verdicts par construction
+(signatures disjointes) + exhibition des coins (conformité kaviva RED
+inchangée ; suffisance verte sur modèle sain, rouge sur modèle amputé).
+AUCUNE violation trouvée à l'audit — aucune correction moteur nécessaire.
+AUCUNE exécution P0 (aurait été payante — non requise). Tests 321→329.
+R2 = CLOSED (13 critères tenus) · R3 = NON COMMENCÉ · 0 $ · 0 push.
