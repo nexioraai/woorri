@@ -516,6 +516,12 @@ async function callPart(part, system, userText, label, usage) {
       // preuve. Le plafond mord malgré tout — `assertPeutAppeler` voit la
       // dépense mise à jour dès l'appel suivant.
       budgetUsd.assertNonDepasse(PLAFOND_USD, etatDepense, label);
+      if (!alerteNeufDixiemesEmise && etatDepense.depense >= 0.9 * PLAFOND_USD) {
+        alerteNeufDixiemesEmise = true;
+        console.log(
+          `  ⚠ ALERTE 90 % (EP-050) — dépensé $${etatDepense.depense.toFixed(4)} / plafond $${PLAFOND_USD} après ${label}`,
+        );
+      }
       return response;
     } catch (error) {
       const msg = String(error?.message ?? error);
@@ -997,6 +1003,10 @@ const end = Number(process.argv[3] ?? INTENTIONS.length);
 // À défaut, le plafond historique de 25 $ (D-025) s'applique.
 const PLAFOND_USD = Number(process.env.BUDGET_USD ?? 25);
 let etatDepense = budgetUsd.DEPENSE_INITIALE;
+// EP-050/EP-060 — l'alerte 90 % est un INSTRUMENT du GO : le franchissement
+// est signalé UNE fois, la campagne continue (le plafond, lui, mord à 100 %,
+// D-103). Une borne approchée à 90 % doit être révisée avant la mesure suivante.
+let alerteNeufDixiemesEmise = false;
 const TARIFS = {
   entree: PRIX.in,
   ecritureCache: PRIX.cacheWrite,

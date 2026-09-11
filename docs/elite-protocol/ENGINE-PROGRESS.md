@@ -432,3 +432,19 @@ P1 sous contrat corrigé). Prompt v5 re-scellé (EP-043). Cliquet de
 complétude honoré (24→26). Les 4 diagnostics de campagne DISPARUS sur le
 réel ; 8 tests dédiés ; compiler 393/393 ; paquets verts ; 27/27 apps.
 Re-campagne = GO séparé. Dépense passe : 0 $ · mission 4,5143 $.
+
+--- 2026-09-11 · RE-CAMPAGNE D'EXÉCUTION (GO EP-060, plafond 7 $ re-chiffré) ---
+LE PIPELINE VA AU BOUT POUR LA PREMIÈRE FOIS. P0 sous prompt v5 → modèle
+P1-valide (invariant D6 inclus) → plan accepté par les juges J1–J3
+corrigés → huit passes → 14 diagnostics réparés → AIR valide versé au
+corpus → app émise, 28/28 compilent. Q1 OUI · Q2 OUI mesurée (bijection
+15/15, zéro écran libre, 0 écart de navigation) · Q3 NON : un écran mort
+au runtime (déclencheur `data` hors enveloppe + thenScreenId param jamais
+honoré), 2 contrôles morts (même famille data), 11 références brutes
+affichées. La passe juges est VALIDÉE PAR LE RÉEL (ses deux barrières
+franchies par un tirage frais). Le re-chiffrage du plafond (7 $) vérifié
+par les faits : 5,9025 $ dépensés — 6 $ aurait tronqué en pleine
+réparation. Six défauts consignés avec fixtures, AUCUNE correction
+(EP-043/EP-057). Round-trip découvert DÉBRANCHÉ (consigné). R6 se
+concevra contre ces fixtures, sur GO séparé. Dépense campagne 5,9025 $ ·
+mission 10,4168 $.

@@ -1,0 +1,4203 @@
+{
+  "airSchemaVersion": "1.21.0",
+  "projectId": "prj_kaviva",
+  "app": {
+    "name": "Kaviva",
+    "slug": "kaviva",
+    "description": [
+      {
+        "locale": "fr",
+        "text": "Institut de beauté et spa à Abidjan : découvrez les soins (massages, soins du visage, manucure, hammam), consultez leur fiche, choisissez un créneau et réservez votre rendez-vous, puis retrouvez vos rendez-vous à venir et passés."
+      }
+    ],
+    "locales": {
+      "userLanguage": "fr",
+      "appLocales": [
+        "fr"
+      ],
+      "defaultAppLocale": "fr",
+      "contentLocales": [
+        "fr"
+      ],
+      "rtlSupported": false
+    }
+  },
+  "navigation": {
+    "entryScreenId": "scr_entree",
+    "primary": {
+      "destinations": [
+        {
+          "routeId": "nav_entree",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Accueil"
+            }
+          ],
+          "order": 0,
+          "icon": "accueil"
+        },
+        {
+          "routeId": "nav_compte_s_identifier",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Connexion"
+            }
+          ],
+          "order": 1,
+          "icon": "compte"
+        },
+        {
+          "routeId": "nav_compte_saisir",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Créer un compte"
+            }
+          ],
+          "order": 2
+        }
+      ]
+    },
+    "routes": [
+      {
+        "id": "nav_entree",
+        "screenId": "scr_entree",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Kaviva"
+          }
+        ]
+      },
+      {
+        "id": "nav_soin_choisir",
+        "screenId": "scr_cpt_soin_choisir",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Nos soins"
+          }
+        ]
+      },
+      {
+        "id": "nav_soin_consulter",
+        "screenId": "scr_cpt_soin_consulter",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Le soin"
+          }
+        ]
+      },
+      {
+        "id": "nav_compte_s_identifier",
+        "screenId": "scr_cpt_compte_s_identifier",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Connexion"
+          }
+        ]
+      },
+      {
+        "id": "nav_creneau_choisir",
+        "screenId": "scr_cpt_creneau_choisir",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Choisir un créneau"
+          }
+        ]
+      },
+      {
+        "id": "nav_rendez_vous_saisir",
+        "screenId": "scr_cpt_rendez_vous_saisir",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Votre réservation"
+          }
+        ]
+      },
+      {
+        "id": "nav_rendez_vous_confirmer",
+        "screenId": "scr_cpt_rendez_vous_confirmer",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Rendez-vous confirmé"
+          }
+        ]
+      },
+      {
+        "id": "nav_rendez_vous_consulter_confirme",
+        "screenId": "scr_cpt_rendez_vous_consulter_confirme",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Mes rendez-vous à venir"
+          }
+        ]
+      },
+      {
+        "id": "nav_rendez_vous_consulter_historique",
+        "screenId": "scr_cpt_rendez_vous_consulter_historique",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Rendez-vous passés"
+          }
+        ]
+      },
+      {
+        "id": "nav_compte_saisir",
+        "screenId": "scr_cpt_compte_saisir",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Créer un compte"
+          }
+        ]
+      },
+      {
+        "id": "nav_compte_confirmer",
+        "screenId": "scr_cpt_compte_confirmer",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Compte créé"
+          }
+        ]
+      },
+      {
+        "id": "nav_compte_consulter",
+        "screenId": "scr_cpt_compte_consulter",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Mon profil"
+          }
+        ]
+      },
+      {
+        "id": "nav_rendez_vous_choisir_confirme",
+        "screenId": "scr_cpt_rendez_vous_choisir_confirme",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Détail du rendez-vous"
+          }
+        ]
+      },
+      {
+        "id": "nav_rendez_vous_retirer",
+        "screenId": "scr_cpt_rendez_vous_retirer",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Annuler le rendez-vous"
+          }
+        ]
+      },
+      {
+        "id": "nav_rendez_vous_consulter_historique_annule",
+        "screenId": "scr_cpt_rendez_vous_consulter_historique_annule",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Rendez-vous annulés"
+          }
+        ]
+      }
+    ]
+  },
+  "design": {
+    "theme": "spa_elegant_clair"
+  },
+  "network": {
+    "policy": "deny_by_default",
+    "allowedDomains": [
+      "api.kaviva.app",
+      "picsum.photos"
+    ]
+  },
+  "native": {
+    "minIosVersion": "15.0",
+    "minAndroidSdk": 26
+  },
+  "compliance": {
+    "commerceClass": "none",
+    "accountDeletionRequired": true,
+    "dataCollected": [
+      "contact_info",
+      "identifiers",
+      "user_content",
+      "usage_data"
+    ]
+  },
+  "entities": [
+    {
+      "id": "ent_soin",
+      "name": "soin",
+      "fields": [
+        {
+          "id": "fld_soin_nom",
+          "name": "nom",
+          "type": "string",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Nom du soin"
+            }
+          ],
+          "demoValues": [
+            "Massage relaxant aux huiles de karité",
+            "Soin du visage éclat karité-hibiscus",
+            "Manucure française",
+            "Hammam traditionnel et gommage noir",
+            "Massage pierres chaudes",
+            "Pédicure spa hydratante",
+            "Soin anti-âge collagène",
+            "Massage aux quatre mains"
+          ]
+        },
+        {
+          "id": "fld_soin_categorie",
+          "name": "categorie",
+          "type": "enum",
+          "required": true,
+          "enumValues": [
+            "massage",
+            "visage",
+            "manucure",
+            "hammam"
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Catégorie"
+            }
+          ],
+          "enumLabels": [
+            {
+              "value": "massage",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Massages"
+                }
+              ]
+            },
+            {
+              "value": "visage",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Soins du visage"
+                }
+              ]
+            },
+            {
+              "value": "manucure",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Manucure & pédicure"
+                }
+              ]
+            },
+            {
+              "value": "hammam",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Hammam"
+                }
+              ]
+            }
+          ],
+          "demoValues": [
+            "massage",
+            "visage",
+            "manucure",
+            "hammam"
+          ]
+        },
+        {
+          "id": "fld_soin_description",
+          "name": "description",
+          "type": "text",
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Description"
+            }
+          ],
+          "demoValues": [
+            "Un massage corps entier aux huiles chaudes de karité pour dénouer les tensions et retrouver une profonde détente.",
+            "Nettoyage, gommage doux et masque à l'hibiscus pour un teint lumineux et une peau repulpée.",
+            "Limage, cuticules, pose de vernis longue tenue et massage des mains.",
+            "Vapeur douce, gommage au savon noir et rinçage rituel pour une peau neuve.",
+            "Pierres volcaniques chaudes posées le long du dos pour relâcher les muscles en profondeur.",
+            "Bain de pieds aux sels, gommage, soin des ongles et massage hydratant."
+          ]
+        },
+        {
+          "id": "fld_soin_photo",
+          "name": "photo",
+          "type": "asset",
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Photo du soin"
+            }
+          ],
+          "demoValues": [
+            "https://picsum.photos/seed/massage-relaxant-karite/600/600",
+            "https://picsum.photos/seed/soin-visage-hibiscus/600/600",
+            "https://picsum.photos/seed/manucure-francaise-spa/600/600",
+            "https://picsum.photos/seed/hammam-savon-noir/600/600",
+            "https://picsum.photos/seed/massage-pierres-chaudes/600/600",
+            "https://picsum.photos/seed/pedicure-spa-hydratante/600/600",
+            "https://picsum.photos/seed/soin-anti-age-collagene/600/600",
+            "https://picsum.photos/seed/massage-quatre-mains/600/600"
+          ]
+        },
+        {
+          "id": "fld_soin_duree",
+          "name": "duree",
+          "type": "number",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Durée"
+            }
+          ],
+          "unit": "min",
+          "sensitive": false
+        },
+        {
+          "id": "fld_soin_prix",
+          "name": "prix",
+          "type": "decimal",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Prix"
+            }
+          ],
+          "unit": "FCFA",
+          "sensitive": false
+        },
+        {
+          "id": "fld_soin_vedette",
+          "name": "vedette",
+          "type": "boolean",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Mise en avant"
+            }
+          ],
+          "enumLabels": [
+            {
+              "value": "true",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Soin vedette"
+                }
+              ]
+            },
+            {
+              "value": "false",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Soin du catalogue"
+                }
+              ]
+            }
+          ],
+          "demoValues": [
+            "true",
+            "false",
+            "true",
+            "false",
+            "true",
+            "false"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ent_creneau",
+      "name": "creneau",
+      "fields": [
+        {
+          "id": "fld_creneau_libelle",
+          "name": "libelle",
+          "type": "string",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Créneau"
+            }
+          ],
+          "demoValues": [
+            "Lundi 6 janvier — 09h00 à 10h00",
+            "Lundi 6 janvier — 11h30 à 12h30",
+            "Mardi 7 janvier — 14h00 à 15h30",
+            "Mercredi 8 janvier — 10h00 à 11h00",
+            "Jeudi 9 janvier — 16h00 à 17h00",
+            "Vendredi 10 janvier — 09h30 à 11h00",
+            "Samedi 11 janvier — 13h00 à 14h00",
+            "Samedi 11 janvier — 17h00 à 18h30"
+          ]
+        },
+        {
+          "id": "fld_creneau_date_heure",
+          "name": "date_heure",
+          "type": "datetime",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Date et heure de début"
+            }
+          ]
+        },
+        {
+          "id": "fld_creneau_disponible",
+          "name": "disponible",
+          "type": "boolean",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Disponibilité"
+            }
+          ],
+          "enumLabels": [
+            {
+              "value": "true",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Disponible"
+                }
+              ]
+            },
+            {
+              "value": "false",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Complet"
+                }
+              ]
+            }
+          ],
+          "demoValues": [
+            "true",
+            "true",
+            "false",
+            "true",
+            "true",
+            "false",
+            "true",
+            "true"
+          ]
+        },
+        {
+          "id": "fld_creneau_soin",
+          "name": "soin",
+          "type": "reference",
+          "required": true,
+          "referencesEntityId": "ent_soin",
+          "referenceDisplayFieldId": "fld_soin_nom",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Soin concerné"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ent_rendez_vous",
+      "name": "rendez_vous",
+      "fields": [
+        {
+          "id": "fld_rdv_cliente_nom",
+          "name": "cliente_nom",
+          "type": "string",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Nom de la cliente"
+            }
+          ],
+          "demoValues": [
+            "Aïcha Koné",
+            "Mariam Traoré",
+            "Adjoua N'Guessan",
+            "Fatou Diarra",
+            "Estelle Kouassi",
+            "Nadège Bamba"
+          ]
+        },
+        {
+          "id": "fld_rdv_cliente_telephone",
+          "name": "cliente_telephone",
+          "type": "string",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Téléphone de contact"
+            }
+          ],
+          "demoValues": [
+            "+225 07 08 12 34 56",
+            "+225 01 44 22 90 11",
+            "+225 05 66 78 90 12",
+            "+225 07 55 43 21 09"
+          ]
+        },
+        {
+          "id": "fld_rdv_statut",
+          "name": "statut",
+          "type": "enum",
+          "required": true,
+          "enumValues": [
+            "a_venir",
+            "passe",
+            "annule"
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Statut du rendez-vous"
+            }
+          ],
+          "enumLabels": [
+            {
+              "value": "a_venir",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "À venir"
+                }
+              ]
+            },
+            {
+              "value": "passe",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Passé"
+                }
+              ]
+            },
+            {
+              "value": "annule",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Annulé"
+                }
+              ]
+            }
+          ],
+          "demoValues": [
+            "a_venir",
+            "a_venir",
+            "passe",
+            "passe",
+            "annule",
+            "a_venir"
+          ]
+        },
+        {
+          "id": "fld_rdv_date_heure",
+          "name": "date_heure",
+          "type": "datetime",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Date et heure du rendez-vous"
+            }
+          ]
+        },
+        {
+          "id": "fld_rdv_soin",
+          "name": "soin",
+          "type": "reference",
+          "required": true,
+          "referencesEntityId": "ent_soin",
+          "referenceDisplayFieldId": "fld_soin_nom",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Soin réservé"
+            }
+          ]
+        },
+        {
+          "id": "fld_rdv_creneau",
+          "name": "creneau",
+          "type": "reference",
+          "required": true,
+          "referencesEntityId": "ent_creneau",
+          "referenceDisplayFieldId": "fld_creneau_libelle",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Créneau choisi"
+            }
+          ]
+        },
+        {
+          "id": "fld_rdv_compte",
+          "name": "compte",
+          "type": "reference",
+          "required": false,
+          "referencesEntityId": "ent_compte",
+          "referenceDisplayFieldId": "fld_compte_nom",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Cliente"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ent_compte",
+      "name": "compte",
+      "fields": [
+        {
+          "id": "fld_compte_nom",
+          "name": "nom",
+          "type": "string",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Nom complet"
+            }
+          ],
+          "demoValues": [
+            "Aïcha Koné",
+            "Mariam Traoré",
+            "Adjoua N'Guessan",
+            "Fatou Diarra"
+          ]
+        },
+        {
+          "id": "fld_compte_email",
+          "name": "email",
+          "type": "string",
+          "required": true,
+          "unique": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Adresse e-mail"
+            }
+          ],
+          "demoValues": [
+            "aicha.kone@example.ci",
+            "mariam.traore@example.ci",
+            "adjoua.nguessan@example.ci",
+            "fatou.diarra@example.ci"
+          ]
+        },
+        {
+          "id": "fld_compte_telephone",
+          "name": "telephone",
+          "type": "string",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Téléphone"
+            }
+          ],
+          "demoValues": [
+            "+225 07 08 12 34 56",
+            "+225 01 44 22 90 11",
+            "+225 05 66 78 90 12",
+            "+225 07 55 43 21 09"
+          ]
+        },
+        {
+          "id": "fld_compte_mot_de_passe",
+          "name": "mot_de_passe",
+          "type": "string",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Mot de passe"
+            }
+          ],
+          "sensitive": true
+        },
+        {
+          "id": "fld_compte_photo",
+          "name": "photo",
+          "type": "asset",
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Photo de profil"
+            }
+          ],
+          "demoValues": [
+            "https://picsum.photos/seed/profil-cliente-aicha/600/600",
+            "https://picsum.photos/seed/profil-cliente-mariam/600/600",
+            "https://picsum.photos/seed/profil-cliente-adjoua/600/600",
+            "https://picsum.photos/seed/profil-cliente-fatou/600/600",
+            "https://picsum.photos/seed/profil-cliente-estelle/600/600",
+            "https://picsum.photos/seed/profil-cliente-nadege/600/600"
+          ]
+        }
+      ]
+    }
+  ],
+  "relations": [
+    {
+      "id": "rel_soin_creneaux",
+      "fromEntityId": "ent_soin",
+      "toEntityId": "ent_creneau",
+      "kind": "one_to_many"
+    },
+    {
+      "id": "rel_soin_rendez_vous",
+      "fromEntityId": "ent_soin",
+      "toEntityId": "ent_rendez_vous",
+      "kind": "one_to_many"
+    },
+    {
+      "id": "rel_creneau_rendez_vous",
+      "fromEntityId": "ent_creneau",
+      "toEntityId": "ent_rendez_vous",
+      "kind": "one_to_one"
+    },
+    {
+      "id": "rel_compte_rendez_vous",
+      "fromEntityId": "ent_compte",
+      "toEntityId": "ent_rendez_vous",
+      "kind": "one_to_many"
+    }
+  ],
+  "datasets": [
+    {
+      "id": "data_soin",
+      "entityId": "ent_soin",
+      "contentHash": "3f9c1a7be2d048c5a6b1f0e39d7c4a82b5e6c1d09f3a47b28c5d6e1f0a9b3c7d",
+      "rowCount": 8,
+      "sourceKind": "seed"
+    },
+    {
+      "id": "data_creneau",
+      "entityId": "ent_creneau",
+      "contentHash": "a1b2c3d4e5f60718293a4b5c6d7e8f901a2b3c4d5e6f708192a3b4c5d6e7f809",
+      "rowCount": 8,
+      "sourceKind": "seed"
+    },
+    {
+      "id": "data_rendez_vous",
+      "entityId": "ent_rendez_vous",
+      "contentHash": "7c4e9a150b3d6f2841a7c9e05b2d8f3693ce1a4760bd2f851c39e7a408d5b6f2",
+      "rowCount": 6,
+      "sourceKind": "seed"
+    },
+    {
+      "id": "data_compte",
+      "entityId": "ent_compte",
+      "contentHash": "e8d7c6b5a493827160f54e3d2c1b0a99887766554433221ffedcba9876543210",
+      "rowCount": 4,
+      "sourceKind": "seed"
+    }
+  ],
+  "rules": [
+    {
+      "id": "rule_soin_catalogue_valide",
+      "description": "Un soin publié porte un nom, une catégorie connue, une durée et un prix strictement positifs.",
+      "kind": "validation",
+      "entityId": "ent_soin",
+      "assertions": [
+        {
+          "fieldId": "fld_soin_nom",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_soin_categorie",
+          "operator": "in",
+          "value": [
+            "massage",
+            "visage",
+            "manucure",
+            "hammam"
+          ]
+        },
+        {
+          "fieldId": "fld_soin_duree",
+          "operator": "gt",
+          "value": 0
+        },
+        {
+          "fieldId": "fld_soin_prix",
+          "operator": "gt",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": "rule_creneau_valide",
+      "description": "Un créneau porte un libellé lisible, une date et heure de début, et se rattache à un soin.",
+      "kind": "validation",
+      "entityId": "ent_creneau",
+      "assertions": [
+        {
+          "fieldId": "fld_creneau_libelle",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_creneau_date_heure",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_creneau_soin",
+          "operator": "required"
+        }
+      ]
+    },
+    {
+      "id": "rule_creneau_reservable",
+      "description": "Seul un créneau encore disponible peut être proposé à la réservation.",
+      "kind": "validation",
+      "entityId": "ent_creneau",
+      "assertions": [
+        {
+          "fieldId": "fld_creneau_disponible",
+          "operator": "eq",
+          "value": true
+        }
+      ]
+    },
+    {
+      "id": "rule_rendez_vous_complet",
+      "description": "Une réservation exige le nom et le téléphone de la cliente, le soin, le créneau, la date et heure, et un statut connu.",
+      "kind": "validation",
+      "entityId": "ent_rendez_vous",
+      "assertions": [
+        {
+          "fieldId": "fld_rdv_cliente_nom",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_rdv_cliente_telephone",
+          "operator": "matches",
+          "value": "^\\+?[0-9 ]{8,}$"
+        },
+        {
+          "fieldId": "fld_rdv_soin",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_rdv_creneau",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_rdv_date_heure",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_rdv_statut",
+          "operator": "in",
+          "value": [
+            "a_venir",
+            "passe",
+            "annule"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "rule_rendez_vous_annulation",
+      "description": "Seul un rendez-vous à venir peut être annulé par la cliente.",
+      "kind": "validation",
+      "entityId": "ent_rendez_vous",
+      "assertions": [
+        {
+          "fieldId": "fld_rdv_statut",
+          "operator": "eq",
+          "value": "a_venir"
+        }
+      ]
+    },
+    {
+      "id": "rule_rendez_vous_proprietaire",
+      "description": "Un rendez-vous n'est consultable et modifiable que par la cliente connectée à laquelle il est rattaché.",
+      "kind": "authorization",
+      "entityId": "ent_rendez_vous",
+      "assertions": [
+        {
+          "fieldId": "fld_rdv_compte",
+          "operator": "required"
+        }
+      ]
+    },
+    {
+      "id": "rule_compte_inscription",
+      "description": "Un compte cliente exige un nom, une adresse e-mail valide, un téléphone ivoirien et un mot de passe d'au moins 8 caractères.",
+      "kind": "validation",
+      "entityId": "ent_compte",
+      "assertions": [
+        {
+          "fieldId": "fld_compte_nom",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_compte_email",
+          "operator": "matches",
+          "value": "^[^@\\s]+@[^@\\s]+\\.[A-Za-z]{2,}$"
+        },
+        {
+          "fieldId": "fld_compte_telephone",
+          "operator": "matches",
+          "value": "^\\+?[0-9 ]{8,}$"
+        },
+        {
+          "fieldId": "fld_compte_mot_de_passe",
+          "operator": "matches",
+          "value": "^.{8,}$"
+        }
+      ]
+    },
+    {
+      "id": "rule_compte_profil_proprietaire",
+      "description": "Le profil affiché et modifié est celui de la cliente connectée : son e-mail identifie la session.",
+      "kind": "authorization",
+      "entityId": "ent_compte",
+      "assertions": [
+        {
+          "fieldId": "fld_compte_email",
+          "operator": "required"
+        }
+      ]
+    },
+    {
+      "id": "rule_compte_photo_affichable",
+      "description": "La photo de profil de la cliente, affichée en tête de son profil et sur la ligne de son compte, doit être une URL d'image servie en HTTPS.",
+      "kind": "validation",
+      "entityId": "ent_compte",
+      "assertions": [
+        {
+          "fieldId": "fld_compte_photo",
+          "operator": "matches",
+          "value": "^https://[^\\s]+$"
+        }
+      ]
+    }
+  ],
+  "slots": [
+    {
+      "id": "slot_soins_vedettes_accroche",
+      "description": "Compose l'accroche de la sélection d'accueil à partir des soins vedettes (nombre de soins mis en avant et fourchette de prix en FCFA).",
+      "inputs": [
+        {
+          "name": "soins",
+          "type": "json"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "accroche",
+          "type": "string"
+        }
+      ],
+      "allowedImports": []
+    },
+    {
+      "id": "slot_creneaux_disponibles_resume",
+      "description": "Résume la disponibilité des créneaux d'un soin : prochain créneau libre et nombre de créneaux restants.",
+      "inputs": [
+        {
+          "name": "creneaux",
+          "type": "json"
+        },
+        {
+          "name": "soinNom",
+          "type": "string"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "resume",
+          "type": "string"
+        },
+        {
+          "name": "messageVide",
+          "type": "string"
+        }
+      ],
+      "allowedImports": []
+    },
+    {
+      "id": "slot_rendez_vous_recapitulatif",
+      "description": "Rédige le récapitulatif lisible d'une réservation : soin, créneau, date et heure, nom de la cliente.",
+      "inputs": [
+        {
+          "name": "rendezVous",
+          "type": "json"
+        },
+        {
+          "name": "mention",
+          "type": "string"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "recapitulatif",
+          "type": "text"
+        }
+      ],
+      "allowedImports": []
+    },
+    {
+      "id": "slot_rendez_vous_repartition",
+      "description": "Calcule la répartition des rendez-vous de la cliente entre à venir, passés et annulés pour en faire un titre de section.",
+      "inputs": [
+        {
+          "name": "rendezVous",
+          "type": "json"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "titre",
+          "type": "string"
+        }
+      ],
+      "allowedImports": []
+    },
+    {
+      "id": "slot_compte_identite_resume",
+      "description": "Compose la ligne d'identité de la cliente connectée (nom, téléphone) et l'URL de sa photo de profil, destinée à l'en-tête de détail et à la ligne de liste de son compte.",
+      "inputs": [
+        {
+          "name": "compte",
+          "type": "json"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "identite",
+          "type": "string"
+        },
+        {
+          "name": "photoUri",
+          "type": "asset"
+        }
+      ],
+      "allowedImports": []
+    }
+  ],
+  "capabilities": [
+    {
+      "capability": "auth",
+      "config": [
+        {
+          "key": "profileEntityId",
+          "value": "ent_compte"
+        },
+        {
+          "key": "identifierFieldId",
+          "value": "fld_compte_email"
+        },
+        {
+          "key": "passwordFieldId",
+          "value": "fld_compte_mot_de_passe"
+        },
+        {
+          "key": "signUpEnabled",
+          "value": true
+        },
+        {
+          "key": "passwordResetEnabled",
+          "value": true
+        },
+        {
+          "key": "accountDeletionEnabled",
+          "value": true
+        },
+        {
+          "key": "minPasswordLength",
+          "value": 8
+        }
+      ]
+    },
+    {
+      "capability": "offline_storage",
+      "config": [
+        {
+          "key": "cachedEntityIds",
+          "value": [
+            "ent_soin",
+            "ent_creneau",
+            "ent_rendez_vous",
+            "ent_compte"
+          ]
+        },
+        {
+          "key": "maxCacheAgeSeconds",
+          "value": 86400
+        }
+      ]
+    },
+    {
+      "capability": "analytics",
+      "config": [
+        {
+          "key": "collectsUsageData",
+          "value": true
+        },
+        {
+          "key": "anonymizeIdentifiers",
+          "value": true
+        }
+      ]
+    }
+  ],
+  "permissions": [],
+  "screens": [
+    {
+      "id": "scr_entree",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Kaviva"
+        }
+      ],
+      "showsPrimaryNav": true,
+      "showsScreenTitle": false,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_entree_accroche",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Kaviva"
+            },
+            {
+              "key": "subtitle",
+              "value": "Institut de beauté & spa — Abidjan. Offrez-vous une parenthèse."
+            },
+            {
+              "key": "accroche",
+              "value": true
+            }
+          ]
+        },
+        {
+          "id": "blk_entree_recherche",
+          "blockType": "search_entry",
+          "props": [
+            {
+              "key": "placeholder",
+              "value": "Rechercher un soin, un massage, un hammam…"
+            },
+            {
+              "key": "actionId",
+              "value": "act_entree_chercher"
+            }
+          ]
+        },
+        {
+          "id": "blk_entree_vedettes",
+          "blockType": "list",
+          "entityId": "ent_soin",
+          "props": [
+            {
+              "key": "title",
+              "value": "Soins vedettes"
+            },
+            {
+              "key": "layout",
+              "value": "row"
+            },
+            {
+              "key": "titleFieldId",
+              "value": "fld_soin_nom"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_soin_categorie"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_soin_prix"
+            },
+            {
+              "key": "badgeFieldId",
+              "value": "fld_soin_duree"
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_soin_photo"
+            },
+            {
+              "key": "filterFieldId",
+              "value": "fld_soin_vedette"
+            },
+            {
+              "key": "filterOperator",
+              "value": "eq"
+            },
+            {
+              "key": "filterValue",
+              "value": "true"
+            },
+            {
+              "key": "pageSize",
+              "value": 6
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement de la sélection…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Sélection indisponible"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Impossible d'afficher les soins vedettes pour le moment. Réessayez dans un instant."
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Pas de soin vedette"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Parcourez notre carte complète juste en dessous."
+            }
+          ]
+        },
+        {
+          "id": "blk_entree_carte",
+          "blockType": "list",
+          "entityId": "ent_soin",
+          "props": [
+            {
+              "key": "title",
+              "value": "Notre carte de soins"
+            },
+            {
+              "key": "layout",
+              "value": "grid"
+            },
+            {
+              "key": "titleFieldId",
+              "value": "fld_soin_nom"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_soin_categorie"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_soin_prix"
+            },
+            {
+              "key": "badgeFieldId",
+              "value": "fld_soin_duree"
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_soin_photo"
+            },
+            {
+              "key": "sortFieldId",
+              "value": "fld_soin_prix"
+            },
+            {
+              "key": "sortDirection",
+              "value": "asc"
+            },
+            {
+              "key": "pageSize",
+              "value": 4
+            },
+            {
+              "key": "seeAllLabel",
+              "value": "Voir tous les soins"
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement des soins…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Carte indisponible"
+            },
+            {
+              "key": "errorMessage",
+              "value": "La carte des soins n'a pas pu être chargée. Réessayez dans un instant."
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Aucun soin pour le moment"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Notre carte sera bientôt disponible."
+            }
+          ]
+        },
+        {
+          "id": "blk_entree_profil",
+          "blockType": "button",
+          "visibleWhen": {
+            "kind": "session_authenticated"
+          },
+          "props": [
+            {
+              "key": "label",
+              "value": "Mon profil"
+            },
+            {
+              "key": "actionId",
+              "value": "act_compte_voir_profil"
+            },
+            {
+              "key": "kind",
+              "value": "ghost"
+            },
+            {
+              "key": "icon",
+              "value": "compte"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_cpt_soin_choisir",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Nos soins"
+        }
+      ],
+      "showsPrimaryNav": true,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_soins_header",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Nos soins"
+            },
+            {
+              "key": "subtitle",
+              "value": "Massages, soins du visage, manucure et hammam"
+            }
+          ]
+        },
+        {
+          "id": "blk_soins_liste",
+          "blockType": "list",
+          "entityId": "ent_soin",
+          "props": [
+            {
+              "key": "title",
+              "value": "Tous nos soins"
+            },
+            {
+              "key": "layout",
+              "value": "grid"
+            },
+            {
+              "key": "titleFieldId",
+              "value": "fld_soin_nom"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_soin_categorie"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_soin_prix"
+            },
+            {
+              "key": "badgeFieldId",
+              "value": "fld_soin_duree"
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_soin_photo"
+            },
+            {
+              "key": "searchFieldId",
+              "value": "fld_soin_nom"
+            },
+            {
+              "key": "searchPlaceholder",
+              "value": "Rechercher un soin"
+            },
+            {
+              "key": "userFilterFieldIds",
+              "value": [
+                "fld_soin_categorie"
+              ]
+            },
+            {
+              "key": "userFilterOperators",
+              "value": [
+                "eq"
+              ]
+            },
+            {
+              "key": "userFilterInputTypes",
+              "value": [
+                "choice"
+              ]
+            },
+            {
+              "key": "sortFieldId",
+              "value": "fld_soin_prix"
+            },
+            {
+              "key": "sortDirection",
+              "value": "asc"
+            },
+            {
+              "key": "pageSize",
+              "value": 20
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement des soins…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Soins indisponibles"
+            },
+            {
+              "key": "errorMessage",
+              "value": "La liste des soins n'a pas pu être chargée. Réessayez dans un instant."
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Aucun soin trouvé"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Modifiez votre recherche ou changez de catégorie."
+            }
+          ]
+        },
+        {
+          "id": "blk_soins_vide",
+          "blockType": "empty_state",
+          "visibleWhen": {
+            "kind": "entity_empty",
+            "entityId": "ent_soin"
+          },
+          "props": [
+            {
+              "key": "title",
+              "value": "Aucun soin disponible"
+            },
+            {
+              "key": "message",
+              "value": "Notre carte de soins est en cours de mise à jour. Revenez très bientôt."
+            },
+            {
+              "key": "actionLabel",
+              "value": "Revenir à l'accueil"
+            },
+            {
+              "key": "actionId",
+              "value": "act_soins_vide_vers_accueil"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_cpt_soin_consulter",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Le soin"
+        }
+      ],
+      "showsPrimaryNav": true,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_soin_entete",
+          "blockType": "detail_header",
+          "entityId": "ent_soin",
+          "props": [
+            {
+              "key": "titleFieldId",
+              "value": "fld_soin_nom"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_soin_description"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_soin_prix"
+            },
+            {
+              "key": "badgeFieldIds",
+              "value": [
+                "fld_soin_categorie",
+                "fld_soin_duree",
+                "fld_soin_vedette"
+              ]
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_soin_photo"
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement du soin…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Soin indisponible"
+            },
+            {
+              "key": "errorMessage",
+              "value": "La fiche de ce soin n'a pas pu être chargée. Réessayez dans un instant."
+            }
+          ]
+        },
+        {
+          "id": "blk_soin_creneaux_apercu",
+          "blockType": "list",
+          "entityId": "ent_creneau",
+          "props": [
+            {
+              "key": "title",
+              "value": "Prochaines disponibilités"
+            },
+            {
+              "key": "titleFieldId",
+              "value": "fld_creneau_libelle"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_creneau_soin"
+            },
+            {
+              "key": "badgeFieldId",
+              "value": "fld_creneau_disponible"
+            },
+            {
+              "key": "scopeFieldId",
+              "value": "fld_creneau_soin"
+            },
+            {
+              "key": "sortFieldId",
+              "value": "fld_creneau_date_heure"
+            },
+            {
+              "key": "sortDirection",
+              "value": "asc"
+            },
+            {
+              "key": "pageSize",
+              "value": 3
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Recherche des créneaux…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Créneaux indisponibles"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Les disponibilités de ce soin n'ont pas pu être chargées."
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Aucune disponibilité affichée"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Consultez tous les créneaux de l'institut pour trouver un horaire."
+            }
+          ]
+        },
+        {
+          "id": "blk_soin_reserver",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Choisir un créneau"
+            },
+            {
+              "key": "actionId",
+              "value": "act_soin_reserver"
+            },
+            {
+              "key": "kind",
+              "value": "primary"
+            },
+            {
+              "key": "icon",
+              "value": "calendrier"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_cpt_compte_s_identifier",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Connexion"
+        }
+      ],
+      "showsPrimaryNav": true,
+      "showsScreenTitle": false,
+      "presentation": "sheet",
+      "dismissLabel": [
+        {
+          "locale": "fr",
+          "text": "Fermer"
+        }
+      ],
+      "blocks": [
+        {
+          "id": "blk_connexion_header",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Bon retour chez Kaviva"
+            },
+            {
+              "key": "subtitle",
+              "value": "Connectez-vous pour réserver et retrouver vos rendez-vous."
+            }
+          ]
+        },
+        {
+          "id": "blk_connexion_form",
+          "blockType": "form",
+          "entityId": "ent_compte",
+          "props": [
+            {
+              "key": "title",
+              "value": "Vos identifiants"
+            },
+            {
+              "key": "fieldIds",
+              "value": [
+                "fld_compte_email",
+                "fld_compte_mot_de_passe"
+              ]
+            },
+            {
+              "key": "submitLabel",
+              "value": "Se connecter"
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Connexion en cours…"
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Saisissez votre e-mail et votre mot de passe"
+            }
+          ]
+        },
+        {
+          "id": "blk_connexion_profil",
+          "blockType": "button",
+          "visibleWhen": {
+            "kind": "session_authenticated"
+          },
+          "props": [
+            {
+              "key": "label",
+              "value": "Accéder à mon profil"
+            },
+            {
+              "key": "actionId",
+              "value": "act_compte_voir_profil"
+            },
+            {
+              "key": "kind",
+              "value": "primary"
+            },
+            {
+              "key": "icon",
+              "value": "compte"
+            }
+          ]
+        },
+        {
+          "id": "blk_connexion_oubli",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Mot de passe oublié ?"
+            },
+            {
+              "key": "actionId",
+              "value": "act_compte_reinitialiser"
+            },
+            {
+              "key": "kind",
+              "value": "link"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_cpt_creneau_choisir",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Choisir un créneau"
+        }
+      ],
+      "showsPrimaryNav": true,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_creneau_header",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Choisir un créneau"
+            },
+            {
+              "key": "subtitle",
+              "value": "Sélectionnez la date et l'heure qui vous conviennent."
+            }
+          ]
+        },
+        {
+          "id": "blk_creneau_liste",
+          "blockType": "list",
+          "entityId": "ent_creneau",
+          "props": [
+            {
+              "key": "title",
+              "value": "Créneaux disponibles"
+            },
+            {
+              "key": "titleFieldId",
+              "value": "fld_creneau_libelle"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_creneau_soin"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_creneau_date_heure"
+            },
+            {
+              "key": "badgeFieldId",
+              "value": "fld_creneau_disponible"
+            },
+            {
+              "key": "filterFieldId",
+              "value": "fld_creneau_disponible"
+            },
+            {
+              "key": "filterOperator",
+              "value": "eq"
+            },
+            {
+              "key": "filterValue",
+              "value": "true"
+            },
+            {
+              "key": "userFilterFieldIds",
+              "value": [
+                "fld_creneau_libelle"
+              ]
+            },
+            {
+              "key": "userFilterOperators",
+              "value": [
+                "contains"
+              ]
+            },
+            {
+              "key": "userFilterInputTypes",
+              "value": [
+                "text"
+              ]
+            },
+            {
+              "key": "sortFieldId",
+              "value": "fld_creneau_date_heure"
+            },
+            {
+              "key": "sortDirection",
+              "value": "asc"
+            },
+            {
+              "key": "pageSize",
+              "value": 20
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement des créneaux…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Créneaux indisponibles"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Les disponibilités n'ont pas pu être chargées. Réessayez dans un instant."
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Aucun créneau disponible"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Tous les horaires sont réservés pour l'instant. Revenez un peu plus tard."
+            }
+          ]
+        },
+        {
+          "id": "blk_creneau_vide",
+          "blockType": "empty_state",
+          "visibleWhen": {
+            "kind": "entity_empty",
+            "entityId": "ent_creneau"
+          },
+          "props": [
+            {
+              "key": "title",
+              "value": "Aucun créneau ouvert"
+            },
+            {
+              "key": "message",
+              "value": "Nos horaires de la semaine ne sont pas encore publiés. Choisissez un autre soin ou revenez bientôt."
+            },
+            {
+              "key": "actionLabel",
+              "value": "Revenir aux soins"
+            },
+            {
+              "key": "actionId",
+              "value": "act_creneau_vide_vers_soins"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_cpt_rendez_vous_saisir",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Votre réservation"
+        }
+      ],
+      "showsPrimaryNav": true,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_rdv_saisir_header",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Votre réservation"
+            },
+            {
+              "key": "subtitle",
+              "value": "Confirmez le soin, le créneau et vos coordonnées."
+            }
+          ]
+        },
+        {
+          "id": "blk_rdv_saisir_creneau",
+          "blockType": "detail_header",
+          "entityId": "ent_creneau",
+          "props": [
+            {
+              "key": "titleFieldId",
+              "value": "fld_creneau_libelle"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_creneau_soin"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_creneau_date_heure"
+            },
+            {
+              "key": "badgeFieldIds",
+              "value": [
+                "fld_creneau_disponible"
+              ]
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement du créneau choisi…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Créneau indisponible"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Le créneau sélectionné n'a pas pu être chargé. Revenez à la liste des disponibilités."
+            }
+          ]
+        },
+        {
+          "id": "blk_rdv_saisir_form",
+          "blockType": "form",
+          "entityId": "ent_rendez_vous",
+          "props": [
+            {
+              "key": "title",
+              "value": "Vos informations"
+            },
+            {
+              "key": "fieldIds",
+              "value": [
+                "fld_rdv_cliente_nom",
+                "fld_rdv_cliente_telephone",
+                "fld_rdv_soin",
+                "fld_rdv_creneau",
+                "fld_rdv_date_heure"
+              ]
+            },
+            {
+              "key": "submitLabel",
+              "value": "Confirmer le rendez-vous"
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Préparation de votre réservation…"
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Renseignez vos coordonnées pour réserver"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_cpt_rendez_vous_confirmer",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Rendez-vous confirmé"
+        }
+      ],
+      "showsPrimaryNav": true,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_rdv_confirmer_header",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Rendez-vous confirmé"
+            },
+            {
+              "key": "subtitle",
+              "value": "Merci ! Nous avons hâte de vous accueillir chez Kaviva."
+            }
+          ]
+        },
+        {
+          "id": "blk_rdv_confirmer_spacer",
+          "blockType": "spacer"
+        },
+        {
+          "id": "blk_rdv_confirmer_mes_rdv",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Voir mes rendez-vous"
+            },
+            {
+              "key": "actionId",
+              "value": "act_rdv_voir_mes_rdv"
+            },
+            {
+              "key": "kind",
+              "value": "primary"
+            },
+            {
+              "key": "icon",
+              "value": "calendrier"
+            }
+          ]
+        },
+        {
+          "id": "blk_rdv_confirmer_autres_soins",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Découvrir d'autres soins"
+            },
+            {
+              "key": "actionId",
+              "value": "act_rdv_confirmer_vers_soins"
+            },
+            {
+              "key": "kind",
+              "value": "ghost"
+            },
+            {
+              "key": "icon",
+              "value": "liste"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_cpt_rendez_vous_consulter_confirme",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Mes rendez-vous à venir"
+        }
+      ],
+      "showsPrimaryNav": true,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_rdv_venir_header",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Mes rendez-vous"
+            },
+            {
+              "key": "subtitle",
+              "value": "Vos prochains soins chez Kaviva"
+            }
+          ]
+        },
+        {
+          "id": "blk_rdv_venir_liste",
+          "blockType": "list",
+          "entityId": "ent_rendez_vous",
+          "props": [
+            {
+              "key": "title",
+              "value": "Mes prochains rendez-vous"
+            },
+            {
+              "key": "titleFieldId",
+              "value": "fld_rdv_soin"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_rdv_date_heure"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_rdv_cliente_nom"
+            },
+            {
+              "key": "badgeFieldId",
+              "value": "fld_rdv_statut"
+            },
+            {
+              "key": "filterFieldId",
+              "value": "fld_rdv_statut"
+            },
+            {
+              "key": "filterOperator",
+              "value": "eq"
+            },
+            {
+              "key": "filterValue",
+              "value": "a_venir"
+            },
+            {
+              "key": "sortFieldId",
+              "value": "fld_rdv_date_heure"
+            },
+            {
+              "key": "sortDirection",
+              "value": "asc"
+            },
+            {
+              "key": "pageSize",
+              "value": 20
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement de vos rendez-vous…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Rendez-vous indisponibles"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Vos rendez-vous n'ont pas pu être chargés. Réessayez dans un instant."
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Aucun rendez-vous à venir"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Réservez un soin pour voir votre prochain rendez-vous ici."
+            }
+          ]
+        },
+        {
+          "id": "blk_rdv_venir_vide",
+          "blockType": "empty_state",
+          "visibleWhen": {
+            "kind": "entity_empty",
+            "entityId": "ent_rendez_vous"
+          },
+          "props": [
+            {
+              "key": "title",
+              "value": "Aucun rendez-vous pour l'instant"
+            },
+            {
+              "key": "message",
+              "value": "Choisissez un soin et un créneau pour réserver votre première séance."
+            },
+            {
+              "key": "actionLabel",
+              "value": "Découvrir nos soins"
+            },
+            {
+              "key": "actionId",
+              "value": "act_rdv_vide_vers_soins"
+            }
+          ]
+        },
+        {
+          "id": "blk_rdv_venir_historique",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Voir mes rendez-vous passés"
+            },
+            {
+              "key": "actionId",
+              "value": "act_rdv_voir_historique"
+            },
+            {
+              "key": "kind",
+              "value": "link"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_cpt_rendez_vous_consulter_historique",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Rendez-vous passés"
+        }
+      ],
+      "showsPrimaryNav": true,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_rdv_passes_header",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Rendez-vous passés"
+            },
+            {
+              "key": "subtitle",
+              "value": "L'historique de vos soins chez Kaviva"
+            }
+          ]
+        },
+        {
+          "id": "blk_rdv_passes_liste",
+          "blockType": "list",
+          "entityId": "ent_rendez_vous",
+          "props": [
+            {
+              "key": "title",
+              "value": "Mes séances passées"
+            },
+            {
+              "key": "titleFieldId",
+              "value": "fld_rdv_soin"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_rdv_date_heure"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_rdv_cliente_nom"
+            },
+            {
+              "key": "badgeFieldId",
+              "value": "fld_rdv_statut"
+            },
+            {
+              "key": "filterFieldId",
+              "value": "fld_rdv_statut"
+            },
+            {
+              "key": "filterOperator",
+              "value": "eq"
+            },
+            {
+              "key": "filterValue",
+              "value": "passe"
+            },
+            {
+              "key": "sortFieldId",
+              "value": "fld_rdv_date_heure"
+            },
+            {
+              "key": "sortDirection",
+              "value": "desc"
+            },
+            {
+              "key": "pageSize",
+              "value": 20
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement de votre historique…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Historique indisponible"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Votre historique n'a pas pu être chargé. Réessayez dans un instant."
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Aucun rendez-vous passé"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Vos séances terminées apparaîtront ici."
+            }
+          ]
+        },
+        {
+          "id": "blk_rdv_passes_annules",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Voir les rendez-vous annulés"
+            },
+            {
+              "key": "actionId",
+              "value": "act_rdv_voir_annules"
+            },
+            {
+              "key": "kind",
+              "value": "link"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_cpt_compte_saisir",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Créer un compte"
+        }
+      ],
+      "showsPrimaryNav": true,
+      "showsScreenTitle": false,
+      "presentation": "sheet",
+      "dismissLabel": [
+        {
+          "locale": "fr",
+          "text": "Fermer"
+        }
+      ],
+      "blocks": [
+        {
+          "id": "blk_inscription_header",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Créer votre compte"
+            },
+            {
+              "key": "subtitle",
+              "value": "Réservez vos soins en quelques secondes et gardez vos rendez-vous à portée de main."
+            }
+          ]
+        },
+        {
+          "id": "blk_inscription_form",
+          "blockType": "form",
+          "entityId": "ent_compte",
+          "props": [
+            {
+              "key": "title",
+              "value": "Vos informations"
+            },
+            {
+              "key": "fieldIds",
+              "value": [
+                "fld_compte_nom",
+                "fld_compte_email",
+                "fld_compte_telephone",
+                "fld_compte_mot_de_passe"
+              ]
+            },
+            {
+              "key": "submitLabel",
+              "value": "Créer mon compte"
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Création de votre compte…"
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Renseignez vos informations pour commencer"
+            }
+          ]
+        },
+        {
+          "id": "blk_inscription_profil",
+          "blockType": "button",
+          "visibleWhen": {
+            "kind": "session_authenticated"
+          },
+          "props": [
+            {
+              "key": "label",
+              "value": "Voir mon profil"
+            },
+            {
+              "key": "actionId",
+              "value": "act_compte_voir_profil"
+            },
+            {
+              "key": "kind",
+              "value": "ghost"
+            },
+            {
+              "key": "icon",
+              "value": "compte"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_cpt_compte_confirmer",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Compte créé"
+        }
+      ],
+      "showsPrimaryNav": true,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_compte_confirmer_header",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Bienvenue chez Kaviva"
+            },
+            {
+              "key": "subtitle",
+              "value": "Votre compte est créé : vous pouvez réserver vos soins."
+            }
+          ]
+        },
+        {
+          "id": "blk_compte_confirmer_attente",
+          "blockType": "header",
+          "visibleWhen": {
+            "kind": "session_pending_confirmation"
+          },
+          "props": [
+            {
+              "key": "title",
+              "value": "Confirmez votre adresse e-mail"
+            },
+            {
+              "key": "subtitle",
+              "value": "Un message vient de vous être envoyé : validez-le pour activer définitivement votre compte."
+            }
+          ]
+        },
+        {
+          "id": "blk_compte_confirmer_spacer",
+          "blockType": "spacer"
+        },
+        {
+          "id": "blk_compte_confirmer_profil",
+          "blockType": "button",
+          "visibleWhen": {
+            "kind": "session_authenticated"
+          },
+          "props": [
+            {
+              "key": "label",
+              "value": "Voir mon profil"
+            },
+            {
+              "key": "actionId",
+              "value": "act_compte_voir_profil"
+            },
+            {
+              "key": "kind",
+              "value": "primary"
+            },
+            {
+              "key": "icon",
+              "value": "compte"
+            }
+          ]
+        },
+        {
+          "id": "blk_compte_confirmer_soins",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Découvrir nos soins"
+            },
+            {
+              "key": "actionId",
+              "value": "act_compte_confirmer_vers_soins"
+            },
+            {
+              "key": "kind",
+              "value": "ghost"
+            },
+            {
+              "key": "icon",
+              "value": "liste"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_cpt_compte_consulter",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Mon profil"
+        }
+      ],
+      "showsPrimaryNav": true,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_profil_header",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Mon profil"
+            },
+            {
+              "key": "subtitle",
+              "value": "Vos informations et votre téléphone de contact"
+            }
+          ]
+        },
+        {
+          "id": "blk_profil_apercu",
+          "blockType": "list",
+          "entityId": "ent_compte",
+          "props": [
+            {
+              "key": "title",
+              "value": "Mon compte"
+            },
+            {
+              "key": "titleFieldId",
+              "value": "fld_compte_nom"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_compte_telephone"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_compte_email"
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_compte_photo"
+            },
+            {
+              "key": "pageSize",
+              "value": 1
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement de votre compte…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Compte indisponible"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Vos informations n'ont pas pu être chargées. Réessayez dans un instant."
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Aucun compte connecté"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Connectez-vous pour retrouver votre profil et vos rendez-vous."
+            }
+          ]
+        },
+        {
+          "id": "blk_profil_form",
+          "blockType": "form",
+          "entityId": "ent_compte",
+          "props": [
+            {
+              "key": "title",
+              "value": "Mes informations"
+            },
+            {
+              "key": "fieldIds",
+              "value": [
+                "fld_compte_photo",
+                "fld_compte_nom",
+                "fld_compte_email",
+                "fld_compte_telephone"
+              ]
+            },
+            {
+              "key": "submitLabel",
+              "value": "Enregistrer mes informations"
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement de votre profil…"
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Complétez votre profil"
+            }
+          ]
+        },
+        {
+          "id": "blk_profil_rdv",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Mes rendez-vous"
+            },
+            {
+              "key": "actionId",
+              "value": "act_profil_vers_rdv"
+            },
+            {
+              "key": "kind",
+              "value": "primary"
+            },
+            {
+              "key": "icon",
+              "value": "calendrier"
+            }
+          ]
+        },
+        {
+          "id": "blk_profil_deconnexion",
+          "blockType": "button",
+          "visibleWhen": {
+            "kind": "session_authenticated"
+          },
+          "props": [
+            {
+              "key": "label",
+              "value": "Se déconnecter"
+            },
+            {
+              "key": "actionId",
+              "value": "act_compte_se_deconnecter"
+            },
+            {
+              "key": "kind",
+              "value": "ghost"
+            }
+          ]
+        },
+        {
+          "id": "blk_profil_supprimer",
+          "blockType": "button",
+          "visibleWhen": {
+            "kind": "session_authenticated"
+          },
+          "props": [
+            {
+              "key": "label",
+              "value": "Supprimer mon compte"
+            },
+            {
+              "key": "actionId",
+              "value": "act_compte_supprimer"
+            },
+            {
+              "key": "kind",
+              "value": "link"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_cpt_rendez_vous_choisir_confirme",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Détail du rendez-vous"
+        }
+      ],
+      "showsPrimaryNav": true,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_rdv_detail_entete",
+          "blockType": "detail_header",
+          "entityId": "ent_rendez_vous",
+          "props": [
+            {
+              "key": "titleFieldId",
+              "value": "fld_rdv_soin"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_rdv_creneau"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_rdv_date_heure"
+            },
+            {
+              "key": "badgeFieldIds",
+              "value": [
+                "fld_rdv_statut"
+              ]
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement du rendez-vous…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Rendez-vous indisponible"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Le détail de ce rendez-vous n'a pas pu être chargé. Réessayez dans un instant."
+            }
+          ]
+        },
+        {
+          "id": "blk_rdv_detail_annuler",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Annuler ce rendez-vous"
+            },
+            {
+              "key": "actionId",
+              "value": "act_rdv_vers_annulation"
+            },
+            {
+              "key": "kind",
+              "value": "ghost"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_cpt_rendez_vous_retirer",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Annuler le rendez-vous"
+        }
+      ],
+      "showsPrimaryNav": true,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_rdv_annuler_header",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Annuler ce rendez-vous"
+            },
+            {
+              "key": "subtitle",
+              "value": "Le créneau sera libéré pour une autre cliente. Confirmez pour annuler."
+            }
+          ]
+        },
+        {
+          "id": "blk_rdv_annuler_form",
+          "blockType": "form",
+          "entityId": "ent_rendez_vous",
+          "props": [
+            {
+              "key": "title",
+              "value": "Confirmation d'annulation"
+            },
+            {
+              "key": "fieldIds",
+              "value": [
+                "fld_rdv_statut"
+              ]
+            },
+            {
+              "key": "submitLabel",
+              "value": "Confirmer l'annulation"
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Annulation en cours…"
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Sélectionnez le statut « Annulé » pour confirmer"
+            }
+          ]
+        },
+        {
+          "id": "blk_rdv_annuler_conserver",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Conserver mon rendez-vous"
+            },
+            {
+              "key": "actionId",
+              "value": "act_rdv_conserver"
+            },
+            {
+              "key": "kind",
+              "value": "link"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_cpt_rendez_vous_consulter_historique_annule",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Rendez-vous annulés"
+        }
+      ],
+      "showsPrimaryNav": true,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_rdv_annules_header",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Rendez-vous annulés"
+            },
+            {
+              "key": "subtitle",
+              "value": "Les séances que vous avez annulées"
+            }
+          ]
+        },
+        {
+          "id": "blk_rdv_annules_liste",
+          "blockType": "list",
+          "entityId": "ent_rendez_vous",
+          "props": [
+            {
+              "key": "title",
+              "value": "Mes annulations"
+            },
+            {
+              "key": "titleFieldId",
+              "value": "fld_rdv_soin"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_rdv_date_heure"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_rdv_cliente_nom"
+            },
+            {
+              "key": "badgeFieldId",
+              "value": "fld_rdv_statut"
+            },
+            {
+              "key": "filterFieldId",
+              "value": "fld_rdv_statut"
+            },
+            {
+              "key": "filterOperator",
+              "value": "eq"
+            },
+            {
+              "key": "filterValue",
+              "value": "annule"
+            },
+            {
+              "key": "sortFieldId",
+              "value": "fld_rdv_date_heure"
+            },
+            {
+              "key": "sortDirection",
+              "value": "desc"
+            },
+            {
+              "key": "pageSize",
+              "value": 20
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement des annulations…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Liste indisponible"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Vos rendez-vous annulés n'ont pas pu être chargés. Réessayez dans un instant."
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Aucune annulation"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Vous n'avez annulé aucun rendez-vous."
+            }
+          ]
+        },
+        {
+          "id": "blk_rdv_annules_vers_venir",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Voir mes rendez-vous à venir"
+            },
+            {
+              "key": "actionId",
+              "value": "act_rdv_annules_vers_venir"
+            },
+            {
+              "key": "kind",
+              "value": "link"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "actions": [
+    {
+      "id": "act_entree_chercher",
+      "name": "Ouvrir la recherche des soins",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_entree_recherche"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_soin_choisir"
+      }
+    },
+    {
+      "id": "act_entree_vedette_ouvrir",
+      "name": "Ouvrir la fiche d'un soin vedette",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_entree_vedettes"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_soin_consulter"
+      }
+    },
+    {
+      "id": "act_entree_carte_ouvrir",
+      "name": "Ouvrir la fiche d'un soin de la carte",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_entree_carte"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_soin_consulter"
+      }
+    },
+    {
+      "id": "act_entree_carte_voir_tout",
+      "name": "Voir tous les soins",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_entree_carte",
+        "role": "secondary"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_soin_choisir"
+      }
+    },
+    {
+      "id": "act_soins_liste_ouvrir",
+      "name": "Ouvrir la fiche du soin sélectionné",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_soins_liste"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_soin_consulter"
+      }
+    },
+    {
+      "id": "act_soins_vide_vers_accueil",
+      "name": "Revenir à l'accueil quand la carte des soins n'a plus de soin à montrer",
+      "trigger": {
+        "kind": "data",
+        "entityId": "ent_soin",
+        "event": "deleted"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_entree"
+      }
+    },
+    {
+      "id": "act_soin_reserver",
+      "name": "Choisir un créneau pour ce soin",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_soin_reserver"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_creneau_choisir"
+      }
+    },
+    {
+      "id": "act_soin_creneau_apercu_ouvrir",
+      "name": "Réserver le créneau proposé sur la fiche du soin",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_soin_creneaux_apercu"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_rendez_vous_saisir"
+      }
+    },
+    {
+      "id": "act_creneau_choisir",
+      "name": "Choisir ce créneau et poursuivre la réservation",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_creneau_liste"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_rendez_vous_saisir"
+      }
+    },
+    {
+      "id": "act_creneau_vide_vers_soins",
+      "name": "Revenir aux soins quand plus aucun créneau n'est ouvert",
+      "trigger": {
+        "kind": "data",
+        "entityId": "ent_creneau",
+        "event": "deleted"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_soin_choisir"
+      }
+    },
+    {
+      "id": "act_rdv_enregistrer",
+      "name": "Confirmer et enregistrer le rendez-vous",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_rdv_saisir_form"
+      },
+      "effect": {
+        "kind": "mutation",
+        "entityId": "ent_rendez_vous",
+        "operation": "create",
+        "thenScreenId": "scr_cpt_rendez_vous_confirmer"
+      }
+    },
+    {
+      "id": "act_rdv_voir_mes_rdv",
+      "name": "Voir mes rendez-vous à venir",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_rdv_confirmer_mes_rdv"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_rendez_vous_consulter_confirme"
+      }
+    },
+    {
+      "id": "act_rdv_confirmer_vers_soins",
+      "name": "Découvrir d'autres soins après confirmation",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_rdv_confirmer_autres_soins"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_soin_choisir"
+      }
+    },
+    {
+      "id": "act_rdv_venir_ouvrir",
+      "name": "Ouvrir le détail d'un rendez-vous à venir",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_rdv_venir_liste"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_rendez_vous_choisir_confirme"
+      }
+    },
+    {
+      "id": "act_rdv_vide_vers_soins",
+      "name": "Découvrir nos soins depuis l'état vide des rendez-vous",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_rdv_venir_vide"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_soin_choisir"
+      }
+    },
+    {
+      "id": "act_rdv_voir_historique",
+      "name": "Voir mes rendez-vous passés",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_rdv_venir_historique"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_rendez_vous_consulter_historique"
+      }
+    },
+    {
+      "id": "act_rdv_passes_ouvrir",
+      "name": "Ouvrir le détail d'un rendez-vous passé",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_rdv_passes_liste"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_rendez_vous_choisir_confirme"
+      }
+    },
+    {
+      "id": "act_rdv_voir_annules",
+      "name": "Voir les rendez-vous annulés",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_rdv_passes_annules"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_rendez_vous_consulter_historique_annule"
+      }
+    },
+    {
+      "id": "act_rdv_annules_ouvrir",
+      "name": "Ouvrir le détail d'un rendez-vous annulé",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_rdv_annules_liste"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_rendez_vous_choisir_confirme"
+      }
+    },
+    {
+      "id": "act_rdv_annules_vers_venir",
+      "name": "Revenir aux rendez-vous à venir",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_rdv_annules_vers_venir"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_rendez_vous_consulter_confirme"
+      }
+    },
+    {
+      "id": "act_rdv_vers_annulation",
+      "name": "Ouvrir l'annulation de ce rendez-vous",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_rdv_detail_annuler"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_rendez_vous_retirer"
+      }
+    },
+    {
+      "id": "act_rdv_annuler_enregistrer",
+      "name": "Enregistrer l'annulation du rendez-vous",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_rdv_annuler_form"
+      },
+      "effect": {
+        "kind": "mutation",
+        "entityId": "ent_rendez_vous",
+        "operation": "update",
+        "instanceFrom": "route",
+        "thenScreenId": "scr_cpt_rendez_vous_consulter_historique_annule"
+      }
+    },
+    {
+      "id": "act_rdv_conserver",
+      "name": "Conserver le rendez-vous",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_rdv_annuler_conserver"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_rendez_vous_consulter_confirme"
+      }
+    },
+    {
+      "id": "act_compte_se_connecter",
+      "name": "Se connecter à son compte",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_connexion_form"
+      },
+      "effect": {
+        "kind": "capability",
+        "capability": "auth",
+        "method": "signIn",
+        "params": [
+          {
+            "key": "identifierFieldId",
+            "value": "fld_compte_email"
+          },
+          {
+            "key": "passwordFieldId",
+            "value": "fld_compte_mot_de_passe"
+          },
+          {
+            "key": "thenScreenId",
+            "value": "scr_cpt_compte_consulter"
+          }
+        ]
+      }
+    },
+    {
+      "id": "act_compte_reinitialiser",
+      "name": "Réinitialiser le mot de passe",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_connexion_oubli"
+      },
+      "effect": {
+        "kind": "capability",
+        "capability": "auth",
+        "method": "resetPassword",
+        "params": [
+          {
+            "key": "identifierFieldId",
+            "value": "fld_compte_email"
+          }
+        ]
+      }
+    },
+    {
+      "id": "act_compte_creer",
+      "name": "Créer son compte cliente",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_inscription_form"
+      },
+      "effect": {
+        "kind": "capability",
+        "capability": "auth",
+        "method": "signUp",
+        "params": [
+          {
+            "key": "identifierFieldId",
+            "value": "fld_compte_email"
+          },
+          {
+            "key": "passwordFieldId",
+            "value": "fld_compte_mot_de_passe"
+          },
+          {
+            "key": "profileEntityId",
+            "value": "ent_compte"
+          },
+          {
+            "key": "thenScreenId",
+            "value": "scr_cpt_compte_confirmer"
+          }
+        ]
+      }
+    },
+    {
+      "id": "act_compte_creation_confirmee",
+      "name": "Ouvrir l'écran « Compte créé » dès que le compte cliente est enregistré",
+      "trigger": {
+        "kind": "data",
+        "entityId": "ent_compte",
+        "event": "created"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_compte_confirmer"
+      }
+    },
+    {
+      "id": "act_compte_voir_profil",
+      "name": "Voir mon profil",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_entree_profil"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_compte_consulter"
+      }
+    },
+    {
+      "id": "act_compte_confirmer_vers_soins",
+      "name": "Découvrir nos soins après création du compte",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_compte_confirmer_soins"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_soin_choisir"
+      }
+    },
+    {
+      "id": "act_profil_enregistrer",
+      "name": "Enregistrer mes informations de profil",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_profil_form"
+      },
+      "effect": {
+        "kind": "mutation",
+        "entityId": "ent_compte",
+        "operation": "update",
+        "instanceFrom": "session",
+        "thenScreenId": "scr_cpt_compte_consulter"
+      }
+    },
+    {
+      "id": "act_profil_vers_rdv",
+      "name": "Ouvrir mes rendez-vous depuis le profil",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_profil_rdv"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_rendez_vous_consulter_confirme"
+      }
+    },
+    {
+      "id": "act_compte_se_deconnecter",
+      "name": "Se déconnecter",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_profil_deconnexion"
+      },
+      "effect": {
+        "kind": "capability",
+        "capability": "auth",
+        "method": "signOut",
+        "params": [
+          {
+            "key": "thenScreenId",
+            "value": "scr_entree"
+          }
+        ]
+      }
+    },
+    {
+      "id": "act_compte_supprimer",
+      "name": "Supprimer mon compte",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_profil_supprimer"
+      },
+      "effect": {
+        "kind": "mutation",
+        "entityId": "ent_compte",
+        "operation": "delete",
+        "instanceFrom": "session",
+        "thenScreenId": "scr_entree"
+      }
+    },
+    {
+      "id": "act_slot_accroche_vedettes",
+      "name": "Composer l'accroche des soins vedettes",
+      "trigger": {
+        "kind": "lifecycle",
+        "event": "screen_open",
+        "screenId": "scr_entree"
+      },
+      "effect": {
+        "kind": "slot",
+        "slotId": "slot_soins_vedettes_accroche",
+        "binding": {
+          "inputs": [
+            {
+              "port": "soins",
+              "source": {
+                "kind": "entity_rows",
+                "entityId": "ent_soin"
+              }
+            }
+          ],
+          "outputs": [
+            {
+              "port": "accroche",
+              "blockId": "blk_entree_vedettes",
+              "prop": "title"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "act_slot_creneaux_resume",
+      "name": "Résumer les disponibilités du soin",
+      "trigger": {
+        "kind": "lifecycle",
+        "event": "screen_open",
+        "screenId": "scr_cpt_soin_consulter"
+      },
+      "effect": {
+        "kind": "slot",
+        "slotId": "slot_creneaux_disponibles_resume",
+        "binding": {
+          "inputs": [
+            {
+              "port": "creneaux",
+              "source": {
+                "kind": "entity_rows",
+                "entityId": "ent_creneau"
+              }
+            },
+            {
+              "port": "soinNom",
+              "source": {
+                "kind": "literal",
+                "value": "ce soin"
+              }
+            }
+          ],
+          "outputs": [
+            {
+              "port": "resume",
+              "blockId": "blk_soin_creneaux_apercu",
+              "prop": "title"
+            },
+            {
+              "port": "messageVide",
+              "blockId": "blk_soin_creneaux_apercu",
+              "prop": "emptyMessage"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "act_slot_rdv_recapitulatif",
+      "name": "Rédiger le récapitulatif de la réservation",
+      "trigger": {
+        "kind": "lifecycle",
+        "event": "screen_open",
+        "screenId": "scr_cpt_rendez_vous_confirmer"
+      },
+      "effect": {
+        "kind": "slot",
+        "slotId": "slot_rendez_vous_recapitulatif",
+        "binding": {
+          "inputs": [
+            {
+              "port": "rendezVous",
+              "source": {
+                "kind": "entity_rows",
+                "entityId": "ent_rendez_vous"
+              }
+            },
+            {
+              "port": "mention",
+              "source": {
+                "kind": "literal",
+                "value": "Merci pour votre confiance — à très bientôt chez Kaviva."
+              }
+            }
+          ],
+          "outputs": [
+            {
+              "port": "recapitulatif",
+              "blockId": "blk_rdv_confirmer_header",
+              "prop": "subtitle"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "act_slot_rdv_repartition",
+      "name": "Titrer la section de mes rendez-vous",
+      "trigger": {
+        "kind": "lifecycle",
+        "event": "screen_open",
+        "screenId": "scr_cpt_rendez_vous_consulter_confirme"
+      },
+      "effect": {
+        "kind": "slot",
+        "slotId": "slot_rendez_vous_repartition",
+        "binding": {
+          "inputs": [
+            {
+              "port": "rendezVous",
+              "source": {
+                "kind": "entity_rows",
+                "entityId": "ent_rendez_vous"
+              }
+            }
+          ],
+          "outputs": [
+            {
+              "port": "titre",
+              "blockId": "blk_rdv_venir_liste",
+              "prop": "title"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "act_slot_compte_identite",
+      "name": "Composer la ligne d'identité de la cliente connectée",
+      "trigger": {
+        "kind": "lifecycle",
+        "event": "screen_open",
+        "screenId": "scr_cpt_compte_consulter"
+      },
+      "effect": {
+        "kind": "slot",
+        "slotId": "slot_compte_identite_resume",
+        "binding": {
+          "inputs": [
+            {
+              "port": "compte",
+              "source": {
+                "kind": "entity_rows",
+                "entityId": "ent_compte"
+              }
+            }
+          ],
+          "outputs": [
+            {
+              "port": "identite",
+              "blockId": "blk_profil_apercu",
+              "prop": "title"
+            },
+            {
+              "port": "photoUri",
+              "blockId": "blk_profil_apercu",
+              "prop": "imageFieldId"
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "integrations": [
+    {
+      "id": "intg_auth_kaviva",
+      "providerClass": "supabase_auth",
+      "capability": "auth",
+      "config": [
+        {
+          "key": "provider",
+          "value": "supabase"
+        },
+        {
+          "key": "signUpEnabled",
+          "value": true
+        },
+        {
+          "key": "passwordResetEnabled",
+          "value": true
+        },
+        {
+          "key": "emailConfirmationRequired",
+          "value": true
+        },
+        {
+          "key": "minPasswordLength",
+          "value": 8
+        },
+        {
+          "key": "sessionPersistence",
+          "value": "device_keychain"
+        },
+        {
+          "key": "accountDeletionEnabled",
+          "value": true
+        }
+      ]
+    },
+    {
+      "id": "intg_analytics_kaviva",
+      "providerClass": "analytics_collector",
+      "capability": "analytics",
+      "config": [
+        {
+          "key": "collectionEndpointPath",
+          "value": "/v1/evenements"
+        },
+        {
+          "key": "anonymizeIdentifiers",
+          "value": true
+        },
+        {
+          "key": "trackedScreens",
+          "value": [
+            "scr_entree",
+            "scr_cpt_soin_choisir",
+            "scr_cpt_soin_consulter",
+            "scr_cpt_creneau_choisir",
+            "scr_cpt_rendez_vous_saisir",
+            "scr_cpt_rendez_vous_confirmer"
+          ]
+        },
+        {
+          "key": "batchIntervalSeconds",
+          "value": 60
+        }
+      ]
+    },
+    {
+      "id": "intg_cache_local_kaviva",
+      "providerClass": "local_cache_store",
+      "capability": "offline_storage",
+      "config": [
+        {
+          "key": "cachedEntityIds",
+          "value": [
+            "ent_soin",
+            "ent_creneau",
+            "ent_rendez_vous",
+            "ent_compte"
+          ]
+        },
+        {
+          "key": "maxCacheAgeSeconds",
+          "value": 86400
+        },
+        {
+          "key": "evictionPolicy",
+          "value": "least_recently_used"
+        }
+      ]
+    }
+  ],
+  "expectedTests": [
+    {
+      "id": "test_accueil_soins_vedettes",
+      "description": "Sur l'accueil, la rangée « Soins vedettes » n'affiche que les soins dont la mise en avant vaut « Soin vedette », avec vignette, badge de durée et prix en FCFA, limitée à 6 cartes.",
+      "kind": "deterministic",
+      "targetId": "blk_entree_vedettes"
+    },
+    {
+      "id": "test_accueil_apercu_carte",
+      "description": "L'aperçu « Notre carte de soins » de l'accueil affiche au plus 4 cartes en grille, triées par prix croissant, chacune avec sa photo, son nom et son prix.",
+      "kind": "deterministic",
+      "targetId": "blk_entree_carte"
+    },
+    {
+      "id": "test_accueil_voir_tous_les_soins",
+      "description": "Le geste secondaire « Voir tous les soins » de l'aperçu d'accueil conduit à l'écran complet des soins.",
+      "kind": "e2e",
+      "targetId": "act_entree_carte_voir_tout"
+    },
+    {
+      "id": "test_accueil_entree_recherche",
+      "description": "L'entrée de recherche placée en tête de l'accueil ouvre l'écran des soins où la recherche s'exécute.",
+      "kind": "e2e",
+      "targetId": "act_entree_chercher"
+    },
+    {
+      "id": "test_soins_recherche_filtrante",
+      "description": "Saisir « hammam » dans la recherche de l'écran des soins ne laisse que les soins dont le nom contient ce terme ; vider le champ restaure la liste complète.",
+      "kind": "deterministic",
+      "targetId": "blk_soins_liste"
+    },
+    {
+      "id": "test_soins_filtre_categorie",
+      "description": "Le filtre piloté de catégorie (choix unique) restreint la grille des soins à la catégorie choisie et affiche le libellé humain (« Massages », « Hammam ») et non la valeur brute.",
+      "kind": "deterministic",
+      "targetId": "blk_soins_liste"
+    },
+    {
+      "id": "test_soins_grille_visuels",
+      "description": "La grille des soins présente pour chaque carte la photo issue de fld_soin_photo, la durée en minutes et le prix en FCFA formatés, sans valeur brute.",
+      "kind": "deterministic",
+      "targetId": "fld_soin_photo"
+    },
+    {
+      "id": "test_soins_etat_vide",
+      "description": "Quand aucun soin n'est disponible, l'état vide « Aucun soin disponible » s'affiche et la grille ne s'affiche pas simultanément.",
+      "kind": "deterministic",
+      "targetId": "blk_soins_vide"
+    },
+    {
+      "id": "test_soin_ligne_ouvre_fiche",
+      "description": "Presser une carte de la grille des soins ouvre la fiche détaillée du soin pressé, avec l'identifiant de l'instance transmis.",
+      "kind": "e2e",
+      "targetId": "act_soins_liste_ouvrir"
+    },
+    {
+      "id": "test_soin_fiche_entete",
+      "description": "La fiche d'un soin affiche son visuel, son nom, sa description, son prix en FCFA et les badges catégorie, durée et mise en avant en libellés humains.",
+      "kind": "deterministic",
+      "targetId": "blk_soin_entete"
+    },
+    {
+      "id": "test_soin_creneaux_portee",
+      "description": "L'aperçu « Prochaines disponibilités » de la fiche ne montre que les créneaux rattachés au soin affiché, triés par date et heure croissantes, limité à 3.",
+      "kind": "deterministic",
+      "targetId": "blk_soin_creneaux_apercu"
+    },
+    {
+      "id": "test_soin_vers_creneaux",
+      "description": "Le bouton « Choisir un créneau » de la fiche du soin conduit à l'écran de choix de créneau.",
+      "kind": "e2e",
+      "targetId": "act_soin_reserver"
+    },
+    {
+      "id": "test_creneaux_disponibles_uniquement",
+      "description": "L'écran de choix de créneau n'affiche que les créneaux dont la disponibilité vaut « Disponible », triés du plus proche au plus lointain, avec badge lisible et non « true ».",
+      "kind": "deterministic",
+      "targetId": "blk_creneau_liste"
+    },
+    {
+      "id": "test_creneaux_recherche_pilotee",
+      "description": "Le filtre piloté textuel sur le libellé du créneau ne retient que les créneaux contenant le texte saisi ; un champ vide laisse la liste inchangée.",
+      "kind": "deterministic",
+      "targetId": "blk_creneau_liste"
+    },
+    {
+      "id": "test_creneau_choisi_vers_reservation",
+      "description": "Presser un créneau disponible conduit à l'écran de réservation en transmettant le créneau sélectionné.",
+      "kind": "e2e",
+      "targetId": "act_creneau_choisir"
+    },
+    {
+      "id": "test_reservation_champs_prerenseignes",
+      "description": "Le formulaire de réservation présente le nom, le téléphone, le soin, le créneau et la date-heure, les références affichées par leur libellé lisible et non par un identifiant brut.",
+      "kind": "deterministic",
+      "targetId": "blk_rdv_saisir_form"
+    },
+    {
+      "id": "test_reservation_validation_telephone",
+      "description": "Une soumission de réservation avec un téléphone invalide ou un nom vide est refusée avant écriture ; aucune ligne n'est créée.",
+      "kind": "deterministic",
+      "targetId": "blk_rdv_saisir_form"
+    },
+    {
+      "id": "test_reservation_creation",
+      "description": "« Confirmer le rendez-vous » crée une ligne de rendez-vous puis conduit à l'écran de confirmation.",
+      "kind": "e2e",
+      "targetId": "act_rdv_enregistrer"
+    },
+    {
+      "id": "test_reservation_etat_forme_conserve",
+      "description": "Les informations saisies dans le formulaire de réservation survivent à une navigation vers la fiche du soin puis au retour.",
+      "kind": "deterministic",
+      "targetId": "blk_rdv_saisir_form"
+    },
+    {
+      "id": "test_rdv_a_venir_filtre",
+      "description": "L'écran « Mes rendez-vous à venir » ne liste que les rendez-vous au statut « À venir », triés par date croissante, avec le nom du soin issu de la référence.",
+      "kind": "deterministic",
+      "targetId": "blk_rdv_venir_liste"
+    },
+    {
+      "id": "test_rdv_passes_filtre",
+      "description": "L'écran « Rendez-vous passés » ne liste que les rendez-vous au statut « Passé », triés du plus récent au plus ancien.",
+      "kind": "deterministic",
+      "targetId": "blk_rdv_passes_liste"
+    },
+    {
+      "id": "test_rdv_annules_filtre",
+      "description": "L'écran « Rendez-vous annulés » ne liste que les rendez-vous au statut « Annulé », badge affiché en libellé humain.",
+      "kind": "deterministic",
+      "targetId": "blk_rdv_annules_liste"
+    },
+    {
+      "id": "test_rdv_ligne_ouvre_detail",
+      "description": "Presser une ligne de « Mes rendez-vous à venir » ouvre le détail du rendez-vous pressé, et non le premier enregistrement.",
+      "kind": "e2e",
+      "targetId": "act_rdv_venir_ouvrir"
+    },
+    {
+      "id": "test_rdv_annulation_enregistree",
+      "description": "Depuis le détail d'un rendez-vous, la confirmation d'annulation met à jour le statut du rendez-vous visé puis conduit à la liste des rendez-vous annulés.",
+      "kind": "e2e",
+      "targetId": "act_rdv_annuler_enregistrer"
+    },
+    {
+      "id": "test_rdv_annulation_conserver",
+      "description": "« Conserver mon rendez-vous » quitte l'écran d'annulation sans modifier le rendez-vous et revient aux rendez-vous à venir.",
+      "kind": "e2e",
+      "targetId": "act_rdv_conserver"
+    },
+    {
+      "id": "test_rdv_etat_vide",
+      "description": "Sans aucun rendez-vous, l'état vide propose « Découvrir nos soins » et ce geste conduit à l'écran des soins.",
+      "kind": "deterministic",
+      "targetId": "blk_rdv_venir_vide"
+    },
+    {
+      "id": "test_compte_inscription",
+      "description": "Le formulaire d'inscription crée la session cliente via l'intégration auth (signUp) et conduit à l'écran de confirmation de compte.",
+      "kind": "e2e",
+      "targetId": "act_compte_creer"
+    },
+    {
+      "id": "test_compte_mot_de_passe_masque",
+      "description": "Le champ mot de passe du formulaire d'inscription est masqué à la saisie et n'est jamais persisté dans les données du compte.",
+      "kind": "deterministic",
+      "targetId": "fld_compte_mot_de_passe"
+    },
+    {
+      "id": "test_compte_connexion",
+      "description": "Le formulaire de connexion établit la session via l'intégration auth (signIn) et conduit au profil de la cliente.",
+      "kind": "e2e",
+      "targetId": "act_compte_se_connecter"
+    },
+    {
+      "id": "test_compte_reinitialisation",
+      "description": "« Mot de passe oublié ? » déclenche la réinitialisation auth (resetPassword) sur l'adresse e-mail saisie.",
+      "kind": "contract",
+      "targetId": "act_compte_reinitialiser"
+    },
+    {
+      "id": "test_compte_deconnexion",
+      "description": "« Se déconnecter » ferme la session (signOut) et ramène à l'écran d'accueil.",
+      "kind": "e2e",
+      "targetId": "act_compte_se_deconnecter"
+    },
+    {
+      "id": "test_compte_etat_confirmation",
+      "description": "Sur l'écran d'inscription, le bouton « Voir mon profil » n'apparaît que lorsque la session cliente est établie : tant qu'aucune session n'existe (ou qu'elle reste en attente de confirmation), seul le formulaire de création de compte est visible — jamais deux états de session à la fois.",
+      "kind": "deterministic",
+      "targetId": "blk_inscription_profil"
+    },
+    {
+      "id": "test_profil_enregistrement",
+      "description": "« Enregistrer mes informations » met à jour la ligne de compte de la cliente connectée (instance issue de la session), téléphone compris.",
+      "kind": "e2e",
+      "targetId": "act_profil_enregistrer"
+    },
+    {
+      "id": "test_profil_photo_affichee",
+      "description": "Le formulaire de profil présente la photo de la cliente et ses informations avec leurs libellés humains.",
+      "kind": "deterministic",
+      "targetId": "blk_profil_form"
+    },
+    {
+      "id": "test_compte_suppression",
+      "description": "« Supprimer mon compte » supprime la ligne de compte de la cliente connectée et ramène à l'accueil.",
+      "kind": "e2e",
+      "targetId": "act_compte_supprimer"
+    },
+    {
+      "id": "test_slot_accroche_vedettes",
+      "description": "À l'ouverture de l'accueil, le slot d'accroche est invoqué avec les lignes de soins et sa sortie alimente le titre de la rangée vedette.",
+      "kind": "deterministic",
+      "targetId": "act_slot_accroche_vedettes"
+    },
+    {
+      "id": "test_slot_creneaux_resume",
+      "description": "À l'ouverture de la fiche d'un soin, le slot de disponibilités est invoqué et ses sorties alimentent le titre et le message vide de l'aperçu des créneaux.",
+      "kind": "deterministic",
+      "targetId": "act_slot_creneaux_resume"
+    },
+    {
+      "id": "test_slot_recapitulatif",
+      "description": "À l'ouverture de l'écran de confirmation, le slot de récapitulatif est invoqué et sa sortie alimente le sous-titre de l'en-tête.",
+      "kind": "deterministic",
+      "targetId": "act_slot_rdv_recapitulatif"
+    },
+    {
+      "id": "test_slot_repartition",
+      "description": "À l'ouverture de « Mes rendez-vous à venir », le slot de répartition est invoqué et sa sortie titre la liste.",
+      "kind": "deterministic",
+      "targetId": "act_slot_rdv_repartition"
+    },
+    {
+      "id": "test_navigation_persistante",
+      "description": "La barre de navigation principale (Accueil, Connexion, Créer un compte) est présente et active sur chaque écran du parcours, sauf sur les feuilles où elle reste cohérente avec la destination courante.",
+      "kind": "deterministic",
+      "targetId": "scr_entree"
+    },
+    {
+      "id": "test_feuilles_fermeture",
+      "description": "Les écrans de connexion et d'inscription montent du bas en feuille et exposent un contrôle de fermeture nommé « Fermer » sans titre d'écran.",
+      "kind": "deterministic",
+      "targetId": "scr_cpt_compte_s_identifier"
+    },
+    {
+      "id": "test_donnees_amorcees",
+      "description": "Les jeux de données amorcés de soins, créneaux, rendez-vous et comptes sont chargés à la première ouverture avec des valeurs réalistes et des photos servies depuis picsum.photos.",
+      "kind": "contract",
+      "targetId": "data_soin"
+    }
+  ],
+  "intent": {
+    "request": "J'ouvre Kaviva, un institut de beauté et spa à Abidjan — l'application s'appelle exactement « Kaviva ». Mes clientes doivent voir la liste des soins proposés (massages, soins du visage, manucure, hammam) avec photo, durée et prix, chercher un soin, consulter la fiche détaillée d'un soin, choisir un créneau et réserver un rendez-vous à leur nom avec date et heure, puis retrouver leurs rendez-vous à venir et passés. Chaque cliente crée un compte et gère son profil avec son téléphone. L'accueil doit donner tout de suite envie : les soins vedettes en avant et la recherche accessible immédiatement. Tout en français.",
+    "requestLocale": "fr",
+    "needs": [
+      {
+        "id": "need_liste_soins_photo_duree_prix",
+        "statement": "Les clientes voient la liste des soins proposés avec photo, durée et prix.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "scr_cpt_soin_choisir",
+            "blk_soins_liste",
+            "ent_soin",
+            "fld_soin_nom",
+            "fld_soin_photo",
+            "fld_soin_duree",
+            "fld_soin_prix",
+            "data_soin"
+          ]
+        }
+      },
+      {
+        "id": "need_categories_soins",
+        "statement": "Les soins couvrent les familles massages, soins du visage, manucure et hammam, et se distinguent par catégorie.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "blk_soins_liste",
+            "fld_soin_categorie",
+            "blk_soin_entete"
+          ]
+        }
+      },
+      {
+        "id": "need_chercher_un_soin",
+        "statement": "Chercher un soin.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "blk_soins_liste",
+            "fld_soin_nom",
+            "blk_entree_recherche",
+            "act_entree_chercher"
+          ]
+        }
+      },
+      {
+        "id": "need_fiche_detaillee_soin",
+        "statement": "Consulter la fiche détaillée d'un soin.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "scr_cpt_soin_consulter",
+            "blk_soin_entete",
+            "fld_soin_description",
+            "fld_soin_photo",
+            "act_soins_liste_ouvrir",
+            "act_entree_carte_ouvrir",
+            "act_entree_vedette_ouvrir"
+          ]
+        }
+      },
+      {
+        "id": "need_choisir_un_creneau",
+        "statement": "Choisir un créneau.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "blk_soin_reserver",
+            "act_soin_reserver",
+            "scr_cpt_creneau_choisir",
+            "blk_creneau_liste",
+            "ent_creneau",
+            "fld_creneau_libelle",
+            "fld_creneau_disponible",
+            "blk_soin_creneaux_apercu",
+            "act_creneau_choisir",
+            "data_creneau"
+          ]
+        }
+      },
+      {
+        "id": "need_reserver_rendez_vous_nom_date_heure",
+        "statement": "Réserver un rendez-vous à son nom avec date et heure.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "scr_cpt_rendez_vous_saisir",
+            "blk_rdv_saisir_form",
+            "fld_rdv_cliente_nom",
+            "fld_rdv_cliente_telephone",
+            "fld_rdv_date_heure",
+            "fld_rdv_soin",
+            "fld_rdv_creneau",
+            "act_rdv_enregistrer",
+            "scr_cpt_rendez_vous_confirmer",
+            "blk_rdv_confirmer_header"
+          ]
+        }
+      },
+      {
+        "id": "need_rendez_vous_a_venir",
+        "statement": "Retrouver ses rendez-vous à venir.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "scr_cpt_rendez_vous_consulter_confirme",
+            "blk_rdv_venir_liste",
+            "fld_rdv_statut",
+            "act_rdv_venir_ouvrir",
+            "blk_rdv_detail_entete",
+            "data_rendez_vous"
+          ]
+        }
+      },
+      {
+        "id": "need_rendez_vous_passes",
+        "statement": "Retrouver ses rendez-vous passés.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "scr_cpt_rendez_vous_consulter_historique",
+            "blk_rdv_passes_liste",
+            "fld_rdv_statut",
+            "blk_rdv_venir_historique",
+            "act_rdv_voir_historique",
+            "act_rdv_passes_ouvrir"
+          ]
+        }
+      },
+      {
+        "id": "need_creation_compte",
+        "statement": "Chaque cliente crée un compte.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "scr_cpt_compte_saisir",
+            "blk_inscription_form",
+            "ent_compte",
+            "fld_compte_nom",
+            "fld_compte_email",
+            "fld_compte_mot_de_passe",
+            "act_compte_creer",
+            "scr_cpt_compte_s_identifier",
+            "blk_connexion_form",
+            "act_compte_se_connecter",
+            "data_compte"
+          ]
+        }
+      },
+      {
+        "id": "need_gestion_profil_telephone",
+        "statement": "Chaque cliente gère son profil avec son téléphone.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "blk_profil_form",
+            "blk_profil_apercu",
+            "blk_profil_header",
+            "fld_compte_telephone",
+            "fld_compte_nom",
+            "fld_compte_email",
+            "fld_compte_photo",
+            "act_profil_enregistrer",
+            "act_compte_voir_profil",
+            "blk_profil_deconnexion",
+            "act_compte_se_deconnecter",
+            "data_compte"
+          ]
+        }
+      },
+      {
+        "id": "need_accueil_soins_vedettes",
+        "statement": "L'accueil donne tout de suite envie en mettant les soins vedettes en avant.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "scr_entree",
+            "blk_entree_accroche",
+            "blk_entree_vedettes",
+            "fld_soin_vedette",
+            "fld_soin_photo",
+            "blk_entree_carte",
+            "act_entree_carte_voir_tout",
+            "act_slot_accroche_vedettes"
+          ]
+        }
+      },
+      {
+        "id": "need_recherche_immediate_accueil",
+        "statement": "La recherche est accessible immédiatement depuis l'accueil.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "blk_entree_recherche",
+            "act_entree_chercher",
+            "blk_soins_liste"
+          ]
+        }
+      },
+      {
+        "id": "need_interface_francais",
+        "statement": "Toute l'application est en français.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "blk_entree_accroche",
+            "blk_soins_header",
+            "blk_soins_liste",
+            "fld_soin_categorie",
+            "fld_soin_vedette",
+            "fld_creneau_disponible",
+            "fld_rdv_statut",
+            "blk_rdv_venir_header"
+          ]
+        }
+      }
+    ]
+  }
+}
