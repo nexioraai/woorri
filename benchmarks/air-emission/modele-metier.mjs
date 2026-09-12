@@ -985,12 +985,42 @@ export function jugerPlanEcrans(plan, modele) {
     // acteurs (C1) — un chemin qui n'existe que pour un autre rôle ne compte
     // pas comme traversable.
     const acteurDeParcours = new Map(modele.parcours.map((p) => [p.id, p.acteur]));
+    // EP-093 — L'ÉCRAN PARTAGÉ DE PORTÉE PUBLIQUE EXISTE (mesuré : la
+    // marketplace t3, refusée à tort — acheteur ET vendeur parcourent
+    // légitimement les écrans produit). V2 ne dit plus « jamais deux
+    // acteurs » : il dit CE QU'IL A TOUJOURS VOULU DIRE — une étape posée
+    // sur un écran qu'un acteur n'atteint jamais est une mort. Discriminant
+    // STRUCTUREL, dérivé de l'existant (surfaces, origines, portées — 5e
+    // vérification, aucune extension) :
+    //   partageable ⇔ CHAQUE justification porte SA surface sur l'écran
+    //   (l'acteur y accomplit une étape de SON parcours) ET toutes les
+    //   portées sont PUBLIQUES (globale, resultat:*) — l'identité
+    //   (acteur:*, instance:*) ne se partage JAMAIS.
+    const surfacesParId = new Map(surfacesDe(modele).map((srf) => [srf.surfaceId, srf]));
     for (const e of plan.ecrans) {
       const acteurs = new Set(
         e.justification.map((j) => acteurDeParcours.get(j.parcours)).filter((a) => a !== undefined),
       );
-      if (acteurs.size > 1)
-        out.push(d("DERIVATION_TRAVERSEE_ACTEUR", `ecrans[${e.ecranId}]`, `écran traversé par ${acteurs.size} acteurs : ${[...acteurs].join(", ")}`));
+      if (acteurs.size <= 1) continue;
+      const etrangeres = e.justification.filter(
+        (j) =>
+          !e.surfaces.some((sid) =>
+            (surfacesParId.get(sid)?.origine ?? []).some(
+              (o) => o.parcours === j.parcours && o.etape === j.etape,
+            ),
+          ),
+      );
+      const privees = e.surfaces.filter((sid) => {
+        const portee = surfacesParId.get(sid)?.portee ?? "";
+        return !(portee === "globale" || portee.startsWith("resultat:"));
+      });
+      if (etrangeres.length > 0) {
+        out.push(d("DERIVATION_TRAVERSEE_ACTEUR", `ecrans[${e.ecranId}]`,
+          `étape étrangère à l'écran : ${etrangeres.map((j) => `${j.parcours}[${j.etape}]`).join(", ")} n'y porte aucune surface — un chemin qui n'existe que pour un autre rôle ne compte pas`));
+      } else if (privees.length > 0) {
+        out.push(d("DERIVATION_TRAVERSEE_ACTEUR", `ecrans[${e.ecranId}]`,
+          `écran traversé par ${acteurs.size} acteurs avec surface NON publique (${privees.join(", ")}) — le partage vaut pour le public, jamais pour l'identité`));
+      }
     }
   }
   for (const e of plan.ecrans) {

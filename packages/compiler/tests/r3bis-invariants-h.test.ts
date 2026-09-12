@@ -113,6 +113,12 @@ describe("V2 — traversabilité PAR ACTEUR", () => {
       e.justification.some((j) => j.parcours === "par_gerant"),
     );
     expect(ecranClient && ecranGerant).toBeTruthy();
+    // EP-093 (édition consciente) — le discriminant V2 est désormais
+    // STRUCTUREL : déplacer surfaces+justifications+arcs vers un écran aux
+    // portées toutes publiques fabrique un écran PARTAGÉ licite (le cas
+    // marketplace t3). LA MORT que V2 garde — une étape posée sur un écran
+    // où l'acteur n'accomplit RIEN — se construit en greffant la
+    // JUSTIFICATION SANS sa surface.
     const mute: PlanEcrans = {
       ...plan,
       ecrans: plan.ecrans
@@ -121,7 +127,6 @@ describe("V2 — traversabilité PAR ACTEUR", () => {
           e.ecranId === ecranClient?.ecranId
             ? {
                 ...e,
-                surfaces: [...e.surfaces, ...(ecranGerant?.surfaces ?? [])],
                 justification: [...e.justification, ...(ecranGerant?.justification ?? [])],
               }
             : e,
