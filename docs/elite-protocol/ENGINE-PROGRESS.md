@@ -790,3 +790,16 @@ est que les arcs allaient à la passe `base` et JAMAIS à la passe
 `actions` (0 chars d'obligations) — ce n'est PAS une ligne de prompt,
 c'est la TRANSMISSION. Vérifié à 20 et 16 écrans. Jalons ③ : 0→2.
 Batteries 442+554, 28/28 apps. Mission : 38,8753 $.
+
+--- 2026-09-12 · RE-RUN FINAL (EP-103/104) ---
+① Contrôle ③ 7e tirage : signature DeepSeek/états ÉTABLIE, série FERMÉE.
+Compteur 2→0. ② ARCS : 6 → ZÉRO — la transmission à la passe `actions`
+était bien la cause racine, confirmée par le réel. ③ GATE : attempt1
+valide ⇒ périmètres égaux ⇒ rejet correct d'une oscillation réelle
+(L-098-C, 3e confirmation) ; l'exemption n'avait pas à s'appliquer.
+④ SCHÉMA : pas de récidive — l'invalidité précédente était de la
+variance. Q1 NON (oscillation L-098-C) · Q2 OUI (bijection 19/19, 4e
+taille) · Q3 NON mais TOUTES familles connues jamais traitées (6 titres,
+3 cibles perdues, 1 props, 1 référence brute) ; zéro arc, zéro mort,
+zéro commerce. Q4 : 19 écrans, 42 actions, non livrable. Progression
+20→11 diagnostics. Mission : 43,1795 $.
