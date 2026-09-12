@@ -830,3 +830,16 @@ moteur punit ce qu'il ordonne. L-107-B : le réparateur pose aussi des
 scopeFieldId INVALIDES (défaut distinct). Q1 NON (gate correcte).
 attempt1 : 15 diagnostics, familles connues + RÉAPPARITION d'un arc
 inexécutable (1/18, dit comme régression). Mission : 48,5987 $.
+
+--- 2026-09-12 · L-107-A (EP-108, 0 $) — la nature des props entre au registre ---
+Mesure : la nature affichage/filtrage n'était déclarée NULLE PART
+(fieldRefProps mélangeait les deux) ⇒ propriété manquante, ajoutée au
+contrat de bloc en PARTITION EXHAUSTIVE (affichage | filtrage).
+rawReferences la DÉRIVE du registre — aucune liste d'exemption à la
+main (le motif serait revenu une 4e fois). Le piège du « prop futur »
+est fermé par cliquet : un prop non classé fait échouer la batterie.
+3 mutations exigées vertes sur kaviva 16 écrans, dont la 3e qui ITÈRE
+la déclaration sans nommer aucun prop. Édition consciente : la preuve
+« 11 références brutes » passe à 10 — la 11e était un scopeFieldId,
+soit le moteur se punissant lui-même. blocks 5/5, EC 171/171, compiler
+447/447, 28/28 apps. Jalon ③ 0→1. Mission : 48,5987 $.

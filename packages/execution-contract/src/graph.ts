@@ -597,7 +597,18 @@ export function rawReferences(air: Air): readonly RawReferenceFinding[] {
           .filter((f) => f.type === "reference" && f.referencesEntityId !== undefined)
           .map((f) => [f.id, f.referencesEntityId ?? ""]),
       );
+      // EP-108 — LE JUGE NE REGARDE QUE CE QUI EST **AFFICHÉ**.
+      //
+      // Mesuré (oscillation ×4) : ce parcours prenait TOUS les props, donc
+      // `scopeFieldId` — que la règle C5 ORDONNE de poser sur un champ
+      // `reference`. Le moteur punissait ce qu'il ordonnait. La nature du
+      // prop (affichage vs filtrage) n'était déclarée NULLE PART : elle est
+      // désormais une propriété du REGISTRE DES BLOCS, et se DÉRIVE ici —
+      // aucune liste d'exemption écrite à la main (4e fois que ce motif
+      // serait revenu : prompt v3/v4, J3, sources dérivées).
+      const affichage = new Set(getBlock(block.blockType)?.fieldRefPropsAffichage ?? []);
       for (const pair of block.props ?? []) {
+        if (!affichage.has(pair.key)) continue;
         const values = Array.isArray(pair.value) ? pair.value : [pair.value];
         for (const value of values) {
           if (typeof value !== "string") continue;

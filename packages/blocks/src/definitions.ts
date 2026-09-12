@@ -78,6 +78,22 @@ export interface BlockDefinition {
   propsSchema: z.ZodType;
   /** Clés de props qui référencent des CHAMPS de l'entité liée. */
   fieldRefProps: readonly string[];
+  /**
+   * EP-108 — QUELS DE CES PROPS **AFFICHENT** LA VALEUR DU CHAMP.
+   *
+   * PROPRIÉTÉ MANQUANTE, mesurée : `fieldRefProps` mélangeait les props
+   * d'AFFICHAGE (le composant rend la valeur) et ceux de FILTRAGE/PORTÉE
+   * (la valeur sert à filtrer, scoper, trier — jamais montrée). Le juge des
+   * références brutes parcourait tout : il REFUSAIT un `scopeFieldId` de
+   * type `reference` que la règle C5 ORDONNE de poser — le moteur punissait
+   * ce qu'il ordonnait (oscillation mesurée 4 fois).
+   * PARTITION EXHAUSTIVE, cliquetée : tout prop de `fieldRefProps` est
+   * soit ici, soit dans `fieldRefPropsFiltrage` — aucun prop futur ne peut
+   * être oublié en silence.
+   */
+  fieldRefPropsAffichage: readonly string[];
+  /** Le complément : props dont la valeur FILTRE, SCOPE ou TRIE. */
+  fieldRefPropsFiltrage: readonly string[];
   /** Clés de props qui référencent des ACTIONS de l'AIR. */
   actionRefProps: readonly string[];
   /** États rendus par le composant (exigence du harnais 3.4). */
@@ -145,6 +161,8 @@ export const BLOCKS: readonly BlockDefinition[] = [
       actionId: actionRef,
     }),
     fieldRefProps: [],
+    fieldRefPropsAffichage: [],
+    fieldRefPropsFiltrage: [],
     actionRefProps: ["actionId"],
     states: BUTTON_BLOCK_STATES,
     porteAffordance: true,
@@ -189,6 +207,14 @@ export const BLOCKS: readonly BlockDefinition[] = [
       "trailingFieldId",
       "imageFieldId",
     ],
+    fieldRefPropsAffichage: [
+      "titleFieldId",
+      "subtitleFieldId",
+      "badgeFieldIds",
+      "trailingFieldId",
+      "imageFieldId",
+    ],
+    fieldRefPropsFiltrage: [],
     actionRefProps: [],
     states: DETAIL_HEADER_BLOCK_STATES,
     porteAffordance: false,
@@ -231,6 +257,8 @@ export const BLOCKS: readonly BlockDefinition[] = [
         }
       }),
     fieldRefProps: [],
+    fieldRefPropsAffichage: [],
+    fieldRefPropsFiltrage: [],
     actionRefProps: ["actionId"],
     states: EMPTY_STATE_BLOCK_STATES,
     porteAffordance: true,
@@ -255,6 +283,10 @@ export const BLOCKS: readonly BlockDefinition[] = [
 
     }),
     fieldRefProps: ["fieldIds"],
+    fieldRefPropsAffichage: [
+      "fieldIds",
+    ],
+    fieldRefPropsFiltrage: [],
     actionRefProps: [],
     states: FORM_BLOCK_STATES,
     porteAffordance: true,
@@ -278,6 +310,8 @@ export const BLOCKS: readonly BlockDefinition[] = [
       logoUri: z.string().regex(/^https:\/\/[a-z0-9-]+(\.[a-z0-9-]+)+\/\S*$/).optional(),
     }),
     fieldRefProps: [],
+    fieldRefPropsAffichage: [],
+    fieldRefPropsFiltrage: [],
     actionRefProps: [],
     states: HEADER_BLOCK_STATES,
     porteAffordance: false,
@@ -370,6 +404,20 @@ export const BLOCKS: readonly BlockDefinition[] = [
       "userFilterFieldIds",
       "scopeFieldId",
     ],
+    fieldRefPropsAffichage: [
+      "titleFieldId",
+      "subtitleFieldId",
+      "trailingFieldId",
+      "badgeFieldId",
+      "imageFieldId",
+    ],
+    fieldRefPropsFiltrage: [
+      "searchFieldId",
+      "sortFieldId",
+      "filterFieldId",
+      "userFilterFieldIds",
+      "scopeFieldId",
+    ],
     actionRefProps: [],
     states: LIST_BLOCK_STATES,
     porteAffordance: true,
@@ -393,6 +441,8 @@ export const BLOCKS: readonly BlockDefinition[] = [
       visualSearchLabel: z.string().min(1).optional(),
     }),
     fieldRefProps: [],
+    fieldRefPropsAffichage: [],
+    fieldRefPropsFiltrage: [],
     actionRefProps: ["actionId"],
     states: SEARCH_ENTRY_BLOCK_STATES,
     porteAffordance: true,
@@ -407,6 +457,8 @@ export const BLOCKS: readonly BlockDefinition[] = [
     entity: "forbidden",
     propsSchema: z.strictObject({}),
     fieldRefProps: [],
+    fieldRefPropsAffichage: [],
+    fieldRefPropsFiltrage: [],
     actionRefProps: [],
     states: SPACER_BLOCK_STATES,
     porteAffordance: false,

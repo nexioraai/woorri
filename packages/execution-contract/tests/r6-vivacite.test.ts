@@ -64,8 +64,13 @@ describe("LA preuve — le run archivé re-jugé par R6 rend ROUGE sur les six d
     expect(morts).toContain("actions[act_compte_creer].params[thenScreenId]");
     expect(morts).toContain("actions[act_compte_creer].params[identifierFieldId]");
   });
-  it("④ les 11 références brutes affichées sont refusées", () => {
-    expect(paths("VIVACITE_REFERENCE_BRUTE_AFFICHEE")).toHaveLength(11);
+  it("④ les références brutes AFFICHÉES sont refusées — 10, pas 11 (EP-108)", () => {
+    // ÉDITION CONSCIENTE : la 11e occurrence portait sur un prop de
+    // FILTRAGE (scopeFieldId), que la règle C5 ORDONNE de poser sur un champ
+    // `reference` — ce n'était pas un défaut, c'était le moteur qui punissait
+    // ce qu'il ordonnait. Les 10 restantes sont bien des AFFICHAGES
+    // (titleFieldId ×4, subtitleFieldId ×4, fieldIds ×2).
+    expect(paths("VIVACITE_REFERENCE_BRUTE_AFFICHEE")).toHaveLength(10);
   });
   it("⑤ l'arc prescrit saisir→confirmer n'est satisfait par AUCUNE arête exécutable — et la navigation post-connexion non plus (8 arcs)", () => {
     const arcs = paths("VIVACITE_ARC_PRESCRIT_INEXECUTABLE");
