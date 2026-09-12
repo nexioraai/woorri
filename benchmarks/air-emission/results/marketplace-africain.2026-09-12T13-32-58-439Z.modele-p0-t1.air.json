@@ -1,0 +1,494 @@
+{
+  "version": "modele-metier/1.2.0",
+  "commerce": "digital",
+  "couverture": {
+    "couverts": [
+      {
+        "terme": "place de marché",
+        "noeuds": [
+          "cpt_boutique",
+          "cpt_produit",
+          "cpt_categorie"
+        ]
+      },
+      {
+        "terme": "Tchad et Sahel",
+        "noeuds": [
+          "att_boutique_ville"
+        ]
+      },
+      {
+        "terme": "vendeurs",
+        "noeuds": [
+          "act_vendeur"
+        ]
+      },
+      {
+        "terme": "boutique",
+        "noeuds": [
+          "cpt_boutique"
+        ]
+      },
+      {
+        "terme": "publier des produits",
+        "noeuds": [
+          "cpt_produit",
+          "par_vendeur_publier"
+        ]
+      },
+      {
+        "terme": "photos",
+        "noeuds": [
+          "att_produit_photos"
+        ]
+      },
+      {
+        "terme": "prix en francs CFA",
+        "noeuds": [
+          "att_produit_prix_fcfa"
+        ]
+      },
+      {
+        "terme": "acheteurs",
+        "noeuds": [
+          "act_acheteur"
+        ]
+      },
+      {
+        "terme": "parcourir le catalogue",
+        "noeuds": [
+          "par_acheteur_catalogue"
+        ]
+      },
+      {
+        "terme": "catégorie",
+        "noeuds": [
+          "cpt_categorie"
+        ]
+      },
+      {
+        "terme": "rechercher un produit",
+        "noeuds": [
+          "par_acheteur_recherche"
+        ]
+      },
+      {
+        "terme": "contacter le vendeur par WhatsApp",
+        "noeuds": [
+          "att_boutique_whatsapp"
+        ]
+      },
+      {
+        "terme": "appel téléphonique",
+        "noeuds": [
+          "att_boutique_telephone"
+        ]
+      },
+      {
+        "terme": "mise en avant dans le catalogue",
+        "noeuds": [
+          "cpt_mise_en_avant",
+          "par_vendeur_mise_en_avant"
+        ]
+      },
+      {
+        "terme": "les vendeurs paient la plateforme",
+        "noeuds": [
+          "cpt_mise_en_avant",
+          "att_mise_en_avant_montant"
+        ]
+      }
+    ],
+    "nonRetenus": [
+      {
+        "terme": "aucun paiement en ligne entre acheteur et vendeur",
+        "raison": "hors_perimetre_mobile"
+      },
+      {
+        "terme": "ils s'arrangent entre eux",
+        "raison": "hors_perimetre_mobile"
+      }
+    ]
+  },
+  "acteurs": [
+    {
+      "id": "act_acheteur",
+      "nom": "Acheteur"
+    },
+    {
+      "id": "act_vendeur",
+      "nom": "Vendeur"
+    }
+  ],
+  "concepts": [
+    {
+      "id": "cpt_categorie",
+      "nom": "Catégorie",
+      "donnees": true,
+      "identifiant": "att_categorie_nom",
+      "attributs": [
+        {
+          "id": "att_categorie_nom",
+          "nature": "texte",
+          "requis": true
+        },
+        {
+          "id": "att_categorie_illustration",
+          "nature": "media",
+          "requis": false
+        }
+      ]
+    },
+    {
+      "id": "cpt_boutique",
+      "nom": "Boutique",
+      "donnees": true,
+      "identifiant": "att_boutique_nom",
+      "attributs": [
+        {
+          "id": "att_boutique_nom",
+          "nature": "texte",
+          "requis": true,
+          "producteur": "act_vendeur"
+        },
+        {
+          "id": "att_boutique_description",
+          "nature": "texte",
+          "requis": false,
+          "producteur": "act_vendeur"
+        },
+        {
+          "id": "att_boutique_ville",
+          "nature": "texte",
+          "requis": true,
+          "producteur": "act_vendeur"
+        },
+        {
+          "id": "att_boutique_telephone",
+          "nature": "texte",
+          "requis": true,
+          "producteur": "act_vendeur"
+        },
+        {
+          "id": "att_boutique_whatsapp",
+          "nature": "texte",
+          "requis": false,
+          "producteur": "act_vendeur"
+        },
+        {
+          "id": "att_boutique_logo",
+          "nature": "media",
+          "requis": false,
+          "producteur": "act_vendeur"
+        }
+      ],
+      "etats": [
+        {
+          "id": "brouillon",
+          "transitions": [
+            {
+              "vers": "publiee",
+              "geste": "confirmer"
+            }
+          ]
+        },
+        {
+          "id": "publiee"
+        }
+      ]
+    },
+    {
+      "id": "cpt_produit",
+      "nom": "Produit",
+      "donnees": true,
+      "identifiant": "att_produit_titre",
+      "attributs": [
+        {
+          "id": "att_produit_titre",
+          "nature": "texte",
+          "requis": true,
+          "producteur": "act_vendeur"
+        },
+        {
+          "id": "att_produit_description",
+          "nature": "texte",
+          "requis": false,
+          "producteur": "act_vendeur"
+        },
+        {
+          "id": "att_produit_photos",
+          "nature": "media",
+          "requis": true,
+          "cardinalite": 5,
+          "producteur": "act_vendeur"
+        },
+        {
+          "id": "att_produit_prix_fcfa",
+          "nature": "nombre",
+          "requis": true,
+          "producteur": "act_vendeur"
+        },
+        {
+          "id": "att_produit_categorie",
+          "nature": "reference",
+          "requis": true,
+          "producteur": "act_vendeur"
+        },
+        {
+          "id": "att_produit_date_publication",
+          "nature": "date",
+          "requis": false
+        }
+      ],
+      "etats": [
+        {
+          "id": "brouillon",
+          "transitions": [
+            {
+              "vers": "publie",
+              "geste": "confirmer"
+            }
+          ]
+        },
+        {
+          "id": "publie",
+          "transitions": [
+            {
+              "vers": "retire",
+              "geste": "retirer"
+            }
+          ]
+        },
+        {
+          "id": "retire"
+        }
+      ]
+    },
+    {
+      "id": "cpt_mise_en_avant",
+      "nom": "Mise en avant",
+      "donnees": true,
+      "identifiant": "att_mise_en_avant_reference",
+      "attributs": [
+        {
+          "id": "att_mise_en_avant_reference",
+          "nature": "texte",
+          "requis": true
+        },
+        {
+          "id": "att_mise_en_avant_produit",
+          "nature": "reference",
+          "requis": true,
+          "producteur": "act_vendeur"
+        },
+        {
+          "id": "att_mise_en_avant_periode",
+          "nature": "intervalle",
+          "requis": true,
+          "producteur": "act_vendeur"
+        },
+        {
+          "id": "att_mise_en_avant_montant",
+          "nature": "nombre",
+          "requis": true
+        }
+      ],
+      "etats": [
+        {
+          "id": "brouillon",
+          "transitions": [
+            {
+              "vers": "active",
+              "geste": "payer"
+            }
+          ]
+        },
+        {
+          "id": "active",
+          "transitions": [
+            {
+              "vers": "expiree",
+              "exogene": "temps"
+            }
+          ]
+        },
+        {
+          "id": "expiree"
+        }
+      ]
+    }
+  ],
+  "relations": [
+    {
+      "de": "cpt_boutique",
+      "vers": "cpt_produit",
+      "nature": "possede"
+    },
+    {
+      "de": "cpt_produit",
+      "vers": "cpt_categorie",
+      "nature": "reference"
+    },
+    {
+      "de": "cpt_mise_en_avant",
+      "vers": "cpt_produit",
+      "nature": "reference"
+    }
+  ],
+  "parcours": [
+    {
+      "id": "par_acheteur_catalogue",
+      "besoin": "parcourir le catalogue par catégorie et joindre le vendeur d'un produit",
+      "acteur": "act_acheteur",
+      "priorite": 1,
+      "etapes": [
+        {
+          "concept": "cpt_categorie",
+          "geste": "decouvrir"
+        },
+        {
+          "concept": "cpt_categorie",
+          "geste": "choisir"
+        },
+        {
+          "concept": "cpt_produit",
+          "geste": "decouvrir"
+        },
+        {
+          "concept": "cpt_produit",
+          "geste": "consulter",
+          "etat": "publie"
+        },
+        {
+          "concept": "cpt_produit",
+          "geste": "choisir"
+        },
+        {
+          "concept": "cpt_boutique",
+          "geste": "decouvrir"
+        },
+        {
+          "concept": "cpt_boutique",
+          "geste": "consulter",
+          "etat": "publiee"
+        }
+      ]
+    },
+    {
+      "id": "par_acheteur_recherche",
+      "besoin": "rechercher un produit précis dans la place de marché",
+      "acteur": "act_acheteur",
+      "priorite": 2,
+      "etapes": [
+        {
+          "concept": "cpt_produit",
+          "geste": "chercher"
+        },
+        {
+          "concept": "cpt_produit",
+          "geste": "consulter",
+          "etat": "publie"
+        }
+      ]
+    },
+    {
+      "id": "par_vendeur_publier",
+      "besoin": "créer sa boutique et publier ses produits avec photos et prix",
+      "acteur": "act_vendeur",
+      "priorite": 3,
+      "etapes": [
+        {
+          "concept": "cpt_boutique",
+          "geste": "saisir"
+        },
+        {
+          "concept": "cpt_boutique",
+          "geste": "confirmer"
+        },
+        {
+          "concept": "cpt_boutique",
+          "geste": "consulter",
+          "etat": "publiee"
+        },
+        {
+          "concept": "cpt_produit",
+          "geste": "saisir"
+        },
+        {
+          "concept": "cpt_produit",
+          "geste": "confirmer"
+        },
+        {
+          "concept": "cpt_produit",
+          "geste": "consulter",
+          "etat": "publie"
+        }
+      ]
+    },
+    {
+      "id": "par_vendeur_mise_en_avant",
+      "besoin": "payer la plateforme pour mettre un produit en avant dans le catalogue",
+      "acteur": "act_vendeur",
+      "priorite": 4,
+      "etapes": [
+        {
+          "concept": "cpt_produit",
+          "geste": "chercher"
+        },
+        {
+          "concept": "cpt_produit",
+          "geste": "choisir",
+          "preconditions": [
+            {
+              "concept": "cpt_produit",
+              "etat": "publie"
+            }
+          ]
+        },
+        {
+          "concept": "cpt_mise_en_avant",
+          "geste": "saisir"
+        },
+        {
+          "concept": "cpt_mise_en_avant",
+          "geste": "payer"
+        },
+        {
+          "concept": "cpt_mise_en_avant",
+          "geste": "consulter",
+          "etat": "active"
+        }
+      ]
+    },
+    {
+      "id": "par_vendeur_suivi",
+      "besoin": "suivre ses mises en avant passées et retirer un produit du catalogue",
+      "acteur": "act_vendeur",
+      "priorite": 5,
+      "etapes": [
+        {
+          "concept": "cpt_mise_en_avant",
+          "geste": "consulter_historique"
+        },
+        {
+          "concept": "cpt_mise_en_avant",
+          "geste": "consulter",
+          "etat": "expiree"
+        },
+        {
+          "concept": "cpt_produit",
+          "geste": "consulter_historique"
+        },
+        {
+          "concept": "cpt_produit",
+          "geste": "retirer"
+        },
+        {
+          "concept": "cpt_produit",
+          "geste": "consulter",
+          "etat": "retire"
+        }
+      ]
+    }
+  ]
+}

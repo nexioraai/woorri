@@ -817,3 +817,16 @@ bloc en dur, tout bloc reclassant futur la déclenche. Prompt de
 réparation NON touché (aucune dette), gate EP-102 NON touchée.
 5 mutations sur kaviva 16 écrans. compiler 447/447, 28/28 apps.
 Jalon ③ 0→1. Mission inchangée : 43,1795 $.
+
+--- 2026-09-12 · RE-RUN (EP-106/107) — la clause est suivie, deux juges se contredisent ---
+Contrôle ③ : DeepSeek P1 (série close, noté). Run 5,4161 $, P0→P2 1/1.
+LA CLAUSE EP-105 A ÉTÉ SUIVIE (les 5 introduits portent tous sur
+scopeFieldId : le réparateur a scopé comme ordonné). Elle révèle une
+CONTRADICTION : C5 ordonne de scoper par un champ `reference` ; le juge
+des références brutes refuse tout `reference` dans un prop …FieldId,
+scopeFieldId COMPRIS — or scopeFieldId est un FILTRE, pas un affichage.
+L-107-A : rawReferences ne distingue pas affichage et filtrage — le
+moteur punit ce qu'il ordonne. L-107-B : le réparateur pose aussi des
+scopeFieldId INVALIDES (défaut distinct). Q1 NON (gate correcte).
+attempt1 : 15 diagnostics, familles connues + RÉAPPARITION d'un arc
+inexécutable (1/18, dit comme régression). Mission : 48,5987 $.
