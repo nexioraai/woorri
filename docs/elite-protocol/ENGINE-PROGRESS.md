@@ -935,3 +935,15 @@ mutations (relation retirée, élection retirée, même concept) et la
 vérification que gate et clauses antérieures sont intactes. Batterie de
 complétude 30→31. compiler 457/457, 28/28 apps. Jalon ③ 0→1.
 Mission : 61,0515 $.
+
+--- 2026-09-12 · RUN FINAL INTERROMPU (EP-119/120) ---
+Contrôle ③ : DeepSeek P1, compteur 1→0. Run interrompu par « Request
+timed out » pendant la réparation (10 appels, 38 min, 4,0287 $) — cause
+EXTERNE. LA MESURE DÉCISIVE (cibles d'identité sur document accepté) est
+SANS OBJET : aucun document accepté, je ne conclus pas sur EP-118. Faits
+bruts : (a) génération brute 5 cibles perdues, identique au run
+précédent — l'effet d'EP-118 se mesure après réparation, mesure
+manquante ; (b) RÉGRESSION : VIVACITE_CONTROLE_MORT ×4 (0 avant) ;
+(c) famille nouvelle AIR_INTEGRATION_SECRET_LIKE_KEY ×1, refusée par le
+validateur (garde-fou OK). Q1 NON (étape : réparation). Mission :
+65,0841 $.
