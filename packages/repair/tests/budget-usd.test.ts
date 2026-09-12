@@ -48,7 +48,7 @@ describe("garde budgétaire — AVANT l'appel", () => {
 
 describe("garde budgétaire — APRÈS l'appel", () => {
   it("🔴 détecte le franchissement une fois le coût RÉEL comptabilisé", () => {
-    const apres = ajouter({ depense: 2.4, appels: 8 }, coutUSD({ output_tokens: 16_000 }, TARIFS));
+    const apres = ajouter({ depense: 2.4, appels: 8 }, coutUSD({ sortie: 16_000, entree: 0, ecritureCache: 0, lectureCache: 0 }, TARIFS));
     expect(apres.depense).toBeCloseTo(2.8, 5);
     expect(() => {
       assertNonDepasse(2.5, apres, "section:actions");
@@ -56,7 +56,7 @@ describe("garde budgétaire — APRÈS l'appel", () => {
   });
 
   it("🟢 CONTRÔLE POSITIF : sous le plafond, aucune interruption", () => {
-    const apres = ajouter(DEPENSE_INITIALE, coutUSD({ output_tokens: 4_000 }, TARIFS));
+    const apres = ajouter(DEPENSE_INITIALE, coutUSD({ sortie: 4_000, entree: 0, ecritureCache: 0, lectureCache: 0 }, TARIFS));
     expect(() => {
       assertNonDepasse(2.5, apres, "x");
     }).not.toThrow();
@@ -66,7 +66,7 @@ describe("garde budgétaire — APRÈS l'appel", () => {
   it("le coût réel suit les quatre postes de facturation", () => {
     expect(
       coutUSD(
-        { input_tokens: 1e6, cache_creation_input_tokens: 1e6, cache_read_input_tokens: 1e6, output_tokens: 1e6 },
+        { entree: 1e6, ecritureCache: 1e6, lectureCache: 1e6, sortie: 1e6 },
         TARIFS,
       ),
     ).toBeCloseTo(5 + 6.25 + 0.5 + 25, 5);
@@ -151,7 +151,7 @@ describe("comptabilité — un appel qui a eu lieu est un appel facturé", () =>
   // appelants, après le retour. L'appel échappait donc aux DEUX compteurs.
   // Mesuré sur `toiletteur-chiens` : 16 000 jetons de sortie facturés, comptés
   // nulle part — soit ~0,40 $ invisibles au garde D-103.
-  const TRONQUE = { input_tokens: 12_000, output_tokens: 16_000 };
+  const TRONQUE = { entree: 12_000, sortie: 16_000, ecritureCache: 0, lectureCache: 0 };
 
   it("🔴 CAS-TUEUR : une dépense tronquée RÉDUIT le budget disponible", () => {
     const avant = { depense: 3.0, appels: 5 };
@@ -189,16 +189,18 @@ describe("comptabilité — un appel qui a eu lieu est un appel facturé", () =>
     );
   });
 
-  it("sans information de coût, RIEN n'est inventé", () => {
-    expect(coutUSD({}, TARIFS)).toBe(0);
-    expect(ajouter(DEPENSE_INITIALE, coutUSD({}, TARIFS))).toEqual({ depense: 0, appels: 1 });
+  it("sans information de coût, la garde REFUSE — plus jamais un zéro silencieux (EP-091)", () => {
+    // Édition consciente : l'ancien contrat « vide vaut 0 » était le trou
+    // exact de L-089-A. En production, adaptateur.lireUsage émet TOUJOURS
+    // les quatre champs neutres — un usage vide n'existe plus, il se refuse.
+    expect(() => coutUSD({}, TARIFS)).toThrow(/BUDGET_USAGE_NON_NEUTRE/);
   });
 });
 
 describe("exposition maximale — le chiffre qui motivait ce garde", () => {
   it("28 appels sans garde dépassaient largement un budget de 3,50 $", () => {
     let etat = DEPENSE_INITIALE;
-    for (let i = 0; i < 28; i++) etat = ajouter(etat, coutUSD({ input_tokens: 40_000, output_tokens: 16_000 }, TARIFS));
+    for (let i = 0; i < 28; i++) etat = ajouter(etat, coutUSD({ entree: 40_000, sortie: 16_000, ecritureCache: 0, lectureCache: 0 }, TARIFS));
     expect(etat.depense).toBeGreaterThan(16);
   });
 
@@ -210,7 +212,7 @@ describe("exposition maximale — le chiffre qui motivait ce garde", () => {
     // interrompt. La dépense est donc bornée par « plafond + un appel », jamais
     // par les 28 appels que l'absence de garde autorisait.
     const plafond = 3.5;
-    const coutReel = coutUSD({ input_tokens: 40_000, output_tokens: 16_000 }, TARIFS);
+    const coutReel = coutUSD({ entree: 40_000, sortie: 16_000, ecritureCache: 0, lectureCache: 0 }, TARIFS);
     let etat = DEPENSE_INITIALE;
     let appels = 0;
     let interrompu = false;
@@ -229,5 +231,21 @@ describe("exposition maximale — le chiffre qui motivait ce garde", () => {
     expect(appels).toBeLessThan(28); // la dérive des 28 appels est fermée
     expect(appels).toBeGreaterThan(0); // le garde n'empêche pas de travailler
     expect(interrompu, "le franchissement est DÉTECTÉ, pas subi").toBe(true);
+  });
+});
+
+describe("EP-091 (L-089-A) — la garde tarife un usage NEUTRE, ou échoue bruyamment", () => {
+  const TARIFS = { entree: 5, ecritureCache: 6.25, lectureCache: 0.5, sortie: 25 };
+  it("base verte : l'usage neutre (contrat lireUsage) est tarifé exactement", () => {
+    expect(coutUSD({ entree: 1000, sortie: 1000, ecritureCache: 0, lectureCache: 0 }, TARIFS)).toBeCloseTo(0.03, 10);
+  });
+  it("MUTATION — un usage au format DeepSeek (prompt_tokens…) : la garde ÉCHOUE, elle ne compte plus zéro", () => {
+    expect(() => coutUSD({ prompt_tokens: 3086, completion_tokens: 1658 }, TARIFS)).toThrow(/BUDGET_USAGE_NON_NEUTRE/);
+  });
+  it("MUTATION — l'ancien chemin aveugle (usage brut Anthropic) échoue AUSSI bruyamment", () => {
+    expect(() => coutUSD({ input_tokens: 100, output_tokens: 50 }, TARIFS)).toThrow(/BUDGET_USAGE_NON_NEUTRE/);
+  });
+  it("MUTATION — un usage neutre INCOMPLET (champ manquant) est refusé", () => {
+    expect(() => coutUSD({ entree: 10, sortie: 5 }, TARIFS)).toThrow(/BUDGET_USAGE_NON_NEUTRE/);
   });
 });

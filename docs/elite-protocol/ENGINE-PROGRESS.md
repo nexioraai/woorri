@@ -684,3 +684,16 @@ mesuré : payer in-app lu 3/3, commerce classé de 3 façons en 3
 tirages (dossier EP-044). Notable : 2/3 tirages refusent « réalité
 africaine » comme ambigu — le moteur interroge le brief. Décision
 répétition/bascule = Youssouf. Compteur ③ : 0. Mission : 26,5635 $.
+
+--- 2026-09-12 · CORRECTION GARDE L-089-A (EP-091 ①, 0 $) ---
+Session coupée puis reprise (état réconcilié, rien refait). ① FERMÉE :
+l'usage est NEUTRALISÉ par adaptateur.lireUsage avant tarification ;
+coutUSD exige les quatre champs neutres et JETTE (UsageNonNeutreError)
+sur dialecte, champ manquant ou vide — « vide vaut 0 » abrogé
+consciemment (c'était le trou). Preuves par mutations isolées (format
+DeepSeek refusé, brut Anthropic refusé, incomplet refusé) ; 23 tests
+migrés au contrat neutre. Morsure anti-fournisseur honorée
+structurellement : registre de configuration adaptateurs.mjs, emit-v3
+sans aucun nom de fournisseur. Batteries 162+428, banc OK. ② brief
+Tchad + ③ run Anthropic (8 $) SUSPENDUS sur ordre — compteur ③ : 0.
+Mission inchangée : 26,5635 $.

@@ -53,16 +53,12 @@ const modeleMetier = await import(join(HERE, "modele-metier.mjs"));
 const repairScope = await import(join(REPO, "packages/repair/src/repair-scope.ts"));
 const budgetUsd = await import(join(REPO, "packages/repair/src/budget-usd.ts"));
 // EP-051 — LA frontière fournisseur : tout dialecte passe par lui.
-// EP-089 — SÉLECTEUR DE FOURNISSEUR : les campagnes se décident GO par GO
-// (décision ② EP-088 : DeepSeek est le défaut des tirages de MISE AU POINT ;
-// emit-v3 garde anthropic par défaut, l'appelant choisit explicitement).
-// Tout le dialecte vit dans l'adaptateur choisi — PRIX/TARIFS le suivent.
-const FOURNISSEUR = process.env.ADAPTATEUR_FOURNISSEUR ?? "anthropic";
-if (!["anthropic", "openai", "deepseek"].includes(FOURNISSEUR)) {
-  console.error(`REFUS : fournisseur inconnu « ${FOURNISSEUR} ».`);
-  process.exit(2);
-}
-const adaptateur = await import(join(HERE, `adaptateur-${FOURNISSEUR}.mjs`));
+// EP-089/EP-091 — le fournisseur se charge par le REGISTRE de configuration
+// (adaptateurs.mjs) : le cliquet anti-fournisseur interdit tout nom ici —
+// l'appelant choisit par ADAPTATEUR_FOURNISSEUR, le registre valide et
+// porte le défaut. Tout le dialecte vit dans l'adaptateur chargé.
+const { chargerAdaptateur } = await import(join(HERE, "adaptateurs.mjs"));
+const adaptateur = await chargerAdaptateur(process.env.ADAPTATEUR_FOURNISSEUR);
 const preservation = await import(join(REPO, "packages/repair/src/preservation.ts"));
 // EP-051 — l'échelle vient de l'adaptateur (degradationsPourEchelle).
 const executionContract = await import(join(REPO, "packages/execution-contract/src/envelope.ts"));
@@ -497,7 +493,9 @@ async function callPart(part, system, userText, label, usage) {
       usage.push(response.usage);
       etatDepense = budgetUsd.ajouter(
         etatDepense,
-        budgetUsd.coutUSD(response.usage ?? {}, TARIFS),
+        // EP-091 — l'usage est NEUTRALISÉ par l'adaptateur AVANT tarification
+        // (la garde refuse bruyamment tout usage au dialecte d'un fournisseur).
+        budgetUsd.coutUSD(adaptateur.lireUsage(response.usage), TARIFS),
       );
 
       // TRONCATURE DÉTECTÉE ICI (D-078) — jamais plus confondue avec une erreur

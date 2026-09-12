@@ -49,12 +49,36 @@ export class BudgetEpuiseError extends Error {
   }
 }
 
+// EP-091 (L-089-A) — LA GARDE TARIFE UN USAGE NEUTRE, ET RIEN D'AUTRE.
+//
+// CAUSE RACINE, mordue en réel (run marketplace-africain, EP-090) : cette
+// fonction lisait les champs du DIALECTE Anthropic (input_tokens…) sur
+// l'usage BRUT — chez DeepSeek elle comptait ZÉRO et le plafond D-103 était
+// AVEUGLE pendant tout le run. Dette EP-049(c), auditée puis oubliée là.
+// Désormais : champs NEUTRES exigés (entree/sortie/ecritureCache/
+// lectureCache — le contrat d'adaptateur.lireUsage), et une garde qui
+// reçoit un usage NON NEUTRE ÉCHOUE BRUYAMMENT — une garde qui peut
+// compter zéro sans le dire est pire qu'une absence de garde.
+const CHAMPS_NEUTRES = ["entree", "sortie", "ecritureCache", "lectureCache"] as const;
+
+export class UsageNonNeutreError extends Error {
+  constructor(champs: readonly string[]) {
+    super(`BUDGET_USAGE_NON_NEUTRE: champs reçus [${champs.join(", ")}] — la garde exige l'usage NEUTRE de adaptateur.lireUsage (${CHAMPS_NEUTRES.join("/")})`);
+    this.name = "UsageNonNeutreError";
+  }
+}
+
 export function coutUSD(usage: Readonly<Record<string, number | undefined>>, prix: TarifsUSD): number {
+  const cles = Object.keys(usage);
+  const neutre =
+    CHAMPS_NEUTRES.every((c) => typeof usage[c] === "number") &&
+    cles.every((c) => (CHAMPS_NEUTRES as readonly string[]).includes(c));
+  if (!neutre) throw new UsageNonNeutreError(cles);
   return (
-    ((usage.input_tokens ?? 0) * prix.entree +
-      (usage.cache_creation_input_tokens ?? 0) * prix.ecritureCache +
-      (usage.cache_read_input_tokens ?? 0) * prix.lectureCache +
-      (usage.output_tokens ?? 0) * prix.sortie) /
+    ((usage.entree ?? 0) * prix.entree +
+      (usage.ecritureCache ?? 0) * prix.ecritureCache +
+      (usage.lectureCache ?? 0) * prix.lectureCache +
+      (usage.sortie ?? 0) * prix.sortie) /
     1e6
   );
 }
