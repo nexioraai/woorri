@@ -981,3 +981,16 @@ après correction kaviva-vert rend UN finding, et c'est un VRAI («
 Choisir un créneau » mène à tous les créneaux). 13 preuves sur kaviva
 16 écrans. Batterie 31→32. compiler 470/470, 28/28 apps. Jalons ③ 0→2.
 O-D non inventée. Mission : 65,0841 $.
+
+--- 2026-09-12 · RUN DE VÉRIFICATION (EP-123/124) ---
+PREMIÈRE EN PRODUCTION : la gate comparable EP-102 a RETENU une
+réparation (attempt1 schéma-invalide, périmètre ∅→3 familles, 14
+diagnostics RÉVÉLÉS non introduits) — sans elle, un document valide
+aurait été rejeté au profit d'un invalide. ① chrome 23/23 → 3/16.
+② recherche uniquement sur scr_entree (le bon écran). ③ attributs :
+11 champs pour 6 attributs — complétude atteinte et dépassée, surplus
+consigné non jugé. ④⑤ juges neufs : 2 et 2 — ils ont eu un objet, le
+silence aurait été suspect. ⑥ EP-118 : mesure ENFIN rendue — 4 cibles
+perdues, la famille n'a PAS disparu ; fait dit tel quel, pas d'énoncé
+plus fort. ⑦ aucune régression (arcs 0, morts 0, bijection 16/16, 7e
+taille). Q1 NON : 14 diagnostics, 5 familles. Mission : 69,2485 $.
