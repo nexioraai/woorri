@@ -1004,3 +1004,17 @@ contradiction (deux étages, deux exigences), mais rien ne le disait :
 un document « retenu » peut être NON COMPILABLE. Cause du refus :
 L-107-B, jamais traité. Aucun bricolage. L'app sur appareil reste celle
 du run 15-27, intacte sur disque.
+
+--- 2026-09-12 · L-107-B, 2e traitement (EP-125, 0 $) ---
+MESURE : le champ posé était VALIDE (reference vers ent_categorie), sur
+un écran SANS detail_header. EP-113 avait la BONNE règle, mais elle
+vivait uniquement dans le message d'un diagnostic RÉACTIF — et
+l'attempt1 du run 20-18 ne portait QUE des erreurs de SCHÉMA, donc
+aucun AIR_CIBLE_IDENTITE_PERDUE, donc la règle n'a JAMAIS été dite.
+Branche 2 : incomplet — et c'est le CANAL. Correctif : la règle devient
+une OBLIGATION PERMANENTE de la passe ecrans (principe EP-122 : ce que
+le moteur exige, il le dit toujours), avec indissociabilité, domaine et
+conséquence nommée (émission refusée). La clause réactive d'EP-113
+demeure : deux canaux. 6 preuves sur 23 écrans (≠ 16). compiler
+476/476, 28/28 apps. Jalon ③ 0→1. L-124-A consigné non traité.
+Mission : 69,2485 $.

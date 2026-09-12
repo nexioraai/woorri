@@ -1295,6 +1295,17 @@ export function obligationsPrescriptives(nomPasse, modele, plan) {
         const porteLeChrome = plan.chrome.some((c) => e.surfaces.includes(c));
         return `· ${ecranAirDe(e.ecranId)} — surfaces : ${decisions} (justifié par ${e.justification.length} étape(s))${porteLeChrome ? " — PORTE LE CHROME" : " — SANS chrome"}`;
       }),
+      // EP-125 — LA RÈGLE DU SCOPE DEVIENT UNE OBLIGATION PERMANENTE.
+      //
+      // Mesuré : EP-113 avait la BONNE règle (scoper et poser le détail sont
+      // indissociables) — mais elle vivait UNIQUEMENT dans le message d'un
+      // diagnostic RÉACTIF, donc transmise seulement si ce diagnostic était
+      // émis. Le run 20-18 le prouve : attempt1 ne portait QUE des erreurs de
+      // SCHÉMA, aucun AIR_CIBLE_IDENTITE_PERDUE ⇒ la règle n'a JAMAIS été
+      // dite, et le générateur a scopé une liste sur un écran sans détail.
+      // Le défaut n'était ni la règle ni le générateur : c'était le CANAL.
+      // Principe EP-122 appliqué : ce que le moteur exige, il le dit TOUJOURS.
+      "· PORTÉE D'UNE COLLECTION (`scopeFieldId`) — RÈGLE PERMANENTE : une liste ne porte `scopeFieldId` QUE sur un écran qui montre AUSSI le `detail_header` de l'instance visée ; la valeur est un champ `reference` de l'entité listée pointant l'entité de ce détail. Sur un écran SANS `detail_header`, un `scopeFieldId` est INVALIDE — la portée n'a aucune instance courante et l'émission entière est REFUSÉE.",
       `· CHROME : les surfaces persistantes (${plan.chrome.length === 0 ? "aucune" : plan.chrome.join(", ")}) ne vivent QUE sur les écrans marqués « PORTE LE CHROME » — nulle part ailleurs.`,
       `· BARRE PRIMAIRE : elle appartient aux écrans RACINES (${prescriptionsNavigation(plan).destinations.join(", ")}) ; les écrans de FLUX (saisie, confirmation, paiement, retrait) ne la portent PAS (showsPrimaryNav: false).`,
       ...(portees.length === 0
