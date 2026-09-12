@@ -53,7 +53,16 @@ const modeleMetier = await import(join(HERE, "modele-metier.mjs"));
 const repairScope = await import(join(REPO, "packages/repair/src/repair-scope.ts"));
 const budgetUsd = await import(join(REPO, "packages/repair/src/budget-usd.ts"));
 // EP-051 — LA frontière fournisseur : tout dialecte passe par lui.
-const adaptateur = await import(join(HERE, "adaptateur-anthropic.mjs"));
+// EP-089 — SÉLECTEUR DE FOURNISSEUR : les campagnes se décident GO par GO
+// (décision ② EP-088 : DeepSeek est le défaut des tirages de MISE AU POINT ;
+// emit-v3 garde anthropic par défaut, l'appelant choisit explicitement).
+// Tout le dialecte vit dans l'adaptateur choisi — PRIX/TARIFS le suivent.
+const FOURNISSEUR = process.env.ADAPTATEUR_FOURNISSEUR ?? "anthropic";
+if (!["anthropic", "openai", "deepseek"].includes(FOURNISSEUR)) {
+  console.error(`REFUS : fournisseur inconnu « ${FOURNISSEUR} ».`);
+  process.exit(2);
+}
+const adaptateur = await import(join(HERE, `adaptateur-${FOURNISSEUR}.mjs`));
 const preservation = await import(join(REPO, "packages/repair/src/preservation.ts"));
 // EP-051 — l'échelle vient de l'adaptateur (degradationsPourEchelle).
 const executionContract = await import(join(REPO, "packages/execution-contract/src/envelope.ts"));

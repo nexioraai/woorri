@@ -53,7 +53,11 @@ export function degradationsPourEchelle(jsonSchema) {
 export function construireAppel(requete, reglages) {
   return {
     model: CONFIG.model,
-    max_tokens: reglages.max_tokens,
+    // CONTRAINTE DE DIALECTE DÉCLARÉE (EP-089) : la sortie de deepseek-chat
+    // est bornée à 8192 tokens — un max_tokens supérieur est un 400. Le
+    // clamp est un écart d'adaptateur ; une sortie tronquée reste signalée
+    // par le signal neutre (tronquee) et traitée fail-closed en aval.
+    max_tokens: Math.min(reglages.max_tokens, 8192),
     messages: [
       {
         role: "system",

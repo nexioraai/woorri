@@ -181,4 +181,18 @@ export const INTENTIONS = [
       "donner tout de suite envie : les soins vedettes en avant et la recherche " +
       "accessible immédiatement. Tout en français.",
   },
+  {
+    // EP-089 — PREMIÈRE APPLICATION RÉELLE (vaut V4 de R8). PAS de champ
+    // `commerce` : le brief est piégé à dessein (visibilité payée in-app
+    // vendeur→plateforme, contact acheteur-vendeur hors app) — la lecture
+    // de P0 est une DONNÉE, pas une erreur ; la conformance ne présume rien.
+    slug: "marketplace-africain",
+    text:
+      "Une place de marché adaptée à la réalité africaine. Les vendeurs " +
+      "créent leur boutique et publient leurs produits. Les acheteurs " +
+      "parcourent le catalogue et contactent le vendeur directement par " +
+      "WhatsApp ou par appel — il n'y a pas de paiement en ligne entre " +
+      "acheteur et vendeur. Les vendeurs paient pour mettre leurs produits " +
+      "en avant.",
+  },
 ];
