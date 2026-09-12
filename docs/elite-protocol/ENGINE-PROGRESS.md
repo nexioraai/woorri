@@ -697,3 +697,16 @@ structurellement : registre de configuration adaptateurs.mjs, emit-v3
 sans aucun nom de fournisseur. Batteries 162+428, banc OK. ② brief
 Tchad + ③ run Anthropic (8 $) SUSPENDUS sur ordre — compteur ③ : 0.
 Mission inchangée : 26,5635 $.
+
+--- 2026-09-12 · MARKETPLACE TCHAD/SAHEL sur Anthropic (EP-091 ②③/092) ---
+Q1 NON : 3 tirages arrêtés P2 (0,5033 $). Garde ① CONFIRMÉE sur appels
+réels (coûts par tentative exacts). ATTRIBUTION : t3 est un modèle
+EXCELLENT (7 parcours, plan 0 diagnostic, piège commerce lu juste)
+refusé sur UN finding — « écran traversé par 2 acteurs » sur les
+écrans produit, que les DEUX acteurs parcourent légitimement.
+Candidat angle mort consigné : V2-acteur sans notion d'ÉCRAN PARTAGÉ
+public — toute marketplace échouera en l'état ; passe juges dédiée
+sur GO (fixture t3) = JALON ③ (contrat), contrôle croisé dû après.
+Donnée EP-044 forte : commerce « digital »+payer 3/3 — le brief
+précisé a STABILISÉ la lecture (la variance venait de l'énoncé).
+Mission : 27,0668 $.
