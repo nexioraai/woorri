@@ -909,3 +909,15 @@ source attendue quand la cible est atteinte ailleurs. 4 mutations sur
 kaviva 13 arcs (≠ 22), dont la vérification que gate EP-102 et clauses
 EP-105/EP-113 sont intactes. EC 175/175, compiler 451/451, 28/28 apps.
 Jalon ③ 0→1. Mission inchangée : 56,2786 $.
+
+--- 2026-09-12 · RUN DE VÉRIFICATION (EP-116/117) — LE VERROU EST LEVÉ ---
+① CONVERGENCE : 14 → 3, 0 introduit, gate silencieuse, document réparé
+RETENU — première convergence du marketplace (précédents : 12→12+2,
+18→18+1, 11→11+2, 15→15+5). ② ARCS : 32 % → 0 % sur 25 arcs prescrits.
+③ SCOPES INVALIDES : éteints. Q2 bijection EXACTE 23/23 (6e taille),
+nav 0 écart. Q3 VERT sur le document accepté : jugerAcceptation rend 0
+diagnostic (zéro arc, contrôle mort, écran inatteignable, référence
+brute, param fantôme). Q1 NON : il reste 3 AIR_CIBLE_IDENTITE_PERDUE
+(juge C4, famille jamais traitée) — seule famille bloquante. Q4 : 23
+écrans, 44 actions, 63 blocs : l'app est à 3 diagnostics de
+l'acceptation. Mission : 61,0515 $.
