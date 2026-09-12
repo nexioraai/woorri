@@ -1162,11 +1162,29 @@ export function obligationsPrescriptives(nomPasse, modele, plan) {
       ),
     ];
     if (arcs.length === 0) return "";
+    // EP-115 — L'ORDRE EST DONNÉ PAR ÉCRAN SOURCE, IMPÉRATIVEMENT.
+    //
+    // Mesuré (enquête EP-114) : la source ÉTAIT transmise (membre gauche de
+    // `a->b`) et la règle énoncée — mais comme RÈGLE GÉNÉRALE en fin de bloc,
+    // jamais comme ORDRE PAR ARC, et sans interdit explicite. Résultat : le
+    // générateur câblait la CIBLE depuis la source qu'il jugeait naturelle
+    // (7 arcs morts sur 22, 4 actions visant une cible sans aucune depuis la
+    // source prescrite). Aucune donnée nouvelle ici : le MÊME plan, énoncé
+    // par écran porteur — la forme de l'ordre suit celle du travail demandé.
+    const parSource = new Map();
+    for (const a of arcs) {
+      const [de, vers] = a.split("->");
+      if (!parSource.has(de)) parSource.set(de, []);
+      parSource.get(de).push(vers);
+    }
     return [
       "PRESCRIPTIONS D'ACTIONS (dérivées du plan — chaque arc EXIGE une action qui le rende EXÉCUTABLE) :",
-      `· arcs à câbler : ${arcs.join(", ")}`,
-      "· une action est EXÉCUTABLE quand son déclencheur est dispatché depuis l'écran SOURCE (trigger ui sur un bloc de cet écran, ou prop actionId), ou quand elle est le `thenScreenId` d'une écriture réussie (mutation) — un navigate dont le déclencheur ne part pas de la source ne satisfait AUCUN arc.",
-      "Un arc prescrit sans action exécutable est REFUSÉ mécaniquement.",
+      ...[...parSource.entries()].map(
+        ([de, cibles]) =>
+          `· DEPUIS l'écran "${de}", l'utilisateur DOIT pouvoir atteindre : ${cibles.join(", ")} — le déclencheur de chaque action vit SUR CET ÉCRAN (trigger ui sur un de ses blocs, ou prop actionId d'un de ses blocs), ou bien l'action est le \`thenScreenId\` d'une écriture réussie depuis cet écran.`,
+      ),
+      "· INTERDIT — une action qui mène à la même cible DEPUIS UN AUTRE ÉCRAN ne satisfait PAS l'arc : elle peut exister en plus, elle ne le remplace jamais. C'est la SOURCE qui fait la traversée, pas la destination.",
+      "Un arc prescrit sans action exécutable depuis SA source est REFUSÉ mécaniquement.",
     ].join("\n");
   }
   if (nomPasse === "entites") {

@@ -896,3 +896,16 @@ problème de GÉNÉRATION. L'ampleur suit la complexité du modèle tiré
 régression moteur ; n=3, corrélation non causale, dit comme tel. Une
 variance à 32 % reste un problème de RÉGULARITÉ, traité ailleurs.
 Aucun correctif (consigne). Mission inchangée : 56,2786 $.
+
+--- 2026-09-12 · OBLIGATION SOURCE-PRESCRITE (EP-115, 0 $) ---
+Décision d'arbitre : juger l'arc par sa cible est ÉCARTÉ (cela viderait
+V2). Vérification : la source ÉTAIT transmise et la règle énoncée, mais
+comme règle générale en fin de bloc, sans interdit — présente NON
+CONTRAIGNANTE ⇒ rendre l'ÉNONCÉ impératif, sans ajouter de donnée (3e
+occurrence du motif). Correctif : arcs regroupés PAR ÉCRAN SOURCE,
+énoncés à l'impératif, avec l'interdit nommé (« une action depuis un
+autre écran ne satisfait PAS l'arc »). Le diagnostic nomme désormais la
+source attendue quand la cible est atteinte ailleurs. 4 mutations sur
+kaviva 13 arcs (≠ 22), dont la vérification que gate EP-102 et clauses
+EP-105/EP-113 sont intactes. EC 175/175, compiler 451/451, 28/28 apps.
+Jalon ③ 0→1. Mission inchangée : 56,2786 $.

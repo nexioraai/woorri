@@ -205,6 +205,13 @@ export function jugerVivacite(
       );
       if (!satisfait && tenteParCapabilite) continue;
       if (!satisfait) {
+        // EP-115 — LE DIAGNOSTIC DIT LAQUELLE ÉTAIT ATTENDUE. Mesuré
+        // (EP-114) : le générateur atteint bien la cible, mais depuis un
+        // AUTRE écran — le message doit nommer ce cas précis, sinon il
+        // décrit un manque là où il y a un mauvais point de départ.
+        const ailleurs = aretes
+          .filter((a) => a.cible === arc.vers && a.origine !== undefined && a.origine !== arc.de)
+          .map((a) => a.origine);
         out.push({
           code: "VIVACITE_ARC_PRESCRIT_INEXECUTABLE",
           path: `navigation[${arc.de}->${arc.vers}]`,
@@ -212,7 +219,12 @@ export function jugerVivacite(
             `l'arc prescrit ${arc.de} -> ${arc.vers} n'est satisfait par AUCUNE ` +
             `arête exécutable : une déclaration à déclencheur hors enveloppe ne ` +
             `satisfait aucun arc. Câble une action exécutable depuis ` +
-            `"${arc.de}" (ou via une écriture réussie, thenScreenId).`,
+            `"${arc.de}" (ou via une écriture réussie, thenScreenId).` +
+            (ailleurs.length === 0
+              ? ""
+              : ` LA CIBLE EST POURTANT ATTEINTE — mais depuis ${[...new Set(ailleurs)].join(", ")}, ` +
+                `PAS depuis "${arc.de}" : c'est la SOURCE qui manque, pas la destination. ` +
+                `Une action vers la même cible depuis un autre écran ne remplace jamais celle-ci.`),
         });
       }
     }

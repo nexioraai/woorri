@@ -83,9 +83,13 @@ describe("R5 — prescriptions de navigation dérivées de P2d", () => {
     // et ne les recevait pas (6 arcs morts mesurés). Ce qui reste invariant :
     // STRUCTURE, jamais wording — la liste est DÉRIVÉE du plan.
     const actions = obligationsPrescriptives("actions", MODELE, PLAN);
+    // EP-115 (édition consciente) : les arcs ne sont plus une LISTE de paires
+    // `a->b` mais un ORDRE PAR ÉCRAN SOURCE (« DEPUIS l'écran X … : Y, Z »).
+    // Ce qui reste invariant : chaque arc du plan est énoncé, source ET cible.
     const arcs = PLAN.navigation.arcs as { de: string; vers: string }[];
     for (const a of arcs.filter((x) => x.de !== x.vers).slice(0, 3)) {
-      expect(actions).toContain(`${ecranAirDe(a.de)}->${ecranAirDe(a.vers)}`);
+      expect(actions).toContain(`DEPUIS l'écran "${ecranAirDe(a.de)}"`);
+      expect(actions).toContain(ecranAirDe(a.vers));
     }
     expect(actions).toContain("EXÉCUTABLE");
     // les passes qui n'ont rien à prescrire restent MUETTES.
