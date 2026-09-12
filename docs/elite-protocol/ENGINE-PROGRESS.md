@@ -580,3 +580,17 @@ REFERENCE_INCONNUE ×9 (candidat v8), CONFIRMATION_SANS_ECRITURE ×10,
 elliptiques ×10. V2 bloquée sur le brief propriétaire (hors dépôt,
 charte #6 §8) — critère déjà figé. V4 NON EXERCÉ (arbitrage).
 Mission : 26,1240 $.
+
+--- 2026-09-12 · DEUX DÉCISIONS (GO EP-078, 0 $) — v8 préparé, V2 sur v7 ---
+① Hypothèse « v7 a créé REFERENCE_INCONNUE » VÉRIFIÉE AVANT correctif :
+🟠 NON DÉTERMINÉ et affaibli (kaviva sous v7 : 0/5 ; axe domaine
+totalement confondu — aucune archive multi-domaine pré-v7). Correctif =
+ligne v8-relations (contrat exige, prompt muet), PRÉPARÉE non appliquée
+(prompt-v8.preparation.mjs, scellé v7 revérifié intact). MOTIF permanent
+consigné : toute règle de prompt exige une mesure d'effet de bord.
+② Livraison : le contrat sait DÉJÀ dire (payer = in-app ; hors-app =
+pas de payer ni commerce ; classe économique à la conformité AIR) —
+PAS de 3e valeur, frontière EP-044 non franchie ; ligne v8-payer
+préparée (frontière jamais dite à P0). ③ CONFIRMATION_SANS_ECRITURE :
+ouvert jusqu'après V2. V2 : GO accordé par avance (EP-079), il ne
+manque que le brief propriétaire. Mission inchangée : 26,1240 $.
