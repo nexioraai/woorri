@@ -102,15 +102,34 @@ export function estErreurGrammaire(erreur) {
   return erreur?.status === 400;
 }
 
-/** SEUL point SDK : le SDK OpenAI, pointé sur la base DeepSeek — façade
- * neutre client.messages.create(appel), comme les deux autres. */
+/** SEUL point RÉSEAU — AMENDÉ AVANT TIRAGE (EP-084, patron EP-033-ter,
+ * 0 token facturé) : l'API DeepSeek est du REST pur, `fetch` suffit —
+ * introduire le paquet npm `openai` n'avait pas de nécessité démontrée
+ * (CLAUDE.md). Façade neutre INCHANGÉE : client.messages.create(appel). */
 export async function creerClient(lireFichier, options = {}) {
   const contenu = lireFichier(CONFIG.cheminCle);
   const m = contenu.match(CONFIG.motifCle);
   if (!m) throw new Error("ADAPTATEUR_CLE_INTROUVABLE");
-  const { default: OpenAI } = await import("openai");
-  const client = new OpenAI({ apiKey: m[2].trim(), baseURL: CONFIG.baseURL, ...options });
-  return { messages: { create: (appel) => client.chat.completions.create(appel) } };
+  const cle = m[2].trim();
+  const base = options.baseURL ?? CONFIG.baseURL;
+  return {
+    messages: {
+      create: async (appel) => {
+        const rep = await fetch(`${base}/chat/completions`, {
+          method: "POST",
+          headers: { "content-type": "application/json", authorization: `Bearer ${cle}` },
+          body: JSON.stringify(appel),
+        });
+        if (!rep.ok) {
+          const corps = await rep.text();
+          const erreur = new Error(`DEEPSEEK_${rep.status}: ${corps.slice(0, 300)}`);
+          erreur.status = rep.status;
+          throw erreur;
+        }
+        return rep.json();
+      },
+    },
+  };
 }
 
 /** Usage BRUT du dialecte → usage NEUTRE. */

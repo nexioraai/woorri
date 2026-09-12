@@ -634,3 +634,16 @@ cliquetée à TROIS, SDK dynamique seul. Critère du tirage FIGÉ :
 productibilité (pas qualité), kaviva, v9 scellé, estampilles à 5
 champs ; PASS = 2 énoncés séparés (patron EP-054) ; FAIL = 3 causes à
 distinguer. Batteries 427, banc OK. Mission : 26,3395 $.
+
+--- 2026-09-12 · TIRAGE DEEPSEEK (GO EP-084/085) — 1re séparation prompt/grammaire ---
+FAIL-MÉCANISME au discriminant EP-083 : MODELE_SCHEMA seul, capacité
+NON CONCLUE. LA violation, unique : un tableau de couverture vide
+(minItems ≥ 1) — précisément ce que la grammaire imposée d'Anthropic
+tient au décodage. Deux énoncés séparés (EP-054) : (1) non productible
+sans grammaire imposée EN L'ÉTAT, à une violation près ; (2) le
+dialecte DeepSeek fonctionne (json_object sans 400, JSON strict,
+version exacte, structure complète — dégradations observées ≡
+déclarées). Amendement pré-tirage consigné : transport fetch (paquet
+openai absent, 0 token perdu), estampille corrigée 0f549995.
+Observation non jugée : sortie 3× plus compacte, coût ~67× moindre au
+tarif retenu (0,0027 $, usage réel publié). Mission : 26,3422 $.

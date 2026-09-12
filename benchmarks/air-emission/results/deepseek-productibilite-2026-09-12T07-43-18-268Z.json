@@ -1,0 +1,29 @@
+{
+  "campagne": "EP-084-deepseek",
+  "horodatage": "2026-09-12T07:43:18.266Z",
+  "estampilles": {
+    "contrat": "bac61a7e0464",
+    "prompt": "913380d9",
+    "adaptateur": "bf12f24d9488",
+    "modele": "deepseek-chat",
+    "degradations": [
+      "$ json_schema→json_object : schéma NON imposé au décodage — transmis en texte, conformité refermée par P1"
+    ]
+  },
+  "coutUsdAuTarifRetenu": 0.002657,
+  "usage": {
+    "entree": 3086,
+    "sortie": 1658,
+    "ecritureCache": 0,
+    "lectureCache": 0
+  },
+  "tronquee": false,
+  "refusee": false,
+  "dureeMs": 6460,
+  "issue": {
+    "verdict": "FAIL-mécanisme (dépendance au mécanisme, 4e cause)",
+    "codes": [
+      "MODELE_SCHEMA"
+    ]
+  }
+}
