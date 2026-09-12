@@ -1039,3 +1039,19 @@ non traité, il CROÎT. ⑥ Aucune régression : chrome 3/18, recherche au
 bon endroit, arcs 0, morts 0, bijection 18/18 (8e taille). Q1 NON :
 11 diagnostics. App « Sahel Souk » (18 écrans, 45 actions) émise,
 typecheckée, poussée sur le SM-A175F. Mission : 74,1390 $.
+
+--- 2026-09-12 · CE QUE LE MOTEUR NE SAIT PAS (EP-129, 0 $) ---
+① Superposition : des ZONES existent (chrome/contenu), aucune notion de
+COLLISION ni de géométrie — rien ne dit qui occupe quoi dans le chrome.
+② Espace compte : il DÉPEND du modèle (15-27 l'avait via s_identifier,
+20-52 ne l'a plus) ; aucune règle ne l'exige — une primitive d'app
+mobile traitée comme un accident du modèle. ③ Images : ni données
+manquantes ni slot vide — les URL existent et les données sont pleines ;
+AppImage n'a ni onError ni repli, et aucun juge ne mesure la
+joignabilité d'un média. ④ Contenu de fiche : AUCUNE règle, le
+générateur choisit. ⑤ Règles de présentation : OUI, neuf — mais toutes
+sur la PRÉSENCE/ABSENCE d'un élément, aucune sur mise en page,
+hiérarchie, position, taille, densité ou complétude éditoriale.
+CONCLUSION : le moteur juge qu'un élément est là et vivant, jamais
+comment il est montré. Les cinq constats sont des défauts PAR
+CONSTRUCTION — le pan présentation n'existe pas. Mission : 74,1390 $.
