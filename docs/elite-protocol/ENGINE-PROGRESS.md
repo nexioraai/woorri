@@ -566,3 +566,17 @@ câblés, 0 partout) ; Q2 bijection exacte ; 28/28 apps. Taux P0→P2 v7 :
 3/5 (vs 1/5 v5+v6). Coûts par phase : P0 0,19 · passes 2,41 · répar.
 0,78. Portée : kaviva, ce tirage, ces estampilles — généricité = R8.
 Mission : 22,9231 $.
+
+--- 2026-09-12 · V1 PARAPHRASES (GO EP-076) — MATRICE 7×3 PUBLIÉE ---
+21/21 tirages P0 seul, 3,2009 $, prompt v7 scellé. Contre attendus
+figés : capacités STABLES 5/6 (education auth+iap 3/3 — le chemin
+digital dérive juste) ; livraison INSTABLE = signal nommé (« paiement
+à la livraison », ambiguïté payer/hors-app, décision due) ; gestes =
+bruit ≤1 sur 4 domaines, signal sur livraison(+education léger) ;
+DISCRIMINATION 6/6 ≥5 PASS — la dérivation discrimine sur du P0 frais ;
+taux P1 15/21, P2-pass 5/21, publiés par domaine ; reservation 0/3
+même famille P1 = corrélation domaine (relations pendantes). Familles :
+REFERENCE_INCONNUE ×9 (candidat v8), CONFIRMATION_SANS_ECRITURE ×10,
+elliptiques ×10. V2 bloquée sur le brief propriétaire (hors dépôt,
+charte #6 §8) — critère déjà figé. V4 NON EXERCÉ (arbitrage).
+Mission : 26,1240 $.
