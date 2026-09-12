@@ -803,3 +803,17 @@ taille) · Q3 NON mais TOUTES familles connues jamais traitées (6 titres,
 3 cibles perdues, 1 props, 1 référence brute) ; zéro arc, zéro mort,
 zéro commerce. Q4 : 19 écrans, 42 actions, non livrable. Progression
 20→11 diagnostics. Mission : 43,1795 $.
+
+--- 2026-09-12 · L-098-C (EP-105, 0 $) — la mesure a déplacé la cause ---
+Question de racine tranchée PAR LA MESURE : le type d'écran n'est PAS
+prescrit par le plan (rôle→trait non univoque sur fixture VERTE), il est
+DÉRIVÉ des blocs — donc juger le résultat est déjà correct. Le défaut
+était ailleurs : le message d'AIR_CIBLE_IDENTITE_PERDUE ORDONNE de
+créer un détail sans dire que la collection présente basculera sous C5.
+Une prescription de réparation qui en viole une autre est INCOMPLÈTE.
+Correctif structurel : consequencesDeReclassement() dérive du document
+les collections non scopées et énonce la conséquence — aucun nom de
+bloc en dur, tout bloc reclassant futur la déclenche. Prompt de
+réparation NON touché (aucune dette), gate EP-102 NON touchée.
+5 mutations sur kaviva 16 écrans. compiler 447/447, 28/28 apps.
+Jalon ③ 0→1. Mission inchangée : 43,1795 $.

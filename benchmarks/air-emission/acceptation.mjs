@@ -74,6 +74,39 @@ export function elargit(perimetreAvant, perimetreApres) {
   );
 }
 
+/**
+ * EP-105 — CONSÉQUENCES D'UN RECLASSEMENT D'ÉCRAN, dérivées du document.
+ *
+ * Le type d'écran est DÉRIVÉ de ses blocs (mesuré). Ajouter un bloc de
+ * détail sur un écran qui porte déjà une collection NON SCOPÉE fait
+ * basculer cette collection sous C5. Le diagnostic qui ORDONNE d'ajouter un
+ * détail doit donc énoncer cette conséquence — sinon il prescrit une
+ * réparation qui en viole une autre, et la boucle oscille (3 mesures).
+ * La clause nomme les blocs CONCERNÉS du document ; aucun identifiant n'est
+ * écrit en dur, aucune règle sur un type de bloc particulier.
+ */
+export function consequencesDeReclassement(air, screenId) {
+  const ecran = air.screens.find((s) => s.id === screenId);
+  if (ecran === undefined) return "";
+  const aDejaUnDetail = ecran.blocks.some((b) => b.blockType === "detail_header");
+  if (aDejaUnDetail) return "";
+  const collectionsNues = ecran.blocks
+    .filter(
+      (b) =>
+        b.blockType === "list" &&
+        !(b.props ?? []).some((p) => p.key === "scopeFieldId"),
+    )
+    .map((b) => b.id);
+  if (collectionsNues.length === 0) return "";
+  return (
+    ` CONSÉQUENCE À TRAITER DANS LA MÊME RÉPARATION : poser un détail sur ` +
+    `"${screenId}" en fait une FICHE, et ${collectionsNues.join(", ")} y ` +
+    `deviendra une collection NON CONTEXTUALISÉE (règle C5) — scope-la par ` +
+    `son champ \`reference\` dans le même geste, sinon tu corriges un défaut ` +
+    `en en créant un autre.`
+  );
+}
+
 export function jugerAcceptation(air, prescriptif, intention) {
   if (air === null) return [];
   const out = [];
@@ -147,7 +180,18 @@ export function validateLocal(document) {
           `reference vers elle. L'instance pressée serait PERDUE (repli rows[0] ` +
           `silencieux). Répare en ciblant le DÉTAIL de l'instance, ou en scopant ` +
           `la collection cible par un champ \`reference\` (règle 18). NE ` +
-          `SUPPRIME NI LA LIGNE NI SA NAVIGATION (règle 27).`,
+          `SUPPRIME NI LA LIGNE NI SA NAVIGATION (règle 27).` +
+          // EP-105 — UNE PRESCRIPTION DE RÉPARATION DOIT ÊTRE COMPLÈTE.
+          // Cause racine mesurée (L-098-C, 3 confirmations) : ce message
+          // ordonne « cible le DÉTAIL » ; poser un detail_header RECLASSE
+          // l'écran (le trait est DÉRIVÉ des blocs — prouvé : la
+          // correspondance rôle-prescrit → trait-dérivé n'est pas univoque
+          // sur une fixture VERTE, donc le plan NE prescrit PAS le type) et
+          // la collection déjà présente bascule sous C5. La clause est
+          // DÉRIVÉE du document (collections non scopées de l'écran cible),
+          // jamais un nom de bloc en dur : tout bloc reclassant futur la
+          // déclenchera de la même façon.
+          consequencesDeReclassement(parsed.data, n.targetScreenId),
       })),
     // ── C5 (confrontation #12) — une collection sur une FICHE n'est légitime
     // qu'en ACCÈS CONTEXTUALISÉ (scopée à l'instance). 24 sites gelés consignés.

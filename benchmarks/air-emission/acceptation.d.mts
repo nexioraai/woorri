@@ -20,3 +20,4 @@ export function perimetreDeJugement(
 ): string[];
 export function sontComparables(perimetreA: string[], perimetreB: string[]): boolean;
 export function elargit(perimetreAvant: string[], perimetreApres: string[]): boolean;
+export function consequencesDeReclassement(air: Record<string, unknown>, screenId: string): string;
