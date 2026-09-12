@@ -994,3 +994,13 @@ silence aurait été suspect. ⑥ EP-118 : mesure ENFIN rendue — 4 cibles
 perdues, la famille n'a PAS disparu ; fait dit tel quel, pas d'énoncé
 plus fort. ⑦ aucune régression (arcs 0, morts 0, bijection 16/16, 7e
 taille). Q1 NON : 14 diagnostics, 5 familles. Mission : 69,2485 $.
+
+--- 2026-09-12 · SUITE EP-124 : L-124-A, deux barres ---
+Expo n'a PAS pu être relancé sur le document retenu : le COMPILATEUR le
+refuse (fail-closed, BLOCK_SCOPE_INVALID). Deux barres coexistent —
+l'acceptation de campagne retient un document à 14 diagnostics, le
+compilateur refuse au premier diagnostic de son ressort. Ni bug ni
+contradiction (deux étages, deux exigences), mais rien ne le disait :
+un document « retenu » peut être NON COMPILABLE. Cause du refus :
+L-107-B, jamais traité. Aucun bricolage. L'app sur appareil reste celle
+du run 15-27, intacte sur disque.
