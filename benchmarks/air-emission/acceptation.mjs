@@ -90,20 +90,44 @@ export function consequencesDeReclassement(air, screenId) {
   if (ecran === undefined) return "";
   const aDejaUnDetail = ecran.blocks.some((b) => b.blockType === "detail_header");
   if (aDejaUnDetail) return "";
-  const collectionsNues = ecran.blocks
-    .filter(
-      (b) =>
-        b.blockType === "list" &&
-        !(b.props ?? []).some((p) => p.key === "scopeFieldId"),
-    )
-    .map((b) => b.id);
+  const collectionsNues = ecran.blocks.filter(
+    (b) =>
+      b.blockType === "list" &&
+      !(b.props ?? []).some((p) => p.key === "scopeFieldId"),
+  );
   if (collectionsNues.length === 0) return "";
+  // EP-113 — LE DOMAINE DES VALEURS VALIDES EST FOURNI AVEC L'ORDRE.
+  //
+  // Mesuré : le réparateur posait un `scopeFieldId` EXISTANT et du BON TYPE
+  // (`reference`) — il n'inventait rien — mais sur un écran SANS
+  // detail_header, où la portée n'a aucun sens (E2/D-129). Cause : la clause
+  // ordonnait « scope-la » sans dire (a) que scoper et poser le détail sont
+  // INDISSOCIABLES, ni (b) quels champs sont éligibles. Une prescription qui
+  // ordonne sans fournir le domaine des valeurs valides est INCOMPLÈTE —
+  // même motif que L-098-C, un cran plus loin. Le domaine est DÉRIVÉ du
+  // document (champs `reference` de l'entité listée), jamais écrit en dur.
+  const eligibles = (bloc) => {
+    const entite = air.entities.find((e) => e.id === bloc.entityId);
+    return (entite?.fields ?? [])
+      .filter((f) => f.type === "reference" && f.referencesEntityId !== undefined)
+      .map((f) => `${f.id}→${f.referencesEntityId}`);
+  };
+  const detail = collectionsNues
+    .map((b) => {
+      const champs = eligibles(b);
+      return champs.length === 0
+        ? `${b.id} (AUCUN champ \`reference\` : cette liste NE PEUT PAS être scopée — ne pose pas de détail sur cet écran)`
+        : `${b.id} (champs éligibles : ${champs.join(", ")})`;
+    })
+    .join(" ; ");
   return (
     ` CONSÉQUENCE À TRAITER DANS LA MÊME RÉPARATION : poser un détail sur ` +
-    `"${screenId}" en fait une FICHE, et ${collectionsNues.join(", ")} y ` +
-    `deviendra une collection NON CONTEXTUALISÉE (règle C5) — scope-la par ` +
-    `son champ \`reference\` dans le même geste, sinon tu corriges un défaut ` +
-    `en en créant un autre.`
+    `"${screenId}" en fait une FICHE, et sa ou ses collections y deviendront ` +
+    `NON CONTEXTUALISÉES (règle C5) — ${detail}. Les deux gestes sont ` +
+    `INDISSOCIABLES : un \`scopeFieldId\` posé sur un écran SANS ` +
+    `\`detail_header\` est INVALIDE (la portée n'a pas d'instance courante), ` +
+    `et le champ choisi doit pointer l'entité du détail que tu poses. Fais ` +
+    `les deux, ou ne fais ni l'un ni l'autre.`
   );
 }
 

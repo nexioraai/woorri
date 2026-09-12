@@ -868,3 +868,16 @@ dite comme telle ; mais attribution moteur vs variance NON tranchée
 0 contrôle mort, 0 écran inatteignable. Nouvelle famille consignée :
 AIR_INTEGRATION_CAPABILITY_UNDECLARED. Q1/Q3 NON. Q4 : 21 écrans, 47
 actions. Mission : 56,2786 $.
+
+--- 2026-09-12 · L-107-B (EP-113, 0 $) — le domaine manquait à l'ordre ---
+Mesure sur l'archive : le champ posé EXISTAIT et était du bon type — le
+réparateur n'invente rien ; il l'a posé sur un écran SANS detail_header,
+où la portée n'a pas d'instance courante. Cause : MA clause EP-105
+ordonnait « scope-la » sans dire que scoper et poser le détail sont
+INDISSOCIABLES ni quels champs sont éligibles — L-098-C un cran plus
+loin. Correctif sans juge ajouté : la clause fournit le domaine dérivé
+du document (champs reference → entité cible), déclare non scopable une
+liste qui n'en a aucune, et énonce l'indissociabilité. 4 mutations sur
+kaviva 16 écrans, dont la vérification que gate EP-102 et silences
+EP-105 ne bougent pas. compiler 451/451, 28/28 apps. Compteur ③
+inchangé (seul un texte de diagnostic change). Mission : 56,2786 $.
