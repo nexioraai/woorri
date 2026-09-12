@@ -215,9 +215,10 @@ export const RELEASE_TRAIN_V1 = {
     // lieu d'en être la 2e copie. Vocabulaire INCHANGÉ (mêmes 11 rôles +
     // noms hérités) : seul le lieu de la vérité change.
     "c9148c224bfa26e73aa1c82f825e00b58bbf4a92935cd0dd14c933c25a1b9b09",
-  capabilityRegistryVersion: "1.0.0",
+  // EP-134 — ajout compatible `external_contact` : version MINEURE du registre.
+  capabilityRegistryVersion: "1.1.0",
   capabilitySourcesHash:
-    "6c28599246abde6e7010704f23f273aafe50d17c5483133709c9065f2777346c",
+    "d9ca3e729f3bb6158dc95866e0a09eb1515f141d84b2779fb930d4f4bdfa909d",
   // ÉDITION CONSCIENTE (1.3.0) : l'échelle typographique gagne `display`, un
   // cran au-dessus de `heading`. Ajouté AVEC son consommateur réel (l'écran
   // d'accueil produit), jamais « au cas où » — règle posée par DET-023.

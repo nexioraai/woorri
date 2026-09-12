@@ -83,8 +83,14 @@ export function migrerModele(brut: unknown): unknown;
 export const TABLE_GESTES: Record<string, {
   bloc: string | null; declencheur: string | null; effet: string | null;
   transport: string | null; terminal: boolean;
-    preuve: string;
+  /** EP-134 — capacité exigée : aucune, fixe, ou variante selon le commerce. */
+  capacite: string | null | { selonCommerce: Record<string, string> };
+  /** EP-134 — rôle et cardinalité de la surface, DANS la table (plus deux
+   *  tables parallèles qui divergeaient en silence). */
+  role: string; cardinalite: "instance" | "collection" | "singleton";
+  preuve: string;
 }>;
+export const ROLE_PAR_GESTE: Record<string, string>;
 export function contratDEtape(modele: ModeleMetier, parcours: Parcours, index: number):
   | { acteur: string; geste: string; conceptCible: string;
       preconditions: { concept: string; etat: string }[];

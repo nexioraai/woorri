@@ -60,18 +60,61 @@ export const GLOSSAIRE_NATURES_TEMPORELLES = {
 // la TRANSITION, jamais un 10e geste.
 export const NATURES_EXOGENES = ["temps", "evenement_externe", "condition_donnees"];
 
-export const GESTES = [
-  "decouvrir",
-  "chercher",
-  "consulter",
-  "choisir",
-  "saisir",
-  "confirmer",
-  "consulter_historique",
-  "s_identifier",
-  "payer",
-  "retirer",
-];
+// EP-134 · COLONNE `capacite` — LA CAPACITÉ EST UNE PROPRIÉTÉ DU GESTE.
+//
+// AVANT : `capacitesDe` dérivait par des `if (gestesPresents.has(...))` écrits
+// à la main. C'était EXACTEMENT le chemin par lequel un geste à capacité peut
+// entrer sans que sa capacité suive — la faute que le cliquet EP-068 a déjà
+// fermée pour les listes de gestes, restée ouverte ici. Un onzième geste s'y
+// serait glissé silencieusement. La colonne ferme ce chemin : la dérivation
+// LIT la table, et un test recalcule.
+//
+// TROIS FORMES, et pas une quatrième : `null` (aucune capacité), un
+// identifiant (capacité fixe), `{ selonCommerce }` (la variante dépend du
+// discriminant — `payer` est le seul cas, et le diagnostic d'absence reste).
+export const TABLE_GESTES = {
+  decouvrir:            { bloc: "list",         declencheur: null, effet: null,         transport: null,      terminal: false, capacite: null, role: "decouverte", cardinalite: "collection", preuve: "section rendue, données présentes" },
+  chercher:             { bloc: "search_entry", declencheur: "ui", effet: "navigate",   transport: null,      terminal: false, capacite: null, role: "recherche", cardinalite: "collection", preuve: "paire structurelle complète" },
+  consulter:            { bloc: "list",         declencheur: "ui", effet: "navigate",   transport: "itemId",  terminal: true,  capacite: null, role: "detail", cardinalite: "instance", preuve: "détail de l'instance identifiée" },
+  choisir:              { bloc: "list",         declencheur: "ui", effet: "navigate",   transport: "itemId",  terminal: false, capacite: null, role: "choix", cardinalite: "collection", preuve: "identité élue consommée en aval" },
+  saisir:               { bloc: "form",         declencheur: "ui", effet: "mutation",   transport: "instance",terminal: false, capacite: null, role: "saisie", cardinalite: "instance", preuve: "écriture réelle (règle 13)" },
+  confirmer:            { bloc: null,           declencheur: null, effet: "mutation",   transport: null,      terminal: true,  capacite: null, role: "confirmation", cardinalite: "singleton", preuve: "écran de confirmation atteint (thenScreenId)" },
+  consulter_historique: { bloc: "list",         declencheur: "ui", effet: "navigate",   transport: null,      terminal: true,  capacite: null, role: "historique", cardinalite: "collection", preuve: "collection filtrée sur l'état nommé" },
+  s_identifier:         { bloc: "form",         declencheur: "ui", effet: "capability", transport: null,      terminal: false, capacite: "auth", role: "identite", cardinalite: "singleton", preuve: "méthode auth exécutée (enveloppe véridique R1)" },
+  payer:                { bloc: "form",         declencheur: "ui", effet: "mutation",   transport: null,      terminal: false, capacite: { selonCommerce: { digital: "payments.iap", physique_ou_hors_app: "payments.psp" } }, role: "paiement", cardinalite: "collection", preuve: "capacité déclarée, honnêteté règle 17" },
+  retirer:              { bloc: "list",         declencheur: "ui", effet: "mutation",   transport: "itemId",  terminal: false, capacite: null, role: "retrait", cardinalite: "collection", preuve: "collection réduite, état vide atteignable" },
+  // EP-134 — LA PRISE DE CONTACT. Le geste se nomme par sa TRANSFORMATION :
+  // l'échange QUITTE l'application. Aucun canal dans ce nom — « appeler »,
+  // « écrire », « messagerie » seraient des outils, et un geste qui nomme un
+  // outil est un template déguisé (EP-005). Le canal vit dans la capacité,
+  // qui est le seul étage où il a le droit d'être nommé.
+  //
+  // `transport: "itemId"` n'est pas décoratif : c'est LUI qui fait que
+  // `consommateursDIdentite()` compte ce geste — donc que le juge d'identité
+  // perdue (EP-118/EP-122) le couvre SANS une règle de plus. Contacter le
+  // vendeur d'une fiche transporte l'identité de CE vendeur, ou est refusé.
+  //
+  // `terminal: true` : la preuve est observable et c'est une FIN de parcours —
+  // l'utilisateur sort de l'application. Un parcours peut donc s'y achever,
+  // ce qu'un modèle `physique_ou_hors_app` exige : sans paiement en ligne,
+  // aucun autre geste terminal ne conclut la vente.
+  contacter:            { bloc: null,           declencheur: "ui", effet: "capability", transport: "itemId",  terminal: true,  capacite: "external_contact", role: "contact", cardinalite: "instance", preuve: "canal ouvert vers l'instance identifiée (enveloppe véridique)" },
+};
+
+// EP-134 — `GESTES` EST DÉRIVÉ, IL N'EST PLUS ÉCRIT.
+//
+// LE CHEMIN QUI RESTAIT OUVERT, trouvé en appliquant la règle d'EP-132 :
+// `GESTES` et `TABLE_GESTES` étaient DEUX listes indépendantes, déclarées à
+// six cents lignes d'écart. Ajouter un geste à la table sans l'ajouter ici ne
+// déclenchait RIEN — le geste existait pour les dérivations et n'existait pas
+// pour le schéma. Mesuré en direct pendant cette passe : `contacter` ajouté à
+// la table n'apparaissait nulle part, en silence.
+//
+// C'est la quatrième occurrence du motif « une liste écrite deux fois
+// diverge » (prompt v3-v4, J3/EP-059, retirer-source/EP-067). Le cliquet
+// EP-068 refusait déjà toute NOUVELLE liste de gestes à la main ; il ne
+// pouvait rien contre celle qui était là avant lui. Une dérivation le peut.
+export const GESTES = Object.keys(TABLE_GESTES);
 
 // `.strict()` PARTOUT : toute clé hors contrat est un REFUS — c'est le
 // verrou F4 (un `visuel` déclaré ne passe pas) et l'anti-fourre-tout.
@@ -464,27 +507,27 @@ export function etatVideObligatoire(modele, conceptId) {
 
 // ────────────────── C6/C9 (confrontation #12) — SURFACES, PORTÉE, RÉPÉTITION ──
 
+// EP-134 — DEUXIÈME ET TROISIÈME CHEMINS FERMÉS. Ces deux tables étaient
+// indexées par geste, indépendamment de `TABLE_GESTES` : un geste ajouté à la
+// table y prenait un rôle `undefined` et la cardinalité PAR DÉFAUT, en
+// silence. Mesuré en direct : `contacter` produisait une surface de
+// cardinalité « collection » — c'est-à-dire, à l'écran, « contacter le
+// vendeur » ouvrant la LISTE DE TOUS LES VENDEURS. Le défaut constaté à
+// l'appareil n'était pas un accident du générateur : il était inscrit dans la
+// structure, en attente d'un geste pour se manifester.
+//
+// Les valeurs sont RIGOUREUSEMENT celles d'avant — « collection » était le
+// défaut implicite et devient explicite, rien d'autre ne change.
+
 /** Rôle de surface DÉRIVÉ du geste (jamais déclaré, jamais sectoriel). */
-export const ROLE_PAR_GESTE = {
-  decouvrir: "decouverte",
-  chercher: "recherche",
-  consulter: "detail",
-  choisir: "choix",
-  saisir: "saisie",
-  confirmer: "confirmation",
-  consulter_historique: "historique",
-  s_identifier: "identite",
-  payer: "paiement",
-  retirer: "retrait",
-};
+export const ROLE_PAR_GESTE = Object.fromEntries(
+  Object.entries(TABLE_GESTES).map(([g, patron]) => [g, patron.role]),
+);
 
 /** Cardinalité de la surface d'un geste : une instance identifiée, ou N. */
-const CARDINALITE_PAR_GESTE = {
-  consulter: "instance",
-  saisir: "instance",
-  confirmer: "singleton",
-  s_identifier: "singleton",
-};
+const CARDINALITE_PAR_GESTE = Object.fromEntries(
+  Object.entries(TABLE_GESTES).map(([g, patron]) => [g, patron.cardinalite]),
+);
 
 // ── J1/J2/J3 (EP-059, fixture réelle kaviva-spa…modele-p0) — LE REGISTRE
 // D'IDENTITÉ SE PROPAGE le long du parcours : une étape qui ne touche pas
@@ -654,18 +697,7 @@ export function repetitionsSuspectes(surfaces) {
 // qu'une clé. transport/effet/résultat attendus par une étape se DÉRIVENT
 // d'ici (forme normale : décisions dans le modèle, conclusions dans la
 // table) — aucune étape ne les redéclare.
-export const TABLE_GESTES = {
-  decouvrir:            { bloc: "list",         declencheur: null, effet: null,         transport: null,      terminal: false, preuve: "section rendue, données présentes" },
-  chercher:             { bloc: "search_entry", declencheur: "ui", effet: "navigate",   transport: null,      terminal: false, preuve: "paire structurelle complète" },
-  consulter:            { bloc: "list",         declencheur: "ui", effet: "navigate",   transport: "itemId",  terminal: true,  preuve: "détail de l'instance identifiée" },
-  choisir:              { bloc: "list",         declencheur: "ui", effet: "navigate",   transport: "itemId",  terminal: false, preuve: "identité élue consommée en aval" },
-  saisir:               { bloc: "form",         declencheur: "ui", effet: "mutation",   transport: "instance",terminal: false, preuve: "écriture réelle (règle 13)" },
-  confirmer:            { bloc: null,           declencheur: null, effet: "mutation",   transport: null,      terminal: true,  preuve: "écran de confirmation atteint (thenScreenId)" },
-  consulter_historique: { bloc: "list",         declencheur: "ui", effet: "navigate",   transport: null,      terminal: true,  preuve: "collection filtrée sur l'état nommé" },
-  s_identifier:         { bloc: "form",         declencheur: "ui", effet: "capability", transport: null,      terminal: false, preuve: "méthode auth exécutée (enveloppe véridique R1)" },
-  payer:                { bloc: "form",         declencheur: "ui", effet: "mutation",   transport: null,      terminal: false, preuve: "capacité déclarée, honnêteté règle 17" },
-  retirer:              { bloc: "list",         declencheur: "ui", effet: "mutation",   transport: "itemId",  terminal: false, preuve: "collection réduite, état vide atteignable" },
-};
+
 
 // ────────────────── EP-068 — LES LISTES DE GESTES SE DÉRIVENT DE LA TABLE ──
 //
@@ -837,26 +869,36 @@ export function verifierCouvertureLexicale(inventaire, modele) {
 export function capacitesDe(modele) {
   const capacites = [];
   const diagnostics = [];
-  const gestesPresents = new Set(modele.parcours.flatMap((p) => p.etapes.map((e) => e.geste)));
-  if (gestesPresents.has("s_identifier")) {
-    const etape = modele.parcours
-      .flatMap((p) => p.etapes)
-      .find((e) => e.geste === "s_identifier");
-    capacites.push({ capacite: "auth", profilConceptId: etape?.concept });
-  }
-  if (gestesPresents.has("payer")) {
-    // D6 EP-029 : le discriminant EXISTE désormais au modèle (commerce).
-    // Sans lui, P1 a déjà refusé (MODELE_COMMERCE_ABSENT) — ici, dériver.
-    if (modele.commerce === "digital") {
-      capacites.push({ capacite: "payments.iap" });
-    } else if (modele.commerce === "physique_ou_hors_app") {
-      capacites.push({ capacite: "payments.psp" });
-    } else {
+  const etapes = modele.parcours.flatMap((p) => p.etapes);
+  // EP-134 — DÉRIVÉ DE LA TABLE, dans son ordre : plus aucun `if` par geste.
+  for (const geste of GESTES) {
+    const declaree = TABLE_GESTES[geste].capacite;
+    if (declaree === null) continue;
+    const etape = etapes.find((e) => e.geste === geste);
+    if (etape === undefined) continue;
+    if (typeof declaree === "string") {
+      // Le concept TOUCHÉ n'est transmis que pour l'identité : c'est la seule
+      // capacité dont la configuration dépend d'un concept (le profil). Pour
+      // les autres, l'identité voyage par le TRANSPORT du geste, pas par la
+      // capacité — c'est précisément le mécanisme d'EP-118.
+      capacites.push(
+        declaree === "auth"
+          ? { capacite: declaree, profilConceptId: etape.concept }
+          : { capacite: declaree },
+      );
+      continue;
+    }
+    // D6 EP-029 : le discriminant EXISTE au modèle (commerce). Sans lui, P1 a
+    // déjà refusé (MODELE_COMMERCE_ABSENT) — ici, dériver.
+    const variante = declaree.selonCommerce[modele.commerce];
+    if (variante === undefined) {
       diagnostics.push(
-        d("DISCRIMINANT_ABSENT", "capacites[payer]",
+        d("DISCRIMINANT_ABSENT", `capacites[${geste}]`,
           "commerce absent du modèle — refusé en amont par MODELE_COMMERCE_ABSENT"),
       );
+      continue;
     }
+    capacites.push({ capacite: variante });
   }
   return { capacites, diagnostics };
 }
@@ -952,11 +994,18 @@ export function ecransDe(modele) {
     // la première rédaction exigeait la consommation APRÈS `consulter`,
     // alors que `consulter` EST le consommateur — l'arc y entre).
     for (const [i, e] of p.etapes.entries()) {
-      // (a) `consulter` CONSOMME : source d'identité en amont PROPAGÉ (J1 —
-      // les transparentes s'ignorent), du MÊME concept. J2 : un concept
+      // (a) UN CONSOMMATEUR D'IDENTITÉ exige une source en amont PROPAGÉE
+      // (J1 — les transparentes s'ignorent), du MÊME concept. J2 : un concept
       // d'IDENTITÉ DE L'ACTEUR (discriminant structurel s_identifier) se
       // consulte sans ligne — singleton de soi, aucune source exigée.
-      if (e.geste === "consulter" && !estConceptIdentite(modele, e.concept)) {
+      //
+      // EP-134 — QUATRIÈME CHEMIN FERMÉ. Ce juge nommait `consulter` en dur,
+      // alors que la table sait déjà QUI consomme une identité
+      // (`consommateursDIdentite`, dérivé de la colonne transport). Mesuré :
+      // `retirer` en tête de parcours — retirer UNE instance que rien n'a
+      // élue — passait sans un mot, et `contacter` aurait fait de même. Le
+      // juge existait ; il ne regardait qu'un geste sur trois.
+      if (consommateursDIdentite().includes(e.geste) && !estConceptIdentite(modele, e.concept)) {
         const prec = amontIdentitaire(p, i);
         const sourceValide =
           prec !== undefined &&

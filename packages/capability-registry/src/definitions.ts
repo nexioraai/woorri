@@ -388,6 +388,48 @@ const RAW_DEFINITIONS: CapabilityDefinition[] = [
     buildFootprint: { estimatedSizeKb: 350, buildTimeImpact: "low" },
   },
   {
+    // EP-134 — LE PENDANT SORTANT DE `deep_links`.
+    //
+    // `deep_links` est ENTRANT : « ouverture directe d'un écran depuis une
+    // URL ». Rien ne couvrait le sens inverse — quitter l'application pour
+    // joindre quelqu'un. C'est ce que la règle 26 du prompt promettait
+    // (« prise de contact quand le commerce fonctionne ainsi ») sans que ni
+    // geste ni capacité ne sache l'exprimer.
+    //
+    // LE CANAL EST NOMMÉ ICI, ET NULLE PART AILLEURS. C'est le seul étage où
+    // il a le droit de l'être : une capacité déclare ce que la plateforme
+    // fournit. Le GESTE, lui, ne connaît aucun canal — sans quoi il serait un
+    // template déguisé (EP-005). Aucune région, aucun service nommé : les
+    // canaux sont des schémas d'URI standards, et l'application qui les
+    // servira est le choix de l'appareil, jamais du moteur.
+    id: "external_contact",
+    version: "1.0.0",
+    title: "Contact externe",
+    description:
+      "Ouverture d'un canal de contact vers un destinataire porté par les données (appel, message, courriel), via les schémas d'URI du système.",
+    implementation: { kind: "expo_module", package: "expo-linking", version: "~8" },
+    dependencies: { capabilities: [], nativeModules: [] },
+    platforms: { ios: { supported: true, minOsVersion: "15.1" }, android: { supported: true, minSdk: 24 } },
+    compatibleRuntimeProfiles: ["standard", "extended"],
+    nativeConfig: { infoPlistKeys: [], androidManifestPermissions: [], entitlements: [] },
+    inducedPermissions: [],
+    cost: { model: "free", notes: "aucun coût direct" },
+    nativeFootprint: { impact: "light", nativeModules: ["expo-linking"] },
+    otaCompatible: false,
+    requiresRebuild: true,
+    // Une prise de contact n'est PAS un fait de commerce : un support client
+    // en use autant qu'une vente hors application. La lier à une classe
+    // commerce en ferait une capacité de vente — elle ne l'est pas.
+    commerceConstraint: "none",
+    constraints: [
+      "Android 11+ exige que les schémas visés soient déclarés en <queries> au manifeste, sinon l'ouverture échoue silencieusement.",
+      "Le système peut n'avoir aucune application pour un schéma donné : l'ouverture doit être vérifiée avant d'être promise.",
+    ],
+    conflicts: [],
+    provenance: { source: "expo_sdk", reference: "https://docs.expo.dev/versions/latest/sdk/linking/" },
+    buildFootprint: { estimatedSizeKb: 60, buildTimeImpact: "none" },
+  },
+  {
     id: "share",
     version: "1.0.0",
     title: "Partage système",
@@ -418,4 +460,6 @@ export const CAPABILITIES: readonly CapabilityDefinition[] = z
   .sort((a, b) => (a.id < b.id ? -1 : 1));
 
 // GEL v1 (D-020, 2026-08-27) : toute évolution passe par le cliquet.
-export const CAPABILITY_REGISTRY_VERSION = "1.0.0";
+// EP-134 — version MINEURE : AJOUT compatible (`external_contact`), selon la
+// règle d'évolution post-gel D-020. Aucune capacité retirée ni renommée.
+export const CAPABILITY_REGISTRY_VERSION = "1.1.0";

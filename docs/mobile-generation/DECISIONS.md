@@ -7206,3 +7206,63 @@ la session `A1→A11` **n'a pas commencé**. `D-135` ne clôt aucune phase, ne
 produit aucun scorecard, et ne modifie aucun artefact historique : le scorecard
 du **2026-08-29** reste byte-identique, `apxx-grid.ts` et `run-scorecard.mjs`
 restent inchangés.
+
+## D-136 — LA PRISE DE CONTACT ENTRE AU CONTRAT : UN GESTE, UNE CAPACITÉ, ET QUATRE TABLES RÉUNIES — 2026-09-12
+
+**Décision d'ÉVOLUTION DU REGISTRE (règle post-gel D-020) et d'extension de la
+table des gestes.** Exigée par EP-133 : tant que la prise de contact n'est pas
+exprimable, l'élicitation poserait une question dont le moteur ne sait pas
+consommer la réponse.
+
+### ① Le constat — le moteur promettait ce qu'il ne savait pas dire
+
+La règle 26 du prompt P0 promet « prise de contact quand le commerce fonctionne
+ainsi ». `TABLE_GESTES` ne portait aucun geste pour l'exprimer, et le registre
+aucune capacité pour l'exécuter. Un modèle `physique_ou_hors_app` — une vente
+qui se conclut hors application — n'avait donc **aucun geste terminal** pour
+achever son parcours : sans paiement en ligne, rien ne concluait.
+
+### ② Ce qui est ajouté, et à quel étage
+
+- **Geste `contacter`** (table des gestes) : `effet: capability`,
+  `transport: itemId`, `terminal: true`, `cardinalite: instance`,
+  `role: contact`. **Le geste ne nomme AUCUN canal** — « appeler », « écrire »
+  seraient des outils, et un geste qui nomme un outil est un template déguisé
+  (EP-005). Il se nomme par sa transformation : l'échange quitte l'application.
+- **Capacité `external_contact`** (registre, version MINEURE 1.0.0 → 1.1.0,
+  ajout compatible) : pendant SORTANT de `deep_links`, qui est entrant.
+  **C'est le seul étage où un canal a le droit d'être nommé** : une capacité
+  déclare ce que la plateforme fournit. Aucun service tiers, aucune région —
+  les canaux sont des schémas d'URI standards, et l'application qui les sert
+  est le choix de l'appareil.
+- `commerceConstraint: "none"` : une prise de contact n'est pas un fait de
+  commerce — un support client en use autant qu'une vente hors application.
+
+### ③ Ce que l'ajout a RÉVÉLÉ — quatre tables qui ne se parlaient pas
+
+En appliquant la règle permanente d'EP-132 (« par quel autre chemin ce défaut
+pourrait-il entrer ? »), quatre chemins ont été trouvés et fermés :
+
+| # | Chemin | Ce qui se passait | Fermeture |
+|---|---|---|---|
+| 1 | `GESTES` était une liste écrite à la main, à 600 lignes de `TABLE_GESTES` | un geste ajouté à la table n'existait pas pour le schéma, **en silence** | `GESTES` est DÉRIVÉ des clés de la table |
+| 2 | `ROLE_PAR_GESTE`, table parallèle | rôle `undefined` pour tout geste neuf | colonne `role`, table dérivée |
+| 3 | `CARDINALITE_PAR_GESTE`, table parallèle et PARTIELLE | cardinalité « collection » par défaut — **c'est le défaut constaté à l'appareil : « contacter le vendeur » ouvrant la liste de TOUS les vendeurs** | colonne `cardinalite`, valeurs d'avant explicitées |
+| 4 | le juge `DERIVATION_IDENTITE_SANS_SOURCE` nommait `consulter` en dur | `retirer` en tête de parcours — retirer une instance que rien n'a élue — passait sans un mot | le juge lit `consommateursDIdentite()` |
+
+Le quatrième est un **défaut préexistant corrigé au passage** : il ne concernait
+pas la prise de contact, il attendait simplement qu'un geste le révèle.
+
+### ④ Conséquence sur le prompt — obligatoire, pas opportuniste
+
+Le prompt P0 dérive ses listes de la table : son empreinte change
+mécaniquement (v11 `bb8ddd3c` → v12 `75fd5feb`), ré-épinglée aux deux sites.
+EP-043 : retoucher le prompt pour échapper à un verdict est INTERDIT ; le
+mettre à jour parce que le contrat a changé est OBLIGATOIRE. C'est ce second
+cas.
+
+### ⑤ Ce qui n'est PAS décidé ici
+
+Aucune règle liant une région à une fonctionnalité — la frontière d'EP-044
+tient : le moteur ne connaît que la réponse structurelle (`commerce`), jamais
+le marché. L'élicitation elle-même (EP-133) reste à ouvrir, dans son ordre.

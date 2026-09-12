@@ -24,6 +24,7 @@ const V1_CAPABILITY_IDS = [
   "calendar",
   "camera",
   "deep_links",
+  "external_contact",
   "geolocation",
   "maps",
   "media_upload",
@@ -35,14 +36,14 @@ const V1_CAPABILITY_IDS = [
 ];
 
 describe("cliquets de registre", () => {
-  it("le registre v1 est GELÉ en 1.0.0 et chaque contrat porte la version 1.0.0 (D-020)", () => {
-    expect(CAPABILITY_REGISTRY_VERSION).toBe("1.0.0");
+  it("le registre est en 1.1.0 (ajout compatible EP-134) et chaque contrat porte 1.0.0 et chaque contrat porte la version 1.0.0 (D-020)", () => {
+    expect(CAPABILITY_REGISTRY_VERSION).toBe("1.1.0");
     for (const c of CAPABILITIES) {
       expect(c.version, c.id).toBe("1.0.0");
     }
   });
 
-  it("contient EXACTEMENT les 15 capabilities cœur v1, triées", () => {
+  it("contient EXACTEMENT les 16 capabilities déclarées, triées", () => {
     expect(CAPABILITIES.map((c) => c.id)).toEqual(V1_CAPABILITY_IDS);
   });
 
