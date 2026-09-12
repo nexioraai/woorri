@@ -280,7 +280,7 @@ export const DIAGNOSTICS = {
 
   // ── LES DEUX SEULS CERTAINS : le moteur ne POUVAIT PAS savoir ──
   MODELE_TERME_AMBIGU: { classe: IM, pourquoi: "le moteur dit LUI-MÊME qu'il ne sait pas trancher un terme du brief ; seul celui qui l'a écrit peut le lever — c'est le cas fondateur d'EP-089" },
-  MODELE_COMMERCE_ABSENT: { classe: IM, pourquoi: "« le paiement se conclut-il dans l'application ou hors d'elle ? » se répond sans rien savoir du moteur, et la réponse a une destination structurelle : le fait `commerce`" },
+  MODELE_COMMERCE_ABSENT: { classe: IM, pourquoi: "la variante du paiement se demande en mots ordinaires, sans rien savoir du moteur, et la réponse a une destination structurelle : le fait `commerce`" },
 
   // ── DIAGNOSTICS DE DÉRIVATION ET DE PLAN ──
   // Ils sont calculés APRÈS le modèle, SUR un modèle déjà valide : ils
