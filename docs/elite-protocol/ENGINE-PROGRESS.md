@@ -710,3 +710,14 @@ sur GO (fixture t3) = JALON ③ (contrat), contrôle croisé dû après.
 Donnée EP-044 forte : commerce « digital »+payer 3/3 — le brief
 précisé a STABILISÉ la lecture (la variance venait de l'énoncé).
 Mission : 27,0668 $.
+
+--- 2026-09-12 · CONTRÔLE ③ + RE-RUN MARKETPLACE (EP-093/094) ---
+Contrôle croisé DeepSeek (0,003 $) : P1 MODELE_SCHEMA — RAS pour le
+jalon, donnée à la série forme-sans-grammaire (EP-085). Compteur ③ :
+0. RE-RUN Anthropic : P0→P2 = 1/1 — LE JUGE RAFFINÉ VALIDÉ PAR LE
+RÉEL au premier tirage (hier 0/3 sur la même intention). Puis
+TRONCATURE à la passe ecrans : 24 000/24 000 (100 % de NOTRE borne,
+EP-050 ⇒ révision due). Cause mesurée : 24 écrans prescrits vs 16 au
+kaviva vert — taille légitime du domaine. Proposé (GO suivant) :
+MAX_TOKENS 32000 ; si retroncature, la réponse sera SCINDER la passe
+ecrans, pas augmenter. Mission : 29,0527 $.

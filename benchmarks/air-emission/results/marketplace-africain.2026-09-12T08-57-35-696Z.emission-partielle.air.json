@@ -1,0 +1,1356 @@
+{
+  "airSchemaVersion": "1.22.0",
+  "projectId": "prj_marche_sahel",
+  "app": {
+    "name": "Marché Sahel",
+    "slug": "marche-sahel",
+    "description": [
+      {
+        "locale": "fr",
+        "text": "Place de marché du Tchad et du Sahel : les vendeurs ouvrent leur boutique et publient leurs produits avec photos et prix en francs CFA, les acheteurs parcourent le catalogue par catégorie, recherchent un produit et contactent le vendeur directement par WhatsApp ou par téléphone. Aucun paiement en ligne entre acheteur et vendeur ; les vendeurs paient la plateforme pour mettre leurs produits en avant."
+      }
+    ],
+    "locales": {
+      "userLanguage": "fr",
+      "appLocales": [
+        "fr"
+      ],
+      "defaultAppLocale": "fr",
+      "contentLocales": [
+        "fr"
+      ],
+      "rtlSupported": false
+    }
+  },
+  "navigation": {
+    "entryScreenId": "scr_entree",
+    "primary": {
+      "destinations": [
+        {
+          "routeId": "nav_entree",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Marché"
+            }
+          ],
+          "order": 0,
+          "icon": "accueil"
+        },
+        {
+          "routeId": "nav_boutique_saisir",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Ma boutique"
+            }
+          ],
+          "order": 1,
+          "icon": "compte"
+        },
+        {
+          "routeId": "nav_produit_consulter_historique",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Mes produits"
+            }
+          ],
+          "order": 2,
+          "icon": "liste"
+        },
+        {
+          "routeId": "nav_mise_en_avant_consulter_historique",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Mises en avant"
+            }
+          ],
+          "order": 3,
+          "icon": "billet"
+        }
+      ]
+    },
+    "routes": [
+      {
+        "id": "nav_entree",
+        "screenId": "scr_entree",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Marché Sahel"
+          }
+        ]
+      },
+      {
+        "id": "nav_categorie_choisir",
+        "screenId": "scr_cpt_categorie_choisir",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Catégories"
+          }
+        ]
+      },
+      {
+        "id": "nav_produit_choisir_publie",
+        "screenId": "scr_cpt_produit_choisir_publie",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Catalogue"
+          }
+        ]
+      },
+      {
+        "id": "nav_produit_consulter_publie",
+        "screenId": "scr_cpt_produit_consulter_publie",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Fiche produit"
+          }
+        ]
+      },
+      {
+        "id": "nav_boutique_decouvrir",
+        "screenId": "scr_cpt_boutique_decouvrir",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Boutiques"
+          }
+        ]
+      },
+      {
+        "id": "nav_boutique_consulter_ouverte",
+        "screenId": "scr_cpt_boutique_consulter_ouverte",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Boutique"
+          }
+        ]
+      },
+      {
+        "id": "nav_prise_contact_saisir",
+        "screenId": "scr_cpt_prise_contact_saisir",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Contacter le vendeur"
+          }
+        ]
+      },
+      {
+        "id": "nav_prise_contact_confirmer",
+        "screenId": "scr_cpt_prise_contact_confirmer",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Confirmer le contact"
+          }
+        ]
+      },
+      {
+        "id": "nav_prise_contact_consulter_engagee",
+        "screenId": "scr_cpt_prise_contact_consulter_engagee",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Contact engagé"
+          }
+        ]
+      },
+      {
+        "id": "nav_boutique_saisir",
+        "screenId": "scr_cpt_boutique_saisir",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Ouvrir ma boutique"
+          }
+        ]
+      },
+      {
+        "id": "nav_boutique_confirmer",
+        "screenId": "scr_cpt_boutique_confirmer",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Confirmer la boutique"
+          }
+        ]
+      },
+      {
+        "id": "nav_produit_saisir",
+        "screenId": "scr_cpt_produit_saisir",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Publier un produit"
+          }
+        ]
+      },
+      {
+        "id": "nav_produit_confirmer",
+        "screenId": "scr_cpt_produit_confirmer",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Confirmer la publication"
+          }
+        ]
+      },
+      {
+        "id": "nav_produit_consulter_historique",
+        "screenId": "scr_cpt_produit_consulter_historique",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Mes produits"
+          }
+        ]
+      },
+      {
+        "id": "nav_mise_en_avant_saisir",
+        "screenId": "scr_cpt_mise_en_avant_saisir",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Mettre en avant"
+          }
+        ]
+      },
+      {
+        "id": "nav_mise_en_avant_payer",
+        "screenId": "scr_cpt_mise_en_avant_payer",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Régler la mise en avant"
+          }
+        ]
+      },
+      {
+        "id": "nav_mise_en_avant_consulter_active",
+        "screenId": "scr_cpt_mise_en_avant_consulter_active",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Mise en avant active"
+          }
+        ]
+      },
+      {
+        "id": "nav_mise_en_avant_consulter_historique",
+        "screenId": "scr_cpt_mise_en_avant_consulter_historique",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Mises en avant"
+          }
+        ]
+      },
+      {
+        "id": "nav_mise_en_avant_consulter_expiree",
+        "screenId": "scr_cpt_mise_en_avant_consulter_expiree",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Mise en avant expirée"
+          }
+        ]
+      },
+      {
+        "id": "nav_produit_retirer",
+        "screenId": "scr_cpt_produit_retirer",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Retirer le produit"
+          }
+        ]
+      },
+      {
+        "id": "nav_produit_consulter_retire",
+        "screenId": "scr_cpt_produit_consulter_retire",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Produit retiré"
+          }
+        ]
+      }
+    ]
+  },
+  "design": {
+    "theme": "sahel_marche"
+  },
+  "network": {
+    "policy": "deny_by_default",
+    "allowedDomains": [
+      "api.marche-sahel.app",
+      "picsum.photos"
+    ]
+  },
+  "native": {
+    "minIosVersion": "15.0",
+    "minAndroidSdk": 24
+  },
+  "compliance": {
+    "commerceClass": "physical_or_offapp",
+    "accountDeletionRequired": true,
+    "dataCollected": [
+      "contact_info",
+      "identifiers",
+      "usage_data",
+      "user_content",
+      "purchases"
+    ]
+  },
+  "entities": [
+    {
+      "id": "ent_boutique",
+      "name": "boutique",
+      "fields": [
+        {
+          "id": "fld_boutique_nom",
+          "name": "nom",
+          "type": "string",
+          "required": true,
+          "unique": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Nom de la boutique"
+            }
+          ],
+          "demoValues": [
+            "Boutique Abdelkerim N'Djamena",
+            "Sahel Tissus & Pagnes",
+            "Maison Hadjer Électronique",
+            "Comptoir du Chari",
+            "Atelier Artisanat Kanem",
+            "Ferme Bétail Abéché",
+            "Épicerie Toumaï",
+            "Moto Pièces Sarh"
+          ]
+        },
+        {
+          "id": "fld_boutique_description",
+          "name": "description",
+          "type": "text",
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Description"
+            }
+          ],
+          "demoValues": [
+            "Vente de produits alimentaires et épicerie fine, livraison dans N'Djamena.",
+            "Tissus, pagnes et prêt-à-porter importés du Sahel et d'Afrique de l'Ouest.",
+            "Téléphones, accessoires et réparation rapide sur place.",
+            "Produits agricoles du bassin du Chari, gros et détail.",
+            "Artisanat traditionnel : cuir, vannerie, bijoux touaregs.",
+            "Élevage et vente de bétail sélectionné, marché d'Abéché."
+          ]
+        },
+        {
+          "id": "fld_boutique_ville",
+          "name": "ville",
+          "type": "string",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Ville"
+            }
+          ],
+          "demoValues": [
+            "N'Djamena",
+            "Moundou",
+            "Abéché",
+            "Sarh",
+            "Doba",
+            "Am Timan",
+            "Faya-Largeau",
+            "Bongor"
+          ]
+        },
+        {
+          "id": "fld_boutique_telephone",
+          "name": "telephone",
+          "type": "string",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Téléphone"
+            }
+          ],
+          "demoValues": [
+            "+235 66 12 34 56",
+            "+235 99 45 78 21",
+            "+235 63 08 77 40",
+            "+235 95 31 64 09",
+            "+235 66 77 12 88",
+            "+235 90 22 45 13"
+          ]
+        },
+        {
+          "id": "fld_boutique_whatsapp",
+          "name": "whatsapp",
+          "type": "string",
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Numéro WhatsApp"
+            }
+          ],
+          "demoValues": [
+            "+235 66 12 34 56",
+            "+235 99 45 78 21",
+            "+235 63 08 77 40",
+            "+235 95 31 64 09",
+            "+235 66 77 12 88",
+            "+235 90 22 45 13"
+          ]
+        },
+        {
+          "id": "fld_boutique_statut",
+          "name": "statut",
+          "type": "enum",
+          "required": true,
+          "enumValues": [
+            "ouverte",
+            "fermee"
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "État de la boutique"
+            }
+          ],
+          "enumLabels": [
+            {
+              "value": "ouverte",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Boutique ouverte"
+                }
+              ]
+            },
+            {
+              "value": "fermee",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Boutique fermée"
+                }
+              ]
+            }
+          ],
+          "demoValues": [
+            "ouverte",
+            "ouverte",
+            "fermee",
+            "ouverte"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ent_categorie",
+      "name": "categorie",
+      "fields": [
+        {
+          "id": "fld_categorie_nom",
+          "name": "nom",
+          "type": "string",
+          "required": true,
+          "unique": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Catégorie"
+            }
+          ],
+          "demoValues": [
+            "Alimentation",
+            "Tissus et vêtements",
+            "Téléphonie",
+            "Électroménager",
+            "Artisanat",
+            "Élevage et bétail",
+            "Agriculture",
+            "Motos et pièces"
+          ]
+        },
+        {
+          "id": "fld_categorie_description",
+          "name": "description",
+          "type": "text",
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Description de la catégorie"
+            }
+          ],
+          "demoValues": [
+            "Céréales, épices, huiles et produits du quotidien.",
+            "Pagnes, boubous, chaussures et accessoires.",
+            "Téléphones, cartes SIM, accessoires et réparation.",
+            "Réfrigérateurs, ventilateurs, groupes électrogènes.",
+            "Cuir, vannerie, bijoux et objets traditionnels.",
+            "Bovins, ovins, caprins et produits d'élevage."
+          ]
+        },
+        {
+          "id": "fld_categorie_image",
+          "name": "image",
+          "type": "asset",
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Visuel de la catégorie"
+            }
+          ],
+          "demoValues": [
+            "https://picsum.photos/seed/categorie-alimentation-sahel/600/600",
+            "https://picsum.photos/seed/categorie-tissus-pagnes/600/600",
+            "https://picsum.photos/seed/categorie-telephonie-tchad/600/600",
+            "https://picsum.photos/seed/categorie-electromenager/600/600",
+            "https://picsum.photos/seed/categorie-artisanat-kanem/600/600",
+            "https://picsum.photos/seed/categorie-elevage-betail/600/600",
+            "https://picsum.photos/seed/categorie-agriculture-chari/600/600",
+            "https://picsum.photos/seed/categorie-motos-pieces/600/600"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ent_produit",
+      "name": "produit",
+      "fields": [
+        {
+          "id": "fld_produit_titre",
+          "name": "titre",
+          "type": "string",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Nom du produit"
+            }
+          ],
+          "demoValues": [
+            "Pagne wax 6 yards bleu indigo",
+            "Sac de mil rouge 50 kg",
+            "Téléphone Tecno Spark 10",
+            "Bouilloire électrique 1,7 L",
+            "Selle en cuir brodée du Kanem",
+            "Mouton de race ouda",
+            "Ventilateur sur pied 3 vitesses",
+            "Bidon d'huile d'arachide 20 L"
+          ]
+        },
+        {
+          "id": "fld_produit_description",
+          "name": "description",
+          "type": "text",
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Description du produit"
+            }
+          ],
+          "demoValues": [
+            "Tissu wax authentique, coupe 6 yards, coloris indigo, idéal pour boubou.",
+            "Mil rouge récolté cette saison dans le bassin du Chari, sac de 50 kg.",
+            "Smartphone neuf sous garantie 6 mois, 128 Go, double SIM.",
+            "Petit électroménager neuf, garantie 3 mois, disponible à N'Djamena.",
+            "Pièce artisanale cousue main par les artisans du Kanem.",
+            "Animal en bonne santé, vacciné, disponible au marché d'Abéché."
+          ]
+        },
+        {
+          "id": "fld_produit_photo",
+          "name": "photo",
+          "type": "asset",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Photo du produit"
+            }
+          ],
+          "demoValues": [
+            "https://picsum.photos/seed/produit-pagne-wax-indigo/600/600",
+            "https://picsum.photos/seed/produit-sac-mil-rouge/600/600",
+            "https://picsum.photos/seed/produit-telephone-tecno-spark/600/600",
+            "https://picsum.photos/seed/produit-bouilloire-electrique/600/600",
+            "https://picsum.photos/seed/produit-selle-cuir-kanem/600/600",
+            "https://picsum.photos/seed/produit-mouton-ouda-abeche/600/600",
+            "https://picsum.photos/seed/produit-ventilateur-pied/600/600",
+            "https://picsum.photos/seed/produit-huile-arachide-bidon/600/600",
+            "https://picsum.photos/seed/produit-boubou-brode-ndjamena/600/600",
+            "https://picsum.photos/seed/produit-panier-vannerie-sahel/600/600"
+          ]
+        },
+        {
+          "id": "fld_produit_prix",
+          "name": "prix",
+          "type": "number",
+          "required": true,
+          "unit": "FCFA",
+          "sensitive": false
+        },
+        {
+          "id": "fld_produit_statut",
+          "name": "statut",
+          "type": "enum",
+          "required": true,
+          "enumValues": [
+            "publie",
+            "retire"
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "État de publication"
+            }
+          ],
+          "enumLabels": [
+            {
+              "value": "publie",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "En ligne"
+                }
+              ]
+            },
+            {
+              "value": "retire",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Retiré du catalogue"
+                }
+              ]
+            }
+          ],
+          "demoValues": [
+            "publie",
+            "publie",
+            "publie",
+            "retire"
+          ]
+        },
+        {
+          "id": "fld_produit_ville",
+          "name": "ville",
+          "type": "string",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Ville de vente"
+            }
+          ],
+          "demoValues": [
+            "N'Djamena",
+            "Moundou",
+            "Abéché",
+            "Sarh",
+            "Doba",
+            "Bongor"
+          ]
+        },
+        {
+          "id": "fld_produit_boutique",
+          "name": "boutique",
+          "type": "reference",
+          "required": true,
+          "referencesEntityId": "ent_boutique",
+          "referenceDisplayFieldId": "fld_boutique_nom",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Boutique vendeuse"
+            }
+          ]
+        },
+        {
+          "id": "fld_produit_categorie",
+          "name": "categorie",
+          "type": "reference",
+          "required": true,
+          "referencesEntityId": "ent_categorie",
+          "referenceDisplayFieldId": "fld_categorie_nom",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Catégorie"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ent_mise_en_avant",
+      "name": "mise_en_avant",
+      "fields": [
+        {
+          "id": "fld_mise_en_avant_produit",
+          "name": "produit",
+          "type": "reference",
+          "required": true,
+          "referencesEntityId": "ent_produit",
+          "referenceDisplayFieldId": "fld_produit_titre",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Produit mis en avant"
+            }
+          ]
+        },
+        {
+          "id": "fld_mise_en_avant_intitule",
+          "name": "intitule",
+          "type": "string",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Formule de mise en avant"
+            }
+          ],
+          "demoValues": [
+            "Vitrine 7 jours",
+            "Vitrine 15 jours",
+            "Vitrine 30 jours",
+            "Une du marché 3 jours"
+          ]
+        },
+        {
+          "id": "fld_mise_en_avant_date_debut",
+          "name": "date_debut",
+          "type": "date",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Début de la mise en avant"
+            }
+          ],
+          "demoValues": [
+            "2026-01-05",
+            "2026-01-12",
+            "2026-02-01",
+            "2026-02-18"
+          ]
+        },
+        {
+          "id": "fld_mise_en_avant_date_fin",
+          "name": "date_fin",
+          "type": "date",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Fin de la mise en avant"
+            }
+          ],
+          "demoValues": [
+            "2026-01-12",
+            "2026-01-27",
+            "2026-03-03",
+            "2026-02-21"
+          ]
+        },
+        {
+          "id": "fld_mise_en_avant_montant",
+          "name": "montant",
+          "type": "number",
+          "required": true,
+          "unit": "FCFA",
+          "sensitive": false
+        },
+        {
+          "id": "fld_mise_en_avant_statut",
+          "name": "statut",
+          "type": "enum",
+          "required": true,
+          "enumValues": [
+            "a_regler",
+            "active",
+            "expiree"
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "État de la mise en avant"
+            }
+          ],
+          "enumLabels": [
+            {
+              "value": "a_regler",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "En attente de règlement"
+                }
+              ]
+            },
+            {
+              "value": "active",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Active"
+                }
+              ]
+            },
+            {
+              "value": "expiree",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Expirée"
+                }
+              ]
+            }
+          ],
+          "demoValues": [
+            "active",
+            "a_regler",
+            "expiree",
+            "active"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ent_prise_contact",
+      "name": "prise_contact",
+      "fields": [
+        {
+          "id": "fld_prise_contact_canal",
+          "name": "canal",
+          "type": "enum",
+          "required": true,
+          "enumValues": [
+            "whatsapp",
+            "appel"
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Moyen de contact"
+            }
+          ],
+          "enumLabels": [
+            {
+              "value": "whatsapp",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "WhatsApp"
+                }
+              ]
+            },
+            {
+              "value": "appel",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Appel téléphonique"
+                }
+              ]
+            }
+          ],
+          "demoValues": [
+            "whatsapp",
+            "appel",
+            "whatsapp",
+            "whatsapp"
+          ]
+        },
+        {
+          "id": "fld_prise_contact_message",
+          "name": "message",
+          "type": "text",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Message au vendeur"
+            }
+          ],
+          "demoValues": [
+            "Bonjour, ce produit est-il toujours disponible ?",
+            "Bonjour, quel est votre dernier prix pour deux pièces ?",
+            "Bonjour, je passe demain matin à la boutique, êtes-vous ouvert ?",
+            "Bonjour, livrez-vous à Moundou ?",
+            "Bonjour, avez-vous une autre couleur en stock ?",
+            "Bonjour, je souhaite en acheter cinq, possible ?"
+          ]
+        },
+        {
+          "id": "fld_prise_contact_acheteur_nom",
+          "name": "acheteur_nom",
+          "type": "string",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Votre nom"
+            }
+          ],
+          "demoValues": [
+            "Achta Mahamat",
+            "Djimet Ngaro",
+            "Fatimé Brahim",
+            "Ousmane Adoum",
+            "Madeleine Ndoubatar",
+            "Issa Hassaballah"
+          ]
+        },
+        {
+          "id": "fld_prise_contact_acheteur_telephone",
+          "name": "acheteur_telephone",
+          "type": "string",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Votre numéro"
+            }
+          ],
+          "demoValues": [
+            "+235 66 41 02 19",
+            "+235 99 18 73 55",
+            "+235 63 90 44 27",
+            "+235 95 66 10 38"
+          ]
+        },
+        {
+          "id": "fld_prise_contact_statut",
+          "name": "statut",
+          "type": "enum",
+          "required": true,
+          "enumValues": [
+            "a_confirmer",
+            "engage"
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "État du contact"
+            }
+          ],
+          "enumLabels": [
+            {
+              "value": "a_confirmer",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "À confirmer"
+                }
+              ]
+            },
+            {
+              "value": "engage",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Contact engagé"
+                }
+              ]
+            }
+          ],
+          "demoValues": [
+            "engage",
+            "a_confirmer",
+            "engage",
+            "engage"
+          ]
+        },
+        {
+          "id": "fld_prise_contact_produit",
+          "name": "produit",
+          "type": "reference",
+          "required": true,
+          "referencesEntityId": "ent_produit",
+          "referenceDisplayFieldId": "fld_produit_titre",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Produit concerné"
+            }
+          ]
+        },
+        {
+          "id": "fld_prise_contact_boutique",
+          "name": "boutique",
+          "type": "reference",
+          "required": true,
+          "referencesEntityId": "ent_boutique",
+          "referenceDisplayFieldId": "fld_boutique_nom",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Boutique contactée"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "relations": [
+    {
+      "id": "rel_boutique_produit",
+      "fromEntityId": "ent_boutique",
+      "toEntityId": "ent_produit",
+      "kind": "one_to_many"
+    },
+    {
+      "id": "rel_categorie_produit",
+      "fromEntityId": "ent_categorie",
+      "toEntityId": "ent_produit",
+      "kind": "one_to_many"
+    },
+    {
+      "id": "rel_produit_mise_en_avant",
+      "fromEntityId": "ent_produit",
+      "toEntityId": "ent_mise_en_avant",
+      "kind": "one_to_many"
+    },
+    {
+      "id": "rel_produit_prise_contact",
+      "fromEntityId": "ent_produit",
+      "toEntityId": "ent_prise_contact",
+      "kind": "one_to_many"
+    },
+    {
+      "id": "rel_boutique_prise_contact",
+      "fromEntityId": "ent_boutique",
+      "toEntityId": "ent_prise_contact",
+      "kind": "one_to_many"
+    }
+  ],
+  "datasets": [
+    {
+      "id": "data_boutique_seed",
+      "entityId": "ent_boutique",
+      "contentHash": "3f8c1a7d9b20e54c6af31d0928be47105cc9d3a6f1428ebd07359a4c6e2b18f0",
+      "rowCount": 8,
+      "sourceKind": "seed"
+    },
+    {
+      "id": "data_categorie_seed",
+      "entityId": "ent_categorie",
+      "contentHash": "a91d47c0b3e582f16d740ac9581b3ee27f04c6d8931ab52470e6cf18d2953b4a",
+      "rowCount": 8,
+      "sourceKind": "seed"
+    },
+    {
+      "id": "data_produit_seed",
+      "entityId": "ent_produit",
+      "contentHash": "7b2e90d4165cf83a0d7194ce5b6082fa3d19470c8e2ab5f61930dc47b8e05a26",
+      "rowCount": 24,
+      "sourceKind": "seed"
+    },
+    {
+      "id": "data_mise_en_avant_seed",
+      "entityId": "ent_mise_en_avant",
+      "contentHash": "c40f1b986a2d573e8109fb4c62d7350ae9184bd270c35f6a1d8e429b07c5613f",
+      "rowCount": 6,
+      "sourceKind": "seed"
+    },
+    {
+      "id": "data_prise_contact_seed",
+      "entityId": "ent_prise_contact",
+      "contentHash": "e15a8730d9c4b162f0a37e58419cd26b07f3a94d6218ce50bf7392a4d0168c7b",
+      "rowCount": 6,
+      "sourceKind": "seed"
+    }
+  ],
+  "rules": [
+    {
+      "id": "rule_produit_publication_valide",
+      "description": "Un produit publié porte obligatoirement un nom, une photo, un prix en francs CFA strictement positif et un état de publication connu.",
+      "kind": "validation",
+      "entityId": "ent_produit",
+      "assertions": [
+        {
+          "fieldId": "fld_produit_titre",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_produit_photo",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_produit_prix",
+          "operator": "gt",
+          "value": 0
+        },
+        {
+          "fieldId": "fld_produit_statut",
+          "operator": "in",
+          "value": [
+            "publie",
+            "retire"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "rule_produit_rattachement",
+      "description": "Un produit indique sa ville de vente, sa boutique vendeuse et sa catégorie de catalogue.",
+      "kind": "validation",
+      "entityId": "ent_produit",
+      "assertions": [
+        {
+          "fieldId": "fld_produit_ville",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_produit_boutique",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_produit_categorie",
+          "operator": "required"
+        }
+      ]
+    },
+    {
+      "id": "rule_boutique_joignable",
+      "description": "Une boutique déclare son nom, sa ville et un numéro de téléphone joignable au format international du Sahel.",
+      "kind": "validation",
+      "entityId": "ent_boutique",
+      "assertions": [
+        {
+          "fieldId": "fld_boutique_nom",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_boutique_ville",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_boutique_telephone",
+          "operator": "matches",
+          "value": "^\\+?[0-9][0-9 ]{7,19}$"
+        },
+        {
+          "fieldId": "fld_boutique_statut",
+          "operator": "in",
+          "value": [
+            "ouverte",
+            "fermee"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "rule_boutique_ouverte_pour_publier",
+      "description": "Seule une boutique à l'état ouverte peut publier et mettre en avant des produits dans le catalogue.",
+      "kind": "authorization",
+      "entityId": "ent_boutique",
+      "assertions": [
+        {
+          "fieldId": "fld_boutique_statut",
+          "operator": "eq",
+          "value": "ouverte"
+        }
+      ]
+    },
+    {
+      "id": "rule_prise_contact_complete",
+      "description": "Une prise de contact précise le canal choisi (WhatsApp ou appel), le message, le nom et le numéro de l'acheteur ainsi que le produit concerné.",
+      "kind": "validation",
+      "entityId": "ent_prise_contact",
+      "assertions": [
+        {
+          "fieldId": "fld_prise_contact_canal",
+          "operator": "in",
+          "value": [
+            "whatsapp",
+            "appel"
+          ]
+        },
+        {
+          "fieldId": "fld_prise_contact_message",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_prise_contact_acheteur_nom",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_prise_contact_acheteur_telephone",
+          "operator": "matches",
+          "value": "^\\+?[0-9][0-9 ]{7,19}$"
+        },
+        {
+          "fieldId": "fld_prise_contact_produit",
+          "operator": "required"
+        }
+      ]
+    },
+    {
+      "id": "rule_mise_en_avant_valide",
+      "description": "Une mise en avant désigne un produit, une formule, une période et un montant en francs CFA strictement positif payé par le vendeur à la plateforme.",
+      "kind": "validation",
+      "entityId": "ent_mise_en_avant",
+      "assertions": [
+        {
+          "fieldId": "fld_mise_en_avant_produit",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_mise_en_avant_intitule",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_mise_en_avant_date_debut",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_mise_en_avant_date_fin",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_mise_en_avant_montant",
+          "operator": "gt",
+          "value": 0
+        },
+        {
+          "fieldId": "fld_mise_en_avant_statut",
+          "operator": "in",
+          "value": [
+            "a_regler",
+            "active",
+            "expiree"
+          ]
+        }
+      ]
+    }
+  ],
+  "slots": [
+    {
+      "id": "slot_selection_mise_en_avant",
+      "description": "Classe les produits du catalogue en plaçant d'abord ceux dont une mise en avant payée est active à la date du jour, puis les plus récents, et produit le libellé de la section vedette de l'accueil (par exemple « 6 produits mis en avant cette semaine »).",
+      "inputs": [
+        {
+          "name": "produits",
+          "type": "json"
+        },
+        {
+          "name": "misesEnAvant",
+          "type": "json"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "titreSelection",
+          "type": "string"
+        },
+        {
+          "name": "produitsOrdonnes",
+          "type": "json"
+        }
+      ],
+      "allowedImports": []
+    }
+  ],
+  "capabilities": [
+    {
+      "capability": "media_upload",
+      "config": [
+        {
+          "key": "acceptedTypes",
+          "value": [
+            "image/jpeg",
+            "image/png",
+            "image/webp"
+          ]
+        },
+        {
+          "key": "maxImagesPerProduct",
+          "value": 6
+        },
+        {
+          "key": "maxFileSizeMb",
+          "value": 5
+        }
+      ]
+    },
+    {
+      "capability": "deep_links",
+      "config": [
+        {
+          "key": "scheme",
+          "value": "marchesahel"
+        },
+        {
+          "key": "universalLinkDomain",
+          "value": "api.marche-sahel.app"
+        }
+      ]
+    },
+    {
+      "capability": "payments.psp",
+      "config": [
+        {
+          "key": "currency",
+          "value": "XAF"
+        },
+        {
+          "key": "purpose",
+          "value": "mise_en_avant_catalogue"
+        },
+        {
+          "key": "payerRole",
+          "value": "vendeur"
+        }
+      ]
+    }
+  ],
+  "permissions": [
+    {
+      "platform": "ios",
+      "permission": "NSPhotoLibraryUsageDescription",
+      "reason": [
+        {
+          "locale": "fr",
+          "text": "Marché Sahel accède à vos photos pour que vous puissiez illustrer les produits de votre boutique avant de les publier dans le catalogue."
+        }
+      ],
+      "requiredByCapability": "media_upload"
+    },
+    {
+      "platform": "android",
+      "permission": "android.permission.READ_MEDIA_IMAGES",
+      "reason": [
+        {
+          "locale": "fr",
+          "text": "Marché Sahel accède aux images de votre appareil pour joindre une photo à chaque produit que vous publiez dans le catalogue."
+        }
+      ],
+      "requiredByCapability": "media_upload"
+    }
+  ]
+}
