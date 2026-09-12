@@ -34,7 +34,7 @@ const FIXTURE = migrerModele(
 // RE-SCELLEMENT CONSCIENT (post-série, D6 O-1) : le glossaire temporel
 // entre au prompt — v1 98014b65… reste l'estampille de la mesure T2
 // (EP-032) ; v2 est le prompt des exécutions FUTURES.
-const HASH_PROMPT_FIGE = "913380d974fe3d0c4944c6fdda0f2686bface3b51e11c59ccc4d218c8c2d2cef";
+const HASH_PROMPT_FIGE = "ecb43799d9380602ef9e852fc68bac1ce7633ebe94dda69e123c4e78f9154cdf";
 
 describe("intégration minimale P0 — l'instrument, pas l'exécution", () => {
   it("CLIQUET — le hash du prompt est figé", () => {

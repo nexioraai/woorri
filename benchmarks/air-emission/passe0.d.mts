@@ -26,3 +26,4 @@ export function jugerSortieP0(
   };
   critereKaviva?: { pass: boolean; trouves: Record<string, string[]> };
 };
+export function cheminsMinItems(): string[];

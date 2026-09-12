@@ -66,6 +66,9 @@ export const PROMPT_P0 = [
   "· TRANSITION EXOGÈNE : quand un état change SANS acte de l'utilisateur (le système, le temps, un événement du monde), la transition se déclare {vers, exogene: " +
     NATURES_EXOGENES.join("|") +
     "} — JAMAIS un geste que personne n'accomplit. L'état atteint doit rester VISIBLE : une étape de lecture le consomme (etat), sinon le modèle est refusé.",
+  "· AUCUN TABLEAU EXIGÉ NE RESTE VIDE — chacun porte AU MOINS un élément : " +
+    cheminsMinItems().join(" · ") +
+    ". Un tableau vide à l'un de ces chemins est REFUSÉ (mesuré : un fournisseur sans grammaire imposée a rendu noeuds vide — EP-085).",
   "· CHAQUE TRANSITION DÉCLARÉE EST EXERCÉE : une transition {vers, geste} d'un concept exige, dans un parcours, une étape de CE geste (" +
     GESTES.filter((g) => TABLE_GESTES[g].effet === "mutation").join("/") +
     ") sur CE concept — une machine à états plus riche que les parcours est REFUSÉE.",
@@ -101,6 +104,25 @@ export const PROMPT_P0 = [
 
 /** LE point d'invocation (énoncé) — non branché, consommé par le seul
  * lanceur de dry-run sous GO budgétaire. */
+/** EP-086 — les chemins à minItems ≥ 1, DÉRIVÉS de la grammaire canonique
+ * (jamais recopiés) : la ligne v10 les interpole, le cliquet les recalcule.
+ * Lisibles : properties/items effacés, forme humaine `a.b[].c`. */
+export function cheminsMinItems() {
+  const chemins = [];
+  const marcher = (n, chemin) => {
+    if (n === null || typeof n !== "object") return;
+    for (const [k, v] of Object.entries(n)) {
+      if (k === "minItems" && typeof v === "number" && v >= 1) chemins.push(chemin || "racine");
+      if (typeof v === "object") {
+        const suite = k === "properties" || k === "items" || k === "$defs" ? chemin + (k === "items" ? "[]" : "") : chemin + (chemin ? "." : "") + k;
+        marcher(v, k === "properties" || k === "items" || k === "$defs" ? suite : suite);
+      }
+    }
+  };
+  marcher(grammaireP0(), "");
+  return [...new Set(chemins)].sort();
+}
+
 export function construireRequeteP0(brief) {
   return {
     system: PROMPT_P0,

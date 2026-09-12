@@ -109,6 +109,26 @@ describe("PASSE B — le prompt enseigne les corrections, depuis l'enveloppe", (
     expect(SOURCE).toContain("journal.reparationBilan");
   });
 
+  it("EP-086 · v10 : minItems INTERPOLÉ du schéma — recalculé avant d'être exigé", async () => {
+    const p0 = await import("../../../benchmarks/air-emission/passe0.mjs");
+    // dérivation recalculée ICI, indépendamment du prompt (cliquet EP-068).
+    const chemins: string[] = [];
+    const marcher = (n: unknown, chemin: string): void => {
+      if (n === null || typeof n !== "object") return;
+      for (const [k, v] of Object.entries(n as Record<string, unknown>)) {
+        if (k === "minItems" && typeof v === "number" && v >= 1) chemins.push(chemin || "racine");
+        if (typeof v === "object")
+          marcher(v, k === "properties" || k === "$defs" ? chemin : k === "items" ? chemin + "[]" : chemin + (chemin ? "." : "") + k);
+      }
+    };
+    marcher(p0.grammaireP0(), "");
+    const attendus = [...new Set(chemins)].sort();
+    expect(p0.cheminsMinItems()).toEqual(attendus);
+    expect(attendus.length).toBeGreaterThanOrEqual(3);
+    for (const c of attendus) expect(p0.PROMPT_P0).toContain(c);
+    expect(p0.PROMPT_P0).toContain("AUCUN TABLEAU EXIGÉ NE RESTE VIDE");
+  });
+
   it("B6/EP-065 · la garde de GO : une campagne ne part JAMAIS sans jeton", () => {
     expect(SOURCE).toContain('process.env.GO_CAMPAGNE !== "OUI-JE-PAIE"');
     expect(SOURCE).toContain("process.exit(2)");
