@@ -1026,3 +1026,16 @@ cette fois sans dépense ni artefact). AUCUNE des six mesures écrites
 avant n'est rendue — EP-125 reste NON VÉRIFIÉ en réel. L'app sur le
 téléphone reste celle du run 15-27 ; Expo non relancé (rien de neuf).
 Prérequis externe : recharge du compte. Mission : 69,2513 $.
+
+--- 2026-09-12 · RUN RELANCÉ (EP-128) — LE DOCUMENT COMPILE ---
+① BLOCK_SCOPE_INVALID 1 → 0 : l'obligation permanente EP-125 a transmis
+la règle sans attendre un diagnostic. ② LE DOCUMENT RETENU COMPILE
+(83 fichiers, tsc EXIT=0) — la condition de L-124-A est levée.
+③ Cibles d'identité 4 → 1 : recul net, famille non éteinte, aucun
+énoncé plus fort. ④ Juges neufs : 2 blocs + 3 boutons, ils ont un
+objet ; la gate a rejeté la réparation (1 introduit), attempt1
+conservé. ⑤ Surplus d'attributs 15 champs pour 7 attributs — mesuré,
+non traité, il CROÎT. ⑥ Aucune régression : chrome 3/18, recherche au
+bon endroit, arcs 0, morts 0, bijection 18/18 (8e taille). Q1 NON :
+11 diagnostics. App « Sahel Souk » (18 écrans, 45 actions) émise,
+typecheckée, poussée sur le SM-A175F. Mission : 74,1390 $.

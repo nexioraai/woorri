@@ -1,0 +1,4947 @@
+{
+  "airSchemaVersion": "1.22.0",
+  "projectId": "prj_sahel_souk",
+  "app": {
+    "name": "Sahel Souk",
+    "slug": "sahel-souk",
+    "description": [
+      {
+        "locale": "fr",
+        "text": "Place de marché du Tchad et du Sahel : les vendeurs ouvrent leur boutique et publient leurs produits avec photos et prix en francs CFA, les acheteurs parcourent le catalogue par catégorie, recherchent un produit et contactent le vendeur directement par WhatsApp ou par téléphone. Aucun paiement en ligne entre acheteur et vendeur ; les vendeurs paient la plateforme pour mettre leurs produits en avant."
+      }
+    ],
+    "locales": {
+      "userLanguage": "fr",
+      "appLocales": [
+        "fr"
+      ],
+      "defaultAppLocale": "fr",
+      "contentLocales": [
+        "fr"
+      ],
+      "rtlSupported": false
+    }
+  },
+  "navigation": {
+    "entryScreenId": "scr_entree",
+    "primary": {
+      "destinations": [
+        {
+          "routeId": "nav_entree",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Accueil"
+            }
+          ],
+          "order": 0,
+          "icon": "accueil"
+        },
+        {
+          "routeId": "nav_boutique_saisir",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Ma boutique"
+            }
+          ],
+          "order": 1,
+          "icon": "compte"
+        },
+        {
+          "routeId": "nav_mise_en_avant_historique",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Mises en avant"
+            }
+          ],
+          "order": 2,
+          "icon": "billet"
+        }
+      ]
+    },
+    "routes": [
+      {
+        "id": "nav_entree",
+        "screenId": "scr_entree",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Accueil"
+          }
+        ]
+      },
+      {
+        "id": "nav_categorie_choisir",
+        "screenId": "scr_cpt_categorie_choisir",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Catégories"
+          }
+        ]
+      },
+      {
+        "id": "nav_produit_choisir",
+        "screenId": "scr_cpt_produit_choisir",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Catalogue"
+          }
+        ]
+      },
+      {
+        "id": "nav_produit_consulter_publie",
+        "screenId": "scr_cpt_produit_consulter_publie",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Fiche produit"
+          }
+        ]
+      },
+      {
+        "id": "nav_boutique_decouvrir",
+        "screenId": "scr_cpt_boutique_decouvrir",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Boutiques"
+          }
+        ]
+      },
+      {
+        "id": "nav_boutique_consulter_ouverte",
+        "screenId": "scr_cpt_boutique_consulter_ouverte",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Boutique"
+          }
+        ]
+      },
+      {
+        "id": "nav_boutique_saisir",
+        "screenId": "scr_cpt_boutique_saisir",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Ma boutique"
+          }
+        ]
+      },
+      {
+        "id": "nav_boutique_confirmer",
+        "screenId": "scr_cpt_boutique_confirmer",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Confirmer la boutique"
+          }
+        ]
+      },
+      {
+        "id": "nav_boutique_consulter_ouverte_vendeur",
+        "screenId": "scr_cpt_boutique_consulter_ouverte_acteur_act_vendeur",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Ma boutique"
+          }
+        ]
+      },
+      {
+        "id": "nav_produit_saisir",
+        "screenId": "scr_cpt_produit_saisir",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Publier un produit"
+          }
+        ]
+      },
+      {
+        "id": "nav_produit_confirmer",
+        "screenId": "scr_cpt_produit_confirmer",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Confirmer le produit"
+          }
+        ]
+      },
+      {
+        "id": "nav_produit_consulter_publie_vendeur",
+        "screenId": "scr_cpt_produit_consulter_publie_acteur_act_vendeur",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Mon produit"
+          }
+        ]
+      },
+      {
+        "id": "nav_produit_choisir_vendeur",
+        "screenId": "scr_cpt_produit_choisir_acteur_act_vendeur",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Mes produits"
+          }
+        ]
+      },
+      {
+        "id": "nav_mise_en_avant_saisir",
+        "screenId": "scr_cpt_mise_en_avant_saisir",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Mettre en avant"
+          }
+        ]
+      },
+      {
+        "id": "nav_mise_en_avant_payer",
+        "screenId": "scr_cpt_mise_en_avant_payer",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Paiement de la mise en avant"
+          }
+        ]
+      },
+      {
+        "id": "nav_mise_en_avant_consulter_active",
+        "screenId": "scr_cpt_mise_en_avant_consulter_active",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Mise en avant active"
+          }
+        ]
+      },
+      {
+        "id": "nav_mise_en_avant_historique",
+        "screenId": "scr_cpt_mise_en_avant_consulter_historique",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Mises en avant"
+          }
+        ]
+      },
+      {
+        "id": "nav_mise_en_avant_consulter_expiree",
+        "screenId": "scr_cpt_mise_en_avant_consulter_expiree",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Mise en avant expirée"
+          }
+        ]
+      }
+    ]
+  },
+  "design": {
+    "theme": "sahel_marche"
+  },
+  "network": {
+    "policy": "deny_by_default",
+    "allowedDomains": [
+      "api.sahelsouk.app",
+      "picsum.photos"
+    ]
+  },
+  "native": {
+    "minIosVersion": "15.0",
+    "minAndroidSdk": 24
+  },
+  "compliance": {
+    "commerceClass": "physical_or_offapp",
+    "accountDeletionRequired": true,
+    "dataCollected": [
+      "contact_info",
+      "identifiers",
+      "usage_data",
+      "user_content",
+      "purchases"
+    ]
+  },
+  "entities": [
+    {
+      "id": "ent_categorie",
+      "name": "categorie",
+      "fields": [
+        {
+          "id": "fld_categorie_nom",
+          "name": "nom",
+          "type": "string",
+          "required": true,
+          "unique": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Catégorie"
+            }
+          ],
+          "demoValues": [
+            "Mode & Textile",
+            "Artisanat du Sahel",
+            "Alimentation",
+            "Électronique",
+            "Maison & Cuisine",
+            "Agriculture & Élevage",
+            "Téléphonie",
+            "Cosmétiques naturelles"
+          ]
+        },
+        {
+          "id": "fld_categorie_visuel",
+          "name": "visuel",
+          "type": "asset",
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Visuel de la catégorie"
+            }
+          ],
+          "demoValues": [
+            "https://picsum.photos/seed/categorie-mode-textile-sahel/600/600",
+            "https://picsum.photos/seed/categorie-artisanat-sahel/600/600",
+            "https://picsum.photos/seed/categorie-alimentation-mil/600/600",
+            "https://picsum.photos/seed/categorie-electronique-solaire/600/600",
+            "https://picsum.photos/seed/categorie-maison-cuisine/600/600",
+            "https://picsum.photos/seed/categorie-agriculture-elevage/600/600",
+            "https://picsum.photos/seed/categorie-telephonie-mobile/600/600",
+            "https://picsum.photos/seed/categorie-cosmetiques-karite/600/600"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ent_boutique",
+      "name": "boutique",
+      "fields": [
+        {
+          "id": "fld_boutique_nom",
+          "name": "nom",
+          "type": "string",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Nom de la boutique"
+            }
+          ],
+          "demoValues": [
+            "Boutique Ndjari Textiles",
+            "Maison Hadjer Artisanat",
+            "Sahel Élec N'Djamena",
+            "Comptoir du Kanem",
+            "Atelier Cuir d'Abéché",
+            "Marché Dembé Épices"
+          ]
+        },
+        {
+          "id": "fld_boutique_description",
+          "name": "description",
+          "type": "text",
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Présentation de la boutique"
+            }
+          ],
+          "demoValues": [
+            "Tissus wax, boubous brodés et tenues de cérémonie, cousus sur mesure au marché de Dembé.",
+            "Bijoux touaregs, cuir et vannerie, travaillés à la main par nos artisans.",
+            "Panneaux solaires, radios et lampes rechargeables pour la ville et la brousse.",
+            "Mil, arachides, sésame et dattes du Kanem, vendus au sac ou au détail.",
+            "Sacs, sandales et ceintures en cuir de chèvre tanné à Abéché.",
+            "Épices, thé vert et condiments du Sahel, livrés dans toute la ville."
+          ]
+        },
+        {
+          "id": "fld_boutique_ville",
+          "name": "ville",
+          "type": "string",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Ville"
+            }
+          ],
+          "demoValues": [
+            "N'Djamena",
+            "Moundou",
+            "Abéché",
+            "Sarh",
+            "Niamey",
+            "Bamako"
+          ]
+        },
+        {
+          "id": "fld_boutique_pays",
+          "name": "pays",
+          "type": "string",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Pays"
+            }
+          ],
+          "demoValues": [
+            "Tchad",
+            "Niger",
+            "Mali",
+            "Burkina Faso",
+            "Mauritanie"
+          ]
+        },
+        {
+          "id": "fld_boutique_telephone",
+          "name": "telephone",
+          "type": "string",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Téléphone"
+            }
+          ],
+          "demoValues": [
+            "+235 66 12 34 56",
+            "+235 99 45 78 10",
+            "+235 63 22 09 87",
+            "+227 90 11 22 33",
+            "+223 76 54 32 10",
+            "+235 65 78 41 20"
+          ]
+        },
+        {
+          "id": "fld_boutique_whatsapp",
+          "name": "whatsapp",
+          "type": "string",
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Numéro WhatsApp"
+            }
+          ],
+          "demoValues": [
+            "+235 66 12 34 56",
+            "+235 99 45 78 10",
+            "+235 63 22 09 87",
+            "+227 90 11 22 33",
+            "+223 76 54 32 10",
+            "+235 65 78 41 20"
+          ]
+        },
+        {
+          "id": "fld_boutique_logo",
+          "name": "logo",
+          "type": "asset",
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Logo de la boutique"
+            }
+          ],
+          "demoValues": [
+            "https://picsum.photos/seed/boutique-ndjari-textiles/600/600",
+            "https://picsum.photos/seed/boutique-hadjer-artisanat/600/600",
+            "https://picsum.photos/seed/boutique-sahel-elec-ndjamena/600/600",
+            "https://picsum.photos/seed/boutique-comptoir-kanem/600/600",
+            "https://picsum.photos/seed/boutique-atelier-cuir-abeche/600/600",
+            "https://picsum.photos/seed/boutique-marche-dembe-epices/600/600"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ent_produit",
+      "name": "produit",
+      "fields": [
+        {
+          "id": "fld_produit_titre",
+          "name": "titre",
+          "type": "string",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Titre du produit"
+            }
+          ],
+          "demoValues": [
+            "Boubou brodé homme en coton",
+            "Collier touareg en argent",
+            "Sac en cuir de chèvre d'Abéché",
+            "Sac de mil rouge 25 kg",
+            "Théière émaillée du Sahel",
+            "Panier tressé en doum",
+            "Radio solaire FM rechargeable",
+            "Tapis en laine du Kanem"
+          ]
+        },
+        {
+          "id": "fld_produit_description",
+          "name": "description",
+          "type": "text",
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Description"
+            }
+          ],
+          "demoValues": [
+            "Coton épais brodé main, coupe ample, disponible en beige, blanc cassé et indigo.",
+            "Argent martelé par un artisan de Bol, chaîne réglable, livré dans son étui en cuir.",
+            "Cuir de chèvre tanné et cousu à la main, doublure toile, bandoulière réglable.",
+            "Mil rouge de la récolte de la saison, sac de 25 kg trié et propre.",
+            "Émail traditionnel, contenance 1,5 litre, idéale pour le thé à la menthe.",
+            "Vannerie en palmier doum tressée à la main, deux anses renforcées.",
+            "Panneau solaire intégré, batterie 2000 mAh, lampe torche et port USB.",
+            "Laine filée et teinte à la main, motifs géométriques du Kanem, 120 x 180 cm."
+          ]
+        },
+        {
+          "id": "fld_produit_photos",
+          "name": "photos",
+          "type": "asset",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Photos du produit"
+            }
+          ],
+          "demoValues": [
+            "https://picsum.photos/seed/produit-boubou-brode-coton/600/600",
+            "https://picsum.photos/seed/produit-collier-touareg-argent/600/600",
+            "https://picsum.photos/seed/produit-sac-cuir-chevre-abeche/600/600",
+            "https://picsum.photos/seed/produit-sac-mil-rouge-25kg/600/600",
+            "https://picsum.photos/seed/produit-theiere-emaillee-sahel/600/600",
+            "https://picsum.photos/seed/produit-panier-tresse-doum/600/600",
+            "https://picsum.photos/seed/produit-radio-solaire-fm/600/600",
+            "https://picsum.photos/seed/produit-tapis-laine-kanem/600/600",
+            "https://picsum.photos/seed/produit-sandales-cuir-sahel/600/600",
+            "https://picsum.photos/seed/produit-lampe-solaire-brousse/600/600"
+          ]
+        },
+        {
+          "id": "fld_produit_prix",
+          "name": "prix",
+          "type": "number",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Prix"
+            }
+          ],
+          "unit": "FCFA",
+          "sensitive": false
+        },
+        {
+          "id": "fld_produit_devise",
+          "name": "devise",
+          "type": "string",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Devise"
+            }
+          ],
+          "demoValues": [
+            "FCFA"
+          ]
+        },
+        {
+          "id": "fld_produit_categorie",
+          "name": "categorie",
+          "type": "reference",
+          "required": true,
+          "referencesEntityId": "ent_categorie",
+          "referenceDisplayFieldId": "fld_categorie_nom",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Catégorie"
+            }
+          ]
+        },
+        {
+          "id": "fld_produit_categorie_nom",
+          "name": "categorie_nom",
+          "type": "string",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Catégorie"
+            }
+          ],
+          "demoValues": [
+            "Mode & Textile",
+            "Artisanat du Sahel",
+            "Alimentation",
+            "Électronique",
+            "Maison & Cuisine",
+            "Agriculture & Élevage",
+            "Téléphonie",
+            "Cosmétiques naturelles"
+          ]
+        },
+        {
+          "id": "fld_produit_boutique",
+          "name": "boutique",
+          "type": "reference",
+          "required": true,
+          "referencesEntityId": "ent_boutique",
+          "referenceDisplayFieldId": "fld_boutique_nom",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Boutique"
+            }
+          ]
+        },
+        {
+          "id": "fld_produit_boutique_nom",
+          "name": "boutique_nom",
+          "type": "string",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Vendeur"
+            }
+          ],
+          "demoValues": [
+            "Boutique Ndjari Textiles",
+            "Maison Hadjer Artisanat",
+            "Sahel Élec N'Djamena",
+            "Comptoir du Kanem",
+            "Atelier Cuir d'Abéché",
+            "Marché Dembé Épices"
+          ]
+        },
+        {
+          "id": "fld_produit_ville",
+          "name": "ville",
+          "type": "string",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Ville du vendeur"
+            }
+          ],
+          "demoValues": [
+            "N'Djamena",
+            "Moundou",
+            "Abéché",
+            "Sarh",
+            "Niamey",
+            "Bamako"
+          ]
+        },
+        {
+          "id": "fld_produit_telephone",
+          "name": "telephone",
+          "type": "string",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Téléphone du vendeur"
+            }
+          ],
+          "demoValues": [
+            "+235 66 12 34 56",
+            "+235 99 45 78 10",
+            "+235 63 22 09 87",
+            "+227 90 11 22 33",
+            "+223 76 54 32 10",
+            "+235 65 78 41 20"
+          ]
+        },
+        {
+          "id": "fld_produit_whatsapp",
+          "name": "whatsapp",
+          "type": "string",
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "WhatsApp du vendeur"
+            }
+          ],
+          "demoValues": [
+            "+235 66 12 34 56",
+            "+235 99 45 78 10",
+            "+235 63 22 09 87",
+            "+227 90 11 22 33",
+            "+223 76 54 32 10",
+            "+235 65 78 41 20"
+          ]
+        },
+        {
+          "id": "fld_produit_publie_le",
+          "name": "publie_le",
+          "type": "date",
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Publié le"
+            }
+          ],
+          "demoValues": [
+            "2026-01-12",
+            "2026-01-28",
+            "2026-02-03",
+            "2026-02-14",
+            "2026-02-21",
+            "2026-03-02",
+            "2026-03-09",
+            "2026-03-17"
+          ]
+        },
+        {
+          "id": "fld_produit_en_avant",
+          "name": "en_avant",
+          "type": "boolean",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Mise en avant"
+            }
+          ],
+          "enumLabels": [
+            {
+              "value": "true",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "En avant"
+                }
+              ]
+            },
+            {
+              "value": "false",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Standard"
+                }
+              ]
+            }
+          ],
+          "demoValues": [
+            "true",
+            "false",
+            "false",
+            "true",
+            "false",
+            "false",
+            "true",
+            "false"
+          ]
+        },
+        {
+          "id": "fld_produit_disponibilite",
+          "name": "disponibilite",
+          "type": "enum",
+          "required": true,
+          "enumValues": [
+            "disponible",
+            "sur_commande",
+            "epuise"
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Disponibilité"
+            }
+          ],
+          "enumLabels": [
+            {
+              "value": "disponible",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Disponible"
+                }
+              ]
+            },
+            {
+              "value": "sur_commande",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Sur commande"
+                }
+              ]
+            },
+            {
+              "value": "epuise",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Épuisé"
+                }
+              ]
+            }
+          ],
+          "demoValues": [
+            "disponible",
+            "disponible",
+            "sur_commande",
+            "disponible",
+            "epuise",
+            "disponible",
+            "disponible",
+            "sur_commande"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ent_mise_en_avant",
+      "name": "mise_en_avant",
+      "fields": [
+        {
+          "id": "fld_mise_en_avant_produit",
+          "name": "produit",
+          "type": "reference",
+          "required": true,
+          "referencesEntityId": "ent_produit",
+          "referenceDisplayFieldId": "fld_produit_titre",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Produit mis en avant"
+            }
+          ]
+        },
+        {
+          "id": "fld_mise_en_avant_produit_titre",
+          "name": "produit_titre",
+          "type": "string",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Produit mis en avant"
+            }
+          ],
+          "demoValues": [
+            "Boubou brodé homme en coton",
+            "Collier touareg en argent",
+            "Sac en cuir de chèvre d'Abéché",
+            "Sac de mil rouge 25 kg",
+            "Théière émaillée du Sahel",
+            "Radio solaire FM rechargeable"
+          ]
+        },
+        {
+          "id": "fld_mise_en_avant_debut",
+          "name": "debut",
+          "type": "date",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Début de la mise en avant"
+            }
+          ],
+          "demoValues": [
+            "2026-01-15",
+            "2026-02-01",
+            "2026-02-18",
+            "2026-03-01",
+            "2026-03-10",
+            "2026-03-20"
+          ]
+        },
+        {
+          "id": "fld_mise_en_avant_fin",
+          "name": "fin",
+          "type": "date",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Fin de la mise en avant"
+            }
+          ],
+          "demoValues": [
+            "2026-01-22",
+            "2026-03-03",
+            "2026-02-25",
+            "2026-03-31",
+            "2026-03-17",
+            "2026-04-19"
+          ]
+        },
+        {
+          "id": "fld_mise_en_avant_duree",
+          "name": "duree",
+          "type": "enum",
+          "required": true,
+          "enumValues": [
+            "7_jours",
+            "14_jours",
+            "30_jours"
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Durée"
+            }
+          ],
+          "enumLabels": [
+            {
+              "value": "7_jours",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "7 jours"
+                }
+              ]
+            },
+            {
+              "value": "14_jours",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "14 jours"
+                }
+              ]
+            },
+            {
+              "value": "30_jours",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "30 jours"
+                }
+              ]
+            }
+          ],
+          "demoValues": [
+            "7_jours",
+            "30_jours",
+            "7_jours",
+            "30_jours",
+            "7_jours",
+            "30_jours"
+          ]
+        },
+        {
+          "id": "fld_mise_en_avant_tarif",
+          "name": "tarif",
+          "type": "number",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Tarif"
+            }
+          ],
+          "unit": "FCFA",
+          "sensitive": false
+        },
+        {
+          "id": "fld_mise_en_avant_devise",
+          "name": "devise",
+          "type": "string",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Devise"
+            }
+          ],
+          "demoValues": [
+            "FCFA"
+          ]
+        },
+        {
+          "id": "fld_mise_en_avant_statut",
+          "name": "statut",
+          "type": "enum",
+          "required": true,
+          "enumValues": [
+            "a_payer",
+            "active",
+            "expiree"
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Statut"
+            }
+          ],
+          "enumLabels": [
+            {
+              "value": "a_payer",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "En attente de paiement"
+                }
+              ]
+            },
+            {
+              "value": "active",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Active"
+                }
+              ]
+            },
+            {
+              "value": "expiree",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Expirée"
+                }
+              ]
+            }
+          ],
+          "demoValues": [
+            "active",
+            "expiree",
+            "a_payer",
+            "active",
+            "expiree",
+            "active"
+          ]
+        },
+        {
+          "id": "fld_mise_en_avant_reference_paiement",
+          "name": "reference_paiement",
+          "type": "string",
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Référence de paiement"
+            }
+          ],
+          "demoValues": [
+            "MAV-2026-0114",
+            "MAV-2026-0207",
+            "MAV-2026-0233",
+            "MAV-2026-0310",
+            "MAV-2026-0341",
+            "MAV-2026-0388"
+          ]
+        },
+        {
+          "id": "fld_mise_en_avant_moyen_paiement",
+          "name": "moyen_paiement",
+          "type": "enum",
+          "required": true,
+          "enumValues": [
+            "mobile_money",
+            "especes_agence",
+            "virement"
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Moyen de paiement"
+            }
+          ],
+          "enumLabels": [
+            {
+              "value": "mobile_money",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Mobile Money"
+                }
+              ]
+            },
+            {
+              "value": "especes_agence",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Espèces en agence"
+                }
+              ]
+            },
+            {
+              "value": "virement",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Virement bancaire"
+                }
+              ]
+            }
+          ],
+          "demoValues": [
+            "mobile_money",
+            "especes_agence",
+            "mobile_money",
+            "virement",
+            "mobile_money",
+            "especes_agence"
+          ]
+        }
+      ]
+    }
+  ],
+  "relations": [
+    {
+      "id": "rel_categorie_produits",
+      "fromEntityId": "ent_categorie",
+      "toEntityId": "ent_produit",
+      "kind": "one_to_many"
+    },
+    {
+      "id": "rel_boutique_produits",
+      "fromEntityId": "ent_boutique",
+      "toEntityId": "ent_produit",
+      "kind": "one_to_many"
+    },
+    {
+      "id": "rel_produit_mises_en_avant",
+      "fromEntityId": "ent_produit",
+      "toEntityId": "ent_mise_en_avant",
+      "kind": "one_to_many"
+    }
+  ],
+  "datasets": [
+    {
+      "id": "data_categorie",
+      "entityId": "ent_categorie",
+      "contentHash": "3f9c1ab47d02e85b6c4a17de9028f5b1cc73a4e09d16bb27f8541ce03a9d6172",
+      "rowCount": 8,
+      "sourceKind": "seed"
+    },
+    {
+      "id": "data_boutique",
+      "entityId": "ent_boutique",
+      "contentHash": "a1d47c60b93f2e85104fd7ba6c39e2178bf05c4d9a6e3318d72fb04591ce6a37",
+      "rowCount": 6,
+      "sourceKind": "seed"
+    },
+    {
+      "id": "data_produit",
+      "entityId": "ent_produit",
+      "contentHash": "c85be0417a2d93f6e15cb748092da3167f40b5c29e836d1a47fc0b95d3e28a60",
+      "rowCount": 24,
+      "sourceKind": "seed"
+    },
+    {
+      "id": "data_mise_en_avant",
+      "entityId": "ent_mise_en_avant",
+      "contentHash": "7b204ef9c136a85d0e47fb1c93a2650d8f3714be9c0d52a6178fbd3e40c95a82",
+      "rowCount": 6,
+      "sourceKind": "seed"
+    }
+  ],
+  "rules": [
+    {
+      "id": "rule_produit_publication_valide",
+      "description": "Un produit publié porte un titre, au moins une photo, une catégorie, un prix strictement positif en francs CFA et une disponibilité connue.",
+      "kind": "validation",
+      "entityId": "ent_produit",
+      "assertions": [
+        {
+          "fieldId": "fld_produit_titre",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_produit_photos",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_produit_categorie_nom",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_produit_prix",
+          "operator": "gt",
+          "value": 0
+        },
+        {
+          "fieldId": "fld_produit_devise",
+          "operator": "eq",
+          "value": "FCFA"
+        },
+        {
+          "fieldId": "fld_produit_disponibilite",
+          "operator": "in",
+          "value": [
+            "disponible",
+            "sur_commande",
+            "epuise"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "rule_produit_contact_vendeur_obligatoire",
+      "description": "Aucun paiement en ligne : tout produit publié doit porter un moyen de contact direct du vendeur (téléphone, WhatsApp optionnel) et le nom de sa boutique.",
+      "kind": "validation",
+      "entityId": "ent_produit",
+      "assertions": [
+        {
+          "fieldId": "fld_produit_telephone",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_produit_telephone",
+          "operator": "matches",
+          "value": "^\\+[0-9][0-9 ]{7,19}$"
+        },
+        {
+          "fieldId": "fld_produit_boutique_nom",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_produit_ville",
+          "operator": "required"
+        }
+      ]
+    },
+    {
+      "id": "rule_boutique_identite_valide",
+      "description": "Une boutique s'ouvre avec un nom, une ville, un pays du Sahel et un numéro de téléphone joignable.",
+      "kind": "validation",
+      "entityId": "ent_boutique",
+      "assertions": [
+        {
+          "fieldId": "fld_boutique_nom",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_boutique_ville",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_boutique_pays",
+          "operator": "in",
+          "value": [
+            "Tchad",
+            "Niger",
+            "Mali",
+            "Burkina Faso",
+            "Mauritanie"
+          ]
+        },
+        {
+          "fieldId": "fld_boutique_telephone",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_boutique_telephone",
+          "operator": "matches",
+          "value": "^\\+[0-9][0-9 ]{7,19}$"
+        }
+      ]
+    },
+    {
+      "id": "rule_categorie_nom_valide",
+      "description": "Une catégorie du catalogue porte un nom lisible et non vide.",
+      "kind": "validation",
+      "entityId": "ent_categorie",
+      "assertions": [
+        {
+          "fieldId": "fld_categorie_nom",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_categorie_nom",
+          "operator": "matches",
+          "value": "^.{2,40}$"
+        }
+      ]
+    },
+    {
+      "id": "rule_mise_en_avant_commande_valide",
+      "description": "Une mise en avant vise un produit, porte une durée du barème, un tarif d'au moins 5 000 FCFA en francs CFA, un moyen de paiement et des dates cohérentes.",
+      "kind": "validation",
+      "entityId": "ent_mise_en_avant",
+      "assertions": [
+        {
+          "fieldId": "fld_mise_en_avant_produit_titre",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_mise_en_avant_duree",
+          "operator": "in",
+          "value": [
+            "7_jours",
+            "14_jours",
+            "30_jours"
+          ]
+        },
+        {
+          "fieldId": "fld_mise_en_avant_tarif",
+          "operator": "gte",
+          "value": 5000
+        },
+        {
+          "fieldId": "fld_mise_en_avant_devise",
+          "operator": "eq",
+          "value": "FCFA"
+        },
+        {
+          "fieldId": "fld_mise_en_avant_moyen_paiement",
+          "operator": "in",
+          "value": [
+            "mobile_money",
+            "especes_agence",
+            "virement"
+          ]
+        },
+        {
+          "fieldId": "fld_mise_en_avant_debut",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_mise_en_avant_fin",
+          "operator": "required"
+        }
+      ]
+    },
+    {
+      "id": "rule_mise_en_avant_statut_valide",
+      "description": "Le statut d'une mise en avant reste dans le cycle attendu : en attente de paiement, active ou expirée.",
+      "kind": "validation",
+      "entityId": "ent_mise_en_avant",
+      "assertions": [
+        {
+          "fieldId": "fld_mise_en_avant_statut",
+          "operator": "in",
+          "value": [
+            "a_payer",
+            "active",
+            "expiree"
+          ]
+        }
+      ]
+    }
+  ],
+  "slots": [
+    {
+      "id": "slot_tarif_mise_en_avant",
+      "description": "Calcule le tarif en francs CFA d'une mise en avant à partir de la durée choisie (7, 14 ou 30 jours) et renvoie le libellé affichable du tarif ainsi que la date de fin correspondante.",
+      "inputs": [
+        {
+          "name": "duree",
+          "type": "enum"
+        },
+        {
+          "name": "dateDebut",
+          "type": "date"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "tarif",
+          "type": "number"
+        },
+        {
+          "name": "libelleTarif",
+          "type": "string"
+        },
+        {
+          "name": "dateFin",
+          "type": "date"
+        }
+      ],
+      "allowedImports": []
+    },
+    {
+      "id": "slot_consigne_contact_vendeur",
+      "description": "Compose la consigne de contact direct affichée sur la fiche produit : nom de la boutique, ville, numéro de téléphone et numéro WhatsApp formatés à l'international, en rappelant qu'aucun paiement ne passe par l'application.",
+      "inputs": [
+        {
+          "name": "produits",
+          "type": "json"
+        },
+        {
+          "name": "mentionPaiement",
+          "type": "string"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "consigneContact",
+          "type": "text"
+        },
+        {
+          "name": "numeroLisible",
+          "type": "string"
+        }
+      ],
+      "allowedImports": []
+    },
+    {
+      "id": "slot_classement_catalogue",
+      "description": "Ordonne les produits du catalogue en plaçant en tête ceux dont la mise en avant payée est active, puis les plus récemment publiés, et renvoie le libellé de la sélection mise en avant.",
+      "inputs": [
+        {
+          "name": "produits",
+          "type": "json"
+        },
+        {
+          "name": "misesEnAvant",
+          "type": "json"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "titreSelection",
+          "type": "string"
+        },
+        {
+          "name": "produitsOrdonnes",
+          "type": "json"
+        }
+      ],
+      "allowedImports": []
+    }
+  ],
+  "capabilities": [
+    {
+      "capability": "media_upload",
+      "config": [
+        {
+          "key": "mediaTypes",
+          "value": [
+            "image"
+          ]
+        },
+        {
+          "key": "maxItemsPerProduct",
+          "value": 6
+        }
+      ]
+    },
+    {
+      "capability": "deep_links",
+      "config": [
+        {
+          "key": "contactChannels",
+          "value": [
+            "whatsapp",
+            "telephone"
+          ]
+        }
+      ]
+    },
+    {
+      "capability": "payments.psp",
+      "config": [
+        {
+          "key": "currency",
+          "value": "XAF"
+        },
+        {
+          "key": "scope",
+          "value": "mise_en_avant_vendeur"
+        }
+      ]
+    }
+  ],
+  "permissions": [
+    {
+      "platform": "ios",
+      "permission": "NSPhotoLibraryUsageDescription",
+      "reason": [
+        {
+          "locale": "fr",
+          "text": "Sahel Souk accède à vos photos pour que vous puissiez illustrer les produits de votre boutique avant de les publier au catalogue."
+        }
+      ],
+      "requiredByCapability": "media_upload"
+    },
+    {
+      "platform": "android",
+      "permission": "android.permission.READ_MEDIA_IMAGES",
+      "reason": [
+        {
+          "locale": "fr",
+          "text": "Sahel Souk lit les images de votre appareil pour joindre les photos de vos produits lors de leur publication dans le catalogue."
+        }
+      ],
+      "requiredByCapability": "media_upload"
+    }
+  ],
+  "screens": [
+    {
+      "id": "scr_entree",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Accueil"
+        }
+      ],
+      "showsPrimaryNav": true,
+      "showsScreenTitle": false,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_entree_marque",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Sahel Souk"
+            },
+            {
+              "key": "subtitle",
+              "value": "Le marché du Tchad et du Sahel : produits, boutiques et contact direct avec le vendeur."
+            },
+            {
+              "key": "accroche",
+              "value": true
+            }
+          ]
+        },
+        {
+          "id": "blk_entree_recherche",
+          "blockType": "search_entry",
+          "props": [
+            {
+              "key": "placeholder",
+              "value": "Rechercher un produit (boubou, mil, radio solaire…)"
+            },
+            {
+              "key": "actionId",
+              "value": "act_entree_ouvrir_recherche"
+            }
+          ]
+        },
+        {
+          "id": "blk_entree_categories",
+          "blockType": "list",
+          "entityId": "ent_categorie",
+          "props": [
+            {
+              "key": "title",
+              "value": "Parcourir par catégorie"
+            },
+            {
+              "key": "titleFieldId",
+              "value": "fld_categorie_nom"
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_categorie_visuel"
+            },
+            {
+              "key": "layout",
+              "value": "row"
+            },
+            {
+              "key": "pageSize",
+              "value": 8
+            },
+            {
+              "key": "seeAllLabel",
+              "value": "Toutes les catégories"
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement des catégories…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Catégories indisponibles"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Impossible d'afficher les catégories pour le moment. Réessayez dans un instant."
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Aucune catégorie"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Les catégories du catalogue arrivent très bientôt."
+            }
+          ]
+        },
+        {
+          "id": "blk_entree_categorie_courante",
+          "blockType": "detail_header",
+          "entityId": "ent_categorie",
+          "props": [
+            {
+              "key": "titleFieldId",
+              "value": "fld_categorie_nom"
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_categorie_visuel"
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement de la catégorie…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Catégorie indisponible"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Cette catégorie ne peut pas être affichée pour l'instant."
+            }
+          ]
+        },
+        {
+          "id": "blk_entree_produits",
+          "blockType": "list",
+          "entityId": "ent_produit",
+          "props": [
+            {
+              "key": "title",
+              "value": "Sélection du moment"
+            },
+            {
+              "key": "titleFieldId",
+              "value": "fld_produit_titre"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_produit_boutique_nom"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_produit_prix"
+            },
+            {
+              "key": "badgeFieldId",
+              "value": "fld_produit_en_avant"
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_produit_photos"
+            },
+            {
+              "key": "scopeFieldId",
+              "value": "fld_produit_categorie"
+            },
+            {
+              "key": "layout",
+              "value": "grid"
+            },
+            {
+              "key": "pageSize",
+              "value": 6
+            },
+            {
+              "key": "sortFieldId",
+              "value": "fld_produit_publie_le"
+            },
+            {
+              "key": "sortDirection",
+              "value": "desc"
+            },
+            {
+              "key": "seeAllLabel",
+              "value": "Voir tout le catalogue"
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement des produits…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Produits indisponibles"
+            },
+            {
+              "key": "errorMessage",
+              "value": "La sélection ne peut pas être affichée pour le moment."
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Aucun produit dans cette catégorie"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Choisissez une autre catégorie ou parcourez tout le catalogue."
+            }
+          ]
+        },
+        {
+          "id": "blk_entree_boutiques_lien",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Découvrir les boutiques"
+            },
+            {
+              "key": "actionId",
+              "value": "act_entree_ouvrir_boutiques"
+            },
+            {
+              "key": "kind",
+              "value": "link"
+            },
+            {
+              "key": "icon",
+              "value": "liste"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_cpt_categorie_choisir",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Catégories"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_cat_choisir_titre",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Catégories"
+            },
+            {
+              "key": "subtitle",
+              "value": "Choisissez une catégorie : l'accueil affichera les produits correspondants."
+            }
+          ]
+        },
+        {
+          "id": "blk_cat_choisir_liste",
+          "blockType": "list",
+          "entityId": "ent_categorie",
+          "props": [
+            {
+              "key": "titleFieldId",
+              "value": "fld_categorie_nom"
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_categorie_visuel"
+            },
+            {
+              "key": "layout",
+              "value": "grid"
+            },
+            {
+              "key": "pageSize",
+              "value": 12
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement des catégories…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Catégories indisponibles"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Impossible d'afficher les catégories pour le moment."
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Aucune catégorie"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Les catégories seront ajoutées prochainement."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_cpt_produit_choisir",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Catalogue"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_prod_choisir_titre",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Catalogue"
+            },
+            {
+              "key": "subtitle",
+              "value": "Tous les produits des vendeurs du Tchad et du Sahel, prix en francs CFA."
+            }
+          ]
+        },
+        {
+          "id": "blk_prod_choisir_liste",
+          "blockType": "list",
+          "entityId": "ent_produit",
+          "props": [
+            {
+              "key": "titleFieldId",
+              "value": "fld_produit_titre"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_produit_boutique_nom"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_produit_prix"
+            },
+            {
+              "key": "badgeFieldId",
+              "value": "fld_produit_disponibilite"
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_produit_photos"
+            },
+            {
+              "key": "layout",
+              "value": "grid"
+            },
+            {
+              "key": "searchFieldId",
+              "value": "fld_produit_titre"
+            },
+            {
+              "key": "searchPlaceholder",
+              "value": "Rechercher un produit…"
+            },
+            {
+              "key": "userFilterFieldIds",
+              "value": [
+                "fld_produit_categorie_nom",
+                "fld_produit_ville",
+                "fld_produit_disponibilite"
+              ]
+            },
+            {
+              "key": "userFilterOperators",
+              "value": [
+                "eq",
+                "eq",
+                "eq"
+              ]
+            },
+            {
+              "key": "userFilterInputTypes",
+              "value": [
+                "choice",
+                "choice",
+                "choice"
+              ]
+            },
+            {
+              "key": "sortFieldId",
+              "value": "fld_produit_publie_le"
+            },
+            {
+              "key": "sortDirection",
+              "value": "desc"
+            },
+            {
+              "key": "pageSize",
+              "value": 20
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement du catalogue…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Catalogue indisponible"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Le catalogue ne peut pas être affiché pour le moment."
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Aucun produit trouvé"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Modifiez votre recherche ou vos filtres."
+            }
+          ]
+        },
+        {
+          "id": "blk_prod_choisir_vide",
+          "blockType": "empty_state",
+          "visibleWhen": {
+            "kind": "entity_empty",
+            "entityId": "ent_produit"
+          },
+          "props": [
+            {
+              "key": "title",
+              "value": "Aucun produit trouvé"
+            },
+            {
+              "key": "message",
+              "value": "Aucun produit ne correspond à votre recherche. Parcourez les catégories pour découvrir le marché."
+            },
+            {
+              "key": "actionLabel",
+              "value": "Parcourir les catégories"
+            },
+            {
+              "key": "actionId",
+              "value": "act_prod_choisir_vers_categories"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_cpt_produit_consulter_publie",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Fiche produit"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_prod_pub_entete",
+          "blockType": "detail_header",
+          "entityId": "ent_produit",
+          "props": [
+            {
+              "key": "titleFieldId",
+              "value": "fld_produit_titre"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_produit_description"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_produit_prix"
+            },
+            {
+              "key": "badgeFieldIds",
+              "value": [
+                "fld_produit_disponibilite",
+                "fld_produit_en_avant"
+              ]
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_produit_photos"
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement du produit…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Produit indisponible"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Cette fiche produit ne peut pas être affichée pour le moment."
+            }
+          ]
+        },
+        {
+          "id": "blk_prod_pub_consigne",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Contact direct avec le vendeur"
+            },
+            {
+              "key": "subtitle",
+              "value": "Aucun paiement ne passe par l'application : contactez le vendeur par WhatsApp ou par téléphone et arrangez-vous directement avec lui."
+            }
+          ]
+        },
+        {
+          "id": "blk_prod_pub_whatsapp",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Contacter par WhatsApp"
+            },
+            {
+              "key": "actionId",
+              "value": "act_prod_pub_contacter_whatsapp"
+            },
+            {
+              "key": "kind",
+              "value": "primary"
+            },
+            {
+              "key": "icon",
+              "value": "message"
+            }
+          ]
+        },
+        {
+          "id": "blk_prod_pub_appel",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Appeler le vendeur"
+            },
+            {
+              "key": "actionId",
+              "value": "act_prod_pub_appeler_vendeur"
+            },
+            {
+              "key": "kind",
+              "value": "ghost"
+            }
+          ]
+        },
+        {
+          "id": "blk_prod_pub_boutiques",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Découvrir les boutiques du Sahel"
+            },
+            {
+              "key": "actionId",
+              "value": "act_prod_pub_ouvrir_boutiques"
+            },
+            {
+              "key": "kind",
+              "value": "link"
+            },
+            {
+              "key": "icon",
+              "value": "liste"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_cpt_boutique_decouvrir",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Boutiques"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_bout_dec_titre",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Boutiques du Sahel"
+            },
+            {
+              "key": "subtitle",
+              "value": "Les vendeurs, leur ville et leurs produits."
+            }
+          ]
+        },
+        {
+          "id": "blk_bout_dec_liste",
+          "blockType": "list",
+          "entityId": "ent_boutique",
+          "props": [
+            {
+              "key": "titleFieldId",
+              "value": "fld_boutique_nom"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_boutique_ville"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_boutique_pays"
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_boutique_logo"
+            },
+            {
+              "key": "layout",
+              "value": "grid"
+            },
+            {
+              "key": "searchFieldId",
+              "value": "fld_boutique_nom"
+            },
+            {
+              "key": "searchPlaceholder",
+              "value": "Rechercher une boutique…"
+            },
+            {
+              "key": "userFilterFieldIds",
+              "value": [
+                "fld_boutique_ville",
+                "fld_boutique_pays"
+              ]
+            },
+            {
+              "key": "userFilterOperators",
+              "value": [
+                "eq",
+                "eq"
+              ]
+            },
+            {
+              "key": "userFilterInputTypes",
+              "value": [
+                "choice",
+                "choice"
+              ]
+            },
+            {
+              "key": "pageSize",
+              "value": 12
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement des boutiques…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Boutiques indisponibles"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Les boutiques ne peuvent pas être affichées pour le moment."
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Aucune boutique"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Aucune boutique ne correspond à votre recherche."
+            }
+          ]
+        },
+        {
+          "id": "blk_bout_dec_vide",
+          "blockType": "empty_state",
+          "visibleWhen": {
+            "kind": "entity_empty",
+            "entityId": "ent_boutique"
+          },
+          "props": [
+            {
+              "key": "title",
+              "value": "Aucune boutique pour l'instant"
+            },
+            {
+              "key": "message",
+              "value": "Les premières boutiques du Tchad et du Sahel seront visibles ici dès leur ouverture."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_cpt_boutique_consulter_ouverte",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Boutique"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_bout_ouv_entete",
+          "blockType": "detail_header",
+          "entityId": "ent_boutique",
+          "props": [
+            {
+              "key": "titleFieldId",
+              "value": "fld_boutique_nom"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_boutique_description"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_boutique_ville"
+            },
+            {
+              "key": "badgeFieldIds",
+              "value": [
+                "fld_boutique_pays"
+              ]
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_boutique_logo"
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement de la boutique…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Boutique indisponible"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Cette boutique ne peut pas être affichée pour le moment."
+            }
+          ]
+        },
+        {
+          "id": "blk_bout_ouv_produits",
+          "blockType": "list",
+          "entityId": "ent_produit",
+          "props": [
+            {
+              "key": "title",
+              "value": "Produits de cette boutique"
+            },
+            {
+              "key": "titleFieldId",
+              "value": "fld_produit_titre"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_produit_categorie_nom"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_produit_prix"
+            },
+            {
+              "key": "badgeFieldId",
+              "value": "fld_produit_disponibilite"
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_produit_photos"
+            },
+            {
+              "key": "scopeFieldId",
+              "value": "fld_produit_boutique"
+            },
+            {
+              "key": "layout",
+              "value": "grid"
+            },
+            {
+              "key": "pageSize",
+              "value": 12
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement des produits…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Produits indisponibles"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Les produits de cette boutique ne peuvent pas être affichés."
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Aucun produit publié"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Cette boutique n'a pas encore publié de produit."
+            }
+          ]
+        },
+        {
+          "id": "blk_bout_ouv_whatsapp",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Contacter la boutique par WhatsApp"
+            },
+            {
+              "key": "actionId",
+              "value": "act_bout_ouv_contacter_whatsapp"
+            },
+            {
+              "key": "kind",
+              "value": "primary"
+            },
+            {
+              "key": "icon",
+              "value": "message"
+            }
+          ]
+        },
+        {
+          "id": "blk_bout_ouv_appel",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Appeler la boutique"
+            },
+            {
+              "key": "actionId",
+              "value": "act_bout_ouv_appeler"
+            },
+            {
+              "key": "kind",
+              "value": "ghost"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_cpt_boutique_saisir",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Ma boutique"
+        }
+      ],
+      "showsPrimaryNav": true,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_bout_saisir_titre",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Ma boutique"
+            },
+            {
+              "key": "subtitle",
+              "value": "Ouvrez votre boutique, puis publiez vos produits avec photos et prix en FCFA."
+            }
+          ]
+        },
+        {
+          "id": "blk_bout_saisir_mes_boutiques",
+          "blockType": "list",
+          "entityId": "ent_boutique",
+          "props": [
+            {
+              "key": "title",
+              "value": "Mes boutiques"
+            },
+            {
+              "key": "titleFieldId",
+              "value": "fld_boutique_nom"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_boutique_ville"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_boutique_telephone"
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_boutique_logo"
+            },
+            {
+              "key": "pageSize",
+              "value": 5
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement de vos boutiques…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Boutiques indisponibles"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Vos boutiques ne peuvent pas être affichées pour le moment."
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Aucune boutique ouverte"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Remplissez le formulaire ci-dessous pour ouvrir votre boutique."
+            }
+          ]
+        },
+        {
+          "id": "blk_bout_saisir_form",
+          "blockType": "form",
+          "entityId": "ent_boutique",
+          "props": [
+            {
+              "key": "title",
+              "value": "Informations de la boutique"
+            },
+            {
+              "key": "fieldIds",
+              "value": [
+                "fld_boutique_nom",
+                "fld_boutique_description",
+                "fld_boutique_ville",
+                "fld_boutique_pays",
+                "fld_boutique_telephone",
+                "fld_boutique_whatsapp",
+                "fld_boutique_logo"
+              ]
+            },
+            {
+              "key": "submitLabel",
+              "value": "Enregistrer ma boutique"
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Enregistrement de la boutique…"
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Renseignez les informations de votre boutique"
+            }
+          ]
+        },
+        {
+          "id": "blk_bout_saisir_mes_produits",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Mes produits"
+            },
+            {
+              "key": "actionId",
+              "value": "act_bout_saisir_vers_mes_produits"
+            },
+            {
+              "key": "kind",
+              "value": "link"
+            },
+            {
+              "key": "icon",
+              "value": "liste"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_cpt_boutique_confirmer",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Confirmer la boutique"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_bout_conf_titre",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Boutique enregistrée"
+            },
+            {
+              "key": "subtitle",
+              "value": "Votre boutique est ouverte sur Sahel Souk. Publiez votre premier produit pour apparaître au catalogue."
+            }
+          ]
+        },
+        {
+          "id": "blk_bout_conf_espace",
+          "blockType": "spacer"
+        },
+        {
+          "id": "blk_bout_conf_publier",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Publier un produit"
+            },
+            {
+              "key": "actionId",
+              "value": "act_bout_conf_publier_produit"
+            },
+            {
+              "key": "kind",
+              "value": "primary"
+            },
+            {
+              "key": "icon",
+              "value": "liste"
+            }
+          ]
+        },
+        {
+          "id": "blk_bout_conf_retour",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Revenir à ma boutique"
+            },
+            {
+              "key": "actionId",
+              "value": "act_bout_conf_retour_boutique"
+            },
+            {
+              "key": "kind",
+              "value": "ghost"
+            },
+            {
+              "key": "icon",
+              "value": "compte"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_cpt_boutique_consulter_ouverte_acteur_act_vendeur",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Ma boutique"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_bout_vend_entete",
+          "blockType": "detail_header",
+          "entityId": "ent_boutique",
+          "props": [
+            {
+              "key": "titleFieldId",
+              "value": "fld_boutique_nom"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_boutique_description"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_boutique_telephone"
+            },
+            {
+              "key": "badgeFieldIds",
+              "value": [
+                "fld_boutique_ville",
+                "fld_boutique_pays"
+              ]
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_boutique_logo"
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement de votre boutique…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Boutique indisponible"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Votre boutique ne peut pas être affichée pour le moment."
+            }
+          ]
+        },
+        {
+          "id": "blk_bout_vend_produits",
+          "blockType": "list",
+          "entityId": "ent_produit",
+          "props": [
+            {
+              "key": "title",
+              "value": "Mes produits dans cette boutique"
+            },
+            {
+              "key": "titleFieldId",
+              "value": "fld_produit_titre"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_produit_categorie_nom"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_produit_prix"
+            },
+            {
+              "key": "badgeFieldId",
+              "value": "fld_produit_en_avant"
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_produit_photos"
+            },
+            {
+              "key": "scopeFieldId",
+              "value": "fld_produit_boutique"
+            },
+            {
+              "key": "layout",
+              "value": "grid"
+            },
+            {
+              "key": "pageSize",
+              "value": 12
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement de vos produits…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Produits indisponibles"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Vos produits ne peuvent pas être affichés pour le moment."
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Aucun produit publié"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Publiez votre premier produit pour qu'il apparaisse au catalogue."
+            }
+          ]
+        },
+        {
+          "id": "blk_bout_vend_publier",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Publier un produit"
+            },
+            {
+              "key": "actionId",
+              "value": "act_bout_vend_publier_produit"
+            },
+            {
+              "key": "kind",
+              "value": "primary"
+            },
+            {
+              "key": "icon",
+              "value": "liste"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_cpt_produit_saisir",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Publier un produit"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_prod_saisir_titre",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Publier un produit"
+            },
+            {
+              "key": "subtitle",
+              "value": "Photos, prix en francs CFA, catégorie et coordonnées de contact direct."
+            }
+          ]
+        },
+        {
+          "id": "blk_prod_saisir_form",
+          "blockType": "form",
+          "entityId": "ent_produit",
+          "props": [
+            {
+              "key": "title",
+              "value": "Fiche du produit"
+            },
+            {
+              "key": "fieldIds",
+              "value": [
+                "fld_produit_titre",
+                "fld_produit_description",
+                "fld_produit_photos",
+                "fld_produit_prix",
+                "fld_produit_devise",
+                "fld_produit_categorie_nom",
+                "fld_produit_boutique_nom",
+                "fld_produit_ville",
+                "fld_produit_telephone",
+                "fld_produit_whatsapp",
+                "fld_produit_disponibilite"
+              ]
+            },
+            {
+              "key": "submitLabel",
+              "value": "Publier le produit"
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Publication du produit…"
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Renseignez les informations du produit"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_cpt_produit_confirmer",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Confirmer le produit"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_prod_conf_titre",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Produit publié"
+            },
+            {
+              "key": "subtitle",
+              "value": "Votre produit est visible au catalogue. Les acheteurs vous contacteront par WhatsApp ou par téléphone."
+            }
+          ]
+        },
+        {
+          "id": "blk_prod_conf_espace",
+          "blockType": "spacer"
+        },
+        {
+          "id": "blk_prod_conf_mettre_en_avant",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Mettre ce produit en avant"
+            },
+            {
+              "key": "actionId",
+              "value": "act_prod_conf_mettre_en_avant"
+            },
+            {
+              "key": "kind",
+              "value": "primary"
+            },
+            {
+              "key": "icon",
+              "value": "billet"
+            }
+          ]
+        },
+        {
+          "id": "blk_prod_conf_mes_produits",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Voir mes produits"
+            },
+            {
+              "key": "actionId",
+              "value": "act_prod_conf_mes_produits"
+            },
+            {
+              "key": "kind",
+              "value": "ghost"
+            },
+            {
+              "key": "icon",
+              "value": "liste"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_cpt_produit_consulter_publie_acteur_act_vendeur",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Mon produit"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_prod_vend_entete",
+          "blockType": "detail_header",
+          "entityId": "ent_produit",
+          "props": [
+            {
+              "key": "titleFieldId",
+              "value": "fld_produit_titre"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_produit_categorie_nom"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_produit_prix"
+            },
+            {
+              "key": "badgeFieldIds",
+              "value": [
+                "fld_produit_disponibilite",
+                "fld_produit_en_avant"
+              ]
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_produit_photos"
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement du produit…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Produit indisponible"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Ce produit ne peut pas être affiché pour le moment."
+            }
+          ]
+        },
+        {
+          "id": "blk_prod_vend_form",
+          "blockType": "form",
+          "entityId": "ent_produit",
+          "props": [
+            {
+              "key": "title",
+              "value": "Mettre à jour le produit"
+            },
+            {
+              "key": "fieldIds",
+              "value": [
+                "fld_produit_prix",
+                "fld_produit_disponibilite",
+                "fld_produit_description",
+                "fld_produit_photos"
+              ]
+            },
+            {
+              "key": "submitLabel",
+              "value": "Mettre à jour le produit"
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Mise à jour du produit…"
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Modifiez les informations à corriger"
+            }
+          ]
+        },
+        {
+          "id": "blk_prod_vend_mettre_en_avant",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Mettre ce produit en avant"
+            },
+            {
+              "key": "actionId",
+              "value": "act_prod_vend_mettre_en_avant"
+            },
+            {
+              "key": "kind",
+              "value": "primary"
+            },
+            {
+              "key": "icon",
+              "value": "billet"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_cpt_produit_choisir_acteur_act_vendeur",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Mes produits"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_mes_prod_titre",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Mes produits"
+            },
+            {
+              "key": "subtitle",
+              "value": "Vos produits publiés au catalogue Sahel Souk."
+            }
+          ]
+        },
+        {
+          "id": "blk_mes_prod_liste",
+          "blockType": "list",
+          "entityId": "ent_produit",
+          "props": [
+            {
+              "key": "titleFieldId",
+              "value": "fld_produit_titre"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_produit_categorie_nom"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_produit_prix"
+            },
+            {
+              "key": "badgeFieldId",
+              "value": "fld_produit_en_avant"
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_produit_photos"
+            },
+            {
+              "key": "layout",
+              "value": "grid"
+            },
+            {
+              "key": "searchFieldId",
+              "value": "fld_produit_titre"
+            },
+            {
+              "key": "searchPlaceholder",
+              "value": "Rechercher dans mes produits…"
+            },
+            {
+              "key": "userFilterFieldIds",
+              "value": [
+                "fld_produit_disponibilite"
+              ]
+            },
+            {
+              "key": "userFilterOperators",
+              "value": [
+                "eq"
+              ]
+            },
+            {
+              "key": "userFilterInputTypes",
+              "value": [
+                "choice"
+              ]
+            },
+            {
+              "key": "sortFieldId",
+              "value": "fld_produit_publie_le"
+            },
+            {
+              "key": "sortDirection",
+              "value": "desc"
+            },
+            {
+              "key": "pageSize",
+              "value": 20
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement de vos produits…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Produits indisponibles"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Vos produits ne peuvent pas être affichés pour le moment."
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Aucun produit publié"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Publiez un produit pour le rendre visible aux acheteurs."
+            }
+          ]
+        },
+        {
+          "id": "blk_mes_prod_vide",
+          "blockType": "empty_state",
+          "visibleWhen": {
+            "kind": "entity_empty",
+            "entityId": "ent_produit"
+          },
+          "props": [
+            {
+              "key": "title",
+              "value": "Aucun produit publié"
+            },
+            {
+              "key": "message",
+              "value": "Publiez votre premier produit avec ses photos et son prix en francs CFA."
+            },
+            {
+              "key": "actionLabel",
+              "value": "Publier un produit"
+            },
+            {
+              "key": "actionId",
+              "value": "act_mes_prod_vide_publier"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_cpt_mise_en_avant_saisir",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Mettre en avant"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_mav_saisir_titre",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Mettre un produit en avant"
+            },
+            {
+              "key": "subtitle",
+              "value": "Choisissez la durée : le tarif en francs CFA et la date de fin se calculent automatiquement."
+            }
+          ]
+        },
+        {
+          "id": "blk_mav_saisir_form",
+          "blockType": "form",
+          "entityId": "ent_mise_en_avant",
+          "props": [
+            {
+              "key": "title",
+              "value": "Commande de mise en avant"
+            },
+            {
+              "key": "fieldIds",
+              "value": [
+                "fld_mise_en_avant_produit_titre",
+                "fld_mise_en_avant_duree",
+                "fld_mise_en_avant_debut",
+                "fld_mise_en_avant_fin",
+                "fld_mise_en_avant_tarif",
+                "fld_mise_en_avant_devise",
+                "fld_mise_en_avant_moyen_paiement",
+                "fld_mise_en_avant_statut"
+              ]
+            },
+            {
+              "key": "submitLabel",
+              "value": "Valider la mise en avant"
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Enregistrement de la mise en avant…"
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Renseignez la durée et le moyen de paiement"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_cpt_mise_en_avant_payer",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Paiement de la mise en avant"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_mav_payer_titre",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Paiement de la mise en avant"
+            },
+            {
+              "key": "subtitle",
+              "value": "Réglez par Mobile Money, virement bancaire ou en espèces en agence. Ce paiement concerne uniquement la visibilité de vos produits."
+            }
+          ]
+        },
+        {
+          "id": "blk_mav_payer_liste",
+          "blockType": "list",
+          "entityId": "ent_mise_en_avant",
+          "props": [
+            {
+              "key": "title",
+              "value": "À régler"
+            },
+            {
+              "key": "titleFieldId",
+              "value": "fld_mise_en_avant_produit_titre"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_mise_en_avant_duree"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_mise_en_avant_tarif"
+            },
+            {
+              "key": "badgeFieldId",
+              "value": "fld_mise_en_avant_moyen_paiement"
+            },
+            {
+              "key": "filterFieldId",
+              "value": "fld_mise_en_avant_statut"
+            },
+            {
+              "key": "filterOperator",
+              "value": "eq"
+            },
+            {
+              "key": "filterValue",
+              "value": "a_payer"
+            },
+            {
+              "key": "pageSize",
+              "value": 10
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement des paiements…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Paiements indisponibles"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Vos mises en avant à régler ne peuvent pas être affichées."
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Aucun paiement en attente"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Toutes vos mises en avant sont réglées."
+            }
+          ]
+        },
+        {
+          "id": "blk_mav_payer_vide",
+          "blockType": "empty_state",
+          "visibleWhen": {
+            "kind": "entity_empty",
+            "entityId": "ent_mise_en_avant"
+          },
+          "props": [
+            {
+              "key": "title",
+              "value": "Aucun paiement en attente"
+            },
+            {
+              "key": "message",
+              "value": "Créez une mise en avant pour donner de la visibilité à un produit."
+            },
+            {
+              "key": "actionLabel",
+              "value": "Mettre un produit en avant"
+            },
+            {
+              "key": "actionId",
+              "value": "act_mav_payer_vide_creer"
+            }
+          ]
+        },
+        {
+          "id": "blk_mav_payer_confirmer",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Confirmer le paiement"
+            },
+            {
+              "key": "actionId",
+              "value": "act_mav_payer_confirmer"
+            },
+            {
+              "key": "kind",
+              "value": "primary"
+            },
+            {
+              "key": "icon",
+              "value": "billet"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_cpt_mise_en_avant_consulter_active",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Mise en avant active"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_mav_active_entete",
+          "blockType": "detail_header",
+          "entityId": "ent_mise_en_avant",
+          "props": [
+            {
+              "key": "titleFieldId",
+              "value": "fld_mise_en_avant_produit_titre"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_mise_en_avant_fin"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_mise_en_avant_tarif"
+            },
+            {
+              "key": "badgeFieldIds",
+              "value": [
+                "fld_mise_en_avant_statut",
+                "fld_mise_en_avant_duree"
+              ]
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement de la mise en avant…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Mise en avant indisponible"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Cette mise en avant ne peut pas être affichée pour le moment."
+            }
+          ]
+        },
+        {
+          "id": "blk_mav_active_renouveler",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Renouveler la mise en avant"
+            },
+            {
+              "key": "actionId",
+              "value": "act_mav_active_renouveler"
+            },
+            {
+              "key": "kind",
+              "value": "primary"
+            },
+            {
+              "key": "icon",
+              "value": "billet"
+            }
+          ]
+        },
+        {
+          "id": "blk_mav_active_retour",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Retour à mes mises en avant"
+            },
+            {
+              "key": "actionId",
+              "value": "act_mav_active_retour"
+            },
+            {
+              "key": "kind",
+              "value": "ghost"
+            },
+            {
+              "key": "icon",
+              "value": "liste"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_cpt_mise_en_avant_consulter_historique",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Mises en avant"
+        }
+      ],
+      "showsPrimaryNav": true,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_mav_hist_titre",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Mes mises en avant"
+            },
+            {
+              "key": "subtitle",
+              "value": "Vos campagnes payées : en cours et passées."
+            }
+          ]
+        },
+        {
+          "id": "blk_mav_hist_actives",
+          "blockType": "list",
+          "entityId": "ent_mise_en_avant",
+          "props": [
+            {
+              "key": "title",
+              "value": "En cours"
+            },
+            {
+              "key": "titleFieldId",
+              "value": "fld_mise_en_avant_produit_titre"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_mise_en_avant_fin"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_mise_en_avant_tarif"
+            },
+            {
+              "key": "badgeFieldId",
+              "value": "fld_mise_en_avant_duree"
+            },
+            {
+              "key": "layout",
+              "value": "row"
+            },
+            {
+              "key": "filterFieldId",
+              "value": "fld_mise_en_avant_statut"
+            },
+            {
+              "key": "filterOperator",
+              "value": "eq"
+            },
+            {
+              "key": "filterValue",
+              "value": "active"
+            },
+            {
+              "key": "pageSize",
+              "value": 5
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement des mises en avant actives…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Mises en avant indisponibles"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Vos mises en avant actives ne peuvent pas être affichées."
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Aucune mise en avant active"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Lancez une mise en avant pour apparaître en tête du catalogue."
+            }
+          ]
+        },
+        {
+          "id": "blk_mav_hist_expirees",
+          "blockType": "list",
+          "entityId": "ent_mise_en_avant",
+          "props": [
+            {
+              "key": "title",
+              "value": "Campagnes passées"
+            },
+            {
+              "key": "titleFieldId",
+              "value": "fld_mise_en_avant_produit_titre"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_mise_en_avant_fin"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_mise_en_avant_tarif"
+            },
+            {
+              "key": "badgeFieldId",
+              "value": "fld_mise_en_avant_statut"
+            },
+            {
+              "key": "filterFieldId",
+              "value": "fld_mise_en_avant_statut"
+            },
+            {
+              "key": "filterOperator",
+              "value": "eq"
+            },
+            {
+              "key": "filterValue",
+              "value": "expiree"
+            },
+            {
+              "key": "userFilterFieldIds",
+              "value": [
+                "fld_mise_en_avant_produit_titre",
+                "fld_mise_en_avant_duree"
+              ]
+            },
+            {
+              "key": "userFilterOperators",
+              "value": [
+                "contains",
+                "eq"
+              ]
+            },
+            {
+              "key": "userFilterInputTypes",
+              "value": [
+                "text",
+                "choice"
+              ]
+            },
+            {
+              "key": "sortFieldId",
+              "value": "fld_mise_en_avant_debut"
+            },
+            {
+              "key": "sortDirection",
+              "value": "desc"
+            },
+            {
+              "key": "pageSize",
+              "value": 20
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement de l'historique…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Historique indisponible"
+            },
+            {
+              "key": "errorMessage",
+              "value": "L'historique de vos mises en avant ne peut pas être affiché."
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Aucune campagne passée"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Vos mises en avant terminées apparaîtront ici."
+            }
+          ]
+        },
+        {
+          "id": "blk_mav_hist_vide",
+          "blockType": "empty_state",
+          "visibleWhen": {
+            "kind": "entity_empty",
+            "entityId": "ent_mise_en_avant"
+          },
+          "props": [
+            {
+              "key": "title",
+              "value": "Aucune mise en avant"
+            },
+            {
+              "key": "message",
+              "value": "Payez une mise en avant pour placer vos produits en tête du catalogue."
+            },
+            {
+              "key": "actionLabel",
+              "value": "Mettre un produit en avant"
+            },
+            {
+              "key": "actionId",
+              "value": "act_mav_hist_vide_creer"
+            }
+          ]
+        },
+        {
+          "id": "blk_mav_hist_creer",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Mettre un produit en avant"
+            },
+            {
+              "key": "actionId",
+              "value": "act_mav_hist_creer"
+            },
+            {
+              "key": "kind",
+              "value": "primary"
+            },
+            {
+              "key": "icon",
+              "value": "billet"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_cpt_mise_en_avant_consulter_expiree",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Mise en avant expirée"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_mav_exp_entete",
+          "blockType": "detail_header",
+          "entityId": "ent_mise_en_avant",
+          "props": [
+            {
+              "key": "titleFieldId",
+              "value": "fld_mise_en_avant_produit_titre"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_mise_en_avant_fin"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_mise_en_avant_tarif"
+            },
+            {
+              "key": "badgeFieldIds",
+              "value": [
+                "fld_mise_en_avant_statut",
+                "fld_mise_en_avant_moyen_paiement"
+              ]
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement de la mise en avant…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Mise en avant indisponible"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Cette mise en avant ne peut pas être affichée pour le moment."
+            }
+          ]
+        },
+        {
+          "id": "blk_mav_exp_relancer",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Relancer cette mise en avant"
+            },
+            {
+              "key": "actionId",
+              "value": "act_mav_exp_relancer"
+            },
+            {
+              "key": "kind",
+              "value": "primary"
+            },
+            {
+              "key": "icon",
+              "value": "billet"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "actions": [
+    {
+      "id": "act_entree_ouvrir_recherche",
+      "name": "Ouvrir la recherche du catalogue",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_entree_recherche"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_produit_choisir"
+      }
+    },
+    {
+      "id": "act_entree_categories_voir_tout",
+      "name": "Voir toutes les catégories",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_entree_categories",
+        "role": "secondary"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_categorie_choisir"
+      }
+    },
+    {
+      "id": "act_entree_vers_mes_produits",
+      "name": "Ouvrir mes produits (espace vendeur)",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_entree_categories",
+        "role": "primary"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_produit_choisir_acteur_act_vendeur"
+      }
+    },
+    {
+      "id": "act_entree_produit_ouvrir",
+      "name": "Ouvrir la fiche du produit depuis l'accueil",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_entree_produits",
+        "role": "primary"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_produit_consulter_publie"
+      }
+    },
+    {
+      "id": "act_entree_produits_voir_tout",
+      "name": "Voir tout le catalogue",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_entree_produits",
+        "role": "secondary"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_produit_choisir"
+      }
+    },
+    {
+      "id": "act_entree_ouvrir_boutiques",
+      "name": "Découvrir les boutiques",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_entree_boutiques_lien"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_boutique_decouvrir"
+      }
+    },
+    {
+      "id": "act_entree_classer_catalogue",
+      "name": "Classer la sélection de l'accueil selon les mises en avant payées",
+      "trigger": {
+        "kind": "lifecycle",
+        "event": "screen_open",
+        "screenId": "scr_entree"
+      },
+      "effect": {
+        "kind": "slot",
+        "slotId": "slot_classement_catalogue",
+        "binding": {
+          "inputs": [
+            {
+              "port": "produits",
+              "source": {
+                "kind": "entity_rows",
+                "entityId": "ent_produit"
+              }
+            },
+            {
+              "port": "misesEnAvant",
+              "source": {
+                "kind": "entity_rows",
+                "entityId": "ent_mise_en_avant"
+              }
+            }
+          ],
+          "outputs": [
+            {
+              "port": "titreSelection",
+              "blockId": "blk_entree_produits",
+              "prop": "title"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "act_cat_choisir_appliquer",
+      "name": "Appliquer la catégorie choisie et revenir à l'accueil",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_cat_choisir_liste"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_entree"
+      }
+    },
+    {
+      "id": "act_prod_choisir_ouvrir_fiche",
+      "name": "Ouvrir la fiche produit depuis le catalogue",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_prod_choisir_liste"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_produit_consulter_publie"
+      }
+    },
+    {
+      "id": "act_prod_choisir_vers_categories",
+      "name": "Parcourir les catégories",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_prod_choisir_vide"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_categorie_choisir"
+      }
+    },
+    {
+      "id": "act_prod_pub_consigne_contact",
+      "name": "Composer la consigne de contact direct du vendeur",
+      "trigger": {
+        "kind": "lifecycle",
+        "event": "screen_open",
+        "screenId": "scr_cpt_produit_consulter_publie"
+      },
+      "effect": {
+        "kind": "slot",
+        "slotId": "slot_consigne_contact_vendeur",
+        "binding": {
+          "inputs": [
+            {
+              "port": "produits",
+              "source": {
+                "kind": "entity_rows",
+                "entityId": "ent_produit"
+              }
+            },
+            {
+              "port": "mentionPaiement",
+              "source": {
+                "kind": "literal",
+                "value": "Aucun paiement ne passe par Sahel Souk : arrangez-vous directement avec le vendeur."
+              }
+            }
+          ],
+          "outputs": [
+            {
+              "port": "consigneContact",
+              "blockId": "blk_prod_pub_consigne",
+              "prop": "subtitle"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "act_prod_pub_contacter_whatsapp",
+      "name": "Contacter le vendeur par WhatsApp",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_prod_pub_whatsapp"
+      },
+      "effect": {
+        "kind": "capability",
+        "capability": "deep_links",
+        "method": "openWhatsApp",
+        "params": [
+          {
+            "key": "numeroFieldId",
+            "value": "fld_produit_whatsapp"
+          },
+          {
+            "key": "secoursNumeroFieldId",
+            "value": "fld_produit_telephone"
+          },
+          {
+            "key": "sujetFieldId",
+            "value": "fld_produit_titre"
+          }
+        ]
+      }
+    },
+    {
+      "id": "act_prod_pub_appeler_vendeur",
+      "name": "Appeler le vendeur",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_prod_pub_appel"
+      },
+      "effect": {
+        "kind": "capability",
+        "capability": "deep_links",
+        "method": "openPhoneCall",
+        "params": [
+          {
+            "key": "numeroFieldId",
+            "value": "fld_produit_telephone"
+          }
+        ]
+      }
+    },
+    {
+      "id": "act_prod_pub_ouvrir_boutiques",
+      "name": "Découvrir les boutiques du Sahel",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_prod_pub_boutiques"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_boutique_decouvrir"
+      }
+    },
+    {
+      "id": "act_bout_dec_ouvrir_boutique",
+      "name": "Ouvrir la boutique",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_bout_dec_liste"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_boutique_consulter_ouverte"
+      }
+    },
+    {
+      "id": "act_bout_ouv_ouvrir_produit",
+      "name": "Ouvrir la fiche d'un produit de la boutique",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_bout_ouv_produits"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_produit_consulter_publie"
+      }
+    },
+    {
+      "id": "act_bout_ouv_contacter_whatsapp",
+      "name": "Contacter la boutique par WhatsApp",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_bout_ouv_whatsapp"
+      },
+      "effect": {
+        "kind": "capability",
+        "capability": "deep_links",
+        "method": "openWhatsApp",
+        "params": [
+          {
+            "key": "numeroFieldId",
+            "value": "fld_boutique_whatsapp"
+          },
+          {
+            "key": "secoursNumeroFieldId",
+            "value": "fld_boutique_telephone"
+          },
+          {
+            "key": "sujetFieldId",
+            "value": "fld_boutique_nom"
+          }
+        ]
+      }
+    },
+    {
+      "id": "act_bout_ouv_appeler",
+      "name": "Appeler la boutique",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_bout_ouv_appel"
+      },
+      "effect": {
+        "kind": "capability",
+        "capability": "deep_links",
+        "method": "openPhoneCall",
+        "params": [
+          {
+            "key": "numeroFieldId",
+            "value": "fld_boutique_telephone"
+          }
+        ]
+      }
+    },
+    {
+      "id": "act_bout_saisir_enregistrer",
+      "name": "Enregistrer ma boutique",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_bout_saisir_form"
+      },
+      "effect": {
+        "kind": "mutation",
+        "entityId": "ent_boutique",
+        "operation": "create",
+        "thenScreenId": "scr_cpt_boutique_confirmer"
+      }
+    },
+    {
+      "id": "act_bout_saisir_ouvrir_ma_boutique",
+      "name": "Ouvrir ma boutique",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_bout_saisir_mes_boutiques"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_boutique_consulter_ouverte_acteur_act_vendeur"
+      }
+    },
+    {
+      "id": "act_bout_saisir_vers_mes_produits",
+      "name": "Voir mes produits",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_bout_saisir_mes_produits"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_produit_choisir_acteur_act_vendeur"
+      }
+    },
+    {
+      "id": "act_bout_conf_publier_produit",
+      "name": "Publier un produit après l'ouverture de la boutique",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_bout_conf_publier"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_produit_saisir"
+      }
+    },
+    {
+      "id": "act_bout_conf_retour_boutique",
+      "name": "Revenir à ma boutique",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_bout_conf_retour"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_boutique_consulter_ouverte_acteur_act_vendeur"
+      }
+    },
+    {
+      "id": "act_bout_vend_ouvrir_produit",
+      "name": "Ouvrir un de mes produits",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_bout_vend_produits"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_produit_consulter_publie_acteur_act_vendeur"
+      }
+    },
+    {
+      "id": "act_bout_vend_publier_produit",
+      "name": "Publier un produit dans ma boutique",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_bout_vend_publier"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_produit_saisir"
+      }
+    },
+    {
+      "id": "act_prod_saisir_publier",
+      "name": "Publier le produit au catalogue",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_prod_saisir_form"
+      },
+      "effect": {
+        "kind": "mutation",
+        "entityId": "ent_produit",
+        "operation": "create",
+        "thenScreenId": "scr_cpt_produit_confirmer"
+      }
+    },
+    {
+      "id": "act_prod_conf_mettre_en_avant",
+      "name": "Mettre le produit publié en avant",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_prod_conf_mettre_en_avant"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_mise_en_avant_saisir"
+      }
+    },
+    {
+      "id": "act_prod_conf_mes_produits",
+      "name": "Voir le produit publié",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_prod_conf_mes_produits"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_produit_consulter_publie_acteur_act_vendeur"
+      }
+    },
+    {
+      "id": "act_prod_vend_mettre_a_jour",
+      "name": "Mettre à jour le produit",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_prod_vend_form"
+      },
+      "effect": {
+        "kind": "mutation",
+        "entityId": "ent_produit",
+        "operation": "update",
+        "instanceFrom": "route",
+        "thenScreenId": "scr_cpt_produit_choisir_acteur_act_vendeur"
+      }
+    },
+    {
+      "id": "act_prod_vend_mettre_en_avant",
+      "name": "Mettre ce produit en avant",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_prod_vend_mettre_en_avant"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_mise_en_avant_saisir"
+      }
+    },
+    {
+      "id": "act_mes_prod_ouvrir_produit",
+      "name": "Ouvrir mon produit",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_mes_prod_liste",
+        "role": "primary"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_produit_consulter_publie_acteur_act_vendeur"
+      }
+    },
+    {
+      "id": "act_mes_prod_vers_mise_en_avant",
+      "name": "Mettre un de mes produits en avant",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_mes_prod_liste",
+        "role": "secondary"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_mise_en_avant_saisir"
+      }
+    },
+    {
+      "id": "act_mes_prod_vide_publier",
+      "name": "Publier un premier produit",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_mes_prod_vide"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_produit_saisir"
+      }
+    },
+    {
+      "id": "act_mav_saisir_calculer_tarif",
+      "name": "Calculer le tarif et la date de fin de la mise en avant",
+      "trigger": {
+        "kind": "lifecycle",
+        "event": "screen_open",
+        "screenId": "scr_cpt_mise_en_avant_saisir"
+      },
+      "effect": {
+        "kind": "slot",
+        "slotId": "slot_tarif_mise_en_avant",
+        "binding": {
+          "inputs": [
+            {
+              "port": "duree",
+              "source": {
+                "kind": "literal",
+                "value": "7_jours"
+              }
+            },
+            {
+              "port": "dateDebut",
+              "source": {
+                "kind": "literal",
+                "value": "2026-03-01"
+              }
+            }
+          ],
+          "outputs": [
+            {
+              "port": "libelleTarif",
+              "blockId": "blk_mav_saisir_titre",
+              "prop": "subtitle"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "act_mav_saisir_valider",
+      "name": "Valider la commande de mise en avant",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_mav_saisir_form"
+      },
+      "effect": {
+        "kind": "mutation",
+        "entityId": "ent_mise_en_avant",
+        "operation": "create",
+        "thenScreenId": "scr_cpt_mise_en_avant_payer"
+      }
+    },
+    {
+      "id": "act_mav_payer_ouvrir_active",
+      "name": "Ouvrir la mise en avant à régler",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_mav_payer_liste"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_mise_en_avant_consulter_active"
+      }
+    },
+    {
+      "id": "act_mav_payer_vide_creer",
+      "name": "Créer une mise en avant",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_mav_payer_vide"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_mise_en_avant_saisir"
+      }
+    },
+    {
+      "id": "act_mav_payer_confirmer",
+      "name": "Confirmer le paiement de la mise en avant",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_mav_payer_confirmer"
+      },
+      "effect": {
+        "kind": "mutation",
+        "entityId": "ent_mise_en_avant",
+        "operation": "update",
+        "instanceFrom": "route",
+        "thenScreenId": "scr_cpt_mise_en_avant_consulter_active"
+      }
+    },
+    {
+      "id": "act_mav_active_renouveler",
+      "name": "Renouveler la mise en avant",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_mav_active_renouveler"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_mise_en_avant_saisir"
+      }
+    },
+    {
+      "id": "act_mav_active_retour",
+      "name": "Retour à mes mises en avant",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_mav_active_retour"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_mise_en_avant_consulter_historique"
+      }
+    },
+    {
+      "id": "act_mav_hist_ouvrir_active",
+      "name": "Ouvrir une mise en avant en cours",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_mav_hist_actives"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_mise_en_avant_consulter_active"
+      }
+    },
+    {
+      "id": "act_mav_hist_ouvrir_expiree",
+      "name": "Ouvrir une campagne passée",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_mav_hist_expirees"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_mise_en_avant_consulter_expiree"
+      }
+    },
+    {
+      "id": "act_mav_hist_vide_creer",
+      "name": "Lancer une première mise en avant",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_mav_hist_vide"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_mise_en_avant_saisir"
+      }
+    },
+    {
+      "id": "act_mav_hist_creer",
+      "name": "Mettre un produit en avant",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_mav_hist_creer"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_mise_en_avant_saisir"
+      }
+    },
+    {
+      "id": "act_mav_exp_relancer",
+      "name": "Relancer cette mise en avant",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_mav_exp_relancer"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_mise_en_avant_saisir"
+      }
+    }
+  ],
+  "integrations": [
+    {
+      "id": "intg_backend_sahel_souk",
+      "providerClass": "rest_api",
+      "config": [
+        {
+          "key": "baseDomain",
+          "value": "api.sahelsouk.app"
+        },
+        {
+          "key": "basePath",
+          "value": "/v1"
+        },
+        {
+          "key": "authMode",
+          "value": "provisioned"
+        },
+        {
+          "key": "timeoutSeconds",
+          "value": 20
+        }
+      ]
+    },
+    {
+      "id": "intg_medias_produits",
+      "providerClass": "media_library",
+      "config": [
+        {
+          "key": "acceptedTypes",
+          "value": [
+            "image/jpeg",
+            "image/png",
+            "image/webp"
+          ]
+        },
+        {
+          "key": "maxItems",
+          "value": 6
+        },
+        {
+          "key": "maxSizeMb",
+          "value": 8
+        },
+        {
+          "key": "demoImageDomain",
+          "value": "picsum.photos"
+        }
+      ]
+    },
+    {
+      "id": "intg_contact_vendeur",
+      "providerClass": "deep_link_router",
+      "config": [
+        {
+          "key": "channels",
+          "value": [
+            "whatsapp",
+            "tel"
+          ]
+        },
+        {
+          "key": "whatsappUrlTemplate",
+          "value": "https://wa.me/{numero}"
+        },
+        {
+          "key": "phoneUrlTemplate",
+          "value": "tel:{numero}"
+        },
+        {
+          "key": "defaultCountryCode",
+          "value": "+235"
+        },
+        {
+          "key": "paiementEnLigneEntreParticuliers",
+          "value": false
+        }
+      ]
+    },
+    {
+      "id": "intg_paiement_mise_en_avant",
+      "providerClass": "payment_gateway",
+      "config": [
+        {
+          "key": "currency",
+          "value": "XAF"
+        },
+        {
+          "key": "currencyLabel",
+          "value": "FCFA"
+        },
+        {
+          "key": "methods",
+          "value": [
+            "mobile_money",
+            "virement",
+            "especes_agence"
+          ]
+        },
+        {
+          "key": "scope",
+          "value": "mise_en_avant_vendeur"
+        },
+        {
+          "key": "merchantDomain",
+          "value": "api.sahelsouk.app"
+        }
+      ]
+    }
+  ],
+  "expectedTests": [
+    {
+      "id": "test_catalogue_recherche_produit",
+      "description": "Sur l'écran Catalogue, saisir « boubou » dans le champ de recherche filtre réellement la liste sur le titre du produit et ne laisse que les lignes correspondantes.",
+      "kind": "deterministic",
+      "targetId": "blk_prod_choisir_liste"
+    },
+    {
+      "id": "test_catalogue_filtres_pilotes",
+      "description": "Les trois filtres pilotés du catalogue (catégorie, ville, disponibilité) se combinent en conjonction ; une valeur vide laisse le filtre inactif et l'ensemble des produits visibles.",
+      "kind": "deterministic",
+      "targetId": "blk_prod_choisir_liste"
+    },
+    {
+      "id": "test_catalogue_grille_images_prix",
+      "description": "Le catalogue s'affiche en grille : chaque carte porte la photo du produit, son titre, le nom de la boutique et le prix formaté en FCFA (jamais un nombre brut ni une vignette vide).",
+      "kind": "deterministic",
+      "targetId": "blk_prod_choisir_liste"
+    },
+    {
+      "id": "test_catalogue_ligne_ouvre_fiche",
+      "description": "Appuyer sur une carte du catalogue ouvre la fiche du produit correspondant, avec l'identifiant de l'instance pressée et non le premier enregistrement.",
+      "kind": "e2e",
+      "targetId": "act_prod_choisir_ouvrir_fiche"
+    },
+    {
+      "id": "test_catalogue_etat_vide",
+      "description": "Quand aucun produit ne correspond, l'état vide du catalogue s'affiche et son bouton mène à l'écran des catégories.",
+      "kind": "deterministic",
+      "targetId": "blk_prod_choisir_vide"
+    },
+    {
+      "id": "test_accueil_selection_produits",
+      "description": "L'accueil affiche une sélection de 6 produits en grille, triée par date de publication décroissante, avec photos, prix en FCFA et badge de mise en avant.",
+      "kind": "deterministic",
+      "targetId": "blk_entree_produits"
+    },
+    {
+      "id": "test_accueil_categories_rangee",
+      "description": "La rangée horizontale des catégories de l'accueil affiche le nom et le visuel de chaque catégorie et propose le libellé « Toutes les catégories ».",
+      "kind": "deterministic",
+      "targetId": "blk_entree_categories"
+    },
+    {
+      "id": "test_accueil_voir_toutes_categories",
+      "description": "Le geste secondaire de la rangée des catégories de l'accueil navigue vers l'écran complet des catégories.",
+      "kind": "e2e",
+      "targetId": "act_entree_categories_voir_tout"
+    },
+    {
+      "id": "test_accueil_recherche_ouvre_catalogue",
+      "description": "Appuyer sur l'entrée de recherche de l'accueil ouvre l'écran Catalogue où la recherche s'exécute réellement.",
+      "kind": "e2e",
+      "targetId": "act_entree_ouvrir_recherche"
+    },
+    {
+      "id": "test_categorie_choisie_filtre_accueil",
+      "description": "Choisir une catégorie dans la liste des catégories ramène à l'accueil dont la sélection de produits est bornée à la catégorie retenue.",
+      "kind": "e2e",
+      "targetId": "act_cat_choisir_appliquer"
+    },
+    {
+      "id": "test_fiche_produit_entete",
+      "description": "La fiche produit affiche la photo, le titre, la description, le prix en FCFA et les badges de disponibilité et de mise en avant en libellés humains (« Disponible », « En avant »).",
+      "kind": "deterministic",
+      "targetId": "blk_prod_pub_entete"
+    },
+    {
+      "id": "test_fiche_produit_consigne_contact",
+      "description": "À l'ouverture de la fiche produit, le slot de consigne de contact est invoqué et sa sortie alimente le sous-titre du bloc de consigne : nom de boutique, ville, numéro lisible et rappel qu'aucun paiement ne passe par l'application.",
+      "kind": "deterministic",
+      "targetId": "act_prod_pub_consigne_contact"
+    },
+    {
+      "id": "test_boutiques_recherche_et_filtres",
+      "description": "L'écran Boutiques filtre par nom via la recherche et par ville et pays via les filtres pilotés, en affichant logo, ville et pays de chaque boutique.",
+      "kind": "deterministic",
+      "targetId": "blk_bout_dec_liste"
+    },
+    {
+      "id": "test_boutique_ligne_ouvre_detail",
+      "description": "Appuyer sur une boutique de la liste ouvre sa fiche, avec l'identifiant de la boutique pressée.",
+      "kind": "e2e",
+      "targetId": "act_bout_dec_ouvrir_boutique"
+    },
+    {
+      "id": "test_boutique_produits_limites",
+      "description": "La fiche d'une boutique ne liste que les produits de cette boutique (portée par la référence boutique), avec photo, catégorie et prix en FCFA.",
+      "kind": "deterministic",
+      "targetId": "blk_bout_ouv_produits"
+    },
+    {
+      "id": "test_boutique_creation_enregistree",
+      "description": "Le formulaire d'ouverture de boutique crée réellement une boutique puis mène à l'écran de confirmation ; l'enregistrement est présent dans les données.",
+      "kind": "e2e",
+      "targetId": "act_bout_saisir_enregistrer"
+    },
+    {
+      "id": "test_boutique_regles_identite",
+      "description": "Le formulaire de boutique refuse la soumission sans nom, ville, pays du Sahel ou numéro de téléphone au format international, conformément aux règles de validation.",
+      "kind": "contract",
+      "targetId": "blk_bout_saisir_form"
+    },
+    {
+      "id": "test_produit_publication_enregistree",
+      "description": "Le formulaire de publication crée réellement le produit au catalogue puis mène à l'écran de confirmation du produit.",
+      "kind": "e2e",
+      "targetId": "act_prod_saisir_publier"
+    },
+    {
+      "id": "test_produit_regles_publication",
+      "description": "La publication d'un produit est refusée sans titre, sans photo, sans catégorie, avec un prix nul ou négatif, avec une devise autre que FCFA ou sans téléphone de contact valide.",
+      "kind": "contract",
+      "targetId": "blk_prod_saisir_form"
+    },
+    {
+      "id": "test_produit_mise_a_jour_vendeur",
+      "description": "Le formulaire de la fiche vendeur met à jour le prix, la disponibilité, la description et les photos du produit ouvert, puis ramène à la liste « Mes produits ».",
+      "kind": "e2e",
+      "targetId": "act_prod_vend_mettre_a_jour"
+    },
+    {
+      "id": "test_mes_produits_ligne_ouvre_fiche",
+      "description": "Appuyer sur un de mes produits ouvre sa fiche vendeur avec la bonne instance ; le geste secondaire mène à la commande de mise en avant.",
+      "kind": "e2e",
+      "targetId": "act_mes_prod_ouvrir_produit"
+    },
+    {
+      "id": "test_mes_produits_etat_vide",
+      "description": "Quand le vendeur n'a publié aucun produit, l'état vide s'affiche et son bouton ouvre le formulaire de publication.",
+      "kind": "deterministic",
+      "targetId": "blk_mes_prod_vide"
+    },
+    {
+      "id": "test_mise_en_avant_tarif_calcule",
+      "description": "À l'ouverture de l'écran de mise en avant, le slot de tarification est invoqué et son libellé de tarif en FCFA alimente le sous-titre de l'en-tête.",
+      "kind": "deterministic",
+      "targetId": "act_mav_saisir_calculer_tarif"
+    },
+    {
+      "id": "test_mise_en_avant_creation",
+      "description": "La validation du formulaire de mise en avant crée la campagne (durée du barème, tarif d'au moins 5 000 FCFA, moyen de paiement) puis mène à l'écran de paiement.",
+      "kind": "e2e",
+      "targetId": "act_mav_saisir_valider"
+    },
+    {
+      "id": "test_mise_en_avant_regles_commande",
+      "description": "Une mise en avant est refusée si la durée est hors barème, si le tarif est inférieur à 5 000 FCFA, si la devise n'est pas FCFA ou si les dates de début et de fin manquent.",
+      "kind": "contract",
+      "targetId": "blk_mav_saisir_form"
+    },
+    {
+      "id": "test_mise_en_avant_a_payer_filtree",
+      "description": "L'écran de paiement ne liste que les mises en avant au statut « En attente de paiement », avec le produit, la durée, le tarif en FCFA et le moyen de paiement en libellés humains.",
+      "kind": "deterministic",
+      "targetId": "blk_mav_payer_liste"
+    },
+    {
+      "id": "test_mise_en_avant_paiement_confirme",
+      "description": "Confirmer le paiement met à jour la mise en avant ouverte puis mène à l'écran de la mise en avant active.",
+      "kind": "e2e",
+      "targetId": "act_mav_payer_confirmer"
+    },
+    {
+      "id": "test_mise_en_avant_historique",
+      "description": "L'historique sépare les campagnes actives (rangée) des campagnes expirées (liste filtrée sur le statut expirée) et permet de filtrer les passées par titre de produit et par durée.",
+      "kind": "deterministic",
+      "targetId": "blk_mav_hist_expirees"
+    },
+    {
+      "id": "test_mise_en_avant_historique_ouvre_campagne",
+      "description": "Appuyer sur une campagne passée ouvre l'écran de mise en avant expirée correspondant, d'où le vendeur peut la relancer.",
+      "kind": "e2e",
+      "targetId": "act_mav_hist_ouvrir_expiree"
+    }
+  ],
+  "intent": {
+    "request": "Une place de marché pour le Tchad et le Sahel. Les vendeurs créent leur boutique et publient leurs produits avec photos et prix en francs CFA. Les acheteurs parcourent le catalogue par catégorie et recherchent un produit. Il n'y a aucun paiement en ligne entre acheteur et vendeur : l'acheteur contacte le vendeur directement par WhatsApp ou par appel téléphonique, et ils s'arrangent entre eux. Les vendeurs paient la plateforme pour mettre leurs produits en avant dans le catalogue.",
+    "requestLocale": "fr",
+    "needs": [
+      {
+        "id": "need_place_de_marche_sahel",
+        "statement": "Disposer d'une place de marché pour le Tchad et le Sahel, où acheteurs et vendeurs se rencontrent autour d'un catalogue commun.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "scr_entree",
+            "blk_entree_marque",
+            "blk_entree_produits",
+            "blk_entree_categories",
+            "scr_cpt_produit_choisir",
+            "blk_prod_choisir_liste",
+            "ent_produit",
+            "ent_boutique",
+            "ent_categorie",
+            "data_produit"
+          ]
+        }
+      },
+      {
+        "id": "need_vendeur_cree_boutique",
+        "statement": "Les vendeurs créent leur boutique.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "scr_cpt_boutique_saisir",
+            "blk_bout_saisir_form",
+            "act_bout_saisir_enregistrer",
+            "scr_cpt_boutique_confirmer",
+            "blk_bout_conf_titre",
+            "ent_boutique",
+            "fld_boutique_nom",
+            "fld_boutique_ville",
+            "fld_boutique_pays",
+            "fld_boutique_telephone",
+            "data_boutique"
+          ]
+        }
+      },
+      {
+        "id": "need_vendeur_publie_produits",
+        "statement": "Les vendeurs publient leurs produits.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "scr_cpt_produit_saisir",
+            "blk_prod_saisir_form",
+            "act_prod_saisir_publier",
+            "scr_cpt_produit_confirmer",
+            "blk_prod_conf_titre",
+            "scr_cpt_produit_choisir_acteur_act_vendeur",
+            "blk_mes_prod_liste",
+            "blk_prod_vend_form",
+            "act_prod_vend_mettre_a_jour",
+            "ent_produit"
+          ]
+        }
+      },
+      {
+        "id": "need_produits_avec_photos",
+        "statement": "Les produits sont publiés et présentés avec leurs photos.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "fld_produit_photos",
+            "blk_prod_choisir_liste",
+            "blk_entree_produits",
+            "blk_prod_pub_entete",
+            "blk_bout_ouv_produits",
+            "blk_mes_prod_liste",
+            "blk_prod_vend_entete",
+            "blk_prod_saisir_form"
+          ]
+        }
+      },
+      {
+        "id": "need_prix_en_francs_cfa",
+        "statement": "Les produits portent un prix affiché en francs CFA.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "fld_produit_prix",
+            "fld_produit_devise",
+            "blk_prod_choisir_liste",
+            "blk_entree_produits",
+            "blk_prod_pub_entete",
+            "blk_bout_ouv_produits",
+            "blk_prod_saisir_form"
+          ]
+        }
+      },
+      {
+        "id": "need_acheteur_parcourt_par_categorie",
+        "statement": "Les acheteurs parcourent le catalogue par catégorie.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "ent_categorie",
+            "blk_entree_categories",
+            "scr_cpt_categorie_choisir",
+            "blk_cat_choisir_liste",
+            "act_cat_choisir_appliquer",
+            "act_entree_categories_voir_tout",
+            "blk_entree_produits",
+            "blk_prod_choisir_liste",
+            "fld_produit_categorie_nom",
+            "act_prod_choisir_vers_categories"
+          ]
+        }
+      },
+      {
+        "id": "need_acheteur_recherche_produit",
+        "statement": "Les acheteurs recherchent un produit.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "blk_entree_recherche",
+            "act_entree_ouvrir_recherche",
+            "scr_cpt_produit_choisir",
+            "blk_prod_choisir_liste",
+            "fld_produit_titre",
+            "blk_prod_choisir_vide"
+          ]
+        }
+      },
+      {
+        "id": "need_consulter_fiche_produit",
+        "statement": "Consulter le détail d'un produit du catalogue (description, prix, disponibilité, vendeur).",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "act_prod_choisir_ouvrir_fiche",
+            "act_entree_produit_ouvrir",
+            "scr_cpt_produit_consulter_publie",
+            "blk_prod_pub_entete",
+            "fld_produit_description",
+            "fld_produit_disponibilite",
+            "fld_produit_boutique_nom",
+            "fld_produit_ville"
+          ]
+        }
+      },
+      {
+        "id": "need_decouvrir_boutiques",
+        "statement": "Découvrir les boutiques des vendeurs et les produits qu'elles proposent.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "scr_cpt_boutique_decouvrir",
+            "blk_bout_dec_liste",
+            "act_bout_dec_ouvrir_boutique",
+            "scr_cpt_boutique_consulter_ouverte",
+            "blk_bout_ouv_entete",
+            "blk_bout_ouv_produits",
+            "blk_entree_boutiques_lien",
+            "act_entree_ouvrir_boutiques"
+          ]
+        }
+      },
+      {
+        "id": "need_aucun_paiement_en_ligne_entre_acheteur_et_vendeur",
+        "statement": "Il n'y a aucun paiement en ligne entre acheteur et vendeur : l'application n'encaisse rien pour eux et l'indique clairement.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "blk_prod_pub_consigne",
+            "act_prod_pub_consigne_contact",
+            "blk_prod_pub_whatsapp",
+            "blk_prod_pub_appel",
+            "scr_cpt_produit_consulter_publie"
+          ]
+        }
+      },
+      {
+        "id": "need_contact_vendeur_whatsapp",
+        "statement": "L'acheteur contacte le vendeur directement par WhatsApp.",
+        "resolution": {
+          "kind": "unexpressible",
+          "reason": "le moteur n'exécute pas encore les effets capability (capabilitiesEmitCode: false) : l'ouverture réelle de WhatsApp via le lien profond ne peut pas être émise ; le numéro et le bouton sont déclarés, l'appel du canal ne part pas."
+        }
+      },
+      {
+        "id": "need_contact_vendeur_appel_telephonique",
+        "statement": "L'acheteur contacte le vendeur par appel téléphonique.",
+        "resolution": {
+          "kind": "unexpressible",
+          "reason": "le moteur n'exécute pas encore les effets capability (capabilitiesEmitCode: false) : le déclenchement réel de l'appel téléphonique depuis la fiche produit ou la boutique ne peut pas être émis."
+        }
+      },
+      {
+        "id": "need_coordonnees_vendeur_visibles",
+        "statement": "Les coordonnées du vendeur (boutique, ville, téléphone, WhatsApp) sont visibles pour que l'acheteur et le vendeur s'arrangent entre eux.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "fld_produit_telephone",
+            "fld_produit_whatsapp",
+            "fld_boutique_telephone",
+            "fld_boutique_whatsapp",
+            "blk_prod_pub_consigne",
+            "act_prod_pub_consigne_contact",
+            "blk_bout_ouv_entete",
+            "blk_bout_saisir_form",
+            "blk_prod_saisir_form"
+          ]
+        }
+      },
+      {
+        "id": "need_vendeur_paie_mise_en_avant",
+        "statement": "Les vendeurs paient la plateforme pour mettre leurs produits en avant.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "ent_mise_en_avant",
+            "scr_cpt_mise_en_avant_saisir",
+            "blk_mav_saisir_form",
+            "act_mav_saisir_valider",
+            "act_mav_saisir_calculer_tarif",
+            "scr_cpt_mise_en_avant_payer",
+            "blk_mav_payer_liste",
+            "blk_mav_payer_confirmer",
+            "act_mav_payer_confirmer",
+            "fld_mise_en_avant_tarif",
+            "fld_mise_en_avant_moyen_paiement",
+            "data_mise_en_avant"
+          ]
+        }
+      },
+      {
+        "id": "need_produits_mis_en_avant_dans_catalogue",
+        "statement": "Les produits payés apparaissent mis en avant dans le catalogue.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "fld_produit_en_avant",
+            "blk_entree_produits",
+            "act_entree_classer_catalogue",
+            "blk_prod_pub_entete",
+            "blk_mes_prod_liste",
+            "blk_bout_vend_produits"
+          ]
+        }
+      },
+      {
+        "id": "need_suivi_mises_en_avant_vendeur",
+        "statement": "Le vendeur suit ses mises en avant payées : celles en cours et celles qui sont terminées.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "scr_cpt_mise_en_avant_consulter_historique",
+            "blk_mav_hist_actives",
+            "blk_mav_hist_expirees",
+            "act_mav_hist_ouvrir_active",
+            "act_mav_hist_ouvrir_expiree",
+            "scr_cpt_mise_en_avant_consulter_active",
+            "blk_mav_active_entete",
+            "scr_cpt_mise_en_avant_consulter_expiree",
+            "blk_mav_exp_entete",
+            "act_mav_exp_relancer",
+            "fld_mise_en_avant_statut"
+          ]
+        }
+      }
+    ]
+  }
+}
