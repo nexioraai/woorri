@@ -50,6 +50,39 @@ export const EMPLACEMENT_PAR_BLOC: Readonly<Record<string, string>> = {
 };
 
 /**
+ * EP-131 · ① QUI OCCUPE L'EMPLACEMENT « TITRE ».
+ *
+ * Deux chemins mènent au même emplacement, et c'est là que naît le désordre :
+ *  · l'EN-TÊTE NATIF, rendu dès que l'écran ne le masque pas, qui reçoit le
+ *    titre de l'écran — c'est la place que [S2] assigne au titre ;
+ *  · un bloc d'en-tête DANS le document, qui porte son propre texte.
+ *
+ * Le discriminant est le TEXTE, pas la présence : un bloc qui porte une
+ * phrase distincte est un contenu éditorial légitime, en zone contenu. Un
+ * bloc qui REDIT le titre de l'écran occupe une seconde fois l'emplacement
+ * déjà tenu par l'en-tête natif — la même donnée est affichée deux fois,
+ * l'une sous l'autre.
+ */
+const texteDe = (valeur: unknown): string => {
+  if (typeof valeur === "string") return valeur;
+  if (Array.isArray(valeur)) {
+    const premier: unknown = valeur[0];
+    if (typeof premier === "object" && premier !== null && "text" in premier) {
+      const t: unknown = (premier as { text: unknown }).text;
+      return typeof t === "string" ? t : "";
+    }
+  }
+  return "";
+};
+
+const memeTexte = (a: string, b: string): boolean =>
+  a.trim().toLocaleLowerCase() === b.trim().toLocaleLowerCase() && a.trim() !== "";
+
+/** L'en-tête natif est rendu SAUF si l'écran le masque explicitement. */
+export const enteteNativeRendue = (ecran: { showsScreenTitle?: boolean }): boolean =>
+  ecran.showsScreenTitle !== false;
+
+/**
  * DÉCISION PRODUIT (Youssouf), NON une convention de plateforme.
  *
  * Aucune source consultée n'impose un onglet « Compte » : [S1] prescrit
@@ -77,15 +110,39 @@ export function jugerExclusivite(air: Air): readonly PlacementFinding[] {
       if (emplacement === undefined) continue;
       occupants.set(emplacement, [...(occupants.get(emplacement) ?? []), bloc.id]);
     }
+    // EP-131 — l'emplacement « titre » : l'en-tête natif d'abord, puis tout
+    // bloc qui redit le même texte.
+    if (enteteNativeRendue(ecran)) {
+      const titreEcran = texteDe(ecran.title);
+      const redits = ecran.blocks.filter(
+        (b) =>
+          b.blockType === "header" &&
+          memeTexte(
+            texteDe(b.props?.find((p) => p.key === "title")?.value),
+            titreEcran,
+          ),
+      );
+      for (const bloc of redits) {
+        occupants.set("titre", [...(occupants.get("titre") ?? ["en-tête natif"]), bloc.id]);
+      }
+    }
     for (const [emplacement, blocs] of occupants) {
       if (blocs.length > 1) {
         out.push({
-          code: "PRESENTATION_EMPLACEMENT_OCCUPE",
+          code:
+            emplacement === "titre"
+              ? "PRESENTATION_TITRE_REPETE"
+              : "PRESENTATION_EMPLACEMENT_OCCUPE",
           path: `screens[${ecran.id}]`,
           message:
-            `${String(blocs.length)} éléments persistants occupent l'emplacement ` +
-            `« ${emplacement} » de la barre supérieure : ${blocs.join(", ")}. ` +
-            `Un emplacement porte UN élément — deux s'empilent ou se recouvrent à l'écran.`,
+            emplacement === "titre"
+              ? `le titre de l'écran est affiché DEUX fois : par l'en-tête natif, ` +
+                `et redit à l'identique par ${blocs.slice(1).join(", ")}. ` +
+                `Un bloc qui porte un texte DIFFÉRENT est un contenu légitime ; ` +
+                `un bloc qui redit le titre occupe une place déjà tenue.`
+              : `${String(blocs.length)} éléments persistants occupent l'emplacement ` +
+                `« ${emplacement} » de la barre supérieure : ${blocs.join(", ")}. ` +
+                `Un emplacement porte UN élément — deux s'empilent ou se recouvrent à l'écran.`,
         });
       }
     }

@@ -91,6 +91,48 @@ describe("EP-130 · ① un emplacement porte UN élément", () => {
   });
 });
 
+describe("EP-131 · ① l'emplacement « titre » de la barre supérieure", () => {
+  // Base verte : l'en-tête natif porte le titre, et un bloc voisin porte un
+  // texte DIFFÉRENT — un contenu éditorial, pas un second titre.
+  const avecEnteteEtBloc = (titreBloc: string, masquee = false): ReturnType<typeof air> => {
+    const a = baseVerte();
+    a.screens[1] = {
+      id: "scr_b",
+      title: L("Titre de l'écran"),
+      ...(masquee ? { showsScreenTitle: false } : {}),
+      blocks: [{ id: "blk_b_h", blockType: "header", props: P({ title: titreBloc }) }],
+    };
+    return a;
+  };
+
+  it("laisse passer un bloc qui porte un texte DIFFÉRENT", () => {
+    expect(codes(jugerExclusivite(avecEnteteEtBloc("Une phrase à elle")))).toEqual([]);
+  });
+
+  it("refuse un bloc qui REDIT le titre déjà porté par l'en-tête natif", () => {
+    const f = jugerExclusivite(avecEnteteEtBloc("Titre de l'écran"));
+    expect(codes(f)).toEqual(["PRESENTATION_TITRE_REPETE"]);
+    expect(f[0]!.message).toContain("blk_b_h");
+  });
+
+  it("ignore la casse et les espaces — c'est la même donnée redite", () => {
+    expect(codes(jugerExclusivite(avecEnteteEtBloc("  TITRE DE L'ÉCRAN ")))).toEqual([
+      "PRESENTATION_TITRE_REPETE",
+    ]);
+  });
+
+  it("laisse passer le même texte quand l'en-tête natif est MASQUÉ", () => {
+    // Un seul titre à l'écran : le bloc prend la place laissée libre.
+    expect(codes(jugerExclusivite(avecEnteteEtBloc("Titre de l'écran", true)))).toEqual([]);
+  });
+
+  it("ne confond pas un titre vide avec une répétition", () => {
+    const a = avecEnteteEtBloc("");
+    a.screens[1]!.title = L("");
+    expect(codes(jugerExclusivite(a))).toEqual([]);
+  });
+});
+
 describe("EP-130 · ② la recherche est en haut [S3]", () => {
   it("refuse une recherche tombée dans le flux défilant", () => {
     const base = baseVerte();
