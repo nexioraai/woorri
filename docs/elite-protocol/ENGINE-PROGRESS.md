@@ -1018,3 +1018,11 @@ conséquence nommée (émission refusée). La clause réactive d'EP-113
 demeure : deux canaux. 6 preuves sur 23 écrans (≠ 16). compiler
 476/476, 28/28 apps. Jalon ③ 0→1. L-124-A consigné non traité.
 Mission : 69,2485 $.
+
+--- 2026-09-12 · RUN AVORTÉ — CRÉDIT ÉPUISÉ (EP-126/127) ---
+Contrôle ③ : DeepSeek P1, compteur 1→0. Run Anthropic : 0 appel, 0 $,
+crédit épuisé avant le premier tirage (2e occurrence, cf. EP-110, mais
+cette fois sans dépense ni artefact). AUCUNE des six mesures écrites
+avant n'est rendue — EP-125 reste NON VÉRIFIÉ en réel. L'app sur le
+téléphone reste celle du run 15-27 ; Expo non relancé (rien de neuf).
+Prérequis externe : recharge du compte. Mission : 69,2513 $.
