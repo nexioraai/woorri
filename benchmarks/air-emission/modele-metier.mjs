@@ -700,6 +700,46 @@ export function gestesParcoursDeCollection() {
     );
   });
 }
+/**
+ * EP-118 — LE LIEN QUE LA CONSOMMATION-PAR-PORTÉE ÉTABLIT, EXPOSÉ.
+ *
+ * Mesuré : `ecransDe` ACCEPTE « élire X puis parcourir Y relié à X »
+ * (EP-070) — donc le plan SAIT que les Y présentés sont ceux de l'instance
+ * de X choisie — mais il ne CONSERVE ce lien nulle part : la surface de
+ * `chercher` porte `resultat:Y`, jamais `instance:X`. Résultat mesuré : le
+ * générateur produit une collection Y NON SCOPÉE, et C4 refuse l'identité
+ * perdue (3 diagnostics, dernière famille bloquante). Le plan décidait sans
+ * transmettre — 4e occurrence du motif. Dérivé du MÊME prédicat que la
+ * décision : aucune donnée nouvelle, aucune liste à la main.
+ */
+export function consommationsParPortee(modele) {
+  const out = [];
+  const parcoursDeCollection = gestesParcoursDeCollection();
+  for (const p of modele.parcours) {
+    for (const [i, e] of p.etapes.entries()) {
+      if (e.geste !== "choisir") continue;
+      const suivant = avalIdentitaire(p, i);
+      if (suivant === undefined) continue;
+      const cible = suivant.etape;
+      if (
+        cible.concept === e.concept ||
+        !parcoursDeCollection.includes(cible.geste) ||
+        !conceptsRelies(modele, e.concept, cible.concept)
+      ) {
+        continue;
+      }
+      out.push({
+        parcours: p.id,
+        elu: e.concept,
+        parcouru: cible.concept,
+        etapeElection: i,
+        etapeConsommation: suivant.index,
+      });
+    }
+  }
+  return out;
+}
+
 /** EP-070 — un lien structurel DÉCLARÉ entre deux concepts, dans l'un ou
  * l'autre sens (T3 écrit « creneau référence soin », T2 « categorie possède
  * soin » : même lien, deux sens — la déclaration fait foi, pas sa direction). */
@@ -1196,9 +1236,29 @@ export function obligationsPrescriptives(nomPasse, modele, plan) {
     ].join("\n");
   }
   if (nomPasse === "ecrans") {
+    // EP-118 — CE QUE LE PLAN A DÉCIDÉ, IL LE TRANSMET. Les élections
+    // consommées PAR PORTÉE (EP-070) établissent un lien élu→parcouru que le
+    // plan utilisait pour ACCEPTER sans jamais le dire : la collection
+    // présentée doit être SCOPÉE sur l'instance élue, sinon l'identité
+    // transportée est perdue (C4, mesuré : dernière famille bloquante).
+    // Le domaine est fourni avec l'ordre (leçon EP-113) : le concept élu est
+    // nommé, la valeur attendue est le champ `reference` qui le vise.
+    const portees = consommationsParPortee(modele).map((c) => {
+      const ecran = plan.ecrans.find((e) =>
+        e.justification.some(
+          (j) => j.parcours === c.parcours && j.etape === c.etapeConsommation,
+        ),
+      );
+      return ecran === undefined
+        ? ""
+        : `· ${ecranAirDe(ecran.ecranId)} présente les « ${c.parcouru} » DE L'INSTANCE de « ${c.elu} » choisie juste avant : sa liste DOIT porter \`scopeFieldId\` = le champ \`reference\` de ${c.parcouru} qui vise ${c.elu}. Sans lui, l'instance choisie est PERDUE et l'écran montre tout le catalogue.`;
+    }).filter((l) => l !== "");
     return [
       "PRESCRIPTIONS D'ÉCRANS (dérivés du plan — chaque écran est JUSTIFIÉ par ses étapes) :",
       ...plan.ecrans.map((e) => `· ${ecranAirDe(e.ecranId)} — surfaces : ${e.surfaces.join(", ")} (justifié par ${e.justification.length} étape(s))`),
+      ...(portees.length === 0
+        ? []
+        : ["PORTÉES OBLIGATOIRES (une élection consommée par portée se MATÉRIALISE) :", ...portees]),
       "Le NOMBRE d'écrans est une sortie du plan : ni écran libre, ni écran manquant.",
     ].join("\n");
   }

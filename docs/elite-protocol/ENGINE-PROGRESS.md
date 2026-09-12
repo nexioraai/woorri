@@ -921,3 +921,17 @@ brute, param fantôme). Q1 NON : il reste 3 AIR_CIBLE_IDENTITE_PERDUE
 (juge C4, famille jamais traitée) — seule famille bloquante. Q4 : 23
 écrans, 44 actions, 63 blocs : l'app est à 3 diagnostics de
 l'acceptation. Mission : 61,0515 $.
+
+--- 2026-09-12 · CIBLES D'IDENTITÉ (EP-118, 0 $) — le plan décidait sans transmettre ---
+Mesure : les 3 cibles ignorent RÉELLEMENT l'élection (aucun scope) — le
+juge C4 a raison. Pourquoi EP-070 ne se déclenche pas ici : il se
+déclenche côté PLAN (qui accepte), mais la surface de `chercher` porte
+`resultat:` et jamais `instance:` — le lien qui a servi à DÉCIDER n'est
+conservé nulle part, donc jamais transmis. 4e occurrence du motif.
+Correctif : consommationsParPortee() expose le lien élu→parcouru, dérivé
+du MÊME prédicat que la décision ; l'obligation `ecrans` le transmet avec
+son domaine et sa conséquence. 6 preuves sur kaviva 16 écrans, dont 3
+mutations (relation retirée, élection retirée, même concept) et la
+vérification que gate et clauses antérieures sont intactes. Batterie de
+complétude 30→31. compiler 457/457, 28/28 apps. Jalon ③ 0→1.
+Mission : 61,0515 $.
