@@ -731,3 +731,32 @@ variance connue, toutes légitimes, aucun angle mort. Taux marketplace
 P0→P2 : 1/4 sous juge raffiné. Décision Youssouf : répétition (~2-3
 relances attendues) ou passe-goulot sur le taux de passage P2 (la
 variable dominante de coût depuis v5). Mission : 29,6248 $.
+
+--- 2026-09-12 · RE-RUN v11 (EP-097/098) — trois faits ---
+① v11 TRANCHE : P0→P2 1/1 (v10 : 1/4) et ZÉRO des deux familles qui
+tuaient les 3 tirages d'hier — l'obligation d'élection a débloqué
+aussi la famille voisine (SANS_SOURCE, pourtant dite depuis v6) ; n=1,
+dit comme tel. ② Borne 40 000 EXERCÉE : 21 écrans émis, aucune
+troncature — dérivation EP-095 validée par le réel. ③ La gate
+anti-oscillation MORD en production pour la première fois : réparation
+12→12 avec 2 introduits ⇒ REJETÉE, attempt1 conservé, oscillation
+journalisée. Q1 NON · Q2 partielle (navigation 0 écart, bijection
+22/21) · Q3 NON (arcs inexécutables ×4, contrôle mort ×1) · Q4 : une
+app existe (21 écrans, 40 actions, 63 blocs, mise en avant payée) mais
+n'est pas livrable. Le goulot s'est déplacé de P0 vers l'ÉMISSION à
+l'échelle. Mission : 35,0225 $.
+
+--- 2026-09-12 · TROIS LIVRABLES D'ÉCHELLE (GO EP-099, 0 $) ---
+Les deux hypothèses du GO sont RÉFUTÉES par la mesure. L-098-A : les 4
+arcs étaient TOUS transmis — deux causes distinctes : (A1) le PLAN
+prescrit l'impossible (arc payer→ via payments.psp que le moteur
+n'exécute pas ; générateur irréprochable) ⇒ exemption limitation-moteur
+à discriminant FIN (capability absente = exemptée ; méthode fausse =
+refusée, EP-064 intact), mort restée visible ; (A2) cible fausse de
+thenScreenId ⇒ consigné, candidat prompt. L-098-B : mon attribution
+« écran manquant » était FAUSSE — le plan produisait un DOUBLON
+(surfaceId non injectif sur la portée) ; correctif chirurgical, zéro
+identifiant collatéral. L-098-C : cause remontée — la réparation ajoute
+un detail_header qui RECLASSE l'écran en fiche et invalide la liste
+déjà présente ; gate non touchée, correctif = sa propre passe. Jalon ③
+0→1. Batteries 436+168, 28/28 apps. Mission : 35,0225 $.

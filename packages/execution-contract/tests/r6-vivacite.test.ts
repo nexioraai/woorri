@@ -330,6 +330,49 @@ describe("B3 (EP-064) — une capability HONORÉE est une arête : thenScreenId 
   });
 });
 
+describe("EP-099 (L-098-A) — limitation-moteur : un arc que SEULE une capability non implémentée pourrait satisfaire", () => {
+  // Mesuré sur la marketplace : payer ⇒ payments.psp.startCheckout avec
+  // thenScreenId CORRECTEMENT posé — le générateur a écrit exactement ce que
+  // le contrat demande, le moteur n'exécute pas cette capability. Le refuser
+  // rendrait la réparation INGAGNABLE (précédent R1/EP-020).
+  interface ActionCap {
+    id: string;
+    trigger: Record<string, unknown>;
+    effect: { kind: string; capability?: string; method?: string; thenScreenId?: string; params?: unknown };
+  }
+  const ARC = { de: "scr_cpt_compte_s_identifier", vers: "scr_cpt_compte_consulter" };
+  const avecCapability = (capability: string, methode: string): AirDoc => {
+    const air = lireAir() as unknown as { actions: ActionCap[] };
+    air.actions = air.actions.filter((a) => a.effect.thenScreenId !== ARC.vers);
+    air.actions.push({
+      id: "act_paiement_promotion",
+      trigger: { kind: "ui", blockId: "blk_inscription_form" },
+      effect: { kind: "capability", capability, method: methode, thenScreenId: ARC.vers },
+    });
+    return air as unknown as AirDoc;
+  };
+
+  it("capability ABSENTE de l'enveloppe ⇒ arc EXEMPTÉ (aucune alternative possible)", () => {
+    const f = jugerVivacite(avecCapability("payments.psp", "startCheckout"), EXECUTION_ENVELOPE_V1, {
+      arcsPrescrits: [ARC],
+    });
+    expect(f.map((x) => x.path)).not.toContain(`navigation[${ARC.de}->${ARC.vers}]`);
+  });
+
+  it("MUTATION — capability IMPLÉMENTÉE mais méthode fausse ⇒ arc REFUSÉ (faute du document, EP-064 intact)", () => {
+    const f = jugerVivacite(avecCapability("auth", "captureDePrise"), EXECUTION_ENVELOPE_V1, {
+      arcsPrescrits: [ARC],
+    });
+    expect(f.map((x) => x.path)).toContain(`navigation[${ARC.de}->${ARC.vers}]`);
+  });
+
+  it("la mort reste VISIBLE : l'écran exempté sort en ÉCRAN INATTEIGNABLE si rien ne l'atteint", () => {
+    const air = avecCapability("payments.psp", "startCheckout");
+    const codes = jugerVivacite(air, EXECUTION_ENVELOPE_V1, { arcsPrescrits: [ARC] }).map((x) => x.code);
+    expect(codes).toContain("VIVACITE_ECRAN_INATTEIGNABLE");
+  });
+});
+
 describe("branchement — un juge hors acceptation ne juge pas", () => {
   const emitV3 = readFileSync(join(R, "benchmarks", "air-emission", "emit-v3.mjs"), "utf8");
   it("jugerAcceptation tourne aux DEUX attempts, et consomme jugerVivacite", () => {

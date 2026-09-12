@@ -183,6 +183,27 @@ export function jugerVivacite(
       const satisfait = aretes.some(
         (a) => a.cible === arc.vers && (a.origine === undefined || a.origine === arc.de),
       );
+      // EP-099 (L-098-A) — LIMITATION-MOTEUR DÉCLARÉE : un arc dont la
+      // SEULE réalisation possible passe par une capability que le moteur
+      // n'exécute pas (mesuré : marketplace, payer ⇒ payments.psp.
+      // startCheckout, thenScreenId correctement posé) n'est PAS un défaut
+      // du document — le générateur a écrit exactement ce que le contrat
+      // demande. Le refuser rendrait la boucle de réparation INGAGNABLE
+      // (précédent R1/EP-020, exemption identique déjà en vigueur pour
+      // VIVACITE_CONTROLE_MORT). La mort reste VISIBLE : l'écran cible sort
+      // en VIVACITE_ECRAN_INATTEIGNABLE si rien d'autre ne l'atteint.
+      // DISCRIMINANT FIN (corrigé après morsure de 4 preuves EP-064) : la
+      // capability est-elle ABSENTE de la table — donc AUCUNE méthode
+      // exécutable, le document n'a aucune alternative (limitation-moteur,
+      // exemption) — ou bien implémentée mais la MÉTHODE mal choisie, et
+      // c'est alors une faute du document qui reste refusée (B3/EP-064).
+      const tenteParCapabilite = air.actions.some(
+        (a) =>
+          a.effect.kind === "capability" &&
+          a.effect.thenScreenId === arc.vers &&
+          envelope.capabilityMethodsExecutees[a.effect.capability] === undefined,
+      );
+      if (!satisfait && tenteParCapabilite) continue;
       if (!satisfait) {
         out.push({
           code: "VIVACITE_ARC_PRESCRIT_INEXECUTABLE",

@@ -611,7 +611,24 @@ export function surfacesDe(modele) {
       });
     }
   }
-  return [...table.values()];
+  // EP-099 (L-098-B) — L'IDENTIFIANT DOIT ÊTRE INJECTIF, ou le plan
+  // collisionne. Mesuré à l'échelle (marketplace, 22 écrans) : deux surfaces
+  // au même (concept, geste, état) mais de PORTÉES différentes (globale vs
+  // acteur:vendeur) recevaient le MÊME surfaceId ⇒ deux plan.ecrans au même
+  // ecranId ⇒ bijection prescrits/émis intenable (22 prescrits, 21
+  // distincts). Le dédoublonnage C6 est par QUADRUPLET : l'identifiant doit
+  // l'être aussi. DÉSAMBIGUÏSATION CHIRURGICALE : seules les COLLISIONS
+  // RÉELLES reçoivent le suffixe de portée — tout identifiant sans
+  // collision reste INCHANGÉ (aucune fixture antérieure ne bouge).
+  const toutes = [...table.values()];
+  const compte = new Map();
+  for (const sf of toutes) compte.set(sf.surfaceId, (compte.get(sf.surfaceId) ?? 0) + 1);
+  for (const sf of toutes) {
+    if ((compte.get(sf.surfaceId) ?? 0) > 1 && sf.portee !== "globale") {
+      sf.surfaceId = `${sf.surfaceId}_${sf.portee.replace(/[^a-z0-9]+/gi, "_")}`;
+    }
+  }
+  return toutes;
 }
 
 /**
