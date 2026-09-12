@@ -228,7 +228,97 @@ export const modeleMetierSchema = z
   })
   .strict();
 
-const d = (code, path, message) => ({ code, path, message });
+// ────────────── EP-135 — LA CLASSE VIT AVEC LE DIAGNOSTIC ──
+//
+// OBJET : partitionner les diagnostics en DEUX classes, pour qu'un refus
+// sache s'il doit être RE-TIRÉ (le brief disait assez, la machine a mal
+// travaillé) ou DEMANDÉ (la machine ne pouvait pas savoir). Cette passe pose
+// la classification ; elle ne l'exerce pas — aucun dialogue, aucune question.
+//
+// LE CRITÈRE, ET LUI SEUL : si le moteur posait la question correspondante à
+// un humain, celui-ci pourrait-il y répondre SANS connaître le fonctionnement
+// interne du moteur ? Oui ⇒ intention manquante. Non ⇒ faute de production.
+// Ni la gravité, ni la fréquence n'entrent en ligne de compte.
+//
+// ASYMÉTRIE DE PRUDENCE, appliquée aux cas douteux : un diagnostic mal classé
+// en « intention manquante » ferait porter à un humain une erreur de machine —
+// c'est le pire résultat possible. Mal classé en « faute de production », il ne
+// produit que le comportement ACTUEL (re-tirage), dont le coût pour l'humain
+// est nul. Tout doute est donc tranché vers `faute_de_production`, et DIT.
+//
+// LA CLASSE VIT ICI, AVEC LE DIAGNOSTIC — pas dans une table parallèle. La
+// leçon d'EP-134 a coûté quatre tables qui ne se parlaient pas ; celle-ci
+// n'aura pas de jumelle. Et le cliquet n'est PAS un test : `d()` REFUSE un
+// code inconnu de cette table. Un diagnostic sans classe ne peut pas être
+// émis — il n'existe pas.
+export const CLASSES_DIAGNOSTIC = ["faute_de_production", "intention_manquante"];
+
+const FP = "faute_de_production";
+const IM = "intention_manquante";
+
+export const DIAGNOSTICS = {
+  // ── LES 19 DIAGNOSTICS DE MODÈLE ──
+  MODELE_SCHEMA: { classe: FP, pourquoi: "le document ne respecte pas sa propre forme : aucune question adressée à un humain n'aurait de sens" },
+  MODELE_REFERENCE_INCONNUE: { classe: FP, pourquoi: "un identifiant interne pointe dans le vide — l'humain n'a jamais vu ces identifiants" },
+  MODELE_ETAT_INCONNU: { classe: FP, pourquoi: "un état référencé n'existe pas dans le concept : incohérence interne, invisible depuis le brief" },
+  MODELE_IDENTIFIANT_INCONNU: { classe: FP, pourquoi: "l'identifiant d'un concept désigne un attribut inexistant — même nature que la référence morte" },
+  MODELE_TRANSITION_INCONNUE: { classe: FP, pourquoi: "une transition vise un état qui n'existe pas : le graphe est faux, pas l'intention" },
+  MODELE_ETAT_SUR_GESTE_MUTANT: { classe: FP, pourquoi: "savoir OÙ se déclare un état-cible est une règle de forme du moteur ; y répondre exigerait de le connaître" },
+  MODELE_TRANSITION_DECLENCHEE_PAR_LECTURE: { classe: FP, pourquoi: "distinguer les gestes qui mutent de ceux qui lisent est une connaissance interne" },
+  MODELE_TRANSITION_NON_REPRESENTEE: { classe: FP, pourquoi: "exiger qu'une transition ait son étape est une règle du moteur, que l'humain n'a pas à connaître" },
+  MODELE_ETAT_INATTEIGNABLE: { classe: FP, pourquoi: "cohérence du graphe d'états : ni cible ni consommé se constate sur le modèle, jamais sur le besoin" },
+  MODELE_ETAT_NON_OBSERVABLE: { classe: FP, pourquoi: "répondre exigerait de savoir ce qu'est une surface — vocabulaire du moteur" },
+  MODELE_PARCOURS_SANS_PREUVE: { classe: FP, pourquoi: "répondre exigerait de savoir ce qu'est un geste terminal — vocabulaire du moteur" },
+  MODELE_TERME_NON_JUSTIFIE: { classe: FP, pourquoi: "le terme VIENT du brief : ne pas l'avoir traité est un manquement du générateur à sa redevabilité, pas une lacune de l'humain" },
+
+  // ── LES QUATRE DOUTEUX, tranchés par prudence et DITS ──
+  MODELE_COUVERTURE_VIDE: { classe: FP, discutable: true, pourquoi: "DOUTEUX — un brief très pauvre pourrait le causer ; mais le brief EXISTE et le modèle ne s'y rapporte à rien : c'est d'abord un défaut de redevabilité du générateur" },
+  MODELE_SANS_PARCOURS: { classe: FP, discutable: true, pourquoi: "DOUTEUX — « que doit-on pouvoir faire ? » est parfaitement répondable ; mais si le brief le disait déjà, poser la question ferait porter une erreur de machine. Le re-tirage est sans coût, la question ne l'est pas" },
+  MODELE_ACTEUR_MUET: { classe: FP, discutable: true, pourquoi: "DOUTEUX — « que fait cet acteur ? » est répondable ; mais l'acteur a été déclaré par le générateur, qui devait aussi le faire agir" },
+  MODELE_CONCEPT_MORT: { classe: FP, discutable: true, pourquoi: "DOUTEUX — même nature que l'acteur muet : le concept vient du générateur, qui devait le faire traverser" },
+  MODELE_COMMERCE_SANS_OBJET: { classe: FP, discutable: true, pourquoi: "DOUTEUX — pourrait révéler un paiement voulu mais non modélisé ; la correction évidente reste de retirer un fait sans consommateur" },
+
+  // ── LES DEUX SEULS CERTAINS : le moteur ne POUVAIT PAS savoir ──
+  MODELE_TERME_AMBIGU: { classe: IM, pourquoi: "le moteur dit LUI-MÊME qu'il ne sait pas trancher un terme du brief ; seul celui qui l'a écrit peut le lever — c'est le cas fondateur d'EP-089" },
+  MODELE_COMMERCE_ABSENT: { classe: IM, pourquoi: "« le paiement se conclut-il dans l'application ou hors d'elle ? » se répond sans rien savoir du moteur, et la réponse a une destination structurelle : le fait `commerce`" },
+
+  // ── DIAGNOSTICS DE DÉRIVATION ET DE PLAN ──
+  // Ils sont calculés APRÈS le modèle, SUR un modèle déjà valide : ils
+  // constatent une incohérence que le générateur a produite, jamais un manque
+  // du brief. Aucun humain n'a de prise sur eux — tous `faute_de_production`,
+  // et c'est le classement, pas un défaut de classement.
+  DERIVATION_IDENTITE_SANS_SOURCE: { classe: FP, pourquoi: "un geste consomme une identité que rien n'a élue : chaînage produit par le générateur" },
+  DERIVATION_IDENTITE_NON_CONSOMMEE: { classe: FP, pourquoi: "une identité est élue puis abandonnée : même nature, sens inverse" },
+  DERIVATION_CONFIRMATION_SANS_ECRITURE: { classe: FP, pourquoi: "une confirmation sans écriture amont est une incohérence de parcours produite" },
+  DERIVATION_ETAPE_SANS_ECRAN: { classe: FP, pourquoi: "une étape sans surface est un défaut de dérivation interne" },
+  DERIVATION_TRAVERSEE_ACTEUR: { classe: FP, pourquoi: "un parcours qui change d'acteur en cours de route est une incohérence produite" },
+  DISCRIMINANT_ABSENT: { classe: FP, pourquoi: "le fait discriminant manque au modèle — déjà refusé en amont par le diagnostic de modèle correspondant" },
+  PLAN_ECRAN_SANS_JUSTIFICATION: { classe: FP, pourquoi: "un écran qu'aucune étape n'exige vient du plan, pas du besoin" },
+  NAVIGATION_BARRE_HORS_PLAN: { classe: FP, pourquoi: "écart entre le document et le plan prescrit : produit, jamais voulu" },
+  NAVIGATION_DESTINATIONS_HORS_PLAN: { classe: FP, pourquoi: "écart entre le document et le plan prescrit : produit, jamais voulu" },
+  NAVIGATION_ECRAN_HORS_PLAN: { classe: FP, pourquoi: "écart entre le document et le plan prescrit : produit, jamais voulu" },
+  NAVIGATION_ECRAN_PRESCRIT_MANQUANT: { classe: FP, pourquoi: "le document omet un écran que le plan prescrit : omission de production" },
+  NAVIGATION_ENTREE_HORS_PLAN: { classe: FP, pourquoi: "écart entre le document et le plan prescrit : produit, jamais voulu" },
+  NAVIGATION_ROUTE_HORS_PLAN: { classe: FP, pourquoi: "écart entre le document et le plan prescrit : produit, jamais voulu" },
+  NAVIGATION_ROUTE_PRESCRITE_MANQUANTE: { classe: FP, pourquoi: "le document omet une route que le plan prescrit : omission de production" },
+};
+
+/** Les codes d'une classe — DÉRIVÉ, jamais écrit une seconde fois. */
+export function diagnosticsDeClasse(classe) {
+  return Object.keys(DIAGNOSTICS).filter((code) => DIAGNOSTICS[code].classe === classe);
+}
+
+/** EP-135 — LE CLIQUET N'EST PAS UN TEST, C'EST UNE IMPOSSIBILITÉ.
+ *  Tout diagnostic passe par ici ; un code sans classe ne peut pas naître. */
+const d = (code, path, message) => {
+  if (!(code in DIAGNOSTICS)) {
+    throw new Error(
+      `EP-135 — diagnostic "${code}" émis sans classe. Tout diagnostic se classe ` +
+        `(${CLASSES_DIAGNOSTIC.join(" | ")}) dans DIAGNOSTICS, avec sa justification.`,
+    );
+  }
+  return { code, path, message };
+};
 
 /**
  * R2 — MIGRATION 1.0.0 → 1.1.0, même patron que l'AIR : additive, jamais

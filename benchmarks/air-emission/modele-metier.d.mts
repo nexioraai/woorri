@@ -90,7 +90,24 @@ export const TABLE_GESTES: Record<string, {
   role: string; cardinalite: "instance" | "collection" | "singleton";
   preuve: string;
 }>;
-export const ROLE_PAR_GESTE: Record<string, string>;
+
+/** EP-135 — les deux classes d'un diagnostic. */
+export const CLASSES_DIAGNOSTIC: readonly ["faute_de_production", "intention_manquante"];
+/**
+ * EP-135 — LA CLASSE VIT AVEC LE DIAGNOSTIC. `faute_de_production` : le brief
+ * disait assez, la machine a mal travaillé — cela se re-tire.
+ * `intention_manquante` : la machine ne pouvait pas savoir — cela se demande.
+ * Un code absent de cette table ne peut pas être émis : `d()` le refuse.
+ */
+export const DIAGNOSTICS: Record<string, {
+  classe: "faute_de_production" | "intention_manquante";
+  pourquoi: string;
+  /** Cas tranché par prudence vers le re-tirage, et dit comme tel. */
+  discutable?: boolean;
+}>;
+export function diagnosticsDeClasse(
+  classe: "faute_de_production" | "intention_manquante",
+): string[];
 export function contratDEtape(modele: ModeleMetier, parcours: Parcours, index: number):
   | { acteur: string; geste: string; conceptCible: string;
       preconditions: { concept: string; etat: string }[];

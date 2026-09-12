@@ -116,6 +116,10 @@ describe("B/C — les dérivations ne travaillent QUE sur le MODEL (balayage COM
     gestesParcoursDeCollection: () => derivationsModele.gestesParcoursDeCollection(),
     conceptsRelies: (m) => derivationsModele.conceptsRelies(m, m.concepts[0]?.id ?? "", m.concepts[1]?.id ?? ""),
     estConceptIdentite: (m) => derivationsModele.estConceptIdentite(m, m.concepts[0]?.id ?? ""),
+    // EP-135 (édition consciente) — la classe d'un diagnostic est une
+    // propriété de la TABLE, jamais du modèle ni du brief : la dérivation
+    // ne prend aucun argument de modèle, et sa sortie est donc constante.
+    diagnosticsDeClasse: () => derivationsModele.diagnosticsDeClasse("intention_manquante"),
   };
 
   it("COMPLÉTUDE — la batterie couvre CHAQUE fonction exportée des dérivations", () => {
