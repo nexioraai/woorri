@@ -1,0 +1,933 @@
+{
+  "airSchemaVersion": "1.22.0",
+  "projectId": "prj_sahel_souk",
+  "app": {
+    "name": "Souk Sahel",
+    "slug": "souk-sahel",
+    "description": [
+      {
+        "locale": "fr",
+        "text": "Place de marché du Tchad et du Sahel : les vendeurs publient leurs produits avec photos et prix en francs CFA, les acheteurs parcourent le catalogue par catégorie, recherchent un produit et contactent directement le vendeur par WhatsApp ou par téléphone. Les vendeurs paient la plateforme pour mettre leurs produits en avant."
+      }
+    ],
+    "locales": {
+      "userLanguage": "fr",
+      "appLocales": [
+        "fr"
+      ],
+      "defaultAppLocale": "fr",
+      "contentLocales": [
+        "fr"
+      ],
+      "rtlSupported": false
+    }
+  },
+  "navigation": {
+    "entryScreenId": "scr_entree",
+    "primary": {
+      "destinations": [
+        {
+          "routeId": "nav_entree",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Accueil"
+            }
+          ],
+          "order": 0,
+          "icon": "accueil"
+        },
+        {
+          "routeId": "nav_produit_saisir",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Publier"
+            }
+          ],
+          "order": 1,
+          "icon": "liste"
+        },
+        {
+          "routeId": "nav_boutique_saisir",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Ma boutique"
+            }
+          ],
+          "order": 2,
+          "icon": "compte"
+        },
+        {
+          "routeId": "nav_mise_en_avant_historique",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Mises en avant"
+            }
+          ],
+          "order": 3,
+          "icon": "billet"
+        }
+      ]
+    },
+    "routes": [
+      {
+        "id": "nav_entree",
+        "screenId": "scr_entree",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Accueil"
+          }
+        ]
+      },
+      {
+        "id": "nav_categorie_choisir",
+        "screenId": "scr_cpt_categorie_choisir",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Catégories"
+          }
+        ]
+      },
+      {
+        "id": "nav_produit_consulter_publie",
+        "screenId": "scr_cpt_produit_consulter_publie",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Fiche produit"
+          }
+        ]
+      },
+      {
+        "id": "nav_prise_contact_saisir",
+        "screenId": "scr_cpt_prise_contact_saisir",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Contacter le vendeur"
+          }
+        ]
+      },
+      {
+        "id": "nav_prise_contact_confirmer",
+        "screenId": "scr_cpt_prise_contact_confirmer",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Confirmer le contact"
+          }
+        ]
+      },
+      {
+        "id": "nav_prise_contact_consulter_envoyee",
+        "screenId": "scr_cpt_prise_contact_consulter_envoyee",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Demande envoyée"
+          }
+        ]
+      },
+      {
+        "id": "nav_produit_saisir",
+        "screenId": "scr_cpt_produit_saisir",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Publier un produit"
+          }
+        ]
+      },
+      {
+        "id": "nav_produit_confirmer",
+        "screenId": "scr_cpt_produit_confirmer",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Vérifier la publication"
+          }
+        ]
+      },
+      {
+        "id": "nav_produit_consulter_publie_vendeur",
+        "screenId": "scr_cpt_produit_consulter_publie_acteur_act_vendeur",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Produit publié"
+          }
+        ]
+      },
+      {
+        "id": "nav_boutique_saisir",
+        "screenId": "scr_cpt_boutique_saisir",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Créer ma boutique"
+          }
+        ]
+      },
+      {
+        "id": "nav_boutique_confirmer",
+        "screenId": "scr_cpt_boutique_confirmer",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Vérifier ma boutique"
+          }
+        ]
+      },
+      {
+        "id": "nav_boutique_consulter_active",
+        "screenId": "scr_cpt_boutique_consulter_active",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Ma boutique"
+          }
+        ]
+      },
+      {
+        "id": "nav_produit_choisir",
+        "screenId": "scr_cpt_produit_choisir",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Choisir un produit à promouvoir"
+          }
+        ]
+      },
+      {
+        "id": "nav_mise_en_avant_saisir",
+        "screenId": "scr_cpt_mise_en_avant_saisir",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Mettre en avant"
+          }
+        ]
+      },
+      {
+        "id": "nav_mise_en_avant_payer",
+        "screenId": "scr_cpt_mise_en_avant_payer",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Régler la mise en avant"
+          }
+        ]
+      },
+      {
+        "id": "nav_mise_en_avant_consulter_active",
+        "screenId": "scr_cpt_mise_en_avant_consulter_active",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Mise en avant active"
+          }
+        ]
+      },
+      {
+        "id": "nav_mise_en_avant_historique",
+        "screenId": "scr_cpt_mise_en_avant_consulter_historique_expiree",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Mes mises en avant"
+          }
+        ]
+      },
+      {
+        "id": "nav_mise_en_avant_consulter",
+        "screenId": "scr_cpt_mise_en_avant_consulter",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Détail de la mise en avant"
+          }
+        ]
+      },
+      {
+        "id": "nav_produit_retirer",
+        "screenId": "scr_cpt_produit_retirer",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Retirer un produit"
+          }
+        ]
+      },
+      {
+        "id": "nav_produit_consulter_retire",
+        "screenId": "scr_cpt_produit_consulter_retire",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Produit retiré"
+          }
+        ]
+      }
+    ]
+  },
+  "design": {
+    "theme": "sahel_terracotta"
+  },
+  "network": {
+    "policy": "deny_by_default",
+    "allowedDomains": [
+      "api.souk-sahel.app",
+      "picsum.photos"
+    ]
+  },
+  "native": {
+    "minIosVersion": "16.0",
+    "minAndroidSdk": 26
+  },
+  "compliance": {
+    "commerceClass": "physical_or_offapp",
+    "accountDeletionRequired": true,
+    "dataCollected": [
+      "contact_info",
+      "identifiers",
+      "user_content",
+      "usage_data",
+      "purchases"
+    ]
+  },
+  "entities": [
+    {
+      "id": "ent_categorie",
+      "name": "categorie",
+      "fields": [
+        {
+          "id": "fld_categorie_nom",
+          "name": "nom",
+          "type": "string",
+          "required": true,
+          "unique": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Catégorie"
+            }
+          ],
+          "demoValues": [
+            "Artisanat & décoration",
+            "Vêtements & tissus",
+            "Alimentation & céréales",
+            "Téléphonie & électronique",
+            "Élevage & bétail",
+            "Maison & ustensiles",
+            "Beauté & soins",
+            "Agriculture & outillage"
+          ]
+        },
+        {
+          "id": "fld_categorie_description",
+          "name": "description",
+          "type": "text",
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Description"
+            }
+          ],
+          "demoValues": [
+            "Objets d'artisanat, tapis, poterie et décoration du Sahel",
+            "Boubous, pagnes, tissus et confection locale",
+            "Mil, sorgho, arachides, dattes et produits vivriers",
+            "Téléphones, accessoires et petit électronique",
+            "Bovins, ovins, caprins et produits d'élevage",
+            "Ustensiles, théières, nattes et équipement de la maison"
+          ]
+        },
+        {
+          "id": "fld_categorie_image",
+          "name": "image",
+          "type": "asset",
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Visuel de la catégorie"
+            }
+          ],
+          "demoValues": [
+            "https://picsum.photos/seed/categorie-artisanat-sahel/600/600",
+            "https://picsum.photos/seed/categorie-tissus-boubou/600/600",
+            "https://picsum.photos/seed/categorie-cereales-mil/600/600",
+            "https://picsum.photos/seed/categorie-telephonie-tecno/600/600",
+            "https://picsum.photos/seed/categorie-elevage-betail/600/600",
+            "https://picsum.photos/seed/categorie-maison-theiere/600/600",
+            "https://picsum.photos/seed/categorie-beaute-karite/600/600",
+            "https://picsum.photos/seed/categorie-agriculture-outillage/600/600"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ent_boutique",
+      "name": "boutique",
+      "fields": [
+        {
+          "id": "fld_boutique_nom",
+          "name": "nom",
+          "type": "string",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Nom de la boutique"
+            }
+          ],
+          "demoValues": [
+            "Boutique Al-Amana",
+            "Sahel Textile N'Djamena",
+            "Maison Toumaï Artisanat",
+            "Comptoir du Chari",
+            "Dépôt Ouaddaï Céréales",
+            "Tech Sahel Abéché",
+            "Chez Fatimé Beauté",
+            "Élevage Kanem Services"
+          ]
+        },
+        {
+          "id": "fld_boutique_description",
+          "name": "description",
+          "type": "text",
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Présentation"
+            }
+          ],
+          "demoValues": [
+            "Artisanat traditionnel du Ouaddaï, pièces uniques faites main.",
+            "Tissus, pagnes et confection sur mesure au marché central.",
+            "Céréales en gros et demi-gros, livraison dans tout le Chari-Baguirmi.",
+            "Téléphones neufs et accessoires garantis six mois.",
+            "Beurre de karité pur et savons naturels préparés à Moundou.",
+            "Vente de bétail et de produits laitiers, région du Kanem."
+          ]
+        },
+        {
+          "id": "fld_boutique_ville",
+          "name": "ville",
+          "type": "string",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Ville"
+            }
+          ],
+          "demoValues": [
+            "N'Djamena",
+            "Moundou",
+            "Abéché",
+            "Sarh",
+            "Faya-Largeau",
+            "Niamey",
+            "Bamako",
+            "Maroua"
+          ]
+        },
+        {
+          "id": "fld_boutique_telephone",
+          "name": "telephone",
+          "type": "string",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Téléphone"
+            }
+          ],
+          "demoValues": [
+            "+235 66 12 44 08",
+            "+235 99 07 51 23",
+            "+235 63 88 10 47",
+            "+227 90 22 76 14",
+            "+223 76 45 30 91",
+            "+235 65 31 09 62"
+          ]
+        },
+        {
+          "id": "fld_boutique_whatsapp",
+          "name": "whatsapp",
+          "type": "string",
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Numéro WhatsApp"
+            }
+          ],
+          "demoValues": [
+            "+235 66 12 44 08",
+            "+235 99 07 51 23",
+            "+235 63 88 10 47",
+            "+227 90 22 76 14",
+            "+223 76 45 30 91",
+            "+235 65 31 09 62"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ent_produit",
+      "name": "produit",
+      "fields": [
+        {
+          "id": "fld_produit_nom",
+          "name": "nom",
+          "type": "string",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Nom du produit"
+            }
+          ],
+          "demoValues": [
+            "Collier baoulé perles bleues",
+            "Boubou brodé homme en coton",
+            "Sac en cuir tanné de Mao",
+            "Sac de mil rouge 50 kg",
+            "Téléphone Tecno Spark 10",
+            "Théière émaillée traditionnelle",
+            "Tapis tissé du Ouaddaï",
+            "Dattes fraîches de Faya 5 kg"
+          ]
+        },
+        {
+          "id": "fld_produit_description",
+          "name": "description",
+          "type": "text",
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Description"
+            }
+          ],
+          "demoValues": [
+            "Pièce faite main, perles cousues une à une par nos artisanes.",
+            "Coton épais, broderie au fil doré, taille homme du M au XXL.",
+            "Cuir tanné artisanalement, coutures renforcées, deux poches intérieures.",
+            "Récolte de la saison, sac de 50 kg, disponible en gros.",
+            "Neuf sous blister, double SIM, garantie six mois en boutique.",
+            "Émail résistant, capacité 1,2 litre, idéale pour le thé sahélien."
+          ]
+        },
+        {
+          "id": "fld_produit_photo",
+          "name": "photo",
+          "type": "asset",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Photo du produit"
+            }
+          ],
+          "demoValues": [
+            "https://picsum.photos/seed/collier-baoule-perles-bleues/600/600",
+            "https://picsum.photos/seed/boubou-brode-coton-homme/600/600",
+            "https://picsum.photos/seed/sac-cuir-tanne-mao/600/600",
+            "https://picsum.photos/seed/sac-mil-rouge-50kg/600/600",
+            "https://picsum.photos/seed/telephone-tecno-spark-10/600/600",
+            "https://picsum.photos/seed/theiere-emaillee-the-sahel/600/600",
+            "https://picsum.photos/seed/tapis-tisse-ouaddai/600/600",
+            "https://picsum.photos/seed/dattes-fraiches-faya/600/600",
+            "https://picsum.photos/seed/savon-karite-moundou/600/600",
+            "https://picsum.photos/seed/natte-tressee-paille-tchad/600/600"
+          ]
+        },
+        {
+          "id": "fld_produit_prix",
+          "name": "prix",
+          "type": "decimal",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Prix"
+            }
+          ],
+          "unit": "FCFA",
+          "sensitive": false
+        }
+      ]
+    }
+  ],
+  "relations": [
+    {
+      "id": "rel_categorie_produit",
+      "fromEntityId": "ent_categorie",
+      "toEntityId": "ent_produit",
+      "kind": "one_to_many"
+    },
+    {
+      "id": "rel_boutique_produit",
+      "fromEntityId": "ent_boutique",
+      "toEntityId": "ent_produit",
+      "kind": "one_to_many"
+    },
+    {
+      "id": "rel_categorie_boutique",
+      "fromEntityId": "ent_categorie",
+      "toEntityId": "ent_boutique",
+      "kind": "many_to_many"
+    }
+  ],
+  "datasets": [
+    {
+      "id": "data_categorie_seed",
+      "entityId": "ent_categorie",
+      "contentHash": "3f9a1c7d0b62e4485ad31c90f7e26b8419cc75d0aa3e61f2b48d90c7e5137aa2",
+      "rowCount": 8,
+      "sourceKind": "seed"
+    },
+    {
+      "id": "data_boutique_seed",
+      "entityId": "ent_boutique",
+      "contentHash": "b71e45c9d2a380f614cc9ba07e53d18f2a6490bb3cd7e015f8a42c6d9b30117e",
+      "rowCount": 12,
+      "sourceKind": "seed"
+    },
+    {
+      "id": "data_produit_seed",
+      "entityId": "ent_produit",
+      "contentHash": "c0d48a2f61b9e73c5ad812f40e97bb365c1a7de820f43b96ad5e1c07f28b94d3",
+      "rowCount": 36,
+      "sourceKind": "seed"
+    }
+  ],
+  "rules": [
+    {
+      "id": "rule_produit_publication_complete",
+      "description": "Un produit ne peut être publié que s'il porte un nom, une photo et un prix en francs CFA.",
+      "kind": "validation",
+      "entityId": "ent_produit",
+      "assertions": [
+        {
+          "fieldId": "fld_produit_nom",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_produit_photo",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_produit_prix",
+          "operator": "required"
+        }
+      ]
+    },
+    {
+      "id": "rule_produit_prix_positif",
+      "description": "Le prix affiché en FCFA doit être strictement supérieur à zéro et rester sous le plafond d'annonce de 50 000 000 FCFA.",
+      "kind": "validation",
+      "entityId": "ent_produit",
+      "assertions": [
+        {
+          "fieldId": "fld_produit_prix",
+          "operator": "gt",
+          "value": 0
+        },
+        {
+          "fieldId": "fld_produit_prix",
+          "operator": "lte",
+          "value": 50000000
+        }
+      ]
+    },
+    {
+      "id": "rule_boutique_identite_complete",
+      "description": "Une boutique doit indiquer son nom et sa ville avant de publier des produits au catalogue.",
+      "kind": "validation",
+      "entityId": "ent_boutique",
+      "assertions": [
+        {
+          "fieldId": "fld_boutique_nom",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_boutique_ville",
+          "operator": "required"
+        }
+      ]
+    },
+    {
+      "id": "rule_boutique_contact_joignable",
+      "description": "Comme l'échange se fait hors application, la boutique doit fournir un numéro de téléphone au format international (+235, +227, +223…).",
+      "kind": "validation",
+      "entityId": "ent_boutique",
+      "assertions": [
+        {
+          "fieldId": "fld_boutique_telephone",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_boutique_telephone",
+          "operator": "matches",
+          "value": "^\\+[0-9][0-9 ]{7,18}$"
+        }
+      ]
+    },
+    {
+      "id": "rule_boutique_whatsapp_format",
+      "description": "Le numéro WhatsApp, lorsqu'il est renseigné, doit être au format international pour permettre l'ouverture de la conversation.",
+      "kind": "validation",
+      "entityId": "ent_boutique",
+      "assertions": [
+        {
+          "fieldId": "fld_boutique_whatsapp",
+          "operator": "matches",
+          "value": "^\\+[0-9][0-9 ]{7,18}$"
+        }
+      ]
+    },
+    {
+      "id": "rule_boutique_ville_couverte",
+      "description": "La boutique déclare une ville desservie par la place de marché du Tchad et du Sahel.",
+      "kind": "validation",
+      "entityId": "ent_boutique",
+      "assertions": [
+        {
+          "fieldId": "fld_boutique_ville",
+          "operator": "in",
+          "value": [
+            "N'Djamena",
+            "Moundou",
+            "Abéché",
+            "Sarh",
+            "Faya-Largeau",
+            "Bongor",
+            "Doba",
+            "Niamey",
+            "Bamako",
+            "Maroua",
+            "Ouagadougou",
+            "Nouakchott"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "rule_categorie_nom_unique",
+      "description": "Chaque catégorie du catalogue porte un nom lisible et non vide.",
+      "kind": "validation",
+      "entityId": "ent_categorie",
+      "assertions": [
+        {
+          "fieldId": "fld_categorie_nom",
+          "operator": "required"
+        }
+      ]
+    },
+    {
+      "id": "rule_produit_modification_reservee_vendeur",
+      "description": "Seule la boutique propriétaire du produit peut le modifier ou le retirer du catalogue.",
+      "kind": "authorization",
+      "entityId": "ent_produit",
+      "assertions": [
+        {
+          "fieldId": "fld_produit_nom",
+          "operator": "required"
+        }
+      ]
+    },
+    {
+      "id": "rule_boutique_edition_reservee_proprietaire",
+      "description": "Seul le vendeur connecté propriétaire de la boutique peut en éditer la fiche et les coordonnées de contact.",
+      "kind": "authorization",
+      "entityId": "ent_boutique",
+      "assertions": [
+        {
+          "fieldId": "fld_boutique_nom",
+          "operator": "required"
+        }
+      ]
+    }
+  ],
+  "slots": [
+    {
+      "id": "slot_prix_fcfa_lisible",
+      "description": "Met en forme le prix d'un produit en francs CFA avec séparateurs de milliers (145 000 FCFA) et renvoie le libellé prêt à afficher sur la fiche produit.",
+      "inputs": [
+        {
+          "name": "produits",
+          "type": "json"
+        },
+        {
+          "name": "devise",
+          "type": "string"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "prixLisible",
+          "type": "string"
+        },
+        {
+          "name": "prixDetail",
+          "type": "text"
+        }
+      ],
+      "allowedImports": []
+    },
+    {
+      "id": "slot_catalogue_mise_en_avant",
+      "description": "Classe les produits du catalogue en plaçant en tête ceux dont la boutique a payé une mise en avant, et produit le titre de la section 'Sélection mise en avant' ainsi que son message d'absence.",
+      "inputs": [
+        {
+          "name": "produits",
+          "type": "json"
+        },
+        {
+          "name": "limite",
+          "type": "number"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "titreSelection",
+          "type": "string"
+        },
+        {
+          "name": "messageVide",
+          "type": "text"
+        }
+      ],
+      "allowedImports": []
+    },
+    {
+      "id": "slot_contact_vendeur_message",
+      "description": "Compose le message de prise de contact pré-rempli (nom du produit, prix, ville de la boutique) que l'acheteur enverra au vendeur par WhatsApp ou lira avant de téléphoner.",
+      "inputs": [
+        {
+          "name": "produits",
+          "type": "json"
+        },
+        {
+          "name": "modele",
+          "type": "string"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "messageContact",
+          "type": "text"
+        },
+        {
+          "name": "libelleBouton",
+          "type": "string"
+        }
+      ],
+      "allowedImports": []
+    }
+  ],
+  "capabilities": [
+    {
+      "capability": "media_upload",
+      "config": [
+        {
+          "key": "maxItemsPerProduct",
+          "value": 6
+        },
+        {
+          "key": "acceptedMimeTypes",
+          "value": [
+            "image/jpeg",
+            "image/png",
+            "image/webp"
+          ]
+        },
+        {
+          "key": "maxFileSizeMb",
+          "value": 8
+        },
+        {
+          "key": "targetEntityId",
+          "value": "ent_produit"
+        },
+        {
+          "key": "targetFieldId",
+          "value": "fld_produit_photo"
+        }
+      ]
+    },
+    {
+      "capability": "payments.psp",
+      "config": [
+        {
+          "key": "commerceClass",
+          "value": "physical_or_offapp"
+        },
+        {
+          "key": "currency",
+          "value": "XAF"
+        },
+        {
+          "key": "purpose",
+          "value": "mise_en_avant_catalogue"
+        },
+        {
+          "key": "payerRole",
+          "value": "vendeur"
+        },
+        {
+          "key": "apiDomain",
+          "value": "api.souk-sahel.app"
+        }
+      ]
+    },
+    {
+      "capability": "share",
+      "config": [
+        {
+          "key": "sharedObject",
+          "value": "produit"
+        },
+        {
+          "key": "includeShopContact",
+          "value": true
+        }
+      ]
+    }
+  ],
+  "permissions": [
+    {
+      "platform": "ios",
+      "permission": "NSPhotoLibraryUsageDescription",
+      "reason": [
+        {
+          "locale": "fr",
+          "text": "Pour publier un produit, la boutique choisit dans sa photothèque la photo qui sera affichée au catalogue avec le prix en francs CFA."
+        }
+      ],
+      "requiredByCapability": "media_upload"
+    },
+    {
+      "platform": "android",
+      "permission": "android.permission.READ_MEDIA_IMAGES",
+      "reason": [
+        {
+          "locale": "fr",
+          "text": "Pour publier un produit, la boutique choisit dans ses images la photo qui sera affichée au catalogue avec le prix en francs CFA."
+        }
+      ],
+      "requiredByCapability": "media_upload"
+    }
+  ]
+}

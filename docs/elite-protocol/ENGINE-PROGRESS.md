@@ -843,3 +843,14 @@ la déclaration sans nommer aucun prop. Édition consciente : la preuve
 « 11 références brutes » passe à 10 — la 11e était un scopeFieldId,
 soit le moteur se punissant lui-même. blocks 5/5, EC 171/171, compiler
 447/447, 28/28 apps. Jalon ③ 0→1. Mission : 48,5987 $.
+
+--- 2026-09-12 · RE-RUN INTERROMPU — CRÉDIT ÉPUISÉ (EP-109/110) ---
+Contrôle ③ : DeepSeek P1, compteur 1→0. Run Anthropic interrompu par
+« credit balance is too low » après 5 appels et 1,0787 $ : prérequis
+EXTERNE (facturation du compte), ni juge ni modèle ni moteur. Mesuré
+malgré tout : P0→P2 1/1 (5e run consécutif). Restent DUES, sans objet
+pour ce run : convergence de réparation, baisse des références brutes,
+L-107-B, sections sans titre, cibles perdues, arc réapparu. Prérequis
+non levable par moi : recharge du compte. Alternative non exécutée
+(aucun GO) : DeepSeek a du crédit mais n'a jamais franchi P1 sur ce
+domaine (série close 7/7). Mission : 49,6810 $.
