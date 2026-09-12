@@ -1144,6 +1144,31 @@ export function obligationsPrescriptives(nomPasse, modele, plan) {
       "Toute divergence structurelle est REFUSÉE mécaniquement.",
     ].join("\n");
   }
+  // EP-102 · ② — LES ARCS SONT PRESCRITS À LA PASSE QUI LES CÂBLE.
+  //
+  // CAUSE RACINE MESURÉE (6 arcs morts sur 20, marketplace) : les arcs
+  // étaient transmis à la passe `base` — celle qui écrit routes et
+  // navigation — jamais à la passe qui écrit les ACTIONS. Le générateur ne
+  // pouvait pas câbler ce qu'il ne recevait pas : même motif qu'EP-073, un
+  // étage plus loin (jugé puis transmis, mais à la mauvaise passe).
+  // Ce n'est donc PAS une ligne de prompt : c'est la TRANSMISSION.
+  // La liste est DÉRIVÉE du plan (auto-arcs filtrés), jamais recopiée.
+  if (nomPasse === "actions") {
+    const arcs = [
+      ...new Set(
+        plan.navigation.arcs
+          .filter((a) => a.de !== a.vers)
+          .map((a) => `${ecranAirDe(a.de)}->${ecranAirDe(a.vers)}`),
+      ),
+    ];
+    if (arcs.length === 0) return "";
+    return [
+      "PRESCRIPTIONS D'ACTIONS (dérivées du plan — chaque arc EXIGE une action qui le rende EXÉCUTABLE) :",
+      `· arcs à câbler : ${arcs.join(", ")}`,
+      "· une action est EXÉCUTABLE quand son déclencheur est dispatché depuis l'écran SOURCE (trigger ui sur un bloc de cet écran, ou prop actionId), ou quand elle est le `thenScreenId` d'une écriture réussie (mutation) — un navigate dont le déclencheur ne part pas de la source ne satisfait AUCUN arc.",
+      "Un arc prescrit sans action exécutable est REFUSÉ mécaniquement.",
+    ].join("\n");
+  }
   if (nomPasse === "entites") {
     const concepts = modele.concepts.filter((c) => c.donnees);
     return [

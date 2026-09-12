@@ -776,3 +776,17 @@ Elle confond RÉVÉLÉS et INTRODUITS. Correctif conforme EP-100 formulé,
 NON appliqué (passe dédiée). Q1 NON · Q2 bijection OUI/arcs NON · Q3
 NON sur attempt2 · Q4 : 20 écrans, 44 actions, non livrable.
 Mission : 38,8753 $.
+
+--- 2026-09-12 · GATE COMPARABLE + TRANSMISSION DES ARCS (EP-102, 0 $) ---
+① Périmètre de jugement (schema/semantique/prescriptions) : l'oscillation
+ne se juge qu'entre documents COMPARABLES ; élargissement ⇒ révélation,
+la réparation est retenue ; égalité ⇒ gate inchangée (L-098-C intact) ;
+rétrécissement ⇒ rejet. Le cas partiellement jugeable est couvert par
+construction. Motif : un compteur qui compare deux états dont l'un n'est
+pas observable mesure autre chose que ce qu'il croit. 6 preuves sur
+kaviva (16 écrans, autre taille que le défaut). ② ARCS : la piste
+« identifiant désambiguïsé mal transmis » est RÉFUTÉE ; la vraie cause
+est que les arcs allaient à la passe `base` et JAMAIS à la passe
+`actions` (0 chars d'obligations) — ce n'est PAS une ligne de prompt,
+c'est la TRANSMISSION. Vérifié à 20 et 16 écrans. Jalons ③ : 0→2.
+Batteries 442+554, 28/28 apps. Mission : 38,8753 $.

@@ -32,6 +32,48 @@ const modeleMetier = await import(join(HERE, "modele-metier.mjs"));
 // (R6, document confronté à l'ENVELOPPE — un déclencheur hors enveloppe ne
 // satisfait aucun arc, un contrôle non câblé est refusé, un param non
 // consommé est refusé, une référence affichée brute est refusée).
+/**
+ * EP-102 — PÉRIMÈTRE DE JUGEMENT : quels juges ont RÉELLEMENT tourné.
+ *
+ * MOTIF (règle générale, consignée) : un compteur qui compare deux états
+ * dont l'un n'est pas observable mesure autre chose que ce qu'il croit.
+ * Mesuré : un document schéma-invalide ne porte QU'UN diagnostic (le parse
+ * s'arrête) ; la réparation qui rétablit le schéma fait APPARAÎTRE les
+ * diagnostics sémantiques — la gate anti-oscillation les comptait comme
+ * « introduits » et gardait le document INVALIDE.
+ *
+ * Le discriminant est la COMPARABILITÉ, jamais l'invalidité : deux documents
+ * ne se comparent que s'ils ont été soumis AU MÊME ENSEMBLE de juges. Un
+ * périmètre plus large n'est pas une régression — c'est une mesure plus
+ * complète ; un périmètre plus étroit en est une.
+ */
+export function perimetreDeJugement(air, prescriptif) {
+  if (air === null) return [];
+  const perimetre = ["schema", "semantique"];
+  if (prescriptif !== undefined) perimetre.push("prescriptions");
+  return perimetre;
+}
+
+/** Comparables ⇔ MÊME périmètre. Sinon la comparaison n'a pas de base. */
+export function sontComparables(perimetreA, perimetreB) {
+  return (
+    perimetreA.length === perimetreB.length &&
+    perimetreA.every((f) => perimetreB.includes(f))
+  );
+}
+
+/**
+ * Le périmètre B ÉLARGIT-il A ? (A strictement inclus dans B) — une
+ * réparation qui rend jugeable ce qui ne l'était pas RÉVÈLE, elle
+ * n'introduit pas.
+ */
+export function elargit(perimetreAvant, perimetreApres) {
+  return (
+    perimetreAvant.length < perimetreApres.length &&
+    perimetreAvant.every((f) => perimetreApres.includes(f))
+  );
+}
+
 export function jugerAcceptation(air, prescriptif, intention) {
   if (air === null) return [];
   const out = [];

@@ -589,7 +589,7 @@ function extractJson(response) {
 // (garde EP-065, à raison). Les juges n'ont aucun dialecte ni dépense : ils
 // sortent. emit-v3 les CONSOMME — mêmes objets, mêmes appels, zéro dérive.
 const acceptation = await import(join(HERE, "acceptation.mjs"));
-const { validateLocal, jugerAcceptation } = acceptation;
+const { validateLocal, jugerAcceptation, perimetreDeJugement, elargit } = acceptation;
 
 async function emitSections(system, contextText, label, usage, refusals, accumulateur, prescriptif) {
   const assembled = accumulateur ?? {};
@@ -1078,7 +1078,29 @@ for (const intention of INTENTIONS.slice(start, end)) {
         (journal.attempt1?.diagnostics ?? []).map((x) => `${x.code}|${x.path}`),
       );
       const introduits = diagnostics.filter((x) => !clesAttempt1.has(`${x.code}|${x.path}`));
-      if (introduits.length > 0) {
+      // EP-102 · ① — L'OSCILLATION NE SE JUGE QU'ENTRE DOCUMENTS COMPARABLES.
+      // Si la réparation ÉLARGIT le périmètre de jugement (elle rend jugeable
+      // ce qui ne l'était pas), les diagnostics qui apparaissent sont RÉVÉLÉS,
+      // pas introduits : la retenir, et son résultat devient la nouvelle base.
+      // Périmètre ÉGAL ⇒ la gate juge comme avant (L-098-C inchangé) ;
+      // périmètre RÉTRÉCI ⇒ régression franche, rejet.
+      const perimetreAvant = perimetreDeJugement(
+        validateLocal(avantReparation).air,
+        prescriptif,
+      );
+      const perimetreApres = perimetreDeJugement(air, prescriptif);
+      const revelation = elargit(perimetreAvant, perimetreApres);
+      if (revelation) {
+        console.log(
+          `  [${intention.slug}] réparation RETENUE — elle RÉTABLIT la jugeabilité (${perimetreAvant.length}→${perimetreApres.length} familles de juges) : ${introduits.length} diagnostic(s) RÉVÉLÉS, non introduits`,
+        );
+        journal.reparationRevelation = {
+          perimetreAvant,
+          perimetreApres,
+          revelesNonIntroduits: introduits.length,
+        };
+      }
+      if (introduits.length > 0 && !revelation) {
         console.log(
           `  [${intention.slug}] RÉPARATION REJETÉE — OSCILLATION : ${introduits.length} diagnostic(s) INTRODUITS (${[...new Set(introduits.map((x) => x.code))].join(", ")})`,
         );
@@ -1091,7 +1113,8 @@ for (const intention of INTENTIONS.slice(start, end)) {
       journal.reparationBilan = {
         avant: (journal.attempt1?.diagnostics ?? []).length,
         apres: diagnostics.length,
-        introduits: introduits.length,
+        introduits: revelation ? 0 : introduits.length,
+        ...(revelation ? { reveles: introduits.length } : {}),
       };
       journal.diagnosticsApresReparation = diagnostics.length;
       journal.diagnosticsRestantsCodes = [...new Set(diagnostics.map((d) => d.code))];

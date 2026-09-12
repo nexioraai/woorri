@@ -11,6 +11,7 @@ import {
   migrerModele,
   obligationsPrescriptives,
   prescriptionsNavigation,
+  ecranAirDe,
   verifierNavigationPrescrite,
   type ModeleMetier,
 } from "../../../benchmarks/air-emission/modele-metier.mjs";
@@ -77,7 +78,19 @@ describe("R5 — prescriptions de navigation dérivées de P2d", () => {
     }
     const ecrans = obligationsPrescriptives("ecrans", MODELE, PLAN);
     for (const scr of P.ecrans) expect(ecrans).toContain(scr);
-    expect(obligationsPrescriptives("actions", MODELE, PLAN)).toBe("");
+    // EP-102 · ② (édition consciente) — la passe `actions` reçoit désormais
+    // les ARCS À CÂBLER : elle écrit les actions qui les rendent exécutables,
+    // et ne les recevait pas (6 arcs morts mesurés). Ce qui reste invariant :
+    // STRUCTURE, jamais wording — la liste est DÉRIVÉE du plan.
+    const actions = obligationsPrescriptives("actions", MODELE, PLAN);
+    const arcs = PLAN.navigation.arcs as { de: string; vers: string }[];
+    for (const a of arcs.filter((x) => x.de !== x.vers).slice(0, 3)) {
+      expect(actions).toContain(`${ecranAirDe(a.de)}->${ecranAirDe(a.vers)}`);
+    }
+    expect(actions).toContain("EXÉCUTABLE");
+    // les passes qui n'ont rien à prescrire restent MUETTES.
+    expect(obligationsPrescriptives("donnees", MODELE, PLAN)).toBe("");
+    expect(obligationsPrescriptives("theme", MODELE, PLAN)).toBe("");
   });
 
   it("le chemin campagne est CÂBLÉ (P0 → plan → prescriptions → vérificateur) — NON EXERCÉ", () => {
