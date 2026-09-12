@@ -760,3 +760,19 @@ identifiant collatéral. L-098-C : cause remontée — la réparation ajoute
 un detail_header qui RECLASSE l'écran en fiche et invalide la liste
 déjà présente ; gate non touchée, correctif = sa propre passe. Jalon ③
 0→1. Batteries 436+168, 28/28 apps. Mission : 35,0225 $.
+
+--- 2026-09-12 · RE-RUN POST-CORRECTIFS (EP-100/101) ---
+Contrôle ③ : 6e signature DeepSeek identique (états), compteur 1→0.
+Run : P0→P2 1/1, 3,85 $. ① BIJECTION EXACTE 20/20 — le correctif tient
+à une TROISIÈME taille (20, après 22 et 16) : corollaire d'échelle
+satisfait par la mesure. ② ARCS : 6 morts, TOUS A2 (transmis non
+suivi), ZÉRO A1 — l'exemption tient ; 4 visent des écrans
+désambiguïsés que le générateur émet mais ne câble pas ⇒ une ligne de
+prompt est justifiée. ③ DÉFAUT DE LA GATE (L-101-A) : attempt1
+schéma-invalide (1 diagnostic, parse arrêté) ; la réparation rétablit
+le schéma, les 20 diagnostics sémantiques APPARAISSENT, la gate les
+compte comme INTRODUITS et rejette — gardant le document invalide.
+Elle confond RÉVÉLÉS et INTRODUITS. Correctif conforme EP-100 formulé,
+NON appliqué (passe dédiée). Q1 NON · Q2 bijection OUI/arcs NON · Q3
+NON sur attempt2 · Q4 : 20 écrans, 44 actions, non livrable.
+Mission : 38,8753 $.
