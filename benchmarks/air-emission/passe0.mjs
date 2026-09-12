@@ -17,6 +17,7 @@ import {
   GESTES,
   NATURES_EXOGENES,
   GESTES_TERMINAUX,
+  consommateursDIdentite,
   sourcesDIdentite,
   gestesParcoursDeCollection,
   TABLE_GESTES,
@@ -75,6 +76,10 @@ export const PROMPT_P0 = [
   "· ÉLIRE X POUR PARCOURIR Y RELIÉ À X : une élection (choisir X) est aussi consommée par une étape " +
     gestesParcoursDeCollection().join("/") +
     " sur un concept Y ≠ X, À CONDITION qu'une relation entre X et Y soit DÉCLARÉE dans relations — déclare le lien, sinon l'élection est refusée.",
+  "· TOUTE ÉLECTION DOIT ÊTRE CONSOMMÉE : une étape choisir sur un concept X EXIGE, EN AVAL DU MÊME PARCOURS, l'une de ces trois suites — " +
+    "(a) " + consommateursDIdentite().join("/") + " du MÊME concept X ; (b) saisir un concept dont la portée est l'instance de X ; " +
+    "(c) " + gestesParcoursDeCollection().join("/") + " d'un concept Y relié à X par une relation DÉCLARÉE. " +
+    "Une élection que rien ne consomme est REFUSÉE : n'écris choisir que si le parcours en fait quelque chose ensuite.",
   "· commerce (\"digital\" | \"physique_ou_hors_app\") — REQUIS si un parcours contient payer, interdit sinon",
   "· couverture (voir ci-dessous).",
   "",

@@ -129,6 +129,18 @@ describe("PASSE B — le prompt enseigne les corrections, depuis l'enveloppe", (
     expect(p0.PROMPT_P0).toContain("AUCUN TABLEAU EXIGÉ NE RESTE VIDE");
   });
 
+  it("EP-097 · v11 : l'obligation d'élection est INTERPOLÉE des tables (dérive-puis-exige)", async () => {
+    const p0 = await import("../../../benchmarks/air-emission/passe0.mjs");
+    const mm = await import("../../../benchmarks/air-emission/modele-metier.mjs");
+    // recalcul indépendant depuis TABLE_GESTES (cliquet EP-068).
+    const consommateurs = mm.GESTES.filter(
+      (g) => mm.TABLE_GESTES[g]?.transport === "itemId" && g !== "choisir",
+    );
+    expect(p0.PROMPT_P0).toContain("TOUTE ÉLECTION DOIT ÊTRE CONSOMMÉE");
+    expect(p0.PROMPT_P0).toContain(consommateurs.join("/"));
+    expect(p0.PROMPT_P0).toContain(mm.gestesParcoursDeCollection().join("/"));
+  });
+
   it("B6/EP-065 · la garde de GO : une campagne ne part JAMAIS sans jeton", () => {
     expect(SOURCE).toContain('process.env.GO_CAMPAGNE !== "OUI-JE-PAIE"');
     expect(SOURCE).toContain("process.exit(2)");
