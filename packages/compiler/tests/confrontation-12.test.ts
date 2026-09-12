@@ -217,7 +217,10 @@ describe("C3 — suppression du texte : preuve DYNAMIQUE", () => {
     expect(sansTexte.diags).toEqual([]);
     expect(avecTexte.diags).toEqual([]); // le texte est MORT à la migration
     expect(JSON.stringify(avecTexte.surfaces)).toBe(JSON.stringify(sansTexte.surfaces));
-    const v11 = { ...M2, version: "modele-metier/1.1.0", texteOriginal: "BRIEF" };
+    // EP-081 (édition consciente) : la clé étrangère se teste à la version
+    // COURANTE — un 1.1.0 passe par la migration à liste fermée, qui fait
+    // MOURIR les clés hors contrat (c'est SA protection C3, pas un trou).
+    const v11 = { ...M2, version: "modele-metier/1.2.0", texteOriginal: "BRIEF" };
     expect(validerModele(v11).some((d) => d.code === "MODELE_SCHEMA")).toBe(true);
   });
 

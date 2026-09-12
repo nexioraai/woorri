@@ -608,3 +608,17 @@ Charte honorée : brief jamais commité (hash), gel prouvé, scan propre,
 usage unique. v8 APPLIQUÉ post-V2 (hash c0a46f82, 2 gardes re-scellées,
 pin v7 du lanceur V1 gardé fail-closed) avec dette de mesure d'effet
 de bord. Dépense V2 : 0,2155 $ · mission : 26,3395 $.
+
+--- 2026-09-12 · TRANSITION EXOGÈNE + SECOND ADAPTATEUR (GO EP-081, 0 $) ---
+① Le contrat ne savait pas dire (1re fois sur 4 vérifications) :
+extension 1.2.0 — natures exogènes FERMÉES (temps, événement externe,
+condition), union stricte, migration chaînée. O-2 intact ; V4 juge
+l'arête sans acteur (prouvé par mutation). Prompt v9 re-scellé
+(913380d9, dette de mesure consignée). Fixture = le hold-out : archive
+refusée, base verte = expression fidèle (faux acteur « moteur » retiré,
+données système amorcées, autonomie en transition exogène) — un domaine
+d'agent autonome est exprimable ET vivant. ② adaptateur-openai : même
+surface (parité cliquetée), zéro fichier moteur touché — la frontière
+EP-049 prouvée suffisante à 0 $ ; contraintes déclarées NON mesurées ;
+tirage sur clé propriétaire (critère : productibilité, pas qualité).
+Batteries 427+557, 28/28 apps. Mission : 26,3395 $.

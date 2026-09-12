@@ -32,7 +32,9 @@ describe("R2 — contrat v1.1.0, migration fermée", () => {
     expect(MODELE_KAVIVA.version).toBe("modele-metier/1.0.0");
     expect(validerModele(MODELE_KAVIVA)).toEqual([]);
     const migre = migrerModele(MODELE_KAVIVA) as ModeleMetier;
-    expect(migre.version).toBe("modele-metier/1.1.0");
+    // EP-081 (édition consciente) : la migration CHAÎNE désormais jusqu'à
+    // 1.2.0 (transitions exogènes, montée additive).
+    expect(migre.version).toBe("modele-metier/1.2.0");
     const rdv = migre.concepts.find((c) => c.id === "cpt_rendez_vous");
     expect(rdv?.etats?.[0]).toEqual({ id: "a_venir" });
   });

@@ -15,6 +15,7 @@
 import { z } from "zod";
 import {
   GESTES,
+  NATURES_EXOGENES,
   GESTES_TERMINAUX,
   sourcesDIdentite,
   gestesParcoursDeCollection,
@@ -62,6 +63,9 @@ export const PROMPT_P0 = [
   "· payer = un paiement QUI A LIEU DANS L'APPLICATION — c'est le seul des gestes d'écriture (" +
     GESTES.filter((g) => TABLE_GESTES[g].effet === "mutation").join("/") +
     ") qui déclenche une capacité de paiement. Un paiement à la réception, sur place ou hors application N'EST PAS un geste payer : le parcours s'écrit SANS payer et le modèle ne porte PAS de champ commerce.",
+  "· TRANSITION EXOGÈNE : quand un état change SANS acte de l'utilisateur (le système, le temps, un événement du monde), la transition se déclare {vers, exogene: " +
+    NATURES_EXOGENES.join("|") +
+    "} — JAMAIS un geste que personne n'accomplit. L'état atteint doit rester VISIBLE : une étape de lecture le consomme (etat), sinon le modèle est refusé.",
   "· CHAQUE TRANSITION DÉCLARÉE EST EXERCÉE : une transition {vers, geste} d'un concept exige, dans un parcours, une étape de CE geste (" +
     GESTES.filter((g) => TABLE_GESTES[g].effet === "mutation").join("/") +
     ") sur CE concept — une machine à états plus riche que les parcours est REFUSÉE.",

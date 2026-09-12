@@ -14,6 +14,25 @@ const HERE = dirname(fileURLToPath(import.meta.url));
 const R = join(HERE, "..", "..", "..");
 const SOURCE = readFileSync(join(R, "benchmarks", "air-emission", "emit-v3.mjs"), "utf8");
 
+describe("EP-081 · ② — PARITÉ DES ADAPTATEURS : la frontière suffit", () => {
+  // Le second adaptateur expose EXACTEMENT la même surface que le premier,
+  // et sa construction n'a touché AUCUN fichier du moteur. Un import statique
+  // est interdit des deux côtés : le SDK n'entre que par creerClient.
+  it("mêmes exports, aucun SDK importé statiquement, façade client identique", async () => {
+    const a = await import("../../../benchmarks/air-emission/adaptateur-anthropic.mjs");
+    const b = await import("../../../benchmarks/air-emission/adaptateur-openai.mjs");
+    expect(Object.keys(b).sort()).toEqual(Object.keys(a).sort());
+    for (const src of ["adaptateur-anthropic.mjs", "adaptateur-openai.mjs"]) {
+      const code = readFileSync(join(R, "benchmarks", "air-emission", src), "utf8");
+      expect(/^import .*(anthropic|openai)/m.test(code), src).toBe(false);
+    }
+    // contraintes du second : DÉCLARÉES, PAS MESURÉES — le fichier le dit.
+    const code2 = readFileSync(join(R, "benchmarks", "air-emission", "adaptateur-openai.mjs"), "utf8");
+    expect(code2).toContain("DÉCLARÉES, PAS MESURÉES");
+    expect(code2).toContain("PRODUCTIBILITÉ");
+  });
+});
+
 describe("PASSE B — le prompt enseigne les corrections, depuis l'enveloppe", () => {
   it("B1 · déclencheurs : la liste est INTERPOLÉE de l'enveloppe, data est enseigné mort", () => {
     expect(SOURCE).toContain("38. DÉCLENCHEURS — LES SEULS QUI EXISTENT");

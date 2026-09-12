@@ -133,3 +133,4 @@ export function estSourceDIdentite(geste: string): boolean;
 export function sourcesDIdentite(): string[];
 export function gestesParcoursDeCollection(): string[];
 export function conceptsRelies(modele: ModeleMetier, a: string, b: string): boolean;
+export const NATURES_EXOGENES: string[];

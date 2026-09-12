@@ -52,6 +52,14 @@ export const GLOSSAIRE_NATURES_TEMPORELLES = {
  * (confrontations #4/#6/#8). `retirer` entre par F7 : l'enveloppe exécute
  * `mutation delete`, une étape peut donc RÉDUIRE une collection.
  */
+// EP-081 — TRANSITION EXOGÈNE : l'état peut changer SANS acte d'utilisateur
+// (le hold-out l'a prouvé inexprimable : un système qui agit seul se faisait
+// domestiquer en gestes). La nature est NOMMÉE — un booléen « systeme »
+// réintroduirait ce qu'O-2 interdit : une transition dont personne ne répond.
+// Les gestes restent des actes UTILISATEUR ; l'exogène est une propriété de
+// la TRANSITION, jamais un 10e geste.
+export const NATURES_EXOGENES = ["temps", "evenement_externe", "condition_donnees"];
+
 export const GESTES = [
   "decouvrir",
   "chercher",
@@ -69,7 +77,7 @@ export const GESTES = [
 // verrou F4 (un `visuel` déclaré ne passe pas) et l'anti-fourre-tout.
 export const modeleMetierSchema = z
   .object({
-    version: z.literal("modele-metier/1.1.0"),
+    version: z.literal("modele-metier/1.2.0"),
     /**
      * D6 EP-029 (payer) — LE FAIT que la variante de paiement exige : ce
      * qui est vendu est-il consommé DANS l'app (digital) ou hors d'elle
@@ -129,7 +137,11 @@ export const modeleMetierSchema = z
                   id: z.string().min(1),
                   transitions: z
                     .array(
-                      z.object({ vers: z.string().min(1), geste: z.enum(GESTES) }).strict(),
+                      z.union([
+                        z.object({ vers: z.string().min(1), geste: z.enum(GESTES) }).strict(),
+                        // EP-081 — exogène : nature fermée, pas de geste.
+                        z.object({ vers: z.string().min(1), exogene: z.enum(NATURES_EXOGENES) }).strict(),
+                      ]),
                     )
                     .optional(),
                 })
@@ -182,12 +194,25 @@ const d = (code, path, message) => ({ code, path, message });
  */
 export function migrerModele(brut) {
   if (brut === null || typeof brut !== "object") return brut;
+  // EP-081 — 1.1.0 → 1.2.0 : montée ADDITIVE (variante exogène des
+  // transitions) ; un 1.1.0 est un 1.2.0 valide, copie par liste fermée.
+  if (brut.version === "modele-metier/1.1.0") {
+    return {
+      version: "modele-metier/1.2.0",
+      ...(brut.commerce === undefined ? {} : { commerce: brut.commerce }),
+      couverture: brut.couverture,
+      acteurs: brut.acteurs,
+      concepts: brut.concepts,
+      relations: brut.relations,
+      parcours: brut.parcours,
+    };
+  }
   if (brut.version !== "modele-metier/1.0.0") return brut;
   // COPIE PAR LISTE FERMÉE de clés — jamais un spread : une migration qui
   // recopierait des clés inconnues BLANCHIRAIT un champ étranger (mesuré :
   // le piège C3 a vu le spread énumérer `texteOriginal`). Les clés hors
   // contrat meurent ici ; le schéma strict refuse de toute façon.
-  return {
+  return migrerModele({
     version: "modele-metier/1.1.0",
     // F-R4-1 : `commerce` manquait à cette liste (ajouté au contrat APRÈS
     // elle) — un 1.0.0 portant le fait le perdait EN SILENCE. La liste est
@@ -203,7 +228,7 @@ export function migrerModele(brut) {
     ),
     relations: brut.relations,
     parcours: brut.parcours,
-  };
+  });
 }
 
 /**
@@ -312,6 +337,12 @@ export function validerModele(brut) {
         // causée par une ÉCRITURE — un geste de LECTURE qui transite un
         // état est un non-sens des patrons (mesuré : a_venir→passe via
         // consulter_historique au tirage 1, accepté à tort par P1).
+        // EP-081 — une transition EXOGÈNE n'a pas de geste : personne ne
+        // l'accomplit, O-2 et la représentation ne s'appliquent pas. Son
+        // OBSERVABILITÉ reste jugée par V4 (état atteint ⇒ distingué par une
+        // surface) — l'exogène est une troisième voie, pas une porte de
+        // sortie : un geste de LECTURE ne transite toujours jamais un état.
+        if (t.exogene !== undefined) continue;
         if (TABLE_GESTES[t.geste]?.effet !== "mutation") {
           out.push(
             d("MODELE_TRANSITION_DECLENCHEE_PAR_LECTURE", `concepts[${c.id}].etats[${e.id}]`, `${t.geste}→${t.vers} : le geste ${t.geste} ne mute pas`),
