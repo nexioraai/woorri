@@ -357,6 +357,22 @@ const makeSheet = (c: Palette) =>
       borderRadius: theme.radius.sm,
       backgroundColor: c.border,
     },
+    // EP-132 — la place d'un média PROMIS qui n'est pas arrivé. Elle garde
+    // exactement la forme du média qu'elle remplace (la mise en page ne
+    // bouge pas), et porte le texte que le document fournit déjà. Aucune
+    // couleur neuve : le fond est celui des surfaces, l'encre celle des
+    // textes secondaires — un emplacement en attente, pas une alarme.
+    imageRepli: {
+      backgroundColor: c.border,
+      alignItems: "center",
+      justifyContent: "center",
+      padding: theme.space.xs,
+    },
+    imageRepliTexte: {
+      fontSize: theme.font.label,
+      color: c.muted,
+      textAlign: "center",
+    },
     rowBody: { flex: 1 },
     rowTitle: { fontSize: theme.font.body, fontWeight: theme.fontWeight.semibold, color: c.text },
     rowSubtitle: {

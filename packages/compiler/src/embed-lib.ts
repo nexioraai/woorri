@@ -54,6 +54,15 @@ export const EMBEDDED_SOURCES: readonly EmbeddedSourceSpec[] = [
     rewrites: {},
   },
   {
+    // EP-132 — la DÉCISION de ce qui tient la place d'un média absent, à
+    // côté de la primitive qui lui obéit. Sans cette ligne, l'app émise
+    // importerait un module inexistant : le rendu ne se corrige pas sans
+    // que le chemin d'embarquement le suive.
+    source: "primitives/src/media-repli.ts",
+    target: "lib/primitives/media-repli.ts",
+    rewrites: {},
+  },
+  {
     source: "primitives/src/primitives.tsx",
     target: "lib/primitives/primitives.tsx",
     rewrites: {},
