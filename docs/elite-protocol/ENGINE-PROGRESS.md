@@ -721,3 +721,13 @@ EP-050 ⇒ révision due). Cause mesurée : 24 écrans prescrits vs 16 au
 kaviva vert — taille légitime du domaine. Proposé (GO suivant) :
 MAX_TOKENS 32000 ; si retroncature, la réponse sera SCINDER la passe
 ecrans, pas augmenter. Mission : 29,0527 $.
+
+--- 2026-09-12 · RE-RUN BORNE 40 000 (EP-095/096) ---
+Q1 NON : 3 tirages arrêtés P2 (0,5721 $), boucle épuisée, borne 40 000
+jamais exercée. ZÉRO TRAVERSEE_ACTEUR — le juge raffiné EP-093 tient
+(1 PASS hier, 0 faux refus depuis). Attribution sur pièce : élections
+non consommées (relation non déclarée) + elliptiques — famille de
+variance connue, toutes légitimes, aucun angle mort. Taux marketplace
+P0→P2 : 1/4 sous juge raffiné. Décision Youssouf : répétition (~2-3
+relances attendues) ou passe-goulot sur le taux de passage P2 (la
+variable dominante de coût depuis v5). Mission : 29,6248 $.
