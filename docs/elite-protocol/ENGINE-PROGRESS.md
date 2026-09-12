@@ -964,3 +964,20 @@ modèle, le plan prescrit UNE surface, l'AIR en pose 8 blocs ; rien
 n'interdit d'ajouter. RACINE COMMUNE : le moteur juge ce qui MANQUE,
 jamais ce qui est EN TROP, et ne transmet qu'une partie de ce que le
 plan décide. Aucun correctif. Mission : 65,0841 $.
+
+--- 2026-09-12 · LES DEUX MOITIÉS (EP-122, 0 $) ---
+① TRANSMISSION : mesure — 2 propriétés de surface sur 11 transmises,
+0 attribut sur 7 nommé ; aucune raison de principe. Correction = LE
+PRINCIPE : decisionDeSurface() sérialise tout, exclusions en partition
+déclarée AVEC RAISON, chrome et barre primaire disent qui les porte ET
+qui ne les porte pas, attributs nommés et obligatoires. Cliquet : une
+propriété ajoutée demain est prise automatiquement — 7e occurrence
+impossible. ② SURPLUS : frontière O.4 au contenu d'écran, discriminant
+DÉRIVÉ du registre (entité requise = structure ; le reste = expression
+libre). Juges : BLOC_STRUCTUREL_NON_JUSTIFIE, BOUTON_IDENTITE_PERDUE.
+Faux positifs trouvés par la mesure et corrigés AVANT conclusion (agir
+sur une instance par un FORMULAIRE est une consommation — 4 formes) ;
+après correction kaviva-vert rend UN finding, et c'est un VRAI («
+Choisir un créneau » mène à tous les créneaux). 13 preuves sur kaviva
+16 écrans. Batterie 31→32. compiler 470/470, 28/28 apps. Jalons ③ 0→2.
+O-D non inventée. Mission : 65,0841 $.
