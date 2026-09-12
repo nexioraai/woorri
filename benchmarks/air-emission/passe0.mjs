@@ -58,6 +58,10 @@ export const PROMPT_P0 = [
     sourcesDIdentite().join(", ") +
     " (les gestes " + GESTES.filter((g) => !sourcesDIdentite().includes(g)).join("/") +
     " sont traversés sans rompre la chaîne). Un parcours qui consomme une identité venue d'ailleurs est REFUSÉ.",
+  "· CHAQUE BOUT D'UNE RELATION EST UN CONCEPT DÉCLARÉ : relations[].de et relations[].vers ne portent QUE des ids présents dans concepts[] — une relation vers un concept absent est REFUSÉE (déclare le concept, ou retire la relation).",
+  "· payer = un paiement QUI A LIEU DANS L'APPLICATION — c'est le seul des gestes d'écriture (" +
+    GESTES.filter((g) => TABLE_GESTES[g].effet === "mutation").join("/") +
+    ") qui déclenche une capacité de paiement. Un paiement à la réception, sur place ou hors application N'EST PAS un geste payer : le parcours s'écrit SANS payer et le modèle ne porte PAS de champ commerce.",
   "· CHAQUE TRANSITION DÉCLARÉE EST EXERCÉE : une transition {vers, geste} d'un concept exige, dans un parcours, une étape de CE geste (" +
     GESTES.filter((g) => TABLE_GESTES[g].effet === "mutation").join("/") +
     ") sur CE concept — une machine à états plus riche que les parcours est REFUSÉE.",

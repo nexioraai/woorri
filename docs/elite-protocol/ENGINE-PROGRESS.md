@@ -594,3 +594,17 @@ PAS de 3e valeur, frontière EP-044 non franchie ; ligne v8-payer
 préparée (frontière jamais dite à P0). ③ CONFIRMATION_SANS_ECRITURE :
 ouvert jusqu'après V2. V2 : GO accordé par avance (EP-079), il ne
 manque que le brief propriétaire. Mission inchangée : 26,1240 $.
+
+--- 2026-09-12 · V2 HOLD-OUT + APPLICATION v8 (EP-079/080) ---
+V2 : FAIL au critère figé (P1 rouge ×1, parcours sans preuve) — et LA
+TROUVAILLE : le cœur du domaine (un système qui AGIT SEUL) est
+INEXPRIMABLE — O-2 exige un geste mutant pour toute transition, aucune
+TRANSITION EXOGÈNE (marché/temps/système) ne se déclare. P0 a
+domestiqué l'autonomie en gestes utilisateur TOUT EN CLAMANT la
+couverture — limite M3 (EP-023) démontrée in vivo. Le vocabulaire
+était ajusté au corpus (7 domaines tous pilotés utilisateur).
+Candidat nommé, non tranché : déclencheur de transition « systeme ».
+Charte honorée : brief jamais commité (hash), gel prouvé, scan propre,
+usage unique. v8 APPLIQUÉ post-V2 (hash c0a46f82, 2 gardes re-scellées,
+pin v7 du lanceur V1 gardé fail-closed) avec dette de mesure d'effet
+de bord. Dépense V2 : 0,2155 $ · mission : 26,3395 $.

@@ -1,0 +1,23 @@
+{
+  "campagne": "V2-holdout",
+  "hashBrief": "16e66a2a013d9e430c3a9a725880ea1ff7123eccc8ed1d3f62171d029e68508d",
+  "commitGel": "ea7c59d",
+  "hashPrompt": "7b41480edb1719f569b64a917f69736d233aaa249fae301e1a81a1b6e413582d",
+  "horodatage": "2026-09-12T06:34:05.679Z",
+  "coutUsd": 0.2155,
+  "dureeMs": 80490,
+  "p1": {
+    "ok": false,
+    "diagnostics": [
+      "MODELE_PARCOURS_SANS_PREUVE"
+    ]
+  },
+  "observation": {
+    "tailleInventaire": 22,
+    "partInventaireEnNonRetenus": 0.09090909090909091,
+    "distributionRaisons": {
+      "infrastructure_technique": 1,
+      "doublon": 1
+    }
+  }
+}
