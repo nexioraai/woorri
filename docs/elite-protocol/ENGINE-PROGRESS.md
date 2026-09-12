@@ -671,3 +671,16 @@ tirage B v10, jalons depuis : 0). Lecture-divergence appliquée :
 A/B divergent en CAPACITÉ (V4 ×2 vs PASS) — premier livrable L-③-1,
 attribution NON CONCLUE à n=1 (famille aussi vue chez Anthropic) ;
 tirages répétés = GO futur. Mission inchangée : 26,5549 $.
+
+--- 2026-09-12 · MARKETPLACE AFRICAIN sur DeepSeek (EP-089/090) ---
+Q1 NON : 3 tirages P0 arrêtés P1 (boucle épuisée, 0,0086 $, 18 s) —
+huit passes hors Anthropic toujours non exercées. TROIS LIVRABLES :
+L-089-A la garde D-103 comptait ZÉRO chez DeepSeek (tarification sur
+l'usage brut au dialecte Anthropic — dette EP-049c mordue en réel,
+correction 0 $ due avant tout run DeepSeek long) · L-③-1 renforcé :
+4/4 tirages DeepSeek échouent sur la famille états vs Anthropic passe
+(attribution fournisseur se précise) · L-089-B le piège du brief
+mesuré : payer in-app lu 3/3, commerce classé de 3 façons en 3
+tirages (dossier EP-044). Notable : 2/3 tirages refusent « réalité
+africaine » comme ambigu — le moteur interroge le brief. Décision
+répétition/bascule = Youssouf. Compteur ③ : 0. Mission : 26,5635 $.
