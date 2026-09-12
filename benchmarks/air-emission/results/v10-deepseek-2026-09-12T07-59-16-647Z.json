@@ -1,0 +1,23 @@
+{
+  "adaptateur": "deepseek",
+  "modele": "deepseek-chat",
+  "coutUsd": 0.003498,
+  "usage": {
+    "entree": 3170,
+    "sortie": 2361,
+    "ecritureCache": 0,
+    "lectureCache": 640
+  },
+  "tronquee": false,
+  "dureeMs": 7883,
+  "degradations": [
+    "$ json_schema→json_object : schéma NON imposé au décodage — transmis en texte, conformité refermée par P1"
+  ],
+  "issue": {
+    "verdict": "FAIL-capacité",
+    "codes": [
+      "MODELE_ETAT_NON_OBSERVABLE",
+      "MODELE_ETAT_NON_OBSERVABLE"
+    ]
+  }
+}

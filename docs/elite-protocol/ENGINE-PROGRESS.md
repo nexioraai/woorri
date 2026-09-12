@@ -647,3 +647,15 @@ déclarées). Amendement pré-tirage consigné : transport fetch (paquet
 openai absent, 0 token perdu), estampille corrigée 0f549995.
 Observation non jugée : sortie 3× plus compacte, coût ~67× moindre au
 tarif retenu (0,0027 $, usage réel publié). Mission : 26,3422 $.
+
+--- 2026-09-12 · PORTABILITÉ SANS GRAMMAIRE IMPOSÉE (EP-086/087) ---
+EXIGENCE de premier rang consignée (rang EP-049). Balayage publié :
+7 genres tenus par la grammaire imposée, minItems seul a mordu ; v10 =
+la ligne ordonnée seule, chemins INTERPOLÉS (cliquet dérive-puis-
+exige), hash ecb43799 re-scellé. TIRAGES : A DeepSeek — le FAIL-
+mécanisme a DISPARU (forme verte par le seul prompt, la 4e cause est
+COMBLÉE) ; reste FAIL-capacité n=1 (V4 ×2, famille de variance vue
+aussi chez Anthropic) — énoncés séparés. B Anthropic — PASS P1+P2 au
+1er tirage : niveau v9 tenu à domaine constant, dettes v8/v9/v10
+SOLDÉES, dégradations observées ≡ épinglées. 0,2127 $/0,50. Le socle
+est prompt + P1, mesuré chez deux fournisseurs. Mission : 26,5549 $.

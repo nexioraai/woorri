@@ -1,0 +1,24 @@
+{
+  "adaptateur": "anthropic",
+  "modele": "claude-opus-5",
+  "coutUsd": 0.209245,
+  "usage": {
+    "entree": 5739,
+    "sortie": 7222,
+    "ecritureCache": 0,
+    "lectureCache": 0
+  },
+  "tronquee": false,
+  "dureeMs": 78111,
+  "degradations": [
+    "$.properties.concepts.items.properties.attributs.items.properties.cardinalite.maximum 9007199254740991→retiré",
+    "$.properties.concepts.items.properties.attributs.items.properties.cardinalite.minimum 1→retiré",
+    "$.properties.parcours.items.properties.etapes.minItems 2→1",
+    "$.properties.parcours.items.properties.priorite.maximum 9007199254740991→retiré",
+    "$.properties.parcours.items.properties.priorite.minimum 0→retiré"
+  ],
+  "issue": {
+    "verdict": "PASS (P1+P2)",
+    "p2": []
+  }
+}
