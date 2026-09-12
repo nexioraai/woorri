@@ -187,12 +187,18 @@ export const INTENTIONS = [
     // vendeur→plateforme, contact acheteur-vendeur hors app) — la lecture
     // de P0 est une DONNÉE, pas une erreur ; la conformance ne présume rien.
     slug: "marketplace-africain",
+    // EP-091 ② — BRIEF PRÉCISÉ (le moteur avait interrogé : « réalité
+    // africaine » refusé AMBIGU 2/3 tirages — la réponse du propriétaire est
+    // CE verbatim). Toujours AUCUN champ commerce : les 3 tirages DeepSeek
+    // l'ont classé de 3 façons — toute lecture de P0 est une DONNÉE (EP-044).
     text:
-      "Une place de marché adaptée à la réalité africaine. Les vendeurs " +
-      "créent leur boutique et publient leurs produits. Les acheteurs " +
-      "parcourent le catalogue et contactent le vendeur directement par " +
-      "WhatsApp ou par appel — il n'y a pas de paiement en ligne entre " +
-      "acheteur et vendeur. Les vendeurs paient pour mettre leurs produits " +
-      "en avant.",
+      "Une place de marché pour le Tchad et le Sahel. Les vendeurs créent " +
+      "leur boutique et publient leurs produits avec photos et prix en " +
+      "francs CFA. Les acheteurs parcourent le catalogue par catégorie et " +
+      "recherchent un produit. Il n'y a aucun paiement en ligne entre " +
+      "acheteur et vendeur : l'acheteur contacte le vendeur directement par " +
+      "WhatsApp ou par appel téléphonique, et ils s'arrangent entre eux. " +
+      "Les vendeurs paient la plateforme pour mettre leurs produits en " +
+      "avant dans le catalogue.",
   },
 ];
