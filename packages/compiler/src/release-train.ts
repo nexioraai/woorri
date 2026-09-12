@@ -106,7 +106,10 @@ export const RELEASE_TRAIN_V1 = {
   // ÉDITION CONSCIENTE (1.11.0) : `kind: "link"` — du TEXTE cliquable. Mesuré
   // à l'écran : un chemin secondaire rendu en gros bouton pèse autant qu'une
   // action principale et brouille la hiérarchie.
-  blockRegistryVersion: "1.11.0",
+  // 1.12.0 (EP-108) — montée ADDITIVE : la NATURE des props de champ
+  // (affichage | filtrage) entre au contrat de bloc, en partition
+  // exhaustive ; rien n'est retiré, aucun schéma ne change.
+  blockRegistryVersion: "1.12.0",
   // Ré-scellé le 2026-08-29 (DET-006 / D-039) : `ListBlock` DÉCLARE désormais
   // `fill` sur sa Section, afin que la liste virtualisée reçoive un parent
   // BORNÉ. Cause démontrée : imbriquée dans un ScrollView de même axe, une
@@ -211,7 +214,7 @@ export const RELEASE_TRAIN_V1 = {
     // bloc `button` DÉRIVE de la source unique (primitives/roles-icones) au
     // lieu d'en être la 2e copie. Vocabulaire INCHANGÉ (mêmes 11 rôles +
     // noms hérités) : seul le lieu de la vérité change.
-    "a3a30ee6f55090fac54e37ed6cc84bfadf7563cedf77215ffdc24bb8a97b401d",
+    "c9148c224bfa26e73aa1c82f825e00b58bbf4a92935cd0dd14c933c25a1b9b09",
   capabilityRegistryVersion: "1.0.0",
   capabilitySourcesHash:
     "6c28599246abde6e7010704f23f273aafe50d17c5483133709c9065f2777346c",

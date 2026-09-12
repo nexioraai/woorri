@@ -55,7 +55,12 @@ import {
 // 1.10.0 — deux signes de plus au vocabulaire fermé : `close-outline`
 // (passer l'étape) et `help-circle-outline` (aide). Additif.
 // 1.11.0 — `kind: "link"` sur le bouton. Additif.
-export const BLOCK_REGISTRY_VERSION = "1.11.0";
+// 1.12.0 (EP-108) — montée ADDITIVE (patron D-060/D-084) : chaque bloc
+// déclare la NATURE de ses props de champ (affichage | filtrage), en
+// partition exhaustive. Aucun prop retiré, aucun schéma changé — le juge
+// des références brutes DÉRIVE désormais cette nature au lieu de tout
+// regarder (il refusait un `scopeFieldId` que la règle C5 ORDONNE).
+export const BLOCK_REGISTRY_VERSION = "1.12.0";
 
 // Motifs d'identités stables — IDENTIQUES à @deribfy/air-schema (ids.ts) ;
 // redéclarés structurellement (patron AirCapabilitySlice : pas de couplage
