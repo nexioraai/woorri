@@ -136,6 +136,7 @@ describe("pureté et indépendance", () => {
       // l'enveloppe — les juges de pureté (temps, aléa, réseau, fs) de ce
       // fichier tournent sur lui comme sur les autres.
       "./vivacite.ts",
+      "./presentation.ts",
     ]);
     for (const { file, code } of sources) {
       for (const match of code.matchAll(/from "([^"]+)"/g)) {

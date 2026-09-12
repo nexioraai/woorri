@@ -39,6 +39,20 @@ export type {
   ScreenTraitFinding,
 } from "./graph.ts";
 export { jugerVivacite, jugerAttestations } from "./vivacite.ts";
+export {
+  BARRE_INFERIEURE,
+  BARRE_SUPERIEURE,
+  DESTINATIONS_MAX,
+  DESTINATIONS_MIN,
+  EMPLACEMENT_PAR_BLOC,
+  ROLES_DESTINATION_OBLIGATOIRES,
+  jugerBarreInferieure,
+  jugerExclusivite,
+  jugerPlacement,
+  jugerPositionRecherche,
+  jugerPrimitivesDeNavigation,
+} from "./presentation.ts";
+export type { ContextePrimitives, PlacementFinding } from "./presentation.ts";
 export type { ArcPrescrit, OptionsVivacite, VivaciteFinding } from "./vivacite.ts";
 export { areteExecutable } from "./graph.ts";
 export type { AreteExecutable } from "./graph.ts";

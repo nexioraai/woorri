@@ -20,6 +20,7 @@ const fidelity = await import(join(REPO, "packages/fidelity/src/index.ts"));
 const executionGraph = await import(join(REPO, "packages/execution-contract/src/graph.ts"));
 const executionContract = await import(join(REPO, "packages/execution-contract/src/envelope.ts"));
 const vivacite = await import(join(REPO, "packages/execution-contract/src/vivacite.ts"));
+const presentation = await import(join(REPO, "packages/execution-contract/src/presentation.ts"));
 const ENV = executionContract.EXECUTION_ENVELOPE_V1;
 const modeleMetier = await import(join(HERE, "modele-metier.mjs"));
 
@@ -278,6 +279,36 @@ export function jugerAcceptation(air, prescriptif, intention) {
     de: modeleMetier.ecranAirDe(a.de),
     vers: modeleMetier.ecranAirDe(a.vers),
   }));
+  // EP-130 — LE PLACEMENT : la première dimension de PRÉSENTATION jugée.
+  // La zone d'un bloc vient du PLAN DE COMPOSITION (l'étage qui la décide) —
+  // le juge ne la redevine pas.
+  const planComposition = compiler.planifierComposition(air);
+  const zoneDuBloc = (screenId, blockId) =>
+    planComposition.ecrans
+      .find((e) => e.screenId === screenId)
+      ?.sections.find((s) => s.blockId === blockId)?.zone;
+  // Les écrans d'identité viennent du MODÈLE (concept touché par s_identifier),
+  // jamais d'une icône — une icône est un symbole, pas une destination.
+  const conceptsIdentite = prescriptif.modele.concepts
+    .map((c) => c.id)
+    .filter((id) => modeleMetier.estConceptIdentite(prescriptif.modele, id));
+  const surfacesModele = modeleMetier.surfacesDe(prescriptif.modele);
+  const ecransDIdentite = prescriptif.plan.ecrans
+    .filter((e) =>
+      e.surfaces.some((sid) =>
+        conceptsIdentite.includes(
+          surfacesModele.find((sf) => sf.surfaceId === sid)?.concept ?? "",
+        ),
+      ),
+    )
+    .map((e) => modeleMetier.ecranAirDe(e.ecranId));
+  out.push(
+    ...presentation.jugerPlacement(air, zoneDuBloc, {
+      entryScreenId: air.navigation.entryScreenId,
+      ecransDIdentite,
+    }),
+  );
+
   // EP-122 · ② — le SURPLUS structurel et l'identité perdue par bouton.
   out.push(...jugerContenuDEcran(air, prescriptif));
   out.push(...jugerNavigationsDeBouton(air));
