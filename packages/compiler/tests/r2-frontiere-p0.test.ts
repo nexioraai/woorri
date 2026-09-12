@@ -108,6 +108,9 @@ describe("B/C — les dérivations ne travaillent QUE sur le MODEL (balayage COM
     // EP-118 (édition consciente) — le lien élu→parcouru que la décision
     // de consommation-par-portée établissait sans le transmettre.
     consommationsParPortee: (m) => derivationsModele.consommationsParPortee(m),
+    // EP-122 (édition consciente) — la sérialisation d'une décision de
+    // surface : pure, modèle seul, aucune donnée extérieure.
+    decisionDeSurface: (m) => derivationsModele.decisionDeSurface({ ...(derivationsModele.surfacesDe(m)[0] ?? {}) }),
     // EP-070 (édition consciente) — consommation-par-portée : prédicat de
     // parcours de collection + lien déclaré, dérivés du modèle seul.
     gestesParcoursDeCollection: () => derivationsModele.gestesParcoursDeCollection(),

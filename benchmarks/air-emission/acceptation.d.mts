@@ -21,3 +21,5 @@ export function perimetreDeJugement(
 export function sontComparables(perimetreA: string[], perimetreB: string[]): boolean;
 export function elargit(perimetreAvant: string[], perimetreApres: string[]): boolean;
 export function consequencesDeReclassement(air: Record<string, unknown>, screenId: string): string;
+export function jugerContenuDEcran(air: Record<string, unknown> | null, prescriptif: unknown): DiagnosticAcceptation[];
+export function jugerNavigationsDeBouton(air: Record<string, unknown> | null): DiagnosticAcceptation[];

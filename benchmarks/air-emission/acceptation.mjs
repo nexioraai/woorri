@@ -131,6 +131,138 @@ export function consequencesDeReclassement(air, screenId) {
   );
 }
 
+/**
+ * EP-122 · ② — CE QUI EST **EN TROP** SE JUGE AUSSI.
+ *
+ * Asymétrie mesurée (EP-121) : un écran orphelin est refusé, un bloc
+ * surnuméraire est accepté ; la bijection compte les ÉCRANS, jamais leur
+ * CONTENU. Conséquence d'usage : 8 blocs sur un écran que le plan prescrit
+ * à UNE surface (connexion, inscription, mot de passe oublié, liste de
+ * boutiques, recherche…), et une navigation par BOUTON qui perd l'identité
+ * que personne ne juge (C4 ne regarde que les lignes de liste).
+ *
+ * LA FRONTIÈRE (O.4 appliquée au contenu d'écran) : ce qui porte une
+ * STRUCTURE doit être justifié ; ce qui porte de l'EXPRESSION reste libre.
+ * Le discriminant est DÉRIVÉ du registre : un bloc porte une structure ssi
+ * il est LIÉ À UNE ENTITÉ (entity: "required") — il montre ou saisit des
+ * données du modèle. Les autres (header, spacer, button, empty_state,
+ * search_entry) sont de l'expression ou de la navigation : le générateur
+ * garde sa liberté de libellés, d'ordre et d'affordance.
+ */
+export function jugerContenuDEcran(air, prescriptif) {
+  if (air === null || prescriptif === undefined) return [];
+  const out = [];
+  const parEcran = new Map();
+  for (const e of prescriptif.plan.ecrans) {
+    parEcran.set(modeleMetier.ecranAirDe(e.ecranId), e);
+  }
+  const surfaces = new Map(
+    modeleMetier.surfacesDe(prescriptif.modele).map((sf) => [sf.surfaceId, sf]),
+  );
+  for (const ecran of air.screens) {
+    const prescrit = parEcran.get(ecran.id);
+    if (prescrit === undefined) continue;
+    // concepts que le plan autorise sur CET écran (via ses surfaces).
+    const conceptsPrescrits = new Set(
+      prescrit.surfaces.map((sid) => surfaces.get(sid)?.concept).filter((c) => c !== undefined),
+    );
+    const entitesPrescrites = new Set(
+      [...conceptsPrescrits].map((c) => `ent_${String(c).slice(4)}`),
+    );
+    for (const bloc of ecran.blocks) {
+      const definition = blocksRegistry.getBlock(bloc.blockType);
+      if (definition?.entity !== "required") continue; // expression : libre.
+      if (bloc.entityId !== undefined && !entitesPrescrites.has(bloc.entityId)) {
+        out.push({
+          code: "AIR_BLOC_STRUCTUREL_NON_JUSTIFIE",
+          path: `screens[${ecran.id}].blocks[${bloc.id}]`,
+          message:
+            `le bloc "${bloc.id}" (${bloc.blockType}) présente l'entité ` +
+            `"${bloc.entityId}" qu'AUCUNE surface prescrite de cet écran ne ` +
+            `justifie (prescrites : ${[...entitesPrescrites].join(", ") || "aucune"}). ` +
+            `Un écran ne porte QUE les données que le plan y a placées — les ` +
+            `libellés, l'ordre et les boutons restent à toi, les données non.`,
+        });
+      }
+    }
+  }
+  return out;
+}
+
+/**
+ * EP-122 · ② — UNE NAVIGATION PAR BOUTON QUI TRANSPORTE UNE IDENTITÉ.
+ *
+ * C4 (`navigationsDeLigne`) ne voit que les LIGNES de liste. Mesuré : depuis
+ * la fiche d'un produit, un BOUTON menait à un écran listant TOUS les
+ * vendeurs — l'instance était perdue, et aucun juge ne le disait. Même
+ * exigence, autre porteur : si l'écran SOURCE porte un détail d'entité,
+ * l'écran CIBLE doit consommer cette identité (détail de la même entité, ou
+ * collection scopée par un champ qui la vise).
+ */
+export function jugerNavigationsDeBouton(air) {
+  if (air === null) return [];
+  const out = [];
+  const ecranDe = new Map(air.screens.map((s) => [s.id, s]));
+  const entites = new Map(air.entities.map((e) => [e.id, e]));
+  for (const ecran of air.screens) {
+    const detail = ecran.blocks.find((b) => b.blockType === "detail_header" && b.entityId !== undefined);
+    if (detail === undefined) continue;
+    for (const bloc of ecran.blocks) {
+      if (bloc.blockType !== "button") continue;
+      const actionId = (bloc.props ?? []).find((p) => p.key === "actionId")?.value;
+      const action = air.actions.find(
+        (a) =>
+          a.id === actionId ||
+          (a.trigger.kind === "ui" && a.trigger.blockId === bloc.id),
+      );
+      const cibleId =
+        action?.effect.kind === "navigate" ? action.effect.screenId : undefined;
+      if (cibleId === undefined) continue;
+      const cible = ecranDe.get(cibleId);
+      if (cible === undefined) continue;
+      // CONSOMMATION — les QUATRE formes, dérivées du schéma (corrigé après
+      // mesure : une première version ne connaissait que le détail et la
+      // liste scopée, et refusait à tort « Réserver ce créneau » → formulaire
+      // de rendez-vous, et « Annuler ce rendez-vous » → formulaire d'édition.
+      // Agir SUR une instance par un formulaire est une consommation.)
+      const viseLaFiche = (entiteId) =>
+        (entites.get(entiteId)?.fields ?? []).some(
+          (f) => f.type === "reference" && f.referencesEntityId === detail.entityId,
+        );
+      const consomme = cible.blocks.some((b) => {
+        // (a) le détail de la MÊME entité : on regarde la même instance.
+        if (b.blockType === "detail_header" && b.entityId === detail.entityId) return true;
+        // (b) un FORMULAIRE de la même entité : on l'édite.
+        if (b.blockType === "form" && b.entityId === detail.entityId) return true;
+        // (c) un FORMULAIRE d'une entité qui RÉFÉRENCE la fiche : on crée
+        //     quelque chose POUR cette instance (réserver, contacter, payer).
+        if (b.blockType === "form" && b.entityId !== undefined && viseLaFiche(b.entityId)) return true;
+        // (d) une COLLECTION scopée par un champ qui vise la fiche.
+        if (b.blockType !== "list" || b.entityId === undefined) return false;
+        const champ = (b.props ?? []).find((p) => p.key === "scopeFieldId")?.value;
+        const entite = entites.get(b.entityId);
+        return (entite?.fields ?? []).some(
+          (f) => f.id === champ && f.type === "reference" && f.referencesEntityId === detail.entityId,
+        );
+      });
+      if (!consomme) {
+        out.push({
+          code: "AIR_BOUTON_IDENTITE_PERDUE",
+          path: `screens[${ecran.id}].blocks[${bloc.id}]`,
+          message:
+            `le bouton "${bloc.id}" part d'une FICHE de "${detail.entityId}" et ` +
+            `mène à "${cibleId}", qui ne CONSOMME PAS cette instance : ni détail ` +
+            `de la même entité, ni collection scopée par un champ \`reference\` ` +
+            `qui la vise. L'utilisateur qui agit DEPUIS une fiche agit SUR cette ` +
+            `instance — l'écran d'arrivée doit le savoir. NE SUPPRIME NI LE ` +
+            `BOUTON NI SA NAVIGATION : scope la collection cible, ou cible le détail.`,
+        });
+      }
+    }
+  }
+  return out;
+}
+
 export function jugerAcceptation(air, prescriptif, intention) {
   if (air === null) return [];
   const out = [];
@@ -146,6 +278,9 @@ export function jugerAcceptation(air, prescriptif, intention) {
     de: modeleMetier.ecranAirDe(a.de),
     vers: modeleMetier.ecranAirDe(a.vers),
   }));
+  // EP-122 · ② — le SURPLUS structurel et l'identité perdue par bouton.
+  out.push(...jugerContenuDEcran(air, prescriptif));
+  out.push(...jugerNavigationsDeBouton(air));
   out.push(
     ...vivacite.jugerVivacite(air, executionContract.EXECUTION_ENVELOPE_V1, {
       arcsPrescrits,

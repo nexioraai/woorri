@@ -1166,6 +1166,32 @@ export function verifierNavigationPrescrite(air, prescriptions) {
  * R5 — OBLIGATIONS PRESCRIPTIVES dérivées du MODÈLE + PLAN, par passe :
  * le générateur NOMME et REMPLIT ; il ne choisit plus la structure.
  */
+/**
+ * EP-122 · ① — CE QUE LE PLAN DÉCIDE, IL LE TRANSMET. LE PRINCIPE, PAS LA LISTE.
+ *
+ * Mesuré (EP-121) : sur les 11 propriétés qu'une surface porte, **2** étaient
+ * transmises. Les 9 autres — rôle, acteur, cardinalité, état, portée,
+ * obligation d'état vide, identité, exclusions — étaient DÉCIDÉES et jamais
+ * dites, et le générateur devinait. Quatre symptômes d'usage en découlaient
+ * (chrome mal placé, portée de saisie perdue, attributs manquants, contenu
+ * d'écran inventé). Il n'existe AUCUNE raison de principe pour qu'une
+ * décision reste muette : la correction est donc le PRINCIPE — toute
+ * propriété décidée entre aux obligations — et un CLIQUET de partition
+ * (transmise | exclue avec raison) rend la 7e occurrence impossible.
+ */
+export const PROPRIETES_SURFACE_NON_TRANSMISES = {
+  surfaceId: "c'est l'identifiant lui-même, déjà en tête de ligne",
+  origine: "traçabilité interne du plan (parcours/étape), résumée par le compte de justifications",
+};
+
+/** La décision PORTÉE PAR UNE SURFACE, énoncée en toutes lettres. */
+export function decisionDeSurface(surface) {
+  const dits = Object.entries(surface)
+    .filter(([cle]) => !(cle in PROPRIETES_SURFACE_NON_TRANSMISES))
+    .map(([cle, valeur]) => `${cle}=${Array.isArray(valeur) ? (valeur.length === 0 ? "aucune" : valeur.join("/")) : String(valeur)}`);
+  return dits.join(" · ");
+}
+
 export function obligationsPrescriptives(nomPasse, modele, plan) {
   const p = prescriptionsNavigation(plan);
   if (nomPasse === "base") {
@@ -1231,7 +1257,10 @@ export function obligationsPrescriptives(nomPasse, modele, plan) {
     const concepts = modele.concepts.filter((c) => c.donnees);
     return [
       "PRESCRIPTIONS D'ENTITÉS (dérivées du modèle — une entité PAR concept porteur de données) :",
-      ...concepts.map((c) => `· ent_${c.id.slice(4)} ← concept « ${c.nom} » (${c.id})${(c.attributs ?? []).length ? " — attributs attendus : " + (c.attributs ?? []).map((a) => a.nature).join(", ") : ""}`),
+      // EP-122 — les attributs sont NOMMÉS un par un : le modèle en portait 7,
+      // l'entité émise en avait 4 (mesuré EP-121). Une liste de natures ne dit
+      // pas COMBIEN ni LESQUELS.
+      ...concepts.map((c) => `· ent_${c.id.slice(4)} ← concept « ${c.nom} » (${c.id})${(c.attributs ?? []).length ? ` — ${(c.attributs ?? []).length} attributs, TOUS OBLIGATOIRES : ` + (c.attributs ?? []).map((a) => `${a.id}:${a.nature}${a.requis ? " (requis)" : ""}`).join(", ") : ""}`),
       "N'en invente aucune autre porteuse de données ; n'en omets aucune.",
     ].join("\n");
   }
@@ -1253,9 +1282,21 @@ export function obligationsPrescriptives(nomPasse, modele, plan) {
         ? ""
         : `· ${ecranAirDe(ecran.ecranId)} présente les « ${c.parcouru} » DE L'INSTANCE de « ${c.elu} » choisie juste avant : sa liste DOIT porter \`scopeFieldId\` = le champ \`reference\` de ${c.parcouru} qui vise ${c.elu}. Sans lui, l'instance choisie est PERDUE et l'écran montre tout le catalogue.`;
     }).filter((l) => l !== "");
+    const parSurface = new Map(surfacesDe(modele).map((sf) => [sf.surfaceId, sf]));
     return [
       "PRESCRIPTIONS D'ÉCRANS (dérivés du plan — chaque écran est JUSTIFIÉ par ses étapes) :",
-      ...plan.ecrans.map((e) => `· ${ecranAirDe(e.ecranId)} — surfaces : ${e.surfaces.join(", ")} (justifié par ${e.justification.length} étape(s))`),
+      ...plan.ecrans.map((e) => {
+        const decisions = e.surfaces
+          .map((sid) => {
+            const sf = parSurface.get(sid);
+            return sf === undefined ? `${sid} (chrome)` : `${sid} [${decisionDeSurface(sf)}]`;
+          })
+          .join(" ; ");
+        const porteLeChrome = plan.chrome.some((c) => e.surfaces.includes(c));
+        return `· ${ecranAirDe(e.ecranId)} — surfaces : ${decisions} (justifié par ${e.justification.length} étape(s))${porteLeChrome ? " — PORTE LE CHROME" : " — SANS chrome"}`;
+      }),
+      `· CHROME : les surfaces persistantes (${plan.chrome.length === 0 ? "aucune" : plan.chrome.join(", ")}) ne vivent QUE sur les écrans marqués « PORTE LE CHROME » — nulle part ailleurs.`,
+      `· BARRE PRIMAIRE : elle appartient aux écrans RACINES (${prescriptionsNavigation(plan).destinations.join(", ")}) ; les écrans de FLUX (saisie, confirmation, paiement, retrait) ne la portent PAS (showsPrimaryNav: false).`,
       ...(portees.length === 0
         ? []
         : ["PORTÉES OBLIGATOIRES (une élection consommée par portée se MATÉRIALISE) :", ...portees]),

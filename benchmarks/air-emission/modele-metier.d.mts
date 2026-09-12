@@ -141,3 +141,5 @@ export function consommationsParPortee(modele: ModeleMetier): {
   etapeElection: number;
   etapeConsommation: number;
 }[];
+export const PROPRIETES_SURFACE_NON_TRANSMISES: Record<string, string>;
+export function decisionDeSurface(surface: Record<string, unknown>): string;
