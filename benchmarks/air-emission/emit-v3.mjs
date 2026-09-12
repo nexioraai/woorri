@@ -136,7 +136,14 @@ const MODEL = adaptateur.CONFIG.model; // EP-051 — paramètre d'adaptateur, pl
 // passe de 0,467 $ à 0,667 $, et 7 sections doivent tenir sous le plafond dur
 // de la tentative. Monter plus haut réduirait le nombre d'appels que le garde
 // budgétaire autorise avant de mordre.
-const MAX_TOKENS = 24000;
+// EP-095 — BORNE DÉRIVÉE, PAS AUGMENTÉE (EP-050). Deux mesures concordantes
+// sur archives : marketplace tronquée = 24 000 jetons pour 16 écrans
+// COMPLETS ≈ 1 500 j/écran ; kaviva vert recoupé ≈ 1 416 j/écran. Pire taux
+// 1 500 × 24 écrans prescrits = 36 000 → /0,9 → 40 000.
+// DETTE CONSIGNÉE (EP-095) : une borne FIXE sur une passe dont la sortie
+// croît avec le nombre d'écrans RE-CASSERA au domaine suivant — la borne
+// durable se dérive PAR PASSE de la taille du plan (conception, GO futur).
+const MAX_TOKENS = 40000;
 // DÉLAI ET REPRISES (D-080) — la campagne a perdu deux domaines sur
 // « Request timed out » : le SDK abandonne à 10 minutes par défaut, et les
 // sections lourdes (actions avec liaisons, écrans avec titres d'état) les
