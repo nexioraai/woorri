@@ -947,3 +947,20 @@ manquante ; (b) RÉGRESSION : VIVACITE_CONTROLE_MORT ×4 (0 avant) ;
 (c) famille nouvelle AIR_INTEGRATION_SECRET_LIKE_KEY ×1, refusée par le
 validateur (garde-fou OK). Q1 NON (étape : réparation). Mission :
 65,0841 $.
+
+--- 2026-09-12 · DIAGNOSTIC Q4 (EP-121, 0 $) — quatre causes, une racine ---
+O-A chrome : R-chrome ne répète PAS (1 écran sur 23) — le chrome n'est
+transmis NULLE PART, le générateur l'a placé ailleurs ; la « roue
+dentée » est en fait la barre primaire, showsPrimaryNav=true sur 23/23
+dont 9 écrans de flux, le plan ne prescrivant jamais QUI la porte.
+O-B contact : famille DISTINCTE — le juge C4 ne voit que les
+navigations depuis une LIGNE ; ici on arrive par un BOUTON (angle mort),
+alors que le plan porte bien portee=instance:cpt_produit, non transmise.
+O-C fiche : les 4 champs de l'entité sont tous affichés ; la perte est
+en amont — 3 des 7 attributs du modèle n'ont jamais été traduits en
+champs (prescription non exhaustive + aucun juge modèle↔entité).
+O-D connexion : ABSENCE de décision — l'inscription n'est pas au
+modèle, le plan prescrit UNE surface, l'AIR en pose 8 blocs ; rien
+n'interdit d'ajouter. RACINE COMMUNE : le moteur juge ce qui MANQUE,
+jamais ce qui est EN TROP, et ne transmet qu'une partie de ce que le
+plan décide. Aucun correctif. Mission : 65,0841 $.
