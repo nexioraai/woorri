@@ -881,3 +881,18 @@ liste qui n'en a aucune, et énonce l'indissociabilité. 4 mutations sur
 kaviva 16 écrans, dont la vérification que gate EP-102 et silences
 EP-105 ne bougent pas. compiler 451/451, 28/28 apps. Compteur ③
 inchangé (seul un texte de diagnostic change). Mission : 56,2786 $.
+
+--- 2026-09-12 · ENQUÊTE ARCS (EP-114, 0 $) ---
+① 7/7 arcs morts étaient TRANSMIS à la passe actions : le correctif
+EP-102 n'est pas défait, la branche « régression » est RÉFUTÉE.
+② Base comparable : 0/18, 1/20, 7/22 (0 %, 5 %, 32 %) ; les arcs
+impliquant un écran désambiguïsé sont CONSTANTS (5) sur les trois runs
+— l'hypothèse identifiants est re-réfutée. FAIT DÉCISIF : pour chaque
+arc mort, des actions visent bien la CIBLE, mais depuis un AUTRE écran
+que la source prescrite. CAUSE NOMMÉE : le générateur câble la cible
+depuis une source de SON choix, pas la source prescrite — A2 confirmé,
+problème de GÉNÉRATION. L'ampleur suit la complexité du modèle tiré
+(5 parcours/22 arcs vs 4/18). VERDICT : variance de génération, pas
+régression moteur ; n=3, corrélation non causale, dit comme tel. Une
+variance à 32 % reste un problème de RÉGULARITÉ, traité ailleurs.
+Aucun correctif (consigne). Mission inchangée : 56,2786 $.
