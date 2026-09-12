@@ -659,3 +659,15 @@ aussi chez Anthropic) — énoncés séparés. B Anthropic — PASS P1+P2 au
 1er tirage : niveau v9 tenu à domaine constant, dettes v8/v9/v10
 SOLDÉES, dégradations observées ≡ épinglées. 0,2127 $/0,50. Le socle
 est prompt + P1, mesuré chez deux fournisseurs. Mission : 26,5549 $.
+
+--- 2026-09-12 · BASCULE DEEPSEEK + GARDE ANTI-COUPLAGE (EP-088, 0 $) ---
+Réconciliation (non-répétition) : v10 et tirages A/B déjà exécutés
+(EP-086/087) — rien refait. NOUVEAU, consigné : ② DeepSeek fournisseur
+de développement PAR DÉFAUT (coût ~67×) ; ③ règle permanente
+anti-couplage — contrôle croisé Anthropic à chaque jalon
+(contrat/prompt/grammaire), jamais plus de 5 changements sans
+contrôle, écart = livrable ; compteur ouvert (dernier contrôle =
+tirage B v10, jalons depuis : 0). Lecture-divergence appliquée :
+A/B divergent en CAPACITÉ (V4 ×2 vs PASS) — premier livrable L-③-1,
+attribution NON CONCLUE à n=1 (famille aussi vue chez Anthropic) ;
+tirages répétés = GO futur. Mission inchangée : 26,5549 $.
