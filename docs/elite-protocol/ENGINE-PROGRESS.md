@@ -854,3 +854,17 @@ L-107-B, sections sans titre, cibles perdues, arc réapparu. Prérequis
 non levable par moi : recharge du compte. Alternative non exécutée
 (aucun GO) : DeepSeek a du crédit mais n'a jamais franchi P1 sur ce
 domaine (série close 7/7). Mission : 49,6810 $.
+
+--- 2026-09-12 · RE-RUN APRÈS RECHARGE (EP-111/112) ---
+① Convergence : introduits 5 → 1, et l'unique restant est L-107-B
+(BLOCK_SCOPE_INVALID), famille exclue de EP-108 et jamais traitée —
+PAS une nouvelle cause : le verrou restant a déjà un nom. ② Références
+brutes 2 → 0 : le correctif EP-108 transmet jusqu'à la génération.
+③ Sections sans titre ×5, cibles perdues ×2, L-107-B : attendus.
+④ ARCS : régression CONFIRMÉE (0 → 1 → 7 sur trois runs, 7/22 = 32 %),
+dite comme telle ; mais attribution moteur vs variance NON tranchée
+(aucun correctif depuis EP-102 ne touche les arcs ; le modèle P0 diffère
+à chaque tirage). ⑤ Bijection exacte 21/21 (5e taille), nav 0 écart,
+0 contrôle mort, 0 écran inatteignable. Nouvelle famille consignée :
+AIR_INTEGRATION_CAPABILITY_UNDECLARED. Q1/Q3 NON. Q4 : 21 écrans, 47
+actions. Mission : 56,2786 $.
