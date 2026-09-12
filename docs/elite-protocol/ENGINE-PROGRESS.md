@@ -622,3 +622,15 @@ surface (parité cliquetée), zéro fichier moteur touché — la frontière
 EP-049 prouvée suffisante à 0 $ ; contraintes déclarées NON mesurées ;
 tirage sur clé propriétaire (critère : productibilité, pas qualité).
 Batteries 427+557, 28/28 apps. Mission : 26,3395 $.
+
+--- 2026-09-12 · ADAPTATEUR DEEPSEEK (GO EP-082, 0 $) ---
+Tranché : TROISIÈME FICHIER, pas un paramétrage — le transport est
+compatible OpenAI mais le dialecte diffère où ça compte (json_object
+seul, aucun schéma imposé au décodage ; champs de cache propres).
+Dégradation majeure DÉCLARÉE sans essai payant : schéma en renfort
+textuel, conformité refermée par P1, écart compté à la veille EP-037 ;
+échelle à un niveau. Preuve 0 $ : zéro fichier moteur touché, parité
+cliquetée à TROIS, SDK dynamique seul. Critère du tirage FIGÉ :
+productibilité (pas qualité), kaviva, v9 scellé, estampilles à 5
+champs ; PASS = 2 énoncés séparés (patron EP-054) ; FAIL = 3 causes à
+distinguer. Batteries 427, banc OK. Mission : 26,3395 $.

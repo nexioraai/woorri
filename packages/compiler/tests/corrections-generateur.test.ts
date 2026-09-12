@@ -21,10 +21,13 @@ describe("EP-081 · ② — PARITÉ DES ADAPTATEURS : la frontière suffit", () 
   it("mêmes exports, aucun SDK importé statiquement, façade client identique", async () => {
     const a = await import("../../../benchmarks/air-emission/adaptateur-anthropic.mjs");
     const b = await import("../../../benchmarks/air-emission/adaptateur-openai.mjs");
+    // EP-082 — troisième adaptateur (DeepSeek) : même parité exigée.
+    const c = await import("../../../benchmarks/air-emission/adaptateur-deepseek.mjs");
     expect(Object.keys(b).sort()).toEqual(Object.keys(a).sort());
-    for (const src of ["adaptateur-anthropic.mjs", "adaptateur-openai.mjs"]) {
+    expect(Object.keys(c).sort()).toEqual(Object.keys(a).sort());
+    for (const src of ["adaptateur-anthropic.mjs", "adaptateur-openai.mjs", "adaptateur-deepseek.mjs"]) {
       const code = readFileSync(join(R, "benchmarks", "air-emission", src), "utf8");
-      expect(/^import .*(anthropic|openai)/m.test(code), src).toBe(false);
+      expect(/^import .*(anthropic|openai|deepseek)/m.test(code), src).toBe(false);
     }
     // contraintes du second : DÉCLARÉES, PAS MESURÉES — le fichier le dit.
     const code2 = readFileSync(join(R, "benchmarks", "air-emission", "adaptateur-openai.mjs"), "utf8");
