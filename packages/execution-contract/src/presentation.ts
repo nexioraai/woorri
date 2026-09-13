@@ -641,6 +641,156 @@ export function jugerDivulgationProeminente(
   return out;
 }
 
+/**
+ * EP-157 ① — LE LIBELLÉ D'UNE PRIMITIVE EST IMPOSÉ.
+ *
+ * CONSTATÉ À L'APPAREIL : la barre portait « Accueil · Mon espace ·
+ * Inscription ». Le générateur nomme librement, et il a appelé le compte
+ * « Mon espace ». La primitive d'EP-130 était donc satisfaite par un écran
+ * qui ne porte pas son nom — l'utilisateur ne trouve pas « Compte ».
+ *
+ * DÉCISION PRODUIT, étiquetée : aucune convention de plateforme n'impose ces
+ * mots. Material prescrit des destinations d'importance égale et n'en nomme
+ * aucune. C'est un choix, et il est ferme : deux mots, aucun synonyme, quel
+ * que soit le domaine.
+ *
+ * LA LANGUE EST UNE AUTRE QUESTION — ces libellés sont français, et le jour
+ * où le moteur générera en arabe ou en anglais il faudra une TABLE de
+ * traduction des primitives, jamais une liberté du générateur. Consigné,
+ * non traité ici.
+ */
+export const LIBELLES_PRIMITIFS: Readonly<Record<"accueil" | "compte", string>> = {
+  accueil: "Accueil",
+  compte: "Compte",
+};
+
+const texteLibelle = (label: unknown): string => {
+  if (Array.isArray(label)) {
+    const premier: unknown = label[0];
+    if (typeof premier === "object" && premier !== null && "text" in premier) {
+      const t: unknown = (premier as { text: unknown }).text;
+      return typeof t === "string" ? t.trim() : "";
+    }
+  }
+  return "";
+};
+
+export function jugerLibellesPrimitifs(
+  air: Air,
+  contexte: ContextePrimitives,
+): readonly PlacementFinding[] {
+  const out: PlacementFinding[] = [];
+  const destinations = air.navigation.primary?.destinations ?? [];
+  if (destinations.length === 0) return out;
+  const ecranDeRoute = new Map(air.navigation.routes.map((r) => [r.id, r.screenId]));
+
+  for (const d of destinations) {
+    const ecran = ecranDeRoute.get(d.routeId);
+    if (ecran === undefined) continue;
+    const attendu =
+      ecran === contexte.entryScreenId
+        ? LIBELLES_PRIMITIFS.accueil
+        : contexte.ecransDIdentite.includes(ecran)
+          ? LIBELLES_PRIMITIFS.compte
+          : undefined;
+    if (attendu === undefined) continue;
+    const porte = texteLibelle(d.label);
+    if (porte !== attendu) {
+      out.push({
+        code: "PRESENTATION_LIBELLE_PRIMITIF_LIBRE",
+        path: `navigation.primary.destinations[${d.routeId}]`,
+        message:
+          `la destination porte « ${porte} » là où la primitive impose ` +
+          `« ${attendu} » : un utilisateur cherche ce mot-là, pas un synonyme. ` +
+          `(DÉCISION PRODUIT — aucune convention ne nomme ces destinations.)`,
+      });
+    }
+  }
+  return out;
+}
+
+/**
+ * EP-157 ③ — LE BAS DE L'ESPACE COMPTE A UN ORDRE.
+ *
+ * EP-137 a posé QUE ces surfaces existent ; rien ne disait OÙ ni dans quel
+ * ordre. Référence donnée par le propriétaire, capture à l'appui (espace
+ * compte d'une application de grande distribution) : aide, contact,
+ * conditions, confidentialité, suppression — en liste simple, APRÈS le
+ * contenu utile.
+ *
+ * DÉCISION PRODUIT, étiquetée : c'est une référence d'usage, pas une règle
+ * de plateforme. Ce qu'elle apporte est un ordre STABLE — l'utilisateur qui
+ * a trouvé « Nous contacter » une fois le retrouve au même endroit.
+ */
+export const ORDRE_BAS_DE_COMPTE: readonly GenreEcran[] = [
+  "help",
+  "contact",
+  "terms",
+  "privacy_policy",
+  "account_delete",
+];
+
+export function jugerBasDeCompte(
+  air: Air,
+  contexte: ContextePrimitives,
+): readonly PlacementFinding[] {
+  const out: PlacementFinding[] = [];
+  const compte = air.screens.find((e) => contexte.ecransDIdentite.includes(e.id));
+  if (compte === undefined) return out;
+
+  // Les boutons du compte, dans l'ordre où ils sont posés, et ce qu'ils ouvrent.
+  const cibleDuBouton = new Map<string, string>();
+  for (const a of air.actions) {
+    if (a.effect.kind !== "navigate" || a.trigger.kind !== "ui") continue;
+    const cible = (a.effect as { screenId?: string }).screenId;
+    const bloc = (a.trigger as { blockId?: string }).blockId;
+    if (cible !== undefined && bloc !== undefined) cibleDuBouton.set(bloc, cible);
+  }
+  const genreDEcran = new Map(
+    air.screens.filter((e) => e.purpose !== undefined).map((e) => [e.id, e.purpose as GenreEcran]),
+  );
+
+  const rangs: { genre: GenreEcran; index: number }[] = [];
+  compte.blocks.forEach((b, index) => {
+    const cible = cibleDuBouton.get(b.id);
+    const genre = cible === undefined ? undefined : genreDEcran.get(cible);
+    if (genre !== undefined && ORDRE_BAS_DE_COMPTE.includes(genre)) rangs.push({ genre, index });
+  });
+  if (rangs.length < 2) return out;
+
+  const attendu = ORDRE_BAS_DE_COMPTE.filter((g) => rangs.some((r) => r.genre === g));
+  const obtenu = rangs.map((r) => r.genre);
+  if (obtenu.join("|") !== attendu.join("|")) {
+    out.push({
+      code: "PRESENTATION_BAS_DE_COMPTE_DESORDONNE",
+      path: `screens[${compte.id}]`,
+      message:
+        `les renvois du bas de compte sont posés dans l'ordre ${obtenu.join(" → ")} ` +
+        `alors que l'ordre est ${attendu.join(" → ")} : un utilisateur qui a trouvé ` +
+        `un lien une fois le retrouve au même endroit. (DÉCISION PRODUIT.)`,
+    });
+  }
+
+  // Ils viennent APRÈS le contenu utile : aucun bloc non-renvoi ne doit les suivre.
+  const premier = rangs[0]!.index;
+  const apres = compte.blocks.slice(premier).filter((b, i) => {
+    if (i === 0) return false;
+    const cible = cibleDuBouton.get(b.id);
+    const genre = cible === undefined ? undefined : genreDEcran.get(cible);
+    return genre === undefined || !ORDRE_BAS_DE_COMPTE.includes(genre);
+  });
+  if (apres.length > 0) {
+    out.push({
+      code: "PRESENTATION_BAS_DE_COMPTE_INTERROMPU",
+      path: `screens[${compte.id}]`,
+      message:
+        `${String(apres.length)} bloc(s) suivent les renvois du bas de compte : ` +
+        `ces renvois ferment l'écran, ils ne s'intercalent pas dans le contenu utile.`,
+    });
+  }
+  return out;
+}
+
 /** Les trois juges de placement, en un appel. */
 export function jugerPlacement(
   air: Air,
@@ -653,6 +803,11 @@ export function jugerPlacement(
     ...jugerBarreInferieure(air),
     ...(contexte === undefined
       ? []
-      : [...jugerPrimitivesDeNavigation(air, contexte), ...jugerPositionPrimitives(air, contexte)]),
+      : [
+          ...jugerPrimitivesDeNavigation(air, contexte),
+          ...jugerPositionPrimitives(air, contexte),
+          ...jugerLibellesPrimitifs(air, contexte),
+          ...jugerBasDeCompte(air, contexte),
+        ]),
   ];
 }
