@@ -6,7 +6,12 @@ export const CONFIG: {
   motifCle: RegExp;
   prixParMtok: { entree: number; ecritureCache: number; lectureCache: number; sortie: number };
 };
-export const CONTRAINTES_GRAMMAIRE: { minItemsMax: number; bornesNumeriquesEntiers: boolean };
+export const CONTRAINTES_GRAMMAIRE: {
+  minItemsMax: number;
+  bornesNumeriquesEntiers: boolean;
+  /** EP-149 — sixième écart : le service refuse `maxItems` sur les tableaux. */
+  maxItemsSupporte: boolean;
+};
 export function degraderGrammaire(canonique: unknown): { grammaire: unknown; ecarts: string[] };
 export function degradationsPourEchelle(jsonSchema: unknown): { name: string; schema: unknown }[];
 export function construireAppel(

@@ -30,12 +30,24 @@ export const CONFIG = {
 export const CONTRAINTES_GRAMMAIRE = {
   minItemsMax: 1,
   bornesNumeriquesEntiers: false,
+  // EP-149 — SIXIÈME ÉCART, mesuré sur le run EP-148 et jusqu'ici NON DÉCLARÉ.
+  // Le service refuse `maxItems` sur les tableaux : « output_config.format.
+  // schema: For 'array' type, property 'maxItems' is … ». L'écart existait
+  // dans les faits — deux niveaux de l'échelle le gardaient et se faisaient
+  // refuser — sans être nommé nulle part. C'est une CONTRAINTE DE TRANSPORT :
+  // elle appartient à l'adaptateur, jamais au contrat (le schéma AIR continue
+  // de borner ses tableaux, et P1 continue de le vérifier).
+  maxItemsSupporte: false,
 };
 
 /** Grammaire canonique → grammaire du dialecte, ÉCARTS DÉCLARÉS. */
 export function degraderGrammaire(canonique) {
   const grammaire = stripKeys(clampMinItems(canonique), [
     "minimum", "maximum", "exclusiveMinimum", "exclusiveMaximum",
+    // EP-149 — retiré DÈS LA GRAMMAIRE CANONIQUE, plus au troisième repli :
+    // l'échelle le gardait jusqu'au niveau 2, ce qui coûtait DEUX appels
+    // refusés par segment, systématiquement.
+    "maxItems",
   ]);
   const ecarts = [];
   const marcher = (a, b, chemin) => {
@@ -44,7 +56,7 @@ export function degraderGrammaire(canonique) {
       const av = a[k];
       const bv = b?.[k];
       if (k === "minItems" && av !== bv) ecarts.push(`${chemin}.minItems ${av}→${bv}`);
-      else if (["minimum", "maximum", "exclusiveMinimum", "exclusiveMaximum"].includes(k) && bv === undefined)
+      else if (["minimum", "maximum", "exclusiveMinimum", "exclusiveMaximum", "maxItems"].includes(k) && bv === undefined)
         ecarts.push(`${chemin}.${k} ${av}→retiré`);
       else if (typeof av === "object") marcher(av, bv, `${chemin}.${k}`);
     }

@@ -59,16 +59,23 @@ const trouver = (n: unknown, cle: string): unknown[] => {
 };
 
 describe("le premier niveau règle l'incompatibilité SANS tout sacrifier", () => {
-  it("🔴 CAS-TUEUR : `minItems: 3` est ramené à 1, `maxItems` et `maxLength` SURVIVENT", () => {
-    const premier = niveau(SCHEMA, "minItems-ramene");
-    // L'incompatibilité disparaît : plus aucun minItems hors {0, 1}.
+  it("🔴 CAS-TUEUR, RÉVISÉ EP-149 : les DEUX incompatibilités tombent, `maxLength` survit", () => {
+    // CE QUE LE RÉEL A RÉFUTÉ : ce test épinglait la survie de `maxItems`, sur
+    // l'hypothèse qu'il était accepté. Le run EP-148 l'a démenti — « For
+    // 'array' type, property 'maxItems' is … », refusé sur deux segments, à
+    // deux niveaux chacun. Le garder coûtait deux appels par segment.
+    //
+    // L'intention du test ne change pas : le premier niveau règle ce qui est
+    // INCOMPATIBLE sans sacrifier ce qui ne l'est pas. Seule la liste des
+    // incompatibilités connues s'est allongée, parce qu'on l'a mesurée.
+    const premier = niveau(SCHEMA, "incompatibilites-connues");
     expect(trouver(premier.schema, "minItems").filter((v) => Number(v) > 1)).toEqual([]);
-    // Et les bornes hautes — que l'ancien repli détruisait — sont intactes.
-    expect(trouver(premier.schema, "maxItems")).toEqual([5]);
+    expect(trouver(premier.schema, "maxItems")).toEqual([]);
+    // Ce que le service n'a JAMAIS refusé reste intact.
     expect(trouver(premier.schema, "maxLength")).toEqual([80]);
   });
 
-  it("🔴 CONTRÔLE NÉGATIF : l'ancien repli DÉTRUISAIT ces deux bornes", () => {
+  it("🔴 CONTRÔLE NÉGATIF : le filet reste plus large que le premier niveau", () => {
     // Sans ce contrôle, le test précédent pourrait passer sur une échelle qui
     // n'a rien changé. `sans-longueurs` reste dans l'échelle comme filet.
     const filet = niveau(SCHEMA, "sans-longueurs");
@@ -77,7 +84,7 @@ describe("le premier niveau règle l'incompatibilité SANS tout sacrifier", () =
   });
 
   it("les contraintes SANS rapport avec l'incompatibilité sont conservées", () => {
-    const premier = niveau(SCHEMA, "minItems-ramene");
+    const premier = niveau(SCHEMA, "incompatibilites-connues");
     expect(trouver(premier.schema, "pattern")).toEqual(["^[a-z]+$"]);
     expect(trouver(premier.schema, "minLength")).toEqual([1]);
     // `minItems: 1` était déjà accepté : il ne doit pas être touché.
@@ -86,21 +93,26 @@ describe("le premier niveau règle l'incompatibilité SANS tout sacrifier", () =
 
   it("les niveaux de repli subsistent, dans l'ordre, du plus doux au plus large", () => {
     expect(makeLevels(SCHEMA).map((n) => n.name)).toEqual([
-      "minItems-ramene",
+      "incompatibilites-connues",
       "sans-bornes-numeriques",
       "sans-longueurs",
       "sans-patterns",
     ]);
   });
 
-  it("🟢 COMPORTEMENT NOMINAL : sans incompatibilité, le premier niveau ne change RIEN", () => {
+  it("🟢 COMPORTEMENT NOMINAL : ce qui est COMPATIBLE traverse le premier niveau", () => {
+    // EP-149 — `maxItems` a quitté ce test : il n'est plus « compatible »,
+    // le service le refuse. Ce qui l'est — un `minItems` déjà à 1, une
+    // longueur, un type — doit traverser sans être touché.
     const sain: Noeud = {
       type: "object",
-      properties: { a: { type: "array", minItems: 1, maxItems: 9, items: { type: "string" } } },
+      properties: {
+        a: { type: "array", minItems: 1, items: { type: "string", minLength: 2 } },
+      },
     };
-    const premier = niveau(sain, "minItems-ramene");
+    const premier = niveau(sain, "incompatibilites-connues");
     expect(trouver(premier.schema, "minItems")).toEqual([1]);
-    expect(trouver(premier.schema, "maxItems")).toEqual([9]);
+    expect(trouver(premier.schema, "minLength")).toEqual([2]);
   });
 });
 

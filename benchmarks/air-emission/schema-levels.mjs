@@ -43,15 +43,24 @@ export function clampMinItems(node) {
 }
 
 export function makeLevels(jsonSchema) {
+  // EP-149 — L'ORDRE DE L'ÉCHELLE SUIT CE QUI EST RÉELLEMENT REFUSÉ.
+  //
+  // MESURÉ sur le run EP-148 : l'échelle retirait d'abord les bornes
+  // NUMÉRIQUES — que le service n'a jamais refusées — et gardait `maxItems`
+  // jusqu'au troisième niveau, alors que c'est précisément lui que le service
+  // refuse. Deux appels perdus par segment, systématiquement, avant même
+  // d'approcher le vrai problème.
+  //
+  // Le premier niveau neutralise donc les DEUX incompatibilités connues, et
+  // les niveaux suivants attaquent la COMPLEXITÉ — longueurs, puis motifs —
+  // qui est l'autre refus observé (« Schema is too complex » sur `ecrans`).
   const base = oneOfToAnyOf(jsonSchema);
-  const L1 = stripKeys(base, ["minimum", "maximum", "exclusiveMinimum", "exclusiveMaximum", "multipleOf"]);
-  // PREMIER NIVEAU : la seule incompatibilité connue est neutralisée par une
-  // correction CIBLÉE, et les bornes hautes survivent.
-  const L0 = clampMinItems(L1);
-  const L2 = stripKeys(L1, ["minLength", "maxLength", "minItems", "maxItems"]);
+  const L0 = stripKeys(clampMinItems(base), ["maxItems"]);
+  const L1 = stripKeys(L0, ["minimum", "maximum", "exclusiveMinimum", "exclusiveMaximum", "multipleOf"]);
+  const L2 = stripKeys(L1, ["minLength", "maxLength", "minItems"]);
   const L3 = stripKeys(L2, ["pattern", "format"]);
   return [
-    { name: "minItems-ramene", schema: L0 },
+    { name: "incompatibilites-connues", schema: L0 },
     { name: "sans-bornes-numeriques", schema: L1 },
     { name: "sans-longueurs", schema: L2 },
     { name: "sans-patterns", schema: L3 },
