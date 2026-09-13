@@ -272,17 +272,38 @@ function partsPour(prescriptif) {
   if (lots.length <= 1) return PARTS;
   const i = PARTS.findIndex((x) => x.name === "ecrans");
   const modele = PARTS[i];
+  // EP-175 ② — L'ÉCHELLE SE DESCEND UNE FOIS POUR TOUS LES LOTS.
+  //
+  // MESURÉ SUR EP-174 : les dégradations sont passées de 4 à 12 — `base` ×2
+  // puis CHAQUE lot ×2. Mon chiffrage d'EP-172 ne l'avait pas prévu
+  // [L-174-A] : chaque lot repayait le même escalier de grammaire.
+  //
+  // VÉRIFIÉ AVANT DE PARTAGER, comme demandé : les lots portent le MÊME
+  // schéma. Ils sont tous construits par `{...PARTS[ecrans]}`, donc mêmes
+  // `keys: ["screens"]`, donc même `pick` Zod, donc le MÊME JSON Schema —
+  // 2 362 octets identiques. Seuls diffèrent `name`, `ecransAttendus`,
+  // `surfaces` et `accumule`, dont AUCUN n'entre dans la grammaire. Une
+  // échelle commune ne peut donc dégrader aucun lot à tort.
+  //
+  // LE PARTAGE PASSE PAR UN ACCESSEUR, jamais par une copie : `{...modele}`
+  // copie `levelIndex` par VALEUR, et chaque lot repartait de zéro. Les lots
+  // lisent et écrivent désormais le MÊME compteur.
+  const etatEchelle = { levelIndex: modele.levelIndex ?? 0 };
   const eclates = lots.map((lot) => ({
     ...modele,
     name: `ecrans:${lot.parcours}`,
     base: "ecrans",
     ecransAttendus: lot.ecrans,
     accumule: "screens",
+    get levelIndex() { return etatEchelle.levelIndex; },
+    set levelIndex(v) { etatEchelle.levelIndex = v; },
   }));
   // LE LOT DES SURFACES, en dernier : il ne vient pas du plan mais de la
   // règle 41, et il est le seul à n'avoir aucune liste d'écrans attendus.
   eclates.push({
     ...modele,
+    get levelIndex() { return etatEchelle.levelIndex; },
+    set levelIndex(v) { etatEchelle.levelIndex = v; },
     name: "ecrans:surfaces",
     base: "ecrans",
     ecransAttendus: [],
@@ -728,7 +749,7 @@ async function emitSections(system, contextText, label, usage, refusals, accumul
       // R5 — quand un modèle existe, la STRUCTURE est PRESCRITE.
       prescriptif === undefined
         ? ""
-        : modeleMetier.obligationsPrescriptives(part.base ?? part.name, prescriptif.modele, prescriptif.plan),
+        : modeleMetier.obligationsPrescriptives(part.base ?? part.name, prescriptif.modele, prescriptif.plan, presentation.DESTINATIONS_MIN),
     ].filter((x) => x !== "").join("\n\n");
     // EP-173 — UN LOT DIT EXACTEMENT CE QU'IL PORTE, et rien d'autre.
     const perimetreDuLot =
@@ -839,7 +860,7 @@ async function repairSections(
     const prescriptives =
       prescriptif === undefined
         ? ""
-        : modeleMetier.obligationsPrescriptives(part.name, prescriptif.modele, prescriptif.plan);
+        : modeleMetier.obligationsPrescriptives(part.name, prescriptif.modele, prescriptif.plan, presentation.DESTINATIONS_MIN);
     const user =
       `${intentionText}\n\nDocument complet actuel :\n${JSON.stringify(repaired)}\n\n` +
       (obligations === "" ? "" : `${obligations}\n\n`) +

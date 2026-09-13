@@ -1468,14 +1468,37 @@ export function lotsDEcrans(modele, plan) {
     .map(([parcours, ecrans]) => ({ parcours, ecrans }));
 }
 
-export function prescriptionsNavigation(plan) {
+export function prescriptionsNavigation(plan, destinationsMin) {
   const ecrans = plan.ecrans.map((e) => ecranAirDe(e.ecranId));
   const destinations = plan.navigation.destinations.map(ecranAirDe);
+  // EP-175 ① — UNE BARRE QUI N'A PAS ASSEZ DE DESTINATIONS N'EST PAS UNE
+  // BARRE, ET LE PLAN NE DOIT PAS LA PRESCRIRE.
+  //
+  // RACINE MESURÉE SUR EP-174, ET CE N'EST NI LA TRANSMISSION NI LE
+  // GÉNÉRATEUR : la règle EST transmise et NOMME les destinations prescrites.
+  // Le plan prescrivait `barre: true` avec DEUX destinations ; la règle de
+  // présentation en exige TROIS à CINQ. Le générateur recevait donc deux
+  // exigences INCOMPATIBLES. `attempt1` a suivi le plan (2 destinations,
+  // conforme) et s'est fait dire « hors bornes » ; `attempt2` a satisfait la
+  // borne en AJOUTANT un écran de flux comme destination — sans lui rendre la
+  // barre qu'il masquait. D'où `AIR_NAV_DESTINATION_SANS_BARRE`, le SEUL
+  // diagnostic qui séparait ce document de la compilation.
+  //
+  // LA BORNE N'EST PAS RÉÉCRITE ICI — elle est REÇUE. Ce module est
+  // agnostique par construction (il n'importe que zod) : lui faire importer
+  // une règle de présentation inverserait les couches, et la recopier serait
+  // la onzième occurrence du motif. L'appelant passe `DESTINATIONS_MIN`, qui
+  // vit dans le registre de présentation et n'est déclaré qu'une fois.
+  //
+  // SANS BORNE, RIEN NE CHANGE : le plan reste ce qu'il était.
+  const barre =
+    plan.navigation.barre &&
+    (destinationsMin === undefined || destinations.length >= destinationsMin);
   return {
     entree: destinations[0] ?? ecrans[0],
     ecrans,
     destinations,
-    barre: plan.navigation.barre,
+    barre,
   };
 }
 
@@ -1578,8 +1601,8 @@ export function decisionDeSurface(surface) {
   return dits.join(" · ");
 }
 
-export function obligationsPrescriptives(nomPasse, modele, plan) {
-  const p = prescriptionsNavigation(plan);
+export function obligationsPrescriptives(nomPasse, modele, plan, destinationsMin) {
+  const p = prescriptionsNavigation(plan, destinationsMin);
   if (nomPasse === "base") {
     return [
       "PRESCRIPTIONS DE NAVIGATION (dérivées du plan — STRUCTURE NON NÉGOCIABLE, seuls les libellés t'appartiennent) :",
@@ -1693,7 +1716,13 @@ export function obligationsPrescriptives(nomPasse, modele, plan) {
       // Principe EP-122 appliqué : ce que le moteur exige, il le dit TOUJOURS.
       "· PORTÉE D'UNE COLLECTION (`scopeFieldId`) — RÈGLE PERMANENTE : une liste ne porte `scopeFieldId` QUE sur un écran qui montre AUSSI le `detail_header` de l'instance visée ; la valeur est un champ `reference` de l'entité listée pointant l'entité de ce détail. Sur un écran SANS `detail_header`, un `scopeFieldId` est INVALIDE — la portée n'a aucune instance courante et l'émission entière est REFUSÉE.",
       `· CHROME : les surfaces persistantes (${plan.chrome.length === 0 ? "aucune" : plan.chrome.join(", ")}) ne vivent QUE sur les écrans marqués « PORTE LE CHROME » — nulle part ailleurs.`,
-      `· BARRE PRIMAIRE : elle appartient aux écrans RACINES (${prescriptionsNavigation(plan).destinations.join(", ")}) ; les écrans de FLUX (saisie, confirmation, paiement, retrait) ne la portent PAS (showsPrimaryNav: false).`,
+      ...(p.barre
+        ? [`· BARRE PRIMAIRE : elle appartient aux écrans RACINES (${p.destinations.join(", ")}) ; les écrans de FLUX (saisie, confirmation, paiement, retrait) ne la portent PAS (showsPrimaryNav: false). CETTE LISTE EST CLOSE : n'y ajoute aucune destination.`]
+        // EP-175 ① — QUAND LE PLAN NE PRESCRIT PAS DE BARRE, ON LE DIT.
+        // Se taire laissait le générateur en inventer une pour satisfaire la
+        // borne Material — c'est exactement ce qui a produit le seul
+        // diagnostic bloquant d'EP-174.
+        : ["· BARRE PRIMAIRE : le plan n'en prescrit AUCUNE — ce domaine n'a pas assez de parcours racines pour qu'une barre inférieure ait un sens. N'émets PAS `navigation.primary`."]),
       ...(portees.length === 0
         ? []
         : ["PORTÉES OBLIGATOIRES (une élection consommée par portée se MATÉRIALISE) :", ...portees]),

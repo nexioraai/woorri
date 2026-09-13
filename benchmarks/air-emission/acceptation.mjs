@@ -476,7 +476,7 @@ export function jugerAcceptation(air, prescriptif, intention) {
     out.push(
       ...modeleMetier.verifierNavigationPrescrite(
         air,
-        modeleMetier.prescriptionsNavigation(prescriptif.plan),
+        modeleMetier.prescriptionsNavigation(prescriptif.plan, presentation.DESTINATIONS_MIN),
       ),
     );
   }

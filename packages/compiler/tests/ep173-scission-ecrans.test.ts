@@ -11,7 +11,9 @@ import {
   ecransDe,
   lotsDEcrans,
   migrerModele,
+  obligationsPrescriptives,
   parcoursParPriorite,
+  prescriptionsNavigation,
   type ModeleMetier,
 } from "../../../benchmarks/air-emission/modele-metier.mjs";
 
@@ -25,7 +27,11 @@ const charger = (f: string): ModeleMetier => {
 // DEUX TAILLES, comme le protocole l'exige : un modèle récent du domaine neuf
 // et un modèle de marché, plus gros.
 const fichiers = readdirSync(RES).filter((f) => f.includes("modele-p0"));
-const PETIT = charger(fichiers.find((f) => f.includes("marche-immobilier"))!);
+// LE MODÈLE DU RUN EP-174, celui qui porte le cas : deux destinations
+// seulement, donc une barre que Material refuse. Prendre « le premier
+// immobilier trouvé » ramenait celui d'EP-168, qui en a trois — la fixture
+// aurait été muette sur ce que le test doit prouver.
+const PETIT = charger(fichiers.filter((f) => f.includes("marche-immobilier")).sort().at(-1)!);
 const GRAND = charger(fichiers.filter((f) => f.includes("marketplace-africain")).at(-1)!);
 
 describe("EP-173 · la scission par parcours", () => {
@@ -136,5 +142,88 @@ describe("EP-173 · la scission par parcours", () => {
     expect(src, "l'accumulation doit concaténer, pas remplacer").toMatch(
       /assembled\[cle\] = \[\.\.\.\(assembled\[cle\] \?\? \[\]\), \.\.\.\(emis\[cle\] \?\? \[\]\)\]/,
     );
+  });
+});
+
+// EP-175 — LES DEUX RACINES D'EP-174.
+describe("EP-175 · la barre que le plan ne prescrit pas", () => {
+  it("① UN PLAN À MOINS DE 3 DESTINATIONS NE PRESCRIT PLUS DE BARRE", async () => {
+    // RACINE MESURÉE : le plan prescrivait `barre: true` avec DEUX
+    // destinations, la règle Material en exige TROIS. Le générateur recevait
+    // deux exigences incompatibles et a ajouté un écran de flux comme
+    // destination — sans lui rendre la barre. D'où le SEUL diagnostic qui
+    // séparait le document de la compilation.
+    const { DESTINATIONS_MIN } = await import(
+      "../../execution-contract/src/presentation.ts"
+    );
+    const plan = ecransDe(PETIT);
+    const avant = prescriptionsNavigation(plan);
+    const apres = prescriptionsNavigation(plan, DESTINATIONS_MIN);
+    expect(avant.destinations.length, "fixture sans le cas").toBeLessThan(DESTINATIONS_MIN);
+    expect(avant.barre, "avant : le plan prescrivait une barre").toBe(true);
+    expect(apres.barre, "après : il ne doit plus en prescrire").toBe(false);
+  });
+
+  it("UN DOMAINE À ASSEZ DE RACINES GARDE SA BARRE — pas un refus systématique", async () => {
+    const { DESTINATIONS_MIN } = await import(
+      "../../execution-contract/src/presentation.ts"
+    );
+    const plan = ecransDe(GRAND);
+    const p = prescriptionsNavigation(plan, DESTINATIONS_MIN);
+    expect(p.destinations.length).toBeGreaterThanOrEqual(DESTINATIONS_MIN);
+    expect(p.barre, "une barre légitime a été retirée").toBe(true);
+  });
+
+  it("SANS BORNE, LE PLAN EST INCHANGÉ — l'ignorance ne décide pas", () => {
+    for (const M of [PETIT, GRAND]) {
+      const plan = ecransDe(M);
+      expect(prescriptionsNavigation(plan).barre).toBe(plan.navigation.barre);
+    }
+  });
+
+  it("LA BORNE N'EST PAS RECOPIÉE — elle est REÇUE", () => {
+    // La recopier dans `modele-metier.mjs` serait la onzième occurrence, et
+    // lui faire importer une règle de présentation inverserait les couches :
+    // ce module n'importe que zod, par construction.
+    const src = readFileSync(join(R, "benchmarks", "air-emission", "modele-metier.mjs"), "utf8");
+    const bloc = src.slice(
+      src.indexOf("export function prescriptionsNavigation"),
+      src.indexOf("export function verifierNavigationPrescrite"),
+    );
+    expect(bloc.length).toBeGreaterThan(200);
+    const code = bloc.split("\n").filter((l) => !l.trim().startsWith("//")).join("\n");
+    expect(code, "la borne est écrite en dur").not.toMatch(/>=\s*3\b/);
+    expect(code).toContain("destinationsMin");
+    const imports = src.split("\n").filter((l) => l.startsWith("import "));
+    expect(imports.length, "modele-metier a gagné une dépendance").toBe(1);
+  });
+
+  it("QUAND LE PLAN NE PRESCRIT PAS DE BARRE, LA RÈGLE LE DIT", async () => {
+    // Se taire laissait le générateur en inventer une pour satisfaire la
+    // borne Material.
+    const { DESTINATIONS_MIN } = await import(
+      "../../execution-contract/src/presentation.ts"
+    );
+    const plan = ecransDe(PETIT);
+    const o = String(obligationsPrescriptives("ecrans", PETIT, plan, DESTINATIONS_MIN));
+    expect(o).toContain("n'en prescrit AUCUNE");
+    expect(o).toContain("N'émets PAS");
+    const oGrand = String(obligationsPrescriptives("ecrans", GRAND, ecransDe(GRAND), DESTINATIONS_MIN));
+    expect(oGrand, "un domaine à barre doit garder sa règle").toContain("écrans RACINES");
+  });
+
+  it("② L'ÉCHELLE DE DÉGRADATION EST PARTAGÉE ENTRE LOTS", () => {
+    // MESURÉ sur EP-174 : 4 dégradations devenues 12, chaque lot repayant le
+    // même escalier. Les lots portent le MÊME schéma (mêmes `keys`), donc une
+    // échelle commune ne peut en dégrader aucun à tort.
+    const src = readFileSync(join(R, "benchmarks", "air-emission", "emit-v3.mjs"), "utf8");
+    expect(src, "pas d'état d'échelle partagé").toContain("const etatEchelle =");
+    // Le partage doit passer par un ACCESSEUR : `{...modele}` copierait
+    // `levelIndex` par valeur et chaque lot repartirait de zéro.
+    expect(src).toMatch(/get levelIndex\(\)\s*\{\s*return etatEchelle\.levelIndex;/);
+    expect(src).toMatch(/set levelIndex\(v\)\s*\{\s*etatEchelle\.levelIndex = v;/);
+    // Et le lot des surfaces le partage aussi.
+    const bloc = src.slice(src.indexOf("eclates.push({"), src.indexOf("return [...PARTS.slice(0, i)"));
+    expect(bloc, "le lot des surfaces ne partage pas l'échelle").toContain("etatEchelle.levelIndex");
   });
 });

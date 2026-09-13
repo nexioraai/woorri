@@ -154,7 +154,7 @@ export function ecransDe(modele: ModeleMetier): PlanEcrans;
 export function jugerPlanEcrans(plan: PlanEcrans, modele?: ModeleMetier): DiagnosticModele[];
 export const GLOSSAIRE_NATURES_TEMPORELLES: Record<string, string>;
 export function ecranAirDe(ecranId: string): string;
-export function prescriptionsNavigation(plan: PlanEcrans): {
+export function prescriptionsNavigation(plan: PlanEcrans, destinationsMin?: number): {
   entree: string; ecrans: string[]; destinations: string[]; barre: boolean;
 };
 export function verifierNavigationPrescrite(
@@ -165,6 +165,7 @@ export function obligationsPrescriptives(
   nomPasse: string,
   modele: ModeleMetier,
   plan: PlanEcrans,
+  destinationsMin?: number,
 ): string;
 export function consommateursDIdentite(): string[];
 export function estConceptIdentite(modele: ModeleMetier, conceptId: string): boolean;
