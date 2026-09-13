@@ -96,7 +96,11 @@ describe("PASSE B — le prompt enseigne les corrections, depuis l'enveloppe", (
     // Cause racine mesurée de l'oscillation (22-09 : 14 corrigés, 10
     // réintroduits) : la section réparée était réécrite AVEUGLE à la
     // structure prescrite. Les deux consommations doivent exister.
-    const occurrences = SOURCE.match(/obligationsPrescriptives\(part\.name/g) ?? [];
+    // EP-173 — le motif suit le DISPATCH RÉEL : depuis la scission du segment
+    // `ecrans` en lots, l'émission dispatche sur `part.base ?? part.name` (le
+    // nom DE BASE, jamais le nom du lot), la réparation sur `part.name`. Ce
+    // que ce cliquet exige est INCHANGÉ : les DEUX consommations existent.
+    const occurrences = SOURCE.match(/obligationsPrescriptives\(part\.(base \?\? part\.)?name/g) ?? [];
     expect(occurrences.length).toBeGreaterThanOrEqual(2);
     expect(SOURCE).toContain("repairSections(document, diagnostics, intentionText, label, usage, refusals, partiel, prescriptif)");
   });

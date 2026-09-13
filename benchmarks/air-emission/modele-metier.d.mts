@@ -182,3 +182,10 @@ export function consommationsParPortee(modele: ModeleMetier): {
 }[];
 export const PROPRIETES_SURFACE_NON_TRANSMISES: Record<string, string>;
 export function decisionDeSurface(surface: Record<string, unknown>): string;
+
+/** EP-173 — les écrans du plan partitionnés par parcours, affectation par
+ *  priorité. Un écran multi-parcours n'apparaît que dans UN lot. */
+export function lotsDEcrans(
+  modele: ModeleMetier,
+  plan: { ecrans: { ecranId: string; justification?: { parcours: string; etape: number }[] }[] },
+): { parcours: string; ecrans: string[] }[];

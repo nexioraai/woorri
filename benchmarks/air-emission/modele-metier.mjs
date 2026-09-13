@@ -1418,6 +1418,56 @@ export function ecranAirDe(ecranId) {
 }
 
 /** Les PRESCRIPTIONS de navigation dérivées du plan P2d. */
+/**
+ * EP-173 — LES ÉCRANS DU PLAN, PARTITIONNÉS PAR PARCOURS.
+ *
+ * POURQUOI : le segment `ecrans` concentre 4 des 11 arrêts d'émission, et la
+ * cause est MESURÉE — ce n'est pas sa grammaire (les dégradations se
+ * concentrent sur `base`, 79 contre 25) mais son VOLUME en un seul appel :
+ * 49 % du document, médiane 15 écrans, jusqu'à 28.
+ *
+ * LE DISCRIMINANT N'EST PAS INVENTÉ : chaque écran du plan porte déjà
+ * `justification: [{parcours, etape}]`. Une TRANCHE aurait été un nombre
+ * arbitraire, donc un template ; un PARCOURS est une unité du modèle.
+ *
+ * UN ÉCRAN N'APPARTIENT QU'À UN LOT, MÊME S'IL SERT PLUSIEURS PARCOURS —
+ * mesuré : 30 à 40 % des écrans sont dans ce cas (`ecr_entree` relève de deux
+ * parcours sur le modèle immobilier). L'affectation suit la PRIORITÉ, ordre
+ * déjà établi par `parcoursParPriorite` et éprouvé depuis EP-139 : dérivée,
+ * déterministe, aucun champ nouveau. Un doublon serait un défaut PLUS GRAVE
+ * que celui qu'on corrige — deux émissions du même identifiant.
+ *
+ * CE QUI N'EST PAS ICI, ET QUI EST DIT PLUTÔT QUE TU : les écrans de SURFACE
+ * (`purpose`) ne sont dans AUCUN lot, parce qu'ils ne sont dans AUCUN PLAN —
+ * le plan dérive du modèle métier, qui ignore `purpose` (EP-165 ③a). Ils
+ * relèvent de la règle 41 du prompt, et l'émission doit leur donner un lot
+ * PROPRE, sans quoi ils disparaîtraient entre deux lots.
+ */
+export function lotsDEcrans(modele, plan) {
+  const rang = new Map(parcoursParPriorite(modele).map((p, i) => [p.id, i]));
+  const parLot = new Map();
+  for (const ecran of plan.ecrans) {
+    const parcours = (ecran.justification ?? []).map((j) => j.parcours);
+    // Le parcours de plus haute priorité (rang le plus petit) l'emporte.
+    // Un écran sans justification tombe dans le lot `null` — il n'est PAS
+    // perdu, il est nommé.
+    let elu = null;
+    for (const p of parcours) {
+      if (!rang.has(p)) continue;
+      if (elu === null || rang.get(p) < rang.get(elu)) elu = p;
+    }
+    const cle = elu ?? "(sans parcours)";
+    parLot.set(cle, [...(parLot.get(cle) ?? []), ecran.ecranId]);
+  }
+  // Les lots sortent DANS L'ORDRE DE PRIORITÉ : le parcours principal
+  // d'abord. Aucune référence en avant n'en découle — mesuré : un écran ne
+  // cite jamais un autre écran, les navigations vivent dans `actions`, émis
+  // APRÈS tous les lots.
+  return [...parLot.entries()]
+    .sort((a, b) => (rang.get(a[0]) ?? 1e9) - (rang.get(b[0]) ?? 1e9))
+    .map(([parcours, ecrans]) => ({ parcours, ecrans }));
+}
+
 export function prescriptionsNavigation(plan) {
   const ecrans = plan.ecrans.map((e) => ecranAirDe(e.ecranId));
   const destinations = plan.navigation.destinations.map(ecranAirDe);

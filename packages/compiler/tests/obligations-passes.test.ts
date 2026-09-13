@@ -85,7 +85,10 @@ describe("étape ⑤ — obligations mécaniques dérivées des sections émises
     expect(pos("actions")).toBeLessThan(pos("cablage"));
     expect(pos("cablage")).toBeLessThan(pos("intention"));
     // Les obligations sont branchées sur l'émission ET la réparation.
-    expect(source).toContain("obligationsPourPasse(part.name, assembled)");
+    // EP-173 — l'émission dispatche sur le nom DE BASE : un lot
+    // `ecrans:par_xxx` doit recevoir les obligations de `ecrans`, pas celles
+    // d'une passe inexistante. Ce que ce cliquet garantit ne change pas.
+    expect(source).toMatch(/obligationsPourPasse\(part\.(base \?\? part\.)?name, assembled\)/);
     expect(source).toContain("obligationsPourPasse(part.name, repaired)");
   });
 });

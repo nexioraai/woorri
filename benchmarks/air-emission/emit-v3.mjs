@@ -246,6 +246,52 @@ const PARTS = [
  */
 
 
+/**
+ * EP-173 — LE SEGMENT `ecrans` SE SCINDE PAR PARCOURS.
+ *
+ * MESURÉ (EP-172) : `ecrans` concentre 4 des 11 arrêts, et la cause n'est pas
+ * sa grammaire — les dégradations se concentrent sur `base` (79) et `entites`
+ * (42), pas sur lui (25). C'est son VOLUME EN UN SEUL APPEL : 49 % du
+ * document, médiane 15 écrans, jusqu'à 28.
+ *
+ * SURCOÛT CHIFFRÉ : un appel de plus renvoie les sections déjà émises en
+ * contexte — 2 678 tokens, soit $0,0134. En face, 40 runs échoués ont perdu
+ * $52,75, soit $1,32 par échec. RAPPORT 1 POUR 98.
+ *
+ * LE DERNIER LOT EST CELUI DES SURFACES, ET IL EST INDISPENSABLE : les écrans
+ * de `purpose` ne sont dans AUCUN plan — le plan dérive du modèle métier, qui
+ * les ignore (EP-165 ③a). Sans un lot qui leur soit propre, ils
+ * DISPARAÎTRAIENT entre deux lots.
+ *
+ * SANS MODÈLE, RIEN NE CHANGE : le segment reste entier. L'ignorance ne
+ * réorganise pas l'émission.
+ */
+function partsPour(prescriptif) {
+  if (prescriptif?.modele === undefined || prescriptif?.plan === undefined) return PARTS;
+  const lots = modeleMetier.lotsDEcrans(prescriptif.modele, prescriptif.plan);
+  if (lots.length <= 1) return PARTS;
+  const i = PARTS.findIndex((x) => x.name === "ecrans");
+  const modele = PARTS[i];
+  const eclates = lots.map((lot) => ({
+    ...modele,
+    name: `ecrans:${lot.parcours}`,
+    base: "ecrans",
+    ecransAttendus: lot.ecrans,
+    accumule: "screens",
+  }));
+  // LE LOT DES SURFACES, en dernier : il ne vient pas du plan mais de la
+  // règle 41, et il est le seul à n'avoir aucune liste d'écrans attendus.
+  eclates.push({
+    ...modele,
+    name: "ecrans:surfaces",
+    base: "ecrans",
+    ecransAttendus: [],
+    surfaces: true,
+    accumule: "screens",
+  });
+  return [...PARTS.slice(0, i), ...eclates, ...PARTS.slice(i + 1)];
+}
+
 for (const part of PARTS) {
   const pick = Object.fromEntries(part.keys.map((k) => [k, true]));
   part.zod = airSchema.projectAirSchema.pick(pick);
@@ -674,18 +720,25 @@ const { validateLocal, jugerAcceptation, perimetreDeJugement, elargit } = accept
 
 async function emitSections(system, contextText, label, usage, refusals, accumulateur, prescriptif) {
   const assembled = accumulateur ?? {};
-  for (const part of PARTS) {
+  for (const part of partsPour(prescriptif)) {
     // Étape ⑤ — les OBLIGATIONS dérivées mécaniquement des sections émises :
     // identifiants promis, cibles autorisées. Zéro coût, zéro supposition.
     const obligations = [
-      obligationsPourPasse(part.name, assembled),
+      obligationsPourPasse(part.base ?? part.name, assembled),
       // R5 — quand un modèle existe, la STRUCTURE est PRESCRITE.
       prescriptif === undefined
         ? ""
-        : modeleMetier.obligationsPrescriptives(part.name, prescriptif.modele, prescriptif.plan),
+        : modeleMetier.obligationsPrescriptives(part.base ?? part.name, prescriptif.modele, prescriptif.plan),
     ].filter((x) => x !== "").join("\n\n");
+    // EP-173 — UN LOT DIT EXACTEMENT CE QU'IL PORTE, et rien d'autre.
+    const perimetreDuLot =
+      part.base !== "ecrans"
+        ? ""
+        : part.surfaces === true
+          ? `\n\nCE LOT PORTE UNIQUEMENT LES ÉCRANS DE SURFACE (règle 41 — ceux qui se déclarent par \`purpose\`). N'ÉMETS AUCUN écran de parcours : ils ont été émis dans les lots précédents et figurent dans les sections déjà émises.`
+          : `\n\nCE LOT PORTE EXACTEMENT CES ÉCRANS, NI PLUS NI MOINS : ${part.ecransAttendus.map((e) => modeleMetier.ecranAirDe(e)).join(", ")}. Les autres écrans du plan sont émis dans d'autres lots — ne les émets pas ici, ne les anticipe pas.`;
     const user =
-      `${contextText}\n\nSECTIONS À ÉMETTRE MAINTENANT : ${part.keys.join(", ")}.` +
+      `${contextText}\n\nSECTIONS À ÉMETTRE MAINTENANT : ${part.keys.join(", ")}.${perimetreDuLot}` +
       (Object.keys(assembled).length
         ? `\n\nSECTIONS DÉJÀ ÉMISES (à respecter strictement, ne pas réémettre) :\n${JSON.stringify(assembled)}`
         : "") +
@@ -699,7 +752,16 @@ async function emitSections(system, contextText, label, usage, refusals, accumul
         throw new Error(`refus persistant sur ${part.name}`);
       }
     }
-    Object.assign(assembled, extractJson(response));
+    const emis = extractJson(response);
+    if (part.accumule !== undefined) {
+      // SANS CECI, CHAQUE LOT EFFACERAIT LE PRÉCÉDENT et le document ne
+      // porterait que les écrans du dernier appel.
+      const cle = part.accumule;
+      assembled[cle] = [...(assembled[cle] ?? []), ...(emis[cle] ?? [])];
+      for (const [k, v] of Object.entries(emis)) if (k !== cle) assembled[k] = v;
+    } else {
+      Object.assign(assembled, emis);
+    }
     // EP-169 ① — LE VERDICT DE LA BASE EST RENDU DÈS LA BASE.
     //
     // MESURÉ sur EP-168 : le run s'est arrêté avant les écrans, et le

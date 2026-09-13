@@ -92,6 +92,10 @@ describe("B/C — les dérivations ne travaillent QUE sur le MODEL (balayage COM
     capacitesDe: (m) => derivationsModele.capacitesDe(m),
     ecransDe: (m) => derivationsModele.ecransDe(m),
     jugerPlanEcrans: (m) => derivationsModele.jugerPlanEcrans(derivationsModele.ecransDe(m)),
+    // EP-173 (édition consciente) — la partition des écrans du plan par
+    // parcours. Modèle + plan seuls, aucune donnée extérieure : l'affectation
+    // suit `parcoursParPriorite`, déjà dans cette batterie.
+    lotsDEcrans: (m) => derivationsModele.lotsDEcrans(m, derivationsModele.ecransDe(m)),
     // R5 (édition CONSCIENTE) — prescriptions et vérificateur : modèle+plan
     // seuls, comme tout le reste.
     ecranAirDe: () => derivationsModele.ecranAirDe("ecr_entree"),
