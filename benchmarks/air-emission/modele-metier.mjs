@@ -694,10 +694,31 @@ export function consommateursDIdentite() {
  * n'est nécessaire — elle n'a fait qu'égarer.
  */
 export function parcoursFerme(modele, parcours) {
-  for (const e of parcours.etapes) {
+  for (const [index, e] of parcours.etapes.entries()) {
     const exigeIdentite =
       e.geste === "s_identifier" ||
-      (e.preconditions ?? []).some((pre) => estConceptIdentite(modele, pre.concept));
+      (e.preconditions ?? []).some((pre) => estConceptIdentite(modele, pre.concept)) ||
+      // EP-140 — LE PARCOURS EN SESSION, et le contrat savait DÉJÀ le dire,
+      // de DEUX façons complémentaires. Aucune déclaration : deux constats.
+      //
+      // ① LA PORTÉE `acteur:` — une surface qui ne montre que les données
+      // d'une personne exige qu'on sache laquelle. `porteeDe` la dérive du
+      // geste et du producteur (C6), jamais d'un champ.
+      //
+      // ② LE CONCEPT RELIÉ À L'IDENTITÉ — mesuré sur une fixture réelle :
+      // un portefeuille APPARTIENT à l'investisseur mais est PRODUIT par le
+      // moteur, si bien que ① ne le voyait pas. Le contrat dit pourtant
+      // l'appartenance, par une relation DÉCLARÉE `identité → concept`.
+      //
+      // DIRECTE, ET SURTOUT PAS TRANSITIVE : la transitivité a été essayée
+      // en EP-139 et réfutée en une mesure — dans un marché, produit →
+      // boutique → compte rend TOUT personnel et vide le juge. Une relation
+      // directe dit « cette collection est indexée par personne » ; une
+      // chaîne ne dit plus rien.
+      porteeDe(modele, parcours, index).startsWith("acteur:") ||
+      modele.concepts.some(
+        (c) => estConceptIdentite(modele, c.id) && conceptsRelies(modele, e.concept, c.id),
+      );
     if (exigeIdentite) return true;
     if (!estConceptIdentite(modele, e.concept)) return false;
   }

@@ -23,6 +23,11 @@ const charger = (chemin: string): ModeleMetier => {
 // run réel (5 parcours).
 const PETIT = charger(join(R, "slices", "kaviva", "kaviva-modele.json"));
 const GRAND = charger(join(RES, "marketplace-africain.2026-09-12T15-27-32-324Z.modele-p0-t1.air.json"));
+// EP-140 — base à PLUSIEURS parcours ouverts. Depuis que la portée `acteur:`
+// compte comme une exigence de session, la fixture métier n'en a plus qu'UN :
+// le fermer rend l'application légitimement close, et le juge se tait — à
+// raison. Pour éprouver le REFUS, il faut un modèle qui garde de quoi ouvrir.
+const OUVERT = charger(join(RES, "marketplace-africain.2026-09-12T20-52-53-664Z.modele-p0-t2.air.json"));
 const codes = (m: ModeleMetier): string[] =>
   mm.jugerAccesSansConnexion(m).map((x) => x.code);
 const clone = (m: ModeleMetier): ModeleMetier => structuredClone(m);
@@ -56,24 +61,28 @@ describe("EP-139 · ② un cœur fermé est refusé, en citant la source", () =>
   });
 
   it("fermer le cœur d'un modèle vert le fait basculer", () => {
-    const m = clone(PETIT);
+    const m = clone(OUVERT);
+    expect(codes(m)).toEqual([]);
     const principal = mm.parcoursParPriorite(m)[0]!;
     principal.etapes.unshift({ concept: principal.etapes[0]!.concept, geste: "s_identifier" });
     expect(codes(m)).toEqual(["MODELE_COEUR_EXIGE_CONNEXION"]);
   });
 
-  it("LE CHEMIN DISCRET — une précondition d'identité en tête ferme aussi", () => {
+  it("LE CHEMIN DISCRET — une précondition d'identité en tête ferme le parcours", () => {
     // Sans cela, il suffirait d'exiger « compte actif » à la première étape
     // pour murer l'application sans jamais écrire `s_identifier`.
+    // Vérifié sur le PARCOURS : le diagnostic global, lui, dépend en plus de
+    // ce que le modèle sait encore ouvrir par ailleurs (EP-140).
     const m = clone(PETIT);
     const identite = m.concepts.map((c) => c.id).find((id) => mm.estConceptIdentite(m, id));
     expect(identite).toBeDefined();
     const principal = mm.parcoursParPriorite(m)[0]!;
+    expect(mm.parcoursFerme(m, principal)).toBe(false);
     principal.etapes[0] = {
       ...principal.etapes[0]!,
       preconditions: [{ concept: identite!, etat: "actif" }],
     };
-    expect(codes(m)).toEqual(["MODELE_COEUR_EXIGE_CONNEXION"]);
+    expect(mm.parcoursFerme(m, principal)).toBe(true);
   });
 
   it("LE CHEMIN PAR L'ORDRE — la priorité désigne le cœur, pas l'index", () => {

@@ -78,12 +78,15 @@ describe("le hold-out, exprimé — la fixture que le corpus n'avait jamais dema
   });
   it("BASE VERTE : P1, plan et juges — un domaine d'agent autonome est désormais exprimable ET vivant", () => {
     const m = verte();
-    // EP-139 — cette fixture met la CRÉATION DE COMPTE en parcours principal
-    // alors qu'elle porte un parcours de suivi de marché, légitimement
-    // public. App Store Review Guidelines 5.1.1(iv) le refuse, et le
-    // diagnostic est JUSTE : ce test-ci porte sur l'expressivité du domaine
-    // (transitions exogènes), pas sur l'ordre de ses parcours. Il écarte ce
-    // diagnostic-là, nommément, et aucun autre.
+    // EP-140 — RÉÉVALUÉE, ET LE REFUS EST MAINTENU, À RAISON. Quatre des
+    // cinq parcours que le juge comptait « ouverts » sont désormais reconnus
+    // EN SESSION : portefeuille, dépôt et stratégie sont déclarés reliés au
+    // compte, l'historique est de portée `acteur:`. Il en reste UN : le
+    // suivi de marché, qui est légitimement PUBLIC. L'application peut donc
+    // montrer quelque chose sans compte — et elle met la création de compte
+    // en parcours principal. C'est exactement ce qu'Apple 5.1.1(iv) refuse.
+    // Le diagnostic est écarté ici, nommément : ce test porte sur
+    // l'expressivité du domaine, pas sur l'ordre de ses parcours.
     expect(
       validerModele(m).filter((d) => d.code !== "MODELE_COEUR_EXIGE_CONNEXION"),
     ).toEqual([]);
