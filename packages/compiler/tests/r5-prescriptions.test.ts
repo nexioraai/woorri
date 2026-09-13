@@ -68,6 +68,68 @@ describe("R5 — prescriptions de navigation dérivées de P2d", () => {
     expect(verifierNavigationPrescrite(m5 as never, P).map((x) => x.code)).toContain("NAVIGATION_DESTINATIONS_HORS_PLAN");
   });
 
+  // EP-165 ③ — UN ÉCRAN DE SURFACE N'EST PAS « HORS PLAN ».
+  //
+  // FAUX POSITIF MESURÉ sur `kaviva-spa` : les SIX écrans signalés étaient
+  // exactement les surfaces d'application (settings, account_delete,
+  // privacy_policy, terms, help, contact). Le document obéissait à la règle
+  // 41 du prompt et un juge le lui reprochait. 6 → 0 après correction, sans
+  // qu'aucun écran légitime cesse d'être vu.
+  describe("EP-165 ③ · les surfaces d'application ne sont pas hors plan", () => {
+    it("LE JUGE N'EST PAS MORT — un écran inventé SANS purpose reste refusé", () => {
+      // Sans cette moitié, l'exclusion aurait pu vider le juge et la mesure
+      // « 6 → 0 » se lirait comme une réussite.
+      const m = airConforme();
+      m.screens.push({ id: "scr_invente" });
+      expect(verifierNavigationPrescrite(m as never, P).map((x) => x.code)).toContain(
+        "NAVIGATION_ECRAN_HORS_PLAN",
+      );
+    });
+
+    it("un écran de SURFACE, lui, passe — il relève d'un autre juge, pas d'aucun", () => {
+      const m = airConforme();
+      m.screens.push({ id: "scr_surface_aide", purpose: "help" } as never);
+      expect(verifierNavigationPrescrite(m as never, P).map((x) => x.code)).not.toContain(
+        "NAVIGATION_ECRAN_HORS_PLAN",
+      );
+    });
+
+    it("LA RÈGLE EST LA PRÉSENCE DU CHAMP, JAMAIS UNE LISTE DE GENRES", () => {
+      // Une liste de purposes écrite ici divergerait de l'énumération du
+      // schéma dès le prochain genre ajouté — onzième occurrence du motif.
+      // Le juge ne doit donc citer AUCUN genre.
+      const source = readFileSync(
+        join(HERE, "..", "..", "..", "benchmarks", "air-emission", "modele-metier.mjs"),
+        "utf8",
+      );
+      const juge = source.slice(
+        source.indexOf("EP-165 ③ — UN ÉCRAN DE SURFACE"),
+        source.indexOf("const routesVers"),
+      );
+      expect(juge.length, "bloc du juge introuvable").toBeGreaterThan(200);
+      const code = juge.split("\n").filter((l) => !l.trim().startsWith("//")).join("\n");
+      for (const genre of ["help", "terms", "settings", "contact", "privacy_policy", "account_delete"]) {
+        expect(code, `le juge cite le genre ${genre}`).not.toContain(`"${genre}"`);
+      }
+    });
+
+    it("CHEMIN D'ABUS FERMÉ — un purpose ne retire pas un écran DU PLAN", () => {
+      // Poser un purpose sur un écran prescrit ne doit rien faire gagner :
+      // son absence reste vue par NAVIGATION_ECRAN_PRESCRIT_MANQUANT.
+      const m = airConforme();
+      const premier = m.screens[0] as { purpose?: string } | undefined;
+      if (premier) premier.purpose = "help";
+      expect(verifierNavigationPrescrite(m as never, P).map((x) => x.code)).not.toContain(
+        "NAVIGATION_ECRAN_PRESCRIT_MANQUANT",
+      );
+      const sansLui = airConforme();
+      sansLui.screens = sansLui.screens.slice(1);
+      expect(verifierNavigationPrescrite(sansLui as never, P).map((x) => x.code)).toContain(
+        "NAVIGATION_ECRAN_PRESCRIT_MANQUANT",
+      );
+    });
+  });
+
   it("OBLIGATIONS PRESCRIPTIVES — base/entites/ecrans reçoivent la structure, pas le wording", () => {
     const base = obligationsPrescriptives("base", MODELE, PLAN);
     expect(base).toContain(`entryScreenId = ${P.entree}`);

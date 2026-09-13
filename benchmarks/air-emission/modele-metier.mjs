@@ -1443,9 +1443,40 @@ export function verifierNavigationPrescrite(air, prescriptions) {
     if (!idsEcrans.has(scr))
       out.push(d("NAVIGATION_ECRAN_PRESCRIT_MANQUANT", `screens[${scr}]`, "écran du plan absent du document"));
   }
-  for (const scr of idsEcrans) {
-    if (!prescriptions.ecrans.includes(scr))
-      out.push(d("NAVIGATION_ECRAN_HORS_PLAN", `screens[${scr}]`, "écran absent du plan — aucun stylo libre"));
+  // EP-165 ③ — UN ÉCRAN DE SURFACE N'EST PAS « HORS PLAN » : IL EST HORS DU
+  // DOMAINE DU PLAN.
+  //
+  // FAUX POSITIF STRUCTUREL, MESURÉ : sur `kaviva-spa`, les SIX écrans
+  // signalés étaient exactement `settings`, `account_delete`,
+  // `privacy_policy`, `terms`, `help`, `contact` — c'est-à-dire les surfaces
+  // d'application. Le document faisait EXACTEMENT ce que la règle 41 du
+  // prompt lui ordonne (« des écrans n'ont AUCUNE existence métier et
+  // doivent pourtant être là, parce que c'est une APPLICATION »), et ce juge
+  // le lui reprochait.
+  //
+  // LA CAUSE EST UNE DÉCISION PRISE À DEUX ENDROITS QUI NE SE PARLENT PAS :
+  // « quels écrans doivent exister » est décidé par `ecransDe` (dérivé du
+  // MODÈLE MÉTIER, qui ignore `purpose`) ET par les obligations de
+  // publication. Le plan ne PEUT PAS prescrire une surface : le modèle
+  // métier n'en connaît aucune, et il n'a pas à en connaître.
+  //
+  // LA RÈGLE N'EST PAS UNE LISTE DE GENRES — ce serait la onzième
+  // occurrence. C'est la PRÉSENCE du champ : le schéma AIR garantit déjà
+  // que `purpose` appartient à une énumération FERMÉE.
+  //
+  // AUCUN TROU OUVERT, VÉRIFIÉ AVANT D'EXCLURE : un écran porteur d'un
+  // `purpose` est jugé par `jugerEspaceCompte`, branché dans l'acceptation —
+  // genre connu, condition d'existence, place dans l'espace compte, ordre du
+  // bas. Il change de juge, il n'en perd aucun.
+  //
+  // ET LE CHEMIN D'ABUS EST FERMÉ PAR CONSTRUCTION : poser un `purpose` sur
+  // un écran QUE LE PLAN PRESCRIT ne le retire pas du plan — son absence
+  // resterait vue par NAVIGATION_ECRAN_PRESCRIT_MANQUANT. L'exclusion ne
+  // peut donc servir qu'à ce qu'elle vise.
+  for (const ecran of air.screens) {
+    if (prescriptions.ecrans.includes(ecran.id)) continue;
+    if (ecran.purpose !== undefined) continue;
+    out.push(d("NAVIGATION_ECRAN_HORS_PLAN", `screens[${ecran.id}]`, "écran absent du plan — aucun stylo libre"));
   }
   const routesVers = new Set(air.navigation.routes.map((r) => r.screenId));
   for (const scr of prescriptions.ecrans) {
