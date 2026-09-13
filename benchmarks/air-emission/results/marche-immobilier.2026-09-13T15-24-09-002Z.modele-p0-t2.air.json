@@ -1,0 +1,539 @@
+{
+  "version": "modele-metier/1.2.0",
+  "couverture": {
+    "couverts": [
+      {
+        "terme": "marché immobilier",
+        "noeuds": [
+          "cpt_annonce",
+          "par_recherche_bien"
+        ]
+      },
+      {
+        "terme": "Tchad",
+        "noeuds": [
+          "cpt_ville"
+        ]
+      },
+      {
+        "terme": "Sahel",
+        "noeuds": [
+          "cpt_ville"
+        ]
+      },
+      {
+        "terme": "agences immobilières",
+        "noeuds": [
+          "act_annonceur",
+          "cpt_vendeur",
+          "att_vendeur_type"
+        ]
+      },
+      {
+        "terme": "particuliers",
+        "noeuds": [
+          "act_annonceur",
+          "cpt_vendeur",
+          "att_vendeur_type"
+        ]
+      },
+      {
+        "terme": "publier un bien",
+        "noeuds": [
+          "cpt_annonce",
+          "par_publication_annonce"
+        ]
+      },
+      {
+        "terme": "bien à vendre ou à louer",
+        "noeuds": [
+          "cpt_annonce",
+          "att_annonce_transaction"
+        ]
+      },
+      {
+        "terme": "photos",
+        "noeuds": [
+          "att_annonce_photos"
+        ]
+      },
+      {
+        "terme": "prix en francs CFA",
+        "noeuds": [
+          "att_annonce_prix"
+        ]
+      },
+      {
+        "terme": "surface",
+        "noeuds": [
+          "att_annonce_surface"
+        ]
+      },
+      {
+        "terme": "nombre de pièces",
+        "noeuds": [
+          "att_annonce_pieces"
+        ]
+      },
+      {
+        "terme": "quartier",
+        "noeuds": [
+          "cpt_quartier",
+          "att_annonce_quartier",
+          "att_recherche_quartier"
+        ]
+      },
+      {
+        "terme": "ville",
+        "noeuds": [
+          "cpt_ville",
+          "att_annonce_ville",
+          "att_recherche_ville"
+        ]
+      },
+      {
+        "terme": "acheteurs",
+        "noeuds": [
+          "act_chercheur"
+        ]
+      },
+      {
+        "terme": "locataires",
+        "noeuds": [
+          "act_chercheur"
+        ]
+      },
+      {
+        "terme": "parcourir les annonces",
+        "noeuds": [
+          "cpt_annonce",
+          "par_exploration_territoire"
+        ]
+      },
+      {
+        "terme": "filtrer",
+        "noeuds": [
+          "cpt_recherche"
+        ]
+      },
+      {
+        "terme": "type de bien",
+        "noeuds": [
+          "att_annonce_type_bien",
+          "att_recherche_type_bien"
+        ]
+      },
+      {
+        "terme": "fiche complète",
+        "noeuds": [
+          "cpt_annonce"
+        ]
+      },
+      {
+        "terme": "contacter le vendeur",
+        "noeuds": [
+          "cpt_vendeur",
+          "par_recherche_bien"
+        ]
+      },
+      {
+        "terme": "appel téléphonique",
+        "noeuds": [
+          "att_vendeur_telephone"
+        ]
+      },
+      {
+        "terme": "WhatsApp",
+        "noeuds": [
+          "att_vendeur_whatsapp"
+        ]
+      },
+      {
+        "terme": "retrait de l'annonce",
+        "noeuds": [
+          "cpt_annonce",
+          "par_retrait_annonce"
+        ]
+      }
+    ],
+    "nonRetenus": [
+      {
+        "terme": "aucun paiement en ligne",
+        "raison": "capacite_hors_enveloppe"
+      },
+      {
+        "terme": "organiser une visite",
+        "raison": "capacite_hors_enveloppe"
+      },
+      {
+        "terme": "s'arranger avec lui",
+        "raison": "capacite_hors_enveloppe"
+      }
+    ]
+  },
+  "acteurs": [
+    {
+      "id": "act_chercheur",
+      "nom": "Acheteur ou locataire"
+    },
+    {
+      "id": "act_annonceur",
+      "nom": "Agence immobilière ou particulier vendeur"
+    }
+  ],
+  "concepts": [
+    {
+      "id": "cpt_annonce",
+      "nom": "Annonce de bien",
+      "donnees": true,
+      "identifiant": "att_annonce_titre",
+      "attributs": [
+        {
+          "id": "att_annonce_titre",
+          "nature": "texte",
+          "requis": true
+        },
+        {
+          "id": "att_annonce_description",
+          "nature": "texte",
+          "requis": false
+        },
+        {
+          "id": "att_annonce_photos",
+          "nature": "media",
+          "requis": true,
+          "cardinalite": 8
+        },
+        {
+          "id": "att_annonce_prix",
+          "nature": "nombre",
+          "requis": true
+        },
+        {
+          "id": "att_annonce_surface",
+          "nature": "nombre",
+          "requis": true
+        },
+        {
+          "id": "att_annonce_pieces",
+          "nature": "nombre",
+          "requis": true
+        },
+        {
+          "id": "att_annonce_type_bien",
+          "nature": "texte",
+          "requis": true
+        },
+        {
+          "id": "att_annonce_transaction",
+          "nature": "texte",
+          "requis": true
+        },
+        {
+          "id": "att_annonce_ville",
+          "nature": "reference",
+          "requis": true
+        },
+        {
+          "id": "att_annonce_quartier",
+          "nature": "reference",
+          "requis": true
+        },
+        {
+          "id": "att_annonce_vendeur",
+          "nature": "reference",
+          "requis": true
+        },
+        {
+          "id": "att_annonce_date_publication",
+          "nature": "date",
+          "requis": false
+        }
+      ],
+      "etats": [
+        {
+          "id": "brouillon",
+          "transitions": [
+            {
+              "vers": "publiee",
+              "geste": "confirmer"
+            }
+          ]
+        },
+        {
+          "id": "publiee",
+          "transitions": [
+            {
+              "vers": "retiree",
+              "geste": "retirer"
+            }
+          ]
+        },
+        {
+          "id": "retiree"
+        }
+      ]
+    },
+    {
+      "id": "cpt_vendeur",
+      "nom": "Vendeur ou bailleur",
+      "donnees": true,
+      "identifiant": "att_vendeur_nom",
+      "attributs": [
+        {
+          "id": "att_vendeur_nom",
+          "nature": "texte",
+          "requis": true
+        },
+        {
+          "id": "att_vendeur_type",
+          "nature": "texte",
+          "requis": true
+        },
+        {
+          "id": "att_vendeur_telephone",
+          "nature": "texte",
+          "requis": true
+        },
+        {
+          "id": "att_vendeur_whatsapp",
+          "nature": "texte",
+          "requis": false
+        },
+        {
+          "id": "att_vendeur_ville",
+          "nature": "reference",
+          "requis": false
+        }
+      ]
+    },
+    {
+      "id": "cpt_ville",
+      "nom": "Ville",
+      "donnees": true,
+      "identifiant": "att_ville_nom",
+      "attributs": [
+        {
+          "id": "att_ville_nom",
+          "nature": "texte",
+          "requis": true
+        },
+        {
+          "id": "att_ville_pays",
+          "nature": "texte",
+          "requis": true
+        }
+      ]
+    },
+    {
+      "id": "cpt_quartier",
+      "nom": "Quartier",
+      "donnees": true,
+      "identifiant": "att_quartier_nom",
+      "attributs": [
+        {
+          "id": "att_quartier_nom",
+          "nature": "texte",
+          "requis": true
+        },
+        {
+          "id": "att_quartier_ville",
+          "nature": "reference",
+          "requis": true
+        }
+      ]
+    },
+    {
+      "id": "cpt_recherche",
+      "nom": "Critères de recherche",
+      "donnees": true,
+      "attributs": [
+        {
+          "id": "att_recherche_ville",
+          "nature": "reference",
+          "requis": false
+        },
+        {
+          "id": "att_recherche_quartier",
+          "nature": "reference",
+          "requis": false
+        },
+        {
+          "id": "att_recherche_prix_min",
+          "nature": "nombre",
+          "requis": false
+        },
+        {
+          "id": "att_recherche_prix_max",
+          "nature": "nombre",
+          "requis": false
+        },
+        {
+          "id": "att_recherche_type_bien",
+          "nature": "texte",
+          "requis": false
+        },
+        {
+          "id": "att_recherche_transaction",
+          "nature": "texte",
+          "requis": false
+        }
+      ]
+    }
+  ],
+  "relations": [
+    {
+      "de": "cpt_vendeur",
+      "vers": "cpt_annonce",
+      "nature": "possede"
+    },
+    {
+      "de": "cpt_ville",
+      "vers": "cpt_quartier",
+      "nature": "possede"
+    },
+    {
+      "de": "cpt_annonce",
+      "vers": "cpt_quartier",
+      "nature": "reference"
+    },
+    {
+      "de": "cpt_annonce",
+      "vers": "cpt_ville",
+      "nature": "reference"
+    },
+    {
+      "de": "cpt_recherche",
+      "vers": "cpt_annonce",
+      "nature": "reference"
+    }
+  ],
+  "parcours": [
+    {
+      "id": "par_recherche_bien",
+      "besoin": "trouver un bien à acheter ou à louer et joindre le vendeur",
+      "acteur": "act_chercheur",
+      "priorite": 1,
+      "etapes": [
+        {
+          "concept": "cpt_recherche",
+          "geste": "saisir"
+        },
+        {
+          "concept": "cpt_annonce",
+          "geste": "chercher"
+        },
+        {
+          "concept": "cpt_annonce",
+          "geste": "choisir"
+        },
+        {
+          "concept": "cpt_annonce",
+          "geste": "consulter",
+          "etat": "publiee"
+        },
+        {
+          "concept": "cpt_vendeur",
+          "geste": "decouvrir"
+        },
+        {
+          "concept": "cpt_vendeur",
+          "geste": "contacter"
+        }
+      ]
+    },
+    {
+      "id": "par_publication_annonce",
+      "besoin": "publier un bien à vendre ou à louer",
+      "acteur": "act_annonceur",
+      "priorite": 2,
+      "etapes": [
+        {
+          "concept": "cpt_vendeur",
+          "geste": "s_identifier"
+        },
+        {
+          "concept": "cpt_vendeur",
+          "geste": "saisir"
+        },
+        {
+          "concept": "cpt_annonce",
+          "geste": "saisir"
+        },
+        {
+          "concept": "cpt_annonce",
+          "geste": "confirmer"
+        },
+        {
+          "concept": "cpt_annonce",
+          "geste": "consulter",
+          "etat": "publiee"
+        }
+      ]
+    },
+    {
+      "id": "par_exploration_territoire",
+      "besoin": "parcourir les biens disponibles ville par ville et quartier par quartier",
+      "acteur": "act_chercheur",
+      "priorite": 3,
+      "etapes": [
+        {
+          "concept": "cpt_ville",
+          "geste": "decouvrir"
+        },
+        {
+          "concept": "cpt_ville",
+          "geste": "choisir"
+        },
+        {
+          "concept": "cpt_quartier",
+          "geste": "chercher"
+        },
+        {
+          "concept": "cpt_quartier",
+          "geste": "choisir"
+        },
+        {
+          "concept": "cpt_annonce",
+          "geste": "chercher"
+        },
+        {
+          "concept": "cpt_annonce",
+          "geste": "consulter",
+          "etat": "publiee"
+        }
+      ]
+    },
+    {
+      "id": "par_retrait_annonce",
+      "besoin": "retirer un bien déjà vendu ou déjà loué",
+      "acteur": "act_annonceur",
+      "priorite": 4,
+      "etapes": [
+        {
+          "concept": "cpt_annonce",
+          "geste": "consulter_historique"
+        },
+        {
+          "concept": "cpt_annonce",
+          "geste": "choisir"
+        },
+        {
+          "concept": "cpt_annonce",
+          "geste": "retirer",
+          "preconditions": [
+            {
+              "concept": "cpt_annonce",
+              "etat": "publiee"
+            }
+          ]
+        },
+        {
+          "concept": "cpt_annonce",
+          "geste": "consulter",
+          "etat": "retiree"
+        }
+      ]
+    }
+  ]
+}

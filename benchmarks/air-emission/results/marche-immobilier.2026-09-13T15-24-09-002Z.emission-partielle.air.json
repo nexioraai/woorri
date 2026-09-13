@@ -1,0 +1,778 @@
+{
+  "airSchemaVersion": "1.25.0",
+  "projectId": "prj_sahel_immo",
+  "app": {
+    "name": "Sahel Immo",
+    "slug": "sahel-immo",
+    "description": [
+      {
+        "locale": "fr",
+        "text": "Le marché immobilier du Tchad et du Sahel : agences et particuliers publient leurs biens à vendre ou à louer avec photos, prix en francs CFA, surface, nombre de pièces et quartier. Les acheteurs et locataires parcourent les annonces, filtrent par ville, quartier, prix et type de bien, consultent la fiche complète et contactent directement le vendeur pour organiser une visite."
+      }
+    ],
+    "locales": {
+      "userLanguage": "fr",
+      "appLocales": [
+        "fr"
+      ],
+      "defaultAppLocale": "fr",
+      "contentLocales": [
+        "fr"
+      ],
+      "rtlSupported": false
+    },
+    "distribution": {
+      "owner": "sahel-immo",
+      "projectId": "prj_sahel_immo"
+    }
+  },
+  "navigation": {
+    "entryScreenId": "scr_cpt_recherche_saisir",
+    "primary": {
+      "destinations": [
+        {
+          "routeId": "nav_recherche",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Rechercher"
+            }
+          ],
+          "order": 0,
+          "icon": "recherche"
+        },
+        {
+          "routeId": "nav_compte",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Mon compte"
+            }
+          ],
+          "order": 1,
+          "icon": "compte"
+        },
+        {
+          "routeId": "nav_villes",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Villes"
+            }
+          ],
+          "order": 2,
+          "icon": "carte"
+        },
+        {
+          "routeId": "nav_mes_annonces",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Mes annonces"
+            }
+          ],
+          "order": 3,
+          "icon": "liste"
+        }
+      ]
+    },
+    "routes": [
+      {
+        "id": "nav_recherche",
+        "screenId": "scr_cpt_recherche_saisir",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Rechercher un bien"
+          }
+        ]
+      },
+      {
+        "id": "nav_annonces",
+        "screenId": "scr_entree",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Annonces"
+          }
+        ]
+      },
+      {
+        "id": "nav_annonces_choisir",
+        "screenId": "scr_cpt_annonce_choisir",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Résultats"
+          }
+        ]
+      },
+      {
+        "id": "nav_annonce_fiche",
+        "screenId": "scr_cpt_annonce_consulter_publiee",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Fiche du bien"
+          }
+        ]
+      },
+      {
+        "id": "nav_vendeur",
+        "screenId": "scr_cpt_vendeur_decouvrir",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Le vendeur"
+          }
+        ]
+      },
+      {
+        "id": "nav_vendeur_contacter",
+        "screenId": "scr_cpt_vendeur_contacter",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Contacter le vendeur"
+          }
+        ]
+      },
+      {
+        "id": "nav_compte",
+        "screenId": "scr_cpt_vendeur_s_identifier",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Mon compte"
+          }
+        ]
+      },
+      {
+        "id": "nav_vendeur_saisir",
+        "screenId": "scr_cpt_vendeur_saisir",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Mon profil annonceur"
+          }
+        ]
+      },
+      {
+        "id": "nav_annonce_saisir",
+        "screenId": "scr_cpt_annonce_saisir",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Publier une annonce"
+          }
+        ]
+      },
+      {
+        "id": "nav_annonce_confirmer",
+        "screenId": "scr_cpt_annonce_confirmer",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Vérifier l'annonce"
+          }
+        ]
+      },
+      {
+        "id": "nav_annonce_publiee_annonceur",
+        "screenId": "scr_cpt_annonce_consulter_publiee_acteur_act_annonceur",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Annonce publiée"
+          }
+        ]
+      },
+      {
+        "id": "nav_villes",
+        "screenId": "scr_cpt_ville_decouvrir",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Villes"
+          }
+        ]
+      },
+      {
+        "id": "nav_ville_choisir",
+        "screenId": "scr_cpt_ville_choisir",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Choisir une ville"
+          }
+        ]
+      },
+      {
+        "id": "nav_quartier_choisir",
+        "screenId": "scr_cpt_quartier_choisir",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Choisir un quartier"
+          }
+        ]
+      },
+      {
+        "id": "nav_mes_annonces",
+        "screenId": "scr_cpt_annonce_consulter_historique",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Mes annonces"
+          }
+        ]
+      },
+      {
+        "id": "nav_mes_annonces_choisir",
+        "screenId": "scr_cpt_annonce_choisir_acteur_act_annonceur",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Gérer une annonce"
+          }
+        ]
+      },
+      {
+        "id": "nav_annonce_retirer",
+        "screenId": "scr_cpt_annonce_retirer",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Retirer l'annonce"
+          }
+        ]
+      },
+      {
+        "id": "nav_annonce_retiree",
+        "screenId": "scr_cpt_annonce_consulter_retiree",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Annonce retirée"
+          }
+        ]
+      }
+    ]
+  },
+  "design": {
+    "theme": "sahel_terre_ocre"
+  },
+  "network": {
+    "policy": "deny_by_default",
+    "allowedDomains": [
+      "api.sahelimmo.app",
+      "picsum.photos"
+    ]
+  },
+  "native": {
+    "minIosVersion": "15.0",
+    "minAndroidSdk": 24
+  },
+  "compliance": {
+    "commerceClass": "physical_or_offapp",
+    "accountDeletionRequired": true,
+    "dataCollected": [
+      "contact_info",
+      "identifiers",
+      "usage_data",
+      "user_content"
+    ]
+  },
+  "entities": [
+    {
+      "id": "ent_ville",
+      "name": "ville",
+      "fields": [
+        {
+          "id": "fld_ville_nom",
+          "name": "nom",
+          "type": "string",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Ville"
+            }
+          ],
+          "demoValues": [
+            "N'Djaména",
+            "Moundou",
+            "Sarh",
+            "Abéché",
+            "Niamey",
+            "Bamako",
+            "Ouagadougou",
+            "Maroua"
+          ]
+        },
+        {
+          "id": "fld_ville_pays",
+          "name": "pays",
+          "type": "string",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Pays"
+            }
+          ],
+          "demoValues": [
+            "Tchad",
+            "Niger",
+            "Mali",
+            "Burkina Faso",
+            "Cameroun"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ent_quartier",
+      "name": "quartier",
+      "fields": [
+        {
+          "id": "fld_quartier_nom",
+          "name": "nom",
+          "type": "string",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Quartier"
+            }
+          ],
+          "demoValues": [
+            "Chagoua",
+            "Moursal",
+            "Klemat",
+            "Farcha",
+            "Ardep-Djoumal",
+            "Sabangali",
+            "Djambalbahr",
+            "Gassi"
+          ]
+        },
+        {
+          "id": "fld_quartier_ville",
+          "name": "ville",
+          "type": "reference",
+          "required": true,
+          "referencesEntityId": "ent_ville",
+          "referenceDisplayFieldId": "fld_ville_nom",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Ville du quartier"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ent_vendeur",
+      "name": "vendeur",
+      "fields": [
+        {
+          "id": "fld_vendeur_nom",
+          "name": "nom",
+          "type": "string",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Nom de l'annonceur"
+            }
+          ],
+          "demoValues": [
+            "Agence Sahel Habitat",
+            "Immobilière du Chari",
+            "Moussa Abakar",
+            "Fatimé Ngarta",
+            "Agence Toumaï Immo",
+            "Hassan Djibrine",
+            "Résidences du Logone",
+            "Aïcha Mahamat"
+          ]
+        },
+        {
+          "id": "fld_vendeur_type",
+          "name": "type",
+          "type": "enum",
+          "required": true,
+          "enumValues": [
+            "agence",
+            "particulier"
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Type d'annonceur"
+            }
+          ],
+          "enumLabels": [
+            {
+              "value": "agence",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Agence immobilière"
+                }
+              ]
+            },
+            {
+              "value": "particulier",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Particulier"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "fld_vendeur_telephone",
+          "name": "telephone",
+          "type": "string",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Téléphone (appel)"
+            }
+          ],
+          "demoValues": [
+            "+235 66 12 34 56",
+            "+235 99 04 77 21",
+            "+235 63 88 10 45",
+            "+235 95 32 60 18",
+            "+227 90 44 12 07",
+            "+223 76 55 88 30"
+          ]
+        },
+        {
+          "id": "fld_vendeur_whatsapp",
+          "name": "whatsapp",
+          "type": "string",
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Numéro WhatsApp"
+            }
+          ],
+          "demoValues": [
+            "+235 66 12 34 56",
+            "+235 99 04 77 21",
+            "+235 62 71 09 33",
+            "+235 95 32 60 18",
+            "+227 91 22 45 60"
+          ]
+        },
+        {
+          "id": "fld_vendeur_ville",
+          "name": "ville",
+          "type": "reference",
+          "required": false,
+          "referencesEntityId": "ent_ville",
+          "referenceDisplayFieldId": "fld_ville_nom",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Ville de l'annonceur"
+            }
+          ]
+        },
+        {
+          "id": "fld_vendeur_email",
+          "name": "email",
+          "type": "string",
+          "required": true,
+          "unique": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Adresse e-mail"
+            }
+          ],
+          "demoValues": [
+            "contact@sahelhabitat.td",
+            "moussa.abakar@mail.td",
+            "agence.toumai@mail.td",
+            "fatime.ngarta@mail.td"
+          ]
+        },
+        {
+          "id": "fld_vendeur_mot_de_passe",
+          "name": "mot_de_passe",
+          "type": "string",
+          "required": true,
+          "sensitive": true
+        }
+      ]
+    }
+  ],
+  "relations": [
+    {
+      "id": "rel_ville_quartiers",
+      "fromEntityId": "ent_ville",
+      "toEntityId": "ent_quartier",
+      "kind": "one_to_many"
+    },
+    {
+      "id": "rel_ville_vendeurs",
+      "fromEntityId": "ent_ville",
+      "toEntityId": "ent_vendeur",
+      "kind": "one_to_many"
+    }
+  ],
+  "datasets": [
+    {
+      "id": "data_ville_seed",
+      "entityId": "ent_ville",
+      "contentHash": "3f9a1c7e4b28d05f61a3c8e27d94b6f0a5e13c8d7b2f409a6c15e83d7fa20b4c",
+      "rowCount": 8,
+      "sourceKind": "seed"
+    },
+    {
+      "id": "data_quartier_seed",
+      "entityId": "ent_quartier",
+      "contentHash": "8c2d51ab07e4f936b1d8a2405c76e9f32a0b4d81e63c95f70d1a82b4c9e57306",
+      "rowCount": 18,
+      "sourceKind": "seed"
+    },
+    {
+      "id": "data_vendeur_seed",
+      "entityId": "ent_vendeur",
+      "contentHash": "b47e0a921f6c38d5e250a7b39c4d1e8670f2b5a9d31c60e48a95f7b206d4e13c",
+      "rowCount": 8,
+      "sourceKind": "seed"
+    }
+  ],
+  "rules": [
+    {
+      "id": "rule_ville_identite",
+      "description": "Une ville publiée porte toujours un nom et le pays auquel elle appartient.",
+      "kind": "validation",
+      "entityId": "ent_ville",
+      "assertions": [
+        {
+          "fieldId": "fld_ville_nom",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_ville_pays",
+          "operator": "required"
+        }
+      ]
+    },
+    {
+      "id": "rule_quartier_rattachement",
+      "description": "Un quartier porte un nom et se rattache obligatoirement à une ville du marché.",
+      "kind": "validation",
+      "entityId": "ent_quartier",
+      "assertions": [
+        {
+          "fieldId": "fld_quartier_nom",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_quartier_ville",
+          "operator": "required"
+        }
+      ]
+    },
+    {
+      "id": "rule_vendeur_contact_joignable",
+      "description": "Un annonceur doit être joignable : nom et numéro de téléphone d'appel obligatoires, puisque toute visite s'organise par contact direct.",
+      "kind": "validation",
+      "entityId": "ent_vendeur",
+      "assertions": [
+        {
+          "fieldId": "fld_vendeur_nom",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_vendeur_telephone",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_vendeur_telephone",
+          "operator": "matches",
+          "value": "^\\+?[0-9 ]{8,20}$"
+        }
+      ]
+    },
+    {
+      "id": "rule_vendeur_type_connu",
+      "description": "Un annonceur est soit une agence immobilière, soit un particulier.",
+      "kind": "validation",
+      "entityId": "ent_vendeur",
+      "assertions": [
+        {
+          "fieldId": "fld_vendeur_type",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_vendeur_type",
+          "operator": "in",
+          "value": [
+            "agence",
+            "particulier"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "rule_vendeur_compte",
+      "description": "Le compte annonceur exige une adresse e-mail valide et un mot de passe pour s'identifier.",
+      "kind": "validation",
+      "entityId": "ent_vendeur",
+      "assertions": [
+        {
+          "fieldId": "fld_vendeur_email",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_vendeur_email",
+          "operator": "matches",
+          "value": "^[^@\\s]+@[^@\\s]+\\.[a-z]{2,}$"
+        },
+        {
+          "fieldId": "fld_vendeur_mot_de_passe",
+          "operator": "required"
+        }
+      ]
+    }
+  ],
+  "slots": [
+    {
+      "id": "slot_contact_vendeur_liens",
+      "description": "Construit, à partir des coordonnées de l'annonceur, le libellé d'appel téléphonique et le libellé WhatsApp affichés sur l'écran de contact (numéro normalisé au format international sahélien, mention d'absence de WhatsApp si le numéro est vide).",
+      "inputs": [
+        {
+          "name": "vendeurRows",
+          "type": "json"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "libelleAppel",
+          "type": "string"
+        },
+        {
+          "name": "libelleWhatsapp",
+          "type": "string"
+        }
+      ],
+      "allowedImports": []
+    },
+    {
+      "id": "slot_quartiers_par_ville",
+      "description": "Résume pour chaque ville le nombre de quartiers couverts et en produit une phrase de contexte affichée sous l'en-tête de l'écran Villes.",
+      "inputs": [
+        {
+          "name": "villeRows",
+          "type": "json"
+        },
+        {
+          "name": "quartierRows",
+          "type": "json"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "resumeCouverture",
+          "type": "string"
+        }
+      ],
+      "allowedImports": []
+    }
+  ],
+  "capabilities": [
+    {
+      "capability": "auth",
+      "config": [
+        {
+          "key": "signUpEnabled",
+          "value": true
+        },
+        {
+          "key": "passwordResetEnabled",
+          "value": true
+        },
+        {
+          "key": "sessionScope",
+          "value": "annonceur"
+        }
+      ]
+    },
+    {
+      "capability": "external_contact",
+      "config": [
+        {
+          "key": "canaux",
+          "value": [
+            "telephone",
+            "whatsapp"
+          ]
+        }
+      ]
+    },
+    {
+      "capability": "media_upload",
+      "config": [
+        {
+          "key": "usage",
+          "value": "photos_des_biens"
+        },
+        {
+          "key": "maxMedias",
+          "value": 8
+        }
+      ]
+    },
+    {
+      "capability": "payments.psp",
+      "config": [
+        {
+          "key": "enLigne",
+          "value": false
+        },
+        {
+          "key": "reglement",
+          "value": "hors_application_entre_les_parties"
+        }
+      ]
+    }
+  ],
+  "permissions": [
+    {
+      "platform": "ios",
+      "permission": "NSPhotoLibraryUsageDescription",
+      "reason": [
+        {
+          "locale": "fr",
+          "text": "Sahel Immo accède à vos photos pour que vous puissiez joindre les images de votre bien (maison, villa, terrain) à votre annonce."
+        }
+      ],
+      "requiredByCapability": "media_upload"
+    },
+    {
+      "platform": "android",
+      "permission": "android.permission.READ_MEDIA_IMAGES",
+      "reason": [
+        {
+          "locale": "fr",
+          "text": "Sahel Immo lit les images de votre appareil pour illustrer l'annonce de votre bien avec vos propres photos."
+        }
+      ],
+      "requiredByCapability": "media_upload"
+    }
+  ]
+}

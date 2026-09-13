@@ -201,4 +201,29 @@ export const INTENTIONS = [
       "Les vendeurs paient la plateforme pour mettre leurs produits en " +
       "avant dans le catalogue.",
   },
+  {
+    slug: "marche-immobilier",
+    // EP-168 — DOMAINE NEUF, jamais généré sous AUCUN contrat. `agence-immo`
+    // existait, mais ses archives datent du 2026-09-02, AVANT le contrat
+    // 1.25.0 — et il a servi de FIXTURE pendant les passes : le moteur le
+    // connaît. Rejouer l'un pour l'autre n'aurait pas comparé deux
+    // générations mais deux mondes.
+    //
+    // `commerce` VOLONTAIREMENT OMIS, comme pour `marketplace-africain` :
+    // trois tirages y avaient classé le même domaine de trois façons. Toute
+    // lecture de P0 est une DONNÉE (EP-044), jamais une erreur — déclarer
+    // une attente ici la transformerait en verdict.
+    //
+    // TEXTE VERBATIM de Youssouf, non reformulé.
+    text:
+      "Un marché immobilier pour le Tchad et le Sahel. Les agences " +
+      "immobilières et les particuliers publient leurs biens à vendre ou " +
+      "à louer, avec des photos, le prix en francs CFA, la surface, le " +
+      "nombre de pièces et le quartier. Les acheteurs et les locataires " +
+      "parcourent les annonces, filtrent par ville, quartier, prix et type " +
+      "de bien, et consultent la fiche complète. Il n'y a aucun paiement " +
+      "en ligne : l'intéressé contacte directement le vendeur par appel " +
+      "téléphonique ou par WhatsApp pour organiser une visite et " +
+      "s'arranger avec lui.",
+  },
 ];
