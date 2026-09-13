@@ -373,7 +373,12 @@ export const SURFACES_DE_COMPTE = {
  * désormais par `jugerDivulgationProeminente` et non plus par le juge de
  * l'espace compte.
  */
-export const GENRES_HORS_COMPTE = ["privacy_consent", "consent_withdraw"] as const;
+// EP-154 — `consent_withdraw` EN EST RETIRÉ. EP-147 l'avait mis dans les deux
+// listes : exigé par `surfacesAttendues`, puis SAUTÉ par le juge de l'espace
+// compte, donc jamais réclamé. Or EP-147 disait lui-même qu'il vit DANS le
+// compte — reprendre son accord est un réglage durable. Seule la DIVULGATION
+// doit se rencontrer hors d'un menu (Google, User Data).
+export const GENRES_HORS_COMPTE = ["privacy_consent"] as const;
 
 export type GenreEcran = keyof typeof SURFACES_DE_COMPTE;
 

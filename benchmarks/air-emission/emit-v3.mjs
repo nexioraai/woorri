@@ -254,6 +254,42 @@ for (const part of PARTS) {
   part.levelIndex = 0;
 }
 
+// EP-154 — LES SURFACES ET LEURS CONDITIONS, DÉRIVÉES.
+//
+// NEUVIÈME OCCURRENCE, ET LA TROISIÈME CONSÉCUTIVE. La règle 41 interpolait
+// `surfacesAttendues(true)` — le RÉSULTAT de la condition pour un cas
+// particulier — puis réécrivait une partie des conditions en français. Les
+// genres liés au PARTAGE n'apparaissaient donc nulle part, et le générateur
+// ne pouvait pas savoir qu'il les devait : mesuré en EP-152, un document qui
+// partage des données sans rien en dire.
+//
+// LE PROMPT NE PEUT PAS CONNAÎTRE LE DOCUMENT — il est construit une fois, au
+// chargement, avant toute génération. Il ne doit donc pas énoncer un
+// RÉSULTAT mais la RÈGLE : chaque genre avec SA condition, dérivée de la
+// table qui la porte déjà (`exigeIdentite`, `exigePartage`).
+function surfacesDigest() {
+  const condition = (fiche) =>
+    fiche.exigePartage === true
+      ? "SI l'application partage des données avec un tiers (toute intégration)"
+      : fiche.exigeIdentite === true
+        ? "SI l'application a des comptes"
+        : "TOUJOURS";
+  const lignes = [];
+  for (const [genre, fiche] of Object.entries(presentation.SURFACES_DE_COMPTE)) {
+    lignes.push(
+      `   · \`${genre}\` — ${condition(fiche)} — ` +
+        (fiche.source === null ? "décision produit" : `OBLIGATION : ${fiche.source}`),
+    );
+  }
+  for (const genre of presentation.GENRES_HORS_COMPTE) {
+    lignes.push(
+      `   · \`${genre}\` — SI l'application partage des données avec un tiers — ` +
+        "OBLIGATION : Google Play, User Data (divulgation proéminente)",
+    );
+  }
+  return lignes.join("\n");
+}
+
 // EP-153 — LE DIGEST DES BLOCS EST DÉRIVÉ DU REGISTRE.
 //
 // HUITIÈME OCCURRENCE DU MOTIF, et celle-ci a coûté quatre runs : le registre
@@ -447,7 +483,7 @@ RAPPELS DE FORME, non déductibles du registre :
 
 40. CLASSE DE COMMERCE — \`compliance.commerceClass\` décrit le MODÈLE ÉCONOMIQUE DU DOMAINE, pas les écrans : \`physical_or_offapp\` dès que des biens ou services SE PAIENT hors application ou physiquement, MÊME SI l'app ne porte aucune étape de paiement (réserver une prestation payée sur place = \`physical_or_offapp\`) ; \`digital\` quand du contenu digital se vend dans l'app ; \`none\` SEULEMENT quand rien ne se paie nulle part. MESURÉ (EP-061) : \`none\` émis pour un domaine de prestations payées sur place — divergence refusée (CONFORMANCE_COMMERCE_DIVERGENT).
 
-41. SURFACES DE L'APPLICATION — six écrans n'ont AUCUNE existence métier et doivent pourtant être là, parce que c'est une APPLICATION : ils se déclarent par \`purpose\` (énumération FERMÉE) et ne se déduisent d'aucun besoin. ${presentation.surfacesAttendues(true).map((g) => `\\\`${g}\\\` (${presentation.SURFACES_DE_COMPTE[g].source ?? "décision produit"})`).join(" · ")}. Ils vivent DANS l'espace compte — atteignables par une action \`navigate\` depuis lui — et JAMAIS dans \`navigation.primary\` : la barre porte de trois à cinq destinations, et ces surfaces sont six. \`account_create\` et \`account_delete\` n'existent que si l'application a des comptes. TU NE RÉDIGES PAS LEUR TEXTE : une politique de confidentialité ou des conditions d'utilisation sont l'engagement du propriétaire de l'app — l'écran existe, son contenu sera fourni.
+41. SURFACES DE L'APPLICATION — des écrans n'ont AUCUNE existence métier et doivent pourtant être là, parce que c'est une APPLICATION : ils se déclarent par `purpose` (énumération FERMÉE) et ne se déduisent d'aucun besoin. CHACUN A SA CONDITION — ne pose que ceux que ton application appelle :\n${surfacesDigest()}\n   Ils vivent DANS l'espace compte, atteignables par une action `navigate` depuis lui, et JAMAIS dans `navigation.primary`. SEULE EXCEPTION, et elle est imposée : la DIVULGATION du partage se rencontre dans l'usage NORMAL — atteignable depuis l'écran d'ENTRÉE, jamais seulement depuis un menu ou l'espace compte (Google Play, User Data : « must be displayed in the normal usage of the app and not require the user to navigate into a menu or settings »). TU NE RÉDIGES PAS LEUR TEXTE : une politique de confidentialité ou des conditions d'utilisation sont l'engagement du propriétaire — l'écran existe, son contenu sera fourni.
 
 36. ICÔNES — allowlist FERMÉE, ONZE rôles, aucune autre : accueil, recherche, liste, billet, panier, calendrier, carte, compte, favoris, message, reglages. Elle vaut pour \`icon\` des destinations de \`primary\` ET pour \`icon\` d'un \`button\` — et NULLE PART ailleurs (aucun autre bloc n'a d'icône). Le contrat parle UNE seule langue : les RÔLES — le moteur traduit vers les glyphes embarqués (unifié le 2026-09-10, mesuré sur marketa). Choisis par le RÔLE ; si aucun des onze ne convient, N'EN METS PAS.
 
