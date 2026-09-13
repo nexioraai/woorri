@@ -56,10 +56,11 @@ describe("EP-154 · le prompt énonce la RÈGLE, pas son résultat", () => {
   });
 
   it("le prompt n'écrit plus AUCUN genre à la main", () => {
-    const regle = SOURCE.slice(
-      SOURCE.indexOf("41. SURFACES DE L'APPLICATION"),
-      SOURCE.indexOf("\n", SOURCE.indexOf("41. SURFACES DE L'APPLICATION")),
-    );
+    // EP-155 — la règle tient sur PLUSIEURS lignes depuis que l'interpolation
+    // a sa propre ligne : on délimite par la règle suivante, pas par un
+    // retour à la ligne.
+    const debut = SOURCE.indexOf("41. SURFACES DE L'APPLICATION");
+    const regle = SOURCE.slice(debut, SOURCE.indexOf("\n42.", debut));
     expect(regle).toContain("${surfacesDigest()}");
     for (const genre of Object.keys(SURFACES_DE_COMPTE)) {
       expect(regle.includes(`\`${genre}\``), `${genre} écrit à la main`).toBe(false);
@@ -67,7 +68,8 @@ describe("EP-154 · le prompt énonce la RÈGLE, pas son résultat", () => {
   });
 
   it("la PLACE de la divulgation est dite, avec sa source", () => {
-    const regle = SOURCE.slice(SOURCE.indexOf("41. SURFACES DE L'APPLICATION"));
+    const d2 = SOURCE.indexOf("41. SURFACES DE L'APPLICATION");
+    const regle = SOURCE.slice(d2, SOURCE.indexOf("\n42.", d2));
     expect(regle).toContain("normal usage of the app");
     expect(regle).toContain("écran d'ENTRÉE");
   });
