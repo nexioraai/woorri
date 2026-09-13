@@ -45,6 +45,49 @@ const versionGte = (a: string, b: string): boolean => {
   return true;
 };
 
+/**
+ * EP-144 ① — QUI, DANS CE QUE L'APPLICATION EMBARQUE, RELÈVERAIT D'UN
+ * CHIFFREMENT NON EXEMPTÉ.
+ *
+ * La règle américaine d'export exempte le chiffrement STANDARD — celui du
+ * système et de TLS — et vise les cryptographies propres. La réponse dépend
+ * donc de ce que l'application EMBARQUE, pas d'une humeur : elle se dérive.
+ *
+ * PARTITION EXHAUSTIVE, SOUS CLIQUET (motif EP-135) : chaque capacité du
+ * registre est classée. Une capacité NEUVE ne peut pas entrer sans qu'une
+ * décision soit prise ici — c'est ce qui empêche la réponse de vieillir en
+ * silence, et c'est plus sûr qu'une liste d'exceptions.
+ *
+ * LIMITE DITE : la page Apple qui définit la clé est rendue en JavaScript et
+ * n'a pas pu être lue (même constat qu'Apple HIG depuis EP-130). La source
+ * citée est la documentation Expo, qui est le canal réellement emprunté par
+ * le moteur puisqu'il émet un `app.json`.
+ */
+export const CHIFFREMENT_PROPRE_PAR_CAPACITE: Readonly<Record<string, boolean>> = {
+  analytics: false,
+  auth: false,
+  barcode_scan: false,
+  biometrics: false,
+  calendar: false,
+  camera: false,
+  deep_links: false,
+  external_contact: false,
+  geolocation: false,
+  maps: false,
+  media_upload: false,
+  offline_storage: false,
+  "payments.iap": false,
+  "payments.psp": false,
+  push_notifications: false,
+  share: false,
+};
+
+export function utiliseChiffrementNonExempte(air: ProjectAir): boolean {
+  return air.capabilities.some(
+    (c) => CHIFFREMENT_PROPRE_PAR_CAPACITE[c.capability] === true,
+  );
+}
+
 export function emitAppJson(air: ProjectAir, train: ReleaseTrain): string {
   const locale = air.app.locales.defaultAppLocale;
   const capabilityIds = air.capabilities.map((c) => c.capability);
@@ -109,6 +152,13 @@ export function emitAppJson(air: ProjectAir, train: ReleaseTrain): string {
     ios: {
       bundleIdentifier: identity.ios,
       supportsTablet: false,
+      // EP-144 ① — DÉCLARATION D'EXPORT, DÉRIVÉE DES CAPACITÉS.
+      // `ios.config.usesNonExemptEncryption` « sets `ITSAppUsesNonExemptEncryption`
+      // in the standalone ipa's Info.plist » (docs.expo.dev, app config). Sans
+      // elle, chaque dépôt réclame une réponse manuelle à l'éditeur.
+      // Elle n'est PAS écrite en dur : elle se DÉRIVE de ce que l'application
+      // embarque — voir `CHIFFREMENT_PROPRE_PAR_CAPACITE`.
+      config: { usesNonExemptEncryption: utiliseChiffrementNonExempte(air) },
       ...(Object.keys(infoPlist).length > 0 ? { infoPlist } : {}),
     },
     name: air.app.name,
