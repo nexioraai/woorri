@@ -10,6 +10,7 @@
 // (implémentations : Phases 5+/9 — lecture consignée D-028).
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 // E1/E2 (D-129) — la vérité des lignes visibles vit dans un module PUR.
+import { champsDeSaisie } from "./champs-de-saisie";
 import {lignesVisibles, optionsDistinctes, formatValeur} from "./list-pipeline";
 import type { FiltreEffectif, OperateurFiltre } from "./list-pipeline";
 import { useNavigation } from "@react-navigation/native";
@@ -875,6 +876,17 @@ export function AirForm({ screen, blockId, itemId }: BlockRef & { itemId?: strin
   // DET-032 (AIR 1.10.0) : le libellé rendu est celui que le document DÉCLARE
   // (`field.label`, résolu par le compilateur) ; `field.name` reste le repli
   // 1.9.0 — donnée AIR dans les deux cas, jamais un texte moteur (D-028/F3).
+  // EP-159 — LES SAISIES QUI N'EXISTENT PAS EN BASE, dérivées des props.
+  // La décision vit dans un module PUR (`champsDeSaisie`) : ici on lit, on
+  // délègue, on rend. Un champ de cette famille n'est JAMAIS transmis à
+  // l'écriture — sa valeur est vérifiée puis oubliée.
+  const saisieRoles = strArray(props.saisieRoles);
+  const saisieCibles = strArray(props.saisieCibles);
+  const champsSecrets = fieldIds
+    .filter((id): id is string => typeof id === "string")
+    .filter((id) => fieldsById.get(id)?.sensitive === true);
+  const saisiesPures = champsDeSaisie(saisieRoles, saisieCibles, champsSecrets);
+
   const fields: FormFieldSpec[] = fieldIds.flatMap((fieldId) => {
     if (typeof fieldId !== "string") return [];
     const field = fieldsById.get(fieldId);
@@ -892,6 +904,18 @@ export function AirForm({ screen, blockId, itemId }: BlockRef & { itemId?: strin
       },
     ];
   });
+
+  // Les saisies pures se posent APRÈS les champs de l'entité : elles les
+  // confirment ou les complètent, elles ne les précèdent pas.
+  for (const [i, saisie] of saisiesPures.entries()) {
+    fields.push({
+      id: `saisie_${saisie.role}_${String(i)}`,
+      label: saisie.role,
+      required: true,
+      ...(saisie.secret ? { secure: true } : {}),
+      saisieSeule: { role: saisie.role, ...(saisie.cible === undefined ? {} : { cible: saisie.cible }) },
+    });
+  }
   // PRÉREMPLISSAGE — la ligne existante fournit les VALEURS PAR DÉFAUT, la
   // saisie l'emporte toujours. Sans cela, la relecture serveur restait
   // invisible : les données étaient là, l'écran restait vide.

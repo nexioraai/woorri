@@ -120,6 +120,13 @@ export interface FormFieldSpec {
   placeholder?: string;
   secure?: boolean;
   /**
+   * EP-159 — SAISIE NON PERSISTÉE. Une confirmation, une acceptation, un code
+   * de vérification : la valeur est exigée à l'écran, vérifiée avant
+   * écriture, puis OUBLIÉE. Elle ne part jamais vers la base — c'est ce qui
+   * distingue cette famille d'un champ d'entité.
+   */
+  saisieSeule?: { role: string; cible?: string };
+  /**
    * CHAMP OBLIGATOIRE (1.6.0) — le bloc en dérive si l'action est POSSIBLE.
    * Sans lui, le bouton d'envoi était toujours actif : il promettait une
    * action que la validation refusait ensuite en silence.

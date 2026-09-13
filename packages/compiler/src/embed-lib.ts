@@ -78,6 +78,11 @@ export const EMBEDDED_SOURCES: readonly EmbeddedSourceSpec[] = [
     rewrites: { "@deribfy/primitives": "../primitives" },
   },
   {
+    source: "compiler/runtime/champs-de-saisie.ts",
+    target: "lib/runtime/champs-de-saisie.ts",
+    rewrites: {},
+  },
+  {
     source: "compiler/runtime/data-provider.tsx",
     target: "lib/runtime/data-provider.tsx",
     rewrites: {},

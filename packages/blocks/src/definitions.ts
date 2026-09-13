@@ -60,7 +60,8 @@ import {
 // partition exhaustive. Aucun prop retiré, aucun schéma changé — le juge
 // des références brutes DÉRIVE désormais cette nature au lieu de tout
 // regarder (il refusait un `scopeFieldId` que la règle C5 ORDONNE).
-export const BLOCK_REGISTRY_VERSION = "1.12.0";
+// EP-159 — ajout ADDITIF : la famille des saisies non persistées.
+export const BLOCK_REGISTRY_VERSION = "1.13.0";
 
 // Motifs d'identités stables — IDENTIQUES à @deribfy/air-schema (ids.ts) ;
 // redéclarés structurellement (patron AirCapabilitySlice : pas de couplage
@@ -278,6 +279,21 @@ export const BLOCKS: readonly BlockDefinition[] = [
       title: z.string().min(1).optional(),
       fieldIds: z.array(fieldRef).min(1),
       submitLabel: z.string().min(1),
+      // EP-159 — LES SAISIES QUI N'EXISTENT PAS EN BASE. Une confirmation de
+      // mot de passe, une acceptation de conditions, un code de vérification :
+      // trois membres d'une même famille — une saisie CONTRAINTE et NON
+      // PERSISTÉE. `fieldIds` ne pouvait pas les porter, puisqu'il ne
+      // référence que des champs d'entité.
+      //
+      // Tableaux PARALLÈLES, comme les filtres pilotés : le flat config
+      // n'admet que des feuilles. Une cible vide vaut « ce rôle n'en vise
+      // aucun » — c'est le cas de l'acceptation.
+      saisieRoles: z
+        .array(z.enum(["confirmation", "acceptation", "verification"]))
+        .min(1)
+        .max(3)
+        .optional(),
+      saisieCibles: z.array(z.string()).min(1).max(3).optional(),
       // REGISTRE 1.1.0 (D-060) — titres des états. DONNÉES, jamais texte moteur
       // (F3) : sans titre déclaré, l'état n'est pas rendu. Additif, optionnel.
       loadingTitle: z.string().min(1).optional(),
