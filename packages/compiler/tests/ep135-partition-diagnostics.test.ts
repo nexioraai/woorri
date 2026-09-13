@@ -33,9 +33,12 @@ const codesEmis = (): string[] => [
 ];
 
 describe("EP-135 · la partition est EXHAUSTIVE", () => {
-  it("les 19 diagnostics de modèle sont classés, aucun de plus, aucun de moins", () => {
+  it("les diagnostics de modèle sont TOUS classés, aucun de plus, aucun de moins", () => {
     const duModele = Object.keys(TABLE).filter((c) => c.startsWith("MODELE_"));
-    expect(duModele).toHaveLength(19);
+    // 19 à la partition d'EP-135 ; 20 depuis EP-139, qui a ajouté l'accès
+    // sans connexion. Ce compte se monte par ÉDITION CONSCIENTE — c'est tout
+    // l'objet du cliquet : un diagnostic neuf ne peut pas entrer en silence.
+    expect(duModele).toHaveLength(20);
   });
 
   it("tout code émis par la source est classé", () => {

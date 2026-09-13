@@ -278,6 +278,8 @@ export const DIAGNOSTICS = {
   MODELE_CONCEPT_MORT: { classe: FP, discutable: true, pourquoi: "DOUTEUX — même nature que l'acteur muet : le concept vient du générateur, qui devait le faire traverser" },
   MODELE_COMMERCE_SANS_OBJET: { classe: FP, discutable: true, pourquoi: "DOUTEUX — pourrait révéler un paiement voulu mais non modélisé ; la correction évidente reste de retirer un fait sans consommateur" },
 
+  MODELE_COEUR_EXIGE_CONNEXION: { classe: FP, pourquoi: "le générateur a placé en tête un parcours fermé alors que l'application a de quoi en ouvrir un : il réordonne ou ouvre, l'humain n'a rien à répondre" },
+
   // ── LES DEUX SEULS CERTAINS : le moteur ne POUVAIT PAS savoir ──
   MODELE_TERME_AMBIGU: { classe: IM, pourquoi: "le moteur dit LUI-MÊME qu'il ne sait pas trancher un terme du brief ; seul celui qui l'a écrit peut le lever — c'est le cas fondateur d'EP-089" },
   MODELE_COMMERCE_ABSENT: { classe: IM, pourquoi: "la variante du paiement se demande en mots ordinaires, sans rien savoir du moteur, et la réponse a une destination structurelle : le fait `commerce`" },
@@ -539,6 +541,10 @@ export function validerModele(brut) {
   }
   if (m.couverture.couverts.length === 0)
     out.push(d("MODELE_COUVERTURE_VIDE", "couverture.couverts", "aucun terme couvert"));
+  // EP-139 — l'application doit être utilisable sans connexion (Apple
+  // 5.1.1 iv). Jugé ICI, avec les autres faits du modèle : la règle porte
+  // sur ce que l'utilisateur PEUT FAIRE, pas sur les écrans.
+  out.push(...jugerAccesSansConnexion(m));
   return out;
 }
 
@@ -632,6 +638,105 @@ const CARDINALITE_PAR_GESTE = Object.fromEntries(
  * itemId qui ne sont pas eux-mêmes ÉLECTEURS, plus la saisie liée. */
 export function consommateursDIdentite() {
   return GESTES.filter((g) => TABLE_GESTES[g].transport === "itemId" && g !== "choisir");
+}
+
+/**
+ * EP-139 — L'APPLICATION DOIT ÊTRE UTILISABLE SANS CONNEXION.
+ *
+ * App Store Review Guidelines 5.1.1(iv) : « Apps may not require users to
+ * enter personal information to function, except when directly relevant to
+ * the core functionality of the app or required by law. … you must provide
+ * access without a login or via another mechanism. » Une application qui la
+ * viole est REFUSABLE AU MAGASIN — ce n'est pas une question de goût.
+ *
+ * POURQUOI LE MODÈLE, ET NON LE PLAN : le plan dit quels écrans sont
+ * atteignables, le modèle dit ce que l'utilisateur PEUT FAIRE. La règle
+ * d'Apple porte sur la seconde question. Juger au modèle, c'est juger la
+ * CAUSE ; juger au plan, l'effet — et P1 passe avant P2, donc le refus
+ * arrive avant qu'un écran n'ait été dérivé.
+ *
+ * ① « LE CŒUR », DÉRIVÉ ET NON DEVINÉ : le parcours de priorité la plus
+ * haute. Le contrat porte déjà `priorite` (« additive ; l'ordre du tableau
+ * fait foi sinon ») — on trie donc par priorité croissante, l'index
+ * départageant. MESURÉ AU PASSAGE : `priorite` n'était CONSOMMÉE NULLE PART
+ * avant cette passe, et les modèles qui la portent la numérotent 1..n dans
+ * l'ordre du tableau — les deux conventions coïncident.
+ *
+ * ② LE CAS LÉGITIME, CONSTATÉ ET NON DÉCLARÉ : Apple excuse l'app dont la
+ * fonction même exige un compte. Un booléen que le générateur cocherait
+ * serait une porte de sortie — il suffirait de le mettre à `true`. Le fait
+ * structurel est ailleurs : une application n'a le droit de tout fermer que
+ * si elle n'a RIEN à montrer sans compte, c'est-à-dire si AUCUN de ses
+ * concepts n'est indépendant de l'identité. Une banque n'a que des données
+ * personnelles ; un marché a un catalogue. La légitimité ne se déclare pas,
+ * elle se CONSTATE.
+ */
+/**
+ * Un parcours est FERMÉ si l'identité est exigée AVANT que l'utilisateur ait
+ * rien pu voir.
+ *
+ * DEUX RÉDACTIONS RÉFUTÉES PAR LA MESURE, et c'est le vrai contenu de cette
+ * passe :
+ *  ① « le parcours contient une exigence d'identité » — réfutée par une
+ *     fixture où l'on parcourt un catalogue, choisit, PUIS doit un compte
+ *     pour réserver. C'est exactement ce qu'Apple demande : l'ACCÈS est
+ *     fourni, seule l'action finale demande un compte.
+ *  ② « la donnée est personnelle si elle se rattache à l'identité par une
+ *     chaîne de relations » — réfutée aussitôt : dans un marché, produit →
+ *     boutique → compte rend TOUT personnel, et l'application qu'Apple
+ *     refuserait passait au vert. La transitivité a vidé le juge en une
+ *     mesure.
+ *
+ * RETENU, et plus simple que les deux : on lit les étapes DANS L'ORDRE ; la
+ * première des deux qui arrive décide. Une exigence d'identité ⇒ fermé. Une
+ * étape qui touche autre chose que l'identité elle-même ⇒ ouvert, car
+ * l'utilisateur a vu quelque chose. Aucune notion de « donnée personnelle »
+ * n'est nécessaire — elle n'a fait qu'égarer.
+ */
+export function parcoursFerme(modele, parcours) {
+  for (const e of parcours.etapes) {
+    const exigeIdentite =
+      e.geste === "s_identifier" ||
+      (e.preconditions ?? []).some((pre) => estConceptIdentite(modele, pre.concept));
+    if (exigeIdentite) return true;
+    if (!estConceptIdentite(modele, e.concept)) return false;
+  }
+  return true;
+}
+
+/** Les parcours dans l'ordre de PRIORITÉ — le premier est le cœur. */
+export function parcoursParPriorite(modele) {
+  return modele.parcours
+    .map((p, index) => ({ p, index }))
+    .sort((a, b) => (a.p.priorite ?? a.index) - (b.p.priorite ?? b.index) || a.index - b.index)
+    .map(({ p }) => p);
+}
+
+export function jugerAccesSansConnexion(modele) {
+  const coeur = parcoursParPriorite(modele)[0];
+  if (coeur === undefined) return [];
+  if (!parcoursFerme(modele, coeur)) return [];
+  // Le cœur est fermé : est-ce LÉGITIME ? Apple excuse l'application dont la
+  // fonction même exige un compte. Le fait structurel n'est pas une propriété
+  // des données mais une propriété du MODÈLE ENTIER : une application n'a le
+  // droit de fermer son cœur que si elle ne sait RIEN ouvrir — aucun de ses
+  // parcours n'est praticable sans compte. Une banque est dans ce cas ; un
+  // marché qui porte un catalogue ne l'est pas. La légitimité se CONSTATE,
+  // elle ne se déclare pas : un booléen que le générateur cocherait serait
+  // une porte de sortie.
+  const saitOuvrir = modele.parcours.some((p) => !parcoursFerme(modele, p));
+  if (!saitOuvrir) return [];
+  return [
+    d(
+      "MODELE_COEUR_EXIGE_CONNEXION",
+      `parcours[${coeur.id}]`,
+      `le parcours principal exige une connexion alors que l'application porte ` +
+        `d'autres parcours qui, eux, n'en exigent pas ` +
+        `(${modele.parcours.filter((p) => !parcoursFerme(modele, p)).map((p) => p.id).join(", ")}). ` +
+        `App Store Review Guidelines 5.1.1(iv) : « you must provide access without a login ` +
+        `or via another mechanism » — une application qui l'ignore est refusable au magasin.`,
+    ),
+  ];
 }
 
 /** J2 — concept d'IDENTITÉ DE L'ACTEUR : discriminant STRUCTUREL (le

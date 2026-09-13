@@ -36,12 +36,22 @@ const GRAND = (() => {
 
 const codes = (m: ModeleMetier): string[] =>
   mm.ecransDe(m).diagnostics.map((x) => x.code);
+
+// EP-139 — le modèle de run « grand » EXIGE UN COMPTE avant de rien montrer :
+// son parcours principal commence par `s_identifier`, ce qu'App Store Review
+// Guidelines 5.1.1(iv) refuse. Il n'est donc plus vert, et c'est un
+// RÉSULTAT, pas un incident de test. Ces tests-ci portent sur le geste de
+// prise de contact : ils écartent ce diagnostic-là, nommément, et aucun autre.
+const codesModele = (m: ModeleMetier): string[] =>
+  (mm.validerModele(m) as { code: string }[])
+    .map((x) => x.code)
+    .filter((c) => c !== "MODELE_COEUR_EXIGE_CONNEXION");
 const clone = <T>(x: T): T => structuredClone(x);
 
 describe("EP-134 · base verte, deux tailles", () => {
   it("les deux modèles restent verts après l'ajout du geste", () => {
     for (const [nom, m] of [["petit", PETIT], ["grand", GRAND]] as const) {
-      expect(mm.validerModele(m), nom).toEqual([]);
+      expect(codesModele(m), nom).toEqual([]);
       expect(codes(m), nom).toEqual([]);
     }
   });
@@ -65,7 +75,7 @@ describe("EP-134 · ① un modèle hors application peut exprimer la prise de co
       const etapes = parcours!.etapes;
       const i = etapes.findIndex((e) => e.geste === "choisir");
       etapes.splice(i + 1, 0, { concept: etapes[i]!.concept, geste: "contacter" });
-      expect(mm.validerModele(m), nom).toEqual([]);
+      expect(codesModele(m), nom).toEqual([]);
       expect(codes(m), nom).toEqual([]);
     }
   });

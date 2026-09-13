@@ -26,7 +26,15 @@ const GRAND = (() => {
   return mm.migrerModele(brut.modele ?? brut) as Modele;
 })();
 
-const diagnostics = (m: Modele): DiagnosticModele[] => mm.validerModele(m) as DiagnosticModele[];
+// EP-139 — le modèle de run « grand » exige un compte avant de rien montrer
+// (5.1.1(iv)) : il n'est plus vert, et c'est un RÉSULTAT. Ces tests portent
+// sur l'élicitation ; ils écartent ce diagnostic-là, nommément — et il est
+// de classe `faute_de_production`, donc il ne produit aucune question, ce
+// que le test « une faute de production ne demande rien » vérifie déjà.
+const diagnostics = (m: Modele): DiagnosticModele[] =>
+  (mm.validerModele(m) as DiagnosticModele[]).filter(
+    (x) => x.code !== "MODELE_COEUR_EXIGE_CONNEXION",
+  );
 
 /** Mutation : un parcours paie, et le fait `commerce` manque. */
 const sansCommerce = (base: Modele): Modele => {

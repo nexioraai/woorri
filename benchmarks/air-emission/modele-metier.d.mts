@@ -29,6 +29,13 @@ export interface Parcours {
   id: string;
   besoin: string;
   acteur: string;
+  /**
+   * EP-139 — le champ EXISTAIT au schéma (« additive ; l'ordre du tableau
+   * fait foi sinon ») mais MANQUAIT ICI : le type mentait. Il désigne le
+   * CŒUR de l'application, donc ce qui doit être accessible sans connexion.
+   * MESURÉ : il n'était consommé NULLE PART avant cette passe.
+   */
+  priorite?: number;
   etapes: Etape[];
 }
 export interface ModeleMetier {
@@ -105,6 +112,14 @@ export const DIAGNOSTICS: Record<string, {
   /** Cas tranché par prudence vers le re-tirage, et dit comme tel. */
   discutable?: boolean;
 }>;
+/**
+ * EP-139 — ACCÈS SANS CONNEXION (App Store Review Guidelines 5.1.1(iv)).
+ * Un parcours est FERMÉ si l'identité est exigée avant que l'utilisateur ait
+ * rien pu voir ; le CŒUR est le parcours de priorité la plus haute.
+ */
+export function parcoursFerme(modele: ModeleMetier, parcours: Parcours): boolean;
+export function parcoursParPriorite(modele: ModeleMetier): Parcours[];
+export function jugerAccesSansConnexion(modele: ModeleMetier): DiagnosticModele[];
 export function diagnosticsDeClasse(
   classe: "faute_de_production" | "intention_manquante",
 ): string[];

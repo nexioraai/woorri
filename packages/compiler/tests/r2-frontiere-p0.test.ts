@@ -120,6 +120,12 @@ describe("B/C — les dérivations ne travaillent QUE sur le MODEL (balayage COM
     // propriété de la TABLE, jamais du modèle ni du brief : la dérivation
     // ne prend aucun argument de modèle, et sa sortie est donc constante.
     diagnosticsDeClasse: () => derivationsModele.diagnosticsDeClasse("intention_manquante"),
+    // EP-139 (édition consciente) — l'accès sans connexion se juge sur le
+    // MODEL seul : concepts, relations, parcours. Aucune de ces quatre
+    // dérivations ne regarde le brief.
+    parcoursFerme: (m) => (m.parcours[0] === undefined ? null : derivationsModele.parcoursFerme(m, m.parcours[0])),
+    parcoursParPriorite: (m) => derivationsModele.parcoursParPriorite(m).map((p) => p.id),
+    jugerAccesSansConnexion: (m) => derivationsModele.jugerAccesSansConnexion(m),
   };
 
   it("COMPLÉTUDE — la batterie couvre CHAQUE fonction exportée des dérivations", () => {

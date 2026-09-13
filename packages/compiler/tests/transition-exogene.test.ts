@@ -78,7 +78,15 @@ describe("le hold-out, exprimé — la fixture que le corpus n'avait jamais dema
   });
   it("BASE VERTE : P1, plan et juges — un domaine d'agent autonome est désormais exprimable ET vivant", () => {
     const m = verte();
-    expect(validerModele(m)).toEqual([]);
+    // EP-139 — cette fixture met la CRÉATION DE COMPTE en parcours principal
+    // alors qu'elle porte un parcours de suivi de marché, légitimement
+    // public. App Store Review Guidelines 5.1.1(iv) le refuse, et le
+    // diagnostic est JUSTE : ce test-ci porte sur l'expressivité du domaine
+    // (transitions exogènes), pas sur l'ordre de ses parcours. Il écarte ce
+    // diagnostic-là, nommément, et aucun autre.
+    expect(
+      validerModele(m).filter((d) => d.code !== "MODELE_COEUR_EXIGE_CONNEXION"),
+    ).toEqual([]);
     const plan = ecransDe(m);
     expect(plan.diagnostics).toEqual([]);
     expect(jugerPlanEcrans(plan, m)).toEqual([]);
