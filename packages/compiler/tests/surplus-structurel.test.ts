@@ -13,7 +13,13 @@ import {
   jugerContenuDEcran,
   jugerNavigationsDeBouton,
 } from "../../../benchmarks/air-emission/acceptation.mjs";
-import { ecransDe, type ModeleMetier } from "../../../benchmarks/air-emission/modele-metier.mjs";
+import {
+  conceptsRelies,
+  ecranAirDe,
+  ecransDe,
+  surfacesDe,
+  type ModeleMetier,
+} from "../../../benchmarks/air-emission/modele-metier.mjs";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const R = join(HERE, "..", "..", "..");
@@ -33,17 +39,43 @@ interface Ecran { id: string; blocks: Bloc[] }
 const doc = (): Air => structuredClone(AIR);
 const ecrans = (a: Air): Ecran[] => (a as unknown as { screens: Ecran[] }).screens;
 
+/** Les concepts que le plan autorise sur un écran — même dérivation que le juge. */
+const conceptsPrescritsDe = (screenId: string): string[] => {
+  const surfaces = new Map(surfacesDe(MODELE).map((sf) => [sf.surfaceId, sf]));
+  const prescrit = PRESCRIPTIF.plan.ecrans.find((e) => ecranAirDe(e.ecranId) === screenId);
+  return [
+    ...new Set(
+      (prescrit?.surfaces ?? [])
+        .map((sid) => surfaces.get(sid)?.concept)
+        .filter((c): c is string => c !== undefined),
+    ),
+  ];
+};
+
 describe("① le SURPLUS structurel est refusé, l'EXPRESSION reste libre", () => {
   it("base verte : le document accepté ne porte aucun bloc structurel injustifié", () => {
     expect(jugerContenuDEcran(AIR, PRESCRIPTIF)).toEqual([]);
   });
 
   it("MUTATION — une liste d'une entité que le plan n'a pas placée ici : REFUSÉE, nommée", () => {
+    // RESSERRÉ EN EP-165 ③c, ET C'EST UN RENFORCEMENT : ce test prenait la
+    // PREMIÈRE entité absente de l'écran, sans regarder si le modèle la
+    // reliait au concept prescrit. Sur cette fixture elle tombait sur
+    // `ent_creneau`, RELIÉE à `cpt_soin` — donc désormais justifiée par la
+    // relation. Choisir une entité NON RELIÉE (`ent_profil` ici) ne
+    // l'affaiblit pas : elle prouve la même chose avec le bon critère.
     const air = doc();
     const cible = ecrans(air)[0];
+    const cptDe = (id: string): string => `cpt_${id.slice(4)}`;
+    // Les concepts PRESCRITS DE CET ÉCRAN — dérivés exactement comme le juge
+    // les dérive. Les comparer aux concepts du modèle ENTIER excluait tout.
+    const prescrits = conceptsPrescritsDe(cible?.id ?? "");
     const etrangere = (air as unknown as { entities: { id: string }[] }).entities.find(
-      (e) => !cible?.blocks.some((b) => b.entityId === e.id),
+      (e) =>
+        !cible?.blocks.some((b) => b.entityId === e.id) &&
+        !prescrits.some((c) => conceptsRelies(MODELE, cptDe(e.id), c)),
     );
+    expect(etrangere, "aucune entité non reliée dans la fixture").toBeDefined();
     cible?.blocks.push({ id: "blk_intrus", blockType: "list", entityId: etrangere?.id, props: [] });
     const f = jugerContenuDEcran(air, PRESCRIPTIF);
     expect(f.map((x) => x.code)).toEqual(["AIR_BLOC_STRUCTUREL_NON_JUSTIFIE"]);
@@ -177,5 +209,98 @@ describe("EP-165 ③b · le bouton qui mène à un LIEU", () => {
       expect(code, `le juge cite ${genre}`).not.toContain(`"${genre}"`);
     }
     expect(code, "le juge cite un identifiant d'écran").not.toMatch(/"scr_/);
+  });
+});
+
+// EP-165 ③c — CE QUE LA RELATION JUSTIFIE, LE PLAN N'A PAS À LE RÉPÉTER.
+//
+// MESURÉ : 43 diagnostics sur 11 paires, dont 38 visaient une entité RELIÉE
+// au concept prescrit (les créneaux d'un soin, les produits d'une boutique).
+// 43 → 5 après la règle, et le juge REFUSE ENCORE — c'est ce qui distingue
+// une règle d'un désarmement.
+describe("EP-165 ③c · l'entité reliée est justifiée par la relation", () => {
+  const conceptsDe = (m: ModeleMetier): string[] => m.concepts.map((c) => c.id);
+  const relation = (m: ModeleMetier): { de: string; vers: string } | undefined =>
+    (m as unknown as { relations?: { de: string; vers: string }[] }).relations?.[0];
+
+  it("BASE VERTE — le document accepté reste sans diagnostic", () => {
+    expect(jugerContenuDEcran(AIR, PRESCRIPTIF)).toEqual([]);
+  });
+
+  it("UNE ENTITÉ RELIÉE EST ACCEPTÉE — le test que la sonde a révélé manquant", () => {
+    // CE TEST EXISTE PARCE QUE LA SONDE N'A PAS MORDU. En désactivant la
+    // règle (`!justifieParRelation` → `true`), les cinq premiers tests
+    // passaient encore : aucun ne vérifiait le CŒUR de la correction. Un
+    // cliquet qui ne tombe pas quand on retire ce qu'il garde ne garde rien.
+    const air = doc();
+    const cible = ecrans(air)[0];
+    const prescrits = conceptsPrescritsDe(cible?.id ?? "");
+    const reliee = (air as unknown as { entities: { id: string }[] }).entities.find(
+      (e) =>
+        !cible?.blocks.some((b) => b.entityId === e.id) &&
+        prescrits.some((c) => conceptsRelies(MODELE, `cpt_${e.id.slice(4)}`, c)),
+    );
+    expect(reliee, "aucune entité reliée dans la fixture").toBeDefined();
+    cible?.blocks.push({ id: "blk_sonde_reliee", blockType: "list", entityId: reliee!.id, props: [] });
+    expect(
+      jugerContenuDEcran(air, PRESCRIPTIF).filter((x) => String(x.path).includes("blk_sonde_reliee")),
+    ).toEqual([]);
+  });
+
+  it("LE JUGE N'EST PAS MORT — une entité SANS relation reste refusée", () => {
+    // La moitié qui compte : sans elle, « 43 → 5 » pourrait n'être qu'un
+    // juge désarmé. On pose une entité qu'AUCUNE relation ne rattache.
+    const air = doc();
+    const cible = ecrans(air).find((e) => e.blocks.some((b) => b.entityId !== undefined));
+    expect(cible, "fixture sans bloc porteur d'entité").toBeDefined();
+    cible!.blocks.push({
+      id: "blk_sonde_orphelin",
+      blockType: "list",
+      entityId: "ent_parfaitement_etrangere",
+    });
+    const codes = jugerContenuDEcran(air, PRESCRIPTIF)
+      .filter((x) => String(x.path).includes("blk_sonde_orphelin"))
+      .map((x) => x.code);
+    expect(codes).toEqual(["AIR_BLOC_STRUCTUREL_NON_JUSTIFIE"]);
+  });
+
+  it("UN SEUL SAUT — la règle ne referme pas le graphe (leçon d'EP-139)", () => {
+    // EP-139 a montré où mène la transitivité : produit → boutique → compte
+    // rendait TOUT justifiable. `conceptsRelies` lit `relations.some`, jamais
+    // une fermeture transitive. On le vérifie sur la source plutôt que de le
+    // supposer d'une lecture.
+    const source = readFileSync(join(R, "benchmarks", "air-emission", "modele-metier.mjs"), "utf8");
+    const corps = source.slice(
+      source.indexOf("export function conceptsRelies"),
+      source.indexOf("export function conceptsRelies") + 400,
+    );
+    expect(corps).toContain("relations.some");
+    for (const motif of ["while", "closure", "transitif", "parcourir"]) {
+      expect(corps.toLowerCase(), `fermeture transitive suspectée : ${motif}`).not.toContain(motif);
+    }
+  });
+
+  it("LA RÈGLE EST DÉRIVÉE DU MODÈLE — le juge ne cite aucune entité", () => {
+    const source = readFileSync(join(R, "benchmarks", "air-emission", "acceptation.mjs"), "utf8");
+    const bloc = source.slice(
+      source.indexOf("EP-165 ③c — CE QUE LA RELATION JUSTIFIE"),
+      source.indexOf("AIR_BLOC_STRUCTUREL_NON_JUSTIFIE"),
+    );
+    expect(bloc.length, "bloc introuvable").toBeGreaterThan(200);
+    const code = bloc.split("\n").filter((l) => !l.trim().startsWith("//")).join("\n");
+    expect(code, "le juge cite une entité en dur").not.toMatch(/"ent_[a-z]/);
+    expect(code, "la relation doit venir du modèle").toContain("conceptsRelies");
+  });
+
+  it("une relation est éprouvée dans les DEUX SENS — de→vers et vers→de", () => {
+    // `conceptsRelies` accepte l'arête dans les deux sens ; si ce n'était
+    // pas le cas, un écran justifierait ses enfants mais pas ses parents.
+    const r = relation(MODELE);
+    expect(r, "fixture sans relation").toBeDefined();
+    expect(conceptsRelies(MODELE, r!.de, r!.vers)).toBe(true);
+    expect(conceptsRelies(MODELE, r!.vers, r!.de)).toBe(true);
+    const inconnu = "cpt_absolument_inconnu";
+    expect(conceptsDe(MODELE).includes(inconnu)).toBe(false);
+    expect(conceptsRelies(MODELE, inconnu, r!.de)).toBe(false);
   });
 });

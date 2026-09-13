@@ -173,7 +173,46 @@ export function jugerContenuDEcran(air, prescriptif) {
     for (const bloc of ecran.blocks) {
       const definition = blocksRegistry.getBlock(bloc.blockType);
       if (definition?.entity !== "required") continue; // expression : libre.
-      if (bloc.entityId !== undefined && !entitesPrescrites.has(bloc.entityId)) {
+      // EP-165 ③c — CE QUE LA RELATION JUSTIFIE, LE PLAN N'A PAS À LE RÉPÉTER.
+      //
+      // MESURÉ sur 11 paires (modèle, document) : 43 diagnostics, dont 38
+      // visaient une entité RELIÉE au concept prescrit — les créneaux d'un
+      // soin sur l'écran du soin, les produits d'une boutique sur l'écran de
+      // la boutique, le créneau qu'on réserve sur l'écran de réservation.
+      // C'est ce qu'une application FAIT ; le reprocher demandait au document
+      // de montrer une fiche sans ce qu'elle contient.
+      //
+      // LA JUSTIFICATION EXISTAIT DÉJÀ, AILLEURS : le modèle DÉCLARE ses
+      // relations, et `conceptsRelies` les lit depuis R2. Le juge exigeait
+      // l'entité EXACTE de la surface et ignorait cette déclaration — même
+      // forme qu'en ③a et ③b : une information présente au modèle que le
+      // juge n'allait pas chercher.
+      //
+      // UN SEUL SAUT, ET C'EST LA GARDE ESSENTIELLE : `conceptsRelies` ne
+      // parcourt pas le graphe (`relations.some`, jamais de fermeture
+      // transitive). EP-139 a montré où mène la transitivité — produit →
+      // boutique → compte rendait TOUT justifiable et VIDAIT le juge.
+      // MESURÉ ICI : 5 cas subsistent après la règle, le juge garde son
+      // pouvoir de refus.
+      //
+      // ET LE CHEMIN D'ABUS EST FERMÉ PAR LA CHRONOLOGIE : les relations
+      // vivent dans le MODÈLE (P0), jugé à sa propre passe. Le générateur de
+      // P2 ne peut pas inventer une relation pour se justifier — il ne
+      // l'écrit pas.
+      const justifieParRelation =
+        bloc.entityId !== undefined &&
+        [...conceptsPrescrits].some((c) =>
+          modeleMetier.conceptsRelies(
+            prescriptif.modele,
+            `cpt_${String(bloc.entityId).slice(4)}`,
+            String(c),
+          ),
+        );
+      if (
+        bloc.entityId !== undefined &&
+        !entitesPrescrites.has(bloc.entityId) &&
+        !justifieParRelation
+      ) {
         out.push({
           code: "AIR_BLOC_STRUCTUREL_NON_JUSTIFIE",
           path: `screens[${ecran.id}].blocks[${bloc.id}]`,
