@@ -1,0 +1,536 @@
+{
+  "airSchemaVersion": "1.25.0",
+  "projectId": "prj_kaviva",
+  "app": {
+    "name": "Kaviva",
+    "slug": "kaviva",
+    "description": [
+      {
+        "locale": "fr",
+        "text": "Institut de beauté et spa à Abidjan : découvrez les soins, réservez votre créneau et retrouvez vos rendez-vous."
+      }
+    ],
+    "locales": {
+      "userLanguage": "fr",
+      "appLocales": [
+        "fr"
+      ],
+      "defaultAppLocale": "fr",
+      "contentLocales": [
+        "fr"
+      ],
+      "rtlSupported": false
+    }
+  },
+  "navigation": {
+    "entryScreenId": "scr_entree",
+    "primary": {
+      "destinations": [
+        {
+          "routeId": "nav_entree",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Accueil"
+            }
+          ],
+          "order": 0,
+          "icon": "accueil"
+        },
+        {
+          "routeId": "nav_compte_s_identifier",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Mon espace"
+            }
+          ],
+          "order": 1,
+          "icon": "compte"
+        },
+        {
+          "routeId": "nav_compte_saisir",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Créer un compte"
+            }
+          ],
+          "order": 2,
+          "icon": "reglages"
+        }
+      ]
+    },
+    "routes": [
+      {
+        "id": "nav_entree",
+        "screenId": "scr_entree",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Accueil"
+          }
+        ]
+      },
+      {
+        "id": "nav_soin_consulter",
+        "screenId": "scr_cpt_soin_consulter",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Nos soins"
+          }
+        ]
+      },
+      {
+        "id": "nav_creneau_decouvrir",
+        "screenId": "scr_cpt_creneau_decouvrir",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Le soin en détail"
+          }
+        ]
+      },
+      {
+        "id": "nav_creneau_choisir",
+        "screenId": "scr_cpt_creneau_choisir",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Choisir un créneau"
+          }
+        ]
+      },
+      {
+        "id": "nav_compte_s_identifier",
+        "screenId": "scr_cpt_compte_s_identifier",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Mon espace"
+          }
+        ]
+      },
+      {
+        "id": "nav_rendez_vous_saisir",
+        "screenId": "scr_cpt_rendez_vous_saisir",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Votre rendez-vous"
+          }
+        ]
+      },
+      {
+        "id": "nav_rendez_vous_confirmer",
+        "screenId": "scr_cpt_rendez_vous_confirmer",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Rendez-vous confirmé"
+          }
+        ]
+      },
+      {
+        "id": "nav_rendez_vous_consulter_historique",
+        "screenId": "scr_cpt_rendez_vous_consulter_historique",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Mes rendez-vous"
+          }
+        ]
+      },
+      {
+        "id": "nav_rendez_vous_consulter_confirme",
+        "screenId": "scr_cpt_rendez_vous_consulter_confirme",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Rendez-vous à venir"
+          }
+        ]
+      },
+      {
+        "id": "nav_rendez_vous_consulter_passe",
+        "screenId": "scr_cpt_rendez_vous_consulter_passe",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Rendez-vous passés"
+          }
+        ]
+      },
+      {
+        "id": "nav_compte_saisir",
+        "screenId": "scr_cpt_compte_saisir",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Créer un compte"
+          }
+        ]
+      },
+      {
+        "id": "nav_profil_saisir",
+        "screenId": "scr_cpt_profil_saisir",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Modifier mon profil"
+          }
+        ]
+      },
+      {
+        "id": "nav_profil_consulter",
+        "screenId": "scr_cpt_profil_consulter",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Mon profil"
+          }
+        ]
+      }
+    ]
+  },
+  "design": {
+    "theme": "kaviva_spa_elegance"
+  },
+  "network": {
+    "policy": "deny_by_default",
+    "allowedDomains": [
+      "api.kaviva.app",
+      "picsum.photos"
+    ]
+  },
+  "native": {
+    "minIosVersion": "15.0",
+    "minAndroidSdk": 26
+  },
+  "compliance": {
+    "commerceClass": "physical_or_offapp",
+    "accountDeletionRequired": true,
+    "dataCollected": [
+      "contact_info",
+      "identifiers",
+      "usage_data",
+      "user_content"
+    ]
+  },
+  "entities": [
+    {
+      "id": "ent_soin",
+      "name": "soin",
+      "fields": [
+        {
+          "id": "fld_soin_nom",
+          "name": "nom",
+          "type": "string",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Nom du soin"
+            }
+          ],
+          "demoValues": [
+            "Massage relaxant karité",
+            "Soin du visage éclat",
+            "Manucure française",
+            "Hammam traditionnel",
+            "Massage aux pierres chaudes",
+            "Soin hydratant profond",
+            "Pédicure spa",
+            "Gommage corps au café"
+          ]
+        },
+        {
+          "id": "fld_soin_categorie",
+          "name": "categorie",
+          "type": "string",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Catégorie"
+            }
+          ],
+          "demoValues": [
+            "Massages",
+            "Soins du visage",
+            "Manucure",
+            "Hammam"
+          ]
+        },
+        {
+          "id": "fld_soin_photo",
+          "name": "photo",
+          "type": "asset",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Photo du soin"
+            }
+          ],
+          "demoValues": [
+            "https://picsum.photos/seed/massage-relaxant-karite/600/600",
+            "https://picsum.photos/seed/soin-visage-eclat/600/600",
+            "https://picsum.photos/seed/manucure-francaise/600/600",
+            "https://picsum.photos/seed/hammam-traditionnel/600/600",
+            "https://picsum.photos/seed/massage-pierres-chaudes/600/600",
+            "https://picsum.photos/seed/soin-hydratant-profond/600/600",
+            "https://picsum.photos/seed/pedicure-spa/600/600",
+            "https://picsum.photos/seed/gommage-corps-cafe/600/600"
+          ]
+        },
+        {
+          "id": "fld_soin_duree",
+          "name": "duree",
+          "type": "number",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Durée"
+            }
+          ],
+          "unit": "min",
+          "sensitive": false
+        }
+      ]
+    },
+    {
+      "id": "ent_creneau",
+      "name": "creneau",
+      "fields": [
+        {
+          "id": "fld_creneau_plage",
+          "name": "plage",
+          "type": "string",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Plage horaire"
+            }
+          ],
+          "demoValues": [
+            "09:00 – 10:00",
+            "10:30 – 11:30",
+            "12:00 – 13:00",
+            "14:00 – 15:30",
+            "16:00 – 17:00",
+            "17:30 – 18:30"
+          ]
+        },
+        {
+          "id": "fld_creneau_disponible",
+          "name": "disponible",
+          "type": "boolean",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Disponibilité"
+            }
+          ],
+          "enumLabels": [
+            {
+              "value": "true",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Disponible"
+                }
+              ]
+            },
+            {
+              "value": "false",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Complet"
+                }
+              ]
+            }
+          ],
+          "demoValues": [
+            "true",
+            "true",
+            "false",
+            "true",
+            "true",
+            "false"
+          ]
+        },
+        {
+          "id": "fld_creneau_soin",
+          "name": "soin",
+          "type": "reference",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Soin concerné"
+            }
+          ],
+          "enumLabels": [
+            {
+              "value": "x",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "x"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "relations": [
+    {
+      "id": "rel_soin_creneau",
+      "fromEntityId": "ent_soin",
+      "toEntityId": "ent_creneau",
+      "kind": "one_to_many"
+    }
+  ],
+  "datasets": [
+    {
+      "id": "data_soin",
+      "entityId": "ent_soin",
+      "contentHash": "3f9a1c7d5e2b48a0c6d1f83b47e59a02d6c4b8f1e73a95c20d8f4b6a1e39c7d5",
+      "rowCount": 8,
+      "sourceKind": "seed"
+    },
+    {
+      "id": "data_creneau",
+      "entityId": "ent_creneau",
+      "contentHash": "a71c4e09bd63f582017ac4d9e8b3526f10d7c84b2fa96e3d5c08b1746e2df930",
+      "rowCount": 24,
+      "sourceKind": "seed"
+    }
+  ],
+  "rules": [
+    {
+      "id": "rule_soin_fiche_complete",
+      "description": "Un soin publié au catalogue porte obligatoirement un nom, une catégorie, une photo et une durée strictement positive.",
+      "kind": "validation",
+      "entityId": "ent_soin",
+      "assertions": [
+        {
+          "fieldId": "fld_soin_nom",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_soin_categorie",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_soin_photo",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_soin_duree",
+          "operator": "gt",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": "rule_soin_categorie_connue",
+      "description": "La catégorie d'un soin appartient aux familles proposées par l'institut : massages, soins du visage, manucure, hammam.",
+      "kind": "validation",
+      "entityId": "ent_soin",
+      "assertions": [
+        {
+          "fieldId": "fld_soin_categorie",
+          "operator": "in",
+          "value": [
+            "Massages",
+            "Soins du visage",
+            "Manucure",
+            "Hammam"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "rule_creneau_reservable",
+      "description": "Un créneau ne peut être choisi que s'il porte une plage horaire, un soin rattaché et qu'il est encore disponible.",
+      "kind": "validation",
+      "entityId": "ent_creneau",
+      "assertions": [
+        {
+          "fieldId": "fld_creneau_plage",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_creneau_soin",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_creneau_disponible",
+          "operator": "eq",
+          "value": true
+        }
+      ]
+    },
+    {
+      "id": "rule_creneau_plage_renseignee",
+      "description": "La plage horaire affichée à la cliente respecte le format « 09:00 – 10:00 ».",
+      "kind": "validation",
+      "entityId": "ent_creneau",
+      "assertions": [
+        {
+          "fieldId": "fld_creneau_plage",
+          "operator": "matches",
+          "value": "^[0-2][0-9]:[0-5][0-9] – [0-2][0-9]:[0-5][0-9]$"
+        }
+      ]
+    }
+  ],
+  "slots": [],
+  "capabilities": [
+    {
+      "capability": "auth",
+      "config": [
+        {
+          "key": "methods",
+          "value": [
+            "signIn",
+            "signUp",
+            "signOut",
+            "resetPassword"
+          ]
+        },
+        {
+          "key": "identifierKind",
+          "value": "email"
+        },
+        {
+          "key": "sessionPersistence",
+          "value": true
+        }
+      ]
+    },
+    {
+      "capability": "payments.psp",
+      "config": [
+        {
+          "key": "settlement",
+          "value": "on_site"
+        },
+        {
+          "key": "currency",
+          "value": "XOF"
+        }
+      ]
+    }
+  ],
+  "permissions": []
+}
