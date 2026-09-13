@@ -304,3 +304,78 @@ describe("EP-165 ③c · l'entité reliée est justifiée par la relation", () =
     expect(conceptsRelies(MODELE, inconnu, r!.de)).toBe(false);
   });
 });
+
+// EP-167 — LE JUGE REÇOIT ENFIN CE QU'IL JUGE (option b, L-165-B).
+//
+// `jugerNavigationsDeBouton` jugeait une INTENTION sans avoir accès à
+// l'intention. EP-166 : ce n'était pas une impossibilité — `jugerAcceptation`
+// passait le modèle au juge de la ligne PRÉCÉDENTE et pas à celui-ci.
+// MESURÉ : 25 diagnostics sans le modèle, 13 avec — et les 13 restants sont
+// ceux qui suivent un arc PORTEUR sans consommer. C'est la garde.
+describe("EP-167 · l'arc porteur exige, il ne permet pas", () => {
+  const PRESC = PRESCRIPTIF as unknown as {
+    plan: { navigation?: { arcs?: { de: string; vers: string; transport: string | null }[] } };
+  };
+  const paths = (a: Air, p?: unknown): string[] =>
+    jugerNavigationsDeBouton(a, p as never).map((x) => String(x.path));
+
+  it("LA GARDE — un bouton SUR arc porteur qui ne consomme rien reste REFUSÉ", () => {
+    // CAS RÉEL, non fabriqué : `blk_soin_bouton_creneaux` part d'une fiche de
+    // soin, suit un arc que le modèle déclare PORTEUR, et n'emmène pas
+    // l'instance. Il était refusé avant l'option (b) ; il l'est encore.
+    // Sans cette moitié, « 25 → 13 » serait un désarmement déguisé.
+    expect(paths(AIR, PRESCRIPTIF)).toContain(
+      "screens[scr_cpt_soin_choisir].blocks[blk_soin_bouton_creneaux]",
+    );
+  });
+
+  it("LE CŒUR DE (b) — un bouton HORS arc du plan n'est plus reproché", () => {
+    const air = doc();
+    const s = air as unknown as {
+      screens: Ecran[];
+      actions: { id: string; name: string; trigger: unknown; effect: unknown }[];
+    };
+    const fiche = s.screens.find((e) => e.blocks.some((b) => b.blockType === "detail_header"));
+    expect(fiche, "fixture sans fiche").toBeDefined();
+    fiche!.blocks.push({ id: "blk_ep167_btn", blockType: "button" });
+    s.screens.push({ id: "scr_ep167_cible", blocks: [{ id: "blk_ep167_liste", blockType: "list" }] });
+    s.actions.push({
+      id: "act_ep167",
+      name: "sonde",
+      trigger: { kind: "ui", blockId: "blk_ep167_btn" },
+      effect: { kind: "navigate", screenId: "scr_ep167_cible" },
+    });
+    // SANS le modèle : le juge ne peut pas savoir, il reproche.
+    expect(paths(air).some((p) => p.includes("blk_ep167_btn"))).toBe(true);
+    // AVEC le modèle : aucun arc ne mène là — c'est un élargissement.
+    expect(paths(air, PRESCRIPTIF).some((p) => p.includes("blk_ep167_btn"))).toBe(false);
+  });
+
+  it("L'IGNORANCE NE RELÂCHE RIEN — sans modèle, le juge reste celui d'avant", () => {
+    // Un appelant qui ne peut pas fournir le plan (réparation, re-jugement
+    // d'archive) n'obtient pas un juge plus permissif.
+    expect(paths(AIR).length).toBeGreaterThanOrEqual(paths(AIR, PRESCRIPTIF).length);
+    expect(paths(AIR, { plan: {} })).toEqual(paths(AIR));
+  });
+
+  it("LE CRITÈRE EST LE TRANSPORT, DÉRIVÉ DU GESTE — pas la simple présence d'un arc", () => {
+    // Le modèle dit si quelque chose voyage : `transport` vaut null, itemId
+    // ou instance, et vient de TABLE_GESTES. Un arc n'est pas une permission.
+    const arcs = PRESC.plan.navigation?.arcs ?? [];
+    expect(arcs.length, "plan sans arcs").toBeGreaterThan(0);
+    expect(arcs.some((a) => a.transport === null), "aucun arc sans transport").toBe(true);
+    expect(arcs.some((a) => a.transport !== null), "aucun arc porteur").toBe(true);
+    // Et le juge ne cite aucune valeur de transport en dur : il teste la
+    // NULLITÉ, pour qu'un transport ajouté demain soit honoré sans édition.
+    const source = readFileSync(join(R, "benchmarks", "air-emission", "acceptation.mjs"), "utf8");
+    const bloc = source.slice(
+      source.indexOf("EP-167 — LE JUGE REÇOIT ENFIN"),
+      source.indexOf("const ecranDe"),
+    );
+    expect(bloc.length, "bloc introuvable").toBeGreaterThan(200);
+    const code = bloc.split("\n").filter((l) => !l.trim().startsWith("//")).join("\n");
+    for (const v of ['"itemId"', '"instance"']) {
+      expect(code, `le juge cite ${v} en dur`).not.toContain(v);
+    }
+  });
+});

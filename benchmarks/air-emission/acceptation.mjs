@@ -239,7 +239,41 @@ export function jugerContenuDEcran(air, prescriptif) {
  * l'écran CIBLE doit consommer cette identité (détail de la même entité, ou
  * collection scopée par un champ qui la vise).
  */
-export function jugerNavigationsDeBouton(air) {
+export function jugerNavigationsDeBouton(air, prescriptif) {
+  // EP-167 — LE JUGE REÇOIT ENFIN CE QU'IL JUGE.
+  //
+  // Il jugeait une INTENTION (« ce bouton agit-il sur l'instance ? ») sans
+  // avoir accès à l'intention. EP-166 a montré que ce n'était pas une
+  // impossibilité : `jugerAcceptation` LE REÇOIT, passait déjà le modèle à
+  // `jugerContenuDEcran` à la ligne précédente, et ne le passait pas ici.
+  // MÊME CHEMIN QU'EP-160, AUTRE BOUT : là-bas la signature exigeait ce que
+  // l'appelant n'avait pas ; ici elle ne demandait pas ce qu'il avait.
+  //
+  // LE CRITÈRE N'EST PAS « SUIT UN ARC » MAIS « SUIT UN ARC QUI TRANSPORTE
+  // UNE IDENTITÉ » — et c'est la MESURE qui l'a imposé, pas moi : sur les
+  // arcs des plans réels, `transport` vaut `null` (106), `itemId` (66) ou
+  // `instance` (33), et il est DÉRIVÉ DE `TABLE_GESTES` par le geste de
+  // l'étape. Un arc n'est donc pas une permission : c'est le modèle qui dit
+  // si quelque chose voyage.
+  //
+  // LA GARDE, ET ELLE EST LE CŒUR DE LA RÈGLE : un arc NE JUSTIFIE PAS
+  // l'absence de consommation — il l'EXIGE. Ce juge devient plus strict là
+  // où le modèle transporte une identité, et se tait là où rien ne voyage.
+  // Sans cette garde, (b) aurait été un désarmement déguisé.
+  //
+  // SANS `prescriptif`, RIEN NE CHANGE : le juge reste intégralement strict.
+  // Un appelant qui ne peut pas fournir le modèle n'obtient pas un juge plus
+  // permissif — il obtient celui d'avant.
+  const arcsPorteurs = new Set(
+    (prescriptif?.plan?.navigation?.arcs ?? [])
+      .filter((a) => a.transport !== null && a.transport !== undefined)
+      .map((a) => `${modeleMetier.ecranAirDe(a.de)}→${modeleMetier.ecranAirDe(a.vers)}`),
+  );
+  const arcsDuPlan = new Set(
+    (prescriptif?.plan?.navigation?.arcs ?? []).map(
+      (a) => `${modeleMetier.ecranAirDe(a.de)}→${modeleMetier.ecranAirDe(a.vers)}`,
+    ),
+  );
   if (air === null) return [];
   const out = [];
   const ecranDe = new Map(air.screens.map((s) => [s.id, s]));
@@ -277,6 +311,10 @@ export function jugerNavigationsDeBouton(air) {
       // LES DEUX TESTS SONT STRUCTURELS, AUCUNE LISTE : la présence du champ
       // `purpose` (énumération FERMÉE du schéma) et l'appartenance aux
       // destinations déclarées de `navigation.primary`.
+      // EP-167 — CE QUE LE MODÈLE NE FAIT PAS VOYAGER N'A RIEN À CONSOMMER.
+      // N'est examiné que ce qui suit un arc PORTEUR. Le plan absent, tout
+      // reste examiné : l'ignorance ne relâche rien.
+      if (arcsDuPlan.size > 0 && !arcsPorteurs.has(`${ecran.id}→${cibleId}`)) continue;
       const estLieu =
         cible.purpose !== undefined ||
         (air.navigation.primary?.destinations ?? []).some(
@@ -383,7 +421,7 @@ export function jugerAcceptation(air, prescriptif, intention) {
 
   // EP-122 · ② — le SURPLUS structurel et l'identité perdue par bouton.
   out.push(...jugerContenuDEcran(air, prescriptif));
-  out.push(...jugerNavigationsDeBouton(air));
+  out.push(...jugerNavigationsDeBouton(air, prescriptif));
   out.push(
     ...vivacite.jugerVivacite(air, executionContract.EXECUTION_ENVELOPE_V1, {
       arcsPrescrits,

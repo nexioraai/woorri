@@ -22,4 +22,7 @@ export function sontComparables(perimetreA: string[], perimetreB: string[]): boo
 export function elargit(perimetreAvant: string[], perimetreApres: string[]): boolean;
 export function consequencesDeReclassement(air: Record<string, unknown>, screenId: string): string;
 export function jugerContenuDEcran(air: Record<string, unknown> | null, prescriptif: unknown): DiagnosticAcceptation[];
-export function jugerNavigationsDeBouton(air: Record<string, unknown> | null): DiagnosticAcceptation[];
+/** EP-167 — `prescriptif` OPTIONNEL : sans lui le juge reste intégralement
+ *  strict (l'ignorance ne relâche rien) ; avec lui, il n'examine que les
+ *  navigations qui suivent un arc PORTEUR du plan. */
+export function jugerNavigationsDeBouton(air: Record<string, unknown> | null, prescriptif?: unknown): DiagnosticAcceptation[];
