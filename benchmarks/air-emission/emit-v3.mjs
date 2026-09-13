@@ -254,6 +254,39 @@ for (const part of PARTS) {
   part.levelIndex = 0;
 }
 
+// EP-153 — LE DIGEST DES BLOCS EST DÉRIVÉ DU REGISTRE.
+//
+// HUITIÈME OCCURRENCE DU MOTIF, et celle-ci a coûté quatre runs : le registre
+// des blocs vit dans `definitions.ts`, et le prompt le RÉÉCRIVAIT à la main,
+// bloc par bloc, prop par prop. La copie avait divergé — elle OMETTAIT
+// `filterValue` et `filterOperator` de la liste `list`, et ne donnait le TYPE
+// d'aucune prop. Le générateur a donc posé `filterValue: true` sur un champ
+// booléen : geste sensé, valeur refusée par le registre, document non
+// compilable. Quatre runs payés, rien à installer.
+//
+// Le type ne pouvait pas non plus venir de la grammaire : les props voyagent
+// en `flatConfig` (paires clé/valeur), qui accepte les booléens. Le contrat
+// des props n'est vérifié qu'APRÈS, par le registre. Entre les deux, le
+// prompt était le seul canal — et il se taisait.
+function blocsDigest() {
+  const lignes = [];
+  for (const id of blocksRegistry.listBlockIds()) {
+    const bloc = blocksRegistry.getBlock(id);
+    if (bloc === undefined) continue;
+    const js = z.toJSONSchema(bloc.propsSchema, { target: "draft-2020-12", io: "input" });
+    const requises = new Set(js.required ?? []);
+    const props = Object.entries(js.properties ?? {}).map(([clef, def]) => {
+      const type = def.type ?? (def.enum !== undefined ? "enum" : def.anyOf !== undefined ? "union" : "?");
+      const valeurs = def.enum === undefined ? "" : ` parmi ${def.enum.map((v) => JSON.stringify(v)).join("|")}`;
+      const items = def.items?.enum === undefined ? "" : ` de ${def.items.enum.map((v) => JSON.stringify(v)).join("|")}`;
+      return `${clef}${requises.has(clef) ? " (REQUIS)" : "?"} : ${type}${valeurs}${items}`;
+    });
+    const entite = bloc.entity === "required" ? "REQUIS" : bloc.entity === "forbidden" ? "INTERDIT" : "optionnel";
+    lignes.push(`- \`${id}\` — entityId ${entite}. Props : ${props.join(" · ")}`);
+  }
+  return lignes.join("\n");
+}
+
 // --- Digest du registre pour le prompt : le LLM demande, le registre décide. ---
 function registryDigest() {
   const lines = [];
@@ -289,14 +322,16 @@ REGISTRE DES CAPABILITIES (allowlist fermée) :
 ${registryDigest()}
 
 REGISTRE DES SMART BLOCKS (allowlist FERMÉE — blockType UNIQUEMENT parmi ces ${blocksRegistry.listBlockIds().length} ; props STRICTES : toute clé hors liste = refus) :
-- \`header\` — tête d'écran éditoriale. entityId : INTERDIT. Props : title (REQUIS), subtitle?, accroche? (true ⇒ typographie DISPLAY, réservé au grand titre d'un écran d'accueil), logoUri? (https, domaine dans allowedDomains).
-- \`list\` — liste d'instances d'une entité. entityId : REQUIS. Props : titleFieldId (REQUIS), subtitleFieldId?, trailingFieldId?, badgeFieldId?, imageFieldId?, title?, searchFieldId?+searchPlaceholder?, sortFieldId?+sortDirection?("asc"|"desc"), pageSize?, filterFieldId?, filtres PILOTÉS : userFilterFieldIds?+userFilterOperators? (chaque valeur : "eq"|"neq"|"contains", RIEN d'autre)+userFilterInputTypes? (chaque valeur : "text"|"choice", RIEN d'autre), emptyTitle?, emptyMessage?, loadingTitle?, errorTitle?, errorMessage?.
-- \`detail_header\` — tête d'écran de détail. entityId : REQUIS. Props : titleFieldId (REQUIS), subtitleFieldId?, trailingFieldId?, badgeFieldIds? (NON VIDE si présent), imageFieldId?, loadingTitle?, errorTitle?, errorMessage?.
-- \`form\` — formulaire lié à une entité. entityId : REQUIS. Props : fieldIds (au moins 1, REQUIS), submitLabel (REQUIS), title?, loadingTitle?, emptyTitle?.
-- \`button\` — action autonome. entityId : INTERDIT. Props : label (REQUIS), actionId (act_*, REQUIS — action DÉCLARÉE), kind? ("primary"|"ghost"|"link" — link = TEXTE cliquable pour un chemin secondaire, jamais pour l'action principale), icon? (allowlist : ${ROLES_ICONES.join(", ")}).
-- \`empty_state\` — état vide d'écran. entityId : INTERDIT. Props : title (REQUIS), message? ; actionLabel et actionId vont TOUJOURS PAR PAIRE.
-- \`search_entry\` — ENTRÉE de recherche : l'allure d'un champ, le geste d'une navigation. Props : placeholder (REQUIS), actionId (act_*, REQUIS — un \`navigate\` vers l'écran où la recherche s'EXÉCUTE). C'est l'élément structurel d'un accueil ; le champ \`searchFieldId\` d'une liste reste la recherche EXÉCUTÉE.
-- \`spacer\` — espace extensible qui POUSSE ce qui le suit vers le bas de l'écran (composition d'un écran d'accueil : marque+titre en haut, actions en bas). Aucune prop.
+${blocsDigest()}
+
+RAPPELS DE FORME, non déductibles du registre :
+- \`accroche\` sur \`header\` : true ⇒ typographie DISPLAY, réservé au grand titre d'un accueil.
+- \`logoUri\` : https, domaine dans allowedDomains.
+- BUDGET COMMUN DE 3 FILTRES sur un même \`list\` — les pilotés ET le littéral \`filterFieldId\` comptent ensemble.
+- \`actionLabel\` et \`actionId\` d'un \`empty_state\` vont TOUJOURS PAR PAIRE.
+- \`actionId\` d'un \`search_entry\` : un \`navigate\` vers l'écran où la recherche s'EXÉCUTE.
+- \`spacer\` POUSSE ce qui le suit vers le bas (accueil : marque en haut, actions en bas).
+- \`icon\` d'un \`button\` : allowlist ${ROLES_ICONES.join(", ")}.
 
 11. INTENTION — \`intent\` porte la demande du client. \`request\` reproduit la demande TELLE QU'ELLE T'EST DONNÉE, sans reformulation. \`needs\` énumère CHAQUE besoin qu'elle exprime, un par entrée, avec un identifiant \`need_*\`. Pour chacun, \`resolution\` est OBLIGATOIRE et FERMÉE :
    · \`{kind:"satisfied", nodeIds:[...]}\` — C'EST L'ISSUE PAR DÉFAUT. Les nœuds du document qui portent ce besoin. PREUVE DE RENDU EXIGÉE : le COMPORTEMENT CENTRAL du besoin doit SORTIR d'au moins un bloc du registre fermé ci-dessus, et ce bloc figure dans \`nodeIds\`. Des nœuds VIVANTS ne suffisent pas — un écran, un champ, une intégration et une règle assemblés AUTOUR d'un comportement qu'aucun bloc ne rend ne satisfont rien : ils le maquillent. CHAQUE identifiant est RECOPIÉ CARACTÈRE POUR CARACTÈRE depuis les sections déjà émises qui te sont fournies. N'en invente AUCUN, n'en devine AUCUN. Dans le doute, RELIS les sections fournies et trouve les identifiants exacts — ne te rabats PAS sur \`unexpressible\` ;
