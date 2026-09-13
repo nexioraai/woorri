@@ -1175,7 +1175,18 @@ export function emitProject(
           preview: { distribution: "internal", ios: { simulator: true } },
           production: { autoIncrement: true },
         },
-        submit: { production: {} },
+        // EP-179 ② — AUCUN PROFIL DE SOUMISSION, ET C'EST UNE RÈGLE D'APPLE.
+        //
+        // App Store Review Guidelines 4.2.6 : « les apps créées par un service
+        // de génération seront rejetées SAUF si elles sont soumises
+        // DIRECTEMENT par le fournisseur du contenu. Ces services ne doivent
+        // pas soumettre au nom de leurs clients. »
+        //
+        // Un `submit` préconfiguré préparerait exactement ce qu'Apple
+        // interdit. Le moteur va donc jusqu'au BUILD — TestFlight compris —
+        // et s'arrête là : la soumission est un geste du propriétaire, depuis
+        // son propre compte. Ce n'est pas une limite technique, c'est la
+        // condition pour que l'app ne soit pas rejetée d'emblée.
       },
       null,
       2,

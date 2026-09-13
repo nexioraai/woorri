@@ -329,7 +329,23 @@ export function rendrePublicationMd(
   // On donne donc le SOMMAIRE et ce qu'il doit couvrir. On n'écrit AUCUNE
   // phrase que le propriétaire pourrait recopier telle quelle dans un texte
   // qui l'engage.
+  // EP-179 ② — CE QUI SE PRÉPARE AVANT LA PUBLICATION, PAS PENDANT.
+  //
+  // Ces deux règles ne coûtent aucun travail technique et coûtent des
+  // SEMAINES si on les découvre le jour du dépôt. Elles apparaissent donc à
+  // la GÉNÉRATION, pas à la publication.
   lignes.push(
+    "## Ce qui prend du temps — à lancer maintenant, pas le jour du dépôt",
+    "",
+    "Deux règles de plateforme n'exigent aucun travail technique, et coûtent",
+    "des semaines si on les découvre trop tard.",
+    "",
+    "- [ ] **Recruter douze testeurs et les faire rester quatorze jours CONSÉCUTIFS sur la piste fermée, AVANT de pouvoir publier en production. Tout compte développeur personnel créé récemment y est soumis. Le compte se crée aujourd'hui ; les quatorze jours, eux, ne se rattrapent pas.**",
+    "      *Exigé par : Google Play Console — accès à la production pour les comptes personnels.*",
+    "",
+    "- [ ] **Déposer l'application VOUS-MÊME, depuis VOTRE compte. Le moteur construit et vous livre le binaire — il ne soumet pas à votre place, et aucun outil ne doit le faire : une app soumise par un service de génération est rejetée.**",
+    "      *Exigé par : App Store Review Guidelines 4.2.6.*",
+    "",
     "## Ce que votre politique doit couvrir",
     "",
     "Les plateformes n'imposent pas un texte, elles imposent des SUJETS. Voici",
