@@ -791,6 +791,63 @@ export function jugerBasDeCompte(
   return out;
 }
 
+/**
+ * EP-158 ① — UN ÉCRAN EMPILÉ GARDE SON RETOUR.
+ *
+ * CONSTATÉ À L'APPAREIL : on entre dans un écran et l'on n'en sort plus
+ * autrement qu'en changeant d'onglet. Aucun juge ne le voyait.
+ *
+ * QUI DÉCIDE, MESURÉ : ni l'AppShell, ni la pile native. La pile FOURNIT le
+ * retour — c'est un mécanisme de plateforme, et O.3 a raison de n'attribuer
+ * cette autorité à personne. Mais le DOCUMENT peut le SUPPRIMER :
+ * `showsScreenTitle: false` masque l'en-tête native (`headerShown: false`),
+ * et le retour part avec elle. Le défaut n'est donc pas une absence, c'est
+ * une suppression.
+ *
+ * LE DISCRIMINANT EST STRUCTUREL, pas une préférence : une RACINE de
+ * destination n'a pas de retour — il n'y a rien derrière elle, et la pile ne
+ * lui en donne pas. Un écran ATTEINT PAR EMPILEMENT en a un, et masquer son
+ * en-tête le lui retire.
+ *
+ * LE CAS SYMÉTRIQUE N'EXISTE PAS : aucune propriété ne permet d'AJOUTER un
+ * retour à une racine. Le document ne peut que supprimer, jamais poser —
+ * donc « une racine qui porte un retour » n'est pas exprimable, et c'est
+ * dit plutôt que jugé pour rien.
+ */
+export function jugerRetourAtteignable(air: Air): readonly PlacementFinding[] {
+  const out: PlacementFinding[] = [];
+  const ecranDeRoute = new Map(air.navigation.routes.map((r) => [r.id, r.screenId]));
+  const racines = new Set(
+    (air.navigation.primary?.destinations ?? [])
+      .map((d) => ecranDeRoute.get(d.routeId))
+      .filter((e): e is string => e !== undefined),
+  );
+  racines.add(air.navigation.entryScreenId);
+
+  const empiles = new Set(
+    air.actions
+      .filter((a) => a.effect.kind === "navigate")
+      .map((a) => (a.effect as { screenId?: string }).screenId)
+      .filter((e): e is string => e !== undefined),
+  );
+
+  for (const ecran of air.screens) {
+    if (enteteNativeRendue(ecran)) continue;
+    if (racines.has(ecran.id)) continue;
+    if (!empiles.has(ecran.id)) continue;
+    out.push({
+      code: "PRESENTATION_ECRAN_SANS_RETOUR",
+      path: `screens[${ecran.id}]`,
+      message:
+        `cet écran est atteint par empilement et masque son en-tête : le retour ` +
+        `que la plateforme fournit disparaît avec elle, et l'écran devient un ` +
+        `cul-de-sac. Seules les destinations de la barre peuvent masquer leur ` +
+        `en-tête — il n'y a rien derrière elles.`,
+    });
+  }
+  return out;
+}
+
 /** Les trois juges de placement, en un appel. */
 export function jugerPlacement(
   air: Air,
@@ -799,6 +856,7 @@ export function jugerPlacement(
 ): readonly PlacementFinding[] {
   return [
     ...jugerExclusivite(air),
+    ...jugerRetourAtteignable(air),
     ...jugerPositionRecherche(air, zoneDuBloc),
     ...jugerBarreInferieure(air),
     ...(contexte === undefined

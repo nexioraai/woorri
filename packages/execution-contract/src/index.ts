@@ -57,6 +57,7 @@ export {
   ORDRE_BAS_DE_COMPTE,
   jugerBasDeCompte,
   jugerLibellesPrimitifs,
+  jugerRetourAtteignable,
   jugerPositionPrimitives,
   jugerPrimitivesDeNavigation,
   surfacesAttendues,

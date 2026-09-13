@@ -187,6 +187,17 @@ export function obligationsDuProprietaire(air: ProjectAir): readonly ObligationP
   }
 
   out.push({
+    quoi:
+      "Fixer le NUMÉRO DE VERSION de l'application avant chaque dépôt. Le bas " +
+      "de l'espace compte l'affichera avec la mention de propriété : c'est une " +
+      "donnée que vous seul possédez — le document ne la porte pas, et " +
+      "l'inventer reviendrait à annoncer une version qui n'existe pas.",
+    ou: "fournir",
+    source:
+      "Apple App Store Connect · Google Play Console — numéro de version exigé à chaque dépôt",
+  });
+
+  out.push({
     quoi: "Répondre au questionnaire de classification de contenu.",
     ou: "console",
     source: "Google Play — Content Ratings",
