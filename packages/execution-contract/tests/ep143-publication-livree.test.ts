@@ -145,3 +145,39 @@ describe("EP-143 · CLIQUET (règle d'EP-132)", () => {
     expect(md).not.toMatch(/##[^\n]*\n\n[^\n]*\n\n##/);
   });
 });
+
+// EP-177 ① — LA STRUCTURE N'EST PAS LE TEXTE.
+describe("EP-177 · le sommaire d'une politique, jamais son texte", () => {
+  it("le fichier dit ce que la politique doit COUVRIR", () => {
+    const md = rendrePublicationMd(AVEC_COMPTE);
+    expect(md).toContain("## Ce que votre politique doit couvrir");
+    for (const sujet of ["Quelles données", "Avec qui", "Combien de temps", "Où le texte est hébergé"]) {
+      expect(md, `sujet manquant : ${sujet}`).toContain(sujet);
+    }
+  });
+
+  it("ET TOUJOURS AUCUN TEXTE DE POLITIQUE — l'interdiction d'EP-143 tient", () => {
+    // VÉRIFIÉ avant d'écrire : l'interdiction porte sur des AMORCES DE PHRASE
+    // juridique, pas sur la liste des sujets qu'une plateforme exige. On la
+    // re-vérifie ici plutôt que de s'en remettre au test d'origine.
+    const md = rendrePublicationMd(AVEC_COMPTE).toLocaleLowerCase();
+    for (const amorce of [
+      "nous collectons",
+      "en utilisant cette application",
+      "conformément au rgpd",
+      "le présent document",
+      "vous acceptez",
+    ]) {
+      expect(md.includes(amorce), amorce).toBe(false);
+    }
+  });
+
+  it("LE SOMMAIRE NE REDOUBLE PAS UNE SOURCE — il précise une tâche existante", () => {
+    // Le cliquet d'EP-143 exige autant de sources que de tâches cochables.
+    // Un sommaire qui citerait sa propre source ferait mentir ce compte, et
+    // laisserait croire à une obligation de plus.
+    const md = rendrePublicationMd(AVEC_COMPTE);
+    expect((md.match(/\*Exigé par :/g) ?? []).length).toBe((md.match(/- \[ \]/g) ?? []).length);
+    expect(md).toContain("Ils ne s'ajoutent pas à votre liste");
+  });
+});

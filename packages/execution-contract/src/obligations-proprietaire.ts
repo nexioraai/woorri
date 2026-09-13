@@ -316,7 +316,36 @@ export function rendrePublicationMd(
       lignes.push("");
     }
   }
+  // EP-177 ① — LA STRUCTURE N'EST PAS LE TEXTE.
+  //
+  // VÉRIFIÉ AVANT D'ÉCRIRE : l'interdiction d'EP-143 (« pas même un modèle »)
+  // porte sur des AMORCES DE PHRASE juridique — « nous collectons », « en
+  // utilisant cette application », « conformément au RGPD ». Elle ne vise PAS
+  // la liste des sections qu'une plateforme EXIGE : celle-là est une
+  // obligation citable, du même ordre que les sources déjà rendues ici. Ce
+  // fichier livre d'ailleurs déjà de la MATIÈRE brute (les catégories
+  // collectées) sans écrire une ligne de politique.
+  //
+  // On donne donc le SOMMAIRE et ce qu'il doit couvrir. On n'écrit AUCUNE
+  // phrase que le propriétaire pourrait recopier telle quelle dans un texte
+  // qui l'engage.
   lignes.push(
+    "## Ce que votre politique doit couvrir",
+    "",
+    "Les plateformes n'imposent pas un texte, elles imposent des SUJETS. Voici",
+    "ceux qu'elles exigent — à vous de les traiter avec vos mots et vos faits.",
+    "",
+    "  1. Quelles données sont collectées — la liste est plus haut, déjà dérivée de votre application.",
+    "  2. Pourquoi chacune est collectée, et ce qu'elle sert à faire.",
+    "  3. Avec qui elles sont partagées, nommément, et ce que chacun reçoit.",
+    "  4. Combien de temps elles sont conservées.",
+    "  5. Comment une personne demande leur suppression, et sous quel délai.",
+    "  6. Qui contacter pour une question de confidentialité.",
+    "  7. Où le texte est hébergé — l'adresse doit être publique et stable.",
+    "",
+    "Ces sept points détaillent la première tâche de ce fichier — celle qui porte",
+    "sa source. Ils ne s'ajoutent pas à votre liste : ils la précisent.",
+    "",
     "---",
     "",
     "Ce fichier est régénéré à chaque émission. Il décrit ce qu'il faut écrire ;",
