@@ -24,7 +24,7 @@ type Noeud = Record<string, unknown>;
 
 /** Le niveau nommé, ou un échec explicite — jamais une assertion non nulle muette. */
 const niveau = (schema: Noeud, nom: string): NiveauSchema => {
-  const trouve = makeLevels(schema).find((n) => n.name === nom);
+  const trouve = makeLevels(schema, DIALECTE).find((n) => n.name === nom);
   if (trouve === undefined) throw new Error(`niveau absent : ${nom}`);
   return trouve;
 };
@@ -57,6 +57,13 @@ const trouver = (n: unknown, cle: string): unknown[] => {
   walk(n);
   return out;
 };
+
+/**
+ * EP-151 — l'échelle ne DEVINE plus ce qui est incompatible : elle le REÇOIT
+ * du dialecte. Ces tests déclarent donc le leur, au lieu de dépendre d'un
+ * défaut caché — c'est précisément la seconde liste que la passe supprime.
+ */
+const DIALECTE = { minItemsMax: 1, bornesNumeriquesEntiers: false, maxItemsSupporte: false };
 
 describe("le premier niveau règle l'incompatibilité SANS tout sacrifier", () => {
   it("🔴 CAS-TUEUR, RÉVISÉ EP-149 : les DEUX incompatibilités tombent, `maxLength` survit", () => {
@@ -92,9 +99,12 @@ describe("le premier niveau règle l'incompatibilité SANS tout sacrifier", () =
   });
 
   it("les niveaux de repli subsistent, dans l'ordre, du plus doux au plus large", () => {
-    expect(makeLevels(SCHEMA).map((n) => n.name)).toEqual([
+    expect(makeLevels(SCHEMA, DIALECTE).map((n) => n.name)).toEqual([
+      // EP-151 — trois niveaux au lieu de quatre : « sans-bornes-numeriques »
+      // a disparu parce que les bornes sont DÉCLARÉES incompatibles, donc
+      // retirées d'emblée. Un niveau de repli en moins, c'est un appel refusé
+      // en moins par segment.
       "incompatibilites-connues",
-      "sans-bornes-numeriques",
       "sans-longueurs",
       "sans-patterns",
     ]);

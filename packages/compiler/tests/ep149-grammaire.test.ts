@@ -55,13 +55,18 @@ describe("EP-149 · l'incompatibilité est DÉCLARÉE, plus seulement subie", ()
 });
 
 describe("EP-149 · l'échelle dégrade dans l'ordre de ce qui est REFUSÉ", () => {
-  const niveaux = makeLevels(SCHEMA) as { name: string; schema: unknown }[];
+  // EP-151 — l'échelle REÇOIT les contraintes du dialecte : elle ne les devine
+  // plus. Les tests la nourrissent donc explicitement.
+  const niveaux = makeLevels(SCHEMA, CONTRAINTES_GRAMMAIRE) as { name: string; schema: unknown }[];
 
   it("le PREMIER niveau neutralise les deux incompatibilités connues", () => {
     // Avant : il retirait les bornes numériques — jamais refusées — et gardait
     // `maxItems` jusqu'au troisième. Deux appels perdus par segment.
     expect(niveaux[0]!.name).toBe("incompatibilites-connues");
     expect(compter(niveaux[0]!.schema, "maxItems")).toBe(0);
+    // EP-151 — les bornes numériques aussi, désormais : elles étaient
+    // déclarées et non honorées, ce qui a coûté le run EP-150.
+    expect(compter(niveaux[0]!.schema, "maximum")).toBe(0);
     expect(compter(niveaux[0]!.schema, "minItems")).toBe(1);
     const min = JSON.stringify(niveaux[0]!.schema).match(/"minItems":(\d+)/);
     expect(min?.[1], "minItems doit être ramené à 1").toBe("1");
@@ -71,13 +76,14 @@ describe("EP-149 · l'échelle dégrade dans l'ordre de ce qui est REFUSÉ", () 
     // « Schema is too complex » sur les écrans : les motifs sont le poste le
     // plus lourd d'un compilateur de grammaire, donc ils partent en dernier —
     // ce sont eux qui portent le plus de sens.
+    // EP-151 — un niveau de moins : les bornes numériques ont rejoint le
+    // premier, puisqu'elles étaient déclarées incompatibles depuis toujours.
     expect(niveaux.map((n) => n.name)).toEqual([
       "incompatibilites-connues",
-      "sans-bornes-numeriques",
       "sans-longueurs",
       "sans-patterns",
     ]);
-    expect(compter(niveaux[3]!.schema, "pattern")).toBe(0);
+    expect(compter(niveaux[2]!.schema, "pattern")).toBe(0);
   });
 
   it("chaque niveau retire STRICTEMENT plus que le précédent", () => {

@@ -14,7 +14,7 @@
 // écarts grammaire canonique → grammaire dégradée sont ÉNUMÉRÉS par
 // `degraderGrammaire` et chacun reste refermé par P1 (veille EP-037,
 // désormais PAR ADAPTATEUR).
-import { clampMinItems, makeLevels, stripKeys } from "./schema-levels.mjs";
+import { clampMinItems, incompatibilitesDe, makeLevels, stripKeys } from "./schema-levels.mjs";
 
 /** CONFIGURATION — le « quel LLM » est un paramètre, jamais une hypothèse. */
 export const CONFIG = {
@@ -42,13 +42,13 @@ export const CONTRAINTES_GRAMMAIRE = {
 
 /** Grammaire canonique → grammaire du dialecte, ÉCARTS DÉCLARÉS. */
 export function degraderGrammaire(canonique) {
-  const grammaire = stripKeys(clampMinItems(canonique), [
-    "minimum", "maximum", "exclusiveMinimum", "exclusiveMaximum",
-    // EP-149 — retiré DÈS LA GRAMMAIRE CANONIQUE, plus au troisième repli :
-    // l'échelle le gardait jusqu'au niveau 2, ce qui coûtait DEUX appels
-    // refusés par segment, systématiquement.
-    "maxItems",
-  ]);
+  // EP-151 — MÊME SOURCE que l'échelle : ce qui est incompatible est déclaré
+  // une fois, dans `CONTRAINTES_GRAMMAIRE`, et les deux chemins en dérivent.
+  const incompatibles = incompatibilitesDe(CONTRAINTES_GRAMMAIRE);
+  const grammaire = stripKeys(
+    incompatibles.clampMinItems ? clampMinItems(canonique) : canonique,
+    incompatibles.clefs,
+  );
   const ecarts = [];
   const marcher = (a, b, chemin) => {
     if (a === null || typeof a !== "object") return;
@@ -56,7 +56,7 @@ export function degraderGrammaire(canonique) {
       const av = a[k];
       const bv = b?.[k];
       if (k === "minItems" && av !== bv) ecarts.push(`${chemin}.minItems ${av}→${bv}`);
-      else if (["minimum", "maximum", "exclusiveMinimum", "exclusiveMaximum", "maxItems"].includes(k) && bv === undefined)
+      else if (incompatibles.clefs.includes(k) && bv === undefined)
         ecarts.push(`${chemin}.${k} ${av}→retiré`);
       else if (typeof av === "object") marcher(av, bv, `${chemin}.${k}`);
     }
@@ -67,7 +67,10 @@ export function degraderGrammaire(canonique) {
 
 /** L'échelle de dégradation d'une grammaire de passe — DÉCLARÉE ici. */
 export function degradationsPourEchelle(jsonSchema) {
-  return makeLevels(jsonSchema);
+  // EP-151 — l'échelle REÇOIT les contraintes du dialecte : elle ne les
+  // redéclare pas. Une incompatibilité ajoutée ici est honorée dès le premier
+  // niveau, sans qu'aucune autre liste ait à suivre.
+  return makeLevels(jsonSchema, CONTRAINTES_GRAMMAIRE);
 }
 
 /** Requête neutre {system, user, grammaire} → charge utile du dialecte. */

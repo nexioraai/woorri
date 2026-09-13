@@ -42,27 +42,51 @@ export function clampMinItems(node) {
   return node;
 }
 
-export function makeLevels(jsonSchema) {
-  // EP-149 — L'ORDRE DE L'ÉCHELLE SUIT CE QUI EST RÉELLEMENT REFUSÉ.
-  //
-  // MESURÉ sur le run EP-148 : l'échelle retirait d'abord les bornes
-  // NUMÉRIQUES — que le service n'a jamais refusées — et gardait `maxItems`
-  // jusqu'au troisième niveau, alors que c'est précisément lui que le service
-  // refuse. Deux appels perdus par segment, systématiquement, avant même
-  // d'approcher le vrai problème.
-  //
-  // Le premier niveau neutralise donc les DEUX incompatibilités connues, et
-  // les niveaux suivants attaquent la COMPLEXITÉ — longueurs, puis motifs —
-  // qui est l'autre refus observé (« Schema is too complex » sur `ecrans`).
+/**
+ * EP-151 — LE NIVEAU 0 EST DÉRIVÉ DES CONTRAINTES DÉCLARÉES.
+ *
+ * SIXIÈME OCCURRENCE DU MÊME MOTIF, et celle-ci a coûté un run : l'échelle et
+ * `CONTRAINTES_GRAMMAIRE` étaient deux listes portant la même information. Le
+ * dialecte déclarait trois incompatibilités ; le premier niveau n'en honorait
+ * que deux, et la troisième — les bornes numériques sur les entiers — ne
+ * partait qu'au niveau suivant. Un appel refusé par segment, invisible tant
+ * qu'on ne lisait pas les deux listes côte à côte.
+ *
+ * `makeLevels` ne DÉCIDE plus ce qui est incompatible : il le REÇOIT. La
+ * seule source est l'adaptateur, qui connaît son dialecte.
+ */
+export function incompatibilitesDe(contraintes) {
+  const clefs = [];
+  if (contraintes.maxItemsSupporte === false) clefs.push("maxItems");
+  if (contraintes.bornesNumeriquesEntiers === false) {
+    clefs.push("minimum", "maximum", "exclusiveMinimum", "exclusiveMaximum", "multipleOf");
+  }
+  return { clefs, clampMinItems: contraintes.minItemsMax === 1 };
+}
+
+export function makeLevels(jsonSchema, contraintes) {
+  if (contraintes === undefined) {
+    throw new Error(
+      "EP-151 — `makeLevels` exige les contraintes du dialecte. Les deviner " +
+        "ici recréerait la seconde liste que cette passe supprime.",
+    );
+  }
+  const incompatibles = incompatibilitesDe(contraintes);
   const base = oneOfToAnyOf(jsonSchema);
-  const L0 = stripKeys(clampMinItems(base), ["maxItems"]);
-  const L1 = stripKeys(L0, ["minimum", "maximum", "exclusiveMinimum", "exclusiveMaximum", "multipleOf"]);
-  const L2 = stripKeys(L1, ["minLength", "maxLength", "minItems"]);
-  const L3 = stripKeys(L2, ["pattern", "format"]);
+  // NIVEAU 0 — TOUTES les incompatibilités déclarées, d'un coup. Ce qui est
+  // connu du dialecte ne se découvre pas appel après appel.
+  const L0 = stripKeys(
+    incompatibles.clampMinItems ? clampMinItems(base) : base,
+    incompatibles.clefs,
+  );
+  // Les niveaux suivants attaquent la COMPLEXITÉ, pas la compatibilité :
+  // longueurs d'abord, motifs en dernier — ce sont eux qui portent le plus de
+  // sens, et la mesure montre qu'ils sont peu nombreux mais décisifs.
+  const L1 = stripKeys(L0, ["minLength", "maxLength", "minItems"]);
+  const L2 = stripKeys(L1, ["pattern", "format"]);
   return [
     { name: "incompatibilites-connues", schema: L0 },
-    { name: "sans-bornes-numeriques", schema: L1 },
-    { name: "sans-longueurs", schema: L2 },
-    { name: "sans-patterns", schema: L3 },
+    { name: "sans-longueurs", schema: L1 },
+    { name: "sans-patterns", schema: L2 },
   ];
 }
