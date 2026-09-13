@@ -72,25 +72,34 @@ const FAITS = [
  * l'allonger sans raison écrite est ce que le cliquet empêche.
  */
 const SANS_EFFET_ASSUME: Readonly<Record<string, string>> = {
-  accountDeletionRequired:
-    "L-137-A — porte une OBLIGATION Apple (5.1.1(v)) et n'est que restitué : " +
-    "aucun écran, aucun juge, aucun manifeste n'en dépend. Depuis EP-137, le " +
-    "genre d'écran `account_delete` exprime la même exigence par une surface : " +
-    "les deux doivent être réconciliés.",
-  dataCollected:
-    "L-141-A — porte la MATIÈRE du formulaire Data safety de Google Play, que " +
-    "tout développeur doit remplir (EP-138). Le document déclare ce qu'il " +
-    "collecte, et rien n'en fait quoi que ce soit : ni permission induite, ni " +
-    "texte de politique, ni sortie destinée à la console. La déclaration reste " +
-    "un acte de console, mais la matière existe et dort.",
-  policy:
-    "L-141-B — `network.policy` vaut `deny_by_default` dans tout le corpus et " +
-    "n'est LU par aucune décision : c'est `allowedDomains` qui est consommé, " +
-    "par neuf fichiers. La politique est donc appliquée DE FAIT par la liste " +
-    "blanche, jamais parce que le champ le demande — si un document déclarait " +
-    "une autre politique, rien ne changerait. L'audit EP-138 la donnait pour " +
-    "produite : c'était optimiste.",
+  // EP-142 — VIDE, et c'est le résultat de la réconciliation.
+  //
+  // `accountDeletionRequired` PRESCRIT désormais sa surface : le fait du
+  // contrat et l'écran de genre `account_delete` sont la même exigence, et
+  // une incohérence entre les deux est refusée (L-137-A close).
+  //
+  // `dataCollected` alimente les obligations du propriétaire : le document
+  // déclare ce qu'il collecte, et cette matière est RENDUE à celui qui devra
+  // la recopier dans Play Console (L-141-A close).
+  //
+  // Une entrée ici doit porter sa dette ET être vraie : le test suivant
+  // vérifie qu'une exception qui a gagné un consommateur est retirée.
 };
+
+/**
+ * EP-142 ③ — UNE CONSTANTE N'EST PAS UN FAIT SANS CONSOMMATEUR.
+ *
+ * `network.policy` est déclaré `z.literal("deny_by_default")` : le schéma
+ * n'autorise AUCUNE autre valeur. Mon diagnostic de L-141-B — « un document
+ * déclarant une autre politique ne changerait rien » — était FAUX : un tel
+ * document serait refusé à la porte. Un champ qui ne varie pas ne peut pas
+ * mentir, donc il n'a pas besoin de peser sur une décision ; l'invariant est
+ * tenu par le schéma lui-même, ce qui est plus fort qu'un juge.
+ *
+ * Le danger que l'inventaire traque n'existe que pour les champs qui VARIENT.
+ * Le cliquet les distingue désormais, au lieu de les confondre.
+ */
+const CONSTANTES_DE_SCHEMA: readonly string[] = ["policy"];
 
 describe("EP-141 ① · aucun fait de publication sans consommateur", () => {
   it("chaque fait est LU quelque part dans le moteur", () => {
@@ -101,6 +110,7 @@ describe("EP-141 ① · aucun fait de publication sans consommateur", () => {
 
   it("chaque fait pèse sur une DÉCISION, ou figure aux exceptions déclarées", () => {
     for (const champ of FAITS) {
+      if (CONSTANTES_DE_SCHEMA.includes(champ)) continue;
       const decisionnels = lecteurs(champ).filter((f) => !RESTITUTION.test(f));
       if (decisionnels.length > 0) continue;
       expect(
@@ -121,14 +131,18 @@ describe("EP-141 ① · aucun fait de publication sans consommateur", () => {
     }
   });
 
-  it("le cas connu est bien celui-là, et lui seul", () => {
-    // Vérification frontale : TROIS faits de publication sont restitués sans
-    // qu'aucune décision n'en dépende. L'inventaire manuel n'en avait vu
-    // qu'un ; le cliquet, écrit ensuite, en a trouvé deux de plus — c'est
-    // exactement ce qu'on attend d'un instrument par rapport à une lecture.
+  it("plus aucun fait de publication n'est lu sans effet", () => {
+    // Vérification frontale, et c'est ce qui a changé en EP-142 : plus aucun
+    // fait de publication n'est restitué sans peser sur quelque chose.
     const restitues = FAITS.filter(
-      (c) => lecteurs(c).length > 0 && lecteurs(c).every((f) => RESTITUTION.test(f)),
+      (c) =>
+        !CONSTANTES_DE_SCHEMA.includes(c) &&
+        lecteurs(c).length > 0 &&
+        lecteurs(c).every((f) => RESTITUTION.test(f)),
     );
-    expect(restitues.sort()).toEqual(["accountDeletionRequired", "dataCollected", "policy"]);
+    // EP-142 — la liste est VIDE : `accountDeletionRequired` prescrit
+    // désormais sa surface, `dataCollected` alimente les obligations du
+    // propriétaire, et `policy` est une constante de schéma, pas une dette.
+    expect(restitues).toEqual([]);
   });
 });

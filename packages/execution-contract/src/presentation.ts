@@ -366,6 +366,34 @@ export function jugerEspaceCompte(
     parGenre.set(ecran.purpose, [...(parGenre.get(ecran.purpose) ?? []), ecran.id]);
   }
 
+  // EP-142 ① — LE FAIT ET LA SURFACE SONT LA MÊME CHOSE.
+  // `compliance.accountDeletionRequired` portait l'obligation Apple 5.1.1(v)
+  // sans rien produire, pendant que le genre `account_delete` l'exprimait de
+  // son côté : deux expressions d'une seule exigence, qui s'ignoraient. Le
+  // fait DÉCIDE désormais — et une incohérence entre les deux est refusée.
+  const porteUneSuppression = air.screens.some((e) => e.purpose === "account_delete");
+  if (avecIdentite && !air.compliance.accountDeletionRequired) {
+    out.push({
+      code: "PRESENTATION_SUPPRESSION_NON_DECLAREE",
+      path: "compliance.accountDeletionRequired",
+      message:
+        `l'application a des comptes et ne déclare pas la suppression : ` +
+        `« If your app supports account creation, you must also offer account ` +
+        `deletion within the app » (OBLIGATION DE PLATEFORME — App Store Review ` +
+        `Guidelines 5.1.1(v)).`,
+    });
+  }
+  if (air.compliance.accountDeletionRequired && !porteUneSuppression) {
+    out.push({
+      code: "PRESENTATION_SUPPRESSION_DECLAREE_SANS_SURFACE",
+      path: "screens",
+      message:
+        `le document déclare la suppression de compte obligatoire mais ne porte ` +
+        `aucun écran de genre « account_delete » : un fait qui ne produit pas ` +
+        `sa surface donne l'apparence de la conformité sans la produire.`,
+    });
+  }
+
   for (const genre of surfacesAttendues(avecIdentite)) {
     if (parGenre.has(genre)) continue;
     const fiche = SURFACES_DE_COMPTE[genre];

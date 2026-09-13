@@ -50,6 +50,14 @@ function baseVerte(genres: readonly GenreEcran[] = surfacesAttendues(true)): Ret
         ],
       },
     },
+    // EP-142 — une application à comptes DÉCLARE la suppression : le fait du
+    // contrat et la surface `account_delete` sont la même exigence, et une
+    // base verte doit porter les deux.
+    compliance: {
+      commerceClass: "none" as const,
+      accountDeletionRequired: true,
+      dataCollected: [],
+    },
     // Chaque surface est atteignable DEPUIS le compte — sinon elle ne remplit
     // aucune obligation, si bien déclarée soit-elle.
     actions: genres.map((genre) => ({
@@ -77,8 +85,13 @@ describe("EP-137 · ① une surface manquante est refusée, et NOMMÉE", () => {
     for (const genre of surfacesAttendues(true)) {
       const restantes = surfacesAttendues(true).filter((g) => g !== genre);
       const f = jugerEspaceCompte(baseVerte(restantes), AVEC_IDENTITE);
-      expect(codes(f), genre).toEqual(["PRESENTATION_SURFACE_COMPTE_ABSENTE"]);
-      expect(f[0]!.message, genre).toContain(genre);
+      // EP-142 — retirer la surface de SUPPRESSION en produit DEUX : elle
+      // manque, ET le fait du contrat qui la déclare ne la trouve plus. Les
+      // deux disent la même exigence par ses deux bouts, et c'est voulu.
+      expect(codes(f), genre).toContain("PRESENTATION_SURFACE_COMPTE_ABSENTE");
+      expect(codes(f).length, genre).toBe(genre === "account_delete" ? 2 : 1);
+      expect(f.find((x) => x.code === "PRESENTATION_SURFACE_COMPTE_ABSENTE")!.message, genre)
+        .toContain(genre);
     }
   });
 
@@ -118,9 +131,14 @@ describe("EP-137 · ③ PRIMITIVES : elles existent SANS modèle d'identité", (
     // rien dans le modèle ne les demande, et elles sont pourtant exigées.
     const attendues = surfacesAttendues(false);
     expect(attendues).toEqual(["privacy_policy", "contact", "terms", "help", "settings"]);
-    expect(codes(jugerEspaceCompte(baseVerte(attendues), SANS_IDENTITE))).toEqual([]);
-    const sansRien = jugerEspaceCompte(baseVerte([]), SANS_IDENTITE);
-    expect(sansRien).toHaveLength(5);
+    // Sans comptes, la suppression ne se déclare pas non plus (EP-142).
+    const sansComptes = (genres: readonly GenreEcran[]): ReturnType<typeof air> => {
+      const d = baseVerte(genres);
+      d.compliance = { ...d.compliance, accountDeletionRequired: false };
+      return d;
+    };
+    expect(codes(jugerEspaceCompte(sansComptes(attendues), SANS_IDENTITE))).toEqual([]);
+    expect(jugerEspaceCompte(sansComptes([]), SANS_IDENTITE)).toHaveLength(5);
   });
 
   it("création et suppression de compte ne sont exigées QUE s'il y a des comptes", () => {

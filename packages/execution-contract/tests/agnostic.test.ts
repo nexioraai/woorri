@@ -137,6 +137,7 @@ describe("pureté et indépendance", () => {
       // fichier tournent sur lui comme sur les autres.
       "./vivacite.ts",
       "./presentation.ts",
+      "./obligations-proprietaire.ts",
     ]);
     for (const { file, code } of sources) {
       for (const match of code.matchAll(/from "([^"]+)"/g)) {
