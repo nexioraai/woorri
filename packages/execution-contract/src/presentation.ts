@@ -25,6 +25,7 @@
 // couvre les trois points de cette passe. Ce qu'aucune source ne fonde est
 // étiqueté DÉCISION PRODUIT, jamais présenté comme une convention.
 import { partagesDe } from "./obligations-proprietaire.ts";
+export { partagesDe };
 import type { ProjectAir } from "@deribfy/air-schema";
 
 type Air = ProjectAir;
@@ -337,15 +338,42 @@ export const SURFACES_DE_COMPTE = {
   help: { fondement: "produit", source: null, exigeIdentite: false },
   settings: { fondement: "produit", source: null, exigeIdentite: false },
   account_create: { fondement: "produit", source: null, exigeIdentite: true },
-  // EP-145 — le consentement n'existe QUE s'il y a quelque chose à consentir.
-  // L'exiger sans partage serait demander l'accord de l'utilisateur pour rien.
-  privacy_consent: {
+  // EP-147 ④ — LE RETRAIT DU CONSENTEMENT. Donner son accord sans pouvoir le
+  // reprendre n'est pas un accord : « Apps must also provide the customer with
+  // an easily accessible and understandable way to withdraw consent »
+  // (App Store Review Guidelines 5.1.1(ii)). Celle-ci vit bien DANS le compte
+  // — c'est un réglage durable, pas une demande ponctuelle.
+  consent_withdraw: {
     fondement: "plateforme",
-    source: "App Store Review Guidelines 5.1.2(i)",
+    source: "App Store Review Guidelines 5.1.1(ii)",
     exigeIdentite: false,
     exigePartage: true,
   },
 } as const;
+
+/**
+ * EP-147 ① — CE QUE CETTE PASSE DÉFAIT, ET POURQUOI.
+ *
+ * EP-145 avait rangé le consentement au partage parmi les surfaces de
+ * l'espace compte. EP-137 y range ces surfaces : dans le compte, jamais dans
+ * la barre. **La lecture complète de la politique Google dit l'inverse pour
+ * celle-ci** :
+ *
+ *   « an in-app disclosure … must be displayed in the normal usage of the app
+ *   and NOT REQUIRE THE USER TO NAVIGATE INTO A MENU OR SETTINGS » ; le
+ *   consentement exige « affirmative user action » ; et elle « cannot only be
+ *   placed in a privacy policy or terms of service ».
+ *   — Play, User Data (answer/10144311)
+ *
+ * La décision d'EP-145 reposait sur une lecture partielle — le hub Google, pas
+ * ses pages. Une correction fondée sur la source prime, et les tests qui
+ * assumaient l'ancienne place changent : c'est normal, pas un accident.
+ *
+ * Le genre `privacy_consent` demeure ; ce qui change est SA PLACE, jugée
+ * désormais par `jugerDivulgationProeminente` et non plus par le juge de
+ * l'espace compte.
+ */
+export const GENRES_HORS_COMPTE = ["privacy_consent", "consent_withdraw"] as const;
 
 export type GenreEcran = keyof typeof SURFACES_DE_COMPTE;
 
@@ -419,6 +447,9 @@ export function jugerEspaceCompte(
   }
 
   for (const genre of surfacesAttendues(avecIdentite, avecPartage)) {
+    // EP-147 — la divulgation ne se range PAS ici : sa place est jugée
+    // ailleurs, et l'exiger dans le compte serait exiger l'inverse de Google.
+    if ((GENRES_HORS_COMPTE as readonly string[]).includes(genre)) continue;
     if (parGenre.has(genre)) continue;
     const fiche = SURFACES_DE_COMPTE[genre];
     out.push({
@@ -539,6 +570,68 @@ export function jugerPositionPrimitives(
           `(DÉCISION PRODUIT — aucune convention ne fixe cet ordre.)`,
       });
     }
+  }
+  return out;
+}
+
+/**
+ * EP-147 ① — LA DIVULGATION DOIT ÊTRE RENCONTRÉE, PAS CHERCHÉE.
+ *
+ * Elle est exigée dès qu'un partage existe, et sa place est contrainte : elle
+ * doit être atteignable depuis l'usage normal — concrètement, depuis l'écran
+ * d'ENTRÉE — et non seulement depuis un menu ou l'espace compte.
+ */
+export function jugerDivulgationProeminente(
+  air: Air,
+  contexte: { readonly avecPartage: boolean; readonly ecransDIdentite: readonly string[] },
+): readonly PlacementFinding[] {
+  const out: PlacementFinding[] = [];
+  const ecran = air.screens.find((e) => e.purpose === "privacy_consent");
+  if (!contexte.avecPartage) {
+    if (ecran !== undefined) {
+      out.push({
+        code: "PRESENTATION_CONSENTEMENT_SANS_OBJET",
+        path: `screens[${ecran.id}]`,
+        message:
+          `un écran de consentement au partage alors qu'aucune intégration ne ` +
+          `partage de données : demander un accord pour rien.`,
+      });
+    }
+    return out;
+  }
+  if (ecran === undefined) {
+    out.push({
+      code: "PRESENTATION_DIVULGATION_ABSENTE",
+      path: "screens",
+      message:
+        `des données sont partagées avec des tiers et aucun écran ne le dit : ` +
+        `« an in-app disclosure … must be displayed in the normal usage of the ` +
+        `app » (OBLIGATION DE PLATEFORME — Google Play, User Data).`,
+    });
+    return out;
+  }
+  // Atteignable depuis l'ENTRÉE, directement : une divulgation qu'il faut
+  // aller chercher dans un menu ne remplit pas l'exigence.
+  const depuisEntree = air.actions.some(
+    (a) =>
+      a.effect.kind === "navigate" &&
+      (a.effect as { screenId?: string }).screenId === ecran.id &&
+      a.trigger.kind === "ui" &&
+      air.screens
+        .find((e) => e.id === air.navigation.entryScreenId)
+        ?.blocks.some((b) => b.id === (a.trigger as { blockId?: string }).blockId) === true,
+  );
+  const depuisCompte = contexte.ecransDIdentite.length > 0;
+  if (!depuisEntree) {
+    out.push({
+      code: "PRESENTATION_DIVULGATION_ENFOUIE",
+      path: `screens[${ecran.id}]`,
+      message:
+        `la divulgation n'est atteignable que par ${depuisCompte ? "l'espace compte" : "un détour"} : ` +
+        `elle « must NOT require the user to navigate into a menu or settings » ` +
+        `(Google Play, User Data). Elle se rencontre dans l'usage normal, depuis ` +
+        `l'écran d'entrée.`,
+    });
   }
   return out;
 }

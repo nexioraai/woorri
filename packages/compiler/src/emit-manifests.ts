@@ -82,6 +82,74 @@ export const CHIFFREMENT_PROPRE_PAR_CAPACITE: Readonly<Record<string, boolean>> 
   share: false,
 };
 
+/**
+ * EP-147 ② — LE MANIFESTE DE CONFIDENTIALITÉ (`PrivacyInfo.xcprivacy`).
+ *
+ * Obligatoire depuis 2024, et le moteur n'en produisait aucun. Expo :
+ * « native code that calls into certain APIs that Apple considers sensitive »
+ * — dont « accessing UserDefaults, file timestamp, system boot time, disk
+ * space, and active keyboard ». Il se déclare en `expo.ios.privacyManifests`.
+ *
+ * SE DÉRIVE-T-IL DES CAPACITÉS ? EN PARTIE SEULEMENT, et c'est le point.
+ * Deux sources se superposent :
+ *  · un SOCLE, touché par toute application React Native — le stockage de
+ *    préférences (`UserDefaults`) est utilisé par le train lui-même, quelles
+ *    que soient les capacités déclarées. Ne pas le déclarer serait mentir par
+ *    omission ;
+ *  · ce que les CAPACITÉS ajoutent, sous partition exhaustive (même patron
+ *    qu'EP-144) — une capacité neuve ne peut pas entrer sans décision.
+ *
+ * Les codes de raison sont ceux d'Apple (`CA92.1` : accès aux seules données
+ * de l'app ; `C617.1` : affichage à l'utilisateur). LIMITE DITE : la liste
+ * énumérée des *required reason APIs* n'a pas pu être lue à la source (page
+ * Apple en JavaScript, EP-146) ; ce qui est déclaré ici est ce qu'Expo
+ * documente, et rien de plus.
+ */
+export const API_SENSIBLES_SOCLE: readonly { readonly type: string; readonly raisons: readonly string[] }[] = [
+  { type: "NSPrivacyAccessedAPICategoryUserDefaults", raisons: ["CA92.1"] },
+];
+
+export const API_SENSIBLES_PAR_CAPACITE: Readonly<Record<string, readonly string[]>> = {
+  analytics: [],
+  auth: [],
+  barcode_scan: [],
+  biometrics: [],
+  calendar: [],
+  camera: [],
+  deep_links: [],
+  external_contact: [],
+  geolocation: [],
+  maps: [],
+  media_upload: [],
+  // Le stockage hors ligne écrit des fichiers : leur horodatage est une API
+  // à raison requise.
+  offline_storage: ["NSPrivacyAccessedAPICategoryFileTimestamp"],
+  "payments.iap": [],
+  "payments.psp": [],
+  push_notifications: [],
+  share: [],
+};
+
+const RAISON_PAR_TYPE: Readonly<Record<string, readonly string[]>> = {
+  NSPrivacyAccessedAPICategoryUserDefaults: ["CA92.1"],
+  NSPrivacyAccessedAPICategoryFileTimestamp: ["C617.1"],
+};
+
+export function manifesteConfidentialite(air: ProjectAir): {
+  NSPrivacyAccessedAPITypes: { NSPrivacyAccessedAPIType: string; NSPrivacyAccessedAPITypeReasons: readonly string[] }[];
+} {
+  const types = new Set(API_SENSIBLES_SOCLE.map((a) => a.type));
+  for (const c of air.capabilities) {
+    for (const t of API_SENSIBLES_PAR_CAPACITE[c.capability] ?? []) types.add(t);
+  }
+  return {
+    NSPrivacyAccessedAPITypes: [...types].sort().map((type) => ({
+      NSPrivacyAccessedAPIType: type,
+      NSPrivacyAccessedAPITypeReasons: RAISON_PAR_TYPE[type] ?? [],
+    })),
+  };
+}
+
 export function utiliseChiffrementNonExempte(air: ProjectAir): boolean {
   return air.capabilities.some(
     (c) => CHIFFREMENT_PROPRE_PAR_CAPACITE[c.capability] === true,
@@ -159,6 +227,8 @@ export function emitAppJson(air: ProjectAir, train: ReleaseTrain): string {
       // Elle n'est PAS écrite en dur : elle se DÉRIVE de ce que l'application
       // embarque — voir `CHIFFREMENT_PROPRE_PAR_CAPACITE`.
       config: { usesNonExemptEncryption: utiliseChiffrementNonExempte(air) },
+      // EP-147 ② — le manifeste de confidentialité, DÉRIVÉ.
+      privacyManifests: manifesteConfidentialite(air),
       ...(Object.keys(infoPlist).length > 0 ? { infoPlist } : {}),
     },
     name: air.app.name,
@@ -182,7 +252,21 @@ export function emitAppJson(air: ProjectAir, train: ReleaseTrain): string {
       [
         "expo-build-properties",
         {
-          android: { minSdkVersion },
+          android: { minSdkVersion,
+          // EP-147 ③ — LE MOTEUR DÉCIDE, il ne constate pas.
+          //
+          // Google exige API 36 depuis le 31 août 2026 (answer/11926878). Le
+          // train Expo cible déjà Android 16/API 36 — mais par hasard, du
+          // point de vue du moteur : rien ne le commandait, et rien
+          // n'alerterait si une version future du train régressait. C'est la
+          // forme exacte de `network.policy` (EP-141) : appliqué de fait.
+          //
+          // ENTRE CONSTATER ET DÉCIDER, ON DÉCIDE : la valeur est posée ICI,
+          // elle vient du train (aucun nombre en dur), et un cliquet exige
+          // qu'elle atteigne le minimum de la plateforme. Constater aurait
+          // laissé l'application dépendre d'un choix qui n'est pas le sien.
+          targetSdkVersion: train.androidTargetSdk,
+        },
           ios: { deploymentTarget },
         },
       ],

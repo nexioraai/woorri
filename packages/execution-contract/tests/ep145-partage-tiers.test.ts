@@ -7,6 +7,7 @@ import { describe, expect, it } from "vitest";
 import { CAPABILITIES } from "@deribfy/capability-registry";
 import {
   PARTAGE_PAR_CAPACITE,
+  jugerDivulgationProeminente,
   jugerEspaceCompte,
   obligationsDuProprietaire,
   partagesDe,
@@ -83,35 +84,46 @@ describe("EP-145 · ① le partage se DÉRIVE, il ne se déclare pas", () => {
   });
 });
 
-describe("EP-145 · ② le consentement est une SURFACE, conditionnelle au partage", () => {
-  it("un partage exige l'écran de consentement", () => {
-    expect(surfacesAttendues(false, true)).toContain("privacy_consent");
-    const f = jugerEspaceCompte(document([{ id: "intg_p", providerClass: "payments_psp", capability: "payments.psp" }], surfacesAttendues(false)), { ecransDIdentite: [] });
-    expect(codes(f)).toContain("PRESENTATION_SURFACE_COMPTE_ABSENTE");
-    expect(f.find((x) => x.message.includes("privacy_consent"))).toBeDefined();
+describe("EP-145/147 · ② le consentement est une SURFACE — SA PLACE A CHANGÉ", () => {
+  // EP-147 DÉFAIT ce qu'EP-145 avait posé : le consentement était rangé parmi
+  // les surfaces de l'espace compte. La lecture complète de la politique
+  // Google dit l'inverse — « must be displayed in the normal usage of the app
+  // and not require the user to navigate into a menu or settings ». Une
+  // correction fondée sur la source prime sur une décision fondée sur une
+  // lecture partielle, et ces tests changent avec elle.
+  const avecPartage = (genres: readonly GenreEcran[]): Air =>
+    document([{ id: "intg_p", providerClass: "payments_psp", capability: "payments.psp" }], genres);
+
+  it("le consentement N'EST PLUS une surface de l'espace compte", () => {
+    expect(surfacesAttendues(false, true)).not.toContain("privacy_consent");
+    // Le juge de l'espace compte ne le réclame plus.
+    const f = jugerEspaceCompte(avecPartage(surfacesAttendues(false, true)), { ecransDIdentite: [] });
+    expect(codes(f)).toEqual([]);
   });
 
-  it("sans partage, l'écran n'est PAS exigé — consentir à rien n'a pas de sens", () => {
-    expect(surfacesAttendues(false, false)).not.toContain("privacy_consent");
-    const complet = document([], surfacesAttendues(false));
-    expect(codes(jugerEspaceCompte(complet, { ecransDIdentite: [] }))).toEqual([]);
+  it("un partage SANS divulgation est refusé, par l'autre juge", () => {
+    const f = jugerDivulgationProeminente(avecPartage([]), {
+      avecPartage: true,
+      ecransDIdentite: [],
+    });
+    expect(codes(f)).toEqual(["PRESENTATION_DIVULGATION_ABSENTE"]);
+    expect(f[0]!.message).toContain("normal usage");
   });
 
-  it("avec le partage ET l'écran, rien à redire", () => {
-    const complet = document(
-      [{ id: "intg_p", providerClass: "payments_psp", capability: "payments.psp" }],
-      surfacesAttendues(false, true),
-    );
-    expect(codes(jugerEspaceCompte(complet, { ecransDIdentite: [] }))).toEqual([]);
+  it("sans partage, un écran de consentement est REFUSÉ — consentir à rien", () => {
+    // `privacy_consent` a quitté SURFACES_DE_COMPTE : le type des genres de
+    // cette table ne le porte plus, alors que le SCHÉMA, lui, le porte.
+    const f = jugerDivulgationProeminente(document([], ["privacy_consent" as GenreEcran]), {
+      avecPartage: false,
+      ecransDIdentite: [],
+    });
+    expect(codes(f)).toEqual(["PRESENTATION_CONSENTEMENT_SANS_OBJET"]);
   });
 
-  it("le consentement est une OBLIGATION DE PLATEFORME, pas un choix produit", () => {
-    const f = jugerEspaceCompte(
-      document([{ id: "intg_p", providerClass: "payments_psp", capability: "payments.psp" }], surfacesAttendues(false)),
-      { ecransDIdentite: [] },
-    );
-    expect(f.find((x) => x.message.includes("privacy_consent"))!.message)
-      .toContain("5.1.2(i)");
+  it("LE RETRAIT du consentement, lui, vit bien dans le compte", () => {
+    // Reprendre son accord est un réglage durable, pas une demande
+    // ponctuelle : 5.1.1(ii) exige qu'il soit « easily accessible ».
+    expect(surfacesAttendues(false, true)).toContain("consent_withdraw");
   });
 });
 

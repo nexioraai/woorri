@@ -245,8 +245,42 @@ const SECTIONS: readonly { ou: ObligationProprietaire["ou"]; titre: string; intr
  * ET IL NE REMPLACE RIEN : il dit ce qu'il faut écrire, il ne l'écrit pas.
  * C'est la frontière posée en EP-137, et elle ne bouge pas.
  */
-export function rendrePublicationMd(air: ProjectAir): string {
-  const obligations = obligationsDuProprietaire(air);
+/**
+ * EP-147 ④ — NOMMER LE DESTINATAIRE, SANS L'INVENTER.
+ *
+ * Apple 5.1.2(i) exige de « clearly disclose WHERE personal data will be
+ * shared with third parties, including with third-party AI ». Dire « un
+ * prestataire de paiement » ne dit pas où.
+ *
+ * EP-145 avait posé un cliquet interdisant au moteur de nommer une société.
+ * Le raisonnement tenait pour la DÉRIVATION, qui ne voit que le document et
+ * n'y trouve que des classes. Mais le LOCK, lui, RÉSOUT les fournisseurs
+ * (mesuré : `auth → @supabase/supabase-js`). Le moteur peut donc nommer ce
+ * qu'il a résolu — il ne l'invente pas, il le lit. Le cliquet demeure pour
+ * tout ce qui n'est pas résolu : là, seul le propriétaire sait.
+ */
+export interface FournisseurResolu {
+  readonly providerClass: string;
+  readonly provider: string;
+}
+
+export function rendrePublicationMd(
+  air: ProjectAir,
+  fournisseurs: readonly FournisseurResolu[] = [],
+): string {
+  const resolu = new Map(fournisseurs.map((f) => [f.providerClass, f.provider]));
+  const obligations = obligationsDuProprietaire(air).map((o) =>
+    o.matiere === undefined
+      ? o
+      : {
+          ...o,
+          matiere: o.matiere.map((m) => {
+            const classe = m.split(" :")[0] ?? "";
+            const nom = resolu.get(classe);
+            return nom === undefined ? m : m.replace(classe, `${classe} (${nom})`);
+          }),
+        },
+  );
   const lignes: string[] = [
     `# Publier « ${air.app.name} »`,
     "",

@@ -121,6 +121,9 @@ describe("EP-144 · aucun fait « lu sans effet » créé (motif EP-141)", () =>
     // Les textes de permission viennent des raisons DÉCLARÉES ; la
     // déclaration d'export vient des capacités ; rien d'autre n'est ajouté.
     const ios = appJson(GRAND).ios as Record<string, unknown>;
-    expect(Object.keys(ios).sort()).toEqual(["bundleIdentifier", "config", "infoPlist", "supportsTablet"]);
+    // EP-147 — `privacyManifests` s'y ajoute, DÉRIVÉ des capacités comme la
+    // déclaration d'export. Cette liste se monte par édition consciente.
+    expect(Object.keys(ios).sort())
+      .toEqual(["bundleIdentifier", "config", "infoPlist", "privacyManifests", "supportsTablet"]);
   });
 });

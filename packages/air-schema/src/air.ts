@@ -21,7 +21,7 @@ import {
 // 1.7.1 (E3.3, D-131) : provenance APLANIE (sourceKind/sourceIntegrationId/
 //   sourceDomain/sourceRefreshSeconds) — l'union 1.7.0 dépassait la limite
 //   réelle de grammaire de l'API (classe D-078) ; sémantique inchangée.
-export const AIR_SCHEMA_VERSION = "1.24.0";
+export const AIR_SCHEMA_VERSION = "1.25.0";
 
 export const semverSchema = z.string().regex(/^\d+\.\d+\.\d+$/);
 export const sha256Schema = z.string().regex(/^[0-9a-f]{64}$/);
@@ -265,6 +265,8 @@ const screenSchema = z.strictObject({
       // Apple 5.1.2(i) exige de l'obtenir AVANT le partage ; il n'existe que
       // si un partage existe, ce qui se DÉRIVE des intégrations.
       "privacy_consent",
+      // 1.25.0 (EP-147) — le RETRAIT du consentement (5.1.1(ii)).
+      "consent_withdraw",
     ])
     .optional(),
   /**

@@ -1134,7 +1134,10 @@ export function emitProject(
   // n'atteignaient personne : une connaissance du moteur, pas une
   // information de celui qui publie. Le fichier voyage avec le code et
   // survit à la session — c'est ce qui le rend utile.
-  files.set("PUBLICATION.md", rendrePublicationMd(air));
+  // EP-147 ④ — les fournisseurs RÉSOLUS par le lock sont nommés : le moteur
+  // ne les invente pas, il les lit. Ce qui n'est pas résolu reste au
+  // propriétaire, qui seul le connaît.
+  files.set("PUBLICATION.md", rendrePublicationMd(air, lock.resolved.providers));
   files.set("demo.data.ts", emitDemoData(air));
   files.set("manifests/permissions.manifest.json", emitPermissionsManifest(air));
   files.set("nav.data.ts", emitNavData(air, locale));

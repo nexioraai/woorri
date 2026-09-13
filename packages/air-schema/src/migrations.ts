@@ -331,6 +331,14 @@ export const AIR_MIGRATIONS: readonly AirMigration[] = [
       "des intégrations : rien à déclarer, rien à inventer. Migration IDENTITÉ.",
     migrate: (document) => document,
   },
+  {
+    from: "1.24.0",
+    to: "1.25.0",
+    description:
+      "AIR 1.25.0 (EP-147) : genre `consent_withdraw` — donner son accord sans " +
+      "pouvoir le reprendre n'est pas un accord (5.1.1(ii)). Migration IDENTITÉ.",
+    migrate: (document) => document,
+  },
 ];
 
 export class AirMigrationError extends Error {

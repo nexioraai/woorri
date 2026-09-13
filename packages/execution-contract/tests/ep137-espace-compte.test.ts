@@ -188,7 +188,10 @@ describe("EP-137 · CLIQUETS (règle d'EP-132)", () => {
     // l'autre — le motif « liste écrite deux fois », déjà payé cinq fois.
     const schema = projectAirSchema.shape.screens.element.shape.purpose;
     const duSchema = [...(schema.unwrap().options as readonly string[])].sort();
-    expect(duSchema).toEqual(Object.keys(SURFACES_DE_COMPTE).sort());
+    // EP-147 — `privacy_consent` a QUITTÉ les surfaces de compte : sa place
+    // est jugée ailleurs, parce que Google exige qu'elle ne soit pas dans un
+    // menu. Le schéma porte donc un genre de plus que cette table.
+    expect(duSchema).toEqual([...Object.keys(SURFACES_DE_COMPTE), "privacy_consent"].sort());
   });
 
   it("chaque surface déclare son fondement, et une source si elle en a une", () => {
@@ -205,6 +208,6 @@ describe("EP-137 · CLIQUETS (règle d'EP-132)", () => {
 
   it("le schéma qui porte ce champ est la version courante", () => {
     // EP-145 — montée à 1.24.0 avec le genre `privacy_consent`.
-    expect(AIR_SCHEMA_VERSION).toBe("1.24.0");
+    expect(AIR_SCHEMA_VERSION).toBe("1.25.0");
   });
 });

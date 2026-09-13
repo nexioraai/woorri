@@ -51,6 +51,8 @@ export {
   jugerPlacement,
   jugerPositionRecherche,
   jugerEspaceCompte,
+  GENRES_HORS_COMPTE,
+  jugerDivulgationProeminente,
   jugerPositionPrimitives,
   jugerPrimitivesDeNavigation,
   surfacesAttendues,
@@ -74,4 +76,4 @@ export type {
   GapOwner,
 } from "./feasibility.ts";
 export { PARTAGE_BACKEND, PARTAGE_PAR_CAPACITE, obligationsDuProprietaire, partagesDe, rendrePublicationMd } from "./obligations-proprietaire.ts";
-export type { ObligationProprietaire, Partage } from "./obligations-proprietaire.ts";
+export type { FournisseurResolu, ObligationProprietaire, Partage } from "./obligations-proprietaire.ts";

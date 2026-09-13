@@ -68,8 +68,8 @@ export const RELEASE_TRAIN_V1 = {
   // `capability` — la navigation post-connexion n'existait dans AUCUN contrat
   // (mesuré EP-061/R6 : 8 arcs prescrits morts, l'intention portée par un
   // param que rien ne lisait).
-  // EP-137 — `purpose` sur l'écran : ajout OPTIONNEL, migration identité.
-  airSchemaVersion: "1.24.0",
+  // EP-137/145/147 — genres d'écran successifs, migrations identité.
+  airSchemaVersion: "1.25.0",
   // Porté à 1.1.0 le 2026-08-31 (D-060) : montée STRICTEMENT ADDITIVE du
   // registre de blocs — `form` gagne `loading`/`empty`, `detail_header` gagne un
   // état, les trois blocs à données gagnent les props de titres. Rien n'est
@@ -217,6 +217,14 @@ export const RELEASE_TRAIN_V1 = {
     // noms hérités) : seul le lieu de la vérité change.
     "c9148c224bfa26e73aa1c82f825e00b58bbf4a92935cd0dd14c933c25a1b9b09",
   // EP-134 — ajout compatible `external_contact` : version MINEURE du registre.
+  /**
+   * EP-147 ③ — LE NIVEAU D'API ANDROID VISÉ, épinglé par le train.
+   *
+   * Google l'exige à 36 depuis le 31 août 2026 (answer/11926878). Le train
+   * le portait DE FAIT, par la version d'Expo ; il le DÉCLARE désormais, et
+   * un cliquet vérifie qu'il atteint le minimum de la plateforme.
+   */
+  androidTargetSdk: 36,
   capabilityRegistryVersion: "1.1.0",
   capabilitySourcesHash:
     "d9ca3e729f3bb6158dc95866e0a09eb1515f141d84b2779fb930d4f4bdfa909d",

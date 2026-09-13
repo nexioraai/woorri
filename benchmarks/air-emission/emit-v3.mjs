@@ -179,7 +179,7 @@ const coutUSD = (u) => adaptateur.coutUsd(adaptateur.lireUsage(u));
 // EP-137 — resynchronisé sur AIR 1.23.0 (`purpose` : le genre des écrans
 // qui n'ont aucune existence métier). Monté DANS LE MÊME GESTE que la
 // règle 41, comme le cliquet `generateur-synchronise` l'exige.
-export const CONTRAT_CIBLE = "1.24.0";
+export const CONTRAT_CIBLE = "1.25.0";
 
 const PARTS = [
   {
