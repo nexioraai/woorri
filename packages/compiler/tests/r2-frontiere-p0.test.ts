@@ -76,6 +76,12 @@ describe("B/C — les dérivations ne travaillent QUE sur le MODEL (balayage COM
     inventaireDe: () => derivationsModele.inventaireDe("texte fixe de calibration"),
     verifierCouvertureLexicale: (m) =>
       derivationsModele.verifierCouvertureLexicale(["soins", "creneau"], m),
+    // EP-162 (édition consciente) — « ce terme est-il porté par un geste que
+    // le modèle EXERCE ? ». Le terme vient du brief, comme pour les deux
+    // dérivations voisines : il entre donc en argument FIXE, et ce qui est
+    // éprouvé ici est que la réponse ne dépend QUE du modèle. Les gestes
+    // exercés sont lus dans `parcours[].etapes[].geste` — rien d'autre.
+    porteParUnGesteExerce: (m) => derivationsModele.porteParUnGesteExerce(m, "consulter"),
     // obligations (post-P0, consomment des sections AIR structurées)
     actionsPromises: () => derivationsObligations.actionsPromises([]),
     ciblesVivantes: () => derivationsObligations.ciblesVivantes({}),

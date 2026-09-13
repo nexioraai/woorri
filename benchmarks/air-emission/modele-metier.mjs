@@ -1053,6 +1053,32 @@ export function inventaireDe(brief) {
  * un terme non retenu (raison fermée), ou le nom/id d'un nœud du modèle.
  * Sinon : MODELE_TERME_NON_JUSTIFIE — l'omission silencieuse est refusée.
  */
+/**
+ * EP-162 — UN TERME EST-IL PORTÉ PAR UN GESTE QUE LE MODÈLE EXERCE ?
+ *
+ * Le rapprochement se fait sur la RACINE : « consulter » et
+ * `consulter_historique`, « choisit » et `choisir`. Ni synonymie ni
+ * sémantique — une comparaison de préfixes, assumée comme telle, sur le
+ * vocabulaire FERMÉ de la table. Un geste que le modèle n'exerce PAS ne
+ * couvre rien : c'est ce qui empêche la règle de devenir un permis de
+ * silence.
+ */
+export function porteParUnGesteExerce(modele, terme) {
+  const normalise = (t) => t.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const t = normalise(terme);
+  if (t.length < 4) return false;
+  const exerces = new Set(modele.parcours.flatMap((p) => p.etapes.map((e) => e.geste)));
+  for (const geste of exerces) {
+    for (const mot of geste.split("_")) {
+      const g = normalise(mot);
+      if (g.length < 4) continue;
+      const racine = g.slice(0, Math.min(6, g.length));
+      if (t.startsWith(racine) || g.startsWith(t.slice(0, Math.min(6, t.length)))) return true;
+    }
+  }
+  return false;
+}
+
 export function verifierCouvertureLexicale(inventaire, modele) {
   const textes = [
     ...modele.couverture.couverts.map((x) => x.terme),
@@ -1071,6 +1097,20 @@ export function verifierCouvertureLexicale(inventaire, modele) {
     // Justifié si le corps du terme (ou son radical sans pluriel) apparaît.
     const radical = terme.replace(/s$/, "");
     if (!textes.includes(terme) && !textes.includes(radical)) {
+      // EP-162 ② — CE QU'UN GESTE PORTE DÉJÀ N'EST PAS UN MANQUE.
+      //
+      // MESURÉ : les sept termes que ce juge signalait sur un brief réel
+      // étaient SEPT VERBES D'ACTION — « choisir » et « consulter » sont
+      // littéralement des gestes du vocabulaire fermé. Ce que le brief décrit
+      // par ces mots est porté par les PARCOURS du modèle, pas par sa
+      // couverture de concepts : exiger une justification lexicale pour ce
+      // que la structure exprime déjà est une redondance, pas une rigueur.
+      //
+      // LA RÈGLE EST DÉRIVÉE DE LA TABLE, jamais une liste de verbes : un
+      // terme est couvert de fait s'il DÉSIGNE un geste que le modèle
+      // EXERCE. Un geste absent du modèle ne couvre rien — sans quoi le
+      // vocabulaire entier deviendrait un permis de silence.
+      if (porteParUnGesteExerce(modele, terme)) continue;
       out.push(d("MODELE_TERME_NON_JUSTIFIE", `couverture[${terme}]`, "ni couvert, ni non-retenu, ni porté par un nœud"));
     }
   }

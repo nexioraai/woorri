@@ -332,18 +332,42 @@ export function jugerAcceptation(air, prescriptif, intention) {
 }
 
 export function validateLocal(document) {
+  // EP-162 ③ — L'INTENTION EST DUE, ET AUCUN JUGE BRANCHÉ NE LE VOYAIT.
+  //
+  // BRANCHÉ, PAS RETIRÉ. Le doute était légitime : `intent` est dans le
+  // schéma, donc Zod pourrait suffire. MESURÉ, il ne suffit pas — un
+  // document RÉEL du dépôt (toiletteur-chiens 1.7.1) privé de son intention
+  // traverse `projectAirSchema.safeParse` ET `validateAir` en VERT. C'est
+  // voulu : `air.ts` rend `intent` optionnel pour ne pas forcer la migration
+  // à FABRIQUER une intention aux 12 documents du corpus gelé (D-044), et
+  // renvoie le fail-closed « à la gate de fidélité ». Or l'ÉMISSION ne passe
+  // pas par cette gate : la promesse était tenue ailleurs que là où elle
+  // était due.
+  //
+  // ICI, sur le document BRUT — avant migration, seul moment où la version
+  // DÉCLARÉE distingue un artefact gelé d'un document neuf.
+  //
+  // MESURÉ SUR 81 ARCHIVES avant branchement : 10 rouges, toutes des
+  // `emission-partielle` — des assemblages interrompus par un échec
+  // technique, jamais un document complet. Le fail-closed ne ferme sur
+  // aucune génération réussie du passé.
+  const intentionDue = airSchema.validateAirIntentRequirement(document);
   const parsed = airSchema.projectAirSchema.safeParse(document);
   if (!parsed.success) {
     return {
       air: null,
-      diagnostics: parsed.error.issues.map((issue) => ({
-        code: "SCHEMA",
-        path: issue.path.join("."),
-        message: issue.message,
-      })),
+      diagnostics: [
+        ...intentionDue,
+        ...parsed.error.issues.map((issue) => ({
+          code: "SCHEMA",
+          path: issue.path.join("."),
+          message: issue.message,
+        })),
+      ],
     };
   }
   const diagnostics = [
+    ...intentionDue,
     ...airSchema.validateAir(parsed.data),
     ...registry.validateAirCapabilities(parsed.data),
     ...blocksRegistry.validateAirBlocks(parsed.data),

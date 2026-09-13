@@ -1330,6 +1330,7 @@ const rtBilan =
   rtJournaux.length === 0
     ? "round-trip NON EXÉCUTÉ (instrument débranché — EP-061f)"
     : `round-trip conformes ${rtValid}/${rtJournaux.length} · identiques ${identical}/${rtJournaux.length}`;
+
 // EP-070 · ③ — le taux de passage P0→P2 est PUBLIÉ à chaque campagne :
 // c'est le chiffre qui dimensionne R8, jamais un détail interne.
 const tiragesP0 = summary.flatMap((j) => j.p0Tentatives ?? []);
@@ -1338,6 +1339,26 @@ const bilanP0 =
   tiragesP0.length === 0
     ? "P0 NON TIRÉ"
     : `passage P0→P2 : ${passagesP0}/${tiragesP0.length} tirages`;
+
+// EP-162 ① — L'ATTESTATION EST JUGÉE, PLUS SEULEMENT ÉCRITE.
+//
+// Le principe « un chiffre exige une attestation » (R6, EP-062) était appliqué
+// À LA MAIN, deux fois : un `if` pour le round-trip, un autre pour P0. Le juge
+// qui le porte — `jugerAttestations` — existait et NE TOURNAIT PAS (EP-161).
+// Il tourne désormais sur les instruments du bilan : un chiffre publié au nom
+// d'un instrument qui n'a pas tourné est NOMMÉ, quel que soit l'instrument, y
+// compris ceux qu'on ajoutera demain.
+const INSTRUMENTS_DU_BILAN = ["passage-p0", "round-trip", "acceptation"];
+const instrumentsExecutes = new Set([
+  ...(tiragesP0.length > 0 ? ["passage-p0"] : []),
+  ...(rtJournaux.length > 0 ? ["round-trip"] : []),
+  ...(summary.length > 0 ? ["acceptation"] : []),
+]);
+const attestations = vivacite.jugerAttestations(
+  INSTRUMENTS_DU_BILAN,
+  instrumentsExecutes,
+);
+for (const a of attestations) console.log(`  ⚠ ${a.code} — ${a.message}`);
 console.log(
   `\nBILAN tranche [${start},${end}) : ${valid}/${summary.length} AIR valides · ` +
     `${bilanP0} · ${rtBilan} · ` +

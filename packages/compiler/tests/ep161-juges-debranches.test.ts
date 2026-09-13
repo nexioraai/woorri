@@ -54,23 +54,15 @@ function emettrices(prod: readonly Source[]): { p: string; nom: string }[] {
  * sans qu'on le sache, et rendre visible ce que le dépôt promet sans le tenir.
  */
 const DEBRANCHES_CONNUS: Readonly<Record<string, string>> = {
-  verifierCouvertureLexicale:
-    "L-160-A — le juge qui rend le générateur redevable du BRIEF. Sa remise en " +
-    "service exige d'abord de trancher son bruit : 7 diagnostics sur un modèle " +
-    "qui passe P1 à zéro.",
-  jugerAttestations:
-    "L-161-A — juge de vivacité : il compare les instruments ATTENDUS aux " +
-    "instruments RÉELLEMENT exécutés. Débranché, aucune attestation n'est " +
-    "vérifiée, et une enveloppe peut promettre ce qu'elle n'a pas fait.",
-  validateAirIntentRequirement:
-    "L-161-B — exporté par l'index du paquet, donc offert comme API, et appelé " +
-    "par personne. Il vérifie qu'un document porte son intention.",
+  // EP-162 — LA LISTE A MAIGRI DE TROIS. Elle a tenu sa promesse : les
+  // dettes L-160-A, L-161-A et L-161-B sont payées, leurs juges branchés,
+  // et les retirer d'ici n'est pas un geste d'écriture — le test
+  // « chaque débranché déclaré l'est ENCORE » refusait de passer tant
+  // qu'ils y figuraient avec un appelant de production.
+  //
   // DEUX SIGNALÉS QUE JE N'AI PAS CONFIRMÉS COMME JUGES, et je le dis plutôt
   // que de gonfler le compte : le détecteur les voit parce que leur corps
   // contient un code en majuscules, ce qui ne fait pas d'eux des juges.
-  // `contratDEtape` rend un contrat d'étape, pas des diagnostics.
-  // `nativeFootprintOf` est ré-exporté par l'index sans définition trouvée
-  // dans le paquet — à élucider, sans l'annoncer comme un juge mort.
   contratDEtape:
     "SIGNALÉ, NON CONFIRMÉ — rend un contrat d'étape et non des diagnostics ; " +
     "le détecteur le voit sur une chaîne en majuscules. À élucider.",
@@ -127,7 +119,7 @@ describe("EP-161 ① · aucun juge ne se débranche en silence", () => {
 });
 
 describe("EP-161 ① · LE CHEMIN PIRE (règle d'EP-132) — appelé mais ignoré", () => {
-  it("EST DIT, ET NON MESURÉ — l'heuristique que j'ai écrite ne prouve rien", () => {
+  it("PLACE TENUE, RIEN DE FERMÉ — ce test ne mesure aucun juge et n'en couvre aucun", () => {
     // Un juge débranché se voit ; un juge dont le résultat est JETÉ a l'air
     // branché, et c'est pire. J'ai écrit un détecteur : il a rendu 43 cas,
     // tous faux — il ne sait pas distinguer un appel dont la valeur sert
@@ -135,9 +127,25 @@ describe("EP-161 ① · LE CHEMIN PIRE (règle d'EP-132) — appelé mais ignor�
     // appel dont elle est perdue. Publier 43 faux positifs aurait été
     // inutile ; les cacher aurait été malhonnête.
     //
-    // Ce qu'il faudrait : une analyse de flot, pas une expression régulière.
-    // Consigné en [L-161-C]. Ce test tient la place pour que le chemin ne
-    // soit pas oublié — il ne prétend pas le fermer.
-    expect(true).toBe(true);
+    // EP-162 · L-161-C — HORS DE CETTE PASSE, PAS HORS DE PORTÉE, et mesuré
+    // plutôt que supposé. TypeScript 5.9.3 est déjà installé ; sonde tsc
+    // `--strict --noUnusedLocals` sur deux formes :
+    //   const d = juge(1);   → TS6133 « 'd' is declared but its value is
+    //                          never read » — VU.
+    //   juge(1);             → AUCUNE erreur — NON VU.
+    // Une moitié du chemin est donc déjà couverte par un outil du dépôt. La
+    // seconde n'est même pas une analyse de FLOT : l'appel nu est une forme
+    // SYNTAXIQUE exacte — un `ExpressionStatement` dont l'expression est un
+    // `CallExpression` vers une émettrice — lisible sur l'AST que TypeScript
+    // expose. Il n'y a donc aucun analyseur à réécrire ; il y a un parseur à
+    // appeler. C'est ce qui distingue « pas fait » de « impossible ».
+    //
+    // CE TEST NE FERME RIEN ET NE DOIT PAS ÊTRE LU COMME UNE COUVERTURE : il
+    // ne charge aucun juge, n'en appelle aucun, et ne mesure aucune source.
+    // Il tient la place de [L-161-C] pour que le chemin ne disparaisse pas
+    // de la batterie verte.
+    expect(
+      "L-161-C OUVERT : le chemin « appelé mais ignoré » n'est ni mesuré ni fermé",
+    ).toBeTruthy();
   });
 });

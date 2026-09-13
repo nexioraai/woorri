@@ -25,6 +25,7 @@ import {
   NATURES_ATTRIBUT,
   RAISONS_NON_RETENUE,
   inventaireDe,
+  verifierCouvertureLexicale,
   modeleMetierSchema,
   strategieInitiale,
   validerModele,
@@ -218,8 +219,27 @@ export function jugerSortieP0(texteBrut, brief, meta) {
     for (const x of brut.couverture.nonRetenus ?? []) {
       distributionRaisons[x.raison] = (distributionRaisons[x.raison] ?? 0) + 1;
     }
+    // EP-162 ② — LE JUGE DE COUVERTURE LEXICALE EST BRANCHÉ ICI.
+    //
+    // ICI ET NULLE PART AILLEURS : il exige le BRIEF, que `validerModele`
+    // n'a pas. C'est exactement pourquoi il était resté débranché depuis
+    // R2/C1 — sa signature ne rentrait pas dans le seul juge appelé.
+    //
+    // RÉGIME OBSERVANT, ET C'EST UN ARBITRAGE, PAS UN OUBLI.
+    // `MODELE_TERME_NON_JUSTIFIE` est classé `faute_de_production` : en
+    // fail-closed il déclencherait un re-tirage. MESURÉ sur 34 archives :
+    // 156 diagnostics subsistent après la règle des gestes, dominés par des
+    // mots-outils que `STOPWORDS_FR` ne connaît pas — « directement » 17
+    // fois, « quand », « veux », « petit ». Refuser un tirage là-dessus
+    // serait refuser un adverbe. La lacune est DANS L'INVENTAIRE, pas dans
+    // ce juge : `STOPWORDS_FR` est une liste écrite à la main. L'allonger
+    // de sept mots ici serait la onzième occurrence du motif — donc non.
+    // Le passage en fail-closed est dû quand l'inventaire cesse d'être une
+    // liste manuelle (L-162-A).
+    const couvertureLexicale = verifierCouvertureLexicale(inventaire, brut);
     observation = {
       tailleInventaire: inventaire.length,
+      termesNonJustifies: couvertureLexicale.map((x) => x.path),
       partInventaireEnNonRetenus:
         inventaire.length === 0 ? 0 : dansNonRetenus.length / inventaire.length,
       distributionRaisons,

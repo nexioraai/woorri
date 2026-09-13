@@ -131,6 +131,7 @@ export function contratDEtape(modele: ModeleMetier, parcours: Parcours, index: n
   | undefined;
 export const STOPWORDS_FR: Set<string>;
 export function inventaireDe(brief: string): string[];
+export function porteParUnGesteExerce(modele: ModeleMetier, terme: string): boolean;
 export function verifierCouvertureLexicale(
   inventaire: readonly string[],
   modele: ModeleMetier,
