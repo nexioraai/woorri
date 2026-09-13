@@ -24,6 +24,7 @@
 // s'appuient donc sur la documentation Material officielle d'Android, qui
 // couvre les trois points de cette passe. Ce qu'aucune source ne fonde est
 // étiqueté DÉCISION PRODUIT, jamais présenté comme une convention.
+import { partagesDe } from "./obligations-proprietaire.ts";
 import type { ProjectAir } from "@deribfy/air-schema";
 
 type Air = ProjectAir;
@@ -336,15 +337,35 @@ export const SURFACES_DE_COMPTE = {
   help: { fondement: "produit", source: null, exigeIdentite: false },
   settings: { fondement: "produit", source: null, exigeIdentite: false },
   account_create: { fondement: "produit", source: null, exigeIdentite: true },
+  // EP-145 — le consentement n'existe QUE s'il y a quelque chose à consentir.
+  // L'exiger sans partage serait demander l'accord de l'utilisateur pour rien.
+  privacy_consent: {
+    fondement: "plateforme",
+    source: "App Store Review Guidelines 5.1.2(i)",
+    exigeIdentite: false,
+    exigePartage: true,
+  },
 } as const;
 
 export type GenreEcran = keyof typeof SURFACES_DE_COMPTE;
 
-/** Les genres attendus d'un document, DÉRIVÉS : jamais une liste écrite. */
-export function surfacesAttendues(avecIdentite: boolean): GenreEcran[] {
-  return (Object.keys(SURFACES_DE_COMPTE) as GenreEcran[]).filter(
-    (genre) => avecIdentite || !SURFACES_DE_COMPTE[genre].exigeIdentite,
-  );
+/**
+ * Les genres attendus d'un document, DÉRIVÉS : jamais une liste écrite.
+ *
+ * EP-145 — la condition n'est plus seulement l'identité : une surface peut
+ * dépendre d'un PARTAGE. `avecPartage` par défaut à `false` pour que les
+ * appels existants gardent exactement leur sens.
+ */
+export function surfacesAttendues(
+  avecIdentite: boolean,
+  avecPartage = false,
+): GenreEcran[] {
+  return (Object.keys(SURFACES_DE_COMPTE) as GenreEcran[]).filter((genre) => {
+    const fiche: { exigeIdentite: boolean; exigePartage?: boolean } =
+      SURFACES_DE_COMPTE[genre];
+    if (fiche.exigePartage === true) return avecPartage;
+    return avecIdentite || !fiche.exigeIdentite;
+  });
 }
 
 /**
@@ -360,6 +381,9 @@ export function jugerEspaceCompte(
 ): readonly PlacementFinding[] {
   const out: PlacementFinding[] = [];
   const avecIdentite = contexte.ecransDIdentite.length > 0;
+  // EP-145 — le partage se DÉRIVE du document lui-même : le juge n'a rien à
+  // recevoir de plus, et personne ne peut le lui cacher.
+  const avecPartage = partagesDe(air).length > 0;
   const parGenre = new Map<string, string[]>();
   for (const ecran of air.screens) {
     if (ecran.purpose === undefined) continue;
@@ -394,7 +418,7 @@ export function jugerEspaceCompte(
     });
   }
 
-  for (const genre of surfacesAttendues(avecIdentite)) {
+  for (const genre of surfacesAttendues(avecIdentite, avecPartage)) {
     if (parGenre.has(genre)) continue;
     const fiche = SURFACES_DE_COMPTE[genre];
     out.push({

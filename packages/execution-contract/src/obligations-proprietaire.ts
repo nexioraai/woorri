@@ -33,6 +33,98 @@ export interface ObligationProprietaire {
   readonly matiere?: readonly string[];
 }
 
+/**
+ * EP-145 — AVEC QUI LES DONNÉES SONT PARTAGÉES, DÉRIVÉ DES INTÉGRATIONS.
+ *
+ * Apple 5.1.2(i) : « You must clearly disclose where personal data will be
+ * shared with third parties, including with third-party AI, and obtain
+ * explicit permission before doing so. » Le contrat savait dire CE QUI est
+ * collecté (`compliance.dataCollected`) et pas AVEC QUI c'est partagé.
+ *
+ * LE FAIT SE DÉRIVE, IL NE SE DÉCLARE PAS — et c'est ce qui ferme la porte de
+ * sortie : brancher un prestataire de paiement PARTAGE avec lui, que le
+ * générateur le dise ou non. Le registre des fournisseurs est lui-même dérivé
+ * du registre des capacités (mesuré) : la chaîne entière tient sans qu'aucune
+ * valeur ne soit recopiée à la main.
+ *
+ * PARTITION EXHAUSTIVE SOUS CLIQUET (motif EP-135, appliqué en EP-144) :
+ * chaque capacité du registre est classée — ce qu'elle transmet à son
+ * fournisseur, ou rien. Une capacité NEUVE ne peut pas entrer sans qu'une
+ * décision soit prise. `[]` signifie « reste sur l'appareil », et c'est une
+ * réponse, pas un trou.
+ */
+export const PARTAGE_PAR_CAPACITE: Readonly<Record<string, readonly string[]>> = {
+  // Mesure d'usage envoyée au fournisseur d'analytique.
+  analytics: ["usage_data", "identifiers"],
+  // L'identité de la personne est établie chez le fournisseur.
+  auth: ["contact_info", "identifiers"],
+  // Lecture locale de l'appareil photo : rien ne sort.
+  barcode_scan: [],
+  // Le gabarit biométrique ne quitte JAMAIS l'appareil (Secure Enclave).
+  biometrics: [],
+  calendar: [],
+  camera: [],
+  // Ouverture d'une URL : aucune donnée n'est transmise à un tiers.
+  deep_links: [],
+  external_contact: [],
+  // Les coordonnées partent au fournisseur de cartes à chaque requête.
+  geolocation: ["location"],
+  maps: ["location"],
+  // Le contenu téléversé est stocké chez l'hébergeur.
+  media_upload: ["user_content"],
+  // Stockage LOCAL : c'est sa définition même.
+  offline_storage: [],
+  "payments.iap": ["purchases", "identifiers"],
+  "payments.psp": ["purchases", "contact_info", "identifiers"],
+  // Le jeton d'appareil est enregistré chez le service de notification.
+  push_notifications: ["identifiers"],
+  // La feuille de partage est un geste de l'utilisateur, pas un envoi.
+  share: [],
+};
+
+/**
+ * REPLI PRUDENT, et c'est un choix assumé. MESURÉ sur les documents réels :
+ * les classes de fournisseur déclarées (`rest_api`, `image_cdn`,
+ * `psp_checkout`…) ne figurent PAS au registre — le schéma les laisse libres.
+ * Quand la capacité n'est pas dite, on ne peut donc pas savoir ce que le tiers
+ * reçoit.
+ *
+ * On suppose alors le partage le PLUS LARGE. L'inverse — supposer qu'aucune
+ * donnée ne sort — ferait manquer une divulgation qu'Apple exige, et le coût
+ * des deux erreurs n'est pas le même : sur-déclarer alourdit une politique,
+ * sous-déclarer fait refuser l'application.
+ */
+export const PARTAGE_BACKEND: readonly string[] = [
+  "contact_info",
+  "identifiers",
+  "user_content",
+];
+
+export interface Partage {
+  /** La classe de fournisseur — jamais le nom commercial, que le lock résout. */
+  readonly aupresDe: string;
+  /** Ce qui lui parvient, dans le vocabulaire de `dataCollected`. */
+  readonly recoit: readonly string[];
+}
+
+/** Les partages d'un document, DÉRIVÉS de ses intégrations. */
+export function partagesDe(air: ProjectAir): readonly Partage[] {
+  const out = new Map<string, Set<string>>();
+  for (const integration of air.integrations) {
+    const recoit =
+      integration.capability === undefined
+        ? PARTAGE_BACKEND
+        : (PARTAGE_PAR_CAPACITE[integration.capability] ?? []);
+    if (recoit.length === 0) continue;
+    const deja = out.get(integration.providerClass) ?? new Set<string>();
+    for (const r of recoit) deja.add(r);
+    out.set(integration.providerClass, deja);
+  }
+  return [...out.entries()]
+    .map(([aupresDe, recoit]) => ({ aupresDe, recoit: [...recoit].sort() }))
+    .sort((a, b) => (a.aupresDe < b.aupresDe ? -1 : 1));
+}
+
 /** Les catégories déclarées, rendues telles quelles : le moteur ne les
  *  traduit pas — les recopier est l'acte du propriétaire. */
 const categoriesDe = (air: ProjectAir): readonly string[] => air.compliance.dataCollected;
@@ -75,6 +167,22 @@ export function obligationsDuProprietaire(air: ProjectAir): readonly ObligationP
         "sans quoi la revue Apple ne pourra pas ouvrir l'application.",
       ou: "console",
       source: "App Store Review Guidelines 2.1(a)",
+    });
+  }
+
+  const partages = partagesDe(air);
+  if (partages.length > 0) {
+    out.push({
+      quoi:
+        "Nommer, dans votre politique de confidentialité, les prestataires avec " +
+        "qui les données sont partagées, et ce que chacun reçoit. L'application " +
+        "demande le consentement ; le NOM des sociétés et leurs propres " +
+        "politiques, vous seul les connaissez.",
+      ou: "fournir",
+      source:
+        "App Store Review Guidelines 5.1.2(i) — « You must clearly disclose where " +
+        "personal data will be shared with third parties »",
+      matiere: partages.map((p) => `${p.aupresDe} : ${p.recoit.join(", ")}`),
     });
   }
 

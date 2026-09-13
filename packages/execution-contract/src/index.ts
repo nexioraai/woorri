@@ -73,5 +73,5 @@ export type {
   FeasibilityVerdict,
   GapOwner,
 } from "./feasibility.ts";
-export { obligationsDuProprietaire, rendrePublicationMd } from "./obligations-proprietaire.ts";
-export type { ObligationProprietaire } from "./obligations-proprietaire.ts";
+export { PARTAGE_BACKEND, PARTAGE_PAR_CAPACITE, obligationsDuProprietaire, partagesDe, rendrePublicationMd } from "./obligations-proprietaire.ts";
+export type { ObligationProprietaire, Partage } from "./obligations-proprietaire.ts";

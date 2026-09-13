@@ -321,6 +321,16 @@ export const AIR_MIGRATIONS: readonly AirMigration[] = [
       "n'est INVENTÉ pour eux : un écran sans genre n'en a pas.",
     migrate: (document) => document,
   },
+  {
+    from: "1.23.0",
+    to: "1.24.0",
+    description:
+      "AIR 1.24.0 (EP-145) : genre d'écran `privacy_consent` — le consentement " +
+      "au partage avec des tiers, qu'Apple 5.1.2(i) exige d'obtenir AVANT le " +
+      "partage. Il n'existe que si un partage existe, et le partage se DÉRIVE " +
+      "des intégrations : rien à déclarer, rien à inventer. Migration IDENTITÉ.",
+    migrate: (document) => document,
+  },
 ];
 
 export class AirMigrationError extends Error {
