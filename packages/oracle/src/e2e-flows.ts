@@ -18,11 +18,35 @@ export interface GeneratedFlows {
   readonly navigation: string;
   /** Rejeu du même parcours sous RTL forcé (robustesse de mise en page). */
   readonly rtl: string;
+  /**
+   * EP-165 ① — PARCOURS DE CAPTURE : mêmes écrans, une image par écran.
+   *
+   * LE SOCLE DU SECOND ŒIL, et il vaut SANS lui : deux captures du même
+   * écran entre deux générations se comparent AU PIXEL. C'est une détection
+   * de régression visuelle DÉTERMINISTE (N6), qui n'appelle aucun modèle et
+   * ne coûte rien. Un lecteur ne sert qu'ensuite, à QUALIFIER un changement
+   * déjà détecté mécaniquement — sa part probabiliste est réduite au lieu
+   * d'être subie (EP-164 ④).
+   *
+   * LES NOMS SONT DÉRIVÉS DES `screenId` DE L'AIR, jamais numérotés : un
+   * fichier numéroté se décale dès qu'un écran s'insère, et deux campagnes
+   * ne seraient plus comparables. C'est la condition même du « au pixel ».
+   */
+  readonly captures: string;
   /** Métadonnées de couverture (pour le rapport). */
   readonly coverage: {
     readonly entryScreenId: string;
     readonly navActions: readonly { blockId: string; targetScreenId: string }[];
     readonly rtlDeclared: boolean;
+    /**
+     * Écrans RÉELLEMENT capturés, et le document en compte davantage.
+     * MESURÉ sur 8 documents du dépôt : ce parcours atteint 25 % à 44 % des
+     * écrans, parce qu'il ne visite que l'entrée et ce qu'une action de
+     * l'entrée ouvre. L'écran d'ENTRÉE est toujours du nombre — c'est lui
+     * qui porte les deux défauts que seul un œil voit. Le reste est une
+     * dette DISTINCTE, chiffrée ici plutôt que tue [L-165-A].
+     */
+    readonly capturedScreenIds: readonly string[];
   };
 }
 
@@ -121,9 +145,49 @@ export function generateMaestroFlows(
     "",
   ].join("\n");
 
+  // UNE IMAGE PAR ÉCRAN, PAS PAR CHEMIN — défaut MESURÉ sur le document
+  // `agence-immo` : deux blocs de l'accueil ouvrent le MÊME `scr_quartiers`,
+  // et la version naïve prenait deux captures du même nom. La seconde
+  // écrasait la première, le compte d'écrans capturés était faux, et le
+  // parcours payait deux fois le même aller-retour. La capture est donc
+  // prise à la PREMIÈRE rencontre ; la navigation, elle, reste entière —
+  // c'est le parcours qui est éprouvé, l'image n'en est que la trace.
+  const vus = new Set([entry]);
+  const captured = [entry];
+  const captureSteps = navs.flatMap((n) => {
+    const neuf = !vus.has(n.targetScreenId);
+    if (neuf) {
+      vus.add(n.targetScreenId);
+      captured.push(n.targetScreenId);
+    }
+    return [
+    `- scrollUntilVisible:\n    element:\n      id: "${n.blockId}"\n    timeout: 60000\n    speed: 70`,
+    `- tapOn:\n    id: "${n.blockId}"`,
+    `- assertVisible:\n    id: "${n.targetScreenId}"`,
+    ...(neuf ? [`- takeScreenshot: capture-${n.targetScreenId}`] : []),
+    back,
+    `- assertVisible:\n    id: "${entry}"`,
+    ];
+  });
+  const captures = [
+    ...header("captures par écran"),
+    ...stateAssert,
+    // L'entrée d'abord : c'est le seul écran garanti présent, et celui qui
+    // porte la hiérarchie visuelle et la barre supérieure.
+    `- takeScreenshot: capture-${entry}`,
+    ...captureSteps,
+    "",
+  ].join("\n");
+
   return {
     navigation,
     rtl,
-    coverage: { entryScreenId: entry, navActions: navs, rtlDeclared },
+    captures,
+    coverage: {
+      entryScreenId: entry,
+      navActions: navs,
+      rtlDeclared,
+      capturedScreenIds: captured,
+    },
   };
 }
