@@ -100,3 +100,82 @@ describe("② la navigation par BOUTON qui perd l'identité est jugée", () => {
     expect(emitV3).toContain("elargit(perimetreAvant, perimetreApres)");
   });
 });
+
+// EP-165 ③b — UN LIEU DE L'APPLICATION N'EST PAS LA SUITE D'UNE ACTION.
+//
+// `jugerNavigationsDeBouton` présumait que TOUT bouton partant d'une fiche
+// AGIT SUR cette instance. Vrai de « Réserver ce créneau », faux de
+// « Aide » ou d'un onglet de la barre. MESURÉ sur 38 documents : 63
+// diagnostics, dont 17 visaient une cible atteinte INDÉPENDAMMENT de toute
+// fiche (5 surfaces, 12 destinations de barre). 63 → 46 après correction.
+describe("EP-165 ③b · le bouton qui mène à un LIEU", () => {
+  const avecBouton = (): Air => {
+    // On part du document RÉEL et on lui ajoute une navigation depuis une
+    // fiche vers un écran neuf — la forme exacte que le juge vise.
+    const a = doc();
+    const s = a as unknown as {
+      screens: Ecran[];
+      actions: { id: string; name: string; trigger: unknown; effect: unknown }[];
+      navigation: { routes: { id: string; screenId: string }[]; primary?: { destinations: { routeId: string; order: number }[] } };
+    };
+    const fiche = s.screens.find((e) => e.blocks.some((b) => b.blockType === "detail_header"));
+    if (fiche === undefined) throw new Error("fixture sans fiche");
+    fiche.blocks.push({ id: "blk_sonde_btn", blockType: "button" });
+    s.screens.push({ id: "scr_sonde_cible", blocks: [{ id: "blk_sonde_liste", blockType: "list" }] });
+    s.actions.push({
+      id: "act_sonde",
+      name: "sonde",
+      trigger: { kind: "ui", blockId: "blk_sonde_btn" },
+      effect: { kind: "navigate", screenId: "scr_sonde_cible" },
+    });
+    return a;
+  };
+  // LA FIXTURE PORTE DÉJÀ UN DIAGNOSTIC (mesuré : `blk_soin_bouton_creneaux`).
+  // Compter TOUS les codes ferait échouer les sondes sur un cas étranger —
+  // c'est ce qui s'est produit avant cette restriction. On ne juge donc que
+  // ce que la sonde a ajouté.
+  const codes = (a: Air): string[] =>
+    jugerNavigationsDeBouton(a)
+      .filter((x) => String(x.path).includes("blk_sonde_btn"))
+      .map((x) => x.code);
+
+  it("LE JUGE N'EST PAS MORT — une cible ORDINAIRE qui ne consomme rien reste refusée", () => {
+    // Sans cette moitié, « 63 → 46 » pourrait n'être qu'un juge vidé.
+    expect(codes(avecBouton())).toContain("AIR_BOUTON_IDENTITE_PERDUE");
+  });
+
+  it("une cible porteuse d'un `purpose` est un LIEU — plus de reproche", () => {
+    const a = avecBouton();
+    const cible = (a as unknown as { screens: Ecran[] }).screens.find((e) => e.id === "scr_sonde_cible");
+    (cible as unknown as { purpose: string }).purpose = "help";
+    expect(codes(a)).not.toContain("AIR_BOUTON_IDENTITE_PERDUE");
+  });
+
+  it("une DESTINATION DE LA BARRE est un LIEU — on n'y scope pas une fiche", () => {
+    const a = avecBouton();
+    const s = a as unknown as {
+      navigation: { routes: { id: string; screenId: string }[]; primary?: { destinations: { routeId: string; order: number }[] } };
+    };
+    s.navigation.routes.push({ id: "rt_sonde", screenId: "scr_sonde_cible" });
+    if (s.navigation.primary === undefined) s.navigation.primary = { destinations: [] };
+    s.navigation.primary.destinations.push({ routeId: "rt_sonde", order: 99 });
+    expect(codes(a)).not.toContain("AIR_BOUTON_IDENTITE_PERDUE");
+  });
+
+  it("LA RÈGLE EST STRUCTURELLE — le juge ne cite AUCUN genre ni AUCUN identifiant", () => {
+    // Une liste de purposes ou d'écrans écrite ici divergerait du schéma :
+    // onzième occurrence du motif. Les deux tests doivent rester la PRÉSENCE
+    // du champ et l'APPARTENANCE aux destinations déclarées.
+    const source = readFileSync(join(R, "benchmarks", "air-emission", "acceptation.mjs"), "utf8");
+    const bloc = source.slice(
+      source.indexOf("EP-165 ③b — UN LIEU DE L'APPLICATION"),
+      source.indexOf("if (estLieu) continue;"),
+    );
+    expect(bloc.length, "bloc introuvable").toBeGreaterThan(200);
+    const code = bloc.split("\n").filter((l) => !l.trim().startsWith("//")).join("\n");
+    for (const genre of ["help", "terms", "settings", "contact", "privacy_policy"]) {
+      expect(code, `le juge cite ${genre}`).not.toContain(`"${genre}"`);
+    }
+    expect(code, "le juge cite un identifiant d'écran").not.toMatch(/"scr_/);
+  });
+});

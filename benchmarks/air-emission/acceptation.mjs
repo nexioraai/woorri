@@ -221,6 +221,29 @@ export function jugerNavigationsDeBouton(air) {
       if (cibleId === undefined) continue;
       const cible = ecranDe.get(cibleId);
       if (cible === undefined) continue;
+      // EP-165 ③b — UN LIEU DE L'APPLICATION N'EST PAS LA SUITE D'UNE ACTION.
+      //
+      // Ce juge présume que TOUT bouton partant d'une fiche AGIT SUR cette
+      // instance. C'est vrai de « Réserver ce créneau » ; c'est faux de
+      // « Aide », « Conditions », ou d'un onglet de la barre. MESURÉ sur 38
+      // documents : 63 diagnostics, dont 17 visaient une cible qu'on atteint
+      // INDÉPENDAMMENT de toute fiche — 5 surfaces d'application, 12
+      // destinations de la barre primaire. Exiger d'y « scoper la
+      // collection » n'a aucun sens : on n'affiche pas l'aide DU bien.
+      //
+      // UNE SEULE CAUSE, DEUX FORMES : dans les deux cas la cible est un
+      // LIEU de l'application — un écran que l'utilisateur atteint par
+      // lui-même, pas une étape ouverte par ce qu'il regarde.
+      //
+      // LES DEUX TESTS SONT STRUCTURELS, AUCUNE LISTE : la présence du champ
+      // `purpose` (énumération FERMÉE du schéma) et l'appartenance aux
+      // destinations déclarées de `navigation.primary`.
+      const estLieu =
+        cible.purpose !== undefined ||
+        (air.navigation.primary?.destinations ?? []).some(
+          (dst) => air.navigation.routes.find((r) => r.id === dst.routeId)?.screenId === cibleId,
+        );
+      if (estLieu) continue;
       // CONSOMMATION — les QUATRE formes, dérivées du schéma (corrigé après
       // mesure : une première version ne connaissait que le détail et la
       // liste scopée, et refusait à tort « Réserver ce créneau » → formulaire
