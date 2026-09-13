@@ -8,7 +8,7 @@
 // Règles d'émission S5 : LF, UTF-8, tri par point de code, AUCUN contenu
 // libre interpolé dans le code (identifiants validés par regex ; toute la
 // matière variable vit dans les modules .data canoniques).
-import { rendrePublicationMd } from "@deribfy/execution-contract";
+import { LIBELLES_PRIMITIFS, rendrePublicationMd } from "@deribfy/execution-contract";
 import { canonicalJson, type ProjectAir, type ProjectLock } from "@deribfy/air-schema";
 import { buildDemoFixtures } from "./demo-fixtures.ts";
 import { emitAppJson, emitPermissionsManifest } from "./emit-manifests.ts";
@@ -116,6 +116,16 @@ export interface EmitOptions {
    * fichier émis ne dépend d'un provider concret en v1 (fait mesuré).
    */
   readonly providerOverrides?: Readonly<Record<string, string>>;
+  /**
+   * EP-180 — LES ÉCRANS QUI PORTENT L'IDENTITÉ, dérivés du MODÈLE par
+   * l'appelant. Le compilateur ne voit que l'AIR : il sait désigner l'ENTRÉE
+   * (`navigation.entryScreenId`), jamais le COMPTE.
+   *
+   * ABSENTS, AUCUN COMPTE N'EST DÉSIGNÉ — et c'est le cas juste : une app
+   * sans concept d'identité n'a pas d'espace compte et n'en gagne pas un de
+   * force. L'ignorance ne fabrique rien.
+   */
+  readonly ecransDIdentite?: readonly string[];
 }
 
 function emitSlotRegistry(slots: readonly SlotSource[]): string {
@@ -679,7 +689,7 @@ function emitScreen(slice: ScreenSlice, aBarre: boolean, planEcran: EcranPlan): 
   return lines.filter((l): l is string => l !== undefined).join("\n");
 }
 
-function emitNavData(air: ProjectAir, locale: string): string {
+function emitNavData(air: ProjectAir, locale: string, options: EmitOptions = {}): string {
   // route.title est OPTIONNEL dans le schéma AIR (fait vérifié, air.ts) :
   // repli déterministe sur le titre de l'ÉCRAN cible (requis, lui).
   const screenTitles = new Map(air.screens.map((s) => [s.id, s.title]));
@@ -712,7 +722,22 @@ function emitNavData(air: ProjectAir, locale: string): string {
             return {
               routeId: assertId(d.routeId, "navigation.primary"),
               screenId: assertId(route.screenId, "navigation.primary"),
-              label: resolveLocalized(d.label, locale, `navigation.primary.${d.routeId}`),
+              // EP-180 — LE MOTEUR CONNAÎT LA RÉPONSE : IL LA POSE.
+              //
+              // DOUZE TRANSMISSIONS ONT MONTRÉ QU'UNE TREIZIÈME NE CHANGERAIT
+              // RIEN. Trois runs de suite ont écrit « Mon compte »,
+              // « Rechercher », « Rechercher » là où la primitive impose
+              // « Accueil » — et depuis EP-169 le juge le disait au PREMIER
+              // appel sur douze. Le verdict arrivait ; il n'était pas suivi.
+              // Un libellé dont la valeur est décidée ailleurs n'a rien à
+              // faire dans un texte libre : il s'ÉMET.
+              //
+              // LA GARDE EST LE CŒUR DE LA RÈGLE : SEULES les deux
+              // primitives. Toute destination du DOMAINE garde son libellé
+              // libre — l'imposer ferait de la barre un gabarit, et c'est
+              // exactement ce que l'App Store punit sous 4.3.
+              label: libellePrimitif(route.screenId, air, options) ??
+                resolveLocalized(d.label, locale, `navigation.primary.${d.routeId}`),
               order: d.order,
               // 1.8.0 — projection EXPLICITE, comme les autres champs : la
               // destination n'est pas recopiée en bloc. Absente du document,
@@ -1086,6 +1111,29 @@ function decodeBase64(b64: string): Uint8Array {
   return out.subarray(0, o);
 }
 
+/**
+ * EP-180 — LE LIBELLÉ D'UNE PRIMITIVE, POSÉ PAR LE MOTEUR.
+ *
+ * Rend `undefined` pour toute destination du DOMAINE : celle-là garde ce que
+ * le générateur a écrit.
+ *
+ * L'ENTRÉE se désigne depuis l'AIR seul (`navigation.entryScreenId`). LE
+ * COMPTE exige de savoir quels écrans portent l'identité — une connaissance
+ * du MODÈLE, que le compilateur n'a pas : elle arrive par `options`. SANS
+ * ELLE, AUCUN COMPTE N'EST DÉSIGNÉ, et c'est le cas juste — une app sans
+ * concept d'identité (Sahel Immo) n'a pas d'espace compte et ne doit pas en
+ * gagner un de force.
+ */
+function libellePrimitif(
+  screenId: string,
+  air: ProjectAir,
+  options: EmitOptions,
+): string | undefined {
+  if (screenId === air.navigation.entryScreenId) return LIBELLES_PRIMITIFS.accueil;
+  if ((options.ecransDIdentite ?? []).includes(screenId)) return LIBELLES_PRIMITIFS.compte;
+  return undefined;
+}
+
 export function emitProject(
   input: unknown,
   train: ReleaseTrain = RELEASE_TRAIN_V1,
@@ -1241,7 +1289,7 @@ export function emitProject(
   files.set("PUBLICATION.md", rendrePublicationMd(air, lock.resolved.providers));
   files.set("demo.data.ts", emitDemoData(air));
   files.set("manifests/permissions.manifest.json", emitPermissionsManifest(air));
-  files.set("nav.data.ts", emitNavData(air, locale));
+  files.set("nav.data.ts", emitNavData(air, locale, options));
   files.set("navigation.tsx", emitNavigation(air));
   for (const screen of [...air.screens].sort((a, b) => byCodeUnit(a.id, b.id))) {
     // ÉTAPE ① — le plan couvre chaque écran PAR CONSTRUCTION ; un trou est

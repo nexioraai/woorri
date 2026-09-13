@@ -41,7 +41,12 @@ const fichiers = readdirSync(RES).filter((f) => f.includes("modele-p0"));
 const PETIT = charger(
   fichiers.find((f) => f.includes("marche-immobilier") && f.includes("16-26-13"))!,
 );
-const GRAND = charger(fichiers.filter((f) => f.includes("marketplace-africain")).at(-1)!);
+// L-179-B — DÉSIGNÉ PAR SON HORODATAGE, jamais par son rang. `.at(-1)`
+// prend le PLUS RÉCENT : il change à chaque run, et la fixture cesse
+// silencieusement de porter le cas qu'elle prétend éprouver.
+const GRAND = charger(
+  fichiers.find((f) => f.includes("marketplace-africain") && f.includes("20-52-53"))!,
+);
 
 describe("EP-173 · la scission par parcours", () => {
   for (const [nom, M] of [["immobilier", PETIT], ["marketplace", GRAND]] as const) {
