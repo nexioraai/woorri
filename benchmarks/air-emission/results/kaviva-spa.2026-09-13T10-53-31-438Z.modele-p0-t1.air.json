@@ -1,0 +1,435 @@
+{
+  "version": "modele-metier/1.2.0",
+  "couverture": {
+    "couverts": [
+      {
+        "terme": "soins proposés",
+        "noeuds": [
+          "cpt_soin"
+        ]
+      },
+      {
+        "terme": "massages",
+        "noeuds": [
+          "att_soin_categorie"
+        ]
+      },
+      {
+        "terme": "soins du visage",
+        "noeuds": [
+          "att_soin_categorie"
+        ]
+      },
+      {
+        "terme": "manucure",
+        "noeuds": [
+          "att_soin_categorie"
+        ]
+      },
+      {
+        "terme": "hammam",
+        "noeuds": [
+          "att_soin_categorie"
+        ]
+      },
+      {
+        "terme": "photo",
+        "noeuds": [
+          "att_soin_photo"
+        ]
+      },
+      {
+        "terme": "durée",
+        "noeuds": [
+          "att_soin_duree"
+        ]
+      },
+      {
+        "terme": "prix",
+        "noeuds": [
+          "att_soin_prix"
+        ]
+      },
+      {
+        "terme": "chercher un soin",
+        "noeuds": [
+          "par_reserver_soin",
+          "cpt_soin"
+        ]
+      },
+      {
+        "terme": "fiche détaillée d'un soin",
+        "noeuds": [
+          "cpt_soin",
+          "att_soin_description"
+        ]
+      },
+      {
+        "terme": "créneau",
+        "noeuds": [
+          "cpt_creneau",
+          "att_creneau_plage"
+        ]
+      },
+      {
+        "terme": "réserver un rendez-vous",
+        "noeuds": [
+          "cpt_rendez_vous",
+          "par_reserver_soin"
+        ]
+      },
+      {
+        "terme": "à leur nom",
+        "noeuds": [
+          "att_rdv_nom_cliente"
+        ]
+      },
+      {
+        "terme": "date et heure",
+        "noeuds": [
+          "att_rdv_date",
+          "att_creneau_plage"
+        ]
+      },
+      {
+        "terme": "rendez-vous à venir",
+        "noeuds": [
+          "cpt_rendez_vous",
+          "par_mes_rendez_vous"
+        ]
+      },
+      {
+        "terme": "rendez-vous passés",
+        "noeuds": [
+          "cpt_rendez_vous",
+          "par_mes_rendez_vous"
+        ]
+      },
+      {
+        "terme": "cliente",
+        "noeuds": [
+          "act_cliente"
+        ]
+      },
+      {
+        "terme": "crée un compte",
+        "noeuds": [
+          "cpt_compte",
+          "par_compte"
+        ]
+      },
+      {
+        "terme": "gère son profil",
+        "noeuds": [
+          "cpt_compte",
+          "par_compte"
+        ]
+      },
+      {
+        "terme": "téléphone",
+        "noeuds": [
+          "att_compte_telephone"
+        ]
+      },
+      {
+        "terme": "soins vedettes en avant",
+        "noeuds": [
+          "att_soin_vedette",
+          "cpt_soin"
+        ]
+      },
+      {
+        "terme": "accueil",
+        "noeuds": [
+          "par_reserver_soin",
+          "cpt_soin"
+        ]
+      }
+    ],
+    "nonRetenus": [
+      {
+        "terme": "Kaviva",
+        "raison": "expression_visuelle"
+      },
+      {
+        "terme": "institut de beauté et spa",
+        "raison": "hors_perimetre_mobile"
+      },
+      {
+        "terme": "Abidjan",
+        "raison": "hors_perimetre_mobile"
+      },
+      {
+        "terme": "donner tout de suite envie",
+        "raison": "expression_visuelle"
+      },
+      {
+        "terme": "recherche accessible immédiatement",
+        "raison": "expression_visuelle"
+      },
+      {
+        "terme": "tout en français",
+        "raison": "expression_visuelle"
+      }
+    ]
+  },
+  "acteurs": [
+    {
+      "id": "act_cliente",
+      "nom": "Cliente"
+    }
+  ],
+  "concepts": [
+    {
+      "id": "cpt_soin",
+      "nom": "Soin",
+      "donnees": true,
+      "identifiant": "att_soin_nom",
+      "attributs": [
+        {
+          "id": "att_soin_nom",
+          "nature": "texte",
+          "requis": true
+        },
+        {
+          "id": "att_soin_categorie",
+          "nature": "texte",
+          "requis": true
+        },
+        {
+          "id": "att_soin_description",
+          "nature": "texte",
+          "requis": false
+        },
+        {
+          "id": "att_soin_photo",
+          "nature": "media",
+          "requis": true
+        },
+        {
+          "id": "att_soin_duree",
+          "nature": "duree",
+          "requis": true
+        },
+        {
+          "id": "att_soin_prix",
+          "nature": "nombre",
+          "requis": true
+        },
+        {
+          "id": "att_soin_vedette",
+          "nature": "booleen",
+          "requis": false
+        }
+      ]
+    },
+    {
+      "id": "cpt_creneau",
+      "nom": "Créneau",
+      "donnees": true,
+      "identifiant": "att_creneau_plage",
+      "attributs": [
+        {
+          "id": "att_creneau_plage",
+          "nature": "intervalle",
+          "requis": true
+        },
+        {
+          "id": "att_creneau_disponible",
+          "nature": "booleen",
+          "requis": true
+        }
+      ]
+    },
+    {
+      "id": "cpt_rendez_vous",
+      "nom": "Rendez-vous",
+      "donnees": true,
+      "identifiant": "att_rdv_reference",
+      "attributs": [
+        {
+          "id": "att_rdv_reference",
+          "nature": "texte",
+          "requis": true
+        },
+        {
+          "id": "att_rdv_nom_cliente",
+          "nature": "texte",
+          "requis": true
+        },
+        {
+          "id": "att_rdv_date",
+          "nature": "date",
+          "requis": true
+        }
+      ],
+      "etats": [
+        {
+          "id": "brouillon",
+          "transitions": [
+            {
+              "vers": "confirme",
+              "geste": "confirmer"
+            }
+          ]
+        },
+        {
+          "id": "confirme",
+          "transitions": [
+            {
+              "vers": "passe",
+              "exogene": "temps"
+            }
+          ]
+        },
+        {
+          "id": "passe"
+        }
+      ]
+    },
+    {
+      "id": "cpt_compte",
+      "nom": "Compte cliente",
+      "donnees": true,
+      "identifiant": "att_compte_telephone",
+      "attributs": [
+        {
+          "id": "att_compte_nom",
+          "nature": "texte",
+          "requis": true
+        },
+        {
+          "id": "att_compte_telephone",
+          "nature": "texte",
+          "requis": true
+        }
+      ]
+    }
+  ],
+  "relations": [
+    {
+      "de": "cpt_soin",
+      "vers": "cpt_creneau",
+      "nature": "possede"
+    },
+    {
+      "de": "cpt_rendez_vous",
+      "vers": "cpt_soin",
+      "nature": "reference"
+    },
+    {
+      "de": "cpt_rendez_vous",
+      "vers": "cpt_creneau",
+      "nature": "reference"
+    },
+    {
+      "de": "cpt_compte",
+      "vers": "cpt_rendez_vous",
+      "nature": "possede"
+    }
+  ],
+  "parcours": [
+    {
+      "id": "par_reserver_soin",
+      "besoin": "découvrir les soins, en choisir un créneau et réserver un rendez-vous",
+      "acteur": "act_cliente",
+      "priorite": 1,
+      "etapes": [
+        {
+          "concept": "cpt_soin",
+          "geste": "decouvrir",
+          "acteur": "act_cliente"
+        },
+        {
+          "concept": "cpt_soin",
+          "geste": "chercher",
+          "acteur": "act_cliente"
+        },
+        {
+          "concept": "cpt_soin",
+          "geste": "consulter",
+          "acteur": "act_cliente"
+        },
+        {
+          "concept": "cpt_creneau",
+          "geste": "decouvrir",
+          "acteur": "act_cliente"
+        },
+        {
+          "concept": "cpt_creneau",
+          "geste": "choisir",
+          "acteur": "act_cliente"
+        },
+        {
+          "concept": "cpt_compte",
+          "geste": "s_identifier",
+          "acteur": "act_cliente"
+        },
+        {
+          "concept": "cpt_rendez_vous",
+          "geste": "saisir",
+          "acteur": "act_cliente"
+        },
+        {
+          "concept": "cpt_rendez_vous",
+          "geste": "confirmer",
+          "acteur": "act_cliente"
+        }
+      ]
+    },
+    {
+      "id": "par_mes_rendez_vous",
+      "besoin": "retrouver ses rendez-vous à venir et passés",
+      "acteur": "act_cliente",
+      "priorite": 2,
+      "etapes": [
+        {
+          "concept": "cpt_compte",
+          "geste": "s_identifier",
+          "acteur": "act_cliente"
+        },
+        {
+          "concept": "cpt_rendez_vous",
+          "geste": "consulter_historique",
+          "acteur": "act_cliente",
+          "preconditions": []
+        },
+        {
+          "concept": "cpt_rendez_vous",
+          "geste": "consulter",
+          "etat": "passe",
+          "acteur": "act_cliente"
+        },
+        {
+          "concept": "cpt_rendez_vous",
+          "geste": "consulter",
+          "etat": "confirme",
+          "acteur": "act_cliente"
+        }
+      ]
+    },
+    {
+      "id": "par_compte",
+      "besoin": "créer son compte et gérer son profil avec son téléphone",
+      "acteur": "act_cliente",
+      "priorite": 3,
+      "etapes": [
+        {
+          "concept": "cpt_compte",
+          "geste": "saisir",
+          "acteur": "act_cliente"
+        },
+        {
+          "concept": "cpt_compte",
+          "geste": "s_identifier",
+          "acteur": "act_cliente"
+        },
+        {
+          "concept": "cpt_compte",
+          "geste": "consulter",
+          "acteur": "act_cliente"
+        }
+      ]
+    }
+  ]
+}
