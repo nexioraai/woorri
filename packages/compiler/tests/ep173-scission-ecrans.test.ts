@@ -31,7 +31,16 @@ const fichiers = readdirSync(RES).filter((f) => f.includes("modele-p0"));
 // seulement, donc une barre que Material refuse. Prendre « le premier
 // immobilier trouvé » ramenait celui d'EP-168, qui en a trois — la fixture
 // aurait été muette sur ce que le test doit prouver.
-const PETIT = charger(fichiers.filter((f) => f.includes("marche-immobilier")).sort().at(-1)!);
+// LE MODÈLE DU RUN EP-174, DÉSIGNÉ PAR SON HORODATAGE ET NON PAR SON RANG.
+//
+// Il porte le cas : DEUX destinations seulement, donc une barre que Material
+// refuse. « Le dernier trouvé » a marché jusqu'au run EP-178, qui en a produit
+// un nouveau avec TROIS destinations — et trois tests sont tombés d'un coup.
+// UNE FIXTURE QUI DIT « LE DERNIER » CHANGE DE SENS À CHAQUE RUN : elle ne
+// désigne pas un cas, elle désigne une date.
+const PETIT = charger(
+  fichiers.find((f) => f.includes("marche-immobilier") && f.includes("16-26-13"))!,
+);
 const GRAND = charger(fichiers.filter((f) => f.includes("marketplace-africain")).at(-1)!);
 
 describe("EP-173 · la scission par parcours", () => {
