@@ -10,6 +10,7 @@
 // tests. Il en a trouvé DEUX autres du premier coup.
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
+import ts from "typescript";
 import { describe, expect, it } from "vitest";
 
 const R = join(import.meta.dirname, "..", "..", "..");
@@ -34,7 +35,7 @@ function sources(test: boolean): Source[] {
 }
 
 /** Une fonction ÉMETTRICE : exportée, et son corps produit un code de diagnostic. */
-function emettrices(prod: readonly Source[]): { p: string; nom: string }[] {
+function emettrices_(prod: readonly Source[]): { p: string; nom: string }[] {
   const out: { p: string; nom: string }[] = [];
   for (const { p, code } of prod) {
     for (const m of code.matchAll(/export function (\w+)\s*\(/g)) {
@@ -74,7 +75,7 @@ const DEBRANCHES_CONNUS: Readonly<Record<string, string>> = {
 describe("EP-161 ① · aucun juge ne se débranche en silence", () => {
   const prod = sources(false);
   const tests = sources(true);
-  const liste = emettrices(prod);
+  const liste = emettrices_(prod);
 
   it("le détecteur voit des émettrices — sinon il ne prouve rien", () => {
     expect(liste.length).toBeGreaterThan(20);
@@ -119,33 +120,66 @@ describe("EP-161 ① · aucun juge ne se débranche en silence", () => {
 });
 
 describe("EP-161 ① · LE CHEMIN PIRE (règle d'EP-132) — appelé mais ignoré", () => {
-  it("PLACE TENUE, RIEN DE FERMÉ — ce test ne mesure aucun juge et n'en couvre aucun", () => {
-    // Un juge débranché se voit ; un juge dont le résultat est JETÉ a l'air
-    // branché, et c'est pire. J'ai écrit un détecteur : il a rendu 43 cas,
-    // tous faux — il ne sait pas distinguer un appel dont la valeur sert
-    // (affectée, dispersée, retournée, passée en argument, chaînée) d'un
-    // appel dont elle est perdue. Publier 43 faux positifs aurait été
-    // inutile ; les cacher aurait été malhonnête.
-    //
-    // EP-162 · L-161-C — HORS DE CETTE PASSE, PAS HORS DE PORTÉE, et mesuré
-    // plutôt que supposé. TypeScript 5.9.3 est déjà installé ; sonde tsc
-    // `--strict --noUnusedLocals` sur deux formes :
-    //   const d = juge(1);   → TS6133 « 'd' is declared but its value is
-    //                          never read » — VU.
-    //   juge(1);             → AUCUNE erreur — NON VU.
-    // Une moitié du chemin est donc déjà couverte par un outil du dépôt. La
-    // seconde n'est même pas une analyse de FLOT : l'appel nu est une forme
-    // SYNTAXIQUE exacte — un `ExpressionStatement` dont l'expression est un
-    // `CallExpression` vers une émettrice — lisible sur l'AST que TypeScript
-    // expose. Il n'y a donc aucun analyseur à réécrire ; il y a un parseur à
-    // appeler. C'est ce qui distingue « pas fait » de « impossible ».
-    //
-    // CE TEST NE FERME RIEN ET NE DOIT PAS ÊTRE LU COMME UNE COUVERTURE : il
-    // ne charge aucun juge, n'en appelle aucun, et ne mesure aucune source.
-    // Il tient la place de [L-161-C] pour que le chemin ne disparaisse pas
-    // de la batterie verte.
-    expect(
-      "L-161-C OUVERT : le chemin « appelé mais ignoré » n'est ni mesuré ni fermé",
-    ).toBeTruthy();
+  // L-161-C FERMÉ (EP-164). Le chemin est celui-ci : un juge DÉBRANCHÉ se
+  // voit ; un juge APPELÉ dont le résultat est JETÉ a l'air branché, et c'est
+  // pire. Mon heuristique d'EP-161 rendait 43 cas, tous faux — une expression
+  // régulière ne distingue pas un appel dont la valeur sert d'un appel dont
+  // elle est perdue.
+  //
+  // CE N'ÉTAIT PAS UNE ANALYSE DE FLOT, ET C'EST CE QUI L'A DÉBLOQUÉ : un
+  // appel nu est une forme SYNTAXIQUE exacte — un `ExpressionStatement` dont
+  // l'expression est un `CallExpression`. TypeScript expose l'AST ; il n'y a
+  // aucun analyseur à écrire, seulement un parseur à appeler.
+  //
+  // L'AUTRE MOITIÉ EST COUVERTE SANS RIEN ÉCRIRE : `tsc --noUnusedLocals`
+  // rend TS6133 sur `const d = juge(1)` jamais lu (sondé en EP-162).
+  const prod = sources(false);
+  // Le détecteur cherche des NOMS ; `emettrices_` rend des { p, nom }.
+  // Sans la sonde ci-dessous, ce Set d'OBJETS rendait `has(nom)` toujours
+  // faux et le cliquet publiait « 0 appel nu » — une propreté imaginaire.
+  const emettrices = new Set(emettrices_(prod).map((e) => e.nom));
+
+  const appelsNus = (fichiers: readonly Source[]): string[] => {
+    const out: string[] = [];
+    for (const { p, code } of fichiers) {
+      const sf = ts.createSourceFile(p, code, ts.ScriptTarget.Latest, true);
+      const walk = (n: ts.Node): void => {
+        if (ts.isExpressionStatement(n) && ts.isCallExpression(n.expression)) {
+          const e = n.expression.expression;
+          const nom = ts.isIdentifier(e)
+            ? e.text
+            : ts.isPropertyAccessExpression(e)
+              ? e.name.text
+              : null;
+          if (nom !== null && emettrices.has(nom)) {
+            out.push(`${p}:${sf.getLineAndCharacterOfPosition(n.getStart()).line + 1} ${nom}()`);
+          }
+        }
+        ts.forEachChild(n, walk);
+      };
+      walk(sf);
+      }
+    return out;
+  };
+
+  it("LE DÉTECTEUR MORD — prouvé sur du code synthétique, sinon « 0 » ne vaut rien", () => {
+    // Sans cette sonde, un détecteur cassé rendrait 0 et passerait pour une
+    // preuve de propreté. C'est la leçon des 29 faux orphelins d'EP-161,
+    // prise par l'autre bout.
+    const nom = [...emettrices][0];
+    expect(nom, "aucune émettrice — le détecteur n'a rien à chercher").toBeDefined();
+    const perdu = appelsNus([{ p: "sonde.ts", code: `function f() { ${nom!}(x); }` }]);
+    expect(perdu, "un appel NU doit être vu").toHaveLength(1);
+    const garde = appelsNus([{ p: "sonde.ts", code: `function f() { const d = ${nom!}(x); return d; }` }]);
+    expect(garde, "un résultat AFFECTÉ ne doit PAS être signalé").toEqual([]);
+    const disperse = appelsNus([{ p: "sonde.ts", code: `const a = [...${nom!}(x)];` }]);
+    expect(disperse, "un résultat DISPERSÉ ne doit PAS être signalé").toEqual([]);
+  });
+
+  it("AUCUN juge n'est appelé pour rien dans la production", () => {
+    // MESURÉ à la fermeture : 266 fichiers de production, 52 émettrices,
+    // ZÉRO appel nu. Le cliquet ne corrige donc rien aujourd'hui — il
+    // empêche que la forme apparaisse demain, ce qui est son seul objet.
+    expect(appelsNus(prod)).toEqual([]);
   });
 });
