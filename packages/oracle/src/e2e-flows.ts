@@ -13,6 +13,33 @@
 // `<listBlockId>-row-<rowId>`), jamais un texte de langue.
 import type { ProjectAir } from "@deribfy/air-schema";
 
+/**
+ * EP-176 ③ — LES TAILLES QU'APPLE EXIGE POUR UNE FICHE.
+ *
+ * MESURÉ : les captures du dépôt font 1206×2622 — un iPhone 6,1 pouces.
+ * AUCUNE fiche App Store n'accepte cette taille. Elles sont JUSTES pour la
+ * comparaison au pixel entre deux générations (EP-165 ①), et INUTILISABLES
+ * pour un dépôt.
+ *
+ * ET CE N'EST PAS UN REDIMENSIONNEMENT QU'IL FAUT — c'est le BON APPAREIL.
+ * Redimensionner une capture 6,1 vers 6,9 étirerait des pixels et Apple
+ * refuse les images upscalées ; le simulateur 6,9 pouces, lui, rend
+ * nativement la taille attendue. Le dépôt en a un : « iPhone 17 Pro Max ».
+ *
+ * Source : App Store Connect — spécifications de captures d'écran.
+ */
+export const TAILLES_FICHE_APPLE = [
+  { pouces: "6.9", largeur: 1320, hauteur: 2868, simulateur: "iPhone 17 Pro Max", requis: true },
+  { pouces: "6.9", largeur: 1290, hauteur: 2796, simulateur: "iPhone 16 Pro Max", requis: true },
+  { pouces: "6.5", largeur: 1242, hauteur: 2688, simulateur: "iPhone 11 Pro Max", requis: false },
+  { pouces: "6.5", largeur: 1284, hauteur: 2778, simulateur: "iPhone 12 Pro Max", requis: false },
+] as const;
+
+/** Une capture est-elle déposable telle quelle sur une fiche ? */
+export function tailleDeposable(largeur: number, hauteur: number): boolean {
+  return TAILLES_FICHE_APPLE.some((t) => t.largeur === largeur && t.hauteur === hauteur);
+}
+
 export interface GeneratedFlows {
   /** Parcours de navigation LTR (launch → entrée → chaque nav → retour). */
   readonly navigation: string;

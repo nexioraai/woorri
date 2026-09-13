@@ -469,6 +469,59 @@ export function jugerCapacitesContreIntention(air, prescriptif) {
   return out;
 }
 
+/**
+ * EP-176 ① — UNE CAPACITÉ DE SERVICE EXIGE UNE INTÉGRATION QUI LA PORTE.
+ *
+ * MESURÉ SUR EP-174 : les TROIS intégrations du document avaient
+ * `capability = ABSENT`, alors que `capabilities` déclarait `auth`. Or le
+ * compilateur n'émet le client d'authentification que si une intégration
+ * porte `capability === "auth"` ET une config avec `url` et `anonKey`. Le
+ * code de connexion existait, sa condition ne se déclenchait JAMAIS.
+ *
+ * ET LA RACINE EST LA TRANSMISSION, pour la onzième fois : le prompt
+ * mentionne `capability` TREIZE fois, TOUTES pour `actions.effect.capability`
+ * — AUCUNE pour `integrations[].capability`. Le moteur exigeait un champ
+ * qu'il ne demandait pas. Principe EP-122 : ce que le moteur exige, il le
+ * DIT.
+ *
+ * LA RÈGLE EST DÉRIVÉE DU REGISTRE, AUCUNE LISTE : une capacité dont
+ * `implementation.kind === "provider_service"` s'appuie sur un service
+ * EXTERNE — elle a donc besoin d'une intégration pour dire OÙ. Les autres
+ * (`expo_module` : caméra, biométrie…) vivent dans l'appareil et n'en
+ * exigent aucune. Une capacité de service ajoutée demain sera couverte sans
+ * édition.
+ */
+export function jugerCapacitesSansIntegration(air) {
+  if (air === null || air === undefined) return [];
+  const parService = new Map(
+    registry.CAPABILITIES.filter((c) => c.implementation?.kind === "provider_service").map((c) => [
+      c.id,
+      c,
+    ]),
+  );
+  const portees = new Set(
+    (air.integrations ?? []).map((i) => i.capability).filter((c) => c !== undefined),
+  );
+  const out = [];
+  for (const demandee of air.capabilities ?? []) {
+    if (!parService.has(demandee.capability)) continue;
+    if (portees.has(demandee.capability)) continue;
+    out.push({
+      code: "AIR_CAPACITE_SERVICE_SANS_INTEGRATION",
+      path: `capabilities[${demandee.capability}]`,
+      message:
+        `la capacité "${demandee.capability}" s'appuie sur un SERVICE externe ` +
+        `(${String(parService.get(demandee.capability)?.implementation?.package ?? "")}) mais AUCUNE ` +
+        `intégration ne la porte : aucune \`integrations[]\` n'a ` +
+        `\`capability: "${demandee.capability}"\`. Le moteur ne peut pas deviner OÙ joindre ce ` +
+        `service — il ne câblera rien, et la capacité restera déclarée sans effet. ` +
+        `AJOUTE \`capability\` À L'INTÉGRATION QUI LA SERT ; n'invente aucun secret, ` +
+        `l'adresse et la clé viennent du provisioning.`,
+    });
+  }
+  return out;
+}
+
 export function jugerAcceptation(air, prescriptif, intention) {
   if (air === null) return [];
   const out = [];
@@ -527,6 +580,7 @@ export function jugerAcceptation(air, prescriptif, intention) {
   // EP-122 · ② — le SURPLUS structurel et l'identité perdue par bouton.
   out.push(...jugerContenuDEcran(air, prescriptif));
   out.push(...jugerNavigationsDeBouton(air, prescriptif));
+  out.push(...jugerCapacitesSansIntegration(air));
   out.push(
     ...vivacite.jugerVivacite(air, executionContract.EXECUTION_ENVELOPE_V1, {
       arcsPrescrits,

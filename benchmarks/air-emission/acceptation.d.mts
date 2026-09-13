@@ -33,3 +33,7 @@ export function jugerBase(air: Record<string, unknown> | null, contexte?: { entr
 /** EP-169 ② — une capacité sous contrainte de commerce exige que le modèle
  *  exerce le geste `payer`. Sans `prescriptif`, le juge se tait. */
 export function jugerCapacitesContreIntention(air: Record<string, unknown> | null, prescriptif?: unknown): DiagnosticAcceptation[];
+
+/** EP-176 ① — une capacité dont l'implémentation est `provider_service` exige
+ *  une intégration qui la porte via `capability`. Dérivé du registre. */
+export function jugerCapacitesSansIntegration(air: Record<string, unknown> | null): DiagnosticAcceptation[];

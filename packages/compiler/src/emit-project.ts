@@ -37,6 +37,19 @@ export interface EmittedProject {
   lock: ProjectLock;
   /** Chemin relatif du projet généré → contenu (LF, UTF-8 sans BOM). */
   files: ReadonlyMap<string, string>;
+  /**
+   * EP-176 ② — LES FICHIERS D'OCTETS, SÉPARÉS DU TEXTE.
+   *
+   * `files` porte du TEXTE. Y ranger une image obligeait à l'écrire en base64
+   * — un `.png` dont le contenu est du texte n'est pas une image, et c'est
+   * exactement ce que faisait l'émission de la marque. Élargir `files` aux
+   * octets aurait propagé le type à tous ses consommateurs ; une carte
+   * SÉPARÉE laisse l'existant intact et dit ce qu'elle porte.
+   *
+   * Qui écrit sur disque DOIT la joindre, sans quoi l'icône que le manifeste
+   * désigne n'existera pas.
+   */
+  binaries: ReadonlyMap<string, Uint8Array>;
 }
 
 const byCodeUnit = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
@@ -1051,6 +1064,28 @@ function emitDemoData(air: ProjectAir): string {
  * résolution du lock (4 validateurs) refuse tout document non conforme
  * AVANT la moindre émission.
  */
+/**
+ * EP-176 ② — base64 → octets. Aucune dépendance : la table est celle de la
+ * RFC 4648, et l'écrire ici évite de supposer un `Buffer` global.
+ */
+function decodeBase64(b64: string): Uint8Array {
+  const T = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+  const net = b64.replace(/[^A-Za-z0-9+/]/g, "");
+  const out = new Uint8Array(Math.floor((net.length * 3) / 4));
+  let o = 0;
+  for (let i = 0; i + 1 < net.length; i += 4) {
+    const n =
+      (T.indexOf(net[i]!) << 18) |
+      (T.indexOf(net[i + 1]!) << 12) |
+      ((net[i + 2] === undefined ? 0 : T.indexOf(net[i + 2]!)) << 6) |
+      (net[i + 3] === undefined ? 0 : T.indexOf(net[i + 3]!));
+    out[o++] = (n >> 16) & 0xff;
+    if (net[i + 2] !== undefined) out[o++] = (n >> 8) & 0xff;
+    if (net[i + 3] !== undefined) out[o++] = n & 0xff;
+  }
+  return out.subarray(0, o);
+}
+
 export function emitProject(
   input: unknown,
   train: ReleaseTrain = RELEASE_TRAIN_V1,
@@ -1083,6 +1118,14 @@ export function emitProject(
   }
 
   const files = new Map<string, string>();
+  // EP-176 ② — LES FICHIERS BINAIRES VOYAGENT À PART, ET C'EST VOULU.
+  //
+  // `files` est une carte de TEXTE : y ranger une image obligeait à l'écrire
+  // en base64, donc à produire un `.png` dont le contenu est du texte. Élargir
+  // `files` aux octets aurait propagé le type à tous ses consommateurs — et il
+  // y en a dans tout le compilateur et ses tests. Une carte SÉPARÉE laisse
+  // l'existant intact et dit ce qu'elle porte.
+  const binaries = new Map<string, Uint8Array>();
   for (const [target, content] of Object.entries(EMBEDDED_ASSETS)) {
     files.set(target, content);
   }
@@ -1102,6 +1145,42 @@ export function emitProject(
     files.set("lib/tokens/theme.generated.ts", emitThemeModule(air));
   }
   files.set("app.json", emitAppJson(air, train));
+  // EP-176 ④ — `eas.json` EST DU MÊME ORDRE QU'`app.json`.
+  //
+  // MESURÉ : `eas-cli` absent du dépôt, `eas.json` absent des apps générées,
+  // et le compilateur n'en produisait AUCUN — avec un compte Apple fourni, la
+  // machine ne pouvait RIEN faire seule, faute de configuration de build à
+  // exécuter. Le fichier est PRODUIT ici ; rien n'est installé, rien n'est
+  // lancé, aucun compte n'est engagé.
+  //
+  // CE QU'IL NE CONTIENT PAS, ET C'EST VOULU : aucun identifiant Apple, aucun
+  // ASC App ID, aucun chemin de certificat. Ce sont des secrets et des
+  // comptes — le contrat interdit les premiers (non-négociable #13), le
+  // propriétaire seul possède les seconds, et `eas submit` les lira depuis
+  // son propre profil.
+  //
+  // TROIS PROFILS, DU PLUS FERMÉ AU PLUS OUVERT : les deux premiers visent le
+  // SIMULATEUR et n'engagent aucun compte ; seul `production` en demande un.
+  files.set(
+    "eas.json",
+    JSON.stringify(
+      {
+        cli: { version: ">= 5.0.0", appVersionSource: "remote" },
+        build: {
+          development: {
+            developmentClient: true,
+            distribution: "internal",
+            ios: { simulator: true },
+          },
+          preview: { distribution: "internal", ios: { simulator: true } },
+          production: { autoIncrement: true },
+        },
+        submit: { production: {} },
+      },
+      null,
+      2,
+    ) + "\n",
+  );
   // LES DÉPENDANCES NE MONTENT JAMAIS AU SERVICE DE BUILD (mesuré 2026-09-09) :
   // le service les réinstalle depuis le verrou, les envoyer est inutile. Le
   // motif du gabarit gelé (`node_modules/`, barre finale) ne couvre pas un LIEN
@@ -1127,7 +1206,18 @@ export function emitProject(
   // MARQUE (1.17.0) : le FICHIER que le manifeste désigne. Le déclarer sans
   // le produire ferait échouer le prebuild — fail-closed inversé.
   if (air.app.brandIconPngBase64 !== undefined) {
-    files.set("assets/marque.png", air.app.brandIconPngBase64);
+    // EP-176 ② — LES OCTETS, PAS LE TEXTE.
+    //
+    // Cette ligne écrivait la CHAÎNE base64 comme contenu du fichier : un
+    // `.png` dont le contenu est du texte n'est pas une image, et le prebuild
+    // Expo l'aurait refusé — ou pire, accepté en produisant une icône
+    // illisible. La branche n'avait JAMAIS tourné : aucun document généré
+    // n'a jamais porté `brandIconPngBase64`, le prompt interdisant au
+    // générateur de l'inventer. Du code mort qui se croyait vivant.
+    //
+    // `ArtifactStore.put` accepte `Uint8Array | string` depuis toujours :
+    // c'est la carte des fichiers qui forçait le texte.
+    binaries.set("assets/marque.png", decodeBase64(air.app.brandIconPngBase64));
   }
   // EP-143 — CE QUE LE MOTEUR NE FERA JAMAIS, LIVRÉ AVEC CE QU'IL A FAIT.
   // Les obligations du propriétaire étaient DÉRIVABLES depuis EP-142 et
@@ -1187,5 +1277,5 @@ export function emitProject(
     }
     files.set("slots/index.ts", emitSlotRegistry(bundle));
   }
-  return { lock, files };
+  return { lock, files, binaries };
 }

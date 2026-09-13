@@ -41,6 +41,22 @@ const REPO = join(HERE, "..", "..");
 
 const airSchema = await import(join(REPO, "packages/air-schema/src/index.ts"));
 const registry = await import(join(REPO, "packages/capability-registry/src/index.ts"));
+
+// EP-176 ① — LES CAPACITÉS QUI EXIGENT UNE INTÉGRATION, DÉRIVÉES DU REGISTRE.
+//
+// Le prompt mentionnait `capability` treize fois, TOUTES pour
+// `actions.effect.capability`, AUCUNE pour `integrations[].capability`. Le
+// compilateur, lui, n'émet le client d'authentification que si une intégration
+// porte ce lien : le moteur EXIGEAIT un champ qu'il ne DEMANDAIT pas.
+//
+// La liste n'est pas écrite : `implementation.kind === "provider_service"`
+// désigne exactement les capacités qui s'appuient sur un service EXTERNE.
+function capacitesDeService() {
+  return registry.CAPABILITIES.filter((c) => c.implementation?.kind === "provider_service")
+    .map((c) => `\`${c.id}\``)
+    .join(", ");
+}
+
 const blocksRegistry = await import(join(REPO, "packages/blocks/src/registry.ts"));
 const presentation = await import(join(REPO, "packages/execution-contract/src/presentation.ts"));
 // Étape ③ (EP-008) — le digest INTERPOLE le registre au lieu de le recopier :
@@ -457,6 +473,7 @@ RAPPELS DE FORME, non déductibles du registre :
 
 16. ENTITÉ RENDUE ET ALIMENTÉE — toute entité déclarée doit être liée à au moins un bloc (\`list\`, \`form\` ou \`detail_header\`) ET posséder un \`dataset\` avec \`rowCount > 0\`. Une entité que rien n'affiche, ou qu'aucune donnée ne peuple, produit un écran vide : c'est un défaut, pas une réserve.
 
+17bis. UNE CAPACITÉ DE SERVICE DÉSIGNE SON INTÉGRATION — ces capacités s'appuient sur un service EXTERNE et le moteur doit savoir OÙ le joindre : ${capacitesDeService()}. Pour CHACUNE que tu déclares, l'intégration qui la sert porte \`capability: "<id>"\`. Sans ce lien, le moteur NE CÂBLE RIEN : la capacité reste déclarée et sans effet, et l'utilisateur voit un bouton qui ne fait rien. N'ÉCRIS AUCUN SECRET dans \`config\` — ni clé, ni jeton : l'adresse et la clé du service viennent du provisioning, jamais de toi. Les autres capacités (caméra, biométrie, position) vivent dans l'appareil et n'exigent AUCUNE intégration.
 17. HONNÊTETÉ SUR LES CAPABILITIES — le moteur N'EXÉCUTE PAS ENCORE les effets \`capability\` (\`capabilitiesEmitCode: false\`, mesuré), À UNE EXCEPTION PRÈS, réelle et prouvée sur appareil : \`auth\` (\`sessionEtablissable: true\`). Les méthodes signIn, signUp, signOut et resetPassword S'EXÉCUTENT quand le document déclare une intégration auth portant \`url\`, \`anonKey\` et \`profileEntityId\` — le provisioning les remplit. Les besoins de compte se déclarent donc \`satisfied\`. Tout le reste de cette règle vaut pour les AUTRES capabilities (caméra, GPS, notifications…). Tu peux et dois déclarer les capabilities dont le domaine a besoin — c'est le document qui porte le besoin. Mais :
    · N'ÉCRIS AUCUN \`expectedTests\` dont le \`targetId\` est une action à effet \`capability\` — SAUF les actions \`auth\` (signIn, signUp, signOut, resetPassword), qui S'EXÉCUTENT réellement : les tester est légitime et attendu. MESURÉ (dougplace, 2026-09-10) : une version de cette règle sans l'exception a poussé le modèle à TRANSFORMER les actions auth en mutations pour pouvoir les tester — le garde-fou anti-amputation a rejeté la réparation entière. Ne change JAMAIS l'effet d'une action pour contourner une règle : l'exception est ici, sers-t'en.
    · Le besoin correspondant va dans \`intent.needs\` avec \`{kind:"unexpressible", reason:"le moteur n'exécute pas encore les effets capability (capabilitiesEmitCode: false)"}\`.
