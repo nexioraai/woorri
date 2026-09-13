@@ -68,7 +68,8 @@ export const RELEASE_TRAIN_V1 = {
   // `capability` — la navigation post-connexion n'existait dans AUCUN contrat
   // (mesuré EP-061/R6 : 8 arcs prescrits morts, l'intention portée par un
   // param que rien ne lisait).
-  airSchemaVersion: "1.22.0",
+  // EP-137 — `purpose` sur l'écran : ajout OPTIONNEL, migration identité.
+  airSchemaVersion: "1.23.0",
   // Porté à 1.1.0 le 2026-08-31 (D-060) : montée STRICTEMENT ADDITIVE du
   // registre de blocs — `form` gagne `loading`/`empty`, `detail_header` gagne un
   // état, les trois blocs à données gagnent les props de titres. Rien n'est

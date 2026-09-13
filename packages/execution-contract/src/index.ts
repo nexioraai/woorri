@@ -50,9 +50,12 @@ export {
   jugerExclusivite,
   jugerPlacement,
   jugerPositionRecherche,
+  jugerEspaceCompte,
   jugerPrimitivesDeNavigation,
+  surfacesAttendues,
+  SURFACES_DE_COMPTE,
 } from "./presentation.ts";
-export type { ContextePrimitives, PlacementFinding } from "./presentation.ts";
+export type { ContextePrimitives, GenreEcran, PlacementFinding } from "./presentation.ts";
 export type { ArcPrescrit, OptionsVivacite, VivaciteFinding } from "./vivacite.ts";
 export { areteExecutable } from "./graph.ts";
 export type { AreteExecutable } from "./graph.ts";

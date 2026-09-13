@@ -42,6 +42,7 @@ const REPO = join(HERE, "..", "..");
 const airSchema = await import(join(REPO, "packages/air-schema/src/index.ts"));
 const registry = await import(join(REPO, "packages/capability-registry/src/index.ts"));
 const blocksRegistry = await import(join(REPO, "packages/blocks/src/registry.ts"));
+const presentation = await import(join(REPO, "packages/execution-contract/src/presentation.ts"));
 // Étape ③ (EP-008) — le digest INTERPOLE le registre au lieu de le recopier :
 // la liste des rôles d'icônes et le NOMBRE de blocs viennent des sources.
 const { ROLES_ICONES } = await import(join(REPO, "packages/primitives/src/roles-icones.ts"));
@@ -175,7 +176,10 @@ const coutUSD = (u) => adaptateur.coutUsd(adaptateur.lireUsage(u));
 // générée naissait en dessous du niveau. Un test du paquet air-schema compare
 // cette constante à AIR_SCHEMA_VERSION : toute avancée du schéma CASSE la CI
 // tant que ce prompt n'a pas été resynchronisé, consciemment.
-export const CONTRAT_CIBLE = "1.22.0";
+// EP-137 — resynchronisé sur AIR 1.23.0 (`purpose` : le genre des écrans
+// qui n'ont aucune existence métier). Monté DANS LE MÊME GESTE que la
+// règle 41, comme le cliquet `generateur-synchronise` l'exige.
+export const CONTRAT_CIBLE = "1.23.0";
 
 const PARTS = [
   {
@@ -407,6 +411,8 @@ REGISTRE DES SMART BLOCKS (allowlist FERMÉE — blockType UNIQUEMENT parmi ces 
 39. UNE RÉFÉRENCE NE S'AFFICHE JAMAIS — un champ \`reference\` ne va dans AUCUN emplacement d'affichage ni de saisie (\`titleFieldId\`, \`subtitleFieldId\`, \`imageFieldId\`, \`fieldIds\` d'un \`form\`…) : le moteur ne traverse pas les relations à l'affichage (\`relationTraversal: false\`) — il rendrait l'IDENTIFIANT BRUT (\`ent_x_row_2\`). L'identité voyage par la NAVIGATION (règles 18/C4) ; l'affichage n'utilise que les champs PROPRES de l'entité. MESURÉ (EP-061/R6) : 11 références brutes sur la première traversée réelle.
 
 40. CLASSE DE COMMERCE — \`compliance.commerceClass\` décrit le MODÈLE ÉCONOMIQUE DU DOMAINE, pas les écrans : \`physical_or_offapp\` dès que des biens ou services SE PAIENT hors application ou physiquement, MÊME SI l'app ne porte aucune étape de paiement (réserver une prestation payée sur place = \`physical_or_offapp\`) ; \`digital\` quand du contenu digital se vend dans l'app ; \`none\` SEULEMENT quand rien ne se paie nulle part. MESURÉ (EP-061) : \`none\` émis pour un domaine de prestations payées sur place — divergence refusée (CONFORMANCE_COMMERCE_DIVERGENT).
+
+41. SURFACES DE L'APPLICATION — six écrans n'ont AUCUNE existence métier et doivent pourtant être là, parce que c'est une APPLICATION : ils se déclarent par \`purpose\` (énumération FERMÉE) et ne se déduisent d'aucun besoin. ${presentation.surfacesAttendues(true).map((g) => `\\\`${g}\\\` (${presentation.SURFACES_DE_COMPTE[g].source ?? "décision produit"})`).join(" · ")}. Ils vivent DANS l'espace compte — atteignables par une action \`navigate\` depuis lui — et JAMAIS dans \`navigation.primary\` : la barre porte de trois à cinq destinations, et ces surfaces sont six. \`account_create\` et \`account_delete\` n'existent que si l'application a des comptes. TU NE RÉDIGES PAS LEUR TEXTE : une politique de confidentialité ou des conditions d'utilisation sont l'engagement du propriétaire de l'app — l'écran existe, son contenu sera fourni.
 
 36. ICÔNES — allowlist FERMÉE, ONZE rôles, aucune autre : accueil, recherche, liste, billet, panier, calendrier, carte, compte, favoris, message, reglages. Elle vaut pour \`icon\` des destinations de \`primary\` ET pour \`icon\` d'un \`button\` — et NULLE PART ailleurs (aucun autre bloc n'a d'icône). Le contrat parle UNE seule langue : les RÔLES — le moteur traduit vers les glyphes embarqués (unifié le 2026-09-10, mesuré sur marketa). Choisis par le RÔLE ; si aucun des onze ne convient, N'EN METS PAS.
 

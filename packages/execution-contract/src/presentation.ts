@@ -284,6 +284,150 @@ export function jugerPrimitivesDeNavigation(
   return out;
 }
 
+/**
+ * EP-137 — CE QUE L'ESPACE COMPTE PORTE, ET POURQUOI.
+ *
+ * EP-130 a posé que l'accueil et le compte sont des primitives. Leur CONTENU
+ * l'est aussi : ces surfaces existent dans toute application, quel que soit
+ * le domaine — elles n'ont AUCUNE existence métier, ni concept, ni parcours,
+ * ni geste. C'est pourquoi elles relèvent de la PRÉSENTATION et non du
+ * modèle : les faire dépendre du modèle reproduirait l'accident d'EP-130,
+ * où l'on jugeait ce que le modèle PORTE au lieu de ce qu'une application
+ * DOIT porter.
+ *
+ * FONDEMENT, UN PAR UN — et la moitié n'est PAS une convention :
+ *  [P1] confidentialité — App Store Review Guidelines 5.1.1(i) : « All apps
+ *       must include a link to their privacy policy … within the app in an
+ *       easily accessible manner ». OBLIGATION DE PLATEFORME.
+ *  [P2] contact — Guideline 1.5 : « Make sure your app and its Support URL
+ *       include an easy way to contact you ». OBLIGATION DE PLATEFORME, et
+ *       elle porte bien sur l'app, pas seulement sur la fiche du magasin.
+ *  [P3] suppression de compte — Guideline 5.1.1(v) : « If your app supports
+ *       account creation, you must also offer account deletion within the
+ *       app ». OBLIGATION DE PLATEFORME, CONDITIONNELLE.
+ *  [D]  conditions d'utilisation, aide, réglages, création de compte —
+ *       AUCUNE convention ne les impose. Les guidelines ne mentionnent aucun
+ *       EULA obligatoire, et ne citent aide et réglages qu'en « where
+ *       possible » (4.4). Ce sont des DÉCISIONS PRODUIT, étiquetées comme
+ *       telles — jamais présentées comme des règles de plateforme.
+ *
+ * CE QUE LE MOTEUR NE PROMET PAS : le TEXTE. Il ne peut pas écrire une
+ * politique de confidentialité, et ne prétend pas le faire. Il garantit que
+ * la SURFACE existe et qu'elle est atteignable ; son contenu est un
+ * engagement du propriétaire de l'application.
+ */
+export const SURFACES_DE_COMPTE = {
+  privacy_policy: {
+    fondement: "plateforme",
+    source: "App Store Review Guidelines 5.1.1(i)",
+    exigeIdentite: false,
+  },
+  contact: {
+    fondement: "plateforme",
+    source: "App Store Review Guidelines 1.5",
+    exigeIdentite: false,
+  },
+  account_delete: {
+    fondement: "plateforme",
+    source: "App Store Review Guidelines 5.1.1(v)",
+    exigeIdentite: true,
+  },
+  terms: { fondement: "produit", source: null, exigeIdentite: false },
+  help: { fondement: "produit", source: null, exigeIdentite: false },
+  settings: { fondement: "produit", source: null, exigeIdentite: false },
+  account_create: { fondement: "produit", source: null, exigeIdentite: true },
+} as const;
+
+export type GenreEcran = keyof typeof SURFACES_DE_COMPTE;
+
+/** Les genres attendus d'un document, DÉRIVÉS : jamais une liste écrite. */
+export function surfacesAttendues(avecIdentite: boolean): GenreEcran[] {
+  return (Object.keys(SURFACES_DE_COMPTE) as GenreEcran[]).filter(
+    (genre) => avecIdentite || !SURFACES_DE_COMPTE[genre].exigeIdentite,
+  );
+}
+
+/**
+ * ④ ELLES N'AJOUTENT AUCUN ONGLET. Material prescrit trois à cinq
+ * destinations d'importance égale [S1] ; six surfaces de plus en feraient
+ * onze. Elles vivent DANS le compte — le juge refuse toute surface de compte
+ * promue en destination, ce qui garantit que la borne d'EP-130 tient sans
+ * qu'aucune règle ne soit assouplie.
+ */
+export function jugerEspaceCompte(
+  air: Air,
+  contexte: { readonly ecransDIdentite: readonly string[] },
+): readonly PlacementFinding[] {
+  const out: PlacementFinding[] = [];
+  const avecIdentite = contexte.ecransDIdentite.length > 0;
+  const parGenre = new Map<string, string[]>();
+  for (const ecran of air.screens) {
+    if (ecran.purpose === undefined) continue;
+    parGenre.set(ecran.purpose, [...(parGenre.get(ecran.purpose) ?? []), ecran.id]);
+  }
+
+  for (const genre of surfacesAttendues(avecIdentite)) {
+    if (parGenre.has(genre)) continue;
+    const fiche = SURFACES_DE_COMPTE[genre];
+    out.push({
+      code: "PRESENTATION_SURFACE_COMPTE_ABSENTE",
+      path: "screens",
+      message:
+        `aucun écran de genre « ${genre} » : cette surface existe dans toute ` +
+        `application, indépendamment du domaine. ` +
+        (fiche.source === null
+          ? `(DÉCISION PRODUIT — aucune convention de plateforme ne l'impose.)`
+          : `(OBLIGATION DE PLATEFORME — ${fiche.source}.)`),
+    });
+  }
+
+  // Une surface de compte promue en destination mangerait une place de la
+  // barre, que Material borne à cinq.
+  const ecranDeRoute = new Map(air.navigation.routes.map((r) => [r.id, r.screenId]));
+  const ecransEnBarre = new Set(
+    (air.navigation.primary?.destinations ?? [])
+      .map((d) => ecranDeRoute.get(d.routeId))
+      .filter((e): e is string => e !== undefined),
+  );
+  for (const [genre, ecrans] of parGenre) {
+    for (const id of ecrans) {
+      if (!ecransEnBarre.has(id)) continue;
+      out.push({
+        code: "PRESENTATION_SURFACE_COMPTE_EN_BARRE",
+        path: `navigation.primary`,
+        message:
+          `l'écran « ${genre} » (${id}) est une destination principale : ces ` +
+          `surfaces vivent DANS le compte, pas dans la barre — une barre en ` +
+          `porte de trois à cinq, et elles sont six.`,
+      });
+    }
+  }
+
+  // Quand un espace compte existe, ces surfaces s'y rattachent : sinon elles
+  // sont dans le document sans que personne puisse les atteindre.
+  if (avecIdentite) {
+    const cibles = new Set(
+      air.actions
+        .filter((a) => a.effect.kind === "navigate")
+        .map((a) => (a.effect as { screenId?: string }).screenId)
+        .filter((x): x is string => x !== undefined),
+    );
+    for (const [genre, ecrans] of parGenre) {
+      for (const id of ecrans) {
+        if (cibles.has(id) || ecransEnBarre.has(id)) continue;
+        out.push({
+          code: "PRESENTATION_SURFACE_COMPTE_ORPHELINE",
+          path: `screens[${id}]`,
+          message:
+            `l'écran « ${genre} » (${id}) existe mais aucune action n'y mène : ` +
+            `une surface qu'on ne peut pas atteindre ne remplit aucune obligation.`,
+        });
+      }
+    }
+  }
+  return out;
+}
+
 /** Les trois juges de placement, en un appel. */
 export function jugerPlacement(
   air: Air,

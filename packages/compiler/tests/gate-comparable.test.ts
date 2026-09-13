@@ -18,15 +18,24 @@ import {
   validateLocal,
 } from "../../../benchmarks/air-emission/acceptation.mjs";
 import { ecransDe } from "../../../benchmarks/air-emission/modele-metier.mjs";
+import { AIR_MIGRATIONS, applyAirMigrations } from "@deribfy/air-schema";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const R = join(HERE, "..", "..", "..");
 const R_RES = join(R, "benchmarks", "air-emission", "results");
+// EP-137 — UNE ARCHIVE SE MIGRE AVANT D'ÊTRE JUGÉE. Ces documents ont été
+// émis sous une version antérieure du schéma : les juger tels quels les
+// déclarerait invalides pour la seule raison qu'ils sont anciens, alors que
+// les migrations existent précisément pour ça. La migration est IDENTITÉ ici
+// (ajout d'un champ optionnel) — rien du document ne change.
 const lire = (f: string): Record<string, unknown> =>
   JSON.parse(readFileSync(join(R_RES, f), "utf8")) as Record<string, unknown>;
+/** Un DOCUMENT d'archive se migre ; un modèle métier n'a pas de version d'AIR. */
+const lireAir = (f: string): Record<string, unknown> =>
+  applyAirMigrations(lire(f), AIR_MIGRATIONS) as Record<string, unknown>;
 
 // FIXTURE : kaviva 23-00 — 16 écrans, document VALIDE (run vert).
-const VALIDE = lire("kaviva-spa.2026-09-11T23-00-50-047Z.attempt2.air.json");
+const VALIDE = lireAir("kaviva-spa.2026-09-11T23-00-50-047Z.attempt2.air.json");
 const MODELE_BRUT = lire("kaviva-spa.2026-09-11T23-00-50-047Z.modele-p0-t1.air.json");
 const MODELE = (MODELE_BRUT.modele ?? MODELE_BRUT) as never;
 const PRESCRIPTIF = { modele: MODELE, plan: ecransDe(MODELE) };

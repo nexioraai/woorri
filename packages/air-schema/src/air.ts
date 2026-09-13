@@ -21,7 +21,7 @@ import {
 // 1.7.1 (E3.3, D-131) : provenance APLANIE (sourceKind/sourceIntegrationId/
 //   sourceDomain/sourceRefreshSeconds) — l'union 1.7.0 dépassait la limite
 //   réelle de grammaire de l'API (classe D-078) ; sémantique inchangée.
-export const AIR_SCHEMA_VERSION = "1.22.0";
+export const AIR_SCHEMA_VERSION = "1.23.0";
 
 export const semverSchema = z.string().regex(/^\d+\.\d+\.\d+$/);
 export const sha256Schema = z.string().regex(/^[0-9a-f]{64}$/);
@@ -226,6 +226,43 @@ const screenSchema = z.strictObject({
    * OPTIONNEL : sans déclaration, l'écran reste une carte poussée.
    */
   presentation: z.enum(["card", "sheet"]).optional(),
+  /**
+   * GENRE D'ÉCRAN (1.23.0, EP-137) — ce qu'un écran EST, quand ce n'est pas
+   * le modèle métier qui le dit.
+   *
+   * Les écrans ordinaires se dérivent du besoin : une liste de produits
+   * existe parce qu'un parcours la traverse. Certains écrans n'ont AUCUNE
+   * existence métier et doivent pourtant être là — parce que c'est une
+   * APPLICATION, pas parce que le domaine les demande. Une politique de
+   * confidentialité ne se déduit d'aucun modèle ; elle est exigée par les
+   * plateformes (App Store Review Guidelines 5.1.1(i) : « All apps must
+   * include a link to their privacy policy … within the app in an easily
+   * accessible manner »).
+   *
+   * Ce champ les NOMME structurellement, pour qu'un juge les reconnaisse
+   * sans lire un titre — un jugement fondé sur du texte serait fragile et
+   * traduisible.
+   *
+   * LISTE LITTÉRALE, ET SOUS CLIQUET : ce paquet ne peut dépendre d'aucun
+   * autre (même règle que les rôles d'icônes), donc la table qui porte le
+   * FONDEMENT de chaque genre vit ailleurs, et un test refuse toute
+   * divergence entre les deux.
+   *
+   * OPTIONNEL AU SCHÉMA, EXIGÉ PAR LA GATE — même motif qu'`intent` : le
+   * rendre requis forcerait la migration à inventer un genre pour chaque
+   * écran des documents existants. Le fail-closed vit dans le juge.
+   */
+  purpose: z
+    .enum([
+      "privacy_policy",
+      "terms",
+      "help",
+      "contact",
+      "settings",
+      "account_create",
+      "account_delete",
+    ])
+    .optional(),
   /**
    * LIBELLÉ DE FERMETURE (1.18.0) — le mot que porte le contrôle qui referme
    * une feuille.

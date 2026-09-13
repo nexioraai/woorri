@@ -309,6 +309,18 @@ export const AIR_MIGRATIONS: readonly AirMigration[] = [
       "Migration IDENTITÉ.",
     migrate: (document) => document,
   },
+  {
+    from: "1.22.0",
+    to: "1.23.0",
+    description:
+      "AIR 1.23.0 (EP-137) : `purpose` OPTIONNEL sur l'écran — le GENRE d'un " +
+      "écran qui n'a aucune existence métier et doit pourtant être là " +
+      "(confidentialité, contact, suppression de compte…). Sans lui, un juge " +
+      "devrait reconnaître ces surfaces à leur TITRE : fragile, et traduisible. " +
+      "Migration IDENTITÉ — aucun document existant ne change, et aucun genre " +
+      "n'est INVENTÉ pour eux : un écran sans genre n'en a pas.",
+    migrate: (document) => document,
+  },
 ];
 
 export class AirMigrationError extends Error {

@@ -308,6 +308,8 @@ export function jugerAcceptation(air, prescriptif, intention) {
       ecransDIdentite,
     }),
   );
+  // EP-137 — le CONTENU de l'espace compte est lui aussi une primitive.
+  out.push(...presentation.jugerEspaceCompte(air, { ecransDIdentite }));
 
   // EP-122 · ② — le SURPLUS structurel et l'identité perdue par bouton.
   out.push(...jugerContenuDEcran(air, prescriptif));
