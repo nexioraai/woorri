@@ -19,8 +19,14 @@ import type { ProjectAir } from "@deribfy/air-schema";
 export interface ObligationProprietaire {
   /** Ce que le propriétaire doit faire, en une phrase. */
   readonly quoi: string;
-  /** Où : dans l'application, dans une console, hors ligne. */
-  readonly ou: "console" | "contenu" | "compte_developpeur";
+  /**
+   * CE QU'IL FAUT EN FAIRE, et c'est ce qui range le fichier livré :
+   *  · `fournir`  — un contenu que le propriétaire produit (un texte, une
+   *                 adresse, des coordonnées) ;
+   *  · `console`  — une action dans une console d'éditeur ;
+   *  · `posseder` — un compte, un certificat : cela s'obtient, pas s'écrit.
+   */
+  readonly ou: "fournir" | "console" | "posseder";
   /** La règle qui l'exige — jamais une opinion. */
   readonly source: string;
   /** La matière que le moteur a su préparer, s'il y en a une. */
@@ -39,7 +45,7 @@ export function obligationsDuProprietaire(air: ProjectAir): readonly ObligationP
     quoi:
       "Rédiger la politique de confidentialité et l'héberger : l'écran existe, " +
       "son contenu vous engage juridiquement et le moteur ne l'écrira pas.",
-    ou: "contenu",
+    ou: "fournir",
     source: "App Store Review Guidelines 5.1.1(i) · Google Play answer/9859455",
   });
 
@@ -60,7 +66,7 @@ export function obligationsDuProprietaire(air: ProjectAir): readonly ObligationP
         "Publier une page web de demande de suppression de compte et en donner " +
         "l'adresse à Play Console. Google exige les DEUX chemins — celui dans " +
         "l'application est généré, celui du web est le vôtre.",
-      ou: "console",
+      ou: "fournir",
       source: "Google Play answer/13327111 — « and provide a web link resource »",
     });
     out.push({
@@ -82,9 +88,88 @@ export function obligationsDuProprietaire(air: ProjectAir): readonly ObligationP
       "Renseigner les coordonnées du compte développeur et l'adresse de support " +
       "de la fiche — distinctes du moyen de contact DANS l'application, qui, lui, " +
       "est généré.",
-    ou: "compte_developpeur",
+    ou: "fournir",
     source: "Google Play — contact du compte · App Store Review Guidelines 1.5",
   });
 
+  out.push({
+    quoi:
+      "Ouvrir les comptes d'éditeur (Apple Developer Program, Google Play " +
+      "Console) et obtenir les certificats de signature. Sans eux, rien ne " +
+      "peut être déposé.",
+    ou: "posseder",
+    source: "Apple Developer Program · Google Play Console — conditions d'inscription",
+  });
+
   return out;
+}
+
+/** Les trois sections du fichier livré, dans l'ordre où on les traite. */
+const SECTIONS: readonly { ou: ObligationProprietaire["ou"]; titre: string; intro: string }[] = [
+  {
+    ou: "fournir",
+    titre: "Ce que vous devez fournir",
+    intro:
+      "Des contenus que vous seul pouvez écrire. L'application prévoit la place ; " +
+      "le texte vous engage.",
+  },
+  {
+    ou: "console",
+    titre: "Ce que vous devez faire en console",
+    intro:
+      "Des formulaires à remplir chez Apple et Google. Personne ne peut les " +
+      "remplir à votre place, mais tout ce qui pouvait être préparé l'est.",
+  },
+  {
+    ou: "posseder",
+    titre: "Ce que vous devez posséder",
+    intro: "Des comptes et des certificats. Cela s'obtient auprès des plateformes.",
+  },
+];
+
+/**
+ * LE FICHIER LIVRÉ AVEC L'APPLICATION.
+ *
+ * ÉCRIT POUR QUELQU'UN QUI VEUT PUBLIER SON APPLICATION, pas pour qui veut
+ * comprendre le moteur : aucun code de diagnostic, aucun terme interne. Un
+ * cliquet le vérifie — c'est facile à oublier quand on écrit depuis l'intérieur.
+ *
+ * ET IL NE REMPLACE RIEN : il dit ce qu'il faut écrire, il ne l'écrit pas.
+ * C'est la frontière posée en EP-137, et elle ne bouge pas.
+ */
+export function rendrePublicationMd(air: ProjectAir): string {
+  const obligations = obligationsDuProprietaire(air);
+  const lignes: string[] = [
+    `# Publier « ${air.app.name} »`,
+    "",
+    "Votre application est générée et compilable. Avant de la déposer sur les",
+    "magasins, il reste des choses que personne ne peut faire à votre place.",
+    "Cette liste est établie d'après CETTE application : elle ne contient que",
+    "ce qui la concerne réellement.",
+    "",
+  ];
+  for (const section of SECTIONS) {
+    const dedans = obligations.filter((o) => o.ou === section.ou);
+    if (dedans.length === 0) continue;
+    lignes.push(`## ${section.titre}`, "", section.intro, "");
+    for (const o of dedans) {
+      // Une LISTE DE TÂCHES, pas des titres : celui qui lit veut cocher, et
+      // une phrase entière en titre de section se lit mal.
+      lignes.push(`- [ ] **${o.quoi}**`, `      *Exigé par : ${o.source}.*`);
+      if (o.matiere !== undefined && o.matiere.length > 0) {
+        lignes.push("", "      Ce que votre application déclare collecter, à recopier :");
+        for (const m of o.matiere) lignes.push(`      - \`${m}\``);
+      }
+      lignes.push("");
+    }
+  }
+  lignes.push(
+    "---",
+    "",
+    "Ce fichier est régénéré à chaque émission. Il décrit ce qu'il faut écrire ;",
+    "il ne l'écrit pas — le texte d'une politique de confidentialité vous engage",
+    "juridiquement, et aucun outil ne peut le signer à votre place.",
+    "",
+  );
+  return lignes.join("\n");
 }

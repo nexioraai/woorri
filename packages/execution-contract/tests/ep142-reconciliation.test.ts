@@ -93,8 +93,9 @@ describe("EP-142 ④ · le lien web de suppression est DIT, pas inventé", () =>
     const lien = o.find((x) => x.quoi.includes("web"));
     expect(lien).toBeDefined();
     expect(lien!.source).toContain("13327111");
-    // Le moteur ne peut pas l'inventer : c'est une adresse du propriétaire.
-    expect(lien!.ou).toBe("console");
+    // Le moteur ne peut pas l'inventer : c'est une adresse du propriétaire,
+    // donc quelque chose qu'il FOURNIT (EP-143).
+    expect(lien!.ou).toBe("fournir");
   });
 
   it("sans comptes, ni lien web ni compte de démonstration", () => {
@@ -108,7 +109,7 @@ describe("EP-142 ④ · le lien web de suppression est DIT, pas inventé", () =>
 describe("EP-142 · la colonne 3 est DÉRIVÉE, jamais une liste fixe", () => {
   it("chaque obligation cite sa source et son lieu", () => {
     for (const o of obligationsDuProprietaire(document(surfacesAttendues(true)))) {
-      expect(["console", "contenu", "compte_developpeur"]).toContain(o.ou);
+      expect(["fournir", "console", "posseder"]).toContain(o.ou);
       expect(o.source.length).toBeGreaterThan(10);
       expect(o.quoi.length).toBeGreaterThan(30);
     }
@@ -117,7 +118,7 @@ describe("EP-142 · la colonne 3 est DÉRIVÉE, jamais une liste fixe", () => {
   it("le texte des politiques est TOUJOURS dû — c'est ce que le moteur n'écrira jamais", () => {
     for (const compliance of [{ dataCollected: [] }, { accountDeletionRequired: false }]) {
       const o = obligationsDuProprietaire(document([], compliance));
-      expect(o.some((x) => x.ou === "contenu")).toBe(true);
+      expect(o.some((x) => x.ou === "fournir")).toBe(true);
     }
   });
 

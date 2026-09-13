@@ -8,6 +8,7 @@
 // Règles d'émission S5 : LF, UTF-8, tri par point de code, AUCUN contenu
 // libre interpolé dans le code (identifiants validés par regex ; toute la
 // matière variable vit dans les modules .data canoniques).
+import { rendrePublicationMd } from "@deribfy/execution-contract";
 import { canonicalJson, type ProjectAir, type ProjectLock } from "@deribfy/air-schema";
 import { buildDemoFixtures } from "./demo-fixtures.ts";
 import { emitAppJson, emitPermissionsManifest } from "./emit-manifests.ts";
@@ -1128,6 +1129,12 @@ export function emitProject(
   if (air.app.brandIconPngBase64 !== undefined) {
     files.set("assets/marque.png", air.app.brandIconPngBase64);
   }
+  // EP-143 — CE QUE LE MOTEUR NE FERA JAMAIS, LIVRÉ AVEC CE QU'IL A FAIT.
+  // Les obligations du propriétaire étaient DÉRIVABLES depuis EP-142 et
+  // n'atteignaient personne : une connaissance du moteur, pas une
+  // information de celui qui publie. Le fichier voyage avec le code et
+  // survit à la session — c'est ce qui le rend utile.
+  files.set("PUBLICATION.md", rendrePublicationMd(air));
   files.set("demo.data.ts", emitDemoData(air));
   files.set("manifests/permissions.manifest.json", emitPermissionsManifest(air));
   files.set("nav.data.ts", emitNavData(air, locale));

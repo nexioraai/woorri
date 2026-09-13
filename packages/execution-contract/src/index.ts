@@ -73,5 +73,5 @@ export type {
   FeasibilityVerdict,
   GapOwner,
 } from "./feasibility.ts";
-export { obligationsDuProprietaire } from "./obligations-proprietaire.ts";
+export { obligationsDuProprietaire, rendrePublicationMd } from "./obligations-proprietaire.ts";
 export type { ObligationProprietaire } from "./obligations-proprietaire.ts";
