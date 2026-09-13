@@ -428,6 +428,69 @@ export function jugerEspaceCompte(
   return out;
 }
 
+/**
+ * EP-141 ② — OÙ SE TIENNENT LES PRIMITIVES.
+ *
+ * EP-130 a posé qu'Accueil et Compte EXISTENT ; rien ne disait OÙ. Ils
+ * occupent les EXTRÉMITÉS : l'accueil en PREMIÈRE position, le compte en
+ * DERNIÈRE, les destinations du domaine entre les deux.
+ *
+ * PREMIER ET DERNIER, JAMAIS GAUCHE ET DROITE. En arabe ou en hébreu, la
+ * barre s'inverse : une règle écrite en gauche-droite serait fausse le jour
+ * où Deribfy générera une application dans ces langues. Le contrat porte
+ * `order`, qui est un RANG — indépendant du sens de lecture.
+ *
+ * DÉCISION PRODUIT, étiquetée : aucune convention de plateforme ne fixe la
+ * position de ces destinations. Material prescrit trois à cinq destinations
+ * d'importance ÉGALE [S1] et n'en ordonne aucune. C'est un choix, assumé.
+ *
+ * CONTRAINT AVEC CE QUI EXISTE : le schéma porte déjà `order`, et
+ * `AIR_NAV_ORDER_DUPLICATE` refuse déjà deux rangs identiques. Aucun champ
+ * n'est ajouté — on lit les rangs déjà déclarés.
+ *
+ * ET SUR LES IDENTITÉS, PAS SUR LES ICÔNES : EP-130 a mesuré qu'une icône
+ * « compte » peut être posée sur tout autre chose. On reconnaît donc
+ * l'accueil à l'écran d'ENTRÉE et le compte à l'écran d'IDENTITÉ.
+ */
+export function jugerPositionPrimitives(
+  air: Air,
+  contexte: ContextePrimitives,
+): readonly PlacementFinding[] {
+  const out: PlacementFinding[] = [];
+  const destinations = air.navigation.primary?.destinations ?? [];
+  if (destinations.length === 0) return out;
+  const ecranDeRoute = new Map(air.navigation.routes.map((r) => [r.id, r.screenId]));
+  const rangs = destinations.map((d) => d.order);
+  const premier = Math.min(...rangs);
+  const dernier = Math.max(...rangs);
+
+  for (const d of destinations) {
+    const ecran = ecranDeRoute.get(d.routeId);
+    if (ecran === undefined) continue;
+    if (ecran === contexte.entryScreenId && d.order !== premier) {
+      out.push({
+        code: "PRESENTATION_ACCUEIL_HORS_PREMIERE_POSITION",
+        path: `navigation.primary.destinations[${d.routeId}]`,
+        message:
+          `l'accueil est au rang ${String(d.order)} alors que la barre commence ` +
+          `au rang ${String(premier)} : il occupe la PREMIÈRE position. ` +
+          `(DÉCISION PRODUIT — aucune convention ne fixe cet ordre.)`,
+      });
+    }
+    if (contexte.ecransDIdentite.includes(ecran) && d.order !== dernier) {
+      out.push({
+        code: "PRESENTATION_COMPTE_HORS_DERNIERE_POSITION",
+        path: `navigation.primary.destinations[${d.routeId}]`,
+        message:
+          `l'espace compte est au rang ${String(d.order)} alors que la barre ` +
+          `finit au rang ${String(dernier)} : il occupe la DERNIÈRE position. ` +
+          `(DÉCISION PRODUIT — aucune convention ne fixe cet ordre.)`,
+      });
+    }
+  }
+  return out;
+}
+
 /** Les trois juges de placement, en un appel. */
 export function jugerPlacement(
   air: Air,
@@ -438,6 +501,8 @@ export function jugerPlacement(
     ...jugerExclusivite(air),
     ...jugerPositionRecherche(air, zoneDuBloc),
     ...jugerBarreInferieure(air),
-    ...(contexte === undefined ? [] : jugerPrimitivesDeNavigation(air, contexte)),
+    ...(contexte === undefined
+      ? []
+      : [...jugerPrimitivesDeNavigation(air, contexte), ...jugerPositionPrimitives(air, contexte)]),
   ];
 }

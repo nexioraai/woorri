@@ -51,6 +51,7 @@ export {
   jugerPlacement,
   jugerPositionRecherche,
   jugerEspaceCompte,
+  jugerPositionPrimitives,
   jugerPrimitivesDeNavigation,
   surfacesAttendues,
   SURFACES_DE_COMPTE,
