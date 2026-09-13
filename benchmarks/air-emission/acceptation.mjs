@@ -398,6 +398,21 @@ export function jugerBase(air, contexte) {
     ...presentation.jugerPrimitivesDeNavigation(air, ctx),
     ...presentation.jugerPositionPrimitives(air, ctx),
     ...presentation.jugerLibellesPrimitifs(air, ctx),
+    // EP-171 ① — QUATRIÈME JUGE DE LA BARRE, DÉPLACÉ SUR MESURE.
+    //
+    // Le crible d'EP-170 l'a trouvé en classe (b) — zéro lecture de
+    // `air.screens`, il ne lit que `navigation`, émis au segment `base`. Et
+    // la mesure, faite sur les ONZE émissions partielles archivées et non sur
+    // un cas isolé, a décidé : 15 diagnostics, tous des
+    // `PRESENTATION_DESTINATION_SANS_ICONE` — « une barre de navigation se
+    // lit par ses symboles ». DU SIGNAL, JAMAIS RENDU À PERSONNE.
+    //
+    // DEUX AUTRES CANDIDATS ONT ÉTÉ ÉCARTÉS PAR LA MÊME MESURE, pas par
+    // prudence : `validateAirCapabilities` rend ZÉRO sur les onze (il juge le
+    // registre, jamais l'intention — EP-169 ② l'avait établi par lecture, la
+    // mesure le confirme), et `partagesDe` exige `integrations`, émis à
+    // l'avant-dernier segment : le déplacer ne gagnerait rien.
+    ...presentation.jugerBarreInferieure(air),
   ];
 }
 

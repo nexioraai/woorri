@@ -75,6 +75,42 @@ describe("EP-169 ① · la barre se juge dès la base", () => {
   });
 });
 
+describe("EP-171 ① · la barre inférieure se juge dès la base", () => {
+  it("LE DÉPLACEMENT EST MESURÉ — jugerBase rend les diagnostics d'icône", () => {
+    // Le crible d'EP-170 : `jugerBarreInferieure` ne lit QUE `navigation`,
+    // émis au segment `base`. Mesuré sur les 11 émissions partielles
+    // archivées : 15 diagnostics jamais rendus à personne.
+    const partiels = readdirSync(RES).filter((f) => f.includes("emission-partielle"));
+    expect(partiels.length, "aucune émission partielle archivée").toBeGreaterThan(5);
+    let icones = 0;
+    for (const f of partiels) {
+      const d = JSON.parse(readFileSync(join(RES, f), "utf8")) as Record<string, unknown>;
+      icones += codes(jugerBase(d, { ecransDIdentite: [] })).filter(
+        (c) => c === "PRESENTATION_DESTINATION_SANS_ICONE",
+      ).length;
+    }
+    expect(icones, "le juge déplacé ne rend rien").toBeGreaterThan(0);
+  });
+
+  it("IL NE LIT AUCUN ÉCRAN — c'est ce qui autorise le déplacement", () => {
+    const src = readFileSync(join(R, "packages", "execution-contract", "src", "presentation.ts"), "utf8");
+    const bornes = [...src.matchAll(/export function (\w+)/g)].map((m) => [m[1]!, m.index!] as const);
+    const i = bornes.findIndex(([n]) => n === "jugerBarreInferieure");
+    expect(i).toBeGreaterThanOrEqual(0);
+    const corps = src.slice(bornes[i]![1], bornes[i + 1]?.[1] ?? src.length);
+    expect(corps.includes(".screens"), "jugerBarreInferieure lit les écrans").toBe(false);
+    expect(corps.includes("navigation"), "il devrait lire navigation").toBe(true);
+  });
+
+  it("sans barre, il se tait — il n'invente pas un défaut d'icône", () => {
+    const air = structuredClone(PARTIEL) as { navigation: { primary?: unknown } };
+    delete air.navigation.primary;
+    expect(codes(jugerBase(air, { ecransDIdentite: [] }))).not.toContain(
+      "PRESENTATION_DESTINATION_SANS_ICONE",
+    );
+  });
+});
+
 describe("EP-169 ② · une capacité de paiement exige un geste de paiement", () => {
   it("LE CAS RÉEL — `payments.psp` sur un modèle sans `payer` est REFUSÉ, nommé", () => {
     const d = jugerCapacitesContreIntention(PARTIEL, { modele: MODELE });
