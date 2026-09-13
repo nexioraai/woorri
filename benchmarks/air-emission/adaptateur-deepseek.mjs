@@ -48,11 +48,40 @@ export function degradationsPourEchelle(jsonSchema) {
   return [{ name: "json-object-texte", schema: jsonSchema }];
 }
 
-/** Requête neutre {system, user, grammaire} → charge utile du dialecte :
+/**
+ * EP-165 ② — CAPACITÉ DE VISION DÉCLARÉE. Contrainte de TRANSPORT (EP-049).
+ *
+ * VÉRIFIÉ À LA DOCUMENTATION DU FOURNISSEUR le 2026-09-13, ET CELA CORRIGE
+ * CE QUE J'AVAIS ÉCRIT EN EP-164. J'y déclarais `deepseek-chat` « modèle de
+ * texte », ce qui laissait entendre que ce fournisseur ne voyait pas. IL
+ * VOIT — mais sur un AUTRE modèle. La capacité de vision appartient donc au
+ * MODÈLE, jamais au fournisseur : c'est la distinction que ma formulation
+ * écrasait, et la raison pour laquelle elle est déclarée ici, à côté du
+ * modèle qu'elle concerne.
+ *
+ * CONSÉQUENCE SUR L'INDÉPENDANCE : il y a DEUX lecteurs possibles, pas un.
+ */
+export const VISION = {
+  supportee: true,
+  // PAS `CONFIG.model` : la génération et la lecture n'emploient pas le même
+  // modèle chez ce fournisseur. Les confondre serait envoyer une image à un
+  // modèle qui ne la lit pas, et lire un refus comme un verdict.
+  modele: "deepseek-flash",
+  modeleDeGeneration: CONFIG.model,
+  formats: ["image/jpeg", "image/png", "image/gif", "image/webp"],
+  independantDuGenerateur: true,
+  formeAttestee: true,
+};
+
+/** Requête neutre {system, user, grammaire, images?} → charge utile du dialecte :
  * json_object + schéma en RENFORT TEXTUEL dans le system. */
 export function construireAppel(requete, reglages) {
+  const images = requete.images ?? [];
   return {
-    model: CONFIG.model,
+    // LE MODÈLE SUIT LA MODALITÉ : une requête qui porte une image part au
+    // modèle qui sait la lire. Ce n'est pas un choix d'appelant — c'est une
+    // contrainte de dialecte, et elle vit donc ici.
+    model: images.length === 0 ? CONFIG.model : VISION.modele,
     // CONTRAINTE DE DIALECTE DÉCLARÉE (EP-089) : la sortie de deepseek-chat
     // est bornée à 8192 tokens — un max_tokens supérieur est un 400. Le
     // clamp est un écart d'adaptateur ; une sortie tronquée reste signalée
@@ -66,7 +95,19 @@ export function construireAppel(requete, reglages) {
           "\n\nRÉPONDS EN UN SEUL OBJET JSON, STRICTEMENT CONFORME À CE SCHÉMA (aucune clé en plus, aucune en moins) :\n" +
           JSON.stringify(requete.grammaire),
       },
-      { role: "user", content: requete.user },
+      {
+        role: "user",
+        content:
+          images.length === 0
+            ? requete.user
+            : [
+                ...images.map((img) => ({
+                  type: "image_url",
+                  image_url: { url: `data:${img.mediaType};base64,${img.base64}` },
+                })),
+                { type: "text", text: requete.user },
+              ],
+      },
     ],
     response_format: { type: "json_object" },
   };

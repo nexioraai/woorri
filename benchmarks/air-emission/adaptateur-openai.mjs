@@ -58,14 +58,52 @@ export function degradationsPourEchelle(jsonSchema) {
   return makeLevels(jsonSchema);
 }
 
-/** Requête neutre {system, user, grammaire} → charge utile du dialecte. */
+/**
+ * EP-165 ② — CAPACITÉ DE VISION DÉCLARÉE. Contrainte de TRANSPORT (EP-049).
+ *
+ * VÉRIFIÉ À LA DOCUMENTATION le 2026-09-13 — ET AVEC UNE RÉSERVE QUI EST DITE
+ * PLUTÔT QUE TUE : la documentation détaille le bloc `input_image` pour
+ * l'API *Responses*, et ne donne PAS d'exemple complet pour l'API *Chat
+ * Completions*, qui est celle que cet adaptateur emploie (`messages` +
+ * `response_format`). La forme ci-dessous est donc PROBABLE, pas ATTESTÉE.
+ * Le premier appel réel la confirmera ou la réfutera — et il attend un GO.
+ * Un 400 sur ce bloc n'est PAS un refus de grammaire : c'est un écart de
+ * dialecte à déclarer ici, comme les six précédents.
+ */
+export const VISION = {
+  supportee: true,
+  modele: CONFIG.model,
+  formats: ["image/png", "image/jpeg", "image/gif", "image/webp"],
+  // LE CANDIDAT LECTEUR : cet adaptateur ne génère pas les campagnes en
+  // cours, donc il peut regarder ce qu'un autre a produit.
+  independantDuGenerateur: true,
+  formeAttestee: false,
+  reserve:
+    "bloc `input_image` documenté pour l'API Responses ; cet adaptateur " +
+    "emploie Chat Completions, dont la documentation ne donne pas d'exemple " +
+    "complet. À confirmer au premier appel réel.",
+};
+
+/** Requête neutre {system, user, grammaire, images?} → charge utile du dialecte. */
 export function construireAppel(requete, reglages) {
+  const images = requete.images ?? [];
+  const contenuUtilisateur =
+    images.length === 0
+      ? requete.user
+      : [
+          ...images.map((img) => ({
+            type: "input_image",
+            image_url: `data:${img.mediaType};base64,${img.base64}`,
+            detail: "auto",
+          })),
+          { type: "text", text: requete.user },
+        ];
   return {
     model: CONFIG.model,
     max_completion_tokens: reglages.max_tokens,
     messages: [
       { role: "system", content: requete.system },
-      { role: "user", content: requete.user },
+      { role: "user", content: contenuUtilisateur },
     ],
     response_format: {
       type: "json_schema",

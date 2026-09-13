@@ -73,13 +73,52 @@ export function degradationsPourEchelle(jsonSchema) {
   return makeLevels(jsonSchema, CONTRAINTES_GRAMMAIRE);
 }
 
-/** Requête neutre {system, user, grammaire} → charge utile du dialecte. */
+/**
+ * EP-165 ② — CAPACITÉ DE VISION DÉCLARÉE, comme `CONTRAINTES_GRAMMAIRE`.
+ *
+ * C'EST UNE CONTRAINTE DE TRANSPORT, JAMAIS DU CONTRAT (frontière EP-049) :
+ * le contrat neutre dit « il y a des images », l'adaptateur seul sait dans
+ * quel dialecte les mettre. Aucun nom de fournisseur ne sort d'ici.
+ *
+ * VÉRIFIÉ À LA DOCUMENTATION DU FOURNISSEUR le 2026-09-13, jamais supposé.
+ */
+export const VISION = {
+  supportee: true,
+  // Le MÊME modèle que la génération : c'est justement pourquoi cet
+  // adaptateur ne peut PAS être le second œil d'une campagne qu'il a
+  // produite. L'indépendance est une règle d'emploi, pas de code.
+  modele: CONFIG.model,
+  formats: ["image/png", "image/jpeg", "image/gif", "image/webp"],
+  octetsMaxBase64: 10 * 1024 * 1024,
+  // Palier HAUTE RÉSOLUTION (Claude 4.7 et suivants) : grand côté 2576 px,
+  // 4784 jetons visuels au plus. Le coût est ⌈l/28⌉ × ⌈h/28⌉ — PAS la
+  // division par 750 que j'avais employée en EP-164, qui sous-estimait.
+  grandCoteMax: 2576,
+  jetonsVisuelsMax: 4784,
+  cotePatch: 28,
+};
+
+/** Requête neutre {system, user, grammaire, images?} → charge utile du dialecte. */
 export function construireAppel(requete, reglages) {
+  const images = requete.images ?? [];
+  // L'IMAGE AVANT LE TEXTE — recommandation explicite du fournisseur
+  // (« Claude works best when images come before text »). Ce n'est pas un
+  // détail d'écriture : c'est une consigne de qualité de lecture.
+  const content =
+    images.length === 0
+      ? requete.user
+      : [
+          ...images.map((img) => ({
+            type: "image",
+            source: { type: "base64", media_type: img.mediaType, data: img.base64 },
+          })),
+          { type: "text", text: requete.user },
+        ];
   return {
     model: CONFIG.model,
     max_tokens: reglages.max_tokens,
     system: requete.system,
-    messages: [{ role: "user", content: requete.user }],
+    messages: [{ role: "user", content }],
     output_config: { format: { type: "json_schema", schema: requete.grammaire } },
   };
 }
