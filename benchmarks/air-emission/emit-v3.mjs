@@ -700,6 +700,27 @@ async function emitSections(system, contextText, label, usage, refusals, accumul
       }
     }
     Object.assign(assembled, extractJson(response));
+    // EP-169 ① — LE VERDICT DE LA BASE EST RENDU DÈS LA BASE.
+    //
+    // MESURÉ sur EP-168 : le run s'est arrêté avant les écrans, et le
+    // document portait DÉJÀ une barre fausse (« Rechercher » en première
+    // destination, « Mon compte » au lieu de « Compte »). Les juges qui le
+    // disent existaient, étaient branchés, et n'ont rien dit — parce qu'ils
+    // ne sont appelés que sur un document COMPLET. 21 minutes et 1,21 $ plus
+    // tard, personne n'avait ce verdict.
+    //
+    // PUBLIÉ, JAMAIS BLOQUANT : interrompre une émission à mi-course
+    // changerait la dynamique du run, et EP-168 vient de rappeler ce qu'on
+    // perd à modifier un comportement juste avant de payer.
+    if (part.name === "base") {
+      const verdictBase = acceptation.jugerBase(assembled, {
+        ecransDIdentite: prescriptif?.ecransDIdentite ?? [],
+      });
+      for (const v of verdictBase) {
+        console.log(`  ⚠ [base] ${v.code} — ${String(v.message ?? "").slice(0, 160)}`);
+      }
+      if (verdictBase.length > 0) refusals.verdictBase = verdictBase.map((v) => v.code);
+    }
   }
   return assembled;
 }
@@ -1086,7 +1107,8 @@ for (const intention of INTENTIONS.slice(start, end)) {
       refusals,
       prescriptif,
     );
-    let { air, diagnostics } = validateLocal(document);
+    // EP-169 ② — le modèle voyage jusqu'au juge des capacités.
+    let { air, diagnostics } = validateLocal(document, prescriptif);
     // R5+R6 — l'acceptation COMPLÈTE (navigation prescrite, vivacité,
     // conformance) tourne ici ET après réparation : mêmes juges, un seul code.
     diagnostics = [...diagnostics, ...jugerAcceptation(air, prescriptif, intention)];
@@ -1146,7 +1168,7 @@ for (const intention of INTENTIONS.slice(start, end)) {
           `  [${intention.slug}] RÉPARATION REJETÉE — amputation hors périmètre : ${resultat.ampute.join(", ")}`,
         );
       }
-      ({ air, diagnostics } = validateLocal(document));
+      ({ air, diagnostics } = validateLocal(document, prescriptif));
       // R6 — les MÊMES juges qu'à l'attempt 1 : un juge absent après
       // réparation ne jugeait pas (mesuré EP-061 : la navigation prescrite
       // ne re-tournait pas sur l'attempt 2).
@@ -1187,7 +1209,7 @@ for (const intention of INTENTIONS.slice(start, end)) {
         );
         journal.reparationOscillante = introduits.map((x) => ({ code: x.code, path: x.path }));
         document = avantReparation;
-        ({ air, diagnostics } = validateLocal(document));
+        ({ air, diagnostics } = validateLocal(document, prescriptif));
         diagnostics = [...diagnostics, ...jugerAcceptation(air, prescriptif, intention)];
         journal.artefacts.acceptedDocument = journal.attempt1.fichier;
       }

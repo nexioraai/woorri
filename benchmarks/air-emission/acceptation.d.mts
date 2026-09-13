@@ -8,7 +8,7 @@ export interface ResultatValidation {
   air: Record<string, unknown> | null;
   diagnostics: DiagnosticAcceptation[];
 }
-export function validateLocal(document: unknown): ResultatValidation;
+export function validateLocal(document: unknown, prescriptif?: unknown): ResultatValidation;
 export function jugerAcceptation(
   air: Record<string, unknown> | null,
   prescriptif: unknown,
@@ -26,3 +26,10 @@ export function jugerContenuDEcran(air: Record<string, unknown> | null, prescrip
  *  strict (l'ignorance ne relâche rien) ; avec lui, il n'examine que les
  *  navigations qui suivent un arc PORTEUR du plan. */
 export function jugerNavigationsDeBouton(air: Record<string, unknown> | null, prescriptif?: unknown): DiagnosticAcceptation[];
+
+/** EP-169 ① — juges qui ne dépendent QUE de `navigation` : exécutables dès le
+ *  segment `base`, avant tout écran. */
+export function jugerBase(air: Record<string, unknown> | null, contexte?: { entryScreenId?: string; ecransDIdentite?: readonly string[] }): DiagnosticAcceptation[];
+/** EP-169 ② — une capacité sous contrainte de commerce exige que le modèle
+ *  exerce le geste `payer`. Sans `prescriptif`, le juge se tait. */
+export function jugerCapacitesContreIntention(air: Record<string, unknown> | null, prescriptif?: unknown): DiagnosticAcceptation[];

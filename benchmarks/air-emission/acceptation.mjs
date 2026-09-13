@@ -364,6 +364,96 @@ export function jugerNavigationsDeBouton(air, prescriptif) {
   return out;
 }
 
+/**
+ * EP-169 ① — CE QUE LA BASE PORTE SE JUGE DÈS LA BASE.
+ *
+ * MESURÉ SUR LE RUN EP-168, INTERROMPU AVANT LES ÉCRANS : le document émis
+ * portait une barre primaire fausse — « Rechercher » en première destination
+ * là où la primitive impose « Accueil », et « Mon compte » au lieu de
+ * « Compte ». Les juges qui le disent EXISTENT et sont BRANCHÉS ; aucun n'a
+ * parlé, parce qu'ils sont appelés depuis `jugerAcceptation`, qui n'est
+ * appelé que sur un document COMPLET.
+ *
+ * CE N'ÉTAIT DONC PAS UNE INFIRMITÉ DES JUGES MAIS DE L'ORCHESTRATION, et la
+ * mesure le prouve : les trois juges de primitives ne contiennent ZÉRO
+ * référence à `air.screens`. Rejoués sur l'assemblage partiel RÉEL du run,
+ * ils rendent le verdict qui manquait — gratuitement, 21 minutes plus tôt.
+ *
+ * `navigation` appartient au segment `base` : une destination porte un
+ * LIBELLÉ et un RANG, et ni l'un ni l'autre n'exige qu'un écran existe.
+ *
+ * RÉGIME : ces diagnostics sont PUBLIÉS, pas bloquants. Faire échouer une
+ * émission à mi-course changerait la dynamique du run, et EP-168 vient de
+ * rappeler ce qu'on perd à modifier un comportement juste avant de payer.
+ * Le verdict existe, il est rendu, il ne décide de rien.
+ */
+export function jugerBase(air, contexte) {
+  if (air === null || air === undefined) return [];
+  if (air.navigation?.primary === undefined) return [];
+  const ctx = {
+    entryScreenId: contexte?.entryScreenId ?? air.navigation.entryScreenId ?? "",
+    ecransDIdentite: contexte?.ecransDIdentite ?? [],
+  };
+  return [
+    ...presentation.jugerPrimitivesDeNavigation(air, ctx),
+    ...presentation.jugerPositionPrimitives(air, ctx),
+    ...presentation.jugerLibellesPrimitifs(air, ctx),
+  ];
+}
+
+/**
+ * EP-169 ② — UNE CAPACITÉ DE PAIEMENT EXIGE UN GESTE DE PAIEMENT.
+ *
+ * MESURÉ SUR EP-168 : le document déclarait `payments.psp` sur un brief qui
+ * dit « il n'y a aucun paiement en ligne », et AUCUN de ses deux modèles P0
+ * n'exerce le geste `payer`. Rien ne l'a arrêté :
+ * `validateAirCapabilities` vérifie la conformité au REGISTRE — la capacité
+ * existe, elle est bien formée — jamais la conformité à l'INTENTION.
+ *
+ * C'EST L-166-A SUR UN CAS RÉEL : un juge privé de ce qui le trancherait.
+ * L'information existait — `compliance.commerceClass` était JUSTE, et le
+ * modèle ne porte aucun `payer` — mais elle n'arrivait pas au juge.
+ *
+ * LES DEUX BORNES SONT DÉRIVÉES, AUCUNE LISTE :
+ *  · « capacité de paiement » = `commerceConstraint !== "none"` au REGISTRE.
+ *    Mesuré : cela désigne exactement `payments.iap` et `payments.psp`, et
+ *    une capacité de paiement ajoutée demain sera couverte sans édition.
+ *  · « le domaine paie » = le geste `payer` est EXERCÉ dans un parcours du
+ *    modèle. `payer` appartient au vocabulaire FERMÉ de `TABLE_GESTES`.
+ *
+ * SANS `prescriptif`, LE JUGE SE TAIT — et ce n'est pas un relâchement au
+ * sens d'EP-167 : avant cette passe il n'existait pas. Se taire EST le
+ * comportement d'avant. Le modèle n'est jamais imposé à `validateLocal`, qui
+ * doit rester capable de juger une archive ou une réparation seule.
+ */
+export function jugerCapacitesContreIntention(air, prescriptif) {
+  const modele = prescriptif?.modele;
+  if (air === null || air === undefined || modele === undefined) return [];
+  const gestesExerces = new Set(
+    (modele.parcours ?? []).flatMap((p) => (p.etapes ?? []).map((e) => e.geste)),
+  );
+  if (gestesExerces.has("payer")) return [];
+  const contraintes = new Map(
+    registry.CAPABILITIES.map((c) => [c.id, c.commerceConstraint]),
+  );
+  const out = [];
+  for (const demandee of air.capabilities ?? []) {
+    const contrainte = contraintes.get(demandee.capability);
+    if (contrainte === undefined || contrainte === "none") continue;
+    out.push({
+      code: "AIR_CAPACITE_SANS_GESTE",
+      path: `capabilities[${demandee.capability}]`,
+      message:
+        `la capacité "${demandee.capability}" porte une contrainte de commerce ` +
+        `(${contrainte}) mais AUCUN parcours du modèle n'exerce le geste ` +
+        `« payer » : le document déclare une possibilité que la demande ne ` +
+        `contient pas. RETIRE LA CAPACITÉ — ne fabrique pas un parcours de ` +
+        `paiement pour la justifier.`,
+    });
+  }
+  return out;
+}
+
 export function jugerAcceptation(air, prescriptif, intention) {
   if (air === null) return [];
   const out = [];
@@ -431,7 +521,7 @@ export function jugerAcceptation(air, prescriptif, intention) {
   return out;
 }
 
-export function validateLocal(document) {
+export function validateLocal(document, prescriptif) {
   // EP-162 ③ — L'INTENTION EST DUE, ET AUCUN JUGE BRANCHÉ NE LE VOYAIT.
   //
   // BRANCHÉ, PAS RETIRÉ. Le doute était légitime : `intent` est dans le
@@ -452,12 +542,16 @@ export function validateLocal(document) {
   // technique, jamais un document complet. Le fail-closed ne ferme sur
   // aucune génération réussie du passé.
   const intentionDue = airSchema.validateAirIntentRequirement(document);
+  // EP-169 ② — `prescriptif` OPTIONNEL, remède d'EP-167 : sans lui rien ne
+  // change, avec lui le juge des capacités peut enfin trancher.
+  const capacitesContreIntention = jugerCapacitesContreIntention(document, prescriptif);
   const parsed = airSchema.projectAirSchema.safeParse(document);
   if (!parsed.success) {
     return {
       air: null,
       diagnostics: [
         ...intentionDue,
+        ...capacitesContreIntention,
         ...parsed.error.issues.map((issue) => ({
           code: "SCHEMA",
           path: issue.path.join("."),
@@ -468,6 +562,7 @@ export function validateLocal(document) {
   }
   const diagnostics = [
     ...intentionDue,
+    ...capacitesContreIntention,
     ...airSchema.validateAir(parsed.data),
     ...registry.validateAirCapabilities(parsed.data),
     ...blocksRegistry.validateAirBlocks(parsed.data),
