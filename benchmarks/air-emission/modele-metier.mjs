@@ -278,6 +278,7 @@ export const DIAGNOSTICS = {
   MODELE_CONCEPT_MORT: { classe: FP, discutable: true, pourquoi: "DOUTEUX — même nature que l'acteur muet : le concept vient du générateur, qui devait le faire traverser" },
   MODELE_COMMERCE_SANS_OBJET: { classe: FP, discutable: true, pourquoi: "DOUTEUX — pourrait révéler un paiement voulu mais non modélisé ; la correction évidente reste de retirer un fait sans consommateur" },
 
+  MODELE_PUBLICATION_SANS_COMPTE: { classe: FP, pourquoi: "quelqu'un PUBLIE et le modèle ne porte aucun concept d'identité : l'action est réservée à un acteur qui n'a nulle part où s'identifier. Le générateur doit poser le compte, l'humain n'a rien à répondre" },
   MODELE_ENTREE_SANS_COLLECTION: { classe: FP, pourquoi: "le parcours prioritaire consulte un concept qu'il n'a jamais LISTÉ : l'utilisateur qui ouvre l'application ne voit aucun contenu. Le générateur doit poser l'étape manquante, pas l'humain répondre à une question" },
   MODELE_COEUR_EXIGE_CONNEXION: { classe: FP, pourquoi: "le générateur a placé en tête un parcours fermé alors que l'application a de quoi en ouvrir un : il réordonne ou ouvre, l'humain n'a rien à répondre" },
 
@@ -1308,6 +1309,19 @@ export function ecransDe(modele) {
   // prioritaire ⇒ recherche et exploration restent publiques ;
   // `act_annonceur` porte publication et gestion ⇒ les deux sortent.
   const acteurPublic = modele.parcours[0]?.acteur;
+  // EP-183 — ON NE RÉSERVE QUE S'IL EXISTE UN ENDROIT OÙ ALLER.
+  //
+  // MESURÉ, ET C'ÉTAIT UN DÉFAUT QUE MA PROPRE CORRECTION ③ AVAIT INTRODUIT :
+  // sur le modèle immobilier, qui ne porte AUCUN concept d'identité, retirer
+  // « Publier » et « Mes annonces » de la barre les rendait INATTEIGNABLES —
+  // aucun arc entrant, aucun espace compte pour les héberger. Un écran qu'on
+  // ne peut plus ouvrir est PIRE qu'un onglet mal placé.
+  //
+  // La réservation exige donc un espace compte. S'il n'y en a pas, le
+  // parcours RESTE dans la barre — et le modèle est NOMMÉ comme incomplet :
+  // faire publier quelqu'un sans lui donner de compte est une lacune de
+  // MODÈLE, pas de plan.
+  const aUnEspaceCompte = modele.concepts.some((c) => estConceptIdentite(modele, c.id));
   const destinations = [];
   const reservees = [];
   for (const p of modele.parcours) {
@@ -1316,7 +1330,10 @@ export function ecransDe(modele) {
     if (ecran === undefined) continue;
     // Sans acteur déclaré, rien ne distingue : l'ignorance ne réserve pas.
     const reserve =
-      acteurPublic !== undefined && p.acteur !== undefined && p.acteur !== acteurPublic;
+      aUnEspaceCompte &&
+      acteurPublic !== undefined &&
+      p.acteur !== undefined &&
+      p.acteur !== acteurPublic;
     if (reserve) {
       if (!reservees.includes(ecran)) reservees.push(ecran);
       continue;
@@ -1612,6 +1629,44 @@ export function ecranAirDe(ecranId) {
  * `effet: "navigate"`). La RECHERCHE ne compte pas : `chercher` produit un
  * `search_entry`, un CHAMP — on ne voit rien tant qu'on n'a pas tapé.
  */
+/**
+ * EP-183 — QUI PUBLIE DOIT POUVOIR S'IDENTIFIER.
+ *
+ * RÈGLE DE PRODUIT : ce qui publie vit DANS le compte, après création de
+ * compte. Un modèle qui fait publier quelqu'un SANS porter de concept
+ * d'identité décrit une application où l'action réservée n'a nulle part où
+ * vivre — et le plan doit alors la laisser dans la barre publique, faute de
+ * mieux (EP-183 : sinon elle devient INATTEIGNABLE, mesuré).
+ *
+ * LE CRITÈRE EST DÉRIVÉ, aucun geste cité : un modèle a PLUSIEURS acteurs
+ * (donc quelqu'un fait autre chose que le public) et AUCUN concept
+ * d'identité. `estConceptIdentite` est la dérivation qui décide, éprouvée
+ * depuis EP-139.
+ *
+ * CE N'EST PAS UN DÉFAUT DE PRÉSENTATION MAIS DE MODÈLE : le générateur doit
+ * poser le compte. L'humain n'a rien à répondre — c'est pourquoi le
+ * diagnostic est classé `faute_de_production`.
+ */
+export function jugerPublicationSansCompte(modele) {
+  const acteurs = new Set(
+    (modele.parcours ?? []).map((p) => p.acteur).filter((a) => a !== undefined),
+  );
+  if (acteurs.size < 2) return [];
+  if (modele.concepts.some((c) => estConceptIdentite(modele, c.id))) return [];
+  return [
+    d(
+      "MODELE_PUBLICATION_SANS_COMPTE",
+      "concepts",
+      `le modèle porte ${String(acteurs.size)} acteurs — donc quelqu'un fait ` +
+        `autre chose que consulter — mais AUCUN concept d'identité. L'action ` +
+        `réservée n'a nulle part où vivre : elle reste dans la barre PUBLIQUE, ` +
+        `visible d'un visiteur qui ne peut pas l'accomplir. AJOUTE le concept ` +
+        `qui porte l'identité de celui qui publie, avec le geste s_identifier ` +
+        `dans son parcours.`,
+    ),
+  ];
+}
+
 export function jugerEntreeSansCollection(modele) {
   // LA RÈGLE PORTE SUR CE QUE L'ÉCRAN D'ENTRÉE MONTRE, pas sur la forme du
   // parcours prioritaire — et la différence est mesurable : juger le parcours

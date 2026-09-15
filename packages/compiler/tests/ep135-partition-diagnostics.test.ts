@@ -40,7 +40,8 @@ describe("EP-135 · la partition est EXHAUSTIVE", () => {
     // ne montre aucun contenu ». Ce compte se monte par ÉDITION CONSCIENTE —
     // c'est tout l'objet du cliquet : un diagnostic neuf ne peut pas entrer
     // en silence.
-    expect(duModele).toHaveLength(21);
+    // 22 depuis EP-183, qui a ajouté « publier sans compte ».
+    expect(duModele).toHaveLength(22);
   });
 
   it("tout code émis par la source est classé", () => {

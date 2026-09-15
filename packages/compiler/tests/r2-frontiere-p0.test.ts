@@ -103,6 +103,9 @@ describe("B/C — les dérivations ne travaillent QUE sur le MODEL (balayage COM
     // EP-182 ② (édition consciente) — l écran d ouverture montre-t-il du
     // contenu ? Dérivé du plan, lui-même dérivé du modèle. Modèle seul.
     jugerEntreeSansCollection: (m) => derivationsModele.jugerEntreeSansCollection(m),
+    // EP-183 (édition consciente) — qui publie doit pouvoir s'identifier.
+    // Modèle seul : acteurs des parcours et concepts d'identité.
+    jugerPublicationSansCompte: (m) => derivationsModele.jugerPublicationSansCompte(m),
     // R5 (édition CONSCIENTE) — prescriptions et vérificateur : modèle+plan
     // seuls, comme tout le reste.
     ecranAirDe: () => derivationsModele.ecranAirDe("ecr_entree"),

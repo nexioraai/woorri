@@ -206,3 +206,7 @@ export function etapesFusionnables(modele: ModeleMetier): {
 /** EP-182 ② — l ecran d ouverture MONTRE-t-il du contenu ? Un champ de
  *  recherche et un formulaire ne montrent rien. */
 export function jugerEntreeSansCollection(modele: ModeleMetier): DiagnosticModele[];
+
+/** EP-183 — plusieurs acteurs mais aucun concept d'identite : l action
+ *  reservee n a nulle part ou vivre. */
+export function jugerPublicationSansCompte(modele: ModeleMetier): DiagnosticModele[];

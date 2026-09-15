@@ -64,6 +64,11 @@ const DEBRANCHES_CONNUS: Readonly<Record<string, string>> = {
   // DEUX SIGNALÉS QUE JE N'AI PAS CONFIRMÉS COMME JUGES, et je le dis plutôt
   // que de gonfler le compte : le détecteur les voit parce que leur corps
   // contient un code en majuscules, ce qui ne fait pas d'eux des juges.
+  jugerPublicationSansCompte:
+    "L-183-A — juge JUSTE mais DÉBRANCHÉ PAR DÉCISION, comme son voisin : il " +
+    "trouve 15 modèles sur 39 qui font publier quelqu'un sans lui donner de " +
+    "compte. Le brancher en fail-closed refuserait ces 15 d'un coup. Le " +
+    "RÉGIME est un arbitrage de Youssouf ; la mesure, elle, est faite.",
   jugerEntreeSansCollection:
     "L-182-A — juge JUSTE mais DÉBRANCHÉ PAR DÉCISION, pas par oubli : il " +
     "retrouve exactement les 7 modèles sur 39 dont l'écran d'ouverture ne " +
