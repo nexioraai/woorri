@@ -142,6 +142,9 @@ export interface PlanEcrans {
   navigation: {
     destinations: string[];
     barre: boolean;
+    /** EP-182 ③ — racines de parcours RESERVEES a un acteur autre que le
+     *  public : elles quittent la barre et vivent dans l espace compte. */
+    racinesReservees: string[];
     arcs: { parcours: string; de?: string; vers?: string; geste: string; transport: string | null }[];
   };
   diagnostics: DiagnosticModele[];

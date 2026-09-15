@@ -1291,13 +1291,55 @@ export function ecransDe(modele) {
   );
 
   // ── navigation (R-nav) : racines = étape 0 de chaque parcours, dans l'ordre ──
+  // EP-182 ③ — UNE ACTION RÉSERVÉE N'OCCUPE PAS UNE PLACE PUBLIQUE.
+  //
+  // RÈGLE DE PRODUIT, VALABLE POUR TOUS LES SECTEURS : ce qui PUBLIE — une
+  // annonce, un produit, une prestation — ne concerne pas les visiteurs. Cela
+  // vit DANS l'espace compte, après création de compte. « Publier » dans une
+  // barre publique montre à un visiteur une action qu'il ne peut pas faire.
+  //
+  // LE DISCRIMINANT EST L'ACTEUR, et il ne cite aucun nom : l'acteur du
+  // parcours PRIORITAIRE est le PUBLIC — c'est lui que l'application sert
+  // d'abord. Tout parcours porté par un AUTRE acteur est réservé, et sa
+  // racine quitte la barre. Aucune liste de gestes, aucun nom de parcours :
+  // le modèle dit qui fait quoi, le plan en tire qui voit quoi.
+  //
+  // MESURÉ sur le modèle immobilier : `act_chercheur` porte le parcours
+  // prioritaire ⇒ recherche et exploration restent publiques ;
+  // `act_annonceur` porte publication et gestion ⇒ les deux sortent.
+  const acteurPublic = modele.parcours[0]?.acteur;
   const destinations = [];
+  const reservees = [];
   for (const p of modele.parcours) {
     const sf = surfaceDeLEtape(p.id, 0);
     const ecran = sf === undefined ? undefined : ecranDeSurface.get(sf.surfaceId);
-    if (ecran !== undefined && !destinations.includes(ecran)) destinations.push(ecran);
+    if (ecran === undefined) continue;
+    // Sans acteur déclaré, rien ne distingue : l'ignorance ne réserve pas.
+    const reserve =
+      acteurPublic !== undefined && p.acteur !== undefined && p.acteur !== acteurPublic;
+    if (reserve) {
+      if (!reservees.includes(ecran)) reservees.push(ecran);
+      continue;
+    }
+    if (!destinations.includes(ecran)) destinations.push(ecran);
   }
-  const barre = destinations.length >= 2;
+  // EP-182 ③ — LA BARRE EXISTE TOUJOURS : « Accueil » ET « Compte ».
+  //
+  // RÈGLE DE PRODUIT, ÉNONCÉE POUR TOUS LES SECTEURS : toute application
+  // porte ces deux primitives. Accueil est la PREMIÈRE chose que voit un
+  // visiteur ; Compte est l'endroit où vit tout ce qui lui est réservé.
+  //
+  // CELA RÉVISE EP-175 ①, ET LA RÉVISION EST CONSCIENTE : cette passe avait
+  // fait dépendre l'existence de la barre de la borne Material (3 à 5
+  // destinations). MESURÉ APRÈS ③ : 26 modèles sur 39 ont moins de TROIS
+  // destinations PUBLIQUES — les autres racines étant réservées au compte.
+  // Appliquer la borne les priverait tous de barre, donc d'« Accueil » et de
+  // « Compte ». La règle de produit prime sur la borne : la barre EXISTE, et
+  // c'est son CONTENU qui doit satisfaire Material.
+  const barre = true;
+  // Les racines RÉSERVÉES voyagent avec le plan : l'espace compte doit les
+  // héberger, et le juge doit pouvoir vérifier qu'aucune n'a été perdue.
+  const racinesReservees = reservees.filter((e) => !destinations.includes(e));
 
   // ── arcs + invariants de chaîne ──
   const arcs = [];
@@ -1390,7 +1432,7 @@ export function ecransDe(modele) {
       }
     }
   }
-  return { ecrans, chrome, navigation: { destinations, barre, arcs }, diagnostics };
+  return { ecrans, chrome, navigation: { destinations, barre, arcs, racinesReservees }, diagnostics };
 }
 
 /**
@@ -1690,9 +1732,10 @@ export function prescriptionsNavigation(plan, destinationsMin) {
   // vit dans le registre de présentation et n'est déclaré qu'une fois.
   //
   // SANS BORNE, RIEN NE CHANGE : le plan reste ce qu'il était.
-  const barre =
-    plan.navigation.barre &&
-    (destinationsMin === undefined || destinations.length >= destinationsMin);
+  // EP-182 ③ — LA BORNE NE SUPPRIME PLUS LA BARRE. Elle reste REÇUE et
+  // servira à juger son CONTENU ; elle ne décide plus de son existence, parce
+  // que « Accueil » et « Compte » sont dus dans toute application.
+  const barre = plan.navigation.barre;
   return {
     entree: destinations[0] ?? ecrans[0],
     ecrans,

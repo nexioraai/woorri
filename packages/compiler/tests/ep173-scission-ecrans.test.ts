@@ -162,94 +162,57 @@ describe("EP-173 · la scission par parcours", () => {
 });
 
 // EP-175 — LES DEUX RACINES D'EP-174.
-describe("EP-175 · la barre que le plan ne prescrit pas", () => {
-  it("① UN PLAN À MOINS DE 3 DESTINATIONS NE PRESCRIT PLUS DE BARRE", async () => {
-    // RACINE MESURÉE : le plan prescrivait `barre: true` avec DEUX
-    // destinations, la règle Material en exige TROIS. Le générateur recevait
-    // deux exigences incompatibles et a ajouté un écran de flux comme
-    // destination — sans lui rendre la barre. D'où le SEUL diagnostic qui
-    // séparait le document de la compilation.
-    const { DESTINATIONS_MIN } = await import(
-      "../../execution-contract/src/presentation.ts"
-    );
-    const plan = ecransDe(PETIT);
-    const avant = prescriptionsNavigation(plan);
-    const apres = prescriptionsNavigation(plan, DESTINATIONS_MIN);
-    expect(avant.destinations.length, "fixture sans le cas").toBeLessThan(DESTINATIONS_MIN);
-    expect(avant.barre, "avant : le plan prescrivait une barre").toBe(true);
-    expect(apres.barre, "après : il ne doit plus en prescrire").toBe(false);
-  });
-
-  it("UN DOMAINE À ASSEZ DE RACINES GARDE SA BARRE — pas un refus systématique", async () => {
-    const { DESTINATIONS_MIN } = await import(
-      "../../execution-contract/src/presentation.ts"
-    );
-    const plan = ecransDe(GRAND);
-    const p = prescriptionsNavigation(plan, DESTINATIONS_MIN);
-    expect(p.destinations.length).toBeGreaterThanOrEqual(DESTINATIONS_MIN);
-    expect(p.barre, "une barre légitime a été retirée").toBe(true);
-  });
-
-  it("SANS BORNE, LE PLAN EST INCHANGÉ — l'ignorance ne décide pas", () => {
+describe("EP-182 ③ · la barre existe toujours, et le réservé n'y est pas", () => {
+  // RÉVISION CONSCIENTE D'EP-175 ①. Cette passe faisait dépendre l'existence
+  // de la barre de la borne Material (3 à 5 destinations). MESURÉ après que
+  // les racines réservées en soient sorties : 26 modèles sur 39 ont moins de
+  // TROIS destinations publiques. Appliquer la borne les priverait tous de
+  // barre, donc d'« Accueil » et de « Compte » — que toute application doit
+  // porter. La règle de produit prime ; la borne jugera le CONTENU.
+  it("TOUTE APPLICATION A UNE BARRE — Accueil et Compte sont dus", () => {
     for (const M of [PETIT, GRAND]) {
-      const plan = ecransDe(M);
-      expect(prescriptionsNavigation(plan).barre).toBe(plan.navigation.barre);
+      expect(ecransDe(M).navigation.barre, "une application sans barre").toBe(true);
     }
   });
 
-  it("LA BORNE N'EST PAS RECOPIÉE — elle est REÇUE", () => {
-    // La recopier dans `modele-metier.mjs` serait la onzième occurrence, et
-    // lui faire importer une règle de présentation inverserait les couches :
-    // ce module n'importe que zod, par construction.
+  it("UNE ACTION RÉSERVÉE QUITTE LA BARRE — mesuré sur le cas de Youssouf", () => {
+    // « Publier » est une action d'annonceur : elle ne concerne pas les
+    // visiteurs et vit dans l'espace compte.
+    const plan = ecransDe(PETIT);
+    expect(plan.navigation.racinesReservees.length, "rien n'a été réservé").toBeGreaterThan(0);
+    for (const e of plan.navigation.racinesReservees) {
+      expect(plan.navigation.destinations, `${e} occupe encore la barre`).not.toContain(e);
+    }
+  });
+
+  it("LE DISCRIMINANT EST L'ACTEUR — aucun nom de parcours, aucun geste cité", () => {
     const src = readFileSync(join(R, "benchmarks", "air-emission", "modele-metier.mjs"), "utf8");
     const bloc = src.slice(
-      src.indexOf("export function prescriptionsNavigation"),
-      src.indexOf("export function verifierNavigationPrescrite"),
+      src.indexOf("EP-182 ③ — UNE ACTION RÉSERVÉE"),
+      src.indexOf("const barre = true"),
     );
-    expect(bloc.length).toBeGreaterThan(200);
     const code = bloc.split("\n").filter((l) => !l.trim().startsWith("//")).join("\n");
-    expect(code, "la borne est écrite en dur").not.toMatch(/>=\s*3\b/);
-    expect(code).toContain("destinationsMin");
-    const imports = src.split("\n").filter((l) => l.startsWith("import "));
-    expect(imports.length, "modele-metier a gagné une dépendance").toBe(1);
+    expect(code).toContain("acteurPublic");
+    for (const nom of ["publier", "saisir", "annonceur", "vendeur"]) {
+      expect(code, `le discriminant cite ${nom}`).not.toContain(`"${nom}`);
+    }
   });
 
-  it("QUAND LE PLAN NE PRESCRIT PAS DE BARRE, LA RÈGLE LE DIT", async () => {
-    // Se taire laissait le générateur en inventer une pour satisfaire la
-    // borne Material.
-    const { DESTINATIONS_MIN } = await import(
-      "../../execution-contract/src/presentation.ts"
+  it("L'IGNORANCE NE RÉSERVE RIEN — sans acteur déclaré, tout reste public", () => {
+    const sansActeur = structuredClone(PETIT) as ModeleMetier;
+    for (const p of sansActeur.parcours) delete (p as { acteur?: string }).acteur;
+    expect(ecransDe(sansActeur).navigation.racinesReservees).toEqual([]);
+  });
+
+  it("UN DOMAINE À UN SEUL ACTEUR NE RÉSERVE RIEN", () => {
+    // Kaviva n'a qu'un acteur : rien ne doit quitter sa barre.
+    const kaviva = charger(
+      readdirSync(RES).find((f) => f.includes("kaviva") && f.includes("23-00-50") && f.includes("modele-p0"))!,
     );
-    const plan = ecransDe(PETIT);
-    const o = String(obligationsPrescriptives("ecrans", PETIT, plan, DESTINATIONS_MIN));
-    expect(o).toContain("n'en prescrit AUCUNE");
-    expect(o).toContain("N'émets PAS");
-    const oGrand = String(obligationsPrescriptives("ecrans", GRAND, ecransDe(GRAND), DESTINATIONS_MIN));
-    expect(oGrand, "un domaine à barre doit garder sa règle").toContain("écrans RACINES");
-  });
-
-  it("② L'ÉCHELLE DE DÉGRADATION EST PARTAGÉE ENTRE LOTS", () => {
-    // MESURÉ sur EP-174 : 4 dégradations devenues 12, chaque lot repayant le
-    // même escalier. Les lots portent le MÊME schéma (mêmes `keys`), donc une
-    // échelle commune ne peut en dégrader aucun à tort.
-    const src = readFileSync(join(R, "benchmarks", "air-emission", "emit-v3.mjs"), "utf8");
-    expect(src, "pas d'état d'échelle partagé").toContain("const etatEchelle =");
-    // Le partage doit passer par un ACCESSEUR : `{...modele}` copierait
-    // `levelIndex` par valeur et chaque lot repartirait de zéro.
-    expect(src).toMatch(/get levelIndex\(\)\s*\{\s*return etatEchelle\.levelIndex;/);
-    expect(src).toMatch(/set levelIndex\(v\)\s*\{\s*etatEchelle\.levelIndex = v;/);
-    // Et le lot des surfaces le partage aussi.
-    const bloc = src.slice(src.indexOf("eclates.push({"), src.indexOf("return [...PARTS.slice(0, i)"));
-    expect(bloc, "le lot des surfaces ne partage pas l'échelle").toContain("etatEchelle.levelIndex");
+    expect(ecransDe(kaviva).navigation.racinesReservees).toEqual([]);
   });
 });
 
-// EP-182 ① — LE FILTRE ET SA LISTE SONT UN SEUL ÉCRAN.
-//
-// Le fondement était faux depuis le premier jour : une étape de parcours
-// devenait un ÉCRAN, jamais une RÉGION. Kaviva le portait déjà — 16 écrans
-// simples le masquaient. Sahel Immo l'a rendu visible : trois écrans et deux
-// formulaires avant la première annonce.
 describe("EP-182 · le plan compose, il ne sérialise plus", () => {
   it("LE CAS MESURÉ — `saisir critères` puis `chercher annonces` ne font qu'UN écran", () => {
     const f = etapesFusionnables(PETIT);
