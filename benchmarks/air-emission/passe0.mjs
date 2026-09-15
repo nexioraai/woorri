@@ -93,6 +93,34 @@ export const PROMPT_P0 = [
   "« ambigu » ne classe pas : il BLOQUE le modèle entier — résous l'ambiguïté en modélisant, ou laisse-la pour refus explicite.",
   "NE DÉVERSE PAS le brief dans nonRetenus : chaque objet que l'application doit servir devient concept, acteur ou parcours.",
   "",
+  // EP-184 — DEUX RÈGLES DE PRODUIT, TRANSMISES AVANT D'ÊTRE JUGÉES.
+  //
+  // ARBITRAGE DE YOUSSOUF, et sa raison vaut pour la suite : refuser en
+  // fail-closed ce qu'on n'a JAMAIS DEMANDÉ, c'est faire porter au générateur
+  // une règle qu'il ignore. Douze occurrences du motif l'ont montré. On
+  // transmet d'abord ; si cela persiste APRÈS transmission, alors c'est un
+  // fait sur le modèle, et on jugera.
+  //
+  // MESURÉ AVANT D'ÉCRIRE : 15 modèles sur 39 font publier sans compte,
+  // 7 sur 39 ouvrent sur un écran qui ne montre aucun contenu. Les deux juges
+  // existent (`jugerPublicationSansCompte`, `jugerEntreeSansCollection`),
+  // sont éprouvés, et RESTENT débranchés tant que la transmission n'a pas été
+  // mesurée.
+  "",
+  "DEUX RÈGLES DE PRODUIT — elles valent pour TOUT domaine, sans exception :",
+  "① QUI PUBLIE DOIT POUVOIR S'IDENTIFIER. Si un acteur produit du contenu que",
+  "  d'autres consultent, quel qu'en soit l'objet,",
+  "  alors le modèle porte un concept d'IDENTITÉ (la personne qui publie) et son",
+  "  parcours passe par le geste `" + "s_identifier" + "`. Sans cela tu décris une application",
+  "  où l'on publie sans compte : l'action n'a nulle part où vivre, et un visiteur",
+  "  voit une action qu'il ne peut pas accomplir.",
+  "② L'OUVERTURE MONTRE DU CONTENU. Le parcours le plus important commence par",
+  "  PRÉSENTER la collection principale du domaine, quelle qu'elle soit,",
+  "  avec un geste qui la LISTE. Un champ de recherche et un formulaire de critères",
+  "  ne montrent RIEN tant que l'utilisateur n'a pas tapé : ils se posent AU-DESSUS",
+  "  d'une liste, jamais à sa place. La première impression est ce que l'on voit,",
+  "  pas ce que l'on doit remplir.",
+  "",
   "RÈGLES DE FORME (refusées mécaniquement sinon) :",
   "ids ^[a-z][a-z0-9_]*$ · un concept donnees=true est traversé par au moins une étape ·",
   "chaque parcours a ≥ 2 étapes et se TERMINE par un geste observable (" + GESTES_TERMINAUX.join(", ") + ") ·",
