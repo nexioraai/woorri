@@ -199,3 +199,7 @@ export function etapesFusionnables(modele: ModeleMetier): {
   filtre: { geste: string; concept: string };
   collection: { geste: string; concept: string };
 }[];
+
+/** EP-182 ② — l ecran d ouverture MONTRE-t-il du contenu ? Un champ de
+ *  recherche et un formulaire ne montrent rien. */
+export function jugerEntreeSansCollection(modele: ModeleMetier): DiagnosticModele[];

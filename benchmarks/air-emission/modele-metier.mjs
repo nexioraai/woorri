@@ -278,6 +278,7 @@ export const DIAGNOSTICS = {
   MODELE_CONCEPT_MORT: { classe: FP, discutable: true, pourquoi: "DOUTEUX — même nature que l'acteur muet : le concept vient du générateur, qui devait le faire traverser" },
   MODELE_COMMERCE_SANS_OBJET: { classe: FP, discutable: true, pourquoi: "DOUTEUX — pourrait révéler un paiement voulu mais non modélisé ; la correction évidente reste de retirer un fait sans consommateur" },
 
+  MODELE_ENTREE_SANS_COLLECTION: { classe: FP, pourquoi: "le parcours prioritaire consulte un concept qu'il n'a jamais LISTÉ : l'utilisateur qui ouvre l'application ne voit aucun contenu. Le générateur doit poser l'étape manquante, pas l'humain répondre à une question" },
   MODELE_COEUR_EXIGE_CONNEXION: { classe: FP, pourquoi: "le générateur a placé en tête un parcours fermé alors que l'application a de quoi en ouvrir un : il réordonne ou ouvre, l'humain n'a rien à répondre" },
 
   // ── LES DEUX SEULS CERTAINS : le moteur ne POUVAIT PAS savoir ──
@@ -545,6 +546,19 @@ export function validerModele(brut) {
   // 5.1.1 iv). Jugé ICI, avec les autres faits du modèle : la règle porte
   // sur ce que l'utilisateur PEUT FAIRE, pas sur les écrans.
   out.push(...jugerAccesSansConnexion(m));
+  // EP-182 ② — PAS BRANCHÉ EN FAIL-CLOSED, ET C EST MESURÉ, PAS PRUDENT.
+  //
+  // Le juge dit VRAI : il retrouve exactement les 7 modèles sur 39 dont
+  // l écran d ouverture ne montre aucun contenu — chiffre obtenu par une
+  // mesure INDÉPENDANTE, avant lui. Mais le brancher ici REFUSERAIT ces 7
+  // modèles et fait tomber 8 tests de base verte : des fixtures éprouvées
+  // depuis EP-134 deviendraient invalides d un coup.
+  //
+  // MÊME SITUATION QU EP-162 ② : un juge juste dont le RÉGIME est une
+  // décision, pas une évidence. Le passer en fail-closed change ce qu un
+  // modèle a le droit d être — c est un arbitrage de Youssouf, et le run
+  // qui le mesurerait n a pas encore eu lieu. Le juge est exporté, éprouvé,
+  // inscrit à la batterie de frontière, et il attend. [L-182-A]
   return out;
 }
 
@@ -1530,6 +1544,84 @@ export function ecranAirDe(ecranId) {
  * forme. Kaviva n'en a AUCUNE — le discriminant ne fusionne pas ce qui n'a
  * pas à l'être.
  */
+/**
+ * EP-182 ② — CE QUE L'UTILISATEUR VOIT EN OUVRANT L'APPLICATION.
+ *
+ * RÈGLE JAMAIS POSÉE, et c'est le trou que Youssouf a nommé : toutes les
+ * règles portaient sur le CHROME — où est Accueil, où est la recherche —
+ * aucune sur ce que l'écran CONTIENT. Une app immobilière ouvre sur des
+ * BIENS ; un marché sur des PRODUITS. Le filtre se pose au-dessus de la
+ * liste ; il ne la remplace pas.
+ *
+ * MESURÉ SUR 39 MODÈLES : 7 entrées ne portent AUCUNE collection de contenu
+ * — `marche-immobilier` (saisie + recherche + recherche), `kaviva-spa` et
+ * `marketplace-africain` (recherche seule). Ce n'est donc pas un accident de
+ * domaine : c'est une règle qui manque.
+ *
+ * ET LA COUCHE EST LE MODÈLE, PAS LE PLAN. Le plan ne peut pas INVENTER une
+ * surface : il dérive des étapes. Si le parcours prioritaire CONSULTE un
+ * concept qu'il n'a jamais LISTÉ, c'est le PARCOURS qui est incomplet — un
+ * domaine de marché dont le cœur ne découvre jamais sa marchandise décrit
+ * une application où l'on ne voit rien.
+ *
+ * LE CRITÈRE EST DÉRIVÉ DE `TABLE_GESTES`, aucune liste de gestes : un
+ * concept CONSULTÉ (`cardinalite: "instance"`) doit avoir, AVANT, une étape
+ * qui le présente en COLLECTION sans muter (`cardinalite: "collection"`,
+ * `effet: "navigate"`). La RECHERCHE ne compte pas : `chercher` produit un
+ * `search_entry`, un CHAMP — on ne voit rien tant qu'on n'a pas tapé.
+ */
+export function jugerEntreeSansCollection(modele) {
+  // LA RÈGLE PORTE SUR CE QUE L'ÉCRAN D'ENTRÉE MONTRE, pas sur la forme du
+  // parcours prioritaire — et la différence est mesurable : juger le parcours
+  // refusait 15 modèles, juger l'entrée en refuse 7, exactement ceux que la
+  // mesure avait trouvés. Le plan peut ramener sur l'entrée une découverte
+  // venue d'un AUTRE parcours ; ce qui compte est le résultat, pas le chemin.
+  //
+  // Une surface MONTRE du contenu si son rôle présente une collection de
+  // choses existantes. La RECHERCHE ne compte pas : `chercher` produit un
+  // `search_entry`, un CHAMP — on ne voit rien tant qu'on n'a pas tapé. La
+  // SAISIE non plus : un formulaire ne montre rien.
+  //
+  // Les rôles qui montrent sont DÉRIVÉS de la table, jamais énumérés : ce
+  // sont ceux des gestes qui présentent une COLLECTION sans muter et dont le
+  // bloc n'est pas un champ de recherche.
+  // LE DISCRIMINANT EST LE BLOC, ET C'EST LA MESURE QUI L'A IMPOSÉ : j'avais
+  // écrit `effet === "navigate"`, or `decouvrir` porte `effet: null` — le
+  // juge refusait alors 39 modèles sur 39, y compris ceux dont l'entrée
+  // MONTRE une découverte. Ce qui montre du contenu, c'est le bloc `list` :
+  // `search_entry` est un champ, `form` une saisie. Aucun rôle n'est énuméré.
+  const rolesQuiMontrent = new Set(
+    GESTES.filter((g) => {
+      const t = TABLE_GESTES[g];
+      return t.cardinalite === "collection" && t.bloc === "list";
+    }).map((g) => TABLE_GESTES[g].role),
+  );
+  const plan = ecransDe(modele);
+  const entree = plan.ecrans.find((e) => e.ecranId === "ecr_entree");
+  if (entree === undefined) return [];
+  const parSurface = new Map(surfacesDe(modele).map((sf) => [sf.surfaceId, sf]));
+  const montre = entree.surfaces.some((id) =>
+    rolesQuiMontrent.has(parSurface.get(id)?.role),
+  );
+  if (montre) return [];
+  const portes = entree.surfaces
+    .map((id) => parSurface.get(id)?.role)
+    .filter((r) => r !== undefined)
+    .join(", ");
+  return [
+    d(
+      "MODELE_ENTREE_SANS_COLLECTION",
+      "parcours[0]",
+      `l'écran d'ouverture ne MONTRE aucun contenu : il ne porte que ` +
+        `${portes === "" ? "rien" : portes}. Un champ de recherche et un ` +
+        `formulaire ne montrent RIEN tant que l'utilisateur n'a pas tapé. ` +
+        `AJOUTE au parcours prioritaire une étape qui PRÉSENTE la collection ` +
+        `du domaine — les biens, les produits, les soins — AVANT toute saisie ` +
+        `et avant toute consultation d'une instance.`,
+    ),
+  ];
+}
+
 export function etapesFusionnables(modele) {
   const out = [];
   for (const parcours of modele.parcours ?? []) {

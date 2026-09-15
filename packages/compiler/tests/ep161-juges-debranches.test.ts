@@ -64,6 +64,12 @@ const DEBRANCHES_CONNUS: Readonly<Record<string, string>> = {
   // DEUX SIGNALÉS QUE JE N'AI PAS CONFIRMÉS COMME JUGES, et je le dis plutôt
   // que de gonfler le compte : le détecteur les voit parce que leur corps
   // contient un code en majuscules, ce qui ne fait pas d'eux des juges.
+  jugerEntreeSansCollection:
+    "L-182-A — juge JUSTE mais DÉBRANCHÉ PAR DÉCISION, pas par oubli : il " +
+    "retrouve exactement les 7 modèles sur 39 dont l'écran d'ouverture ne " +
+    "montre aucun contenu (mesure indépendante). Le brancher en fail-closed " +
+    "refuserait ces 7 et ferait tomber 8 tests de base verte éprouvés depuis " +
+    "EP-134. Le RÉGIME est un arbitrage de Youssouf, pas une évidence.",
   contratDEtape:
     "SIGNALÉ, NON CONFIRMÉ — rend un contrat d'étape et non des diagnostics ; " +
     "le détecteur le voit sur une chaîne en majuscules. À élucider.",
