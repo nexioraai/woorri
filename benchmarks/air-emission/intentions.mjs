@@ -226,4 +226,27 @@ export const INTENTIONS = [
       "téléphonique ou par WhatsApp pour organiser une visite et " +
       "s'arranger avec lui.",
   },
+  {
+    slug: "tontine-cameroun",
+    // EP-186 ② — DOMAINE NEUF, ET LE PREMIER À DEUX RÔLES AUX DROITS
+    // DISTINCTS : un président CRÉE et se fait vérifier, des membres
+    // REJOIGNENT et cotisent. Aucun domaine généré jusqu'ici n'avait ça —
+    // `marche-immobilier` a deux acteurs, mais ils font la même chose des
+    // deux côtés d'une annonce.
+    //
+    // `commerce` VOLONTAIREMENT OMIS, comme pour les deux marchés : l'argent
+    // circule par Mobile Money, hors application ou dedans — c'est une
+    // lecture de P0, pas une attente à déclarer (EP-044).
+    //
+    // TEXTE VERBATIM de Youssouf, non reformulé.
+    text:
+      "Une application de tontine pour le Cameroun. Un président crée une " +
+      "tontine en donnant son nom, son numéro Mobile Money, une photo de lui " +
+      "et une pièce d'identité — son profil affiche alors un badge vérifié. " +
+      "Les membres rejoignent la tontine, consultent la fiche du président, " +
+      "et cotisent chaque semaine ou chaque mois par Orange Money ou MTN " +
+      "Mobile Money. Un tableau de bord montre qui a payé et qui est en " +
+      "retard, avec le montant dû et la pénalité. À l'échéance, le pot est " +
+      "versé au membre dont c'est le tour.",
+  },
 ];
