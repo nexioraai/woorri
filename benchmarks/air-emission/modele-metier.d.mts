@@ -190,3 +190,12 @@ export function lotsDEcrans(
   modele: ModeleMetier,
   plan: { ecrans: { ecranId: string; justification?: { parcours: string; etape: number }[] }[] },
 ): { parcours: string; ecrans: string[] }[];
+
+/** EP-182 — les paires d'etapes consecutives qui sont un FILTRE et sa LISTE.
+ *  Discriminant derive de TABLE_GESTES ; aucune paire de gestes citee. */
+export function etapesFusionnables(modele: ModeleMetier): {
+  parcours: string;
+  index: number;
+  filtre: { geste: string; concept: string };
+  collection: { geste: string; concept: string };
+}[];

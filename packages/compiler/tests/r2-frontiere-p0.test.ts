@@ -96,6 +96,10 @@ describe("B/C — les dérivations ne travaillent QUE sur le MODEL (balayage COM
     // parcours. Modèle + plan seuls, aucune donnée extérieure : l'affectation
     // suit `parcoursParPriorite`, déjà dans cette batterie.
     lotsDEcrans: (m) => derivationsModele.lotsDEcrans(m, derivationsModele.ecransDe(m)),
+    // EP-182 (édition consciente) — les paires d'étapes qui sont un FILTRE et
+    // sa LISTE. Modèle seul : le discriminant vient de `TABLE_GESTES`
+    // (transport, cardinalité, effet) et des concepts des étapes.
+    etapesFusionnables: (m) => derivationsModele.etapesFusionnables(m),
     // R5 (édition CONSCIENTE) — prescriptions et vérificateur : modèle+plan
     // seuls, comme tout le reste.
     ecranAirDe: () => derivationsModele.ecranAirDe("ecr_entree"),

@@ -9,6 +9,8 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import {
   ecransDe,
+  etapesFusionnables,
+  surfacesDe,
   lotsDEcrans,
   migrerModele,
   obligationsPrescriptives,
@@ -239,5 +241,74 @@ describe("EP-175 · la barre que le plan ne prescrit pas", () => {
     // Et le lot des surfaces le partage aussi.
     const bloc = src.slice(src.indexOf("eclates.push({"), src.indexOf("return [...PARTS.slice(0, i)"));
     expect(bloc, "le lot des surfaces ne partage pas l'échelle").toContain("etatEchelle.levelIndex");
+  });
+});
+
+// EP-182 ① — LE FILTRE ET SA LISTE SONT UN SEUL ÉCRAN.
+//
+// Le fondement était faux depuis le premier jour : une étape de parcours
+// devenait un ÉCRAN, jamais une RÉGION. Kaviva le portait déjà — 16 écrans
+// simples le masquaient. Sahel Immo l'a rendu visible : trois écrans et deux
+// formulaires avant la première annonce.
+describe("EP-182 · le plan compose, il ne sérialise plus", () => {
+  it("LE CAS MESURÉ — `saisir critères` puis `chercher annonces` ne font qu'UN écran", () => {
+    const f = etapesFusionnables(PETIT);
+    expect(f.length, "la paire n'est plus reconnue").toBe(1);
+    expect(f[0]!.filtre.geste).toBe("saisir");
+    expect(f[0]!.collection.geste).toBe("chercher");
+    // Et le plan le RÉALISE : le filtre vit sur l'entrée, au-dessus.
+    const plan = ecransDe(PETIT);
+    const entree = plan.ecrans.find((e) => e.ecranId === "ecr_entree");
+    expect(entree, "aucune entrée").toBeDefined();
+    expect(entree!.surfaces.length, "le filtre n'a pas rejoint l'entrée").toBeGreaterThan(1);
+    expect(entree!.surfaces[0], "le filtre doit être AU-DESSUS").toContain("saisir");
+    // Il n'a plus d'écran à lui.
+    expect(plan.ecrans.some((e) => e.ecranId === "ecr_cpt_recherche_saisir")).toBe(false);
+  });
+
+  it("LE DISCRIMINANT NE CITE AUCUNE PAIRE DE GESTES — il vient de la TABLE", () => {
+    const src = readFileSync(join(R, "benchmarks", "air-emission", "modele-metier.mjs"), "utf8");
+    const bloc = src.slice(
+      src.indexOf("export function etapesFusionnables"),
+      src.indexOf("export function lotsDEcrans"),
+    );
+    const code = bloc.split("\n").filter((l) => !l.trim().startsWith("//")).join("\n");
+    for (const geste of ["saisir", "chercher", "payer", "decouvrir"]) {
+      expect(code, `le discriminant cite ${geste}`).not.toContain(`"${geste}"`);
+    }
+    for (const critere of ["transport", "cardinalite", "effet"]) {
+      expect(code, `critère absent : ${critere}`).toContain(critere);
+    }
+  });
+
+  it("IL NE FUSIONNE PAS CE QUI N'A PAS À L'ÊTRE — deux tailles", () => {
+    // Kaviva n'a AUCUNE paire de cette forme : son parcours commence par une
+    // découverte, pas par un formulaire. Le plan doit rester identique.
+    expect(etapesFusionnables(GRAND).every((f) => f.filtre.concept !== f.collection.concept)).toBe(true);
+    const kaviva = charger(
+      readdirSync(RES).find((f) => f.includes("kaviva") && f.includes("23-00-50") && f.includes("modele-p0"))!,
+    );
+    expect(etapesFusionnables(kaviva), "Kaviva ne doit rien fusionner").toEqual([]);
+  });
+
+  it("LE FAUX POSITIF EST FERMÉ — `saisir X` puis `payer X` n'est pas un filtre", () => {
+    // Mesuré avant la condition : `saisir cpt_mise_en_avant → payer
+    // cpt_mise_en_avant` était fusionné. Payer MUTE et porte le MÊME concept.
+    for (const M of [PETIT, GRAND]) {
+      for (const f of etapesFusionnables(M)) {
+        expect(f.filtre.concept, "même concept fusionné").not.toBe(f.collection.concept);
+      }
+    }
+  });
+
+  it("AUCUN ÉCRAN PERDU — le compte total ne peut que DIMINUER, jamais manquer", () => {
+    // Une fusion retire un écran ; elle ne doit retirer AUCUNE surface.
+    for (const M of [PETIT, GRAND]) {
+      const plan = ecransDe(M);
+      const posees = new Set(plan.ecrans.flatMap((e) => e.surfaces));
+      for (const sf of surfacesDe(M)) {
+        expect(posees.has(sf.surfaceId), `surface perdue : ${sf.surfaceId}`).toBe(true);
+      }
+    }
   });
 });

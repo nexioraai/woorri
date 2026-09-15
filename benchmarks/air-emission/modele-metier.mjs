@@ -1197,12 +1197,55 @@ export function ecransDe(modele) {
       ),
     });
   }
+  // EP-182 ① — LE FILTRE ET SA LISTE SONT UN SEUL ÉCRAN.
+  //
+  // Le plan posait UNE SURFACE = UN ÉCRAN, sans exception : la séquence du
+  // parcours devenait une suite d'écrans, jamais une composition. D'où
+  // « saisir les critères » PUIS « chercher les annonces » sur deux écrans —
+  // trois écrans et deux formulaires avant la première annonce.
+  //
+  // Les paires que `etapesFusionnables` désigne deviennent UN écran portant
+  // DEUX surfaces : le filtre d'abord, la collection ensuite. L'ordre compte
+  // — le filtre se pose AU-DESSUS de la liste.
+  const fusions = etapesFusionnables(modele);
+  const absorbees = new Set();
+  // Surfaces que l'ENTRÉE absorbe : leur collection y vit déjà.
+  const absorbeesParEntree = new Set();
+  const compagnonDe = new Map();
+  for (const f of fusions) {
+    const sfFiltre = surfaceDeLEtape(f.parcours, f.index);
+    const sfListe = surfaceDeLEtape(f.parcours, f.index + 1);
+    if (sfFiltre === undefined || sfListe === undefined) continue;
+    if (surfacesEntree.has(sfFiltre.surfaceId) || chrome.includes(sfFiltre.surfaceId)) continue;
+    // LE FILTRE REJOINT L'ÉCRAN OÙ VIT SA COLLECTION — mesuré : sur le
+    // modèle immobilier, la collection (`chercher`) est DÉJÀ du CHROME, donc
+    // déjà hébergée par l'entrée. C'est le FORMULAIRE qui avait un écran à
+    // lui, et qui devenait la destination d'ouverture. Le fusionner « chez
+    // lui » l'aurait laissé où il était.
+    if (chrome.includes(sfListe.surfaceId) || surfacesEntree.has(sfListe.surfaceId)) {
+      absorbeesParEntree.add(sfFiltre.surfaceId);
+      continue;
+    }
+    // Sinon la COLLECTION rejoint le FILTRE : l'écran garde l'identité de
+    // l'étape qui vient en premier dans le parcours, donc sa place dans les
+    // arcs et les destinations reste celle qu'elle avait.
+    if (absorbees.has(sfListe.surfaceId) || compagnonDe.has(sfFiltre.surfaceId)) continue;
+    compagnonDe.set(sfFiltre.surfaceId, sfListe.surfaceId);
+    absorbees.add(sfListe.surfaceId);
+  }
   for (const sf of surfaces) {
     if (surfacesEntree.has(sf.surfaceId) || chrome.includes(sf.surfaceId)) continue;
+    // Une surface ABSORBÉE n'a pas d'écran à elle : elle vit dans celui du
+    // filtre. Sans cette garde, elle en aurait DEUX.
+    if (absorbees.has(sf.surfaceId) || absorbeesParEntree.has(sf.surfaceId)) continue;
+    const compagnon = compagnonDe.get(sf.surfaceId);
     ecrans.push({
       ecranId: `ecr_${sf.surfaceId.slice(4)}`,
-      surfaces: [sf.surfaceId],
-      justification: sf.origine,
+      surfaces: compagnon === undefined ? [sf.surfaceId] : [sf.surfaceId, compagnon],
+      justification:
+        compagnon === undefined
+          ? sf.origine
+          : [...sf.origine, ...(parSurface.get(compagnon)?.origine ?? [])],
     });
   }
   // R3-bis · V1 — le CHROME est TOUJOURS hébergé : si aucune entrée de
@@ -1215,6 +1258,19 @@ export function ecransDe(modele) {
       surfaces: [...chrome],
       justification: chrome.flatMap((id) => parSurface.get(id)?.origine ?? []),
     });
+  }
+  // EP-182 ① — LE FILTRE SE POSE AU-DESSUS DE SA COLLECTION, sur l'entrée.
+  // L'ordre n'est pas décoratif : c'est lui qui distingue « un filtre sur une
+  // liste » de « un formulaire suivi d'une liste ».
+  if (absorbeesParEntree.size > 0) {
+    const entree = ecrans.find((e) => e.ecranId === "ecr_entree");
+    if (entree !== undefined) {
+      entree.surfaces = [...absorbeesParEntree, ...entree.surfaces];
+      entree.justification = [
+        ...[...absorbeesParEntree].flatMap((id) => parSurface.get(id)?.origine ?? []),
+        ...entree.justification,
+      ];
+    }
   }
   const ecranDeSurface = new Map(
     ecrans.flatMap((e) => e.surfaces.map((sid) => [sid, e.ecranId])),
@@ -1443,6 +1499,57 @@ export function ecranAirDe(ecranId) {
  * relèvent de la règle 41 du prompt, et l'émission doit leur donner un lot
  * PROPRE, sans quoi ils disparaîtraient entre deux lots.
  */
+/**
+ * EP-182 ① — DEUX ÉTAPES QUI SONT DEUX RÉGIONS D'UN ÉCRAN.
+ *
+ * LE FONDEMENT ÉTAIT FAUX DEPUIS LE PREMIER JOUR : une étape de parcours
+ * devenait un ÉCRAN, jamais une RÉGION. Le plan sérialisait la séquence et ne
+ * composait jamais. Kaviva le portait déjà — 16 écrans simples le masquaient.
+ * Sahel Immo l'a rendu visible : trois écrans et deux formulaires avant la
+ * première annonce.
+ *
+ * LE DISCRIMINANT EST STRUCTUREL, TIRÉ DE `TABLE_GESTES`, ET IL NE CITE
+ * AUCUNE PAIRE DE GESTES :
+ *
+ *   A.transport === "instance"   — A porte une INSTANCE ENTIÈRE, pas un
+ *                                  simple `itemId`. C'est un CRITÈRE, pas une
+ *                                  identité de parent.
+ *   B.cardinalite === "collection" — B présente une LISTE.
+ *   B.effet === "navigate"       — B REGARDE, il ne MUTE pas. Sans cela,
+ *                                  `saisir → payer` serait fusionné, et payer
+ *                                  n'est pas un filtre (mesuré : ce faux
+ *                                  positif existait avant cette condition).
+ *   A.concept !== B.concept      — un critère porte sur AUTRE CHOSE que
+ *                                  lui-même. `saisir X → payer X` est une
+ *                                  suite d'actions sur la même chose.
+ *
+ * ALORS A ET B SONT UN FILTRE ET SA LISTE : le filtre se pose AU-DESSUS de la
+ * collection, sur le MÊME écran — jamais avant elle, sur un écran séparé.
+ *
+ * MESURÉ SUR 39 MODÈLES DU DÉPÔT : 8 paires fusionnables, toutes de cette
+ * forme. Kaviva n'en a AUCUNE — le discriminant ne fusionne pas ce qui n'a
+ * pas à l'être.
+ */
+export function etapesFusionnables(modele) {
+  const out = [];
+  for (const parcours of modele.parcours ?? []) {
+    const etapes = parcours.etapes ?? [];
+    for (let i = 0; i < etapes.length - 1; i++) {
+      const a = etapes[i];
+      const b = etapes[i + 1];
+      const ta = TABLE_GESTES[a.geste];
+      const tb = TABLE_GESTES[b.geste];
+      if (ta === undefined || tb === undefined) continue;
+      if (ta.transport !== "instance") continue;
+      if (tb.cardinalite !== "collection") continue;
+      if (tb.effet !== "navigate") continue;
+      if (a.concept === b.concept) continue;
+      out.push({ parcours: parcours.id, index: i, filtre: a, collection: b });
+    }
+  }
+  return out;
+}
+
 export function lotsDEcrans(modele, plan) {
   const rang = new Map(parcoursParPriorite(modele).map((p, i) => [p.id, i]));
   const parLot = new Map();
