@@ -1228,7 +1228,30 @@ for (const intention of INTENTIONS.slice(start, end)) {
         };
         if (arret === "passe") {
           const plan = modeleMetier.ecransDe(verdictP0.modele);
-          prescriptif = { modele: verdictP0.modele, plan };
+          // EP-190 ② — LE PRESCRIPTIF PORTE LES ÉCRANS D'IDENTITÉ.
+          //
+          // QUATORZIÈME VARIANTE DU MOTIF, ET LA TONTINE L'A RÉVÉLÉE : elle
+          // porte DEUX concepts d'identité, et `jugerBase` criait pourtant
+          // `PRESENTATION_ESPACE_COMPTE_ABSENT` au premier appel. Le juge
+          // disait vrai SUR CE QU'IL VOYAIT — il recevait `ecransDIdentite:
+          // []`, parce que personne ne les lui transmettait.
+          //
+          // DÉRIVÉ, jamais recopié : `estConceptIdentite` décide, `ecranAirDe`
+          // traduit. Les deux existent et sont éprouvés depuis EP-139.
+          const conceptsIdentite = verdictP0.modele.concepts
+            .map((c) => c.id)
+            .filter((id) => modeleMetier.estConceptIdentite(verdictP0.modele, id));
+          const surfacesModele = modeleMetier.surfacesDe(verdictP0.modele);
+          const ecransDIdentite = plan.ecrans
+            .filter((e) =>
+              (e.surfaces ?? []).some((sid) =>
+                conceptsIdentite.includes(
+                  surfacesModele.find((sf) => sf.surfaceId === sid)?.concept,
+                ),
+              ),
+            )
+            .map((e) => modeleMetier.ecranAirDe(e.ecranId));
+          prescriptif = { modele: verdictP0.modele, plan, ecransDIdentite };
           break;
         }
         console.log(
