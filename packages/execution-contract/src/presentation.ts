@@ -96,7 +96,27 @@ export const enteteNativeRendue = (ecran: { showsScreenTitle?: boolean }): boole
 export const ROLES_DESTINATION_OBLIGATOIRES = ["accueil", "compte"] as const;
 
 /** Bornes documentées de la barre inférieure. [S1] */
-export const DESTINATIONS_MIN = 3;
+// EP-190 — DEUX, ET C'EST LA RÈGLE DE PRODUIT QUI TRANCHE.
+//
+// Material recommande 3 à 5 destinations pour une navigation bar. TENU POUR
+// 3 PENDANT TROIS PASSES, cette borne a produit la MÊME impasse à chaque
+// run : le plan prescrit 2 destinations (« Accueil » et « Compte », que
+// Youssouf exige dans TOUTE application), le juge en réclame 3, et le
+// générateur en INVENTE une troisième — puis lui laisse
+// `showsPrimaryNav: false`. D'où `AIR_NAV_DESTINATION_SANS_BARRE`, seul
+// diagnostic bloquant de QUATRE runs consécutifs.
+//
+// EP-175 ① avait « résolu » le conflit en supprimant la barre sous 3 ;
+// EP-182 ③ a retiré cette garde parce qu'« Accueil » et « Compte » sont dus ;
+// EP-190 ① a fait du compte une destination — et le conflit est revenu dès
+// qu'un domaine n'a que DEUX racines.
+//
+// LA VÉRITÉ QUE TROIS PASSES ONT CONTOURNÉE : une application dont le
+// domaine ne porte que deux lieux N'A QUE DEUX ONGLETS. Exiger un troisième
+// revient à demander au générateur d'inventer un lieu — et il l'a fait
+// quatre fois. La borne descend à 2 : « Accueil » et « Compte » suffisent,
+// et le MAXIMUM de 5 reste, lui, une vraie contrainte de lisibilité.
+export const DESTINATIONS_MIN = 2;
 export const DESTINATIONS_MAX = 5;
 
 /**

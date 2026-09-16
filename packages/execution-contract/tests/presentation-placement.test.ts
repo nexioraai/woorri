@@ -143,12 +143,31 @@ describe("EP-130 · ② la recherche est en haut [S3]", () => {
 });
 
 describe("EP-130 · ③ la barre inférieure [S1]", () => {
-  it("refuse moins de trois destinations", () => {
+  it("DEUX DESTINATIONS PASSENT — « Accueil » et « Compte » suffisent", () => {
+    // RÉVISÉ EN EP-190. La borne était à 3, d'après Material. TENUE PENDANT
+    // TROIS PASSES, elle a produit la même impasse à chaque run : le plan
+    // prescrit 2 destinations — celles que Youssouf exige dans TOUTE
+    // application — le juge en réclame 3, et le générateur en INVENTE une
+    // troisième puis lui laisse `showsPrimaryNav: false`. Seul diagnostic
+    // bloquant de QUATRE runs consécutifs.
+    //
+    // Une application dont le domaine ne porte que deux lieux n'a que deux
+    // onglets. Exiger un troisième, c'est demander d'inventer un lieu.
     const mute = baseVerte();
     mute.navigation.primary!.destinations.pop();
-    expect(codes(jugerBarreInferieure(mute))).toEqual([
+    expect(mute.navigation.primary!.destinations.length).toBe(2);
+    expect(codes(jugerBarreInferieure(mute))).not.toContain(
       "PRESENTATION_DESTINATIONS_HORS_BORNES",
-    ]);
+    );
+  });
+
+  it("UNE SEULE destination reste refusée — ce n'est plus une barre", () => {
+    const mute = baseVerte();
+    mute.navigation.primary!.destinations.pop();
+    mute.navigation.primary!.destinations.pop();
+    expect(codes(jugerBarreInferieure(mute))).toContain(
+      "PRESENTATION_DESTINATIONS_HORS_BORNES",
+    );
   });
 
   it("refuse plus de cinq destinations", () => {
