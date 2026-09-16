@@ -1358,6 +1358,41 @@ export function ecransDe(modele) {
   // Les racines RÉSERVÉES voyagent avec le plan : l'espace compte doit les
   // héberger, et le juge doit pouvoir vérifier qu'aucune n'a été perdue.
   const racinesReservees = reservees.filter((e) => !destinations.includes(e));
+  // EP-190 ① — L'ESPACE COMPTE EST UNE DESTINATION, ET C'EST CE QUI FERME LA
+  // CONTRADICTION LAISSÉE OUVERTE PAR EP-182 ③.
+  //
+  // EP-175 ① avait fermé le conflit « plan prescrit 2 destinations / Material
+  // en exige 3 » en supprimant la barre. EP-182 ③ a RETIRÉ cette garde — à
+  // raison, « Accueil » et « Compte » sont dus dans toute application — mais
+  // SANS LA REMPLACER. MESURÉ : deux runs, deux domaines, MÊME diagnostic
+  // bloquant `AIR_NAV_DESTINATION_SANS_BARRE` — le générateur ajoutait une
+  // troisième destination pour satisfaire Material, puis lui laissait
+  // `showsPrimaryNav: false`.
+  //
+  // LA RÉPONSE ÉTAIT DANS LA DEMANDE DE YOUSSOUF DEPUIS LE DÉBUT : « Accueil,
+  // Boutiques, Compte ». LE COMPTE EST UNE DESTINATION — pas un écran qu'on
+  // atteint par hasard. Les racines RÉSERVÉES vivent DEDANS ; c'est lui qui
+  // occupe la place, pas elles.
+  //
+  // DÉRIVÉ : l'écran d'identité est celui qui porte une surface d'un concept
+  // d'identité — `estConceptIdentite`, éprouvé depuis EP-139. Sans concept
+  // d'identité, rien n'est ajouté : l'ignorance n'invente pas d'onglet.
+  const conceptsIdentite = modele.concepts
+    .map((c) => c.id)
+    .filter((id) => estConceptIdentite(modele, id));
+  const ecranDeCompte = ecrans.find((e) =>
+    (e.surfaces ?? []).some((sid) => conceptsIdentite.includes(parSurface.get(sid)?.concept)),
+  );
+  if (ecranDeCompte !== undefined && !destinations.includes(ecranDeCompte.ecranId)) {
+    destinations.push(ecranDeCompte.ecranId);
+    // L'ÉCRAN DE COMPTE N'EST PLUS « RÉSERVÉ » — IL EST LE COMPTE.
+    // Le distinguo est le cœur de la règle : l'espace compte OCCUPE une
+    // place publique, et les actions réservées (publier, gérer) vivent
+    // DEDANS. Le laisser dans les deux listes le rendrait à la fois onglet
+    // et caché — un cliquet d'EP-182 ③ le refusait, à raison.
+    const i = racinesReservees.indexOf(ecranDeCompte.ecranId);
+    if (i !== -1) racinesReservees.splice(i, 1);
+  }
 
   // ── arcs + invariants de chaîne ──
   const arcs = [];

@@ -175,10 +175,16 @@ describe("EP-182 ③ · la barre existe toujours, et le réservé n'y est pas", 
     }
   });
 
-  it("UNE ACTION RÉSERVÉE QUITTE LA BARRE — mesuré sur le cas de Youssouf", () => {
-    // « Publier » est une action d'annonceur : elle ne concerne pas les
-    // visiteurs et vit dans l'espace compte.
-    const plan = ecransDe(PETIT);
+  it("UNE ACTION RÉSERVÉE QUITTE LA BARRE — mesuré sur la TONTINE", () => {
+    // RECALÉ EN EP-190 : sur la fixture `PETIT`, le SEUL réservé était
+    // l'écran de compte — devenu DESTINATION, il n'est plus réservé, et le
+    // test n'avait plus de cas. La TONTINE en porte un VRAI : deux acteurs
+    // aux pouvoirs distincts, donc le président réservé À CÔTÉ du compte du
+    // membre. C'est le premier domaine à l'exposer.
+    const tontine = charger(
+      readdirSync(RES).find((f) => f.includes("tontine") && f.includes("modele-p0"))!,
+    );
+    const plan = ecransDe(tontine);
     expect(plan.navigation.racinesReservees.length, "rien n'a été réservé").toBeGreaterThan(0);
     for (const e of plan.navigation.racinesReservees) {
       expect(plan.navigation.destinations, `${e} occupe encore la barre`).not.toContain(e);

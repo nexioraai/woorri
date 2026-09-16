@@ -1,0 +1,7027 @@
+{
+  "airSchemaVersion": "1.25.0",
+  "projectId": "prj_sahel_immo",
+  "app": {
+    "name": "Sahel Immo",
+    "slug": "sahel-immo",
+    "description": [
+      {
+        "locale": "fr",
+        "text": "Le marché immobilier du Tchad et du Sahel : agences et particuliers publient leurs biens à vendre ou à louer avec photos, prix en francs CFA, surface, nombre de pièces et quartier. Les acheteurs et locataires parcourent les annonces, filtrent par ville, quartier, prix et type de bien, consultent la fiche complète puis contactent directement le vendeur par téléphone ou WhatsApp pour organiser une visite. Aucun paiement en ligne."
+      }
+    ],
+    "locales": {
+      "userLanguage": "fr",
+      "appLocales": [
+        "fr"
+      ],
+      "defaultAppLocale": "fr",
+      "contentLocales": [
+        "fr"
+      ],
+      "rtlSupported": false
+    }
+  },
+  "navigation": {
+    "entryScreenId": "scr_entree",
+    "primary": {
+      "destinations": [
+        {
+          "routeId": "nav_entree",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Annonces"
+            }
+          ],
+          "order": 0,
+          "icon": "accueil"
+        },
+        {
+          "routeId": "nav_ville_decouvrir",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Villes"
+            }
+          ],
+          "order": 1,
+          "icon": "carte"
+        },
+        {
+          "routeId": "nav_annonce_choisir",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Rechercher"
+            }
+          ],
+          "order": 2,
+          "icon": "recherche"
+        }
+      ]
+    },
+    "routes": [
+      {
+        "id": "nav_entree",
+        "screenId": "scr_entree",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Annonces"
+          }
+        ]
+      },
+      {
+        "id": "nav_annonce_choisir",
+        "screenId": "scr_cpt_annonce_choisir",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Toutes les annonces"
+          }
+        ]
+      },
+      {
+        "id": "nav_annonce_consulter_publiee",
+        "screenId": "scr_cpt_annonce_consulter_publiee",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Fiche du bien"
+          }
+        ]
+      },
+      {
+        "id": "nav_annonceur_decouvrir",
+        "screenId": "scr_cpt_annonceur_decouvrir",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Le vendeur"
+          }
+        ]
+      },
+      {
+        "id": "nav_annonceur_contacter",
+        "screenId": "scr_cpt_annonceur_contacter",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Contacter le vendeur"
+          }
+        ]
+      },
+      {
+        "id": "nav_annonceur_s_identifier",
+        "screenId": "scr_cpt_annonceur_s_identifier",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Espace annonceur"
+          }
+        ]
+      },
+      {
+        "id": "nav_annonce_saisir",
+        "screenId": "scr_cpt_annonce_saisir",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Publier un bien"
+          }
+        ]
+      },
+      {
+        "id": "nav_annonce_confirmer",
+        "screenId": "scr_cpt_annonce_confirmer",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Annonce publiée"
+          }
+        ]
+      },
+      {
+        "id": "nav_annonce_consulter_publiee_acteur_act_annonceur",
+        "screenId": "scr_cpt_annonce_consulter_publiee_acteur_act_annonceur",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Mon annonce"
+          }
+        ]
+      },
+      {
+        "id": "nav_annonce_consulter_historique_publiee",
+        "screenId": "scr_cpt_annonce_consulter_historique_publiee",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Mes annonces en ligne"
+          }
+        ]
+      },
+      {
+        "id": "nav_annonce_choisir_acteur_act_annonceur",
+        "screenId": "scr_cpt_annonce_choisir_acteur_act_annonceur",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Gérer une annonce"
+          }
+        ]
+      },
+      {
+        "id": "nav_annonce_retirer",
+        "screenId": "scr_cpt_annonce_retirer",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Retirer l'annonce"
+          }
+        ]
+      },
+      {
+        "id": "nav_annonce_consulter_historique_retiree",
+        "screenId": "scr_cpt_annonce_consulter_historique_retiree",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Annonces retirées"
+          }
+        ]
+      },
+      {
+        "id": "nav_ville_decouvrir",
+        "screenId": "scr_cpt_ville_decouvrir",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Villes"
+          }
+        ]
+      },
+      {
+        "id": "nav_ville_choisir",
+        "screenId": "scr_cpt_ville_choisir",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Choisir une ville"
+          }
+        ]
+      },
+      {
+        "id": "nav_quartier_decouvrir",
+        "screenId": "scr_cpt_quartier_decouvrir",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Quartiers"
+          }
+        ]
+      },
+      {
+        "id": "nav_quartier_choisir",
+        "screenId": "scr_cpt_quartier_choisir",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Choisir un quartier"
+          }
+        ]
+      }
+    ]
+  },
+  "design": {
+    "theme": "sahel_terracotta"
+  },
+  "network": {
+    "policy": "deny_by_default",
+    "allowedDomains": [
+      "api.sahelimmo.app",
+      "picsum.photos"
+    ]
+  },
+  "native": {
+    "minIosVersion": "15.0",
+    "minAndroidSdk": 24
+  },
+  "compliance": {
+    "commerceClass": "physical_or_offapp",
+    "accountDeletionRequired": true,
+    "dataCollected": [
+      "contact_info",
+      "identifiers",
+      "usage_data",
+      "user_content"
+    ]
+  },
+  "entities": [
+    {
+      "id": "ent_ville",
+      "name": "ville",
+      "fields": [
+        {
+          "id": "fld_ville_nom",
+          "name": "nom",
+          "type": "string",
+          "required": true,
+          "unique": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Ville"
+            }
+          ],
+          "demoValues": [
+            "N'Djaména",
+            "Moundou",
+            "Sarh",
+            "Abéché",
+            "Doba",
+            "Niamey",
+            "Bamako",
+            "Ouagadougou"
+          ]
+        },
+        {
+          "id": "fld_ville_pays",
+          "name": "pays",
+          "type": "enum",
+          "required": true,
+          "enumValues": [
+            "tchad",
+            "niger",
+            "mali",
+            "burkina_faso",
+            "senegal",
+            "mauritanie"
+          ],
+          "enumLabels": [
+            {
+              "value": "tchad",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Tchad"
+                }
+              ]
+            },
+            {
+              "value": "niger",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Niger"
+                }
+              ]
+            },
+            {
+              "value": "mali",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Mali"
+                }
+              ]
+            },
+            {
+              "value": "burkina_faso",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Burkina Faso"
+                }
+              ]
+            },
+            {
+              "value": "senegal",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Sénégal"
+                }
+              ]
+            },
+            {
+              "value": "mauritanie",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Mauritanie"
+                }
+              ]
+            }
+          ],
+          "demoValues": [
+            "tchad",
+            "tchad",
+            "tchad",
+            "niger",
+            "mali",
+            "burkina_faso"
+          ],
+          "sensitive": false
+        },
+        {
+          "id": "fld_ville_photo",
+          "name": "photo",
+          "type": "asset",
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Photo de la ville"
+            }
+          ],
+          "demoValues": [
+            "https://picsum.photos/seed/ville-ndjamena-centre/600/600",
+            "https://picsum.photos/seed/ville-moundou-avenue/600/600",
+            "https://picsum.photos/seed/ville-sarh-marche/600/600",
+            "https://picsum.photos/seed/ville-abeche-quartier/600/600",
+            "https://picsum.photos/seed/ville-doba-rue/600/600",
+            "https://picsum.photos/seed/ville-niamey-fleuve/600/600",
+            "https://picsum.photos/seed/ville-bamako-pont/600/600",
+            "https://picsum.photos/seed/ville-ouagadougou-avenue/600/600"
+          ]
+        },
+        {
+          "id": "fld_ville_annonces_actives",
+          "name": "annonces_actives",
+          "type": "number",
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Annonces en ligne"
+            }
+          ],
+          "unit": "annonces",
+          "sensitive": false
+        }
+      ]
+    },
+    {
+      "id": "ent_quartier",
+      "name": "quartier",
+      "fields": [
+        {
+          "id": "fld_quartier_nom",
+          "name": "nom",
+          "type": "string",
+          "required": true,
+          "unique": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Quartier"
+            }
+          ],
+          "demoValues": [
+            "Moursal",
+            "Chagoua",
+            "Klemat",
+            "Farcha",
+            "Diguel",
+            "Sabangali",
+            "Gassi",
+            "Ardep-Djoumal"
+          ]
+        },
+        {
+          "id": "fld_quartier_ville",
+          "name": "ville",
+          "type": "reference",
+          "required": true,
+          "referencesEntityId": "ent_ville",
+          "referenceDisplayFieldId": "fld_ville_nom",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Ville du quartier"
+            }
+          ]
+        },
+        {
+          "id": "fld_quartier_ville_nom",
+          "name": "ville_nom",
+          "type": "string",
+          "required": true,
+          "unique": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Ville"
+            }
+          ],
+          "demoValues": [
+            "N'Djaména",
+            "N'Djaména",
+            "N'Djaména",
+            "Moundou",
+            "Sarh",
+            "Abéché",
+            "Niamey",
+            "Bamako"
+          ]
+        },
+        {
+          "id": "fld_quartier_photo",
+          "name": "photo",
+          "type": "asset",
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Photo du quartier"
+            }
+          ],
+          "demoValues": [
+            "https://picsum.photos/seed/quartier-moursal-rue/600/600",
+            "https://picsum.photos/seed/quartier-chagoua-marche/600/600",
+            "https://picsum.photos/seed/quartier-klemat-villas/600/600",
+            "https://picsum.photos/seed/quartier-farcha-terrain/600/600",
+            "https://picsum.photos/seed/quartier-diguel-maisons/600/600",
+            "https://picsum.photos/seed/quartier-sabangali-commerces/600/600",
+            "https://picsum.photos/seed/quartier-gassi-avenue/600/600",
+            "https://picsum.photos/seed/quartier-ardep-djoumal/600/600"
+          ]
+        },
+        {
+          "id": "fld_quartier_description",
+          "name": "description",
+          "type": "text",
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "À propos du quartier"
+            }
+          ],
+          "demoValues": [
+            "Quartier résidentiel calme, proche des écoles et des commerces.",
+            "Quartier animé avec marché quotidien et transports faciles.",
+            "Quartier administratif, villas spacieuses et rues goudronnées.",
+            "Zone en développement, terrains disponibles et prix accessibles."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ent_annonceur",
+      "name": "annonceur",
+      "fields": [
+        {
+          "id": "fld_annonceur_nom",
+          "name": "nom",
+          "type": "string",
+          "required": true,
+          "unique": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Nom de l'annonceur"
+            }
+          ],
+          "demoValues": [
+            "Agence Sahel Habitat",
+            "Immobilière Chari",
+            "Mahamat Abdelkerim",
+            "Agence Logis N'Djamena",
+            "Fatimé Oumar",
+            "Cabinet Toumaï Immobilier",
+            "Ousmane Djibrine",
+            "Agence Kanem Résidences"
+          ]
+        },
+        {
+          "id": "fld_annonceur_type",
+          "name": "type",
+          "type": "enum",
+          "required": true,
+          "enumValues": [
+            "agence",
+            "particulier"
+          ],
+          "enumLabels": [
+            {
+              "value": "agence",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Agence immobilière"
+                }
+              ]
+            },
+            {
+              "value": "particulier",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Particulier"
+                }
+              ]
+            }
+          ],
+          "demoValues": [
+            "agence",
+            "particulier",
+            "agence",
+            "particulier",
+            "agence",
+            "particulier"
+          ],
+          "sensitive": false
+        },
+        {
+          "id": "fld_annonceur_telephone",
+          "name": "telephone",
+          "type": "string",
+          "required": true,
+          "unique": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Téléphone"
+            }
+          ],
+          "demoValues": [
+            "+235 66 12 34 56",
+            "+235 99 04 88 21",
+            "+235 63 77 15 09",
+            "+235 95 42 30 77",
+            "+235 66 80 19 44",
+            "+235 90 55 26 13"
+          ]
+        },
+        {
+          "id": "fld_annonceur_whatsapp",
+          "name": "whatsapp",
+          "type": "string",
+          "required": false,
+          "unique": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Numéro WhatsApp"
+            }
+          ],
+          "demoValues": [
+            "+235 66 12 34 56",
+            "+235 99 04 88 21",
+            "+235 63 77 15 09",
+            "+235 95 42 30 77",
+            "+235 66 80 19 44",
+            "+235 90 55 26 13"
+          ]
+        },
+        {
+          "id": "fld_annonceur_ville",
+          "name": "ville",
+          "type": "reference",
+          "required": false,
+          "referencesEntityId": "ent_ville",
+          "referenceDisplayFieldId": "fld_ville_nom",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Ville de l'annonceur"
+            }
+          ]
+        },
+        {
+          "id": "fld_annonceur_ville_nom",
+          "name": "ville_nom",
+          "type": "string",
+          "required": false,
+          "unique": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Ville"
+            }
+          ],
+          "demoValues": [
+            "N'Djaména",
+            "Moundou",
+            "Sarh",
+            "Abéché",
+            "Niamey",
+            "Bamako"
+          ]
+        },
+        {
+          "id": "fld_annonceur_presentation",
+          "name": "presentation",
+          "type": "text",
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Présentation"
+            }
+          ],
+          "demoValues": [
+            "Agence installée à N'Djaména depuis 2012, spécialisée en location de villas et d'appartements.",
+            "Particulier proposant ses biens familiaux à la vente, visites possibles le week-end.",
+            "Cabinet immobilier couvrant N'Djaména et Moundou, gestion locative et vente de terrains.",
+            "Propriétaire de plusieurs studios meublés dans le centre-ville."
+          ]
+        },
+        {
+          "id": "fld_annonceur_photo",
+          "name": "photo",
+          "type": "asset",
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Photo / logo"
+            }
+          ],
+          "demoValues": [
+            "https://picsum.photos/seed/annonceur-agence-sahel-habitat/600/600",
+            "https://picsum.photos/seed/annonceur-immobiliere-chari/600/600",
+            "https://picsum.photos/seed/annonceur-mahamat-abdelkerim/600/600",
+            "https://picsum.photos/seed/annonceur-logis-ndjamena/600/600",
+            "https://picsum.photos/seed/annonceur-fatime-oumar/600/600",
+            "https://picsum.photos/seed/annonceur-toumai-immobilier/600/600",
+            "https://picsum.photos/seed/annonceur-ousmane-djibrine/600/600",
+            "https://picsum.photos/seed/annonceur-kanem-residences/600/600"
+          ]
+        },
+        {
+          "id": "fld_annonceur_email",
+          "name": "email",
+          "type": "string",
+          "required": true,
+          "unique": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Adresse e-mail"
+            }
+          ],
+          "demoValues": [
+            "contact@sahelhabitat.td",
+            "agence.chari@mail.td",
+            "m.abdelkerim@mail.td",
+            "logis.ndjamena@mail.td",
+            "fatime.oumar@mail.td",
+            "toumai.immo@mail.td"
+          ]
+        },
+        {
+          "id": "fld_annonceur_mot_de_passe",
+          "name": "mot_de_passe",
+          "type": "string",
+          "required": true,
+          "unique": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Mot de passe"
+            }
+          ],
+          "sensitive": true
+        }
+      ]
+    },
+    {
+      "id": "ent_annonce",
+      "name": "annonce",
+      "fields": [
+        {
+          "id": "fld_annonce_titre",
+          "name": "titre",
+          "type": "string",
+          "required": true,
+          "unique": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Titre de l'annonce"
+            }
+          ],
+          "demoValues": [
+            "Villa 4 pièces avec cour à Moursal",
+            "Appartement 3 pièces à Klemat",
+            "Studio meublé à Chagoua",
+            "Terrain clôturé de 500 m² à Farcha",
+            "Maison familiale 5 pièces à Diguel",
+            "Boutique sur avenue à Sabangali",
+            "Bureau climatisé à Gassi",
+            "Duplex neuf à Ardep-Djoumal"
+          ]
+        },
+        {
+          "id": "fld_annonce_description",
+          "name": "description",
+          "type": "text",
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Description du bien"
+            }
+          ],
+          "demoValues": [
+            "Villa en dur avec grande cour, forage, garage pour deux véhicules et mur de clôture achevé.",
+            "Appartement lumineux au premier étage, séjour spacieux, cuisine équipée, eau et électricité stables.",
+            "Studio meublé prêt à habiter, douche interne, idéal pour étudiant ou jeune actif.",
+            "Terrain plat et clôturé avec titre foncier, accès direct à la route goudronnée.",
+            "Maison familiale avec véranda, cinq chambres, deux douches et cour arborée.",
+            "Local commercial en bord d'avenue, rideau métallique, forte affluence de passage."
+          ]
+        },
+        {
+          "id": "fld_annonce_photos",
+          "name": "photos",
+          "type": "asset",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Photos du bien"
+            }
+          ],
+          "demoValues": [
+            "https://picsum.photos/seed/bien-villa-moursal-cour/600/600",
+            "https://picsum.photos/seed/bien-appartement-klemat-sejour/600/600",
+            "https://picsum.photos/seed/bien-studio-chagoua-meuble/600/600",
+            "https://picsum.photos/seed/bien-terrain-farcha-cloture/600/600",
+            "https://picsum.photos/seed/bien-maison-diguel-veranda/600/600",
+            "https://picsum.photos/seed/bien-boutique-sabangali-avenue/600/600",
+            "https://picsum.photos/seed/bien-bureau-gassi-climatise/600/600",
+            "https://picsum.photos/seed/bien-duplex-ardep-djoumal/600/600"
+          ]
+        },
+        {
+          "id": "fld_annonce_prix_fcfa",
+          "name": "prix_fcfa",
+          "type": "number",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Prix"
+            }
+          ],
+          "unit": "FCFA",
+          "sensitive": false
+        },
+        {
+          "id": "fld_annonce_surface_m2",
+          "name": "surface_m2",
+          "type": "number",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Surface"
+            }
+          ],
+          "unit": "m²",
+          "sensitive": false
+        },
+        {
+          "id": "fld_annonce_pieces",
+          "name": "pieces",
+          "type": "number",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Nombre de pièces"
+            }
+          ],
+          "unit": "pièces",
+          "sensitive": false
+        },
+        {
+          "id": "fld_annonce_transaction",
+          "name": "transaction",
+          "type": "enum",
+          "required": true,
+          "enumValues": [
+            "vente",
+            "location"
+          ],
+          "enumLabels": [
+            {
+              "value": "vente",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "À vendre"
+                }
+              ]
+            },
+            {
+              "value": "location",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "À louer"
+                }
+              ]
+            }
+          ],
+          "demoValues": [
+            "location",
+            "vente",
+            "location",
+            "vente",
+            "location",
+            "vente"
+          ],
+          "sensitive": false
+        },
+        {
+          "id": "fld_annonce_type_bien",
+          "name": "type_bien",
+          "type": "enum",
+          "required": true,
+          "enumValues": [
+            "villa",
+            "appartement",
+            "studio",
+            "maison",
+            "terrain",
+            "boutique",
+            "bureau",
+            "magasin"
+          ],
+          "enumLabels": [
+            {
+              "value": "villa",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Villa"
+                }
+              ]
+            },
+            {
+              "value": "appartement",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Appartement"
+                }
+              ]
+            },
+            {
+              "value": "studio",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Studio"
+                }
+              ]
+            },
+            {
+              "value": "maison",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Maison"
+                }
+              ]
+            },
+            {
+              "value": "terrain",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Terrain"
+                }
+              ]
+            },
+            {
+              "value": "boutique",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Boutique"
+                }
+              ]
+            },
+            {
+              "value": "bureau",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Bureau"
+                }
+              ]
+            },
+            {
+              "value": "magasin",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Magasin"
+                }
+              ]
+            }
+          ],
+          "demoValues": [
+            "villa",
+            "appartement",
+            "studio",
+            "terrain",
+            "maison",
+            "boutique",
+            "bureau",
+            "villa"
+          ],
+          "sensitive": false
+        },
+        {
+          "id": "fld_annonce_quartier",
+          "name": "quartier",
+          "type": "reference",
+          "required": true,
+          "referencesEntityId": "ent_quartier",
+          "referenceDisplayFieldId": "fld_quartier_nom",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Quartier du bien"
+            }
+          ]
+        },
+        {
+          "id": "fld_annonce_quartier_nom",
+          "name": "quartier_nom",
+          "type": "string",
+          "required": true,
+          "unique": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Quartier"
+            }
+          ],
+          "demoValues": [
+            "Moursal",
+            "Klemat",
+            "Chagoua",
+            "Farcha",
+            "Diguel",
+            "Sabangali",
+            "Gassi",
+            "Ardep-Djoumal"
+          ]
+        },
+        {
+          "id": "fld_annonce_ville_nom",
+          "name": "ville_nom",
+          "type": "string",
+          "required": true,
+          "unique": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Ville"
+            }
+          ],
+          "demoValues": [
+            "N'Djaména",
+            "N'Djaména",
+            "Moundou",
+            "N'Djaména",
+            "Sarh",
+            "Abéché",
+            "N'Djaména",
+            "Moundou"
+          ]
+        },
+        {
+          "id": "fld_annonce_annonceur",
+          "name": "annonceur",
+          "type": "reference",
+          "required": true,
+          "referencesEntityId": "ent_annonceur",
+          "referenceDisplayFieldId": "fld_annonceur_nom",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Annonceur du bien"
+            }
+          ]
+        },
+        {
+          "id": "fld_annonce_annonceur_nom",
+          "name": "annonceur_nom",
+          "type": "string",
+          "required": true,
+          "unique": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Publié par"
+            }
+          ],
+          "demoValues": [
+            "Agence Sahel Habitat",
+            "Immobilière Chari",
+            "Mahamat Abdelkerim",
+            "Agence Logis N'Djamena",
+            "Fatimé Oumar",
+            "Cabinet Toumaï Immobilier"
+          ]
+        },
+        {
+          "id": "fld_annonce_telephone_contact",
+          "name": "telephone_contact",
+          "type": "string",
+          "required": true,
+          "unique": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Téléphone du vendeur"
+            }
+          ],
+          "demoValues": [
+            "+235 66 12 34 56",
+            "+235 99 04 88 21",
+            "+235 63 77 15 09",
+            "+235 95 42 30 77",
+            "+235 66 80 19 44",
+            "+235 90 55 26 13"
+          ]
+        },
+        {
+          "id": "fld_annonce_whatsapp_contact",
+          "name": "whatsapp_contact",
+          "type": "string",
+          "required": false,
+          "unique": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "WhatsApp du vendeur"
+            }
+          ],
+          "demoValues": [
+            "+235 66 12 34 56",
+            "+235 99 04 88 21",
+            "+235 63 77 15 09",
+            "+235 95 42 30 77",
+            "+235 66 80 19 44",
+            "+235 90 55 26 13"
+          ]
+        },
+        {
+          "id": "fld_annonce_statut",
+          "name": "statut",
+          "type": "enum",
+          "required": true,
+          "enumValues": [
+            "en_ligne",
+            "retiree"
+          ],
+          "enumLabels": [
+            {
+              "value": "en_ligne",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "En ligne"
+                }
+              ]
+            },
+            {
+              "value": "retiree",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Retirée"
+                }
+              ]
+            }
+          ],
+          "demoValues": [
+            "en_ligne",
+            "en_ligne",
+            "en_ligne",
+            "en_ligne",
+            "retiree",
+            "en_ligne"
+          ],
+          "sensitive": false
+        },
+        {
+          "id": "fld_annonce_publiee_le",
+          "name": "publiee_le",
+          "type": "date",
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Publiée le"
+            }
+          ],
+          "demoValues": [
+            "2026-01-12",
+            "2026-01-28",
+            "2026-02-03",
+            "2026-02-14",
+            "2026-02-21",
+            "2026-03-02",
+            "2026-03-09",
+            "2026-03-18"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ent_recherche",
+      "name": "recherche",
+      "fields": [
+        {
+          "id": "fld_recherche_libelle",
+          "name": "libelle",
+          "type": "string",
+          "required": true,
+          "unique": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Nom de la recherche"
+            }
+          ],
+          "demoValues": [
+            "Villa à louer à Moursal",
+            "Appartement 3 pièces à Klemat",
+            "Terrain à vendre à Farcha",
+            "Studio meublé à N'Djaména",
+            "Boutique à louer à Moundou",
+            "Maison familiale à Diguel"
+          ]
+        },
+        {
+          "id": "fld_recherche_ville",
+          "name": "ville",
+          "type": "reference",
+          "required": false,
+          "referencesEntityId": "ent_ville",
+          "referenceDisplayFieldId": "fld_ville_nom",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Ville recherchée"
+            }
+          ]
+        },
+        {
+          "id": "fld_recherche_quartier",
+          "name": "quartier",
+          "type": "reference",
+          "required": false,
+          "referencesEntityId": "ent_quartier",
+          "referenceDisplayFieldId": "fld_quartier_nom",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Quartier recherché"
+            }
+          ]
+        },
+        {
+          "id": "fld_recherche_ville_nom",
+          "name": "ville_nom",
+          "type": "string",
+          "required": false,
+          "unique": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Ville"
+            }
+          ],
+          "demoValues": [
+            "N'Djaména",
+            "Moundou",
+            "Sarh",
+            "Abéché",
+            "Niamey",
+            "Bamako"
+          ]
+        },
+        {
+          "id": "fld_recherche_quartier_nom",
+          "name": "quartier_nom",
+          "type": "string",
+          "required": false,
+          "unique": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Quartier"
+            }
+          ],
+          "demoValues": [
+            "Moursal",
+            "Klemat",
+            "Chagoua",
+            "Farcha",
+            "Diguel",
+            "Gassi"
+          ]
+        },
+        {
+          "id": "fld_recherche_prix_min",
+          "name": "prix_min",
+          "type": "number",
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Prix minimum"
+            }
+          ],
+          "unit": "FCFA",
+          "sensitive": false
+        },
+        {
+          "id": "fld_recherche_prix_max",
+          "name": "prix_max",
+          "type": "number",
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Prix maximum"
+            }
+          ],
+          "unit": "FCFA",
+          "sensitive": false
+        },
+        {
+          "id": "fld_recherche_type_bien",
+          "name": "type_bien",
+          "type": "enum",
+          "required": false,
+          "enumValues": [
+            "villa",
+            "appartement",
+            "studio",
+            "maison",
+            "terrain",
+            "boutique",
+            "bureau",
+            "magasin"
+          ],
+          "enumLabels": [
+            {
+              "value": "villa",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Villa"
+                }
+              ]
+            },
+            {
+              "value": "appartement",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Appartement"
+                }
+              ]
+            },
+            {
+              "value": "studio",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Studio"
+                }
+              ]
+            },
+            {
+              "value": "maison",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Maison"
+                }
+              ]
+            },
+            {
+              "value": "terrain",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Terrain"
+                }
+              ]
+            },
+            {
+              "value": "boutique",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Boutique"
+                }
+              ]
+            },
+            {
+              "value": "bureau",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Bureau"
+                }
+              ]
+            },
+            {
+              "value": "magasin",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Magasin"
+                }
+              ]
+            }
+          ],
+          "demoValues": [
+            "villa",
+            "appartement",
+            "studio",
+            "terrain",
+            "maison",
+            "boutique"
+          ],
+          "sensitive": false
+        },
+        {
+          "id": "fld_recherche_transaction",
+          "name": "transaction",
+          "type": "enum",
+          "required": false,
+          "enumValues": [
+            "vente",
+            "location"
+          ],
+          "enumLabels": [
+            {
+              "value": "vente",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "À vendre"
+                }
+              ]
+            },
+            {
+              "value": "location",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "À louer"
+                }
+              ]
+            }
+          ],
+          "demoValues": [
+            "location",
+            "vente",
+            "location",
+            "vente",
+            "location",
+            "vente"
+          ],
+          "sensitive": false
+        }
+      ]
+    }
+  ],
+  "relations": [
+    {
+      "id": "rel_ville_quartiers",
+      "fromEntityId": "ent_ville",
+      "toEntityId": "ent_quartier",
+      "kind": "one_to_many"
+    },
+    {
+      "id": "rel_quartier_annonces",
+      "fromEntityId": "ent_quartier",
+      "toEntityId": "ent_annonce",
+      "kind": "one_to_many"
+    },
+    {
+      "id": "rel_annonceur_annonces",
+      "fromEntityId": "ent_annonceur",
+      "toEntityId": "ent_annonce",
+      "kind": "one_to_many"
+    },
+    {
+      "id": "rel_ville_annonceurs",
+      "fromEntityId": "ent_ville",
+      "toEntityId": "ent_annonceur",
+      "kind": "one_to_many"
+    },
+    {
+      "id": "rel_ville_recherches",
+      "fromEntityId": "ent_ville",
+      "toEntityId": "ent_recherche",
+      "kind": "one_to_many"
+    },
+    {
+      "id": "rel_quartier_recherches",
+      "fromEntityId": "ent_quartier",
+      "toEntityId": "ent_recherche",
+      "kind": "one_to_many"
+    }
+  ],
+  "datasets": [
+    {
+      "id": "data_ville",
+      "entityId": "ent_ville",
+      "contentHash": "3f9a1c7d5b2e8046a1c4f70b93d5e8271a6c0fb48d92e35a7c1049b6e8f2d573",
+      "rowCount": 8,
+      "sourceKind": "seed"
+    },
+    {
+      "id": "data_quartier",
+      "entityId": "ent_quartier",
+      "contentHash": "8b41e07c6d9a2f530e7b14a8c35f9d6247d0a1e9b82c6f3591ca5308e6b7d24f",
+      "rowCount": 12,
+      "sourceKind": "seed"
+    },
+    {
+      "id": "data_annonceur",
+      "entityId": "ent_annonceur",
+      "contentHash": "c05d9a37f1b6e4822a9f6c130e84b7d55e1b83a7c2049fd6b7e30c8159adf246",
+      "rowCount": 8,
+      "sourceKind": "seed"
+    },
+    {
+      "id": "data_annonce",
+      "entityId": "ent_annonce",
+      "contentHash": "72e6b1049fa3c85d1d8f47b2e06ca935a3c07e59d1846bf29b52048c7ed3a16f",
+      "rowCount": 24,
+      "sourceKind": "seed"
+    },
+    {
+      "id": "data_recherche",
+      "entityId": "ent_recherche",
+      "contentHash": "4a17d3f80b6c295ee82b95170ad4c63f06d3ac8f41b7e592f5940e26b18da7c3",
+      "rowCount": 6,
+      "sourceKind": "seed"
+    }
+  ],
+  "rules": [
+    {
+      "id": "rule_annonce_champs_requis",
+      "description": "Une annonce ne peut être publiée sans titre, photo, prix, surface, quartier, ville et téléphone de contact.",
+      "kind": "validation",
+      "entityId": "ent_annonce",
+      "assertions": [
+        {
+          "fieldId": "fld_annonce_titre",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_annonce_photos",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_annonce_prix_fcfa",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_annonce_surface_m2",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_annonce_pieces",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_annonce_quartier_nom",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_annonce_ville_nom",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_annonce_telephone_contact",
+          "operator": "required"
+        }
+      ]
+    },
+    {
+      "id": "rule_annonce_prix_realiste",
+      "description": "Le prix en francs CFA doit être strictement positif et rester dans une fourchette plausible du marché sahélien.",
+      "kind": "validation",
+      "entityId": "ent_annonce",
+      "assertions": [
+        {
+          "fieldId": "fld_annonce_prix_fcfa",
+          "operator": "gte",
+          "value": 15000
+        },
+        {
+          "fieldId": "fld_annonce_prix_fcfa",
+          "operator": "lte",
+          "value": 500000000
+        }
+      ]
+    },
+    {
+      "id": "rule_annonce_surface_realiste",
+      "description": "La surface annoncée doit être positive et plausible (de 9 m² pour un studio à 10 000 m² pour un terrain).",
+      "kind": "validation",
+      "entityId": "ent_annonce",
+      "assertions": [
+        {
+          "fieldId": "fld_annonce_surface_m2",
+          "operator": "gte",
+          "value": 9
+        },
+        {
+          "fieldId": "fld_annonce_surface_m2",
+          "operator": "lte",
+          "value": 10000
+        }
+      ]
+    },
+    {
+      "id": "rule_annonce_pieces_bornees",
+      "description": "Le nombre de pièces doit être compris entre 0 (terrain nu) et 20.",
+      "kind": "validation",
+      "entityId": "ent_annonce",
+      "assertions": [
+        {
+          "fieldId": "fld_annonce_pieces",
+          "operator": "gte",
+          "value": 0
+        },
+        {
+          "fieldId": "fld_annonce_pieces",
+          "operator": "lte",
+          "value": 20
+        }
+      ]
+    },
+    {
+      "id": "rule_annonce_nature_connue",
+      "description": "Le type de transaction et le type de bien doivent appartenir aux valeurs du marché immobilier reconnues par l'application.",
+      "kind": "validation",
+      "entityId": "ent_annonce",
+      "assertions": [
+        {
+          "fieldId": "fld_annonce_transaction",
+          "operator": "in",
+          "value": [
+            "vente",
+            "location"
+          ]
+        },
+        {
+          "fieldId": "fld_annonce_type_bien",
+          "operator": "in",
+          "value": [
+            "villa",
+            "appartement",
+            "studio",
+            "maison",
+            "terrain",
+            "boutique",
+            "bureau",
+            "magasin"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "rule_annonce_statut_connu",
+      "description": "Une annonce est soit en ligne, soit retirée : aucun autre état n'est accepté.",
+      "kind": "validation",
+      "entityId": "ent_annonce",
+      "assertions": [
+        {
+          "fieldId": "fld_annonce_statut",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_annonce_statut",
+          "operator": "in",
+          "value": [
+            "en_ligne",
+            "retiree"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "rule_annonce_telephone_format",
+      "description": "Le téléphone de contact doit être un numéro international plausible (indicatif + chiffres, espaces autorisés).",
+      "kind": "validation",
+      "entityId": "ent_annonce",
+      "assertions": [
+        {
+          "fieldId": "fld_annonce_telephone_contact",
+          "operator": "matches",
+          "value": "^\\+?[0-9][0-9 ]{7,19}$"
+        }
+      ]
+    },
+    {
+      "id": "rule_annonce_lisible_dans_liste",
+      "description": "Le nom de l'annonceur doit accompagner l'annonce pour que la fiche indique qui publie le bien.",
+      "kind": "validation",
+      "entityId": "ent_annonce",
+      "assertions": [
+        {
+          "fieldId": "fld_annonce_annonceur_nom",
+          "operator": "required"
+        }
+      ]
+    },
+    {
+      "id": "rule_annonceur_identite_requise",
+      "description": "Un annonceur doit déclarer son nom, son type, son téléphone, son e-mail et un mot de passe avant de publier.",
+      "kind": "validation",
+      "entityId": "ent_annonceur",
+      "assertions": [
+        {
+          "fieldId": "fld_annonceur_nom",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_annonceur_type",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_annonceur_telephone",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_annonceur_email",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_annonceur_mot_de_passe",
+          "operator": "required"
+        }
+      ]
+    },
+    {
+      "id": "rule_annonceur_type_connu",
+      "description": "Un annonceur est une agence immobilière ou un particulier.",
+      "kind": "validation",
+      "entityId": "ent_annonceur",
+      "assertions": [
+        {
+          "fieldId": "fld_annonceur_type",
+          "operator": "in",
+          "value": [
+            "agence",
+            "particulier"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "rule_annonceur_email_format",
+      "description": "L'adresse e-mail de l'annonceur doit avoir une forme valide pour permettre la connexion.",
+      "kind": "validation",
+      "entityId": "ent_annonceur",
+      "assertions": [
+        {
+          "fieldId": "fld_annonceur_email",
+          "operator": "matches",
+          "value": "^[^@\\s]+@[^@\\s]+\\.[a-zA-Z]{2,}$"
+        }
+      ]
+    },
+    {
+      "id": "rule_annonceur_telephone_format",
+      "description": "Le téléphone et le numéro WhatsApp de l'annonceur doivent être des numéros plausibles pour être appelés.",
+      "kind": "validation",
+      "entityId": "ent_annonceur",
+      "assertions": [
+        {
+          "fieldId": "fld_annonceur_telephone",
+          "operator": "matches",
+          "value": "^\\+?[0-9][0-9 ]{7,19}$"
+        }
+      ]
+    },
+    {
+      "id": "rule_annonceur_acces_reserve",
+      "description": "Seul un annonceur identifié par une adresse e-mail enregistrée peut publier ou retirer une annonce.",
+      "kind": "authorization",
+      "entityId": "ent_annonceur",
+      "assertions": [
+        {
+          "fieldId": "fld_annonceur_email",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_annonceur_mot_de_passe",
+          "operator": "required"
+        }
+      ]
+    },
+    {
+      "id": "rule_ville_identite",
+      "description": "Une ville doit porter un nom et un pays du Sahel reconnu.",
+      "kind": "validation",
+      "entityId": "ent_ville",
+      "assertions": [
+        {
+          "fieldId": "fld_ville_nom",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_ville_pays",
+          "operator": "in",
+          "value": [
+            "tchad",
+            "niger",
+            "mali",
+            "burkina_faso",
+            "senegal",
+            "mauritanie"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "rule_ville_compteur_positif",
+      "description": "Le nombre d'annonces en ligne d'une ville ne peut pas être négatif.",
+      "kind": "validation",
+      "entityId": "ent_ville",
+      "assertions": [
+        {
+          "fieldId": "fld_ville_annonces_actives",
+          "operator": "gte",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "id": "rule_quartier_rattache",
+      "description": "Un quartier doit porter un nom et être rattaché à une ville nommée.",
+      "kind": "validation",
+      "entityId": "ent_quartier",
+      "assertions": [
+        {
+          "fieldId": "fld_quartier_nom",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_quartier_ville_nom",
+          "operator": "required"
+        }
+      ]
+    },
+    {
+      "id": "rule_recherche_libelle_requis",
+      "description": "Une recherche enregistrée doit porter un libellé pour être retrouvée.",
+      "kind": "validation",
+      "entityId": "ent_recherche",
+      "assertions": [
+        {
+          "fieldId": "fld_recherche_libelle",
+          "operator": "required"
+        }
+      ]
+    },
+    {
+      "id": "rule_recherche_prix_coherent",
+      "description": "Les bornes de prix d'une recherche doivent être positives et rester dans la fourchette du marché.",
+      "kind": "validation",
+      "entityId": "ent_recherche",
+      "assertions": [
+        {
+          "fieldId": "fld_recherche_prix_min",
+          "operator": "gte",
+          "value": 0
+        },
+        {
+          "fieldId": "fld_recherche_prix_max",
+          "operator": "lte",
+          "value": 500000000
+        }
+      ]
+    }
+  ],
+  "slots": [],
+  "capabilities": [
+    {
+      "capability": "auth",
+      "config": [
+        {
+          "key": "methods",
+          "value": [
+            "email_password"
+          ]
+        },
+        {
+          "key": "profileEntity",
+          "value": "ent_annonceur"
+        },
+        {
+          "key": "identifierField",
+          "value": "fld_annonceur_email"
+        },
+        {
+          "key": "passwordField",
+          "value": "fld_annonceur_mot_de_passe"
+        },
+        {
+          "key": "allowAnonymousBrowsing",
+          "value": true
+        }
+      ]
+    },
+    {
+      "capability": "media_upload",
+      "config": [
+        {
+          "key": "acceptedTypes",
+          "value": [
+            "image/jpeg",
+            "image/png"
+          ]
+        },
+        {
+          "key": "maxItems",
+          "value": 8
+        },
+        {
+          "key": "targetEntity",
+          "value": "ent_annonce"
+        },
+        {
+          "key": "targetField",
+          "value": "fld_annonce_photos"
+        }
+      ]
+    },
+    {
+      "capability": "external_contact",
+      "config": [
+        {
+          "key": "channels",
+          "value": [
+            "phone",
+            "whatsapp"
+          ]
+        },
+        {
+          "key": "phoneFieldId",
+          "value": "fld_annonce_telephone_contact"
+        },
+        {
+          "key": "whatsappFieldId",
+          "value": "fld_annonce_whatsapp_contact"
+        }
+      ]
+    }
+  ],
+  "permissions": [
+    {
+      "platform": "ios",
+      "permission": "NSPhotoLibraryUsageDescription",
+      "reason": [
+        {
+          "locale": "fr",
+          "text": "Sahel Immo accède à vos photos pour que vous puissiez joindre les images de votre bien (villa, terrain, boutique) à votre annonce."
+        }
+      ],
+      "requiredByCapability": "media_upload"
+    },
+    {
+      "platform": "android",
+      "permission": "android.permission.READ_MEDIA_IMAGES",
+      "reason": [
+        {
+          "locale": "fr",
+          "text": "Sahel Immo lit les images de votre appareil pour illustrer l'annonce du bien que vous mettez en vente ou en location."
+        }
+      ],
+      "requiredByCapability": "media_upload"
+    }
+  ],
+  "screens": [
+    {
+      "id": "scr_entree",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Annonces"
+        }
+      ],
+      "showsPrimaryNav": true,
+      "showsScreenTitle": false,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_entree_marque",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Sahel Immo"
+            },
+            {
+              "key": "subtitle",
+              "value": "Villas, terrains et boutiques à vendre ou à louer au Tchad et dans le Sahel"
+            },
+            {
+              "key": "accroche",
+              "value": true
+            }
+          ]
+        },
+        {
+          "id": "blk_entree_recherche_entree",
+          "blockType": "search_entry",
+          "props": [
+            {
+              "key": "placeholder",
+              "value": "Rechercher une villa, un terrain, une boutique…"
+            },
+            {
+              "key": "actionId",
+              "value": "act_entree_chercher_annonce"
+            }
+          ]
+        },
+        {
+          "id": "blk_entree_annonces_publiees",
+          "blockType": "list",
+          "entityId": "ent_annonce",
+          "props": [
+            {
+              "key": "title",
+              "value": "Biens en ligne"
+            },
+            {
+              "key": "titleFieldId",
+              "value": "fld_annonce_titre"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_annonce_quartier_nom"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_annonce_prix_fcfa"
+            },
+            {
+              "key": "badgeFieldId",
+              "value": "fld_annonce_transaction"
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_annonce_photos"
+            },
+            {
+              "key": "layout",
+              "value": "grid"
+            },
+            {
+              "key": "searchFieldId",
+              "value": "fld_annonce_titre"
+            },
+            {
+              "key": "searchPlaceholder",
+              "value": "Villa, studio, terrain, quartier…"
+            },
+            {
+              "key": "sortFieldId",
+              "value": "fld_annonce_publiee_le"
+            },
+            {
+              "key": "sortDirection",
+              "value": "desc"
+            },
+            {
+              "key": "filterFieldId",
+              "value": "fld_annonce_statut"
+            },
+            {
+              "key": "filterOperator",
+              "value": "eq"
+            },
+            {
+              "key": "filterValue",
+              "value": "en_ligne"
+            },
+            {
+              "key": "userFilterFieldIds",
+              "value": [
+                "fld_annonce_transaction",
+                "fld_annonce_prix_fcfa"
+              ]
+            },
+            {
+              "key": "userFilterOperators",
+              "value": [
+                "eq",
+                "contains"
+              ]
+            },
+            {
+              "key": "userFilterInputTypes",
+              "value": [
+                "choice",
+                "text"
+              ]
+            },
+            {
+              "key": "pageSize",
+              "value": 12
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement des annonces…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Annonces indisponibles"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Impossible d'afficher les annonces pour le moment. Réessayez dans un instant."
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Aucune annonce en ligne"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Aucun bien ne correspond à votre recherche. Modifiez la ville, le prix ou le type de bien."
+            }
+          ]
+        },
+        {
+          "id": "blk_entree_annonces_vide",
+          "blockType": "empty_state",
+          "visibleWhen": {
+            "kind": "entity_empty",
+            "entityId": "ent_annonce"
+          },
+          "props": [
+            {
+              "key": "title",
+              "value": "Aucune annonce pour l'instant"
+            },
+            {
+              "key": "message",
+              "value": "Les agences et les particuliers publient chaque jour de nouveaux biens. Revenez bientôt ou enregistrez votre recherche ci-dessous."
+            }
+          ]
+        },
+        {
+          "id": "blk_entree_quartier_entete",
+          "blockType": "detail_header",
+          "entityId": "ent_quartier",
+          "props": [
+            {
+              "key": "titleFieldId",
+              "value": "fld_quartier_nom"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_quartier_description"
+            },
+            {
+              "key": "badgeFieldIds",
+              "value": [
+                "fld_quartier_ville_nom"
+              ]
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_quartier_photo"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_quartier_ville_nom"
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement du quartier…"
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Aucun quartier sélectionné"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Choisissez une ville puis un quartier pour voir les biens du secteur."
+            },
+            {
+              "key": "errorTitle",
+              "value": "Quartier indisponible"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Les informations de ce quartier n'ont pas pu être chargées."
+            }
+          ]
+        },
+        {
+          "id": "blk_entree_annonces_du_quartier",
+          "blockType": "list",
+          "entityId": "ent_annonce",
+          "props": [
+            {
+              "key": "title",
+              "value": "Dans ce quartier"
+            },
+            {
+              "key": "titleFieldId",
+              "value": "fld_annonce_titre"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_annonce_type_bien"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_annonce_prix_fcfa"
+            },
+            {
+              "key": "badgeFieldId",
+              "value": "fld_annonce_transaction"
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_annonce_photos"
+            },
+            {
+              "key": "layout",
+              "value": "row"
+            },
+            {
+              "key": "scopeFieldId",
+              "value": "fld_annonce_quartier"
+            },
+            {
+              "key": "sortFieldId",
+              "value": "fld_annonce_prix_fcfa"
+            },
+            {
+              "key": "sortDirection",
+              "value": "asc"
+            },
+            {
+              "key": "pageSize",
+              "value": 6
+            },
+            {
+              "key": "seeAllLabel",
+              "value": "Voir toutes les annonces"
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement des biens du quartier…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Biens du quartier indisponibles"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Les annonces de ce quartier n'ont pas pu être chargées."
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Aucun bien dans ce quartier"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Aucune annonce en ligne ici pour le moment."
+            }
+          ]
+        },
+        {
+          "id": "blk_entree_recherche_form",
+          "blockType": "form",
+          "entityId": "ent_recherche",
+          "props": [
+            {
+              "key": "title",
+              "value": "Enregistrer ma recherche"
+            },
+            {
+              "key": "fieldIds",
+              "value": [
+                "fld_recherche_libelle",
+                "fld_recherche_ville_nom",
+                "fld_recherche_quartier_nom",
+                "fld_recherche_type_bien",
+                "fld_recherche_transaction",
+                "fld_recherche_prix_min",
+                "fld_recherche_prix_max"
+              ]
+            },
+            {
+              "key": "submitLabel",
+              "value": "Enregistrer ma recherche"
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Préparation du formulaire…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Recherche non enregistrée"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Vérifiez le libellé et les bornes de prix, puis réessayez."
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Nouvelle recherche"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Décrivez le bien que vous cherchez : ville, quartier, type et budget."
+            }
+          ]
+        },
+        {
+          "id": "blk_entree_espace_annonceur",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Espace annonceur — publier un bien"
+            },
+            {
+              "key": "icon",
+              "value": "compte"
+            },
+            {
+              "key": "kind",
+              "value": "ghost"
+            },
+            {
+              "key": "actionId",
+              "value": "act_entree_ouvrir_espace_annonceur"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_cpt_annonce_choisir",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Toutes les annonces"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_choisir_intro",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Filtrez par ville, quartier et type de bien"
+            },
+            {
+              "key": "subtitle",
+              "value": "Prix en francs CFA, surface et nombre de pièces indiqués sur chaque fiche."
+            }
+          ]
+        },
+        {
+          "id": "blk_choisir_liste",
+          "blockType": "list",
+          "entityId": "ent_annonce",
+          "props": [
+            {
+              "key": "titleFieldId",
+              "value": "fld_annonce_titre"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_annonce_quartier_nom"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_annonce_prix_fcfa"
+            },
+            {
+              "key": "badgeFieldId",
+              "value": "fld_annonce_type_bien"
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_annonce_photos"
+            },
+            {
+              "key": "layout",
+              "value": "grid"
+            },
+            {
+              "key": "searchFieldId",
+              "value": "fld_annonce_titre"
+            },
+            {
+              "key": "searchPlaceholder",
+              "value": "Rechercher un bien (villa, studio, terrain…)"
+            },
+            {
+              "key": "userFilterFieldIds",
+              "value": [
+                "fld_annonce_ville_nom",
+                "fld_annonce_quartier_nom",
+                "fld_annonce_type_bien"
+              ]
+            },
+            {
+              "key": "userFilterOperators",
+              "value": [
+                "contains",
+                "contains",
+                "eq"
+              ]
+            },
+            {
+              "key": "userFilterInputTypes",
+              "value": [
+                "text",
+                "text",
+                "choice"
+              ]
+            },
+            {
+              "key": "sortFieldId",
+              "value": "fld_annonce_prix_fcfa"
+            },
+            {
+              "key": "sortDirection",
+              "value": "asc"
+            },
+            {
+              "key": "pageSize",
+              "value": 20
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement des annonces…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Annonces indisponibles"
+            },
+            {
+              "key": "errorMessage",
+              "value": "La liste des biens n'a pas pu être chargée. Réessayez dans un instant."
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Aucun bien ne correspond"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Élargissez votre recherche : changez de ville, de quartier ou de type de bien."
+            }
+          ]
+        },
+        {
+          "id": "blk_choisir_vide",
+          "blockType": "empty_state",
+          "visibleWhen": {
+            "kind": "entity_empty",
+            "entityId": "ent_annonce"
+          },
+          "props": [
+            {
+              "key": "title",
+              "value": "Aucun bien à afficher"
+            },
+            {
+              "key": "message",
+              "value": "Aucune annonce ne correspond à vos critères. Effacez un filtre ou essayez une autre ville."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_cpt_annonce_consulter_publiee",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Fiche du bien"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_annonce_detail_entete",
+          "blockType": "detail_header",
+          "entityId": "ent_annonce",
+          "props": [
+            {
+              "key": "titleFieldId",
+              "value": "fld_annonce_titre"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_annonce_description"
+            },
+            {
+              "key": "badgeFieldIds",
+              "value": [
+                "fld_annonce_transaction",
+                "fld_annonce_type_bien",
+                "fld_annonce_surface_m2",
+                "fld_annonce_pieces",
+                "fld_annonce_quartier_nom",
+                "fld_annonce_ville_nom",
+                "fld_annonce_statut"
+              ]
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_annonce_photos"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_annonce_prix_fcfa"
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement de la fiche…"
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Fiche introuvable"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Cette annonce n'est plus disponible. Revenez à la liste des biens."
+            },
+            {
+              "key": "errorTitle",
+              "value": "Fiche indisponible"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Les détails de ce bien n'ont pas pu être chargés."
+            }
+          ]
+        },
+        {
+          "id": "blk_annonce_detail_contacter",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Contacter le vendeur"
+            },
+            {
+              "key": "icon",
+              "value": "message"
+            },
+            {
+              "key": "kind",
+              "value": "primary"
+            },
+            {
+              "key": "actionId",
+              "value": "act_detail_contacter_annonceur"
+            }
+          ]
+        },
+        {
+          "id": "blk_annonce_detail_voir_vendeur",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Qui publie ce bien ?"
+            },
+            {
+              "key": "icon",
+              "value": "compte"
+            },
+            {
+              "key": "kind",
+              "value": "ghost"
+            },
+            {
+              "key": "actionId",
+              "value": "act_detail_voir_annonceur"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_cpt_annonceur_decouvrir",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Le vendeur"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_annonceur_decouvrir_intro",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Agences et particuliers du Sahel"
+            },
+            {
+              "key": "subtitle",
+              "value": "Choisissez le vendeur de ce bien pour voir ses coordonnées et ses autres annonces."
+            }
+          ]
+        },
+        {
+          "id": "blk_annonceur_decouvrir_liste",
+          "blockType": "list",
+          "entityId": "ent_annonceur",
+          "props": [
+            {
+              "key": "titleFieldId",
+              "value": "fld_annonceur_nom"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_annonceur_ville_nom"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_annonceur_telephone"
+            },
+            {
+              "key": "badgeFieldId",
+              "value": "fld_annonceur_type"
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_annonceur_photo"
+            },
+            {
+              "key": "layout",
+              "value": "rows"
+            },
+            {
+              "key": "searchFieldId",
+              "value": "fld_annonceur_nom"
+            },
+            {
+              "key": "searchPlaceholder",
+              "value": "Rechercher une agence ou un particulier"
+            },
+            {
+              "key": "sortFieldId",
+              "value": "fld_annonceur_nom"
+            },
+            {
+              "key": "sortDirection",
+              "value": "asc"
+            },
+            {
+              "key": "pageSize",
+              "value": 20
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement des annonceurs…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Annonceurs indisponibles"
+            },
+            {
+              "key": "errorMessage",
+              "value": "La liste des agences et particuliers n'a pas pu être chargée."
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Aucun annonceur"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Aucune agence ni particulier n'est enregistré pour le moment."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_cpt_annonceur_contacter",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Contacter le vendeur"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_annonceur_contact_entete",
+          "blockType": "detail_header",
+          "entityId": "ent_annonceur",
+          "props": [
+            {
+              "key": "titleFieldId",
+              "value": "fld_annonceur_nom"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_annonceur_presentation"
+            },
+            {
+              "key": "badgeFieldIds",
+              "value": [
+                "fld_annonceur_type",
+                "fld_annonceur_ville_nom",
+                "fld_annonceur_whatsapp"
+              ]
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_annonceur_photo"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_annonceur_telephone"
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement des coordonnées…"
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Vendeur introuvable"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Ce vendeur n'est plus disponible. Revenez à la fiche du bien."
+            },
+            {
+              "key": "errorTitle",
+              "value": "Coordonnées indisponibles"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Les coordonnées de ce vendeur n'ont pas pu être chargées."
+            }
+          ]
+        },
+        {
+          "id": "blk_annonceur_contact_appeler",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Appeler le vendeur"
+            },
+            {
+              "key": "icon",
+              "value": "message"
+            },
+            {
+              "key": "kind",
+              "value": "primary"
+            },
+            {
+              "key": "actionId",
+              "value": "act_annonceur_appeler"
+            }
+          ]
+        },
+        {
+          "id": "blk_annonceur_contact_whatsapp",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Écrire sur WhatsApp"
+            },
+            {
+              "key": "icon",
+              "value": "message"
+            },
+            {
+              "key": "kind",
+              "value": "ghost"
+            },
+            {
+              "key": "actionId",
+              "value": "act_annonceur_whatsapp"
+            }
+          ]
+        },
+        {
+          "id": "blk_annonceur_contact_ses_biens",
+          "blockType": "list",
+          "entityId": "ent_annonce",
+          "props": [
+            {
+              "key": "title",
+              "value": "Ses autres biens"
+            },
+            {
+              "key": "titleFieldId",
+              "value": "fld_annonce_titre"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_annonce_quartier_nom"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_annonce_prix_fcfa"
+            },
+            {
+              "key": "badgeFieldId",
+              "value": "fld_annonce_transaction"
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_annonce_photos"
+            },
+            {
+              "key": "layout",
+              "value": "row"
+            },
+            {
+              "key": "scopeFieldId",
+              "value": "fld_annonce_annonceur"
+            },
+            {
+              "key": "filterFieldId",
+              "value": "fld_annonce_statut"
+            },
+            {
+              "key": "filterOperator",
+              "value": "eq"
+            },
+            {
+              "key": "filterValue",
+              "value": "en_ligne"
+            },
+            {
+              "key": "sortFieldId",
+              "value": "fld_annonce_publiee_le"
+            },
+            {
+              "key": "sortDirection",
+              "value": "desc"
+            },
+            {
+              "key": "pageSize",
+              "value": 6
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement de ses biens…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Biens indisponibles"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Les autres annonces de ce vendeur n'ont pas pu être chargées."
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Aucun autre bien"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Ce vendeur n'a pas d'autre annonce en ligne actuellement."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_cpt_annonceur_s_identifier",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Espace annonceur"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": false,
+      "presentation": "sheet",
+      "purpose": "account_create",
+      "dismissLabel": [
+        {
+          "locale": "fr",
+          "text": "Fermer"
+        }
+      ],
+      "blocks": [
+        {
+          "id": "blk_identifier_intro",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Publiez et gérez vos biens"
+            },
+            {
+              "key": "subtitle",
+              "value": "Agences immobilières et particuliers : identifiez-vous pour mettre en ligne une villa, un terrain ou une boutique au Tchad et dans le Sahel."
+            }
+          ]
+        },
+        {
+          "id": "blk_identifier_connexion_form",
+          "blockType": "form",
+          "entityId": "ent_annonceur",
+          "visibleWhen": {
+            "kind": "session_anonymous"
+          },
+          "props": [
+            {
+              "key": "title",
+              "value": "J'ai déjà un compte annonceur"
+            },
+            {
+              "key": "fieldIds",
+              "value": [
+                "fld_annonceur_email",
+                "fld_annonceur_mot_de_passe"
+              ]
+            },
+            {
+              "key": "submitLabel",
+              "value": "Se connecter"
+            },
+            {
+              "key": "saisieRoles",
+              "value": [
+                "verification"
+              ]
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Connexion en cours…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Connexion impossible"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Vérifiez votre adresse e-mail et votre mot de passe, puis réessayez."
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Connexion annonceur"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Saisissez l'adresse e-mail et le mot de passe de votre compte annonceur."
+            }
+          ]
+        },
+        {
+          "id": "blk_identifier_mot_de_passe_oublie",
+          "blockType": "button",
+          "visibleWhen": {
+            "kind": "session_anonymous"
+          },
+          "props": [
+            {
+              "key": "label",
+              "value": "Mot de passe oublié ?"
+            },
+            {
+              "key": "kind",
+              "value": "link"
+            },
+            {
+              "key": "actionId",
+              "value": "act_annonceur_mot_de_passe_oublie"
+            }
+          ]
+        },
+        {
+          "id": "blk_identifier_inscription_form",
+          "blockType": "form",
+          "entityId": "ent_annonceur",
+          "visibleWhen": {
+            "kind": "session_anonymous"
+          },
+          "props": [
+            {
+              "key": "title",
+              "value": "Créer mon compte annonceur"
+            },
+            {
+              "key": "fieldIds",
+              "value": [
+                "fld_annonceur_nom",
+                "fld_annonceur_type",
+                "fld_annonceur_telephone",
+                "fld_annonceur_whatsapp",
+                "fld_annonceur_ville_nom",
+                "fld_annonceur_presentation",
+                "fld_annonceur_photo",
+                "fld_annonceur_email",
+                "fld_annonceur_mot_de_passe"
+              ]
+            },
+            {
+              "key": "submitLabel",
+              "value": "Créer mon compte"
+            },
+            {
+              "key": "saisieRoles",
+              "value": [
+                "acceptation"
+              ]
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Création du compte…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Compte non créé"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Vérifiez votre nom, votre téléphone, votre e-mail et votre mot de passe, puis réessayez."
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Nouveau compte annonceur"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Indiquez qui vous êtes et comment les acheteurs pourront vous joindre."
+            }
+          ]
+        },
+        {
+          "id": "blk_identifier_publier",
+          "blockType": "button",
+          "visibleWhen": {
+            "kind": "session_authenticated"
+          },
+          "props": [
+            {
+              "key": "label",
+              "value": "Publier un bien"
+            },
+            {
+              "key": "icon",
+              "value": "liste"
+            },
+            {
+              "key": "kind",
+              "value": "primary"
+            },
+            {
+              "key": "actionId",
+              "value": "act_annonceur_ouvrir_publication"
+            }
+          ]
+        },
+        {
+          "id": "blk_identifier_mes_annonces",
+          "blockType": "button",
+          "visibleWhen": {
+            "kind": "session_authenticated"
+          },
+          "props": [
+            {
+              "key": "label",
+              "value": "Mes annonces en ligne"
+            },
+            {
+              "key": "icon",
+              "value": "liste"
+            },
+            {
+              "key": "kind",
+              "value": "ghost"
+            },
+            {
+              "key": "actionId",
+              "value": "act_annonceur_ouvrir_mes_annonces"
+            }
+          ]
+        },
+        {
+          "id": "blk_identifier_gerer",
+          "blockType": "button",
+          "visibleWhen": {
+            "kind": "session_authenticated"
+          },
+          "props": [
+            {
+              "key": "label",
+              "value": "Gérer une annonce"
+            },
+            {
+              "key": "icon",
+              "value": "reglages"
+            },
+            {
+              "key": "kind",
+              "value": "ghost"
+            },
+            {
+              "key": "actionId",
+              "value": "act_annonceur_ouvrir_gestion"
+            }
+          ]
+        },
+        {
+          "id": "blk_identifier_retirees",
+          "blockType": "button",
+          "visibleWhen": {
+            "kind": "session_authenticated"
+          },
+          "props": [
+            {
+              "key": "label",
+              "value": "Annonces retirées"
+            },
+            {
+              "key": "icon",
+              "value": "liste"
+            },
+            {
+              "key": "kind",
+              "value": "ghost"
+            },
+            {
+              "key": "actionId",
+              "value": "act_annonceur_ouvrir_retirees"
+            }
+          ]
+        },
+        {
+          "id": "blk_identifier_espace",
+          "blockType": "spacer",
+          "props": []
+        },
+        {
+          "id": "blk_identifier_deconnexion",
+          "blockType": "button",
+          "visibleWhen": {
+            "kind": "session_authenticated"
+          },
+          "props": [
+            {
+              "key": "label",
+              "value": "Se déconnecter"
+            },
+            {
+              "key": "icon",
+              "value": "compte"
+            },
+            {
+              "key": "kind",
+              "value": "link"
+            },
+            {
+              "key": "actionId",
+              "value": "act_annonceur_se_deconnecter"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_cpt_annonce_saisir",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Publier un bien"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_saisir_intro",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Décrivez votre bien"
+            },
+            {
+              "key": "subtitle",
+              "value": "Photos, prix en francs CFA, surface, nombre de pièces et quartier : plus votre annonce est complète, plus vite on vous appelle."
+            }
+          ]
+        },
+        {
+          "id": "blk_saisir_form",
+          "blockType": "form",
+          "entityId": "ent_annonce",
+          "props": [
+            {
+              "key": "title",
+              "value": "Nouvelle annonce"
+            },
+            {
+              "key": "fieldIds",
+              "value": [
+                "fld_annonce_titre",
+                "fld_annonce_description",
+                "fld_annonce_photos",
+                "fld_annonce_transaction",
+                "fld_annonce_type_bien",
+                "fld_annonce_prix_fcfa",
+                "fld_annonce_surface_m2",
+                "fld_annonce_pieces",
+                "fld_annonce_ville_nom",
+                "fld_annonce_quartier_nom",
+                "fld_annonce_annonceur_nom",
+                "fld_annonce_telephone_contact",
+                "fld_annonce_whatsapp_contact",
+                "fld_annonce_statut",
+                "fld_annonce_publiee_le"
+              ]
+            },
+            {
+              "key": "submitLabel",
+              "value": "Publier mon annonce"
+            },
+            {
+              "key": "saisieRoles",
+              "value": [
+                "verification"
+              ]
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Préparation du formulaire…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Annonce non publiée"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Vérifiez le titre, les photos, le prix en FCFA, la surface, le quartier et le téléphone de contact, puis réessayez."
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Votre annonce"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Renseignez les informations de votre villa, appartement, terrain ou local commercial."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_cpt_annonce_confirmer",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Annonce publiée"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_confirmer_message",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Votre bien est en ligne"
+            },
+            {
+              "key": "subtitle",
+              "value": "Les acheteurs et locataires voient désormais votre annonce et vous joindront directement par téléphone ou WhatsApp pour organiser une visite."
+            }
+          ]
+        },
+        {
+          "id": "blk_confirmer_mes_annonces_liste",
+          "blockType": "list",
+          "entityId": "ent_annonce",
+          "props": [
+            {
+              "key": "title",
+              "value": "Vos annonces en ligne"
+            },
+            {
+              "key": "titleFieldId",
+              "value": "fld_annonce_titre"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_annonce_quartier_nom"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_annonce_prix_fcfa"
+            },
+            {
+              "key": "badgeFieldId",
+              "value": "fld_annonce_statut"
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_annonce_photos"
+            },
+            {
+              "key": "layout",
+              "value": "rows"
+            },
+            {
+              "key": "filterFieldId",
+              "value": "fld_annonce_statut"
+            },
+            {
+              "key": "filterOperator",
+              "value": "eq"
+            },
+            {
+              "key": "filterValue",
+              "value": "en_ligne"
+            },
+            {
+              "key": "sortFieldId",
+              "value": "fld_annonce_publiee_le"
+            },
+            {
+              "key": "sortDirection",
+              "value": "desc"
+            },
+            {
+              "key": "pageSize",
+              "value": 5
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement de vos annonces…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Annonces indisponibles"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Vos annonces n'ont pas pu être chargées. Réessayez dans un instant."
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Aucune annonce en ligne"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Votre annonce apparaîtra ici dès sa publication."
+            }
+          ]
+        },
+        {
+          "id": "blk_confirmer_publier_encore",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Publier un autre bien"
+            },
+            {
+              "key": "icon",
+              "value": "liste"
+            },
+            {
+              "key": "kind",
+              "value": "primary"
+            },
+            {
+              "key": "actionId",
+              "value": "act_confirmer_publier_encore"
+            }
+          ]
+        },
+        {
+          "id": "blk_confirmer_voir_historique",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Voir toutes mes annonces en ligne"
+            },
+            {
+              "key": "icon",
+              "value": "compte"
+            },
+            {
+              "key": "kind",
+              "value": "ghost"
+            },
+            {
+              "key": "actionId",
+              "value": "act_confirmer_ouvrir_historique"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_cpt_annonce_consulter_publiee_acteur_act_annonceur",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Mon annonce"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_mon_annonce_entete",
+          "blockType": "detail_header",
+          "entityId": "ent_annonce",
+          "props": [
+            {
+              "key": "titleFieldId",
+              "value": "fld_annonce_titre"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_annonce_description"
+            },
+            {
+              "key": "badgeFieldIds",
+              "value": [
+                "fld_annonce_statut",
+                "fld_annonce_transaction",
+                "fld_annonce_type_bien",
+                "fld_annonce_surface_m2",
+                "fld_annonce_pieces",
+                "fld_annonce_quartier_nom",
+                "fld_annonce_ville_nom",
+                "fld_annonce_publiee_le"
+              ]
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_annonce_photos"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_annonce_prix_fcfa"
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement de votre annonce…"
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Annonce introuvable"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Cette annonce n'existe plus. Revenez à la liste de vos biens."
+            },
+            {
+              "key": "errorTitle",
+              "value": "Annonce indisponible"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Les détails de votre annonce n'ont pas pu être chargés."
+            }
+          ]
+        },
+        {
+          "id": "blk_mon_annonce_coordonnees",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Ce que voient les acheteurs"
+            },
+            {
+              "key": "subtitle",
+              "value": "Votre téléphone et votre numéro WhatsApp sont affichés sur la fiche : les intéressés vous appellent directement pour organiser une visite."
+            }
+          ]
+        },
+        {
+          "id": "blk_mon_annonce_retirer",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Retirer cette annonce"
+            },
+            {
+              "key": "icon",
+              "value": "reglages"
+            },
+            {
+              "key": "kind",
+              "value": "primary"
+            },
+            {
+              "key": "actionId",
+              "value": "act_mon_annonce_ouvrir_retrait"
+            }
+          ]
+        },
+        {
+          "id": "blk_mon_annonce_retour_historique",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Revenir à mes annonces en ligne"
+            },
+            {
+              "key": "icon",
+              "value": "liste"
+            },
+            {
+              "key": "kind",
+              "value": "ghost"
+            },
+            {
+              "key": "actionId",
+              "value": "act_mon_annonce_retour_historique"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_cpt_annonce_consulter_historique_publiee",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Mes annonces en ligne"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_hist_publiee_intro",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Vos biens visibles par les acheteurs"
+            },
+            {
+              "key": "subtitle",
+              "value": "Chaque bien affiché ici peut être appelé ou contacté sur WhatsApp par un acheteur ou un locataire. Touchez une annonce pour l'ouvrir."
+            }
+          ]
+        },
+        {
+          "id": "blk_hist_publiee_liste",
+          "blockType": "list",
+          "entityId": "ent_annonce",
+          "props": [
+            {
+              "key": "title",
+              "value": "En ligne"
+            },
+            {
+              "key": "titleFieldId",
+              "value": "fld_annonce_titre"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_annonce_quartier_nom"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_annonce_prix_fcfa"
+            },
+            {
+              "key": "badgeFieldId",
+              "value": "fld_annonce_transaction"
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_annonce_photos"
+            },
+            {
+              "key": "layout",
+              "value": "rows"
+            },
+            {
+              "key": "filterFieldId",
+              "value": "fld_annonce_statut"
+            },
+            {
+              "key": "filterOperator",
+              "value": "eq"
+            },
+            {
+              "key": "filterValue",
+              "value": "en_ligne"
+            },
+            {
+              "key": "userFilterFieldIds",
+              "value": [
+                "fld_annonce_type_bien",
+                "fld_annonce_ville_nom"
+              ]
+            },
+            {
+              "key": "userFilterOperators",
+              "value": [
+                "eq",
+                "contains"
+              ]
+            },
+            {
+              "key": "userFilterInputTypes",
+              "value": [
+                "choice",
+                "text"
+              ]
+            },
+            {
+              "key": "sortFieldId",
+              "value": "fld_annonce_publiee_le"
+            },
+            {
+              "key": "sortDirection",
+              "value": "desc"
+            },
+            {
+              "key": "pageSize",
+              "value": 20
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement de vos annonces…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Annonces indisponibles"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Vos annonces en ligne n'ont pas pu être chargées. Réessayez dans un instant."
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Aucune annonce en ligne"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Vous n'avez aucun bien en ligne pour le moment."
+            }
+          ]
+        },
+        {
+          "id": "blk_hist_publiee_vide",
+          "blockType": "empty_state",
+          "visibleWhen": {
+            "kind": "entity_empty",
+            "entityId": "ent_annonce"
+          },
+          "props": [
+            {
+              "key": "title",
+              "value": "Vous n'avez encore rien publié"
+            },
+            {
+              "key": "message",
+              "value": "Publiez votre villa, votre terrain ou votre boutique avec des photos, le prix en francs CFA, la surface et le quartier : les acheteurs vous appelleront directement."
+            }
+          ]
+        },
+        {
+          "id": "blk_hist_publiee_publier",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Publier un bien"
+            },
+            {
+              "key": "icon",
+              "value": "liste"
+            },
+            {
+              "key": "kind",
+              "value": "primary"
+            },
+            {
+              "key": "actionId",
+              "value": "act_hist_publiee_publier"
+            }
+          ]
+        },
+        {
+          "id": "blk_hist_publiee_gerer",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Gérer une annonce"
+            },
+            {
+              "key": "icon",
+              "value": "reglages"
+            },
+            {
+              "key": "kind",
+              "value": "ghost"
+            },
+            {
+              "key": "actionId",
+              "value": "act_hist_publiee_ouvrir_gestion"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_cpt_annonce_choisir_acteur_act_annonceur",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Gérer une annonce"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_gerer_intro",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Choisissez le bien à gérer"
+            },
+            {
+              "key": "subtitle",
+              "value": "Retrouvez toutes vos annonces, en ligne comme retirées, et ouvrez celle que vous voulez modifier ou retirer du marché."
+            }
+          ]
+        },
+        {
+          "id": "blk_gerer_liste",
+          "blockType": "list",
+          "entityId": "ent_annonce",
+          "props": [
+            {
+              "key": "titleFieldId",
+              "value": "fld_annonce_titre"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_annonce_quartier_nom"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_annonce_prix_fcfa"
+            },
+            {
+              "key": "badgeFieldId",
+              "value": "fld_annonce_statut"
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_annonce_photos"
+            },
+            {
+              "key": "layout",
+              "value": "rows"
+            },
+            {
+              "key": "searchFieldId",
+              "value": "fld_annonce_titre"
+            },
+            {
+              "key": "searchPlaceholder",
+              "value": "Rechercher parmi vos biens"
+            },
+            {
+              "key": "userFilterFieldIds",
+              "value": [
+                "fld_annonce_statut",
+                "fld_annonce_type_bien"
+              ]
+            },
+            {
+              "key": "userFilterOperators",
+              "value": [
+                "eq",
+                "eq"
+              ]
+            },
+            {
+              "key": "userFilterInputTypes",
+              "value": [
+                "choice",
+                "choice"
+              ]
+            },
+            {
+              "key": "sortFieldId",
+              "value": "fld_annonce_publiee_le"
+            },
+            {
+              "key": "sortDirection",
+              "value": "desc"
+            },
+            {
+              "key": "pageSize",
+              "value": 20
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement de vos biens…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Biens indisponibles"
+            },
+            {
+              "key": "errorMessage",
+              "value": "La liste de vos annonces n'a pas pu être chargée. Réessayez dans un instant."
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Aucune annonce à gérer"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Aucun bien ne correspond à ce filtre. Effacez le statut ou le type de bien."
+            }
+          ]
+        },
+        {
+          "id": "blk_gerer_vide",
+          "blockType": "empty_state",
+          "visibleWhen": {
+            "kind": "entity_empty",
+            "entityId": "ent_annonce"
+          },
+          "props": [
+            {
+              "key": "title",
+              "value": "Rien à gérer pour l'instant"
+            },
+            {
+              "key": "message",
+              "value": "Dès que vous aurez publié un bien, il apparaîtra ici et vous pourrez le retirer à tout moment."
+            }
+          ]
+        },
+        {
+          "id": "blk_gerer_retirer",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Retirer une annonce du marché"
+            },
+            {
+              "key": "icon",
+              "value": "reglages"
+            },
+            {
+              "key": "kind",
+              "value": "primary"
+            },
+            {
+              "key": "actionId",
+              "value": "act_gerer_ouvrir_retrait"
+            }
+          ]
+        },
+        {
+          "id": "blk_gerer_retirees",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Voir les annonces retirées"
+            },
+            {
+              "key": "icon",
+              "value": "liste"
+            },
+            {
+              "key": "kind",
+              "value": "ghost"
+            },
+            {
+              "key": "actionId",
+              "value": "act_gerer_ouvrir_retirees"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_cpt_annonce_retirer",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Retirer l'annonce"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_retirer_intro",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Le bien est vendu ou loué ?"
+            },
+            {
+              "key": "subtitle",
+              "value": "Retirez-le du marché : il disparaît des annonces publiques et vous cessez de recevoir des appels pour ce bien. Vous pourrez le republier plus tard."
+            }
+          ]
+        },
+        {
+          "id": "blk_retirer_liste",
+          "blockType": "list",
+          "entityId": "ent_annonce",
+          "props": [
+            {
+              "key": "title",
+              "value": "Vos biens encore en ligne"
+            },
+            {
+              "key": "titleFieldId",
+              "value": "fld_annonce_titre"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_annonce_quartier_nom"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_annonce_prix_fcfa"
+            },
+            {
+              "key": "badgeFieldId",
+              "value": "fld_annonce_transaction"
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_annonce_photos"
+            },
+            {
+              "key": "layout",
+              "value": "rows"
+            },
+            {
+              "key": "filterFieldId",
+              "value": "fld_annonce_statut"
+            },
+            {
+              "key": "filterOperator",
+              "value": "eq"
+            },
+            {
+              "key": "filterValue",
+              "value": "en_ligne"
+            },
+            {
+              "key": "sortFieldId",
+              "value": "fld_annonce_publiee_le"
+            },
+            {
+              "key": "sortDirection",
+              "value": "desc"
+            },
+            {
+              "key": "pageSize",
+              "value": 10
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement de vos biens en ligne…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Biens indisponibles"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Vos annonces en ligne n'ont pas pu être chargées. Réessayez dans un instant."
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Aucun bien en ligne"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Vous n'avez aucune annonce à retirer pour le moment."
+            }
+          ]
+        },
+        {
+          "id": "blk_retirer_vide",
+          "blockType": "empty_state",
+          "visibleWhen": {
+            "kind": "entity_empty",
+            "entityId": "ent_annonce"
+          },
+          "props": [
+            {
+              "key": "title",
+              "value": "Rien à retirer"
+            },
+            {
+              "key": "message",
+              "value": "Aucune de vos annonces n'est actuellement en ligne."
+            }
+          ]
+        },
+        {
+          "id": "blk_retirer_form",
+          "blockType": "form",
+          "entityId": "ent_annonce",
+          "props": [
+            {
+              "key": "title",
+              "value": "Confirmer le retrait"
+            },
+            {
+              "key": "fieldIds",
+              "value": [
+                "fld_annonce_statut"
+              ]
+            },
+            {
+              "key": "submitLabel",
+              "value": "Retirer l'annonce du marché"
+            },
+            {
+              "key": "saisieRoles",
+              "value": [
+                "confirmation"
+              ]
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Préparation du retrait…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Retrait impossible"
+            },
+            {
+              "key": "errorMessage",
+              "value": "L'annonce n'a pas pu être retirée. Vérifiez le statut choisi, puis réessayez."
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Retrait d'une annonce"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Sélectionnez le bien concerné dans la liste ci-dessus, puis passez son statut à « Retirée »."
+            }
+          ]
+        },
+        {
+          "id": "blk_retirer_voir_retirees",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Voir les annonces déjà retirées"
+            },
+            {
+              "key": "icon",
+              "value": "liste"
+            },
+            {
+              "key": "kind",
+              "value": "ghost"
+            },
+            {
+              "key": "actionId",
+              "value": "act_retirer_ouvrir_retirees"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_cpt_annonce_consulter_historique_retiree",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Annonces retirées"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_hist_retiree_intro",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Biens vendus, loués ou mis en pause"
+            },
+            {
+              "key": "subtitle",
+              "value": "Ces annonces ne sont plus visibles par les acheteurs et les locataires. Touchez-en une pour revoir sa fiche."
+            }
+          ]
+        },
+        {
+          "id": "blk_hist_retiree_liste",
+          "blockType": "list",
+          "entityId": "ent_annonce",
+          "props": [
+            {
+              "key": "title",
+              "value": "Retirées du marché"
+            },
+            {
+              "key": "titleFieldId",
+              "value": "fld_annonce_titre"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_annonce_quartier_nom"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_annonce_prix_fcfa"
+            },
+            {
+              "key": "badgeFieldId",
+              "value": "fld_annonce_statut"
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_annonce_photos"
+            },
+            {
+              "key": "layout",
+              "value": "rows"
+            },
+            {
+              "key": "filterFieldId",
+              "value": "fld_annonce_statut"
+            },
+            {
+              "key": "filterOperator",
+              "value": "eq"
+            },
+            {
+              "key": "filterValue",
+              "value": "retiree"
+            },
+            {
+              "key": "userFilterFieldIds",
+              "value": [
+                "fld_annonce_type_bien",
+                "fld_annonce_ville_nom"
+              ]
+            },
+            {
+              "key": "userFilterOperators",
+              "value": [
+                "eq",
+                "contains"
+              ]
+            },
+            {
+              "key": "userFilterInputTypes",
+              "value": [
+                "choice",
+                "text"
+              ]
+            },
+            {
+              "key": "sortFieldId",
+              "value": "fld_annonce_publiee_le"
+            },
+            {
+              "key": "sortDirection",
+              "value": "desc"
+            },
+            {
+              "key": "pageSize",
+              "value": 20
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement des annonces retirées…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Annonces retirées indisponibles"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Vos annonces retirées n'ont pas pu être chargées. Réessayez dans un instant."
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Aucune annonce retirée"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Aucun de vos biens n'a été retiré du marché."
+            }
+          ]
+        },
+        {
+          "id": "blk_hist_retiree_vide",
+          "blockType": "empty_state",
+          "visibleWhen": {
+            "kind": "entity_empty",
+            "entityId": "ent_annonce"
+          },
+          "props": [
+            {
+              "key": "title",
+              "value": "Aucun bien retiré"
+            },
+            {
+              "key": "message",
+              "value": "Les biens que vous retirerez du marché seront conservés ici."
+            }
+          ]
+        },
+        {
+          "id": "blk_hist_retiree_republier",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Publier un nouveau bien"
+            },
+            {
+              "key": "icon",
+              "value": "liste"
+            },
+            {
+              "key": "kind",
+              "value": "primary"
+            },
+            {
+              "key": "actionId",
+              "value": "act_hist_retiree_publier"
+            }
+          ]
+        },
+        {
+          "id": "blk_hist_retiree_voir_en_ligne",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Revenir à mes annonces en ligne"
+            },
+            {
+              "key": "icon",
+              "value": "compte"
+            },
+            {
+              "key": "kind",
+              "value": "ghost"
+            },
+            {
+              "key": "actionId",
+              "value": "act_hist_retiree_ouvrir_publiees"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_cpt_ville_decouvrir",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Villes"
+        }
+      ],
+      "showsPrimaryNav": true,
+      "showsScreenTitle": false,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_ville_decouvrir_intro",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Le marché ville par ville"
+            },
+            {
+              "key": "subtitle",
+              "value": "N'Djaména, Moundou, Sarh, Abéché et les grandes villes du Sahel : touchez une ville pour voir ses quartiers et les biens à vendre ou à louer."
+            }
+          ]
+        },
+        {
+          "id": "blk_ville_decouvrir_liste",
+          "blockType": "list",
+          "entityId": "ent_ville",
+          "props": [
+            {
+              "key": "title",
+              "value": "Villes du Tchad et du Sahel"
+            },
+            {
+              "key": "titleFieldId",
+              "value": "fld_ville_nom"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_ville_pays"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_ville_annonces_actives"
+            },
+            {
+              "key": "badgeFieldId",
+              "value": "fld_ville_pays"
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_ville_photo"
+            },
+            {
+              "key": "layout",
+              "value": "grid"
+            },
+            {
+              "key": "searchFieldId",
+              "value": "fld_ville_nom"
+            },
+            {
+              "key": "searchPlaceholder",
+              "value": "Rechercher une ville (N'Djaména, Moundou…)"
+            },
+            {
+              "key": "userFilterFieldIds",
+              "value": [
+                "fld_ville_pays"
+              ]
+            },
+            {
+              "key": "userFilterOperators",
+              "value": [
+                "eq"
+              ]
+            },
+            {
+              "key": "userFilterInputTypes",
+              "value": [
+                "choice"
+              ]
+            },
+            {
+              "key": "sortFieldId",
+              "value": "fld_ville_annonces_actives"
+            },
+            {
+              "key": "sortDirection",
+              "value": "desc"
+            },
+            {
+              "key": "pageSize",
+              "value": 12
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement des villes…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Villes indisponibles"
+            },
+            {
+              "key": "errorMessage",
+              "value": "La liste des villes n'a pas pu être chargée. Réessayez dans un instant."
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Aucune ville à afficher"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Aucune ville ne correspond à votre recherche. Essayez un autre nom ou un autre pays."
+            }
+          ]
+        },
+        {
+          "id": "blk_ville_decouvrir_vide",
+          "blockType": "empty_state",
+          "visibleWhen": {
+            "kind": "entity_empty",
+            "entityId": "ent_ville"
+          },
+          "props": [
+            {
+              "key": "title",
+              "value": "Aucune ville enregistrée"
+            },
+            {
+              "key": "message",
+              "value": "Les villes couvertes par Sahel Immo apparaîtront ici dès que des biens y seront publiés."
+            }
+          ]
+        },
+        {
+          "id": "blk_ville_decouvrir_choisir",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Choisir une ville"
+            },
+            {
+              "key": "icon",
+              "value": "carte"
+            },
+            {
+              "key": "kind",
+              "value": "ghost"
+            },
+            {
+              "key": "actionId",
+              "value": "act_ville_ouvrir_choix"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_cpt_ville_choisir",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Choisir une ville"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_ville_choisir_intro",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Où cherchez-vous un bien ?"
+            },
+            {
+              "key": "subtitle",
+              "value": "Sélectionnez la ville de votre recherche : vous verrez ensuite ses quartiers, puis les villas, appartements, terrains et locaux disponibles."
+            }
+          ]
+        },
+        {
+          "id": "blk_ville_choisir_liste",
+          "blockType": "list",
+          "entityId": "ent_ville",
+          "props": [
+            {
+              "key": "titleFieldId",
+              "value": "fld_ville_nom"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_ville_pays"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_ville_annonces_actives"
+            },
+            {
+              "key": "badgeFieldId",
+              "value": "fld_ville_pays"
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_ville_photo"
+            },
+            {
+              "key": "layout",
+              "value": "rows"
+            },
+            {
+              "key": "searchFieldId",
+              "value": "fld_ville_nom"
+            },
+            {
+              "key": "searchPlaceholder",
+              "value": "Rechercher une ville"
+            },
+            {
+              "key": "userFilterFieldIds",
+              "value": [
+                "fld_ville_pays",
+                "fld_ville_nom"
+              ]
+            },
+            {
+              "key": "userFilterOperators",
+              "value": [
+                "eq",
+                "contains"
+              ]
+            },
+            {
+              "key": "userFilterInputTypes",
+              "value": [
+                "choice",
+                "text"
+              ]
+            },
+            {
+              "key": "sortFieldId",
+              "value": "fld_ville_nom"
+            },
+            {
+              "key": "sortDirection",
+              "value": "asc"
+            },
+            {
+              "key": "pageSize",
+              "value": 20
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement des villes…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Villes indisponibles"
+            },
+            {
+              "key": "errorMessage",
+              "value": "La liste des villes n'a pas pu être chargée. Réessayez dans un instant."
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Aucune ville ne correspond"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Effacez le filtre de pays ou essayez un autre nom de ville."
+            }
+          ]
+        },
+        {
+          "id": "blk_ville_choisir_vide",
+          "blockType": "empty_state",
+          "visibleWhen": {
+            "kind": "entity_empty",
+            "entityId": "ent_ville"
+          },
+          "props": [
+            {
+              "key": "title",
+              "value": "Aucune ville disponible"
+            },
+            {
+              "key": "message",
+              "value": "Aucune ville n'est encore couverte. Revenez bientôt : de nouvelles annonces arrivent chaque jour."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_cpt_quartier_decouvrir",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Quartiers"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_quartier_decouvrir_ville_entete",
+          "blockType": "detail_header",
+          "entityId": "ent_ville",
+          "props": [
+            {
+              "key": "titleFieldId",
+              "value": "fld_ville_nom"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_ville_pays"
+            },
+            {
+              "key": "badgeFieldIds",
+              "value": [
+                "fld_ville_pays"
+              ]
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_ville_photo"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_ville_annonces_actives"
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement de la ville…"
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Aucune ville sélectionnée"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Revenez à la liste des villes et touchez celle où vous cherchez un bien."
+            },
+            {
+              "key": "errorTitle",
+              "value": "Ville indisponible"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Les informations de cette ville n'ont pas pu être chargées."
+            }
+          ]
+        },
+        {
+          "id": "blk_quartier_decouvrir_liste",
+          "blockType": "list",
+          "entityId": "ent_quartier",
+          "props": [
+            {
+              "key": "title",
+              "value": "Quartiers de cette ville"
+            },
+            {
+              "key": "titleFieldId",
+              "value": "fld_quartier_nom"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_quartier_description"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_quartier_ville_nom"
+            },
+            {
+              "key": "badgeFieldId",
+              "value": "fld_quartier_ville_nom"
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_quartier_photo"
+            },
+            {
+              "key": "layout",
+              "value": "grid"
+            },
+            {
+              "key": "scopeFieldId",
+              "value": "fld_quartier_ville"
+            },
+            {
+              "key": "searchFieldId",
+              "value": "fld_quartier_nom"
+            },
+            {
+              "key": "searchPlaceholder",
+              "value": "Rechercher un quartier (Moursal, Klemat…)"
+            },
+            {
+              "key": "sortFieldId",
+              "value": "fld_quartier_nom"
+            },
+            {
+              "key": "sortDirection",
+              "value": "asc"
+            },
+            {
+              "key": "pageSize",
+              "value": 12
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement des quartiers…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Quartiers indisponibles"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Les quartiers de cette ville n'ont pas pu être chargés. Réessayez dans un instant."
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Aucun quartier dans cette ville"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Aucun quartier n'est encore répertorié ici. Essayez une autre ville."
+            }
+          ]
+        },
+        {
+          "id": "blk_quartier_decouvrir_vide",
+          "blockType": "empty_state",
+          "visibleWhen": {
+            "kind": "entity_empty",
+            "entityId": "ent_quartier"
+          },
+          "props": [
+            {
+              "key": "title",
+              "value": "Aucun quartier répertorié"
+            },
+            {
+              "key": "message",
+              "value": "Les quartiers apparaîtront ici dès que des biens y seront mis en vente ou en location."
+            }
+          ]
+        },
+        {
+          "id": "blk_quartier_decouvrir_tous",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Voir tous les quartiers"
+            },
+            {
+              "key": "icon",
+              "value": "liste"
+            },
+            {
+              "key": "kind",
+              "value": "ghost"
+            },
+            {
+              "key": "actionId",
+              "value": "act_quartier_ouvrir_choix"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_cpt_quartier_choisir",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Choisir un quartier"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_quartier_choisir_intro",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Dans quel quartier cherchez-vous ?"
+            },
+            {
+              "key": "subtitle",
+              "value": "Touchez un quartier pour découvrir les villas, appartements, studios, terrains et locaux qui y sont proposés, avec le prix en francs CFA."
+            }
+          ]
+        },
+        {
+          "id": "blk_quartier_choisir_liste",
+          "blockType": "list",
+          "entityId": "ent_quartier",
+          "props": [
+            {
+              "key": "titleFieldId",
+              "value": "fld_quartier_nom"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_quartier_description"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_quartier_ville_nom"
+            },
+            {
+              "key": "badgeFieldId",
+              "value": "fld_quartier_ville_nom"
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_quartier_photo"
+            },
+            {
+              "key": "layout",
+              "value": "rows"
+            },
+            {
+              "key": "searchFieldId",
+              "value": "fld_quartier_nom"
+            },
+            {
+              "key": "searchPlaceholder",
+              "value": "Rechercher un quartier"
+            },
+            {
+              "key": "userFilterFieldIds",
+              "value": [
+                "fld_quartier_ville_nom",
+                "fld_quartier_nom"
+              ]
+            },
+            {
+              "key": "userFilterOperators",
+              "value": [
+                "contains",
+                "contains"
+              ]
+            },
+            {
+              "key": "userFilterInputTypes",
+              "value": [
+                "text",
+                "text"
+              ]
+            },
+            {
+              "key": "sortFieldId",
+              "value": "fld_quartier_nom"
+            },
+            {
+              "key": "sortDirection",
+              "value": "asc"
+            },
+            {
+              "key": "pageSize",
+              "value": 20
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement des quartiers…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Quartiers indisponibles"
+            },
+            {
+              "key": "errorMessage",
+              "value": "La liste des quartiers n'a pas pu être chargée. Réessayez dans un instant."
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Aucun quartier ne correspond"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Changez de ville ou effacez le filtre pour voir davantage de quartiers."
+            }
+          ]
+        },
+        {
+          "id": "blk_quartier_choisir_vide",
+          "blockType": "empty_state",
+          "visibleWhen": {
+            "kind": "entity_empty",
+            "entityId": "ent_quartier"
+          },
+          "props": [
+            {
+              "key": "title",
+              "value": "Aucun quartier disponible"
+            },
+            {
+              "key": "message",
+              "value": "Aucun quartier n'est encore répertorié. Revenez bientôt : de nouvelles annonces arrivent chaque jour."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_srf_parametres",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Réglages"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": false,
+      "presentation": "sheet",
+      "purpose": "settings",
+      "dismissLabel": [
+        {
+          "locale": "fr",
+          "text": "Fermer"
+        }
+      ],
+      "blocks": [
+        {
+          "id": "blk_srf_parametres_intro",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Réglages et informations"
+            },
+            {
+              "key": "subtitle",
+              "value": "Aide, contact de l'équipe, conditions d'utilisation et gestion de vos données personnelles."
+            }
+          ]
+        },
+        {
+          "id": "blk_srf_parametres_aide",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Aide et questions fréquentes"
+            },
+            {
+              "key": "icon",
+              "value": "message"
+            },
+            {
+              "key": "kind",
+              "value": "ghost"
+            },
+            {
+              "key": "actionId",
+              "value": "act_srf_ouvrir_aide"
+            }
+          ]
+        },
+        {
+          "id": "blk_srf_parametres_contact",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Contacter l'équipe Sahel Immo"
+            },
+            {
+              "key": "icon",
+              "value": "message"
+            },
+            {
+              "key": "kind",
+              "value": "ghost"
+            },
+            {
+              "key": "actionId",
+              "value": "act_srf_ouvrir_contact"
+            }
+          ]
+        },
+        {
+          "id": "blk_srf_parametres_conditions",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Conditions d'utilisation"
+            },
+            {
+              "key": "icon",
+              "value": "liste"
+            },
+            {
+              "key": "kind",
+              "value": "ghost"
+            },
+            {
+              "key": "actionId",
+              "value": "act_srf_ouvrir_conditions"
+            }
+          ]
+        },
+        {
+          "id": "blk_srf_parametres_confidentialite",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Politique de confidentialité"
+            },
+            {
+              "key": "icon",
+              "value": "liste"
+            },
+            {
+              "key": "kind",
+              "value": "ghost"
+            },
+            {
+              "key": "actionId",
+              "value": "act_srf_ouvrir_confidentialite"
+            }
+          ]
+        },
+        {
+          "id": "blk_srf_parametres_partage",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Partage de vos données"
+            },
+            {
+              "key": "icon",
+              "value": "reglages"
+            },
+            {
+              "key": "kind",
+              "value": "ghost"
+            },
+            {
+              "key": "actionId",
+              "value": "act_srf_ouvrir_partage_donnees"
+            }
+          ]
+        },
+        {
+          "id": "blk_srf_parametres_retrait_consentement",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Retirer mon consentement"
+            },
+            {
+              "key": "icon",
+              "value": "reglages"
+            },
+            {
+              "key": "kind",
+              "value": "ghost"
+            },
+            {
+              "key": "actionId",
+              "value": "act_srf_ouvrir_retrait_consentement"
+            }
+          ]
+        },
+        {
+          "id": "blk_srf_parametres_espace",
+          "blockType": "spacer",
+          "props": []
+        },
+        {
+          "id": "blk_srf_parametres_supprimer_compte",
+          "blockType": "button",
+          "visibleWhen": {
+            "kind": "session_authenticated"
+          },
+          "props": [
+            {
+              "key": "label",
+              "value": "Supprimer mon compte annonceur"
+            },
+            {
+              "key": "icon",
+              "value": "compte"
+            },
+            {
+              "key": "kind",
+              "value": "link"
+            },
+            {
+              "key": "actionId",
+              "value": "act_srf_ouvrir_suppression_compte"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_srf_aide",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Aide"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "purpose": "help",
+      "blocks": [
+        {
+          "id": "blk_srf_aide_intro",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Comment fonctionne Sahel Immo ?"
+            },
+            {
+              "key": "subtitle",
+              "value": "Parcourez les annonces, filtrez par ville, quartier, prix et type de bien, ouvrez la fiche complète puis appelez le vendeur ou écrivez-lui sur WhatsApp. Aucun paiement ne se fait dans l'application : tout s'arrange directement avec le vendeur lors de la visite."
+            }
+          ]
+        },
+        {
+          "id": "blk_srf_aide_annonceur",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Vous êtes agence ou particulier ?"
+            },
+            {
+              "key": "subtitle",
+              "value": "Créez votre compte annonceur, publiez votre villa, votre terrain ou votre boutique avec des photos, le prix en francs CFA, la surface, le nombre de pièces et le quartier, puis retirez l'annonce dès que le bien est vendu ou loué."
+            }
+          ]
+        },
+        {
+          "id": "blk_srf_aide_besoin_aide",
+          "blockType": "empty_state",
+          "props": [
+            {
+              "key": "title",
+              "value": "Une question sans réponse ici ?"
+            },
+            {
+              "key": "message",
+              "value": "Écrivez à l'équipe Sahel Immo : nous répondons sous quelques jours ouvrés."
+            },
+            {
+              "key": "actionLabel",
+              "value": "Contacter l'équipe"
+            },
+            {
+              "key": "actionId",
+              "value": "act_srf_aide_ouvrir_contact"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_srf_contact",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Nous contacter"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "purpose": "contact",
+      "blocks": [
+        {
+          "id": "blk_srf_contact_intro",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Parler à l'équipe Sahel Immo"
+            },
+            {
+              "key": "subtitle",
+              "value": "Pour un problème d'annonce, un signalement ou une question sur votre compte annonceur, les coordonnées de l'éditeur (adresse e-mail et téléphone) sont fournies par le propriétaire de l'application et affichées ici."
+            }
+          ]
+        },
+        {
+          "id": "blk_srf_contact_delai",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Signaler une annonce"
+            },
+            {
+              "key": "subtitle",
+              "value": "Indiquez le titre du bien, le quartier et le nom de l'annonceur : l'équipe vérifie et retire les annonces qui ne respectent pas les conditions d'utilisation."
+            }
+          ]
+        },
+        {
+          "id": "blk_srf_contact_aide",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Consulter l'aide"
+            },
+            {
+              "key": "icon",
+              "value": "message"
+            },
+            {
+              "key": "kind",
+              "value": "ghost"
+            },
+            {
+              "key": "actionId",
+              "value": "act_srf_contact_ouvrir_aide"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_srf_conditions",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Conditions d'utilisation"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "purpose": "terms",
+      "blocks": [
+        {
+          "id": "blk_srf_conditions_intro",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "L'engagement entre vous et l'éditeur"
+            },
+            {
+              "key": "subtitle",
+              "value": "Le texte complet des conditions d'utilisation du marché immobilier Sahel Immo est fourni par le propriétaire de l'application et s'affiche sur cet écran."
+            }
+          ]
+        },
+        {
+          "id": "blk_srf_conditions_confidentialite",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Lire la politique de confidentialité"
+            },
+            {
+              "key": "icon",
+              "value": "liste"
+            },
+            {
+              "key": "kind",
+              "value": "ghost"
+            },
+            {
+              "key": "actionId",
+              "value": "act_srf_conditions_ouvrir_confidentialite"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_srf_confidentialite",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Confidentialité"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "purpose": "privacy_policy",
+      "blocks": [
+        {
+          "id": "blk_srf_confidentialite_intro",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Vos données personnelles"
+            },
+            {
+              "key": "subtitle",
+              "value": "Le texte complet de la politique de confidentialité est fourni par le propriétaire de l'application et s'affiche sur cet écran : données collectées, durée de conservation et vos droits."
+            }
+          ]
+        },
+        {
+          "id": "blk_srf_confidentialite_partage",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Voir le partage de mes données"
+            },
+            {
+              "key": "icon",
+              "value": "reglages"
+            },
+            {
+              "key": "kind",
+              "value": "ghost"
+            },
+            {
+              "key": "actionId",
+              "value": "act_srf_confidentialite_ouvrir_partage"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_srf_partage_donnees",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Partage de vos données"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "purpose": "privacy_consent",
+      "blocks": [
+        {
+          "id": "blk_srf_partage_intro",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Ce que Sahel Immo transmet, et à qui"
+            },
+            {
+              "key": "subtitle",
+              "value": "Pour créer et protéger votre compte annonceur, votre adresse e-mail et votre identifiant de connexion sont transmis au service d'authentification qui héberge les comptes de l'application. Les coordonnées que vous publiez sur une annonce (téléphone, WhatsApp) sont visibles par les acheteurs et locataires afin qu'ils vous joignent pour une visite."
+            }
+          ]
+        },
+        {
+          "id": "blk_srf_partage_precision",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Ce qui n'est jamais transmis"
+            },
+            {
+              "key": "subtitle",
+              "value": "Aucun paiement n'a lieu dans l'application : aucune donnée bancaire n'est collectée ni partagée. Votre mot de passe n'est jamais affiché ni communiqué."
+            }
+          ]
+        },
+        {
+          "id": "blk_srf_partage_continuer",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "J'ai compris, continuer"
+            },
+            {
+              "key": "icon",
+              "value": "accueil"
+            },
+            {
+              "key": "kind",
+              "value": "primary"
+            },
+            {
+              "key": "actionId",
+              "value": "act_srf_partage_continuer"
+            }
+          ]
+        },
+        {
+          "id": "blk_srf_partage_retrait",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Je souhaite retirer mon consentement"
+            },
+            {
+              "key": "icon",
+              "value": "reglages"
+            },
+            {
+              "key": "kind",
+              "value": "link"
+            },
+            {
+              "key": "actionId",
+              "value": "act_srf_partage_ouvrir_retrait"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_srf_retrait_consentement",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Retirer mon consentement"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "purpose": "consent_withdraw",
+      "blocks": [
+        {
+          "id": "blk_srf_retrait_intro",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Cesser le partage de vos données"
+            },
+            {
+              "key": "subtitle",
+              "value": "En retirant votre consentement, vos annonces cessent d'être publiées avec vos coordonnées et votre compte annonceur n'est plus synchronisé avec le service d'authentification. Vous pourrez continuer à parcourir les annonces sans compte."
+            }
+          ]
+        },
+        {
+          "id": "blk_srf_retrait_consequences",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Ce qui se passe ensuite"
+            },
+            {
+              "key": "subtitle",
+              "value": "L'équipe traite votre demande et vous confirme le retrait. Pour effacer également votre compte et toutes vos annonces, utilisez la suppression de compte."
+            }
+          ]
+        },
+        {
+          "id": "blk_srf_retrait_contact",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Demander le retrait à l'équipe"
+            },
+            {
+              "key": "icon",
+              "value": "message"
+            },
+            {
+              "key": "kind",
+              "value": "primary"
+            },
+            {
+              "key": "actionId",
+              "value": "act_srf_retrait_ouvrir_contact"
+            }
+          ]
+        },
+        {
+          "id": "blk_srf_retrait_suppression",
+          "blockType": "button",
+          "visibleWhen": {
+            "kind": "session_authenticated"
+          },
+          "props": [
+            {
+              "key": "label",
+              "value": "Supprimer plutôt mon compte"
+            },
+            {
+              "key": "icon",
+              "value": "compte"
+            },
+            {
+              "key": "kind",
+              "value": "link"
+            },
+            {
+              "key": "actionId",
+              "value": "act_srf_retrait_ouvrir_suppression"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_srf_supprimer_compte",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Supprimer mon compte"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "purpose": "account_delete",
+      "blocks": [
+        {
+          "id": "blk_srf_suppression_intro",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Effacer définitivement votre compte annonceur"
+            },
+            {
+              "key": "subtitle",
+              "value": "Vos coordonnées, votre présentation et toutes vos annonces — en ligne comme retirées — seront supprimées. Les acheteurs ne pourront plus vous joindre depuis l'application. Cette action est irréversible."
+            }
+          ]
+        },
+        {
+          "id": "blk_srf_suppression_mes_annonces",
+          "blockType": "list",
+          "entityId": "ent_annonce",
+          "visibleWhen": {
+            "kind": "session_authenticated"
+          },
+          "props": [
+            {
+              "key": "title",
+              "value": "Annonces qui seront supprimées"
+            },
+            {
+              "key": "titleFieldId",
+              "value": "fld_annonce_titre"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_annonce_quartier_nom"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_annonce_prix_fcfa"
+            },
+            {
+              "key": "badgeFieldId",
+              "value": "fld_annonce_statut"
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_annonce_photos"
+            },
+            {
+              "key": "layout",
+              "value": "rows"
+            },
+            {
+              "key": "sortFieldId",
+              "value": "fld_annonce_publiee_le"
+            },
+            {
+              "key": "sortDirection",
+              "value": "desc"
+            },
+            {
+              "key": "pageSize",
+              "value": 10
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement de vos annonces…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Annonces indisponibles"
+            },
+            {
+              "key": "errorMessage",
+              "value": "La liste de vos biens n'a pas pu être chargée. Réessayez avant de supprimer votre compte."
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Aucune annonce liée à ce compte"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Vous n'avez publié aucun bien : seul votre profil annonceur sera supprimé."
+            }
+          ]
+        },
+        {
+          "id": "blk_srf_suppression_confirmer",
+          "blockType": "button",
+          "visibleWhen": {
+            "kind": "session_authenticated"
+          },
+          "props": [
+            {
+              "key": "label",
+              "value": "Supprimer définitivement mon compte"
+            },
+            {
+              "key": "icon",
+              "value": "compte"
+            },
+            {
+              "key": "kind",
+              "value": "primary"
+            },
+            {
+              "key": "actionId",
+              "value": "act_srf_suppression_confirmer"
+            }
+          ]
+        },
+        {
+          "id": "blk_srf_suppression_s_identifier",
+          "blockType": "button",
+          "visibleWhen": {
+            "kind": "session_anonymous"
+          },
+          "props": [
+            {
+              "key": "label",
+              "value": "Se connecter pour supprimer son compte"
+            },
+            {
+              "key": "icon",
+              "value": "compte"
+            },
+            {
+              "key": "kind",
+              "value": "primary"
+            },
+            {
+              "key": "actionId",
+              "value": "act_srf_suppression_s_identifier"
+            }
+          ]
+        },
+        {
+          "id": "blk_srf_suppression_annuler",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Annuler et revenir aux annonces"
+            },
+            {
+              "key": "icon",
+              "value": "accueil"
+            },
+            {
+              "key": "kind",
+              "value": "ghost"
+            },
+            {
+              "key": "actionId",
+              "value": "act_srf_suppression_annuler"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "actions": [
+    {
+      "id": "act_entree_chercher_annonce",
+      "name": "Ouvrir la recherche de biens",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_entree_recherche_entree"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_annonce_choisir"
+      }
+    },
+    {
+      "id": "act_entree_ligne_annonce",
+      "name": "Ouvrir la fiche du bien depuis l'accueil",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_entree_annonces_publiees"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_annonce_consulter_publiee"
+      }
+    },
+    {
+      "id": "act_entree_ouvrir_partage_donnees",
+      "name": "Voir le partage de vos données depuis l'accueil",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_entree_annonces_publiees",
+        "role": "secondary"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_srf_partage_donnees"
+      }
+    },
+    {
+      "id": "act_entree_quartier_ligne_annonce",
+      "name": "Ouvrir un bien du quartier",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_entree_annonces_du_quartier"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_annonce_consulter_publiee"
+      }
+    },
+    {
+      "id": "act_entree_quartier_voir_toutes",
+      "name": "Voir toutes les annonces",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_entree_annonces_du_quartier",
+        "role": "secondary"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_annonce_choisir"
+      }
+    },
+    {
+      "id": "act_entree_enregistrer_recherche",
+      "name": "Enregistrer ma recherche",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_entree_recherche_form"
+      },
+      "effect": {
+        "kind": "mutation",
+        "entityId": "ent_recherche",
+        "operation": "create",
+        "thenScreenId": "scr_cpt_annonce_choisir"
+      }
+    },
+    {
+      "id": "act_entree_ouvrir_espace_annonceur",
+      "name": "Ouvrir l'espace annonceur",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_entree_espace_annonceur"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_annonceur_s_identifier"
+      }
+    },
+    {
+      "id": "act_choisir_ligne_annonce",
+      "name": "Ouvrir la fiche du bien",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_choisir_liste"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_annonce_consulter_publiee"
+      }
+    },
+    {
+      "id": "act_detail_contacter_annonceur",
+      "name": "Contacter le vendeur du bien",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_annonce_detail_contacter"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_annonceur_contacter"
+      }
+    },
+    {
+      "id": "act_detail_voir_annonceur",
+      "name": "Voir qui publie ce bien",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_annonce_detail_voir_vendeur"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_annonceur_decouvrir"
+      }
+    },
+    {
+      "id": "act_annonceur_ligne_contacter",
+      "name": "Ouvrir les coordonnées du vendeur",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_annonceur_decouvrir_liste"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_annonceur_contacter"
+      }
+    },
+    {
+      "id": "act_annonceur_appeler",
+      "name": "Appeler le vendeur",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_annonceur_contact_appeler"
+      },
+      "effect": {
+        "kind": "capability",
+        "capability": "external_contact",
+        "method": "call",
+        "params": [
+          {
+            "key": "phoneFieldId",
+            "value": "fld_annonceur_telephone"
+          }
+        ]
+      }
+    },
+    {
+      "id": "act_annonceur_whatsapp",
+      "name": "Écrire au vendeur sur WhatsApp",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_annonceur_contact_whatsapp"
+      },
+      "effect": {
+        "kind": "capability",
+        "capability": "external_contact",
+        "method": "openWhatsapp",
+        "params": [
+          {
+            "key": "whatsappFieldId",
+            "value": "fld_annonceur_whatsapp"
+          }
+        ]
+      }
+    },
+    {
+      "id": "act_annonceur_ses_biens_ligne",
+      "name": "Ouvrir un autre bien de ce vendeur",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_annonceur_contact_ses_biens"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_annonce_consulter_publiee"
+      }
+    },
+    {
+      "id": "act_annonceur_se_connecter",
+      "name": "Se connecter à l'espace annonceur",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_identifier_connexion_form"
+      },
+      "effect": {
+        "kind": "capability",
+        "capability": "auth",
+        "method": "signIn",
+        "params": [
+          {
+            "key": "identifiantFieldId",
+            "value": "fld_annonceur_email"
+          },
+          {
+            "key": "motDePasseFieldId",
+            "value": "fld_annonceur_mot_de_passe"
+          }
+        ],
+        "thenScreenId": "scr_cpt_annonce_consulter_historique_publiee"
+      }
+    },
+    {
+      "id": "act_annonceur_creer_compte",
+      "name": "Créer le compte annonceur",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_identifier_inscription_form"
+      },
+      "effect": {
+        "kind": "capability",
+        "capability": "auth",
+        "method": "signUp",
+        "params": [
+          {
+            "key": "identifiantFieldId",
+            "value": "fld_annonceur_email"
+          },
+          {
+            "key": "motDePasseFieldId",
+            "value": "fld_annonceur_mot_de_passe"
+          }
+        ],
+        "thenScreenId": "scr_cpt_annonce_saisir"
+      }
+    },
+    {
+      "id": "act_annonceur_mot_de_passe_oublie",
+      "name": "Réinitialiser le mot de passe",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_identifier_mot_de_passe_oublie"
+      },
+      "effect": {
+        "kind": "capability",
+        "capability": "auth",
+        "method": "resetPassword",
+        "params": [
+          {
+            "key": "identifiantFieldId",
+            "value": "fld_annonceur_email"
+          }
+        ]
+      }
+    },
+    {
+      "id": "act_annonceur_ouvrir_publication",
+      "name": "Publier un bien",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_identifier_publier"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_annonce_saisir"
+      }
+    },
+    {
+      "id": "act_annonceur_ouvrir_mes_annonces",
+      "name": "Voir mes annonces en ligne",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_identifier_mes_annonces"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_annonce_consulter_historique_publiee"
+      }
+    },
+    {
+      "id": "act_annonceur_ouvrir_gestion",
+      "name": "Gérer une annonce",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_identifier_gerer"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_annonce_choisir_acteur_act_annonceur"
+      }
+    },
+    {
+      "id": "act_annonceur_ouvrir_retirees",
+      "name": "Voir les annonces retirées",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_identifier_retirees"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_annonce_consulter_historique_retiree"
+      }
+    },
+    {
+      "id": "act_annonceur_se_deconnecter",
+      "name": "Se déconnecter",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_identifier_deconnexion"
+      },
+      "effect": {
+        "kind": "capability",
+        "capability": "auth",
+        "method": "signOut",
+        "params": [],
+        "thenScreenId": "scr_entree"
+      }
+    },
+    {
+      "id": "act_saisir_publier_annonce",
+      "name": "Publier mon annonce",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_saisir_form"
+      },
+      "effect": {
+        "kind": "mutation",
+        "entityId": "ent_annonce",
+        "operation": "create",
+        "thenScreenId": "scr_cpt_annonce_confirmer"
+      }
+    },
+    {
+      "id": "act_confirmer_ligne_mon_annonce",
+      "name": "Ouvrir mon annonce publiée",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_confirmer_mes_annonces_liste"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_annonce_consulter_publiee_acteur_act_annonceur"
+      }
+    },
+    {
+      "id": "act_confirmer_publier_encore",
+      "name": "Publier un autre bien",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_confirmer_publier_encore"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_annonce_saisir"
+      }
+    },
+    {
+      "id": "act_confirmer_ouvrir_historique",
+      "name": "Voir toutes mes annonces en ligne",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_confirmer_voir_historique"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_annonce_consulter_historique_publiee"
+      }
+    },
+    {
+      "id": "act_mon_annonce_ouvrir_retrait",
+      "name": "Retirer cette annonce",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_mon_annonce_retirer"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_annonce_retirer"
+      }
+    },
+    {
+      "id": "act_mon_annonce_retour_historique",
+      "name": "Revenir à mes annonces en ligne",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_mon_annonce_retour_historique"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_annonce_consulter_historique_publiee"
+      }
+    },
+    {
+      "id": "act_hist_publiee_ligne_mon_annonce",
+      "name": "Ouvrir une de mes annonces en ligne",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_hist_publiee_liste"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_annonce_consulter_publiee_acteur_act_annonceur"
+      }
+    },
+    {
+      "id": "act_hist_publiee_publier",
+      "name": "Publier un bien depuis mes annonces",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_hist_publiee_publier"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_annonce_saisir"
+      }
+    },
+    {
+      "id": "act_hist_publiee_ouvrir_gestion",
+      "name": "Gérer une annonce",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_hist_publiee_gerer"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_annonce_choisir_acteur_act_annonceur"
+      }
+    },
+    {
+      "id": "act_gerer_ligne_mon_annonce",
+      "name": "Ouvrir le bien à gérer",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_gerer_liste"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_annonce_consulter_publiee_acteur_act_annonceur"
+      }
+    },
+    {
+      "id": "act_gerer_ouvrir_retrait",
+      "name": "Retirer une annonce du marché",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_gerer_retirer"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_annonce_retirer"
+      }
+    },
+    {
+      "id": "act_gerer_ouvrir_retirees",
+      "name": "Voir les annonces retirées",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_gerer_retirees"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_annonce_consulter_historique_retiree"
+      }
+    },
+    {
+      "id": "act_retirer_ligne_mon_annonce",
+      "name": "Ouvrir le bien à retirer",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_retirer_liste"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_annonce_consulter_publiee_acteur_act_annonceur"
+      }
+    },
+    {
+      "id": "act_retirer_confirmer",
+      "name": "Confirmer le retrait de l'annonce",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_retirer_form"
+      },
+      "effect": {
+        "kind": "mutation",
+        "entityId": "ent_annonce",
+        "operation": "update",
+        "thenScreenId": "scr_cpt_annonce_consulter_historique_retiree"
+      }
+    },
+    {
+      "id": "act_retirer_ouvrir_retirees",
+      "name": "Voir les annonces déjà retirées",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_retirer_voir_retirees"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_annonce_consulter_historique_retiree"
+      }
+    },
+    {
+      "id": "act_hist_retiree_ligne_mon_annonce",
+      "name": "Revoir une annonce retirée",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_hist_retiree_liste"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_annonce_consulter_publiee_acteur_act_annonceur"
+      }
+    },
+    {
+      "id": "act_hist_retiree_publier",
+      "name": "Publier un nouveau bien",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_hist_retiree_republier"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_annonce_saisir"
+      }
+    },
+    {
+      "id": "act_hist_retiree_ouvrir_publiees",
+      "name": "Revenir à mes annonces en ligne",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_hist_retiree_voir_en_ligne"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_annonce_consulter_historique_publiee"
+      }
+    },
+    {
+      "id": "act_ville_ligne_quartiers",
+      "name": "Ouvrir les quartiers de la ville",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_ville_decouvrir_liste"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_quartier_decouvrir"
+      }
+    },
+    {
+      "id": "act_ville_ouvrir_reglages",
+      "name": "Ouvrir les réglages et informations",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_ville_decouvrir_liste",
+        "role": "secondary"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_srf_parametres"
+      }
+    },
+    {
+      "id": "act_ville_ouvrir_choix",
+      "name": "Choisir une ville",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_ville_decouvrir_choisir"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_ville_choisir"
+      }
+    },
+    {
+      "id": "act_ville_choisir_ligne_quartiers",
+      "name": "Voir les quartiers de cette ville",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_ville_choisir_liste"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_quartier_decouvrir"
+      }
+    },
+    {
+      "id": "act_quartier_decouvrir_ligne_annonces",
+      "name": "Voir les biens de ce quartier",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_quartier_decouvrir_liste"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_entree"
+      }
+    },
+    {
+      "id": "act_quartier_ouvrir_choix",
+      "name": "Voir tous les quartiers",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_quartier_decouvrir_tous"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_quartier_choisir"
+      }
+    },
+    {
+      "id": "act_quartier_choisir_ligne_annonces",
+      "name": "Ouvrir les biens du quartier choisi",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_quartier_choisir_liste"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_entree"
+      }
+    },
+    {
+      "id": "act_srf_ouvrir_aide",
+      "name": "Ouvrir l'aide",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_srf_parametres_aide"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_srf_aide"
+      }
+    },
+    {
+      "id": "act_srf_ouvrir_contact",
+      "name": "Contacter l'équipe",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_srf_parametres_contact"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_srf_contact"
+      }
+    },
+    {
+      "id": "act_srf_ouvrir_conditions",
+      "name": "Lire les conditions d'utilisation",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_srf_parametres_conditions"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_srf_conditions"
+      }
+    },
+    {
+      "id": "act_srf_ouvrir_confidentialite",
+      "name": "Lire la politique de confidentialité",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_srf_parametres_confidentialite"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_srf_confidentialite"
+      }
+    },
+    {
+      "id": "act_srf_ouvrir_partage_donnees",
+      "name": "Voir le partage des données",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_srf_parametres_partage"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_srf_partage_donnees"
+      }
+    },
+    {
+      "id": "act_srf_ouvrir_retrait_consentement",
+      "name": "Retirer mon consentement",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_srf_parametres_retrait_consentement"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_srf_retrait_consentement"
+      }
+    },
+    {
+      "id": "act_srf_ouvrir_suppression_compte",
+      "name": "Ouvrir la suppression de compte",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_srf_parametres_supprimer_compte"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_srf_supprimer_compte"
+      }
+    },
+    {
+      "id": "act_srf_aide_ouvrir_contact",
+      "name": "Contacter l'équipe depuis l'aide",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_srf_aide_besoin_aide"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_srf_contact"
+      }
+    },
+    {
+      "id": "act_srf_contact_ouvrir_aide",
+      "name": "Consulter l'aide depuis le contact",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_srf_contact_aide"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_srf_aide"
+      }
+    },
+    {
+      "id": "act_srf_conditions_ouvrir_confidentialite",
+      "name": "Lire la confidentialité depuis les conditions",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_srf_conditions_confidentialite"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_srf_confidentialite"
+      }
+    },
+    {
+      "id": "act_srf_confidentialite_ouvrir_partage",
+      "name": "Voir le partage depuis la confidentialité",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_srf_confidentialite_partage"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_srf_partage_donnees"
+      }
+    },
+    {
+      "id": "act_srf_partage_continuer",
+      "name": "Continuer vers les annonces",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_srf_partage_continuer"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_entree"
+      }
+    },
+    {
+      "id": "act_srf_partage_ouvrir_retrait",
+      "name": "Ouvrir le retrait de consentement",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_srf_partage_retrait"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_srf_retrait_consentement"
+      }
+    },
+    {
+      "id": "act_srf_retrait_ouvrir_contact",
+      "name": "Demander le retrait à l'équipe",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_srf_retrait_contact"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_srf_contact"
+      }
+    },
+    {
+      "id": "act_srf_retrait_ouvrir_suppression",
+      "name": "Supprimer plutôt mon compte",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_srf_retrait_suppression"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_srf_supprimer_compte"
+      }
+    },
+    {
+      "id": "act_srf_suppression_ligne_annonce",
+      "name": "Ouvrir une annonce avant suppression",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_srf_suppression_mes_annonces"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_annonce_consulter_publiee_acteur_act_annonceur"
+      }
+    },
+    {
+      "id": "act_srf_suppression_confirmer",
+      "name": "Supprimer définitivement mon compte",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_srf_suppression_confirmer"
+      },
+      "effect": {
+        "kind": "mutation",
+        "entityId": "ent_annonceur",
+        "operation": "delete",
+        "instanceFrom": "session",
+        "thenScreenId": "scr_entree"
+      }
+    },
+    {
+      "id": "act_srf_suppression_s_identifier",
+      "name": "Se connecter pour supprimer son compte",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_srf_suppression_s_identifier"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_cpt_annonceur_s_identifier"
+      }
+    },
+    {
+      "id": "act_srf_suppression_annuler",
+      "name": "Annuler et revenir aux annonces",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_srf_suppression_annuler"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_entree"
+      }
+    }
+  ],
+  "integrations": [
+    {
+      "id": "intg_auth_annonceur",
+      "providerClass": "auth_service",
+      "capability": "auth",
+      "config": [
+        {
+          "key": "profileEntityId",
+          "value": "ent_annonceur"
+        },
+        {
+          "key": "identifierFieldId",
+          "value": "fld_annonceur_email"
+        },
+        {
+          "key": "passwordFieldId",
+          "value": "fld_annonceur_mot_de_passe"
+        },
+        {
+          "key": "methods",
+          "value": [
+            "email_password"
+          ]
+        },
+        {
+          "key": "allowAnonymousBrowsing",
+          "value": true
+        },
+        {
+          "key": "defaultLocale",
+          "value": "fr"
+        }
+      ]
+    }
+  ],
+  "expectedTests": [
+    {
+      "id": "test_entree_liste_annonces",
+      "description": "L'accueil affiche les biens en ligne en grille avec vignette (fld_annonce_photos), titre, quartier et prix : seules les annonces au statut « en_ligne » apparaissent, triées de la plus récente à la plus ancienne.",
+      "kind": "deterministic",
+      "targetId": "blk_entree_annonces_publiees"
+    },
+    {
+      "id": "test_choisir_recherche_texte",
+      "description": "Sur l'écran Toutes les annonces, saisir « villa » dans la recherche réduit réellement la liste aux biens dont le titre contient ce mot.",
+      "kind": "deterministic",
+      "targetId": "blk_choisir_liste"
+    },
+    {
+      "id": "test_choisir_filtres_utilisateur",
+      "description": "Les trois filtres pilotés du catalogue (ville, quartier, type de bien) se combinent en conjonction ; une valeur vide laisse le filtre inactif.",
+      "kind": "deterministic",
+      "targetId": "blk_choisir_liste"
+    },
+    {
+      "id": "test_choisir_ligne_ouvre_fiche",
+      "description": "Toucher une ligne du catalogue ouvre la fiche complète du bien touché, avec son identifiant transmis.",
+      "kind": "e2e",
+      "targetId": "act_choisir_ligne_annonce"
+    },
+    {
+      "id": "test_detail_fiche_complete",
+      "description": "La fiche du bien montre la photo en en-tête, le titre, la description, le prix en FCFA et les badges surface, pièces, quartier, ville, type et transaction.",
+      "kind": "deterministic",
+      "targetId": "blk_annonce_detail_entete"
+    },
+    {
+      "id": "test_detail_prix_fcfa",
+      "description": "Le prix du bien est rendu avec son unité FCFA et des valeurs plausibles du marché sahélien, jamais un nombre brut hors échelle.",
+      "kind": "deterministic",
+      "targetId": "fld_annonce_prix_fcfa"
+    },
+    {
+      "id": "test_detail_images_reelles",
+      "description": "Le champ photos de l'annonce sert des images réelles (picsum.photos) dans la liste comme dans la fiche : aucune vignette grise.",
+      "kind": "deterministic",
+      "targetId": "fld_annonce_photos"
+    },
+    {
+      "id": "test_enum_transaction_libelle",
+      "description": "Le badge de transaction affiche « À vendre » ou « À louer », jamais les codes « vente » / « location ».",
+      "kind": "deterministic",
+      "targetId": "fld_annonce_transaction"
+    },
+    {
+      "id": "test_detail_contacter_navigation",
+      "description": "Depuis la fiche du bien, « Contacter le vendeur » conduit à l'écran des coordonnées du vendeur.",
+      "kind": "e2e",
+      "targetId": "act_detail_contacter_annonceur"
+    },
+    {
+      "id": "test_besoin_non_rendable_contact_direct",
+      "description": "L'appel téléphonique et l'ouverture de WhatsApp depuis l'écran du vendeur ne sont pas exécutés par le moteur (capabilitiesEmitCode: false) : le bouton est rendu, la composition du numéro ne part pas.",
+      "kind": "contract",
+      "targetId": "blk_annonceur_contact_appeler"
+    },
+    {
+      "id": "test_annonceur_autres_biens",
+      "description": "L'écran du vendeur liste ses autres annonces en ligne, bornées à l'instance courante par scopeFieldId sur l'annonceur.",
+      "kind": "deterministic",
+      "targetId": "blk_annonceur_contact_ses_biens"
+    },
+    {
+      "id": "test_annonceur_creer_compte",
+      "description": "Le formulaire d'inscription crée le compte annonceur via signUp et conduit à la publication d'un bien.",
+      "kind": "e2e",
+      "targetId": "act_annonceur_creer_compte"
+    },
+    {
+      "id": "test_annonceur_connexion",
+      "description": "Le formulaire de connexion établit la session avec l'e-mail et le mot de passe puis ouvre les annonces en ligne de l'annonceur.",
+      "kind": "e2e",
+      "targetId": "act_annonceur_se_connecter"
+    },
+    {
+      "id": "test_annonceur_mot_de_passe_oublie",
+      "description": "Le lien « Mot de passe oublié ? » déclenche resetPassword sur l'adresse e-mail saisie.",
+      "kind": "e2e",
+      "targetId": "act_annonceur_mot_de_passe_oublie"
+    },
+    {
+      "id": "test_annonceur_deconnexion",
+      "description": "« Se déconnecter » ferme la session et ramène à l'accueil des annonces.",
+      "kind": "e2e",
+      "targetId": "act_annonceur_se_deconnecter"
+    },
+    {
+      "id": "test_publication_annonce",
+      "description": "Le formulaire de publication enregistre réellement une annonce (create sur ent_annonce) puis affiche l'écran de confirmation.",
+      "kind": "e2e",
+      "targetId": "act_saisir_publier_annonce"
+    },
+    {
+      "id": "test_publication_regles_validation",
+      "description": "Une annonce sans photo, sans prix, sans surface ou avec un prix hors bornes est refusée avant écriture par les règles de validation.",
+      "kind": "deterministic",
+      "targetId": "blk_saisir_form"
+    },
+    {
+      "id": "test_retrait_annonce",
+      "description": "Confirmer le retrait met à jour le statut de l'annonce et conduit à la liste des annonces retirées.",
+      "kind": "e2e",
+      "targetId": "act_retirer_confirmer"
+    },
+    {
+      "id": "test_hist_publiee_filtre_en_ligne",
+      "description": "« Mes annonces en ligne » ne montre que les biens au statut « en_ligne », triés par date de publication décroissante.",
+      "kind": "deterministic",
+      "targetId": "blk_hist_publiee_liste"
+    },
+    {
+      "id": "test_hist_retiree_filtre",
+      "description": "« Annonces retirées » ne montre que les biens au statut « retiree ».",
+      "kind": "deterministic",
+      "targetId": "blk_hist_retiree_liste"
+    },
+    {
+      "id": "test_gerer_ligne_ouvre_mon_annonce",
+      "description": "Toucher une ligne de la gestion ouvre la fiche de l'annonce choisie côté annonceur.",
+      "kind": "e2e",
+      "targetId": "act_gerer_ligne_mon_annonce"
+    },
+    {
+      "id": "test_ville_liste_grille",
+      "description": "L'onglet Villes affiche les villes du Tchad et du Sahel en grille avec photo, pays et nombre d'annonces en ligne, filtrables par pays.",
+      "kind": "deterministic",
+      "targetId": "blk_ville_decouvrir_liste"
+    },
+    {
+      "id": "test_ville_ligne_quartiers",
+      "description": "Toucher une ville ouvre l'écran de ses quartiers avec l'en-tête de la ville touchée.",
+      "kind": "e2e",
+      "targetId": "act_ville_ligne_quartiers"
+    },
+    {
+      "id": "test_quartier_scope_ville",
+      "description": "La liste des quartiers est bornée à la ville courante par scopeFieldId : aucun quartier d'une autre ville n'apparaît.",
+      "kind": "deterministic",
+      "targetId": "blk_quartier_decouvrir_liste"
+    },
+    {
+      "id": "test_entree_quartier_scope",
+      "description": "La rangée « Dans ce quartier » de l'accueil est bornée au quartier courant et propose « Voir toutes les annonces ».",
+      "kind": "deterministic",
+      "targetId": "blk_entree_annonces_du_quartier"
+    },
+    {
+      "id": "test_recherche_enregistree",
+      "description": "Le formulaire « Enregistrer ma recherche » crée une recherche (ville, quartier, type, transaction, bornes de prix) puis ouvre le catalogue.",
+      "kind": "e2e",
+      "targetId": "act_entree_enregistrer_recherche"
+    },
+    {
+      "id": "test_partage_donnees_atteignable",
+      "description": "La divulgation du partage de données est atteignable depuis l'écran d'entrée, sans passer par un menu ou les réglages.",
+      "kind": "e2e",
+      "targetId": "act_entree_ouvrir_partage_donnees"
+    },
+    {
+      "id": "test_suppression_compte",
+      "description": "La suppression du compte annonceur s'applique à la ligne de la session et ramène à l'accueil des annonces.",
+      "kind": "e2e",
+      "targetId": "act_srf_suppression_confirmer"
+    },
+    {
+      "id": "test_navigation_primaire_villes",
+      "description": "La barre persistante porte les destinations Annonces et Villes sur chaque écran qui l'affiche, et Villes mène à un écran vivant.",
+      "kind": "contract",
+      "targetId": "nav_ville_decouvrir"
+    },
+    {
+      "id": "test_dataset_annonces_peuple",
+      "description": "Le jeu de données des annonces est amorcé avec des lignes réalistes (titres, quartiers, prix FCFA, surfaces cohérentes) dès la première ouverture.",
+      "kind": "contract",
+      "targetId": "data_annonce"
+    }
+  ],
+  "intent": {
+    "request": "Un marché immobilier pour le Tchad et le Sahel. Les agences immobilières et les particuliers publient leurs biens à vendre ou à louer, avec des photos, le prix en francs CFA, la surface, le nombre de pièces et le quartier. Les acheteurs et les locataires parcourent les annonces, filtrent par ville, quartier, prix et type de bien, et consultent la fiche complète. Il n'y a aucun paiement en ligne : l'intéressé contacte directement le vendeur par appel téléphonique ou par WhatsApp pour organiser une visite et s'arranger avec lui.",
+    "requestLocale": "fr",
+    "needs": [
+      {
+        "id": "need_marche_immobilier_tchad_sahel",
+        "statement": "Offrir un marché immobilier couvrant le Tchad et les villes du Sahel.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "scr_entree",
+            "blk_entree_annonces_publiees",
+            "scr_cpt_ville_decouvrir",
+            "blk_ville_decouvrir_liste",
+            "blk_ville_choisir_liste",
+            "ent_ville",
+            "fld_ville_pays",
+            "data_ville"
+          ]
+        }
+      },
+      {
+        "id": "need_agences_et_particuliers_publient",
+        "statement": "Les agences immobilières et les particuliers publient leurs biens.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "blk_saisir_form",
+            "act_saisir_publier_annonce",
+            "blk_identifier_inscription_form",
+            "act_annonceur_creer_compte",
+            "ent_annonceur",
+            "fld_annonceur_type",
+            "blk_annonceur_decouvrir_liste"
+          ]
+        }
+      },
+      {
+        "id": "need_vente_ou_location",
+        "statement": "Les biens sont proposés à la vente ou à la location.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "fld_annonce_transaction",
+            "blk_entree_annonces_publiees",
+            "blk_annonce_detail_entete",
+            "blk_saisir_form"
+          ]
+        }
+      },
+      {
+        "id": "need_photos_des_biens",
+        "statement": "Chaque annonce comporte des photos du bien.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "fld_annonce_photos",
+            "blk_entree_annonces_publiees",
+            "blk_choisir_liste",
+            "blk_annonce_detail_entete"
+          ]
+        }
+      },
+      {
+        "id": "need_prix_francs_cfa",
+        "statement": "Le prix est exprimé en francs CFA.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "fld_annonce_prix_fcfa",
+            "blk_choisir_liste",
+            "blk_annonce_detail_entete",
+            "blk_saisir_form"
+          ]
+        }
+      },
+      {
+        "id": "need_surface",
+        "statement": "La surface du bien est indiquée.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "fld_annonce_surface_m2",
+            "blk_annonce_detail_entete",
+            "blk_saisir_form"
+          ]
+        }
+      },
+      {
+        "id": "need_nombre_de_pieces",
+        "statement": "Le nombre de pièces est indiqué.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "fld_annonce_pieces",
+            "blk_annonce_detail_entete",
+            "blk_saisir_form"
+          ]
+        }
+      },
+      {
+        "id": "need_quartier_du_bien",
+        "statement": "Le quartier du bien est indiqué.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "fld_annonce_quartier_nom",
+            "blk_choisir_liste",
+            "blk_annonce_detail_entete",
+            "blk_quartier_decouvrir_liste",
+            "blk_quartier_choisir_liste",
+            "ent_quartier"
+          ]
+        }
+      },
+      {
+        "id": "need_parcourir_les_annonces",
+        "statement": "Les acheteurs et locataires parcourent les annonces.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "blk_entree_annonces_publiees",
+            "blk_choisir_liste",
+            "act_entree_chercher_annonce",
+            "blk_entree_recherche_entree",
+            "data_annonce"
+          ]
+        }
+      },
+      {
+        "id": "need_filtrer_par_ville",
+        "statement": "Filtrer les annonces par ville.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "blk_choisir_liste",
+            "fld_annonce_ville_nom",
+            "blk_ville_choisir_liste",
+            "act_ville_choisir_ligne_quartiers"
+          ]
+        }
+      },
+      {
+        "id": "need_filtrer_par_quartier",
+        "statement": "Filtrer les annonces par quartier.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "blk_choisir_liste",
+            "fld_annonce_quartier_nom",
+            "blk_entree_annonces_du_quartier",
+            "act_quartier_choisir_ligne_annonces"
+          ]
+        }
+      },
+      {
+        "id": "need_filtrer_par_prix",
+        "statement": "Filtrer les annonces par prix.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "blk_entree_annonces_publiees",
+            "fld_annonce_prix_fcfa",
+            "blk_entree_recherche_form",
+            "fld_recherche_prix_min",
+            "fld_recherche_prix_max"
+          ]
+        }
+      },
+      {
+        "id": "need_filtrer_par_type_de_bien",
+        "statement": "Filtrer les annonces par type de bien.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "blk_choisir_liste",
+            "fld_annonce_type_bien",
+            "blk_hist_publiee_liste"
+          ]
+        }
+      },
+      {
+        "id": "need_consulter_fiche_complete",
+        "statement": "Consulter la fiche complète d'un bien.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "scr_cpt_annonce_consulter_publiee",
+            "blk_annonce_detail_entete",
+            "act_choisir_ligne_annonce",
+            "act_entree_ligne_annonce"
+          ]
+        }
+      },
+      {
+        "id": "need_aucun_paiement_en_ligne",
+        "statement": "Aucun paiement en ligne dans l'application.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "blk_srf_partage_precision",
+            "blk_srf_aide_intro",
+            "blk_entree_espace_annonceur"
+          ]
+        }
+      },
+      {
+        "id": "need_voir_coordonnees_vendeur",
+        "statement": "L'intéressé accède directement aux coordonnées du vendeur (téléphone, WhatsApp) depuis la fiche du bien.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "blk_annonce_detail_contacter",
+            "act_detail_contacter_annonceur",
+            "blk_annonceur_contact_entete",
+            "fld_annonceur_telephone",
+            "fld_annonceur_whatsapp",
+            "fld_annonce_telephone_contact",
+            "fld_annonce_whatsapp_contact"
+          ]
+        }
+      },
+      {
+        "id": "need_appel_telephonique_vendeur",
+        "statement": "Contacter le vendeur par appel téléphonique depuis l'application.",
+        "resolution": {
+          "kind": "unexpressible",
+          "reason": "le moteur n'exécute pas encore les effets capability (capabilitiesEmitCode: false) : le bouton d'appel est rendu, mais la composition du numéro ne part pas"
+        }
+      },
+      {
+        "id": "need_contact_whatsapp_vendeur",
+        "statement": "Contacter le vendeur par WhatsApp depuis l'application.",
+        "resolution": {
+          "kind": "unexpressible",
+          "reason": "le moteur n'exécute pas encore les effets capability (capabilitiesEmitCode: false) : l'ouverture de la conversation WhatsApp n'est pas déclenchée"
+        }
+      },
+      {
+        "id": "need_organiser_visite_avec_vendeur",
+        "statement": "Organiser une visite et s'arranger directement avec le vendeur, hors application.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "scr_cpt_annonceur_contacter",
+            "blk_annonceur_contact_entete",
+            "blk_annonceur_contact_ses_biens",
+            "blk_mon_annonce_coordonnees",
+            "blk_srf_aide_intro"
+          ]
+        }
+      },
+      {
+        "id": "need_annonceur_gerer_ses_annonces",
+        "statement": "L'annonceur retrouve et gère les biens qu'il a publiés (en ligne, retirés) une fois le bien vendu ou loué.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "blk_hist_publiee_liste",
+            "blk_gerer_liste",
+            "blk_retirer_form",
+            "act_retirer_confirmer",
+            "blk_hist_retiree_liste",
+            "blk_identifier_publier"
+          ]
+        }
+      }
+    ]
+  }
+}
