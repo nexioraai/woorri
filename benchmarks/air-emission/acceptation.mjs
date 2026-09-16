@@ -532,6 +532,8 @@ export function jugerAcceptation(air, prescriptif, intention) {
         modeleMetier.prescriptionsNavigation(prescriptif.plan, presentation.DESTINATIONS_MIN),
       ),
     );
+    // EP-188 ① — ET LES ENTITÉS PRESCRITES, que rien ne vérifiait.
+    out.push(...modeleMetier.verifierEntitesPrescrites(air, prescriptif.modele));
   }
   const arcsPrescrits = (prescriptif?.plan?.navigation?.arcs ?? []).map((a) => ({
     de: modeleMetier.ecranAirDe(a.de),
@@ -646,6 +648,11 @@ export function validateLocal(document, prescriptif) {
     // (aperçus bornés) — plus besoin de l'interdire.
     ...fidelity.principesDeComposition(parsed.data),
     ...fidelity.imagesDeVitrine(parsed.data),
+    // EP-188 ③ — ET LES NOMBRES. Sans `demoValues`, le compilateur tire un
+    // entier entre 1 et 999 quel que soit le sens du champ : c'est ainsi
+    // qu'un logement obtient 907 pièces pour 933 m². Un relecteur de magasin
+    // ouvre l'application et le voit — 4.2 punit la fonctionnalité minimale.
+    ...fidelity.nombresVraisemblables(parsed.data),
     ...fidelity.rechercheVisuelleComplete(parsed.data),
     // ── BLUEPRINT (engine hardening) : le PLAN d'assemblage est validé
     // AVANT toute acceptation — un aperçu qui tronque offre sa suite, une

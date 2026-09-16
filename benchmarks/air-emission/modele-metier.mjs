@@ -278,6 +278,7 @@ export const DIAGNOSTICS = {
   MODELE_CONCEPT_MORT: { classe: FP, discutable: true, pourquoi: "DOUTEUX — même nature que l'acteur muet : le concept vient du générateur, qui devait le faire traverser" },
   MODELE_COMMERCE_SANS_OBJET: { classe: FP, discutable: true, pourquoi: "DOUTEUX — pourrait révéler un paiement voulu mais non modélisé ; la correction évidente reste de retirer un fait sans consommateur" },
 
+  ENTITE_PRESCRITE_MANQUANTE: { classe: FP, pourquoi: "le moteur a PRESCRIT cette entité à la passe `entites`, nommément et avec ses attributs : ne pas l'avoir émise est un manquement du générateur, pas une lacune de la demande" },
   MODELE_PUBLICATION_SANS_COMPTE: { classe: FP, pourquoi: "quelqu'un PUBLIE et le modèle ne porte aucun concept d'identité : l'action est réservée à un acteur qui n'a nulle part où s'identifier. Le générateur doit poser le compte, l'humain n'a rien à répondre" },
   MODELE_ENTREE_SANS_COLLECTION: { classe: FP, pourquoi: "le parcours prioritaire consulte un concept qu'il n'a jamais LISTÉ : l'utilisateur qui ouvre l'application ne voit aucun contenu. Le générateur doit poser l'étape manquante, pas l'humain répondre à une question" },
   MODELE_COEUR_EXIGE_CONNEXION: { classe: FP, pourquoi: "le générateur a placé en tête un parcours fermé alors que l'application a de quoi en ouvrir un : il réordonne ou ouvre, l'humain n'a rien à répondre" },
@@ -1803,6 +1804,52 @@ export function prescriptionsNavigation(plan, destinationsMin) {
  * R5 — VÉRIFICATEUR FAIL-CLOSED : le document DOIT porter exactement la
  * structure prescrite (le générateur n'écrit que les libellés).
  */
+/**
+ * EP-188 ① — UNE ENTITÉ PRESCRITE QUI MANQUE EST UN REFUS.
+ *
+ * MESURÉ SUR LE RUN EP-186, ET C'EST LA CAUSE DIRECTE DE SON ÉCHEC : le
+ * document déclarait TROIS entités pour CINQ concepts porteurs de données —
+ * `ent_annonce` MANQUAIT, le concept central du domaine. Les 29 diagnostics
+ * « entité inconnue » n'étaient pas des écrans qui déliraient : ils citaient
+ * une entité que la section `entites` n'avait pas émise.
+ *
+ * LA PRESCRIPTION ÉTAIT POURTANT TRANSMISE, mot pour mot : « ent_annonce ←
+ * concept cpt_annonce — 12 attributs, TOUS OBLIGATOIRES ». Et les DEUX
+ * tentatives portaient le même manque : ce n'est pas la réparation qui a
+ * amputé, c'est l'émission qui n'a pas suivi.
+ *
+ * LE TROU N'ÉTAIT DONC PAS LA RÈGLE MAIS SA VÉRIFICATION : le moteur
+ * prescrit une entité PAR CONCEPT PORTEUR DE DONNÉES, il le VÉRIFIE pour les
+ * ÉCRANS (`NAVIGATION_ECRAN_PRESCRIT_MANQUANT`, trois occurrences) et JAMAIS
+ * pour les entités. Ce qu'un moteur exige, il doit le vérifier — sinon la
+ * prescription n'est qu'un vœu.
+ *
+ * DÉRIVÉ, aucune liste : `entiteAirDe` est la même bijection que celle
+ * qu'emploient les obligations prescriptives.
+ */
+export function verifierEntitesPrescrites(air, modele) {
+  if (air === null || air === undefined) return [];
+  const presentes = new Set((air.entities ?? []).map((e) => e.id));
+  const out = [];
+  for (const concept of modele.concepts) {
+    if (concept.donnees !== true) continue;
+    const attendue = `ent_${concept.id.slice(4)}`;
+    if (presentes.has(attendue)) continue;
+    out.push(
+      d(
+        "ENTITE_PRESCRITE_MANQUANTE",
+        `entities[${attendue}]`,
+        `l'entité « ${attendue} » est PRESCRITE par le concept « ${concept.id} », ` +
+          `qui porte des données — la passe \`entites\` la nommait avec tous ses ` +
+          `attributs. Elle est ABSENTE du document, et tout ce qui la cite ` +
+          `devient une référence morte. RÉÉMETS-LA ; ne supprime pas ce qui la ` +
+          `référence.`,
+      ),
+    );
+  }
+  return out;
+}
+
 export function verifierNavigationPrescrite(air, prescriptions) {
   const out = [];
   if (air.navigation.entryScreenId !== prescriptions.entree)

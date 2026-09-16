@@ -62,6 +62,13 @@ export interface DiagnosticImages {
   message: string;
 }
 
+/** EP-188 ③ — un champ numérique REQUIS sans valeurs de démonstration. */
+export interface DiagnosticNombres {
+  code: "CAMPAGNE_NOMBRES_DEMO_MANQUANTS";
+  path: string;
+  message: string;
+}
+
 /**
  * ④ UNE VITRINE MONTRE DE VRAIES IMAGES — un champ `asset` RÉFÉRENCÉ par un
  * `imageFieldId` (liste ou fiche) doit porter des `demoValues` (URLs) : la
@@ -69,6 +76,45 @@ export interface DiagnosticImages {
  * même intention a produit une génération AVEC (v1) puis SANS (v2) — la
  * prose ne suffit pas, le verrou décide.
  */
+/**
+ * EP-188 ③ — UN NOMBRE SANS VALEURS DE DÉMONSTRATION EST TIRÉ AU HASARD.
+ *
+ * MESURÉ sur le run EP-186 : un bureau de 907 pièces pour 933 m², un terrain
+ * à 628 FCFA. Le compilateur tire 1 à 999 pour TOUT champ numérique — il ne
+ * peut pas faire mieux : le contrat ne porte AUCUNE borne (`min`/`max`
+ * n'existent pas au schéma), et une surface, un nombre de pièces et un prix
+ * n'ont aucune échelle commune.
+ *
+ * L'ÉCHAPPEMENT EXISTE : `demoValues` est servi tel quel, pour les nombres
+ * comme pour les images. Ce juge exige qu'il soit posé — même patron que
+ * `imagesDeVitrine`, qui exige déjà des URLs réelles.
+ *
+ * PORTÉE : les champs REQUIS seulement. Un champ facultatif peut rester vide
+ * dans une démonstration, et exiger des valeurs pour ce que l'utilisateur ne
+ * verra pas serait du zèle.
+ */
+export function nombresVraisemblables(air: ProjectAir): DiagnosticNombres[] {
+  const out: DiagnosticNombres[] = [];
+  air.entities.forEach((e, i) => {
+    e.fields.forEach((f, j) => {
+      if (f.type !== "number" && f.type !== "decimal") return;
+      if (f.required !== true) return;
+      if (f.demoValues !== undefined && f.demoValues.length > 0) return;
+      out.push({
+        code: "CAMPAGNE_NOMBRES_DEMO_MANQUANTS",
+        path: `entities[${String(i)}].fields[${String(j)}]`,
+        message:
+          `le champ « ${f.id} » mesure quelque chose et ne porte aucune ` +
+          `\`demoValues\` : le moteur tirera un entier entre 1 et 999, sans ` +
+          `rapport avec ce qu'il mesure. C'est ainsi qu'un logement obtient ` +
+          `907 pièces. POSE 6 à 12 valeurs plausibles, cohérentes avec les ` +
+          `autres champs du même objet.`,
+      });
+    });
+  });
+  return out;
+}
+
 export function imagesDeVitrine(air: ProjectAir): DiagnosticImages[] {
   const referencés = new Set<string>();
   for (const s of air.screens)

@@ -56,6 +56,7 @@ export {
   LIBELLES_PRIMITIFS,
   ORDRE_BAS_DE_COMPTE,
   jugerBasDeCompte,
+  jugerEntreeDeCompte,
   jugerLibellesPrimitifs,
   jugerRetourAtteignable,
   jugerPositionPrimitives,

@@ -106,6 +106,10 @@ describe("B/C — les dérivations ne travaillent QUE sur le MODEL (balayage COM
     // EP-183 (édition consciente) — qui publie doit pouvoir s'identifier.
     // Modèle seul : acteurs des parcours et concepts d'identité.
     jugerPublicationSansCompte: (m) => derivationsModele.jugerPublicationSansCompte(m),
+    // EP-188 ① (édition consciente) — les entités prescrites. Le document
+    // est un ARGUMENT FIXE : ce qui est éprouvé ici est que la dérivation ne
+    // dépend que du MODÈLE, comme ses voisines.
+    verifierEntitesPrescrites: (m) => derivationsModele.verifierEntitesPrescrites({ entities: [] }, m),
     // R5 (édition CONSCIENTE) — prescriptions et vérificateur : modèle+plan
     // seuls, comme tout le reste.
     ecranAirDe: () => derivationsModele.ecranAirDe("ecr_entree"),

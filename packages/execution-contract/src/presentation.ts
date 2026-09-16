@@ -730,6 +730,51 @@ export const ORDRE_BAS_DE_COMPTE: readonly GenreEcran[] = [
   "account_delete",
 ];
 
+/**
+ * EP-188 ⑤ — L'ESPACE COMPTE D'UN ANONYME NE POSE PAS DE FORMULAIRE.
+ *
+ * DEMANDE DE YOUSSOUF DEPUIS EP-157, TRANSMISE EN EP-184 (règle 17ter) ET
+ * NON SUIVIE : le run EP-186 a produit `header + form + spacer + form + …` —
+ * DEUX formulaires posés d'emblée sur l'écran d'identification.
+ *
+ * LA RAISON N'EST PAS ESTHÉTIQUE : un champ de mot de passe offert à
+ * quelqu'un qui n'a pas encore choisi entre SE CONNECTER et CRÉER UN COMPTE
+ * lui demande de deviner ce qu'il est en train de faire. Deux boutons, et la
+ * fiche s'ouvre APRÈS le choix.
+ *
+ * TRANSMIS PUIS JUGÉ, dans cet ordre — c'est la règle d'EP-184 : on ne refuse
+ * pas ce qu'on n'a jamais demandé. La transmission a eu lieu, elle n'a pas
+ * suffi ; le juge vient maintenant.
+ *
+ * PORTÉE STRICTE : SEULS les écrans d'identité, et SEULEMENT quand ils
+ * portent un formulaire. Un écran de compte CONNECTÉ a le droit d'en porter —
+ * modifier ses informations est un formulaire légitime. Le contexte ne dit
+ * pas l'état de session : ce juge ne parle donc que de l'écran désigné comme
+ * point d'entrée de l'identité.
+ */
+export function jugerEntreeDeCompte(
+  air: Air,
+  contexte: ContextePrimitives,
+): readonly PlacementFinding[] {
+  const out: PlacementFinding[] = [];
+  for (const ecran of air.screens) {
+    if (!contexte.ecransDIdentite.includes(ecran.id)) continue;
+    const formulaires = ecran.blocks.filter((b) => b.blockType === "form");
+    if (formulaires.length === 0) continue;
+    out.push({
+      code: "PRESENTATION_COMPTE_FORMULAIRE_DEMBLEE",
+      path: `screens[${ecran.id}]`,
+      message:
+        `l'écran d'entrée du compte porte ${String(formulaires.length)} formulaire(s) ` +
+        `posé(s) d'emblée. Un visiteur qui n'a pas encore choisi entre SE ` +
+        `CONNECTER et CRÉER UN COMPTE ne sait pas ce qu'il remplit. Pose DEUX ` +
+        `BOUTONS et rien d'autre ; chacun OUVRE sa fiche par une action ` +
+        `\`navigate\`. Les surfaces obligatoires restent tout en bas.`,
+    });
+  }
+  return out;
+}
+
 export function jugerBasDeCompte(
   air: Air,
   contexte: ContextePrimitives,
@@ -866,6 +911,7 @@ export function jugerPlacement(
           ...jugerPositionPrimitives(air, contexte),
           ...jugerLibellesPrimitifs(air, contexte),
           ...jugerBasDeCompte(air, contexte),
+          ...jugerEntreeDeCompte(air, contexte),
         ]),
   ];
 }

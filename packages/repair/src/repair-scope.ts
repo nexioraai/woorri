@@ -70,6 +70,15 @@ export function sectionDuChemin(path: string): SectionEmission {
  * d'exhaustivité interdit qu'un code y tombe par oubli.
  */
 export const SECTIONS_CORRECTIVES: Readonly<Record<string, readonly SectionEmission[]>> = {
+  // EP-188 ① — UNE ENTITÉ PRESCRITE QUI MANQUE SE RÉPARE DANS `donnees`.
+  //
+  // Mesuré sur le run EP-186 : `ent_annonce` et `ent_recherche` absentes du
+  // document alors que la passe `entites` les prescrivait nommément. Sans
+  // cette entrée, `sectionDuChemin("entities[…]")` devinerait — et une
+  // réparation qui vise la mauvaise section ne peut que supprimer les
+  // références au lieu de rétablir l'entité.
+  ENTITE_PRESCRITE_MANQUANTE: ["donnees"],
+
   // Une image déclarée et jamais montrée : la MONTRER vit dans `screens`.
   AIR_IMAGE_ORPHELINE: ["donnees", "ecrans"],
 

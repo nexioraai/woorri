@@ -109,6 +109,24 @@ function fixtureValue(
     case "text":
       return `${field.name} ${n}`;
     case "number":
+      // EP-188 ③ — CE TIRAGE EST LE DERNIER RECOURS, ET IL EST MAINTENANT DIT.
+      //
+      // MESURÉ sur le run EP-186 : un bureau de 907 pièces pour 933 m², un
+      // terrain « à louer » à 628 FCFA. Tout champ numérique reçoit 1 à 999
+      // QUEL QUE SOIT SON SENS — pièces, surface, prix : même loi. Un
+      // relecteur d'Apple ouvre l'app et voit ça ; 4.2 punit la
+      // fonctionnalité minimale.
+      //
+      // VÉRIFIÉ, ET C'EST POURQUOI LE TIRAGE RESTE : le contrat ne porte
+      // AUCUNE borne sur un champ (`min`/`max` n'existent pas au schéma). Ce
+      // module ne peut donc pas deviner l'échelle d'un nombre — 3 pièces,
+      // 120 m², 45 000 000 FCFA n'ont aucune loi commune.
+      //
+      // L'ÉCHAPPEMENT EXISTE DÉJÀ ET EST EMPLOYÉ PLUS HAUT : si le champ
+      // porte des `demoValues`, elles sont servies telles quelles — pour les
+      // nombres comme pour les images. La réponse n'est donc pas ici mais
+      // dans le PROMPT : c'est au générateur de poser des valeurs qui ont un
+      // sens, comme la règle 1.20 l'exige déjà pour les images.
       return String(1 + Math.floor(rand() * 999));
     case "decimal":
       return (Math.floor(rand() * 99_900) / 100 + 1).toFixed(2);

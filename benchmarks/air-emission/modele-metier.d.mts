@@ -210,3 +210,7 @@ export function jugerEntreeSansCollection(modele: ModeleMetier): DiagnosticModel
 /** EP-183 — plusieurs acteurs mais aucun concept d'identite : l action
  *  reservee n a nulle part ou vivre. */
 export function jugerPublicationSansCompte(modele: ModeleMetier): DiagnosticModele[];
+
+/** EP-188 — une entite PRESCRITE par un concept porteur de donnees et
+ *  ABSENTE du document. Ce que le moteur exige, il le verifie. */
+export function verifierEntitesPrescrites(air: unknown, modele: ModeleMetier): DiagnosticModele[];
