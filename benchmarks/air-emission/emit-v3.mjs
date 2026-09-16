@@ -757,6 +757,46 @@ function extractJson(response) {
 const acceptation = await import(join(HERE, "acceptation.mjs"));
 const { validateLocal, jugerAcceptation, perimetreDeJugement, elargit } = acceptation;
 
+/**
+ * EP-187 — DEUX TEXTES, DEUX DESTINATAIRES.
+ *
+ * OBJECTION DE YOUSSOUF, ET ELLE EST JUSTE : « on ne peut pas tout figer, les
+ * besoins des utilisateurs on ne les connaît même pas ». Si chaque demande
+ * d'un client de Deribfy exige une passe du moteur, Deribfy ne sert à rien.
+ *
+ * LA LIGNE : reste FIGÉ ce qui est imposé de l'EXTÉRIEUR — « Accueil » et
+ * « Compte », les surfaces légales, les conventions Material. Le client ne
+ * peut pas les négocier, et c'est ce qui évite le rejet au magasin. TOUT LE
+ * RESTE devient exprimable, en TEXTE LIBRE, sans que personne ait eu à le
+ * prévoir.
+ *
+ * CES PRÉFÉRENCES NE PASSENT PAS PAR P0 : P0 écrit le MODÈLE et refuse
+ * mécaniquement toute décision d'écran (« écrans, mise en page, navigation,
+ * composition » y sont INTERDITS). Elles s'adressent à l'ÉMISSION, qui décide
+ * les écrans. La garde métier de P0 reste intacte.
+ *
+ * UN SEUL SITE LES POSE, pour les trois chemins qui émettent — sans quoi une
+ * préférence vaudrait à l'émission et pas à la réparation.
+ *
+ * RÉSERVE, DITE PLUTÔT QUE TUE : un texte libre n'est PAS vérifiable
+ * mécaniquement. Aucun juge ne sait lire une phrase et compter. Une
+ * préférence GARANTIE devrait devenir une règle mesurable — préférence par
+ * préférence, et c'est alors un choix du propriétaire.
+ */
+function contexteClient(intention) {
+  const demande = `DEMANDE DU CLIENT :\n${intention.text}`;
+  if (intention.preferences === undefined) return demande;
+  return (
+    `${demande}\n\n` +
+    `PRÉFÉRENCES DE PRÉSENTATION DU PROPRIÉTAIRE — elles portent sur ce que ` +
+    `l'on VOIT, jamais sur ce que l'application FAIT. Honore-les quand elles ` +
+    `ne contredisent NI le plan prescrit, NI une règle de ce prompt : ` +
+    `celles-là sont imposées par les magasins et ne se négocient pas. Si une ` +
+    `préférence contredit une règle, SUIS LA RÈGLE et n'invente aucun ` +
+    `compromis.\n${intention.preferences}`
+  );
+}
+
 async function emitSections(system, contextText, label, usage, refusals, accumulateur, prescriptif) {
   const assembled = accumulateur ?? {};
   for (const part of partsPour(prescriptif)) {
@@ -1074,7 +1114,7 @@ if (process.argv[2] === "--reparer") {
     resultat = await repairSectionsAvecPartiel(
       document,
       diagnostics,
-      `DEMANDE DU CLIENT :\n${intention.text}`,
+      contexteClient(intention),
       slug,
       usage,
       refusals,
@@ -1202,7 +1242,7 @@ for (const intention of INTENTIONS.slice(start, end)) {
     }
     let document = await emitSectionsAvecPartiel(
       SYSTEM_EMIT,
-      `DEMANDE DU CLIENT :\n${intention.text}`,
+      contexteClient(intention),
       intention.slug,
       usage,
       refusals,
@@ -1237,7 +1277,7 @@ for (const intention of INTENTIONS.slice(start, end)) {
       const resultat = await repairSectionsAvecPartiel(
         document,
         diagnostics,
-        `DEMANDE DU CLIENT :\n${intention.text}`,
+        contexteClient(intention),
         intention.slug,
         usage,
         refusals,

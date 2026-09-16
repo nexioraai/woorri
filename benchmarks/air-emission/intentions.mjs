@@ -249,4 +249,69 @@ export const INTENTIONS = [
       "retard, avec le montant dû et la pénalité. À l'échéance, le pot est " +
       "versé au membre dont c'est le tour.",
   },
+  {
+    slug: "marketplace-fiche",
+    // EP-186 — LE MÊME DOMAINE QUE `marketplace-africain`, À UNE PRÉCISION
+    // PRÈS, ET ELLE EST LE POINT : le brief d'origine dit que l'acheteur
+    // contacte le vendeur ; celui-ci dit OÙ — sur la FICHE du produit, avec
+    // la description, le prix, et deux boutons.
+    //
+    // C'est donc un test de FIDÉLITÉ plus que de domaine : le générateur
+    // suit-il une exigence de CONTENU D'ÉCRAN énoncée dans le brief ? Aucune
+    // règle du moteur ne prescrit ce que porte une fiche.
+    //
+    // `commerce` OMIS comme pour les autres marchés (EP-044).
+    //
+    // TEXTE VERBATIM de Youssouf, non reformulé.
+    text:
+      "Une place de marché où les vendeurs paient pour la visibilité de leurs " +
+      "produits. Les acheteurs contactent les vendeurs directement par appel " +
+      "téléphonique ou par WhatsApp. Quand un utilisateur clique sur un " +
+      "produit, la fiche contient la description, le prix, un bouton appel et " +
+      "un bouton WhatsApp. Les prix sont en francs CFA.",
+  },
+  {
+    slug: "marketplace-boutiques",
+    // EP-186 — LE CAHIER DE YOUSSOUF, RÉDUIT À SON MÉTIER.
+    //
+    // Ce qu'il décrit se sépare en DEUX, et le prompt P0 impose la coupure :
+    // « écrans, nombre d'écrans, mise en page, navigation, composition »
+    // sont des DÉCISIONS INTERDITES dans un brief, refusées mécaniquement.
+    //
+    // N'ENTRE PAS ICI, ET CE N'EST PAS UN OUBLI : « six produits au maximum
+    // sur l'accueil », « barre de recherche fixe en haut », « trois onglets
+    // Accueil / Boutiques / Compte ». Ce sont des décisions de PRÉSENTATION
+    // — le moteur les prend, ou il ne les prend pas encore, mais elles ne se
+    // demandent pas à P0.
+    //
+    // ENTRE ICI, parce que c'est du MÉTIER : les produits appartiennent à des
+    // boutiques · le prix est FACULTATIF (le vendeur le met ou non) · le
+    // contact est porté par la BOUTIQUE, donc partagé par ses produits · on
+    // peut publier SANS boutique · publier exige un compte · le compte se
+    // gère et se supprime.
+    //
+    // TEXTE tiré du cahier de Youssouf.
+    text:
+      "Une place de marché. Les vendeurs publient des produits avec des " +
+      "photos ; le prix est facultatif, chaque vendeur le met ou non, en " +
+      "francs CFA. Un vendeur peut ouvrir une boutique et y ranger ses " +
+      "produits, ou publier un produit sans boutique. La boutique porte le " +
+      "numéro de téléphone et le compte WhatsApp du vendeur, et tous ses " +
+      "produits partagent ce contact. Les acheteurs parcourent les produits, " +
+      "cherchent un produit précis, consultent la fiche d'un produit — elle " +
+      "montre la description, le prix s'il existe, et permet d'appeler le " +
+      "vendeur ou de lui écrire sur WhatsApp. Ils parcourent aussi les " +
+      "boutiques et consultent les produits d'une boutique. Publier exige un " +
+      "compte : le vendeur crée son compte, s'identifie, consulte et modifie " +
+      "ses informations, et peut supprimer son compte.",
+    // EP-187 — LA PREMIÈRE PRÉFÉRENCE RÉELLE, énoncée par Youssouf.
+    //
+    // Elle ne va PAS au brief : P0 refuse les décisions d'écran. Elle
+    // s'adresse à l'ÉMISSION, qui décide ce que porte un écran.
+    preferences:
+      "Une grille de produits montre QUATRE produits par écran — dans ce " +
+      "domaine un produit SE VOIT comme une image, donc quatre images " +
+      "visibles à la fois. La recherche reste visible en haut de l'écran " +
+      "d'accueil, sans avoir à défiler.",
+  },
 ];
