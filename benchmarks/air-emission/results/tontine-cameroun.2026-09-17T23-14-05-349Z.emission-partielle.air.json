@@ -1,0 +1,2780 @@
+{
+  "airSchemaVersion": "1.26.0",
+  "projectId": "prj_tontine_cm",
+  "app": {
+    "name": "Tontine Cameroun",
+    "slug": "tontine-cm",
+    "description": [
+      {
+        "locale": "fr",
+        "text": "Application de tontine pour le Cameroun : un président vérifié ouvre une tontine, les membres la rejoignent, cotisent chaque semaine ou chaque mois par Orange Money ou MTN Mobile Money, suivent qui a payé et qui est en retard, et le pot est versé au membre dont c'est le tour."
+      }
+    ],
+    "locales": {
+      "userLanguage": "fr",
+      "appLocales": [
+        "fr"
+      ],
+      "defaultAppLocale": "fr",
+      "contentLocales": [
+        "fr"
+      ],
+      "rtlSupported": false
+    }
+  },
+  "navigation": {
+    "entryScreenId": "scr_entree",
+    "primary": {
+      "destinations": [
+        {
+          "routeId": "nav_entree",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Accueil"
+            }
+          ],
+          "order": 0,
+          "icon": "accueil"
+        },
+        {
+          "routeId": "nav_profil_president_decouvrir",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Mon espace"
+            }
+          ],
+          "order": 1,
+          "icon": "compte"
+        }
+      ]
+    },
+    "routes": [
+      {
+        "id": "nav_entree",
+        "screenId": "scr_entree",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Accueil"
+          }
+        ]
+      },
+      {
+        "id": "nav_tontine_choisir",
+        "screenId": "scr_cpt_tontine_choisir",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Les tontines"
+          }
+        ]
+      },
+      {
+        "id": "nav_tontine_consulter_ouverte",
+        "screenId": "scr_cpt_tontine_consulter_ouverte",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Fiche de la tontine"
+          }
+        ]
+      },
+      {
+        "id": "nav_profil_president_decouvrir",
+        "screenId": "scr_cpt_profil_president_decouvrir",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Mon espace"
+          }
+        ]
+      },
+      {
+        "id": "nav_profil_president_consulter_verifie",
+        "screenId": "scr_cpt_profil_president_consulter_verifie",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Fiche du président"
+          }
+        ]
+      },
+      {
+        "id": "nav_membre_s_identifier",
+        "screenId": "scr_cpt_membre_s_identifier",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Se connecter"
+          }
+        ]
+      },
+      {
+        "id": "nav_adhesion_saisir",
+        "screenId": "scr_cpt_adhesion_saisir",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Rejoindre la tontine"
+          }
+        ]
+      },
+      {
+        "id": "nav_adhesion_confirmer",
+        "screenId": "scr_cpt_adhesion_confirmer",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Confirmer l'adhésion"
+          }
+        ]
+      },
+      {
+        "id": "nav_adhesion_consulter_active",
+        "screenId": "scr_cpt_adhesion_consulter_active",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Mon adhésion"
+          }
+        ]
+      },
+      {
+        "id": "nav_cotisation_decouvrir",
+        "screenId": "scr_cpt_cotisation_decouvrir",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Ma cotisation"
+          }
+        ]
+      },
+      {
+        "id": "nav_cotisation_payer",
+        "screenId": "scr_cpt_cotisation_payer",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Payer par Mobile Money"
+          }
+        ]
+      },
+      {
+        "id": "nav_cotisation_consulter_payee",
+        "screenId": "scr_cpt_cotisation_consulter_payee",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Cotisation payée"
+          }
+        ]
+      },
+      {
+        "id": "nav_profil_president_saisir",
+        "screenId": "scr_cpt_profil_president_saisir",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Devenir président"
+          }
+        ]
+      },
+      {
+        "id": "nav_profil_president_s_identifier",
+        "screenId": "scr_cpt_profil_president_s_identifier",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Connexion président"
+          }
+        ]
+      },
+      {
+        "id": "nav_profil_president_consulter_en_verification",
+        "screenId": "scr_cpt_profil_president_consulter_en_verification",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Vérification en cours"
+          }
+        ]
+      },
+      {
+        "id": "nav_tontine_saisir",
+        "screenId": "scr_cpt_tontine_saisir",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Créer une tontine"
+          }
+        ]
+      },
+      {
+        "id": "nav_tontine_confirmer",
+        "screenId": "scr_cpt_tontine_confirmer",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Confirmer la tontine"
+          }
+        ]
+      },
+      {
+        "id": "nav_tontine_consulter_ouverte_president",
+        "screenId": "scr_cpt_tontine_consulter_ouverte_acteur_act_president",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Ma tontine ouverte"
+          }
+        ]
+      },
+      {
+        "id": "nav_tontine_decouvrir_president",
+        "screenId": "scr_cpt_tontine_decouvrir_acteur_act_president",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Tableau de bord"
+          }
+        ]
+      },
+      {
+        "id": "nav_tontine_choisir_president",
+        "screenId": "scr_cpt_tontine_choisir_acteur_act_president",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Mes tontines"
+          }
+        ]
+      },
+      {
+        "id": "nav_cotisation_consulter_historique",
+        "screenId": "scr_cpt_cotisation_consulter_historique",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Qui a payé"
+          }
+        ]
+      },
+      {
+        "id": "nav_cotisation_consulter_en_retard",
+        "screenId": "scr_cpt_cotisation_consulter_en_retard",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Retards et pénalités"
+          }
+        ]
+      },
+      {
+        "id": "nav_pot_decouvrir",
+        "screenId": "scr_cpt_pot_decouvrir",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Le pot et le tour"
+          }
+        ]
+      },
+      {
+        "id": "nav_pot_consulter_verse",
+        "screenId": "scr_cpt_pot_consulter_verse",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Pot versé"
+          }
+        ]
+      }
+    ]
+  },
+  "design": {
+    "theme": "tontine_ocre"
+  },
+  "network": {
+    "policy": "deny_by_default",
+    "allowedDomains": [
+      "api.tontinecm.app",
+      "picsum.photos"
+    ]
+  },
+  "native": {
+    "minIosVersion": "16.0",
+    "minAndroidSdk": 26
+  },
+  "compliance": {
+    "commerceClass": "physical_or_offapp",
+    "accountDeletionRequired": true,
+    "dataCollected": [
+      "contact_info",
+      "identifiers",
+      "user_content",
+      "purchases",
+      "usage_data"
+    ]
+  },
+  "entities": [
+    {
+      "id": "ent_profil_president",
+      "name": "profil_president",
+      "fields": [
+        {
+          "id": "fld_pres_nom",
+          "name": "nom",
+          "type": "string",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Nom du président"
+            }
+          ],
+          "demoValues": [
+            "Jean-Pierre Ekotto",
+            "Marthe Ngo Bassong",
+            "Alphonse Mbarga",
+            "Clarisse Atangana",
+            "Ibrahim Moussa Bello",
+            "Solange Nkoulou",
+            "Désiré Tchoua",
+            "Rachel Eyenga"
+          ]
+        },
+        {
+          "id": "fld_pres_numero_momo",
+          "name": "numero_momo",
+          "type": "string",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Numéro Mobile Money"
+            }
+          ],
+          "demoValues": [
+            "+237 6 90 12 34 56",
+            "+237 6 77 45 88 21",
+            "+237 6 55 30 14 07",
+            "+237 6 99 62 41 88",
+            "+237 6 70 18 52 33",
+            "+237 6 94 27 60 15"
+          ]
+        },
+        {
+          "id": "fld_pres_photo",
+          "name": "photo",
+          "type": "asset",
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Photo du président"
+            }
+          ],
+          "demoValues": [
+            "https://picsum.photos/seed/president-tontine-douala/600/600",
+            "https://picsum.photos/seed/president-tontine-yaounde/600/600",
+            "https://picsum.photos/seed/presidente-tontine-bafoussam/600/600",
+            "https://picsum.photos/seed/president-tontine-bonaberi/600/600",
+            "https://picsum.photos/seed/presidente-tontine-garoua/600/600",
+            "https://picsum.photos/seed/president-tontine-bamenda/600/600",
+            "https://picsum.photos/seed/presidente-tontine-kribi/600/600",
+            "https://picsum.photos/seed/president-tontine-ngaoundere/600/600"
+          ]
+        },
+        {
+          "id": "fld_pres_piece_identite",
+          "name": "piece_identite",
+          "type": "asset",
+          "required": true,
+          "sensitive": true
+        }
+      ]
+    }
+  ],
+  "relations": [],
+  "datasets": [
+    {
+      "id": "data_profil_president",
+      "entityId": "ent_profil_president",
+      "contentHash": "3f9a1c7d0e4b62a85d13f8c4b07e9a2d6f51c83b94ae27d0f6b1c5a83e74d290",
+      "rowCount": 8,
+      "sourceKind": "seed"
+    }
+  ],
+  "rules": [
+    {
+      "id": "rule_pres_identite_complete",
+      "description": "Un profil de président n'est enregistré que si le nom, le numéro Mobile Money, la photo et la pièce d'identité sont tous fournis : ce sont les pièces exigées pour la vérification.",
+      "kind": "validation",
+      "entityId": "ent_profil_president",
+      "assertions": [
+        {
+          "fieldId": "fld_pres_nom",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_pres_numero_momo",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_pres_photo",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_pres_piece_identite",
+          "operator": "required"
+        }
+      ]
+    },
+    {
+      "id": "rule_pres_numero_momo_format",
+      "description": "Le numéro Mobile Money du président doit être un numéro camerounais valide (indicatif +237 suivi d'un numéro mobile à 9 chiffres commençant par 6).",
+      "kind": "validation",
+      "entityId": "ent_profil_president",
+      "assertions": [
+        {
+          "fieldId": "fld_pres_numero_momo",
+          "operator": "matches",
+          "value": "^\\+?237[ ]?6[ ]?[0-9]{2}[ ]?[0-9]{2}[ ]?[0-9]{2}[ ]?[0-9]{2}$"
+        }
+      ]
+    },
+    {
+      "id": "rule_pres_nom_lisible",
+      "description": "Le nom affiché du président doit comporter au moins trois caractères et ne contenir que des lettres, espaces, apostrophes ou tirets : c'est le nom que les membres verront sur la fiche.",
+      "kind": "validation",
+      "entityId": "ent_profil_president",
+      "assertions": [
+        {
+          "fieldId": "fld_pres_nom",
+          "operator": "matches",
+          "value": "^[A-Za-zÀ-ÖØ-öø-ÿ][A-Za-zÀ-ÖØ-öø-ÿ' -]{2,}$"
+        }
+      ]
+    },
+    {
+      "id": "rule_pres_piece_obligatoire_avant_tontine",
+      "description": "Seul un profil de président ayant déposé sa pièce d'identité et sa photo peut ouvrir une tontine et encaisser les cotisations des membres.",
+      "kind": "authorization",
+      "entityId": "ent_profil_president",
+      "assertions": [
+        {
+          "fieldId": "fld_pres_piece_identite",
+          "operator": "required"
+        },
+        {
+          "fieldId": "fld_pres_photo",
+          "operator": "required"
+        }
+      ]
+    }
+  ],
+  "slots": [
+    {
+      "id": "slot_calcul_penalite_retard",
+      "description": "Calcule, pour une échéance de cotisation, le montant dû, la pénalité de retard en FCFA selon le nombre de jours de retard et le taux appliqué par la tontine, puis le total à régler par Mobile Money.",
+      "inputs": [
+        {
+          "name": "montantDu",
+          "type": "decimal"
+        },
+        {
+          "name": "joursRetard",
+          "type": "number"
+        },
+        {
+          "name": "tauxPenalite",
+          "type": "decimal"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "montantPenalite",
+          "type": "decimal"
+        },
+        {
+          "name": "montantTotalDu",
+          "type": "decimal"
+        },
+        {
+          "name": "libellePenalite",
+          "type": "string"
+        }
+      ],
+      "allowedImports": []
+    },
+    {
+      "id": "slot_ordre_tour_pot",
+      "description": "Détermine, à partir de la liste des membres et de leur rang d'adhésion, le membre dont c'est le tour à l'échéance courante, ainsi que le montant du pot à lui verser.",
+      "inputs": [
+        {
+          "name": "membres",
+          "type": "json"
+        },
+        {
+          "name": "echeanceCourante",
+          "type": "date"
+        },
+        {
+          "name": "montantCotisation",
+          "type": "decimal"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "beneficiaireTour",
+          "type": "string"
+        },
+        {
+          "name": "rangTour",
+          "type": "number"
+        },
+        {
+          "name": "montantPot",
+          "type": "decimal"
+        },
+        {
+          "name": "libelleTour",
+          "type": "text"
+        }
+      ],
+      "allowedImports": []
+    },
+    {
+      "id": "slot_synthese_paiements",
+      "description": "Produit la synthèse du tableau de bord d'une période : nombre de membres à jour, nombre en retard, taux de recouvrement et phrase de résumé lisible pour le président.",
+      "inputs": [
+        {
+          "name": "cotisations",
+          "type": "json"
+        },
+        {
+          "name": "periode",
+          "type": "string"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "nombrePayes",
+          "type": "number"
+        },
+        {
+          "name": "nombreEnRetard",
+          "type": "number"
+        },
+        {
+          "name": "tauxRecouvrement",
+          "type": "decimal"
+        },
+        {
+          "name": "resume",
+          "type": "text"
+        }
+      ],
+      "allowedImports": []
+    },
+    {
+      "id": "slot_reference_mobile_money",
+      "description": "Compose la référence de paiement et l'instruction de règlement à recopier par le membre selon l'opérateur choisi (Orange Money ou MTN Mobile Money) et le numéro du président.",
+      "inputs": [
+        {
+          "name": "numeroMomo",
+          "type": "string"
+        },
+        {
+          "name": "montant",
+          "type": "decimal"
+        },
+        {
+          "name": "operateur",
+          "type": "enum"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "referencePaiement",
+          "type": "string"
+        },
+        {
+          "name": "instructionPaiement",
+          "type": "text"
+        }
+      ],
+      "allowedImports": []
+    }
+  ],
+  "capabilities": [
+    {
+      "capability": "auth",
+      "config": [
+        {
+          "key": "methodes",
+          "value": [
+            "signIn",
+            "signUp",
+            "signOut",
+            "resetPassword"
+          ]
+        },
+        {
+          "key": "identifiant",
+          "value": "email"
+        },
+        {
+          "key": "profilRequis",
+          "value": true
+        }
+      ]
+    },
+    {
+      "capability": "media_upload",
+      "config": [
+        {
+          "key": "typesAcceptes",
+          "value": [
+            "image/jpeg",
+            "image/png"
+          ]
+        },
+        {
+          "key": "tailleMaxMo",
+          "value": 8
+        },
+        {
+          "key": "usages",
+          "value": [
+            "photo_president",
+            "piece_identite"
+          ]
+        }
+      ]
+    },
+    {
+      "capability": "payments.psp",
+      "config": [
+        {
+          "key": "classeCommerce",
+          "value": "physical_or_offapp"
+        },
+        {
+          "key": "operateurs",
+          "value": [
+            "orange_money",
+            "mtn_mobile_money"
+          ]
+        },
+        {
+          "key": "devise",
+          "value": "XAF"
+        }
+      ]
+    }
+  ],
+  "permissions": [
+    {
+      "platform": "ios",
+      "permission": "NSPhotoLibraryUsageDescription",
+      "reason": [
+        {
+          "locale": "fr",
+          "text": "Pour déposer votre photo de président et votre pièce d'identité depuis votre téléphone, afin que votre profil puisse être vérifié avant l'ouverture d'une tontine."
+        }
+      ],
+      "requiredByCapability": "media_upload"
+    },
+    {
+      "platform": "android",
+      "permission": "android.permission.READ_MEDIA_IMAGES",
+      "reason": [
+        {
+          "locale": "fr",
+          "text": "Pour choisir dans vos images la photo du président et la pièce d'identité à joindre au dossier de vérification de la tontine."
+        }
+      ],
+      "requiredByCapability": "media_upload"
+    }
+  ],
+  "screens": [
+    {
+      "id": "scr_entree",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Accueil"
+        }
+      ],
+      "showsPrimaryNav": true,
+      "showsScreenTitle": false,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_entree_accroche",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Cotiser ensemble, en confiance"
+            },
+            {
+              "key": "subtitle",
+              "value": "Rejoignez une tontine animée par un président vérifié, cotisez par Orange Money ou MTN Mobile Money et suivez votre tour."
+            },
+            {
+              "key": "accroche",
+              "value": true
+            }
+          ]
+        },
+        {
+          "id": "blk_entree_recherche",
+          "blockType": "search_entry",
+          "props": [
+            {
+              "key": "placeholder",
+              "value": "Rechercher une tontine ou un président"
+            },
+            {
+              "key": "actionId",
+              "value": "act_entree_ouvrir_recherche"
+            }
+          ]
+        },
+        {
+          "id": "blk_entree_presidents",
+          "blockType": "list",
+          "entityId": "ent_profil_president",
+          "props": [
+            {
+              "key": "title",
+              "value": "Présidents vérifiés"
+            },
+            {
+              "key": "titleFieldId",
+              "value": "fld_pres_nom"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_pres_numero_momo"
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_pres_photo"
+            },
+            {
+              "key": "layout",
+              "value": "row"
+            },
+            {
+              "key": "pageSize",
+              "value": 6
+            },
+            {
+              "key": "sortFieldId",
+              "value": "fld_pres_nom"
+            },
+            {
+              "key": "sortDirection",
+              "value": "asc"
+            },
+            {
+              "key": "seeAllLabel",
+              "value": "Tout voir"
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement des présidents…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Liste indisponible"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Impossible d'afficher les présidents pour le moment. Réessayez dans un instant."
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Aucun président vérifié"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Aucune tontine n'est encore ouverte. Vous pouvez être le premier à en créer une."
+            }
+          ]
+        },
+        {
+          "id": "blk_entree_presidents_vide",
+          "blockType": "empty_state",
+          "visibleWhen": {
+            "kind": "entity_empty",
+            "entityId": "ent_profil_president"
+          },
+          "props": [
+            {
+              "key": "title",
+              "value": "Aucune tontine ouverte pour l'instant"
+            },
+            {
+              "key": "message",
+              "value": "Déposez votre photo et votre pièce d'identité pour devenir président vérifié et ouvrir la première tontine."
+            },
+            {
+              "key": "actionLabel",
+              "value": "Devenir président"
+            },
+            {
+              "key": "actionId",
+              "value": "act_entree_devenir_president"
+            }
+          ]
+        },
+        {
+          "id": "blk_entree_btn_tontines",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Voir les tontines ouvertes"
+            },
+            {
+              "key": "icon",
+              "value": "liste"
+            },
+            {
+              "key": "kind",
+              "value": "primary"
+            },
+            {
+              "key": "actionId",
+              "value": "act_entree_voir_tontines"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_cpt_tontine_choisir",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Les tontines"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_choisir_header",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Des présidents vérifiés, des cotisations suivies"
+            },
+            {
+              "key": "subtitle",
+              "value": "Parcourez les tontines ouvertes, consultez la fiche du président puis rejoignez celle qui vous convient."
+            }
+          ]
+        },
+        {
+          "id": "blk_choisir_liste",
+          "blockType": "list",
+          "entityId": "ent_profil_president",
+          "props": [
+            {
+              "key": "titleFieldId",
+              "value": "fld_pres_nom"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_pres_numero_momo"
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_pres_photo"
+            },
+            {
+              "key": "layout",
+              "value": "grid"
+            },
+            {
+              "key": "searchFieldId",
+              "value": "fld_pres_nom"
+            },
+            {
+              "key": "searchPlaceholder",
+              "value": "Rechercher un président de tontine"
+            },
+            {
+              "key": "sortFieldId",
+              "value": "fld_pres_nom"
+            },
+            {
+              "key": "sortDirection",
+              "value": "asc"
+            },
+            {
+              "key": "pageSize",
+              "value": 12
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement des tontines…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Tontines indisponibles"
+            },
+            {
+              "key": "errorMessage",
+              "value": "La liste des tontines n'a pas pu être chargée. Réessayez dans un instant."
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Aucune tontine à rejoindre"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Aucun président vérifié n'a encore ouvert de tontine."
+            }
+          ]
+        },
+        {
+          "id": "blk_choisir_vide",
+          "blockType": "empty_state",
+          "visibleWhen": {
+            "kind": "entity_empty",
+            "entityId": "ent_profil_president"
+          },
+          "props": [
+            {
+              "key": "title",
+              "value": "Aucune tontine à rejoindre"
+            },
+            {
+              "key": "message",
+              "value": "Créez votre profil de président vérifié pour ouvrir une tontine et inviter vos membres."
+            },
+            {
+              "key": "actionLabel",
+              "value": "Devenir président"
+            },
+            {
+              "key": "actionId",
+              "value": "act_choisir_devenir_president"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_cpt_tontine_consulter_ouverte",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Fiche de la tontine"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_tontine_ouverte_entete",
+          "blockType": "detail_header",
+          "entityId": "ent_profil_president",
+          "props": [
+            {
+              "key": "titleFieldId",
+              "value": "fld_pres_nom"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_pres_numero_momo"
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_pres_photo"
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement de la tontine…"
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Tontine introuvable"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Cette tontine n'est plus ouverte aux nouvelles adhésions."
+            },
+            {
+              "key": "errorTitle",
+              "value": "Fiche indisponible"
+            },
+            {
+              "key": "errorMessage",
+              "value": "La fiche de cette tontine n'a pas pu être chargée."
+            }
+          ]
+        },
+        {
+          "id": "blk_tontine_ouverte_regles",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Cotisation hebdomadaire ou mensuelle"
+            },
+            {
+              "key": "subtitle",
+              "value": "Le montant, le rythme et l'ordre des tours sont fixés par le président. À chaque échéance, le pot est versé au membre dont c'est le tour ; tout retard entraîne une pénalité."
+            }
+          ]
+        },
+        {
+          "id": "blk_tontine_ouverte_btn_rejoindre",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Rejoindre cette tontine"
+            },
+            {
+              "key": "kind",
+              "value": "primary"
+            },
+            {
+              "key": "actionId",
+              "value": "act_tontine_ouverte_rejoindre"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_cpt_profil_president_decouvrir",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Mon espace"
+        }
+      ],
+      "showsPrimaryNav": true,
+      "showsScreenTitle": false,
+      "presentation": "card",
+      "purpose": "account_home",
+      "blocks": [
+        {
+          "id": "blk_espace_header_anonyme",
+          "blockType": "header",
+          "visibleWhen": {
+            "kind": "session_anonymous"
+          },
+          "props": [
+            {
+              "key": "title",
+              "value": "Votre espace tontine"
+            },
+            {
+              "key": "subtitle",
+              "value": "Connectez-vous pour suivre vos cotisations, ou créez un compte pour rejoindre une tontine ou en ouvrir une."
+            }
+          ]
+        },
+        {
+          "id": "blk_espace_spacer_anonyme",
+          "blockType": "spacer",
+          "visibleWhen": {
+            "kind": "session_anonymous"
+          }
+        },
+        {
+          "id": "blk_espace_btn_connexion",
+          "blockType": "button",
+          "visibleWhen": {
+            "kind": "session_anonymous"
+          },
+          "props": [
+            {
+              "key": "label",
+              "value": "Se connecter"
+            },
+            {
+              "key": "icon",
+              "value": "compte"
+            },
+            {
+              "key": "kind",
+              "value": "primary"
+            },
+            {
+              "key": "actionId",
+              "value": "act_espace_ouvrir_connexion"
+            }
+          ]
+        },
+        {
+          "id": "blk_espace_btn_creer_compte",
+          "blockType": "button",
+          "visibleWhen": {
+            "kind": "session_anonymous"
+          },
+          "props": [
+            {
+              "key": "label",
+              "value": "Créer un compte"
+            },
+            {
+              "key": "kind",
+              "value": "ghost"
+            },
+            {
+              "key": "actionId",
+              "value": "act_espace_ouvrir_creation_compte"
+            }
+          ]
+        },
+        {
+          "id": "blk_espace_header_connecte",
+          "blockType": "header",
+          "visibleWhen": {
+            "kind": "session_authenticated"
+          },
+          "props": [
+            {
+              "key": "title",
+              "value": "Vos tontines et vos cotisations"
+            },
+            {
+              "key": "subtitle",
+              "value": "Retrouvez vos adhésions, votre prochaine échéance et le tour du pot."
+            }
+          ]
+        },
+        {
+          "id": "blk_espace_adhesions_liste",
+          "blockType": "list",
+          "entityId": "ent_profil_president",
+          "visibleWhen": {
+            "kind": "session_authenticated"
+          },
+          "props": [
+            {
+              "key": "title",
+              "value": "Mes adhésions"
+            },
+            {
+              "key": "titleFieldId",
+              "value": "fld_pres_nom"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_pres_numero_momo"
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_pres_photo"
+            },
+            {
+              "key": "layout",
+              "value": "rows"
+            },
+            {
+              "key": "pageSize",
+              "value": 8
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement de vos adhésions…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Adhésions indisponibles"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Vos adhésions n'ont pas pu être chargées. Réessayez dans un instant."
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Vous n'avez encore rejoint aucune tontine"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Parcourez les tontines ouvertes pour rejoindre celle de votre quartier ou de votre association."
+            }
+          ]
+        },
+        {
+          "id": "blk_espace_btn_cotisation",
+          "blockType": "button",
+          "visibleWhen": {
+            "kind": "session_authenticated"
+          },
+          "props": [
+            {
+              "key": "label",
+              "value": "Ma cotisation"
+            },
+            {
+              "key": "icon",
+              "value": "billet"
+            },
+            {
+              "key": "kind",
+              "value": "primary"
+            },
+            {
+              "key": "actionId",
+              "value": "act_espace_voir_cotisation"
+            }
+          ]
+        },
+        {
+          "id": "blk_espace_btn_tontines_ouvertes",
+          "blockType": "button",
+          "visibleWhen": {
+            "kind": "session_authenticated"
+          },
+          "props": [
+            {
+              "key": "label",
+              "value": "Rejoindre une autre tontine"
+            },
+            {
+              "key": "icon",
+              "value": "liste"
+            },
+            {
+              "key": "kind",
+              "value": "ghost"
+            },
+            {
+              "key": "actionId",
+              "value": "act_espace_voir_tontines"
+            }
+          ]
+        },
+        {
+          "id": "blk_espace_btn_pot",
+          "blockType": "button",
+          "visibleWhen": {
+            "kind": "session_authenticated"
+          },
+          "props": [
+            {
+              "key": "label",
+              "value": "Le pot et le tour"
+            },
+            {
+              "key": "icon",
+              "value": "calendrier"
+            },
+            {
+              "key": "kind",
+              "value": "ghost"
+            },
+            {
+              "key": "actionId",
+              "value": "act_espace_voir_pot"
+            }
+          ]
+        },
+        {
+          "id": "blk_espace_btn_tableau_bord",
+          "blockType": "button",
+          "visibleWhen": {
+            "kind": "session_authenticated"
+          },
+          "props": [
+            {
+              "key": "label",
+              "value": "Tableau de bord de ma tontine"
+            },
+            {
+              "key": "icon",
+              "value": "reglages"
+            },
+            {
+              "key": "kind",
+              "value": "ghost"
+            },
+            {
+              "key": "actionId",
+              "value": "act_espace_voir_tableau_bord"
+            }
+          ]
+        },
+        {
+          "id": "blk_espace_btn_devenir_president",
+          "blockType": "button",
+          "visibleWhen": {
+            "kind": "session_authenticated"
+          },
+          "props": [
+            {
+              "key": "label",
+              "value": "Devenir président et ouvrir une tontine"
+            },
+            {
+              "key": "kind",
+              "value": "link"
+            },
+            {
+              "key": "actionId",
+              "value": "act_espace_devenir_president"
+            }
+          ]
+        },
+        {
+          "id": "blk_espace_spacer_connecte",
+          "blockType": "spacer",
+          "visibleWhen": {
+            "kind": "session_authenticated"
+          }
+        },
+        {
+          "id": "blk_espace_btn_deconnexion",
+          "blockType": "button",
+          "visibleWhen": {
+            "kind": "session_authenticated"
+          },
+          "props": [
+            {
+              "key": "label",
+              "value": "Se déconnecter"
+            },
+            {
+              "key": "kind",
+              "value": "link"
+            },
+            {
+              "key": "actionId",
+              "value": "act_espace_se_deconnecter"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_cpt_profil_president_consulter_verifie",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Fiche du président"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_pres_verifie_entete",
+          "blockType": "detail_header",
+          "entityId": "ent_profil_president",
+          "props": [
+            {
+              "key": "titleFieldId",
+              "value": "fld_pres_nom"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_pres_numero_momo"
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_pres_photo"
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement de la fiche…"
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Président introuvable"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Ce profil de président n'est plus disponible."
+            },
+            {
+              "key": "errorTitle",
+              "value": "Fiche indisponible"
+            },
+            {
+              "key": "errorMessage",
+              "value": "La fiche du président n'a pas pu être chargée."
+            }
+          ]
+        },
+        {
+          "id": "blk_pres_verifie_badge",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Profil vérifié"
+            },
+            {
+              "key": "subtitle",
+              "value": "Photo et pièce d'identité déposées puis contrôlées : ce président peut ouvrir une tontine et encaisser les cotisations sur son numéro Mobile Money."
+            }
+          ]
+        },
+        {
+          "id": "blk_pres_verifie_btn_rejoindre",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Rejoindre sa tontine"
+            },
+            {
+              "key": "kind",
+              "value": "primary"
+            },
+            {
+              "key": "actionId",
+              "value": "act_pres_verifie_rejoindre"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_cpt_membre_s_identifier",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Se connecter"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": false,
+      "presentation": "sheet",
+      "dismissLabel": [
+        {
+          "locale": "fr",
+          "text": "Fermer"
+        }
+      ],
+      "blocks": [
+        {
+          "id": "blk_membre_identifier_header",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Heureux de vous revoir"
+            },
+            {
+              "key": "subtitle",
+              "value": "Entrez le numéro Mobile Money avec lequel vous cotisez dans votre tontine."
+            }
+          ]
+        },
+        {
+          "id": "blk_membre_identifier_form",
+          "blockType": "form",
+          "entityId": "ent_profil_president",
+          "props": [
+            {
+              "key": "fieldIds",
+              "value": [
+                "fld_pres_numero_momo"
+              ]
+            },
+            {
+              "key": "submitLabel",
+              "value": "Se connecter"
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Connexion en cours…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Connexion impossible"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Vérifiez votre numéro Mobile Money puis réessayez."
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Aucun compte trouvé"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Ce numéro n'est rattaché à aucune tontine. Créez un compte pour rejoindre une tontine."
+            }
+          ]
+        },
+        {
+          "id": "blk_membre_identifier_btn_creer",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Je n'ai pas encore de compte"
+            },
+            {
+              "key": "kind",
+              "value": "link"
+            },
+            {
+              "key": "actionId",
+              "value": "act_membre_identifier_creer_compte"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_cpt_adhesion_saisir",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Rejoindre la tontine"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_adhesion_saisir_header",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Devenez membre de cette tontine"
+            },
+            {
+              "key": "subtitle",
+              "value": "Indiquez le nom et le numéro Mobile Money avec lesquels vous cotiserez chaque semaine ou chaque mois, et sur lesquels le pot vous sera versé à votre tour."
+            }
+          ]
+        },
+        {
+          "id": "blk_adhesion_saisir_form",
+          "blockType": "form",
+          "entityId": "ent_profil_president",
+          "props": [
+            {
+              "key": "title",
+              "value": "Vos coordonnées de membre"
+            },
+            {
+              "key": "fieldIds",
+              "value": [
+                "fld_pres_nom",
+                "fld_pres_numero_momo"
+              ]
+            },
+            {
+              "key": "submitLabel",
+              "value": "Continuer"
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Enregistrement de votre adhésion…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Adhésion non enregistrée"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Vérifiez votre nom et votre numéro Mobile Money (+237 6 …) puis réessayez."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_cpt_adhesion_confirmer",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Confirmer l'adhésion"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_adhesion_confirmer_header",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Vérifiez avant de valider"
+            },
+            {
+              "key": "subtitle",
+              "value": "Votre nom et votre numéro Mobile Money serviront à enregistrer vos cotisations, à calculer vos pénalités de retard et à vous verser le pot à votre tour."
+            }
+          ]
+        },
+        {
+          "id": "blk_adhesion_confirmer_engagement",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Votre engagement"
+            },
+            {
+              "key": "subtitle",
+              "value": "En confirmant, vous vous engagez à cotiser à chaque échéance par Orange Money ou MTN Mobile Money sur le numéro du président."
+            }
+          ]
+        },
+        {
+          "id": "blk_adhesion_confirmer_btn_valider",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Confirmer mon adhésion"
+            },
+            {
+              "key": "icon",
+              "value": "checkmark-outline"
+            },
+            {
+              "key": "kind",
+              "value": "primary"
+            },
+            {
+              "key": "actionId",
+              "value": "act_adhesion_confirmer_valider"
+            }
+          ]
+        },
+        {
+          "id": "blk_adhesion_confirmer_btn_modifier",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Modifier mes informations"
+            },
+            {
+              "key": "kind",
+              "value": "link"
+            },
+            {
+              "key": "actionId",
+              "value": "act_adhesion_confirmer_modifier"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_cpt_adhesion_consulter_active",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Mon adhésion"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_adhesion_active_entete",
+          "blockType": "detail_header",
+          "entityId": "ent_profil_president",
+          "props": [
+            {
+              "key": "titleFieldId",
+              "value": "fld_pres_nom"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_pres_numero_momo"
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_pres_photo"
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement de votre adhésion…"
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Adhésion introuvable"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Aucune adhésion active n'a été trouvée pour ce compte."
+            },
+            {
+              "key": "errorTitle",
+              "value": "Adhésion indisponible"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Votre adhésion n'a pas pu être chargée. Réessayez dans un instant."
+            }
+          ]
+        },
+        {
+          "id": "blk_adhesion_active_statut",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Adhésion active"
+            },
+            {
+              "key": "subtitle",
+              "value": "Vous cotisez auprès de ce président. Votre prochaine échéance et le montant dû s'affichent dans « Ma cotisation »."
+            }
+          ]
+        },
+        {
+          "id": "blk_adhesion_active_btn_cotiser",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Voir ma cotisation"
+            },
+            {
+              "key": "icon",
+              "value": "billet"
+            },
+            {
+              "key": "kind",
+              "value": "primary"
+            },
+            {
+              "key": "actionId",
+              "value": "act_adhesion_active_voir_cotisation"
+            }
+          ]
+        },
+        {
+          "id": "blk_adhesion_active_btn_pot",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Voir le pot et l'ordre des tours"
+            },
+            {
+              "key": "icon",
+              "value": "calendrier"
+            },
+            {
+              "key": "kind",
+              "value": "ghost"
+            },
+            {
+              "key": "actionId",
+              "value": "act_adhesion_active_voir_pot"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_cpt_cotisation_decouvrir",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Ma cotisation"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_cotisation_decouvrir_header",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Votre prochaine cotisation"
+            },
+            {
+              "key": "subtitle",
+              "value": "Montant dû, échéance et pénalité de retard éventuelle avant règlement par Orange Money ou MTN Mobile Money."
+            }
+          ]
+        },
+        {
+          "id": "blk_cotisation_decouvrir_liste",
+          "blockType": "list",
+          "entityId": "ent_profil_president",
+          "props": [
+            {
+              "key": "title",
+              "value": "À régler auprès de votre président"
+            },
+            {
+              "key": "titleFieldId",
+              "value": "fld_pres_nom"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_pres_numero_momo"
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_pres_photo"
+            },
+            {
+              "key": "layout",
+              "value": "rows"
+            },
+            {
+              "key": "pageSize",
+              "value": 8
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement de vos cotisations…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Cotisations indisponibles"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Vos cotisations n'ont pas pu être chargées. Réessayez dans un instant."
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Aucune cotisation en attente"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Vous êtes à jour : rien à régler pour l'échéance en cours."
+            }
+          ]
+        },
+        {
+          "id": "blk_cotisation_decouvrir_btn_payer",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Payer ma cotisation"
+            },
+            {
+              "key": "icon",
+              "value": "panier"
+            },
+            {
+              "key": "kind",
+              "value": "primary"
+            },
+            {
+              "key": "actionId",
+              "value": "act_cotisation_decouvrir_payer"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_cpt_cotisation_payer",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Payer par Mobile Money"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_cotisation_payer_header",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Réglez par Mobile Money"
+            },
+            {
+              "key": "subtitle",
+              "value": "Orange Money ou MTN Mobile Money : confirmez le numéro à débiter, le montant dû et la pénalité éventuelle."
+            }
+          ]
+        },
+        {
+          "id": "blk_cotisation_payer_form",
+          "blockType": "form",
+          "entityId": "ent_profil_president",
+          "props": [
+            {
+              "key": "title",
+              "value": "Numéro Mobile Money à débiter"
+            },
+            {
+              "key": "fieldIds",
+              "value": [
+                "fld_pres_numero_momo"
+              ]
+            },
+            {
+              "key": "submitLabel",
+              "value": "Payer maintenant"
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Paiement en cours…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Paiement non abouti"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Le règlement n'a pas pu être enregistré. Vérifiez votre numéro et votre solde Mobile Money puis réessayez."
+            }
+          ]
+        },
+        {
+          "id": "blk_cotisation_payer_instruction",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Instruction de règlement"
+            },
+            {
+              "key": "subtitle",
+              "value": "La marche à suivre et la référence de paiement s'affichent ici selon l'opérateur choisi."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_cpt_cotisation_consulter_payee",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Cotisation payée"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_cotisation_payee_header",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Versement enregistré"
+            },
+            {
+              "key": "subtitle",
+              "value": "Votre cotisation est enregistrée : le tableau de bord de la tontine vous affiche désormais à jour, sans pénalité."
+            }
+          ]
+        },
+        {
+          "id": "blk_cotisation_payee_reference",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Référence de paiement"
+            },
+            {
+              "key": "subtitle",
+              "value": "La référence communiquée par l'opérateur apparaît ici ; conservez-la pour toute réclamation auprès du président."
+            }
+          ]
+        },
+        {
+          "id": "blk_cotisation_payee_btn_pot",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Voir le pot et le tour"
+            },
+            {
+              "key": "icon",
+              "value": "calendrier"
+            },
+            {
+              "key": "kind",
+              "value": "primary"
+            },
+            {
+              "key": "actionId",
+              "value": "act_cotisation_payee_voir_pot"
+            }
+          ]
+        },
+        {
+          "id": "blk_cotisation_payee_btn_adhesion",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Revenir à mon adhésion"
+            },
+            {
+              "key": "kind",
+              "value": "link"
+            },
+            {
+              "key": "actionId",
+              "value": "act_cotisation_payee_retour_adhesion"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_cpt_profil_president_saisir",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Devenir président"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": false,
+      "presentation": "sheet",
+      "purpose": "account_create",
+      "dismissLabel": [
+        {
+          "locale": "fr",
+          "text": "Fermer"
+        }
+      ],
+      "blocks": [
+        {
+          "id": "blk_pres_saisir_header",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Devenez président vérifié"
+            },
+            {
+              "key": "subtitle",
+              "value": "Déposez votre nom, votre numéro Mobile Money, votre photo et votre pièce d'identité. Après contrôle, votre profil affiche le badge vérifié et vous pouvez ouvrir une tontine."
+            }
+          ]
+        },
+        {
+          "id": "blk_pres_saisir_form",
+          "blockType": "form",
+          "entityId": "ent_profil_president",
+          "props": [
+            {
+              "key": "title",
+              "value": "Votre dossier de président"
+            },
+            {
+              "key": "fieldIds",
+              "value": [
+                "fld_pres_nom",
+                "fld_pres_numero_momo",
+                "fld_pres_photo",
+                "fld_pres_piece_identite"
+              ]
+            },
+            {
+              "key": "submitLabel",
+              "value": "Déposer mon dossier"
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Envoi de votre dossier…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Dossier non déposé"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Vérifiez votre nom, votre numéro Mobile Money (+237 6 …), votre photo et votre pièce d'identité, puis réessayez."
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Dossier vide"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Aucune information n'a encore été saisie pour ce dossier de président."
+            }
+          ]
+        },
+        {
+          "id": "blk_pres_saisir_rappel",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Pourquoi ces pièces ?"
+            },
+            {
+              "key": "subtitle",
+              "value": "La photo et la pièce d'identité rassurent les membres qui vous confient leurs cotisations : sans elles, aucune tontine ne peut être ouverte."
+            }
+          ]
+        },
+        {
+          "id": "blk_pres_saisir_btn_connexion",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "J'ai déjà un profil de président"
+            },
+            {
+              "key": "kind",
+              "value": "link"
+            },
+            {
+              "key": "actionId",
+              "value": "act_pres_saisir_ouvrir_connexion"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_cpt_profil_president_s_identifier",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Connexion président"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": false,
+      "presentation": "sheet",
+      "dismissLabel": [
+        {
+          "locale": "fr",
+          "text": "Fermer"
+        }
+      ],
+      "blocks": [
+        {
+          "id": "blk_pres_identifier_header",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Reprenez la main sur votre tontine"
+            },
+            {
+              "key": "subtitle",
+              "value": "Entrez le numéro Mobile Money de votre profil de président pour retrouver votre tableau de bord et vos cotisations."
+            }
+          ]
+        },
+        {
+          "id": "blk_pres_identifier_form",
+          "blockType": "form",
+          "entityId": "ent_profil_president",
+          "props": [
+            {
+              "key": "fieldIds",
+              "value": [
+                "fld_pres_numero_momo"
+              ]
+            },
+            {
+              "key": "submitLabel",
+              "value": "Se connecter"
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Connexion en cours…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Connexion impossible"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Vérifiez le numéro Mobile Money de votre profil de président puis réessayez."
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Aucun profil de président trouvé"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Ce numéro n'est rattaché à aucun profil de président. Déposez d'abord votre dossier."
+            }
+          ]
+        },
+        {
+          "id": "blk_pres_identifier_btn_creer",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Créer mon profil de président"
+            },
+            {
+              "key": "kind",
+              "value": "link"
+            },
+            {
+              "key": "actionId",
+              "value": "act_pres_identifier_creer_profil"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_cpt_profil_president_consulter_en_verification",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Vérification en cours"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_pres_verification_entete",
+          "blockType": "detail_header",
+          "entityId": "ent_profil_president",
+          "props": [
+            {
+              "key": "titleFieldId",
+              "value": "fld_pres_nom"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_pres_numero_momo"
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_pres_photo"
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement de votre dossier…"
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Dossier introuvable"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Aucun dossier de président n'est en cours de vérification pour ce compte."
+            },
+            {
+              "key": "errorTitle",
+              "value": "Dossier indisponible"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Votre dossier n'a pas pu être chargé. Réessayez dans un instant."
+            }
+          ]
+        },
+        {
+          "id": "blk_pres_verification_statut",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Dossier en cours de vérification"
+            },
+            {
+              "key": "subtitle",
+              "value": "Votre photo et votre pièce d'identité sont contrôlées. Dès que le badge vérifié est accordé, votre fiche est visible des membres et vous pouvez encaisser les cotisations sur votre numéro Mobile Money."
+            }
+          ]
+        },
+        {
+          "id": "blk_pres_verification_btn_creer_tontine",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Créer ma tontine"
+            },
+            {
+              "key": "icon",
+              "value": "liste"
+            },
+            {
+              "key": "kind",
+              "value": "primary"
+            },
+            {
+              "key": "actionId",
+              "value": "act_pres_verification_creer_tontine"
+            }
+          ]
+        },
+        {
+          "id": "blk_pres_verification_btn_modifier",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Modifier mon dossier"
+            },
+            {
+              "key": "kind",
+              "value": "ghost"
+            },
+            {
+              "key": "actionId",
+              "value": "act_pres_verification_modifier_dossier"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_cpt_tontine_saisir",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Créer une tontine"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_tontine_saisir_header",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Ouvrez votre tontine"
+            },
+            {
+              "key": "subtitle",
+              "value": "Donnez le nom sous lequel vos membres reconnaîtront la tontine et le numéro Mobile Money sur lequel les cotisations seront encaissées."
+            }
+          ]
+        },
+        {
+          "id": "blk_tontine_saisir_dossier",
+          "blockType": "list",
+          "entityId": "ent_profil_president",
+          "props": [
+            {
+              "key": "title",
+              "value": "Le dossier qui ouvre cette tontine"
+            },
+            {
+              "key": "titleFieldId",
+              "value": "fld_pres_nom"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_pres_numero_momo"
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_pres_photo"
+            },
+            {
+              "key": "layout",
+              "value": "rows"
+            },
+            {
+              "key": "pageSize",
+              "value": 1
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement de votre dossier…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Dossier indisponible"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Votre dossier de président n'a pas pu être chargé. Réessayez dans un instant."
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Aucun dossier de président"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Déposez votre photo et votre pièce d'identité avant d'ouvrir une tontine."
+            }
+          ]
+        },
+        {
+          "id": "blk_tontine_saisir_form",
+          "blockType": "form",
+          "entityId": "ent_profil_president",
+          "props": [
+            {
+              "key": "title",
+              "value": "Nom et numéro d'encaissement de la tontine"
+            },
+            {
+              "key": "fieldIds",
+              "value": [
+                "fld_pres_nom",
+                "fld_pres_numero_momo"
+              ]
+            },
+            {
+              "key": "submitLabel",
+              "value": "Continuer"
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Enregistrement de la tontine…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Tontine non enregistrée"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Vérifiez le nom de la tontine et le numéro Mobile Money (+237 6 …) puis réessayez."
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Rien à enregistrer"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Renseignez le nom et le numéro d'encaissement de la tontine."
+            }
+          ]
+        },
+        {
+          "id": "blk_tontine_saisir_regles",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Rythme et pénalités"
+            },
+            {
+              "key": "subtitle",
+              "value": "Les cotisations sont hebdomadaires ou mensuelles ; tout retard entraîne une pénalité, et à chaque échéance le pot est versé au membre dont c'est le tour."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_cpt_tontine_confirmer",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Confirmer la tontine"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_tontine_confirmer_header",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Vérifiez avant d'ouvrir"
+            },
+            {
+              "key": "subtitle",
+              "value": "Le nom de la tontine et le numéro Mobile Money d'encaissement seront visibles des membres qui la rejoindront."
+            }
+          ]
+        },
+        {
+          "id": "blk_tontine_confirmer_engagement",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Votre engagement de président"
+            },
+            {
+              "key": "subtitle",
+              "value": "En ouvrant cette tontine, vous vous engagez à encaisser les cotisations sur ce numéro, à tenir le tableau de bord des paiements et à verser le pot au membre du tour à chaque échéance."
+            }
+          ]
+        },
+        {
+          "id": "blk_tontine_confirmer_btn_ouvrir",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Ouvrir la tontine"
+            },
+            {
+              "key": "icon",
+              "value": "checkmark-outline"
+            },
+            {
+              "key": "kind",
+              "value": "primary"
+            },
+            {
+              "key": "actionId",
+              "value": "act_tontine_confirmer_ouvrir"
+            }
+          ]
+        },
+        {
+          "id": "blk_tontine_confirmer_btn_modifier",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Modifier les informations"
+            },
+            {
+              "key": "kind",
+              "value": "link"
+            },
+            {
+              "key": "actionId",
+              "value": "act_tontine_confirmer_modifier"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_cpt_tontine_consulter_ouverte_acteur_act_president",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Ma tontine ouverte"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_tontine_pres_entete",
+          "blockType": "detail_header",
+          "entityId": "ent_profil_president",
+          "props": [
+            {
+              "key": "titleFieldId",
+              "value": "fld_pres_nom"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_pres_numero_momo"
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_pres_photo"
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement de votre tontine…"
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Tontine introuvable"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Aucune tontine ouverte n'est rattachée à votre profil de président."
+            },
+            {
+              "key": "errorTitle",
+              "value": "Tontine indisponible"
+            },
+            {
+              "key": "errorMessage",
+              "value": "Votre tontine n'a pas pu être chargée. Réessayez dans un instant."
+            }
+          ]
+        },
+        {
+          "id": "blk_tontine_pres_statut",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Tontine ouverte aux adhésions"
+            },
+            {
+              "key": "subtitle",
+              "value": "Les membres peuvent rejoindre votre tontine et cotiser par Orange Money ou MTN Mobile Money sur votre numéro."
+            }
+          ]
+        },
+        {
+          "id": "blk_tontine_pres_membres",
+          "blockType": "list",
+          "entityId": "ent_profil_president",
+          "props": [
+            {
+              "key": "title",
+              "value": "Membres de la tontine"
+            },
+            {
+              "key": "titleFieldId",
+              "value": "fld_pres_nom"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_pres_numero_momo"
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_pres_photo"
+            },
+            {
+              "key": "layout",
+              "value": "rows"
+            },
+            {
+              "key": "searchFieldId",
+              "value": "fld_pres_nom"
+            },
+            {
+              "key": "searchPlaceholder",
+              "value": "Rechercher un membre"
+            },
+            {
+              "key": "sortFieldId",
+              "value": "fld_pres_nom"
+            },
+            {
+              "key": "sortDirection",
+              "value": "asc"
+            },
+            {
+              "key": "pageSize",
+              "value": 10
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Chargement des membres…"
+            },
+            {
+              "key": "errorTitle",
+              "value": "Membres indisponibles"
+            },
+            {
+              "key": "errorMessage",
+              "value": "La liste des membres n'a pas pu être chargée. Réessayez dans un instant."
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Aucun membre pour l'instant"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Partagez votre tontine autour de vous : les membres apparaîtront ici dès leur adhésion."
+            }
+          ]
+        },
+        {
+          "id": "blk_tontine_pres_btn_tableau_bord",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Tableau de bord des paiements"
+            },
+            {
+              "key": "icon",
+              "value": "reglages"
+            },
+            {
+              "key": "kind",
+              "value": "primary"
+            },
+            {
+              "key": "actionId",
+              "value": "act_tontine_pres_voir_tableau_bord"
+            }
+          ]
+        },
+        {
+          "id": "blk_tontine_pres_btn_qui_a_paye",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Qui a payé, qui est en retard"
+            },
+            {
+              "key": "icon",
+              "value": "liste"
+            },
+            {
+              "key": "kind",
+              "value": "ghost"
+            },
+            {
+              "key": "actionId",
+              "value": "act_tontine_pres_voir_historique"
+            }
+          ]
+        },
+        {
+          "id": "blk_tontine_pres_btn_pot",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Le pot et le tour du prochain membre"
+            },
+            {
+              "key": "icon",
+              "value": "calendrier"
+            },
+            {
+              "key": "kind",
+              "value": "ghost"
+            },
+            {
+              "key": "actionId",
+              "value": "act_tontine_pres_voir_pot"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
