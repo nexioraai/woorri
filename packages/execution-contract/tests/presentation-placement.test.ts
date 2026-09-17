@@ -332,3 +332,92 @@ describe("EP-191 · le genre de la racine du compte", () => {
       .not.toContain("jugerGenreRacineCompte");
   });
 });
+
+describe("EP-193 · LE CRIBLE INVERSÉ — un juge ne lit pas ce qui n'est pas encore émis", () => {
+  // CE QUE CE CLIQUET GARDE, ET IL A DÉJÀ COÛTÉ 0,56 $ : l'émission est
+  // SEGMENTÉE. Au segment `base`, `navigation` existe et `screens` PAS ENCORE.
+  // Un juge branché là qui lit `screens` jette `undefined.filter` et arrête le
+  // run — pas au banc d'essai, mais en production, après un appel payant.
+  //
+  // EP-170 avait établi le crible dans un sens : quel segment suffit à un
+  // juge ? Celui-ci le prend à L'ENVERS, comme Youssouf l'a demandé : pour
+  // chaque juge DÉJÀ branché à un segment, ce qu'il lit est-il déjà émis ?
+  //
+  // Ni la liste des juges ni celle des sections ne sont écrites ici : les deux
+  // sont DÉRIVÉES de leurs sources — le motif « une liste écrite deux fois
+  // diverge » est le défaut dominant de ce dépôt, quatorze fois documenté.
+  const RACINE = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
+  const lire = (...p: string[]): string => readFileSync(join(RACINE, ...p), "utf8");
+
+  /** Les sections émises au segment `base` — DÉRIVÉES de PARTS, jamais recopiées. */
+  const sectionsDuSegmentBase = (): string[] => {
+    const src = lire("benchmarks", "air-emission", "emit-v3.mjs");
+    const i = src.indexOf('name: "base"');
+    const debut = src.indexOf("keys: [", i);
+    const bloc = src.slice(debut, src.indexOf("]", debut));
+    return [...bloc.matchAll(/"(\w+)"/g)].map((m) => m[1]!);
+  };
+
+  /** Les juges branchés dans `jugerBase` — DÉRIVÉS de l'appelant réel. */
+  const jugesDuSegmentBase = (): string[] => {
+    const acc = lire("benchmarks", "air-emission", "acceptation.mjs");
+    const i = acc.indexOf("export function jugerBase");
+    const j = acc.indexOf("export function", i + 10);
+    const corps = acc.slice(i, j === -1 ? acc.length : j);
+    return [...new Set([...corps.matchAll(/presentation\.(juger\w+)/g)].map((m) => m[1]!))];
+  };
+
+  /** Ce qu'un juge lit de l'AIR — directement, et via ses helpers locaux. */
+  const sectionsLues = (nom: string, src: string, vus = new Set<string>()): string[] => {
+    if (vus.has(nom)) return [];
+    vus.add(nom);
+    const i = src.search(new RegExp(`(export function|function|const) ${nom}\\b`));
+    if (i === -1) return [];
+    const j = src.indexOf("\nexport function", i + 10);
+    const corps = src.slice(i, j === -1 ? Math.min(src.length, i + 6000) : j);
+    const directes = [...corps.matchAll(/\bair\.(\w+)/g)].map((m) => m[1]!);
+    // Les lectures INDIRECTES comptent aussi : un helper qui lit `air.screens`
+    // fait tomber son appelant exactement pareil.
+    const helpers = [...new Set([...corps.matchAll(/\b([a-z][a-zA-Z0-9]*)\(/g)].map((m) => m[1]!))];
+    const indirectes = helpers.flatMap((h) =>
+      h === nom || /^(if|for|while|return|String|Number|Object|Array|Set|Map)$/.test(h)
+        ? []
+        : sectionsLues(h, src, vus),
+    );
+    return [...new Set([...directes, ...indirectes])];
+  };
+
+  it("AUCUN juge du segment `base` ne lit une section non encore émise", () => {
+    const emises = new Set(sectionsDuSegmentBase());
+    expect(emises.size, "les sections du segment base n'ont pas été dérivées").toBeGreaterThan(0);
+    const src = lire("packages", "execution-contract", "src", "presentation.ts");
+    const juges = jugesDuSegmentBase();
+    expect(juges.length, "aucun juge dérivé — le crible ne mesure rien").toBeGreaterThan(0);
+
+    const fautifs: string[] = [];
+    for (const nom of juges) {
+      const corpsI = src.search(new RegExp(`export function ${nom}\\b`));
+      if (corpsI === -1) continue;
+      const j = src.indexOf("\nexport function", corpsI + 10);
+      const corps = src.slice(corpsI, j === -1 ? src.length : j);
+      for (const section of sectionsLues(nom, src)) {
+        if (emises.has(section)) continue;
+        // Une lecture GARDÉE (`air.x ?? []`, `air.x?.`) ne jette pas.
+        const gardee = new RegExp(`air\\.${section}\\s*\\?\\?|air\\.${section}\\?\\.`).test(corps);
+        if (!gardee) fautifs.push(`${nom} lit air.${section}, non émis au segment base`);
+      }
+    }
+    expect(fautifs, fautifs.join(" · ")).toEqual([]);
+  });
+
+  it("LE CRIBLE MORD — un juge fautif serait vu", () => {
+    // Un cliquet qui ne tombe pas quand on retire ce qu'il garde ne garde rien
+    // (EP-165 ③c). On rejoue ici la logique sur un juge FICTIF qui lit une
+    // section absente : le crible doit le désigner.
+    const emises = new Set(sectionsDuSegmentBase());
+    const faux = "export function jugerFictif(air) {\n  return air.screens.filter((e) => e);\n}";
+    const lues = [...new Set([...faux.matchAll(/\bair\.(\w+)/g)].map((m) => m[1]!))];
+    const manquantes = lues.filter((x) => !emises.has(x));
+    expect(manquantes, "le crible ne verrait pas un juge lisant `screens`").toContain("screens");
+  });
+});
