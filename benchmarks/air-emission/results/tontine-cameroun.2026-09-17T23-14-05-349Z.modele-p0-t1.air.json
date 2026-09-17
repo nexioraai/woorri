@@ -1,0 +1,648 @@
+{
+  "version": "modele-metier/1.2.0",
+  "commerce": "digital",
+  "couverture": {
+    "couverts": [
+      {
+        "terme": "tontine",
+        "noeuds": [
+          "cpt_tontine"
+        ]
+      },
+      {
+        "terme": "président",
+        "noeuds": [
+          "act_president",
+          "cpt_profil_president"
+        ]
+      },
+      {
+        "terme": "crée une tontine",
+        "noeuds": [
+          "par_creer_tontine",
+          "cpt_tontine"
+        ]
+      },
+      {
+        "terme": "nom du président",
+        "noeuds": [
+          "att_pres_nom"
+        ]
+      },
+      {
+        "terme": "numéro Mobile Money",
+        "noeuds": [
+          "att_pres_numero_momo"
+        ]
+      },
+      {
+        "terme": "photo de lui",
+        "noeuds": [
+          "att_pres_photo"
+        ]
+      },
+      {
+        "terme": "pièce d'identité",
+        "noeuds": [
+          "att_pres_piece_identite"
+        ]
+      },
+      {
+        "terme": "profil",
+        "noeuds": [
+          "cpt_profil_president"
+        ]
+      },
+      {
+        "terme": "badge vérifié",
+        "noeuds": [
+          "att_pres_badge_verifie",
+          "cpt_profil_president"
+        ]
+      },
+      {
+        "terme": "membres",
+        "noeuds": [
+          "act_membre",
+          "cpt_membre"
+        ]
+      },
+      {
+        "terme": "rejoindre la tontine",
+        "noeuds": [
+          "cpt_adhesion",
+          "par_rejoindre_et_cotiser"
+        ]
+      },
+      {
+        "terme": "fiche du président",
+        "noeuds": [
+          "cpt_profil_president"
+        ]
+      },
+      {
+        "terme": "cotiser",
+        "noeuds": [
+          "cpt_cotisation"
+        ]
+      },
+      {
+        "terme": "chaque semaine ou chaque mois",
+        "noeuds": [
+          "att_tontine_periodicite",
+          "att_cot_periode"
+        ]
+      },
+      {
+        "terme": "Orange Money",
+        "noeuds": [
+          "att_cot_moyen_paiement"
+        ]
+      },
+      {
+        "terme": "MTN Mobile Money",
+        "noeuds": [
+          "att_cot_moyen_paiement"
+        ]
+      },
+      {
+        "terme": "tableau de bord",
+        "noeuds": [
+          "cpt_cotisation",
+          "par_suivre_et_verser"
+        ]
+      },
+      {
+        "terme": "qui a payé",
+        "noeuds": [
+          "cpt_cotisation"
+        ]
+      },
+      {
+        "terme": "qui est en retard",
+        "noeuds": [
+          "cpt_cotisation"
+        ]
+      },
+      {
+        "terme": "montant dû",
+        "noeuds": [
+          "att_cot_montant_du"
+        ]
+      },
+      {
+        "terme": "pénalité",
+        "noeuds": [
+          "att_cot_penalite"
+        ]
+      },
+      {
+        "terme": "échéance",
+        "noeuds": [
+          "att_pot_echeance",
+          "att_cot_echeance"
+        ]
+      },
+      {
+        "terme": "pot",
+        "noeuds": [
+          "cpt_pot"
+        ]
+      },
+      {
+        "terme": "versé au membre",
+        "noeuds": [
+          "cpt_pot",
+          "att_pot_date_versement"
+        ]
+      },
+      {
+        "terme": "membre dont c'est le tour",
+        "noeuds": [
+          "att_pot_beneficiaire",
+          "att_adhesion_rang"
+        ]
+      }
+    ],
+    "nonRetenus": [
+      {
+        "terme": "Cameroun",
+        "raison": "hors_perimetre_mobile"
+      }
+    ]
+  },
+  "acteurs": [
+    {
+      "id": "act_membre",
+      "nom": "Membre de la tontine"
+    },
+    {
+      "id": "act_president",
+      "nom": "Président de la tontine"
+    }
+  ],
+  "concepts": [
+    {
+      "id": "cpt_tontine",
+      "nom": "Tontine",
+      "donnees": true,
+      "identifiant": "att_tontine_nom",
+      "attributs": [
+        {
+          "id": "att_tontine_nom",
+          "nature": "texte",
+          "requis": true
+        },
+        {
+          "id": "att_tontine_periodicite",
+          "nature": "texte",
+          "requis": true
+        },
+        {
+          "id": "att_tontine_montant_cotisation",
+          "nature": "nombre",
+          "requis": true
+        },
+        {
+          "id": "att_tontine_president",
+          "nature": "reference",
+          "requis": true
+        },
+        {
+          "id": "att_tontine_nombre_membres",
+          "nature": "nombre",
+          "requis": false
+        }
+      ],
+      "etats": [
+        {
+          "id": "brouillon",
+          "transitions": [
+            {
+              "vers": "ouverte",
+              "geste": "confirmer"
+            }
+          ]
+        },
+        {
+          "id": "ouverte"
+        }
+      ]
+    },
+    {
+      "id": "cpt_profil_president",
+      "nom": "Profil du président",
+      "donnees": true,
+      "identifiant": "att_pres_nom",
+      "attributs": [
+        {
+          "id": "att_pres_nom",
+          "nature": "texte",
+          "requis": true
+        },
+        {
+          "id": "att_pres_numero_momo",
+          "nature": "texte",
+          "requis": true
+        },
+        {
+          "id": "att_pres_photo",
+          "nature": "media",
+          "requis": true
+        },
+        {
+          "id": "att_pres_piece_identite",
+          "nature": "media",
+          "requis": true
+        },
+        {
+          "id": "att_pres_badge_verifie",
+          "nature": "booleen",
+          "requis": false
+        }
+      ],
+      "etats": [
+        {
+          "id": "incomplet",
+          "transitions": [
+            {
+              "vers": "en_verification",
+              "geste": "saisir"
+            }
+          ]
+        },
+        {
+          "id": "en_verification",
+          "transitions": [
+            {
+              "vers": "verifie",
+              "exogene": "evenement_externe"
+            }
+          ]
+        },
+        {
+          "id": "verifie"
+        }
+      ]
+    },
+    {
+      "id": "cpt_membre",
+      "nom": "Membre",
+      "donnees": true,
+      "identifiant": "att_membre_nom",
+      "attributs": [
+        {
+          "id": "att_membre_nom",
+          "nature": "texte",
+          "requis": true
+        },
+        {
+          "id": "att_membre_telephone",
+          "nature": "texte",
+          "requis": true
+        },
+        {
+          "id": "att_membre_numero_momo",
+          "nature": "texte",
+          "requis": false
+        }
+      ]
+    },
+    {
+      "id": "cpt_adhesion",
+      "nom": "Adhésion à la tontine",
+      "donnees": true,
+      "identifiant": "att_adhesion_date",
+      "attributs": [
+        {
+          "id": "att_adhesion_membre",
+          "nature": "reference",
+          "requis": true
+        },
+        {
+          "id": "att_adhesion_tontine",
+          "nature": "reference",
+          "requis": true
+        },
+        {
+          "id": "att_adhesion_date",
+          "nature": "date",
+          "requis": true
+        },
+        {
+          "id": "att_adhesion_rang",
+          "nature": "nombre",
+          "requis": false
+        }
+      ],
+      "etats": [
+        {
+          "id": "demandee",
+          "transitions": [
+            {
+              "vers": "active",
+              "geste": "confirmer"
+            }
+          ]
+        },
+        {
+          "id": "active"
+        }
+      ]
+    },
+    {
+      "id": "cpt_cotisation",
+      "nom": "Cotisation",
+      "donnees": true,
+      "identifiant": "att_cot_echeance",
+      "attributs": [
+        {
+          "id": "att_cot_membre",
+          "nature": "reference",
+          "requis": true
+        },
+        {
+          "id": "att_cot_montant_du",
+          "nature": "nombre",
+          "requis": true
+        },
+        {
+          "id": "att_cot_moyen_paiement",
+          "nature": "texte",
+          "requis": true
+        },
+        {
+          "id": "att_cot_echeance",
+          "nature": "date",
+          "requis": true
+        },
+        {
+          "id": "att_cot_periode",
+          "nature": "intervalle",
+          "requis": false
+        },
+        {
+          "id": "att_cot_penalite",
+          "nature": "nombre",
+          "requis": false
+        },
+        {
+          "id": "att_cot_date_paiement",
+          "nature": "date",
+          "requis": false
+        }
+      ],
+      "etats": [
+        {
+          "id": "due",
+          "transitions": [
+            {
+              "vers": "payee",
+              "geste": "payer"
+            },
+            {
+              "vers": "en_retard",
+              "exogene": "temps"
+            }
+          ]
+        },
+        {
+          "id": "en_retard",
+          "transitions": [
+            {
+              "vers": "payee",
+              "geste": "payer"
+            }
+          ]
+        },
+        {
+          "id": "payee"
+        }
+      ]
+    },
+    {
+      "id": "cpt_pot",
+      "nom": "Pot de la tontine",
+      "donnees": true,
+      "identifiant": "att_pot_echeance",
+      "attributs": [
+        {
+          "id": "att_pot_montant",
+          "nature": "nombre",
+          "requis": true
+        },
+        {
+          "id": "att_pot_echeance",
+          "nature": "date",
+          "requis": true
+        },
+        {
+          "id": "att_pot_beneficiaire",
+          "nature": "reference",
+          "requis": true
+        },
+        {
+          "id": "att_pot_date_versement",
+          "nature": "date",
+          "requis": false
+        }
+      ],
+      "etats": [
+        {
+          "id": "en_constitution",
+          "transitions": [
+            {
+              "vers": "verse",
+              "exogene": "temps"
+            }
+          ]
+        },
+        {
+          "id": "verse"
+        }
+      ]
+    }
+  ],
+  "relations": [
+    {
+      "de": "cpt_profil_president",
+      "vers": "cpt_tontine",
+      "nature": "possede"
+    },
+    {
+      "de": "cpt_tontine",
+      "vers": "cpt_profil_president",
+      "nature": "reference"
+    },
+    {
+      "de": "cpt_tontine",
+      "vers": "cpt_adhesion",
+      "nature": "possede"
+    },
+    {
+      "de": "cpt_tontine",
+      "vers": "cpt_cotisation",
+      "nature": "possede"
+    },
+    {
+      "de": "cpt_tontine",
+      "vers": "cpt_pot",
+      "nature": "possede"
+    },
+    {
+      "de": "cpt_adhesion",
+      "vers": "cpt_membre",
+      "nature": "reference"
+    },
+    {
+      "de": "cpt_cotisation",
+      "vers": "cpt_membre",
+      "nature": "reference"
+    },
+    {
+      "de": "cpt_pot",
+      "vers": "cpt_membre",
+      "nature": "reference"
+    }
+  ],
+  "parcours": [
+    {
+      "id": "par_rejoindre_et_cotiser",
+      "besoin": "Découvrir les tontines, vérifier le président, rejoindre et payer sa cotisation par Mobile Money",
+      "acteur": "act_membre",
+      "priorite": 1,
+      "etapes": [
+        {
+          "concept": "cpt_tontine",
+          "geste": "decouvrir"
+        },
+        {
+          "concept": "cpt_tontine",
+          "geste": "choisir"
+        },
+        {
+          "concept": "cpt_tontine",
+          "geste": "consulter",
+          "etat": "ouverte"
+        },
+        {
+          "concept": "cpt_profil_president",
+          "geste": "decouvrir"
+        },
+        {
+          "concept": "cpt_profil_president",
+          "geste": "consulter",
+          "etat": "verifie"
+        },
+        {
+          "concept": "cpt_membre",
+          "geste": "s_identifier"
+        },
+        {
+          "concept": "cpt_adhesion",
+          "geste": "saisir"
+        },
+        {
+          "concept": "cpt_adhesion",
+          "geste": "confirmer"
+        },
+        {
+          "concept": "cpt_adhesion",
+          "geste": "consulter",
+          "etat": "active"
+        },
+        {
+          "concept": "cpt_cotisation",
+          "geste": "decouvrir"
+        },
+        {
+          "concept": "cpt_cotisation",
+          "geste": "payer",
+          "preconditions": [
+            {
+              "concept": "cpt_adhesion",
+              "etat": "active"
+            }
+          ]
+        },
+        {
+          "concept": "cpt_cotisation",
+          "geste": "consulter",
+          "etat": "payee"
+        }
+      ]
+    },
+    {
+      "id": "par_creer_tontine",
+      "besoin": "Créer une tontine et faire vérifier son profil de président",
+      "acteur": "act_president",
+      "priorite": 2,
+      "etapes": [
+        {
+          "concept": "cpt_profil_president",
+          "geste": "saisir"
+        },
+        {
+          "concept": "cpt_profil_president",
+          "geste": "s_identifier"
+        },
+        {
+          "concept": "cpt_profil_president",
+          "geste": "consulter",
+          "etat": "en_verification"
+        },
+        {
+          "concept": "cpt_tontine",
+          "geste": "saisir"
+        },
+        {
+          "concept": "cpt_tontine",
+          "geste": "confirmer"
+        },
+        {
+          "concept": "cpt_tontine",
+          "geste": "consulter",
+          "etat": "ouverte"
+        }
+      ]
+    },
+    {
+      "id": "par_suivre_et_verser",
+      "besoin": "Suivre qui a payé et qui est en retard, puis constater le versement du pot au membre dont c'est le tour",
+      "acteur": "act_president",
+      "priorite": 3,
+      "etapes": [
+        {
+          "concept": "cpt_profil_president",
+          "geste": "s_identifier"
+        },
+        {
+          "concept": "cpt_tontine",
+          "geste": "decouvrir"
+        },
+        {
+          "concept": "cpt_tontine",
+          "geste": "choisir"
+        },
+        {
+          "concept": "cpt_cotisation",
+          "geste": "consulter_historique"
+        },
+        {
+          "concept": "cpt_cotisation",
+          "geste": "consulter",
+          "etat": "en_retard"
+        },
+        {
+          "concept": "cpt_pot",
+          "geste": "decouvrir"
+        },
+        {
+          "concept": "cpt_pot",
+          "geste": "consulter",
+          "etat": "verse"
+        }
+      ]
+    }
+  ]
+}
