@@ -287,7 +287,17 @@ export function jugerGenreRacineCompte(
   // Sans concept d'identité au modèle, il n'y a pas d'espace compte à nommer :
   // l'absence est alors le cas JUSTE, et l'exiger fabriquerait un écran.
   if (contexte.ecransDIdentite.length === 0) return [];
-  const portent = air.screens.filter((e) => e.purpose === GENRE_RACINE_COMPTE);
+  // EP-192 — `?? []` PARCE QUE L'ÉMISSION EST SEGMENTÉE, ET CE DÉFAUT A COÛTÉ
+  // UN RUN. Branché au segment `base`, ce juge lisait `air.screens` alors que
+  // les écrans ne sont émis QUE deux segments plus loin : `undefined.filter`,
+  // arrêt technique à 0,56 $. Mes tests ne l'ont pas vu parce qu'ils lui
+  // passaient TOUS un document complet — la même faute qu'EP-191 réparait,
+  // commise en le réparant : un test qui fournit ce que la chaîne ne fournit
+  // pas ne mesure pas la chaîne.
+  //
+  // Le juge est DÉPLACÉ au segment qui porte les écrans ; ce `?? []` est la
+  // seconde barrière, pour qu'aucun appelant futur ne puisse le faire tomber.
+  const portent = (air.screens ?? []).filter((e) => e.purpose === GENRE_RACINE_COMPTE);
   if (portent.length === 0) {
     return [
       {

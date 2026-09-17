@@ -396,11 +396,6 @@ export function jugerBase(air, contexte) {
   };
   return [
     ...presentation.jugerPrimitivesDeNavigation(air, ctx),
-    // EP-191 — LE GENRE DE LA RACINE, JUGÉ AU SEGMENT `base`. Il ne lit que
-    // `screens[].purpose` et le contexte : il n'attend aucun segment ultérieur,
-    // et le dire tôt évite d'émettre sept segments sur un document dont le
-    // compte ne sera jamais intitulé.
-    ...presentation.jugerGenreRacineCompte(air, ctx),
     ...presentation.jugerPositionPrimitives(air, ctx),
     ...presentation.jugerLibellesPrimitifs(air, ctx),
     // EP-171 ① — QUATRIÈME JUGE DE LA BARRE, DÉPLACÉ SUR MESURE.
@@ -575,6 +570,11 @@ export function jugerAcceptation(air, prescriptif, intention) {
   );
   // EP-137 — le CONTENU de l'espace compte est lui aussi une primitive.
   out.push(...presentation.jugerEspaceCompte(air, { ecransDIdentite }));
+  // EP-192 — LE GENRE DE LA RACINE, ICI ET PAS AU SEGMENT `base`. Il lit
+  // `screens[].purpose` ; au segment `base` les écrans n'existent pas encore,
+  // et l'y avoir branché a coûté un arrêt technique. Sa place est auprès de
+  // `jugerEspaceCompte`, qui lit les mêmes écrans et reçoit le même contexte.
+  out.push(...presentation.jugerGenreRacineCompte(air, { ecransDIdentite }));
   // EP-147 ① — la divulgation se rencontre dans l'usage normal, elle ne se
   // range pas dans un menu : son placement est jugé à part.
   out.push(

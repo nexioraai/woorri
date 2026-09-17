@@ -1,0 +1,214 @@
+{
+  "airSchemaVersion": "1.26.0",
+  "projectId": "prj_sahel_immo",
+  "app": {
+    "name": "Sahel Immo",
+    "slug": "sahel-immo",
+    "description": [
+      {
+        "locale": "fr",
+        "text": "Le marché immobilier du Tchad et du Sahel : agences et particuliers publient leurs biens à vendre ou à louer avec photos, prix en francs CFA, surface, nombre de pièces et quartier. Les acheteurs et locataires parcourent, filtrent par ville, quartier, prix et type de bien, consultent la fiche complète et contactent directement le vendeur par téléphone ou WhatsApp pour organiser une visite. Aucun paiement en ligne."
+      }
+    ],
+    "locales": {
+      "userLanguage": "fr",
+      "appLocales": [
+        "fr"
+      ],
+      "defaultAppLocale": "fr",
+      "contentLocales": [
+        "fr"
+      ],
+      "rtlSupported": false
+    },
+    "distribution": {
+      "owner": "sahel-immo",
+      "projectId": "prj_sahel_immo"
+    }
+  },
+  "navigation": {
+    "entryScreenId": "scr_entree",
+    "primary": {
+      "destinations": [
+        {
+          "routeId": "nav_entree",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Accueil"
+            }
+          ],
+          "order": 0,
+          "icon": "accueil"
+        },
+        {
+          "routeId": "nav_compte_s_identifier",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Compte"
+            }
+          ],
+          "order": 1,
+          "icon": "compte"
+        }
+      ]
+    },
+    "routes": [
+      {
+        "id": "nav_entree",
+        "screenId": "scr_entree",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Accueil"
+          }
+        ]
+      },
+      {
+        "id": "nav_annonce_choisir",
+        "screenId": "scr_cpt_annonce_choisir",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Annonces"
+          }
+        ]
+      },
+      {
+        "id": "nav_annonce_consulter_publiee",
+        "screenId": "scr_cpt_annonce_consulter_publiee",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Fiche du bien"
+          }
+        ]
+      },
+      {
+        "id": "nav_annonce_contacter_publiee",
+        "screenId": "scr_cpt_annonce_contacter_publiee",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Contacter le vendeur"
+          }
+        ]
+      },
+      {
+        "id": "nav_compte_s_identifier",
+        "screenId": "scr_cpt_compte_s_identifier",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Mon espace"
+          }
+        ]
+      },
+      {
+        "id": "nav_compte_saisir",
+        "screenId": "scr_cpt_compte_saisir",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Créer un compte"
+          }
+        ]
+      },
+      {
+        "id": "nav_annonce_saisir",
+        "screenId": "scr_cpt_annonce_saisir",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Publier une annonce"
+          }
+        ]
+      },
+      {
+        "id": "nav_annonce_confirmer",
+        "screenId": "scr_cpt_annonce_confirmer",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Annonce publiée"
+          }
+        ]
+      },
+      {
+        "id": "nav_annonce_consulter_publiee_annonceur",
+        "screenId": "scr_cpt_annonce_consulter_publiee_acteur_act_annonceur",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Mon annonce en ligne"
+          }
+        ]
+      },
+      {
+        "id": "nav_annonce_consulter_historique",
+        "screenId": "scr_cpt_annonce_consulter_historique",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Mes annonces"
+          }
+        ]
+      },
+      {
+        "id": "nav_annonce_choisir_annonceur",
+        "screenId": "scr_cpt_annonce_choisir_acteur_act_annonceur",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Gérer mon annonce"
+          }
+        ]
+      },
+      {
+        "id": "nav_annonce_retirer",
+        "screenId": "scr_cpt_annonce_retirer",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Retirer l'annonce"
+          }
+        ]
+      },
+      {
+        "id": "nav_annonce_consulter_retiree",
+        "screenId": "scr_cpt_annonce_consulter_retiree",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Annonce retirée"
+          }
+        ]
+      }
+    ]
+  },
+  "design": {
+    "theme": "sahel_argile"
+  },
+  "network": {
+    "policy": "deny_by_default",
+    "allowedDomains": [
+      "api.sahel-immo.app",
+      "picsum.photos"
+    ]
+  },
+  "native": {
+    "minIosVersion": "15.0",
+    "minAndroidSdk": 24
+  },
+  "compliance": {
+    "commerceClass": "physical_or_offapp",
+    "accountDeletionRequired": true,
+    "dataCollected": [
+      "contact_info",
+      "identifiers",
+      "user_content",
+      "usage_data"
+    ]
+  }
+}

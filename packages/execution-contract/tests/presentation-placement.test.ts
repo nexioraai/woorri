@@ -292,6 +292,24 @@ describe("EP-191 · le genre de la racine du compte", () => {
     expect(codes(jugerGenreRacineCompte(baseVerte(), { ecransDIdentite: [] }))).toEqual([]);
   });
 
+  it("EP-192 — UN DOCUMENT SANS `screens` NE LE FAIT PAS TOMBER", () => {
+    // LE DÉFAUT QUE CE TEST GARDE, ET IL A COÛTÉ UN RUN À 0,56 $ : l'émission
+    // est SEGMENTÉE. Au segment `base`, `navigation` existe déjà et `screens`
+    // PAS ENCORE. Ce juge y était branché ; `undefined.filter` a arrêté le run
+    // au troisième appel.
+    //
+    // ET AUCUN DES CINQ TESTS AU-DESSUS NE POUVAIT LE VOIR : tous lui passent
+    // un document COMPLET. C'est la faute même qu'EP-191 réparait — un test
+    // qui fournit ce que la chaîne ne fournit pas ne mesure pas la chaîne —
+    // recommise en la réparant.
+    const sansEcrans = { ...baseVerte(), screens: undefined } as unknown as ReturnType<typeof air>;
+    expect(() => jugerGenreRacineCompte(sansEcrans, CTX)).not.toThrow();
+    // Et il le DIT plutôt que de se taire : un compte attendu reste manquant.
+    expect(codes(jugerGenreRacineCompte(sansEcrans, CTX))).toEqual([
+      "PRESENTATION_GENRE_RACINE_COMPTE_ABSENT",
+    ]);
+  });
+
   it("LE CLIQUET — le juge a un APPELANT (EP-161)", () => {
     // Un juge sans appelant ne juge rien. Les deux chemins réels l'invoquent :
     // la validation du contrat, et le segment `base` de l'émission.
@@ -305,6 +323,12 @@ describe("EP-191 · le genre de la racine du compte", () => {
       join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "benchmarks", "air-emission", "acceptation.mjs"),
       "utf8",
     );
-    expect(acc, "le juge n'est plus appelé au segment base").toContain("jugerGenreRacineCompte");
+    expect(acc, "le juge n'est plus appelé dans l'émission").toContain("jugerGenreRacineCompte");
+    // EP-192 — ET IL NE DOIT PAS REVENIR AU SEGMENT `base`, où les écrans
+    // n'existent pas encore. `jugerBase` est la frontière : le juge est
+    // AILLEURS, auprès de ceux qui lisent `screens`.
+    const base = acc.slice(acc.indexOf("export function jugerBase"), acc.indexOf("export function", acc.indexOf("export function jugerBase") + 10));
+    expect(base, "le juge est retourné au segment base, où screens est undefined")
+      .not.toContain("jugerGenreRacineCompte");
   });
 });
