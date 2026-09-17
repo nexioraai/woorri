@@ -21,7 +21,7 @@ import {
 // 1.7.1 (E3.3, D-131) : provenance APLANIE (sourceKind/sourceIntegrationId/
 //   sourceDomain/sourceRefreshSeconds) — l'union 1.7.0 dépassait la limite
 //   réelle de grammaire de l'API (classe D-078) ; sémantique inchangée.
-export const AIR_SCHEMA_VERSION = "1.25.0";
+export const AIR_SCHEMA_VERSION = "1.26.0";
 
 export const semverSchema = z.string().regex(/^\d+\.\d+\.\d+$/);
 export const sha256Schema = z.string().regex(/^[0-9a-f]{64}$/);
@@ -267,6 +267,28 @@ const screenSchema = z.strictObject({
       "privacy_consent",
       // 1.25.0 (EP-147) — le RETRAIT du consentement (5.1.1(ii)).
       "consent_withdraw",
+      // 1.26.0 (EP-191) — LA RACINE DE L'ESPACE COMPTE, et non l'une de ses
+      // sous-surfaces. Les autres genres nomment ce qui VIT dans le compte
+      // (`account_create`, `account_delete`, `settings`…) ; celui-ci nomme le
+      // LIEU qui les héberge — la destination que la barre inférieure doit
+      // atteindre et que le compilateur doit intituler « Compte ».
+      //
+      // POURQUOI AU DOCUMENT, ET NON EN OPTION DU COMPILATEUR. EP-180 avait
+      // posé la règle « le compilateur pose les primitives » en lisant une
+      // option `ecransDIdentite`. MESURÉ EN EP-190 ⑤ : AUCUN des 9 sites
+      // d'appel réels ne passait cette option. Le compilateur posait donc
+      // « Accueil » — dérivé d'`entryScreenId`, TOUJOURS présent au document —
+      // et ne posait JAMAIS « Compte ». Le défaut a survécu à QUATRE runs
+      // (« Annonces », « Mon compte », « Mon espace ») et c'est lui que
+      // Youssouf a vu sur son téléphone.
+      //
+      // UN PARAMÈTRE QUE NEUF APPELANTS SUR NEUF OUBLIENT N'EST PAS UN
+      // PARAMÈTRE : c'est une branche morte qui se croit vivante. Le genre
+      // vit donc AU DOCUMENT, là où `entryScreenId` vit déjà — le seul
+      // endroit qu'aucun appelant ne peut oublier de transmettre, puisqu'il
+      // EST l'entrée. C'est la doctrine que ce schéma énonce plus bas :
+      // le DOCUMENT nomme, le moteur dessine.
+      "account_home",
     ])
     .optional(),
   /**

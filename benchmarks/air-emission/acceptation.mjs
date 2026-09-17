@@ -396,6 +396,11 @@ export function jugerBase(air, contexte) {
   };
   return [
     ...presentation.jugerPrimitivesDeNavigation(air, ctx),
+    // EP-191 — LE GENRE DE LA RACINE, JUGÉ AU SEGMENT `base`. Il ne lit que
+    // `screens[].purpose` et le contexte : il n'attend aucun segment ultérieur,
+    // et le dire tôt évite d'émettre sept segments sur un document dont le
+    // compte ne sera jamais intitulé.
+    ...presentation.jugerGenreRacineCompte(air, ctx),
     ...presentation.jugerPositionPrimitives(air, ctx),
     ...presentation.jugerLibellesPrimitifs(air, ctx),
     // EP-171 ① — QUATRIÈME JUGE DE LA BARRE, DÉPLACÉ SUR MESURE.

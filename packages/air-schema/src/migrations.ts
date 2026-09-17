@@ -339,6 +339,23 @@ export const AIR_MIGRATIONS: readonly AirMigration[] = [
       "pouvoir le reprendre n'est pas un accord (5.1.1(ii)). Migration IDENTITÉ.",
     migrate: (document) => document,
   },
+  {
+    from: "1.25.0",
+    to: "1.26.0",
+    description:
+      "AIR 1.26.0 (EP-191) : genre `account_home` — la RACINE de l'espace " +
+      "compte, le lieu qui héberge les autres genres au lieu d'en être un. " +
+      "POSÉ PARCE QU'UNE OPTION DE COMPILATEUR NE SUFFIT PAS : EP-180 faisait " +
+      "lire `options.ecransDIdentite` pour intituler « Compte », et EP-190 ⑤ a " +
+      "mesuré qu'AUCUN des 9 sites d'appel réels ne la passait — le libellé " +
+      "n'a donc JAMAIS été posé, quatre runs durant. Le genre vit au DOCUMENT, " +
+      "que nul appelant ne peut oublier de transmettre. " +
+      "Migration IDENTITÉ — aucun document existant ne change, et aucun écran " +
+      "ne se voit ATTRIBUER le genre : l'attribuer d'office supposerait de " +
+      "deviner lequel des écrans est le compte, ce qui est exactement la " +
+      "déduction après coup que ce genre supprime.",
+    migrate: (document) => document,
+  },
 ];
 
 export class AirMigrationError extends Error {

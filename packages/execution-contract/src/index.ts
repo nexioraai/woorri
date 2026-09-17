@@ -60,6 +60,8 @@ export {
   jugerLibellesPrimitifs,
   jugerRetourAtteignable,
   jugerPositionPrimitives,
+  GENRE_RACINE_COMPTE,
+  jugerGenreRacineCompte,
   jugerPrimitivesDeNavigation,
   surfacesAttendues,
   SURFACES_DE_COMPTE,

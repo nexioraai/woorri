@@ -191,7 +191,16 @@ describe("EP-137 · CLIQUETS (règle d'EP-132)", () => {
     // EP-147 — `privacy_consent` a QUITTÉ les surfaces de compte : sa place
     // est jugée ailleurs, parce que Google exige qu'elle ne soit pas dans un
     // menu. Le schéma porte donc un genre de plus que cette table.
-    expect(duSchema).toEqual([...Object.keys(SURFACES_DE_COMPTE), "privacy_consent"].sort());
+    //
+    // EP-191 — `account_home` n'y entre pas NON PLUS, et pour une raison de
+    // nature différente : les surfaces de compte sont ce qui VIT dans le
+    // compte, et `SURFACES_DE_COMPTE` sert à calculer les écrans DUS à
+    // l'intérieur. La racine n'est pas due à l'intérieur d'elle-même — l'y
+    // inscrire ferait réclamer au juge un écran « compte » DANS le compte.
+    // Le schéma nomme donc un LIEU de plus que cette table ne nomme de
+    // contenus, et les deux listes restent solidaires par ce cliquet.
+    const HORS_TABLE = ["privacy_consent", "account_home"];
+    expect(duSchema).toEqual([...Object.keys(SURFACES_DE_COMPTE), ...HORS_TABLE].sort());
   });
 
   it("chaque surface déclare son fondement, et une source si elle en a une", () => {
@@ -208,6 +217,6 @@ describe("EP-137 · CLIQUETS (règle d'EP-132)", () => {
 
   it("le schéma qui porte ce champ est la version courante", () => {
     // EP-145 — montée à 1.24.0 avec le genre `privacy_consent`.
-    expect(AIR_SCHEMA_VERSION).toBe("1.25.0");
+    expect(AIR_SCHEMA_VERSION).toBe("1.26.0");
   });
 });

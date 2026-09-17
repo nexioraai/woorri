@@ -265,6 +265,71 @@ export interface ContextePrimitives {
   readonly ecransDIdentite: readonly string[];
 }
 
+/**
+ * EP-191 — CE QUE LE MOTEUR EXIGE, IL LE VÉRIFIE.
+ *
+ * LEÇON D'EP-188 ①, PAYÉE UNE FOIS DÉJÀ : une règle transmise au générateur
+ * et jamais vérifiée n'est pas une règle, c'est un vœu — le document déclarait
+ * alors 3 entités pour 5 concepts et rien ne l'avait dit. Le genre
+ * `account_home` serait exactement le même vœu : le compilateur le LIT pour
+ * intituler « Compte », donc son absence rend le libellé muet, en silence,
+ * comme l'option l'était avant lui.
+ *
+ * FAIL-CLOSED, et sur les DEUX faces : absent alors que le modèle porte une
+ * identité, il manque ; posé sur un écran qui ne porte pas l'identité, il
+ * ment. Un genre qui désigne le mauvais écran est pire qu'un genre absent —
+ * il intitule « Compte » une surface qui n'en est pas une.
+ */
+export function jugerGenreRacineCompte(
+  air: Air,
+  contexte: { readonly ecransDIdentite: readonly string[] },
+): readonly PlacementFinding[] {
+  // Sans concept d'identité au modèle, il n'y a pas d'espace compte à nommer :
+  // l'absence est alors le cas JUSTE, et l'exiger fabriquerait un écran.
+  if (contexte.ecransDIdentite.length === 0) return [];
+  const portent = air.screens.filter((e) => e.purpose === GENRE_RACINE_COMPTE);
+  if (portent.length === 0) {
+    return [
+      {
+        code: "PRESENTATION_GENRE_RACINE_COMPTE_ABSENT",
+        path: "screens[].purpose",
+        message:
+          `aucun écran ne porte le genre « ${GENRE_RACINE_COMPTE} » alors que le ` +
+          `modèle porte une identité (écrans concernés : ` +
+          `${contexte.ecransDIdentite.join(", ")}). Le compilateur lit CE genre ` +
+          `pour intituler la destination « Compte » : sans lui le libellé reste ` +
+          `celui qu'a écrit le générateur, et le défaut a déjà traversé quatre ` +
+          `runs jusqu'à l'appareil. (DÉCISION PRODUIT — aucune convention ne le nomme.)`,
+      },
+    ];
+  }
+  const out: PlacementFinding[] = [];
+  if (portent.length > 1) {
+    out.push({
+      code: "PRESENTATION_GENRE_RACINE_COMPTE_MULTIPLE",
+      path: "screens[].purpose",
+      message:
+        `${portent.length} écrans portent « ${GENRE_RACINE_COMPTE} » ` +
+        `(${portent.map((e) => e.id).join(", ")}) : l'espace compte est UN lieu, ` +
+        `et deux racines en feraient deux libellés « Compte » dans la même barre.`,
+    });
+  }
+  for (const e of portent) {
+    if (!contexte.ecransDIdentite.includes(e.id)) {
+      out.push({
+        code: "PRESENTATION_GENRE_RACINE_COMPTE_DEPLACE",
+        path: `screens[${e.id}].purpose`,
+        message:
+          `l'écran "${e.id}" porte « ${GENRE_RACINE_COMPTE} » sans porter ` +
+          `l'identité du modèle (écrans d'identité : ` +
+          `${contexte.ecransDIdentite.join(", ")}) : il serait intitulé ` +
+          `« Compte » alors qu'il n'est pas le compte.`,
+      });
+    }
+  }
+  return out;
+}
+
 export function jugerPrimitivesDeNavigation(
   air: Air,
   contexte: ContextePrimitives,
@@ -399,6 +464,23 @@ export const SURFACES_DE_COMPTE = {
 // compte — reprendre son accord est un réglage durable. Seule la DIVULGATION
 // doit se rencontrer hors d'un menu (Google, User Data).
 export const GENRES_HORS_COMPTE = ["privacy_consent"] as const;
+
+/**
+ * EP-191 — LE GENRE DE LA RACINE, ET POURQUOI IL EST SEUL DE SON ESPÈCE.
+ *
+ * `SURFACES_DE_COMPTE` nomme ce qui VIT dans le compte, et sert à calculer
+ * les écrans DUS à l'intérieur. La racine n'est pas due à l'intérieur
+ * d'elle-même : l'y inscrire ferait réclamer un écran « compte » DANS le
+ * compte. Elle est aussi la seule à avoir sa place dans `navigation.primary`,
+ * là où les autres y sont justement INTERDITES.
+ *
+ * CE QU'ELLE RÉPARE. Le compte n'était nommé NULLE PART au document : il se
+ * dérivait du modèle métier, hors de l'AIR, et se transmettait au compilateur
+ * par une option. EP-190 ⑤ a mesuré que les NEUF appelants réels l'omettaient
+ * — le libellé « Compte » n'a donc jamais été posé, quatre runs durant.
+ * Un fait que le document ne porte pas est un fait que la chaîne perd.
+ */
+export const GENRE_RACINE_COMPTE = "account_home";
 
 export type GenreEcran = keyof typeof SURFACES_DE_COMPTE;
 
@@ -928,6 +1010,7 @@ export function jugerPlacement(
       ? []
       : [
           ...jugerPrimitivesDeNavigation(air, contexte),
+          ...jugerGenreRacineCompte(air, contexte),
           ...jugerPositionPrimitives(air, contexte),
           ...jugerLibellesPrimitifs(air, contexte),
           ...jugerBasDeCompte(air, contexte),

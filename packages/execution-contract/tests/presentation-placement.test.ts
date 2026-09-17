@@ -5,11 +5,15 @@
 // dérivent des CONVENTIONS documentées des plateformes, citées dans
 // `presentation.ts` [S1][S2][S3]. Les tests vérifient donc deux choses :
 // que la convention est appliquée, et que ce qui la respecte reste VERT.
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import {
   jugerBarreInferieure,
   jugerExclusivite,
   jugerPositionRecherche,
+  jugerGenreRacineCompte,
   jugerPrimitivesDeNavigation,
 } from "../src/presentation.ts";
 import { L, P, air } from "./fixtures.ts";
@@ -233,5 +237,74 @@ describe("EP-130 · ③ primitives — DÉCISION PRODUIT, pas convention", () =>
     });
     expect(codes(f)).toEqual(["PRESENTATION_ESPACE_COMPTE_ABSENT"]);
     expect(f[0]!.message).toContain("AUCUN concept d'identité");
+  });
+});
+
+describe("EP-191 · le genre de la racine du compte", () => {
+  // CE QUE CE JUGE GARDE, ET IL A ÉTÉ PAYÉ QUATRE RUNS : le compte n'était
+  // nommé NULLE PART au document. Il se dérivait du modèle, hors de l'AIR, et
+  // se transmettait au compilateur par une option que les NEUF appelants réels
+  // omettaient (EP-190 ⑤). Le libellé « Compte » n'a donc jamais été posé, et
+  // le défaut s'est vu sur l'appareil. Le genre vit désormais au document —
+  // et ce qu'un moteur exige, il doit le vérifier, sinon ce n'est qu'un vœu.
+  const avecGenre = (ecran: string) => {
+    const a = baseVerte();
+    return {
+      ...a,
+      screens: a.screens.map((e) => (e.id === ecran ? { ...e, purpose: "account_home" } : e)),
+    } as ReturnType<typeof air>;
+  };
+
+  it("ABSENT alors que le modèle porte une identité — il manque", () => {
+    expect(codes(jugerGenreRacineCompte(baseVerte(), CTX))).toEqual([
+      "PRESENTATION_GENRE_RACINE_COMPTE_ABSENT",
+    ]);
+  });
+
+  it("POSÉ SUR L'ÉCRAN D'IDENTITÉ — rien à dire", () => {
+    expect(codes(jugerGenreRacineCompte(avecGenre("scr_c"), CTX))).toEqual([]);
+  });
+
+  it("POSÉ AILLEURS — il ment, et c'est pire qu'absent", () => {
+    // Un genre qui désigne le mauvais écran intitule « Compte » une surface
+    // qui n'en est pas une : l'utilisateur y cherche son compte et ne le
+    // trouve pas, sans qu'aucun juge ne l'ait dit.
+    expect(codes(jugerGenreRacineCompte(avecGenre("scr_b"), CTX))).toEqual([
+      "PRESENTATION_GENRE_RACINE_COMPTE_DEPLACE",
+    ]);
+  });
+
+  it("POSÉ DEUX FOIS — l'espace compte est UN lieu", () => {
+    const a = avecGenre("scr_c");
+    const deux = {
+      ...a,
+      screens: a.screens.map((e) => (e.id === "scr_b" ? { ...e, purpose: "account_home" } : e)),
+    } as ReturnType<typeof air>;
+    expect(codes(jugerGenreRacineCompte(deux, CTX))).toEqual([
+      "PRESENTATION_GENRE_RACINE_COMPTE_MULTIPLE",
+      "PRESENTATION_GENRE_RACINE_COMPTE_DEPLACE",
+    ]);
+  });
+
+  it("SANS IDENTITÉ AU MODÈLE — le juge se tait, il ne fabrique pas d'écran", () => {
+    // L'absence est ici le cas JUSTE : une application sans comptes n'a pas
+    // d'espace compte et n'en gagne pas un de force.
+    expect(codes(jugerGenreRacineCompte(baseVerte(), { ecransDIdentite: [] }))).toEqual([]);
+  });
+
+  it("LE CLIQUET — le juge a un APPELANT (EP-161)", () => {
+    // Un juge sans appelant ne juge rien. Les deux chemins réels l'invoquent :
+    // la validation du contrat, et le segment `base` de l'émission.
+    const src = readFileSync(
+      join(dirname(fileURLToPath(import.meta.url)), "..", "src", "presentation.ts"),
+      "utf8",
+    );
+    const appels = [...src.matchAll(/\.\.\.jugerGenreRacineCompte\(/g)].length;
+    expect(appels, "le juge n'est plus appelé dans le contrat").toBeGreaterThanOrEqual(1);
+    const acc = readFileSync(
+      join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "benchmarks", "air-emission", "acceptation.mjs"),
+      "utf8",
+    );
+    expect(acc, "le juge n'est plus appelé au segment base").toContain("jugerGenreRacineCompte");
   });
 });

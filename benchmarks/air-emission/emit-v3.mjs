@@ -195,7 +195,7 @@ const coutUSD = (u) => adaptateur.coutUsd(adaptateur.lireUsage(u));
 // EP-137 — resynchronisé sur AIR 1.23.0 (`purpose` : le genre des écrans
 // qui n'ont aucune existence métier). Monté DANS LE MÊME GESTE que la
 // règle 41, comme le cliquet `generateur-synchronise` l'exige.
-export const CONTRAT_CIBLE = "1.25.0";
+export const CONTRAT_CIBLE = "1.26.0";
 
 const PARTS = [
   {
@@ -573,7 +573,9 @@ RAPPELS DE FORME, non déductibles du registre :
 
 41. SURFACES DE L'APPLICATION — des écrans n'ont AUCUNE existence métier et doivent pourtant être là, parce que c'est une APPLICATION : ils se déclarent par \`purpose\` (énumération FERMÉE) et ne se déduisent d'aucun besoin. CHACUN A SA CONDITION — ne pose que ceux que ton application appelle :
 ${surfacesDigest()}
-   Ils vivent DANS l'espace compte, atteignables par une action \`navigate\` depuis lui, et JAMAIS dans \`navigation.primary\`. SEULE EXCEPTION, et elle est imposée : la DIVULGATION du partage se rencontre dans l'usage NORMAL — atteignable depuis l'écran d'ENTRÉE, jamais seulement depuis un menu ou l'espace compte (Google Play, User Data : « must be displayed in the normal usage of the app and not require the user to navigate into a menu or settings »). TU NE RÉDIGES PAS LEUR TEXTE : une politique de confidentialité ou des conditions d'utilisation sont l'engagement du propriétaire — l'écran existe, son contenu sera fourni.
+   Ils vivent DANS l'espace compte, atteignables par une action \`navigate\` depuis lui, et JAMAIS dans \`navigation.primary\`.
+
+41bis. LE GENRE DE L'ESPACE COMPTE LUI-MÊME — \`${presentation.GENRE_RACINE_COMPTE}\`. Les genres ci-dessus nomment ce qui VIT dans le compte ; celui-ci nomme le LIEU qui les héberge. IL EST LE SEUL DE SON ESPÈCE : le seul qui ait sa place dans \`navigation.primary\`, là où les autres y sont interdits. POSE-LE SUR L'ÉCRAN QUI EST L'ESPACE COMPTE — un seul, exactement, dès que ton application a des comptes. CE QU'IL COMMANDE : le moteur intitule cette destination « Compte », quel que soit le libellé que tu écris. Sans ce genre, le moteur ne SAIT PAS lequel de tes écrans est le compte, et il n'en devine aucun — la destination garde alors ton libellé, et ce n'est pas celui que l'utilisateur cherche. SEULE EXCEPTION, et elle est imposée : la DIVULGATION du partage se rencontre dans l'usage NORMAL — atteignable depuis l'écran d'ENTRÉE, jamais seulement depuis un menu ou l'espace compte (Google Play, User Data : « must be displayed in the normal usage of the app and not require the user to navigate into a menu or settings »). TU NE RÉDIGES PAS LEUR TEXTE : une politique de confidentialité ou des conditions d'utilisation sont l'engagement du propriétaire — l'écran existe, son contenu sera fourni.
 
 36. ICÔNES — allowlist FERMÉE, ONZE rôles, aucune autre : accueil, recherche, liste, billet, panier, calendrier, carte, compte, favoris, message, reglages. Elle vaut pour \`icon\` des destinations de \`primary\` ET pour \`icon\` d'un \`button\` — et NULLE PART ailleurs (aucun autre bloc n'a d'icône). Le contrat parle UNE seule langue : les RÔLES — le moteur traduit vers les glyphes embarqués (unifié le 2026-09-10, mesuré sur marketa). Choisis par le RÔLE ; si aucun des onze ne convient, N'EN METS PAS.
 

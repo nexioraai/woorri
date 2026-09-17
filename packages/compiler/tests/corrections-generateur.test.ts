@@ -54,7 +54,7 @@ describe("PASSE B — le prompt enseigne les corrections, depuis l'enveloppe", (
   it("B3 · thenScreenId : enseigné SUR L'EFFET capability, jamais dans les params", () => {
     expect(SOURCE).toContain("SUR L'EFFET \\`capability\\`");
     expect(SOURCE).toContain("JAMAIS dans les params");
-    expect(SOURCE).toContain('CONTRAT_CIBLE = "1.25.0"');
+    expect(SOURCE).toContain('CONTRAT_CIBLE = "1.26.0"');
   });
 
   it("B4 · références : jamais affichées ni saisies", () => {

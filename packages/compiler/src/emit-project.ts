@@ -116,16 +116,24 @@ export interface EmitOptions {
    * fichier émis ne dépend d'un provider concret en v1 (fait mesuré).
    */
   readonly providerOverrides?: Readonly<Record<string, string>>;
-  /**
-   * EP-180 — LES ÉCRANS QUI PORTENT L'IDENTITÉ, dérivés du MODÈLE par
-   * l'appelant. Le compilateur ne voit que l'AIR : il sait désigner l'ENTRÉE
-   * (`navigation.entryScreenId`), jamais le COMPTE.
-   *
-   * ABSENTS, AUCUN COMPTE N'EST DÉSIGNÉ — et c'est le cas juste : une app
-   * sans concept d'identité n'a pas d'espace compte et n'en gagne pas un de
-   * force. L'ignorance ne fabrique rien.
-   */
-  readonly ecransDIdentite?: readonly string[];
+  // EP-191 — `ecransDIdentite` A ÉTÉ RETIRÉ D'ICI, ET LE VIDE EST LE CLIQUET.
+  //
+  // EP-180 posait « le compilateur pose les primitives » en faisant lire à
+  // `libellePrimitif` une option que l'appelant devait dériver du modèle.
+  // MESURÉ EN EP-190 ⑤ : sur les NEUF sites d'appel réels de
+  // `emitProject`/`compileProject` — oracle, repair, anti-template, sandbox,
+  // déterminisme — **aucun ne la passait**. Le compilateur posait donc
+  // « Accueil », dérivé d'`entryScreenId` qui vit AU DOCUMENT, et ne posait
+  // JAMAIS « Compte ». Quatre runs ont porté le défaut (« Annonces »,
+  // « Mon compte », « Mon espace ») et c'est lui qui s'est vu sur l'appareil.
+  //
+  // Seize tests le gardaient pourtant au vert : ils passaient l'option. Un
+  // test qui fournit ce que la vraie chaîne ne fournit pas ne mesure pas la
+  // vraie chaîne. La leçon n'est pas « il fallait brancher l'option » — c'est
+  // qu'un paramètre optionnel que tout appelant peut taire est une branche
+  // morte qui se croit vivante, et le remède est de SUPPRIMER le choix :
+  // le genre `account_home` vit au document (1.26.0), comme `entryScreenId`,
+  // et nul appelant ne peut plus l'oublier puisqu'il n'a plus rien à passer.
 }
 
 function emitSlotRegistry(slots: readonly SlotSource[]): string {
@@ -736,7 +744,7 @@ function emitNavData(air: ProjectAir, locale: string, options: EmitOptions = {})
               // primitives. Toute destination du DOMAINE garde son libellé
               // libre — l'imposer ferait de la barre un gabarit, et c'est
               // exactement ce que l'App Store punit sous 4.3.
-              label: libellePrimitif(route.screenId, air, options) ??
+              label: libellePrimitif(route.screenId, air) ??
                 resolveLocalized(d.label, locale, `navigation.primary.${d.routeId}`),
               order: d.order,
               // 1.8.0 — projection EXPLICITE, comme les autres champs : la
@@ -1124,13 +1132,14 @@ function decodeBase64(b64: string): Uint8Array {
  * concept d'identité (Sahel Immo) n'a pas d'espace compte et ne doit pas en
  * gagner un de force.
  */
-function libellePrimitif(
-  screenId: string,
-  air: ProjectAir,
-  options: EmitOptions,
-): string | undefined {
+function libellePrimitif(screenId: string, air: ProjectAir): string | undefined {
+  // DEUX LECTURES DU DOCUMENT, ET RIEN D'AUTRE (EP-191). L'entrée se nomme
+  // dans `navigation`, le compte se nomme par son genre. Aucun appelant n'a
+  // plus rien à fournir, donc aucun ne peut plus l'omettre.
   if (screenId === air.navigation.entryScreenId) return LIBELLES_PRIMITIFS.accueil;
-  if ((options.ecransDIdentite ?? []).includes(screenId)) return LIBELLES_PRIMITIFS.compte;
+  if (air.screens.some((e) => e.id === screenId && e.purpose === "account_home")) {
+    return LIBELLES_PRIMITIFS.compte;
+  }
   return undefined;
 }
 
