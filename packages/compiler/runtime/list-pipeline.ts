@@ -90,6 +90,56 @@ export function optionsDistinctes(
   return [...new Set(instances.map((i) => i.values[fieldId] ?? "").filter((v) => v !== ""))].sort();
 }
 
+/**
+ * EP-194 ① — AU-DELÀ D'UN CERTAIN NOMBRE, LES OPTIONS SE REPLIENT.
+ *
+ * DÉFAUT VU SUR L'APPAREIL, jamais par un test : un écran de catalogue portait
+ * DEUX champs de filtre, l'un à six valeurs et l'autre à deux. Les huit puces
+ * ont pris la moitié de la hauteur utile — DEUX lignes de contenu là où il en
+ * tenait six. Le contenu est ce que l'utilisateur est venu voir ; les filtres
+ * servent à y arriver.
+ *
+ * POURQUOI LE MOTEUR PEUT TRANCHER SEUL : les options ne sont PAS déclarées au
+ * document. Elles sont CALCULÉES — valeurs distinctes du champ dans les
+ * données chargées, juste au-dessus — donc leur nombre est connu à l'instant
+ * précis où il faut décider, sans que le document ait rien à dire.
+ *
+ * SEUIL = DÉCISION PRODUIT, ÉTIQUETÉE. Cherché à la source, comme aux passes
+ * de présentation : la documentation Compose des chips ne dit RIEN du nombre
+ * ni du débordement, et `m3.material.io` reste illisible (rendu en
+ * JavaScript — limite déjà consignée en tête de `presentation.ts`). AUCUNE
+ * convention ne fonde ce seuil : il n'est donc pas présenté comme une.
+ *
+ * QUATRE, et le nombre se raisonne : deux ou trois options tiennent sur une
+ * ligne et se lisent d'un regard ; au-delà la rangée déborde et repousse le
+ * contenu. Le seuil vaut pour TOUT domaine — douze catégories de plats posent
+ * exactement le problème de sept catégories de logement.
+ *
+ * ICI ET PAS DANS LE BLOC, et ce sont les cliquets du dépôt qui l'ont dit :
+ * `components.tsx` n'admet que trois imports (pas `useState`) et interdit
+ * toute chaîne linguistique. L'étanchéité des blocs est délibérée — « la
+ * saisie appartient à l'appelant » (D-129). La RÈGLE est donc pure et vit
+ * ici ; l'ÉTAT appartient au runtime qui porte déjà celui des filtres.
+ *
+ * REPLIÉ N'EST PAS PERDU : l'option RETENUE reste visible, sans quoi
+ * l'utilisateur verrait une liste réduite sans rien qui dise pourquoi.
+ */
+export const SEUIL_OPTIONS_ETALEES = 4;
+
+export function optionsAffichees(
+  options: readonly string[],
+  valeurRetenue: string,
+  deplie: boolean,
+): readonly string[] {
+  if (options.length <= SEUIL_OPTIONS_ETALEES || deplie) return options;
+  return options.filter((o) => o === valeurRetenue);
+}
+
+/** Vrai quand la rangée déborde et demande donc un déclencheur. */
+export function optionsDebordent(options: readonly string[]): boolean {
+  return options.length > SEUIL_OPTIONS_ETALEES;
+}
+
 // ── MODE D'ASSEMBLAGE D'UNE LISTE (mission composition II, 2026-09-10) ──
 //
 // RÈGLE MÉCANIQUE, tous archétypes : la FENÊTRE PLEINE (Section fill +
