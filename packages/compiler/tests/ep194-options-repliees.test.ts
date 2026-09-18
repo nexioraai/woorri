@@ -22,9 +22,24 @@ const PEU = ["a", "b", "c"];
 const BEAUCOUP = ["a", "b", "c", "d", "e", "f", "g"];
 
 describe("EP-194 ① · le seuil de repli des options de filtre", () => {
-  it("DEUX OU TROIS OPTIONS RESTENT VISIBLES — elles tiennent sur une ligne", () => {
-    expect(optionsAffichees(PEU, "", false)).toEqual(PEU);
-    expect(optionsDebordent(PEU), "un déclencheur inutile").toBe(false);
+  it("UNE SEULE OPTION RESTE VISIBLE — elle ne filtre rien, elle informe", () => {
+    // SEUIL FIXÉ PAR YOUSSOUF, pas par moi : au-delà d'UNE option, repli.
+    // J'avais posé QUATRE en le raisonnant seul — un arbitrage produit tranché
+    // en silence. Sa règle est plus franche : un filtre à une valeur unique ne
+    // filtre rien, puisque tout le contenu la porte ; dès qu'il y a un CHOIX,
+    // sa place est derrière un déclencheur, pas devant le contenu.
+    const UNE = ["a"];
+    expect(optionsAffichees(UNE, "", false)).toEqual(UNE);
+    expect(optionsDebordent(UNE), "un déclencheur inutile").toBe(false);
+  });
+
+  it("DEUX OPTIONS SE REPLIENT DÉJÀ — mon seuil de quatre en laissait passer douze", () => {
+    // LE DÉFAUT QUE CE CAS GARDE : avec un seuil à 4 et les 3 champs que le
+    // contrat autorise, DOUZE puces restaient permises devant le contenu.
+    expect(optionsAffichees(["a", "b"], "", false)).toEqual([]);
+    expect(optionsDebordent(["a", "b"])).toBe(true);
+    expect(optionsAffichees(PEU, "", false)).toEqual([]);
+    expect(optionsDebordent(PEU)).toBe(true);
   });
 
   it("SEPT OPTIONS SE REPLIENT — elles ne tiennent pas, le contenu passe avant", () => {
@@ -43,7 +58,7 @@ describe("EP-194 ① · le seuil de repli des options de filtre", () => {
     expect(optionsAffichees(BEAUCOUP, "d", true)).toEqual(BEAUCOUP);
   });
 
-  it("LE SEUIL EST FRANCHI À QUATRE, PAS AVANT — la bascule est exacte", () => {
+  it("LA BASCULE EST EXACTE AU SEUIL — ni avant, ni après", () => {
     const juste = BEAUCOUP.slice(0, SEUIL_OPTIONS_ETALEES);
     const unDePlus = BEAUCOUP.slice(0, SEUIL_OPTIONS_ETALEES + 1);
     expect(optionsAffichees(juste, "", false), "le seuil se déclenche trop tôt").toEqual(juste);

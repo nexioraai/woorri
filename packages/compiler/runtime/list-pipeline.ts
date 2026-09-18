@@ -110,9 +110,21 @@ export function optionsDistinctes(
  * JavaScript — limite déjà consignée en tête de `presentation.ts`). AUCUNE
  * convention ne fonde ce seuil : il n'est donc pas présenté comme une.
  *
- * QUATRE, et le nombre se raisonne : deux ou trois options tiennent sur une
- * ligne et se lisent d'un regard ; au-delà la rangée déborde et repousse le
- * contenu. Le seuil vaut pour TOUT domaine — douze catégories de plats posent
+ * UN — ET C'EST YOUSSOUF QUI L'A FIXÉ, PAS MOI.
+ *
+ * J'avais posé QUATRE en le raisonnant seul : « deux ou trois options tiennent
+ * sur une ligne ». C'était un arbitrage PRODUIT, et je l'ai tranché en silence
+ * alors que la méthode l'interdit — une décision produit se présente, elle ne
+ * se décide pas dans un commentaire. Youssouf a repris la main : au-delà d'UNE
+ * option, elles se replient.
+ *
+ * ET SA RÈGLE EST PLUS FRANCHE QUE LA MIENNE : un filtre à une seule valeur ne
+ * filtre rien (tout le contenu la porte) ; dès qu'il y en a deux, le choix
+ * existe et sa place est derrière un déclencheur, pas étalée devant le contenu.
+ * Mon seuil laissait passer quatre puces par champ — avec trois champs, douze
+ * puces restaient permises. La sienne n'en laisse aucune.
+ *
+ * Le seuil vaut pour TOUT domaine — douze catégories de plats posent
  * exactement le problème de sept catégories de logement.
  *
  * ICI ET PAS DANS LE BLOC, et ce sont les cliquets du dépôt qui l'ont dit :
@@ -124,7 +136,7 @@ export function optionsDistinctes(
  * REPLIÉ N'EST PAS PERDU : l'option RETENUE reste visible, sans quoi
  * l'utilisateur verrait une liste réduite sans rien qui dise pourquoi.
  */
-export const SEUIL_OPTIONS_ETALEES = 4;
+export const SEUIL_OPTIONS_ETALEES = 1;
 
 export function optionsAffichees(
   options: readonly string[],
