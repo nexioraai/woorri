@@ -75,7 +75,24 @@ describe("cliquets du registre de blocs", () => {
     // 1.11.0 : `kind: "link"` — du TEXTE cliquable pour un chemin secondaire.
     // Mesuré à l'écran : « Mot de passe oublié » et « Continuer sans compte »
     // pesaient autant qu'une action principale.
-    expect(BLOCK_REGISTRY_VERSION).toBe("1.11.0");
+    // 1.12.0 (EP-108) : titres et messages des ÉTATS déclarés au document —
+    // `loadingTitle`, `emptyTitle`, `emptyMessage`, `errorTitle`,
+    // `errorMessage`. DONNÉES, jamais texte moteur (F3) : sans déclaration,
+    // l'état n'est pas rendu. Additif et optionnel.
+    // 1.13.0 (EP-159) : `saisieRoles` / `saisieCibles` — les saisies qui
+    // n'existent PAS en base (confirmation d'un secret, acceptation de
+    // conditions). `fieldIds` ne référence que des champs d'entité : tout ce
+    // qui s'affichait devait donc exister en colonne. Tableaux PARALLÈLES,
+    // même patron que les filtres pilotés. Additif et optionnel.
+    //
+    // CES DEUX MONTÉES N'ÉTAIENT PAS CONSIGNÉES ICI, et le cliquet est resté
+    // ROUGE depuis le 2026-09-13 — il attendait 1.11.0 quand le registre
+    // portait 1.13.0. Un cliquet rouge en permanence ne garde plus rien : on
+    // apprend à le lire comme du bruit, et la montée SUIVANTE passe sans être
+    // vue. Recalé en NOMMANT ce que chaque version a ajouté, comme les onze
+    // précédentes — c'est la trace qui fait la valeur de ce cliquet, pas le
+    // nombre.
+    expect(BLOCK_REGISTRY_VERSION).toBe("1.13.0");
     expect(BLOCKS.map((b) => b.id)).toEqual(V1_BLOCK_IDS);
   });
 
