@@ -1017,6 +1017,7 @@ export function jugerPlacement(
     ...jugerPositionRecherche(air, zoneDuBloc),
     ...jugerBarreInferieure(air),
     ...jugerFicheUnique(air),
+    ...jugerFicheDIdentite(air),
     // EP-195 — LE CONTEXTE SE DÉRIVE DU DOCUMENT QUAND NUL NE LE FOURNIT.
     //
     // TROISIÈME FOIS QUE LE MÊME MOTIF FRAPPE. Six juges se taisaient dès que
@@ -1077,6 +1078,79 @@ export function contexteDeDocument(air: Air): ContextePrimitives {
  *
  * Un formulaire par écran, et le choix se fait AVANT par un bouton.
  */
+/**
+ * EP-196 — UNE FICHE D'AUTHENTIFICATION NE DEMANDE QUE CE QU'IL FAUT POUR ENTRER.
+ *
+ * RÈGLE DE YOUSSOUF, APRÈS INSPECTION : « pas besoin de nous casser les
+ * couilles avec d'autres trucs ». Se connecter = identifiant + secret. Créer
+ * un compte = nom + identifiant + secret, plus la confirmation du secret.
+ *
+ * MESURÉ sur le document du run : la fiche « Créer un compte » portait SEPT
+ * champs — type, ville, téléphone, whatsapp en plus des trois dus. Quatre
+ * questions posées avant même que l'utilisateur ait un compte, quand rien ne
+ * les exige pour en ouvrir un. Ce qui relève du PROFIL se remplit APRÈS, dans
+ * « gérer mon compte », et seulement si le domaine en a besoin.
+ *
+ * COMMENT LE MOTEUR RECONNAÎT CES FICHES SANS NOMMER AUCUN CHAMP : le schéma
+ * porte déjà `sensitive` — saisie masquée ET jamais persistée, les deux
+ * couplées dans un seul drapeau (1.12.0). Un formulaire qui porte un champ
+ * sensible EST une fiche d'authentification, dans tout domaine et toute
+ * langue. Aucun genre nouveau, aucun nom de champ, aucune heuristique.
+ *
+ * TROIS, et le compte se raisonne : nom, identifiant, secret. La confirmation
+ * n'y entre pas — elle vit dans `saisieRoles`, hors des champs persistés,
+ * puisqu'on ne conserve pas deux fois un secret qu'on ne conserve pas.
+ */
+const CHAMPS_MAX_FICHE_IDENTITE = 3;
+
+export function jugerFicheDIdentite(air: Air): readonly PlacementFinding[] {
+  const out: PlacementFinding[] = [];
+  const sensibles = new Set<string>();
+  for (const e of air.entities ?? []) {
+    for (const f of e.fields ?? []) if (f.sensitive === true) sensibles.add(f.id);
+  }
+  if (sensibles.size === 0) return out;
+
+  for (const ecran of air.screens ?? []) {
+    for (const bloc of ecran.blocks ?? []) {
+      if (bloc.blockType !== "form") continue;
+      const props = new Map((bloc.props ?? []).map((p) => [p.key, p.value]));
+      const champs = (props.get("fieldIds") ?? []) as readonly string[];
+      if (!Array.isArray(champs) || !champs.some((c) => sensibles.has(c))) continue;
+      const roles = (props.get("saisieRoles") ?? []) as readonly string[];
+
+      if (champs.length > CHAMPS_MAX_FICHE_IDENTITE) {
+        out.push({
+          code: "PRESENTATION_FICHE_IDENTITE_SURCHARGEE",
+          path: `screens[${ecran.id}].blocks[${bloc.id}]`,
+          message:
+            `la fiche porte ${String(champs.length)} champs pour un secret : ` +
+            `entrer dans un compte demande l'identifiant, le secret, et le nom ` +
+            `si le compte se crée — pas davantage. Ce qui relève du PROFIL se ` +
+            `remplit APRÈS, dans l'espace compte. (DÉCISION PRODUIT.)`,
+        });
+      }
+
+      // Une fiche qui n'est PAS une vérification ENREGISTRE un secret : elle
+      // doit le faire confirmer. Une faute de frappe y enferme dehors, sans
+      // que rien ne l'ait signalée.
+      const verifie = roles.includes("verification");
+      if (!verifie && !roles.includes("confirmation")) {
+        out.push({
+          code: "PRESENTATION_SECRET_SANS_CONFIRMATION",
+          path: `screens[${ecran.id}].blocks[${bloc.id}]`,
+          message:
+            `la fiche enregistre un secret sans le faire confirmer ` +
+            `(rôles : ${roles.length === 0 ? "aucun" : roles.join(", ")}). ` +
+            `Une faute de frappe enferme l'utilisateur dehors et rien ne le dit. ` +
+            `Ajoute le rôle \`confirmation\`. (DÉCISION PRODUIT.)`,
+        });
+      }
+    }
+  }
+  return out;
+}
+
 export function jugerFicheUnique(air: Air): readonly PlacementFinding[] {
   const out: PlacementFinding[] = [];
   for (const ecran of air.screens ?? []) {

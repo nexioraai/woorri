@@ -13,6 +13,7 @@ import {
   jugerBarreInferieure,
   jugerExclusivite,
   jugerPositionRecherche,
+  jugerFicheDIdentite,
   jugerGenreRacineCompte,
   jugerPrimitivesDeNavigation,
 } from "../src/presentation.ts";
@@ -419,5 +420,84 @@ describe("EP-193 · LE CRIBLE INVERSÉ — un juge ne lit pas ce qui n'est pas e
     const lues = [...new Set([...faux.matchAll(/\bair\.(\w+)/g)].map((m) => m[1]!))];
     const manquantes = lues.filter((x) => !emises.has(x));
     expect(manquantes, "le crible ne verrait pas un juge lisant `screens`").toContain("screens");
+  });
+});
+
+describe("EP-196 · la fiche d'identité ne demande que ce qu'il faut pour entrer", () => {
+  // RÈGLE DE YOUSSOUF, APRÈS INSPECTION : « pas besoin de nous casser les
+  // couilles avec d'autres trucs ». MESURÉ sur le document du run : la fiche
+  // « Créer un compte » portait SEPT champs — type, ville, téléphone, whatsapp
+  // en plus des trois dus. Quatre questions posées avant même d'avoir un
+  // compte, quand rien ne les exige pour en ouvrir un.
+  //
+  // Aucun nom de champ ni de domaine ici : le discriminant est `sensitive`,
+  // que le schéma porte depuis 1.12.0.
+  const avecFiche = (champs: readonly string[], roles: readonly string[]) => {
+    const a = baseVerte();
+    return {
+      ...a,
+      entities: [
+        {
+          id: "ent_x",
+          name: "x",
+          fields: [
+            { id: "fld_1", name: "f1", type: "string", required: true },
+            { id: "fld_2", name: "f2", type: "string", required: true },
+            { id: "fld_3", name: "f3", type: "string", required: true },
+            { id: "fld_4", name: "f4", type: "string", required: true },
+            { id: "fld_s", name: "s", type: "string", required: true, sensitive: true },
+          ],
+        },
+      ],
+      screens: a.screens.map((e) =>
+        e.id === "scr_b"
+          ? {
+              ...e,
+              blocks: [
+                {
+                  id: "blk_f",
+                  blockType: "form",
+                  props: P({ fieldIds: [...champs], saisieRoles: [...roles] }),
+                },
+              ],
+            }
+          : e,
+      ),
+    } as unknown as ReturnType<typeof air>;
+  };
+
+  it("DEUX CHAMPS POUR SE CONNECTER — identifiant et secret, rien de plus", () => {
+    expect(codes(jugerFicheDIdentite(avecFiche(["fld_1", "fld_s"], ["verification"])))).toEqual([]);
+  });
+
+  it("TROIS POUR CRÉER — nom, identifiant, secret, avec confirmation", () => {
+    expect(
+      codes(jugerFicheDIdentite(avecFiche(["fld_1", "fld_2", "fld_s"], ["confirmation"]))),
+    ).toEqual([]);
+  });
+
+  it("SEPT CHAMPS SONT REFUSÉS — le profil se remplit APRÈS, pas pour entrer", () => {
+    // LE DÉFAUT QUE CE CAS GARDE, et il était à l'écran.
+    const r = codes(
+      jugerFicheDIdentite(avecFiche(["fld_1", "fld_2", "fld_3", "fld_4", "fld_s"], ["confirmation"])),
+    );
+    expect(r).toContain("PRESENTATION_FICHE_IDENTITE_SURCHARGEE");
+  });
+
+  it("UN SECRET ENREGISTRÉ SANS CONFIRMATION EST REFUSÉ — la faute de frappe enferme dehors", () => {
+    const r = codes(jugerFicheDIdentite(avecFiche(["fld_1", "fld_s"], ["acceptation"])));
+    expect(r).toContain("PRESENTATION_SECRET_SANS_CONFIRMATION");
+  });
+
+  it("UNE FICHE SANS SECRET N'EST PAS CONCERNÉE — le juge ne déborde pas", () => {
+    // Un formulaire métier à dix champs reste légitime : la règle ne vise que
+    // ce qui fait entrer dans un compte.
+    expect(
+      codes(jugerFicheDIdentite(avecFiche(["fld_1", "fld_2", "fld_3", "fld_4"], []))),
+    ).toEqual([]);
+  });
+
+  it("SANS AUCUN CHAMP SENSIBLE AU DOCUMENT, LE JUGE SE TAIT", () => {
+    expect(codes(jugerFicheDIdentite(baseVerte()))).toEqual([]);
   });
 });
