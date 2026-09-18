@@ -26,6 +26,7 @@ import { fileURLToPath } from "node:url";
 const REPO = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const acceptation = await import("./acceptation.mjs");
 const compiler = await import(join(REPO, "packages/compiler/src/compile-project.ts"));
+const presentation = await import(join(REPO, "packages/execution-contract/src/presentation.ts"));
 
 /**
  * Juge PUIS matérialise. Rend `{ecrits, diagnostics}`.
@@ -41,10 +42,27 @@ export function materialiser(document, destination, { prescriptif } = {}) {
   // sans elle j'aurais livré un cliquet creux, exactement le défaut
   // d'EP-165 ③c : « un cliquet qui ne tombe pas quand on retire ce qu'il
   // garde ne garde rien. »
-  const { diagnostics } = acceptation.validateLocal(document, prescriptif);
+  const { air, diagnostics } = acceptation.validateLocal(document, prescriptif);
   if (!Array.isArray(diagnostics)) {
     throw new TypeError("validateLocal n'a pas rendu de diagnostics — barrière non fiable, refus");
   }
+  // EP-195 — ET LA PRÉSENTATION, QUE `validateLocal` NE JUGE PAS DU TOUT.
+  //
+  // MESURÉ : `validateLocal` ne porte ZÉRO appel à `presentation.*` — il juge
+  // la MATIÈRE (fidelity) et le GRAPHE (executionGraph), jamais l'ÉCRAN. Or
+  // c'est à l'écran que Youssouf a vu ses défauts : deux formulaires sur la
+  // fiche de connexion, les boutons de session tous affichés ensemble, aucune
+  // surface légale en bas du compte. Une barrière qui laisse passer ce que
+  // l'utilisateur voit ne barre pas grand-chose.
+  //
+  // Le contexte n'est plus un obstacle : depuis EP-191 l'entrée et le compte
+  // se nomment AU DOCUMENT, donc `contexteDeDocument` les dérive sans rien
+  // recevoir — plus de « paramètre sans fournisseur ».
+  const deLEcran =
+    air === null || air === undefined
+      ? []
+      : presentation.jugerPlacement(air, () => "contenu", presentation.contexteDeDocument(air));
+  diagnostics.push(...deLEcran);
   if (diagnostics.length > 0) {
     return { ecrits: 0, diagnostics, refus: true };
   }

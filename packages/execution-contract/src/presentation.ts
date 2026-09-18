@@ -1016,15 +1016,81 @@ export function jugerPlacement(
     ...jugerRetourAtteignable(air),
     ...jugerPositionRecherche(air, zoneDuBloc),
     ...jugerBarreInferieure(air),
-    ...(contexte === undefined
-      ? []
-      : [
-          ...jugerPrimitivesDeNavigation(air, contexte),
-          ...jugerGenreRacineCompte(air, contexte),
-          ...jugerPositionPrimitives(air, contexte),
-          ...jugerLibellesPrimitifs(air, contexte),
-          ...jugerBasDeCompte(air, contexte),
-          ...jugerEntreeDeCompte(air, contexte),
-        ]),
+    ...jugerFicheUnique(air),
+    // EP-195 — LE CONTEXTE SE DÉRIVE DU DOCUMENT QUAND NUL NE LE FOURNIT.
+    //
+    // TROISIÈME FOIS QUE LE MÊME MOTIF FRAPPE. Six juges se taisaient dès que
+    // l'appelant omettait `contexte` — et la barrière de matérialisation
+    // (EP-194 ②) l'omettait, faute de prescriptif. MESURÉ sur le document du
+    // run EP-193 : `jugerEntreeDeCompte` rendait ZÉRO sans contexte, et nommait
+    // exactement le défaut vu par Youssouf dès qu'on le lui donnait — deux
+    // formulaires posés d'emblée sur l'écran d'entrée du compte.
+    //
+    // CE QUI REND LA DÉRIVATION POSSIBLE AUJOURD'HUI : EP-191. L'entrée vit
+    // dans `navigation.entryScreenId` et le compte se nomme désormais par son
+    // genre `account_home` — les deux AU DOCUMENT. Il n'y a plus rien à
+    // transmettre, donc plus rien à oublier.
+    ...(() => {
+      const ctx = contexte ?? contexteDeDocument(air);
+      return [
+        ...jugerPrimitivesDeNavigation(air, ctx),
+        ...jugerGenreRacineCompte(air, ctx),
+        ...jugerPositionPrimitives(air, ctx),
+        ...jugerLibellesPrimitifs(air, ctx),
+        ...jugerBasDeCompte(air, ctx),
+        ...jugerEntreeDeCompte(air, ctx),
+      ];
+    })(),
   ];
+}
+
+/**
+ * EP-195 — CE QUE LE DOCUMENT DIT DE LUI-MÊME, SANS QU'ON LE LUI DEMANDE.
+ *
+ * Un contexte DÉRIVÉ vaut mieux qu'un contexte transmis : il ne peut pas être
+ * oublié. Sans `account_home` au document, la liste est vide et les juges du
+ * compte se taisent — ce qui est le cas JUSTE : une application sans espace
+ * compte n'en gagne pas un de force.
+ */
+export function contexteDeDocument(air: Air): ContextePrimitives {
+  return {
+    entryScreenId: air.navigation.entryScreenId,
+    ecransDIdentite: (air.screens ?? [])
+      .filter((e) => e.purpose === GENRE_RACINE_COMPTE)
+      .map((e) => e.id),
+  };
+}
+
+/**
+ * EP-195 — UNE FICHE, UN SEUL BUT.
+ *
+ * RÈGLE DE YOUSSOUF, ÉNONCÉE APRÈS INSPECTION DE L'APPAREIL : « quand on clique
+ * sur se connecter, il faut juste afficher UNE SEULE fiche ». MESURÉ sur le
+ * document du run : l'écran « Se connecter » portait DEUX formulaires — « J'ai
+ * déjà un compte » ET « Créer un compte annonceur », l'un sous l'autre.
+ *
+ * POURQUOI CETTE RÈGLE PLUTÔT QUE CELLE DU CONTEXTE. `jugerEntreeDeCompte`
+ * voyait déjà le défaut, mais seulement sur les écrans qu'un contexte lui
+ * DÉSIGNAIT — et ce contexte manquait. Celle-ci ne dépend de RIEN : deux
+ * formulaires sur un même écran demandent à l'utilisateur de deviner lequel
+ * le concerne, quel que soit l'écran et quel que soit le domaine.
+ *
+ * Un formulaire par écran, et le choix se fait AVANT par un bouton.
+ */
+export function jugerFicheUnique(air: Air): readonly PlacementFinding[] {
+  const out: PlacementFinding[] = [];
+  for (const ecran of air.screens ?? []) {
+    const formulaires = (ecran.blocks ?? []).filter((b) => b.blockType === "form");
+    if (formulaires.length <= 1) continue;
+    out.push({
+      code: "PRESENTATION_FICHE_MULTIPLE",
+      path: `screens[${ecran.id}]`,
+      message:
+        `l'écran "${ecran.id}" porte ${String(formulaires.length)} formulaires ` +
+        `(${formulaires.map((b) => b.id).join(", ")}) : l'utilisateur doit deviner ` +
+        `lequel le concerne. UNE FICHE, UN SEUL BUT — le choix se fait AVANT, ` +
+        `par un bouton qui OUVRE la fiche voulue. (DÉCISION PRODUIT.)`,
+    });
+  }
+  return out;
 }

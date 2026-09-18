@@ -94,3 +94,30 @@ describe("EP-194 ② · la barrière de matérialisation", () => {
     expect(code).not.toMatch(/immobili|annonce|vendeur/i);
   });
 });
+
+describe("EP-195 · la barrière voit enfin l'ÉCRAN", () => {
+  it("LES JUGES DE PRÉSENTATION TOURNENT — ils ne tournaient PAS", () => {
+    // MESURÉ : `validateLocal` ne porte ZÉRO appel à `presentation.*` — il
+    // juge la MATIÈRE et le GRAPHE, jamais l'ÉCRAN. Or c'est à l'écran que
+    // Youssouf a vu ses défauts. Une barrière qui laisse passer ce que
+    // l'utilisateur VOIT ne barre pas grand-chose.
+    const doc = charger(REFUSE);
+    dansUnDossierNeuf((dest) => {
+      const r = materialiser(doc, dest) as { diagnostics: readonly { code?: string }[] };
+      const codes = r.diagnostics.map((d) => d.code ?? "");
+      expect(codes.some((c) => c.startsWith("PRESENTATION_")), "aucun juge d'écran n'a parlé")
+        .toBe(true);
+    });
+  });
+
+  it("ET ELLE NOMME LES DEUX FORMULAIRES — le « truc bizarre » de l'inspection", () => {
+    // « quand je clique sur se connecter je vois des choses trop bizarres » :
+    // l'écran portait DEUX formulaires, « J'ai déjà un compte » et « Créer un
+    // compte », l'un sous l'autre. UNE FICHE, UN SEUL BUT.
+    const doc = charger(REFUSE);
+    dansUnDossierNeuf((dest) => {
+      const r = materialiser(doc, dest) as { diagnostics: readonly { code?: string }[] };
+      expect(r.diagnostics.map((d) => d.code)).toContain("PRESENTATION_FICHE_MULTIPLE");
+    });
+  });
+});

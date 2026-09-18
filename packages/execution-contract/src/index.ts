@@ -61,6 +61,8 @@ export {
   jugerRetourAtteignable,
   jugerPositionPrimitives,
   GENRE_RACINE_COMPTE,
+  contexteDeDocument,
+  jugerFicheUnique,
   jugerGenreRacineCompte,
   jugerPrimitivesDeNavigation,
   surfacesAttendues,
