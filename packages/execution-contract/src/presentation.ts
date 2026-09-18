@@ -1040,6 +1040,7 @@ export function jugerPlacement(
         ...jugerLibellesPrimitifs(air, ctx),
         ...jugerBasDeCompte(air, ctx),
         ...jugerEntreeDeCompte(air, ctx),
+        ...jugerCompteSelonSession(air, ctx),
       ];
     })(),
   ];
@@ -1147,6 +1148,56 @@ export function jugerFicheDIdentite(air: Air): readonly PlacementFinding[] {
         });
       }
     }
+  }
+  return out;
+}
+
+/**
+ * EP-197 — L'ESPACE COMPTE SERT LES DEUX ÉTATS, OU IL N'EN SERT AUCUN.
+ *
+ * RÈGLE DE YOUSSOUF : « quand l'utilisateur n'a pas créé son compte, il faut
+ * montrer créer son compte ; s'il se connecte, il faut afficher déconnecter,
+ * et aussi gérer son compte. »
+ *
+ * VÉRIFIÉ AVANT D'ÉCRIRE CE JUGE, et le résultat a changé ce qu'il fallait
+ * faire : le document du run POSAIT DÉJÀ les bons prédicats — « Se connecter »
+ * et « Créer un compte » en `session_anonymous`, « Publier », « Mes annonces »
+ * et « Se déconnecter » en `session_authenticated` — et le runtime les honore
+ * (`air-runtime`, évaluation de `visibleWhen`). La règle n'était donc pas
+ * absente : elle était SUIVIE SANS ÊTRE EXIGÉE.
+ *
+ * ET C'EST PRÉCISÉMENT LE DANGER. Un générateur qui fait bien sans y être tenu
+ * fera mal un jour, et rien ne le dira — c'est le motif payé quatre runs en
+ * EP-191. Ce qu'un moteur attend, il doit le vérifier.
+ *
+ * DEUX ÉTATS, PAS UN : un espace compte qui ne sert que l'anonyme n'offre
+ * jamais de sortie ; un qui ne sert que l'authentifié laisse le visiteur
+ * devant une porte sans poignée. Aucun libellé n'est exigé — le moteur
+ * n'écrit pas de texte (F3) — seulement que les deux états soient servis.
+ */
+export function jugerCompteSelonSession(
+  air: Air,
+  contexte: { readonly ecransDIdentite: readonly string[] },
+): readonly PlacementFinding[] {
+  const out: PlacementFinding[] = [];
+  for (const ecran of air.screens ?? []) {
+    if (!contexte.ecransDIdentite.includes(ecran.id)) continue;
+    const etats = new Set<string>(
+      (ecran.blocks ?? [])
+        .map((b): string => b.visibleWhen?.kind ?? "")
+        .filter((k) => k.startsWith("session_")),
+    );
+    const manquants = ["session_anonymous", "session_authenticated"].filter((e) => !etats.has(e));
+    if (manquants.length === 0) continue;
+    out.push({
+      code: "PRESENTATION_COMPTE_ETAT_NON_SERVI",
+      path: `screens[${ecran.id}]`,
+      message:
+        `l'espace compte ne sert pas l'état ${manquants.join(" ni ")} : ` +
+        `${manquants.includes("session_anonymous") ? "un visiteur y trouve une porte sans poignée" : "un utilisateur connecté n'y trouve aucune sortie"}. ` +
+        `Pose des blocs \`visibleWhen\` pour CHACUN des deux états — entrer d'un ` +
+        `côté, gérer et sortir de l'autre. (DÉCISION PRODUIT.)`,
+    });
   }
   return out;
 }

@@ -62,6 +62,7 @@ export {
   jugerPositionPrimitives,
   GENRE_RACINE_COMPTE,
   contexteDeDocument,
+  jugerCompteSelonSession,
   jugerFicheDIdentite,
   jugerFicheUnique,
   jugerGenreRacineCompte,

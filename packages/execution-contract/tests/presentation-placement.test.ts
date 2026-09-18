@@ -13,6 +13,7 @@ import {
   jugerBarreInferieure,
   jugerExclusivite,
   jugerPositionRecherche,
+  jugerCompteSelonSession,
   jugerFicheDIdentite,
   jugerGenreRacineCompte,
   jugerPrimitivesDeNavigation,
@@ -499,5 +500,66 @@ describe("EP-196 · la fiche d'identité ne demande que ce qu'il faut pour entre
 
   it("SANS AUCUN CHAMP SENSIBLE AU DOCUMENT, LE JUGE SE TAIT", () => {
     expect(codes(jugerFicheDIdentite(baseVerte()))).toEqual([]);
+  });
+});
+
+describe("EP-197 · l'espace compte sert les DEUX états de session", () => {
+  // RÈGLE DE YOUSSOUF : « quand l'utilisateur n'a pas créé son compte, montrer
+  // créer son compte ; s'il se connecte, afficher déconnecter et gérer son
+  // compte. »
+  //
+  // VÉRIFIÉ AVANT D'ÉCRIRE CE JUGE, et le résultat a changé ce qu'il fallait
+  // faire : le document du run POSAIT DÉJÀ les bons prédicats, et le runtime
+  // les honore. La règle était SUIVIE SANS ÊTRE EXIGÉE — et c'est le danger :
+  // un générateur qui fait bien sans y être tenu fera mal un jour, comme en
+  // EP-191 où le silence a coûté quatre runs.
+  const CTX_COMPTE = { ecransDIdentite: ["scr_b"] };
+  const avecEtats = (kinds: readonly (string | undefined)[]) => {
+    const a = baseVerte();
+    return {
+      ...a,
+      screens: a.screens.map((e) =>
+        e.id === "scr_b"
+          ? {
+              ...e,
+              blocks: kinds.map((k, i) => ({
+                id: `blk_${String(i)}`,
+                blockType: "button",
+                props: P({ label: `b${String(i)}`, kind: "primary" }),
+                ...(k === undefined ? {} : { visibleWhen: { kind: k } }),
+              })),
+            }
+          : e,
+      ),
+    } as unknown as ReturnType<typeof air>;
+  };
+
+  it("LES DEUX ÉTATS SERVIS — rien à dire", () => {
+    expect(
+      codes(jugerCompteSelonSession(avecEtats(["session_anonymous", "session_authenticated"]), CTX_COMPTE)),
+    ).toEqual([]);
+  });
+
+  it("SANS L'ÉTAT CONNECTÉ — l'utilisateur n'a aucune sortie", () => {
+    const r = jugerCompteSelonSession(avecEtats(["session_anonymous"]), CTX_COMPTE);
+    expect(codes(r)).toEqual(["PRESENTATION_COMPTE_ETAT_NON_SERVI"]);
+    expect(r[0]?.message).toContain("aucune sortie");
+  });
+
+  it("SANS L'ÉTAT ANONYME — le visiteur trouve une porte sans poignée", () => {
+    const r = jugerCompteSelonSession(avecEtats(["session_authenticated"]), CTX_COMPTE);
+    expect(codes(r)).toEqual(["PRESENTATION_COMPTE_ETAT_NON_SERVI"]);
+    expect(r[0]?.message).toContain("porte sans poignée");
+  });
+
+  it("AUCUN PRÉDICAT DU TOUT — tous les boutons s'affichent ensemble", () => {
+    // LE DÉFAUT QUE CE CAS GARDE : entrer et sortir proposés en même temps.
+    expect(codes(jugerCompteSelonSession(avecEtats([undefined, undefined]), CTX_COMPTE))).toEqual([
+      "PRESENTATION_COMPTE_ETAT_NON_SERVI",
+    ]);
+  });
+
+  it("HORS DE L'ESPACE COMPTE, LE JUGE NE DÉBORDE PAS", () => {
+    expect(codes(jugerCompteSelonSession(avecEtats([undefined]), { ecransDIdentite: [] }))).toEqual([]);
   });
 });
