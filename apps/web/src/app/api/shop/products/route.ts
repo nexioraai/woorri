@@ -47,7 +47,7 @@ export async function GET(req: Request) {
 // la valeur ne se perime jamais, il n'existe aucune condition sous laquelle
 // elle deviendrait fausse d'elle-meme. Un PATCH generique est donc la forme
 // exacte du besoin, et lui inventer une route dediee serait de la ceremonie.
-const ALLOWED_PRODUCT_FIELDS = ['name', 'description', 'price', 'currency', 'images', 'stock', 'published', 'position', 'for_sale'] as const;
+const ALLOWED_PRODUCT_FIELDS = ['name', 'description', 'price', 'currency', 'sizes', 'images', 'stock', 'published', 'position', 'for_sale'] as const;
 
 /** POST /api/shop/products → crée un produit. Body: { slug, name, price, ... } */
 export async function POST(req: Request) {

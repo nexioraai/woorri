@@ -53,6 +53,12 @@ export type ShopProductInput = {
   price?: number;
   currency?: string;
   images?: string[];
+  /**
+   * M2-202 — TAILLES. Un attribut d'affichage et de choix (S, M, L, 42…),
+   * jamais des lignes de stock : le stock reste au produit. Optionnel — un
+   * produit sans déclinaison n'en déclare aucune.
+   */
+  sizes?: string[];
   stock?: number;
   published?: boolean;
   /**

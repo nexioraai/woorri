@@ -117,6 +117,7 @@ export const fr = {
   'pm.field.description': 'Description',
   'pm.field.price': 'Prix',
   'pm.field.currency': 'Devise',
+  'pm.field.sizes': 'Tailles (séparées par des virgules)',
   'pm.field.stock': 'Stock',
   'pm.field.published': 'Visible sur le site',
   'pm.field.forSale': 'En vente',

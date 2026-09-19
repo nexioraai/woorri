@@ -5,7 +5,7 @@
 // ligne — `currency: 'CAD'` dans l'état initial du formulaire — et le
 // marchand devait corriger la devise à CHAQUE produit, ou ne pas la voir.
 import { describe, expect, it } from 'vitest';
-import { deviseParDefaut, draftVierge, EMPTY_DRAFT } from '../productDraft';
+import { deviseParDefaut, draftFromProduct, draftVierge, EMPTY_DRAFT, payloadFromDraft, taillesDepuisTexte } from '../productDraft';
 
 describe('M2-201 · la devise par défaut se déduit de la boutique', () => {
   it('UNE BOUTIQUE QUI VEND EN XAF PROPOSE XAF', () => {
@@ -51,5 +51,36 @@ describe('M2-201 · la devise par défaut se déduit de la boutique', () => {
   it("AUCUNE DEVISE N'EST CODÉE EN DUR DANS L'ÉTAT INITIAL", () => {
     // Le cliquet : si quelqu'un remet une monnaie par défaut, ce test tombe.
     expect(EMPTY_DRAFT.currency).toBe('');
+  });
+});
+
+describe('M2-202 · les tailles — du texte libre du marchand au tableau propre', () => {
+  it('« S, M, L » devient ["S","M","L"]', () => {
+    expect(taillesDepuisTexte('S, M, L')).toEqual(['S', 'M', 'L']);
+  });
+
+  it('ESPACES, DOUBLONS ET VIDES SONT ABSORBÉS — le marchand tape comme il parle', () => {
+    expect(taillesDepuisTexte(' S ,, M , s , L, ')).toEqual(['S', 'M', 'L']);
+    expect(taillesDepuisTexte('')).toEqual([]);
+    expect(taillesDepuisTexte('  ,  ,')).toEqual([]);
+  });
+
+  it('LES POINTURES PASSENT AUSSI — la règle ne connaît aucun vocabulaire', () => {
+    expect(taillesDepuisTexte('40, 41, 42')).toEqual(['40', '41', '42']);
+    expect(taillesDepuisTexte('Unique')).toEqual(['Unique']);
+  });
+
+  it("L'ALLER-RETOUR EST STABLE — ouvrir un produit ne perd aucune taille", () => {
+    const p = {
+      name: 'x', description: null, price: 5, currency: 'XAF',
+      sizes: ['S', 'M', 'L'], images: [], published: true, for_sale: true,
+    };
+    const d = draftFromProduct(p);
+    expect(d.sizes).toBe('S, M, L');
+    expect(payloadFromDraft(d).sizes).toEqual(['S', 'M', 'L']);
+  });
+
+  it('UN PRODUIT SANS TAILLES EN ENVOIE ZÉRO — jamais une valeur inventée', () => {
+    expect(payloadFromDraft(EMPTY_DRAFT).sizes).toEqual([]);
   });
 });

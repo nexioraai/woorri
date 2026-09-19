@@ -39,6 +39,12 @@ export type ProductDraft = {
   description: string;
   price: string;
   currency: string;
+  /**
+   * M2-202 — TAILLES, saisies comme TEXTE LIBRE (« S, M, L » ou « 40, 42 »).
+   * Le formulaire parle la langue du marchand ; la charge envoyée porte le
+   * tableau. La conversion vit dans `paylodFromDraft`, PURE et testée.
+   */
+  sizes: string;
   images: string[];
   published: boolean;
   for_sale: boolean;
@@ -50,6 +56,7 @@ export type EditableProduct = {
   description: string | null;
   price: number;
   currency: string;
+  sizes?: string[] | null;
   images: string[];
   published: boolean;
   for_sale: boolean;
@@ -124,6 +131,7 @@ export const EMPTY_DRAFT: ProductDraft = {
   description: '',
   price: '',
   currency: '',
+  sizes: '',
   images: [],
   published: true,
   for_sale: false,
@@ -148,6 +156,7 @@ export function draftFromProduct(p: EditableProduct): ProductDraft {
     description: p.description ?? '',
     price: String(p.price),
     currency: p.currency,
+    sizes: (p.sizes ?? []).join(', '),
     images: p.images ?? [],
     published: p.published,
     for_sale: p.for_sale !== false,
@@ -164,12 +173,30 @@ export function draftFromProduct(p: EditableProduct): ProductDraft {
  * DETTE 6c — `for_sale` y est TOUJOURS present, dans les deux sens. Le
  * formulaire ne s'en remet pas au defaut de la colonne : il declare.
  */
+/**
+ * M2-202 — LE TEXTE LIBRE DEVIENT UN TABLEAU PROPRE. Virgules, espaces et
+ * doublons sont absorbés ici, une fois : « S, M , L, S » → ["S","M","L"].
+ * Le composant n'a rien à savoir de cette forme.
+ */
+export function taillesDepuisTexte(texte: string): string[] {
+  const vues = new Set<string>();
+  const out: string[] = [];
+  for (const brut of texte.split(',')) {
+    const t = brut.trim();
+    if (t === '' || vues.has(t.toLowerCase())) continue;
+    vues.add(t.toLowerCase());
+    out.push(t);
+  }
+  return out;
+}
+
 export function payloadFromDraft(d: ProductDraft) {
   return {
     name: d.name.trim(),
     description: d.description.trim() || null,
     price: parseFloat(d.price) || 0,
     currency: d.currency,
+    sizes: taillesDepuisTexte(d.sizes),
     images: d.images,
     published: d.published,
     for_sale: d.for_sale,

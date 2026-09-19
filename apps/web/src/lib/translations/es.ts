@@ -112,6 +112,7 @@ export const es = {
   'pm.field.description': 'Descripcion',
   'pm.field.price': 'Precio',
   'pm.field.currency': 'Moneda',
+  'pm.field.sizes': 'Tallas (separadas por comas)',
   'pm.field.stock': 'Stock',
   'pm.field.published': 'Visible en el sitio',
   'pm.field.forSale': 'A la venta',

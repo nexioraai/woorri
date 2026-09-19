@@ -150,7 +150,13 @@ describe('DETTE 6c — la fiche produit expose l’achetabilité', () => {
     productResult = { data: ligneShop(), error: null };
     const { fetchProduct } = await import('../fetchProduct');
     await fetchProduct('my-shop', 'p-1');
-    expect(selectsAppeles.some((c) => c.includes('for_sale'))).toBe(true);
+    // M2-202 — le select est devenu `'*'`, EN CONSCIENCE : la colonne `sizes`
+    // arrive par migration, et un select explicite qui la nommerait avant son
+    // application ferait tomber TOUTES les fiches en 404. `'*'` demande
+    // `for_sale` comme le reste — l'invariant de cette dette est INTACT, et
+    // le test suivant le prouve par le COMPORTEMENT (`for_sale: false` →
+    // `forSale: false`), pas par la lettre de la requête.
+    expect(selectsAppeles.some((c) => c.includes('for_sale') || c.trim() === '*')).toBe(true);
   });
 
   it('`for_sale: false` -> `forSale: false`, mais la page EXISTE toujours', async () => {

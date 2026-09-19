@@ -259,6 +259,14 @@ export default function ProductManager({ slug }: { slug: string }) {
             className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-white/30 transition resize-y" />
         </PField>
 
+        {/* M2-202 — TAILLES : texte libre (« S, M, L » ou « 40, 42 »), la
+            conversion en tableau vit dans productDraft, pure et testee. */}
+        <PField label={t('pm.field.sizes')}>
+          <input value={draft.sizes} onChange={(e) => setDraft({ ...draft, sizes: e.target.value })}
+            placeholder="S, M, L"
+            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-white/30 transition" />
+        </PField>
+
         <div className={editingId ? 'grid grid-cols-2 gap-3' : 'grid grid-cols-3 gap-3'}>
           <PField label={t('pm.field.price')}>
             <input type="number" step="0.01" value={draft.price} onChange={(e) => setDraft({ ...draft, price: e.target.value })}

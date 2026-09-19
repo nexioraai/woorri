@@ -37,6 +37,21 @@ export type ProductPage = {
   /** `true` si la ligne catalogue est un PRODUIT (variante obligatoire). */
   requiresVariant: boolean
   /**
+   * M2-202 — TAILLES du produit marchand (S, M, L, 42…). Vide pour un produit
+   * de catalogue fournisseur : ses déclinaisons sont les VARIANTES, un autre
+   * mécanisme, déjà porté par `requiresVariant`.
+   */
+  sizes: string[]
+  /**
+   * M2-202 — LE NUMÉRO DU VENDEUR (`social_links.whatsapp`). Il sert les DEUX
+   * usages, et c'est la spécification : « ce numéro sera le même pour tous
+   * vos produits, et servira aussi à vous joindre » — la commande par
+   * WhatsApp ET l'encaissement par transfert mobile. `null` si le marchand ne
+   * l'a pas renseigné : la fiche n'affiche alors ni l'un ni l'autre, rien
+   * n'est inventé.
+   */
+  whatsapp: string | null
+  /**
    * LOT 5 / P5-02 -- `true` sur un site `pod_custom` : le visiteur doit
    * televerser SON design avant tout achat. La fiche produit ne l'offrait pas
    * du tout -- seule la modale de la vitrine portait le televerseur -- si bien
@@ -52,7 +67,7 @@ export async function fetchProduct(slug: string, rawId: string): Promise<Product
   // vrai par construction de la vue, jamais lu par le reste de la fonction.
   const { data: site } = await supabase
     .from('sites_public')
-    .select('id, name, slug, mode, custom_domain, dropship_type, product_families, cj_margin_percent, cj_round_mode, primary_color, theme, lang, shipping_flat')
+    .select('id, name, slug, mode, custom_domain, dropship_type, product_families, cj_margin_percent, cj_round_mode, primary_color, theme, lang, shipping_flat, social_links')
     .eq('slug', slug)
     .maybeSingle()
   if (!site) return null
@@ -150,12 +165,22 @@ export async function fetchProduct(slug: string, rawId: string): Promise<Product
       supplierProductId: cp.supplier_product_id ?? null,
       requiresVariant: !cp.supplier_parent_id,
       requiresDesign: (site as any).dropship_type === 'pod_custom',
+      // Catalogue fournisseur : les déclinaisons sont les VARIANTES.
+      sizes: [],
+      whatsapp: ((site as any).social_links?.whatsapp as string | undefined) || null,
     }
   }
 
+  // M2-202 — `select('*')` EN CONSCIENCE, et uniquement ici : la colonne
+  // `sizes` arrive par migration, et un select explicite qui la nommerait
+  // AVANT son application ferait tomber TOUTES les fiches produit en 404 —
+  // l'erreur de colonne inconnue rend `p` nul. `'*'` lit ce qui existe :
+  // avant la migration, `sizes` est simplement absent et vaut [] ; après,
+  // il est porté. Cette requête est côté serveur, par identifiant ; seuls
+  // les champs MAPPÉS ci-dessous atteignent le client — aucune fuite.
   const { data: p } = await supabase
     .from('shop_products')
-    .select('id, site_id, name, description, price, currency, images, stock, published, for_sale')
+    .select('*')
     .eq('id', rawId)
     .eq('site_id', (site as any).id)
     .eq('published', true)
@@ -180,6 +205,8 @@ export async function fetchProduct(slug: string, rawId: string): Promise<Product
     // `published` reste filtre par la requete : un produit non publie n'a
     // toujours pas de page, quelle que soit son achetabilite.
     forSale: (p as any).for_sale !== false,
+    sizes: Array.isArray((p as any).sizes) ? (p as any).sizes : [],
+    whatsapp: ((site as any).social_links?.whatsapp as string | undefined) || null,
     siteName: (site as any).name,
     siteSlug: (site as any).slug,
     siteCustomDomain: (site as any).custom_domain ?? null,

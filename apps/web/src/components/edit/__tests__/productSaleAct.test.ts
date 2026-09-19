@@ -135,8 +135,11 @@ describe('DETTE 6c — cocher / décocher puis enregistrer', () => {
   });
 
   it('la charge reste exactement celle attendue — aucun champ ajouté au passage', () => {
+    // M2-202 — `sizes` entre dans la charge, EN CONSCIENCE : c'est la demande
+    // « chaque produit : image(s), titre, description, taille(s), prix ».
+    // `stock` reste exclu (étape 7) — un comptage ne s'écrase pas.
     expect(Object.keys(payloadFromDraft(EMPTY_DRAFT)).sort()).toEqual(
-      ['currency', 'description', 'for_sale', 'images', 'name', 'price', 'published']
+      ['currency', 'description', 'for_sale', 'images', 'name', 'price', 'published', 'sizes']
     );
   });
 });

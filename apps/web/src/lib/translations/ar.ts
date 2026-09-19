@@ -113,6 +113,7 @@ export const ar: Record<TranslationKey, string> = {
   'pm.field.description': 'الوصف',
   'pm.field.price': 'السعر',
   'pm.field.currency': 'العملة',
+  'pm.field.sizes': 'المقاسات (مفصولة بفواصل)',
   'pm.field.stock': 'المخزون',
   'pm.field.published': 'ظاهر على الموقع',
   'pm.field.forSale': 'معروض للبيع',

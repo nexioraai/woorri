@@ -114,6 +114,7 @@ export const en: Record<TranslationKey, string> = {
   'pm.field.description': 'Description',
   'pm.field.price': 'Price',
   'pm.field.currency': 'Currency',
+  'pm.field.sizes': 'Sizes (comma-separated)',
   'pm.field.stock': 'Stock',
   'pm.field.published': 'Visible on the site',
   'pm.field.forSale': 'For sale',

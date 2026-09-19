@@ -53,7 +53,7 @@ type Ctx = { params: Promise<{ id: string }> };
 //
 // Audit Mode 3 global (CRIT-2) -- voir shop/products/route.ts pour le
 // raisonnement complet sur l'allowlist elle-meme (cj_vid/cost_price).
-const ALLOWED_PRODUCT_FIELDS = ['name', 'description', 'price', 'currency', 'images', 'published', 'position', 'for_sale'] as const;
+const ALLOWED_PRODUCT_FIELDS = ['name', 'description', 'price', 'currency', 'sizes', 'images', 'published', 'position', 'for_sale'] as const;
 
 /** PATCH /api/shop/products/[id] → met à jour un produit. */
 export async function PATCH(req: Request, { params }: Ctx) {

@@ -24,10 +24,63 @@ const NOT_FOR_SALE_LABELS: Record<string, string> = {
   es: 'Este producto no está a la venta',
 }
 
+// M2-202 — LA FICHE PARLE AUSSI LE PARCOURS HORS APPLICATION.
+// « Mobile Money » est une CATÉGORIE générique, pas une marque : aucun nom
+// d'opérateur n'entre ici — le numéro du vendeur fonctionne quel que soit le
+// sien, et nommer des opérateurs serait une connaissance régionale figée.
+const SIZES_LABELS: Record<string, string> = {
+  fr: 'Tailles',
+  en: 'Sizes',
+  ar: 'المقاسات',
+  es: 'Tallas',
+}
+const WA_ORDER_LABELS: Record<string, string> = {
+  fr: 'Commander sur WhatsApp',
+  en: 'Order on WhatsApp',
+  ar: 'اطلب عبر واتساب',
+  es: 'Pedir por WhatsApp',
+}
+const PAY_TITLE_LABELS: Record<string, string> = {
+  fr: 'Paiement par Mobile Money',
+  en: 'Pay by mobile money',
+  ar: 'الدفع عبر المحفظة الجوالة',
+  es: 'Pago por dinero móvil',
+}
+const PAY_HINT_LABELS: Record<string, string> = {
+  fr: 'Envoyez le montant à ce numéro, puis partagez la capture du paiement sur WhatsApp — le vendeur confirme et livre.',
+  en: 'Send the amount to this number, then share the payment screenshot on WhatsApp — the seller confirms and delivers.',
+  ar: 'أرسل المبلغ إلى هذا الرقم ثم شارك لقطة الدفع عبر واتساب — يؤكد البائع ويسلّم.',
+  es: 'Envíe el importe a este número y comparta la captura del pago por WhatsApp: el vendedor confirma y entrega.',
+}
+
+/** Le lien de commande : wa.me + récapitulatif pré-rempli. EXPORTÉ pour être
+ *  testé sans jsdom — la construction est pure. */
+export function lienCommandeWhatsApp(args: {
+  whatsapp: string
+  productName: string
+  size: string | null
+  priceLabel: string
+  url: string
+}): string | null {
+  const digits = args.whatsapp.replace(/\D/g, '')
+  if (!digits) return null
+  const lignes = [
+    args.productName + (args.size ? ` (${args.size})` : ''),
+    args.priceLabel,
+    args.url,
+  ].filter(Boolean)
+  return `https://wa.me/${digits}?text=${encodeURIComponent(lignes.join('\n'))}`
+}
+
 type VarianteFournisseur = { variant_id: string; name: string }
 
 export default function ProductPageView({ product }: { product: ProductPage }) {
   const [imgIndex, setImgIndex] = useState(0)
+  // M2-202 — la taille choisie entre dans le récapitulatif WhatsApp.
+  const [tailleChoisie, setTailleChoisie] = useState<string | null>(null)
+  // `?? []` : un appelant d'avant M2-202 — fixture, cache, autre montage —
+  // peut livrer un produit SANS le champ. Une fiche ne tombe pas pour ça.
+  const tailles = product.sizes ?? []
   // LOT 4 / R4-01 -- meme source de variantes que la modale de la vitrine
   // (`/api/catalog/variants`), meme regle : tant qu'une variante est proposee,
   // aucun achat n'est possible sans en choisir une.
@@ -210,6 +263,34 @@ export default function ProductPageView({ product }: { product: ProductPage }) {
               </div>
             )}
 
+            {/* M2-202 — TAILLES DU PRODUIT MARCHAND. Même geste que les
+                variantes fournisseur au-dessus : des puces, re-presser
+                désélectionne. Les deux ne coexistent jamais — un produit
+                marchand n'a pas de variantes, un produit catalogue n'a pas
+                de `sizes`. */}
+            {tailles.length > 0 && (
+              <div style={{ marginTop: 24 }}>
+                <p style={{ fontSize: 12, fontWeight: 600, marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.05em', opacity: 0.6 }}>
+                  {SIZES_LABELS[product.lang] || SIZES_LABELS.en}
+                </p>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  {tailles.map((taille) => (
+                    <button
+                      key={taille}
+                      type="button"
+                      onClick={() => setTailleChoisie(taille === tailleChoisie ? null : taille)}
+                      style={{
+                        padding: '8px 16px', borderRadius: 8, fontSize: 13, cursor: 'pointer', fontWeight: 500,
+                        border: taille === tailleChoisie ? '2px solid ' + product.primary : '1.5px solid rgba(0,0,0,0.12)',
+                        background: taille === tailleChoisie ? product.primary + '15' : 'transparent',
+                        transition: 'all 0.15s',
+                      }}
+                    >{taille}</button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {product.requiresDesign && (
               <div style={{ marginTop: 24 }}>
                 <DesignCanvas
@@ -242,6 +323,74 @@ export default function ProductPageView({ product }: { product: ProductPage }) {
                 <div style={{ fontSize: 14, opacity: 0.7 }}>{notForSaleLabel}</div>
               )}
             </div>
+
+            {/* ============================================================
+                M2-202 — LE PARCOURS HORS APPLICATION, SUR LA FICHE.
+
+                Demande de Youssouf : « quand les acheteurs cliquent sur un
+                produit, sa fiche affiche description, tailles, prix, bouton
+                WhatsApp, bouton payer par transfert mobile ». Le parcours :
+                voir le numéro → payer par Mobile Money → envoyer la capture
+                au vendeur via WhatsApp → le vendeur livre.
+
+                UN SEUL NUMÉRO, et c'est la spécification : celui de WhatsApp
+                (`social_links.whatsapp`) sert la commande ET l'encaissement —
+                « ce numéro sera le même pour tous vos produits, et servira
+                aussi à vous joindre ». Aucun opérateur n'est nommé : le
+                numéro du vendeur fonctionne quel que soit le sien.
+
+                RIEN N'EST INVENTÉ : sans numéro renseigné par le marchand,
+                ce bloc n'existe pas. Et l'application ne CONFIRME aucun
+                paiement — elle ne le voit pas passer ; la confirmation est
+                humaine, par la capture envoyée au vendeur.
+                ============================================================ */}
+            {product.forSale && product.whatsapp && (
+              <div
+                style={{
+                  marginTop: 20,
+                  border: '1.5px solid rgba(128,128,128,0.25)',
+                  borderRadius: 12,
+                  padding: '16px 18px',
+                }}
+              >
+                <p style={{ fontSize: 12, fontWeight: 600, margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em', opacity: 0.6 }}>
+                  {PAY_TITLE_LABELS[product.lang] || PAY_TITLE_LABELS.en}
+                </p>
+                <a
+                  href={'tel:' + product.whatsapp.replace(/[^\d+]/g, '')}
+                  style={{ display: 'inline-block', marginTop: 8, fontSize: 20, fontWeight: 700, color: 'inherit', textDecoration: 'none' }}
+                >
+                  {product.whatsapp}
+                </a>
+                <p style={{ fontSize: 13, lineHeight: 1.5, opacity: 0.75, marginTop: 8, marginBottom: 12 }}>
+                  {PAY_HINT_LABELS[product.lang] || PAY_HINT_LABELS.en}
+                </p>
+                {(() => {
+                  const lien = lienCommandeWhatsApp({
+                    whatsapp: product.whatsapp,
+                    productName: product.name,
+                    size: tailleChoisie,
+                    priceLabel,
+                    url: typeof window === 'undefined' ? '' : window.location.href,
+                  })
+                  return lien && (
+                    <a
+                      href={lien}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        display: 'inline-flex', alignItems: 'center', gap: 8,
+                        background: '#25D366', color: '#fff', fontWeight: 600,
+                        fontSize: 14, padding: '12px 20px', borderRadius: 10,
+                        textDecoration: 'none',
+                      }}
+                    >
+                      {WA_ORDER_LABELS[product.lang] || WA_ORDER_LABELS.en}
+                    </a>
+                  )
+                })()}
+              </div>
+            )}
           </div>
         </div>
       </div>
