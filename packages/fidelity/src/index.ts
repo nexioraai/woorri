@@ -1,5 +1,5 @@
 export { preuveDeMatiere, principesDeComposition, imagesDeVitrine,
-  catalogueFourni, deviseCoherente,
+  catalogueFourni, deviseCoherente, vitrineAlignee,
   nombresVraisemblables, rechercheVisuelleComplete, type DiagnosticImages, type DiagnosticRecherche, type DiagnosticMatiere, type DiagnosticComposition } from "./matiere.ts";
 export {
   evaluatePromises,

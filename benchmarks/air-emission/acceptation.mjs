@@ -663,6 +663,8 @@ export function validateLocal(document, prescriptif) {
     // autres, sinon le generateur ne saurait pas ce qu on attend de lui.
     ...fidelity.catalogueFourni(parsed.data),
     ...fidelity.deviseCoherente(parsed.data),
+    // EP-202 - ce qui est affiche doit etre renseigne, pour CHAQUE ligne.
+    ...fidelity.vitrineAlignee(parsed.data),
     ...fidelity.rechercheVisuelleComplete(parsed.data),
     // ── BLUEPRINT (engine hardening) : le PLAN d'assemblage est validé
     // AVANT toute acceptation — un aperçu qui tronque offre sa suite, une

@@ -663,6 +663,8 @@ describe("EP-199 · un juge sans règle transmise ne corrige rien", () => {
       // refuse doit pouvoir citer l'endroit où la forme a été demandée.
       ["catalogueFourni", "PLANCHER DE TRENTE-CINQ"],
       ["deviseCoherente", "app.currency"],
+      // EP-202 - la regle la plus visible a l ecran.
+      ["vitrineAlignee", "AUTANT DE VALEURS QUE DE LIGNES"],
     ];
     const muets = exigences.filter(([, marqueur]) => !PROMPT.includes(marqueur));
     expect(

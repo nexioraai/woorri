@@ -219,6 +219,93 @@ export function deviseCoherente(air: ProjectAir): DiagnosticDevise[] {
   return out;
 }
 
+/**
+ * EP-202 — CE QUI EST AFFICHÉ DOIT ÊTRE RENSEIGNÉ, POUR CHAQUE LIGNE.
+ *
+ * DEMANDE DE YOUSSOUF, APRÈS EP-201 : « et les produits avec images et leur
+ * prix ? » La règle 37bis le DEMANDAIT au générateur ; rien ne le VÉRIFIAIT —
+ * exactement le trou d'EP-199, rouvert dans la passe qui le refermait.
+ *
+ * MESURÉ sur le document du run 2026-09-19 :
+ *   fld_annonce_titre        8 valeurs
+ *   fld_annonce_photos       8 valeurs
+ *   fld_annonce_description  6 valeurs   ← deux lignes sans description
+ *   fld_annonce_prix         0 valeur    ← AFFICHÉ EN TRAILING, ET VIDE
+ *
+ * POURQUOI LES JUGES EXISTANTS NE LE VOYAIENT PAS. `nombresVraisemblables`
+ * (EP-188 ③) ne vise que les champs `required` — un prix optionnel lui
+ * échappe, même affiché. `imagesDeVitrine` ne vérifie que la PRÉSENCE d'au
+ * moins une valeur, jamais leur NOMBRE. Entre les deux, un champ montré à
+ * l'écran pouvait être vide pour la moitié des lignes sans que rien ne le
+ * dise : à l'appareil, un prix manquant est tiré entre 1 et 999, et une
+ * description absente laisse un blanc.
+ *
+ * LA RÈGLE EST STRUCTURELLE, et ne nomme ni prix, ni photo, ni domaine : tout
+ * champ qu'un bloc DÉSIGNE pour l'affichage doit porter AUTANT de valeurs que
+ * la ligne la mieux fournie de son entité. Une liste de N lignes montre N
+ * prix, ou elle montre des trous.
+ */
+export interface DiagnosticVitrine {
+  code: string;
+  path: string;
+  message: string;
+}
+
+/** Props par lesquelles un bloc DÉSIGNE un champ à afficher. Dérivées du
+ *  registre par usage : ce sont les seules qui atteignent l'écran. */
+const PROPS_D_AFFICHAGE = [
+  "titleFieldId",
+  "subtitleFieldId",
+  "trailingFieldId",
+  "badgeFieldId",
+  "imageFieldId",
+] as const;
+
+export function vitrineAlignee(air: ProjectAir): DiagnosticVitrine[] {
+  const out: DiagnosticVitrine[] = [];
+  // Quels champs sont AFFICHÉS, et pour quelle entité.
+  const affichesParEntite = new Map<string, Set<string>>();
+  for (const ecran of air.screens ?? []) {
+    for (const bloc of ecran.blocks ?? []) {
+      if (typeof bloc.entityId !== "string") continue;
+      const props = new Map((bloc.props ?? []).map((p) => [p.key, p.value]));
+      for (const cle of PROPS_D_AFFICHAGE) {
+        const champ = props.get(cle);
+        if (typeof champ !== "string") continue;
+        const set = affichesParEntite.get(bloc.entityId) ?? new Set<string>();
+        set.add(champ);
+        affichesParEntite.set(bloc.entityId, set);
+      }
+    }
+  }
+  air.entities.forEach((e, i) => {
+    const affiches = affichesParEntite.get(e.id);
+    if (affiches === undefined || affiches.size === 0) return;
+    // La ligne la mieux fournie donne le compte attendu. Une entité sans
+    // aucune valeur n'est pas visée ici — c'est le rôle des autres juges.
+    const attendu = Math.max(0, ...e.fields.map((f) => (f.demoValues ?? []).length));
+    if (attendu === 0) return;
+    e.fields.forEach((f, j) => {
+      if (!affiches.has(f.id)) return;
+      // Une référence se résout par la relation, pas par des valeurs propres.
+      if (f.type === "reference") return;
+      const compte = (f.demoValues ?? []).length;
+      if (compte >= attendu) return;
+      out.push({
+        code: "CAMPAGNE_VITRINE_INCOMPLETE",
+        path: `entities[${String(i)}].fields[${String(j)}]`,
+        message:
+          `« ${f.id} » est AFFICHÉ à l'écran et ne porte que ${String(compte)} ` +
+          `valeur(s) pour ${String(attendu)} ligne(s) : ${String(attendu - compte)} ` +
+          `d'entre elles se montreront sans. Ce qui est affiché doit être ` +
+          `renseigné pour CHAQUE ligne — un champ vide n'est pas un champ ` +
+          `discret, c'est un trou visible. (DÉCISION PRODUIT.)`,
+      });
+    });
+  });
+  return out;
+}
+
 export function imagesDeVitrine(air: ProjectAir): DiagnosticImages[] {
   const referencés = new Set<string>();
   for (const s of air.screens)
