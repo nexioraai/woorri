@@ -30,6 +30,13 @@ const V1_CAPABILITY_IDS = [
   "media_upload",
   "offline_storage",
   "payments.iap",
+  // EP-201 — DIX-SEPTIEME CAPACITE : le paiement qui se conclut HORS de
+  // l application. Le registre ne connaissait que deux facons d encaisser,
+  // les achats integres et un PSP par carte. Une boutique dont l acheteur
+  // paie par transfert puis envoie sa preuve au vendeur n avait AUCUNE
+  // capacite a declarer. Aucun operateur n y est nomme : la coordonnee vient
+  // du DOCUMENT, et le moteur ignore quel service la sert.
+  "payments.offapp_transfer",
   "payments.psp",
   "push_notifications",
   "share",
@@ -43,7 +50,7 @@ describe("cliquets de registre", () => {
     }
   });
 
-  it("contient EXACTEMENT les 16 capabilities déclarées, triées", () => {
+  it("contient EXACTEMENT les 17 capabilities déclarées, triées", () => {
     expect(CAPABILITIES.map((c) => c.id)).toEqual(V1_CAPABILITY_IDS);
   });
 

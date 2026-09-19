@@ -332,6 +332,63 @@ const RAW_DEFINITIONS: CapabilityDefinition[] = [
     buildFootprint: { estimatedSizeKb: 800, buildTimeImpact: "medium" },
   },
   {
+    // EP-201 G — LE PAIEMENT QUI SE CONCLUT HORS DE L'APPLICATION.
+    //
+    // FAIT MESURÉ AVANT CETTE ENTRÉE : le registre ne connaissait que DEUX
+    // façons d'encaisser — les achats intégrés des stores, et un PSP par
+    // carte. Une boutique dont l'acheteur paie par transfert téléphonique
+    // puis envoie sa preuve au vendeur n'avait AUCUNE capacité à déclarer :
+    // elle se voyait donc attribuer un PSP dont elle n'a pas l'usage, ou
+    // rien du tout.
+    //
+    // CE QUE CETTE CAPACITÉ EST, ET CE QU'ELLE N'EST PAS. Elle N'INTÈGRE
+    // AUCUN opérateur : aucune clé d'API, aucun module natif, aucun appel
+    // réseau. Elle déclare que l'application MONTRE une coordonnée
+    // d'encaissement portée par les données et OUVRE un canal de contact
+    // vers elle. Le transfert lui-même a lieu hors de l'application, entre
+    // deux personnes, exactement comme un paiement de la main à la main.
+    //
+    // POURQUOI AUCUN OPÉRATEUR N'EST NOMMÉ ICI. Le nommer ferait entrer une
+    // connaissance régionale dans le moteur — et le cliquet anti-secteur
+    // l'interdit. La coordonnée vient du DOCUMENT, saisie par le marchand à
+    // l'élicitation ; le moteur ne sait ni quel opérateur la sert, ni dans
+    // quel pays. C'est la même frontière que partout : le document nomme,
+    // le moteur dessine.
+    //
+    // ELLE N'EST DONC PAS EN CONFLIT AVEC `payments.psp` : un marchand peut
+    // parfaitement offrir les deux. C'est l'humain qui choisit, jamais une
+    // déduction faite depuis son pays.
+    id: "payments.offapp_transfer",
+    version: "1.0.0",
+    title: "Paiement par transfert, conclu hors application",
+    description:
+      "L'application AFFICHE une coordonnée d'encaissement portée par les données et OUVRE un canal de contact vers elle. Aucun opérateur intégré, aucun appel réseau : le transfert a lieu hors de l'application, comme un paiement de la main à la main.",
+    // `expo-linking` et rien d'autre : ouvrir un canal, composer un numéro.
+    // La capacité n'apporte AUCUN module de paiement.
+    implementation: { kind: "expo_module", package: "expo-linking", version: "~8" },
+    dependencies: { capabilities: ["external_contact"], nativeModules: [] },
+    platforms: { ios: { supported: true, minOsVersion: "15.1" }, android: { supported: true, minSdk: 24 } },
+    compatibleRuntimeProfiles: ["standard", "extended"],
+    nativeConfig: { infoPlistKeys: [], androidManifestPermissions: [], entitlements: [] },
+    inducedPermissions: [],
+    cost: { model: "free", notes: "aucun coût direct — l'application n'encaisse rien elle-même" },
+    nativeFootprint: { impact: "light", nativeModules: ["expo-linking"] },
+    otaCompatible: false,
+    requiresRebuild: true,
+    // Même classe que le PSP : un bien physique ou un service consommé hors
+    // de l'application. Les stores n'exigent leurs achats intégrés que pour
+    // le numérique consommé DANS l'app (3.1.1) — ce n'est pas le cas ici.
+    commerceConstraint: "physical_or_offapp",
+    constraints: [
+      "la coordonnée d'encaissement vient du DOCUMENT, jamais du moteur : aucune valeur par défaut n'est inventée",
+      "Android 11+ exige que les schémas d'URI visés soient déclarés en <queries> au manifeste, sinon l'ouverture échoue silencieusement",
+      "l'application ne confirme AUCUN paiement : elle ne le voit pas passer. Toute promesse de confirmation automatique serait fausse",
+    ],
+    conflicts: [],
+    provenance: { source: "expo_sdk", reference: "https://docs.expo.dev/versions/latest/sdk/linking/" },
+    buildFootprint: { estimatedSizeKb: 60, buildTimeImpact: "none" },
+  },
+  {
     id: "payments.psp",
     version: "1.0.0",
     title: "Paiement PSP (biens physiques / hors app)",

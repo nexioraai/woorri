@@ -115,6 +115,110 @@ export function nombresVraisemblables(air: ProjectAir): DiagnosticNombres[] {
   return out;
 }
 
+/**
+ * EP-201 E — LE CATALOGUE N'EST PAS UN ÉCHANTILLON.
+ *
+ * DEMANDE DE YOUSSOUF : plancher de 35 produits dès la génération, et aucune
+ * limite haute — « le marchand peut en ajouter autant qu'il souhaite ».
+ *
+ * CE QUE LE PLANCHER GARDE. Mesuré à l'écran : une boutique livrée avec six
+ * articles ne se juge pas, ne se fait pas défiler, et ne montre NI la
+ * recherche NI les filtres à l'œuvre — elle a l'air d'une maquette, et le
+ * propriétaire ne peut rien décider en la voyant.
+ *
+ * COMMENT LE MOTEUR RECONNAÎT UN CATALOGUE SANS CONNAÎTRE AUCUN SECTEUR : une
+ * entité est une vitrine quand un bloc `list` la porte ET qu'elle déclare une
+ * image. Aucun nom de domaine n'entre ici — ni produit, ni plat, ni bien. Une
+ * entité sans image (un historique, un journal, des réglages) n'a aucune
+ * raison de porter trente-cinq lignes, et le juge ne la vise pas.
+ */
+const PLANCHER_CATALOGUE = 35;
+
+export interface DiagnosticCatalogue {
+  code: string;
+  path: string;
+  message: string;
+}
+
+export function catalogueFourni(air: ProjectAir): DiagnosticCatalogue[] {
+  const out: DiagnosticCatalogue[] = [];
+  const enListe = new Set<string>();
+  for (const ecran of air.screens ?? []) {
+    for (const bloc of ecran.blocks ?? []) {
+      if (bloc.blockType === "list" && typeof bloc.entityId === "string") {
+        enListe.add(bloc.entityId);
+      }
+    }
+  }
+  air.entities.forEach((e, i) => {
+    if (!enListe.has(e.id)) return;
+    if (!e.fields.some((f) => f.type === "asset")) return;
+    const compte = Math.max(0, ...e.fields.map((f) => (f.demoValues ?? []).length));
+    if (compte >= PLANCHER_CATALOGUE) return;
+    out.push({
+      code: "CAMPAGNE_CATALOGUE_TROP_MAIGRE",
+      path: `entities[${String(i)}]`,
+      message:
+        `« ${e.id} » est présentée en liste avec des images, et ne porte que ` +
+        `${String(compte)} valeur(s) de démonstration pour ${String(PLANCHER_CATALOGUE)} ` +
+        `attendues au minimum. Une vitrine à ${String(compte)} entrées ne se fait ` +
+        `pas défiler et ne montre ni la recherche ni les filtres à l'œuvre : ` +
+        `elle a l'air d'une maquette. Aucune limite HAUTE — davantage est ` +
+        `toujours mieux. (DÉCISION PRODUIT.)`,
+    });
+  });
+  return out;
+}
+
+/**
+ * EP-201 F — UN PRIX EST UN NOMBRE, LA DEVISE EST DÉCLARÉE À PART.
+ *
+ * FAIT MESURÉ AVANT `app.currency` (AIR 1.27.0) : l'AIR ne portait AUCUNE
+ * devise, et le générateur écrivait donc la monnaie DANS les valeurs — « 45
+ * 000 FCFA » ici, « 45000 » là, sans qu'aucune règle ne les accorde.
+ *
+ * DEUX DÉFAUTS EN UN. Le premier est de forme : une valeur qui mêle un nombre
+ * et un mot n'est plus un nombre — elle ne se trie pas, ne se compare pas, ne
+ * se reformate pas. Le second est de langue : « FCFA » varie selon la région,
+ * et figé dans une donnée il part tel quel dans toutes les traductions. Le
+ * document porte le CODE (ISO 4217), le moteur dessine le reste.
+ *
+ * LE JUGE VISE LA CLASSE, PAS UNE LISTE DE MONNAIES : il refuse toute valeur
+ * numérique qui porte des caractères non numériques. Nommer les monnaies
+ * ferait entrer une connaissance régionale dans le moteur.
+ */
+export interface DiagnosticDevise {
+  code: string;
+  path: string;
+  message: string;
+}
+
+export function deviseCoherente(air: ProjectAir): DiagnosticDevise[] {
+  const out: DiagnosticDevise[] = [];
+  const purementNumerique = /^[\d\s., -]+$/u;
+  air.entities.forEach((e, i) => {
+    e.fields.forEach((f, j) => {
+      if (f.type !== "number" && f.type !== "decimal") return;
+      for (const v of f.demoValues ?? []) {
+        const texte = String(v).trim();
+        if (texte === "" || purementNumerique.test(texte)) continue;
+        out.push({
+          code: "CAMPAGNE_MONNAIE_DANS_LA_VALEUR",
+          path: `entities[${String(i)}].fields[${String(j)}]`,
+          message:
+            `la valeur « ${texte} » de « ${f.id} » mêle un nombre et du texte. ` +
+            `Un prix est un NOMBRE ; la monnaie se déclare UNE fois dans ` +
+            `\`app.currency\` (code ISO 4217) et vaut pour tout le catalogue. ` +
+            `Un mot de monnaie figé dans une donnée ne se reformate pas et ` +
+            `part tel quel dans toutes les langues. (DÉCISION PRODUIT.)`,
+        });
+        break;
+      }
+    });
+  });
+  return out;
+}
+
 export function imagesDeVitrine(air: ProjectAir): DiagnosticImages[] {
   const referencés = new Set<string>();
   for (const s of air.screens)

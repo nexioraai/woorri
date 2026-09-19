@@ -13,6 +13,14 @@
 // diagnostics sur dix-neuf passent le critère « un humain peut y répondre sans
 // connaître le moteur » — et non une limite de conception : la table grandira
 // quand un fait du modèle attendra une réponse de plus.
+//
+// EP-201 — ET UNE SECONDE FAMILLE, DE NATURE DIFFÉRENTE : LA CONFIGURATION.
+// Les questions ci-dessus PROJETTENT un diagnostic : le juge a refusé, on
+// demande. Celles de `QUESTIONS_DE_CONFIGURATION` ne projettent rien — elles
+// recueillent ce que l'humain SEUL peut fournir avant qu'un juge n'existe :
+// son marché, sa logistique, le numéro qui reçoit son argent. Les deux
+// familles sont séparées parce que leurs cliquets diffèrent : la première doit
+// correspondre EXACTEMENT aux diagnostics, la seconde n'en a aucun.
 import { DIAGNOSTICS, diagnosticsDeClasse, inventaireDe } from "./modele-metier.mjs";
 
 /**
@@ -49,6 +57,149 @@ export const QUESTIONS = {
   },
 };
 
+// ───────────────────────────────────────────────────────────────────────────
+// EP-201 — LA TABLE PAYS → DEVISE, ET LE TEST QUI DÉCIDE DE SA LÉGITIMITÉ.
+//
+// LE TEST DU CLIQUET, ÉNONCÉ POUR QU'UNE RELECTURE PUISSE L'APPLIQUER SEULE :
+//
+//   « Une table pays→X n'est admise dans la couche d'élicitation que si X est
+//     une norme publique citable (ISO 4217, indicatifs E.164, etc.).
+//     Pays→devise et pays→indicatif PASSENT.
+//     Pays→moyen de paiement, pays→fiscalité, pays→logistique NE PASSENT PAS. »
+//
+// POURQUOI CETTE TABLE EST ICI ET NON DANS LE MOTEUR. Elle ne décide de RIEN :
+// elle PRÉ-REMPLIT un champ que l'humain peut changer. Le rôle est celui d'un
+// sélecteur de date qui connaît le calendrier grégorien — le moteur, lui,
+// n'apprend jamais quel jour on est dans quel pays. Ce que le moteur reçoit
+// est `{ currency: "XAF" }` : un code ISO, une donnée structurelle, sans le
+// nom du pays ni la moindre trace de la table qui l'a suggéré.
+//
+// ET CE QUI N'Y EST PAS, DÉLIBÉRÉMENT : aucune correspondance pays → moyen de
+// paiement. Un marchand tchadien peut encaisser par carte, un marchand
+// français de la main à la main. Déduire le moyen de paiement du pays serait
+// décider à la place de l'humain — précisément ce que l'élicitation existe
+// pour empêcher, et ce que le cliquet anti-secteur interdit au moteur.
+//
+// Source de la colonne de droite : ISO 4217 (codes de devise), norme publique.
+// La liste des pays n'a pas vocation à être exhaustive : un pays absent laisse
+// simplement la devise VIDE, et l'humain la saisit. Aucun défaut n'est inventé.
+export const DEVISES_PAR_PAYS = Object.freeze({
+  // Afrique centrale — franc CFA BEAC
+  tchad: "XAF",
+  cameroun: "XAF",
+  gabon: "XAF",
+  congo: "XAF",
+  centrafrique: "XAF",
+  "guinee equatoriale": "XAF",
+  // Afrique de l'Ouest — franc CFA BCEAO
+  senegal: "XOF",
+  "cote d ivoire": "XOF",
+  mali: "XOF",
+  "burkina faso": "XOF",
+  benin: "XOF",
+  togo: "XOF",
+  niger: "XOF",
+  "guinee-bissau": "XOF",
+  // Autres marchés africains
+  maroc: "MAD",
+  tunisie: "TND",
+  algerie: "DZD",
+  nigeria: "NGN",
+  ghana: "GHS",
+  kenya: "KES",
+  "afrique du sud": "ZAR",
+  rdc: "CDF",
+  // Europe
+  france: "EUR",
+  belgique: "EUR",
+  allemagne: "EUR",
+  espagne: "EUR",
+  italie: "EUR",
+  portugal: "EUR",
+  "pays-bas": "EUR",
+  suisse: "CHF",
+  "royaume-uni": "GBP",
+  // Amérique du Nord
+  canada: "CAD",
+  "etats-unis": "USD",
+  // Moyen-Orient
+  "emirats arabes unis": "AED",
+  "arabie saoudite": "SAR",
+  qatar: "QAR",
+});
+
+/** Normalisation tolérante — accents, casse et ponctuation ne doivent pas
+ *  faire échouer une réponse humaine parfaitement claire. */
+const normaliserPays = (texte) =>
+  String(texte ?? "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/['’]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+/**
+ * LA DEVISE SUGGÉRÉE — un DÉFAUT, jamais un verrou (EP-201 ③).
+ *
+ * Le pays pré-remplit, l'humain dispose : un commerçant de la diaspora vend
+ * depuis N'Djaména en euros, et rien ne doit l'en empêcher. Un pays inconnu
+ * de la table ne produit AUCUN défaut — la devise reste à saisir, et le
+ * moteur ne recevra que ce que l'humain aura dit.
+ */
+export function deviseSuggeree(pays) {
+  return DEVISES_PAR_PAYS[normaliserPays(pays)] ?? null;
+}
+
+/**
+ * EP-201 A — CE QUE L'HUMAIN SEUL PEUT FOURNIR.
+ *
+ * Ces questions ne projettent aucun diagnostic : elles précèdent tout juge.
+ * Elles sont posées AVANT la génération, et leurs réponses deviennent une
+ * configuration STRUCTURELLE — jamais un nom de pays transmis au moteur.
+ *
+ * `structure` dit ce que la réponse devient une fois le dialogue terminé.
+ * C'est ce champ qui rend le cliquet vérifiable : si une question produisait
+ * autre chose qu'une donnée structurelle, elle se verrait ici.
+ */
+export const QUESTIONS_DE_CONFIGURATION = {
+  MARCHE_VISE: {
+    structure: "currency",
+    demande: () =>
+      `Dans quel pays votre boutique vend-elle ? Cela me sert à proposer la ` +
+      `devise d'affichage — vous pourrez la changer si vous vendez dans une ` +
+      `autre monnaie.`,
+  },
+  DEVISE_RETENUE: {
+    structure: "currency",
+    // Le pays a pré-rempli ; cette question CONFIRME ou CORRIGE. Elle porte
+    // la suggestion dans son texte, ce qui évite à l'humain de connaître les
+    // codes ISO sans que le moteur, lui, n'en apprenne davantage.
+    demande: (suggestion) =>
+      suggestion === null || suggestion === undefined
+        ? `Dans quelle monnaie affichez-vous vos prix ? Indiquez son code ` +
+          `international à trois lettres (par exemple EUR, USD, XAF).`
+        : `J'afficherai vos prix en ${suggestion}. Si vous vendez dans une ` +
+          `autre monnaie, indiquez son code à trois lettres.`,
+  },
+  LOGISTIQUE_PROPRE: {
+    structure: "logistiqueParLeMarchand",
+    demande: () =>
+      `Gérez-vous vous-même le stock et la livraison de vos produits, ou ` +
+      `passez-vous par quelqu'un d'autre ?`,
+  },
+  NUMERO_ENCAISSEUR: {
+    structure: "numeroEncaisseur",
+    // AUCUN moyen de paiement n'est nommé ici : la question vaut pour un
+    // transfert mobile, un virement ou un appel. C'est le moyen CHOISI par
+    // l'humain à la question du commerce qui décidera de l'usage.
+    demande: () =>
+      `Quel numéro de téléphone reçoit les paiements de vos acheteurs ? Ce ` +
+      `numéro sera le même pour tous vos produits, et servira aussi à vous ` +
+      `joindre. Indiquez-le au format international (indicatif compris).`,
+  },
+};
+
 // CLIQUET AU CHARGEMENT — fail-closed, comme le registre de capacités. Un
 // diagnostic « intention manquante » sans question projetée est une classe
 // qui promet un dialogue que personne ne sait tenir ; une question sans
@@ -64,6 +215,52 @@ export const QUESTIONS = {
         `sans diagnostic : ${sansDiagnostic.join(", ") || "aucun"}.`,
     );
   }
+}
+
+// CLIQUET AU CHARGEMENT (EP-201) — toute question de configuration DOIT
+// déclarer ce que sa réponse devient. Une question sans destination
+// structurelle serait un canal par lequel du texte libre — un nom de pays,
+// un nom de fournisseur — atteindrait le moteur sans être vu.
+{
+  const nues = Object.entries(QUESTIONS_DE_CONFIGURATION)
+    .filter(([, q]) => typeof q.structure !== "string" || q.structure.length === 0)
+    .map(([c]) => c);
+  if (nues.length > 0) {
+    throw new Error(
+      `EP-201 — question(s) de configuration sans destination structurelle : ${nues.join(", ")}.`,
+    );
+  }
+}
+
+/**
+ * EP-201 B — LA RÉPONSE STRUCTURELLE, ET RIEN D'AUTRE.
+ *
+ * C'est LA frontière de cette passe. Le dialogue a pu parler de « Tchad » ;
+ * ce que cette fonction rend ne contient ni ce mot ni la table qui l'a
+ * traduit — seulement `{ currency, logistiqueParLeMarchand, numeroEncaisseur }`.
+ *
+ * LE MOYEN DE PAIEMENT N'EST PAS ICI, ET C'EST VOULU : il vient de la réponse
+ * à `MODELE_COMMERCE_ABSENT`, c'est-à-dire d'un choix EXPLICITE de l'humain.
+ * Aucune ligne de ce module ne le déduit d'un pays.
+ */
+export function configurationDe(reponses = {}) {
+  const pays = reponses.MARCHE_VISE;
+  const suggeree = pays === undefined ? null : deviseSuggeree(pays);
+  const saisie = reponses.DEVISE_RETENUE;
+  // L'humain prime TOUJOURS sur la suggestion (EP-201 C).
+  const devise =
+    typeof saisie === "string" && saisie.trim() !== ""
+      ? saisie.trim().toUpperCase()
+      : suggeree;
+  const logistique = reponses.LOGISTIQUE_PROPRE;
+  const numero = reponses.NUMERO_ENCAISSEUR;
+  const out = {};
+  if (devise !== null && devise !== undefined) out.currency = devise;
+  if (typeof logistique === "boolean") out.logistiqueParLeMarchand = logistique;
+  if (typeof numero === "string" && numero.trim() !== "") {
+    out.numeroEncaisseur = numero.trim();
+  }
+  return Object.freeze(out);
 }
 
 /**
@@ -116,6 +313,40 @@ export function elicitationDe(diagnostics, { interlocuteur = false } = {}) {
         `${String(questions.length)} question(s) sans interlocuteur : cette exécution ` +
         `n'est pas interactive. Le besoin est INCOMPLET et le moteur ne suppose pas — ` +
         `relancer avec quelqu'un pour répondre, ou compléter le brief.`,
+    };
+  }
+  return { statut: "questions", questions };
+}
+
+/**
+ * EP-201 A — LE DIALOGUE DE CONFIGURATION, DANS L'ORDRE.
+ *
+ * Le pays AVANT la devise : sans cet ordre, la suggestion n'existerait pas et
+ * l'humain devrait connaître son code ISO. Même garde-fou qu'au-dessus : sans
+ * interlocuteur, on REFUSE au lieu de supposer.
+ */
+export function configurationADemander({ interlocuteur = false, reponses = {} } = {}) {
+  const ordre = ["MARCHE_VISE", "DEVISE_RETENUE", "LOGISTIQUE_PROPRE", "NUMERO_ENCAISSEUR"];
+  const suggeree =
+    reponses.MARCHE_VISE === undefined ? null : deviseSuggeree(reponses.MARCHE_VISE);
+  const questions = ordre
+    .filter((code) => reponses[code] === undefined)
+    .map((code) => ({
+      code,
+      structure: QUESTIONS_DE_CONFIGURATION[code].structure,
+      texte: QUESTIONS_DE_CONFIGURATION[code].demande(suggeree),
+    }));
+  if (questions.length === 0) {
+    return { statut: "aucune_question", questions: [], configuration: configurationDe(reponses) };
+  }
+  if (!interlocuteur) {
+    return {
+      statut: "refus",
+      questions,
+      raison:
+        `${String(questions.length)} question(s) de configuration sans interlocuteur : ` +
+        `cette exécution n'est pas interactive. Le moteur ne suppose ni devise, ni ` +
+        `logistique, ni numéro — relancer avec quelqu'un pour répondre.`,
     };
   }
   return { statut: "questions", questions };

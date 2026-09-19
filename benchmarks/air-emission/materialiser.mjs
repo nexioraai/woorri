@@ -27,6 +27,7 @@ const REPO = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const acceptation = await import("./acceptation.mjs");
 const compiler = await import(join(REPO, "packages/compiler/src/compile-project.ts"));
 const presentation = await import(join(REPO, "packages/execution-contract/src/presentation.ts"));
+const airSchema = await import(join(REPO, "packages/air-schema/src/migrations.ts"));
 
 /**
  * Juge PUIS matérialise. Rend `{ecrits, diagnostics}`.
@@ -36,13 +37,29 @@ const presentation = await import(join(REPO, "packages/execution-contract/src/pr
  * ce qui est arrivé, et ce que cette fonction rend impossible.
  */
 export function materialiser(document, destination, { prescriptif } = {}) {
+  // EP-201 — MIGRER AVANT DE JUGER, sinon un document d'archive est refusé
+  // pour sa VERSION et non pour ses défauts.
+  //
+  // MESURÉ à la montée 1.27.0 : les documents des runs précédents, en 1.26.0,
+  // sont soudain devenus « SCHEMA » et plus rien d'autre — les vrais
+  // diagnostics avaient disparu derrière un refus de version. Une barrière
+  // qui ne sait juger que le document du jour ne juge pas grand-chose : la
+  // chaîne de migrations existe précisément pour que le passé reste lisible.
+  let aJuger = document;
+  try {
+    aJuger = airSchema.applyAirMigrations(document);
+  } catch {
+    // Migration impossible : on juge le document TEL QUEL, et le refus de
+    // schéma dira lui-même ce qui ne va pas. Jamais d'échec silencieux.
+    aJuger = document;
+  }
   // `validateLocal` rend {air, diagnostics} — un OBJET. Ma première version
   // lisait `.length` dessus : `undefined > 0` est FAUX, donc la barrière
   // laissait TOUT passer. La sonde l'a attrapée avant qu'elle ne serve —
   // sans elle j'aurais livré un cliquet creux, exactement le défaut
   // d'EP-165 ③c : « un cliquet qui ne tombe pas quand on retire ce qu'il
   // garde ne garde rien. »
-  const { air, diagnostics } = acceptation.validateLocal(document, prescriptif);
+  const { air, diagnostics } = acceptation.validateLocal(aJuger, prescriptif);
   if (!Array.isArray(diagnostics)) {
     throw new TypeError("validateLocal n'a pas rendu de diagnostics — barrière non fiable, refus");
   }
@@ -66,7 +83,7 @@ export function materialiser(document, destination, { prescriptif } = {}) {
   if (diagnostics.length > 0) {
     return { ecrits: 0, diagnostics, refus: true };
   }
-  const compile = compiler.compileProject(document);
+  const compile = compiler.compileProject(aJuger);
   let ecrits = 0;
   for (const [chemin, contenu] of compile.files) {
     const abs = join(destination, chemin);

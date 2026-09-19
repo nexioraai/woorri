@@ -195,7 +195,7 @@ const coutUSD = (u) => adaptateur.coutUsd(adaptateur.lireUsage(u));
 // EP-137 — resynchronisé sur AIR 1.23.0 (`purpose` : le genre des écrans
 // qui n'ont aucune existence métier). Monté DANS LE MÊME GESTE que la
 // règle 41, comme le cliquet `generateur-synchronise` l'exige.
-export const CONTRAT_CIBLE = "1.26.0";
+export const CONTRAT_CIBLE = "1.27.0";
 
 const PARTS = [
   {
@@ -588,6 +588,16 @@ ${surfacesDigest()}
 35quinquies. L'ESPACE COMPTE NE POSE PAS DE FORMULAIRE D'EMBLÉE — POSE DEUX BOUTONS. Sur l'écran de genre \`account_home\`, un visiteur anonyme ne doit PAS trouver un champ de saisie déjà ouvert : il n'a pas encore choisi entre SE CONNECTER et CRÉER UN COMPTE, et il ne sait donc pas ce qu'il remplit. Pose DEUX BOUTONS et rien d'autre ; chacun NAVIGUE vers son propre écran, où sa fiche l'attend seule. Mesuré deux runs de suite : un formulaire de connexion posé directement dans l'espace compte, et l'inscription reléguée dessous.
 
 35quater. L'ESPACE COMPTE SERT LES DEUX ÉTATS. Pose \`visibleWhen\` sur ses blocs : ce qui fait ENTRER en \`session_anonymous\`, ce qui fait GÉRER et SORTIR en \`session_authenticated\`. Sans les deux, un visiteur trouve une porte sans poignée, ou un utilisateur connecté n'a aucune sortie.
+
+37. LE CATALOGUE N'EST PAS UN ÉCHANTILLON — PLANCHER DE TRENTE-CINQ. Quand ton application présente un catalogue de produits, d'articles ou de biens, émets AU MOINS 35 valeurs de démonstration pour l'entité qui le porte. AUCUNE LIMITE HAUTE : davantage est toujours mieux. Mesuré à l'écran : une boutique livrée avec six articles ne se juge pas, ne se fait pas défiler, et ne montre ni la recherche ni les filtres à l'œuvre — elle a l'air d'une maquette. CHAQUE ENTRÉE EST DISTINCTE ET PLAUSIBLE : des noms réels du domaine, des prix qui varient de façon crédible, des descriptions différentes. Jamais « Produit 1, Produit 2 ».
+
+37bis. CE QU'UN PRODUIT PORTE. Une entité de catalogue déclare AU MINIMUM : une image (champ \`asset\` avec ses \`demoValues\`), un titre, une description, un prix — et les déclinaisons qui font sens dans ce domaine, quand il y en a (taille, poids, durée, format). La FICHE de détail affiche tout cela : l'image en tête, puis la description, les déclinaisons, et le prix. Un prix est un nombre PRÉCIS, jamais arrondi au hasard : il doit être vraisemblable pour ce produit et cette monnaie.
+
+37ter. LA DEVISE EST DÉCLARÉE UNE FOIS, ET ELLE VAUT PARTOUT. \`app.currency\` porte le code ISO 4217 de la monnaie — trois lettres majuscules, par exemple EUR, USD, XAF, XOF. TU NE L'INVENTES PAS : elle t'est donnée, ou elle n'existe pas. N'ÉCRIS AUCUN SYMBOLE NI AUCUN NOM DE MONNAIE DANS LES VALEURS DE PRIX : un prix est un NOMBRE, la devise est déclarée à part, et c'est le moteur qui les met en forme. Écrire « 45 000 FCFA » dans une valeur de prix fige un mot qui varie selon la langue, et interdit tout reformatage — le document porte le code, le moteur dessine le reste.
+
+37quater. QUAND LE PAIEMENT SE CONCLUT HORS DE L'APPLICATION. Si le besoin dit que l'acheteur paie AILLEURS — par transfert, de la main à la main, par un moyen que le vendeur utilise déjà — alors la capacité est \`payments.offapp_transfer\`, et surtout PAS un encaissement par carte. TU NE CHOISIS PAS : ce choix est dans le besoin qui t'est donné, ou il n'y est pas. N'INVENTE JAMAIS un moyen de paiement à partir d'un pays, d'une ville ou d'une monnaie — un marchand peut encaisser par carte n'importe où, et de la main à la main n'importe où.
+   L'ÉCRAN DE PAIEMENT PORTE ALORS TROIS CHOSES, et elles se suivent : ① la coordonnée d'encaissement du vendeur, affichée en clair et lisible — elle vient des DONNÉES, une seule pour toute la boutique, jamais une par produit ; ② un récapitulatif de ce qui est commandé et du montant ; ③ un bouton qui OUVRE le canal de contact vers cette même coordonnée, avec le récapitulatif déjà écrit dans le message, plus un second bouton pour appeler. Les deux passent par \`external_contact\`.
+   CE QUE TU NE PROMETS PAS : l'application ne VOIT PAS le paiement passer et ne peut donc RIEN confirmer automatiquement. Aucun texte ne doit laisser croire le contraire. Ce qui suit le paiement est humain — l'acheteur envoie sa preuve au vendeur par le canal de contact, et le vendeur livre.
 
 36. ICÔNES — allowlist FERMÉE, ONZE rôles, aucune autre : accueil, recherche, liste, billet, panier, calendrier, carte, compte, favoris, message, reglages. Elle vaut pour \`icon\` des destinations de \`primary\` ET pour \`icon\` d'un \`button\` — et NULLE PART ailleurs (aucun autre bloc n'a d'icône). Le contrat parle UNE seule langue : les RÔLES — le moteur traduit vers les glyphes embarqués (unifié le 2026-09-10, mesuré sur marketa). Choisis par le RÔLE ; si aucun des onze ne convient, N'EN METS PAS.
 

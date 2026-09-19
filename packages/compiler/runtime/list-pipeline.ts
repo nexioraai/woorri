@@ -182,8 +182,38 @@ export function tailleApercu(layout: string | undefined, pageSize: number | unde
  * nombres, très petits, décimales, non-numérique. Le nombre prend les
  * séparateurs fr-FR ; l'unité vient du DOCUMENT, jamais du moteur.
  */
+/**
+ * EP-201 F — UNE UNITE QUI EST UN CODE DE MONNAIE SE REND COMME UNE MONNAIE.
+ *
+ * Trois lettres majuscules : c est la forme d un code ISO 4217. Le rendu
+ * passe alors par `Intl.NumberFormat`, qui connait le symbole, sa POSITION et
+ * le nombre de decimales de chaque monnaie — XAF et XOF s affichent sans
+ * decimale, l euro en porte deux, et le symbole precede en anglais quand il
+ * suit en francais.
+ *
+ * POURQUOI CE N EST PAS UNE CONNAISSANCE REGIONALE DU MOTEUR. `Intl` est une
+ * norme du langage, au meme titre que le calendrier gregorien : le moteur n y
+ * apprend AUCUN pays, aucune table, aucun operateur. Il recoit un code que le
+ * DOCUMENT porte, et il le met en forme. Ecrire « FCFA » a la main, a l
+ * inverse, figerait un mot qui varie selon la langue.
+ *
+ * REPLI SUR LE COMPORTEMENT ANTERIEUR : une unite qui n est pas un code de
+ * monnaie — « kg », « m2 », « min » — se rend exactement comme avant, et un
+ * code inconnu d `Intl` aussi. Rien de ce qui marchait ne change.
+ */
+const CODE_MONNAIE = /^[A-Z]{3}$/;
+
 export function formatValeur(brut: string, unit: string | undefined): string {
   if (unit === undefined) return brut;
   const n = Number(brut);
+  if (CODE_MONNAIE.test(unit) && Number.isFinite(n)) {
+    try {
+      return new Intl.NumberFormat("fr-FR", { style: "currency", currency: unit }).format(n);
+    } catch {
+      // Code inconnu d `Intl` : on retombe sur le rendu anterieur plutot que
+      // de perdre la valeur. Jamais d echec silencieux a l ecran.
+      return `${n.toLocaleString("fr-FR")} ${unit}`;
+    }
+  }
   return Number.isFinite(n) ? `${n.toLocaleString("fr-FR")} ${unit}` : `${brut} ${unit}`;
 }

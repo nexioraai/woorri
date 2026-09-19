@@ -356,6 +356,20 @@ export const AIR_MIGRATIONS: readonly AirMigration[] = [
       "déduction après coup que ce genre supprime.",
     migrate: (document) => document,
   },
+  {
+    from: "1.26.0",
+    to: "1.27.0",
+    description:
+      "AIR 1.27.0 (EP-201) : `app.currency` — le code ISO 4217 de la monnaie " +
+      "d'affichage. L'AIR n'en portait AUCUNE : un prix s'affichait dans le " +
+      "format que le générateur avait écrit au fil du texte, sans qu'aucune " +
+      "règle ne les accorde. Le CODE et non le symbole — « XAF » est " +
+      "normalisé, « FCFA » est un mot qui varie selon la langue. " +
+      "Migration IDENTITÉ : aucune devise n'est ATTRIBUÉE d'office, car la " +
+      "deviner reviendrait à supposer un marché — ce que ni le moteur ni " +
+      "l'élicitation ne font.",
+    migrate: (document) => document,
+  },
 ];
 
 export class AirMigrationError extends Error {

@@ -217,6 +217,6 @@ describe("EP-137 · CLIQUETS (règle d'EP-132)", () => {
 
   it("le schéma qui porte ce champ est la version courante", () => {
     // EP-145 — montée à 1.24.0 avec le genre `privacy_consent`.
-    expect(AIR_SCHEMA_VERSION).toBe("1.26.0");
+    expect(AIR_SCHEMA_VERSION).toBe("1.27.0");
   });
 });

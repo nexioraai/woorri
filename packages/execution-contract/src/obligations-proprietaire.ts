@@ -67,6 +67,10 @@ export const PARTAGE_PAR_CAPACITE: Readonly<Record<string, readonly string[]>> =
   // Ouverture d'une URL : aucune donnée n'est transmise à un tiers.
   deep_links: [],
   external_contact: [],
+  // EP-201 — AUCUNE DONNÉE NE PART VERS UN TIERS : l'application affiche une
+  // coordonnée et ouvre un canal. Le transfert a lieu entre deux personnes,
+  // hors de l'application, qui n'en voit rien passer.
+  "payments.offapp_transfer": [],
   // Les coordonnées partent au fournisseur de cartes à chaque requête.
   geolocation: ["location"],
   maps: ["location"],

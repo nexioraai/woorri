@@ -659,6 +659,10 @@ describe("EP-199 · un juge sans règle transmise ne corrige rien", () => {
       // formulaire d emblee depuis EP-188, sans que la consigne « pose deux
       // boutons » ait jamais ete transmise. Mesure au run du 2026-09-19.
       ["jugerEntreeDeCompte", "POSE DEUX BOUTONS"],
+      // EP-201 — les trois règles de la boutique. Même loi : un juge qui
+      // refuse doit pouvoir citer l'endroit où la forme a été demandée.
+      ["catalogueFourni", "PLANCHER DE TRENTE-CINQ"],
+      ["deviseCoherente", "app.currency"],
     ];
     const muets = exigences.filter(([, marqueur]) => !PROMPT.includes(marqueur));
     expect(
@@ -674,5 +678,127 @@ describe("EP-199 · un juge sans règle transmise ne corrige rien", () => {
     expect(PROMPT, "le marqueur des fiches d'identité n'est pas dit").toContain("sensitive");
     expect(PROMPT, "les deux états de session ne sont pas nommés").toContain("session_anonymous");
     expect(PROMPT, "le brouillon n'est pas exigé").toContain("brouillon");
+  });
+});
+
+describe("EP-201 · la boutique adaptée au marché — sans que le moteur connaisse un marché", () => {
+  // L'INVARIANT DE CETTE PASSE, ÉNONCÉ PAR YOUSSOUF ET REPRIS DE LA LOI DU
+  // DÉPÔT : « aucune liste de pays, aucun moyen de paiement local écrit en dur
+  // ici. Le moteur ne connaît que la réponse structurelle. »
+  const lire = (...p: string[]): string =>
+    readFileSync(join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", ...p), "utf8");
+
+  const MOTEUR = [
+    ["benchmarks/air-emission/emit-v3.mjs"],
+    ["benchmarks/air-emission/modele-metier.mjs"],
+    ["benchmarks/air-emission/acceptation.mjs"],
+    ["benchmarks/air-emission/passe0.mjs"],
+    ["packages/fidelity/src/matiere.ts"],
+    ["packages/execution-contract/src/presentation.ts"],
+    ["packages/air-schema/src/air.ts"],
+  ];
+
+  it("AUCUN NOM DE PAYS NI D'OPÉRATEUR DANS LE MOTEUR", () => {
+    // Le test vise la CLASSE : des toponymes et des marques de service. Il
+    // couvre le pays qui a motivé la passe et ses voisins, plus les noms de
+    // services d'encaissement — ceux-là n'ont leur place que dans un
+    // adaptateur, jamais dans un chemin décisionnel.
+    const INTERDITS = [
+      "tchad", "senegal", "cameroun", "gabon", "mali", "niger",
+      "mobile money", "orange money", "wave", "mtn", "pawapay", "airtel",
+    ];
+    const fautes: string[] = [];
+    for (const chemin of MOTEUR) {
+      const texte = lire(...chemin)
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[̀-ͯ]/g, "");
+      for (const terme of INTERDITS) {
+        // MOTS ENTIERS — « mali » est une sous-chaîne de « normalisé », et un
+        // cliquet qui crie au loup sur un faux positif finit par être ignoré.
+        if (new RegExp(`(^|[^a-z])${terme}([^a-z]|$)`).test(texte)) {
+          fautes.push(`${chemin.join("/")} : « ${terme} »`);
+        }
+      }
+    }
+    expect(fautes, fautes.join(" · ")).toEqual([]);
+  });
+
+  it("LA TABLE PAYS→DEVISE VIT DANS L'ÉLICITATION, ET NULLE PART AILLEURS", () => {
+    // Le test du cliquet, énoncé dans le code : une table pays→X n'est admise
+    // dans la couche d'élicitation que si X est une norme publique citable.
+    // ISO 4217 passe ; pays→moyen de paiement ne passerait pas.
+    const elicitation = lire("benchmarks", "air-emission", "elicitation.mjs");
+    expect(elicitation).toContain("DEVISES_PAR_PAYS");
+    expect(elicitation, "le test du cliquet n'est plus énoncé").toContain("norme publique citable");
+    for (const chemin of MOTEUR) {
+      expect(lire(...chemin), `${chemin.join("/")} porte la table`).not.toContain(
+        "DEVISES_PAR_PAYS",
+      );
+    }
+  });
+
+  it("AUCUNE TABLE PAYS→MOYEN DE PAIEMENT, MÊME DANS L'ÉLICITATION", () => {
+    // La moitié la plus importante du cliquet : la devise se déduit, le moyen
+    // de paiement JAMAIS. Un marchand peut encaisser par carte n'importe où.
+    const elicitation = lire("benchmarks", "air-emission", "elicitation.mjs")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[̀-ͯ]/g, "");
+    for (const terme of ["mobile money", "orange money", "wave", "mtn", "stripe", "pawapay"]) {
+      expect(elicitation, `l'élicitation nomme « ${terme} »`).not.toContain(terme);
+    }
+  });
+
+  it("LE MOTEUR NE REÇOIT QUE LA RÉPONSE STRUCTURELLE", async () => {
+    // LA MESURE CENTRALE : le dialogue a parlé d'un pays ; ce qui sort ne
+    // contient ni ce mot, ni la table qui l'a traduit.
+    const e = (await import(
+      "../../../benchmarks/air-emission/elicitation.mjs"
+    )) as unknown as {
+      configurationDe: (r: Record<string, unknown>) => Record<string, unknown>;
+      deviseSuggeree: (p: string) => string | null;
+    };
+    const config = e.configurationDe({
+      MARCHE_VISE: "Tchad",
+      LOGISTIQUE_PROPRE: true,
+      NUMERO_ENCAISSEUR: "+235 66 00 00 00",
+    });
+    expect(Object.keys(config).sort()).toEqual([
+      "currency",
+      "logistiqueParLeMarchand",
+      "numeroEncaisseur",
+    ]);
+    expect(config.currency).toBe("XAF");
+    expect(JSON.stringify(config).toLowerCase(), "le nom du pays a fuité").not.toContain("tchad");
+  });
+
+  it("LA DEVISE EST UN DÉFAUT, PAS UN VERROU — la diaspora vend en euros", () => {
+    // EP-201 C : le pays pré-remplit, l'humain dispose.
+    return import("../../../benchmarks/air-emission/elicitation.mjs").then((mod) => {
+      const e = mod as unknown as {
+        configurationDe: (r: Record<string, unknown>) => Record<string, unknown>;
+      };
+      expect(e.configurationDe({ MARCHE_VISE: "Tchad" }).currency).toBe("XAF");
+      expect(e.configurationDe({ MARCHE_VISE: "Tchad", DEVISE_RETENUE: "eur" }).currency).toBe(
+        "EUR",
+      );
+      // Un pays inconnu n'invente AUCUN défaut.
+      expect(e.configurationDe({ MARCHE_VISE: "Atlantide" }).currency).toBeUndefined();
+    });
+  });
+
+  it("LE PAIEMENT HORS APPLICATION EST UNE CAPACITÉ, SANS OPÉRATEUR NOMMÉ", () => {
+    const registre = lire("packages", "capability-registry", "src", "definitions.ts");
+    expect(registre).toContain("payments.offapp_transfer");
+    const i = registre.indexOf('id: "payments.offapp_transfer"');
+    const bloc = registre.slice(i, registre.indexOf('id: "payments.psp"', i));
+    const norm = bloc.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+    for (const terme of ["mobile money", "orange", "wave", "mtn", "airtel", "stripe"]) {
+      expect(norm, `la capacité nomme « ${terme} »`).not.toContain(terme);
+    }
+    // Aucun module de paiement : la capacité n'encaisse rien elle-même.
+    expect(bloc).toContain("expo-linking");
+    expect(bloc).not.toContain("stripe-react-native");
   });
 });

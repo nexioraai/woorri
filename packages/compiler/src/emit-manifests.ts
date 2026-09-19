@@ -72,6 +72,8 @@ export const CHIFFREMENT_PROPRE_PAR_CAPACITE: Readonly<Record<string, boolean>> 
   camera: false,
   deep_links: false,
   external_contact: false,
+  // EP-201 — ni chiffrement ni export : rien n'est collecté par cette capacité.
+  "payments.offapp_transfer": false,
   geolocation: false,
   maps: false,
   media_upload: false,
@@ -118,6 +120,7 @@ export const API_SENSIBLES_PAR_CAPACITE: Readonly<Record<string, readonly string
   camera: [],
   deep_links: [],
   external_contact: [],
+  "payments.offapp_transfer": [],
   geolocation: [],
   maps: [],
   media_upload: [],

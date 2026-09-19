@@ -21,7 +21,7 @@ import {
 // 1.7.1 (E3.3, D-131) : provenance APLANIE (sourceKind/sourceIntegrationId/
 //   sourceDomain/sourceRefreshSeconds) — l'union 1.7.0 dépassait la limite
 //   réelle de grammaire de l'API (classe D-078) ; sémantique inchangée.
-export const AIR_SCHEMA_VERSION = "1.26.0";
+export const AIR_SCHEMA_VERSION = "1.27.0";
 
 export const semverSchema = z.string().regex(/^\d+\.\d+\.\d+$/);
 export const sha256Schema = z.string().regex(/^[0-9a-f]{64}$/);
@@ -116,6 +116,30 @@ const appSchema = z.strictObject({
    * OPTIONNEL : sans elle, l'artefact est celui de 1.16.0 au caractère près.
    */
   brandIconPngBase64: z.string().regex(/^[A-Za-z0-9+/]+=*$/).min(64).optional(),
+  /**
+   * DEVISE D'AFFICHAGE (1.27.0, EP-201) — le code ISO 4217 de la monnaie dans
+   * laquelle l'application montre ses prix.
+   *
+   * FAIT MESURÉ AVANT CETTE MONTÉE : l'AIR ne portait AUCUNE devise. Un prix
+   * s'affichait donc dans le format que le générateur avait écrit au fil du
+   * texte — « 45 000 FCFA » ici, « 45000 » là — sans qu'aucune règle ne les
+   * accorde, et sans que le moteur puisse formater quoi que ce soit.
+   *
+   * LE CODE, PAS LE SYMBOLE, ET C'EST TOUTE LA DIFFÉRENCE. « XAF » est une
+   * donnée normalisée (ISO 4217) ; « FCFA » est un mot, qui varie selon la
+   * langue et la région. Le document porte le CODE, le rendu en tire le
+   * format — c'est la même frontière que partout ailleurs ici : le document
+   * nomme, le moteur dessine.
+   *
+   * ET LE MOTEUR N'EN DÉDUIT AUCUN PAYS. La devise vient de la couche
+   * d'élicitation, qui a pu la suggérer depuis un pays ; ce qui arrive au
+   * document est le code seul. Aucune table pays→devise ne vit dans le
+   * moteur, et le cliquet anti-secteur reste vérifiable.
+   *
+   * OPTIONNEL : une application qui ne montre aucun prix n'a pas de devise à
+   * déclarer, et ne s'en voit imposer aucune.
+   */
+  currency: z.string().regex(/^[A-Z]{3}$/).optional(),
   distribution: appDistributionSchema.optional(),
 });
 

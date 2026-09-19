@@ -69,7 +69,7 @@ export const RELEASE_TRAIN_V1 = {
   // (mesuré EP-061/R6 : 8 arcs prescrits morts, l'intention portée par un
   // param que rien ne lisait).
   // EP-137/145/147 — genres d'écran successifs, migrations identité.
-  airSchemaVersion: "1.26.0",
+  airSchemaVersion: "1.27.0",
   // Porté à 1.1.0 le 2026-08-31 (D-060) : montée STRICTEMENT ADDITIVE du
   // registre de blocs — `form` gagne `loading`/`empty`, `detail_header` gagne un
   // état, les trois blocs à données gagnent les props de titres. Rien n'est
@@ -238,7 +238,13 @@ export const RELEASE_TRAIN_V1 = {
   androidTargetSdk: 36,
   capabilityRegistryVersion: "1.1.0",
   capabilitySourcesHash:
-    "d9ca3e729f3bb6158dc95866e0a09eb1515f141d84b2779fb930d4f4bdfa909d",
+    // Re-scellé 2026-09-19 (EP-201) : DIX-SEPTIÈME capacité —
+    // `payments.offapp_transfer`, le paiement qui se conclut HORS de
+    // l'application. ÉDITION CONSCIENTE : aucun opérateur n'y est nommé et
+    // aucun module de paiement n'est ajouté (`expo-linking` seul, déjà
+    // présent pour `external_contact`). La coordonnée d'encaissement vient
+    // du DOCUMENT. Les seize précédentes sont intactes.
+    "29dd85584fb2234a0b42c2742e09f50110e3c4710e6b78f39c4f86478be61d64",
   // ÉDITION CONSCIENTE (1.3.0) : l'échelle typographique gagne `display`, un
   // cran au-dessus de `heading`. Ajouté AVEC son consommateur réel (l'écran
   // d'accueil produit), jamais « au cas où » — règle posée par DET-023.

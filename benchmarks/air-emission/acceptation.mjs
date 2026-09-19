@@ -658,6 +658,11 @@ export function validateLocal(document, prescriptif) {
     // qu'un logement obtient 907 pièces pour 933 m². Un relecteur de magasin
     // ouvre l'application et le voit — 4.2 punit la fonctionnalité minimale.
     ...fidelity.nombresVraisemblables(parsed.data),
+    // EP-201 E/F — le catalogue et la devise. Regle transmise (37/37ter) ET
+    // juge qui verifie: la loi d EP-199 vaut pour ces deux-la comme pour les
+    // autres, sinon le generateur ne saurait pas ce qu on attend de lui.
+    ...fidelity.catalogueFourni(parsed.data),
+    ...fidelity.deviseCoherente(parsed.data),
     ...fidelity.rechercheVisuelleComplete(parsed.data),
     // ── BLUEPRINT (engine hardening) : le PLAN d'assemblage est validé
     // AVANT toute acceptation — un aperçu qui tronque offre sa suite, une
