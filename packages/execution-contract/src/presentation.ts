@@ -418,6 +418,7 @@ export const SURFACES_DE_COMPTE = {
     fondement: "plateforme",
     source: "App Store Review Guidelines 5.1.1(i)",
     exigeIdentite: false,
+    porteUnEngagement: true,
   },
   contact: {
     fondement: "plateforme",
@@ -428,8 +429,9 @@ export const SURFACES_DE_COMPTE = {
     fondement: "plateforme",
     source: "App Store Review Guidelines 5.1.1(v)",
     exigeIdentite: true,
+    porteUnEngagement: true,
   },
-  terms: { fondement: "produit", source: null, exigeIdentite: false },
+  terms: { fondement: "produit", source: null, exigeIdentite: false, porteUnEngagement: true },
   help: { fondement: "produit", source: null, exigeIdentite: false },
   settings: { fondement: "produit", source: null, exigeIdentite: false },
   account_create: { fondement: "produit", source: null, exigeIdentite: true },
@@ -443,6 +445,7 @@ export const SURFACES_DE_COMPTE = {
     source: "App Store Review Guidelines 5.1.1(ii)",
     exigeIdentite: false,
     exigePartage: true,
+    porteUnEngagement: true,
   },
 } as const;
 
@@ -1018,6 +1021,7 @@ export function jugerPlacement(
     ...jugerBarreInferieure(air),
     ...jugerFicheUnique(air),
     ...jugerFicheDIdentite(air),
+    ...jugerSurfaceQuiEngage(air),
     // EP-195 — LE CONTEXTE SE DÉRIVE DU DOCUMENT QUAND NUL NE LE FOURNIT.
     //
     // TROISIÈME FOIS QUE LE MÊME MOTIF FRAPPE. Six juges se taisaient dès que
@@ -1198,6 +1202,74 @@ export function jugerCompteSelonSession(
         `Pose des blocs \`visibleWhen\` pour CHACUN des deux états — entrer d'un ` +
         `côté, gérer et sortir de l'autre. (DÉCISION PRODUIT.)`,
     });
+  }
+  return out;
+}
+
+/**
+ * EP-198 — UNE SURFACE QUI ENGAGE PORTE SON TEXTE, PAS SA PROMESSE.
+ *
+ * DÉCISION DE YOUSSOUF, 2026-09-18, qui RENVERSE la consigne précédente :
+ * « le système doit générer ses propres conditions d'utilisation, centre de
+ * confidentialité, mentions légales selon le secteur, et on laisse l'option
+ * aux utilisateurs de modifier et écrire leurs propres textes ».
+ *
+ * CE QUE LA MESURE A MONTRÉ, et qui a changé le remède : les écrans `terms`
+ * et `privacy_policy` du run existaient, étaient atteignables SANS compte — et
+ * disaient « Le texte complet des conditions d'utilisation est fourni par le
+ * propriétaire ». Je croyais le cliquet EP-143 en cause. **Il ne l'était pas :
+ * le registre ne comptait AUCUN bloc capable de porter plus qu'un sous-titre.
+ * Le générateur ne refusait pas d'écrire — il n'avait aucun endroit où le
+ * faire.** D'où le bloc `prose` (registre 1.14.0), et ce juge.
+ *
+ * ET LE CLIQUET D'EP-143 RESTE ENTIER : il interdit au MOTEUR de rédiger un
+ * texte juridique. Rien ici ne le lui fait faire — le juge EXIGE un texte, il
+ * n'en écrit aucun. C'est le générateur qui rédige, le document qui porte.
+ *
+ * LE BROUILLON N'EST PAS UNE PRÉCAUTION DE FORME, C'EST LA CONDITION. Un texte
+ * juridique produit par un générateur ENGAGE le propriétaire s'il part tel
+ * quel. Le déclarer brouillon est ce qui rend acceptable de le rédiger : le
+ * propriétaire sait qu'il doit le relire, l'adapter à son pays, le remplacer.
+ */
+export function jugerSurfaceQuiEngage(air: Air): readonly PlacementFinding[] {
+  const out: PlacementFinding[] = [];
+  const engageants = new Set(
+    Object.entries(SURFACES_DE_COMPTE)
+      .filter(([, f]) => (f as { porteUnEngagement?: boolean }).porteUnEngagement === true)
+      .map(([g]) => g),
+  );
+  for (const ecran of air.screens ?? []) {
+    const genre = ecran.purpose;
+    if (genre === undefined || !engageants.has(genre)) continue;
+    const proses = (ecran.blocks ?? []).filter((b) => b.blockType === "prose");
+    if (proses.length === 0) {
+      out.push({
+        code: "PRESENTATION_ENGAGEMENT_SANS_TEXTE",
+        path: `screens[${ecran.id}]`,
+        message:
+          `l'écran de genre « ${genre} » ne porte aucun bloc \`prose\` : ` +
+          `un écran qui ANNONCE un texte au lieu de le porter est une page ` +
+          `blanche avec une excuse. Écris le texte RÉEL pour ce domaine, à ` +
+          `partir de ce que les entités déclarent et des intégrations posées. ` +
+          `(DÉCISION PRODUIT.)`,
+      });
+      continue;
+    }
+    for (const bloc of proses) {
+      const props = new Map((bloc.props ?? []).map((p) => [p.key, p.value]));
+      if (props.get("brouillon") !== true) {
+        out.push({
+          code: "PRESENTATION_ENGAGEMENT_SANS_BROUILLON",
+          path: `screens[${ecran.id}].blocks[${bloc.id}]`,
+          message:
+            `le texte de « ${genre} » n'est pas déclaré \`brouillon\` : un texte ` +
+            `juridique écrit par un générateur ENGAGE le propriétaire s'il part ` +
+            `tel quel. Le déclarer brouillon est la CONDITION pour le rédiger — ` +
+            `le propriétaire doit savoir qu'il lui revient de le relire, de ` +
+            `l'adapter à son pays et de le remplacer. (DÉCISION PRODUIT.)`,
+        });
+      }
+    }
   }
   return out;
 }

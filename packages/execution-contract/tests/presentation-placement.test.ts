@@ -16,6 +16,7 @@ import {
   jugerCompteSelonSession,
   jugerFicheDIdentite,
   jugerGenreRacineCompte,
+  jugerSurfaceQuiEngage,
   jugerPrimitivesDeNavigation,
 } from "../src/presentation.ts";
 import { L, P, air } from "./fixtures.ts";
@@ -561,5 +562,65 @@ describe("EP-197 · l'espace compte sert les DEUX états de session", () => {
 
   it("HORS DE L'ESPACE COMPTE, LE JUGE NE DÉBORDE PAS", () => {
     expect(codes(jugerCompteSelonSession(avecEtats([undefined]), { ecransDIdentite: [] }))).toEqual([]);
+  });
+});
+
+describe("EP-198 · une surface qui engage porte son TEXTE", () => {
+  // DÉCISION DE YOUSSOUF qui RENVERSE la consigne précédente : le système
+  // rédige les conditions selon le secteur, le propriétaire les remplace.
+  //
+  // CE QUE LA MESURE A MONTRÉ, et qui a changé le remède : je croyais le
+  // cliquet EP-143 en cause. Il ne l'était pas — le registre ne comptait
+  // AUCUN bloc capable de porter plus qu'un sous-titre. Le générateur ne
+  // refusait pas d'écrire, il n'avait aucun endroit où le faire.
+  const surface = (genre: string, blocks: readonly unknown[]) => {
+    const a = baseVerte();
+    return {
+      ...a,
+      screens: a.screens.map((e) => (e.id === "scr_b" ? { ...e, purpose: genre, blocks } : e)),
+    } as unknown as ReturnType<typeof air>;
+  };
+  const PROSE = (brouillon: boolean) => ({
+    id: "blk_p",
+    blockType: "prose",
+    props: P({ paragraphs: ["un texte réel et complet."], ...(brouillon ? { brouillon: true } : {}) }),
+  });
+
+  it("UN TEXTE DÉCLARÉ BROUILLON — rien à dire", () => {
+    expect(codes(jugerSurfaceQuiEngage(surface("terms", [PROSE(true)])))).toEqual([]);
+  });
+
+  it("AUCUN TEXTE — une page blanche avec une excuse", () => {
+    // LE DÉFAUT QUE CE CAS GARDE, et il était à l'écran : « Le texte complet
+    // des conditions d'utilisation est fourni par le propriétaire. »
+    expect(
+      codes(jugerSurfaceQuiEngage(surface("privacy_policy", [
+        { id: "blk_h", blockType: "header", props: P({ title: "Vos données" }) },
+      ]))),
+    ).toEqual(["PRESENTATION_ENGAGEMENT_SANS_TEXTE"]);
+  });
+
+  it("UN TEXTE NON DÉCLARÉ BROUILLON — il engagerait le propriétaire tel quel", () => {
+    // Le brouillon n'est pas une précaution de forme : c'est la CONDITION
+    // qui rend acceptable qu'un générateur rédige un texte juridique.
+    expect(codes(jugerSurfaceQuiEngage(surface("terms", [PROSE(false)])))).toEqual([
+      "PRESENTATION_ENGAGEMENT_SANS_BROUILLON",
+    ]);
+  });
+
+  it("UNE SURFACE QUI N'ENGAGE PAS N'EST PAS CONCERNÉE — l'aide reste libre", () => {
+    // `help` et `contact` n'engagent personne : un mode d'emploi est définitif,
+    // pas un brouillon. Le juge ne déborde pas.
+    expect(codes(jugerSurfaceQuiEngage(surface("help", [])))).toEqual([]);
+    expect(codes(jugerSurfaceQuiEngage(surface("contact", [])))).toEqual([]);
+  });
+
+  it("LES QUATRE GENRES QUI ENGAGENT SONT DÉRIVÉS DE LA TABLE, jamais réécrits", () => {
+    // Motif dominant du dépôt : une liste écrite deux fois diverge.
+    for (const g of ["terms", "privacy_policy", "account_delete", "consent_withdraw"]) {
+      expect(codes(jugerSurfaceQuiEngage(surface(g, []))), g).toEqual([
+        "PRESENTATION_ENGAGEMENT_SANS_TEXTE",
+      ]);
+    }
   });
 });

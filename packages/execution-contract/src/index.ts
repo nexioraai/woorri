@@ -65,6 +65,7 @@ export {
   jugerCompteSelonSession,
   jugerFicheDIdentite,
   jugerFicheUnique,
+  jugerSurfaceQuiEngage,
   jugerGenreRacineCompte,
   jugerPrimitivesDeNavigation,
   surfacesAttendues,
