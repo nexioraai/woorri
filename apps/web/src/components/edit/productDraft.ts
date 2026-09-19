@@ -16,11 +16,6 @@
 // employe par `canTransact`, `productResolution` et `galleryResolution` : le
 // point de decision sort du composant, et devient testable pour de vrai.
 // `ProductManager` ne garde que le rendu et les appels reseau.
-//
-// AUCUN CHANGEMENT DE COMPORTEMENT DANS CETTE EXTRACTION : memes champs,
-// memes valeurs, meme ordre. Ce qui change ensuite (l'etat initial de
-// `for_sale`) est une decision produit distincte, appliquee apres que ces
-// tests ont fige l'existant.
 
 /**
  * ETAPE 7 — `stock` N'EST PAS ICI, et c'est structurel.
@@ -61,6 +56,47 @@ export type EditableProduct = {
 };
 
 /**
+ * M2-201 — LA DEVISE N'EST PLUS CODEE EN DUR, ET C'ETAIT UN VRAI DEFAUT.
+ *
+ * CE QUI ETAIT LA : `currency: 'CAD'` dans l'etat initial du formulaire. Tout
+ * produit cree partait donc en dollars canadiens, quel que soit le marche du
+ * marchand. MESURE SUR UNE BOUTIQUE REELLE A N'DJAMENA : les prix
+ * s'affichaient en « $ » alors que la boutique vend en francs CFA, et le
+ * marchand devait corriger la devise A CHAQUE produit -- ou ne pas la voir.
+ *
+ * CE QUI LA REMPLACE : la devise du formulaire se DEDUIT des produits deja
+ * enregistres. Un marchand qui a vendu une fois en XAF cree son deuxieme
+ * produit en XAF, sans rien retaper. C'est la boutique elle-meme qui porte la
+ * reponse -- pas une constante ecrite par quelqu'un qui ne connait pas son
+ * marche.
+ *
+ * ET SUR UNE BOUTIQUE VIDE ? Aucune valeur n'est inventee : le champ reste
+ * VIDE et le marchand le renseigne. Proposer une devise au hasard serait
+ * reproduire le defaut en changeant seulement de monnaie par defaut -- un
+ * marchand tchadien n'a pas plus de raison de voir « CAD » que « XAF » de
+ * s'imposer a un marchand canadien. L'ignorance ne fabrique rien.
+ */
+export function deviseParDefaut(produits: readonly { currency?: string | null }[]): string {
+  // La devise la PLUS REPANDUE parmi les produits existants : un produit isole
+  // saisi par erreur dans une autre monnaie ne doit pas devenir la reference.
+  const comptes = new Map<string, number>();
+  for (const p of produits) {
+    const c = (p.currency ?? '').trim().toUpperCase();
+    if (!/^[A-Z]{3}$/.test(c)) continue;
+    comptes.set(c, (comptes.get(c) ?? 0) + 1);
+  }
+  let gagnante = '';
+  let meilleur = 0;
+  for (const [code, n] of comptes) {
+    if (n > meilleur) {
+      gagnante = code;
+      meilleur = n;
+    }
+  }
+  return gagnante;
+}
+
+/**
  * DETTE 6c — L'ETAT INITIAL DU FORMULAIRE DE CREATION.
  *
  * `published: true` — un produit qu'on cree, on le montre.
@@ -79,16 +115,24 @@ export type EditableProduct = {
  * Une case pre-cochee fait porter cet engagement par l'inaction ; une case
  * vide le fait porter par une decision. C'est la meme lecon que l'allowlist
  * de `canTransact` : on nomme ce qu'on autorise, jamais ce qu'on exclut.
+ *
+ * M2-201 — `currency` y est desormais VIDE. Voir `deviseParDefaut` : la
+ * boutique porte sa propre reponse, et une boutique neuve n'en a pas encore.
  */
 export const EMPTY_DRAFT: ProductDraft = {
   name: '',
   description: '',
   price: '',
-  currency: 'CAD',
+  currency: '',
   images: [],
   published: true,
   for_sale: false,
 };
+
+/** L'etat initial POUR CETTE BOUTIQUE — la devise vient de ses produits. */
+export function draftVierge(produits: readonly { currency?: string | null }[]): ProductDraft {
+  return { ...EMPTY_DRAFT, currency: deviseParDefaut(produits) };
+}
 
 /**
  * Ouverture d'un produit existant dans le formulaire.

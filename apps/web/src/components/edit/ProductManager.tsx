@@ -6,7 +6,7 @@ import { useTranslation } from '@/lib/translations';
 // et la charge envoyee vivent desormais dans un module PUR, verifiable sans
 // jsdom (ce depot n'en a pas). Ce composant ne garde que le rendu et les
 // appels reseau. Voir productDraft.ts pour le raisonnement complet.
-import { EMPTY_DRAFT, draftFromProduct, payloadFromDraft, type ProductDraft } from './productDraft';
+import { draftVierge, draftFromProduct, payloadFromDraft, type ProductDraft } from './productDraft';
 
 // Couleur accent admin Nexiora — changer ici se répercute partout dans ce composant.
 const ACCENT = '#FA5D1E';
@@ -31,7 +31,7 @@ export default function ProductManager({ slug }: { slug: string }) {
   const { t } = useTranslation();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [draft, setDraft] = useState<ProductDraft>(EMPTY_DRAFT);
+  const [draft, setDraft] = useState<ProductDraft>(draftVierge(products));
   const [editingId, setEditingId] = useState<string | null>(null);
   const formRef = useRef<HTMLDivElement | null>(null);
   const [busy, setBusy] = useState(false);
@@ -75,7 +75,9 @@ export default function ProductManager({ slug }: { slug: string }) {
   }, [slug]);
 
   function resetForm() {
-    setDraft(EMPTY_DRAFT);
+    // M2-201 — la devise vient de la BOUTIQUE, pas d'une constante. Un
+    // marchand qui vend en XAF ne retape pas sa monnaie a chaque produit.
+    setDraft(draftVierge(products));
     setEditingId(null);
     setCreateStock('0');
     setCountUnits('');

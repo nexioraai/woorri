@@ -145,14 +145,25 @@ describe('DETTE 6c — le composant utilise réellement ces décisions', () => {
   // Sans ces trois constats, les tests ci-dessus verrouilleraient un module
   // que plus personne n'appelle : l'extraction doit rester branchée.
   it('`ProductManager` importe le module, et ne recompose rien à la main', () => {
-    expect(PM_CODE).toMatch(/import \{[^}]*EMPTY_DRAFT[^}]*\} from '\.\/productDraft'/);
+    expect(PM_CODE).toMatch(/import \{[^}]*draftVierge[^}]*\} from '\.\/productDraft'/);
     expect(PM_CODE).toMatch(/setDraft\(draftFromProduct\(p\)\)/);
     expect(PM_CODE).toMatch(/const payload = payloadFromDraft\(draft\)/);
   });
 
   it('le formulaire de création et le `resetForm` partent du MÊME état initial', () => {
-    expect(PM_CODE).toMatch(/useState<ProductDraft>\(EMPTY_DRAFT\)/);
-    expect(PM_CODE).toMatch(/setDraft\(EMPTY_DRAFT\)/);
+    // M2-201 — L'ÉTAT INITIAL EST DÉSORMAIS DÉRIVÉ DE LA BOUTIQUE.
+    //
+    // Il valait `EMPTY_DRAFT`, qui portait `currency: 'CAD'` en dur : tout
+    // produit créé partait en dollars canadiens, quel que soit le marché.
+    // MESURÉ sur une boutique réelle à N'Djamena — les prix s'affichaient en
+    // « $ » alors qu'elle vend en francs CFA, et le marchand devait corriger
+    // la devise à CHAQUE produit, ou ne pas la voir.
+    //
+    // L'INVARIANT DE CE TEST NE CHANGE PAS : les deux chemins partent du même
+    // état. Seule la source de cet état change — la boutique, et non une
+    // constante écrite par quelqu'un qui ne connaît pas le marché du marchand.
+    expect(PM_CODE).toMatch(/useState<ProductDraft>\(draftVierge\(products\)\)/);
+    expect(PM_CODE).toMatch(/setDraft\(draftVierge\(products\)\)/);
   });
 
   it('la case « en vente » est bien reliée à `draft.for_sale`', () => {
