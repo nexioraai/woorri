@@ -624,3 +624,51 @@ describe("EP-198 · une surface qui engage porte son TEXTE", () => {
     }
   });
 });
+
+describe("EP-199 · un juge sans règle transmise ne corrige rien", () => {
+  // LA DÉMONSTRATION LA PLUS NETTE DE LA SESSION, et elle est de ma main.
+  //
+  // Le run du 2026-09-19 a produit une asymétrie parfaite :
+  //   · règle transmise + juge → les 5 surfaces légales écrites du PREMIER
+  //     coup, et le brouillon posé sur les 5 qui engagent, sur aucune autre ;
+  //   · juge SEUL → les TROIS défauts d'inspection reproduits à l'identique :
+  //     deux formulaires sur l'écran de connexion, six champs pour un secret,
+  //     aucune confirmation.
+  //
+  // J'avais posé les juges en EP-195/196 sans transmettre les règles. Le
+  // générateur ne pouvait pas deviner ce qu'aucun texte ne lui disait — et un
+  // juge qui refuse SANS que la règle ait été dite fait payer un run pour
+  // apprendre ce qu'on aurait pu écrire à 0 $.
+  //
+  // C'est EP-191 à l'envers : là-bas un paramètre sans fournisseur, ici une
+  // exigence sans énoncé.
+  const PROMPT = readFileSync(
+    join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "benchmarks", "air-emission", "emit-v3.mjs"),
+    "utf8",
+  );
+
+  it("CHAQUE JUGE DE PRÉSENTATION POSÉ CETTE SESSION A SA RÈGLE DANS LE PROMPT", () => {
+    // Le cliquet vise la CLASSE : un juge qui refuse une forme doit pouvoir
+    // citer l'endroit où cette forme a été demandée.
+    const exigences: readonly [string, string][] = [
+      ["jugerFicheUnique", "UNE FICHE, UN SEUL BUT"],
+      ["jugerFicheDIdentite", "AU PLUS TROIS champs"],
+      ["jugerCompteSelonSession", "SERT LES DEUX ÉTATS"],
+      ["jugerSurfaceQuiEngage", "ET TU RÉDIGES LEUR TEXTE"],
+    ];
+    const muets = exigences.filter(([, marqueur]) => !PROMPT.includes(marqueur));
+    expect(
+      muets.map(([juge]) => juge),
+      "juge(s) qui refusent sans que la règle ait été transmise",
+    ).toEqual([]);
+  });
+
+  it("ET LA RÈGLE DIT CE QUE LE JUGE MESURE — pas seulement le sujet", () => {
+    // Une règle vague laisserait le générateur échouer autrement. Les bornes
+    // exactes des juges doivent figurer dans le texte transmis.
+    expect(PROMPT, "le rôle `confirmation` n'est pas exigé").toContain("confirmation");
+    expect(PROMPT, "le marqueur des fiches d'identité n'est pas dit").toContain("sensitive");
+    expect(PROMPT, "les deux états de session ne sont pas nommés").toContain("session_anonymous");
+    expect(PROMPT, "le brouillon n'est pas exigé").toContain("brouillon");
+  });
+});
