@@ -655,6 +655,10 @@ describe("EP-199 · un juge sans règle transmise ne corrige rien", () => {
       ["jugerFicheDIdentite", "AU PLUS TROIS champs"],
       ["jugerCompteSelonSession", "SERT LES DEUX ÉTATS"],
       ["jugerSurfaceQuiEngage", "ET TU RÉDIGES LEUR TEXTE"],
+      // EP-200 — le juge ANTERIEUR pris au meme piege : il refusait le
+      // formulaire d emblee depuis EP-188, sans que la consigne « pose deux
+      // boutons » ait jamais ete transmise. Mesure au run du 2026-09-19.
+      ["jugerEntreeDeCompte", "POSE DEUX BOUTONS"],
     ];
     const muets = exigences.filter(([, marqueur]) => !PROMPT.includes(marqueur));
     expect(
