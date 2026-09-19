@@ -15,6 +15,7 @@ import {GridCard, AppButton,
   AppImage,
   TextField, ListFooter, SearchEntry, Rangee} from "@deribfy/primitives";
 import type {Blocks,
+  ProseBlockProps,
   ButtonBlockProps,
   DetailHeaderBlockProps,
   EmptyStateBlockProps,
@@ -383,6 +384,25 @@ export function SpacerBlock({ testID }: SpacerBlockProps) {
   return <Section testID={testID} fill />;
 }
 
+/**
+ * TEXTE SUIVI (1.14.0, EP-198) — la mise en page d'un texte que le DOCUMENT
+ * porte. Le compilateur n'écrit pas une ligne de ce contenu (F3) : il le
+ * dispose. `brouillon` n ajoute AUCUN mot ici non plus : il marque le bloc
+ * pour le rendu, et le document reste seul a nommer.
+ */
+export function ProseBlock({ paragraphs, title, brouillon, testID }: ProseBlockProps) {
+  return (
+    <Section testID={testID} accessibilityLabel={title}>
+      {title === undefined ? null : <AppText variant="heading">{title}</AppText>}
+      {paragraphs.map((p, i) => (
+        <AppText key={`${testID ?? "prose"}-p${String(i)}`} tone={brouillon === true ? "muted" : "default"}>
+          {p}
+        </AppText>
+      ))}
+    </Section>
+  );
+}
+
 export function ButtonBlock({ label, icon, kind, onPress, testID }: ButtonBlockProps) {
   // MESURE SUR APPAREIL : ce bloc rendait le bouton NU, donc collé aux bords
   // de l'ecran — seul bloc a ne pas passer par `Section`, qui porte les
@@ -481,4 +501,5 @@ export const blocks: Blocks = {
   EmptyStateBlock,
   DetailHeaderBlock,
   SpacerBlock,
+  ProseBlock,
 };

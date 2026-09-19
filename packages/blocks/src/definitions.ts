@@ -16,6 +16,7 @@ import { ROLES_ICONES } from "@deribfy/primitives/roles-icones";
 import {
   BUTTON_BLOCK_STATES,
   SEARCH_ENTRY_BLOCK_STATES,
+  PROSE_BLOCK_STATES,
   SPACER_BLOCK_STATES,
   DETAIL_HEADER_BLOCK_STATES,
   EMPTY_STATE_BLOCK_STATES,
@@ -61,7 +62,7 @@ import {
 // des références brutes DÉRIVE désormais cette nature au lieu de tout
 // regarder (il refusait un `scopeFieldId` que la règle C5 ORDONNE).
 // EP-159 — ajout ADDITIF : la famille des saisies non persistées.
-export const BLOCK_REGISTRY_VERSION = "1.13.0";
+export const BLOCK_REGISTRY_VERSION = "1.14.0";
 
 // Motifs d'identités stables — IDENTIQUES à @deribfy/air-schema (ids.ts) ;
 // redéclarés structurellement (patron AirCapabilitySlice : pas de couplage
@@ -482,6 +483,42 @@ export const BLOCKS: readonly BlockDefinition[] = [
     fieldRefPropsFiltrage: [],
     actionRefProps: [],
     states: SPACER_BLOCK_STATES,
+    porteAffordance: false,
+  },
+  {
+    // 1.14.0 (EP-198) — TEXTE SUIVI. Le bloc qui manquait pour qu'une surface
+    // légale dise autre chose que « le texte sera fourni ».
+    //
+    // MESURÉ AVANT LA MONTÉE : huit blocs au registre, et le plus long texte
+    // qu'aucun pouvait porter était un sous-titre. Les écrans `terms` et
+    // `privacy_policy` du run existaient et étaient atteignables sans compte —
+    // ils annonçaient « le texte complet est fourni par le propriétaire ».
+    // Le générateur ne refusait pas d'écrire : il n'avait aucun endroit où le
+    // faire.
+    //
+    // LE CLIQUET D'EP-143 RESTE ENTIER. Il interdit au MOTEUR de rédiger un
+    // texte juridique, et rien ici ne le lui fait faire : les paragraphes
+    // viennent du document, le compilateur les met en page. C'est la doctrine
+    // déjà inscrite au schéma — le document nomme, le moteur dessine.
+    id: "prose",
+    version: "1.0.0",
+    description: "Texte suivi — paragraphes déclarés par le document.",
+    entity: "forbidden",
+    propsSchema: z.strictObject({
+      // Le contrat des props n'admet que des feuilles : un tableau de chaînes
+      // en est un, comme `userFilterFieldIds`.
+      paragraphs: z.array(z.string().min(1)).min(1),
+      title: z.string().min(1).optional(),
+      // BROUILLON À FAIRE VALIDER : un texte juridique écrit par un
+      // générateur ENGAGE le propriétaire s'il part tel quel. Le document le
+      // déclare, le rendu l'annonce — personne ne publie sans l'avoir su.
+      brouillon: z.boolean().optional(),
+    }),
+    fieldRefProps: [],
+    fieldRefPropsAffichage: [],
+    fieldRefPropsFiltrage: [],
+    actionRefProps: [],
+    states: PROSE_BLOCK_STATES,
     porteAffordance: false,
   },
 ];

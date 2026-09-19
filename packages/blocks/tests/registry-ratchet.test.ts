@@ -31,6 +31,9 @@ const V1_BLOCK_IDS = [
   "list",
   "search_entry",
   "spacer",
+  // 1.14.0 (EP-198) — NEUVIEME bloc, ajoute en queue : l ordre du registre est
+  // celui de la declaration, et les huit premiers ne bougent pas.
+  "prose",
 ];
 
 describe("cliquets du registre de blocs", () => {
@@ -92,7 +95,14 @@ describe("cliquets du registre de blocs", () => {
     // vue. Recalé en NOMMANT ce que chaque version a ajouté, comme les onze
     // précédentes — c'est la trace qui fait la valeur de ce cliquet, pas le
     // nombre.
-    expect(BLOCK_REGISTRY_VERSION).toBe("1.13.0");
+    // 1.14.0 (EP-198) : NEUVIEME BLOC — `prose`, texte suivi. Le registre en
+    // comptait huit, et le plus long texte qu aucun pouvait porter etait un
+    // sous-titre : les ecrans `terms` et `privacy_policy` annoncaient donc
+    // « le texte complet est fourni par le proprietaire ». Le generateur ne
+    // refusait pas d ecrire, il n avait AUCUN endroit ou le faire.
+    // Premiere montee qui AJOUTE un bloc et non une prop — et rien n est
+    // retire : les huit precedents sont intacts.
+    expect(BLOCK_REGISTRY_VERSION).toBe("1.14.0");
     expect(BLOCKS.map((b) => b.id)).toEqual(V1_BLOCK_IDS);
   });
 

@@ -48,6 +48,8 @@ export const ZONE_PAR_BLOCK_TYPE: Readonly<Record<string, ZoneEcran>> = {
   // La recherche appartient au VIEWPORT, pas au flux (mission chrome).
   search_entry: "chrome",
   spacer: "contenu",
+  // 1.14.0 (EP-198) — le texte suivi COULE dans le flux, comme tout contenu.
+  prose: "contenu",
 };
 
 export interface SectionPlan {

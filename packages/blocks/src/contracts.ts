@@ -171,6 +171,36 @@ export interface FormBlockProps extends BlockA11yProps {
  */
 export type SpacerBlockProps = BlockA11yProps;
 
+/**
+ * TEXTE SUIVI (1.14.0, EP-198) — le bloc qui manquait pour qu'une surface
+ * légale dise autre chose que « le texte sera fourni ».
+ *
+ * FAIT MESURÉ AVANT CETTE MONTÉE : le registre comptait HUIT blocs, et le
+ * plus long texte qu'aucun pouvait porter était un sous-titre. Les écrans
+ * `terms` et `privacy_policy` du run existaient, étaient atteignables sans
+ * compte — et annonçaient « Le texte complet des conditions d'utilisation est
+ * fourni par le propriétaire ». Ce n'était pas un refus du générateur : il
+ * n'avait AUCUN endroit où écrire.
+ *
+ * LES PARAGRAPHES VIENNENT DU DOCUMENT, JAMAIS DU MOTEUR (F3). Le compilateur
+ * n'écrit pas une ligne de ce texte — il le met en page. C'est la doctrine
+ * déjà inscrite au schéma : le document nomme, le moteur dessine. Le cliquet
+ * d'EP-143 reste donc entier : il interdit au MOTEUR de rédiger un texte
+ * juridique, et rien ici ne le lui fait faire.
+ */
+export interface ProseBlockProps extends BlockA11yProps {
+  /** Paragraphes, dans l'ordre. Un tableau vide n'est pas rendu. */
+  paragraphs: readonly string[];
+  /** Intertitre facultatif — le titre de l'écran reste ailleurs. */
+  title?: string;
+  /**
+   * BROUILLON À FAIRE VALIDER (EP-198) — un texte juridique écrit par un
+   * générateur ENGAGE le propriétaire s'il part tel quel. Le document le
+   * déclare, le rendu l'annonce : personne ne publie sans l'avoir su.
+   */
+  brouillon?: boolean;
+}
+
 export interface ButtonBlockProps extends BlockA11yProps {
   label: string;
   /**
@@ -231,6 +261,7 @@ export interface Blocks {
   FormBlock: ComponentType<FormBlockProps>;
   ButtonBlock: ComponentType<ButtonBlockProps>;
   SpacerBlock: ComponentType<SpacerBlockProps>;
+  ProseBlock: ComponentType<ProseBlockProps>;
   EmptyStateBlock: ComponentType<EmptyStateBlockProps>;
   DetailHeaderBlock: ComponentType<DetailHeaderBlockProps>;
 }
@@ -261,6 +292,7 @@ export const BUTTON_BLOCK_STATES = ["ready"] as const;
 export const HEADER_BLOCK_STATES = ["ready"] as const;
 /** 1.8.0 — le spacer n'a qu'un état : il est là, ou il ne l'est pas. */
 export const SPACER_BLOCK_STATES = ["ready"] as const;
+export const PROSE_BLOCK_STATES = ["ready"] as const;
 export const SEARCH_ENTRY_BLOCK_STATES = ["ready"] as const;
 
 /**

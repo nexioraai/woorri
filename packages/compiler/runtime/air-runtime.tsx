@@ -23,6 +23,7 @@ import {
   HeaderBlock,
   ListBlock,
   SpacerBlock,
+  ProseBlock,
   SearchEntryBlock,
 } from "../blocks/components";
 import type { FormFieldSpec, ListItemData } from "../blocks/contracts";
@@ -602,6 +603,34 @@ export function AirSpacer({ screen, blockId }: BlockRef) {
   const b = block(screen, blockId);
   if (!visible) return null;
   return <SpacerBlock testID={b.id} />;
+}
+
+/**
+ * TEXTE SUIVI (1.14.0, EP-198) — le contenu vient du DOCUMENT, entier.
+ *
+ * Le runtime ne compose aucune phrase : il lit `paragraphs` tel quel. C'est
+ * ce qui permet aux surfaces legales de porter un texte reel au lieu d une
+ * promesse, sans que le moteur en redige un mot (F3, EP-143).
+ */
+export function AirProse({ screen, blockId }: BlockRef) {
+  const visible = useBlockVisible(screen, blockId);
+  const b = block(screen, blockId);
+  if (!visible) return null;
+  const props = b.props ?? {};
+  const paragraphs = Array.isArray(props.paragraphs)
+    ? (props.paragraphs as string[]).filter((p): p is string => typeof p === "string")
+    : [];
+  if (paragraphs.length === 0) return null;
+  const titre = typeof props.title === "string" ? props.title : undefined;
+  const brouillon = props.brouillon === true;
+  return (
+    <ProseBlock
+      testID={b.id}
+      paragraphs={paragraphs}
+      {...(titre === undefined ? {} : { title: titre })}
+      {...(brouillon ? { brouillon: true } : {})}
+    />
+  );
 }
 
 export function AirEmptyState({ screen, blockId }: BlockRef) {

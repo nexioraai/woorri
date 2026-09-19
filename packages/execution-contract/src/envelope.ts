@@ -196,6 +196,10 @@ export const EXECUTION_ENVELOPE_V1: ExecutionEnvelope = {
     // 1.8.0 — le spacer n'a qu'un état, et il est ATTEINT dès qu'il est rendu :
     // il n'a ni donnée à charger, ni vide à signaler, ni erreur possible.
     spacer: ["ready"],
+    // 1.14.0 (EP-198) — le texte suivi vient du DOCUMENT, entier : il n a ni
+    // chargement, ni vide a signaler, ni erreur possible. Un bloc sans
+    // paragraphe n est pas rendu du tout.
+    prose: ["ready"],
   },
 
   // Mesuré : ajouter la capability `maps` (implémentation `react-native-maps`)

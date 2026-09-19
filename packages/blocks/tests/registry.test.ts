@@ -22,7 +22,10 @@ describe("pont AIR ↔ registre de blocs", () => {
     // 1.8.0 : `spacer` → 7. Mission composition 2026-09-10 : `search_entry`
     // → 8 — la recherche comme élément structurel d'un accueil (références
     // propriétaire : Amazon, marketplace d'annonces). Additif.
-    expect(listBlockIds()).toHaveLength(8);
+    // 1.14.0 (EP-198) : `prose` -> 9 — le texte suivi. Le registre n avait
+    // AUCUN bloc capable de porter plus qu un sous-titre, et les surfaces
+    // legales annoncaient donc « le texte sera fourni ». Additif.
+    expect(listBlockIds()).toHaveLength(9);
     expect(getBlock("list")?.entity).toBe("required");
     expect(getBlock("carousel")).toBeUndefined();
   });

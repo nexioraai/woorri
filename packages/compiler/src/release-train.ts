@@ -110,7 +110,13 @@ export const RELEASE_TRAIN_V1 = {
   // 1.12.0 (EP-108) — montée ADDITIVE : la NATURE des props de champ
   // (affichage | filtrage) entre au contrat de bloc, en partition
   // exhaustive ; rien n'est retiré, aucun schéma ne change.
-  blockRegistryVersion: "1.13.0",
+  // 1.13.0 (EP-159) — saisieRoles/saisieCibles : les saisies qui n existent
+  // pas en base (confirmation d un secret, acceptation de conditions).
+  // 1.14.0 (EP-198) — NEUVIEME BLOC : `prose`, texte suivi. Le registre n en
+  // avait aucun capable de porter plus qu un sous-titre, et les surfaces
+  // legales annoncaient donc « le texte complet sera fourni ». Le generateur
+  // ne refusait pas d ecrire : il n avait aucun endroit ou le faire.
+  blockRegistryVersion: "1.14.0",
   // Ré-scellé le 2026-08-29 (DET-006 / D-039) : `ListBlock` DÉCLARE désormais
   // `fill` sur sa Section, afin que la liste virtualisée reçoive un parent
   // BORNÉ. Cause démontrée : imbriquée dans un ScrollView de même axe, une
@@ -215,7 +221,12 @@ export const RELEASE_TRAIN_V1 = {
     // bloc `button` DÉRIVE de la source unique (primitives/roles-icones) au
     // lieu d'en être la 2e copie. Vocabulaire INCHANGÉ (mêmes 11 rôles +
     // noms hérités) : seul le lieu de la vérité change.
-    "b5335711bee0d4d93c3dab4b92efe5eb2702d7cd586d300412f888886005df41",
+    // Re-scelle 2026-09-18 (EP-198) : NEUVIEME bloc, `prose` — texte suivi.
+    // EDITION CONSCIENTE : le sceau change parce qu un bloc ENTRE au registre,
+    // pas parce qu une prop bouge. Les huit precedents sont intacts, rien n
+    // est retire, et `prose` ne porte aucun texte du moteur — ses paragraphes
+    // viennent du DOCUMENT (F3, EP-143 preserve).
+    "5e50e222f08903ccf03ba55678fa3b12c566ce0a7627504475c0ac5cc37703f4",
   // EP-134 — ajout compatible `external_contact` : version MINEURE du registre.
   /**
    * EP-147 ③ — LE NIVEAU D'API ANDROID VISÉ, épinglé par le train.
