@@ -505,15 +505,15 @@ This prompt has two layers: (1) the MODE-SPECIFIC RULES you are about to read (m
 BOUTIQUE CLASSIQUE (mode 2) SPECIFIC RULES:
 - pages MUST be ["Home", "About", "Shop", "Contact"] — the Shop displays products the merchant adds manually in their dashboard. NO supplier catalog, NO search bar for external products, NO automated product curation.
 - sections: 1-2 sections showcasing the type of products this boutique sells (e.g. "Nos Collections", "Nos Créations"). Items are EXAMPLES to inspire the merchant — they will replace them with their real products. Each item has title, description, price, imageQuery as usual.
-- products: return an EMPTY array [] — the merchant adds their own products manually after site generation.
+- products: generate AT LEAST 35 realistic products for THIS boutique (M2-203 — a shop with 6 items looks like a mockup: it cannot be scrolled, searched or judged). Each product MUST have: {"name", "description" (1-2 sentences), "priceNumber" (a plain NUMBER, no currency inside), "currency" (the 3-letter ISO 4217 code of the merchant's market — infer it from the business location/language context the user gave, e.g. a shop in N'Djamena prices in XAF, in Paris in EUR, in Montreal in CAD; when truly unknown, use the currency of the language region), "sizes" (array of strings when the product has size/variant options — clothing S/M/L, shoes 40/41/42 — otherwise []), "imageQuery" (precise English photo search)}. Prices must be PRECISE and plausible for that product in that currency — never round invented numbers. These become the merchant's REAL starting catalog: they can edit, delete and add more (no upper limit) in their dashboard.
 - testimonials: 3 realistic testimonials (like mode 1).
 - heroTitle/heroSubtitle: emphasize the boutique's unique identity, curated selection, local/artisanal quality. Tone = authentic, inviting, personal.
 - slogan: about the boutique's identity, craftsmanship, or curated taste.
 - cta: "Discover our shop" / "Découvrir la boutique" / equivalent in site language. Action = browse the shop.
 - about: describe a local boutique with its own inventory, personal curation, and unique identity. The owner selects and manages their own products. NEVER mention suppliers, dropshipping, automated fulfillment, or Deribfy handling anything.
-- faq: 4 questions about shipping (handled by the merchant), return/exchange policy (merchant's own policy), secure payment (Stripe — the merchant's own Stripe account), and product availability (real physical inventory).
+- faq: 4 questions about shipping (handled by the merchant), return/exchange policy (merchant's own policy), payment (M2-203 — match the merchant's MARKET: card payment where that is the norm; mobile money transfer + WhatsApp/phone contact with the seller where THAT is the norm, e.g. much of Africa. NEVER assume one payment rail worldwide), and product availability (real physical inventory).
 - whyus: 3 trust signals — unique/curated selection, personal customer service, secure payment.
-- CRITICAL: Mode 2 is a self-managed boutique. The merchant connects their OWN Stripe account via Stripe Connect. Payments go DIRECTLY to the merchant. There is NO platform commission, NO automated fulfillment, NO supplier integration. The merchant handles their own stock, shipping, and customer service. NEVER mention Deribfy, suppliers, or automation in any generated text.
+- CRITICAL: Mode 2 is a self-managed boutique. Payments go DIRECTLY to the merchant, by the rail of THEIR market: their own card processor where cards are the norm, or mobile money transfer to the merchant's number + WhatsApp confirmation where that is the norm (M2-203 — the payment rail follows the merchant's market and their explicit choice, NEVER a worldwide assumption). There is NO platform commission, NO automated fulfillment, NO supplier integration. The merchant handles their own stock, shipping, and customer service. NEVER mention Deribfy, suppliers, or automation in any generated text.
 
 DROPSHIPPING (mode 3) SPECIFIC RULES — ADAPT BY DROPSHIP TYPE:
 
@@ -834,6 +834,76 @@ Return ONLY valid JSON, no markdown:
     if (error) {
       console.error('SUPABASE ERROR:', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    // ============================================================
+    // M2-203 — LE CATALOGUE DE DÉPART DEVIENT RÉEL (Mode 2 uniquement).
+    //
+    // CE QUI SE PASSAIT : `enforceModeProducts(2, …)` JETAIT les produits
+    // générés — décision juste à l'époque (volet C : le jsonb faisait un
+    // catalogue fantôme non achetable), mais la conséquence mesurée est
+    // qu'une boutique Mode 2 naissait avec ZÉRO produit réel : la vitrine
+    // n'avait rien à vendre, et le marchand repartait de zéro, produit par
+    // produit. Sur un marché où l'on demande des boutiques prêtes (Tchad),
+    // c'est la première chose qui se voit.
+    //
+    // CE QUI SE PASSE : les produits générés sont SEMÉS dans `shop_products`
+    // — la source canonique du Mode 2 — comme lignes RÉELLES. Le jsonb
+    // `sites.products` reste vide (volet C intact) : il n'y a plus deux
+    // vérités.
+    //
+    // `for_sale: false`, ET C'EST LA DOCTRINE DE LA DETTE 6c : « mettre en
+    // vente engage à encaisser ; une case pré-cochée fait porter cet
+    // engagement par l'inaction ». Les prix sont générés : le marchand les
+    // VÉRIFIE puis met en vente d'un geste. Visible d'emblée (published),
+    // vendable après décision.
+    // ============================================================
+    if (finalMode === 2 && Array.isArray(parsed.products) && parsed.products.length > 0) {
+      try {
+        const graines = await Promise.all(
+          parsed.products.map(async (pr: any) => {
+            const q = (pr.imageQuery || `${pr.name || ''} ${parsed.type || ''}`).trim();
+            const imgs = pr.image ? [pr.image] : await fetchPexelsImages(q, parsed.primaryColor);
+            const prix = typeof pr.priceNumber === 'number'
+              ? pr.priceNumber
+              : parseFloat(String(pr.price ?? '').replace(/[^\d.,]/g, '').replace(',', '.')) || 0;
+            const devise = /^[A-Za-z]{3}$/.test(String(pr.currency ?? '')) ? String(pr.currency).toUpperCase() : null;
+            return {
+              name: String(pr.name ?? '').slice(0, 200) || null,
+              description: pr.description ? String(pr.description) : null,
+              price: prix,
+              ...(devise ? { currency: devise } : {}),
+              images: imgs.filter(Boolean).slice(0, 1),
+              published: true,
+              for_sale: false,
+              sizes: Array.isArray(pr.sizes) ? pr.sizes.map(String).slice(0, 20) : [],
+            };
+          })
+        );
+        const lignes = graines
+          .filter((g) => g.name)
+          .map((g, i) => ({ ...g, site_id: undefined as unknown, position: i }));
+        // L'id du site vient d'être inséré : on le relit par slug (l'insert
+        // ci-dessus ne rend pas la ligne).
+        const { data: siteRow } = await supabaseAdmin.from('sites').select('id').eq('slug', slug).maybeSingle();
+        if (siteRow && lignes.length > 0) {
+          const rows = lignes.map((l) => ({ ...l, site_id: (siteRow as any).id }));
+          const { error: seedError } = await supabaseAdmin.from('shop_products').insert(rows);
+          if (seedError && /sizes/.test(seedError.message)) {
+            // FENÊTRE DE MIGRATION (M2-202) : la colonne `sizes` peut ne pas
+            // encore exister. On ressème SANS elle plutôt que de laisser la
+            // boutique vide — et l'erreur d'origine est tracée, pas avalée.
+            console.error('seed shop_products: colonne sizes absente, re-essai sans elle:', seedError.message);
+            await supabaseAdmin.from('shop_products').insert(rows.map(({ sizes: _s, ...reste }) => reste));
+          } else if (seedError) {
+            console.error('seed shop_products failed:', seedError);
+          }
+        }
+      } catch (e) {
+        // Le semis ne doit JAMAIS faire échouer la création du site : une
+        // boutique sans catalogue de départ vaut mieux que pas de boutique.
+        console.error('seed shop_products threw:', e);
+      }
     }
 
     // Increment du compteur de generation (monotone, jamais decremente) — sauf comptes illimites
