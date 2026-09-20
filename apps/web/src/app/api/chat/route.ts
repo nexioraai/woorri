@@ -345,7 +345,10 @@ export async function POST(req: Request) {
     // Email validé depuis le token — pas depuis le body (sinon manipulable)
     const owner_email = authData.user.email;
     const owner_id = authData.user.id;
-    const UNLIMITED_EMAILS = ['issayamiyoussouf@gmail.com'];
+    // M2-205 — comptes d'ESSAI INTERNE : la limite reste active pour tout le
+    // monde, ces comptes en sont exemptés nommément. Ajouter ici est un acte
+    // versionné — jamais un contournement en base.
+    const UNLIMITED_EMAILS = ['issayamiyoussouf@gmail.com', 'abbasissay@gmail.com'];
     const isUnlimited = UNLIMITED_EMAILS.includes(owner_email);
     // ===============================================================
 
