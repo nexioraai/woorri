@@ -16,6 +16,14 @@
 // d'étage déjà commise une fois (D-105) et défaite.
 import type { ProjectAir } from "@deribfy/air-schema";
 
+/**
+ * EP-192 — L'ÉMISSION SEGMENTÉE LIVRE DES DOCUMENTS PARTIELS : le type dit
+ * « requis », le run a prouvé le contraire (arrêt payant à 0,56 $). Ce helper
+ * porte la tolérance UNE fois, avec le type qui dit la vérité — même motif
+ * que dans `presentation.ts`.
+ */
+const listeOuVide = <T>(xs: readonly T[] | undefined): readonly T[] => xs ?? [];
+
 export interface DiagnosticMatiere {
   code: "CAMPAGNE_MATIERE_INSUFFISANTE";
   path: string;
@@ -98,7 +106,7 @@ export function nombresVraisemblables(air: ProjectAir): DiagnosticNombres[] {
   air.entities.forEach((e, i) => {
     e.fields.forEach((f, j) => {
       if (f.type !== "number" && f.type !== "decimal") return;
-      if (f.required !== true) return;
+      if (!f.required) return;
       if (f.demoValues !== undefined && f.demoValues.length > 0) return;
       out.push({
         code: "CAMPAGNE_NOMBRES_DEMO_MANQUANTS",
@@ -143,8 +151,8 @@ export interface DiagnosticCatalogue {
 export function catalogueFourni(air: ProjectAir): DiagnosticCatalogue[] {
   const out: DiagnosticCatalogue[] = [];
   const enListe = new Set<string>();
-  for (const ecran of air.screens ?? []) {
-    for (const bloc of ecran.blocks ?? []) {
+  for (const ecran of listeOuVide(air.screens)) {
+    for (const bloc of listeOuVide(ecran.blocks)) {
       if (bloc.blockType === "list" && typeof bloc.entityId === "string") {
         enListe.add(bloc.entityId);
       }
@@ -200,7 +208,7 @@ export function deviseCoherente(air: ProjectAir): DiagnosticDevise[] {
     e.fields.forEach((f, j) => {
       if (f.type !== "number" && f.type !== "decimal") return;
       for (const v of f.demoValues ?? []) {
-        const texte = String(v).trim();
+        const texte = v.trim();
         if (texte === "" || purementNumerique.test(texte)) continue;
         out.push({
           code: "CAMPAGNE_MONNAIE_DANS_LA_VALEUR",
@@ -265,8 +273,8 @@ export function vitrineAlignee(air: ProjectAir): DiagnosticVitrine[] {
   const out: DiagnosticVitrine[] = [];
   // Quels champs sont AFFICHÉS, et pour quelle entité.
   const affichesParEntite = new Map<string, Set<string>>();
-  for (const ecran of air.screens ?? []) {
-    for (const bloc of ecran.blocks ?? []) {
+  for (const ecran of listeOuVide(air.screens)) {
+    for (const bloc of listeOuVide(ecran.blocks)) {
       if (typeof bloc.entityId !== "string") continue;
       const props = new Map((bloc.props ?? []).map((p) => [p.key, p.value]));
       for (const cle of PROPS_D_AFFICHAGE) {

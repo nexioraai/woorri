@@ -30,6 +30,17 @@ import type { ProjectAir } from "@deribfy/air-schema";
 
 type Air = ProjectAir;
 
+/**
+ * EP-192 — L'ÉMISSION SEGMENTÉE LIVRE DES DOCUMENTS PARTIELS.
+ *
+ * Le TYPE dit que `screens`, `entities`, `blocks` sont requis ; le RUN a
+ * prouvé le contraire — au segment `base`, `screens` n'existe pas encore, et
+ * `undefined.filter` a arrêté un run payant à 0,56 $. Un `?? []` posé à
+ * chaque site serait jugé « inutile » par le lint, À RAISON selon le type :
+ * ce helper porte la tolérance UNE fois, avec le type qui dit la vérité.
+ */
+const listeOuVide = <T>(xs: readonly T[] | undefined): readonly T[] => xs ?? [];
+
 export interface PlacementFinding {
   readonly code: string;
   readonly path: string;
@@ -70,7 +81,7 @@ const texteDe = (valeur: unknown): string => {
   if (Array.isArray(valeur)) {
     const premier: unknown = valeur[0];
     if (typeof premier === "object" && premier !== null && "text" in premier) {
-      const t: unknown = (premier as { text: unknown }).text;
+      const t: unknown = premier.text;
       return typeof t === "string" ? t : "";
     }
   }
@@ -297,7 +308,7 @@ export function jugerGenreRacineCompte(
   //
   // Le juge est DÉPLACÉ au segment qui porte les écrans ; ce `?? []` est la
   // seconde barrière, pour qu'aucun appelant futur ne puisse le faire tomber.
-  const portent = (air.screens ?? []).filter((e) => e.purpose === GENRE_RACINE_COMPTE);
+  const portent = listeOuVide(air.screens).filter((e) => e.purpose === GENRE_RACINE_COMPTE);
   if (portent.length === 0) {
     return [
       {
@@ -783,7 +794,7 @@ const texteLibelle = (label: unknown): string => {
   if (Array.isArray(label)) {
     const premier: unknown = label[0];
     if (typeof premier === "object" && premier !== null && "text" in premier) {
-      const t: unknown = (premier as { text: unknown }).text;
+      const t: unknown = premier.text;
       return typeof t === "string" ? t.trim() : "";
     }
   }
@@ -932,7 +943,10 @@ export function jugerBasDeCompte(
   }
 
   // Ils viennent APRÈS le contenu utile : aucun bloc non-renvoi ne doit les suivre.
-  const premier = rangs[0]!.index;
+  // `rangs` est non vide ici — le retour anticipé plus haut l'a garanti —
+  // mais une garde explicite vaut mieux qu'une assertion que rien ne relit.
+  const premier = rangs[0]?.index;
+  if (premier === undefined) return out;
   const apres = compte.blocks.slice(premier).filter((b, i) => {
     if (i === 0) return false;
     const cible = cibleDuBouton.get(b.id);
@@ -1061,7 +1075,7 @@ export function jugerPlacement(
 export function contexteDeDocument(air: Air): ContextePrimitives {
   return {
     entryScreenId: air.navigation.entryScreenId,
-    ecransDIdentite: (air.screens ?? [])
+    ecransDIdentite: listeOuVide(air.screens)
       .filter((e) => e.purpose === GENRE_RACINE_COMPTE)
       .map((e) => e.id),
   };
@@ -1111,18 +1125,24 @@ const CHAMPS_MAX_FICHE_IDENTITE = 3;
 export function jugerFicheDIdentite(air: Air): readonly PlacementFinding[] {
   const out: PlacementFinding[] = [];
   const sensibles = new Set<string>();
-  for (const e of air.entities ?? []) {
-    for (const f of e.fields ?? []) if (f.sensitive === true) sensibles.add(f.id);
+  for (const e of listeOuVide(air.entities)) {
+    for (const f of listeOuVide(e.fields)) if (f.sensitive === true) sensibles.add(f.id);
   }
   if (sensibles.size === 0) return out;
 
-  for (const ecran of air.screens ?? []) {
-    for (const bloc of ecran.blocks ?? []) {
+  for (const ecran of listeOuVide(air.screens)) {
+    for (const bloc of listeOuVide(ecran.blocks)) {
       if (bloc.blockType !== "form") continue;
       const props = new Map((bloc.props ?? []).map((p) => [p.key, p.value]));
-      const champs = (props.get("fieldIds") ?? []) as readonly string[];
-      if (!Array.isArray(champs) || !champs.some((c) => sensibles.has(c))) continue;
-      const roles = (props.get("saisieRoles") ?? []) as readonly string[];
+      const brut = props.get("fieldIds");
+      const champs = Array.isArray(brut)
+        ? brut.filter((c): c is string => typeof c === "string")
+        : [];
+      if (!champs.some((c) => sensibles.has(c))) continue;
+      const brutRoles = props.get("saisieRoles");
+      const roles = Array.isArray(brutRoles)
+        ? brutRoles.filter((r): r is string => typeof r === "string")
+        : [];
 
       if (champs.length > CHAMPS_MAX_FICHE_IDENTITE) {
         out.push({
@@ -1184,10 +1204,10 @@ export function jugerCompteSelonSession(
   contexte: { readonly ecransDIdentite: readonly string[] },
 ): readonly PlacementFinding[] {
   const out: PlacementFinding[] = [];
-  for (const ecran of air.screens ?? []) {
+  for (const ecran of listeOuVide(air.screens)) {
     if (!contexte.ecransDIdentite.includes(ecran.id)) continue;
     const etats = new Set<string>(
-      (ecran.blocks ?? [])
+      listeOuVide(ecran.blocks)
         .map((b): string => b.visibleWhen?.kind ?? "")
         .filter((k) => k.startsWith("session_")),
     );
@@ -1238,10 +1258,10 @@ export function jugerSurfaceQuiEngage(air: Air): readonly PlacementFinding[] {
       .filter(([, f]) => (f as { porteUnEngagement?: boolean }).porteUnEngagement === true)
       .map(([g]) => g),
   );
-  for (const ecran of air.screens ?? []) {
+  for (const ecran of listeOuVide(air.screens)) {
     const genre = ecran.purpose;
     if (genre === undefined || !engageants.has(genre)) continue;
-    const proses = (ecran.blocks ?? []).filter((b) => b.blockType === "prose");
+    const proses = listeOuVide(ecran.blocks).filter((b) => b.blockType === "prose");
     if (proses.length === 0) {
       out.push({
         code: "PRESENTATION_ENGAGEMENT_SANS_TEXTE",
@@ -1276,8 +1296,8 @@ export function jugerSurfaceQuiEngage(air: Air): readonly PlacementFinding[] {
 
 export function jugerFicheUnique(air: Air): readonly PlacementFinding[] {
   const out: PlacementFinding[] = [];
-  for (const ecran of air.screens ?? []) {
-    const formulaires = (ecran.blocks ?? []).filter((b) => b.blockType === "form");
+  for (const ecran of listeOuVide(air.screens)) {
+    const formulaires = listeOuVide(ecran.blocks).filter((b) => b.blockType === "form");
     if (formulaires.length <= 1) continue;
     out.push({
       code: "PRESENTATION_FICHE_MULTIPLE",

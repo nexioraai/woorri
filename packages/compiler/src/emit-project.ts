@@ -699,7 +699,7 @@ function emitScreen(slice: ScreenSlice, aBarre: boolean, planEcran: EcranPlan): 
   return lines.filter((l): l is string => l !== undefined).join("\n");
 }
 
-function emitNavData(air: ProjectAir, locale: string, options: EmitOptions = {}): string {
+function emitNavData(air: ProjectAir, locale: string): string {
   // route.title est OPTIONNEL dans le schéma AIR (fait vérifié, air.ts) :
   // repli déterministe sur le titre de l'ÉCRAN cible (requis, lui).
   const screenTitles = new Map(air.screens.map((s) => [s.id, s.title]));
@@ -1109,11 +1109,13 @@ function decodeBase64(b64: string): Uint8Array {
   const out = new Uint8Array(Math.floor((net.length * 3) / 4));
   let o = 0;
   for (let i = 0; i + 1 < net.length; i += 4) {
+    // `?? ""` et non `!` : la boucle garantit i+1 < net.length, mais le
+    // lint ne le voit pas — et `indexOf("")` vaut -1, jamais un accès nul.
     const n =
-      (T.indexOf(net[i]!) << 18) |
-      (T.indexOf(net[i + 1]!) << 12) |
-      ((net[i + 2] === undefined ? 0 : T.indexOf(net[i + 2]!)) << 6) |
-      (net[i + 3] === undefined ? 0 : T.indexOf(net[i + 3]!));
+      (T.indexOf(net[i] ?? "") << 18) |
+      (T.indexOf(net[i + 1] ?? "") << 12) |
+      (T.indexOf(net[i + 2] ?? "A") << 6) |
+      T.indexOf(net[i + 3] ?? "A");
     out[o++] = (n >> 16) & 0xff;
     if (net[i + 2] !== undefined) out[o++] = (n >> 8) & 0xff;
     if (net[i + 3] !== undefined) out[o++] = n & 0xff;
@@ -1300,7 +1302,7 @@ export function emitProject(
   files.set("PUBLICATION.md", rendrePublicationMd(air, lock.resolved.providers));
   files.set("demo.data.ts", emitDemoData(air));
   files.set("manifests/permissions.manifest.json", emitPermissionsManifest(air));
-  files.set("nav.data.ts", emitNavData(air, locale, options));
+  files.set("nav.data.ts", emitNavData(air, locale));
   files.set("navigation.tsx", emitNavigation(air));
   for (const screen of [...air.screens].sort((a, b) => byCodeUnit(a.id, b.id))) {
     // ÉTAPE ① — le plan couvre chaque écran PAR CONSTRUCTION ; un trou est
