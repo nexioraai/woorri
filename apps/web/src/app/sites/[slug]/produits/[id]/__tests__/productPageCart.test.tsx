@@ -57,6 +57,9 @@ function produit(over: Partial<ProductPage> = {}): ProductPage {
     supplierId: null, supplierProductId: null, requiresVariant: false,
     // LOT 5 -- champ AJOUTE : seul `pod_custom` exige un design du visiteur.
     requiresDesign: false,
+    // M2-202 -- champs AJOUTES : tailles et numero du vendeur. Neutres ici :
+    // sans tailles ni numero, le rendu de ces cas est celui d'avant.
+    sizes: [], whatsapp: null,
     ...over,
   };
 }

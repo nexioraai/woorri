@@ -132,15 +132,19 @@ describe("ÉTAPE 6 — les allowlists génériques restent fermées", () => {
   // n'écrase rien. Le PATCH met à jour une ligne existante : y poser un
   // `stock` écrase le compteur SANS réveiller le trigger de l'étape 2, dont
   // la portée est `track_inventory` seul. Une seule des deux est dangereuse.
-  const POST_ATTENDUE = "['name', 'description', 'price', 'currency', 'images', 'stock', 'published', 'position', 'for_sale']";
-  const PATCH_ATTENDUE = "['name', 'description', 'price', 'currency', 'images', 'published', 'position', 'for_sale']";
+  // M2-202 — `sizes` ADMIS consciemment dans les DEUX listes : un attribut
+  // d'affichage et de choix (S, M, L, 42…), au même titre que `images`. Il ne
+  // déclare rien sur un état antérieur — ni preuve, ni acte dédié — et le
+  // PATCH doit pouvoir le corriger comme il corrige une description.
+  const POST_ATTENDUE = "['name', 'description', 'price', 'currency', 'sizes', 'images', 'stock', 'published', 'position', 'for_sale']";
+  const PATCH_ATTENDUE = "['name', 'description', 'price', 'currency', 'sizes', 'images', 'published', 'position', 'for_sale']";
 
-  it('POST /api/shop/products : 9 champs, `stock` COMPRIS', () => {
+  it('POST /api/shop/products : 10 champs, `stock` COMPRIS', () => {
     const s = readFileSync(join(SRC, 'app/api/shop/products/route.ts'), 'utf-8');
     expect(s).toContain(`const ALLOWED_PRODUCT_FIELDS = ${POST_ATTENDUE} as const;`);
   });
 
-  it('PATCH /api/shop/products/[id] : 8 champs, `stock` RETIRÉ (dette 2)', () => {
+  it('PATCH /api/shop/products/[id] : 9 champs, `stock` RETIRÉ (dette 2)', () => {
     const s = readFileSync(join(SRC, 'app/api/shop/products/[id]/route.ts'), 'utf-8');
     expect(s).toContain(`const ALLOWED_PRODUCT_FIELDS = ${PATCH_ATTENDUE} as const;`);
   });
@@ -155,8 +159,8 @@ describe("ÉTAPE 6 — les allowlists génériques restent fermées", () => {
 
     const post = champs('app/api/shop/products/route.ts');
     const patch = champs('app/api/shop/products/[id]/route.ts');
-    expect(post).toHaveLength(9);
-    expect(patch).toHaveLength(8);
+    expect(post).toHaveLength(10);
+    expect(patch).toHaveLength(9);
     expect(post.filter((c) => !patch.includes(c))).toEqual(['stock']);
     expect(patch.filter((c) => !post.includes(c))).toEqual([]);
   });
@@ -251,6 +255,15 @@ describe("ÉTAPE 6 — les allowlists génériques restent fermées", () => {
       // lit, n'écrit ni n'interprète `for_sale` : il ne fait que citer le
       // nom d'un outil dans un texte destiné au modèle.
       'src/lib/agent-tools/modeGuidance.ts',           // guidance par mode
+      // M2-203 — une entrée ajoutée CONSCIEMMENT, sur demande de ce cliquet
+      // lui-même. Le semis du catalogue de départ (Mode 2) ÉCRIT
+      // `for_sale: false` sur les lignes qu'il crée — même nature que
+      // `EMPTY_DRAFT.for_sale: false` côté formulaire : l'ÉTAT INITIAL d'une
+      // ligne nouvelle, déclaré explicitement plutôt que remis au DEFAULT
+      // SQL (true), parce que des prix GÉNÉRÉS ne doivent jamais encaisser
+      // sans que le marchand les ait vérifiés. Ce fichier ne JUGE pas
+      // l'achetabilité — le checkout reste seul juge.
+      'src/app/api/chat/route.ts',                     // semis Mode 2
     ];
     const hors = SOURCES.filter((f) => /for_sale/.test(code(f))).map(relatif)
       .filter((f) => !AUTORISES.includes(f));
@@ -319,11 +332,21 @@ describe("ÉTAPE 6 — les allowlists génériques restent fermées", () => {
     expect(shop).not.toMatch(/for_sale\s*[:=]\s*(true|false)/);
     expect(shop).not.toMatch(/for_sale\s*\?\?/);
 
-    const routes = SOURCES.filter((f) => /app\/api\//.test(relatif(f)));
+    // M2-203 — le semis du Mode 2 est l'ÉQUIVALENT SERVEUR du formulaire :
+    // il déclare l'état initial des lignes qu'il crée (`for_sale: false`,
+    // prix générés à vérifier avant vente). Ce n'est pas un DÉFAUT qui
+    // répond « que vaut le champ si on l'omet » — c'est une déclaration,
+    // comme EMPTY_DRAFT. Les autres routes restent interdites de défaut.
+    const routes = SOURCES.filter(
+      (f) => /app\/api\//.test(relatif(f)) && relatif(f) !== 'src/app/api/chat/route.ts',
+    );
     for (const f of routes) {
       expect(code(f), `${relatif(f)} ne doit pas reposer le défaut de for_sale`)
         .not.toMatch(/for_sale\s*[:=]\s*(true|false)/);
     }
+    // Et le semis ne déclare JAMAIS `true` : vendable reste un acte du
+    // marchand, pas un cadeau du générateur.
+    expect(code(join(SRC, 'app/api/chat/route.ts'))).not.toMatch(/for_sale\s*[:=]\s*true/);
   });
 });
 
