@@ -1,6 +1,6 @@
 // M2-202 — LE LIEN DE COMMANDE WHATSAPP, PUR ET TESTÉ SANS JSDOM.
 import { describe, expect, it } from 'vitest'
-import { lienCommandeWhatsApp } from '../ProductPageView'
+import { lienCommandeWhatsApp } from '@/lib/whatsappOrder'
 
 describe('M2-202 · le récapitulatif de commande WhatsApp', () => {
   it('LE LIEN PORTE PRODUIT, TAILLE, PRIX ET URL — le vendeur sait quoi livrer', () => {

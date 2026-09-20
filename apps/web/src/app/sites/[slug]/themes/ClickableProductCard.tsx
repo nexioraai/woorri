@@ -14,6 +14,9 @@ interface MerchantProduct {
   image?: string;
   supplierId?: string | null;
   supplierProductId?: string | null;
+  /** M2-206 — projetés par mapShopProducts, consommés par la modale. */
+  sizes?: string[];
+  whatsapp?: string | null;
 }
 interface Props {
   product: MerchantProduct;

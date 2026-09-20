@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { achatPossible } from './variantRequirement';
 import { X } from 'lucide-react';
 import AddToCartButton from './AddToCartButton';
+import { lienAppel, lienCommandeWhatsApp, urlProduitDepuisLaPage } from '@/lib/whatsappOrder';
 
 interface MerchantProduct {
   id?: string;
@@ -18,6 +19,11 @@ interface MerchantProduct {
   supplierProductId?: string | null;
   /** LOT 4 / R4-02 -- voir la condition `disabled` ci-dessous. */
   requiresVariant?: boolean;
+  /** M2-206 — tailles du produit marchand (S, M, L, 42…), projetées par
+   *  mapShopProducts. La sélection entre dans le récapitulatif WhatsApp. */
+  sizes?: string[];
+  /** M2-206 — le numéro du vendeur : appel direct ET commande WhatsApp. */
+  whatsapp?: string | null;
 }
 
 interface Props {
@@ -38,6 +44,12 @@ interface Props {
   // sombres futurs).
   variant?: 'light' | 'dark';
 }
+
+// M2-206 — même mécanique locale que le reste du fichier (en/fr).
+const CONTACT_LABELS: Record<string, { call: string; order: string; sizes: string }> = {
+  en: { call: 'Call the seller', order: 'Order on WhatsApp', sizes: 'Sizes' },
+  fr: { call: 'Appeler le vendeur', order: 'Commander sur WhatsApp', sizes: 'Tailles' },
+};
 
 const LABELS: Record<string, Record<string, string>> = {
   en: { addToCart: 'Add to cart', description: 'Description', chooseOption: 'Choose an option', loadingVariants: 'Loading options\u2026', options: 'Options' },
@@ -67,6 +79,8 @@ export default function MerchantProductModal({ product: p, primary, lang = 'en',
   const t = LABELS[lang] || LABELS.en;
   const c = TOKENS[variant]
   const [selectedVariant, setSelectedVariant] = useState<string | null>(null);
+  // M2-206 — la taille choisie entre dans le récapitulatif WhatsApp.
+  const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const cachedVariants = Array.isArray(p.variants) ? p.variants : [];
   const [liveVariants, setLiveVariants] = useState<any[]>([]);
   const [loadingVariants, setLoadingVariants] = useState(false);
@@ -201,6 +215,87 @@ export default function MerchantProductModal({ product: p, primary, lang = 'en',
               disabled={!achetable}
               onAdded={onClose}
             />
+
+            {/* M2-206 — TAILLES DU PRODUIT MARCHAND, même geste que les
+                variantes : re-presser désélectionne. Les deux familles ne
+                coexistent jamais (un produit marchand n'a pas de variantes
+                fournisseur). */}
+            {(p.sizes ?? []).length > 0 && (
+              <div style={{ marginTop: 20 }}>
+                <p style={{ fontSize: 12, fontWeight: 600, marginBottom: 10, textTransform: 'uppercase', letterSpacing: '0.05em', color: c.labelMuted }}>
+                  {(CONTACT_LABELS[lang] || CONTACT_LABELS.en).sizes}
+                </p>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  {(p.sizes ?? []).map((taille) => (
+                    <button
+                      key={taille}
+                      onClick={() => setSelectedSize(taille === selectedSize ? null : taille)}
+                      style={{
+                        padding: '8px 16px', borderRadius: 8, fontSize: 13, cursor: 'pointer', fontWeight: 500,
+                        border: taille === selectedSize ? '2px solid ' + primary : '1.5px solid ' + c.variantBorder,
+                        background: taille === selectedSize ? primary + '15' : 'transparent',
+                        color: c.text, transition: 'all 0.15s',
+                      }}
+                    >{taille}</button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* ============================================================
+                M2-206 — APPEL DIRECT + COMMANDE WHATSAPP, SUR LA MODALE.
+
+                Demandé après inspection : la modale est CE QUI S'OUVRE au
+                clic sur un produit — les boutons doivent y être, pas
+                seulement sur la page /produits/<id>.
+
+                LE VENDEUR REÇOIT LE PRODUIT PRÉCIS : le message porte le
+                LIEN du produit, que WhatsApp déroule en aperçu — photo, nom
+                — via l'og:image que la page produit déclare déjà. Un lien
+                wa.me ne peut PAS joindre une image ; l'aperçu du lien est
+                le chemin fiable.
+
+                RIEN N'EST INVENTÉ : sans numéro renseigné par le marchand
+                (réseaux sociaux du site), aucun des deux boutons n'existe.
+                ============================================================ */}
+            {p.whatsapp && (
+              <div style={{ display: 'flex', gap: 10, marginTop: 14, flexWrap: 'wrap' }}>
+                {(() => {
+                  const appel = lienAppel(p.whatsapp);
+                  return appel && (
+                    <a
+                      href={appel}
+                      style={{
+                        display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                        border: '1.5px solid ' + primary, color: primary, fontWeight: 600,
+                        fontSize: 14, padding: '12px 20px', borderRadius: 10, textDecoration: 'none',
+                      }}
+                    >{(CONTACT_LABELS[lang] || CONTACT_LABELS.en).call}</a>
+                  );
+                })()}
+                <a
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    const lien = lienCommandeWhatsApp({
+                      whatsapp: p.whatsapp ?? '',
+                      productName: p.name,
+                      size: selectedSize,
+                      priceLabel: p.price,
+                      // L'URL se résout depuis la page courante : valable sur
+                      // deribfy.com/sites/<slug> comme sur un domaine propre.
+                      url: p.id ? urlProduitDepuisLaPage(window.location.origin, window.location.pathname, p.id) : (p.image ?? ''),
+                    });
+                    if (lien) window.open(lien, '_blank', 'noopener,noreferrer');
+                  }}
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                    background: '#25D366', color: '#fff', fontWeight: 600,
+                    fontSize: 14, padding: '12px 20px', borderRadius: 10, textDecoration: 'none',
+                  }}
+                >{(CONTACT_LABELS[lang] || CONTACT_LABELS.en).order}</a>
+              </div>
+            )}
 
             {p.description && (
               <div style={{ marginTop: 28, borderTop: '1px solid ' + c.border, paddingTop: 20 }}>

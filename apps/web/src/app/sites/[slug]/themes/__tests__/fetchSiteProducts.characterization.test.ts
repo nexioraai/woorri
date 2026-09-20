@@ -227,10 +227,12 @@ for (const [nom, appel] of FONCTIONS) {
   });
 
   describe(`${nom} — CAS 6 : forme exacte du mapping`, () => {
-    // DETTE 6c — NEUF champs, et non plus huit. Le `toEqual` est exhaustif :
-    // c'est lui qui garantit qu'aucun autre champ interne n'a été promu au
-    // passage. Ce bloc est exécuté pour fetchSite ET fetchSitePreview.
-    it('les 9 champs projetés, aux formats exacts', async () => {
+    // DETTE 6c — NEUF champs. M2-206 — ONZE : `sizes` et `whatsapp` entrent
+    // EN CONSCIENCE, deux informations DESTINÉES au visiteur (choisir sa
+    // taille, joindre le vendeur), au même titre que le prix. Le `toEqual`
+    // reste exhaustif : c'est lui qui garantit qu'aucun champ INTERNE n'est
+    // promu au passage. Ce bloc est exécuté pour fetchSite ET fetchSitePreview.
+    it('les 11 champs projetés, aux formats exacts', async () => {
       shopProductsResult = { data: [ligne()], error: null };
       const mod = await import('../shared');
       const s = await appel(mod);
@@ -242,8 +244,10 @@ for (const [nom, appel] of FONCTIONS) {
         priceNumber: 12,             // et le nombre à côté
         currency: 'CAD',
         image: 'https://x.test/mug.png',  // images[0], pas le tableau
+        sizes: [],                   // M2-206 — tailles, [] quand absentes
+        whatsapp: null,              // M2-206 — numéro du site, null sans social_links
         cjVid: null,
-        forSale: true,               // DETTE 6c — l'achetabilité, seul champ ajouté
+        forSale: true,               // DETTE 6c — l'achetabilité
       });
     });
 

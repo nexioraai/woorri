@@ -7,6 +7,7 @@ import AddToCartButton from '../../themes/AddToCartButton'
 import { achatPossible, choixDeVarianteRequis } from '../../themes/variantRequirement'
 import DesignCanvas from '../../themes/DesignCanvas'
 import { THEME_TOKENS, ThemeKey } from '../../themes/CatalogSearch'
+import { lienAppel, lienCommandeWhatsApp } from '@/lib/whatsappOrder'
 
 const CART_LABELS: Record<string, string> = {
   fr: 'Ajouter au panier',
@@ -53,24 +54,8 @@ const PAY_HINT_LABELS: Record<string, string> = {
   es: 'Envíe el importe a este número y comparta la captura del pago por WhatsApp: el vendedor confirma y entrega.',
 }
 
-/** Le lien de commande : wa.me + récapitulatif pré-rempli. EXPORTÉ pour être
- *  testé sans jsdom — la construction est pure. */
-export function lienCommandeWhatsApp(args: {
-  whatsapp: string
-  productName: string
-  size: string | null
-  priceLabel: string
-  url: string
-}): string | null {
-  const digits = args.whatsapp.replace(/\D/g, '')
-  if (!digits) return null
-  const lignes = [
-    args.productName + (args.size ? ` (${args.size})` : ''),
-    args.priceLabel,
-    args.url,
-  ].filter(Boolean)
-  return `https://wa.me/${digits}?text=${encodeURIComponent(lignes.join('\n'))}`
-}
+// M2-206 — la construction du lien vit dans `@/lib/whatsappOrder`, module
+// PUR partagé avec la modale de la vitrine : deux copies auraient divergé.
 
 type VarianteFournisseur = { variant_id: string; name: string }
 
@@ -365,6 +350,24 @@ export default function ProductPageView({ product }: { product: ProductPage }) {
                 <p style={{ fontSize: 13, lineHeight: 1.5, opacity: 0.75, marginTop: 8, marginBottom: 12 }}>
                   {PAY_HINT_LABELS[product.lang] || PAY_HINT_LABELS.en}
                 </p>
+                {/* M2-206 — l'APPEL DIRECT, demandé explicitement : « bouton
+                    appel direct du marchand ». Vital sur ce marché. */}
+                {(() => {
+                  const appel = lienAppel(product.whatsapp)
+                  return appel && (
+                    <a
+                      href={appel}
+                      style={{
+                        display: 'inline-flex', alignItems: 'center', gap: 8,
+                        border: '1.5px solid ' + product.primary, color: product.primary,
+                        fontWeight: 600, fontSize: 14, padding: '12px 20px',
+                        borderRadius: 10, textDecoration: 'none', marginRight: 10,
+                      }}
+                    >
+                      {product.lang === 'fr' ? 'Appeler le vendeur' : 'Call the seller'}
+                    </a>
+                  )
+                })()}
                 {(() => {
                   const lien = lienCommandeWhatsApp({
                     whatsapp: product.whatsapp,

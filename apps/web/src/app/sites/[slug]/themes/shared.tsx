@@ -282,8 +282,15 @@ console.error('[storefront] ' + ligne)
 // tromper vers le visible, une barriere de PAIEMENT jamais vers l'encaissement.
 // ============================================================
 
-/** Projection publique d'une ligne `shop_products`. Aucun champ interne. */
-function mapShopProducts(rows: any[]): any[] {
+/** Projection publique d'une ligne `shop_products`. Aucun champ interne.
+ *
+ * M2-206 — `sizes` et `whatsapp` s'y ajoutent : deux informations DESTINÉES
+ * au visiteur (choisir sa taille, joindre le vendeur), au même titre que le
+ * prix. Le cliquet de caractérisation continue d'interdire les champs
+ * INTERNES (`stock`, `published`, `track_inventory`) — rien ne change pour
+ * eux. `whatsapp` est le numéro du SITE (social_links), posé sur chaque
+ * produit pour voyager jusqu'à la modale sans traverser cinq thèmes. */
+function mapShopProducts(rows: any[], whatsapp?: string | null): any[] {
 return rows.map((p: any) => ({
 id: p.id,
 name: p.name,
@@ -292,6 +299,8 @@ price: p.price != null ? `${Number(p.price).toFixed(2)} ${p.currency}` : '',
 priceNumber: p.price != null ? Number(p.price) : undefined,
 currency: p.currency,
 image: Array.isArray(p.images) && p.images.length > 0 ? p.images[0] : undefined,
+sizes: Array.isArray(p.sizes) ? p.sizes : [],
+whatsapp: whatsapp || null,
 cjVid: p.cj_vid || null,
 forSale: p.for_sale !== false,
 }))
@@ -310,7 +319,7 @@ if (canTransact(data?.mode)) {
 // Modes commercants : `shop_products` fait foi, MEME VIDE. Aucun repli --
 // une boutique sans produit publie n'a pas de catalogue, elle n'herite pas
 // de celui d'avant.
-data.products = mapShopProducts(shopProducts ?? [])
+data.products = mapShopProducts(shopProducts ?? [], data?.social_links?.whatsapp)
 return
 }
 // Mode 1 (et tout mode non commercant) : comportement RIGOUREUSEMENT
@@ -318,7 +327,7 @@ return
 // atteindre -- une vitrine n'a pas de `shop_products`. La conserver telle
 // quelle est ce qui garantit qu'aucun comportement du Mode 1 n'a bouge.
 if (shopProducts && shopProducts.length > 0) {
-data.products = mapShopProducts(shopProducts)
+data.products = mapShopProducts(shopProducts, data?.social_links?.whatsapp)
 }
 }
 
