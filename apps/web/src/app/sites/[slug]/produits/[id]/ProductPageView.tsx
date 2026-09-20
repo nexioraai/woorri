@@ -7,7 +7,7 @@ import AddToCartButton from '../../themes/AddToCartButton'
 import { achatPossible, choixDeVarianteRequis } from '../../themes/variantRequirement'
 import DesignCanvas from '../../themes/DesignCanvas'
 import { THEME_TOKENS, ThemeKey } from '../../themes/CatalogSearch'
-import { lienAppel, lienCommandeWhatsApp } from '@/lib/whatsappOrder'
+import { lienAppel, lienCommandeWhatsApp, marcheSansCarte } from '@/lib/whatsappOrder'
 
 const CART_LABELS: Record<string, string> = {
   fr: 'Ajouter au panier',
@@ -329,7 +329,9 @@ export default function ProductPageView({ product }: { product: ProductPage }) {
                 paiement — elle ne le voit pas passer ; la confirmation est
                 humaine, par la capture envoyée au vendeur.
                 ============================================================ */}
-            {product.forSale && product.whatsapp && (
+            {/* M2-207 — porte du marché : XAF/XOF seulement. Les marchés
+                carte (Stripe) gardent leur parcours, intact. */}
+            {product.forSale && product.whatsapp && marcheSansCarte(product.currency) && (
               <div
                 style={{
                   marginTop: 20,

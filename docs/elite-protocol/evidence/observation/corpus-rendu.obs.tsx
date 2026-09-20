@@ -32,12 +32,17 @@ describe("GATE RACINE — les applications émises se MONTENT vraiment", () => {
     // 26 depuis la campagne v3 (D-081) : le corpus gelé ET le corpus généré.
     // ÉDITION CONSCIENTE (2026-09-04) : 27 depuis l'entrée de `bus-intercites`
     // au corpus v3 (intention créée par arbitrage D-126, run accepté D-127).
+    // ÉDITION CONSCIENTE (2026-09-20) : 28 depuis l'entrée de `kaviva-spa`
+    // au corpus v3 — run accepté du 2026-09-11, resté hors de cette gate
+    // parce qu'aucun push n'a fait tourner le CI entre le 13 et le 19 (212
+    // commits poussés d'un coup). Le cliquet a fait EXACTEMENT son office :
+    // une app entrée sans que ce fichier le consigne l'a fait échouer.
     // Le cliquet reste EXACT — il continue d'exiger un nombre précis, donc
     // toute app ajoutée ou perdue sans décision le fait échouer. Sa réparation
     // n'assouplit rien : elle le RÉARME. Mesuré le 2026-09-04 : cette
     // assertion précède la boucle de montage, donc tant qu'elle échouait
     // AUCUN écran n'était monté — la gate ne prouvait plus rien.
-    expect(apps.length, "les applications des deux corpus").toBe(27);
+    expect(apps.length, "les applications des deux corpus").toBe(28);
 
     let ecrans = 0;
     let identites = 0;

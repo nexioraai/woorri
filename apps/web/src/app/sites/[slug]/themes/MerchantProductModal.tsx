@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { achatPossible } from './variantRequirement';
 import { X } from 'lucide-react';
 import AddToCartButton from './AddToCartButton';
-import { lienAppel, lienCommandeWhatsApp, urlProduitDepuisLaPage } from '@/lib/whatsappOrder';
+import { lienAppel, lienCommandeWhatsApp, marcheSansCarte, urlProduitDepuisLaPage } from '@/lib/whatsappOrder';
 
 interface MerchantProduct {
   id?: string;
@@ -187,7 +187,10 @@ export default function MerchantProductModal({ product: p, primary, lang = 'en',
               </div>
             )}
 
-            <AddToCartButton
+            {/* M2-207 — une carte de COLLECTION (pas de priceNumber) n'est
+                pas une ligne de panier : sa fiche informe et fait parler au
+                vendeur. Le bouton panier n'y est pas rendu. */}
+            {p.priceNumber != null && <AddToCartButton
               id={(p.id || p.name) + (selectedVariant ? '::' + selectedVariant : '')}
               name={p.name + (selectedVariant ? ' \u2014 ' + (variants.find(v => v.variant_id === selectedVariant)?.label || '') : '')}
               priceNumber={p.priceNumber || 0}
@@ -214,7 +217,7 @@ export default function MerchantProductModal({ product: p, primary, lang = 'en',
               label={loadingVariants ? t.loadingVariants : (achetable ? t.addToCart : t.chooseOption)}
               disabled={!achetable}
               onAdded={onClose}
-            />
+            />}
 
             {/* M2-206 — TAILLES DU PRODUIT MARCHAND, même geste que les
                 variantes : re-presser désélectionne. Les deux familles ne
@@ -258,7 +261,10 @@ export default function MerchantProductModal({ product: p, primary, lang = 'en',
                 RIEN N'EST INVENTÉ : sans numéro renseigné par le marchand
                 (réseaux sociaux du site), aucun des deux boutons n'existe.
                 ============================================================ */}
-            {p.whatsapp && (
+            {/* M2-207 — PORTE DU MARCHÉ (Youssouf) : ces boutons ne
+                concernent QUE les marchés sans carte (XAF/XOF). Un marchand
+                Stripe (EUR, USD, CAD…) garde son parcours panier, intact. */}
+            {p.whatsapp && marcheSansCarte(p.currency, p.price) && (
               <div style={{ display: 'flex', gap: 10, marginTop: 14, flexWrap: 'wrap' }}>
                 {(() => {
                   const appel = lienAppel(p.whatsapp);

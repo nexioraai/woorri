@@ -319,7 +319,7 @@ if (canTransact(data?.mode)) {
 // Modes commercants : `shop_products` fait foi, MEME VIDE. Aucun repli --
 // une boutique sans produit publie n'a pas de catalogue, elle n'herite pas
 // de celui d'avant.
-data.products = mapShopProducts(shopProducts ?? [], data?.social_links?.whatsapp)
+data.products = mapShopProducts(shopProducts ?? [], data?.social_links?.whatsapp || data?.contact?.phone)
 return
 }
 // Mode 1 (et tout mode non commercant) : comportement RIGOUREUSEMENT
@@ -327,7 +327,7 @@ return
 // atteindre -- une vitrine n'a pas de `shop_products`. La conserver telle
 // quelle est ce qui garantit qu'aucun comportement du Mode 1 n'a bouge.
 if (shopProducts && shopProducts.length > 0) {
-data.products = mapShopProducts(shopProducts, data?.social_links?.whatsapp)
+data.products = mapShopProducts(shopProducts, data?.social_links?.whatsapp || data?.contact?.phone)
 }
 }
 

@@ -67,7 +67,7 @@ export async function fetchProduct(slug: string, rawId: string): Promise<Product
   // vrai par construction de la vue, jamais lu par le reste de la fonction.
   const { data: site } = await supabase
     .from('sites_public')
-    .select('id, name, slug, mode, custom_domain, dropship_type, product_families, cj_margin_percent, cj_round_mode, primary_color, theme, lang, shipping_flat, social_links')
+    .select('id, name, slug, mode, custom_domain, dropship_type, product_families, cj_margin_percent, cj_round_mode, primary_color, theme, lang, shipping_flat, social_links, contact')
     .eq('slug', slug)
     .maybeSingle()
   if (!site) return null
@@ -167,7 +167,7 @@ export async function fetchProduct(slug: string, rawId: string): Promise<Product
       requiresDesign: (site as any).dropship_type === 'pod_custom',
       // Catalogue fournisseur : les déclinaisons sont les VARIANTES.
       sizes: [],
-      whatsapp: ((site as any).social_links?.whatsapp as string | undefined) || null,
+      whatsapp: ((site as any).social_links?.whatsapp as string | undefined) || ((site as any).contact?.phone as string | undefined) || null,
     }
   }
 
@@ -206,7 +206,7 @@ export async function fetchProduct(slug: string, rawId: string): Promise<Product
     // toujours pas de page, quelle que soit son achetabilite.
     forSale: (p as any).for_sale !== false,
     sizes: Array.isArray((p as any).sizes) ? (p as any).sizes : [],
-    whatsapp: ((site as any).social_links?.whatsapp as string | undefined) || null,
+    whatsapp: ((site as any).social_links?.whatsapp as string | undefined) || ((site as any).contact?.phone as string | undefined) || null,
     siteName: (site as any).name,
     siteSlug: (site as any).slug,
     siteCustomDomain: (site as any).custom_domain ?? null,

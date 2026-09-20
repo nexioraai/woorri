@@ -25,6 +25,7 @@ import TiltCard from './TiltCard'
 import { getModeCapabilities } from './modeCapabilities'
 import EditorialShopSection from './EditorialShopSection'
 import { socialUrl } from '@/lib/social'
+import ClickableProductCard from './ClickableProductCard'
 
 // ---------- Premium Button ----------
 function PremiumButton({
@@ -298,9 +299,30 @@ export default function EditorialTheme({ site }: { site: Site }) {
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {(sec.items || []).map((s: any, i: number) => {
                 const featured = i === 0 && sec.items.length >= 3
+                // M2-207 — LA CARTE DE COLLECTION EST CLIQUABLE (Youssouf :
+                // « nos collections doivent être cliquables, la fiche
+                // s'affiche, avec les boutons WhatsApp et appel »). Elle
+                // ouvre la MÊME modale que la boutique — sans bouton panier
+                // (pas de priceNumber) : la fiche informe, et sur un marché
+                // sans carte elle fait parler au vendeur. Le numéro suit le
+                // même repli que partout : social_links.whatsapp, sinon
+                // contact.phone.
                 return (
-                  <TiltCard
+                  <ClickableProductCard
                     key={i}
+                    slug={site.slug}
+                    lang={site.lang}
+                    primary={primary}
+                    product={{
+                      name: s.title,
+                      description: s.description || '',
+                      price: s.price || '',
+                      image: s.image,
+                      whatsapp: social.whatsapp || contact.phone || null,
+                      hasProductPage: false,
+                    }}
+                  >
+                  <TiltCard
                     className={`group relative p-8 md:p-10 rounded-3xl transition-all duration-500 ${
                       featured
                         ? 'bg-neutral-900 text-white shadow-2xl lg:row-span-2'
@@ -336,15 +358,15 @@ export default function EditorialTheme({ site }: { site: Site }) {
                       {s.description}
                     </p>
                     {featured && (
-                      <a
-                        href="#contact"
+                      <span
                         className="inline-flex items-center gap-2 mt-8 text-sm font-medium group/link"
                       >
                         {t.labels.learnMore}
                         <ArrowRight className="w-4 h-4 group-hover/link:translate-x-1 transition-transform" />
-                      </a>
+                      </span>
                     )}
                   </TiltCard>
+                  </ClickableProductCard>
                 )
               })}
             </div>

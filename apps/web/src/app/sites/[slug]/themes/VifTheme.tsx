@@ -17,6 +17,7 @@ import TiltCard from './TiltCard'
 import { getModeCapabilities } from './modeCapabilities'
 import VifShopSection from './VifShopSection'
 import { socialUrl } from '@/lib/social'
+import ClickableProductCard from './ClickableProductCard'
 
 // Palette Gusto clair-editorial (fixe, signature du theme)
 export const CREAM = '#EFE6D4'
@@ -292,8 +293,23 @@ export default function VifTheme({ site }: { site: Site }) {
 
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {(sec.items || []).map((s: any, i: number) => (
-                  <TiltCard
+                  // M2-207 — carte de collection CLIQUABLE : même modale que
+                  // la boutique, sans panier. Numéro : whatsapp ou téléphone.
+                  <ClickableProductCard
                     key={i}
+                    slug={site.slug}
+                    lang={site.lang}
+                    primary={INK}
+                    product={{
+                      name: s.title,
+                      description: s.description || '',
+                      price: s.price || '',
+                      image: s.image,
+                      whatsapp: social.whatsapp || contact.phone || null,
+                      hasProductPage: false,
+                    }}
+                  >
+                  <TiltCard
                     className="group relative rounded-3xl overflow-hidden transition-all duration-500 hover:-translate-y-1 bg-white border border-black/[0.06] hover:shadow-xl"
                   >
                     {s.image && (
@@ -319,6 +335,7 @@ export default function VifTheme({ site }: { site: Site }) {
                       )}
                     </div>
                   </TiltCard>
+                  </ClickableProductCard>
                 ))}
               </div>
             </div>

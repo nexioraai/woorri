@@ -6,6 +6,7 @@ import { ArrowRight, Phone, Mail, MapPin, ShoppingBag } from 'lucide-react'
 import { motion, useReducedMotion, useScroll, useTransform, useMotionTemplate, type MotionValue } from 'framer-motion'
 import { Instagram, Facebook, TikTok, WhatsApp } from './BrandIcons'
 import MobileNav from './MobileNav'
+import ClickableProductCard from './ClickableProductCard'
 import ContactForm from '../ContactForm'
 import {
   type Site,
@@ -483,7 +484,25 @@ export default function NoirTheme({ site }: { site: Site }) {
 
               <div style={{ borderTop: `1px solid ${LINE}` }}>
                 {(sec.items || []).map((s: any, i: number) => (
-                  <div key={i} className="group grid md:grid-cols-2 gap-8 md:gap-14 items-center py-12 md:py-16 transition-colors duration-500 hover:bg-white/[0.02]" style={{ borderBottom: `1px solid ${LINE}` }}>
+                  // M2-207 — carte de collection CLIQUABLE : même modale que
+                  // la boutique, sans panier (pas de priceNumber). Numéro du
+                  // vendeur : social_links.whatsapp, sinon contact.phone.
+                  <ClickableProductCard
+                    key={i}
+                    slug={site.slug}
+                    lang={site.lang}
+                    primary={gold}
+                    variant="dark"
+                    product={{
+                      name: s.title,
+                      description: s.description || '',
+                      price: s.price || '',
+                      image: s.image,
+                      whatsapp: social.whatsapp || contact.phone || null,
+                      hasProductPage: false,
+                    }}
+                  >
+                  <div className="group grid md:grid-cols-2 gap-8 md:gap-14 items-center py-12 md:py-16 transition-colors duration-500 hover:bg-white/[0.02]" style={{ borderBottom: `1px solid ${LINE}` }}>
                     <div className={i % 2 === 1 ? 'md:order-2' : ''}>
                       <div className="flex items-baseline gap-5 mb-6">
                         <span className="text-5xl md:text-6xl leading-none transition-opacity duration-500 group-hover:opacity-100" style={{ fontFamily: 'var(--font-fraunces), serif', color: gold, opacity: 0.5 }}>
@@ -501,6 +520,7 @@ export default function NoirTheme({ site }: { site: Site }) {
                       </div>
                     )}
                   </div>
+                  </ClickableProductCard>
                 ))}
               </div>
             </div>

@@ -61,3 +61,22 @@ export function urlProduitDepuisLaPage(
   const racine = base.includes('/produits/') ? base.slice(0, base.indexOf('/produits/')) : base
   return `${origin}${racine}/produits/${encodeURIComponent(productId)}`
 }
+
+
+/**
+ * M2-207 — LA PORTE DU MARCHÉ SANS CARTE, DITE PAR YOUSSOUF :
+ * « les boutons WhatsApp et appel sur la fiche produit, marché tchadien
+ * UNIQUEMENT — ça ne concerne pas les autres pays où on a intégré Stripe. »
+ *
+ * Le discriminant est la MONNAIE du produit : XAF et XOF sont les deux zones
+ * franc CFA où le transfert mobile est la norme d'encaissement. EUR, USD,
+ * CAD et le reste gardent leur parcours carte, strictement inchangé.
+ * `texte` tolère un libellé de prix (« 28500.00 XAF », « 25 000 - 80 000
+ * FCFA ») pour les cartes de collection qui n'ont pas de champ devise.
+ */
+export function marcheSansCarte(currency?: string | null, texte?: string | null): boolean {
+  const c = (currency ?? '').trim().toUpperCase()
+  if (c === 'XAF' || c === 'XOF') return true
+  const t = (texte ?? '').toUpperCase()
+  return /\b(XAF|XOF|FCFA|F CFA)\b/.test(t)
+}
