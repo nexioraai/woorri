@@ -366,7 +366,7 @@ export default function AdminDashboard() {
                               disabled={basculeEnCours === s.slug}
                               className="ml-3 px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-400/25 hover:bg-emerald-500/25 transition disabled:opacity-40"
                             >
-                              {basculeEnCours === s.slug ? "…" : "Mettre en ligne"}
+                              {basculeEnCours === s.slug ? "…" : "Publier"}
                             </button>
                           )}
                         </td>

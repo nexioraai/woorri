@@ -39,7 +39,7 @@ export default function PublishOverrideCard() {
       setMsg({
         ok: true,
         text: publish
-          ? `« ${slug.trim()} » est EN LIGNE (paiement hors ligne, journalisé).`
+          ? `« ${slug.trim()} » est PUBLIÉ (paiement hors ligne, journalisé).`
           : `« ${slug.trim()} » est retiré de la ligne (journalisé).`,
       });
       setReason('');
@@ -83,7 +83,7 @@ export default function PublishOverrideCard() {
           disabled={!pret}
           className="px-5 py-2.5 rounded-xl text-sm font-semibold transition disabled:opacity-40 bg-emerald-500/15 text-emerald-300 border border-emerald-400/25 hover:bg-emerald-500/25"
         >
-          {busy ? '…' : 'Mettre EN LIGNE'}
+          {busy ? '…' : 'Publier'}
         </button>
         <button
           onClick={() => agir(false)}
