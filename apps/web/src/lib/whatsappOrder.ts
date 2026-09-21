@@ -56,9 +56,20 @@ export function urlProduitDepuisLaPage(
   origin: string,
   pathname: string,
   productId: string,
+  slug?: string,
 ): string {
   const base = pathname.replace(/\/+$/, '')
-  const racine = base.includes('/produits/') ? base.slice(0, base.indexOf('/produits/')) : base
+  const i = base.indexOf('/produits/')
+  const racine = i !== -1 ? base.slice(0, i) : base
+  // M2-213 — L'APERÇU N'EST PAS UNE ADRESSE PUBLIQUE, ET ÇA A CASSÉ UNE
+  // VENTE RÉELLE : l'acheteur commande depuis /preview/<slug> (ou /edit),
+  // le vendeur reçoit ce lien-là… et tombe sur 404 — la page d'aperçu
+  // n'existe que pour le propriétaire connecté. Le lien envoyé vise
+  // désormais TOUJOURS l'adresse publique canonique /sites/<slug>/…,
+  // la seule que le destinataire peut ouvrir.
+  if (slug && !racine.startsWith('/sites/') && racine !== '') {
+    return `${origin}/sites/${encodeURIComponent(slug)}/produits/${encodeURIComponent(productId)}`
+  }
   return `${origin}${racine}/produits/${encodeURIComponent(productId)}`
 }
 

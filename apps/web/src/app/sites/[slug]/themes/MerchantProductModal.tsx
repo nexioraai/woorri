@@ -328,7 +328,7 @@ export default function MerchantProductModal({ product: p, primary, lang = 'en',
                       priceLabel: p.price,
                       // L'URL se résout depuis la page courante : valable sur
                       // deribfy.com/sites/<slug> comme sur un domaine propre.
-                      url: p.id ? urlProduitDepuisLaPage(window.location.origin, window.location.pathname, p.id) : (p.image ?? ''),
+                      url: p.id ? urlProduitDepuisLaPage(window.location.origin, window.location.pathname, p.id, slug) : (p.image ?? ''),
                     });
                     if (lien) window.open(lien, '_blank', 'noopener,noreferrer');
                   }}

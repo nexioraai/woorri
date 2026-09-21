@@ -7,7 +7,7 @@ import AddToCartButton from '../../themes/AddToCartButton'
 import { achatPossible, choixDeVarianteRequis } from '../../themes/variantRequirement'
 import DesignCanvas from '../../themes/DesignCanvas'
 import { THEME_TOKENS, ThemeKey } from '../../themes/CatalogSearch'
-import { lienAppel, lienCommandeWhatsApp, marcheSansCarte, numerosDEncaissement } from '@/lib/whatsappOrder'
+import { lienAppel, lienCommandeWhatsApp, marcheSansCarte, numerosDEncaissement, urlProduitDepuisLaPage } from '@/lib/whatsappOrder'
 
 const CART_LABELS: Record<string, string> = {
   fr: 'Ajouter au panier',
@@ -383,7 +383,8 @@ export default function ProductPageView({ product }: { product: ProductPage }) {
                     productName: product.name,
                     size: tailleChoisie,
                     priceLabel,
-                    url: typeof window === 'undefined' ? '' : window.location.href,
+                    // M2-213 — toujours l'adresse publique canonique, jamais un chemin d'aperçu.
+                    url: typeof window === 'undefined' ? '' : urlProduitDepuisLaPage(window.location.origin, window.location.pathname, product.id, product.siteSlug),
                   })
                   return lien && (
                     <a

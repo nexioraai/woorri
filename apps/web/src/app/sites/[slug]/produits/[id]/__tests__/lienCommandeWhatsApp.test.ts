@@ -67,6 +67,22 @@ describe('M2-207 · la porte du marché sans carte', () => {
       .toBe('https://deribfy.com/sites/x/produits/p-1')
   })
 
+  it("M2-213 — L'APERÇU N'EST PAS UNE ADRESSE PUBLIQUE : le lien vise /sites/<slug>", () => {
+    // LE DÉFAUT VU EN VRAI : l'acheteur commande depuis /preview/<slug>, le
+    // vendeur reçoit ce lien-là et tombe sur 404 — la page d'aperçu n'existe
+    // que pour le propriétaire connecté.
+    expect(urlProduitDepuisLaPage('https://deribfy.com', '/preview/ma-boutique', 'p-1', 'ma-boutique'))
+      .toBe('https://deribfy.com/sites/ma-boutique/produits/p-1')
+    expect(urlProduitDepuisLaPage('https://deribfy.com', '/edit/ma-boutique', 'p-1', 'ma-boutique'))
+      .toBe('https://deribfy.com/sites/ma-boutique/produits/p-1')
+    // Sur l'adresse publique, rien ne change.
+    expect(urlProduitDepuisLaPage('https://deribfy.com', '/sites/ma-boutique', 'p-1', 'ma-boutique'))
+      .toBe('https://deribfy.com/sites/ma-boutique/produits/p-1')
+    // Sur un domaine propre (racine), rien ne change non plus.
+    expect(urlProduitDepuisLaPage('https://maboutique.td', '/', 'p-1', 'ma-boutique'))
+      .toBe('https://maboutique.td/produits/p-1')
+  })
+
   it('LIEN APPEL — garde les chiffres et le +, refuse le vide', () => {
     expect(lienAppel('+235 66 00 00 00')).toBe('tel:+235660000 00'.replace(' ', ''))
     expect(lienAppel('rien')).toBeNull()

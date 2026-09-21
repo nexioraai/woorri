@@ -622,7 +622,8 @@ export default function CartDrawer({
                       productName: items.map((it) => `${it.quantity}× ${it.name}`).join(', '),
                       size: null,
                       priceLabel: `${total.toFixed(2)} ${devise}`,
-                      url: typeof window === 'undefined' ? '' : window.location.href,
+                      // M2-213 — l'adresse publique du site, jamais le chemin d'aperçu.
+                      url: typeof window === 'undefined' ? '' : (window.location.pathname.startsWith('/sites/') ? window.location.href : `${window.location.origin}/sites/${encodeURIComponent(slug)}`),
                     });
                     if (lien) window.open(lien, '_blank', 'noopener,noreferrer');
                   }}
