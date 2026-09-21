@@ -26,6 +26,8 @@ interface MerchantProduct {
   whatsapp?: string | null;
   /** M2-210 — numéros d'encaissement {label, number}, libellés du marchand. */
   mobileMoney?: { label: string; number: string }[];
+  /** M2-217 — prix barré, prêt à afficher. Présent = strictement supérieur. */
+  compareAt?: string;
 }
 
 interface Props {
@@ -171,7 +173,15 @@ export default function MerchantProductModal({ product: p, primary, lang = 'en',
 
           <div style={{ padding: '32px 36px', display: 'flex', flexDirection: 'column' }}>
             <h2 style={{ fontSize: 24, fontWeight: 700, margin: '0 0 16px', lineHeight: 1.3 }}>{p.name}</h2>
-            <p style={{ fontSize: 32, fontWeight: 800, margin: '0 0 24px', color: primary }}>
+            {/* M2-217 — le prix barré au-dessus du prix : l'acheteur voit
+                l'économie d'un coup d'œil. Rendu SEULEMENT si le barré est
+                strictement supérieur (garanti par la projection). */}
+            {p.compareAt && (
+              <p style={{ fontSize: 18, fontWeight: 600, margin: '0 0 2px', textDecoration: 'line-through', opacity: 0.45 }}>
+                {p.compareAt}
+              </p>
+            )}
+            <p style={{ fontSize: 32, fontWeight: 800, margin: p.compareAt ? '0 0 24px' : '0 0 24px', color: primary }}>
               {p.price}
             </p>
 

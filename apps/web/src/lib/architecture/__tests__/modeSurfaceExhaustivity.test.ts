@@ -194,6 +194,9 @@ const LECTEURS_TRANSITIFS: Record<string, string> = {
   // `site-mode-decision-surfaces`, où le niveau 2 le tient.
   'src/app/api/shop/connect/route.ts': 'délègue l’admission à canTransact() ; ne lit le mode que pour la lui passer.',
   'src/app/api/shop/products/route.ts': 'idem — canTransact() décide, la route transmet.',
+  // M2-217 — même catégorie exactement : la route promo lit `mode` pour le
+  // passer à canTransact(), qui seul décide de l'admission commerce.
+  'src/app/api/shop/promo/route.ts': 'idem — canTransact() décide, la route transmet.',
   'src/app/api/shop/shipping/calculate/route.ts': 'idem — canTransact() décide, la route transmet.',
   'src/app/api/shop/shipping/route.ts': 'idem — canTransact() décide, la route transmet.',
   'src/app/api/shop/upload-design/route.ts': 'idem — canTransact() décide, la route transmet.',
@@ -266,7 +269,11 @@ const LECTEURS_TRANSITIFS: Record<string, string> = {
 // Le mouvement est le bon : une exemption mensongere quitte l'allowlist pour
 // un domaine contraint, et deux transports honnetes s'y declarent. Le cliquet
 // a fait exactement son travail -- il a rendu l'operation visible en diff.
-const PLAFOND_ALLOWLIST = 20
+// M2-217 — 20 → 21 : la route promo entre, TRANSPORT honnête du même moule
+// que les cinq routes shop voisines (canTransact décide, la route transmet).
+// Le plafond monte d'exactement UN, pour exactement UNE entrée justifiée —
+// c'est la décision que ce cliquet exige de rendre visible en diff.
+const PLAFOND_ALLOWLIST = 21
 
 const TOUS = fichiersSource(SRC)
 const rel = (p: string) => relative(RACINE, p).split(sep).join('/')

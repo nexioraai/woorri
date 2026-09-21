@@ -24,6 +24,8 @@ type Product = {
   published: boolean;
   /** ÉTAPE 8, VOLET A — achetabilité. `false` = présenté mais non vendable. */
   for_sale: boolean;
+  /** M2-217 — prix barré. Posé par le marchand ou par l'outil Promo. */
+  compare_at_price?: number | null;
   position: number;
 };
 
@@ -41,6 +43,12 @@ export default function ProductManager({ slug }: { slug: string }) {
   const [countUnits, setCountUnits] = useState('');
   const [countBusy, setCountBusy] = useState(false);
   const [uploading, setUploading] = useState(false);
+  // M2-217 — L'OUTIL PROMO : pourcentage + portée décidée par le marchand
+  // (tous les produits, ou la sélection cochée). Réversible d'un clic.
+  const [promoPct, setPromoPct] = useState('20');
+  const [promoSel, setPromoSel] = useState<Set<string>>(new Set());
+  const [promoBusy, setPromoBusy] = useState(false);
+  const [promoMsg, setPromoMsg] = useState('');
   const [msg, setMsg] = useState('');
 
   async function authHeaders(): Promise<HeadersInit> {
@@ -104,6 +112,33 @@ export default function ProductManager({ slug }: { slug: string }) {
   function removeImage(url: string) {
     setDraft((d) => ({ ...d, images: d.images.filter((i) => i !== url) }));
   }
+
+  const lancerPromo = async (action: 'apply' | 'remove', tous: boolean) => {
+    setPromoBusy(true);
+    setPromoMsg('');
+    try {
+      const res = await fetch('/api/shop/promo', {
+        method: 'POST', headers: { ...(await authHeaders()), 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          slug,
+          action,
+          percent: parseFloat(promoPct) || 0,
+          productIds: tous ? null : Array.from(promoSel),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Erreur');
+      setPromoMsg(action === 'apply'
+        ? `Promo appliquée à ${data.touches} produit(s) — l'ancien prix est affiché barré.`
+        : `Promo retirée de ${data.touches} produit(s) — prix d'origine restaurés.`);
+      setPromoSel(new Set());
+      await load();
+    } catch (e: any) {
+      setPromoMsg(e.message);
+    } finally {
+      setPromoBusy(false);
+    }
+  };
 
   function startEdit(p: Product) {
     setEditingId(p.id);
@@ -217,6 +252,52 @@ export default function ProductManager({ slug }: { slug: string }) {
       </div>
 
       {/* Liste produits */}
+      {/* ============================================================
+          M2-217 — PROMOTIONS. Le marchand choisit le pourcentage ET la
+          portée : tous ses produits, ou seulement ceux qu'il coche dans la
+          liste ci-dessous. L'ancien prix devient le prix BARRÉ des fiches ;
+          « Retirer la promo » restaure exactement les prix d'origine.
+          Tout le calcul est SERVEUR — le navigateur n'envoie jamais un prix.
+          ============================================================ */}
+      {products.length > 0 && (
+        <div className="mb-6 bg-white/[0.02] border border-white/10 rounded-2xl p-4">
+          <h3 className="text-sm font-bold mb-1">Promotion</h3>
+          <p className="text-xs text-white/40 mb-3">
+            Réduction en % — sur tous les produits, ou seulement ceux cochés
+            ({promoSel.size} sélectionné{promoSel.size > 1 ? 's' : ''}).
+            L&apos;ancien prix s&apos;affiche barré ; retirer la promo restaure les prix.
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <input
+              type="number" min={1} max={90} value={promoPct}
+              onChange={(e) => setPromoPct(e.target.value)}
+              className="w-20 bg-white/5 border border-white/10 rounded-xl px-3 py-2 text-sm text-white outline-none focus:border-white/30 transition"
+              aria-label="Pourcentage de réduction"
+            />
+            <span className="text-sm text-white/50 mr-2">%</span>
+            <button onClick={() => lancerPromo('apply', true)} disabled={promoBusy}
+              className="px-4 py-2 rounded-xl text-sm font-semibold transition disabled:opacity-40"
+              style={{ background: `${ACCENT}1a`, color: ACCENT, border: `1px solid ${ACCENT}33` }}>
+              {promoBusy ? '…' : 'Appliquer à TOUT'}
+            </button>
+            <button onClick={() => lancerPromo('apply', false)} disabled={promoBusy || promoSel.size === 0}
+              className="px-4 py-2 rounded-xl text-sm font-semibold transition disabled:opacity-40"
+              style={{ background: `${ACCENT}1a`, color: ACCENT, border: `1px solid ${ACCENT}33` }}>
+              {promoBusy ? '…' : `Appliquer à la sélection`}
+            </button>
+            <button onClick={() => lancerPromo('remove', true)} disabled={promoBusy}
+              className="px-4 py-2 rounded-xl text-sm font-semibold border border-white/15 text-white/70 hover:bg-white/5 transition disabled:opacity-40">
+              Retirer la promo (tout)
+            </button>
+            <button onClick={() => lancerPromo('remove', false)} disabled={promoBusy || promoSel.size === 0}
+              className="px-4 py-2 rounded-xl text-sm font-semibold border border-white/15 text-white/70 hover:bg-white/5 transition disabled:opacity-40">
+              Retirer (sélection)
+            </button>
+          </div>
+          {promoMsg && <p className="text-xs mt-2 text-white/60">{promoMsg}</p>}
+        </div>
+      )}
+
       {loading ? (
         <p className="text-white/40 text-sm">Chargement…</p>
       ) : products.length === 0 ? (
@@ -225,6 +306,18 @@ export default function ProductManager({ slug }: { slug: string }) {
         <div className="space-y-3">
           {products.map((p) => (
             <div key={p.id} className="flex items-center gap-4 bg-white/[0.02] border border-white/10 rounded-2xl p-3">
+              {/* M2-217 — sélection pour la promo ciblée. */}
+              <input
+                type="checkbox"
+                checked={promoSel.has(p.id)}
+                onChange={(e) => {
+                  const next = new Set(promoSel);
+                  if (e.target.checked) next.add(p.id); else next.delete(p.id);
+                  setPromoSel(next);
+                }}
+                className="w-4 h-4 accent-[#FA5D1E] shrink-0"
+                aria-label={`Sélectionner ${p.name} pour la promo`}
+              />
               {p.images?.[0]
                 ? <img src={p.images[0]} alt={p.name} className="w-14 h-14 rounded-xl object-cover border border-white/10" />
                 : <div className="w-14 h-14 rounded-xl bg-white/5 border border-white/10" />}
@@ -235,6 +328,9 @@ export default function ProductManager({ slug }: { slug: string }) {
                   {p.for_sale === false && <span className="text-[10px] uppercase tracking-wide text-white/40 border border-white/15 rounded-full px-2 py-0.5">{t('pm.notForSale')}</span>}
                 </div>
                 <div className="text-sm text-white/50">
+                  {p.compare_at_price != null && Number(p.compare_at_price) > p.price && (
+                    <span className="line-through opacity-50 mr-1.5">{Number(p.compare_at_price).toFixed(2)}</span>
+                  )}
                   {p.price.toFixed(2)} {p.currency} · {p.track_inventory === false ? t('pm.inv.untracked') : `${t('pm.field.stock')} ${p.stock}`}
                 </div>
               </div>

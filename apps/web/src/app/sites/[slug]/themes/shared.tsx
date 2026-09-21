@@ -103,6 +103,9 @@ forSale?: boolean
 /** M2-208 — tailles et numéro du vendeur : voir normalizeProduct. */
 sizes?: string[]
 whatsapp?: string | null
+/** M2-217 — prix barré : nombre et libellé prêt à afficher. */
+compareAtPrice?: number
+compareAt?: string
 /** M2-210 — numéros d'encaissement {label, number}, libellés du marchand. */
 mobileMoney?: { label: string; number: string }[]
 variants?: { variant_id: string; label: string; price: number; currency: string }[]
@@ -301,6 +304,16 @@ id: p.id,
 name: p.name,
 description: p.description ?? '',
 price: p.price != null ? `${Number(p.price).toFixed(2)} ${p.currency}` : '',
+// M2-217 — LE PRIX BARRÉ : affiché seulement s'il est STRICTEMENT supérieur
+// au prix actuel — un « barré » égal ou inférieur mentirait à l'acheteur.
+compareAtPrice:
+  p.compare_at_price != null && Number(p.compare_at_price) > Number(p.price ?? 0)
+    ? Number(p.compare_at_price)
+    : undefined,
+compareAt:
+  p.compare_at_price != null && Number(p.compare_at_price) > Number(p.price ?? 0)
+    ? `${Number(p.compare_at_price).toFixed(2)} ${p.currency}`
+    : undefined,
 priceNumber: p.price != null ? Number(p.price) : undefined,
 currency: p.currency,
 image: Array.isArray(p.images) && p.images.length > 0 ? p.images[0] : undefined,
@@ -366,12 +379,26 @@ console.error(error)
 return null
 }
 
-const { data: shopProducts, error: shopProductsError } = await supabase
+let { data: shopProducts, error: shopProductsError } = await supabase
+.from('shop_products')
+.select('id,name,description,price,currency,compare_at_price,sizes,images,cj_vid,for_sale')
+.eq('site_id', (data as any).id)
+.eq('published', true)
+.order('position', { ascending: true })
+
+// M2-217 — FENÊTRE DE MIGRATION : si `compare_at_price` n'existe pas encore
+// en base, on retombe sur la liste d'avant. AUCUNE boutique ne se vide en
+// attendant l'exécution du SQL — la panne serait pire que la nouveauté.
+if (shopProductsError && /compare_at_price/.test(shopProductsError.message)) {
+const repli = await supabase
 .from('shop_products')
 .select('id,name,description,price,currency,sizes,images,cj_vid,for_sale')
 .eq('site_id', (data as any).id)
 .eq('published', true)
 .order('position', { ascending: true })
+shopProducts = repli.data as typeof shopProducts
+shopProductsError = repli.error
+}
 
 if (shopProductsError) {
 signalQueryFailure('fetchSite/shop_products', shopProductsError.message, diagnostics)
@@ -575,12 +602,23 @@ const { data, error } = await supabase
 if (error || !data) {
 return null
 }
-const { data: shopProducts, error: shopProductsError } = await supabase
+let { data: shopProducts, error: shopProductsError } = await supabase
+.from('shop_products')
+.select('id,name,description,price,currency,compare_at_price,sizes,images,cj_vid,for_sale')
+.eq('site_id', (data as any).id)
+.eq('published', true)
+.order('position', { ascending: true })
+// M2-217 — même repli de migration que fetchSite.
+if (shopProductsError && /compare_at_price/.test(shopProductsError.message)) {
+const repli = await supabase
 .from('shop_products')
 .select('id,name,description,price,currency,sizes,images,cj_vid,for_sale')
 .eq('site_id', (data as any).id)
 .eq('published', true)
 .order('position', { ascending: true })
+shopProducts = repli.data as typeof shopProducts
+shopProductsError = repli.error
+}
 if (shopProductsError) {
 // AUCUN `diagnostics` ici, et c'est deliberé : l'unique appelant de cette
 // fonction est `preview/[slug]/page.tsx`, un composant 'use client' qui
@@ -740,6 +778,8 @@ forSale: raw?.forSale,
 // commentaire ci-dessus l'avait écrit d'avance : « tout champ non recopié
 // ici est PERDU ».
 whatsapp: raw?.whatsapp ?? null,
+compareAtPrice: raw?.compareAtPrice,
+compareAt: raw?.compareAt,
 mobileMoney: Array.isArray(raw?.mobileMoney) ? raw.mobileMoney : [],
 sizes: Array.isArray(raw?.sizes) ? raw.sizes : [],
 shippingDaysMin: raw?.shippingDaysMin || null,

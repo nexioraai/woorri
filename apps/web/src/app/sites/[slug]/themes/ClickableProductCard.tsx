@@ -18,6 +18,7 @@ interface MerchantProduct {
   sizes?: string[];
   whatsapp?: string | null;
   mobileMoney?: { label: string; number: string }[];
+  compareAt?: string;
 }
 interface Props {
   product: MerchantProduct;

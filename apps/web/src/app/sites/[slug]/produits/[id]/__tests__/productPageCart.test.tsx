@@ -59,7 +59,7 @@ function produit(over: Partial<ProductPage> = {}): ProductPage {
     requiresDesign: false,
     // M2-202 -- champs AJOUTES : tailles et numero du vendeur. Neutres ici :
     // sans tailles ni numero, le rendu de ces cas est celui d'avant.
-    sizes: [], whatsapp: null, mobileMoney: [],
+    sizes: [], whatsapp: null, mobileMoney: [], compareAtPrice: null,
     ...over,
   };
 }

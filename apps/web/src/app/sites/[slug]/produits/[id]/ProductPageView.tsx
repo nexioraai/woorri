@@ -188,8 +188,14 @@ export default function ProductPageView({ product }: { product: ProductPage }) {
 
           <div>
             <h1 style={{ fontSize: 30, fontWeight: 700, margin: 0, lineHeight: 1.2 }}>{product.name}</h1>
+            {/* M2-217 — le prix barré au-dessus du prix. */}
+            {product.compareAtPrice != null && (
+              <div style={{ fontSize: 16, fontWeight: 600, marginTop: 14, textDecoration: 'line-through', opacity: 0.45 }}>
+                {product.compareAtPrice.toFixed(2)} {product.currency}
+              </div>
+            )}
             {priceLabel && (
-              <div style={{ fontSize: 24, fontWeight: 600, marginTop: 16 }}>{priceLabel}</div>
+              <div style={{ fontSize: 24, fontWeight: 600, marginTop: product.compareAtPrice != null ? 2 : 16 }}>{priceLabel}</div>
             )}
             {!product.inStock && (
               <div style={{ marginTop: 8, color: '#e05b5b', fontSize: 14 }}>Rupture de stock</div>
