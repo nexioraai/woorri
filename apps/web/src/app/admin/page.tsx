@@ -353,13 +353,28 @@ export default function AdminDashboard() {
                           </span>
                           {/* M2-214 — un clic, journalisé côté API (motif généré). */}
                           {s.published ? (
+                            <>
+                            {/* M2-216 — LE GLOBE HABITUEL, à l'identique du
+                                dashboard (Mes projets) : le MÊME lien
+                                /domaine/<slug> qui continue le processus de
+                                domaine personnalisé. Rien de nouveau n'est
+                                créé — c'est le même chemin, affiché ici
+                                aussi dès que le site est en ligne. */}
+                            <Link
+                              href={`/domaine/${s.slug}`}
+                              className="ml-3 inline-flex items-center justify-center px-2.5 py-1 rounded-lg text-xs font-semibold border border-white/15 text-white/70 hover:bg-white/5 transition align-middle"
+                              title="Domaine personnalisé"
+                            >
+                              <Globe className="w-3.5 h-3.5" />
+                            </Link>
                             <button
                               onClick={() => basculerPublication(s.slug, false)}
                               disabled={basculeEnCours === s.slug}
-                              className="ml-3 px-2.5 py-1 rounded-lg text-xs font-semibold bg-red-500/10 text-red-300 border border-red-400/20 hover:bg-red-500/20 transition disabled:opacity-40"
+                              className="ml-2 px-2.5 py-1 rounded-lg text-xs font-semibold bg-red-500/10 text-red-300 border border-red-400/20 hover:bg-red-500/20 transition disabled:opacity-40"
                             >
                               {basculeEnCours === s.slug ? "…" : "Retirer"}
                             </button>
+                            </>
                           ) : (
                             <button
                               onClick={() => basculerPublication(s.slug, true)}
