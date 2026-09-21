@@ -360,7 +360,7 @@ return null
 
 const { data: shopProducts, error: shopProductsError } = await supabase
 .from('shop_products')
-.select('id,name,description,price,currency,images,cj_vid,for_sale')
+.select('id,name,description,price,currency,sizes,images,cj_vid,for_sale')
 .eq('site_id', (data as any).id)
 .eq('published', true)
 .order('position', { ascending: true })
@@ -569,7 +569,7 @@ return null
 }
 const { data: shopProducts, error: shopProductsError } = await supabase
 .from('shop_products')
-.select('id,name,description,price,currency,images,cj_vid,for_sale')
+.select('id,name,description,price,currency,sizes,images,cj_vid,for_sale')
 .eq('site_id', (data as any).id)
 .eq('published', true)
 .order('position', { ascending: true })
