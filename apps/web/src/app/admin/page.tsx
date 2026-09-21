@@ -80,6 +80,55 @@ const SEVERITY_STYLE: Record<string, string> = {
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState<Stats | null>(null);
+  // M2-214 — MISE EN LIGNE EN UN CLIC, DEPUIS LE TABLEAU (demande de
+  // Youssouf : « à côté de Brouillon, deux boutons — un clic et tout est en
+  // ligne »). Le motif reste journalisé côté API : généré ici avec l'action
+  // et l'heure — l'audit ne perd rien, le geste gagne tout.
+  const [basculeEnCours, setBasculeEnCours] = useState<string | null>(null);
+  const [basculeErreur, setBasculeErreur] = useState<string | null>(null);
+  const basculerPublication = async (slug: string, publish: boolean) => {
+    setBasculeEnCours(slug);
+    setBasculeErreur(null);
+    try {
+      const { data } = await supabase.auth.getSession();
+      const res = await fetch('/api/admin/site-publish-override', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${data.session?.access_token ?? ''}`,
+        },
+        body: JSON.stringify({
+          slug,
+          publish,
+          reason: `1-clic admin (${publish ? 'mise en ligne' : 'retrait'}) — paiement hors ligne — ${new Date().toISOString()}`,
+        }),
+      });
+      const out = await res.json();
+      if (!res.ok) throw new Error(out.error || 'Erreur');
+      // Rafraîchit la ligne SANS recharger toute la page.
+      setStats((prev) => {
+        if (!prev) return prev;
+        const breakdown = Object.fromEntries(
+          Object.entries(prev.breakdown).map(([k, grp]) => [
+            k,
+            {
+              ...grp,
+              published: grp.sites.reduce(
+                (n, x) => n + ((x.slug === slug ? publish : x.published) ? 1 : 0),
+                0,
+              ),
+              sites: grp.sites.map((x) => (x.slug === slug ? { ...x, published: publish } : x)),
+            },
+          ]),
+        );
+        return { ...prev, breakdown };
+      });
+    } catch (e) {
+      setBasculeErreur(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBasculeEnCours(null);
+    }
+  };
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
 
@@ -168,6 +217,11 @@ export default function AdminDashboard() {
         </div>
       )}
 
+      {basculeErreur && (
+        <div className="mb-4 px-4 py-3 rounded-xl bg-red-500/10 border border-red-400/20 text-sm text-red-300">
+          {basculeErreur}
+        </div>
+      )}
       {/* M2-212 — mise en ligne hors Stripe (paiement comptant) */}
       <PublishOverrideCard />
 
@@ -297,6 +351,24 @@ export default function AdminDashboard() {
                           <span className={`px-2 py-0.5 rounded text-xs ${s.published ? "bg-emerald-900 text-emerald-300" : "bg-neutral-800 text-white/50"}`}>
                             {s.published ? "En ligne" : "Brouillon"}
                           </span>
+                          {/* M2-214 — un clic, journalisé côté API (motif généré). */}
+                          {s.published ? (
+                            <button
+                              onClick={() => basculerPublication(s.slug, false)}
+                              disabled={basculeEnCours === s.slug}
+                              className="ml-3 px-2.5 py-1 rounded-lg text-xs font-semibold bg-red-500/10 text-red-300 border border-red-400/20 hover:bg-red-500/20 transition disabled:opacity-40"
+                            >
+                              {basculeEnCours === s.slug ? "…" : "Retirer"}
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => basculerPublication(s.slug, true)}
+                              disabled={basculeEnCours === s.slug}
+                              className="ml-3 px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-500/15 text-emerald-300 border border-emerald-400/25 hover:bg-emerald-500/25 transition disabled:opacity-40"
+                            >
+                              {basculeEnCours === s.slug ? "…" : "Mettre en ligne"}
+                            </button>
+                          )}
                         </td>
                       </tr>
                     ))}
