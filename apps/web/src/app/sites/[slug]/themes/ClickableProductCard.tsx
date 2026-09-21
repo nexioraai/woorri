@@ -17,6 +17,7 @@ interface MerchantProduct {
   /** M2-206 — projetés par mapShopProducts, consommés par la modale. */
   sizes?: string[];
   whatsapp?: string | null;
+  mobileMoney?: { label: string; number: string }[];
 }
 interface Props {
   product: MerchantProduct;

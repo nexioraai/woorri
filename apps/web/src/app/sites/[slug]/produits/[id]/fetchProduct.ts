@@ -51,6 +51,8 @@ export type ProductPage = {
    * n'est inventé.
    */
   whatsapp: string | null
+  /** M2-210 — numéros d'encaissement {label, number}, libellés du marchand. */
+  mobileMoney: { label: string; number: string }[]
   /**
    * LOT 5 / P5-02 -- `true` sur un site `pod_custom` : le visiteur doit
    * televerser SON design avant tout achat. La fiche produit ne l'offrait pas
@@ -168,6 +170,7 @@ export async function fetchProduct(slug: string, rawId: string): Promise<Product
       // Catalogue fournisseur : les déclinaisons sont les VARIANTES.
       sizes: [],
       whatsapp: ((site as any).social_links?.whatsapp as string | undefined) || ((site as any).contact?.phone as string | undefined) || null,
+      mobileMoney: Array.isArray((site as any).contact?.mobile_money) ? (site as any).contact.mobile_money : [],
     }
   }
 
@@ -206,6 +209,7 @@ export async function fetchProduct(slug: string, rawId: string): Promise<Product
     // toujours pas de page, quelle que soit son achetabilite.
     forSale: (p as any).for_sale !== false,
     sizes: Array.isArray((p as any).sizes) ? (p as any).sizes : [],
+    mobileMoney: Array.isArray((site as any).contact?.mobile_money) ? (site as any).contact.mobile_money : [],
     whatsapp: ((site as any).social_links?.whatsapp as string | undefined) || ((site as any).contact?.phone as string | undefined) || null,
     siteName: (site as any).name,
     siteSlug: (site as any).slug,

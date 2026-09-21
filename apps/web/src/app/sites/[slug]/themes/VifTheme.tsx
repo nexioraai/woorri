@@ -306,6 +306,7 @@ export default function VifTheme({ site }: { site: Site }) {
                       price: s.price || '',
                       image: s.image,
                       whatsapp: social.whatsapp || contact.phone || null,
+                      mobileMoney: Array.isArray((contact as any).mobile_money) ? (contact as any).mobile_money : [],
                       hasProductPage: false,
                     }}
                   >

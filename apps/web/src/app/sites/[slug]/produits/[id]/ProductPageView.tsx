@@ -7,7 +7,7 @@ import AddToCartButton from '../../themes/AddToCartButton'
 import { achatPossible, choixDeVarianteRequis } from '../../themes/variantRequirement'
 import DesignCanvas from '../../themes/DesignCanvas'
 import { THEME_TOKENS, ThemeKey } from '../../themes/CatalogSearch'
-import { lienAppel, lienCommandeWhatsApp, marcheSansCarte } from '@/lib/whatsappOrder'
+import { lienAppel, lienCommandeWhatsApp, marcheSansCarte, numerosDEncaissement } from '@/lib/whatsappOrder'
 
 const CART_LABELS: Record<string, string> = {
   fr: 'Ajouter au panier',
@@ -343,12 +343,19 @@ export default function ProductPageView({ product }: { product: ProductPage }) {
                 <p style={{ fontSize: 12, fontWeight: 600, margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em', opacity: 0.6 }}>
                   {PAY_TITLE_LABELS[product.lang] || PAY_TITLE_LABELS.en}
                 </p>
-                <a
-                  href={'tel:' + product.whatsapp.replace(/[^\d+]/g, '')}
-                  style={{ display: 'inline-block', marginTop: 8, fontSize: 20, fontWeight: 700, color: 'inherit', textDecoration: 'none' }}
-                >
-                  {product.whatsapp}
-                </a>
+                {/* M2-210 — tous les numéros d'encaissement, libellés par
+                    le marchand (opérateurs multiples = aucune vente perdue). */}
+                {numerosDEncaissement(product.mobileMoney, product.whatsapp).map((n) => (
+                  <div key={n.label + n.number} style={{ marginTop: 8 }}>
+                    {n.label && <span style={{ fontSize: 12, fontWeight: 600, opacity: 0.6, display: 'block' }}>{n.label}</span>}
+                    <a
+                      href={'tel:' + n.number.replace(/[^\d+]/g, '')}
+                      style={{ display: 'inline-block', fontSize: 20, fontWeight: 700, color: 'inherit', textDecoration: 'none' }}
+                    >
+                      {n.number}
+                    </a>
+                  </div>
+                ))}
                 <p style={{ fontSize: 13, lineHeight: 1.5, opacity: 0.75, marginTop: 8, marginBottom: 12 }}>
                   {PAY_HINT_LABELS[product.lang] || PAY_HINT_LABELS.en}
                 </p>

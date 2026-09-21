@@ -1,6 +1,9 @@
 // M2-202 — LE LIEN DE COMMANDE WHATSAPP, PUR ET TESTÉ SANS JSDOM.
+import { readFileSync } from 'node:fs'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
-import { lienAppel, lienCommandeWhatsApp, marcheSansCarte, urlProduitDepuisLaPage } from '@/lib/whatsappOrder'
+import { lienAppel, lienCommandeWhatsApp, marcheSansCarte, nettoieNumerosMobileMoney, numerosDEncaissement, urlProduitDepuisLaPage } from '@/lib/whatsappOrder'
 
 describe('M2-202 · le récapitulatif de commande WhatsApp', () => {
   it('LE LIEN PORTE PRODUIT, TAILLE, PRIX ET URL — le vendeur sait quoi livrer', () => {
@@ -68,5 +71,46 @@ describe('M2-207 · la porte du marché sans carte', () => {
     expect(lienAppel('+235 66 00 00 00')).toBe('tel:+235660000 00'.replace(' ', ''))
     expect(lienAppel('rien')).toBeNull()
     expect(lienAppel(null)).toBeNull()
+  })
+})
+
+
+describe('M2-210 · plusieurs numéros d\'encaissement, libellés par le marchand', () => {
+  it('AIRTEL ET MOOV COEXISTENT — l\'acheteur paie sur SON opérateur', () => {
+    const liste = nettoieNumerosMobileMoney([
+      { label: 'Airtel Money', number: '+235 66 11 22 33' },
+      { label: 'Moov Money', number: '+235 99 44 55 66' },
+    ])
+    expect(liste).toHaveLength(2)
+    expect(liste[0]?.label).toBe('Airtel Money')
+    expect(liste[1]?.label).toBe('Moov Money')
+  })
+
+  it('LES FORMES INATTENDUES SONT ABSORBÉES — jamais un plantage sur du JSON libre', () => {
+    expect(nettoieNumerosMobileMoney(undefined)).toEqual([])
+    expect(nettoieNumerosMobileMoney('texte')).toEqual([])
+    expect(nettoieNumerosMobileMoney([null, 42, { label: 'x' }, { number: 'sans-chiffre' }])).toEqual([])
+    expect(nettoieNumerosMobileMoney([{ number: ' +235 60 00 00 00 ' }])).toEqual([
+      { label: '', number: '+235 60 00 00 00' },
+    ])
+  })
+
+  it('SANS LISTE, LE REPLI EST LE NUMÉRO DE CONTACT — jamais zéro numéro quand un existe', () => {
+    expect(numerosDEncaissement([], '+23566131260')).toEqual([{ label: '', number: '+23566131260' }])
+    expect(numerosDEncaissement(undefined, null)).toEqual([])
+  })
+
+  it('LA LISTE PRIME SUR LE REPLI — le marchand a parlé, on l\'écoute', () => {
+    const liste = numerosDEncaissement([{ label: 'Moov Money', number: '+235 99' }], '+235 66')
+    expect(liste).toHaveLength(1)
+    expect(liste[0]?.number).toBe('+235 99')
+  })
+
+  it('AUCUN OPÉRATEUR N\'EST ÉCRIT DANS LE CODE — le libellé vient du marchand', () => {
+    // L\'invariant structurel : la structure est {label, number}, et le code
+    // de production ne nomme aucun opérateur. Vérifié sur le module entier.
+    const src = readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..', '..', '..', '..', 'lib', 'whatsappOrder.ts'), 'utf8')
+    const code = src.split('\n').filter((l) => !l.trim().startsWith('//') && !l.trim().startsWith('*')).join('\n')
+    expect(code).not.toMatch(/[Aa]irtel|[Mm]oov|[Oo]range/)
   })
 })

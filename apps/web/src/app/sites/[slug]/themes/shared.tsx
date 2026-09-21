@@ -103,6 +103,8 @@ forSale?: boolean
 /** M2-208 — tailles et numéro du vendeur : voir normalizeProduct. */
 sizes?: string[]
 whatsapp?: string | null
+/** M2-210 — numéros d'encaissement {label, number}, libellés du marchand. */
+mobileMoney?: { label: string; number: string }[]
 variants?: { variant_id: string; label: string; price: number; currency: string }[]
 shippingDaysMin?: number | null
 shippingDaysMax?: number | null
@@ -293,7 +295,7 @@ console.error('[storefront] ' + ligne)
  * INTERNES (`stock`, `published`, `track_inventory`) — rien ne change pour
  * eux. `whatsapp` est le numéro du SITE (social_links), posé sur chaque
  * produit pour voyager jusqu'à la modale sans traverser cinq thèmes. */
-function mapShopProducts(rows: any[], whatsapp?: string | null): any[] {
+function mapShopProducts(rows: any[], whatsapp?: string | null, mobileMoney?: unknown): any[] {
 return rows.map((p: any) => ({
 id: p.id,
 name: p.name,
@@ -304,6 +306,9 @@ currency: p.currency,
 image: Array.isArray(p.images) && p.images.length > 0 ? p.images[0] : undefined,
 sizes: Array.isArray(p.sizes) ? p.sizes : [],
 whatsapp: whatsapp || null,
+// M2-210 — les numéros d'encaissement du SITE (contact.mobile_money),
+// libellés par le marchand. Même voyage que `whatsapp`.
+mobileMoney: Array.isArray(mobileMoney) ? mobileMoney : [],
 cjVid: p.cj_vid || null,
 forSale: p.for_sale !== false,
 }))
@@ -322,7 +327,7 @@ if (canTransact(data?.mode)) {
 // Modes commercants : `shop_products` fait foi, MEME VIDE. Aucun repli --
 // une boutique sans produit publie n'a pas de catalogue, elle n'herite pas
 // de celui d'avant.
-data.products = mapShopProducts(shopProducts ?? [], data?.social_links?.whatsapp || data?.contact?.phone)
+data.products = mapShopProducts(shopProducts ?? [], data?.social_links?.whatsapp || data?.contact?.phone, data?.contact?.mobile_money)
 return
 }
 // Mode 1 (et tout mode non commercant) : comportement RIGOUREUSEMENT
@@ -330,7 +335,7 @@ return
 // atteindre -- une vitrine n'a pas de `shop_products`. La conserver telle
 // quelle est ce qui garantit qu'aucun comportement du Mode 1 n'a bouge.
 if (shopProducts && shopProducts.length > 0) {
-data.products = mapShopProducts(shopProducts, data?.social_links?.whatsapp || data?.contact?.phone)
+data.products = mapShopProducts(shopProducts, data?.social_links?.whatsapp || data?.contact?.phone, data?.contact?.mobile_money)
 }
 }
 
@@ -735,6 +740,7 @@ forSale: raw?.forSale,
 // commentaire ci-dessus l'avait écrit d'avance : « tout champ non recopié
 // ici est PERDU ».
 whatsapp: raw?.whatsapp ?? null,
+mobileMoney: Array.isArray(raw?.mobileMoney) ? raw.mobileMoney : [],
 sizes: Array.isArray(raw?.sizes) ? raw.sizes : [],
 shippingDaysMin: raw?.shippingDaysMin || null,
 shippingDaysMax: raw?.shippingDaysMax || null,

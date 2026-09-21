@@ -35,6 +35,7 @@ describe('M2-208 · normalizeProduct préserve les champs de la projection', () 
     image: 'https://x.test/s.png',
     sizes: ['40', '41', '42'],
     whatsapp: '+23566131260',
+    mobileMoney: [{ label: 'Moov Money', number: '+235 99 44 55 66' }],
     cjVid: null,
     forSale: true,
   };
@@ -51,6 +52,7 @@ describe('M2-208 · normalizeProduct préserve les champs de la projection', () 
     const n = normalizeProduct({ name: 'x', description: '', price: '' });
     expect(n.whatsapp).toBeNull();
     expect(n.sizes).toEqual([]);
+    expect(n.mobileMoney).toEqual([]);
   });
 
   it('LE CONTRAT COMPLET — chaque champ de la projection survit au normaliseur', () => {
@@ -60,7 +62,7 @@ describe('M2-208 · normalizeProduct préserve les champs de la projection', () 
     const n = normalizeProduct(PROJETE);
     for (const champ of [
       'id', 'name', 'description', 'price', 'priceNumber', 'currency',
-      'image', 'sizes', 'whatsapp', 'cjVid', 'forSale',
+      'image', 'sizes', 'whatsapp', 'mobileMoney', 'cjVid', 'forSale',
     ] as const) {
       expect(n[champ as keyof typeof n], champ).toEqual(PROJETE[champ]);
     }

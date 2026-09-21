@@ -80,3 +80,44 @@ export function marcheSansCarte(currency?: string | null, texte?: string | null)
   const t = (texte ?? '').toUpperCase()
   return /\b(XAF|XOF|FCFA|F CFA)\b/.test(t)
 }
+
+
+/**
+ * M2-210 — PLUSIEURS NUMÉROS D'ENCAISSEMENT, LIBELLÉS PAR LE MARCHAND.
+ *
+ * Youssouf : « le marchand peut avoir un numéro Moov Money ET un numéro
+ * Airtel Money — on ne laisse pas passer un acheteur parce qu'on n'a pas
+ * couvert son opérateur. » Le LIBELLÉ est un texte LIBRE saisi par le
+ * marchand : aucun nom d'opérateur ne vit dans le code, la structure est
+ * {label, number} et rien d'autre — l'invariant structurel est intact.
+ */
+export type NumeroMobileMoney = { label: string; number: string }
+
+/** Nettoie une liste venue du JSON du site : formes inattendues absorbées,
+ *  numéros sans chiffres écartés, jamais d'invention. PURE. */
+export function nettoieNumerosMobileMoney(brut: unknown): NumeroMobileMoney[] {
+  if (!Array.isArray(brut)) return []
+  const out: NumeroMobileMoney[] = []
+  for (const e of brut) {
+    if (typeof e !== 'object' || e === null) continue
+    const number = String((e as { number?: unknown }).number ?? '').trim()
+    if (number.replace(/\D/g, '') === '') continue
+    const label = String((e as { label?: unknown }).label ?? '').trim()
+    out.push({ label, number })
+  }
+  return out.slice(0, 6)
+}
+
+/**
+ * Les numéros à MONTRER à l'acheteur : la liste du marchand, sinon le repli
+ * historique — son numéro de contact, sans libellé. Jamais une liste vide
+ * quand un numéro existe quelque part.
+ */
+export function numerosDEncaissement(
+  mobileMoney: unknown,
+  whatsapp: string | null | undefined,
+): NumeroMobileMoney[] {
+  const liste = nettoieNumerosMobileMoney(mobileMoney)
+  if (liste.length > 0) return liste
+  return whatsapp ? [{ label: '', number: whatsapp }] : []
+}

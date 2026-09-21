@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { achatPossible } from './variantRequirement';
 import { X } from 'lucide-react';
 import AddToCartButton from './AddToCartButton';
-import { lienAppel, lienCommandeWhatsApp, marcheSansCarte, urlProduitDepuisLaPage } from '@/lib/whatsappOrder';
+import { lienAppel, lienCommandeWhatsApp, marcheSansCarte, numerosDEncaissement, urlProduitDepuisLaPage } from '@/lib/whatsappOrder';
 
 interface MerchantProduct {
   id?: string;
@@ -24,6 +24,8 @@ interface MerchantProduct {
   sizes?: string[];
   /** M2-206 — le numéro du vendeur : appel direct ET commande WhatsApp. */
   whatsapp?: string | null;
+  /** M2-210 — numéros d'encaissement {label, number}, libellés du marchand. */
+  mobileMoney?: { label: string; number: string }[];
 }
 
 interface Props {
@@ -281,9 +283,20 @@ export default function MerchantProductModal({ product: p, primary, lang = 'en',
                 <p style={{ fontSize: 12, fontWeight: 600, margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em', color: c.labelMuted }}>
                   {(CONTACT_LABELS[lang] || CONTACT_LABELS.en).payTitle}
                 </p>
-                <a href={'tel:' + p.whatsapp.replace(/[^\d+]/g, '')} style={{ display: 'inline-block', marginTop: 6, fontSize: 20, fontWeight: 700, color: 'inherit', textDecoration: 'none' }}>
-                  {p.whatsapp}
-                </a>
+                {/* M2-210 — TOUS les numéros du marchand, avec leur libellé
+                    (Airtel Money, Moov Money… — texte LIBRE saisi par lui).
+                    L'acheteur paie sur celui de SON opérateur : on ne perd
+                    pas une vente faute d'avoir couvert un réseau. */}
+                {numerosDEncaissement(p.mobileMoney, p.whatsapp).map((n) => (
+                  <div key={n.label + n.number} style={{ marginTop: 6 }}>
+                    {n.label && (
+                      <span style={{ fontSize: 12, fontWeight: 600, color: c.labelMuted, display: 'block' }}>{n.label}</span>
+                    )}
+                    <a href={'tel:' + n.number.replace(/[^\d+]/g, '')} style={{ display: 'inline-block', fontSize: 20, fontWeight: 700, color: 'inherit', textDecoration: 'none' }}>
+                      {n.number}
+                    </a>
+                  </div>
+                ))}
                 <p style={{ fontSize: 13, lineHeight: 1.5, color: c.descText, marginTop: 6, marginBottom: 0 }}>
                   {(CONTACT_LABELS[lang] || CONTACT_LABELS.en).payHint}
                 </p>
