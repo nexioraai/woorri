@@ -36,10 +36,20 @@ export default function CartShell({
     return <>{children}</>;
   }
 
+  // M2-209 — LE NUMÉRO DU VENDEUR SUIT LE PANIER. Dérivé des produits
+  // eux-mêmes (la projection le pose sur chacun) : aucune nouvelle requête,
+  // aucun pays nommé — la réponse structurelle, rien d'autre.
+  const vendeurWhatsapp =
+    (Array.isArray(products)
+      ? (products.find((p) => (p as { whatsapp?: string | null })?.whatsapp) as
+          | { whatsapp?: string | null }
+          | undefined)?.whatsapp
+      : null) ?? null;
+
   return (
     <CartProvider>
       {children}
-      <CartDrawer primary={primary} labels={labels} slug={slug} mode={mode} shippingFlat={shippingFlat} variant={variant} />
+      <CartDrawer primary={primary} labels={labels} slug={slug} mode={mode} shippingFlat={shippingFlat} variant={variant} vendeurWhatsapp={vendeurWhatsapp} />
     </CartProvider>
   );
 }

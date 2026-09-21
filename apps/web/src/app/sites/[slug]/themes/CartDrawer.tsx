@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { lienCommandeWhatsApp, marcheSansCarte } from '@/lib/whatsappOrder';
 import { useCart } from './CartContext';
 import { X, ShoppingBag, Plus, Minus, Trash2 } from 'lucide-react';
 import type { CartLabels } from './cartLabels';
@@ -167,6 +168,7 @@ export default function CartDrawer({
   mode,
   shippingFlat = 0,
   variant = 'light',
+  vendeurWhatsapp = null,
 }: {
   primary?: string;
   labels: Labels;
@@ -174,6 +176,8 @@ export default function CartDrawer({
   mode?: number | null;
   shippingFlat?: number;
   variant?: Variant;
+  /** M2-209 — numéro du vendeur, dérivé des produits par CartShell. */
+  vendeurWhatsapp?: string | null;
 }) {
   const { items, isOpen, total, currency, count, setQuantity, removeItem, closeCart } = useCart();
   // Seules les deux capacites de LIVRAISON sont lues ici. `hasShop` ne l'est
@@ -584,6 +588,49 @@ export default function CartDrawer({
                 {(total + (billsFlatShipping ? shippingFlat : (shipping ?? 0)) - promoDiscount).toFixed(2)} {currency}
               </span>
             </div>
+            {/* ============================================================
+                M2-209 — PANIER EN MONNAIE SANS CARTE : LE PAIEMENT EST
+                MOBILE MONEY, PAS STRIPE.
+
+                Youssouf : « les acheteurs peuvent voir le numéro mobile
+                money pour payer via mobile » — et au checkout aussi. Quand
+                CHAQUE article du panier est en XAF/XOF et que le numéro du
+                vendeur est connu, le bouton Stripe n'est PAS rendu : à sa
+                place, le numéro encaisseur et l'envoi du récapitulatif de
+                commande sur WhatsApp. Les paniers en monnaie carte (EUR,
+                USD, CAD…) gardent leur checkout Stripe, STRICTEMENT
+                INCHANGÉ. Aucun pays n'est nommé : la porte est la monnaie
+                des articles — la réponse structurelle.
+                ============================================================ */}
+            {vendeurWhatsapp && items.length > 0 && items.every((i) => marcheSansCarte(i.currency)) ? (
+              <div className="space-y-3">
+                <div className="rounded-2xl border px-4 py-3" style={{ borderColor: 'rgba(128,128,128,0.35)' }}>
+                  <p className="text-xs font-semibold uppercase tracking-wider opacity-60 m-0">Paiement Mobile Money</p>
+                  <a href={'tel:' + vendeurWhatsapp.replace(/[^\d+]/g, '')} className="block text-xl font-bold mt-1" style={{ color: 'inherit', textDecoration: 'none' }}>
+                    {vendeurWhatsapp}
+                  </a>
+                  <p className="text-xs opacity-70 mt-1 mb-0">Envoyez le montant à ce numéro, puis partagez la capture du paiement sur WhatsApp — le vendeur confirme et livre.</p>
+                </div>
+                <button
+                  className="w-full py-4 rounded-2xl font-semibold text-white transition hover:opacity-90"
+                  style={{ background: '#25D366' }}
+                  onClick={() => {
+                    const total = items.reduce((somme, it) => somme + it.priceNumber * it.quantity, 0);
+                    const devise = items[0]?.currency ?? '';
+                    const lien = lienCommandeWhatsApp({
+                      whatsapp: vendeurWhatsapp,
+                      productName: items.map((it) => `${it.quantity}× ${it.name}`).join(', '),
+                      size: null,
+                      priceLabel: `${total.toFixed(2)} ${devise}`,
+                      url: typeof window === 'undefined' ? '' : window.location.href,
+                    });
+                    if (lien) window.open(lien, '_blank', 'noopener,noreferrer');
+                  }}
+                >
+                  Commander sur WhatsApp
+                </button>
+              </div>
+            ) : (
             <button
               className="w-full py-4 rounded-2xl font-semibold text-white transition hover:opacity-90 disabled:opacity-50"
               style={{ background: primary }}
@@ -599,6 +646,7 @@ export default function CartDrawer({
             >
               {busy ? '…' : labels.checkout}
             </button>
+            )}
             {error && <p className="text-sm text-red-500 text-center">{error}</p>}
             <button onClick={closeCart} className={`w-full text-sm ${s.continueText} ${s.continueHoverText} transition`}>
               {labels.continue}
