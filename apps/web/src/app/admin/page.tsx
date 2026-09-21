@@ -4,6 +4,7 @@ import { supabase } from "@/lib/supabase";
 import { Users, Globe, ShoppingCart, DollarSign, Monitor, Store, Truck, AlertTriangle, Cpu, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 import Sidebar from "@/components/Sidebar";
+import PublishOverrideCard from "@/components/admin/PublishOverrideCard";
 
 interface CronRun {
   id: string;
@@ -166,6 +167,9 @@ export default function AdminDashboard() {
           </div>
         </div>
       )}
+
+      {/* M2-212 — mise en ligne hors Stripe (paiement comptant) */}
+      <PublishOverrideCard />
 
       {/* Overview Cards */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-10">

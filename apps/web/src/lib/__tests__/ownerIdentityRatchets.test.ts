@@ -112,6 +112,12 @@ describe('DETTE 6a — le périmètre restant est connu et délibéré', () => {
     // façon : ce test la rend impossible à ajouter en silence.
     const ATTENDUES = [
       'admin/ai-usage/route.ts',
+      // M2-212 — entrée ajoutée CONSCIEMMENT, même catégorie que les autres
+      // admin/* : `owner_email` y est une donnée d'AFFICHAGE (journalisée
+      // dans l'audit de la mise en ligne comptant), jamais une identité —
+      // l'autorisation vient du jeton + ADMIN_EMAILS, la propriété du site
+      // n'est pas en cause puisque c'est l'OPÉRATEUR qui agit.
+      'admin/site-publish-override/route.ts',
       'admin/stats/route.ts',
       'chat/route.ts',
       'checkout/route.ts',
