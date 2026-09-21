@@ -25,9 +25,14 @@ export async function GET(req: NextRequest) {
     { data: toPayOrders },
   ] = await Promise.all([
     supabaseAdmin.from('profiles').select('*', { count: 'exact', head: true }),
-    supabaseAdmin.from('sites').select('*', { count: 'exact', head: true }),
-    supabaseAdmin.from('sites').select('*', { count: 'exact', head: true }).eq('published', true),
-    supabaseAdmin.from('sites').select('mode, dropship_type, published, owner_email, name, slug, created_at'),
+    // M2-218 — LES ARCHIVÉS NE SONT PLUS COMPTÉS NI LISTÉS. « Supprimer »
+    // archive (archived_at), c'est le contrat du dépôt — mais ces trois
+    // requêtes l'ignoraient : un site supprimé restait dans les tableaux
+    // admin pour toujours, comptes compris. Mesuré : 4 sites archivés
+    // affichés comme vivants.
+    supabaseAdmin.from('sites').select('*', { count: 'exact', head: true }).is('archived_at', null),
+    supabaseAdmin.from('sites').select('*', { count: 'exact', head: true }).eq('published', true).is('archived_at', null),
+    supabaseAdmin.from('sites').select('mode, dropship_type, published, owner_email, name, slug, created_at').is('archived_at', null),
     supabaseAdmin.from('shop_orders').select('*', { count: 'exact', head: true }),
     supabaseAdmin.from('shop_orders').select('nexiora_commission, supplier_cost, total, status'),
     supabaseAdmin.from('cron_runs').select('*').order('started_at', { ascending: false }).limit(50),

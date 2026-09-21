@@ -22,7 +22,8 @@ export default function DashboardPage() {
         router.push('/login');
       } else {
         setUser(data.user);
-        supabase.from('sites').select('*').eq('owner_email', data.user.email)
+        // M2-218 — un site supprimé (archivé) ne revient pas au rechargement.
+        supabase.from('sites').select('*').eq('owner_email', data.user.email).is('archived_at', null)
           .order('created_at', { ascending: false })
           .then(({ data: sitesData }) => {
             setSites(sitesData || []);

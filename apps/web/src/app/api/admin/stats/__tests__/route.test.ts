@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
 
@@ -28,6 +30,12 @@ function chain(data: unknown, count: number | null = 0) {
   const self = () => c;
   c.select = vi.fn(self);
   c.eq = vi.fn(self);
+  // M2-218 — `.is()` MANQUAIT au mock, et c'est le mock qui était
+  // incomplet, jamais le code : la route filtre désormais les sites
+  // archivés (`.is('archived_at', null)`), comme toute surface qui liste
+  // des sites vivants. Un faux chaînon rend une vraie garde intestable —
+  // on complète le double, on ne retire pas la garde.
+  c.is = vi.fn(self);
   c.order = vi.fn(self);
   c.limit = vi.fn(self);
   c.then = (resolve: (v: unknown) => void) => resolve({ data, count, error: null });
@@ -169,5 +177,55 @@ describe('M2-01 — une commande sans commission prélevée n’enfle pas le rev
     const json = await (await GET(req())).json();
     expect(json.revenue.total).toBe(500);
     expect(json.revenue.commission).toBe(0);
+  });
+});
+
+// ============================================================
+// M2-218 — UN SITE SUPPRIMÉ NE REVIENT PAS DANS LES TABLEAUX ADMIN.
+//
+// DÉFAUT VU PAR YOUSSOUF : « je supprime certains sites mais ils sont
+// toujours là ». MESURÉ en base : 4 sites `archived_at` non nul, comptés
+// et listés comme vivants.
+//
+// LA CAUSE N'ÉTAIT PAS LA SUPPRESSION — elle marchait : « Supprimer »
+// archive (`archived_at`), c'est le contrat du dépôt (aucune destruction
+// physique, les commandes passées doivent rester traçables). C'étaient les
+// LECTEURS qui ignoraient le contrat : trois requêtes de stats et celle du
+// dashboard listaient tout, archivés compris.
+//
+// Ce test garde la CLASSE : toute requête `sites` de cette route doit
+// porter le filtre. Une quatrième ajoutée sans lui fera rougir ici.
+// ============================================================
+describe('M2-218 — les sites archivés sont exclus des stats admin', () => {
+  it('CHAQUE requête `sites` filtre `archived_at IS NULL`', async () => {
+    const appels: { table: string; c: any }[] = [];
+    fromMock.mockReset();
+    fromMock.mockImplementation((table: string) => {
+      const c = chain(table === 'shop_orders' ? ORDERS : [], 0);
+      appels.push({ table, c });
+      return c;
+    });
+    await GET(req());
+    const sites = appels.filter((a) => a.table === 'sites');
+    expect(sites.length, 'aucune requête sites observée').toBeGreaterThan(0);
+    for (const a of sites) {
+      expect(a.c.is, 'une requête sites ne filtre pas les archivés').toHaveBeenCalledWith(
+        'archived_at',
+        null,
+      );
+    }
+  });
+
+  it("LE FILTRE VISE LES ARCHIVÉS, PAS AUTRE CHOSE — et jamais les commandes", () => {
+    // `shop_orders` n'a pas d'archivage : lui appliquer ce filtre masquerait
+    // des commandes réelles. Le test le dit explicitement.
+    const src = readFileSync(join(__dirname, '..', 'route.ts'), 'utf8');
+    const lignesOrders = src
+      .split('\n')
+      .filter((l) => l.includes("from('shop_orders')"));
+    expect(lignesOrders.length).toBeGreaterThan(0);
+    for (const l of lignesOrders) {
+      expect(l, 'un filtre archived_at a été posé sur shop_orders').not.toContain('archived_at');
+    }
   });
 });
