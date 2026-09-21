@@ -100,6 +100,9 @@ cjVid?: string | null
  * partout ou ce champ est lu.
  */
 forSale?: boolean
+/** M2-208 — tailles et numéro du vendeur : voir normalizeProduct. */
+sizes?: string[]
+whatsapp?: string | null
 variants?: { variant_id: string; label: string; price: number; currency: string }[]
 shippingDaysMin?: number | null
 shippingDaysMax?: number | null
@@ -725,6 +728,14 @@ cjVid: raw?.cjVid || null,
 // Noir, Vif et Aurora -- la correction n'aurait servi a rien sur 4 vitrines
 // sur 5. Mesure, pas supposition : les quatre appellent bien `.map(normalizeProduct)`.
 forSale: raw?.forSale,
+// M2-208 — MÊME CLASSE DE DÉFAUT QUE LA DETTE 6c, MESURÉE À L'ÉCRAN :
+// la projection injectait `whatsapp` et `sizes`, ce normaliseur les JETAIT,
+// et la modale boutique n'affichait donc AUCUN bouton — pendant que les
+// cartes de collection, qui ne passent pas par ici, les affichaient. Le
+// commentaire ci-dessus l'avait écrit d'avance : « tout champ non recopié
+// ici est PERDU ».
+whatsapp: raw?.whatsapp ?? null,
+sizes: Array.isArray(raw?.sizes) ? raw.sizes : [],
 shippingDaysMin: raw?.shippingDaysMin || null,
 shippingDaysMax: raw?.shippingDaysMax || null,
 supplierId: raw?.supplierId || null,

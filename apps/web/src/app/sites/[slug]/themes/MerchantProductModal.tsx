@@ -46,9 +46,17 @@ interface Props {
 }
 
 // M2-206 — même mécanique locale que le reste du fichier (en/fr).
-const CONTACT_LABELS: Record<string, { call: string; order: string; sizes: string }> = {
-  en: { call: 'Call the seller', order: 'Order on WhatsApp', sizes: 'Sizes' },
-  fr: { call: 'Appeler le vendeur', order: 'Commander sur WhatsApp', sizes: 'Tailles' },
+const CONTACT_LABELS: Record<string, { call: string; order: string; sizes: string; payTitle: string; payHint: string }> = {
+  en: {
+    call: 'Call the seller', order: 'Order on WhatsApp', sizes: 'Sizes',
+    payTitle: 'Pay by mobile money',
+    payHint: 'Send the amount to this number, then share the payment screenshot on WhatsApp — the seller confirms and delivers.',
+  },
+  fr: {
+    call: 'Appeler le vendeur', order: 'Commander sur WhatsApp', sizes: 'Tailles',
+    payTitle: 'Paiement Mobile Money',
+    payHint: 'Envoyez le montant à ce numéro, puis partagez la capture du paiement sur WhatsApp — le vendeur confirme et livre.',
+  },
 };
 
 const LABELS: Record<string, Record<string, string>> = {
@@ -264,6 +272,23 @@ export default function MerchantProductModal({ product: p, primary, lang = 'en',
             {/* M2-207 — PORTE DU MARCHÉ (Youssouf) : ces boutons ne
                 concernent QUE les marchés sans carte (XAF/XOF). Un marchand
                 Stripe (EUR, USD, CAD…) garde son parcours panier, intact. */}
+            {/* M2-208 — LE NUMÉRO MOBILE MONEY, VISIBLE POUR PAYER (Youssouf :
+                « les acheteurs peuvent voir le numéro mobile money pour payer
+                via mobile »). Marché sans carte uniquement — même porte que
+                les boutons. */}
+            {p.whatsapp && marcheSansCarte(p.currency, p.price) && (
+              <div style={{ marginTop: 18, border: '1.5px solid ' + c.border, borderRadius: 12, padding: '14px 16px' }}>
+                <p style={{ fontSize: 12, fontWeight: 600, margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em', color: c.labelMuted }}>
+                  {(CONTACT_LABELS[lang] || CONTACT_LABELS.en).payTitle}
+                </p>
+                <a href={'tel:' + p.whatsapp.replace(/[^\d+]/g, '')} style={{ display: 'inline-block', marginTop: 6, fontSize: 20, fontWeight: 700, color: 'inherit', textDecoration: 'none' }}>
+                  {p.whatsapp}
+                </a>
+                <p style={{ fontSize: 13, lineHeight: 1.5, color: c.descText, marginTop: 6, marginBottom: 0 }}>
+                  {(CONTACT_LABELS[lang] || CONTACT_LABELS.en).payHint}
+                </p>
+              </div>
+            )}
             {p.whatsapp && marcheSansCarte(p.currency, p.price) && (
               <div style={{ display: 'flex', gap: 10, marginTop: 14, flexWrap: 'wrap' }}>
                 {(() => {

@@ -2,6 +2,8 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useTranslation } from '@/lib/translations';
+import { deviseParDefaut } from './productDraft';
+import { marcheSansCarte } from '@/lib/whatsappOrder';
 
 const ACCENT = '#FA5D1E';
 
@@ -21,6 +23,12 @@ export default function PaymentConnect({ slug, mode }: { slug: string; mode?: nu
   const [shipping, setShipping] = useState('0');
   const [savingShip, setSavingShip] = useState(false);
   const [shipMsg, setShipMsg] = useState('');
+  // M2-208 — LE MARCHÉ DE LA BOUTIQUE, DÉRIVÉ DE SES PRODUITS (Youssouf :
+  // « je ne veux pas voir Stripe dans Edit pour une boutique de vendeur
+  // africain — WhatsApp, appel, Mobile Money, pas de Stripe »). Le
+  // discriminant est la monnaie dominante du catalogue : XAF/XOF = marché
+  // Mobile Money, Stripe n'y a rien à faire. null = pas encore mesuré.
+  const [marcheMobile, setMarcheMobile] = useState<boolean | null>(null);
 
   const loadStatus = async () => {
     try {
@@ -41,6 +49,26 @@ export default function PaymentConnect({ slug, mode }: { slug: string; mode?: nu
   };
 
   useEffect(() => { loadStatus(); }, [slug]);
+
+  // M2-208 — mesurer le marché AVANT de proposer Stripe. Mode 2 seulement :
+  // le dropshipping (mode 3) encaisse par carte, quel que soit le pays.
+  useEffect(() => {
+    if (mode !== 2) { setMarcheMobile(false); return; }
+    let annule = false;
+    (async () => {
+      try {
+        const headers = await authHeaders();
+        const res = await fetch(`/api/shop/products?slug=${encodeURIComponent(slug)}`, { headers });
+        const data = await res.json();
+        if (annule) return;
+        const devise = deviseParDefaut(Array.isArray(data.products) ? data.products : []);
+        setMarcheMobile(marcheSansCarte(devise));
+      } catch {
+        if (!annule) setMarcheMobile(false);
+      }
+    })();
+    return () => { annule = true; };
+  }, [slug, mode]);
 
   const handleConnect = async () => {
     setBusy(true);
@@ -81,6 +109,37 @@ export default function PaymentConnect({ slug, mode }: { slug: string; mode?: nu
       setSavingShip(false);
     }
   };
+
+  // ============================================================
+  // M2-208 — MARCHÉ MOBILE MONEY : STRIPE N'APPARAÎT PAS DU TOUT.
+  //
+  // « Les vendeurs africains ont WhatsApp, appel, Mobile Money — pas de
+  // Stripe dans Edit. » Le panneau dit au marchand comment ses acheteurs
+  // paient RÉELLEMENT sur son marché, et où vit son numéro : les fiches
+  // produit l'affichent déjà (boutons + numéro), depuis son WhatsApp ou son
+  // téléphone de contact. Aucune connexion Stripe n'est proposée ; les
+  // marchés carte (EUR, USD, CAD…) gardent le panneau Stripe, inchangé.
+  // ============================================================
+  if (marcheMobile === true) {
+    return (
+      <div className="glass glass-hover rounded-3xl p-6 md:p-8 mt-8">
+        <h2 className="text-xl font-bold mb-2">Paiements — Mobile Money</h2>
+        <p className="text-sm text-white/50 mb-4">
+          Votre boutique vend en francs CFA : vos acheteurs paient par
+          transfert mobile et vous contactent par WhatsApp ou par appel,
+          directement depuis chaque fiche produit.
+        </p>
+        <ul className="text-sm text-white/70 space-y-2 list-disc pl-5">
+          <li>Le numéro affiché aux acheteurs est celui de vos réseaux
+            sociaux (WhatsApp), sinon votre téléphone de contact.</li>
+          <li>L'acheteur envoie le montant par Mobile Money, puis vous
+            partage la capture du paiement sur WhatsApp.</li>
+          <li>Vous confirmez et vous livrez — aucun intermédiaire ne
+            prélève de commission sur vos ventes.</li>
+        </ul>
+      </div>
+    );
+  }
 
   return (
     <div className="glass glass-hover rounded-3xl p-6 md:p-8 mt-8">
