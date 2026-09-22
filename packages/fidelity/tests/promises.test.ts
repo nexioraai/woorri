@@ -43,6 +43,13 @@ function documentSain(): ProjectAir {
   };
 }
 
+/** Le verdict UNIQUE d'un document à une seule promesse — jamais un `!`. */
+function requisVerdict(r: ReturnType<typeof evaluatePromises>) {
+  const v = r.verdicts[0];
+  if (v === undefined) throw new Error("aucun verdict rendu");
+  return v;
+}
+
 describe("gate des promesses — CONTRÔLE POSITIF", () => {
   it("un document dont toutes les cibles vivent PASSE", () => {
     const r = evaluatePromises(documentSain(), EXECUTION_ENVELOPE_V1);
@@ -133,6 +140,97 @@ describe("gate des promesses — CAS-TUEURS (elle doit ÉCHOUER)", () => {
     );
     expect(r.vivantes).toBe(3);
     expect(r.passed).toBe(false);
+  });
+});
+
+// ── EP-204 · LES SEPT FAMILLES AJOUTÉES DOIVENT POUVOIR RENDRE « MORTE ».
+//
+// Élargir un évaluateur est le geste le plus facile à rater : sept branches
+// qui répondraient « vivante » parce que le nœud est DÉCLARÉ seraient sept
+// faux verts, et la gate de fidélité perdrait exactement ce qu'elle garde.
+// Chaque famille est donc éprouvée DANS LES DEUX SENS, sur des nœuds RÉELS du
+// corpus gelé — aucun document fabriqué pour l'occasion.
+describe("gate des promesses — EP-204, les sept familles jugées DANS LES DEUX SENS", () => {
+  const ENV = EXECUTION_ENVELOPE_V1;
+  const jugerUne = (air: ProjectAir, targetId: string, env = ENV) =>
+    requisVerdict(evaluatePromises({ ...air, expectedTests: [promesse(targetId)] }, env));
+
+  const CAS: readonly (readonly [string, string, string, string])[] = [
+    // famille        vivante (nœud réel)      morte (nœud réel)          raison de la mort
+    ["block", "blk_menu_header", "blk_plat_detail_header", "écran INATTEIGNABLE"],
+    ["route", "nav_menu", "nav_plat_detail", "route vers un écran inatteignable"],
+    ["field", "fld_plat_nom", "fld_cmd_reference", "entité qu'aucun bloc rendu n'affiche"],
+    ["capability", "auth", "analytics", "aucune méthode exécutée par le moteur"],
+    ["integration", "intg_auth_client", "intg_analytics_produit", "capacité non exécutée"],
+  ];
+
+  for (const [famille, vivant, mort] of CAS) {
+    it(`${famille} — le nœud VIVANT passe, le nœud MORT échoue`, () => {
+      const air = base();
+      const v = jugerUne(air, vivant);
+      expect(v.targetKind, `${vivant} mal classé`).toBe(famille);
+      expect(v.state, `${vivant} devrait vivre — ${v.motif}`).toBe("cible_vivante");
+
+      const m = jugerUne(air, mort);
+      expect(m.targetKind, `${mort} mal classé`).toBe(famille);
+      expect(m.state, `${mort} devrait être MORTE — ${m.motif}`).toBe("cible_morte");
+      expect(m.motif.length, "une mort sans motif n'apprend rien").toBeGreaterThan(20);
+    });
+  }
+
+  it("dataset — vivant s'il alimente une entité rendue, MORT sinon", () => {
+    const air = base();
+    const v = jugerUne(air, "data_menu_initial");
+    expect(v.targetKind).toBe("dataset");
+    expect(v.state, v.motif).toBe("cible_vivante");
+    // LE MÊME dataset, qui ne produit plus AUCUNE ligne. C'est la condition
+    // exacte de sa mort : il est déclaré, son entité a un bloc, et il
+    // n'alimente rien. (Le repointer vers une autre entité ne l'aurait PAS
+    // tué — il aurait alimenté celle-là : mesuré, et c'est pourquoi la
+    // première version de ce cas-tueur était creuse.)
+    const devie: ProjectAir = {
+      ...air,
+      datasets: air.datasets.map((d) => (d.id === "data_menu_initial" ? { ...d, rowCount: 0 } : d)),
+    };
+    const m = jugerUne(devie, "data_menu_initial");
+    expect(m.state, m.motif).toBe("cible_morte");
+  });
+
+  it("règle — vivante si l'enveloppe les applique, MORTE si elle ne les applique pas", () => {
+    // Le fait décisif appartient à l'ENVELOPPE, pas au document : une règle
+    // qu'aucun code n'applique est une promesse morte, quel qu'en soit l'auteur.
+    const air = base();
+    expect(jugerUne(air, "rule_plat_prix_positif").state).toBe("cible_vivante");
+    const m = jugerUne(air, "rule_plat_prix_positif", { ...ENV, rulesEnforced: false });
+    expect(m.targetKind).toBe("rule");
+    expect(m.state, m.motif).toBe("cible_morte");
+  });
+
+  it("une cible qui n'est AUCUN nœud déclaré reste INEXISTANTE", () => {
+    // La famille « inconnu » ne doit pas disparaître sous l'élargissement :
+    // c'est elle qui attrape une promesse sur un identifiant inventé.
+    const v = jugerUne(base(), "blk_cet_identifiant_n_existe_nulle_part");
+    expect(v.targetKind).toBe("inconnu");
+    expect(v.state).toBe("cible_inexistante");
+  });
+
+  it("v3/kaviva-spa — le document qui a révélé le défaut est ENTIÈREMENT vivant", () => {
+    // MESURÉ AVANT : 20/39, dont 19 « cibles inexistantes » — 12 blocs,
+    // 5 champs, 1 route, 1 dataset, TOUS déclarés et tous acceptés par le
+    // validateur (`validate.ts` règle 11, élargie les 2026-09-10 et 09-11).
+    // Aucune n'était absente : c'est la MESURE qui était fausse.
+    const air = migrateAirDocument(
+      JSON.parse(
+        readFileSync(
+          join(dirname(fileURLToPath(import.meta.url)), "..", "..", "golden-corpus", "corpus-v3", "kaviva-spa.air.json"),
+          "utf8",
+        ),
+      ),
+    );
+    const r = evaluatePromises(air, ENV);
+    expect(r.inexistantes, "plus aucune cible déclarée ne doit être dite inexistante").toBe(0);
+    expect(r.vivantes).toBe(39);
+    expect(r.passed).toBe(true);
   });
 });
 

@@ -30,7 +30,25 @@ export type PromiseState =
   /** La cible n'est pas déclarée par le document. */
   | "cible_inexistante";
 
-export type TargetKind = "screen" | "action" | "entity" | "inconnu";
+export type TargetKind =
+  | "screen"
+  | "action"
+  | "entity"
+  // ── EP-204 — LES SEPT FAMILLES QUE LE VALIDATEUR ACCEPTE ET QUE CET
+  // ÉVALUATEUR IGNORAIT. Le validateur a été ÉLARGI les 2026-09-10 puis
+  // 2026-09-11 (`validate.ts`, règle 11), délibérément et sur mesure :
+  // « un test sur un bloc vivant — la liste du catalogue montre les produits —
+  // est une promesse parfaitement vérifiable ». Depuis ce jour il accepte les
+  // DIX familles de nœuds du document ; celui-ci n'en connaissait que TROIS et
+  // rendait `cible_inexistante` pour les sept autres.
+  | "block"
+  | "field"
+  | "route"
+  | "dataset"
+  | "rule"
+  | "integration"
+  | "capability"
+  | "inconnu";
 
 export interface PromiseVerdict {
   readonly testId: string;
@@ -107,6 +125,40 @@ export function evaluatePromises(
   const ecrans = new Set(air.screens.map((s) => s.id));
   const entites = new Set(air.entities.map((e) => e.id));
 
+  // ── EP-204 · LES SEPT FAMILLES MANQUANTES, CHACUNE AVEC SA CONDITION DE VIE.
+  //
+  // LE DÉFAUT MESURÉ : `v3/kaviva-spa` était déclaré 20/39 — 19 promesses
+  // « à CIBLE INEXISTANTE ». Or les 19 cibles EXISTENT toutes : 12 blocs,
+  // 5 champs, 1 route, 1 dataset, tous déclarés, tous acceptés par le
+  // validateur. Aucune n'était absente. Le document était bon ; la MESURE
+  // était fausse, et elle a fait rougir la gate de fidélité.
+  //
+  // CE N'EST PAS UN ÉLARGISSEMENT COMPLAISANT. Rien n'est réputé vivant parce
+  // qu'il est déclaré — c'est exactement l'erreur que cet évaluateur existe
+  // pour ne pas commettre. Chaque famille reçoit la condition de vie de ce
+  // dont elle DÉPEND, et chacune peut rendre MORTE :
+  //   · bloc      → il ne se rend que si son écran est ATTEIGNABLE ;
+  //   · route     → elle ne mène quelque part que si cet écran l'est ;
+  //   · champ     → rien ne l'affiche si son entité n'est pas rendue ;
+  //   · dataset   → il n'alimente rien si son entité n'est pas rendue ;
+  //   · règle     → morte si l'enveloppe ne les applique pas ;
+  //   · capacité  → vivante si l'enveloppe déclare une méthode EXÉCUTÉE ;
+  //   · intégra.  → morte si elle ne porte aucune capacité exécutée : rien ne
+  //                 la câble (c'est la règle du juge EP-176).
+  const ecranDuBloc = new Map(
+    air.screens.flatMap((sc) => sc.blocks.map((b) => [b.id, sc.id] as const)),
+  );
+  const ecranDeLaRoute = new Map(air.navigation.routes.map((r) => [r.id, r.screenId] as const));
+  const entiteDuChamp = new Map(
+    air.entities.flatMap((e) => e.fields.map((f) => [f.id, e.id] as const)),
+  );
+  const entiteDuDataset = new Map(air.datasets.map((d) => [d.id, d.entityId] as const));
+  const regles = new Set(air.rules.map((r) => r.id));
+  const capacites = new Set(air.capabilities.map((c) => c.capability));
+  const integrationsById = new Map(air.integrations.map((x) => [x.id, x] as const));
+  const capaciteExecutee = (c: string): boolean =>
+    (envelope.capabilityMethodsExecutees[c] ?? []).length > 0;
+
   // `expectedTests` est REQUIS par le schéma : pas de garde `?? []` — elle
   // laisserait croire que le champ peut manquer, et masquerait une régression
   // du schéma derrière un tableau vide silencieux.
@@ -136,11 +188,59 @@ export function evaluatePromises(
         ? { ...base, targetKind: "entity" as const, state: "cible_vivante" as const, motif: "entité liée à un bloc rendu et alimentée" }
         : { ...base, targetKind: "entity" as const, state: "cible_morte" as const, motif: "entité liée à AUCUN bloc rendu, ou sans dataset — rien ne s'affiche" };
     }
+    const ecranPorteur = ecranDuBloc.get(t.targetId);
+    if (ecranPorteur !== undefined) {
+      return atteignables.has(ecranPorteur)
+        ? { ...base, targetKind: "block" as const, state: "cible_vivante" as const, motif: `bloc rendu sur l'écran atteignable \`${ecranPorteur}\`` }
+        : { ...base, targetKind: "block" as const, state: "cible_morte" as const, motif: `bloc porté par l'écran INATTEIGNABLE \`${ecranPorteur}\` — il ne se rend jamais` };
+    }
+    const ecranVise = ecranDeLaRoute.get(t.targetId);
+    if (ecranVise !== undefined) {
+      return atteignables.has(ecranVise)
+        ? { ...base, targetKind: "route" as const, state: "cible_vivante" as const, motif: `route vers l'écran atteignable \`${ecranVise}\`` }
+        : { ...base, targetKind: "route" as const, state: "cible_morte" as const, motif: `route vers l'écran INATTEIGNABLE \`${ecranVise}\` — elle ne mène nulle part` };
+    }
+    const entitePorteuse = entiteDuChamp.get(t.targetId);
+    if (entitePorteuse !== undefined) {
+      return entitesRendues.has(entitePorteuse)
+        ? { ...base, targetKind: "field" as const, state: "cible_vivante" as const, motif: `champ de l'entité rendue \`${entitePorteuse}\`` }
+        : { ...base, targetKind: "field" as const, state: "cible_morte" as const, motif: `champ de l'entité \`${entitePorteuse}\`, liée à AUCUN bloc rendu — rien ne l'affiche` };
+    }
+    const entiteAlimentee = entiteDuDataset.get(t.targetId);
+    if (entiteAlimentee !== undefined) {
+      return entitesRendues.has(entiteAlimentee)
+        ? { ...base, targetKind: "dataset" as const, state: "cible_vivante" as const, motif: `dataset alimentant l'entité rendue \`${entiteAlimentee}\`` }
+        : { ...base, targetKind: "dataset" as const, state: "cible_morte" as const, motif: `dataset de l'entité \`${entiteAlimentee}\`, qu'aucun bloc rendu n'affiche — il n'alimente rien` };
+    }
+    if (regles.has(t.targetId)) {
+      return envelope.rulesEnforced
+        ? { ...base, targetKind: "rule" as const, state: "cible_vivante" as const, motif: "règle appliquée par le moteur (enveloppe)" }
+        : { ...base, targetKind: "rule" as const, state: "cible_morte" as const, motif: "l'enveloppe déclare que les règles ne sont appliquées NULLE PART — rien ne la fait respecter" };
+    }
+    if (capacites.has(t.targetId)) {
+      return capaciteExecutee(t.targetId)
+        ? { ...base, targetKind: "capability" as const, state: "cible_vivante" as const, motif: "capacité dont l'enveloppe déclare au moins une méthode EXÉCUTÉE" }
+        : { ...base, targetKind: "capability" as const, state: "cible_morte" as const, motif: "capacité dont l'enveloppe n'exécute AUCUNE méthode — l'appel n'a jamais lieu" };
+    }
+    const integration = integrationsById.get(t.targetId);
+    if (integration !== undefined) {
+      return integration.capability !== undefined && capaciteExecutee(integration.capability)
+        ? { ...base, targetKind: "integration" as const, state: "cible_vivante" as const, motif: `intégration portant la capacité exécutée \`${integration.capability}\`` }
+        : {
+            ...base,
+            targetKind: "integration" as const,
+            state: "cible_morte" as const,
+            motif:
+              integration.capability === undefined
+                ? "intégration ne portant AUCUNE capacité — le moteur ne l'émet pas (règle EP-176)"
+                : `intégration portant \`${integration.capability}\`, dont l'enveloppe n'exécute aucune méthode`,
+          };
+    }
     return {
       ...base,
       targetKind: "inconnu" as const,
       state: "cible_inexistante" as const,
-      motif: "la cible n'est ni un écran, ni une action, ni une entité de ce document",
+      motif: "la cible n'est AUCUN nœud déclaré de ce document",
     };
   });
 
