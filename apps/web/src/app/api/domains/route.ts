@@ -47,6 +47,18 @@ export async function POST(req: NextRequest) {
     const auth = await requireSiteOwner(req, slug, 'id, custom_domain')
     if (!auth.ok) return auth.response
     const site = auth.site as { id: string; custom_domain: string | null }
+    // M2-219 — L'OPÉRATEUR A AGI POUR UN CLIENT : c'est légitime et c'est
+    // TRACÉ. Un accès qui contourne la propriété ne doit jamais être
+    // silencieux, même quand il est voulu.
+    if (auth.viaAdmin) {
+      await logAnomaly({
+        type: 'domain_connect_via_admin',
+        severity: 'warning',
+        siteId: site.id,
+        slug,
+        details: { adminEmail: auth.email ?? null, domain: clean },
+      })
+    }
 
     // Un domaine ne peut pas etre rattache a deux sites.
     const { data: alreadyUsed, error: erreurUsage } = await supabaseAdmin

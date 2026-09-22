@@ -3,7 +3,9 @@ import { supabase as supabaseAnon } from '@/lib/supabase';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 
 type OwnerCheck =
-  { ok: true; site: any; email?: string } |
+  /** M2-219 — `viaAdmin` : l'accès est celui de l'OPÉRATEUR de la
+   *  plateforme, pas du propriétaire. L'appelant doit le journaliser. */
+  { ok: true; site: any; email?: string; viaAdmin?: boolean } |
   { ok: false; response: NextResponse };
 
 /**
@@ -67,11 +69,29 @@ async function resolveOwnedSite(
   const isOwner = siteOwnerId != null
     ? siteOwnerId === user.id
     : !!user.email && (site as any).owner_email === user.email;
-  if (!isOwner) {
+  // ============================================================
+  // M2-219 — L'OPÉRATEUR DE LA PLATEFORME AGIT POUR SES CLIENTS.
+  //
+  // BESOIN RÉEL, MESURÉ : les marchands tchadiens paient comptant et ne
+  // feront jamais les manipulations techniques (DNS, connexion de
+  // domaine). Youssouf publie déjà pour eux (M2-212) ; sans ceci, la
+  // moitié du parcours reste hors de portée de la clientèle visée — il
+  // recevait « Accès refusé » sur le site d'un client qu'il accompagne.
+  //
+  // LA GARDE N'EST PAS AFFAIBLIE : la liste est NOMINATIVE, versionnée,
+  // et identique à celle des routes admin existantes
+  // (site-publish-override, site-archive-override, ai-usage, stats).
+  // Un marchand ne gagne AUCUN droit sur le site d'un autre — seul
+  // l'opérateur passe, et son passage est SIGNALÉ à l'appelant
+  // (`viaAdmin`) pour qu'il le journalise.
+  // ============================================================
+  const ADMIN_EMAILS = ['issayamiyoussouf@gmail.com'];
+  const isAdmin = !!user.email && ADMIN_EMAILS.includes(user.email);
+  if (!isOwner && !isAdmin) {
     return { ok: false, response: NextResponse.json({ error: 'Acces refuse.' }, { status: 403 }) };
   }
 
-  return { ok: true, site, email: user.email };
+  return { ok: true, site, email: user.email, viaAdmin: !isOwner && isAdmin };
 }
 
 /** Verifie la propriete d'un site identifie par son SLUG. */
