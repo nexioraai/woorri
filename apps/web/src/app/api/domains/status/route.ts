@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { verifierJoignabilite } from '@/lib/domains/joignabilite';
 import { requireSiteOwner } from '@/lib/auth/require-site-owner';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getVercelDomainStatus, verifyVercelDomain } from '@/lib/domains/vercel';
@@ -110,12 +111,27 @@ async function construireStatut(site: SiteStatut) {
     };
   }
 
+  // M2-221 — L'ESSAI RÉEL, en plus des états internes. Vercel peut dire
+  // « rattaché et vérifié » pendant qu'une des quatre adresses ne répond
+  // pas : c'est arrivé deux fois, sur www. Seul l'essai le dit.
+  let joignabilite: Awaited<ReturnType<typeof verifierJoignabilite>> | null = null;
+  const domaineAVerifier = site.custom_domain || domain?.domain || null;
+  if (domaineAVerifier) {
+    try {
+      joignabilite = await verifierJoignabilite(domaineAVerifier);
+    } catch {
+      // Le diagnostic ne doit jamais casser l'écran qu'il informe.
+      joignabilite = null;
+    }
+  }
+
   return {
     customDomain: site.custom_domain || null,
     purchased: domain || null,
     byodVerification,
     byodTxt,
     byodGoogle,
+    joignabilite,
   };
 }
 

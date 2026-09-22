@@ -179,6 +179,12 @@ export default function DomainePage({ params }: { params: Promise<{ slug: string
     | { attached: boolean; verified: boolean }
     | null
     | undefined
+  // M2-221 — l'essai réel des quatre adresses, fourni par /api/domains/status.
+  const joignabilite = status?.joignabilite as
+    | { adresses: { url: string; code: number; ok: boolean }[]; complet: boolean; enPanne: string[] }
+    | null
+    | undefined
+
   const byodStatus = !byodVerification
     ? { dot: 'bg-slate-400', text: 'text-slate-400', label: t('domain.statusUnknown') }
     : byodVerification.verified
@@ -312,6 +318,43 @@ export default function DomainePage({ params }: { params: Promise<{ slug: string
                 </div>
                 {byodGoogle?.lastError && (
                   <p className="text-xs text-red-400 mb-4">{byodGoogle.lastError}</p>
+                )}
+
+                {/* ============================================================
+                    M2-221 — CE QUE LE VISITEUR OBTIENT VRAIMENT.
+                    Les indicateurs ci-dessus disent l'état INTERNE (Vercel,
+                    Google). Deux boutiques ont porté « rattaché et vérifié »
+                    pendant que `www` ne répondait pas du tout. Ce bloc OUVRE
+                    les quatre adresses et montre le résultat : aucun état
+                    interne ne remplace l'essai.
+                    ============================================================ */}
+                {joignabilite && (
+                  <div className="mb-6">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
+                      {joignabilite.complet
+                        ? 'Toutes les adresses répondent'
+                        : 'Certaines adresses ne répondent pas'}
+                    </p>
+                    <div className="space-y-1">
+                      {joignabilite.adresses.map((a) => (
+                        <div key={a.url} className="flex items-center gap-2 text-sm">
+                          <span className={`w-2 h-2 rounded-full ${a.ok ? 'bg-emerald-400' : 'bg-red-400'}`} />
+                          <span className="text-slate-300">{a.url}</span>
+                          <span className={a.ok ? 'text-emerald-400' : 'text-red-400'}>
+                            {a.ok ? 'OK' : a.code === 0 ? 'aucune réponse' : `erreur ${a.code}`}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                    {!joignabilite.complet && (
+                      <p className="text-xs text-slate-400 mt-2">
+                        Une adresse qui ne répond pas laisse une partie de vos
+                        visiteurs devant une page morte — beaucoup de téléphones
+                        ajoutent « www. » tout seuls. La vérification peut prendre
+                        quelques minutes après un changement DNS.
+                      </p>
+                    )}
+                  </div>
                 )}
                 <p className="text-sm text-slate-300 mb-4">
                   {t('domain.dnsInstructions')}
