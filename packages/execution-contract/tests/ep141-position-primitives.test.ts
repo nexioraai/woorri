@@ -10,7 +10,7 @@ import {
   jugerBarreInferieure,
   jugerPositionPrimitives,
 } from "../src/presentation.ts";
-import { L, P, air } from "./fixtures.ts";
+import { L, P, air, requis } from "./fixtures.ts";
 
 const codes = (f: readonly { code: string }[]): string[] => f.map((x) => x.code);
 const CTX = { entryScreenId: "scr_accueil", ecransDIdentite: ["scr_compte"] };
@@ -58,7 +58,7 @@ describe("EP-141 ② · l'accueil occupe la PREMIÈRE position", () => {
   it("l'accueil au milieu est refusé", () => {
     const f = jugerPositionPrimitives(barre({ accueil: 1, domaine: 0, compte: 2 }), CTX);
     expect(codes(f)).toEqual(["PRESENTATION_ACCUEIL_HORS_PREMIERE_POSITION"]);
-    expect(f[0]!.message).toContain("DÉCISION PRODUIT");
+    expect(requis(f[0], "f0").message).toContain("DÉCISION PRODUIT");
   });
 
   it("l'accueil en dernier est refusé DEUX fois — il prend la place du compte", () => {
@@ -80,7 +80,7 @@ describe("EP-141 ② · le compte occupe la DERNIÈRE position", () => {
 describe("EP-141 ② · ce que la règle NE casse PAS", () => {
   it("une barre à DEUX destinations reste valide pour ce juge", () => {
     const m = barre({ accueil: 0, domaine: 1, compte: 2 });
-    m.navigation.primary!.destinations = m.navigation.primary!.destinations.filter(
+    requis(m.navigation.primary, "m.navigation.primary").destinations = requis(m.navigation.primary, "m.navigation.primary").destinations.filter(
       (d) => d.routeId !== "nav_domaine",
     );
     // Accueil premier, compte dernier : rien à redire ICI. La borne de trois
@@ -90,8 +90,8 @@ describe("EP-141 ② · ce que la règle NE casse PAS", () => {
 
   it("la borne de Material tient toujours, et c'est un juge SÉPARÉ", () => {
     const m = barre({ accueil: 0, domaine: 1, compte: 2 });
-    expect(m.navigation.primary!.destinations.length).toBeGreaterThanOrEqual(DESTINATIONS_MIN);
-    expect(m.navigation.primary!.destinations.length).toBeLessThanOrEqual(DESTINATIONS_MAX);
+    expect(requis(m.navigation.primary, "m.navigation.primary").destinations.length).toBeGreaterThanOrEqual(DESTINATIONS_MIN);
+    expect(requis(m.navigation.primary, "m.navigation.primary").destinations.length).toBeLessThanOrEqual(DESTINATIONS_MAX);
     expect(codes(jugerBarreInferieure(m))).toEqual([]);
   });
 
@@ -116,7 +116,7 @@ describe("EP-141 ② · CLIQUET — la règle est écrite en RANGS", () => {
     // Un document mesuré portait une icône « compte » sur un tout autre
     // écran. On reconnaît donc le compte à l'écran d'IDENTITÉ.
     const m = barre({ accueil: 0, domaine: 1, compte: 2 });
-    m.navigation.primary!.destinations[1]!.icon = "compte";
+    requis(requis(m.navigation.primary, "m.navigation.primary").destinations[1], "rimarym.navigation.primary.destinations1").icon = "compte";
     expect(codes(jugerPositionPrimitives(m, CTX))).toEqual([]);
   });
 });

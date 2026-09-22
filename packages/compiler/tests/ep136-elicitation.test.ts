@@ -11,6 +11,7 @@ import * as mm from "../../../benchmarks/air-emission/modele-metier.mjs";
 import * as el from "../../../benchmarks/air-emission/elicitation.mjs";
 import type { DiagnosticModele, Intention } from "../../../benchmarks/air-emission/elicitation.d.mts";
 
+import { requis } from "./helpers.ts";
 const HERE = dirname(fileURLToPath(import.meta.url));
 const R = join(HERE, "..", "..", "..");
 
@@ -40,8 +41,8 @@ const diagnostics = (m: Modele): DiagnosticModele[] =>
 const sansCommerce = (base: Modele): Modele => {
   const m = structuredClone(base);
   delete m.commerce;
-  const parcours = (m.parcours as { etapes: { concept: string; geste: string }[] }[])[0]!;
-  const derniere = parcours.etapes[parcours.etapes.length - 1]!;
+  const parcours = requis((m.parcours as { etapes: { concept: string; geste: string }[] }[])[0], "arcoursasetapesconceptstringgestestring0");
+  const derniere = requis(parcours.etapes[parcours.etapes.length - 1], "parcours.etapesparcours.etapes.length1");
   parcours.etapes.splice(parcours.etapes.length - 1, 0, { concept: derniere.concept, geste: "payer" });
   return m;
 };
@@ -64,7 +65,7 @@ describe("EP-136 · ① un diagnostic « intention manquante » produit sa quest
       const r = el.elicitationDe(diagnostics(sansCommerce(base)), { interlocuteur: true });
       expect(r.statut, nom).toBe("questions");
       expect(r.questions, nom).toHaveLength(1);
-      const q = r.questions[0]!;
+      const q = requis(r.questions[0], "r.questions0");
       expect(q.destination).toBe("commerce");
       // Compréhensible sans connaître le moteur : ni code, ni chemin.
       expect(q.texte).not.toMatch(/MODELE_|couverture\.|parcours\[/);
@@ -88,8 +89,8 @@ describe("EP-136 · ① un diagnostic « intention manquante » produit sa quest
 describe("EP-136 · ② une faute de production ne produit AUCUNE question", () => {
   it("un modèle cassé se re-tire, il ne se demande pas", () => {
     const m = structuredClone(PETIT);
-    const parcours = (m.parcours as { etapes: { concept: string }[] }[])[0]!;
-    parcours.etapes[0]!.concept = "cpt_fantome";
+    const parcours = requis((m.parcours as { etapes: { concept: string }[] }[])[0], "m.parcoursasetapesconceptstring0");
+    requis(parcours.etapes[0], "parcours.etapes0").concept = "cpt_fantome";
     const d = diagnostics(m);
     expect(d.map((x) => x.code)).toContain("MODELE_REFERENCE_INCONNUE");
     expect(el.elicitationDe(d, { interlocuteur: true }).statut).toBe("aucune_question");
@@ -116,8 +117,8 @@ describe("EP-136 · ③ une réponse enrichit l'addendum, JAMAIS le brief", () =
     expect(apres.brief).toBe(BRIEF);
     expect(depart.addendum).toHaveLength(0); // l'intention d'origine est intacte
     expect(apres.addendum).toHaveLength(1);
-    expect(apres.addendum[0]!.rang).toBe(0);
-    expect(apres.addendum[0]!.destination).toBe("commerce");
+    expect(requis(apres.addendum[0], "apres.addendum0").rang).toBe(0);
+    expect(requis(apres.addendum[0], "apres.addendum0").destination).toBe("commerce");
   });
 
   it("le gel n'est pas décoratif : écrire dans le brief est impossible", () => {
@@ -202,15 +203,15 @@ describe("EP-136 · CLIQUET RÉGIONAL — la région n'entre pas dans la règle"
     // Les deux modèles viennent de domaines et de régions différents ; la
     // question posée est strictement identique. Toute divergence prouverait
     // qu'une table régionale s'est glissée quelque part.
-    expect(a.questions[0]!.texte).toBe(b.questions[0]!.texte);
-    expect(a.questions[0]!.destination).toBe(b.questions[0]!.destination);
+    expect(requis(a.questions[0], "a.questions0").texte).toBe(requis(b.questions[0], "b.questions0").texte);
+    expect(requis(a.questions[0], "a.questions0").destination).toBe(requis(b.questions[0], "b.questions0").destination);
   });
 
   it("la même réponse structurelle produit le même addendum, quelle que soit la région", () => {
     const faire = (brief: string): unknown =>
       el.repondre(el.creerIntention(brief), {
         code: "MODELE_COMMERCE_ABSENT",
-        texte: el.QUESTIONS.MODELE_COMMERCE_ABSENT!.demande({ code: "", path: "", message: "" }),
+        texte: requis(el.QUESTIONS.MODELE_COMMERCE_ABSENT, "el.QUESTIONS.MODELE_COMMERCE_ABSENT").demande({ code: "", path: "", message: "" }),
         reponse: "hors de l'application",
       }).addendum;
     expect(faire("un marché en ligne au Tchad")).toEqual(faire("un marché en ligne en Norvège"));
@@ -231,7 +232,7 @@ describe("EP-136 · CLIQUET RÉGIONAL — la région n'entre pas dans la règle"
 describe("EP-136 · LES CHEMINS (règle d'EP-132)", () => {
   it("la projection est EXHAUSTIVE dans les deux sens — vérifié au CHARGEMENT", () => {
     expect(Object.keys(el.QUESTIONS).sort())
-      .toEqual((mm.diagnosticsDeClasse("intention_manquante") as string[]).sort());
+      .toEqual((mm.diagnosticsDeClasse("intention_manquante")).sort());
     const source = readFileSync(join(R, "benchmarks", "air-emission", "elicitation.mjs"), "utf8");
     // Le cliquet n'attend pas qu'un test tourne : le module refuse d'exister.
     expect(source).toContain("throw new Error(");

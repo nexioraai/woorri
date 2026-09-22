@@ -8,6 +8,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
+import { requis } from "./helpers.ts";
 const R = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
 const EMIT = readFileSync(join(R, "benchmarks", "air-emission", "emit-v3.mjs"), "utf8");
 const P0 = readFileSync(join(R, "benchmarks", "air-emission", "passe0.mjs"), "utf8");
@@ -61,9 +62,9 @@ describe("EP-187 · le canal des préférences", () => {
       (i) => i.slug === "marketplace-boutiques",
     );
     expect(x, "intention absente").toBeDefined();
-    expect(x!.preferences, "aucune préférence").toBeDefined();
-    expect(x!.preferences!).toContain("QUATRE");
+    expect(requis(x, "x").preferences, "aucune préférence").toBeDefined();
+    expect(requis(requis(x, "x").preferences, "requisxx.preferences")).toContain("QUATRE");
     // Et elle n'est PAS dans le brief : le brief reste du métier.
-    expect(x!.text, "une décision d'écran a fui dans le brief").not.toMatch(/QUATRE|quatre produits/);
+    expect(requis(x, "x").text, "une décision d'écran a fui dans le brief").not.toMatch(/QUATRE|quatre produits/);
   });
 });

@@ -12,6 +12,7 @@ import {
 } from "../../../benchmarks/air-emission/adaptateur-anthropic.mjs";
 import { incompatibilitesDe, makeLevels } from "../../../benchmarks/air-emission/schema-levels.mjs";
 
+import { requis } from "./helpers.ts";
 const compter = (o: unknown, clef: string): number => {
   if (Array.isArray(o)) return o.reduce<number>((a, x) => a + compter(x, clef), 0);
   if (o !== null && typeof o === "object") {
@@ -37,14 +38,14 @@ describe("EP-151 · LE CLIQUET — toute contrainte déclarée est honorée au P
     const { clefs } = incompatibilitesDe(CONTRAINTES_GRAMMAIRE) as { clefs: string[] };
     expect(clefs.length).toBeGreaterThan(0);
     for (const clef of clefs) {
-      expect(compter(niveau0!.schema, clef), `« ${clef} » déclarée incompatible, encore présente`).toBe(0);
+      expect(compter(requis(niveau0, "niveau0").schema, clef), `« ${clef} » déclarée incompatible, encore présente`).toBe(0);
     }
   });
 
   it("le clamp déclaré est appliqué lui aussi", () => {
     const [niveau0] = degradationsPourEchelle(SCHEMA) as { schema: unknown }[];
     if (CONTRAINTES_GRAMMAIRE.minItemsMax === 1) {
-      const restants = JSON.stringify(niveau0!.schema).match(/"minItems":([2-9]|\d\d)/g) ?? [];
+      const restants = JSON.stringify(requis(niveau0, "niveau0").schema).match(/"minItems":([2-9]|\d\d)/g) ?? [];
       expect(restants).toEqual([]);
     }
   });
@@ -57,7 +58,7 @@ describe("EP-151 · LE CLIQUET — toute contrainte déclarée est honorée au P
     const { clefs } = incompatibilitesDe(CONTRAINTES_GRAMMAIRE) as { clefs: string[] };
     for (const clef of clefs) {
       expect(compter(grammaire, clef), `grammaire canonique · ${clef}`).toBe(0);
-      expect(compter(niveau0!.schema, clef), `niveau 0 · ${clef}`).toBe(0);
+      expect(compter(requis(niveau0, "niveau0").schema, clef), `niveau 0 · ${clef}`).toBe(0);
     }
   });
 
@@ -93,9 +94,9 @@ describe("EP-151 · l'échelle garde son rôle, et rien de plus", () => {
   });
 
   it("les motifs partent EN DERNIER — ils portent le plus de sens", () => {
-    expect(compter(niveaux[0]!.schema, "pattern")).toBe(1);
-    expect(compter(niveaux[1]!.schema, "pattern")).toBe(1);
-    expect(compter(niveaux[2]!.schema, "pattern")).toBe(0);
+    expect(compter(requis(niveaux[0], "niveaux0").schema, "pattern")).toBe(1);
+    expect(compter(requis(niveaux[1], "niveaux1").schema, "pattern")).toBe(1);
+    expect(compter(requis(niveaux[2], "niveaux2").schema, "pattern")).toBe(0);
   });
 
   it("AUCUN niveau ne touche à la structure — le contrat ne paie pas le transport", () => {

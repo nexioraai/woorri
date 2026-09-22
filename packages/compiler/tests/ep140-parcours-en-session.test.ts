@@ -12,6 +12,7 @@ import { describe, expect, it } from "vitest";
 import * as mm from "../../../benchmarks/air-emission/modele-metier.mjs";
 import type { ModeleMetier, Parcours } from "../../../benchmarks/air-emission/modele-metier.d.mts";
 
+import { requis } from "./helpers.ts";
 const HERE = dirname(fileURLToPath(import.meta.url));
 const R = join(HERE, "..", "..", "..");
 const RES = join(R, "benchmarks", "air-emission", "results");
@@ -33,7 +34,7 @@ describe("EP-140 · ① les parcours en session sont reconnus", () => {
     // demande — la portée le dit, aucune déclaration n'est nécessaire.
     const p = PETIT.parcours.find((x: Parcours) => mm.porteeDe(PETIT, x, 0).startsWith("acteur:"));
     expect(p, "aucun parcours de portée acteur dans la fixture").toBeDefined();
-    expect(mm.parcoursFerme(PETIT, p!)).toBe(true);
+    expect(mm.parcoursFerme(PETIT, requis(p, "p"))).toBe(true);
   });
 
   it("un concept DÉCLARÉ relié à l'identité exige la session, même produit par un autre", () => {
@@ -46,8 +47,8 @@ describe("EP-140 · ① les parcours en session sont reconnus", () => {
       .filter((c) => identite.some((i) => mm.conceptsRelies(SESSION, c.id, i)))
       .map((c) => c.id);
     expect(possedes.length).toBeGreaterThan(0);
-    for (const p of SESSION.parcours as Parcours[]) {
-      if (!possedes.includes(p.etapes[0]!.concept)) continue;
+    for (const p of SESSION.parcours) {
+      if (!possedes.includes(requis(p.etapes[0], "p.etapes0").concept)) continue;
       expect(mm.parcoursFerme(SESSION, p), p.id).toBe(true);
     }
   });
@@ -64,8 +65,8 @@ describe("EP-140 · ② le marketplace reste refusé — son catalogue est bien 
   it("les parcours d'achat ne touchent aucun concept relié à l'identité", () => {
     const identite = GRAND.concepts.map((c) => c.id).filter((id) => mm.estConceptIdentite(GRAND, id));
     for (const id of ouverts(GRAND)) {
-      const p = GRAND.parcours.find((x: Parcours) => x.id === id)!;
-      const premier = p.etapes[0]!.concept;
+      const p = requis(GRAND.parcours.find((x: Parcours) => x.id === id), "GRAND.parcours.findxParcoursx.idid");
+      const premier = requis(p.etapes[0], "p.etapes0").concept;
       expect(identite.some((i) => i === premier || mm.conceptsRelies(GRAND, premier, i)), id).toBe(false);
     }
   });
@@ -80,7 +81,7 @@ describe("EP-140 · ② le marketplace reste refusé — son catalogue est bien 
 describe("EP-140 · ③ « montrer puis demander » reste vert", () => {
   it("la fixture qui expose avant d'exiger n'est pas touchée", () => {
     const f = readdirSync(RES).find((x) => x.includes("16-30-59-387Z") && x.includes("modele"));
-    const t3 = charger(join(RES, f!));
+    const t3 = charger(join(RES, requis(f, "f")));
     expect(mm.jugerAccesSansConnexion(t3)).toEqual([]);
   });
 

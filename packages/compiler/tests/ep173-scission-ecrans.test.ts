@@ -7,15 +7,14 @@ import { readFileSync, readdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
+import { requis } from "./helpers.ts";
 import {
   ecransDe,
   etapesFusionnables,
   surfacesDe,
   lotsDEcrans,
   migrerModele,
-  obligationsPrescriptives,
   parcoursParPriorite,
-  prescriptionsNavigation,
   type ModeleMetier,
 } from "../../../benchmarks/air-emission/modele-metier.mjs";
 
@@ -41,13 +40,13 @@ const fichiers = readdirSync(RES).filter((f) => f.includes("modele-p0"));
 // UNE FIXTURE QUI DIT « LE DERNIER » CHANGE DE SENS À CHAQUE RUN : elle ne
 // désigne pas un cas, elle désigne une date.
 const PETIT = charger(
-  fichiers.find((f) => f.includes("marche-immobilier") && f.includes("16-26-13"))!,
+  requis(fichiers.find((f) => f.includes("marche-immobilier") && f.includes("16-26-13")), "includesmarcheimmobilierf.includes162613"),
 );
 // L-179-B — DÉSIGNÉ PAR SON HORODATAGE, jamais par son rang. `.at(-1)`
 // prend le PLUS RÉCENT : il change à chaque run, et la fixture cesse
 // silencieusement de porter le cas qu'elle prétend éprouver.
 const GRAND = charger(
-  fichiers.find((f) => f.includes("marketplace-africain") && f.includes("20-52-53"))!,
+  requis(fichiers.find((f) => f.includes("marketplace-africain") && f.includes("20-52-53")), "ludesmarketplaceafricainf.includes205253"),
 );
 
 describe("EP-173 · la scission par parcours", () => {
@@ -67,7 +66,7 @@ describe("EP-173 · la scission par parcours", () => {
       expect(new Set(tous).size, "doublon entre lots").toBe(tous.length);
       // Et la fixture DOIT contenir le cas, sinon le test ne prouve rien.
       const multi = plan.ecrans.filter(
-        (e) => new Set((e.justification ?? []).map((j) => j.parcours)).size > 1,
+        (e) => new Set(e.justification.map((j) => j.parcours)).size > 1,
       );
       expect(multi.length, `${nom} : aucun écran multi-parcours, test sans objet`).toBeGreaterThan(0);
     });
@@ -88,7 +87,7 @@ describe("EP-173 · la scission par parcours", () => {
           const candidats = [...new Set((ecran?.justification ?? []).map((j) => j.parcours))]
             .filter((p) => rang.has(p));
           if (candidats.length === 0) continue;
-          const meilleur = candidats.reduce((a, b) => (rang.get(a)! <= rang.get(b)! ? a : b));
+          const meilleur = candidats.reduce((a, b) => (requis(rang.get(a), "rang.geta") <= requis(rang.get(b), "rang.getb") ? a : b));
           expect(lot.parcours, `${id} mal affecté`).toBe(meilleur);
         }
       }
@@ -115,7 +114,7 @@ describe("EP-173 · la scission par parcours", () => {
     const f = readdirSync(RES).find(
       (x) => x.endsWith(".air.json") && !x.includes("modele") && !x.includes("partielle"),
     );
-    const air = JSON.parse(readFileSync(join(RES, f!), "utf8")) as {
+    const air = JSON.parse(readFileSync(join(RES, requis(f, "f")), "utf8")) as {
       screens?: { id: string }[];
     };
     const ids = (air.screens ?? []).map((s) => s.id);
@@ -134,7 +133,7 @@ describe("EP-173 · la scission par parcours", () => {
     // les porter — c'est l'émission qui doit leur donner un lot propre.
     for (const M of [PETIT, GRAND]) {
       const plan = ecransDe(M);
-      expect(plan.ecrans.every((e) => (e.justification ?? []).length > 0)).toBe(true);
+      expect(plan.ecrans.every((e) => e.justification.length > 0)).toBe(true);
     }
     const src = readFileSync(join(R, "benchmarks", "air-emission", "emit-v3.mjs"), "utf8");
     expect(src, "aucun lot de surfaces dans l'émission").toContain('name: "ecrans:surfaces"');
@@ -182,7 +181,7 @@ describe("EP-182 ③ · la barre existe toujours, et le réservé n'y est pas", 
     // aux pouvoirs distincts, donc le président réservé À CÔTÉ du compte du
     // membre. C'est le premier domaine à l'exposer.
     const tontine = charger(
-      readdirSync(RES).find((f) => f.includes("tontine") && f.includes("modele-p0"))!,
+      requis(readdirSync(RES).find((f) => f.includes("tontine") && f.includes("modele-p0")), "findff.includestontinef.includesmodelep0"),
     );
     const plan = ecransDe(tontine);
     expect(plan.navigation.racinesReservees.length, "rien n'a été réservé").toBeGreaterThan(0);
@@ -205,7 +204,7 @@ describe("EP-182 ③ · la barre existe toujours, et le réservé n'y est pas", 
   });
 
   it("L'IGNORANCE NE RÉSERVE RIEN — sans acteur déclaré, tout reste public", () => {
-    const sansActeur = structuredClone(PETIT) as ModeleMetier;
+    const sansActeur = structuredClone(PETIT);
     for (const p of sansActeur.parcours) delete (p as { acteur?: string }).acteur;
     expect(ecransDe(sansActeur).navigation.racinesReservees).toEqual([]);
   });
@@ -213,7 +212,7 @@ describe("EP-182 ③ · la barre existe toujours, et le réservé n'y est pas", 
   it("UN DOMAINE À UN SEUL ACTEUR NE RÉSERVE RIEN", () => {
     // Kaviva n'a qu'un acteur : rien ne doit quitter sa barre.
     const kaviva = charger(
-      readdirSync(RES).find((f) => f.includes("kaviva") && f.includes("23-00-50") && f.includes("modele-p0"))!,
+      requis(readdirSync(RES).find((f) => f.includes("kaviva") && f.includes("23-00-50") && f.includes("modele-p0")), "kavivaf.includes230050f.includesmodelep0"),
     );
     expect(ecransDe(kaviva).navigation.racinesReservees).toEqual([]);
   });
@@ -223,14 +222,14 @@ describe("EP-182 · le plan compose, il ne sérialise plus", () => {
   it("LE CAS MESURÉ — `saisir critères` puis `chercher annonces` ne font qu'UN écran", () => {
     const f = etapesFusionnables(PETIT);
     expect(f.length, "la paire n'est plus reconnue").toBe(1);
-    expect(f[0]!.filtre.geste).toBe("saisir");
-    expect(f[0]!.collection.geste).toBe("chercher");
+    expect(requis(f[0], "f0").filtre.geste).toBe("saisir");
+    expect(requis(f[0], "f0").collection.geste).toBe("chercher");
     // Et le plan le RÉALISE : le filtre vit sur l'entrée, au-dessus.
     const plan = ecransDe(PETIT);
     const entree = plan.ecrans.find((e) => e.ecranId === "ecr_entree");
     expect(entree, "aucune entrée").toBeDefined();
-    expect(entree!.surfaces.length, "le filtre n'a pas rejoint l'entrée").toBeGreaterThan(1);
-    expect(entree!.surfaces[0], "le filtre doit être AU-DESSUS").toContain("saisir");
+    expect(requis(entree, "entree").surfaces.length, "le filtre n'a pas rejoint l'entrée").toBeGreaterThan(1);
+    expect(requis(entree, "entree").surfaces[0], "le filtre doit être AU-DESSUS").toContain("saisir");
     // Il n'a plus d'écran à lui.
     expect(plan.ecrans.some((e) => e.ecranId === "ecr_cpt_recherche_saisir")).toBe(false);
   });
@@ -255,7 +254,7 @@ describe("EP-182 · le plan compose, il ne sérialise plus", () => {
     // découverte, pas par un formulaire. Le plan doit rester identique.
     expect(etapesFusionnables(GRAND).every((f) => f.filtre.concept !== f.collection.concept)).toBe(true);
     const kaviva = charger(
-      readdirSync(RES).find((f) => f.includes("kaviva") && f.includes("23-00-50") && f.includes("modele-p0"))!,
+      requis(readdirSync(RES).find((f) => f.includes("kaviva") && f.includes("23-00-50") && f.includes("modele-p0")), "kavivaf.includes230050f.includesmodelep0"),
     );
     expect(etapesFusionnables(kaviva), "Kaviva ne doit rien fusionner").toEqual([]);
   });

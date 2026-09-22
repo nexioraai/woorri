@@ -13,6 +13,7 @@ import { emitProject } from "../src/emit-project.ts";
 import { API_SENSIBLES_PAR_CAPACITE, manifesteConfidentialite } from "../src/emit-manifests.ts";
 import { RELEASE_TRAIN_V1 } from "../src/release-train.ts";
 
+import { requis } from "./helpers.ts";
 const R = join(import.meta.dirname, "..", "..", "..");
 const charger = (f: string): ProjectAir =>
   applyAirMigrations(
@@ -24,14 +25,14 @@ const charger = (f: string): ProjectAir =>
 const PETIT = charger("kaviva-spa.2026-09-11T23-00-50-047Z.attempt2.air.json");
 const GRAND = charger("marketplace-africain.2026-09-12T15-27-32-324Z.attempt2.air.json");
 const expo = (air: ProjectAir): Record<string, unknown> =>
-  (JSON.parse(emitProject(air).files.get("app.json")!) as { expo: Record<string, unknown> }).expo;
+  (JSON.parse(requis(emitProject(air).files.get("app.json"), "emitProjectair.files.getapp.json")) as { expo: Record<string, unknown> }).expo;
 
 describe("EP-147 ② · le manifeste de confidentialité est produit", () => {
   it("il est émis, sur les deux tailles", () => {
     for (const [nom, air] of [["petit", PETIT], ["grand", GRAND]] as const) {
       const ios = expo(air).ios as { privacyManifests?: { NSPrivacyAccessedAPITypes: unknown[] } };
       expect(ios.privacyManifests, nom).toBeDefined();
-      expect(ios.privacyManifests!.NSPrivacyAccessedAPITypes.length, nom).toBeGreaterThan(0);
+      expect(requis(ios.privacyManifests, "ios.privacyManifests").NSPrivacyAccessedAPITypes.length, nom).toBeGreaterThan(0);
     }
   });
 
@@ -83,7 +84,7 @@ describe("EP-147 ③ · le niveau d'API visé est DÉCIDÉ, pas subi", () => {
 
 describe("EP-147 ④ · nommer le destinataire sans l'inventer", () => {
   it("le fichier livré porte le fournisseur RÉSOLU par le lock", () => {
-    const md = emitProject(GRAND).files.get("PUBLICATION.md")!;
+    const md = requis(emitProject(GRAND).files.get("PUBLICATION.md"), "emitProjectGRAND.files.getPUBLICATION.md");
     const resolus = emitProject(GRAND).lock.resolved.providers;
     expect(resolus.length).toBeGreaterThan(0);
     const nomme = resolus.some((p) => md.includes(p.provider));
@@ -91,7 +92,7 @@ describe("EP-147 ④ · nommer le destinataire sans l'inventer", () => {
   });
 
   it("ce qui n'est PAS résolu reste une classe — le moteur n'invente rien", () => {
-    const md = emitProject(GRAND).files.get("PUBLICATION.md")!;
+    const md = requis(emitProject(GRAND).files.get("PUBLICATION.md"), "emitProjectGRAND.files.getPUBLICATION.md");
     // `psp_checkout` n'est pas dans le registre : il n'a pas de fournisseur
     // résolu, et il apparaît donc nu, sans nom accolé.
     expect(md).toContain("psp_checkout :");
@@ -99,7 +100,7 @@ describe("EP-147 ④ · nommer le destinataire sans l'inventer", () => {
   });
 
   it("le RETRAIT du consentement est exigé dès qu'un partage existe", () => {
-    const md = emitProject(GRAND).files.get("PUBLICATION.md")!;
+    const md = requis(emitProject(GRAND).files.get("PUBLICATION.md"), "emitProjectGRAND.files.getPUBLICATION.md");
     expect(md).toContain("prestataires");
   });
 });

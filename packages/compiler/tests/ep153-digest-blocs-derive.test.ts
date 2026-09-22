@@ -21,6 +21,10 @@ const SOURCE = readFileSync(join(R, "benchmarks", "air-emission", "emit-v3.mjs")
 function digest(): string {
   const debut = SOURCE.indexOf("function blocsDigest()");
   const corps = SOURCE.slice(debut, SOURCE.indexOf("\n}", debut) + 2);
+  // Le module ne peut pas être IMPORTÉ : son chargement lance une campagne
+  // payante. On extrait donc le corps de la fonction et on l'évalue seul.
+  // Exception nommée ICI, au site exact — la règle reste armée ailleurs.
+  // eslint-disable-next-line @typescript-eslint/no-implied-eval
   const f = new Function("blocksRegistry", "z", `${corps}; return blocsDigest();`) as (
     r: unknown,
     zod: unknown,

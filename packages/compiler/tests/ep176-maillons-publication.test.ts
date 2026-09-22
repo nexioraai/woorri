@@ -3,16 +3,18 @@ import { readFileSync, readdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
+import type { ProjectAir } from "@deribfy/air-schema";
 import { jugerCapacitesSansIntegration } from "../../../benchmarks/air-emission/acceptation.mjs";
 
+import { requis } from "./helpers.ts";
 const R = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
 const RES = join(R, "benchmarks", "air-emission", "results");
 const DOC = JSON.parse(
   readFileSync(
-    join(RES, readdirSync(RES).find((f) => f.includes("marche-immobilier") && f.includes("attempt2"))!),
+    join(RES, requis(readdirSync(RES).find((f) => f.includes("marche-immobilier") && f.includes("attempt2")), "cludesmarcheimmobilierf.includesattempt2")),
     "utf8",
   ),
-) as Record<string, any>;
+) as ProjectAir;
 const codes = (d: readonly { code: string }[]): string[] => d.map((x) => x.code);
 
 describe("EP-176 ① · une capacité de service désigne son intégration", () => {
@@ -21,13 +23,13 @@ describe("EP-176 ① · une capacité de service désigne son intégration", () 
     // et le compilateur n'émet le client d'authentification que si une
     // intégration porte `capability === "auth"`. Le code existait, sa
     // condition ne se déclenchait jamais.
-    expect((DOC.integrations ?? []).every((i: { capability?: string }) => i.capability === undefined)).toBe(true);
+    expect(DOC.integrations.every((i) => i.capability === undefined)).toBe(true);
     expect(codes(jugerCapacitesSansIntegration(DOC))).toEqual(["AIR_CAPACITE_SERVICE_SANS_INTEGRATION"]);
   });
 
   it("LE LIEN POSÉ, LE JUGE SE TAIT", () => {
     const lie = structuredClone(DOC);
-    lie.integrations[0].capability = "auth";
+    requis(lie.integrations[0], "première intégration du document").capability = "auth";
     expect(jugerCapacitesSansIntegration(lie)).toEqual([]);
   });
 
@@ -35,11 +37,11 @@ describe("EP-176 ① · une capacité de service désigne son intégration", () 
     // `external_contact` et `media_upload` sont déclarées sur ce document et
     // ne produisent aucun diagnostic : seules les capacités de SERVICE en
     // exigent une.
-    expect((DOC.capabilities ?? []).length).toBeGreaterThan(1);
+    expect(DOC.capabilities.length).toBeGreaterThan(1);
     expect(jugerCapacitesSansIntegration(DOC)).toHaveLength(1);
   });
 
-  it("LA RÈGLE EST DÉRIVÉE DU REGISTRE — aucune capacité citée en dur", async () => {
+  it("LA RÈGLE EST DÉRIVÉE DU REGISTRE — aucune capacité citée en dur", () => {
     const src = readFileSync(join(R, "benchmarks", "air-emission", "acceptation.mjs"), "utf8");
     const bloc = src.slice(
       src.indexOf("export function jugerCapacitesSansIntegration"),
@@ -98,7 +100,7 @@ describe("EP-176 ② · l'icône est écrite en OCTETS", () => {
     const emis = emitProject(avec);
     const octets = emis.binaries.get("assets/marque.png");
     expect(octets, "la marque n'a pas été émise").toBeDefined();
-    expect([...octets!.slice(0, 4)], "signature PNG non restituée").toEqual([0x89, 0x50, 0x4e, 0x47]);
+    expect([...requis(octets, "octets").slice(0, 4)], "signature PNG non restituée").toEqual([0x89, 0x50, 0x4e, 0x47]);
     // Et surtout : elle n'est PLUS dans la carte de texte.
     expect(emis.files.has("assets/marque.png"), "l'image est encore du texte").toBe(false);
   });
@@ -115,7 +117,7 @@ describe("EP-176 ② · l'icône est écrite en OCTETS", () => {
     // ne porte, est une branche jamais éprouvée. MESURÉ : 2 sur 25 — et
     // l'une des deux était cassée depuis toujours.
     const air = readFileSync(join(R, "packages", "air-schema", "src", "air.ts"), "utf8");
-    const optionnels = [...new Set([...air.matchAll(/^\s{2,}(\w+):\s*[^\n]*\.optional\(\)/gm)].map((m) => m[1]!))];
+    const optionnels = [...new Set([...air.matchAll(/^\s{2,}(\w+):\s*[^\n]*\.optional\(\)/gm)].map((m) => requis(m[1], "m1")))];
     const compilo =
       readFileSync(join(R, "packages", "compiler", "src", "emit-project.ts"), "utf8") +
       readFileSync(join(R, "packages", "compiler", "src", "emit-manifests.ts"), "utf8");

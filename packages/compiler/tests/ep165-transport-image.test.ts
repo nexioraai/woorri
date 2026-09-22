@@ -8,11 +8,35 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
+import { requis } from "./helpers.ts";
+
 const R = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
 const AD = join(R, "benchmarks", "air-emission");
 
-const charger = (nom: string): Promise<Record<string, any>> =>
-  import(join(AD, `adaptateur-${nom}.mjs`));
+/**
+ * CE QUE CE TEST EXIGE d'un adaptateur — écrit une fois, vérifié par le
+ * compilateur à chaque accès. Sous `Record<string, any>`, `VISION.supportee`
+ * et `VISION.suportee` se valaient : la faute de frappe passait verte, et le
+ * cliquet ne gardait plus rien. La forme déclarée ici EST l'attente.
+ */
+interface Adaptateur {
+  construireAppel: (
+    requete: Record<string, unknown>,
+    reglages: Record<string, unknown>,
+  ) => { model?: unknown; messages: { content: unknown }[] };
+  VISION: {
+    supportee: boolean;
+    modele: string;
+    modeleDeGeneration: string;
+    formats: unknown;
+    formeAttestee?: boolean;
+    reserve?: string;
+    independantDuGenerateur?: boolean;
+  };
+}
+
+const charger = (nom: string): Promise<Adaptateur> =>
+  import(join(AD, `adaptateur-${nom}.mjs`)) as Promise<Adaptateur>;
 
 const PNG = readFileSync(join(R, "benchmarks", "e2e", "results", "rtl", "ios-rtl.png"));
 const IMAGE = { mediaType: "image/png", base64: PNG.toString("base64") };
@@ -20,8 +44,8 @@ const REQUETE = { system: "S", user: "U", grammaire: { type: "object" } };
 const REGLAGES = { max_tokens: 2000 };
 const NOMS = ["anthropic", "openai", "deepseek"] as const;
 
-const contenuUtilisateur = (appel: any): unknown =>
-  appel.messages[appel.messages.length - 1].content;
+const contenuUtilisateur = (appel: { messages: { content: unknown }[] }): unknown =>
+  requis(appel.messages[appel.messages.length - 1], "dernier message de l'appel").content;
 
 describe("EP-165 ② · le transport d'image", () => {
   for (const nom of NOMS) {
@@ -87,7 +111,10 @@ describe("EP-165 ② · le transport d'image", () => {
     expect(nonAttestees.length, "au moins une réserve doit être portée").toBeGreaterThan(0);
     for (const [nom, v] of nonAttestees) {
       expect(typeof v.reserve, `${nom} — réserve sans motif écrit`).toBe("string");
-      expect(v.reserve.length, `${nom} — motif trop court pour être utile`).toBeGreaterThan(80);
+      expect(
+        requis(v.reserve, `${nom} — réserve`).length,
+        `${nom} — motif trop court pour être utile`,
+      ).toBeGreaterThan(80);
     }
   });
 

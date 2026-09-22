@@ -6,7 +6,7 @@
 import { describe, expect, it } from "vitest";
 import { jugerEspaceCompte, obligationsDuProprietaire, surfacesAttendues } from "../src/index.ts";
 import type { GenreEcran } from "../src/presentation.ts";
-import { L, P, air } from "./fixtures.ts";
+import { L, P, air, requis } from "./fixtures.ts";
 
 const codes = (f: readonly { code: string }[]): string[] => f.map((x) => x.code);
 const AVEC = { ecransDIdentite: ["scr_compte"] };
@@ -52,7 +52,7 @@ describe("EP-142 ① · le fait et la surface sont la MÊME exigence", () => {
     const d = document(surfacesAttendues(true), { accountDeletionRequired: false });
     const f = jugerEspaceCompte(d, AVEC);
     expect(codes(f)).toContain("PRESENTATION_SUPPRESSION_NON_DECLAREE");
-    expect(f.find((x) => x.code === "PRESENTATION_SUPPRESSION_NON_DECLAREE")!.message)
+    expect(requis(f.find((x) => x.code === "PRESENTATION_SUPPRESSION_NON_DECLAREE"), "odePRESENTATION_SUPPRESSION_NON_DECLAREE").message)
       .toContain("5.1.1(v)");
   });
 
@@ -77,8 +77,8 @@ describe("EP-142 ② · `dataCollected` pèse sur une sortie", () => {
     const d = document(surfacesAttendues(true), { dataCollected: ["location", "identifiers"] });
     const data = obligationsDuProprietaire(d).find((o) => o.quoi.includes("Data safety"));
     expect(data).toBeDefined();
-    expect(data!.matiere).toEqual(["location", "identifiers"]);
-    expect(data!.ou).toBe("console");
+    expect(requis(data, "data").matiere).toEqual(["location", "identifiers"]);
+    expect(requis(data, "data").ou).toBe("console");
   });
 
   it("rien de collecté, rien à déclarer — la liste suit le document", () => {
@@ -92,10 +92,10 @@ describe("EP-142 ④ · le lien web de suppression est DIT, pas inventé", () =>
     const o = obligationsDuProprietaire(document(surfacesAttendues(true)));
     const lien = o.find((x) => x.quoi.includes("web"));
     expect(lien).toBeDefined();
-    expect(lien!.source).toContain("13327111");
+    expect(requis(lien, "lien").source).toContain("13327111");
     // Le moteur ne peut pas l'inventer : c'est une adresse du propriétaire,
     // donc quelque chose qu'il FOURNIT (EP-143).
-    expect(lien!.ou).toBe("fournir");
+    expect(requis(lien, "lien").ou).toBe("fournir");
   });
 
   it("sans comptes, ni lien web ni compte de démonstration", () => {

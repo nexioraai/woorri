@@ -10,6 +10,7 @@ import { describe, expect, it } from "vitest";
 import * as mm from "../../../benchmarks/air-emission/modele-metier.mjs";
 import type { ModeleMetier } from "../../../benchmarks/air-emission/modele-metier.d.mts";
 
+import { requis } from "./helpers.ts";
 const HERE = dirname(fileURLToPath(import.meta.url));
 const R = join(HERE, "..", "..", "..");
 const RES = join(R, "benchmarks", "air-emission", "results");
@@ -42,8 +43,8 @@ describe("EP-139 · ① un cœur ouvert passe", () => {
     // exige un compte. L'ACCÈS est fourni.
     const f = readdirSync(RES).find((x) => x.includes("16-30-59-387Z") && x.includes("modele"));
     expect(f, "fixture absente").toBeDefined();
-    const t3 = charger(join(RES, f!));
-    const principal = mm.parcoursParPriorite(t3)[0]!;
+    const t3 = charger(join(RES, requis(f, "f")));
+    const principal = requis(mm.parcoursParPriorite(t3)[0], "mm.parcoursParPrioritet30");
     expect(principal.etapes.some((e) => (e.preconditions ?? []).length > 0)).toBe(true);
     expect(codes(t3)).toEqual([]);
   });
@@ -52,19 +53,19 @@ describe("EP-139 · ① un cœur ouvert passe", () => {
 describe("EP-139 · ② un cœur fermé est refusé, en citant la source", () => {
   it("le modèle de run dont le parcours principal commence par s_identifier est ROUGE", () => {
     // CAS RÉEL, non fabriqué : ce document a été produit par une campagne.
-    const principal = mm.parcoursParPriorite(GRAND)[0]!;
-    expect(principal.etapes[0]!.geste).toBe("s_identifier");
+    const principal = requis(mm.parcoursParPriorite(GRAND)[0], "mm.parcoursParPrioriteGRAND0");
+    expect(requis(principal.etapes[0], "principal.etapes0").geste).toBe("s_identifier");
     const f = mm.jugerAccesSansConnexion(GRAND);
     expect(f.map((x) => x.code)).toEqual(["MODELE_COEUR_EXIGE_CONNEXION"]);
-    expect(f[0]!.message).toContain("5.1.1(iv)");
-    expect(f[0]!.message).toContain("refusable au magasin");
+    expect(requis(f[0], "f0").message).toContain("5.1.1(iv)");
+    expect(requis(f[0], "f0").message).toContain("refusable au magasin");
   });
 
   it("fermer le cœur d'un modèle vert le fait basculer", () => {
     const m = clone(OUVERT);
     expect(codes(m)).toEqual([]);
-    const principal = mm.parcoursParPriorite(m)[0]!;
-    principal.etapes.unshift({ concept: principal.etapes[0]!.concept, geste: "s_identifier" });
+    const principal = requis(mm.parcoursParPriorite(m)[0], "mm.parcoursParPrioritem0");
+    principal.etapes.unshift({ concept: requis(principal.etapes[0], "principal.etapes0").concept, geste: "s_identifier" });
     expect(codes(m)).toEqual(["MODELE_COEUR_EXIGE_CONNEXION"]);
   });
 
@@ -76,11 +77,11 @@ describe("EP-139 · ② un cœur fermé est refusé, en citant la source", () =>
     const m = clone(PETIT);
     const identite = m.concepts.map((c) => c.id).find((id) => mm.estConceptIdentite(m, id));
     expect(identite).toBeDefined();
-    const principal = mm.parcoursParPriorite(m)[0]!;
+    const principal = requis(mm.parcoursParPriorite(m)[0], "mm.parcoursParPrioritem0");
     expect(mm.parcoursFerme(m, principal)).toBe(false);
     principal.etapes[0] = {
-      ...principal.etapes[0]!,
-      preconditions: [{ concept: identite!, etat: "actif" }],
+      ...requis(principal.etapes[0], "principal.etapes0"),
+      preconditions: [{ concept: requis(identite, "identite"), etat: "actif" }],
     };
     expect(mm.parcoursFerme(m, principal)).toBe(true);
   });
@@ -89,11 +90,11 @@ describe("EP-139 · ② un cœur fermé est refusé, en citant la source", () =>
     // Sans cela, un générateur mettrait le parcours fermé en tête du tableau
     // et lui donnerait une priorité basse pour échapper au juge.
     const m = clone(GRAND);
-    const ferme = mm.parcoursParPriorite(m)[0]!;
-    const ouvert = m.parcours.find((p) => !mm.parcoursFerme(m, p))!;
+    const ferme = requis(mm.parcoursParPriorite(m)[0], "mm.parcoursParPrioritem0");
+    const ouvert = requis(m.parcours.find((p) => !mm.parcoursFerme(m, p)), "m.parcours.findpmm.parcoursFermemp");
     ferme.priorite = 99;
     ouvert.priorite = 0;
-    expect(mm.parcoursParPriorite(m)[0]!.id).toBe(ouvert.id);
+    expect(requis(mm.parcoursParPriorite(m)[0], "mm.parcoursParPrioritem0").id).toBe(ouvert.id);
     expect(codes(m)).toEqual([]);
   });
 });
@@ -106,7 +107,7 @@ describe("EP-139 · ③ le cas légitime passe — constaté, jamais déclaré",
     const m = clone(PETIT);
     for (const p of m.parcours) {
       if (!mm.parcoursFerme(m, p)) {
-        p.etapes.unshift({ concept: p.etapes[0]!.concept, geste: "s_identifier" });
+        p.etapes.unshift({ concept: requis(p.etapes[0], "p.etapes0").concept, geste: "s_identifier" });
       }
     }
     expect(m.parcours.every((p) => mm.parcoursFerme(m, p))).toBe(true);

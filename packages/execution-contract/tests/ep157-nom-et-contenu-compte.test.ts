@@ -12,7 +12,7 @@ import {
   jugerLibellesPrimitifs,
 } from "../src/index.ts";
 import type { GenreEcran } from "../src/presentation.ts";
-import { L, P, air } from "./fixtures.ts";
+import { L, P, air, requis } from "./fixtures.ts";
 
 type Air = ReturnType<typeof air>;
 const codes = (f: readonly { code: string }[]): string[] => f.map((x) => x.code);
@@ -53,9 +53,9 @@ describe("EP-157 ① · le libellé d'une primitive est IMPOSÉ", () => {
   it("« Mon espace » est refusé — le cas exact vu à l'appareil", () => {
     const f = jugerLibellesPrimitifs(barre({ accueil: "Accueil", compte: "Mon espace" }), CTX);
     expect(codes(f)).toEqual(["PRESENTATION_LIBELLE_PRIMITIF_LIBRE"]);
-    expect(f[0]!.message).toContain("« Mon espace »");
-    expect(f[0]!.message).toContain("« Compte »");
-    expect(f[0]!.message).toContain("DÉCISION PRODUIT");
+    expect(requis(f[0], "f0").message).toContain("« Mon espace »");
+    expect(requis(f[0], "f0").message).toContain("« Compte »");
+    expect(requis(f[0], "f0").message).toContain("DÉCISION PRODUIT");
   });
 
   it("aucun synonyme n'est admis, même proche", () => {
@@ -139,7 +139,7 @@ describe("EP-157 ③ · le bas de l'espace compte a un ordre", () => {
   it("un ordre inversé est refusé, et le message donne l'ordre attendu", () => {
     const f = jugerBasDeCompte(compteAvec([...ORDRE_BAS_DE_COMPTE].reverse()), CTX);
     expect(codes(f)).toEqual(["PRESENTATION_BAS_DE_COMPTE_DESORDONNE"]);
-    expect(f[0]!.message).toContain("help → contact → terms");
+    expect(requis(f[0], "f0").message).toContain("help → contact → terms");
   });
 
   it("un sous-ensemble garde l'ordre relatif", () => {

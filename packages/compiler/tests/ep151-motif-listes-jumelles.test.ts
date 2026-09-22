@@ -116,7 +116,7 @@ describe("EP-151 · le filet générique — deux tables aux mêmes clés", () =
   it("les sœurs déclarées couvrent EXACTEMENT le registre — sinon l'exemption ment", () => {
     // Une exemption sans cliquet serait une porte. Celles des capacités ont
     // le leur depuis EP-144/145/147 ; celles des blocs le reçoivent ici.
-    const blocs = [...(listBlockIds() as readonly string[])].sort();
+    const blocs = [...(listBlockIds())].sort();
     for (const [nom, table] of [
       ["ZONE_PAR_BLOCK_TYPE", ZONE_PAR_BLOCK_TYPE],
       ["WRAPPER_BY_BLOCK_TYPE", WRAPPER_BY_BLOCK_TYPE],

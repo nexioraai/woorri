@@ -5,7 +5,7 @@
 // document peut SUPPRIMER sans que rien ne le dise.
 import { describe, expect, it } from "vitest";
 import { jugerRetourAtteignable, obligationsDuProprietaire } from "../src/index.ts";
-import { L, P, air } from "./fixtures.ts";
+import { L, P, air, requis } from "./fixtures.ts";
 
 type Air = ReturnType<typeof air>;
 const codes = (f: readonly { code: string }[]): string[] => f.map((x) => x.code);
@@ -42,7 +42,7 @@ describe("EP-158 ① · un écran empilé garde son retour", () => {
   it("un écran atteint par navigation qui masque son en-tête est REFUSÉ", () => {
     const f = jugerRetourAtteignable(pile({ enteteEmpile: false }));
     expect(codes(f)).toEqual(["PRESENTATION_ECRAN_SANS_RETOUR"]);
-    expect(f[0]!.message).toContain("cul-de-sac");
+    expect(requis(f[0], "f0").message).toContain("cul-de-sac");
   });
 
   it("le même écran avec son en-tête ne produit rien", () => {
@@ -81,14 +81,14 @@ describe("EP-158 ③ · la version est une donnée du propriétaire", () => {
     const doc = pile({ enteteEmpile: true });
     const v = obligationsDuProprietaire(doc).find((o) => o.quoi.includes("VERSION"));
     expect(v).toBeDefined();
-    expect(v!.ou).toBe("fournir");
-    expect(v!.source).toContain("version");
+    expect(requis(v, "v").ou).toBe("fournir");
+    expect(requis(v, "v").source).toContain("version");
   });
 
   it("le moteur n'en invente aucune — il dit pourquoi", () => {
     const v = obligationsDuProprietaire(pile({ enteteEmpile: true }))
       .find((o) => o.quoi.includes("VERSION"));
-    expect(v!.quoi).toContain("le document ne la porte pas");
+    expect(requis(v, "v").quoi).toContain("le document ne la porte pas");
   });
 
   it("elle est due quelle que soit l'application", () => {

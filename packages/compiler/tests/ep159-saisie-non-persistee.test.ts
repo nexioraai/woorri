@@ -9,6 +9,7 @@
 // CONTRAINTE et NON PERSISTÉE.
 import { describe, expect, it } from "vitest";
 import { getBlock } from "@deribfy/blocks/registry";
+import { requis } from "./helpers.ts";
 import {
   ROLES_SAISIE,
   champsDeSaisie,
@@ -18,7 +19,7 @@ import {
 describe("EP-159 · la famille est un vocabulaire FERMÉ", () => {
   it("trois rôles, et le contrat les porte tous", () => {
     expect([...ROLES_SAISIE]).toEqual(["confirmation", "acceptation", "verification"]);
-    const forme = getBlock("form")!.propsSchema.safeParse({
+    const forme = requis(getBlock("form"), "getBlockform").propsSchema.safeParse({
       fieldIds: ["fld_x"],
       submitLabel: "Créer",
       saisieRoles: [...ROLES_SAISIE],
@@ -28,7 +29,7 @@ describe("EP-159 · la famille est un vocabulaire FERMÉ", () => {
   });
 
   it("un rôle inventé est REFUSÉ par le contrat", () => {
-    const r = getBlock("form")!.propsSchema.safeParse({
+    const r = requis(getBlock("form"), "getBlockform").propsSchema.safeParse({
       fieldIds: ["fld_x"],
       submitLabel: "Créer",
       saisieRoles: ["captcha"],
@@ -41,19 +42,19 @@ describe("EP-159 · un formulaire de création porte la confirmation", () => {
   it("la confirmation vise le champ qu'elle confirme", () => {
     const c = champsDeSaisie(["confirmation"], ["fld_mot_de_passe"], ["fld_mot_de_passe"]);
     expect(c).toHaveLength(1);
-    expect(c[0]!.role).toBe("confirmation");
-    expect(c[0]!.cible).toBe("fld_mot_de_passe");
+    expect(requis(c[0], "c0").role).toBe("confirmation");
+    expect(requis(c[0], "c0").cible).toBe("fld_mot_de_passe");
   });
 
   it("elle HÉRITE du secret de ce qu'elle confirme — jamais déclaré", () => {
     // Masquer ou non se DÉDUIT du champ visé : une confirmation de mot de
     // passe est masquée, une confirmation d'adresse ne l'est pas.
-    expect(champsDeSaisie(["confirmation"], ["fld_mdp"], ["fld_mdp"])[0]!.secret).toBe(true);
-    expect(champsDeSaisie(["confirmation"], ["fld_email"], ["fld_mdp"])[0]!.secret).toBe(false);
+    expect(requis(champsDeSaisie(["confirmation"], ["fld_mdp"], ["fld_mdp"])[0], "hampsDeSaisieconfirmationfld_mdpfld_mdp0").secret).toBe(true);
+    expect(requis(champsDeSaisie(["confirmation"], ["fld_email"], ["fld_mdp"])[0], "mpsDeSaisieconfirmationfld_emailfld_mdp0").secret).toBe(false);
   });
 
   it("elle n'est acceptée QUE si les deux saisies coïncident", () => {
-    const c = champsDeSaisie(["confirmation"], ["fld_mdp"], ["fld_mdp"])[0]!;
+    const c = requis(champsDeSaisie(["confirmation"], ["fld_mdp"], ["fld_mdp"])[0], "hampsDeSaisieconfirmationfld_mdpfld_mdp0");
     expect(saisieAcceptable(c, "secret123", "secret123")).toBe(true);
     expect(saisieAcceptable(c, "secret124", "secret123")).toBe(false);
   });
@@ -66,7 +67,7 @@ describe("EP-159 · un formulaire de connexion n'en porte pas", () => {
   });
 
   it("le contrat n'en exige aucun — la connexion reste deux champs", () => {
-    const r = getBlock("form")!.propsSchema.safeParse({
+    const r = requis(getBlock("form"), "getBlockform").propsSchema.safeParse({
       fieldIds: ["fld_email", "fld_mdp"],
       submitLabel: "Se connecter",
     });
@@ -76,7 +77,7 @@ describe("EP-159 · un formulaire de connexion n'en porte pas", () => {
 
 describe("EP-159 · les deux autres membres de la famille", () => {
   it("une acceptation ne vise AUCUN champ — et c'est normal", () => {
-    const c = champsDeSaisie(["acceptation"], [""])[0]!;
+    const c = requis(champsDeSaisie(["acceptation"], [""])[0], "champsDeSaisieacceptation0");
     expect(c.cible).toBeUndefined();
     expect(c.secret).toBe(false);
     expect(saisieAcceptable(c, "true", "")).toBe(true);
@@ -86,7 +87,7 @@ describe("EP-159 · les deux autres membres de la famille", () => {
   it("une vérification exige une valeur, et ne PROMET pas plus", () => {
     // La comparaison à un secret externe se fait ailleurs : prétendre la
     // faire ici serait mentir sur ce que le moteur vérifie.
-    const c = champsDeSaisie(["verification"], [""])[0]!;
+    const c = requis(champsDeSaisie(["verification"], [""])[0], "champsDeSaisieverification0");
     expect(saisieAcceptable(c, "123456", "")).toBe(true);
     expect(saisieAcceptable(c, "  ", "")).toBe(false);
   });
@@ -96,7 +97,7 @@ describe("EP-159 · rien n'est déclaré sans être consommé", () => {
   it("un champ de saisie pure n'apparaît dans AUCUNE entité", () => {
     // C'est sa définition : il n'a pas d'identifiant de champ d'entité, et
     // `saisieSeule` le marque pour que l'écriture l'ignore.
-    const c = champsDeSaisie(["confirmation"], ["fld_mdp"], ["fld_mdp"])[0]!;
+    const c = requis(champsDeSaisie(["confirmation"], ["fld_mdp"], ["fld_mdp"])[0], "hampsDeSaisieconfirmationfld_mdpfld_mdp0");
     expect(Object.keys(c).sort()).toEqual(["cible", "role", "secret"]);
     expect("fieldId" in c).toBe(false);
   });
@@ -112,7 +113,7 @@ describe("EP-159 · rien n'est déclaré sans être consommé", () => {
     // effet, ce qu'EP-141 interdit.
     // Le schéma est typé de façon opaque : on l'interroge par ce qu'il
     // ACCEPTE, comme en EP-142, plutôt que par sa forme interne.
-    const forme = getBlock("form")!;
+    const forme = requis(getBlock("form"), "getBlockform");
     expect(forme.propsSchema.safeParse({
       fieldIds: ["fld_x"], submitLabel: "Créer",
       saisieRoles: ["confirmation"], saisieCibles: ["fld_x"],

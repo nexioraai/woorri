@@ -15,7 +15,7 @@ import {
   surfacesAttendues,
 } from "../src/index.ts";
 import type { GenreEcran } from "../src/presentation.ts";
-import { L, P, air } from "./fixtures.ts";
+import { L, P, air, requis } from "./fixtures.ts";
 
 type Air = ReturnType<typeof air>;
 const codes = (f: readonly { code: string }[]): string[] => f.map((x) => x.code);
@@ -56,8 +56,8 @@ describe("EP-145 · ① le partage se DÉRIVE, il ne se déclare pas", () => {
   it("brancher un paiement partage avec le prestataire, sans que personne ne le dise", () => {
     const p = partagesDe(AVEC_PAIEMENT);
     expect(p).toHaveLength(1);
-    expect(p[0]!.aupresDe).toBe("payments_psp");
-    expect(p[0]!.recoit).toContain("purchases");
+    expect(requis(p[0], "p0").aupresDe).toBe("payments_psp");
+    expect(requis(p[0], "p0").recoit).toContain("purchases");
   });
 
   it("aucune intégration, aucun partage", () => {
@@ -75,7 +75,7 @@ describe("EP-145 · ① le partage se DÉRIVE, il ne se déclare pas", () => {
     // ferait refuser l'application ; sur-déclarer alourdit une politique.
     const p = partagesDe(document([{ id: "intg_x", providerClass: "rest_api" }]));
     expect(p).toHaveLength(1);
-    expect(p[0]!.recoit.length).toBeGreaterThan(0);
+    expect(requis(p[0], "p0").recoit.length).toBeGreaterThan(0);
   });
 
   it("CLIQUET — la partition couvre EXACTEMENT le registre des capacités", () => {
@@ -107,7 +107,7 @@ describe("EP-145/147 · ② le consentement est une SURFACE — SA PLACE A CHANG
       ecransDIdentite: [],
     });
     expect(codes(f)).toEqual(["PRESENTATION_DIVULGATION_ABSENTE"]);
-    expect(f[0]!.message).toContain("normal usage");
+    expect(requis(f[0], "f0").message).toContain("normal usage");
   });
 
   it("sans partage, un écran de consentement est REFUSÉ — consentir à rien", () => {
@@ -132,8 +132,8 @@ describe("EP-145 · ③ ce qui relève du propriétaire est DIT", () => {
     const o = obligationsDuProprietaire(AVEC_PAIEMENT);
     const divulgation = o.find((x) => x.quoi.includes("prestataires"));
     expect(divulgation).toBeDefined();
-    expect(divulgation!.ou).toBe("fournir");
-    expect(divulgation!.matiere!.some((m) => m.startsWith("payments_psp"))).toBe(true);
+    expect(requis(divulgation, "divulgation").ou).toBe("fournir");
+    expect(requis(requis(divulgation, "divulgation").matiere, "requisdivulgationdivulgation.matiere").some((m) => m.startsWith("payments_psp"))).toBe(true);
   });
 
   it("le moteur ne NOMME aucune société — il ne connaît que des classes", () => {

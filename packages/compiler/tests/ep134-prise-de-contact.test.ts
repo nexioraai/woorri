@@ -13,6 +13,7 @@ import { CAPABILITIES } from "@deribfy/capability-registry";
 import * as mm from "../../../benchmarks/air-emission/modele-metier.mjs";
 import type { ModeleMetier } from "../../../benchmarks/air-emission/modele-metier.d.mts";
 
+import { requis } from "./helpers.ts";
 const HERE = dirname(fileURLToPath(import.meta.url));
 const R = join(HERE, "..", "..", "..");
 
@@ -72,9 +73,9 @@ describe("EP-134 · ① un modèle hors application peut exprimer la prise de co
       // plus grande n'en a aucune dans le premier.
       const parcours = m.parcours.find((p) => p.etapes.some((e) => e.geste === "choisir"));
       expect(parcours, `${nom} : aucune élection dans la fixture`).toBeDefined();
-      const etapes = parcours!.etapes;
+      const etapes = requis(parcours, "parcours").etapes;
       const i = etapes.findIndex((e) => e.geste === "choisir");
-      etapes.splice(i + 1, 0, { concept: etapes[i]!.concept, geste: "contacter" });
+      etapes.splice(i + 1, 0, { concept: requis(etapes[i], "etapesi").concept, geste: "contacter" });
       expect(codesModele(m), nom).toEqual([]);
       expect(codes(m), nom).toEqual([]);
     }
@@ -84,9 +85,9 @@ describe("EP-134 · ① un modèle hors application peut exprimer la prise de co
 describe("EP-134 · ② le geste dérive sa capacité comme les autres", () => {
   it("la capacité est dérivée de la table, pas d'un cas particulier", () => {
     const m = clone(PETIT);
-    const parcours = m.parcours[0]!;
+    const parcours = requis(m.parcours[0], "m.parcours0");
     const i = parcours.etapes.findIndex((e) => e.geste === "choisir");
-    parcours.etapes.splice(i + 1, 0, { concept: parcours.etapes[i]!.concept, geste: "contacter" });
+    parcours.etapes.splice(i + 1, 0, { concept: requis(parcours.etapes[i], "parcours.etapesi").concept, geste: "contacter" });
     const { capacites } = mm.capacitesDe(m);
     expect(capacites.map((c) => c.capacite)).toContain("external_contact");
   });
@@ -105,16 +106,16 @@ describe("EP-134 · ② le geste dérive sa capacité comme les autres", () => {
 describe("EP-134 · ③ un contact qui perd l'instance est refusé", () => {
   it("sans source d'identité en amont → DERIVATION_IDENTITE_SANS_SOURCE", () => {
     const m = clone(PETIT);
-    const parcours = m.parcours[0]!;
-    parcours.etapes[0] = { ...parcours.etapes[0]!, geste: "contacter" };
+    const parcours = requis(m.parcours[0], "m.parcours0");
+    parcours.etapes[0] = { ...requis(parcours.etapes[0], "parcours.etapes0"), geste: "contacter" };
     expect(codes(m)).toContain("DERIVATION_IDENTITE_SANS_SOURCE");
   });
 
   it("la surface du contact porte UNE instance, jamais la collection", () => {
     const m = clone(PETIT);
-    const parcours = m.parcours[0]!;
+    const parcours = requis(m.parcours[0], "m.parcours0");
     const i = parcours.etapes.findIndex((e) => e.geste === "choisir");
-    parcours.etapes.splice(i + 1, 0, { concept: parcours.etapes[i]!.concept, geste: "contacter" });
+    parcours.etapes.splice(i + 1, 0, { concept: requis(parcours.etapes[i], "parcours.etapesi").concept, geste: "contacter" });
     const surface = mm.surfacesDe(m).find((s) => s.role === "contact");
     expect(surface?.cardinalite).toBe("instance");
     expect(surface?.identite).toBe("consommee");
@@ -124,8 +125,8 @@ describe("EP-134 · ③ un contact qui perd l'instance est refusé", () => {
 
   it("LE CHEMIN VOISIN, révélé et fermé : le retrait aussi est jugé", () => {
     const m = clone(PETIT);
-    const parcours = m.parcours[0]!;
-    parcours.etapes[0] = { ...parcours.etapes[0]!, geste: "retirer" };
+    const parcours = requis(m.parcours[0], "m.parcours0");
+    parcours.etapes[0] = { ...requis(parcours.etapes[0], "parcours.etapes0"), geste: "retirer" };
     expect(codes(m)).toContain("DERIVATION_IDENTITE_SANS_SOURCE");
   });
 });

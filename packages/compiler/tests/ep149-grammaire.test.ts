@@ -7,6 +7,7 @@ import { describe, expect, it } from "vitest";
 import { makeLevels } from "../../../benchmarks/air-emission/schema-levels.mjs";
 import { CONTRAINTES_GRAMMAIRE, degraderGrammaire } from "../../../benchmarks/air-emission/adaptateur-anthropic.mjs";
 
+import { requis } from "./helpers.ts";
 const compter = (o: unknown, clef: string): number => {
   if (Array.isArray(o)) return o.reduce<number>((a, x) => a + compter(x, clef), 0);
   if (o !== null && typeof o === "object") {
@@ -62,13 +63,13 @@ describe("EP-149 · l'échelle dégrade dans l'ordre de ce qui est REFUSÉ", () 
   it("le PREMIER niveau neutralise les deux incompatibilités connues", () => {
     // Avant : il retirait les bornes numériques — jamais refusées — et gardait
     // `maxItems` jusqu'au troisième. Deux appels perdus par segment.
-    expect(niveaux[0]!.name).toBe("incompatibilites-connues");
-    expect(compter(niveaux[0]!.schema, "maxItems")).toBe(0);
+    expect(requis(niveaux[0], "niveaux0").name).toBe("incompatibilites-connues");
+    expect(compter(requis(niveaux[0], "niveaux0").schema, "maxItems")).toBe(0);
     // EP-151 — les bornes numériques aussi, désormais : elles étaient
     // déclarées et non honorées, ce qui a coûté le run EP-150.
-    expect(compter(niveaux[0]!.schema, "maximum")).toBe(0);
-    expect(compter(niveaux[0]!.schema, "minItems")).toBe(1);
-    const min = JSON.stringify(niveaux[0]!.schema).match(/"minItems":(\d+)/);
+    expect(compter(requis(niveaux[0], "niveaux0").schema, "maximum")).toBe(0);
+    expect(compter(requis(niveaux[0], "niveaux0").schema, "minItems")).toBe(1);
+    const min = /"minItems":(\d+)/.exec(JSON.stringify(requis(niveaux[0], "niveaux0").schema));
     expect(min?.[1], "minItems doit être ramené à 1").toBe("1");
   });
 
@@ -83,13 +84,13 @@ describe("EP-149 · l'échelle dégrade dans l'ordre de ce qui est REFUSÉ", () 
       "sans-longueurs",
       "sans-patterns",
     ]);
-    expect(compter(niveaux[2]!.schema, "pattern")).toBe(0);
+    expect(compter(requis(niveaux[2], "niveaux2").schema, "pattern")).toBe(0);
   });
 
   it("chaque niveau retire STRICTEMENT plus que le précédent", () => {
     const poids = niveaux.map((n) => JSON.stringify(n.schema).length);
     for (let i = 1; i < poids.length; i += 1) {
-      expect(poids[i]!, niveaux[i]!.name).toBeLessThanOrEqual(poids[i - 1]!);
+      expect(requis(poids[i], "poidsi"), requis(niveaux[i], "niveauxi").name).toBeLessThanOrEqual(requis(poids[i - 1], "poidsi1"));
     }
   });
 

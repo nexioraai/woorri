@@ -14,7 +14,7 @@ import {
   surfacesAttendues,
   type GenreEcran,
 } from "../src/presentation.ts";
-import { L, P, air } from "./fixtures.ts";
+import { L, P, air, requis } from "./fixtures.ts";
 
 const codes = (f: readonly { code: string }[]): string[] => f.map((x) => x.code);
 const AVEC_IDENTITE = { ecransDIdentite: ["scr_compte"] };
@@ -90,17 +90,17 @@ describe("EP-137 · ① une surface manquante est refusée, et NOMMÉE", () => {
       // deux disent la même exigence par ses deux bouts, et c'est voulu.
       expect(codes(f), genre).toContain("PRESENTATION_SURFACE_COMPTE_ABSENTE");
       expect(codes(f).length, genre).toBe(genre === "account_delete" ? 2 : 1);
-      expect(f.find((x) => x.code === "PRESENTATION_SURFACE_COMPTE_ABSENTE")!.message, genre)
+      expect(requis(f.find((x) => x.code === "PRESENTATION_SURFACE_COMPTE_ABSENTE"), "codePRESENTATION_SURFACE_COMPTE_ABSENTE").message, genre)
         .toContain(genre);
     }
   });
 
   it("le message dit le FONDEMENT — obligation de plateforme ou décision produit", () => {
     const sansConfidentialite = surfacesAttendues(true).filter((g) => g !== "privacy_policy");
-    expect(jugerEspaceCompte(baseVerte(sansConfidentialite), AVEC_IDENTITE)[0]!.message)
+    expect(requis(jugerEspaceCompte(baseVerte(sansConfidentialite), AVEC_IDENTITE)[0], "seVertesansConfidentialiteAVEC_IDENTITE0").message)
       .toContain("OBLIGATION DE PLATEFORME — App Store Review Guidelines 5.1.1(i)");
     const sansAide = surfacesAttendues(true).filter((g) => g !== "help");
-    expect(jugerEspaceCompte(baseVerte(sansAide), AVEC_IDENTITE)[0]!.message)
+    expect(requis(jugerEspaceCompte(baseVerte(sansAide), AVEC_IDENTITE)[0], "aceComptebaseVertesansAideAVEC_IDENTITE0").message)
       .toContain("DÉCISION PRODUIT");
   });
 });
@@ -109,7 +109,7 @@ describe("EP-137 · ② elles vivent DANS le compte, jamais dans la barre", () =
   it("une surface promue en destination est refusée", () => {
     const mute = baseVerte();
     mute.navigation.routes.push({ id: "nav_help", screenId: "scr_help" });
-    mute.navigation.primary!.destinations.push({
+    requis(mute.navigation.primary, "mute.navigation.primary").destinations.push({
       routeId: "nav_help", label: L("Aide"), order: 2, icon: "liste",
     });
     expect(codes(jugerEspaceCompte(mute, AVEC_IDENTITE)))
@@ -121,7 +121,7 @@ describe("EP-137 · ② elles vivent DANS le compte, jamais dans la barre", () =
     mute.actions = mute.actions.filter((a) => a.id !== "act_terms");
     const f = jugerEspaceCompte(mute, AVEC_IDENTITE);
     expect(codes(f)).toEqual(["PRESENTATION_SURFACE_COMPTE_ORPHELINE"]);
-    expect(f[0]!.message).toContain("aucune action n'y mène");
+    expect(requis(f[0], "f0").message).toContain("aucune action n'y mène");
   });
 });
 
@@ -163,14 +163,14 @@ describe("EP-137 · ④ la borne de la barre tient, sans être assouplie", () =>
     // ait eu à l'assouplir — c'est la conséquence de « elles vivent DANS le
     // compte ». Les y mettre en aurait demandé dix.
     expect(base.screens.length).toBeGreaterThan(DESTINATIONS_MAX);
-    expect(base.navigation.primary!.destinations).toHaveLength(3);
+    expect(requis(base.navigation.primary, "base.navigation.primary").destinations).toHaveLength(3);
     expect(codes(jugerBarreInferieure(base))).toEqual([]);
   });
 
   it("promouvoir une surface en destination : la barre reste conforme, le compte non", () => {
     const base = baseVerte();
     base.navigation.routes.push({ id: "nav_x", screenId: "scr_privacy_policy" });
-    base.navigation.primary!.destinations.push({
+    requis(base.navigation.primary, "base.navigation.primary").destinations.push({
       routeId: "nav_x", label: L("X"), order: 3, icon: "liste",
     });
     // Quatre destinations : Material est satisfait. C'est l'AUTRE juge qui

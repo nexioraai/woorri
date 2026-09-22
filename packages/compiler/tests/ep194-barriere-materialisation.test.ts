@@ -18,7 +18,26 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 // @ts-expect-error — module JS du banc d'essai, sans déclaration de types :
 // la barrière vit auprès des juges qu'elle appelle, et ceux-ci sont en .mjs.
-import { materialiser } from "../../../benchmarks/air-emission/materialiser.mjs";
+import { materialiser as materialiserBrut } from "../../../benchmarks/air-emission/materialiser.mjs";
+
+/**
+ * CE QUE LA BARRIÈRE REND — déclaré UNE fois, au franchissement de frontière,
+ * au lieu d'une affirmation de type répétée à chaque appel. Sans elle, chaque
+ * `r.refus` portait sur un type irrésolu : le compilateur ne vérifiait plus
+ * qu'un champ existe, et un renommage côté `.mjs` serait passé vert.
+ */
+interface Materialisation {
+  readonly refus: boolean;
+  readonly ecrits: number;
+  readonly diagnostics: readonly { code?: string }[];
+  readonly rootHash?: string;
+}
+
+const materialiser = materialiserBrut as (
+  document: unknown,
+  destination: string,
+  options?: { prescriptif?: unknown },
+) => Materialisation;
 
 const ICI = dirname(fileURLToPath(import.meta.url));
 const RACINE = join(ICI, "..", "..", "..");
@@ -46,11 +65,7 @@ describe("EP-194 ② · la barrière de matérialisation", () => {
     // et tourné sur l'appareil de Youssouf, alors que les juges le refusaient.
     const doc = charger(REFUSE);
     dansUnDossierNeuf((dest) => {
-      const r = materialiser(doc, dest) as {
-        refus: boolean;
-        ecrits: number;
-        diagnostics: readonly { code?: string }[];
-      };
+      const r = materialiser(doc, dest);
       expect(r.refus, "un document refusé a été matérialisé").toBe(true);
       expect(r.ecrits, "des fichiers ont été écrits malgré le refus").toBe(0);
       expect(existsSync(dest) ? readdirSync(dest) : []).toEqual([]);
@@ -63,7 +78,7 @@ describe("EP-194 ② · la barrière de matérialisation", () => {
     // VISITEUR. Le juge le disait déjà : l'instance pressée est perdue.
     const doc = charger(REFUSE);
     dansUnDossierNeuf((dest) => {
-      const r = materialiser(doc, dest) as { diagnostics: readonly { code?: string }[] };
+      const r = materialiser(doc, dest);
       expect(r.diagnostics.map((d) => d.code)).toContain("AIR_CIBLE_IDENTITE_PERDUE");
     });
   });
@@ -103,7 +118,7 @@ describe("EP-195 · la barrière voit enfin l'ÉCRAN", () => {
     // l'utilisateur VOIT ne barre pas grand-chose.
     const doc = charger(REFUSE);
     dansUnDossierNeuf((dest) => {
-      const r = materialiser(doc, dest) as { diagnostics: readonly { code?: string }[] };
+      const r = materialiser(doc, dest);
       const codes = r.diagnostics.map((d) => d.code ?? "");
       expect(codes.some((c) => c.startsWith("PRESENTATION_")), "aucun juge d'écran n'a parlé")
         .toBe(true);
@@ -116,7 +131,7 @@ describe("EP-195 · la barrière voit enfin l'ÉCRAN", () => {
     // compte », l'un sous l'autre. UNE FICHE, UN SEUL BUT.
     const doc = charger(REFUSE);
     dansUnDossierNeuf((dest) => {
-      const r = materialiser(doc, dest) as { diagnostics: readonly { code?: string }[] };
+      const r = materialiser(doc, dest);
       expect(r.diagnostics.map((d) => d.code)).toContain("PRESENTATION_FICHE_MULTIPLE");
     });
   });

@@ -73,7 +73,7 @@ describe("EP-131 · ② aucun symbole non prescrit dans le moteur", () => {
     expect(GLYPHE_PAR_ROLE.reglages).toBe("settings-outline");
     expect(Object.keys(JUSTIFIES)).not.toContain("settings-outline");
     for (const { fichier, code } of sources()) {
-      expect(code.includes('"settings-outline"'), `${fichier}`).toBe(false);
+      expect(code.includes('"settings-outline"'), fichier).toBe(false);
     }
   });
 

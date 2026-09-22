@@ -8,6 +8,7 @@ import { readFileSync, readdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
+import type { ProjectAir } from "@deribfy/air-schema";
 import {
   migrerModele,
   verifierEntitesPrescrites,
@@ -15,29 +16,38 @@ import {
 } from "../../../benchmarks/air-emission/modele-metier.mjs";
 import { SECTIONS_CORRECTIVES, sectionsAReemettre } from "@deribfy/repair";
 
+import { requis } from "./helpers.ts";
 const R = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
 const RES = join(R, "benchmarks", "air-emission", "results");
-const lire = (motif: string): Record<string, any> =>
-  JSON.parse(readFileSync(join(RES, readdirSync(RES).find((f) => f.includes(motif))!), "utf8"));
+// UNE affirmation de type à la FRONTIÈRE ; au-delà, le compilateur vérifie.
+const lire = (motif: string): ProjectAir =>
+  JSON.parse(
+    readFileSync(
+      join(RES, requis(readdirSync(RES).find((f) => f.includes(motif)), "résultat de run « " + motif + " »")),
+      "utf8",
+    ),
+  ) as ProjectAir;
 
 const DOC = lire("marche-immobilier.2026-09-15T23-07-09-872Z.attempt2");
-const brut = lire("marche-immobilier.2026-09-15T23-07-09-872Z.modele-p0-t2") as { modele?: ModeleMetier };
+const brut = lire("marche-immobilier.2026-09-15T23-07-09-872Z.modele-p0-t2") as unknown as {
+  modele?: ModeleMetier;
+};
 const MODELE = migrerModele(brut.modele ?? brut) as ModeleMetier;
 
 describe("EP-188 ① · l'entité prescrite qui manque", () => {
   it("LE CAS RÉEL — le document du run EP-186 est REFUSÉ, nommément", () => {
     const d = verifierEntitesPrescrites(DOC, MODELE);
-    expect(d.map((x) => String(x.path)).sort()).toEqual([
+    expect(d.map((x) => x.path).sort()).toEqual([
       "entities[ent_annonce]",
       "entities[ent_recherche]",
     ]);
-    expect(d[0]!.code).toBe("ENTITE_PRESCRITE_MANQUANTE");
+    expect(requis(d[0], "d0").code).toBe("ENTITE_PRESCRITE_MANQUANTE");
   });
 
   it("UN DOCUMENT COMPLET PASSE — ce n'est pas un refus systématique", () => {
     const complet = structuredClone(DOC) as { entities: { id: string }[] };
     for (const c of MODELE.concepts) {
-      if (c.donnees !== true) continue;
+      if (!c.donnees) continue;
       const id = `ent_${c.id.slice(4)}`;
       if (!complet.entities.some((e) => e.id === id)) complet.entities.push({ id });
     }
@@ -66,8 +76,8 @@ describe("EP-188 ① · l'entité prescrite qui manque", () => {
     // Le chemin de fuite évident : retirer les blocs qui citent l'entité
     // absente ferait taire les 29 diagnostics sans rien rétablir.
     const d = verifierEntitesPrescrites(DOC, MODELE);
-    expect(d[0]!.message).toContain("ne supprime pas ce qui la référence");
-    expect(d[0]!.message).toContain("RÉÉMETS-LA");
+    expect(requis(d[0], "d0").message).toContain("ne supprime pas ce qui la référence");
+    expect(requis(d[0], "d0").message).toContain("RÉÉMETS-LA");
   });
 
   it("CE QUE LE MOTEUR EXIGE, IL LE VÉRIFIE — le trou nommé", () => {
@@ -86,7 +96,7 @@ describe("EP-188 ③ · un nombre sans demoValues est tiré au hasard", () => {
     const { nombresVraisemblables } = await import("@deribfy/fidelity");
     const doc = lire("marche-immobilier.2026-09-13T18-29-46-907Z.attempt1");
     const champs = nombresVraisemblables(doc as never).map(
-      (x) => x.message.match(/« ([^»]+) »/)?.[1],
+      (x) => (/« ([^»]+) »/.exec(x.message))?.[1],
     );
     expect(champs).toContain("fld_bien_surface");
     expect(champs).toContain("fld_bien_pieces");
@@ -137,18 +147,18 @@ describe("EP-188 ③ · un nombre sans demoValues est tiré au hasard", () => {
 describe("EP-188 ⑤ · deux boutons, pas une fiche", () => {
   it("LE CAS RÉEL — le run EP-186 posait DEUX formulaires d'emblée", async () => {
     const { jugerEntreeDeCompte } = await import("@deribfy/execution-contract");
-    const d = jugerEntreeDeCompte(DOC as never, {
-      entryScreenId: String((DOC as { navigation: { entryScreenId: string } }).navigation.entryScreenId),
+    const d = jugerEntreeDeCompte(DOC, {
+      entryScreenId: DOC.navigation.entryScreenId,
       ecransDIdentite: ["scr_cpt_profil_annonceur_s_identifier"],
     });
     expect(d.map((x) => x.code)).toEqual(["PRESENTATION_COMPTE_FORMULAIRE_DEMBLEE"]);
-    expect(d[0]!.message).toContain("DEUX BOUTONS");
+    expect(requis(d[0], "d0").message).toContain("DEUX BOUTONS");
   });
 
   it("DEUX BOUTONS SANS FORMULAIRE PASSENT", async () => {
     const { jugerEntreeDeCompte } = await import("@deribfy/execution-contract");
     const air = structuredClone(DOC) as { screens: { id: string; blocks: { blockType: string }[] }[] };
-    const cible = air.screens.find((s) => s.id === "scr_cpt_profil_annonceur_s_identifier")!;
+    const cible = requis(air.screens.find((s) => s.id === "scr_cpt_profil_annonceur_s_identifier"), "idscr_cpt_profil_annonceur_s_identifier");
     cible.blocks = cible.blocks.filter((b) => b.blockType !== "form");
     expect(
       jugerEntreeDeCompte(air as never, {

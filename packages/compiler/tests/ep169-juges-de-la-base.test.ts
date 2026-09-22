@@ -14,15 +14,16 @@ import {
 } from "../../../benchmarks/air-emission/acceptation.mjs";
 import { migrerModele, type ModeleMetier } from "../../../benchmarks/air-emission/modele-metier.mjs";
 
+import { requis } from "./helpers.ts";
 const R = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
 const RES = join(R, "benchmarks", "air-emission", "results");
 
 // LE CAS RÉEL, non fabriqué : l'assemblage partiel du run EP-168.
 const PARTIEL = JSON.parse(
-  readFileSync(join(RES, readdirSync(RES).find((f) => f.includes("marche-immobilier") && f.includes("emission-partielle"))!), "utf8"),
+  readFileSync(join(RES, requis(readdirSync(RES).find((f) => f.includes("marche-immobilier") && f.includes("emission-partielle")), "cheimmobilierf.includesemissionpartielle")), "utf8"),
 ) as Record<string, unknown>;
 const brut = JSON.parse(
-  readFileSync(join(RES, readdirSync(RES).find((f) => f.includes("marche-immobilier") && f.includes("modele-p0-t2"))!), "utf8"),
+  readFileSync(join(RES, requis(readdirSync(RES).find((f) => f.includes("marche-immobilier") && f.includes("modele-p0-t2")), "udesmarcheimmobilierf.includesmodelep0t2")), "utf8"),
 ) as { modele?: ModeleMetier };
 const MODELE = migrerModele(brut.modele ?? brut) as ModeleMetier;
 const codes = (d: readonly { code: string }[]): string[] => d.map((x) => x.code);
@@ -43,12 +44,12 @@ describe("EP-169 ① · la barre se juge dès la base", () => {
     };
     const d0 = air.navigation.primary?.destinations[0];
     expect(d0, "fixture sans destination").toBeDefined();
-    expect(d0!.label?.[0]?.text).toBe("Rechercher");
+    expect(requis(d0, "d0").label?.[0]?.text).toBe("Rechercher");
     expect(codes(jugerBase(air, { ecransDIdentite: [] }))).toContain(
       "PRESENTATION_LIBELLE_PRIMITIF_LIBRE",
     );
     // Et la BASE VERTE : corrigée, la barre ne produit plus ce diagnostic.
-    d0!.label = [{ locale: "fr", text: "Accueil" }];
+    requis(d0, "d0").label = [{ locale: "fr", text: "Accueil" }];
     expect(codes(jugerBase(air, { ecransDIdentite: [] }))).not.toContain(
       "PRESENTATION_LIBELLE_PRIMITIF_LIBRE",
     );
@@ -59,11 +60,11 @@ describe("EP-169 ① · la barre se juge dès la base", () => {
     // tourner sur la base seule rendrait un verdict tronqué passant pour
     // complet. Aucun ne le touche.
     const src = readFileSync(join(R, "packages", "execution-contract", "src", "presentation.ts"), "utf8");
-    const bornes = [...src.matchAll(/export function (\w+)/g)].map((m) => [m[1]!, m.index!] as const);
+    const bornes = [...src.matchAll(/export function (\w+)/g)].map((m) => [requis(m[1], "m1"), m.index] as const);
     for (const nom of ["jugerPrimitivesDeNavigation", "jugerPositionPrimitives", "jugerLibellesPrimitifs"]) {
       const i = bornes.findIndex(([n]) => n === nom);
       expect(i, nom).toBeGreaterThanOrEqual(0);
-      const corps = src.slice(bornes[i]![1], bornes[i + 1]?.[1] ?? src.length);
+      const corps = src.slice(requis(bornes[i], "bornesi")[1], bornes[i + 1]?.[1] ?? src.length);
       expect(corps.includes("air.screens"), `${nom} lit air.screens`).toBe(false);
     }
   });
@@ -94,10 +95,10 @@ describe("EP-171 ① · la barre inférieure se juge dès la base", () => {
 
   it("IL NE LIT AUCUN ÉCRAN — c'est ce qui autorise le déplacement", () => {
     const src = readFileSync(join(R, "packages", "execution-contract", "src", "presentation.ts"), "utf8");
-    const bornes = [...src.matchAll(/export function (\w+)/g)].map((m) => [m[1]!, m.index!] as const);
+    const bornes = [...src.matchAll(/export function (\w+)/g)].map((m) => [requis(m[1], "m1"), m.index] as const);
     const i = bornes.findIndex(([n]) => n === "jugerBarreInferieure");
     expect(i).toBeGreaterThanOrEqual(0);
-    const corps = src.slice(bornes[i]![1], bornes[i + 1]?.[1] ?? src.length);
+    const corps = src.slice(requis(bornes[i], "bornesi")[1], bornes[i + 1]?.[1] ?? src.length);
     expect(corps.includes(".screens"), "jugerBarreInferieure lit les écrans").toBe(false);
     expect(corps.includes("navigation"), "il devrait lire navigation").toBe(true);
   });
@@ -115,14 +116,14 @@ describe("EP-169 ② · une capacité de paiement exige un geste de paiement", (
   it("LE CAS RÉEL — `payments.psp` sur un modèle sans `payer` est REFUSÉ, nommé", () => {
     const d = jugerCapacitesContreIntention(PARTIEL, { modele: MODELE });
     expect(codes(d)).toEqual(["AIR_CAPACITE_SANS_GESTE"]);
-    expect(d[0]!.path).toContain("payments.psp");
+    expect(requis(d[0], "d0").path).toContain("payments.psp");
   });
 
   it("UN MODÈLE QUI PAIE GARDE SA CAPACITÉ — le juge n'est pas un refus systématique", () => {
     const paie = structuredClone(MODELE);
     const p0 = paie.parcours[0];
     expect(p0, "fixture sans parcours").toBeDefined();
-    p0!.etapes.push({ concept: paie.concepts[0]!.id, geste: "payer" });
+    requis(p0, "p0").etapes.push({ concept: requis(paie.concepts[0], "paie.concepts0").id, geste: "payer" });
     expect(jugerCapacitesContreIntention(PARTIEL, { modele: paie })).toEqual([]);
   });
 

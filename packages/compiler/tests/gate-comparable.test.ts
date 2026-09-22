@@ -32,7 +32,7 @@ const lire = (f: string): Record<string, unknown> =>
   JSON.parse(readFileSync(join(R_RES, f), "utf8")) as Record<string, unknown>;
 /** Un DOCUMENT d'archive se migre ; un modèle métier n'a pas de version d'AIR. */
 const lireAir = (f: string): Record<string, unknown> =>
-  applyAirMigrations(lire(f), AIR_MIGRATIONS) as Record<string, unknown>;
+  applyAirMigrations(lire(f), AIR_MIGRATIONS);
 
 // FIXTURE : kaviva 23-00 — 16 écrans, document VALIDE (run vert).
 const VALIDE = lireAir("kaviva-spa.2026-09-11T23-00-50-047Z.attempt2.air.json");

@@ -12,6 +12,7 @@ import { rendrePublicationMd } from "@deribfy/execution-contract";
 import { emitProject } from "../src/emit-project.ts";
 import { CHIFFREMENT_PROPRE_PAR_CAPACITE, utiliseChiffrementNonExempte } from "../src/emit-manifests.ts";
 
+import { requis } from "./helpers.ts";
 const R = join(import.meta.dirname, "..", "..", "..");
 const charger = (f: string): ProjectAir =>
   applyAirMigrations(
@@ -23,7 +24,7 @@ const charger = (f: string): ProjectAir =>
 const PETIT = charger("kaviva-spa.2026-09-11T23-00-50-047Z.attempt2.air.json");
 const GRAND = charger("marketplace-africain.2026-09-12T15-27-32-324Z.attempt2.air.json");
 const appJson = (air: ProjectAir): Record<string, unknown> =>
-  (JSON.parse(emitProject(air).files.get("app.json")!) as { expo: Record<string, unknown> }).expo;
+  (JSON.parse(requis(emitProject(air).files.get("app.json"), "emitProjectair.files.getapp.json")) as { expo: Record<string, unknown> }).expo;
 
 describe("EP-144 ① · chiffrement et export — DÉRIVÉ, donc au manifeste", () => {
   it("la déclaration est écrite, sur les deux tailles", () => {
@@ -62,7 +63,7 @@ describe("EP-144 ② · traçage ATT — L'ABSENCE EST UNE DÉCISION", () => {
     // Une clé de traçage sur une application qui ne trace pas est un faux
     // positif qui complique la revue — et une promesse fausse.
     for (const [nom, air] of [["petit", PETIT], ["grand", GRAND]] as const) {
-      const rendu = emitProject(air).files.get("app.json")!;
+      const rendu = requis(emitProject(air).files.get("app.json"), "emitProjectair.files.getapp.json");
       expect(rendu.includes("NSUserTrackingUsageDescription"), nom).toBe(false);
       expect(rendu.includes("AppTrackingTransparency"), nom).toBe(false);
     }
@@ -88,14 +89,14 @@ describe("EP-144 ③ · âge et classification — RIEN au manifeste, tout en co
     // La classification se répond dans les consoles d'éditeur ; ni Info.plist
     // ni AndroidManifest ne portent l'âge. Ce que le manifeste porte, ce sont
     // les versions d'OS — déjà produites, et ce n'est pas la même chose.
-    const rendu = emitProject(GRAND).files.get("app.json")!;
+    const rendu = requis(emitProject(GRAND).files.get("app.json"), "emitProjectGRAND.files.getapp.json");
     for (const clef of ["ageRating", "contentRating", "minimumAge", "AGE_RATING"]) {
       expect(rendu.includes(clef), clef).toBe(false);
     }
   });
 
   it("mais la version minimale d'OS, elle, EST au manifeste", () => {
-    const rendu = emitProject(GRAND).files.get("app.json")!;
+    const rendu = requis(emitProject(GRAND).files.get("app.json"), "emitProjectGRAND.files.getapp.json");
     expect(rendu).toContain("deploymentTarget");
   });
 

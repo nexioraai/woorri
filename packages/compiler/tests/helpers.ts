@@ -36,3 +36,22 @@ export function hashSourceTree(
   }
   return sha256(lines.join("\n"));
 }
+
+// ── `requis` — LE NARROWING QUI SE VÉRIFIE, À LA PLACE DU `!` QUI AFFIRME.
+//
+// `expr!` dit au compilateur « crois-moi » et ne laisse AUCUNE trace à
+// l'exécution : quand l'hypothèse est fausse, le test casse plus loin, sur un
+// symptôme (`Cannot read properties of undefined`) qui ne nomme ni la valeur
+// ni l'endroit. Le lint du moteur l'interdit depuis le premier commit
+// (`packages/README.md`) — cette règle n'est pas décorative, elle interdit
+// d'affirmer sans vérifier, ce qui est exactement le protocole de preuve.
+//
+// `requis` échoue AU POINT de l'hypothèse et la NOMME. Sur le chemin nominal
+// — la valeur est présente — les deux formes rendent rigoureusement la même
+// chose : la substitution ne change aucun test qui passait.
+export function requis<T>(valeur: T | null | undefined, quoi: string): T {
+  if (valeur === null || valeur === undefined) {
+    throw new Error(`valeur requise absente : ${quoi}`);
+  }
+  return valeur;
+}

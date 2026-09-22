@@ -8,13 +8,24 @@ import { readFileSync, readdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
+import type { ProjectAir } from "@deribfy/air-schema";
 import { LIBELLES_PRIMITIFS, jugerLibellesPrimitifs } from "@deribfy/execution-contract";
 import { emitProject } from "../src/emit-project.ts";
 
+import { requis } from "./helpers.ts";
 const R = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
 const RES = join(R, "benchmarks", "air-emission", "results");
-const charger = (motif: string): Record<string, any> =>
-  JSON.parse(readFileSync(join(RES, readdirSync(RES).find((f) => f.includes(motif))!), "utf8"));
+// UNE SEULE affirmation de type, ici, à la FRONTIÈRE du fichier — et elle ne
+// décide de rien : `emitProject` revalide le document pour de bon. Ce qui
+// disparaît avec elle, ce sont les 29 accès `any` qui suivaient, où le
+// compilateur ne vérifiait plus RIEN — ni le nom d'un champ, ni sa forme.
+const charger = (motif: string): ProjectAir =>
+  JSON.parse(
+    readFileSync(
+      join(RES, requis(readdirSync(RES).find((f) => f.includes(motif)), "résultat de run « " + motif + " »")),
+      "utf8",
+    ),
+  ) as ProjectAir;
 
 // DEUX TAILLES, et désignées par leur HORODATAGE — jamais « le dernier »
 // (L-179-B : une fixture doit désigner un cas, pas une date).
@@ -26,15 +37,15 @@ const KAVIVA = charger("kaviva-spa.2026-09-11T23-00-50-047Z.attempt2");
 // compilateur ; les neuf appelants réels ne le faisaient pas. Seize tests
 // verts mesuraient donc une chaîne qui n'existait nulle part ailleurs.
 // Ce qui suit appelle `emitProject` EXACTEMENT comme la vraie chaîne l'appelle.
-const libelles = (doc: Record<string, any>): string[] => {
+const libelles = (doc: ProjectAir): string[] => {
   const nav = emitProject(doc).files.get("nav.data.ts") ?? "";
-  return [...nav.matchAll(/"label":"([^"]+)"/g)].map((m) => m[1]!);
+  return [...nav.matchAll(/"label":"([^"]+)"/g)].map((m) => requis(m[1], "m1"));
 };
 
 /** Pose le genre AU DOCUMENT — le seul canal désormais. */
-const avecCompte = (doc: Record<string, any>, screenId: string): Record<string, any> => ({
+const avecCompte = (doc: ProjectAir, screenId: string): ProjectAir => ({
   ...doc,
-  screens: (doc.screens as { id: string }[]).map((e) =>
+  screens: doc.screens.map((e) =>
     e.id === screenId ? { ...e, purpose: "account_home" } : e,
   ),
 });
@@ -52,13 +63,13 @@ describe("EP-180 · les libellés primitifs sont ÉMIS", () => {
   it("LE COMPTE AUSSI — quand le DOCUMENT porte le genre `account_home`", () => {
     // Un écran qui EST une destination de la barre — sinon le libellé ne
     // s'applique à rien et le test ne prouverait rien.
-    const entree = KAVIVA.navigation.entryScreenId as string;
+    const entree = KAVIVA.navigation.entryScreenId;
     const cibles = (KAVIVA.navigation.primary?.destinations ?? []).map(
       (d: { routeId: string }) =>
         (KAVIVA.navigation.routes as { id: string; screenId: string }[]).find((r) => r.id === d.routeId)
           ?.screenId,
     );
-    const compte = cibles.find((id: string | undefined) => id !== undefined && id !== entree)!;
+    const compte = requis(cibles.find((id: string | undefined) => id !== undefined && id !== entree), "findidstringundefinedidundefinedidentree");
     // AVANT : le document ne porte pas le genre, donc AUCUN « Compte ».
     expect(libelles(KAVIVA)).not.toContain(LIBELLES_PRIMITIFS.compte);
     // APRÈS : le genre est au document, et le compilateur le lit SEUL.
@@ -114,7 +125,7 @@ describe("EP-180 · les libellés primitifs sont ÉMIS", () => {
     // Et le juge, rejoué sur le document SOURCE, parle encore — c'est normal :
     // il juge ce que le générateur a écrit, pas ce que le moteur a émis.
     // La correction vit dans l'ÉMISSION, et c'est elle qui atteint l'écran.
-    const ctx = { entryScreenId: SAHEL.navigation.entryScreenId as string, ecransDIdentite: [] };
+    const ctx = { entryScreenId: SAHEL.navigation.entryScreenId, ecransDIdentite: [] };
     expect(jugerLibellesPrimitifs(SAHEL as never, ctx).length).toBeGreaterThan(0);
   });
 

@@ -8,6 +8,7 @@ import { describe, expect, it } from "vitest";
 import { applyAirMigrations, AIR_MIGRATIONS } from "@deribfy/air-schema";
 import { emitProject } from "../src/emit-project.ts";
 
+import { requis } from "./helpers.ts";
 const R = join(import.meta.dirname, "..", "..", "..");
 const charger = (f: string): unknown =>
   applyAirMigrations(
@@ -24,7 +25,7 @@ describe("EP-143 · le fichier sort avec l'application", () => {
     for (const [nom, doc] of [["petit", PETIT], ["grand", GRAND]] as const) {
       const { files } = emitProject(doc);
       expect(files.has("PUBLICATION.md"), nom).toBe(true);
-      expect(files.get("PUBLICATION.md")!.length, nom).toBeGreaterThan(400);
+      expect(requis(files.get("PUBLICATION.md"), "files.getPUBLICATION.md").length, nom).toBeGreaterThan(400);
     }
   });
 
@@ -35,8 +36,8 @@ describe("EP-143 · le fichier sort avec l'application", () => {
   });
 
   it("son contenu est celui de CETTE application, pas un texte générique", () => {
-    const petit = emitProject(PETIT).files.get("PUBLICATION.md")!;
-    const grand = emitProject(GRAND).files.get("PUBLICATION.md")!;
+    const petit = requis(emitProject(PETIT).files.get("PUBLICATION.md"), "emitProjectPETIT.files.getPUBLICATION.md");
+    const grand = requis(emitProject(GRAND).files.get("PUBLICATION.md"), "emitProjectGRAND.files.getPUBLICATION.md");
     expect(petit).not.toBe(grand);
     // Chacun nomme son application.
     expect(petit).toContain("Publier «");

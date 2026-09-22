@@ -12,6 +12,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import * as mm from "../../../benchmarks/air-emission/modele-metier.mjs";
 
+import { requis } from "./helpers.ts";
 const HERE = dirname(fileURLToPath(import.meta.url));
 const SOURCE = readFileSync(
   join(HERE, "..", "..", "..", "benchmarks", "air-emission", "modele-metier.mjs"),
@@ -80,7 +81,7 @@ describe("EP-135 · LE CLIQUET — un diagnostic sans classe ne peut pas naître
       delete TABLE.MODELE_SANS_PARCOURS;
       expect(() => mm.validerModele(modeleSansParcours)).toThrow(/EP-135/);
     } finally {
-      TABLE.MODELE_SANS_PARCOURS = sauvegarde!;
+      TABLE.MODELE_SANS_PARCOURS = requis(sauvegarde, "sauvegarde");
     }
     // Et le module est rendu intact : le test suivant doit voir la table pleine.
     expect((mm.validerModele(modeleSansParcours) as { code: string }[]).map((x) => x.code))

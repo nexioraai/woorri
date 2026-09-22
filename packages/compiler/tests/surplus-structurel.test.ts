@@ -9,6 +9,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
+import { requis } from "./helpers.ts";
 import {
   jugerContenuDEcran,
   jugerNavigationsDeBouton,
@@ -168,7 +169,7 @@ describe("EP-165 ③b · le bouton qui mène à un LIEU", () => {
   // ce que la sonde a ajouté.
   const codes = (a: Air): string[] =>
     jugerNavigationsDeBouton(a)
-      .filter((x) => String(x.path).includes("blk_sonde_btn"))
+      .filter((x) => x.path.includes("blk_sonde_btn"))
       .map((x) => x.code);
 
   it("LE JUGE N'EST PAS MORT — une cible ORDINAIRE qui ne consomme rien reste refusée", () => {
@@ -189,7 +190,7 @@ describe("EP-165 ③b · le bouton qui mène à un LIEU", () => {
       navigation: { routes: { id: string; screenId: string }[]; primary?: { destinations: { routeId: string; order: number }[] } };
     };
     s.navigation.routes.push({ id: "rt_sonde", screenId: "scr_sonde_cible" });
-    if (s.navigation.primary === undefined) s.navigation.primary = { destinations: [] };
+    s.navigation.primary ??= { destinations: [] };
     s.navigation.primary.destinations.push({ routeId: "rt_sonde", order: 99 });
     expect(codes(a)).not.toContain("AIR_BOUTON_IDENTITE_PERDUE");
   });
@@ -241,9 +242,9 @@ describe("EP-165 ③c · l'entité reliée est justifiée par la relation", () =
         prescrits.some((c) => conceptsRelies(MODELE, `cpt_${e.id.slice(4)}`, c)),
     );
     expect(reliee, "aucune entité reliée dans la fixture").toBeDefined();
-    cible?.blocks.push({ id: "blk_sonde_reliee", blockType: "list", entityId: reliee!.id, props: [] });
+    cible?.blocks.push({ id: "blk_sonde_reliee", blockType: "list", entityId: requis(reliee, "reliee").id, props: [] });
     expect(
-      jugerContenuDEcran(air, PRESCRIPTIF).filter((x) => String(x.path).includes("blk_sonde_reliee")),
+      jugerContenuDEcran(air, PRESCRIPTIF).filter((x) => x.path.includes("blk_sonde_reliee")),
     ).toEqual([]);
   });
 
@@ -253,13 +254,13 @@ describe("EP-165 ③c · l'entité reliée est justifiée par la relation", () =
     const air = doc();
     const cible = ecrans(air).find((e) => e.blocks.some((b) => b.entityId !== undefined));
     expect(cible, "fixture sans bloc porteur d'entité").toBeDefined();
-    cible!.blocks.push({
+    requis(cible, "cible").blocks.push({
       id: "blk_sonde_orphelin",
       blockType: "list",
       entityId: "ent_parfaitement_etrangere",
     });
     const codes = jugerContenuDEcran(air, PRESCRIPTIF)
-      .filter((x) => String(x.path).includes("blk_sonde_orphelin"))
+      .filter((x) => x.path.includes("blk_sonde_orphelin"))
       .map((x) => x.code);
     expect(codes).toEqual(["AIR_BLOC_STRUCTUREL_NON_JUSTIFIE"]);
   });
@@ -297,11 +298,11 @@ describe("EP-165 ③c · l'entité reliée est justifiée par la relation", () =
     // pas le cas, un écran justifierait ses enfants mais pas ses parents.
     const r = relation(MODELE);
     expect(r, "fixture sans relation").toBeDefined();
-    expect(conceptsRelies(MODELE, r!.de, r!.vers)).toBe(true);
-    expect(conceptsRelies(MODELE, r!.vers, r!.de)).toBe(true);
+    expect(conceptsRelies(MODELE, requis(r, "r").de, requis(r, "r").vers)).toBe(true);
+    expect(conceptsRelies(MODELE, requis(r, "r").vers, requis(r, "r").de)).toBe(true);
     const inconnu = "cpt_absolument_inconnu";
     expect(conceptsDe(MODELE).includes(inconnu)).toBe(false);
-    expect(conceptsRelies(MODELE, inconnu, r!.de)).toBe(false);
+    expect(conceptsRelies(MODELE, inconnu, requis(r, "r").de)).toBe(false);
   });
 });
 
@@ -317,7 +318,7 @@ describe("EP-167 · l'arc porteur exige, il ne permet pas", () => {
     plan: { navigation?: { arcs?: { de: string; vers: string; transport: string | null }[] } };
   };
   const paths = (a: Air, p?: unknown): string[] =>
-    jugerNavigationsDeBouton(a, p as never).map((x) => String(x.path));
+    jugerNavigationsDeBouton(a, p as never).map((x) => x.path);
 
   it("LA GARDE — un bouton SUR arc porteur qui ne consomme rien reste REFUSÉ", () => {
     // CAS RÉEL, non fabriqué : `blk_soin_bouton_creneaux` part d'une fiche de
@@ -337,7 +338,7 @@ describe("EP-167 · l'arc porteur exige, il ne permet pas", () => {
     };
     const fiche = s.screens.find((e) => e.blocks.some((b) => b.blockType === "detail_header"));
     expect(fiche, "fixture sans fiche").toBeDefined();
-    fiche!.blocks.push({ id: "blk_ep167_btn", blockType: "button" });
+    requis(fiche, "fiche").blocks.push({ id: "blk_ep167_btn", blockType: "button" });
     s.screens.push({ id: "scr_ep167_cible", blocks: [{ id: "blk_ep167_liste", blockType: "list" }] });
     s.actions.push({
       id: "act_ep167",

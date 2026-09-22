@@ -18,11 +18,11 @@ describe("EP-132 · le contrat fournit toujours le texte du repli", () => {
     const porteurs = listBlockIds()
       .map((id) => getBlock(id))
       .filter((b) => b !== undefined)
-      .filter((b) => (b.fieldRefPropsAffichage ?? []).includes("imageFieldId"));
+      .filter((b) => b.fieldRefPropsAffichage.includes("imageFieldId"));
     // Si ce compte tombe à zéro, le cliquet ne garde plus rien.
     expect(porteurs.length).toBeGreaterThan(0);
     for (const b of porteurs) {
-      expect(b.fieldRefPropsAffichage, `${b.id}`).toContain("titleFieldId");
+      expect(b.fieldRefPropsAffichage, b.id).toContain("titleFieldId");
       // Le schéma est typé de façon opaque : la question se pose donc au
       // schéma lui-même — accepte-t-il l'absence du titre ? S'il l'accepte,
       // un document pourrait porter un média sans rien pour le remplacer.

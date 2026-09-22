@@ -13,6 +13,7 @@ import { join } from "node:path";
 import ts from "typescript";
 import { describe, expect, it } from "vitest";
 
+import { requis } from "./helpers.ts";
 const R = join(import.meta.dirname, "..", "..", "..");
 
 interface Source { readonly p: string; readonly code: string }
@@ -179,11 +180,11 @@ describe("EP-161 ① · LE CHEMIN PIRE (règle d'EP-132) — appelé mais ignor�
     // prise par l'autre bout.
     const nom = [...emettrices][0];
     expect(nom, "aucune émettrice — le détecteur n'a rien à chercher").toBeDefined();
-    const perdu = appelsNus([{ p: "sonde.ts", code: `function f() { ${nom!}(x); }` }]);
+    const perdu = appelsNus([{ p: "sonde.ts", code: `function f() { ${requis(nom, "nom")}(x); }` }]);
     expect(perdu, "un appel NU doit être vu").toHaveLength(1);
-    const garde = appelsNus([{ p: "sonde.ts", code: `function f() { const d = ${nom!}(x); return d; }` }]);
+    const garde = appelsNus([{ p: "sonde.ts", code: `function f() { const d = ${requis(nom, "nom")}(x); return d; }` }]);
     expect(garde, "un résultat AFFECTÉ ne doit PAS être signalé").toEqual([]);
-    const disperse = appelsNus([{ p: "sonde.ts", code: `const a = [...${nom!}(x)];` }]);
+    const disperse = appelsNus([{ p: "sonde.ts", code: `const a = [...${requis(nom, "nom")}(x)];` }]);
     expect(disperse, "un résultat DISPERSÉ ne doit PAS être signalé").toEqual([]);
   });
 

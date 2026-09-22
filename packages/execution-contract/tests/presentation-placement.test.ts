@@ -19,7 +19,7 @@ import {
   jugerSurfaceQuiEngage,
   jugerPrimitivesDeNavigation,
 } from "../src/presentation.ts";
-import { L, P, air } from "./fixtures.ts";
+import { L, P, air, requis } from "./fixtures.ts";
 
 const codes = (f: readonly { code: string }[]): string[] => f.map((x) => x.code);
 
@@ -78,18 +78,18 @@ describe("EP-130 · base verte", () => {
 describe("EP-130 · ① un emplacement porte UN élément", () => {
   it("refuse deux recherches sur le même écran", () => {
     const mute = baseVerte();
-    mute.screens[0]!.blocks.push({
+    requis(mute.screens[0], "mute.screens0").blocks.push({
       id: "blk_a_s2",
       blockType: "search_entry",
       props: P({ placeholder: "…" }),
     });
     expect(codes(jugerExclusivite(mute))).toEqual(["PRESENTATION_EMPLACEMENT_OCCUPE"]);
-    expect(jugerExclusivite(mute)[0]!.message).toContain("blk_a_s, blk_a_s2");
+    expect(requis(jugerExclusivite(mute)[0], "jugerExclusivitemute0").message).toContain("blk_a_s, blk_a_s2");
   });
 
   it("n'invente pas de collision entre écrans différents", () => {
     const mute = baseVerte();
-    mute.screens[1]!.blocks.push({
+    requis(mute.screens[1], "mute.screens1").blocks.push({
       id: "blk_b_s",
       blockType: "search_entry",
       props: P({ placeholder: "…" }),
@@ -119,7 +119,7 @@ describe("EP-131 · ① l'emplacement « titre » de la barre supérieure", () =
   it("refuse un bloc qui REDIT le titre déjà porté par l'en-tête natif", () => {
     const f = jugerExclusivite(avecEnteteEtBloc("Titre de l'écran"));
     expect(codes(f)).toEqual(["PRESENTATION_TITRE_REPETE"]);
-    expect(f[0]!.message).toContain("blk_b_h");
+    expect(requis(f[0], "f0").message).toContain("blk_b_h");
   });
 
   it("ignore la casse et les espaces — c'est la même donnée redite", () => {
@@ -135,7 +135,7 @@ describe("EP-131 · ① l'emplacement « titre » de la barre supérieure", () =
 
   it("ne confond pas un titre vide avec une répétition", () => {
     const a = avecEnteteEtBloc("");
-    a.screens[1]!.title = L("");
+    requis(a.screens[1], "a.screens1").title = L("");
     expect(codes(jugerExclusivite(a))).toEqual([]);
   });
 });
@@ -145,7 +145,7 @@ describe("EP-130 · ② la recherche est en haut [S3]", () => {
     const base = baseVerte();
     const f = jugerPositionRecherche(base, () => "contenu");
     expect(codes(f)).toEqual(["PRESENTATION_RECHERCHE_HORS_BARRE"]);
-    expect(f[0]!.message).toContain("défilerait");
+    expect(requis(f[0], "f0").message).toContain("défilerait");
   });
 });
 
@@ -161,8 +161,8 @@ describe("EP-130 · ③ la barre inférieure [S1]", () => {
     // Une application dont le domaine ne porte que deux lieux n'a que deux
     // onglets. Exiger un troisième, c'est demander d'inventer un lieu.
     const mute = baseVerte();
-    mute.navigation.primary!.destinations.pop();
-    expect(mute.navigation.primary!.destinations.length).toBe(2);
+    requis(mute.navigation.primary, "mute.navigation.primary").destinations.pop();
+    expect(requis(mute.navigation.primary, "mute.navigation.primary").destinations.length).toBe(2);
     expect(codes(jugerBarreInferieure(mute))).not.toContain(
       "PRESENTATION_DESTINATIONS_HORS_BORNES",
     );
@@ -170,8 +170,8 @@ describe("EP-130 · ③ la barre inférieure [S1]", () => {
 
   it("UNE SEULE destination reste refusée — ce n'est plus une barre", () => {
     const mute = baseVerte();
-    mute.navigation.primary!.destinations.pop();
-    mute.navigation.primary!.destinations.pop();
+    requis(mute.navigation.primary, "mute.navigation.primary").destinations.pop();
+    requis(mute.navigation.primary, "mute.navigation.primary").destinations.pop();
     expect(codes(jugerBarreInferieure(mute))).toContain(
       "PRESENTATION_DESTINATIONS_HORS_BORNES",
     );
@@ -182,7 +182,7 @@ describe("EP-130 · ③ la barre inférieure [S1]", () => {
     for (const i of [1, 2, 3]) {
       mute.screens.push({ id: `scr_x${String(i)}`, title: L("X"), blocks: [] });
       mute.navigation.routes.push({ id: `nav_x${String(i)}`, screenId: `scr_x${String(i)}` });
-      mute.navigation.primary!.destinations.push(dest(`nav_x${String(i)}`, "liste", 2 + i));
+      requis(mute.navigation.primary, "mute.navigation.primary").destinations.push(dest(`nav_x${String(i)}`, "liste", 2 + i));
     }
     expect(codes(jugerBarreInferieure(mute))).toEqual([
       "PRESENTATION_DESTINATIONS_HORS_BORNES",
@@ -191,7 +191,7 @@ describe("EP-130 · ③ la barre inférieure [S1]", () => {
 
   it("refuse une destination sans icône", () => {
     const mute = baseVerte();
-    delete mute.navigation.primary!.destinations[1]!.icon;
+    delete requis(requis(mute.navigation.primary, "mute.navigation.primary").destinations[1], "arymute.navigation.primary.destinations1").icon;
     expect(codes(jugerBarreInferieure(mute))).toEqual([
       "PRESENTATION_DESTINATION_SANS_ICONE",
     ]);
@@ -208,7 +208,7 @@ describe("EP-130 · ③ la barre inférieure [S1]", () => {
 describe("EP-130 · ③ primitives — DÉCISION PRODUIT, pas convention", () => {
   it("refuse une barre qui ne ramène pas à l'accueil", () => {
     const mute = baseVerte();
-    mute.navigation.primary!.destinations[0] = dest("nav_b", "accueil", 0);
+    requis(mute.navigation.primary, "mute.navigation.primary").destinations[0] = dest("nav_b", "accueil", 0);
     expect(codes(jugerPrimitivesDeNavigation(mute, CTX))).toEqual([
       "PRESENTATION_ACCUEIL_ABSENT",
     ]);
@@ -216,7 +216,7 @@ describe("EP-130 · ③ primitives — DÉCISION PRODUIT, pas convention", () =>
 
   it("refuse une barre sans espace compte", () => {
     const mute = baseVerte();
-    mute.navigation.primary!.destinations[2] = dest("nav_b", "compte", 2);
+    requis(mute.navigation.primary, "mute.navigation.primary").destinations[2] = dest("nav_b", "compte", 2);
     expect(codes(jugerPrimitivesDeNavigation(mute, CTX))).toEqual([
       "PRESENTATION_ESPACE_COMPTE_ABSENT",
     ]);
@@ -226,11 +226,11 @@ describe("EP-130 · ③ primitives — DÉCISION PRODUIT, pas convention", () =>
   // une icône « compte » posée sur un écran d'un tout autre parcours.
   it("ne prend PAS une icône « compte » pour un espace compte", () => {
     const mute = baseVerte();
-    mute.navigation.primary!.destinations[1]!.icon = "compte";
-    mute.navigation.primary!.destinations[2] = dest("nav_b", "liste", 2);
+    requis(requis(mute.navigation.primary, "mute.navigation.primary").destinations[1], "arymute.navigation.primary.destinations1").icon = "compte";
+    requis(mute.navigation.primary, "mute.navigation.primary").destinations[2] = dest("nav_b", "liste", 2);
     const f = jugerPrimitivesDeNavigation(mute, CTX);
     expect(codes(f)).toEqual(["PRESENTATION_ESPACE_COMPTE_ABSENT"]);
-    expect(f[0]!.message).toContain("une icône « compte » posée ailleurs");
+    expect(requis(f[0], "f0").message).toContain("une icône « compte » posée ailleurs");
   });
 
   it("nomme la cause quand le MODÈLE ne porte aucune identité", () => {
@@ -239,7 +239,7 @@ describe("EP-130 · ③ primitives — DÉCISION PRODUIT, pas convention", () =>
       ecransDIdentite: [],
     });
     expect(codes(f)).toEqual(["PRESENTATION_ESPACE_COMPTE_ABSENT"]);
-    expect(f[0]!.message).toContain("AUCUN concept d'identité");
+    expect(requis(f[0], "f0").message).toContain("AUCUN concept d'identité");
   });
 });
 
@@ -358,7 +358,7 @@ describe("EP-193 · LE CRIBLE INVERSÉ — un juge ne lit pas ce qui n'est pas e
     const i = src.indexOf('name: "base"');
     const debut = src.indexOf("keys: [", i);
     const bloc = src.slice(debut, src.indexOf("]", debut));
-    return [...bloc.matchAll(/"(\w+)"/g)].map((m) => m[1]!);
+    return [...bloc.matchAll(/"(\w+)"/g)].map((m) => requis(m[1], "m1"));
   };
 
   /** Les juges branchés dans `jugerBase` — DÉRIVÉS de l'appelant réel. */
@@ -367,7 +367,7 @@ describe("EP-193 · LE CRIBLE INVERSÉ — un juge ne lit pas ce qui n'est pas e
     const i = acc.indexOf("export function jugerBase");
     const j = acc.indexOf("export function", i + 10);
     const corps = acc.slice(i, j === -1 ? acc.length : j);
-    return [...new Set([...corps.matchAll(/presentation\.(juger\w+)/g)].map((m) => m[1]!))];
+    return [...new Set([...corps.matchAll(/presentation\.(juger\w+)/g)].map((m) => requis(m[1], "m1")))];
   };
 
   /** Ce qu'un juge lit de l'AIR — directement, et via ses helpers locaux. */
@@ -378,10 +378,10 @@ describe("EP-193 · LE CRIBLE INVERSÉ — un juge ne lit pas ce qui n'est pas e
     if (i === -1) return [];
     const j = src.indexOf("\nexport function", i + 10);
     const corps = src.slice(i, j === -1 ? Math.min(src.length, i + 6000) : j);
-    const directes = [...corps.matchAll(/\bair\.(\w+)/g)].map((m) => m[1]!);
+    const directes = [...corps.matchAll(/\bair\.(\w+)/g)].map((m) => requis(m[1], "m1"));
     // Les lectures INDIRECTES comptent aussi : un helper qui lit `air.screens`
     // fait tomber son appelant exactement pareil.
-    const helpers = [...new Set([...corps.matchAll(/\b([a-z][a-zA-Z0-9]*)\(/g)].map((m) => m[1]!))];
+    const helpers = [...new Set([...corps.matchAll(/\b([a-z][a-zA-Z0-9]*)\(/g)].map((m) => requis(m[1], "m1")))];
     const indirectes = helpers.flatMap((h) =>
       h === nom || /^(if|for|while|return|String|Number|Object|Array|Set|Map)$/.test(h)
         ? []
@@ -419,7 +419,7 @@ describe("EP-193 · LE CRIBLE INVERSÉ — un juge ne lit pas ce qui n'est pas e
     // section absente : le crible doit le désigner.
     const emises = new Set(sectionsDuSegmentBase());
     const faux = "export function jugerFictif(air) {\n  return air.screens.filter((e) => e);\n}";
-    const lues = [...new Set([...faux.matchAll(/\bair\.(\w+)/g)].map((m) => m[1]!))];
+    const lues = [...new Set([...faux.matchAll(/\bair\.(\w+)/g)].map((m) => requis(m[1], "m1")))];
     const manquantes = lues.filter((x) => !emises.has(x));
     expect(manquantes, "le crible ne verrait pas un juge lisant `screens`").toContain("screens");
   });
