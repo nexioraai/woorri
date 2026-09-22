@@ -44,6 +44,7 @@ describe("GATE RACINE — aucun contrôle fantôme", () => {
     const fantomes: string[] = [];
     let agissants = 0;
     const parApp: string[] = [];
+    const mesure = new Map<string, { vus: number; fantomes: number }>();
 
     for (const app of apps) {
       const base = RACINE + app + "/";
@@ -147,6 +148,7 @@ describe("GATE RACINE — aucun contrôle fantôme", () => {
       }
       total += vus;
       agissants += actifs;
+      mesure.set(app, { vus, fantomes: vus - actifs });
       parApp.push(`   ${app.padEnd(26)} ${String(actifs).padStart(3)}/${String(vus).padEnd(3)} agissants${actifs === vus ? "" : "   🔴 " + String(vus - actifs) + " FANTÔME(S)"}`);
     }
 
@@ -187,12 +189,119 @@ describe("GATE RACINE — aucun contrôle fantôme", () => {
     // La réponse robuste n'est pas un autre seuil, c'est un cliquet DÉCOMPOSÉ PAR
     // CAUSE — chaque classe avec son propre plafond nommé. Chantier arbitré,
     // non entrepris ici.
-    const PLAFOND = 180;
-    console.log(`[FANTÔMES] cliquet : ${String(total - agissants)} / plafond ${String(PLAFOND)}`);
+    //
+    // ── 2026-09-22 · LA PRÉDICTION S'EST RÉALISÉE, LA GRANDEUR CHANGE (M2-223).
+    //
+    // Ce qui était annoncé ci-dessus est arrivé, et ce n'est pas une opinion :
+    //
+    //     2026-09-03 (dernier CI vert) : 26 apps · 1135 contrôles · 180 fantômes → 15,86 %
+    //     2026-09-22                   : 28 apps · 2143 contrôles · 182 fantômes →  8,49 %
+    //
+    // Le corpus a presque DOUBLÉ, le taux de fantômes a été divisé par deux, et
+    // le compteur absolu est passé de 180 à 182 : la gate a rougi sur une
+    // AMÉLIORATION. Elle a mordu sur la croissance, exactement comme prédit.
+    //
+    // Relever le plafond à 182 serait la faute que ce commentaire dénonce déjà :
+    // ce serait transformer un garde-fou en BUDGET, et la prochaine génération
+    // le ferait rougir encore. Le seuil n'est pas le problème — la GRANDEUR
+    // MESURÉE l'est. Un nombre absolu sur une population variable ne peut pas
+    // dire « régression » ; il dit « il y a plus d'applications ».
+    //
+    // DEUX CLIQUETS, tous deux INDÉPENDANTS DE LA POPULATION :
+    //
+    //   ① PAR APPLICATION — aucune application ne dépasse SA propre mesure.
+    //      C'est le cliquet anti-régression réel : il mord là où la régression
+    //      se produit, et une régénération qui dégrade un document est vue même
+    //      si dix applications saines arrivent en même temps. L'ancien compteur
+    //      global en était incapable.
+    //
+    //   ② TAUX GLOBAL — la proportion de fantômes ne monte jamais. C'est lui
+    //      qui empêche ① d'être contourné : une application NEUVE n'a pas de
+    //      ligne au registre, elle entre donc sans être bornée par ① — mais si
+    //      elle est pire que la flotte, elle pousse le taux et ② la refuse.
+    //
+    // CE QUE CES DEUX CLIQUETS NE FONT PAS, et il faut le dire : ils ne
+    // décomposent pas PAR CAUSE. Les trois dettes structurelles nommées plus
+    // haut restent agrégées. Le cliquet par cause demeure le chantier arbitré ;
+    // celui-ci est son axe le plus proche parmi ceux que la sonde mesure déjà.
+    //
+    // REGISTRE — état MESURÉ le 2026-09-22, jamais un état souhaité. Baisser
+    // une ligne est libre et attendu ; la monter est une DÉCISION, qui se voit
+    // en revue parce qu'elle se lit ici.
+    const BASE_PAR_APP: Record<string, number> = {
+      "agence-immo": 10,
+      "billetterie-concerts": 2,
+      "boutique-mode": 2,
+      "livraison-fruits": 4,
+      "plombier-urgence": 5,
+      "resto-quartier": 8,
+      "salon-coiffure": 10,
+      "slice-conteneurs": 5,
+      "suivi-chantier": 2,
+      "toiletteur-chiens": 5,
+      "tuteur-langues": 5,
+      "v3-agence-immo": 13,
+      "v3-billetterie-concerts": 6,
+      "v3-boutique-mode": 9,
+      "v3-bus-intercites": 9,
+      "v3-coach-fitness": 5,
+      "v3-cours-cuisine": 10,
+      "v3-kaviva-spa": 8,
+      "v3-livraison-fruits": 13,
+      "v3-plombier-urgence": 13,
+      "v3-resto-quartier": 12,
+      "v3-salon-coiffure": 5,
+      "v3-suivi-chantier": 7,
+      "v3-toiletteur-chiens": 7,
+      "v3-tuteur-langues": 7,
+    };
+    /** Taux mesuré le 2026-09-22 : 182 / 2143 = 8,4928 %. */
+    const TAUX_PLAFOND = 0.0850;
+
+    // ① aucune application ne dégrade la sienne.
+    const regressions: string[] = [];
+    const neuves: string[] = [];
+    for (const [app, m] of [...mesure].sort()) {
+      const base = BASE_PAR_APP[app];
+      if (base === undefined) {
+        neuves.push(`${app} (${String(m.fantomes)}/${String(m.vus)})`);
+        continue;
+      }
+      if (m.fantomes > base) {
+        regressions.push(`${app} : ${String(m.fantomes)} fantômes, registre ${String(base)}`);
+      }
+    }
+    // AUCUN PLAFOND SILENCIEUX : une application hors registre est NOMMÉE.
+    // Elle n'est pas bornée par ① — c'est ② qui la juge —, et le lecteur de
+    // la CI doit le savoir sans avoir à lire ce fichier.
+    if (neuves.length > 0) {
+      console.log(
+        `[FANTÔMES] ${String(neuves.length)} application(s) HORS REGISTRE — bornées par le TAUX seul, ` +
+          `à consigner : ${neuves.join(", ")}`,
+      );
+    }
+    // Une application du registre qui DISPARAÎT est signalée elle aussi :
+    // sans cela, retirer une application ferait « baisser » les fantômes.
+    const disparues = Object.keys(BASE_PAR_APP).filter((a) => !mesure.has(a));
+    if (disparues.length > 0) {
+      console.log(`[FANTÔMES] ${String(disparues.length)} application(s) du registre ABSENTE(S) : ${disparues.join(", ")}`);
+    }
+
+    const taux = (total - agissants) / total;
+    console.log(
+      `[FANTÔMES] cliquet ① par application : ${String(regressions.length)} régression(s)\n` +
+        `[FANTÔMES] cliquet ② taux global : ${(taux * 100).toFixed(2)} % / plafond ${(TAUX_PLAFOND * 100).toFixed(2)} %` +
+        ` (${String(total - agissants)} sur ${String(total)} contrôles, ${String(apps.length)} applications)`,
+    );
+
     expect(
-      total - agissants,
-      "le nombre de contrôles fantômes ne doit jamais AUGMENTER",
-    ).toBeLessThanOrEqual(PLAFOND);
+      regressions,
+      "une application a PLUS de contrôles fantômes qu'au registre — régression",
+    ).toEqual([]);
+    expect(
+      taux,
+      "la proportion de contrôles fantômes ne doit jamais AUGMENTER",
+    ).toBeLessThanOrEqual(TAUX_PLAFOND);
   });
 });
 
