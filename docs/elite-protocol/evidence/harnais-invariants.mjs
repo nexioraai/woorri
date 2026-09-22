@@ -138,26 +138,69 @@ const I_REACH = [
 
 // ── controls × actions déclarées et enveloppe ─────────────────────────────
 const AFFORDANCES = new Set(["button", "empty_state", "form", "list"]);
+
+// ── EP-203 · L'APPARTENANCE À L'ENVELOPPE SE LIT SUR DEUX CHAMPS, PAS UN.
+//
+// Ce témoin ne lisait que `effects`. Il DATAIT d'avant R1 (EP-020), qui a
+// tranché que `capability` ne pouvait pas entrer dans `effects` EN BLOC — 61
+// promesses du corpus seraient passées vivantes sans qu'une ligne s'exécute —
+// et a porté la granularité juste PAR MÉTHODE, dans
+// `capabilityMethodsExecutees`. Depuis ce jour l'enveloppe exprime son
+// appartenance sur DEUX champs ; le témoin n'en relisait toujours qu'un.
+//
+// CONSÉQUENCE MESURÉE : 4 désaccords permanents sur `v3/kaviva-spa`, dont les
+// quatre méthodes auth SONT dans l'enveloppe (fournisseur embarqué, dispatch
+// réel, prouvé sur appareil). Faux rouge — et la gate tenue en échec par lui.
+//
+// LE TÉMOIN RESTE INDÉPENDANT : il relit les DONNÉES de l'enveloppe et
+// redérive l'appartenance lui-même, il n'emprunte pas le prédicat de
+// `controls()`. Les 191 actions du corpus réellement hors enveloppe le
+// restent — c'est ce que mesure son contrôle négatif, plus bas.
+const EFFETS_ENV = new Set(ENV.effects);
+const DECLENCHEURS_ENV = new Set(ENV.triggers);
+const dansEnveloppe = (action) =>
+  (action.effect.kind === "capability"
+    ? (ENV.capabilityMethodsExecutees[action.effect.capability] ?? []).includes(
+        action.effect.method,
+      )
+    : EFFETS_ENV.has(action.effect.kind)) && DECLENCHEURS_ENV.has(action.trigger.kind);
+
+/**
+ * Corps de C1, l'ORACLE reçu en paramètre. Extrait pour que le contrôle
+ * négatif rejoue EXACTEMENT cette confrontation avec un oracle menteur —
+ * sinon il ne prouverait que le prédicat, pas l'invariant.
+ */
+const confronterC1 = (nom, air, oracle) => {
+  const parId = new Map(air.actions.map((a) => [a.id, a]));
+  for (const c of oracle(air, ENV)) {
+    const a = parId.get(c.actionId);
+    if (a === undefined) continue;
+    // D-105 — IMPLICATION, non plus équivalence. `executed` exige désormais
+    // AUSSI un dispatch réel : exiger l'équivalence reviendrait à réencoder
+    // l'ancienne définition, celle qui déclarait exécutées 17 actions mortes.
+    // Ce qui doit rester vrai : rien hors enveloppe n'est jamais exécuté.
+    if (c.executed && !dansEnveloppe(a)) {
+      note("C1", nom, `${c.actionId} exécutée HORS enveloppe`);
+    }
+  }
+};
+
+/**
+ * L'ORACLE MENTEUR : tout contrôle visible est déclaré exécuté. C'est la
+ * faute que C1 existe pour voir — un oracle qui affirme `executed` sans
+ * regarder ce que le moteur sait faire.
+ */
+const ORACLE_NAIF = (air) => {
+  const blocs = new Set(air.screens.flatMap((s) => s.blocks.map((b) => b.id)));
+  return air.actions
+    .filter((a) => a.trigger.kind === "ui" && blocs.has(a.trigger.blockId))
+    .map((a) => ({ actionId: a.id, executed: true }));
+};
+
 const I_CTRL = [
   [
     "C1 · `executed` IMPLIQUE l'appartenance à l'enveloppe",
-    (nom, air) => {
-      const eff = new Set(ENV.effects);
-      const trg = new Set(ENV.triggers);
-      const parId = new Map(air.actions.map((a) => [a.id, a]));
-      for (const c of controls(air, ENV)) {
-        const a = parId.get(c.actionId);
-        if (a === undefined) continue;
-        // D-105 — IMPLICATION, non plus équivalence. `executed` exige désormais
-        // AUSSI un dispatch réel : exiger l'équivalence reviendrait à réencoder
-        // l'ancienne définition, celle qui déclarait exécutées 17 actions mortes.
-        // Ce qui doit rester vrai : rien hors enveloppe n'est jamais exécuté.
-        const dansEnveloppe = eff.has(a.effect.kind) && trg.has(a.trigger.kind);
-        if (c.executed && !dansEnveloppe) {
-          note("C1", nom, `${c.actionId} exécutée HORS enveloppe`);
-        }
-      }
-    },
+    (nom, air) => confronterC1(nom, air, controls),
   ],
   [
     "C2 · aucune action `ui` liée à un bloc n'échappe à l'oracle",
@@ -319,6 +362,25 @@ if (sain === undefined) {
     essai("R2", "un écran d'entrée absent des écrans", (d) => {
       d.navigation.entryScreenId = "scr_inexistant_controle";
     }),
+    // C1 confronte un ORACLE à l'enveloppe. Sa violation ne se produit PAS en
+    // mutant le document : `controls()` recalculerait `executed` et tomberait
+    // d'accord avec lui-même — le désaccord s'évanouirait au lieu d'apparaître.
+    // Ce qui doit être prouvé, c'est que la CONFRONTATION est vivante : on
+    // rejoue le même corps avec l'ORACLE MENTEUR (`executed` partout), et C1
+    // doit crier sur tout ce que le moteur ne sait pas faire.
+    (() => {
+      const avant = desaccords.length;
+      for (const [nom, air] of documents) {
+        if (air === null) continue;
+        confronterC1(nom, air, ORACLE_NAIF);
+      }
+      const vus = desaccords.length - avant;
+      desaccords.length = avant; // on ne pollue pas le verdict réel
+      console.log(
+        `  ${vus > 0 ? "🟢 VU  " : "🔴 AVEUGLE"} C1 · la confrontation oracle × enveloppe est VIVANTE (${vus} contrôle(s) fantôme(s) sur oracle menteur)`,
+      );
+      return vus > 0;
+    })(),
     essai("C2", "une action `ui` sur un bloc HORS liste d'affordances", (d) => {
       const header = d.screens.flatMap((s) => s.blocks).find((b) => b.blockType === "header");
       if (header === undefined) return;
