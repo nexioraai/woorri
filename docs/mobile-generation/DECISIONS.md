@@ -7266,3 +7266,94 @@ cas.
 Aucune règle liant une région à une fonctionnalité — la frontière d'EP-044
 tient : le moteur ne connaît que la réponse structurelle (`commerce`), jamais
 le marché. L'élicitation elle-même (EP-133) reste à ouvrir, dans son ordre.
+
+---
+
+## D-137 — LE CORPUS GELÉ SE GARDE PAR NON-RÉGRESSION ; UNE IMPOSSIBILITÉ RÉELLE DOIT ÊTRE DÉMONTRABLE — 2026-09-22
+
+**Arbitrage propriétaire rendu le 2026-09-22**, sollicité après diagnostic
+depuis la racine. La CI était rouge sur `main` depuis le 2026-09-03 — 21 runs.
+Règle directrice reprise de `D-134` : **CI honnête, stricte et utile — jamais
+verte artificiellement.**
+
+### Le fait qui déclenche l'arbitrage
+
+`D-125` l'avait inscrit : « la gate `fidelite` ne peut PAS devenir verte quelle
+que soit l'action sur v3 — les 12 documents v2 gelés sont rouges par
+construction ». `D-134` avait ajouté que la liste bloquante de la CI, écrite
+avant ces arbitrages, n'avait jamais été amendée : **gouvernance, pas défaut.**
+
+**CE QUE CE ROUGE PERMANENT A COÛTÉ, ET C'EST MESURÉ** : le 2026-09-22, F1 est
+passé de 12 à 13 — `v3/kaviva-spa` entrait en échec — et **personne ne l'a vu**,
+parce que la gate était déjà rouge. Un cliquet dont le rouge ne peut jamais
+tomber cesse de signaler : il ne protège plus rien, et il masque ce qui arrive
+après lui.
+
+### Lot 1 · EP-204 — CORRECTION DE MESURE (faux rouge, aucune politique touchée)
+
+`v3/kaviva-spa` était déclaré 20/39, dont 19 promesses « à CIBLE INEXISTANTE ».
+Les 19 cibles **existent toutes** : 12 blocs, 5 champs, 1 route, 1 dataset —
+zéro absente. **Désynchronisation interne, datée** : `validate.ts` (règle 11) a
+été élargi les 2026-09-10 et 2026-09-11 et accepte les **dix** familles de
+nœuds ; `evaluatePromises` en connaissait **trois**. Les sept familles ajoutées
+reçoivent chacune la condition de vie de ce dont elles dépendent, et chacune
+peut rendre MORTE — éprouvées dans les deux sens sur des nœuds réels du corpus
+gelé. **F1 : 13 → 12.** Le corpus v2 est INTOUCHÉ (ses promesses mortes sont des
+`cible_morte`, jamais des familles ignorées).
+
+### Lot 2 · M2-224 — LE CORPUS v2 EST MESURÉ, PUBLIÉ, SOUS CLIQUET ; IL NE BLOQUE PLUS
+
+**Décision propriétaire, l'une des deux conditions écrites de `D-134`.**
+v2 reste listé, mesuré et publié INTÉGRALEMENT ; son état devient un REGISTRE
+par document (12 lignes, lisibles en revue) qui ne peut jamais empirer, ni en
+promesses vivantes ni en promesses déclarées ; un document du registre qui
+DISPARAÎT est nommé et fait échouer. **Les deux sens du cliquet ont été
+éprouvés avant d'être gardés.** La gate bloquante ne juge plus que **v3** — ce
+que le moteur produit AUJOURD'HUI, et qui peut changer.
+
+**Motif** : un corpus gelé se garde par NON-RÉGRESSION, jamais par pass/fail —
+même patron que le cliquet des contrôles fantômes (M2-223, même jour). Sa
+fidélité était d'ailleurs DÉJÀ gardée par un cliquet dans
+`packages/fidelity/tests/promises.test.ts` ; l'`exit 1` par-dessus n'ajoutait
+aucune protection et neutralisait la gate entière.
+
+### Lot 3 · M2-225 / R7 — `registreDeBlocsOuvert` ENTRE À L'ENVELOPPE (contrat 1.1.0 → 1.2.0)
+
+**Problème** : un besoin réellement inexprimable **pour cause de registre fermé**
+n'était démontrable par AUCUN motif — seuls `capabilitiesEmitCode` et
+`listGrouping` valent `false`, et ni l'un ni l'autre ne parle du registre. Le
+document restait rouge **sans recours**, et le régénérer aurait reproduit le
+même rouge sans fin. C'est exactement la situation qui a fait entrer
+`listGrouping` le 2026-09-04.
+
+**Alternative écartée** : assouplir la règle pour accepter un motif en prose.
+Refusée — un motif non vérifiable rouvre le trou que `D-089` a fermé.
+
+**Démonstration technique, mesurée** : `WRAPPER_BY_BLOCK_TYPE` est une carte
+GELÉE (9 types → 9 composants `Air*`) et tout autre `blockType` lève
+`EMIT_BLOCK_TYPE_UNKNOWN` à l'émission ; le runtime n'offre aucune échappatoire
+(`eval`, `new Function`, `dangerouslySetInnerHTML`, `WebView`, `createElement`
+calculé, `require`) — absences VÉRIFIÉES par `envelope-truth`, dans les deux
+sens (faire mentir l'enveloppe fait tomber le cliquet ; introduire une vraie
+échappatoire aussi).
+
+**Nature** : ÉLARGISSEMENT au sens `D-020`, version **MINEURE**. La déclaration
+devient PLUS PRÉCISE pour REFUSER plus, jamais pour faire passer un document —
+**et c'est vérifié** : le motif actuellement écrit dans `v3/tuteur-langues`
+reste REFUSÉ, puisqu'il ne cite aucun nom de fait. Ce lot ne verdit aucun
+document ; il rend `tuteur-langues` RÉGÉNÉRABLE vert, ce qu'il n'était pas.
+
+### État après arbitrage, et ce qui reste
+
+- `app_fidelite` : F1 **0 bloquant** (12 documents gelés sous cliquet, 0
+  régression) · F4 **2 documents v3** · **3 motifs réfutés**.
+- **Reste, et ce n'est PAS une dette de gouvernance mais deux défauts de
+  document** : `v3/salon-coiffure` écarte un besoin **SATISFIABLE** (la
+  sélection d'une liste transmise à l'écran suivant — `agence-immo`,
+  `boutique-mode` et `resto-quartier` le font déjà) et écarte l'agenda par jour
+  **sans citer `listGrouping`** ; `v3/tuteur-langues` écarte les exercices
+  jouables **sans citer de fait**. **Leur correction passe par une
+  RÉGÉNÉRATION** (dépense API, autorisation et chiffrage préalables — `D-018`).
+- Les **14 autres** étapes de la CI sont vertes ; `app_fidelite` reste
+  BLOQUANTE sur `main` et sur toute PR vers `main` (`D-134` inchangé) — elle ne
+  juge simplement plus que ce qui peut changer.

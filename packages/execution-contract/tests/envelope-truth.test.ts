@@ -788,3 +788,47 @@ describe("sessionEtablissable — les trois maillons, et la limite dite", () => 
     expect(mutant).not.toContain("estAuthentifie: () => false");
   });
 });
+
+describe("véracité de l'enveloppe — le registre de blocs est FERMÉ (R7, M2-225)", () => {
+  // AJOUT DU 2026-09-22. Un fait qui vaut `false` se prouve par une ABSENCE
+  // MESURÉE, jamais par une affirmation — même patron que `listGrouping`.
+  // Si une échappatoire apparaît un jour, ces tests tombent AVANT que
+  // l'enveloppe ne mente au générateur.
+
+  it("la carte blockType -> composant est GELÉE, et le compilateur REFUSE le reste", () => {
+    // Le point décisif n'est pas la taille de la carte : c'est qu'un type
+    // inconnu fasse ÉCHOUER l'émission au lieu d'être ignoré en silence.
+    expect(EMIT_PROJECT).toContain("EMIT_BLOCK_TYPE_UNKNOWN");
+    const carte = /WRAPPER_BY_BLOCK_TYPE[^=]*=\s*\{([\s\S]*?)\n\};/.exec(EMIT_PROJECT);
+    expect(carte, "carte des blocs introuvable — ce cliquet ne garde plus rien").not.toBeNull();
+    const types = [...(carte?.[1] ?? "").matchAll(/^\s*([a-z_]+):/gm)].map((m) => m[1]);
+    expect(types.length, "aucun type lu : la lecture du cliquet a dérivé").toBeGreaterThan(5);
+    // Chaque entrée vise un composant `Air*` du runtime copié — jamais un nom
+    // calculé, jamais une valeur venue du document.
+    expect((carte?.[1] ?? "").match(/"Air[A-Za-z]+"/g)?.length).toBe(types.length);
+    expect(EXECUTION_ENVELOPE_V1.registreDeBlocsOuvert).toBe(false);
+  });
+
+  it("le runtime n'offre AUCUNE échappatoire vers un composant arbitraire", () => {
+    // Chacune de ces formes suffirait à rendre une surface que le registre ne
+    // décrit pas — et rendrait `registreDeBlocsOuvert: false` MENSONGER.
+    for (const echappatoire of [
+      "eval(",
+      "new Function",
+      "dangerouslySetInnerHTML",
+      "WebView",
+      "createElement(",
+      "require(",
+    ]) {
+      expect(RUNTIME, echappatoire).not.toContain(echappatoire);
+    }
+  });
+
+  it("CONTRÔLE NÉGATIF : cette lecture sait voir une échappatoire", () => {
+    // Sans ceci, les assertions ci-dessus passeraient encore si `RUNTIME`
+    // devenait vide ou si la lecture du fichier dérivait.
+    const mutant = RUNTIME + "\nconst surface = eval(props.code);\n";
+    expect(mutant).toContain("eval(");
+    expect(RUNTIME.length, "runtime vide : les absences ne prouveraient rien").toBeGreaterThan(5000);
+  });
+});

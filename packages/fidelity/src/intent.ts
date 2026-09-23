@@ -102,6 +102,14 @@ const FAITS_BOOLEENS = [
   "relationScoping",
   "liveData",
   "primaryNavigation",
+  // AJOUT 2026-09-22 (R7, M2-225) — MÊME RAISON QUE `listGrouping` EN 2026-09-04 :
+  // sans ce fait, une inexprimabilité RÉELLE — « le registre de blocs fermé ne
+  // porte aucun exercice jouable : le champ est stocké, rien ne peut le
+  // RENDRE » — n'était démontrable par aucun motif. Le document restait rouge
+  // SANS RECOURS, et le régénérer aurait reproduit le même rouge sans fin.
+  // Il vaut `false` : le citer fait TENIR un motif. S'il passait un jour à
+  // `true`, tout motif qui l'invoque serait réfuté — automatiquement.
+  "registreDeBlocsOuvert",
 ] as const;
 
 // ── D-089 · CAUSALITÉ DU MOTIF.

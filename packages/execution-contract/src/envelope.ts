@@ -40,7 +40,15 @@ import type { ProjectAir } from "@deribfy/air-schema";
 // montré un signUp jugé « exécuté » (méthode dans l'enveloppe, dispatch réel)
 // dont AUCUN des quatre params déclarés n'était lu par le fournisseur — appel
 // parti, identité jamais établie : mort en silence au niveau du PARAM.
-export const EXECUTION_ENVELOPE_VERSION = "1.1.0";
+// 1.2.0 — R7 (M2-225) : `registreDeBlocsOuvert` entre, à `false`.
+// ÉLARGISSEMENT au sens D-020 (version MINEURE) : la déclaration devient PLUS
+// précise pour REFUSER plus, jamais pour faire passer un document. Sans ce
+// fait, une inexprimabilité RÉELLE — « le registre de blocs fermé ne porte
+// aucun exercice jouable » — n'était démontrable par AUCUN motif : le document
+// restait rouge SANS RECOURS, et sa régénération aurait reproduit le même
+// rouge indéfiniment. Exactement la raison qui a fait entrer `listGrouping`
+// le 2026-09-04.
+export const EXECUTION_ENVELOPE_VERSION = "1.2.0";
 
 export type EffectKind = ProjectAir["actions"][number]["effect"]["kind"];
 export type TriggerKind = ProjectAir["actions"][number]["trigger"]["kind"];
@@ -122,6 +130,23 @@ export interface ExecutionEnvelope {
    * transport rendues à l'écran, trace instrumentée exacte).
    */
   readonly liveData: boolean;
+  /**
+   * R7 (M2-225) — UNE APPLICATION PEUT-ELLE PORTER UNE SURFACE D'INTERACTION
+   * QUI N'EST PAS L'UN DES BLOCS DU REGISTRE ?
+   *
+   * `false`, et c'est MESURÉ, pas affirmé : `WRAPPER_BY_BLOCK_TYPE` est une
+   * carte GELÉE (9 types → 9 composants) et tout autre type lève
+   * `EMIT_BLOCK_TYPE_UNKNOWN` à l'émission ; le runtime n'offre aucune
+   * échappatoire (ni `eval`, ni `new Function`, ni `dangerouslySetInnerHTML`,
+   * ni `WebView`, ni `import()` dynamique, ni `createElement` calculé, ni
+   * injection de `children`). Un quiz, une dictée, un jeu de cartes ne sont
+   * donc PAS exprimables — et jusqu'ici aucun fait ne permettait de le dire.
+   *
+   * CE FAIT NE FAIT PASSER AUCUN DOCUMENT. Il rend une impossibilité RÉELLE
+   * démontrable, ce qui est la condition pour qu'un besoin puisse être écarté
+   * honnêtement plutôt que de rester rouge sans recours.
+   */
+  readonly registreDeBlocsOuvert: boolean;
   /** `navigation.primary` produit-il une barre PERSISTANTE sur chaque écran ? */
   readonly primaryNavigation: boolean;
 }
@@ -379,4 +404,20 @@ export const EXECUTION_ENVELOPE_V1: ExecutionEnvelope = {
   // l'ordre du document, sur UNE ligne et non empilés, et presser un onglet
   // navigue vers l'écran attendu.
   primaryNavigation: true,
+
+  // R7 (M2-225) — LE REGISTRE DE BLOCS EST FERMÉ, ET RIEN N'EN SORT.
+  //
+  // ÉTABLI PAR ABSENCE MESURÉE, jamais par affirmation (patron `listGrouping`,
+  // 2026-09-04) :
+  //   · `WRAPPER_BY_BLOCK_TYPE` (emit-project.ts) est une carte GELÉE de 9
+  //     entrées ; tout autre `blockType` lève `EMIT_BLOCK_TYPE_UNKNOWN` — le
+  //     compilateur refuse d'émettre, il n'improvise pas ;
+  //   · le runtime ne porte AUCUNE échappatoire vers un composant arbitraire.
+  //
+  // Conséquence directe, et c'est ce que ce fait sert à DIRE : une leçon
+  // jouable, un quiz, une dictée, une carte à retourner ne sont exprimables
+  // par aucun document — l'information peut être STOCKÉE dans un champ, rien
+  // ne peut la JOUER. `tests/envelope-truth.test.ts` confronte cette
+  // déclaration au code réel dans les deux sens.
+  registreDeBlocsOuvert: false,
 } as const;
