@@ -225,6 +225,8 @@ export default defineConfig({
       'src/app/dashboard/**/*.test.tsx',
       'src/__tests__/**/*.test.ts',
     ],
+    // M2-226 — aucun test ne sort sur le réseau réel (voir vitest.setup.ts).
+    setupFiles: ['./vitest.setup.ts'],
     environment: 'node',
   },
   resolve: {

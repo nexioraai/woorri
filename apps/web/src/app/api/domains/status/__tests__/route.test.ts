@@ -32,6 +32,25 @@ vi.mock('@/lib/supabase-admin', () => ({
 const logAnomalyMock = vi.fn();
 vi.mock('@/lib/anomaly', () => ({ logAnomaly: (...a: unknown[]) => logAnomalyMock(...a) }));
 
+// ── M2-226 — LA SONDE DE JOIGNABILITÉ EST UN APPEL RÉSEAU RÉEL. ELLE SE MASQUE.
+//
+// DÉFAUT MESURÉ EN CI (run 35800661169) : ces cinq tests ont échoué sur
+// « Test timed out in 5000ms », et UNIQUEMENT ceux qui atteignent cette route.
+// Cause exacte : `verifierJoignabilite` OUVRE quatre adresses avec un délai de
+// 8 s — plus long que le délai d'un test. Là où le réseau répond, les tests
+// passent ; là où il ne répond pas, ils dépassent. C'est un test INTERMITTENT,
+// et un CI intermittent ne vaut pas mieux qu'un CI rouge : on cesse de le lire.
+//
+// Le masquer n'affaiblit rien : la joignabilité a ses PROPRES tests
+// (`src/lib/domains/__tests__/joignabilite.test.ts`), qui l'éprouvent sans
+// réseau. Ici, on mesure la ROUTE.
+const joignabiliteMock = vi.fn((..._a: unknown[]) =>
+  Promise.resolve({ adresses: [], complet: true, enPanne: [] }),
+);
+vi.mock('@/lib/domains/joignabilite', () => ({
+  verifierJoignabilite: (...a: unknown[]) => joignabiliteMock(...a),
+}));
+
 import { GET, POST } from '../route';
 
 const SITE = {
