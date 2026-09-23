@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { NextResponse } from 'next/server'
 import { requireSiteOwner } from '@/lib/auth/require-site-owner'
+import { ameliorer } from '@/lib/images/ameliorer'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import {
   TAILLE_MAX,
@@ -112,6 +113,33 @@ export async function POST(req: Request) {
     }
 
     const urlOriginal = await deposer(`${dossier}/original.jpg`, original, 'image/jpeg')
+
+    // ── LA VERSION AMÉLIORÉE EST PRODUITE ICI, PAS DANS UNE FILE D'ATTENTE.
+    //
+    // Le plan prévoyait un traitement en tâche de fond. LA MESURE l'a rendu
+    // inutile pour cette partie : la chaîne complète coûte ~1,0 s (9 variantes)
+    // et l'amélioration ~0,2 s de plus. Une file d'attente aurait ajouté une
+    // table, un ordonnanceur, des états et un sondage côté navigateur — pour
+    // cacher deux dixièmes de seconde. La complexité doit être payée par un
+    // gain, et il n'y en a pas.
+    //
+    // La file reste NÉCESSAIRE pour la suppression de fond, qui exige un
+    // modèle de 176 Mo hors d'atteinte du serverless (voir `fond.ts`).
+    //
+    // L'AMÉLIORATION NE REMPLACE RIEN : elle est déposée À CÔTÉ. Le marchand
+    // garde l'original, compare, et choisit. Un échec ici ne fait pas échouer
+    // l'envoi — il le prive d'une option, pas de sa photo.
+    let amelioration: { url: string; appliquees: string[]; ms: number } | null = null
+    try {
+      const a = await ameliorer(entree)
+      amelioration = {
+        url: await deposer(`${dossier}/amelioree.jpg`, a.donnees, 'image/jpeg'),
+        appliquees: a.appliquees,
+        ms: a.ms,
+      }
+    } catch {
+      amelioration = null
+    }
     const deposees = await Promise.all(
       variantes.map(async (v) => ({
         format: v.format,
@@ -140,6 +168,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       url: urlOriginal,
+      amelioration,
       variantes: deposees,
       apercu,
       analyse: {

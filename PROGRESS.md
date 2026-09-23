@@ -11,8 +11,8 @@ Dernière mise à jour : 2026-09-23.
 | 2 — metadata et langue | A | ✅ fait |
 | 3 — SEO des sites marchands | B | ✅ fait |
 | 4 — chaîne d'images (upload/affichage) | B | ✅ fait |
-| 5 — amélioration « photo pro » | B | 🔄 en cours |
-| 6 — vérification et livraison | A+B | ⏳ à faire |
+| 5 — amélioration « photo pro » | B | ✅ fait (une réserve nommée) |
+| 6 — vérification et livraison | A+B | ✅ fait |
 
 ## Journal
 
@@ -234,6 +234,114 @@ tous les avertissements suivants. Limite assumée et écrite dans le code — un
 produit blanc sur fond blanc a une variance basse sans être flou, donc ce signal
 **avertit et ne bloque jamais**.
 
+### Groupe 5 ✅ — amélioration « photo pro » (B)
+
+**Aucun fournisseur de modèle IA. Aucune dépense.** Tout ce qui est livré ici
+tourne sur `sharp` / libvips, sur le processeur, dans le dépôt.
+
+#### Ce qui est livré et mesuré — `src/lib/images/ameliorer.ts`
+
+Quatre corrections, visant les trois maux réels d'une photo prise en boutique
+(contre-jour de la porte, tube fluorescent, mise au point au jugé) :
+
+- **exposition** — gain calculé vers une cible, puis **borné** (×0,75 à ×1,6) ;
+- **contraste** — relevé **seulement s'il est bas** ; le rehausser sur une photo
+  déjà contrastée écrase les noirs et efface les plis d'un vêtement foncé,
+  donc la matière ;
+- **balance des blancs** — méthode du monde gris, gains **serrés** (×0,8 à
+  ×1,25) : l'hypothèse est fausse sur un tissu rouge plein cadre, et mieux vaut
+  corriger à moitié une dominante réelle que délaver un article rouge ;
+- **débruitage puis netteté**, dans cet ordre — l'inverse amplifie le bruit
+  avant de l'effacer, et laisse des halos.
+
+La chaîne **rapporte ce qu'elle a fait** (« éclaircie, couleurs rééquilibrées,
+netteté légère ») : sans cela le marchand voit son image changer sans savoir
+pourquoi, et ne peut ni faire confiance ni mieux photographier la suivante.
+
+**Recadrage intelligent** — stratégie `attention` de libvips (calcul d'énergie,
+aucun modèle chargé) + **marges uniformes**. La marge est le point : on cadre
+sur l'article *puis on lui rend de l'air*, au lieu de le coller aux bords.
+C'est ce qui distingue ce recadrage du `object-cover` qu'on vient de retirer.
+
+**Comparateur avant/après** dans l'éditeur : deux images côte à côte, pas de
+curseur à faire glisser (sur téléphone, le geste est imprécis et on ne voit
+jamais les deux états en entier au même moment — or c'est ce qu'il faut
+comparer). **L'original reste retenu tant que le marchand n'a pas choisi** :
+ne rien faire ne doit jamais modifier sa boutique.
+
+#### La file d'attente n'a PAS été construite, et c'est la mesure qui l'a décidé
+
+Le plan prévoyait un traitement en tâche de fond. **Mesuré** : la chaîne
+complète coûte **~1,0 s** (9 variantes) et l'amélioration **~0,2 s** de plus.
+Une file aurait ajouté une table, un ordonnanceur, des états et un sondage côté
+navigateur — **pour cacher deux dixièmes de seconde**. La complexité doit être
+payée par un gain ; il n'y en avait pas.
+
+Elle reste nécessaire **pour la suppression de fond seule**, qui a une
+contrainte de forme, pas de volume.
+
+#### Suppression de fond — livrée, mais pas déployable ici, et je le dis
+
+`workers/suppression-fond/` : worker autonome, **U²-Net** (Apache-2.0) via
+`onnxruntime-node`, aucun appel sortant.
+
+**Il ne tournera pas sur Vercel, et ce n'est pas une opinion :**
+
+| fait | valeur |
+|---|---|
+| modèle U²-Net | ~176 Mo |
+| `onnxruntime-node` | ~120 Mo |
+| plafond d'une fonction serverless Vercel | **250 Mo décompressés** |
+
+Le modèle seul dépasse déjà le plafond. Et même s'il tenait, chaque invocation
+repart à froid : on rechargerait 176 Mo **par photo**, plus cher que
+l'inférence. Un worker garde le modèle en mémoire.
+
+**Coût estimé** : ~1 à 3 s par image sur un cœur, ~700 Mo à 1 Go de mémoire en
+pointe. Une machine **1 vCPU / 1 Go** traite quelques dizaines de photos par
+minute — très au-dessus du rythme réel d'un catalogue. **Ce n'est pas un poste
+de dépense significatif**, c'est une contrainte de forme.
+
+**Tant que `IMAGE_WORKER_URL` et `IMAGE_WORKER_TOKEN` sont absents,
+`fondDisponible()` rend `false` et l'option n'apparaît pas.** Cliquet posé :
+une fonctionnalité annoncée et indisponible est pire qu'absente — le marchand
+clique, rien ne se passe, et il cesse de croire au reste de l'outil.
+
+#### 🟠 Agrandissement — NON LIVRÉ, et je ne prétends pas l'avoir évalué
+
+Le plan disait : livré **seulement** si le coût mesuré est acceptable.
+**Je ne l'ai pas mesuré**, donc je ne le livre pas et je ne l'affirme pas.
+
+Ce que je sais : Real-ESRGAN a **la même contrainte de forme** que U²-Net (un
+worker), et le modèle ×4 produirait 4800 px à partir de 1200 — inutile pour une
+boutique. Le besoin réel est 500 → 1200 px.
+
+Ce que j'ai mesuré, en revanche : l'agrandissement **Lanczos** de `sharp`,
+500 → 1200 px, coûte **22 ms**. Il ne *fabrique* aucun détail — il interpole —
+mais il est immédiat, gratuit, et déjà appliqué par la chaîne de variantes
+quand c'est utile. **Un vrai agrandissement par modèle reste à évaluer ; ce
+serait un lot à part.**
+
+#### Un défaut trouvé dans mon INSTRUMENT, pas dans le code
+
+Mon test de marges lisait **168 partout, y compris au centre**. Le recadrage
+était correct : c'est `stats()` de `sharp` qui se calcule sur l'image
+**d'entrée**, pas au bout du pipeline — `.extract().stats()` rendait donc les
+statistiques de l'image entière. Corrigé en `extract()` **puis** `toBuffer()`,
+et doublé d'une assertion sur le centre (sans elle, une image entièrement
+blanche aurait passé le test).
+
+### Groupe 6 ✅ — vérification
+
+Batterie CI complète, en local, après le groupe 5 :
+
+```
+typecheck EXIT=0   test EXIT=0   build EXIT=0   apidocs EXIT=0
+pkg_typecheck EXIT=0   pkg_lint EXIT=0   pkg_test EXIT=0
+```
+
+**234 fichiers · 4183 tests · 0 échec.** 77 routes documentées.
+
 ## Choix pris à la place du propriétaire
 
 *(consignés ici au fur et à mesure, pour arbitrage a posteriori)*
@@ -274,6 +382,34 @@ produit blanc sur fond blanc a une variance basse sans être flou, donc ce signa
   signaux des sitelinks que tu demandes. **Je n'ai rien changé**, la décision
   est datée et elle t'appartient.
 
-## Reste manuel (propriétaire)
+## Reste manuel — ce que je ne peux pas faire à ta place
 
-*(rempli en fin de chantier)*
+1. **Google Search Console.** Soumettre `https://www.deribfy.com/sitemap.xml`,
+   puis demander la réindexation de `/`, `/about`, `/pricing`, `/privacy`,
+   `/cookies`, `/terms`. Sans cette demande, Google gardera les anciens titres
+   dupliqués pendant des semaines.
+2. **Le favicon met du temps à changer dans les résultats.** Google recrawle
+   l'icône à son propre rythme (souvent plusieurs jours après la page). Le
+   navigateur, lui, montrera le bon immédiatement.
+3. **Search Console pour les boutiques.** `chanorfie.com` et `alloufshop.com`
+   ont chacune leur sitemap (`/sitemap.xml`) et désormais leur favicon. À
+   soumettre séparément, par propriété.
+4. **Le vrai logo Deribfy**, si tu en as un : déposer
+   `apps/web/assets/logo-deribfy.png` (ou `.svg`) et lancer
+   `node scripts/generer-icones.mjs`. Toutes les icônes en sont dérivées —
+   aucune n'est écrite à la main.
+5. **Déployer le worker de détourage**, si tu veux la suppression de fond.
+   Code prêt dans `workers/suppression-fond/`, une machine 1 vCPU / 1 Go
+   suffit. Tant qu'il n'est pas là, l'option n'apparaît pas — rien n'est promis
+   à tort.
+6. **Rien à exécuter côté base.** Ce chantier n'ajoute **aucune migration SQL**.
+
+## Ce qui a été trouvé mais NON corrigé (hors périmètre, signalé)
+
+- **`/api/shop/upload-design`** dépose toujours en direct, sans la chaîne de
+  traitement. C'est le chemin des designs POD (Mode 3), pas celui des photos
+  produit — même classe de défaut, autre parcours. Non touché : le périmètre
+  demandé était les photos de marchands.
+- **Aucune colonne `logo`** pour les marchands. Le favicon est donc un
+  monogramme. Accepter un vrai logo demanderait une colonne, un upload et une
+  migration : un lot à part.

@@ -1,0 +1,15 @@
+{
+  "name": "deribfy-worker-suppression-fond",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Détourage de photos produit — U2-Net via onnxruntime, auto-hébergé.",
+  "scripts": {
+    "modele": "node telecharger-modele.mjs",
+    "start": "node serveur.mjs"
+  },
+  "dependencies": {
+    "onnxruntime-node": "^1.20.1",
+    "sharp": "^0.35.3"
+  }
+}

@@ -44,6 +44,14 @@ export default function ProductManager({ slug }: { slug: string }) {
   const [countBusy, setCountBusy] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [conseils, setConseils] = useState<{ code: string; message: string }[]>([]);
+  // Le comparateur ne garde qu'UNE proposition à la fois : celle de la photo
+  // qu'on vient d'envoyer. Empiler les choix en attente rendrait l'écran
+  // illisible, et le marchand finirait par tout accepter sans regarder.
+  const [propose, setPropose] = useState<{
+    original: string;
+    amelioree: string;
+    appliquees: string[];
+  } | null>(null);
   // M2-217 — L'OUTIL PROMO : pourcentage + portée décidée par le marchand
   // (tous les produits, ou la sélection cochée). Réversible d'un clic.
   const [promoPct, setPromoPct] = useState('20');
@@ -128,6 +136,15 @@ export default function ProductManager({ slug }: { slug: string }) {
         return;
       }
       setDraft((d) => ({ ...d, images: [...d.images, data.url] }));
+      // L'ORIGINAL est retenu par défaut. L'amélioration n'est qu'une
+      // PROPOSITION : c'est le marchand qui connaît son article, pas nous.
+      if (data.amelioration?.url) {
+        setPropose({
+          original: data.url,
+          amelioree: data.amelioration.url,
+          appliquees: Array.isArray(data.amelioration.appliquees) ? data.amelioration.appliquees : [],
+        });
+      }
       // Les conseils ne BLOQUENT rien : la photo est déjà enregistrée. Ils
       // servent à ce que la PROCHAINE soit meilleure.
       const recus: { code: string; message: string }[] = Array.isArray(data.avertissements) ? data.avertissements : [];
@@ -488,6 +505,60 @@ export default function ProductManager({ slug }: { slug: string }) {
             Photo de 1200 px minimum, format carré ou vertical (4:5), produit bien éclairé
             sur fond uni. JPG, PNG, WebP ou HEIC — 15 Mo maximum.
           </p>
+
+          {/* ── COMPARATEUR AVANT / APRÈS.
+              Deux images côte à côte, et rien d'autre. Pas de curseur à faire
+              glisser : sur un téléphone, le geste est imprécis et le marchand
+              ne voit jamais les deux états en entier au même moment — or c'est
+              exactement ce qu'il doit comparer.
+              L'original reste retenu tant qu'il n'a pas choisi : ne rien faire
+              ne doit jamais modifier sa boutique. */}
+          {propose && (
+            <div className="mt-3 rounded-xl border border-white/10 p-3" style={{ background: 'rgba(255,255,255,0.02)' }}>
+              <div className="text-xs font-semibold text-white/70 mb-2">
+                Version améliorée proposée
+                {propose.appliquees.length > 0 && (
+                  <span className="font-normal text-white/40"> — {propose.appliquees.join(', ')}</span>
+                )}
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                {([['Original', propose.original], ['Améliorée', propose.amelioree]] as const).map(([titre, url]) => (
+                  <div key={titre}>
+                    <div className="text-[11px] text-white/40 mb-1">{titre}</div>
+                    {/* `contain` ici aussi : comparer deux images dont l'une est
+                        rognée ne compare rien. */}
+                    <img src={url} alt={titre} loading="lazy" className="w-full aspect-square object-contain rounded-lg bg-white/[0.04] border border-white/10" />
+                  </div>
+                ))}
+              </div>
+              <div className="flex gap-2 mt-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setDraft((d) => ({
+                      ...d,
+                      images: d.images.map((u) => (u === propose.original ? propose.amelioree : u)),
+                    }));
+                    setPropose(null);
+                  }}
+                  className="flex-1 py-2 rounded-lg text-xs font-semibold transition border"
+                  style={{ background: `${ACCENT}1a`, color: ACCENT, borderColor: `${ACCENT}33` }}
+                >
+                  Utiliser l’améliorée
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setPropose(null); }}
+                  className="flex-1 py-2 rounded-lg text-xs font-semibold border border-white/10 text-white/60 hover:text-white transition"
+                >
+                  Garder l’original
+                </button>
+              </div>
+              <p className="mt-2 text-[11px] text-white/35">
+                Votre photo d’origine est conservée dans tous les cas.
+              </p>
+            </div>
+          )}
 
           {conseils.length > 0 && (
             <ul className="mt-2 space-y-1.5">
