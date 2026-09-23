@@ -34,8 +34,8 @@ export default function VifShopSection({ site }: { site: Site }) {
             <ClickableProductCard slug={site.slug} key={i} product={p} primary={INK} lang={site.lang}>
             <TiltCard className="group rounded-3xl overflow-hidden bg-white border border-black/[0.06]">
               {p.image && (
-                <div className="relative w-full h-56 overflow-hidden">
-                  <img src={p.image} alt={p.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                <div className="relative w-full h-56 overflow-hidden bg-black/[0.04]">
+                  <img src={p.image} alt={p.name} loading="lazy" decoding="async" className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105" />
                 </div>
               )}
               <div className="p-6">

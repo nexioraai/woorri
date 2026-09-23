@@ -10,8 +10,8 @@ Dernière mise à jour : 2026-09-23.
 | 1 — identité visuelle `deribfy.com` | A | ✅ fait |
 | 2 — metadata et langue | A | ✅ fait |
 | 3 — SEO des sites marchands | B | ✅ fait |
-| 4 — chaîne d'images (upload/affichage) | B | 🔄 en cours |
-| 5 — amélioration « photo pro » | B | ⏳ à faire |
+| 4 — chaîne d'images (upload/affichage) | B | ✅ fait |
+| 5 — amélioration « photo pro » | B | 🔄 en cours |
 | 6 — vérification et livraison | A+B | ⏳ à faire |
 
 ## Journal
@@ -155,6 +155,84 @@ demande). La seule qui interrogeait la base, `/blog`, a reçu un
 donnait. Alternative propre (deux layouts racine par groupes de routes) écartée :
 **82 fichiers à déplacer** et des chemins littéraux affirmés par plusieurs
 cliquets d'architecture — hors périmètre.
+
+### Groupe 4 ✅ — chaîne d'images (B)
+
+#### Le défaut le plus grave n'était pas la performance
+
+`ProductManager.tsx` poussait le fichier **brut** dans Supabase Storage, depuis
+le navigateur. Trois conséquences, toutes réelles :
+
+1. une photo d'iPhone de 8 Mo servie telle quelle à des visiteurs en 3G ;
+2. l'orientation EXIF jamais appliquée — les photos prises en portrait
+   s'affichaient **couchées** partout où l'EXIF n'est pas honoré ;
+3. **les métadonnées publiées avec l'image** — dont les coordonnées **GPS** du
+   lieu de prise de vue, c'est-à-dire très souvent le domicile du marchand, en
+   clair, pour qui télécharge la photo.
+
+Le troisième point n'est pas un défaut de performance : c'est une **fuite de
+données personnelles**, et aucun test ne la surveillait. Elle l'est maintenant.
+
+#### Ce qui a été livré
+
+- `src/lib/images/traitement.ts` — `sharp` / libvips, **aucun service tiers** :
+  redressement EXIF puis effacement des métadonnées, variantes
+  **AVIF + WebP + JPG** en 400/800/1200/1600 px, aperçu flou en data-URI,
+  détecteur de flou (variance du laplacien, **calculé localement**).
+- `POST /api/images/upload` — garde de propriété du site, plafond 15 Mo,
+  JPG/PNG/WebP/**HEIC** (format par défaut des iPhone).
+- Consigne affichée **avant** la prise : « 1200 px minimum, carré ou 4:5, bien
+  éclairé ». Avertissements **non bloquants** après coup — la photo est déjà
+  publiée. Un marchand qui n'a que cette photo-là doit pouvoir la vendre.
+- Le marchand est **informé** quand du GPS a été retiré de sa photo.
+
+#### Ne jamais rogner — 7 fichiers corrigés
+
+`object-cover` **coupe** ce qui dépasse. Sur une photo de téléphone (3:4 ou
+9:16) dans un cadre carré, cela ampute le haut et le bas de l'article : un
+pantalon y perd ses jambes. Et c'est souvent **la seule photo** que le marchand
+ait prise.
+
+Corrigé en `object-contain` + cadre à ratio fixe + **fond neutre** (sans lui,
+`contain` laisse des bandes qui révèlent le fond du thème) sur : fiche produit,
+vignettes de la fiche, grilles `Editorial`, `Vif`, `StorefrontDense`,
+`FamilyFilter`, panier, et l'éditeur du marchand. **Les bannières et les avatars
+restent en `cover`** — les remplir y est légitime.
+
+Ajouté : **zoom plein écran** au clic sur la fiche produit (`Échap` ferme, le
+défilement de fond est gelé).
+
+#### Coût serveur mesuré — et une décision qu'il a renversée
+
+Encodage AVIF d'une photo réelle en 1200 px :
+
+| effort | 0 | 1 | 2 | 3 | 4 |
+|---|---|---|---|---|---|
+| temps | 59 ms | 124 ms | 183 ms | 393 ms | **1555 ms** |
+| poids | 103 ko | 84 ko | **80 ko** | 78 ko | 72 ko |
+
+J'avais posé `effort: 4`. **Mes propres tests l'ont fait tomber en
+dépassement**, et c'est ce qui a déclenché la mesure. Le genou de la courbe est
+à **2** : 8 ko de moins ne valent pas huit fois le temps serveur.
+
+**Chaîne complète : ~1,0 s par photo** (9 variantes, 666 ko au total) +
+15 ms pour l'aperçu et la netteté. Tient dans une requête ; `maxDuration = 60`
+pour les très grosses photos.
+
+#### Le détecteur de flou ne détectait rien
+
+Mon premier seuil (60) laissait passer une image délibérément floutée
+(variance 98). **Un détecteur qui ne détecte pas est pire qu'absent : il
+rassure.** Recalibré sur mesures :
+
+| flou appliqué | 0 | 1 | 3 | 5 | 8 | 12 | 20 |
+|---|---|---|---|---|---|---|---|
+| variance | 2183 | 2074 | 1402 | 855 | 318 | 98 | 16 |
+
+Seuil à **150**, volontairement bas : un faux positif détruit la crédibilité de
+tous les avertissements suivants. Limite assumée et écrite dans le code — un
+produit blanc sur fond blanc a une variance basse sans être flou, donc ce signal
+**avertit et ne bloque jamais**.
 
 ## Choix pris à la place du propriétaire
 

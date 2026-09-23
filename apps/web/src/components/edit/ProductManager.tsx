@@ -43,6 +43,7 @@ export default function ProductManager({ slug }: { slug: string }) {
   const [countUnits, setCountUnits] = useState('');
   const [countBusy, setCountBusy] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [conseils, setConseils] = useState<{ code: string; message: string }[]>([]);
   // M2-217 — L'OUTIL PROMO : pourcentage + portée décidée par le marchand
   // (tous les produits, ou la sélection cochée). Réversible d'un clic.
   const [promoPct, setPromoPct] = useState('20');
@@ -91,21 +92,55 @@ export default function ProductManager({ slug }: { slug: string }) {
     setCountUnits('');
   }
 
+  // ── L'ENVOI PASSE PAR `/api/images/upload`, PLUS PAR LE DÉPÔT BRUT.
+  //
+  // CE QUE FAISAIT L'ANCIEN CHEMIN : il poussait le fichier tel quel dans le
+  // stockage, depuis le navigateur. Une photo d'iPhone de 8 Mo était servie
+  // telle quelle à des visiteurs en 3G ; l'orientation EXIF n'était pas
+  // appliquée, donc les photos de portrait s'affichaient couchées ; et
+  // surtout LES MÉTADONNÉES PARTAIENT AVEC — dont les coordonnées GPS du lieu
+  // de la prise de vue, c'est-à-dire très souvent le domicile du marchand,
+  // publiées en clair pour qui télécharge l'image.
+  //
+  // Le dernier point n'est pas une question de performance : c'était une fuite
+  // de données personnelles, et elle vaut à elle seule ce détour.
   async function handleImageUpload(e: any) {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
     setMsg('');
-    const ext = file.name.split('.').pop();
-    const path = `${slug}/products/${Date.now()}.${ext}`;
-    const { error } = await supabase.storage.from('site-images').upload(path, file);
-    if (error) {
-      setMsg('Erreur upload : ' + error.message);
-      setUploading(false);
-      return;
+    setConseils([]);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { setMsg('Session expirée, reconnectez-vous.'); setUploading(false); return; }
+      const corps = new FormData();
+      corps.append('file', file);
+      corps.append('slug', slug);
+      const res = await fetch('/api/images/upload', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${session.access_token}` },
+        body: corps,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.url) {
+        setMsg(data.error || 'Envoi impossible.');
+        setUploading(false);
+        return;
+      }
+      setDraft((d) => ({ ...d, images: [...d.images, data.url] }));
+      // Les conseils ne BLOQUENT rien : la photo est déjà enregistrée. Ils
+      // servent à ce que la PROCHAINE soit meilleure.
+      const recus: { code: string; message: string }[] = Array.isArray(data.avertissements) ? data.avertissements : [];
+      if (data.analyse?.gpsRetire) {
+        recus.push({
+          code: 'gps',
+          message: 'Cette photo contenait votre position GPS. Elle a été retirée avant publication.',
+        });
+      }
+      setConseils(recus);
+    } catch {
+      setMsg('Envoi impossible. Vérifiez votre connexion.');
     }
-    const { data } = supabase.storage.from('site-images').getPublicUrl(path);
-    setDraft((d) => ({ ...d, images: [...d.images, data.publicUrl] }));
     setUploading(false);
   }
 
@@ -425,7 +460,7 @@ export default function ProductManager({ slug }: { slug: string }) {
             <div className="flex flex-wrap gap-2 mb-3">
               {draft.images.map((url) => (
                 <div key={url} className="relative">
-                  <img src={url} alt="" className="w-16 h-16 rounded-xl object-cover border border-white/10" />
+                  <img src={url} alt="" loading="lazy" className="w-16 h-16 rounded-xl object-contain bg-white/[0.04] border border-white/10" />
                   <button onClick={() => removeImage(url)} className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-black/80 text-white text-xs border border-white/20">×</button>
                 </div>
               ))}
@@ -434,8 +469,44 @@ export default function ProductManager({ slug }: { slug: string }) {
           <label className="block w-full text-center py-3 rounded-xl cursor-pointer font-semibold transition border"
             style={{ background: `${ACCENT}1a`, color: ACCENT, borderColor: `${ACCENT}33` }}>
             {uploading ? t('pm.uploading') : t('pm.addImage')}
-            <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+            {/* HEIC accepté explicitement : c'est le format par défaut des
+                iPhone, et `accept="image/*"` seul le laisse parfois de côté
+                selon le navigateur — le marchand voyait alors ses photos
+                grisées dans le sélecteur, sans comprendre pourquoi. */}
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif,image/*"
+              onChange={handleImageUpload}
+              className="hidden"
+            />
           </label>
+
+          {/* LA CONSIGNE EST DONNÉE AVANT LA PRISE, pas après le refus. Un
+              marchand qui photographie mal ne le sait pas : personne ne le lui
+              a dit. Trois phrases valent mieux qu'un message d'erreur. */}
+          <p className="mt-2 text-xs leading-relaxed text-white/40">
+            Photo de 1200 px minimum, format carré ou vertical (4:5), produit bien éclairé
+            sur fond uni. JPG, PNG, WebP ou HEIC — 15 Mo maximum.
+          </p>
+
+          {conseils.length > 0 && (
+            <ul className="mt-2 space-y-1.5">
+              {conseils.map((c) => (
+                <li
+                  key={c.code}
+                  className="text-xs leading-relaxed rounded-lg px-3 py-2 border"
+                  style={{
+                    // Ton d'information, jamais d'erreur : la photo EST publiée.
+                    background: 'rgba(255,255,255,0.03)',
+                    borderColor: 'rgba(255,255,255,0.08)',
+                    color: 'rgba(255,255,255,0.65)',
+                  }}
+                >
+                  {c.message}
+                </li>
+              ))}
+            </ul>
+          )}
         </PField>
 
         {/* ÉTAPE 8, VOLET A — DEUX cases, et non une. `published` décide de ce

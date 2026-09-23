@@ -215,6 +215,8 @@ Toutes protégées par `Authorization: Bearer <CRON_SECRET>` sauf mention contra
 
 | POST | `/api/sites/[slug]/archive` | Archive un site (remplace la suppression physique). **Bloque** tant qu'une commande n'est pas dans un statut sûr — RPC `archive_sites_if_no_blocking_orders`, tout-ou-rien. | Propriétaire |
 | GET | `/api/internal/site-sitemap/[slug]` | Sitemap XML d'un site marchand. Placé **hors** de `src/app/sites/[slug]/` délibérément : un dossier `sitemap.xml` imbriqué sous `[slug]`, avec un catch-all frère, provoquait un 404/500 propre à la production Vercel. Atteint par réécriture depuis `src/proxy.ts`, jamais appelé directement. | Public (interne) |
+| GET | `/api/internal/site-icon/[slug]` | Favicon et icônes d'un site marchand, dérivés de son nom et de sa couleur de marque (monogramme, `sharp`). `?f=ico` rend l'ICO multi-tailles, `?t=<48\|96\|180\|192\|512>` un PNG. Placé **hors** de `src/app/sites/[slug]/` pour la même raison que le sitemap. Atteint par réécriture de `/favicon.ico` depuis `src/proxy.ts`, et par les balises `<link rel="icon">`. | Public (interne) |
+| POST | `/api/images/upload` | Envoi d'une photo de produit : garde de propriété du site, plafond 15 Mo, types JPG/PNG/WebP/HEIC. Redresse selon l'EXIF puis **efface les métadonnées (GPS compris)**, produit les variantes AVIF/WebP/JPG en 400/800/1200/1600 px, un aperçu flou, et rend des avertissements non bloquants (trop petite, cadrage, flou). `sharp` uniquement, aucun service tiers. | Propriétaire du site |
 
 ## Constats (observations factuelles, non corrigées dans cette passe)
 

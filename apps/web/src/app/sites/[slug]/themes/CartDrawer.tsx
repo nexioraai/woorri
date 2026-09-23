@@ -453,7 +453,7 @@ export default function CartDrawer({
               {items.map((item, idx) => (
                 <div key={`${item.id}-${idx}`} className="flex gap-4 items-center">
                   {item.image ? (
-                    <img src={item.image} alt={item.name} className={`w-16 h-16 rounded-xl object-cover border ${s.itemImageBorder}`} />
+                    <img src={item.image} alt={item.name} loading="lazy" decoding="async" className={`w-16 h-16 rounded-xl object-contain bg-black/[0.04] border ${s.itemImageBorder}`} />
                   ) : (
                     <div className={`w-16 h-16 rounded-xl ${s.itemImagePlaceholderBg} flex items-center justify-center text-xl font-medium`} style={{ color: primary }}>
                       {item.name.charAt(0).toUpperCase()}

@@ -61,6 +61,7 @@ type VarianteFournisseur = { variant_id: string; name: string }
 
 export default function ProductPageView({ product }: { product: ProductPage }) {
   const [imgIndex, setImgIndex] = useState(0)
+  const [zoom, setZoom] = useState(false)
   // M2-202 — la taille choisie entre dans le récapitulatif WhatsApp.
   const [tailleChoisie, setTailleChoisie] = useState<string | null>(null)
   // `?? []` : un appelant d'avant M2-202 — fixture, cache, autre montage —
@@ -133,8 +134,68 @@ export default function ProductPageView({ product }: { product: ProductPage }) {
   const addLabel = CART_LABELS[product.lang] || CART_LABELS.en
   const notForSaleLabel = NOT_FOR_SALE_LABELS[product.lang] || NOT_FOR_SALE_LABELS.en
 
+  // ── ZOOM PLEIN ÉCRAN.
+  //
+  // Ce que demande vraiment un acheteur : « c'est quelle matière ? », « la
+  // couture est comment ? ». Sur une vignette de grille, ces questions restent
+  // sans réponse — et une question sans réponse ne devient pas un achat.
+  // `Échap` ferme : sur un téléphone, une image plein écran dont on ne sait pas
+  // sortir donne l'impression d'une page bloquée.
+  useEffect(() => {
+    if (!zoom) return undefined
+    const fermer = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setZoom(false)
+    }
+    window.addEventListener('keydown', fermer)
+    // Le corps ne défile plus derrière la visionneuse : sans cela, refermer
+    // ramène l'acheteur à un autre endroit de la page que celui qu'il avait
+    // quitté, et il perd le produit qu'il regardait.
+    const defilement = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      window.removeEventListener('keydown', fermer)
+      document.body.style.overflow = defilement
+    }
+  }, [zoom])
+
   return (
     <div style={{ background: tokens.modalBg, color: tokens.modalText, minHeight: '100vh' }}>
+      {zoom && imgs.length > 0 && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={product.name}
+          onClick={() => { setZoom(false) }}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 9999,
+            background: 'rgba(0,0,0,0.92)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: 16, cursor: 'zoom-out',
+          }}
+        >
+          {/* `contain` ici aussi, et c'est le point : le zoom existe pour VOIR
+              l'article en entier. Une visionneuse qui rogne ne sert à rien. */}
+          <img
+            src={imgs[imgIndex]}
+            alt={product.name}
+            style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
+          />
+          <button
+            type="button"
+            onClick={() => { setZoom(false) }}
+            aria-label={product.lang === 'fr' ? 'Fermer' : 'Close'}
+            style={{
+              position: 'absolute', top: 16, right: 16,
+              width: 44, height: 44, borderRadius: 999,
+              border: '1px solid rgba(255,255,255,0.3)',
+              background: 'rgba(0,0,0,0.5)', color: '#fff',
+              fontSize: 22, lineHeight: 1, cursor: 'pointer',
+            }}
+          >
+            ×
+          </button>
+        </div>
+      )}
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 20px' }}>
         <Link
           href={'/sites/' + product.siteSlug}
@@ -155,11 +216,30 @@ export default function ProductPageView({ product }: { product: ProductPage }) {
           <div>
             {imgs.length > 0 ? (
               <>
-                <img
-                  src={imgs[imgIndex]}
-                  alt={product.name}
-                  style={{ width: '100%', borderRadius: 16, objectFit: 'cover', aspectRatio: '1 / 1' }}
-                />
+                {/* ── L'IMAGE ENTIÈRE, JAMAIS UN MORCEAU (M2-227).
+                    Cette photo était rendue en `cover` dans un cadre carré :
+                    sur une photo de téléphone (3:4 ou 9:16), le haut et le bas
+                    de l'article étaient COUPÉS. Un pantalon y perdait ses
+                    jambes. C'est la seule image que l'acheteur verra — et
+                    souvent la seule que le marchand ait prise.
+                    Le fond neutre existe parce que `contain` laisse des bandes :
+                    sans lui, elles révéleraient le fond du thème. */}
+                <button
+                  type="button"
+                  onClick={() => { setZoom(true) }}
+                  aria-label={product.lang === 'fr' ? 'Agrandir la photo' : 'Enlarge photo'}
+                  style={{
+                    display: 'block', width: '100%', padding: 0, border: 'none',
+                    borderRadius: 16, overflow: 'hidden', cursor: 'zoom-in',
+                    background: 'rgba(128,128,128,0.08)', aspectRatio: '1 / 1',
+                  }}
+                >
+                  <img
+                    src={imgs[imgIndex]}
+                    alt={product.name}
+                    style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                  />
+                </button>
                 {imgs.length > 1 && (
                   <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
                     {imgs.map((src, i) => (
@@ -175,7 +255,16 @@ export default function ProductPageView({ product }: { product: ProductPage }) {
                           lineHeight: 0,
                         }}
                       >
-                        <img src={src} alt="" style={{ width: 64, height: 64, objectFit: 'cover', borderRadius: 6 }} />
+                        <img
+                          src={src}
+                          alt=""
+                          loading="lazy"
+                          decoding="async"
+                          style={{
+                            width: 64, height: 64, objectFit: 'contain', borderRadius: 6,
+                            background: 'rgba(128,128,128,0.08)',
+                          }}
+                        />
                       </button>
                     ))}
                   </div>

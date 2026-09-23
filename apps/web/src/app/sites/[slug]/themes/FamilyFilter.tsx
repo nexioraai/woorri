@@ -143,7 +143,7 @@ export default function FamilyFilter({
                           alt={fam}
                           fill
                           sizes="96px"
-                          className="object-cover transition-transform duration-700 group-hover:scale-110"
+                          className="object-contain transition-transform duration-700 group-hover:scale-110"
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-2xl font-semibold opacity-20" style={{ color: primary }}>
@@ -185,7 +185,7 @@ export default function FamilyFilter({
                     alt={p.name}
                     fill
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
-                    className="object-cover group-hover:scale-105 transition-transform duration-700"
+                    className="object-contain group-hover:scale-105 transition-transform duration-700"
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center text-5xl font-semibold opacity-15" style={{ color: primary }}>
