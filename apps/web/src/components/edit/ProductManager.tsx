@@ -42,16 +42,12 @@ export default function ProductManager({ slug }: { slug: string }) {
   // ÉTAPE 7 — état de l'ACTE de comptage, strictement séparé de `draft`.
   const [countUnits, setCountUnits] = useState('');
   const [countBusy, setCountBusy] = useState(false);
-  const [uploading, setUploading] = useState(false);
   const [conseils, setConseils] = useState<{ code: string; message: string }[]>([]);
-  // Le comparateur ne garde qu'UNE proposition à la fois : celle de la photo
-  // qu'on vient d'envoyer. Empiler les choix en attente rendrait l'écran
-  // illisible, et le marchand finirait par tout accepter sans regarder.
-  const [propose, setPropose] = useState<{
-    original: string;
-    amelioree: string;
-    appliquees: string[];
-  } | null>(null);
+  /** Avancement d'un envoi MULTIPLE — `null` quand rien n'est en cours. */
+  const [progression, setProgression] = useState<{ fait: number; total: number } | null>(null);
+  /** Pour chaque vignette RETOUCHÉE, l'URL de la photo d'origine. C'est ce qui
+   *  rend la retouche d'office révocable, et donc acceptable. */
+  const [originaux, setOriginaux] = useState<Record<string, string>>({});
   // M2-217 — L'OUTIL PROMO : pourcentage + portée décidée par le marchand
   // (tous les produits, ou la sélection cochée). Réversible d'un clic.
   const [promoPct, setPromoPct] = useState('20');
@@ -112,53 +108,123 @@ export default function ProductManager({ slug }: { slug: string }) {
   //
   // Le dernier point n'est pas une question de performance : c'était une fuite
   // de données personnelles, et elle vaut à elle seule ce détour.
+  // ============================================================
+  // PLUSIEURS PHOTOS D'UN COUP, ET RETOUCHÉES SANS RIEN DEMANDER.
+  //
+  // DEUX DEMANDES DU MARCHAND, et elles vont ensemble :
+  //   « il accepte seulement une image » ;
+  //   « personne ne veut passer des heures à modifier les images — s'il peut
+  //     simplement prendre une photo avec son téléphone et envoyer ».
+  //
+  // CE QUE JE FAISAIS DE TRAVERS. L'envoi ne prenait que `files[0]` : sept
+  // photos exigeaient sept allers-retours. Et chaque envoi ouvrait un
+  // comparateur BLOQUANT — une décision à prendre avant de continuer. Sept
+  // photos, sept décisions : exactement les heures qu'il refuse de passer.
+  //
+  // CE QUI CHANGE. Toutes les photos partent en une fois, et la version
+  // RETOUCHÉE est retenue D'OFFICE : c'est le réglage que veut quelqu'un qui
+  // photographie au téléphone entre deux clients. Rien ne s'interpose.
+  //
+  // CE QUI NE CHANGE PAS, ET QUI EST LA CONTREPARTIE : l'original est toujours
+  // conservé, et chaque vignette porte un « ↺ » pour y revenir. Le défaut
+  // devient révocable d'un geste, au lieu d'être une question posée sept fois.
+  //
+  // AUCUN PLAFOND DE NOMBRE, ni minimum ni maximum : le marchand sait combien
+  // de vues son article demande. Le seul plafond est celui de la TAILLE d'un
+  // fichier (15 Mo), et il protège l'envoi lui-même, pas un quota.
+  //
+  // ENVOI SÉQUENTIEL, et c'est délibéré : sept requêtes simultanées depuis une
+  // connexion 3G se gênent l'une l'autre et échouent ensemble. Une par une,
+  // avec l'avancement affiché — et une photo qui échoue n'emporte pas les autres.
+  // ============================================================
   async function handleImageUpload(e: any) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setUploading(true);
+    const fichiers: File[] = Array.from(e.target.files ?? []);
+    if (fichiers.length === 0) return;
+    // Le champ est vidé tout de suite : sans cela, renvoyer LE MÊME fichier
+    // juste après ne déclenche aucun `change`, et le marchand croit l'envoi mort.
+    e.target.value = '';
+
     setMsg('');
     setConseils([]);
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) { setMsg('Session expirée, reconnectez-vous.'); setUploading(false); return; }
-      const corps = new FormData();
-      corps.append('file', file);
-      corps.append('slug', slug);
-      const res = await fetch('/api/images/upload', {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${session.access_token}` },
-        body: corps,
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok || !data.url) {
-        setMsg(data.error || 'Envoi impossible.');
-        setUploading(false);
-        return;
-      }
-      setDraft((d) => ({ ...d, images: [...d.images, data.url] }));
-      // L'ORIGINAL est retenu par défaut. L'amélioration n'est qu'une
-      // PROPOSITION : c'est le marchand qui connaît son article, pas nous.
-      if (data.amelioration?.url) {
-        setPropose({
-          original: data.url,
-          amelioree: data.amelioration.url,
-          appliquees: Array.isArray(data.amelioration.appliquees) ? data.amelioration.appliquees : [],
-        });
-      }
-      // Les conseils ne BLOQUENT rien : la photo est déjà enregistrée. Ils
-      // servent à ce que la PROCHAINE soit meilleure.
-      const recus: { code: string; message: string }[] = Array.isArray(data.avertissements) ? data.avertissements : [];
-      if (data.analyse?.gpsRetire) {
-        recus.push({
-          code: 'gps',
-          message: 'Cette photo contenait votre position GPS. Elle a été retirée avant publication.',
-        });
-      }
-      setConseils(recus);
-    } catch {
-      setMsg('Envoi impossible. Vérifiez votre connexion.');
+    setProgression({ fait: 0, total: fichiers.length });
+
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      setMsg('Session expirée, reconnectez-vous.');
+      setProgression(null);
+      return;
     }
-    setUploading(false);
+
+    const conseilsRecus = new Map<string, string>();
+    const echecs: string[] = [];
+
+    for (const [i, file] of fichiers.entries()) {
+      setProgression({ fait: i, total: fichiers.length });
+      try {
+        const corps = new FormData();
+        corps.append('file', file);
+        corps.append('slug', slug);
+        const res = await fetch('/api/images/upload', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${session.access_token}` },
+          body: corps,
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.url) {
+          echecs.push(`${file.name} : ${String(data.error ?? 'envoi impossible')}`);
+          continue;
+        }
+
+        // La RETOUCHÉE est retenue d'office quand elle existe ; l'original
+        // reste connu, donc le geste est réversible.
+        const affichee: string = data.amelioration?.url ?? data.url;
+        if (data.amelioration?.url) {
+          setOriginaux((o) => ({ ...o, [affichee]: data.url }));
+        }
+        setDraft((d) => ({ ...d, images: [...d.images, affichee] }));
+
+        // Les conseils sont DÉDOUBLONNÉS : sept photos sombres ne doivent pas
+        // produire sept fois le même message — on cesserait de les lire.
+        for (const c of (Array.isArray(data.avertissements) ? data.avertissements : []) as {
+          code: string;
+          message: string;
+        }[]) {
+          conseilsRecus.set(c.code, c.message);
+        }
+        if (data.analyse?.gpsRetire) {
+          conseilsRecus.set(
+            'gps',
+            'Certaines photos contenaient votre position GPS. Elle a été retirée avant publication.',
+          );
+        }
+      } catch {
+        echecs.push(`${file.name} : connexion interrompue`);
+      }
+    }
+
+    setProgression(null);
+    setConseils([...conseilsRecus].map(([code, message]) => ({ code, message })));
+    // Un échec PARTIEL se dit : sans cela, le marchand compte ses vignettes et
+    // ne comprend pas pourquoi il en manque une.
+    if (echecs.length > 0) {
+      setMsg(
+        echecs.length === fichiers.length
+          ? 'Aucune photo n’a pu être envoyée. Vérifiez votre connexion.'
+          : `${String(echecs.length)} photo(s) sur ${String(fichiers.length)} n’ont pas pu être envoyées.`,
+      );
+    }
+  }
+
+  /** Revenir à la photo d'origine pour UNE vignette. */
+  function revenirOriginal(affichee: string) {
+    const origine = originaux[affichee];
+    if (!origine) return;
+    setDraft((d) => ({ ...d, images: d.images.map((u) => (u === affichee ? origine : u)) }));
+    setOriginaux((o) => {
+      const copie = { ...o };
+      delete copie[affichee];
+      return copie;
+    });
   }
 
   function removeImage(url: string) {
@@ -478,22 +544,46 @@ export default function ProductManager({ slug }: { slug: string }) {
               {draft.images.map((url) => (
                 <div key={url} className="relative">
                   <img src={url} alt="" loading="lazy" className="w-16 h-16 rounded-xl object-contain bg-white/[0.04] border border-white/10" />
-                  <button onClick={() => removeImage(url)} className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-black/80 text-white text-xs border border-white/20">×</button>
+                  <button onClick={() => removeImage(url)} title="Retirer" className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-black/80 text-white text-xs border border-white/20">×</button>
+                  {/* ── LE RETOUR À L'ORIGINAL TIENT EN UN GESTE, SUR LA VIGNETTE.
+                      La retouche est appliquée d'office : c'est ce que veut
+                      quelqu'un qui photographie au téléphone entre deux clients.
+                      Mais « d'office » n'est acceptable QUE si c'est révocable —
+                      et révocable ici, sur la photo qu'on regarde, pas dans un
+                      écran de réglages qu'il faudra retrouver.
+                      N'apparaît que si une version d'origine existe vraiment. */}
+                  {originaux[url] && (
+                    <button
+                      onClick={() => { revenirOriginal(url); }}
+                      title="Revenir à ma photo d’origine"
+                      className="absolute -bottom-1.5 -right-1.5 w-5 h-5 rounded-full bg-black/80 text-white text-[10px] leading-none border border-white/20"
+                    >
+                      ↺
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
           )}
           <label className="block w-full text-center py-3 rounded-xl cursor-pointer font-semibold transition border"
             style={{ background: `${ACCENT}1a`, color: ACCENT, borderColor: `${ACCENT}33` }}>
-            {uploading ? t('pm.uploading') : t('pm.addImage')}
-            {/* HEIC accepté explicitement : c'est le format par défaut des
+            {progression
+              ? `Envoi ${String(progression.fait + 1)} / ${String(progression.total)}…`
+              : t('pm.addImage')}
+            {/* `multiple` : le marchand choisit SES photos d'un coup. Sans lui,
+                sept vues d'un article exigeaient sept allers-retours.
+                AUCUN PLAFOND DE NOMBRE, ni minimum ni maximum — il sait mieux
+                que nous combien de vues son article demande.
+                HEIC accepté explicitement : c'est le format par défaut des
                 iPhone, et `accept="image/*"` seul le laisse parfois de côté
                 selon le navigateur — le marchand voyait alors ses photos
                 grisées dans le sélecteur, sans comprendre pourquoi. */}
             <input
               type="file"
+              multiple
               accept="image/jpeg,image/png,image/webp,image/heic,image/heif,.heic,.heif,image/*"
               onChange={handleImageUpload}
+              disabled={progression !== null}
               className="hidden"
             />
           </label>
@@ -502,8 +592,12 @@ export default function ProductManager({ slug }: { slug: string }) {
               marchand qui photographie mal ne le sait pas : personne ne le lui
               a dit. Trois phrases valent mieux qu'un message d'erreur. */}
           <p className="mt-2 text-xs leading-relaxed text-white/40">
-            Photo de 1200 px minimum, format carré ou vertical (4:5), produit bien éclairé
-            sur fond uni. JPG, PNG, WebP ou HEIC — 15 Mo maximum.
+            Choisissez autant de photos que vous voulez, d’un seul coup. Elles sont
+            redressées, allégées et retouchées automatiquement — le « ↺ » sur une
+            vignette revient à votre photo d’origine, toujours conservée.
+            <br />
+            Pour un meilleur rendu : 1200 px, format carré ou vertical, produit bien
+            éclairé sur fond uni. JPG, PNG, WebP ou HEIC, 15 Mo par photo.
           </p>
 
           {/* ── COMPARATEUR AVANT / APRÈS.
@@ -513,53 +607,6 @@ export default function ProductManager({ slug }: { slug: string }) {
               exactement ce qu'il doit comparer.
               L'original reste retenu tant qu'il n'a pas choisi : ne rien faire
               ne doit jamais modifier sa boutique. */}
-          {propose && (
-            <div className="mt-3 rounded-xl border border-white/10 p-3" style={{ background: 'rgba(255,255,255,0.02)' }}>
-              <div className="text-xs font-semibold text-white/70 mb-2">
-                Version améliorée proposée
-                {propose.appliquees.length > 0 && (
-                  <span className="font-normal text-white/40"> — {propose.appliquees.join(', ')}</span>
-                )}
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                {([['Original', propose.original], ['Améliorée', propose.amelioree]] as const).map(([titre, url]) => (
-                  <div key={titre}>
-                    <div className="text-[11px] text-white/40 mb-1">{titre}</div>
-                    {/* `contain` ici aussi : comparer deux images dont l'une est
-                        rognée ne compare rien. */}
-                    <img src={url} alt={titre} loading="lazy" className="w-full aspect-square object-contain rounded-lg bg-white/[0.04] border border-white/10" />
-                  </div>
-                ))}
-              </div>
-              <div className="flex gap-2 mt-3">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setDraft((d) => ({
-                      ...d,
-                      images: d.images.map((u) => (u === propose.original ? propose.amelioree : u)),
-                    }));
-                    setPropose(null);
-                  }}
-                  className="flex-1 py-2 rounded-lg text-xs font-semibold transition border"
-                  style={{ background: `${ACCENT}1a`, color: ACCENT, borderColor: `${ACCENT}33` }}
-                >
-                  Utiliser l’améliorée
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { setPropose(null); }}
-                  className="flex-1 py-2 rounded-lg text-xs font-semibold border border-white/10 text-white/60 hover:text-white transition"
-                >
-                  Garder l’original
-                </button>
-              </div>
-              <p className="mt-2 text-[11px] text-white/35">
-                Votre photo d’origine est conservée dans tous les cas.
-              </p>
-            </div>
-          )}
-
           {conseils.length > 0 && (
             <ul className="mt-2 space-y-1.5">
               {conseils.map((c) => (
