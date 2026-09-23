@@ -85,11 +85,31 @@ export function urlProduitDepuisLaPage(
  * `texte` tolère un libellé de prix (« 28500.00 XAF », « 25 000 - 80 000
  * FCFA ») pour les cartes de collection qui n'ont pas de champ devise.
  */
+/**
+ * Les écritures RÉELLES du franc CFA, telles que les marchands les tapent.
+ *
+ * DÉFAUT MESURÉ le 2026-09-23 sur `chanorfie.com` : le marchand ajoute
+ * « Chaussures homme », saisit la devise **`CFA`**, et ses boutons WhatsApp
+ * disparaissent — alors que les produits générés, en `XAF`, les gardent. Du
+ * point de vue du marchand, deux produits identiques se comportent
+ * différemment sans raison visible.
+ *
+ * Il n'avait pas tort : `CFA` EST le franc CFA. C'est la porte qui était trop
+ * étroite. Elle ne connaissait que le code ISO, alors que personne ne tape un
+ * code ISO — on tape ce qu'on lit sur les étiquettes.
+ *
+ * L'INVARIANT TIENT : on reconnaît une DEVISE, jamais un pays. Aucun nom de
+ * pays n'entre ici, et aucune règle ne se déclenche sur « Tchad ».
+ */
+const ECRITURES_FRANC_CFA = /^(XAF|XOF|F?\s*CFA|FRANCS?\s*CFA|CFA\s*FRANCS?)$/u
+
 export function marcheSansCarte(currency?: string | null, texte?: string | null): boolean {
-  const c = (currency ?? '').trim().toUpperCase()
-  if (c === 'XAF' || c === 'XOF') return true
+  const c = (currency ?? '').trim().toUpperCase().replace(/\s+/gu, ' ')
+  if (ECRITURES_FRANC_CFA.test(c)) return true
+  // Repli sur le LIBELLÉ de prix, quand la devise n'est pas renseignée : un
+  // prix affiché « 20 000 FCFA » dit la même chose qu'un code.
   const t = (texte ?? '').toUpperCase()
-  return /\b(XAF|XOF|FCFA|F CFA)\b/.test(t)
+  return /\b(XAF|XOF|FCFA|F CFA|CFA)\b/u.test(t)
 }
 
 

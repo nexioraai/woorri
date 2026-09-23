@@ -424,9 +424,29 @@ export default function ProductPageView({ product }: { product: ProductPage }) {
                 paiement — elle ne le voit pas passer ; la confirmation est
                 humaine, par la capture envoyée au vendeur.
                 ============================================================ */}
-            {/* M2-207 — porte du marché : XAF/XOF seulement. Les marchés
-                carte (Stripe) gardent leur parcours, intact. */}
-            {product.forSale && product.whatsapp && marcheSansCarte(product.currency) && (
+            {/* ── M2-230 : `forSale` NE GOUVERNE PLUS CE BLOC, ET C'ÉTAIT INVERSÉ.
+                
+                `for_sale` décide de ce que l'acheteur peut PAYER — c'est la
+                porte du panier et de la carte. Or ce bloc-ci est le parcours
+                des marchés SANS carte : justement ceux où l'on ne paie pas en
+                ligne. Exiger `for_sale` revenait donc à cacher WhatsApp
+                précisément là où il est le seul moyen d'acheter.
+
+                MESURÉ le 2026-09-23 : **103 produits sur 105** de la
+                plateforme ont `for_sale = false`. Le bloc était donc invisible
+                sur 98 % du catalogue — y compris sur les produits en `XAF`,
+                pas seulement sur celui du marchand.
+
+                ET LA MODALE DES COLLECTIONS, ELLE, N'EXIGEAIT RIEN DE TEL
+                (`MerchantProductModal`, `p.whatsapp && marcheSansCarte(...)`).
+                D'où le symptôme signalé : boutons présents dans la collection,
+                absents sur la fiche. Deux surfaces, une seule règle — c'est
+                désormais vrai, et un cliquet le garde.
+
+                Le libellé de prix est passé en repli, comme dans la modale :
+                un prix « 20 000 FCFA » dit la devise quand le champ ne la dit
+                pas. */}
+            {product.whatsapp && marcheSansCarte(product.currency, priceLabel) && (
               <div
                 style={{
                   marginTop: 20,
