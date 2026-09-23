@@ -67,6 +67,24 @@ jobs:
         continue-on-error: true
         run: npx vitest run --reporter=default --reporter=json --outputFile=vitest-results.json
 
+      # ── M2-229 : UN TEST LENT SE VOIT AVANT LE CI, PLUS PENDANT.
+      #
+      # DEUX ROUGES PAYES A DEUX JOURS D INTERVALLE, meme cause : une suite
+      # verte en local et rouge ici. Le 09-21 une sonde RESEAU reelle (8 s de
+      # delai contre 5 s de budget) ; le 09-23 douze encodages d images
+      # (4380 ms, soit 10 % de marge). Dans les deux cas la machine qui
+      # VERIFIE n est pas celle qui JUGE : un portable est rapide et connecte,
+      # un runner partage est lent et cloisonne.
+      #
+      # `vitest.setup.ts` a ferme l axe RESEAU. Cette etape ferme l axe TEMPS :
+      # tout cas consommant plus du TIERS de son budget est refuse, sauf s il
+      # figure au registre AVEC SA RAISON. Elle relit le rapport JSON que
+      # l etape `test` produit deja -- aucun second passage de la suite.
+      - name: Marge des tests (aucun test au bord de son delai)
+        id: test_marge
+        continue-on-error: true
+        run: node scripts/verifier-marge-tests.mjs
+
       - name: Build
         id: build
         continue-on-error: true
@@ -240,8 +258,8 @@ jobs:
           if [ "${FIDELITE_BLOQUANTE}" = "true" ] && [ "${{ steps.app_fidelite.outcome }}" != "success" ]; then
             fidelite_ko=true
           fi
-          if [ "$fidelite_ko" = "true" ] || [ "${{ steps.typecheck.outcome }}" != "success" ] || [ "${{ steps.test.outcome }}" != "success" ] || [ "${{ steps.build.outcome }}" != "success" ] || [ "${{ steps.apidocs.outcome }}" != "success" ] || [ "${{ steps.pkg_typecheck.outcome }}" != "success" ] || [ "${{ steps.pkg_lint.outcome }}" != "success" ] || [ "${{ steps.pkg_test.outcome }}" != "success" ] || [ "${{ steps.app_compile.outcome }}" != "success" ] || [ "${{ steps.app_rendu.outcome }}" != "success" ] || [ "${{ steps.app_controles.outcome }}" != "success" ] || [ "${{ steps.app_session.outcome }}" != "success" ] || [ "${{ steps.app_navigation.outcome }}" != "success" ] || [ "${{ steps.app_composition.outcome }}" != "success" ] || [ "${{ steps.app_invariants.outcome }}" != "success" ]; then
-            echo "Étape(s) en échec — typecheck=${{ steps.typecheck.outcome }} test=${{ steps.test.outcome }} build=${{ steps.build.outcome }} apidocs=${{ steps.apidocs.outcome }} pkg_typecheck=${{ steps.pkg_typecheck.outcome }} pkg_lint=${{ steps.pkg_lint.outcome }} pkg_test=${{ steps.pkg_test.outcome }} app_compile=${{ steps.app_compile.outcome }} app_rendu=${{ steps.app_rendu.outcome }} app_controles=${{ steps.app_controles.outcome }} app_session=${{ steps.app_session.outcome }} app_navigation=${{ steps.app_navigation.outcome }} app_composition=${{ steps.app_composition.outcome }} app_fidelite=${{ steps.app_fidelite.outcome }} app_invariants=${{ steps.app_invariants.outcome }}"
+          if [ "$fidelite_ko" = "true" ] || [ "${{ steps.typecheck.outcome }}" != "success" ] || [ "${{ steps.test.outcome }}" != "success" ] || [ "${{ steps.test_marge.outcome }}" != "success" ] || [ "${{ steps.build.outcome }}" != "success" ] || [ "${{ steps.apidocs.outcome }}" != "success" ] || [ "${{ steps.pkg_typecheck.outcome }}" != "success" ] || [ "${{ steps.pkg_lint.outcome }}" != "success" ] || [ "${{ steps.pkg_test.outcome }}" != "success" ] || [ "${{ steps.app_compile.outcome }}" != "success" ] || [ "${{ steps.app_rendu.outcome }}" != "success" ] || [ "${{ steps.app_controles.outcome }}" != "success" ] || [ "${{ steps.app_session.outcome }}" != "success" ] || [ "${{ steps.app_navigation.outcome }}" != "success" ] || [ "${{ steps.app_composition.outcome }}" != "success" ] || [ "${{ steps.app_invariants.outcome }}" != "success" ]; then
+            echo "Étape(s) en échec — typecheck=${{ steps.typecheck.outcome }} test=${{ steps.test.outcome }} test_marge=${{ steps.test_marge.outcome }} build=${{ steps.build.outcome }} apidocs=${{ steps.apidocs.outcome }} pkg_typecheck=${{ steps.pkg_typecheck.outcome }} pkg_lint=${{ steps.pkg_lint.outcome }} pkg_test=${{ steps.pkg_test.outcome }} app_compile=${{ steps.app_compile.outcome }} app_rendu=${{ steps.app_rendu.outcome }} app_controles=${{ steps.app_controles.outcome }} app_session=${{ steps.app_session.outcome }} app_navigation=${{ steps.app_navigation.outcome }} app_composition=${{ steps.app_composition.outcome }} app_fidelite=${{ steps.app_fidelite.outcome }} app_invariants=${{ steps.app_invariants.outcome }}"
             exit 1
           fi
           echo "Toutes les étapes bloquantes ont réussi."

@@ -82,7 +82,8 @@ describe('vie privée — ce qui ne doit JAMAIS sortir avec l’image', () => {
   })
 
   it('AUCUNE variante servie ne porte de métadonnées', async () => {
-    const source = await sharp(await photo(1400, 1400))
+    // 400 px : la présence de métadonnées ne dépend pas de la taille de l'image.
+    const source = await sharp(await photo(400, 400))
       .withMetadata({ exif: { IFD0: { Copyright: 'confidentiel' } } })
       .jpeg()
       .toBuffer()
@@ -95,7 +96,17 @@ describe('vie privée — ce qui ne doit JAMAIS sortir avec l’image', () => {
 
 describe('variantes servies', () => {
   it('les trois formats sont produits, du plus efficace au plus compatible', async () => {
-    const v = await produireVariantes(await photo(1600, 1600))
+    // ── 400 px, ET PAS 1600. CE TEST EST TOMBÉ EN CI POUR CETTE RAISON.
+    //
+    // Il n'affirme QUE l'ensemble des formats émis. Avec une source de 1600 px
+    // il encodait 12 images : 2933 ms MESURÉS, soit 4380 ms pour le test —
+    // 10 % de marge avant le délai de 5 s. Sur un runner GitHub, plus lent, sa
+    // chute était garantie, pas malchanceuse. À 400 px : 112 ms mesurés.
+    //
+    // LA RÈGLE QUI MANQUAIT : une fixture se dimensionne à ce que le test
+    // PROUVE, jamais à ce qui « fait plus réaliste ». Une image plus grande
+    // n'ajoutait ici aucune assertion — seulement du temps.
+    const v = await produireVariantes(await photo(400, 400))
     expect([...new Set(v.map((x) => x.format))]).toEqual([...FORMATS])
   })
 
@@ -121,7 +132,9 @@ describe('variantes servies', () => {
   })
 
   it('l’AVIF est PLUS LÉGER que le JPEG à largeur égale — sinon il ne sert à rien', async () => {
-    const v = await produireVariantes(await photo(1200, 1200))
+    // 800 px exactement : c'est la largeur COMPARÉE. Au-delà, on encoderait des
+    // variantes que ce test ne regarde jamais.
+    const v = await produireVariantes(await photo(800, 800))
     const avif = v.find((x) => x.format === 'avif' && x.largeur === 800)
     const jpeg = v.find((x) => x.format === 'jpeg' && x.largeur === 800)
     expect(avif).toBeDefined()
@@ -134,7 +147,8 @@ describe('aperçu flou', () => {
   it('tient dans le HTML — quelques centaines d’octets, pas plus', async () => {
     // S'il grossissait, il coûterait la bande passante qu'il est censé
     // économiser : le visiteur en 3G paierait deux fois pour la même image.
-    const a = await apercuFlou(await photo(1600, 1600))
+    // `apercuFlou` réduit à 16 px : la source n'a pas besoin d'être grande.
+    const a = await apercuFlou(await photo(600, 600))
     expect(a.startsWith('data:image/webp;base64,')).toBe(true)
     expect(a.length).toBeLessThan(2000)
   })
@@ -142,7 +156,8 @@ describe('aperçu flou', () => {
 
 describe('netteté — le seuil est calibré, pas estimé', () => {
   it('une photo nette n’est PAS signalée', async () => {
-    const r = await flou(await photo(1200, 1200))
+    // `flou` mesure sur une miniature de 256 px — même remarque.
+    const r = await flou(await photo(600, 600))
     expect(r.variance).toBeGreaterThan(SEUIL_FLOU)
     expect(r.floue).toBe(false)
   })
@@ -151,7 +166,7 @@ describe('netteté — le seuil est calibré, pas estimé', () => {
     // Le premier seuil que j'avais posé (60) ne détectait rien : une image
     // délibérément floutée rendait 98 et passait pour nette. Un détecteur qui
     // ne détecte pas est pire qu'absent — il rassure.
-    const floutee = await sharp(await photo(1200, 1200)).blur(14).jpeg().toBuffer()
+    const floutee = await sharp(await photo(600, 600)).blur(14).jpeg().toBuffer()
     const r = await flou(floutee)
     expect(r.variance).toBeLessThan(SEUIL_FLOU)
     expect(r.floue).toBe(true)

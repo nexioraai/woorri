@@ -14,6 +14,7 @@ Dernière mise à jour : 2026-09-23.
 | 5 — amélioration « photo pro » | B | ✅ fait (une réserve nommée) |
 | 6 — vérification et livraison | A+B | ✅ fait |
 | 7 — `/api/shop/upload-design` (demandé après coup) | B | ✅ fait |
+| 8 — déploiement + réindexation | A+B | ✅ fait |
 
 ## Journal
 
@@ -394,6 +395,73 @@ contentait : elle ne décodait jamais. Rendues **réelles** — elles parcourent
 désormais le chemin complet, décodage compris. Deux cas gardent des octets nuls
 **à dessein** : le SVG (refusé par l'allowlist MIME) et le dépassement de
 taille (refusé avant tout décodage).
+
+### Groupe 8 ✅ — déployé, vérifié en production, et Google connecté
+
+#### Déploiement
+
+`fix/xss-jsonld` fusionnée dans `main` en avance rapide (12 commits, 0 conflit),
+déployée. **Mesuré en production, pas supposé :**
+
+| | avant | après |
+|---|---|---|
+| favicon `www.deribfy.com` | 25 931 o (Vercel) | **2 486 o** |
+| favicon `chanorfie.com` | 25 931 o | **900 o** |
+| favicon `alloufshop.com` | 25 931 o | **901 o** |
+| favicon `yiaglobalcommodities.com` | 25 931 o | **877 o** |
+| `lang` de `yiaglobalcommodities.com` | `fr` (faux) | **`en`**, dans le HTML servi |
+| titre `/privacy` | celui de l'accueil | « Politique de confidentialité — Deribfy » |
+| titre `/cookies` | celui de l'accueil | « Politique de cookies — Deribfy » |
+| titre `/terms` | celui de l'accueil | « Conditions générales d'utilisation — Deribfy » |
+
+Les trois favicons de boutique ont des **empreintes toutes différentes** :
+chacun est bien dérivé de sa propre marque.
+
+#### Search Console — les trois domaines sont connectés
+
+Découverte pendant l'audit : le produit a **déjà** une automatisation
+(`/api/cron/domain-indexing-byod`, cadence `45 */2 * * *`). Elle était
+**bloquée** sur deux domaines, faute du TXT dans leur zone DNS :
+
+| domaine | avant | après TXT | tentatives |
+|---|---|---|---|
+| `alloufshop.com` | `token_issued` | **`sitemap_submitted`** | 16 → 17 **sur 20** |
+| `chanorfie.com` | `token_issued` | **`sitemap_submitted`** | 15 → 16 |
+| `yiaglobalcommodities.com` | `sitemap_submitted` | inchangé | 2 |
+
+Le cron de 08:45 UTC a fait vérification **et** soumission du sitemap d'un seul
+passage, sans erreur. Il restait **3 tentatives** de marge sur `alloufshop.com`
+avant abandon définitif.
+
+### 🔴 Un défaut que j'ai introduit, et la classe que j'avais mal fermée
+
+Après le déploiement, le CI sur `main` était rouge sur **deux** étapes, pas une :
+`app_fidelite` (attendu, dette arbitrée) **et `test`** —
+`lib/images/traitement.test.ts` → « Test timed out in 5000ms ».
+
+**Mesuré** : 4380 ms en local pour un délai de 5000. **10 % de marge.** Sur un
+runner GitHub, plus lent, sa chute était garantie.
+
+**C'est la deuxième fois en deux jours**, et j'avais déjà écrit la leçon dans
+mon propre commit M2-226 : *« masquer ce module-là ferme UN chemin »*. J'avais
+fermé l'axe **réseau** et déclaré la classe close. La vraie classe n'est pas le
+réseau : c'est **« un test dont le résultat dépend de la machine qui
+l'exécute »**. Le temps processeur en fait partie.
+
+**Corrigé à la racine, pas par un délai relevé** : chaque fixture est
+dimensionnée à ce que son test prouve. `produireVariantes` mesuré à 112 ms en
+400 px contre 2933 ms en 1600 px — et ce test n'affirmait que l'*ensemble des
+formats*. **4380 ms → 157 ms**, marge ×32.
+
+**Et la classe est maintenant visible en local** : `scripts/verifier-marge-tests.mjs`
+refuse tout cas consommant plus du **tiers** de son budget, sauf inscription au
+registre **avec sa raison**. Il relit le rapport JSON que l'étape `test` produit
+déjà — aucun second passage de la suite. Étape CI **bloquante**, éprouvée dans
+les deux sens (remettre la grosse fixture → 3257 ms → refusé).
+
+Le registre distingue ce que le cliquet ne sait pas voir seul : un test qui
+**attend** un minuteur (`resolveShipping`, 3000 ms ici et partout) d'un test qui
+**calcule** (le mien, qui triple sur machine lente).
 
 ## Choix pris à la place du propriétaire
 

@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "check:api-docs": "node scripts/check-api-docs.mjs"
+    "check:api-docs": "node scripts/check-api-docs.mjs",
+    "test:marge": "vitest run --reporter=json --outputFile=vitest-results.json && node scripts/verifier-marge-tests.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.121.0",
