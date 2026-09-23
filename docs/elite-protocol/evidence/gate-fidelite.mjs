@@ -120,6 +120,51 @@ if (registrePerime > 0) {
 }
 
 // ── F1 / F4 / intention due, document par document.
+// ── ARBITRAGE PROPRIÉTAIRE 2026-09-22 (M2-224) — LE CORPUS v2 EST MESURÉ,
+// PUBLIÉ, SOUS CLIQUET ; IL NE BLOQUE PLUS.
+//
+// LE FAIT, déjà inscrit dans `D-125` : « la gate `fidelite` ne peut PAS
+// devenir verte quelle que soit l'action sur v3 — les 12 documents v2 gelés
+// sont rouges par construction ». Leurs promesses mortes sont RÉELLES
+// (mesuré : 136 cibles qui existent et ne fonctionnent pas), et le corpus est
+// GELÉ : il sert de base de comparaison historique et n'est pas retouchable.
+//
+// CE QUE CE ROUGE PERMANENT A COÛTÉ, et c'est mesuré : le 2026-09-22, F1 est
+// passé de 12 à 13 — `v3/kaviva-spa` entrait en échec — et PERSONNE ne l'a vu,
+// parce que la gate était déjà rouge. (C'était un faux rouge, corrigé par
+// EP-204.) Un cliquet dont le rouge ne peut jamais tomber cesse de signaler :
+// il ne protège plus rien et masque ce qui arrive après lui.
+//
+// CE N'EST PAS UN ABANDON DE MESURE. v2 reste listé, mesuré et publié
+// INTÉGRALEMENT ci-dessous. Son état devient un REGISTRE par document :
+// il ne peut jamais empirer, et un document qui disparaît est signalé —
+// sans quoi retirer un document ferait « baisser » la dette. C'est le même
+// patron que le cliquet des contrôles fantômes, et pour la même raison : un
+// corpus gelé se garde par NON-RÉGRESSION, jamais par pass/fail.
+//
+// LA GATE BLOQUANTE NE JUGE PLUS QUE v3 — ce que le moteur produit
+// AUJOURD'HUI, et qui peut changer. C'est là que son rouge veut dire quelque
+// chose.
+//
+// ÉTAT MESURÉ LE 2026-09-22 — vivantes / déclarées, par document.
+const BASE_GELEE = {
+  "v2/agence-immo": [6, 15],
+  "v2/billetterie-concerts": [2, 15],
+  "v2/boutique-mode": [5, 16],
+  "v2/coach-fitness": [6, 16],
+  "v2/cours-cuisine": [5, 20],
+  "v2/livraison-fruits": [7, 24],
+  "v2/plombier-urgence": [9, 21],
+  "v2/resto-quartier": [6, 18],
+  "v2/salon-coiffure": [5, 16],
+  "v2/suivi-chantier": [8, 15],
+  "v2/toiletteur-chiens": [8, 15],
+  "v2/tuteur-langues": [4, 16],
+};
+const gele = (nom) => Object.prototype.hasOwnProperty.call(BASE_GELEE, nom);
+const regressionsGelees = [];
+const vusGeles = new Set();
+
 console.log("\n  document                    intention    F1 promesses        F4 couverture");
 console.log("  " + "─".repeat(92));
 let sansIntention = 0;
@@ -150,8 +195,26 @@ for (const [nom, brut] of documents) {
   const f1 = evaluatePromises(air, ENV);
   const f4 = evaluateIntentCoverage(air, ENV);
   const refutes = f4.verdicts.filter((v) => v.state === "motif_refute").length;
-  motifsRefutes += refutes;
-  if (!f1.passed) f1KO++;
+  // M2-224 — un document GELÉ ne compte plus dans les échecs bloquants ; il
+  // est confronté à son propre registre. Tout le reste de sa ligne est
+  // affiché à l'identique : aucune donnée n'est masquée.
+  if (gele(nom)) {
+    vusGeles.add(nom);
+    const [vivantesBase, declareesBase] = BASE_GELEE[nom];
+    if (f1.vivantes < vivantesBase) {
+      regressionsGelees.push(
+        `${nom} : ${f1.vivantes} promesses vivantes, registre ${vivantesBase} — RÉGRESSION`,
+      );
+    }
+    if (f1.declared !== declareesBase) {
+      regressionsGelees.push(
+        `${nom} : ${f1.declared} promesses déclarées, registre ${declareesBase} — un corpus GELÉ ne change pas`,
+      );
+    }
+  } else {
+    motifsRefutes += refutes;
+    if (!f1.passed) f1KO++;
+  }
   // B (arbitrage 2026-09-04) — F4 mesure « tout besoin EXPRIMÉ est satisfait
   // ou déclaré inexprimable » : un artefact gelé antérieur à 1.2.0, que ce
   // fichier reconnaît déjà « légitimement dépourvu » d'intention (l. 134-135
@@ -161,7 +224,7 @@ for (const [nom, brut] of documents) {
   // sanctionnait le même fait —, pas une exigence de la ROADMAP.
   // F1 RESTE INCHANGÉ sur ces mêmes documents (l. 154) : leurs promesses
   // mortes sont RÉELLES, mesurées, et demeurent un échec bloquant.
-  if (!f4.passed && !horsContrat) f4KO++;
+  if (!f4.passed && !horsContrat && !gele(nom)) f4KO++;
   console.log(
     `  ${nom.padEnd(27)} ${colonneIntention} ` +
       `${f1.passed ? "🟢" : "🔴"} ${`${f1.vivantes}/${f1.declared} vivantes`.padEnd(18)}` +
@@ -174,7 +237,20 @@ for (const [nom, brut] of documents) {
 }
 
 console.log("\n" + "─".repeat(96));
+// AUCUN SILENCE SUR LE CORPUS GELÉ : son registre est publié à chaque run,
+// et un document qui en disparaît est nommé — sinon le retirer ferait
+// « baisser » la dette sans que rien ne l'ait réparée.
+const gelesDisparus = Object.keys(BASE_GELEE).filter((n) => !vusGeles.has(n));
+console.log(
+  `  CORPUS GELÉ (v2) — mesuré et publié, NON BLOQUANT (M2-224) : ${vusGeles.size}/${Object.keys(BASE_GELEE).length} documents au registre, ` +
+    `${regressionsGelees.length} régression(s)` +
+    (gelesDisparus.length > 0 ? ` · ${gelesDisparus.length} DISPARU(S) : ${gelesDisparus.join(", ")}` : ""),
+);
 const echecs = [];
+for (const r of regressionsGelees) echecs.push(`CORPUS GELÉ : ${r}`);
+if (gelesDisparus.length > 0) {
+  echecs.push(`CORPUS GELÉ : ${gelesDisparus.length} document(s) du registre ABSENT(S) — ${gelesDisparus.join(", ")}`);
+}
 if (sansIntention > 0) echecs.push(`${sansIntention} document(s) doivent une intention et n'en portent pas`);
 if (f1KO > 0) echecs.push(`F1 : ${f1KO} document(s) promettent sur des cibles mortes ou absentes`);
 if (f4KO > 0) echecs.push(`F4 : ${f4KO} document(s) perdent ou écartent un besoin à tort`);
