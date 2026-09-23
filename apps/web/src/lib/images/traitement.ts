@@ -185,6 +185,55 @@ export async function apercuFlou(entree: Buffer): Promise<string> {
   return `data:image/webp;base64,${donnees.toString('base64')}`
 }
 
+/**
+ * Nettoie un fichier DESTINÉ À L'IMPRESSION — et rien d'autre.
+ *
+ * ── POURQUOI CE N'EST PAS `produireVariantes()`.
+ *
+ * Un design POD n'est pas une photo de vitrine. Il part chez un imprimeur, et
+ * trois propriétés y sont vitales, que la chaîne de vitrine détruirait :
+ *
+ *   · LA TRANSPARENCE. Un logo sur fond transparent aplati en JPEG arrive avec
+ *     un rectangle blanc autour, imprimé sur le t-shirt. Le format d'entrée
+ *     est donc CONSERVÉ : un PNG ressort PNG, avec son canal alpha.
+ *   · LA DÉFINITION. Aucun redimensionnement : réduire un fichier d'impression
+ *     le rend inutilisable, et l'imprimeur refuse ou imprime flou.
+ *   · LE PROFIL COLORIMÉTRIQUE. Il est CONSERVÉ (`keepIccProfile`) : sans lui,
+ *     les couleurs dérivent à l'impression. Un profil ICC décrit des couleurs,
+ *     pas une personne — il n'y a aucune raison de le jeter.
+ *
+ * ── CE QUI EST RETIRÉ, ET C'EST TOUT L'OBJET.
+ *
+ * L'EXIF, donc les coordonnées GPS, l'identifiant d'appareil et l'horodatage.
+ * MESURÉ : `keepIccProfile()` conserve le profil ET laisse tomber l'EXIF —
+ * vérifié dans les deux sens par le cliquet.
+ *
+ * L'orientation est APPLIQUÉE puis effacée : un design envoyé depuis un
+ * téléphone arrivait couché chez l'imprimeur, et personne ne s'en apercevait
+ * avant la livraison du vêtement.
+ */
+export async function nettoyerPourImpression(
+  entree: Buffer,
+): Promise<{ donnees: Buffer; type: string; exifRetire: boolean }> {
+  const avant = await sharp(entree).metadata()
+  const exifRetire = avant.exif !== undefined
+
+  // `.rotate()` applique l'orientation EXIF puis la neutralise.
+  const base = sharp(entree, { failOn: 'none' }).rotate().keepIccProfile()
+
+  // LE FORMAT D'ENTRÉE SURVIT. Sans cette branche, tout ressortirait en JPEG —
+  // et chaque design transparent serait ruiné.
+  if (avant.format === 'png') {
+    return { donnees: await base.png({ compressionLevel: 9 }).toBuffer(), type: 'image/png', exifRetire }
+  }
+  if (avant.format === 'webp') {
+    // Sans perte : un design réencodé avec perte à chaque passage se dégrade.
+    return { donnees: await base.webp({ lossless: true }).toBuffer(), type: 'image/webp', exifRetire }
+  }
+  // Qualité très haute : c'est un fichier d'impression, pas une vignette.
+  return { donnees: await base.jpeg({ quality: 96, mozjpeg: true }).toBuffer(), type: 'image/jpeg', exifRetire }
+}
+
 export type Avertissement = { code: string; message: string }
 
 /**

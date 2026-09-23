@@ -2,6 +2,7 @@ import { canTransact } from '@/lib/commerce-admission/canTransact';
 import { consommerJeton } from '@/lib/rate-limit/rateLimit';
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { nettoyerPourImpression } from '@/lib/images/traitement';
 import { randomUUID } from 'crypto';
 
 // LOT J (Mode 3 global, F-CUSTOM-01/F-CUSTOM-04) :
@@ -99,13 +100,52 @@ export async function POST(req: Request) {
     });
     if (!jeton.ok) return NextResponse.json({ error: jeton.erreur }, { status: jeton.statut });
 
-    const ext = file.name.split('.').pop() || 'png';
+    // ============================================================
+    // MEME DEFAUT QUE L ENVOI DES PHOTOS PRODUIT, AUTRE PARCOURS.
+    //
+    // Cette route deposait le fichier BRUT. Les metadonnees partaient donc
+    // avec lui -- dont les coordonnees GPS du lieu de prise de vue quand le
+    // design est une photo prise au telephone. Ces fichiers sont deposes dans
+    // un seau PUBLIC (`getPublicUrl` juste en dessous) : la position etait
+    // lisible par quiconque obtenait l URL.
+    //
+    // ET IL EST PIRE ICI QUE SUR UNE PHOTO DE VITRINE, sur un point :
+    // l orientation EXIF n etait pas appliquee non plus. Un design envoye
+    // depuis un telephone partait COUCHE chez l imprimeur, et personne ne s en
+    // apercevait avant la livraison du vetement.
+    //
+    // CE QUI SURVIT, PARCE QUE C EST UN FICHIER D IMPRESSION ET NON UNE
+    // VIGNETTE : le format d entree (un PNG transparent reste transparent),
+    // la definition (aucun redimensionnement), et le profil colorimetrique
+    // (sans lui les couleurs derivent a l impression). Voir
+    // `nettoyerPourImpression`.
+    // ============================================================
+    const brut = Buffer.from(await file.arrayBuffer());
+    let buffer: Buffer = brut;
+    let typeStocke: string = file.type;
+    let exifRetire = false;
+    try {
+      const propre = await nettoyerPourImpression(brut);
+      buffer = propre.donnees;
+      typeStocke = propre.type;
+      exifRetire = propre.exifRetire;
+    } catch {
+      // Un fichier illisible par le decodeur : on REFUSE plutot que de
+      // deposer un binaire non verifie dans un seau public. Le controle de
+      // type MIME plus haut se fie a ce que declare le navigateur ; celui-ci
+      // se fie a ce que le fichier EST.
+      return NextResponse.json({ error: 'Fichier illisible comme image.' }, { status: 415 });
+    }
+
+    // L extension suit le format REELLEMENT stocke, jamais celle du nom
+    // d origine : un fichier nomme `.jpg` mais encode en PNG sortait avec la
+    // mauvaise extension, et certains imprimeurs s y fient.
+    const ext = typeStocke === 'image/png' ? 'png' : typeStocke === 'image/webp' ? 'webp' : 'jpg';
     const path = `${randomUUID()}.${ext}`;
-    const buffer = Buffer.from(await file.arrayBuffer());
 
     const { error } = await supabaseAdmin.storage
       .from('custom-designs')
-      .upload(path, buffer, { contentType: file.type, upsert: false });
+      .upload(path, buffer, { contentType: typeStocke, upsert: false });
 
     if (error) {
       console.error('Upload error:', error);
@@ -120,7 +160,9 @@ export async function POST(req: Request) {
       site_id: site.id,
       storage_path: path,
       public_url: urlData.publicUrl,
-      mime_type: file.type,
+      // Le type REELLEMENT stocke, pas celui declare par le navigateur : c est
+      // lui que liront le checkout et l imprimeur.
+      mime_type: typeStocke,
     });
     if (designError) {
       // Le fichier est deja dans le bucket mais sans reference tracee --
@@ -131,7 +173,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Upload failed' }, { status: 500 });
     }
 
-    return NextResponse.json({ url: urlData.publicUrl });
+    // `metadonneesRetirees` est une PREUVE, pas une promesse : il dit que ce
+    // fichier PORTAIT de l'EXIF et qu'il n'en porte plus. L'interface peut
+    // alors le signaler au marchand, au lieu de nettoyer en silence.
+    return NextResponse.json({ url: urlData.publicUrl, metadonneesRetirees: exifRetire });
   } catch (e: any) {
     console.error('upload-design error:', e);
     return NextResponse.json({ error: e.message }, { status: 500 });

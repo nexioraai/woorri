@@ -20,6 +20,7 @@ import {
   apercuFlou,
   avertissements,
   flou,
+  nettoyerPourImpression,
   produireVariantes,
   redresser,
 } from '../traitement'
@@ -154,6 +155,108 @@ describe('netteté — le seuil est calibré, pas estimé', () => {
     const r = await flou(floutee)
     expect(r.variance).toBeLessThan(SEUIL_FLOU)
     expect(r.floue).toBe(true)
+  })
+})
+
+// ============================================================
+// CLIQUET — UN DESIGN D'IMPRESSION SE NETTOIE SANS SE DÉTRUIRE.
+//
+// MÊME DÉFAUT QUE L'ENVOI DES PHOTOS, AUTRE PARCOURS : `/api/shop/upload-design`
+// déposait le fichier BRUT dans un seau PUBLIC. Les coordonnées GPS partaient
+// donc avec le design quand celui-ci est une photo prise au téléphone, et
+// elles étaient lisibles par quiconque obtenait l'URL.
+//
+// MAIS LA CORRECTION NE PEUT PAS ÊTRE LA MÊME, et c'est tout l'enjeu de ces
+// tests. Ce fichier part chez un imprimeur. Trois propriétés y sont vitales
+// que la chaîne de vitrine détruirait — transparence, définition, couleurs.
+// Un nettoyage qui les emporterait « réparerait » la fuite en ruinant le
+// produit imprimé.
+// ============================================================
+describe('design d’impression — nettoyé, et intact', () => {
+  /** Un logo : fond TRANSPARENT, c'est le cas qui casse tout si on l'aplatit. */
+  async function logoTransparent(): Promise<Buffer> {
+    return sharp({
+      create: { width: 600, height: 400, channels: 4, background: { r: 0, g: 0, b: 0, alpha: 0 } },
+    })
+      .composite([
+        {
+          input: await sharp({
+            create: { width: 300, height: 200, channels: 4, background: { r: 250, g: 93, b: 30, alpha: 1 } },
+          })
+            .png()
+            .toBuffer(),
+          top: 100,
+          left: 150,
+        },
+      ])
+      .withMetadata({ exif: { IFD0: { Copyright: 'GPS-DU-MARCHAND' } }, icc: 'srgb' })
+      .png()
+      .toBuffer()
+  }
+
+  it('l’EXIF DISPARAÎT — c’est la raison d’être de ce nettoyage', async () => {
+    const avant = await logoTransparent()
+    expect((await sharp(avant).metadata()).exif, 'le fixture doit PORTER de l’EXIF').toBeDefined()
+
+    const { donnees, exifRetire } = await nettoyerPourImpression(avant)
+    expect((await sharp(donnees).metadata()).exif).toBeUndefined()
+    // La route REMONTE ce booléen au marchand : nettoyer en silence le
+    // laisserait ignorer que sa photo portait sa position.
+    expect(exifRetire).toBe(true)
+  })
+
+  it('le PROFIL COLORIMÉTRIQUE SURVIT — sans lui, les couleurs dérivent à l’impression', async () => {
+    // Un profil ICC décrit des couleurs, pas une personne. Le jeter avec
+    // l'EXIF serait une correction qui casse le produit qu'elle protège.
+    const { donnees } = await nettoyerPourImpression(await logoTransparent())
+    expect((await sharp(donnees).metadata()).icc).toBeDefined()
+  })
+
+  it('LA TRANSPARENCE SURVIT — un logo aplati arrive avec un rectangle blanc imprimé', async () => {
+    const { donnees, type } = await nettoyerPourImpression(await logoTransparent())
+    expect(type).toBe('image/png')
+    const m = await sharp(donnees).metadata()
+    expect(m.channels, 'le canal alpha a été perdu').toBe(4)
+    expect(m.hasAlpha).toBe(true)
+
+    // Et le coin doit être RÉELLEMENT transparent, pas seulement déclaré tel.
+    const coin = await sharp(donnees).extract({ left: 0, top: 0, width: 10, height: 10 }).toBuffer()
+    const stats = await sharp(coin).stats()
+    expect(stats.channels[3]!.mean, 'le coin n’est plus transparent').toBeLessThan(5)
+  })
+
+  it('LA DÉFINITION SURVIT — aucun redimensionnement', async () => {
+    // Réduire un fichier d'impression le rend inutilisable : l'imprimeur
+    // refuse, ou imprime flou.
+    const { donnees } = await nettoyerPourImpression(await logoTransparent())
+    const m = await sharp(donnees).metadata()
+    expect([m.width, m.height]).toEqual([600, 400])
+  })
+
+  it('l’ORIENTATION est APPLIQUÉE — sinon le design part couché chez l’imprimeur', async () => {
+    // Défaut invisible jusqu'à la livraison du vêtement : personne ne regarde
+    // le fichier, on regarde le t-shirt.
+    const couche = await sharp(await logoTransparent()).withMetadata({ orientation: 6 }).png().toBuffer()
+    const { donnees } = await nettoyerPourImpression(couche)
+    const m = await sharp(donnees).metadata()
+    expect([m.width, m.height], 'la rotation EXIF n’a pas été appliquée').toEqual([400, 600])
+    expect(m.orientation, 'l’orientation devait être neutralisée').toBeUndefined()
+  })
+
+  it('le FORMAT D’ENTRÉE est conservé — jamais tout converti en JPEG', async () => {
+    // Sans cette branche, chaque design transparent serait ruiné.
+    const jpeg = await sharp({ create: { width: 200, height: 200, channels: 3, background: { r: 10, g: 20, b: 30 } } }).jpeg().toBuffer()
+    expect((await nettoyerPourImpression(jpeg)).type).toBe('image/jpeg')
+
+    const webp = await sharp({ create: { width: 200, height: 200, channels: 4, background: { r: 10, g: 20, b: 30, alpha: 0.5 } } }).webp().toBuffer()
+    const r = await nettoyerPourImpression(webp)
+    expect(r.type).toBe('image/webp')
+    expect((await sharp(r.donnees).metadata()).hasAlpha).toBe(true)
+  })
+
+  it('un fichier SANS EXIF le signale honnêtement', async () => {
+    const propre = await sharp({ create: { width: 100, height: 100, channels: 3, background: { r: 1, g: 2, b: 3 } } }).png().toBuffer()
+    expect((await nettoyerPourImpression(propre)).exifRetire).toBe(false)
   })
 })
 

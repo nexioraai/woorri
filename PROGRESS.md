@@ -13,6 +13,7 @@ Dernière mise à jour : 2026-09-23.
 | 4 — chaîne d'images (upload/affichage) | B | ✅ fait |
 | 5 — amélioration « photo pro » | B | ✅ fait (une réserve nommée) |
 | 6 — vérification et livraison | A+B | ✅ fait |
+| 7 — `/api/shop/upload-design` (demandé après coup) | B | ✅ fait |
 
 ## Journal
 
@@ -342,6 +343,58 @@ pkg_typecheck EXIT=0   pkg_lint EXIT=0   pkg_test EXIT=0
 
 **234 fichiers · 4183 tests · 0 échec.** 77 routes documentées.
 
+### Groupe 7 ✅ — `/api/shop/upload-design` (designs POD)
+
+Signalé en fin de groupe 6 comme dette hors périmètre, puis **demandé**. Même
+défaut GPS/EXIF que l'envoi des photos produit — **mais la correction ne
+pouvait pas être la même**, et c'est tout l'enjeu.
+
+#### Le défaut, et pourquoi il était pire ici
+
+La route déposait le fichier **brut** dans le seau `custom-designs`, qui est
+**public** (`getPublicUrl`). Les coordonnées GPS partaient donc avec le design
+quand celui-ci est une photo prise au téléphone, **lisibles par quiconque
+obtenait l'URL**.
+
+Et un second défaut que l'autre parcours n'a pas : **l'orientation EXIF n'était
+pas appliquée**. Un design envoyé depuis un téléphone partait **couché chez
+l'imprimeur**, et personne ne s'en apercevait avant la livraison du vêtement —
+on regarde le t-shirt, pas le fichier.
+
+#### Ce qui devait SURVIVRE, et qui aurait été détruit par la chaîne de vitrine
+
+`nettoyerPourImpression()` — une fonction distincte, pas un réemploi :
+
+| propriété | pourquoi elle est vitale |
+|---|---|
+| **transparence** | un logo aplati en JPEG arrive avec un **rectangle blanc imprimé** sur le vêtement. Le format d'entrée est conservé : PNG reste PNG, avec son alpha. |
+| **définition** | **aucun redimensionnement** — réduire un fichier d'impression le rend inutilisable. |
+| **profil ICC** | **conservé** (`keepIccProfile`). Sans lui les couleurs dérivent à l'impression. Un profil décrit des couleurs, pas une personne : rien ne justifie de le jeter avec l'EXIF. |
+
+**Mesuré** : `keepIccProfile()` garde le profil **et** laisse tomber l'EXIF —
+vérifié dans les deux sens.
+
+Ajouté au passage : un fichier **illisible comme image** est désormais refusé
+(415). Le contrôle de type MIME se fie à ce que **déclare** le navigateur ;
+celui-ci se fie à ce que le fichier **est**. Sans lui, un binaire quelconque
+entrait dans un seau public sous un nom d'image.
+
+#### Un cliquet qui ne mordait pas, trouvé en le vérifiant
+
+Mes premiers tests éprouvaient la **fonction**, pas le fait que **la route
+l'appelle**. **Mesuré** : en remettant le dépôt brut dans la route, ils
+restaient **tous verts**. J'ai ajouté un cliquet qui inspecte **les octets
+réellement passés au stockage** — il tombe maintenant sur les trois assertions
+qui comptent.
+
+#### Les fixtures de test étaient plus permissives que le vrai système
+
+Elles envoyaient des **tampons de zéros** portant un type MIME. La route s'en
+contentait : elle ne décodait jamais. Rendues **réelles** — elles parcourent
+désormais le chemin complet, décodage compris. Deux cas gardent des octets nuls
+**à dessein** : le SVG (refusé par l'allowlist MIME) et le dépassement de
+taille (refusé avant tout décodage).
+
 ## Choix pris à la place du propriétaire
 
 *(consignés ici au fur et à mesure, pour arbitrage a posteriori)*
@@ -406,10 +459,10 @@ pkg_typecheck EXIT=0   pkg_lint EXIT=0   pkg_test EXIT=0
 
 ## Ce qui a été trouvé mais NON corrigé (hors périmètre, signalé)
 
-- **`/api/shop/upload-design`** dépose toujours en direct, sans la chaîne de
-  traitement. C'est le chemin des designs POD (Mode 3), pas celui des photos
-  produit — même classe de défaut, autre parcours. Non touché : le périmètre
-  demandé était les photos de marchands.
+- ~~`/api/shop/upload-design`~~ — **corrigé** au groupe 7, voir plus haut.
+- **`catch (e: any)`** dans `upload-design` (ligne préexistante, antérieure à
+  ce chantier). Le lint `apps/web` est non bloquant et porte déjà ~699 écarts
+  hérités. Signalé, **non touché** : hors périmètre.
 - **Aucune colonne `logo`** pour les marchands. Le favicon est donc un
   monogramme. Accepter un vrai logo demanderait une colonne, un upload et une
   migration : un lot à part.
