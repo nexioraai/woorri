@@ -94,6 +94,31 @@ export default function JsonLd({ site, url }: { site: Site; url: string }) {
   if (site.hero_image) data.image = site.hero_image
   if (site.contact?.phone) data.telephone = site.contact.phone
   if (site.contact?.email) data.email = site.contact.email
+
+  // ── WHATSAPP DÉCLARÉ, PARCE QUE C'EST LE CANAL RÉEL DU MARCHÉ VISÉ.
+  //
+  // `sameAs` ne pouvait pas le porter : il ne retient que les valeurs
+  // commençant par `http`, et le WhatsApp est stocké comme un NUMÉRO
+  // (`social_links.whatsapp`, M2-210/211). Il était donc invisible pour les
+  // moteurs alors qu'il est, au Tchad, le premier moyen de joindre une
+  // boutique — devant le courriel et souvent devant l'appel.
+  //
+  // `https://wa.me/<chiffres>` est la forme canonique du lien WhatsApp : une
+  // URL réelle, que Google sait suivre et rattacher à l'entité.
+  const chiffresWhatsapp = String(site.social_links?.whatsapp ?? '').replace(/\D/g, '')
+  if (chiffresWhatsapp) {
+    data.contactPoint = [
+      {
+        '@type': 'ContactPoint',
+        contactType: 'customer service',
+        url: `https://wa.me/${chiffresWhatsapp}`,
+        // Déclaré comme téléphone parce que c'en est un : le numéro WhatsApp
+        // et le numéro d'appel peuvent différer, et c'est fréquent.
+        telephone: `+${chiffresWhatsapp}`,
+      },
+    ]
+  }
+
   if (sameAs.length > 0) data.sameAs = sameAs
 
   if (isPhysical && address) {

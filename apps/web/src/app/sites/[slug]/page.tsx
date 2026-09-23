@@ -61,10 +61,29 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const url = resolveSiteBaseUrl(site, host)
   const images = site.hero_image ? [{ url: site.hero_image }] : undefined
 
+  // ── ICÔNES DU MARCHAND — « plus jamais de globe par défaut ».
+  //
+  // Les balises `<link rel="icon">` sont le canal que les navigateurs ET Google
+  // consultent EN PREMIER ; `/favicon.ico` n'est que leur repli (lui aussi
+  // servi, via `proxy.ts`). Poser les deux, c'est fermer les deux chemins.
+  //
+  // URL ABSOLUE sur le domaine réellement servi : une icône déclarée en
+  // relatif sur un domaine personnalisé serait résolue par le navigateur, mais
+  // les moteurs qui lisent le balisage sans le résoudre la manqueraient.
+  const icone = (t: number) => `${url.replace(/\/$/, '')}/api/internal/site-icon/${slug}?t=${String(t)}`
+
   return {
     title,
     description,
     alternates: { canonical: url },
+    icons: {
+      icon: [
+        { url: `${url.replace(/\/$/, '')}/favicon.ico`, sizes: '16x16 32x32 48x48' },
+        { url: icone(192), sizes: '192x192', type: 'image/png' },
+        { url: icone(512), sizes: '512x512', type: 'image/png' },
+      ],
+      apple: [{ url: icone(180), sizes: '180x180', type: 'image/png' }],
+    },
     openGraph: {
       title,
       description,

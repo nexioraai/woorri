@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { fetchSiteByDomain } from './app/sites/[slug]/themes/shared'
+import {
+  fetchLangueParSlug,
+  fetchSiteEtLangueParDomaine,
+} from './app/sites/[slug]/themes/shared'
 import { varianteHote, cibleCanonique } from './lib/domains/canonicalHost'
+import { EN_TETE_LANGUE, normaliserLangue } from './lib/seo/langueServie'
 
 const INTERNAL_HOSTS = ['nexiora.ca', 'www.nexiora.ca', 'woorri.com', 'www.woorri.com', 'deribfy.com', 'www.deribfy.com', 'localhost']
 
@@ -9,6 +13,25 @@ const INTERNAL_HOSTS = ['nexiora.ca', 'www.nexiora.ca', 'woorri.com', 'www.woorr
 // — un dossier "sitemap.xml" imbrique sous [slug] avec un catch-all frere
 // provoquait un 404/500 specifique a la production Vercel).
 const PLATFORM_SITE_SITEMAP = /^\/sites\/([^/]+)\/sitemap\.xml$/
+
+/** Chemin plateforme servant un site marchand : `/sites/{slug}` ou `/preview/{slug}`. */
+const CHEMIN_SITE_PLATEFORME = /^\/(?:sites|preview)\/([^/]+)/
+
+/**
+ * Pose la langue du site sur la REQUÊTE, pour que le layout racine écrive le
+ * bon `<html lang>` DANS LE HTML SERVI.
+ *
+ * Le composant `HtmlLang` corrige déjà l'attribut — mais dans un `useEffect`,
+ * donc après hydratation, donc jamais pour un moteur. Mesuré le 2026-09-23 :
+ * 3 des 5 sites publiés sont en anglais et s'annonçaient tous en français.
+ */
+function avecLangue(req: NextRequest, lang: string | null) {
+  const code = normaliserLangue(lang)
+  if (!code) return undefined
+  const entetes = new Headers(req.headers)
+  entetes.set(EN_TETE_LANGUE, code)
+  return { request: { headers: entetes } }
+}
 
 export async function proxy(req: NextRequest) {
   const host = (req.headers.get('host') || '').split(':')[0].toLowerCase()
@@ -29,11 +52,23 @@ export async function proxy(req: NextRequest) {
       url.pathname = `/api/internal/site-sitemap/${platformMatch[1]}`
       return NextResponse.rewrite(url)
     }
+    // Sur l'origine plateforme, un site marchand est servi sous `/sites/{slug}`
+    // — et il doit s'annoncer dans SA langue, pas dans celle de la plateforme.
+    // La requête n'est faite QUE pour ces chemins : les pages de la plateforme
+    // (accueil, tarifs, blog…) ne paient rien.
+    const siteMatch = CHEMIN_SITE_PLATEFORME.exec(pathname)
+    if (siteMatch) {
+      const lang = await fetchLangueParSlug(siteMatch[1]!)
+      return NextResponse.next(avecLangue(req, lang))
+    }
     return NextResponse.next()
   }
 
-  // Domaine perso d'un client → on cherche le site lié
-  const slug = await fetchSiteByDomain(host)
+  // Domaine perso d'un client → on cherche le site lié. `lang` voyage avec le
+  // slug : même ligne, même requête, aucun coût supplémentaire.
+  const resolu = await fetchSiteEtLangueParDomaine(host)
+  const slug = resolu?.slug ?? null
+  const langue = resolu?.lang ?? null
 
   // ============================================================
   // D-08 -- LA FORME NON STOCKEE REPONDAIT 404.
@@ -55,7 +90,7 @@ export async function proxy(req: NextRequest) {
   if (!slug) {
     const variante = varianteHote(host)
     if (variante) {
-      const slugVariante = await fetchSiteByDomain(variante)
+      const slugVariante = await fetchSiteEtLangueParDomaine(variante)
       if (slugVariante) {
         return NextResponse.redirect(
           cibleCanonique(variante, req.nextUrl.pathname, req.nextUrl.search),
@@ -64,6 +99,16 @@ export async function proxy(req: NextRequest) {
       }
     }
     return NextResponse.next()
+  }
+
+  // Favicon du domaine personnalise : l'icone du MARCHAND, jamais celle de la
+  // plateforme. Sans cette reecriture, la boutique porte l'enseigne de son
+  // fournisseur dans l'onglet du navigateur et dans les resultats Google.
+  if (pathname === '/favicon.ico') {
+    const url = req.nextUrl.clone()
+    url.pathname = `/api/internal/site-icon/${slug}`
+    url.search = '?f=ico'
+    return NextResponse.rewrite(url)
   }
 
   // Sitemap du domaine personnalise (ex. mondomaine.com/sitemap.xml)
@@ -75,14 +120,16 @@ export async function proxy(req: NextRequest) {
 
   // Réécriture interne : le visiteur garde son domaine, on sert /sites/{slug}
   const url = req.nextUrl.clone()
-  if (url.pathname === '/') {
-    url.pathname = `/sites/${slug}`
-    return NextResponse.rewrite(url)
-  }
-  url.pathname = `/sites/${slug}${url.pathname}`
-  return NextResponse.rewrite(url)
+  url.pathname = url.pathname === '/' ? `/sites/${slug}` : `/sites/${slug}${url.pathname}`
+  return NextResponse.rewrite(url, avecLangue(req, langue))
 }
 
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
+  // `favicon.ico` N'EST PLUS EXCLU, et c'était la cause exacte du défaut :
+  // mesuré le 2026-09-23, `chanorfie.com/favicon.ico` et
+  // `alloufshop.com/favicon.ico` répondaient 200 avec 25 931 octets — le
+  // favicon de `create-next-app`. La requête n'atteignait jamais le site
+  // marchand ; elle tombait sur le fichier de la plateforme. Sur un hôte
+  // interne, le comportement est rigoureusement inchangé (`next()`).
+  matcher: ['/((?!api|_next/static|_next/image).*)'],
 }

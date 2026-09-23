@@ -84,3 +84,9 @@ _trash_backups/
 
 # Artefact genere par la CI (etape "Report system health") -- jamais versionne.
 vitest-results.json
+
+# Applications ÉMISES par les gates du moteur (`gate:app-compile`, `gate:rendu`…).
+# Ce sont des artefacts RECONSTRUITS à chaque exécution, jamais une source :
+# `git add -A` les proposait au commit après chaque passage de gate — 300+
+# fichiers dérivés qui auraient noyé toute revue.
+apps-generees/

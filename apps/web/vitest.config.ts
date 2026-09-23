@@ -167,6 +167,10 @@ export default defineConfig({
       // reellement servies. Prefixe absent : sans cette ligne son test
       // passe en isolation mais n'est JAMAIS collecte par `vitest run`.
       'src/lib/i18n/**/*.test.ts',
+      // Chantier SEO : sans cette ligne les cliquets SEO ne sont pas COLLECTÉS,
+      // et un test que le lanceur ignore ne garde rigoureusement rien.
+      'src/lib/seo/**/*.test.ts',
+      'src/lib/images/**/*.test.ts',
       // CHANTIER 5 -- src/lib/site-profile/ porte la borne de `area_served`
       // et l'allowlist de `price_range`. Prefixe absent : sans cette ligne,
       // leurs tests passent en isolation mais ne sont JAMAIS collectes.

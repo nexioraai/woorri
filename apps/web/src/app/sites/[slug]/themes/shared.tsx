@@ -541,6 +541,37 @@ data.products = [...catalogProducts, ...existing]
 }
 }
 
+/**
+ * Slug ET langue d'un site, depuis son domaine personnalisé — une seule requête.
+ *
+ * LA LANGUE VOYAGE AVEC LE SLUG parce qu'elle est nécessaire AU MÊME MOMENT :
+ * `proxy.ts` la pose en en-tête pour que le layout racine écrive le bon
+ * `<html lang>` DANS LE HTML SERVI. La chercher plus tard coûterait une
+ * seconde requête pour une colonne déjà sur la ligne.
+ */
+export async function fetchSiteEtLangueParDomaine(
+  domain: string
+): Promise<{ slug: string; lang: string | null } | null> {
+  const { data, error } = await supabase
+    .from('sites_public')
+    .select('slug, lang')
+    .eq('custom_domain', domain)
+    .single()
+  if (error || !data) return null
+  return { slug: (data as { slug: string }).slug, lang: (data as { lang: string | null }).lang }
+}
+
+/** Langue d'un site par son SLUG — chemin plateforme `/sites/{slug}`. */
+export async function fetchLangueParSlug(slug: string): Promise<string | null> {
+  const { data, error } = await supabase
+    .from('sites_public')
+    .select('lang')
+    .eq('slug', slug)
+    .single()
+  if (error || !data) return null
+  return (data as { lang: string | null }).lang
+}
+
 export async function fetchSiteByDomain(
 domain: string
 ): Promise<string | null> {

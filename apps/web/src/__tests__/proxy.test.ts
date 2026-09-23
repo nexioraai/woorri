@@ -13,10 +13,22 @@ import { NextRequest } from 'next/server';
 //   * les hotes de la plateforme ne sont jamais concernes.
 // ============================================================
 
+// Le proxy résout désormais le slug ET la langue en UNE requête : la langue est
+// nécessaire au même instant, pour que le layout racine écrive le bon
+// `<html lang>` dans le HTML SERVI. Le double suit ce contrat — un double plus
+// permissif que le vrai système rendrait du vert sur un code cassé.
 const fetchSiteByDomainMock = vi.fn();
+const fetchLangueParSlugMock = vi.fn((..._a: unknown[]): Promise<string | null> => Promise.resolve(null));
 vi.mock('../app/sites/[slug]/themes/shared', () => ({
-  fetchSiteByDomain: (...a: unknown[]) => fetchSiteByDomainMock(...a),
+  fetchSiteEtLangueParDomaine: async (domaine: string) => {
+    const slug = (await fetchSiteByDomainMock(domaine)) as string | null;
+    return slug ? { slug, lang: langueDuSiteDouble } : null;
+  },
+  fetchLangueParSlug: (...a: unknown[]) => fetchLangueParSlugMock(...a),
 }));
+
+/** Langue rendue par le double pour le site résolu. */
+let langueDuSiteDouble: string | null = null;
 
 import { proxy } from '../proxy';
 
@@ -25,6 +37,9 @@ const req = (host: string, pathname = '/', search = '') =>
 
 beforeEach(() => {
   fetchSiteByDomainMock.mockReset();
+  fetchLangueParSlugMock.mockReset();
+  fetchLangueParSlugMock.mockResolvedValue(null);
+  langueDuSiteDouble = null;
 });
 
 /** `exemple.com` est le domaine STOCKE ; `www.exemple.com` ne l'est pas. */
@@ -110,5 +125,54 @@ describe('D-08 — les hôtes de la plateforme ne sont jamais redirigés', () =>
     const res = await proxy(req(h, '/'));
     expect(res.status).not.toBe(308);
     expect(fetchSiteByDomainMock).not.toHaveBeenCalled();
+  });
+});
+
+// ============================================================
+// LA LANGUE DU SITE VOYAGE JUSQU'AU HTML SERVI.
+//
+// LE DÉFAUT MESURÉ le 2026-09-23 : `HtmlLang` corrige `document.documentElement
+// .lang` dans un `useEffect`, donc APRÈS hydratation. Le HTML servi portait
+// toujours le `fr` écrit en dur du layout racine. Sur les 5 sites publiés,
+// **3 sont en anglais** — dont `yiaglobalcommodities.com`, qui porte un vrai
+// domaine. Tous s'annonçaient en français.
+//
+// Le proxy pose donc la langue en EN-TÊTE DE REQUÊTE, seul canal qui atteigne
+// le layout racine avant le rendu.
+// ============================================================
+describe('la langue du site atteint le layout racine', () => {
+  const langueVue = (res: { headers: Headers }) =>
+    res.headers.get('x-middleware-override-headers')?.includes('x-deribfy-lang') ??
+    false;
+
+  it('domaine personnalisé — la langue du site est posée sur la requête', async () => {
+    stocke('exemple.com');
+    langueDuSiteDouble = 'en';
+    const res = await proxy(req('exemple.com', '/'));
+    expect(res.headers.get('x-middleware-request-x-deribfy-lang')).toBe('en');
+  });
+
+  it('chemin plateforme `/sites/{slug}` — la langue est résolue par le slug', async () => {
+    fetchLangueParSlugMock.mockResolvedValue('en');
+    const res = await proxy(req('www.deribfy.com', '/sites/ma-boutique'));
+    expect(fetchLangueParSlugMock).toHaveBeenCalledWith('ma-boutique');
+    expect(res.headers.get('x-middleware-request-x-deribfy-lang')).toBe('en');
+  });
+
+  it('une page de la PLATEFORME ne paie aucune requête de langue', async () => {
+    // Le coût doit rester là où il sert : l'accueil, les tarifs, le blog
+    // n'appartiennent à aucun marchand.
+    await proxy(req('www.deribfy.com', '/pricing'));
+    expect(fetchLangueParSlugMock).not.toHaveBeenCalled();
+  });
+
+  it('langue ABSENTE ou ILLISIBLE — aucun en-tête, repli sur la plateforme', async () => {
+    stocke('exemple.com');
+    langueDuSiteDouble = 'pas-une-langue-du-tout';
+    const res = await proxy(req('exemple.com', '/'));
+    // Un `lang` faux est pire que pas de `lang` : il fait dire au document
+    // quelque chose d'inexact. On préfère l'absence, donc le repli.
+    expect(res.headers.get('x-middleware-request-x-deribfy-lang')).toBeNull();
+    expect(langueVue(res)).toBe(false);
   });
 });
