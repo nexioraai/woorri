@@ -7,6 +7,7 @@ import AddToCartButton from './AddToCartButton';
 import { lienAppel, lienCommandeWhatsApp, numerosDEncaissement, urlProduitDepuisLaPage } from '@/lib/whatsappOrder';
 import { contactDirectRequis } from '@/lib/contactDirect';
 
+import GalerieProduit from './GalerieProduit';
 interface MerchantProduct {
   /** M2-232 — la boutique encaisse-t-elle en ligne ? Sans compte
    *  d'encaissement, le contact direct est le SEUL parcours d'achat. */
@@ -18,6 +19,9 @@ interface MerchantProduct {
   priceNumber?: number;
   currency?: string;
   image?: string;
+  /** M2-235 — TOUTES les photos. `image` reste la première, pour les
+   *  surfaces qui n'en montrent qu'une (vignette de panier). */
+  images?: string[];
   variants?: { variant_id: string; label: string; price: number; currency: string }[];
   supplierId?: string | null;
   supplierProductId?: string | null;
@@ -168,8 +172,17 @@ export default function MerchantProductModal({ product: p, primary, lang = 'en',
 
         <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 0 }} className="merchant-modal-grid">
           <div style={{ background: c.imageBg, minHeight: 320, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            {p.image ? (
-              <img src={p.image} alt={p.name} style={{ width: '100%', height: 480, objectFit: 'contain', display: 'block' }} />
+            {/* M2-235 — la modale montrait UNE photo. Le marchand en envoie
+                sept ; les six autres étaient stockées et jamais vues. */}
+            {(p.images?.length ?? 0) > 0 || p.image ? (
+              <GalerieProduit
+                images={p.images?.length ? p.images : p.image ? [p.image] : []}
+                alt={p.name}
+                hauteur={480}
+                primary={primary}
+                fond={c.imageBg}
+                arrondi={0}
+              />
             ) : (
               <span style={{ fontSize: 56, opacity: 0.15 }}>?</span>
             )}

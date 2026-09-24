@@ -78,11 +78,18 @@ export default function EditorialShopSection({ site, primary }: { site: Site; pr
                 )}
                 <div className="flex items-center justify-between pt-4 border-t border-neutral-100 mt-auto">
                   {p.price ? (
-                    <span
-                      className="text-2xl font-medium"
-                      style={{ color: primary }}
-                    >
-                      {p.price}
+                    <span className="flex items-baseline gap-2">
+                      {/* M2-236 — LE PRIX BARRÉ SE VOIT SANS CLIQUER.
+                      Il n'existait que dans la modale : un acheteur qui parcourt
+                      la grille ne voyait aucune promotion, et n'avait donc aucune
+                      raison d'ouvrir la fiche. Une remise qu'on ne voit pas ne
+                      fait pas vendre. */}
+                    {p.compareAt && (
+                        <span className="text-base line-through text-neutral-400">{p.compareAt}</span>
+                      )}
+                      <span className="text-2xl font-medium" style={{ color: primary }}>
+                        {p.price}
+                      </span>
                     </span>
                   ) : (
                     <span className="text-sm text-neutral-400">{t.labels.onQuote}</span>

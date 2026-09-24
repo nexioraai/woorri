@@ -223,7 +223,11 @@ export default function StorefrontDense({
                   <h3 className="text-sm font-semibold leading-snug mb-2 line-clamp-2 min-h-[2.5rem]">{p.name}</h3>
                   <div className="mt-auto">
                     {p.price ? (
-                      <div className="text-lg font-semibold mb-2.5" style={{ color: primary }}>{p.price}</div>
+                      <div className="flex items-baseline gap-2 mb-2.5">
+                        {/* M2-236 — visible dans la grille, plus seulement en modale. */}
+                        {p.compareAt && <span className="text-sm line-through opacity-50">{p.compareAt}</span>}
+                        <span className="text-lg font-semibold" style={{ color: primary }}>{p.price}</span>
+                      </div>
                     ) : (
                       <div className="text-sm text-neutral-400 mb-2.5">{labels.onQuote}</div>
                     )}

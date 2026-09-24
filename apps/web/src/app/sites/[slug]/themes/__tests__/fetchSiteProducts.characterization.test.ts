@@ -234,7 +234,7 @@ for (const [nom, appel] of FONCTIONS) {
     // marchand libelle lui-même (Airtel, Moov, autre). Le `toEqual`
     // reste exhaustif : c'est lui qui garantit qu'aucun champ INTERNE n'est
     // promu au passage. Ce bloc est exécuté pour fetchSite ET fetchSitePreview.
-    it('les 12 champs projetés, aux formats exacts', async () => {
+    it('les 13 champs projetés, aux formats exacts', async () => {
       shopProductsResult = { data: [ligne()], error: null };
       const mod = await import('../shared');
       const s = await appel(mod);
@@ -246,6 +246,11 @@ for (const [nom, appel] of FONCTIONS) {
         priceNumber: 12,             // et le nombre à côté
         currency: 'CAD',
         image: 'https://x.test/mug.png',  // images[0], pas le tableau
+        // M2-235 — ÉDITION CONSCIENTE : un 13e champ entre à la projection.
+        // La boutique n'émettait que `images[0]` : un marchand qui envoie sept
+        // vues de son article n'en montrait qu'UNE, partout sauf sur la fiche.
+        // Les six autres étaient stockées, payées, et jamais vues.
+        images: ['https://x.test/mug.png'],
         sizes: [],                   // M2-206 — tailles, [] quand absentes
         whatsapp: null,              // M2-206 — numéro du site, null sans social_links
         mobileMoney: [],             // M2-210 — numéros d'encaissement, [] sans saisie

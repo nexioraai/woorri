@@ -200,7 +200,11 @@ export default function FamilyFilter({
                 )}
                 <div className="flex items-center justify-between pt-4 border-t border-neutral-100 mt-auto">
                   {p.price ? (
-                    <span className="text-xl font-semibold" style={{ color: primary }}>{p.price}</span>
+                    <span className="flex items-baseline gap-2">
+                      {/* M2-236 — visible dans la grille, plus seulement en modale. */}
+                      {p.compareAt && <span className="text-sm line-through opacity-50">{p.compareAt}</span>}
+                      <span className="text-xl font-semibold" style={{ color: primary }}>{p.price}</span>
+                    </span>
                   ) : (
                     <span className="text-sm text-neutral-400">{labels.onQuote}</span>
                   )}

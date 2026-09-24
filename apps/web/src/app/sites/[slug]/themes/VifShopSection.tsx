@@ -40,7 +40,13 @@ export default function VifShopSection({ site }: { site: Site }) {
               )}
               <div className="p-6">
                 <h3 className="text-lg mb-1" style={{ fontFamily: 'var(--font-fraunces), serif' }}>{p.name}</h3>
-                {p.price && <div className="text-sm font-semibold mb-4" style={{ color: GOLD }}>{p.price}</div>}
+                {p.price && (
+                  <div className="flex items-baseline gap-2 mb-4">
+                    {/* M2-236 — visible dans la grille, plus seulement en modale. */}
+                    {p.compareAt && <span className="text-xs line-through opacity-50">{p.compareAt}</span>}
+                    <span className="text-sm font-semibold" style={{ color: GOLD }}>{p.price}</span>
+                  </div>
+                )}
                 {canAddToCart(p) ? (
                   <AddToCartButton
                     id={p.id}

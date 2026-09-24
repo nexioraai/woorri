@@ -108,6 +108,8 @@ compareAtPrice?: number
 compareAt?: string
 /** M2-210 — numéros d'encaissement {label, number}, libellés du marchand. */
 mobileMoney?: { label: string; number: string }[]
+/** M2-235 — toutes les photos du produit, dans l'ordre du marchand. */
+images?: string[]
 /** M2-233 — la boutique encaisse-t-elle en ligne ? `undefined` = inconnu. */
 encaisseEnLigne?: boolean
 variants?: { variant_id: string; label: string; price: number; currency: string }[]
@@ -319,6 +321,12 @@ compareAt:
 priceNumber: p.price != null ? Number(p.price) : undefined,
 currency: p.currency,
 image: Array.isArray(p.images) && p.images.length > 0 ? p.images[0] : undefined,
+// M2-235 — TOUTES les photos, pas seulement la première.
+//
+// La projection n'émettait que `images[0]` : un marchand qui envoie sept vues
+// de son article n'en montrait qu'UNE à ses visiteurs, partout sauf sur la
+// fiche. Les six autres étaient stockées, payées, et jamais vues.
+images: Array.isArray(p.images) ? p.images : [],
 sizes: Array.isArray(p.sizes) ? p.sizes : [],
 whatsapp: whatsapp || null,
 // M2-210 — les numéros d'encaissement du SITE (contact.mobile_money),

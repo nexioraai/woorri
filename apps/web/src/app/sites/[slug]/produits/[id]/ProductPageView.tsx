@@ -9,6 +9,7 @@ import DesignCanvas from '../../themes/DesignCanvas'
 import { THEME_TOKENS, ThemeKey } from '../../themes/CatalogSearch'
 import { lienAppel, lienCommandeWhatsApp, numerosDEncaissement, urlProduitDepuisLaPage } from '@/lib/whatsappOrder'
 import { contactDirectRequis } from '@/lib/contactDirect'
+import GalerieProduit from '../../themes/GalerieProduit'
 
 const CART_LABELS: Record<string, string> = {
   fr: 'Ajouter au panier',
@@ -225,22 +226,29 @@ export default function ProductPageView({ product }: { product: ProductPage }) {
                     souvent la seule que le marchand ait prise.
                     Le fond neutre existe parce que `contain` laisse des bandes :
                     sans lui, elles révéleraient le fond du thème. */}
-                <button
-                  type="button"
+                {/* ── M2-235 : ON GLISSE, ON NE VISE PLUS DES VIGNETTES.
+                    Les vues supplémentaires n'étaient atteignables que par des
+                    pastilles de 64 px. Sur un téléphone — le seul écran du
+                    marché visé — personne ne les voyait. Le geste attendu est
+                    le glissement, celui de toutes les galeries que l'acheteur
+                    connaît déjà. Les vignettes restent dessous, pour
+                    l'ordinateur et pour choisir une vue précise. */}
+                <div
                   onClick={() => { setZoom(true) }}
+                  style={{ cursor: 'zoom-in' }}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => { if (e.key === 'Enter') setZoom(true) }}
                   aria-label={product.lang === 'fr' ? 'Agrandir la photo' : 'Enlarge photo'}
-                  style={{
-                    display: 'block', width: '100%', padding: 0, border: 'none',
-                    borderRadius: 16, overflow: 'hidden', cursor: 'zoom-in',
-                    background: 'rgba(128,128,128,0.08)', aspectRatio: '1 / 1',
-                  }}
                 >
-                  <img
-                    src={imgs[imgIndex]}
+                  <GalerieProduit
+                    images={imgs}
                     alt={product.name}
-                    style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                    ratio="1 / 1"
+                    primary={product.primary}
+                    arrondi={16}
                   />
-                </button>
+                </div>
                 {imgs.length > 1 && (
                   <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
                     {imgs.map((src, i) => (
