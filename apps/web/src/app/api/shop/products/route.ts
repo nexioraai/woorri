@@ -47,7 +47,14 @@ export async function GET(req: Request) {
 // la valeur ne se perime jamais, il n'existe aucune condition sous laquelle
 // elle deviendrait fausse d'elle-meme. Un PATCH generique est donc la forme
 // exacte du besoin, et lui inventer une route dediee serait de la ceremonie.
-const ALLOWED_PRODUCT_FIELDS = ['name', 'description', 'price', 'currency', 'sizes', 'images', 'stock', 'published', 'position', 'for_sale'] as const;
+// M2-234 — `compare_at_price` ADMIS. Il porte l'ANCIEN prix, celui qu'on
+// montre barre a cote du prix actuel. Il existait deja en base et a
+// l'affichage, et l'outil Promo le posait EN MASSE -- mais aucune ecriture
+// PRODUIT PAR PRODUIT n'etait autorisee, donc le marchand ne pouvait pas
+// solder un seul article. Meme nature que `price` : une decision commerciale
+// du marchand sur SON produit, pas un champ de fonctionnement interne comme
+// `cj_vid` ou `cost_price`, qui restent exclus.
+const ALLOWED_PRODUCT_FIELDS = ['name', 'description', 'price', 'currency', 'sizes', 'images', 'stock', 'published', 'position', 'for_sale', 'compare_at_price'] as const;
 
 /** POST /api/shop/products → crée un produit. Body: { slug, name, price, ... } */
 export async function POST(req: Request) {

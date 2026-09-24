@@ -53,7 +53,14 @@ type Ctx = { params: Promise<{ id: string }> };
 //
 // Audit Mode 3 global (CRIT-2) -- voir shop/products/route.ts pour le
 // raisonnement complet sur l'allowlist elle-meme (cj_vid/cost_price).
-const ALLOWED_PRODUCT_FIELDS = ['name', 'description', 'price', 'currency', 'sizes', 'images', 'published', 'position', 'for_sale'] as const;
+// M2-234 — `compare_at_price` ADMIS. Il porte l'ANCIEN prix, celui qu'on
+// montre barre a cote du prix actuel. Il existait deja en base et a
+// l'affichage, et l'outil Promo le posait EN MASSE -- mais aucune ecriture
+// PRODUIT PAR PRODUIT n'etait autorisee, donc le marchand ne pouvait pas
+// solder un seul article. Meme nature que `price` : une decision commerciale
+// du marchand sur SON produit, pas un champ de fonctionnement interne comme
+// `cj_vid` ou `cost_price`, qui restent exclus.
+const ALLOWED_PRODUCT_FIELDS = ['name', 'description', 'price', 'currency', 'sizes', 'images', 'published', 'position', 'for_sale', 'compare_at_price'] as const;
 
 /** PATCH /api/shop/products/[id] → met à jour un produit. */
 export async function PATCH(req: Request, { params }: Ctx) {

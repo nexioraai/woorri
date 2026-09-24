@@ -138,8 +138,14 @@ describe('DETTE 6c — cocher / décocher puis enregistrer', () => {
     // M2-202 — `sizes` entre dans la charge, EN CONSCIENCE : c'est la demande
     // « chaque produit : image(s), titre, description, taille(s), prix ».
     // `stock` reste exclu (étape 7) — un comptage ne s'écrase pas.
+    //
+    // M2-234 — `compare_at_price` entre, EN CONSCIENCE également : l'ANCIEN
+    // prix, celui qu'on montre barré. La colonne existait en base, l'affichage
+    // aussi, et l'outil Promo la posait EN MASSE — mais aucune écriture
+    // produit par produit n'existait, donc le marchand ne pouvait pas solder
+    // UN SEUL article, le cas pourtant le plus fréquent.
     expect(Object.keys(payloadFromDraft(EMPTY_DRAFT)).sort()).toEqual(
-      ['currency', 'description', 'for_sale', 'images', 'name', 'price', 'published', 'sizes']
+      ['compare_at_price', 'currency', 'description', 'for_sale', 'images', 'name', 'price', 'published', 'sizes']
     );
   });
 });

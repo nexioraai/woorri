@@ -45,6 +45,20 @@ export type ProductDraft = {
    * tableau. La conversion vit dans `paylodFromDraft`, PURE et testée.
    */
   sizes: string;
+  /**
+   * M2-234 — L'ANCIEN PRIX, celui qu'on montre BARRÉ à côté du prix actuel.
+   *
+   * C'est le geste le plus courant du commerce de détail : « avant 25 000,
+   * aujourd'hui 20 000 ». Il existait en base (`compare_at_price`) et à
+   * l'affichage, et l'outil Promo le posait EN MASSE — mais le marchand ne
+   * pouvait pas le saisir PRODUIT PAR PRODUIT. Il ne pouvait donc pas solder
+   * un seul article, ce qui est pourtant le cas le plus fréquent.
+   *
+   * TEXTE, comme `price` : le formulaire parle la langue du marchand, la
+   * conversion vit dans `payloadFromDraft`, pure et testée. Chaîne vide =
+   * aucun prix barré.
+   */
+  compare_at_price: string;
   images: string[];
   published: boolean;
   for_sale: boolean;
@@ -52,6 +66,7 @@ export type ProductDraft = {
 
 /** La forme minimale que ce module lit d'un produit deja enregistre. */
 export type EditableProduct = {
+  compare_at_price?: number | null;
   name: string;
   description: string | null;
   price: number;
@@ -132,6 +147,7 @@ export const EMPTY_DRAFT: ProductDraft = {
   price: '',
   currency: '',
   sizes: '',
+  compare_at_price: '',
   images: [],
   published: true,
   for_sale: false,
@@ -157,6 +173,9 @@ export function draftFromProduct(p: EditableProduct): ProductDraft {
     price: String(p.price),
     currency: p.currency,
     sizes: (p.sizes ?? []).join(', '),
+    // Rouvrir un produit soldé doit remontrer SON ancien prix : sans cela,
+    // la moindre modification du nom effacerait la promotion en silence.
+    compare_at_price: p.compare_at_price != null ? String(p.compare_at_price) : '',
     images: p.images ?? [],
     published: p.published,
     for_sale: p.for_sale !== false,
@@ -190,6 +209,26 @@ export function taillesDepuisTexte(texte: string): string[] {
   return out;
 }
 
+/**
+ * L'ancien prix RETENU, ou `null`.
+ *
+ * ── UN PRIX BARRÉ QUI NE BARRE RIEN EST UN MENSONGE À L'ACHETEUR.
+ *
+ * S'il est inférieur ou égal au prix actuel, il n'annonce aucune remise : il
+ * fait croire à une affaire qui n'existe pas. L'affichage refusait déjà de le
+ * montrer dans ce cas — mais il était alors ENREGISTRÉ sans effet, et le
+ * marchand croyait avoir posé une promotion invisible.
+ *
+ * On le neutralise donc à la SOURCE : ce qui est enregistré est ce qui sera
+ * montré, jamais autre chose.
+ */
+export function ancienPrixRetenu(compareAt: string, prix: string): number | null {
+  const barre = parseFloat(compareAt)
+  const actuel = parseFloat(prix) || 0
+  if (!Number.isFinite(barre) || barre <= 0) return null
+  return barre > actuel ? barre : null
+}
+
 export function payloadFromDraft(d: ProductDraft) {
   return {
     name: d.name.trim(),
@@ -197,6 +236,7 @@ export function payloadFromDraft(d: ProductDraft) {
     price: parseFloat(d.price) || 0,
     currency: d.currency,
     sizes: taillesDepuisTexte(d.sizes),
+    compare_at_price: ancienPrixRetenu(d.compare_at_price, d.price),
     images: d.images,
     published: d.published,
     for_sale: d.for_sale,

@@ -6,7 +6,7 @@ import { useTranslation } from '@/lib/translations';
 // et la charge envoyee vivent desormais dans un module PUR, verifiable sans
 // jsdom (ce depot n'en a pas). Ce composant ne garde que le rendu et les
 // appels reseau. Voir productDraft.ts pour le raisonnement complet.
-import { draftVierge, draftFromProduct, payloadFromDraft, type ProductDraft } from './productDraft';
+import { ancienPrixRetenu, draftVierge, draftFromProduct, payloadFromDraft, type ProductDraft } from './productDraft';
 
 // Couleur accent admin Nexiora — changer ici se répercute partout dans ce composant.
 const ACCENT = '#FA5D1E';
@@ -481,10 +481,27 @@ export default function ProductManager({ slug }: { slug: string }) {
             className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-white/30 transition" />
         </PField>
 
-        <div className={editingId ? 'grid grid-cols-2 gap-3' : 'grid grid-cols-3 gap-3'}>
+        <div className={editingId ? 'grid grid-cols-3 gap-3' : 'grid grid-cols-2 sm:grid-cols-4 gap-3'}>
           <PField label={t('pm.field.price')}>
             <input type="number" step="0.01" value={draft.price} onChange={(e) => setDraft({ ...draft, price: e.target.value })}
               className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-white/30 transition" />
+          </PField>
+          {/* ── M2-234 — L'ANCIEN PRIX, CELUI QU'ON BARRE.
+              Le geste le plus courant du commerce de détail : « avant 25 000,
+              aujourd'hui 20 000 ». La colonne existait, l'affichage aussi, et
+              l'outil Promo la posait EN MASSE — mais le marchand ne pouvait
+              pas solder UN SEUL article, ce qui est pourtant le cas le plus
+              fréquent. Il ne pouvait donc pas faire ce que fait n'importe quel
+              commerçant de son marché. */}
+          <PField label="Ancien prix (barré)">
+            <input
+              type="number"
+              step="0.01"
+              value={draft.compare_at_price}
+              placeholder="facultatif"
+              onChange={(e) => { setDraft({ ...draft, compare_at_price: e.target.value }); }}
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-white/30 transition"
+            />
           </PField>
           <PField label={t('pm.field.currency')}>
             <input value={draft.currency} onChange={(e) => setDraft({ ...draft, currency: e.target.value.toUpperCase() })}
@@ -537,6 +554,18 @@ export default function ProductManager({ slug }: { slug: string }) {
             </div>
           );
         })()}
+
+        {/* Un prix barré INFÉRIEUR OU ÉGAL au prix actuel n'annonce aucune
+            remise : il ferait croire à une affaire qui n'existe pas.
+            `ancienPrixRetenu` le neutralise à l'enregistrement — on le DIT
+            ici, sinon le marchand croit avoir posé une promotion invisible. */}
+        {draft.compare_at_price.trim() !== '' &&
+          ancienPrixRetenu(draft.compare_at_price, draft.price) === null && (
+            <p className="text-xs leading-relaxed rounded-lg px-3 py-2 border border-white/10 text-white/50" style={{ background: 'rgba(255,255,255,0.03)' }}>
+              L’ancien prix doit être <strong className="text-white/70">plus élevé</strong> que le prix
+              actuel pour s’afficher barré. Sinon il ne sera pas enregistré.
+            </p>
+          )}
 
         <PField label={t('pm.field.images')}>
           {draft.images.length > 0 && (

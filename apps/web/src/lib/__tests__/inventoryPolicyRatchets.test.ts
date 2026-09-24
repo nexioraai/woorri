@@ -136,15 +136,27 @@ describe("ÉTAPE 6 — les allowlists génériques restent fermées", () => {
   // d'affichage et de choix (S, M, L, 42…), au même titre que `images`. Il ne
   // déclare rien sur un état antérieur — ni preuve, ni acte dédié — et le
   // PATCH doit pouvoir le corriger comme il corrige une description.
-  const POST_ATTENDUE = "['name', 'description', 'price', 'currency', 'sizes', 'images', 'stock', 'published', 'position', 'for_sale']";
-  const PATCH_ATTENDUE = "['name', 'description', 'price', 'currency', 'sizes', 'images', 'published', 'position', 'for_sale']";
+  // M2-234 — `compare_at_price` ENTRE DANS LES DEUX LISTES, EN CONSCIENCE.
+  //
+  // Il porte l'ANCIEN prix, celui qu'on montre barré. La colonne existait en
+  // base, la vitrine savait l'afficher, et l'outil Promo la posait EN MASSE —
+  // mais aucune écriture PRODUIT PAR PRODUIT n'était autorisée : le marchand
+  // ne pouvait pas solder un seul article, le cas pourtant le plus fréquent.
+  //
+  // MÊME NATURE QUE `price` : une décision commerciale du marchand sur SON
+  // produit. Rien à voir avec `cj_vid` ou `cost_price`, qui déclenchent une
+  // commande réelle ou fondent un garde-fou financier, et restent exclus.
+  //
+  // Ajouté aux DEUX listes : l'écart entre elles reste `stock`, et rien d'autre.
+  const POST_ATTENDUE = "['name', 'description', 'price', 'currency', 'sizes', 'images', 'stock', 'published', 'position', 'for_sale', 'compare_at_price']";
+  const PATCH_ATTENDUE = "['name', 'description', 'price', 'currency', 'sizes', 'images', 'published', 'position', 'for_sale', 'compare_at_price']";
 
-  it('POST /api/shop/products : 10 champs, `stock` COMPRIS', () => {
+  it('POST /api/shop/products : 11 champs, `stock` COMPRIS', () => {
     const s = readFileSync(join(SRC, 'app/api/shop/products/route.ts'), 'utf-8');
     expect(s).toContain(`const ALLOWED_PRODUCT_FIELDS = ${POST_ATTENDUE} as const;`);
   });
 
-  it('PATCH /api/shop/products/[id] : 9 champs, `stock` RETIRÉ (dette 2)', () => {
+  it('PATCH /api/shop/products/[id] : 10 champs, `stock` RETIRÉ (dette 2)', () => {
     const s = readFileSync(join(SRC, 'app/api/shop/products/[id]/route.ts'), 'utf-8');
     expect(s).toContain(`const ALLOWED_PRODUCT_FIELDS = ${PATCH_ATTENDUE} as const;`);
   });
@@ -159,8 +171,11 @@ describe("ÉTAPE 6 — les allowlists génériques restent fermées", () => {
 
     const post = champs('app/api/shop/products/route.ts');
     const patch = champs('app/api/shop/products/[id]/route.ts');
-    expect(post).toHaveLength(10);
-    expect(patch).toHaveLength(9);
+    // M2-234 : 10 -> 11 et 9 -> 10, `compare_at_price` ajouté AUX DEUX.
+    // L'écart entre elles, lui, ne bouge pas — c'est le vrai invariant, et
+    // les deux assertions qui suivent le vérifient.
+    expect(post).toHaveLength(11);
+    expect(patch).toHaveLength(10);
     expect(post.filter((c) => !patch.includes(c))).toEqual(['stock']);
     expect(patch.filter((c) => !post.includes(c))).toEqual([]);
   });
