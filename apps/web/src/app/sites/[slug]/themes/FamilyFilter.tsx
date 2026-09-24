@@ -9,6 +9,7 @@ import { canAddToCart } from './shared'
 import ClickableProductCard from './ClickableProductCard'
 import AddToCartButton from './AddToCartButton'
 import ShippingEstimate from './ShippingEstimate'
+import GalerieProduit from './GalerieProduit'
 
 type Labels = {
   shopKicker: string
@@ -179,7 +180,10 @@ export default function FamilyFilter({
                   className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
                   style={{ background: `radial-gradient(circle at 50% 60%, color-mix(in srgb, ${primary} 18%, transparent), transparent 70%)` }}
                 />
-                {p.image ? (
+                {/* M2-237 — on glisse dans la carte, plus besoin d'ouvrir. */}
+                {(p.images?.length ?? 0) > 1 ? (
+                  <GalerieProduit images={p.images ?? []} alt={p.name} ratio="1 / 1" primary={primary} fond="transparent" arrondi={0} optimisee sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw" />
+                ) : p.image ? (
                   <Image
                     src={p.image}
                     alt={p.name}

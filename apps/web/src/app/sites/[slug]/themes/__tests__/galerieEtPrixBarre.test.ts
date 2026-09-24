@@ -47,6 +47,37 @@ describe('le prix barré se voit SANS cliquer', () => {
   })
 })
 
+describe('on glisse DANS LA CARTE, sans avoir à cliquer', () => {
+  // LE DÉFAUT SIGNALÉ APRÈS MA PREMIÈRE CORRECTION : j'avais mis la galerie
+  // dans la modale et sur la fiche — c'est-à-dire DERRIÈRE un clic. Le
+  // marchand met cinq photos et n'en voit toujours qu'une dans sa boutique :
+  // rien n'indique que les autres existent, donc personne ne les cherche.
+  it('les QUATRE grilles montent la galerie', () => {
+    for (const g of GRILLES) {
+      expect(lire(g).includes('<GalerieProduit'), `${g} : une seule photo dans la carte`).toBe(true)
+    }
+  })
+
+  it('elles la rendent OPTIMISÉE — sinon la grille télécharge les originaux', () => {
+    // Les photos stockées sont les ORIGINAUX (qualité 95, pleine définition).
+    // Vingt articles sans optimiseur, c'est vingt originaux sur une 3G.
+    for (const g of GRILLES) {
+      const src = lire(g)
+      const i = src.indexOf('<GalerieProduit')
+      expect(src.slice(i, i + 460).includes('optimisee'), `${g} : galerie non optimisée`).toBe(true)
+    }
+  })
+
+  it('un GLISSEMENT n’ouvre pas la fiche — la carte entière est cliquable', () => {
+    // Sans cela, chaque glissement pour voir la photo suivante ouvrirait le
+    // produit : le visiteur ne verrait jamais la deuxième vue, et croirait
+    // l'avoir demandée par erreur.
+    const g = lire('GalerieProduit.tsx')
+    expect(g.includes('onClickCapture'), 'le clic qui suit le glissement n’est pas avalé').toBe(true)
+    expect(g.includes('stopPropagation'), 'le glissement remonte à la carte').toBe(true)
+  })
+})
+
 describe('toutes les photos atteignent le visiteur', () => {
   it('la projection émet le TABLEAU, pas seulement la première', () => {
     const src = lire('shared.tsx')

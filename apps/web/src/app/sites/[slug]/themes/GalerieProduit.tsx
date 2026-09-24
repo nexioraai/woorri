@@ -1,4 +1,5 @@
 'use client'
+import Image from 'next/image'
 import { useEffect, useRef, useState } from 'react'
 
 // ============================================================
@@ -45,6 +46,18 @@ export type GalerieProduitProps = {
   /** Fond du cadre — `contain` laisse des bandes, elles ne doivent pas jurer. */
   fond?: string
   arrondi?: number
+  /**
+   * Rendre par `next/image` plutôt qu'une balise brute.
+   *
+   * INDISPENSABLE DANS UNE GRILLE : les photos stockées sont les ORIGINAUX
+   * (qualité 95, pleine définition). Sans optimiseur, une grille de vingt
+   * articles ferait télécharger vingt originaux — sur une 3G, la page ne
+   * s'affiche pas. La fiche et la modale n'en ont pas besoin : elles ne
+   * montrent qu'un article.
+   */
+  optimisee?: boolean
+  /** Consigne de largeur, quand `optimisee`. */
+  sizes?: string
 }
 
 /** Distance minimale d'un glissement, en pixels. */
@@ -58,9 +71,18 @@ export default function GalerieProduit({
   primary = '#FA5D1E',
   fond = 'rgba(128,128,128,0.08)',
   arrondi = 12,
+  optimisee = false,
+  sizes,
 }: GalerieProduitProps) {
   const [index, setIndex] = useState(0)
   const depart = useRef<number | null>(null)
+  // ── UN GLISSEMENT N'EST PAS UN CLIC, ET LA CARTE ENTIÈRE EST CLIQUABLE.
+  //
+  // Dans la grille, la galerie vit à l'intérieur d'une carte qui ouvre le
+  // produit. Sans ce drapeau, chaque glissement pour voir la photo suivante
+  // ouvrirait la fiche — le visiteur ne verrait jamais la deuxième vue, et
+  // croirait l'avoir demandée par erreur.
+  const aGlisse = useRef(false)
 
   const total = images.length
   // Un index qui déborde après un changement de produit afficherait du vide.
@@ -86,36 +108,62 @@ export default function GalerieProduit({
         // Le glissement est écouté sur le CADRE, pas sur l'image : une image en
         // cours de chargement ne reçoit pas encore les événements, et le geste
         // serait perdu au moment précis où le visiteur attend.
-        onTouchStart={(e) => { depart.current = e.touches[0]?.clientX ?? null }}
+        onTouchStart={(e) => {
+          depart.current = e.touches[0]?.clientX ?? null
+          aGlisse.current = false
+        }}
         onTouchEnd={(e) => {
           const d = depart.current
           depart.current = null
           if (d === null || total < 2) return
           const ecart = (e.changedTouches[0]?.clientX ?? d) - d
           if (Math.abs(ecart) < SEUIL_GLISSEMENT) return
+          aGlisse.current = true
+          e.stopPropagation()
           aller(index + (ecart < 0 ? 1 : -1))
+        }}
+        // Le navigateur émet un `click` APRÈS le glissement : on l'avale, sinon
+        // la carte s'ouvre quand même. Capture, pour arriver avant la carte.
+        onClickCapture={(e) => {
+          if (!aGlisse.current) return
+          aGlisse.current = false
+          e.stopPropagation()
+          e.preventDefault()
         }}
         style={{
           ...cadre,
           background: fond,
           borderRadius: arrondi,
           overflow: 'hidden',
+          // `next/image fill` exige un parent positionné.
+          position: 'relative',
           // Le défilement vertical de la page reste possible ; seul le
           // glissement horizontal nous revient. Sans cela, la page se bloque
           // dès que le doigt passe sur une photo.
           touchAction: 'pan-y',
         }}
       >
-        <img
-          src={images[index]}
-          alt={total > 1 ? `${alt} — vue ${String(index + 1)} sur ${String(total)}` : alt}
-          // La première est immédiate, les suivantes attendent d'être utiles :
-          // sur une connexion lente, charger sept photos d'un coup retarde
-          // celle qu'on regarde.
-          loading={index === 0 ? 'eager' : 'lazy'}
-          decoding="async"
-          style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
-        />
+        {optimisee ? (
+          <Image
+            src={images[index]!}
+            alt={total > 1 ? `${alt} — vue ${String(index + 1)} sur ${String(total)}` : alt}
+            fill
+            sizes={sizes ?? '(max-width: 768px) 100vw, 33vw'}
+            className="object-contain"
+            style={{ objectFit: 'contain' }}
+          />
+        ) : (
+          <img
+            src={images[index]}
+            alt={total > 1 ? `${alt} — vue ${String(index + 1)} sur ${String(total)}` : alt}
+            // La première est immédiate, les suivantes attendent d'être utiles :
+            // sur une connexion lente, charger sept photos d'un coup retarde
+            // celle qu'on regarde.
+            loading={index === 0 ? 'eager' : 'lazy'}
+            decoding="async"
+            style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
+          />
+        )}
       </div>
 
       {total > 1 && (
@@ -125,7 +173,7 @@ export default function GalerieProduit({
             <button
               key={cote}
               type="button"
-              onClick={() => { aller(index + pas) }}
+              onClick={(e) => { e.stopPropagation(); e.preventDefault(); aller(index + pas) }}
               aria-label={pas < 0 ? 'Photo précédente' : 'Photo suivante'}
               style={{
                 position: 'absolute', top: '50%', [cote]: 8, transform: 'translateY(-50%)',
@@ -145,7 +193,7 @@ export default function GalerieProduit({
               <button
                 key={src}
                 type="button"
-                onClick={() => { aller(i) }}
+                onClick={(e) => { e.stopPropagation(); e.preventDefault(); aller(i) }}
                 aria-label={`Photo ${String(i + 1)}`}
                 aria-current={i === index}
                 style={{

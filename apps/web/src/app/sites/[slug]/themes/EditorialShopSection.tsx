@@ -13,6 +13,7 @@ import ShippingEstimate from './ShippingEstimate'
 import { getCartLabels } from './cartLabels'
 import { type Site, normalizeProduct, mockupsToProducts, canAddToCart } from './shared'
 import { getDict } from './i18n'
+import GalerieProduit from './GalerieProduit'
 
 export default function EditorialShopSection({ site, primary }: { site: Site; primary: string }) {
   const t = getDict(site.lang)
@@ -46,8 +47,26 @@ export default function EditorialShopSection({ site, primary }: { site: Site; pr
               lang={site.lang}
               className="group bg-white border border-neutral-200/70 rounded-3xl overflow-hidden hover:shadow-xl hover:-translate-y-1 hover:border-transparent transition-all duration-500 flex flex-col"
             >
+              {/* ── M2-237 : LA GALERIE EST DANS LA CARTE, pas seulement derrière
+                  un clic. Le marchand met cinq photos et n'en voyait qu'UNE
+                  dans sa boutique — il fallait ouvrir le produit pour
+                  soupçonner l'existence des autres.
+                  `optimisee` : les photos stockées sont les ORIGINAUX (qualité
+                  95) ; sans optimiseur, une grille de vingt articles ferait
+                  télécharger vingt originaux. */}
               <div className="aspect-square relative overflow-hidden bg-neutral-100">
-                {p.image ? (
+                {(p.images?.length ?? 0) > 1 ? (
+                  <GalerieProduit
+                    images={p.images ?? []}
+                    alt={p.name}
+                    ratio="1 / 1"
+                    primary={primary}
+                    fond="transparent"
+                    arrondi={0}
+                    optimisee
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
+                  />
+                ) : p.image ? (
                   <Image
                     src={p.image}
                     alt={p.name}
