@@ -38,7 +38,7 @@ export default function VifShopSection({ site }: { site: Site }) {
                 <div className="relative w-full h-56 overflow-hidden bg-black/[0.04]">
                   {/* M2-237 — cinq photos envoyées, une seule montrée : on glisse. */}
                   {(p.images?.length ?? 0) > 1 ? (
-                    <GalerieProduit images={p.images ?? []} alt={p.name} hauteur={224} primary={INK} fond="transparent" arrondi={0} optimisee sizes="(max-width: 640px) 100vw, 25vw" />
+                    <GalerieProduit points="bas" images={p.images ?? []} alt={p.name} hauteur={224} primary={INK} fond="transparent" arrondi={0} optimisee sizes="(max-width: 640px) 100vw, 25vw" />
                   ) : (
                     <img src={p.image} alt={p.name} loading="lazy" decoding="async" className="w-full h-full object-contain transition-transform duration-500 group-hover:scale-105" />
                   )}

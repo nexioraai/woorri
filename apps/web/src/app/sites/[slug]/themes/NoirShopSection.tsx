@@ -28,6 +28,7 @@ import { type Site, normalizeProduct, mockupsToProducts, canAddToCart } from './
 import { getDict } from './i18n'
 import { gold, goldBright, LINE, STAGE, GradedImage } from './NoirTheme'
 import SectionKicker from './SectionKicker'
+import GalerieProduit from './GalerieProduit'
 import NoirSpotlight from './NoirSpotlight'
 
 // Rythme de la grille : le produit 0 est toujours vedette (grand format) ;
@@ -92,7 +93,29 @@ export default function NoirShopSection({ site }: { site: Site }) {
                   )}
                   <ClickableProductCard slug={site.slug} product={p} primary={gold} lang={site.lang} variant="dark" className={`group relative overflow-hidden ${span}`}>
                     <div className="absolute inset-0" style={{ backgroundColor: '#1F1810' }}>
-                      {p.image ? (
+                      {/* TOUTES LES PHOTOS, ICI AUSSI.
+                          Noir était la dernière vitrine à n'en montrer qu'une.
+                          Elle n'a aujourd'hui aucune boutique à produits
+                          marchands — mais le sélecteur de thème l'offre à tout
+                          le monde (`ThemeSelector.tsx`) et l'agent peut
+                          l'appliquer (`api/agent/[slug]/apply`). Un marchand qui
+                          bascule dessus aurait reperdu ses cinq photos et son
+                          prix barré, sans rien avoir changé d'autre.
+                          Points EN HAUT : le bas du cadre porte déjà le nom, le
+                          prix et le bouton d'achat. */}
+                      {(p.images?.length ?? 0) > 1 ? (
+                        <GalerieProduit
+                          points="haut"
+                          images={p.images ?? []}
+                          alt={p.name}
+                          ratio="1 / 1"
+                          primary={goldBright}
+                          fond="transparent"
+                          arrondi={0}
+                          optimisee
+                          sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                        />
+                      ) : p.image ? (
                         <GradedImage src={p.image} alt={p.name} cropBottomPct={9} imgClassName="transition-transform duration-700 ease-out group-hover:scale-[1.06]" />
                       ) : (
                         <div className="absolute inset-0 flex items-center justify-center" style={{ color: 'rgba(245,230,200,0.25)' }}>
@@ -132,11 +155,23 @@ export default function NoirShopSection({ site }: { site: Site }) {
                         </div>
                       </div>
                       {p.price && (
-                        <span
-                          className={`shrink-0 font-extralight leading-none tracking-tight ${featured ? 'text-4xl md:text-5xl' : 'text-xl md:text-2xl'}`}
-                          style={{ fontFamily: 'var(--font-fraunces), serif', color: goldBright }}
-                        >
-                          {p.price.replace(/[^0-9.,]/g, '')}
+                        <span className="shrink-0 flex items-baseline gap-2">
+                          {/* La remise se voit SANS ouvrir la fiche : une remise
+                              qu'on ne voit pas ne fait pas vendre. */}
+                          {p.compareAt && (
+                            <span
+                              className={`line-through font-extralight leading-none ${featured ? 'text-xl md:text-2xl' : 'text-sm'}`}
+                              style={{ fontFamily: 'var(--font-fraunces), serif', color: 'rgba(245,243,238,0.45)' }}
+                            >
+                              {p.compareAt.replace(/[^0-9.,]/g, '')}
+                            </span>
+                          )}
+                          <span
+                            className={`font-extralight leading-none tracking-tight ${featured ? 'text-4xl md:text-5xl' : 'text-xl md:text-2xl'}`}
+                            style={{ fontFamily: 'var(--font-fraunces), serif', color: goldBright }}
+                          >
+                            {p.price.replace(/[^0-9.,]/g, '')}
+                          </span>
                         </span>
                       )}
                     </div>

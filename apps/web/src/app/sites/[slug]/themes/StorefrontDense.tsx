@@ -208,7 +208,7 @@ export default function StorefrontDense({
                   />
                   {/* M2-237 — on glisse dans la carte, plus besoin d'ouvrir. */}
                   {(p.images?.length ?? 0) > 1 ? (
-                    <GalerieProduit images={p.images ?? []} alt={p.name} ratio="1 / 1" primary={primary} fond="transparent" arrondi={0} optimisee sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw" />
+                    <GalerieProduit points="bas" images={p.images ?? []} alt={p.name} ratio="1 / 1" primary={primary} fond="transparent" arrondi={0} optimisee sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw" />
                   ) : p.image ? (
                     <Image
                       src={p.image}

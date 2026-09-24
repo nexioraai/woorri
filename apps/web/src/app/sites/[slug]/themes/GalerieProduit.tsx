@@ -58,6 +58,28 @@ export type GalerieProduitProps = {
   optimisee?: boolean
   /** Consigne de largeur, quand `optimisee`. */
   sizes?: string
+  /**
+   * Où poser les points de progression.
+   *
+   * ── CE DÉFAUT ÉTAIT INVISIBLE DANS LE CODE ET VISIBLE À L'ÉCRAN.
+   *
+   * Les points étaient toujours rendus SOUS le cadre (`marginTop`). Or les
+   * quatre grilles de vitrine enferment la galerie dans un conteneur à ratio
+   * fixe ET `overflow-hidden` — `aspect-square` pour Editorial, Aurora et les
+   * familles, `h-56` pour Vif. Le cadre y remplit déjà TOUTE la hauteur : les
+   * points débordaient donc de 17 px et étaient ROGNÉS.
+   *
+   * Mesuré sur le HTML réellement servi par `chanorfie.com` : 25 boutons de
+   * points présents dans le document, et aucun visible. Un cliquet qui compte
+   * des nœuds dans le DOM ne prouve donc RIEN sur ce que le visiteur voit —
+   * c'est la structure CSS qu'il fallait lire.
+   *
+   *   · `dessous` (défaut) — sous le cadre. Fiche et modale, où rien ne rogne.
+   *   · `bas`     — en surimpression en bas du cadre. Les grilles claires.
+   *   · `haut`    — en surimpression en haut. Noir, dont le bas du cadre porte
+   *                 déjà le nom, le prix et le bouton d'achat.
+   */
+  points?: 'dessous' | 'bas' | 'haut'
 }
 
 /** Distance minimale d'un glissement, en pixels. */
@@ -73,6 +95,7 @@ export default function GalerieProduit({
   arrondi = 12,
   optimisee = false,
   sizes,
+  points = 'dessous',
 }: GalerieProduitProps) {
   const [index, setIndex] = useState(0)
   const depart = useRef<number | null>(null)
@@ -101,6 +124,26 @@ export default function GalerieProduit({
   }
 
   const aller = (n: number) => { setIndex(((n % total) + total) % total) }
+
+  // En surimpression, les points sortent du flux : la hauteur de la galerie
+  // redevient exactement celle du cadre. Effet de bord bienvenu — les flèches,
+  // centrées sur `top: 50%`, retrouvent le vrai milieu de l'image.
+  const enSurimpression = points !== 'dessous'
+  const rangeeDesPoints: React.CSSProperties = enSurimpression
+    ? {
+        position: 'absolute', left: 0, right: 0,
+        ...(points === 'haut' ? { top: 10 } : { bottom: 10 }),
+        display: 'flex', justifyContent: 'center',
+      }
+    : { display: 'flex', justifyContent: 'center', marginTop: 10 }
+  const pastilleDesPoints: React.CSSProperties = enSurimpression
+    ? {
+        display: 'flex', gap: 6, alignItems: 'center',
+        padding: '6px 9px', borderRadius: 999,
+        // Sans ce fond, des points posés sur une photo claire sont illisibles.
+        background: 'rgba(10,8,6,0.45)', backdropFilter: 'blur(4px)',
+      }
+    : { display: 'flex', gap: 6, alignItems: 'center' }
 
   return (
     <div style={{ position: 'relative' }}>
@@ -187,22 +230,30 @@ export default function GalerieProduit({
           ))}
 
           {/* Les points DISENT qu'il y en a d'autres. Sans eux, le visiteur ne
-              sait pas qu'il peut glisser — et ne glisse donc jamais. */}
-          <div style={{ display: 'flex', gap: 6, justifyContent: 'center', marginTop: 10 }}>
-            {images.map((src, i) => (
-              <button
-                key={src}
-                type="button"
-                onClick={(e) => { e.stopPropagation(); e.preventDefault(); aller(i) }}
-                aria-label={`Photo ${String(i + 1)}`}
-                aria-current={i === index}
-                style={{
-                  width: i === index ? 20 : 7, height: 7, borderRadius: 999, padding: 0,
-                  border: 'none', cursor: 'pointer', transition: 'width .2s',
-                  background: i === index ? primary : 'rgba(128,128,128,0.4)',
-                }}
-              />
-            ))}
+              sait pas qu'il peut glisser — et ne glisse donc jamais.
+              Encore faut-il qu'ils soient VISIBLES : sous le cadre, les quatre
+              grilles les rognaient (voir `points`). */}
+          <div style={rangeeDesPoints}>
+            <div style={pastilleDesPoints}>
+              {images.map((src, i) => (
+                <button
+                  key={src}
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); e.preventDefault(); aller(i) }}
+                  aria-label={`Photo ${String(i + 1)}`}
+                  aria-current={i === index}
+                  style={{
+                    width: i === index ? 20 : 7, height: 7, borderRadius: 999, padding: 0,
+                    border: 'none', cursor: 'pointer', transition: 'width .2s',
+                    // Sur une photo, le gris de repos disparaît : au-dessus de
+                    // l'image on l'éclaircit, et la pastille fournit le contraste.
+                    background: i === index
+                      ? primary
+                      : (enSurimpression ? 'rgba(255,255,255,0.55)' : 'rgba(128,128,128,0.4)'),
+                  }}
+                />
+              ))}
+            </div>
           </div>
         </>
       )}

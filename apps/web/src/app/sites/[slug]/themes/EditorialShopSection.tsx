@@ -56,7 +56,7 @@ export default function EditorialShopSection({ site, primary }: { site: Site; pr
                   télécharger vingt originaux. */}
               <div className="aspect-square relative overflow-hidden bg-neutral-100">
                 {(p.images?.length ?? 0) > 1 ? (
-                  <GalerieProduit
+                  <GalerieProduit points="bas"
                     images={p.images ?? []}
                     alt={p.name}
                     ratio="1 / 1"
