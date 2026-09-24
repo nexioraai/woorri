@@ -825,6 +825,14 @@ forSale: raw?.forSale,
 // commentaire ci-dessus l'avait écrit d'avance : « tout champ non recopié
 // ici est PERDU ».
 whatsapp: raw?.whatsapp ?? null,
+// M2-237 — TROISIÈME FOIS QUE CE NORMALISEUR MANGE UN CHAMP.
+// Après `forSale` (dette 6c) et `whatsapp`/`sizes` (M2-208), c'est
+// `images` et `encaisseEnLigne` qui n'arrivaient pas : le marchand
+// mettait CINQ photos et sa grille n'en montrait qu'une. Un cliquet
+// compare désormais les deux listes de champs — cette classe ne peut
+// plus revenir en silence.
+images: Array.isArray(raw?.images) ? raw.images : [],
+encaisseEnLigne: raw?.encaisseEnLigne,
 compareAtPrice: raw?.compareAtPrice,
 compareAt: raw?.compareAt,
 mobileMoney: Array.isArray(raw?.mobileMoney) ? raw.mobileMoney : [],
