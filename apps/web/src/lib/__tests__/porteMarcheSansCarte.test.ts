@@ -23,6 +23,7 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
+import { contactDirectRequis, encaisseEnLigne } from '../contactDirect'
 import { marcheSansCarte, numerosDEncaissement } from '../whatsappOrder'
 
 describe('la porte reconnaît ce que les marchands ÉCRIVENT', () => {
@@ -55,35 +56,112 @@ describe('la porte reconnaît ce que les marchands ÉCRIVENT', () => {
   })
 })
 
-describe('les deux surfaces posent la MÊME condition', () => {
-  const lire = (rel: string) => readFileSync(join(process.cwd(), 'src', rel), 'utf8')
+describe('les deux surfaces décident sur le FAIT, plus sur la devise', () => {
+  /**
+   * Le fichier SANS SES COMMENTAIRES.
+   *
+   * Sans cela, ce cliquet échouait sur sa propre justification : la fiche
+   * explique en commentaire pourquoi elle N'APPELLE PLUS `marcheSansCarte`,
+   * et le motif y voyait un appel. Le dépôt connaît déjà ce piège —
+   * `jsonLdMounting.test.ts` le documente pour la même raison. On vérifie le
+   * CODE, jamais la prose qui l'entoure.
+   */
+  const lire = (rel: string) =>
+    readFileSync(join(process.cwd(), 'src', rel), 'utf8')
+      .replace(/\/\*[\s\S]*?\*\//gu, '')
+      .replace(/^[ \t]*\/\/.*$/gmu, '')
 
   const FICHE = 'app/sites/[slug]/produits/[id]/ProductPageView.tsx'
   const MODALE = 'app/sites/[slug]/themes/MerchantProductModal.tsx'
+  const SURFACES = [
+    ['fiche', FICHE],
+    ['modale', MODALE],
+  ] as const
 
-  it('NI la fiche NI la modale n’exigent `forSale` pour ce bloc', () => {
-    // LE CŒUR DU DÉFAUT. `for_sale` décide du PAIEMENT ; ce bloc est
-    // l'alternative AU paiement en ligne. Les lier cache la fonctionnalité
-    // précisément là où elle sert.
-    for (const [nom, src] of [['fiche', lire(FICHE)], ['modale', lire(MODALE)]] as const) {
-      const lignes = src.split('\n').filter((l) => l.includes('marcheSansCarte(') && l.includes('&&'))
-      expect(lignes.length, `${nom} : aucune condition trouvée — la lecture a dérivé`).toBeGreaterThan(0)
-      for (const l of lignes) {
-        expect(
-          /\bforSale\b|\bfor_sale\b/u.test(l),
-          `${nom} : \`forSale\` est revenu dans la condition — ${l.trim().slice(0, 90)}`,
-        ).toBe(false)
-      }
+  it('aucune des deux n’appelle `marcheSansCarte` DIRECTEMENT', () => {
+    // LE CŒUR DE LA CORRECTION. Tant que les surfaces décidaient sur une
+    // chaîne de caractères, chaque orthographe nouvelle (`XAF`, `CFA`, `F`…)
+    // faisait disparaître les boutons en silence, et il fallait élargir le
+    // test à chaque fois. Elles passent désormais par `contactDirectRequis`,
+    // qui lit d'abord une CAPACITÉ de la boutique.
+    for (const [nom, rel] of SURFACES) {
+      expect(
+        /\bmarcheSansCarte\s*\(/u.test(lire(rel)),
+        `${nom} : décide encore sur la devise — la prochaine orthographe cassera tout`,
+      ).toBe(false)
     }
   })
 
-  it('les deux exigent un NUMÉRO — on ne montre jamais un bouton mort', () => {
-    for (const [nom, src] of [['fiche', lire(FICHE)], ['modale', lire(MODALE)]] as const) {
-      const lignes = src.split('\n').filter((l) => l.includes('marcheSansCarte(') && l.includes('&&'))
-      for (const l of lignes) {
-        expect(/whatsapp/iu.test(l), `${nom} : condition sans numéro — ${l.trim().slice(0, 90)}`).toBe(true)
-      }
+  it('les deux passent par `contactDirectRequis`', () => {
+    for (const [nom, rel] of SURFACES) {
+      expect(lire(rel).includes('contactDirectRequis('), `${nom} : ne décide pas sur le fait`).toBe(true)
     }
+  })
+
+  it('les deux lui transmettent `encaisseEnLigne` — le fait, pas une devise seule', () => {
+    for (const [nom, rel] of SURFACES) {
+      const src = lire(rel)
+      const i = src.indexOf('contactDirectRequis(')
+      expect(i, `${nom} : appel introuvable`).toBeGreaterThan(-1)
+      expect(
+        src.slice(i, i + 420).includes('encaisseEnLigne'),
+        `${nom} : appelle la décision SANS lui donner le fait qui la fonde`,
+      ).toBe(true)
+    }
+  })
+
+  it('NI l’une NI l’autre n’exige `forSale` pour ce bloc', () => {
+    // `for_sale` décide du PAIEMENT ; ce bloc est l'alternative AU paiement
+    // en ligne. Les lier cachait la fonctionnalité là où elle sert —
+    // mesuré : 103 produits sur 105 ont `for_sale = false`.
+    for (const [nom, rel] of SURFACES) {
+      const src = lire(rel)
+      const i = src.indexOf('contactDirectRequis(')
+      expect(
+        /\bforSale\b|\bfor_sale\b/u.test(src.slice(Math.max(0, i - 220), i + 420)),
+        `${nom} : \`forSale\` est revenu autour de la décision`,
+      ).toBe(false)
+    }
+  })
+})
+
+describe('la décision structurelle — `contactDirectRequis`', () => {
+  it('boutique SANS compte d’encaissement : contact affiché, QUELLE QUE SOIT la devise', () => {
+    // LE DÉFAUT SIGNALÉ TROIS FOIS PAR LE MARCHAND, en trois orthographes :
+    // `XAF`, puis `CFA`, puis `F`. Aucune ne doit plus compter.
+    for (const devise of ['XAF', 'CFA', 'F', 'Fr', 'franc', '', null, undefined, 'EUR']) {
+      expect(
+        contactDirectRequis({ encaisseEnLigne: false, devise, numero: '+23565926592' }),
+        `devise « ${String(devise)} » : le contact devrait s’afficher — la boutique ne peut PAS être payée en ligne`,
+      ).toBe(true)
+    }
+  })
+
+  it('boutique QUI encaisse et marché à carte : contact MASQUÉ', () => {
+    // Sans cette moitié, on aurait « corrigé » en affichant WhatsApp sur
+    // toutes les boutiques Stripe du monde.
+    for (const devise of ['EUR', 'USD', 'CAD']) {
+      expect(contactDirectRequis({ encaisseEnLigne: true, devise, numero: '+1' })).toBe(false)
+    }
+  })
+
+  it('boutique qui encaisse MAIS sert un marché sans carte : les deux chemins', () => {
+    expect(contactDirectRequis({ encaisseEnLigne: true, devise: 'XAF', numero: '+235' })).toBe(true)
+  })
+
+  it('AUCUN numéro : jamais de bouton, même sans encaissement', () => {
+    // Un bouton qui ne compose rien est pire que pas de bouton.
+    expect(contactDirectRequis({ encaisseEnLigne: false, devise: 'XAF', numero: null })).toBe(false)
+    expect(contactDirectRequis({ encaisseEnLigne: false, devise: 'XAF', numero: '' })).toBe(false)
+  })
+
+  it('`encaisseEnLigne` lit le compte comme le fait `checkout`', () => {
+    // Deux lectures divergentes du même champ produiraient une boutique qui
+    // affiche un panier sans pouvoir l'encaisser.
+    expect(encaisseEnLigne(null)).toBe(false)
+    expect(encaisseEnLigne(undefined)).toBe(false)
+    expect(encaisseEnLigne('   ')).toBe(false)
+    expect(encaisseEnLigne('acct_123')).toBe(true)
   })
 })
 

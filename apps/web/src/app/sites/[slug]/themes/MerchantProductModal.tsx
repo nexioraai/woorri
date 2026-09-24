@@ -4,9 +4,13 @@ import { useState, useEffect } from 'react';
 import { achatPossible } from './variantRequirement';
 import { X } from 'lucide-react';
 import AddToCartButton from './AddToCartButton';
-import { lienAppel, lienCommandeWhatsApp, marcheSansCarte, numerosDEncaissement, urlProduitDepuisLaPage } from '@/lib/whatsappOrder';
+import { lienAppel, lienCommandeWhatsApp, numerosDEncaissement, urlProduitDepuisLaPage } from '@/lib/whatsappOrder';
+import { contactDirectRequis } from '@/lib/contactDirect';
 
 interface MerchantProduct {
+  /** M2-232 — la boutique encaisse-t-elle en ligne ? Sans compte
+   *  d'encaissement, le contact direct est le SEUL parcours d'achat. */
+  encaisseEnLigne?: boolean;
   id?: string;
   name: string;
   description: string;
@@ -288,7 +292,13 @@ export default function MerchantProductModal({ product: p, primary, lang = 'en',
                 « les acheteurs peuvent voir le numéro mobile money pour payer
                 via mobile »). Marché sans carte uniquement — même porte que
                 les boutons. */}
-            {p.whatsapp && marcheSansCarte(p.currency, p.price) && (
+            {p.whatsapp &&
+              contactDirectRequis({
+                encaisseEnLigne: p.encaisseEnLigne === true,
+                devise: p.currency,
+                libellePrix: p.price,
+                numero: p.whatsapp,
+              }) && (
               <div style={{ marginTop: 18, border: '1.5px solid ' + c.border, borderRadius: 12, padding: '14px 16px' }}>
                 <p style={{ fontSize: 12, fontWeight: 600, margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em', color: c.labelMuted }}>
                   {(CONTACT_LABELS[lang] || CONTACT_LABELS.en).payTitle}
@@ -312,7 +322,13 @@ export default function MerchantProductModal({ product: p, primary, lang = 'en',
                 </p>
               </div>
             )}
-            {p.whatsapp && marcheSansCarte(p.currency, p.price) && (
+            {p.whatsapp &&
+              contactDirectRequis({
+                encaisseEnLigne: p.encaisseEnLigne === true,
+                devise: p.currency,
+                libellePrix: p.price,
+                numero: p.whatsapp,
+              }) && (
               <div style={{ display: 'flex', gap: 10, marginTop: 14, flexWrap: 'wrap' }}>
                 {(() => {
                   const appel = lienAppel(p.whatsapp);

@@ -7,7 +7,8 @@ import AddToCartButton from '../../themes/AddToCartButton'
 import { achatPossible, choixDeVarianteRequis } from '../../themes/variantRequirement'
 import DesignCanvas from '../../themes/DesignCanvas'
 import { THEME_TOKENS, ThemeKey } from '../../themes/CatalogSearch'
-import { lienAppel, lienCommandeWhatsApp, marcheSansCarte, numerosDEncaissement, urlProduitDepuisLaPage } from '@/lib/whatsappOrder'
+import { lienAppel, lienCommandeWhatsApp, numerosDEncaissement, urlProduitDepuisLaPage } from '@/lib/whatsappOrder'
+import { contactDirectRequis } from '@/lib/contactDirect'
 
 const CART_LABELS: Record<string, string> = {
   fr: 'Ajouter au panier',
@@ -446,7 +447,16 @@ export default function ProductPageView({ product }: { product: ProductPage }) {
                 Le libellé de prix est passé en repli, comme dans la modale :
                 un prix « 20 000 FCFA » dit la devise quand le champ ne la dit
                 pas. */}
-            {product.whatsapp && marcheSansCarte(product.currency, priceLabel) && (
+            {/* `product.whatsapp &&` est redondant avec `contactDirectRequis`,
+                qui exige déjà un numéro — mais il RESTREINT LE TYPE pour le
+                bloc, où `lienCommandeWhatsApp` demande une chaîne non nulle.
+                Une garde de type explicite vaut mieux qu'une affirmation. */}
+            {product.whatsapp && contactDirectRequis({
+              encaisseEnLigne: product.encaisseEnLigne,
+              devise: product.currency,
+              libellePrix: priceLabel,
+              numero: product.whatsapp,
+            }) && (
               <div
                 style={{
                   marginTop: 20,

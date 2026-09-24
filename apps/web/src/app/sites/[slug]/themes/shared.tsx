@@ -5,6 +5,7 @@ import { selectionServable } from '@/lib/dropship/catalogAdmission'
 import { calcSellPrice, sitePricing, resolveDisplayPrice } from '@/lib/pricing'
 import { canTransact } from '@/lib/commerce-admission/canTransact'
 import { sellablePodBrandMockups } from '@/lib/mode3/podBrandMockups'
+import { encaisseEnLigne } from '@/lib/contactDirect'
 
 import {
 Wrench,
@@ -108,6 +109,8 @@ compareAtPrice?: number
 compareAt?: string
 /** M2-210 — numéros d'encaissement {label, number}, libellés du marchand. */
 mobileMoney?: { label: string; number: string }[]
+/** M2-232 — la boutique encaisse-t-elle en ligne ? Décide du contact direct. */
+encaisseEnLigne?: boolean
 variants?: { variant_id: string; label: string; price: number; currency: string }[]
 shippingDaysMin?: number | null
 shippingDaysMax?: number | null
@@ -151,7 +154,7 @@ rating: number
 // ---------- Supabase ----------
 
 export const PUBLIC_COLS =
-'id,slug,name,slogan,type,mode,custom_domain,primary_color,hero_title,hero_subtitle,about,services,testimonials,gallery,products,contact,menu,team,hours,social_links,address,pages,cta,theme,hero_image,lang,faq,whyus,mission,vision,geo_lat,geo_lng,area_served,price_range,hidden_sections,section_label,sections,created_at,dropship_type,pod_designs,product_families,cj_margin_percent,cj_round_mode,shipping_flat,updated_at'
+'id,slug,name,slogan,type,mode,custom_domain,payment_account_id,primary_color,hero_title,hero_subtitle,about,services,testimonials,gallery,products,contact,menu,team,hours,social_links,address,pages,cta,theme,hero_image,lang,faq,whyus,mission,vision,geo_lat,geo_lng,area_served,price_range,hidden_sections,section_label,sections,created_at,dropship_type,pod_designs,product_families,cj_margin_percent,cj_round_mode,shipping_flat,updated_at'
 
 // ---------- Resolution d'URL multi-domaines ----------
 //
@@ -298,7 +301,7 @@ console.error('[storefront] ' + ligne)
  * INTERNES (`stock`, `published`, `track_inventory`) — rien ne change pour
  * eux. `whatsapp` est le numéro du SITE (social_links), posé sur chaque
  * produit pour voyager jusqu'à la modale sans traverser cinq thèmes. */
-function mapShopProducts(rows: any[], whatsapp?: string | null, mobileMoney?: unknown): any[] {
+function mapShopProducts(rows: any[], whatsapp?: string | null, mobileMoney?: unknown, paiementEnLigne?: boolean): any[] {
 return rows.map((p: any) => ({
 id: p.id,
 name: p.name,
@@ -322,6 +325,12 @@ whatsapp: whatsapp || null,
 // M2-210 — les numéros d'encaissement du SITE (contact.mobile_money),
 // libellés par le marchand. Même voyage que `whatsapp`.
 mobileMoney: Array.isArray(mobileMoney) ? mobileMoney : [],
+// M2-232 — LE FAIT QUI DÉCIDE VRAIMENT : cette boutique encaisse-t-elle en
+// ligne ? Sans compte d'encaissement, le contact direct n'est pas une
+// option régionale, c'est le SEUL parcours d'achat. Il voyage avec le
+// produit, comme `whatsapp`, pour atteindre la modale sans traverser
+// cinq thèmes.
+encaisseEnLigne: paiementEnLigne === true,
 cjVid: p.cj_vid || null,
 forSale: p.for_sale !== false,
 }))
@@ -340,7 +349,7 @@ if (canTransact(data?.mode)) {
 // Modes commercants : `shop_products` fait foi, MEME VIDE. Aucun repli --
 // une boutique sans produit publie n'a pas de catalogue, elle n'herite pas
 // de celui d'avant.
-data.products = mapShopProducts(shopProducts ?? [], data?.social_links?.whatsapp || data?.contact?.phone, data?.contact?.mobile_money)
+data.products = mapShopProducts(shopProducts ?? [], data?.social_links?.whatsapp || data?.contact?.phone, data?.contact?.mobile_money, encaisseEnLigne(data?.payment_account_id))
 return
 }
 // Mode 1 (et tout mode non commercant) : comportement RIGOUREUSEMENT
@@ -348,7 +357,7 @@ return
 // atteindre -- une vitrine n'a pas de `shop_products`. La conserver telle
 // quelle est ce qui garantit qu'aucun comportement du Mode 1 n'a bouge.
 if (shopProducts && shopProducts.length > 0) {
-data.products = mapShopProducts(shopProducts, data?.social_links?.whatsapp || data?.contact?.phone, data?.contact?.mobile_money)
+data.products = mapShopProducts(shopProducts, data?.social_links?.whatsapp || data?.contact?.phone, data?.contact?.mobile_money, encaisseEnLigne(data?.payment_account_id))
 }
 }
 

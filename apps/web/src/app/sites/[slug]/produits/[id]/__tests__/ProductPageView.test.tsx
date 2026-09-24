@@ -38,6 +38,8 @@ function page(over: Partial<ProductPage> = {}): ProductPage {
     // M2-202 -- champs AJOUTES : tailles et numero du vendeur. Neutres ici :
     // sans tailles ni numero, le rendu de ces cas est celui d'avant.
     sizes: [], whatsapp: null, mobileMoney: [], compareAtPrice: null,
+    // M2-232 -- fixture a marche CARTE : le contact direct ne s y affiche pas.
+    encaisseEnLigne: true,
     ...over,
   };
 }

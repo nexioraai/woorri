@@ -60,6 +60,10 @@ function produit(over: Partial<ProductPage> = {}): ProductPage {
     // M2-202 -- champs AJOUTES : tailles et numero du vendeur. Neutres ici :
     // sans tailles ni numero, le rendu de ces cas est celui d'avant.
     sizes: [], whatsapp: null, mobileMoney: [], compareAtPrice: null,
+    // M2-232 -- la boutique de ce fixture encaisse en ligne (devise CAD,
+    // marche carte) : le contact direct n'a donc PAS a s'y afficher, et ces
+    // cas rendent exactement ce qu'ils rendaient avant.
+    encaisseEnLigne: true,
     ...over,
   };
 }

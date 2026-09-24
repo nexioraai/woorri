@@ -3,6 +3,9 @@ import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import MerchantProductModal from './MerchantProductModal';
 interface MerchantProduct {
+  /** M2-232 — la boutique encaisse-t-elle en ligne ? Sans compte
+   *  d'encaissement, le contact direct est le SEUL parcours d'achat. */
+  encaisseEnLigne?: boolean;
   id?: string;
   /** LOT 3 / DEBT-058 -- voir le calcul de `href` ci-dessous. */
   hasProductPage?: boolean;

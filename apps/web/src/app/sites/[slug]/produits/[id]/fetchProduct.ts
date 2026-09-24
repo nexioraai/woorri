@@ -1,6 +1,7 @@
 import { supabase } from '@/lib/supabase'
 import { sitePricing, resolveDisplayPrice } from '@/lib/pricing'
 import { selectionServable, usesCatalogSelections } from '@/lib/dropship/catalogAdmission'
+import { encaisseEnLigne } from '@/lib/contactDirect'
 
 export type ProductPage = {
   id: string
@@ -51,6 +52,12 @@ export type ProductPage = {
    * n'est inventé.
    */
   whatsapp: string | null
+  /** M2-232 — la boutique a-t-elle un compte d'encaissement ? Sans lui, le
+   *  contact direct N'EST PAS une option régionale : c'est le SEUL parcours
+   *  d'achat. Projeté ici parce que `checkout` lit déjà ce même champ pour
+   *  refuser une commande — deux lectures divergentes produiraient une
+   *  boutique qui affiche un panier sans pouvoir l'encaisser. */
+  encaisseEnLigne: boolean
   /** M2-210 — numéros d'encaissement {label, number}, libellés du marchand. */
   mobileMoney: { label: string; number: string }[]
   /** M2-217 — prix barré (nombre), présent seulement si > prix actuel. */
@@ -71,7 +78,7 @@ export async function fetchProduct(slug: string, rawId: string): Promise<Product
   // vrai par construction de la vue, jamais lu par le reste de la fonction.
   const { data: site } = await supabase
     .from('sites_public')
-    .select('id, name, slug, mode, custom_domain, dropship_type, product_families, cj_margin_percent, cj_round_mode, primary_color, theme, lang, shipping_flat, social_links, contact')
+    .select('id, name, slug, mode, custom_domain, dropship_type, product_families, cj_margin_percent, cj_round_mode, primary_color, theme, lang, shipping_flat, social_links, contact, payment_account_id')
     .eq('slug', slug)
     .maybeSingle()
   if (!site) return null
@@ -173,6 +180,7 @@ export async function fetchProduct(slug: string, rawId: string): Promise<Product
       sizes: [],
       compareAtPrice: null,
       whatsapp: ((site as any).social_links?.whatsapp as string | undefined) || ((site as any).contact?.phone as string | undefined) || null,
+      encaisseEnLigne: encaisseEnLigne((site as any).payment_account_id as string | null | undefined),
       mobileMoney: Array.isArray((site as any).contact?.mobile_money) ? (site as any).contact.mobile_money : [],
     }
   }
@@ -218,6 +226,7 @@ export async function fetchProduct(slug: string, rawId: string): Promise<Product
         : null,
     mobileMoney: Array.isArray((site as any).contact?.mobile_money) ? (site as any).contact.mobile_money : [],
     whatsapp: ((site as any).social_links?.whatsapp as string | undefined) || ((site as any).contact?.phone as string | undefined) || null,
+    encaisseEnLigne: encaisseEnLigne((site as any).payment_account_id as string | null | undefined),
     siteName: (site as any).name,
     siteSlug: (site as any).slug,
     siteCustomDomain: (site as any).custom_domain ?? null,

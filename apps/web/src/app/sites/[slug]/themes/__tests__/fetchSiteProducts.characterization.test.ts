@@ -234,7 +234,7 @@ for (const [nom, appel] of FONCTIONS) {
     // marchand libelle lui-même (Airtel, Moov, autre). Le `toEqual`
     // reste exhaustif : c'est lui qui garantit qu'aucun champ INTERNE n'est
     // promu au passage. Ce bloc est exécuté pour fetchSite ET fetchSitePreview.
-    it('les 12 champs projetés, aux formats exacts', async () => {
+    it('les 13 champs projetés, aux formats exacts', async () => {
       shopProductsResult = { data: [ligne()], error: null };
       const mod = await import('../shared');
       const s = await appel(mod);
@@ -251,6 +251,14 @@ for (const [nom, appel] of FONCTIONS) {
         mobileMoney: [],             // M2-210 — numéros d'encaissement, [] sans saisie
         cjVid: null,
         forSale: true,               // DETTE 6c — l'achetabilité
+        // M2-232 — ÉDITION CONSCIENTE : un 13e champ entre à la projection.
+        // Il dit si la boutique a un COMPTE D'ENCAISSEMENT. Sans lui, la
+        // décision d'afficher WhatsApp / appel / Mobile Money reposait sur la
+        // DEVISE, saisie en texte libre — et trois orthographes successives du
+        // même marchand (`XAF`, `CFA`, `F`) ont fait disparaître ses boutons
+        // trois fois. Ce champ remplace une devinette par un fait.
+        // `false` ici : le site de ce cas ne porte pas de `payment_account_id`.
+        encaisseEnLigne: false,
       });
     });
 
