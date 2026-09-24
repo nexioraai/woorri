@@ -18,10 +18,21 @@ import sharp from 'sharp'
 // boutiques auraient servi le « D » de Deribfy. Un marchand marqué à l'enseigne
 // de son fournisseur, c'est un défaut plus grave que l'absence d'icône.
 //
-// AUCUN MODÈLE, AUCUN SERVICE. La table `sites` ne porte pas de colonne `logo`
-// — seulement `name` et `primary_color`. Le monogramme en est DÉRIVÉ : c'est
-// la seule chose vraie qu'on puisse dessiner à partir de ce que le marchand a
-// réellement fourni.
+// AUCUN MODÈLE, AUCUN SERVICE.
+//
+// ── M2-240 : LE MONOGRAMME N'EST PLUS QU'UN REPLI.
+//
+// Ce commentaire disait, et c'était vrai : « la table `sites` ne porte pas de
+// colonne `logo` ». C'était la raison du monogramme — et c'était aussi une
+// LIMITE SUBIE, pas un choix. Le marchand a demandé deux fois de pouvoir
+// mettre le sien. `sites.logo_url` existe désormais
+// (`supabase/sql/sites_logo_url.sql`), et l'ordre est :
+//
+//   1. le logo déposé par le marchand, s'il y en a un ;
+//   2. le monogramme dérivé de son nom et de sa couleur, sinon.
+//
+// Le monogramme reste INDISPENSABLE : une boutique naît sans logo, et elle
+// doit avoir une icône dès sa première minute en ligne.
 // ============================================================
 
 /** Repli quand le marchand n'a pas choisi de couleur. Accent de la plateforme. */
@@ -133,13 +144,96 @@ export function construireIco(images: { taille: number; donnees: Buffer }[]): Bu
   return Buffer.concat([enTete, ...entrees, ...images.map((i) => i.donnees)])
 }
 
+/**
+ * L'URL du logo pointe-t-elle vers NOTRE dépôt de fichiers ?
+ *
+ * `logo_url` est une colonne TEXTE que le marchand écrit. Le serveur va
+ * ensuite la CHERCHER pour fabriquer l'icône : sans ce filtre, n'importe quel
+ * marchand ferait émettre à notre serveur une requête vers l'adresse de son
+ * choix — y compris une adresse interne. C'est une SSRF, et elle serait
+ * offerte par un champ de formulaire.
+ *
+ * On n'accepte donc que l'origine de notre propre stockage. Une URL absente
+ * ou illisible n'est pas une erreur : c'est simplement « pas de logo ».
+ */
+export function sourceLogoAutorisee(
+  url: string | null | undefined,
+  origineStockage: string | null | undefined,
+): boolean {
+  if (!url || !origineStockage) return false
+  try {
+    const u = new URL(url)
+    if (u.protocol !== 'https:') return false
+    return u.origin === new URL(origineStockage).origin
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Le logo du marchand, rendu en icône carrée.
+ *
+ * ── `contain`, JAMAIS `cover`. C'est la règle de tout ce lot : une image de
+ * marque ne se rogne pas. Un logo large rentre dans le carré avec des marges ;
+ * rogné, il perdrait la moitié du nom de la boutique.
+ *
+ * ── LA TRANSPARENCE SURVIT. Un logo est le plus souvent un PNG détouré. En
+ * l'aplatissant sur du blanc, on donnerait un carré blanc dans les onglets
+ * sombres. `sharp` garde le canal alpha, et le fond reste transparent.
+ *
+ * ── UNE MARGE DE 6 %. Collé aux bords, un logo paraît plus gros que les
+ * icônes voisines dans une liste d'onglets, et son contour est rogné par les
+ * navigateurs qui arrondissent. Six pour cent suffisent à le poser.
+ */
+export async function logoEnIcone(donnees: Buffer, taille: number): Promise<Buffer> {
+  const marge = Math.max(1, Math.round(taille * 0.06))
+  return sharp(donnees, { failOn: 'none' })
+    .rotate()
+    .resize(taille - marge * 2, taille - marge * 2, {
+      fit: 'contain',
+      background: { r: 0, g: 0, b: 0, alpha: 0 },
+    })
+    .extend({
+      top: marge, bottom: marge, left: marge, right: marge,
+      background: { r: 0, g: 0, b: 0, alpha: 0 },
+    })
+    .png({ compressionLevel: 9 })
+    .toBuffer()
+}
+
+/**
+ * L'icône du site, à une taille donnée : son logo s'il en a un, son
+ * monogramme sinon.
+ *
+ * FAIL-SAFE, ET C'EST DÉLIBÉRÉ. Si le logo est illisible — fichier corrompu,
+ * format exotique, stockage momentanément muet — on retombe sur le
+ * monogramme. Une boutique sans icône est un défaut visible dans chaque
+ * onglet et chaque résultat de recherche ; une icône de repli ne l'est pas.
+ */
+export async function iconeDuSite(
+  logo: Buffer | null,
+  nom: string | null | undefined,
+  couleur: string | null | undefined,
+  taille: number,
+): Promise<Buffer> {
+  if (logo && logo.length > 0) {
+    try {
+      return await logoEnIcone(logo, taille)
+    } catch {
+      // On ne relaie PAS l'erreur : voir ci-dessus.
+    }
+  }
+  return monogrammePng(nom, couleur, taille)
+}
+
 /** Favicon ICO d'un marchand : 16, 32, 48 — les trois tailles réellement demandées. */
 export async function faviconIcoDuSite(
   nom: string | null | undefined,
   couleur: string | null | undefined,
+  logo: Buffer | null = null,
 ): Promise<Buffer> {
   const images = await Promise.all(
-    [16, 32, 48].map(async (taille) => ({ taille, donnees: await monogrammePng(nom, couleur, taille) })),
+    [16, 32, 48].map(async (taille) => ({ taille, donnees: await iconeDuSite(logo, nom, couleur, taille) })),
   )
   return construireIco(images)
 }

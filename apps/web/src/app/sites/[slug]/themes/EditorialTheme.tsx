@@ -26,6 +26,7 @@ import { getModeCapabilities } from './modeCapabilities'
 import EditorialShopSection from './EditorialShopSection'
 import { socialUrl } from '@/lib/social'
 import ClickableProductCard from './ClickableProductCard'
+import EnseigneDuSite from './EnseigneDuSite'
 
 // ---------- Premium Button ----------
 function PremiumButton({
@@ -108,13 +109,12 @@ export default function EditorialTheme({ site }: { site: Site }) {
       {/* =================== HEADER =================== */}
       <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-white/70 border-b border-black/5">
         <div className="max-w-7xl mx-auto px-6 md:px-10 h-20 flex items-center justify-between">
-          <Link
-            href="#home"
+          <EnseigneDuSite
+            nom={site.name}
+            logo={site.logo_url}
             className="font-serif text-2xl tracking-tight font-medium"
             style={{ fontFamily: 'var(--font-fraunces), serif' }}
-          >
-            {site.name}
-          </Link>
+          />
           <nav className="hidden md:flex items-center gap-10 text-sm font-medium text-neutral-700">
             {!hidden('Home') && <a href="#home" className="hover:text-black transition-colors">{t.nav.home}</a>}
             {!hidden('About') && <a href="#about" className="hover:text-black transition-colors">{t.nav.about}</a>}

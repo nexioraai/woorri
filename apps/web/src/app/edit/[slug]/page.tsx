@@ -32,6 +32,8 @@ export default function EditPage() {
   const [uploading, setUploading] = useState(false);
   const [podDesigns, setPodDesigns] = useState<{url: string; name: string; created_at: string}[]>([]);
   const [uploadingDesign, setUploadingDesign] = useState(false);
+  const [envoiLogo, setEnvoiLogo] = useState(false);
+  const [avisLogo, setAvisLogo] = useState<string[]>([]);
   const [generatingMockups, setGeneratingMockups] = useState(false);
   const [podCatalog, setPodCatalog] = useState<any[]>([]);
   const [selectedProducts, setSelectedProducts] = useState<Record<string, {selected: boolean; sellPrice: number; variantId?: string}>>({});
@@ -110,6 +112,47 @@ export default function EditPage() {
     setMessage('Image uploaded! Click Save Changes to keep it.');
   };
 
+  // ── LE LOGO DU MARCHAND.
+  //
+  // Il passe par `/api/site/logo`, JAMAIS par le dépôt direct au stockage
+  // comme l'image de bandeau juste au-dessus : cette route vérifie le format,
+  // refuse le SVG (document exécutable = XSS stocké), impose une définition
+  // minimale et retire les métadonnées — un logo exporté d'un téléphone peut
+  // porter des coordonnées GPS.
+  //
+  // Elle ne RETOUCHE rien, à la différence de la route des photos de produit :
+  // un logo ne se recadre pas et ne se « corrige » pas.
+  const deposerLogo = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const fichier = e.target.files?.[0];
+    if (!fichier) return;
+    setEnvoiLogo(true);
+    setMessage('');
+    setAvisLogo([]);
+    try {
+      const corps = new FormData();
+      corps.append('slug', slug);
+      corps.append('file', fichier);
+      const res = await fetch('/api/site/logo', { method: 'POST', body: corps });
+      const data = await res.json();
+      if (!res.ok) {
+        setMessage(data.error || 'Dépôt du logo impossible.');
+        return;
+      }
+      setSite({ ...site, logo_url: data.url });
+      setAvisLogo(
+        ((data.avertissements ?? []) as { code: string; message: string }[]).map((a) => a.message),
+      );
+      setMessage('Logo déposé. Cliquez sur « Save Changes » pour le conserver.');
+    } catch {
+      setMessage('Dépôt du logo impossible.');
+    } finally {
+      setEnvoiLogo(false);
+      // Sans cela, redéposer le MÊME fichier après un refus n'émet aucun
+      // événement et l'interface paraît morte.
+      e.target.value = '';
+    }
+  };
+
   const handleSave = async () => {
     // Garde defensive (coherente avec Navbar.tsx) : cette fonction n'est
     // normalement jamais atteignable UI sans `site` deja charge (rendu
@@ -146,6 +189,7 @@ export default function EditPage() {
       hero_subtitle: site.hero_subtitle,
       primary_color: site.primary_color,
       hero_image: site.hero_image,
+      logo_url: site.logo_url,
       theme: site.theme,
       cj_margin_percent: site.cj_margin_percent,
       cj_round_mode: site.cj_round_mode,
@@ -293,6 +337,57 @@ export default function EditPage() {
         <div className="glass glass-hover rounded-3xl p-6 md:p-8 space-y-6">
 
           <ThemeSelector currentTheme={site.theme || "editorial"} onThemeChange={(t) => updateField("theme", t)} />
+
+          {/* LE LOGO EST LA PREMIÈRE CHOSE QU'ON VOIT DE LA BOUTIQUE :
+              dans l'onglet du navigateur, sur l'écran d'accueil d'un téléphone
+              et dans les résultats Google. Il passe donc AVANT l'image de
+              bannière dans ce formulaire. Sans logo déposé, la boutique reçoit
+              un monogramme automatique — jamais rien. */}
+          <FieldSection label="Logo de la boutique">
+            <div className="flex items-center gap-4 mb-3">
+              <div className="w-20 h-20 shrink-0 rounded-xl border border-white/10 bg-white/5 flex items-center justify-center overflow-hidden">
+                {site.logo_url ? (
+                  /* `contain` : un logo ne se rogne pas.
+                     Balise simple ASSUMÉE : l'optimiseur de Next exige des
+                     dimensions connues, or celles d'un logo déposé à l'instant
+                     ne le sont pas — et cet aperçu de 80 px ne coûte rien. */
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={site.logo_url} alt={`Logo de ${site.name || 'la boutique'}`} className="w-full h-full object-contain p-1.5" />
+                ) : (
+                  <span className="text-2xl font-semibold" style={{ color: site.primary_color || '#FA5D1E' }}>
+                    {(site.name || '?').trim().charAt(0).toUpperCase()}
+                  </span>
+                )}
+              </div>
+              <p className="text-sm text-white/50 leading-snug">
+                {site.logo_url
+                  ? 'Votre logo sert d’icône dans les onglets, sur les téléphones et dans Google.'
+                  : 'Aucun logo : une lettre est dessinée automatiquement. Déposez le vôtre pour la remplacer.'}
+              </p>
+            </div>
+            <label className="block w-full text-center bg-[#FA5D1E]/10 hover:bg-[#FA5D1E]/20 text-[#FA5D1E] py-3 rounded-xl cursor-pointer font-semibold transition border border-[#FA5D1E]/20">
+              {envoiLogo ? 'Envoi…' : site.logo_url ? 'Remplacer le logo' : 'Déposer mon logo'}
+              <input type="file" accept="image/png,image/jpeg,image/webp" onChange={deposerLogo} className="hidden" />
+            </label>
+            <p className="mt-2 text-xs text-white/40">
+              PNG (fond transparent de préférence), JPG ou WebP · 512 px de côté
+              recommandés · carré de préférence · 5 Mo maximum
+            </p>
+            {/* AVERTIR SANS BLOQUER : un logo très allongé reste accepté, on
+                dit seulement ce qu'il donnera dans un carré. */}
+            {avisLogo.map((m) => (
+              <p key={m} className="mt-2 text-xs text-amber-300/80">{m}</p>
+            ))}
+            {site.logo_url && (
+              <button
+                type="button"
+                onClick={() => { setSite({ ...site, logo_url: null }); setAvisLogo([]); setMessage('Logo retiré. Cliquez sur « Save Changes ».') }}
+                className="mt-2 text-xs text-white/40 hover:text-white/70 underline"
+              >
+                Retirer le logo et revenir à la lettre
+              </button>
+            )}
+          </FieldSection>
 
           <FieldSection label="Hero Image">
             {site.hero_image && (

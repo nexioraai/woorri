@@ -22,6 +22,7 @@ import { getModeCapabilities } from './modeCapabilities'
 import NoirShopSection from './NoirShopSection'
 import SectionKicker from './SectionKicker'
 import { useSpotlightXY, SpotlightGlow, SpotlightSheen } from './NoirSpotlight'
+import EnseigneDuSite from './EnseigneDuSite'
 
 // ============================================================
 // Systeme de tons -- Noir comme clair-obscur, pas comme "site sombre".
@@ -254,9 +255,12 @@ export default function NoirTheme({ site }: { site: Site }) {
         style={{ backgroundColor: headerBg, borderBottom: `1px solid`, borderBottomColor: headerBorder, backdropFilter: 'blur(10px)' }}
       >
         <div className="max-w-7xl mx-auto px-6 md:px-10 h-20 flex items-center justify-between">
-          <Link href="#home" className="text-2xl tracking-tight font-medium" style={{ fontFamily: 'var(--font-fraunces), serif' }}>
-            {site.name}
-          </Link>
+          <EnseigneDuSite
+            nom={site.name}
+            logo={site.logo_url}
+            className="text-2xl tracking-tight font-medium"
+            style={{ fontFamily: 'var(--font-fraunces), serif' }}
+          />
           <nav className="hidden md:flex items-center gap-10 text-sm font-medium" style={{ color: 'rgba(245,243,238,0.72)' }}>
             {!hidden('Home') && <NavLink href="#home">{t.nav.home}</NavLink>}
             {!hidden('About') && <NavLink href="#about">{t.nav.about}</NavLink>}

@@ -11,7 +11,7 @@
 // L'URL publique n'est jamais celle-ci : `proxy.ts` y réécrit `/favicon.ico`,
 // et `generateMetadata` y pointe les balises `<link rel="icon">`.
 // ============================================================
-import { faviconIcoDuSite, monogrammePng } from '@/lib/images/favicon'
+import { faviconIcoDuSite, iconeDuSite, sourceLogoAutorisee } from '@/lib/images/favicon'
 import { supabase } from '@/lib/supabase'
 
 // `sharp` est un binaire natif : il exige l'exécution Node, jamais l'Edge.
@@ -30,7 +30,7 @@ export async function GET(
   // un site retiré ne doit pas continuer à servir son icône.
   const { data: site } = await supabase
     .from('sites_public')
-    .select('name, primary_color')
+    .select('name, primary_color, logo_url')
     .eq('slug', slug)
     .maybeSingle()
 
@@ -38,6 +38,7 @@ export async function GET(
 
   const nom = (site as { name: string | null }).name
   const couleur = (site as { primary_color: string | null }).primary_color
+  const logo = await chargerLogo((site as { logo_url: string | null }).logo_url)
 
   const brut = Number(new URL(req.url).searchParams.get('t'))
   const format = new URL(req.url).searchParams.get('f')
@@ -51,11 +52,38 @@ export async function GET(
   })
 
   if (format === 'ico') {
-    const ico = await faviconIcoDuSite(nom, couleur)
+    const ico = await faviconIcoDuSite(nom, couleur, logo)
     return new Response(new Uint8Array(ico), { headers: entetes('image/x-icon') })
   }
 
   const taille = TAILLES.has(brut) ? brut : 512
-  const png = await monogrammePng(nom, couleur, taille)
+  const png = await iconeDuSite(logo, nom, couleur, taille)
   return new Response(new Uint8Array(png), { headers: entetes('image/png') })
+}
+
+/**
+ * Va chercher le logo du marchand, ou rend `null`.
+ *
+ * DEUX GARDES, ET AUCUNE N'EST DÉCORATIVE :
+ *
+ *   · `sourceLogoAutorisee` — `logo_url` est une colonne TEXTE écrite par le
+ *     marchand. Sans ce filtre, il ferait émettre à notre serveur une requête
+ *     vers l'adresse de son choix, y compris interne : une SSRF offerte par un
+ *     champ de formulaire.
+ *   · le délai — le stockage est un service tiers. Sans plafond, une lenteur
+ *     là-bas ferait attendre l'icône de TOUTES les boutiques.
+ *
+ * Toute anomalie rend `null`, et l'appelant retombe sur le monogramme. Une
+ * boutique sans icône est un défaut visible dans chaque onglet ; un repli ne
+ * l'est pas.
+ */
+async function chargerLogo(logoUrl: string | null): Promise<Buffer | null> {
+  if (!sourceLogoAutorisee(logoUrl, process.env.NEXT_PUBLIC_SUPABASE_URL)) return null
+  try {
+    const r = await fetch(logoUrl!, { signal: AbortSignal.timeout(4000) })
+    if (!r.ok) return null
+    return Buffer.from(await r.arrayBuffer())
+  } catch {
+    return null
+  }
 }

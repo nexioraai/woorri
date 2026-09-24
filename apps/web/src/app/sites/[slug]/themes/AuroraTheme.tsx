@@ -27,6 +27,7 @@ import StorefrontDense from './StorefrontDense'
 import CatalogSearch from './CatalogSearch'
 import { showsVisitorCatalogSearch } from './catalogSearchVisibility'
 import { getModeCapabilities } from './modeCapabilities'
+import EnseigneDuSite from './EnseigneDuSite'
 
 export default function AuroraTheme({ site }: { site: Site }) {
   const hidden = (name: string) => (site.hidden_sections || []).includes(name)
@@ -108,9 +109,13 @@ export default function AuroraTheme({ site }: { site: Site }) {
       <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/70 border-b border-black/5">
         <div className="max-w-[1400px] mx-auto px-4 md:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
           <div className="flex items-center gap-4 min-w-0">
-            <Link href="#home" className="text-xl md:text-2xl font-semibold tracking-tight shrink-0">
-              {site.name}
-            </Link>
+            <EnseigneDuSite
+              nom={site.name}
+              logo={site.logo_url}
+              /* En-tête plus bas que les autres (h-16) : le logo suit. */
+              hauteur={30}
+              className="text-xl md:text-2xl font-semibold tracking-tight shrink-0"
+            />
             {isShop && (
               <span className="hidden sm:inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1 rounded-full" style={{ backgroundColor: `color-mix(in srgb, ${primary} 10%, white)`, color: primary }}>
                 <Truck className="w-3.5 h-3.5" />

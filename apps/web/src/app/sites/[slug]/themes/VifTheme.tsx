@@ -18,6 +18,7 @@ import { getModeCapabilities } from './modeCapabilities'
 import VifShopSection from './VifShopSection'
 import { socialUrl } from '@/lib/social'
 import ClickableProductCard from './ClickableProductCard'
+import EnseigneDuSite from './EnseigneDuSite'
 
 // Palette Gusto clair-editorial (fixe, signature du theme)
 export const CREAM = '#EFE6D4'
@@ -75,13 +76,12 @@ export default function VifTheme({ site }: { site: Site }) {
         style={{ backgroundColor: 'rgba(246,241,231,0.78)', borderBottom: `1px solid rgba(20,18,16,0.08)` }}
       >
         <div className="max-w-7xl mx-auto px-6 md:px-10 h-20 flex items-center justify-between">
-          <Link
-            href="#home"
+          <EnseigneDuSite
+            nom={site.name}
+            logo={site.logo_url}
             className="text-2xl tracking-tight font-medium"
             style={{ fontFamily: 'var(--font-fraunces), serif' }}
-          >
-            {site.name}
-          </Link>
+          />
           <nav className="hidden md:flex items-center gap-10 text-sm font-medium" style={{ color: 'rgba(20,18,16,0.7)' }}>
             {!hidden('Home') && <a href="#home" className="hover:opacity-100 transition-opacity">{t.nav.home}</a>}
             {!hidden('About') && <a href="#about" className="hover:opacity-100 transition-opacity">{t.nav.about}</a>}
