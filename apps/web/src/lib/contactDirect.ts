@@ -40,8 +40,20 @@ import { marcheSansCarte } from './whatsappOrder'
 // ============================================================
 
 export type ContexteContact = {
-  /** La boutique a-t-elle un compte d'encaissement en ligne ? */
-  readonly encaisseEnLigne: boolean
+  /**
+   * La boutique a-t-elle un compte d'encaissement en ligne ?
+   *
+   * `undefined` signifie INCONNU, et ce n'est pas un détail : la vue publique
+   * `sites_public` n'expose PAS `payment_account_id` — colonne sensible,
+   * délibérément retenue (`supabase/sql/sites_public_view.sql`). Tant qu'un
+   * booléen DÉRIVÉ n'y est pas ajouté, les surfaces publiques ne peuvent pas
+   * connaître ce fait.
+   *
+   * INCONNU ≠ FAUX. Répondre « faux » ferait apparaître WhatsApp sur les
+   * boutiques Stripe ; répondre « vrai » le cacherait partout ailleurs. On
+   * retombe donc sur le signal SECONDAIRE — la devise — en le disant.
+   */
+  readonly encaisseEnLigne?: boolean | null
   /** Devise du produit, telle que saisie. Signal SECONDAIRE seulement. */
   readonly devise?: string | null
   /** Libellé de prix, repli quand la devise n'est pas renseignée. */
@@ -77,6 +89,9 @@ export function encaisseEnLigne(paymentAccountId?: string | null): boolean {
  */
 export function contactDirectRequis(ctx: ContexteContact): boolean {
   if (!ctx.numero) return false
-  if (!ctx.encaisseEnLigne) return true
+  // FAIT CONNU et négatif : la boutique ne peut pas être payée en ligne, donc
+  // le contact direct est le SEUL parcours d'achat. Aucune devise n'entre ici.
+  if (ctx.encaisseEnLigne === false) return true
+  // Fait connu et positif, OU inconnu : on s'en remet au signal secondaire.
   return marcheSansCarte(ctx.devise, ctx.libellePrix)
 }
