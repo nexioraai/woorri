@@ -108,6 +108,8 @@ compareAtPrice?: number
 compareAt?: string
 /** M2-210 — numéros d'encaissement {label, number}, libellés du marchand. */
 mobileMoney?: { label: string; number: string }[]
+/** M2-233 — la boutique encaisse-t-elle en ligne ? `undefined` = inconnu. */
+encaisseEnLigne?: boolean
 variants?: { variant_id: string; label: string; price: number; currency: string }[]
 shippingDaysMin?: number | null
 shippingDaysMax?: number | null
@@ -298,7 +300,7 @@ console.error('[storefront] ' + ligne)
  * INTERNES (`stock`, `published`, `track_inventory`) — rien ne change pour
  * eux. `whatsapp` est le numéro du SITE (social_links), posé sur chaque
  * produit pour voyager jusqu'à la modale sans traverser cinq thèmes. */
-function mapShopProducts(rows: any[], whatsapp?: string | null, mobileMoney?: unknown): any[] {
+function mapShopProducts(rows: any[], whatsapp?: string | null, mobileMoney?: unknown, encaisseEnLigne?: boolean): any[] {
 return rows.map((p: any) => ({
 id: p.id,
 name: p.name,
@@ -322,6 +324,12 @@ whatsapp: whatsapp || null,
 // M2-210 — les numéros d'encaissement du SITE (contact.mobile_money),
 // libellés par le marchand. Même voyage que `whatsapp`.
 mobileMoney: Array.isArray(mobileMoney) ? mobileMoney : [],
+// M2-233 — LE FAIT QUI DÉCIDE DU CONTACT DIRECT : cette boutique
+// encaisse-t-elle en ligne ? `undefined` tant que
+// `sites_public_encaisse_en_ligne.sql` n'est pas exécuté — et INCONNU
+// n'est pas FAUX : la décision retombe alors sur la devise, au lieu
+// d'afficher WhatsApp sur les boutiques Stripe.
+encaisseEnLigne,
 cjVid: p.cj_vid || null,
 forSale: p.for_sale !== false,
 }))
@@ -340,7 +348,7 @@ if (canTransact(data?.mode)) {
 // Modes commercants : `shop_products` fait foi, MEME VIDE. Aucun repli --
 // une boutique sans produit publie n'a pas de catalogue, elle n'herite pas
 // de celui d'avant.
-data.products = mapShopProducts(shopProducts ?? [], data?.social_links?.whatsapp || data?.contact?.phone, data?.contact?.mobile_money)
+data.products = mapShopProducts(shopProducts ?? [], data?.social_links?.whatsapp || data?.contact?.phone, data?.contact?.mobile_money, (data as any)?.encaisse_en_ligne as boolean | undefined)
 return
 }
 // Mode 1 (et tout mode non commercant) : comportement RIGOUREUSEMENT
@@ -348,7 +356,7 @@ return
 // atteindre -- une vitrine n'a pas de `shop_products`. La conserver telle
 // quelle est ce qui garantit qu'aucun comportement du Mode 1 n'a bouge.
 if (shopProducts && shopProducts.length > 0) {
-data.products = mapShopProducts(shopProducts, data?.social_links?.whatsapp || data?.contact?.phone, data?.contact?.mobile_money)
+data.products = mapShopProducts(shopProducts, data?.social_links?.whatsapp || data?.contact?.phone, data?.contact?.mobile_money, (data as any)?.encaisse_en_ligne as boolean | undefined)
 }
 }
 

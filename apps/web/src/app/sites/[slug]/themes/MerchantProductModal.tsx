@@ -294,6 +294,7 @@ export default function MerchantProductModal({ product: p, primary, lang = 'en',
                 les boutons. */}
             {p.whatsapp &&
               contactDirectRequis({
+                encaisseEnLigne: p.encaisseEnLigne,
                 devise: p.currency,
                 libellePrix: p.price,
                 numero: p.whatsapp,
@@ -323,6 +324,7 @@ export default function MerchantProductModal({ product: p, primary, lang = 'en',
             )}
             {p.whatsapp &&
               contactDirectRequis({
+                encaisseEnLigne: p.encaisseEnLigne,
                 devise: p.currency,
                 libellePrix: p.price,
                 numero: p.whatsapp,

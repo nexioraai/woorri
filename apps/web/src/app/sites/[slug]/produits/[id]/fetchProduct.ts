@@ -79,7 +79,21 @@ export async function fetchProduct(slug: string, rawId: string): Promise<Product
   // vrai par construction de la vue, jamais lu par le reste de la fonction.
   const { data: site } = await supabase
     .from('sites_public')
-    .select('id, name, slug, mode, custom_domain, dropship_type, product_families, cj_margin_percent, cj_round_mode, primary_color, theme, lang, shipping_flat, social_links, contact')
+    // ── `select('*')` SUR LA VUE, comme le fait déjà `fetchSite`.
+    //
+    // POURQUOI, ET CE QUE ÇA ÉVITE : la fiche a besoin de `encaisse_en_ligne`,
+    // un booléen DÉRIVÉ qui entre à la vue par
+    // `sites_public_encaisse_en_ligne.sql`. Le nommer dans une liste explicite
+    // ferait échouer la requête (PostgREST 42703) TANT QUE le SQL n'est pas
+    // exécuté — et cette panne-là, je l'ai déjà provoquée : toutes les
+    // boutiques sur domaine personnalisé ont servi l'accueil de la plateforme.
+    //
+    // `*` sur une VUE ne prend aucun risque : ses colonnes sont publiques par
+    // construction — c'est tout l'objet de la vue, qui retient `owner_email`,
+    // `owner_id`, `stripe_customer_id` et `payment_account_id`. Le fait
+    // apparaît de lui-même le jour de la migration, et son absence avant ce
+    // jour-là vaut simplement INCONNU.
+    .select('*')
     .eq('slug', slug)
     .maybeSingle()
   if (!site) return null
@@ -181,7 +195,7 @@ export async function fetchProduct(slug: string, rawId: string): Promise<Product
       sizes: [],
       compareAtPrice: null,
       whatsapp: ((site as any).social_links?.whatsapp as string | undefined) || ((site as any).contact?.phone as string | undefined) || null,
-      encaisseEnLigne: undefined,
+      encaisseEnLigne: (site as any).encaisse_en_ligne as boolean | undefined,
       mobileMoney: Array.isArray((site as any).contact?.mobile_money) ? (site as any).contact.mobile_money : [],
     }
   }
@@ -227,7 +241,7 @@ export async function fetchProduct(slug: string, rawId: string): Promise<Product
         : null,
     mobileMoney: Array.isArray((site as any).contact?.mobile_money) ? (site as any).contact.mobile_money : [],
     whatsapp: ((site as any).social_links?.whatsapp as string | undefined) || ((site as any).contact?.phone as string | undefined) || null,
-    encaisseEnLigne: undefined,
+    encaisseEnLigne: (site as any).encaisse_en_ligne as boolean | undefined,
     siteName: (site as any).name,
     siteSlug: (site as any).slug,
     siteCustomDomain: (site as any).custom_domain ?? null,

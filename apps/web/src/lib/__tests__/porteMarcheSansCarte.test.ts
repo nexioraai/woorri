@@ -98,38 +98,45 @@ describe('les deux surfaces décident sur le FAIT, plus sur la devise', () => {
     }
   })
 
-  it('la FICHE transmet `encaisseEnLigne` — elle porte le champ', () => {
-    const src = lire(FICHE)
-    const i = src.indexOf('contactDirectRequis(')
-    expect(i, 'fiche : appel introuvable').toBeGreaterThan(-1)
-    expect(
-      src.slice(i, i + 420).includes('encaisseEnLigne'),
-      'fiche : appelle la décision SANS lui donner le fait qui la fonde',
-    ).toBe(true)
+  it('les DEUX transmettent `encaisseEnLigne` — le fait, pas une devise seule', () => {
+    // DETTE M2-233 REFERMÉE. La modale ne pouvait pas transmettre le fait :
+    // elle est alimentée par `sites_public`, une VUE qui n'exposait pas
+    // `payment_account_id` — colonne sensible, délibérément retenue.
+    //
+    // J'AI PAYÉ CETTE IGNORANCE PAR UNE PANNE : avoir ajouté la colonne à la
+    // projection publique a fait échouer la requête (42703) et servi l'accueil
+    // de la plateforme à la place de TOUTES les boutiques sur domaine
+    // personnalisé.
+    //
+    // La vue expose désormais un BOOLÉEN DÉRIVÉ (`encaisse_en_ligne`,
+    // `sites_public_encaisse_en_ligne.sql`) — un fait, jamais l'identifiant.
+    for (const [nom, rel] of SURFACES) {
+      const src = lire(rel)
+      const i = src.indexOf('contactDirectRequis(')
+      expect(i, `${nom} : appel introuvable`).toBeGreaterThan(-1)
+      expect(
+        src.slice(i, i + 420).includes('encaisseEnLigne'),
+        `${nom} : appelle la décision SANS lui donner le fait qui la fonde`,
+      ).toBe(true)
+    }
   })
 
-  // ── 🟠 DETTE NOMMÉE, PAS UN OUBLI — M2-233.
-  //
-  // La MODALE ne transmet pas encore le fait, et elle ne le PEUT pas : elle
-  // est alimentée par `sites_public`, une VUE qui n'expose délibérément pas
-  // `payment_account_id` (colonne sensible — `supabase/sql/sites_public_view.sql`).
-  //
-  // J'AI DÉJÀ PAYÉ CETTE IGNORANCE : avoir ajouté la colonne à la projection
-  // publique a fait échouer la requête (PostgREST 42703) et servi l'accueil
-  // Deribfy à la place de TOUTES les boutiques sur domaine personnalisé.
-  //
-  // CE QUI DÉBLOQUE : ajouter à la vue un BOOLÉEN DÉRIVÉ
-  // (`payment_account_id IS NOT NULL AS encaisse_en_ligne`) — un fait, jamais
-  // l'identifiant. Tant que ce n'est pas fait, la modale décide sur la devise,
-  // et ce test dit pourquoi au lieu de le taire.
-  it('la MODALE décide encore sur la devise — dette assumée, pas silencieuse', () => {
-    const src = lire(MODALE)
-    const i = src.indexOf('contactDirectRequis(')
-    expect(i, 'modale : appel introuvable').toBeGreaterThan(-1)
-    expect(
-      src.slice(i, i + 420).includes('encaisseEnLigne'),
-      'la modale transmet désormais le fait : retirez cette dette et fusionnez ce cas avec celui de la fiche',
-    ).toBe(false)
+  it('AUCUNE projection publique ne demande `payment_account_id`', () => {
+    // LE CLIQUET DE LA PANNE. La vue ne porte QUE le booléen dérivé ; nommer
+    // l'identifiant dans une projection publique fait échouer la requête et
+    // met les boutiques hors ligne. Ce test relit les deux lecteurs publics.
+    for (const rel of [
+      'app/sites/[slug]/themes/shared.tsx',
+      'app/sites/[slug]/produits/[id]/fetchProduct.ts',
+    ]) {
+      const code = lire(rel)
+      for (const appel of code.match(/\.select\((['"`])[\s\S]*?\1\)/gu) ?? []) {
+        expect(
+          appel.includes('payment_account_id'),
+          `${rel} : une projection publique demande payment_account_id — ${appel.slice(0, 80)}`,
+        ).toBe(false)
+      }
+    }
   })
 
   it('NI l’une NI l’autre n’exige `forSale` pour ce bloc', () => {
