@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Plus, ExternalLink, Pencil, Trash2, LogOut, Globe } from 'lucide-react';
+import { Plus, ExternalLink, Pencil, Trash2, LogOut, Globe, MoreVertical } from 'lucide-react';
 import Sidebar from '@/components/Sidebar';
 import { supabase } from '@/lib/supabase';
 import { computeAiScore } from '@/app/lib/aiScore';
@@ -48,6 +48,36 @@ export default function DashboardPage() {
     });
   }, []);
 
+  // ── LA CORBEILLE N'EST PLUS DANS LA ZONE DU POUCE.
+  //
+  // SIGNALÉ PAR UN UTILISATEUR : « on peut supprimer par erreur ». C'était
+  // exact, et la capture le montre — sur un téléphone, la rangée d'actions
+  // passe à la ligne et la corbeille se retrouve seule, DIRECTEMENT SOUS
+  // « Voir », le bouton qu'on vise le plus souvent. Un pouce qui glisse d'un
+  // demi-centimètre tombe dessus.
+  //
+  // Elle part donc dans un menu discret, en haut à droite de la carte : loin
+  // du bas de l'écran, loin des actions fréquentes, et derrière DEUX gestes au
+  // lieu d'un. La confirmation reste — elle ne suffisait pas, elle n'est pas
+  // devenue inutile pour autant : une boîte de dialogue qu'on voit surgir
+  // après un geste qu'on n'a pas voulu se valide aussi par réflexe.
+  const [menuOuvert, setMenuOuvert] = useState<string | null>(null);
+
+  // Un menu qui ne se referme qu'en rouvrant reste ouvert sous le doigt, et
+  // le prochain appui tombe dedans. Il se referme donc au clic extérieur et
+  // à la touche Échap.
+  useEffect(() => {
+    if (!menuOuvert) return;
+    const fermer = () => { setMenuOuvert(null); };
+    const surEchap = (e: KeyboardEvent) => { if (e.key === 'Escape') setMenuOuvert(null); };
+    document.addEventListener('click', fermer);
+    document.addEventListener('keydown', surEchap);
+    return () => {
+      document.removeEventListener('click', fermer);
+      document.removeEventListener('keydown', surEchap);
+    };
+  }, [menuOuvert]);
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.push('/login');
@@ -68,6 +98,7 @@ export default function DashboardPage() {
       return;
     }
     setSites(sites.filter(s => s.slug !== slug));
+    setMenuOuvert(null);
   };
 
   const handlePublish = async (slug: string, current: boolean) => {
@@ -137,6 +168,45 @@ export default function DashboardPage() {
                 <div className="h-28 relative flex items-center justify-center overflow-hidden">
                   <div className="absolute inset-0"
                     style={{ background: `radial-gradient(ellipse at 50% 50%, ${site.primary_color || '#FA5D1E'}45 0%, transparent 70%)` }} />
+
+                  {/* ── LE MENU DISCRET. Loin du bas de l'écran, loin des
+                      actions fréquentes. La suppression demande deux gestes
+                      volontaires, plus un seul réflexe. */}
+                  <div className="absolute top-2 right-2 z-20">
+                    <button
+                      type="button"
+                      aria-label={t('dashboard.more')}
+                      aria-haspopup="menu"
+                      aria-expanded={menuOuvert === site.slug}
+                      onClick={(e) => {
+                        // Sans cela, l'écouteur global de fermeture reçoit le
+                        // même clic et referme le menu dans la foulée.
+                        e.stopPropagation();
+                        setMenuOuvert(menuOuvert === site.slug ? null : site.slug);
+                      }}
+                      className="w-9 h-9 flex items-center justify-center rounded-lg text-white/35 hover:text-white/80 hover:bg-white/10 transition-all"
+                    >
+                      <MoreVertical className="w-4 h-4" />
+                    </button>
+
+                    {menuOuvert === site.slug && (
+                      <div
+                        role="menu"
+                        onClick={(e) => { e.stopPropagation(); }}
+                        className="absolute right-0 mt-1 min-w-[190px] rounded-xl border border-white/10 bg-[#140d18] shadow-2xl overflow-hidden"
+                      >
+                        <button
+                          type="button"
+                          role="menuitem"
+                          onClick={() => { void handleDelete(site.slug); }}
+                          className="w-full flex items-center gap-2.5 px-3.5 py-3 text-sm text-red-400/80 hover:text-red-300 hover:bg-red-500/10 transition-colors text-left"
+                        >
+                          <Trash2 className="w-4 h-4 shrink-0" />
+                          {t('dashboard.delete')}
+                        </button>
+                      </div>
+                    )}
+                  </div>
                   <div className="relative text-center px-4">
                     <h2 className="text-xl font-black text-white">{site.name}</h2>
                     <span className="text-xs px-3 py-1 rounded-full mt-2 inline-block font-medium"
@@ -189,10 +259,6 @@ export default function DashboardPage() {
                       className={`flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-sm font-semibold border transition-all ${site.published ? 'border-emerald-500/30 text-emerald-400 bg-emerald-500/10' : 'border-white/10 text-white/70 hover:text-white hover:border-white/30'}`}>
                       <span className={`w-2 h-2 rounded-full nexiora-pulse-dot ${site.published ? 'bg-emerald-400' : 'bg-[#FA5D1E]'}`} />
                       {site.published ? t('dashboard.online') : t('dashboard.publish')}
-                    </button>
-                    <button onClick={() => handleDelete(site.slug)}
-                      className="w-10 flex items-center justify-center rounded-xl border border-red-500/20 text-red-400/50 hover:text-red-400 hover:border-red-500/40 transition-all">
-                      <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
