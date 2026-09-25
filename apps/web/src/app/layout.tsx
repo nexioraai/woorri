@@ -43,6 +43,37 @@ export const metadata: Metadata = {
   // nom de la marque et les libellés de l'interface.
   other: { google: "notranslate" },
   metadataBase: new URL(SITE_URL),
+  // ── LES ICÔNES DE LA PLATEFORME, DÉCLARÉES ICI PLUTÔT QUE DÉDUITES. M2-242.
+  //
+  // Elles vivaient dans `src/app/` (favicon.ico, icon.png, apple-icon.png),
+  // où Next les traite comme une CONVENTION et injecte lui-même les balises
+  // dans TOUTES les pages de l'application — y compris celles des boutiques
+  // marchandes, où `<link rel="icon" href="/favicon.ico?favicon.<hachage>.ico">`
+  // arrivait EN PREMIER, avant les icônes du marchand.
+  //
+  // Le CONTENU servi était juste — `proxy.ts` réécrit `/favicon.ico` vers
+  // l'icône du marchand — mais l'URL portait un hachage de build qui change à
+  // CHAQUE déploiement. C'est précisément l'adresse instable que les moteurs
+  // de recherche demandent d'éviter pour une icône.
+  //
+  // Depuis `public/`, plus aucune balise n'est injectée : une page marchande
+  // ne déclare que SES icônes, et la plateforme déclare les siennes ci-dessous.
+  // Les chemins sont fixes — c'est tout l'intérêt.
+  //
+  // MESURÉ AVANT D'ÊTRE FAIT. Une sonde statique en production a montré que le
+  // proxy s'exécute AVANT le service des fichiers de `public/` :
+  //     deribfy.com/proxy-sonde.txt    -> 200, le texte
+  //     chanorfie.com/proxy-sonde.txt  -> 404, donc réécrit
+  // Sans cette mesure, se tromper aurait fait servir l'icône de Deribfy sur
+  // TOUTES les boutiques — le défaut que `favicon.ts` décrit comme « un
+  // marchand marqué à l'enseigne de son fournisseur ».
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "16x16 32x32 48x48", type: "image/x-icon" },
+      { url: "/icon.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-icon.png", sizes: "180x180", type: "image/png" }],
+  },
 };
 
 export default async function RootLayout({

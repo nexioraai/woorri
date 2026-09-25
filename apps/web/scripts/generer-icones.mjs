@@ -21,7 +21,6 @@ import { fileURLToPath } from "node:url";
 import sharp from "sharp";
 
 const ICI = dirname(fileURLToPath(import.meta.url));
-const APP = join(ICI, "..", "src", "app");
 const PUBLIC = join(ICI, "..", "public");
 const ASSETS = join(ICI, "..", "assets");
 
@@ -107,12 +106,28 @@ async function principal() {
   const ico = construireIco(
     await Promise.all([16, 32, 48].map(async (taille) => ({ taille, donnees: await png(taille) }))),
   );
-  writeFileSync(join(APP, "favicon.ico"), ico);
+  // ── ÉCRIT DANS `public/`, PLUS DANS `src/app/`. M2-242.
+  //
+  // Sous `src/app/`, Next traite ces fichiers comme une CONVENTION et injecte
+  // lui-même `<link rel="icon" href="/favicon.ico?favicon.<hachage>.ico">`
+  // dans TOUTES les pages — y compris celles des boutiques marchandes, où
+  // cette balise arrivait EN PREMIER. Son contenu était bon (le proxy la
+  // réécrit vers l'icône du marchand), mais son URL portait un hachage de
+  // build qui change à CHAQUE déploiement : exactement l'adresse instable que
+  // les moteurs de recherche demandent d'éviter.
+  //
+  // Depuis `public/`, aucune balise n'est injectée : chaque page ne déclare
+  // que SES icônes. Le déplacement a été mesuré avant d'être fait — une sonde
+  // statique en production a montré que le proxy s'exécute AVANT le service
+  // des fichiers de `public/` (`deribfy.com/proxy-sonde.txt` -> 200,
+  // `chanorfie.com/proxy-sonde.txt` -> 404). Sans cette mesure, se tromper
+  // aurait fait servir l'icône de Deribfy sur TOUTES les boutiques.
+  writeFileSync(join(PUBLIC, "favicon.ico"), ico);
   console.log(`  favicon.ico          ${ico.length} octets (16, 32, 48)`);
 
   // ── Conventions de fichier Next : Next émet lui-même les <link>.
-  writeFileSync(join(APP, "icon.png"), await png(512));
-  writeFileSync(join(APP, "apple-icon.png"), await png(180));
+  writeFileSync(join(PUBLIC, "icon.png"), await png(512));
+  writeFileSync(join(PUBLIC, "apple-icon.png"), await png(180));
   console.log("  icon.png             512×512");
   console.log("  apple-icon.png       180×180");
 
