@@ -1,91 +1,107 @@
 // ============================================================
-// CLIQUET — LA SUPPRESSION N'EST PAS DANS LA ZONE DU POUCE.
+// CLIQUET — ON NE SUPPRIME PAS UNE BOUTIQUE DEPUIS LA LISTE DES AUTRES.
 //
 // SIGNALÉ PAR UN UTILISATEUR : « on peut supprimer par erreur, c'est trop
 // risqué ». C'était exact, et la capture le montrait sans ambiguïté.
 //
+// ── LE DÉFAUT D'ORIGINE.
+//
 // La corbeille vivait dans la RANGÉE D'ACTIONS de la carte, en `flex-wrap`.
-// Sur un téléphone, cette rangée passe à la ligne : la corbeille se
-// retrouvait SEULE sur une deuxième ligne, directement sous « Voir » — le
-// bouton qu'on vise le plus souvent. Un pouce qui glisse d'un demi-centimètre
-// tombe dessus.
+// Sur un téléphone cette rangée passe à la ligne : la corbeille se retrouvait
+// SEULE sur une deuxième ligne, directement sous « Voir » — le bouton qu'on
+// vise le plus souvent. Un pouce qui glisse d'un demi-centimètre tombe
+// dessus.
 //
-// Une confirmation existait déjà, et elle n'a pas suffi : une boîte de
-// dialogue qui surgit après un geste qu'on n'a pas voulu se valide aussi par
-// réflexe. La bonne réponse n'était pas d'ajouter un avertissement, c'était
-// d'ÉLOIGNER le geste.
+// ── POURQUOI LA CONFIRMATION NE SUFFISAIT PAS.
 //
-// Ce que ce cliquet garde :
-//   · la suppression n'est plus dans la rangée d'actions ;
-//   · elle est derrière un menu, donc deux gestes volontaires ;
-//   · la confirmation reste — on n'échange pas une garde contre l'autre.
+// Elle existait déjà. Une boîte de dialogue qui surgit après un geste qu'on
+// n'a pas voulu se valide aussi par réflexe : on appuie sur « OK » parce
+// qu'on était en train d'appuyer. La bonne réponse n'était pas un
+// avertissement de plus, c'était d'ÉLOIGNER le geste.
+//
+// ── ET POURQUOI LE PREMIER CORRECTIF NE SUFFISAIT PAS NON PLUS.
+//
+// Un menu « ⋯ » en haut de la carte éloignait du pouce, mais laissait la
+// suppression à UN geste de la liste, sur l'écran qu'on ouvre le plus
+// souvent. Elle vit désormais au BAS de la page d'édition de la boutique
+// concernée, repliée, derrière un mot à taper — l'idiome que ce dépôt
+// utilisait déjà pour la suppression de compte.
 // ============================================================
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 
-const SOURCE = readFileSync(join(process.cwd(), 'src', 'app', 'dashboard', 'page.tsx'), 'utf8')
-const CODE = SOURCE.replace(/\/\*[\s\S]*?\*\//gu, '').replace(/^[ \t]*\/\/.*$/gmu, '')
+const lire = (...p: string[]) => readFileSync(join(process.cwd(), 'src', ...p), 'utf8')
+const sansCommentaires = (s: string) =>
+  s.replace(/\/\*[\s\S]*?\*\//gu, '').replace(/^[ \t]*\/\/.*$/gmu, '')
 
-/** Le bloc de la rangée d'actions : de son ouverture à sa fermeture. */
-function rangeeDActions(): string {
-  const i = CODE.indexOf('className="flex flex-wrap gap-2"')
-  expect(i, 'rangée d’actions introuvable — instrument cassé').toBeGreaterThan(-1)
-  // Elle se termine au `</div>` qui précède la fermeture de la carte ; on
-  // prend une fenêtre large, largement suffisante pour la contenir.
-  return CODE.slice(i, i + 2200)
-}
+const DASHBOARD = sansCommentaires(lire('app', 'dashboard', 'page.tsx'))
+const EDIT = sansCommentaires(lire('app', 'edit', '[slug]', 'page.tsx'))
 
-describe('la corbeille a quitté la rangée d’actions', () => {
-  it('la rangée d’actions ne contient AUCUN appel à la suppression', () => {
-    // LE DÉFAUT EXACT : `flex-wrap` renvoyait la corbeille à la ligne, juste
-    // sous « Voir ». La remettre ici la replacerait sous le pouce.
-    const rangee = rangeeDActions()
-    expect(
-      rangee.includes('handleDelete'),
-      'la suppression est revenue dans la rangée d’actions : sur un téléphone ' +
-        'elle repassera à la ligne, directement sous « Voir »',
-    ).toBe(false)
-    expect(rangee.includes('Trash2'), 'la corbeille est revenue dans la rangée d’actions').toBe(false)
+describe('le tableau de bord ne peut plus supprimer quoi que ce soit', () => {
+  it('AUCUN chemin de suppression n’y subsiste', () => {
+    // LE CŒUR DE LA CORRECTION. Tant qu'un bouton d'effacement vit sur
+    // l'écran qui liste TOUTES les boutiques, une erreur de visée détruit la
+    // mauvaise. La suppression appartient à la page de la boutique concernée.
+    for (const trace of ['handleDelete', 'Trash2', '/archive']) {
+      expect(
+        DASHBOARD.includes(trace),
+        `« ${trace} » est revenu dans le tableau de bord : on pourrait à ` +
+          `nouveau effacer une boutique depuis la liste de toutes les autres`,
+      ).toBe(false)
+    }
   })
 
-  it('la rangée d’actions porte TOUJOURS les actions utiles — on n’a rien perdu', () => {
-    // La moitié qui empêche de « corriger » en vidant la rangée.
-    const rangee = rangeeDActions()
-    expect(rangee.includes('dashboard.view'), '« Voir » a disparu').toBe(true)
-    expect(rangee.includes('dashboard.edit'), '« Éditer » a disparu').toBe(true)
-    expect(rangee.includes('handlePublish'), 'la publication a disparu').toBe(true)
+  it('les actions utiles y sont TOUTES restées — on n’a rien perdu', () => {
+    // La moitié qui empêche de « corriger » en vidant la carte.
+    for (const attendu of ['dashboard.view', 'dashboard.edit', 'handlePublish']) {
+      expect(DASHBOARD.includes(attendu), `${attendu} a disparu de la carte`).toBe(true)
+    }
   })
 })
 
-describe('la suppression demande deux gestes, et garde sa confirmation', () => {
-  it('elle vit dans un menu, pas en accès direct', () => {
-    expect(CODE.includes('role="menu"'), 'aucun menu : la suppression est en accès direct').toBe(true)
-    const i = CODE.indexOf('role="menu"')
-    const bloc = CODE.slice(i, i + 900)
-    expect(bloc.includes('handleDelete'), 'la suppression n’est pas DANS le menu').toBe(true)
+describe('la suppression vit au bas de la page d’édition, derrière un mot', () => {
+  it('la zone sensible existe et porte l’action', () => {
+    expect(EDIT.includes("t('edit.dangerZone')"), 'aucune zone sensible').toBe(true)
+    expect(EDIT.includes('supprimerLaBoutique'), 'la zone sensible ne supprime rien').toBe(true)
+    expect(EDIT.includes('/archive'), 'l’appel d’archivage a disparu').toBe(true)
   })
 
-  it('le menu se referme au clic extérieur ET à Échap', () => {
-    // Un menu qui reste ouvert sous le doigt rend le geste suivant dangereux :
-    // on aurait déplacé le risque au lieu de le retirer.
-    expect(/addEventListener\('click'/u.test(CODE), 'le menu ne se referme pas au clic extérieur').toBe(true)
-    expect(/'Escape'/u.test(CODE), 'le menu ne se referme pas à Échap').toBe(true)
+  it('elle est REPLIÉE par défaut — rien de rouge ne s’offre au doigt', () => {
+    expect(/zoneSensible\s*\]\s*=\s*useState\(false\)|useState\(false\)/u.test(EDIT)).toBe(true)
+    expect(/!zoneSensible \?/u.test(EDIT), 'la zone n’est pas repliée par défaut').toBe(true)
   })
 
-  it('la confirmation est TOUJOURS là', () => {
-    // On n'échange pas une garde contre une autre : éloigner le geste ET
-    // demander confirmation, les deux.
+  it('le bouton reste DÉSACTIVÉ tant que le mot exact n’est pas tapé', () => {
+    // Sans cette garde, on aurait déplacé le bouton sans rien protéger.
     expect(
-      /confirm\(t\('dashboard\.confirmDelete'\)\)/u.test(CODE),
-      'la confirmation a été retirée en même temps qu’on déplaçait le bouton',
+      /disabled=\{motDeSuppression\.trim\(\) !== t\('edit\.deleteWord'\)/u.test(EDIT),
+      'le bouton de suppression n’est plus conditionné au mot exact',
+    ).toBe(true)
+    // Et l'action elle-même revérifie : un bouton activé par l'inspecteur du
+    // navigateur ne doit pas suffire.
+    expect(
+      /if \(motDeSuppression\.trim\(\) !== t\('edit\.deleteWord'\)\) return/u.test(EDIT),
+      'l’action ne revérifie pas le mot : la garde ne tient qu’à l’affichage',
     ).toBe(true)
   })
 
-  it('les libellés du menu existent dans les QUATRE langues', () => {
-    for (const langue of ['fr', 'en', 'es', 'ar']) {
-      const dict = readFileSync(join(process.cwd(), 'src', 'lib', 'translations', `${langue}.ts`), 'utf8')
-      for (const cle of ['dashboard.more', 'dashboard.delete']) {
+  it('le motif d’un refus est RENDU, jamais avalé', () => {
+    // Une boutique qu'on ne peut pas supprimer à cause de commandes en cours
+    // doit le dire, sinon le marchand croit à une panne.
+    expect(EDIT.includes('erreurSuppression'), 'aucun rendu d’erreur').toBe(true)
+    expect(EDIT.includes("t('edit.deleteBlocked')"), 'le blocage pour commandes n’est pas expliqué').toBe(true)
+  })
+
+  it('le mot exigé est celui que le libellé ANNONCE, dans les quatre langues', () => {
+    // Sans cette clé, l'arabe demanderait « حذف » et le code attendrait
+    // « SUPPRIMER » : la suppression y serait impossible.
+    const MOTS: Record<string, string> = { fr: 'SUPPRIMER', en: 'DELETE', es: 'ELIMINAR', ar: 'حذف' }
+    for (const [langue, mot] of Object.entries(MOTS)) {
+      const dict = lire('lib', 'translations', `${langue}.ts`)
+      expect(dict.includes(`'edit.deleteWord': '${mot}'`), `${langue} : mot exigé manquant ou différent`).toBe(true)
+      expect(dict.includes(mot), `${langue} : le libellé n’annonce pas le mot`).toBe(true)
+      for (const cle of ['edit.dangerZone', 'edit.deleteSite', 'edit.confirmDelete', 'edit.deleteBlocked']) {
         expect(dict.includes(`'${cle}'`), `${langue} : ${cle} manquant`).toBe(true)
       }
     }

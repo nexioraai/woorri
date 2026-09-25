@@ -19,6 +19,7 @@ import { supabase } from '@/lib/supabase';
 import { fetchOwnedSite, updateOwnedSite } from '@/lib/supabase-owned-site';
 import { computeAiScore } from '@/app/lib/aiScore';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { Trash2 } from 'lucide-react';
 
 export default function EditPage() {
   const params = useParams();
@@ -151,6 +152,55 @@ export default function EditPage() {
       // événement et l'interface paraît morte.
       e.target.value = '';
     }
+  };
+
+  // ── LA SUPPRESSION DE LA BOUTIQUE VIT ICI, TOUT EN BAS.
+  //
+  // SIGNALÉ PAR UN UTILISATEUR : « on peut supprimer par erreur, c'est trop
+  // risqué ». Elle était dans la rangée d'actions du tableau de bord, en
+  // `flex-wrap` — sur un téléphone elle passait à la ligne et se retrouvait
+  // SEULE, directement sous « Voir », le bouton qu'on vise le plus souvent.
+  //
+  // Une confirmation existait déjà et n'avait pas suffi : une boîte de
+  // dialogue qui surgit après un geste qu'on n'a pas voulu se valide aussi
+  // par réflexe. La bonne réponse n'était pas un avertissement de plus,
+  // c'était d'ÉLOIGNER le geste.
+  //
+  // Elle est donc ici : sur la page de LA boutique concernée, tout en bas,
+  // repliée, et derrière un mot à taper. Quatre gestes volontaires, et le
+  // tableau de bord n'en porte plus aucun — on ne peut plus effacer une
+  // boutique depuis la liste de toutes les autres.
+  //
+  // Le mot exigé est une donnée de LANGUE (`edit.deleteWord`) : le libellé et
+  // la comparaison lisent la même clé, sinon on demanderait un mot en arabe
+  // tout en en attendant un en français.
+  const [zoneSensible, setZoneSensible] = useState(false);
+  const [motDeSuppression, setMotDeSuppression] = useState('');
+  const [suppressionEnCours, setSuppressionEnCours] = useState(false);
+  const [erreurSuppression, setErreurSuppression] = useState<string | null>(null);
+
+  const supprimerLaBoutique = async () => {
+    if (motDeSuppression.trim() !== t('edit.deleteWord')) return;
+    setSuppressionEnCours(true);
+    setErreurSuppression(null);
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) { router.push('/login'); return; }
+    const res = await fetch(`/api/sites/${slug}/archive`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${session.access_token}` },
+    });
+    const data = await res.json().catch(() => ({}));
+    setSuppressionEnCours(false);
+    if (!res.ok || !data.success) {
+      // Le motif du refus est RENDU, jamais avalé : une boutique qu'on ne
+      // peut pas supprimer à cause de commandes en cours doit le dire.
+      const detail = data.blockingStatuses?.length ? ` (${data.blockingStatuses.join(', ')})` : '';
+      setErreurSuppression(
+        (data.error === 'site_archive_blocked' ? t('edit.deleteBlocked') : t('edit.deleteFailed')) + detail,
+      );
+      return;
+    }
+    router.push('/dashboard');
   };
 
   const handleSave = async () => {
@@ -803,6 +853,60 @@ export default function EditPage() {
         {(site?.mode === 2 || site?.mode === 3) && <OrderManager slug={slug} />}
 
         {site?.mode === 3 && <FinanceDashboard slug={slug} />}
+
+        {/* ── ZONE SENSIBLE — EN DERNIER, ET REPLIÉE.
+            Même idiome que la suppression de compte dans `/parametres` : un
+            mot à taper. Ce dépôt l'utilisait déjà ; en inventer un autre
+            aurait donné deux façons de faire la même chose. */}
+        <div className="mt-12 bg-white/[0.03] border border-red-500/10 rounded-3xl p-6 md:p-8">
+          <h2 className="text-sm font-semibold text-red-400/70 mb-3 uppercase tracking-wider">
+            {t('edit.dangerZone')}
+          </h2>
+          <p className="text-sm text-white/40 mb-4">{t('edit.deleteWarning')}</p>
+          {!zoneSensible ? (
+            <button
+              type="button"
+              onClick={() => setZoneSensible(true)}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold border border-red-500/20 text-red-400/60 hover:text-red-400 hover:border-red-500/40 transition-all"
+            >
+              <Trash2 className="w-4 h-4" />
+              {t('edit.deleteSite')}
+            </button>
+          ) : (
+            <div className="space-y-3 max-w-sm">
+              <p className="text-sm text-red-400/80">{t('edit.deleteConfirmLabel')}</p>
+              <input
+                type="text"
+                value={motDeSuppression}
+                onChange={(e) => setMotDeSuppression(e.target.value)}
+                placeholder={t('edit.deleteWord')}
+                className="w-full bg-white/[0.06] border border-red-500/20 rounded-xl px-4 py-2.5 text-white text-sm outline-none focus:border-red-500/40 transition-colors"
+              />
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => { void supprimerLaBoutique(); }}
+                  disabled={motDeSuppression.trim() !== t('edit.deleteWord') || suppressionEnCours}
+                  className="px-4 py-2 rounded-xl text-sm font-semibold bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  {suppressionEnCours ? '…' : t('edit.confirmDelete')}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setZoneSensible(false); setMotDeSuppression(''); setErreurSuppression(null); }}
+                  className="px-4 py-2 rounded-xl text-sm text-white/40 hover:text-white/60 transition-colors"
+                >
+                  {t('edit.cancel')}
+                </button>
+              </div>
+              {erreurSuppression && (
+                <p className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-2.5">
+                  {erreurSuppression}
+                </p>
+              )}
+            </div>
+          )}
+        </div>
       </section>
 
       <Footer />
