@@ -2,6 +2,7 @@
 import type { MetadataRoute } from 'next'
 import { supabase } from '@/lib/supabase'
 import { selectionServable } from '@/lib/dropship/catalogAdmission'
+import { PAGES_PUBLIQUES } from '@/lib/seo/metadata'
 
 const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.deribfy.com'
@@ -9,26 +10,39 @@ const SITE_URL =
 export const revalidate = 3600
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const staticRoutes: MetadataRoute.Sitemap = [
-    {
-      url: SITE_URL,
+  // ── LES PAGES DE LA PLATEFORME VIENNENT DU REGISTRE, PLUS D'UNE LISTE ÉCRITE
+  // À LA MAIN.
+  //
+  // MESURÉ le 2026-09-25 : cette liste en portait TROIS (`/`, `/about`,
+  // `/pricing`) alors que le registre `PAGES_PUBLIQUES` en déclare HUIT.
+  // `/blog`, `/visibilite-ia`, `/cookies`, `/privacy` et `/terms` répondaient
+  // 200, avaient chacune un titre et une description propres — et n'étaient
+  // dans AUCUN plan de site.
+  //
+  // La cause n'est pas l'oubli : c'est la duplication. Deux listes des mêmes
+  // pages, à deux endroits, finissent toujours par diverger — et celle qui
+  // diverge en silence est celle que personne ne relit. Le registre existe
+  // précisément pour être l'unique autorité ; le plan de site en découle
+  // désormais, et toute page ajoutée là y entrera sans qu'on y pense.
+  type Cadence = NonNullable<MetadataRoute.Sitemap[number]['changeFrequency']>
+  const CADENCE: Record<string, { f: Cadence; p: number }> = {
+    '/': { f: 'daily', p: 1 },
+    '/blog': { f: 'weekly', p: 0.8 },
+    // Pages légales : elles doivent être trouvables, pas mises en avant.
+    '/privacy': { f: 'yearly', p: 0.3 },
+    '/cookies': { f: 'yearly', p: 0.3 },
+    '/terms': { f: 'yearly', p: 0.3 },
+  }
+  const staticRoutes: MetadataRoute.Sitemap = Object.keys(PAGES_PUBLIQUES).map((chemin) => {
+    const c: { f: Cadence; p: number } = CADENCE[chemin] ?? { f: 'monthly', p: 0.7 }
+    return {
+      // `/` ne doit pas produire une URL à double barre oblique finale.
+      url: chemin === '/' ? SITE_URL : `${SITE_URL}${chemin}`,
       lastModified: new Date(),
-      changeFrequency: 'daily',
-      priority: 1,
-    },
-    {
-      url: `${SITE_URL}/about`,
-      lastModified: new Date(),
-      changeFrequency: 'monthly',
-      priority: 0.7,
-    },
-    {
-      url: `${SITE_URL}/pricing`,
-      lastModified: new Date(),
-      changeFrequency: 'monthly',
-      priority: 0.7,
-    },
-  ]
+      changeFrequency: c.f,
+      priority: c.p,
+    }
+  })
 
   // LOT 1 : sites_public (published=true AND archived_at IS NULL déjà
   // appliqué par la vue -- corrige au passage l'absence de vérification
