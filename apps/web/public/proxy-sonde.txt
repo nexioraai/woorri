@@ -1,0 +1,15 @@
+SONDE STATIQUE — M2-242.
+
+Fichier de mesure, sans usage fonctionnel. Il répond à UNE question dont la
+réponse décide d'un déplacement risqué : sur un domaine marchand, le proxy
+s'exécute-t-il AVANT le service des fichiers de `public/` ?
+
+  · chanorfie.com/proxy-sonde.txt -> 404      => le proxy passe d'abord.
+    Déplacer les icônes de la plateforme vers `public/` est alors SANS
+    DANGER : elles resteront réécrites vers l'icône du marchand.
+
+  · chanorfie.com/proxy-sonde.txt -> ce texte => les fichiers statiques
+    passent d'abord. Déplacer les icônes ferait alors servir celle de
+    Deribfy sur TOUTES les boutiques. À NE PAS FAIRE.
+
+Supprimable dès que la mesure est consignée.
