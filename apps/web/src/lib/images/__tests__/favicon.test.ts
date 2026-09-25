@@ -84,12 +84,23 @@ describe('images produites', () => {
     expect(png.readUInt32BE(16)).toBe(192)
   })
 
-  it('le favicon est un ICO VALIDE portant les trois tailles utiles', async () => {
+  it('le favicon est un ICO VALIDE portant les tailles que GOOGLE demande', async () => {
+    // 16 et 32 sont pour les onglets ; 48, 96 et 144 sont pour Google, dont la
+    // documentation exige un carré MULTIPLE de 48 px.
+    //
+    // L'ICO plafonnait à 48 — la plus petite valeur acceptable, donc la source
+    // la plus pauvre qu'on pouvait lui donner. Ce n'était pas un défaut, c'était
+    // une occasion manquée : le commerçant regarde cette icône dans sa ligne de
+    // résultats, et elle y était reconstruite depuis 48 px.
     const ico = await faviconIcoDuSite('Chanorfie', '#8B2252')
     expect(ico.readUInt16LE(0), 'octets réservés').toBe(0)
     expect(ico.readUInt16LE(2), 'type ICO').toBe(1)
-    expect(ico.readUInt16LE(4), '16, 32 et 48 — pas une seule taille').toBe(3)
-    expect([...ico.subarray(6, 8)]).toEqual([16, 16])
+
+    const n = ico.readUInt16LE(4)
+    const tailles = Array.from({ length: n }, (_, i) => ico[6 + i * 16] || 256)
+    expect(tailles, 'les cinq tailles servies').toEqual([16, 32, 48, 96, 144])
+    // AU MOINS UNE taille multiple de 48 : sans elle, Google écarte l'icône.
+    expect(tailles.some((t) => t % 48 === 0 && t >= 48)).toBe(true)
   })
 
   it('DEUX marchands DIFFÉRENTS n’obtiennent pas la même icône', async () => {

@@ -89,7 +89,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     alternates: { canonical: url },
     icons: {
       icon: [
-        { url: `${racine}/favicon.ico`, sizes: '16x16 32x32 48x48' },
+        // Les tailles ANNONCÉES doivent être celles que l'ICO porte vraiment :
+        // un navigateur qui demande du 144 et reçoit du 48 affiche du flou.
+        { url: `${racine}/favicon.ico`, sizes: '16x16 32x32 48x48 96x96 144x144' },
         { url: icone(192), sizes: '192x192', type: 'image/png' },
         { url: icone(512), sizes: '512x512', type: 'image/png' },
       ],

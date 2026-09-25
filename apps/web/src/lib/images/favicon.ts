@@ -226,14 +226,31 @@ export async function iconeDuSite(
   return monogrammePng(nom, couleur, taille)
 }
 
-/** Favicon ICO d'un marchand : 16, 32, 48 — les trois tailles réellement demandées. */
+/**
+ * Favicon ICO d'un marchand.
+ *
+ * ── POURQUOI CINQ TAILLES, ET POURQUOI CELLES-LÀ.
+ *
+ * 16 et 32 sont ce que demandent les onglets de navigateur. 48, 96 et 144
+ * sont ce que demande GOOGLE : sa documentation exige un carré MULTIPLE de
+ * 48 px, et il redimensionne ensuite lui-même.
+ *
+ * L'ICO plafonnait à 48 — la plus petite valeur acceptable. C'était conforme,
+ * et c'était la source la plus pauvre qu'on pouvait lui donner : redescendre
+ * de 48 à 16 depuis une image déjà petite abîme les détails d'un logo. Un
+ * écran moderne, lui, affiche déjà des onglets en 32 réels.
+ *
+ * Le coût est négligeable — quelques kilo-octets, redessinés une fois par
+ * tranche de cinq minutes de cache — et le gain porte là où le commerçant
+ * regarde : la ligne de résultats Google.
+ */
 export async function faviconIcoDuSite(
   nom: string | null | undefined,
   couleur: string | null | undefined,
   logo: Buffer | null = null,
 ): Promise<Buffer> {
   const images = await Promise.all(
-    [16, 32, 48].map(async (taille) => ({ taille, donnees: await iconeDuSite(logo, nom, couleur, taille) })),
+    [16, 32, 48, 96, 144].map(async (taille) => ({ taille, donnees: await iconeDuSite(logo, nom, couleur, taille) })),
   )
   return construireIco(images)
 }
