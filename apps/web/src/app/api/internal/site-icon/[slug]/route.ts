@@ -43,12 +43,29 @@ export async function GET(
   const brut = Number(new URL(req.url).searchParams.get('t'))
   const format = new URL(req.url).searchParams.get('f')
 
-  // Une icône ne change qu'avec la marque du marchand : un cache long est
-  // correct, et il évite de redessiner à chaque visite. `stale-while-revalidate`
-  // pour qu'un changement de couleur se propage sans jamais faire attendre.
+  // ── LE CACHE A GARDÉ L'ANCIENNE ICÔNE PENDANT VINGT-QUATRE HEURES.
+  //
+  // MESURÉ SUR `chanorfie.com` LE 2026-09-24, après le dépôt d'un vrai logo :
+  //
+  //     /favicon.ico                 -> monogramme (écart-type 10,9 = aplat)
+  //     /favicon.ico?<autre requête> -> LE LOGO     (écart-type 34,3 = détaillé)
+  //
+  // Les deux URL frappent cette route ; seule la seconde avait une clé de
+  // cache neuve. L'URL canonique — celle que Google et les navigateurs
+  // demandent — servait encore l'icône d'avant, à cause de `s-maxage=86400`.
+  //
+  // J'avais écrit « un cache long est correct » en supposant qu'une marque ne
+  // change pas. C'est vrai dans la durée, et FAUX à la minute qui compte : le
+  // marchand dépose son logo, enregistre, regarde son onglet — et voit
+  // l'ancien. Il conclut que ça ne marche pas, et il a raison de le conclure.
+  //
+  // Cinq minutes au lieu d'un jour. Une icône pèse quelques kilo-octets ;
+  // `stale-while-revalidate` continue de servir instantanément pendant le
+  // rafraîchissement, donc personne n'attend jamais. Le coût est nul, le
+  // délai devient humain.
   const entetes = (type: string) => ({
     'Content-Type': type,
-    'Cache-Control': 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800',
+    'Cache-Control': 'public, max-age=300, s-maxage=300, stale-while-revalidate=604800',
   })
 
   if (format === 'ico') {

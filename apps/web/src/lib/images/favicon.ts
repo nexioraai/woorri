@@ -237,3 +237,32 @@ export async function faviconIcoDuSite(
   )
   return construireIco(images)
 }
+
+/**
+ * Empreinte courte et STABLE du logo, destinée à l'URL des icônes.
+ *
+ * ── POURQUOI ELLE EXISTE.
+ *
+ * Sans elle, l'adresse de l'icône ne bouge jamais : le marchand remplace son
+ * logo, et navigateurs, téléphones et moteurs continuent d'afficher l'ancien
+ * tant que leur cache tient. Avec elle, l'URL change EXACTEMENT quand le logo
+ * change — et jamais autrement, car les moteurs demandent une adresse d'icône
+ * stable.
+ *
+ * ── ELLE NE SÉCURISE RIEN, et n'essaie pas de le faire. Un hachage de
+ * trente-deux bits suffit à distinguer deux URL successives ; ce n'est pas une
+ * empreinte cryptographique et elle ne doit jamais servir à en tenir lieu.
+ *
+ * ── UN SEUL EXEMPLAIRE. Les balises `<link rel="icon">` et le manifeste
+ * doivent produire la MÊME valeur : deux copies de ce calcul finiraient par
+ * diverger, et le téléphone installerait une icône pendant que l'onglet en
+ * montrerait une autre.
+ */
+export function empreinteDuLogo(logoUrl: string | null | undefined): string {
+  if (!logoUrl) return 'mono'
+  let h = 0
+  for (let i = 0; i < logoUrl.length; i += 1) {
+    h = (h * 31 + logoUrl.charCodeAt(i)) | 0
+  }
+  return Math.abs(h).toString(36)
+}

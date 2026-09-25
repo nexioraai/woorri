@@ -23,6 +23,7 @@ import CatalogSearch, { type ThemeKey } from './themes/CatalogSearch'
 // base ne porte pas.
 import { showsVisitorCatalogSearch } from '@/app/sites/[slug]/themes/catalogSearchVisibility'
 import PromoBanner from './themes/PromoBanner'
+import { empreinteDuLogo } from '@/lib/images/favicon'
 
 // M1-08 : `revalidate` retire, il etait TROMPEUR. Cette page appelle
 // `headers()` (resolution du domaine perso pour le canonical), ce qui la
@@ -70,7 +71,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   // URL ABSOLUE sur le domaine réellement servi : une icône déclarée en
   // relatif sur un domaine personnalisé serait résolue par le navigateur, mais
   // les moteurs qui lisent le balisage sans le résoudre la manqueraient.
-  const icone = (t: number) => `${url.replace(/\/$/, '')}/api/internal/site-icon/${slug}?t=${String(t)}`
+  //
+  // ── L'EMPREINTE DU LOGO DANS L'URL, ET POURQUOI ELLE EST NÉCESSAIRE.
+  //
+  // Sans elle, l'URL de l'icône ne bouge jamais : le marchand remplace son
+  // logo, et navigateurs, téléphones et moteurs continuent de montrer
+  // l'ancien tant que leur cache tient. Avec elle, l'URL change EXACTEMENT
+  // quand le logo change — et jamais autrement, car les moteurs demandent
+  // une adresse d'icône stable.
+  const v = empreinteDuLogo((site as { logo_url?: string | null }).logo_url)
+  const racine = url.replace(/\/$/, '')
+  const icone = (t: number) => `${racine}/api/internal/site-icon/${slug}?t=${String(t)}&v=${v}`
 
   return {
     title,
@@ -78,12 +89,20 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     alternates: { canonical: url },
     icons: {
       icon: [
-        { url: `${url.replace(/\/$/, '')}/favicon.ico`, sizes: '16x16 32x32 48x48' },
+        { url: `${racine}/favicon.ico`, sizes: '16x16 32x32 48x48' },
         { url: icone(192), sizes: '192x192', type: 'image/png' },
         { url: icone(512), sizes: '512x512', type: 'image/png' },
       ],
       apple: [{ url: icone(180), sizes: '180x180', type: 'image/png' }],
     },
+    // ── LE MANIFESTE DU MARCHAND, PAS CELUI DE LA PLATEFORME.
+    //
+    // Sans cette ligne, la page héritait de `<link rel="manifest"
+    // href="/manifest.webmanifest">` — qui, sur un domaine personnalisé,
+    // répondait une PAGE D'ERREUR. « Ajouter à l'écran d'accueil » n'avait
+    // donc ni nom ni icône à lire. Et s'il avait répondu, il aurait installé
+    // la boutique du marchand sous l'enseigne de Deribfy.
+    manifest: `${racine}/api/internal/site-manifest/${slug}?v=${v}`,
     openGraph: {
       title,
       description,
