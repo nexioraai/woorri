@@ -9,6 +9,7 @@ import LanguageSwitcher from './LanguageSwitcher';
 import { SUPPORTED_LANGUAGES } from '@/lib/i18n/supportedLanguages';
 import { Menu as MenuIcon, X, ArrowLeft, Plus, Trash2, Check, Loader2, Upload, Eye, EyeOff, MapPin } from 'lucide-react';
 import ChoixProduitsDePage from '@/components/edit/ChoixProduitsDePage';
+import CreerProduitDePage from '@/components/edit/CreerProduitDePage';
 
 export default function Navbar() {
   const { t } = useTranslation();
@@ -171,6 +172,14 @@ export default function Navbar() {
   };
 
   // Image upload helper
+  // ── RECHARGER LA LISTE APRÈS UNE CRÉATION.
+  //
+  // Le sélecteur charge les produits UNE fois, au montage. Sans ce compteur,
+  // un article créé à l'instant serait bien ajouté à la page — mais absent de
+  // la liste juste en dessous. Le marchand verrait « 1 produit sur cette
+  // page » et aucune ligne cochée : il conclurait que ça n'a pas marché.
+  const [versionProduits, setVersionProduits] = useState(0);
+
   const uploadImage = async (file: File): Promise<string | null> => {
     const ext = file.name.split('.').pop();
     const path = `${slug}/${Date.now()}.${ext}`;
@@ -477,8 +486,49 @@ export default function Navbar() {
                           la page existait, mais rien ne permettait d'y mettre
                           ce qu'on vend. Réservé aux boutiques (modes 2 et 3) —
                           un site vitrine n'a pas de catalogue à y poser. */}
+                      {/* ── CRÉER UN PRODUIT, ICI, POUR CETTE PAGE.
+                          C'EST LA DEMANDE, et j'avais d'abord livré autre
+                          chose : un sélecteur parmi les produits existants.
+                          « Je ne cherche pas à ajouter des produits existants,
+                          il faut pouvoir en ajouter d'autres. » Le marchand qui
+                          crée une page « Chaussures » veut y SAISIR ses
+                          chaussures — pas aller les créer ailleurs puis revenir
+                          les cocher. Le sélecteur reste en dessous : il sert à
+                          ranger sur la page un article déjà en boutique. */}
+                      {slug && (site?.mode === 2 || site?.mode === 3) && (
+                        <CreerProduitDePage
+                          slug={slug}
+                          deviseParDefaut={site?.products?.[0]?.currency}
+                          onCree={(id) => {
+                            const actuels = Array.isArray(page.productIds) ? page.productIds : [];
+                            updateArrayItem('pages', pageIdx, 'productIds', [...actuels, id]);
+                            setVersionProduits((v) => v + 1);
+                          }}
+                          labels={{
+                            open: t('naved.pageNewProduct'),
+                            name: t('naved.pnpName'),
+                            namePh: t('naved.pnpNamePh'),
+                            desc: t('naved.pnpDesc'),
+                            descPh: t('naved.pnpDescPh'),
+                            price: t('naved.pnpPrice'),
+                            compare: t('naved.pnpCompare'),
+                            currency: t('naved.pnpCurrency'),
+                            photos: t('naved.pnpPhotos'),
+                            addPhotos: t('naved.pnpAddPhotos'),
+                            sending: t('naved.pnpSending'),
+                            create: t('naved.pnpCreate'),
+                            creating: t('naved.pnpCreating'),
+                            cancel: t('naved.pnpCancel'),
+                            needName: t('naved.pnpNeedName'),
+                            needPrice: t('naved.pnpNeedPrice'),
+                            failed: t('naved.pnpFailed'),
+                          }}
+                        />
+                      )}
+
                       {slug && (site?.mode === 2 || site?.mode === 3) && (
                         <ChoixProduitsDePage
+                          key={versionProduits}
                           slug={slug}
                           valeur={Array.isArray(page.productIds) ? page.productIds : []}
                           onChange={(ids) => updateArrayItem('pages', pageIdx, 'productIds', ids)}
