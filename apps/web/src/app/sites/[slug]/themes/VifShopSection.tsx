@@ -13,6 +13,7 @@ import { type Site, normalizeProduct, mockupsToProducts, canAddToCart } from './
 import { getDict } from './i18n'
 import { INK, GOLD, CREAM_DEEP } from './VifTheme'
 import GalerieProduit from './GalerieProduit'
+import GrilleCherchable from './GrilleCherchable'
 
 export default function VifShopSection({ site }: { site: Site }) {
   const t = getDict(site.lang)
@@ -30,7 +31,18 @@ export default function VifShopSection({ site }: { site: Site }) {
             {t.sections.shopTitle}
           </h2>
         </div>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* ── RECHERCHE DANS LA BOUTIQUE — demande des marchands.
+            `CatalogSearch` ne sert QUE le catalogue fournisseur (mode 3) :
+            les boutiques qui vendent leur propre stock n'avaient aucune
+            recherche. Les cartes restent rendues PAR LE SERVEUR — le
+            catalogue complet reste dans le HTML initial, donc indexable —
+            et ce conteneur ne fait que montrer ou cacher. */}
+        <GrilleCherchable
+          textes={products.map((p) => ({ name: p.name, description: p.description }))}
+          className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6"
+          primary={INK}
+          labels={{ placeholder: t.labels.searchPlaceholder, resultats: t.labels.searchResults, aucun: t.labels.searchNone, effacer: t.labels.searchClear }}
+        >
           {products.map((p, i) => (
             <ClickableProductCard slug={site.slug} key={i} product={p} primary={INK} lang={site.lang}>
             <TiltCard className="group rounded-3xl overflow-hidden bg-white border border-black/[0.06]">
@@ -79,7 +91,7 @@ export default function VifShopSection({ site }: { site: Site }) {
             </TiltCard>
             </ClickableProductCard>
           ))}
-        </div>
+        </GrilleCherchable>
       </div>
     </section>
   )

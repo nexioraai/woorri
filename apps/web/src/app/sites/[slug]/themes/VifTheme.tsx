@@ -10,6 +10,8 @@ import {
   type Site,
   normalizeTestimonial,
   ContactMap,
+  normalizeProduct,
+  mockupsToProducts,
 } from './shared'
 import { getDict } from './i18n'
 import Reveal from './Reveal'
@@ -19,6 +21,7 @@ import VifShopSection from './VifShopSection'
 import { socialUrl } from '@/lib/social'
 import ClickableProductCard from './ClickableProductCard'
 import EnseigneDuSite from './EnseigneDuSite'
+import PageProduits, { produitsDeLaPage } from './PageProduits'
 
 // Palette Gusto clair-editorial (fixe, signature du theme)
 export const CREAM = '#EFE6D4'
@@ -27,6 +30,15 @@ export const INK = '#B08847'
 export const GOLD = '#B08847'
 
 export default function VifTheme({ site }: { site: Site }) {
+  // ── LES PRODUITS, POUR LES PAGES PERSONNALISÉES.
+  //
+  // Les sections boutique calculent déjà cette liste chacune de leur côté ;
+  // ce thème n'en avait pas besoin jusqu'ici. Une page personnalisée peut
+  // désormais montrer des produits — « une page par article », la demande
+  // des marchands — il lui faut donc la même liste, calculée de la même
+  // façon : le catalogue vendable, plus les maquettes POD.
+  const products = [...(site.products || []).map(normalizeProduct), ...mockupsToProducts(site)]
+
   const hidden = (name: string) => (site.hidden_sections || []).includes(name)
   const t = getDict(site.lang)
   const sections = site.sections || []
@@ -400,7 +412,7 @@ export default function VifTheme({ site }: { site: Site }) {
         )}
 
         {/* =================== CUSTOM PAGES =================== */}
-        {(site.pages || []).filter((p: any) => p && (p.title || p.content || p.image)).map((page: any, pi: number) => (
+        {(site.pages || []).filter((p: any) => p && (p.title || p.content || p.image || (p.productIds?.length ?? 0) > 0)).map((page: any, pi: number) => (
           <section key={`page-${pi}`} id={`page-${pi}`} className="reveal py-28 md:py-36" style={{ borderTop: '1px solid rgba(20,18,16,0.08)' }}>
             <div className="max-w-4xl mx-auto px-6 md:px-10">
               <h2 className="text-3xl md:text-5xl font-semibold tracking-tight mb-10" style={{ color: GOLD }}>{page.title}</h2>
@@ -412,6 +424,9 @@ export default function VifTheme({ site }: { site: Site }) {
               {page.content && (
                 <div className="text-lg leading-relaxed whitespace-pre-line" style={{ color: 'rgba(20,18,16,0.72)' }}>{page.content}</div>
               )}
+              {/* LES PRODUITS DE LA PAGE — « une page par article »,
+                  la demande des marchands. */}
+              <PageProduits slug={site.slug} produits={produitsDeLaPage(products, page.productIds)} primary={GOLD} />
             </div>
           </section>
         ))}

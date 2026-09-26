@@ -591,6 +591,11 @@ export const DOMAIN_REGISTRY: DomainDefinition[] = [
       'src/app/sites/[slug]/page.tsx',
       'src/components/edit/PaymentConnect.tsx',
       'src/components/onboarding/OnboardingChat.tsx',
+      // M2-247 — l'editeur de page lit le mode pour UNE raison d'affichage :
+      // proposer ou non le choix des produits d'une page. Un site vitrine
+      // (mode 1) n'a pas de catalogue a y poser. Aucune regle de vente n'en
+      // depend : ni admission, ni routage, ni facturation.
+      'src/components/Navbar.tsx',
     ],
     forbiddenPatterns: [],
     capabilities: ['siteMode'],

@@ -30,6 +30,7 @@ import { gold, goldBright, LINE, STAGE, GradedImage } from './NoirTheme'
 import SectionKicker from './SectionKicker'
 import GalerieProduit from './GalerieProduit'
 import NoirSpotlight from './NoirSpotlight'
+import GrilleCherchable from './GrilleCherchable'
 
 // Rythme de la grille : le produit 0 est toujours vedette (grand format) ;
 // au-dela, une carte sur cinq est haute (row-span-2) pour casser la
@@ -76,7 +77,16 @@ export default function NoirShopSection({ site }: { site: Site }) {
               a plusieurs largeurs reelles (768/1024/1280/1920px). Corrige avec un
               palier intermediaire a 3 colonnes qui garde un ratio proche du carre
               a chaque largeur testee. */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5 auto-rows-[190px] sm:auto-rows-[230px] md:auto-rows-[240px] lg:auto-rows-[250px]">
+          {/* ── RECHERCHE DANS LA BOUTIQUE — demande des marchands.
+              Les cartes restent rendues PAR LE SERVEUR : le catalogue reste
+              dans le HTML initial, donc indexable. */}
+          <GrilleCherchable
+            textes={products.map((p) => ({ name: p.name, description: p.description }))}
+            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5 auto-rows-[190px] sm:auto-rows-[230px] md:auto-rows-[240px] lg:auto-rows-[250px]"
+            primary={goldBright}
+            sombre
+            labels={{ placeholder: t.labels.searchPlaceholder, resultats: t.labels.searchResults, aucun: t.labels.searchNone, effacer: t.labels.searchClear }}
+          >
             {products.map((p, i) => {
               const featured = i === 0
               const span = cardSpan(i)
@@ -199,7 +209,7 @@ export default function NoirShopSection({ site }: { site: Site }) {
                 </Fragment>
               )
             })}
-          </div>
+          </GrilleCherchable>
         </NoirSpotlight>
       </div>
     </section>

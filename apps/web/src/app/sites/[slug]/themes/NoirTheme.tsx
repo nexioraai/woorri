@@ -23,6 +23,7 @@ import NoirShopSection from './NoirShopSection'
 import SectionKicker from './SectionKicker'
 import { useSpotlightXY, SpotlightGlow, SpotlightSheen } from './NoirSpotlight'
 import EnseigneDuSite from './EnseigneDuSite'
+import PageProduits, { produitsDeLaPage } from './PageProduits'
 
 // ============================================================
 // Systeme de tons -- Noir comme clair-obscur, pas comme "site sombre".
@@ -602,7 +603,7 @@ export default function NoirTheme({ site }: { site: Site }) {
         )}
 
         {/* =================== CUSTOM PAGES =================== */}
-        {(site.pages || []).filter((p: any) => p && (p.title || p.content || p.image)).map((page: any, pi: number) => (
+        {(site.pages || []).filter((p: any) => p && (p.title || p.content || p.image || (p.productIds?.length ?? 0) > 0)).map((page: any, pi: number) => (
           <section key={`page-${pi}`} id={`page-${pi}`} className="reveal py-28 md:py-36">
             <div className="max-w-4xl mx-auto px-6 md:px-10">
               <h2 className="text-3xl md:text-5xl font-semibold tracking-tight mb-10" style={{ color: gold }}>{page.title}</h2>
@@ -612,6 +613,9 @@ export default function NoirTheme({ site }: { site: Site }) {
                 </div>
               )}
               {page.content && <div className="text-lg leading-relaxed whitespace-pre-line text-white/70">{page.content}</div>}
+              {/* LES PRODUITS DE LA PAGE — « une page par article »,
+                  la demande des marchands. */}
+              <PageProduits slug={site.slug} produits={produitsDeLaPage(products, page.productIds)} primary={goldBright} sombre />
             </div>
           </section>
         ))}

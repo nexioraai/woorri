@@ -382,7 +382,7 @@ describe('ÉTAPE B — NIVEAU 2 : tout décideur est déclaré dans un domaine',
     expect(DECIDEURS.length).toBeGreaterThanOrEqual(1)
   })
 
-  it('les deux domaines de l’étape B couvrent bien 19 fichiers', () => {
+  it('les deux domaines de l’étape B couvrent bien 20 fichiers', () => {
     const d = (id: string) => DOMAIN_REGISTRY.find((x) => x.id === id)!
     // ETAPE 2 -- 6 depuis que `catalog/search` interroge `hasSupplierCatalog` :
     // il est devenu un lecteur, donc une surface a declarer.
@@ -394,10 +394,13 @@ describe('ÉTAPE B — NIVEAU 2 : tout décideur est déclaré dans un domaine',
     // DEBT-054 -- 12 : quatre decideurs reels que le detecteur ne voyait pas
     // (toolCapabilities, modeGuidance, onboarding, chat) sont declares.
     expect(d('site-mode-decision-surfaces').ownedFiles).toHaveLength(14)
-    expect(d('human-ui-mode-display').ownedFiles).toHaveLength(5)
+    // M2-247 -- 6 : l'editeur de page (Navbar) lit le mode pour proposer ou
+    // non le choix des produits d'une page. Un site vitrine n'a pas de
+    // catalogue a y poser. Choix d'affichage, aucune regle de vente.
+    expect(d('human-ui-mode-display').ownedFiles).toHaveLength(6)
   })
 
-  it('les 8 surfaces hors UI sont CONTRAINTES, les 5 UI seulement DÉCLARÉES', () => {
+  it('les 8 surfaces hors UI sont CONTRAINTES, les 6 UI seulement DÉCLARÉES', () => {
     const d = (id: string) => DOMAIN_REGISTRY.find((x) => x.id === id)!
     // Ampleur décidée : déclarer les dix, ne contraindre que les cinq
     // premières. Une comparaison de mode dans l'UI humaine est un choix

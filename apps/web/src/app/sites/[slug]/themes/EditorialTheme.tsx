@@ -12,7 +12,11 @@ import {
 import { Instagram, Facebook, TikTok, WhatsApp } from './BrandIcons'
 import MobileNav from './MobileNav'
 import ContactForm from '../ContactForm'
-import { WOORRI_SITE_URL } from './shared'
+import {
+  WOORRI_SITE_URL,
+  normalizeProduct,
+  mockupsToProducts,
+} from './shared'
 import {
   type Site,
   normalizeService,
@@ -27,6 +31,7 @@ import EditorialShopSection from './EditorialShopSection'
 import { socialUrl } from '@/lib/social'
 import ClickableProductCard from './ClickableProductCard'
 import EnseigneDuSite from './EnseigneDuSite'
+import PageProduits, { produitsDeLaPage } from './PageProduits'
 
 // ---------- Premium Button ----------
 function PremiumButton({
@@ -68,6 +73,15 @@ function PremiumButton({
 
 // ---------- Theme ----------
 export default function EditorialTheme({ site }: { site: Site }) {
+  // ── LES PRODUITS, POUR LES PAGES PERSONNALISÉES.
+  //
+  // Les sections boutique calculent déjà cette liste chacune de leur côté ;
+  // ce thème n'en avait pas besoin jusqu'ici. Une page personnalisée peut
+  // désormais montrer des produits — « une page par article », la demande
+  // des marchands — il lui faut donc la même liste, calculée de la même
+  // façon : le catalogue vendable, plus les maquettes POD.
+  const products = [...(site.products || []).map(normalizeProduct), ...mockupsToProducts(site)]
+
   const hidden = (name: string) => (site.hidden_sections || []).includes(name)
   const primary = site.primary_color || '#111111'
   const t = getDict(site.lang)
@@ -510,7 +524,7 @@ export default function EditorialTheme({ site }: { site: Site }) {
       )}
 
       {/* =================== CUSTOM PAGES =================== */}
-      {(site.pages || []).filter((p: any) => p && (p.title || p.content || p.image)).map((page: any, pi: number) => (
+      {(site.pages || []).filter((p: any) => p && (p.title || p.content || p.image || (p.productIds?.length ?? 0) > 0)).map((page: any, pi: number) => (
         <section key={`page-${pi}`} id={`page-${pi}`} className={`reveal py-28 md:py-36 ${pi % 2 === 0 ? "bg-neutral-50" : "bg-white"}`}>
           <div className="max-w-4xl mx-auto px-6 md:px-10">
             <h2 className="text-3xl md:text-5xl font-semibold tracking-tight text-neutral-900 mb-10">{page.title}</h2>
@@ -522,6 +536,10 @@ export default function EditorialTheme({ site }: { site: Site }) {
             {page.content && (
               <div className="text-lg leading-relaxed text-neutral-700 whitespace-pre-line">{page.content}</div>
             )}
+            {/* LES PRODUITS DE LA PAGE. « Une page par article » : c'est la
+                demande des marchands, et c'est ce qui manquait — une page ne
+                pouvait porter qu'un titre et un texte. */}
+            <PageProduits slug={site.slug} produits={produitsDeLaPage(products, page.productIds)} primary={site.primary_color || '#FA5D1E'} />
           </div>
         </section>
       ))}

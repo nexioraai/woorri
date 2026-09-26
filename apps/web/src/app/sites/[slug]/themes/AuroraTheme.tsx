@@ -28,6 +28,7 @@ import CatalogSearch from './CatalogSearch'
 import { showsVisitorCatalogSearch } from './catalogSearchVisibility'
 import { getModeCapabilities } from './modeCapabilities'
 import EnseigneDuSite from './EnseigneDuSite'
+import PageProduits, { produitsDeLaPage } from './PageProduits'
 
 export default function AuroraTheme({ site }: { site: Site }) {
   const hidden = (name: string) => (site.hidden_sections || []).includes(name)
@@ -160,6 +161,12 @@ export default function AuroraTheme({ site }: { site: Site }) {
               <CatalogSearch slug={site.slug} primary={primary} lang={site.lang} dropshipType={site.dropship_type} />
             ) : undefined}
             labels={{
+              // Recherche dans la boutique : les libellés viennent du
+              // dictionnaire des vitrines, comme tout le reste de cette page.
+              searchPlaceholder: t.labels.searchPlaceholder,
+              searchResults: t.labels.searchResults,
+              searchNone: t.labels.searchNone,
+              searchClear: t.labels.searchClear,
               all: L('Tout', 'All', 'Todo', 'الكل', 'Tudo', 'Alle', 'Tutti'),
               onQuote: t.labels.onQuote,
               request: t.labels.request,
@@ -287,11 +294,17 @@ export default function AuroraTheme({ site }: { site: Site }) {
         )}
 
         {/* CUSTOM PAGES */}
-        {(site.pages || []).filter((p: any) => p && p.title).map((page: any, pi: number) => (
+        {(site.pages || []).filter((p: any) => p && (p.title || p.content || p.image || (p.productIds?.length ?? 0) > 0)).map((page: any, pi: number) => (
           <section key={`page-${pi}`} id={`page-${pi}`} className="py-20 md:py-28">
             <div className="max-w-4xl mx-auto px-6 md:px-10">
               <h2 className="text-4xl md:text-5xl font-semibold leading-tight mb-8">{page.title}</h2>
-              <div className="text-lg leading-relaxed text-neutral-700 whitespace-pre-line">{page.content}</div>
+              {page.content && (
+                <div className="text-lg leading-relaxed text-neutral-700 whitespace-pre-line">{page.content}</div>
+              )}
+              {/* LES PRODUITS DE LA PAGE. « Une page par article » : c'est la
+                  demande des marchands, et c'est ce qui manquait — une page
+                  ne pouvait porter qu'un texte. */}
+              <PageProduits slug={site.slug} produits={produitsDeLaPage(products, page.productIds)} primary={primary} />
             </div>
           </section>
         ))}

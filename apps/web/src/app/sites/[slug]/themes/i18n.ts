@@ -45,6 +45,18 @@ export type ThemeDict = {
     estimatedDelivery: string
     days: string
     contactCta: string
+    /**
+     * Recherche dans la boutique du marchand — mode 2 compris.
+     *
+     * `CatalogSearch` ne sert QUE le catalogue fournisseur (mode 3) : les
+     * boutiques qui vendent leur propre stock n'avaient aucune recherche.
+     * Avec quarante articles, un visiteur qui cherche « chaussures » fait
+     * défiler toute la page ou s'en va.
+     */
+    searchPlaceholder: string
+    searchResults: string
+    searchNone: string
+    searchClear: string
   }
   form: {
     title: string
@@ -138,6 +150,10 @@ const en: ThemeDict = {
     poweredBy: 'Powered by',
     rightsReserved: 'All rights reserved.',
     contactCta: 'Contact us',
+    searchPlaceholder: 'Search an item…',
+    searchResults: '{n} item(s) found',
+    searchNone: 'No item matches “{q}”.',
+    searchClear: 'Clear search',
     estimatedDelivery: 'Estimated delivery:',
     days: 'days',
   },
@@ -233,6 +249,10 @@ const fr: ThemeDict = {
     poweredBy: 'Propulsé par',
     rightsReserved: 'Tous droits réservés.',
     contactCta: 'Contactez-nous',
+    searchPlaceholder: 'Chercher un article…',
+    searchResults: '{n} article(s) trouvé(s)',
+    searchNone: 'Aucun article ne correspond à « {q} ».',
+    searchClear: 'Effacer la recherche',
     estimatedDelivery: 'Livraison estimée :',
     days: 'jours',
   },
@@ -328,6 +348,10 @@ const es: ThemeDict = {
     poweredBy: 'Desarrollado por',
     rightsReserved: 'Todos los derechos reservados.',
     contactCta: 'Contáctanos',
+    searchPlaceholder: 'Buscar un artículo…',
+    searchResults: '{n} artículo(s) encontrado(s)',
+    searchNone: 'Ningún artículo coincide con «{q}».',
+    searchClear: 'Borrar la búsqueda',
     estimatedDelivery: 'Entrega estimada:',
     days: 'días',
   },
@@ -423,6 +447,10 @@ const ar: ThemeDict = {
     poweredBy: 'مشغّل بواسطة',
     rightsReserved: 'جميع الحقوق محفوظة.',
     contactCta: 'تواصل معنا',
+    searchPlaceholder: 'ابحث عن منتج…',
+    searchResults: 'تم العثور على {n} منتج',
+    searchNone: 'لا يوجد منتج يطابق «{q}».',
+    searchClear: 'مسح البحث',
     estimatedDelivery: 'التسليم المقدّر:',
     days: 'أيام',
   },

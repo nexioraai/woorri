@@ -8,6 +8,7 @@ import { useTranslation } from '@/lib/translations';
 import LanguageSwitcher from './LanguageSwitcher';
 import { SUPPORTED_LANGUAGES } from '@/lib/i18n/supportedLanguages';
 import { Menu as MenuIcon, X, ArrowLeft, Plus, Trash2, Check, Loader2, Upload, Eye, EyeOff, MapPin } from 'lucide-react';
+import ChoixProduitsDePage from '@/components/edit/ChoixProduitsDePage';
 
 export default function Navbar() {
   const { t } = useTranslation();
@@ -258,7 +259,7 @@ export default function Navbar() {
                   {/* Add Page Button */}
                   {slug && (
                     <button onClick={() => {
-                      const newPages = [...(site?.pages || []), { title: t('naved.newPage'), content: '' }];
+                      const newPages = [...(site?.pages || []), { title: t('naved.newPage'), content: '', productIds: [] }];
                       setSite({ ...site, pages: newPages });
                       setCurrentSection('page:' + (newPages.length - 1));
                     }}
@@ -469,6 +470,32 @@ export default function Navbar() {
                         </label>
                       )}
                       <TextArea label={t('naved.content')} value={page.content || ''} onChange={(v) => updateArrayItem('pages', pageIdx, 'content', v)} rows={10} />
+
+                      {/* ── LES PRODUITS DE LA PAGE.
+                          « Une page par article : page colliers, page
+                          chaussures, page t-shirts. » C'est ce qui manquait :
+                          la page existait, mais rien ne permettait d'y mettre
+                          ce qu'on vend. Réservé aux boutiques (modes 2 et 3) —
+                          un site vitrine n'a pas de catalogue à y poser. */}
+                      {slug && (site?.mode === 2 || site?.mode === 3) && (
+                        <ChoixProduitsDePage
+                          slug={slug}
+                          valeur={Array.isArray(page.productIds) ? page.productIds : []}
+                          onChange={(ids) => updateArrayItem('pages', pageIdx, 'productIds', ids)}
+                          labels={{
+                            titre: t('naved.pageProducts'),
+                            aide: t('naved.pageProductsHelp'),
+                            recherche: t('naved.pageProductsSearch'),
+                            aucun: t('naved.pageProductsNone'),
+                            vide: t('naved.pageProductsEmpty'),
+                            brouillon: t('naved.pageProductsDraft'),
+                            compte: t('naved.pageProductsCount'),
+                            chargement: t('naved.pageProductsLoading'),
+                            erreur: t('naved.pageProductsError'),
+                          }}
+                        />
+                      )}
+
                       <button onClick={() => { removeArrayItem('pages', pageIdx); setCurrentSection(null); }}
                         className="w-full px-4 py-3 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 font-semibold transition border border-red-500/20 flex items-center justify-center gap-2">
                         <Trash2 size={16} /> {t('naved.deletePage')}
@@ -695,7 +722,10 @@ export default function Navbar() {
                         <textarea value={page.content || ''} onChange={(e) => updateArrayItem('pages', idx, 'content', e.target.value)} placeholder={t('naved.content')} rows={4} className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#FA5D1E] resize-y" />
                       </div>
                     ))}
-                    <button onClick={() => addArrayItem('pages', { title: '', content: '' })} className="w-full px-4 py-3 rounded-xl bg-[#FA5D1E]/10 hover:bg-[#FA5D1E]/20 text-[#FA5D1E] font-semibold transition border border-[#FA5D1E]/20 flex items-center justify-center gap-2">
+                    {/* UN TITRE PAR DÉFAUT, ET CE N'EST PAS UN DÉTAIL : une page sans
+                          titre ni contenu était FILTRÉE par les vitrines. Le marchand
+                          cliquait, et rien n'apparaissait sur son site. */}
+                    <button onClick={() => addArrayItem('pages', { title: t('naved.newPage'), content: '', productIds: [] })} className="w-full px-4 py-3 rounded-xl bg-[#FA5D1E]/10 hover:bg-[#FA5D1E]/20 text-[#FA5D1E] font-semibold transition border border-[#FA5D1E]/20 flex items-center justify-center gap-2">
                       <Plus size={18} /> {t('naved.addPage')}
                     </button>
                   </div>

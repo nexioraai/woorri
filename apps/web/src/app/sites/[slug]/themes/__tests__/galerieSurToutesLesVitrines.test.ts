@@ -41,6 +41,11 @@ const GRILLES = [
   'StorefrontDense.tsx', // la vitrine d'Aurora, qui lui délègue tout son Shop
   'FamilyFilter.tsx',
   'NoirShopSection.tsx',
+  // M2-247 — la grille des produits d'une page personnalisee. « Une page par
+  // article : page colliers, page chaussures » — la demande des marchands.
+  // C'est bien une grille de produits : elle doit donc porter la galerie et
+  // le prix barre comme les autres.
+  'PageProduits.tsx',
 ]
 
 /**
@@ -54,6 +59,10 @@ const HORS_GRILLE: Record<string, string> = {
   'NoirTheme.tsx': 'carrousel de HERO (5 produits), pas la grille — celle-ci est NoirShopSection',
   'EditorialTheme.tsx': '`p` y désigne une PAGE du site (site.pages), pas un produit',
   'VifTheme.tsx': 'idem — `p` y désigne une page',
+  // M2-247 — Aurora filtrait ses pages sur le seul titre ; elle teste
+  // desormais aussi `p.image`, comme les trois autres vitrines. `p` y designe
+  // toujours une PAGE, jamais un produit : sa grille est StorefrontDense.
+  'AuroraTheme.tsx': '`p` y désigne une PAGE du site — sa grille produits est StorefrontDense',
   'CartDrawer.tsx': 'lignes de panier, aucune image',
   'shared.tsx': 'projection et normalisation, aucun rendu',
   'MerchantProductModal.tsx': 'fiche détaillée — a déjà sa galerie, hors grille',

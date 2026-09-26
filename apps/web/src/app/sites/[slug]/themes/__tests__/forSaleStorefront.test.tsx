@@ -41,7 +41,8 @@ function makeSite(products: unknown[]): Site {
 }
 
 const LABELS = {
-  shopKicker: 'Boutique', shopTitle: 'Nos produits', all: 'Tout',
+  searchPlaceholder: 'Chercher', searchResults: '{n}', searchNone: 'Aucun {q}', searchClear: 'Effacer',
+      shopKicker: 'Boutique', shopTitle: 'Nos produits', all: 'Tout',
   onQuote: 'Sur devis', request: 'Demander', addToCart: 'Ajouter au panier',
   estimatedDelivery: 'Livraison estimée', days: 'jours',
   securePayment: '', freeDelivery: '', easyReturns: '', support: '',

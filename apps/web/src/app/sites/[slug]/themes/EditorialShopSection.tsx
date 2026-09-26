@@ -14,6 +14,7 @@ import { getCartLabels } from './cartLabels'
 import { type Site, normalizeProduct, mockupsToProducts, canAddToCart } from './shared'
 import { getDict } from './i18n'
 import GalerieProduit from './GalerieProduit'
+import GrilleCherchable from './GrilleCherchable'
 
 export default function EditorialShopSection({ site, primary }: { site: Site; primary: string }) {
   const t = getDict(site.lang)
@@ -38,7 +39,18 @@ export default function EditorialShopSection({ site, primary }: { site: Site; pr
           </h2>
         </div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {/* ── RECHERCHE DANS LA BOUTIQUE — demande des marchands.
+            `CatalogSearch` ne sert QUE le catalogue fournisseur (mode 3) :
+            les boutiques qui vendent leur propre stock n'avaient aucune
+            recherche. Les cartes restent rendues PAR LE SERVEUR — le
+            catalogue complet reste dans le HTML initial, donc indexable —
+            et ce conteneur ne fait que montrer ou cacher. */}
+        <GrilleCherchable
+          textes={products.map((p) => ({ name: p.name, description: p.description }))}
+          className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+          primary={primary}
+          labels={{ placeholder: t.labels.searchPlaceholder, resultats: t.labels.searchResults, aucun: t.labels.searchNone, effacer: t.labels.searchClear }}
+        >
           {products.map((p, i) => (
             <ClickableProductCard slug={site.slug}
               key={i}
@@ -143,7 +155,7 @@ export default function EditorialShopSection({ site, primary }: { site: Site; pr
               </div>
             </ClickableProductCard>
           ))}
-        </div>
+        </GrilleCherchable>
       </div>
     </section>
   )

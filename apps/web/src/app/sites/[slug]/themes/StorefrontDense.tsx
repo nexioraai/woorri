@@ -10,8 +10,14 @@ import ClickableProductCard from './ClickableProductCard'
 import AddToCartButton from './AddToCartButton'
 import ShippingEstimate from './ShippingEstimate'
 import GalerieProduit from './GalerieProduit'
+import GrilleCherchable from './GrilleCherchable'
 
 type Labels = {
+  /** Recherche dans la boutique — voir `RechercheBoutique`. */
+  searchPlaceholder: string
+  searchResults: string
+  searchNone: string
+  searchClear: string
   all: string
   onQuote: string
   request: string
@@ -192,7 +198,15 @@ export default function StorefrontDense({
             <span className="text-sm text-neutral-400">{shown.length}</span>
           </div>
 
-          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-5">
+          {/* ── RECHERCHE DANS LA BOUTIQUE — demande des marchands.
+              Aurora délègue tout son Shop ici : c'est donc le point
+              unique pour cette vitrine. */}
+          <GrilleCherchable
+            textes={shown.map((p) => ({ name: p.name, description: p.description }))}
+            className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-5"
+            primary={primary}
+            labels={{ placeholder: labels.searchPlaceholder, resultats: labels.searchResults, aucun: labels.searchNone, effacer: labels.searchClear }}
+          >
             {shown.map((p, i) => (
               <ClickableProductCard slug={slug}
                 key={`${p.id ?? p.name}-${i}`}
@@ -267,7 +281,7 @@ export default function StorefrontDense({
                 </div>
               </ClickableProductCard>
             ))}
-          </div>
+          </GrilleCherchable>
         </div>
       </div>
     </div>
