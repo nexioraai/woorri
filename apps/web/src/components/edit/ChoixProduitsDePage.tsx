@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useMemo, useState } from 'react';
+import { supabase } from '@/lib/supabase';
 
 // ============================================================
 // CHOISIR LES PRODUITS D'UNE PAGE.
@@ -65,7 +66,21 @@ export default function ChoixProduitsDePage({ slug, valeur, onChange, labels }: 
     let vivant = true;
     void (async () => {
       try {
-        const res = await fetch(`/api/shop/products?slug=${encodeURIComponent(slug)}`, { credentials: 'include' });
+        // ── LE JETON, ET NON LES COOKIES.
+        //
+        // DÉFAUT PAYÉ EN PRODUCTION, LE JOUR MÊME : cette liste était demandée
+        // avec `credentials: 'include'`, donc sans en-tête `Authorization`.
+        // Or `/api/shop/products` lit un jeton `Bearer`
+        // (`require-site-owner.ts`) : la requête repartait en 401 et le
+        // marchand voyait « Impossible de charger vos produits ».
+        //
+        // Il a donc créé sa page « Chaussures », n'a trouvé AUCUN produit à
+        // cocher, et a conclu que la fonctionnalité ne marchait pas. Elle ne
+        // marchait pas. Même calcul que `ProductManager`, seule forme éprouvée.
+        const { data: { session } } = await supabase.auth.getSession();
+        const res = await fetch(`/api/shop/products?slug=${encodeURIComponent(slug)}`, {
+          headers: { Authorization: `Bearer ${session?.access_token ?? ''}` },
+        });
         const data = await res.json();
         if (!vivant) return;
         if (!res.ok) { setErreur(true); return; }
