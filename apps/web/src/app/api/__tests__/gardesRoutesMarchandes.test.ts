@@ -113,10 +113,6 @@ describe('une requête SANS jeton se fait refuser par les vraies routes', () => 
   it('POST /api/shop/orders — commandes', async () => {
     const { PATCH } = await import('../shop/orders/route')
     const res = await PATCH(
-      // CHARGE BIEN FORMÉE, ET C'EST NÉCESSAIRE : cette route valide le corps
-      // AVANT de vérifier l'identité. Une charge incomplète s'arrêterait sur un
-      // 400 et ne prouverait rien de la garde — c'est ce qu'a fait mon premier
-      // essai, avec `id`/`status` au lieu de `orderId`/`targetStatus`.
       requeteAnonymeJson('https://x.test/api/shop/orders', {
         slug: 'chanorfie-1789998512799',
         orderId: '00000000-0000-0000-0000-000000000000',
@@ -124,6 +120,25 @@ describe('une requête SANS jeton se fait refuser par les vraies routes', () => 
       }),
     )
     expect(res.status, 'un inconnu a pu toucher aux commandes').toBe(401)
+  })
+
+  it('…et une charge INCOMPLÈTE est refusée pour la bonne raison', async () => {
+    // M2-252 — CE TEST GARDE UN ORDRE, PAS SEULEMENT UNE GARDE.
+    //
+    // La route validait tout le corps AVANT de vérifier l'identité : un
+    // inconnu recevait un 400 détaillé, donc le serveur travaillait pour lui
+    // et lui apprenait quelle forme de charge est acceptée. Sans `orderId`,
+    // la réponse doit désormais être 401 — refusé parce qu'inconnu, pas
+    // parce que mal formé.
+    const { PATCH } = await import('../shop/orders/route')
+    const res = await PATCH(
+      requeteAnonymeJson('https://x.test/api/shop/orders', { slug: 'chanorfie-1789998512799' }),
+    )
+    expect(
+      res.status,
+      `réponse ${String(res.status)} : le corps est validé AVANT l’identité — ` +
+        `un inconnu fait travailler le serveur et apprend la forme attendue`,
+    ).toBe(401)
   })
 })
 

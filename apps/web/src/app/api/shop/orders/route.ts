@@ -51,11 +51,22 @@ export async function PATCH(req: Request) {
   try {
     const body = await req.json();
     const { slug, orderId, trackingNumber, targetStatus: rawTarget } = body;
-    if (!slug || !orderId) return NextResponse.json({ error: 'Missing slug or orderId' }, { status: 400 });
-    const targetStatus: TargetStatus = rawTarget || 'shipped';
-    if (!ALLOWED_TARGET_STATUSES.includes(targetStatus)) {
-      return NextResponse.json({ error: 'targetStatus invalide' }, { status: 400 });
-    }
+
+    // ── L'IDENTITE D'ABORD, LE RESTE ENSUITE. M2-252.
+    //
+    // Cette route validait TOUT le corps avant de verifier qui appelait :
+    // `orderId` present, `targetStatus` autorise, puis seulement la
+    // propriete. Ce n'est pas une breche -- un inconnu n'obtenait rien
+    // d'autre qu'un 400 -- mais il faisait travailler le serveur, et il
+    // apprenait gratuitement quelle forme de charge est acceptee. Un test qui
+    // EXECUTE la route l'a montre : ma requete anonyme s'arretait sur un 400
+    // et ne prouvait donc RIEN de la garde.
+    //
+    // `slug` reste verifie avant : sans lui, on ne saurait pas de QUELLE
+    // boutique verifier la propriete. C'est le minimum indispensable, et
+    // rien de plus.
+    if (!slug) return NextResponse.json({ error: 'Missing slug' }, { status: 400 });
+
     // M2-02 -- la verification de propriete etait reimplementee ici (copie
     // verbatim de la meme fonction dans 5 routes, plus 2 controles inline).
     // Toutes portaient la MEME regle, mais sur `owner_email` SEUL, la ou la
@@ -64,6 +75,12 @@ export async function PATCH(req: Request) {
     // endroit, aucune divergence possible.
     const auth = await requireSiteOwner(req, slug, 'id');
     if (!auth.ok) return auth.response;
+
+    if (!orderId) return NextResponse.json({ error: 'Missing slug or orderId' }, { status: 400 });
+    const targetStatus: TargetStatus = rawTarget || 'shipped';
+    if (!ALLOWED_TARGET_STATUSES.includes(targetStatus)) {
+      return NextResponse.json({ error: 'targetStatus invalide' }, { status: 400 });
+    }
 
     // Vérifie que la commande appartient bien au site
     const { data: order } = await supabaseAdmin
