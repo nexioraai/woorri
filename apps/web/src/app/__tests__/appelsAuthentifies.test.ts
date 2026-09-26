@@ -136,7 +136,19 @@ describe('les appels clients vers les routes marchandes portent leur jeton', () 
         // quelque part dans ce fichier : c'est le défaut réel qu'on garde —
         // un composant qui n'authentifie NULLE PART.
         if (/Authorization/u.test(appel) || /authHeaders/u.test(appel)) continue
-        if (/Authorization/u.test(source)) continue
+        // ── LE REPLI NE VAUT QUE POUR UNE INDIRECTION.
+        //
+        // Un appel peut porter ses en-têtes dans une VARIABLE (`headers`,
+        // `authHeaders`) : on accepte alors que le jeton soit posé ailleurs
+        // dans le fichier. Mais un appel qui n'a AUCUN en-tête n'a aucune
+        // indirection à invoquer — et le repli le masquerait.
+        //
+        // IL L'A MASQUÉ. `/api/site/logo` a reçu sa garde de propriété, et
+        // l'envoi depuis l'éditeur ne portait pas de jeton : ce test est
+        // passé au vert parce que le MÊME FICHIER authentifie ailleurs (la
+        // suppression de boutique). Une garde qui se laisse satisfaire par
+        // une ligne sans rapport ne garde rien.
+        if (/headers/u.test(appel) && /Authorization/u.test(source)) continue
         fautifs.push(`${f.replace(`${SRC}/`, '')} → ${appel.slice(0, 90).replace(/\s+/gu, ' ')}`)
       }
     }

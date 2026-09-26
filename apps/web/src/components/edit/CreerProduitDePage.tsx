@@ -69,7 +69,16 @@ export default function CreerProduitDePage({ slug, deviseParDefaut, onCree, labe
         const corps = new FormData();
         corps.append('slug', slug);
         corps.append('file', fichier);
-        const res = await fetch('/api/images/upload', { method: 'POST', body: corps });
+        // LE JETON : `/api/images/upload` vérifie la propriété du site — la
+        // même garde que la route du logo vient de recevoir. Sans en-tête,
+        // chaque photo repartirait en 401 et le marchand verrait ses envois
+        // échouer sans explication.
+        const { data: { session } } = await supabase.auth.getSession();
+        const res = await fetch('/api/images/upload', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${session?.access_token ?? ''}` },
+          body: corps,
+        });
         const data = await res.json();
         // LA VERSION RETOUCHÉE PAR DÉFAUT, comme dans le gestionnaire de
         // produits : c'est ce que le marchand attend, et l'original reste

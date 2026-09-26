@@ -133,7 +133,14 @@ export default function EditPage() {
       const corps = new FormData();
       corps.append('slug', slug);
       corps.append('file', fichier);
-      const res = await fetch('/api/site/logo', { method: 'POST', body: corps });
+      // LE JETON : `/api/site/logo` vérifie désormais que l'appelant possède
+      // bien la boutique. Sans en-tête, l'envoi repartirait en 401.
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch('/api/site/logo', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${session?.access_token ?? ''}` },
+        body: corps,
+      });
       const data = await res.json();
       if (!res.ok) {
         setMessage(data.error || 'Dépôt du logo impossible.');

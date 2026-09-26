@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import sharp from 'sharp'
 import { createClient } from '@supabase/supabase-js'
+import { requireSiteOwner } from '@/lib/auth/require-site-owner'
 
 // ============================================================
 // LE MARCHAND DÉPOSE SON LOGO.
@@ -62,6 +63,27 @@ export async function POST(req: Request) {
   if (!(fichier instanceof File)) {
     return NextResponse.json({ error: 'Aucun fichier.' }, { status: 400 })
   }
+
+  // ── PROPRIÉTÉ D'ABORD, AVANT DE LIRE LE MOINDRE OCTET.
+  //
+  // DÉFAUT QUE J'AI ÉCRIT ET QUE J'AI TROUVÉ EN ME RELISANT : cette route
+  // n'avait AUCUNE garde. Elle prenait le `slug` du formulaire et écrivait
+  // dans le stockage avec la CLÉ DE SERVICE. N'importe qui sur Internet
+  // pouvait donc déposer des fichiers dans le dossier de n'importe quel
+  // marchand, sans compte, sans limite, et les servir depuis notre domaine.
+  //
+  // Elle ne permettait pas de CHANGER le logo d'un marchand — écrire
+  // `logo_url` passe par `updateOwnedSite`, filtré par propriétaire, et par
+  // un GRANT colonne par colonne. Mais un dépôt de fichiers non
+  // authentifié reste un dépôt de fichiers non authentifié : volume porté
+  // par le compte du marchand, et hébergement d'images arbitraires sous
+  // notre nom.
+  //
+  // `/api/images/upload`, la route des photos de produit, portait cette
+  // garde depuis le début — et son commentaire dit exactement pourquoi. Je
+  // l'avais sous les yeux en écrivant celle-ci.
+  const garde = await requireSiteOwner(req, slug, 'id, slug')
+  if (!garde.ok) return garde.response
   if (fichier.size > TAILLE_MAX) {
     return NextResponse.json(
       { error: 'Logo trop lourd (5 Mo maximum). Exportez-le en PNG à 512 px.' },
