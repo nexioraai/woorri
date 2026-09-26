@@ -99,6 +99,9 @@ export default defineConfig({
       'src/lib/commerce-admission/**/*.test.ts',
       'src/lib/systemHealth/**/*.test.ts',
       'src/app/api/webhooks/**/*.test.ts',
+      'src/app/api/__tests__/**/*.test.ts',
+      // Tests qui EXÉCUTENT les routes (gardes vivantes), par opposition
+      // aux cliquets qui lisent le code. Voir gardesRoutesMarchandes.
       'src/app/api/shop/**/*.test.ts',
       'src/app/api/stripe/**/*.test.ts',
       'src/app/api/cron/**/*.test.ts',
