@@ -136,9 +136,85 @@ export async function getVercelDomainStatus(domain: string): Promise<{
 }
 
 /**
+ * S'assurer qu'un certificat TLS existe pour ce domaine, et le demander sinon.
+ *
+ * ============================================================
+ * SANS CERTIFICAT, LE DOMAINE EST VERIFIE ET LA BOUTIQUE EST MORTE.
+ *
+ * DEFAUT CONSTATE SUR alloufbusiness.com, 2026-09-27. Vercel repondait
+ * `verified: true`, le DNS etait exact, `misconfigured: false` — et AUCUN
+ * certificat n'existait. Consequence pour le visiteur :
+ *   https://domaine       ne s'ouvre pas du tout (pas de poignee de main TLS)
+ *   http://domaine        404
+ * Le marchand voyait « Domaine verifie » et ses clients une page morte.
+ *
+ * POURQUOI CA ARRIVE, ET POURQUOI CA SE REPETERAIT.
+ *
+ * Vercel emet le certificat automatiquement au rattachement. Mais au moment
+ * du rattachement, le DNS ne pointe pas encore : le marchand ne voit les
+ * enregistrements a creer qu'APRES. L'emission echoue donc, et Vercel ne
+ * la relance jamais. Le domaine devient « verifie » une heure plus tard,
+ * sans que rien ne redemande le certificat.
+ *
+ * C'est l'ordre NORMAL du parcours : tout marchand apportant son domaine
+ * passait par la. Corriger un domaine a la main n'aurait ferme que celui-la.
+ *
+ * POURQUOI ICI, ET NON CHEZ LES APPELANTS.
+ *
+ * Deux parcours verifient aujourd'hui — le bouton « Verifier maintenant »
+ * (BYOD) et le provisioning d'un domaine achete. Poser l'appel dans chacun
+ * laisserait le troisieme, celui qui n'existe pas encore, retomber dans le
+ * defaut. La verification est le seul passage oblige : c'est la que le
+ * cliquet tient.
+ *
+ * ON REGARDE AVANT DE DEMANDER. Let's Encrypt limite les emissions ; le
+ * bouton « Verifier maintenant » est clicable en boucle. Un certificat deja
+ * present sort immediatement, sans rien demander.
+ * ============================================================
+ *
+ * @returns `existant` si un certificat couvre deja le domaine, `demande` si
+ *   l'emission vient d'etre lancee, `echec` si Vercel a refuse. L'echec n'est
+ *   jamais propage : la verification, elle, a reussi.
+ */
+export async function assurerCertificat(domain: string): Promise<'existant' | 'demande' | 'echec'> {
+  const { token } = vercelCreds();
+  const headers = { Authorization: 'Bearer ' + token, 'Content-Type': 'application/json' };
+  // Un certificat couvre le nu ET le www : appele avec `www.x.com`, on ne
+  // doit pas aller demander `www.www.x.com`.
+  const nu = domain.replace(/^www\./, '');
+
+  try {
+    const existants = await fetch(VERCEL_API + '/v7/certs?domain=' + encodeURIComponent(nu), { headers });
+    const data = await existants.json().catch(() => null);
+    if (existants.ok && Array.isArray(data?.certs) && data.certs.length > 0) return 'existant';
+
+    const emission = await fetch(VERCEL_API + '/v7/certs', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ cns: [nu, 'www.' + nu] }),
+    });
+    if (!emission.ok) {
+      const err = await emission.json().catch(() => null);
+      console.warn('[vercel] certificat refuse pour', nu, err?.error?.message || emission.status);
+      return 'echec';
+    }
+    return 'demande';
+  } catch (e) {
+    // Le reseau peut tomber. La verification a deja reussi : on ne transforme
+    // pas un certificat manquant en echec de verification, sinon le marchand
+    // verrait « non verifie » alors que son DNS est juste.
+    console.warn('[vercel] certificat impossible pour', nu, e instanceof Error ? e.message : e);
+    return 'echec';
+  }
+}
+
+/**
  * Demande a Vercel de relire le DNS et de valider la propriete du domaine.
  * Sans cet appel, le TXT _vercel peut etre en place sans que Vercel le sache :
  * le domaine reste non verifie et l'ancien hebergeur continue de repondre.
+ *
+ * Une verification reussie declenche `assurerCertificat` : voir la-bas
+ * pourquoi un domaine verifie pouvait rester sans certificat, donc mort.
  */
 export async function verifyVercelDomain(domain: string): Promise<boolean> {
   const { token, projectId } = vercelCreds();
@@ -147,7 +223,9 @@ export async function verifyVercelDomain(domain: string): Promise<boolean> {
     { method: 'POST', headers: { Authorization: 'Bearer ' + token } }
   );
   const data = await res.json().catch(() => null);
-  return res.ok && data?.verified === true;
+  const verifie = res.ok && data?.verified === true;
+  if (verifie) await assurerCertificat(domain);
+  return verifie;
 }
 
 /**
