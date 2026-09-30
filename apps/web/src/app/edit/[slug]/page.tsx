@@ -5,7 +5,6 @@ import { useParams, useRouter } from 'next/navigation';
 import { useTranslation } from '@/lib/translations';
 
 import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
 import ThemeSelector from '@/components/edit/ThemeSelector';
 import AIAgentChat from '@/components/edit/AIAgentChat';
 import ProductManager from '@/components/edit/ProductManager';
@@ -289,7 +288,6 @@ export default function EditPage() {
           <h1 className="text-3xl font-bold mb-4">Site not found</h1>
           <Link href="/dashboard" className="text-[#FA5D1E] hover:underline">← Back to Dashboard</Link>
         </div>
-        <Footer />
       </main>
     );
   }
@@ -916,7 +914,6 @@ export default function EditPage() {
         </div>
       </section>
 
-      <Footer />
       <AIAgentChat slug={slug} onSiteUpdated={setSite} lang={site?.lang} />
     </main>
   );
