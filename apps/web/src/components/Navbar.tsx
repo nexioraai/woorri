@@ -428,15 +428,15 @@ export default function Navbar() {
                 {/* REVIEWS */}
                 {currentSection === 'Reviews' && site && (
                   <div className="space-y-4">
-                    {(site.testimonials || []).map((t: any, idx: number) => (
+                    {(site.testimonials || []).map((avis: any, idx: number) => (
                       <div key={idx} className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-3">
                         <div className="flex items-center justify-between">
                           <span className="text-xs text-slate-400">{t('naved.review')} #{idx + 1}</span>
                           <button onClick={() => removeArrayItem('testimonials', idx)} className="text-red-400 hover:text-red-300 p-1"><Trash2 size={16} /></button>
                         </div>
-                        <input value={t.name || t.author || ''} onChange={(e) => updateArrayItem('testimonials', idx, 'name', e.target.value)} placeholder={t('naved.phCustomerName')} className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#FA5D1E]" />
-                        <textarea value={t.content || t.text || ''} onChange={(e) => updateArrayItem('testimonials', idx, 'content', e.target.value)} placeholder={t('naved.phReviewContent')} rows={3} className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#FA5D1E] resize-y" />
-                        <input type="number" min="1" max="5" value={t.rating || 5} onChange={(e) => updateArrayItem('testimonials', idx, 'rating', parseInt(e.target.value))} placeholder={t('naved.phRating')} className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#FA5D1E]" />
+                        <input value={avis.name || avis.author || ''} onChange={(e) => updateArrayItem('testimonials', idx, 'name', e.target.value)} placeholder={t('naved.phCustomerName')} className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#FA5D1E]" />
+                        <textarea value={avis.content || avis.text || ''} onChange={(e) => updateArrayItem('testimonials', idx, 'content', e.target.value)} placeholder={t('naved.phReviewContent')} rows={3} className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#FA5D1E] resize-y" />
+                        <input type="number" min="1" max="5" value={avis.rating || 5} onChange={(e) => updateArrayItem('testimonials', idx, 'rating', parseInt(e.target.value))} placeholder={t('naved.phRating')} className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#FA5D1E]" />
                       </div>
                     ))}
                     <button onClick={() => addArrayItem('testimonials', { name: '', content: '', rating: 5 })} className="w-full px-4 py-3 rounded-xl bg-[#FA5D1E]/10 hover:bg-[#FA5D1E]/20 text-[#FA5D1E] font-semibold transition border border-[#FA5D1E]/20 flex items-center justify-center gap-2">
