@@ -4,7 +4,8 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useTranslation } from '@/lib/translations';
 
-import Sidebar from '@/components/Sidebar';
+import Navbar from '@/components/Navbar';
+import Footer from '@/components/Footer';
 import ThemeSelector from '@/components/edit/ThemeSelector';
 import AIAgentChat from '@/components/edit/AIAgentChat';
 import ProductManager from '@/components/edit/ProductManager';
@@ -282,12 +283,13 @@ export default function EditPage() {
 
   if (!site) {
     return (
-      <main className="min-h-screen nexiora-bg text-white flex">
-        <Sidebar />
-        <div className="flex-1 min-w-0 max-w-3xl mx-auto px-6 py-20 text-center">
+      <main className="min-h-screen nexiora-bg text-white">
+        <Navbar />
+        <div className="max-w-3xl mx-auto px-6 py-20 text-center">
           <h1 className="text-3xl font-bold mb-4">Site not found</h1>
           <Link href="/dashboard" className="text-[#FA5D1E] hover:underline">← Back to Dashboard</Link>
         </div>
+        <Footer />
       </main>
     );
   }
@@ -295,10 +297,10 @@ export default function EditPage() {
   const isError = message.toLowerCase().startsWith('error') || message.toLowerCase().startsWith('upload error');
 
   return (
-    <main className="min-h-screen nexiora-bg text-white flex">
-      <Sidebar />
+    <main className="min-h-screen nexiora-bg text-white">
+      <Navbar />
 
-      <section className="flex-1 min-w-0 max-w-3xl mx-auto px-6 pt-12 pb-24">
+      <section className="max-w-3xl mx-auto px-6 pt-12 pb-24">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-10">
           <div>
@@ -914,6 +916,7 @@ export default function EditPage() {
         </div>
       </section>
 
+      <Footer />
       <AIAgentChat slug={slug} onSiteUpdated={setSite} lang={site?.lang} />
     </main>
   );

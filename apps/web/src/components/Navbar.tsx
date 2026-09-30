@@ -201,8 +201,12 @@ export default function Navbar() {
           <span className="text-xl font-black tracking-tight text-nexiora hidden sm:block" translate="no">deribfy</span>
         </Link>
         <div className="flex items-center gap-3 sm:gap-4">
-          <Link href="/about" className="text-white/70 hover:text-white text-sm font-medium transition-colors hidden sm:inline">{t('nav.about')}</Link>
-          <Link href="/pricing" className="text-white/70 hover:text-white text-sm font-medium transition-colors hidden sm:inline">{t('nav.pricing')}</Link>
+          {!slug && (
+            <>
+              <Link href="/about" className="text-white/70 hover:text-white text-sm font-medium transition-colors hidden sm:inline">{t('nav.about')}</Link>
+              <Link href="/pricing" className="text-white/70 hover:text-white text-sm font-medium transition-colors hidden sm:inline">{t('nav.pricing')}</Link>
+            </>
+          )}
           {!isHome && <LanguageSwitcher />}
           {authLoaded && (userEmail ? (
             !isHome && <button onClick={() => setMenuOpen(true)} className="btn-nexiora p-2.5 rounded-full text-white flex items-center justify-center" aria-label="Menu">
