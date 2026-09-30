@@ -61,6 +61,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE_URL}/documentation/en`, priority: 0.7 },
     ...adresses('fr').map((a) => ({ url: `${SITE_URL}/documentation/${a}`, priority: 0.7 })),
     ...adresses('en').map((a) => ({ url: `${SITE_URL}/documentation/en/${a}`, priority: 0.6 })),
+    // Le fichier destine aux agents, declare ici faute de directive normalisee.
+    { url: `${SITE_URL}/llms.txt`, priority: 0.5 },
   ].map((r) => ({ ...r, lastModified: new Date(), changeFrequency: 'monthly' as Cadence }))
 
   // LOT 1 : sites_public (published=true AND archived_at IS NULL déjà

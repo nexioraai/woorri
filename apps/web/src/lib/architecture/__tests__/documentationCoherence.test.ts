@@ -33,7 +33,15 @@ const PAGES_FR = readdirSync(join(DOC, 'fr')).filter((f) => f.endsWith('.md'))
 const PAGES_EN = readdirSync(join(DOC, 'en')).filter((f) => f.endsWith('.md'))
 
 /** Les surfaces publiques derivees, controlees au meme titre que les pages. */
-const SURFACES_DERIVEES = ['src/app/llms.txt/route.ts']
+const SURFACES_DERIVEES = [
+  'src/app/llms.txt/route.ts',
+  // Les pages de documentation qui portent un texte ECRIT A LA MAIN. Les pages
+  // de chapitre en sont absentes a dessein : elles n'affichent que le corpus,
+  // deja controle ligne par ligne au-dessus.
+  'src/app/documentation/page.tsx',
+  'src/app/documentation/en/page.tsx',
+  'src/app/documentation/_composants/Vues.tsx',
+]
 
 describe('CORPUS — le denominateur est reel', () => {
   it('12 pages FR et 12 pages EN existent sur le disque', () => {
@@ -134,7 +142,7 @@ describe('CORPUS — aucun motif interdit', () => {
 
   it('la liste de motifs est reelle — un corpus vide passerait aussi', () => {
     expect(MOTIFS_INTERDITS.length).toBeGreaterThanOrEqual(10)
-    expect(fichiers.length).toBe(25)
+    expect(fichiers.length).toBe(28)
   })
 })
 
