@@ -13,6 +13,7 @@ export const en: Record<TranslationKey, string> = {
   'footer.privacy': 'Privacy',
   'footer.terms': 'Terms',
   'footer.cookies': 'Cookies',
+  'footer.documentation': 'Documentation',
   'footer.about': 'About',
   'footer.pricing': 'Pricing',
   'footer.contact': 'Contact',

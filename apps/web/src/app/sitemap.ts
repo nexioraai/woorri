@@ -3,6 +3,7 @@ import type { MetadataRoute } from 'next'
 import { supabase } from '@/lib/supabase'
 import { selectionServable } from '@/lib/dropship/catalogAdmission'
 import { PAGES_PUBLIQUES } from '@/lib/seo/metadata'
+import { adresses } from '@/lib/documentation/adresses'
 
 const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.deribfy.com'
@@ -44,6 +45,24 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
   })
 
+  // ── LA DOCUMENTATION, DANS LES DEUX LANGUES.
+  //
+  // Les chapitres viennent du MANIFESTE, seule autorité du corpus — pas d'une
+  // seconde liste écrite ici, qui divergerait comme la précédente l'a fait.
+  // Ajouter un chapitre au manifeste l'ajoute au plan de site sans y penser,
+  // et le test de cohérence interdit qu'un chapitre existe dans une seule des
+  // deux langues.
+  //
+  // `documentation/` est lu par les pages à la CONSTRUCTION ; ici on n'a besoin
+  // que des identifiants, donc d'un simple import TypeScript : le plan de site
+  // ne touche aucun fichier.
+  const docRoutes: MetadataRoute.Sitemap = [
+    { url: `${SITE_URL}/documentation`, priority: 0.8 },
+    { url: `${SITE_URL}/documentation/en`, priority: 0.7 },
+    ...adresses('fr').map((a) => ({ url: `${SITE_URL}/documentation/${a}`, priority: 0.7 })),
+    ...adresses('en').map((a) => ({ url: `${SITE_URL}/documentation/en/${a}`, priority: 0.6 })),
+  ].map((r) => ({ ...r, lastModified: new Date(), changeFrequency: 'monthly' as Cadence }))
+
   // LOT 1 : sites_public (published=true AND archived_at IS NULL déjà
   // appliqué par la vue -- corrige au passage l'absence de vérification
   // archived_at qui existait ici : un site archivé restait dans le sitemap).
@@ -58,7 +77,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     .select('id, slug, created_at, mode, dropship_type')
 
   if (error || !data) {
-    return staticRoutes
+    return [...staticRoutes, ...docRoutes]
   }
 
   const siteRoutes: MetadataRoute.Sitemap = data.map((s) => ({
@@ -152,5 +171,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.7,
     }))
 
-  return [...staticRoutes, ...siteRoutes, ...blogRoutes, ...shopProductRoutes, ...catalogProductRoutes]
+  return [...staticRoutes, ...docRoutes, ...siteRoutes, ...blogRoutes, ...shopProductRoutes, ...catalogProductRoutes]
 }

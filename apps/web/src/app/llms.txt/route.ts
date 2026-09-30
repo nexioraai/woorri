@@ -86,6 +86,8 @@ dans les resultats de recherche.
 - [Questions frequentes](${SITE_URL}/documentation/faq)
 - [Glossaire](${SITE_URL}/documentation/glossaire)
 
+Le meme corpus existe en anglais : ${SITE_URL}/documentation/en
+
 ## Liens
 
 - [Accueil](${SITE_URL})

@@ -11,6 +11,7 @@ export const es = {
   'footer.privacy': 'Privacidad',
   'footer.terms': 'Condiciones',
   'footer.cookies': 'Cookies',
+  'footer.documentation': 'Documentación',
   'footer.about': 'Acerca de',
   'footer.pricing': 'Precios',
   'footer.contact': 'Contacto',
