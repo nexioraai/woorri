@@ -17,6 +17,13 @@ import { NextRequest } from 'next/server';
 
 const startCronRunMock = vi.fn();
 const finishCronRunMock = vi.fn();
+vi.mock('@/lib/domains/byod-zone', () => ({
+  lireJetonsZone: vi.fn(async () => ({ notrePresent: false, jetonsExternes: [], zoneLisible: true })),
+  diagnosticZone: () => 'diagnostic simule',
+  construireAlerteMiParcours: () => ({ subject: 's', html: 'h' }),
+  SEUIL_ALERTE_BYOD: 10,
+}));
+vi.mock('resend', () => ({ Resend: class { emails = { send: vi.fn(async () => ({})) } } }));
 vi.mock('@/lib/cron-tracker', () => ({
   startCronRun: (...args: unknown[]) => startCronRunMock(...args),
   finishCronRun: (...args: unknown[]) => finishCronRunMock(...args),

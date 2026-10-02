@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { startCronRun, finishCronRun } from '@/lib/cron-tracker';
+import { Resend } from 'resend';
+import { lireJetonsZone, diagnosticZone, construireAlerteMiParcours, SEUIL_ALERTE_BYOD } from '@/lib/domains/byod-zone';
+
+const ADMIN_EMAIL = 'issayamiyoussouf@gmail.com';
 import { getVercelDomainStatus } from '@/lib/domains/vercel';
 import { getDnsVerificationToken, verifyDomain, addSite, submitSitemap } from '@/lib/domains/searchconsole';
 
@@ -35,6 +39,7 @@ type Candidate = {
   id: string;
   custom_domain: string;
   custom_domain_google_status: string | null;
+  slug: string;
   custom_domain_google_token: string | null;
   custom_domain_google_attempts: number | null;
 };
@@ -55,7 +60,7 @@ export async function GET(req: NextRequest) {
 
     const { data: candidates } = await supabaseAdmin
       .from('sites')
-      .select('id, custom_domain, custom_domain_google_status, custom_domain_google_token, custom_domain_google_attempts')
+      .select('id, slug, custom_domain, custom_domain_google_status, custom_domain_google_token, custom_domain_google_attempts')
       .not('custom_domain', 'is', null)
       .eq('published', true)
       .or('custom_domain_google_status.is.null,custom_domain_google_status.neq.sitemap_submitted')
@@ -163,9 +168,45 @@ export async function GET(req: NextRequest) {
         if (status === 'token_issued') {
           const ok = await verifyDomain(row.custom_domain);
           if (!ok) {
+            // ── AUDIT 2026-10-02, cas logonemoteurfils.com : le marchand
+            // avait verifie Google LUI-MEME (jeton tiers en zone), et le
+            // robot comptait en aveugle vers l'echec terminal. Desormais il
+            // LIT la zone, ecrit un diagnostic humain (informatif — aucune
+            // logique ne decide dessus, verifie a l'audit), et alerte
+            // l'admin A L'ESSAI 10 au lieu de l'essai 20.
+            const zone = await lireJetonsZone(row.custom_domain, row.custom_domain_google_token);
+            const diagnostic = diagnosticZone(zone);
             if (attempts >= MAX_ATTEMPTS) {
-              await markFailed('Propriete Google non verifiee apres ' + MAX_ATTEMPTS + ' tentatives (TXT jamais vu par Google — verifier que le marchand a bien pose le bon enregistrement).', 'token_issued');
+              await markFailed('Propriete Google non verifiee apres ' + MAX_ATTEMPTS + ' tentatives. ' + diagnostic, 'token_issued');
               continue;
+            }
+            await supabaseAdmin
+              .from('sites')
+              .update({ custom_domain_google_last_error: ('essai ' + attempts + '/' + MAX_ATTEMPTS + ' — ' + diagnostic).slice(0, 500) })
+              .eq('id', row.id)
+              .eq('custom_domain_google_status', 'token_issued');
+            // L'egalite stricte garantit UN seul courriel par domaine : le
+            // compteur ne vaut 10 qu'une fois.
+            if (attempts === SEUIL_ALERTE_BYOD && process.env.RESEND_API_KEY) {
+              try {
+                const alerte = construireAlerteMiParcours({
+                  domain: row.custom_domain,
+                  slug: row.slug,
+                  attempts,
+                  max: MAX_ATTEMPTS,
+                  diagnostic,
+                  token: row.custom_domain_google_token,
+                });
+                await new Resend(process.env.RESEND_API_KEY).emails.send({
+                  from: 'Deribfy Alerts <no-reply@deribfy.com>',
+                  to: ADMIN_EMAIL,
+                  subject: alerte.subject,
+                  html: alerte.html,
+                });
+              } catch (e) {
+                // Un courriel qui echoue ne doit jamais casser le pipeline.
+                console.error('alerte mi-parcours BYOD non envoyee :', e);
+              }
             }
             pending++;
             continue;

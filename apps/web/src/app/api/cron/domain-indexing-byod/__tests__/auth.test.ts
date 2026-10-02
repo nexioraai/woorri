@@ -4,6 +4,13 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 // séparé du fichier de tests comportementaux existant (route.test.ts) pour
 // ne pas mélanger les deux garanties.
 
+vi.mock('@/lib/domains/byod-zone', () => ({
+  lireJetonsZone: vi.fn(async () => ({ notrePresent: false, jetonsExternes: [], zoneLisible: true })),
+  diagnosticZone: () => 'diagnostic simule',
+  construireAlerteMiParcours: () => ({ subject: 's', html: 'h' }),
+  SEUIL_ALERTE_BYOD: 10,
+}));
+vi.mock('resend', () => ({ Resend: class { emails = { send: vi.fn(async () => ({})) } } }));
 vi.mock('@/lib/cron-tracker', () => ({
   startCronRun: vi.fn().mockResolvedValue('run-1'),
   finishCronRun: vi.fn().mockResolvedValue(undefined),
