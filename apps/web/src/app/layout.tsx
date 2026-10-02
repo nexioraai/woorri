@@ -3,6 +3,8 @@ import { Geist, Geist_Mono, Fraunces } from "next/font/google";
 import { LanguageProvider } from "@/lib/translations";
 import { SITE_URL, metadataPublique } from "@/lib/seo/metadata";
 import { langueServie } from "@/lib/seo/langueServie";
+import { donneesPlateforme, estPagePlateforme } from "@/lib/seo/donneesStructurees";
+import JsonLdScript from "@/app/sites/[slug]/themes/JsonLdScript";
 import CookieConsent from "@/components/CookieConsent";
 import "./globals.css";
 
@@ -93,6 +95,9 @@ export default async function RootLayout({
   // Repli sur le français quand l'en-tête est absent : c'est la langue de la
   // plateforme elle-même.
   const { lang, dir } = await langueServie();
+  // Les données structurées de Deribfy ne s'émettent que sur les pages de
+  // Deribfy — jamais sur la boutique d'un marchand.
+  const plateforme = await estPagePlateforme();
 
   return (
     <html
@@ -101,6 +106,9 @@ export default async function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} ${fraunces.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        {/* L'identité de la plateforme, pour les moteurs — jamais sur la
+            boutique d'un marchand (voir `estPagePlateforme`). */}
+        {plateforme && <JsonLdScript data={donneesPlateforme()} />}
         <LanguageProvider>
           {children}
           <CookieConsent />
