@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { sansQuota } from '@/lib/admin-emails';
 import Anthropic from '@anthropic-ai/sdk';
 import { z } from 'zod';
 import { supabase as supabaseAnon } from '@/lib/supabase';
@@ -348,8 +349,7 @@ export async function POST(req: Request) {
     // M2-205 — comptes d'ESSAI INTERNE : la limite reste active pour tout le
     // monde, ces comptes en sont exemptés nommément. Ajouter ici est un acte
     // versionné — jamais un contournement en base.
-    const UNLIMITED_EMAILS = ['issayamiyoussouf@gmail.com', 'abbasissay@gmail.com'];
-    const isUnlimited = UNLIMITED_EMAILS.includes(owner_email);
+    const isUnlimited = sansQuota(owner_email);
     // ===============================================================
 
     const body = await req.json();

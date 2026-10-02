@@ -37,3 +37,38 @@ export const ADMIN_EMAILS: readonly string[] = ['issayamiyoussouf@gmail.com']
 export function estAdmin(email: string | null | undefined): boolean {
   return !!email && ADMIN_EMAILS.includes(email)
 }
+
+// ── TROIS RÔLES, TROIS LISTES — JAMAIS UNE SEULE.
+//
+// Le 2026-10-02, la même adresse vivait sous TROIS formes dans neuf fichiers
+// de plus : `ADMIN_EMAIL` (destinataire des alertes), `UNLIMITED_EMAILS`
+// (comptes hors quota) et une comparaison écrite en clair dans la barre
+// latérale. Les réunir ici ne veut PAS dire les confondre : ce sont trois
+// autorisations différentes, et les fondre en une seule ouvrirait un droit
+// que personne n'a demandé.
+//
+//   ADMIN_EMAILS       → qui ENTRE dans l'administration
+//   DESTINATAIRE_ALERTES → qui REÇOIT les alertes techniques
+//   EMAILS_SANS_QUOTA  → qui n'est pas limité en génération
+//
+// Elles se trouvent aujourd'hui partager une adresse. Elles n'ont aucune
+// raison de rester identiques demain.
+
+/** Qui reçoit les alertes techniques (anomalies, crons, veille). */
+export const DESTINATAIRE_ALERTES = 'issayamiyoussouf@gmail.com'
+
+/**
+ * Comptes exemptés des quotas de génération.
+ *
+ * Volontairement une liste à part : elle contient une adresse de PLUS que
+ * l'administration — être hors quota n'est pas être administrateur.
+ */
+export const EMAILS_SANS_QUOTA: readonly string[] = [
+  'issayamiyoussouf@gmail.com',
+  'abbasissay@gmail.com',
+]
+
+/** Ce compte est-il exempté de quota ? */
+export function sansQuota(email: string | null | undefined): boolean {
+  return !!email && EMAILS_SANS_QUOTA.includes(email)
+}

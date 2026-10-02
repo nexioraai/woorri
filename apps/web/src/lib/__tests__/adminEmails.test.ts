@@ -27,14 +27,31 @@ function fichiersSource(dossier: string, acc: string[] = []): string[] {
 }
 
 describe('la source unique des administrateurs', () => {
-  it('une seule déclaration dans tout le dépôt — celle de `admin-emails.ts`', () => {
+  // ── LE PREMIER CLIQUET NE CHERCHAIT QUE `const ADMIN_EMAILS`.
+  //
+  // Il a laissé passer NEUF autres copies, sous d'autres noms : `ADMIN_EMAIL`
+  // (destinataire d'alertes), `UNLIMITED_EMAILS` (hors quota), et une
+  // comparaison écrite en clair dans un composant CLIENT — donc livrée au
+  // navigateur de chaque visiteur. Ce n'est pas le NOM qu'il fallait
+  // surveiller : c'est l'ADRESSE elle-même.
+  it('aucune adresse d’administrateur n’est écrite ailleurs que dans `admin-emails.ts`', () => {
     const coupables = fichiersSource(SRC)
       .filter((f) => !f.endsWith('admin-emails.ts'))
       .filter((f) => !f.includes('__tests__'))
-      .filter((f) => /const\s+ADMIN_EMAILS\s*[:=]/.test(readFileSync(f, 'utf8')))
+      .filter((f) => ADMIN_EMAILS.some((e) => readFileSync(f, 'utf8').includes(e)))
       .map((f) => f.replace(SRC, 'src'))
 
     expect(coupables).toEqual([])
+  })
+
+  it('AUCUN composant client ne porte une adresse — elle partirait au navigateur', () => {
+    const clients = fichiersSource(SRC)
+      .filter((f) => !f.includes('__tests__'))
+      .filter((f) => /^['"]use client['"]/m.test(readFileSync(f, 'utf8')))
+      .filter((f) => ADMIN_EMAILS.some((e) => readFileSync(f, 'utf8').includes(e)))
+      .map((f) => f.replace(SRC, 'src'))
+
+    expect(clients).toEqual([])
   })
 
   it('toutes les routes d’administration vérifient bien une autorisation', () => {

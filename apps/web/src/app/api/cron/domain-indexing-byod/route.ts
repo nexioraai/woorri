@@ -4,7 +4,7 @@ import { startCronRun, finishCronRun } from '@/lib/cron-tracker';
 import { Resend } from 'resend';
 import { lireJetonsZone, diagnosticZone, construireAlerteMiParcours, SEUIL_ALERTE_BYOD } from '@/lib/domains/byod-zone';
 
-const ADMIN_EMAIL = 'issayamiyoussouf@gmail.com';
+import { DESTINATAIRE_ALERTES as ADMIN_EMAIL } from '@/lib/admin-emails';
 import { getVercelDomainStatus } from '@/lib/domains/vercel';
 import { getDnsVerificationToken, verifyDomain, addSite, submitSitemap } from '@/lib/domains/searchconsole';
 

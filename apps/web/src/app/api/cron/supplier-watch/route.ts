@@ -43,7 +43,7 @@ const SEVERITY: Record<Finding['kind'], 'blocked' | 'warning'> = {
   price_spike: 'warning',
 };
 
-const ADMIN_EMAIL = 'issayamiyoussouf@gmail.com';
+import { DESTINATAIRE_ALERTES as ADMIN_EMAIL } from '@/lib/admin-emails';
 
 /** CJ renvoie une fourchette "0.58-93.24" : on retient la borne basse. */
 function parseLowPrice(sellPrice: unknown): number | null {

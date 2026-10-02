@@ -1,7 +1,7 @@
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { Resend } from 'resend';
 
-const ADMIN_EMAIL = 'issayamiyoussouf@gmail.com';
+import { DESTINATAIRE_ALERTES as ADMIN_EMAIL } from '@/lib/admin-emails';
 const ALERT_COOLDOWN_MS = 60 * 60 * 1000; // 1 email par type et par heure
 // Types qui exigent un email A CHAQUE occurrence (pas d'anti-spam). Audit
 // Reseller/CJ : principe explicite -- une commande client deja payee qui

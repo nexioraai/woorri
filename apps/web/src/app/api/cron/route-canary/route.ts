@@ -5,7 +5,7 @@ import { Resend } from 'resend';
 
 export const maxDuration = 30;
 
-const ADMIN_EMAIL = 'issayamiyoussouf@gmail.com';
+import { DESTINATAIRE_ALERTES as ADMIN_EMAIL } from '@/lib/admin-emails';
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.deribfy.com';
 
 type Check = { name: string; url: string; expect: RegExp };

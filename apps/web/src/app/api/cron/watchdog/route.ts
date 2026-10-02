@@ -6,7 +6,7 @@ import { MAX_ATTEMPTS as DOMAIN_RETRY_MAX_ATTEMPTS } from '@/app/api/cron/domain
 
 export const maxDuration = 30;
 
-const ADMIN_EMAIL = 'issayamiyoussouf@gmail.com';
+import { DESTINATAIRE_ALERTES as ADMIN_EMAIL } from '@/lib/admin-emails';
 
 const EXPECTED_CRONS: Record<string, number> = {
   'catalog-sync': 14,

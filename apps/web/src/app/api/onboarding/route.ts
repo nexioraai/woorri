@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { sansQuota } from '@/lib/admin-emails';
 import { isKnownDropshipSubtype, requiresDropshipSubtype } from '@/lib/dropship/subtypeAdmission';
 import Anthropic from '@anthropic-ai/sdk';
 import { supabase as supabaseAnon } from '@/lib/supabase';
@@ -96,9 +97,8 @@ export async function POST(req: Request) {
     }
 
     // ============ FREEMIUM LIMIT CHECK ============
-    const UNLIMITED_EMAILS = ['issayamiyoussouf@gmail.com'];
     const FREE_LIMIT = 3;
-    if (!UNLIMITED_EMAILS.includes(authData.user.email!)) {
+    if (!sansQuota(authData.user.email)) {
       const { data: profile } = await supabaseAdmin
         .from('profiles')
         .select('generation_count')

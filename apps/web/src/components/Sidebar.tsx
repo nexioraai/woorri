@@ -14,11 +14,39 @@ export default function Sidebar() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [userEmail, setUserEmail] = useState('');
+  // ── « SUIS-JE ADMINISTRATEUR ? » SE DEMANDE AU SERVEUR.
+  //
+  // Cette barre comparait l'adresse connectée à une adresse ÉCRITE EN CLAIR
+  // ici même. Comme ce fichier part au navigateur, l'adresse personnelle du
+  // propriétaire se retrouvait dans dix fichiers du bundle livré à chaque
+  // visiteur (mesuré le 2026-10-02).
+  //
+  // Le serveur seul connaît la liste et seul il tranche. On n'affiche donc
+  // rien tant qu'il n'a pas répondu : un lien absent ne coûte rien, un lien
+  // montré à tort ne protège de rien non plus — mais l'adresse, elle, ne part
+  // plus. L'accès, lui, était déjà gardé côté serveur (403).
+  const [estAdministrateur, setEstAdministrateur] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
+    let vivant = true;
+    (async () => {
+      const { data } = await supabase.auth.getUser();
+      if (!vivant) return;
       if (data.user?.email) setUserEmail(data.user.email);
-    });
+      if (!data.user) return;
+
+      const { data: s } = await supabase.auth.getSession();
+      const jeton = s.session?.access_token;
+      if (!jeton) return;
+      try {
+        const r = await fetch('/api/admin/whoami', { headers: { Authorization: `Bearer ${jeton}` } });
+        const j = await r.json();
+        if (vivant) setEstAdministrateur(j.admin === true);
+      } catch {
+        // Réseau indisponible : on n'affiche pas le lien. Jamais l'inverse.
+      }
+    })();
+    return () => { vivant = false; };
   }, []);
 
   // Ferme le panneau mobile quand on change de page
@@ -80,7 +108,7 @@ export default function Sidebar() {
       </nav>
 
       <div className="mt-auto pt-4 border-t border-white/8">
-        {userEmail === 'issayamiyoussouf@gmail.com' && (
+        {estAdministrateur && (
           <Link href="/admin"
             className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all mb-1 ${
               isActive('/admin') ? 'bg-white/10 text-white' : 'text-white/60 hover:text-white hover:bg-white/5'

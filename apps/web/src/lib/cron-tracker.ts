@@ -2,7 +2,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { Resend } from 'resend';
 
 const ALERT_THRESHOLD_MS = 270000;
-const ADMIN_EMAIL = 'issayamiyoussouf@gmail.com';
+import { DESTINATAIRE_ALERTES as ADMIN_EMAIL } from '@/lib/admin-emails';
 
 async function sendCronAlert(cronName: string, durationMs: number) {
   try {
