@@ -1,5 +1,6 @@
 import OnboardingChat from '@/components/onboarding/OnboardingChat';
 import Sidebar from '@/components/Sidebar';
+import Footer from '@/components/Footer';
 
 // ============================================================
 // LA PAGE D'ACCUEIL NE SERVAIT AUCUN CONTENU AUX MOTEURS.
@@ -43,6 +44,13 @@ export default function Home() {
       <main className="flex-1 min-w-0 px-6 lg:pl-40 lg:pr-12">
         <div className="pt-24 pb-4" />
         <OnboardingChat />
+        {/* ── LE SEUL CHEMIN VERS LES PAGES PUBLIQUES, DEPUIS L'ACCUEIL.
+            Cette page rend `Sidebar`, qui ne mène qu'à l'espace privé. Elle
+            ne liait donc vers AUCUNE page publique — Search Console le disait
+            sur /blog : « Referring page: None detected ». L'accueil est la
+            page vers laquelle pointe tout lien externe : c'est d'elle que la
+            découverte doit partir. */}
+        <Footer />
       </main>
     </div>
   );

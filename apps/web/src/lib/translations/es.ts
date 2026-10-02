@@ -12,6 +12,8 @@ export const es = {
   'footer.terms': 'Condiciones',
   'footer.cookies': 'Cookies',
   'footer.documentation': 'Documentación',
+  'footer.blog': 'Blog',
+  'footer.visibiliteIa': 'Visibilidad IA',
   'footer.about': 'Acerca de',
   'footer.pricing': 'Precios',
   'footer.contact': 'Contacto',

@@ -2,6 +2,25 @@
 import Link from 'next/link';
 import { useTranslation } from '@/lib/translations';
 
+// ============================================================
+// CE PIED DE PAGE EST LE SEUL CHEMIN VERS LES PAGES PUBLIQUES.
+//
+// MESURÉ LE 2026-10-02, sur la production : la page d'ACCUEIL ne contenait
+// AUCUN lien vers `/about`, `/pricing`, `/blog` ni `/documentation` — elle
+// rend `Sidebar` (qui ne mène qu'à `/`, `/admin`, `/parametres`), jamais
+// `Navbar`. Search Console le disait mot pour mot sur `/blog` :
+// « Referring page: None detected ».
+//
+// Les pages existaient, le sitemap les listait (214 URLs), `robots.txt` le
+// référençait — mais RIEN NE MENAIT À ELLES. Un sitemap annonce ; ce sont les
+// liens qui font découvrir. C'est ce qui rendait les résultats Google
+// « éparpillés » : sans autre page atteignable, Google ne pouvait montrer que
+// l'accueil, encore et encore.
+//
+// Ajouter un lien ici, c'est donc l'ajouter à TOUTES les pages publiques.
+// Avant d'en retirer un, vérifier qu'un autre chemin y mène.
+// ============================================================
+
 export default function Footer() {
   const { t } = useTranslation();
 
@@ -27,6 +46,8 @@ export default function Footer() {
           <Link href="/about" className="hover:text-white transition-colors">{t('footer.about')}</Link>
           <Link href="/documentation" className="hover:text-white transition-colors">{t('footer.documentation')}</Link>
           <Link href="/pricing" className="hover:text-white transition-colors">{t('footer.pricing')}</Link>
+          <Link href="/blog" className="hover:text-white transition-colors">{t('footer.blog')}</Link>
+          <Link href="/visibilite-ia" className="hover:text-white transition-colors">{t('footer.visibiliteIa')}</Link>
           <a href="mailto:contact@deribfy.com" className="hover:text-white transition-colors">{t('footer.contact')}</a>
           <Link href="/privacy" className="hover:text-white transition-colors">{t('footer.privacy')}</Link>
           <Link href="/terms" className="hover:text-white transition-colors">{t('footer.terms')}</Link>
