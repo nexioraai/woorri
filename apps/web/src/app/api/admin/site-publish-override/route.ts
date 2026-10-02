@@ -25,7 +25,7 @@ import { logAnomaly } from '@/lib/anomaly';
 // Même pattern d'autorisation que site-archive-override / ai-usage /
 // cron-runs / system-health — pas de mécanisme parallèle.
 // ============================================================
-const ADMIN_EMAILS = ['issayamiyoussouf@gmail.com'];
+import { ADMIN_EMAILS } from '@/lib/admin-emails';
 
 export async function POST(req: NextRequest) {
   const authHeader = req.headers.get('authorization');

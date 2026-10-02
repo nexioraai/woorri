@@ -4,7 +4,7 @@ import { logAnomaly } from '@/lib/anomaly';
 
 // Même pattern d'autorisation admin que ai-usage/cron-runs/system-health/stats
 // -- pas de nouveau mécanisme d'autorisation parallèle.
-const ADMIN_EMAILS = ['issayamiyoussouf@gmail.com'];
+import { ADMIN_EMAILS } from '@/lib/admin-emails';
 
 /**
  * POST /api/admin/site-archive-override — archive un site en ignorant les

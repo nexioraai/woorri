@@ -3,7 +3,7 @@ import { supabase as supabaseAnon } from '@/lib/supabase';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { DOMAIN_REGISTRY } from '@/lib/architecture/domainRegistry';
 
-const ADMIN_EMAILS = ['issayamiyoussouf@gmail.com'];
+import { ADMIN_EMAILS } from '@/lib/admin-emails';
 const STALE_HOURS = 48;
 
 export async function GET(req: NextRequest) {

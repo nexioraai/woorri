@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabase as supabaseAnon } from '@/lib/supabase';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { estAdmin } from '@/lib/admin-emails';
 
 type OwnerCheck =
   /** M2-219 — `viaAdmin` : l'accès est celui de l'OPÉRATEUR de la
@@ -85,8 +86,7 @@ async function resolveOwnedSite(
   // l'opérateur passe, et son passage est SIGNALÉ à l'appelant
   // (`viaAdmin`) pour qu'il le journalise.
   // ============================================================
-  const ADMIN_EMAILS = ['issayamiyoussouf@gmail.com'];
-  const isAdmin = !!user.email && ADMIN_EMAILS.includes(user.email);
+  const isAdmin = estAdmin(user.email);
   if (!isOwner && !isAdmin) {
     return { ok: false, response: NextResponse.json({ error: 'Acces refuse.' }, { status: 403 }) };
   }

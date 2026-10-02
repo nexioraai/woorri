@@ -18,9 +18,20 @@ const SRC = readFileSync(
   'utf8',
 );
 
+// ── LA LISTE A DÉMÉNAGÉ, LA RÈGLE N'A PAS CHANGÉ (2026-10-02).
+//
+// `ADMIN_EMAILS` était recopiée dans HUIT fichiers ; elle vit désormais dans
+// `src/lib/admin-emails.ts`, seule et unique. Ce test continue de garder
+// exactement la même chose — que la liste reste NOMINATIVE — mais il la lit
+// là où elle est réellement écrite.
+const SRC_LISTE = readFileSync(
+  join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'admin-emails.ts'),
+  'utf8',
+);
+
 describe('M2-219 · la garde de propriété reste stricte sauf pour l’opérateur', () => {
   it('LA LISTE EST NOMINATIVE — jamais un rôle, jamais un domaine d’e-mail', () => {
-    const m = SRC.match(/const ADMIN_EMAILS = \[([^\]]*)\]/);
+    const m = SRC_LISTE.match(/ADMIN_EMAILS[^=]*=\s*\[([^\]]*)\]/);
     expect(m, 'ADMIN_EMAILS introuvable').not.toBeNull();
     const entrees = (m?.[1] ?? '').split(',').map((x) => x.trim().replace(/'/g, '')).filter(Boolean);
     expect(entrees.length, 'la liste doit rester courte et nominative').toBeLessThanOrEqual(2);

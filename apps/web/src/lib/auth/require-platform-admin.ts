@@ -37,7 +37,7 @@ import { supabase as supabaseAnon } from '@/lib/supabase';
  * absent n'obtient rien, et l'y inscrire est une decision d'une ligne, visible
  * en diff.
  */
-const ADMIN_EMAILS = ['issayamiyoussouf@gmail.com'];
+import { ADMIN_EMAILS } from '@/lib/admin-emails';
 
 type AdminCheck =
   | { ok: true; email: string }

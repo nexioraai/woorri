@@ -3,7 +3,7 @@ import { supabase as supabaseAnon } from '@/lib/supabase';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { countsAsRevenue } from '@/lib/shop/orderStatusMachine';
 
-const ADMIN_EMAILS = ['issayamiyoussouf@gmail.com'];
+import { ADMIN_EMAILS } from '@/lib/admin-emails';
 
 export async function GET(req: NextRequest) {
   const token = req.headers.get('authorization')?.replace('Bearer ', '');
