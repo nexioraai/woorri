@@ -2,7 +2,24 @@ import type { Metadata } from 'next'
 import { pageMetadata } from '@/lib/seo/metadata'
 import { Sommaire } from '../_composants/Vues'
 
-export const dynamic = 'force-static'
+// ── CES PAGES SONT RENDUES À LA REQUÊTE, PAS AU BUILD.
+//
+// ÉTAT TROUVÉ : `force-static`. MESURÉ LE 2026-10-02 : `proxy.ts` pose bien
+// `x-deribfy-lang: en` sur ce segment, et la production servait pourtant
+// `<html lang="fr">`. La raison tient en une ligne : une page prégénérée a
+// son HTML — attribut `lang` compris — écrit AVANT qu'une requête existe,
+// donc avant qu'un en-tête puisse être lu. Un proxy ne réécrit pas un fichier
+// déjà produit.
+//
+// CE QUE ÇA COÛTE, ET C'EST DIT : ces pages passent de « servies telles
+// quelles » à « assemblées à la demande ». Elles ne font AUCUNE entrée-sortie
+// — leur contenu vient d'un fichier local — donc le rendu revient à assembler
+// du JSX. Même arbitrage que celui déjà consigné dans `langueServie.ts`.
+//
+// LA VERSION FRANÇAISE, ELLE, RESTE PRÉGÉNÉRÉE : le français est la langue
+// par défaut de la plateforme, son `lang` est donc juste sans aucun en-tête.
+// On ne paie que là où il faut.
+export const dynamic = 'force-dynamic'
 
 const TITRE = 'Deribfy documentation — build a site or store with AI'
 const DESCRIPTION =
