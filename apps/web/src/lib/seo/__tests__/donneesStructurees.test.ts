@@ -68,6 +68,18 @@ describe('ce qui est déclaré aux moteurs', () => {
     expect(tarifs?.description).toBe(PAGES_PUBLIQUES['/pricing'].description)
   })
 
+  // ── CLIQUET NÉ D'UNE ERREUR RÉELLE, le 2026-10-02 : la première version
+  // déclarait `/login` comme section alors que cette page sert `noindex`.
+  // Annoncer une section à un moteur et lui interdire de l'indexer sont deux
+  // signaux qui se contredisent.
+  it('aucune section ne pointe vers une page tenue hors index', () => {
+    const horsIndex = ['/login', '/dashboard', '/parametres', '/admin', '/welcome', '/onboarding-chat']
+    for (const n of navigation()) {
+      const chemin = n.url.replace(SITE_URL, '')
+      expect(horsIndex).not.toContain(chemin)
+    }
+  })
+
   it('le tout forme un seul tableau : organisation, site, puis les sections', () => {
     const d = donneesPlateforme()
     expect(d[0]['@type']).toBe('Organization')

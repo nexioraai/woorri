@@ -30,23 +30,31 @@ import { headers } from 'next/headers'
 import { SITE_URL, SITE_NOM, PAGES_PUBLIQUES } from './metadata'
 import { EN_TETE_LANGUE } from './langueServie'
 
+// ── UNE SECTION DÉCLARÉE DOIT ÊTRE UNE PAGE INDEXABLE.
+//
+// CORRIGÉ LE JOUR MÊME : la première version listait `/login`, qui sert
+// `noindex, nofollow`. Déclarer à un moteur « voici une section du site »
+// tout en lui interdisant de l'indexer est un signal qui se contredit —
+// vérifié en production sur les cinq pages.
+//
+// `/documentation` la remplace : indexable, substantielle (douze chapitres),
+// et c'est ce qu'un visiteur venu de Google cherche réellement.
 /** Les sections que Deribfy met en avant, dans l'ordre où elles comptent. */
-const SECTIONS: Array<keyof typeof PAGES_PUBLIQUES | '/login'> = [
-  '/pricing',
-  '/about',
-  '/blog',
-  '/visibilite-ia',
-  '/login',
-]
+const SECTIONS = ['/pricing', '/about', '/documentation', '/blog', '/visibilite-ia'] as const
 
 /** Le libellé court d'une section — celui qu'un humain lirait dans un menu. */
 const LIBELLES: Record<string, string> = {
   '/pricing': 'Tarifs',
   '/about': 'À propos',
+  '/documentation': 'Documentation',
   '/blog': 'Blog',
   '/visibilite-ia': 'Visibilité IA',
-  '/login': 'Connexion',
 }
+
+/** La documentation n'est pas dans le registre des pages publiques : elle a
+ *  son propre socle (chapitres). Sa description est donc portée ici. */
+const DESCRIPTION_DOCUMENTATION =
+  'Ce que Deribfy fait, comment il le fait, et ce qu’il ne fait pas — douze chapitres, du fonctionnement à la mise en ligne.'
 
 /**
  * L'entité Deribfy : qui c'est, où c'est, à quoi ça ressemble.
@@ -101,8 +109,8 @@ export function navigation() {
     '@type': 'SiteNavigationElement',
     name: LIBELLES[chemin],
     description:
-      chemin === '/login'
-        ? 'Accéder à votre espace Deribfy.'
+      chemin === '/documentation'
+        ? DESCRIPTION_DOCUMENTATION
         : PAGES_PUBLIQUES[chemin as keyof typeof PAGES_PUBLIQUES].description,
     url: `${SITE_URL}${chemin}`,
   }))
