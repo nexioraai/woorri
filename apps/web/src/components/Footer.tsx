@@ -33,7 +33,7 @@ export default function Footer() {
             className="w-8 h-8 rounded-xl flex items-center justify-center text-white font-black text-sm"
             style={{ background: 'radial-gradient(circle at 30% 30%, #4F6EF5 0%, transparent 60%), radial-gradient(circle at 70% 70%, #FA5D1E 0%, transparent 60%), #16090e' }}
           >
-            W
+            D
           </div>
           <span className="font-black text-sm text-nexiora">deribfy</span>
         </div>

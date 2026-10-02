@@ -196,7 +196,7 @@ export default function Navbar() {
         <Link href="/" className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white font-black text-lg"
             style={{ background: 'radial-gradient(circle at 30% 30%, #4F6EF5 0%, transparent 60%), radial-gradient(circle at 70% 70%, #FA5D1E 0%, transparent 60%), #16090e' }}>
-            W
+            D
           </div>
           <span className="text-xl font-black tracking-tight text-nexiora hidden sm:block" translate="no">deribfy</span>
         </Link>
