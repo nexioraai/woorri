@@ -28,8 +28,23 @@ import { headers } from 'next/headers'
 // Mesuré et assumé ; consigné dans PROGRESS.md.
 // ============================================================
 
-/** En-tête posé par `proxy.ts` quand la requête sert un site marchand. */
+/** En-tête posé par `proxy.ts` pour imposer la langue du document servi. */
 export const EN_TETE_LANGUE = 'x-deribfy-lang'
+
+/**
+ * En-tête posé par `proxy.ts` UNIQUEMENT quand la requête sert la boutique
+ * d'un marchand.
+ *
+ * ── POURQUOI IL EST DISTINCT DE LA LANGUE (2026-10-02).
+ *
+ * Les deux notions étaient confondues : « cette requête porte une langue »
+ * servait aussi à dire « ce n'est pas une page de la plateforme ». Elles se
+ * sont séparées le jour où la DOCUMENTATION ANGLAISE a eu besoin d'une
+ * langue — `/documentation/en` est une page de la plateforme, en anglais.
+ * Sans cette distinction, lui donner `lang="en"` lui aurait fait perdre le
+ * balisage d'identité de Deribfy.
+ */
+export const EN_TETE_SITE = 'x-deribfy-site'
 
 /** Langue de la plateforme elle-même. Voir PROGRESS.md, choix nº 2. */
 export const LANGUE_PLATEFORME = 'fr'

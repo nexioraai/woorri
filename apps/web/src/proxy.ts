@@ -4,7 +4,7 @@ import {
   fetchSiteEtLangueParDomaine,
 } from './app/sites/[slug]/themes/shared'
 import { varianteHote, cibleCanonique } from './lib/domains/canonicalHost'
-import { EN_TETE_LANGUE, normaliserLangue } from './lib/seo/langueServie'
+import { EN_TETE_LANGUE, EN_TETE_SITE, normaliserLangue } from './lib/seo/langueServie'
 
 const INTERNAL_HOSTS = ['nexiora.ca', 'www.nexiora.ca', 'woorri.com', 'www.woorri.com', 'deribfy.com', 'www.deribfy.com', 'localhost']
 
@@ -25,13 +25,31 @@ const CHEMIN_SITE_PLATEFORME = /^\/(?:sites|preview)\/([^/]+)/
  * donc après hydratation, donc jamais pour un moteur. Mesuré le 2026-09-23 :
  * 3 des 5 sites publiés sont en anglais et s'annonçaient tous en français.
  */
-function avecLangue(req: NextRequest, lang: string | null) {
+function avecLangue(req: NextRequest, lang: string | null, estSiteMarchand = true) {
   const code = normaliserLangue(lang)
   if (!code) return undefined
   const entetes = new Headers(req.headers)
   entetes.set(EN_TETE_LANGUE, code)
+  // Un en-tête d'ENTRÉE ne se croit jamais : on efface d'abord la marque
+  // qu'un visiteur aurait pu envoyer lui-même, puis on pose la nôtre.
+  entetes.delete(EN_TETE_SITE)
+  if (estSiteMarchand) entetes.set(EN_TETE_SITE, '1')
   return { request: { headers: entetes } }
 }
+
+/**
+ * La documentation anglaise est une page de la PLATEFORME, en anglais.
+ *
+ * MESURÉ LE 2026-10-02, en production : les treize URL de
+ * `/documentation/en` servaient `<html lang="fr">`. Le contenu est anglais,
+ * le document l'annonçait français — exactement le défaut que ce proxy
+ * corrige déjà pour les boutiques, mais que la plateforme s'appliquait à
+ * elle-même puisqu'elle retombe sur `LANGUE_PLATEFORME`.
+ *
+ * Les balises `hreflang` étaient, elles, déjà justes : c'est bien le seul
+ * attribut `lang` qui manquait.
+ */
+const DOCUMENTATION_ANGLAISE = /^\/documentation\/en(?:\/|$)/
 
 export async function proxy(req: NextRequest) {
   const host = (req.headers.get('host') || '').split(':')[0].toLowerCase()
@@ -60,6 +78,13 @@ export async function proxy(req: NextRequest) {
     if (siteMatch) {
       const lang = await fetchLangueParSlug(siteMatch[1]!)
       return NextResponse.next(avecLangue(req, lang))
+    }
+    // Page de la plateforme, mais anglophone : la langue est imposée, et la
+    // marque « site marchand » reste ABSENTE — ces pages gardent donc le
+    // balisage d'identité de Deribfy. Aucune requête réseau : un test de
+    // chemin, rien d'autre.
+    if (DOCUMENTATION_ANGLAISE.test(pathname)) {
+      return NextResponse.next(avecLangue(req, 'en', false))
     }
     return NextResponse.next()
   }

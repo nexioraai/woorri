@@ -176,3 +176,69 @@ describe('la langue du site atteint le layout racine', () => {
     expect(langueVue(res)).toBe(false);
   });
 });
+
+// ============================================================
+// LA DOCUMENTATION ANGLAISE EST UNE PAGE DE LA PLATEFORME, EN ANGLAIS.
+//
+// MESURÉ EN PRODUCTION le 2026-10-02 : les treize URL de `/documentation/en`
+// servaient `<html lang="fr">`. Le contenu est anglais, le document
+// l'annonçait français — le défaut même que ce proxy corrige pour les
+// boutiques, mais que la plateforme s'appliquait à elle-même en retombant sur
+// sa langue par défaut.
+//
+// CE QUE CES TESTS GARDENT, ET C'EST LE POINT DÉLICAT : la langue et la
+// nature « boutique marchande » sont deux choses DISTINCTES. Les confondre à
+// nouveau ferait perdre à ces pages le balisage d'identité de Deribfy, qui ne
+// s'émet que hors boutique.
+// ============================================================
+describe('la documentation anglaise s’annonce en anglais', () => {
+  const langue = (res: Response) => res.headers.get('x-middleware-request-x-deribfy-lang');
+  const marqueBoutique = (res: Response) => res.headers.get('x-middleware-request-x-deribfy-site');
+
+  it('sert `en` sur le sommaire anglais', async () => {
+    const res = await proxy(req('www.deribfy.com', '/documentation/en'));
+    expect(langue(res)).toBe('en');
+  });
+
+  it('sert `en` sur un chapitre anglais', async () => {
+    const res = await proxy(req('www.deribfy.com', '/documentation/en/how-it-works'));
+    expect(langue(res)).toBe('en');
+  });
+
+  it('N’EST PAS marquée comme boutique — elle garde le balisage de la plateforme', async () => {
+    const res = await proxy(req('www.deribfy.com', '/documentation/en'));
+    expect(marqueBoutique(res)).toBeNull();
+  });
+
+  it('la documentation FRANÇAISE n’est pas touchée — elle garde le repli plateforme', async () => {
+    const res = await proxy(req('www.deribfy.com', '/documentation'));
+    expect(langue(res)).toBeNull();
+  });
+
+  it('un chapitre français non plus', async () => {
+    const res = await proxy(req('www.deribfy.com', '/documentation/comment-ca-marche'));
+    expect(langue(res)).toBeNull();
+  });
+
+  it('aucune autre page de la plateforme n’est affectée', async () => {
+    for (const chemin of ['/', '/pricing', '/about', '/blog']) {
+      const res = await proxy(req('www.deribfy.com', chemin));
+      expect(langue(res), chemin).toBeNull();
+      expect(marqueBoutique(res), chemin).toBeNull();
+    }
+  });
+
+  it('un chemin qui RESSEMBLE à la doc anglaise sans en être n’est pas pris', async () => {
+    const res = await proxy(req('www.deribfy.com', '/documentation/entreprise'));
+    expect(langue(res)).toBeNull();
+  });
+});
+
+describe('une boutique reste marquée comme boutique', () => {
+  it('sur l’origine plateforme, `/sites/{slug}` porte LES DEUX en-têtes', async () => {
+    fetchLangueParSlugMock.mockResolvedValue('en');
+    const res = await proxy(req('www.deribfy.com', '/sites/ma-boutique'));
+    expect(res.headers.get('x-middleware-request-x-deribfy-lang')).toBe('en');
+    expect(res.headers.get('x-middleware-request-x-deribfy-site')).toBe('1');
+  });
+});

@@ -28,7 +28,7 @@
 
 import { headers } from 'next/headers'
 import { SITE_URL, SITE_NOM, PAGES_PUBLIQUES } from './metadata'
-import { EN_TETE_LANGUE } from './langueServie'
+import { EN_TETE_SITE } from './langueServie'
 
 // ── UNE SECTION DÉCLARÉE DOIT ÊTRE UNE PAGE INDEXABLE.
 //
@@ -128,16 +128,21 @@ export function donneesPlateforme() {
 // l'enseigne de son fournisseur — le défaut exact que `favicon` décrit, et
 // qui dirait à Google que la boutique du marchand EST Deribfy.
 //
-// Le discriminant existe déjà : `proxy.ts` pose `x-deribfy-lang` UNIQUEMENT
-// quand la requête sert un site marchand. Sa présence suffit, et on n'a pas
+// Le discriminant : `proxy.ts` pose `x-deribfy-site` UNIQUEMENT quand la
+// requête sert la boutique d'un marchand. Sa présence suffit, et on n'a pas
 // besoin de lui faire confiance au-delà de « présent ou non ».
+//
+// CET EN-TÊTE EST DISTINCT DE LA LANGUE DEPUIS LE 2026-10-02 : les deux
+// notions étaient confondues, jusqu'à ce que `/documentation/en` ait besoin
+// d'une langue anglaise TOUT EN RESTANT une page de la plateforme. Les
+// confondre lui aurait fait perdre ce balisage.
 //
 // FAIL-SAFE INVERSE DE `langueServie` : au moindre doute on N'ÉMET PAS.
 // Taire un balisage ne coûte qu'un signal ; l'émettre à tort salit l'identité
 // d'un client.
 export async function estPagePlateforme(): Promise<boolean> {
   try {
-    return (await headers()).get(EN_TETE_LANGUE) === null
+    return (await headers()).get(EN_TETE_SITE) === null
   } catch {
     // Rendu hors requête (génération statique, tests) : la plateforme.
     return true

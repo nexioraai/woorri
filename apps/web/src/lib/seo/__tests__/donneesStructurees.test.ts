@@ -29,13 +29,24 @@ describe('la garde boutique marchande', () => {
   })
 
   it('N’ÉMET PAS dès que la requête sert un site marchand', async () => {
-    entetes.set('x-deribfy-lang', 'en')
+    entetes.set('x-deribfy-site', '1')
     expect(await estPagePlateforme()).toBe(false)
   })
 
-  it('n’émet pas non plus quand le marchand est en français — c’est la PRÉSENCE qui compte', async () => {
-    entetes.set('x-deribfy-lang', 'fr')
+  it('n’émet pas non plus quel que soit le contenu de l’en-tête — c’est la PRÉSENCE qui compte', async () => {
+    entetes.set('x-deribfy-site', '1')
     expect(await estPagePlateforme()).toBe(false)
+  })
+
+  // ── NÉ DU CAS RÉEL `/documentation/en` (2026-10-02).
+  //
+  // Cette page porte une LANGUE anglaise sans être une boutique. Tant que les
+  // deux notions étaient confondues, lui donner `lang="en"` lui aurait fait
+  // perdre le balisage d'identité de Deribfy. Elles sont séparées : ce test
+  // le prouve, et empêche de les refondre un jour.
+  it('une page de la plateforme en anglais garde le balisage — langue ≠ boutique', async () => {
+    entetes.set('x-deribfy-lang', 'en')
+    expect(await estPagePlateforme()).toBe(true)
   })
 })
 
