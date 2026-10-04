@@ -452,13 +452,24 @@ function besoins(entites) {
     "Un compte créé hors de l'application, sans profil, ne doit accéder à rien.",
     ["role_employe"]);
 
-  manque("need_porte_selon_droits",
+  // ── RECLASSÉ APRÈS TRAVAIL, le 2026-10-04. Le motif disait vrai au moment
+  // où il a été écrit : « refuser n'est pas résoudre ». Le format ne sait
+  // toujours pas DÉCLARER une porte par rôle — et c'est volontaire : tout est
+  // déjà là. Les destinations sont ORDONNÉES, chaque écran déclare son droit,
+  // chaque rôle déclare ce qu'il ouvre. La destination d'arrivée est donc une
+  // FONCTION du document, calculée à l'exécution, et non une donnée de plus.
+  //
+  // Ce qui manquait n'était pas un nœud de contrat mais trois étages :
+  //   · l'ÉMISSION — mesure du jour : `access` et `requiredRightId`
+  //     n'atteignaient AUCUN fichier émis ; le modèle était inerte ;
+  //   · la SESSION — `droits?()` au contrat, et `access` monte désormais la
+  //     racine de session : un droit appartient à une personne ;
+  //   · le NAVIGATEUR — `key={depart}`, sans quoi « après connexion » n'aurait
+  //     aucun effet (React Navigation ne lit `initialRouteName` qu'au montage).
+  satisfait("need_porte_selon_droits",
     "Après connexion, conduire chacun vers le PREMIER écran que ses droits lui ouvrent.",
-    "`navigation.entryScreenId` reste UNIQUE. Le validateur 1.28.0 refuse désormais qu'il exige " +
-    "un droit que le rôle par défaut n'a pas (AIR_ACCESS_ENTRY_UNREACHABLE) — le défaut de SGD " +
-    "est donc ATTRAPÉ. Mais refuser n'est pas résoudre : le format ne sait toujours pas dire " +
-    "« ouvre sur la première destination accessible », il sait seulement empêcher d'ouvrir sur " +
-    "une porte fermée.");
+    ["role_employe", "role_proprietaire", `scr_${ECRANS.find((e) => !e.droit).cle}`,
+     ...DROITS.map((d) => `right_${d}`)])
 
   manque("need_stock_calcule",
     "Le stock n'est jamais stocké : il se calcule en rejouant les mouvements d'entrée et de sortie.",

@@ -5,6 +5,9 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { declarerRacines } from "./lib/runtime/racines-navigation";
 import { theme } from "./lib/tokens";
 import { navData } from "./nav.data";
+import { useSessionProvider } from "./lib/runtime/session-provider";
+import { premierEcranAccessible } from "./lib/runtime/acces";
+import { accesData, candidatsEntree } from "./acces.data";
 import ScrAnticipationScreen from "./screens/scr_anticipation";
 import ScrChargesScreen from "./screens/scr_charges";
 import ScrClientsScreen from "./screens/scr_clients";
@@ -28,9 +31,12 @@ const Stack = createNativeStackNavigator();
 declarerRacines(["scr_conteneurs","scr_mouvements","scr_porte","scr_recherche","scr_scanner"]);
 
 export function Navigation() {
+  const session = useSessionProvider();
+  const droits = session.droits?.();
+  const depart = premierEcranAccessible(accesData, candidatsEntree, droits, "scr_parametres");
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="scr_parametres"
+      <Stack.Navigator key={depart} initialRouteName={depart}
         screenOptions={{ headerShadowVisible: false, headerStyle: { backgroundColor: theme.color.light.bg } }}>
       <Stack.Screen name="scr_anticipation" component={ScrAnticipationScreen}
         options={{ title: navData.routes.find((x) => x.screenId === "scr_anticipation")!.title }} />

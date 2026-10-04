@@ -105,6 +105,11 @@ export const EMBEDDED_SOURCES: readonly EmbeddedSourceSpec[] = [
     rewrites: {},
   },
   {
+    source: "compiler/runtime/acces.ts",
+    target: "lib/runtime/acces.ts",
+    rewrites: {},
+  },
+  {
     source: "compiler/runtime/session-contract.ts",
     target: "lib/runtime/session-contract.ts",
     rewrites: {},

@@ -128,7 +128,33 @@ describe("EP-176 ② · l'icône est écrite en OCTETS", () => {
     const jamais = consommes.filter((c) => !docs.some((d) => d.includes(`"${c}"`)));
     expect(consommes.length, "le crible ne voit rien").toBeGreaterThan(10);
     // Le compte est CONSIGNÉ, pas figé : il doit rester petit et connu.
-    expect(jamais.sort()).toEqual(["brandIconPngBase64", "overrides"]);
+    //
+    // ── TROIS ENTRÉES AJOUTÉES LE 2026-10-04, ET IL FAUT DIRE PAR QUOI ELLES
+    // SONT ÉPROUVÉES, SANS QUOI CETTE LISTE DEVIENT UN PERMIS.
+    //
+    // `access`, `requiredRightId` et `grantsAllRights` sont consommés par
+    // l'émission depuis que le modèle d'accès atteint l'application. AUCUN
+    // document du corpus de campagne ne les porte — le corpus est GELÉ, et
+    // l'amender pour faire verdir un test serait déplacer la cible.
+    //
+    // Ils sont éprouvés ailleurs, et pour de bon :
+    //   · `packages/compiler/tests/acces-porte.test.ts` — 14 cas sur le calcul
+    //     pur, dont le défaut fondateur de SGD (l'employé sans droit atterrit
+    //     sur l'écran de secours, jamais dehors) ;
+    //   · `slices/gestion` — le document dérivé de SGD, en production, qui
+    //     déclare 12 droits et 2 rôles, compilé à chaque émission ;
+    //   · `packages/air-schema/tests/acces.test.ts` — les quatre refus du
+    //     validateur sur ce même document.
+    //
+    // Le jour où un document de campagne portera des employés, ces trois
+    // entrées devront QUITTER cette liste — pas y rester par habitude.
+    expect(jamais.sort()).toEqual([
+      "access",
+      "brandIconPngBase64",
+      "grantsAllRights",
+      "overrides",
+      "requiredRightId",
+    ]);
   });
 });
 

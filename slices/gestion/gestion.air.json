@@ -2106,8 +2106,24 @@
     "id": "need_porte_selon_droits",
     "statement": "Après connexion, conduire chacun vers le PREMIER écran que ses droits lui ouvrent.",
     "resolution": {
-     "kind": "unexpressible",
-     "reason": "`navigation.entryScreenId` reste UNIQUE. Le validateur 1.28.0 refuse désormais qu'il exige un droit que le rôle par défaut n'a pas (AIR_ACCESS_ENTRY_UNREACHABLE) — le défaut de SGD est donc ATTRAPÉ. Mais refuser n'est pas résoudre : le format ne sait toujours pas dire « ouvre sur la première destination accessible », il sait seulement empêcher d'ouvrir sur une porte fermée."
+     "kind": "satisfied",
+     "nodeIds": [
+      "role_employe",
+      "role_proprietaire",
+      "scr_parametres",
+      "right_dashboard",
+      "right_recherche",
+      "right_scan_inventaire",
+      "right_mouvements",
+      "right_porte",
+      "right_conteneurs",
+      "right_lieux",
+      "right_ventes",
+      "right_clients",
+      "right_charges",
+      "right_rentabilite",
+      "right_anticipation"
+     ]
     }
    },
    {

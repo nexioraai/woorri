@@ -138,6 +138,11 @@ if (seulementLister) {
 const resultats = [];
 for (const e of etapes) {
   process.stdout.write(`  ${e.id.padEnd(16)} [${e.repertoire}] … `);
+  // LE TEMPS DE CHAQUE ÉTAPE EST AFFICHÉ, et ce n'est pas de la décoration :
+  // ce script est destiné à un hook `pre-push`. Un contrôle trop lent se fait
+  // contourner, et un contrôle contourné ne protège rien — il faut donc voir où
+  // part le temps pour pouvoir en discuter sur des chiffres.
+  const depart = process.hrtime.bigint();
   const r = spawnSync("bash", ["-e", "-c", e.commande], {
     cwd: join(RACINE, e.repertoire),
     encoding: "utf8",
@@ -147,8 +152,12 @@ for (const e of etapes) {
     env: { ...process.env, ...(parse(readFileSync(WORKFLOW, "utf8")).jobs?.ci?.env ?? {}) },
   });
   const ok = r.status === 0;
-  resultats.push({ ...e, ok, sortie: `${r.stdout ?? ""}${r.stderr ?? ""}` });
-  console.log(ok ? "success" : arbitrees.has(e.id) ? "failure (ARBITRÉE)" : "FAILURE");
+  const secondes = Number(process.hrtime.bigint() - depart) / 1e9;
+  resultats.push({ ...e, ok, secondes, sortie: `${r.stdout ?? ""}${r.stderr ?? ""}` });
+  console.log(
+    `${ok ? "success" : arbitrees.has(e.id) ? "failure (ARBITRÉE)" : "FAILURE"}` +
+      `  ${secondes.toFixed(1)} s`,
+  );
 }
 
 // ── LE VERDICT, AU FORMAT DU GATE.
@@ -158,6 +167,12 @@ for (const e of etapes) {
 // se tromper.
 console.log(
   "\nÉtape(s) — " + resultats.map((r) => `${r.id}=${r.ok ? "success" : "failure"}`).join(" "),
+);
+const total = resultats.reduce((t, r) => t + r.secondes, 0);
+const lentes = [...resultats].sort((a, b) => b.secondes - a.secondes).slice(0, 3);
+console.log(
+  `durée : ${(total / 60).toFixed(1)} min · les plus lentes : ` +
+    lentes.map((r) => `${r.id} ${r.secondes.toFixed(0)} s`).join(", "),
 );
 
 const casses = resultats.filter((r) => !r.ok && !arbitrees.has(r.id));

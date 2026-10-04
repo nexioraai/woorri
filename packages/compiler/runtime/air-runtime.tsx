@@ -29,6 +29,7 @@ import {
 import type { FormFieldSpec, ListItemData } from "../blocks/contracts";
 import { useDataProvider } from "./data-provider";
 import { useSlotRegistry } from "./slot-provider";
+import { detientLeDroit } from "./acces";
 import { useCapabilityProvider } from "./capability-provider";
 import { useSessionProvider } from "./session-provider";
 import { useAllFormValues, useFormValues } from "./form-state";
@@ -136,6 +137,15 @@ export interface AirScreenData {
   /** 1.21.0 — gestes SECONDAIRES (« Voir plus » d'un en-tête de section). */
   uiSecondaryActionsByBlock?: Readonly<Record<string, string>>;
   entities: Readonly<Record<string, { fields: readonly AirFieldData[] }>>;
+  /**
+   * LE DROIT QUI OUVRE CET ÉCRAN (1.28.0 — émission du 2026-10-04).
+   *
+   * Absent = ouvert à tous, comportement de toute version antérieure. Présent,
+   * il est vérifié dans `useBlockVisible` — l'UNIQUE couture de visibilité —
+   * et non à l'entrée de l'écran : une garde posée à l'entrée se contourne par
+   * n'importe quelle autre route, celle-ci non.
+   */
+  requiredRightId?: string;
   /** Slots LIÉS dont au moins une sortie alimente un bloc de cet écran (1.3.0). */
   slotInvocations?: readonly AirSlotInvocationData[];
   /** Règles de validation des entités écrites depuis cet écran (D-062). */
@@ -320,6 +330,26 @@ function useBlockVisible(screen: AirScreenData, blockId: string): boolean {
     () => (session.estAuthentifie() ? "auth" : session.enAttenteConfirmation?.() === true ? "attente" : "anon"),
   );
   const authentifie = etat === "auth";
+  // ── LE DROIT D'ABORD, ET AVANT TOUTE AUTRE CONDITION.
+  //
+  // Mesuré le 2026-10-04 : le modèle d'accès 1.28.0 n'atteignait AUCUN fichier
+  // émis — chaque écran restait ouvert à tout le monde. Conduire quelqu'un vers
+  // la porte que ses droits lui ouvrent ne suffisait pas : rien n'empêchait
+  // d'atteindre un écran réservé par une AUTRE route, et une protection
+  // contournable par un chemin latéral n'est pas une protection.
+  //
+  // La vérification vit ICI, dans l'unique couture de visibilité, et pas à
+  // l'entrée de l'écran : il n'existe qu'un seul chemin vers le rendu d'un
+  // bloc, donc un seul endroit à fermer. La règle elle-même n'est pas réécrite
+  // — `detientLeDroit` en est l'unique exemplaire.
+  //
+  // CE QUE CE GARDE NE FAIT PAS, et il faut le dire : il n'explique rien. Le
+  // runtime s'interdit tout texte naturel (F3) — les libellés viennent du
+  // document — et aucun champ ne porte encore un message de refus. Un écran
+  // réservé se rend donc VIDE, sous son titre. C'est sûr, c'est diagnosticable
+  // par le `testID`, et ce n'est pas aimable : porter la phrase au document
+  // demandera une montée de contrat, consignée et non faite ici.
+  if (!detientLeDroit(session.droits?.(), screen.requiredRightId)) return false;
   const condition = block(screen, blockId).visibleWhen;
   if (condition === undefined) return true;
   // Discrimination POSITIVE sur les prédicats de DONNÉES : eux seuls portent

@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+# ════════════════════════════════════════════════════════════════════
+#  AVANT DE POUSSER — EXÉCUTER LE CI, PAS SON SOUVENIR.
+# ════════════════════════════════════════════════════════════════════
+#
+# ── POURQUOI CE HOOK EXISTE.
+#
+# Le 2026-10-04, un commit a été poussé sur `main` en faisant passer `pkg_lint`
+# et `pkg_test` de vert à rouge. La vérification locale avait porté sur 3
+# packages sur 11 : un sous-ensemble choisi de mémoire, qui ne pouvait pas
+# contredire son auteur.
+#
+# Le correctif de fond est `npm run verifier`, qui LIT `.github/workflows/ci.yml`
+# et exécute ses étapes. Mais un outil qu'il faut penser à lancer ne protège que
+# les jours où on y pense — et ce jour-là, précisément, on n'y a pas pensé. D'où
+# ce hook : il le lance à la seule seconde qui compte, celle où le code part.
+#
+# ── IL EST CONTOURNABLE, ET C'EST ASSUMÉ.
+#
+# `git push --no-verify` passe outre. On ne cherche pas à l'empêcher : un hook
+# qu'on ne peut pas contourner dans une urgence devient un hook qu'on désinstalle
+# — et on perd tout. Ce qu'on vise est plus modeste et plus solide : que PASSER
+# OUTRE SOIT UN GESTE CONSCIENT, pas un oubli.
+#
+# ── IL NE JUGE PAS CE QUI EST ROUGE PAR DÉCISION.
+#
+# `app_fidelite` est rouge sur `main` par arbitrage (D-134/D-125) et ne doit
+# jamais être « corrigée ». `verifier` lit cette dette depuis le gate lui-même et
+# ne la compte pas comme une régression — sinon ce hook serait rouge en
+# permanence, donc ignoré, donc inutile.
+#
+# ── INSTALLATION (une fois par clone)
+#
+#     git config core.hooksPath .githooks
+#
+# Le hook vit DANS le dépôt, à l'inverse de `.git/hooks/` qui n'est pas versionné
+# et disparaît au clone suivant.
+
+set -u
+
+racine="$(git rev-parse --show-toplevel)"
+cd "$racine" || exit 1
+
+echo "── pre-push : vérification dérivée de .github/workflows/ci.yml"
+echo "   (contourner si nécessaire : git push --no-verify)"
+echo
+
+if npm run --silent verifier; then
+  echo
+  echo "── pre-push : rien de cassé, le push continue."
+  exit 0
+fi
+
+echo
+echo "────────────────────────────────────────────────────────────────"
+echo " PUSH INTERROMPU — une étape du CI échoue HORS dette arbitrée."
+echo
+echo " Ce n'est pas le CI qui te le dira dans dix minutes : c'est ici,"
+echo " maintenant, avant que la branche distante ne porte la casse."
+echo
+echo " Relancer une seule étape :   npm run verifier -- <id>"
+echo " Voir le plan sans exécuter : npm run verifier -- --liste"
+echo " Passer outre sciemment :     git push --no-verify"
+echo "────────────────────────────────────────────────────────────────"
+exit 1

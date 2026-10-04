@@ -1,0 +1,6 @@
+// GÉNÉRÉ — NE PAS ÉDITER (modèle d'accès canonique).
+export const accesData = {"defaultRoleId":"role_employe","droits":["right_dashboard","right_recherche","right_scan_inventaire","right_mouvements","right_porte","right_conteneurs","right_lieux","right_ventes","right_clients","right_charges","right_rentabilite","right_anticipation"],"parAction":{},"parEcran":{"scr_anticipation":"right_anticipation","scr_charges":"right_charges","scr_clients":"right_clients","scr_conteneurs":"right_conteneurs","scr_dashboard":"right_dashboard","scr_lieux":"right_lieux","scr_mouvements":"right_mouvements","scr_porte":"right_porte","scr_recherche":"right_recherche","scr_rentabilite":"right_rentabilite","scr_scanner":"right_scan_inventaire","scr_ventes":"right_ventes"},"roles":[{"grantsAllRights":true,"id":"role_proprietaire","rightIds":[]},{"id":"role_employe","rightIds":[]}]} as const;
+
+// Où chercher la porte de quelqu'un, DANS L'ORDRE : destinations
+// principales (l'ordre du document), puis les autres routes.
+export const candidatsEntree = ["scr_recherche","scr_scanner","scr_mouvements","scr_porte","scr_conteneurs","scr_dashboard","scr_lieux","scr_ventes","scr_clients","scr_charges","scr_rentabilite","scr_anticipation","scr_parametres"] as const;

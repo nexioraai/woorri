@@ -486,6 +486,12 @@ function buildScreenSlice(air: ProjectAir, screen: ProjectAir["screens"][number]
         ? {}
         : { uiSecondaryActionsByBlock }),
       entities,
+      // LE DROIT QUI OUVRE CET ÉCRAN (1.28.0). Omis quand l'écran n'en exige
+      // aucun — un document sans droits garde des données d'écran identiques
+      // au bit près, et le corpus gelé ne bouge pas.
+      ...(screen.requiredRightId === undefined
+        ? {}
+        : { requiredRightId: screen.requiredRightId }),
       // Omise quand vide : les documents sans liaison de slot gardent des
       // données d'écran EXACTEMENT identiques à celles de 1.2.0.
       ...(slotInvocations.length === 0 ? {} : { slotInvocations }),
@@ -771,6 +777,72 @@ function emitNavData(air: ProjectAir, locale: string): string {
   ].join("\n");
 }
 
+// ── LE MODÈLE D'ACCÈS, ÉMIS — SANS QUOI IL NE PROTÈGE RIEN.
+//
+// MESURE DU 2026-10-04 : après l'ajout d'`access` au contrat (1.28.0),
+// `requiredRightId` n'apparaissait dans AUCUN fichier émis. Le document
+// déclarait, le validateur refusait un modèle incohérent, et l'application
+// générée laissait CHAQUE écran ouvert à tout le monde. Un modèle d'accès qui
+// ne franchit pas l'émission est pire qu'absent : il se lit comme une
+// protection, et personne ne va vérifier.
+//
+// `accesData` vaut `null` quand le document ne déclare pas `access` — le
+// runtime sait alors qu'il n'y a RIEN à faire respecter, au lieu de le deviner
+// d'un objet vide.
+//
+// `candidatsEntree` porte l'ordre dans lequel chercher la porte de quelqu'un :
+// les destinations principales d'abord, parce que leur ordre est celui que
+// l'auteur a déclaré, puis les autres routes. C'est une projection du
+// document, jamais une préférence du moteur.
+function emitAccesData(air: ProjectAir): string {
+  // Appelé UNIQUEMENT quand `air.access` existe (voir l'appel) : la garde est
+  // au point d'appel, pas ici, pour que le type reste non-nullable de bout en
+  // bout — une branche nulle traversant l'émission était justement le défaut.
+  if (air.access === undefined) throw new EmitError("EMIT_ACCESS_ABSENT", "access", "");
+  const acces =
+    {
+          droits: air.access.rights.map((r) => r.id),
+          roles: air.access.roles.map((r) => ({
+            id: r.id,
+            rightIds: [...r.rightIds],
+            ...(r.grantsAllRights === true ? { grantsAllRights: true } : {}),
+          })),
+          defaultRoleId: air.access.defaultRoleId,
+      parEcran: Object.fromEntries(
+        air.screens.flatMap((e) =>
+          e.requiredRightId === undefined ? [] : [[e.id, e.requiredRightId] as const],
+        ),
+      ),
+          // UN ÉCRAN OUVERT PEUT PORTER UN GESTE RÉSERVÉ. Dans SGD, inventaire,
+          // vente et transfert partagent le MÊME écran de scan et ne font pas
+          // la même chose au stock : trois droits, portés par trois actions.
+      parAction: Object.fromEntries(
+        air.actions.flatMap((a) =>
+          a.requiredRightId === undefined ? [] : [[a.id, a.requiredRightId] as const],
+        ),
+      ),
+    };
+
+  const principales = (air.navigation.primary?.destinations ?? [])
+    .slice()
+    .sort((a, b) => a.order - b.order)
+    .map((d) => air.navigation.routes.find((r) => r.id === d.routeId)?.screenId)
+    .filter((id): id is string => id !== undefined);
+  const autres = air.navigation.routes
+    .map((r) => r.screenId)
+    .filter((id) => !principales.includes(id));
+
+  return [
+    "// GÉNÉRÉ — NE PAS ÉDITER (modèle d'accès canonique).",
+    `export const accesData = ${canonicalJson(acces)} as const;`,
+    "",
+    "// Où chercher la porte de quelqu'un, DANS L'ORDRE : destinations",
+    "// principales (l'ordre du document), puis les autres routes.",
+    `export const candidatsEntree = ${canonicalJson([...principales, ...autres])} as const;`,
+    "",
+  ].join("\n");
+}
+
 function emitNavigation(air: ProjectAir): string {
   // Écrans qui SONT des destinations principales (résolus par leur route).
   const destinationsPrincipales = new Set(
@@ -834,6 +906,18 @@ function emitNavigation(air: ProjectAir): string {
     'import { declarerRacines } from "./lib/runtime/racines-navigation";',
     'import { theme } from "./lib/tokens";',
     'import { navData } from "./nav.data";',
+    // ── LA PORTE DE CHACUN, QUAND LE DOCUMENT DÉCLARE DES DROITS.
+    //
+    // Émis SOUS CONDITION : un document sans `access` produit exactement les
+    // mêmes octets qu'avant. Le corpus gelé ne doit pas bouger parce qu'une
+    // autre application, ailleurs, a des employés.
+    ...(air.access === undefined
+      ? []
+      : [
+          'import { useSessionProvider } from "./lib/runtime/session-provider";',
+          'import { premierEcranAccessible } from "./lib/runtime/acces";',
+          'import { accesData, candidatsEntree } from "./acces.data";',
+        ]),
     ...importLines,
     "",
     "const Stack = createNativeStackNavigator();",
@@ -845,6 +929,18 @@ function emitNavigation(air: ProjectAir): string {
     `declarerRacines(${canonicalJson(racines)});`,
     "",
     "export function Navigation() {",
+    ...(air.access === undefined
+      ? []
+      : [
+          "  const session = useSessionProvider();",
+          // `droits?.()` et non `droits()` : la méthode est OPTIONNELLE au
+          // contrat. `undefined` ne vaut pas « aucun droit » mais « cette
+          // session ne sait pas le dire » — et le calcul ferme, parce que
+          // faire de l'ignorance une autorisation serait le pire réglage.
+          "  const droits = session.droits?.();",
+          `  const depart = premierEcranAccessible(accesData, candidatsEntree, droits, ` +
+            `"${assertId(air.navigation.entryScreenId, "navigation")}");`,
+        ]),
     "  return (",
     "    <NavigationContainer>",
     // UNE SEULE SURFACE (jugement propriétaire sur capture, 2026-09-10) :
@@ -852,7 +948,19 @@ function emitNavigation(air: ProjectAir): string {
     // son ombre, zone de contenu, bande du bas. L'en-tête natif prend le FOND
     // du thème et perd son ombre : le titre appartient à la page, il ne la
     // barre plus. Les jetons restent la seule source des couleurs.
-    `      <Stack.Navigator initialRouteName="${assertId(air.navigation.entryScreenId, "navigation")}"`,
+    ...(air.access === undefined
+      ? [
+          `      <Stack.Navigator initialRouteName="${assertId(air.navigation.entryScreenId, "navigation")}"`,
+        ]
+      : [
+          // `key` EST LE CŒUR DE LA RÈGLE, et sans elle le besoin n'est pas
+          // tenu. React Navigation ne lit `initialRouteName` QU'AU MONTAGE :
+          // la destination recalculée après une connexion n'aurait donc aucun
+          // effet. Remonter le navigateur quand la destination CHANGE — et
+          // seulement alors — fait appliquer la nouvelle porte, et remet la
+          // pile à zéro, ce qui est précisément ce qu'on veut à la connexion.
+          "      <Stack.Navigator key={depart} initialRouteName={depart}",
+        ]),
     '        screenOptions={{ headerShadowVisible: false, headerStyle: { backgroundColor: theme.color.light.bg } }}>',
     ...screenLines,
     "      </Stack.Navigator>",
@@ -910,7 +1018,19 @@ function emitApp(
           b.visibleWhen?.kind === "session_authenticated" ||
           b.visibleWhen?.kind === "session_anonymous",
       ),
-    ) || air.actions.some((a) => a.effect.kind === "capability" && a.effect.capability === "auth");
+    ) ||
+    air.actions.some((a) => a.effect.kind === "capability" && a.effect.capability === "auth") ||
+    // ── UN MODÈLE D'ACCÈS IMPLIQUE UNE SESSION (1.28.0, émission du 2026-10-04).
+    //
+    // Un droit appartient à une PERSONNE. Déclarer `access` sans monter la
+    // racine de session produirait une application où `useSessionProvider`
+    // rend la session anonyme : aucun droit lisible, donc — par la règle de
+    // fermeture — tout le monde renvoyé sur l'écran d'entrée de secours. Le
+    // modèle d'accès serait émis, et inerte.
+    //
+    // Mesuré avant de poser cette clause : le document de gestion déclare 12
+    // droits et 2 rôles, et son `App.tsx` ne portait AUCUN `SessionRoot`.
+    air.access !== undefined;
   return [
     "// GÉNÉRÉ — NE PAS ÉDITER (racine d'app : thème + données + navigation).",
     "// S7 (D-026) : tokens scellés 1.0.0, design.theme transporté sans effet.",
@@ -1303,6 +1423,17 @@ export function emitProject(
   files.set("demo.data.ts", emitDemoData(air));
   files.set("manifests/permissions.manifest.json", emitPermissionsManifest(air));
   files.set("nav.data.ts", emitNavData(air, locale));
+  // ── ÉMIS SEULEMENT SI LE DOCUMENT DÉCLARE DES DROITS.
+  //
+  // Je l'avais d'abord émis pour TOUS les documents, avec `accesData = null`
+  // quand il n'y a pas d'accès. Deux torts : `null as const` est refusé par
+  // TypeScript (TS1355 — l'assertion ne porte pas sur `null`), et les 28
+  // applications du corpus gelé recevaient un fichier de plus. Le gate l'a dit
+  // sans détour : 0/28 compilaient.
+  //
+  // J'avais pourtant ANNONCÉ que le corpus resterait identique au bit près.
+  // L'émission conditionnelle tient cette promesse au lieu de la répéter.
+  if (air.access !== undefined) files.set("acces.data.ts", emitAccesData(air));
   files.set("navigation.tsx", emitNavigation(air));
   for (const screen of [...air.screens].sort((a, b) => byCodeUnit(a.id, b.id))) {
     // ÉTAPE ① — le plan couvre chaque écran PAR CONSTRUCTION ; un trou est

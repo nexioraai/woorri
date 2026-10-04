@@ -101,13 +101,13 @@ function diagnostiquer(doc: DocTest): string[] {
 }
 
 describe("un besoin porté est adossé (AIR, cliquet)", () => {
-  it("le document de gestion déclare 9 besoins portés, et chacun tient", () => {
+  it("le document de gestion déclare 10 besoins portés, et chacun tient", () => {
     // Ce test vaut par son document : SGD est en production, et ses besoins
     // viennent de ses incidents. Un document fabriqué pour le test mesurerait
     // ma capacité à écrire un cas qui passe.
     const doc = lire();
     const portes = doc.intent.needs.filter((n) => n.resolution.kind === "satisfied");
-    expect(portes.length).toBe(9);
+    expect(portes.length).toBe(10);
     expect(diagnostiquer(doc)).not.toContain("AIR_NEED_NODE_UNKNOWN");
   });
 

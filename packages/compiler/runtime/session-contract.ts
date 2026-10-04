@@ -25,4 +25,21 @@ export interface SessionProvider {
    * locale) ne le porte pas, et son comportement est inchangé.
    */
   enAttenteConfirmation?(): boolean;
+  /**
+   * CE QUE CETTE PERSONNE A LE DROIT D'OUVRIR (1.28.0 — émission du 2026-10-04).
+   *
+   * Rend les identifiants de droits accordés. `undefined` n'est PAS « aucun
+   * droit » : c'est « cette session ne sait pas le dire » — un fournisseur qui
+   * n'implémente pas cette méthode alors que le document déclare `access`.
+   *
+   * La distinction n'est pas théorique. « Aucun droit » envoie chercher la
+   * cause dans les rôles ; « session muette » l'envoie chercher dans
+   * l'intégration, et c'est là qu'elle est. Les deux produisent le même refus
+   * — fermé par défaut — mais pas le même message.
+   *
+   * OPTIONNEL : une application sans employés ne déclare pas `access`, aucun
+   * écran n'exige de droit, et ce fournisseur n'a rien à porter. Le
+   * comportement des versions antérieures est donc inchangé.
+   */
+  droits?(): readonly string[];
 }
