@@ -31,6 +31,7 @@
      "text": "Tableau de bord"
     }
    ],
+   "requiredRightId": "right_dashboard",
    "showsPrimaryNav": true,
    "showsScreenTitle": true,
    "presentation": "card",
@@ -69,6 +70,7 @@
      "text": "Rechercher un article"
     }
    ],
+   "requiredRightId": "right_recherche",
    "showsPrimaryNav": true,
    "showsScreenTitle": true,
    "presentation": "card",
@@ -104,6 +106,7 @@
      "text": "Scanner"
     }
    ],
+   "requiredRightId": "right_scan_inventaire",
    "showsPrimaryNav": true,
    "showsScreenTitle": true,
    "presentation": "card",
@@ -139,6 +142,7 @@
      "text": "Mouvements"
     }
    ],
+   "requiredRightId": "right_mouvements",
    "showsPrimaryNav": true,
    "showsScreenTitle": true,
    "presentation": "card",
@@ -174,6 +178,7 @@
      "text": "Porte"
     }
    ],
+   "requiredRightId": "right_porte",
    "showsPrimaryNav": true,
    "showsScreenTitle": true,
    "presentation": "card",
@@ -209,6 +214,7 @@
      "text": "Conteneurs"
     }
    ],
+   "requiredRightId": "right_conteneurs",
    "showsPrimaryNav": true,
    "showsScreenTitle": true,
    "presentation": "card",
@@ -244,6 +250,7 @@
      "text": "Lieux"
     }
    ],
+   "requiredRightId": "right_lieux",
    "showsPrimaryNav": true,
    "showsScreenTitle": true,
    "presentation": "card",
@@ -279,6 +286,7 @@
      "text": "Ventes"
     }
    ],
+   "requiredRightId": "right_ventes",
    "showsPrimaryNav": true,
    "showsScreenTitle": true,
    "presentation": "card",
@@ -314,6 +322,7 @@
      "text": "Clients"
     }
    ],
+   "requiredRightId": "right_clients",
    "showsPrimaryNav": true,
    "showsScreenTitle": true,
    "presentation": "card",
@@ -349,6 +358,7 @@
      "text": "Charges"
     }
    ],
+   "requiredRightId": "right_charges",
    "showsPrimaryNav": true,
    "showsScreenTitle": true,
    "presentation": "card",
@@ -384,6 +394,7 @@
      "text": "Rentabilité"
     }
    ],
+   "requiredRightId": "right_rentabilite",
    "showsPrimaryNav": true,
    "showsScreenTitle": true,
    "presentation": "card",
@@ -422,6 +433,7 @@
      "text": "Anticipation"
     }
    ],
+   "requiredRightId": "right_anticipation",
    "showsPrimaryNav": true,
    "showsScreenTitle": true,
    "presentation": "card",
@@ -492,7 +504,7 @@
   }
  ],
  "navigation": {
-  "entryScreenId": "scr_recherche",
+  "entryScreenId": "scr_parametres",
   "primary": {
    "destinations": [
     {
@@ -1667,6 +1679,156 @@
  "slots": [],
  "capabilities": [],
  "permissions": [],
+ "access": {
+  "rights": [
+   {
+    "id": "right_dashboard",
+    "name": "dashboard",
+    "label": [
+     {
+      "locale": "fr",
+      "text": "dashboard"
+     }
+    ]
+   },
+   {
+    "id": "right_recherche",
+    "name": "recherche",
+    "label": [
+     {
+      "locale": "fr",
+      "text": "recherche"
+     }
+    ]
+   },
+   {
+    "id": "right_scan_inventaire",
+    "name": "scan_inventaire",
+    "label": [
+     {
+      "locale": "fr",
+      "text": "scan inventaire"
+     }
+    ]
+   },
+   {
+    "id": "right_mouvements",
+    "name": "mouvements",
+    "label": [
+     {
+      "locale": "fr",
+      "text": "mouvements"
+     }
+    ]
+   },
+   {
+    "id": "right_porte",
+    "name": "porte",
+    "label": [
+     {
+      "locale": "fr",
+      "text": "porte"
+     }
+    ]
+   },
+   {
+    "id": "right_conteneurs",
+    "name": "conteneurs",
+    "label": [
+     {
+      "locale": "fr",
+      "text": "conteneurs"
+     }
+    ]
+   },
+   {
+    "id": "right_lieux",
+    "name": "lieux",
+    "label": [
+     {
+      "locale": "fr",
+      "text": "lieux"
+     }
+    ]
+   },
+   {
+    "id": "right_ventes",
+    "name": "ventes",
+    "label": [
+     {
+      "locale": "fr",
+      "text": "ventes"
+     }
+    ]
+   },
+   {
+    "id": "right_clients",
+    "name": "clients",
+    "label": [
+     {
+      "locale": "fr",
+      "text": "clients"
+     }
+    ]
+   },
+   {
+    "id": "right_charges",
+    "name": "charges",
+    "label": [
+     {
+      "locale": "fr",
+      "text": "charges"
+     }
+    ]
+   },
+   {
+    "id": "right_rentabilite",
+    "name": "rentabilite",
+    "label": [
+     {
+      "locale": "fr",
+      "text": "rentabilite"
+     }
+    ]
+   },
+   {
+    "id": "right_anticipation",
+    "name": "anticipation",
+    "label": [
+     {
+      "locale": "fr",
+      "text": "anticipation"
+     }
+    ]
+   }
+  ],
+  "roles": [
+   {
+    "id": "role_proprietaire",
+    "name": "proprietaire",
+    "label": [
+     {
+      "locale": "fr",
+      "text": "Propriétaire"
+     }
+    ],
+    "grantsAllRights": true,
+    "rightIds": []
+   },
+   {
+    "id": "role_employe",
+    "name": "employe",
+    "label": [
+     {
+      "locale": "fr",
+      "text": "Employé"
+     }
+    ],
+    "rightIds": []
+   }
+  ],
+  "defaultRoleId": "role_employe"
+ },
  "design": {
   "theme": "gestion_sobre"
  },
@@ -1748,24 +1910,41 @@
     "id": "need_droits_par_section",
     "statement": "Onze sections, chacune ouverte à un employé par liste blanche ; le propriétaire voit tout.",
     "resolution": {
-     "kind": "unexpressible",
-     "reason": "`permissions` de l'AIR décrit les permissions de l'APPAREIL (caméra, iOS/Android, `requiredByCapability`), pas les droits d'un utilisateur. `rules.kind = \"authorization\"` porte sur les CHAMPS d'une entité, jamais sur un écran ni sur une action. Rien ne permet d'écrire « cet écran demande le droit rentabilite »."
+     "kind": "satisfied",
+     "nodeIds": [
+      "role_employe",
+      "role_proprietaire",
+      "right_dashboard",
+      "right_recherche",
+      "right_scan_inventaire",
+      "right_mouvements",
+      "right_porte",
+      "right_conteneurs",
+      "right_lieux",
+      "right_ventes",
+      "right_clients",
+      "right_charges",
+      "right_rentabilite",
+      "right_anticipation"
+     ]
     }
    },
    {
     "id": "need_compte_sans_profil",
     "statement": "Un compte créé hors de l'application, sans profil, ne doit accéder à rien.",
     "resolution": {
-     "kind": "unexpressible",
-     "reason": "L'AIR n'a pas de notion d'utilisateur ni de rôle : il ne peut donc pas distinguer « authentifié » de « autorisé ». C'est précisément la confusion qui, dans SGD, laissait dix-sept routes écrire avec la clé qui traverse RLS."
+     "kind": "satisfied",
+     "nodeIds": [
+      "role_employe"
+     ]
     }
    },
    {
     "id": "need_porte_selon_droits",
-    "statement": "Après connexion, conduire chacun vers le premier écran que ses droits lui ouvrent.",
+    "statement": "Après connexion, conduire chacun vers le PREMIER écran que ses droits lui ouvrent.",
     "resolution": {
      "kind": "unexpressible",
-     "reason": "`navigation.entryScreenId` est UNIQUE et fixe. Un employé sans le droit du premier écran serait mis dehors à chaque ouverture — défaut réellement survenu dans SGD, deux fois : à la connexion, puis dans le manifeste de l'application installée."
+     "reason": "`navigation.entryScreenId` reste UNIQUE. Le validateur 1.28.0 refuse désormais qu'il exige un droit que le rôle par défaut n'a pas (AIR_ACCESS_ENTRY_UNREACHABLE) — le défaut de SGD est donc ATTRAPÉ. Mais refuser n'est pas résoudre : le format ne sait toujours pas dire « ouvre sur la première destination accessible », il sait seulement empêcher d'ouvrir sur une porte fermée."
     }
    },
    {
@@ -1812,8 +1991,10 @@
     "id": "need_trois_scans",
     "statement": "Inventaire, vente et transfert sont trois droits distincts : ils ne font pas la même chose au stock.",
     "resolution": {
-     "kind": "unexpressible",
-     "reason": "Même manque que les droits par section, aggravé : ici le droit ne porte pas sur un écran mais sur un MODE d'un même écran. L'AIR n'a aucun niveau en dessous de l'écran pour l'accrocher."
+     "kind": "satisfied",
+     "nodeIds": [
+      "right_scan_inventaire"
+     ]
     }
    }
   ]

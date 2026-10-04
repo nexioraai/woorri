@@ -30,7 +30,7 @@ declarerRacines(["scr_conteneurs","scr_mouvements","scr_porte","scr_recherche","
 export function Navigation() {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="scr_recherche"
+      <Stack.Navigator initialRouteName="scr_parametres"
         screenOptions={{ headerShadowVisible: false, headerStyle: { backgroundColor: theme.color.light.bg } }}>
       <Stack.Screen name="scr_anticipation" component={ScrAnticipationScreen}
         options={{ title: navData.routes.find((x) => x.screenId === "scr_anticipation")!.title }} />

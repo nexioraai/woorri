@@ -370,6 +370,22 @@ export const AIR_MIGRATIONS: readonly AirMigration[] = [
       "l'élicitation ne font.",
     migrate: (document) => document,
   },
+  {
+    from: "1.27.0",
+    to: "1.28.0",
+    description:
+      "AIR 1.28.0 : `access` — les droits, les rôles, et le droit qu'un écran " +
+      "ou une action exige. L'AIR n'en portait AUCUN : `permissions` décrit " +
+      "les permissions de l'APPAREIL, et `rules.kind = \"authorization\"` " +
+      "porte sur les champs d'une entité, jamais sur un écran. Mesuré le " +
+      "2026-10-04 en écrivant l'AIR d'un système de gestion réel : neuf " +
+      "besoins sur quatorze inexprimables, dont TROIS tenaient à ce seul trou. " +
+      "Migration IDENTITÉ : aucun rôle n'est attribué d'office. En inventer " +
+      "reviendrait à décider du modèle d'accès d'un document gelé — et un " +
+      "modèle d'accès deviné est pire qu'absent, car il se croit tenu. Un " +
+      "document sans `access` reste donc OUVERT, comme il l'était.",
+    migrate: (document) => document,
+  },
 ];
 
 export class AirMigrationError extends Error {

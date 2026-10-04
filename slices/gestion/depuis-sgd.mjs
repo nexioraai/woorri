@@ -243,6 +243,7 @@ function ecransEtActions(entites) {
     screens.push({
       id: `scr_${e.cle}`,
       title: [{ locale: "fr", text: e.titre }],
+      ...(e.droit ? { requiredRightId: `right_${e.droit}` } : {}),
       showsPrimaryNav: true,
       showsScreenTitle: true,
       presentation: "card",
@@ -260,6 +261,47 @@ function ecransEtActions(entites) {
   // La navigation d'un écran à l'autre passe par `navigation.routes` ; ces
   // actions ne portaient rien que les routes ne portent déjà.
   return { screens, actions };
+}
+
+// ══════════════════════════════════════════════════════════════
+//  2bis. LES DROITS, REPRIS DES SECTIONS RÉELLES DE SGD (AIR 1.28.0)
+// ══════════════════════════════════════════════════════════════
+//
+// SGD déclare onze sections dans `lib/garde.ts`, plus trois pour les gestes de
+// scan — l'inventaire AJOUTE au stock, la vente en RETIRE, le transfert le
+// DÉPLACE. Les accorder ensemble reviendrait à confier le recensement à qui ne
+// doit que vendre au comptoir.
+const DROITS = [...new Set(ECRANS.map((e) => e.droit).filter(Boolean))];
+
+function acces() {
+  return {
+    rights: DROITS.map((d) => ({
+      id: `right_${d}`,
+      name: d,
+      label: [{ locale: "fr", text: d.replace(/_/g, " ") }],
+    })),
+    roles: [
+      {
+        id: "role_proprietaire",
+        name: "proprietaire",
+        label: [{ locale: "fr", text: "Propriétaire" }],
+        // Sa liste n'est même pas consultée : il resterait propriétaire avec
+        // une liste vide. L'énumérer droit par droit serait une liste à tenir,
+        // et la section ajoutée demain lui serait fermée sans qu'il le voie.
+        grantsAllRights: true,
+        rightIds: [],
+      },
+      {
+        id: "role_employe",
+        name: "employe",
+        label: [{ locale: "fr", text: "Employé" }],
+        // LISTE BLANCHE, et vide par défaut : une section ajoutée demain n'est
+        // visible de personne tant qu'on ne l'accorde pas.
+        rightIds: [],
+      },
+    ],
+    defaultRoleId: "role_employe",
+  };
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -292,24 +334,21 @@ function besoins(entites) {
     "Enregistrer les recherches qui ne trouvent rien, sans jamais noter QUI a cherché.",
     [a("ent_recherches_ratees")].filter(Boolean));
 
-  manque("need_droits_par_section",
+  satisfait("need_droits_par_section",
     "Onze sections, chacune ouverte à un employé par liste blanche ; le propriétaire voit tout.",
-    "`permissions` de l'AIR décrit les permissions de l'APPAREIL (caméra, iOS/Android, " +
-    "`requiredByCapability`), pas les droits d'un utilisateur. `rules.kind = \"authorization\"` " +
-    "porte sur les CHAMPS d'une entité, jamais sur un écran ni sur une action. Rien ne permet " +
-    "d'écrire « cet écran demande le droit rentabilite ».");
+    ["role_employe", "role_proprietaire", ...DROITS.map((d) => `right_${d}`)]);
 
-  manque("need_compte_sans_profil",
+  satisfait("need_compte_sans_profil",
     "Un compte créé hors de l'application, sans profil, ne doit accéder à rien.",
-    "L'AIR n'a pas de notion d'utilisateur ni de rôle : il ne peut donc pas distinguer " +
-    "« authentifié » de « autorisé ». C'est précisément la confusion qui, dans SGD, laissait " +
-    "dix-sept routes écrire avec la clé qui traverse RLS.");
+    ["role_employe"]);
 
   manque("need_porte_selon_droits",
-    "Après connexion, conduire chacun vers le premier écran que ses droits lui ouvrent.",
-    "`navigation.entryScreenId` est UNIQUE et fixe. Un employé sans le droit du premier écran " +
-    "serait mis dehors à chaque ouverture — défaut réellement survenu dans SGD, deux fois : à la " +
-    "connexion, puis dans le manifeste de l'application installée.");
+    "Après connexion, conduire chacun vers le PREMIER écran que ses droits lui ouvrent.",
+    "`navigation.entryScreenId` reste UNIQUE. Le validateur 1.28.0 refuse désormais qu'il exige " +
+    "un droit que le rôle par défaut n'a pas (AIR_ACCESS_ENTRY_UNREACHABLE) — le défaut de SGD " +
+    "est donc ATTRAPÉ. Mais refuser n'est pas résoudre : le format ne sait toujours pas dire " +
+    "« ouvre sur la première destination accessible », il sait seulement empêcher d'ouvrir sur " +
+    "une porte fermée.");
 
   manque("need_stock_calcule",
     "Le stock n'est jamais stocké : il se calcule en rejouant les mouvements d'entrée et de sortie.",
@@ -342,10 +381,11 @@ function besoins(entites) {
     "principale mène à un écran sans entité (AIR_NAV_DESTINATION_DEAD) : trois des treize écrans " +
     "de SGD sont dans ce cas, et ce sont ceux que le propriétaire regarde le matin.");
 
-  manque("need_trois_scans",
+  satisfait("need_trois_scans",
     "Inventaire, vente et transfert sont trois droits distincts : ils ne font pas la même chose au stock.",
-    "Même manque que les droits par section, aggravé : ici le droit ne porte pas sur un écran mais " +
-    "sur un MODE d'un même écran. L'AIR n'a aucun niveau en dessous de l'écran pour l'accrocher.");
+    ["right_scan_inventaire"].filter(() => DROITS.includes("scan_inventaire")).length > 0
+      ? ["right_scan_inventaire"]
+      : ["role_employe"]);
 
   return n;
 }
@@ -375,7 +415,22 @@ const air = {
   },
   screens,
   navigation: {
-    entryScreenId: "scr_recherche",
+    // ── LA PORTE D'ENTRÉE EST L'ÉCRAN QUI N'EXIGE AUCUN DROIT.
+    //
+    // Le validateur 1.28.0 a refusé « scr_recherche » :
+    //   AIR_ACCESS_ENTRY_UNREACHABLE — tout nouveau compte serait mis dehors
+    //   dès l'ouverture.
+    //
+    // Il a raison, et c'est LITTÉRALEMENT ce qui est arrivé dans SGD : un
+    // employé dont les droits n'étaient pas encore accordés tombait sur un mur,
+    // à la connexion puis à chaque ouverture de l'application installée. La
+    // réparation posée dans SGD fut exactement celle que le format impose ici —
+    // ouvrir sur Paramètres, ouverte à tous, où l'on peut au moins changer son
+    // mot de passe et voir ce qui nous est accordé.
+    //
+    // Un format qui force la bonne conception vaut mieux qu'un format qui la
+    // documente.
+    entryScreenId: `scr_${ECRANS.find((e) => !e.droit).cle}`,
     primary: {
       // Cinq destinations au maximum, et le schéma l'impose : une barre
       // d'onglets qui en porte douze n'est plus une barre, c'est un menu.
@@ -411,6 +466,7 @@ const air = {
   slots: [],
   capabilities: [],
   permissions: [],
+  access: acces(),
   design: { theme: "gestion_sobre" },
   integrations: [],
   network: { policy: "deny_by_default", allowedDomains: [] },

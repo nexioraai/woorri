@@ -54,7 +54,11 @@ describe("PASSE B — le prompt enseigne les corrections, depuis l'enveloppe", (
   it("B3 · thenScreenId : enseigné SUR L'EFFET capability, jamais dans les params", () => {
     expect(SOURCE).toContain("SUR L'EFFET \\`capability\\`");
     expect(SOURCE).toContain("JAMAIS dans les params");
-    expect(SOURCE).toContain('CONTRAT_CIBLE = "1.27.0"');
+    // La version visée n'est PAS vérifiée ici. Elle l'était, en dur, et chaque
+    // avancee du contrat cassait ce test — qui ne parle pourtant que de la
+    // place de `thenScreenId`. L'egalite CONTRAT_CIBLE === AIR_SCHEMA_VERSION
+    // appartient a `generateur-synchronise.test.ts`, qui la DERIVE au lieu de
+    // la recopier : un seul endroit a corriger lors d'une montee de contrat.
   });
 
   it("B4 · références : jamais affichées ni saisies", () => {

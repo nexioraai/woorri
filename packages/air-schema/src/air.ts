@@ -14,6 +14,8 @@ import {
   screenIdSchema,
   slotIdSchema,
   needIdSchema,
+  rightIdSchema,
+  roleIdSchema,
   testIdSchema,
 } from "./ids.ts";
 
@@ -21,7 +23,7 @@ import {
 // 1.7.1 (E3.3, D-131) : provenance APLANIE (sourceKind/sourceIntegrationId/
 //   sourceDomain/sourceRefreshSeconds) — l'union 1.7.0 dépassait la limite
 //   réelle de grammaire de l'API (classe D-078) ; sémantique inchangée.
-export const AIR_SCHEMA_VERSION = "1.27.0";
+export const AIR_SCHEMA_VERSION = "1.28.0";
 
 export const semverSchema = z.string().regex(/^\d+\.\d+\.\d+$/);
 export const sha256Schema = z.string().regex(/^[0-9a-f]{64}$/);
@@ -213,6 +215,12 @@ const blockInstanceSchema = z.strictObject({
 const screenSchema = z.strictObject({
   id: screenIdSchema,
   title: localizedTextSchema,
+  /**
+   * LE DROIT QUI OUVRE CET ÉCRAN (1.28.0) — OPTIONNEL : un écran sans droit
+   * déclaré est ouvert à tous, ce qui est le comportement de toutes les
+   * versions antérieures. L'absence n'est donc jamais une fermeture surprise.
+   */
+  requiredRightId: rightIdSchema.optional(),
   /**
    * CHROME DE L'ÉCRAN (1.15.0) — la barre d'onglets est-elle rendue ici ?
    *
@@ -753,6 +761,14 @@ const actionEffectSchema = z.discriminatedUnion("kind", [
 ]);
 
 const actionSchema = z.strictObject({
+  /**
+   * LE DROIT QU'EXIGE CETTE ACTION (1.28.0). Un écran peut être ouvert à tous
+   * et porter un geste qui ne l'est pas : dans SGD, inventaire, vente et
+   * transfert sont trois droits distincts sur le MÊME écran de scan — ils ne
+   * font pas la même chose au stock. Sans ce champ, le droit ne pouvait
+   * s'accrocher qu'à l'écran, donc aux trois à la fois.
+   */
+  requiredRightId: rightIdSchema.optional(),
   id: actionIdSchema,
   name: z.string().min(1),
   trigger: actionTriggerSchema,
@@ -787,6 +803,70 @@ const slotSchema = z.strictObject({
   inputs: z.array(slotPortSchema),
   outputs: z.array(slotPortSchema),
   allowedImports: z.array(z.string()),
+});
+
+// ══════════════════════════════════════════════════════════════
+//  CONTRÔLE D'ACCÈS (1.28.0) — QUI A LE DROIT DE VOIR QUOI.
+//
+// ── POURQUOI CE BLOC EXISTE, et ce qu'il a coûté de ne pas l'avoir.
+//
+// Mesure du 2026-10-04 : l'AIR d'un système de gestion réel — SGD, en
+// production — a été écrit, puis compilé. Le modèle de données passe sans
+// difficulté : 15 entités, 9 relations, 73 fichiers émis. Mais NEUF besoins sur
+// quatorze sont sortis `unexpressible`, et TROIS tenaient au même trou.
+//
+// `permissions` décrit les permissions de l'APPAREIL — caméra, iOS/Android,
+// `requiredByCapability`. Rien à voir avec les droits d'une personne. Et
+// `rules.kind = "authorization"` porte sur les CHAMPS d'une entité : elle sait
+// dire « ce champ doit valoir ceci », jamais « cet écran demande ce droit ».
+//
+// CE QUE CE TROU A PRODUIT DANS LA VRAIE VIE. Dans SGD, dix-sept routes
+// écrivaient avec la clé qui traverse les politiques de la base — l'application
+// était elle-même la porte ouverte. Et un employé sans le droit du tableau de
+// bord ne pouvait pas entrer DU TOUT : ni par la page de connexion, ni par
+// l'application installée sur son téléphone, qui ouvrait sur ce même écran. Le
+// défaut a survécu à sa propre correction parce qu'il habitait deux fichiers.
+//
+// LE PROPRIÉTAIRE NE PEUT PAS LE VOIR : il voit tout. C'est la raison pour
+// laquelle un contrôle de ce genre doit vivre dans le FORMAT, et être vérifié à
+// la compilation — pas découvert sur le téléphone d'un employé.
+// ══════════════════════════════════════════════════════════════
+
+const rightSchema = z.strictObject({
+  id: rightIdSchema,
+  name: z.string().regex(/^[a-z][a-z0-9_]*$/),
+  label: localizedTextSchema,
+});
+
+const roleSchema = z.strictObject({
+  id: roleIdSchema,
+  name: z.string().regex(/^[a-z][a-z0-9_]*$/),
+  label: localizedTextSchema,
+  /**
+   * LE RÔLE QUI VOIT TOUT, déclaré et non déduit.
+   *
+   * Dans SGD le propriétaire ne figure sur aucune liste blanche : sa liste de
+   * droits pourrait être vide, il resterait propriétaire. Exprimer cela en lui
+   * accordant TOUS les droits un par un serait une liste à tenir à jour — et
+   * la première section ajoutée demain lui serait fermée sans que personne le
+   * remarque.
+   */
+  grantsAllRights: z.boolean().optional(),
+  rightIds: z.array(rightIdSchema),
+});
+
+const accessSchema = z.strictObject({
+  rights: z.array(rightSchema),
+  roles: z.array(roleSchema).min(1),
+  /**
+   * CE QU'UN COMPTE REÇOIT QUAND RIEN N'A ÉTÉ ACCORDÉ.
+   *
+   * Exigé, et c'est le point : sans rôle par défaut, un compte créé hors de
+   * l'application n'aurait AUCUN statut, et chaque écran déciderait seul s'il
+   * le laisse entrer. C'est ainsi qu'un compte sans profil traversait SGD
+   * jusqu'à ce que `exigerProfil` soit posé sur les trente-trois routes.
+   */
+  defaultRoleId: roleIdSchema,
 });
 
 const capabilityRequestSchema = z.strictObject({
@@ -906,6 +986,15 @@ export const projectAirSchema = z.strictObject({
   slots: z.array(slotSchema),
   capabilities: z.array(capabilityRequestSchema),
   permissions: z.array(permissionSchema),
+  /**
+   * CONTRÔLE D'ACCÈS (1.28.0) — OPTIONNEL AU SCHÉMA.
+   *
+   * Le rendre requis forcerait la migration à FABRIQUER des rôles pour les
+   * documents du corpus gelé : inventer un modèle d'accès que personne n'a
+   * décidé, exactement ce que les migrations de ce dépôt s'interdisent. Un
+   * document sans `access` se comporte comme avant — tout est ouvert.
+   */
+  access: accessSchema.optional(),
   design: designSchema,
   integrations: z.array(integrationSchema),
   network: networkPolicySchema,

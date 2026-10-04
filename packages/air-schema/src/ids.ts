@@ -25,6 +25,13 @@ export const testIdSchema = idSchema("test");
 // même titre qu'un écran : il porte une identité stable et unique.
 export const needIdSchema = idSchema("need");
 
+// CONTRÔLE D'ACCÈS (1.28.0) — un droit et un rôle sont des NŒUDS du document,
+// pas des chaînes libres : un écran les désigne par identité, et le validateur
+// vérifie que la cible existe. Nommer un droit par son libellé aurait fait
+// dépendre la sécurité d'une orthographe.
+export const rightIdSchema = idSchema("right");
+export const roleIdSchema = idSchema("role");
+
 // Référence de capability : clé du registre (ARCHITECTURE §2), pas un nœud
 // AIR — le LLM demande la capacité, le registre décide de l'implémentation.
 export const capabilityRefSchema = z

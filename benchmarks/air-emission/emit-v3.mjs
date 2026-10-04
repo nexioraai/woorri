@@ -195,7 +195,7 @@ const coutUSD = (u) => adaptateur.coutUsd(adaptateur.lireUsage(u));
 // EP-137 — resynchronisé sur AIR 1.23.0 (`purpose` : le genre des écrans
 // qui n'ont aucune existence métier). Monté DANS LE MÊME GESTE que la
 // règle 41, comme le cliquet `generateur-synchronise` l'exige.
-export const CONTRAT_CIBLE = "1.27.0";
+export const CONTRAT_CIBLE = "1.28.0";
 
 const PARTS = [
   {
@@ -576,6 +576,28 @@ ${surfacesDigest()}
    Ils vivent DANS l'espace compte, atteignables par une action \`navigate\` depuis lui, et JAMAIS dans \`navigation.primary\`.
 
 41bis. LE GENRE DE L'ESPACE COMPTE LUI-MÊME — \`${presentation.GENRE_RACINE_COMPTE}\`. Les genres ci-dessus nomment ce qui VIT dans le compte ; celui-ci nomme le LIEU qui les héberge. IL EST LE SEUL DE SON ESPÈCE : le seul qui ait sa place dans \`navigation.primary\`, là où les autres y sont interdits. POSE-LE SUR L'ÉCRAN QUI EST L'ESPACE COMPTE — un seul, exactement, dès que ton application a des comptes. CE QU'IL COMMANDE : le moteur intitule cette destination « Compte », quel que soit le libellé que tu écris. Sans ce genre, le moteur ne SAIT PAS lequel de tes écrans est le compte, et il n'en devine aucun — la destination garde alors ton libellé, et ce n'est pas celui que l'utilisateur cherche. SEULE EXCEPTION, et elle est imposée : la DIVULGATION du partage se rencontre dans l'usage NORMAL — atteignable depuis l'écran d'ENTRÉE, jamais seulement depuis un menu ou l'espace compte (Google Play, User Data : « must be displayed in the normal usage of the app and not require the user to navigate into a menu or settings »). 41ter. ET TU RÉDIGES LEUR TEXTE — DÉCISION DE YOUSSOUF, 2026-09-18, QUI RENVERSE LA CONSIGNE PRÉCÉDENTE. Jusqu'ici l'instruction disait « tu ne rédiges pas leur texte, l'écran existe, son contenu sera fourni » — et les écrans produits annonçaient donc « le texte complet des conditions est fourni par le propriétaire ». Un écran qui promet un texte n'est pas une surface, c'est une page blanche avec une excuse. DÉSORMAIS : chaque écran de surface qui porte un ENGAGEMENT (conditions, confidentialité, mentions légales, partage des données, retrait du consentement, suppression du compte) porte un bloc \`prose\` avec un texte RÉEL ET COMPLET, écrit pour CE domaine et CE qu'il collecte vraiment — les catégories de données que TES entités déclarent, les intégrations que TU as posées, rien d'inventé. CE TEXTE EST UN BROUILLON, ET IL LE DIT : pose \`brouillon: true\` sur ces blocs. Un texte juridique ENGAGE le propriétaire ; il doit le relire, l'adapter à son pays et le remplacer. Le déclarer brouillon n'est pas une précaution de forme — c'est la condition pour que le rédiger soit acceptable. N'écris JAMAIS \`brouillon: true\` sur un texte qui n'engage personne (une page d'aide, un mode d'emploi) : celui-là est définitif.
+
+42. QUI A LE DROIT DE VOIR QUOI (1.28) — \`access\` et \`requiredRightId\`.
+
+   Une application de GESTION — stock, caisse, atelier, école, clinique — n'a pas un seul
+   utilisateur : elle a un patron et des employés, et ils ne voient pas la même chose. Déclare
+   alors \`access\` : \`rights\` (un droit par domaine : \`right_stock\`, \`right_caisse\`,
+   \`right_rentabilite\`), \`roles\` (celui qui dirige porte \`grantsAllRights: true\` ; les autres
+   une LISTE BLANCHE, vide par défaut), et \`defaultRoleId\` — ce qu'un compte reçoit quand rien ne
+   lui a été accordé.
+
+   Chaque écran réservé porte \`requiredRightId\`. Chaque geste réservé aussi : un même écran de
+   scan peut servir à l'inventaire, à la vente et au transfert, qui ne font PAS la même chose au
+   stock — ce sont trois droits, portés par trois actions, pas par l'écran.
+
+   ⚠️ L'ÉCRAN D'ENTRÉE N'EN PORTE AUCUN. Le validateur refuse un \`entryScreenId\` qui exige un
+   droit que le rôle par défaut n'a pas (AIR_ACCESS_ENTRY_UNREACHABLE), et il a une raison
+   mesurée : dans un système réel, un employé dont les droits n'étaient pas encore accordés était
+   mis dehors DÈS L'OUVERTURE — à la connexion, puis à chaque lancement de l'application
+   installée. Le patron ne pouvait pas le voir : il voit tout.
+
+   Une application sans employés n'écrit PAS \`access\` — un modèle d'accès inventé est pire
+   qu'absent, car il se croit tenu.
 
 35bis. UNE FICHE, UN SEUL BUT — ET C'EST LA RÈGLE LA PLUS SOUVENT ENFREINTE. Un écran ne porte JAMAIS deux \`form\`. Mesuré trois runs de suite : l'écran « Se connecter » portait « J'ai déjà un compte » ET « Créer un compte », l'un sous l'autre, et l'utilisateur devait deviner lequel le concernait. Le choix se fait AVANT, par un BOUTON qui ouvre la fiche voulue — deux boutons sur l'espace compte, deux écrans distincts, un formulaire chacun.
 

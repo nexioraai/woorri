@@ -74,6 +74,108 @@ export function validateAir(air: ProjectAir): AirDiagnostic[] {
   };
 
   const screenIds = new Set(air.screens.map((s) => s.id));
+
+  // ══════════════════════════════════════════════════════════════
+  //  CONTRÔLE D'ACCÈS (1.28.0)
+  //
+  // Le défaut fondateur, mesuré dans un système en production : un employé
+  // sans le droit du premier écran ne pouvait PAS ENTRER — ni par la page de
+  // connexion, ni par l'application installée sur son téléphone, qui ouvrait
+  // sur ce même écran. Ses droits existaient ; aucun écran ne les lui servait.
+  //
+  // Le propriétaire ne pouvait pas le rencontrer : il voit tout. Il a fallu
+  // qu'un employé installe l'application. C'est exactement le genre de défaut
+  // qu'un format doit refuser AVANT la compilation.
+  // ══════════════════════════════════════════════════════════════
+  const acces = air.access;
+  const droitsConnus = new Set(acces?.rights.map((d) => d.id) ?? []);
+
+  if (acces !== undefined) {
+    const roleParId = new Map(acces.roles.map((r) => [r.id, r]));
+
+    acces.roles.forEach((role, i) => {
+      role.rightIds.forEach((droitId, j) => {
+        if (!droitsConnus.has(droitId)) {
+          push(
+            "AIR_ACCESS_RIGHT_UNKNOWN",
+            `access.roles[${i}].rightIds[${j}]`,
+            `le rôle "${role.id}" accorde le droit "${droitId}", qui n'est pas déclaré`,
+          );
+        }
+      });
+    });
+
+    const parDefaut = roleParId.get(acces.defaultRoleId);
+    if (parDefaut === undefined) {
+      push(
+        "AIR_ACCESS_DEFAULT_ROLE_UNKNOWN",
+        "access.defaultRoleId",
+        `le rôle par défaut "${acces.defaultRoleId}" n'est pas déclaré : un compte nouvellement créé n'aurait aucun statut`,
+      );
+    }
+
+    // Un droit nommé par un écran ou une action doit exister : sans cela, la
+    // sécurité dépendrait d'une orthographe, et un droit mal tapé ouvrirait
+    // l'écran à tout le monde au lieu de le fermer.
+    air.screens.forEach((ecran, i) => {
+      if (ecran.requiredRightId !== undefined && !droitsConnus.has(ecran.requiredRightId)) {
+        push(
+          "AIR_ACCESS_RIGHT_UNKNOWN",
+          `screens[${i}].requiredRightId`,
+          `l'écran "${ecran.id}" exige le droit "${ecran.requiredRightId}", qui n'est pas déclaré`,
+        );
+      }
+    });
+    air.actions.forEach((action, i) => {
+      if (action.requiredRightId !== undefined && !droitsConnus.has(action.requiredRightId)) {
+        push(
+          "AIR_ACCESS_RIGHT_UNKNOWN",
+          `actions[${i}].requiredRightId`,
+          `l'action "${action.id}" exige le droit "${action.requiredRightId}", qui n'est pas déclaré`,
+        );
+      }
+    });
+
+    // ── LA PORTE D'ENTRÉE DOIT S'OUVRIR AU RÔLE PAR DÉFAUT.
+    //
+    // C'est LE défaut de SGD, et il se voit ici en une ligne : si l'écran
+    // d'entrée exige un droit que le rôle par défaut n'a pas, tout nouvel
+    // employé est mis dehors dès l'ouverture.
+    const entree = air.screens.find((s) => s.id === air.navigation.entryScreenId);
+    const requis = entree?.requiredRightId;
+    if (parDefaut !== undefined && requis !== undefined) {
+      const ouvert = parDefaut.grantsAllRights === true || parDefaut.rightIds.includes(requis);
+      if (!ouvert) {
+        push(
+          "AIR_ACCESS_ENTRY_UNREACHABLE",
+          "navigation.entryScreenId",
+          `l'écran d'entrée "${air.navigation.entryScreenId}" exige le droit "${requis}", que le rôle par défaut "${parDefaut.id}" n'a pas : tout nouveau compte serait mis dehors dès l'ouverture`,
+        );
+      }
+    }
+  } else {
+    // Un droit nommé sans bloc `access` ne protège RIEN : il se lit comme une
+    // précaution et n'en est pas une. On refuse plutôt que de laisser croire.
+    air.screens.forEach((ecran, i) => {
+      if (ecran.requiredRightId !== undefined) {
+        push(
+          "AIR_ACCESS_SANS_DECLARATION",
+          `screens[${i}].requiredRightId`,
+          `l'écran "${ecran.id}" exige un droit alors qu'aucun bloc "access" n'est déclaré : ce droit ne protège rien`,
+        );
+      }
+    });
+    air.actions.forEach((action, i) => {
+      if (action.requiredRightId !== undefined) {
+        push(
+          "AIR_ACCESS_SANS_DECLARATION",
+          `actions[${i}].requiredRightId`,
+          `l'action "${action.id}" exige un droit alors qu'aucun bloc "access" n'est déclaré : ce droit ne protège rien`,
+        );
+      }
+    });
+  }
+
   const blockIds = new Set(air.screens.flatMap((s) => s.blocks.map((b) => b.id)));
   const entityById = new Map(air.entities.map((e) => [e.id, e]));
   const slotIds = new Set(air.slots.map((s) => s.id));
