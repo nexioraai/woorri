@@ -1,0 +1,1821 @@
+{
+ "airSchemaVersion": "1.27.0",
+ "projectId": "prj_gestion_sgd",
+ "app": {
+  "name": "Gestion",
+  "slug": "gestion",
+  "description": [
+   {
+    "locale": "fr",
+    "text": "Stock, mouvements, conteneurs et rentabilité d'un commerce."
+   }
+  ],
+  "locales": {
+   "userLanguage": "fr",
+   "appLocales": [
+    "fr"
+   ],
+   "defaultAppLocale": "fr",
+   "contentLocales": [
+    "fr"
+   ],
+   "rtlSupported": false
+  }
+ },
+ "screens": [
+  {
+   "id": "scr_dashboard",
+   "title": [
+    {
+     "locale": "fr",
+     "text": "Tableau de bord"
+    }
+   ],
+   "showsPrimaryNav": true,
+   "showsScreenTitle": true,
+   "presentation": "card",
+   "blocks": [
+    {
+     "id": "blk_dashboard_entete",
+     "blockType": "header",
+     "props": [
+      {
+       "key": "title",
+       "value": "Tableau de bord"
+      }
+     ]
+    },
+    {
+     "id": "blk_dashboard_vide",
+     "blockType": "empty_state",
+     "props": [
+      {
+       "key": "title",
+       "value": "Tableau de bord"
+      },
+      {
+       "key": "message",
+       "value": "Cet écran agrège des chiffres : il ne montre aucune table."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "scr_recherche",
+   "title": [
+    {
+     "locale": "fr",
+     "text": "Rechercher un article"
+    }
+   ],
+   "showsPrimaryNav": true,
+   "showsScreenTitle": true,
+   "presentation": "card",
+   "blocks": [
+    {
+     "id": "blk_recherche_entete",
+     "blockType": "header",
+     "props": [
+      {
+       "key": "title",
+       "value": "Rechercher un article"
+      }
+     ]
+    },
+    {
+     "id": "blk_recherche_liste",
+     "blockType": "list",
+     "entityId": "ent_articles",
+     "props": [
+      {
+       "key": "titleFieldId",
+       "value": "fld_articles_nom"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "scr_scanner",
+   "title": [
+    {
+     "locale": "fr",
+     "text": "Scanner"
+    }
+   ],
+   "showsPrimaryNav": true,
+   "showsScreenTitle": true,
+   "presentation": "card",
+   "blocks": [
+    {
+     "id": "blk_scanner_entete",
+     "blockType": "header",
+     "props": [
+      {
+       "key": "title",
+       "value": "Scanner"
+      }
+     ]
+    },
+    {
+     "id": "blk_scanner_liste",
+     "blockType": "list",
+     "entityId": "ent_mouvements",
+     "props": [
+      {
+       "key": "titleFieldId",
+       "value": "fld_mouvements_type"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "scr_mouvements",
+   "title": [
+    {
+     "locale": "fr",
+     "text": "Mouvements"
+    }
+   ],
+   "showsPrimaryNav": true,
+   "showsScreenTitle": true,
+   "presentation": "card",
+   "blocks": [
+    {
+     "id": "blk_mouvements_entete",
+     "blockType": "header",
+     "props": [
+      {
+       "key": "title",
+       "value": "Mouvements"
+      }
+     ]
+    },
+    {
+     "id": "blk_mouvements_liste",
+     "blockType": "list",
+     "entityId": "ent_mouvements",
+     "props": [
+      {
+       "key": "titleFieldId",
+       "value": "fld_mouvements_type"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "scr_porte",
+   "title": [
+    {
+     "locale": "fr",
+     "text": "Porte"
+    }
+   ],
+   "showsPrimaryNav": true,
+   "showsScreenTitle": true,
+   "presentation": "card",
+   "blocks": [
+    {
+     "id": "blk_porte_entete",
+     "blockType": "header",
+     "props": [
+      {
+       "key": "title",
+       "value": "Porte"
+      }
+     ]
+    },
+    {
+     "id": "blk_porte_liste",
+     "blockType": "list",
+     "entityId": "ent_mouvements",
+     "props": [
+      {
+       "key": "titleFieldId",
+       "value": "fld_mouvements_type"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "scr_conteneurs",
+   "title": [
+    {
+     "locale": "fr",
+     "text": "Conteneurs"
+    }
+   ],
+   "showsPrimaryNav": true,
+   "showsScreenTitle": true,
+   "presentation": "card",
+   "blocks": [
+    {
+     "id": "blk_conteneurs_entete",
+     "blockType": "header",
+     "props": [
+      {
+       "key": "title",
+       "value": "Conteneurs"
+      }
+     ]
+    },
+    {
+     "id": "blk_conteneurs_liste",
+     "blockType": "list",
+     "entityId": "ent_conteneurs",
+     "props": [
+      {
+       "key": "titleFieldId",
+       "value": "fld_conteneurs_numero"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "scr_lieux",
+   "title": [
+    {
+     "locale": "fr",
+     "text": "Lieux"
+    }
+   ],
+   "showsPrimaryNav": true,
+   "showsScreenTitle": true,
+   "presentation": "card",
+   "blocks": [
+    {
+     "id": "blk_lieux_entete",
+     "blockType": "header",
+     "props": [
+      {
+       "key": "title",
+       "value": "Lieux"
+      }
+     ]
+    },
+    {
+     "id": "blk_lieux_liste",
+     "blockType": "list",
+     "entityId": "ent_lieux",
+     "props": [
+      {
+       "key": "titleFieldId",
+       "value": "fld_lieux_nom"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "scr_ventes",
+   "title": [
+    {
+     "locale": "fr",
+     "text": "Ventes"
+    }
+   ],
+   "showsPrimaryNav": true,
+   "showsScreenTitle": true,
+   "presentation": "card",
+   "blocks": [
+    {
+     "id": "blk_ventes_entete",
+     "blockType": "header",
+     "props": [
+      {
+       "key": "title",
+       "value": "Ventes"
+      }
+     ]
+    },
+    {
+     "id": "blk_ventes_liste",
+     "blockType": "list",
+     "entityId": "ent_factures_clients",
+     "props": [
+      {
+       "key": "titleFieldId",
+       "value": "fld_factures_clients_numero_facture"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "scr_clients",
+   "title": [
+    {
+     "locale": "fr",
+     "text": "Clients"
+    }
+   ],
+   "showsPrimaryNav": true,
+   "showsScreenTitle": true,
+   "presentation": "card",
+   "blocks": [
+    {
+     "id": "blk_clients_entete",
+     "blockType": "header",
+     "props": [
+      {
+       "key": "title",
+       "value": "Clients"
+      }
+     ]
+    },
+    {
+     "id": "blk_clients_liste",
+     "blockType": "list",
+     "entityId": "ent_clients",
+     "props": [
+      {
+       "key": "titleFieldId",
+       "value": "fld_clients_nom"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "scr_charges",
+   "title": [
+    {
+     "locale": "fr",
+     "text": "Charges"
+    }
+   ],
+   "showsPrimaryNav": true,
+   "showsScreenTitle": true,
+   "presentation": "card",
+   "blocks": [
+    {
+     "id": "blk_charges_entete",
+     "blockType": "header",
+     "props": [
+      {
+       "key": "title",
+       "value": "Charges"
+      }
+     ]
+    },
+    {
+     "id": "blk_charges_liste",
+     "blockType": "list",
+     "entityId": "ent_depenses",
+     "props": [
+      {
+       "key": "titleFieldId",
+       "value": "fld_depenses_nature"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "scr_rentabilite",
+   "title": [
+    {
+     "locale": "fr",
+     "text": "Rentabilité"
+    }
+   ],
+   "showsPrimaryNav": true,
+   "showsScreenTitle": true,
+   "presentation": "card",
+   "blocks": [
+    {
+     "id": "blk_rentabilite_entete",
+     "blockType": "header",
+     "props": [
+      {
+       "key": "title",
+       "value": "Rentabilité"
+      }
+     ]
+    },
+    {
+     "id": "blk_rentabilite_vide",
+     "blockType": "empty_state",
+     "props": [
+      {
+       "key": "title",
+       "value": "Rentabilité"
+      },
+      {
+       "key": "message",
+       "value": "Cet écran agrège des chiffres : il ne montre aucune table."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "scr_anticipation",
+   "title": [
+    {
+     "locale": "fr",
+     "text": "Anticipation"
+    }
+   ],
+   "showsPrimaryNav": true,
+   "showsScreenTitle": true,
+   "presentation": "card",
+   "blocks": [
+    {
+     "id": "blk_anticipation_entete",
+     "blockType": "header",
+     "props": [
+      {
+       "key": "title",
+       "value": "Anticipation"
+      }
+     ]
+    },
+    {
+     "id": "blk_anticipation_vide",
+     "blockType": "empty_state",
+     "props": [
+      {
+       "key": "title",
+       "value": "Anticipation"
+      },
+      {
+       "key": "message",
+       "value": "Cet écran agrège des chiffres : il ne montre aucune table."
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "scr_parametres",
+   "title": [
+    {
+     "locale": "fr",
+     "text": "Paramètres"
+    }
+   ],
+   "showsPrimaryNav": true,
+   "showsScreenTitle": true,
+   "presentation": "card",
+   "blocks": [
+    {
+     "id": "blk_parametres_entete",
+     "blockType": "header",
+     "props": [
+      {
+       "key": "title",
+       "value": "Paramètres"
+      }
+     ]
+    },
+    {
+     "id": "blk_parametres_vide",
+     "blockType": "empty_state",
+     "props": [
+      {
+       "key": "title",
+       "value": "Paramètres"
+      },
+      {
+       "key": "message",
+       "value": "Cet écran agrège des chiffres : il ne montre aucune table."
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "navigation": {
+  "entryScreenId": "scr_recherche",
+  "primary": {
+   "destinations": [
+    {
+     "routeId": "nav_recherche",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Rechercher un article"
+      }
+     ],
+     "order": 0,
+     "icon": "recherche"
+    },
+    {
+     "routeId": "nav_scanner",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Scanner"
+      }
+     ],
+     "order": 1,
+     "icon": "liste"
+    },
+    {
+     "routeId": "nav_mouvements",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Mouvements"
+      }
+     ],
+     "order": 2,
+     "icon": "carte"
+    },
+    {
+     "routeId": "nav_porte",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Porte"
+      }
+     ],
+     "order": 3,
+     "icon": "billet"
+    },
+    {
+     "routeId": "nav_conteneurs",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Conteneurs"
+      }
+     ],
+     "order": 4
+    }
+   ]
+  },
+  "routes": [
+   {
+    "id": "nav_dashboard",
+    "screenId": "scr_dashboard",
+    "title": [
+     {
+      "locale": "fr",
+      "text": "Tableau de bord"
+     }
+    ]
+   },
+   {
+    "id": "nav_recherche",
+    "screenId": "scr_recherche",
+    "title": [
+     {
+      "locale": "fr",
+      "text": "Rechercher un article"
+     }
+    ]
+   },
+   {
+    "id": "nav_scanner",
+    "screenId": "scr_scanner",
+    "title": [
+     {
+      "locale": "fr",
+      "text": "Scanner"
+     }
+    ]
+   },
+   {
+    "id": "nav_mouvements",
+    "screenId": "scr_mouvements",
+    "title": [
+     {
+      "locale": "fr",
+      "text": "Mouvements"
+     }
+    ]
+   },
+   {
+    "id": "nav_porte",
+    "screenId": "scr_porte",
+    "title": [
+     {
+      "locale": "fr",
+      "text": "Porte"
+     }
+    ]
+   },
+   {
+    "id": "nav_conteneurs",
+    "screenId": "scr_conteneurs",
+    "title": [
+     {
+      "locale": "fr",
+      "text": "Conteneurs"
+     }
+    ]
+   },
+   {
+    "id": "nav_lieux",
+    "screenId": "scr_lieux",
+    "title": [
+     {
+      "locale": "fr",
+      "text": "Lieux"
+     }
+    ]
+   },
+   {
+    "id": "nav_ventes",
+    "screenId": "scr_ventes",
+    "title": [
+     {
+      "locale": "fr",
+      "text": "Ventes"
+     }
+    ]
+   },
+   {
+    "id": "nav_clients",
+    "screenId": "scr_clients",
+    "title": [
+     {
+      "locale": "fr",
+      "text": "Clients"
+     }
+    ]
+   },
+   {
+    "id": "nav_charges",
+    "screenId": "scr_charges",
+    "title": [
+     {
+      "locale": "fr",
+      "text": "Charges"
+     }
+    ]
+   },
+   {
+    "id": "nav_rentabilite",
+    "screenId": "scr_rentabilite",
+    "title": [
+     {
+      "locale": "fr",
+      "text": "Rentabilité"
+     }
+    ]
+   },
+   {
+    "id": "nav_anticipation",
+    "screenId": "scr_anticipation",
+    "title": [
+     {
+      "locale": "fr",
+      "text": "Anticipation"
+     }
+    ]
+   },
+   {
+    "id": "nav_parametres",
+    "screenId": "scr_parametres",
+    "title": [
+     {
+      "locale": "fr",
+      "text": "Paramètres"
+     }
+    ]
+   }
+  ]
+ },
+ "entities": [
+  {
+   "id": "ent_codes",
+   "name": "codes",
+   "fields": [
+    {
+     "id": "fld_codes_article_id",
+     "name": "article_id",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "article id"
+      }
+     ],
+     "type": "reference",
+     "required": true,
+     "referencesEntityId": "ent_articles"
+    },
+    {
+     "id": "fld_codes_code",
+     "name": "code",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "code"
+      }
+     ],
+     "type": "string",
+     "required": true
+    },
+    {
+     "id": "fld_codes_origine",
+     "name": "origine",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "origine"
+      }
+     ],
+     "type": "string",
+     "required": true
+    }
+   ]
+  },
+  {
+   "id": "ent_connexions",
+   "name": "connexions",
+   "fields": [
+    {
+     "id": "fld_connexions_utilisateur_id",
+     "name": "utilisateur_id",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "utilisateur id"
+      }
+     ],
+     "type": "string",
+     "required": false
+    },
+    {
+     "id": "fld_connexions_email",
+     "name": "email",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "email"
+      }
+     ],
+     "type": "string",
+     "required": true
+    },
+    {
+     "id": "fld_connexions_ip",
+     "name": "ip",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "ip"
+      }
+     ],
+     "type": "string",
+     "required": false
+    },
+    {
+     "id": "fld_connexions_agent",
+     "name": "agent",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "agent"
+      }
+     ],
+     "type": "string",
+     "required": false
+    },
+    {
+     "id": "fld_connexions_nouvelle_ip",
+     "name": "nouvelle_ip",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "nouvelle ip"
+      }
+     ],
+     "type": "boolean",
+     "required": true
+    },
+    {
+     "id": "fld_connexions_nouvel_appareil",
+     "name": "nouvel_appareil",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "nouvel appareil"
+      }
+     ],
+     "type": "boolean",
+     "required": true
+    }
+   ]
+  },
+  {
+   "id": "ent_emplacements",
+   "name": "emplacements",
+   "fields": [
+    {
+     "id": "fld_emplacements_article_id",
+     "name": "article_id",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "article id"
+      }
+     ],
+     "type": "reference",
+     "required": true,
+     "referencesEntityId": "ent_articles"
+    },
+    {
+     "id": "fld_emplacements_lieu_id",
+     "name": "lieu_id",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "lieu id"
+      }
+     ],
+     "type": "reference",
+     "required": true,
+     "referencesEntityId": "ent_lieux"
+    },
+    {
+     "id": "fld_emplacements_emplacement",
+     "name": "emplacement",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "emplacement"
+      }
+     ],
+     "type": "string",
+     "required": true
+    }
+   ]
+  },
+  {
+   "id": "ent_profils",
+   "name": "profils",
+   "fields": [
+    {
+     "id": "fld_profils_email",
+     "name": "email",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "email"
+      }
+     ],
+     "type": "string",
+     "required": true
+    },
+    {
+     "id": "fld_profils_role",
+     "name": "role",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "role"
+      }
+     ],
+     "type": "string",
+     "required": true
+    },
+    {
+     "id": "fld_profils_cree_par",
+     "name": "cree_par",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "cree par"
+      }
+     ],
+     "type": "string",
+     "required": false
+    }
+   ]
+  },
+  {
+   "id": "ent_recherches_ratees",
+   "name": "recherches_ratees",
+   "fields": [
+    {
+     "id": "fld_recherches_ratees_question",
+     "name": "question",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "question"
+      }
+     ],
+     "type": "string",
+     "required": true
+    },
+    {
+     "id": "fld_recherches_ratees_suggestions",
+     "name": "suggestions",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "suggestions"
+      }
+     ],
+     "type": "number",
+     "required": true
+    },
+    {
+     "id": "fld_recherches_ratees_retenue",
+     "name": "retenue",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "retenue"
+      }
+     ],
+     "type": "string",
+     "required": false
+    }
+   ]
+  },
+  {
+   "id": "ent_lieux",
+   "name": "lieux",
+   "fields": [
+    {
+     "id": "fld_lieux_nom",
+     "name": "nom",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "nom"
+      }
+     ],
+     "type": "string",
+     "required": true
+    },
+    {
+     "id": "fld_lieux_type",
+     "name": "type",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "type"
+      }
+     ],
+     "type": "string",
+     "required": true
+    },
+    {
+     "id": "fld_lieux_chef",
+     "name": "chef",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "chef"
+      }
+     ],
+     "type": "string",
+     "required": false
+    }
+   ]
+  },
+  {
+   "id": "ent_clients",
+   "name": "clients",
+   "fields": [
+    {
+     "id": "fld_clients_numero",
+     "name": "numero",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "numero"
+      }
+     ],
+     "type": "string",
+     "required": true
+    },
+    {
+     "id": "fld_clients_nom",
+     "name": "nom",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "nom"
+      }
+     ],
+     "type": "string",
+     "required": true
+    }
+   ]
+  },
+  {
+   "id": "ent_articles",
+   "name": "articles",
+   "fields": [
+    {
+     "id": "fld_articles_reference",
+     "name": "reference",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "reference"
+      }
+     ],
+     "type": "string",
+     "required": true
+    },
+    {
+     "id": "fld_articles_nom",
+     "name": "nom",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "nom"
+      }
+     ],
+     "type": "string",
+     "required": true
+    },
+    {
+     "id": "fld_articles_prix_vente",
+     "name": "prix_vente",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "prix vente"
+      }
+     ],
+     "type": "decimal",
+     "required": false
+    },
+    {
+     "id": "fld_articles_cout_revient_actuel",
+     "name": "cout_revient_actuel",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "cout revient actuel"
+      }
+     ],
+     "type": "decimal",
+     "required": false
+    },
+    {
+     "id": "fld_articles_famille",
+     "name": "famille",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "famille"
+      }
+     ],
+     "type": "string",
+     "required": false
+    }
+   ]
+  },
+  {
+   "id": "ent_conteneurs",
+   "name": "conteneurs",
+   "fields": [
+    {
+     "id": "fld_conteneurs_numero",
+     "name": "numero",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "numero"
+      }
+     ],
+     "type": "string",
+     "required": true
+    },
+    {
+     "id": "fld_conteneurs_statut",
+     "name": "statut",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "statut"
+      }
+     ],
+     "type": "string",
+     "required": true
+    },
+    {
+     "id": "fld_conteneurs_frais_chargement",
+     "name": "frais_chargement",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "frais chargement"
+      }
+     ],
+     "type": "decimal",
+     "required": false
+    },
+    {
+     "id": "fld_conteneurs_frais_arrivee",
+     "name": "frais_arrivee",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "frais arrivee"
+      }
+     ],
+     "type": "decimal",
+     "required": false
+    },
+    {
+     "id": "fld_conteneurs_date_chargement",
+     "name": "date_chargement",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "date chargement"
+      }
+     ],
+     "type": "date",
+     "required": false
+    },
+    {
+     "id": "fld_conteneurs_date_arrivee",
+     "name": "date_arrivee",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "date arrivee"
+      }
+     ],
+     "type": "date",
+     "required": false
+    },
+    {
+     "id": "fld_conteneurs_lieu_arrivee_id",
+     "name": "lieu_arrivee_id",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "lieu arrivee id"
+      }
+     ],
+     "type": "reference",
+     "required": false,
+     "referencesEntityId": "ent_lieux"
+    }
+   ]
+  },
+  {
+   "id": "ent_employes",
+   "name": "employes",
+   "fields": [
+    {
+     "id": "fld_employes_numero",
+     "name": "numero",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "numero"
+      }
+     ],
+     "type": "string",
+     "required": true
+    },
+    {
+     "id": "fld_employes_nom_complet",
+     "name": "nom_complet",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "nom complet"
+      }
+     ],
+     "type": "string",
+     "required": true
+    },
+    {
+     "id": "fld_employes_salaire_mensuel",
+     "name": "salaire_mensuel",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "salaire mensuel"
+      }
+     ],
+     "type": "decimal",
+     "required": true
+    },
+    {
+     "id": "fld_employes_actif",
+     "name": "actif",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "actif"
+      }
+     ],
+     "type": "boolean",
+     "required": false
+    }
+   ]
+  },
+  {
+   "id": "ent_historique_salaires",
+   "name": "historique_salaires",
+   "fields": [
+    {
+     "id": "fld_historique_salaires_employe_id",
+     "name": "employe_id",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "employe id"
+      }
+     ],
+     "type": "reference",
+     "required": true,
+     "referencesEntityId": "ent_employes"
+    },
+    {
+     "id": "fld_historique_salaires_ancien_salaire",
+     "name": "ancien_salaire",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "ancien salaire"
+      }
+     ],
+     "type": "decimal",
+     "required": false
+    },
+    {
+     "id": "fld_historique_salaires_nouveau_salaire",
+     "name": "nouveau_salaire",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "nouveau salaire"
+      }
+     ],
+     "type": "decimal",
+     "required": true
+    },
+    {
+     "id": "fld_historique_salaires_date_changement",
+     "name": "date_changement",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "date changement"
+      }
+     ],
+     "type": "date",
+     "required": false
+    }
+   ]
+  },
+  {
+   "id": "ent_depenses",
+   "name": "depenses",
+   "fields": [
+    {
+     "id": "fld_depenses_nature",
+     "name": "nature",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "nature"
+      }
+     ],
+     "type": "string",
+     "required": true
+    },
+    {
+     "id": "fld_depenses_categorie",
+     "name": "categorie",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "categorie"
+      }
+     ],
+     "type": "string",
+     "required": false
+    },
+    {
+     "id": "fld_depenses_montant",
+     "name": "montant",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "montant"
+      }
+     ],
+     "type": "decimal",
+     "required": true
+    },
+    {
+     "id": "fld_depenses_date_depense",
+     "name": "date_depense",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "date depense"
+      }
+     ],
+     "type": "date",
+     "required": false
+    }
+   ]
+  },
+  {
+   "id": "ent_conteneur_lignes",
+   "name": "conteneur_lignes",
+   "fields": [
+    {
+     "id": "fld_conteneur_lignes_conteneur_id",
+     "name": "conteneur_id",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "conteneur id"
+      }
+     ],
+     "type": "reference",
+     "required": true,
+     "referencesEntityId": "ent_conteneurs"
+    },
+    {
+     "id": "fld_conteneur_lignes_article_id",
+     "name": "article_id",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "article id"
+      }
+     ],
+     "type": "reference",
+     "required": true,
+     "referencesEntityId": "ent_articles"
+    },
+    {
+     "id": "fld_conteneur_lignes_prix_achat",
+     "name": "prix_achat",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "prix achat"
+      }
+     ],
+     "type": "decimal",
+     "required": true
+    },
+    {
+     "id": "fld_conteneur_lignes_quantite",
+     "name": "quantite",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "quantite"
+      }
+     ],
+     "type": "decimal",
+     "required": true
+    },
+    {
+     "id": "fld_conteneur_lignes_cout_revient_unitaire",
+     "name": "cout_revient_unitaire",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "cout revient unitaire"
+      }
+     ],
+     "type": "decimal",
+     "required": false
+    }
+   ]
+  },
+  {
+   "id": "ent_factures_clients",
+   "name": "factures_clients",
+   "fields": [
+    {
+     "id": "fld_factures_clients_numero_facture",
+     "name": "numero_facture",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "numero facture"
+      }
+     ],
+     "type": "string",
+     "required": true
+    },
+    {
+     "id": "fld_factures_clients_client_id",
+     "name": "client_id",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "client id"
+      }
+     ],
+     "type": "reference",
+     "required": true,
+     "referencesEntityId": "ent_clients"
+    },
+    {
+     "id": "fld_factures_clients_date_facture",
+     "name": "date_facture",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "date facture"
+      }
+     ],
+     "type": "date",
+     "required": false
+    },
+    {
+     "id": "fld_factures_clients_montant_total",
+     "name": "montant_total",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "montant total"
+      }
+     ],
+     "type": "decimal",
+     "required": false
+    },
+    {
+     "id": "fld_factures_clients_statut_paiement",
+     "name": "statut_paiement",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "statut paiement"
+      }
+     ],
+     "type": "string",
+     "required": true
+    },
+    {
+     "id": "fld_factures_clients_date_paiement",
+     "name": "date_paiement",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "date paiement"
+      }
+     ],
+     "type": "date",
+     "required": false
+    },
+    {
+     "id": "fld_factures_clients_lieu_sortie_id",
+     "name": "lieu_sortie_id",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "lieu sortie id"
+      }
+     ],
+     "type": "reference",
+     "required": false,
+     "referencesEntityId": "ent_lieux"
+    }
+   ]
+  },
+  {
+   "id": "ent_mouvements",
+   "name": "mouvements",
+   "fields": [
+    {
+     "id": "fld_mouvements_article_id",
+     "name": "article_id",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "article id"
+      }
+     ],
+     "type": "reference",
+     "required": true,
+     "referencesEntityId": "ent_articles"
+    },
+    {
+     "id": "fld_mouvements_type",
+     "name": "type",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "type"
+      }
+     ],
+     "type": "string",
+     "required": true
+    },
+    {
+     "id": "fld_mouvements_lieu_depart_id",
+     "name": "lieu_depart_id",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "lieu depart id"
+      }
+     ],
+     "type": "reference",
+     "required": false,
+     "referencesEntityId": "ent_lieux"
+    },
+    {
+     "id": "fld_mouvements_lieu_arrivee_id",
+     "name": "lieu_arrivee_id",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "lieu arrivee id"
+      }
+     ],
+     "type": "reference",
+     "required": false,
+     "referencesEntityId": "ent_lieux"
+    },
+    {
+     "id": "fld_mouvements_quantite",
+     "name": "quantite",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "quantite"
+      }
+     ],
+     "type": "number",
+     "required": true
+    },
+    {
+     "id": "fld_mouvements_date_mouvement",
+     "name": "date_mouvement",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "date mouvement"
+      }
+     ],
+     "type": "date",
+     "required": false
+    },
+    {
+     "id": "fld_mouvements_client_id",
+     "name": "client_id",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "client id"
+      }
+     ],
+     "type": "reference",
+     "required": false,
+     "referencesEntityId": "ent_clients"
+    },
+    {
+     "id": "fld_mouvements_prix_vente_ligne",
+     "name": "prix_vente_ligne",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "prix vente ligne"
+      }
+     ],
+     "type": "decimal",
+     "required": false
+    },
+    {
+     "id": "fld_mouvements_facture_client_id",
+     "name": "facture_client_id",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "facture client id"
+      }
+     ],
+     "type": "string",
+     "required": false
+    }
+   ]
+  }
+ ],
+ "relations": [
+  {
+   "id": "rel_codes_article",
+   "fromEntityId": "ent_articles",
+   "toEntityId": "ent_codes",
+   "kind": "one_to_many"
+  },
+  {
+   "id": "rel_emplacements_article",
+   "fromEntityId": "ent_articles",
+   "toEntityId": "ent_emplacements",
+   "kind": "one_to_many"
+  },
+  {
+   "id": "rel_emplacements_lieu",
+   "fromEntityId": "ent_lieux",
+   "toEntityId": "ent_emplacements",
+   "kind": "one_to_many"
+  },
+  {
+   "id": "rel_historique_salaires_employe",
+   "fromEntityId": "ent_employes",
+   "toEntityId": "ent_historique_salaires",
+   "kind": "one_to_many"
+  },
+  {
+   "id": "rel_conteneur_lignes_conteneur",
+   "fromEntityId": "ent_conteneurs",
+   "toEntityId": "ent_conteneur_lignes",
+   "kind": "one_to_many"
+  },
+  {
+   "id": "rel_conteneur_lignes_article",
+   "fromEntityId": "ent_articles",
+   "toEntityId": "ent_conteneur_lignes",
+   "kind": "one_to_many"
+  },
+  {
+   "id": "rel_factures_clients_client",
+   "fromEntityId": "ent_clients",
+   "toEntityId": "ent_factures_clients",
+   "kind": "one_to_many"
+  },
+  {
+   "id": "rel_mouvements_article",
+   "fromEntityId": "ent_articles",
+   "toEntityId": "ent_mouvements",
+   "kind": "one_to_many"
+  },
+  {
+   "id": "rel_mouvements_client",
+   "fromEntityId": "ent_clients",
+   "toEntityId": "ent_mouvements",
+   "kind": "one_to_many"
+  }
+ ],
+ "datasets": [],
+ "actions": [],
+ "rules": [],
+ "slots": [],
+ "capabilities": [],
+ "permissions": [],
+ "design": {
+  "theme": "gestion_sobre"
+ },
+ "integrations": [],
+ "network": {
+  "policy": "deny_by_default",
+  "allowedDomains": []
+ },
+ "native": {
+  "minIosVersion": "16.0",
+  "minAndroidSdk": 26
+ },
+ "compliance": {
+  "commerceClass": "physical_or_offapp",
+  "accountDeletionRequired": true,
+  "dataCollected": [
+   "identifiers",
+   "usage_data"
+  ]
+ },
+ "expectedTests": [],
+ "intent": {
+  "request": "Un système de gestion pour un commerce : stock par lieu, mouvements, conteneurs, ventes, charges et rentabilité, avec des droits par employé.",
+  "requestLocale": "fr",
+  "needs": [
+   {
+    "id": "need_articles",
+    "statement": "Tenir un catalogue d'articles avec référence, nom, prix de vente et famille.",
+    "resolution": {
+     "kind": "satisfied",
+     "nodeIds": [
+      "ent_articles",
+      "scr_recherche"
+     ]
+    }
+   },
+   {
+    "id": "need_lieux",
+    "statement": "Plusieurs lieux de stockage : magasins et dépôts.",
+    "resolution": {
+     "kind": "satisfied",
+     "nodeIds": [
+      "ent_lieux",
+      "scr_lieux"
+     ]
+    }
+   },
+   {
+    "id": "need_emplacement",
+    "statement": "L'endroit où ranger une pièce dépend du lieu : « rayon 3 » au magasin n'est pas « rayon 3 » au dépôt.",
+    "resolution": {
+     "kind": "satisfied",
+     "nodeIds": [
+      "ent_emplacements"
+     ]
+    }
+   },
+   {
+    "id": "need_prix_absent",
+    "statement": "Un prix non renseigné n'est pas un prix de zéro : l'écran doit pouvoir le dire.",
+    "resolution": {
+     "kind": "satisfied",
+     "nodeIds": [
+      "ent_articles"
+     ]
+    }
+   },
+   {
+    "id": "need_journal_recherche",
+    "statement": "Enregistrer les recherches qui ne trouvent rien, sans jamais noter QUI a cherché.",
+    "resolution": {
+     "kind": "satisfied",
+     "nodeIds": [
+      "ent_recherches_ratees"
+     ]
+    }
+   },
+   {
+    "id": "need_droits_par_section",
+    "statement": "Onze sections, chacune ouverte à un employé par liste blanche ; le propriétaire voit tout.",
+    "resolution": {
+     "kind": "unexpressible",
+     "reason": "`permissions` de l'AIR décrit les permissions de l'APPAREIL (caméra, iOS/Android, `requiredByCapability`), pas les droits d'un utilisateur. `rules.kind = \"authorization\"` porte sur les CHAMPS d'une entité, jamais sur un écran ni sur une action. Rien ne permet d'écrire « cet écran demande le droit rentabilite »."
+    }
+   },
+   {
+    "id": "need_compte_sans_profil",
+    "statement": "Un compte créé hors de l'application, sans profil, ne doit accéder à rien.",
+    "resolution": {
+     "kind": "unexpressible",
+     "reason": "L'AIR n'a pas de notion d'utilisateur ni de rôle : il ne peut donc pas distinguer « authentifié » de « autorisé ». C'est précisément la confusion qui, dans SGD, laissait dix-sept routes écrire avec la clé qui traverse RLS."
+    }
+   },
+   {
+    "id": "need_porte_selon_droits",
+    "statement": "Après connexion, conduire chacun vers le premier écran que ses droits lui ouvrent.",
+    "resolution": {
+     "kind": "unexpressible",
+     "reason": "`navigation.entryScreenId` est UNIQUE et fixe. Un employé sans le droit du premier écran serait mis dehors à chaque ouverture — défaut réellement survenu dans SGD, deux fois : à la connexion, puis dans le manifeste de l'application installée."
+    }
+   },
+   {
+    "id": "need_stock_calcule",
+    "statement": "Le stock n'est jamais stocké : il se calcule en rejouant les mouvements d'entrée et de sortie.",
+    "resolution": {
+     "kind": "unexpressible",
+     "reason": "Une entité AIR porte des champs, pas une grandeur dérivée. Un champ `quantite` sur l'article serait un stock ÉCRIT — exactement ce que SGD refuse, parce qu'un stock écrit diverge de son historique sans que rien ne le signale. Un `slot` pourrait le calculer, mais aucun lien ne dit qu'un champ EST le résultat d'un slot."
+    }
+   },
+   {
+    "id": "need_contre_passation",
+    "statement": "Annuler un mouvement, c'est en écrire un INVERSE, jamais effacer le premier.",
+    "resolution": {
+     "kind": "unexpressible",
+     "reason": "L'AIR ne connaît pas l'immuabilité d'une ligne ni l'écriture compensatoire. Un générateur poserait une suppression, et la comptabilité mentirait dès la première erreur corrigée."
+    }
+   },
+   {
+    "id": "need_recherche_par_mots",
+    "statement": "La recherche découpe la question en mots : un mot ramène large, trois resserrent.",
+    "resolution": {
+     "kind": "unexpressible",
+     "reason": "Un bloc `list` se lie à une entité ; aucun nœud ne décrit COMMENT une recherche interroge. C'est un `slot`, donc du code écrit hors du document — et le format ne dit pas qu'un écran dépend de ce code."
+    }
+   },
+   {
+    "id": "need_suggestion",
+    "statement": "Quand rien n'est trouvé, proposer les pièces qui RESSEMBLENT à ce qui a été tapé.",
+    "resolution": {
+     "kind": "unexpressible",
+     "reason": "La ressemblance repose sur une extension de la base (pg_trgm) et une fonction SQL. L'AIR décrit des entités, pas les capacités du magasin de données qui les porte."
+    }
+   },
+   {
+    "id": "need_ecrans_calcules",
+    "statement": "Le tableau de bord, la rentabilité et l'anticipation n'affichent aucune table : ils agrègent les mouvements, les dépenses et les ventes pour produire des chiffres qui n'existent nulle part.",
+    "resolution": {
+     "kind": "unexpressible",
+     "reason": "Un écran AIR montre une ENTITÉ, par un bloc lié. Il n'existe aucun nœud pour décrire une agrégation — somme, marge, projection. Le compilateur refuse d'ailleurs qu'une destination principale mène à un écran sans entité (AIR_NAV_DESTINATION_DEAD) : trois des treize écrans de SGD sont dans ce cas, et ce sont ceux que le propriétaire regarde le matin."
+    }
+   },
+   {
+    "id": "need_trois_scans",
+    "statement": "Inventaire, vente et transfert sont trois droits distincts : ils ne font pas la même chose au stock.",
+    "resolution": {
+     "kind": "unexpressible",
+     "reason": "Même manque que les droits par section, aggravé : ici le droit ne porte pas sur un écran mais sur un MODE d'un même écran. L'AIR n'a aucun niveau en dessous de l'écran pour l'accrocher."
+    }
+   }
+  ]
+ }
+}

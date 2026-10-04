@@ -1,0 +1,4 @@
+// GÉNÉRÉ — NE PAS ÉDITER (données canoniques d'écran, D-026 Option C).
+import type { AirScreenData } from "../lib/runtime/air-runtime";
+
+export const screenData: AirScreenData = {"actions":{},"blocks":[{"blockType":"header","id":"blk_lieux_entete","props":{"title":"Lieux"}},{"blockType":"list","entityId":"ent_lieux","id":"blk_lieux_liste","props":{"titleFieldId":"fld_lieux_nom"}}],"composition":{"defile":false,"role":"fenetre","sections":{"blk_lieux_entete":{"zone":"contenu"},"blk_lieux_liste":{"mode":"fenetre","zone":"contenu"}}},"entities":{"ent_lieux":{"fields":[{"id":"fld_lieux_nom","label":"nom","name":"nom","required":true,"type":"string"},{"id":"fld_lieux_type","label":"type","name":"type","required":true,"type":"string"},{"id":"fld_lieux_chef","label":"chef","name":"chef","type":"string"}]}},"screenId":"scr_lieux","title":"Lieux","uiActionsByBlock":{}};
