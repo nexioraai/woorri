@@ -102,7 +102,7 @@ describe("cliquets du registre de blocs", () => {
     // refusait pas d ecrire, il n avait AUCUN endroit ou le faire.
     // Premiere montee qui AJOUTE un bloc et non une prop — et rien n est
     // retire : les huit precedents sont intacts.
-    expect(BLOCK_REGISTRY_VERSION).toBe("1.14.0");
+    expect(BLOCK_REGISTRY_VERSION).toBe("1.15.0");
     expect(BLOCKS.map((b) => b.id)).toEqual(V1_BLOCK_IDS);
   });
 

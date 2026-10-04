@@ -116,7 +116,7 @@ export const RELEASE_TRAIN_V1 = {
   // avait aucun capable de porter plus qu un sous-titre, et les surfaces
   // legales annoncaient donc « le texte complet sera fourni ». Le generateur
   // ne refusait pas d ecrire : il n avait aucun endroit ou le faire.
-  blockRegistryVersion: "1.14.0",
+  blockRegistryVersion: "1.15.0",
   // Ré-scellé le 2026-08-29 (DET-006 / D-039) : `ListBlock` DÉCLARE désormais
   // `fill` sur sa Section, afin que la liste virtualisée reçoive un parent
   // BORNÉ. Cause démontrée : imbriquée dans un ScrollView de même axe, une
@@ -136,6 +136,13 @@ export const RELEASE_TRAIN_V1 = {
   // TAIRE le diagnostic d'image orpheline sans rien afficher.
   // Aucune prop n'est ajoutée ni retirée : seule leur VÉRIFICATION est rétablie.
   blocksSourcesHash:
+    // Ré-scellé 2026-10-04 (registre 1.15.0) : `searchMode` sur la liste. La
+    // recherche cherchait la saisie ENTIÈRE comme sous-chaîne — « filtre toyota »
+    // ne trouvait pas « filtre à huile toyota », les deux mots étant séparés par
+    // « à huile ». Mesuré au comptoir de SGD : écran vide, pièce en stock,
+    // client qui attend. ADDITIF, absent =
+    // `sous_chaine` : aucune application existante ne change de réponse. Aucun
+    // type de bloc, aucun état ajouté ni retiré.
     // Ré-scellé 2026-09-09 (1.18.0) : `ButtonBlock` demande une section
     // RESSERRÉE quand le rôle déclaré est `link`. Mesure à l'écran (SM-A175F) :
     // « Mot de passe oublié » flottait à ~62 dp du bouton d'envoi — le
@@ -226,7 +233,7 @@ export const RELEASE_TRAIN_V1 = {
     // pas parce qu une prop bouge. Les huit precedents sont intacts, rien n
     // est retire, et `prose` ne porte aucun texte du moteur — ses paragraphes
     // viennent du DOCUMENT (F3, EP-143 preserve).
-    "5e50e222f08903ccf03ba55678fa3b12c566ce0a7627504475c0ac5cc37703f4",
+    "cad1a25dced6d2ec221b0546cf7ddf7ed9cf657fc8513b0a83c996da5efdb27b",
   // EP-134 — ajout compatible `external_contact` : version MINEURE du registre.
   /**
    * EP-147 ③ — LE NIVEAU D'API ANDROID VISÉ, épinglé par le train.

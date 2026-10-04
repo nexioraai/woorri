@@ -62,7 +62,12 @@ import {
 // des références brutes DÉRIVE désormais cette nature au lieu de tout
 // regarder (il refusait un `scopeFieldId` que la règle C5 ORDONNE).
 // EP-159 — ajout ADDITIF : la famille des saisies non persistées.
-export const BLOCK_REGISTRY_VERSION = "1.14.0";
+// 1.15.0 (2026-10-04) — `searchMode` sur la liste. Mesure au comptoir de SGD :
+// la recherche cherchait la saisie ENTIÈRE comme sous-chaîne, donc « filtre
+// toyota » ne trouvait pas « filtre à huile toyota » — les deux mots y sont,
+// séparés par « à huile ». Écran vide, pièce en stock, client qui attend. ADDITIF : absent = `sous_chaine`, comportement
+// d'avant, aucune application existante ne change de réponse.
+export const BLOCK_REGISTRY_VERSION = "1.15.0";
 
 // Motifs d'identités stables — IDENTIQUES à @deribfy/air-schema (ids.ts) ;
 // redéclarés structurellement (patron AirCapabilitySlice : pas de couplage
@@ -366,6 +371,18 @@ export const BLOCKS: readonly BlockDefinition[] = [
       imageFieldId: fieldRef.optional(),
       searchFieldId: fieldRef.optional(),
       searchPlaceholder: z.string().min(1).optional(),
+      // ── COMMENT LA QUESTION EST LUE (registre 1.15.0).
+      //
+      // Mesuré au comptoir de SGD : la recherche cherchait la saisie ENTIÈRE
+      // comme sous-chaîne, donc « filtre toyota » ne trouvait pas « filtre à
+      // huile toyota » — les deux mots y sont, séparés par « à huile ».
+      // L'employé voyait un écran vide, la pièce était en stock, et le client
+      // attendait.
+      //
+      // ABSENT = `sous_chaine`, le comportement d'avant : aucune application
+      // existante ne change de réponse. Une liste sans `searchFieldId` ne doit
+      // pas porter ce mode — le validateur le refuse (BLOCK_PROPS_INVALID).
+      searchMode: z.enum(["sous_chaine", "tous_les_mots"]).optional(),
       sortFieldId: fieldRef.optional(),
       sortDirection: z.enum(["asc", "desc"]).optional(),
       filterFieldId: fieldRef.optional(),

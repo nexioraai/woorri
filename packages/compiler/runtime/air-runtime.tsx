@@ -808,6 +808,10 @@ export function AirList({ screen, blockId, itemId }: BlockRef & { itemId?: strin
     instanceId: itemId,
     rechercheChamp,
     recherche,
+    // COMMENT LA QUESTION EST LUE (registre de blocs 1.15.0). Le mode vient du
+    // DOCUMENT ; absent, la recherche reste une sous-chaîne — le comportement
+    // d'avant, pour que rien ne change là où personne ne l'a demandé.
+    rechercheMode: props.searchMode === "tous_les_mots" ? "tous_les_mots" : undefined,
     filtres,
     triChamp: str(props.sortFieldId),
     triDesc: props.sortDirection === "desc",
