@@ -107,6 +107,26 @@ describe("étape ③ — une source, des dérivations sous cliquet", () => {
       expectedTests: air.expectedTests.filter(
         (t) => !retires.has(t.targetId) && !actionsRetirees.has(t.targetId),
       ),
+      // ── LES BESOINS SUIVENT LE MÊME SORT QUE LES TESTS ATTENDUS.
+      //
+      // Ce test MUTILE un document pour prouver une non-apparition. Les
+      // `expectedTests` visant les nœuds retirés étaient déjà filtrés ici ;
+      // `intent.needs` ne l'était pas, et continuait donc de se déclarer PORTÉ
+      // par des blocs et des actions qui venaient d'être enlevés. Le cliquet
+      // AIR_NEED_NODE_UNKNOWN l'a fait voir — un besoin ne peut pas être adossé
+      // à un nœud absent, dans un test comme ailleurs.
+      ...(air.intent === undefined
+        ? {}
+        : {
+            intent: {
+              ...air.intent,
+              needs: air.intent.needs.filter((n) =>
+                n.resolution.kind !== "satisfied"
+                  ? true
+                  : !n.resolution.nodeIds.some((id) => retires.has(id) || actionsRetirees.has(id)),
+              ),
+            },
+          }),
     };
     const emis = emitProject(sansRecherche);
     for (const [chemin, contenu] of emis.files) {

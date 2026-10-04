@@ -69,6 +69,19 @@ describe("contrôle d'accès (AIR 1.28.0)", () => {
     const doc = lire() as any;
     delete doc.access;
     for (const s of doc.screens) delete s.requiredRightId;
+    // ── ET LES BESOINS QUI S'ADOSSAIENT À CES DROITS PARTENT AVEC EUX.
+    //
+    // Retirer `access` sans toucher à `intent.needs` laissait deux besoins se
+    // déclarer PORTÉS par `right_stock`, `role_employe` et leurs pareils — des
+    // nœuds qui venaient d'être supprimés. Le cliquet AIR_NEED_NODE_UNKNOWN l'a
+    // fait voir, avec 16 diagnostics. Ce n'est pas lui qui a tort : une
+    // boutique sans employés n'a pas « le besoin des droits par section »
+    // porté, elle ne l'a pas du tout.
+    doc.intent.needs = doc.intent.needs.filter((n: any) =>
+      n.resolution.kind !== "satisfied"
+        ? true
+        : !n.resolution.nodeIds.some((id: string) => /^(right|role)_/.test(id)),
+    );
     expect(() => assertValidAir(migrateAirDocument(doc))).not.toThrow();
   });
 });

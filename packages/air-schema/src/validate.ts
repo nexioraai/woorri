@@ -224,6 +224,16 @@ export function validateAir(air: ProjectAir): AirDiagnostic[] {
   air.intent?.needs.forEach((n, i) => {
     identities.push([n.id, `intent.needs[${i}]`]);
   });
+  // DROITS ET RÔLES (1.28.0) — OUBLIÉS à l'écriture du contrôle d'accès, et
+  // c'est une omission, pas un choix : sans eux ici, un droit pouvait porter
+  // l'identifiant d'un écran sans que rien ne le signale, et `requiredRightId`
+  // aurait désigné deux nœuds à la fois.
+  air.access?.rights.forEach((r, i) => {
+    identities.push([r.id, `access.rights[${i}]`]);
+  });
+  air.access?.roles.forEach((r, i) => {
+    identities.push([r.id, `access.roles[${i}]`]);
+  });
 
   // NAVIGATION PRINCIPALE (1.6.0, D-086) — quatre refus, chacun mesurable.
   //
@@ -455,6 +465,44 @@ export function validateAir(air: ProjectAir): AirDiagnostic[] {
       push("AIR_DUP_ID", path, `identifiant "${id}" déjà utilisé à ${first}`);
     }
   }
+
+  // ── 1bis. UN BESOIN DÉCLARÉ PORTÉ DOIT NOMMER DES NŒUDS QUI EXISTENT.
+  //
+  // `intent.needs` est la réponse à la question « ce format sait-il dire ce que
+  // le domaine demande ? ». Chaque besoin sort `satisfied` — avec les nœuds qui
+  // le portent — ou `unexpressible` avec motif. C'est la MESURE du format, et
+  // elle était ENTIÈREMENT sur parole : rien ne vérifiait que les nœuds nommés
+  // existaient.
+  //
+  // CE QUE CELA A COÛTÉ, et c'est de moi. En portant SGD, j'ai classé le besoin
+  // des écrans calculés `unexpressible` avec ce motif : « il n'existe aucun
+  // nœud pour décrire une agrégation ». Mesure du 2026-10-04 : faux sur les
+  // quatre étages — un slot, une action `lifecycle/screen_open` et une liaison
+  // le font, le compilateur l'émet, le runtime l'honore. Trois écrans
+  // affichaient donc une EXCUSE à l'utilisateur pour un manque inexistant.
+  //
+  // Un motif faux ne se rattrape pas par de la relecture — rien ne pouvait le
+  // contredire. Dans l'autre sens, un `satisfied` qui nomme n'importe quoi
+  // gonflerait le score sans qu'aucun test ne proteste. Ce cliquet ferme le
+  // second sens, qui est le seul mécanisable : on ne peut pas prouver qu'un
+  // manque est réel, on peut exiger qu'une satisfaction soit ADOSSÉE.
+  //
+  // COÛT MESURÉ AVANT DE POSER : sur 111 documents réels — corpus de référence
+  // compris — 9878 nœuds nommés, 23 introuvables (0,23 %), concentrés sur 3
+  // résultats de campagne archivés dont une réparation partielle. Le corpus de
+  // référence passe INTACT. Le cliquet ne coûte rien à ce qui est juste.
+  air.intent?.needs.forEach((n, i) => {
+    if (n.resolution.kind !== "satisfied") return;
+    for (const [j, nodeId] of n.resolution.nodeIds.entries()) {
+      if (seen.has(nodeId)) continue;
+      push(
+        "AIR_NEED_NODE_UNKNOWN",
+        `intent.needs[${i}].resolution.nodeIds[${j}]`,
+        `le besoin "${n.id}" se déclare PORTÉ par le nœud "${nodeId}", qui n'existe ` +
+          `dans aucune collection du document : la satisfaction n'est adossée à rien`,
+      );
+    }
+  });
 
   // 2. Locales : la locale par défaut appartient aux locales de l'app, et
   // tout texte localisé obligatoire la couvre.

@@ -166,7 +166,7 @@ function entitesEtRelations(sql) {
 // c'est le premier manque, et il est consigné dans `intent.needs`. On garde la
 // correspondance ici pour que le manque soit CHIFFRÉ, pas évoqué.
 const ECRANS = [
-  { cle: "dashboard", titre: "Tableau de bord", droit: "dashboard", entite: null },
+  { cle: "dashboard", titre: "Tableau de bord", droit: "dashboard", entite: null, calcule: "dashboard" },
   { cle: "recherche", titre: "Rechercher un article", droit: "recherche", entite: "ent_articles" },
   { cle: "scanner", titre: "Scanner", droit: "scan_inventaire", entite: "ent_mouvements" },
   { cle: "mouvements", titre: "Mouvements", droit: "mouvements", entite: "ent_mouvements" },
@@ -176,10 +176,64 @@ const ECRANS = [
   { cle: "ventes", titre: "Ventes", droit: "ventes", entite: "ent_factures_clients" },
   { cle: "clients", titre: "Clients", droit: "clients", entite: "ent_clients" },
   { cle: "charges", titre: "Charges", droit: "charges", entite: "ent_depenses" },
-  { cle: "rentabilite", titre: "Rentabilité", droit: "rentabilite", entite: null },
-  { cle: "anticipation", titre: "Anticipation", droit: "anticipation", entite: null },
+  { cle: "rentabilite", titre: "Rentabilité", droit: "rentabilite", entite: null, calcule: "rentabilite" },
+  { cle: "anticipation", titre: "Anticipation", droit: "anticipation", entite: null, calcule: "anticipation" },
   { cle: "parametres", titre: "Paramètres", droit: null, entite: null },
 ];
+
+// ══════════════════════════════════════════════════════════════
+//  LES ÉCRANS QUI N'AFFICHENT AUCUNE TABLE — ET QUI SONT POURTANT EXPRIMABLES
+// ══════════════════════════════════════════════════════════════
+//
+// ── CE QUI ÉTAIT ÉCRIT ICI, ET QUI ÉTAIT FAUX.
+//
+// Le besoin `need_ecrans_calcules` sortait `unexpressible`, avec ce motif :
+// « il n'existe aucun nœud pour décrire une agrégation — somme, marge,
+// projection ». MESURE DU 2026-10-04, sur ce document même : c'est FAUX.
+//
+// La chaîne existe, et elle est complète sur les quatre étages :
+//   · `slots[]` déclare le calcul, ses ports d'entrée et de sortie ;
+//   · une action au déclencheur `lifecycle/screen_open` l'invoque À L'OUVERTURE
+//     de l'écran — donc sans bouton, ce qu'un tableau de bord exige ;
+//   · `binding.inputs` lui passe les LIGNES d'une entité (`entity_rows`), et
+//     `binding.outputs` verse son résultat dans la PROP d'un bloc ;
+//   · le compilateur émet ces liaisons sous `slotInvocations`
+//     (emit-project.ts:367-377), et le runtime les honore — il cherche le slot
+//     au registre, lui donne les lignes, et écrit sa sortie dans la prop
+//     (air-runtime.tsx:243-257).
+//
+// Ce qui restait à fournir n'était donc pas un nœud de contrat : c'était le
+// CORPS du calcul, et c'est précisément la définition d'un Code Slot.
+//
+// L'erreur avait un coût VISIBLE : ces trois écrans portaient un `empty_state`
+// annonçant « cet écran agrège des chiffres : il ne montre aucune table ». Une
+// excuse affichée à l'utilisateur, à la place du chiffre qu'il venait chercher
+// — exactement le défaut que la règle 41ter a renversé pour les textes
+// juridiques. On ne décrit pas son manque à l'écran : on le porte.
+const CALCULES = {
+  dashboard: {
+    quoi: "Rejouer les mouvements d'entrée et de sortie pour obtenir le stock par article — " +
+      "le stock n'est écrit nulle part, et c'est voulu : un stock écrit diverge de son historique.",
+    sources: ["ent_mouvements"],
+  },
+  rentabilite: {
+    quoi: "Soustraire les dépenses des ventes encaissées pour obtenir la marge réelle, " +
+      "par période et par famille d'articles.",
+    sources: ["ent_factures_clients", "ent_depenses"],
+  },
+  anticipation: {
+    quoi: "Projeter les ruptures à venir d'après le rythme des sorties passées : " +
+      "ce qui part vite et dont il reste peu.",
+    sources: ["ent_mouvements"],
+  },
+};
+
+// Un port de slot se nomme en une seule pièce (`^[a-z][a-zA-Z0-9]*$`). On le
+// dérive de l'identifiant de l'entité — jamais inventé, donc jamais désaccordé.
+function portDe(entiteId) {
+  const [tete, ...reste] = entiteId.replace(/^ent_/, "").split("_");
+  return tete + reste.map((m) => m[0].toUpperCase() + m.slice(1)).join("");
+}
 
 // Les icônes de la barre sont FERMÉES par le schéma : le moteur doit savoir
 // dessiner ce que le document nomme. On ne prend que celles qui existent.
@@ -206,6 +260,7 @@ function champDAffichage(entite) {
 function ecransEtActions(entites) {
   const screens = [];
   const actions = [];
+  const slots = [];
 
   for (const e of ECRANS) {
     const blocks = [
@@ -230,13 +285,68 @@ function ecransEtActions(entites) {
         entityId: entite.id,
         props: [{ key: "titleFieldId", value: titreLigne }],
       });
+    } else if (e.calcule) {
+      // ── UN ÉCRAN CALCULÉ PORTE SON CALCUL, PAS SON EXCUSE.
+      //
+      // Le bloc est posé avec UNE phrase d'attente — pas un message d'absence.
+      // Le slot l'écrase dès que l'écran s'ouvre ; tant qu'il n'a pas répondu,
+      // l'utilisateur lit « Calcul en cours », qui est VRAI.
+      const calc = CALCULES[e.calcule];
+      const sources = calc.sources.filter((id) => entites.some((x) => x.id === id));
+      if (sources.length === 0) {
+        throw new Error(`l'écran calculé « ${e.cle} » n'a plus aucune de ses entités sources`);
+      }
+      const blocId = `blk_${e.cle}_chiffres`;
+      const slotId = `slot_${e.cle}`;
+      blocks.push({
+        id: blocId,
+        blockType: "prose",
+        props: [{ key: "title", value: e.titre }, { key: "paragraphs", value: ["Calcul en cours."] }],
+      });
+      slots.push({
+        id: slotId,
+        description: calc.quoi,
+        inputs: sources.map((id) => ({ name: portDe(id), type: "json" })),
+        // `json` et non `text` : la sortie est une LISTE de phrases, et le
+        // contrat des ports n'accepte que des types de champ. `json` est le
+        // seul qui ne mente pas sur ce qui passe.
+        outputs: [{ name: "phrases", type: "json" }],
+        // Un slot est du code écrit sous influence possible du prompt : sa
+        // liste d'imports reste VIDE. Il calcule sur ce qu'on lui donne.
+        allowedImports: [],
+      });
+      actions.push({
+        // PAS de `requiredRightId` ici, et c'est délibéré : l'écran en porte
+        // déjà un, et le calcul n'a pas de sens hors de son écran. Un droit
+        // posé deux fois est un droit qu'on oubliera de retirer une fois.
+        id: `act_${e.cle}_calculer`,
+        name: `Calculer ${e.titre.toLowerCase()}`,
+        // À L'OUVERTURE — un tableau de bord ne se déclenche pas au doigt.
+        trigger: { kind: "lifecycle", event: "screen_open", screenId: `scr_${e.cle}` },
+        effect: {
+          kind: "slot",
+          slotId,
+          // SANS CETTE LIAISON, LE SLOT N'EST PAS APPELÉ. Le schéma le dit, et
+          // c'est mesuré : sur 152 promesses mortes du corpus, 44 visaient un
+          // slot nommé que rien ne branchait.
+          binding: {
+            inputs: sources.map((id) => ({
+              port: portDe(id),
+              source: { kind: "entity_rows", entityId: id },
+            })),
+            outputs: [{ port: "phrases", blockId: blocId, prop: "paragraphs" }],
+          },
+        },
+      });
     } else {
       blocks.push({
         id: `blk_${e.cle}_vide`,
         blockType: "empty_state",
         props: [
           { key: "title", value: e.titre },
-          { key: "message", value: "Cet écran agrège des chiffres : il ne montre aucune table." },
+          // Paramètres n'agrège RIEN : il n'a simplement pas encore de contenu
+          // porté par ce document. Le dire ainsi, et pas autrement.
+          { key: "message", value: "Aucun réglage n'est encore porté par ce document." },
         ],
       });
     }
@@ -260,7 +370,7 @@ function ecransEtActions(entites) {
   //
   // La navigation d'un écran à l'autre passe par `navigation.routes` ; ces
   // actions ne portaient rien que les routes ne portent déjà.
-  return { screens, actions };
+  return { screens, actions, slots };
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -373,13 +483,17 @@ function besoins(entites) {
     "La ressemblance repose sur une extension de la base (pg_trgm) et une fonction SQL. L'AIR " +
     "décrit des entités, pas les capacités du magasin de données qui les porte.");
 
-  manque("need_ecrans_calcules",
+  // ── CE BESOIN A ÉTÉ RECLASSÉ, APRÈS MESURE. Il sortait `unexpressible`,
+  // avec ce motif : « il n'existe aucun nœud pour décrire une agrégation ».
+  // La mesure du 2026-10-04 l'a démenti sur les quatre étages — document,
+  // validateur, compilateur (`slotInvocations`), runtime (la prop du bloc est
+  // écrasée par la sortie du slot). Le motif décrivait ma méconnaissance du
+  // format, pas une limite du format. Voir `CALCULES` plus haut.
+  satisfait("need_ecrans_calcules",
     "Le tableau de bord, la rentabilité et l'anticipation n'affichent aucune table : ils agrègent " +
     "les mouvements, les dépenses et les ventes pour produire des chiffres qui n'existent nulle part.",
-    "Un écran AIR montre une ENTITÉ, par un bloc lié. Il n'existe aucun nœud pour décrire une " +
-    "agrégation — somme, marge, projection. Le compilateur refuse d'ailleurs qu'une destination " +
-    "principale mène à un écran sans entité (AIR_NAV_DESTINATION_DEAD) : trois des treize écrans " +
-    "de SGD sont dans ce cas, et ce sont ceux que le propriétaire regarde le matin.");
+    ["slot_dashboard", "slot_rentabilite", "slot_anticipation",
+     "act_dashboard_calculer", "act_rentabilite_calculer", "act_anticipation_calculer"])
 
   satisfait("need_trois_scans",
     "Inventaire, vente et transfert sont trois droits distincts : ils ne font pas la même chose au stock.",
@@ -396,7 +510,7 @@ function besoins(entites) {
 
 const sql = lireSql(SGD);
 const { entites, relations } = entitesEtRelations(sql);
-const { screens, actions } = ecransEtActions(entites);
+const { screens, actions, slots } = ecransEtActions(entites);
 
 const air = {
   airSchemaVersion: "1.27.0",
@@ -463,7 +577,7 @@ const air = {
   datasets: [],
   actions,
   rules: [],
-  slots: [],
+  slots,
   capabilities: [],
   permissions: [],
   access: acces(),

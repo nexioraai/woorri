@@ -47,16 +47,18 @@
      ]
     },
     {
-     "id": "blk_dashboard_vide",
-     "blockType": "empty_state",
+     "id": "blk_dashboard_chiffres",
+     "blockType": "prose",
      "props": [
       {
        "key": "title",
        "value": "Tableau de bord"
       },
       {
-       "key": "message",
-       "value": "Cet écran agrège des chiffres : il ne montre aucune table."
+       "key": "paragraphs",
+       "value": [
+        "Calcul en cours."
+       ]
       }
      ]
     }
@@ -410,16 +412,18 @@
      ]
     },
     {
-     "id": "blk_rentabilite_vide",
-     "blockType": "empty_state",
+     "id": "blk_rentabilite_chiffres",
+     "blockType": "prose",
      "props": [
       {
        "key": "title",
        "value": "Rentabilité"
       },
       {
-       "key": "message",
-       "value": "Cet écran agrège des chiffres : il ne montre aucune table."
+       "key": "paragraphs",
+       "value": [
+        "Calcul en cours."
+       ]
       }
      ]
     }
@@ -449,16 +453,18 @@
      ]
     },
     {
-     "id": "blk_anticipation_vide",
-     "blockType": "empty_state",
+     "id": "blk_anticipation_chiffres",
+     "blockType": "prose",
      "props": [
       {
        "key": "title",
        "value": "Anticipation"
       },
       {
-       "key": "message",
-       "value": "Cet écran agrège des chiffres : il ne montre aucune table."
+       "key": "paragraphs",
+       "value": [
+        "Calcul en cours."
+       ]
       }
      ]
     }
@@ -496,7 +502,7 @@
       },
       {
        "key": "message",
-       "value": "Cet écran agrège des chiffres : il ne montre aucune table."
+       "value": "Aucun réglage n'est encore porté par ce document."
       }
      ]
     }
@@ -1674,9 +1680,166 @@
   }
  ],
  "datasets": [],
- "actions": [],
+ "actions": [
+  {
+   "id": "act_dashboard_calculer",
+   "name": "Calculer tableau de bord",
+   "trigger": {
+    "kind": "lifecycle",
+    "event": "screen_open",
+    "screenId": "scr_dashboard"
+   },
+   "effect": {
+    "kind": "slot",
+    "slotId": "slot_dashboard",
+    "binding": {
+     "inputs": [
+      {
+       "port": "mouvements",
+       "source": {
+        "kind": "entity_rows",
+        "entityId": "ent_mouvements"
+       }
+      }
+     ],
+     "outputs": [
+      {
+       "port": "phrases",
+       "blockId": "blk_dashboard_chiffres",
+       "prop": "paragraphs"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "act_rentabilite_calculer",
+   "name": "Calculer rentabilité",
+   "trigger": {
+    "kind": "lifecycle",
+    "event": "screen_open",
+    "screenId": "scr_rentabilite"
+   },
+   "effect": {
+    "kind": "slot",
+    "slotId": "slot_rentabilite",
+    "binding": {
+     "inputs": [
+      {
+       "port": "facturesClients",
+       "source": {
+        "kind": "entity_rows",
+        "entityId": "ent_factures_clients"
+       }
+      },
+      {
+       "port": "depenses",
+       "source": {
+        "kind": "entity_rows",
+        "entityId": "ent_depenses"
+       }
+      }
+     ],
+     "outputs": [
+      {
+       "port": "phrases",
+       "blockId": "blk_rentabilite_chiffres",
+       "prop": "paragraphs"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "act_anticipation_calculer",
+   "name": "Calculer anticipation",
+   "trigger": {
+    "kind": "lifecycle",
+    "event": "screen_open",
+    "screenId": "scr_anticipation"
+   },
+   "effect": {
+    "kind": "slot",
+    "slotId": "slot_anticipation",
+    "binding": {
+     "inputs": [
+      {
+       "port": "mouvements",
+       "source": {
+        "kind": "entity_rows",
+        "entityId": "ent_mouvements"
+       }
+      }
+     ],
+     "outputs": [
+      {
+       "port": "phrases",
+       "blockId": "blk_anticipation_chiffres",
+       "prop": "paragraphs"
+      }
+     ]
+    }
+   }
+  }
+ ],
  "rules": [],
- "slots": [],
+ "slots": [
+  {
+   "id": "slot_dashboard",
+   "description": "Rejouer les mouvements d'entrée et de sortie pour obtenir le stock par article — le stock n'est écrit nulle part, et c'est voulu : un stock écrit diverge de son historique.",
+   "inputs": [
+    {
+     "name": "mouvements",
+     "type": "json"
+    }
+   ],
+   "outputs": [
+    {
+     "name": "phrases",
+     "type": "json"
+    }
+   ],
+   "allowedImports": []
+  },
+  {
+   "id": "slot_rentabilite",
+   "description": "Soustraire les dépenses des ventes encaissées pour obtenir la marge réelle, par période et par famille d'articles.",
+   "inputs": [
+    {
+     "name": "facturesClients",
+     "type": "json"
+    },
+    {
+     "name": "depenses",
+     "type": "json"
+    }
+   ],
+   "outputs": [
+    {
+     "name": "phrases",
+     "type": "json"
+    }
+   ],
+   "allowedImports": []
+  },
+  {
+   "id": "slot_anticipation",
+   "description": "Projeter les ruptures à venir d'après le rythme des sorties passées : ce qui part vite et dont il reste peu.",
+   "inputs": [
+    {
+     "name": "mouvements",
+     "type": "json"
+    }
+   ],
+   "outputs": [
+    {
+     "name": "phrases",
+     "type": "json"
+    }
+   ],
+   "allowedImports": []
+  }
+ ],
  "capabilities": [],
  "permissions": [],
  "access": {
@@ -1983,8 +2146,15 @@
     "id": "need_ecrans_calcules",
     "statement": "Le tableau de bord, la rentabilité et l'anticipation n'affichent aucune table : ils agrègent les mouvements, les dépenses et les ventes pour produire des chiffres qui n'existent nulle part.",
     "resolution": {
-     "kind": "unexpressible",
-     "reason": "Un écran AIR montre une ENTITÉ, par un bloc lié. Il n'existe aucun nœud pour décrire une agrégation — somme, marge, projection. Le compilateur refuse d'ailleurs qu'une destination principale mène à un écran sans entité (AIR_NAV_DESTINATION_DEAD) : trois des treize écrans de SGD sont dans ce cas, et ce sont ceux que le propriétaire regarde le matin."
+     "kind": "satisfied",
+     "nodeIds": [
+      "slot_dashboard",
+      "slot_rentabilite",
+      "slot_anticipation",
+      "act_dashboard_calculer",
+      "act_rentabilite_calculer",
+      "act_anticipation_calculer"
+     ]
     }
    },
    {

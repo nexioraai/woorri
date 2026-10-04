@@ -8,7 +8,7 @@
 import { KeyboardAvoidingView, ScrollView } from "react-native";
 import { ScreenShell } from "../lib/primitives";
 import { AppShell } from "../lib/runtime/app-shell";
-import { AirEmptyState, AirHeader } from "../lib/runtime/air-runtime";
+import { AirHeader, AirProse, AirScreenLifecycle } from "../lib/runtime/air-runtime";
 import { PrimaryNav } from "../lib/runtime/primary-nav";
 import { primaryNav } from "../nav.data";
 import { screenData } from "./scr_anticipation.data";
@@ -16,6 +16,7 @@ import { screenData } from "./scr_anticipation.data";
 export default function ScrAnticipationScreen() {
   return (
     <ScreenShell testID="scr_anticipation" title={screenData.title}>
+      <AirScreenLifecycle screen={screenData} />
       <AppShell
         avecEntete={true}
         navigation={<PrimaryNav destinations={primaryNav} currentScreenId="scr_anticipation" />}
@@ -26,7 +27,7 @@ export default function ScrAnticipationScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <AirHeader screen={screenData} blockId="blk_anticipation_entete" />
-          <AirEmptyState screen={screenData} blockId="blk_anticipation_vide" />
+          <AirProse screen={screenData} blockId="blk_anticipation_chiffres" />
         </ScrollView>
         </KeyboardAvoidingView>
       </AppShell>

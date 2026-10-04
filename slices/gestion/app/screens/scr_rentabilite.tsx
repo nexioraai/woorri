@@ -8,7 +8,7 @@
 import { KeyboardAvoidingView, ScrollView } from "react-native";
 import { ScreenShell } from "../lib/primitives";
 import { AppShell } from "../lib/runtime/app-shell";
-import { AirEmptyState, AirHeader } from "../lib/runtime/air-runtime";
+import { AirHeader, AirProse, AirScreenLifecycle } from "../lib/runtime/air-runtime";
 import { PrimaryNav } from "../lib/runtime/primary-nav";
 import { primaryNav } from "../nav.data";
 import { screenData } from "./scr_rentabilite.data";
@@ -16,6 +16,7 @@ import { screenData } from "./scr_rentabilite.data";
 export default function ScrRentabiliteScreen() {
   return (
     <ScreenShell testID="scr_rentabilite" title={screenData.title}>
+      <AirScreenLifecycle screen={screenData} />
       <AppShell
         avecEntete={true}
         navigation={<PrimaryNav destinations={primaryNav} currentScreenId="scr_rentabilite" />}
@@ -26,7 +27,7 @@ export default function ScrRentabiliteScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <AirHeader screen={screenData} blockId="blk_rentabilite_entete" />
-          <AirEmptyState screen={screenData} blockId="blk_rentabilite_vide" />
+          <AirProse screen={screenData} blockId="blk_rentabilite_chiffres" />
         </ScrollView>
         </KeyboardAvoidingView>
       </AppShell>
