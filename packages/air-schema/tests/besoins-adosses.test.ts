@@ -30,16 +30,68 @@ import { migrateAirDocument, assertValidAir } from "../src/index.ts";
 // ============================================================
 
 const RACINE = new URL("../../../", import.meta.url).pathname;
-const lire = () =>
-  JSON.parse(readFileSync(RACINE + "slices/gestion/gestion.air.json", "utf8")) as Record<
-    string,
-    unknown
-  >;
+
+// ── CE QUE CES TESTS TOUCHENT DU DOCUMENT, ET RIEN DE PLUS.
+//
+// La première version lisait le document `as any`. Le lint du dépôt l'a refusé,
+// et il a raison : `any` éteint le typage à l'endroit même où ces tests
+// manipulent la structure à la main. Un champ renommé ne les aurait pas fait
+// broncher — ils auraient muté une propriété inexistante et continué de passer.
+// On déclare donc la forme réellement touchée. Elle est partielle par
+// construction : ce qui n'est pas écrit ici n'est pas manipulé.
+interface DocTest {
+  screens: { id: string; requiredRightId?: string }[];
+  navigation: { entryScreenId: string; routes: { id: string }[] };
+  entities: { fields: { id: string }[] }[];
+  access?: {
+    rights: { id: string }[];
+    roles: { id: string }[];
+    defaultRoleId: string;
+  };
+  intent: {
+    needs: {
+      id: string;
+      resolution:
+        | { kind: "satisfied"; nodeIds: string[] }
+        | { kind: "unexpressible"; reason: string; nodeIds?: undefined };
+    }[];
+  };
+}
+
+const lire = (): DocTest =>
+  JSON.parse(readFileSync(RACINE + "slices/gestion/gestion.air.json", "utf8")) as DocTest;
+
+/** Le document rendu au contrat d'entrée du validateur, sans passer par `any`. */
+const brut = (doc: DocTest) => doc as unknown as Record<string, unknown>;
+
+/**
+ * La prémisse d'un test, rendue EXPLICITE.
+ *
+ * `find` et l'indexation rendent `undefined`, et c'est ce que `any` masquait :
+ * un test pouvait muter une propriété d'un objet absent et continuer de passer,
+ * ne mesurant plus rien. Ici, une prémisse fausse ÉCHOUE, et elle dit laquelle.
+ */
+function exige<T>(valeur: T | undefined, quoi: string): T {
+  if (valeur === undefined) throw new Error(`prémisse absente du document : ${quoi}`);
+  return valeur;
+}
+
+/** Un besoin déclaré PORTÉ, avec ses nœuds — la prémisse de presque tout ici. */
+function unPorte(doc: DocTest, aumoins = 1) {
+  const n = exige(
+    doc.intent.needs.find(
+      (x) => x.resolution.kind === "satisfied" && x.resolution.nodeIds.length >= aumoins,
+    ),
+    `un besoin porté par au moins ${aumoins} nœud(s)`,
+  );
+  if (n.resolution.kind !== "satisfied") throw new Error("inatteignable");
+  return n.resolution;
+}
 
 /** Les diagnostics du document, LUS plutôt que subis. */
-function diagnostiquer(doc: unknown): string[] {
+function diagnostiquer(doc: DocTest): string[] {
   try {
-    assertValidAir(migrateAirDocument(doc as Record<string, unknown>));
+    assertValidAir(migrateAirDocument(brut(doc)));
     return [];
   } catch (e) {
     const liste = (e as { diagnostics?: { code: string }[] }).diagnostics;
@@ -53,26 +105,23 @@ describe("un besoin porté est adossé (AIR, cliquet)", () => {
     // Ce test vaut par son document : SGD est en production, et ses besoins
     // viennent de ses incidents. Un document fabriqué pour le test mesurerait
     // ma capacité à écrire un cas qui passe.
-    const doc = lire() as any;
-    const portes = doc.intent.needs.filter((n: any) => n.resolution.kind === "satisfied");
+    const doc = lire();
+    const portes = doc.intent.needs.filter((n) => n.resolution.kind === "satisfied");
     expect(portes.length).toBe(9);
     expect(diagnostiquer(doc)).not.toContain("AIR_NEED_NODE_UNKNOWN");
   });
 
   it("un nœud inventé dans un `satisfied` est refusé", () => {
-    const doc = lire() as any;
-    const porte = doc.intent.needs.find((n: any) => n.resolution.kind === "satisfied");
-    porte.resolution.nodeIds = ["slot_qui_nexiste_pas"];
+    const doc = lire();
+    unPorte(doc).nodeIds = ["slot_qui_nexiste_pas"];
 
     expect(diagnostiquer(doc)).toContain("AIR_NEED_NODE_UNKNOWN");
   });
 
   it("un seul nœud faux parmi des vrais suffit — on ne vérifie pas que le premier", () => {
-    const doc = lire() as any;
-    const porte = doc.intent.needs.find(
-      (n: any) => n.resolution.kind === "satisfied" && n.resolution.nodeIds.length > 1,
-    );
-    porte.resolution.nodeIds = [...porte.resolution.nodeIds, "ent_inventee"];
+    const doc = lire();
+    const porte = unPorte(doc, 2);
+    porte.nodeIds = [...porte.nodeIds, "ent_inventee"];
 
     expect(diagnostiquer(doc)).toContain("AIR_NEED_NODE_UNKNOWN");
   });
@@ -80,9 +129,11 @@ describe("un besoin porté est adossé (AIR, cliquet)", () => {
   it("un besoin `unexpressible` n'est PAS tenu de nommer des nœuds", () => {
     // Un manque n'a rien à adosser — c'est sa définition. Si ce cliquet exigeait
     // des nœuds ici, il pousserait à déclarer `satisfied` pour se taire.
-    const doc = lire() as any;
-    const absent = doc.intent.needs.find((n: any) => n.resolution.kind === "unexpressible");
-    expect(absent).toBeDefined();
+    const doc = lire();
+    const absent = exige(
+      doc.intent.needs.find((n) => n.resolution.kind === "unexpressible"),
+      "un besoin inexprimable",
+    );
     expect(absent.resolution.nodeIds).toBeUndefined();
     expect(diagnostiquer(doc)).not.toContain("AIR_NEED_NODE_UNKNOWN");
   });
@@ -92,12 +143,11 @@ describe("un besoin porté est adossé (AIR, cliquet)", () => {
     // champs, les routes et les tests attendus — il accusait 106 documents sur
     // 111 de mentir. C'était l'inventaire qui était faux. Le cliquet doit donc
     // reconnaître un champ, une route et un test attendu comme des nœuds.
-    const doc = lire() as any;
-    const champ = doc.entities[0].fields[0].id;
-    const route = doc.navigation.routes[0].id;
-    const droit = doc.access.rights[0].id;
-    const porte = doc.intent.needs.find((n: any) => n.resolution.kind === "satisfied");
-    porte.resolution.nodeIds = [champ, route, droit];
+    const doc = lire();
+    const champ = exige(exige(doc.entities[0], "une entité").fields[0], "un champ").id;
+    const route = exige(doc.navigation.routes[0], "une route").id;
+    const droit = exige(exige(doc.access, "le bloc access").rights[0], "un droit").id;
+    unPorte(doc).nodeIds = [champ, route, droit];
 
     expect(diagnostiquer(doc)).not.toContain("AIR_NEED_NODE_UNKNOWN");
   });
@@ -113,15 +163,17 @@ describe("un besoin porté est adossé (AIR, cliquet)", () => {
     // lui, était réel et il est ici : rien n'empêchait `access.rights` de
     // déclarer deux fois le même droit, et `requiredRightId` aurait désigné
     // celui des deux que le lecteur voudrait bien lire.
-    const doc = lire() as any;
-    doc.access.rights.push({ ...doc.access.rights[0] });
+    const doc = lire();
+    const acces = exige(doc.access, "le bloc access");
+    acces.rights.push({ ...exige(acces.rights[0], "un droit") });
 
     expect(diagnostiquer(doc)).toContain("AIR_DUP_ID");
   });
 
   it("deux rôles ne peuvent pas porter le même identifiant", () => {
-    const doc = lire() as any;
-    doc.access.roles.push({ ...doc.access.roles[0] });
+    const doc = lire();
+    const acces = exige(doc.access, "le bloc access");
+    acces.roles.push({ ...exige(acces.roles[0], "un rôle") });
 
     expect(diagnostiquer(doc)).toContain("AIR_DUP_ID");
   });

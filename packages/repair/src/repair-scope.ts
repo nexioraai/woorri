@@ -43,6 +43,12 @@ export const SECTION_KEYS: Readonly<Record<SectionEmission, readonly string[]>> 
     "network",
     "native",
     "compliance",
+    // CONTRÔLE D'ACCÈS (1.28.0) — OUBLIÉ ICI à son ajout, et l'oubli avait
+    // deux conséquences, pas une : le routage n'aurait jamais réémis `access`
+    // (donc un modèle d'accès faux était IRRÉPARABLE), et la garantie
+    // d'anti-amputation ne le protégeait pas (une réparation d'une tout autre
+    // section pouvait le faire DISPARAÎTRE, ce qui ouvre l'application à tous).
+    "access",
   ],
   donnees: ["entities", "relations", "datasets", "rules", "slots"],
   ecrans: ["screens"],
@@ -214,6 +220,32 @@ export const SECTIONS_CORRECTIVES: Readonly<Record<string, readonly SectionEmiss
   AIR_FIELD_REFERENCE_TARGET_UNKNOWN: ["donnees"],
   AIR_FIELD_REFERENCE_UNEXPECTED: ["donnees"],
   AIR_DUP_ID: ["donnees", "ecrans", "actions"],
+  // ── CONTRÔLE D'ACCÈS (1.28.0). Le correctif ne vit JAMAIS seulement là où
+  // le défaut s'observe, et c'est tout l'objet de cette table.
+  //
+  // Un droit inconnu s'observe sur l'écran ou l'action qui l'exige ; il se
+  // répare en le DÉCLARANT dans `access` (donc `base`) tout autant qu'en
+  // corrigeant la référence. Sans `base` dans ce périmètre, la seule issue
+  // serait de retirer le droit de l'écran — l'amputation, encore.
+  AIR_ACCESS_RIGHT_UNKNOWN: ["base", "ecrans", "actions"],
+  // Un rôle par défaut inconnu ne s'observe et ne se répare que dans `access`.
+  AIR_ACCESS_DEFAULT_ROLE_UNKNOWN: ["base"],
+  // L'écran d'entrée hors de portée du rôle par défaut a TROIS correctifs
+  // légitimes : accorder le droit au rôle, entrer sur un autre écran (les deux
+  // dans `base`), ou libérer l'écran de son droit (`ecrans`). Les trois sont
+  // du ressort du document ; aucun n'est préférable a priori.
+  AIR_ACCESS_ENTRY_UNREACHABLE: ["base", "ecrans"],
+  // Des droits portés sans modèle d'accès : soit on déclare le modèle
+  // (`base`), soit on retire les droits là où ils sont portés.
+  AIR_ACCESS_SANS_DECLARATION: ["base", "ecrans", "actions"],
+  // ── UN BESOIN QUI SE DIT PORTÉ PAR UN NŒUD ABSENT.
+  //
+  // S'observe dans `intent`. Mais la réparation honnête n'est pas toujours de
+  // réécrire le besoin : le nœud peut être celui qui MANQUE, et c'est alors lui
+  // qu'il faut poser. Restreindre ce périmètre à `intention` ne laisserait
+  // qu'une issue — effacer la revendication — c'est-à-dire se taire sur un
+  // besoin réel. On ouvre donc les sections qui peuvent PORTER le nœud.
+  AIR_NEED_NODE_UNKNOWN: ["intention", "donnees", "ecrans", "actions", "cablage"],
   AIR_CONFIG_DUP_KEY: ["cablage"],
   AIR_INTEGRATION_SECRET_LIKE_KEY: ["cablage"],
   // Une marque hors allowlist se répare dans le CÂBLAGE (politique réseau)

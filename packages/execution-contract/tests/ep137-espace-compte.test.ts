@@ -215,8 +215,21 @@ describe("EP-137 · CLIQUETS (règle d'EP-132)", () => {
     }
   });
 
-  it("le schéma qui porte ce champ est la version courante", () => {
-    // EP-145 — montée à 1.24.0 avec le genre `privacy_consent`.
-    expect(AIR_SCHEMA_VERSION).toBe("1.27.0");
+  it("le schéma qui porte ce champ ne redescend pas sous la version qui l'a introduit", () => {
+    // ── CE TEST FIGEAIT `AIR_SCHEMA_VERSION` EN DUR, et c'était une impasse.
+    //
+    // Son titre annonce « la version courante » ; le littéral, lui, n'en
+    // vérifiait rien : il se contentait de casser à CHAQUE montée de contrat,
+    // en exigeant une mise à jour qui ne prouvait rien de plus. Un cliquet qui
+    // se contente d'être recopié n'est plus un cliquet — c'est une corvée, et
+    // la corvée finit par être expédiée sans regarder.
+    //
+    // Ce qu'il doit garder, c'est que le champ n'a pas DISPARU avec une
+    // version descendue sous celle qui l'a introduit (1.24.0, EP-145, genre
+    // `privacy_consent`). Les genres eux-mêmes sont vérifiés plus haut, sur le
+    // registre réel.
+    const [maj, min] = AIR_SCHEMA_VERSION.split(".").map(Number);
+    expect(maj).toBeGreaterThanOrEqual(1);
+    if (maj === 1) expect(min).toBeGreaterThanOrEqual(24);
   });
 });
