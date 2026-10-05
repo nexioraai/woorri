@@ -79,6 +79,22 @@ export const PARTAGE_PAR_CAPACITE: Readonly<Record<string, readonly string[]>> =
   // Stockage LOCAL : c'est sa définition même.
   offline_storage: [],
   "payments.iap": ["purchases", "identifiers"],
+  // ── ARGENT MOBILE : LE PARTAGE EST RÉEL, MÊME EN PASSANT PAR LE SERVEUR.
+  //
+  // L'application parle à SON serveur, qui parle à l'opérateur. Il serait
+  // tentant d'en conclure qu'elle ne partage rien — c'est faux, et dangereux.
+  // Le NUMÉRO DE TÉLÉPHONE et le MONTANT atteignent Orange, MTN, Moov ou
+  // Airtel : le fait se produit, que l'application le dise ou non.
+  //
+  // C'est précisément la règle que ce module porte : « le fait se DÉRIVE, il
+  // ne se déclare pas ». Un intermédiaire ne supprime pas une divulgation, il
+  // la rend seulement moins visible — et la rendre moins visible est le
+  // contraire de ce que les magasins exigent.
+  //
+  // `contact_info` : le numéro est la coordonnée du compte d'argent mobile.
+  // `purchases` : le mouvement d'argent lui-même. `identifiers` : la référence
+  // externe qui rattache la transaction chez l'opérateur.
+  "payments.mobile_money": ["contact_info", "purchases", "identifiers"],
   "payments.psp": ["purchases", "contact_info", "identifiers"],
   // Le jeton d'appareil est enregistré chez le service de notification.
   push_notifications: ["identifiers"],

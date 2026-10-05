@@ -332,6 +332,86 @@ const RAW_DEFINITIONS: CapabilityDefinition[] = [
     buildFootprint: { estimatedSizeKb: 800, buildTimeImpact: "medium" },
   },
   {
+    // ══════════════════════════════════════════════════════════════
+    //  ARGENT MOBILE — ET AUCUN OPÉRATEUR N'EST NOMMÉ ICI.
+    // ══════════════════════════════════════════════════════════════
+    //
+    // ── LA RAISON, DONNÉE PAR LE PROPRIÉTAIRE LE 2026-10-05.
+    //
+    // « Il va y avoir appli tontine au Cameroun, Sénégal, Tchad, Mali. Mobile
+    // money doit être bien construite, car il y a Orange Money au Cameroun mais
+    // pas au Tchad où il y a Moov Money et Airtel Money. »
+    //
+    // Nommer un opérateur ici rendrait le générateur CAMEROUNAIS. L'opérateur
+    // est une donnée du PAYS et du document, jamais du moteur — exactement la
+    // frontière que `payments.offapp_transfer` énonce déjà : « le document
+    // nomme, le moteur dessine ».
+    //
+    // ── POURQUOI `provider_service` ET NON UN MODULE NATIF.
+    //
+    // Il n'existe AUCUN SDK universel d'argent mobile : Orange, MTN, Moov et
+    // Airtel exposent chacun leur API HTTP, et chaque pays a les siens. Un
+    // module embarqué dans l'application obligerait à la reconstruire pour
+    // chaque marché — et, pire, mettrait des identifiants d'opérateur dans un
+    // binaire distribué.
+    //
+    // L'application DEMANDE donc un encaissement ou un décaissement À SON
+    // PROPRE SERVEUR, et suit l'issue. C'est le serveur qui parle à
+    // l'opérateur, qui détient les secrets, et qui applique les règles d'argent
+    // — comme pour le reste du calcul financier. Changer de pays devient un
+    // changement de CONFIGURATION, pas de code.
+    //
+    // ── CE QU'ELLE N'APPORTE PAS, ET QU'IL FAUT DIRE.
+    //
+    // Aucun paiement n'est conclu DANS l'application : elle demande, elle
+    // affiche, elle n'encaisse pas. Un décaissement reste suspendu à ce que le
+    // serveur confirme — y compris à une validation hors application, comme un
+    // code reçu par SMS.
+    id: "payments.mobile_money",
+    version: "1.0.0",
+    title: "Argent mobile — encaissement et décaissement, par le serveur",
+    description:
+      "L'application DEMANDE à son propre serveur un encaissement (PayIn) ou un décaissement (PayOut) par argent mobile, et suit l'issue de l'opération. L'OPÉRATEUR est une donnée du document — Orange, MTN, Moov, Airtel, Wave selon le pays — et n'est jamais nommé par le moteur. Aucun secret d'opérateur n'entre dans l'application.",
+    implementation: { kind: "provider_service", package: "@supabase/supabase-js", version: "^2" },
+    dependencies: { capabilities: [], nativeModules: [] },
+    platforms: { ios: { supported: true }, android: { supported: true } },
+    // `core` INCLUS, et c'est un cliquet qui me l'a appris : une capacité SANS
+    // empreinte native n'a aucune raison d'être refusée au profil le plus
+    // léger. Elle n'embarque aucun module — elle parle au serveur, comme le
+    // reste de l'application.
+    compatibleRuntimeProfiles: ["core", "standard", "extended"],
+    nativeConfig: { infoPlistKeys: [], androidManifestPermissions: [], entitlements: [] },
+    inducedPermissions: [],
+    cost: {
+      model: "usage_based",
+      notes:
+        "les frais appartiennent à l'opérateur et au pays — l'application n'en prélève aucun elle-même",
+    },
+    nativeFootprint: { impact: "none", nativeModules: [] },
+    otaCompatible: true,
+    requiresRebuild: false,
+    // Les fonds circulent entre personnes par un opérateur tiers : ce n'est pas
+    // un achat dans l'application, et la règle 3.1.1 des magasins ne s'y
+    // applique pas.
+    commerceConstraint: "physical_or_offapp",
+    constraints: [
+      "l'OPÉRATEUR est une donnée du document — Orange, MTN, Moov, Airtel, Wave selon le pays — et n'est JAMAIS nommé par le moteur",
+      "aucun secret d'opérateur n'entre dans l'application : le serveur les détient",
+      "les montants sont CALCULÉS par le serveur ; l'application les affiche, elle ne les décide pas",
+      "un décaissement reste suspendu à ce que le serveur confirme, y compris à une validation hors application",
+    ],
+    // AUCUN CONFLIT AVEC LES AUTRES MOYENS DE PAIEMENT. Un même document peut
+    // porter l'argent mobile ET le transfert hors application : au Tchad, un
+    // membre paie par Airtel et son voisin remet des espèces. C'est l'humain
+    // qui choisit, jamais une déduction faite depuis son pays.
+    conflicts: [],
+    provenance: {
+      source: "first_party",
+      reference: "cahier des charges Tontine Digitale Cameroun v1.2, §1 et §4",
+    },
+    buildFootprint: { estimatedSizeKb: 0, buildTimeImpact: "none" },
+  },
+  {
     // EP-201 G — LE PAIEMENT QUI SE CONCLUT HORS DE L'APPLICATION.
     //
     // FAIT MESURÉ AVANT CETTE ENTRÉE : le registre ne connaissait que DEUX
@@ -519,4 +599,9 @@ export const CAPABILITIES: readonly CapabilityDefinition[] = z
 // GEL v1 (D-020, 2026-08-27) : toute évolution passe par le cliquet.
 // EP-134 — version MINEURE : AJOUT compatible (`external_contact`), selon la
 // règle d'évolution post-gel D-020. Aucune capacité retirée ni renommée.
-export const CAPABILITY_REGISTRY_VERSION = "1.1.0";
+// 1.2.0 (2026-10-05) — ARGENT MOBILE, et aucun opérateur nommé. Demande du
+// propriétaire : « il va y avoir appli tontine au Cameroun, Sénégal, Tchad,
+// Mali ; il y a Orange Money au Cameroun mais pas au Tchad où il y a Moov et
+// Airtel ». Nommer un opérateur dans le registre aurait rendu le générateur
+// camerounais. ADDITIF : aucune capacité existante ne change.
+export const CAPABILITY_REGISTRY_VERSION = "1.2.0";

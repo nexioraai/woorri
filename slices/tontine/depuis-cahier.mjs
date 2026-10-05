@@ -487,11 +487,18 @@ function besoins() {
     "— et elle se déclenche À LA FIN DU CYCLE, un événement métier qu'aucun déclencheur ne " +
     "connaît. Diviser et choisir son moment appartiennent au serveur, avec le reste de l'argent.")
 
-  manque("need_mobile_money",
-    "Collecte et décaissement par les API Orange Money Cameroun et MTN Mobile Money.",
-    "Le registre des capacités porte `payments.psp` (Stripe) et `payments.offapp_transfer`, qui dit " +
-    "explicitement « aucun opérateur intégré, aucun appel réseau ». Aucun opérateur d'argent mobile " +
-    "africain n'y figure, alors que c'est l'infrastructure de paiement du marché visé.");
+  // ── RECLASSÉ (registre de capacités 1.2.0). Le motif disait vrai : aucun
+  // opérateur d'argent mobile africain n'existait au registre, qui ne portait
+  // que Stripe et le transfert hors application.
+  //
+  // `payments.mobile_money` le porte désormais SANS NOMMER D'OPÉRATEUR — et
+  // c'est la seule forme défendable : « il y a Orange Money au Cameroun mais
+  // pas au Tchad où il y a Moov Money et Airtel Money ». Les opérateurs sont
+  // dans l'énumération du document ; le même générateur sert les quatre pays.
+  porte("need_mobile_money",
+    "Collecte et décaissement par argent mobile, avec les opérateurs du pays.",
+    ["ent_transactions", "fld_transactions_operateur", "fld_transactions_reference_externe",
+     "intg_argent_mobile"])
 
   manque("need_otp_payout",
     "Un décaissement n'est exécuté qu'après saisie d'un code à 6 chiffres reçu par WhatsApp ou SMS.",
@@ -578,11 +585,28 @@ const air = {
   actions: [],
   rules: [],
   slots: [],
-  capabilities: [],
+  // ── L'ARGENT MOBILE, ET SES OPÉRATEURS EN DONNÉES.
+  //
+  // Le cahier §1 : « intégration directe des API nationales Orange Money
+  // Cameroun et MTN Mobile Money pour la collecte (PayIn) et le décaissement
+  // (PayOut) ».
+  //
+  // La CAPACITÉ ne nomme aucun opérateur — elle dit seulement que
+  // l'application demande un encaissement à son serveur et en suit l'issue.
+  // Les opérateurs sont là où ils doivent être : dans l'énumération
+  // `fld_transactions_operateur` du DOCUMENT. Une tontine tchadienne y
+  // écrirait MOOV_TCD et AIRTEL_TCD, une sénégalaise WAVE_SEN — sans qu'une
+  // ligne du générateur ne change.
+  capabilities: [{ capability: "payments.mobile_money" }],
   permissions: [],
   access: acces(),
   design: { theme: "tontine_sobre" },
-  integrations: [],
+  // La CLASSE est neutre : le fournisseur concret se résout au lock
+  // (multi-provider, non-négociable #12). C'est ce qui permettra au même
+  // document de viser Orange au Cameroun et Airtel au Tchad.
+  integrations: [
+    { id: "intg_argent_mobile", providerClass: "argent_mobile", capability: "payments.mobile_money" },
+  ],
   // Le cahier annonce des API Mobile Money nationales. Tant qu'aucune capacité
   // ne les porte, le document ne déclare AUCUN domaine : annoncer un accès
   // réseau qui n'existe pas serait une permission inventée.

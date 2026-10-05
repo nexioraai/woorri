@@ -30,6 +30,7 @@ const V1_CAPABILITY_IDS = [
   "media_upload",
   "offline_storage",
   "payments.iap",
+  "payments.mobile_money",
   // EP-201 — DIX-SEPTIEME CAPACITE : le paiement qui se conclut HORS de
   // l application. Le registre ne connaissait que deux facons d encaisser,
   // les achats integres et un PSP par carte. Une boutique dont l acheteur
@@ -43,14 +44,14 @@ const V1_CAPABILITY_IDS = [
 ];
 
 describe("cliquets de registre", () => {
-  it("le registre est en 1.1.0 (ajout compatible EP-134) et chaque contrat porte 1.0.0 et chaque contrat porte la version 1.0.0 (D-020)", () => {
-    expect(CAPABILITY_REGISTRY_VERSION).toBe("1.1.0");
+  it("le registre est en 1.2.0 (argent mobile, additif) et chaque contrat porte 1.0.0 (D-020)", () => {
+    expect(CAPABILITY_REGISTRY_VERSION).toBe("1.2.0");
     for (const c of CAPABILITIES) {
       expect(c.version, c.id).toBe("1.0.0");
     }
   });
 
-  it("contient EXACTEMENT les 17 capabilities déclarées, triées", () => {
+  it("contient EXACTEMENT les 18 capabilities déclarées, triées", () => {
     expect(CAPABILITIES.map((c) => c.id)).toEqual(V1_CAPABILITY_IDS);
   });
 

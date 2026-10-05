@@ -1156,7 +1156,11 @@
  "actions": [],
  "rules": [],
  "slots": [],
- "capabilities": [],
+ "capabilities": [
+  {
+   "capability": "payments.mobile_money"
+  }
+ ],
  "permissions": [],
  "access": {
   "rights": [
@@ -1288,7 +1292,13 @@
  "design": {
   "theme": "tontine_sobre"
  },
- "integrations": [],
+ "integrations": [
+  {
+   "id": "intg_argent_mobile",
+   "providerClass": "argent_mobile",
+   "capability": "payments.mobile_money"
+  }
+ ],
  "network": {
   "policy": "deny_by_default",
   "allowedDomains": []
@@ -1455,10 +1465,15 @@
    },
    {
     "id": "need_mobile_money",
-    "statement": "Collecte et décaissement par les API Orange Money Cameroun et MTN Mobile Money.",
+    "statement": "Collecte et décaissement par argent mobile, avec les opérateurs du pays.",
     "resolution": {
-     "kind": "unexpressible",
-     "reason": "Le registre des capacités porte `payments.psp` (Stripe) et `payments.offapp_transfer`, qui dit explicitement « aucun opérateur intégré, aucun appel réseau ». Aucun opérateur d'argent mobile africain n'y figure, alors que c'est l'infrastructure de paiement du marché visé."
+     "kind": "satisfied",
+     "nodeIds": [
+      "ent_transactions",
+      "fld_transactions_operateur",
+      "fld_transactions_reference_externe",
+      "intg_argent_mobile"
+     ]
     }
    },
    {

@@ -243,7 +243,12 @@ export const RELEASE_TRAIN_V1 = {
    * un cliquet vérifie qu'il atteint le minimum de la plateforme.
    */
   androidTargetSdk: 36,
-  capabilityRegistryVersion: "1.1.0",
+  capabilityRegistryVersion: "1.2.0",
+  // Ré-scellé 2026-10-05 (registre 1.2.0) : `payments.mobile_money`. AUCUN
+  // opérateur n'y est nommé — Orange, MTN, Moov, Airtel et Wave sont des
+  // données du document, parce que le Cameroun et le Tchad n'ont pas les mêmes.
+  // Nommer un opérateur ici aurait rendu le générateur camerounais. Additif :
+  // aucune capacité existante ne change.
   capabilitySourcesHash:
     // Re-scellé 2026-09-19 (EP-201) : DIX-SEPTIÈME capacité —
     // `payments.offapp_transfer`, le paiement qui se conclut HORS de
@@ -251,7 +256,7 @@ export const RELEASE_TRAIN_V1 = {
     // aucun module de paiement n'est ajouté (`expo-linking` seul, déjà
     // présent pour `external_contact`). La coordonnée d'encaissement vient
     // du DOCUMENT. Les seize précédentes sont intactes.
-    "29dd85584fb2234a0b42c2742e09f50110e3c4710e6b78f39c4f86478be61d64",
+    "e0119a63e0ffff1ad42048dd2f54df9077ed06c9c5285b022d738ead5a6e124c",
   // ÉDITION CONSCIENTE (1.3.0) : l'échelle typographique gagne `display`, un
   // cran au-dessus de `heading`. Ajouté AVEC son consommateur réel (l'écran
   // d'accueil produit), jamais « au cas où » — règle posée par DET-023.

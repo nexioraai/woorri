@@ -79,6 +79,14 @@ export const CHIFFREMENT_PROPRE_PAR_CAPACITE: Readonly<Record<string, boolean>> 
   media_upload: false,
   offline_storage: false,
   "payments.iap": false,
+  // ── ARGENT MOBILE : AUCUN CHIFFREMENT PROPRE.
+  //
+  // L'application ne chiffre rien elle-même — elle demande à SON serveur, par
+  // HTTPS, comme tout le reste. Le chiffrement du transport est celui de la
+  // plateforme, et la clé `usesNonExemptEncryption` ne porte que sur un
+  // chiffrement AJOUTÉ par l'application. Répondre `true` déclencherait une
+  // procédure d'export qui ne correspond à rien ici.
+  "payments.mobile_money": false,
   "payments.psp": false,
   push_notifications: false,
   share: false,
@@ -128,6 +136,10 @@ export const API_SENSIBLES_PAR_CAPACITE: Readonly<Record<string, readonly string
   // à raison requise.
   offline_storage: ["NSPrivacyAccessedAPICategoryFileTimestamp"],
   "payments.iap": [],
+  // Aucune API à raison requise : l'application n'écrit pas de fichier, ne lit
+  // pas l'horodatage du disque, n'interroge pas l'espace libre. Elle fait un
+  // appel réseau à son serveur.
+  "payments.mobile_money": [],
   "payments.psp": [],
   push_notifications: [],
   share: [],
