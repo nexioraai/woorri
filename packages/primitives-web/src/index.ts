@@ -14,3 +14,6 @@ export type { ProprietesListe } from "./liste.tsx";
 // commun plutôt que d'en faire une seconde vérité.
 export { ThemeRoot, useStyles, useThemeBridge } from "@deribfy/primitives/theme-bridge";
 export { GLYPHE_PAR_ROLE, ROLES_ICONES } from "@deribfy/primitives/roles-icones";
+
+// Les composants HÔTES — même vocabulaire que `@deribfy/primitives`.
+export { Vue, Texte, Geste, Visuel, Saisie, Attente, Signe, Defilement, EviteLeClavier } from "./hotes.tsx";

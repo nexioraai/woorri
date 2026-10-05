@@ -317,3 +317,89 @@ export function Signe({
 
 /** Ce que les primitives reçoivent comme enfants. */
 export type Enfants = ReactNode;
+
+/**
+ * LE CONTENEUR DÉFILANT.
+ *
+ * React Native sépare le cadre (`style`) du contenu (`contentContainerStyle`) :
+ * le premier borne la fenêtre, le second dimensionne ce qui défile dedans.
+ * Cette séparation n'est PAS cosmétique — `flexGrow: 1` sur le contenu est ce
+ * qui fait qu'un écran plus court que la page la remplit quand même (mesuré
+ * sur appareil : 90 px au lieu de remplir). Deux éléments imbriqués sont donc
+ * nécessaires ici aussi ; les fusionner reproduirait exactement ce défaut.
+ *
+ * `overflow-y: auto` et non `scroll` : une barre de défilement permanente sur
+ * un écran qui n'en a pas besoin est un bruit visuel que le natif n'a pas.
+ */
+export function Defilement({
+  style,
+  contentContainerStyle,
+  horizontal,
+  keyboardShouldPersistTaps,
+  children,
+  ...reste
+}: PropsWithChildren<
+  Commun & {
+    style?: Styles;
+    contentContainerStyle?: Styles;
+    horizontal?: boolean;
+    keyboardShouldPersistTaps?: string;
+  }
+>) {
+  // `keyboardShouldPersistTaps` décide si une tape ferme le clavier avant
+  // d'atteindre le bouton — un problème propre aux claviers logiciels natifs.
+  // Sur le web, un clic atteint toujours sa cible : rien à traduire.
+  void keyboardShouldPersistTaps;
+  return (
+    <div
+      {...attributs(reste)}
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        ...(horizontal === true
+          ? { overflowX: "auto", overflowY: "hidden" }
+          : { overflowY: "auto", overflowX: "hidden" }),
+        ...versCss(...aplatir(style)),
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          flexDirection: horizontal === true ? "row" : "column",
+          ...versCss(...aplatir(contentContainerStyle)),
+        }}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * ÉVITER LE CLAVIER — inerte sur le web, et ce n'est pas un manque.
+ *
+ * Sur iOS et Android, le clavier logiciel se superpose à l'application : sans
+ * ce conteneur, il recouvre le champ qu'on est en train de remplir. React
+ * Native le règle en ajoutant du rembourrage.
+ *
+ * Un navigateur le règle LUI-MÊME : il rétrécit la zone visible (`visualViewport`)
+ * et fait défiler le champ actif dans le cadre. Ajouter du rembourrage par
+ * dessus décalerait la page DEUX fois — le champ remonterait trop haut, hors
+ * de vue dans l'autre sens. Le conteneur se contente donc de porter son style.
+ */
+export function EviteLeClavier({
+  style,
+  behavior,
+  children,
+  ...reste
+}: PropsWithChildren<Commun & { style?: Styles; behavior?: string }>) {
+  void behavior;
+  return (
+    <div
+      {...attributs(reste)}
+      style={{ display: "flex", flexDirection: "column", ...versCss(...aplatir(style)) }}
+    >
+      {children}
+    </div>
+  );
+}

@@ -78,6 +78,26 @@ const page = (air: ProjectAir): string => `<!doctype html>
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>${air.app.name}</title>
     <link rel="manifest" href="./manifest.webmanifest" />
+    <style>
+      /* L'ENCOCHE, TRAITÉE ICI ET NULLE PART AILLEURS.
+         \`viewport-fit=cover\` ci-dessus fait occuper l'écran ENTIER à une PWA
+         installée — encoche et barre de gestes comprises. Sans ce rembourrage,
+         le haut de l'application passe SOUS l'heure du système.
+         Le natif obtient ces marges en nombres (\`useSafeAreaInsets\`) ; le web
+         ne les connaît qu'en CSS, au moment du rendu. C'est pourquoi la couture
+         \`plateforme-web\` rend des zéros : la marge est déjà posée, et les
+         additionner la doublerait. */
+      html, body { margin: 0; height: 100%; }
+      #racine {
+        min-height: 100%;
+        display: flex;
+        flex-direction: column;
+        padding-top: env(safe-area-inset-top);
+        padding-bottom: env(safe-area-inset-bottom);
+        padding-left: env(safe-area-inset-left);
+        padding-right: env(safe-area-inset-right);
+      }
+    </style>
   </head>
   <body>
     <div id="racine"></div>
@@ -177,7 +197,8 @@ const navigation = (air: ProjectAir, pascal: (id: string) => string): string => 
   const routes = air.navigation.routes;
   const l: string[] = [
     "// GÉNÉRÉ — NE PAS ÉDITER (navigation WEB : l'adresse désigne l'écran).",
-    'import { ecranDeLAdresse } from "./lib/runtime/navigation-web";',
+    'import { ecranDeLAdresse, parametresDeLAdresse } from "./lib/runtime/navigation-web";',
+    'import type { AirScreenProps } from "./lib/runtime/air-runtime";',
     'import { declarerRacines } from "./lib/runtime/racines-navigation";',
     'import { navData } from "./nav.data";',
     ...routes.map((r) => `import ${pascal(r.screenId)}Screen from "./screens/${r.screenId}";`),
@@ -188,7 +209,11 @@ const navigation = (air: ProjectAir, pascal: (id: string) => string): string => 
         .filter((x): x is string => x !== undefined),
     )});`,
     "",
-    "const ECRANS: Record<string, () => React.JSX.Element> = {",
+    // LE TYPE DIT LA VÉRITÉ : un écran REÇOIT sa route. Le typer `() => Element`
+    // compilait sur le natif par hasard et refusait de compiler ici — c'est la
+    // gate web qui l'a dit, et elle avait raison : un écran de détail sans son
+    // `itemId` s'affiche vide.
+    "const ECRANS: Record<string, (p: AirScreenProps) => React.JSX.Element> = {",
     ...routes.map((r) => `  ${JSON.stringify(r.screenId)}: ${pascal(r.screenId)}Screen,`),
     "};",
     "",
@@ -198,10 +223,72 @@ const navigation = (air: ProjectAir, pascal: (id: string) => string): string => 
     "  // lien périmé ou mal recopié doit ramener quelque part, pas nulle part.",
     "  const Ecran = ECRANS[courant] ?? ECRANS[navData.entryScreenId];",
     "  if (Ecran === undefined) return null;",
-    "  return <Ecran />;",
+    "  // Les paramètres viennent de l'ADRESSE, comme l'écran : un lien vers une",
+    "  // fiche se partage et se recharge, ou ce n'est pas une application web.",
+    "  return <Ecran route={{ params: parametresDeLAdresse() }} />;",
     "}",
     "",
   ];
+  return l.join("\n");
+};
+
+/**
+ * CE QUE VOTRE HÉBERGEUR ATTEND — la note de publication, version web.
+ *
+ * Le natif en émet une, tournée vers les magasins : comptes développeur,
+ * captures, politique de confidentialité. Rien de cela ne s'applique ici, et la
+ * laisser passer telle quelle enverrait le propriétaire remplir des formulaires
+ * d'Apple pour une page web. Une PWA se publie autrement — et elle se publie
+ * en trois commandes, ce qui mérite d'être dit aussi clairement.
+ */
+const publication = (air: ProjectAir): string => {
+  // `compliance.dataCollected` est OBLIGATOIRE au contrat : pas de repli ici,
+  // le lint refuse à juste titre une garde sur une valeur toujours présente.
+  const collecte = air.compliance.dataCollected;
+  const l: string[] = [
+    `# Mettre « ${air.app.name} » en ligne`,
+    "",
+    "Votre application web est générée. Elle produit des fichiers STATIQUES :",
+    "n'importe quel hébergement sait les servir, aucun serveur à maintenir.",
+    "",
+    "## Les trois commandes",
+    "",
+    "```sh",
+    "npm install      # une fois",
+    "npm run dev      # pour voir l'application sur votre machine",
+    "npm run build    # produit le dossier `dist/` — c'est lui qu'on héberge",
+    "```",
+    "",
+    "Déposez le contenu de `dist/` chez votre hébergeur. L'application",
+    "fonctionne servie depuis un sous-dossier : aucun chemin n'est absolu.",
+    "",
+    "## Ce qu'il reste à faire, et que personne ne peut faire à votre place",
+    "",
+    "- **HTTPS est obligatoire.** Sans lui, le navigateur refuse l'installation",
+    "  sur l'écran d'accueil, et l'application reste une page web ordinaire.",
+    "- **Les icônes.** Le manifeste n'en déclare AUCUNE, délibérément : annoncer",
+    "  un fichier absent ferait refuser l'installation entière. Ajoutez vos",
+    "  icônes puis déclarez-les dans `manifest.webmanifest`.",
+  ];
+  if (collecte.length > 0) {
+    l.push(
+      `- **Une politique de confidentialité.** Cette application collecte : ${collecte.join(", ")}.`,
+      "  Sur le web, aucun magasin ne vous la réclamera — la loi, elle, si.",
+    );
+  }
+  l.push(
+    "",
+    "## Ce que la version web ne fait pas",
+    "",
+    "- **Pas de fonctionnement hors ligne.** Aucun service worker n'est généré :",
+    "  en poser un sans stratégie de cache servirait une version périmée de",
+    "  l'application sans jamais dire laquelle.",
+    "- **Pas de notifications poussées.**",
+    "- **Les signes (icônes) ne s'affichent pas.** La police du vocabulaire",
+    "  fermé est embarquée côté natif ; côté web, elle n'est pas encore livrée.",
+    "  Les libellés, eux, sont intacts.",
+    "",
+  );
   return l.join("\n");
 };
 
@@ -223,6 +310,42 @@ const gabarit = (air: ProjectAir): ReadonlyMap<string, string> =>
         },
       }),
     ],
+    [
+      // LE TSCONFIG N'EST PAS UN DÉTAIL DE CONFORT.
+      //
+      // Le natif reçoit le sien du gabarit Expo scellé. Le web n'avait AUCUN
+      // tsconfig : l'application était émise, et rien — ni `tsc`, ni l'éditeur
+      // du propriétaire — ne pouvait vérifier qu'elle tient. Le défaut que je
+      // paie en boucle : produit, donc supposé bon.
+      //
+      // `allowImportingTsExtensions` est requis parce que la bibliothèque
+      // embarquée importe `./contracts.ts` extension comprise, comme en natif.
+      "tsconfig.json",
+      json({
+        compilerOptions: {
+          target: "ES2022",
+          lib: ["ES2022", "DOM", "DOM.Iterable"],
+          module: "ESNext",
+          moduleResolution: "bundler",
+          jsx: "react-jsx",
+          strict: true,
+          allowImportingTsExtensions: true,
+          esModuleInterop: true,
+          skipLibCheck: true,
+          noEmit: true,
+        },
+        include: ["**/*.ts", "**/*.tsx"],
+        // `vite.config.ts` est EXCLU, comme dans le gabarit officiel de Vite,
+        // et la raison n'est pas un contournement : ce fichier ne tourne pas
+        // dans le navigateur. Il est exécuté par Node AVANT le build, et il
+        // n'a donc ni le même environnement (`lib: DOM` ne s'y applique pas)
+        // ni le même cycle de vie que le code de l'application. Le typer avec
+        // les mêmes réglages mélange deux programmes dans un seul contrat.
+        exclude: ["node_modules", "dist", "vite.config.ts"],
+      }),
+    ],
+    [".gitignore", "node_modules/\ndist/\n"],
+    ["PUBLICATION.md", publication(air)],
     [
       "vite.config.ts",
       `import { defineConfig } from "vite";

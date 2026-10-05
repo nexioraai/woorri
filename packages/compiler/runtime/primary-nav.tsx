@@ -9,8 +9,8 @@
 // gabarit ni dans le `package-lock` EMBARQUÉ (0 entrée, mesuré). L'ajouter
 // exigerait d'ouvrir le lock de 504 paquets — la même décision que les
 // capabilities. Cette barre n'utilise QUE ce qui est déjà là :
-// `useNavigation` (la COUTURE de navigation), `Pressable`/`View`/`Text`
-// (react-native). L'inset du bas appartient à l'AppShell (étape ②).
+// `useNavigation` (la COUTURE de navigation) et les PRIMITIVES d'hôte.
+// L'inset du bas appartient à l'AppShell (étape ②).
 //
 // CONTREPARTIE, MESURÉE ET CORRIGÉE : la première version appelait
 // `navigate`, qui EMPILE. Les quatre pages s'accumulaient et l'en-tête natif
@@ -22,9 +22,10 @@
 // Ce qui reste réellement en moins face à un vrai gestionnaire d'onglets :
 // l'historique PROPRE À CHAQUE onglet. Ouvrir une fiche depuis Départs puis
 // toucher Accueil perd la fiche. Dit ici, une fois, sans être maquillé.
-import { Pressable, Text, View } from "react-native";
+// Par les PRIMITIVES, comme les blocs — voir `app-shell`. La barre principale
+// est de l'interface : elle n'a aucune raison de connaître la plateforme.
+import { Geste as Pressable, Texte as Text, Vue as View, Signe } from "@deribfy/primitives";
 import { useNavigation } from "./navigation-contrat";
-import Ionicons from "@expo/vector-icons/Ionicons";
 import { useStyles } from "@deribfy/primitives/theme-bridge";
 import { GLYPHE_PAR_ROLE, type RoleIcone } from "@deribfy/primitives/roles-icones";
 import { allerVers } from "./racines-navigation";
@@ -84,7 +85,7 @@ export function PrimaryNav({ destinations, currentScreenId }: PrimaryNavProps) {
                 Le mot exact est volontairement absent — la grille le cherche par
                 sous-chaîne et ne distingue pas un commentaire du code. */}
             {d.icon === undefined ? null : (
-              <Ionicons
+              <Signe
                 name={GLYPHE_PAR_ROLE[d.icon]}
                 size={s.primaryNavIcon.fontSize}
                 color={actif ? s.primaryNavLabelActive.color : s.primaryNavLabel.color}

@@ -32,22 +32,48 @@ describe("étape ② — un seul propriétaire du shell mobile", () => {
     }
   });
 
-  it("CLIQUET — `useSafeAreaInsets` n'existe QUE dans le shell embarqué", () => {
-    const proprietaires = [...files.entries()]
-      .filter(([, contenu]) => contenu.includes("useSafeAreaInsets"))
+  // ── LE CLIQUET S'EST RESSERRÉ EN CHANGEANT DE FORME (2026-10-05).
+  //
+  // Il exigeait que `useSafeAreaInsets` et `expo-status-bar` n'apparaissent que
+  // dans le shell. En branchant la cible web, ces deux paquets — qui n'existent
+  // PAS dans un navigateur — ont été déplacés derrière une COUTURE
+  // (`lib/runtime/plateforme`). Le shell reste le seul à s'en servir.
+  //
+  // La règle est désormais plus forte qu'avant, et en deux morceaux : UN SEUL
+  // consommateur (le shell, qui possède la géométrie système) et UN SEUL
+  // déclarant (la couture, le seul fichier qui nomme un paquet de plateforme).
+  // L'ancienne version admettait que le shell fasse les deux ; celle-ci
+  // l'interdit, et c'est ce qui rend la même enveloppe émissible pour le web.
+
+  it("CLIQUET — le shell est le SEUL consommateur des zones sûres", () => {
+    const consommateurs = [...files.entries()]
+      .filter(([chemin, c]) => c.includes("useSafeAreaInsets()") && chemin !== "lib/runtime/plateforme.tsx")
       .map(([chemin]) => chemin);
-    expect(proprietaires).toEqual(["lib/runtime/app-shell.tsx"]);
+    expect(consommateurs).toEqual(["lib/runtime/app-shell.tsx"]);
   });
 
-  it("la barre d'état a un propriétaire : le shell la déclare (expo-status-bar)", () => {
+  it("CLIQUET — la COUTURE est le seul fichier émis qui nomme un paquet de plateforme", () => {
+    // Le GABARIT a le droit de nommer ces paquets — `package.json` doit les
+    // installer, et `app.json` les configurer. Ce que le cliquet interdit,
+    // c'est qu'un fichier de CODE les importe ailleurs qu'à la couture.
+    for (const paquet of ["expo-status-bar", "react-native-safe-area-context"]) {
+      const declarants = [...files.entries()]
+        .filter(([chemin]) => chemin.endsWith(".ts") || chemin.endsWith(".tsx"))
+        .filter(([, c]) => c.includes(paquet))
+        .map(([chemin]) => chemin);
+      expect(declarants, paquet).toEqual(["lib/runtime/plateforme.tsx"]);
+    }
+  });
+
+  it("la barre d'état a un propriétaire : le shell la monte, la couture la fournit", () => {
     const shell = files.get("lib/runtime/app-shell.tsx") ?? "";
-    expect(shell).toContain('from "expo-status-bar"');
+    expect(shell).toContain('from "./plateforme"');
     expect(shell).toContain("<StatusBar");
-    // Aucun AUTRE fichier émis ne déclare la barre d'état.
-    const declarants = [...files.entries()]
-      .filter(([, c]) => c.includes("expo-status-bar"))
+    // Aucun AUTRE fichier émis ne monte la barre d'état.
+    const monteurs = [...files.entries()]
+      .filter(([, c]) => c.includes("<StatusBar"))
       .map(([chemin]) => chemin);
-    expect(declarants).toEqual(["lib/runtime/app-shell.tsx"]);
+    expect(monteurs).toEqual(["lib/runtime/app-shell.tsx"]);
   });
 
   it("l'inset du BAS est écrit UNE fois par cas : barre présente OU contenu", () => {

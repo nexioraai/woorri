@@ -147,6 +147,17 @@ jobs:
         working-directory: .
         run: npm run gate:app-compile
 
+      # CIBLE WEB (2026-10-05). Le generateur emet desormais des PWA en plus
+      # des applications natives. Cette gate nait avec la cible, pas apres :
+      # elle compile les 29 memes documents en web et refuse tout import de
+      # react-native residuel. Sans elle, « Deribfy genere des applications
+      # web » serait une affirmation sur du texte, pas sur un programme.
+      - name: Apps emises — compilent (WEB)
+        id: app_web
+        continue-on-error: true
+        working-directory: .
+        run: npm run gate:app-web
+
       # MONTE reellement les 58 ecrans des 14 applications (react-test-renderer
       # + stubs RN). La premiere version de cette gate s'appelait « se rendent »
       # et se contentait de LIRE les modules de donnees : elle SURDECLARAIT,
@@ -258,8 +269,8 @@ jobs:
           if [ "${FIDELITE_BLOQUANTE}" = "true" ] && [ "${{ steps.app_fidelite.outcome }}" != "success" ]; then
             fidelite_ko=true
           fi
-          if [ "$fidelite_ko" = "true" ] || [ "${{ steps.typecheck.outcome }}" != "success" ] || [ "${{ steps.test.outcome }}" != "success" ] || [ "${{ steps.test_marge.outcome }}" != "success" ] || [ "${{ steps.build.outcome }}" != "success" ] || [ "${{ steps.apidocs.outcome }}" != "success" ] || [ "${{ steps.pkg_typecheck.outcome }}" != "success" ] || [ "${{ steps.pkg_lint.outcome }}" != "success" ] || [ "${{ steps.pkg_test.outcome }}" != "success" ] || [ "${{ steps.app_compile.outcome }}" != "success" ] || [ "${{ steps.app_rendu.outcome }}" != "success" ] || [ "${{ steps.app_controles.outcome }}" != "success" ] || [ "${{ steps.app_session.outcome }}" != "success" ] || [ "${{ steps.app_navigation.outcome }}" != "success" ] || [ "${{ steps.app_composition.outcome }}" != "success" ] || [ "${{ steps.app_invariants.outcome }}" != "success" ]; then
-            echo "Étape(s) en échec — typecheck=${{ steps.typecheck.outcome }} test=${{ steps.test.outcome }} test_marge=${{ steps.test_marge.outcome }} build=${{ steps.build.outcome }} apidocs=${{ steps.apidocs.outcome }} pkg_typecheck=${{ steps.pkg_typecheck.outcome }} pkg_lint=${{ steps.pkg_lint.outcome }} pkg_test=${{ steps.pkg_test.outcome }} app_compile=${{ steps.app_compile.outcome }} app_rendu=${{ steps.app_rendu.outcome }} app_controles=${{ steps.app_controles.outcome }} app_session=${{ steps.app_session.outcome }} app_navigation=${{ steps.app_navigation.outcome }} app_composition=${{ steps.app_composition.outcome }} app_fidelite=${{ steps.app_fidelite.outcome }} app_invariants=${{ steps.app_invariants.outcome }}"
+          if [ "$fidelite_ko" = "true" ] || [ "${{ steps.typecheck.outcome }}" != "success" ] || [ "${{ steps.test.outcome }}" != "success" ] || [ "${{ steps.test_marge.outcome }}" != "success" ] || [ "${{ steps.build.outcome }}" != "success" ] || [ "${{ steps.apidocs.outcome }}" != "success" ] || [ "${{ steps.pkg_typecheck.outcome }}" != "success" ] || [ "${{ steps.pkg_lint.outcome }}" != "success" ] || [ "${{ steps.pkg_test.outcome }}" != "success" ] || [ "${{ steps.app_compile.outcome }}" != "success" ] || [ "${{ steps.app_web.outcome }}" != "success" ] || [ "${{ steps.app_rendu.outcome }}" != "success" ] || [ "${{ steps.app_controles.outcome }}" != "success" ] || [ "${{ steps.app_session.outcome }}" != "success" ] || [ "${{ steps.app_navigation.outcome }}" != "success" ] || [ "${{ steps.app_composition.outcome }}" != "success" ] || [ "${{ steps.app_invariants.outcome }}" != "success" ]; then
+            echo "Étape(s) en échec — typecheck=${{ steps.typecheck.outcome }} test=${{ steps.test.outcome }} test_marge=${{ steps.test_marge.outcome }} build=${{ steps.build.outcome }} apidocs=${{ steps.apidocs.outcome }} pkg_typecheck=${{ steps.pkg_typecheck.outcome }} pkg_lint=${{ steps.pkg_lint.outcome }} pkg_test=${{ steps.pkg_test.outcome }} app_compile=${{ steps.app_compile.outcome }} app_web=${{ steps.app_web.outcome }} app_rendu=${{ steps.app_rendu.outcome }} app_controles=${{ steps.app_controles.outcome }} app_session=${{ steps.app_session.outcome }} app_navigation=${{ steps.app_navigation.outcome }} app_composition=${{ steps.app_composition.outcome }} app_fidelite=${{ steps.app_fidelite.outcome }} app_invariants=${{ steps.app_invariants.outcome }}"
             exit 1
           fi
           echo "Toutes les étapes bloquantes ont réussi."

@@ -10,12 +10,16 @@ import { fileURLToPath } from "node:url";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const PACKAGES = join(HERE, "..", "..");
-const { buildEmbeddedAssets } = await import(join(HERE, "..", "src", "embed-lib.ts"));
+const { buildEmbeddedAssets, buildEmbeddedAssetsWeb } = await import(
+  join(HERE, "..", "src", "embed-lib.ts")
+);
 
 const assets = buildEmbeddedAssets((rel) =>
   readFileSync(join(PACKAGES, rel), "utf8"),
 );
 const targets = Object.keys(assets).sort();
+const assetsWeb = buildEmbeddedAssetsWeb((rel) => readFileSync(join(PACKAGES, rel), "utf8"));
+const ciblesWeb = Object.keys(assetsWeb).sort();
 const fingerprint = createHash("sha256")
   .update(targets.map((t) => `${t} ${createHash("sha256").update(assets[t]).digest("hex")}`).join("\n"))
   .digest("hex");
@@ -31,6 +35,13 @@ const lines = [
   "",
   `export const EMBEDDED_ASSETS_FINGERPRINT = ${JSON.stringify(fingerprint)};`,
   "",
+  "// LA CIBLE WEB : la table commune, puis ce que le web remplace. Elle est",
+  "// GÉNÉRÉE depuis la même liste de sources — une seconde liste écrite à la",
+  "// main aurait divergé au premier fichier ajouté.",
+  "export const EMBEDDED_ASSETS_WEB: Readonly<Record<string, string>> = {",
+  ...ciblesWeb.map((t) => `  ${JSON.stringify(t)}: ${JSON.stringify(assetsWeb[t])},`),
+  "};",
+  "",
 ];
 writeFileSync(join(HERE, "..", "src", "embedded-assets.generated.ts"), lines.join("\n"));
-console.log(`OK ${targets.length} fichiers, fingerprint ${fingerprint.slice(0, 16)}`);
+console.log(`OK ${targets.length} fichiers natif · ${ciblesWeb.length} web, fingerprint ${fingerprint.slice(0, 16)}`);

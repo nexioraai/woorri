@@ -651,7 +651,21 @@ function emitScreen(slice: ScreenSlice, aBarre: boolean, planEcran: EcranPlan): 
     "// défilement à la liste virtualisée elle-même, bornée par Section fill.",
     "// SHELL (étape ②, EP-002) : status bar, safe area et zones persistantes",
     "// appartiennent à AppShell — cet écran ne touche JAMAIS à la safe area.",
-    ...(containerImport === undefined ? [] : [`import { ${containerImport} } from "react-native";`]),
+    // ── LES CONTENEURS D'ÉCRAN PASSENT PAR LES PRIMITIVES (2026-10-05).
+    //
+    // Ils venaient de `react-native` directement. La gate web l'a mesuré sur
+    // les 29 applications du corpus : l'écran émis n'était pas portable, et
+    // aucun test de paquet ne pouvait le voir — ils lisent des sources, pas
+    // des applications produites.
+    //
+    // Les ALIAS gardent les noms de balises inchangés dans le JSX émis : le
+    // fichier produit reste lisible pour qui connaît React Native, et les
+    // cliquets qui cherchent `<ScrollView` continuent de viser juste.
+    ...(containerImport === undefined
+      ? []
+      : [
+          'import { EviteLeClavier as KeyboardAvoidingView, Defilement as ScrollView } from "../lib/primitives";',
+        ]),
     'import { ScreenShell } from "../lib/primitives";',
     'import { AppShell } from "../lib/runtime/app-shell";',
     `import { ${[...wrappers, ...(aCycle ? ["AirScreenLifecycle"] : [])].sort().join(", ")} } from "../lib/runtime/air-runtime";`,

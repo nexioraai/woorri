@@ -32,6 +32,20 @@ export const EMBEDDED_SOURCES: readonly EmbeddedSourceSpec[] = [
     rewrites: {},
   },
   {
+    // LES HÔTES — la frontière de plateforme, côté natif. La cible web
+    // remplace CETTE cible d'écriture, et c'est tout ce qui la distingue.
+    source: "primitives/src/hotes.tsx",
+    target: "lib/primitives/hotes.tsx",
+    rewrites: {},
+  },
+  {
+    // La COUTURE de la feuille de styles — un seul appel au moteur natif,
+    // isolé pour que `styles.ts` reste UNIQUE pour les deux cibles.
+    source: "primitives/src/feuille.ts",
+    target: "lib/primitives/feuille.ts",
+    rewrites: {},
+  },
+  {
     source: "primitives/src/contracts.ts",
     target: "lib/primitives/contracts.ts",
     rewrites: {},
@@ -183,7 +197,10 @@ export const EMBEDDED_SOURCES: readonly EmbeddedSourceSpec[] = [
     // Copié avant les écrans, ses seuls consommateurs.
     source: "compiler/runtime/app-shell.tsx",
     target: "lib/runtime/app-shell.tsx",
-    rewrites: { "@deribfy/primitives/theme-bridge": "../primitives/theme-bridge" },
+    rewrites: {
+      "@deribfy/primitives": "../primitives",
+      "@deribfy/primitives/theme-bridge": "../primitives/theme-bridge",
+    },
   },
   {
     source: "compiler/runtime/primary-nav.tsx",
@@ -192,9 +209,17 @@ export const EMBEDDED_SOURCES: readonly EmbeddedSourceSpec[] = [
     // la copie doit viser le MÊME module que celui embarqué, sinon l'app émise
     // ne compile pas — défaut attrapé par le `tsc` du projet témoin.
     rewrites: {
+      "@deribfy/primitives": "../primitives",
       "@deribfy/primitives/theme-bridge": "../primitives/theme-bridge",
       "@deribfy/primitives/roles-icones": "../primitives/roles-icones",
     },
+  },
+  {
+    // La COUTURE de plateforme — barre d'état et zones sûres. L'`app-shell`
+    // doit valoir pour les deux cibles : c'est lui qui pose les insets.
+    source: "compiler/runtime/plateforme.tsx",
+    target: "lib/runtime/plateforme.tsx",
+    rewrites: {},
   },
   {
     source: "compiler/runtime/demo-provider.ts",
@@ -257,12 +282,66 @@ export function rewriteEmbeddedSource(
   return out;
 }
 
+/**
+ * CE QUE LA CIBLE WEB REMPLACE — et rien de plus.
+ *
+ * Les 35 fichiers embarqués sont partagés ; seules les PRIMITIVES changent,
+ * parce qu'elles sont la seule couche qui connaisse une plateforme. Le
+ * remplacement se fait par CIBLE D'ÉCRITURE : `lib/primitives/primitives.tsx`
+ * reçoit la version web, et tout le reste — blocs, runtime, jetons, données —
+ * reste strictement identique.
+ *
+ * ÉCRIRE UNE SECONDE LISTE COMPLÈTE AURAIT ÉTÉ PLUS SIMPLE, et faux : les deux
+ * auraient divergé au premier fichier ajouté, et la cible web se serait mise à
+ * embarquer un runtime d'une autre époque sans que rien ne le dise.
+ */
+const SOURCES_WEB: readonly EmbeddedSourceSpec[] = [
+  { source: "primitives-web/src/css.ts", target: "lib/primitives/css.ts", rewrites: {} },
+  { source: "primitives-web/src/hotes.tsx", target: "lib/primitives/hotes.tsx", rewrites: {} },
+  {
+    source: "primitives-web/src/primitives.tsx",
+    target: "lib/primitives/primitives.tsx",
+    rewrites: {
+      "@deribfy/primitives/contracts": "./contracts",
+      "@deribfy/primitives/styles": "./styles",
+      "@deribfy/primitives/theme-bridge": "./theme-bridge",
+      "@deribfy/primitives/roles-icones": "./roles-icones",
+      "@deribfy/primitives/media-repli": "./media-repli",
+    },
+  },
+  { source: "primitives-web/src/liste.tsx", target: "lib/primitives/liste.tsx", rewrites: {} },
+  { source: "primitives-web/src/feuille.ts", target: "lib/primitives/feuille.ts", rewrites: {} },
+  {
+    source: "compiler/runtime/navigation-web.tsx",
+    target: "lib/runtime/navigation-web.tsx",
+    rewrites: {},
+  },
+  {
+    // La plateforme web remplace la MÊME cible que la native : `app-shell`
+    // importe `./plateforme` et ne sait pas laquelle des deux il obtient.
+    source: "compiler/runtime/plateforme-web.tsx",
+    target: "lib/runtime/plateforme.tsx",
+    rewrites: {},
+  },
+];
+
 /** Construit la table complète des copies depuis un lecteur de sources. */
 export function buildEmbeddedAssets(
   readSource: (repoRelativePath: string) => string,
 ): Record<string, string> {
   const assets: Record<string, string> = {};
   for (const spec of EMBEDDED_SOURCES) {
+    assets[spec.target] = rewriteEmbeddedSource(spec, readSource(spec.source));
+  }
+  return assets;
+}
+
+/** La table de la cible WEB : la commune, puis ce que le web remplace. */
+export function buildEmbeddedAssetsWeb(
+  readSource: (repoRelativePath: string) => string,
+): Record<string, string> {
+  const assets = buildEmbeddedAssets(readSource);
+  for (const spec of SOURCES_WEB) {
     assets[spec.target] = rewriteEmbeddedSource(spec, readSource(spec.source));
   }
   return assets;
