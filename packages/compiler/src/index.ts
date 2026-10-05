@@ -43,3 +43,5 @@ export {
   EMBEDDED_ASSETS,
   EMBEDDED_ASSETS_FINGERPRINT,
 } from "./embedded-assets.generated.ts";
+
+export { compileWeb } from "./compile-web.ts";

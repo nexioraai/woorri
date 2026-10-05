@@ -13,7 +13,7 @@ import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { champsDeSaisie } from "./champs-de-saisie";
 import {lignesVisibles, optionsDistinctes, formatValeur} from "./list-pipeline";
 import type { FiltreEffectif, OperateurFiltre } from "./list-pipeline";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation } from "./navigation-contrat.tsx";
 import { allerVers } from "./racines-navigation";
 import {
   ButtonBlock,

@@ -9,7 +9,7 @@
 // gabarit ni dans le `package-lock` EMBARQUÉ (0 entrée, mesuré). L'ajouter
 // exigerait d'ouvrir le lock de 504 paquets — la même décision que les
 // capabilities. Cette barre n'utilise QUE ce qui est déjà là :
-// `useNavigation` (@react-navigation/native), `Pressable`/`View`/`Text`
+// `useNavigation` (la COUTURE de navigation), `Pressable`/`View`/`Text`
 // (react-native). L'inset du bas appartient à l'AppShell (étape ②).
 //
 // CONTREPARTIE, MESURÉE ET CORRIGÉE : la première version appelait
@@ -23,7 +23,7 @@
 // l'historique PROPRE À CHAQUE onglet. Ouvrir une fiche depuis Départs puis
 // toucher Accueil perd la fiche. Dit ici, une fois, sans être maquillé.
 import { Pressable, Text, View } from "react-native";
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation } from "./navigation-contrat.tsx";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useStyles } from "../primitives/theme-bridge";
 import { GLYPHE_PAR_ROLE, type RoleIcone } from "../primitives/roles-icones";

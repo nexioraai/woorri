@@ -870,7 +870,7 @@ function emitNavigation(air: ProjectAir): string {
     const ecran = air.screens.find((sc) => sc.id === r.screenId);
     const estFeuille = ecran?.presentation === "sheet";
     return [
-    `      <Stack.Screen name="${r.screenId}" component={${pascal(r.screenId)}Screen}`,
+    `      <Stack.Screen name="${r.screenId}" component={avecNavigation(${pascal(r.screenId)}Screen)}`,
     // 1.16.0 — un écran peut refuser l'en-tête natif : sur un accueil portant
     // une marque, le titre de route empilait une seconde identité au-dessus
     // du logo. 1.18.0 : une FEUILLE garde son en-tête même sans titre — c'est
@@ -913,6 +913,7 @@ function emitNavigation(air: ProjectAir): string {
     "// GÉNÉRÉ — NE PAS ÉDITER (navigation : verdict S1 D-026 — native-stack,",
     "// config EXPLICITE émise depuis l'AIR, patron prouvé au banc V4).",
     'import { NavigationContainer } from "@react-navigation/native";',
+    'import { NavigationNative } from "./lib/runtime/navigation-native";',
     'import { createNativeStackNavigator } from "@react-navigation/native-stack";',
     'import { declarerRacines } from "./lib/runtime/racines-navigation";',
     'import { theme } from "./lib/tokens";',
@@ -932,6 +933,25 @@ function emitNavigation(air: ProjectAir): string {
     ...importLines,
     "",
     "const Stack = createNativeStackNavigator();",
+    "",
+    "// ── LA COUTURE DE NAVIGATION EST REMPLIE ICI, ET SEULEMENT ICI.",
+    "//",
+    "// Le runtime partagé (`air-runtime`) ne connaît plus React Navigation : il",
+    "// lit un CONTRAT que chaque cible remplit. Sans cet enrobage, le contrat",
+    "// resterait inerte — les écrans se monteraient, et aucun geste ne",
+    "// naviguerait. Un enrobage PAR ÉCRAN, parce que `useNavigation` de React",
+    "// Navigation ne répond qu'À L'INTÉRIEUR d'un écran.",
+    "// GÉNÉRIQUE SUR LES PROPS : un écran de détail reçoit les paramètres de sa",
+    "// route. Les ignorer ferait perdre l'identifiant de la fiche ouverte.",
+    "function avecNavigation<P extends object>(Ecran: React.ComponentType<P>) {",
+    "  return function EcranNavigable(props: P) {",
+    "    return (",
+    "      <NavigationNative>",
+    "        <Ecran {...props} />",
+    "      </NavigationNative>",
+    "    );",
+    "  };",
+    "}",
     "",
     "// Les quatre pages principales sont des RACINES : y aller REMPLACE la pile.",
     "// Sans cela `navigate` les empile, et l'en-tête natif dessine une flèche de",

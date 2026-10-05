@@ -161,6 +161,24 @@ export const EMBEDDED_SOURCES: readonly EmbeddedSourceSpec[] = [
     rewrites: {},
   },
   {
+    // LA COUTURE DE NAVIGATION (2026-10-05). `air-runtime.tsx`, 1 029 lignes,
+    // n'importait de plateforme qu'une seule chose : `useNavigation`. Le
+    // contrat est désormais PARTAGÉ et chaque cible le remplit — même remède
+    // que pour `FlatList` dans les blocs.
+    //
+    // TROISIÈME FOIS que j'oublie d'embarquer un fichier neuf (`acces.ts`,
+    // `liste.tsx`) : sans cette entrée, il n'existe que chez nous et les 28
+    // applications cessent de compiler.
+    source: "compiler/runtime/navigation-contrat.tsx",
+    target: "lib/runtime/navigation-contrat.tsx",
+    rewrites: {},
+  },
+  {
+    source: "compiler/runtime/navigation-native.tsx",
+    target: "lib/runtime/navigation-native.tsx",
+    rewrites: {},
+  },
+  {
     // ÉTAPE ② — LE propriétaire du shell mobile : status bar + insets + zones.
     // Copié avant les écrans, ses seuls consommateurs.
     source: "compiler/runtime/app-shell.tsx",
