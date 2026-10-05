@@ -72,6 +72,16 @@ const docs = [
     : []),
   ["slice-conteneurs", R + "slices/conteneurs/air/suivi-conteneurs.air.json"],
   ["resto-riche", R + "slices/resto-riche/chez-nous.air.json"],
+  // ── LA TONTINE, ENFIN COUVERTE DU CÔTÉ NATIF (2026-10-05).
+  //
+  // Mesuré : elle n'était dans AUCUNE de ces gates. Seule `app_web` la
+  // compilait. Son chemin NATIF — celui qui part sur un téléphone — n'était
+  // prouvé par rien : « elle compile » reposait sur une sonde que j'avais
+  // lancée à la main, pas sur une porte qui se relance toute seule.
+  //
+  // C'est l'application qui compte le plus pour le propriétaire. La laisser
+  // hors des portes revenait à mesurer tout le corpus SAUF celle-là.
+  ["tontine", R + "slices/tontine/tontine.air.json"],
   // ── LE SERVEUR NEUTRE, COMPILÉ COMME LES AUTRES (2026-10-05).
   //
   // Le générateur sait désormais émettre une application qui parle le

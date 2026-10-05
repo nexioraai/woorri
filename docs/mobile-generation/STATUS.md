@@ -1,7 +1,69 @@
 # STATUS — TABLEAU DE BORD DU CHANTIER MOBILE GENERATION
 
 > Mis à jour à chaque étape significative. Dernière mise à jour :
-> **2026-09-05 (27)** (**🎯 TROISIÈME CYCLE DE JUGEMENT — deux demandes produit
+> **2026-10-05 (28)** (**🌐 LA CIBLE WEB, LE SERVEUR NEUTRE, ET UN MOIS DE
+> DÉRIVE DE CE FICHIER RECONNU.** Ce fichier datait du **2026-09-05** alors que
+> le dépôt a avancé de quatre lots — infraction à la règle 2 du CLAUDE.md,
+> signalée ici plutôt que réparée en silence.
+>
+> **① CIBLE WEB BRANCHÉE** (`b29ebfdc`). Le générateur émet désormais des PWA
+> Vite EN PLUS des applications Expo. Trois COUTURES isolent toute la frontière
+> de plateforme — `primitives/hotes.tsx` (Vue, Texte, Geste, Signe,
+> Defilement, EviteLeClavier), `primitives/feuille.ts` (l'unique appel au
+> moteur de styles), `runtime/plateforme.tsx` (barre d'état, zones sûres) — et
+> la feuille de styles reste **UNIQUE** pour les deux cibles. Nouvelle gate
+> **`app_web`** (17ᵉ étape de `ci.yml`) : **29/29 compilent, zéro import
+> react-native**. Elle a trouvé SIX défauts qu'une sonde manuelle sur `lib/`
+> avait manqués, dont `navigate` qui jetait ses paramètres (tout écran de
+> détail se serait ouvert VIDE) et l'absence totale de `tsconfig.json` émis.
+> Cliquet EP-002 **resserré** : un consommateur (le shell), un déclarant (la
+> couture) — l'ancienne version confondait les deux.
+>
+> **② AIR 1.33.0 — `integration.mobileMoney`** (`c4646e95`). Partition
+> EXHAUSTIVE de l'énumération des moyens de paiement (6 diagnostics) : le
+> cahier des charges portait `ORANGE_CMR`/`MTN_CMR`/`CASH` et AUCUN étage ne
+> savait lequel n'était pas un opérateur. **J'avais d'abord écrit un catalogue
+> des opérateurs PAR PAYS** ; le cliquet **EP-201** l'a refusé — « aucune table
+> pays → moyen de paiement », y compris dans l'élicitation — et il avait
+> raison : une table périmée REFUSE un document valide. Les six gestes liés
+> faits.
+>
+> **③ SERVEUR NEUTRE** (`dbb0d736`). Le moteur avait un protocole neutre pour
+> la LECTURE (D-132) et jamais pour l'écriture ni la session : l'app écrivait
+> par `clientAuth.from(table).upsert()` et ouvrait sa session par
+> `client.auth.signInWithPassword`. Un propriétaire exigeant un autre backend
+> (demande réelle : **Spring Boot**) n'avait rien à implémenter. Protocole
+> étendu SANS nouvel endpoint (la collection est déjà la ressource : `GET`
+> lit, `POST` écrit, `DELETE` sur la ligne supprime) + 5 opérations de session
+> + provider `air_http` au registre + deux implémentations `fetch`.
+> **Variante `boutique-mode-serveur-neutre` aux gates** : elle compile ET se
+> monte. `CONTRAT-API.md` (292 lignes) **dérivé** de `tontine.air.json`,
+> publié. Nouveau diagnostic **`AIR_DROIT_EXIGE_SANS_PORTEUR`** : un droit
+> exigé qu'aucun rôle n'accorde rendait l'écran inaccessible à vie, toutes
+> portes vertes (mesuré sur les 31 documents avant d'ajouter le refus : aucun
+> concerné). **Trois cliquets m'ont corrigé** — `zero-network` (mes deux
+> `fetch(`), `ep161` (`urlProtocoleLigne` dont le seul appelant était son
+> propre test), `corpus-rendu` (réarmé, pas assoupli).
+>
+> **④ LA TONTINE AVAIT ZÉRO DONNÉE** (`d341aed9` + ce lot). `demo.data.ts`
+> faisait **278 octets** : `demoData = {}`. Dix écrans, toutes les listes
+> vides — produite, montée, et MUETTE. Cause : `datasets: []`. Corrigé :
+> **32 936 octets**, 8 personnes · 3 tontines · 8 adhésions · 24 transactions.
+> Les données ont aussitôt révélé un second défaut : les **8** champs de
+> référence sortaient en `ent_utilisateurs_row_8` — déclaré UNE FOIS PAR
+> ENTITÉ CIBLE (`NOM_AFFICHE`), 8/8 affichent un nom. Et la tontine n'était
+> dans **AUCUNE** gate native : ajoutée à `app_compile` (**30/30**) et au
+> montage (**30**), sans fuite — ce qui confirme la correction.
+>
+> **🔴 CE QUI RESTE OUVERT, DIT** : pas d'équivalent WEB de `app_rendu` (une
+> PWA n'est pas prouvée MONTÉE, seulement compilée) ; `vite.config.ts` hors
+> tsconfig ; aucun verrou de dépendances web ; `DOMAINE_SERVEUR = undefined`
+> dans la tontine — la bascule distante attend l'adresse du serveur du
+> propriétaire, qui ne m'appartient pas. **Hors périmètre, consigné et non
+> corrigé** : `dougplace` n'est dans aucune gate et porte QUATRE fuites
+> d'identifiant sur `scr_catalogue`. **Les 4 commits ne sont PAS POUSSÉS.**)
+>
+> *Entrée précédente —* **2026-09-05 (27)** (**🎯 TROISIÈME CYCLE DE JUGEMENT — deux demandes produit
 > précises, deux fermetures démontrées.** **DET-035** — « Autres départs vers
 > la même période » après sélection : cause démontrée AUX SIX QUESTIONS avant
 > toute correction (bloc `list` déclaré au DOCUMENT depuis `9294a6c`, sans

@@ -51,7 +51,11 @@ describe("GATE RACINE — les applications émises se MONTENT vraiment", () => {
     //
     // Sans cette variante, le chemin neutre restait « émis et supposé bon » :
     // aucun document du corpus ne déclare ce protocole.
-    expect(apps.length, "les applications des deux corpus").toBe(29);
+    // ÉDITION CONSCIENTE (2026-10-05, seconde) : 30 avec l'entrée de
+    // `tontine`. Elle n'était dans AUCUNE de ces gates — seule la gate web la
+    // compilait — alors que c'est l'application qui compte le plus pour le
+    // propriétaire. Son chemin natif reposait sur une sonde lancée à la main.
+    expect(apps.length, "les applications des deux corpus").toBe(30);
 
     let ecrans = 0;
     let identites = 0;
