@@ -44,7 +44,7 @@ p:last-of-type em,p em{color:var(--encre-douce)}
 </style>
 <main>
 <h1>Tontine — spécification dérivée</h1>
-<blockquote>Générée depuis le document AIR <code>prj_tontine_cameroun</code>, contrat 1.29.0.</blockquote>
+<blockquote>Générée depuis le document AIR <code>prj_tontine_cameroun</code>, contrat 1.30.0.</blockquote>
 <blockquote>Ne pas modifier à la main : régénérer après toute évolution du document.</blockquote>
 <p>Tontine digitale : cotisations, enchères, séquestre et bureau traditionnel.</p>
 <h2>Qui fait quoi</h2>
@@ -73,7 +73,7 @@ p:last-of-type em,p em{color:var(--encre-douce)}
 <h2>Ce qui revient au backend (9 points)</h2>
 <p>Ces exigences du cahier des charges <strong>ne sont pas portées par l'interface</strong>, et c'est volontaire : ce sont des règles métier, financières ou réglementaires. Elles sont donc à implémenter côté Spring Boot. La liste est exhaustive par construction — tout ce que l'application ne sait pas porter se trouve ici.</p>
 <h3>1. Les fonds collectés sont bloqués sur un compte séquestre jusqu'à l'échéance du tour.</h3>
-<blockquote>Un état qui se DÉBLOQUE À UNE DATE n'existe pas au format. <code>statut = SEQUESTRE_BLOQUE</code> est une valeur d'énumération comme une autre : rien ne dit ce qui la lève, ni quand, ni qui peut la lever. Écrire le mot « séquestre » dans une colonne ne séquestre rien.</blockquote>
+<blockquote>L'ORDRE des états est maintenant déclaré (<code>transitions</code>) : le séquestre ne se dé-bloque plus vers un état antérieur. Mais l'ÉCHÉANCE ne l'est pas. « Jusqu'à l'échéance du tour » suppose une HORLOGE qui fasse passer l'état toute seule, et une horloge vit sur le serveur. Le format dit ce qui est PERMIS, jamais ce qui arrive de soi-même — prétendre le contraire ferait croire qu'une application déverrouille des fonds sans que personne n'agisse.</blockquote>
 <h3>2. Le pot est attribué par enchère : le membre qui propose la plus forte prime l'emporte.</h3>
 <blockquote>Une enchère est une CONCURRENCE entre plusieurs membres sur un même objet, avec un gagnant et une clôture. Le format décrit des écrans, des listes et des gestes individuels ; il n'a aucun nœud pour un mécanisme où le geste d'un membre invalide celui d'un autre.</blockquote>
 <h3>3. Les pénalités de retard valent 2 % par jour et se répartissent 70 % au groupe, 30 % à la plateforme.</h3>

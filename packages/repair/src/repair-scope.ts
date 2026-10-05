@@ -257,6 +257,17 @@ export const SECTIONS_CORRECTIVES: Readonly<Record<string, readonly SectionEmiss
   // Celui-ci ne se répare QUE dans `access` : soit on accorde le droit à un
   // rôle, soit on cesse de le déléguer. Les deux y vivent.
   AIR_DELEGATION_DROIT_SANS_PORTEUR: ["base"],
+  // ── IMMUABILITÉ ET AUTOMATES (1.30.0).
+  //
+  // Une entité figée que l'on réécrit se répare des DEUX côtés : retirer
+  // l'action fautive (`actions`), ou cesser de figer l'entité (`donnees`).
+  // N'ouvrir que `actions` forcerait a supprimer un geste légitime quand c'est
+  // la déclaration qui était trop large.
+  AIR_APPEND_ONLY_REECRITE: ["actions", "donnees"],
+  // Les trois autres vivent entierement dans la declaration de l'entite.
+  AIR_TRANSITIONS_HORS_ENUM: ["donnees"],
+  AIR_TRANSITION_VALEUR_INCONNUE: ["donnees"],
+  AIR_TRANSITION_ETAT_MORT: ["donnees"],
   AIR_CONFIG_DUP_KEY: ["cablage"],
   AIR_INTEGRATION_SECRET_LIKE_KEY: ["cablage"],
   // Une marque hors allowlist se répare dans le CÂBLAGE (politique réseau)

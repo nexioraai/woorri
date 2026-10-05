@@ -1,6 +1,6 @@
 # Tontine — spécification dérivée
 
-> Générée depuis le document AIR `prj_tontine_cameroun`, contrat 1.29.0.
+> Générée depuis le document AIR `prj_tontine_cameroun`, contrat 1.30.0.
 > Ne pas modifier à la main : régénérer après toute évolution du document.
 
 Tontine digitale : cotisations, enchères, séquestre et bureau traditionnel.
@@ -133,7 +133,7 @@ Ces exigences du cahier des charges **ne sont pas portées par l'interface**, et
 
 ### 1. Les fonds collectés sont bloqués sur un compte séquestre jusqu'à l'échéance du tour.
 
-> Un état qui se DÉBLOQUE À UNE DATE n'existe pas au format. `statut = SEQUESTRE_BLOQUE` est une valeur d'énumération comme une autre : rien ne dit ce qui la lève, ni quand, ni qui peut la lever. Écrire le mot « séquestre » dans une colonne ne séquestre rien.
+> L'ORDRE des états est maintenant déclaré (`transitions`) : le séquestre ne se dé-bloque plus vers un état antérieur. Mais l'ÉCHÉANCE ne l'est pas. « Jusqu'à l'échéance du tour » suppose une HORLOGE qui fasse passer l'état toute seule, et une horloge vit sur le serveur. Le format dit ce qui est PERMIS, jamais ce qui arrive de soi-même — prétendre le contraire ferait croire qu'une application déverrouille des fonds sans que personne n'agisse.
 
 ### 2. Le pot est attribué par enchère : le membre qui propose la plus forte prime l'emporte.
 

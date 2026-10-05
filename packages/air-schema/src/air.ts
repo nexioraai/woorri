@@ -23,7 +23,7 @@ import {
 // 1.7.1 (E3.3, D-131) : provenance APLANIE (sourceKind/sourceIntegrationId/
 //   sourceDomain/sourceRefreshSeconds) — l'union 1.7.0 dépassait la limite
 //   réelle de grammaire de l'API (classe D-078) ; sémantique inchangée.
-export const AIR_SCHEMA_VERSION = "1.29.0";
+export const AIR_SCHEMA_VERSION = "1.30.0";
 
 export const semverSchema = z.string().regex(/^\d+\.\d+\.\d+$/);
 export const sha256Schema = z.string().regex(/^[0-9a-f]{64}$/);
@@ -455,6 +455,32 @@ const fieldSchema = z.strictObject({
   enumValues: z.array(z.string().min(1)).min(1).optional(),
   referencesEntityId: entityIdSchema.optional(),
   /**
+   * LES PASSAGES D'ÉTAT PERMIS (1.30.0) — sur un champ `enum`, et lui seul.
+   *
+   * ── CE QU'UNE ÉNUMÉRATION NE DIT PAS.
+   *
+   * `statut: EN_ATTENTE | SEQUESTRE_BLOQUE | PAYOUT_SUCCES | ECHEC` énumère
+   * quatre valeurs et ne dit RIEN de leur ordre. Rien n'empêche de repasser un
+   * décaissement réussi en attente, ni de le bloquer après coup. Mesuré sur le
+   * cahier des charges d'une tontine : le mot « séquestre » écrit dans une
+   * colonne ne séquestre rien.
+   *
+   * Déclarer les transitions dit ce qui SUCCÈDE À QUOI. Le validateur refuse
+   * alors une valeur inatteignable — un état qu'aucune transition ne mène est
+   * un état mort, donc une promesse qui ne se tiendra jamais.
+   *
+   * ── CE QUE CECI NE DIT PAS, ET QU'IL FAUT DIRE.
+   *
+   * L'automate dit quels passages sont PERMIS. Il ne dit pas QUAND un passage a
+   * lieu de lui-même — « le séquestre se libère à l'échéance du tour » suppose
+   * une horloge, et une horloge vit sur le serveur. Prétendre le contraire
+   * ferait croire qu'une application déverrouille des fonds toute seule.
+   */
+  transitions: z
+    .array(z.strictObject({ from: z.string().min(1), to: z.string().min(1) }))
+    .min(1)
+    .optional(),
+  /**
    * CHAMP D'AFFICHAGE DE LA RÉFÉRENCE (1.4.0, D-064).
    *
    * `referencesEntityId` disait vers QUOI pointer, jamais QUOI MONTRER. Un champ
@@ -545,6 +571,28 @@ const fieldSchema = z.strictObject({
 const entitySchema = z.strictObject({
   id: entityIdSchema,
   name: z.string().regex(/^[a-z][a-z0-9_]*$/),
+  /**
+   * CETTE ENTITÉ NE SE RÉÉCRIT PAS (1.30.0) — OPTIONNEL.
+   *
+   * ── DEUX MÉTIERS, LE MÊME BESOIN.
+   *
+   * SGD : « annuler un mouvement, c'est en écrire un INVERSE, jamais effacer le
+   * premier ». Un stock écrit diverge de son historique sans que rien ne le
+   * signale ; un mouvement effacé fait mentir la comptabilité dès la première
+   * erreur corrigée.
+   *
+   * Tontine : les transactions portent des cotisations, des enchères et des
+   * décaissements. Modifier une ligne d'argent déjà passée n'est pas une
+   * correction, c'est une réécriture de l'histoire.
+   *
+   * Déclarée `true`, le validateur REFUSE toute action qui modifie ou efface
+   * une ligne de cette entité. La seule correction possible devient l'écriture
+   * d'une ligne NOUVELLE — ce que la comptabilité appelle une contre-passation,
+   * et ce que les deux métiers font déjà à la main.
+   *
+   * Absent vaut `false` : aucune entité existante ne se fige par surprise.
+   */
+  appendOnly: z.boolean().optional(),
   fields: z.array(fieldSchema).min(1),
 });
 

@@ -101,13 +101,23 @@ function diagnostiquer(doc: DocTest): string[] {
 }
 
 describe("un besoin porté est adossé (AIR, cliquet)", () => {
-  it("le document de gestion déclare 11 besoins portés, et chacun tient", () => {
+  it("le document de gestion porte AU MOINS 12 besoins, et chacun tient", () => {
     // Ce test vaut par son document : SGD est en production, et ses besoins
     // viennent de ses incidents. Un document fabriqué pour le test mesurerait
     // ma capacité à écrire un cas qui passe.
     const doc = lire();
     const portes = doc.intent.needs.filter((n) => n.resolution.kind === "satisfied");
-    expect(portes.length).toBe(11);
+    // ── CLIQUET MONOTONE, ET C'EST DÉLIBÉRÉ.
+    //
+    // Un nombre FIGÉ casse à chaque progrès : ce test a été mis à jour trois
+    // fois en deux jours — 9, puis 10, puis 11 — et chaque mise à jour était
+    // un geste mécanique, donc un geste qu'on finit par expédier sans lire.
+    //
+    // Ce qui doit alerter n'est pas qu'un besoin DE PLUS soit porté : c'est
+    // qu'un besoin cesse de l'être. Le compte peut donc monter librement, et
+    // toute BAISSE fait échouer le test — une régression du format, ou un
+    // document amputé, se voit alors immédiatement.
+    expect(portes.length).toBeGreaterThanOrEqual(12);
     expect(diagnostiquer(doc)).not.toContain("AIR_NEED_NODE_UNKNOWN");
   });
 

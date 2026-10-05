@@ -82,7 +82,10 @@ const TABLES = [
       ["frequence", "enum", true, null, ["HEBDOMADAIRE", "MENSUEL"]],
       ["cagnotte_interets_cumulee", "decimal", true],
       ["taux_penalite_jour", "decimal", true],
-      ["statut", "enum", true, null, ["EN_ATTENTE", "ACTIVE", "TERMINEE"]],
+      // Une tontine s'ouvre, tourne, puis s'achève. Elle ne redevient jamais
+      // « en attente » : le cycle ne se rejoue pas.
+      ["statut", "enum", true, null, ["EN_ATTENTE", "ACTIVE", "TERMINEE"],
+       [{ from: "EN_ATTENTE", to: "ACTIVE" }, { from: "ACTIVE", to: "TERMINEE" }]],
       ["president", "reference", true, "ent_utilisateurs"],
       ["cree_le", "datetime", true],
     ],
@@ -99,6 +102,14 @@ const TABLES = [
   },
   {
     nom: "transactions",
+    // ── UN JOURNAL D'ARGENT NE SE RÉÉCRIT PAS (1.30.0).
+    //
+    // Cotisations, enchères, amendes, décaissements : modifier une ligne déjà
+    // passée n'est pas une correction, c'est une réécriture de l'histoire. Le
+    // validateur refuse désormais toute action qui modifierait ou effacerait
+    // une de ces lignes — la seule correction reste d'en écrire une NOUVELLE
+    // qui annule la première.
+    appendOnly: true,
     colonnes: [
       ["tontine", "reference", true, "ent_tontines"],
       ["cotiseur", "reference", false, "ent_utilisateurs"],
@@ -124,12 +135,23 @@ const TABLES = [
       ["operateur", "enum", false, null, ["ORANGE_CMR", "MTN_CMR", "CASH"]],
       ["reference_externe", "string", false],
       ["code_otp_payout", "string", false],
+      // ── CE QUI SUCCÈDE À QUOI. Le cahier §4 décrit un chemin, pas un choix :
+      // la transaction attend, se bloque au séquestre, puis réussit ou échoue.
+      // Sans ces passages, rien n'empêchait de repasser un décaissement réussi
+      // en attente — le mot « séquestre » écrit dans une colonne ne séquestre
+      // rien.
       [
         "statut",
         "enum",
         true,
         null,
         ["EN_ATTENTE", "SEQUESTRE_BLOQUE", "PAYOUT_SUCCES", "ECHEC"],
+        [
+          { from: "EN_ATTENTE", to: "SEQUESTRE_BLOQUE" },
+          { from: "EN_ATTENTE", to: "ECHEC" },
+          { from: "SEQUESTRE_BLOQUE", to: "PAYOUT_SUCCES" },
+          { from: "SEQUESTRE_BLOQUE", to: "ECHEC" },
+        ],
       ],
       ["date_transaction", "datetime", true],
     ],
@@ -140,7 +162,8 @@ function entites() {
   return TABLES.map((t) => ({
     id: `ent_${t.nom}`,
     name: t.nom,
-    fields: t.colonnes.map(([nom, type, requis, cible, valeurs]) => ({
+    ...(t.appendOnly === true ? { appendOnly: true } : {}),
+    fields: t.colonnes.map(([nom, type, requis, cible, valeurs, passages]) => ({
       id: `fld_${t.nom}_${nom}`,
       name: nom,
       label: [{ locale: "fr", text: nom.replace(/_/g, " ") }],
@@ -148,6 +171,7 @@ function entites() {
       required: requis,
       ...(type === "reference" ? { referencesEntityId: cible } : {}),
       ...(type === "enum" ? { enumValues: valeurs } : {}),
+      ...(passages ? { transitions: passages } : {}),
     })),
   }));
 }
@@ -414,11 +438,17 @@ function besoins() {
     ["right_encaisser_cash", "ent_utilisateurs", "fld_utilisateurs_mandataire",
      "fld_utilisateurs_est_sans_telephone", "rel_mandat", "scr_encaissement"])
 
+  // ── MOTIF RESSERRÉ (1.30.0), et c'est une demi-victoire qu'il faut dire
+  // comme telle. `transitions` exprime désormais que l'état NE REVIENT PAS en
+  // arrière : un décaissement réussi ne redevient pas « en attente ». Ce qui
+  // reste hors du format est l'autre moitié, et c'est la plus importante.
   manque("need_sequestre",
     "Les fonds collectés sont bloqués sur un compte séquestre jusqu'à l'échéance du tour.",
-    "Un état qui se DÉBLOQUE À UNE DATE n'existe pas au format. `statut = SEQUESTRE_BLOQUE` est une " +
-    "valeur d'énumération comme une autre : rien ne dit ce qui la lève, ni quand, ni qui peut la lever. " +
-    "Écrire le mot « séquestre » dans une colonne ne séquestre rien.");
+    "L'ORDRE des états est maintenant déclaré (`transitions`) : le séquestre ne se dé-bloque " +
+    "plus vers un état antérieur. Mais l'ÉCHÉANCE ne l'est pas. « Jusqu'à l'échéance du tour » " +
+    "suppose une HORLOGE qui fasse passer l'état toute seule, et une horloge vit sur le serveur. " +
+    "Le format dit ce qui est PERMIS, jamais ce qui arrive de soi-même — prétendre le contraire " +
+    "ferait croire qu'une application déverrouille des fonds sans que personne n'agisse.")
 
   manque("need_encheres",
     "Le pot est attribué par enchère : le membre qui propose la plus forte prime l'emporte.",
@@ -485,7 +515,7 @@ const screens = ecrans(ents);
 const enBarre = ECRANS.filter((e) => e.entite && e.icone).slice(0, 5);
 
 const air = {
-  airSchemaVersion: "1.29.0",
+  airSchemaVersion: "1.30.0",
   projectId: "prj_tontine_cameroun",
   app: {
     name: "Tontine",

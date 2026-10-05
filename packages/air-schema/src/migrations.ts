@@ -404,6 +404,25 @@ export const AIR_MIGRATIONS: readonly AirMigration[] = [
       "procuration au nom de quelqu'un.",
     migrate: (document) => document,
   },
+  {
+    from: "1.29.0",
+    to: "1.30.0",
+    description:
+      "AIR 1.30.0 : CE QUI NE SE RÉÉCRIT PAS, ET CE QUI SUCCÈDE À QUOI. Deux " +
+      "métiers, le même besoin. SGD : « annuler un mouvement, c'est en écrire " +
+      "un INVERSE, jamais effacer le premier » — un mouvement effacé fait " +
+      "mentir la comptabilité dès la première erreur corrigée. Tontine : " +
+      "`statut` énumère quatre valeurs et ne dit RIEN de leur ordre ; rien " +
+      "n'empêchait de repasser un décaissement réussi en attente. Le mot " +
+      "« séquestre » écrit dans une colonne ne séquestre rien. D'où " +
+      "`entity.appendOnly` et `field.transitions`. CE QUE CELA NE DIT PAS, et " +
+      "il faut le dire : l'automate énonce les passages PERMIS, jamais QUAND " +
+      "un passage a lieu de lui-même — « le séquestre se libère à l'échéance » " +
+      "suppose une horloge, et une horloge vit sur le serveur. Migration " +
+      "IDENTITÉ : rien ne se fige par surprise, et aucun ordre n'est devine " +
+      "sur une énumération existante.",
+    migrate: (document) => document,
+  },
 ];
 
 export class AirMigrationError extends Error {

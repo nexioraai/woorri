@@ -105,7 +105,22 @@ function entitesEtRelations(sql) {
         candidates.push({ table, base });
       }
     }
-    if (fields.length > 0) entites.push({ id: `ent_${table}`, name: table, fields });
+    if (fields.length > 0) {
+      entites.push({
+        id: `ent_${table}`,
+        name: table,
+        // ── LE JOURNAL DE SGD NE SE RÉÉCRIT PAS (1.30.0).
+        //
+        // Règle du métier, payée en incidents : « annuler un mouvement, c'est
+        // en écrire un INVERSE, jamais effacer le premier ». Un stock écrit
+        // diverge de son historique sans que rien ne le signale, et un
+        // mouvement effacé fait mentir la comptabilité dès la première erreur
+        // corrigée. Les dépenses suivent la même règle : une charge passée se
+        // contre-passe, elle ne se gomme pas.
+        ...(["mouvements", "depenses"].includes(table) ? { appendOnly: true } : {}),
+        fields,
+      });
+    }
   }
 
   // ── UN CHAMP `reference` DOIT NOMMER SA CIBLE, et le validateur l'exige.
@@ -498,10 +513,15 @@ function besoins(entites) {
     "historique sans que rien ne le signale. Un `slot` pourrait le calculer, mais aucun lien ne dit " +
     "qu'un champ EST le résultat d'un slot.");
 
-  manque("need_contre_passation",
+  // ── RECLASSÉ (AIR 1.30.0). Le motif disait vrai : « l'AIR ne connaît ni
+  // l'immuabilité d'une ligne ni l'écriture compensatoire ». `appendOnly` dit
+  // désormais la première, et la seconde en découle — si rien ne peut être
+  // modifié ni effacé, la seule correction possible EST une ligne nouvelle qui
+  // annule la première. Le validateur refuse toute action qui réécrirait un
+  // mouvement ou une dépense : le défaut ne peut plus entrer par le document.
+  satisfait("need_contre_passation",
     "Annuler un mouvement, c'est en écrire un INVERSE, jamais effacer le premier.",
-    "L'AIR ne connaît pas l'immuabilité d'une ligne ni l'écriture compensatoire. Un générateur " +
-    "poserait une suppression, et la comptabilité mentirait dès la première erreur corrigée.");
+    [a("ent_mouvements"), a("ent_depenses"), "scr_mouvements"].filter(Boolean))
 
   // ── RECLASSÉ APRÈS TRAVAIL, le 2026-10-04. Le motif disait : « aucun nœud ne
   // décrit COMMENT une recherche interroge ». C'était vrai : `list` savait

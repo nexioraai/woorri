@@ -249,6 +249,72 @@ export function validateAir(air: ProjectAir): AirDiagnostic[] {
     });
   }
 
+  // ══════════════════════════════════════════════════════════════
+  //  CE QUI NE SE RÉÉCRIT PAS, ET CE QUI SUCCÈDE À QUOI (1.30.0).
+  // ══════════════════════════════════════════════════════════════
+  air.entities.forEach((e, ei) => {
+    // ── UNE ENTITÉ FIGÉE NE SE MODIFIE NI NE S'EFFACE.
+    //
+    // La déclarer puis poser une action qui la réécrit serait la pire des
+    // configurations : le document promet un journal immuable, et l'application
+    // le réécrit. Mieux vaut refuser le document.
+    if (e.appendOnly === true) {
+      air.actions.forEach((a, ai) => {
+        if (a.effect.kind !== "mutation" || a.effect.entityId !== e.id) return;
+        if (a.effect.operation === "create") return;
+        push(
+          "AIR_APPEND_ONLY_REECRITE",
+          `actions[${ai}].effect`,
+          `l'action "${a.id}" veut ${a.effect.operation === "update" ? "modifier" : "effacer"} ` +
+            `une ligne de "${e.id}", qui est déclarée non réécrivable : la seule correction ` +
+            `possible est d'écrire une ligne NOUVELLE qui annule la première`,
+        );
+      });
+    }
+    // ── LES TRANSITIONS VIVENT SUR UN CHAMP ÉNUMÉRÉ, ET SUR LUI SEUL.
+    e.fields.forEach((f, fi) => {
+      if (f.transitions === undefined) return;
+      const chemin = `entities[${ei}].fields[${fi}].transitions`;
+      if (f.type !== "enum" || f.enumValues === undefined) {
+        push(
+          "AIR_TRANSITIONS_HORS_ENUM",
+          chemin,
+          `le champ "${f.id}" déclare des passages d'état alors qu'il est de type "${f.type}" : ` +
+            `un automate suppose une liste FERMÉE d'états, que seule une énumération donne`,
+        );
+        return;
+      }
+      const valeurs = new Set(f.enumValues);
+      f.transitions.forEach((tr, ti) => {
+        for (const [cote, v] of [["from", tr.from], ["to", tr.to]] as const) {
+          if (valeurs.has(v)) continue;
+          push(
+            "AIR_TRANSITION_VALEUR_INCONNUE",
+            `${chemin}[${ti}].${cote}`,
+            `"${v}" n'est pas une valeur de "${f.id}" : une transition vers un état qui ` +
+              `n'existe pas ne se produira jamais`,
+          );
+        }
+      });
+      // ── UN ÉTAT QU'AUCUNE TRANSITION N'ATTEINT EST UN ÉTAT MORT.
+      //
+      // Le premier état de l'énumération est l'état INITIAL — c'est ainsi qu'on
+      // lit une énumération, et le cahier de la tontine l'écrit dans cet ordre.
+      // Tous les autres doivent être atteignables, sinon le document promet un
+      // état que rien ne produira.
+      const atteints = new Set([f.enumValues[0], ...f.transitions.map((t) => t.to)]);
+      f.enumValues.forEach((v) => {
+        if (atteints.has(v)) return;
+        push(
+          "AIR_TRANSITION_ETAT_MORT",
+          chemin,
+          `l'état "${v}" de "${f.id}" n'est atteint par AUCUNE transition et n'est pas ` +
+            `l'état initial : le document le promet et rien ne l'y mènera`,
+        );
+      });
+    });
+  });
+
   const blockIds = new Set(air.screens.flatMap((s) => s.blocks.map((b) => b.id)));
   const entityById = new Map(air.entities.map((e) => [e.id, e]));
   const slotIds = new Set(air.slots.map((s) => s.id));

@@ -1305,6 +1305,7 @@
   {
    "id": "ent_depenses",
    "name": "depenses",
+   "appendOnly": true,
    "fields": [
     {
      "id": "fld_depenses_nature",
@@ -1519,6 +1520,7 @@
   {
    "id": "ent_mouvements",
    "name": "mouvements",
+   "appendOnly": true,
    "fields": [
     {
      "id": "fld_mouvements_article_id",
@@ -2150,8 +2152,12 @@
     "id": "need_contre_passation",
     "statement": "Annuler un mouvement, c'est en écrire un INVERSE, jamais effacer le premier.",
     "resolution": {
-     "kind": "unexpressible",
-     "reason": "L'AIR ne connaît pas l'immuabilité d'une ligne ni l'écriture compensatoire. Un générateur poserait une suppression, et la comptabilité mentirait dès la première erreur corrigée."
+     "kind": "satisfied",
+     "nodeIds": [
+      "ent_mouvements",
+      "ent_depenses",
+      "scr_mouvements"
+     ]
     }
    },
    {
