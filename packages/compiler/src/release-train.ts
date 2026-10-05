@@ -135,6 +135,12 @@ export const RELEASE_TRAIN_V1 = {
   // AUTRE entité, passait la validation — et pour `imageFieldId`, cela faisait
   // TAIRE le diagnostic d'image orpheline sans rien afficher.
   // Aucune prop n'est ajoutée ni retirée : seule leur VÉRIFICATION est rétablie.
+  // Ré-scellé 2026-10-05 : `FlatList` a QUITTÉ les blocs pour la primitive
+  // `Liste`. Les 505 lignes de `components.tsx` n'importaient de react-native
+  // que cette seule chose — et c'était tout ce qui les empêchait d'être
+  // PARTAGÉES avec une cible web. Aucun type de bloc, aucune prop, aucun état
+  // ajouté ni retiré : le rendu natif est identique, seule l'importation
+  // change de place.
   blocksSourcesHash:
     // Ré-scellé 2026-10-04 (registre 1.15.0) : `searchMode` sur la liste. La
     // recherche cherchait la saisie ENTIÈRE comme sous-chaîne — « filtre toyota »
@@ -233,7 +239,7 @@ export const RELEASE_TRAIN_V1 = {
     // pas parce qu une prop bouge. Les huit precedents sont intacts, rien n
     // est retire, et `prose` ne porte aucun texte du moteur — ses paragraphes
     // viennent du DOCUMENT (F3, EP-143 preserve).
-    "cad1a25dced6d2ec221b0546cf7ddf7ed9cf657fc8513b0a83c996da5efdb27b",
+    "452776455571f4a351e20941c3163e3b8e2ee2374fcd38c3684689eaa84fe634",
   // EP-134 — ajout compatible `external_contact` : version MINEURE du registre.
   /**
    * EP-147 ③ — LE NIVEAU D'API ANDROID VISÉ, épinglé par le train.

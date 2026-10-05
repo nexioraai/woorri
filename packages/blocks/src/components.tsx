@@ -1,12 +1,12 @@
 // LES 6 SMART BLOCKS v1 — composites DE PRIMITIVES exclusivement (D-023).
 // RÈGLE MÉCANISÉE (tests/etancheite-ratchet.test.ts) : tout le visuel passe
-// par @deribfy/primitives ; seul composant react-native autorisé ici :
-// FlatList (structurel). AUCUN StyleSheet, AUCUN style en dur — le moteur
+// par @deribfy/primitives — Y COMPRIS LA LISTE, depuis le 2026-10-05. Ce
+// fichier n'importe RIEN de react-native : c'est ce qui le rend partageable
+// entre le natif et le web. AUCUN StyleSheet, AUCUN style en dur — le moteur
 // de styling reste remplaçable (D-021) et les tokens restent la seule
 // source visuelle. AUCUNE syntaxe Maestro/Detox : les blocs sont
 // E2E-agnostiques (D-022/D-023), seuls les testID standard sont exposés.
-import { FlatList } from "react-native";
-import {GridCard, AppButton,
+import {Liste, GridCard, AppButton,
   AppText,
   Badge,
   ListRow,
@@ -133,7 +133,7 @@ export function ListBlock({
   );
   if (bounded === true && layout !== "row") {
     // APERÇU BORNÉ (mission composition II) — la liste COULE dans un écran
-    // composé : pas de FlatList (DET-006 : jamais de virtualisée non bornée
+    // composé : pas de liste virtualisée (DET-006 : jamais de virtualisée non bornée
     // dans un ScrollView), pas de fill. L'appelant a déjà tronqué les items ;
     // « Voir plus » emmène au complet. États et contrôles : mêmes règles.
     const rangees: (typeof items)[] = [];
@@ -203,13 +203,11 @@ export function ListBlock({
       <Section title={title} testID={testID} titleAction={seeAll}>
         {controles}
         {etatContenu ?? (
-          <FlatList
+          <Liste
             horizontal
-            showsHorizontalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-            data={state.kind === "ready" ? items : []}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
+            donnees={state.kind === "ready" ? items : []}
+            clef={(item) => item.id}
+            rendu={(item) => (
               <GridCard
                 compact
                 title={item.title}
@@ -234,35 +232,32 @@ export function ListBlock({
   }
   return (
     // `fill` (DET-006) : la section BORNE la hauteur de la liste virtualisée.
-    // Sans parent borné, la FlatList rend tous ses éléments. L'intention est
+    // Sans parent borné, la liste rend tous ses éléments. L'intention est
     // DÉCLARÉE ici ; le style reste entièrement porté par les primitives —
     // la contrainte « aucun StyleSheet, aucun style en dur » est préservée.
     <Section title={title} testID={testID} fill titleAction={seeAll}>
       {controles}
-      <FlatList
-        // GRILLE (1.20) : deux colonnes de cartes pour un catalogue. `key`
-        // force la FlatList a se recreer si le layout changeait — il est
-        // statique par document, la cle est donc constante a l'execution.
+      <Liste
+        // GRILLE (1.20) : deux colonnes de cartes pour un catalogue. La clé
+        // force la liste à se recréer si la disposition changeait — React
+        // Native refuse de passer de une à deux colonnes sur une liste déjà
+        // montée. Elle est posée ICI, par l'appelant : une clé ne se transmet
+        // PAS par une prop, React l'extrait à la création de l'élément.
         key={layout === "grid" ? "grid" : "rows"}
-        numColumns={layout === "grid" ? 2 : 1}
-        // DET-016 (D-039, dimension A étendue) : ajustement natif aux insets
-        // du clavier. Propriété VÉRIFIÉE sur RN 0.86.3 — déclarée dans
-        // `ScrollViewPropsIOS`, sans implémentation Android : elle agit sur
-        // iOS et reste INERTE sur Android, qui est couvert par le mode de
-        // redimensionnement déclaré au manifeste. Aucun `Platform.OS` requis.
-        // `keyboardShouldPersistTaps` évite qu'un appui sur un contrôle
-        // pendant l'édition soit absorbé par la fermeture du clavier.
-        // Ce sont des PROPRIÉTÉS structurelles, jamais des styles.
+        colonnes={layout === "grid" ? 2 : 1}
+        // DET-016 (D-039, dimension A étendue) : ajustement au clavier. Le
+        // DÉTAIL de plateforme — quelle propriété, sur quel système — vit
+        // désormais dans la primitive : c'est elle qui est remplaçable par
+        // cible, pas le bloc.
         // DET-033 : recherche et filtres vivent EN-TÊTE DE LISTE — une seule
         // surface de défilement — et l'état (chargement/vide/erreur) ne
-        // remplace que la zone de contenu, via ListEmptyComponent.
-        automaticallyAdjustKeyboardInsets
-        keyboardShouldPersistTaps="handled"
-        ListEmptyComponent={etatContenu}
-        ListFooterComponent={ListFooter}
-        data={state.kind === "ready" ? items : []}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) =>
+        // remplace que la zone de contenu.
+        suitLeClavier
+        vide={etatContenu}
+        pied={ListFooter}
+        donnees={state.kind === "ready" ? items : []}
+        clef={(item) => item.id}
+        rendu={(item) =>
           layout === "grid" ? (
             <GridCard
               title={item.title}

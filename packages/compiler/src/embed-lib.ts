@@ -68,6 +68,15 @@ export const EMBEDDED_SOURCES: readonly EmbeddedSourceSpec[] = [
     rewrites: {},
   },
   {
+    // LA LISTE (2026-10-05) — sortie des blocs pour que ceux-ci n'importent
+    // plus rien de react-native, et deviennent partageables avec une cible web.
+    // Oubliée ici, elle a fait echouer 28 applications sur 28 : leur
+    // `index.ts` exportait un fichier qu'elles n'avaient pas.
+    source: "primitives/src/liste.tsx",
+    target: "lib/primitives/liste.tsx",
+    rewrites: {},
+  },
+  {
     source: "blocks/src/contracts.ts",
     target: "lib/blocks/contracts.ts",
     rewrites: {},

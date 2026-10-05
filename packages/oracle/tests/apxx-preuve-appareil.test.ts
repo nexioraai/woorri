@@ -14,6 +14,13 @@
 // appareil » ; cet instrument ne lit que du source. Elles valent donc
 // `non_determinee` quand les pré-conditions tiennent, et `non_conforme` quand
 // une pré-condition MESURABLE échoue — un défaut démontré reste un défaut.
+// ── LE NOM A CHANGÉ LE 2026-10-05, L'INVARIANT NON.
+//
+// La liste virtualisée s'appelait `FlatList` ; elle vit maintenant derrière la
+// primitive `Liste`, pour que les blocs n'importent plus rien de React Native
+// et deviennent partageables avec une cible web. Ce que ces tests prouvent est
+// inchangé : une liste virtualisée NON BORNÉE rend tous ses éléments, il lui
+// faut donc une `<Section fill>` qui la contient.
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -41,7 +48,7 @@ describe("V1 — le bornage de la liste est vérifié STRUCTURELLEMENT", () => {
     // empêche le test de rester vert si l'émetteur cessait de l'émettre.
     expect(source).toContain("<Section title={title} testID={testID} fill titleAction={seeAll}>");
     const g = dim(files, "G");
-    expect(g?.detail).toContain("<Section fill> encadrant une <FlatList>");
+    expect(g?.detail).toContain("<Section fill> encadrant une <Liste>");
     // ÉDITION CONSCIENTE (V3) : le libellé provient désormais du lecteur de
     // preuve appareil. Casse suivie ; l'ÉTAT attendu est inchangé.
     expect(g?.detail).toContain("pré-conditions structurelles TENUES");
@@ -79,10 +86,10 @@ describe("V1 — le bornage de la liste est vérifié STRUCTURELLEMENT", () => {
     // Un commentaire est de la TRIVIA : il ne peut pas être un attribut JSX.
     // La propriété est donc structurelle, pas probabiliste.
     const leurres = [
-      '// <Section title={t} fill><FlatList /></Section>\nexport const X = 1;\n',
-      '/* <Section fill><FlatList data={d} /></Section> */\nexport const X = 1;\n',
-      'export const doc = "<Section fill><FlatList /></Section>";\n',
-      '/** @example <Section fill><FlatList /></Section> */\nexport const X = 1;\n',
+      '// <Section title={t} fill><Liste /></Section>\nexport const X = 1;\n',
+      '/* <Section fill><Liste data={d} /></Section> */\nexport const X = 1;\n',
+      'export const doc = "<Section fill><Liste /></Section>";\n',
+      '/** @example <Section fill><Liste /></Section> */\nexport const X = 1;\n',
     ];
     for (const leurre of leurres) {
       const files = artefact();
@@ -93,7 +100,7 @@ describe("V1 — le bornage de la liste est vérifié STRUCTURELLEMENT", () => {
   });
 
   it("⑤ `fill` posée AILLEURS que sur le parent de la liste → NON détecté", () => {
-    // Contrôle de PRÉCISION : la mesure porte sur le parent de la FlatList,
+    // Contrôle de PRÉCISION : la mesure porte sur le parent de la Liste,
     // pas sur la présence d'un `fill` quelque part dans le fichier.
     const files = artefact();
     const source = files.get(BLOCKS) ?? "";
@@ -102,7 +109,7 @@ describe("V1 — le bornage de la liste est vérifié STRUCTURELLEMENT", () => {
       .concat("\nexport const Ailleurs = () => <Section fill><Badge label=\"x\" /></Section>;\n");
     const g = dim(files.set(BLOCKS, deplace), "G");
     expect(g?.state).toBe("non_conforme");
-    expect(g?.detail).toContain("mais AUCUNE n'encadre de <FlatList>");
+    expect(g?.detail).toContain("mais AUCUNE n'encadre de <Liste>");
   });
 
   it("⑥ `fill={false}` ne conclut pas ; `fill={true}` conclut", () => {
@@ -115,7 +122,7 @@ describe("V1 — le bornage de la liste est vérifié STRUCTURELLEMENT", () => {
 
     const vrai = artefact();
     vrai.set(BLOCKS, source.replace(cible, "<Section title={title} testID={testID} fill={true} titleAction={seeAll}>"));
-    expect(dim(vrai, "G")?.detail).toContain("<Section fill> encadrant une <FlatList>");
+    expect(dim(vrai, "G")?.detail).toContain("<Section fill> encadrant une <Liste>");
   });
 });
 

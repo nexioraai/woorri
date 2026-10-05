@@ -187,7 +187,17 @@ export function wcagFailures(themeSource: string): { pairs: number; failures: re
 
 /** Conteneur qui BORNE la hauteur, et liste virtualisée qu'il doit borner. */
 const SECTION_TAG = "Section";
-const VIRTUALIZED_TAG = "FlatList";
+// ── LE NOM A CHANGÉ LE 2026-10-05, ET L'INVARIANT NON.
+//
+// La liste virtualisée s'appelait `FlatList` et venait directement de React
+// Native. Elle vit désormais derrière la primitive `Liste`, pour que les blocs
+// n'importent plus rien de la plateforme et deviennent partageables avec une
+// cible web.
+//
+// Ce que cet oracle prouve ne change pas d'un iota : une liste virtualisée NON
+// BORNÉE rend tous ses éléments (DET-006), il lui faut donc une `<Section
+// fill>` qui la contient. Seul le nom du composant à chercher a bougé.
+const VIRTUALIZED_TAG = "Liste";
 
 const jsxTagName = (node: ts.JsxElement | ts.JsxSelfClosingElement): string =>
   (ts.isJsxElement(node) ? node.openingElement.tagName : node.tagName).getText();
@@ -239,7 +249,7 @@ const contientBalise = (node: ts.Node, tag: string): boolean => {
  *
  * La propriété vérifiée est celle que `DET-025` nomme : la liste virtualisée a
  * un parent BORNÉ. Il ne suffit donc pas qu'un `fill` existe quelque part —
- * il faut une `<Section fill>` qui CONTIENT la `<FlatList>`.
+ * il faut une `<Section fill>` qui CONTIENT la `<Liste>`.
  *
  * Ceci reste une propriété STRUCTURELLE. Elle ne dit RIEN de la virtualisation
  * effective à l'exécution, qui exige l'appareil (`DET-006`, volet V3).
@@ -477,7 +487,7 @@ export function evaluateApxxGrid(
   // ÉDITION CONSCIENTE (mission composition II, 2026-09-10) — l'invariant
   // se reformule : la fenêtre VIRTUALISÉE appartient à l'écran dont la liste
   // est l'UNIQUE liste ; un écran multi-listes DÉFILE et rend ses listes en
-  // APERÇUS BORNÉS (sans FlatList — décision pure `modeListe`, cliquetée).
+  // APERÇUS BORNÉS (sans liste virtualisée — décision pure `modeListe`).
   // La pré-condition G ne surveille donc que les écrans à liste UNIQUE :
   // c'est là, et là seulement, qu'une virtualisée peut se faire encapsuler.
   const listScreens = air.screens.filter((s) => s.blocks.some((b) => b.blockType === "list"));

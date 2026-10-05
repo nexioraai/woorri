@@ -54,8 +54,22 @@ describe("DET-016 — verrous clavier (7 propriétés mécaniques)", () => {
     expect(bad).toEqual([]);
   });
 
-  it("2. la FlatList du bloc list porte l'ajustement + persistTaps", () => {
-    const src = readFileSync(join(HERE, "..", "..", "blocks", "src", "components.tsx"), "utf8");
+  it("2. la liste porte l'ajustement clavier + persistTaps", () => {
+    // ── LE MÉCANISME A DESCENDU D'UN ÉTAGE LE 2026-10-05, ET LE VERROU TIENT.
+    //
+    // Ces deux propriétés vivaient dans `blocks/components.tsx`, posées
+    // directement sur une `FlatList`. Elles vivent désormais dans la primitive
+    // `Liste` — avec la `FlatList` elle-même — pour que les blocs n'importent
+    // plus rien de React Native et deviennent partageables avec une cible web.
+    //
+    // Ce que ce verrou protège est INCHANGÉ : un appui sur une ligne ne doit
+    // pas se perdre à refermer le clavier, et la liste doit s'ajuster aux
+    // insets. Seul l'endroit où le mécanisme est écrit a bougé — et le
+    // chercher au bon endroit est la seule façon de continuer à le prouver.
+    const src = readFileSync(
+      join(HERE, "..", "..", "primitives", "src", "liste.tsx"),
+      "utf8",
+    );
     const code = stripComments(src);
     expect(code).toContain(KB);
     expect(code).toContain('keyboardShouldPersistTaps="handled"');
@@ -102,7 +116,7 @@ describe("DET-016 — verrous clavier (7 propriétés mécaniques)", () => {
         const code = String(c.out.files.get(path));
         const hasList = screen.blocks.some((b) => b.blockType === "list");
         // écran sans liste : l'enveloppe KeyboardAvoidingView porte le
-        // mécanisme (DET-030) ; écran avec liste : la FlatList (test 2).
+        // mécanisme (DET-030) ; écran avec liste : la primitive (test 2).
         if (!hasList && !code.includes("KeyboardAvoidingView")) bad.push(`${c.f}:${screen.id}`);
       }
     }

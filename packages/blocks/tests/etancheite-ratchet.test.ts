@@ -6,7 +6,7 @@ import { describe, expect, it } from "vitest";
 // CLIQUETS D'ÉTANCHÉITÉ (D-021/D-023, patron 3.2 mécanisé) :
 //   1. contracts.ts n'importe QUE des types de react ;
 //   2. components.tsx ne compose QUE des primitives — seul import
-//      react-native autorisé : FlatList (structurel) ; AUCUN StyleSheet,
+//      react-native : AUCUN (depuis 2026-10-05) ; AUCUN StyleSheet,
 //      AUCUN style en dur (tout le visuel vient des primitives/tokens).
 const SRC = join(dirname(fileURLToPath(import.meta.url)), "..", "src");
 const stripComments = (s: string): string =>
@@ -24,15 +24,23 @@ describe("étanchéité des blocs", () => {
     expect(source).not.toMatch(/^import \{/m);
   });
 
-  it("CLIQUET — components.tsx : primitives + FlatList uniquement", () => {
+  it("CLIQUET RENFORCÉ — components.tsx n'importe RIEN de react-native", () => {
+    // ── LE CLIQUET S'EST RESSERRÉ LE 2026-10-05, ET C'EST UN GAIN.
+    //
+    // Il tolérait `FlatList`, « seul composant react-native autorisé ici ».
+    // Mesuré en préparant la CIBLE WEB : cette unique importation était tout ce
+    // qui empêchait ces 505 lignes d'être PARTAGÉES entre le natif et le web.
+    //
+    // `FlatList` vit désormais derrière la primitive `Liste` — là où les
+    // détails de plateforme doivent être, puisque les primitives sont, elles,
+    // remplaçables par cible. Les blocs sont redevenus ce que D-023 décrit :
+    // des composites de primitives, exclusivement.
+    //
+    // Ce test interdit donc le retour en arrière : une seule importation de
+    // react-native ici, et cinq cents lignes redeviennent à réécrire.
     const source = read("components.tsx");
-    expect(importsOf(source).sort()).toEqual([
-      "./contracts.ts",
-      "@deribfy/primitives",
-      "react-native",
-    ]);
-    const rn = /import \{([^}]+)\} from "react-native"/.exec(source);
-    expect(rn?.[1]?.trim()).toBe("FlatList");
+    expect(importsOf(source).sort()).toEqual(["./contracts.ts", "@deribfy/primitives"]);
+    expect(source).not.toContain('from "react-native"');
   });
 
   it("CLIQUET F3 — aucune chaîne LINGUISTIQUE codée en dur dans les composants", () => {
