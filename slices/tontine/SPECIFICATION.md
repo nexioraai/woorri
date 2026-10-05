@@ -1,6 +1,6 @@
 # Tontine — spécification dérivée
 
-> Générée depuis le document AIR `prj_tontine_cameroun`, contrat 1.28.0.
+> Générée depuis le document AIR `prj_tontine_cameroun`, contrat 1.29.0.
 > Ne pas modifier à la main : régénérer après toute évolution du document.
 
 Tontine digitale : cotisations, enchères, séquestre et bureau traditionnel.
@@ -127,51 +127,47 @@ Rôle par défaut : **Membre**. Un compte nouvellement créé n'a donc **aucun**
 | Séance et enchères | `right_bureau` |
 | Paramètres | _ouvert_ |
 
-## Ce qui revient au backend (10 points)
+## Ce qui revient au backend (9 points)
 
 Ces exigences du cahier des charges **ne sont pas portées par l'interface**, et c'est volontaire : ce sont des règles métier, financières ou réglementaires. Elles sont donc à implémenter côté Spring Boot. La liste est exhaustive par construction — tout ce que l'application ne sait pas porter se trouve ici.
 
-### 1. Le mandataire AGIT AU NOM d'un autre : il cotise pour lui, encaisse son pot, et signe le reçu de décharge.
-
-> AIR 1.28.0 sait dire « cette personne a ce droit ». Il ne sait pas dire « cette personne agit POUR une autre » : il n'existe aucune DÉLÉGATION. La colonne `mandataire` existe dans les données, mais rien dans le modèle d'accès ne l'autorise ni ne l'encadre — et un reçu qui ne porte qu'un seul nom ne prouve rien. SGD n'avait pas révélé ce manque : un employé y agit toujours en son propre nom.
-
-### 2. Les fonds collectés sont bloqués sur un compte séquestre jusqu'à l'échéance du tour.
+### 1. Les fonds collectés sont bloqués sur un compte séquestre jusqu'à l'échéance du tour.
 
 > Un état qui se DÉBLOQUE À UNE DATE n'existe pas au format. `statut = SEQUESTRE_BLOQUE` est une valeur d'énumération comme une autre : rien ne dit ce qui la lève, ni quand, ni qui peut la lever. Écrire le mot « séquestre » dans une colonne ne séquestre rien.
 
-### 3. Le pot est attribué par enchère : le membre qui propose la plus forte prime l'emporte.
+### 2. Le pot est attribué par enchère : le membre qui propose la plus forte prime l'emporte.
 
 > Une enchère est une CONCURRENCE entre plusieurs membres sur un même objet, avec un gagnant et une clôture. Le format décrit des écrans, des listes et des gestes individuels ; il n'a aucun nœud pour un mécanisme où le geste d'un membre invalide celui d'un autre.
 
-### 4. Les pénalités de retard valent 2 % par jour et se répartissent 70 % au groupe, 30 % à la plateforme.
+### 3. Les pénalités de retard valent 2 % par jour et se répartissent 70 % au groupe, 30 % à la plateforme.
 
 > Calcul sur une DURÉE, puis partage. Le format ne porte ni l'un ni l'autre : `rules.kind = "validation"` sait refuser une saisie, jamais produire un montant. C'est la même famille que le stock calculé de SGD, resté inexprimable.
 
-### 5. Les primes d'enchères s'accumulent pendant tout le cycle, puis se répartissent à parts égales en fin de cycle.
+### 4. Les primes d'enchères s'accumulent pendant tout le cycle, puis se répartissent à parts égales en fin de cycle.
 
 > Deux manques en un : l'ACCUMULATION (un champ qui est la somme d'autres lignes) et l'ÉVÉNEMENT DE FIN DE CYCLE. Le déclencheur `lifecycle` connaît l'ouverture d'un écran, pas l'achèvement d'un cycle métier.
 
-### 6. Collecte et décaissement par les API Orange Money Cameroun et MTN Mobile Money.
+### 5. Collecte et décaissement par les API Orange Money Cameroun et MTN Mobile Money.
 
 > Le registre des capacités porte `payments.psp` (Stripe) et `payments.offapp_transfer`, qui dit explicitement « aucun opérateur intégré, aucun appel réseau ». Aucun opérateur d'argent mobile africain n'y figure, alors que c'est l'infrastructure de paiement du marché visé.
 
-### 7. Un décaissement n'est exécuté qu'après saisie d'un code à 6 chiffres reçu par WhatsApp ou SMS.
+### 6. Un décaissement n'est exécuté qu'après saisie d'un code à 6 chiffres reçu par WhatsApp ou SMS.
 
 > Une validation en DEUX TEMPS, avec un secret envoyé par un canal tiers. Le format décrit un geste et son effet ; il n'a pas de nœud pour un geste SUSPENDU à une confirmation hors application.
 
-### 8. À chaque séance, un membre et un seul encaisse le pot, selon l'ordre de passage.
+### 7. À chaque séance, un membre et un seul encaisse le pot, selon l'ordre de passage.
 
 > `ordre_passage` est un nombre sur une ligne. Rien ne dit QUEL tour est en cours, ni que le tour avance quand le pot est versé. L'état d'avancement d'un cycle n'a pas de place au format.
 
-### 9. Déclarer aux magasins que l'application traite des données financières.
+### 8. Déclarer aux magasins que l'application traite des données financières.
 
 > `compliance.dataCollected` est une énumération FERMÉE de sept catégories, et aucune ne couvre l'argent : contact_info, identifiers, usage_data, location, user_content, purchases, diagnostics. Or Apple ET Google portent une catégorie « Financial Info » dans leurs étiquettes de confidentialité. Déclarer `purchases` serait inexact — dans une tontine, personne n'achète rien : les membres se prêtent de l'argent. Une déclaration fausse à un magasin est pire qu'une déclaration incomplète.
 
-### 10. Le Secrétaire exporte les procès-verbaux et les rapports en PDF d'un seul clic.
+### 9. Le Secrétaire exporte les procès-verbaux et les rapports en PDF d'un seul clic.
 
 > Aucune capacité du registre ne produit de document. `share` partage ce qui existe déjà ; rien ne fabrique un PDF à partir des données.
 
-## Ce que l'application porte déjà (7 points)
+## Ce que l'application porte déjà (8 points)
 
 - Reproduire le bureau traditionnel — Président, Secrétaire, Trésorier, Censeur, Membre — par une matrice d'accès stricte.
 - Un membre peut n'avoir ni smartphone ni compte Mobile Money, et reste rattaché à un mandataire.
@@ -180,7 +176,8 @@ Ces exigences du cahier des charges **ne sont pas portées par l'interface**, et
 - Chaque mouvement est horodaté, typé, et garde la trace de son opérateur et de sa référence externe.
 - Vérification d'identité obligatoire : pièce d'identité et selfie, contrôlés par le bureau.
 - Un membre consulte sa position et son historique financier sans aucune charge du bureau.
+- Le mandataire AGIT AU NOM d'un autre : il cotise pour lui et encaisse son pot.
 
 ---
 
-*4 entités · 6 relations · 10 écrans · 5 droits · 5 rôles · 7 besoins portés · 10 au backend.*
+*4 entités · 6 relations · 10 écrans · 5 droits · 5 rôles · 8 besoins portés · 9 au backend.*

@@ -816,6 +816,17 @@ function emitAccesData(air: ProjectAir): string {
           // UN ÉCRAN OUVERT PEUT PORTER UN GESTE RÉSERVÉ. Dans SGD, inventaire,
           // vente et transfert partagent le MÊME écran de scan et ne font pas
           // la même chose au stock : trois droits, portés par trois actions.
+      // ── LA DÉLÉGATION TRAVERSE (1.29.0). Omise quand le document n'en
+      // déclare pas : un métier sans mandataire garde des octets identiques.
+      ...(air.access.delegation === undefined
+        ? {}
+        : {
+            delegation: {
+              subjectEntityId: air.access.delegation.subjectEntityId,
+              holderFieldId: air.access.delegation.holderFieldId,
+              delegatableRightIds: [...air.access.delegation.delegatableRightIds],
+            },
+          }),
       parAction: Object.fromEntries(
         air.actions.flatMap((a) =>
           a.requiredRightId === undefined ? [] : [[a.id, a.requiredRightId] as const],

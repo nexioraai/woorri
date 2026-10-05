@@ -176,6 +176,79 @@ export function validateAir(air: ProjectAir): AirDiagnostic[] {
     });
   }
 
+  // ══════════════════════════════════════════════════════════════
+  //  AGIR AU NOM D'UN AUTRE (1.29.0) — CE QU'UNE DÉLÉGATION DOIT TENIR.
+  // ══════════════════════════════════════════════════════════════
+  //
+  // Une délégation mal déclarée est pire qu'absente : elle se lit comme une
+  // procuration encadrée, et n'encadre rien. Quatre refus, chacun mesurable.
+  const modeleDacces = air.access;
+  if (modeleDacces?.delegation !== undefined) {
+    const d = modeleDacces.delegation;
+    const sujet = air.entities.find((e) => e.id === d.subjectEntityId);
+    if (sujet === undefined) {
+      push(
+        "AIR_DELEGATION_SUJET_INCONNU",
+        "access.delegation.subjectEntityId",
+        `la délégation porte sur l'entité "${d.subjectEntityId}", qui n'existe pas : ` +
+          `on ne peut pas agir au nom de personnes que le document ne décrit pas`,
+      );
+    } else {
+      // ── LE MANDATAIRE D'UNE PERSONNE EST UNE PERSONNE.
+      //
+      // Le champ doit vivre SUR l'entité des personnes et POINTER VERS ELLE.
+      // Un champ qui désignerait autre chose — une tontine, un lieu — ferait
+      // d'un objet le mandataire d'un humain, et la garde ne garderait rien.
+      const champ = sujet.fields.find((x) => x.id === d.holderFieldId);
+      if (champ === undefined) {
+        push(
+          "AIR_DELEGATION_PORTEUR_INVALIDE",
+          "access.delegation.holderFieldId",
+          `le champ "${d.holderFieldId}" n'existe pas sur l'entité "${sujet.id}" : ` +
+            `rien ne dit alors QUI est le mandataire de qui`,
+        );
+      } else if (champ.type !== "reference" || champ.referencesEntityId !== sujet.id) {
+        push(
+          "AIR_DELEGATION_PORTEUR_INVALIDE",
+          "access.delegation.holderFieldId",
+          `le champ "${d.holderFieldId}" doit être une référence vers "${sujet.id}" ` +
+            `lui-même — le mandataire d'une personne est une personne — et il est ` +
+            `de type "${champ.type}"${champ.referencesEntityId === undefined ? "" : ` vers "${champ.referencesEntityId}"`}`,
+        );
+      }
+    }
+    const droitsConnus = new Set(modeleDacces.rights.map((r) => r.id));
+    d.delegatableRightIds.forEach((id, i) => {
+      if (droitsConnus.has(id)) return;
+      push(
+        "AIR_DELEGATION_DROIT_INCONNU",
+        `access.delegation.delegatableRightIds[${i}]`,
+        `le droit "${id}" est déclaré délégable alors qu'il n'est déclaré nulle part : ` +
+          `une procuration sur un droit qui n'existe pas n'autorise rien`,
+      );
+    });
+    // ── UN DROIT QUE PERSONNE NE POSSÈDE NE SE DÉLÈGUE PAS.
+    //
+    // Déléguer un droit qu'aucun rôle n'accorde produit une procuration VIDE :
+    // le mandataire exercerait au nom d'autrui un pouvoir que son mandant n'a
+    // pas. C'est le cas qui se lit le mieux comme une protection, et qui n'en
+    // est pas une.
+    const possedes = new Set(
+      modeleDacces.roles.flatMap((r) =>
+        r.grantsAllRights === true ? modeleDacces.rights.map((x) => x.id) : r.rightIds,
+      ),
+    );
+    d.delegatableRightIds.forEach((id, i) => {
+      if (!droitsConnus.has(id) || possedes.has(id)) return;
+      push(
+        "AIR_DELEGATION_DROIT_SANS_PORTEUR",
+        `access.delegation.delegatableRightIds[${i}]`,
+        `le droit "${id}" est délégable alors qu'AUCUN rôle ne l'accorde : ` +
+          `le mandataire exercerait au nom d'autrui un pouvoir que son mandant n'a pas`,
+      );
+    });
+  }
+
   const blockIds = new Set(air.screens.flatMap((s) => s.blocks.map((b) => b.id)));
   const entityById = new Map(air.entities.map((e) => [e.id, e]));
   const slotIds = new Set(air.slots.map((s) => s.id));

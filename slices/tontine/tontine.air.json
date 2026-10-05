@@ -1,5 +1,5 @@
 {
- "airSchemaVersion": "1.28.0",
+ "airSchemaVersion": "1.29.0",
  "projectId": "prj_tontine_cameroun",
  "app": {
   "name": "Tontine",
@@ -1242,7 +1242,14 @@
     "rightIds": []
    }
   ],
-  "defaultRoleId": "role_membre"
+  "defaultRoleId": "role_membre",
+  "delegation": {
+   "subjectEntityId": "ent_utilisateurs",
+   "holderFieldId": "fld_utilisateurs_mandataire",
+   "delegatableRightIds": [
+    "right_encaisser_cash"
+   ]
+  }
  },
  "design": {
   "theme": "tontine_sobre"
@@ -1367,10 +1374,17 @@
    },
    {
     "id": "need_mandat_agir_pour",
-    "statement": "Le mandataire AGIT AU NOM d'un autre : il cotise pour lui, encaisse son pot, et signe le reçu de décharge.",
+    "statement": "Le mandataire AGIT AU NOM d'un autre : il cotise pour lui et encaisse son pot.",
     "resolution": {
-     "kind": "unexpressible",
-     "reason": "AIR 1.28.0 sait dire « cette personne a ce droit ». Il ne sait pas dire « cette personne agit POUR une autre » : il n'existe aucune DÉLÉGATION. La colonne `mandataire` existe dans les données, mais rien dans le modèle d'accès ne l'autorise ni ne l'encadre — et un reçu qui ne porte qu'un seul nom ne prouve rien. SGD n'avait pas révélé ce manque : un employé y agit toujours en son propre nom."
+     "kind": "satisfied",
+     "nodeIds": [
+      "right_encaisser_cash",
+      "ent_utilisateurs",
+      "fld_utilisateurs_mandataire",
+      "fld_utilisateurs_est_sans_telephone",
+      "rel_mandat",
+      "scr_encaissement"
+     ]
     }
    },
    {

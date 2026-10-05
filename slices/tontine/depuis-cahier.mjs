@@ -239,6 +239,22 @@ function acces() {
       },
     ],
     defaultRoleId: "role_membre",
+    // ── LE MANDAT, DÉCLARÉ (AIR 1.29.0).
+    //
+    // Le cahier §3 : « tout membre ne possédant pas de smartphone est rattaché
+    // à un membre parrain certifié. Le membre remet la somme en espèces ; le
+    // mandataire saisit la transaction et crédite le séquestre. Lors du tour de
+    // gain, le décaissement est versé au mandataire, qui remet la somme contre
+    // signature d'un reçu de décharge. »
+    //
+    // UN SEUL DROIT DÉLÉGABLE, et c'est délibéré. Le cahier décrit le mandat
+    // pour l'ARGENT REMIS EN ESPÈCES, rien d'autre. Déléguer la discipline ou
+    // le registre serait inventer une procuration que personne n'a signée.
+    delegation: {
+      subjectEntityId: "ent_utilisateurs",
+      holderFieldId: "fld_utilisateurs_mandataire",
+      delegatableRightIds: ["right_encaisser_cash"],
+    },
   };
 }
 
@@ -386,12 +402,17 @@ function besoins() {
 
   // ── CE QUE LE FORMAT NE SAIT PAS DIRE ──────────────────────
 
-  manque("need_mandat_agir_pour",
-    "Le mandataire AGIT AU NOM d'un autre : il cotise pour lui, encaisse son pot, et signe le reçu de décharge.",
-    "AIR 1.28.0 sait dire « cette personne a ce droit ». Il ne sait pas dire « cette personne agit POUR " +
-    "une autre » : il n'existe aucune DÉLÉGATION. La colonne `mandataire` existe dans les données, mais " +
-    "rien dans le modèle d'accès ne l'autorise ni ne l'encadre — et un reçu qui ne porte qu'un seul nom " +
-    "ne prouve rien. SGD n'avait pas révélé ce manque : un employé y agit toujours en son propre nom.");
+  // ── RECLASSÉ : le manque que CE cahier a révélé, et que SGD ne pouvait pas
+  // montrer — un employé y agit toujours en son propre nom. AIR 1.29.0 porte
+  // désormais `access.delegation`.
+  //
+  // CE QUI RESTE HORS DU FORMAT, et il faut le dire : le REÇU DE DÉCHARGE.
+  // Le cahier exige un reçu signé portant les deux noms. Le format autorise
+  // maintenant l'acte ; il ne fabrique aucun document — voir `need_export_pdf`.
+  porte("need_mandat_agir_pour",
+    "Le mandataire AGIT AU NOM d'un autre : il cotise pour lui et encaisse son pot.",
+    ["right_encaisser_cash", "ent_utilisateurs", "fld_utilisateurs_mandataire",
+     "fld_utilisateurs_est_sans_telephone", "rel_mandat", "scr_encaissement"])
 
   manque("need_sequestre",
     "Les fonds collectés sont bloqués sur un compte séquestre jusqu'à l'échéance du tour.",
@@ -464,7 +485,7 @@ const screens = ecrans(ents);
 const enBarre = ECRANS.filter((e) => e.entite && e.icone).slice(0, 5);
 
 const air = {
-  airSchemaVersion: "1.28.0",
+  airSchemaVersion: "1.29.0",
   projectId: "prj_tontine_cameroun",
   app: {
     name: "Tontine",

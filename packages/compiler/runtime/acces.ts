@@ -45,6 +45,52 @@ export interface AccesData {
   readonly parEcran: Readonly<Record<string, string>>;
   /** Quel droit autorise quel geste — un écran ouvert peut porter un geste réservé. */
   readonly parAction: Readonly<Record<string, string>>;
+  /** Ce qu'on a le droit de faire AU NOM D'UN AUTRE. Absent = personne. */
+  readonly delegation?: {
+    readonly subjectEntityId: string;
+    readonly holderFieldId: string;
+    readonly delegatableRightIds: readonly string[];
+  };
+}
+
+/**
+ * CETTE PERSONNE PEUT-ELLE EXERCER CE DROIT **AU NOM** D'UNE AUTRE ?
+ *
+ * ── LE MANQUE QU'UN SEUL MÉTIER POUVAIT RÉVÉLER.
+ *
+ * 1.28.0 sait dire « cette personne a ce droit ». Il ne savait pas dire « AU
+ * NOM DE QUI ». SGD ne pouvait pas le montrer : un employé y agit toujours pour
+ * lui-même. Mesuré sur le cahier des charges d'une tontine camerounaise, où un
+ * membre sans smartphone remet son argent à un MANDATAIRE qui cotise à sa
+ * place et encaisse son tour.
+ *
+ * ── QUATRE CONDITIONS, ET AUCUNE NE SE DEVINE.
+ *
+ * ① Le document déclare un mandat. Sans lui, personne n'agit pour personne :
+ *    l'absence n'est pas une permission tacite.
+ * ② Le droit demandé est sur la LISTE BLANCHE. « Ce mandataire peut tout faire
+ *    pour moi » est une procuration générale que personne ne signe en
+ *    connaissance de cause.
+ * ③ Le mandant a DÉSIGNÉ cette personne. On ne se nomme pas mandataire
+ *    soi-même : `mandataireDuMandant` est la valeur lue sur la ligne DU
+ *    MANDANT, donc ce que lui a désigné — pas ce que le mandataire prétend.
+ * ④ Le mandataire possède le droit LUI-MÊME. Un mandat TRANSMET un pouvoir, il
+ *    n'en CRÉE pas : sinon la délégation serait une porte dérobée vers des
+ *    droits qu'on n'a pas.
+ */
+export function peutAgirPour(
+  acces: AccesData,
+  droitsDuMandataire: readonly string[] | undefined,
+  droitExige: string | undefined,
+  identifiantDuMandataire: string | undefined,
+  mandataireDuMandant: string | undefined,
+): boolean {
+  if (acces.delegation === undefined) return false;
+  if (droitExige === undefined) return false;
+  if (!acces.delegation.delegatableRightIds.includes(droitExige)) return false;
+  if (identifiantDuMandataire === undefined || mandataireDuMandant === undefined) return false;
+  if (identifiantDuMandataire !== mandataireDuMandant) return false;
+  return detientLeDroit(droitsDuMandataire, droitExige);
 }
 
 /**

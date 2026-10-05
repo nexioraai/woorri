@@ -23,7 +23,7 @@ import {
 // 1.7.1 (E3.3, D-131) : provenance APLANIE (sourceKind/sourceIntegrationId/
 //   sourceDomain/sourceRefreshSeconds) — l'union 1.7.0 dépassait la limite
 //   réelle de grammaire de l'API (classe D-078) ; sémantique inchangée.
-export const AIR_SCHEMA_VERSION = "1.28.0";
+export const AIR_SCHEMA_VERSION = "1.29.0";
 
 export const semverSchema = z.string().regex(/^\d+\.\d+\.\d+$/);
 export const sha256Schema = z.string().regex(/^[0-9a-f]{64}$/);
@@ -867,6 +867,48 @@ const accessSchema = z.strictObject({
    * jusqu'à ce que `exigerProfil` soit posé sur les trente-trois routes.
    */
   defaultRoleId: roleIdSchema,
+  /**
+   * AGIR AU NOM D'UN AUTRE (1.29.0) — OPTIONNEL.
+   *
+   * ── LE DÉFAUT QUE CE BLOC FERME, et un seul métier pouvait le révéler.
+   *
+   * 1.28.0 sait dire « cette personne a ce droit ». Il ne sait pas dire « AU
+   * NOM DE QUI ». SGD ne pouvait pas le montrer : un employé y agit toujours
+   * pour lui-même.
+   *
+   * Mesuré le 2026-10-05 sur le cahier des charges d'une tontine camerounaise :
+   * « tout membre ne possédant pas de smartphone est rattaché à un mandataire.
+   * Le membre remet la somme en espèces ; le mandataire saisit la transaction
+   * et crédite le séquestre. Lors du tour de gain, le décaissement est versé au
+   * mandataire, qui remet la somme contre signature d'un reçu de décharge. »
+   *
+   * Sans ce bloc, la colonne « mandataire » existe dans les données et RIEN ne
+   * l'autorise ni ne l'encadre — et un reçu qui ne porte qu'un seul nom ne
+   * prouve rien.
+   *
+   * ── POURQUOI UNE LISTE BLANCHE DE DROITS, ET NON UN DRAPEAU.
+   *
+   * « Ce mandataire peut tout faire pour moi » serait une procuration générale,
+   * que personne ne signe en connaissance de cause. Les droits délégables sont
+   * donc ÉNUMÉRÉS : cotiser pour un autre, oui ; vérifier sa propre identité au
+   * nom d'un autre, jamais.
+   */
+  delegation: z
+    .strictObject({
+      /** L'entité qui porte les PERSONNES — celles qui délèguent et reçoivent. */
+      subjectEntityId: entityIdSchema,
+      /**
+       * Le champ qui dit QUI est le mandataire de qui.
+       *
+       * Il vit sur `subjectEntityId` et pointe vers elle : le mandataire d'une
+       * personne est une personne. Le validateur le vérifie — une délégation
+       * qui pointerait ailleurs désignerait n'importe quoi.
+       */
+      holderFieldId: fieldIdSchema,
+      /** Les droits qui peuvent s'exercer POUR UN AUTRE. Jamais tous. */
+      delegatableRightIds: z.array(rightIdSchema).min(1),
+    })
+    .optional(),
 });
 
 const capabilityRequestSchema = z.strictObject({

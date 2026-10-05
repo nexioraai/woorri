@@ -386,6 +386,24 @@ export const AIR_MIGRATIONS: readonly AirMigration[] = [
       "document sans `access` reste donc OUVERT, comme il l'était.",
     migrate: (document) => document,
   },
+  {
+    from: "1.28.0",
+    to: "1.29.0",
+    description:
+      "AIR 1.29.0 : `access.delegation` — AGIR AU NOM D'UN AUTRE. 1.28.0 sait " +
+      "dire « cette personne a ce droit » ; il ne sait pas dire « AU NOM DE " +
+      "QUI ». Un seul métier pouvait révéler ce trou, et ce n'était pas SGD : " +
+      "un employé y agit toujours pour lui-même. Mesuré le 2026-10-05 sur le " +
+      "cahier des charges d'une tontine camerounaise, où un membre sans " +
+      "smartphone est rattaché à un MANDATAIRE qui cotise pour lui, encaisse " +
+      "son pot et signe le reçu de décharge. Sans ce bloc, la colonne " +
+      "« mandataire » existe dans les données et RIEN ne l'autorise ni ne " +
+      "l'encadre — et un reçu qui ne porte qu'un seul nom ne prouve rien. " +
+      "Migration IDENTITÉ : la délégation est OPTIONNELLE, et aucun document " +
+      "n'en reçoit une d'office. En inventer une reviendrait à signer une " +
+      "procuration au nom de quelqu'un.",
+    migrate: (document) => document,
+  },
 ];
 
 export class AirMigrationError extends Error {

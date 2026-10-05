@@ -6,6 +6,7 @@ import {
   droitsDuRole,
   peutAgir,
   peutOuvrir,
+  peutAgirPour,
   premierEcranAccessible,
   raisonDuRefus,
   type AccesData,
@@ -154,8 +155,9 @@ describe("LE BESOIN, mot pour mot : le PREMIER écran que ses droits lui ouvrent
 // qu'une autre application, ailleurs, a des employés.
 // ════════════════════════════════════════════════════════════════════
 
+const R = new URL("../../../", import.meta.url).pathname;
+
 describe("l'émission porte les droits, et SEULEMENT quand il y en a", () => {
-  const R = new URL("../../../", import.meta.url).pathname;
   const compiler = (chemin: string) => {
     const doc: unknown = JSON.parse(readFileSync(R + chemin, "utf8"));
     return compileProject(assertValidAir(migrateAirDocument(doc)));
@@ -197,5 +199,92 @@ describe("l'émission porte les droits, et SEULEMENT quand il y en a", () => {
       ([f, c]) => f.endsWith(".data.ts") && c.includes("requiredRightId"),
     );
     expect(avecDroit.map(([f]) => f)).toEqual([]);
+  });
+});
+
+// ════════════════════════════════════════════════════════════════════
+//  AGIR AU NOM D'UN AUTRE — LE CALCUL (AIR 1.29.0).
+//
+// Trois conditions, et aucune ne se devine : le document déclare un mandat, le
+// droit est sur la liste blanche, et le mandant a DÉSIGNÉ cette personne.
+// ════════════════════════════════════════════════════════════════════
+
+const AVEC_MANDAT: AccesData = {
+  ...ACCES,
+  delegation: {
+    subjectEntityId: "ent_personnes",
+    holderFieldId: "fld_personnes_mandataire",
+    delegatableRightIds: ["right_mouvements"],
+  },
+};
+
+describe("agir au nom d'un autre", () => {
+  it("le mandataire désigné, avec le droit, PEUT agir", () => {
+    expect(
+      peutAgirPour(AVEC_MANDAT, ["right_mouvements"], "right_mouvements", "u_paul", "u_paul"),
+    ).toBe(true);
+  });
+
+  it("sans délégation déclarée, PERSONNE n'agit pour personne", () => {
+    // L'absence n'est pas une permission tacite.
+    expect(peutAgirPour(ACCES, ["right_mouvements"], "right_mouvements", "u_paul", "u_paul")).toBe(
+      false,
+    );
+  });
+
+  it("un droit HORS de la liste blanche ne se délègue pas", () => {
+    // « Ce mandataire peut tout faire pour moi » est une procuration générale
+    // que personne ne signe en connaissance de cause.
+    expect(
+      peutAgirPour(AVEC_MANDAT, ["right_rentabilite"], "right_rentabilite", "u_paul", "u_paul"),
+    ).toBe(false);
+  });
+
+  it("ON NE SE NOMME PAS MANDATAIRE SOI-MÊME", () => {
+    // C'est le mandant qui désigne, et l'application ne fait que lire ce qu'il
+    // a désigné. Quelqu'un qui n'est pas désigné n'agit pas, même avec le droit.
+    expect(
+      peutAgirPour(AVEC_MANDAT, ["right_mouvements"], "right_mouvements", "u_jean", "u_paul"),
+    ).toBe(false);
+  });
+
+  it("UN MANDAT TRANSMET UN POUVOIR, IL N'EN CRÉE PAS", () => {
+    // Quelqu'un qui n'a pas le droit de cotiser ne l'acquiert pas en cotisant
+    // pour autrui — sinon la délégation serait une porte dérobée vers des
+    // droits qu'on n'a pas.
+    expect(peutAgirPour(AVEC_MANDAT, [], "right_mouvements", "u_paul", "u_paul")).toBe(false);
+  });
+
+  it("une session muette n'agit pour personne", () => {
+    expect(
+      peutAgirPour(AVEC_MANDAT, undefined, "right_mouvements", "u_paul", "u_paul"),
+    ).toBe(false);
+  });
+
+  it("sans mandant désigné, rien ne se délègue", () => {
+    expect(
+      peutAgirPour(AVEC_MANDAT, ["right_mouvements"], "right_mouvements", "u_paul", undefined),
+    ).toBe(false);
+  });
+});
+
+describe("l'émission porte le mandat, et seulement s'il y en a un", () => {
+  it("la tontine : `delegation` atteint l'application", () => {
+    const doc: unknown = JSON.parse(
+      readFileSync(R + "slices/tontine/tontine.air.json", "utf8"),
+    );
+    const { files } = compileProject(assertValidAir(migrateAirDocument(doc)));
+    const data = files.get("acces.data.ts") ?? "";
+    expect(data).toContain('"delegation"');
+    expect(data).toContain('"fld_utilisateurs_mandataire"');
+    expect(data).toContain('"right_encaisser_cash"');
+  });
+
+  it("la gestion, qui n'en déclare aucun, n'en reçoit aucun", () => {
+    const doc: unknown = JSON.parse(
+      readFileSync(R + "slices/gestion/gestion.air.json", "utf8"),
+    );
+    const { files } = compileProject(assertValidAir(migrateAirDocument(doc)));
+    expect(files.get("acces.data.ts") ?? "").not.toContain("delegation");
   });
 });

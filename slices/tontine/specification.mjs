@@ -213,12 +213,31 @@ console.log(`  écrit : ${sortie} (${l.length} lignes)`);
 const ech = (s) =>
   String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-// Le Markdown en ligne que la spécification emploie : `code` et **gras**.
-const inline = (s) =>
-  ech(s)
-    .replace(/`([^`]+)`/g, "<code>$1</code>")
+// ── LE CODE SE MET DE CÔTÉ AVANT QU'ON TOUCHE AU RESTE.
+//
+// DÉFAUT VU SUR LA PAGE PUBLIÉE : `prj_tontine_cameroun` sortait
+// « prj<em>tontine</em>cameroun », et `est_sans_telephone` perdait ses tirets
+// bas. L'italique du Markdown — `_ceci_` — s'appliquait À L'INTÉRIEUR du code,
+// là où un tiret bas n'est pas une marque de style mais une LETTRE DU NOM.
+//
+// Le développeur backend aurait lu des noms de champs faux. Dans un document
+// dont tout l'intérêt est d'être exact, c'est le pire endroit pour se tromper.
+//
+// On extrait donc les fragments de code sous un jeton que le Markdown ne peut
+// pas contenir, on applique le gras et l'italique au reste, puis on remet les
+// fragments. Même remède que pour les formules des cours de mathématiques, où
+// le gras se refermait au milieu d'un `\frac`.
+const inline = (s) => {
+  const codes = [];
+  const sansCode = ech(s).replace(/`([^`]+)`/g, (_, c) => {
+    codes.push(c);
+    return `\u0000${codes.length - 1}\u0000`;
+  });
+  return sansCode
     .replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
-    .replace(/_([^_]+)_/g, "<em>$1</em>");
+    .replace(/_([^_]+)_/g, "<em>$1</em>")
+    .replace(/\u0000(\d+)\u0000/g, (_, i) => `<code>${codes[Number(i)]}</code>`);
+};
 
 const h = [];
 const cellules = (ligne) =>

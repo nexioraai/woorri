@@ -246,6 +246,17 @@ export const SECTIONS_CORRECTIVES: Readonly<Record<string, readonly SectionEmiss
   // qu'une issue — effacer la revendication — c'est-à-dire se taire sur un
   // besoin réel. On ouvre donc les sections qui peuvent PORTER le nœud.
   AIR_NEED_NODE_UNKNOWN: ["intention", "donnees", "ecrans", "actions", "cablage"],
+  // ── DÉLÉGATION (1.29.0). Une procuration mal déclarée se répare des DEUX
+  // côtés : dans `access` (base), ou dans les DONNÉES — car le champ qui dit
+  // qui est le mandataire de qui vit sur une entité, et c'est parfois lui qui
+  // manque. N'ouvrir que `base` forcerait à retirer la délégation au lieu de
+  // poser le champ.
+  AIR_DELEGATION_SUJET_INCONNU: ["base", "donnees"],
+  AIR_DELEGATION_PORTEUR_INVALIDE: ["base", "donnees"],
+  AIR_DELEGATION_DROIT_INCONNU: ["base"],
+  // Celui-ci ne se répare QUE dans `access` : soit on accorde le droit à un
+  // rôle, soit on cesse de le déléguer. Les deux y vivent.
+  AIR_DELEGATION_DROIT_SANS_PORTEUR: ["base"],
   AIR_CONFIG_DUP_KEY: ["cablage"],
   AIR_INTEGRATION_SECRET_LIKE_KEY: ["cablage"],
   // Une marque hors allowlist se répare dans le CÂBLAGE (politique réseau)
