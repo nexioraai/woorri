@@ -15,18 +15,17 @@ export interface ProprietesListe<T> {
   horizontal?: boolean;
   /** Nombre de colonnes. Deux pour un catalogue en grille. */
   colonnes?: number;
-  /**
-   * Recréer la liste quand la DISPOSITION change.
-   *
-   * React Native l'exige : passer de une à deux colonnes sur une liste déjà
-   * montée est refusé. La disposition est statique par document, donc cette
-   * clé est constante à l'exécution — elle ne provoque aucun remontage réel.
-   */
-  cleDisposition?: string;
   /** Ce qu'on montre quand il n'y a rien. */
   vide?: React.ReactElement | null;
-  /** Ce qui ferme la liste — un compte, un bouton « voir plus ». */
-  pied?: React.ReactElement | null;
+  /**
+   * Ce qui ferme la liste — un compte, une respiration.
+   *
+   * Un COMPOSANT, pas un élément, et la nuance n'est pas cosmétique : passé en
+   * élément, l'arbre rendu devenait circulaire à la sérialisation et le gate
+   * des contrôles fantômes tombait. Le port doit être fidèle à l'appel
+   * d'origine, pas seulement équivalent à la lecture.
+   */
+  pied?: React.ComponentType;
   /**
    * AJUSTEMENT AU CLAVIER (DET-016). Vérifié sur RN 0.86.3 : déclaré dans
    * `ScrollViewPropsIOS`, sans implémentation Android — il agit sur iOS et
@@ -42,14 +41,12 @@ export function Liste<T>({
   rendu,
   horizontal,
   colonnes,
-  cleDisposition,
   vide,
   pied,
   suitLeClavier,
 }: ProprietesListe<T>) {
   return (
     <FlatList
-      {...(cleDisposition === undefined ? {} : { key: cleDisposition })}
       data={donnees}
       keyExtractor={clef}
       renderItem={({ item }) => rendu(item)}

@@ -646,7 +646,28 @@ const air = {
   // (multi-provider, non-négociable #12). C'est ce qui permettra au même
   // document de viser Orange au Cameroun et Airtel au Tchad.
   integrations: [
-    { id: "intg_argent_mobile", providerClass: "argent_mobile", capability: "payments.mobile_money" },
+    {
+      id: "intg_argent_mobile",
+      providerClass: "argent_mobile",
+      capability: "payments.mobile_money",
+      // ── QUELLES VALEURS PASSENT PAR LE RÉSEAU (AIR 1.33.0).
+      //
+      // Les valeurs sont celles du CAHIER DES CHARGES — `ORANGE_CMR`,
+      // `MTN_CMR`, `CASH` sont l'énumération PostgreSQL du propriétaire, et
+      // elles ne changent pas. Ce que le document ajoute, c'est QUI passe par
+      // un réseau : une tontine encaisse aussi en espèces à la séance, et
+      // aucun étage ne savait que `CASH` n'était pas un opérateur.
+      //
+      // AUCUN PAYS N'EST DÉCLARÉ, et c'est la loi du dépôt (EP-201) : une
+      // table pays → moyen de paiement est interdite jusque dans
+      // l'élicitation. La même application au Tchad ne change que ces
+      // valeurs ; le moteur, lui, n'a jamais nommé un opérateur.
+      mobileMoney: {
+        operatorFieldId: "fld_transactions_operateur",
+        operatorValues: ["ORANGE_CMR", "MTN_CMR"],
+        offNetworkValues: ["CASH"],
+      },
+    },
   ],
   // Le cahier annonce des API Mobile Money nationales. Tant qu'aucune capacité
   // ne les porte, le document ne déclare AUCUN domaine : annoncer un accès

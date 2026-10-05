@@ -69,3 +69,7 @@ export type { RoleIcone } from "./roles-icones.ts";
 // alors implémenter des comportements que personne n'utilise.
 export { Liste } from "./liste.tsx";
 export type { ProprietesListe } from "./liste.tsx";
+
+// Les composants HÔTES — même vocabulaire que `@deribfy/primitives-web`, pour
+// qu'un fichier d'interface s'écrive une seule fois pour les deux cibles.
+export { Vue, Texte, Geste, Signe, Defilement, EviteLeClavier } from "./hotes.tsx";

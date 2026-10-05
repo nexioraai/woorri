@@ -459,6 +459,26 @@ export const AIR_MIGRATIONS: readonly AirMigration[] = [
       "au magasin, au nom du propriétaire, une collecte qu'il n'a pas dite.",
     migrate: (document) => document,
   },
+  {
+    from: "1.32.0",
+    to: "1.33.0",
+    description:
+      "AIR 1.33.0 : `integration.mobileMoney` — QUELLES valeurs de " +
+      "l'énumération des moyens de paiement passent par un opérateur d'argent " +
+      "mobile, et lesquelles n'en passent aucun. Mesuré le 2026-10-05 sur un " +
+      "cahier des charges réel : trois valeurs, deux opérateurs et un " +
+      "encaissement à la main, et AUCUN étage ne savait laquelle était " +
+      "laquelle — le générateur traitait les trois pareil. Le validateur exige " +
+      "désormais une partition EXHAUSTIVE. Une première version déclarait " +
+      "aussi le PAYS et vérifiait les opérateurs contre un catalogue : le " +
+      "cliquet EP-201 l'a refusée, et sa raison est la bonne — une table " +
+      "pays → moyen de paiement vieillit, et une table périmée refuse un " +
+      "document valide. Migration IDENTITÉ : le nœud est optionnel et son " +
+      "absence vaut le comportement de 1.32.0, car deviner quelles valeurs " +
+      "d'une énumération existante sont de l'argent mobile reviendrait à " +
+      "décider, au nom du propriétaire, par où circule son argent.",
+    migrate: (document) => document,
+  },
 ];
 
 export class AirMigrationError extends Error {

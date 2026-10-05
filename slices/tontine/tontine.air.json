@@ -1321,7 +1321,17 @@
   {
    "id": "intg_argent_mobile",
    "providerClass": "argent_mobile",
-   "capability": "payments.mobile_money"
+   "capability": "payments.mobile_money",
+   "mobileMoney": {
+    "operatorFieldId": "fld_transactions_operateur",
+    "operatorValues": [
+     "ORANGE_CMR",
+     "MTN_CMR"
+    ],
+    "offNetworkValues": [
+     "CASH"
+    ]
+   }
   }
  ],
  "network": {

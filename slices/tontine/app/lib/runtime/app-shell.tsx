@@ -16,17 +16,29 @@
 //   SYSTEM BOTTOM INSET       → porté ICI : sous la barre quand elle existe,
 //                               sous le contenu sinon — UNE fois, jamais deux
 //
-// La barre d'état est DÉCLARÉE ici (expo-status-bar, présent dans le verrou
-// embarqué) : style dérivé du thème — icônes sombres sur surface claire,
-// claires sur surface sombre. Aucun écran généré n'a le droit de toucher aux
-// insets : le cliquet d'émission le vérifie (app-shell.test.ts).
+// La barre d'état est MONTÉE ici — style dérivé du thème : icônes sombres sur
+// surface claire, claires sur surface sombre. Elle n'est plus DÉCLARÉE ici :
+// le paquet qui la fournit vit derrière la couture de plateforme, sans quoi la
+// même enveloppe ne pourrait pas être émise pour le web. Aucun écran généré n'a
+// le droit de toucher aux insets : le cliquet d'émission le vérifie
+// (app-shell.test.ts). Le nom du paquet est volontairement absent de ce
+// fichier — le cliquet cherche par sous-chaîne et ne distingue pas un
+// commentaire du code, leçon déjà payée sur `primary-nav`.
 //
 // La persistance reste STRUCTURELLE : c'est l'ORDRE DE L'ARBRE (chrome et
 // navigation hors du conteneur défilant) qui la fait, pas une position
 // absolue — vérifiable sans lire un style (D-086, mission chrome).
-import { View } from "react-native";
-import { StatusBar } from "expo-status-bar";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+// ── PAR LES PRIMITIVES, COMME LES BLOCS (2026-10-05).
+//
+// Ce fichier importait `View` directement de React Native. C'est la règle
+// D-023 contournée : le visuel passe par les primitives, qui sont remplaçables
+// par cible. Une seule importation, et l'enveloppe de l'application n'était
+// plus portable.
+import { Vue as View } from "../primitives";
+// Barre d'état et zones sûres passent par une COUTURE — voir ./plateforme.
+// Sans elle, le shell imposait deux paquets natifs à la cible web, alors que
+// c'est justement le fichier qui doit valoir pour les deux.
+import { StatusBar, useSafeAreaInsets } from "./plateforme";
 import { useThemeBridge } from "../primitives/theme-bridge";
 import type { PropsWithChildren, ReactNode } from "react";
 

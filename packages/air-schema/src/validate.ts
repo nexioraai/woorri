@@ -1213,6 +1213,111 @@ export function validateAir(air: ProjectAir): AirDiagnostic[] {
     }
   });
 
+  // ══════════════════════════════════════════════════════════════
+  //  ARGENT MOBILE — CHAQUE VALEUR EST CLASSÉE, OU LE DOCUMENT EST REFUSÉ.
+  //
+  // ── CE QUE CE CONTRÔLE N'EST PAS, ET POURQUOI.
+  //
+  // J'ai d'abord écrit un catalogue des opérateurs PAR PAYS, pour refuser
+  // « Orange Money au Tchad ». Le cliquet EP-201 l'a refusé, et il avait
+  // raison : la loi du dépôt interdit une table pays → moyen de paiement
+  // MÊME dans la couche d'élicitation. Son raisonnement est meilleur que le
+  // mien — une telle table vieillit (un opérateur se lance, fusionne, se
+  // retire), et une table périmée REFUSE un document valide. Un contrôle qui
+  // bloque une application réelle coûte plus cher que l'absence de contrôle.
+  //
+  // Ce qui reste est STRUCTUREL, et c'est ce qui manquait vraiment : une
+  // énumération de moyens de paiement où personne n'a dit lesquels passent
+  // par l'argent mobile. Mesuré sur le premier cahier des charges reçu :
+  // `CASH` y voisinait deux opérateurs sans qu'aucun étage ne sache que ce
+  // n'en était pas un.
+  // ══════════════════════════════════════════════════════════════
+  air.integrations.forEach((intg, ii) => {
+    const mm = intg.mobileMoney;
+    if (mm === undefined) return;
+    const chemin = `integrations[${String(ii)}].mobileMoney`;
+
+    // ── LE NŒUD N'A DE SENS QUE SOUS LA CAPACITÉ QUI L'EMPLOIE.
+    //
+    // Posé sur une intégration d'e-mail, il décrirait des moyens de paiement
+    // que rien ne lit. Un contrôle qui ne protège rien est pire qu'absent : il
+    // fait croire que quelque chose est vérifié.
+    if (intg.capability !== "payments.mobile_money") {
+      push(
+        "AIR_ARGENT_MOBILE_SANS_CAPACITE",
+        chemin,
+        `l'intégration "${intg.id}" classe des moyens de paiement sans porter la capacité ` +
+          `"payments.mobile_money" : ce classement ne serait lu par personne`,
+      );
+    }
+
+    // ── LE CHAMP DOIT EXISTER, ET ÊTRE UNE ÉNUMÉRATION.
+    let enumValues: readonly string[] | undefined;
+    const champ = air.entities.flatMap((e) => e.fields).find((x) => x.id === mm.operatorFieldId);
+    if (champ === undefined) {
+      push(
+        "AIR_ARGENT_MOBILE_CHAMP_INCONNU",
+        `${chemin}.operatorFieldId`,
+        `le champ "${mm.operatorFieldId}" n'existe pas : rien ne dit alors OÙ le moyen ` +
+          `de paiement est enregistré`,
+      );
+    } else if (champ.type !== "enum" || champ.enumValues === undefined) {
+      push(
+        "AIR_ARGENT_MOBILE_CHAMP_NON_ENUM",
+        `${chemin}.operatorFieldId`,
+        `le champ "${mm.operatorFieldId}" n'est pas une énumération : un moyen de paiement ` +
+          `en texte libre ne se classe pas, et une faute de frappe y devient un opérateur`,
+      );
+    } else {
+      enumValues = champ.enumValues;
+    }
+
+    // ── TOUTE VALEUR CLASSÉE DOIT EXISTER DANS L'ÉNUMÉRATION.
+    //
+    // Sinon le classement ne protège rien : il croit couvrir une valeur, et la
+    // vraie reste non classée — avec un nom voisin, qui se lit juste.
+    const verifier = (v: string, ou: string): void => {
+      if (enumValues === undefined || enumValues.includes(v)) return;
+      push(
+        "AIR_ARGENT_MOBILE_VALEUR_INCONNUE",
+        ou,
+        `"${v}" n'est pas une valeur de "${mm.operatorFieldId}" : le classement porte sur ` +
+          `un moyen de paiement que le document n'enregistre jamais`,
+      );
+    };
+    mm.operatorValues.forEach((v, i) => {
+      verifier(v, `${chemin}.operatorValues[${String(i)}]`);
+    });
+    mm.offNetworkValues.forEach((v, i) => {
+      verifier(v, `${chemin}.offNetworkValues[${String(i)}]`);
+    });
+
+    const operateurs = new Set(mm.operatorValues);
+    const horsReseau = new Set(mm.offNetworkValues);
+
+    // ── AUCUNE VALEUR NE PEUT ÊTRE LES DEUX.
+    for (const v of operateurs) {
+      if (!horsReseau.has(v)) continue;
+      push(
+        "AIR_ARGENT_MOBILE_VALEUR_AMBIGUE",
+        chemin,
+        `"${v}" est déclarée à la fois comme argent mobile et hors réseau : ` +
+          `le document dit deux choses contraires du même paiement`,
+      );
+    }
+
+    // ── LA PARTITION DOIT ÊTRE EXHAUSTIVE.
+    (enumValues ?? []).forEach((v) => {
+      if (operateurs.has(v) || horsReseau.has(v)) return;
+      push(
+        "AIR_ARGENT_MOBILE_VALEUR_NON_CLASSEE",
+        chemin,
+        `"${v}" est une valeur de "${mm.operatorFieldId}" qui n'est NI déclarée argent ` +
+          `mobile NI déclarée hors réseau : personne ne saura quoi en faire au moment du paiement`,
+      );
+    });
+  });
+
   // Sortie triée (path, code) : même AIR ⇒ même liste, octet pour octet.
   return diagnostics.sort((a, b) =>
     a.path < b.path ? -1 : a.path > b.path ? 1 : a.code < b.code ? -1 : a.code > b.code ? 1 : 0,

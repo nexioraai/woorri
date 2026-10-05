@@ -5,7 +5,7 @@
 // défilement à la liste virtualisée elle-même, bornée par Section fill.
 // SHELL (étape ②, EP-002) : status bar, safe area et zones persistantes
 // appartiennent à AppShell — cet écran ne touche JAMAIS à la safe area.
-import { KeyboardAvoidingView, ScrollView } from "react-native";
+import { EviteLeClavier as KeyboardAvoidingView, Defilement as ScrollView } from "../lib/primitives";
 import { ScreenShell } from "../lib/primitives";
 import { AppShell } from "../lib/runtime/app-shell";
 import { AirEmptyState, AirHeader } from "../lib/runtime/air-runtime";

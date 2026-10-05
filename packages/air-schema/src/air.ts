@@ -23,7 +23,7 @@ import {
 // 1.7.1 (E3.3, D-131) : provenance APLANIE (sourceKind/sourceIntegrationId/
 //   sourceDomain/sourceRefreshSeconds) — l'union 1.7.0 dépassait la limite
 //   réelle de grammaire de l'API (classe D-078) ; sémantique inchangée.
-export const AIR_SCHEMA_VERSION = "1.32.0";
+export const AIR_SCHEMA_VERSION = "1.33.0";
 
 export const semverSchema = z.string().regex(/^\d+\.\d+\.\d+$/);
 export const sha256Schema = z.string().regex(/^[0-9a-f]{64}$/);
@@ -1051,6 +1051,51 @@ const designSchema = z.strictObject({
   overrides: flatConfigSchema.optional(),
 });
 
+/**
+ * ARGENT MOBILE — QUELLES VALEURS PASSENT PAR LE RÉSEAU (1.33.0).
+ *
+ * ── LE DÉFAUT, MESURÉ SUR UN CAHIER DES CHARGES RÉEL.
+ *
+ * Une énumération de moyens de paiement portait trois valeurs : deux
+ * opérateurs d'argent mobile et un encaissement à la main, à la séance. AUCUN
+ * étage ne savait laquelle était laquelle. Le générateur produisait donc une
+ * application qui traite les trois pareil — et l'une des trois ne passe par
+ * aucun réseau.
+ *
+ * ── CE QUE CE NŒUD NE FAIT PAS, ET C'EST UNE DÉCISION.
+ *
+ * Il ne déclare AUCUN pays et ne vérifie AUCUN opérateur contre une liste.
+ * La loi du dépôt (EP-201, énoncée par le propriétaire) interdit une table
+ * pays → moyen de paiement, y compris dans la couche d'élicitation : « la
+ * devise se déduit, le moyen de paiement JAMAIS ».
+ *
+ * J'avais écrit cette table. Le cliquet l'a refusée, et son raisonnement est
+ * le bon : un opérateur se lance, fusionne, se retire — une table recopiée
+ * ici serait fausse au premier changement, et une table périmée REFUSE un
+ * document valide. Un contrôle qui bloque une application réelle coûte plus
+ * cher que l'absence de contrôle.
+ *
+ * Les opérateurs restent donc ce que le registre de capacités promet : une
+ * DONNÉE du document, que le moteur ne nomme jamais. Ce que le format exige,
+ * c'est que le document dise lesquelles de ses valeurs en sont.
+ *
+ * ── POURQUOI LES DEUX LISTES SONT OBLIGATOIRES, MÊME VIDES.
+ *
+ * Le validateur exige une partition EXHAUSTIVE de l'énumération : chaque
+ * valeur est argent mobile, ou hors réseau. Rendre une liste optionnelle
+ * laisserait une valeur non classée passer en silence — et une valeur non
+ * classée est exactement celle dont personne ne sait quoi faire le jour du
+ * paiement.
+ */
+const argentMobileSchema = z.strictObject({
+  /** Le champ d'énumération qui porte le moyen de paiement. */
+  operatorFieldId: fieldIdSchema,
+  /** Les valeurs qui passent par un opérateur d'argent mobile. */
+  operatorValues: z.array(z.string().min(1)),
+  /** Les valeurs qui n'en sont pas (espèces, virement…). */
+  offNetworkValues: z.array(z.string().min(1)),
+});
+
 const integrationSchema = z.strictObject({
   id: integrationIdSchema,
   // Classe neutre ("psp", "email"…) — le provider concret est résolu dans le
@@ -1059,6 +1104,14 @@ const integrationSchema = z.strictObject({
   capability: capabilityRefSchema.optional(),
   // JAMAIS de secret ici (non-négociable #13) — vérifié par le validateur.
   config: flatConfigSchema.optional(),
+  /**
+   * ARGENT MOBILE (1.33.0) — OPTIONNEL, et réservé à `payments.mobile_money`.
+   *
+   * Absent, le comportement est celui de 1.32.0 : l'énumération des moyens de
+   * paiement n'est pas classée et personne ne sait lesquels passent par un
+   * réseau. Présent, le validateur exige une partition EXHAUSTIVE.
+   */
+  mobileMoney: argentMobileSchema.optional(),
 });
 
 const networkPolicySchema = z.strictObject({

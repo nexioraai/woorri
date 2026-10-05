@@ -280,6 +280,22 @@ export const SECTIONS_CORRECTIVES: Readonly<Record<string, readonly SectionEmiss
   // Une confirmation posee sur un geste sans consequence se repare dans
   // `actions`, et la seulement : c'est la que vit la declaration.
   AIR_CONFIRMATION_SANS_CONSEQUENCE: ["actions"],
+  // ── ARGENT MOBILE (1.33.0). Le classement vit dans `cablage`
+  // (l'intégration), mais la correction dépend du défaut — d'où une entrée par
+  // code plutôt qu'un `["cablage"]` uniforme :
+  //
+  //   · un champ inconnu ou non-énuméré se répare des DEUX côtés : viser le
+  //     bon champ (câblage), ou faire du champ une énumération (données) ;
+  //   · une valeur non classée ou inconnue se répare dans le câblage (la
+  //     classer) ou dans les données (la retirer de l'énumération) — les deux
+  //     issues sont légitimes et le document choisit ;
+  //   · une valeur ambiguë n'a qu'une issue : trancher dans le câblage.
+  AIR_ARGENT_MOBILE_SANS_CAPACITE: ["cablage", "capacites"],
+  AIR_ARGENT_MOBILE_CHAMP_INCONNU: ["cablage", "donnees"],
+  AIR_ARGENT_MOBILE_CHAMP_NON_ENUM: ["cablage", "donnees"],
+  AIR_ARGENT_MOBILE_VALEUR_INCONNUE: ["cablage", "donnees"],
+  AIR_ARGENT_MOBILE_VALEUR_AMBIGUE: ["cablage"],
+  AIR_ARGENT_MOBILE_VALEUR_NON_CLASSEE: ["cablage", "donnees"],
   AIR_CONFIG_DUP_KEY: ["cablage"],
   AIR_INTEGRATION_SECRET_LIKE_KEY: ["cablage"],
   // Une marque hors allowlist se répare dans le CÂBLAGE (politique réseau)

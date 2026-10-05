@@ -238,10 +238,12 @@ export function ListBlock({
     <Section title={title} testID={testID} fill titleAction={seeAll}>
       {controles}
       <Liste
-        // GRILLE (1.20) : deux colonnes de cartes pour un catalogue. La clé de
-        // disposition force la liste a se recreer si le layout changeait — il
-        // est statique par document, elle est donc constante a l'execution.
-        cleDisposition={layout === "grid" ? "grid" : "rows"}
+        // GRILLE (1.20) : deux colonnes de cartes pour un catalogue. La clé
+        // force la liste à se recréer si la disposition changeait — React
+        // Native refuse de passer de une à deux colonnes sur une liste déjà
+        // montée. Elle est posée ICI, par l'appelant : une clé ne se transmet
+        // PAS par une prop, React l'extrait à la création de l'élément.
+        key={layout === "grid" ? "grid" : "rows"}
         colonnes={layout === "grid" ? 2 : 1}
         // DET-016 (D-039, dimension A étendue) : ajustement au clavier. Le
         // DÉTAIL de plateforme — quelle propriété, sur quel système — vit
@@ -252,7 +254,7 @@ export function ListBlock({
         // remplace que la zone de contenu.
         suitLeClavier
         vide={etatContenu}
-        pied={<ListFooter />}
+        pied={ListFooter}
         donnees={state.kind === "ready" ? items : []}
         clef={(item) => item.id}
         rendu={(item) =>

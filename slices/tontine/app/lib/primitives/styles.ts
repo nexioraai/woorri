@@ -7,13 +7,16 @@
 // graisses, pas fin d'espacement et opacité d'état viennent des tokens ;
 // l'accent n'est plus utilisé comme couleur de texte (encre dérivée).
 import { theme } from "../tokens";
-import { StyleSheet } from "react-native";
+// L'appel au moteur de styles passe par une COUTURE : c'est le seul mot de
+// React Native qu'il restait ici, et la cible web le remplace par l'identité.
+// Voir ./feuille.ts — la feuille, elle, reste UNIQUE pour les deux cibles.
+import { creerFeuille } from "./feuille.ts";
 import type { Scheme } from "./contracts.ts";
 
 export type Palette = (typeof theme.color)[Scheme];
 
 const makeSheet = (c: Palette) =>
-  StyleSheet.create({
+  creerFeuille({
     // — ScreenShell —
     shell: { flex: 1, backgroundColor: c.bg },
     shellTitle: {
