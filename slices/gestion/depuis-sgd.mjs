@@ -283,7 +283,27 @@ function ecransEtActions(entites) {
         id: `blk_${e.cle}_liste`,
         blockType: "list",
         entityId: entite.id,
-        props: [{ key: "titleFieldId", value: titreLigne }],
+        props: [
+          { key: "titleFieldId", value: titreLigne },
+          // ── « UN MOT RAMÈNE LARGE, TROIS RESSERRENT » (registre de blocs 1.15.0).
+          //
+          // Posé SEULEMENT sur l'écran dont le métier EST de chercher. Une
+          // recherche sur « Lieux » (trois magasins) ou sur « Porte »
+          // encombrerait sans rien rendre — la règle 24 du prompt le dit, et
+          // elle vaut ici aussi.
+          //
+          // `tous_les_mots` et non la sous-chaîne : au comptoir on tape
+          // « filtre toyota », et la sous-chaîne ne trouve pas « filtre à huile
+          // toyota » — les deux mots y sont, séparés par « à huile ». Écran
+          // vide, pièce en stock, client qui attend.
+          ...(e.cle === "recherche" && titreLigne !== null
+            ? [
+                { key: "searchFieldId", value: titreLigne },
+                { key: "searchPlaceholder", value: "Nom de la pièce" },
+                { key: "searchMode", value: "tous_les_mots" },
+              ]
+            : []),
+        ],
       });
     } else if (e.calcule) {
       // ── UN ÉCRAN CALCULÉ PORTE SON CALCUL, PAS SON EXCUSE.
@@ -483,11 +503,20 @@ function besoins(entites) {
     "L'AIR ne connaît pas l'immuabilité d'une ligne ni l'écriture compensatoire. Un générateur " +
     "poserait une suppression, et la comptabilité mentirait dès la première erreur corrigée.");
 
-  manque("need_recherche_par_mots",
+  // ── RECLASSÉ APRÈS TRAVAIL, le 2026-10-04. Le motif disait : « aucun nœud ne
+  // décrit COMMENT une recherche interroge ». C'était vrai : `list` savait
+  // chercher une SOUS-CHAÎNE sur un champ, et rien d'autre. « filtre toyota »
+  // ne trouvait donc pas « filtre à huile toyota ».
+  //
+  // `searchMode: "tous_les_mots"` est désormais au contrat du bloc, et la règle
+  // vit dans le module PUR du pipeline — donc éprouvée sans monter d'écran.
+  // Ce que l'AIR ne sait TOUJOURS pas dire, et il faut le garder en tête : la
+  // recherche porte sur UN champ. SGD interroge une colonne concaténée
+  // (nom + référence + famille, sans accents) ; ici le mot doit se trouver dans
+  // le champ désigné. C'est plus étroit, mais ce n'est plus faux.
+  satisfait("need_recherche_par_mots",
     "La recherche découpe la question en mots : un mot ramène large, trois resserrent.",
-    "Un bloc `list` se lie à une entité ; aucun nœud ne décrit COMMENT une recherche interroge. " +
-    "C'est un `slot`, donc du code écrit hors du document — et le format ne dit pas qu'un écran " +
-    "dépend de ce code.");
+    [a("ent_articles"), "scr_recherche", "blk_recherche_liste"].filter(Boolean))
 
   manque("need_suggestion",
     "Quand rien n'est trouvé, proposer les pièces qui RESSEMBLENT à ce qui a été tapé.",

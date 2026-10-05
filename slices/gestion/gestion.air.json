@@ -95,6 +95,18 @@
       {
        "key": "titleFieldId",
        "value": "fld_articles_nom"
+      },
+      {
+       "key": "searchFieldId",
+       "value": "fld_articles_nom"
+      },
+      {
+       "key": "searchPlaceholder",
+       "value": "Nom de la pièce"
+      },
+      {
+       "key": "searchMode",
+       "value": "tous_les_mots"
       }
      ]
     }
@@ -2146,8 +2158,12 @@
     "id": "need_recherche_par_mots",
     "statement": "La recherche découpe la question en mots : un mot ramène large, trois resserrent.",
     "resolution": {
-     "kind": "unexpressible",
-     "reason": "Un bloc `list` se lie à une entité ; aucun nœud ne décrit COMMENT une recherche interroge. C'est un `slot`, donc du code écrit hors du document — et le format ne dit pas qu'un écran dépend de ce code."
+     "kind": "satisfied",
+     "nodeIds": [
+      "ent_articles",
+      "scr_recherche",
+      "blk_recherche_liste"
+     ]
     }
    },
    {

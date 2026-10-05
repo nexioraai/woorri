@@ -36,6 +36,23 @@ export interface ParametresPipeline {
   readonly instanceId?: string;
   readonly rechercheChamp?: string;
   readonly recherche?: string;
+  /**
+   * COMMENT LA QUESTION EST LUE — « tous les mots » ou sous-chaine.
+   *
+   * ── LE DÉFAUT, MESURÉ SUR UN COMPTOIR RÉEL (SGD, 2026-10).
+   *
+   * La recherche cherchait la saisie ENTIÈRE comme sous-chaîne d'un champ.
+   * « filtre toyota » ne trouvait donc PAS « filtre à huile toyota » : les deux
+   * mots y sont, mais séparés par « à huile ». Au comptoir, l'employé
+   * voyait un écran vide alors que la pièce était en stock, et le client
+   * attendait. C'est le besoin, mot pour mot : « la recherche découpe la
+   * question en mots : un mot ramène large, trois resserrent ».
+   *
+   * ABSENT = SOUS-CHAÎNE, le comportement d'avant. Aucune application
+   * existante ne change de réponse parce qu'une autre, ailleurs, a un
+   * comptoir.
+   */
+  readonly rechercheMode?: "sous_chaine" | "tous_les_mots";
   /** Filtres effectifs, littéral inclus — un filtre à valeur vide est INACTIF. */
   readonly filtres?: readonly FiltreEffectif[];
   readonly triChamp?: string;
@@ -57,11 +74,30 @@ export function lignesVisibles(
         ? []
         : instances.filter((i) => (i.values[p.scopeFieldId as string] ?? "") === p.instanceId);
   const saisie = (p.recherche ?? "").trim().toLowerCase();
+  // Les mots de la question. Découpés sur TOUT blanc — espaces multiples,
+  // tabulation, retour de ligne : une saisie au comptoir n'est pas propre.
+  const mots = p.rechercheMode === "tous_les_mots" ? saisie.split(/\s+/).filter((m) => m !== "") : [];
   const cherchees =
     p.rechercheChamp === undefined || saisie === ""
       ? scopees
       : scopees.filter((i) =>
-          (i.values[p.rechercheChamp as string] ?? "").toLowerCase().includes(saisie),
+          (() => {
+            const brut = i.values[p.rechercheChamp as string] ?? "";
+            // CONJONCTION : chaque mot doit s'y trouver, dans n'importe quel
+            // ordre. Un mot ramène large, trois resserrent — exactement ce que
+            // le comptoir attend, et l'inverse d'un OU qui noierait la réponse.
+            //
+            // `.toLowerCase().includes(` RESTE ACCOLÉ, aux deux endroits, et ce
+            // n'est pas un hasard : `envelope-truth` prouve que la recherche
+            // filtre RÉELLEMENT en cherchant ce motif exact dans cette source.
+            // Ma première version mettait la minuscule dans une variable — le
+            // cliquet est tombé, et il avait raison : on n'affaiblit pas une
+            // preuve pour accommoder un style. Ne pas « optimiser » en
+            // factorisant la minuscule : cela casserait la preuve en silence.
+            return mots.length === 0
+              ? brut.toLowerCase().includes(saisie)
+              : mots.every((m) => brut.toLowerCase().includes(m));
+          })(),
         );
   const actifs = (p.filtres ?? []).filter((f) => f.valeur !== "");
   const filtrees = actifs.reduce(
