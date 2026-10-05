@@ -227,7 +227,8 @@
      ],
      "type": "reference",
      "required": false,
-     "referencesEntityId": "ent_utilisateurs"
+     "referencesEntityId": "ent_utilisateurs",
+     "referenceDisplayFieldId": "fld_utilisateurs_nom_complet"
     },
     {
      "id": "fld_utilisateurs_photo_profil",
@@ -390,7 +391,8 @@
      ],
      "type": "reference",
      "required": true,
-     "referencesEntityId": "ent_utilisateurs"
+     "referencesEntityId": "ent_utilisateurs",
+     "referenceDisplayFieldId": "fld_utilisateurs_nom_complet"
     },
     {
      "id": "fld_tontines_cree_le",
@@ -421,7 +423,8 @@
      ],
      "type": "reference",
      "required": true,
-     "referencesEntityId": "ent_tontines"
+     "referencesEntityId": "ent_tontines",
+     "referenceDisplayFieldId": "fld_tontines_nom"
     },
     {
      "id": "fld_membres_tontine_utilisateur",
@@ -434,7 +437,8 @@
      ],
      "type": "reference",
      "required": true,
-     "referencesEntityId": "ent_utilisateurs"
+     "referencesEntityId": "ent_utilisateurs",
+     "referenceDisplayFieldId": "fld_utilisateurs_nom_complet"
     },
     {
      "id": "fld_membres_tontine_role",
@@ -497,7 +501,8 @@
      ],
      "type": "reference",
      "required": true,
-     "referencesEntityId": "ent_tontines"
+     "referencesEntityId": "ent_tontines",
+     "referenceDisplayFieldId": "fld_tontines_nom"
     },
     {
      "id": "fld_transactions_cotiseur",
@@ -510,7 +515,8 @@
      ],
      "type": "reference",
      "required": false,
-     "referencesEntityId": "ent_utilisateurs"
+     "referencesEntityId": "ent_utilisateurs",
+     "referenceDisplayFieldId": "fld_utilisateurs_nom_complet"
     },
     {
      "id": "fld_transactions_beneficiaire",
@@ -523,7 +529,8 @@
      ],
      "type": "reference",
      "required": false,
-     "referencesEntityId": "ent_utilisateurs"
+     "referencesEntityId": "ent_utilisateurs",
+     "referenceDisplayFieldId": "fld_utilisateurs_nom_complet"
     },
     {
      "id": "fld_transactions_mandataire",
@@ -536,7 +543,8 @@
      ],
      "type": "reference",
      "required": false,
-     "referencesEntityId": "ent_utilisateurs"
+     "referencesEntityId": "ent_utilisateurs",
+     "referenceDisplayFieldId": "fld_utilisateurs_nom_complet"
     },
     {
      "id": "fld_transactions_type_op",
@@ -783,7 +791,36 @@
    "kind": "one_to_many"
   }
  ],
- "datasets": [],
+ "datasets": [
+  {
+   "id": "data_utilisateurs",
+   "entityId": "ent_utilisateurs",
+   "contentHash": "a98bf3cf09f568bc0540c31f20f9ee32f4c27ed1111dd85ff417b542817d31a8",
+   "rowCount": 8,
+   "sourceKind": "seed"
+  },
+  {
+   "id": "data_tontines",
+   "entityId": "ent_tontines",
+   "contentHash": "e5f77ff38d91727f1935d2a3d37a67431534634f3347714abbb9ebdb33001ed8",
+   "rowCount": 3,
+   "sourceKind": "seed"
+  },
+  {
+   "id": "data_membres_tontine",
+   "entityId": "ent_membres_tontine",
+   "contentHash": "dffb3abc595019d3c1015eb41fa158858d8d1289db721fc8b11c543ef4716487",
+   "rowCount": 8,
+   "sourceKind": "seed"
+  },
+  {
+   "id": "data_transactions",
+   "entityId": "ent_transactions",
+   "contentHash": "61939734f10c53d80e3bd835f33a9e588e3dde76de9e5c41dc9fb6801a675409",
+   "rowCount": 24,
+   "sourceKind": "seed"
+  }
+ ],
  "screens": [
   {
    "id": "scr_mon_tableau",

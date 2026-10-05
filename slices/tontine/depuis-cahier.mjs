@@ -43,6 +43,9 @@
 // ============================================================
 
 import { writeFileSync } from "node:fs";
+// `createHash` sert de GRAINE déterministe aux fixtures de démonstration —
+// voir `DATASETS` plus bas. Aucune cryptographie ici : de la reproductibilité.
+import { createHash } from "node:crypto";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -57,6 +60,20 @@ const ICI = dirname(fileURLToPath(import.meta.url));
 // `datetime`, les ENUM → `enum` avec leurs valeurs, les clés étrangères →
 // `reference`. TEXT portant une URL de fichier → `asset` : une photo d'identité
 // n'est pas une chaîne, et le dire change ce que l'écran en fait.
+
+// ── LE NOM PAR LEQUEL UNE ENTITÉ SE MONTRE.
+//
+// Déclaré une fois par entité, pas par champ qui la référence. Les deux
+// valeurs viennent du cahier des charges — `nom_complet` sur les personnes,
+// `nom` sur les tontines — et ne sont donc pas des conventions inventées ici.
+//
+// `ent_membres_tontine` et `ent_transactions` en sont ABSENTES à dessein :
+// aucune ligne ne les référence, et leur donner un nom d'affichage serait
+// répondre à une question que personne ne pose.
+const NOM_AFFICHE = {
+  ent_utilisateurs: "fld_utilisateurs_nom_complet",
+  ent_tontines: "fld_tontines_nom",
+};
 
 const TABLES = [
   {
@@ -180,7 +197,25 @@ function entites() {
       label: [{ locale: "fr", text: nom.replace(/_/g, " ") }],
       type,
       required: requis,
-      ...(type === "reference" ? { referencesEntityId: cible } : {}),
+      // ── UNE RÉFÉRENCE S'AFFICHE PAR UN NOM, PAS PAR UN IDENTIFIANT.
+      //
+      // Mesuré le 2026-10-05, dès que l'application a eu des données : les 8
+      // champs de référence sortaient en `ent_utilisateurs_row_8`. Un membre
+      // ne se reconnaît pas à son identifiant de ligne, et un bénéficiaire de
+      // pot encore moins — c'est de l'argent qui change de main.
+      //
+      // Le document SAIT l'exprimer depuis AIR 1.4.0, et le champ d'affichage
+      // appartient à l'entité CIBLE : on le déclare une fois par entité
+      // (`NOM_AFFICHE`) au lieu de huit fois par champ, sans quoi un neuvième
+      // champ de référence naîtrait muet.
+      ...(type === "reference"
+        ? {
+            referencesEntityId: cible,
+            ...(NOM_AFFICHE[cible] === undefined
+              ? {}
+              : { referenceDisplayFieldId: NOM_AFFICHE[cible] }),
+          }
+        : {}),
       ...(type === "enum" ? { enumValues: valeurs } : {}),
       ...(passages ? { transitions: passages } : {}),
       ...(calcul ? { derived: calcul } : {}),
@@ -548,6 +583,69 @@ const screens = ecrans(ents);
 // entité, dans l'ordre où un membre les rencontre.
 const enBarre = ECRANS.filter((e) => e.entite && e.icone).slice(0, 5);
 
+// ════════════════════════════════════════════════════════════════════
+//  LES DONNÉES : D'OÙ VIENNENT-ELLES ? (2026-10-05)
+// ════════════════════════════════════════════════════════════════════
+//
+// ── LE DÉFAUT, MESURÉ, ET IL EST GROS.
+//
+// `datasets: []`. Conséquence vérifiée sur l'application émise :
+// `demo.data.ts` contenait `export const demoData: DemoData = {}`. L'app
+// compile, se monte, s'affiche… et chaque liste est VIDE. Pas de fausses
+// cotisations : AUCUNE donnée.
+//
+// Le propriétaire ne pouvait donc rien juger à l'écran. C'est la pire forme du
+// défaut de ce dépôt : produit, monté, et muet.
+//
+// ── CE QUE `contentHash` EST VRAIMENT.
+//
+// Pas une somme de contrôle d'un contenu existant : la GRAINE d'un générateur
+// déterministe (`demo-fixtures.ts`). Même graine, mêmes lignes de
+// démonstration à chaque compilation. On la dérive de l'identifiant de
+// l'entité — stable, reproductible, et pas un nombre choisi au hasard qui
+// aurait l'air d'un hash.
+const graine = (entityId) => createHash("sha256").update(entityId).digest("hex");
+
+// ── LE SERVEUR DU PROPRIÉTAIRE : SON ADRESSE NE M'APPARTIENT PAS.
+//
+// Passer ces datasets en `remote` demande un DOMAINE. Celui du serveur de
+// l'ami n'existe pas encore — le contrat d'API vient de lui être remis. En
+// inventer un ici reviendrait à choisir l'adresse de SON serveur depuis un
+// générateur, et à faire croire la configuration faite.
+//
+// La bascule tient en UNE ligne : mettre le domaine réel ci-dessous. Le
+// résolveur produira les cibles distantes, l'application montera l'adaptateur
+// réseau et le port d'écriture HTTP, et ces fixtures ne serviront plus que
+// d'amorçage — exactement ce que le moteur prévoit (D-013).
+const DOMAINE_SERVEUR = undefined;
+
+// Combien de lignes de démonstration par entité. Choisies pour que CHAQUE
+// écran montre quelque chose de crédible : une tontine a plusieurs membres,
+// et un journal de transactions n'a pas trois lignes.
+const LIGNES_DEMO = {
+  ent_utilisateurs: 8,
+  ent_tontines: 3,
+  ent_membres_tontine: 8,
+  ent_transactions: 24,
+};
+
+const DATASETS = Object.entries(LIGNES_DEMO).map(([entityId, rowCount]) => ({
+  id: `data_${entityId.replace(/^ent_/, "")}`,
+  entityId,
+  contentHash: graine(entityId),
+  rowCount,
+  ...(DOMAINE_SERVEUR === undefined
+    ? { sourceKind: "seed" }
+    : {
+        sourceKind: "remote",
+        sourceIntegrationId: "intg_serveur",
+        sourceDomain: DOMAINE_SERVEUR,
+        // 60 s : assez pour qu'une cotisation versée par un autre membre
+        // apparaisse pendant la séance, assez peu pour vider une batterie.
+        sourceRefreshSeconds: 60,
+      }),
+}));
+
 const air = {
   airSchemaVersion: "1.30.0",
   projectId: "prj_tontine_cameroun",
@@ -588,7 +686,7 @@ const air = {
     toEntityId: vers,
     kind,
   })),
-  datasets: [],
+  datasets: DATASETS,
   screens,
   // ── LE DÉCAISSEMENT ATTEND UN CODE REÇU AILLEURS (AIR 1.32.0).
   //
