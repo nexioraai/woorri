@@ -423,6 +423,25 @@ export const AIR_MIGRATIONS: readonly AirMigration[] = [
       "sur une énumération existante.",
     migrate: (document) => document,
   },
+  {
+    from: "1.30.0",
+    to: "1.31.0",
+    description:
+      "AIR 1.31.0 : `field.derived` — UN CHAMP QUI EST LE RÉSULTAT D'AUTRES " +
+      "LIGNES. Le même besoin dans les deux métiers. SGD : « le stock n'est " +
+      "jamais stocké, il se calcule en rejouant les mouvements » — un stock " +
+      "ÉCRIT diverge de son historique sans que rien ne le signale. Tontine : " +
+      "« les primes d'enchères s'accumulent pendant toute la durée du cycle ». " +
+      "DEUX OPÉRATIONS, et pas une de plus : `sum` et `count` sur une relation " +
+      "déclarée. Un langage d'expressions arbitraires rendrait le document " +
+      "incalculable — il faudrait l'évaluer pour savoir ce qu'il dit ; ces " +
+      "deux-là se traduisent sans ambiguïté en SQL, donc le serveur les tient " +
+      "vraiment. CE QUE CELA NE COUVRE PAS : un TAUX sur une durée (« 2 % par " +
+      "jour de retard ») et un PARTAGE (« 70/30 ») ne sont pas des " +
+      "agrégations ; ils restent au serveur avec le reste de l'argent. " +
+      "Migration IDENTITÉ : aucun champ existant ne devient calculé.",
+    migrate: (document) => document,
+  },
 ];
 
 export class AirMigrationError extends Error {

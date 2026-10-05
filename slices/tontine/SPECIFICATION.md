@@ -38,7 +38,7 @@ La matrice d'accès est **appliquée par le serveur**. L'application la respecte
 | `nom` | string | VARCHAR(255) | String | oui |
 | `montant_cotisation` | decimal | DECIMAL(12,2) | BigDecimal | oui |
 | `frequence` | enum | (type énuméré) — `HEBDOMADAIRE`, `MENSUEL` | enum | oui |
-| `cagnotte_interets_cumulee` | decimal | DECIMAL(12,2) | BigDecimal | oui |
+| `cagnotte_interets_cumulee` | decimal | DECIMAL(12,2) | BigDecimal | non |
 | `taux_penalite_jour` | decimal | DECIMAL(12,2) | BigDecimal | oui |
 | `statut` | enum | (type énuméré) — `EN_ATTENTE`, `ACTIVE`, `TERMINEE` | enum | oui |
 | `president` | reference | UUID → `utilisateurs` | (entité liée) | oui |
@@ -145,7 +145,7 @@ Ces exigences du cahier des charges **ne sont pas portées par l'interface**, et
 
 ### 4. Les primes d'enchères s'accumulent pendant tout le cycle, puis se répartissent à parts égales en fin de cycle.
 
-> Deux manques en un : l'ACCUMULATION (un champ qui est la somme d'autres lignes) et l'ÉVÉNEMENT DE FIN DE CYCLE. Le déclencheur `lifecycle` connaît l'ouverture d'un écran, pas l'achèvement d'un cycle métier.
+> L'ACCUMULATION est portée : `cagnotte_interets_cumulee` est déclarée somme des primes d'enchères de ses transactions, et le validateur refuse qu'un formulaire la propose à la saisie. C'est la RÉPARTITION qui reste dehors, et pour deux raisons distinctes : elle divise par le nombre de membres ACTIFS — une condition que `sum` et `count` ne portent pas — et elle se déclenche À LA FIN DU CYCLE, un événement métier qu'aucun déclencheur ne connaît. Diviser et choisir son moment appartiennent au serveur, avec le reste de l'argent.
 
 ### 5. Collecte et décaissement par les API Orange Money Cameroun et MTN Mobile Money.
 

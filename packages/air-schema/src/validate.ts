@@ -271,6 +271,79 @@ export function validateAir(air: ProjectAir): AirDiagnostic[] {
         );
       });
     }
+    // ── UN CHAMP DÉRIVÉ EST LE RÉSULTAT D'AUTRES LIGNES (1.31.0).
+    e.fields.forEach((f, fi) => {
+      if (f.derived === undefined) return;
+      const chemin = `entities[${ei}].fields[${fi}].derived`;
+      const d = f.derived;
+      const rel = air.relations.find((r) => r.id === d.relationId);
+      if (rel === undefined) {
+        push(
+          "AIR_DERIVE_RELATION_INCONNUE",
+          `${chemin}.relationId`,
+          `la relation "${d.relationId}" n'existe pas : rien ne dit alors QUELLES ` +
+            `lignes "${f.id}" agrège`,
+        );
+        return;
+      }
+      // ── LA RELATION DOIT PARTIR DE CETTE ENTITÉ.
+      //
+      // Agréger par une relation qui ne la touche pas sommerait des lignes
+      // sans rapport avec celle qu'on regarde — et le chiffre serait le même
+      // pour toutes les lignes, ce qui se repère tard et se croit longtemps.
+      if (rel.fromEntityId !== e.id) {
+        push(
+          "AIR_DERIVE_RELATION_ETRANGERE",
+          `${chemin}.relationId`,
+          `la relation "${rel.id}" part de "${rel.fromEntityId}" et non de "${e.id}" : ` +
+            `elle ne mène pas aux lignes de CETTE entité`,
+        );
+        return;
+      }
+      if (d.kind === "sum") {
+        const cible = air.entities.find((x) => x.id === rel.toEntityId);
+        const champ = cible?.fields.find((x) => x.id === d.fieldId);
+        if (champ === undefined) {
+          push(
+            "AIR_DERIVE_CHAMP_INCONNU",
+            `${chemin}.fieldId`,
+            `"${d.fieldId}" n'est pas un champ de "${rel.toEntityId}" : ` +
+              `on ne peut pas sommer ce qui n'y est pas`,
+          );
+        } else if (champ.type !== "number" && champ.type !== "decimal") {
+          push(
+            "AIR_DERIVE_CHAMP_NON_NUMERIQUE",
+            `${chemin}.fieldId`,
+            `"${champ.id}" est de type "${champ.type}" : une somme ne se fait que sur des ` +
+              `nombres, et sommer autre chose produirait un chiffre qui ne veut rien dire`,
+          );
+        }
+      }
+      // ── ET IL NE SE SAISIT JAMAIS.
+      //
+      // Un champ dérivé qu'on peut taper finira par contredire ce dont il
+      // dérive. C'est le défaut exact que SGD a payé : « un stock écrit diverge
+      // de son historique sans que rien ne le signale ».
+      //
+      // LA GARDE SE POSE SUR LE FORMULAIRE, et non sur l'action — une mutation
+      // ne déclare PAS quels champs elle écrit : elle écrit ce que le
+      // formulaire de son écran porte. C'est donc là qu'un champ calculé
+      // devient saisissable, et donc là qu'il faut le refuser.
+      air.screens.forEach((sc, si) => {
+        sc.blocks.forEach((b, bi) => {
+          if (b.blockType !== "form" || b.entityId !== e.id) return;
+          const champs = b.props?.find((p) => p.key === "fieldIds")?.value;
+          if (!Array.isArray(champs) || !champs.includes(f.id)) return;
+          push(
+            "AIR_DERIVE_SAISI",
+            `screens[${si}].blocks[${bi}].props.fieldIds`,
+            `le formulaire propose de saisir "${f.id}", qui est CALCULÉ à partir d'autres ` +
+              `lignes : une valeur tapée finira par contredire ce dont elle dérive`,
+          );
+        });
+      });
+    });
+
     // ── LES TRANSITIONS VIVENT SUR UN CHAMP ÉNUMÉRÉ, ET SUR LUI SEUL.
     e.fields.forEach((f, fi) => {
       if (f.transitions === undefined) return;

@@ -1099,6 +1099,23 @@
      ],
      "type": "string",
      "required": false
+    },
+    {
+     "id": "fld_articles_stock",
+     "name": "stock",
+     "label": [
+      {
+       "locale": "fr",
+       "text": "stock"
+      }
+     ],
+     "type": "number",
+     "required": false,
+     "derived": {
+      "kind": "sum",
+      "relationId": "rel_mouvements_article",
+      "fieldId": "fld_mouvements_quantite"
+     }
     }
    ]
   },
@@ -2144,8 +2161,13 @@
     "id": "need_stock_calcule",
     "statement": "Le stock n'est jamais stocké : il se calcule en rejouant les mouvements d'entrée et de sortie.",
     "resolution": {
-     "kind": "unexpressible",
-     "reason": "Une entité AIR porte des champs, pas une grandeur dérivée. Un champ `quantite` sur l'article serait un stock ÉCRIT — exactement ce que SGD refuse, parce qu'un stock écrit diverge de son historique sans que rien ne le signale. Un `slot` pourrait le calculer, mais aucun lien ne dit qu'un champ EST le résultat d'un slot."
+     "kind": "satisfied",
+     "nodeIds": [
+      "ent_articles",
+      "ent_mouvements",
+      "rel_mouvements_article",
+      "fld_articles_stock"
+     ]
     }
    },
    {

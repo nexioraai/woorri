@@ -268,6 +268,15 @@ export const SECTIONS_CORRECTIVES: Readonly<Record<string, readonly SectionEmiss
   AIR_TRANSITIONS_HORS_ENUM: ["donnees"],
   AIR_TRANSITION_VALEUR_INCONNUE: ["donnees"],
   AIR_TRANSITION_ETAT_MORT: ["donnees"],
+  // ── CHAMPS CALCULÉS (1.31.0). La déclaration vit sur l'entité ; une relation
+  // manquante se pose aussi dans `donnees`. Le dernier fait exception : un
+  // champ calculé proposé à la saisie se répare dans l'ÉCRAN qui le propose,
+  // ou en cessant de le déclarer calculé — les deux issues sont légitimes.
+  AIR_DERIVE_RELATION_INCONNUE: ["donnees"],
+  AIR_DERIVE_RELATION_ETRANGERE: ["donnees"],
+  AIR_DERIVE_CHAMP_INCONNU: ["donnees"],
+  AIR_DERIVE_CHAMP_NON_NUMERIQUE: ["donnees"],
+  AIR_DERIVE_SAISI: ["ecrans", "donnees"],
   AIR_CONFIG_DUP_KEY: ["cablage"],
   AIR_INTEGRATION_SECRET_LIKE_KEY: ["cablage"],
   // Une marque hors allowlist se répare dans le CÂBLAGE (politique réseau)

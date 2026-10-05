@@ -106,6 +106,27 @@ function entitesEtRelations(sql) {
       }
     }
     if (fields.length > 0) {
+      // ── LE STOCK N'EST JAMAIS STOCKÉ (AIR 1.31.0).
+      //
+      // Règle du métier, et la plus coûteuse à enfreindre : un stock ÉCRIT
+      // diverge de son historique sans que rien ne le signale. Il est donc
+      // déclaré CALCULÉ — la somme des quantités de ses mouvements — et le
+      // validateur refuse désormais tout formulaire qui le proposerait à la
+      // saisie.
+      //
+      // Le signe vient du TYPE de mouvement, et il n'est pas dans la somme :
+      // c'est au serveur de compter une sortie en négatif. Le document dit CE
+      // QUI est agrégé, pas comment chaque ligne est signée.
+      if (table === "articles") {
+        fields.push({
+          id: "fld_articles_stock",
+          name: "stock",
+          label: [{ locale: "fr", text: "stock" }],
+          type: "number",
+          required: false,
+          derived: { kind: "sum", relationId: "rel_mouvements_article", fieldId: "fld_mouvements_quantite" },
+        });
+      }
       entites.push({
         id: `ent_${table}`,
         name: table,
@@ -506,12 +527,17 @@ function besoins(entites) {
     ["role_employe", "role_proprietaire", `scr_${ECRANS.find((e) => !e.droit).cle}`,
      ...DROITS.map((d) => `right_${d}`)])
 
-  manque("need_stock_calcule",
+  // ── RECLASSÉ (AIR 1.31.0). Le motif disait : « une entité AIR porte des
+  // champs, pas une grandeur dérivée ; aucun lien ne dit qu'un champ EST le
+  // résultat d'un slot ». `derived` le dit maintenant, et sans slot : la somme
+  // se déclare, donc elle se vérifie et se traduit en SQL.
+  //
+  // CE QUI RESTE AU SERVEUR, et c'est juste : le SIGNE. Une sortie compte en
+  // négatif, une entrée en positif — cela dépend du TYPE du mouvement, et le
+  // document dit CE QUI est agrégé, pas comment chaque ligne est signée.
+  satisfait("need_stock_calcule",
     "Le stock n'est jamais stocké : il se calcule en rejouant les mouvements d'entrée et de sortie.",
-    "Une entité AIR porte des champs, pas une grandeur dérivée. Un champ `quantite` sur l'article " +
-    "serait un stock ÉCRIT — exactement ce que SGD refuse, parce qu'un stock écrit diverge de son " +
-    "historique sans que rien ne le signale. Un `slot` pourrait le calculer, mais aucun lien ne dit " +
-    "qu'un champ EST le résultat d'un slot.");
+    [a("ent_articles"), a("ent_mouvements"), "rel_mouvements_article", "fld_articles_stock"].filter(Boolean))
 
   // ── RECLASSÉ (AIR 1.30.0). Le motif disait vrai : « l'AIR ne connaît ni
   // l'immuabilité d'une ligne ni l'écriture compensatoire ». `appendOnly` dit

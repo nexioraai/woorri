@@ -80,7 +80,18 @@ const TABLES = [
       ["nom", "string", true],
       ["montant_cotisation", "decimal", true],
       ["frequence", "enum", true, null, ["HEBDOMADAIRE", "MENSUEL"]],
-      ["cagnotte_interets_cumulee", "decimal", true],
+      // ── LA CAGNOTTE SE CALCULE (AIR 1.31.0).
+      //
+      // Le cahier §4.1 : « les primes d'enchères sont versées et bloquées dans
+      // la cagnotte d'intérêts du compte séquestre » pendant tout le cycle. Une
+      // cagnotte ÉCRITE se désaccorde des transactions qui la composent, et
+      // personne ne s'en aperçoit avant la répartition finale — c'est-à-dire
+      // au pire moment.
+      //
+      // Elle est donc la SOMME des primes d'enchères de ses transactions. Le
+      // champ n'est plus requis : on ne saisit pas un résultat.
+      ["cagnotte_interets_cumulee", "decimal", false, null, null, null,
+       { kind: "sum", relationId: "rel_transaction_tontine", fieldId: "fld_transactions_montant_enchere" }],
       ["taux_penalite_jour", "decimal", true],
       // Une tontine s'ouvre, tourne, puis s'achève. Elle ne redevient jamais
       // « en attente » : le cycle ne se rejoue pas.
@@ -163,7 +174,7 @@ function entites() {
     id: `ent_${t.nom}`,
     name: t.nom,
     ...(t.appendOnly === true ? { appendOnly: true } : {}),
-    fields: t.colonnes.map(([nom, type, requis, cible, valeurs, passages]) => ({
+    fields: t.colonnes.map(([nom, type, requis, cible, valeurs, passages, calcul]) => ({
       id: `fld_${t.nom}_${nom}`,
       name: nom,
       label: [{ locale: "fr", text: nom.replace(/_/g, " ") }],
@@ -172,6 +183,7 @@ function entites() {
       ...(type === "reference" ? { referencesEntityId: cible } : {}),
       ...(type === "enum" ? { enumValues: valeurs } : {}),
       ...(passages ? { transitions: passages } : {}),
+      ...(calcul ? { derived: calcul } : {}),
     })),
   }));
 }
@@ -462,11 +474,18 @@ function besoins() {
     "\"validation\"` sait refuser une saisie, jamais produire un montant. C'est la même famille que le " +
     "stock calculé de SGD, resté inexprimable.");
 
+  // ── MOTIF RESSERRÉ (AIR 1.31.0) — la moitié devient exprimable, et il faut
+  // dire laquelle. L'ACCUMULATION est déclarée : la cagnotte EST la somme des
+  // primes d'enchères, donc elle ne peut plus se désaccorder de ce qui la
+  // compose. Reste l'autre moitié.
   manque("need_cagnotte",
     "Les primes d'enchères s'accumulent pendant tout le cycle, puis se répartissent à parts égales en fin de cycle.",
-    "Deux manques en un : l'ACCUMULATION (un champ qui est la somme d'autres lignes) et l'ÉVÉNEMENT DE " +
-    "FIN DE CYCLE. Le déclencheur `lifecycle` connaît l'ouverture d'un écran, pas l'achèvement d'un " +
-    "cycle métier.");
+    "L'ACCUMULATION est portée : `cagnotte_interets_cumulee` est déclarée somme des primes " +
+    "d'enchères de ses transactions, et le validateur refuse qu'un formulaire la propose à la " +
+    "saisie. C'est la RÉPARTITION qui reste dehors, et pour deux raisons distinctes : elle " +
+    "divise par le nombre de membres ACTIFS — une condition que `sum` et `count` ne portent pas " +
+    "— et elle se déclenche À LA FIN DU CYCLE, un événement métier qu'aucun déclencheur ne " +
+    "connaît. Diviser et choisir son moment appartiennent au serveur, avec le reste de l'argent.")
 
   manque("need_mobile_money",
     "Collecte et décaissement par les API Orange Money Cameroun et MTN Mobile Money.",

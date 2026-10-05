@@ -23,7 +23,7 @@ import {
 // 1.7.1 (E3.3, D-131) : provenance APLANIE (sourceKind/sourceIntegrationId/
 //   sourceDomain/sourceRefreshSeconds) — l'union 1.7.0 dépassait la limite
 //   réelle de grammaire de l'API (classe D-078) ; sémantique inchangée.
-export const AIR_SCHEMA_VERSION = "1.30.0";
+export const AIR_SCHEMA_VERSION = "1.31.0";
 
 export const semverSchema = z.string().regex(/^\d+\.\d+\.\d+$/);
 export const sha256Schema = z.string().regex(/^[0-9a-f]{64}$/);
@@ -476,6 +476,54 @@ const fieldSchema = z.strictObject({
    * une horloge, et une horloge vit sur le serveur. Prétendre le contraire
    * ferait croire qu'une application déverrouille des fonds toute seule.
    */
+  /**
+   * UN CHAMP QUI EST LE RÉSULTAT D'AUTRES LIGNES (1.31.0) — OPTIONNEL.
+   *
+   * ── LE MÊME BESOIN DANS LES DEUX MÉTIERS.
+   *
+   * SGD : « le stock n'est jamais stocké : il se calcule en rejouant les
+   * mouvements d'entrée et de sortie ». Un stock ÉCRIT diverge de son
+   * historique sans que rien ne le signale.
+   *
+   * Tontine : « les primes d'enchères s'accumulent pendant toute la durée du
+   * cycle » — une cagnotte écrite à la main se désaccorde des transactions qui
+   * la composent.
+   *
+   * ── DEUX OPÉRATIONS, ET PAS UNE DE PLUS.
+   *
+   * `sum` et `count` sur une relation déclarée. C'est peu, et c'est voulu : un
+   * langage d'expressions arbitraires au contrat rendrait le document
+   * incalculable — il faudrait l'évaluer pour savoir ce qu'il dit. Ces deux-là
+   * se traduisent sans ambiguïté en SQL, donc le serveur les tient vraiment.
+   *
+   * ── CE QUE CELA NE COUVRE PAS, ET QU'IL FAUT DIRE.
+   *
+   * Un TAUX sur une durée — « 2 % par jour de retard » — n'est pas une
+   * agrégation : il suppose une horloge et une multiplication. Un PARTAGE —
+   * « 70 % au groupe, 30 % à la plateforme » — non plus. Ces règles restent au
+   * serveur, avec le reste de l'argent.
+   *
+   * ── ET IL NE SE STOCKE JAMAIS.
+   *
+   * Le validateur refuse qu'une action l'écrive : un champ dérivé qu'on peut
+   * écrire est un champ qui finira par contredire ce dont il dérive, et c'est
+   * exactement le défaut que SGD a payé.
+   */
+  derived: z
+    .discriminatedUnion("kind", [
+      z.strictObject({
+        kind: z.literal("count"),
+        /** La relation qui mène aux lignes à compter. */
+        relationId: relationIdSchema,
+      }),
+      z.strictObject({
+        kind: z.literal("sum"),
+        relationId: relationIdSchema,
+        /** Le champ à sommer, sur l'entité au bout de la relation. */
+        fieldId: fieldIdSchema,
+      }),
+    ])
+    .optional(),
   transitions: z
     .array(z.strictObject({ from: z.string().min(1), to: z.string().min(1) }))
     .min(1)
