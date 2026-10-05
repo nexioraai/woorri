@@ -1,0 +1,99 @@
+<title>Tontine — spécification backend</title>
+<style>
+:root{
+  --encre:#171a1f; --encre-douce:#4a5159; --papier:#faf9f6; --carte:#ffffff;
+  --rule:#e2ded5; --accent:#0f6b58; --accent-doux:#e6f1ed;
+  --dette:#8c4a2f; --dette-doux:#f7ece6;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --encre:#e9e7e1; --encre-douce:#a3a8ad; --papier:#14161a; --carte:#1b1e23;
+    --rule:#2d3138; --accent:#4fd1ab; --accent-doux:#132a24;
+    --dette:#e0a183; --dette-doux:#2b1d16;
+  }
+}
+:root[data-theme="dark"]{
+  --encre:#e9e7e1; --encre-douce:#a3a8ad; --papier:#14161a; --carte:#1b1e23;
+  --rule:#2d3138; --accent:#4fd1ab; --accent-doux:#132a24;
+  --dette:#e0a183; --dette-doux:#2b1d16;
+}
+body{background:var(--papier);color:var(--encre);
+  font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  margin:0;padding:0 1.25rem 5rem;}
+main{max-width:52rem;margin:0 auto;display:flex;flex-direction:column;gap:.2rem}
+h1{font-family:Georgia,"Times New Roman",serif;font-weight:600;font-size:2.1rem;
+  line-height:1.2;text-wrap:balance;margin:3rem 0 .5rem;letter-spacing:-.01em}
+h2{font-family:Georgia,serif;font-weight:600;font-size:1.4rem;text-wrap:balance;
+  margin:3rem 0 .25rem;padding-bottom:.45rem;border-bottom:2px solid var(--rule)}
+h3{font-weight:600;font-size:1.02rem;margin:2rem 0 .25rem;
+  letter-spacing:.04em;text-transform:uppercase;color:var(--encre-douce)}
+p{margin:.7rem 0;max-width:40rem}
+blockquote{margin:.9rem 0;padding:.75rem 1rem;background:var(--dette-doux);
+  border-left:3px solid var(--dette);color:var(--encre-douce);font-size:.94rem}
+ul{margin:.7rem 0;padding-left:1.1rem;display:flex;flex-direction:column;gap:.3rem;max-width:40rem}
+code{font:.88em ui-monospace,SFMono-Regular,Menlo,monospace;
+  background:var(--accent-doux);color:var(--accent);padding:.1em .35em;border-radius:3px}
+.defile{overflow-x:auto;margin:1rem 0;border:1px solid var(--rule);border-radius:6px;background:var(--carte)}
+table{border-collapse:collapse;width:100%;font-size:.9rem;font-variant-numeric:tabular-nums}
+th{text-align:left;font-weight:600;padding:.6rem .8rem;background:var(--accent-doux);
+  color:var(--accent);white-space:nowrap;font-size:.8rem;letter-spacing:.03em;text-transform:uppercase}
+td{padding:.55rem .8rem;border-top:1px solid var(--rule);vertical-align:top}
+tr:hover td{background:var(--accent-doux)}
+hr{border:0;border-top:1px solid var(--rule);margin:3rem 0 1rem}
+p:last-of-type em,p em{color:var(--encre-douce)}
+</style>
+<main>
+<h1>Tontine — spécification dérivée</h1>
+<blockquote>Générée depuis le document AIR <code>prj<em>tontine</em>cameroun</code>, contrat 1.28.0.</blockquote>
+<blockquote>Ne pas modifier à la main : régénérer après toute évolution du document.</blockquote>
+<p>Tontine digitale : cotisations, enchères, séquestre et bureau traditionnel.</p>
+<h2>Qui fait quoi</h2>
+<div class="defile"><table><thead><tr><th></th><th>Côté <strong>Spring Boot</strong></th><th>Côté <strong>application générée</strong></th></tr></thead><tbody><tr><td>Données</td><td>persistance, intégrité, migrations</td><td>affichage, saisie</td></tr><tr><td>Accès</td><td><strong>faire respecter</strong> la matrice</td><td>masquer ce qui est interdit</td></tr><tr><td>Argent</td><td><strong>tout le calcul</strong></td><td>afficher des montants déjà calculés</td></tr><tr><td>Opérateurs</td><td>Mobile Money, OTP, PDF</td><td>déclencher, montrer le résultat</td></tr></tbody></table></div>
+<p>La matrice d'accès est <strong>appliquée par le serveur</strong>. L'application la respecte aussi — elle masque ce qu'un rôle n'ouvre pas — mais une garde côté client ne garde rien : elle évite une erreur, elle n'empêche pas une attaque.</p>
+<h2>Entités</h2>
+<h3><code>utilisateurs</code></h3>
+<div class="defile"><table><thead><tr><th>Champ</th><th>Type AIR</th><th>PostgreSQL</th><th>Java</th><th>Requis</th></tr></thead><tbody><tr><td><code>nom_complet</code></td><td>string</td><td>VARCHAR(255)</td><td>String</td><td>oui</td></tr><tr><td><code>telephone</code></td><td>string</td><td>VARCHAR(255)</td><td>String</td><td>non</td></tr><tr><td><code>est<em>sans</em>telephone</code></td><td>boolean</td><td>BOOLEAN</td><td>Boolean</td><td>oui</td></tr><tr><td><code>mandataire</code></td><td>reference</td><td>UUID → <code>utilisateurs</code></td><td>(entité liée)</td><td>non</td></tr><tr><td><code>photo_profil</code></td><td>asset</td><td>TEXT (URL)</td><td>String</td><td>non</td></tr><tr><td><code>piece_identite</code></td><td>asset</td><td>TEXT (URL)</td><td>String</td><td>non</td></tr><tr><td><code>est<em>president</em>verifie</code></td><td>boolean</td><td>BOOLEAN</td><td>Boolean</td><td>oui</td></tr><tr><td><code>cree_le</code></td><td>datetime</td><td>TIMESTAMP</td><td>Instant</td><td>oui</td></tr></tbody></table></div>
+<h3><code>tontines</code></h3>
+<div class="defile"><table><thead><tr><th>Champ</th><th>Type AIR</th><th>PostgreSQL</th><th>Java</th><th>Requis</th></tr></thead><tbody><tr><td><code>nom</code></td><td>string</td><td>VARCHAR(255)</td><td>String</td><td>oui</td></tr><tr><td><code>montant_cotisation</code></td><td>decimal</td><td>DECIMAL(12,2)</td><td>BigDecimal</td><td>oui</td></tr><tr><td><code>frequence</code></td><td>enum</td><td>(type énuméré) — <code>HEBDOMADAIRE</code>, <code>MENSUEL</code></td><td>enum</td><td>oui</td></tr><tr><td><code>cagnotte<em>interets</em>cumulee</code></td><td>decimal</td><td>DECIMAL(12,2)</td><td>BigDecimal</td><td>oui</td></tr><tr><td><code>taux<em>penalite</em>jour</code></td><td>decimal</td><td>DECIMAL(12,2)</td><td>BigDecimal</td><td>oui</td></tr><tr><td><code>statut</code></td><td>enum</td><td>(type énuméré) — <code>EN_ATTENTE</code>, <code>ACTIVE</code>, <code>TERMINEE</code></td><td>enum</td><td>oui</td></tr><tr><td><code>president</code></td><td>reference</td><td>UUID → <code>utilisateurs</code></td><td>(entité liée)</td><td>oui</td></tr><tr><td><code>cree_le</code></td><td>datetime</td><td>TIMESTAMP</td><td>Instant</td><td>oui</td></tr></tbody></table></div>
+<h3><code>membres_tontine</code></h3>
+<div class="defile"><table><thead><tr><th>Champ</th><th>Type AIR</th><th>PostgreSQL</th><th>Java</th><th>Requis</th></tr></thead><tbody><tr><td><code>tontine</code></td><td>reference</td><td>UUID → <code>tontines</code></td><td>(entité liée)</td><td>oui</td></tr><tr><td><code>utilisateur</code></td><td>reference</td><td>UUID → <code>utilisateurs</code></td><td>(entité liée)</td><td>oui</td></tr><tr><td><code>role</code></td><td>enum</td><td>(type énuméré) — <code>PRESIDENT</code>, <code>SECRETAIRE</code>, <code>TRESORIER</code>, <code>CENSEUR</code>, <code>MEMBRE</code></td><td>enum</td><td>oui</td></tr><tr><td><code>ordre_passage</code></td><td>number</td><td>INTEGER</td><td>Integer</td><td>non</td></tr><tr><td><code>cumul<em>amandes</em>disciplinaires</code></td><td>decimal</td><td>DECIMAL(12,2)</td><td>BigDecimal</td><td>oui</td></tr></tbody></table></div>
+<h3><code>transactions</code></h3>
+<div class="defile"><table><thead><tr><th>Champ</th><th>Type AIR</th><th>PostgreSQL</th><th>Java</th><th>Requis</th></tr></thead><tbody><tr><td><code>tontine</code></td><td>reference</td><td>UUID → <code>tontines</code></td><td>(entité liée)</td><td>oui</td></tr><tr><td><code>cotiseur</code></td><td>reference</td><td>UUID → <code>utilisateurs</code></td><td>(entité liée)</td><td>non</td></tr><tr><td><code>beneficiaire</code></td><td>reference</td><td>UUID → <code>utilisateurs</code></td><td>(entité liée)</td><td>non</td></tr><tr><td><code>mandataire</code></td><td>reference</td><td>UUID → <code>utilisateurs</code></td><td>(entité liée)</td><td>non</td></tr><tr><td><code>type_op</code></td><td>enum</td><td>(type énuméré) — <code>COTISATION</code>, <code>ENCHERE</code>, <code>AMENDE<em>DISCIPLINAIRE</code>, <code>DISTRIBUTION</em>INTERETS</code>, <code>PAYOUT_POT</code></td><td>enum</td><td>oui</td></tr><tr><td><code>montant_base</code></td><td>decimal</td><td>DECIMAL(12,2)</td><td>BigDecimal</td><td>oui</td></tr><tr><td><code>montant_enchere</code></td><td>decimal</td><td>DECIMAL(12,2)</td><td>BigDecimal</td><td>oui</td></tr><tr><td><code>frais<em>reseau</em>mobile</code></td><td>decimal</td><td>DECIMAL(12,2)</td><td>BigDecimal</td><td>oui</td></tr><tr><td><code>montant_penalite</code></td><td>decimal</td><td>DECIMAL(12,2)</td><td>BigDecimal</td><td>oui</td></tr><tr><td><code>part<em>penalite</em>createur</code></td><td>decimal</td><td>DECIMAL(12,2)</td><td>BigDecimal</td><td>oui</td></tr><tr><td><code>part<em>penalite</em>tontine</code></td><td>decimal</td><td>DECIMAL(12,2)</td><td>BigDecimal</td><td>oui</td></tr><tr><td><code>commission_plateforme</code></td><td>decimal</td><td>DECIMAL(12,2)</td><td>BigDecimal</td><td>oui</td></tr><tr><td><code>total_paye</code></td><td>decimal</td><td>DECIMAL(12,2)</td><td>BigDecimal</td><td>oui</td></tr><tr><td><code>operateur</code></td><td>enum</td><td>(type énuméré) — <code>ORANGE<em>CMR</code>, <code>MTN</em>CMR</code>, <code>CASH</code></td><td>enum</td><td>non</td></tr><tr><td><code>reference_externe</code></td><td>string</td><td>VARCHAR(255)</td><td>String</td><td>non</td></tr><tr><td><code>code<em>otp</em>payout</code></td><td>string</td><td>VARCHAR(255)</td><td>String</td><td>non</td></tr><tr><td><code>statut</code></td><td>enum</td><td>(type énuméré) — <code>EN<em>ATTENTE</code>, <code>SEQUESTRE</em>BLOQUE</code>, <code>PAYOUT_SUCCES</code>, <code>ECHEC</code></td><td>enum</td><td>oui</td></tr><tr><td><code>date_transaction</code></td><td>datetime</td><td>TIMESTAMP</td><td>Instant</td><td>oui</td></tr></tbody></table></div>
+<h2>Relations</h2>
+<p>Le format ne connaît pas <code>many<em>to</em>one</code> : une relation se déclare toujours depuis le côté « un ». En JPA, cela se lit <code>@OneToMany</code> d'un côté et <code>@ManyToOne</code> de l'autre.</p>
+<div class="defile"><table><thead><tr><th>Depuis</th><th>Vers</th><th>Cardinalité</th></tr></thead><tbody><tr><td><code>utilisateurs</code></td><td><code>tontines</code></td><td>one<em>to</em>many</td></tr><tr><td><code>tontines</code></td><td><code>membres_tontine</code></td><td>one<em>to</em>many</td></tr><tr><td><code>utilisateurs</code></td><td><code>membres_tontine</code></td><td>one<em>to</em>many</td></tr><tr><td><code>tontines</code></td><td><code>transactions</code></td><td>one<em>to</em>many</td></tr><tr><td><code>utilisateurs</code></td><td><code>transactions</code></td><td>one<em>to</em>many</td></tr><tr><td><code>utilisateurs</code></td><td><code>utilisateurs</code></td><td>one<em>to</em>many</td></tr></tbody></table></div>
+<h2>Matrice d'accès</h2>
+<h3>Droits</h3>
+<ul><li><code>right_bureau</code> — Créer une tontine et en orchestrer les séances</li><li><code>right_registre</code> — Tenir le registre, les procès-verbaux et les présences</li><li><code>right_tresorerie</code> — Superviser le séquestre et certifier les écritures</li><li><code>right_discipline</code> — Appliquer le règlement intérieur et les amendes</li><li><code>right<em>encaisser</em>cash</code> — Saisir une cotisation en espèces pour un autre membre</li></ul>
+<h3>Rôles</h3>
+<div class="defile"><table><thead><tr><th>Rôle</th><th>Droits</th></tr></thead><tbody><tr><td>Président</td><td><strong>tous</strong> (super-administrateur)</td></tr><tr><td>Secrétaire</td><td><code>right_registre</code></td></tr><tr><td>Trésorier</td><td><code>right<em>tresorerie</code>, <code>right</em>encaisser_cash</code></td></tr><tr><td>Censeur</td><td><code>right_discipline</code></td></tr><tr><td>Membre</td><td><em>aucun</em> — liste blanche vide</td></tr></tbody></table></div>
+<p>Rôle par défaut : <strong>Membre</strong>. Un compte nouvellement créé n'a donc <strong>aucun</strong> droit du bureau tant qu'on ne lui en accorde pas.</p>
+<h2>Écrans et droits exigés</h2>
+<div class="defile"><table><thead><tr><th>Écran</th><th>Droit exigé</th></tr></thead><tbody><tr><td>Mon tableau de bord</td><td><em>ouvert</em></td></tr><tr><td>Mes tontines</td><td><em>ouvert</em></td></tr><tr><td>Membres et ordre de passage</td><td><em>ouvert</em></td></tr><tr><td>Mouvements du séquestre</td><td><code>right_tresorerie</code></td></tr><tr><td>Annuaire des membres</td><td><code>right_registre</code></td></tr><tr><td>Vérification d'identité</td><td><code>right_bureau</code></td></tr><tr><td>Amendes disciplinaires</td><td><code>right_discipline</code></td></tr><tr><td>Encaisser en espèces</td><td><code>right<em>encaisser</em>cash</code></td></tr><tr><td>Séance et enchères</td><td><code>right_bureau</code></td></tr><tr><td>Paramètres</td><td><em>ouvert</em></td></tr></tbody></table></div>
+<h2>Ce qui revient au backend (10 points)</h2>
+<p>Ces exigences du cahier des charges <strong>ne sont pas portées par l'interface</strong>, et c'est volontaire : ce sont des règles métier, financières ou réglementaires. Elles sont donc à implémenter côté Spring Boot. La liste est exhaustive par construction — tout ce que l'application ne sait pas porter se trouve ici.</p>
+<h3>1. Le mandataire AGIT AU NOM d'un autre : il cotise pour lui, encaisse son pot, et signe le reçu de décharge.</h3>
+<blockquote>AIR 1.28.0 sait dire « cette personne a ce droit ». Il ne sait pas dire « cette personne agit POUR une autre » : il n'existe aucune DÉLÉGATION. La colonne <code>mandataire</code> existe dans les données, mais rien dans le modèle d'accès ne l'autorise ni ne l'encadre — et un reçu qui ne porte qu'un seul nom ne prouve rien. SGD n'avait pas révélé ce manque : un employé y agit toujours en son propre nom.</blockquote>
+<h3>2. Les fonds collectés sont bloqués sur un compte séquestre jusqu'à l'échéance du tour.</h3>
+<blockquote>Un état qui se DÉBLOQUE À UNE DATE n'existe pas au format. <code>statut = SEQUESTRE_BLOQUE</code> est une valeur d'énumération comme une autre : rien ne dit ce qui la lève, ni quand, ni qui peut la lever. Écrire le mot « séquestre » dans une colonne ne séquestre rien.</blockquote>
+<h3>3. Le pot est attribué par enchère : le membre qui propose la plus forte prime l'emporte.</h3>
+<blockquote>Une enchère est une CONCURRENCE entre plusieurs membres sur un même objet, avec un gagnant et une clôture. Le format décrit des écrans, des listes et des gestes individuels ; il n'a aucun nœud pour un mécanisme où le geste d'un membre invalide celui d'un autre.</blockquote>
+<h3>4. Les pénalités de retard valent 2 % par jour et se répartissent 70 % au groupe, 30 % à la plateforme.</h3>
+<blockquote>Calcul sur une DURÉE, puis partage. Le format ne porte ni l'un ni l'autre : <code>rules.kind = "validation"</code> sait refuser une saisie, jamais produire un montant. C'est la même famille que le stock calculé de SGD, resté inexprimable.</blockquote>
+<h3>5. Les primes d'enchères s'accumulent pendant tout le cycle, puis se répartissent à parts égales en fin de cycle.</h3>
+<blockquote>Deux manques en un : l'ACCUMULATION (un champ qui est la somme d'autres lignes) et l'ÉVÉNEMENT DE FIN DE CYCLE. Le déclencheur <code>lifecycle</code> connaît l'ouverture d'un écran, pas l'achèvement d'un cycle métier.</blockquote>
+<h3>6. Collecte et décaissement par les API Orange Money Cameroun et MTN Mobile Money.</h3>
+<blockquote>Le registre des capacités porte <code>payments.psp</code> (Stripe) et <code>payments.offapp_transfer</code>, qui dit explicitement « aucun opérateur intégré, aucun appel réseau ». Aucun opérateur d'argent mobile africain n'y figure, alors que c'est l'infrastructure de paiement du marché visé.</blockquote>
+<h3>7. Un décaissement n'est exécuté qu'après saisie d'un code à 6 chiffres reçu par WhatsApp ou SMS.</h3>
+<blockquote>Une validation en DEUX TEMPS, avec un secret envoyé par un canal tiers. Le format décrit un geste et son effet ; il n'a pas de nœud pour un geste SUSPENDU à une confirmation hors application.</blockquote>
+<h3>8. À chaque séance, un membre et un seul encaisse le pot, selon l'ordre de passage.</h3>
+<blockquote><code>ordre_passage</code> est un nombre sur une ligne. Rien ne dit QUEL tour est en cours, ni que le tour avance quand le pot est versé. L'état d'avancement d'un cycle n'a pas de place au format.</blockquote>
+<h3>9. Déclarer aux magasins que l'application traite des données financières.</h3>
+<blockquote><code>compliance.dataCollected</code> est une énumération FERMÉE de sept catégories, et aucune ne couvre l'argent : contact<em>info, identifiers, usage</em>data, location, user_content, purchases, diagnostics. Or Apple ET Google portent une catégorie « Financial Info » dans leurs étiquettes de confidentialité. Déclarer <code>purchases</code> serait inexact — dans une tontine, personne n'achète rien : les membres se prêtent de l'argent. Une déclaration fausse à un magasin est pire qu'une déclaration incomplète.</blockquote>
+<h3>10. Le Secrétaire exporte les procès-verbaux et les rapports en PDF d'un seul clic.</h3>
+<blockquote>Aucune capacité du registre ne produit de document. <code>share</code> partage ce qui existe déjà ; rien ne fabrique un PDF à partir des données.</blockquote>
+<h2>Ce que l'application porte déjà (7 points)</h2>
+<ul><li>Reproduire le bureau traditionnel — Président, Secrétaire, Trésorier, Censeur, Membre — par une matrice d'accès stricte.</li><li>Un membre peut n'avoir ni smartphone ni compte Mobile Money, et reste rattaché à un mandataire.</li><li>Tenir le registre des membres d'une tontine, leur rôle, leur ordre de passage et leur cumul d'amendes.</li><li>Une tontine porte son montant de cotisation, sa fréquence, son taux de pénalité et son statut.</li><li>Chaque mouvement est horodaté, typé, et garde la trace de son opérateur et de sa référence externe.</li><li>Vérification d'identité obligatoire : pièce d'identité et selfie, contrôlés par le bureau.</li><li>Un membre consulte sa position et son historique financier sans aucune charge du bureau.</li></ul>
+<hr/>
+<p>*4 entités · 6 relations · 10 écrans · 5 droits · 5 rôles · 7 besoins portés · 10 au backend.*</p>
+</main>
