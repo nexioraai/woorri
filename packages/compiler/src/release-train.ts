@@ -69,7 +69,7 @@ export const RELEASE_TRAIN_V1 = {
   // (mesuré EP-061/R6 : 8 arcs prescrits morts, l'intention portée par un
   // param que rien ne lisait).
   // EP-137/145/147 — genres d'écran successifs, migrations identité.
-  airSchemaVersion: "1.31.0",
+  airSchemaVersion: "1.32.0",
   // Porté à 1.1.0 le 2026-08-31 (D-060) : montée STRICTEMENT ADDITIVE du
   // registre de blocs — `form` gagne `loading`/`empty`, `detail_header` gagne un
   // état, les trois blocs à données gagnent les props de titres. Rien n'est
@@ -243,7 +243,9 @@ export const RELEASE_TRAIN_V1 = {
    * un cliquet vérifie qu'il atteint le minimum de la plateforme.
    */
   androidTargetSdk: 36,
-  capabilityRegistryVersion: "1.2.0",
+  capabilityRegistryVersion: "1.3.0",
+  // Ré-scellé 2026-10-05 (registre 1.3.0) : `document.export` — un document
+  // qui engage est PRODUIT par le serveur, jamais composé sur le téléphone.
   // Ré-scellé 2026-10-05 (registre 1.2.0) : `payments.mobile_money`. AUCUN
   // opérateur n'y est nommé — Orange, MTN, Moov, Airtel et Wave sont des
   // données du document, parce que le Cameroun et le Tchad n'ont pas les mêmes.
@@ -256,7 +258,7 @@ export const RELEASE_TRAIN_V1 = {
     // aucun module de paiement n'est ajouté (`expo-linking` seul, déjà
     // présent pour `external_contact`). La coordonnée d'encaissement vient
     // du DOCUMENT. Les seize précédentes sont intactes.
-    "e0119a63e0ffff1ad42048dd2f54df9077ed06c9c5285b022d738ead5a6e124c",
+    "05b98be51d67e646dc9d4c6815b00534bbf0f0bee3a5e7a9a2522624a87440cd",
   // ÉDITION CONSCIENTE (1.3.0) : l'échelle typographique gagne `display`, un
   // cran au-dessus de `heading`. Ajouté AVEC son consommateur réel (l'écran
   // d'accueil produit), jamais « au cas où » — règle posée par DET-023.

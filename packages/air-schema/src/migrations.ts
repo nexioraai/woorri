@@ -442,6 +442,23 @@ export const AIR_MIGRATIONS: readonly AirMigration[] = [
       "Migration IDENTITÉ : aucun champ existant ne devient calculé.",
     migrate: (document) => document,
   },
+  {
+    from: "1.31.0",
+    to: "1.32.0",
+    description:
+      "AIR 1.32.0 : `financial_info` au catalogue des données collectées. " +
+      "Apple ET Google portent une catégorie « Financial Info » dans leurs " +
+      "étiquettes de confidentialité ; le format n'en avait AUCUNE. Mesuré le " +
+      "2026-10-05 sur le cahier des charges d'une tontine : une application " +
+      "qui déplace de l'argent entre ses membres devait se déclarer " +
+      "`purchases`, ce qui est INEXACT — personne n'y achète rien, les membres " +
+      "se prêtent de l'argent. Une déclaration FAUSSE à un magasin se paie " +
+      "plus cher qu'une incomplète : l'une est une erreur, l'autre devient un " +
+      "mensonge quand on la découvre. Migration IDENTITÉ : aucun document " +
+      "existant ne gagne cette catégorie — la deviner reviendrait à déclarer " +
+      "au magasin, au nom du propriétaire, une collecte qu'il n'a pas dite.",
+    migrate: (document) => document,
+  },
 ];
 
 export class AirMigrationError extends Error {

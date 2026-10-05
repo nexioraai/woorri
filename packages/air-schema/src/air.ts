@@ -23,7 +23,7 @@ import {
 // 1.7.1 (E3.3, D-131) : provenance APLANIE (sourceKind/sourceIntegrationId/
 //   sourceDomain/sourceRefreshSeconds) — l'union 1.7.0 dépassait la limite
 //   réelle de grammaire de l'API (classe D-078) ; sémantique inchangée.
-export const AIR_SCHEMA_VERSION = "1.31.0";
+export const AIR_SCHEMA_VERSION = "1.32.0";
 
 export const semverSchema = z.string().regex(/^\d+\.\d+\.\d+$/);
 export const sha256Schema = z.string().regex(/^[0-9a-f]{64}$/);
@@ -869,6 +869,32 @@ const actionSchema = z.strictObject({
   name: z.string().min(1),
   trigger: actionTriggerSchema,
   effect: actionEffectSchema,
+  /**
+   * CE GESTE ATTEND UNE CONFIRMATION REÇUE AILLEURS (1.32.0) — OPTIONNEL.
+   *
+   * ── LE BESOIN, MESURÉ SUR UN CAHIER DES CHARGES RÉEL.
+   *
+   * Tontine, §2 : « validation des PayOuts sécurisée par code OTP à 6 chiffres
+   * (WhatsApp/SMS) ». Le geste n'est pas annulable : une fois l'argent parti,
+   * il est parti. On ne confirme donc pas d'un bouton « êtes-vous sûr », qui
+   * se clique par réflexe, mais par un secret reçu SUR UN AUTRE CANAL — ce qui
+   * prouve au passage que la personne détient bien ce canal.
+   *
+   * ── CE QUE LE FORMAT DIT, ET CE QU'IL NE DIT PAS.
+   *
+   * Il dit que le geste est SUSPENDU et combien de chiffres sont attendus.
+   * Il ne dit NI par quel canal le code part, NI comment il est vérifié : les
+   * deux appartiennent au serveur, qui seul peut émettre un secret et le
+   * comparer. Une application qui vérifierait elle-même un code le détiendrait
+   * — et un secret que le vérificateur détient ne prouve plus rien.
+   */
+  confirmation: z
+    .strictObject({
+      kind: z.literal("code_hors_application"),
+      /** Longueur du code attendu. Six dans le cahier de la tontine. */
+      digits: z.number().int().min(4).max(10),
+    })
+    .optional(),
 });
 
 const ruleAssertionSchema = z.strictObject({
@@ -1052,6 +1078,21 @@ const complianceSchema = z.strictObject({
   dataCollected: z.array(
     z.enum([
       "contact_info",
+      /**
+       * DONNÉES FINANCIÈRES (1.32.0) — et son absence était un vrai risque.
+       *
+       * Apple ET Google portent une catégorie « Financial Info » dans leurs
+       * étiquettes de confidentialité. Le format n'en avait aucune.
+       *
+       * Mesuré le 2026-10-05 sur le cahier des charges d'une tontine : une
+       * application qui déplace de l'argent entre ses membres devait se
+       * déclarer `purchases`, ce qui est INEXACT — dans une tontine, personne
+       * n'achète rien ; les membres se prêtent de l'argent. Et une déclaration
+       * FAUSSE à un magasin se paie plus cher qu'une déclaration incomplète :
+       * l'une est une erreur, l'autre devient un mensonge quand on la
+       * découvre.
+       */
+      "financial_info",
       "identifiers",
       "usage_data",
       "location",

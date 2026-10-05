@@ -15,6 +15,12 @@ Des contenus que vous seul pouvez écrire. L'application prévoit la place ; le 
 - [ ] **Publier une page web de demande de suppression de compte et en donner l'adresse à Play Console. Google exige les DEUX chemins — celui dans l'application est généré, celui du web est le vôtre.**
       *Exigé par : Google Play answer/13327111 — « and provide a web link resource ».*
 
+- [ ] **Nommer, dans votre politique de confidentialité, les prestataires avec qui les données sont partagées, et ce que chacun reçoit. L'application demande le consentement ; le NOM des sociétés et leurs propres politiques, vous seul les connaissez.**
+      *Exigé par : App Store Review Guidelines 5.1.2(i) — « You must clearly disclose where personal data will be shared with third parties ».*
+
+      Ce que votre application déclare collecter, à recopier :
+      - `argent_mobile : contact_info, financial_info, identifiers`
+
 - [ ] **Fixer le NUMÉRO DE VERSION de l'application avant chaque dépôt. Le bas de l'espace compte l'affichera avec la mention de propriété : c'est une donnée que vous seul possédez — le document ne la porte pas, et l'inventer reviendrait à annoncer une version qui n'existe pas.**
       *Exigé par : Apple App Store Connect · Google Play Console — numéro de version exigé à chaque dépôt.*
 
@@ -30,6 +36,7 @@ Des formulaires à remplir chez Apple et Google. Personne ne peut les remplir à
 
       Ce que votre application déclare collecter, à recopier :
       - `identifiers`
+      - `financial_info`
       - `usage_data`
 
 - [ ] **Fournir un compte de démonstration et allumer le service qui le sert, sans quoi la revue Apple ne pourra pas ouvrir l'application.**

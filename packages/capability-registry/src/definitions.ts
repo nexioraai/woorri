@@ -306,6 +306,60 @@ const RAW_DEFINITIONS: CapabilityDefinition[] = [
     buildFootprint: { estimatedSizeKb: 400, buildTimeImpact: "low" },
   },
   {
+    // ══════════════════════════════════════════════════════════════
+    //  UN DOCUMENT PRODUIT PAR LE SERVEUR, REMIS À LA PERSONNE.
+    // ══════════════════════════════════════════════════════════════
+    //
+    // ── LE BESOIN, MESURÉ SUR DEUX CAHIERS.
+    //
+    // Tontine, §2 : « exportation des rapports PDF d'un clic » par le
+    // Secrétaire, et le reçu de décharge que signe le mandataire. Ces
+    // documents ENGAGENT : un procès-verbal fait foi, un reçu prouve une
+    // remise d'argent.
+    //
+    // ── POURQUOI LE SERVEUR LE FABRIQUE, ET PAS L'APPLICATION.
+    //
+    // Un document qui engage doit être REPRODUCTIBLE et ARCHIVÉ : deux
+    // personnes qui l'exportent doivent obtenir la même chose, et il doit
+    // rester consultable après. Fabriqué sur un téléphone, il dépendrait de la
+    // version de l'application, de la police installée, de la taille de
+    // l'écran — et ne serait archivé nulle part.
+    //
+    // L'application DEMANDE donc un document, le reçoit, et le remet. Elle ne
+    // le compose pas.
+    //
+    // ── CE QU'ELLE N'EST PAS.
+    //
+    // `share` partage un contenu QUI EXISTE DÉJÀ ; celle-ci en fait PRODUIRE
+    // un. Les deux se complètent : on produit, puis on partage.
+    id: "document.export",
+    version: "1.0.0",
+    title: "Document produit par le serveur, remis à la personne",
+    description:
+      "L'application DEMANDE à son serveur un document (procès-verbal, reçu, rapport), le reçoit, et le remet à la personne — enregistrement ou partage. Elle ne le compose pas : un document qui engage doit être reproductible et archivé, ce qu'une fabrication sur téléphone ne garantit pas.",
+    implementation: { kind: "expo_module", package: "expo-sharing", version: "~14" },
+    dependencies: { capabilities: ["share"], nativeModules: [] },
+    platforms: { ios: { supported: true, minOsVersion: "15.1" }, android: { supported: true, minSdk: 24 } },
+    compatibleRuntimeProfiles: ["standard", "extended"],
+    nativeConfig: { infoPlistKeys: [], androidManifestPermissions: [], entitlements: [] },
+    inducedPermissions: [],
+    cost: { model: "free", notes: "le document est produit par le serveur de l'application" },
+    nativeFootprint: { impact: "light", nativeModules: ["expo-sharing"] },
+    otaCompatible: false,
+    requiresRebuild: true,
+    commerceConstraint: "none",
+    constraints: [
+      "le document est PRODUIT PAR LE SERVEUR : l'application ne le compose pas",
+      "un document qui engage doit rester consultable après coup — l'archivage appartient au serveur",
+    ],
+    conflicts: [],
+    provenance: {
+      source: "first_party",
+      reference: "cahier des charges Tontine Digitale Cameroun v1.2, §2",
+    },
+    buildFootprint: { estimatedSizeKb: 90, buildTimeImpact: "low" },
+  },
+  {
     id: "payments.iap",
     version: "1.0.0",
     title: "Achats intégrés (IAP)",
@@ -604,4 +658,4 @@ export const CAPABILITIES: readonly CapabilityDefinition[] = z
 // Mali ; il y a Orange Money au Cameroun mais pas au Tchad où il y a Moov et
 // Airtel ». Nommer un opérateur dans le registre aurait rendu le générateur
 // camerounais. ADDITIF : aucune capacité existante ne change.
-export const CAPABILITY_REGISTRY_VERSION = "1.2.0";
+export const CAPABILITY_REGISTRY_VERSION = "1.3.0";

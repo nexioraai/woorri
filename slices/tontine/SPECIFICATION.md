@@ -127,7 +127,7 @@ Rôle par défaut : **Membre**. Un compte nouvellement créé n'a donc **aucun**
 | Séance et enchères | `right_bureau` |
 | Paramètres | _ouvert_ |
 
-## Ce qui revient au backend (8 points)
+## Ce qui revient au backend (5 points)
 
 Ces exigences du cahier des charges **ne sont pas portées par l'interface**, et c'est volontaire : ce sont des règles métier, financières ou réglementaires. Elles sont donc à implémenter côté Spring Boot. La liste est exhaustive par construction — tout ce que l'application ne sait pas porter se trouve ici.
 
@@ -147,23 +147,11 @@ Ces exigences du cahier des charges **ne sont pas portées par l'interface**, et
 
 > L'ACCUMULATION est portée : `cagnotte_interets_cumulee` est déclarée somme des primes d'enchères de ses transactions, et le validateur refuse qu'un formulaire la propose à la saisie. C'est la RÉPARTITION qui reste dehors, et pour deux raisons distinctes : elle divise par le nombre de membres ACTIFS — une condition que `sum` et `count` ne portent pas — et elle se déclenche À LA FIN DU CYCLE, un événement métier qu'aucun déclencheur ne connaît. Diviser et choisir son moment appartiennent au serveur, avec le reste de l'argent.
 
-### 5. Un décaissement n'est exécuté qu'après saisie d'un code à 6 chiffres reçu par WhatsApp ou SMS.
-
-> Une validation en DEUX TEMPS, avec un secret envoyé par un canal tiers. Le format décrit un geste et son effet ; il n'a pas de nœud pour un geste SUSPENDU à une confirmation hors application.
-
-### 6. À chaque séance, un membre et un seul encaisse le pot, selon l'ordre de passage.
+### 5. À chaque séance, un membre et un seul encaisse le pot, selon l'ordre de passage.
 
 > `ordre_passage` est un nombre sur une ligne. Rien ne dit QUEL tour est en cours, ni que le tour avance quand le pot est versé. L'état d'avancement d'un cycle n'a pas de place au format.
 
-### 7. Déclarer aux magasins que l'application traite des données financières.
-
-> `compliance.dataCollected` est une énumération FERMÉE de sept catégories, et aucune ne couvre l'argent : contact_info, identifiers, usage_data, location, user_content, purchases, diagnostics. Or Apple ET Google portent une catégorie « Financial Info » dans leurs étiquettes de confidentialité. Déclarer `purchases` serait inexact — dans une tontine, personne n'achète rien : les membres se prêtent de l'argent. Une déclaration fausse à un magasin est pire qu'une déclaration incomplète.
-
-### 8. Le Secrétaire exporte les procès-verbaux et les rapports en PDF d'un seul clic.
-
-> Aucune capacité du registre ne produit de document. `share` partage ce qui existe déjà ; rien ne fabrique un PDF à partir des données.
-
-## Ce que l'application porte déjà (9 points)
+## Ce que l'application porte déjà (12 points)
 
 - Reproduire le bureau traditionnel — Président, Secrétaire, Trésorier, Censeur, Membre — par une matrice d'accès stricte.
 - Un membre peut n'avoir ni smartphone ni compte Mobile Money, et reste rattaché à un mandataire.
@@ -174,7 +162,10 @@ Ces exigences du cahier des charges **ne sont pas portées par l'interface**, et
 - Un membre consulte sa position et son historique financier sans aucune charge du bureau.
 - Le mandataire AGIT AU NOM d'un autre : il cotise pour lui et encaisse son pot.
 - Collecte et décaissement par argent mobile, avec les opérateurs du pays.
+- Un décaissement n'est exécuté qu'après saisie d'un code à 6 chiffres reçu par WhatsApp ou SMS.
+- Déclarer aux magasins que l'application traite des données financières.
+- Le Secrétaire exporte les procès-verbaux et les rapports en PDF d'un seul clic.
 
 ---
 
-*4 entités · 6 relations · 10 écrans · 5 droits · 5 rôles · 9 besoins portés · 8 au backend.*
+*4 entités · 6 relations · 10 écrans · 5 droits · 5 rôles · 12 besoins portés · 5 au backend.*

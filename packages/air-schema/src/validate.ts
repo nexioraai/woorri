@@ -388,6 +388,23 @@ export function validateAir(air: ProjectAir): AirDiagnostic[] {
     });
   });
 
+  // ── UNE CONFIRMATION NE PROTÈGE QUE CE QUI EST IRRÉVERSIBLE (1.32.0).
+  //
+  // Demander un code à six chiffres pour CHANGER D'ÉCRAN n'ajoute aucune
+  // sécurité : cela apprend seulement à taper des codes sans les lire, et
+  // dévalue la confirmation là où elle compte vraiment.
+  air.actions.forEach((a, i) => {
+    if (a.confirmation === undefined) return;
+    if (a.effect.kind === "navigate") {
+      push(
+        "AIR_CONFIRMATION_SANS_CONSEQUENCE",
+        `actions[${i}].confirmation`,
+        `l'action "${a.id}" exige un code de confirmation pour une simple navigation : ` +
+          `une confirmation qui protège un geste sans conséquence apprend à les expédier`,
+      );
+    }
+  });
+
   const blockIds = new Set(air.screens.flatMap((s) => s.blocks.map((b) => b.id)));
   const entityById = new Map(air.entities.map((e) => [e.id, e]));
   const slotIds = new Set(air.slots.map((s) => s.id));

@@ -277,6 +277,9 @@ export const SECTIONS_CORRECTIVES: Readonly<Record<string, readonly SectionEmiss
   AIR_DERIVE_CHAMP_INCONNU: ["donnees"],
   AIR_DERIVE_CHAMP_NON_NUMERIQUE: ["donnees"],
   AIR_DERIVE_SAISI: ["ecrans", "donnees"],
+  // Une confirmation posee sur un geste sans consequence se repare dans
+  // `actions`, et la seulement : c'est la que vit la declaration.
+  AIR_CONFIRMATION_SANS_CONSEQUENCE: ["actions"],
   AIR_CONFIG_DUP_KEY: ["cablage"],
   AIR_INTEGRATION_SECRET_LIKE_KEY: ["cablage"],
   // Une marque hors allowlist se répare dans le CÂBLAGE (politique réseau)

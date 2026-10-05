@@ -1153,12 +1153,37 @@
    ]
   }
  ],
- "actions": [],
+ "actions": [
+  {
+   "id": "act_decaisser_pot",
+   "name": "Décaisser le pot au gagnant du tour",
+   "requiredRightId": "right_bureau",
+   "trigger": {
+    "kind": "ui",
+    "blockId": "blk_seance_liste"
+   },
+   "effect": {
+    "kind": "capability",
+    "capability": "payments.mobile_money",
+    "method": "payout"
+   },
+   "confirmation": {
+    "kind": "code_hors_application",
+    "digits": 6
+   }
+  }
+ ],
  "rules": [],
  "slots": [],
  "capabilities": [
   {
    "capability": "payments.mobile_money"
+  },
+  {
+   "capability": "document.export"
+  },
+  {
+   "capability": "share"
   }
  ],
  "permissions": [],
@@ -1312,6 +1337,7 @@
   "accountDeletionRequired": true,
   "dataCollected": [
    "identifiers",
+   "financial_info",
    "usage_data"
   ]
  },
@@ -1480,8 +1506,12 @@
     "id": "need_otp_payout",
     "statement": "Un décaissement n'est exécuté qu'après saisie d'un code à 6 chiffres reçu par WhatsApp ou SMS.",
     "resolution": {
-     "kind": "unexpressible",
-     "reason": "Une validation en DEUX TEMPS, avec un secret envoyé par un canal tiers. Le format décrit un geste et son effet ; il n'a pas de nœud pour un geste SUSPENDU à une confirmation hors application."
+     "kind": "satisfied",
+     "nodeIds": [
+      "act_decaisser_pot",
+      "right_bureau",
+      "scr_seance"
+     ]
     }
    },
    {
@@ -1496,16 +1526,24 @@
     "id": "need_categorie_financiere",
     "statement": "Déclarer aux magasins que l'application traite des données financières.",
     "resolution": {
-     "kind": "unexpressible",
-     "reason": "`compliance.dataCollected` est une énumération FERMÉE de sept catégories, et aucune ne couvre l'argent : contact_info, identifiers, usage_data, location, user_content, purchases, diagnostics. Or Apple ET Google portent une catégorie « Financial Info » dans leurs étiquettes de confidentialité. Déclarer `purchases` serait inexact — dans une tontine, personne n'achète rien : les membres se prêtent de l'argent. Une déclaration fausse à un magasin est pire qu'une déclaration incomplète."
+     "kind": "satisfied",
+     "nodeIds": [
+      "ent_transactions",
+      "fld_transactions_total_paye",
+      "fld_transactions_montant_base"
+     ]
     }
    },
    {
     "id": "need_export_pdf",
     "statement": "Le Secrétaire exporte les procès-verbaux et les rapports en PDF d'un seul clic.",
     "resolution": {
-     "kind": "unexpressible",
-     "reason": "Aucune capacité du registre ne produit de document. `share` partage ce qui existe déjà ; rien ne fabrique un PDF à partir des données."
+     "kind": "satisfied",
+     "nodeIds": [
+      "right_registre",
+      "scr_annuaire",
+      "role_secretaire"
+     ]
     }
    }
   ]

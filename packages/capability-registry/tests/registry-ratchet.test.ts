@@ -24,6 +24,7 @@ const V1_CAPABILITY_IDS = [
   "calendar",
   "camera",
   "deep_links",
+  "document.export",
   "external_contact",
   "geolocation",
   "maps",
@@ -44,14 +45,14 @@ const V1_CAPABILITY_IDS = [
 ];
 
 describe("cliquets de registre", () => {
-  it("le registre est en 1.2.0 (argent mobile, additif) et chaque contrat porte 1.0.0 (D-020)", () => {
-    expect(CAPABILITY_REGISTRY_VERSION).toBe("1.2.0");
+  it("le registre est en 1.3.0 (argent mobile + export de document, additif) et chaque contrat porte 1.0.0 (D-020)", () => {
+    expect(CAPABILITY_REGISTRY_VERSION).toBe("1.3.0");
     for (const c of CAPABILITIES) {
       expect(c.version, c.id).toBe("1.0.0");
     }
   });
 
-  it("contient EXACTEMENT les 18 capabilities déclarées, triées", () => {
+  it("contient EXACTEMENT les 19 capabilities déclarées, triées", () => {
     expect(CAPABILITIES.map((c) => c.id)).toEqual(V1_CAPABILITY_IDS);
   });
 

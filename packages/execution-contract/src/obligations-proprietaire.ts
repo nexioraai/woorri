@@ -75,6 +75,10 @@ export const PARTAGE_PAR_CAPACITE: Readonly<Record<string, readonly string[]>> =
   geolocation: ["location"],
   maps: ["location"],
   // Le contenu téléversé est stocké chez l'hébergeur.
+  // Le document est PRODUIT par le serveur de l'application : son contenu ne
+  // quitte pas ce périmètre. Le remettre à la personne — l'enregistrer, le
+  // partager — est un geste d'elle, pas un envoi.
+  "document.export": [],
   media_upload: ["user_content"],
   // Stockage LOCAL : c'est sa définition même.
   offline_storage: [],
@@ -92,9 +96,11 @@ export const PARTAGE_PAR_CAPACITE: Readonly<Record<string, readonly string[]>> =
   // contraire de ce que les magasins exigent.
   //
   // `contact_info` : le numéro est la coordonnée du compte d'argent mobile.
-  // `purchases` : le mouvement d'argent lui-même. `identifiers` : la référence
-  // externe qui rattache la transaction chez l'opérateur.
-  "payments.mobile_money": ["contact_info", "purchases", "identifiers"],
+  // `financial_info` : le mouvement d'argent lui-même — et c'est la catégorie
+  // JUSTE depuis 1.32.0. Elle disait `purchases` faute de mieux, ce qui était
+  // INEXACT : dans une tontine, personne n'achète rien. `identifiers` : la
+  // référence externe qui rattache la transaction chez l'opérateur.
+  "payments.mobile_money": ["contact_info", "financial_info", "identifiers"],
   "payments.psp": ["purchases", "contact_info", "identifiers"],
   // Le jeton d'appareil est enregistré chez le service de notification.
   push_notifications: ["identifiers"],

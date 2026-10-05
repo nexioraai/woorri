@@ -71,6 +71,8 @@ export const CHIFFREMENT_PROPRE_PAR_CAPACITE: Readonly<Record<string, boolean>> 
   calendar: false,
   camera: false,
   deep_links: false,
+  // Aucun chiffrement ajouté : le document arrive par HTTPS, comme le reste.
+  "document.export": false,
   external_contact: false,
   // EP-201 — ni chiffrement ni export : rien n'est collecté par cette capacité.
   "payments.offapp_transfer": false,
@@ -127,6 +129,9 @@ export const API_SENSIBLES_PAR_CAPACITE: Readonly<Record<string, readonly string
   calendar: [],
   camera: [],
   deep_links: [],
+  // Enregistrer un document touche au système de fichiers : son horodatage est
+  // une API a raison requise, au meme titre que le stockage hors ligne.
+  "document.export": ["NSPrivacyAccessedAPICategoryFileTimestamp"],
   external_contact: [],
   "payments.offapp_transfer": [],
   geolocation: [],

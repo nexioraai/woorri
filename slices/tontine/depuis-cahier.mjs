@@ -500,29 +500,37 @@ function besoins() {
     ["ent_transactions", "fld_transactions_operateur", "fld_transactions_reference_externe",
      "intg_argent_mobile"])
 
-  manque("need_otp_payout",
+  // ── RECLASSÉ (AIR 1.32.0). Le motif disait : « le format n'a pas de nœud
+  // pour un geste SUSPENDU à une confirmation hors application ». Il l'a
+  // désormais, et le validateur refuse qu'on en pose une sur un geste sans
+  // conséquence — une confirmation qui protège une navigation apprend à les
+  // expédier.
+  //
+  // CE QUI RESTE AU SERVEUR, et c'est juste : l'ÉMISSION et la VÉRIFICATION du
+  // code. Une application qui vérifierait elle-même un secret le détiendrait,
+  // et un secret que le vérificateur détient ne prouve plus rien.
+  porte("need_otp_payout",
     "Un décaissement n'est exécuté qu'après saisie d'un code à 6 chiffres reçu par WhatsApp ou SMS.",
-    "Une validation en DEUX TEMPS, avec un secret envoyé par un canal tiers. Le format décrit un geste " +
-    "et son effet ; il n'a pas de nœud pour un geste SUSPENDU à une confirmation hors application.");
+    ["act_decaisser_pot", "right_bureau", "scr_seance"])
 
   manque("need_tour_courant",
     "À chaque séance, un membre et un seul encaisse le pot, selon l'ordre de passage.",
     "`ordre_passage` est un nombre sur une ligne. Rien ne dit QUEL tour est en cours, ni que le tour " +
     "avance quand le pot est versé. L'état d'avancement d'un cycle n'a pas de place au format.");
 
-  manque("need_categorie_financiere",
+  // ── RECLASSÉ (AIR 1.32.0). La catégorie manquait au format ; elle y est.
+  porte("need_categorie_financiere",
     "Déclarer aux magasins que l'application traite des données financières.",
-    "`compliance.dataCollected` est une énumération FERMÉE de sept catégories, et aucune ne couvre " +
-    "l'argent : contact_info, identifiers, usage_data, location, user_content, purchases, diagnostics. " +
-    "Or Apple ET Google portent une catégorie « Financial Info » dans leurs étiquettes de " +
-    "confidentialité. Déclarer `purchases` serait inexact — dans une tontine, personne n'achète rien : " +
-    "les membres se prêtent de l'argent. Une déclaration fausse à un magasin est pire qu'une " +
-    "déclaration incomplète.");
+    ["ent_transactions", "fld_transactions_total_paye", "fld_transactions_montant_base"])
 
-  manque("need_export_pdf",
+  // ── RECLASSÉ (registre de capacités 1.3.0). `document.export` dit que
+  // l'application REMET un document que le serveur a produit. Elle ne le
+  // compose pas : un procès-verbal fabriqué sur un téléphone dépendrait de la
+  // version de l'app et de la police installée, et ne serait archivé nulle
+  // part — alors qu'un document qui engage doit rester consultable après coup.
+  porte("need_export_pdf",
     "Le Secrétaire exporte les procès-verbaux et les rapports en PDF d'un seul clic.",
-    "Aucune capacité du registre ne produit de document. `share` partage ce qui existe déjà ; rien ne " +
-    "fabrique un PDF à partir des données.");
+    ["right_registre", "scr_annuaire", "role_secretaire"])
 
   return n;
 }
@@ -582,7 +590,30 @@ const air = {
   })),
   datasets: [],
   screens,
-  actions: [],
+  // ── LE DÉCAISSEMENT ATTEND UN CODE REÇU AILLEURS (AIR 1.32.0).
+  //
+  // Cahier §2 : « validation des PayOuts sécurisée par code OTP à 6 chiffres
+  // (WhatsApp/SMS) ». Une fois l'argent parti, il est parti : un bouton
+  // « êtes-vous sûr » se clique par réflexe, un code reçu sur un AUTRE canal
+  // prouve au passage que la personne détient ce canal.
+  //
+  // Le geste est déclenché depuis l'écran de séance, qui exige déjà le droit
+  // du bureau — le Président « détient le pouvoir d'exécution financière
+  // finale ».
+  actions: [
+    {
+      id: "act_decaisser_pot",
+      name: "Décaisser le pot au gagnant du tour",
+      requiredRightId: "right_bureau",
+      trigger: { kind: "ui", blockId: "blk_seance_liste" },
+      effect: {
+        kind: "capability",
+        capability: "payments.mobile_money",
+        method: "payout",
+      },
+      confirmation: { kind: "code_hors_application", digits: 6 },
+    },
+  ],
   rules: [],
   slots: [],
   // ── L'ARGENT MOBILE, ET SES OPÉRATEURS EN DONNÉES.
@@ -597,7 +628,17 @@ const air = {
   // `fld_transactions_operateur` du DOCUMENT. Une tontine tchadienne y
   // écrirait MOOV_TCD et AIRTEL_TCD, une sénégalaise WAVE_SEN — sans qu'une
   // ligne du générateur ne change.
-  capabilities: [{ capability: "payments.mobile_money" }],
+  capabilities: [
+    { capability: "payments.mobile_money" },
+    // Le cahier §2 : « exportation des rapports PDF d'un clic » par le
+    // Secrétaire, et le reçu de décharge que signe le mandataire. Ces
+    // documents ENGAGENT — un procès-verbal fait foi, un reçu prouve une
+    // remise d'argent — donc le serveur les produit et les archive.
+    { capability: "document.export" },
+    // `share` est une dépendance déclarée de `document.export` : remettre un
+    // document, c'est l'ouvrir dans la feuille de partage du téléphone.
+    { capability: "share" },
+  ],
   permissions: [],
   access: acces(),
   design: { theme: "tontine_sobre" },
@@ -623,7 +664,11 @@ const air = {
     // déclarer « purchases » serait INEXACT — personne n'achète rien. On
     // déclare donc ce qui est vrai, et le manque est consigné dans les besoins
     // (`need_categorie_financiere`) plutôt que masqué par un à-peu-près.
-    dataCollected: ["identifiers", "usage_data"],
+    // `financial_info` EXISTE DEPUIS 1.32.0, et c'est la catégorie juste. Elle
+    // manquait au format ; le document déclarait donc une collecte incomplète
+    // plutôt que fausse — on ne déclare pas `purchases` quand personne
+    // n'achète rien.
+    dataCollected: ["identifiers", "financial_info", "usage_data"],
   },
   expectedTests: [],
   intent: {
