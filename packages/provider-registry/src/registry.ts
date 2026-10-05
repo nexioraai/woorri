@@ -80,10 +80,29 @@ const CAPABILITY_CLASSES: readonly ProviderClassDefinition[] = CAPABILITIES.map(
 // par app (D-032, Phase 5 — provisioning, RLS et teardown prouvés sur un
 // projet réel). Ce n'est pas une déclaration d'intention : l'implémentation
 // existe et a tourné.
+// ── UN TROISIÈME PROVIDER : LE SERVEUR DU PROPRIÉTAIRE (2026-10-05).
+//
+// Mesuré sur une demande réelle : le propriétaire d'une application exige un
+// backend Spring Boot. L'application émise écrivait par le client Supabase et
+// ouvrait sa session par `client.auth.*` — les noms d'UN fournisseur. Rien
+// n'était spécifié pour un autre serveur, donc rien n'était implémentable.
+//
+// `air_http` n'est pas un service tiers : c'est le PROTOCOLE du moteur
+// (`/air/v1/...`, voir `resolve-lock.ts`) parlé par le serveur du
+// propriétaire, quel que soit son langage. D'où `implementation: ""` alors
+// que `kind` est `real` — il n'y a AUCUN paquet à installer : l'application
+// utilise `fetch`, qui est déjà là. Le substitut partage cette forme pour la
+// raison inverse (il n'implémente rien) ; les deux cas sont distingués par
+// `kind`, jamais par la chaîne vide.
+//
+// Le défaut par défaut reste `supabase` : changer le comportement par défaut
+// d'un corpus entier pour servir un nouveau cas aurait fait basculer 28
+// applications existantes vers un serveur que personne n'a écrit.
 const BACKEND_CLASS: ProviderClassDefinition = {
   providerClass: BACKEND_REST_CLASS,
   providers: [
     { id: "supabase", kind: "real", implementation: "@supabase/supabase-js" },
+    { id: "air_http", kind: "real", implementation: "" },
     { id: PROVIDER_MOCK, kind: "mock", implementation: "" },
   ],
   defaultProvider: "supabase",

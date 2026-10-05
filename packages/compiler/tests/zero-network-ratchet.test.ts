@@ -45,28 +45,46 @@ const sourceFiles = (dir: string): string[] =>
 // contient donc la même occurrence de `fetch(` que le module exempté, comme
 // DONNÉE. Le scan de runtime/ ci-dessous fait foi sur l'emplacement réel ;
 // les interdits d'IMPORT restent vérifiés sur le miroir aussi.
+// ÉDITION CONSCIENTE (2026-10-05) : DEUX modules réseau de plus, et la même
+// raison que le premier — ils ne s'exécutent QUE dans l'application émise, sur
+// l'appareil. Le chemin de compilation reste intégralement zéro-réseau.
+//
+// Pourquoi ils existent : le moteur avait décidé un protocole neutre pour la
+// LECTURE (D-132) et jamais pour l'écriture ni la session — l'application émise
+// écrivait par le client Supabase. Un propriétaire qui exige un autre serveur
+// n'avait donc rien à implémenter. Ces deux modules parlent le protocole
+// `/air/v1/...` en HTTP nu, sans aucun paquet.
 const EXEMPTIONS_FETCH = [
   join("runtime", "source-reseau.ts"),
+  join("runtime", "ecriture-http.ts"),
+  join("runtime", "session-http.ts"),
   join("src", "embedded-assets.generated.ts"),
 ];
 
 describe("cliquet statique zéro-réseau (chemin de compilation)", () => {
   it("aucun import de module réseau/LLM dans src/ ni runtime/", () => {
-    let exemptionVue = false;
+    const vues = new Set<string>();
     for (const file of [...sourceFiles("src"), ...sourceFiles("runtime")]) {
       const content = readFileSync(join(PKG, file), "utf8");
       for (const forbidden of FORBIDDEN_SPECIFIERS) {
         expect(content.includes(forbidden), `${file} → ${forbidden}`).toBe(false);
       }
       if (EXEMPTIONS_FETCH.includes(file)) {
-        if (file === EXEMPTIONS_FETCH[0]) exemptionVue = true;
+        if (file.startsWith("runtime")) vues.add(file);
         continue; // seules exemptions `fetch(` — voir ÉDITION CONSCIENTE ci-dessus
       }
       expect(content.includes("fetch("), `${file} → fetch(`).toBe(false);
     }
-    // L'exemption doit exister LÀ où elle est déclarée — un déplacement du
-    // module réseau sans retouche consciente du cliquet doit ÉCHOUER ici.
-    expect(exemptionVue, "runtime/source-reseau.ts absent").toBe(true);
+    // ── CHAQUE EXEMPTION DÉCLARÉE DOIT ÊTRE VUE, PAS SEULEMENT LA PREMIÈRE.
+    //
+    // La version d'origine ne vérifiait que `EXEMPTIONS_FETCH[0]`. Avec une
+    // seule exemption de runtime, cela suffisait ; avec trois, une exemption
+    // dont le fichier serait renommé ou supprimé resterait déclarée sans que
+    // rien ne le dise — et une exemption qui ne correspond à rien finit par
+    // couvrir, un jour, un fichier portant par hasard le même nom.
+    expect([...vues].sort(), "exemption déclarée dont le fichier n'existe pas").toEqual(
+      EXEMPTIONS_FETCH.filter((e) => e.startsWith("runtime")).sort(),
+    );
   });
 
   it("dépendances du paquet = allowlist moteur exacte", () => {

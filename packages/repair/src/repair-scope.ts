@@ -235,6 +235,16 @@ export const SECTIONS_CORRECTIVES: Readonly<Record<string, readonly SectionEmiss
   // dans `base`), ou libérer l'écran de son droit (`ecrans`). Les trois sont
   // du ressort du document ; aucun n'est préférable a priori.
   AIR_ACCESS_ENTRY_UNREACHABLE: ["base", "ecrans"],
+  // ── UN DROIT EXIGÉ SANS PORTEUR (2026-10-05). Trois issues légitimes, et
+  // c'est pourquoi les trois sections y sont :
+  //
+  //   · accorder le droit à un rôle (`base` — `access` y vit) ;
+  //   · cesser de l'exiger sur l'écran (`ecrans`) ;
+  //   · cesser de l'exiger sur le geste (`actions`).
+  //
+  // Le routage vers `base` seule aurait forcé la première — or un écran qui
+  // n'a pas à être protégé ne se répare pas en inventant un rôle qui l'ouvre.
+  AIR_DROIT_EXIGE_SANS_PORTEUR: ["base", "ecrans", "actions"],
   // Des droits portés sans modèle d'accès : soit on déclare le modèle
   // (`base`), soit on retire les droits là où ils sont portés.
   AIR_ACCESS_SANS_DECLARATION: ["base", "ecrans", "actions"],

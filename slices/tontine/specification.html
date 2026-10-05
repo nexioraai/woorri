@@ -40,6 +40,12 @@ th{text-align:left;font-weight:600;padding:.6rem .8rem;background:var(--accent-d
 td{padding:.55rem .8rem;border-top:1px solid var(--rule);vertical-align:top}
 tr:hover td{background:var(--accent-doux)}
 hr{border:0;border-top:1px solid var(--rule);margin:3rem 0 1rem}
+/* UN BLOC DE CODE DÉFILE DANS SON PROPRE CADRE. Sans cela, une ligne JSON
+   longue fait défiler la PAGE ENTIÈRE de côté — sur un téléphone, le texte
+   du document devient inatteignable. */
+pre{overflow-x:auto;margin:1rem 0;padding:.9rem 1rem;background:var(--carte);
+  border:1px solid var(--rule);border-radius:6px;max-width:40rem}
+pre code{background:none;color:var(--encre);padding:0;font-size:.85rem;line-height:1.55}
 p:last-of-type em,p em{color:var(--encre-douce)}
 </style>
 <main>

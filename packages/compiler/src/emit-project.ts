@@ -18,6 +18,9 @@ import { normalizeAir, resolveLock } from "./resolve-lock.ts";
 import { RELEASE_TRAIN_V1, type ReleaseTrain } from "./release-train.ts";
 import { planifierComposition, validerPlan, type EcranPlan } from "./plan-composition.ts";
 import type { CibleRemoteResolue } from "./resolve-lock.ts";
+// Le protocole de session vit avec celui des données, dans le résolveur :
+// une seule autorité sur la forme des URL (doctrine D-132).
+import { OPERATIONS_SESSION, urlProtocoleSession } from "./resolve-lock.ts";
 
 // Syntaxe EFFAÇABLE uniquement (pas de parameter properties) : les bancs
 // exécutent ces sources sous le strip-only de Node (patron emit-v2.mjs).
@@ -1034,12 +1037,34 @@ function emitApp(
     (i) =>
       i.capability === "auth" &&
       (i.config ?? []).some((c) => c.key === "url") &&
-      (i.config ?? []).some((c) => c.key === "anonKey"),
+      // Une clé anonyme OU un protocole déclaré. Supabase exige la première ;
+      // un serveur qui parle le protocole du moteur n'en a aucune à publier,
+      // et l'exiger l'aurait rendu inatteignable.
+      (i.config ?? []).some(
+        (c) =>
+          c.key === "anonKey" || (c.key === "provider" && c.value === "air_http"),
+      ),
   );
+  // ── QUEL SERVEUR ? LE DOCUMENT LE DIT, ON NE LE DEVINE PAS.
+  //
+  // Jusqu'au 2026-10-05 il n'y avait qu'une réponse : Supabase. Le moteur avait
+  // décidé un protocole NEUTRE pour la lecture (D-132) et jamais pour
+  // l'écriture ni la session — un propriétaire qui exige un autre backend
+  // (demande réelle : Spring Boot) n'avait donc rien à implémenter.
+  //
+  // `provider: "air_http"` dans la configuration de l'intégration désigne le
+  // PROTOCOLE DU MOTEUR (`/air/v1/...`) parlé par le serveur du propriétaire,
+  // quel que soit son langage. Le choix est DÉCLARÉ : l'absence de clé anonyme
+  // aurait pu servir de signe, et déduire un backend d'une absence est
+  // exactement le genre de convention qui se retourne un jour.
+  const serveurNeutre =
+    integrationAuth !== undefined &&
+    (integrationAuth.config ?? []).some((c) => c.key === "provider" && c.value === "air_http");
   const configAuth =
     integrationAuth === undefined
       ? undefined
       : {
+          neutre: serveurNeutre,
           url: String((integrationAuth.config ?? []).find((c) => c.key === "url")?.value ?? ""),
           anonKey: String(
             (integrationAuth.config ?? []).find((c) => c.key === "anonKey")?.value ?? "",
@@ -1126,15 +1151,26 @@ function emitApp(
                 'import { creerCapabilitesAuth } from "./lib/runtime/capabilites-auth";',
                 'import { creerSessionLocale } from "./lib/runtime/session-locale";',
               ]
-            : [
-                'import { creerCapabilitesAuthVerifiee } from "./lib/runtime/capabilites-auth";',
-                'import { createClient } from "@supabase/supabase-js";',
-                'import { creerSessionSupabase } from "./lib/runtime/session-supabase";',
-                ...(configAuth.profil === undefined
-                  ? []
-                  : ['import { armerLectureProfil } from "./lib/runtime/lecture-profil";']),
-                ...(avecRemote ? ['import { creerMagasinEcrivain } from "./lib/runtime/ecriture-supabase";'] : []),
-              ]),
+            : configAuth.neutre
+              ? [
+                  'import { creerCapabilitesAuthVerifiee } from "./lib/runtime/capabilites-auth";',
+                  'import { creerSessionHttp, transportSessionHttp } from "./lib/runtime/session-http";',
+                  ...(avecRemote
+                    ? [
+                        'import { creerMagasinEcrivain } from "./lib/runtime/ecriture-supabase";',
+                        'import { creerPortHttp, transportEcritureHttp } from "./lib/runtime/ecriture-http";',
+                      ]
+                    : []),
+                ]
+              : [
+                  'import { creerCapabilitesAuthVerifiee } from "./lib/runtime/capabilites-auth";',
+                  'import { createClient } from "@supabase/supabase-js";',
+                  'import { creerSessionSupabase } from "./lib/runtime/session-supabase";',
+                  ...(configAuth.profil === undefined
+                    ? []
+                    : ['import { armerLectureProfil } from "./lib/runtime/lecture-profil";']),
+                  ...(avecRemote ? ['import { creerMagasinEcrivain } from "./lib/runtime/ecriture-supabase";'] : []),
+                ]),
         ]
       : []),
     'import { demoData } from "./demo.data";',
@@ -1169,7 +1205,34 @@ function emitApp(
             "const session = creerSessionLocale();",
             "const capabilities = creerCapabilitesAuth(session);",
           ]
-        : [
+        : configAuth.neutre
+          ? [
+              "// Session VÉRIFIÉE par LE SERVEUR DU PROPRIÉTAIRE, en HTTP nu.",
+              "// Les cinq URL viennent du protocole du moteur — l'application",
+              "// n'en construit aucune (doctrine D-132).",
+              `const URLS_SESSION = ${canonicalJson(urlsSession(configAuth.url))} as const;`,
+              "const session = creerSessionHttp({",
+              "  urls: URLS_SESSION,",
+              "  transport: transportSessionHttp,",
+              "});",
+              "const capabilities = creerCapabilitesAuthVerifiee(session);",
+              ...(avecRemote
+                ? [
+                    `const CHAMPS_SENSIBLES = ${canonicalJson(champsSensibles)} as const;`,
+                    "// L'écriture atteint le serveur. Le magasin est DÉCORÉ :",
+                    "// l'instantané local ne bouge que si le serveur a accepté.",
+                    "const providerEcrivain = creerMagasinEcrivain({",
+                    "  magasin: provider,",
+                    "  port: creerPortHttp({",
+                    "    cibles: CIBLES_REMOTE,",
+                    "    transport: transportEcritureHttp,",
+                    "  }),",
+                    "  champsSensibles: CHAMPS_SENSIBLES,",
+                    "});",
+                  ]
+                : []),
+            ]
+          : [
             "// Session VÉRIFIÉE : le document déclare OÙ vérifier l'identité.",
             "// La clé anonyme est publiable par conception (protégée par RLS) —",
             "// c'est ce qui ship dans tout client Supabase ; aucun secret ici.",
@@ -1207,7 +1270,7 @@ function emitApp(
                       ]),
                 ]
               : []),
-          ]
+            ]
       : []),
     ...(air.app.locales.rtlSupported
       ? [
@@ -1310,6 +1373,21 @@ function libellePrimitif(screenId: string, air: ProjectAir): string | undefined 
     return LIBELLES_PRIMITIFS.compte;
   }
   return undefined;
+}
+
+/**
+ * LES CINQ URL DE SESSION, DÉRIVÉES DU PROTOCOLE.
+ *
+ * `urlProtocoleSession` est l'autorité (il vit avec le protocole de données,
+ * dans le résolveur). Les recopier ici en ferait une seconde — et deux
+ * autorités sur une URL finissent par ne plus dire la même chose.
+ */
+function urlsSession(base: string): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const nom of Object.keys(OPERATIONS_SESSION)) {
+    out[nom] = urlProtocoleSession(base, nom as keyof typeof OPERATIONS_SESSION);
+  }
+  return out;
 }
 
 export function emitProject(

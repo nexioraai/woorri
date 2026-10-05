@@ -1,0 +1,214 @@
+<title>Tontine — contrat d'API</title>
+<style>
+:root{
+  --encre:#171a1f; --encre-douce:#4a5159; --papier:#faf9f6; --carte:#ffffff;
+  --rule:#e2ded5; --accent:#0f6b58; --accent-doux:#e6f1ed;
+  --dette:#8c4a2f; --dette-doux:#f7ece6;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --encre:#e9e7e1; --encre-douce:#a3a8ad; --papier:#14161a; --carte:#1b1e23;
+    --rule:#2d3138; --accent:#4fd1ab; --accent-doux:#132a24;
+    --dette:#e0a183; --dette-doux:#2b1d16;
+  }
+}
+:root[data-theme="dark"]{
+  --encre:#e9e7e1; --encre-douce:#a3a8ad; --papier:#14161a; --carte:#1b1e23;
+  --rule:#2d3138; --accent:#4fd1ab; --accent-doux:#132a24;
+  --dette:#e0a183; --dette-doux:#2b1d16;
+}
+body{background:var(--papier);color:var(--encre);
+  font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  margin:0;padding:0 1.25rem 5rem;}
+main{max-width:52rem;margin:0 auto;display:flex;flex-direction:column;gap:.2rem}
+h1{font-family:Georgia,"Times New Roman",serif;font-weight:600;font-size:2.1rem;
+  line-height:1.2;text-wrap:balance;margin:3rem 0 .5rem;letter-spacing:-.01em}
+h2{font-family:Georgia,serif;font-weight:600;font-size:1.4rem;text-wrap:balance;
+  margin:3rem 0 .25rem;padding-bottom:.45rem;border-bottom:2px solid var(--rule)}
+h3{font-weight:600;font-size:1.02rem;margin:2rem 0 .25rem;
+  letter-spacing:.04em;text-transform:uppercase;color:var(--encre-douce)}
+p{margin:.7rem 0;max-width:40rem}
+blockquote{margin:.9rem 0;padding:.75rem 1rem;background:var(--dette-doux);
+  border-left:3px solid var(--dette);color:var(--encre-douce);font-size:.94rem}
+ul{margin:.7rem 0;padding-left:1.1rem;display:flex;flex-direction:column;gap:.3rem;max-width:40rem}
+code{font:.88em ui-monospace,SFMono-Regular,Menlo,monospace;
+  background:var(--accent-doux);color:var(--accent);padding:.1em .35em;border-radius:3px}
+.defile{overflow-x:auto;margin:1rem 0;border:1px solid var(--rule);border-radius:6px;background:var(--carte)}
+table{border-collapse:collapse;width:100%;font-size:.9rem;font-variant-numeric:tabular-nums}
+th{text-align:left;font-weight:600;padding:.6rem .8rem;background:var(--accent-doux);
+  color:var(--accent);white-space:nowrap;font-size:.8rem;letter-spacing:.03em;text-transform:uppercase}
+td{padding:.55rem .8rem;border-top:1px solid var(--rule);vertical-align:top}
+tr:hover td{background:var(--accent-doux)}
+hr{border:0;border-top:1px solid var(--rule);margin:3rem 0 1rem}
+/* UN BLOC DE CODE DÉFILE DANS SON PROPRE CADRE. Sans cela, une ligne JSON
+   longue fait défiler la PAGE ENTIÈRE de côté — sur un téléphone, le texte
+   du document devient inatteignable. */
+pre{overflow-x:auto;margin:1rem 0;padding:.9rem 1rem;background:var(--carte);
+  border:1px solid var(--rule);border-radius:6px;max-width:40rem}
+pre code{background:none;color:var(--encre);padding:0;font-size:.85rem;line-height:1.55}
+p:last-of-type em,p em{color:var(--encre-douce)}
+</style>
+<main>
+<h1>Contrat d'API — « Tontine »</h1>
+<blockquote>Dérivé du document AIR <code>prj_tontine_cameroun</code>, contrat 1.30.0.</blockquote>
+<blockquote>Ne pas éditer à la main : régénérer par <code>npx tsx slices/tontine/contrat-api.mjs</code>.</blockquote>
+<p>Ce document dit ce que <strong>le serveur</strong> doit faire. Il ne dit rien de son</p>
+<p>langage ni de sa base : l'application parle HTTP et JSON, et rien d'autre.</p>
+<p>Toutes les URL sont relatives à la racine de votre serveur. Le domaine</p>
+<p><code>api.exemple.tontine</code> ci-dessous est un EXEMPLE — le vrai sera celui que le document</p>
+<p>déclarera comme source de ses données.</p>
+<h2>1. Les données — une ressource par entité, trois méthodes</h2>
+<p>L'application lit, crée et supprime des lignes. Le protocole est le même</p>
+<p>pour chaque entité, et il n'a qu'une ressource : la <strong>collection</strong>.</p>
+<p>| méthode | chemin | ce que le serveur fait |</p>
+<p>| --- | --- | --- |</p>
+<p>| <code>GET</code> | <code>/air/v1/entities/{entityId}/rows</code> | rend <strong>le tableau JSON</strong> des lignes : <code>[{ "id": "…", "values": { … } }]</code> |</p>
+<p>| <code>POST</code> | <code>/air/v1/entities/{entityId}/rows</code> | crée la ligne, ou <strong>remplace</strong> celle dont l'<code>id</code> est fourni dans le corps |</p>
+<p>| <code>DELETE</code> | <code>/air/v1/entities/{entityId}/rows/{id}</code> | supprime la ligne |</p>
+<p><code>POST</code> et non <code>PUT</code> : à la création, le client ne connaît pas encore l'URL</p>
+<p>de la ligne — c'est le serveur qui décide de l'identifiant.</p>
+<p><code>{id}</code> est un gabarit. L'application <strong>encode</strong> l'identifiant dans l'URL</p>
+<p>(<code>percent-encoding</code>) : un identifiant qui contiendrait <code>/</code> ou <code>?</code> viserait</p>
+<p>sinon une autre ressource — ou la collection entière, selon le serveur.</p>
+<p>Les 4 entités de cette application :</p>
+<h3><code>ent_utilisateurs</code></h3>
+<ul><li>lecture : <code>GET https://api.exemple.tontine/air/v1/entities/ent_utilisateurs/rows</code></li><li>écriture : <code>POST https://api.exemple.tontine/air/v1/entities/ent_utilisateurs/rows</code></li><li>suppression : <code>DELETE https://api.exemple.tontine/air/v1/entities/ent_utilisateurs/rows/{id}</code></li></ul>
+<p>Champs attendus dans <code>values</code> :</p>
+<ul><li><code>nom_complet</code> — string — <strong>requis</strong></li><li><code>telephone</code> — string</li><li><code>est_sans_telephone</code> — boolean — <strong>requis</strong></li><li><code>mandataire</code> — reference</li><li><code>photo_profil</code> — asset</li><li><code>piece_identite</code> — asset</li><li><code>est_president_verifie</code> — boolean — <strong>requis</strong></li><li><code>cree_le</code> — datetime — <strong>requis</strong></li></ul>
+<h3><code>ent_tontines</code></h3>
+<ul><li>lecture : <code>GET https://api.exemple.tontine/air/v1/entities/ent_tontines/rows</code></li><li>écriture : <code>POST https://api.exemple.tontine/air/v1/entities/ent_tontines/rows</code></li><li>suppression : <code>DELETE https://api.exemple.tontine/air/v1/entities/ent_tontines/rows/{id}</code></li></ul>
+<p>Champs attendus dans <code>values</code> :</p>
+<ul><li><code>nom</code> — string — <strong>requis</strong></li><li><code>montant_cotisation</code> — decimal — <strong>requis</strong></li><li><code>frequence</code> — enum — <strong>requis</strong> — ∈ <code>HEBDOMADAIRE</code> · <code>MENSUEL</code></li><li><code>cagnotte_interets_cumulee</code> — decimal — 🧮 <strong>calculé par le serveur</strong></li><li><code>taux_penalite_jour</code> — decimal — <strong>requis</strong></li><li><code>statut</code> — enum — <strong>requis</strong> — ∈ <code>EN_ATTENTE</code> · <code>ACTIVE</code> · <code>TERMINEE</code> — 🔒 transitions contrôlées</li><li><code>president</code> — reference — <strong>requis</strong></li><li><code>cree_le</code> — datetime — <strong>requis</strong></li></ul>
+<h3><code>ent_membres_tontine</code></h3>
+<ul><li>lecture : <code>GET https://api.exemple.tontine/air/v1/entities/ent_membres_tontine/rows</code></li><li>écriture : <code>POST https://api.exemple.tontine/air/v1/entities/ent_membres_tontine/rows</code></li><li>suppression : <code>DELETE https://api.exemple.tontine/air/v1/entities/ent_membres_tontine/rows/{id}</code></li></ul>
+<p>Champs attendus dans <code>values</code> :</p>
+<ul><li><code>tontine</code> — reference — <strong>requis</strong></li><li><code>utilisateur</code> — reference — <strong>requis</strong></li><li><code>role</code> — enum — <strong>requis</strong> — ∈ <code>PRESIDENT</code> · <code>SECRETAIRE</code> · <code>TRESORIER</code> · <code>CENSEUR</code> · <code>MEMBRE</code></li><li><code>ordre_passage</code> — number</li><li><code>cumul_amandes_disciplinaires</code> — decimal — <strong>requis</strong></li></ul>
+<h3><code>ent_transactions</code></h3>
+<ul><li>lecture : <code>GET https://api.exemple.tontine/air/v1/entities/ent_transactions/rows</code></li><li>écriture : <code>POST https://api.exemple.tontine/air/v1/entities/ent_transactions/rows</code></li><li>suppression : <code>DELETE https://api.exemple.tontine/air/v1/entities/ent_transactions/rows/{id}</code></li></ul>
+<blockquote>🚫 <strong>ENTITÉ JOURNAL — aucune modification, aucune suppression.</strong></blockquote>
+<blockquote>Le document la déclare <code>appendOnly</code>. Le serveur doit REFUSER <code>DELETE</code>,</blockquote>
+<blockquote>et refuser un <code>POST</code> qui porte l'<code>id</code> d'une ligne existante. La seule</blockquote>
+<blockquote>correction admise est une ligne NOUVELLE qui annule la première — ce que</blockquote>
+<blockquote>la comptabilité appelle une contre-passation. L'application ne propose</blockquote>
+<blockquote>déjà pas ces gestes ; un serveur qui les accepterait les rendrait</blockquote>
+<blockquote>atteignables par tout autre chemin.</blockquote>
+<p>Champs attendus dans <code>values</code> :</p>
+<ul><li><code>tontine</code> — reference — <strong>requis</strong></li><li><code>cotiseur</code> — reference</li><li><code>beneficiaire</code> — reference</li><li><code>mandataire</code> — reference</li><li><code>type_op</code> — enum — <strong>requis</strong> — ∈ <code>COTISATION</code> · <code>ENCHERE</code> · <code>AMENDE_DISCIPLINAIRE</code> · <code>DISTRIBUTION_INTERETS</code> · <code>PAYOUT_POT</code></li><li><code>montant_base</code> — decimal — <strong>requis</strong></li><li><code>montant_enchere</code> — decimal — <strong>requis</strong></li><li><code>frais_reseau_mobile</code> — decimal — <strong>requis</strong></li><li><code>montant_penalite</code> — decimal — <strong>requis</strong></li><li><code>part_penalite_createur</code> — decimal — <strong>requis</strong></li><li><code>part_penalite_tontine</code> — decimal — <strong>requis</strong></li><li><code>commission_plateforme</code> — decimal — <strong>requis</strong></li><li><code>total_paye</code> — decimal — <strong>requis</strong></li><li><code>operateur</code> — enum — ∈ <code>ORANGE_CMR</code> · <code>MTN_CMR</code> · <code>CASH</code></li><li><code>reference_externe</code> — string</li><li><code>code_otp_payout</code> — string</li><li><code>statut</code> — enum — <strong>requis</strong> — ∈ <code>EN_ATTENTE</code> · <code>SEQUESTRE_BLOQUE</code> · <code>PAYOUT_SUCCES</code> · <code>ECHEC</code> — 🔒 transitions contrôlées</li><li><code>date_transaction</code> — datetime — <strong>requis</strong></li></ul>
+<h2>2. Les champs que le serveur CALCULE</h2>
+<p>Ces valeurs ne se saisissent pas : elles dérivent d'autres lignes. Le</p>
+<p>serveur les rend en lecture et doit <strong>ignorer ou refuser</strong> toute tentative</p>
+<p>de les écrire — une valeur écrite diverge de ce dont elle dérive, et</p>
+<p>personne ne s'en aperçoit avant le décompte final.</p>
+<ul><li><code>ent_tontines.cagnotte_interets_cumulee</code> = la SOMME de <code>fld_transactions_montant_enchere</code> sur les lignes de <code>ent_transactions</code> liées par <code>rel_transaction_tontine</code></li></ul>
+<h2>3. Les états, et les seuls passages permis</h2>
+<p>Une énumération liste des valeurs et ne dit rien de leur ordre. Ces</p>
+<p>champs-là se succèdent dans le temps : **la première valeur est l'état</p>
+<p>initial**, et tout autre passage que ceux listés doit être refusé par le</p>
+<p>serveur. Sans ce refus, un paiement en échec pourrait repasser en attente.</p>
+<h3><code>ent_tontines.statut</code></h3>
+<p>État initial : <code>EN_ATTENTE</code>.</p>
+<p>| depuis | vers |</p>
+<p>| --- | --- |</p>
+<p>| <code>EN_ATTENTE</code> | <code>ACTIVE</code> |</p>
+<p>| <code>ACTIVE</code> | <code>TERMINEE</code> |</p>
+<p>États TERMINAUX (rien n'en sort) : <code>TERMINEE</code>.</p>
+<h3><code>ent_transactions.statut</code></h3>
+<p>État initial : <code>EN_ATTENTE</code>.</p>
+<p>| depuis | vers |</p>
+<p>| --- | --- |</p>
+<p>| <code>EN_ATTENTE</code> | <code>SEQUESTRE_BLOQUE</code> |</p>
+<p>| <code>EN_ATTENTE</code> | <code>ECHEC</code> |</p>
+<p>| <code>SEQUESTRE_BLOQUE</code> | <code>PAYOUT_SUCCES</code> |</p>
+<p>| <code>SEQUESTRE_BLOQUE</code> | <code>ECHEC</code> |</p>
+<p>États TERMINAUX (rien n'en sort) : <code>PAYOUT_SUCCES</code> · <code>ECHEC</code>.</p>
+<h2>4. La session, et les droits</h2>
+<p>Cinq opérations. Les chemins viennent du protocole du moteur, pas d'une</p>
+<p>convention de ce document.</p>
+<p>| méthode | chemin | ce que le serveur rend |</p>
+<p>| --- | --- | --- |</p>
+<p>| <code>POST</code> | <code>/air/v1/session</code> | l'identité <strong>et les droits</strong> — voir ci-dessous |</p>
+<p>| <code>GET</code> | <code>/air/v1/session</code> | l'état courant (appelé au démarrage de l'application) |</p>
+<p>| <code>DELETE</code> | <code>/air/v1/session</code> | rien (204 suffit) |</p>
+<p>| <code>POST</code> | <code>/air/v1/accounts</code> | l'identité si la session s'ouvre, sinon <code>pendingConfirmation: true</code> |</p>
+<p>| <code>POST</code> | <code>/air/v1/password-resets</code> | l'ACCEPTATION de l'envoi — <strong>jamais</strong> si le compte existe |</p>
+<p>Corps de <code>POST /air/v1/session</code> et <code>POST /air/v1/accounts</code> :</p>
+<p><code>{ "email": "…", "password": "…" }</code>.</p>
+<p>Réponse attendue de <code>POST</code> et <code>GET /air/v1/session</code> :</p>
+<pre><code>{
+  "userId": "identifiant de la personne, absent si aucune session",
+  "rights": ["les droits accordés — voir la liste ci-dessous"],
+  "pendingConfirmation": false
+}</code></pre>
+<h3>Les droits reviennent AVEC l'identité</h3>
+<p>Ce n'est pas un détail d'implémentation. Les demander par un second appel</p>
+<p>ferait exister un instant où l'identité est établie et les droits inconnus.</p>
+<p>L'accès étant <strong>fermé par défaut</strong>, cet instant afficherait un refus à</p>
+<p>quelqu'un qui a le droit — exactement le défaut que le contrôle d'accès</p>
+<p>existe pour empêcher.</p>
+<p>Les droits de cette application :</p>
+<ul><li><code>right_bureau</code> — bureau</li><li><code>right_registre</code> — registre</li><li><code>right_tresorerie</code> — tresorerie</li><li><code>right_discipline</code> — discipline</li><li><code>right_encaisser_cash</code> — encaisser_cash</li></ul>
+<h3>Les rôles appartiennent au serveur</h3>
+<p>L'application ne connaît que des DROITS. Qui a quel rôle, et quel rôle</p>
+<p>donne quel droit, est votre affaire — le document les décrit pour que les</p>
+<p>deux côtés parlent de la même chose, pas pour que l'application les calcule.</p>
+<p>Un rôle marqué <strong>tous les droits</strong> les reçoit TOUS, y compris ceux ajoutés</p>
+<p>plus tard : recopier la liste à sa place la désaccorderait au premier droit</p>
+<p>nouveau, et le garant de l'association perdrait un accès sans que rien ne</p>
+<p>le dise.</p>
+<p>| rôle | droits |</p>
+<p>| --- | --- |</p>
+<p>| <code>role_president</code> | <strong>tous les droits</strong> (<code>grantsAllRights</code>) |</p>
+<p>| <code>role_secretaire</code> | <code>right_registre</code> |</p>
+<p>| <code>role_tresorier</code> | <code>right_tresorerie</code> · <code>right_encaisser_cash</code> |</p>
+<p>| <code>role_censeur</code> | <code>right_discipline</code> |</p>
+<p>| <code>role_membre</code> | <em>aucun</em> |</p>
+<h3>Agir au nom d'un autre</h3>
+<p>Le champ <code>fld_utilisateurs_mandataire</code> de <code>ent_utilisateurs</code> désigne le mandataire</p>
+<p>d'une personne. Les droits <strong>délégables</strong> sont une liste blanche :</p>
+<ul><li><code>right_encaisser_cash</code></li></ul>
+<p>Un mandat <strong>transmet</strong> un droit, il ne le <strong>crée</strong> pas : le serveur doit</p>
+<p>refuser l'action si le mandant lui-même n'a pas le droit. Et aucun autre</p>
+<p>droit que ceux listés ne se délègue — « ce mandataire peut tout faire pour</p>
+<p>moi » est une procuration générale que personne ne signe en connaissance</p>
+<p>de cause.</p>
+<h2>5. Les gestes que le serveur exécute</h2>
+<p>Ces actions ne s'exécutent pas dans l'application : elle <strong>demande</strong>, le</p>
+<p>serveur fait, l'application suit l'issue.</p>
+<h3><code>act_decaisser_pot</code> — Décaisser le pot au gagnant du tour</h3>
+<ul><li>capacité : <code>payments.mobile_money</code>, méthode <code>payout</code></li><li>droit exigé : <code>right_bureau</code> — <strong>le serveur doit le vérifier</strong>, pas seulement l'application</li><li>🔐 <strong>SUSPENDU à un code de 6 chiffres reçu hors de l'application</strong></li></ul>
+<p>  Le serveur <strong>émet</strong> ce code sur un autre canal (SMS, messagerie) et le</p>
+<p>  <strong>vérifie</strong> lui-même. L'application ne fait que le saisir et le</p>
+<p>  transmettre : une application qui vérifierait elle-même un secret le</p>
+<p>  détiendrait, et un secret que le vérificateur détient ne prouve plus</p>
+<p>  rien. Le document dit que le geste est suspendu et combien de chiffres</p>
+<p>  sont attendus — ni par quel canal, ni comment vérifier.</p>
+<h2>6. Ce qui n'appartient PAS à l'application</h2>
+<p>5 exigences du cahier des charges ne sont pas exprimables dans le</p>
+<p>document, et ce n'est pas un manque du format : chacune a besoin d'une</p>
+<p><strong>horloge</strong> ou manipule de l'<strong>argent</strong> entre des personnes. Un document</p>
+<p>qui décrit des écrans ne doit porter ni l'une ni l'autre.</p>
+<p>Elles sont donc <strong>entièrement à vous</strong>. L'application les verra par les</p>
+<p>données qu'elle lit et par les gestes qu'elle demande — jamais en les</p>
+<p>calculant.</p>
+<h3>Les fonds collectés sont bloqués sur un compte séquestre jusqu'à l'échéance du tour.</h3>
+<blockquote><strong>Pourquoi le serveur et pas l'application</strong> — L'ORDRE des états est maintenant déclaré (<code>transitions</code>) : le séquestre ne se dé-bloque plus vers un état antérieur. Mais l'ÉCHÉANCE ne l'est pas. « Jusqu'à l'échéance du tour » suppose une HORLOGE qui fasse passer l'état toute seule, et une horloge vit sur le serveur. Le format dit ce qui est PERMIS, jamais ce qui arrive de soi-même — prétendre le contraire ferait croire qu'une application déverrouille des fonds sans que personne n'agisse.</blockquote>
+<h3>Le pot est attribué par enchère : le membre qui propose la plus forte prime l'emporte.</h3>
+<blockquote><strong>Pourquoi le serveur et pas l'application</strong> — Une enchère est une CONCURRENCE entre plusieurs membres sur un même objet, avec un gagnant et une clôture. Le format décrit des écrans, des listes et des gestes individuels ; il n'a aucun nœud pour un mécanisme où le geste d'un membre invalide celui d'un autre.</blockquote>
+<h3>Les pénalités de retard valent 2 % par jour et se répartissent 70 % au groupe, 30 % à la plateforme.</h3>
+<blockquote><strong>Pourquoi le serveur et pas l'application</strong> — Calcul sur une DURÉE, puis partage. Le format ne porte ni l'un ni l'autre : <code>rules.kind = "validation"</code> sait refuser une saisie, jamais produire un montant. C'est la même famille que le stock calculé de SGD, resté inexprimable.</blockquote>
+<h3>Les primes d'enchères s'accumulent pendant tout le cycle, puis se répartissent à parts égales en fin de cycle.</h3>
+<blockquote><strong>Pourquoi le serveur et pas l'application</strong> — L'ACCUMULATION est portée : <code>cagnotte_interets_cumulee</code> est déclarée somme des primes d'enchères de ses transactions, et le validateur refuse qu'un formulaire la propose à la saisie. C'est la RÉPARTITION qui reste dehors, et pour deux raisons distinctes : elle divise par le nombre de membres ACTIFS — une condition que <code>sum</code> et <code>count</code> ne portent pas — et elle se déclenche À LA FIN DU CYCLE, un événement métier qu'aucun déclencheur ne connaît. Diviser et choisir son moment appartiennent au serveur, avec le reste de l'argent.</blockquote>
+<h3>À chaque séance, un membre et un seul encaisse le pot, selon l'ordre de passage.</h3>
+<blockquote><strong>Pourquoi le serveur et pas l'application</strong> — <code>ordre_passage</code> est un nombre sur une ligne. Rien ne dit QUEL tour est en cours, ni que le tour avance quand le pot est versé. L'état d'avancement d'un cycle n'a pas de place au format.</blockquote>
+<hr/>
+<h2>Ce que ce contrat ne dit pas, délibérément</h2>
+<ul><li><strong>Aucune forme de jeton n'est imposée.</strong> Cookie, en-tête, durée de vie :</li></ul>
+<p>  mettez ce que vous voulez dans la réponse de <code>POST /air/v1/session</code>,</p>
+<p>  l'application le renvoie tel quel. Choisir à votre place reviendrait à</p>
+<p>  décider de la sécurité de votre serveur depuis un générateur d'écrans.</p>
+<ul><li><strong>Aucun schéma de base de données.</strong> Les entités ci-dessus sont ce que</li></ul>
+<p>  l'application attend en JSON, pas vos tables.</p>
+<ul><li><strong>Aucune pagination.</strong> <code>GET …/rows</code> rend tout. Le jour où une collection</li></ul>
+<p>  devient grande, cela se verra et se décidera — l'annoncer maintenant</p>
+<p>  obligerait à l'implémenter des deux côtés sans savoir laquelle le mérite.</p>
+</main>

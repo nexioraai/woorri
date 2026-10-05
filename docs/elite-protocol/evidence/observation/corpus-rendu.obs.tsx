@@ -42,7 +42,16 @@ describe("GATE RACINE — les applications émises se MONTENT vraiment", () => {
     // n'assouplit rien : elle le RÉARME. Mesuré le 2026-09-04 : cette
     // assertion précède la boucle de montage, donc tant qu'elle échouait
     // AUCUN écran n'était monté — la gate ne prouvait plus rien.
-    expect(apps.length, "les applications des deux corpus").toBe(28);
+    // ÉDITION CONSCIENTE (2026-10-05) : 29 depuis l'entrée de
+    // `dougplace-serveur-neutre` à la gate de compilation. Ce n'est pas un
+    // nouveau document : c'est `dougplace` dont SEULE la configuration
+    // d'authentification change, pour que le chemin du SERVEUR NEUTRE
+    // (protocole `/air/v1/...` au lieu du client Supabase) soit réellement
+    // compilé — et, par cette gate-ci, réellement MONTÉ.
+    //
+    // Sans cette variante, le chemin neutre restait « émis et supposé bon » :
+    // aucun document du corpus ne déclare ce protocole.
+    expect(apps.length, "les applications des deux corpus").toBe(29);
 
     let ecrans = 0;
     let identites = 0;

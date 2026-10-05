@@ -72,6 +72,37 @@ const docs = [
     : []),
   ["slice-conteneurs", R + "slices/conteneurs/air/suivi-conteneurs.air.json"],
   ["resto-riche", R + "slices/resto-riche/chez-nous.air.json"],
+  // ── LE SERVEUR NEUTRE, COMPILÉ COMME LES AUTRES (2026-10-05).
+  //
+  // Le générateur sait désormais émettre une application qui parle le
+  // protocole du moteur (`/air/v1/...`) à un serveur quelconque, au lieu du
+  // client Supabase. AUCUN document du corpus ne déclare ce protocole : la
+  // gate ne l'aurait donc jamais compilé, et le chemin neutre serait resté
+  // « émis et supposé bon » — le défaut que ce dépôt paie en boucle.
+  //
+  // LE DOCUMENT EST CELUI DU CORPUS, et SEULE sa configuration
+  // d'authentification change. Deux raisons, et la seconde a été payée :
+  //
+  //   · un document fabriqué pour l'occasion n'aurait mesuré que ma capacité
+  //     à écrire un cas qui passe ;
+  //   · le premier essai prenait `dougplace`, qui n'est dans AUCUNE de ces
+  //     gates. La gate de rendu y a trouvé quatre fuites d'identifiant —
+  //     une dette RÉELLE de ce document, exposée parce que je l'amenais ici
+  //     pour la première fois. Elle est consignée, pas corrigée : ce lot
+  //     mesure le chemin du serveur, pas l'affichage des références.
+  [
+    "boutique-mode-serveur-neutre",
+    R + "packages/golden-corpus/corpus-v3/boutique-mode.air.json",
+    (doc) => {
+      const intg = (doc.integrations ?? []).find((i) => i.capability === "auth");
+      if (intg === undefined) return undefined; // pas d'auth : rien à mesurer
+      intg.config = [
+        { key: "url", value: "https://api.exemple.com" },
+        { key: "provider", value: "air_http" },
+      ];
+      return doc;
+    },
+  ],
 ].filter(([, p]) => existsSync(p));
 
 // Un slot d'auteur MINIMAL pour chaque slot déclaré : sans lui, le registre
@@ -89,12 +120,18 @@ console.log("\n  document                 fichiers   slots   tsc");
 console.log("  " + "─".repeat(72));
 
 let echecs = 0;
-for (const [nom, chemin] of docs) {
+for (const [nom, chemin, transformer] of docs) {
   // Un document devenu INVALIDE ne doit pas faire planter la gate : elle le
   // RAPPORTE. Un plantage masque l'information au lieu de la donner.
   let air;
   try {
-    air = migrateAirDocument(JSON.parse(readFileSync(chemin, "utf8")));
+    const brut = JSON.parse(readFileSync(chemin, "utf8"));
+    const prepare = transformer === undefined ? brut : transformer(brut);
+    if (prepare === undefined) {
+      console.log(`  ${nom.padEnd(24)} ⚪ IGNORÉ — la variante ne s'applique pas à ce document`);
+      continue;
+    }
+    air = migrateAirDocument(prepare);
   } catch (e) {
     const codes = [...new Set((e.diagnostics ?? []).map((d) => d.code))].join(" ");
     console.log(`  ${nom.padEnd(24)} 🔴 DOCUMENT INVALIDE : ${codes || String(e.message).slice(0, 50)}`);

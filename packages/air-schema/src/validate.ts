@@ -136,6 +136,53 @@ export function validateAir(air: ProjectAir): AirDiagnostic[] {
       }
     });
 
+    // ── UN DROIT EXIGÉ QUE PERSONNE NE PEUT TENIR FERME L'ÉCRAN À TOUS.
+    //
+    // ── POURQUOI CE CONTRÔLE MANQUAIT, ET COMMENT IL S'EST VU.
+    //
+    // Trois contrôles d'accès existaient : droit non DÉCLARÉ, écran D'ENTRÉE
+    // fermé au rôle par défaut, droit DÉLÉGABLE sans porteur. Le cas général
+    // — un droit exigé par n'importe quel écran ou geste, qu'aucun rôle
+    // n'accorde — n'était couvert par aucun des trois.
+    //
+    // Le raisonnement du contrôle de délégation s'applique ici et plus fort :
+    // là-bas « le mandataire exercerait un pouvoir que son mandant n'a pas » ;
+    // ici PERSONNE ne peut ouvrir l'écran, jamais, et toutes les portes du
+    // dépôt restent vertes — le document est valide, l'application compile,
+    // se monte, et l'écran est inaccessible à vie.
+    //
+    // Repéré le 2026-10-05 en dérivant le contrat d'API d'une tontine : la
+    // table des rôles donnée au développeur du serveur affichait « aucun
+    // droit » pour le Président. C'était un défaut du dérivateur
+    // (`grantsAllRights` non lu) et non du document — mais la question posée
+    // était bonne, et la réponse était que rien ne la posait.
+    //
+    // Mesuré sur les 31 documents du dépôt avant d'ajouter le refus : AUCUN
+    // n'est concerné. Le contrôle est donc strictement additif — il refuse
+    // une configuration que personne n'a écrite, et qui se paierait entière.
+    const porteurs = (droit: string): boolean =>
+      acces.roles.some((r) => r.grantsAllRights === true || r.rightIds.includes(droit));
+    air.screens.forEach((ecran, i) => {
+      const requis = ecran.requiredRightId;
+      if (requis === undefined || !droitsConnus.has(requis) || porteurs(requis)) return;
+      push(
+        "AIR_DROIT_EXIGE_SANS_PORTEUR",
+        `screens[${i}].requiredRightId`,
+        `l'écran "${ecran.id}" exige le droit "${requis}", qu'AUCUN rôle n'accorde : ` +
+          `cet écran est inaccessible à tout le monde, et rien d'autre ne le signale`,
+      );
+    });
+    air.actions.forEach((action, i) => {
+      const requis = action.requiredRightId;
+      if (requis === undefined || !droitsConnus.has(requis) || porteurs(requis)) return;
+      push(
+        "AIR_DROIT_EXIGE_SANS_PORTEUR",
+        `actions[${i}].requiredRightId`,
+        `l'action "${action.id}" exige le droit "${requis}", qu'AUCUN rôle n'accorde : ` +
+          `ce geste est impossible pour tout le monde — y compris celui qui en répond`,
+      );
+    });
+
     // ── LA PORTE D'ENTRÉE DOIT S'OUVRIR AU RÔLE PAR DÉFAUT.
     //
     // C'est LE défaut de SGD, et il se voit ici en une ligne : si l'écran

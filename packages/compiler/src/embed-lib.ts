@@ -215,6 +215,20 @@ export const EMBEDDED_SOURCES: readonly EmbeddedSourceSpec[] = [
     },
   },
   {
+    // LE SERVEUR DU PROPRIÉTAIRE, EN HTTP NU (2026-10-05). Le moteur avait un
+    // protocole neutre pour la LECTURE et jamais pour l'écriture ni la
+    // session : l'application écrivait par le client Supabase, et un
+    // propriétaire exigeant un autre backend n'avait rien à implémenter.
+    source: "compiler/runtime/ecriture-http.ts",
+    target: "lib/runtime/ecriture-http.ts",
+    rewrites: {},
+  },
+  {
+    source: "compiler/runtime/session-http.ts",
+    target: "lib/runtime/session-http.ts",
+    rewrites: {},
+  },
+  {
     // La COUTURE de plateforme — barre d'état et zones sûres. L'`app-shell`
     // doit valoir pour les deux cibles : c'est lui qui pose les insets.
     source: "compiler/runtime/plateforme.tsx",

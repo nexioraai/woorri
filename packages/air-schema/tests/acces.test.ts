@@ -29,8 +29,11 @@ interface DocTest {
   navigation: { entryScreenId: string; routes: { id: string }[] };
   entities: { fields: { id: string }[] }[];
   access?: {
-    rights: { id: string }[];
-    roles: { id: string }[];
+    rights: { id: string; name?: string; label?: { locale: string; text: string }[] }[];
+    // `rightIds` et `grantsAllRights` sont touchés par les tests du droit sans
+    // porteur : les déclarer ici, c'est la raison d'être de cette interface
+    // partielle — ce qui n'est pas écrit n'est pas manipulé.
+    roles: { id: string; rightIds?: string[]; grantsAllRights?: boolean }[];
     defaultRoleId: string;
   };
   intent: {
@@ -147,3 +150,101 @@ function diagnostiquer(doc: DocTest): string[] {
     return liste.map((d) => d.code);
   }
 }
+
+// ════════════════════════════════════════════════════════════════════
+//  UN DROIT QUE PERSONNE NE PEUT TENIR (2026-10-05).
+//
+// Trois contrôles d'accès existaient : droit non DÉCLARÉ, écran D'ENTRÉE fermé
+// au rôle par défaut, droit DÉLÉGABLE sans porteur. Le cas général manquait —
+// un droit exigé par n'importe quel écran ou geste, qu'aucun rôle n'accorde.
+//
+// Le raisonnement du contrôle de délégation s'applique ici et plus fort : là-bas
+// « le mandataire exercerait un pouvoir que son mandant n'a pas » ; ici PERSONNE
+// ne peut ouvrir l'écran, jamais, et toutes les portes du dépôt restent vertes.
+//
+// Repéré en dérivant le contrat d'API d'une tontine : la table des rôles donnée
+// au développeur du serveur affichait « aucun droit » pour le Président.
+// C'était un défaut du dérivateur (`grantsAllRights` non lu) et non du
+// document — mais la question posée était bonne, et rien ne la posait.
+// ════════════════════════════════════════════════════════════════════
+
+/**
+ * Le document réel, avec UN droit de plus que personne n'accorde, exigé par un
+ * écran qui n'est pas l'entrée.
+ *
+ * Pas d'écran d'entrée : son cas est DÉJÀ couvert par
+ * `AIR_ACCESS_ENTRY_UNREACHABLE`, et le viser ici ne prouverait rien de neuf.
+ */
+function docAvecDroitOrphelin(): DocTest {
+  const doc = lire();
+  if (doc.access === undefined) throw new Error("prémisse absente : le document porte access");
+  // Un droit COMPLET : le schéma exige `name` et `label`. La première version
+  // n'envoyait que l'identifiant, et les quatre tests échouaient au parse —
+  // sur une erreur de forme, pas sur le contrôle qu'ils visent.
+  doc.access.rights.push({
+    id: "right_orphelin",
+    name: "orphelin",
+    label: [{ locale: "fr", text: "Droit que personne n'accorde" }],
+  });
+  const autre = doc.screens.find((s) => s.id !== doc.navigation.entryScreenId);
+  if (autre === undefined) throw new Error("prémisse absente : un écran hors entrée");
+  autre.requiredRightId = "right_orphelin";
+  // ── LE GARANT GARDE SES DROITS, MAIS PLUS SA CARTE BLANCHE.
+  //
+  // Deux erreurs successives ici, et la seconde valait la première.
+  //
+  // ① Le document de référence porte `role_proprietaire` avec
+  //    `grantsAllRights: true` : il tient DÉJÀ tout droit ajouté, celui-ci
+  //    compris. Attendre un diagnostic était attendre l'impossible.
+  //
+  // ② Lui retirer `grantsAllRights` a orphelin TOUS les autres droits du
+  //    document — onze écrans d'un coup. Le test mesurait alors un dégât
+  //    collatéral, pas le cas qu'il visait.
+  //
+  // On énumère donc ce que la carte blanche accordait : le document reste
+  // exactement aussi valide qu'avant, et UN SEUL droit est sans porteur.
+  for (const r of doc.access.roles) {
+    if (r.grantsAllRights !== true) continue;
+    r.rightIds = doc.access.rights.map((x) => x.id).filter((id) => id !== "right_orphelin");
+    delete r.grantsAllRights;
+  }
+  return doc;
+}
+
+describe("un droit exigé que personne ne peut tenir", () => {
+  it("un ÉCRAN qui exige un droit sans porteur est REFUSÉ", () => {
+    expect(diagnostiquer(docAvecDroitOrphelin())).toContain("AIR_DROIT_EXIGE_SANS_PORTEUR");
+  });
+
+  it("un rôle ORDINAIRE qui l'accorde suffit à le rendre valide", () => {
+    // Le contrôle doit mordre ET laisser passer : un contrôle qui refuse tout
+    // ne prouve rien.
+    const doc = docAvecDroitOrphelin();
+    doc.access?.roles[0]?.rightIds?.push("right_orphelin");
+    expect(diagnostiquer(doc)).not.toContain("AIR_DROIT_EXIGE_SANS_PORTEUR");
+  });
+
+  it("un rôle `grantsAllRights` le porte AUSSI, sans l'énumérer", () => {
+    // Le défaut qui m'a trompé en lisant le document de la tontine : un rôle
+    // de garant n'énumère rien et porte tout. Lire `rightIds` seul fait croire
+    // qu'il n'a aucun droit — et dans un contrat remis à un tiers, cette
+    // lecture fait implémenter l'autorisation inverse.
+    const doc = docAvecDroitOrphelin();
+    const garant = doc.access?.roles[0];
+    if (garant === undefined) throw new Error("prémisse absente : un rôle");
+    garant.grantsAllRights = true;
+    expect(diagnostiquer(doc)).not.toContain("AIR_DROIT_EXIGE_SANS_PORTEUR");
+  });
+
+  it("un droit DÉCLARÉ et jamais exigé reste valide", () => {
+    // Un droit en réserve n'est pas un défaut : il n'enferme personne. Seul
+    // l'écran ou le geste qui l'EXIGE rend son absence de porteur fatale.
+    const doc = lire();
+    doc.access?.rights.push({
+    id: "right_en_reserve",
+    name: "en_reserve",
+    label: [{ locale: "fr", text: "Droit en réserve" }],
+  });
+    expect(diagnostiquer(doc)).not.toContain("AIR_DROIT_EXIGE_SANS_PORTEUR");
+  });
+});

@@ -61,6 +61,92 @@ export function urlProtocoleDonnees(domaine: string, entityId: string): string {
   return `https://${domaine}/air/v1/entities/${entityId}/rows`;
 }
 
+/*
+ * LA MÊME RESSOURCE, TROIS MÉTHODES — l'écriture n'invente aucun endpoint.
+ *
+ * ── CE QUI MANQUAIT, ET CE QUE ÇA COÛTAIT.
+ *
+ * Le moteur avait décidé un protocole NEUTRE pour la lecture (ci-dessus) et
+ * JAMAIS pour l'écriture : l'application émise écrivait par le client Supabase
+ * (`from(table).upsert(ligne)`). Un propriétaire qui exige un autre serveur —
+ * mesuré le 2026-10-05 : un backend Spring Boot — n'avait donc rien à
+ * implémenter pour les écritures, parce que rien n'était spécifié.
+ *
+ * ── POURQUOI PAS DE NOUVEL ENDPOINT.
+ *
+ * La collection `/air/v1/entities/{id}/rows` est DÉJÀ la ressource des lignes
+ * d'une entité. Lire, c'est `GET` dessus ; créer ou remplacer une ligne, c'est
+ * `POST` dessus ; supprimer, c'est `DELETE` sur la ligne. Inventer
+ * `/create-row` aurait ajouté du vocabulaire là où HTTP en a déjà.
+ *
+ * `POST` et non `PUT` : le corps porte l'identifiant quand il existe, et le
+ * serveur en décide quand il est absent. Un `PUT` promettrait que le client
+ * connaît l'URL de la ligne AVANT qu'elle existe, ce qui est faux d'une
+ * création.
+ *
+ * ── OÙ VIT LA DÉRIVATION DE L'URL DE LIGNE, ET POURQUOI PAS ICI.
+ *
+ * `urlDeLigne` vit dans `runtime/ecriture-http.ts`, et c'est la SEULE. Les
+ * lignes n'existent pas à la compilation : le résolveur ne peut en énumérer
+ * aucune, et une fonction posée ici n'aurait eu pour appelant que le test qui
+ * la vérifie — exactement ce que le cliquet EP-161 refuse, à raison. Une
+ * autorité que personne ne consomme n'en est pas une.
+ */
+
+/**
+ * LES CINQ OPÉRATIONS DE SESSION — et pourquoi elles sont cinq, pas une.
+ *
+ * ── LE DÉFAUT, MESURÉ.
+ *
+ * `session-supabase.ts` appelle `client.auth.signInWithPassword`, `signUp`,
+ * `resetPasswordForEmail`, `signOut` et `onAuthStateChange`. Ce sont les noms
+ * d'UN fournisseur. Un serveur tiers ne peut pas les deviner, et le contrat de
+ * session (`SessionProvider`) ne dit rien des endpoints — il décrit ce que
+ * l'application a besoin de SAVOIR, pas comment elle l'apprend.
+ *
+ * ── LA FORME, ET CE QU'ELLE REFUSE DE DIRE.
+ *
+ *   · `POST   /air/v1/session`          ouvrir — rend l'identité et LES DROITS
+ *   · `GET    /air/v1/session`          l'état courant, au démarrage
+ *   · `DELETE /air/v1/session`          fermer
+ *   · `POST   /air/v1/accounts`         créer un compte
+ *   · `POST   /air/v1/password-resets`  demander une réinitialisation
+ *
+ * LES DROITS VIENNENT AVEC LA SESSION, et c'est une décision : les demander
+ * séparément ferait exister un instant où l'identité est établie et les droits
+ * inconnus. Le contrôle d'accès est fermé par défaut (1.28.0) — cet instant
+ * afficherait un refus à quelqu'un qui a le droit, ce qui est le défaut
+ * fondateur que le lot d'accès existe pour empêcher.
+ *
+ * `POST /password-resets` rend ACCEPTÉ ou REFUSÉ, jamais « ce compte existe » :
+ * révéler l'existence d'une adresse est une fuite, et le contrat de session le
+ * dit déjà (`reinitialiser`).
+ *
+ * AUCUNE FORME DE JETON N'EST IMPOSÉE ICI. Le serveur place ce qu'il veut dans
+ * la réponse de `POST /session` ; l'application le renvoie tel quel. Choisir
+ * entre un cookie et un en-tête à la place du propriétaire reviendrait à
+ * décider de la sécurité de son serveur depuis un générateur d'écrans.
+ */
+export const OPERATIONS_SESSION = {
+  ouvrir: { methode: "POST", chemin: "/air/v1/session" },
+  etat: { methode: "GET", chemin: "/air/v1/session" },
+  fermer: { methode: "DELETE", chemin: "/air/v1/session" },
+  creerCompte: { methode: "POST", chemin: "/air/v1/accounts" },
+  reinitialiser: { methode: "POST", chemin: "/air/v1/password-resets" },
+} as const;
+
+/** L'URL d'une opération de session, sur le serveur déclaré par l'intégration. */
+export function urlProtocoleSession(
+  base: string,
+  operation: keyof typeof OPERATIONS_SESSION,
+): string {
+  // `base` arrive du `config.url` de l'intégration d'authentification — déjà
+  // une URL complète. On retire une barre finale pour ne pas produire `//air`,
+  // qui est une URL VALIDE et un chemin différent : certains serveurs la
+  // servent, d'autres rendent 404, et le défaut ne se voit qu'en production.
+  return `${base.replace(/\/+$/, "")}${OPERATIONS_SESSION[operation].chemin}`;
+}
+
 export interface CibleRemoteResolue {
   readonly datasetId: string;
   readonly entityId: string;
