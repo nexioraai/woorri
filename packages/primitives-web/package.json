@@ -1,0 +1,33 @@
+{
+  "name": "@deribfy/primitives-web",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Primitives du design system pour la cible WEB — meme contrat que @deribfy/primitives, rendu HTML. Les blocs ne connaissent ni l'une ni l'autre : ils ne connaissent que le contrat.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint . --max-warnings 0",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@deribfy/design-tokens": "*",
+    "@deribfy/primitives": "*"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "~19.2.2",
+    "@types/react-test-renderer": "^19.1.0",
+    "eslint": "^9.39.0",
+    "react": "^19.2.0",
+    "react-test-renderer": "^19.2.0",
+    "typescript": "^5",
+    "typescript-eslint": "^8.60.0",
+    "vitest": "^4.1.10"
+  }
+}
