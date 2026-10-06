@@ -27,6 +27,7 @@ const { tmpdir } = await import("node:os");
 const { join } = await import("node:path");
 const { fileURLToPath } = await import("node:url");
 const R = join(fileURLToPath(import.meta.url), "..", "..", "..", "..") + "/";
+const { outillageJava } = await import(R + "docs/elite-protocol/evidence/outillage-java.mjs");
 const { migrateAirDocument, assertValidAir } = await import(R + "packages/air-schema/src/index.ts");
 const { compileBackend } = await import(R + "packages/compiler/src/index.ts");
 const { documentsDuCorpus } = await import(R + "docs/elite-protocol/evidence/corpus-documents.mjs");
@@ -38,37 +39,16 @@ const OUT = join(tmpdir(), "deribfy-gate-backend") + "/";
 // Sur un runner GitHub, `java` et `mvn` sont fournis. Sur une machine de
 // développement, pas forcément. Une gate qui se TAIRAIT dans ce cas
 // laisserait croire qu'elle a mesuré : elle REFUSE, et dit comment l'installer.
-const ou = (bin) => {
-  // Les emplacements réels, dans l'ordre : Homebrew arm64 pose le JDK sous
-  // `opt/openjdk` et les exécutables ailleurs. Mesuré ici — la première
-  // version ne cherchait pas `/opt/homebrew/bin` et déclarait Maven absent
-  // alors qu'il venait d'être installé.
-  for (const p of [
-    `/opt/homebrew/opt/openjdk/bin/${bin}`,
-    `/opt/homebrew/bin/${bin}`,
-    `/usr/bin/${bin}`,
-    bin,
-  ]) {
-    try {
-      execFileSync(p, ["--version"], { stdio: "pipe" });
-      return p;
-    } catch {
-      /* suivant */
-    }
-  }
-  return undefined;
-};
-const JAVA = ou("java");
-const MVN = ou("mvn");
 console.log("  racine  :", R);
-console.log("  java    :", JAVA ?? "🔴 ABSENT");
-console.log("  maven   :", MVN ?? "🔴 ABSENT");
-if (JAVA === undefined || MVN === undefined) {
-  console.error("\n  🔴 Outillage Java absent — cette gate ne peut RIEN mesurer.");
+const outillage = outillageJava(21);
+console.log(outillage.lignes.join("\n"));
+if (!outillage.ok) {
+  console.error(`\n  🔴 ${outillage.motif}`);
   console.error("     macOS :  /opt/homebrew/bin/brew install openjdk maven");
-  console.error("     Linux :  apt-get install default-jdk maven");
+  console.error("     CI    :  actions/setup-java@v4 avec java-version: 21");
   process.exit(2);
 }
+const { java: JAVA, mvn: MVN } = outillage;
 const JAVA_HOME = JAVA.replace(/\/bin\/java$/, "");
 
 rmSync(OUT, { recursive: true, force: true });

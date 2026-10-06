@@ -35,6 +35,7 @@ const { tmpdir } = await import("node:os");
 const { join } = await import("node:path");
 const { fileURLToPath } = await import("node:url");
 const R = join(fileURLToPath(import.meta.url), "..", "..", "..", "..") + "/";
+const { outillageJava } = await import(R + "docs/elite-protocol/evidence/outillage-java.mjs");
 const { migrateAirDocument, assertValidAir } = await import(R + "packages/air-schema/src/index.ts");
 const { compileBackend } = await import(R + "packages/compiler/src/index.ts");
 
@@ -42,30 +43,15 @@ const PORT = 8099; // hors du port de développement, pour ne rien bousculer
 const OUT = join(tmpdir(), "deribfy-gate-backend-vivant") + "/";
 const DOC = R + "slices/tontine/tontine.air.json";
 
-const ou = (bin) => {
-  for (const p of [
-    `/opt/homebrew/opt/openjdk/bin/${bin}`,
-    `/opt/homebrew/bin/${bin}`,
-    `/usr/bin/${bin}`,
-    bin,
-  ]) {
-    try {
-      execFileSync(p, ["--version"], { stdio: "pipe" });
-      return p;
-    } catch {
-      /* suivant */
-    }
-  }
-  return undefined;
-};
-const JAVA = ou("java");
-const MVN = ou("mvn");
-console.log("  java    :", JAVA ?? "🔴 ABSENT", "·  maven :", MVN ?? "🔴 ABSENT");
-if (JAVA === undefined || MVN === undefined) {
-  console.error("\n  🔴 Outillage Java absent — cette gate ne peut RIEN mesurer.");
+const outillage = outillageJava(21);
+console.log(outillage.lignes.join("\n"));
+if (!outillage.ok) {
+  console.error(`\n  🔴 ${outillage.motif}`);
   console.error("     macOS :  /opt/homebrew/bin/brew install openjdk maven");
+  console.error("     CI    :  actions/setup-java@v4 avec java-version: 21");
   process.exit(2);
 }
+const { java: JAVA, mvn: MVN } = outillage;
 if (!existsSync(DOC)) {
   console.error("  🔴 document de référence absent :", DOC);
   process.exit(2);
