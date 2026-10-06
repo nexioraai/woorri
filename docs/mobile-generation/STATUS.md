@@ -55,8 +55,23 @@
 > dans **AUCUNE** gate native : ajoutée à `app_compile` (**30/30**) et au
 > montage (**30**), sans fuite — ce qui confirme la correction.
 >
-> **🔴 CE QUI RESTE OUVERT, DIT** : pas d'équivalent WEB de `app_rendu` (une
-> PWA n'est pas prouvée MONTÉE, seulement compilée) ; `vite.config.ts` hors
+> **⑤ LA GATE DE RENDU WEB** — le dernier trou qui était chez nous. Une PWA
+> peut compiler parfaitement et n'afficher RIEN ; le natif a `app_rendu` depuis
+> un mois, le web n'avait que sa gate de COMPILATION. Jumelle écrite :
+> `app_web_rendu` (18ᵉ étape de `ci.yml`), **29 applications · 208 écrans
+> montés**, gestes pressés, avertissements React capturés. Son harnais
+> (`obs-web.config.ts`) ne contient **AUCUN stub** là où le natif en aligne
+> sept — c'est le cœur de la preuve : une application web émise n'a plus rien à
+> stuber. Aucun DOM ajouté au dépôt : `react-test-renderer` monte un arbre quel
+> que soit le type de ses hôtes. **Contrôle négatif exécuté** : un écran cassé
+> dans le répertoire temporaire est nommé précisément. Les deux déclarations
+> « son équivalent web n'existe pas encore » ont été corrigées dans la gate de
+> compilation — une limite périmée trompe autant qu'une preuve périmée.
+>
+> **🔴 CE QUI RESTE OUVERT, DIT** : la MISE EN PAGE web n'est prouvée par
+> rien (aucun style calculé — seul un vrai navigateur le dirait) ;
+> `index.tsx`/`App.tsx` non montés (ils exigent un DOM, dix lignes chacun) ;
+> `vite.config.ts` hors
 > tsconfig ; aucun verrou de dépendances web ; `DOMAINE_SERVEUR = undefined`
 > dans la tontine — la bascule distante attend l'adresse du serveur du
 > propriétaire, qui ne m'appartient pas. **Hors périmètre, consigné et non

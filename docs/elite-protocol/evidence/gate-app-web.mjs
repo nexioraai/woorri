@@ -15,9 +15,11 @@
 // ── CE QU'ELLE PROUVE, ET CE QU'ELLE NE PROUVE PAS.
 //
 // 🟢 PROUVÉ : le projet émis passe le VRAI `tsc`, avec les vraies dépendances.
-// 🟠 NON PROUVÉ ICI : qu'il se MONTE dans un navigateur. C'est l'affaire de la
-//    gate de rendu (`app_rendu`), qui monte les écrans natifs ; son équivalent
-//    web n'existe pas encore, et le dire vaut mieux que de le laisser croire.
+// 🟠 NON PROUVÉ ICI : qu'il se MONTE. C'est l'affaire de sa JUMELLE,
+//    `app_web_rendu` (`observation/corpus-web.obsweb.tsx`), écrite le même
+//    jour : 29 applications, 208 écrans montés, gestes pressés, contrôle
+//    négatif exécuté. Cette ligne disait « son équivalent web n'existe pas
+//    encore » — une limite périmée trompe autant qu'une preuve périmée.
 // 🟠 NON PROUVÉ ICI non plus : `vite.config.ts`. Le tsconfig émis l'exclut —
 //    c'est de la configuration exécutée par Node, pas du code d'application —
 //    et `@vitejs/plugin-react` n'est de toute façon pas installé à la racine
