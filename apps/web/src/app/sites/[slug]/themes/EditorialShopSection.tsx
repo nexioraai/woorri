@@ -15,6 +15,7 @@ import { type Site, normalizeProduct, mockupsToProducts, canAddToCart } from './
 import { getDict } from './i18n'
 import GalerieProduit from './GalerieProduit'
 import GrilleCherchable from './GrilleCherchable'
+import { PhotoProduit } from '@/components/boutique/PhotoProduit'
 
 export default function EditorialShopSection({ site, primary }: { site: Site; primary: string }) {
   const t = getDict(site.lang)
@@ -79,12 +80,15 @@ export default function EditorialShopSection({ site, primary }: { site: Site; pr
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
                   />
                 ) : p.image ? (
-                  <Image
+                  // Photo de marchand : souvent verticale, prise au téléphone.
+                  // `PhotoProduit` la laisse ENTIÈRE et remplit les bandes
+                  // vides avec une copie floutée d'elle-même — voir son
+                  // en-tête pour la raison de ne pas recadrer.
+                  <PhotoProduit
                     src={p.image}
                     alt={p.name}
-                    fill
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
-                    className="object-contain group-hover:scale-105 transition-transform duration-700"
+                    className="group-hover:scale-105 transition-transform duration-700"
                   />
                 ) : (
                   <div

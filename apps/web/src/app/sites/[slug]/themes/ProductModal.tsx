@@ -150,11 +150,42 @@ export default function ProductModal({ product: p, primary, lang = 'en', theme =
           <div style={{ position: 'relative', background: theme === 'noir' ? '#000' : '#f7f7f7', minHeight: 320 }}>
             {imgs.length > 0 ? (
               <>
-                <img
-                  src={imgs[imgIndex]}
-                  alt={p.name}
-                  style={{ width: '100%', height: 480, objectFit: 'contain', display: 'block' }}
-                />
+                {/* Le cadre de 480 px de haut est FIXE ; une photo de
+                    téléphone y laissait deux bandes vides. La même photo,
+                    agrandie et floutée, les remplit — voir `PhotoProduit`
+                    pour pourquoi on ne recadre pas. */}
+                <div style={{ position: 'relative', width: '100%', height: 480, overflow: 'hidden' }}>
+                  <img
+                    src={imgs[imgIndex]}
+                    alt=""
+                    aria-hidden="true"
+                    loading="lazy"
+                    decoding="async"
+                    style={{
+                      position: 'absolute',
+                      inset: 0,
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      transform: 'scale(1.1)',
+                      filter: 'blur(28px)',
+                      opacity: 0.6,
+                      userSelect: 'none',
+                      pointerEvents: 'none',
+                    }}
+                  />
+                  <img
+                    src={imgs[imgIndex]}
+                    alt={p.name}
+                    style={{
+                      position: 'relative',
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'contain',
+                      display: 'block',
+                    }}
+                  />
+                </div>
                 {imgs.length > 1 && (
                   <>
                     <button onClick={prevImg} aria-label="Previous" style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', background: 'rgba(0,0,0,0.5)', color: '#fff', border: 'none', borderRadius: '50%', width: 36, height: 36, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><ChevronLeft size={20} /></button>

@@ -1,6 +1,7 @@
 'use client'
 import Image from 'next/image'
 import { useEffect, useRef, useState } from 'react'
+import { PhotoProduit } from '@/components/boutique/PhotoProduit'
 
 // ============================================================
 // TOUTES LES PHOTOS, EN GLISSANT — PAS UNE SEULE, PAS DES VIGNETTES.
@@ -187,25 +188,56 @@ export default function GalerieProduit({
         }}
       >
         {optimisee ? (
-          <Image
+          // Photo de marchand : laissée ENTIÈRE, les bandes vides remplies
+          // par une copie floutée d'elle-même (voir `PhotoProduit`).
+          <PhotoProduit
             src={images[index]!}
             alt={total > 1 ? `${alt} — vue ${String(index + 1)} sur ${String(total)}` : alt}
-            fill
             sizes={sizes ?? '(max-width: 768px) 100vw, 33vw'}
-            className="object-contain"
-            style={{ objectFit: 'contain' }}
+            priority={index === 0}
           />
         ) : (
-          <img
-            src={images[index]}
-            alt={total > 1 ? `${alt} — vue ${String(index + 1)} sur ${String(total)}` : alt}
-            // La première est immédiate, les suivantes attendent d'être utiles :
-            // sur une connexion lente, charger sept photos d'un coup retarde
-            // celle qu'on regarde.
-            loading={index === 0 ? 'eager' : 'lazy'}
-            decoding="async"
-            style={{ width: '100%', height: '100%', objectFit: 'contain', display: 'block' }}
-          />
+          <>
+            {/* MÊME FOND SANS `next/image` : le chemin non optimisé sert les
+                mêmes photos de marchand, et laissait les mêmes bandes vides.
+                Le corriger d'un seul côté aurait rendu la boutique incohérente
+                selon le thème. */}
+            <img
+              src={images[index]}
+              alt=""
+              aria-hidden="true"
+              loading="lazy"
+              decoding="async"
+              style={{
+                position: 'absolute',
+                inset: 0,
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                transform: 'scale(1.1)',
+                filter: 'blur(28px)',
+                opacity: 0.6,
+                userSelect: 'none',
+                pointerEvents: 'none',
+              }}
+            />
+            <img
+              src={images[index]}
+              alt={total > 1 ? `${alt} — vue ${String(index + 1)} sur ${String(total)}` : alt}
+              // La première est immédiate, les suivantes attendent d'être utiles :
+              // sur une connexion lente, charger sept photos d'un coup retarde
+              // celle qu'on regarde.
+              loading={index === 0 ? 'eager' : 'lazy'}
+              decoding="async"
+              style={{
+                position: 'relative',
+                width: '100%',
+                height: '100%',
+                objectFit: 'contain',
+                display: 'block',
+              }}
+            />
+          </>
         )}
       </div>
 
