@@ -157,6 +157,49 @@
 > ligne de liste, et un bouton ne porte aucune sélection. Le document avait
 > raison sur le fond les deux fois ; c'est ma lecture qui était pressée.
 >
+> **⑪ DERIBFY ÉCRIT LE SERVEUR (AIR 1.34.0).** Question du propriétaire :
+> « que font les autres générateurs d'applis ? » Réponse mesurée : ils
+> FOURNISSENT le backend (Bubble, Adalo) ou le GÉNÈRENT depuis un schéma
+> (Hasura, PostgREST, Amplify) ; seuls les outils internes (Retool, Appsmith)
+> supposent un système déjà en place. Deribfy était dans cette dernière
+> famille — et ses utilisateurs n'arrivent avec RIEN : on leur livrait une
+> application et une facture de développement backend.
+>
+> Or l'AIR *est* un schéma, et plus riche que ceux dont Hasura part :
+> `appendOnly`, `derived`, `transitions`, `access`, `sensitive`. **Un serveur
+> écrit à la main oublie au moins une de ces cinq choses ; celui-ci ne peut
+> pas.**
+>
+> `backend: { kind: "genere" | "externe", stack?, domain? }` — et c'est le
+> CLIENT qui tranche, inscrit dans le document, pas dans un `if` du
+> compilateur. Un choix inscrit se relit, se valide et se migre.
+>
+> **Émetteur Spring Boot** (`emit-spring.ts`) : entités JPA, dépôts,
+> contrôleurs `/air/v1/entities/{id}/rows`, session 5 opérations, `pom.xml`,
+> `application.yml` (H2 pour démarrer, Postgres par l'environnement, AUCUN
+> secret). `decimal → BigDecimal` et jamais `double` : une tontine additionne
+> des cotisations, et trois centimes perdus par opération deviennent une
+> dispute en fin de cycle.
+>
+> **Ce qu'il n'écrit PAS, nommé et vide** : les 5 exigences que le document
+> déclare inexprimables sortent dans `ReglesMetier`, portant l'énoncé du
+> cahier des charges, et elles LÈVENT. Un serveur qui rendrait silencieusement
+> `0` serait un serveur qui ment.
+>
+> **Gate `backend` (20ᵉ étape)** : `mvn compile` RÉEL avec JDK 27, plus la
+> vérification que les refus du document sont dans le code produit — journal,
+> transitions, calculés, aucun secret littéral. **1/1 compile, 4/4 refus
+> présents.** Elle a trouvé à sa première exécution un symbole inexistant
+> (`tontineCalculs.…`) que `tsc` ne pouvait pas voir : c'est du Java dans une
+> chaîne.
+>
+> **Deux fautes à moi, consignées** : ① le contrôle « serveur sans source »
+> refusait l'état le plus normal du chantier — le serveur s'écrit AVANT que
+> son adresse existe ; il est désormais lié à `domain`. ② le détecteur de
+> secret employait `\s*`, qui traverse les sauts de ligne : il accusait le
+> `jpa:` suivant d'être un mot de passe. **Même classe d'erreur que la veille
+> sur la feuille de styles web.**
+>
 > **🔴 CE QUI RESTE OUVERT, DIT** : la MISE EN PAGE web n'est prouvée par
 > rien (aucun style calculé — seul un vrai navigateur le dirait) ;
 > `index.tsx`/`App.tsx` non montés (ils exigent un DOM, dix lignes chacun) ;

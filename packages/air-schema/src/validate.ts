@@ -1365,6 +1365,67 @@ export function validateAir(air: ProjectAir): AirDiagnostic[] {
     });
   });
 
+  // ══════════════════════════════════════════════════════════════
+  //  LE SERVEUR DÉCLARÉ DOIT ÊTRE JOIGNABLE (1.34.0)
+  //
+  // Un backend est inutile si l'application ne peut pas lui parler. Deux
+  // façons de se rendre injoignable, et le document peut les écrire toutes
+  // les deux sans que rien ne proteste :
+  //
+  //   · déclarer un domaine que la politique réseau n'autorise pas
+  //     (`network.policy` est `deny_by_default`) ;
+  //   · déclarer des sources distantes qui pointent AILLEURS que ce serveur.
+  //
+  // Les deux se voient à l'exécution, sur un appareil, et nulle part avant.
+  // ══════════════════════════════════════════════════════════════
+  if (air.backend !== undefined) {
+    const b = air.backend;
+    if (b.domain !== undefined && !air.network.allowedDomains.includes(b.domain)) {
+      push(
+        "AIR_BACKEND_DOMAINE_INTERDIT",
+        "backend.domain",
+        `le backend déclare le domaine "${b.domain}", absent de ` +
+          `network.allowedDomains : la politique est "deny_by_default", donc ` +
+          `l'application ne joindra JAMAIS son propre serveur`,
+      );
+    }
+    // ── UN SERVEUR EN LIGNE QUE PERSONNE N'APPELLE.
+    //
+    // Première version de ce contrôle : tout backend `genere` exigeait une
+    // source distante. Il refusait l'état le plus NORMAL du chantier — le
+    // serveur s'écrit AVANT que l'application ne pointe dessus, puisque son
+    // adresse n'existe pas encore.
+    //
+    // C'est l'ADRESSE qui fait la différence. Un backend qui en déclare une
+    // est joignable : s'il ne sert aucune donnée, les deux moitiés existent et
+    // ne se touchent pas — le défaut « émis et inerte » que ce dépôt paie en
+    // boucle. Sans adresse, le serveur est en construction, et c'est légitime.
+    const distants = air.datasets.filter((d) => d.sourceKind === "remote");
+    if (b.kind === "genere" && b.domain !== undefined && distants.length === 0) {
+      push(
+        "AIR_BACKEND_SANS_SOURCE",
+        "backend",
+        `le backend déclare l'adresse "${b.domain}" et AUCUN dataset ne la lit ` +
+          `(\`sourceKind: "remote"\`) : le serveur serait déployé, joignable, et ` +
+          `appelé par personne`,
+      );
+    }
+    // ── ET LES SOURCES DOIVENT POINTER VERS CE SERVEUR-LÀ.
+    if (b.domain !== undefined) {
+      air.datasets.forEach((d, i) => {
+        if (d.sourceKind !== "remote" || d.sourceDomain === undefined) return;
+        if (d.sourceDomain === b.domain) return;
+        push(
+          "AIR_BACKEND_SOURCE_ETRANGERE",
+          `datasets[${String(i)}].sourceDomain`,
+          `le dataset "${d.id}" lit "${d.sourceDomain}" alors que le backend du ` +
+            `document est "${b.domain}" : une moitié des données viendrait d'un ` +
+            `serveur que personne n'a écrit`,
+        );
+      });
+    }
+  }
+
   // Sortie triée (path, code) : même AIR ⇒ même liste, octet pour octet.
   return diagnostics.sort((a, b) =>
     a.path < b.path ? -1 : a.path > b.path ? 1 : a.code < b.code ? -1 : a.code > b.code ? 1 : 0,

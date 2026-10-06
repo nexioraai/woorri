@@ -791,6 +791,10 @@
    "kind": "one_to_many"
   }
  ],
+ "backend": {
+  "kind": "genere",
+  "stack": "spring_boot"
+ },
  "datasets": [
   {
    "id": "data_utilisateurs",

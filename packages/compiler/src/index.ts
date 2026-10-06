@@ -20,6 +20,9 @@ export {
 } from "./emit-manifests.ts";
 export type { EmitOptions, EmittedProject, SlotSource } from "./emit-project.ts";
 export { compileProject } from "./compile-project.ts";
+// Le SERVEUR que le document décrit (1.34.0) — voir `compile-backend.ts`.
+export { compileBackend } from "./compile-backend.ts";
+export { enveloppeSpring, type EnveloppeBackend } from "./emit-spring.ts";
 export type { CompiledProject } from "./compile-project.ts";
 export {
   ArtifactStoreError,

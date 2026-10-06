@@ -23,7 +23,7 @@ import {
 // 1.7.1 (E3.3, D-131) : provenance APLANIE (sourceKind/sourceIntegrationId/
 //   sourceDomain/sourceRefreshSeconds) — l'union 1.7.0 dépassait la limite
 //   réelle de grammaire de l'API (classe D-078) ; sémantique inchangée.
-export const AIR_SCHEMA_VERSION = "1.33.0";
+export const AIR_SCHEMA_VERSION = "1.34.0";
 
 export const semverSchema = z.string().regex(/^\d+\.\d+\.\d+$/);
 export const sha256Schema = z.string().regex(/^[0-9a-f]{64}$/);
@@ -1114,6 +1114,51 @@ const integrationSchema = z.strictObject({
   mobileMoney: argentMobileSchema.optional(),
 });
 
+/**
+ * LA PILE DU SERVEUR GÉNÉRÉ.
+ *
+ * Énumération FERMÉE, et d'un seul membre pour l'instant. Une chaîne libre
+ * aurait laissé un document demander « django » ou « fastapi » et le
+ * compilateur refuser plus tard, avec un message qui accuse le document.
+ * Ce que le moteur ne sait pas écrire, le format ne doit pas savoir le dire.
+ *
+ * `spring_boot` est le premier parce qu'un propriétaire réel l'a exigé —
+ * pas parce que c'est le meilleur choix dans l'absolu.
+ */
+const backendSchema = z
+  .strictObject({
+    kind: z.enum(["genere", "externe"]),
+    stack: z.enum(["spring_boot"]).optional(),
+    /**
+     * Le domaine que servira ce backend. Il entre dans `network.allowedDomains`
+     * — le validateur le vérifie : une application qui parle à un serveur que
+     * sa propre politique réseau interdit ne joint rien, et le défaut ne se
+     * voit qu'à l'exécution.
+     */
+    domain: z
+      .string()
+      .regex(/^([a-z0-9-]+\.)+[a-z]{2,}$/)
+      .optional(),
+  })
+  .superRefine((b, ctx) => {
+    // Une pile sans génération ne décrit rien : le serveur du client est écrit
+    // dans le langage qu'il veut, et le document n'a pas à le prétendre.
+    if (b.kind === "externe" && b.stack !== undefined) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["stack"],
+        message: "`stack` n'a de sens que si le backend est `genere` : un serveur externe est écrit par son propriétaire",
+      });
+    }
+    if (b.kind === "genere" && b.stack === undefined) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["stack"],
+        message: "un backend `genere` doit dire DANS QUOI : le compilateur n'a pas de pile par défaut",
+      });
+    }
+  });
+
 const networkPolicySchema = z.strictObject({
   policy: z.literal("deny_by_default"),
   allowedDomains: z.array(z.string().regex(/^([a-z0-9-]+\.)+[a-z]{2,}$/)),
@@ -1229,6 +1274,44 @@ export const projectAirSchema = z.strictObject({
   access: accessSchema.optional(),
   design: designSchema,
   integrations: z.array(integrationSchema),
+  /**
+   * QUI ÉCRIT LE SERVEUR (1.34.0) — OPTIONNEL.
+   *
+   * ── LE TROU, NOMMÉ PAR LE PROPRIÉTAIRE.
+   *
+   * « Que font les autres générateurs d'applis ? » — ils fournissent ou
+   * GÉNÈRENT le backend. Bubble et Adalo l'hébergent ; Hasura et PostgREST le
+   * génèrent depuis un schéma. Seuls les outils internes (Retool, Appsmith)
+   * supposent un système déjà en place.
+   *
+   * Deribfy était dans la troisième famille — et ses utilisateurs, eux,
+   * n'arrivent avec RIEN. On leur livrait une application et une facture de
+   * développement backend.
+   *
+   * Or l'AIR *est* un schéma, et plus riche que ceux dont Hasura part : il
+   * porte les entités, les relations, les DROITS, les entités journal, les
+   * champs calculés et les transitions d'états. Tout ce qu'il faut pour écrire
+   * le serveur est déjà dans le document que le client a validé.
+   *
+   * ── LES DEUX RÉPONSES, ET LE CLIENT CHOISIT.
+   *
+   *   · `genere`  — Deribfy écrit le serveur. C'est le défaut que le
+   *                 générateur doit produire quand le client n'exige rien ;
+   *   · `externe` — le client tient son propre serveur. Deribfy n'écrit alors
+   *                 AUCUN code de backend : il émet le CONTRAT que ce serveur
+   *                 doit honorer, et l'application le parle.
+   *
+   * ── POURQUOI CE NŒUD EST OPTIONNEL, ET CE QUE SON ABSENCE VEUT DIRE.
+   *
+   * Absent ⇒ AUCUN backend émis, exactement comme avant 1.34.0. Les documents
+   * du corpus gelé ne gagnent donc pas un serveur qu'ils n'ont jamais demandé
+   * — en fabriquer un pour eux changerait ce que ces mesures mesurent.
+   *
+   * Le DÉFAUT demandé par le propriétaire (« si l'utilisateur n'exige rien, on
+   * donne celui de Deribfy ») vit donc dans la règle du GÉNÉRATEUR, pas dans
+   * une migration qui réécrirait l'histoire.
+   */
+  backend: backendSchema.optional(),
   network: networkPolicySchema,
   native: nativeRequirementsSchema,
   compliance: complianceSchema,

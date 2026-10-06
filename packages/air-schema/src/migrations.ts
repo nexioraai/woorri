@@ -479,6 +479,24 @@ export const AIR_MIGRATIONS: readonly AirMigration[] = [
       "décider, au nom du propriétaire, par où circule son argent.",
     migrate: (document) => document,
   },
+  {
+    from: "1.33.0",
+    to: "1.34.0",
+    description:
+      "AIR 1.34.0 : `backend` — QUI écrit le serveur. Le propriétaire a posé " +
+      "la question qui manquait : « que font les autres générateurs d'applis ? » " +
+      "Ils fournissent le backend (Bubble, Adalo) ou le GÉNÈRENT depuis un " +
+      "schéma (Hasura, PostgREST). Deribfy, lui, livrait une application et une " +
+      "facture de développement backend — alors que l'AIR *est* un schéma, et " +
+      "plus riche que ceux dont Hasura part : entités, relations, DROITS, " +
+      "entités journal, champs calculés, transitions d'états. Deux réponses " +
+      "désormais : `genere` (Deribfy écrit le serveur) et `externe` (le client " +
+      "tient le sien, Deribfy n'émet que le CONTRAT). Migration IDENTITÉ : " +
+      "absent ⇒ aucun backend émis, exactement comme avant. Fabriquer un " +
+      "serveur pour les documents du corpus gelé changerait ce que ces mesures " +
+      "mesurent — et personne ne l'a demandé.",
+    migrate: (document) => document,
+  },
 ];
 
 export class AirMigrationError extends Error {

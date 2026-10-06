@@ -617,6 +617,16 @@ const graine = (entityId) => createHash("sha256").update(entityId).digest("hex")
 // résolveur produira les cibles distantes, l'application montera l'adaptateur
 // réseau et le port d'écriture HTTP, et ces fixtures ne serviront plus que
 // d'amorçage — exactement ce que le moteur prévoit (D-013).
+// ── LE DOMAINE DU SERVEUR (2026-10-06).
+//
+// Il n'existe pas encore : le contrat d'API vient d'être remis au
+// propriétaire. Mais le document peut désormais DÉCLARER son serveur sans
+// connaître son adresse — `backend.domain` reste absent tant qu'elle n'est
+// pas connue, et le validateur ne la réclame pas.
+//
+// Le jour où elle existe, UNE ligne ici bascule tout : les datasets passent en
+// `remote`, l'application monte l'adaptateur réseau et le port d'écriture
+// HTTP, et les fixtures ne servent plus que d'amorçage.
 const DOMAINE_SERVEUR = undefined;
 
 // Combien de lignes de démonstration par entité. Choisies pour que CHAQUE
@@ -686,6 +696,17 @@ const air = {
     toEntityId: vers,
     kind,
   })),
+  // ── QUI ÉCRIT LE SERVEUR (AIR 1.34.0).
+  //
+  // Le propriétaire a EXIGÉ Spring Boot. Le document le déclare donc — et
+  // c'est le document qui le dit, pas une option de ligne de commande : un
+  // choix inscrit ici se relit, se valide et se migre.
+  //
+  // `genere` et non `externe` : Deribfy écrit le serveur. Ce qu'il n'écrit
+  // PAS — séquestre, tour courant, pénalités, répartition, enchères — sort
+  // nommé et vide dans `ReglesMetier`, parce que ces règles ont besoin d'une
+  // horloge ou divisent de l'argent entre des personnes.
+  backend: { kind: "genere", stack: "spring_boot" },
   datasets: DATASETS,
   screens,
   // ── LE DÉCAISSEMENT ATTEND UN CODE REÇU AILLEURS (AIR 1.32.0).

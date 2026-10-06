@@ -306,6 +306,18 @@ export const SECTIONS_CORRECTIVES: Readonly<Record<string, readonly SectionEmiss
   AIR_ARGENT_MOBILE_VALEUR_INCONNUE: ["cablage", "donnees"],
   AIR_ARGENT_MOBILE_VALEUR_AMBIGUE: ["cablage"],
   AIR_ARGENT_MOBILE_VALEUR_NON_CLASSEE: ["cablage", "donnees"],
+  // ── QUI ÉCRIT LE SERVEUR (1.34.0). Le nœud `backend` vit dans `base` ;
+  // les sources distantes dans `donnees` ; la politique réseau dans `base`.
+  //
+  //   · un domaine interdit se répare en l'autorisant (`base`, où vit
+  //     `network`) ou en changeant le domaine du backend (`base` aussi) ;
+  //   · un serveur joignable que personne n'appelle se répare dans `donnees`
+  //     (déclarer une source distante) ou dans `base` (retirer l'adresse
+  //     tant que le serveur n'est pas en ligne) ;
+  //   · une source étrangère se répare des deux côtés, et le document choisit.
+  AIR_BACKEND_DOMAINE_INTERDIT: ["base"],
+  AIR_BACKEND_SANS_SOURCE: ["base", "donnees"],
+  AIR_BACKEND_SOURCE_ETRANGERE: ["base", "donnees"],
   AIR_CONFIG_DUP_KEY: ["cablage"],
   AIR_INTEGRATION_SECRET_LIKE_KEY: ["cablage"],
   // Une marque hors allowlist se répare dans le CÂBLAGE (politique réseau)
