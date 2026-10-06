@@ -1,18 +1,85 @@
+# ════════════════════════════════════════════════════════════════════
+#  DEPENDABOT — CE QU'IL SURVEILLE, ET CE QU'IL N'A PAS À TOUCHER.
+# ════════════════════════════════════════════════════════════════════
+#
+# ── CE QUE CE FICHIER NE FAIT PAS, DIT D'ABORD.
+#
+# Il NE RÉDUIT PAS le nombre d'ALERTES. Les alertes viennent du graphe de
+# dépendances, qui détecte tout manifeste présent dans le dépôt — aucun
+# réglage ici ne les filtre par chemin. Je l'avais annoncé le contraire ; la
+# correction est ici plutôt que dans une phrase oubliée.
+#
+# Mesuré le 2026-10-06 : GitHub annonce 254 alertes. Le dépôt porte TRENTE
+# fichiers de verrou ; Dependabot les additionne. La décomposition réelle :
+#
+#   · application WEB émise ....... 0 vulnérabilité (117 paquets)
+#   · gabarit NATIF (Expo) ........ 30, dont 20 hautes — PARTENT dans chaque
+#                                   application native générée
+#   · racine (site + moteur) ...... 33, dont 23 hautes, aucune critique
+#   · l'unique CRITIQUE ........... `benchmarks/orchestration/triggerdev`
+#                                   (`proxy-addr`, `tar`) — un banc d'essai,
+#                                   jamais émis, jamais déployé
+#   · ~27 autres verrous .......... fixtures de mesure et applications
+#                                   générées, conservées comme PREUVES
+#
+# ── CE QU'IL FAIT, ET POURQUOI ÇA COMPTE.
+#
+# Il décide où Dependabot a le droit d'OUVRIR DES PR. Sans lui, activer les
+# mises à jour de sécurité ouvrirait des demandes sur les trente verrous — y
+# compris sur des bancs d'essai gelés dont la valeur est précisément d'être
+# INCHANGÉS. Une preuve qu'un robot met à jour n'est plus une preuve.
+#
+# Les trois répertoires ci-dessous sont les seuls qui soient LIVRÉS ou
+# EXÉCUTÉS. Tout le reste est de la mesure, et la mesure ne se met pas à jour.
 version: 2
 updates:
-  - package-ecosystem: "npm"
-    directory: "/"
+  # ── LE DÉPÔT LUI-MÊME : le site Deribfy et les paquets du moteur.
+  - package-ecosystem: npm
+    directory: /
     schedule:
-      interval: "weekly"
-    open-pull-requests-limit: 10
-    labels:
-      - "dependencies"
-      - "security"
-    commit-message:
-      prefix: "chore"
-      include: "scope"
-    # Prisma disparaitra avec le debranchement de src/erp/ : on ignore ses
-    # updates pour eviter les PR recurrentes (breaking change v7) en attendant.
+      interval: monthly
+    open-pull-requests-limit: 5
+    # Les montées MAJEURES touchent `vite`, `next`, `react` — et donc les
+    # dix-neuf portes. Elles se décident, elles ne se subissent pas : on laisse
+    # Dependabot proposer le correctif et le mineur, jamais la rupture.
     ignore:
-      - dependency-name: "prisma"
-      - dependency-name: "@prisma/client"
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  # ── LE GABARIT NATIF : ce qui part dans CHAQUE application générée.
+  #
+  # C'est le seul endroit où une vulnérabilité atteint l'utilisateur final.
+  # Les 20 hautes qu'il porte sont `expo`, `metro`, `react-native` : le
+  # framework lui-même. Les fermer veut dire MONTER DE VERSION EXPO, ce qui
+  # touche le gabarit scellé, le `templateHash` et le train de release — une
+  # décision de chantier, pas un `npm audit fix`. Les majeures sont donc
+  # ignorées ici aussi : c'est un humain qui ouvre ce chantier.
+  - package-ecosystem: npm
+    directory: /packages/compiler/template
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 3
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  # ── LE GABARIT WEB : zéro vulnérabilité au 2026-10-06, et on veut le savoir
+  # le jour où ça change. Son verrou est scellé (`template-web/LISEZ-MOI.md`)
+  # et toute mise à jour exige de le régénérer — la gate `app_web_build`
+  # installe par `npm ci` et REFUSE un verrou en désaccord avec le manifeste.
+  - package-ecosystem: npm
+    directory: /packages/compiler/template-web
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 3
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  # ── LES ACTIONS DU WORKFLOW. La CI a déjà averti deux fois : « Node.js 20
+  # est déprécié » sur `actions/checkout@v4` et `actions/setup-node@v4`. Sans
+  # cette entrée, personne ne suit ces versions-là.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
