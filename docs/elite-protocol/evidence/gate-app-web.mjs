@@ -20,11 +20,11 @@
 //    jour : 29 applications, 208 écrans montés, gestes pressés, contrôle
 //    négatif exécuté. Cette ligne disait « son équivalent web n'existe pas
 //    encore » — une limite périmée trompe autant qu'une preuve périmée.
-// 🟠 NON PROUVÉ ICI non plus : `vite.config.ts`. Le tsconfig émis l'exclut —
-//    c'est de la configuration exécutée par Node, pas du code d'application —
-//    et `@vitejs/plugin-react` n'est de toute façon pas installé à la racine
-//    du dépôt. Deux lignes de configuration non vérifiées : c'est peu, et ce
-//    peu est écrit ici plutôt que supposé.
+// 🟠 NON TYPÉ ICI : `vite.config.ts`. Le tsconfig émis l'exclut — c'est de la
+//    configuration exécutée par Node, pas du code d'application. Mais il n'est
+//    plus « vérifié nulle part » : la gate `app_web_build` l'EXÉCUTE, puisque
+//    `vite build` le charge. Non typé n'est pas non prouvé, et cette ligne
+//    disait l'inverse.
 //
 // Elle emprunte `react`, `react-dom` et `typescript` au dépôt lui-même : une
 // application web n'a pas de verrou de dépendances embarqué (le natif, lui, en

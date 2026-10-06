@@ -136,7 +136,7 @@
 > rien (aucun style calculé — seul un vrai navigateur le dirait) ;
 > `index.tsx`/`App.tsx` non montés (ils exigent un DOM, dix lignes chacun) ;
 > `vite.config.ts` hors
-> tsconfig ; aucun verrou de dépendances web ; `DOMAINE_SERVEUR = undefined`
+> tsconfig ; `DOMAINE_SERVEUR = undefined`
 > dans la tontine — la bascule distante attend l'adresse du serveur du
 > propriétaire, qui ne m'appartient pas. **Hors périmètre, consigné et non
 > corrigé** : `dougplace` n'est dans aucune gate et porte QUATRE fuites
