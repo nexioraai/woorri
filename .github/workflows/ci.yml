@@ -48,6 +48,25 @@ jobs:
           node-version: 24
           cache: npm
 
+      # ── JAVA 21 POUR LE BACKEND GÉNÉRÉ (AIR 1.34.0).
+      #
+      # Les deux gates `backend` et `backend_vivant` compilent et DÉMARRENT un
+      # serveur Spring Boot dont le `pom.xml` émis exige Java 21. Le runner
+      # fournit bien un JDK, mais rien ne garantit SA VERSION : un Java 17 par
+      # défaut ferait échouer la compilation sur « release 21 not supported »,
+      # et le message accuserait le projet émis au lieu du runner.
+      #
+      # PAS DE `cache: maven` : l'action cherche un `pom.xml` VERSIONNÉ pour
+      # calculer sa clé, et le nôtre est ÉMIS à l'exécution — aucun n'existe
+      # dans le dépôt. L'activer ferait échouer l'étape de mise en place sur
+      # « no file matched », c'est-à-dire avant toute mesure, pour une
+      # optimisation. Le téléchargement de Spring Boot est donc payé à chaque
+      # run ; c'est le prix d'un gabarit qui n'est pas versionné.
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
       - run: npm ci
         working-directory: .
 

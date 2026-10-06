@@ -108,9 +108,11 @@ const arreter = () => {
 
 const B = `http://localhost:${String(PORT)}/air/v1/entities`;
 const attendre = async () => {
-  // 120 s : un premier démarrage Spring télécharge et compile. Au-delà, c'est
-  // qu'il ne démarrera pas — et le journal dira pourquoi.
-  for (let i = 0; i < 120; i += 1) {
+  // 240 s : un premier démarrage télécharge Spring Boot ET compile. Sur une
+  // machine de développement c'est 45 s ; sur un runner partagé au cache vide,
+  // bien plus. Un délai trop court ferait accuser le serveur de ne pas démarrer
+  // alors qu'il téléchargeait encore — un faux rouge vaut un faux vert.
+  for (let i = 0; i < 240; i += 1) {
     try {
       const r = await fetch(`${B}/${air.entities[0].id}/rows`);
       if (r.ok) return true;
