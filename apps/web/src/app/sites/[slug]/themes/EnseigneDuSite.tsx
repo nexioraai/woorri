@@ -31,6 +31,16 @@ export type EnseigneDuSiteProps = {
   nom: string
   /** Le logo déposé par le marchand, s'il en a un. */
   logo?: string | null
+  /**
+   * Le slug de la boutique, pour servir l'enseigne NORMALISÉE.
+   *
+   * Sans lui, on affiche le fichier déposé tel quel — et c'est ce qui donnait,
+   * mesuré le 2026-10-06 sur deux boutiques en ligne, un timbre-poste
+   * illisible d'une photo de devanture, et un rectangle noir dans un en-tête
+   * blanc. `/api/internal/site-logo/` serre la marge uniforme et remplace une
+   * photo par le monogramme. Facultatif pour ne casser aucun appel existant.
+   */
+  slug?: string | null
   /** Destination du clic. Les vitrines pointent toutes vers leur ancre d'accueil. */
   href?: string
   /** Hauteur maximale du logo, en pixels — l'en-tête d'Aurora est plus bas. */
@@ -43,12 +53,18 @@ export type EnseigneDuSiteProps = {
 export default function EnseigneDuSite({
   nom,
   logo,
+  slug,
   href = '#home',
   hauteur = 36,
   className,
   style,
 }: EnseigneDuSiteProps) {
   if (logo) {
+    // LE LOGO DÉPOSÉ DÉCIDE S'IL Y A UNE ENSEIGNE ; la route décide de ce
+    // qu'on en montre. Garder la première condition sur `logo` évite d'appeler
+    // la route pour les vingt-quatre boutiques sur vingt-sept qui n'ont aucun
+    // logo — pour elles, le nom reste la bonne réponse.
+    const source = typeof slug === 'string' && slug !== '' ? `/api/internal/site-logo/${slug}` : logo
     return (
       <Link href={href} className="shrink-0 flex items-center" aria-label={nom}>
         {/* `next/image` exige des dimensions connues ou un parent positionné ;
@@ -56,9 +72,19 @@ export default function EnseigneDuSite({
             balise simple, avec une hauteur bornée, est le choix juste. */}
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={logo}
+          src={source}
           alt={nom}
-          style={{ height: hauteur, width: 'auto', maxWidth: 200, objectFit: 'contain' }}
+          // L'ARRONDI NE COÛTE RIEN ET RATTRAPE UN CAS RÉEL. Un logo à fond
+          // transparent n'a pas de boîte : il ne change pas. Un logo à fond
+          // plein — doré sur noir, mesuré sur une boutique en ligne — devient
+          // un BADGE au lieu d'un rectangle égaré dans un en-tête blanc.
+          style={{
+            height: hauteur,
+            width: 'auto',
+            maxWidth: 200,
+            objectFit: 'contain',
+            borderRadius: 6,
+          }}
           // L'enseigne est visible dès le premier écran : la charger
           // paresseusement la ferait apparaître après le reste.
           loading="eager"

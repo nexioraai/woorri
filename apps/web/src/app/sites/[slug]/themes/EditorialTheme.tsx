@@ -126,6 +126,7 @@ export default function EditorialTheme({ site }: { site: Site }) {
           <EnseigneDuSite
             nom={site.name}
             logo={site.logo_url}
+          slug={site.slug}
             className="font-serif text-2xl tracking-tight font-medium"
             style={{ fontFamily: 'var(--font-fraunces), serif' }}
           />

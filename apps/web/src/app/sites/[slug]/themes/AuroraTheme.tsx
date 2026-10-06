@@ -113,6 +113,7 @@ export default function AuroraTheme({ site }: { site: Site }) {
             <EnseigneDuSite
               nom={site.name}
               logo={site.logo_url}
+              slug={site.slug}
               /* En-tête plus bas que les autres (h-16) : le logo suit. */
               hauteur={30}
               className="text-xl md:text-2xl font-semibold tracking-tight shrink-0"

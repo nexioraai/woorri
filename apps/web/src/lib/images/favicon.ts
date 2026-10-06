@@ -1,4 +1,5 @@
 import sharp from 'sharp'
+import { mesurerAplats } from './qualiteLogo'
 
 // ============================================================
 // FAVICON D'UN SITE MARCHAND — DÉRIVÉ DE SA MARQUE, 100 % OPEN SOURCE.
@@ -218,7 +219,23 @@ export async function iconeDuSite(
 ): Promise<Buffer> {
   if (logo && logo.length > 0) {
     try {
-      return await logoEnIcone(logo, taille)
+      // ── UN LOGO QUI EST UNE PHOTO NE DEVIENT PAS UNE ICÔNE.
+      //
+      // MESURÉ SUR UNE BOUTIQUE EN LIGNE le 2026-10-06 : le « logo » déposé
+      // était une PHOTO DE LA DEVANTURE, 1504×688, des pick-up devant un
+      // magasin. Réduite à 32 px pour l'onglet, elle ne donne rien — une
+      // bouillie de pixels bruns. Et c'est cette bouillie que Google affichait
+      // à côté du nom de la boutique.
+      //
+      // Le monogramme, lui, reste lisible à 16 px : c'est précisément ce pour
+      // quoi il existe. Préférer une initiale nette à une photo illisible
+      // n'est pas écarter le choix du marchand — c'est refuser de le trahir
+      // à une taille où son image ne veut plus rien dire. L'éditeur le lui
+      // dit, en toutes lettres, par l'avis `semble_une_photo`.
+      const { dominante, couleurs } = await mesurerAplats(logo)
+      if (couleurs <= 90 && dominante >= 0.3) {
+        return await logoEnIcone(logo, taille)
+      }
     } catch {
       // On ne relaie PAS l'erreur : voir ci-dessus.
     }
