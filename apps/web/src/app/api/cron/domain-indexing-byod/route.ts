@@ -56,6 +56,57 @@ export async function GET(req: NextRequest) {
   const runId = await startCronRun('domain-indexing-byod');
 
   try {
+    // ── LE RATTRAPAGE : UN DOMAINE « failed » QUI SE REPARE TOUT SEUL.
+    //
+    // DEFAUT TROUVE EN LISANT L'ALERTE DU 2026-10-06 sur
+    // `logonemoteurfils.com`. La requete principale exclut les lignes dont
+    // `attempts >= MAX_ATTEMPTS` : une fois `failed`, un domaine n'est PLUS
+    // JAMAIS relu. Le marchand peut ajouter notre TXT le lendemain, rien ne
+    // repart — il faut qu'un humain remette le compteur a zero dans la base.
+    //
+    // L'alerte disait « intervention manuelle requise » et ne parlait que de
+    // la MOITIE du travail. Le marchand fait sa part, ne voit rien bouger, et
+    // conclut que ca ne marche pas. C'est la facon la plus sure de rendre une
+    // correction invisible : la rendre dependante d'un geste que personne ne
+    // sait devoir faire.
+    //
+    // On relit donc la zone des domaines `failed` qui ont un jeton emis. Si
+    // NOTRE jeton y est enfin, le compteur repart et le pipeline reprend seul.
+    // Une resolution DNS par domaine en echec, toutes les deux heures : le
+    // cout est nul devant un domaine qui reste bloque indefiniment.
+    const { data: bloques } = await supabaseAdmin
+      .from('sites')
+      .select('id, slug, custom_domain, custom_domain_google_token')
+      .not('custom_domain', 'is', null)
+      .not('custom_domain_google_token', 'is', null)
+      .eq('published', true)
+      .eq('custom_domain_google_status', 'failed')
+      .limit(BATCH_SIZE);
+
+    let repris = 0;
+    for (const b of bloques ?? []) {
+      const zone = await lireJetonsZone(
+        b.custom_domain as string,
+        b.custom_domain_google_token as string,
+      );
+      if (!zone.notrePresent) continue;
+      // Ecriture conditionnelle sur `failed`, comme toutes les transitions de
+      // ce cron : si une autre execution a deja repris ce domaine, on la
+      // laisse faire au lieu d'ecraser son travail.
+      const { data: pris } = await supabaseAdmin
+        .from('sites')
+        .update({
+          custom_domain_google_status: 'token_issued',
+          custom_domain_google_attempts: 0,
+          custom_domain_google_last_error:
+            'Notre jeton est apparu dans la zone : verification relancee automatiquement.',
+        })
+        .eq('id', b.id)
+        .eq('custom_domain_google_status', 'failed')
+        .select('id');
+      if (pris && pris.length > 0) repris++;
+    }
+
     const since = new Date(Date.now() - RETRY_DELAY_MS).toISOString();
 
     const { data: candidates } = await supabaseAdmin
@@ -70,7 +121,9 @@ export async function GET(req: NextRequest) {
 
     if (!candidates || candidates.length === 0) {
       await finishCronRun(runId, { itemsProcessed: 0 });
-      return NextResponse.json({ done: true, processed: 0 });
+      // `repris` sort MEME ici : une reprise sans autre travail reste un
+      // evenement qu'on doit pouvoir constater.
+      return NextResponse.json({ done: true, processed: 0, repris });
     }
 
     // Exclusion des sites deja geres par le pipeline achat pour LEUR
@@ -252,7 +305,7 @@ export async function GET(req: NextRequest) {
     }
 
     await finishCronRun(runId, { itemsProcessed: rows.length });
-    return NextResponse.json({ done: true, processed: rows.length, verified, submitted, pending, failedTerminal });
+    return NextResponse.json({ done: true, processed: rows.length, verified, submitted, pending, failedTerminal, repris });
   } catch (e: any) {
     await finishCronRun(runId, { itemsProcessed: 0, status: 'error', errorMessage: e.message });
     return NextResponse.json({ error: e.message }, { status: 500 });
