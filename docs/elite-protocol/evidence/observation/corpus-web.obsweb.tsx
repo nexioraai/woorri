@@ -49,9 +49,15 @@ describe("GATE RACINE — les applications WEB émises se MONTENT vraiment", () 
       expect(existsSync(RACINE), "lancer d'abord `npm run gate:app-web`").toBe(true);
       const apps = readdirSync(RACINE).sort();
       // Le cliquet est EXACT, comme son jumeau natif : toute application
-      // ajoutée ou perdue sans décision le fait échouer. Il vise le MÊME
-      // corpus que la gate de compilation web — 29 documents au 2026-10-05.
-      expect(apps.length, "les applications web du corpus").toBe(29);
+      // ajoutée ou perdue sans décision le fait échouer.
+      //
+      // ÉDITION CONSCIENTE (2026-10-05) : 31, et c'est le MÊME nombre que le
+      // natif depuis que la liste des documents est PARTAGÉE
+      // (`corpus-documents.mjs`). Les deux gates en portaient chacune une :
+      // 31 d'un côté, 29 de l'autre, quatre heures après la naissance de
+      // celle-ci. Une cible qui mesure un document que l'autre ignore ne se
+      // voit pas — les deux gates restent vertes.
+      expect(apps.length, "les applications web du corpus").toBe(31);
 
       let ecrans = 0;
       const problemes: string[] = [];

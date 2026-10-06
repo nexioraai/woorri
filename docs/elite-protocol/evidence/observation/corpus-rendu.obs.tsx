@@ -55,7 +55,11 @@ describe("GATE RACINE — les applications émises se MONTENT vraiment", () => {
     // `tontine`. Elle n'était dans AUCUNE de ces gates — seule la gate web la
     // compilait — alors que c'est l'application qui compte le plus pour le
     // propriétaire. Son chemin natif reposait sur une sonde lancée à la main.
-    expect(apps.length, "les applications des deux corpus").toBe(30);
+    // ÉDITION CONSCIENTE (2026-10-05, troisième) : 31 avec `dougplace`, qui
+    // n'était dans aucune gate alors qu'elle sert de document de référence à
+    // plusieurs cliquets d'émission. C'est ELLE qui a révélé que les chips de
+    // filtre montraient l'identifiant d'une référence au lieu du nom déclaré.
+    expect(apps.length, "les applications des deux corpus").toBe(31);
 
     let ecrans = 0;
     let identites = 0;

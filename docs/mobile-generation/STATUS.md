@@ -68,6 +68,26 @@
 > « son équivalent web n'existe pas encore » ont été corrigées dans la gate de
 > compilation — une limite périmée trompe autant qu'une preuve périmée.
 >
+> **⑥ LES CHIPS DE FILTRE MONTRAIENT UN IDENTIFIANT DE LIGNE.** `dougplace`
+> n'était dans AUCUNE gate, alors qu'elle sert de document de référence à
+> plusieurs cliquets d'émission. Amenée dans les portes : QUATRE fuites sur
+> `scr_catalogue` — `ent_categorie_row_1` à `_4` — alors que le document
+> déclare pourtant `referenceDisplayFieldId: fld_categorie_nom`. **Cause
+> démontrée** : les options de filtre ne lisaient que `enumLabels` ; un champ
+> `reference` n'en a aucun, et la traversée déclarée n'était pas appliquée aux
+> chips. Corrigé en les branchant sur le résolveur UNIQUE (`useResolveField`),
+> qui traite les trois cas d'un coup — enum, référence, unité : une branche
+> SUPPRIMÉE, pas ajoutée. `enumLabelsParChamp` retiré avec elle.
+>
+> **⑦ UNE SEULE LISTE DE DOCUMENTS POUR LES DEUX CIBLES.** Les deux gates de
+> compilation en portaient chacune une : **31 d'un côté, 29 de l'autre**,
+> quatre heures après la naissance de la seconde. C'est exactement la
+> divergence annoncée dans `embed-lib.ts` et payée ici. Extraite dans
+> `corpus-documents.mjs` ; la gate web a gagné au passage la gestion des
+> VARIANTES, sans quoi elle aurait compilé la variante du serveur neutre comme
+> le document d'origine — deux mesures identiques prises pour deux.
+> **31/31 natif · 31/31 web · 31 montées natif · 31 et 233 écrans web.**
+>
 > **🔴 CE QUI RESTE OUVERT, DIT** : la MISE EN PAGE web n'est prouvée par
 > rien (aucun style calculé — seul un vrai navigateur le dirait) ;
 > `index.tsx`/`App.tsx` non montés (ils exigent un DOM, dix lignes chacun) ;

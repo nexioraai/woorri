@@ -19,6 +19,7 @@ const { tmpdir } = await import("node:os");
 const { join } = await import("node:path");
 const { fileURLToPath } = await import("node:url");
 const R = join(fileURLToPath(import.meta.url), "..", "..", "..", "..") + "/";
+const { documentsDuCorpus } = await import(R + "docs/elite-protocol/evidence/corpus-documents.mjs");
 const { migrateAirDocument } = await import(R + "packages/air-schema/src/migrations.ts");
 const { compileProject } = await import(R + "packages/compiler/src/index.ts");
 
@@ -61,59 +62,11 @@ if (!existsSync(BASE + "/typescript")) {
 console.log("  deps    : empruntées à slices/resto-riche/app ✔");
 rmSync(OUT, { recursive: true, force: true });
 
-const docs = [
-  // v3 (généré par emit-v3) EN PLUS de v2 : le corpus gelé reste mesuré, et le
-  // nouveau doit franchir exactement les mêmes gates.
-  ...readdirSync(R + "packages/golden-corpus/corpus-v2").filter((f) => f.endsWith(".air.json"))
-    .map((f) => [f.replace(".air.json", ""), R + "packages/golden-corpus/corpus-v2/" + f]),
-  ...(existsSync(R + "packages/golden-corpus/corpus-v3")
-    ? readdirSync(R + "packages/golden-corpus/corpus-v3").filter((f) => f.endsWith(".air.json"))
-        .map((f) => ["v3-" + f.replace(".air.json", ""), R + "packages/golden-corpus/corpus-v3/" + f])
-    : []),
-  ["slice-conteneurs", R + "slices/conteneurs/air/suivi-conteneurs.air.json"],
-  ["resto-riche", R + "slices/resto-riche/chez-nous.air.json"],
-  // ── LA TONTINE, ENFIN COUVERTE DU CÔTÉ NATIF (2026-10-05).
-  //
-  // Mesuré : elle n'était dans AUCUNE de ces gates. Seule `app_web` la
-  // compilait. Son chemin NATIF — celui qui part sur un téléphone — n'était
-  // prouvé par rien : « elle compile » reposait sur une sonde que j'avais
-  // lancée à la main, pas sur une porte qui se relance toute seule.
-  //
-  // C'est l'application qui compte le plus pour le propriétaire. La laisser
-  // hors des portes revenait à mesurer tout le corpus SAUF celle-là.
-  ["tontine", R + "slices/tontine/tontine.air.json"],
-  // ── LE SERVEUR NEUTRE, COMPILÉ COMME LES AUTRES (2026-10-05).
-  //
-  // Le générateur sait désormais émettre une application qui parle le
-  // protocole du moteur (`/air/v1/...`) à un serveur quelconque, au lieu du
-  // client Supabase. AUCUN document du corpus ne déclare ce protocole : la
-  // gate ne l'aurait donc jamais compilé, et le chemin neutre serait resté
-  // « émis et supposé bon » — le défaut que ce dépôt paie en boucle.
-  //
-  // LE DOCUMENT EST CELUI DU CORPUS, et SEULE sa configuration
-  // d'authentification change. Deux raisons, et la seconde a été payée :
-  //
-  //   · un document fabriqué pour l'occasion n'aurait mesuré que ma capacité
-  //     à écrire un cas qui passe ;
-  //   · le premier essai prenait `dougplace`, qui n'est dans AUCUNE de ces
-  //     gates. La gate de rendu y a trouvé quatre fuites d'identifiant —
-  //     une dette RÉELLE de ce document, exposée parce que je l'amenais ici
-  //     pour la première fois. Elle est consignée, pas corrigée : ce lot
-  //     mesure le chemin du serveur, pas l'affichage des références.
-  [
-    "boutique-mode-serveur-neutre",
-    R + "packages/golden-corpus/corpus-v3/boutique-mode.air.json",
-    (doc) => {
-      const intg = (doc.integrations ?? []).find((i) => i.capability === "auth");
-      if (intg === undefined) return undefined; // pas d'auth : rien à mesurer
-      intg.config = [
-        { key: "url", value: "https://api.exemple.com" },
-        { key: "provider", value: "air_http" },
-      ];
-      return doc;
-    },
-  ],
-].filter(([, p]) => existsSync(p));
+// LA LISTE EST PARTAGÉE (voir `corpus-documents.mjs`). Les deux gates en
+// portaient chacune une : 31 documents d'un côté, 29 de l'autre, quatre heures
+// après la naissance de la seconde. Une cible qui mesure un document que
+// l'autre ignore ne se voit pas — les deux gates sont vertes.
+const docs = documentsDuCorpus(R);
 
 // Un slot d'auteur MINIMAL pour chaque slot déclaré : sans lui, le registre
 // n'est pas émis et la gate ne testerait jamais le chemin qui a cassé.

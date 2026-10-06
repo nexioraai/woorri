@@ -829,7 +829,9 @@ export function AirList({ screen, blockId, itemId }: BlockRef & { itemId?: strin
   // (identifiant machine) ne sert que de repli 1.9.0.
   const champsEntite = screen.entities[b.entityId]?.fields ?? [];
   const nomsChamps = new Map(champsEntite.map((f) => [f.id, f.label ?? f.name]));
-  const enumLabelsParChamp = new Map(champsEntite.map((f) => [f.id, f.enumLabels]));
+  // `enumLabelsParChamp` a disparu avec la branche qu'il servait : les chips
+  // passent par `resoudre`, qui lit `enumLabels` lui-même. Une table sans
+  // consommateur finit par être recopiée ailleurs.
   const filtresSpec =
     champsPilotes.length === 0
       ? undefined
@@ -840,13 +842,38 @@ export function AirList({ screen, blockId, itemId }: BlockRef & { itemId?: strin
             setSaisiesFiltres((s) => ({ ...s, [i]: v })),
           inputType: (typesPilotes[i] === "choice" ? "choice" : "text") as "text" | "choice",
           ...(typesPilotes[i] === "choice"
-            ? {
-                options: optionsDistinctes(scopees, fieldId),
+            ? (() => {
+                const options = optionsDistinctes(scopees, fieldId);
+                // ── LES CHIPS PASSENT PAR LE RÉSOLVEUR, PAS PAR UNE BRANCHE.
+                //
                 // DET-032 — les chips affichent le libellé, filtrent la valeur.
-                ...(enumLabelsParChamp.get(fieldId) === undefined
-                  ? {}
-                  : { optionLabels: enumLabelsParChamp.get(fieldId) }),
-              }
+                // Mais la version d'origine ne lisait QUE `enumLabels` : un
+                // champ `reference` n'en a aucun, et ses chips montraient
+                // l'identifiant de ligne.
+                //
+                // Mesuré le 2026-10-05 sur `dougplace/scr_catalogue` :
+                // QUATRE chips « ent_categorie_row_1 » à
+                // « ent_categorie_row_4 », alors que le document déclare
+                // pourtant `referenceDisplayFieldId: fld_categorie_nom`. La
+                // résolution existait, les chips n'y passaient pas.
+                //
+                // `resoudre` est le résolveur UNIQUE (`useResolveField`) : il
+                // traite les trois cas d'un coup — libellé d'enum, traversée
+                // de référence, et unité. Y brancher les chips supprime une
+                // branche au lieu d'en ajouter une.
+                const libelles: Record<string, string> = {};
+                for (const option of options) {
+                  const lisible = resoudre(fieldId, option);
+                  // Seules les entrées qui CHANGENT quelque chose. Une
+                  // identité n'apporte rien et le bloc retombe déjà sur la
+                  // valeur brute (`optionLabels?.[option] ?? option`).
+                  if (lisible !== undefined && lisible !== option) libelles[option] = lisible;
+                }
+                return {
+                  options,
+                  ...(Object.keys(libelles).length === 0 ? {} : { optionLabels: libelles }),
+                };
+              })()
             : {}),
         }));
   const pick = (fieldId: unknown, values: Readonly<Record<string, string>>) =>

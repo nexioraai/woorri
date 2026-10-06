@@ -39,6 +39,7 @@ const { tmpdir } = await import("node:os");
 const { join } = await import("node:path");
 const { fileURLToPath } = await import("node:url");
 const R = join(fileURLToPath(import.meta.url), "..", "..", "..", "..") + "/";
+const { documentsDuCorpus } = await import(R + "docs/elite-protocol/evidence/corpus-documents.mjs");
 const { migrateAirDocument } = await import(R + "packages/air-schema/src/migrations.ts");
 const { compileWeb } = await import(R + "packages/compiler/src/index.ts");
 
@@ -59,17 +60,11 @@ rmSync(OUT, { recursive: true, force: true });
 // LE MÊME CORPUS QUE LA GATE NATIVE, et c'est le point : la cible web ne se
 // juge pas sur un cas choisi pour elle. Toute application que le générateur
 // sait produire en natif doit se produire en web, ou l'écart doit être VU.
-const docs = [
-  ...readdirSync(R + "packages/golden-corpus/corpus-v2").filter((f) => f.endsWith(".air.json"))
-    .map((f) => [f.replace(".air.json", ""), R + "packages/golden-corpus/corpus-v2/" + f]),
-  ...(existsSync(R + "packages/golden-corpus/corpus-v3")
-    ? readdirSync(R + "packages/golden-corpus/corpus-v3").filter((f) => f.endsWith(".air.json"))
-        .map((f) => ["v3-" + f.replace(".air.json", ""), R + "packages/golden-corpus/corpus-v3/" + f])
-    : []),
-  ["slice-conteneurs", R + "slices/conteneurs/air/suivi-conteneurs.air.json"],
-  ["resto-riche", R + "slices/resto-riche/chez-nous.air.json"],
-  ["tontine", R + "slices/tontine/tontine.air.json"],
-].filter(([, p]) => existsSync(p));
+// LA LISTE EST PARTAGÉE (voir `corpus-documents.mjs`). Les deux gates en
+// portaient chacune une : 31 documents d'un côté, 29 de l'autre, quatre heures
+// après la naissance de la seconde. Une cible qui mesure un document que
+// l'autre ignore ne se voit pas — les deux gates sont vertes.
+const docs = documentsDuCorpus(R);
 
 console.log("═".repeat(78));
 console.log("GATE RACINE — l'application WEB émise COMPILE-T-ELLE ?");
@@ -78,10 +73,20 @@ console.log("\n  document                 fichiers   react-native   tsc");
 console.log("  " + "─".repeat(72));
 
 let echecs = 0;
-for (const [nom, chemin] of docs) {
+for (const [nom, chemin, transformer] of docs) {
   let air;
   try {
-    air = migrateAirDocument(JSON.parse(readFileSync(chemin, "utf8")));
+    // Une VARIANTE est le même document avec une configuration changée. Ce
+    // bloc existait côté natif ; la liste étant désormais partagée, l'ignorer
+    // ici aurait fait compiler la variante comme le document d'origine — la
+    // gate aurait mesuré deux fois la même chose en croyant en mesurer deux.
+    const brut = JSON.parse(readFileSync(chemin, "utf8"));
+    const prepare = transformer === undefined ? brut : transformer(brut);
+    if (prepare === undefined) {
+      console.log(`  ${nom.padEnd(24)} ⚪ IGNORÉ — la variante ne s'applique pas à ce document`);
+      continue;
+    }
+    air = migrateAirDocument(prepare);
   } catch (e) {
     const codes = [...new Set((e.diagnostics ?? []).map((d) => d.code))].join(" ");
     console.log(`  ${nom.padEnd(24)} 🔴 DOCUMENT INVALIDE : ${codes || String(e.message).slice(0, 50)}`);
