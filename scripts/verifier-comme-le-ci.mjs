@@ -151,6 +151,50 @@ function etapesDuWorkflow() {
 // Le gate du workflow nomme les étapes dont le rouge est un ARBITRAGE. On lit
 // ces noms depuis son script shell plutôt que de les décider ici : si
 // l'arbitrage tombe, ce fichier suit sans intervention.
+/**
+ * LA BRANCHE COURANTE — parce que l'arbitrage en DÉPEND.
+ *
+ * Lue de git, pas supposée : le gate n'arbitre pas de la même façon sur une
+ * branche de chantier et sur `main`.
+ */
+function brancheCourante() {
+  const r = spawnSync("git", ["rev-parse", "--abbrev-ref", "HEAD"], {
+    cwd: RACINE,
+    encoding: "utf8",
+  });
+  return r.status === 0 ? String(r.stdout).trim() : "(inconnue)";
+}
+
+/**
+ * Évalue une expression `${{ … }}` du workflow, pour les seules formes que le
+ * gate emploie : des comparaisons sur `github.ref_name` reliées par `||`.
+ *
+ * On ne construit PAS un interpréteur d'expressions GitHub. Toute forme non
+ * reconnue rend `undefined`, et l'appelant choisit alors la lecture la plus
+ * SÉVÈRE — ne pas comprendre une garde ne doit jamais relâcher un contrôle.
+ */
+function evaluerGarde(expression, branche) {
+  const termes = expression.split("||").map((t) => t.trim());
+  let connu = false;
+  let vrai = false;
+  for (const t of termes) {
+    const m = /^github\.ref_name\s*==\s*'([^']+)'$/.exec(t);
+    if (m !== null) {
+      connu = true;
+      if (m[1] === branche) vrai = true;
+      continue;
+    }
+    // `pull_request` : une exécution locale n'en est jamais une. C'est la
+    // seule forme qu'on sait rendre fausse sans risque.
+    if (/^github\.event_name\s*==\s*'pull_request'$/.test(t)) {
+      connu = true;
+      continue;
+    }
+    return undefined; // forme inconnue : on ne devine pas
+  }
+  return connu ? vrai : undefined;
+}
+
 function detteArbitree() {
   const brut = readFileSync(WORKFLOW, "utf8");
   const arbitrees = new Set();
@@ -167,13 +211,48 @@ function detteArbitree() {
     const m = /steps\.([a-z_]+)\.outcome/.exec(bloc);
     if (m?.[1] !== undefined) arbitrees.add(m[1]);
   }
-  return arbitrees;
+
+  // ── L'ARBITRAGE EST CONDITIONNEL, ET JE L'AVAIS LU COMME ABSOLU.
+  //
+  // Mesuré le 2026-10-06 sur la CI réelle : tout vert sauf `app_fidelite`, et
+  // le job ROUGE quand même. Le gate déclare
+  //
+  //     FIDELITE_BLOQUANTE: ${{ github.ref_name == 'main' || … }}
+  //
+  // puis ne compte la fidélité comme fatale QUE si cette garde est vraie
+  // (D-134). Sur une branche de chantier c'est de la dette arbitrée ; sur
+  // `main` c'est bloquant.
+  //
+  // Ce vérificateur annonçait « aucune régression » pendant que `main`
+  // tombait. Même faute que ce matin, un cran plus loin : j'avais lu le gate,
+  // mais pas sa CONDITION.
+  //
+  // On relit donc les blocs qui relient une GARDE (`${VAR}`) à une étape, et
+  // on retire l'arbitrage quand la garde est vraie ici.
+  const branche = brancheCourante();
+  const gardes = new Map();
+  for (const m of brut.matchAll(/^\s{10}([A-Z_]+):\s*\$\{\{\s*(.+?)\s*\}\}\s*$/gm)) {
+    gardes.set(m[1], m[2]);
+  }
+  for (const bloc of brut.split(/\bif \[/)) {
+    const g = /\$\{([A-Z_]+)\}/.exec(bloc);
+    const e = /steps\.([a-z_]+)\.outcome/.exec(bloc);
+    if (g?.[1] === undefined || e?.[1] === undefined) continue;
+    const expression = gardes.get(g[1]);
+    if (expression === undefined) continue;
+    const active = evaluerGarde(expression, branche);
+    // `undefined` = garde non comprise ⇒ lecture SÉVÈRE : on retire
+    // l'arbitrage. Un contrôle qui ne comprend pas sa propre condition doit
+    // refuser, pas laisser passer.
+    if (active !== false) arbitrees.delete(e[1]);
+  }
+  return { arbitrees, branche };
 }
 
 const filtre = process.argv.slice(2).find((a) => !a.startsWith("--"));
 const seulementLister = process.argv.includes("--liste");
 const { etapes: toutes, nonRejouables } = etapesDuWorkflow();
-const arbitrees = detteArbitree();
+const { arbitrees, branche } = detteArbitree();
 const etapes = filtre === undefined ? toutes : toutes.filter((e) => e.etiquette.includes(filtre));
 
 if (etapes.length === 0) {
@@ -183,9 +262,18 @@ if (etapes.length === 0) {
   process.exit(2);
 }
 
+// ── LA BRANCHE S'AFFICHE TOUJOURS, MÊME SANS ARBITRAGE.
+//
+// La première version ne la montrait que s'il RESTAIT une dette arbitrée.
+// Or c'est exactement sur `main` — où il n'en reste aucune — qu'il faut savoir
+// pour quelle branche le verdict est rendu : « 0 arbitrée » et « arbitrage non
+// lu » s'affichaient pareil.
 console.log(
   `${etapes.length} étape(s) lue(s) dans ${WORKFLOW.replace(RACINE + "/", "")}` +
-    (arbitrees.size > 0 ? ` · dette arbitrée : ${[...arbitrees].join(", ")}` : ""),
+    ` · branche ${branche} · ` +
+    (arbitrees.size > 0
+      ? `dette arbitrée ici : ${[...arbitrees].join(", ")}`
+      : "AUCUNE dette arbitrée sur cette branche — tout rouge est bloquant"),
 );
 // ── CE QUE CE VÉRIFICATEUR NE COUVRE PAS, DIT AVANT LE RESTE.
 //
