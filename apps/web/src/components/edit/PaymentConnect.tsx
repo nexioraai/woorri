@@ -193,7 +193,7 @@ export default function PaymentConnect({ slug, mode }: { slug: string; mode?: nu
           directement depuis chaque fiche produit.
         </p>
         <ul className="text-sm text-white/70 space-y-2 list-disc pl-5 mb-6">
-          <li>L'acheteur envoie le montant par Mobile Money, puis vous
+          <li>L&apos;acheteur envoie le montant par Mobile Money, puis vous
             partage la capture du paiement sur WhatsApp.</li>
           <li>Vous confirmez et vous livrez — aucun intermédiaire ne
             prélève de commission sur vos ventes.</li>
@@ -204,9 +204,9 @@ export default function PaymentConnect({ slug, mode }: { slug: string; mode?: nu
             saisi ici, vos fiches montrent votre numéro de contact. */}
         <h3 className="text-sm font-bold mb-2">Numéro de contact (WhatsApp & appel)</h3>
         <p className="text-xs text-white/40 mb-3">
-          C'est ce numéro que portent les boutons « Commander sur WhatsApp »
+          C&apos;est ce numéro que portent les boutons « Commander sur WhatsApp »
           et « Appeler le vendeur » sur vos fiches produit. Il peut être
-          différent de vos numéros d'encaissement.
+          différent de vos numéros d&apos;encaissement.
         </p>
         <input
           value={numeroContact}
@@ -218,7 +218,7 @@ export default function PaymentConnect({ slug, mode }: { slug: string; mode?: nu
         <h3 className="text-sm font-bold mb-2">Numéros Mobile Money</h3>
         <p className="text-xs text-white/40 mb-3">
           Ajoutez un numéro par opérateur (ex. : Airtel Money, Moov Money).
-          Ils s'affichent sur chaque fiche produit et au paiement. Si la liste
+          Ils s&apos;affichent sur chaque fiche produit et au paiement. Si la liste
           est vide, votre numéro de contact est utilisé.
         </p>
         <div className="space-y-2">

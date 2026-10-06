@@ -127,7 +127,7 @@ export default function VisibiliteIaPage() {
                                 <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ background: '#f8717120', color: '#f87171' }}>{t('aivis.notMentioned')}</span>
                               )}
                             </div>
-                            {chk.excerpt && <p className="text-xs text-white/50 leading-relaxed">"{chk.excerpt}"</p>}
+                            {chk.excerpt && <p className="text-xs text-white/50 leading-relaxed">&quot;{chk.excerpt}&quot;</p>}
                           </div>
                         );
                       })}

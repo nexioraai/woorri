@@ -471,7 +471,7 @@ export default function EditorialTheme({ site }: { site: Site }) {
                       />
                     ))}
                   </div>
-                  <p className="text-lg leading-relaxed mb-8 text-white/90">"{t.content}"</p>
+                  <p className="text-lg leading-relaxed mb-8 text-white/90">&quot;{t.content}&quot;</p>
                   <div className="flex items-center gap-4 pt-6 border-t border-white/10">
                     <div
                       className="w-11 h-11 rounded-full flex items-center justify-center font-medium text-sm"

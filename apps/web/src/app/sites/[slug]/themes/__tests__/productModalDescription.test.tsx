@@ -7,6 +7,8 @@
 // (pas une simple lecture du code source), meme methodologie que
 // shop-product-guard.test.tsx (DEBT-001).
 import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { renderToStaticMarkup } from 'react-dom/server';
 import ProductModal from '../ProductModal';
 import { CartProvider } from '../CartContext';
@@ -50,8 +52,8 @@ describe('ProductModal -- description rendue en texte pur (SEC-09)', () => {
   });
 
   it('dangerouslySetInnerHTML absent du code executable de ce composant (verification structurelle directe, ignore les commentaires)', () => {
-    const src = require('fs').readFileSync(
-      require('path').join(__dirname, '../ProductModal.tsx'),
+    const src = readFileSync(
+      join(__dirname, '../ProductModal.tsx'),
       'utf-8'
     );
     // Verifie la forme JSX reelle (attribut avec accolade ouvrante), pas la

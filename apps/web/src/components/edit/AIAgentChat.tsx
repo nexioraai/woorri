@@ -259,9 +259,9 @@ export default function AIAgentChat({ slug, onSiteUpdated, lang = 'en' }: Props)
                 <Sparkles className="w-8 h-8 mx-auto mb-3 text-[#FA5D1E]/60" />
                 <p className="text-sm text-white/80 mb-3">Ask me anything about your site.</p>
                 <div className="text-xs text-slate-500 space-y-1">
-                  <p>"Change the name to Garage Pro"</p>
-                  <p>"Add a service for free delivery"</p>
-                  <p>"Make the slogan more catchy"</p>
+                  <p>&quot;Change the name to Garage Pro&quot;</p>
+                  <p>&quot;Add a service for free delivery&quot;</p>
+                  <p>&quot;Make the slogan more catchy&quot;</p>
                 </div>
               </div>
             )}
@@ -406,7 +406,7 @@ function ToolProposalCard({
         return (
           <>
             Change <strong className="text-[#FA5D1E]">{input.field}</strong> to:{' '}
-            <span className="text-white">"{input.value}"</span>
+            <span className="text-white">&quot;{input.value}&quot;</span>
           </>
         );
       case 'propose_color_update':
@@ -451,14 +451,14 @@ function ToolProposalCard({
         return (
           <>
             Update contact <strong className="text-[#FA5D1E]">{input.field}</strong>:{' '}
-            <span className="text-white">"{input.value}"</span>
+            <span className="text-white">&quot;{input.value}&quot;</span>
           </>
         );
       case 'propose_service_update':
         return (
           <>
             Update offering <strong className="text-[#FA5D1E]">{input.title}</strong> — {input.field}:{' '}
-            <span className="text-white">"{input.value}"</span>
+            <span className="text-white">&quot;{input.value}&quot;</span>
           </>
         );
       case 'propose_testimonial_add':
@@ -466,7 +466,7 @@ function ToolProposalCard({
           <>
             Add testimonial: <strong className="text-[#FA5D1E]">{input.name}</strong>{' '}
             <span className="text-slate-400">({input.rating}★)</span>
-            <div className="text-xs text-slate-400 mt-1 italic">"{input.content}"</div>
+            <div className="text-xs text-slate-400 mt-1 italic">&quot;{input.content}&quot;</div>
           </>
         );
       case 'propose_testimonial_remove':
@@ -475,7 +475,7 @@ function ToolProposalCard({
         return (
           <>
             Update testimonial #{input.index} <strong className="text-[#FA5D1E]">{input.field}</strong>:{' '}
-            <span className="text-white">"{String(input.value)}"</span>
+            <span className="text-white">&quot;{String(input.value)}&quot;</span>
           </>
         );
       case 'propose_product_add':
@@ -503,7 +503,7 @@ function ToolProposalCard({
           <>
             Update <strong className="text-[#FA5D1E]">{input.product_name}</strong> —{' '}
             <strong className="text-[#FA5D1E]">{input.field}</strong>:{' '}
-            <span className="text-white">"{input.value}"</span>
+            <span className="text-white">&quot;{input.value}&quot;</span>
           </>
         );
       // DETTE 4 (gallery) -- l'URL, plus jamais un numero. La carte affichait

@@ -87,7 +87,7 @@ export async function GET(req: NextRequest) {
   // ====== 1. Search curated products first ======
   let curatedResults: any[] = [];
   if (words.length > 0) {
-    let cQuery = supabaseAdmin
+    const cQuery = supabaseAdmin
       .from('site_catalog_selections')
       .select('id, sell_price, custom_name, custom_description, catalog_product_id, catalog_products(id, name, description, price, currency, images, supplier_id, supplier_product_id, supplier_parent_id, shipping_days_min, shipping_days_max, warehouse_country, in_stock)')
       .eq('site_id', site.id)

@@ -204,7 +204,7 @@ export async function POST(
       );
     }
 
-    let updates: Record<string, any> = {};
+    const updates: Record<string, any> = {};
 
     switch (tool_name) {
       case 'propose_field_update': {

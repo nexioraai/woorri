@@ -45,7 +45,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'address required' }, { status: 400 });
     }
     // Nettoyage adresse pour Nominatim : abreviations + retrait code postal canadien
-    let q = address
+    const q = address
       .replace(/\bTerr\.?/gi, 'Terrasse')
       .replace(/\bAve\.?/gi, 'Avenue')
       .replace(/\bBlvd\.?/gi, 'Boulevard')

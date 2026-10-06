@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { NextRequest } from 'next/server';
 import { creerFrom, journalVierge, type JournalPostgrest, type TableStub } from '@/lib/testing/postgrest';
 
 // ============================================================
@@ -40,7 +41,7 @@ const SITE_RESELLER = { id: 'site-1', mode: 3, dropship_type: 'reseller', archiv
 function req(p: Record<string, string>) {
   const u = new URL('https://woorri.test/api/catalog/variants');
   for (const [k, v] of Object.entries(p)) u.searchParams.set(k, v);
-  return new (require('next/server').NextRequest)(u);
+  return new NextRequest(u);
 }
 
 beforeEach(() => {

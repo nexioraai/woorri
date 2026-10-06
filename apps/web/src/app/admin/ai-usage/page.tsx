@@ -96,7 +96,7 @@ export default function AiUsagePage() {
             </div>
 
             {data.rows.length === 0 ? (
-              <p className="text-white/40">Aucune consommation IA enregistree pour l'instant.</p>
+              <p className="text-white/40">Aucune consommation IA enregistree pour l&apos;instant.</p>
             ) : (
               <div className="bg-white/[0.03] border border-white/10 rounded-2xl overflow-x-auto">
                 <table className="w-full text-sm">

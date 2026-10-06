@@ -16,6 +16,8 @@
 // pour une donnée de configuration inattendue.
 
 import { describe, it, expect } from 'vitest'
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import {
   resolveFulfillmentDomain,
   isRecognisedSiteMode,
@@ -128,8 +130,8 @@ describe('le module ne connaît ni sous-type ni fournisseur', () => {
   })
 
   it('le module n’importe rien', () => {
-    const source = require('node:fs').readFileSync(
-      require('node:path').join(process.cwd(), 'src/lib/order-domain/resolve.ts'),
+    const source = readFileSync(
+      join(process.cwd(), 'src/lib/order-domain/resolve.ts'),
       'utf8'
     )
     expect(source).not.toMatch(/^\s*import\s/m)
