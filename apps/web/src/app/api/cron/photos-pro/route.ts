@@ -117,7 +117,29 @@ export async function GET(req: NextRequest) {
         const cle = `${REGISTRE}/${empreinte(source)}`
         const commun = { site: site.slug as string, produit: String(produit.name), source }
 
-        // ② LE REGISTRE, LU AVANT TOUT TRAVAIL.
+        // ② LE PLUS SIMPLE D'ABORD : CETTE PHOTO EST-ELLE DÉJÀ LA NÔTRE ?
+        //
+        // MESURÉ AU PREMIER PASSAGE RÉEL. Le registre est indexé sur
+        // l'empreinte de l'URL SOURCE — mais une photo traitée reçoit une
+        // NOUVELLE url dans le catalogue, dont l'empreinte n'est évidemment
+        // pas au registre. Au passage suivant, elle était donc retéléchargée,
+        // redétourée, puis refusée par la garde du fond plat.
+        //
+        // Aucune photo n'a été abîmée — la garde a fait son office — mais le
+        // budget partait en ré-examens : sur 55 photos d'un passage,
+        // quarante-neuf étaient des photos déjà faites. Resultat, les grandes
+        // boutiques n'atteignaient jamais leurs dernières photos : 52 traitées
+        // sur les 76 annoncées pour `alloufshop`.
+        //
+        // Nos propres sorties vivent sous un préfixe connu. Les reconnaître
+        // coûte une comparaison de chaîne, contre un téléchargement et une
+        // inférence.
+        if (source.includes(`/${REGISTRE}/`)) {
+          examens.push({ ...commun, etat: 'déjà traitée', motif: 'c’est déjà notre sortie' })
+          continue
+        }
+
+        // ③ LE REGISTRE, LU AVANT TOUT TRAVAIL.
         const { data: fiche } = await supabaseAdmin.storage.from(SEAU).download(`${cle}.json`)
         if (fiche) {
           examens.push({ ...commun, etat: 'déjà traitée', motif: 'fiche présente au registre' })
