@@ -278,10 +278,11 @@ const controleur = (groupe: string, air: ProjectAir, e: ProjectAir["entities"][n
     "  // La réponse est le tableau des lignes `{id, values}` — la forme que",
     "  // l'application attend, et qu'elle ne négocie pas.",
     "  @GetMapping",
-    `  public List<Map<String, Object>> lire() {`,
+    "  public ResponseEntity<List<Map<String, Object>>> lire() {",
     "    List<Map<String, Object>> sortie = new ArrayList<>();",
-    `    for (${nom} x : depot.findAll()) sortie.add(enLigne(x));`,
-    "    return sortie;",
+    "    Set<String> nonCalcules = new LinkedHashSet<>();",
+    `    for (${nom} x : depot.findAll()) sortie.add(enLigne(x, nonCalcules));`,
+    "    return avecEnTete(ResponseEntity.ok(), nonCalcules).body(sortie);",
     "  }",
     "",
     "  @PostMapping",
@@ -332,7 +333,9 @@ const controleur = (groupe: string, air: ProjectAir, e: ProjectAir["entities"][n
     "    x.setId(id);",
     "    appliquer(x, corps);",
     "    depot.save(x);",
-    "    return ResponseEntity.ok(enLigne(x));",
+    "    Set<String> nonCalcules = new LinkedHashSet<>();",
+    "    Map<String, Object> ligne = enLigne(x, nonCalcules);",
+    "    return avecEnTete(ResponseEntity.ok(), nonCalcules).body(ligne);",
     "  }",
     "",
   );
@@ -362,7 +365,18 @@ const controleur = (groupe: string, air: ProjectAir, e: ProjectAir["entities"][n
   }
   // ── LA LECTURE D'UNE LIGNE, CHAMPS CALCULÉS COMPRIS.
   l.push(
-    `  private Map<String, Object> enLigne(${nom} x) {`,
+    "  // ── UN CALCUL NON ÉCRIT NE DOIT PAS RENDRE LA LIGNE ILLISIBLE.",
+    "  //",
+    "  // Mesuré en DÉMARRANT le serveur : `Calculs` lève tant que le",
+    "  // propriétaire ne l'a pas écrit — c'est voulu, un serveur qui rendrait",
+    "  // silencieusement 0 mentirait. Mais la première version laissait",
+    "  // l'exception remonter : la ligne était ENREGISTRÉE et toute lecture",
+    "  // répondait 500. Il ne pouvait même pas voir ses données en attendant.",
+    "  //",
+    "  // Le champ est donc ABSENT de la réponse, et l'en-tête",
+    "  // `X-Air-Non-Calcule` nomme ce qui reste à écrire. Absent n'est pas",
+    "  // faux : c'est exactement ce que le serveur sait dire.",
+    `  private Map<String, Object> enLigne(${nom} x, Set<String> nonCalcules) {`,
     "    Map<String, Object> v = new LinkedHashMap<>();",
   );
   for (const f of e.fields) {
@@ -377,7 +391,8 @@ const controleur = (groupe: string, air: ProjectAir, e: ProjectAir["entities"][n
         // simple. La première version préfixait par le dernier segment du
         // groupe (`tontineCalculs.…`) — un symbole qui n'existe nulle part, et
         // que seul un vrai `mvn compile` pouvait dire.
-        `    v.put("${f.name}", Calculs.${CAMEL(f.id)}(x.getId()));`,
+        `    try { v.put("${f.name}", Calculs.${CAMEL(f.id)}(x.getId())); }`,
+        `    catch (UnsupportedOperationException e) { nonCalcules.add("${f.name}"); }`,
       );
       continue;
     }
@@ -388,6 +403,15 @@ const controleur = (groupe: string, air: ProjectAir, e: ProjectAir["entities"][n
     "    ligne.put(\"id\", x.getId());",
     "    ligne.put(\"values\", v);",
     "    return ligne;",
+    "  }",
+    "",
+    "  // L'en-tête n'apparaît QUE s'il reste quelque chose à écrire. Un",
+    "  // en-tête vide sur chaque réponse deviendrait du bruit qu'on cesse de",
+    "  // lire — et c'est précisément le jour où il compterait.",
+    "  private static <T> ResponseEntity.BodyBuilder avecEnTete(",
+    "      ResponseEntity.BodyBuilder b, Set<String> nonCalcules) {",
+    "    if (nonCalcules.isEmpty()) return b;",
+    "    return b.header(\"X-Air-Non-Calcule\", String.join(\",\", nonCalcules));",
     "  }",
     "",
     `  private void appliquer(${nom} x, Map<String, Object> c) {`,

@@ -200,6 +200,26 @@
 > `jpa:` suivant d'être un mot de passe. **Même classe d'erreur que la veille
 > sur la feuille de styles web.**
 >
+> **⑫ LE SERVEUR GÉNÉRÉ RÉPOND — PROUVÉ PAR HTTP.** `gate:backend` compile ;
+> elle ne démarrait rien. Or le dépôt connaît par cœur le défaut « compile et
+> ne marche pas » : modèle d'accès 1.28.0 émis et inerte, `navigate` jetant ses
+> paramètres, tontine à zéro donnée — les trois compilaient.
+>
+> Gate `backend_vivant` (21ᵉ étape) : le serveur DÉMARRE, et **8 preuves par
+> HTTP réel** — collection servie, journal qui refuse la réécriture (409) et
+> l'effacement (409), transition déclarée ACCEPTÉE (200) et non déclarée
+> REFUSÉE (409). L'acceptation ET le refus, jamais l'un sans l'autre : une
+> gate qui refuserait tout passerait sans rien prouver. **Contrôle négatif
+> exécuté** — refus du journal neutralisé, la gate le nomme (7/8).
+>
+> **DÉFAUT TROUVÉ EN DÉMARRANT, ET INVISIBLE AUTREMENT** : une ligne portant un
+> champ CALCULÉ était enregistrée puis ILLISIBLE. `Calculs` lève tant que le
+> propriétaire ne l'a pas écrit — c'est voulu, un serveur qui rendrait
+> silencieusement `0` mentirait — mais l'exception remontait en 500 et il ne
+> pouvait même pas voir ses données en attendant. Le champ est désormais
+> ABSENT de la réponse et l'en-tête `X-Air-Non-Calcule` le NOMME. Absent n'est
+> pas faux : c'est exactement ce que le serveur sait dire.
+>
 > **🔴 CE QUI RESTE OUVERT, DIT** : la MISE EN PAGE web n'est prouvée par
 > rien (aucun style calculé — seul un vrai navigateur le dirait) ;
 > `index.tsx`/`App.tsx` non montés (ils exigent un DOM, dix lignes chacun) ;
