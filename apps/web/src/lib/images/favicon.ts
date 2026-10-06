@@ -1,4 +1,6 @@
 import sharp from 'sharp'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import { mesurerAplats } from './qualiteLogo'
 
 // ============================================================
@@ -86,6 +88,49 @@ export function encreSur(fond: string): string {
  * La police est celle du système (`sans-serif`) — une police embarquée ferait
  * entrer une dépendance et un octet de licence pour une seule lettre.
  */
+/**
+ * LA POLICE DU MONOGRAMME, EMBARQUÉE DANS LE DOCUMENT.
+ *
+ * ── LE DÉFAUT, MESURÉ EN PRODUCTION LE 2026-10-06.
+ *
+ * Ce monogramme demandait `font-family="Helvetica,Arial,sans-serif"`. Sur un
+ * poste de développement, ces polices existent et la lettre sortait. DANS LE
+ * CONTENEUR VERCEL, AUCUNE POLICE N'EST INSTALLÉE : librsvg ne trouvait rien
+ * et dessinait un `tofu` — le petit rectangle vide des glyphes manquants.
+ *
+ * Conséquence réelle : les icônes de `biyaminchine.com` et `alloufshop.com`
+ * faisaient 1695 octets CHACUNE, et c'étaient LES MÊMES OCTETS — un carré
+ * rouge avec un rectangle vide au centre. Vingt-quatre boutiques sur
+ * vingt-sept n'ont aucun logo déposé, donc vingt-quatre boutiques servaient
+ * cette image-là dans l'onglet du navigateur et à Google.
+ *
+ * C'était le vrai « logo bizarre » — pas les trois logos déposés, mais celui
+ * que nous fabriquions nous-mêmes pour tous les autres.
+ *
+ * ── POURQUOI EMBARQUER PLUTÔT QUE DEMANDER.
+ *
+ * Une police nommée ne se demande pas : elle se fournit. Le fichier est versionné
+ * (`public/polices/monogramme.ttf`, Geist, licence SIL OFL-1.1 jointe) et son
+ * contenu part DANS le document SVG. PROUVÉ localement avec un nom de famille
+ * inexistant sur le système — si la lettre sort, c'est que la police embarquée
+ * a été lue et non une police installée. Elle est sortie.
+ *
+ * Le repli garde l'ancien comportement si le fichier manque : on ne remplace
+ * pas un défaut par une panne.
+ */
+let policeMemo: string | null | undefined
+
+function policeEmbarquee(): string | null {
+  if (policeMemo !== undefined) return policeMemo
+  try {
+    const chemin = join(process.cwd(), 'public', 'polices', 'monogramme.ttf')
+    policeMemo = readFileSync(chemin).toString('base64')
+  } catch {
+    policeMemo = null
+  }
+  return policeMemo
+}
+
 export function monogrammeSvg(initiale: string, couleur: string): Buffer {
   const encre = encreSur(couleur)
   // L'initiale est échappée : elle vient du nom de boutique, donc de l'entrée
@@ -94,10 +139,18 @@ export function monogrammeSvg(initiale: string, couleur: string): Buffer {
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
+  const police = policeEmbarquee()
+  const famille = police === null ? 'Helvetica,Arial,sans-serif' : 'DeribfyMonogramme'
+  const declaration =
+    police === null
+      ? ''
+      : `<defs><style>@font-face{font-family:'DeribfyMonogramme';` +
+        `src:url(data:font/ttf;base64,${police}) format('truetype');}</style></defs>`
   return Buffer.from(
     `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+       ${declaration}
        <rect width="512" height="512" rx="96" fill="${couleur}"/>
-       <text x="256" y="256" fill="${encre}" font-family="Helvetica,Arial,sans-serif"
+       <text x="256" y="256" fill="${encre}" font-family="${famille}"
              font-size="300" font-weight="700" text-anchor="middle"
              dominant-baseline="central">${lettre}</text>
      </svg>`,
