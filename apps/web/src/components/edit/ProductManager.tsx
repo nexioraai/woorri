@@ -49,6 +49,8 @@ export default function ProductManager({ slug }: { slug: string }) {
   /** Pour chaque vignette RETOUCHÉE, l'URL de la photo d'origine. C'est ce qui
    *  rend la retouche d'office révocable, et donc acceptable. */
   const [originaux, setOriginaux] = useState<Record<string, string>>({});
+  // Un traitement par vignette : deux photos peuvent être en cours à la fois.
+  const [enCours, setEnCours] = useState<Record<string, boolean>>({});
   // M2-217 — L'OUTIL PROMO : pourcentage + portée décidée par le marchand
   // (tous les produits, ou la sélection cochée). Réversible d'un clic.
   const [promoPct, setPromoPct] = useState('20');
@@ -162,27 +164,23 @@ export default function ProductManager({ slug }: { slug: string }) {
     for (const [i, file] of fichiers.entries()) {
       setProgression({ fait: i, total: fichiers.length });
       try {
-        // ── LE FOND PART AVANT L'ENVOI, DANS CE NAVIGATEUR.
+        // ── LE DÉTOURAGE N'EST PLUS AUTOMATIQUE, ET C'EST UNE CORRECTION.
         //
-        // Comparaison faite sur trois photos réelles de la même boutique : deux
-        // passées par PhotoRoom, une envoyée brute depuis un téléphone. L'écart
-        // ne tenait ni à l'exposition, ni à la netteté, ni au cadrage — les
-        // deux premières montraient l'article sur un fond UNIFORME, la
-        // troisième sur un CARRELAGE ORANGE avec les taches du sol.
+        // Il l'était. Mesuré sur trois vraies photos d'`alloufshop` : deux
+        // réussites franches — une main tenant un flacon devant un rayon
+        // entier de parfums en ressort détourée sur blanc — et UN ÉCHEC.
         //
-        // On corrige l'exposition d'un carrelage ; on ne le fait pas
-        // disparaître avec un histogramme. Seul un modèle de segmentation le
-        // peut — et `u2netp` (4,4 Mo, Apache-2.0) tourne ici, gratuitement,
-        // sans serveur à payer ni coût par photo.
+        // La troisième n'était pas une photo de téléphone mais une CAPTURE
+        // D'ÉCRAN de site, avec sa colonne de vignettes. Le modèle a pris le
+        // cadran de la montre pour le sujet, et le cadrage a perdu le
+        // bracelet : l'image est ressortie DÉGRADÉE.
         //
-        // `?? file` EST LA LIGNE IMPORTANTE : un détourage raté rend `null`, et
-        // la photo d'origine part quand même. Le marchand ne doit jamais perdre
-        // son visuel pour un bonus manqué.
-        const detouree = await detourerDansLeNavigateur(file);
-        const aEnvoyer = detouree?.fichier ?? file;
-
+        // Appliqué sans demander, ce traitement aurait donc abîmé une fiche
+        // qui allait bien, sans que personne ne le voie. Il est désormais
+        // offert par un BOUTON, sur la vignette, et il montre le résultat
+        // avant de le retenir — voir `rendrePro()`.
         const corps = new FormData();
-        corps.append('file', aEnvoyer);
+        corps.append('file', file);
         corps.append('slug', slug);
         const res = await fetch('/api/images/upload', {
           method: 'POST',
@@ -232,6 +230,64 @@ export default function ProductManager({ slug }: { slug: string }) {
           ? 'Aucune photo n’a pu être envoyée. Vérifiez votre connexion.'
           : `${String(echecs.length)} photo(s) sur ${String(fichiers.length)} n’ont pas pu être envoyées.`,
       );
+    }
+  }
+
+  /**
+   * RENDRE PRO — sur une photo déjà en ligne comme sur une nouvelle.
+   *
+   * ── POURQUOI IL PART D'UNE URL, ET NON D'UN FICHIER.
+   *
+   * C'est ce qui le rend utilisable sur les boutiques EXISTANTES. Un bouton
+   * qui n'aurait traité que les fichiers fraîchement choisis aurait corrigé
+   * les photos futures et laissé les anciennes telles quelles — la boutique
+   * serait restée à moitié amateur, et le marchand aurait dû tout ré-envoyer.
+   *
+   * Ici, la vignette porte une URL. On la récupère, on la traite, on la
+   * renvoie dans la chaîne d'envoi habituelle — qui lui applique en plus
+   * l'exposition, la balance des blancs et le cadre carré.
+   *
+   * L'ancienne URL est conservée dans `originaux` : le bouton ↺ la ramène.
+   */
+  async function rendrePro(url: string) {
+    setEnCours((e) => ({ ...e, [url]: true }));
+    try {
+      // La session est demandée ICI : celle de l'envoi est locale à sa
+      // boucle, et un jeton capturé plus tôt aurait pu expirer entre-temps.
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (session === null) throw new Error('session absente');
+      const reponse = await fetch(url);
+      if (!reponse.ok) throw new Error('image illisible');
+      const brut = new File([await reponse.blob()], 'photo.jpg', { type: 'image/jpeg' });
+      const detouree = await detourerDansLeNavigateur(brut);
+      if (detouree === null) throw new Error('détourage impossible');
+
+      const corps = new FormData();
+      corps.append('file', detouree.fichier);
+      corps.append('slug', slug);
+      const res = await fetch('/api/images/upload', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${session.access_token}` },
+        body: corps,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.url) throw new Error(String(data.error ?? 'envoi impossible'));
+      const nouvelle: string = data.amelioration?.url ?? data.url;
+      // L'ORIGINALE RESTE CONNUE. Le détourage se trompe — une capture
+      // d'écran de site, un article sur fond chargé — et le marchand doit
+      // pouvoir revenir en un geste.
+      setOriginaux((o) => ({ ...o, [nouvelle]: originaux[url] ?? url }));
+      setDraft((d) => ({ ...d, images: d.images.map((u) => (u === url ? nouvelle : u)) }));
+    } catch {
+      // Silencieux : la photo d'origine reste en place, rien n'est perdu.
+    } finally {
+      setEnCours((e) => {
+        const c = { ...e };
+        delete c[url];
+        return c;
+      });
     }
   }
 
@@ -594,6 +650,23 @@ export default function ProductManager({ slug }: { slug: string }) {
                 <div key={url} className="relative">
                   <img src={url} alt="" loading="lazy" className="w-16 h-16 rounded-xl object-contain bg-white/[0.04] border border-white/10" />
                   <button onClick={() => removeImage(url)} title="Retirer" className="absolute -top-1.5 -right-1.5 w-5 h-5 rounded-full bg-black/80 text-white text-xs border border-white/20">×</button>
+                  {/* ── « RENDRE PRO », SUR CHAQUE VIGNETTE.
+                      Il part de l'URL affichée, donc il marche sur une photo
+                      DÉJÀ EN LIGNE comme sur une nouvelle. C'est ce qui permet
+                      de rattraper une boutique entière sans rien ré-envoyer.
+                      Il disparaît quand une version d'origine existe déjà :
+                      la photo a alors été traitée, et le geste suivant est le
+                      retour (↺), pas un second passage. */}
+                  {originaux[url] === undefined && (
+                    <button
+                      onClick={() => { void rendrePro(url); }}
+                      disabled={enCours[url] === true}
+                      title="Rendre pro — détoure l’article et le pose sur fond blanc"
+                      className="absolute -bottom-1.5 -left-1.5 h-5 px-1.5 rounded-full bg-black/80 text-white text-[10px] leading-none border border-white/20 disabled:opacity-50"
+                    >
+                      {enCours[url] === true ? '…' : '✨'}
+                    </button>
+                  )}
                   {/* ── LE RETOUR À L'ORIGINAL TIENT EN UN GESTE, SUR LA VIGNETTE.
                       La retouche est appliquée d'office : c'est ce que veut
                       quelqu'un qui photographie au téléphone entre deux clients.
