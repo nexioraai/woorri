@@ -151,7 +151,39 @@ function getCurrency(location: string): string {
   return 'USD';
 }
 
-async function fetchPexelsImages(query: string, color?: string): Promise<string[]> {
+// ════════════════════════════════════════════════════════════════════
+//  LES IMAGES D'UN SITE GÉNÉRÉ — CE QUI LES RENDAIT LAIDES.
+// ════════════════════════════════════════════════════════════════════
+//
+// Plainte d'utilisateurs, mesurée dans ce fichier le 2026-10-06. Le moteur de
+// recherche était déjà bon — une requête PRÉCISE par article écrite par le
+// modèle, `orientation=landscape`, la couleur de la marque. Trois défauts le
+// ruinaient quand même, et tous les trois dans la façon de CHOISIR :
+//
+// ① SIX photos récupérées, LA PREMIÈRE utilisée. Cinq appels d'API payés pour
+//    rien, et surtout aucune marge pour éviter une collision.
+//
+// ② AUCUNE MÉMOIRE ENTRE LES ARTICLES. Les produits et les sections étaient
+//    enrichis en `Promise.all` — en parallèle, sans état partagé. Deux
+//    requêtes voisines (« grilled chicken plate » et « roast chicken plate »)
+//    rendent souvent la MÊME photo en tête : elle sortait deux fois sur la
+//    même page. Le prompt demande au modèle de ne pas répéter ses requêtes ;
+//    c'est une consigne, pas une garantie — et Pexels, lui, n'a pas lu le
+//    prompt.
+//
+// ③ `src.large` POUR LE HERO, soit 940 px de large. Un hero occupe toute la
+//    largeur ; sur un écran moderne il était visiblement FLOU. Pexels publie
+//    `large2x` (1880 px) pour exactement ce cas.
+//
+// Ce qui suit corrige les trois. Le moteur de recherche n'est pas touché.
+
+/** Une photo, avec ses deux tailles utiles. */
+export interface PhotoPexels {
+  readonly standard: string;
+  readonly pleineLargeur: string;
+}
+
+async function fetchPexelsPhotos(query: string, color?: string): Promise<PhotoPexels[]> {
   const key = process.env.PEXELS_API_KEY;
   if (!key) return [];
   try {
@@ -163,10 +195,54 @@ async function fetchPexelsImages(query: string, color?: string): Promise<string[
       return [];
     }
     const data = await res.json();
-    return (data.photos || []).map((p: any) => p.src.large || p.src.original).filter(Boolean);
+    return (data.photos || [])
+      .map((p: any) => ({
+        standard: p.src?.large || p.src?.original || '',
+        // `large2x` d'abord : c'est la taille faite pour une image qui occupe
+        // toute la largeur. On retombe sur `original` puis `large` — jamais
+        // sur rien, sinon le hero disparaîtrait au lieu d'être flou.
+        pleineLargeur: p.src?.large2x || p.src?.original || p.src?.large || '',
+      }))
+      .filter((p: PhotoPexels) => p.standard !== '');
   } catch (e) {
     console.error('PEXELS EXCEPTION', e, 'query:', query);
     return [];
+  }
+}
+
+/** Compatibilité : les appelants qui ne veulent que des URL standard. */
+async function fetchPexelsImages(query: string, color?: string): Promise<string[]> {
+  return (await fetchPexelsPhotos(query, color)).map((p) => p.standard);
+}
+
+/**
+ * LE PIOCHEUR — une mémoire de ce qui est DÉJÀ pris sur ce site.
+ *
+ * Il rend la première photo de la liste qui n'a pas encore servi. Si les six
+ * sont toutes prises, il rend la première quand même : une image répétée vaut
+ * mieux qu'une case vide, et c'est le seul cas où la répétition est le moindre
+ * mal.
+ *
+ * ⚠️ IL N'EST PAS PARALLÉLISABLE, et c'est son intérêt. Les enrichissements
+ * d'images passaient en `Promise.all` : c'est précisément ce qui empêchait
+ * toute mémoire entre eux. On garde les requêtes réseau en parallèle, et on
+ * SÉRIALISE le choix.
+ */
+export class PiocheurImages {
+  private readonly prises = new Set<string>();
+
+  /** Réserve une photo pour cet emplacement. `''` si la liste est vide. */
+  choisir(photos: readonly PhotoPexels[], pleineLargeur = false): string {
+    const libre = photos.find((p) => !this.prises.has(p.standard));
+    const retenue = libre ?? photos[0];
+    if (!retenue) return '';
+    this.prises.add(retenue.standard);
+    return pleineLargeur ? retenue.pleineLargeur : retenue.standard;
+  }
+
+  /** Marque une image fournie par ailleurs, pour qu'elle ne ressorte pas. */
+  reserver(url: string): void {
+    if (url) this.prises.add(url);
   }
 }
 
@@ -708,11 +784,16 @@ Return ONLY valid JSON, no markdown:
 
     // Vraies images Pexels colorées selon la marque
     const pexelsQuery = (parsed.imageQuery || `${parsed.type || 'business'} ${parsed.name || ''}`).trim();
-    const gallery = await fetchPexelsImages(pexelsQuery, parsed.primaryColor);
-    // Image hero dédiée (recherche premium selon la niche)
+    // UNE SEULE mémoire pour tout le site : c'est elle qui empêche la même
+    // photo de ressortir trois fois sur la même page.
+    const pioche = new PiocheurImages();
+    const galleryPhotos = await fetchPexelsPhotos(pexelsQuery, parsed.primaryColor);
+    // Image hero dédiée (recherche premium selon la niche), EN PLEINE LARGEUR :
+    // elle occupe tout l'écran, et 940 px y sont visiblement flous.
     const heroQuery = (parsed.heroImageQuery || pexelsQuery).trim();
-    const heroImgs = await fetchPexelsImages(heroQuery, parsed.primaryColor);
-    const heroImage = heroImgs[0] || gallery[0] || '';
+    const heroPhotos = await fetchPexelsPhotos(heroQuery, parsed.primaryColor);
+    const heroImage = pioche.choisir(heroPhotos, true) || pioche.choisir(galleryPhotos, true);
+    const gallery = galleryPhotos.map((p) => p.standard);
     // Source unique du mode final, calculee une seule fois et reutilisee
     // partout ci-dessous (pages, hidden_sections, mode, products) -- voir
     // resolveFinalMode(). Calculee ICI (avant l'enrichissement image) pour
@@ -752,30 +833,55 @@ Return ONLY valid JSON, no markdown:
       finalMode,
       Array.isArray(parsed.products) ? parsed.products : []
     );
-    const productsWithImages = await Promise.all(
-      rawProducts.map(async (p: any) => {
-        if (p.image) return p;
-        const q = (p.imageQuery || `${p.name || ''} ${parsed.type || ''}`).trim();
-        const imgs = await fetchPexelsImages(q, parsed.primaryColor);
-        return { ...p, image: imgs[0] || '' };
-      })
+    // LES REQUÊTES EN PARALLÈLE, LE CHOIX EN SÉRIE.
+    //
+    // La version d'origine faisait les deux en parallèle : chaque article
+    // prenait `imgs[0]` sans savoir ce que les autres avaient pris. On garde
+    // la vitesse du réseau et on sérialise la seule chose qui doit l'être.
+    const propositionsProduits = await Promise.all(
+      rawProducts.map(async (p: any) =>
+        p.image
+          ? null
+          : fetchPexelsPhotos(
+              (p.imageQuery || `${p.name || ''} ${parsed.type || ''}`).trim(),
+              parsed.primaryColor,
+            ),
+      ),
     );
+    const productsWithImages = rawProducts.map((p: any, i: number) => {
+      if (p.image) {
+        // Une image déjà fournie est RÉSERVÉE : sans ça, un article suivant
+        // pourrait piocher exactement la même.
+        pioche.reserver(p.image);
+        return p;
+      }
+      return { ...p, image: pioche.choisir(propositionsProduits[i] ?? []) };
+    });
 
     // Image Pexels par service, en parallèle
     const rawSections = Array.isArray(parsed.sections) ? parsed.sections : [];
-    const sectionsWithImages = await Promise.all(
-      rawSections.map(async (sec: any) => {
-        const rawItems = Array.isArray(sec.items) ? sec.items : [];
-        const itemsWithImages = await Promise.all(
-          rawItems.map(async (it: any) => {
-            const q = (it.imageQuery || `${it.title || ''} ${parsed.type || ''}`).trim();
-            const imgs = await fetchPexelsImages(q, parsed.primaryColor);
-            return { ...it, image: imgs[0] || '' };
-          })
-        );
-        return { name: sec.name || '', items: itemsWithImages };
-      })
+    const propositionsSections = await Promise.all(
+      rawSections.map(async (sec: any) =>
+        Promise.all(
+          (Array.isArray(sec.items) ? sec.items : []).map(async (it: any) =>
+            fetchPexelsPhotos(
+              (it.imageQuery || `${it.title || ''} ${parsed.type || ''}`).trim(),
+              parsed.primaryColor,
+            ),
+          ),
+        ),
+      ),
     );
+    const sectionsWithImages = rawSections.map((sec: any, si: number) => {
+      const rawItems = Array.isArray(sec.items) ? sec.items : [];
+      return {
+        name: sec.name || '',
+        items: rawItems.map((it: any, ii: number) => ({
+          ...it,
+          image: pioche.choisir(propositionsSections[si]?.[ii] ?? []),
+        })),
+      };
+    });
     // Insert via service_role (bypass RLS, sécurisé car owner_email vient du token validé)
     const { error } = await supabaseAdmin.from('sites').insert({
       slug,
