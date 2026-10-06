@@ -87,17 +87,40 @@ async function detourer(entree, fond) {
   const base = sharp(entree).rotate()
   const { width, height } = await base.clone().metadata()
 
-  // Le masque est ramené à la taille RÉELLE de la photo, avec un lissage :
-  // un masque de 320 px agrandi brutalement donne un contour en escalier.
-  const masqueRedim = await sharp(m, { raw: { width: N, height: N, channels: 1 } })
+  // ── LE MASQUE DOIT PORTER SON ALPHA, ET C'EST LE DÉFAUT QUI ÉTAIT ICI.
+  //
+  // La version d'origine composait un buffer d'UN SEUL CANAL avec
+  // `blend: 'dest-in'`. Or `dest-in` lit l'ALPHA de l'image composée — un
+  // buffer en niveaux de gris n'en a aucun. Le mélange ne retirait donc RIEN :
+  // ce worker aurait rendu la photo INCHANGÉE, et le propriétaire aurait payé
+  // un hébergement pour une fonction sans effet.
+  //
+  // Mesuré le 2026-10-06 en portant ce code dans le navigateur, sur une vraie
+  // photo de marchand : carton sur carrelage orange, masque PARFAIT, et sortie
+  // identique à l'entrée. Le modèle n'était pas en cause.
+  //
+  // Le masque est donc construit en RGBA — blanc, et son ALPHA porte le
+  // masque. `dest-in` a enfin de quoi lire.
+  //
+  // (Le lissage reste : un masque de 320 px agrandi brutalement donne un
+  //  contour en escalier.)
+  const rgba = Buffer.alloc(N * N * 4)
+  for (let i = 0; i < N * N; i += 1) {
+    rgba[i * 4] = 255
+    rgba[i * 4 + 1] = 255
+    rgba[i * 4 + 2] = 255
+    rgba[i * 4 + 3] = m[i]
+  }
+  const masqueRedim = await sharp(rgba, { raw: { width: N, height: N, channels: 4 } })
     .resize(width, height, { fit: 'fill' })
     .blur(0.6)
+    .png()
     .toBuffer()
 
   const sujet = await base
     .clone()
     .ensureAlpha()
-    .composite([{ input: masqueRedim, raw: { width, height, channels: 1 }, blend: 'dest-in' }])
+    .composite([{ input: masqueRedim, blend: 'dest-in' }])
     .png()
     .toBuffer()
 

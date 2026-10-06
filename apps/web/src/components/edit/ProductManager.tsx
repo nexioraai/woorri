@@ -7,6 +7,7 @@ import { useTranslation } from '@/lib/translations';
 // jsdom (ce depot n'en a pas). Ce composant ne garde que le rendu et les
 // appels reseau. Voir productDraft.ts pour le raisonnement complet.
 import { ancienPrixRetenu, draftVierge, draftFromProduct, payloadFromDraft, type ProductDraft } from './productDraft';
+import { detourerDansLeNavigateur } from './fond-navigateur';
 
 // Couleur accent admin Nexiora — changer ici se répercute partout dans ce composant.
 const ACCENT = '#FA5D1E';
@@ -161,8 +162,27 @@ export default function ProductManager({ slug }: { slug: string }) {
     for (const [i, file] of fichiers.entries()) {
       setProgression({ fait: i, total: fichiers.length });
       try {
+        // ── LE FOND PART AVANT L'ENVOI, DANS CE NAVIGATEUR.
+        //
+        // Comparaison faite sur trois photos réelles de la même boutique : deux
+        // passées par PhotoRoom, une envoyée brute depuis un téléphone. L'écart
+        // ne tenait ni à l'exposition, ni à la netteté, ni au cadrage — les
+        // deux premières montraient l'article sur un fond UNIFORME, la
+        // troisième sur un CARRELAGE ORANGE avec les taches du sol.
+        //
+        // On corrige l'exposition d'un carrelage ; on ne le fait pas
+        // disparaître avec un histogramme. Seul un modèle de segmentation le
+        // peut — et `u2netp` (4,4 Mo, Apache-2.0) tourne ici, gratuitement,
+        // sans serveur à payer ni coût par photo.
+        //
+        // `?? file` EST LA LIGNE IMPORTANTE : un détourage raté rend `null`, et
+        // la photo d'origine part quand même. Le marchand ne doit jamais perdre
+        // son visuel pour un bonus manqué.
+        const detouree = await detourerDansLeNavigateur(file);
+        const aEnvoyer = detouree?.fichier ?? file;
+
         const corps = new FormData();
-        corps.append('file', file);
+        corps.append('file', aEnvoyer);
         corps.append('slug', slug);
         const res = await fetch('/api/images/upload', {
           method: 'POST',
