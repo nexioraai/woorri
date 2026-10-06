@@ -69,6 +69,26 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  // ── `onnxruntime-web` NE DOIT PAS ÊTRE EMPAQUETÉ.
+  //
+  // MESURÉ EN PRODUCTION le 2026-10-06, premier passage réel du lot photo :
+  // 37 photos, 37 erreurs, toutes identiques —
+  //   « no available backend found. ERR: [wasm] Cannot find module
+  //     /var/task/apps/web/.next/server/chunks/ort-wasm-simd-threaded.mjs »
+  //
+  // Le paquet charge son moteur WebAssembly par un import dynamique. Le
+  // bundler l'a réécrit vers un chemin de chunk qui n'existe pas, et le
+  // traçage n'y pouvait rien : il déposait bien les fichiers dans
+  // `node_modules`, mais le code empaqueté ne les cherchait plus là.
+  //
+  // Déclaré externe, le paquet reste dans `node_modules` et résout ses
+  // propres fichiers à l'exécution, comme il le fait en local.
+  //
+  // CE QUI A SAUVÉ LA MISE : chaque photo échoue isolément et le catalogue
+  // n'est écrit qu'après succès. 37 erreurs, ZÉRO photo remplacée — vérifié
+  // produit par produit après le passage.
+  serverExternalPackages: ['onnxruntime-web'],
+
   // LE MODÈLE DE DÉTOURAGE DOIT ENTRER DANS LA FONCTION SERVEUR.
   //
   // `public/` part au CDN ; il n'est PAS dans le système de fichiers d'une
