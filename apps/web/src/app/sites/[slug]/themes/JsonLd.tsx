@@ -92,6 +92,30 @@ export default function JsonLd({ site, url }: { site: Site; url: string }) {
   const description = site.slogan ?? site.hero_subtitle ?? site.about
   if (description) data.description = description
   if (site.hero_image) data.image = site.hero_image
+
+  // ── LE LOGO DE LA MARQUE. IL MANQUAIT, ET C'EST GRAVE.
+  //
+  // MESURÉ LE 2026-10-06 sur les CINQ boutiques en ligne : `image` était
+  // présent sur les cinq, `logo` sur AUCUNE. Or ce sont deux choses que
+  // Google ne confond pas — `image` illustre la page, `logo` identifie
+  // l'entreprise. Sans `logo`, l'entité n'a pas de marque : elle n'a qu'une
+  // photo d'illustration.
+  //
+  // Et cette photo-là était, pour trois des cinq, UNE IMAGE PEXELS. Donc la
+  // seule chose que Google et les aperçus de partage associaient à la marque
+  // était une banque d'images. C'est exactement l'impression que le
+  // propriétaire décrivait : « hero et logo sont liés ». Ils l'étaient — par
+  // l'absence du second.
+  //
+  // LE REPLI N'EST PAS UN PIS-ALLER. Quand le marchand n'a pas déposé de
+  // logo — 24 sites sur 27 au moment où ceci est écrit, parce que le
+  // générateur n'en fabrique aucun — on pointe le MONOGRAMME, que
+  // `/api/internal/site-icon/` sait déjà rendre à partir du nom et de la
+  // couleur de la marque. Vérifié : cette URL répond 200 en PNG sur un
+  // domaine propre (chanorfie.com, biyaminchine.com). Mieux vaut un
+  // monogramme cohérent que pas de marque du tout.
+  data.logo =
+    site.logo_url ?? `${url.replace(/\/+$/, '')}/api/internal/site-icon/${site.slug}?t=512&f=png`
   if (site.contact?.phone) data.telephone = site.contact.phone
   if (site.contact?.email) data.email = site.contact.email
 

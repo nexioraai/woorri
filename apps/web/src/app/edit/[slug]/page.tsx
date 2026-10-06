@@ -52,6 +52,31 @@ export default function EditPage() {
       fetchOwnedSite(slug, data.user.email!).then((siteData) => {
         setSite(siteData);
         if (siteData) {
+          // ── LE LOGO DÉJÀ EN PLACE EST ÉVALUÉ, LUI AUSSI.
+          //
+          // Les contrôles de qualité ne parlaient qu'au moment du dépôt. Or
+          // les logos à problème du parc étaient TOUS déjà déposés : une photo
+          // de devanture servant d'enseigne, un logo doré sur fond noir opaque.
+          // Leurs propriétaires n'auraient jamais vu l'avertissement, parce que
+          // le seul moment où on leur parlait était celui où ils n'avaient plus
+          // rien à corriger.
+          const logo = (siteData as { logo_url?: string | null }).logo_url;
+          if (typeof logo === 'string' && logo !== '') {
+            // LE JETON, comme pour le dépôt : la route vérifie la propriété et
+            // lit `logo_url` elle-même. Un cliquet du dépôt a refusé la
+            // première version, qui appelait sans jeton — à juste titre.
+            supabase.auth.getSession().then(({ data: s }) =>
+              fetch(`/api/site/logo?slug=${encodeURIComponent(slug)}`, {
+                headers: { Authorization: `Bearer ${s.session?.access_token ?? ''}` },
+              })
+              .then((r) => r.json())
+              .then((d: { avertissements?: { message: string }[] }) => {
+                setAvisLogo((d.avertissements ?? []).map((x) => x.message));
+              })
+              // Un avis est un bonus : son absence ne doit rien casser.
+              .catch(() => undefined),
+            ).catch(() => undefined);
+          }
           initialPassed.current = computeAiScore(siteData as any).passed;
           setPodDesigns(Array.isArray((siteData as any).pod_designs) ? (siteData as any).pod_designs : []);
           // Restore selected products from pod_designs

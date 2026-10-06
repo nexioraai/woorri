@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import sharp from 'sharp'
+import { evaluerLogo } from '@/lib/images/qualiteLogo'
 import { createClient } from '@supabase/supabase-js'
 import { requireSiteOwner } from '@/lib/auth/require-site-owner'
 
@@ -150,28 +151,14 @@ export async function POST(req: Request) {
 
   const { data } = client.storage.from('site-images').getPublicUrl(chemin)
 
-  // AVERTIR SANS BLOQUER. Un logo très allongé rentrera dans le carré du
-  // favicon avec de grandes marges : il sera minuscule. C'est le choix du
-  // marchand — on le dit, on ne le refuse pas.
-  const rapport = largeur / hauteur
-  const avertissements: { code: string; message: string }[] = []
-  if (rapport > 2.5 || rapport < 0.4) {
-    avertissements.push({
-      code: 'tres_allonge',
-      message:
-        'Ce logo est très allongé. Dans les onglets et les résultats Google, ' +
-        'l’icône est carrée : il y paraîtra petit. Un logo carré ou un ' +
-        'symbole seul y sera bien plus lisible.',
-    })
-  }
-  if (Math.min(largeur, hauteur) < 256) {
-    avertissements.push({
-      code: 'definition_juste',
-      message:
-        'Définition un peu juste pour l’écran d’accueil d’un téléphone (192 px). ' +
-        'Un export à 512 px serait plus net.',
-    })
-  }
+  // AVERTIR SANS BLOQUER, et la mesure vit AILLEURS.
+  //
+  // Ces contrôles étaient écrits ici, donc ils ne servaient qu'au moment du
+  // dépôt. Or les logos problématiques du parc étaient DÉJÀ déposés : leurs
+  // propriétaires n'auraient jamais vu l'avertissement. La mesure est passée
+  // dans `lib/images/qualiteLogo.ts`, et le GET ci-dessous l'applique à un
+  // logo existant.
+  const avertissements = await evaluerLogo(entree)
 
   return NextResponse.json({
     url: data.publicUrl,
@@ -182,4 +169,51 @@ export async function POST(req: Request) {
     gpsRetire,
     avertissements,
   })
+}
+
+/**
+ * ÉVALUER LE LOGO DÉJÀ EN PLACE.
+ *
+ * Sans ceci, les gardes de qualité ne valaient que pour les dépôts À VENIR —
+ * et les logos à problème du parc étaient tous déjà déposés. Le marchand
+ * aurait gardé un rectangle noir ou une photo de devanture sans que rien ne
+ * le lui dise, parce que le seul moment où on lui parlait était celui où il
+ * n'avait plus rien à corriger.
+ *
+ * ELLE NE PREND PAS D'ADRESSE. Première version : un paramètre `url`, borné au
+ * seau public. Un cliquet du dépôt l'a refusée pour une autre raison — l'appel
+ * client partait sans jeton vers une route protégée — et il avait raison deux
+ * fois. Faire suivre une adresse fournie par l'appelant, même filtrée, laisse
+ * notre serveur émettre des requêtes au choix d'un tiers ; le filtre est une
+ * défense, pas une absence de surface.
+ *
+ * On passe donc le SLUG, on vérifie la propriété comme le fait le dépôt, et on
+ * lit `logo_url` dans la base. Il n'y a plus rien à filtrer.
+ *
+ * Lecture seule : ni stockage ni base ne sont modifiés.
+ */
+export async function GET(req: Request) {
+  const slug = new URL(req.url).searchParams.get('slug')
+  if (slug === null || slug.trim() === '') {
+    return NextResponse.json({ error: 'Site manquant.' }, { status: 400 })
+  }
+
+  const garde = await requireSiteOwner(req, slug, 'id, slug, logo_url')
+  if (!garde.ok) return garde.response
+
+  const logo = (garde.site as { logo_url: string | null } | undefined)?.logo_url
+  if (typeof logo !== 'string' || logo === '') {
+    return NextResponse.json({ avertissements: [] })
+  }
+
+  try {
+    const rep = await fetch(logo)
+    if (!rep.ok) return NextResponse.json({ avertissements: [] })
+    return NextResponse.json({
+      avertissements: await evaluerLogo(Buffer.from(await rep.arrayBuffer())),
+    })
+  } catch {
+    // Un logo illisible n'est pas une panne de l'éditeur : on se tait.
+    return NextResponse.json({ avertissements: [] })
+  }
 }
