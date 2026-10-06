@@ -34,6 +34,9 @@
 // l'usage : ses données viennent déjà d'une API.
 
 import type { ProjectAir } from "@deribfy/air-schema";
+// Le verrou de dépendances du gabarit web, scellé depuis un `npm install`
+// RÉEL sur le `package.json` émis — voir `template-web/LISEZ-MOI.md`.
+import { EMBEDDED_TEMPLATE_WEB } from "./embedded-template-web.generated.ts";
 
 /** Ce que l'enveloppe web ajoute à ce que `emitProject` a déjà produit. */
 export interface EnveloppeWeb {
@@ -305,6 +308,31 @@ const publication = (air: ProjectAir): string => {
   return l.join("\n");
 };
 
+/**
+ * Le verrou scellé, au nom de CETTE application.
+ *
+ * On remplace le nom à DEUX endroits — la racine du document et l'entrée
+ * `packages[""]` — parce que npm les lit tous les deux. N'en changer qu'un
+ * laisse un projet qui se contredit lui-même.
+ */
+const verrou = (slug: string): string => {
+  const brut = EMBEDDED_TEMPLATE_WEB["package-lock.json"];
+  if (brut === undefined) {
+    // Le gabarit est généré et scellé : son absence est un défaut du
+    // compilateur, jamais un cas d'entrée. Refus net plutôt qu'un projet émis
+    // sans verrou, qui ressemblerait à un projet normal.
+    throw new Error("GABARIT_WEB_VERROU_ABSENT");
+  }
+  const lock = JSON.parse(brut) as {
+    name?: string;
+    packages?: Record<string, { name?: string }>;
+  };
+  lock.name = slug;
+  const racine = lock.packages?.[""];
+  if (racine !== undefined) racine.name = slug;
+  return JSON.stringify(lock, null, 2) + "\n";
+};
+
 /** Le gabarit : Vite, et le strict nécessaire. */
 const gabarit = (air: ProjectAir): ReadonlyMap<string, string> =>
   new Map([
@@ -358,6 +386,26 @@ const gabarit = (air: ProjectAir): ReadonlyMap<string, string> =>
       }),
     ],
     [".gitignore", "node_modules/\ndist/\n"],
+    [
+      // ── LE VERROU DE DÉPENDANCES — ET SON ABSENCE N'ÉTAIT PAS ANODINE.
+      //
+      // La cible native scelle le sien depuis l'origine ; la cible web n'en
+      // émettait AUCUN, et la gate de compilation le déclarait comme sa
+      // propre limite.
+      //
+      // Sans verrou, le propriétaire installe aujourd'hui une version et dans
+      // six mois une autre : son `npm run build` peut casser sur une
+      // dépendance transitive qu'il n'a pas choisie, sans explication, et sans
+      // que rien de notre côté n'ait changé. Un générateur qui produit un
+      // projet non reproductible produit un projet qui pourrit.
+      //
+      // LE NOM EST RÉÉCRIT, pas le contenu. Le verrou scellé porte un nom
+      // neutre ; `package.json` porte le slug de l'application. `npm ci`
+      // compare les DÉPENDANCES — mais laisser deux noms différents dans un
+      // projet livré est le genre de détail qui fait douter du reste.
+      "package-lock.json",
+      verrou(air.app.slug),
+    ],
     ["PUBLICATION.md", publication(air)],
     [
       "vite.config.ts",

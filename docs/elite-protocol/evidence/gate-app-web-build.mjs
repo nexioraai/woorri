@@ -60,17 +60,33 @@ if (apps.length === 0) {
 // ── L'INSTALLATION PARTAGÉE, DEPUIS LE `package.json` ÉMIS.
 if (!existsSync(CACHE + "node_modules")) {
   mkdirSync(CACHE, { recursive: true });
-  const gabarit = readFileSync(SOURCE + apps[0] + "/package.json", "utf8");
-  writeFileSync(CACHE + "package.json", gabarit);
-  console.log("  deps    : installation (une fois) depuis le package.json ÉMIS…");
+  writeFileSync(CACHE + "package.json", readFileSync(SOURCE + apps[0] + "/package.json", "utf8"));
+  // ── `npm ci` ET NON `npm install` — C'EST LE CONTRÔLE, PAS UN DÉTAIL.
+  //
+  // `install` RÉSOUT les versions : il réussirait même si le verrou émis était
+  // faux, périmé ou absent. `ci` INSTALLE LE VERROU et refuse tout désaccord
+  // avec le `package.json`. C'est donc cette commande — et elle seule — qui
+  // prouve que le projet livré au propriétaire est reproductible.
+  //
+  // Elle fait aussi office de cliquet sur le gabarit : changer une dépendance
+  // sans régénérer le verrou fait échouer la gate ici, et non chez lui.
+  const verrou = SOURCE + apps[0] + "/package-lock.json";
+  if (!existsSync(verrou)) {
+    console.error("  🔴 aucun `package-lock.json` émis — le projet livré ne serait pas reproductible.");
+    process.exit(2);
+  }
+  writeFileSync(CACHE + "package-lock.json", readFileSync(verrou, "utf8"));
+  console.log("  deps    : `npm ci` (une fois) depuis le VERROU ÉMIS…");
   try {
-    execFileSync("npm", ["install", "--no-audit", "--no-fund"], {
+    execFileSync("npm", ["ci", "--no-audit", "--no-fund"], {
       cwd: CACHE,
       stdio: "inherit",
       timeout: 900000,
     });
   } catch (e) {
-    console.error("  🔴 `npm install` a échoué —", String(e.message).slice(0, 200));
+    console.error("  🔴 `npm ci` a échoué —", String(e.message).slice(0, 300));
+    console.error("     Un verrou en désaccord avec le package.json émis : régénérer");
+    console.error("     `template-web/package-lock.json` (voir son LISEZ-MOI).");
     process.exit(2);
   }
 } else {

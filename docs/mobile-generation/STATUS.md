@@ -111,6 +111,27 @@
 > quelqu'un qui ne le lira jamais et nommant des modules internes. L'explication
 > est remontée dans `emit-web.ts`, où le mainteneur la lit.
 >
+> **⑨ LA CIBLE WEB N'ÉTAIT PAS REPRODUCTIBLE.** Dernière limite que les gates
+> déclaraient elles-mêmes : aucun verrou de dépendances. Le natif scelle le
+> sien depuis l'origine ; le web n'en émettait AUCUN. Sans lui, le
+> propriétaire installe aujourd'hui `vite` 7.3.6 et dans six mois autre chose
+> — son `npm run build` peut casser sur une dépendance transitive qu'il n'a pas
+> choisie, sans explication et sans que rien de notre côté n'ait changé.
+> **Scellé** : `template-web/package-lock.json`, 117 paquets, issu d'un
+> `npm install` RÉEL sur le `package.json` ÉMIS dont le build est vérifié —
+> pas d'un verrou écrit à la main, qui ne correspondrait à aucune
+> installation possible. Nom neutre réécrit au slug de l'application, aux DEUX
+> endroits que npm lit. Le générateur de gabarit a été GÉNÉRALISÉ aux deux
+> cibles plutôt que dupliqué — la divergence a déjà été payée deux fois le
+> même jour (tables d'embarquement, listes de documents des gates).
+> **La gate installe par `npm ci`, pas `npm install`** : `install` RÉSOUT et
+> réussirait même avec un verrou faux ou absent ; `ci` INSTALLE LE VERROU et
+> refuse tout désaccord. C'est donc elle seule qui prouve la reproductibilité,
+> et elle fait cliquet sur le gabarit. **Contrôle négatif** : `react` passé à
+> `^18` dans le package.json émis → `npm error code EUSAGE`, gate arrêtée avec
+> le geste de réparation. Mesuré : `npm ci` installe exactement vite 7.3.6,
+> 31/31 se construisent.
+>
 > **🔴 CE QUI RESTE OUVERT, DIT** : la MISE EN PAGE web n'est prouvée par
 > rien (aucun style calculé — seul un vrai navigateur le dirait) ;
 > `index.tsx`/`App.tsx` non montés (ils exigent un DOM, dix lignes chacun) ;

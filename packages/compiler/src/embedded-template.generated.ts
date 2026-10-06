@@ -1,6 +1,7 @@
 // GÉNÉRÉ PAR scripts/embed-template.mjs — NE PAS ÉDITER À LA MAIN.
-// Fichiers du gabarit scellé (templateHash) embarqués : le chemin de
-// compilation complet est PUR. Non-dérive : embedded-template.test.ts.
+// Fichiers de template/ embarqués : le chemin de compilation complet
+// est PUR (aucun fs). Non-dérive : embedded-template.test.ts recalcule
+// depuis le répertoire et refuse un écart.
 export const EMBEDDED_TEMPLATE: Readonly<Record<string, string>> = {
   ".gitignore": "node_modules/\n.expo/\ndist/\nandroid/\nios/\n",
   "index.ts": "import { registerRootComponent } from \"expo\";\nimport App from \"./App\";\nregisterRootComponent(App);\n",
