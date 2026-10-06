@@ -64,6 +64,26 @@ createRoot(racine).render(
 `;
 
 /**
+ * ── POURQUOI L'ENCOCHE EST TRAITÉE DANS CETTE PAGE, ET NULLE PART AILLEURS.
+ *
+ * `viewport-fit=cover` fait occuper l'écran ENTIER à une PWA installée —
+ * encoche et barre de gestes comprises. Sans rembourrage, le haut de
+ * l'application passe SOUS l'heure du système.
+ *
+ * Le natif obtient ces marges en NOMBRES (`useSafeAreaInsets`) ; le web ne les
+ * connaît qu'en CSS, résolues au moment du rendu. C'est pourquoi la couture
+ * `plateforme-web` rend des zéros : la marge est déjà posée ici, et les
+ * additionner la doublerait sur un iPhone.
+ *
+ * ⚠️ CETTE EXPLICATION VIT ICI, PAS DANS LA PAGE ÉMISE. Mesuré le 2026-10-05
+ * sur le vrai build Vite : les quatorze lignes de commentaire partaient dans
+ * `dist/index.html` — 546 octets servis à CHAQUE visiteur, qui expliquent le
+ * moteur à quelqu'un qui ne le lira jamais, et qui nomment des modules
+ * internes au passage. Le mainteneur lit ce fichier ; l'utilisateur reçoit la
+ * page.
+ */
+
+/**
  * La page qui porte l'application.
  *
  * `viewport-fit=cover` et la couleur de thème viennent du natif : une PWA
@@ -79,14 +99,7 @@ const page = (air: ProjectAir): string => `<!doctype html>
     <title>${air.app.name}</title>
     <link rel="manifest" href="./manifest.webmanifest" />
     <style>
-      /* L'ENCOCHE, TRAITÉE ICI ET NULLE PART AILLEURS.
-         \`viewport-fit=cover\` ci-dessus fait occuper l'écran ENTIER à une PWA
-         installée — encoche et barre de gestes comprises. Sans ce rembourrage,
-         le haut de l'application passe SOUS l'heure du système.
-         Le natif obtient ces marges en nombres (\`useSafeAreaInsets\`) ; le web
-         ne les connaît qu'en CSS, au moment du rendu. C'est pourquoi la couture
-         \`plateforme-web\` rend des zéros : la marge est déjà posée, et les
-         additionner la doublerait. */
+      /* Zones sûres de l'appareil — voir PUBLICATION.md. */
       html, body { margin: 0; height: 100%; }
       #racine {
         min-height: 100%;

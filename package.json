@@ -18,6 +18,7 @@
     "gate:app-compile": "node docs/elite-protocol/evidence/gate-app-compile.mjs",
     "gate:app-web": "node docs/elite-protocol/evidence/gate-app-web.mjs",
     "gate:app-web-rendu": "vitest run --config docs/elite-protocol/evidence/observation/obs-web.config.ts corpus-web",
+    "gate:app-web-build": "node docs/elite-protocol/evidence/gate-app-web-build.mjs",
     "gate:composition": "node --experimental-strip-types docs/elite-protocol/evidence/gate-composition.mjs",
     "gate:fidelite": "node --experimental-strip-types docs/elite-protocol/evidence/gate-fidelite.mjs",
     "gate:invariants": "node --experimental-strip-types docs/elite-protocol/evidence/harnais-invariants.mjs",

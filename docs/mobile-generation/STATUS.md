@@ -88,6 +88,29 @@
 > le document d'origine — deux mesures identiques prises pour deux.
 > **31/31 natif · 31/31 web · 31 montées natif · 31 et 233 écrans web.**
 >
+> **⑧ LE VRAI BUILD VITE N'AVAIT JAMAIS TOURNÉ.** `app_web` passe `tsc`,
+> `app_web_rendu` monte les écrans — aucune ne lance **le build**, qui est la
+> PREMIÈRE commande du propriétaire. Et `tsc` ne peut pas la remplacer :
+> `vite.config.ts` est exclu du tsconfig, le résolveur de Vite n'est pas celui
+> de TypeScript, et le manifeste PWA est un ACTIF que Vite renomme avec une
+> empreinte — si le lien dans `index.html` ne suit pas, le navigateur refuse
+> l'installation **sans rien dire**. Gate `app_web_build` (19ᵉ étape) :
+> **31/31 se construisent**, index.html + bundle + manifeste LIÉ vérifiés sur
+> le disque, zéro react-native dans l'ARTEFACT livré (et non plus seulement
+> dans les sources). UNE installation partagée depuis le `package.json` ÉMIS —
+> pas les deps de la racine, qui portent `vite` 8 là où le gabarit demande
+> `^7` : bâtir avec une autre version que celle livrée ne prouverait rien.
+> **Contrôle négatif : trois essais.** Le premier n'a pas mordu — TypeScript
+> ÉLIDE un import dont le binding n'est pas utilisé, donc ma ligne cassée
+> disparaissait avant toute résolution : c'était mon contrôle qui était faux,
+> pas la gate. Les deux suivants ont corrigé le MESSAGE d'échec, qui publiait
+> « vite v7.3.6 building… » puis « Build failed in 37ms » au lieu de la cause.
+> Il dit maintenant `Could not resolve "./x" from "index.tsx"`.
+> **Scorie supprimée au passage** : 546 octets de commentaire français
+> partaient dans `dist/index.html` à chaque visite, expliquant le moteur à
+> quelqu'un qui ne le lira jamais et nommant des modules internes. L'explication
+> est remontée dans `emit-web.ts`, où le mainteneur la lit.
+>
 > **🔴 CE QUI RESTE OUVERT, DIT** : la MISE EN PAGE web n'est prouvée par
 > rien (aucun style calculé — seul un vrai navigateur le dirait) ;
 > `index.tsx`/`App.tsx` non montés (ils exigent un DOM, dix lignes chacun) ;
