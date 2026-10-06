@@ -1,6 +1,5 @@
 import sharp from 'sharp'
-import { readFileSync } from 'node:fs'
-import { join } from 'node:path'
+import { POLICE_MONOGRAMME_BASE64 } from './police-monogramme'
 import { mesurerAplats } from './qualiteLogo'
 
 // ============================================================
@@ -118,19 +117,6 @@ export function encreSur(fond: string): string {
  * Le repli garde l'ancien comportement si le fichier manque : on ne remplace
  * pas un défaut par une panne.
  */
-let policeMemo: string | null | undefined
-
-function policeEmbarquee(): string | null {
-  if (policeMemo !== undefined) return policeMemo
-  try {
-    const chemin = join(process.cwd(), 'public', 'polices', 'monogramme.ttf')
-    policeMemo = readFileSync(chemin).toString('base64')
-  } catch {
-    policeMemo = null
-  }
-  return policeMemo
-}
-
 export function monogrammeSvg(initiale: string, couleur: string): Buffer {
   const encre = encreSur(couleur)
   // L'initiale est échappée : elle vient du nom de boutique, donc de l'entrée
@@ -139,18 +125,16 @@ export function monogrammeSvg(initiale: string, couleur: string): Buffer {
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
-  const police = policeEmbarquee()
-  const famille = police === null ? 'Helvetica,Arial,sans-serif' : 'DeribfyMonogramme'
+  // La police vient du CODE, pas du disque. Un module part toujours avec la
+  // fonction ; un fichier de `public/` ne s'y trouve pas forcément — mesuré.
   const declaration =
-    police === null
-      ? ''
-      : `<defs><style>@font-face{font-family:'DeribfyMonogramme';` +
-        `src:url(data:font/ttf;base64,${police}) format('truetype');}</style></defs>`
+    `<defs><style>@font-face{font-family:'DeribfyMonogramme';` +
+    `src:url(data:font/ttf;base64,${POLICE_MONOGRAMME_BASE64}) format('truetype');}</style></defs>`
   return Buffer.from(
     `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
        ${declaration}
        <rect width="512" height="512" rx="96" fill="${couleur}"/>
-       <text x="256" y="256" fill="${encre}" font-family="${famille}"
+       <text x="256" y="256" fill="${encre}" font-family="DeribfyMonogramme,Helvetica,Arial,sans-serif"
              font-size="300" font-weight="700" text-anchor="middle"
              dominant-baseline="central">${lettre}</text>
      </svg>`,

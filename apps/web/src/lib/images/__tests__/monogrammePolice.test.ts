@@ -41,10 +41,21 @@ describe('CLIQUET — le monogramme ne dépend d’aucune police installée', ()
     const svg = monogrammeSvg('B', '#C41E3A').toString()
     expect(svg).toContain('@font-face')
     expect(svg).toContain('data:font/ttf;base64,')
-    // La famille demandée doit être CELLE QU'ON FOURNIT. Si le document
-    // nommait encore Helvetica, il dépendrait de nouveau du système.
-    expect(svg).toMatch(/font-family="DeribfyMonogramme"/)
-    expect(svg).not.toContain('Helvetica')
+    // La famille FOURNIE doit venir en premier. Helvetica peut rester derrière
+    // — elle ne sert que si le document est lu par un moteur qui ignore
+    // `@font-face`, et elle n'est plus ce dont le rendu dépend.
+    expect(svg).toMatch(/font-family="DeribfyMonogramme,/)
+  })
+
+  it('LA POLICE VIENT DU CODE, jamais du disque — c’est ce qui a manqué', () => {
+    // Première correction : le fichier dans `public/`, lu par `process.cwd()`,
+    // avec un `outputFileTracingIncludes` VÉRIFIÉ dans la trace du paquet.
+    // Elle n'a pas marché en ligne : fichier servi, icône toujours cassée.
+    // Un module part avec la fonction ; un fichier de `public/` ne s'y trouve
+    // pas forcément. Ce test tient la leçon, pas seulement le résultat.
+    const source = readFileSync(join(process.cwd(), 'src', 'lib', 'images', 'favicon.ts'), 'utf8')
+    expect(source).not.toMatch(/readFileSync|process\.cwd/u)
+    expect(source).toContain('POLICE_MONOGRAMME_BASE64')
   })
 
   it('DEUX BOUTIQUES DE MÊME COULEUR N’ONT PLUS LA MÊME ICÔNE', () => {
