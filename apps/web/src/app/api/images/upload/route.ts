@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import { NextResponse } from 'next/server'
 import { requireSiteOwner } from '@/lib/auth/require-site-owner'
-import { ameliorer } from '@/lib/images/ameliorer'
+import { ameliorer, recadrer } from '@/lib/images/ameliorer'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import {
   TAILLE_MAX,
@@ -129,12 +129,43 @@ export async function POST(req: Request) {
     // L'AMÉLIORATION NE REMPLACE RIEN : elle est déposée À CÔTÉ. Le marchand
     // garde l'original, compare, et choisit. Un échec ici ne fait pas échouer
     // l'envoi — il le prive d'une option, pas de sa photo.
-    let amelioration: { url: string; appliquees: string[]; ms: number } | null = null
+    let amelioration: {
+      url: string
+      appliquees: string[]
+      ms: number
+    } | null = null
     try {
       const a = await ameliorer(entree)
+      const appliquees = [...a.appliquees]
+      // ── LE CADRE CARRÉ, ENFIN BRANCHÉ (2026-10-06).
+      //
+      // `recadrer()` était ÉCRIT, TESTÉ, et appelé par PERSONNE : seuls ses
+      // tests l'invoquaient. Mesuré en cherchant pourquoi les boutiques
+      // paraissaient incohérentes — et c'était la cause.
+      //
+      // Un marchand photographie au téléphone : une photo verticale, une
+      // horizontale, une carrée. Dans une grille, trois formats côte à côte
+      // donnent trois cadres différents, et la boutique a l'air bricolée.
+      // Le même cadre pour tous est ce qui fait qu'une vitrine paraît TENUE.
+      //
+      // Il s'applique SUR LA VERSION AMÉLIORÉE, pas sur l'original : le
+      // marchand reçoit l'exposition corrigée ET le cadrage d'un seul geste.
+      //
+      // RÉSERVE ASSUMÉE, déjà écrite dans `recadrer()` : la stratégie
+      // `attention` peut se tromper sur un fond chargé — cadrer le motif de la
+      // nappe au lieu de l'article. C'est pourquoi l'ORIGINAL reste déposé et
+      // que le retour arrière existe déjà dans l'interface (bouton ↺).
+      let donnees = a.donnees
+      try {
+        donnees = await recadrer(a.donnees)
+        appliquees.push('cadre carré')
+      } catch {
+        // Le recadrage est un BONUS : son échec ne doit pas priver le marchand
+        // de la correction d'exposition, qui est le gain le plus sûr.
+      }
       amelioration = {
-        url: await deposer(`${dossier}/amelioree.jpg`, a.donnees, 'image/jpeg'),
-        appliquees: a.appliquees,
+        url: await deposer(`${dossier}/amelioree.jpg`, donnees, 'image/jpeg'),
+        appliquees,
         ms: a.ms,
       }
     } catch {

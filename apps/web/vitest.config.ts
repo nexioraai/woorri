@@ -106,6 +106,13 @@ export default defineConfig({
       'src/app/api/stripe/**/*.test.ts',
       'src/app/api/cron/**/*.test.ts',
       'src/app/api/chat/**/*.test.ts',
+      // ── LA ROUTE D'ENVOI DE PHOTOS N'ÉTAIT PAS COUVERTE (2026-10-06).
+      //
+      // `src/lib/images/**` l'était — donc le traitement d'image. Mais la
+      // ROUTE qui l'orchestre ne l'était pas, et c'est précisément là qu'un
+      // appel manquant ne se voit pas : `recadrer()` était écrite, testée, et
+      // appelée par personne. Ses propres tests passaient au vert.
+      'src/app/api/images/**/*.test.ts',
       // LOT 1 / L1-01 -- prefixe AJOUTE. `src/app/api/onboarding/` n'etait
       // pas collecte : la route qui produit le mode et le sous-type d'un
       // site n'avait aucune couverture, et un test ecrit la n'aurait ete
