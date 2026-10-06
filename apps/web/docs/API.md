@@ -190,6 +190,7 @@ Toutes protégées par `Authorization: Bearer <CRON_SECRET>` sauf mention contra
 | GET | `/api/cron/instant-payout` | Déclenche un virement instantané si le solde plateforme Stripe dépasse 5 $. |
 | GET | `/api/cron/pod-reconciliation` | Réconciliation fulfillment POD (P0-3.7→3.9.7) — voir `src/lib/fulfillment/`, déjà testé en détail dans les rounds précédents. |
 | GET | `/api/cron/watchdog` | Vérifie que chaque cron a bien tourné dans sa fenêtre attendue, alerte sinon. |
+| GET | `/api/cron/photos-pro` | Rend « pro » les photos produit DÉJÀ en ligne : détourage, ombre portée, cadre carré. À BLANC par défaut — n'écrit rien sans `?reel=1`. Idempotent par registre (`photos-pro/<empreinte>.json` dans le seau), l'original n'est jamais supprimé, et la réponse énumère chaque photo avec le motif exact d'un refus. Paramètres : `reel`, `limite` (60), `site`. | `CRON_SECRET` |
 
 | GET | `/api/cron/cj-fulfillment-reconciliation` | Reprend les commandes CJ payées restées sans commande fournisseur : nouvelle tentative de création tant que le budget `cj_pay_attempts` n'est pas épuisé, et reprise des verrous `processing` abandonnés. Ne crée jamais directement — `fulfillCjOrder()` réconcilie avant toute création. | `CRON_SECRET` |
 | GET | `/api/cron/domain-indexing-byod` | Vérification de propriété Google et soumission de sitemap pour les domaines **BYOD** (le marchand possède sa propre zone DNS — contrairement au domaine acheté, Deribfy n'y écrit jamais). | `CRON_SECRET` |

@@ -24,6 +24,7 @@ const sain = (p: Partial<Detourage> = {}): Detourage => ({
   contraste: 45,
   fondMediane: 120,
   fondEtendue: 80,
+  cotesCollees: 0,
   ...p,
 })
 
@@ -63,6 +64,20 @@ describe('CLIQUET — le verdict refuse ce qu’il doit refuser', () => {
     // Retraiter une photo propre ne la dégrade pas ; la traiter DEUX FOIS, si.
     // Cette seconde garantie est tenue par le registre du lot, pas ici.
     expect(verdict(sain({ fondEtendue: 76, fondMediane: 183 })).traiter).toBe(true)
+  })
+
+  it('LE CAS DE LA VOITURE : refuse un sujet qui déborde du cadre', () => {
+    // Photo d'une voiture occupant tout le cadre, sur une fiche « plaquettes
+    // de frein ». Part et contour la laissaient passer — contour 31, au-dessus
+    // du seuil — et la découpe rendait un morceau de carrosserie à l'arête
+    // rectiligne, flottant sur du blanc. Pire que la photo d'origine.
+    const v = verdict(sain({ cotesCollees: 2, contraste: 31, part: 0.58 }))
+    expect(v.traiter).toBe(false)
+    expect(v.motif).toMatch(/tronqué/)
+  })
+
+  it('UN SEUL bord touché reste acceptable : l’objet perd un liseré, pas plus', () => {
+    expect(verdict(sain({ cotesCollees: 1 })).traiter).toBe(true)
   })
 
   it('LE CAS DE LA MONTRE : refuse une découpe qui ne sépare rien', () => {

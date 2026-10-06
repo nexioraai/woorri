@@ -84,6 +84,21 @@ export interface Detourage {
   readonly fondMediane: number
   /** Étendue entre déciles du fond. Un fond PLAT la laisse proche de zéro. */
   readonly fondEtendue: number
+  /**
+   * Nombre de bords de l'image que le sujet touche, sur quatre.
+   *
+   * C'EST LA SIGNATURE D'UN SUJET TRONQUÉ PAR LE CADRE. Une photo de catalogue
+   * montre un objet entier avec de l'air autour ; une photo d'ambiance montre
+   * un objet qui déborde du cadre. Détourer la seconde ne produit pas un
+   * produit sur fond blanc : elle produit un FRAGMENT à l'arête rectiligne,
+   * qui a l'air cassé.
+   *
+   * Mesuré : six vrais produits bien cadrés touchent ZÉRO bord ; deux photos
+   * de voiture débordant du cadre en touchent DEUX. Et ni la part ni le
+   * contraste au contour ne les distinguaient — le contour valait 31, au-dessus
+   * du seuil, sur un fragment de carrosserie.
+   */
+  readonly cotesCollees: number
 }
 
 /**
@@ -257,10 +272,24 @@ export async function detourer(entree: Buffer, modele: Modele): Promise<Detourag
   const fondMediane = fond.length === 0 ? 0 : au(0.5)
   const fondEtendue = fond.length === 0 ? 255 : au(0.9) - au(0.1)
 
+  // Tolérance RELATIVE, pas absolue : la boîte d'une photo réelle commençait
+  // à 7 pixels du bord sur 812 — collée, mais une marge en pixels fixes ne le
+  // voyait pas. Un seuil absolu ne veut rien dire sur des images de tailles
+  // libres.
+  const tx = largeur * 0.02
+  const ty = hauteur * 0.02
+  const cotesCollees = [
+    boite.left <= tx,
+    boite.top <= ty,
+    boite.left + boite.width >= largeur - tx,
+    boite.top + boite.height >= hauteur - ty,
+  ].filter(Boolean).length
+
   return {
     sujet,
     part: couverts / (N * N),
     boite,
+    cotesCollees,
     contraste: bords === 0 ? 0 : somme / bords,
     fondMediane,
     fondEtendue,
@@ -333,6 +362,25 @@ export function verdict(d: Detourage | null): { traiter: boolean; motif: string 
     return {
       traiter: false,
       motif: `contour peu contrasté (${d.contraste.toFixed(0)}) — la découpe ne sépare rien`,
+    }
+  }
+  // ⑤ LE SUJET DÉBORDE DU CADRE, donc le détourer rend un FRAGMENT.
+  //
+  //    Cette garde a été ajoutée après coup, et il faut dire pourquoi : les
+  //    quatre premières laissaient passer une photo de voiture occupant tout
+  //    le cadre, posée sur une fiche « plaquettes de frein ». Son contour
+  //    valait 31 — AU-DESSUS du seuil — et le résultat était un morceau de
+  //    carrosserie à l'arête rectiligne, flottant sur du blanc. Pire que la
+  //    photo d'origine.
+  //
+  //    Un seul bord touché est banal et sans conséquence : l'objet perd un
+  //    liseré. DEUX bords, l'objet traverse l'image, et il n'y a plus de
+  //    produit à détourer. Mesuré : six vrais produits bien cadrés en touchent
+  //    ZÉRO, les deux photos fautives en touchent DEUX.
+  if (d.cotesCollees >= 2) {
+    return {
+      traiter: false,
+      motif: `sujet tronqué par le cadre (${d.cotesCollees} bords) — le détourer rendrait un fragment`,
     }
   }
   return { traiter: true, motif: `sujet sur ${(d.part * 100).toFixed(0)} % de l'image` }
