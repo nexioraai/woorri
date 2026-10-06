@@ -1248,7 +1248,7 @@
         "id": "need_creneau_selectionne_transmis",
         "resolution": {
           "kind": "unexpressible",
-          "reason": "le registre de blocs fermé (header, list, detail_header, form, button, empty_state) ne sait pas transmettre l'élément sélectionné d'une liste à l'écran suivant ; le fait est porté par le document via test_besoin_non_rendable_selection_creneau"
+          "reason": "le registre de blocs fermé ne porte AUCUN bloc capable de transmettre l'élément sélectionné d'une liste à l'écran suivant (registreDeBlocsOuvert: false) : le geste part d'un bloc `button` d'écran, qui ne connaît aucune ligne. Fait porté par test_besoin_non_rendable_selection_creneau"
         },
         "statement": "Le créneau effectivement choisi dans la liste doit alimenter le formulaire de réservation (sélection transmise d'un écran à l'autre)."
       },
@@ -1256,7 +1256,7 @@
         "id": "need_creneaux_presentes_par_jour",
         "resolution": {
           "kind": "unexpressible",
-          "reason": "le registre de blocs ne sait afficher ni onglets ni regroupements par catégorie ou par date ; les créneaux ne peuvent être rendus qu'en liste continue, fait porté par test_besoin_non_rendable_creneaux_par_jour"
+          "reason": "le moteur ne sait pas regrouper une liste par journée (listGrouping: false) : les créneaux ne peuvent être rendus qu'en liste continue. Fait porté par test_besoin_non_rendable_creneaux_par_jour"
         },
         "statement": "Présenter les créneaux de manière lisible par journée, comme un agenda."
       },

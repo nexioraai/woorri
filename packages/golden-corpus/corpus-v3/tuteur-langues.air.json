@@ -1627,7 +1627,7 @@
         "id": "need_lecons_interactives_jouables",
         "resolution": {
           "kind": "unexpressible",
-          "reason": "le registre de blocs fermé (header, list, detail_header, form, button, empty_state) ne sait pas jouer un contenu interactif : le champ fld_lecon_exercices (json) est stocké mais aucun bloc ne peut le rendre ; le manque est porté par le test test_besoin_non_rendable_exercices_interactifs"
+          "reason": "le registre de blocs fermé ne porte AUCUN bloc capable de jouer un contenu interactif (registreDeBlocsOuvert: false) : le champ fld_lecon_exercices (json) est stocké, et aucun bloc ne peut le RENDRE. Fait porté par test_besoin_non_rendable_exercices_interactifs"
         },
         "statement": "Rendre les leçons réellement interactives (exercices jouables : quiz, dictée, flashcards, dialogue)."
       },

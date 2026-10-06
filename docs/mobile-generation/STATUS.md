@@ -132,6 +132,31 @@
 > le geste de réparation. Mesuré : `npm ci` installe exactement vite 7.3.6,
 > 31/31 se construisent.
 >
+> **⑩ LA DETTE DE FIDÉLITÉ EST PAYÉE — `app_fidelite` EST VERTE.** Trois motifs
+> d'inexprimabilité étaient RÉFUTÉS par l'enveloppe, sur deux documents v3. Le
+> défaut était LE MÊME pour les trois, et il était purement rédactionnel : le
+> motif affirmait une impossibilité **sans nommer le fait qui la démontre**,
+> alors que la règle 459 du prompt l'exige depuis l'origine. **RETOUCHE
+> MINIMALE ET AUDITABLE : trois chaînes `reason`, 3 insertions / 3 suppressions,
+> aucun nœud touché, aucun verdict métier inversé.**
+>
+>   · `salon-coiffure/need_creneau_selectionne_transmis` → cite
+>     `registreDeBlocsOuvert: false`. Le geste part d'un bloc `button` d'écran,
+>     qui ne connaît aucune ligne — le motif était JUSTE ;
+>   · `salon-coiffure/need_creneaux_presentes_par_jour` → cite
+>     `listGrouping: false` ;
+>   · `tuteur-langues/need_lecons_interactives_jouables` → cite
+>     `registreDeBlocsOuvert: false`.
+>
+> **DEUX LECTURES FAUSSES AVANT D'ARRIVER LÀ, consignées parce que l'audit le
+> vaut** : ① j'ai annoncé une CONTRADICTION entre le prompt (qui autorise le
+> registre fermé comme motif) et le refuteur (qui exigerait un drapeau) —
+> faux : le drapeau `registreDeBlocsOuvert` existe depuis le 2026-09-22, ajouté
+> pour exactement ce cas. ② j'ai annoncé que la chaîne de nœuds satisfaisait le
+> besoin du créneau — faux : le déclencheur est un `button` d'écran, pas une
+> ligne de liste, et un bouton ne porte aucune sélection. Le document avait
+> raison sur le fond les deux fois ; c'est ma lecture qui était pressée.
+>
 > **🔴 CE QUI RESTE OUVERT, DIT** : la MISE EN PAGE web n'est prouvée par
 > rien (aucun style calculé — seul un vrai navigateur le dirait) ;
 > `index.tsx`/`App.tsx` non montés (ils exigent un DOM, dix lignes chacun) ;
