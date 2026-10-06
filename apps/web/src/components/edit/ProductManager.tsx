@@ -193,10 +193,15 @@ export default function ProductManager({ slug }: { slug: string }) {
           continue;
         }
 
-        // La RETOUCHÉE est retenue d'office quand elle existe ; l'original
+        // LA MEILLEURE VERSION DISPONIBLE est retenue d'office, et l'original
         // reste connu, donc le geste est réversible.
-        const affichee: string = data.amelioration?.url ?? data.url;
-        if (data.amelioration?.url) {
+        //
+        // Ordre de préférence : PRO (fond retiré, ombre posée) > retouchée
+        // (exposition, cadre) > brute. La version pro n'existe que si le
+        // serveur a jugé la découpe sûre — quand il l'a refusée, on retombe
+        // sur la retouchée, qui est le comportement d'avant.
+        const affichee: string = data.pro?.url ?? data.amelioration?.url ?? data.url;
+        if (affichee !== data.url) {
           setOriginaux((o) => ({ ...o, [affichee]: data.url }));
         }
         setDraft((d) => ({ ...d, images: [...d.images, affichee] }));

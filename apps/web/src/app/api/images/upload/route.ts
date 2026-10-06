@@ -2,6 +2,9 @@ import { randomUUID } from 'node:crypto'
 import { NextResponse } from 'next/server'
 import { requireSiteOwner } from '@/lib/auth/require-site-owner'
 import { ameliorer, recadrer } from '@/lib/images/ameliorer'
+import { detourer, verdict } from '@/lib/images/detourage'
+import { poser } from '@/lib/images/ombre'
+import { modeleDetourage } from '@/lib/images/modele'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import {
   TAILLE_MAX,
@@ -123,8 +126,11 @@ export async function POST(req: Request) {
     // cacher deux dixièmes de seconde. La complexité doit être payée par un
     // gain, et il n'y en a pas.
     //
-    // La file reste NÉCESSAIRE pour la suppression de fond, qui exige un
-    // modèle de 176 Mo hors d'atteinte du serverless (voir `fond.ts`).
+    // CORRIGÉ LE 2026-10-06 : la phrase qui tenait ici disait que la file
+    // restait NÉCESSAIRE pour la suppression de fond, « qui exige un modèle de
+    // 176 Mo hors d'atteinte du serverless ». C'était vrai du modèle plein, et
+    // faux de `u2netp` — 4,4 Mo, exécuté en WebAssembly. Le détourage se fait
+    // désormais ICI MÊME, quelques lignes plus bas.
     //
     // L'AMÉLIORATION NE REMPLACE RIEN : elle est déposée À CÔTÉ. Le marchand
     // garde l'original, compare, et choisit. Un échec ici ne fait pas échouer
@@ -171,6 +177,44 @@ export async function POST(req: Request) {
     } catch {
       amelioration = null
     }
+
+    // ── LA VERSION PRO : FOND RETIRÉ, OMBRE POSÉE, CADRE CARRÉ.
+    //
+    // C'est l'autre moitié de la correction. Un lot repasse sur les photos
+    // DÉJÀ en ligne ; sans ce bloc-ci, chaque photo déposée demain
+    // recommencerait le défaut, et la correction se mesurerait en jours de
+    // retard permanent. Le défaut doit se fermer par les DEUX bouts.
+    //
+    // Pourquoi c'est automatique alors que le bouton « Rendre pro » existe :
+    // le bouton est né quand le détourage tournait DANS LE NAVIGATEUR, lent et
+    // sans juge. Ici le détourage est serveur et il SAIT REFUSER — part du
+    // sujet, contour non contrasté, fond déjà plat. Une découpe douteuse n'est
+    // pas déposée du tout.
+    //
+    // ET RIEN N'EST ÉCRASÉ : la version pro est déposée À CÔTÉ. L'original et
+    // l'améliorée restent, donc le retour arrière du marchand (bouton ↺) vaut
+    // exactement comme avant.
+    let pro: { url: string; appliquees: string[] } | null = null
+    let proRefus: string | null = null
+    try {
+      const d = await detourer(entree, await modeleDetourage(new URL(req.url).origin))
+      const v = verdict(d)
+      if (v.traiter && d !== null) {
+        const p = await poser(d.sujet)
+        pro = {
+          url: await deposer(`${dossier}/pro.jpg`, p.donnees, 'image/jpeg'),
+          appliquees: p.appliquees,
+        }
+      } else {
+        // LE MOTIF REMONTE. Un refus silencieux se lirait comme une panne, et
+        // le marchand mérite de savoir que sa photo a été JUGÉE, pas ignorée.
+        proRefus = v.motif
+      }
+    } catch (e) {
+      // Un échec ici ne prive de rien : la photo, l'améliorée et les variantes
+      // sont déjà déposées.
+      proRefus = e instanceof Error ? e.message : String(e)
+    }
     const deposees = await Promise.all(
       variantes.map(async (v) => ({
         format: v.format,
@@ -200,6 +244,8 @@ export async function POST(req: Request) {
     return NextResponse.json({
       url: urlOriginal,
       amelioration,
+      pro,
+      proRefus,
       variantes: deposees,
       apercu,
       analyse: {

@@ -1,5 +1,26 @@
 // ============================================================
-// SUPPRESSION DE FOND — L'INTERFACE EST POSÉE, LE MOTEUR EST AILLEURS.
+// SUPPRESSION DE FOND — PAR UN WORKER. L'AUTRE CHEMIN EST AILLEURS.
+//
+// ⚠️ LA PRÉMISSE CI-DESSOUS A ÉTÉ RÉFUTÉE LE 2026-10-06, et il faut le lire
+// avant le reste de ce fichier, sans quoi on croit une impossibilité qui n'en
+// est plus une.
+//
+// Ce qui était vrai : U²-Net « plein » pèse 176 Mo et `onnxruntime-node` une
+// centaine de plus — ensemble, hors du plafond de 250 Mo d'une fonction.
+// CE QUI A CHANGÉ : la variante **u2netp** pèse **4,4 Mo**, et
+// `onnxruntime-web` s'exécute sous Node en WebAssembly, SANS binaire natif.
+// Mesuré : modèle chargé en 276 ms, inférence en 685 ms. Et la trace du
+// paquet réellement produit (`route.js.nft.json`) contient bien le modèle et
+// ses quatre `.wasm`.
+//
+// Donc le détourage EST possible dans une fonction. Il y est fait, par
+// `lib/images/detourage.ts` — à l'envoi d'une photo et par le lot
+// `/api/cron/photos-pro`.
+//
+// CE FICHIER GARDE SA RAISON D'ÊTRE : `u2netp` est le petit modèle, moins fin
+// que le modèle plein sur les contours difficiles (cheveux, dentelle,
+// transparence). Le worker reste le chemin de QUALITÉ SUPÉRIEURE, optionnel —
+// il n'est simplement plus le SEUL chemin.
 //
 // CE QUI EST VRAI, ET QUI COMMANDE TOUT CE FICHIER : la suppression de fond
 // exige un modèle de segmentation. Le plus courant en logiciel libre est

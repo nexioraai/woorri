@@ -69,6 +69,23 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  // LE MODÈLE DE DÉTOURAGE DOIT ENTRER DANS LA FONCTION SERVEUR.
+  //
+  // `public/` part au CDN ; il n'est PAS dans le système de fichiers d'une
+  // fonction. Sans cette entrée, `/api/cron/photos-pro` lirait le modèle en
+  // local sans difficulté et échouerait UNE FOIS EN LIGNE — le pire des deux
+  // cas, parce que la preuve locale serait verte.
+  //
+  // `onnxruntime-web` charge en plus ses binaires WebAssembly depuis son
+  // propre dossier : même raison, même traitement.
+  outputFileTracingIncludes: {
+    '/api/cron/photos-pro': [
+      './public/modeles/u2netp.onnx',
+      '../../node_modules/onnxruntime-web/dist/*.wasm',
+      '../../node_modules/onnxruntime-web/dist/*.mjs',
+    ],
+  },
+
   images: {
     remotePatterns: [
       {
