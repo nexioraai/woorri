@@ -1,5 +1,5 @@
 import sharp from 'sharp'
-import { POLICE_MONOGRAMME_BASE64 } from './police-monogramme'
+import { GLYPHES } from './glyphes-monogramme'
 import { mesurerAplats } from './qualiteLogo'
 
 // ============================================================
@@ -88,67 +88,78 @@ export function encreSur(fond: string): string {
  * entrer une dépendance et un octet de licence pour une seule lettre.
  */
 /**
- * LA POLICE DU MONOGRAMME, EMBARQUÉE DANS LE DOCUMENT.
+ * Le carré de marque, SANS la lettre. Géométrie pure : aucune police en jeu.
  *
- * ── LE DÉFAUT, MESURÉ EN PRODUCTION LE 2026-10-06.
- *
- * Ce monogramme demandait `font-family="Helvetica,Arial,sans-serif"`. Sur un
- * poste de développement, ces polices existent et la lettre sortait. DANS LE
- * CONTENEUR VERCEL, AUCUNE POLICE N'EST INSTALLÉE : librsvg ne trouvait rien
- * et dessinait un `tofu` — le petit rectangle vide des glyphes manquants.
- *
- * Conséquence réelle : les icônes de `biyaminchine.com` et `alloufshop.com`
- * faisaient 1695 octets CHACUNE, et c'étaient LES MÊMES OCTETS — un carré
- * rouge avec un rectangle vide au centre. Vingt-quatre boutiques sur
- * vingt-sept n'ont aucun logo déposé, donc vingt-quatre boutiques servaient
- * cette image-là dans l'onglet du navigateur et à Google.
- *
- * C'était le vrai « logo bizarre » — pas les trois logos déposés, mais celui
- * que nous fabriquions nous-mêmes pour tous les autres.
- *
- * ── POURQUOI EMBARQUER PLUTÔT QUE DEMANDER.
- *
- * Une police nommée ne se demande pas : elle se fournit. Le fichier est versionné
- * (`public/polices/monogramme.ttf`, Geist, licence SIL OFL-1.1 jointe) et son
- * contenu part DANS le document SVG. PROUVÉ localement avec un nom de famille
- * inexistant sur le système — si la lettre sort, c'est que la police embarquée
- * a été lue et non une police installée. Elle est sortie.
- *
- * Le repli garde l'ancien comportement si le fichier manque : on ne remplace
- * pas un défaut par une panne.
+ * `monogrammeSvg` rendait autrefois la lettre par un `<text>`. C'est ce qui
+ * l'a cassé en production — voir `glyphes-monogramme.ts`, qui raconte les deux
+ * corrections ratées avant celle-ci. La lettre est désormais composée par
+ * `monogrammePng`, à partir d'un masque rastérisé d'avance.
  */
-export function monogrammeSvg(initiale: string, couleur: string): Buffer {
-  const encre = encreSur(couleur)
-  // L'initiale est échappée : elle vient du nom de boutique, donc de l'entrée
-  // d'un marchand. Sans cela, un nom contenant `<` casserait le document SVG.
-  const lettre = initiale
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-  // La police vient du CODE, pas du disque. Un module part toujours avec la
-  // fonction ; un fichier de `public/` ne s'y trouve pas forcément — mesuré.
-  const declaration =
-    `<defs><style>@font-face{font-family:'DeribfyMonogramme';` +
-    `src:url(data:font/ttf;base64,${POLICE_MONOGRAMME_BASE64}) format('truetype');}</style></defs>`
+export function monogrammeSvg(_initiale: string, couleur: string): Buffer {
   return Buffer.from(
-    `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
-       ${declaration}
-       <rect width="512" height="512" rx="96" fill="${couleur}"/>
-       <text x="256" y="256" fill="${encre}" font-family="DeribfyMonogramme,Helvetica,Arial,sans-serif"
-             font-size="300" font-weight="700" text-anchor="middle"
-             dominant-baseline="central">${lettre}</text>
-     </svg>`,
+    `<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">` +
+      `<rect width="512" height="512" rx="96" fill="${couleur}"/></svg>`,
   )
 }
 
-/** Rend le monogramme en PNG carré. */
+/** `#rrggbb` → les trois composantes. */
+function composantes(hex: string): [number, number, number] {
+  const n = parseInt(hex.replace('#', ''), 16)
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255]
+}
+
 export async function monogrammePng(
   nom: string | null | undefined,
   couleur: string | null | undefined,
   taille: number,
 ): Promise<Buffer> {
-  const svg = monogrammeSvg(initialeDe(nom), couleurDe(couleur))
-  return sharp(svg).resize(taille, taille).png({ compressionLevel: 9 }).toBuffer()
+  const couleurFond = couleurDe(couleur)
+  const fond = await sharp(monogrammeSvg('', couleurFond))
+    .resize(taille, taille)
+    .png()
+    .toBuffer()
+
+  // Le glyphe, choisi dans le jeu rastérisé. Une initiale hors A–Z/0–9 —
+  // arabe, chinois — retombe sur « S » : moins bien qu'un vrai glyphe, et
+  // infiniment mieux que le rectangle vide que tout le monde recevait.
+  const entree = GLYPHES[initialeDe(nom)] ?? GLYPHES.S
+  if (entree === undefined) return fond
+  const [masque64, lg, ht] = entree
+
+  // La lettre occupe 56 % du côté, proportions gardées.
+  const cible = Math.max(1, Math.round(taille * 0.56))
+  const facteur = Math.min(cible / lg, cible / ht)
+  const w = Math.max(1, Math.round(lg * facteur))
+  const h = Math.max(1, Math.round(ht * facteur))
+  const alpha = await sharp(Buffer.from(masque64, 'base64'))
+    .resize(w, h, { fit: 'fill' })
+    .toColourspace('b-w')
+    .raw()
+    .toBuffer()
+
+  // RGBA construit à la main : la couleur est constante, l'ALPHA porte la
+  // lettre. `joinChannel` et `blend: 'dest-in'` ont déjà échoué ailleurs dans
+  // ce dépôt sur exactement ce besoin, l'un d'eux silencieusement.
+  const [r, v, b] = composantes(encreSur(couleurFond))
+  const encre = Buffer.alloc(alpha.length * 4)
+  for (let i = 0; i < alpha.length; i += 1) {
+    encre[i * 4] = r
+    encre[i * 4 + 1] = v
+    encre[i * 4 + 2] = b
+    encre[i * 4 + 3] = alpha[i]!
+  }
+
+  return sharp(fond)
+    .composite([
+      {
+        input: encre,
+        raw: { width: w, height: h, channels: 4 },
+        left: Math.round((taille - w) / 2),
+        top: Math.round((taille - h) / 2),
+      },
+    ])
+    .png({ compressionLevel: 9 })
+    .toBuffer()
 }
 
 /**

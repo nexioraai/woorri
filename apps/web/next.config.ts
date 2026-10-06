@@ -79,15 +79,6 @@ const nextConfig: NextConfig = {
   // `onnxruntime-web` charge en plus ses binaires WebAssembly depuis son
   // propre dossier : même raison, même traitement.
   outputFileTracingIncludes: {
-    // LA POLICE DU MONOGRAMME DOIT PARTIR AVEC CES DEUX ROUTES.
-    //
-    // Sans elle, `monogrammeSvg` retombe sur `Helvetica,Arial` — et AUCUNE
-    // police n'est installée dans le conteneur. C'est exactement le défaut
-    // mesuré en production le 2026-10-06 : vingt-quatre boutiques servaient
-    // un carré de couleur avec un `tofu` au centre, le rectangle vide des
-    // glyphes manquants. Deux d'entre elles rendaient des octets IDENTIQUES.
-    '/api/internal/site-icon/[slug]': ['./public/polices/monogramme.ttf'],
-    '/api/internal/site-logo/[slug]': ['./public/polices/monogramme.ttf'],
     '/api/cron/photos-pro': [
       './public/modeles/u2netp.onnx',
       '../../node_modules/onnxruntime-web/dist/*.wasm',
