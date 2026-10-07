@@ -99,7 +99,16 @@ const nextConfig: NextConfig = {
   // CE QUI A SAUVÉ LA MISE : chaque photo échoue isolément et le catalogue
   // n'est écrit qu'après succès. 37 erreurs, ZÉRO photo remplacée — vérifié
   // produit par produit après le passage.
-  serverExternalPackages: ['onnxruntime-web'],
+  // ── `rolldown` EST NATIF : il ne s'empaquette pas.
+  //
+  // C'est un bundler écrit en Rust : il charge un binaire propre à la
+  // plateforme (`@rolldown/binding-linux-x64-gnu` sur Vercel, `darwin-arm64`
+  // ici). Empaqueté par Next, la résolution de ce binaire se perd et le
+  // runtime rend « Cannot find native binding » — message trompeur, qui
+  // accuse un bogue de npm alors que le fichier n'est simplement pas là.
+  //
+  // Mesuré en ligne au premier clic sur « Voir l'application ».
+  serverExternalPackages: ['onnxruntime-web', 'rolldown'],
 
   // LE MODÈLE DE DÉTOURAGE DOIT ENTRER DANS LA FONCTION SERVEUR.
   //
@@ -133,6 +142,16 @@ const nextConfig: NextConfig = {
     //
     // Les trois paquets sont ceux que les modules d'émission importent
     // réellement — relevés dans leurs sources, pas supposés.
+    // ── L'APERÇU A BESOIN DU BINAIRE NATIF DE `rolldown`.
+    //
+    // Le traceur ne suit pas le chargement dynamique d'un `.node`. On déclare
+    // donc la liaison LINUX — celle que Vercel exécute — et elle seule : les
+    // huit plateformes feraient plusieurs centaines de méga-octets, pour un
+    // plafond de fonction à 250.
+    //
+    // Le glob est résolu AU BUILD, sur Linux, où cette liaison existe. En
+    // local elle n'est pas installée, et c'est normal.
+    '/api/generateur/apercu': ['../../node_modules/@rolldown/binding-linux-x64-gnu/**'],
     '/api/generateur/comprendre': [
       '../../benchmarks/air-emission/**/*.mjs',
       '../../node_modules/zod/**',
