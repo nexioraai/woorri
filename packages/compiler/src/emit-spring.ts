@@ -613,6 +613,33 @@ const reglesMetier = (groupe: string, air: ProjectAir): string => {
   return l.join("\n");
 };
 
+/**
+ * UN SLUG N'EST PAS UN NOM DE BASE DE DONNÉES.
+ *
+ * Le nom de base était le slug, recopié tel quel. Un slug accepte le tiret, et
+ * le propriétaire a demandé « Tontine.SY » — avec un point. Les deux cassent :
+ * en PostgreSQL, `tontine-sy` et `Tontine.SY` ne sont pas des identifiants
+ * valides sans guillemets, et un identifiant cité doit l'être PARTOUT, à la
+ * virgule près, dans chaque requête et chaque script de migration. Le point
+ * est pire encore : il sépare le schéma du nom.
+ *
+ * On ne refuse pas le nom choisi — il reste celui du PRODUIT. On refuse de le
+ * recopier là où il ne peut pas vivre, et on en dérive un identifiant sûr :
+ * minuscules, lettres, chiffres et tiret bas, jamais un chiffre en tête.
+ *
+ * Fait ici plutôt que dans ce seul document : toute application générée porte
+ * le même risque, et une correction par application n'en est pas une.
+ */
+export const identifiantSql = (slug: string): string => {
+  const propre = slug
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+  return propre === "" || /^[0-9]/.test(propre) ? "app_" + propre : propre;
+};
+
 /** La configuration — H2 pour démarrer, Postgres par l'environnement. */
 const configuration = (air: ProjectAir): string => `# GÉNÉRÉ PAR DERIBFY — NE PAS ÉDITER À LA MAIN.
 #
@@ -627,7 +654,7 @@ spring:
   application:
     name: ${air.app.slug}-api
   datasource:
-    url: \${DB_URL:jdbc:h2:mem:${air.app.slug};DB_CLOSE_DELAY=-1}
+    url: \${DB_URL:jdbc:h2:mem:${identifiantSql(air.app.slug)};DB_CLOSE_DELAY=-1}
     username: \${DB_USER:sa}
     password: \${DB_PASSWORD:}
   jpa:

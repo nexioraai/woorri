@@ -3,7 +3,7 @@
   "projectId": "prj_tontine_cameroun",
   "app": {
     "name": "Tontine.SY",
-    "slug": "tontine",
+    "slug": "tontine-sy",
     "description": [
       {
         "locale": "fr",
@@ -1675,6 +1675,14 @@
             "scr_annuaire",
             "role_secretaire"
           ]
+        }
+      },
+      {
+        "id": "need_adhesion_par_code",
+        "statement": "Un membre rejoint la tontine de son president en saisissant le code recu ; un code inconnu est refuse.",
+        "resolution": {
+          "kind": "unexpressible",
+          "reason": "Resoudre un code vers une tontine est une RECHERCHE entre lignes. Une regle de ce format est de niveau CHAMP — required, matches, comparaisons — et rien n'y exprime « cette valeur designe une ligne existante d'une autre entite ». Et le faire dans l'application supposerait de lui livrer la liste des codes : n'importe qui pourrait alors rejoindre n'importe quelle tontine. Le rapprochement doit donc se faire la ou les codes ne sortent jamais."
         }
       }
     ]
