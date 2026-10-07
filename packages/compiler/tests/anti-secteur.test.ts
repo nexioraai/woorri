@@ -8,6 +8,7 @@
 // des appels payants : P0 anti-sectoriel reste UNKNOWN tant qu'elle n'a pas
 // été exécutée (R8) — ce test n'en prétend PAS la preuve.
 import { readdirSync, readFileSync, statSync } from "node:fs";
+import { SOURCE_GENERATEUR } from "./source-generateur.ts";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
@@ -17,7 +18,7 @@ const R = join(HERE, "..", "..", "..");
 
 describe("C7 — aucun routeur sectoriel dans les chemins décisionnels", () => {
   it("le prompt du générateur ne porte plus de table secteur → destinations", () => {
-    const src = readFileSync(join(R, "benchmarks", "air-emission", "emit-v3.mjs"), "utf8");
+    const src = SOURCE_GENERATEUR;
     // La table retirée (règle 19) ne doit pas revenir, sous aucune graphie.
     expect(src).not.toMatch(/·\s*Restaurant\s*:/);
     expect(src).not.toMatch(/·\s*Boutique\s*:/);

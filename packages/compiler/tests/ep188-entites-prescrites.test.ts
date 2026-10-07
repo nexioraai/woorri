@@ -5,6 +5,7 @@
 // central du domaine — MANQUAIT, et les 29 diagnostics « entité inconnue »
 // n'étaient que des références vers elle.
 import { readFileSync, readdirSync } from "node:fs";
+import { SOURCE_GENERATEUR } from "./source-generateur.ts";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
@@ -136,7 +137,7 @@ describe("EP-188 ③ · un nombre sans demoValues est tiré au hasard", () => {
   });
 
   it("ET LA RÈGLE EST TRANSMISE — le moteur dit ce qu'il exige (EP-122)", () => {
-    const emit = readFileSync(join(R, "benchmarks", "air-emission", "emit-v3.mjs"), "utf8");
+    const emit = SOURCE_GENERATEUR;
     expect(emit).toContain("36quinquies. NOMBRES VRAISEMBLABLES");
     expect(emit).toContain("907 PIÈCES");
     expect(emit, "la cohérence entre champs doit être dite").toContain("COHÉRENTES ENTRE ELLES");
@@ -177,7 +178,7 @@ describe("EP-188 ⑤ · deux boutons, pas une fiche", () => {
   it("TRANSMIS PUIS JUGÉ, DANS CET ORDRE — la règle d'EP-184", () => {
     // On ne refuse pas ce qu'on n'a jamais demandé. La règle 17ter a été
     // transmise en EP-184 ; elle n'a pas suffi ; le juge vient ensuite.
-    const emit = readFileSync(join(R, "benchmarks", "air-emission", "emit-v3.mjs"), "utf8");
+    const emit = SOURCE_GENERATEUR;
     expect(emit).toContain("17ter. L'ESPACE COMPTE A DEUX ÉTATS");
     const pres = readFileSync(join(R, "packages", "execution-contract", "src", "presentation.ts"), "utf8");
     expect(pres).toContain("TRANSMIS PUIS JUGÉ");

@@ -1,5 +1,6 @@
 // EP-176 — LES QUATRE MAILLONS ENTRE « LE DOCUMENT COMPILE » ET « L'APP SERT ».
 import { readFileSync, readdirSync } from "node:fs";
+import { SOURCE_GENERATEUR } from "./source-generateur.ts";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
@@ -55,7 +56,7 @@ describe("EP-176 ① · une capacité de service désigne son intégration", () 
   it("ET LA RÈGLE EST TRANSMISE — le moteur dit ce qu'il exige (EP-122)", () => {
     // La racine était la TRANSMISSION : le prompt mentionnait `capability`
     // treize fois, toutes pour `actions.effect.capability`.
-    const src = readFileSync(join(R, "benchmarks", "air-emission", "emit-v3.mjs"), "utf8");
+    const src = SOURCE_GENERATEUR;
     expect(src).toContain("17bis. UNE CAPACITÉ DE SERVICE DÉSIGNE SON INTÉGRATION");
     expect(src, "la liste doit être dérivée du registre").toContain("capacitesDeService()");
     const helper = src.slice(src.indexOf("function capacitesDeService"), src.indexOf("function capacitesDeService") + 400);

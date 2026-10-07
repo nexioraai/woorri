@@ -3,6 +3,7 @@
 // vérificateur FAIL-CLOSED (mutations isolées), obligations prescriptives
 // par passe. Base verte d'abord (EP-028).
 import { readFileSync } from "node:fs";
+import { SOURCE_GENERATEUR } from "./source-generateur.ts";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
@@ -163,7 +164,7 @@ describe("R5 — prescriptions de navigation dérivées de P2d", () => {
     // EP-073 (édition consciente) : les juges d'acceptation vivent dans
     // acceptation.mjs (importable sans la garde, pour re-juger les archives
     // à 0 $) — le câblage se vérifie sur les DEUX fichiers.
-    const src = readFileSync(join(R, "benchmarks", "air-emission", "emit-v3.mjs"), "utf8");
+    const src = SOURCE_GENERATEUR;
     const juges = readFileSync(join(R, "benchmarks", "air-emission", "acceptation.mjs"), "utf8");
     expect(src).toContain("passe0.construireRequeteP0(intention.text)");
     expect(src).toContain("jugerSortieP0");

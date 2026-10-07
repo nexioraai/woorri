@@ -4,13 +4,14 @@
 // utilisateurs on ne les connaît même pas ». Si chaque demande d'un client
 // exige une passe du moteur, Deribfy ne sert à rien.
 import { readFileSync } from "node:fs";
+import { SOURCE_GENERATEUR } from "./source-generateur.ts";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 import { requis } from "./helpers.ts";
 const R = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
-const EMIT = readFileSync(join(R, "benchmarks", "air-emission", "emit-v3.mjs"), "utf8");
+const EMIT = SOURCE_GENERATEUR;
 const P0 = readFileSync(join(R, "benchmarks", "air-emission", "passe0.mjs"), "utf8");
 
 describe("EP-187 · le canal des préférences", () => {

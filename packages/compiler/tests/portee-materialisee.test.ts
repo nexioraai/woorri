@@ -8,6 +8,7 @@
 // de `chercher` porte `resultat:Y`, jamais `instance:X` : le plan décidait
 // sans transmettre (4e occurrence du motif). Preuve sur kaviva (16 écrans).
 import { readFileSync } from "node:fs";
+import { SOURCE_GENERATEUR } from "./source-generateur.ts";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
@@ -73,7 +74,7 @@ describe("mutations isolées — le prédicat est celui de la décision", () => 
 
   it("les clauses EP-105/EP-113/EP-115 et la gate EP-102 ne bougent pas", () => {
     const juges = readFileSync(join(R, "benchmarks", "air-emission", "acceptation.mjs"), "utf8");
-    const emitV3 = readFileSync(join(R, "benchmarks", "air-emission", "emit-v3.mjs"), "utf8");
+    const emitV3 = SOURCE_GENERATEUR;
     expect(juges).toContain("INDISSOCIABLES");
     expect(juges).toContain("champs éligibles");
     expect(emitV3).toContain("elargit(perimetreAvant, perimetreApres)");

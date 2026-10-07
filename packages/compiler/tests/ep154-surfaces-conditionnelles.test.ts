@@ -6,8 +6,7 @@
 // la condition pour un cas particulier, jamais la condition elle-même.
 //
 // NEUVIÈME OCCURRENCE, TROISIÈME CONSÉCUTIVE.
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
+import { SOURCE_GENERATEUR } from "./source-generateur.ts";
 import { describe, expect, it } from "vitest";
 import {
   GENRES_HORS_COMPTE,
@@ -15,8 +14,7 @@ import {
   surfacesAttendues,
 } from "@deribfy/execution-contract";
 
-const R = join(import.meta.dirname, "..", "..", "..");
-const SOURCE = readFileSync(join(R, "benchmarks", "air-emission", "emit-v3.mjs"), "utf8");
+const SOURCE = SOURCE_GENERATEUR;
 
 function digest(): string {
   const debut = SOURCE.indexOf("function surfacesDigest()");

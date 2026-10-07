@@ -9,6 +9,7 @@
 // diagnostic ORDONNE d'ajouter un détail sans dire que la collection déjà
 // présente basculera sous C5. Preuve sur kaviva (16 écrans ≠ 19).
 import { readFileSync } from "node:fs";
+import { SOURCE_GENERATEUR } from "./source-generateur.ts";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
@@ -135,7 +136,7 @@ describe("EP-113 — LE DOMAINE DES VALEURS VALIDES EST FOURNI AVEC L'ORDRE", ()
   });
 
   it("④ le correctif ne touche NI la gate d'EP-102 NI le reste de la clause d'EP-105", () => {
-    const emitV3 = readFileSync(join(R, "benchmarks", "air-emission", "emit-v3.mjs"), "utf8");
+    const emitV3 = SOURCE_GENERATEUR;
     expect(emitV3).toContain("elargit(perimetreAvant, perimetreApres)");
     expect(emitV3).toContain("if (introduits.length > 0 && !revelation) {");
     // la clause reste conditionnée aux MÊMES cas qu'EP-105 (silences intacts).

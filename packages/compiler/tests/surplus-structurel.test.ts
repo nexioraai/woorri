@@ -6,6 +6,7 @@
 // discriminant DÉRIVÉ du registre (`entity: "required"`), aucune liste.
 // Preuve sur kaviva (16 écrans ≠ 23).
 import { readFileSync } from "node:fs";
+import { SOURCE_GENERATEUR } from "./source-generateur.ts";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
@@ -127,7 +128,7 @@ describe("② la navigation par BOUTON qui perd l'identité est jugée", () => {
 
   it("la gate EP-102 et les clauses EP-105/113/115/118 ne bougent pas", () => {
     const juges = readFileSync(join(R, "benchmarks", "air-emission", "acceptation.mjs"), "utf8");
-    const emitV3 = readFileSync(join(R, "benchmarks", "air-emission", "emit-v3.mjs"), "utf8");
+    const emitV3 = SOURCE_GENERATEUR;
     expect(juges).toContain("INDISSOCIABLES");
     expect(juges).toContain("champs éligibles");
     expect(emitV3).toContain("elargit(perimetreAvant, perimetreApres)");

@@ -4,6 +4,7 @@
 // visible, c'est ce qui rend opposable « un FAIL est une information sur
 // le contrat, jamais une retouche de prompt ».
 import { createHash } from "node:crypto";
+import { SOURCE_GENERATEUR } from "./source-generateur.ts";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -131,7 +132,7 @@ describe("intégration minimale P0 — l'instrument, pas l'exécution", () => {
     for (const interdit of ["anthropic", "Anthropic", "fetch(", "node:http", "@anthropic"]) {
       expect(source.includes(interdit), interdit).toBe(false);
     }
-    const emitV3 = readFileSync(join(R, "benchmarks", "air-emission", "emit-v3.mjs"), "utf8");
+    const emitV3 = SOURCE_GENERATEUR;
     expect(emitV3).toContain("intention arrêtée AVANT les passes AIR");
   });
 

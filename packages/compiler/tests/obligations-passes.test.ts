@@ -6,13 +6,10 @@
 // déclarée, règle 5) ; le cycle écrans↔actions CONTRAINT par des obligations
 // mécaniques dérivées des sections émises. Ces tests jugent le module pur et
 // cliquettent l'ordre des passes dans emit-v3.
-import { readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { SOURCE_GENERATEUR } from "./source-generateur.ts";
 import { describe, expect, it } from "vitest";
 import { actionsPromises, ciblesVivantes, obligationsPourPasse } from "../../../benchmarks/air-emission/obligations-passes.mjs";
 
-const HERE = dirname(fileURLToPath(import.meta.url));
 
 const ECRANS = [
   {
@@ -70,10 +67,7 @@ describe("étape ⑤ — obligations mécaniques dérivées des sections émises
   });
 
   it("CLIQUET — l'ordre des passes respecte les dépendances démontrées", () => {
-    const source = readFileSync(
-      join(HERE, "..", "..", "..", "benchmarks", "air-emission", "emit-v3.mjs"),
-      "utf8",
-    );
+    const source = SOURCE_GENERATEUR;
     const pos = (nom: string) => source.search(new RegExp(`name: "${nom}"`));
     for (const nom of ["base", "entites", "donnees", "capacites", "ecrans", "actions", "cablage", "intention"]) {
       expect(pos(nom), nom).toBeGreaterThan(-1);

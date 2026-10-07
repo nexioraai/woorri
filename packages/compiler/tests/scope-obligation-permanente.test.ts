@@ -9,6 +9,7 @@
 // PERMANENTE (principe EP-122 : ce que le moteur exige, il le dit toujours).
 // Preuve sur le modèle 15-27 (23 écrans ≠ 16).
 import { readFileSync } from "node:fs";
+import { SOURCE_GENERATEUR } from "./source-generateur.ts";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
@@ -54,7 +55,7 @@ describe("la règle du scope est dite À TOUS LES COUPS, plus seulement en réac
   });
 
   it("⑥ gate EP-102 et clauses EP-105/115/118 intactes", () => {
-    const emitV3 = readFileSync(join(R, "benchmarks", "air-emission", "emit-v3.mjs"), "utf8");
+    const emitV3 = SOURCE_GENERATEUR;
     expect(emitV3).toContain("elargit(perimetreAvant, perimetreApres)");
     const o = texte();
     expect(o).toContain("PORTÉES OBLIGATOIRES"); // EP-118

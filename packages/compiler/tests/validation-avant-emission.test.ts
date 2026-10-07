@@ -7,6 +7,7 @@
 // `qualite` reste la barre de la campagne payante — mesuré sur corpus réel,
 // 21 documents gelés portent des défauts qualité et DOIVENT rester émissibles.
 import { readFileSync } from "node:fs";
+import { SOURCE_GENERATEUR } from "./source-generateur.ts";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
@@ -78,10 +79,7 @@ describe("étape ④ — aucune émission d'un plan incohérent", () => {
   it("CLIQUET — la campagne payante garde la barre HAUTE (qualité comprise)", () => {
     // EP-073 (édition consciente) : les juges vivent dans acceptation.mjs —
     // la barre se vérifie là où elle est tenue, emit-v3 les consomme.
-    const emitV3 = readFileSync(
-      join(HERE, "..", "..", "..", "benchmarks", "air-emission", "emit-v3.mjs"),
-      "utf8",
-    );
+    const emitV3 = SOURCE_GENERATEUR;
     const juges = readFileSync(
       join(HERE, "..", "..", "..", "benchmarks", "air-emission", "acceptation.mjs"),
       "utf8",

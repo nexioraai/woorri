@@ -7,6 +7,7 @@
 // base partiellement jugeable rouvrirait le même trou au domaine suivant.
 // Preuve sur kaviva (16 écrans) : une AUTRE taille que le défaut (20).
 import { readFileSync } from "node:fs";
+import { SOURCE_GENERATEUR } from "./source-generateur.ts";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
@@ -98,7 +99,7 @@ describe("les trois cas exigés (EP-102), sur une taille AUTRE que le défaut", 
 });
 
 describe("branchement — la gate consomme la comparabilité, elle ne s'assouplit pas", () => {
-  const emitV3 = readFileSync(join(R, "benchmarks", "air-emission", "emit-v3.mjs"), "utf8");
+  const emitV3 = SOURCE_GENERATEUR;
   it("le rejet reste la règle ; la révélation est la SEULE exemption, et elle est nommée", () => {
     expect(emitV3).toContain("if (introduits.length > 0 && !revelation) {");
     expect(emitV3).toContain("RÉPARATION REJETÉE — OSCILLATION");

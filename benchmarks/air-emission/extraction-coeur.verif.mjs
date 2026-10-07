@@ -34,9 +34,10 @@ for (const [d, f] of reperes) {
     console.error(`⛔ REFUS — bloc introuvable dans le module : ${d.slice(0, 40)}`);
     process.exit(1);
   }
-  // Le déplacement a ajouté DEUX espaces d'indentation à chaque ligne : on les
-  // retire pour comparer le texte, pas sa mise en page.
-  bloc += coeur.slice(i, j).split("\n").map((l) => (l.startsWith("  ") ? l.slice(2) : l)).join("\n");
+  // AUCUNE normalisation : le texte doit être identique JUSQU'AUX ESPACES.
+  // Une première tentative indentait le bloc, et deux cliquets qui découpent
+  // ce source par repères textuels sont tombés. On compare donc brut.
+  bloc += coeur.slice(i, j);
 }
 const empreinte = createHash("sha256").update(bloc.replace(/\s+$/u, "")).digest("hex").slice(0, 32);
 if (empreinte !== EMPREINTE_AVANT) {

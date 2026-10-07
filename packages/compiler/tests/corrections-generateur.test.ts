@@ -6,13 +6,14 @@
 // re-campagne : que le MODÈLE suive ces règles sur une génération fraîche.
 // Aucun vert n'est affirmé sur une génération non refaite.
 import { readFileSync } from "node:fs";
+import { SOURCE_GENERATEUR } from "./source-generateur.ts";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const R = join(HERE, "..", "..", "..");
-const SOURCE = readFileSync(join(R, "benchmarks", "air-emission", "emit-v3.mjs"), "utf8");
+const SOURCE = SOURCE_GENERATEUR;
 
 describe("EP-081 · ② — PARITÉ DES ADAPTATEURS : la frontière suffit", () => {
   // Le second adaptateur expose EXACTEMENT la même surface que le premier,

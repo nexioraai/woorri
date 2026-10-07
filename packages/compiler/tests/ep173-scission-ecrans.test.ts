@@ -4,6 +4,7 @@
 // sa grammaire mais son VOLUME en un seul appel. Le discriminant n'est pas
 // inventé — chaque écran du plan porte `justification: [{parcours, etape}]`.
 import { readFileSync, readdirSync } from "node:fs";
+import { SOURCE_GENERATEUR } from "./source-generateur.ts";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
@@ -135,7 +136,7 @@ describe("EP-173 · la scission par parcours", () => {
       const plan = ecransDe(M);
       expect(plan.ecrans.every((e) => e.justification.length > 0)).toBe(true);
     }
-    const src = readFileSync(join(R, "benchmarks", "air-emission", "emit-v3.mjs"), "utf8");
+    const src = SOURCE_GENERATEUR;
     expect(src, "aucun lot de surfaces dans l'émission").toContain('name: "ecrans:surfaces"');
     expect(src, "le lot de surfaces doit être ajouté APRÈS les lots de parcours").toMatch(
       /eclates\.push\(\{[\s\S]{0,400}surfaces: true/,
@@ -143,7 +144,7 @@ describe("EP-173 · la scission par parcours", () => {
   });
 
   it("SANS MODÈLE, L'ÉMISSION N'EST PAS RÉORGANISÉE", () => {
-    const src = readFileSync(join(R, "benchmarks", "air-emission", "emit-v3.mjs"), "utf8");
+    const src = SOURCE_GENERATEUR;
     const bloc = src.slice(src.indexOf("function partsPour"), src.indexOf("for (const part of PARTS) {"));
     expect(bloc).toContain("return PARTS");
     expect(bloc, "l'ignorance ne doit pas réorganiser l'émission").toMatch(
@@ -152,7 +153,7 @@ describe("EP-173 · la scission par parcours", () => {
   });
 
   it("UN LOT ACCUMULE — sans quoi chaque lot effacerait le précédent", () => {
-    const src = readFileSync(join(R, "benchmarks", "air-emission", "emit-v3.mjs"), "utf8");
+    const src = SOURCE_GENERATEUR;
     expect(src).toContain("part.accumule");
     expect(src, "l'accumulation doit concaténer, pas remplacer").toMatch(
       /assembled\[cle\] = \[\.\.\.\(assembled\[cle\] \?\? \[\]\), \.\.\.\(emis\[cle\] \?\? \[\]\)\]/,

@@ -8,14 +8,12 @@
 // `filterValue` et `filterOperator`, et ne donnait le type d'aucune prop. Le
 // générateur a posé un booléen sur un champ booléen : geste sensé, valeur
 // refusée. Huitième occurrence du motif « liste écrite deux fois ».
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
+import { SOURCE_GENERATEUR } from "./source-generateur.ts";
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import { getBlock, listBlockIds } from "@deribfy/blocks/registry";
 
-const R = join(import.meta.dirname, "..", "..", "..");
-const SOURCE = readFileSync(join(R, "benchmarks", "air-emission", "emit-v3.mjs"), "utf8");
+const SOURCE = SOURCE_GENERATEUR;
 
 /** Le digest, évalué hors du module (dont le chargement lance une campagne). */
 function digest(): string {
