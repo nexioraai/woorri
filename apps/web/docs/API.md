@@ -225,6 +225,7 @@ Toutes protégées par `Authorization: Bearer <CRON_SECRET>` sauf mention contra
 | POST | `/api/generateur/comprendre` | Premier temps de la conversation : dit ce que Deribfy a compris d'une demande en texte libre. Avec `GO_EMISSION_IA`, c'est P0 qui lit ; sans le jeton, une lecture simple qui ANNONCE sa pauvreté (`parIA`). | jeton utilisateur |
 | POST | `/api/generateur/produire` | Second temps : construit l'application et rend une archive ZIP. Séparée de la compréhension pour que l'utilisateur corrige AVANT de générer. | jeton utilisateur |
 | POST | `/api/generateur/apercu` | Monte l'application dans un cadre isolé, sans téléchargement : le paquet est assemblé EN MÉMOIRE (rolldown) et rendu en une page HTML autonome. ~940 ko en ~200 ms. | jeton utilisateur |
+| GET | `/api/generateur/sonde` | Exerce la chaîne complète sur une phrase témoin figée — lecture, document, compilation, archive, aperçu — et rend un verdict. AUCUN appel payant, AUCUNE donnée d'utilisateur. Gardée par `CRON_SECRET` : elle compile, donc elle coûte du processeur. | `CRON_SECRET` |
 
 ## Constats (observations factuelles, non corrigées dans cette passe)
 
