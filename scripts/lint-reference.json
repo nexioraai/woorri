@@ -1,0 +1,5 @@
+{
+  "@typescript-eslint/no-explicit-any": 1053,
+  "react-hooks/set-state-in-effect": 21,
+  "react-hooks/immutability": 2
+}
