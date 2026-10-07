@@ -443,6 +443,7 @@ export const es = {
 
   // ===== LOT BLOG 9 — espace propriétaire du blog =====
   'blog.nav': 'Blog',
+  'sidebar.generateur': 'Generador',
   'blog.title': 'Blog de tus sitios',
   'blog.subtitle': 'Escribe, genera y publica artículos. Cada artículo pertenece a un solo sitio.',
   'blog.site': 'Sitio',
