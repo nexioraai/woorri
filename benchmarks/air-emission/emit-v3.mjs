@@ -197,22 +197,6 @@ const coutUSD = (u) => adaptateur.coutUsd(adaptateur.lireUsage(u));
 // règle 41, comme le cliquet `generateur-synchronise` l'exige.
 export const CONTRAT_CIBLE = "1.34.0";
 
-// ── LE CŒUR DE L'ÉMISSION VIT DÉSORMAIS DANS SON PROPRE MODULE.
-//
-// 624 lignes — PARTS, partsPour, les digests, SYSTEM_EMIT, callPart et ses
-// aides — ont été déplacées TELLES QUELLES dans `emission-coeur.mjs`, pour
-// que le produit puisse les appeler sans lancer cette campagne. Rien n'a été
-// réécrit : `tests/extraction-coeur.test.mjs` compare l'empreinte du bloc
-// déplacé à celle d'avant le déplacement.
-//
-// La fabrique reçoit les seize dépendances que ce script construisait déjà.
-// Aucune n'a été ajoutée ni retirée.
-const { creerCoeurEmission } = await import(join(HERE, "emission-coeur.mjs"));
-const {
-  PARTS, partsPour, surfacesDigest, blocsDigest, registryDigest,
-  SYSTEM_EMIT, callPart, texteBrut, extractJson,
-} = creerCoeurEmission({ airSchema, registry, blocksRegistry, presentation, ROLES_ICONES, adaptateur, client, MAX_TOKENS, coutUSD, capacitesDeService, etatDepense, budgetUsd, modeleMetier, surfaceEnveloppe, PRIX, z });
-
 const SYSTEM_TRANSCRIBE = `Tu reçois le rendu texte DÉTERMINISTE et COMPLET d'une spécification AIR existante. Tu transcris par sections : à chaque appel, émets UNIQUEMENT les sections demandées, en JSON strictement conforme au schéma fourni.
 
 RÈGLE ABSOLUE : reproduction à l'IDENTIQUE. Chaque identifiant, chaque valeur, chaque ordre de liste, chaque texte localisé doit être repris VERBATIM depuis le rendu. Les valeurs entre backticks sont des littéraux exacts ; les objets/tableaux JSON inclus dans le rendu sont à recopier tels quels. N'ajoute rien, n'omets rien, ne reformule rien, ne "corrige" rien. Un champ optionnel absent du rendu reste absent du JSON.`;
@@ -526,16 +510,39 @@ const end = Number(process.argv[3] ?? INTENTIONS.length);
 // À défaut, le plafond historique de 25 $ (D-025) s'applique.
 const PLAFOND_USD = Number(process.env.BUDGET_USD ?? 25);
 let etatDepense = budgetUsd.DEPENSE_INITIALE;
+
 // EP-050/EP-060 — l'alerte 90 % est un INSTRUMENT du GO : le franchissement
 // est signalé UNE fois, la campagne continue (le plafond, lui, mord à 100 %,
 // D-103). Une borne approchée à 90 % doit être révisée avant la mesure suivante.
-let alerteNeufDixiemesEmise = false;
 const TARIFS = {
   entree: PRIX.in,
   ecritureCache: PRIX.cacheWrite,
   lectureCache: PRIX.cacheRead,
   sortie: PRIX.out,
 };
+
+// ── LE CŒUR DE L'ÉMISSION VIT DÉSORMAIS DANS SON PROPRE MODULE.
+//
+// 624 lignes — PARTS, partsPour, les digests, SYSTEM_EMIT, callPart et ses
+// aides — ont été déplacées TELLES QUELLES dans `emission-coeur.mjs`, pour
+// que le produit puisse les appeler sans lancer cette campagne. Rien n'a été
+// réécrit : `tests/extraction-coeur.test.mjs` compare l'empreinte du bloc
+// déplacé à celle d'avant le déplacement.
+//
+// La fabrique reçoit les seize dépendances que ce script construisait déjà.
+// Aucune n'a été ajoutée ni retirée.
+//
+// ELLE DESCEND ICI, APRÈS LE BUDGET. Placée plus haut, elle lisait
+// `etatDepense` et `PLAFOND_USD` avant leur initialisation — le premier
+// tirage s'est arrêté dessus, AVANT tout appel payant. Les fonctions rendues
+// ne sont appelées que plus bas : la déclaration peut donc attendre.
+const { creerCoeurEmission } = await import(join(HERE, "emission-coeur.mjs"));
+const {
+  PARTS, partsPour, surfacesDigest, blocsDigest, registryDigest,
+  SYSTEM_EMIT, callPart, texteBrut, extractJson,
+  lireEtatDepense,
+} = creerCoeurEmission({ PLAFOND_USD, CONTRAT_CIBLE, TARIFS, executionContract, preservation, airSchema, registry, blocksRegistry, presentation, ROLES_ICONES, adaptateur, client, MAX_TOKENS, coutUSD, capacitesDeService, etatDepense, budgetUsd, modeleMetier, surfaceEnveloppe, PRIX, z });
+
 const summary = [];
 
 // ── MODE RÉPARATION SEULE (2026-09-04) — `--reparer <artefact> <slug>`.
@@ -593,14 +600,14 @@ if (process.argv[2] === "--reparer") {
       const f = ecrireArtefact(slug, "reparation-partielle", partiel.document);
       console.log(`  partiel conservé (${partiel.sectionsReemises.join(", ")}) : ${f}`);
     }
-    console.log(`  dépensé ~$${etatDepense.depense.toFixed(4)} · ${usage.length} appel(s)`);
+    console.log(`  dépensé ~$${lireEtatDepense().depense.toFixed(4)} · ${usage.length} appel(s)`);
     process.exit(1);
   }
   const apres = validateLocal(resultat.repaired);
   const fichier = ecrireArtefact(slug, "repare", resultat.repaired);
   console.log(`  artefact : ${fichier}`);
   console.log(`  diagnostics ${diagnostics.length} -> ${apres.diagnostics.length}`);
-  console.log(`  coût ~$${etatDepense.depense.toFixed(4)} · ${usage.length} appel(s)`);
+  console.log(`  coût ~$${lireEtatDepense().depense.toFixed(4)} · ${usage.length} appel(s)`);
   if (apres.air !== null && apres.diagnostics.length === 0) {
     writeFileSync(join(CORPUS_DIR, `${slug}.air.json`), JSON.stringify(resultat.repaired, null, 2) + "\n");
     console.log(`  🟢 VALIDE — versé au corpus`);
@@ -612,9 +619,9 @@ if (process.argv[2] === "--reparer") {
 }
 
 for (const intention of INTENTIONS.slice(start, end)) {
-  if (etatDepense.depense >= PLAFOND_USD) {
+  if (lireEtatDepense().depense >= PLAFOND_USD) {
     console.log(
-      `PLAFOND ${PLAFOND_USD}$ ATTEINT — ARRÊT (D-025). Dépensé: $${etatDepense.depense.toFixed(4)}`,
+      `PLAFOND ${PLAFOND_USD}$ ATTEINT — ARRÊT (D-025). Dépensé: $${lireEtatDepense().depense.toFixed(4)}`,
     );
     break;
   }
@@ -660,7 +667,7 @@ for (const intention of INTENTIONS.slice(start, end)) {
           levels: [{ name: "canonique-degradee-adaptateur", schema: grammaire }],
           levelIndex: 0,
         };
-        const coutAvant = etatDepense.depense;
+        const coutAvant = lireEtatDepense().depense;
         const reponseP0 = await callPart(partP0, requeteP0.system, requeteP0.user, `${intention.slug}:p0#t${tentative}`, usage);
         const neutreP0 = adaptateur.lireReponse(reponseP0);
         const verdictP0 = passe0.jugerSortieP0(neutreP0.texte, intention.text, { tronquee: neutreP0.tronquee });
@@ -677,7 +684,7 @@ for (const intention of INTENTIONS.slice(start, end)) {
         const arret = !verdictP0.ok ? "P1" : diagnosticsPlan.length > 0 ? "P2" : "passe";
         journal.p0Tentatives.push({
           tentative,
-          coutUSD: Number((etatDepense.depense - coutAvant).toFixed(4)),
+          coutUSD: Number((lireEtatDepense().depense - coutAvant).toFixed(4)),
           arret,
           diagnostics: !verdictP0.ok
             ? verdictP0.diagnostics.map((x) => x.code)
@@ -953,7 +960,7 @@ for (const intention of INTENTIONS.slice(start, end)) {
   }
   journal.refusals = refusals.count;
   const cost = usage.reduce((s, u) => s + coutUSD(u ?? {}), 0);
-  journal.depenseCumulee = Number(etatDepense.depense.toFixed(4));
+  journal.depenseCumulee = Number(lireEtatDepense().depense.toFixed(4));
   journal.appelsAPI = etatDepense.appels;
   journal.coutUSD = Number(cost.toFixed(4));
   journal.dureeMs = Date.now() - t0;
@@ -1011,5 +1018,5 @@ for (const a of attestations) console.log(`  ⚠ ${a.code} — ${a.message}`);
 console.log(
   `\nBILAN tranche [${start},${end}) : ${valid}/${summary.length} AIR valides · ` +
     `${bilanP0} · ${rtBilan} · ` +
-    `coût ~$${etatDepense.depense.toFixed(4)} · ${etatDepense.appels} appels · journal ${JOURNAL}`,
+    `coût ~$${lireEtatDepense().depense.toFixed(4)} · ${etatDepense.appels} appels · journal ${JOURNAL}`,
 );

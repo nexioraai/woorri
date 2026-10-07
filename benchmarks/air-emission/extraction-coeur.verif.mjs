@@ -24,7 +24,11 @@ const coeur = readFileSync(join(HERE, "emission-coeur.mjs"), "utf8");
 // qu'il faut le relire pour le comparer.
 const reperes = [
   ["const PARTS = [", "async function callPart("],
-  ["async function callPart(", "return { PARTS, partsPour"],
+  // Repère de fin : l'accolade fermante du `return` en début de ligne. La
+  // première version visait « return { PARTS, partsPour » — une ligne que le
+  // moindre reformatage du `return` fait disparaître, et c'est arrivé dès que
+  // la fabrique a dû rendre un accesseur de plus.
+  ["async function callPart(", "\nreturn {"],
 ];
 let bloc = "";
 for (const [d, f] of reperes) {

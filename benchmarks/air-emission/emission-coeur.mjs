@@ -51,12 +51,25 @@ export function creerCoeurEmission({
   coutUSD,
   capacitesDeService,
   etatDepense,
+  PLAFOND_USD,
   budgetUsd,
+  CONTRAT_CIBLE,
+  TARIFS,
+  executionContract,
+  preservation,
   modeleMetier,
   surfaceEnveloppe,
   PRIX,
   z,
 }) {
+
+// ── L'ALERTE DES 90 % EST UN ÉTAT INTERNE, ET ELLE VIENT ICI.
+//
+// Le script la déclarait ; seul ce code la lit ET l'écrit. Laissée dehors,
+// elle aurait été la deuxième variable mutable à ne pas traverser la fabrique
+// — après `etatDepense`, qui a arrêté le premier tirage. Celle-ci n'a pas
+// besoin d'un accesseur : personne au-dehors ne la consulte.
+let alerteNeufDixiemesEmise = false;
 
 const PARTS = [
   {
@@ -677,5 +690,19 @@ function extractJson(response) {
 // (garde EP-065, à raison). Les juges n'ont aucun dialecte ni dépense : ils
 // sortent. emit-v3 les CONSOMME — mêmes objets, mêmes appels, zéro dérive.
 
-return { PARTS, partsPour, surfacesDigest, blocsDigest, registryDigest, SYSTEM_EMIT, callPart, texteBrut, extractJson };
+return {
+  PARTS, partsPour, surfacesDigest, blocsDigest, registryDigest,
+  SYSTEM_EMIT, callPart, texteBrut, extractJson,
+  // ── L'ÉTAT DE DÉPENSE SE LIT PAR ICI, ET C'EST OBLIGATOIRE.
+  //
+  // Le code déplacé RÉASSIGNE `etatDepense` à chaque appel payant, et le
+  // script le relit pour afficher le coût et faire mordre le plafond. Une
+  // fabrique n'en reçoit qu'une COPIE : les mutations ne traverseraient pas,
+  // et le plafond comparerait éternellement zéro.
+  //
+  // Ce défaut n'a pas été trouvé en relisant : le premier tirage s'est arrêté
+  // dessus, AVANT le moindre appel payant. Un accesseur garde le texte
+  // déplacé intact et rend la mutation visible là où elle doit l'être.
+  lireEtatDepense: () => etatDepense,
+};
 }
