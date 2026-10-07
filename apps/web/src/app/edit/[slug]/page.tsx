@@ -34,6 +34,8 @@ export default function EditPage() {
   const [uploadingDesign, setUploadingDesign] = useState(false);
   const [envoiLogo, setEnvoiLogo] = useState(false);
   const [avisLogo, setAvisLogo] = useState<string[]>([]);
+  const [genereEnCours, setGenereEnCours] = useState(false);
+  const [avisApp, setAvisApp] = useState('');
   const [generatingMockups, setGeneratingMockups] = useState(false);
   const [podCatalog, setPodCatalog] = useState<any[]>([]);
   const [selectedProducts, setSelectedProducts] = useState<Record<string, {selected: boolean; sellPrice: number; variantId?: string}>>({});
@@ -147,6 +149,42 @@ export default function EditPage() {
   //
   // Elle ne RETOUCHE rien, à la différence de la route des photos de produit :
   // un logo ne se recadre pas et ne se « corrige » pas.
+  // ── GENERER L APPLICATION WEB, et la remettre au marchand.
+  //
+  // Le telechargement passe par un objet en memoire : la route rend une
+  // archive, pas une URL. Rien n est depose sur nos serveurs — ce que le
+  // marchand recoit n existe que chez lui.
+  const genererApplication = async () => {
+    setGenereEnCours(true);
+    setAvisApp('');
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch(`/api/app/generer?slug=${encodeURIComponent(slug)}`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${session?.access_token ?? ''}` },
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        setAvisApp(String(d.error ?? 'Construction impossible.'));
+        return;
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${slug}-app-web.zip`;
+      a.click();
+      // L objet est libere : sans cela, l archive reste en memoire du
+      // navigateur jusqu a la fermeture de l onglet.
+      URL.revokeObjectURL(url);
+      setAvisApp('Application construite. Le fichier est dans vos telechargements.');
+    } catch {
+      setAvisApp('Construction impossible.');
+    } finally {
+      setGenereEnCours(false);
+    }
+  };
+
   const deposerLogo = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const fichier = e.target.files?.[0];
     if (!fichier) return;
@@ -466,6 +504,36 @@ export default function EditPage() {
               >
                 Retirer le logo et revenir à la lettre
               </button>
+            )}
+          </FieldSection>
+
+          {/* ── L APPLICATION WEB DE LA BOUTIQUE.
+              Le moteur produisait des applications dans une porte de
+              verification, et ce site n avait aucune dependance vers lui.
+              Voici le bouton qui manquait. */}
+          <FieldSection label="Application web">
+            <p className="text-xs text-white/50 mb-3">
+              Deribfy construit l application web de votre boutique et vous la
+              remet en un fichier. Vous la deposez chez l hebergeur de votre
+              choix — nous ne publions rien en votre nom.
+            </p>
+            <button
+              type="button"
+              disabled={genereEnCours}
+              onClick={genererApplication}
+              className="block w-full text-center bg-[#FA5D1E]/10 hover:bg-[#FA5D1E]/20 text-[#FA5D1E] py-3 rounded-xl font-semibold transition border border-[#FA5D1E]/20 disabled:opacity-50"
+            >
+              {genereEnCours ? 'Construction…' : 'Generer mon application web'}
+            </button>
+            {/* LA RESERVE EST DITE ICI, pas seulement dans l archive : un
+                marchand doit savoir AVANT de cliquer ce qu il recevra. */}
+            <p className="mt-2 text-xs text-white/40">
+              L application montre votre nom et la taille de votre catalogue.
+              Les articles affiches sont des articles d apercu : le format qui
+              decrit l application transporte sa structure, jamais vos donnees.
+            </p>
+            {avisApp !== '' && (
+              <p className="mt-2 text-xs text-amber-300/80">{avisApp}</p>
             )}
           </FieldSection>
 

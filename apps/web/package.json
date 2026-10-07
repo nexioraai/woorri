@@ -34,7 +34,9 @@
     "sharp": "^0.35.5",
     "stripe": "^22.2.1",
     "tailwind-merge": "^3.6.0",
-    "zod": "^4.4.3"
+    "zod": "^4.4.3",
+    "@deribfy/compiler": "*",
+    "@deribfy/air-schema": "*"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

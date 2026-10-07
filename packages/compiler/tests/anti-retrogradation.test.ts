@@ -54,12 +54,12 @@ describe("CLIQUET — aucune dépendance du train ne recule", () => {
 
   for (const [paquet, [maj, min]] of Object.entries(PLANCHER)) {
     it(`${paquet} reste au-dessus de ${String(maj)}.${String(min)}`, () => {
-      const declare = deps?.[paquet];
-      expect(declare, `${paquet} absent du train`).toBeTruthy();
-      const [a, b] = majeureMineure(declare!);
+      const declare = deps?.[paquet] ?? "";
+      expect(declare, `${paquet} absent du train`).not.toBe("");
+      const [a, b] = majeureMineure(declare);
       // Le message compte autant que l'assertion : celui qui le lit vient
       // probablement de lancer `npm audit fix --force` sans le savoir.
-      const vu = `${paquet}@${declare ?? "?"}`;
+      const vu = `${paquet}@${declare}`;
       expect(
         a > maj || (a === maj && b >= min),
         `${vu} est SOUS le plancher ${String(maj)}.${String(min)}. ` +

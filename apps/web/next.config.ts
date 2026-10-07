@@ -69,6 +69,18 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  // ── LE MOTEUR ENTRE DANS LE SITE.
+  //
+  // `@deribfy/compiler` et `@deribfy/air-schema` sont des paquets de l'espace
+  // de travail, publiés en TypeScript SOURCE — pas en JavaScript construit.
+  // Sans cette ligne, Next les prendrait pour des dépendances publiées déjà
+  // compilées et refuserait de lire leur source.
+  //
+  // Les deux sont PURS : aucun accès disque, aucun réseau. C'est ce qui les
+  // rend embarquables dans une fonction serveur — vérifié avant de les
+  // brancher, pas après.
+  transpilePackages: ['@deribfy/compiler', '@deribfy/air-schema'],
+
   // ── `onnxruntime-web` NE DOIT PAS ÊTRE EMPAQUETÉ.
   //
   // MESURÉ EN PRODUCTION le 2026-10-06, premier passage réel du lot photo :

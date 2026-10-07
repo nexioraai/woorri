@@ -181,6 +181,8 @@ export default defineConfig({
       // et un test que le lanceur ignore ne garde rigoureusement rien.
       'src/lib/seo/**/*.test.ts',
       'src/lib/images/**/*.test.ts',
+      // Le pont vers le moteur de génération (lot « brancher Deribfy »).
+      'src/lib/apps/**/*.test.ts',
       // CHANTIER 5 -- src/lib/site-profile/ porte la borne de `area_served`
       // et l'allowlist de `price_range`. Prefixe absent : sans cette ligne,
       // leurs tests passent en isolation mais ne sont JAMAIS collectes.

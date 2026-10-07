@@ -389,6 +389,27 @@ function useResolveField(
     if (champ?.unit !== undefined) {
       return formatValeur(brut, champ.unit);
     }
+    // ── UN BOOLÉEN NE SE MONTRE PAS « true ».
+    //
+    // MESURÉ LE 2026-10-07 sur les 31 applications émises : VINGT ET UN blocs
+    // affichaient une pastille portant littéralement `true` ou `false`. Et pas
+    // sur des écrans secondaires —
+    //
+    //     dougplace/blk_accueil_boutiques  → fld_vendeur_verifie
+    //     dougplace/blk_adresse_liste      → fld_adresse_par_defaut
+    //     v3-agence-immo/…_creneaux        → fld_creneau_disponible
+    //
+    // Un vendeur vérifié portait donc l'étiquette « true » sur l'accueil d'une
+    // place de marché. Le propriétaire l'a vu et n'a rien compris — c'est la
+    // bonne réaction : `true` n'est un mot dans aucune langue d'utilisateur.
+    //
+    // Ce que fait un humain : il écrit CE QUE LE CHAMP SIGNIFIE quand c'est
+    // vrai, et il n'écrit RIEN quand c'est faux. Une pastille « non vérifié »
+    // sur chaque vendeur ordinaire serait du bruit ; son absence se lit toute
+    // seule. Le libellé vient du DOCUMENT — le moteur n'invente aucun mot.
+    if (champ?.type === "boolean") {
+      return brut === "true" ? (champ.label ?? undefined) : undefined;
+    }
     // DET-032 — un code d'enum ne se montre pas : si le document a déclaré un
     // libellé pour cette valeur, c'est LUI qui s'affiche. Données, filtrage et
     // testID continuent de porter la valeur brute.
