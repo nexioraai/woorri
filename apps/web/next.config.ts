@@ -111,6 +111,22 @@ const nextConfig: NextConfig = {
   // `onnxruntime-web` charge en plus ses binaires WebAssembly depuis son
   // propre dossier : même raison, même traitement.
   outputFileTracingIncludes: {
+    // ── LA CHAÎNE D'ÉMISSION DOIT ENTRER DANS LA FONCTION.
+    //
+    // `benchmarks/air-emission/` vit HORS de `apps/web` : rien ne l'embarque.
+    // Mesuré EN LIGNE, premier message du générateur :
+    //   « Cannot find module /var/task/benchmarks/air-emission/passe0.mjs »
+    //
+    // C'est exactement le piège déjà rencontré avec le modèle de détourage —
+    // vert en local, cassé une fois déployé — et je ne l'ai pas appliqué ici.
+    // Le repli a tenu : l'écran a nommé la vraie cause au lieu de prétendre
+    // avoir lu.
+    //
+    // Le dossier ENTIER, pas les fichiers choisis à la main : `passe0.mjs`
+    // importe `modele-metier.mjs`, qui en importe d'autres. Une liste écrite
+    // à la main se périmerait au premier ajout, et le défaut ne se verrait
+    // qu'en production.
+    '/api/generateur/comprendre': ['../../benchmarks/air-emission/**/*.mjs'],
     '/api/cron/photos-pro': [
       './public/modeles/u2netp.onnx',
       '../../node_modules/onnxruntime-web/dist/*.wasm',

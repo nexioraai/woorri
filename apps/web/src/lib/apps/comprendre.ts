@@ -95,7 +95,19 @@ export async function comprendre(demande: string): Promise<Comprehension> {
     }
 
     const requete = passe0.construireRequeteP0(propre)
-    const client = await adaptateur.creerClient(null)
+    // ── LA CLÉ VIENT DE L'ENVIRONNEMENT, PAS D'UN FICHIER.
+    //
+    // L'adaptateur a été écrit pour une campagne lancée à la main : il lit
+    // `apps/web/.env.local`. Ce fichier n'est PAS déployé — il est ignoré par
+    // git, et c'est très bien ainsi. Sur le serveur, la clé vit dans
+    // `process.env`.
+    //
+    // On ne modifie pas l'adaptateur pour autant : il prend un LECTEUR en
+    // argument, et c'est précisément là pour ça. On lui en fournit un qui rend
+    // le contenu qu'il attend, construit depuis l'environnement.
+    const cle = process.env.ANTHROPIC_API_KEY ?? ''
+    if (cle === '') return { ok: false, raison: 'Clé Anthropic absente du serveur.' }
+    const client = await adaptateur.creerClient(() => `ANTHROPIC_API_KEY=${cle}`)
     const appel = adaptateur.construireAppel(requete, { max_tokens: 9000 })
     const reponse = (await client.messages.create(appel)) as { usage?: unknown }
     const { texte, meta } = adaptateur.lireReponse(reponse)
