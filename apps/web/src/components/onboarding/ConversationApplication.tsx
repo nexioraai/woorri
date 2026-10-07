@@ -34,6 +34,10 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
   const [travail, setTravail] = useState<'' | 'apercu' | 'archive'>('');
   const [apercu, setApercu] = useState('');
   const [avis, setAvis] = useState('');
+  // LE DOCUMENT COMPRIS, GARDE ICI. Sans lui, « voir » et « telecharger »
+  // reliraient la phrase et repaieraient un appel chacun — trois pour une
+  // seule application, avec le risque que l apercu et l archive different.
+  const [document_, setDocument] = useState<unknown>(null);
 
   const derniere = [...messages].reverse().find((m) => m.role === 'moi');
 
@@ -57,6 +61,7 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
       });
       const d = await res.json();
       if (!res.ok) { setAvis(String(d.error ?? 'Lecture impossible.')); return; }
+      setDocument(d.document ?? null);
       setMessages((m) => [
         ...m,
         { role: 'deribfy', compris: d.compris ?? [], parIA: d.parIA === true, note: d.echecIA },
@@ -82,7 +87,7 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
       const res = await fetch('/api/generateur/apercu', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${await jeton()}` },
-        body: JSON.stringify({ demande: derniere.texte }),
+        body: JSON.stringify({ demande: derniere.texte, document: document_ }),
       });
       const d = await res.json();
       direAnomalies(d);
@@ -103,7 +108,7 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
       const res = await fetch('/api/generateur/produire', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${await jeton()}` },
-        body: JSON.stringify({ demande: derniere.texte }),
+        body: JSON.stringify({ demande: derniere.texte, document: document_ }),
       });
       if (!res.ok) {
         const d = await res.json().catch(() => ({}));

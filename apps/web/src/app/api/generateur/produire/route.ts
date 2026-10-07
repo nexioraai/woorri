@@ -12,7 +12,7 @@
 import { NextResponse } from 'next/server'
 import { compileWeb } from '@deribfy/compiler'
 import { requireAuthenticatedUser } from '@/lib/auth/require-authenticated-user'
-import { emettreSansIa } from '@/lib/apps/emission'
+import { documentPour, documentFourni } from '@/lib/apps/pour'
 import { zipper } from '@/lib/apps/zip'
 
 export const runtime = 'nodejs'
@@ -28,18 +28,22 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Dites ce que vous voulez construire.' }, { status: 400 })
   }
 
-  const emission = emettreSansIa(demande)
-  if (!emission.ok) return NextResponse.json({ error: emission.raison }, { status: 422 })
+  // Le document vient du navigateur s'il a été compris juste avant ; sinon on
+  // relit. Dans les deux cas il est VALIDE : `documentFourni` passe par le
+  // schéma strict, et `documentPour` aussi.
+  const fourni = documentFourni((corps as { document?: unknown }).document)
+  const r = fourni === null ? await documentPour(demande) : { document: fourni, compris: [], parIA: false }
+  if ('erreur' in r) return NextResponse.json({ error: r.erreur }, { status: 422 })
 
   try {
-    const projet = compileWeb(emission.document)
+    const projet = compileWeb(r.document)
     const fichiers = new Map<string, string | Buffer>(projet.files)
-    fichiers.set('LISEZ-MOI.txt', lisezMoi(emission.document.app.name, emission.compris))
+    fichiers.set('LISEZ-MOI.txt', lisezMoi(r.document.app.name, r.compris))
     const archive = zipper(fichiers)
     return new Response(new Uint8Array(archive), {
       headers: {
         'Content-Type': 'application/zip',
-        'Content-Disposition': `attachment; filename="${emission.document.app.slug}.zip"`,
+        'Content-Disposition': `attachment; filename="${r.document.app.slug}.zip"`,
         'Content-Length': String(archive.length),
         'Cache-Control': 'no-store',
       },

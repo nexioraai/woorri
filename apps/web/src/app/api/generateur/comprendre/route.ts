@@ -21,8 +21,7 @@
  */
 import { NextResponse } from 'next/server'
 import { requireAuthenticatedUser } from '@/lib/auth/require-authenticated-user'
-import { comprendre, depenseAutorisee, direCeQuOnACompris } from '@/lib/apps/comprendre'
-import { emettreSansIa } from '@/lib/apps/emission'
+import { documentPour } from '@/lib/apps/pour'
 import { Veille, alerter } from '@/lib/apps/surveillance'
 
 export const runtime = 'nodejs'
@@ -39,42 +38,30 @@ export async function POST(req: Request) {
   }
 
   const veille = new Veille(demande)
-  if (depenseAutorisee()) {
-    const lu = await veille.temps('comprehension', () => comprendre(demande))
-    if (lu.ok) {
-      return NextResponse.json({
-        parIA: true,
-        compris: direCeQuOnACompris(lu.modele),
-        // LE COÛT SORT. Celui qui paie doit pouvoir le voir, pas le deviner.
-        coutUsd: lu.coutUsd,
-      })
-    }
-    // Un échec de lecture ne se déguise pas en lecture pauvre : on le dit, et
-    // on propose quand même ce qu'on sait faire sans modèle.
-    //
-    // ET L'ADMINISTRATEUR EST PRÉVENU. Un utilisateur qui voit « lecture
-    // simple » pense à une limite du produit ; seul le courriel dit que la
-    // lecture par IA est TOMBÉE.
-    const repli = emettreSansIa(demande)
+  const r = await veille.temps('comprehension', () => documentPour(demande))
+  if ('erreur' in r) return NextResponse.json({ error: r.erreur }, { status: 422 })
+
+  if (r.echecIA !== undefined) {
+    // L'ADMINISTRATEUR EST PRÉVENU même si l'utilisateur voit un repli propre :
+    // « lecture simple » ressemble à une limite du produit, seul le courriel
+    // dit que l'IA est TOMBÉE.
     const rapport = veille.conclure()
     await alerter({
       ...rapport,
       anomalies: [
         ...rapport.anomalies,
-        { phase: 'comprehension', code: 'echec', message: `Lecture par IA indisponible : ${lu.raison}` },
+        { phase: 'comprehension', code: 'echec', message: `Lecture par IA indisponible : ${r.echecIA}` },
       ],
       saine: false,
     })
-    return NextResponse.json({
-      parIA: false,
-      echecIA: lu.raison,
-      compris: repli.ok ? repli.compris : [],
-    })
   }
 
-  const repli = emettreSansIa(demande)
   return NextResponse.json({
-    parIA: false,
-    compris: repli.ok ? repli.compris : [],
+    parIA: r.parIA,
+    compris: r.compris,
+    ...(r.echecIA === undefined ? {} : { echecIA: r.echecIA }),
+    // LE DOCUMENT SORT AVEC LA RÉPONSE : les deux autres routes le reçoivent
+    // et le revalident, au lieu de relire la phrase et de repayer.
+    document: r.document,
   })
 }

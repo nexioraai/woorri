@@ -11,7 +11,7 @@
  */
 import { NextResponse } from 'next/server'
 import { requireAuthenticatedUser } from '@/lib/auth/require-authenticated-user'
-import { emettreSansIa } from '@/lib/apps/emission'
+import { documentPour, documentFourni } from '@/lib/apps/pour'
 import { construireApercu } from '@/lib/apps/apercu'
 import { Veille, alerter } from '@/lib/apps/surveillance'
 
@@ -32,10 +32,15 @@ export async function POST(req: Request) {
   // est dit : au demandeur dans la réponse, à l'administrateur par courriel.
   const veille = new Veille(demande)
   try {
-    const emission = await veille.temps('emission', () => emettreSansIa(demande))
-    if (!emission.ok) return NextResponse.json({ error: emission.raison }, { status: 422 })
+    // Le document vient du navigateur s'il a été compris juste avant ; sinon
+    // on relit. Les deux chemins passent par le schéma strict.
+    const fourni = documentFourni((corps as { document?: unknown }).document)
+    const r = await veille.temps('emission', async () =>
+      fourni === null ? await documentPour(demande) : { document: fourni, compris: [], parIA: false },
+    )
+    if ('erreur' in r) return NextResponse.json({ error: r.erreur }, { status: 422 })
 
-    const a = await veille.temps('apercu', () => construireApercu(emission.document))
+    const a = await veille.temps('apercu', () => construireApercu(r.document))
     // Un aperçu de trois kilo-octets « réussit » et ne montre rien. La taille
     // fait partie du verdict, pas seulement l'absence d'exception.
     veille.mesurerSortie('apercu', a.octets)

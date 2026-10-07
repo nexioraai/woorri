@@ -87,6 +87,7 @@ export async function comprendre(demande: string): Promise<Comprehension> {
     const adaptateur = (await import(
       /* webpackIgnore: true */ `${base}/benchmarks/air-emission/adaptateur-anthropic.mjs`
     )) as {
+      degraderGrammaire: (g: unknown) => { grammaire: unknown; ecarts: string[] }
       construireAppel: (r: unknown, g: unknown) => unknown
       lireReponse: (r: unknown) => { texte: string; meta: unknown }
       lireUsage: (u: unknown) => unknown
@@ -94,7 +95,21 @@ export async function comprendre(demande: string): Promise<Comprehension> {
       creerClient: (lire: unknown, o?: unknown) => Promise<{ messages: { create: (a: unknown) => Promise<unknown> } }>
     }
 
-    const requete = passe0.construireRequeteP0(propre)
+    // ── LA GRAMMAIRE SE DÉGRADE AVANT DE PARTIR.
+    //
+    // MESURÉ : l'API a refusé l'appel en 400 —
+    //   « For 'integer' type, properties maximum, minimum are not supported ».
+    //
+    // Le contrat P0 borne ses entiers, et c'est juste : un schéma doit dire
+    // ce qui est vrai. C'est le TRANSPORT qui ne sait pas porter ces bornes,
+    // et l'adaptateur a une fonction exprès — `degraderGrammaire` — qui
+    // retire ce que le dialecte refuse en DÉCLARANT chaque écart.
+    //
+    // Je ne l'appelais pas. La campagne, elle, le fait depuis toujours : j'ai
+    // repris le point d'entrée sans reprendre le geste qui va avec.
+    const requeteBrute = passe0.construireRequeteP0(propre)
+    const { grammaire } = adaptateur.degraderGrammaire(requeteBrute.grammaire)
+    const requete = { ...requeteBrute, grammaire }
     // ── LA CLÉ VIENT DE L'ENVIRONNEMENT, PAS D'UN FICHIER.
     //
     // L'adaptateur a été écrit pour une campagne lancée à la main : il lit
