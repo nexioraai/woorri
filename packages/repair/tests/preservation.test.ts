@@ -301,7 +301,9 @@ describe("cliquet de véracité — le harnais d'émission RÉEL est confronté 
   // redevient nu, ou si une issue cesse de dire la vérité.
   const REPO = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
   const HARNAIS = join(REPO, "benchmarks", "air-emission", "emit-v3.mjs");
-  const code = readFileSync(HARNAIS, "utf8");
+  // Source en DEUX fichiers depuis l extraction du 2026-10-07.
+  const COEUR = join(REPO, "benchmarks", "air-emission", "emission-coeur.mjs");
+  const code = readFileSync(HARNAIS, "utf8") + "\n" + readFileSync(COEUR, "utf8");
   const occurrences = (motif: string): number => code.split(motif).length - 1;
 
   it("🔴 AUCUN chemin de réparation payé n'est appelé sans garde", () => {

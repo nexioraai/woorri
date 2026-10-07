@@ -36,6 +36,8 @@ export default function GenerateurPage() {
   const [enCours, setEnCours] = useState(false);
   const [construction, setConstruction] = useState(false);
   const [avis, setAvis] = useState('');
+  const [apercu, setApercu] = useState('');
+  const [apercuEnCours, setApercuEnCours] = useState(false);
   const bas = useRef<HTMLDivElement>(null);
 
   // La derniere demande comprise — c'est elle qu'on produit.
@@ -76,6 +78,31 @@ export default function GenerateurPage() {
     }
   };
 
+  // ── L APERCU : l application a l ecran, sans telechargement.
+  //
+  // Le paquet est assemble EN MEMOIRE cote serveur et rendu en une page
+  // autonome, posee dans un cadre isole. Ce qui s affiche est la VRAIE
+  // application montee par son vrai runtime — pas une maquette.
+  const voir = async () => {
+    if (!derniereDemande) return;
+    setApercuEnCours(true);
+    setAvis('');
+    try {
+      const res = await fetch('/api/generateur/apercu', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${await jeton()}` },
+        body: JSON.stringify({ demande: derniereDemande.texte }),
+      });
+      const d = await res.json();
+      if (!res.ok) { setAvis(String(d.error ?? 'Apercu impossible.')); return; }
+      setApercu(String(d.html ?? ''));
+    } catch {
+      setAvis('Apercu impossible.');
+    } finally {
+      setApercuEnCours(false);
+    }
+  };
+
   const produire = async () => {
     if (!derniereDemande) return;
     setConstruction(true);
@@ -113,6 +140,31 @@ export default function GenerateurPage() {
         </Link>
         <h1 className="mt-2 text-2xl font-semibold tracking-tight">Générateur d&apos;applications</h1>
       </header>
+
+      {apercu !== '' && (
+        <div className="border-b border-white/10 bg-black/40">
+          <div className="max-w-5xl mx-auto px-6 py-4">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs text-white/40">Votre application</p>
+              <button
+                type="button"
+                onClick={() => setApercu('')}
+                className="text-xs text-white/40 hover:text-white/70 underline"
+              >
+                Fermer l’aperçu
+              </button>
+            </div>
+            {/* `sandbox` SANS `allow-same-origin` : l application tourne, et
+                elle ne peut rien lire du site qui l heberge. */}
+            <iframe
+              title="Aperçu de l’application"
+              srcDoc={apercu}
+              sandbox="allow-scripts"
+              className="w-full h-[520px] rounded-xl border border-white/10 bg-white"
+            />
+          </div>
+        </div>
+      )}
 
       <div className="flex-1 overflow-y-auto px-6 py-8">
         <div className="max-w-2xl mx-auto space-y-6">
@@ -181,20 +233,30 @@ export default function GenerateurPage() {
           </div>
 
           {derniereDemande !== undefined && (
-            <button
-              type="button"
-              onClick={() => void produire()}
-              disabled={construction}
-              className="mt-3 w-full bg-[#FA5D1E] hover:bg-[#FA5D1E]/90 py-3 rounded-xl font-semibold transition disabled:opacity-40"
-            >
-              {construction ? 'Construction…' : 'Générer l’application'}
-            </button>
+            <div className="mt-3 flex gap-3">
+              <button
+                type="button"
+                onClick={() => void voir()}
+                disabled={apercuEnCours}
+                className="flex-1 bg-white/10 hover:bg-white/15 py-3 rounded-xl font-semibold transition disabled:opacity-40"
+              >
+                {apercuEnCours ? 'Assemblage…' : 'Voir l’application'}
+              </button>
+              <button
+                type="button"
+                onClick={() => void produire()}
+                disabled={construction}
+                className="flex-1 bg-[#FA5D1E] hover:bg-[#FA5D1E]/90 py-3 rounded-xl font-semibold transition disabled:opacity-40"
+              >
+                {construction ? 'Construction…' : 'Télécharger'}
+              </button>
+            </div>
           )}
 
-          {/* CE QUI MANQUE EST DIT ICI, pas decouvert apres le telechargement. */}
           <p className="mt-3 text-xs text-white/35 leading-relaxed">
-            L&apos;application se télécharge en un fichier. L&apos;aperçu à l&apos;écran, comme
-            chez Bolt, demande un chemin de construction qui n&apos;existe pas encore.
+            L&apos;aperçu monte la vraie application dans un cadre isolé. Les éléments
+            affichés sont des éléments d&apos;aperçu : le format qui décrit une
+            application transporte sa structure, jamais vos données.
           </p>
         </div>
       </div>

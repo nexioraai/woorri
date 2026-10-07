@@ -5,6 +5,7 @@
 // consignés — s'il rendait vert, R6 ne jugerait rien. Puis chaque juge est
 // prouvé par MUTATION ISOLÉE sur BASE VERTE (EP-028), diagnostic nommé exact.
 import { readFileSync } from "node:fs";
+import { SOURCE_GENERATEUR } from "./source-generateur.ts";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
@@ -379,7 +380,7 @@ describe("EP-099 (L-098-A) — limitation-moteur : un arc que SEULE une capabili
 });
 
 describe("branchement — un juge hors acceptation ne juge pas", () => {
-  const emitV3 = readFileSync(join(R, "benchmarks", "air-emission", "emit-v3.mjs"), "utf8");
+  const emitV3 = SOURCE_GENERATEUR;
   it("jugerAcceptation tourne aux DEUX attempts, et consomme jugerVivacite", () => {
     // Les CONSOMMATIONS (spread dans les diagnostics), pas la définition.
     const appels = emitV3.match(/\.\.\.jugerAcceptation\(air, prescriptif, intention\)/g) ?? [];

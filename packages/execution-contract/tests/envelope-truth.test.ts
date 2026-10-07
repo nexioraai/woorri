@@ -478,7 +478,11 @@ describe("véracité de l'enveloppe — capacités de composition (D-088)", () =
 // surface depuis `EXECUTION_ENVELOPE_V1`. Ces tests interdisent le retour de
 // la paraphrase, et des trois formulations qui orientaient vers l'amputation.
 // ══════════════════════════════════════════════════════════════════════════
-const PROMPT_GENERATEUR = readFileSync(join(PKG, "..", "benchmarks/air-emission/emit-v3.mjs"), "utf8");
+// Source en DEUX fichiers depuis l extraction du 2026-10-07.
+const PROMPT_GENERATEUR =
+  readFileSync(join(PKG, "..", "benchmarks/air-emission/emit-v3.mjs"), "utf8") +
+  "\n" +
+  readFileSync(join(PKG, "..", "benchmarks/air-emission/emission-coeur.mjs"), "utf8");
 
 describe("le prompt du générateur est adossé à l'enveloppe (D-088)", () => {
   it("il IMPORTE l'enveloppe au lieu de la paraphraser", () => {

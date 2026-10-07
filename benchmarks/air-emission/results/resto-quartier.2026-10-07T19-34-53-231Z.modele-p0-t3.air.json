@@ -1,0 +1,602 @@
+{
+  "version": "modele-metier/1.2.0",
+  "commerce": "digital",
+  "couverture": {
+    "couverts": [
+      {
+        "terme": "restaurant de quartier",
+        "noeuds": [
+          "cpt_restaurant",
+          "act_restaurateur"
+        ]
+      },
+      {
+        "terme": "Abidjan",
+        "noeuds": [
+          "cpt_restaurant",
+          "att_restaurant_adresse"
+        ]
+      },
+      {
+        "terme": "clients",
+        "noeuds": [
+          "act_client",
+          "cpt_compte"
+        ]
+      },
+      {
+        "terme": "menu",
+        "noeuds": [
+          "cpt_categorie",
+          "cpt_plat",
+          "par_menu"
+        ]
+      },
+      {
+        "terme": "photos",
+        "noeuds": [
+          "att_plat_photo"
+        ]
+      },
+      {
+        "terme": "prix",
+        "noeuds": [
+          "att_plat_prix",
+          "att_ligne_prix_unitaire",
+          "att_commande_montant_total"
+        ]
+      },
+      {
+        "terme": "commander",
+        "noeuds": [
+          "cpt_commande",
+          "cpt_ligne_commande",
+          "par_commander"
+        ]
+      },
+      {
+        "terme": "à emporter",
+        "noeuds": [
+          "att_commande_mode_retrait",
+          "att_commande_heure_retrait",
+          "par_suivi"
+        ]
+      },
+      {
+        "terme": "payer par carte dans l'app",
+        "noeuds": [
+          "cpt_commande",
+          "att_commande_moyen_paiement",
+          "par_commander"
+        ]
+      },
+      {
+        "terme": "notification",
+        "noeuds": [
+          "cpt_notification",
+          "par_suivi"
+        ]
+      },
+      {
+        "terme": "commande prête",
+        "noeuds": [
+          "cpt_commande",
+          "par_preparation"
+        ]
+      },
+      {
+        "terme": "disponibilité des plats",
+        "noeuds": [
+          "att_plat_disponible"
+        ]
+      }
+    ],
+    "nonRetenus": [
+      {
+        "terme": "en français",
+        "raison": "expression_visuelle"
+      },
+      {
+        "terme": "petit",
+        "raison": "expression_visuelle"
+      }
+    ]
+  },
+  "acteurs": [
+    {
+      "id": "act_client",
+      "nom": "Client"
+    },
+    {
+      "id": "act_restaurateur",
+      "nom": "Restaurateur"
+    }
+  ],
+  "concepts": [
+    {
+      "id": "cpt_compte",
+      "nom": "Compte client",
+      "donnees": true,
+      "identifiant": "att_compte_telephone",
+      "attributs": [
+        {
+          "id": "att_compte_nom",
+          "nature": "texte",
+          "requis": true
+        },
+        {
+          "id": "att_compte_telephone",
+          "nature": "texte",
+          "requis": true
+        },
+        {
+          "id": "att_compte_email",
+          "nature": "texte",
+          "requis": false
+        }
+      ]
+    },
+    {
+      "id": "cpt_restaurant",
+      "nom": "Restaurant",
+      "donnees": true,
+      "identifiant": "att_restaurant_nom",
+      "attributs": [
+        {
+          "id": "att_restaurant_nom",
+          "nature": "texte",
+          "requis": true
+        },
+        {
+          "id": "att_restaurant_adresse",
+          "nature": "texte",
+          "requis": true
+        },
+        {
+          "id": "att_restaurant_telephone",
+          "nature": "texte",
+          "requis": true
+        },
+        {
+          "id": "att_restaurant_horaires",
+          "nature": "intervalle",
+          "requis": false
+        },
+        {
+          "id": "att_restaurant_photo",
+          "nature": "media",
+          "requis": false
+        }
+      ]
+    },
+    {
+      "id": "cpt_categorie",
+      "nom": "Catégorie du menu",
+      "donnees": true,
+      "identifiant": "att_categorie_nom",
+      "attributs": [
+        {
+          "id": "att_categorie_nom",
+          "nature": "texte",
+          "requis": true
+        },
+        {
+          "id": "att_categorie_ordre",
+          "nature": "nombre",
+          "requis": false
+        }
+      ]
+    },
+    {
+      "id": "cpt_plat",
+      "nom": "Plat",
+      "donnees": true,
+      "identifiant": "att_plat_nom",
+      "attributs": [
+        {
+          "id": "att_plat_nom",
+          "nature": "texte",
+          "requis": true
+        },
+        {
+          "id": "att_plat_description",
+          "nature": "texte",
+          "requis": false
+        },
+        {
+          "id": "att_plat_prix",
+          "nature": "nombre",
+          "requis": true
+        },
+        {
+          "id": "att_plat_photo",
+          "nature": "media",
+          "requis": true
+        },
+        {
+          "id": "att_plat_disponible",
+          "nature": "booleen",
+          "requis": true
+        },
+        {
+          "id": "att_plat_categorie",
+          "nature": "reference",
+          "requis": true,
+          "producteur": "act_restaurateur"
+        }
+      ]
+    },
+    {
+      "id": "cpt_ligne_commande",
+      "nom": "Ligne de commande",
+      "donnees": true,
+      "attributs": [
+        {
+          "id": "att_ligne_plat",
+          "nature": "reference",
+          "requis": true
+        },
+        {
+          "id": "att_ligne_quantite",
+          "nature": "nombre",
+          "requis": true
+        },
+        {
+          "id": "att_ligne_prix_unitaire",
+          "nature": "nombre",
+          "requis": true
+        },
+        {
+          "id": "att_ligne_precision",
+          "nature": "texte",
+          "requis": false
+        }
+      ]
+    },
+    {
+      "id": "cpt_commande",
+      "nom": "Commande à emporter",
+      "donnees": true,
+      "identifiant": "att_commande_numero",
+      "attributs": [
+        {
+          "id": "att_commande_numero",
+          "nature": "texte",
+          "requis": true
+        },
+        {
+          "id": "att_commande_montant_total",
+          "nature": "nombre",
+          "requis": true
+        },
+        {
+          "id": "att_commande_mode_retrait",
+          "nature": "texte",
+          "requis": true
+        },
+        {
+          "id": "att_commande_heure_retrait",
+          "nature": "date",
+          "requis": false
+        },
+        {
+          "id": "att_commande_moyen_paiement",
+          "nature": "texte",
+          "requis": false
+        },
+        {
+          "id": "att_commande_client",
+          "nature": "reference",
+          "requis": true
+        }
+      ],
+      "etats": [
+        {
+          "id": "panier",
+          "transitions": [
+            {
+              "vers": "confirmee",
+              "geste": "confirmer"
+            }
+          ]
+        },
+        {
+          "id": "confirmee",
+          "transitions": [
+            {
+              "vers": "payee",
+              "geste": "payer"
+            }
+          ]
+        },
+        {
+          "id": "payee",
+          "transitions": [
+            {
+              "vers": "prete",
+              "geste": "confirmer"
+            }
+          ]
+        },
+        {
+          "id": "prete",
+          "transitions": [
+            {
+              "vers": "retiree",
+              "geste": "retirer"
+            }
+          ]
+        },
+        {
+          "id": "retiree"
+        }
+      ]
+    },
+    {
+      "id": "cpt_notification",
+      "nom": "Notification",
+      "donnees": true,
+      "attributs": [
+        {
+          "id": "att_notification_message",
+          "nature": "texte",
+          "requis": true
+        },
+        {
+          "id": "att_notification_date",
+          "nature": "date",
+          "requis": true
+        },
+        {
+          "id": "att_notification_commande",
+          "nature": "reference",
+          "requis": true
+        },
+        {
+          "id": "att_notification_lue",
+          "nature": "booleen",
+          "requis": false
+        }
+      ],
+      "etats": [
+        {
+          "id": "en_attente",
+          "transitions": [
+            {
+              "vers": "envoyee",
+              "exogene": "evenement_externe"
+            }
+          ]
+        },
+        {
+          "id": "envoyee"
+        }
+      ]
+    }
+  ],
+  "relations": [
+    {
+      "de": "cpt_restaurant",
+      "vers": "cpt_categorie",
+      "nature": "possede"
+    },
+    {
+      "de": "cpt_categorie",
+      "vers": "cpt_plat",
+      "nature": "possede"
+    },
+    {
+      "de": "cpt_commande",
+      "vers": "cpt_ligne_commande",
+      "nature": "possede"
+    },
+    {
+      "de": "cpt_ligne_commande",
+      "vers": "cpt_plat",
+      "nature": "reference"
+    },
+    {
+      "de": "cpt_compte",
+      "vers": "cpt_commande",
+      "nature": "possede"
+    },
+    {
+      "de": "cpt_commande",
+      "vers": "cpt_notification",
+      "nature": "possede"
+    }
+  ],
+  "parcours": [
+    {
+      "id": "par_commander",
+      "besoin": "Voir le menu, composer une commande à emporter et la payer par carte dans l'application",
+      "acteur": "act_client",
+      "priorite": 1,
+      "etapes": [
+        {
+          "concept": "cpt_plat",
+          "geste": "decouvrir"
+        },
+        {
+          "concept": "cpt_plat",
+          "geste": "consulter"
+        },
+        {
+          "concept": "cpt_plat",
+          "geste": "choisir"
+        },
+        {
+          "concept": "cpt_ligne_commande",
+          "geste": "saisir"
+        },
+        {
+          "concept": "cpt_commande",
+          "geste": "saisir"
+        },
+        {
+          "concept": "cpt_compte",
+          "geste": "s_identifier"
+        },
+        {
+          "concept": "cpt_commande",
+          "geste": "confirmer"
+        },
+        {
+          "concept": "cpt_commande",
+          "geste": "consulter",
+          "etat": "confirmee"
+        },
+        {
+          "concept": "cpt_commande",
+          "geste": "payer"
+        },
+        {
+          "concept": "cpt_commande",
+          "geste": "consulter",
+          "etat": "payee"
+        }
+      ]
+    },
+    {
+      "id": "par_menu",
+      "besoin": "Parcourir le menu du restaurant par catégorie avec photos et prix",
+      "acteur": "act_client",
+      "priorite": 2,
+      "etapes": [
+        {
+          "concept": "cpt_plat",
+          "geste": "decouvrir"
+        },
+        {
+          "concept": "cpt_categorie",
+          "geste": "decouvrir"
+        },
+        {
+          "concept": "cpt_categorie",
+          "geste": "choisir"
+        },
+        {
+          "concept": "cpt_plat",
+          "geste": "chercher"
+        },
+        {
+          "concept": "cpt_plat",
+          "geste": "consulter"
+        }
+      ]
+    },
+    {
+      "id": "par_suivi",
+      "besoin": "Être prévenu quand la commande est prête et la retirer au restaurant",
+      "acteur": "act_client",
+      "priorite": 3,
+      "etapes": [
+        {
+          "concept": "cpt_compte",
+          "geste": "s_identifier"
+        },
+        {
+          "concept": "cpt_notification",
+          "geste": "consulter_historique"
+        },
+        {
+          "concept": "cpt_notification",
+          "geste": "consulter",
+          "etat": "envoyee"
+        },
+        {
+          "concept": "cpt_commande",
+          "geste": "consulter_historique"
+        },
+        {
+          "concept": "cpt_commande",
+          "geste": "consulter",
+          "etat": "prete"
+        },
+        {
+          "concept": "cpt_commande",
+          "geste": "retirer"
+        },
+        {
+          "concept": "cpt_commande",
+          "geste": "consulter",
+          "etat": "retiree"
+        }
+      ]
+    },
+    {
+      "id": "par_preparation",
+      "besoin": "Suivre les commandes payées et signaler qu'une commande est prête",
+      "acteur": "act_restaurateur",
+      "priorite": 4,
+      "etapes": [
+        {
+          "concept": "cpt_compte",
+          "geste": "s_identifier"
+        },
+        {
+          "concept": "cpt_commande",
+          "geste": "consulter_historique"
+        },
+        {
+          "concept": "cpt_commande",
+          "geste": "consulter",
+          "etat": "payee"
+        },
+        {
+          "concept": "cpt_commande",
+          "geste": "confirmer"
+        },
+        {
+          "concept": "cpt_commande",
+          "geste": "consulter",
+          "etat": "prete"
+        }
+      ]
+    },
+    {
+      "id": "par_gestion_menu",
+      "besoin": "Publier et tenir à jour les plats du menu avec photo, prix et disponibilité",
+      "acteur": "act_restaurateur",
+      "priorite": 5,
+      "etapes": [
+        {
+          "concept": "cpt_compte",
+          "geste": "s_identifier"
+        },
+        {
+          "concept": "cpt_plat",
+          "geste": "consulter_historique"
+        },
+        {
+          "concept": "cpt_plat",
+          "geste": "saisir"
+        },
+        {
+          "concept": "cpt_plat",
+          "geste": "consulter"
+        }
+      ]
+    },
+    {
+      "id": "par_contact",
+      "besoin": "Connaître l'adresse et les horaires du restaurant et le joindre",
+      "acteur": "act_client",
+      "priorite": 6,
+      "etapes": [
+        {
+          "concept": "cpt_restaurant",
+          "geste": "decouvrir"
+        },
+        {
+          "concept": "cpt_restaurant",
+          "geste": "consulter"
+        },
+        {
+          "concept": "cpt_restaurant",
+          "geste": "contacter"
+        }
+      ]
+    }
+  ]
+}

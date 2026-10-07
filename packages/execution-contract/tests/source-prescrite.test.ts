@@ -5,6 +5,7 @@
 // part, mais parce qu'on y arrive DEPUIS où l'utilisateur se trouve ».
 // Preuve sur kaviva (13 arcs prescrits ≠ 22).
 import { readFileSync } from "node:fs";
+import { SOURCE_GENERATEUR } from "./source-generateur.ts";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
@@ -81,7 +82,7 @@ describe("les mutations exigées (EP-115)", () => {
   });
 
   it("④ ni la gate d'EP-102, ni les clauses d'EP-105/EP-113 ne bougent", () => {
-    const emitV3 = readFileSync(join(R, "benchmarks", "air-emission", "emit-v3.mjs"), "utf8");
+    const emitV3 = SOURCE_GENERATEUR;
     const juges = readFileSync(join(R, "benchmarks", "air-emission", "acceptation.mjs"), "utf8");
     expect(emitV3).toContain("elargit(perimetreAvant, perimetreApres)");
     expect(juges).toContain("INDISSOCIABLES");

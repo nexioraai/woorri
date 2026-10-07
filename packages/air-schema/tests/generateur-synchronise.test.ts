@@ -18,7 +18,11 @@ import { AIR_SCHEMA_VERSION } from "../src/air.ts";
 const HERE = dirname(fileURLToPath(import.meta.url));
 const GENERATEUR = join(HERE, "..", "..", "..", "benchmarks", "air-emission", "emit-v3.mjs");
 
-const source = readFileSync(GENERATEUR, "utf8");
+// Le coeur du generateur a ete EXTRAIT le 2026-10-07 : son source est en deux
+// fichiers. Les lire ensemble garde a ce cliquet exactement son sens — il
+// juge la chaine d emission, pas sa decoupe en fichiers.
+const COEUR = join(HERE, "..", "..", "..", "benchmarks", "air-emission", "emission-coeur.mjs");
+const source = readFileSync(GENERATEUR, "utf8") + "\n" + readFileSync(COEUR, "utf8");
 const cible = /export const CONTRAT_CIBLE = "([^"]+)";/.exec(source)?.[1];
 
 describe("cliquet — générateur synchronisé sur le contrat", () => {

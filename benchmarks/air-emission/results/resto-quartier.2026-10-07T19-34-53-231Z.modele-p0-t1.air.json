@@ -1,0 +1,478 @@
+{
+  "version": "modele-metier/1.2.0",
+  "commerce": "digital",
+  "couverture": {
+    "couverts": [
+      {
+        "terme": "restaurant de quartier",
+        "noeuds": [
+          "act_restaurateur",
+          "cpt_compte"
+        ]
+      },
+      {
+        "terme": "clients",
+        "noeuds": [
+          "act_client"
+        ]
+      },
+      {
+        "terme": "menu",
+        "noeuds": [
+          "cpt_plat"
+        ]
+      },
+      {
+        "terme": "photos",
+        "noeuds": [
+          "att_plat_photo"
+        ]
+      },
+      {
+        "terme": "prix",
+        "noeuds": [
+          "att_plat_prix"
+        ]
+      },
+      {
+        "terme": "commander à emporter",
+        "noeuds": [
+          "cpt_commande",
+          "cpt_ligne_commande",
+          "att_commande_heure_retrait"
+        ]
+      },
+      {
+        "terme": "paiement par carte dans l'app",
+        "noeuds": [
+          "cpt_commande",
+          "att_commande_moyen_paiement"
+        ]
+      },
+      {
+        "terme": "notification",
+        "noeuds": [
+          "cpt_notification"
+        ]
+      },
+      {
+        "terme": "commande prête",
+        "noeuds": [
+          "cpt_commande",
+          "cpt_notification"
+        ]
+      },
+      {
+        "terme": "retrait de la commande",
+        "noeuds": [
+          "cpt_commande"
+        ]
+      }
+    ],
+    "nonRetenus": [
+      {
+        "terme": "Abidjan",
+        "raison": "hors_perimetre_mobile"
+      },
+      {
+        "terme": "en français",
+        "raison": "infrastructure_technique"
+      }
+    ]
+  },
+  "acteurs": [
+    {
+      "id": "act_client",
+      "nom": "Client"
+    },
+    {
+      "id": "act_restaurateur",
+      "nom": "Restaurateur"
+    }
+  ],
+  "concepts": [
+    {
+      "id": "cpt_compte",
+      "nom": "Compte",
+      "donnees": true,
+      "identifiant": "att_compte_telephone",
+      "attributs": [
+        {
+          "id": "att_compte_nom",
+          "nature": "texte",
+          "requis": true
+        },
+        {
+          "id": "att_compte_telephone",
+          "nature": "texte",
+          "requis": true
+        },
+        {
+          "id": "att_compte_email",
+          "nature": "texte",
+          "requis": false
+        }
+      ]
+    },
+    {
+      "id": "cpt_plat",
+      "nom": "Plat",
+      "donnees": true,
+      "identifiant": "att_plat_nom",
+      "attributs": [
+        {
+          "id": "att_plat_nom",
+          "nature": "texte",
+          "requis": true
+        },
+        {
+          "id": "att_plat_description",
+          "nature": "texte",
+          "requis": false
+        },
+        {
+          "id": "att_plat_prix",
+          "nature": "nombre",
+          "requis": true
+        },
+        {
+          "id": "att_plat_photo",
+          "nature": "media",
+          "requis": true
+        },
+        {
+          "id": "att_plat_categorie",
+          "nature": "texte",
+          "requis": false
+        },
+        {
+          "id": "att_plat_disponible",
+          "nature": "booleen",
+          "requis": true
+        }
+      ],
+      "etats": [
+        {
+          "id": "brouillon",
+          "transitions": [
+            {
+              "vers": "publie",
+              "geste": "saisir"
+            }
+          ]
+        },
+        {
+          "id": "publie"
+        }
+      ]
+    },
+    {
+      "id": "cpt_commande",
+      "nom": "Commande",
+      "donnees": true,
+      "identifiant": "att_commande_numero",
+      "attributs": [
+        {
+          "id": "att_commande_numero",
+          "nature": "texte",
+          "requis": true
+        },
+        {
+          "id": "att_commande_heure_retrait",
+          "nature": "date",
+          "requis": true
+        },
+        {
+          "id": "att_commande_montant_total",
+          "nature": "nombre",
+          "requis": true
+        },
+        {
+          "id": "att_commande_moyen_paiement",
+          "nature": "texte",
+          "requis": true
+        },
+        {
+          "id": "att_commande_instructions",
+          "nature": "texte",
+          "requis": false
+        }
+      ],
+      "etats": [
+        {
+          "id": "brouillon",
+          "transitions": [
+            {
+              "vers": "panier",
+              "geste": "saisir"
+            }
+          ]
+        },
+        {
+          "id": "panier",
+          "transitions": [
+            {
+              "vers": "payee",
+              "geste": "payer"
+            }
+          ]
+        },
+        {
+          "id": "payee",
+          "transitions": [
+            {
+              "vers": "prete",
+              "geste": "confirmer"
+            }
+          ]
+        },
+        {
+          "id": "prete",
+          "transitions": [
+            {
+              "vers": "retiree",
+              "geste": "retirer"
+            }
+          ]
+        },
+        {
+          "id": "retiree"
+        }
+      ]
+    },
+    {
+      "id": "cpt_ligne_commande",
+      "nom": "Ligne de commande",
+      "donnees": true,
+      "attributs": [
+        {
+          "id": "att_ligne_quantite",
+          "nature": "nombre",
+          "requis": true
+        },
+        {
+          "id": "att_ligne_plat",
+          "nature": "reference",
+          "requis": true
+        },
+        {
+          "id": "att_ligne_commentaire",
+          "nature": "texte",
+          "requis": false
+        }
+      ]
+    },
+    {
+      "id": "cpt_notification",
+      "nom": "Notification",
+      "donnees": true,
+      "attributs": [
+        {
+          "id": "att_notification_message",
+          "nature": "texte",
+          "requis": true
+        },
+        {
+          "id": "att_notification_envoyee_le",
+          "nature": "date",
+          "requis": false
+        }
+      ],
+      "etats": [
+        {
+          "id": "en_attente",
+          "transitions": [
+            {
+              "vers": "envoyee",
+              "exogene": "evenement_externe"
+            }
+          ]
+        },
+        {
+          "id": "envoyee"
+        }
+      ]
+    }
+  ],
+  "relations": [
+    {
+      "de": "cpt_compte",
+      "vers": "cpt_commande",
+      "nature": "possede"
+    },
+    {
+      "de": "cpt_commande",
+      "vers": "cpt_ligne_commande",
+      "nature": "possede"
+    },
+    {
+      "de": "cpt_ligne_commande",
+      "vers": "cpt_plat",
+      "nature": "reference"
+    },
+    {
+      "de": "cpt_commande",
+      "vers": "cpt_notification",
+      "nature": "possede"
+    }
+  ],
+  "parcours": [
+    {
+      "id": "par_commander",
+      "besoin": "Voir le menu avec photos et prix, composer une commande à emporter et la payer par carte",
+      "acteur": "act_client",
+      "priorite": 1,
+      "etapes": [
+        {
+          "concept": "cpt_plat",
+          "geste": "decouvrir"
+        },
+        {
+          "concept": "cpt_plat",
+          "geste": "choisir"
+        },
+        {
+          "concept": "cpt_plat",
+          "geste": "consulter",
+          "etat": "publie"
+        },
+        {
+          "concept": "cpt_ligne_commande",
+          "geste": "saisir"
+        },
+        {
+          "concept": "cpt_commande",
+          "geste": "saisir"
+        },
+        {
+          "concept": "cpt_commande",
+          "geste": "consulter",
+          "etat": "panier"
+        },
+        {
+          "concept": "cpt_compte",
+          "geste": "s_identifier"
+        },
+        {
+          "concept": "cpt_commande",
+          "geste": "payer",
+          "preconditions": [
+            {
+              "concept": "cpt_commande",
+              "etat": "panier"
+            }
+          ]
+        },
+        {
+          "concept": "cpt_commande",
+          "geste": "consulter",
+          "etat": "payee"
+        }
+      ]
+    },
+    {
+      "id": "par_suivre_retrait",
+      "besoin": "Être averti quand la commande est prête et la retirer au restaurant",
+      "acteur": "act_client",
+      "priorite": 2,
+      "etapes": [
+        {
+          "concept": "cpt_commande",
+          "geste": "consulter_historique"
+        },
+        {
+          "concept": "cpt_commande",
+          "geste": "choisir"
+        },
+        {
+          "concept": "cpt_notification",
+          "geste": "decouvrir"
+        },
+        {
+          "concept": "cpt_notification",
+          "geste": "consulter",
+          "etat": "envoyee"
+        },
+        {
+          "concept": "cpt_commande",
+          "geste": "consulter",
+          "etat": "prete"
+        },
+        {
+          "concept": "cpt_commande",
+          "geste": "retirer"
+        },
+        {
+          "concept": "cpt_commande",
+          "geste": "consulter",
+          "etat": "retiree"
+        }
+      ]
+    },
+    {
+      "id": "par_publier_menu",
+      "besoin": "Publier et tenir à jour le menu avec photos et prix",
+      "acteur": "act_restaurateur",
+      "priorite": 3,
+      "etapes": [
+        {
+          "concept": "cpt_compte",
+          "geste": "s_identifier"
+        },
+        {
+          "concept": "cpt_plat",
+          "geste": "decouvrir"
+        },
+        {
+          "concept": "cpt_plat",
+          "geste": "saisir"
+        },
+        {
+          "concept": "cpt_plat",
+          "geste": "consulter",
+          "etat": "publie"
+        }
+      ]
+    },
+    {
+      "id": "par_preparer_commande",
+      "besoin": "Traiter les commandes payées et signaler qu'elles sont prêtes",
+      "acteur": "act_restaurateur",
+      "priorite": 4,
+      "etapes": [
+        {
+          "concept": "cpt_compte",
+          "geste": "s_identifier"
+        },
+        {
+          "concept": "cpt_commande",
+          "geste": "consulter_historique"
+        },
+        {
+          "concept": "cpt_commande",
+          "geste": "choisir"
+        },
+        {
+          "concept": "cpt_commande",
+          "geste": "consulter",
+          "etat": "payee"
+        },
+        {
+          "concept": "cpt_commande",
+          "geste": "confirmer",
+          "preconditions": [
+            {
+              "concept": "cpt_commande",
+              "etat": "payee"
+            }
+          ]
+        },
+        {
+          "concept": "cpt_commande",
+          "geste": "consulter",
+          "etat": "prete"
+        }
+      ]
+    }
+  ]
+}

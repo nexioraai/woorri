@@ -354,7 +354,12 @@ describe("EP-193 · LE CRIBLE INVERSÉ — un juge ne lit pas ce qui n'est pas e
 
   /** Les sections émises au segment `base` — DÉRIVÉES de PARTS, jamais recopiées. */
   const sectionsDuSegmentBase = (): string[] => {
-    const src = lire("benchmarks", "air-emission", "emit-v3.mjs");
+    // Source en DEUX fichiers depuis l extraction du 2026-10-07 : `PARTS` vit
+    // desormais dans le coeur.
+    const src =
+      lire("benchmarks", "air-emission", "emit-v3.mjs") +
+      "\n" +
+      lire("benchmarks", "air-emission", "emission-coeur.mjs");
     const i = src.indexOf('name: "base"');
     const debut = src.indexOf("keys: [", i);
     const bloc = src.slice(debut, src.indexOf("]", debut));
@@ -642,10 +647,13 @@ describe("EP-199 · un juge sans règle transmise ne corrige rien", () => {
   //
   // C'est EP-191 à l'envers : là-bas un paramètre sans fournisseur, ici une
   // exigence sans énoncé.
-  const PROMPT = readFileSync(
-    join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "benchmarks", "air-emission", "emit-v3.mjs"),
-    "utf8",
-  );
+  // Source en DEUX fichiers depuis l extraction du 2026-10-07 : le prompt
+  // `SYSTEM_EMIT` vit desormais dans le coeur.
+  const racineBench = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "benchmarks", "air-emission");
+  const PROMPT =
+    readFileSync(join(racineBench, "emit-v3.mjs"), "utf8") +
+    "\n" +
+    readFileSync(join(racineBench, "emission-coeur.mjs"), "utf8");
 
   it("CHAQUE JUGE DE PRÉSENTATION POSÉ CETTE SESSION A SA RÈGLE DANS LE PROMPT", () => {
     // Le cliquet vise la CLASSE : un juge qui refuse une forme doit pouvoir
