@@ -23,6 +23,7 @@ import { NextResponse } from 'next/server'
 import { requireAuthenticatedUser } from '@/lib/auth/require-authenticated-user'
 import { comprendre, depenseAutorisee, direCeQuOnACompris } from '@/lib/apps/comprendre'
 import { emettreSansIa } from '@/lib/apps/emission'
+import { Veille, alerter } from '@/lib/apps/surveillance'
 
 export const runtime = 'nodejs'
 export const maxDuration = 120
@@ -37,8 +38,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Dites ce que vous voulez construire.' }, { status: 400 })
   }
 
+  const veille = new Veille(demande)
   if (depenseAutorisee()) {
-    const lu = await comprendre(demande)
+    const lu = await veille.temps('comprehension', () => comprendre(demande))
     if (lu.ok) {
       return NextResponse.json({
         parIA: true,
@@ -49,7 +51,20 @@ export async function POST(req: Request) {
     }
     // Un échec de lecture ne se déguise pas en lecture pauvre : on le dit, et
     // on propose quand même ce qu'on sait faire sans modèle.
+    //
+    // ET L'ADMINISTRATEUR EST PRÉVENU. Un utilisateur qui voit « lecture
+    // simple » pense à une limite du produit ; seul le courriel dit que la
+    // lecture par IA est TOMBÉE.
     const repli = emettreSansIa(demande)
+    const rapport = veille.conclure()
+    await alerter({
+      ...rapport,
+      anomalies: [
+        ...rapport.anomalies,
+        { phase: 'comprehension', code: 'echec', message: `Lecture par IA indisponible : ${lu.raison}` },
+      ],
+      saine: false,
+    })
     return NextResponse.json({
       parIA: false,
       echecIA: lu.raison,
