@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { useTranslation } from '@/lib/translations';
 import {
   Home, LayoutGrid, Settings, Globe, BarChart3,
-  Database, MapPin, Menu, X, Zap, Megaphone, Shield, FileText, Smartphone } from 'lucide-react';
+  Database, MapPin, Menu, X, Zap, Megaphone, Shield, FileText} from 'lucide-react';
 
 export default function Sidebar() {
   const { t } = useTranslation();
@@ -68,9 +68,6 @@ export default function Sidebar() {
     // LOT BLOG 9 -- espace proprietaire du blog. Meme rang que le marketing :
     // c'est une surface de CONTENU, commune aux trois modes.
     { label: t('blog.nav'), href: '/dashboard/blog', icon: FileText },
-    // LE GENERATEUR D'APPLICATIONS — un PRODUIT, pas une fonction de boutique.
-    // Il a produit `tontine`, qui n'est la boutique de personne.
-    { label: t('sidebar.generateur'), href: '/generateur', icon: Smartphone },
     // { label: t("sidebar.upgrade"), href: null, icon: Zap },
   ];
 

@@ -75,6 +75,7 @@ export const en: Record<TranslationKey, string> = {
   'home.mode.website': 'Website',
   'home.mode.store': 'Online store',
   'home.mode.dropshipping': 'Dropshipping',
+  'home.mode.application': 'Application',
   'home.mode.website.desc': 'showcase your business online (no sales).',
   'home.mode.store.desc': 'sell your own products (you manage the stock).',
   'home.mode.dropshipping.desc': 'sell with no stock or capital: everything is automated, a supplier ships directly to your customers.',
@@ -445,7 +446,6 @@ export const en: Record<TranslationKey, string> = {
 
   // ===== LOT BLOG 9 — espace propriétaire du blog =====
   'blog.nav': 'Blog',
-  'sidebar.generateur': 'Generator',
   'blog.title': 'Your sites’ blog',
   'blog.subtitle': 'Write, generate and publish articles. Each article belongs to a single site.',
   'blog.site': 'Site',

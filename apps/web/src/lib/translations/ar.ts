@@ -74,6 +74,7 @@ export const ar: Record<TranslationKey, string> = {
   'home.mode.website': 'موقع إلكتروني',
   'home.mode.store': 'متجر إلكتروني',
   'home.mode.dropshipping': 'دروبشيبينغ',
+  'home.mode.application': 'تطبيق',
   'home.mode.website.desc': 'اعرض نشاطك على الإنترنت (بدون بيع).',
   'home.mode.store.desc': 'بِع منتجاتك الخاصة (أنت تدير المخزون).',
   'home.mode.dropshipping.desc': 'بِع بدون مخزون أو رأس مال: كل شيء آلي، ومورّد يشحن مباشرة إلى عملائك.',
@@ -444,7 +445,6 @@ export const ar: Record<TranslationKey, string> = {
 
   // ===== LOT BLOG 9 — espace propriétaire du blog =====
   'blog.nav': 'المدونة',
-  'sidebar.generateur': 'المولّد',
   'blog.title': 'مدونة مواقعك',
   'blog.subtitle': 'اكتب المقالات وأنشئها وانشرها. كل مقال ينتمي إلى موقع واحد فقط.',
   'blog.site': 'الموقع',

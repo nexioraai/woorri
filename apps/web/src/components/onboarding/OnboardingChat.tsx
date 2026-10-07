@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { ArrowUp, Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+import ConversationApplication from './ConversationApplication';
 import { useTranslation } from '@/lib/translations';
 
 type Msg = { role: 'user' | 'assistant'; content: string };
@@ -121,6 +122,10 @@ export default function OnboardingChat() {
   const [siteMode, setSiteMode] = useState<number | null>(null);
   const [dropshipType, setDropshipType] = useState<string | null>(null);
   const [showDropshipPicker, setShowDropshipPicker] = useState(false);
+  // L'AIGUILLAGE VERS L'APPLICATION. Volontairement un booleen a part, et non
+  // une valeur de `siteMode` : si c'etait un mode, tout ce qui lit `siteMode`
+  // devrait apprendre a le connaitre. Ici, rien ne le voit.
+  const [cibleApplication, setCibleApplication] = useState(false);
   const typedText = messages.filter((m) => m.role === 'user').map((m) => m.content).join(' ');
   const browserLang = typeof navigator !== 'undefined'
     ? (navigator.language || 'fr').slice(0, 2).toLowerCase()
@@ -297,6 +302,24 @@ export default function OnboardingChat() {
     </>
   );
 
+  // ── LE CHEMIN SE SEPARE ICI, ET NULLE PART AILLEURS.
+  //
+  // Un seul `return` anticipe, avant tout le rendu des sites. Rien de ce qui
+  // suit — `siteMode`, `/api/chat`, la table `sites` — n'est atteint quand
+  // l'utilisateur a choisi « Application ». C'est ce qui garantit que les
+  // trois modes existants ne changent pas d'un octet.
+  if (cibleApplication) {
+    return (
+      <section className="max-w-2xl mx-auto px-4 sm:px-6 pb-10 pt-6">
+        <div className="flex items-center gap-2 justify-center mb-6 text-white/60">
+          <Sparkles size={18} className="text-[#FA5D1E]" />
+          <span className="text-sm font-medium tracking-wide" translate="no">{t('home.hero.badge')}</span>
+        </div>
+        <ConversationApplication onRetour={() => setCibleApplication(false)} />
+      </section>
+    );
+  }
+
   return (
     <section className={`max-w-2xl mx-auto px-4 sm:px-6 pb-10 flex flex-col h-[calc(100vh-120px)] ${messages.length === 1 && !loading && !generating ? 'justify-center' : ''}`}>
       <div className="flex items-center gap-2 justify-center mb-6 text-white/60">
@@ -319,13 +342,29 @@ export default function OnboardingChat() {
                 { label: 'Site web', tkey: 'home.mode.website' as const, mode: 1 },
                 { label: 'Boutique en ligne', tkey: 'home.mode.store' as const, mode: 2 },
                 { label: 'Dropshipping', tkey: 'home.mode.dropshipping' as const, mode: 3 },
+                // ── APPLICATION : MEME ENTREE, CHEMIN SEPARE.
+                //
+                // Ce n'est PAS un « mode 4 ». Les modes 1/2/3 produisent une
+                // vitrine : meme table `sites`, meme editeur, meme theme —
+                // 48 fichiers lisent `site.mode`. Une application, elle, se
+                // compile et se livre : ni URL publique, ni theme, ni panier.
+                //
+                // En faire un quatrieme mode obligerait ces 48 fichiers a se
+                // demander quoi faire d'un site sans vitrine. On partage donc
+                // l'ENTREE — la conversation, la pastille — et le chemin se
+                // separe ICI, avant le moindre appel a `/api/chat`.
+                { label: 'Application', tkey: 'home.mode.application' as const, mode: 0 },
               ].map(({ label, tkey, mode }) => (
                 <button
                   key={label}
                   onClick={async () => {
                     const { data: { session: gate } } = await supabase.auth.getSession();
                     if (!gate?.access_token) { router.push('/login'); return; }
-                    if (mode === 3) {
+                    if (mode === 0) {
+                      // L'aiguillage. `siteMode` reste INTACT : rien de ce
+                      // qui suit ne passera par la generation de sites.
+                      setCibleApplication(true);
+                    } else if (mode === 3) {
                       setShowDropshipPicker(true);
                     } else {
                       setSiteMode(mode);

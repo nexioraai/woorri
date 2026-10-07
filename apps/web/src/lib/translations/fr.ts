@@ -73,6 +73,7 @@ export const fr = {
   'home.mode.website': 'Site web',
   'home.mode.store': 'Boutique en ligne',
   'home.mode.dropshipping': 'Dropshipping',
+  'home.mode.application': 'Application',
   'home.mode.website.desc': 'présenter votre activité en ligne (sans vente).',
   'home.mode.store.desc': 'vendre vos propres produits (vous gérez le stock).',
   'home.mode.dropshipping.desc': 'vendre sans stock ni capital : tout est automatisé, un fournisseur expédie directement à vos clients.',
@@ -455,7 +456,6 @@ export const fr = {
 
   // ===== LOT BLOG 9 — espace propriétaire du blog =====
   'blog.nav': 'Blog',
-  'sidebar.generateur': 'Générateur',
   'blog.title': 'Blog de vos sites',
   'blog.subtitle': 'Rédigez, générez et publiez des articles. Chaque article appartient à un seul site.',
   'blog.site': 'Site',
