@@ -126,7 +126,19 @@ const nextConfig: NextConfig = {
     // importe `modele-metier.mjs`, qui en importe d'autres. Une liste écrite
     // à la main se périmerait au premier ajout, et le défaut ne se verrait
     // qu'en production.
-    '/api/generateur/comprendre': ['../../benchmarks/air-emission/**/*.mjs'],
+    //
+    // ET LEURS PROPRES DÉPENDANCES, parce qu'un fichier TRACÉ est copié comme
+    // une DONNÉE : le traceur ne lit pas ses `import`. Mesuré en ligne, second
+    // message : « Cannot find package 'zod' imported from passe0.mjs ».
+    //
+    // Les trois paquets sont ceux que les modules d'émission importent
+    // réellement — relevés dans leurs sources, pas supposés.
+    '/api/generateur/comprendre': [
+      '../../benchmarks/air-emission/**/*.mjs',
+      '../../node_modules/zod/**',
+      '../../node_modules/acorn/**',
+      '../../node_modules/@anthropic-ai/sdk/**',
+    ],
     '/api/cron/photos-pro': [
       './public/modeles/u2netp.onnx',
       '../../node_modules/onnxruntime-web/dist/*.wasm',
