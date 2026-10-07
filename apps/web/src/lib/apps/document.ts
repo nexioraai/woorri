@@ -88,7 +88,15 @@ export function documentDeLaBoutique(b: BoutiqueSource): ProjectAir {
       // lui, impose sa forme. Mesuré par un test : « Ma Boutique.SY » faisait
       // tomber le document. Le vrai slug reste dans le NOM du fichier livré.
       slug: ardoise(b.slug),
-      description: fr(b.description ?? `Le catalogue de ${b.nom}.`),
+      // UNE DESCRIPTION VIDE N'EST PAS UNE DESCRIPTION. Le schéma exige un
+      // texte non vide ; une chaîne blanche le faisait tomber. Trouvé par un
+      // test sur la phrase vide — un cas que personne ne tape exprès et que
+      // tout le monde finit par produire.
+      description: fr(
+        (b.description ?? '').trim() === ''
+          ? `Le catalogue de ${b.nom}.`
+          : (b.description ?? '').trim(),
+      ),
       locales: {
         userLanguage: 'fr',
         appLocales: ['fr'],
