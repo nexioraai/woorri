@@ -36,7 +36,7 @@
  * `GO_DRY_RUN_P0="OUI-15-CENTIMES"` — et elle vaut ici aussi. Sans le jeton,
  * cette fonction REFUSE ; elle ne se degrade pas en silence vers autre chose.
  */
-import type { ProjectAir } from '@deribfy/air-schema'
+import { documentDepuisModele, type Derivation, type TableGestes } from './derivation'
 
 /** Les faits que P0 tire d'une demande. Forme du contrat `modele-metier`. */
 export type ModeleMetier = {
@@ -144,5 +144,30 @@ export function direCeQuOnACompris(m: ModeleMetier): string[] {
   return lignes
 }
 
-/** Le document AIR n'est PAS encore deduit du modele metier — voir l'en-tete. */
-export type PasEncore = ProjectAir | null
+/**
+ * LE MODÈLE DEVIENT UNE APPLICATION — sans un appel de plus.
+ *
+ * P0 a déjà payé pour comprendre. Ce qu'il a compris commande maintenant la
+ * construction : les concepts donnent les entités, les besoins donnent les
+ * écrans, et les gestes donnent les blocs — `TABLE_GESTES` le dit depuis
+ * longtemps, il suffisait de la lire.
+ *
+ * La table est CHARGÉE, jamais recopiée. Le dépôt a vu quatre fois « une liste
+ * écrite deux fois diverge » ; une cinquième copie ne ferait pas exception.
+ */
+export async function construireDepuisModele(
+  modele: ModeleMetier,
+  identite: { nom: string; description: string | null },
+): Promise<Derivation | null> {
+  try {
+    const { racineDepot } = await import('./racine')
+    const mm = (await import(
+      /* webpackIgnore: true */ `${racineDepot()}/benchmarks/air-emission/modele-metier.mjs`
+    )) as { TABLE_GESTES: TableGestes }
+    return documentDepuisModele(modele as never, mm.TABLE_GESTES, identite)
+  } catch {
+    // La table absente ne doit pas faire perdre la compréhension : l'appelant
+    // retombe sur la lecture simple, et le DIT.
+    return null
+  }
+}
