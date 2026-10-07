@@ -1,1602 +1,1682 @@
 {
- "airSchemaVersion": "1.30.0",
- "projectId": "prj_tontine_cameroun",
- "app": {
-  "name": "Tontine",
-  "slug": "tontine",
-  "description": [
-   {
-    "locale": "fr",
-    "text": "Tontine digitale : cotisations, enchères, séquestre et bureau traditionnel."
-   }
+  "airSchemaVersion": "1.30.0",
+  "projectId": "prj_tontine_cameroun",
+  "app": {
+    "name": "Tontine.SY",
+    "slug": "tontine",
+    "description": [
+      {
+        "locale": "fr",
+        "text": "Tontine digitale : cotisations, enchères, séquestre et bureau traditionnel."
+      }
+    ],
+    "locales": {
+      "userLanguage": "fr",
+      "appLocales": [
+        "fr"
+      ],
+      "defaultAppLocale": "fr",
+      "contentLocales": [
+        "fr"
+      ],
+      "rtlSupported": false
+    }
+  },
+  "navigation": {
+    "entryScreenId": "scr_mon_tableau",
+    "primary": {
+      "destinations": [
+        {
+          "routeId": "nav_mon_tableau",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Mon tableau de bord"
+            }
+          ],
+          "order": 0,
+          "icon": "accueil"
+        },
+        {
+          "routeId": "nav_tontines",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Mes tontines"
+            }
+          ],
+          "order": 1,
+          "icon": "liste"
+        },
+        {
+          "routeId": "nav_membres",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Membres et ordre de passage"
+            }
+          ],
+          "order": 2,
+          "icon": "carte"
+        },
+        {
+          "routeId": "nav_transactions",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Mouvements du séquestre"
+            }
+          ],
+          "order": 3,
+          "icon": "billet"
+        }
+      ]
+    },
+    "routes": [
+      {
+        "id": "nav_mon_tableau",
+        "screenId": "scr_mon_tableau",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Mon tableau de bord"
+          }
+        ]
+      },
+      {
+        "id": "nav_tontines",
+        "screenId": "scr_tontines",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Mes tontines"
+          }
+        ]
+      },
+      {
+        "id": "nav_membres",
+        "screenId": "scr_membres",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Membres et ordre de passage"
+          }
+        ]
+      },
+      {
+        "id": "nav_transactions",
+        "screenId": "scr_transactions",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Mouvements du séquestre"
+          }
+        ]
+      },
+      {
+        "id": "nav_annuaire",
+        "screenId": "scr_annuaire",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Annuaire des membres"
+          }
+        ]
+      },
+      {
+        "id": "nav_verification",
+        "screenId": "scr_verification",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Vérification d'identité"
+          }
+        ]
+      },
+      {
+        "id": "nav_discipline",
+        "screenId": "scr_discipline",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Amendes disciplinaires"
+          }
+        ]
+      },
+      {
+        "id": "nav_encaissement",
+        "screenId": "scr_encaissement",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Encaisser en espèces"
+          }
+        ]
+      },
+      {
+        "id": "nav_seance",
+        "screenId": "scr_seance",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Séance et enchères"
+          }
+        ]
+      },
+      {
+        "id": "nav_parametres",
+        "screenId": "scr_parametres",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Paramètres"
+          }
+        ]
+      }
+    ]
+  },
+  "entities": [
+    {
+      "id": "ent_utilisateurs",
+      "name": "utilisateurs",
+      "fields": [
+        {
+          "id": "fld_utilisateurs_nom_complet",
+          "name": "nom_complet",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "nom complet"
+            }
+          ],
+          "type": "string",
+          "required": true
+        },
+        {
+          "id": "fld_utilisateurs_telephone",
+          "name": "telephone",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "telephone"
+            }
+          ],
+          "type": "string",
+          "required": false
+        },
+        {
+          "id": "fld_utilisateurs_est_sans_telephone",
+          "name": "est_sans_telephone",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "est sans telephone"
+            }
+          ],
+          "type": "boolean",
+          "required": true
+        },
+        {
+          "id": "fld_utilisateurs_mandataire",
+          "name": "mandataire",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "mandataire"
+            }
+          ],
+          "type": "reference",
+          "required": false,
+          "referencesEntityId": "ent_utilisateurs",
+          "referenceDisplayFieldId": "fld_utilisateurs_nom_complet"
+        },
+        {
+          "id": "fld_utilisateurs_photo_profil",
+          "name": "photo_profil",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "photo profil"
+            }
+          ],
+          "type": "asset",
+          "required": false
+        },
+        {
+          "id": "fld_utilisateurs_piece_identite",
+          "name": "piece_identite",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "piece identite"
+            }
+          ],
+          "type": "asset",
+          "required": false
+        },
+        {
+          "id": "fld_utilisateurs_est_president_verifie",
+          "name": "est_president_verifie",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "est president verifie"
+            }
+          ],
+          "type": "boolean",
+          "required": true
+        },
+        {
+          "id": "fld_utilisateurs_cree_le",
+          "name": "cree_le",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "cree le"
+            }
+          ],
+          "type": "datetime",
+          "required": true
+        }
+      ]
+    },
+    {
+      "id": "ent_tontines",
+      "name": "tontines",
+      "fields": [
+        {
+          "id": "fld_tontines_nom",
+          "name": "nom",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "nom"
+            }
+          ],
+          "type": "string",
+          "required": true
+        },
+        {
+          "id": "fld_tontines_montant_cotisation",
+          "name": "montant_cotisation",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "montant cotisation"
+            }
+          ],
+          "type": "decimal",
+          "required": true
+        },
+        {
+          "id": "fld_tontines_frequence",
+          "name": "frequence",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "frequence"
+            }
+          ],
+          "type": "enum",
+          "required": true,
+          "enumValues": [
+            "HEBDOMADAIRE",
+            "MENSUEL"
+          ]
+        },
+        {
+          "id": "fld_tontines_cagnotte_interets_cumulee",
+          "name": "cagnotte_interets_cumulee",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "cagnotte interets cumulee"
+            }
+          ],
+          "type": "decimal",
+          "required": false,
+          "derived": {
+            "kind": "sum",
+            "relationId": "rel_transaction_tontine",
+            "fieldId": "fld_transactions_montant_enchere"
+          }
+        },
+        {
+          "id": "fld_tontines_taux_penalite_jour",
+          "name": "taux_penalite_jour",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "taux penalite jour"
+            }
+          ],
+          "type": "decimal",
+          "required": true
+        },
+        {
+          "id": "fld_tontines_statut",
+          "name": "statut",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "statut"
+            }
+          ],
+          "type": "enum",
+          "required": true,
+          "enumValues": [
+            "EN_ATTENTE",
+            "ACTIVE",
+            "TERMINEE"
+          ],
+          "transitions": [
+            {
+              "from": "EN_ATTENTE",
+              "to": "ACTIVE"
+            },
+            {
+              "from": "ACTIVE",
+              "to": "TERMINEE"
+            }
+          ]
+        },
+        {
+          "id": "fld_tontines_president",
+          "name": "president",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "president"
+            }
+          ],
+          "type": "reference",
+          "required": true,
+          "referencesEntityId": "ent_utilisateurs",
+          "referenceDisplayFieldId": "fld_utilisateurs_nom_complet"
+        },
+        {
+          "id": "fld_tontines_code_adhesion",
+          "name": "code_adhesion",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "code d adhesion"
+            }
+          ],
+          "type": "string",
+          "required": true
+        },
+        {
+          "id": "fld_tontines_cree_le",
+          "name": "cree_le",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "cree le"
+            }
+          ],
+          "type": "datetime",
+          "required": true
+        }
+      ]
+    },
+    {
+      "id": "ent_membres_tontine",
+      "name": "membres_tontine",
+      "fields": [
+        {
+          "id": "fld_membres_tontine_code_saisi",
+          "name": "code_saisi",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "code d adhesion recu"
+            }
+          ],
+          "type": "string",
+          "required": false
+        },
+        {
+          "id": "fld_membres_tontine_tontine",
+          "name": "tontine",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "tontine"
+            }
+          ],
+          "type": "reference",
+          "required": true,
+          "referencesEntityId": "ent_tontines",
+          "referenceDisplayFieldId": "fld_tontines_nom"
+        },
+        {
+          "id": "fld_membres_tontine_utilisateur",
+          "name": "utilisateur",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "utilisateur"
+            }
+          ],
+          "type": "reference",
+          "required": true,
+          "referencesEntityId": "ent_utilisateurs",
+          "referenceDisplayFieldId": "fld_utilisateurs_nom_complet"
+        },
+        {
+          "id": "fld_membres_tontine_role",
+          "name": "role",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "role"
+            }
+          ],
+          "type": "enum",
+          "required": true,
+          "enumValues": [
+            "PRESIDENT",
+            "SECRETAIRE",
+            "TRESORIER",
+            "CENSEUR",
+            "MEMBRE"
+          ]
+        },
+        {
+          "id": "fld_membres_tontine_ordre_passage",
+          "name": "ordre_passage",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "ordre passage"
+            }
+          ],
+          "type": "number",
+          "required": false
+        },
+        {
+          "id": "fld_membres_tontine_cumul_amandes_disciplinaires",
+          "name": "cumul_amandes_disciplinaires",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "cumul amandes disciplinaires"
+            }
+          ],
+          "type": "decimal",
+          "required": true
+        }
+      ]
+    },
+    {
+      "id": "ent_transactions",
+      "name": "transactions",
+      "appendOnly": true,
+      "fields": [
+        {
+          "id": "fld_transactions_tontine",
+          "name": "tontine",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "tontine"
+            }
+          ],
+          "type": "reference",
+          "required": true,
+          "referencesEntityId": "ent_tontines",
+          "referenceDisplayFieldId": "fld_tontines_nom"
+        },
+        {
+          "id": "fld_transactions_cotiseur",
+          "name": "cotiseur",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "cotiseur"
+            }
+          ],
+          "type": "reference",
+          "required": false,
+          "referencesEntityId": "ent_utilisateurs",
+          "referenceDisplayFieldId": "fld_utilisateurs_nom_complet"
+        },
+        {
+          "id": "fld_transactions_beneficiaire",
+          "name": "beneficiaire",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "beneficiaire"
+            }
+          ],
+          "type": "reference",
+          "required": false,
+          "referencesEntityId": "ent_utilisateurs",
+          "referenceDisplayFieldId": "fld_utilisateurs_nom_complet"
+        },
+        {
+          "id": "fld_transactions_mandataire",
+          "name": "mandataire",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "mandataire"
+            }
+          ],
+          "type": "reference",
+          "required": false,
+          "referencesEntityId": "ent_utilisateurs",
+          "referenceDisplayFieldId": "fld_utilisateurs_nom_complet"
+        },
+        {
+          "id": "fld_transactions_type_op",
+          "name": "type_op",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "type op"
+            }
+          ],
+          "type": "enum",
+          "required": true,
+          "enumValues": [
+            "COTISATION",
+            "ENCHERE",
+            "AMENDE_DISCIPLINAIRE",
+            "DISTRIBUTION_INTERETS",
+            "PAYOUT_POT"
+          ]
+        },
+        {
+          "id": "fld_transactions_montant_base",
+          "name": "montant_base",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "montant base"
+            }
+          ],
+          "type": "decimal",
+          "required": true
+        },
+        {
+          "id": "fld_transactions_montant_enchere",
+          "name": "montant_enchere",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "montant enchere"
+            }
+          ],
+          "type": "decimal",
+          "required": true
+        },
+        {
+          "id": "fld_transactions_frais_reseau_mobile",
+          "name": "frais_reseau_mobile",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "frais reseau mobile"
+            }
+          ],
+          "type": "decimal",
+          "required": true
+        },
+        {
+          "id": "fld_transactions_montant_penalite",
+          "name": "montant_penalite",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "montant penalite"
+            }
+          ],
+          "type": "decimal",
+          "required": true
+        },
+        {
+          "id": "fld_transactions_part_penalite_createur",
+          "name": "part_penalite_createur",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "part penalite createur"
+            }
+          ],
+          "type": "decimal",
+          "required": true
+        },
+        {
+          "id": "fld_transactions_part_penalite_tontine",
+          "name": "part_penalite_tontine",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "part penalite tontine"
+            }
+          ],
+          "type": "decimal",
+          "required": true
+        },
+        {
+          "id": "fld_transactions_commission_plateforme",
+          "name": "commission_plateforme",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "commission plateforme"
+            }
+          ],
+          "type": "decimal",
+          "required": true
+        },
+        {
+          "id": "fld_transactions_total_paye",
+          "name": "total_paye",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "total paye"
+            }
+          ],
+          "type": "decimal",
+          "required": true
+        },
+        {
+          "id": "fld_transactions_operateur",
+          "name": "operateur",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "operateur"
+            }
+          ],
+          "type": "enum",
+          "required": false,
+          "enumValues": [
+            "ORANGE_CMR",
+            "MTN_CMR",
+            "CASH"
+          ]
+        },
+        {
+          "id": "fld_transactions_reference_externe",
+          "name": "reference_externe",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "reference externe"
+            }
+          ],
+          "type": "string",
+          "required": false
+        },
+        {
+          "id": "fld_transactions_code_otp_payout",
+          "name": "code_otp_payout",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "code otp payout"
+            }
+          ],
+          "type": "string",
+          "required": false
+        },
+        {
+          "id": "fld_transactions_statut",
+          "name": "statut",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "statut"
+            }
+          ],
+          "type": "enum",
+          "required": true,
+          "enumValues": [
+            "EN_ATTENTE",
+            "SEQUESTRE_BLOQUE",
+            "PAYOUT_SUCCES",
+            "ECHEC"
+          ],
+          "transitions": [
+            {
+              "from": "EN_ATTENTE",
+              "to": "SEQUESTRE_BLOQUE"
+            },
+            {
+              "from": "EN_ATTENTE",
+              "to": "ECHEC"
+            },
+            {
+              "from": "SEQUESTRE_BLOQUE",
+              "to": "PAYOUT_SUCCES"
+            },
+            {
+              "from": "SEQUESTRE_BLOQUE",
+              "to": "ECHEC"
+            }
+          ]
+        },
+        {
+          "id": "fld_transactions_date_transaction",
+          "name": "date_transaction",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "date transaction"
+            }
+          ],
+          "type": "datetime",
+          "required": true
+        }
+      ]
+    }
   ],
-  "locales": {
-   "userLanguage": "fr",
-   "appLocales": [
-    "fr"
-   ],
-   "defaultAppLocale": "fr",
-   "contentLocales": [
-    "fr"
-   ],
-   "rtlSupported": false
-  }
- },
- "navigation": {
-  "entryScreenId": "scr_mon_tableau",
-  "primary": {
-   "destinations": [
+  "relations": [
     {
-     "routeId": "nav_mon_tableau",
-     "label": [
-      {
-       "locale": "fr",
-       "text": "Mon tableau de bord"
-      }
-     ],
-     "order": 0,
-     "icon": "accueil"
+      "id": "rel_tontine_president",
+      "fromEntityId": "ent_utilisateurs",
+      "toEntityId": "ent_tontines",
+      "kind": "one_to_many"
     },
     {
-     "routeId": "nav_tontines",
-     "label": [
-      {
-       "locale": "fr",
-       "text": "Mes tontines"
-      }
-     ],
-     "order": 1,
-     "icon": "liste"
+      "id": "rel_membre_tontine",
+      "fromEntityId": "ent_tontines",
+      "toEntityId": "ent_membres_tontine",
+      "kind": "one_to_many"
     },
     {
-     "routeId": "nav_membres",
-     "label": [
-      {
-       "locale": "fr",
-       "text": "Membres et ordre de passage"
-      }
-     ],
-     "order": 2,
-     "icon": "carte"
+      "id": "rel_membre_utilisateur",
+      "fromEntityId": "ent_utilisateurs",
+      "toEntityId": "ent_membres_tontine",
+      "kind": "one_to_many"
     },
     {
-     "routeId": "nav_transactions",
-     "label": [
-      {
-       "locale": "fr",
-       "text": "Mouvements du séquestre"
-      }
-     ],
-     "order": 3,
-     "icon": "billet"
+      "id": "rel_transaction_tontine",
+      "fromEntityId": "ent_tontines",
+      "toEntityId": "ent_transactions",
+      "kind": "one_to_many"
+    },
+    {
+      "id": "rel_transaction_cotiseur",
+      "fromEntityId": "ent_utilisateurs",
+      "toEntityId": "ent_transactions",
+      "kind": "one_to_many"
+    },
+    {
+      "id": "rel_mandat",
+      "fromEntityId": "ent_utilisateurs",
+      "toEntityId": "ent_utilisateurs",
+      "kind": "one_to_many"
     }
-   ]
-  },
-  "routes": [
-   {
-    "id": "nav_mon_tableau",
-    "screenId": "scr_mon_tableau",
-    "title": [
-     {
-      "locale": "fr",
-      "text": "Mon tableau de bord"
-     }
-    ]
-   },
-   {
-    "id": "nav_tontines",
-    "screenId": "scr_tontines",
-    "title": [
-     {
-      "locale": "fr",
-      "text": "Mes tontines"
-     }
-    ]
-   },
-   {
-    "id": "nav_membres",
-    "screenId": "scr_membres",
-    "title": [
-     {
-      "locale": "fr",
-      "text": "Membres et ordre de passage"
-     }
-    ]
-   },
-   {
-    "id": "nav_transactions",
-    "screenId": "scr_transactions",
-    "title": [
-     {
-      "locale": "fr",
-      "text": "Mouvements du séquestre"
-     }
-    ]
-   },
-   {
-    "id": "nav_annuaire",
-    "screenId": "scr_annuaire",
-    "title": [
-     {
-      "locale": "fr",
-      "text": "Annuaire des membres"
-     }
-    ]
-   },
-   {
-    "id": "nav_verification",
-    "screenId": "scr_verification",
-    "title": [
-     {
-      "locale": "fr",
-      "text": "Vérification d'identité"
-     }
-    ]
-   },
-   {
-    "id": "nav_discipline",
-    "screenId": "scr_discipline",
-    "title": [
-     {
-      "locale": "fr",
-      "text": "Amendes disciplinaires"
-     }
-    ]
-   },
-   {
-    "id": "nav_encaissement",
-    "screenId": "scr_encaissement",
-    "title": [
-     {
-      "locale": "fr",
-      "text": "Encaisser en espèces"
-     }
-    ]
-   },
-   {
-    "id": "nav_seance",
-    "screenId": "scr_seance",
-    "title": [
-     {
-      "locale": "fr",
-      "text": "Séance et enchères"
-     }
-    ]
-   },
-   {
-    "id": "nav_parametres",
-    "screenId": "scr_parametres",
-    "title": [
-     {
-      "locale": "fr",
-      "text": "Paramètres"
-     }
-    ]
-   }
-  ]
- },
- "entities": [
-  {
-   "id": "ent_utilisateurs",
-   "name": "utilisateurs",
-   "fields": [
-    {
-     "id": "fld_utilisateurs_nom_complet",
-     "name": "nom_complet",
-     "label": [
-      {
-       "locale": "fr",
-       "text": "nom complet"
-      }
-     ],
-     "type": "string",
-     "required": true
-    },
-    {
-     "id": "fld_utilisateurs_telephone",
-     "name": "telephone",
-     "label": [
-      {
-       "locale": "fr",
-       "text": "telephone"
-      }
-     ],
-     "type": "string",
-     "required": false
-    },
-    {
-     "id": "fld_utilisateurs_est_sans_telephone",
-     "name": "est_sans_telephone",
-     "label": [
-      {
-       "locale": "fr",
-       "text": "est sans telephone"
-      }
-     ],
-     "type": "boolean",
-     "required": true
-    },
-    {
-     "id": "fld_utilisateurs_mandataire",
-     "name": "mandataire",
-     "label": [
-      {
-       "locale": "fr",
-       "text": "mandataire"
-      }
-     ],
-     "type": "reference",
-     "required": false,
-     "referencesEntityId": "ent_utilisateurs",
-     "referenceDisplayFieldId": "fld_utilisateurs_nom_complet"
-    },
-    {
-     "id": "fld_utilisateurs_photo_profil",
-     "name": "photo_profil",
-     "label": [
-      {
-       "locale": "fr",
-       "text": "photo profil"
-      }
-     ],
-     "type": "asset",
-     "required": false
-    },
-    {
-     "id": "fld_utilisateurs_piece_identite",
-     "name": "piece_identite",
-     "label": [
-      {
-       "locale": "fr",
-       "text": "piece identite"
-      }
-     ],
-     "type": "asset",
-     "required": false
-    },
-    {
-     "id": "fld_utilisateurs_est_president_verifie",
-     "name": "est_president_verifie",
-     "label": [
-      {
-       "locale": "fr",
-       "text": "est president verifie"
-      }
-     ],
-     "type": "boolean",
-     "required": true
-    },
-    {
-     "id": "fld_utilisateurs_cree_le",
-     "name": "cree_le",
-     "label": [
-      {
-       "locale": "fr",
-       "text": "cree le"
-      }
-     ],
-     "type": "datetime",
-     "required": true
-    }
-   ]
-  },
-  {
-   "id": "ent_tontines",
-   "name": "tontines",
-   "fields": [
-    {
-     "id": "fld_tontines_nom",
-     "name": "nom",
-     "label": [
-      {
-       "locale": "fr",
-       "text": "nom"
-      }
-     ],
-     "type": "string",
-     "required": true
-    },
-    {
-     "id": "fld_tontines_montant_cotisation",
-     "name": "montant_cotisation",
-     "label": [
-      {
-       "locale": "fr",
-       "text": "montant cotisation"
-      }
-     ],
-     "type": "decimal",
-     "required": true
-    },
-    {
-     "id": "fld_tontines_frequence",
-     "name": "frequence",
-     "label": [
-      {
-       "locale": "fr",
-       "text": "frequence"
-      }
-     ],
-     "type": "enum",
-     "required": true,
-     "enumValues": [
-      "HEBDOMADAIRE",
-      "MENSUEL"
-     ]
-    },
-    {
-     "id": "fld_tontines_cagnotte_interets_cumulee",
-     "name": "cagnotte_interets_cumulee",
-     "label": [
-      {
-       "locale": "fr",
-       "text": "cagnotte interets cumulee"
-      }
-     ],
-     "type": "decimal",
-     "required": false,
-     "derived": {
-      "kind": "sum",
-      "relationId": "rel_transaction_tontine",
-      "fieldId": "fld_transactions_montant_enchere"
-     }
-    },
-    {
-     "id": "fld_tontines_taux_penalite_jour",
-     "name": "taux_penalite_jour",
-     "label": [
-      {
-       "locale": "fr",
-       "text": "taux penalite jour"
-      }
-     ],
-     "type": "decimal",
-     "required": true
-    },
-    {
-     "id": "fld_tontines_statut",
-     "name": "statut",
-     "label": [
-      {
-       "locale": "fr",
-       "text": "statut"
-      }
-     ],
-     "type": "enum",
-     "required": true,
-     "enumValues": [
-      "EN_ATTENTE",
-      "ACTIVE",
-      "TERMINEE"
-     ],
-     "transitions": [
-      {
-       "from": "EN_ATTENTE",
-       "to": "ACTIVE"
-      },
-      {
-       "from": "ACTIVE",
-       "to": "TERMINEE"
-      }
-     ]
-    },
-    {
-     "id": "fld_tontines_president",
-     "name": "president",
-     "label": [
-      {
-       "locale": "fr",
-       "text": "president"
-      }
-     ],
-     "type": "reference",
-     "required": true,
-     "referencesEntityId": "ent_utilisateurs",
-     "referenceDisplayFieldId": "fld_utilisateurs_nom_complet"
-    },
-    {
-     "id": "fld_tontines_cree_le",
-     "name": "cree_le",
-     "label": [
-      {
-       "locale": "fr",
-       "text": "cree le"
-      }
-     ],
-     "type": "datetime",
-     "required": true
-    }
-   ]
-  },
-  {
-   "id": "ent_membres_tontine",
-   "name": "membres_tontine",
-   "fields": [
-    {
-     "id": "fld_membres_tontine_tontine",
-     "name": "tontine",
-     "label": [
-      {
-       "locale": "fr",
-       "text": "tontine"
-      }
-     ],
-     "type": "reference",
-     "required": true,
-     "referencesEntityId": "ent_tontines",
-     "referenceDisplayFieldId": "fld_tontines_nom"
-    },
-    {
-     "id": "fld_membres_tontine_utilisateur",
-     "name": "utilisateur",
-     "label": [
-      {
-       "locale": "fr",
-       "text": "utilisateur"
-      }
-     ],
-     "type": "reference",
-     "required": true,
-     "referencesEntityId": "ent_utilisateurs",
-     "referenceDisplayFieldId": "fld_utilisateurs_nom_complet"
-    },
-    {
-     "id": "fld_membres_tontine_role",
-     "name": "role",
-     "label": [
-      {
-       "locale": "fr",
-       "text": "role"
-      }
-     ],
-     "type": "enum",
-     "required": true,
-     "enumValues": [
-      "PRESIDENT",
-      "SECRETAIRE",
-      "TRESORIER",
-      "CENSEUR",
-      "MEMBRE"
-     ]
-    },
-    {
-     "id": "fld_membres_tontine_ordre_passage",
-     "name": "ordre_passage",
-     "label": [
-      {
-       "locale": "fr",
-       "text": "ordre passage"
-      }
-     ],
-     "type": "number",
-     "required": false
-    },
-    {
-     "id": "fld_membres_tontine_cumul_amandes_disciplinaires",
-     "name": "cumul_amandes_disciplinaires",
-     "label": [
-      {
-       "locale": "fr",
-       "text": "cumul amandes disciplinaires"
-      }
-     ],
-     "type": "decimal",
-     "required": true
-    }
-   ]
-  },
-  {
-   "id": "ent_transactions",
-   "name": "transactions",
-   "appendOnly": true,
-   "fields": [
-    {
-     "id": "fld_transactions_tontine",
-     "name": "tontine",
-     "label": [
-      {
-       "locale": "fr",
-       "text": "tontine"
-      }
-     ],
-     "type": "reference",
-     "required": true,
-     "referencesEntityId": "ent_tontines",
-     "referenceDisplayFieldId": "fld_tontines_nom"
-    },
-    {
-     "id": "fld_transactions_cotiseur",
-     "name": "cotiseur",
-     "label": [
-      {
-       "locale": "fr",
-       "text": "cotiseur"
-      }
-     ],
-     "type": "reference",
-     "required": false,
-     "referencesEntityId": "ent_utilisateurs",
-     "referenceDisplayFieldId": "fld_utilisateurs_nom_complet"
-    },
-    {
-     "id": "fld_transactions_beneficiaire",
-     "name": "beneficiaire",
-     "label": [
-      {
-       "locale": "fr",
-       "text": "beneficiaire"
-      }
-     ],
-     "type": "reference",
-     "required": false,
-     "referencesEntityId": "ent_utilisateurs",
-     "referenceDisplayFieldId": "fld_utilisateurs_nom_complet"
-    },
-    {
-     "id": "fld_transactions_mandataire",
-     "name": "mandataire",
-     "label": [
-      {
-       "locale": "fr",
-       "text": "mandataire"
-      }
-     ],
-     "type": "reference",
-     "required": false,
-     "referencesEntityId": "ent_utilisateurs",
-     "referenceDisplayFieldId": "fld_utilisateurs_nom_complet"
-    },
-    {
-     "id": "fld_transactions_type_op",
-     "name": "type_op",
-     "label": [
-      {
-       "locale": "fr",
-       "text": "type op"
-      }
-     ],
-     "type": "enum",
-     "required": true,
-     "enumValues": [
-      "COTISATION",
-      "ENCHERE",
-      "AMENDE_DISCIPLINAIRE",
-      "DISTRIBUTION_INTERETS",
-      "PAYOUT_POT"
-     ]
-    },
-    {
-     "id": "fld_transactions_montant_base",
-     "name": "montant_base",
-     "label": [
-      {
-       "locale": "fr",
-       "text": "montant base"
-      }
-     ],
-     "type": "decimal",
-     "required": true
-    },
-    {
-     "id": "fld_transactions_montant_enchere",
-     "name": "montant_enchere",
-     "label": [
-      {
-       "locale": "fr",
-       "text": "montant enchere"
-      }
-     ],
-     "type": "decimal",
-     "required": true
-    },
-    {
-     "id": "fld_transactions_frais_reseau_mobile",
-     "name": "frais_reseau_mobile",
-     "label": [
-      {
-       "locale": "fr",
-       "text": "frais reseau mobile"
-      }
-     ],
-     "type": "decimal",
-     "required": true
-    },
-    {
-     "id": "fld_transactions_montant_penalite",
-     "name": "montant_penalite",
-     "label": [
-      {
-       "locale": "fr",
-       "text": "montant penalite"
-      }
-     ],
-     "type": "decimal",
-     "required": true
-    },
-    {
-     "id": "fld_transactions_part_penalite_createur",
-     "name": "part_penalite_createur",
-     "label": [
-      {
-       "locale": "fr",
-       "text": "part penalite createur"
-      }
-     ],
-     "type": "decimal",
-     "required": true
-    },
-    {
-     "id": "fld_transactions_part_penalite_tontine",
-     "name": "part_penalite_tontine",
-     "label": [
-      {
-       "locale": "fr",
-       "text": "part penalite tontine"
-      }
-     ],
-     "type": "decimal",
-     "required": true
-    },
-    {
-     "id": "fld_transactions_commission_plateforme",
-     "name": "commission_plateforme",
-     "label": [
-      {
-       "locale": "fr",
-       "text": "commission plateforme"
-      }
-     ],
-     "type": "decimal",
-     "required": true
-    },
-    {
-     "id": "fld_transactions_total_paye",
-     "name": "total_paye",
-     "label": [
-      {
-       "locale": "fr",
-       "text": "total paye"
-      }
-     ],
-     "type": "decimal",
-     "required": true
-    },
-    {
-     "id": "fld_transactions_operateur",
-     "name": "operateur",
-     "label": [
-      {
-       "locale": "fr",
-       "text": "operateur"
-      }
-     ],
-     "type": "enum",
-     "required": false,
-     "enumValues": [
-      "ORANGE_CMR",
-      "MTN_CMR",
-      "CASH"
-     ]
-    },
-    {
-     "id": "fld_transactions_reference_externe",
-     "name": "reference_externe",
-     "label": [
-      {
-       "locale": "fr",
-       "text": "reference externe"
-      }
-     ],
-     "type": "string",
-     "required": false
-    },
-    {
-     "id": "fld_transactions_code_otp_payout",
-     "name": "code_otp_payout",
-     "label": [
-      {
-       "locale": "fr",
-       "text": "code otp payout"
-      }
-     ],
-     "type": "string",
-     "required": false
-    },
-    {
-     "id": "fld_transactions_statut",
-     "name": "statut",
-     "label": [
-      {
-       "locale": "fr",
-       "text": "statut"
-      }
-     ],
-     "type": "enum",
-     "required": true,
-     "enumValues": [
-      "EN_ATTENTE",
-      "SEQUESTRE_BLOQUE",
-      "PAYOUT_SUCCES",
-      "ECHEC"
-     ],
-     "transitions": [
-      {
-       "from": "EN_ATTENTE",
-       "to": "SEQUESTRE_BLOQUE"
-      },
-      {
-       "from": "EN_ATTENTE",
-       "to": "ECHEC"
-      },
-      {
-       "from": "SEQUESTRE_BLOQUE",
-       "to": "PAYOUT_SUCCES"
-      },
-      {
-       "from": "SEQUESTRE_BLOQUE",
-       "to": "ECHEC"
-      }
-     ]
-    },
-    {
-     "id": "fld_transactions_date_transaction",
-     "name": "date_transaction",
-     "label": [
-      {
-       "locale": "fr",
-       "text": "date transaction"
-      }
-     ],
-     "type": "datetime",
-     "required": true
-    }
-   ]
-  }
- ],
- "relations": [
-  {
-   "id": "rel_tontine_president",
-   "fromEntityId": "ent_utilisateurs",
-   "toEntityId": "ent_tontines",
-   "kind": "one_to_many"
-  },
-  {
-   "id": "rel_membre_tontine",
-   "fromEntityId": "ent_tontines",
-   "toEntityId": "ent_membres_tontine",
-   "kind": "one_to_many"
-  },
-  {
-   "id": "rel_membre_utilisateur",
-   "fromEntityId": "ent_utilisateurs",
-   "toEntityId": "ent_membres_tontine",
-   "kind": "one_to_many"
-  },
-  {
-   "id": "rel_transaction_tontine",
-   "fromEntityId": "ent_tontines",
-   "toEntityId": "ent_transactions",
-   "kind": "one_to_many"
-  },
-  {
-   "id": "rel_transaction_cotiseur",
-   "fromEntityId": "ent_utilisateurs",
-   "toEntityId": "ent_transactions",
-   "kind": "one_to_many"
-  },
-  {
-   "id": "rel_mandat",
-   "fromEntityId": "ent_utilisateurs",
-   "toEntityId": "ent_utilisateurs",
-   "kind": "one_to_many"
-  }
- ],
- "backend": {
-  "kind": "genere",
-  "stack": "spring_boot"
- },
- "datasets": [
-  {
-   "id": "data_utilisateurs",
-   "entityId": "ent_utilisateurs",
-   "contentHash": "a98bf3cf09f568bc0540c31f20f9ee32f4c27ed1111dd85ff417b542817d31a8",
-   "rowCount": 8,
-   "sourceKind": "seed"
-  },
-  {
-   "id": "data_tontines",
-   "entityId": "ent_tontines",
-   "contentHash": "e5f77ff38d91727f1935d2a3d37a67431534634f3347714abbb9ebdb33001ed8",
-   "rowCount": 3,
-   "sourceKind": "seed"
-  },
-  {
-   "id": "data_membres_tontine",
-   "entityId": "ent_membres_tontine",
-   "contentHash": "dffb3abc595019d3c1015eb41fa158858d8d1289db721fc8b11c543ef4716487",
-   "rowCount": 8,
-   "sourceKind": "seed"
-  },
-  {
-   "id": "data_transactions",
-   "entityId": "ent_transactions",
-   "contentHash": "61939734f10c53d80e3bd835f33a9e588e3dde76de9e5c41dc9fb6801a675409",
-   "rowCount": 24,
-   "sourceKind": "seed"
-  }
- ],
- "screens": [
-  {
-   "id": "scr_mon_tableau",
-   "title": [
-    {
-     "locale": "fr",
-     "text": "Mon tableau de bord"
-    }
-   ],
-   "showsPrimaryNav": true,
-   "showsScreenTitle": true,
-   "presentation": "card",
-   "blocks": [
-    {
-     "id": "blk_mon_tableau_entete",
-     "blockType": "header",
-     "props": [
-      {
-       "key": "title",
-       "value": "Mon tableau de bord"
-      }
-     ]
-    },
-    {
-     "id": "blk_mon_tableau_liste",
-     "blockType": "list",
-     "entityId": "ent_transactions",
-     "props": [
-      {
-       "key": "titleFieldId",
-       "value": "fld_transactions_type_op"
-      }
-     ]
-    }
-   ]
-  },
-  {
-   "id": "scr_tontines",
-   "title": [
-    {
-     "locale": "fr",
-     "text": "Mes tontines"
-    }
-   ],
-   "showsPrimaryNav": true,
-   "showsScreenTitle": true,
-   "presentation": "card",
-   "blocks": [
-    {
-     "id": "blk_tontines_entete",
-     "blockType": "header",
-     "props": [
-      {
-       "key": "title",
-       "value": "Mes tontines"
-      }
-     ]
-    },
-    {
-     "id": "blk_tontines_liste",
-     "blockType": "list",
-     "entityId": "ent_tontines",
-     "props": [
-      {
-       "key": "titleFieldId",
-       "value": "fld_tontines_nom"
-      }
-     ]
-    }
-   ]
-  },
-  {
-   "id": "scr_membres",
-   "title": [
-    {
-     "locale": "fr",
-     "text": "Membres et ordre de passage"
-    }
-   ],
-   "showsPrimaryNav": true,
-   "showsScreenTitle": true,
-   "presentation": "card",
-   "blocks": [
-    {
-     "id": "blk_membres_entete",
-     "blockType": "header",
-     "props": [
-      {
-       "key": "title",
-       "value": "Membres et ordre de passage"
-      }
-     ]
-    },
-    {
-     "id": "blk_membres_liste",
-     "blockType": "list",
-     "entityId": "ent_membres_tontine",
-     "props": [
-      {
-       "key": "titleFieldId",
-       "value": "fld_membres_tontine_role"
-      }
-     ]
-    }
-   ]
-  },
-  {
-   "id": "scr_transactions",
-   "title": [
-    {
-     "locale": "fr",
-     "text": "Mouvements du séquestre"
-    }
-   ],
-   "requiredRightId": "right_tresorerie",
-   "showsPrimaryNav": true,
-   "showsScreenTitle": true,
-   "presentation": "card",
-   "blocks": [
-    {
-     "id": "blk_transactions_entete",
-     "blockType": "header",
-     "props": [
-      {
-       "key": "title",
-       "value": "Mouvements du séquestre"
-      }
-     ]
-    },
-    {
-     "id": "blk_transactions_liste",
-     "blockType": "list",
-     "entityId": "ent_transactions",
-     "props": [
-      {
-       "key": "titleFieldId",
-       "value": "fld_transactions_type_op"
-      }
-     ]
-    }
-   ]
-  },
-  {
-   "id": "scr_annuaire",
-   "title": [
-    {
-     "locale": "fr",
-     "text": "Annuaire des membres"
-    }
-   ],
-   "requiredRightId": "right_registre",
-   "showsPrimaryNav": true,
-   "showsScreenTitle": true,
-   "presentation": "card",
-   "blocks": [
-    {
-     "id": "blk_annuaire_entete",
-     "blockType": "header",
-     "props": [
-      {
-       "key": "title",
-       "value": "Annuaire des membres"
-      }
-     ]
-    },
-    {
-     "id": "blk_annuaire_liste",
-     "blockType": "list",
-     "entityId": "ent_utilisateurs",
-     "props": [
-      {
-       "key": "titleFieldId",
-       "value": "fld_utilisateurs_nom_complet"
-      },
-      {
-       "key": "imageFieldId",
-       "value": "fld_utilisateurs_photo_profil"
-      }
-     ]
-    }
-   ]
-  },
-  {
-   "id": "scr_verification",
-   "title": [
-    {
-     "locale": "fr",
-     "text": "Vérification d'identité"
-    }
-   ],
-   "requiredRightId": "right_bureau",
-   "showsPrimaryNav": true,
-   "showsScreenTitle": true,
-   "presentation": "card",
-   "blocks": [
-    {
-     "id": "blk_verification_entete",
-     "blockType": "header",
-     "props": [
-      {
-       "key": "title",
-       "value": "Vérification d'identité"
-      }
-     ]
-    },
-    {
-     "id": "blk_verification_fiche",
-     "blockType": "detail_header",
-     "entityId": "ent_utilisateurs",
-     "props": [
-      {
-       "key": "titleFieldId",
-       "value": "fld_utilisateurs_nom_complet"
-      },
-      {
-       "key": "imageFieldId",
-       "value": "fld_utilisateurs_piece_identite"
-      }
-     ]
-    }
-   ]
-  },
-  {
-   "id": "scr_discipline",
-   "title": [
-    {
-     "locale": "fr",
-     "text": "Amendes disciplinaires"
-    }
-   ],
-   "requiredRightId": "right_discipline",
-   "showsPrimaryNav": true,
-   "showsScreenTitle": true,
-   "presentation": "card",
-   "blocks": [
-    {
-     "id": "blk_discipline_entete",
-     "blockType": "header",
-     "props": [
-      {
-       "key": "title",
-       "value": "Amendes disciplinaires"
-      }
-     ]
-    },
-    {
-     "id": "blk_discipline_liste",
-     "blockType": "list",
-     "entityId": "ent_membres_tontine",
-     "props": [
-      {
-       "key": "titleFieldId",
-       "value": "fld_membres_tontine_role"
-      }
-     ]
-    }
-   ]
-  },
-  {
-   "id": "scr_encaissement",
-   "title": [
-    {
-     "locale": "fr",
-     "text": "Encaisser en espèces"
-    }
-   ],
-   "requiredRightId": "right_encaisser_cash",
-   "showsPrimaryNav": true,
-   "showsScreenTitle": true,
-   "presentation": "card",
-   "blocks": [
-    {
-     "id": "blk_encaissement_entete",
-     "blockType": "header",
-     "props": [
-      {
-       "key": "title",
-       "value": "Encaisser en espèces"
-      }
-     ]
-    },
-    {
-     "id": "blk_encaissement_liste",
-     "blockType": "list",
-     "entityId": "ent_transactions",
-     "props": [
-      {
-       "key": "titleFieldId",
-       "value": "fld_transactions_type_op"
-      }
-     ]
-    }
-   ]
-  },
-  {
-   "id": "scr_seance",
-   "title": [
-    {
-     "locale": "fr",
-     "text": "Séance et enchères"
-    }
-   ],
-   "requiredRightId": "right_bureau",
-   "showsPrimaryNav": true,
-   "showsScreenTitle": true,
-   "presentation": "card",
-   "blocks": [
-    {
-     "id": "blk_seance_entete",
-     "blockType": "header",
-     "props": [
-      {
-       "key": "title",
-       "value": "Séance et enchères"
-      }
-     ]
-    },
-    {
-     "id": "blk_seance_liste",
-     "blockType": "list",
-     "entityId": "ent_transactions",
-     "props": [
-      {
-       "key": "titleFieldId",
-       "value": "fld_transactions_type_op"
-      }
-     ]
-    }
-   ]
-  },
-  {
-   "id": "scr_parametres",
-   "title": [
-    {
-     "locale": "fr",
-     "text": "Paramètres"
-    }
-   ],
-   "showsPrimaryNav": true,
-   "showsScreenTitle": true,
-   "presentation": "card",
-   "blocks": [
-    {
-     "id": "blk_parametres_entete",
-     "blockType": "header",
-     "props": [
-      {
-       "key": "title",
-       "value": "Paramètres"
-      }
-     ]
-    },
-    {
-     "id": "blk_parametres_vide",
-     "blockType": "empty_state",
-     "props": [
-      {
-       "key": "title",
-       "value": "Paramètres"
-      },
-      {
-       "key": "message",
-       "value": "Aucun réglage n'est encore porté par ce document."
-      }
-     ]
-    }
-   ]
-  }
- ],
- "actions": [
-  {
-   "id": "act_decaisser_pot",
-   "name": "Décaisser le pot au gagnant du tour",
-   "requiredRightId": "right_bureau",
-   "trigger": {
-    "kind": "ui",
-    "blockId": "blk_seance_liste"
-   },
-   "effect": {
-    "kind": "capability",
-    "capability": "payments.mobile_money",
-    "method": "payout"
-   },
-   "confirmation": {
-    "kind": "code_hors_application",
-    "digits": 6
-   }
-  }
- ],
- "rules": [],
- "slots": [],
- "capabilities": [
-  {
-   "capability": "payments.mobile_money"
-  },
-  {
-   "capability": "document.export"
-  },
-  {
-   "capability": "share"
-  }
- ],
- "permissions": [],
- "access": {
-  "rights": [
-   {
-    "id": "right_bureau",
-    "name": "bureau",
-    "label": [
-     {
-      "locale": "fr",
-      "text": "Créer une tontine et en orchestrer les séances"
-     }
-    ]
-   },
-   {
-    "id": "right_registre",
-    "name": "registre",
-    "label": [
-     {
-      "locale": "fr",
-      "text": "Tenir le registre, les procès-verbaux et les présences"
-     }
-    ]
-   },
-   {
-    "id": "right_tresorerie",
-    "name": "tresorerie",
-    "label": [
-     {
-      "locale": "fr",
-      "text": "Superviser le séquestre et certifier les écritures"
-     }
-    ]
-   },
-   {
-    "id": "right_discipline",
-    "name": "discipline",
-    "label": [
-     {
-      "locale": "fr",
-      "text": "Appliquer le règlement intérieur et les amendes"
-     }
-    ]
-   },
-   {
-    "id": "right_encaisser_cash",
-    "name": "encaisser_cash",
-    "label": [
-     {
-      "locale": "fr",
-      "text": "Saisir une cotisation en espèces pour un autre membre"
-     }
-    ]
-   }
   ],
-  "roles": [
-   {
-    "id": "role_president",
-    "name": "president",
-    "label": [
-     {
-      "locale": "fr",
-      "text": "Président"
-     }
-    ],
-    "rightIds": [],
-    "grantsAllRights": true
-   },
-   {
-    "id": "role_secretaire",
-    "name": "secretaire",
-    "label": [
-     {
-      "locale": "fr",
-      "text": "Secrétaire"
-     }
-    ],
-    "rightIds": [
-     "right_registre"
-    ]
-   },
-   {
-    "id": "role_tresorier",
-    "name": "tresorier",
-    "label": [
-     {
-      "locale": "fr",
-      "text": "Trésorier"
-     }
-    ],
-    "rightIds": [
-     "right_tresorerie",
-     "right_encaisser_cash"
-    ]
-   },
-   {
-    "id": "role_censeur",
-    "name": "censeur",
-    "label": [
-     {
-      "locale": "fr",
-      "text": "Censeur"
-     }
-    ],
-    "rightIds": [
-     "right_discipline"
-    ]
-   },
-   {
-    "id": "role_membre",
-    "name": "membre",
-    "label": [
-     {
-      "locale": "fr",
-      "text": "Membre"
-     }
-    ],
-    "rightIds": []
-   }
+  "backend": {
+    "kind": "genere",
+    "stack": "spring_boot"
+  },
+  "datasets": [
+    {
+      "id": "data_utilisateurs",
+      "entityId": "ent_utilisateurs",
+      "contentHash": "a98bf3cf09f568bc0540c31f20f9ee32f4c27ed1111dd85ff417b542817d31a8",
+      "rowCount": 8,
+      "sourceKind": "seed"
+    },
+    {
+      "id": "data_tontines",
+      "entityId": "ent_tontines",
+      "contentHash": "e5f77ff38d91727f1935d2a3d37a67431534634f3347714abbb9ebdb33001ed8",
+      "rowCount": 3,
+      "sourceKind": "seed"
+    },
+    {
+      "id": "data_membres_tontine",
+      "entityId": "ent_membres_tontine",
+      "contentHash": "dffb3abc595019d3c1015eb41fa158858d8d1289db721fc8b11c543ef4716487",
+      "rowCount": 8,
+      "sourceKind": "seed"
+    },
+    {
+      "id": "data_transactions",
+      "entityId": "ent_transactions",
+      "contentHash": "61939734f10c53d80e3bd835f33a9e588e3dde76de9e5c41dc9fb6801a675409",
+      "rowCount": 24,
+      "sourceKind": "seed"
+    }
   ],
-  "defaultRoleId": "role_membre",
-  "delegation": {
-   "subjectEntityId": "ent_utilisateurs",
-   "holderFieldId": "fld_utilisateurs_mandataire",
-   "delegatableRightIds": [
-    "right_encaisser_cash"
-   ]
-  }
- },
- "design": {
-  "theme": "tontine_sobre"
- },
- "integrations": [
-  {
-   "id": "intg_argent_mobile",
-   "providerClass": "argent_mobile",
-   "capability": "payments.mobile_money",
-   "mobileMoney": {
-    "operatorFieldId": "fld_transactions_operateur",
-    "operatorValues": [
-     "ORANGE_CMR",
-     "MTN_CMR"
+  "screens": [
+    {
+      "id": "scr_mon_tableau",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Mon tableau de bord"
+        }
+      ],
+      "showsPrimaryNav": true,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_mon_tableau_entete",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Mon tableau de bord"
+            }
+          ]
+        },
+        {
+          "id": "blk_mon_tableau_liste",
+          "blockType": "list",
+          "entityId": "ent_transactions",
+          "props": [
+            {
+              "key": "titleFieldId",
+              "value": "fld_transactions_type_op"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_tontines",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Mes tontines"
+        }
+      ],
+      "showsPrimaryNav": true,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_tontines_entete",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Mes tontines"
+            }
+          ]
+        },
+        {
+          "id": "blk_tontines_liste",
+          "blockType": "list",
+          "entityId": "ent_tontines",
+          "props": [
+            {
+              "key": "titleFieldId",
+              "value": "fld_tontines_nom"
+            }
+          ]
+        },
+        {
+          "id": "blk_tontines_rejoindre",
+          "blockType": "form",
+          "entityId": "ent_membres_tontine",
+          "props": [
+            {
+              "key": "fieldIds",
+              "value": [
+                "fld_membres_tontine_code_saisi"
+              ]
+            },
+            {
+              "key": "submitLabel",
+              "value": "Rejoindre la tontine"
+            },
+            {
+              "key": "title",
+              "value": "Entrez le code reçu du président"
+            },
+            {
+              "key": "loadingTitle",
+              "value": "Vérification du code…"
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Entrez le code reçu du président"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_membres",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Membres et ordre de passage"
+        }
+      ],
+      "showsPrimaryNav": true,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_membres_entete",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Membres et ordre de passage"
+            }
+          ]
+        },
+        {
+          "id": "blk_membres_liste",
+          "blockType": "list",
+          "entityId": "ent_membres_tontine",
+          "props": [
+            {
+              "key": "titleFieldId",
+              "value": "fld_membres_tontine_role"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_transactions",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Mouvements du séquestre"
+        }
+      ],
+      "requiredRightId": "right_tresorerie",
+      "showsPrimaryNav": true,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_transactions_entete",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Mouvements du séquestre"
+            }
+          ]
+        },
+        {
+          "id": "blk_transactions_liste",
+          "blockType": "list",
+          "entityId": "ent_transactions",
+          "props": [
+            {
+              "key": "titleFieldId",
+              "value": "fld_transactions_type_op"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_annuaire",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Annuaire des membres"
+        }
+      ],
+      "requiredRightId": "right_registre",
+      "showsPrimaryNav": true,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_annuaire_entete",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Annuaire des membres"
+            }
+          ]
+        },
+        {
+          "id": "blk_annuaire_liste",
+          "blockType": "list",
+          "entityId": "ent_utilisateurs",
+          "props": [
+            {
+              "key": "titleFieldId",
+              "value": "fld_utilisateurs_nom_complet"
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_utilisateurs_photo_profil"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_verification",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Vérification d'identité"
+        }
+      ],
+      "requiredRightId": "right_bureau",
+      "showsPrimaryNav": true,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_verification_entete",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Vérification d'identité"
+            }
+          ]
+        },
+        {
+          "id": "blk_verification_fiche",
+          "blockType": "detail_header",
+          "entityId": "ent_utilisateurs",
+          "props": [
+            {
+              "key": "titleFieldId",
+              "value": "fld_utilisateurs_nom_complet"
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_utilisateurs_piece_identite"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_discipline",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Amendes disciplinaires"
+        }
+      ],
+      "requiredRightId": "right_discipline",
+      "showsPrimaryNav": true,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_discipline_entete",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Amendes disciplinaires"
+            }
+          ]
+        },
+        {
+          "id": "blk_discipline_liste",
+          "blockType": "list",
+          "entityId": "ent_membres_tontine",
+          "props": [
+            {
+              "key": "titleFieldId",
+              "value": "fld_membres_tontine_role"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_encaissement",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Encaisser en espèces"
+        }
+      ],
+      "requiredRightId": "right_encaisser_cash",
+      "showsPrimaryNav": true,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_encaissement_entete",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Encaisser en espèces"
+            }
+          ]
+        },
+        {
+          "id": "blk_encaissement_liste",
+          "blockType": "list",
+          "entityId": "ent_transactions",
+          "props": [
+            {
+              "key": "titleFieldId",
+              "value": "fld_transactions_type_op"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_seance",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Séance et enchères"
+        }
+      ],
+      "requiredRightId": "right_bureau",
+      "showsPrimaryNav": true,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_seance_entete",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Séance et enchères"
+            }
+          ]
+        },
+        {
+          "id": "blk_seance_liste",
+          "blockType": "list",
+          "entityId": "ent_transactions",
+          "props": [
+            {
+              "key": "titleFieldId",
+              "value": "fld_transactions_type_op"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_parametres",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Paramètres"
+        }
+      ],
+      "showsPrimaryNav": true,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_parametres_entete",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Paramètres"
+            }
+          ]
+        },
+        {
+          "id": "blk_parametres_vide",
+          "blockType": "empty_state",
+          "props": [
+            {
+              "key": "title",
+              "value": "Paramètres"
+            },
+            {
+              "key": "message",
+              "value": "Aucun réglage n'est encore porté par ce document."
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "actions": [
+    {
+      "id": "act_decaisser_pot",
+      "name": "Décaisser le pot au gagnant du tour",
+      "requiredRightId": "right_bureau",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_seance_liste"
+      },
+      "effect": {
+        "kind": "capability",
+        "capability": "payments.mobile_money",
+        "method": "payout"
+      },
+      "confirmation": {
+        "kind": "code_hors_application",
+        "digits": 6
+      }
+    },
+    {
+      "id": "act_rejoindre_avec_code",
+      "name": "Rejoindre la tontine avec le code du président",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_tontines_rejoindre"
+      },
+      "effect": {
+        "kind": "mutation",
+        "entityId": "ent_membres_tontine",
+        "operation": "create"
+      }
+    },
+    {
+      "id": "act_definir_role",
+      "name": "Definir le role d un membre",
+      "requiredRightId": "right_bureau",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_membres_liste"
+      },
+      "effect": {
+        "kind": "mutation",
+        "entityId": "ent_membres_tontine",
+        "operation": "update"
+      }
+    }
+  ],
+  "rules": [],
+  "slots": [],
+  "capabilities": [
+    {
+      "capability": "payments.mobile_money"
+    },
+    {
+      "capability": "document.export"
+    },
+    {
+      "capability": "share"
+    }
+  ],
+  "permissions": [],
+  "access": {
+    "rights": [
+      {
+        "id": "right_bureau",
+        "name": "bureau",
+        "label": [
+          {
+            "locale": "fr",
+            "text": "Créer une tontine et en orchestrer les séances"
+          }
+        ]
+      },
+      {
+        "id": "right_registre",
+        "name": "registre",
+        "label": [
+          {
+            "locale": "fr",
+            "text": "Tenir le registre, les procès-verbaux et les présences"
+          }
+        ]
+      },
+      {
+        "id": "right_tresorerie",
+        "name": "tresorerie",
+        "label": [
+          {
+            "locale": "fr",
+            "text": "Superviser le séquestre et certifier les écritures"
+          }
+        ]
+      },
+      {
+        "id": "right_discipline",
+        "name": "discipline",
+        "label": [
+          {
+            "locale": "fr",
+            "text": "Appliquer le règlement intérieur et les amendes"
+          }
+        ]
+      },
+      {
+        "id": "right_encaisser_cash",
+        "name": "encaisser_cash",
+        "label": [
+          {
+            "locale": "fr",
+            "text": "Saisir une cotisation en espèces pour un autre membre"
+          }
+        ]
+      }
     ],
-    "offNetworkValues": [
-     "CASH"
+    "roles": [
+      {
+        "id": "role_president",
+        "name": "president",
+        "label": [
+          {
+            "locale": "fr",
+            "text": "Président"
+          }
+        ],
+        "rightIds": [],
+        "grantsAllRights": true
+      },
+      {
+        "id": "role_secretaire",
+        "name": "secretaire",
+        "label": [
+          {
+            "locale": "fr",
+            "text": "Secrétaire"
+          }
+        ],
+        "rightIds": [
+          "right_registre"
+        ]
+      },
+      {
+        "id": "role_tresorier",
+        "name": "tresorier",
+        "label": [
+          {
+            "locale": "fr",
+            "text": "Trésorier"
+          }
+        ],
+        "rightIds": [
+          "right_tresorerie",
+          "right_encaisser_cash"
+        ]
+      },
+      {
+        "id": "role_censeur",
+        "name": "censeur",
+        "label": [
+          {
+            "locale": "fr",
+            "text": "Censeur"
+          }
+        ],
+        "rightIds": [
+          "right_discipline"
+        ]
+      },
+      {
+        "id": "role_membre",
+        "name": "membre",
+        "label": [
+          {
+            "locale": "fr",
+            "text": "Membre"
+          }
+        ],
+        "rightIds": []
+      }
+    ],
+    "defaultRoleId": "role_membre",
+    "delegation": {
+      "subjectEntityId": "ent_utilisateurs",
+      "holderFieldId": "fld_utilisateurs_mandataire",
+      "delegatableRightIds": [
+        "right_encaisser_cash"
+      ]
+    }
+  },
+  "design": {
+    "theme": "tontine_sobre"
+  },
+  "integrations": [
+    {
+      "id": "intg_argent_mobile",
+      "providerClass": "argent_mobile",
+      "capability": "payments.mobile_money",
+      "mobileMoney": {
+        "operatorFieldId": "fld_transactions_operateur",
+        "operatorValues": [
+          "ORANGE_CMR",
+          "MTN_CMR"
+        ],
+        "offNetworkValues": [
+          "CASH"
+        ]
+      }
+    }
+  ],
+  "network": {
+    "policy": "deny_by_default",
+    "allowedDomains": []
+  },
+  "native": {
+    "minIosVersion": "16.0",
+    "minAndroidSdk": 26
+  },
+  "compliance": {
+    "commerceClass": "physical_or_offapp",
+    "accountDeletionRequired": true,
+    "dataCollected": [
+      "identifiers",
+      "financial_info",
+      "usage_data"
     ]
-   }
+  },
+  "expectedTests": [],
+  "intent": {
+    "request": "Une tontine digitale pour le Cameroun : bureau traditionnel à cinq rôles, cotisations et décaissements par Mobile Money, compte séquestre, attribution du pot aux enchères, pénalités de retard et redistribution des intérêts en fin de cycle.",
+    "requestLocale": "fr",
+    "needs": [
+      {
+        "id": "need_bureau",
+        "statement": "Reproduire le bureau traditionnel — Président, Secrétaire, Trésorier, Censeur, Membre — par une matrice d'accès stricte.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "role_president",
+            "role_secretaire",
+            "role_tresorier",
+            "role_censeur",
+            "role_membre",
+            "right_bureau",
+            "right_registre",
+            "right_tresorerie",
+            "right_discipline",
+            "right_encaisser_cash"
+          ]
+        }
+      },
+      {
+        "id": "need_membre_sans_telephone",
+        "statement": "Un membre peut n'avoir ni smartphone ni compte Mobile Money, et reste rattaché à un mandataire.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "ent_utilisateurs",
+            "fld_utilisateurs_est_sans_telephone",
+            "fld_utilisateurs_mandataire",
+            "rel_mandat"
+          ]
+        }
+      },
+      {
+        "id": "need_registre",
+        "statement": "Tenir le registre des membres d'une tontine, leur rôle, leur ordre de passage et leur cumul d'amendes.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "ent_membres_tontine",
+            "scr_membres",
+            "scr_annuaire"
+          ]
+        }
+      },
+      {
+        "id": "need_tontines",
+        "statement": "Une tontine porte son montant de cotisation, sa fréquence, son taux de pénalité et son statut.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "ent_tontines",
+            "fld_tontines_montant_cotisation",
+            "fld_tontines_frequence",
+            "fld_tontines_statut"
+          ]
+        }
+      },
+      {
+        "id": "need_journal_transactions",
+        "statement": "Chaque mouvement est horodaté, typé, et garde la trace de son opérateur et de sa référence externe.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "ent_transactions",
+            "fld_transactions_type_op",
+            "fld_transactions_operateur",
+            "fld_transactions_reference_externe",
+            "scr_transactions"
+          ]
+        }
+      },
+      {
+        "id": "need_kyc",
+        "statement": "Vérification d'identité obligatoire : pièce d'identité et selfie, contrôlés par le bureau.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "fld_utilisateurs_piece_identite",
+            "fld_utilisateurs_photo_profil",
+            "fld_utilisateurs_est_president_verifie",
+            "scr_verification",
+            "right_bureau"
+          ]
+        }
+      },
+      {
+        "id": "need_tableau_membre",
+        "statement": "Un membre consulte sa position et son historique financier sans aucune charge du bureau.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "scr_mon_tableau",
+            "role_membre"
+          ]
+        }
+      },
+      {
+        "id": "need_mandat_agir_pour",
+        "statement": "Le mandataire AGIT AU NOM d'un autre : il cotise pour lui et encaisse son pot.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "right_encaisser_cash",
+            "ent_utilisateurs",
+            "fld_utilisateurs_mandataire",
+            "fld_utilisateurs_est_sans_telephone",
+            "rel_mandat",
+            "scr_encaissement"
+          ]
+        }
+      },
+      {
+        "id": "need_sequestre",
+        "statement": "Les fonds collectés sont bloqués sur un compte séquestre jusqu'à l'échéance du tour.",
+        "resolution": {
+          "kind": "unexpressible",
+          "reason": "L'ORDRE des états est maintenant déclaré (`transitions`) : le séquestre ne se dé-bloque plus vers un état antérieur. Mais l'ÉCHÉANCE ne l'est pas. « Jusqu'à l'échéance du tour » suppose une HORLOGE qui fasse passer l'état toute seule, et une horloge vit sur le serveur. Le format dit ce qui est PERMIS, jamais ce qui arrive de soi-même — prétendre le contraire ferait croire qu'une application déverrouille des fonds sans que personne n'agisse."
+        }
+      },
+      {
+        "id": "need_encheres",
+        "statement": "Le pot est attribué par enchère : le membre qui propose la plus forte prime l'emporte.",
+        "resolution": {
+          "kind": "unexpressible",
+          "reason": "Une enchère est une CONCURRENCE entre plusieurs membres sur un même objet, avec un gagnant et une clôture. Le format décrit des écrans, des listes et des gestes individuels ; il n'a aucun nœud pour un mécanisme où le geste d'un membre invalide celui d'un autre."
+        }
+      },
+      {
+        "id": "need_penalites",
+        "statement": "Les pénalités de retard valent 2 % par jour et se répartissent 70 % au groupe, 30 % à la plateforme.",
+        "resolution": {
+          "kind": "unexpressible",
+          "reason": "Calcul sur une DURÉE, puis partage. Le format ne porte ni l'un ni l'autre : `rules.kind = \"validation\"` sait refuser une saisie, jamais produire un montant. C'est la même famille que le stock calculé de SGD, resté inexprimable."
+        }
+      },
+      {
+        "id": "need_cagnotte",
+        "statement": "Les primes d'enchères s'accumulent pendant tout le cycle, puis se répartissent à parts égales en fin de cycle.",
+        "resolution": {
+          "kind": "unexpressible",
+          "reason": "L'ACCUMULATION est portée : `cagnotte_interets_cumulee` est déclarée somme des primes d'enchères de ses transactions, et le validateur refuse qu'un formulaire la propose à la saisie. C'est la RÉPARTITION qui reste dehors, et pour deux raisons distinctes : elle divise par le nombre de membres ACTIFS — une condition que `sum` et `count` ne portent pas — et elle se déclenche À LA FIN DU CYCLE, un événement métier qu'aucun déclencheur ne connaît. Diviser et choisir son moment appartiennent au serveur, avec le reste de l'argent."
+        }
+      },
+      {
+        "id": "need_mobile_money",
+        "statement": "Collecte et décaissement par argent mobile, avec les opérateurs du pays.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "ent_transactions",
+            "fld_transactions_operateur",
+            "fld_transactions_reference_externe",
+            "intg_argent_mobile"
+          ]
+        }
+      },
+      {
+        "id": "need_otp_payout",
+        "statement": "Un décaissement n'est exécuté qu'après saisie d'un code à 6 chiffres reçu par WhatsApp ou SMS.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "act_decaisser_pot",
+            "right_bureau",
+            "scr_seance"
+          ]
+        }
+      },
+      {
+        "id": "need_tour_courant",
+        "statement": "À chaque séance, un membre et un seul encaisse le pot, selon l'ordre de passage.",
+        "resolution": {
+          "kind": "unexpressible",
+          "reason": "`ordre_passage` est un nombre sur une ligne. Rien ne dit QUEL tour est en cours, ni que le tour avance quand le pot est versé. L'état d'avancement d'un cycle n'a pas de place au format."
+        }
+      },
+      {
+        "id": "need_categorie_financiere",
+        "statement": "Déclarer aux magasins que l'application traite des données financières.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "ent_transactions",
+            "fld_transactions_total_paye",
+            "fld_transactions_montant_base"
+          ]
+        }
+      },
+      {
+        "id": "need_export_pdf",
+        "statement": "Le Secrétaire exporte les procès-verbaux et les rapports en PDF d'un seul clic.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "right_registre",
+            "scr_annuaire",
+            "role_secretaire"
+          ]
+        }
+      }
+    ]
   }
- ],
- "network": {
-  "policy": "deny_by_default",
-  "allowedDomains": []
- },
- "native": {
-  "minIosVersion": "16.0",
-  "minAndroidSdk": 26
- },
- "compliance": {
-  "commerceClass": "physical_or_offapp",
-  "accountDeletionRequired": true,
-  "dataCollected": [
-   "identifiers",
-   "financial_info",
-   "usage_data"
-  ]
- },
- "expectedTests": [],
- "intent": {
-  "request": "Une tontine digitale pour le Cameroun : bureau traditionnel à cinq rôles, cotisations et décaissements par Mobile Money, compte séquestre, attribution du pot aux enchères, pénalités de retard et redistribution des intérêts en fin de cycle.",
-  "requestLocale": "fr",
-  "needs": [
-   {
-    "id": "need_bureau",
-    "statement": "Reproduire le bureau traditionnel — Président, Secrétaire, Trésorier, Censeur, Membre — par une matrice d'accès stricte.",
-    "resolution": {
-     "kind": "satisfied",
-     "nodeIds": [
-      "role_president",
-      "role_secretaire",
-      "role_tresorier",
-      "role_censeur",
-      "role_membre",
-      "right_bureau",
-      "right_registre",
-      "right_tresorerie",
-      "right_discipline",
-      "right_encaisser_cash"
-     ]
-    }
-   },
-   {
-    "id": "need_membre_sans_telephone",
-    "statement": "Un membre peut n'avoir ni smartphone ni compte Mobile Money, et reste rattaché à un mandataire.",
-    "resolution": {
-     "kind": "satisfied",
-     "nodeIds": [
-      "ent_utilisateurs",
-      "fld_utilisateurs_est_sans_telephone",
-      "fld_utilisateurs_mandataire",
-      "rel_mandat"
-     ]
-    }
-   },
-   {
-    "id": "need_registre",
-    "statement": "Tenir le registre des membres d'une tontine, leur rôle, leur ordre de passage et leur cumul d'amendes.",
-    "resolution": {
-     "kind": "satisfied",
-     "nodeIds": [
-      "ent_membres_tontine",
-      "scr_membres",
-      "scr_annuaire"
-     ]
-    }
-   },
-   {
-    "id": "need_tontines",
-    "statement": "Une tontine porte son montant de cotisation, sa fréquence, son taux de pénalité et son statut.",
-    "resolution": {
-     "kind": "satisfied",
-     "nodeIds": [
-      "ent_tontines",
-      "fld_tontines_montant_cotisation",
-      "fld_tontines_frequence",
-      "fld_tontines_statut"
-     ]
-    }
-   },
-   {
-    "id": "need_journal_transactions",
-    "statement": "Chaque mouvement est horodaté, typé, et garde la trace de son opérateur et de sa référence externe.",
-    "resolution": {
-     "kind": "satisfied",
-     "nodeIds": [
-      "ent_transactions",
-      "fld_transactions_type_op",
-      "fld_transactions_operateur",
-      "fld_transactions_reference_externe",
-      "scr_transactions"
-     ]
-    }
-   },
-   {
-    "id": "need_kyc",
-    "statement": "Vérification d'identité obligatoire : pièce d'identité et selfie, contrôlés par le bureau.",
-    "resolution": {
-     "kind": "satisfied",
-     "nodeIds": [
-      "fld_utilisateurs_piece_identite",
-      "fld_utilisateurs_photo_profil",
-      "fld_utilisateurs_est_president_verifie",
-      "scr_verification",
-      "right_bureau"
-     ]
-    }
-   },
-   {
-    "id": "need_tableau_membre",
-    "statement": "Un membre consulte sa position et son historique financier sans aucune charge du bureau.",
-    "resolution": {
-     "kind": "satisfied",
-     "nodeIds": [
-      "scr_mon_tableau",
-      "role_membre"
-     ]
-    }
-   },
-   {
-    "id": "need_mandat_agir_pour",
-    "statement": "Le mandataire AGIT AU NOM d'un autre : il cotise pour lui et encaisse son pot.",
-    "resolution": {
-     "kind": "satisfied",
-     "nodeIds": [
-      "right_encaisser_cash",
-      "ent_utilisateurs",
-      "fld_utilisateurs_mandataire",
-      "fld_utilisateurs_est_sans_telephone",
-      "rel_mandat",
-      "scr_encaissement"
-     ]
-    }
-   },
-   {
-    "id": "need_sequestre",
-    "statement": "Les fonds collectés sont bloqués sur un compte séquestre jusqu'à l'échéance du tour.",
-    "resolution": {
-     "kind": "unexpressible",
-     "reason": "L'ORDRE des états est maintenant déclaré (`transitions`) : le séquestre ne se dé-bloque plus vers un état antérieur. Mais l'ÉCHÉANCE ne l'est pas. « Jusqu'à l'échéance du tour » suppose une HORLOGE qui fasse passer l'état toute seule, et une horloge vit sur le serveur. Le format dit ce qui est PERMIS, jamais ce qui arrive de soi-même — prétendre le contraire ferait croire qu'une application déverrouille des fonds sans que personne n'agisse."
-    }
-   },
-   {
-    "id": "need_encheres",
-    "statement": "Le pot est attribué par enchère : le membre qui propose la plus forte prime l'emporte.",
-    "resolution": {
-     "kind": "unexpressible",
-     "reason": "Une enchère est une CONCURRENCE entre plusieurs membres sur un même objet, avec un gagnant et une clôture. Le format décrit des écrans, des listes et des gestes individuels ; il n'a aucun nœud pour un mécanisme où le geste d'un membre invalide celui d'un autre."
-    }
-   },
-   {
-    "id": "need_penalites",
-    "statement": "Les pénalités de retard valent 2 % par jour et se répartissent 70 % au groupe, 30 % à la plateforme.",
-    "resolution": {
-     "kind": "unexpressible",
-     "reason": "Calcul sur une DURÉE, puis partage. Le format ne porte ni l'un ni l'autre : `rules.kind = \"validation\"` sait refuser une saisie, jamais produire un montant. C'est la même famille que le stock calculé de SGD, resté inexprimable."
-    }
-   },
-   {
-    "id": "need_cagnotte",
-    "statement": "Les primes d'enchères s'accumulent pendant tout le cycle, puis se répartissent à parts égales en fin de cycle.",
-    "resolution": {
-     "kind": "unexpressible",
-     "reason": "L'ACCUMULATION est portée : `cagnotte_interets_cumulee` est déclarée somme des primes d'enchères de ses transactions, et le validateur refuse qu'un formulaire la propose à la saisie. C'est la RÉPARTITION qui reste dehors, et pour deux raisons distinctes : elle divise par le nombre de membres ACTIFS — une condition que `sum` et `count` ne portent pas — et elle se déclenche À LA FIN DU CYCLE, un événement métier qu'aucun déclencheur ne connaît. Diviser et choisir son moment appartiennent au serveur, avec le reste de l'argent."
-    }
-   },
-   {
-    "id": "need_mobile_money",
-    "statement": "Collecte et décaissement par argent mobile, avec les opérateurs du pays.",
-    "resolution": {
-     "kind": "satisfied",
-     "nodeIds": [
-      "ent_transactions",
-      "fld_transactions_operateur",
-      "fld_transactions_reference_externe",
-      "intg_argent_mobile"
-     ]
-    }
-   },
-   {
-    "id": "need_otp_payout",
-    "statement": "Un décaissement n'est exécuté qu'après saisie d'un code à 6 chiffres reçu par WhatsApp ou SMS.",
-    "resolution": {
-     "kind": "satisfied",
-     "nodeIds": [
-      "act_decaisser_pot",
-      "right_bureau",
-      "scr_seance"
-     ]
-    }
-   },
-   {
-    "id": "need_tour_courant",
-    "statement": "À chaque séance, un membre et un seul encaisse le pot, selon l'ordre de passage.",
-    "resolution": {
-     "kind": "unexpressible",
-     "reason": "`ordre_passage` est un nombre sur une ligne. Rien ne dit QUEL tour est en cours, ni que le tour avance quand le pot est versé. L'état d'avancement d'un cycle n'a pas de place au format."
-    }
-   },
-   {
-    "id": "need_categorie_financiere",
-    "statement": "Déclarer aux magasins que l'application traite des données financières.",
-    "resolution": {
-     "kind": "satisfied",
-     "nodeIds": [
-      "ent_transactions",
-      "fld_transactions_total_paye",
-      "fld_transactions_montant_base"
-     ]
-    }
-   },
-   {
-    "id": "need_export_pdf",
-    "statement": "Le Secrétaire exporte les procès-verbaux et les rapports en PDF d'un seul clic.",
-    "resolution": {
-     "kind": "satisfied",
-     "nodeIds": [
-      "right_registre",
-      "scr_annuaire",
-      "role_secretaire"
-     ]
-    }
-   }
-  ]
- }
 }
