@@ -26,11 +26,12 @@
 import type { ProjectAir } from '@deribfy/air-schema'
 
 export type BoutiqueSource = {
+  /** Sert d'identité technique : slug de l'application, identifiant de projet. */
   readonly slug: string
   readonly nom: string
   readonly couleur: string | null
   readonly description: string | null
-  /** Le nombre d'articles réels — il donne sa taille au jeu d'aperçu. */
+  /** Le nombre d'éléments — il donne sa taille au jeu d'aperçu. */
   readonly nombreArticles: number
 }
 

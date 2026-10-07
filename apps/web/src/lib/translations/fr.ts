@@ -455,6 +455,7 @@ export const fr = {
 
   // ===== LOT BLOG 9 — espace propriétaire du blog =====
   'blog.nav': 'Blog',
+  'sidebar.generateur': 'Générateur',
   'blog.title': 'Blog de vos sites',
   'blog.subtitle': 'Rédigez, générez et publiez des articles. Chaque article appartient à un seul site.',
   'blog.site': 'Site',

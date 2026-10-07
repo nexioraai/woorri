@@ -223,6 +223,7 @@ Toutes protégées par `Authorization: Bearer <CRON_SECRET>` sauf mention contra
 | POST | `/api/images/upload` | Envoi d'une photo de produit : garde de propriété du site, plafond 15 Mo, types JPG/PNG/WebP/HEIC. Redresse selon l'EXIF puis **efface les métadonnées (GPS compris)**, produit les variantes AVIF/WebP/JPG en 400/800/1200/1600 px, un aperçu flou, et rend des avertissements non bloquants (trop petite, cadrage, flou). `sharp` uniquement, aucun service tiers. | Propriétaire du site |
 | POST | `/api/site/logo` | Dépôt du logo d'un site. Route **séparée** de `/api/images/upload` délibérément : celle des photos de produit recadre, corrige l'exposition et accentue — tout ce qu'il ne faut pas faire à un logo, qui doit sortir tel qu'il entre. Garde de propriété (`requireSiteOwner`), plafond 5 Mo (413), types PNG/JPEG/WebP uniquement (415), 503 si le stockage n'est pas configuré. | Propriétaire du site |
 | POST | `/api/app/generer` | Construit l'application web de la boutique (moteur AIR) et la rend en archive ZIP. Propriété vérifiée. Les données sont celles de l'aperçu — le format AIR ne transporte pas les lignes (D-013). | jeton propriétaire |
+| POST | `/api/generateur` | Génère une application web à partir d'une description libre — **sans boutique**. Le générateur est un produit à part : n'importe quel utilisateur connecté peut s'en servir. Rend une archive ZIP. | jeton utilisateur |
 
 ## Constats (observations factuelles, non corrigées dans cette passe)
 
