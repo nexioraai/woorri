@@ -444,7 +444,6 @@ export const ar: Record<TranslationKey, string> = {
 
   // ===== LOT BLOG 9 — espace propriétaire du blog =====
   'blog.nav': 'المدونة',
-  'sidebar.generateur': 'المولّد',
   'blog.title': 'مدونة مواقعك',
   'blog.subtitle': 'اكتب المقالات وأنشئها وانشرها. كل مقال ينتمي إلى موقع واحد فقط.',
   'blog.site': 'الموقع',

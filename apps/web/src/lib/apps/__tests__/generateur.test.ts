@@ -9,6 +9,17 @@
 // Ces tests tiennent la propriete qui compte : une DESCRIPTION LIBRE suffit a
 // produire une application. Si quelqu'un rebranche un jour le generateur sur
 // une entite de boutique, ils tombent.
+//
+// ── ILS SURVIVENT A LA SUPPRESSION DU FORMULAIRE (2026-10-07).
+//
+// La premiere interface etait un FORMULAIRE — nom, phrase, curseur. Le
+// proprietaire l'a fait retirer, et la recherche lui a donne raison : Lovable,
+// Bolt, v0 et Replit partent TOUS d'une conversation, montrent un apercu
+// vivant, et se corrigent en reparlant. Aucun ne livre une archive.
+//
+// Le formulaire est parti ; ces tests restent, parce qu'ils ne decrivent pas
+// une interface : ils decrivent le CONTRAT que la prochaine devra tenir —
+// d'une phrase libre a une application qui compile.
 // ============================================================
 import { describe, expect, it } from 'vitest'
 import { projectAirSchema } from '@deribfy/air-schema'

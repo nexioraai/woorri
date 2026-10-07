@@ -445,7 +445,6 @@ export const en: Record<TranslationKey, string> = {
 
   // ===== LOT BLOG 9 — espace propriétaire du blog =====
   'blog.nav': 'Blog',
-  'sidebar.generateur': 'Generator',
   'blog.title': 'Your sites’ blog',
   'blog.subtitle': 'Write, generate and publish articles. Each article belongs to a single site.',
   'blog.site': 'Site',
