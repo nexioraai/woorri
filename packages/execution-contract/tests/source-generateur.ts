@@ -11,7 +11,16 @@ const BASE = join(
   "benchmarks", "air-emission",
 );
 
-export const FICHIERS_GENERATEUR = ["emit-v3.mjs", "emission-coeur.mjs"] as const;
+// `orchestration.mjs` et `moteur.mjs` s'ajoutent le 2026-10-08 : 201 lignes
+// de plus ont quitte le script — la boucle des huit passes et la
+// reparation — pour que le PRODUIT puisse les appeler. Meme raison, meme
+// liste. Un controle qui lit le source du generateur doit lire les quatre.
+export const FICHIERS_GENERATEUR = [
+  "emit-v3.mjs",
+  "emission-coeur.mjs",
+  "orchestration.mjs",
+  "moteur.mjs",
+] as const;
 
 /** Leur texte, concaténé : un test trouve ce qu'il cherche où qu'il vive. */
 export const SOURCE_GENERATEUR = FICHIERS_GENERATEUR.map((f) =>

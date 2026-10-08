@@ -387,7 +387,14 @@ describe("branchement — un juge hors acceptation ne juge pas", () => {
     // EP-073 (édition consciente) : 3 consommations — attempt 1, attempt 2,
     // et la RE-VALIDATION du document d'origine quand la gate anti-oscillation
     // rejette une réparation qui introduisait des diagnostics.
-    expect(appels.length).toBe(3);
+    //
+    // ÉDITION CONSCIENTE (2026-10-08) : 5. `moteur.mjs` monte la chaîne POUR
+    // LE PRODUIT — jusqu'ici le site n'appelait que P0 puis une dérivation
+    // écrite à la main, qui ne consultait AUCUN juge. Ses deux consommations
+    // sont les mêmes que celles de la campagne : après l'émission, puis après
+    // la réparation. Le cliquet reste EXACT — il exige un nombre précis, donc
+    // un juge ajouté ou perdu sans décision le fait toujours échouer.
+    expect(appels.length).toBe(5);
     // EP-073 (édition consciente) : les juges vivent dans acceptation.mjs,
     // importable SANS la garde — pour re-juger les archives à 0 $. emit-v3
     // les consomme depuis ce module ; la consommation de jugerVivacite s'y

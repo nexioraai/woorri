@@ -16,8 +16,9 @@
  */
 import type { ProjectAir } from '@deribfy/air-schema'
 import { projectAirSchema } from '@deribfy/air-schema'
-import { comprendre, depenseAutorisee, construireDepuisModele, JETON_DEPENSE } from './comprendre'
-import { emettreSansIa, lireLaPhrase } from './emission'
+import { depenseAutorisee, direCeQuOnACompris, JETON_DEPENSE } from './comprendre'
+import { lireLaPhrase } from './emission'
+import { emettreApplication } from './moteur'
 import {
   fautesDeProduction,
   perimetre,
@@ -133,64 +134,56 @@ export async function documentPour(
     }
   }
 
-  const lu = await comprendre(texteLu)
+  // ── LE MOTEUR A HUIT PASSES, ET PLUS MA DERIVATION.
+  //
+  // `derivation.ts` — 297 lignes ecrites a la main — rendait un document qui
+  // COMPILAIT et ou il ne se passait RIEN. Mesure, marketplace du
+  // proprietaire : entites 5, ecrans 8, 72 fichiers — et actions 0, regles 0,
+  // capacites 0, intent ABSENT. Les etats de commande, WhatsApp, l'appel
+  // direct, le mobile money vivent exactement dans ces quatre champs.
+  //
+  // ET SURTOUT, LE MOTEUR JUGE. Premier tir reel : refus en P2 sur
+  // `DERIVATION_IDENTITE_SANS_SOURCE` et
+  // `DERIVATION_CONFIRMATION_SANS_ECRITURE`. Ma derivation n'appelait aucun
+  // juge — ce qu'elle produisait n'etait pas meilleur, il etait NON JUGE.
+  //
+  // UN SEUL CHEMIN PAYANT : le moteur fait lui-meme sa passe P0, avec sa
+  // boucle bornee a trois tirages. Appeler `comprendre()` en plus repaierait
+  // la lecture a chaque tour.
+  const emission = await emettreApplication(texteLu, lireLaPhrase(intention.brief).nom)
 
-  if (lu.ok) {
-    const nom = lireLaPhrase(intention.brief).nom
-    const derive = await construireDepuisModele(lu.modele, {
-      nom,
-      description: intention.brief.slice(0, 200),
-    })
-    if (derive !== null) {
-      return { document: derive.document, compris: derive.compris, parIA: true, texteLu }
-    }
-    // P0 a compris, mais son modèle ne porte aucun concept de données : il
-    // n'y a pas d'application à en tirer. On le dit plutôt que de servir un
-    // squelette qui ferait croire le contraire.
-    return {
-      incompris: true,
-      raison:
-        'Je vous ai lu, mais rien de concret n’en ressort : dites-moi ce que l’application ' +
-        'manipule — des membres, des produits, des commandes, des rendez-vous…',
-      detailTechnique: 'modèle valide sans concept de données : aucune entité à dériver',
-      texteLu,
+  if (emission.ok && emission.document !== undefined) {
+    const juge = projectAirSchema.safeParse(emission.document)
+    if (juge.success) {
+      return {
+        document: juge.data as ProjectAir,
+        compris: direCeQuOnACompris(emission.modele as Parameters<typeof direCeQuOnACompris>[0]),
+        parIA: true,
+        texteLu,
+      }
     }
   }
 
-  // ── LE REFUS SE PARTAGE EN DEUX, ET C'EST TOUTE LA DIFFÉRENCE (EP-135).
-  //
-  // Jusqu'ici, tout refus du juge devenait « lecture indisponible » et on
-  // servait quand même la lecture simple — c'est-à-dire qu'on CONSTRUISAIT
-  // sans avoir compris. Or le juge classe ce qu'il refuse : ce que l'humain
-  // seul peut trancher (`intention_manquante`) et ce que la machine a raté
-  // (`faute_de_production`).
-  //
-  // Les premiers deviennent des QUESTIONS, et rien n'est construit tant
-  // qu'elles sont ouvertes. Les seconds ne lui sont jamais montrés comme des
-  // questions : lui faire porter une erreur de machine est, de l'aveu même
-  // d'EP-135, « le pire résultat possible ».
-  const diagnostics: Diagnostic[] = lu.diagnostics ?? []
-  const questions = await questionsPour(diagnostics)
+  // ── LE MOTEUR A REFUSE, et ses diagnostics se partagent comme les autres
+  // (EP-135) : ce que l'humain seul peut trancher devient une QUESTION, le
+  // reste est NOTRE faute et part en alerte. Les codes des tirages P0 entrent
+  // dans le meme partage — c'est la que vivent les refus de plan.
+  const dg: Diagnostic[] = [
+    ...emission.diagnostics,
+    ...emission.tirages.flatMap((t) => t.diagnostics.map((code) => ({ code }))),
+  ]
+  const questions = await questionsPour(dg)
   if (questions.length > 0) {
-    return {
-      questions,
-      perimetre: await perimetre(diagnostics),
-      texteLu,
-      ...(lu.coutUsd === undefined ? {} : { coutUsd: lu.coutUsd }),
-    }
+    return { questions, perimetre: await perimetre(dg), texteLu, coutUsd: emission.coutUsd }
   }
 
-  const nos = await fautesDeProduction(diagnostics)
+  const nos = await fautesDeProduction(dg)
   return {
     incompris: true,
-    raison: direALUtilisateur(diagnostics),
-    // Ce qui part en alerte, c'est NOTRE part — pas une question deguisee.
+    raison: direALUtilisateur(dg),
     detailTechnique:
-      nos.length > 0
-        ? `${lu.raison} · ${String(nos.length)} defaut(s) de production : ${nos
-            .map((d) => d.code ?? '?')
-            .join(', ')}`
-        : lu.raison,
+      `${emission.raison ?? 'émission refusée'} · ${String(nos.length)} défaut(s) de production : ` +
+      `${[...new Set(nos.map((d) => d.code ?? '?'))].join(', ')} · ${emission.coutUsd.toFixed(4)} $`,
     texteLu,
   }
 }

@@ -20,7 +20,14 @@ describe("EP-187 · le canal des préférences", () => {
     expect(EMIT).toContain("function contexteClient(intention)");
     // 3 APPELS + 1 définition = 4 occurrences. Compter 3 aurait laissé
     // croire qu'un appel manquait.
-    expect((EMIT.match(/contexteClient\(intention\)/g) ?? []).length).toBe(4);
+    //
+    // ÉDITION CONSCIENTE (2026-10-08) : 6. `moteur.mjs` monte la chaîne pour
+    // le PRODUIT et pose le contexte aux mêmes deux endroits que la
+    // campagne — à l'émission, puis à la réparation. Ce sont des APPELS au
+    // site unique, pas une seconde définition : l'assertion suivante, qui
+    // interdit de reposer la demande en dur, tient toujours et c'est elle
+    // qui porte la propriété. Le compte reste EXACT.
+    expect((EMIT.match(/contexteClient\(intention\)/g) ?? []).length).toBe(6);
     expect(EMIT, "un site pose encore la demande en dur").not.toMatch(
       /`DEMANDE DU CLIENT :\\n\$\{intention\.text\}`,/,
     );

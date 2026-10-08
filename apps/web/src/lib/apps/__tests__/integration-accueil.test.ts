@@ -244,3 +244,43 @@ describe('CLIQUET — IL N Y A QU UNE CONVERSATION, PAS DEUX', () => {
     expect(PARTAGE).toContain('ArrowUp')
   })
 })
+
+describe('CLIQUET — C EST LE MOTEUR A HUIT PASSES QUI CONSTRUIT', () => {
+  // « As-tu vraiment integere le systeme qu on a construit, ou tu as deguise
+  //   un autre truc puis integre en laissant a cote ce qu on a reellement
+  //   construit ? »
+  //
+  // La reponse etait OUI, j avais deguise : P0 plus `derivation.ts`, 297
+  // lignes ecrites a la main qui remplissaient les cases avec des
+  // constantes. Mesure sur la marketplace du proprietaire : actions 0,
+  // regles 0, capacites 0, intent ABSENT — huit ecrans ou il ne se passe
+  // rien. Ce test interdit le retour en arriere.
+  const POUR = sansCommentaires(lire('lib', 'apps', 'pour.ts'))
+
+  it('le chemin payant passe par `emettreApplication`, pas par la derivation', () => {
+    expect(POUR).toContain('emettreApplication(')
+    expect(POUR).not.toContain('construireDepuisModele')
+    // Et plus aucun squelette a l expression reguliere ne sert de document.
+    expect(POUR).not.toContain('emettreSansIa')
+  })
+
+  it('le moteur est charge PARESSEUSEMENT et borne en dollars', () => {
+    //  EST un commentaire : le chercher dans le source
+    // decoupe ne trouverait jamais rien. Celui-la se lit sur le source brut.
+    expect(lire('lib', 'apps', 'moteur.ts')).toContain('/* webpackIgnore: true */')
+    const MOTEUR = sansCommentaires(lire('lib', 'apps', 'moteur.ts'))
+    expect(MOTEUR).toContain('PLAFOND_USD_PAR_APPLICATION')
+    expect(MOTEUR).toContain('plafondUsd:')
+  })
+
+  it('les huit passes sont celles du moteur, pas une liste recopiee', () => {
+    // « Une liste ecrite deux fois diverge », quatre fois constate ici.
+    const RACINE = join(process.cwd(), '..', '..')
+    const coeur = readFileSync(join(RACINE, 'benchmarks/air-emission/emission-coeur.mjs'), 'utf8')
+    for (const passe of ['base', 'entites', 'donnees', 'capacites', 'ecrans', 'actions', 'cablage', 'intention']) {
+      expect(coeur, passe).toContain(`name: "${passe}"`)
+    }
+    // Le site ne redeclare aucune passe.
+    expect(POUR).not.toMatch(/name: "(entites|ecrans|actions|intention)"/u)
+  })
+})

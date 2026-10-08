@@ -303,7 +303,20 @@ describe("cliquet de véracité — le harnais d'émission RÉEL est confronté 
   const HARNAIS = join(REPO, "benchmarks", "air-emission", "emit-v3.mjs");
   // Source en DEUX fichiers depuis l extraction du 2026-10-07.
   const COEUR = join(REPO, "benchmarks", "air-emission", "emission-coeur.mjs");
-  const code = readFileSync(HARNAIS, "utf8") + "\n" + readFileSync(COEUR, "utf8");
+  // ÉDITION CONSCIENTE (2026-10-08) — QUATRE fichiers. `emitSections`,
+  // `repairSections` et leurs enveloppes protégées ont quitté le script pour
+  // `orchestration.mjs`, afin que le PRODUIT puisse enchaîner les huit passes
+  // sans lancer la campagne. Le cliquet lisait donc un harnais d'où les
+  // chemins payés avaient disparu : il rendait 0 au lieu de 2 — il ne
+  // constatait plus « aucun chemin nu », il constatait « aucun chemin ».
+  //
+  // Le cliquet n'est PAS assoupli : il exige toujours EXACTEMENT 2
+  // occurrences. Il lit simplement là où le code vit maintenant.
+  const ORCHESTRATION = join(REPO, "benchmarks", "air-emission", "orchestration.mjs");
+  const MOTEUR = join(REPO, "benchmarks", "air-emission", "moteur.mjs");
+  const code = [HARNAIS, COEUR, ORCHESTRATION, MOTEUR]
+    .map((f) => readFileSync(f, "utf8"))
+    .join("\n");
   const occurrences = (motif: string): number => code.split(motif).length - 1;
 
   it("🔴 AUCUN chemin de réparation payé n'est appelé sans garde", () => {
