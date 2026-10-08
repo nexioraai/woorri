@@ -473,7 +473,14 @@ const surfaceEnveloppe = () => {
         refusals,
         prescriptif,
       );
-      document = resultat;
+      // LA REPARATION REND UNE ENVELOPPE — { sectionsReemises, document,
+      // ampute } — PAS un document. La campagne lit `resultat.document`
+      // (emit-v3, apres la gate anti-oscillation) ; cette ligne prenait
+      // l'enveloppe pour le document, et le second juge criait SCHEMA sur
+      // les VINGT sections. Attrape par le harnais a blanc de l'etage
+      // continuation, AVANT tout tir reel : les deux tirs payes etaient
+      // morts en amont, ce chemin n'avait jamais ete execute.
+      document = resultat.document ?? resultat;
       ({ air, diagnostics } = validateLocal(document, prescriptif));
       diagnostics = [...diagnostics, ...jugerAcceptation(air, prescriptif, intention)];
     }
