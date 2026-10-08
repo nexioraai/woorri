@@ -255,10 +255,32 @@ const surfaceEnveloppe = () => {
       );
       const neutreP0 = adaptateur.lireReponse(reponseP0);
       const verdictP0 = passe0.jugerSortieP0(neutreP0.texte, brief, { tronquee: neutreP0.tronquee });
+      // ── LE GENERATEUR POSE L'ETAPE MANQUANTE AVANT DE JUGER.
+      //
+      // EP-135 dit, pour ces diagnostics-la : « le generateur doit poser
+      // l'etape manquante, pas l'humain repondre a une question ». Personne
+      // ne la posait — on re-tirait. Mesure : 3 tirages aveugles refuses
+      // (0,8209 $), puis 3 tirages INFORMES qui n'ont pas converge non plus,
+      // le modele reparant un point et en cassant un autre.
+      //
+      // `reparerPlan` est PURE et ne repare que ce que le juge NOMME, quand
+      // la reparation est determinee par le modele lui-meme. Elle n'invente
+      // aucun metier, et elle refuse de reparer ce qu'elle ne sait pas —
+      // auquel cas le juge refuse, et c'est le bon comportement.
+      //
+      // LES JUGES REPASSENT APRES, inchanges. Une reparation qui ne
+      // satisferait pas son juge se verrait immediatement.
+      let modeleP0 = verdictP0.ok ? verdictP0.modele : undefined;
+      let reparationsPlan = [];
+      if (verdictP0.ok) {
+        const r = modeleMetier.reparerPlan(verdictP0.modele);
+        modeleP0 = r.modele;
+        reparationsPlan = r.reparations;
+      }
       const diagnosticsPlan = verdictP0.ok
         ? (() => {
-            const plan = modeleMetier.ecransDe(verdictP0.modele);
-            return [...plan.diagnostics, ...modeleMetier.jugerPlanEcrans(plan, verdictP0.modele)];
+            const plan = modeleMetier.ecransDe(modeleP0);
+            return [...plan.diagnostics, ...modeleMetier.jugerPlanEcrans(plan, modeleP0)];
           })()
         : [];
       const arret = !verdictP0.ok ? "P1" : diagnosticsPlan.length > 0 ? "P2" : "passe";
@@ -270,15 +292,19 @@ const surfaceEnveloppe = () => {
         arret,
         coutUsd: Number((coeur.lireEtatDepense().depense - avant).toFixed(4)),
         diagnostics: (verdictP0.ok ? diagnosticsPlan : verdictP0.diagnostics).map((x) => x.code),
+        // CE QUE LE GENERATEUR A CORRIGE LUI-MEME, dit et non tu : une
+        // reparation silencieuse modifierait le travail de quelqu'un sans
+        // qu'il le sache.
+        reparations: reparationsPlan.map((r) => r.action),
       });
       if (arret === "passe") {
-        const plan = modeleMetier.ecransDe(verdictP0.modele);
+        const plan = modeleMetier.ecransDe(modeleP0);
         // EP-190 ② — le prescriptif porte les ECRANS D'IDENTITE. Derive,
         // jamais recopie : `estConceptIdentite` decide, `ecranAirDe` traduit.
-        const conceptsIdentite = verdictP0.modele.concepts
+        const conceptsIdentite = modeleP0.concepts
           .map((c) => c.id)
-          .filter((id) => modeleMetier.estConceptIdentite(verdictP0.modele, id));
-        const surfacesModele = modeleMetier.surfacesDe(verdictP0.modele);
+          .filter((id) => modeleMetier.estConceptIdentite(modeleP0, id));
+        const surfacesModele = modeleMetier.surfacesDe(modeleP0);
         const ecransDIdentite = plan.ecrans
           .filter((e) =>
             (e.surfaces ?? []).some((sid) =>
@@ -286,7 +312,7 @@ const surfaceEnveloppe = () => {
             ),
           )
           .map((e) => modeleMetier.ecranAirDe(e.ecranId));
-        prescriptif = { modele: verdictP0.modele, plan, ecransDIdentite };
+        prescriptif = { modele: modeleP0, plan, ecransDIdentite };
         break;
       }
       if (tentative >= (process.env.P0_TENTATIVES ? Number(process.env.P0_TENTATIVES) : 3)) {
@@ -301,15 +327,68 @@ const surfaceEnveloppe = () => {
       }
     }
 
-    // ── LES HUIT PASSES.
-    let document = await orchestration.emitSectionsAvecPartiel(
-      coeur.SYSTEM_EMIT,
-      orchestration.contexteClient(intention),
-      slug,
-      usage,
-      refusals,
-      prescriptif,
-    );
+    // ── LES PASSES, ET ON NE REPAIE JAMAIS CE QUI EST DEJA PAYE.
+    //
+    // MESURE DU 2026-10-08 : un tir reel a emis SEIZE sections — identite,
+    // navigation, socle, entites, donnees, capacites, ecrans — puis est mort
+    // sur « Connection error ». 2,6387 $ etaient deja payes. D-103 preserve
+    // deja l'assemblage partiel avec l'erreur ; personne ne s'en servait
+    // pour REPRENDRE, et une coupure reseau coutait donc l'emission entiere
+    // une seconde fois.
+    //
+    // LA REPRISE NE TOUCHE PAS AU BLOC EXTRAIT. `partsPour` est une
+    // DEPENDANCE de l'orchestration : on en injecte une version qui retire
+    // les passes dont toutes les cles sont deja presentes. Le code de la
+    // boucle, lui, reste au mot pres celui de la campagne — son empreinte le
+    // prouve.
+    //
+    // DEUX REPRISES AU PLUS, et seulement sur une erreur TRANSITOIRE. Un
+    // refus de grammaire ou un budget epuise ne se reprennent pas : ils se
+    // reproduiraient a l'identique.
+    const estTransitoire = (e) =>
+      /Connection error|timed out|ECONNRESET|socket hang up|5\d\d/i.test(String(e?.message ?? e));
+
+    let document;
+    let acquis = {};
+    for (let reprise = 0; ; reprise++) {
+      const restantes = (p) =>
+        coeur
+          .partsPour(p)
+          .filter((part) => !part.keys.every((k) => acquis[k] !== undefined));
+      const orch =
+        reprise === 0
+          ? orchestration
+          : creerOrchestration({
+              adaptateur, modeleMetier, presentation, preservation, acceptation,
+              obligationsPourPasse,
+              PARTS: coeur.PARTS, partsPour: restantes, SYSTEM_EMIT: coeur.SYSTEM_EMIT,
+              callPart: coeur.callPart, extractJson: coeur.extractJson,
+            });
+      try {
+        const obtenu = await orch.emitSectionsAvecPartiel(
+          coeur.SYSTEM_EMIT,
+          orchestration.contexteClient(intention),
+          slug,
+          usage,
+          refusals,
+          prescriptif,
+        );
+        document = { ...acquis, ...obtenu };
+        break;
+      } catch (e) {
+        const partiel = e?.assemblagePartiel ?? e?.partiel;
+        if (partiel !== undefined) acquis = { ...acquis, ...partiel };
+        const sections = Object.keys(acquis).length;
+        if (reprise >= 2 || !estTransitoire(e) || sections === 0) {
+          e.sectionsAcquises = sections;
+          throw e;
+        }
+        console.log(
+          `  [${slug}] reprise ${String(reprise + 1)}/2 apres « ${String(e?.message ?? e).slice(0, 60)} » — ` +
+            `${String(sections)} section(s) deja payee(s) conservee(s)`,
+        );
+      }
+    }
 
     let { air, diagnostics } = validateLocal(document, prescriptif);
     diagnostics = [...diagnostics, ...jugerAcceptation(air, prescriptif, intention)];

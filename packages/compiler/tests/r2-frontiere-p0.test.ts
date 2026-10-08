@@ -150,6 +150,25 @@ describe("B/C — les dérivations ne travaillent QUE sur le MODEL (balayage COM
     parcoursFerme: (m) => (m.parcours[0] === undefined ? null : derivationsModele.parcoursFerme(m, m.parcours[0])),
     parcoursParPriorite: (m) => derivationsModele.parcoursParPriorite(m).map((p) => p.id),
     jugerAccesSansConnexion: (m) => derivationsModele.jugerAccesSansConnexion(m),
+    // ENTRÉES AJOUTÉES CONSCIEMMENT (2026-10-08).
+    //
+    // `reparerPlan` pose l'étape que `DERIVATION_IDENTITE_SANS_SOURCE` et
+    // `DERIVATION_CONFIRMATION_SANS_ECRITURE` déclarent manquante — EP-135
+    // les classe `faute_de_production` en disant « le générateur doit poser
+    // l'étape manquante », et personne ne la posait : on re-tirait P0, et
+    // trois refus coûtaient 0,82 $ pour rien.
+    //
+    // Elle a TOUTE SA PLACE dans cette batterie : c'est une dérivation pure
+    // du MODÈLE, elle ne lit aucun brief, et la propriété que cette batterie
+    // défend — même modèle ⇒ même sortie, octet pour octet — doit valoir
+    // pour elle comme pour les autres. On rend la liste des actions, pas le
+    // modèle : c'est ce qui se compare.
+    reparerPlan: (m) => derivationsModele.reparerPlan(m).reparations,
+    // `gestesEcrivants` ne prend AUCUN modèle — elle dérive de la table.
+    // Elle entre quand même : la batterie exige que CHAQUE export-fonction
+    // soit appelée, et une liste de gestes qui changerait en silence est
+    // exactement ce que `sources-derivees` existe pour attraper.
+    gestesEcrivants: () => derivationsModele.gestesEcrivants(),
   };
 
   it("COMPLÉTUDE — la batterie couvre CHAQUE fonction exportée des dérivations", () => {

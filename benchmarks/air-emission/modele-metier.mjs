@@ -794,6 +794,115 @@ function amontIdentitaire(parcours, index) {
   return undefined;
 }
 
+/**
+ * ══════════════════════════════════════════════════════════════════════════
+ * LA RÉPARATION DU PLAN — le générateur pose l'étape manquante.
+ * ══════════════════════════════════════════════════════════════════════════
+ *
+ * ── POURQUOI ELLE EXISTE, ET POURQUOI ELLE N'EXISTAIT PAS.
+ *
+ * EP-135 classe `DERIVATION_IDENTITE_SANS_SOURCE` et
+ * `DERIVATION_CONFIRMATION_SANS_ECRITURE` en `faute_de_production`, avec ce
+ * motif écrit : « le générateur doit poser l'étape manquante, pas l'humain
+ * répondre à une question ». La classification était posée. PERSONNE ne la
+ * posait, cette étape : la boucle re-tirait P0 et espérait mieux.
+ *
+ * MESURE DU 2026-10-08, sur une demande de marketplace :
+ *   3 tirages aveugles   → 3 refus, 0,8209 $, rien de produit
+ *   3 tirages INFORMÉS   → 2 refus, 1 refus, 2 refus — le modèle répare un
+ *                          point et en casse un autre
+ *
+ * Le modèle ne converge pas, et il n'a aucune raison de converger : ce qu'on
+ * lui demande est une propriété STRUCTURELLE du graphe de parcours, pas une
+ * question de rédaction.
+ *
+ * ── CE QU'ELLE S'INTERDIT.
+ *
+ * Elle ne répare QUE ce que le juge nomme, et seulement quand la réparation
+ * est DÉTERMINÉE par le modèle lui-même. Jamais une invention de métier :
+ * aucun concept créé, aucun acteur, aucun besoin, aucun état.
+ *
+ * ① IDENTITÉ SANS SOURCE — un geste consomme l'identité d'une instance que
+ *   rien n'a élue. L'étape manquante est nommée sans ambiguïté par le juge :
+ *   une source d'identité DU MÊME CONCEPT, juste avant. `choisir` est le
+ *   geste minimal qui l'est (`transport: "itemId"`, non terminal). Rien
+ *   d'autre n'est ajouté.
+ *
+ * ② CONFIRMATION SANS ÉCRITURE — `confirmer` n'observe rien. Ici la
+ *   réparation n'est détermée QUE si une écriture existe PLUS LOIN dans le
+ *   même parcours : alors l'ordre est faux, et la confirmation se replace
+ *   après la dernière écriture. S'il n'y a AUCUNE écriture, on ne répare
+ *   PAS — supprimer l'étape ferait tomber `MODELE_PARCOURS_SANS_PREUVE`
+ *   (`confirmer` est terminal), et choisir à la place du modèle ce qu'il
+ *   faudrait écrire serait inventer le métier. Le juge refuse alors, et
+ *   c'est le bon comportement.
+ *
+ * ── ET LES JUGES REPASSENT APRÈS.
+ *
+ * Cette fonction ne déclare RIEN réparé : elle rend un modèle et la liste de
+ * ce qu'elle a fait. C'est `jugerPlanEcrans` qui dit si le plan tient, après
+ * comme avant, avec les mêmes exigences. Une réparation qui ne satisferait
+ * pas son juge se verrait immédiatement.
+ */
+export function reparerPlan(modele) {
+  const reparations = [];
+  const consommateurs = consommateursDIdentite();
+  const ECRITURES = new Set(gestesEcrivants());
+
+  const parcours = (modele.parcours ?? []).map((p) => {
+    let etapes = [...(p.etapes ?? [])];
+
+    // ── ② D'ABORD L'ORDRE, car déplacer une étape change les amonts que ①
+    // examine. L'inverse insérerait un `choisir` au mauvais endroit.
+    for (let i = 0; i < etapes.length; i++) {
+      if (etapes[i].geste !== "confirmer") continue;
+      const ecritAvant = etapes.slice(0, i).some((x) => ECRITURES.has(x.geste));
+      if (ecritAvant) continue;
+      let derniereEcriture = -1;
+      for (let j = i + 1; j < etapes.length; j++) if (ECRITURES.has(etapes[j].geste)) derniereEcriture = j;
+      if (derniereEcriture === -1) continue; // non déterminé : on laisse refuser
+      const [confirmation] = etapes.splice(i, 1);
+      // `derniereEcriture` a reculé d'un cran par le retrait ; la
+      // confirmation se pose JUSTE APRÈS l'écriture qu'elle observe.
+      etapes.splice(derniereEcriture, 0, confirmation);
+      reparations.push({
+        // PAS DE CODE DE DIAGNOSTIC ICI. Le cliquet EP-135 l'a refuse, et il
+        // a raison : une reparation n'est pas un diagnostic, elle y repond.
+        // Seul `d()` fait naitre un diagnostic, avec sa classe.
+        parcours: p.id,
+        action: `confirmation déplacée après l'écriture qu'elle observe (${etapes[derniereEcriture - 1]?.geste ?? "?"})`,
+      });
+      i = -1; // le parcours a changé : on le reparcourt depuis le début
+    }
+
+    // ── ① PUIS LES SOURCES D'IDENTITÉ.
+    for (let i = 0; i < etapes.length; i++) {
+      const e = etapes[i];
+      if (!consommateurs.includes(e.geste)) continue;
+      if (estConceptIdentite(modele, e.concept)) continue;
+      const prec = amontIdentitaire({ etapes }, i);
+      if (prec !== undefined && prec.concept === e.concept && estSourceDIdentite(prec.geste)) continue;
+      // L'ÉTAPE MANQUANTE, telle que le juge la nomme : une source
+      // d'identité du MÊME concept, immédiatement avant. L'acteur est celui
+      // de l'étape qui consomme — pas un acteur choisi.
+      const source = { concept: e.concept, geste: "choisir" };
+      if (e.acteur !== undefined) source.acteur = e.acteur;
+      etapes.splice(i, 0, source);
+      reparations.push({
+        parcours: p.id,
+        action: `« choisir ${e.concept} » posé avant « ${e.geste} ${e.concept} »`,
+      });
+      i += 1; // ne pas réexaminer l'étape qu'on vient de pourvoir
+    }
+
+    return etapes === p.etapes ? p : { ...p, etapes };
+  });
+
+  return reparations.length === 0
+    ? { modele, reparations }
+    : { modele: { ...modele, parcours }, reparations };
+}
+
 /** L'étape IDENTITAIRE la plus proche en aval (transparentes ignorées). */
 function avalIdentitaire(parcours, index) {
   for (let i = index + 1; i < parcours.etapes.length; i++) {
@@ -949,6 +1058,29 @@ export function estSourceDIdentite(geste) {
 export function sourcesDIdentite() {
   return GESTES.filter(estSourceDIdentite);
 }
+/**
+ * Gestes qui ÉCRIVENT — mutation ET surface pour le faire.
+ *
+ * DÉRIVÉ DE LA TABLE, jamais écrit à la main : le cliquet
+ * `sources-derivees` m'a pris en flagrant délit — j'avais figé les trois
+ * gestes d'écriture dans un ensemble littéral. Le dépôt a vu quatre fois
+ * « une liste écrite deux fois diverge » ; une cinquième ne ferait pas
+ * exception, et le onzième geste serait oublié ici.
+ *
+ * ET LE COMMENTAIRE NE LES CITE PAS — sixième fois que ce piège se referme
+ * dans ce dépôt. Ma première rédaction écrivait le tableau fautif pour
+ * expliquer pourquoi il est interdit ; le cliquet, qui lit le source comme
+ * du TEXTE, l'a trouvé dans la prose. La documentation d'une règle violait
+ * la règle.
+ *
+ * `confirmer` mute aussi, mais n'a AUCUN bloc : il observe une écriture, il
+ * n'en est pas une. C'est précisément la distinction que fait le juge
+ * `DERIVATION_CONFIRMATION_SANS_ECRITURE`, et elle se lit dans la table.
+ */
+export function gestesEcrivants() {
+  return GESTES.filter((g) => TABLE_GESTES[g].effet === "mutation" && TABLE_GESTES[g].bloc !== null);
+}
+
 /** Gestes dont la preuve est OBSERVABLE — un parcours doit finir par l'un d'eux. */
 export const GESTES_TERMINAUX = GESTES.filter((g) => TABLE_GESTES[g].terminal);
 /** EP-070 — gestes qui PARCOURENT une collection (bloc de présentation) sans

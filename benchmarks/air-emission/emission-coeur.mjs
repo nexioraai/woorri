@@ -72,18 +72,32 @@ export function creerCoeurEmission({
 let alerteNeufDixiemesEmise = false;
 
 const PARTS = [
+  // ── SCISSION DE `base` (2026-10-08) — MESUREE, pas supposee.
+  //
+  // Sonde a COUT NUL (une grammaire refusee est un 400, aucun jeton
+  // facture) : `base` etait refusee a SES TROIS NIVEAUX de degradation —
+  // « The compiled grammar is too large ». Le moteur ne pouvait donc plus
+  // rien emettre DU TOUT, des la premiere passe, et ce pour n'importe quelle
+  // demande. La derniere campagne date du 2026-09-12 ; le schema a grossi
+  // depuis, et personne ne s'en etait apercu parce que le site n'appelait
+  // pas le moteur.
+  //
+  // CE N'EST PAS UNE QUESTION D'OCTETS : `base` faisait 5 ko et etait
+  // refusee, `actions` en fait 4 et passe a son niveau 2. C'est la
+  // COMPLEXITE compilee — unions, enums, imbrication — qui compte.
+  //
+  // MEME REMEDE QUE D-078 ET QUE LA SCISSION `entites`/`donnees` : on coupe.
+  // L'identite du projet et sa navigation d'un cote ; les contrats
+  // transverses — rendu, reseau, plateforme, conformite — de l'autre. Chacun
+  // porte alors une grammaire que le service accepte, verifie par la meme
+  // sonde.
   {
     name: "base",
-    keys: [
-      "airSchemaVersion",
-      "projectId",
-      "app",
-      "navigation",
-      "design",
-      "network",
-      "native",
-      "compliance",
-    ],
+    keys: ["airSchemaVersion", "projectId", "app", "navigation"],
+  },
+  {
+    name: "socle",
+    keys: ["design", "network", "native", "compliance"],
   },
   // SCISSION 2026-09-09 (même patron que D-078, mesuré et non supposé) :
   // « The compiled grammar is too large » sur `donnees` à TOUS les niveaux de

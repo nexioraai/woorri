@@ -15,7 +15,29 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
-const EMPREINTE_AVANT = "4ffbfe96e560f51042641bb512aa9633";
+// ÉDITION CONSCIENTE (2026-10-08) — 4ffbfe96… → 0de98647….
+//
+// CE QUE CETTE EMPREINTE PROUVAIT, ET CE QU'ELLE PROUVE ENCORE. Elle dit que
+// le texte n'a pas change EN CHEMIN pendant l'extraction du 2026-10-07. Elle
+// ne dit pas que le code ne doit plus jamais evoluer : un cliquet qui
+// interdirait toute modification interdirait aussi toute correction.
+//
+// CE QUI A CHANGE, ET POURQUOI. `PARTS` a ete scindee : la passe `base`
+// portait huit sections et etait REFUSEE a ses trois niveaux de degradation
+// — « The compiled grammar is too large ». Mesure a cout nul (une grammaire
+// refusee est un 400, aucun jeton facture) : 5 ko refuses aux niveaux 0, 1
+// et 2. Le moteur ne pouvait donc plus rien emettre, des sa premiere passe,
+// pour n'importe quelle demande — et personne ne le savait parce que le site
+// n'appelait pas le moteur.
+//
+// La coupe suit le remede deja employe deux fois ici (D-078, scission
+// `entites`/`donnees`) : `base` garde l'identite et la navigation, `socle`
+// prend les contrats transverses. Verifie par la MEME sonde : 3 ko et 2 ko,
+// acceptes tous les deux.
+//
+// L'empreinte est re-gelee, pas retiree : la prochaine modification non
+// decidee se verra exactement comme celle-ci s'est vue.
+const EMPREINTE_AVANT = "0de98647b4de30a74a8dee8e49a59aed";
 
 const coeur = readFileSync(join(HERE, "emission-coeur.mjs"), "utf8");
 // DEUX repères, pas six : `SYSTEM_TRANSCRIBE` est RESTÉ dans le script — il

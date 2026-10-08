@@ -214,3 +214,23 @@ export function jugerPublicationSansCompte(modele: ModeleMetier): DiagnosticMode
 /** EP-188 — une entite PRESCRITE par un concept porteur de donnees et
  *  ABSENTE du document. Ce que le moteur exige, il le verifie. */
 export function verifierEntitesPrescrites(air: unknown, modele: ModeleMetier): DiagnosticModele[];
+
+/** Gestes qui ECRIVENT — mutation ET surface pour le faire. DERIVE de la
+ *  table : `confirmer` mute aussi mais n'a aucun bloc, il OBSERVE. */
+export function gestesEcrivants(): string[];
+
+/**
+ * EP-135 appliquee — le generateur POSE l'etape manquante.
+ *
+ * Les deux diagnostics de derivation qu'elle repare sont classes
+ * `faute_de_production` : « le generateur doit poser l'etape manquante, pas
+ * l'humain repondre a une question ». Elle ne repare QUE ce que le juge
+ * nomme, et seulement quand la reparation est DETERMINEE par le modele. Elle
+ * n'invente aucun metier, et laisse refuser ce qu'elle ne sait pas reparer.
+ *
+ * PURE : le modele d'entree n'est jamais mute.
+ */
+export function reparerPlan(modele: ModeleMetier): {
+  modele: ModeleMetier;
+  reparations: { parcours: string; action: string }[];
+};
