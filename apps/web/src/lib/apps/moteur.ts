@@ -128,6 +128,10 @@ export async function emettreApplication(brief: string, slug: string): Promise<E
       primitives,
       budgetUsd: repair,
       preservation: repair,
+      // `repairScope` est la DOUZIEME dependance de l'orchestration, manquee
+      // a l'extraction. Le mode strict l'a nommee ici avant la production ;
+      // sans lui elle serait repartie en ligne valoir `undefined`.
+      repairScope: repair,
       // `acceptation.mjs` en demande quatre de plus — les juges.
       compiler,
       fidelity,

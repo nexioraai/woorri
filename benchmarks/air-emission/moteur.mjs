@@ -119,6 +119,7 @@ export async function creerMoteur({ cleApi, plafondUsd = Infinity, paquets }) {
   if (paquets !== undefined) {
     globalThis.__DERIBFY_PAQUETS__ = { ...(globalThis.__DERIBFY_PAQUETS__ ?? {}), ...paquets };
   }
+  const repairScope = await charger("repairScope", "packages/repair/src/repair-scope.ts");
   const acceptation = await import(join(HERE, "acceptation.mjs"));
   const { chargerAdaptateur } = await import(join(HERE, "adaptateurs.mjs"));
   const adaptateur = await chargerAdaptateur(process.env.ADAPTATEUR_FOURNISSEUR);
@@ -199,7 +200,7 @@ const surfaceEnveloppe = () => {
   const { creerOrchestration } = await import(join(HERE, "orchestration.mjs"));
   const orchestration = creerOrchestration({
     adaptateur, modeleMetier, presentation, preservation, acceptation,
-    obligationsPourPasse,
+    obligationsPourPasse, repairScope,
     PARTS: coeur.PARTS, partsPour: coeur.partsPour, SYSTEM_EMIT: coeur.SYSTEM_EMIT,
     callPart: coeur.callPart, extractJson: coeur.extractJson,
   });
@@ -426,7 +427,7 @@ const surfaceEnveloppe = () => {
           ? orchestration
           : creerOrchestration({
               adaptateur, modeleMetier, presentation, preservation, acceptation,
-              obligationsPourPasse,
+              obligationsPourPasse, repairScope,
               PARTS: coeur.PARTS, partsPour: restantes, SYSTEM_EMIT: coeur.SYSTEM_EMIT,
               callPart: coeur.callPart, extractJson: coeur.extractJson,
             });

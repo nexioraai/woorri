@@ -47,12 +47,26 @@ describe('CLIQUET — aucun fichier TypeScript cherche sur disque', () => {
         __strict: true,
         airSchema, registry, blocksRegistry,
         presentation: executionContract, executionContract,
-        primitives, budgetUsd: repair, preservation: repair,
+        primitives, budgetUsd: repair, preservation: repair, repairScope: repair,
         compiler, fidelity, executionGraph: executionContract, vivacite: executionContract,
       },
     })
     expect(typeof m.emettreApplication).toBe('function')
   }, 60_000)
+
+  it('la liste du test et celle du site ne peuvent pas diverger', () => {
+    // Ce fichier redeclare les paquets qu'il injecte : c'est une SECONDE
+    // liste, et « une liste ecrite deux fois diverge » — quatre fois
+    // constate ici. Le symptome serait le pire possible : un test vert sur
+    // une injection que le site ne fait pas.
+    const TS = readFileSync(join(RACINE, 'apps/web/src/lib/apps/moteur.ts'), 'utf8')
+    const bloc = TS.slice(TS.indexOf('paquets: {'), TS.indexOf('},\n  })'))
+    const duSite = [...bloc.matchAll(/^\s{6}(\w+)[,:]/gmu)].map((m) => m[1]).filter((k) => k !== '__strict')
+    expect(duSite.length).toBeGreaterThan(8)
+    const duTest = readFileSync(__filename, 'utf8')
+    const injection = duTest.slice(duTest.indexOf('paquets: {'), duTest.indexOf('},\n    })'))
+    for (const cle of duSite) expect(injection, `« ${cle} » injecte par le site, absent du test`).toContain(cle)
+  })
 
   it('le site passe bien le mode strict — sinon le defaut reviendrait en silence', () => {
     const TS = sansCommentaires(

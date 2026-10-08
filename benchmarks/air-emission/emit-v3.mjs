@@ -372,7 +372,7 @@ const {
   repairSections, repairSectionsAvecPartiel,
 } = creerOrchestration({
   adaptateur, modeleMetier, presentation, preservation, acceptation,
-  obligationsPourPasse, PARTS, partsPour, SYSTEM_EMIT, callPart, extractJson,
+  obligationsPourPasse, repairScope, PARTS, partsPour, SYSTEM_EMIT, callPart, extractJson,
 });
 
 const summary = [];

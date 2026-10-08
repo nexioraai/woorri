@@ -44,6 +44,16 @@ export function creerOrchestration({
   preservation,
   acceptation,
   obligationsPourPasse,
+  // DOUZIEME DEPENDANCE, MANQUEE A L'EXTRACTION — et le defaut n'est pas
+  // l'oubli, c'est la METHODE. L'analyse de portee (acorn) l'avait bien
+  // listee parmi les candidats libres ; j'ai ensuite TRIE A LA MAIN ceux que
+  // j'allais verifier, et je ne l'ai pas mise dans ma liste.
+  //
+  // Elle ne sert que dans `repairSections` : le defaut n'apparaissait donc
+  // qu'une fois la premiere validation refusee — 1 669 secondes et 9 passes
+  // plus tard. `dependances-orchestration.verif.mjs` verifie desormais TOUS
+  // les candidats, sans tri humain.
+  repairScope,
   PARTS,
   partsPour,
   SYSTEM_EMIT,
