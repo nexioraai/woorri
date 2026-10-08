@@ -66,7 +66,7 @@ const REPO = join(HERE, "..", "..");
  * Un appelant qui veut vraiment borner passe `plafondUsd` ; personne ne le
  * fait, et c'est voulu.
  */
-export async function creerMoteur({ cleApi, plafondUsd = Infinity, paquets }) {
+export async function creerMoteur({ cleApi, plafondUsd = Infinity, paquets, client: clientFourni }) {
   if (typeof cleApi !== "string" || cleApi.trim() === "") {
     throw new Error("MOTEUR_CLE_ABSENTE");
   }
@@ -172,10 +172,19 @@ const surfaceEnveloppe = () => {
   // Le client : meme reglage que la campagne — vingt minutes, deux reprises.
   // La cle vient de l'appelant, jamais d'un fichier : `.env.local` n'est pas
   // deploye, et l'adaptateur a ete ecrit pour une campagne lancee a la main.
-  const client = await adaptateur.creerClient(() => `ANTHROPIC_API_KEY=${cleApi}`, {
-    timeout: 20 * 60 * 1000,
-    maxRetries: 2,
-  });
+  // ── LA COUTURE DU CLIENT (etage 2, mode a blanc).
+  //
+  // `client.messages.create` est LA frontiere payante — tout passe par elle,
+  // les passes comme la sonde. Un client fourni la remplace EN ENTIER : c'est
+  // ce qui permet d'eprouver la machinerie de continuation a cout nul, avec
+  // un client a blanc qui vit dans le fichier de preuve, jamais dans un
+  // chemin de production. Aucun appelant de production ne fournit de client.
+  const client =
+    clientFourni ??
+    (await adaptateur.creerClient(() => `ANTHROPIC_API_KEY=${cleApi}`, {
+      timeout: 20 * 60 * 1000,
+      maxRetries: 2,
+    }));
   const PRIX = {
     in: adaptateur.CONFIG.prixParMtok.entree,
     cacheWrite: adaptateur.CONFIG.prixParMtok.ecritureCache,
@@ -244,11 +253,66 @@ const surfaceEnveloppe = () => {
    * MASQUE pas la variance du modele, elle la COMPTE. A l'epuisement, arret
    * et rapport — jamais de juge assoupli pour « faire passer ».
    */
-  async function emettreApplication({ brief, slug }) {
-    // AVANT LE MOINDRE APPEL D'EMISSION : on mesure quel niveau de grammaire
-    // le service accepte, pour chaque passe, en parallele. Un refus ne
-    // facture rien ; une sonde acceptee coute un jeton de sortie.
-    const niveaux = await sonderUneFois();
+  // ════ L'EMISSION PAR TRANCHES — etage 2 du plan asynchrone (2026-10-08) ════
+  //
+  // Une emission complete dure ~28 minutes ; une invocation serverless en a
+  // 300. L'emission devient donc CONTINUABLE : une tranche travaille dans un
+  // budget temps, se suspend ENTRE deux appels, et rend un etat que la
+  // tranche suivante reprend. L'etat est integralement serialisable — c'est
+  // lui qui ira dans `sections_acquises` (etage travailleur).
+  //
+  // CE QUE CES ENTREES NE PROUVENT PAS ENCORE : le mode a blanc qui les
+  // eprouve etablit « machinerie correcte », JAMAIS « pret pour la prod ».
+  // Tant que l'async n'a pas tourne une fois contre le vrai service, un vert
+  // a blanc n'est pas un vert reel.
+
+  /**
+   * Le prescriptif, RECALCULE depuis le modele — jamais serialise.
+   *
+   * Plan et ecrans d'identite se DERIVENT du modele par des fonctions pures
+   * et gratuites. Les stocker dans l'etat, c'etait leur permettre de
+   * diverger de leur source ; on ne stocke jamais ce qui se derive.
+   *
+   * EP-190 ② — le prescriptif porte les ECRANS D'IDENTITE. Derive,
+   * jamais recopie : `estConceptIdentite` decide, `ecranAirDe` traduit.
+   */
+  function prescriptifDe(modeleP0) {
+    const plan = modeleMetier.ecransDe(modeleP0);
+    const conceptsIdentite = modeleP0.concepts
+      .map((c) => c.id)
+      .filter((id) => modeleMetier.estConceptIdentite(modeleP0, id));
+    const surfacesModele = modeleMetier.surfacesDe(modeleP0);
+    const ecransDIdentite = plan.ecrans
+      .filter((e) =>
+        (e.surfaces ?? []).some((sid) =>
+          conceptsIdentite.includes(surfacesModele.find((sf) => sf.surfaceId === sid)?.concept),
+        ),
+      )
+      .map((e) => modeleMetier.ecranAirDe(e.ecranId));
+    return { modele: modeleP0, plan, ecransDIdentite };
+  }
+
+  /**
+   * UNE TRANCHE D'EMISSION.
+   *
+   * `etat = null` : on demarre a P0. `etat` porte : on reprend ou la tranche
+   * precedente s'est arretee. `budgetMs` : plus aucun NOUVEL appel payant une
+   * fois le budget ecoule — un appel en vol se termine toujours, il n'est
+   * jamais interrompu. C'est a l'appelant de dimensionner son budget sous
+   * `maxDuration` moins le pire appel.
+   *
+   * Rend une union discriminee par `fini` :
+   *   { fini: true,  resultat }                      — l'objet d'aujourd'hui
+   *   { fini: false, etat, etape, raison: "budget_temps",
+   *                  coutTrancheUsd, jetonsTranche }  — a reprendre
+   *
+   * Les ERREURS, elles, se propagent comme avant : la suspension n'existe
+   * que pour le budget. Un refus de juge ou une panne restent des issues
+   * que l'appelant traite — rien n'est avale.
+   */
+  async function poursuivreEmission({ brief, slug, etat = null, budgetMs = Infinity }) {
+    const depart = Date.now();
+    const budgetEpuise = () => Date.now() - depart >= budgetMs;
 
     const usage = [];
     const refusals = { count: 0 };
@@ -263,176 +327,211 @@ const surfaceEnveloppe = () => {
         { entree: 0, sortie: 0 },
       );
     const intention = { text: brief, slug };
-    const tirages = [];
 
-    // ── P0 : comprendre AVANT d'emettre. Un modele refuse arrete l'intention
-    // a ~0,2 $ au lieu de payer huit passes.
-    let prescriptif;
-    const requeteP0 = passe0.construireRequeteP0(brief);
-    const { grammaire } = adaptateur.degraderGrammaire(requeteP0.grammaire);
-
-    // ── LE RE-TIRAGE EST INFORME, PLUS AVEUGLE.
+    // ── CE QUI EST REPRIS DE LA TRANCHE PRECEDENTE — et jamais re-paye.
     //
-    // MESURE DU 2026-10-08, deux tirages sur deux, meme demande :
-    //   P2 · DERIVATION_IDENTITE_SANS_SOURCE
-    //   P2 · DERIVATION_CONFIRMATION_SANS_ECRITURE
-    //
-    // Ce n'est pas de la variance, c'est systematique. Et les deux juges
-    // disent EXACTEMENT ce qui manque : une etape qui elit l'instance avant
-    // de la consulter, une ecriture avant la confirmation qui l'observe.
-    // EP-135 les classe `faute_de_production` — « le generateur doit poser
-    // l'etape manquante, pas l'humain repondre a une question ».
-    //
-    // Or personne ne la posait. La boucle re-tirait a l'identique, en
-    // esperant un tirage plus chanceux : trois refus mesures a 0,8209 $, et
-    // rien de produit. Un modele a qui l'on ne dit pas ce qu'on lui reproche
-    // n'a aucune raison de corriger.
-    //
-    // Le reproche voyage donc avec la demande. C'est le MEME motif que
-    // `repairSections`, qui existe depuis toujours pour les sections AIR :
-    // on ne reemet pas au hasard, on reemet CE QUI A ETE REFUSE, en disant
-    // pourquoi. Rien n'est assoupli — les juges sont les memes a chaque
-    // tentative, seul le tirage est renseigne.
-    const reproche = (diags) =>
-      diags.length === 0
-        ? ""
-        : `\n\nTON MODELE PRECEDENT A ETE REFUSE. Corrige EXACTEMENT ces points, ` +
-          `sans rien retirer d'autre au brief :\n` +
-          diags.map((x) => `- ${x.path} : ${x.message}`).join("\n") +
-          `\n\nCes refus sont STRUCTURELS, jamais une question au client : un geste ` +
-          `qui consulte une instance exige en amont, DANS LE MEME PARCOURS, une etape ` +
-          `du MEME concept qui l'elit ; une confirmation exige une ecriture en amont. ` +
-          `Ajoute les etapes manquantes plutot que de supprimer le parcours.`;
-    let dernierReproche = "";
-
-    for (let tentative = 1; ; tentative++) {
-      const partP0 = {
-        name: "p0",
-        keys: ["modele"],
-        levels: [{ name: "canonique-degradee-adaptateur", schema: grammaire }],
-        levelIndex: 0,
+    // Le compteur de depense du coeur est PAR PROCESSUS : une tranche est un
+    // processus neuf, le cumul voyage donc dans l'etat.
+    const coutAnterieur = etat?.coutUsd ?? 0;
+    const jetonsAnterieurs = etat?.jetons ?? { entree: 0, sortie: 0 };
+    const coutCumule = () => Number((coutAnterieur + coeur.lireEtatDepense().depense).toFixed(6));
+    const jetonsCumules = () => {
+      const j = jetons();
+      return {
+        entree: jetonsAnterieurs.entree + j.entree,
+        sortie: jetonsAnterieurs.sortie + j.sortie,
       };
-      const avant = coeur.lireEtatDepense().depense;
-      const reponseP0 = await coeur.callPart(
-        partP0,
-        requeteP0.system,
-        requeteP0.user + dernierReproche,
-        `${slug}:p0#t${tentative}`,
-        usage,
-      );
-      const neutreP0 = adaptateur.lireReponse(reponseP0);
-      const verdictP0 = passe0.jugerSortieP0(neutreP0.texte, brief, { tronquee: neutreP0.tronquee });
-      // ── LE GENERATEUR POSE L'ETAPE MANQUANTE AVANT DE JUGER.
-      //
-      // EP-135 dit, pour ces diagnostics-la : « le generateur doit poser
-      // l'etape manquante, pas l'humain repondre a une question ». Personne
-      // ne la posait — on re-tirait. Mesure : 3 tirages aveugles refuses
-      // (0,8209 $), puis 3 tirages INFORMES qui n'ont pas converge non plus,
-      // le modele reparant un point et en cassant un autre.
-      //
-      // `reparerPlan` est PURE et ne repare que ce que le juge NOMME, quand
-      // la reparation est determinee par le modele lui-meme. Elle n'invente
-      // aucun metier, et elle refuse de reparer ce qu'elle ne sait pas —
-      // auquel cas le juge refuse, et c'est le bon comportement.
-      //
-      // LES JUGES REPASSENT APRES, inchanges. Une reparation qui ne
-      // satisferait pas son juge se verrait immediatement.
-      let modeleP0 = verdictP0.ok ? verdictP0.modele : undefined;
-      let reparationsPlan = [];
-      if (verdictP0.ok) {
-        const r = modeleMetier.reparerPlan(verdictP0.modele);
-        modeleP0 = r.modele;
-        reparationsPlan = r.reparations;
+    };
+    const tirages = [...(etat?.tirages ?? [])];
+    let modeleP0 = etat?.modele ?? null;
+    let acquis = { ...(etat?.acquis ?? {}) };
+    let niveaux = etat?.niveaux ?? null;
+    let premierePasse = etat?.premierePasse ?? null;
+    let prescriptif = null;
+
+    /** Les passes qu'il reste a emettre : celles dont une cle manque. */
+    const restantes = (p) =>
+      coeur.partsPour(p).filter((part) => !part.keys.every((k) => acquis[k] !== undefined));
+
+    const suspendre = (phase) => ({
+      fini: false,
+      raison: "budget_temps",
+      etape:
+        phase === "emission" && prescriptif !== null
+          ? (restantes(prescriptif)[0]?.name ?? "emission")
+          : phase,
+      etat: {
+        phase,
+        modele: modeleP0,
+        acquis,
+        tirages,
+        niveaux,
+        premierePasse,
+        coutUsd: coutCumule(),
+        jetons: jetonsCumules(),
+      },
+      coutTrancheUsd: coeur.lireEtatDepense().depense,
+      jetonsTranche: jetons(),
+    });
+
+    // ── LES NIVEAUX DE GRAMMAIRE : RE-APPLIQUES DEPUIS L'ETAT, OU SONDES.
+    //
+    // Le niveau acceptable est une propriete du SCHEMA, pas de la demande ni
+    // de la tranche : re-sonder a chaque tranche paierait pour re-mesurer la
+    // meme chose. L'etat le porte, et une reprise n'emet AUCUN appel de sonde.
+    if (niveaux !== null) {
+      niveauxSondes = niveaux;
+      for (const n of niveaux) {
+        if (n.niveau === null) continue;
+        const part = coeur.PARTS.find((x) => x.name === n.passe);
+        if (part !== undefined) part.levelIndex = n.niveau;
       }
-      const diagnosticsPlan = verdictP0.ok
-        ? (() => {
-            const plan = modeleMetier.ecransDe(modeleP0);
-            return [...plan.diagnostics, ...modeleMetier.jugerPlanEcrans(plan, modeleP0)];
-          })()
-        : [];
-      const arret = !verdictP0.ok ? "P1" : diagnosticsPlan.length > 0 ? "P2" : "passe";
-      // Le reproche du PROCHAIN tirage : les diagnostics de celui-ci,
-      // nommes avec leur chemin. Les juges, eux, ne bougent pas.
-      dernierReproche = reproche(verdictP0.ok ? diagnosticsPlan : verdictP0.diagnostics);
-      tirages.push({
-        tentative,
-        arret,
-        coutUsd: Number((coeur.lireEtatDepense().depense - avant).toFixed(4)),
-        diagnostics: (verdictP0.ok ? diagnosticsPlan : verdictP0.diagnostics).map((x) => x.code),
-        // CE QUE LE GENERATEUR A CORRIGE LUI-MEME, dit et non tu : une
-        // reparation silencieuse modifierait le travail de quelqu'un sans
-        // qu'il le sache.
-        reparations: reparationsPlan.map((r) => r.action),
-      });
-      if (arret === "passe") {
-        const plan = modeleMetier.ecransDe(modeleP0);
-        // EP-190 ② — le prescriptif porte les ECRANS D'IDENTITE. Derive,
-        // jamais recopie : `estConceptIdentite` decide, `ecranAirDe` traduit.
-        const conceptsIdentite = modeleP0.concepts
-          .map((c) => c.id)
-          .filter((id) => modeleMetier.estConceptIdentite(modeleP0, id));
-        const surfacesModele = modeleMetier.surfacesDe(modeleP0);
-        const ecransDIdentite = plan.ecrans
-          .filter((e) =>
-            (e.surfaces ?? []).some((sid) =>
-              conceptsIdentite.includes(surfacesModele.find((sf) => sf.surfaceId === sid)?.concept),
-            ),
-          )
-          .map((e) => modeleMetier.ecranAirDe(e.ecranId));
-        prescriptif = { modele: modeleP0, plan, ecransDIdentite };
-        break;
-      }
-      if (tentative >= (process.env.P0_TENTATIVES ? Number(process.env.P0_TENTATIVES) : 3)) {
-        return {
-          ok: false,
-          raison: `P0 refuse ${String(tentative)} fois`,
-          tirages,
-          coutUsd: coeur.lireEtatDepense().depense,
-          jetons: jetons(),
-          diagnostics: [],
+    } else {
+      if (budgetEpuise()) return suspendre("p0");
+      niveaux = await sonderUneFois();
+    }
+
+    // ── P0 : comprendre AVANT d'emettre — saute si l'etat porte deja le
+    // modele : il a ete paye UNE fois, il ne se re-tire jamais.
+    if (modeleP0 === null) {
+      const requeteP0 = passe0.construireRequeteP0(brief);
+      const { grammaire } = adaptateur.degraderGrammaire(requeteP0.grammaire);
+
+      // ── LE RE-TIRAGE EST INFORME, PLUS AVEUGLE.
+      //
+      // MESURE DU 2026-10-08, deux tirages sur deux, meme demande :
+      //   P2 · DERIVATION_IDENTITE_SANS_SOURCE
+      //   P2 · DERIVATION_CONFIRMATION_SANS_ECRITURE
+      //
+      // EP-135 les classe `faute_de_production` — « le generateur doit poser
+      // l'etape manquante, pas l'humain repondre a une question ». La boucle
+      // re-tirait a l'identique : trois refus mesures a 0,8209 $, rien de
+      // produit. Un modele a qui l'on ne dit pas ce qu'on lui reproche n'a
+      // aucune raison de corriger. Le reproche voyage donc avec la demande —
+      // les juges, eux, ne bougent pas.
+      const reproche = (diags) =>
+        diags.length === 0
+          ? ""
+          : `\n\nTON MODELE PRECEDENT A ETE REFUSE. Corrige EXACTEMENT ces points, ` +
+            `sans rien retirer d'autre au brief :\n` +
+            diags.map((x) => `- ${x.path} : ${x.message}`).join("\n") +
+            `\n\nCes refus sont STRUCTURELS, jamais une question au client : un geste ` +
+            `qui consulte une instance exige en amont, DANS LE MEME PARCOURS, une etape ` +
+            `du MEME concept qui l'elit ; une confirmation exige une ecriture en amont. ` +
+            `Ajoute les etapes manquantes plutot que de supprimer le parcours.`;
+      let dernierReproche = "";
+
+      for (let tentative = tirages.length + 1; ; tentative++) {
+        // La suspension tombe ENTRE deux tirages, jamais pendant.
+        if (budgetEpuise()) return suspendre("p0");
+        const partP0 = {
+          name: "p0",
+          keys: ["modele"],
+          levels: [{ name: "canonique-degradee-adaptateur", schema: grammaire }],
+          levelIndex: 0,
         };
+        const avant = coeur.lireEtatDepense().depense;
+        const reponseP0 = await coeur.callPart(
+          partP0,
+          requeteP0.system,
+          requeteP0.user + dernierReproche,
+          `${slug}:p0#t${tentative}`,
+          usage,
+        );
+        const neutreP0 = adaptateur.lireReponse(reponseP0);
+        const verdictP0 = passe0.jugerSortieP0(neutreP0.texte, brief, { tronquee: neutreP0.tronquee });
+        // ── LE GENERATEUR POSE L'ETAPE MANQUANTE AVANT DE JUGER (EP-135).
+        //
+        // `reparerPlan` est PURE et ne repare que ce que le juge NOMME, quand
+        // la reparation est determinee par le modele lui-meme. Elle n'invente
+        // aucun metier, et elle refuse de reparer ce qu'elle ne sait pas —
+        // auquel cas le juge refuse, et c'est le bon comportement. LES JUGES
+        // REPASSENT APRES, inchanges.
+        let candidat = verdictP0.ok ? verdictP0.modele : undefined;
+        let reparationsPlan = [];
+        if (verdictP0.ok) {
+          const r = modeleMetier.reparerPlan(verdictP0.modele);
+          candidat = r.modele;
+          reparationsPlan = r.reparations;
+        }
+        const diagnosticsPlan = verdictP0.ok
+          ? (() => {
+              const plan = modeleMetier.ecransDe(candidat);
+              return [...plan.diagnostics, ...modeleMetier.jugerPlanEcrans(plan, candidat)];
+            })()
+          : [];
+        const arret = !verdictP0.ok ? "P1" : diagnosticsPlan.length > 0 ? "P2" : "passe";
+        dernierReproche = reproche(verdictP0.ok ? diagnosticsPlan : verdictP0.diagnostics);
+        tirages.push({
+          tentative,
+          arret,
+          coutUsd: Number((coeur.lireEtatDepense().depense - avant).toFixed(4)),
+          diagnostics: (verdictP0.ok ? diagnosticsPlan : verdictP0.diagnostics).map((x) => x.code),
+          // CE QUE LE GENERATEUR A CORRIGE LUI-MEME, dit et non tu.
+          reparations: reparationsPlan.map((r) => r.action),
+        });
+        if (arret === "passe") {
+          modeleP0 = candidat;
+          break;
+        }
+        if (tentative >= (process.env.P0_TENTATIVES ? Number(process.env.P0_TENTATIVES) : 3)) {
+          return {
+            fini: true,
+            resultat: {
+              ok: false,
+              raison: `P0 refuse ${String(tentative)} fois`,
+              tirages,
+              coutUsd: coutCumule(),
+              jetons: jetonsCumules(),
+              diagnostics: [],
+              niveaux,
+            },
+          };
+        }
       }
     }
 
+    prescriptif = prescriptifDe(modeleP0);
+
+    // ── LE BUDGET MORD ENTRE DEUX APPELS, PAR LA COUTURE EXISTANTE.
+    //
+    // `callPart` est une DEPENDANCE injectable de l'orchestration — la meme
+    // couture que la reprise. L'enveloppe leve une sentinelle AVANT l'appel
+    // si le budget est ecoule ; `emitSectionsAvecPartiel` fait alors ce pour
+    // quoi D-103 existe : il attache l'assemblage partiel a l'erreur. Rien
+    // dans le bloc scelle ne change — les empreintes le prouvent.
+    const callPartBudgete = async (...args) => {
+      if (budgetEpuise()) {
+        const e = new Error("BUDGET_TEMPS — plus aucun nouvel appel dans cette tranche");
+        e.budgetTemps = true;
+        throw e;
+      }
+      return coeur.callPart(...args);
+    };
+    const orchestrationBudgetee = creerOrchestration({
+      adaptateur, modeleMetier, presentation, preservation, acceptation,
+      obligationsPourPasse, repairScope,
+      PARTS: coeur.PARTS, partsPour: restantes, SYSTEM_EMIT: coeur.SYSTEM_EMIT,
+      callPart: callPartBudgete, extractJson: coeur.extractJson,
+    });
+
     // ── LES PASSES, ET ON NE REPAIE JAMAIS CE QUI EST DEJA PAYE.
     //
-    // MESURE DU 2026-10-08 : un tir reel a emis SEIZE sections — identite,
-    // navigation, socle, entites, donnees, capacites, ecrans — puis est mort
-    // sur « Connection error ». 2,6387 $ etaient deja payes. D-103 preserve
-    // deja l'assemblage partiel avec l'erreur ; personne ne s'en servait
-    // pour REPRENDRE, et une coupure reseau coutait donc l'emission entiere
-    // une seconde fois.
-    //
-    // LA REPRISE NE TOUCHE PAS AU BLOC EXTRAIT. `partsPour` est une
-    // DEPENDANCE de l'orchestration : on en injecte une version qui retire
-    // les passes dont toutes les cles sont deja presentes. Le code de la
-    // boucle, lui, reste au mot pres celui de la campagne — son empreinte le
-    // prouve.
+    // MESURE DU 2026-10-08 : un tir reel a emis SEIZE sections puis est mort
+    // sur « Connection error », 2,6387 $ deja payes. La reprise par `acquis`
+    // existe pour ca ; la continuation lui donne un second support — l'etat
+    // d'une tranche a l'autre, en plus de la memoire d'un meme processus.
     //
     // DEUX REPRISES AU PLUS, et seulement sur une erreur TRANSITOIRE. Un
-    // refus de grammaire ou un budget epuise ne se reprennent pas : ils se
-    // reproduiraient a l'identique.
+    // refus de grammaire ou un budget epuise ne se reprennent pas ici : le
+    // premier se reproduirait a l'identique, le second est une SUSPENSION.
     const estTransitoire = (e) =>
       /Connection error|timed out|ECONNRESET|socket hang up|5\d\d/i.test(String(e?.message ?? e));
 
     let document;
-    let acquis = {};
     for (let reprise = 0; ; reprise++) {
-      const restantes = (p) =>
-        coeur
-          .partsPour(p)
-          .filter((part) => !part.keys.every((k) => acquis[k] !== undefined));
-      const orch =
-        reprise === 0
-          ? orchestration
-          : creerOrchestration({
-              adaptateur, modeleMetier, presentation, preservation, acceptation,
-              obligationsPourPasse, repairScope,
-              PARTS: coeur.PARTS, partsPour: restantes, SYSTEM_EMIT: coeur.SYSTEM_EMIT,
-              callPart: coeur.callPart, extractJson: coeur.extractJson,
-            });
       try {
-        const obtenu = await orch.emitSectionsAvecPartiel(
+        const obtenu = await orchestrationBudgetee.emitSectionsAvecPartiel(
           coeur.SYSTEM_EMIT,
           orchestration.contexteClient(intention),
           slug,
@@ -445,6 +544,7 @@ const surfaceEnveloppe = () => {
       } catch (e) {
         const partiel = e?.assemblagePartiel ?? e?.partiel;
         if (partiel !== undefined) acquis = { ...acquis, ...partiel };
+        if (e?.budgetTemps === true) return suspendre("emission");
         const sections = Object.keys(acquis).length;
         if (reprise >= 2 || !estTransitoire(e) || sections === 0) {
           e.sectionsAcquises = sections;
@@ -456,50 +556,79 @@ const surfaceEnveloppe = () => {
         );
       }
     }
+    acquis = document;
 
     let { air, diagnostics } = validateLocal(document, prescriptif);
     diagnostics = [...diagnostics, ...jugerAcceptation(air, prescriptif, intention)];
-    const premierePasse = diagnostics.length;
+    if (premierePasse === null) premierePasse = diagnostics.length;
 
     // ── UNE REPARATION, comme la campagne : on ne reemet que les sections
-    // que les diagnostics designent.
+    // que les diagnostics designent. Le budget y mord par la MEME enveloppe ;
+    // une suspension replie le partiel repare dans l'etat — la tranche
+    // suivante revalide (gratuit) et ne repare que ce qui reste.
     if (air === null || diagnostics.length > 0) {
-      const resultat = await orchestration.repairSectionsAvecPartiel(
-        document,
-        diagnostics,
-        orchestration.contexteClient(intention),
-        slug,
-        usage,
-        refusals,
-        prescriptif,
-      );
-      // LA REPARATION REND UNE ENVELOPPE — { sectionsReemises, document,
-      // ampute } — PAS un document. La campagne lit `resultat.document`
-      // (emit-v3, apres la gate anti-oscillation) ; cette ligne prenait
-      // l'enveloppe pour le document, et le second juge criait SCHEMA sur
-      // les VINGT sections. Attrape par le harnais a blanc de l'etage
-      // continuation, AVANT tout tir reel : les deux tirs payes etaient
-      // morts en amont, ce chemin n'avait jamais ete execute.
-      document = resultat.document ?? resultat;
+      try {
+        const resultat = await orchestrationBudgetee.repairSectionsAvecPartiel(
+          document,
+          diagnostics,
+          orchestration.contexteClient(intention),
+          slug,
+          usage,
+          refusals,
+          prescriptif,
+        );
+        // LA REPARATION REND UNE ENVELOPPE — { sectionsReemises, document,
+        // ampute } — PAS un document. La campagne lit `resultat.document`
+        // (emit-v3, apres la gate anti-oscillation) ; ma premiere version
+        // prenait l'enveloppe pour le document et le second juge criait
+        // SCHEMA sur TOUTES les sections. Attrape par le mode a blanc avant
+        // tout tir reel : les deux tirs payes etaient morts en amont, le
+        // defaut n'avait jamais ete execute.
+        document = resultat.document ?? resultat;
+      } catch (e) {
+        const partiel = e?.assemblagePartiel ?? e?.partiel;
+        // Meme enveloppe en cas d'erreur : le partiel de reparation porte le
+        // document SOUS la cle `document` — replier l'enveloppe entiere
+        // melerait `sectionsReemises` aux sections du document.
+        const partielDoc = partiel?.document ?? partiel;
+        if (partielDoc !== undefined) acquis = { ...document, ...partielDoc };
+        if (e?.budgetTemps === true) return suspendre("reparation");
+        e.sectionsAcquises = Object.keys(acquis).length;
+        throw e;
+      }
       ({ air, diagnostics } = validateLocal(document, prescriptif));
       diagnostics = [...diagnostics, ...jugerAcceptation(air, prescriptif, intention)];
     }
 
     return {
-      ok: air !== null && diagnostics.length === 0,
-      document: air ?? document,
-      modele: prescriptif.modele,
-      diagnostics: diagnostics.map((d) => ({ code: d.code, path: d.path })),
-      premierePasse,
-      tirages,
-      refus: refusals.count,
-      coutUsd: coeur.lireEtatDepense().depense,
-      jetons: jetons(),
-      // CE QUE LA SONDE A RETENU, dit et non taché : un niveau degrade est
-      // une garantie perdue, et personne ne doit l'apprendre par surprise.
-      niveaux,
+      fini: true,
+      resultat: {
+        ok: air !== null && diagnostics.length === 0,
+        document: air ?? document,
+        modele: prescriptif.modele,
+        diagnostics: diagnostics.map((d) => ({ code: d.code, path: d.path })),
+        premierePasse,
+        tirages,
+        refus: refusals.count,
+        coutUsd: coutCumule(),
+        jetons: jetonsCumules(),
+        // CE QUE LA SONDE A RETENU, dit et non tu : un niveau degrade est
+        // une garantie perdue, et personne ne doit l'apprendre par surprise.
+        niveaux,
+      },
     };
   }
 
-  return { emettreApplication, coeur, orchestration, passe0, adaptateur, modeleMetier, acceptation, airSchema, presentation };
+  /**
+   * L'EMISSION D'UN TRAIT — l'entree d'aujourd'hui, comportement inchange.
+   * En interne : la continuation avec budget infini, qui ne peut donc jamais
+   * suspendre. Un seul pipeline, deux entrees : pas deux copies a faire
+   * diverger.
+   */
+  async function emettreApplication({ brief, slug }) {
+    const r = await poursuivreEmission({ brief, slug });
+    return r.resultat;
+  }
+
+  return { emettreApplication, poursuivreEmission, coeur, orchestration, passe0, adaptateur, modeleMetier, acceptation, airSchema, presentation };
 }
