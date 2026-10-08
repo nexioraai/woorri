@@ -90,6 +90,27 @@ export type Comprehension =
 /** Le jeton budgetaire. Son absence n'est pas une panne : c'est un refus. */
 export const JETON_DEPENSE = 'GO_EMISSION_IA'
 
+/**
+ * LE PLAFOND DE JETONS DE SORTIE — celui de la campagne, pas un autre.
+ *
+ * J'avais mis 9000. La campagne tire a 40000 depuis qu'elle a echoue sur son
+ * premier domaine, et la raison est ecrite dans `emission-coeur.mjs` (D-078).
+ * Un modele metier riche — une marketplace avec ses acteurs, ses concepts,
+ * ses etats de commande et ses parcours — ne tient pas dans 9000 jetons.
+ *
+ * Le propriétaire l'a vu au second tour de SA conversation : le premier
+ * message passait, le second, plus precis, etait coupe.
+ *
+ * CE N'EST PAS UNE DEPENSE EN PLUS. La facturation porte sur les jetons
+ * REELLEMENT produits ; le plafond ne fait que dire ou l'on coupe. Tirer bas
+ * ne fait pas economiser, ca fait perdre l'appel ENTIER qu'on vient de payer.
+ *
+ * Le cliquet `plafond-jetons` verifie que ce nombre est bien celui de la
+ * campagne : deux plafonds qui divergent, c'est un defaut qui n'apparait que
+ * sur les demandes longues.
+ */
+export const PLAFOND_JETONS = 40000
+
 export function depenseAutorisee(): boolean {
   return (process.env[JETON_DEPENSE] ?? '') !== ''
 }
@@ -131,7 +152,9 @@ export async function comprendre(demande: string): Promise<Comprehension> {
     )) as {
       degraderGrammaire: (g: unknown) => { grammaire: unknown; ecarts: string[] }
       construireAppel: (r: unknown, g: unknown) => unknown
-      lireReponse: (r: unknown) => { texte: string; meta: unknown }
+      // LA VRAIE FORME, relevée dans l'adaptateur. J'avais écrit `meta`, qui
+      // n'existe pas — le signal de troncature ne me parvenait donc JAMAIS.
+      lireReponse: (r: unknown) => { texte: string; tronquee: boolean; refusee: boolean }
       lireUsage: (u: unknown) => unknown
       coutUsd: (u: unknown) => number
     }
@@ -163,14 +186,40 @@ export async function comprendre(demande: string): Promise<Comprehension> {
     // L'ADAPTATEUR POSSEDE LA FORME DU DIALECTE, y compris `output_config`,
     // que la surface typee du SDK ne declare pas. Le cast dit cette frontiere
     // au lieu de la masquer : c'est l'adaptateur qui sait, pas le type.
-    const appel = adaptateur.construireAppel(requete, { max_tokens: 9000 })
+    const appel = adaptateur.construireAppel(requete, { max_tokens: PLAFOND_JETONS })
     const reponse = (await client.messages.create(
       appel as Parameters<typeof client.messages.create>[0],
     )) as { usage?: unknown }
-    const { texte, meta } = adaptateur.lireReponse(reponse)
+    const { texte, tronquee, refusee } = adaptateur.lireReponse(reponse)
 
     const usage = adaptateur.lireUsage(reponse.usage) as { entree?: number; sortie?: number }
-    const verdict = passe0.jugerSortieP0(texte, propre, meta)
+    const cout = adaptateur.coutUsd(usage)
+
+    if (refusee) {
+      // Le fournisseur a REFUSÉ de répondre. Ce n'est ni un JSON cassé ni un
+      // défaut de modèle, et le dire autrement enverrait chercher ailleurs.
+      return {
+        ok: false,
+        raison: 'Le modèle a refusé de répondre à cette demande.',
+        diagnostics: [{ code: 'P0_REPONSE_REFUSEE', path: '', message: 'refus du fournisseur' }],
+        coutUsd: cout,
+      }
+    }
+
+    // ── LE SIGNAL DE TRONCATURE, QUI N'ARRIVAIT PAS.
+    //
+    // Le juge l'attend sous `meta.tronquee`. Je lui passais une variable
+    // `meta` que `lireReponse` ne rend pas : elle valait `undefined`, la
+    // garde `meta?.tronquee === true` était donc TOUJOURS fausse, et une
+    // sortie COUPÉE repartait vers `JSON.parse` qui la déclarait
+    // « non parsable ».
+    //
+    // C'est mot pour mot le défaut D-078, déjà payé par la campagne et écrit
+    // dans `emission-coeur.mjs` : « le JSON n'était pas invalide, il était
+    // COUPÉ. Nommer la cause au bon endroit évite de chercher un défaut de
+    // schéma là où il n'y a qu'un plafond de jetons. » Je l'ai relu après
+    // l'avoir reproduit.
+    const verdict = passe0.jugerSortieP0(texte, propre, { tronquee })
     if (!verdict.ok) {
       return {
         ok: false,
@@ -178,7 +227,7 @@ export async function comprendre(demande: string): Promise<Comprehension> {
         // L'APPEL A ETE PAYE MEME QUAND LE VERDICT REFUSE. Le taire ferait
         // apparaitre un tour de dialogue comme gratuit.
         diagnostics: verdict.diagnostics ?? [],
-        coutUsd: adaptateur.coutUsd(usage),
+        coutUsd: cout,
       }
     }
     return {

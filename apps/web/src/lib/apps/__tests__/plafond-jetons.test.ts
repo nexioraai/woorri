@@ -1,0 +1,123 @@
+/**
+ * CLIQUET — LE PLAFOND DU SITE EST CELUI DE LA CAMPAGNE.
+ *
+ * ── LE DÉFAUT QUE CE FICHIER EXISTE POUR INTERDIRE.
+ *
+ * Le site tirait à 9000 jetons, la campagne à 40000. Un modèle métier riche
+ * — une marketplace avec ses acteurs, ses états de commande, ses parcours —
+ * dépasse le premier et pas le second. Mesuré par le propriétaire, EN LIGNE,
+ * au second tour de sa conversation : le premier message passait, le second,
+ * plus précis, était coupé.
+ *
+ * Deux plafonds qui divergent produisent un défaut invisible aux demandes
+ * courtes — c'est-à-dire à tous les essais qu'on fait soi-même.
+ *
+ * ── ET LE SIGNAL QUI NE REMONTAIT PAS.
+ *
+ * Le juge attend la troncature sous `meta.tronquee`. Je lui passais une
+ * variable `meta` que `lireReponse` ne rend pas : la garde était toujours
+ * fausse, et une sortie COUPÉE était rapportée « sortie non parsable ». Le
+ * dépôt avait déjà payé ce défaut (D-078) et l'avait écrit en toutes lettres.
+ */
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
+import { describe, expect, it } from 'vitest'
+import { PLAFOND_JETONS } from '../comprendre'
+import { direALUtilisateur } from '../pour'
+
+const RACINE = join(process.cwd(), '..', '..')
+const lire = (p: string): string => readFileSync(join(RACINE, p), 'utf8')
+
+describe('CLIQUET — le plafond de jetons', () => {
+  it('le site tire au MEME plafond que la campagne', () => {
+    const campagne = /^const MAX_TOKENS = (\d+);$/mu.exec(lire('benchmarks/air-emission/emit-v3.mjs'))
+    expect(campagne, 'MAX_TOKENS introuvable dans emit-v3.mjs').not.toBeNull()
+    expect(PLAFOND_JETONS).toBe(Number(campagne![1]))
+  })
+
+  it('le plafond est reellement passe a l appel', () => {
+    const src = lire('apps/web/src/lib/apps/comprendre.ts')
+    expect(src).toContain('max_tokens: PLAFOND_JETONS')
+    // Le nombre nu ne doit plus apparaitre dans l'appel : c'est par la qu'il
+    // divergerait sans que personne le voie.
+    expect(src).not.toMatch(/max_tokens:\s*\d/u)
+  })
+})
+
+describe('CLIQUET — le signal de troncature arrive jusqu au juge', () => {
+  const ADAPTATEUR = lire('benchmarks/air-emission/adaptateur-anthropic.mjs')
+  const COMPRENDRE = lire('apps/web/src/lib/apps/comprendre.ts')
+
+  it("`lireReponse` rend bien `tronquee`, et c'est ce qu'on lit", () => {
+    // La forme est RELEVÉE dans l'adaptateur, pas supposée. C'est l'écart
+    // entre la forme supposée (`meta`) et la vraie qui a produit le défaut.
+    expect(ADAPTATEUR).toMatch(/tronquee:\s*reponse\.stop_reason === "max_tokens"/u)
+    expect(COMPRENDRE).toContain('const { texte, tronquee, refusee } = adaptateur.lireReponse(reponse)')
+  })
+
+  it('le juge recoit la troncature sous la forme qu il attend', () => {
+    // `jugerSortieP0` teste `meta?.tronquee === true`. Lui passer autre chose
+    // qu'un objet portant ce champ desarme la garde en silence.
+    expect(lire('benchmarks/air-emission/passe0.mjs')).toContain('meta?.tronquee === true')
+    expect(COMPRENDRE).toContain('passe0.jugerSortieP0(texte, propre, { tronquee })')
+  })
+
+  it('une sortie coupee se NOMME, elle ne devient pas un JSON casse', async () => {
+    // LE CONTROLE DE BOUT EN BOUT, avec le VRAI juge — pas une imitation.
+    // Un JSON tronque est exactement ce que le propriétaire a vu : du texte
+    // qui s'arrete au milieu.
+    const { jugerSortieP0 } = (await import(
+      join(RACINE, 'benchmarks/air-emission/passe0.mjs')
+    )) as {
+      jugerSortieP0: (
+        t: string,
+        b: string,
+        m: unknown,
+      ) => { ok: boolean; diagnostics?: { code?: string }[] }
+    }
+    const coupe = '{"version":"modele-metier/1.2.0","acteurs":[{"id":"act_a","nom":"Vend'
+
+    // AVEC le signal : la cause est nommee pour ce qu'elle est.
+    const avec = jugerSortieP0(coupe, 'une marketplace', { tronquee: true })
+    expect(avec.ok).toBe(false)
+    expect(avec.diagnostics?.[0]?.code).toBe('P0_SORTIE_TRONQUEE')
+
+    // SANS le signal — l'etat dans lequel j'avais laisse le site : le MEME
+    // texte est rapporte comme un JSON casse. C'est exactement le message
+    // que le propriétaire a lu a l'ecran.
+    const sans = jugerSortieP0(coupe, 'une marketplace', undefined)
+    expect(sans.diagnostics?.[0]?.code).toBe('P0_SORTIE_NON_JSON')
+  })
+})
+
+describe('CLIQUET — l ecran ne parle JAMAIS le vocabulaire du moteur', () => {
+  // Ce que le propriétaire a lu : « sortie non parsable (1 defaut(s) de
+  // production) ». Exact, et incomprehensible — il ne peut rien en faire.
+  // EP-136 pose la regle pour les questions ; elle vaut pour un echec.
+  const INTERDITS = [
+    'P0_',
+    'MODELE_',
+    'parsable',
+    'instrument',
+    'tirage',
+    'diagnostic',
+    'defaut(s) de production',
+    'couverture.',
+    'stop_reason',
+  ]
+
+  for (const code of ['P0_SORTIE_TRONQUEE', 'P0_SORTIE_NON_JSON', 'P0_REPONSE_REFUSEE', 'MODELE_SCHEMA']) {
+    it(`« ${code} » devient une phrase lisible`, () => {
+      const phrase = direALUtilisateur([{ code, path: 'couverture.nonRetenus[0]', message: 'x' }])
+      for (const mot of INTERDITS) expect(phrase, `${code} laisse passer « ${mot} »`).not.toContain(mot)
+      // Et elle DIT de quel cote est le defaut : sans cela, l utilisateur
+      // reecrit sa phrase en pensant s etre mal exprime.
+      expect(phrase).toContain('de mon côté')
+    })
+  }
+
+  it('la troncature dit QUOI FAIRE, pas seulement que ca a rate', () => {
+    const phrase = direALUtilisateur([{ code: 'P0_SORTIE_TRONQUEE' }])
+    expect(phrase).toContain('deux messages')
+  })
+})

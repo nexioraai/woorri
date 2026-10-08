@@ -101,7 +101,13 @@ export async function POST(req: Request) {
       ...rapport,
       anomalies: [
         ...rapport.anomalies,
-        { phase: 'comprehension', code: 'echec', message: `Lecture par IA indisponible : ${r.echecIA}` },
+        {
+          phase: 'comprehension',
+          code: 'echec',
+          // L'ALERTE RECOIT LE DETAIL, pas la phrase polie de l'ecran. Le
+          // courriel est le seul endroit ou le code du diagnostic sert.
+          message: `Lecture par IA indisponible : ${r.detailTechnique ?? r.echecIA}`,
+        },
       ],
       saine: false,
     })

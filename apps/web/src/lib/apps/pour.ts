@@ -32,8 +32,37 @@ export type Resultat = {
   readonly document: ProjectAir
   readonly compris: string[]
   readonly parIA: boolean
+  /** CE QUE L'UTILISATEUR LIT — en francais ordinaire, jamais un code. */
   readonly echecIA?: string
+  /** CE QUE L'ALERTE RECOIT — les codes, les chemins, le detail brut. */
+  readonly detailTechnique?: string
   readonly texteLu: string
+}
+
+/**
+ * LE MEME FAIT, DEUX DESTINATAIRES.
+ *
+ * L'ecran affichait « sortie coupee par une borne d'instrument — le tirage a
+ * mesure le plafond, pas P0 ». C'est exact, et c'est le vocabulaire du
+ * MOTEUR : l'utilisateur ne peut ni le comprendre ni rien en faire.
+ *
+ * EP-136 pose deja la regle pour les questions — « jamais un code, jamais un
+ * chemin de document ». Elle vaut autant pour un echec : le detail part a
+ * l'alerte, la phrase reste a l'ecran.
+ */
+export function direALUtilisateur(diagnostics: Diagnostic[]): string {
+  const codes = new Set(diagnostics.map((d) => d.code))
+  if (codes.has('P0_SORTIE_TRONQUEE')) {
+    return (
+      'Votre demande est plus riche que ce que j’ai su traiter d’un seul coup, ' +
+      'et ma lecture s’est arrêtée en chemin. C’est de mon côté : je suis prévenu. ' +
+      'En attendant, reformulez en deux messages plutôt qu’un.'
+    )
+  }
+  if (codes.has('P0_REPONSE_REFUSEE')) {
+    return 'Je n’ai pas pu traiter cette demande. C’est de mon côté : je suis prévenu.'
+  }
+  return 'Je n’ai pas réussi à lire votre demande correctement. C’est de mon côté : je suis prévenu.'
 }
 
 /**
@@ -92,6 +121,7 @@ export async function documentPour(
       parIA: false,
       texteLu,
       echecIA: 'La demande a été lue, mais rien de concret n’en ressort — précisez ce que l’application manipule.',
+      detailTechnique: 'modèle valide sans concept de données : aucune entité à dériver',
     }
   }
 
@@ -126,10 +156,13 @@ export async function documentPour(
     compris: repli.compris,
     parIA: false,
     texteLu,
+    echecIA: direALUtilisateur(diagnostics),
     // Ce qui part en alerte, c'est NOTRE part — pas une question deguisee.
-    echecIA:
+    detailTechnique:
       nos.length > 0
-        ? `${lu.raison} (${String(nos.length)} defaut(s) de production)`
+        ? `${lu.raison} · ${String(nos.length)} defaut(s) de production : ${nos
+            .map((d) => d.code ?? '?')
+            .join(', ')}`
         : lu.raison,
   }
 }
