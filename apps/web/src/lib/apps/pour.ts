@@ -182,6 +182,9 @@ export async function documentPour(
       ]),
     ],
     tirages: emission.tirages.length,
+    // Le document part au journal : la contrainte `livree_a_document` exige
+    // qu'une ligne livree le porte, et il est la, dans la main.
+    document: emission.ok ? emission.document : undefined,
   })
 
   if (emission.ok && emission.document !== undefined) {

@@ -64,6 +64,27 @@ describe('CLIQUET — le SQL et le code ecrivent les MEMES colonnes', () => {
     for (const c of inserees) expect(SQL_TABLE, `colonne ${c}`).toContain(c)
   })
 
+  it('le redacteur synchrone dit son statut et porte son document', () => {
+    // LA MINE TROUVEE PAR LA RELECTURE DE L'ETAGE 1 : avec le schema
+    // asynchrone, une ligne inseree SANS statut tombe au defaut
+    // `en_attente` — du travail que le futur balayeur regenererait en
+    // PAYANT une seconde fois. Et une ligne `livree` sans document serait
+    // refusee par la contrainte `livree_a_document`... en SILENCE, puisque
+    // le journal avale ses erreurs pour ne jamais casser une generation.
+    const bloc = JOURNAL.slice(JOURNAL.indexOf("from('app_generations').insert({"))
+    const insertion = bloc.slice(0, bloc.indexOf('})'))
+    expect(insertion).toContain("statut: l.ok ? 'livree' : 'refusee'")
+    expect(insertion).toContain('document:')
+    // Et les trois invariants vivent bien dans le SQL, par CONTRAINTE.
+    for (const c of [
+      'app_generations_statut_valide',
+      'app_generations_livree_a_document',
+      'app_generations_en_cours_verrouillee',
+    ]) {
+      expect(SQL_TABLE, c).toContain(c)
+    }
+  })
+
   it('la table refuse l acces anonyme', () => {
     // Le depot a deja trouve une ecriture anonyme REELLE par les privileges
     // par defaut sur les tables. Ce n'est pas une precaution theorique.

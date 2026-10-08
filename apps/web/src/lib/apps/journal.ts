@@ -42,6 +42,9 @@ export type LigneGeneration = {
   readonly jetonsSortie: number
   readonly diagnostics: string[]
   readonly tirages: number
+  /** L'AIR livre, quand il y en a un. La contrainte `livree_a_document`
+   *  l'EXIGE : une ligne livree sans document serait refusee par Postgres. */
+  readonly document?: unknown
 }
 
 export async function journaliser(l: LigneGeneration): Promise<void> {
@@ -75,6 +78,13 @@ export async function journaliser(l: LigneGeneration): Promise<void> {
   // ── 2. LE DETAIL, dans sa table. Absente ⇒ avalee, sans consequence.
   try {
     await supabaseAdmin.from('app_generations').insert({
+      // ── LE STATUT EST DIT, PAS LAISSE AU DEFAUT. Le defaut de la table
+      // est `en_attente` — le bon pour le futur depot asynchrone. Une ligne
+      // du chemin SYNCHRONE est, elle, deja TERMINEE : la laisser au defaut
+      // en ferait du « travail en attente » qu'un balayeur essaierait de
+      // generer une seconde fois, en payant.
+      statut: l.ok ? 'livree' : 'refusee',
+      document: l.ok ? (l.document ?? null) : null,
       owner_email: l.email,
       demande: l.demande.slice(0, 4000),
       nom: l.nom,
@@ -99,26 +109,95 @@ export async function journaliser(l: LigneGeneration): Promise<void> {
  * l'inverse — fait echouer le test au lieu d'echouer en silence en ligne.
  */
 export const SQL_TABLE = `
+-- ════════════════════════════════════════════════════════════════════
+-- app_generations — etage 1 de la generation asynchrone (2026-10-08)
+-- Rejouable a l'identique : chaque instruction est un no-op au 2e passage.
+-- Mesure avant redaction : table ABSENTE de la base, 0 ligne touchee par
+-- l'UPDATE de retro-remplissage. Le bloc ALTER n'existe que pour le monde
+-- ou l'ancienne forme a 12 colonnes aurait deja ete posee.
+-- ai_usage_log n'apparait nulle part ici.
+-- ════════════════════════════════════════════════════════════════════
+
 create table if not exists public.app_generations (
-  id            uuid primary key default gen_random_uuid(),
-  created_at    timestamptz not null default now(),
-  owner_email   text,
-  demande       text not null,
-  nom           text,
-  ok            boolean not null,
-  cout_usd      numeric(10,4) not null default 0,
-  duree_ms      integer not null default 0,
-  jetons_entree integer not null default 0,
-  jetons_sortie integer not null default 0,
-  diagnostics   text[] not null default '{}',
-  tirages       integer not null default 0
+  id                uuid primary key default gen_random_uuid(),
+  created_at        timestamptz not null default now(),
+  owner_email       text,
+  demande           text not null,
+  nom               text,
+  ok                boolean not null default false,
+  cout_usd          numeric(10,4) not null default 0,
+  duree_ms          integer not null default 0,
+  jetons_entree     integer not null default 0,
+  jetons_sortie     integer not null default 0,
+  diagnostics       text[] not null default '{}',
+  tirages           integer not null default 0,
+  -- ── l'etat asynchrone ──
+  statut            text not null default 'en_attente',
+  etape             text,
+  sections_acquises jsonb not null default '{}'::jsonb,
+  niveaux_sondes    jsonb,
+  document          jsonb,
+  battement         timestamptz,
+  jeton_travailleur uuid,
+  reprises          integer not null default 0
 );
--- AUCUN ACCES ANONYME. La table ne se lit que par la clef de service, depuis
--- la route d'administration. Sans cette ligne, les privileges par defaut sur
--- les TABLES suffiraient a la rendre lisible — le depot a deja trouve une
--- ecriture anonyme reelle par ce chemin.
+
+-- Base deja posee (ancienne forme a 12 colonnes) : complement idempotent.
+alter table public.app_generations add column if not exists statut            text;
+alter table public.app_generations add column if not exists etape             text;
+alter table public.app_generations add column if not exists sections_acquises jsonb not null default '{}'::jsonb;
+alter table public.app_generations add column if not exists niveaux_sondes    jsonb;
+alter table public.app_generations add column if not exists document          jsonb;
+alter table public.app_generations add column if not exists battement         timestamptz;
+alter table public.app_generations add column if not exists jeton_travailleur uuid;
+alter table public.app_generations add column if not exists reprises          integer not null default 0;
+alter table public.app_generations alter column ok set default false;
+
+-- Les lignes du journal synchrone sont des generations TERMINEES : leur
+-- statut se DEDUIT de « ok », il n'est pas invente. Zero ligne au rejeu.
+update public.app_generations
+   set statut = case when ok then 'livree' else 'refusee' end
+ where statut is null;
+
+alter table public.app_generations alter column statut set not null;
+alter table public.app_generations alter column statut set default 'en_attente';
+
+-- ── Trois invariants par CONTRAINTE, pas par discipline de code.
+do $$ begin
+  alter table public.app_generations
+    add constraint app_generations_statut_valide
+    check (statut in ('en_attente', 'en_cours', 'livree', 'refusee'));
+exception when duplicate_object then null; end $$;
+
+-- Une ligne LIVREE sans document serait un mensonge structurel. Le redacteur
+-- synchrone stocke donc le document qu'il avait deja en main — sans quoi
+-- CETTE contrainte ferait echouer ses insertions, en silence puisque le
+-- journal avale ses erreurs.
+do $$ begin
+  alter table public.app_generations
+    add constraint app_generations_livree_a_document
+    check (statut <> 'livree' or document is not null);
+exception when duplicate_object then null; end $$;
+
+-- Une ligne EN COURS exige battement ET jeton : on ne peut pas etre « en cours »
+-- sans detenir le verrou — la preuve que toute saisie passe par le
+-- compare-and-set complet.
+do $$ begin
+  alter table public.app_generations
+    add constraint app_generations_en_cours_verrouillee
+    check (statut <> 'en_cours' or (battement is not null and jeton_travailleur is not null));
+exception when duplicate_object then null; end $$;
+
+-- ── Acces : ceux du lot d'origine, reaffirmes (no-ops si deja poses).
 alter table public.app_generations enable row level security;
 revoke all on public.app_generations from anon, authenticated;
+
+-- ── Index.
 create index if not exists app_generations_created_idx
   on public.app_generations (created_at desc);
+-- Le balayeur ne regarde QUE le travail ouvert : index partiel, pour que la
+-- minute du cron ne coute rien quand la table aura grossi.
+create index if not exists app_generations_ouvertes_idx
+  on public.app_generations (created_at)
+  where statut in ('en_attente', 'en_cours');
 `
