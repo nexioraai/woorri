@@ -37,6 +37,12 @@
     "zod": "^4.4.3",
     "@deribfy/compiler": "*",
     "@deribfy/air-schema": "*",
+    "@deribfy/blocks": "*",
+    "@deribfy/capability-registry": "*",
+    "@deribfy/execution-contract": "*",
+    "@deribfy/fidelity": "*",
+    "@deribfy/primitives": "*",
+    "@deribfy/repair": "*",
     "rolldown": "^1.2.3"
   },
   "devDependencies": {

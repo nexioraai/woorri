@@ -12,15 +12,43 @@ import { fileURLToPath } from "node:url";
 
 const HERE = join(fileURLToPath(import.meta.url), "..");
 const REPO = join(HERE, "..", "..");
-const airSchema = await import(join(REPO, "packages/air-schema/src/index.ts"));
-const blocksRegistry = await import(join(REPO, "packages/blocks/src/registry.ts"));
-const registry = await import(join(REPO, "packages/capability-registry/src/index.ts"));
-const compiler = await import(join(REPO, "packages/compiler/src/index.ts"));
-const fidelity = await import(join(REPO, "packages/fidelity/src/index.ts"));
-const executionGraph = await import(join(REPO, "packages/execution-contract/src/graph.ts"));
-const executionContract = await import(join(REPO, "packages/execution-contract/src/envelope.ts"));
-const vivacite = await import(join(REPO, "packages/execution-contract/src/vivacite.ts"));
-const presentation = await import(join(REPO, "packages/execution-contract/src/presentation.ts"));
+// ── LES PAQUETS PEUVENT ETRE FOURNIS, AU LIEU D'ETRE CHERCHES SUR DISQUE.
+//
+// DEFAUT MESURE EN PRODUCTION (2026-10-08) : ces neuf lignes importaient des
+// fichiers TypeScript PAR CHEMIN. Sous un chargeur TS — la campagne, les
+// tests — cela fonctionne. Dans le runtime du site, Node ne sait pas lire un
+// `.ts` : la route du generateur mourait a l'import, et l'ecran rendait
+// « Lecture impossible » instantanement.
+//
+// POURQUOI UN REGISTRE GLOBAL ET PAS UN ARGUMENT. Ces imports sont en
+// TOP-LEVEL AWAIT : ils s'executent AU CHARGEMENT du module, avant que
+// quiconque puisse passer quoi que ce soit. Transformer ce fichier en
+// fabrique corrigerait cela proprement — et casserait ses DIX consommateurs,
+// dont huit tests. Le registre est pose par `moteur.mjs` juste avant
+// d'importer ce module ; tout appelant qui ne pose rien retombe exactement
+// sur le comportement d'avant.
+const __paquets = globalThis.__DERIBFY_PAQUETS__ ?? {};
+const __prendre = async (cle, chemin) => {
+  if (__paquets[cle] !== undefined) return __paquets[cle];
+  // MODE STRICT — pour PROUVER, a cout nul, qu'aucun chemin TypeScript n'est
+  // emprunte. Sous un chargeur TS le repli fonctionne et masquerait donc une
+  // injection incomplete ; en production il ne pardonne pas. Le test le pose,
+  // la production ne le pose jamais.
+  if (__paquets.__strict === true) {
+    throw new Error(`PAQUET_NON_INJECTE: ${cle} (${chemin}) — Node ne sait pas lire un .ts`);
+  }
+  return await import(join(REPO, chemin));
+};
+
+const airSchema = await __prendre("airSchema", "packages/air-schema/src/index.ts");
+const blocksRegistry = await __prendre("blocksRegistry", "packages/blocks/src/registry.ts");
+const registry = await __prendre("registry", "packages/capability-registry/src/index.ts");
+const compiler = await __prendre("compiler", "packages/compiler/src/index.ts");
+const fidelity = await __prendre("fidelity", "packages/fidelity/src/index.ts");
+const executionGraph = await __prendre("executionGraph", "packages/execution-contract/src/graph.ts");
+const executionContract = await __prendre("executionContract", "packages/execution-contract/src/envelope.ts");
+const vivacite = await __prendre("vivacite", "packages/execution-contract/src/vivacite.ts");
+const presentation = await __prendre("presentation", "packages/execution-contract/src/presentation.ts");
 const ENV = executionContract.EXECUTION_ENVELOPE_V1;
 const modeleMetier = await import(join(HERE, "modele-metier.mjs"));
 

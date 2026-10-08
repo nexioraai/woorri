@@ -66,22 +66,59 @@ const REPO = join(HERE, "..", "..");
  * Un appelant qui veut vraiment borner passe `plafondUsd` ; personne ne le
  * fait, et c'est voulu.
  */
-export async function creerMoteur({ cleApi, plafondUsd = Infinity }) {
+export async function creerMoteur({ cleApi, plafondUsd = Infinity, paquets }) {
   if (typeof cleApi !== "string" || cleApi.trim() === "") {
     throw new Error("MOTEUR_CLE_ABSENTE");
   }
 
-  const airSchema = await import(join(REPO, "packages/air-schema/src/index.ts"));
-  const registry = await import(join(REPO, "packages/capability-registry/src/index.ts"));
-  const blocksRegistry = await import(join(REPO, "packages/blocks/src/registry.ts"));
-  const presentation = await import(join(REPO, "packages/execution-contract/src/presentation.ts"));
-  const { ROLES_ICONES } = await import(join(REPO, "packages/primitives/src/roles-icones.ts"));
+  // ── LES PAQUETS VIENNENT DE L'APPELANT QUAND IL PEUT LES FOURNIR.
+  //
+  // DEFAUT MESURE EN PRODUCTION, 2026-10-08 : la route rendait « Lecture
+  // impossible » INSTANTANEMENT. Cause — ce fichier importait HUIT fichiers
+  // TypeScript par chemin absolu. Sous `tsx`, en local, ca marche. En
+  // production, Node ne sait pas lire un `.ts`, et ces chemins ne sont meme
+  // pas embarques dans la fonction.
+  //
+  // C'est la QUATRIEME fois aujourd'hui que le meme defaut passe : prouve en
+  // local, mort deploye. Et je l'avais pousse sans un seul essai en ligne.
+  //
+  // LE SITE, LUI, SAIT LES RESOUDRE : `@deribfy/air-schema`,
+  // `@deribfy/repair`… sont des paquets de l'espace de travail, et le
+  // bundler suit leurs imports. Il les passe donc ICI, deja charges.
+  //
+  // LE REPLI PAR CHEMIN RESTE, et c'est voulu : la campagne en ligne de
+  // commande tourne sous un chargeur TypeScript et n'a aucune raison de
+  // changer. Un appelant qui ne fournit rien retombe dessus.
+  const charger = async (cle, chemin) => {
+    if (paquets?.[cle] !== undefined) return paquets[cle];
+    if (paquets?.__strict === true) {
+      throw new Error(`PAQUET_NON_INJECTE: ${cle} (${chemin}) — Node ne sait pas lire un .ts`);
+    }
+    return await import(join(REPO, chemin));
+  };
+
+  const airSchema = await charger("airSchema", "packages/air-schema/src/index.ts");
+  const registry = await charger("registry", "packages/capability-registry/src/index.ts");
+  const blocksRegistry = await charger("blocksRegistry", "packages/blocks/src/registry.ts");
+  const presentation = await charger("presentation", "packages/execution-contract/src/presentation.ts");
+  const primitives = await charger("primitives", "packages/primitives/src/roles-icones.ts");
+  const { ROLES_ICONES } = primitives;
   const { obligationsPourPasse } = await import(join(HERE, "obligations-passes.mjs"));
   const passe0 = await import(join(HERE, "passe0.mjs"));
   const modeleMetier = await import(join(HERE, "modele-metier.mjs"));
-  const budgetUsd = await import(join(REPO, "packages/repair/src/budget-usd.ts"));
-  const preservation = await import(join(REPO, "packages/repair/src/preservation.ts"));
-  const executionContract = await import(join(REPO, "packages/execution-contract/src/envelope.ts"));
+  const budgetUsd = await charger("budgetUsd", "packages/repair/src/budget-usd.ts");
+  const preservation = await charger("preservation", "packages/repair/src/preservation.ts");
+  const executionContract = await charger("executionContract", "packages/execution-contract/src/envelope.ts");
+  // ── LE REGISTRE EST POSE AVANT D'IMPORTER `acceptation.mjs`.
+  //
+  // Ce module importe NEUF fichiers TypeScript en top-level await : ils
+  // s'executent AU CHARGEMENT, donc aucun argument ne peut les devancer. Le
+  // registre global est le seul moyen de les devancer sans transformer ce
+  // fichier en fabrique — ce qui casserait ses dix consommateurs, dont huit
+  // tests. Pose ICI, au plus pres de l'import qu'il sert.
+  if (paquets !== undefined) {
+    globalThis.__DERIBFY_PAQUETS__ = { ...(globalThis.__DERIBFY_PAQUETS__ ?? {}), ...paquets };
+  }
   const acceptation = await import(join(HERE, "acceptation.mjs"));
   const { chargerAdaptateur } = await import(join(HERE, "adaptateurs.mjs"));
   const adaptateur = await chargerAdaptateur(process.env.ADAPTATEUR_FOURNISSEUR);
