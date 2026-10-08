@@ -40,7 +40,18 @@ import { intentionDepuis, premiereIntention, sterile } from '@/lib/apps/dialogue
 import { Veille, alerter } from '@/lib/apps/surveillance'
 
 export const runtime = 'nodejs'
-export const maxDuration = 120
+// ── 300 SECONDES, ET C'EST UNE MESURE.
+//
+// La lecture par IA d'une vraie demande — la marketplace du proprietaire,
+// 9 406 jetons de sortie — a pris 96 SECONDES chronometrees. Cette route
+// coupait a 120 : vingt-quatre secondes de marge pour une operation dont on
+// ne controle pas la duree. Une demande un peu plus riche mourait en
+// timeout, et l'utilisateur n'aurait vu qu'une erreur reseau.
+//
+// Les trois routes du generateur peuvent declencher cette lecture : les deux
+// autres relisent la phrase quand aucun document ne leur est fourni. Elles
+// portaient 120 et 60 — elles seraient mortes AVANT meme comprendre.
+export const maxDuration = 300
 
 export async function POST(req: Request) {
   const garde = await requireAuthenticatedUser(req)

@@ -202,9 +202,27 @@ export async function comprendre(demande: string): Promise<Comprehension> {
     // que la surface typee du SDK ne declare pas. Le cast dit cette frontiere
     // au lieu de la masquer : c'est l'adaptateur qui sait, pas le type.
     const appel = adaptateur.construireAppel(requete, { max_tokens: PLAFOND_JETONS })
-    const reponse = (await client.messages.create(
-      appel as Parameters<typeof client.messages.create>[0],
-    )) as { usage?: unknown }
+    // ── L'APPEL EST STREAMÉ, ET CE N'EST PAS UN DÉTAIL DE CONFORT.
+    //
+    // MESURÉ, à coût nul (l'erreur est levée côté client, aucune requête ne
+    // part) : le SDK REFUSE un appel non streamé qu'il estime à plus de dix
+    // minutes — « Streaming is required for operations that may take longer
+    // than 10 minutes ». Recherche dichotomique sur la vraie borne :
+    //
+    //     plafond maximum SANS streaming : 21 333 jetons
+    //     40 000 (la campagne)  → refusé
+    //     128 000 (le maximum)  → refusé
+    //
+    // J'avais donc poussé 128 000 EN PRODUCTION sans faire un seul vrai tir,
+    // et la lecture par IA était morte depuis ce commit. Le plafond n'a pas
+    // besoin d'être rabaissé : c'est le MODE D'APPEL qui le bornait.
+    //
+    // `finalMessage()` rend exactement la forme qu'attend `lireReponse` —
+    // `content`, `stop_reason`, `usage`. L'adaptateur ne change pas d'une
+    // ligne, et le signal de troncature continue d'arriver.
+    const reponse = (await client.messages
+      .stream(appel as Parameters<typeof client.messages.stream>[0])
+      .finalMessage()) as { usage?: unknown }
     const { texte, tronquee, refusee } = adaptateur.lireReponse(reponse)
 
     const usage = adaptateur.lireUsage(reponse.usage) as { entree?: number; sortie?: number }

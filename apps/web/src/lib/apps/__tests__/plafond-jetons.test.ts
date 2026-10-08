@@ -145,3 +145,32 @@ describe('CLIQUET — l ecran ne parle JAMAIS le vocabulaire du moteur', () => {
     expect(phrase).toContain('deux messages')
   })
 })
+
+describe('CLIQUET — l appel est STREAME, et les routes ont le temps', () => {
+  const COMPRENDRE = sansCommentaires(lire('apps/web/src/lib/apps/comprendre.ts'))
+
+  it('le SDK refuse un appel non streame au-dela de 21 333 jetons', () => {
+    // MESURE, a cout nul (erreur levee cote client, aucune requete ne part) :
+    //   plafond maximum SANS streaming : 21 333
+    //   40 000 (la campagne) et 128 000 (le maximum) : refuses
+    // J avais pousse 128 000 en production sans un seul vrai tir — la lecture
+    // par IA etait morte depuis ce commit. Ce test interdit le retour en
+    // arriere : avec ce plafond, l appel DOIT etre streame.
+    expect(PLAFOND_JETONS).toBeGreaterThan(21_333)
+    expect(COMPRENDRE).toContain('.stream(')
+    expect(COMPRENDRE).toContain('.finalMessage()')
+    expect(COMPRENDRE).not.toMatch(/client\.messages\.create\(/u)
+  })
+
+  it('les trois routes laissent le temps a la lecture', () => {
+    // MESURE : 96 SECONDES pour la marketplace du proprietaire. `comprendre`
+    // coupait a 120, `apercu` a 120, `produire` a 60 — et les deux dernieres
+    // relisent la phrase quand aucun document ne leur est fourni.
+    for (const r of ['comprendre', 'apercu', 'produire']) {
+      const src = sansCommentaires(lire(`apps/web/src/app/api/generateur/${r}/route.ts`))
+      const m = /maxDuration = (\d+)/u.exec(src)
+      expect(m, r).not.toBeNull()
+      expect(Number(m![1]), `${r} doit laisser au moins le double des 96 s mesurees`).toBeGreaterThanOrEqual(200)
+    }
+  })
+})

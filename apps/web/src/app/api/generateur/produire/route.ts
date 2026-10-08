@@ -17,7 +17,7 @@ import { premiereIntention } from '@/lib/apps/dialogue'
 import { zipper } from '@/lib/apps/zip'
 
 export const runtime = 'nodejs'
-export const maxDuration = 60
+export const maxDuration = 300
 
 export async function POST(req: Request) {
   const garde = await requireAuthenticatedUser(req)

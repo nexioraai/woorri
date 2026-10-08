@@ -17,7 +17,7 @@ import { construireApercu } from '@/lib/apps/apercu'
 import { Veille, alerter } from '@/lib/apps/surveillance'
 
 export const runtime = 'nodejs'
-export const maxDuration = 120
+export const maxDuration = 300
 
 export async function POST(req: Request) {
   const garde = await requireAuthenticatedUser(req)
