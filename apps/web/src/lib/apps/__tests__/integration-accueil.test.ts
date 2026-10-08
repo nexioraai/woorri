@@ -180,6 +180,29 @@ describe('CLIQUET — IL N Y A QU UNE CONVERSATION, PAS DEUX', () => {
     expect(CONVERSATION).toContain('flex-1 overflow-y-auto')
   })
 
+  it('L ECRAN VIDE EST CENTRE, des deux cotes', () => {
+    // Les trois modes centrent tant qu aucun message n est echange. Sans
+    // l equivalent, la vue Application laissait le texte d accueil colle en
+    // haut et un grand trou jusqu au composeur — le dernier ecart visible
+    // entre les deux conversations.
+    expect(ACCUEIL_NU).toContain("'justify-center'")
+    expect(CONVERSATION).toMatch(/messages\.length === 0 \? '[^']*justify-center/u)
+  })
+
+  it('AUCUN CHROME EN PLUS PENDANT LA CONVERSATION', () => {
+    // Le retour vivait AU-DESSUS de la conversation, a un endroit ou les
+    // trois modes n ont rien. Il ne doit exister que sur l ecran vide —
+    // la ou on se rend compte qu on s est trompe de pastille.
+    //
+    // Le supprimer tout court enfermerait : cliquer « Accueil » vers une
+    // route identique ne remonte pas le composant, donc l etat survivrait.
+    // L APPEL dans le rendu, pas la signature du composant — celle-ci est
+    // en tete de fichier et ferait passer le test pour de mauvaises raisons.
+    const i = CONVERSATION.indexOf('onClick={onRetour}')
+    expect(i, 'le retour doit exister quelque part').toBeGreaterThan(0)
+    expect(CONVERSATION.slice(0, i)).toContain('messages.length === 0')
+  })
+
   it('AUCUN BOUTON « Envoyer » EN TEXTE : la fleche ronde, des deux cotes', () => {
     // Le signe le plus visible des deux interfaces sur la capture d ecran.
     expect(CONVERSATION).not.toMatch(/>\s*Envoyer\s*</u)

@@ -203,14 +203,6 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
 
   return (
     <>
-      <button
-        type="button"
-        onClick={onRetour}
-        className="text-xs text-slate-400 hover:text-white mb-4 self-start"
-      >
-        ← Revenir aux sites et boutiques
-      </button>
-
       {apercu !== '' && (
         <div className="mb-4">
           <div className="flex items-center justify-between mb-2">
@@ -233,15 +225,50 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
       {/* ── LA MEME COLONNE QUE LES TROIS MODES : elle prend la place qui
           reste et defile. C'est ce `flex-1` qui empeche le pied de page de
           remonter dans la conversation. */}
-      <div ref={filRef} className="flex-1 overflow-y-auto space-y-4 pr-1">
+      <div
+        ref={filRef}
+        className={`flex-1 overflow-y-auto space-y-4 pr-1 ${
+          // ECRAN VIDE : CENTRE, comme les trois modes. Leur section porte
+          // `justify-center` tant qu'aucun message n'est echange ; sans
+          // l'equivalent ici, le texte d'accueil restait colle en haut avec
+          // un grand trou jusqu'au composeur. Le dernier ecart visible entre
+          // les deux conversations.
+          messages.length === 0 ? 'flex flex-col justify-center text-center' : ''
+        }`}
+      >
         {messages.length === 0 && (
-          <p className="text-slate-400 text-[15px] leading-relaxed">
-            Décrivez l’application que vous voulez. Deribfy vous dira ce qu’il a compris,
-            et vous <strong className="text-slate-200">posera des questions</strong> sur ce
-            qu’il ne peut pas deviner — rien n’est construit avant. Elle sort en version{' '}
-            <strong className="text-slate-200">mobile</strong> et{' '}
-            <strong className="text-slate-200">web</strong>.
-          </p>
+          <>
+            <p className="text-slate-400 text-[15px] leading-relaxed max-w-md mx-auto">
+              Décrivez l’application que vous voulez. Deribfy vous dira ce qu’il a compris,
+              et vous <strong className="text-slate-200">posera des questions</strong> sur ce
+              qu’il ne peut pas deviner — rien n’est construit avant. Elle sort en version{' '}
+              <strong className="text-slate-200">mobile</strong> et{' '}
+              <strong className="text-slate-200">web</strong>.
+            </p>
+            {/* ── LE RETOUR NE VIT QUE SUR L'ECRAN VIDE, et c'est la reponse a
+                « je vois pas pourquoi tu l'as mis ici ».
+
+                Il etait pose AU-DESSUS de la conversation, aligne a gauche, a
+                un endroit ou les trois modes n'ont rien. Pendant la
+                conversation, il n'a plus lieu d'etre : la vue est desormais
+                identique a celle des trois modes, sans chrome en plus.
+
+                Mais le SUPPRIMER tout court enfermerait. Les trois modes n'en
+                ont pas besoin parce qu'ils QUITTENT la page une fois le site
+                genere ; l'application, elle, reste. Et cliquer « Accueil »
+                vers une route identique ne remonte pas le composant : l'etat
+                survit, donc rien ne reviendrait.
+
+                Il reste donc exactement la ou on se rend compte qu'on s'est
+                trompe de pastille — avant d'avoir ecrit quoi que ce soit. */}
+            <button
+              type="button"
+              onClick={onRetour}
+              className="mt-5 text-xs text-slate-500 hover:text-slate-300 underline underline-offset-4 transition"
+            >
+              Revenir aux sites et boutiques
+            </button>
+          </>
         )}
 
         {messages.map((m, i) =>
