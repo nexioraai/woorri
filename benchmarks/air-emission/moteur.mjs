@@ -206,6 +206,30 @@ const surfaceEnveloppe = () => {
 
   const { validateLocal, jugerAcceptation } = acceptation;
 
+  // ── LA SONDE DE GRAMMAIRE, UNE FOIS PAR MOTEUR.
+  //
+  // Mesure : deux refus de grammaire sur trois arrivent sous forme de DELAI,
+  // et la degradation de `callPart` n'est armee que par le `status 400`. Le
+  // moteur jetait donc au niveau 0 au lieu de descendre au niveau 2, qui est
+  // accepte trois fois sur trois.
+  //
+  // La sonde POSITIONNE le point de depart de chaque passe sur le niveau le
+  // plus contraint qui passe. Elle ne retire rien : la degradation de
+  // `callPart` reste disponible au-dela.
+  //
+  // `PARTS` est un etat de module, partage entre les appels d'un meme
+  // processus. C'est VOULU : le niveau acceptable est une propriete du
+  // SCHEMA, pas de la demande. Deux generations simultanees mesureraient la
+  // meme chose.
+  const { creerSondeGrammaire } = await import(join(HERE, "sonde-grammaire.mjs"));
+  const sondeGrammaire = creerSondeGrammaire({ client, adaptateur });
+  let niveauxSondes = null;
+  async function sonderUneFois() {
+    if (niveauxSondes !== null) return niveauxSondes;
+    niveauxSondes = await sondeGrammaire.sonder(coeur.PARTS);
+    return niveauxSondes;
+  }
+
   /**
    * UNE DEMANDE EN TEXTE LIBRE → UN DOCUMENT AIR COMPLET.
    *
@@ -220,6 +244,11 @@ const surfaceEnveloppe = () => {
    * et rapport — jamais de juge assoupli pour « faire passer ».
    */
   async function emettreApplication({ brief, slug }) {
+    // AVANT LE MOINDRE APPEL D'EMISSION : on mesure quel niveau de grammaire
+    // le service accepte, pour chaque passe, en parallele. Un refus ne
+    // facture rien ; une sonde acceptee coute un jeton de sortie.
+    const niveaux = await sonderUneFois();
+
     const usage = [];
     const refusals = { count: 0 };
     // LES JETONS SE COMPTENT ICI : `callPart` les pousse dans `usage`, et
@@ -458,6 +487,9 @@ const surfaceEnveloppe = () => {
       refus: refusals.count,
       coutUsd: coeur.lireEtatDepense().depense,
       jetons: jetons(),
+      // CE QUE LA SONDE A RETENU, dit et non taché : un niveau degrade est
+      // une garantie perdue, et personne ne doit l'apprendre par surprise.
+      niveaux,
     };
   }
 
