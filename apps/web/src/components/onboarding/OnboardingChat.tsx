@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { ArrowUp, Sparkles } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import ConversationApplication from './ConversationApplication';
+import { Attente, Bulle, CADRE_CONVERSATION, Composeur, VERRE_BULLE } from './Conversation';
 import { useTranslation } from '@/lib/translations';
 
 type Msg = { role: 'user' | 'assistant'; content: string };
@@ -284,13 +285,6 @@ export default function OnboardingChat() {
     sendText(label.charAt(0).toUpperCase() + label.slice(1), mode);
   };
 
-  const onKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      send();
-    }
-  };
-
   // LOT 1 / L1-01 -- LE SELECTEUR DEVIENT ATTEIGNABLE HORS ECRAN D'ACCUEIL.
   //
   // CE QUI MANQUAIT. La branche `need_dropship_type` existait deja ici et
@@ -332,8 +326,12 @@ export default function OnboardingChat() {
   // l'utilisateur a choisi « Application ». C'est ce qui garantit que les
   // trois modes existants ne changent pas d'un octet.
   if (cibleApplication) {
+    // LE MEME CADRE QUE LES TROIS MODES, pas un cadre voisin. Le precedent
+    // n'avait ni hauteur d'ecran ni colonne : la vue etant courte, le PIED DE
+    // PAGE remontait en plein milieu. Ce n'etait pas un defaut du pied de
+    // page — c'etait cette section qui ne tenait pas sa place.
     return (
-      <section className="max-w-2xl mx-auto px-4 sm:px-6 pb-10 pt-6">
+      <section className={CADRE_CONVERSATION}>
         <div className="flex items-center gap-2 justify-center mb-6 text-white/60">
           <Sparkles size={18} className="text-[#FA5D1E]" />
           <span className="text-sm font-medium tracking-wide" translate="no">{t('home.hero.badge')}</span>
@@ -344,7 +342,7 @@ export default function OnboardingChat() {
   }
 
   return (
-    <section className={`max-w-2xl mx-auto px-4 sm:px-6 pb-10 flex flex-col h-[calc(100vh-120px)] ${messages.length === 1 && !loading && !generating ? 'justify-center' : ''}`}>
+    <section className={`${CADRE_CONVERSATION} ${messages.length === 1 && !loading && !generating ? 'justify-center' : ''}`}>
       <div className="flex items-center gap-2 justify-center mb-6 text-white/60">
         <Sparkles size={18} className="text-[#FA5D1E]" />
         <span className="text-sm font-medium tracking-wide" translate="no">{t('home.hero.badge')}</span>
@@ -416,22 +414,14 @@ export default function OnboardingChat() {
       ) : (
       <div ref={scrollRef} className="flex-1 overflow-y-auto space-y-4 pr-1">
         {messages.map((m, i) => (
-          <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div
-              className={`max-w-[82%] px-5 py-3 text-[15px] leading-relaxed shadow-lg whitespace-pre-wrap ${
-                m.role === 'user'
-                  ? 'bg-gradient-to-br from-[#FA5D1E] to-[#FA5D1E] text-white rounded-[22px] rounded-br-md'
-                  : 'bg-white/[0.06] border border-white/10 text-slate-100 rounded-[22px] rounded-bl-md'
-              }`}
-            >
-              <span dangerouslySetInnerHTML={renderBold(m.content)} />
-            </div>
-          </div>
+          <Bulle key={i} moi={m.role === 'user'}>
+            <span dangerouslySetInnerHTML={renderBold(m.content)} />
+          </Bulle>
         ))}
 
-        {(loading || generating) && (
+        {generating && (
           <div className="flex justify-start">
-            <div className="bg-white/[0.06] border border-white/10 rounded-[22px] rounded-bl-md px-5 py-4">
+            <div className={`${VERRE_BULLE} px-5 py-4`}>
               {generating ? (
                 <div className="py-2">
                   <div className="text-center mb-6">
@@ -458,16 +448,11 @@ export default function OnboardingChat() {
                     })}
                   </div>
                 </div>
-              ) : (
-                <div className="flex gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-white/50 animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <span className="w-2 h-2 rounded-full bg-white/50 animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <span className="w-2 h-2 rounded-full bg-white/50 animate-bounce" style={{ animationDelay: '300ms' }} />
-                </div>
-              )}
+              ) : null}
             </div>
           </div>
         )}
+        {loading && !generating && <Attente />}
       </div>
       )}
 
@@ -507,27 +492,15 @@ export default function OnboardingChat() {
         </div>
       )}
 
-      <div className="relative mt-4">
-        <textarea
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={onKeyDown}
-          placeholder={invite}
-          aria-label="Décrivez votre activité"
-          maxLength={1000}
-          disabled={generating}
-          rows={1}
-          className="w-full bg-black/40 border border-white/10 rounded-[24px] pl-6 pr-16 py-4 text-white text-[15px] placeholder-slate-500 resize-none focus:outline-none transition shadow-xl min-h-[56px] max-h-40"
-        />
-        <button
-          onClick={send}
-          disabled={!input.trim() || loading || generating}
-          aria-label="Envoyer"
-          className="absolute bottom-3 right-3 w-11 h-11 rounded-full flex items-center justify-center bg-white border-2 border-[#FA5D1E] shadow-lg transition disabled:opacity-40 disabled:cursor-not-allowed hover:scale-105"
-        >
-          <ArrowUp size={22} strokeWidth={2.5} className="text-[#FA5D1E]" />
-        </button>
-      </div>
+      <Composeur
+        valeur={input}
+        onChange={setInput}
+        onEnvoyer={send}
+        invite={invite}
+        desactive={!input.trim() || loading || generating}
+        bloque={generating}
+        etiquette="Décrivez votre activité"
+      />
 
       {messages.length === 1 && !loading && !generating && !showDropshipPicker && (
         <div className="mt-5 max-w-lg mx-auto text-left space-y-2 text-[13px] leading-relaxed text-slate-400">

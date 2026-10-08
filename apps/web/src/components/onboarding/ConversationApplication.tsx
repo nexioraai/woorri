@@ -20,8 +20,9 @@
 // `sites`. Les 48 fichiers qui lisent `site.mode` ne verront jamais passer
 // une application, et c'est la garantie que rien de ce qui marche ne casse.
 // ============================================================
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import { Attente, Bulle, Composeur } from './Conversation';
 
 type Question = { code: string; destination: string; texte: string };
 type Intention = {
@@ -56,6 +57,13 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
   const [texteLu, setTexteLu] = useState('');
 
   const enQuestion = ouvertes.length > 0;
+
+  // LE FIL SUIT LA CONVERSATION, comme celui des trois modes : sans cela, une
+  // question posee en bas de colonne resterait hors de vue.
+  const filRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    filRef.current?.scrollTo({ top: filRef.current.scrollHeight, behavior: 'smooth' });
+  }, [messages, enCours]);
 
   const jeton = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -194,17 +202,17 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
   };
 
   return (
-    <div className="w-full max-w-2xl mx-auto">
+    <>
       <button
         type="button"
         onClick={onRetour}
-        className="text-xs text-slate-400 hover:text-white mb-4"
+        className="text-xs text-slate-400 hover:text-white mb-4 self-start"
       >
         ← Revenir aux sites et boutiques
       </button>
 
       {apercu !== '' && (
-        <div className="mb-6">
+        <div className="mb-4">
           <div className="flex items-center justify-between mb-2">
             <p className="text-xs text-slate-400">Votre application</p>
             <button type="button" onClick={() => setApercu('')} className="text-xs text-slate-400 hover:text-white underline">
@@ -217,83 +225,81 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
             title="Aperçu de l’application"
             srcDoc={apercu}
             sandbox="allow-scripts"
-            className="w-full h-[460px] rounded-xl border border-white/10 bg-white"
+            className="w-full h-[380px] rounded-xl border border-white/10 bg-white"
           />
         </div>
       )}
 
-      {messages.length === 0 && (
-        <p className="text-slate-400 text-sm mb-6 leading-relaxed">
-          Décrivez l’application que vous voulez. Deribfy vous dira ce qu’il a compris,
-          et vous <strong>posera des questions</strong> sur ce qu’il ne peut pas deviner —
-          rien n’est construit avant. Elle sort en version <strong>mobile</strong> et <strong>web</strong>.
-        </p>
-      )}
+      {/* ── LA MEME COLONNE QUE LES TROIS MODES : elle prend la place qui
+          reste et defile. C'est ce `flex-1` qui empeche le pied de page de
+          remonter dans la conversation. */}
+      <div ref={filRef} className="flex-1 overflow-y-auto space-y-4 pr-1">
+        {messages.length === 0 && (
+          <p className="text-slate-400 text-[15px] leading-relaxed">
+            Décrivez l’application que vous voulez. Deribfy vous dira ce qu’il a compris,
+            et vous <strong className="text-slate-200">posera des questions</strong> sur ce
+            qu’il ne peut pas deviner — rien n’est construit avant. Elle sort en version{' '}
+            <strong className="text-slate-200">mobile</strong> et{' '}
+            <strong className="text-slate-200">web</strong>.
+          </p>
+        )}
 
-      <div className="space-y-4 mb-6">
         {messages.map((m, i) =>
           m.role === 'moi' ? (
-            <div key={i} className="flex justify-end">
-              <p className="bg-[#FA5D1E]/15 border border-[#FA5D1E]/25 rounded-2xl rounded-br-md px-4 py-3 max-w-[85%] text-slate-100">
-                {m.texte}
-              </p>
-            </div>
+            <Bulle key={i} moi>
+              {m.texte}
+            </Bulle>
           ) : m.role === 'question' ? (
-            <div key={i} className="bg-white/[0.04] border border-[#FA5D1E]/25 rounded-2xl rounded-bl-md px-4 py-3">
-              <p className="text-xs text-[#FA5D1E]/90 mb-2">
+            <Bulle key={i} moi={false}>
+              <span className="block text-xs text-[#FA5D1E] mb-2">
                 Avant de construire, j’ai besoin de savoir
-              </p>
-              <ul className="space-y-2">
-                {m.questions.map((q) => (
-                  <li key={q.code} className="text-sm text-slate-100 leading-relaxed">
-                    {q.texte}
-                  </li>
-                ))}
-              </ul>
+              </span>
+              {m.questions.map((q) => (
+                <span key={q.code} className="block">
+                  {q.texte}
+                </span>
+              ))}
               {m.avertissement !== undefined && (
-                <p className="mt-3 text-xs text-amber-300/80">{m.avertissement}</p>
+                <span className="block mt-3 text-xs text-amber-300/80">{m.avertissement}</span>
               )}
               {m.questions.length > 1 && (
-                <p className="mt-3 text-xs text-slate-500">
+                <span className="block mt-3 text-xs text-slate-500">
                   Répondez à la première ; je poserai la suivante ensuite.
-                </p>
+                </span>
               )}
-            </div>
+            </Bulle>
           ) : (
-            <div key={i} className="bg-white/[0.04] border border-white/10 rounded-2xl rounded-bl-md px-4 py-3">
-              <p className="text-xs text-slate-500 mb-2">
+            <Bulle key={i} moi={false}>
+              <span className="block text-xs text-slate-500 mb-2">
                 {m.parIA ? 'Voici ce que j’ai compris' : 'Lecture simple — sans IA'}
-              </p>
-              <ul className="space-y-1.5">
-                {m.compris.map((c) => <li key={c} className="text-sm text-slate-200">· {c}</li>)}
-              </ul>
+              </span>
+              {m.compris.map((c) => (
+                <span key={c} className="block">
+                  · {c}
+                </span>
+              ))}
               {m.note !== undefined && (
-                <p className="mt-3 text-xs text-amber-300/70">Lecture par IA indisponible : {m.note}</p>
+                <span className="block mt-3 text-xs text-amber-300/70">
+                  Lecture par IA indisponible : {m.note}
+                </span>
               )}
-            </div>
+            </Bulle>
           ),
         )}
-        {enCours && <p className="text-sm text-slate-500">Lecture…</p>}
-        {avis !== '' && <p className="text-sm text-amber-300/80">{avis}</p>}
+        {enCours && <Attente />}
       </div>
 
-      <div className="flex gap-3">
-        <input
-          value={saisie}
-          onChange={(e) => setSaisie(e.target.value)}
-          onKeyDown={(e) => { if (e.key === 'Enter') void envoyer(); }}
-          placeholder={enQuestion ? 'Votre réponse…' : 'Une application de tontine pour mon quartier…'}
-          className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-[#FA5D1E]/50 text-slate-100"
-        />
-        <button
-          type="button"
-          onClick={() => void envoyer()}
-          disabled={enCours || saisie.trim() === ''}
-          className="bg-white/10 hover:bg-white/15 px-5 rounded-xl font-medium transition disabled:opacity-30 text-slate-100"
-        >
-          Envoyer
-        </button>
-      </div>
+      {avis !== '' && <p className="text-sm text-amber-300/80 mt-3 text-center">{avis}</p>}
+
+      <Composeur
+        valeur={saisie}
+        onChange={setSaisie}
+        onEnvoyer={() => void envoyer()}
+        invite={enQuestion ? 'Votre réponse…' : 'Une application de tontine pour mon quartier…'}
+        desactive={enCours || saisie.trim() === ''}
+        bloque={travail !== ''}
+        etiquette="Décrivez l’application que vous voulez"
+      />
 
       {/* ── LES DEUX BOUTONS SUIVENT LE DOCUMENT, PLUS LE DERNIER MESSAGE.
           Avant, ils apparaissaient des qu'on avait parle : on pouvait donc
@@ -319,6 +325,6 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
           </button>
         </div>
       )}
-    </div>
+    </>
   );
 }

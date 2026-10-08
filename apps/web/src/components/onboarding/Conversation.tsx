@@ -1,0 +1,122 @@
+'use client';
+// ============================================================
+// LA CONVERSATION — UNE SEULE, PARTAGEE.
+//
+// ── POURQUOI CE FICHIER EXISTE.
+//
+// « Je t'ai explicitement demandé d'utiliser celui qui était là avant. »
+//
+// J'avais refait une bulle, un champ, un bouton « Envoyer ». Le resultat
+// etait une SECONDE interface : des bulles d'une autre forme, un composeur
+// d'une autre forme, et une section qui ne remplissait pas l'ecran — ce qui
+// faisait remonter le pied de page en plein milieu.
+//
+// Les primitives vivent donc ICI, une fois, et les deux chemins — les trois
+// modes de site et l'application — les utilisent. Le depot a vu quatre fois
+// « une liste ecrite deux fois diverge » ; c'etait vrai d'une liste de
+// gestes, c'est vrai d'une bulle de conversation.
+//
+// ── CE QUI N'A PAS BOUGE.
+//
+// Les classes sont celles de l'accueil, au caractere pres : c'est un
+// DEPLACEMENT, pas un redessin. Un cliquet verifie que les deux fichiers
+// passent bien par ici au lieu de redeclarer leurs propres bulles.
+// ============================================================
+import { ArrowUp } from 'lucide-react';
+import type { ReactNode } from 'react';
+
+/** La hauteur de la conversation : elle REMPLIT l'ecran. Sans cela, une vue
+ *  courte laisse le pied de page remonter au milieu de la page. */
+export const CADRE_CONVERSATION =
+  'max-w-2xl mx-auto px-4 sm:px-6 pb-10 flex flex-col h-[calc(100vh-120px)]';
+
+/** LE VERRE D'UNE BULLE DE DERIBFY — une seule ecriture.
+ *
+ *  Le panneau de generation des trois modes porte exactement la meme
+ *  surface. L'ecrire une troisieme fois la ferait diverger au premier
+ *  ajustement ; il la PREND ici, sans changer d'un pixel. */
+export const VERRE_BULLE =
+  'bg-white/[0.06] border border-white/10 rounded-[22px] rounded-bl-md';
+
+/** Une bulle. `moi` a droite en orange, Deribfy a gauche en verre. */
+export function Bulle({ moi, children }: { moi: boolean; children: ReactNode }) {
+  return (
+    <div className={`flex ${moi ? 'justify-end' : 'justify-start'}`}>
+      <div
+        className={`max-w-[82%] px-5 py-3 text-[15px] leading-relaxed shadow-lg whitespace-pre-wrap ${
+          moi
+            ? 'bg-gradient-to-br from-[#FA5D1E] to-[#FA5D1E] text-white rounded-[22px] rounded-br-md'
+            : `${VERRE_BULLE} text-slate-100`
+        }`}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
+
+/** Les trois points — la meme attente, des deux cotes. */
+export function Attente() {
+  return (
+    <div className="flex justify-start">
+      <div className={`${VERRE_BULLE} px-5 py-4`}>
+        <div className="flex gap-1.5">
+          <span className="w-2 h-2 rounded-full bg-white/50 animate-bounce" style={{ animationDelay: '0ms' }} />
+          <span className="w-2 h-2 rounded-full bg-white/50 animate-bounce" style={{ animationDelay: '150ms' }} />
+          <span className="w-2 h-2 rounded-full bg-white/50 animate-bounce" style={{ animationDelay: '300ms' }} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Le composeur : la zone de saisie et sa fleche ronde. Un seul des deux
+ *  chemins pouvait l'avoir « presque » pareil — c'est ce qui se voyait. */
+export function Composeur({
+  valeur,
+  onChange,
+  onEnvoyer,
+  invite,
+  desactive = false,
+  bloque = false,
+  etiquette,
+}: {
+  valeur: string;
+  onChange: (v: string) => void;
+  onEnvoyer: () => void;
+  invite: string;
+  /** Le bouton seul est inactif (rien a envoyer, ou envoi en cours). */
+  desactive?: boolean;
+  /** Le champ entier est fige (une generation est en cours). */
+  bloque?: boolean;
+  etiquette: string;
+}) {
+  return (
+    <div className="relative mt-4">
+      <textarea
+        value={valeur}
+        onChange={(e) => onChange(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            onEnvoyer();
+          }
+        }}
+        placeholder={invite}
+        aria-label={etiquette}
+        maxLength={1000}
+        disabled={bloque}
+        rows={1}
+        className="w-full bg-black/40 border border-white/10 rounded-[24px] pl-6 pr-16 py-4 text-white text-[15px] placeholder-slate-500 resize-none focus:outline-none transition shadow-xl min-h-[56px] max-h-40"
+      />
+      <button
+        onClick={onEnvoyer}
+        disabled={desactive}
+        aria-label="Envoyer"
+        className="absolute bottom-3 right-3 w-11 h-11 rounded-full flex items-center justify-center bg-white border-2 border-[#FA5D1E] shadow-lg transition disabled:opacity-40 disabled:cursor-not-allowed hover:scale-105"
+      >
+        <ArrowUp size={22} strokeWidth={2.5} className="text-[#FA5D1E]" />
+      </button>
+    </div>
+  );
+}

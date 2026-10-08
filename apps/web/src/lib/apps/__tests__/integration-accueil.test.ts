@@ -148,3 +148,52 @@ describe('CLIQUET — ON NE CONSTRUIT PAS CE QU ON N A PAS COMPRIS', () => {
     expect(CONVERSATION).not.toMatch(/MODELE_[A-Z_]+\s*:/u)
   })
 })
+
+describe('CLIQUET — IL N Y A QU UNE CONVERSATION, PAS DEUX', () => {
+  // « Je t ai explicitement demande d utiliser celui qui etait la avant. »
+  //
+  // J avais refait une bulle, un champ et un bouton « Envoyer ». Resultat :
+  // une SECONDE interface — bulles d une autre forme, composeur d une autre
+  // forme, et une section sans hauteur d ecran, ce qui faisait remonter le
+  // pied de page en plein milieu de la page.
+  //
+  // Ces tests tiennent l unicite par la STRUCTURE : les primitives vivent
+  // dans un seul fichier, et les deux chemins y passent.
+  const PARTAGE = sansCommentaires(lire('components', 'onboarding', 'Conversation.tsx'))
+  const ACCUEIL_NU = sansCommentaires(ACCUEIL)
+
+  it('LES PRIMITIVES VIVENT A UN SEUL ENDROIT', () => {
+    // La forme de la bulle et celle du composeur ne sont ecrites qu ici.
+    expect(PARTAGE).toContain('rounded-[22px] rounded-bl-md')
+    expect(PARTAGE).toContain('rounded-[24px] pl-6 pr-16')
+    for (const fichier of [ACCUEIL_NU, CONVERSATION]) {
+      expect(fichier).not.toContain('rounded-[22px] rounded-bl-md')
+      expect(fichier).not.toContain('rounded-[24px] pl-6 pr-16')
+    }
+  })
+
+  it('LES DEUX CHEMINS PASSENT PAR LES MEMES COMPOSANTS', () => {
+    for (const fichier of [ACCUEIL_NU, CONVERSATION]) {
+      expect(fichier).toMatch(/from '\.\/Conversation'/u)
+      expect(fichier).toContain('<Composeur')
+      expect(fichier).toContain('<Bulle')
+    }
+  })
+
+  it('LA VUE APPLICATION REMPLIT L ECRAN, comme les trois modes', () => {
+    // C est ce qui empeche le pied de page de remonter : une section courte
+    // laisse le reste de la page remonter sous elle.
+    expect(PARTAGE).toContain('h-[calc(100vh-120px)]')
+    // Les DEUX branches de l accueil utilisent ce cadre — celle des modes et
+    // celle de l application.
+    expect([...ACCUEIL_NU.matchAll(/CADRE_CONVERSATION/gu)].length).toBeGreaterThanOrEqual(3)
+    // Et la conversation application pose bien la colonne qui defile.
+    expect(CONVERSATION).toContain('flex-1 overflow-y-auto')
+  })
+
+  it('AUCUN BOUTON « Envoyer » EN TEXTE : la fleche ronde, des deux cotes', () => {
+    // Le signe le plus visible des deux interfaces sur la capture d ecran.
+    expect(CONVERSATION).not.toMatch(/>\s*Envoyer\s*</u)
+    expect(PARTAGE).toContain('ArrowUp')
+  })
+})
