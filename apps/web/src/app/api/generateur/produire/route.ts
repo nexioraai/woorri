@@ -13,6 +13,7 @@ import { NextResponse } from 'next/server'
 import { compileWeb } from '@deribfy/compiler'
 import { requireAuthenticatedUser } from '@/lib/auth/require-authenticated-user'
 import { documentPour, documentFourni } from '@/lib/apps/pour'
+import { premiereIntention } from '@/lib/apps/dialogue'
 import { zipper } from '@/lib/apps/zip'
 
 export const runtime = 'nodejs'
@@ -32,8 +33,19 @@ export async function POST(req: Request) {
   // relit. Dans les deux cas il est VALIDE : `documentFourni` passe par le
   // schéma strict, et `documentPour` aussi.
   const fourni = documentFourni((corps as { document?: unknown }).document)
-  const r = fourni === null ? await documentPour(demande) : { document: fourni, compris: [], parIA: false }
+  const r =
+    fourni === null
+      ? await documentPour(await premiereIntention(demande))
+      : { document: fourni, compris: [], parIA: false }
   if ('erreur' in r) return NextResponse.json({ error: r.erreur }, { status: 422 })
+  // MEME INTERDIT QUE L'APERCU : une archive construite sur une comprehension
+  // incomplete est pire qu'un refus — elle part sur le disque de quelqu'un.
+  if ('questions' in r) {
+    return NextResponse.json(
+      { error: 'Des questions restent ouvertes : repondez-y avant de telecharger.', questions: r.questions },
+      { status: 409 },
+    )
+  }
 
   try {
     const projet = compileWeb(r.document)

@@ -68,6 +68,33 @@ const securityHeaders = [
   { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(), interest-cohort=()' },
 ];
 
+/**
+ * CE QUE LE MOTEUR D'ÉMISSION A BESOIN D'EMPORTER DANS UNE FONCTION.
+ *
+ * `benchmarks/air-emission/` vit HORS de `apps/web` : rien ne l'embarque.
+ * Mesuré EN LIGNE, premier message du générateur :
+ *   « Cannot find module /var/task/benchmarks/air-emission/passe0.mjs »
+ *
+ * Le dossier ENTIER, pas les fichiers choisis à la main : `passe0.mjs`
+ * importe `modele-metier.mjs`, qui en importe d'autres, et `elicitation.mjs`
+ * importe le second. Une liste écrite à la main se périmerait au premier
+ * ajout, et le défaut ne se verrait qu'en production.
+ *
+ * ET LEURS PROPRES DÉPENDANCES, parce qu'un fichier TRACÉ est copié comme
+ * une DONNÉE : le traceur ne lit pas ses `import`. Mesuré en ligne, second
+ * message : « Cannot find package 'zod' imported from passe0.mjs ».
+ *
+ * `zod` et `acorn` n'ont elles-mêmes AUCUNE dépendance — c'est pour ça que
+ * deux lignes suffisent ici, et c'est exactement ce qui m'a trompé sur le
+ * SDK Anthropic, qui en avait six. Le test `tracage-cloture` vérifie
+ * désormais cette clôture au lieu de me faire confiance.
+ */
+const MOTEUR_EMISSION = [
+  '../../benchmarks/air-emission/**/*.mjs',
+  '../../node_modules/zod/**',
+  '../../node_modules/acorn/**',
+]
+
 const nextConfig: NextConfig = {
   // ── LE MOTEUR ENTRE DANS LE SITE.
   //
@@ -151,12 +178,34 @@ const nextConfig: NextConfig = {
     //
     // Le glob est résolu AU BUILD, sur Linux, où cette liaison existe. En
     // local elle n'est pas installée, et c'est normal.
-    '/api/generateur/apercu': ['../../node_modules/@rolldown/binding-linux-x64-gnu/**'],
-    '/api/generateur/comprendre': [
-      '../../benchmarks/air-emission/**/*.mjs',
-      '../../node_modules/zod/**',
-      '../../node_modules/acorn/**',
-      '../../node_modules/@anthropic-ai/sdk/**',
+    //
+    // ── ET CE N'EST PLUS LA SEULE ROUTE À EN AVOIR BESOIN.
+    //
+    // En branchant le dialogue, `apercu`, `produire` et la sonde se sont
+    // mises à charger `elicitation.mjs`. Trois fonctions de plus auraient
+    // démarré sans le dossier, et seraient mortes EN LIGNE — le défaut que
+    // je venais de corriger, réintroduit par la correction elle-même.
+    //
+    // La liste est donc UNE, posée au-dessus, et les routes la partagent.
+    // Quatre copies divergeraient à la cinquième route.
+    '/api/generateur/apercu': [
+      ...MOTEUR_EMISSION,
+      // ── L'APERÇU A BESOIN, EN PLUS, DU BINAIRE NATIF DE `rolldown`.
+      //
+      // Le traceur ne suit pas le chargement dynamique d'un `.node`. On
+      // déclare donc la liaison LINUX — celle que Vercel exécute — et elle
+      // seule : les huit plateformes feraient plusieurs centaines de
+      // méga-octets, pour un plafond de fonction à 250.
+      //
+      // Le glob est résolu AU BUILD, sur Linux, où cette liaison existe. En
+      // local elle n'est pas installée, et c'est normal.
+      '../../node_modules/@rolldown/binding-linux-x64-gnu/**',
+    ],
+    '/api/generateur/comprendre': MOTEUR_EMISSION,
+    '/api/generateur/produire': MOTEUR_EMISSION,
+    '/api/generateur/sonde': [
+      ...MOTEUR_EMISSION,
+      '../../node_modules/@rolldown/binding-linux-x64-gnu/**',
     ],
     '/api/cron/photos-pro': [
       './public/modeles/u2netp.onnx',

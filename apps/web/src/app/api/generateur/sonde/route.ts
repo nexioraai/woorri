@@ -122,6 +122,44 @@ export async function GET(req: Request) {
     }
   }
 
+  // ── LE SDK SE CHARGE-T-IL VRAIMENT ? GRATUIT, ET ÇA AURAIT SUFFI.
+  //
+  // Le défaut qui a tué la lecture par IA en production n'était PAS un appel
+  // raté : c'était un `import` — « Cannot find package 'standardwebhooks' ».
+  // Charger le SDK et construire un client ne coûte rien et n'appelle rien,
+  // et c'est exactement ce que le défaut cassait. Il a fallu une vraie
+  // demande d'utilisateur pour le découvrir ; plus maintenant.
+  await essayer('sdk', async () => {
+    const { default: Anthropic } = await import('@anthropic-ai/sdk')
+    // Clé factice : on mesure le CHARGEMENT, pas l'authentification. Aucune
+    // requête ne part d'une construction.
+    const c = new Anthropic({ apiKey: 'sonde-aucun-appel' })
+    if (typeof c.messages.create !== 'function') throw new Error('client sans messages.create')
+    return true
+  })
+
+  // ── LE DIALOGUE SE PROJETTE-T-IL ? GRATUIT AUSSI.
+  //
+  // `elicitation.mjs` porte deux cliquets qui s'exécutent AU CHARGEMENT : il
+  // refuse d'exister si une question n'a pas de diagnostic, ou l'inverse. Le
+  // charger ici, c'est donc les faire tourner en production — et vérifier du
+  // même coup que `benchmarks/` est bien entré dans CETTE fonction.
+  const projection = await essayer('dialogue', async () => {
+    const { questionsPour } = await import('@/lib/apps/dialogue')
+    return await questionsPour([
+      { code: 'MODELE_TERME_AMBIGU', path: 'couverture.nonRetenus[0]', message: 'témoin' },
+    ])
+  })
+  if (projection !== null) {
+    const juste = projection.length === 1 && projection[0].texte.includes('témoin')
+    maillons[maillons.length - 1] = {
+      ...maillons[maillons.length - 1]!,
+      ok: juste,
+      mesure: `${String(projection.length)} question(s)`,
+      ...(juste ? {} : { detail: 'la projection interrogative ne rend plus la question attendue' }),
+    }
+  }
+
   // ── L'ANGLE MORT, ET COMMENT ON LE FERME QUAND ON LE DÉCIDE.
   //
   // Tout ce qui précède est gratuit, donc interrogeable à volonté — et c'est

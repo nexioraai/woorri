@@ -36,6 +36,29 @@
  * `GO_DRY_RUN_P0="OUI-15-CENTIMES"` — et elle vaut ici aussi. Sans le jeton,
  * cette fonction REFUSE ; elle ne se degrade pas en silence vers autre chose.
  */
+// ── POURQUOI LE SDK EST IMPORTÉ ICI, ET PAS PRIS DANS L'ADAPTATEUR.
+//
+// L'adaptateur a une fonction `creerClient` qui fait `await import(
+// "@anthropic-ai/sdk")`. Je l'appelais. En local : vert. EN LIGNE : mort —
+//   « Cannot find package 'standardwebhooks' imported from
+//     /var/task/node_modules/@anthropic-ai/sdk/resources/beta/webhooks.mjs »
+//
+// L'adaptateur est chargé en `webpackIgnore`, donc le bundler ne voit PAS son
+// import du SDK. Je compensais en traçant `node_modules/@anthropic-ai/sdk/**`
+// — et un fichier TRACÉ est copié comme une DONNÉE : le traceur ne lit pas ses
+// `import`. Le SDK dépend de six paquets. Aucun n'est parti.
+//
+// J'avais ÉCRIT cette règle, en toutes lettres, dans le commentaire juste
+// au-dessus de la liste — puis je l'ai appliquée à `zod` et `acorn`, qui n'ont
+// aucune dépendance, et pas au seul paquet de la liste qui en a.
+//
+// La réparation n'est pas d'allonger la liste : une liste de dépendances
+// écrite à la main se périme à la prochaine version du SDK. Le SDK redevient
+// un import NORMAL, que le bundler suit tout seul — exactement ce que fait
+// `api/chat/route.ts`, en production depuis toujours. L'adaptateur garde sa
+// fonction pour la campagne en ligne de commande ; elle n'est juste plus le
+// chemin du serveur.
+import Anthropic from '@anthropic-ai/sdk'
 import { documentDepuisModele, type Derivation, type TableGestes } from './derivation'
 
 /** Les faits que P0 tire d'une demande. Forme du contrat `modele-metier`. */
@@ -47,7 +70,22 @@ export type ModeleMetier = {
 
 export type Comprehension =
   | { ok: true; modele: ModeleMetier; coutUsd: number; jetons: { entree: number; sortie: number } }
-  | { ok: false; raison: string; refusDeDepense?: boolean }
+  | {
+      ok: false
+      raison: string
+      refusDeDepense?: boolean
+      /**
+       * LES DIAGNOSTICS SORTENT MAINTENANT, et c'etait le defaut.
+       *
+       * Le juge rend des codes classes par EP-135 : les uns sont des QUESTIONS
+       * que seul l'humain peut trancher, les autres sont NOS fautes. En ne
+       * rendant qu'une phrase, cette fonction ecrasait la distinction et une
+       * question legitime devenait « lecture refusee » — un cul-de-sac au lieu
+       * d'un tour de dialogue.
+       */
+      diagnostics?: { code?: string; path?: string; message?: string }[]
+      coutUsd?: number
+    }
 
 /** Le jeton budgetaire. Son absence n'est pas une panne : c'est un refus. */
 export const JETON_DEPENSE = 'GO_EMISSION_IA'
@@ -82,7 +120,11 @@ export async function comprendre(demande: string): Promise<Comprehension> {
     const base = racineDepot()
     const passe0 = (await import(/* webpackIgnore: true */ `${base}/benchmarks/air-emission/passe0.mjs`)) as {
       construireRequeteP0: (brief: string) => { system: string; user: string; grammaire: unknown }
-      jugerSortieP0: (texte: string, brief: string, meta: unknown) => { ok: boolean; diagnostics?: { message?: string }[] }
+      jugerSortieP0: (
+        texte: string,
+        brief: string,
+        meta: unknown,
+      ) => { ok: boolean; diagnostics?: { code?: string; path?: string; message?: string }[] }
     }
     const adaptateur = (await import(
       /* webpackIgnore: true */ `${base}/benchmarks/air-emission/adaptateur-anthropic.mjs`
@@ -92,7 +134,6 @@ export async function comprendre(demande: string): Promise<Comprehension> {
       lireReponse: (r: unknown) => { texte: string; meta: unknown }
       lireUsage: (u: unknown) => unknown
       coutUsd: (u: unknown) => number
-      creerClient: (lire: unknown, o?: unknown) => Promise<{ messages: { create: (a: unknown) => Promise<unknown> } }>
     }
 
     // ── LA GRAMMAIRE SE DÉGRADE AVANT DE PARTIR.
@@ -116,25 +157,30 @@ export async function comprendre(demande: string): Promise<Comprehension> {
     // `apps/web/.env.local`. Ce fichier n'est PAS déployé — il est ignoré par
     // git, et c'est très bien ainsi. Sur le serveur, la clé vit dans
     // `process.env`.
-    //
-    // On ne modifie pas l'adaptateur pour autant : il prend un LECTEUR en
-    // argument, et c'est précisément là pour ça. On lui en fournit un qui rend
-    // le contenu qu'il attend, construit depuis l'environnement.
     const cle = process.env.ANTHROPIC_API_KEY ?? ''
     if (cle === '') return { ok: false, raison: 'Clé Anthropic absente du serveur.' }
-    const client = await adaptateur.creerClient(() => `ANTHROPIC_API_KEY=${cle}`)
+    const client = new Anthropic({ apiKey: cle })
+    // L'ADAPTATEUR POSSEDE LA FORME DU DIALECTE, y compris `output_config`,
+    // que la surface typee du SDK ne declare pas. Le cast dit cette frontiere
+    // au lieu de la masquer : c'est l'adaptateur qui sait, pas le type.
     const appel = adaptateur.construireAppel(requete, { max_tokens: 9000 })
-    const reponse = (await client.messages.create(appel)) as { usage?: unknown }
+    const reponse = (await client.messages.create(
+      appel as Parameters<typeof client.messages.create>[0],
+    )) as { usage?: unknown }
     const { texte, meta } = adaptateur.lireReponse(reponse)
 
+    const usage = adaptateur.lireUsage(reponse.usage) as { entree?: number; sortie?: number }
     const verdict = passe0.jugerSortieP0(texte, propre, meta)
     if (!verdict.ok) {
       return {
         ok: false,
         raison: (verdict.diagnostics ?? []).map((d) => d.message ?? '').join(' · ') || 'Lecture refusee.',
+        // L'APPEL A ETE PAYE MEME QUAND LE VERDICT REFUSE. Le taire ferait
+        // apparaitre un tour de dialogue comme gratuit.
+        diagnostics: verdict.diagnostics ?? [],
+        coutUsd: adaptateur.coutUsd(usage),
       }
     }
-    const usage = adaptateur.lireUsage(reponse.usage) as { entree?: number; sortie?: number }
     return {
       ok: true,
       modele: JSON.parse(texte) as ModeleMetier,

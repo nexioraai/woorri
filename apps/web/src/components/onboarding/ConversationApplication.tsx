@@ -23,9 +23,17 @@
 import { useState } from 'react';
 import { supabase } from '@/lib/supabase';
 
+type Question = { code: string; destination: string; texte: string };
+type Intention = {
+  brief: string;
+  addendum: { rang: number; code: string; destination: string; question: string; reponse: string }[];
+};
+
 type Message =
   | { role: 'moi'; texte: string }
-  | { role: 'deribfy'; compris: string[]; parIA: boolean; note?: string };
+  | { role: 'deribfy'; compris: string[]; parIA: boolean; note?: string }
+  // UNE QUESTION EST UN TOUR A PART ENTIERE, pas une note en bas d'un resultat.
+  | { role: 'question'; questions: Question[]; avertissement?: string };
 
 export default function ConversationApplication({ onRetour }: { onRetour: () => void }) {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -38,29 +46,85 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
   // reliraient la phrase et repaieraient un appel chacun — trois pour une
   // seule application, avec le risque que l apercu et l archive different.
   const [document_, setDocument] = useState<unknown>(null);
+  // ── L'ETAT DU DIALOGUE. Il vit ici et repart a chaque tour : le serveur ne
+  // garde rien, et la conversation survit a un rechargement de page.
+  const [intention, setIntention] = useState<Intention | null>(null);
+  const [ouvertes, setOuvertes] = useState<Question[]>([]);
+  const [perimetre, setPerimetre] = useState<string[]>([]);
+  // Le texte REELLEMENT lu — brief et reponses. Les deux autres routes le
+  // recoivent ; leur envoyer le dernier message seul perdrait tout le reste.
+  const [texteLu, setTexteLu] = useState('');
 
-  const derniere = [...messages].reverse().find((m) => m.role === 'moi');
+  const enQuestion = ouvertes.length > 0;
 
   const jeton = async () => {
     const { data: { session } } = await supabase.auth.getSession();
     return session?.access_token ?? '';
   };
 
+  /** Un tour : soit une premiere demande, soit une reponse a la question ouverte. */
   const envoyer = async () => {
-    const demande = saisie.trim();
-    if (demande === '' || enCours) return;
+    const texte = saisie.trim();
+    if (texte === '' || enCours) return;
     setSaisie('');
     setAvis('');
-    setMessages((m) => [...m, { role: 'moi', texte: demande }]);
+    setMessages((m) => [...m, { role: 'moi', texte }]);
     setEnCours(true);
+
+    // ── CE QU'ON ENVOIE DEPEND DE CE QU'ON ATTENDAIT.
+    //
+    // Hors question, c'est une demande. Sous question, c'est une REPONSE : on
+    // la range dans l'addendum avec le code de la question, et le brief reste
+    // SCELLE. C'est ce qui permettra un jour de mesurer ce que l'humain a dit
+    // spontanement et ce qu'il n'a dit que parce qu'on le lui a demande.
+    const corps =
+      enQuestion && intention !== null
+        ? {
+            intention: {
+              brief: intention.brief,
+              addendum: [
+                ...intention.addendum,
+                {
+                  rang: intention.addendum.length,
+                  code: ouvertes[0].code,
+                  destination: ouvertes[0].destination,
+                  question: ouvertes[0].texte,
+                  reponse: texte,
+                },
+              ],
+            },
+            perimetre,
+          }
+        : { demande: texte };
+
     try {
       const res = await fetch('/api/generateur/comprendre', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${await jeton()}` },
-        body: JSON.stringify({ demande }),
+        body: JSON.stringify(corps),
       });
       const d = await res.json();
       if (!res.ok) { setAvis(String(d.error ?? 'Lecture impossible.')); return; }
+
+      setIntention(d.intention ?? null);
+      setTexteLu(String(d.texteLu ?? texte));
+
+      if (Array.isArray(d.questions) && d.questions.length > 0) {
+        // RIEN N'EST CONSTRUIT TANT QU'UNE QUESTION EST OUVERTE. Le document
+        // precedent est EFFACE : le garder laisserait les deux boutons actifs
+        // sur une comprehension qu'on vient de declarer incomplete.
+        setDocument(null);
+        setOuvertes(d.questions as Question[]);
+        setPerimetre(Array.isArray(d.perimetre) ? (d.perimetre as string[]) : []);
+        setMessages((m) => [
+          ...m,
+          { role: 'question', questions: d.questions as Question[], avertissement: d.avertissement },
+        ]);
+        return;
+      }
+
+      setOuvertes([]);
+      setPerimetre([]);
       setDocument(d.document ?? null);
       setMessages((m) => [
         ...m,
@@ -80,14 +144,14 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
   };
 
   const voir = async () => {
-    if (!derniere) return;
+    if (document_ === null) return;
     setTravail('apercu');
     setAvis('');
     try {
       const res = await fetch('/api/generateur/apercu', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${await jeton()}` },
-        body: JSON.stringify({ demande: derniere.texte, document: document_ }),
+        body: JSON.stringify({ demande: texteLu, document: document_ }),
       });
       const d = await res.json();
       direAnomalies(d);
@@ -101,14 +165,14 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
   };
 
   const telecharger = async () => {
-    if (!derniere) return;
+    if (document_ === null) return;
     setTravail('archive');
     setAvis('');
     try {
       const res = await fetch('/api/generateur/produire', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${await jeton()}` },
-        body: JSON.stringify({ demande: derniere.texte, document: document_ }),
+        body: JSON.stringify({ demande: texteLu, document: document_ }),
       });
       if (!res.ok) {
         const d = await res.json().catch(() => ({}));
@@ -160,8 +224,9 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
 
       {messages.length === 0 && (
         <p className="text-slate-400 text-sm mb-6 leading-relaxed">
-          Décrivez l’application que vous voulez. Deribfy vous dira d’abord ce qu’il a
-          compris — vous corrigez, puis vous générez. Elle sort en version <strong>mobile</strong> et <strong>web</strong>.
+          Décrivez l’application que vous voulez. Deribfy vous dira ce qu’il a compris,
+          et vous <strong>posera des questions</strong> sur ce qu’il ne peut pas deviner —
+          rien n’est construit avant. Elle sort en version <strong>mobile</strong> et <strong>web</strong>.
         </p>
       )}
 
@@ -172,6 +237,27 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
               <p className="bg-[#FA5D1E]/15 border border-[#FA5D1E]/25 rounded-2xl rounded-br-md px-4 py-3 max-w-[85%] text-slate-100">
                 {m.texte}
               </p>
+            </div>
+          ) : m.role === 'question' ? (
+            <div key={i} className="bg-white/[0.04] border border-[#FA5D1E]/25 rounded-2xl rounded-bl-md px-4 py-3">
+              <p className="text-xs text-[#FA5D1E]/90 mb-2">
+                Avant de construire, j’ai besoin de savoir
+              </p>
+              <ul className="space-y-2">
+                {m.questions.map((q) => (
+                  <li key={q.code} className="text-sm text-slate-100 leading-relaxed">
+                    {q.texte}
+                  </li>
+                ))}
+              </ul>
+              {m.avertissement !== undefined && (
+                <p className="mt-3 text-xs text-amber-300/80">{m.avertissement}</p>
+              )}
+              {m.questions.length > 1 && (
+                <p className="mt-3 text-xs text-slate-500">
+                  Répondez à la première ; je poserai la suivante ensuite.
+                </p>
+              )}
             </div>
           ) : (
             <div key={i} className="bg-white/[0.04] border border-white/10 rounded-2xl rounded-bl-md px-4 py-3">
@@ -196,7 +282,7 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
           value={saisie}
           onChange={(e) => setSaisie(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') void envoyer(); }}
-          placeholder="Une application de tontine pour mon quartier…"
+          placeholder={enQuestion ? 'Votre réponse…' : 'Une application de tontine pour mon quartier…'}
           className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-[#FA5D1E]/50 text-slate-100"
         />
         <button
@@ -209,7 +295,11 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
         </button>
       </div>
 
-      {derniere !== undefined && (
+      {/* ── LES DEUX BOUTONS SUIVENT LE DOCUMENT, PLUS LE DERNIER MESSAGE.
+          Avant, ils apparaissaient des qu'on avait parle : on pouvait donc
+          lancer une construction sur une comprehension vide ou refusee. Sans
+          document, il n'y a rien a construire — et il n'y a pas de bouton. */}
+      {document_ !== null && (
         <div className="mt-3 flex gap-3">
           <button
             type="button"

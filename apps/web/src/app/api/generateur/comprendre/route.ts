@@ -18,10 +18,25 @@
  * croire qu'une IA a lu quand c'est une expression régulière serait le genre
  * de mensonge qu'on ne rattrape pas : l'utilisateur ajusterait sa phrase en
  * pensant parler à quelqu'un qui comprend.
+ *
+ * ── ET MAINTENANT, ELLE PEUT RÉPONDRE PAR UNE QUESTION (EP-136).
+ *
+ * « On ne peut pas construire un truc qu'on n'a pas compris. » Quand le juge
+ * refuse pour une raison que SEUL l'humain peut lever, la route ne rend plus
+ * un document de repli : elle rend des QUESTIONS, et rien d'autre. Sans
+ * document, l'écran n'a rien à proposer de construire — l'interdit tient par
+ * la forme de la réponse, pas par une consigne d'affichage.
+ *
+ * L'ÉTAT DU DIALOGUE VIT CHEZ LE CLIENT, et revient à chaque tour sous forme
+ * d'intention `{ brief, addendum }`. Il est REJOUÉ par `repondre`, qui refuse
+ * un code hors de la table des questions projetées : le navigateur ne peut
+ * donc pas fabriquer un addendum arbitraire. Aucune session serveur, aucune
+ * table — et une conversation qui survit à un rechargement de page.
  */
 import { NextResponse } from 'next/server'
 import { requireAuthenticatedUser } from '@/lib/auth/require-authenticated-user'
 import { documentPour } from '@/lib/apps/pour'
+import { intentionDepuis, premiereIntention, sterile } from '@/lib/apps/dialogue'
 import { Veille, alerter } from '@/lib/apps/surveillance'
 
 export const runtime = 'nodejs'
@@ -31,15 +46,51 @@ export async function POST(req: Request) {
   const garde = await requireAuthenticatedUser(req)
   if (!garde.ok) return garde.response
 
-  const corps = (await req.json().catch(() => null)) as { demande?: unknown } | null
-  const demande = typeof corps?.demande === 'string' ? corps.demande.trim() : ''
-  if (demande === '') {
+  const corps = (await req.json().catch(() => null)) as {
+    demande?: unknown
+    intention?: unknown
+    perimetre?: unknown
+  } | null
+
+  // DEUX ENTRÉES, UNE SEULE SORTIE. Premier message : une phrase. Tours
+  // suivants : l'intention complète, brief scellé et réponses déjà données.
+  const intention =
+    corps?.intention === undefined || corps.intention === null
+      ? await (async () => {
+          const demande = typeof corps?.demande === 'string' ? corps.demande.trim() : ''
+          return demande === '' ? null : await premiereIntention(demande)
+        })()
+      : await intentionDepuis(corps.intention)
+
+  if (intention === null) {
     return NextResponse.json({ error: 'Dites ce que vous voulez construire.' }, { status: 400 })
   }
 
-  const veille = new Veille(demande)
-  const r = await veille.temps('comprehension', () => documentPour(demande))
+  const veille = new Veille(intention.brief)
+  const r = await veille.temps('comprehension', () => documentPour(intention))
   if ('erreur' in r) return NextResponse.json({ error: r.erreur }, { status: 422 })
+
+  // ── DES QUESTIONS : ON NE CONSTRUIT RIEN, ET ON NE REND AUCUN DOCUMENT.
+  if ('questions' in r) {
+    // UNE RÉPONSE QUI NE RÉDUIT PAS LE PÉRIMÈTRE EST STÉRILE (EP-136). Sans
+    // ce test, la même question reviendrait indéfiniment et chaque tour
+    // coûterait un appel payant. On le DIT plutôt que de boucler.
+    const avant = Array.isArray(corps?.perimetre) ? (corps.perimetre as string[]) : []
+    const tourne = avant.length > 0 && (await sterile(avant, [...r.perimetre]))
+    return NextResponse.json({
+      questions: r.questions,
+      perimetre: r.perimetre,
+      intention,
+      texteLu: r.texteLu,
+      ...(r.coutUsd === undefined ? {} : { coutUsd: r.coutUsd }),
+      ...(tourne
+        ? {
+            avertissement:
+              'Votre réponse n’a pas levé ce qui manquait. Reformulez-la, ou décrivez autrement ce que vous attendez.',
+          }
+        : {}),
+    })
+  }
 
   if (r.echecIA !== undefined) {
     // L'ADMINISTRATEUR EST PRÉVENU même si l'utilisateur voit un repli propre :
@@ -60,6 +111,11 @@ export async function POST(req: Request) {
     parIA: r.parIA,
     compris: r.compris,
     ...(r.echecIA === undefined ? {} : { echecIA: r.echecIA }),
+    // L'INTENTION REVIENT TOUJOURS : les tours suivants la renvoient telle
+    // quelle, et les deux autres routes lisent `texteLu` — jamais le dernier
+    // message seul, qui perdrait tout ce qui a été répondu avant.
+    intention,
+    texteLu: r.texteLu,
     // LE DOCUMENT SORT AVEC LA RÉPONSE : les deux autres routes le reçoivent
     // et le revalident, au lieu de relire la phrase et de repayer.
     document: r.document,
