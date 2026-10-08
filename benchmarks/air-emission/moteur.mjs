@@ -203,6 +203,41 @@ const surfaceEnveloppe = () => {
     let prescriptif;
     const requeteP0 = passe0.construireRequeteP0(brief);
     const { grammaire } = adaptateur.degraderGrammaire(requeteP0.grammaire);
+
+    // ── LE RE-TIRAGE EST INFORME, PLUS AVEUGLE.
+    //
+    // MESURE DU 2026-10-08, deux tirages sur deux, meme demande :
+    //   P2 · DERIVATION_IDENTITE_SANS_SOURCE
+    //   P2 · DERIVATION_CONFIRMATION_SANS_ECRITURE
+    //
+    // Ce n'est pas de la variance, c'est systematique. Et les deux juges
+    // disent EXACTEMENT ce qui manque : une etape qui elit l'instance avant
+    // de la consulter, une ecriture avant la confirmation qui l'observe.
+    // EP-135 les classe `faute_de_production` — « le generateur doit poser
+    // l'etape manquante, pas l'humain repondre a une question ».
+    //
+    // Or personne ne la posait. La boucle re-tirait a l'identique, en
+    // esperant un tirage plus chanceux : trois refus mesures a 0,8209 $, et
+    // rien de produit. Un modele a qui l'on ne dit pas ce qu'on lui reproche
+    // n'a aucune raison de corriger.
+    //
+    // Le reproche voyage donc avec la demande. C'est le MEME motif que
+    // `repairSections`, qui existe depuis toujours pour les sections AIR :
+    // on ne reemet pas au hasard, on reemet CE QUI A ETE REFUSE, en disant
+    // pourquoi. Rien n'est assoupli — les juges sont les memes a chaque
+    // tentative, seul le tirage est renseigne.
+    const reproche = (diags) =>
+      diags.length === 0
+        ? ""
+        : `\n\nTON MODELE PRECEDENT A ETE REFUSE. Corrige EXACTEMENT ces points, ` +
+          `sans rien retirer d'autre au brief :\n` +
+          diags.map((x) => `- ${x.path} : ${x.message}`).join("\n") +
+          `\n\nCes refus sont STRUCTURELS, jamais une question au client : un geste ` +
+          `qui consulte une instance exige en amont, DANS LE MEME PARCOURS, une etape ` +
+          `du MEME concept qui l'elit ; une confirmation exige une ecriture en amont. ` +
+          `Ajoute les etapes manquantes plutot que de supprimer le parcours.`;
+    let dernierReproche = "";
+
     for (let tentative = 1; ; tentative++) {
       const partP0 = {
         name: "p0",
@@ -211,7 +246,13 @@ const surfaceEnveloppe = () => {
         levelIndex: 0,
       };
       const avant = coeur.lireEtatDepense().depense;
-      const reponseP0 = await coeur.callPart(partP0, requeteP0.system, requeteP0.user, `${slug}:p0#t${tentative}`, usage);
+      const reponseP0 = await coeur.callPart(
+        partP0,
+        requeteP0.system,
+        requeteP0.user + dernierReproche,
+        `${slug}:p0#t${tentative}`,
+        usage,
+      );
       const neutreP0 = adaptateur.lireReponse(reponseP0);
       const verdictP0 = passe0.jugerSortieP0(neutreP0.texte, brief, { tronquee: neutreP0.tronquee });
       const diagnosticsPlan = verdictP0.ok
@@ -221,6 +262,9 @@ const surfaceEnveloppe = () => {
           })()
         : [];
       const arret = !verdictP0.ok ? "P1" : diagnosticsPlan.length > 0 ? "P2" : "passe";
+      // Le reproche du PROCHAIN tirage : les diagnostics de celui-ci,
+      // nommes avec leur chemin. Les juges, eux, ne bougent pas.
+      dernierReproche = reproche(verdictP0.ok ? diagnosticsPlan : verdictP0.diagnostics);
       tirages.push({
         tentative,
         arret,
