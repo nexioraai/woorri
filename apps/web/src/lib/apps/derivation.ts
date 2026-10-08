@@ -34,6 +34,7 @@ export type ModeleMetier = {
     donnees?: boolean
     attributs?: { id?: string; nature?: string; requis?: boolean }[]
   }[]
+  readonly relations?: { de?: string; vers?: string; nature?: string }[]
   readonly parcours?: {
     id?: string
     besoin?: string
@@ -123,6 +124,47 @@ export function documentDepuisModele(
     }
   })
 
+  // ── LES RELATIONS DU MÉTIER DEVIENNENT DES RÉFÉRENCES.
+  //
+  // P0 les produit — « la cotisation RÉFÉRENCE le membre », « la tontine
+  // POSSÈDE ses tours » — et je les jetais. Une application où rien ne pointe
+  // vers rien n'est pas un modèle de données : c'est une pile de listes
+  // indépendantes, et le lien que l'utilisateur a énoncé disparaît en silence.
+  //
+  // `possede` et `reference` donnent le même champ côté AIR : une référence
+  // de l'un vers l'autre. Ce qui les distingue est la DURÉE DE VIE — ce que
+  // le format ne transporte pas, et que personne ici ne doit prétendre.
+  const relations: unknown[] = []
+  for (const [i, r] of (modele.relations ?? []).entries()) {
+    const de = idEntite.get(r.de ?? '')
+    const vers = idEntite.get(r.vers ?? '')
+    if (de === undefined || vers === undefined || de === vers) continue
+    const porteuse = entities.find((e) => e.id === de)
+    const cible = entities.find((e) => e.id === vers)
+    if (porteuse === undefined || cible === undefined) continue
+    const nom = `ref_${cible.name}`.slice(0, 40)
+    if (porteuse.fields.some((f) => f.name === nom)) continue
+    porteuse.fields.push({
+      id: `fld_${porteuse.name}_${nom}`,
+      name: nom,
+      label: fr(cible.name.replace(/_/g, ' ')),
+      type: 'reference',
+      required: false,
+      // CE QU'ON MONTRE D'UNE RÉFÉRENCE : le nom de la cible, jamais son
+      // identifiant. Une fiche qui affiche `ent_membre_row_3` ne dit rien.
+      referencesEntityId: cible.id,
+      referenceDisplayFieldId: cible.fields[0]?.id ?? '',
+    } as never)
+    relations.push({
+      id: `rel_${porteuse.name}_${cible.name}`.slice(0, 40),
+      fromEntityId: cible.id,
+      toEntityId: de,
+      // `possede` dit un rattachement : un parent, plusieurs enfants.
+      kind: r.nature === 'possede' ? 'one_to_many' : 'one_to_one',
+    })
+    void i
+  }
+
   // UN PARCOURS DEVIENT UN ÉCRAN. C'est le découpage du métier, pas le mien :
   // « le membre veut cotiser » est un écran parce que c'est un besoin, pas
   // parce qu'un gabarit prévoyait trois onglets.
@@ -211,7 +253,7 @@ export function documentDepuisModele(
       })),
     },
     entities,
-    relations: [],
+    relations,
     datasets: entities.map((e) => ({
       id: `data_${e.name}`,
       entityId: e.id,

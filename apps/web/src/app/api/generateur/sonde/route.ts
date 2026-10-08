@@ -122,6 +122,31 @@ export async function GET(req: Request) {
     }
   }
 
+  // ── L'ANGLE MORT, ET COMMENT ON LE FERME QUAND ON LE DÉCIDE.
+  //
+  // Tout ce qui précède est gratuit, donc interrogeable à volonté — et c'est
+  // justement pourquoi la LECTURE PAR IA n'y est pas : elle coûte un appel.
+  // Conséquence assumée : si P0 tombe en production, seule une vraie demande
+  // le révélerait.
+  //
+  // `?ia=1` ferme cet angle mort, et l'ouvre explicitement : un appel payant
+  // ne part jamais parce qu'un moniteur passait par là. Le coût est RENDU
+  // dans la réponse, pour qu'on le voie au lieu de le découvrir sur une
+  // facture.
+  if (new URL(req.url).searchParams.get('ia') === '1') {
+    const t0 = Date.now()
+    const { comprendre } = await import('@/lib/apps/comprendre')
+    const lu = await comprendre(TEMOIN)
+    maillons.push({
+      nom: 'lecture_ia',
+      ok: lu.ok,
+      ms: Date.now() - t0,
+      ...(lu.ok
+        ? { mesure: `${String(lu.modele.concepts?.length ?? 0)} concepts · $${lu.coutUsd.toFixed(4)}` }
+        : { detail: lu.raison.slice(0, 200) }),
+    })
+  }
+
   const casses = maillons.filter((m) => !m.ok)
   return NextResponse.json(
     {

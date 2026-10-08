@@ -110,6 +110,58 @@ describe('CLIQUET — la structure vient du metier', () => {
     expect(champs.find((f) => f.name === 'creneau')?.type).toBe('datetime')
   })
 
+  it('LES RELATIONS DU METIER DEVIENNENT DES REFERENCES', () => {
+    // P0 les produit, et je les jetais. Une application ou rien ne pointe
+    // vers rien n est pas un modele de donnees : c est une pile de listes
+    // independantes, et le lien que l utilisateur a enonce disparait.
+    const d = derive(
+      { ...TONTINE, relations: [{ de: 'cotisation', vers: 'membre_tontine', nature: 'reference' }] },
+      'Tontine',
+    )!
+    const cotisation = d.document.entities.find((e) => e.name === 'cotisation')!
+    const ref = cotisation.fields.find((f) => f.type === 'reference')
+    expect(ref, 'la cotisation doit referencer le membre').toBeDefined()
+    expect((ref as { referencesEntityId?: string }).referencesEntityId).toBe('ent_membre_de_la_tontine')
+    // CE QU ON MONTRE : le nom de la cible, jamais son identifiant. Une fiche
+    // qui affiche `ent_membre_row_3` ne dit rien a personne.
+    expect((ref as { referenceDisplayFieldId?: string }).referenceDisplayFieldId).toMatch(/_nom$/u)
+    expect(d.document.relations).toHaveLength(1)
+  })
+
+  it('`possede` dit un rattachement : un parent, plusieurs enfants', () => {
+    const d = derive(
+      { ...TONTINE, relations: [{ de: 'cotisation', vers: 'membre_tontine', nature: 'possede' }] },
+      'Tontine',
+    )!
+    expect((d.document.relations[0] as { kind?: string }).kind).toBe('one_to_many')
+  })
+
+  it('une relation vers un concept INCONNU est ignoree, pas inventee', () => {
+    const d = derive(
+      { ...TONTINE, relations: [{ de: 'cotisation', vers: 'fantome', nature: 'reference' }] },
+      'Tontine',
+    )!
+    expect(d.document.relations).toHaveLength(0)
+    expect(d.document.entities.flatMap((e) => e.fields).some((f) => f.type === 'reference')).toBe(false)
+  })
+
+  it('une relation d un concept VERS LUI-MEME est ignoree', () => {
+    const d = derive(
+      { ...TONTINE, relations: [{ de: 'cotisation', vers: 'cotisation', nature: 'reference' }] },
+      'Tontine',
+    )!
+    expect(d.document.relations).toHaveLength(0)
+  })
+
+  it('AVEC RELATIONS, le document reste valide ET compile', () => {
+    const d = derive(
+      { ...TONTINE, relations: [{ de: 'cotisation', vers: 'membre_tontine', nature: 'possede' }] },
+      'Tontine',
+    )!
+    expect(projectAirSchema.safeParse(d.document).success).toBe(true)
+    expect(compileWeb(d.document).files.size).toBeGreaterThan(40)
+  })
+
   it('un modele SANS concept de donnees ne produit rien plutot qu un faux', () => {
     expect(derive({ concepts: [{ nom: 'idee', donnees: false }], parcours: [] }, 'X')).toBeNull()
     expect(derive({}, 'X')).toBeNull()
