@@ -46,7 +46,27 @@ import { fileURLToPath } from "node:url";
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO = join(HERE, "..", "..");
 
-export async function creerMoteur({ cleApi, plafondUsd = 5 }) {
+/**
+ * AUCUN PLAFOND PAR DEFAUT — et c'est une correction.
+ *
+ * J'avais pose 6 $ par application. Le proprietaire :
+ *
+ *   « Si ce que demande l'utilisateur coute plus de 6 $, alors d'apres toi
+ *     il faut empecher ? Retire-moi ce putain de plafond insense. »
+ *
+ * Il a raison, et c'est la MEME erreur que les 40 000 jetons : un nombre que
+ * j'ai choisi, qui ne mesure rien, et qui refuse de construire ce que
+ * quelqu'un demande. Une application riche coute plus cher — c'est une
+ * information, pas une faute.
+ *
+ * `Infinity` traverse les gardes du budget sans jamais mordre
+ * (`etat.depense <= Infinity`). Le budget n'est donc plus un REFUS : il reste
+ * une MESURE, consignee a chaque generation et lisible dans l'administration.
+ *
+ * Un appelant qui veut vraiment borner passe `plafondUsd` ; personne ne le
+ * fait, et c'est voulu.
+ */
+export async function creerMoteur({ cleApi, plafondUsd = Infinity }) {
   if (typeof cleApi !== "string" || cleApi.trim() === "") {
     throw new Error("MOTEUR_CLE_ABSENTE");
   }
@@ -165,6 +185,16 @@ const surfaceEnveloppe = () => {
   async function emettreApplication({ brief, slug }) {
     const usage = [];
     const refusals = { count: 0 };
+    // LES JETONS SE COMPTENT ICI : `callPart` les pousse dans `usage`, et
+    // personne d'autre ne sait ce qui a ete reellement consomme.
+    const jetons = () =>
+      usage.reduce(
+        (a, u) => {
+          const n = adaptateur.lireUsage(u);
+          return { entree: a.entree + (n.entree ?? 0), sortie: a.sortie + (n.sortie ?? 0) };
+        },
+        { entree: 0, sortie: 0 },
+      );
     const intention = { text: brief, slug };
     const tirages = [];
 
@@ -221,6 +251,8 @@ const surfaceEnveloppe = () => {
           raison: `P0 refuse ${String(tentative)} fois`,
           tirages,
           coutUsd: coeur.lireEtatDepense().depense,
+          jetons: jetons(),
+          diagnostics: [],
         };
       }
     }
@@ -265,6 +297,7 @@ const surfaceEnveloppe = () => {
       tirages,
       refus: refusals.count,
       coutUsd: coeur.lireEtatDepense().depense,
+      jetons: jetons(),
     };
   }
 

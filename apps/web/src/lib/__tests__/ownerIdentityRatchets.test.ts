@@ -112,6 +112,12 @@ describe('DETTE 6a — le périmètre restant est connu et délibéré', () => {
     // façon : ce test la rend impossible à ajouter en silence.
     const ATTENDUES = [
       'admin/ai-usage/route.ts',
+      // ENTRÉE AJOUTÉE CONSCIEMMENT (2026-10-08) — même catégorie que les
+      // autres admin/* : `owner_email` y est une donnée d'AFFICHAGE, elle dit
+      // QUI a demandé une génération et ce qu'elle a coûté. L'autorisation
+      // vient du jeton + ADMIN_EMAILS ; aucune propriété de site n'est en
+      // cause, une application générée n'appartient à aucun site.
+      'admin/applications/route.ts',
       // M2-212 — entrée ajoutée CONSCIEMMENT, même catégorie que les autres
       // admin/* : `owner_email` y est une donnée d'AFFICHAGE (journalisée
       // dans l'audit de la mise en ligne comptant), jamais une identité —

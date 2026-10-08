@@ -78,7 +78,9 @@ export async function POST(req: Request) {
   }
 
   const veille = new Veille(intention.brief)
-  const r = await veille.temps('comprehension', () => documentPour(intention))
+  const r = await veille.temps('comprehension', () =>
+    documentPour(intention, garde.email),
+  )
   if ('erreur' in r) return NextResponse.json({ error: r.erreur }, { status: 422 })
 
   // ── DES QUESTIONS : ON NE CONSTRUIT RIEN, ET ON NE REND AUCUN DOCUMENT.

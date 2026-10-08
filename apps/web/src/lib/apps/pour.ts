@@ -19,6 +19,7 @@ import { projectAirSchema } from '@deribfy/air-schema'
 import { depenseAutorisee, direCeQuOnACompris, JETON_DEPENSE } from './comprendre'
 import { lireLaPhrase } from './emission'
 import { emettreApplication } from './moteur'
+import { journaliser } from './journal'
 import {
   fautesDeProduction,
   perimetre,
@@ -117,6 +118,9 @@ export type Incompris = {
  */
 export async function documentPour(
   intention: Intention,
+  /** Qui demande — pour que l'administration sache a qui la depense se
+   *  rattache. Absent hors d'une route authentifiee. */
+  email?: string | null,
 ): Promise<Resultat | Questions | Incompris | { erreur: string }> {
   const texteLu = await texteDe(intention)
 
@@ -150,7 +154,35 @@ export async function documentPour(
   // UN SEUL CHEMIN PAYANT : le moteur fait lui-meme sa passe P0, avec sa
   // boucle bornee a trois tirages. Appeler `comprendre()` en plus repaierait
   // la lecture a chaque tour.
-  const emission = await emettreApplication(texteLu, lireLaPhrase(intention.brief).nom)
+  const nom = lireLaPhrase(intention.brief).nom
+  const depart = Date.now()
+  const emission = await emettreApplication(texteLu, nom)
+
+  // ── CHAQUE GENERATION LAISSE UNE LIGNE, REUSSIE OU NON.
+  //
+  // C'est ce qui remplace le plafond que j'avais pose : on SURVEILLE au lieu
+  // d'empecher. Et les refus comptent autant — trois tirages P0 refuses ont
+  // coute 0,8209 $ sans rien produire, et c'est precisement la depense qu'il
+  // faut voir.
+  //
+  // `void` : le journal ne doit jamais retarder ni casser une generation.
+  void journaliser({
+    email: email ?? null,
+    demande: texteLu,
+    nom,
+    ok: emission.ok,
+    coutUsd: emission.coutUsd,
+    dureeMs: Date.now() - depart,
+    jetonsEntree: emission.jetons.entree,
+    jetonsSortie: emission.jetons.sortie,
+    diagnostics: [
+      ...new Set([
+        ...emission.diagnostics.map((d) => d.code ?? '?'),
+        ...emission.tirages.flatMap((t) => t.diagnostics),
+      ]),
+    ],
+    tirages: emission.tirages.length,
+  })
 
   if (emission.ok && emission.document !== undefined) {
     const juge = projectAirSchema.safeParse(emission.document)

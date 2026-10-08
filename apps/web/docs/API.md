@@ -166,6 +166,7 @@ résolvent le `Host`, un cache serait partagé entre locataires.
 |---|---|---|---|
 | GET | `/api/admin/stats` | Statistiques globales plateforme. | Admin |
 | GET | `/api/admin/ai-usage` | Coût/usage IA agrégé (tarifs Anthropic appliqués aux tokens loggés). | Admin |
+| GET | `/api/admin/applications` | Coût de CHAQUE application générée — réussies et refusées, avec le total payé pour rien. Remplace le plafond de dépense : on surveille au lieu d'empêcher. | Admin |
 | GET | `/api/admin/cron-runs` | Historique des exécutions cron (`cron-tracker`). | Admin |
 | DELETE | `/api/account/delete` | Suppression du compte et des sites de l'utilisateur courant. | Utilisateur |
 

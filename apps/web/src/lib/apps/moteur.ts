@@ -40,6 +40,7 @@ export type Emission = {
   readonly diagnostics: { code?: string; path?: string }[]
   readonly tirages: { tentative: number; arret: string; coutUsd: number; diagnostics: string[] }[]
   readonly coutUsd: number
+  readonly jetons: { entree: number; sortie: number }
   readonly raison?: string
 }
 
@@ -50,9 +51,17 @@ type Moteur = {
   }) => Promise<{ emettreApplication: (d: { brief: string; slug: string }) => Promise<Emission> }>
 }
 
-/** Le plafond par application. Mesure : un tir complet reste sous ce seuil,
- *  et les passes s'arretent dessus AVANT d'appeler plutot que de le depasser. */
-export const PLAFOND_USD_PAR_APPLICATION = 6
+/**
+ * AUCUN PLAFOND. Le cout est MESURE, jamais oppose a l'utilisateur.
+ *
+ * J'avais pose 6 $. Refuser de construire parce qu'une demande coute plus
+ * qu'un nombre que j'ai choisi, c'est exactement l'erreur des 40 000 jetons :
+ * une borne inventee qui mange le travail d'un utilisateur. Une application
+ * riche coute plus cher — c'est une information, pas une faute.
+ *
+ * Ce qui remplace le plafond : CHAQUE generation est consignee avec son cout,
+ * et l'administration la montre. On surveille au lieu d'empecher.
+ */
 
 /**
  * Emet une application complete depuis une demande en texte libre.
@@ -64,11 +73,18 @@ export const PLAFOND_USD_PAR_APPLICATION = 6
 export async function emettreApplication(brief: string, slug: string): Promise<Emission> {
   const cle = process.env.ANTHROPIC_API_KEY ?? ''
   if (cle === '') {
-    return { ok: false, raison: 'Clé Anthropic absente du serveur.', diagnostics: [], tirages: [], coutUsd: 0 }
+    return {
+      ok: false,
+      raison: 'Clé Anthropic absente du serveur.',
+      diagnostics: [],
+      tirages: [],
+      coutUsd: 0,
+      jetons: { entree: 0, sortie: 0 },
+    }
   }
   const { creerMoteur } = (await import(
     /* webpackIgnore: true */ `${racineDepot()}/benchmarks/air-emission/moteur.mjs`
   )) as Moteur
-  const m = await creerMoteur({ cleApi: cle, plafondUsd: PLAFOND_USD_PAR_APPLICATION })
+  const m = await creerMoteur({ cleApi: cle })
   return await m.emettreApplication({ brief, slug })
 }

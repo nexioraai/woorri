@@ -264,13 +264,17 @@ describe('CLIQUET — C EST LE MOTEUR A HUIT PASSES QUI CONSTRUIT', () => {
     expect(POUR).not.toContain('emettreSansIa')
   })
 
-  it('le moteur est charge PARESSEUSEMENT et borne en dollars', () => {
+  it('le moteur est charge PARESSEUSEMENT', () => {
     //  EST un commentaire : le chercher dans le source
     // decoupe ne trouverait jamais rien. Celui-la se lit sur le source brut.
     expect(lire('lib', 'apps', 'moteur.ts')).toContain('/* webpackIgnore: true */')
+    // ÉDITION CONSCIENTE (2026-10-08) : le plafond de 6 $ a ÉTÉ RETIRÉ.
+    // « Si ce que demande l utilisateur coute plus de 6 $, alors d apres toi
+    // il faut empecher ? » Non. Ce que ce test exigeait — un plafond — est
+    // devenu ce qu il interdit :  verifie desormais qu aucun
+    // plafond ne revient, et que le cout est CONSIGNE a la place.
     const MOTEUR = sansCommentaires(lire('lib', 'apps', 'moteur.ts'))
-    expect(MOTEUR).toContain('PLAFOND_USD_PAR_APPLICATION')
-    expect(MOTEUR).toContain('plafondUsd:')
+    expect(MOTEUR).not.toContain('PLAFOND_USD_PAR_APPLICATION')
   })
 
   it('les huit passes sont celles du moteur, pas une liste recopiee', () => {
