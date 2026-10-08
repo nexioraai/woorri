@@ -138,13 +138,33 @@ export default function OnboardingChat() {
   const twPhrase = useRef(0);
   const twChar = useRef(0);
   const twPhase = useRef<'typing' | 'pausing' | 'deleting'>('typing');
+  // L'invite animee s'efface DES QUE l'utilisateur tape. Avant, un effet
+  // remettait l'etat a vide ; React rendait donc une image avec l'ancienne
+  // invite encore visible sous le texte saisi, puis recommencait. Derivee, la
+  // valeur est juste des le premier rendu.
+  const invite = input ? '' : typed;
+
+  // ── LE REDEMARRAGE AU CHANGEMENT DE LANGUE, AJUSTE PENDANT LE RENDU.
+  //
+  // Ce n'est pas une valeur derivable : c'est une remise a zero. L'effet le
+  // faisait, et React rendait alors une image avec l'invite de l'ANCIENNE
+  // langue avant de recommencer.
+  //
+  // Ajuster l'etat pendant le rendu est le patron que React documente pour ce
+  // cas precis : le composant se re-rend AVANT de peindre, donc personne ne
+  // voit l'etat intermediaire. On compare a la langue precedente plutot que
+  // d'ecouter un effet.
+  const [langueRendue, setLangueRendue] = useState(uiLang);
+  if (langueRendue !== uiLang) {
+    setLangueRendue(uiLang);
+    setTyped('');
+  }
   useEffect(() => {
-    if (input) { setTyped(''); return; } // fige l'animation des que l'utilisateur tape
+    if (input) return; // l'animation s'arrete des que l'utilisateur tape
     // reinit propre a chaque changement de langue (evite un index invalide sur l'ancienne liste)
     twPhrase.current = 0;
     twChar.current = 0;
     twPhase.current = 'typing';
-    setTyped('');
     let timer: ReturnType<typeof setTimeout>;
     const tick = () => {
       const phrases = PLACEHOLDERS;
@@ -175,8 +195,11 @@ export default function OnboardingChat() {
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages, loading]);
+  // Hors generation, l'etape vaut zero : c'est une consequence, pas un etat a
+  // remettre. L'effet n'a plus qu'a faire avancer le compteur quand il tourne.
+  const etape = generating ? loadingStep : 0;
   useEffect(() => {
-    if (!generating) { setLoadingStep(0); return; }
+    if (!generating) return;
     const id = setInterval(() => {
       setLoadingStep((s) => (s < LOADING_STEPS.length - 1 ? s + 1 : s));
     }, 8000);
@@ -418,10 +441,10 @@ export default function OnboardingChat() {
                   </div>
                   <div className="flex flex-col gap-3">
                     {LOADING_STEPS.map((label, i) => {
-                      const done = i < loadingStep;
-                      const active = i === loadingStep;
+                      const done = i < etape;
+                      const active = i === etape;
                       return (
-                        <div key={i} className="flex items-center gap-3 transition-all duration-500" style={{ opacity: i <= loadingStep ? 1 : 0.35 }}>
+                        <div key={i} className="flex items-center gap-3 transition-all duration-500" style={{ opacity: i <= etape ? 1 : 0.35 }}>
                           <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-500" style={{ background: done ? '#FA5D1E' : active ? 'rgba(224,112,64,0.2)' : 'rgba(255,255,255,0.06)', border: active ? '2px solid #FA5D1E' : '2px solid transparent' }}>
                             {done ? (
                               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3"><path d="M20 6L9 17l-5-5" /></svg>
@@ -489,7 +512,7 @@ export default function OnboardingChat() {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={onKeyDown}
-          placeholder={typed}
+          placeholder={invite}
           aria-label="Décrivez votre activité"
           maxLength={1000}
           disabled={generating}

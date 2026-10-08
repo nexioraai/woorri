@@ -88,11 +88,17 @@ export default function CatalogSearch({ slug, primary, lang = 'en', theme = 'edi
   const [sort, setSort] = useState('relevance');
   const [visitorCountry, setVisitorCountry] = useState('');
 
+  // EXCEPTION NOMMEE, AU SITE EXACT. Le fuseau horaire est celui du
+  // NAVIGATEUR du visiteur ; le serveur a le sien, et il n'a rien a voir. Lu
+  // au rendu, il donnerait le pays du serveur a tout le monde — et
+  // l'hydratation signalerait la divergence. Un effet de montage est le seul
+  // endroit ou une information de l'appareil a le droit d'etre lue.
   useEffect(() => {
     try {
       const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
       if (tz.startsWith('America/')) {
         const city = tz.split('/')[1] || '';
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         if (['Toronto','Montreal','Vancouver','Winnipeg','Edmonton','Halifax','Regina'].some(c => city.includes(c))) setVisitorCountry('CA');
         else if (['Mexico_City','Cancun','Tijuana','Monterrey'].some(c => city.includes(c))) setVisitorCountry('MX');
         else setVisitorCountry('US');
@@ -161,6 +167,10 @@ export default function CatalogSearch({ slug, primary, lang = 'en', theme = 'edi
     const container = document.createElement('div');
     container.id = 'catalog-search-portal';
     heading.parentNode?.insertBefore(container, heading.nextSibling);
+    // EXCEPTION NOMMEE, AU SITE EXACT. La cible de ce portail est un noeud
+    // DOM qu'on vient de CREER et d'inserer : elle n'existe pas avant que le
+    // navigateur ait rendu. Aucune derivation ne peut produire un noeud.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPortalTarget(container);
     return () => { container.remove(); };
   }, []);

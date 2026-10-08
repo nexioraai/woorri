@@ -65,8 +65,12 @@ export default function PaymentConnect({ slug, mode }: { slug: string; mode?: nu
 
   // M2-208 — mesurer le marché AVANT de proposer Stripe. Mode 2 seulement :
   // le dropshipping (mode 3) encaisse par carte, quel que soit le pays.
+  // Hors du mode 2, la question du marche mobile ne se POSE pas : la reponse
+  // est une consequence du mode, pas un etat a remettre. Un effet qui la
+  // remettait faisait rendre une premiere image avec l'ancienne reponse.
+  const marcheMobileEffectif = mode === 2 ? marcheMobile : false;
   useEffect(() => {
-    if (mode !== 2) { setMarcheMobile(false); return; }
+    if (mode !== 2) return;
     let annule = false;
     (async () => {
       try {
@@ -183,7 +187,7 @@ export default function PaymentConnect({ slug, mode }: { slug: string; mode?: nu
   // téléphone de contact. Aucune connexion Stripe n'est proposée ; les
   // marchés carte (EUR, USD, CAD…) gardent le panneau Stripe, inchangé.
   // ============================================================
-  if (marcheMobile === true) {
+  if (marcheMobileEffectif === true) {
     return (
       <div className="glass glass-hover rounded-3xl p-6 md:p-8 mt-8">
         <h2 className="text-xl font-bold mb-2">Paiements — Mobile Money</h2>

@@ -12,9 +12,18 @@ export default function CookieConsent() {
   const [choice, setChoice] = useState<'accepted' | 'declined' | null>(null);
   const [visible, setVisible] = useState(false);
 
+  // EXCEPTION NOMMEE, AU SITE EXACT. `localStorage` n'existe pas sur le
+  // serveur : ce choix ne PEUT pas etre connu au premier rendu.
+  //
+  // CE QUE L'EXCEPTION NE REGLE PAS, et il faut le dire : le bandeau
+  // apparait apres coup, meme pour qui a deja decide. Un hook n'y changera
+  // rien — le serveur ignore la reponse. Le seul vrai remede est de la
+  // deplacer dans un COOKIE, que le serveur lit avant de rendre. C'est un
+  // autre lot, et il n'est pas fait.
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY) as 'accepted' | 'declined' | null;
     if (stored === 'accepted' || stored === 'declined') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setChoice(stored);
     } else {
       // Petit délai pour ne pas gêner le premier rendu

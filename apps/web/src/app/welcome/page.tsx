@@ -22,6 +22,13 @@ function Confetti() {
       color: colors[i % colors.length],
       rotate: Math.random() * 360,
     }));
+    // EXCEPTION NOMMEE, AU SITE EXACT — la regle a tort ICI, et seulement ici.
+    //
+    // Ces confettis sont tires au HASARD. Les calculer au rendu les ferait
+    // calculer AUSSI sur le serveur, avec d'autres valeurs : l'hydratation
+    // signalerait une divergence et React rejetterait tout l'arbre. Un effet
+    // de montage est le seul endroit ou du hasard a le droit d'exister.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPieces(next);
   }, []);
 

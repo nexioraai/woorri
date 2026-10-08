@@ -71,8 +71,12 @@ export default function OnboardingFlow() {
   const effectiveLang = language === 'auto' ? lang : language;
   const LOADING_STEPS = LOADING_BY_LANG[effectiveLang] || LOADING_BY_LANG[lang] || LOADING_BY_LANG.fr;
 
+  // Hors de l'etape 3, l'etape de chargement vaut zero : c'est une
+  // CONSEQUENCE de l'etat courant, pas une valeur a remettre. L'effet n'a plus
+  // qu'a faire avancer le compteur pendant qu'il tourne.
+  const etape = step === 3 ? loadingStep : 0;
   useEffect(() => {
-    if (step !== 3) { setLoadingStep(0); return; }
+    if (step !== 3) return;
     const id = setInterval(() => {
       setLoadingStep((s) => (s < LOADING_STEPS.length - 1 ? s + 1 : s));
     }, 8000);
@@ -267,13 +271,13 @@ export default function OnboardingFlow() {
             </div>
             <div className="max-w-md mx-auto flex flex-col gap-3">
               {LOADING_STEPS.map((label, i) => {
-                const done = i < loadingStep;
-                const active = i === loadingStep;
+                const done = i < etape;
+                const active = i === etape;
                 return (
                   <div
                     key={i}
                     className="flex items-center gap-3 transition-all duration-500"
-                    style={{ opacity: i <= loadingStep ? 1 : 0.35 }}
+                    style={{ opacity: i <= etape ? 1 : 0.35 }}
                   >
                     <div
                       className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-500"
