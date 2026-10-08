@@ -69,8 +69,11 @@ export async function GET(req: NextRequest) {
       try {
         const r = await provisionDomain(row.id);
         results.push({ domain: row.domain, ok: r.ok, status: r.status });
-      } catch (e: any) {
-        console.error('[domain-retry]', row.domain, e?.message || e);
+      } catch (e: unknown) {
+        // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+        // et seul ce test le dit honnetement.
+        const messageErreur = e instanceof Error ? e.message : String(e)
+        console.error('[domain-retry]', row.domain, messageErreur || e);
         results.push({ domain: row.domain, ok: false, status: 'exception' });
       }
     }
@@ -111,8 +114,11 @@ export async function GET(req: NextRequest) {
 
     await finishCronRun(runId, { itemsProcessed: results.length + reconciliations.length });
     return NextResponse.json({ done: true, processed: results.length, results, reconciliations });
-  } catch (e: any) {
-    await finishCronRun(runId, { itemsProcessed: 0, status: 'error', errorMessage: e?.message || String(e) });
-    return NextResponse.json({ error: e?.message || String(e) }, { status: 500 });
+  } catch (e: unknown) {
+    // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+    // et seul ce test le dit honnetement.
+    const messageErreur = e instanceof Error ? e.message : String(e)
+    await finishCronRun(runId, { itemsProcessed: 0, status: 'error', errorMessage: messageErreur || String(e) });
+    return NextResponse.json({ error: messageErreur || String(e) }, { status: 500 });
   }
 }

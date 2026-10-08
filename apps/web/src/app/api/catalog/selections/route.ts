@@ -132,8 +132,11 @@ export async function PATCH(req: NextRequest) {
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ selection: data });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+    // et seul ce test le dit honnetement.
+    const messageErreur = err instanceof Error ? err.message : String(err)
+    return NextResponse.json({ error: messageErreur }, { status: 500 });
   }
 }
 
@@ -222,7 +225,10 @@ export async function POST(req: NextRequest) {
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 });
     return NextResponse.json({ selection: data });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+    // et seul ce test le dit honnetement.
+    const messageErreur = err instanceof Error ? err.message : String(err)
+    return NextResponse.json({ error: messageErreur }, { status: 500 });
   }
 }

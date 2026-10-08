@@ -177,8 +177,11 @@ export async function POST(req: Request) {
     // fichier PORTAIT de l'EXIF et qu'il n'en porte plus. L'interface peut
     // alors le signaler au marchand, au lieu de nettoyer en silence.
     return NextResponse.json({ url: urlData.publicUrl, metadonneesRetirees: exifRetire });
-  } catch (e: any) {
+  } catch (e: unknown) {
+    // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+    // et seul ce test le dit honnetement.
+    const messageErreur = e instanceof Error ? e.message : String(e)
     console.error('upload-design error:', e);
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    return NextResponse.json({ error: messageErreur }, { status: 500 });
   }
 }

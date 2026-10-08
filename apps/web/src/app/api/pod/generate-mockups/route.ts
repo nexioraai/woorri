@@ -191,11 +191,14 @@ export async function POST(req: Request) {
             } else {
               pending.push(tk.task_key); // reste dans pending_task_keys, retenté au prochain poll
             }
-          } catch (err: any) {
+          } catch (err: unknown) {
+            // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+            // et seul ce test le dit honnetement.
+            const messageErreur = err instanceof Error ? err.message : String(err)
             // Erreur réseau/Printful transitoire : ne retire PAS de
             // pending_task_keys -- un prochain poll doit pouvoir reessayer
             // ce task_key legitimement lie a ce site.
-            errors.push(`${tk.name}: ${err.message}`);
+            errors.push(`${tk.name}: ${messageErreur}`);
           }
         })
       );
@@ -499,9 +502,12 @@ export async function POST(req: Request) {
               }),
             });
             break;
-          } catch (err: any) {
-            if (err.message.includes('429') && attempt < 2) {
-              const m = err.message.match(/after (\d+) seconds/);
+          } catch (err: unknown) {
+            // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+            // et seul ce test le dit honnetement.
+            const messageErreur = err instanceof Error ? err.message : String(err)
+            if (messageErreur.includes('429') && attempt < 2) {
+              const m = messageErreur.match(/after (\d+) seconds/);
               const waitS = m ? parseInt(m[1]) + 3 : 63;
               await delay(waitS * 1000);
               continue;
@@ -518,9 +524,12 @@ export async function POST(req: Request) {
           };
           break;
         }
-      } catch (err: any) {
-        if (err.message.includes('not allowed')) continue;
-        errors.push(`${blank.name}: ${err.message}`);
+      } catch (err: unknown) {
+        // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+        // et seul ce test le dit honnetement.
+        const messageErreur = err instanceof Error ? err.message : String(err)
+        if (messageErreur.includes('not allowed')) continue;
+        errors.push(`${blank.name}: ${messageErreur}`);
         break;
       }
     }
@@ -576,7 +585,10 @@ export async function POST(req: Request) {
       task: launched,
       errors,
     });
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+  } catch (e: unknown) {
+    // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+    // et seul ce test le dit honnetement.
+    const messageErreur = e instanceof Error ? e.message : String(e)
+    return NextResponse.json({ error: messageErreur }, { status: 500 });
   }
 }

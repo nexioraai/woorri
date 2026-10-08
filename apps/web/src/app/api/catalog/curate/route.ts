@@ -212,8 +212,11 @@ export async function POST(req: NextRequest) {
       candidates: allProducts.length,
       selections: inserted,
     });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message || 'Erreur interne' }, { status: 500 });
+  } catch (err: unknown) {
+    // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+    // et seul ce test le dit honnetement.
+    const messageErreur = err instanceof Error ? err.message : String(err)
+    return NextResponse.json({ error: messageErreur || 'Erreur interne' }, { status: 500 });
   }
 }
 

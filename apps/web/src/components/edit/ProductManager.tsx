@@ -76,8 +76,11 @@ export default function ProductManager({ slug }: { slug: string }) {
       const json = await res.json();
       if (res.ok) setProducts(json.products ?? []);
       else setMsg(json.error ?? 'Erreur de chargement');
-    } catch (e: any) {
-      setMsg(e.message);
+    } catch (e: unknown) {
+      // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+      // et seul ce test le dit honnetement.
+      const messageErreur = e instanceof Error ? e.message : String(e)
+      setMsg(messageErreur);
     }
     setLoading(false);
   }
@@ -332,8 +335,11 @@ export default function ProductManager({ slug }: { slug: string }) {
         : `Promo retirée de ${data.touches} produit(s) — prix d'origine restaurés.`);
       setPromoSel(new Set());
       await load();
-    } catch (e: any) {
-      setPromoMsg(e.message);
+    } catch (e: unknown) {
+      // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+      // et seul ce test le dit honnetement.
+      const messageErreur = e instanceof Error ? e.message : String(e)
+      setPromoMsg(messageErreur);
     } finally {
       setPromoBusy(false);
     }
@@ -374,8 +380,11 @@ export default function ProductManager({ slug }: { slug: string }) {
       if (!res.ok) { setMsg(json.error ?? 'Erreur'); setBusy(false); return; }
       resetForm();
       await load();
-    } catch (e: any) {
-      setMsg(e.message);
+    } catch (e: unknown) {
+      // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+      // et seul ce test le dit honnetement.
+      const messageErreur = e instanceof Error ? e.message : String(e)
+      setMsg(messageErreur);
     }
     setBusy(false);
   }
@@ -401,8 +410,11 @@ export default function ProductManager({ slug }: { slug: string }) {
       setCountUnits('');
       await load();
       setMsg(t('pm.inv.counted'));
-    } catch (e: any) {
-      setMsg(e.message);
+    } catch (e: unknown) {
+      // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+      // et seul ce test le dit honnetement.
+      const messageErreur = e instanceof Error ? e.message : String(e)
+      setMsg(messageErreur);
     }
     setCountBusy(false);
   }
@@ -423,8 +435,11 @@ export default function ProductManager({ slug }: { slug: string }) {
       if (!res.ok) { setMsg(json.error ?? t('pm.inv.failed')); setCountBusy(false); return; }
       await load();
       setMsg(t('pm.inv.stopped'));
-    } catch (e: any) {
-      setMsg(e.message);
+    } catch (e: unknown) {
+      // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+      // et seul ce test le dit honnetement.
+      const messageErreur = e instanceof Error ? e.message : String(e)
+      setMsg(messageErreur);
     }
     setCountBusy(false);
   }
@@ -437,8 +452,11 @@ export default function ProductManager({ slug }: { slug: string }) {
         method: 'DELETE', headers: await authHeaders(),
       });
       if (res.ok) { if (editingId === id) resetForm(); await load(); }
-    } catch (e: any) {
-      setMsg(e.message);
+    } catch (e: unknown) {
+      // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+      // et seul ce test le dit honnetement.
+      const messageErreur = e instanceof Error ? e.message : String(e)
+      setMsg(messageErreur);
     }
     setBusy(false);
   }

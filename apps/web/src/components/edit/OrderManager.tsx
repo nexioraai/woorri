@@ -90,8 +90,11 @@ export default function OrderManager({ slug }: { slug: string }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Erreur');
       setOrders(data.orders);
-    } catch (e: any) {
-      setError(e.message);
+    } catch (e: unknown) {
+      // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+      // et seul ce test le dit honnetement.
+      const messageErreur = e instanceof Error ? e.message : String(e)
+      setError(messageErreur);
     } finally {
       setLoading(false);
     }
@@ -112,8 +115,11 @@ export default function OrderManager({ slug }: { slug: string }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Erreur');
       await load();
-    } catch (e: any) {
-      setError(e.message);
+    } catch (e: unknown) {
+      // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+      // et seul ce test le dit honnetement.
+      const messageErreur = e instanceof Error ? e.message : String(e)
+      setError(messageErreur);
     } finally {
       setBusyId(null);
     }
@@ -137,8 +143,11 @@ export default function OrderManager({ slug }: { slug: string }) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Erreur');
       await load();
-    } catch (e: any) {
-      setError(e.message);
+    } catch (e: unknown) {
+      // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+      // et seul ce test le dit honnetement.
+      const messageErreur = e instanceof Error ? e.message : String(e)
+      setError(messageErreur);
     } finally {
       setBusyId(null);
     }

@@ -200,8 +200,11 @@ export const printifyAdapter: SupplierAdapter = {
           products.push(mapPrintifyVariant(blueprint, provider, v));
           if (products.length >= (options.page_size || 50)) break;
         }
-      } catch (err: any) {
-        console.error(`[printify/sync] Blueprint ${bpId} failed:`, err.message || err);
+      } catch (err: unknown) {
+        // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+        // et seul ce test le dit honnetement.
+        const messageErreur = err instanceof Error ? err.message : String(err)
+        console.error(`[printify/sync] Blueprint ${bpId} failed:`, messageErreur || err);
       }
     }
 
@@ -347,12 +350,15 @@ export const printifyAdapter: SupplierAdapter = {
         supplier_order_id: String(pyOrder.id || ''),
         estimated_shipping_days: 7,
       };
-    } catch (e: any) {
+    } catch (e: unknown) {
+      // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+      // et seul ce test le dit honnetement.
+      const messageErreur = e instanceof Error ? e.message : String(e)
       return {
         success: false,
         supplier_order_id: '',
         estimated_shipping_days: 0,
-        error_message: e.message || 'Printify order failed',
+        error_message: messageErreur || 'Printify order failed',
       };
     }
   },
@@ -430,8 +436,11 @@ export const printifyAdapter: SupplierAdapter = {
             break;
           }
         }
-      } catch (err: any) {
-        console.error('[printify/calculateShipping]', err.message || err);
+      } catch (err: unknown) {
+        // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+        // et seul ce test le dit honnetement.
+        const messageErreur = err instanceof Error ? err.message : String(err)
+        console.error('[printify/calculateShipping]', messageErreur || err);
       }
     }
 

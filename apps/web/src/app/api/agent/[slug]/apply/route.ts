@@ -967,10 +967,13 @@ export async function POST(
     }
 
     return NextResponse.json({ success: true, site: updated, applied: { tool_name, tool_input } });
-  } catch (err: any) {
+  } catch (err: unknown) {
+    // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+    // et seul ce test le dit honnetement.
+    const messageErreur = err instanceof Error ? err.message : String(err)
     console.error('Agent apply error:', err);
     return NextResponse.json(
-      { error: 'Server error', details: err?.message },
+      { error: 'Server error', details: messageErreur },
       { status: 500 }
     );
   }

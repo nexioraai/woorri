@@ -208,7 +208,10 @@ export async function GET(req: Request) {
     };
     cache.set(cacheKey, info);
     return NextResponse.json(info);
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+  } catch (e: unknown) {
+    // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+    // et seul ce test le dit honnetement.
+    const messageErreur = e instanceof Error ? e.message : String(e)
+    return NextResponse.json({ error: messageErreur }, { status: 500 });
   }
 }

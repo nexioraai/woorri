@@ -19,8 +19,11 @@ export async function GET(req: Request) {
     if (!auth.ok) return auth.response;
     const { data } = await supabaseAdmin.from('sites').select('shipping_flat').eq('id', (auth.site as any).id).single();
     return NextResponse.json({ shippingFlat: Number(data?.shipping_flat) || 0 });
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+  } catch (e: unknown) {
+    // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+    // et seul ce test le dit honnetement.
+    const messageErreur = e instanceof Error ? e.message : String(e)
+    return NextResponse.json({ error: messageErreur }, { status: 500 });
   }
 }
 
@@ -72,7 +75,10 @@ export async function PATCH(req: Request) {
     if (!auth.ok) return auth.response;
     await supabaseAdmin.from('sites').update({ shipping_flat: value }).eq('id', (auth.site as any).id);
     return NextResponse.json({ shippingFlat: value });
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+  } catch (e: unknown) {
+    // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+    // et seul ce test le dit honnetement.
+    const messageErreur = e instanceof Error ? e.message : String(e)
+    return NextResponse.json({ error: messageErreur }, { status: 500 });
   }
 }

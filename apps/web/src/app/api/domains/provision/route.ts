@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
   let owned: { domain: string }[];
   try {
     owned = await listAllDomains();
-  } catch (e: any) {
+  } catch (e: unknown) {
     return NextResponse.json({ error: 'Porkbun injoignable' }, { status: 502 });
   }
   if (!owned.some((d) => d.domain.toLowerCase() === clean)) {

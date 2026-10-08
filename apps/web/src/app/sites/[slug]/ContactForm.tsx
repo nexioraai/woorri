@@ -51,9 +51,12 @@ export default function ContactForm({ slug, brand = '#111111', lang, variant = '
       setEmail('')
       setMessage('')
       setTimeout(() => setStatus('idle'), 4000)
-    } catch (err: any) {
+    } catch (err: unknown) {
+      // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+      // et seul ce test le dit honnetement.
+      const messageErreur = err instanceof Error ? err.message : String(err)
       setStatus('error')
-      setErrorMsg(err.message || 'Failed to send')
+      setErrorMsg(messageErreur || 'Failed to send')
     }
   }
 

@@ -157,7 +157,10 @@ export async function POST(req: NextRequest) {
     let rattachement: Awaited<ReturnType<typeof addDomainToVercel>>
     try {
       rattachement = await addDomainToVercel(clean)
-    } catch (e: any) {
+    } catch (e: unknown) {
+      // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+      // et seul ce test le dit honnetement.
+      const messageErreur = e instanceof Error ? e.message : String(e)
       // 3. COMPENSATION. Son propre echec est signale, jamais avale.
       const { error: erreurCompensation } = await supabaseAdmin
         .from('sites')
@@ -173,13 +176,13 @@ export async function POST(req: NextRequest) {
           details: {
             domain: clean,
             domainePrecedent,
-            erreurExterne: e?.message || String(e),
+            erreurExterne: messageErreur || String(e),
             erreurCompensation: erreurCompensation.message,
           },
         })
       }
 
-      return NextResponse.json({ error: e?.message || 'Erreur Vercel.' }, { status: 400 })
+      return NextResponse.json({ error: messageErreur || 'Erreur Vercel.' }, { status: 400 })
     }
 
     // ============================================================

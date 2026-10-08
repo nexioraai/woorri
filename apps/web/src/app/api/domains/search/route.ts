@@ -140,7 +140,10 @@ export async function POST(req: NextRequest) {
       // .ca, .us, .eu, .au : eligibilite registre non soumissible par API.
       reason: reqs.apiRegisterable ? null : 'tld_non_automatisable',
     });
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 502 });
+  } catch (e: unknown) {
+    // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+    // et seul ce test le dit honnetement.
+    const messageErreur = e instanceof Error ? e.message : String(e)
+    return NextResponse.json({ error: messageErreur }, { status: 502 });
   }
 }

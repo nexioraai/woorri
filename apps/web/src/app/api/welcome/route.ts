@@ -83,7 +83,10 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json({ success: true });
-  } catch (error: any) {
-    return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+    // et seul ce test le dit honnetement.
+    const messageErreur = error instanceof Error ? error.message : String(error)
+    return NextResponse.json({ success: false, error: messageErreur }, { status: 500 });
   }
 }

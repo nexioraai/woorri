@@ -70,8 +70,11 @@ export async function provisionDomain(domainId: string): Promise<{ ok: boolean; 
     let owned: { domain: string }[] = [];
     try {
       owned = await listAllDomains();
-    } catch (e: any) {
-      console.warn('[provision] listAllDomains indisponible, reconciliation purchase_uncertain reportee', row.domain, e?.message || e);
+    } catch (e: unknown) {
+      // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+      // et seul ce test le dit honnetement.
+      const messageErreur = e instanceof Error ? e.message : String(e)
+      console.warn('[provision] listAllDomains indisponible, reconciliation purchase_uncertain reportee', row.domain, messageErreur || e);
       return { ok: false, status: 'purchase_uncertain' };
     }
     const reallyOwned = owned.some((d) => d.domain.toLowerCase() === row.domain.toLowerCase());
@@ -224,8 +227,11 @@ export async function provisionDomain(domainId: string): Promise<{ ok: boolean; 
         });
         return { ok: false, status: markErr ? 'paid' : 'purchase_uncertain' };
       }
-    } catch (e: any) {
-      return fail('Porkbun : ' + (e?.message || 'echec achat'));
+    } catch (e: unknown) {
+      // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+      // et seul ce test le dit honnetement.
+      const messageErreur = e instanceof Error ? e.message : String(e)
+      return fail('Porkbun : ' + (messageErreur || 'echec achat'));
     }
   }
 
@@ -246,8 +252,11 @@ export async function provisionDomain(domainId: string): Promise<{ ok: boolean; 
           'recreer les enregistrements MX/SPF/DKIM dans la zone Nexiora avant de continuer.'
       );
     }
-  } catch (e: any) {
-    console.warn('[provision] verification messagerie', row.domain, e?.message || e);
+  } catch (e: unknown) {
+    // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+    // et seul ce test le dit honnetement.
+    const messageErreur = e instanceof Error ? e.message : String(e)
+    console.warn('[provision] verification messagerie', row.domain, messageErreur || e);
   }
 
   let vercelVerification: { type: string; domain: string; value: string }[] = [];
@@ -260,8 +269,11 @@ export async function provisionDomain(domainId: string): Promise<{ ok: boolean; 
       const st = await getVercelDomainStatus(row.domain);
       if (!st.verified) vercelVerification = st.verification;
     }
-  } catch (e: any) {
-    return fail('Vercel : ' + (e?.message || 'echec rattachement'));
+  } catch (e: unknown) {
+    // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+    // et seul ce test le dit honnetement.
+    const messageErreur = e instanceof Error ? e.message : String(e)
+    return fail('Vercel : ' + (messageErreur || 'echec rattachement'));
   }
 
   // 3. DNS chez Porkbun. C'est ce que le marchand devait faire lui-meme
@@ -290,8 +302,11 @@ export async function provisionDomain(domainId: string): Promise<{ ok: boolean; 
           last_error: null,
         })
         .eq('id', domainId);
-    } catch (e: any) {
-      return fail('DNS : ' + (e?.message || 'echec ecriture'));
+    } catch (e: unknown) {
+      // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+      // et seul ce test le dit honnetement.
+      const messageErreur = e instanceof Error ? e.message : String(e)
+      return fail('DNS : ' + (messageErreur || 'echec ecriture'));
     }
   }
 
@@ -318,8 +333,11 @@ export async function provisionDomain(domainId: string): Promise<{ ok: boolean; 
     try {
       const ok = await verifyVercelDomain(row.domain);
       if (!ok) console.warn('[provision] Vercel pas encore verifie', row.domain);
-    } catch (e: any) {
-      console.warn('[provision] verify Vercel', row.domain, e?.message || e);
+    } catch (e: unknown) {
+      // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+      // et seul ce test le dit honnetement.
+      const messageErreur = e instanceof Error ? e.message : String(e)
+      console.warn('[provision] verify Vercel', row.domain, messageErreur || e);
     }
   }
 
@@ -339,11 +357,14 @@ export async function provisionDomain(domainId: string): Promise<{ ok: boolean; 
         .from('site_domains')
         .update({ gsc_token: token })
         .eq('id', domainId);
-    } catch (e: any) {
+    } catch (e: unknown) {
+      // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+      // et seul ce test le dit honnetement.
+      const messageErreur = e instanceof Error ? e.message : String(e)
       // Non bloquant : le domaine fonctionne meme si l'indexation attend.
       // Le cron reessaiera. Mais l'erreur doit rester visible : sans trace,
       // un domaine reste indefiniment non indexe sans que personne ne le sache.
-      const msg = 'TXT Google : ' + (e?.message || String(e));
+      const msg = 'TXT Google : ' + (messageErreur || String(e));
       console.error('[provision]', row.domain, msg);
       await supabaseAdmin
         .from('site_domains')

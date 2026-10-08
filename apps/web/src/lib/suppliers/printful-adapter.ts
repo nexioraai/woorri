@@ -347,12 +347,15 @@ export const printfulAdapter: SupplierAdapter = {
         supplier_order_id: String(pfOrder.id || pfOrder.external_id || ''),
         estimated_shipping_days: 7,
       };
-    } catch (e: any) {
+    } catch (e: unknown) {
+      // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+      // et seul ce test le dit honnetement.
+      const messageErreur = e instanceof Error ? e.message : String(e)
       return {
         success: false,
         supplier_order_id: '',
         estimated_shipping_days: 0,
-        error_message: e.message || 'Printful order failed',
+        error_message: messageErreur || 'Printful order failed',
       };
     }
   },
@@ -425,8 +428,11 @@ export const printfulAdapter: SupplierAdapter = {
           estimated_days_max: Number(standard.maxDeliveryDays) || 8,
         };
       }
-    } catch (err: any) {
-      const msg = err.message || '';
+    } catch (err: unknown) {
+      // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+      // et seul ce test le dit honnetement.
+      const messageErreur = err instanceof Error ? err.message : String(err)
+      const msg = messageErreur || '';
       if (msg.includes('ships to')) {
         console.warn('[printful/calculateShipping] Product not available in this country');
         throw new Error('not_available');

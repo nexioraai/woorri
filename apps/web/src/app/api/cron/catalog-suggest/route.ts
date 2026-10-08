@@ -129,15 +129,21 @@ Réponds UNIQUEMENT en JSON : [{"index":0,"reason":"..."},...]`
       }
 
       results.push({ slug: site.slug, suggested: rows.length });
-    } catch (err: any) {
-      console.error(`[catalog-suggest] ${site.slug} error:`, err.message);
+    } catch (err: unknown) {
+      // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+      // et seul ce test le dit honnetement.
+      const messageErreur = err instanceof Error ? err.message : String(err)
+      console.error(`[catalog-suggest] ${site.slug} error:`, messageErreur);
     }
   }
 
   await finishCronRun(runId, { itemsProcessed: sites.length });
   return NextResponse.json({ processed: sites.length, results });
-  } catch (e: any) {
-    await finishCronRun(runId, { itemsProcessed: 0, status: 'error', errorMessage: e.message });
-    return NextResponse.json({ error: e.message }, { status: 500 });
+  } catch (e: unknown) {
+    // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+    // et seul ce test le dit honnetement.
+    const messageErreur = e instanceof Error ? e.message : String(e)
+    await finishCronRun(runId, { itemsProcessed: 0, status: 'error', errorMessage: messageErreur });
+    return NextResponse.json({ error: messageErreur }, { status: 500 });
   }
 }

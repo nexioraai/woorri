@@ -371,8 +371,11 @@ export const cjAdapter: SupplierAdapter = {
         try {
           variants = await cjGetVariants(email, apiKey, item.supplier_product_id);
           break;
-        } catch (e: any) {
-          const msg = String(e?.message || e);
+        } catch (e: unknown) {
+          // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+          // et seul ce test le dit honnetement.
+          const messageErreur = e instanceof Error ? e.message : String(e)
+          const msg = String(messageErreur || e);
           if (attempt === 0 && msg.includes('Too Many Requests')) {
             await new Promise((r) => setTimeout(r, 1200));
             continue;

@@ -80,8 +80,11 @@ export async function GET(req: NextRequest) {
     }
     await finishCronRun(runId, { itemsProcessed: checked });
     return res;
-  } catch (e: any) {
-    await finishCronRun(runId, { itemsProcessed: 0, status: 'error', errorMessage: e?.message || String(e) });
+  } catch (e: unknown) {
+    // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+    // et seul ce test le dit honnetement.
+    const messageErreur = e instanceof Error ? e.message : String(e)
+    await finishCronRun(runId, { itemsProcessed: 0, status: 'error', errorMessage: messageErreur || String(e) });
     throw e;
   }
 }
@@ -153,8 +156,11 @@ async function runWatch() {
     let raw: any = null;
     try {
       raw = await cjFetch(email, apiKey, `/product/query?pid=${encodeURIComponent(p.supplier_product_id)}`);
-    } catch (e: any) {
-      const msg = String(e?.message || '');
+    } catch (e: unknown) {
+      // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+      // et seul ce test le dit honnetement.
+      const messageErreur = e instanceof Error ? e.message : String(e)
+      const msg = String(messageErreur || '');
       if (/product not found/i.test(msg)) {
         findings.push({
           kind: 'disappeared',

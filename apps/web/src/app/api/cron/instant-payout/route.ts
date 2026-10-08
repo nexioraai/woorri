@@ -55,18 +55,24 @@ export async function GET(req: Request) {
           method: 'instant',
         });
         results.push({ currency: bal.currency, amount: bal.amount, payoutId: payout.id });
-      } catch (e: any) {
+      } catch (e: unknown) {
+        // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+        // et seul ce test le dit honnetement.
+        const messageErreur = e instanceof Error ? e.message : String(e)
         // Carte non eligible, plafond atteint : on n'interrompt pas les autres devises.
-        results.push({ currency: bal.currency, amount: bal.amount, skipped: e.message });
+        results.push({ currency: bal.currency, amount: bal.amount, skipped: messageErreur });
       }
     }
 
     const sent = results.filter((r) => r.payoutId).length;
     await finishCronRun(runId, { itemsProcessed: sent });
     return NextResponse.json({ status: 'done', payouts: sent, results });
-  } catch (e: any) {
-    console.error('[instant-payout] Error:', e.message);
-    await finishCronRun(runId, { itemsProcessed: 0, status: 'error', errorMessage: e.message });
-    return NextResponse.json({ status: 'error', message: e.message }, { status: 500 });
+  } catch (e: unknown) {
+    // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+    // et seul ce test le dit honnetement.
+    const messageErreur = e instanceof Error ? e.message : String(e)
+    console.error('[instant-payout] Error:', messageErreur);
+    await finishCronRun(runId, { itemsProcessed: 0, status: 'error', errorMessage: messageErreur });
+    return NextResponse.json({ status: 'error', message: messageErreur }, { status: 500 });
   }
 }

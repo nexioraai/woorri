@@ -804,10 +804,13 @@ Be concise, helpful, and proactive. When the owner asks for a change to the site
       content: response.content,
       stop_reason: response.stop_reason,
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
+    // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+    // et seul ce test le dit honnetement.
+    const messageErreur = err instanceof Error ? err.message : String(err)
     console.error('Agent chat error:', err);
     return NextResponse.json(
-      { error: 'Agent error', details: err?.message },
+      { error: 'Agent error', details: messageErreur },
       { status: 500 }
     );
   }

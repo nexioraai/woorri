@@ -22,8 +22,11 @@ export async function POST(req: Request) {
   let event;
   try {
     event = getStripe().webhooks.constructEvent(body, sig!, webhookSecret);
-  } catch (err: any) {
-    console.error('Webhook signature verification failed:', err.message);
+  } catch (err: unknown) {
+    // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+    // et seul ce test le dit honnetement.
+    const messageErreur = err instanceof Error ? err.message : String(err)
+    console.error('Webhook signature verification failed:', messageErreur);
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
   }
 
@@ -199,7 +202,7 @@ export async function POST(req: Request) {
       }
     }
     return NextResponse.json({ received: true });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error('Webhook handler error:', err);
     return NextResponse.json({ error: 'Handler error' }, { status: 500 });
   }

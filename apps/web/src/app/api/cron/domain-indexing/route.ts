@@ -142,8 +142,11 @@ export async function GET(req: NextRequest) {
             .select('id');
           if (claimed && claimed.length > 0) submitted++;
         }
-      } catch (e: any) {
-        const msg = String(e?.message || e);
+      } catch (e: unknown) {
+        // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+        // et seul ce test le dit honnetement.
+        const messageErreur = e instanceof Error ? e.message : String(e)
+        const msg = String(messageErreur || e);
         if (attempts >= MAX_ATTEMPTS) {
           await markTerminal(msg, status);
         } else {
@@ -158,8 +161,11 @@ export async function GET(req: NextRequest) {
 
     await finishCronRun(runId, { itemsProcessed: rows.length });
     return NextResponse.json({ done: true, processed: rows.length, verified, submitted, pending, failedTerminal });
-  } catch (e: any) {
-    await finishCronRun(runId, { itemsProcessed: 0, status: 'error', errorMessage: e.message });
-    return NextResponse.json({ error: e.message }, { status: 500 });
+  } catch (e: unknown) {
+    // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+    // et seul ce test le dit honnetement.
+    const messageErreur = e instanceof Error ? e.message : String(e)
+    await finishCronRun(runId, { itemsProcessed: 0, status: 'error', errorMessage: messageErreur });
+    return NextResponse.json({ error: messageErreur }, { status: 500 });
   }
 }

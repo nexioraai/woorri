@@ -647,8 +647,11 @@ export default function EditPage() {
                         setPodDesigns(updated);
                         updateField('pod_designs', updated);
                         setMessage('Design uploaded!');
-                      } catch (err: any) {
-                        setMessage('Upload error: ' + (err.message || err));
+                      } catch (err: unknown) {
+                        // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+                        // et seul ce test le dit honnetement.
+                        const messageErreur = err instanceof Error ? err.message : String(err)
+                        setMessage('Upload error: ' + (messageErreur || err));
                       } finally {
                         setUploadingDesign(false);
                         e.target.value = '';
@@ -825,8 +828,11 @@ export default function EditPage() {
                         // deja en cours d'edition par ce meme utilisateur authentifie.
                         const updated = await fetchOwnedSite<{ pod_designs?: any[] }>(slug, site.owner_email, 'pod_designs');
                         if (updated?.pod_designs) setPodDesigns(updated.pod_designs);
-                      } catch (err: any) {
-                        setMessage('Erreur: ' + (err.message || err));
+                      } catch (err: unknown) {
+                        // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+                        // et seul ce test le dit honnetement.
+                        const messageErreur = err instanceof Error ? err.message : String(err)
+                        setMessage('Erreur: ' + (messageErreur || err));
                       } finally {
                         setGeneratingMockups(false);
                       }

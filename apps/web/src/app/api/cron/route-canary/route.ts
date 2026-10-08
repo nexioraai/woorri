@@ -30,8 +30,11 @@ async function runCheck(check: Check): Promise<{ ok: boolean; detail: string }> 
       return { ok: false, detail: `${check.name}: contenu inattendu sur ${check.url}` };
     }
     return { ok: true, detail: `${check.name}: OK` };
-  } catch (e: any) {
-    return { ok: false, detail: `${check.name}: exception (${e?.message || e}) sur ${check.url}` };
+  } catch (e: unknown) {
+    // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+    // et seul ce test le dit honnetement.
+    const messageErreur = e instanceof Error ? e.message : String(e)
+    return { ok: false, detail: `${check.name}: exception (${messageErreur}) sur ${check.url}` };
   }
 }
 
@@ -120,8 +123,11 @@ export async function GET(req: NextRequest) {
     });
 
     return NextResponse.json({ done: true, checked: results.length, failed: failures.length, results });
-  } catch (e: any) {
-    await finishCronRun(runId, { itemsProcessed: 0, status: 'error', errorMessage: e?.message || String(e) });
-    return NextResponse.json({ error: e?.message || String(e) }, { status: 500 });
+  } catch (e: unknown) {
+    // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+    // et seul ce test le dit honnetement.
+    const messageErreur = e instanceof Error ? e.message : String(e)
+    await finishCronRun(runId, { itemsProcessed: 0, status: 'error', errorMessage: messageErreur || String(e) });
+    return NextResponse.json({ error: messageErreur || String(e) }, { status: 500 });
   }
 }

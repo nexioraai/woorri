@@ -127,8 +127,11 @@ export async function GET(req: NextRequest) {
     }
     try {
       totalSynced += await upsertProducts(outcome.value.products);
-    } catch (e: any) {
-      errors.push(`${name} (upsert): ${e.message}`);
+    } catch (e: unknown) {
+      // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+      // et seul ce test le dit honnetement.
+      const messageErreur = e instanceof Error ? e.message : String(e)
+      errors.push(`${name} (upsert): ${messageErreur}`);
     }
   }
 
@@ -138,7 +141,7 @@ export async function GET(req: NextRequest) {
   //   const upserted = await upsertProducts(result.products);
   //   totalSynced += upserted;
   // } catch (e: any) {
-  //   errors.push(`Spocket: ${e.message}`);
+  //   errors.push(`Spocket: ${messageErreur}`);
   // }
 
   await finishCronRun(runId, { itemsProcessed: totalSynced });
@@ -148,9 +151,12 @@ export async function GET(req: NextRequest) {
     synced: totalSynced,
     errors: errors.length > 0 ? errors : undefined,
   });
-  } catch (e: any) {
-    await finishCronRun(runId, { itemsProcessed: 0, status: 'error', errorMessage: e.message });
-    return NextResponse.json({ error: e.message }, { status: 500 });
+  } catch (e: unknown) {
+    // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+    // et seul ce test le dit honnetement.
+    const messageErreur = e instanceof Error ? e.message : String(e)
+    await finishCronRun(runId, { itemsProcessed: 0, status: 'error', errorMessage: messageErreur });
+    return NextResponse.json({ error: messageErreur }, { status: 500 });
   }
 }
 
@@ -186,8 +192,11 @@ Return ONLY a JSON array of strings, nothing else. Example: ["keyword1","keyword
         return keywords.map((k: any) => String(k));
       }
     }
-  } catch (err: any) {
-    console.error('[expandNiche] Haiku failed:', err.message || err);
+  } catch (err: unknown) {
+    // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+    // et seul ce test le dit honnetement.
+    const messageErreur = err instanceof Error ? err.message : String(err)
+    console.error('[expandNiche] Haiku failed:', messageErreur || err);
   }
   // Fallback: retourner la niche brute
   return [niche];

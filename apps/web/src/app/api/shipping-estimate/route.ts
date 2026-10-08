@@ -170,7 +170,10 @@ export async function POST(req: NextRequest) {
       logisticName: std.name,
       logisticAging: std.days_min && std.days_max ? `${std.days_min}-${std.days_max}` : '',
     })
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message || 'Unknown error' }, { status: 500 })
+  } catch (e: unknown) {
+    // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+    // et seul ce test le dit honnetement.
+    const messageErreur = e instanceof Error ? e.message : String(e)
+    return NextResponse.json({ error: messageErreur || 'Unknown error' }, { status: 500 })
   }
 }

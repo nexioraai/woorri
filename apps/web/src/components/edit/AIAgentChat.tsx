@@ -147,8 +147,11 @@ export default function AIAgentChat({ slug, onSiteUpdated, lang = 'en' }: Props)
         }
       }
       setToolStates((s) => ({ ...s, ...newStates }));
-    } catch (err: any) {
-      setError(err.message || 'Error');
+    } catch (err: unknown) {
+      // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+      // et seul ce test le dit honnetement.
+      const messageErreur = err instanceof Error ? err.message : String(err)
+      setError(messageErreur || 'Error');
     } finally {
       setLoading(false);
     }
@@ -209,9 +212,12 @@ export default function AIAgentChat({ slug, onSiteUpdated, lang = 'en' }: Props)
       setToolStates((s) => ({ ...s, [toolUseId]: { status: 'applied' } }));
       if (onSiteUpdated && data.site) onSiteUpdated(data.site);
       appendToolResult(toolUseId, 'User approved and the change was applied successfully.');
-    } catch (err: any) {
-      setToolStates((s) => ({ ...s, [toolUseId]: { status: 'error', error: err.message } }));
-      appendToolResult(toolUseId, `Failed to apply: ${err.message}`, true);
+    } catch (err: unknown) {
+      // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+      // et seul ce test le dit honnetement.
+      const messageErreur = err instanceof Error ? err.message : String(err)
+      setToolStates((s) => ({ ...s, [toolUseId]: { status: 'error', error: messageErreur } }));
+      appendToolResult(toolUseId, `Failed to apply: ${messageErreur}`, true);
     }
   };
 

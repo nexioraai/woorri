@@ -43,9 +43,12 @@ export async function GET(req: NextRequest) {
     const result = await runShippingCache();
     await finishCronRun(runId, { itemsProcessed: result.checked ?? 0, status: 'success' });
     return NextResponse.json({ ok: true, ...result });
-  } catch (e: any) {
-    await finishCronRun(runId, { itemsProcessed: 0, status: 'error', errorMessage: String(e?.message || e) });
-    return NextResponse.json({ error: String(e?.message || e) }, { status: 500 });
+  } catch (e: unknown) {
+    // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+    // et seul ce test le dit honnetement.
+    const messageErreur = e instanceof Error ? e.message : String(e)
+    await finishCronRun(runId, { itemsProcessed: 0, status: 'error', errorMessage: String(messageErreur || e) });
+    return NextResponse.json({ error: String(messageErreur || e) }, { status: 500 });
   }
 }
 
@@ -168,9 +171,12 @@ async function runShippingCache() {
       if (Array.isArray(variants) && variants.length > 0) {
         vid = variants[0].vid || variants[0].variantId || null;
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
+      // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+      // et seul ce test le dit honnetement.
+      const messageErreur = e instanceof Error ? e.message : String(e)
       apiErrors++;
-      console.warn(`[shipping-cache] variants ${pair.supplierProductId}: ${String(e?.message || e).slice(0, 100)}`);
+      console.warn(`[shipping-cache] variants ${pair.supplierProductId}: ${messageErreur.slice(0, 100)}`);
       continue;
     }
     if (!vid) {
@@ -186,9 +192,12 @@ async function runShippingCache() {
       const options = await cjCalculateFreight(email, apiKey, pair.country, [{ vid, quantity: 1 }]);
       best = lowestPrice(options);
       tiers = pickThreeTiers(options);
-    } catch (e: any) {
+    } catch (e: unknown) {
+      // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+      // et seul ce test le dit honnetement.
+      const messageErreur = e instanceof Error ? e.message : String(e)
       apiErrors++;
-      console.warn(`[shipping-cache] freight ${pair.supplierProductId}/${pair.country}: ${String(e?.message || e).slice(0, 100)}`);
+      console.warn(`[shipping-cache] freight ${pair.supplierProductId}/${pair.country}: ${messageErreur.slice(0, 100)}`);
       continue;
     }
 

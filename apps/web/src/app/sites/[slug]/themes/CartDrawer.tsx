@@ -323,8 +323,11 @@ export default function CartDrawer({
           setShipping(Number(data.shipping) || 0);
         }
       }
-    } catch (e: any) {
-      setError(e.message);
+    } catch (e: unknown) {
+      // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+      // et seul ce test le dit honnetement.
+      const messageErreur = e instanceof Error ? e.message : String(e)
+      setError(messageErreur);
     } finally {
       setCalcBusy(false);
     }
@@ -406,8 +409,11 @@ export default function CartDrawer({
 
       if (!res.ok) throw new Error(data.error || 'Erreur');
       window.location.href = data.url;
-    } catch (e: any) {
-      setError(e.message);
+    } catch (e: unknown) {
+      // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+      // et seul ce test le dit honnetement.
+      const messageErreur = e instanceof Error ? e.message : String(e)
+      setError(messageErreur);
       setBusy(false);
     }
   };

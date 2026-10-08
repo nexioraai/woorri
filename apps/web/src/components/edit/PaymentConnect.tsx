@@ -54,8 +54,11 @@ export default function PaymentConnect({ slug, mode }: { slug: string; mode?: nu
       const shipRes = await fetch(`/api/shop/shipping?slug=${encodeURIComponent(slug)}`, { headers });
       const shipData = await shipRes.json();
       if (shipRes.ok) setShipping(String(shipData.shippingFlat ?? 0));
-    } catch (e: any) {
-      setError(e.message);
+    } catch (e: unknown) {
+      // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+      // et seul ce test le dit honnetement.
+      const messageErreur = e instanceof Error ? e.message : String(e)
+      setError(messageErreur);
     } finally {
       setLoading(false);
     }
@@ -130,8 +133,11 @@ export default function PaymentConnect({ slug, mode }: { slug: string; mode?: nu
       setSocialActuel({ ...socialActuel, whatsapp: numeroContact.trim() });
       setNumMsg('Numéros enregistrés — visibles immédiatement sur vos fiches produit.');
       setTimeout(() => setNumMsg(''), 4000);
-    } catch (e: any) {
-      setNumMsg(e.message);
+    } catch (e: unknown) {
+      // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+      // et seul ce test le dit honnetement.
+      const messageErreur = e instanceof Error ? e.message : String(e)
+      setNumMsg(messageErreur);
     } finally {
       setNumSaving(false);
     }
@@ -150,8 +156,11 @@ export default function PaymentConnect({ slug, mode }: { slug: string; mode?: nu
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Erreur');
       window.location.href = data.url;
-    } catch (e: any) {
-      setError(e.message);
+    } catch (e: unknown) {
+      // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+      // et seul ce test le dit honnetement.
+      const messageErreur = e instanceof Error ? e.message : String(e)
+      setError(messageErreur);
       setBusy(false);
     }
   };
@@ -170,8 +179,11 @@ export default function PaymentConnect({ slug, mode }: { slug: string; mode?: nu
       if (!res.ok) throw new Error(data.error || 'Erreur');
       setShipMsg(t('pc.rateSaved'));
       setTimeout(() => setShipMsg(''), 3000);
-    } catch (e: any) {
-      setShipMsg(e.message);
+    } catch (e: unknown) {
+      // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+      // et seul ce test le dit honnetement.
+      const messageErreur = e instanceof Error ? e.message : String(e)
+      setShipMsg(messageErreur);
     } finally {
       setSavingShip(false);
     }

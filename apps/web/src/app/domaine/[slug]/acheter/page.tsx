@@ -117,8 +117,11 @@ export default function AcheterDomainePage({ params }: { params: Promise<{ slug:
       } else {
         setResult(data)
       }
-    } catch (e: any) {
-      setError(e.message)
+    } catch (e: unknown) {
+      // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+      // et seul ce test le dit honnetement.
+      const messageErreur = e instanceof Error ? e.message : String(e)
+      setError(messageErreur)
     }
     setSearching(false)
   }
@@ -137,8 +140,11 @@ export default function AcheterDomainePage({ params }: { params: Promise<{ slug:
         return
       }
       setQuote(data)
-    } catch (e: any) {
-      setError(e.message)
+    } catch (e: unknown) {
+      // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+      // et seul ce test le dit honnetement.
+      const messageErreur = e instanceof Error ? e.message : String(e)
+      setError(messageErreur)
     }
   }
 

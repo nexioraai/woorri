@@ -752,8 +752,11 @@ Return ONLY valid JSON, no markdown:
         });
         throw zodErr;
       }
-    } catch (e: any) {
-      console.error('AI JSON validation failed:', e?.message || e, '\nRaw text (tail):', text.slice(-2000));
+    } catch (e: unknown) {
+      // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+      // et seul ce test le dit honnetement.
+      const messageErreur = e instanceof Error ? e.message : String(e)
+      console.error('AI JSON validation failed:', messageErreur || e, '\nRaw text (tail):', text.slice(-2000));
       return NextResponse.json(
         { error: "La génération IA a produit un résultat invalide. Merci de réessayer." },
         { status: 502 }

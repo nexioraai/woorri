@@ -65,8 +65,11 @@ export default function CatalogSelections({
       });
       const data = await res.json();
       setSelections(data.selections || []);
-    } catch (e: any) {
-      setMessage('Erreur: ' + e.message);
+    } catch (e: unknown) {
+      // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+      // et seul ce test le dit honnetement.
+      const messageErreur = e instanceof Error ? e.message : String(e)
+      setMessage('Erreur: ' + messageErreur);
     } finally {
       setLoading(false);
     }
@@ -103,8 +106,11 @@ export default function CatalogSelections({
           }
         } catch {}
       }
-    } catch (e: any) {
-      setMessage('Erreur: ' + e.message);
+    } catch (e: unknown) {
+      // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+      // et seul ce test le dit honnetement.
+      const messageErreur = e instanceof Error ? e.message : String(e)
+      setMessage('Erreur: ' + messageErreur);
     } finally {
       setCurating(false);
     }
@@ -135,8 +141,11 @@ export default function CatalogSelections({
           return !p._curated && !owned.has(realId);
         })
       );
-    } catch (e: any) {
-      setMessage('Erreur: ' + e.message);
+    } catch (e: unknown) {
+      // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+      // et seul ce test le dit honnetement.
+      const messageErreur = e instanceof Error ? e.message : String(e)
+      setMessage('Erreur: ' + messageErreur);
     } finally {
       setSearching(false);
     }
@@ -158,8 +167,11 @@ export default function CatalogSelections({
         setResults(prev => prev.filter(p => p.id !== prefixedId));
         await fetchSelections();
       }
-    } catch (e: any) {
-      setMessage('Erreur: ' + e.message);
+    } catch (e: unknown) {
+      // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+      // et seul ce test le dit honnetement.
+      const messageErreur = e instanceof Error ? e.message : String(e)
+      setMessage('Erreur: ' + messageErreur);
     } finally {
       setAdding(null);
     }
@@ -216,8 +228,11 @@ export default function CatalogSelections({
         setMessage(t('cs.enhancedDone').replace('{count}', String(data.enhanced)));
         await fetchSelections();
       }
-    } catch (e: any) {
-      setMessage('Erreur: ' + e.message);
+    } catch (e: unknown) {
+      // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+      // et seul ce test le dit honnetement.
+      const messageErreur = e instanceof Error ? e.message : String(e)
+      setMessage('Erreur: ' + messageErreur);
     } finally {
       setEnhancing(false);
     }

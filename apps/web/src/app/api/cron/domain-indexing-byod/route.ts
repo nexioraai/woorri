@@ -209,9 +209,12 @@ export async function GET(req: NextRequest) {
             // Laisser le temps au marchand de poser le TXT avant de
             // tenter une verification qui echouerait a coup sur.
             continue;
-          } catch (e: any) {
+          } catch (e: unknown) {
+            // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+            // et seul ce test le dit honnetement.
+            const messageErreur = e instanceof Error ? e.message : String(e)
             if (attempts >= MAX_ATTEMPTS) {
-              await markFailed('Jeton Google jamais genere apres ' + MAX_ATTEMPTS + ' tentatives : ' + (e?.message || e), null);
+              await markFailed('Jeton Google jamais genere apres ' + MAX_ATTEMPTS + ' tentatives : ' + (messageErreur || e), null);
               continue;
             }
             throw e;
@@ -287,27 +290,36 @@ export async function GET(req: NextRequest) {
               .eq('custom_domain_google_status', 'verified')
               .select('id');
             if (claimed && claimed.length > 0) submitted++;
-          } catch (e: any) {
+          } catch (e: unknown) {
+            // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+            // et seul ce test le dit honnetement.
+            const messageErreur = e instanceof Error ? e.message : String(e)
             if (attempts >= MAX_ATTEMPTS) {
-              await markFailed(String(e?.message || e), 'verified');
+              await markFailed(String(messageErreur || e), 'verified');
               continue;
             }
             throw e;
           }
         }
-      } catch (e: any) {
+      } catch (e: unknown) {
+        // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+        // et seul ce test le dit honnetement.
+        const messageErreur = e instanceof Error ? e.message : String(e)
         await supabaseAdmin
           .from('sites')
-          .update({ custom_domain_google_last_error: String(e?.message || e).slice(0, 500) })
+          .update({ custom_domain_google_last_error: String(messageErreur || e).slice(0, 500) })
           .eq('id', row.id);
-        console.error('[domain-indexing-byod]', row.custom_domain, e?.message || e);
+        console.error('[domain-indexing-byod]', row.custom_domain, messageErreur || e);
       }
     }
 
     await finishCronRun(runId, { itemsProcessed: rows.length });
     return NextResponse.json({ done: true, processed: rows.length, verified, submitted, pending, failedTerminal, repris });
-  } catch (e: any) {
-    await finishCronRun(runId, { itemsProcessed: 0, status: 'error', errorMessage: e.message });
-    return NextResponse.json({ error: e.message }, { status: 500 });
+  } catch (e: unknown) {
+    // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+    // et seul ce test le dit honnetement.
+    const messageErreur = e instanceof Error ? e.message : String(e)
+    await finishCronRun(runId, { itemsProcessed: 0, status: 'error', errorMessage: messageErreur });
+    return NextResponse.json({ error: messageErreur }, { status: 500 });
   }
 }

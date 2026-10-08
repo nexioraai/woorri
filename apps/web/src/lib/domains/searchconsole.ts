@@ -62,8 +62,11 @@ export async function verifyDomain(domain: string): Promise<boolean> {
       },
     });
     return true;
-  } catch (e: any) {
-    const msg = String(e?.message || '');
+  } catch (e: unknown) {
+    // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+    // et seul ce test le dit honnetement.
+    const messageErreur = e instanceof Error ? e.message : String(e)
+    const msg = String(messageErreur || '');
     // Propagation DNS incomplete : ce n'est pas un echec definitif.
     if (/token|verification|not found/i.test(msg)) return false;
     throw e;

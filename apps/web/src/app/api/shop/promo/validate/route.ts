@@ -183,7 +183,10 @@ export async function POST(req: NextRequest) {
       discount_value: Number(promo.discount_value),
       discount,
     });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err: unknown) {
+    // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+    // et seul ce test le dit honnetement.
+    const messageErreur = err instanceof Error ? err.message : String(err)
+    return NextResponse.json({ error: messageErreur }, { status: 500 });
   }
 }

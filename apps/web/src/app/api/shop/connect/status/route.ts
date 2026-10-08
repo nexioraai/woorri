@@ -23,7 +23,10 @@ export async function GET(req: Request) {
     const provider = getProvider((auth.site as any).payment_provider);
     const { ready } = await provider.getStatus((auth.site as any).payment_account_id);
     return NextResponse.json({ connected: true, ready });
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+  } catch (e: unknown) {
+    // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
+    // et seul ce test le dit honnetement.
+    const messageErreur = e instanceof Error ? e.message : String(e)
+    return NextResponse.json({ error: messageErreur }, { status: 500 });
   }
 }
