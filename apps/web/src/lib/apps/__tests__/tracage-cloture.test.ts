@@ -39,6 +39,7 @@ import { describe, expect, it } from 'vitest'
 // MODÈLE du contrôle au lieu du contrôle. Ici, c'est l'objet réellement
 // exporté — celui que Next lira — qui est mesuré.
 import nextConfig from '../../../../next.config'
+import { sansCommentaires } from './sans-commentaires'
 
 const RACINE = join(__dirname, '../../../../../..')
 const MODULES = join(RACINE, 'node_modules')
@@ -51,29 +52,6 @@ function paquetDe(chemin: string): string | null {
   if (reste.length === 0 || reste[0] === '') return null
   // Les paquets à périmètre (`@x/y`) portent leur nom sur deux segments.
   return reste[0].startsWith('@') ? `${reste[0]}/${reste[1] ?? ''}` : reste[0]
-}
-
-/**
- * Le code SEUL, commentaires neutralisés.
- *
- * TROISIÈME FOIS que ce piège se referme dans ce dépôt : un instrument qui
- * cherche un marqueur dans un fichier trouve la PROSE qui parle du marqueur.
- * Ici, le commentaire qui explique pourquoi `creerClient` a été abandonné
- * contenait le mot `creerClient`, et le test échouait sur son propre récit.
- * Les longueurs sont préservées pour que rien ne se décale.
- */
-function sansCommentaires(src: string): string {
-  // UNE SEULE PASSE, DE GAUCHE À DROITE. Deux `replace` successifs ne
-  // suffisent pas : mon commentaire de ligne contenait le texte
-  // « node_modules/@anthropic-ai/sdk/** », et le second passage y a lu une
-  // OUVERTURE de bloc. Le bloc a alors couru jusqu'au `*/` d'un
-  // `webpackIgnore` quarante lignes plus bas, effaçant les imports qu'on
-  // venait mesurer. Les chaînes sont reconnues d'abord, pour la même raison.
-  return src.replace(
-    /("(?:\\.|[^"\\])*")|('(?:\\.|[^'\\])*')|(`(?:\\.|[^`\\])*`)|(\/\/[^\n]*)|(\/\*[\s\S]*?\*\/)/g,
-    (m, _d, _s, _t, ligne, bloc) =>
-      ligne === undefined && bloc === undefined ? m : m.replace(/[^\n]/g, ' '),
-  )
 }
 
 /** Fermeture transitive des `dependencies` réelles, lue dans node_modules. */

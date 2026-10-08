@@ -24,19 +24,43 @@ import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { PLAFOND_JETONS } from '../comprendre'
 import { direALUtilisateur } from '../pour'
+import { sansCommentaires } from './sans-commentaires'
 
 const RACINE = join(process.cwd(), '..', '..')
 const lire = (p: string): string => readFileSync(join(RACINE, p), 'utf8')
 
 describe('CLIQUET — le plafond de jetons', () => {
-  it('le site tire au MEME plafond que la campagne', () => {
+  it('le site n est JAMAIS plus etroit que la campagne', () => {
+    // PREMIERE VERSION DE CE TEST : j'exigeais l'EGALITE avec la campagne.
+    // C'etait lier le site a un chiffre herite — et le proprietaire a eu
+    // raison de demander a quoi il servait. La campagne tire a 40000 pour ses
+    // propres raisons de budget ; le site, lui, sert des gens qui decrivent
+    // une application entiere. Ce qui compte n'est pas l'egalite, c'est que
+    // le site ne soit jamais le plus etroit des deux.
     const campagne = /^const MAX_TOKENS = (\d+);$/mu.exec(lire('benchmarks/air-emission/emit-v3.mjs'))
     expect(campagne, 'MAX_TOKENS introuvable dans emit-v3.mjs').not.toBeNull()
-    expect(PLAFOND_JETONS).toBe(Number(campagne![1]))
+    expect(PLAFOND_JETONS).toBeGreaterThanOrEqual(Number(campagne![1]))
+  })
+
+  it('le plafond est celui du MODELE, mesure, pas un chiffre choisi', () => {
+    // Demande a l'API, qui repond en 400 donc sans rien facturer :
+    //   « max_tokens: 999999 > 128000, which is the maximum allowed number
+    //     of output tokens for claude-opus-5 »
+    // Le generateur n'a donc plus de plafond A LUI : aucune application ne
+    // sera coupee par une borne que j'aurais choisie.
+    expect(PLAFOND_JETONS).toBe(128_000)
+    const src = lire('apps/web/src/lib/apps/comprendre.ts')
+    // La mesure est CONSIGNEE : un nombre nu se reecrirait sans preuve.
+    expect(src).toContain('req_011CfpVM6K6gxenpSx4o6LrA')
+    // Et le modele mesure est bien celui que l'adaptateur appelle.
+    expect(lire('benchmarks/air-emission/adaptateur-anthropic.mjs')).toContain('model: "claude-opus-5"')
   })
 
   it('le plafond est reellement passe a l appel', () => {
-    const src = lire('apps/web/src/lib/apps/comprendre.ts')
+    // LE CODE SEUL : la mesure de l'API est CITEE en commentaire, et elle
+    // contient « max_tokens: 999999 ». Le test butait sur sa propre preuve —
+    // quatrieme fois que ce piege se referme dans ce depot.
+    const src = sansCommentaires(lire('apps/web/src/lib/apps/comprendre.ts'))
     expect(src).toContain('max_tokens: PLAFOND_JETONS')
     // Le nombre nu ne doit plus apparaitre dans l'appel : c'est par la qu'il
     // divergerait sans que personne le voie.

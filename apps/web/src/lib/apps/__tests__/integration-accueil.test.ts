@@ -18,26 +18,15 @@
 import { describe, expect, it } from 'vitest'
 import { readFileSync, existsSync } from 'node:fs'
 import { join } from 'node:path'
+import { sansCommentaires } from './sans-commentaires'
 
 const SRC = join(process.cwd(), 'src')
 const lire = (...p: string[]): string => readFileSync(join(SRC, ...p), 'utf8')
 
-/**
- * Le CODE seul, commentaires retires.
- *
- * SANS CECI, CE FICHIER SE PIEGE LUI-MEME. `ConversationApplication.tsx`
- * explique en tete qu il ne touche NI `siteMode` NI `/api/chat` — et le test
- * trouvait ces mots dans la prose. La documentation d une regle violait la
- * regle.
- *
- * Deja rencontre aujourd hui, a l identique, dans `emission-coeur.mjs` : un
- * commentaire citait le repere qu un instrument cherchait, et l instrument
- * lisait l explication au lieu du code. Dans un depot ou des controles lisent
- * le source comme du TEXTE, un commentaire n est pas inerte.
- */
-const sansCommentaires = (t: string): string =>
-  t.replace(/\/\*[\s\S]*?\*\//gu, '').replace(/^[ \t]*\/\/.*$/gmu, '')
-
+// LE DECOUPEUR EST PARTAGE. Celui qui vivait ici procedait en DEUX passes —
+// blocs puis lignes — et avalait donc tout code situe entre un `/**` ecrit
+// dans un commentaire de ligne et le `*/` suivant. Il n'avait pas encore
+// mordu, mais c'est exactement le defaut qui a fait tomber `tracage-cloture`.
 const ACCUEIL = lire('components', 'onboarding', 'OnboardingChat.tsx')
 const CONVERSATION = sansCommentaires(
   lire('components', 'onboarding', 'ConversationApplication.tsx'),

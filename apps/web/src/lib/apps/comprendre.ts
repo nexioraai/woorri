@@ -91,25 +91,40 @@ export type Comprehension =
 export const JETON_DEPENSE = 'GO_EMISSION_IA'
 
 /**
- * LE PLAFOND DE JETONS DE SORTIE — celui de la campagne, pas un autre.
+ * LE PLAFOND DE JETONS DE SORTIE — LE MAXIMUM DU MODÈLE, ET RIEN DE MOINS.
  *
- * J'avais mis 9000. La campagne tire a 40000 depuis qu'elle a echoue sur son
- * premier domaine, et la raison est ecrite dans `emission-coeur.mjs` (D-078).
- * Un modele metier riche — une marketplace avec ses acteurs, ses concepts,
- * ses etats de commande et ses parcours — ne tient pas dans 9000 jetons.
+ * ── CE QUE CE NOMBRE EST, ET CE QU'IL N'EST PAS.
  *
- * Le propriétaire l'a vu au second tour de SA conversation : le premier
- * message passait, le second, plus precis, etait coupe.
+ * Ce n'est PAS une limite imposée à l'utilisateur. C'est la longueur maximale
+ * de la RÉPONSE DU MODÈLE, et l'API l'exige — un appel sans `max_tokens` est
+ * refusé. On ne peut donc pas « ne pas en mettre » ; on peut seulement le
+ * mettre trop bas.
  *
- * CE N'EST PAS UNE DEPENSE EN PLUS. La facturation porte sur les jetons
- * REELLEMENT produits ; le plafond ne fait que dire ou l'on coupe. Tirer bas
- * ne fait pas economiser, ca fait perdre l'appel ENTIER qu'on vient de payer.
+ * ── ET JE L'AVAIS MIS TROP BAS, DEUX FOIS.
  *
- * Le cliquet `plafond-jetons` verifie que ce nombre est bien celui de la
- * campagne : deux plafonds qui divergent, c'est un defaut qui n'apparait que
- * sur les demandes longues.
+ * 9000 d'abord : la demande de marketplace du propriétaire a été coupée en
+ * plein milieu. Puis 40000, recopié de la campagne — un chiffre hérité, pas
+ * un chiffre mesuré. Le propriétaire a demandé à quoi il servait. À rien.
+ *
+ * ── CELUI-CI EST MESURÉ.
+ *
+ * Demandé à l'API, qui répond en 400 — donc sans rien facturer :
+ *
+ *   « max_tokens: 999999 > 128000, which is the maximum allowed number of
+ *     output tokens for claude-opus-5 »   (request_id req_011CfpVM6K6gxenpSx4o6LrA)
+ *
+ * C'est le plafond du MODÈLE. En le prenant, le générateur cesse d'avoir un
+ * plafond À LUI : plus aucune application ne sera coupée par une borne que
+ * j'aurais choisie.
+ *
+ * ── ET CE N'EST PAS UNE DÉPENSE.
+ *
+ * La facturation porte sur les jetons RÉELLEMENT produits, jamais sur le
+ * plafond. Un modèle métier fait quelques milliers de jetons ; le plafond dit
+ * seulement où l'on couperait. Tirer bas ne fait rien économiser — ça fait
+ * perdre l'appel ENTIER qu'on vient de payer, et il faut le refaire.
  */
-export const PLAFOND_JETONS = 40000
+export const PLAFOND_JETONS = 128_000
 
 export function depenseAutorisee(): boolean {
   return (process.env[JETON_DEPENSE] ?? '') !== ''
