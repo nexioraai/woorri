@@ -21,9 +21,23 @@ describe('CLIQUET — ce que la phrase donne', () => {
     expect(lireLaPhrase('crée une appli de gestion de stock').nom).toMatch(/^Gestion/u)
   })
 
-  it('un nombre dans la phrase est ENTENDU', () => {
+  it('un nombre dans la phrase est ENTENDU, quel que soit le mot qui suit', () => {
     expect(lireLaPhrase('un catalogue de 40 produits').elements).toBe(40)
     expect(lireLaPhrase('une appli pour mes 12 membres').elements).toBe(12)
+    // LE CAS QUE LA SONDE A TROUVE EN PRODUCTION, a sa premiere execution :
+    // « ouvriers » n etait pas dans la liste fermee des noms, et la phrase
+    // retombait sur 8. Une liste de noms communs sera toujours incomplete.
+    expect(lireLaPhrase('un suivi de chantier avec 12 ouvriers et leurs taches').elements).toBe(12)
+    expect(lireLaPhrase('une appli pour 30 patients').elements).toBe(30)
+    expect(lireLaPhrase('gerer 7 vehicules').elements).toBe(7)
+  })
+
+  it('une ANNEE n est pas une quantite, et elle se reconnait a sa PLAGE', () => {
+    // Borner la longueur ferait PERDRE « 9999 produits » au lieu de le
+    // ramener a la limite. Ignorer un nombre enonce est pire que le borner :
+    // l utilisateur l a ecrit, et il ne le reverra pas.
+    expect(lireLaPhrase('une appli de tontine pour 2026 membres').elements).toBe(8)
+    expect(lireLaPhrase('un catalogue de 9999 produits').elements).toBe(200)
   })
 
   it('un nombre absurde est borne, pas recopie', () => {

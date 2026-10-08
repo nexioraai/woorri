@@ -62,7 +62,26 @@ export function lireLaPhrase(phrase: string): { nom: string; intention: string; 
   }
   const mots = reste.split(' ').filter((m) => m.length > 0)
   const nom = (mots.slice(0, 3).join(' ') || 'Mon application').slice(0, 60)
-  const chiffre = /(\d{1,4})\s*(articles?|produits?|membres?|fiches?|éléments?|elements?)/iu.exec(propre)
+  // ── UN NOMBRE SUIVI D'UN MOT, QUEL QU'IL SOIT.
+  //
+  // La première version énumérait les noms : `articles|produits|membres|
+  // fiches|éléments`. LA SONDE L'A PRISE EN DÉFAUT à sa première exécution,
+  // sur « 12 ouvriers » — rendu 8, la valeur par défaut. Une liste fermée de
+  // noms communs sera toujours incomplète : il y aura toujours un métier
+  // qu'on n'avait pas prévu.
+  //
+  // On ne demande donc plus QUEL mot suit, seulement qu'un mot suive. Et le
+  // nombre est borné à 200 : « une appli pour 2026 » n'est pas une quantité.
+  //
+  //   ⚠️ UNE ANNEE N'EST PAS UNE QUANTITE. « pour 2026 » ne demande pas deux
+  //   mille applications. On la reconnaît par sa plage, pas par sa longueur :
+  //   borner à trois chiffres ferait PERDRE « 9999 produits » au lieu de le
+  //   ramener à la limite — et ignorer un nombre énoncé est pire que le
+  //   borner, parce que l'utilisateur l'a écrit et ne le reverra pas.
+  const chiffre = [...propre.matchAll(/\b(\d{1,5})\s+\p{L}{3,}/gu)].find((m) => {
+    const n = Number(m[1])
+    return n > 0 && !(n >= 1900 && n <= 2100)
+  }) ?? null
   return {
     nom: nom.charAt(0).toUpperCase() + nom.slice(1),
     intention: propre.slice(0, 200),
