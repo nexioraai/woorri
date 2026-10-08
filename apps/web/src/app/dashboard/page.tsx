@@ -87,7 +87,10 @@ export default function DashboardPage() {
     });
     const data = await res.json();
     if (data.url) {
-      window.location.href = data.url;
+      // `assign` plutot qu'une affectation : la regle d'immutabilite refuse
+        // l'ecriture sur `location.href`, et `assign` dit la meme chose en
+        // nommant le geste — on NAVIGUE, on ne modifie pas un objet.
+        window.location.assign(data.url);
     } else {
       alert(data.error || t('dashboard.paymentError'));
     }

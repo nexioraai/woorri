@@ -109,10 +109,17 @@ export default function GalerieProduit({
   const aGlisse = useRef(false)
 
   const total = images.length
-  // Un index qui déborde après un changement de produit afficherait du vide.
-  useEffect(() => {
-    if (index > total - 1) setIndex(0)
-  }, [total, index])
+  // ── UN INDEX QUI DÉBORDE SE BORNE AU RENDU, PAS DANS UN EFFET.
+  //
+  // Avant : un effet remettait l'index à zéro quand le produit changeait.
+  // Deux défauts dans un seul geste — React rendait une PREMIÈRE fois avec
+  // l'index hors plage (donc une image vide, le temps d'une image), puis
+  // recommençait. Le visiteur voyait un trou clignoter.
+  //
+  // Borné ici, la valeur est juste DÈS le premier rendu : il n'y a plus
+  // d'instant où elle ne l'est pas. Le drapeau de lint l'avait signalé, et il
+  // avait raison — l'effet n'était pas seulement superflu, il était visible.
+  const vue = total === 0 ? 0 : Math.min(index, total - 1)
 
   // Le cadre : ratio s'il est donné, hauteur sinon. JAMAIS rien — une case
   // sans hauteur désaligne toute la grille autour d'elle.
@@ -164,7 +171,7 @@ export default function GalerieProduit({
           if (Math.abs(ecart) < SEUIL_GLISSEMENT) return
           aGlisse.current = true
           e.stopPropagation()
-          aller(index + (ecart < 0 ? 1 : -1))
+          aller(vue + (ecart < 0 ? 1 : -1))
         }}
         // Le navigateur émet un `click` APRÈS le glissement : on l'avale, sinon
         // la carte s'ouvre quand même. Capture, pour arriver avant la carte.
@@ -191,10 +198,10 @@ export default function GalerieProduit({
           // Photo de marchand : laissée ENTIÈRE, les bandes vides remplies
           // par une copie floutée d'elle-même (voir `PhotoProduit`).
           <PhotoProduit
-            src={images[index]!}
-            alt={total > 1 ? `${alt} — vue ${String(index + 1)} sur ${String(total)}` : alt}
+            src={images[vue]!}
+            alt={total > 1 ? `${alt} — vue ${String(vue + 1)} sur ${String(total)}` : alt}
             sizes={sizes ?? '(max-width: 768px) 100vw, 33vw'}
-            priority={index === 0}
+            priority={vue === 0}
           />
         ) : (
           <>
@@ -203,7 +210,7 @@ export default function GalerieProduit({
                 Le corriger d'un seul côté aurait rendu la boutique incohérente
                 selon le thème. */}
             <img
-              src={images[index]}
+              src={images[vue]}
               alt=""
               aria-hidden="true"
               loading="lazy"
@@ -222,12 +229,12 @@ export default function GalerieProduit({
               }}
             />
             <img
-              src={images[index]}
-              alt={total > 1 ? `${alt} — vue ${String(index + 1)} sur ${String(total)}` : alt}
+              src={images[vue]}
+              alt={total > 1 ? `${alt} — vue ${String(vue + 1)} sur ${String(total)}` : alt}
               // La première est immédiate, les suivantes attendent d'être utiles :
               // sur une connexion lente, charger sept photos d'un coup retarde
               // celle qu'on regarde.
-              loading={index === 0 ? 'eager' : 'lazy'}
+              loading={vue === 0 ? 'eager' : 'lazy'}
               decoding="async"
               style={{
                 position: 'relative',
@@ -248,7 +255,7 @@ export default function GalerieProduit({
             <button
               key={cote}
               type="button"
-              onClick={(e) => { e.stopPropagation(); e.preventDefault(); aller(index + pas) }}
+              onClick={(e) => { e.stopPropagation(); e.preventDefault(); aller(vue + pas) }}
               aria-label={pas < 0 ? 'Photo précédente' : 'Photo suivante'}
               style={{
                 position: 'absolute', top: '50%', [cote]: 8, transform: 'translateY(-50%)',
@@ -273,7 +280,7 @@ export default function GalerieProduit({
                   type="button"
                   onClick={(e) => { e.stopPropagation(); e.preventDefault(); aller(i) }}
                   aria-label={`Photo ${String(i + 1)}`}
-                  aria-current={i === index}
+                  aria-current={i === vue}
                   style={{
                     width: i === index ? 20 : 7, height: 7, borderRadius: 999, padding: 0,
                     border: 'none', cursor: 'pointer', transition: 'width .2s',
