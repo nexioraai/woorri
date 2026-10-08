@@ -16,7 +16,7 @@
  */
 import type { ProjectAir } from '@deribfy/air-schema'
 import { projectAirSchema } from '@deribfy/air-schema'
-import { comprendre, depenseAutorisee, construireDepuisModele } from './comprendre'
+import { comprendre, depenseAutorisee, construireDepuisModele, JETON_DEPENSE } from './comprendre'
 import { emettreSansIa, lireLaPhrase } from './emission'
 import {
   fautesDeProduction,
@@ -81,6 +81,32 @@ export type Questions = {
 }
 
 /**
+ * ON N'A PAS COMPRIS — ET IL N'Y A DONC AUCUN DOCUMENT.
+ *
+ * ── LE DEFAUT QUE CE TYPE SUPPRIME.
+ *
+ * Jusqu'ici, un echec de lecture servait quand meme la LECTURE SIMPLE : un
+ * squelette tire a l'expression reguliere — « une liste de 8 elements » — avec
+ * ses deux boutons. Le proprietaire a donc pu, sur une phrase que le moteur
+ * venait de declarer illisible, TELECHARGER une application.
+ *
+ * C'est mot pour mot ce qui etait interdit : « on peut pas construire un truc
+ * qu'on n'a pas compris ». Ma garde regardait « un document existe-t-il ? » —
+ * et le repli, lui, EN FABRIQUAIT un. La garde ne gardait rien.
+ *
+ * Un document ne sort plus que d'une lecture ABOUTIE. Le reste est un refus
+ * qui se dit, pas un squelette qui se telecharge.
+ */
+export type Incompris = {
+  readonly incompris: true
+  /** En francais ordinaire — jamais un code (EP-136). */
+  readonly raison: string
+  /** Pour l'alerte seulement. */
+  readonly detailTechnique?: string
+  readonly texteLu: string
+}
+
+/**
  * Le document d'une demande.
  *
  * Avec le jeton de dépense, P0 lit et la structure vient du métier. Sans lui,
@@ -90,13 +116,21 @@ export type Questions = {
  */
 export async function documentPour(
   intention: Intention,
-): Promise<Resultat | Questions | { erreur: string }> {
+): Promise<Resultat | Questions | Incompris | { erreur: string }> {
   const texteLu = await texteDe(intention)
 
   if (!depenseAutorisee()) {
-    const repli = emettreSansIa(texteLu)
-    if (!repli.ok) return { erreur: repli.raison }
-    return { document: repli.document, compris: repli.compris, parIA: false, texteLu }
+    // LA LECTURE SIMPLE NE CONSTRUIT PLUS. Elle tire un nom et un ordre de
+    // grandeur d'une expression reguliere ; appeler ca « avoir compris »
+    // serait le mensonge que ce fichier existe pour ne pas faire.
+    return {
+      incompris: true,
+      raison:
+        'La lecture par IA n’est pas activée sur ce serveur. Sans elle je ne comprends pas ' +
+        'votre demande, et je ne construirai donc rien.',
+      detailTechnique: `jeton de dépense ${JETON_DEPENSE} absent de l’environnement`,
+      texteLu,
+    }
   }
 
   const lu = await comprendre(texteLu)
@@ -113,15 +147,13 @@ export async function documentPour(
     // P0 a compris, mais son modèle ne porte aucun concept de données : il
     // n'y a pas d'application à en tirer. On le dit plutôt que de servir un
     // squelette qui ferait croire le contraire.
-    const repli = emettreSansIa(texteLu)
-    if (!repli.ok) return { erreur: repli.raison }
     return {
-      document: repli.document,
-      compris: repli.compris,
-      parIA: false,
-      texteLu,
-      echecIA: 'La demande a été lue, mais rien de concret n’en ressort — précisez ce que l’application manipule.',
+      incompris: true,
+      raison:
+        'Je vous ai lu, mais rien de concret n’en ressort : dites-moi ce que l’application ' +
+        'manipule — des membres, des produits, des commandes, des rendez-vous…',
       detailTechnique: 'modèle valide sans concept de données : aucune entité à dériver',
+      texteLu,
     }
   }
 
@@ -148,15 +180,10 @@ export async function documentPour(
     }
   }
 
-  const repli = emettreSansIa(texteLu)
-  if (!repli.ok) return { erreur: repli.raison }
   const nos = await fautesDeProduction(diagnostics)
   return {
-    document: repli.document,
-    compris: repli.compris,
-    parIA: false,
-    texteLu,
-    echecIA: direALUtilisateur(diagnostics),
+    incompris: true,
+    raison: direALUtilisateur(diagnostics),
     // Ce qui part en alerte, c'est NOTRE part — pas une question deguisee.
     detailTechnique:
       nos.length > 0
@@ -164,6 +191,7 @@ export async function documentPour(
             .map((d) => d.code ?? '?')
             .join(', ')}`
         : lu.raison,
+    texteLu,
   }
 }
 

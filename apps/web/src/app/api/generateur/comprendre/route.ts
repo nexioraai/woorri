@@ -92,6 +92,28 @@ export async function POST(req: Request) {
     })
   }
 
+  // ── ON N'A PAS COMPRIS : AUCUN DOCUMENT NE SORT.
+  //
+  // L'ecran n'a donc rien a proposer de construire — les deux boutons ne
+  // peuvent pas apparaitre. L'interdit tient par la FORME de la reponse, pas
+  // par une condition d'affichage qu'un futur bouton pourrait oublier.
+  if ('incompris' in r) {
+    const rapport = veille.conclure()
+    await alerter({
+      ...rapport,
+      anomalies: [
+        ...rapport.anomalies,
+        {
+          phase: 'comprehension',
+          code: 'echec',
+          message: `Demande non comprise : ${r.detailTechnique ?? r.raison}`,
+        },
+      ],
+      saine: false,
+    })
+    return NextResponse.json({ incompris: true, raison: r.raison, texteLu: r.texteLu })
+  }
+
   if (r.echecIA !== undefined) {
     // L'ADMINISTRATEUR EST PRÉVENU même si l'utilisateur voit un repli propre :
     // « lecture simple » ressemble à une limite du produit, seul le courriel

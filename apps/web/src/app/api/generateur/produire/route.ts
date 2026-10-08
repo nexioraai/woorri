@@ -40,6 +40,10 @@ export async function POST(req: Request) {
   if ('erreur' in r) return NextResponse.json({ error: r.erreur }, { status: 422 })
   // MEME INTERDIT QUE L'APERCU : une archive construite sur une comprehension
   // incomplete est pire qu'un refus — elle part sur le disque de quelqu'un.
+  // MEME INTERDIT : pas de comprehension, pas de construction.
+  if ('incompris' in r) {
+    return NextResponse.json({ error: r.raison }, { status: 409 })
+  }
   if ('questions' in r) {
     return NextResponse.json(
       { error: 'Des questions restent ouvertes : repondez-y avant de telecharger.', questions: r.questions },

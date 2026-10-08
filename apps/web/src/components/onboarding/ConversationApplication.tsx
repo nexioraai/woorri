@@ -34,7 +34,9 @@ type Message =
   | { role: 'moi'; texte: string }
   | { role: 'deribfy'; compris: string[]; parIA: boolean; note?: string }
   // UNE QUESTION EST UN TOUR A PART ENTIERE, pas une note en bas d'un resultat.
-  | { role: 'question'; questions: Question[]; avertissement?: string };
+  | { role: 'question'; questions: Question[]; avertissement?: string }
+  // UN REFUS DE CONSTRUIRE EST UN TOUR A PART, pas une note sous un resultat.
+  | { role: 'incompris'; raison: string };
 
 export default function ConversationApplication({ onRetour }: { onRetour: () => void }) {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -116,6 +118,19 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
 
       setIntention(d.intention ?? null);
       setTexteLu(String(d.texteLu ?? texte));
+
+      // ── PAS COMPRIS : ON EFFACE LE DOCUMENT, DONC LES BOUTONS.
+      //
+      // Avant, l'echec servait un squelette de repli — et les deux boutons
+      // restaient la. On pouvait TELECHARGER une application batie sur une
+      // phrase que le moteur venait de declarer illisible.
+      if (d.incompris === true) {
+        setDocument(null);
+        setOuvertes([]);
+        setPerimetre([]);
+        setMessages((m) => [...m, { role: 'incompris', raison: String(d.raison ?? '') }]);
+        return;
+      }
 
       if (Array.isArray(d.questions) && d.questions.length > 0) {
         // RIEN N'EST CONSTRUIT TANT QU'UNE QUESTION EST OUVERTE. Le document
@@ -275,6 +290,13 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
           m.role === 'moi' ? (
             <Bulle key={i} moi>
               {m.texte}
+            </Bulle>
+          ) : m.role === 'incompris' ? (
+            <Bulle key={i} moi={false}>
+              <span className="block text-xs text-amber-300/80 mb-2">
+                Je n’ai pas compris — je ne construis rien
+              </span>
+              {m.raison}
             </Bulle>
           ) : m.role === 'question' ? (
             <Bulle key={i} moi={false}>

@@ -189,6 +189,41 @@ describe('CLIQUET — IL N Y A QU UNE CONVERSATION, PAS DEUX', () => {
     expect(CONVERSATION).toMatch(/messages\.length === 0 \? '[^']*justify-center/u)
   })
 
+  it('UN ECHEC DE LECTURE NE PRODUIT AUCUN DOCUMENT', () => {
+    // LE DEFAUT MESURE : le repli `emettreSansIa` FABRIQUAIT un document, et
+    // ma garde regardait « un document existe-t-il ? ». Elle ne gardait donc
+    // rien : on pouvait telecharger une application batie sur une phrase que
+    // le moteur venait de declarer illisible.
+    const POUR = sansCommentaires(lire('lib', 'apps', 'pour.ts'))
+    // Les trois chemins d echec rendent `incompris`, jamais un document.
+    expect([...POUR.matchAll(/incompris: true/gu)].length).toBeGreaterThanOrEqual(3)
+    // Et plus aucun `emettreSansIa` ne sert de document a l utilisateur.
+    expect(POUR).not.toMatch(/document: repli\.document/u)
+    // Les trois routes refusent. Relues ici : les constantes de l autre
+    // describe ne sont pas visibles, et s appuyer dessus ferait passer ce
+    // test pour une raison qui n est pas la sienne.
+    for (const r of ['comprendre', 'apercu', 'produire']) {
+      const src = sansCommentaires(lire('app', 'api', 'generateur', r, 'route.ts'))
+      expect(src, r).toMatch(/'incompris' in r/u)
+    }
+    // Et l ecran efface le document precedent.
+    const i = CONVERSATION.indexOf('d.incompris === true')
+    expect(i).toBeGreaterThan(0)
+    expect(CONVERSATION.slice(i, i + 200)).toContain('setDocument(null)')
+  })
+
+  it('LA CONVERSATION PRINCIPALE NE NIE PLUS LES APPLICATIONS', () => {
+    // Mesure : « Deribfy cree des sites web professionnels — pas des
+    // applications mobiles natives pour App Store ou Google Play. » Faux, et
+    // dit a l utilisateur par le produit lui-meme.
+    const ONBOARDING = sansCommentaires(
+      lire('app', 'api', 'onboarding', 'route.ts'),
+    )
+    expect(ONBOARDING).toContain('NEVER claim Deribfy cannot do mobile or native applications')
+    // Et il n interviewe pas pour une application : ce chemin n est pas le sien.
+    expect(ONBOARDING).toContain('do NOT assign a mode')
+  })
+
   it('AUCUN CHROME EN PLUS PENDANT LA CONVERSATION', () => {
     // Le retour vivait AU-DESSUS de la conversation, a un endroit ou les
     // trois modes n ont rien. Il ne doit exister que sur l ecran vide —

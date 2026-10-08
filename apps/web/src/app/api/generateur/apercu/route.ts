@@ -45,6 +45,10 @@ export async function POST(req: Request) {
     // ON NE CONSTRUIT PAS CE QU'ON N'A PAS COMPRIS. Si la relecture ouvre des
     // questions, cette route n'a rien a montrer : elle le DIT, au lieu
     // d'assembler un apercu sur une comprehension incomplete.
+    // MEME INTERDIT : pas de comprehension, pas de construction.
+    if ('incompris' in r) {
+      return NextResponse.json({ error: r.raison }, { status: 409 })
+    }
     if ('questions' in r) {
       return NextResponse.json(
         { error: 'Des questions restent ouvertes : repondez-y avant de voir l’application.', questions: r.questions },
