@@ -54,15 +54,15 @@ const moteurParTranche: MoteurContinuation = {
   },
 }
 
-// LOCAL : tranches de 600 s — un tour de reparation typique s'acheve d'un
-// trait (120 s etait taille pour l'emission seule, et c'est ce qui a casse).
-// En production l'appariement budget <= maxDuration - pire appel demeure.
+// LOCAL : tranches de 3600 s — un tour de reparation ENTIER tient dans une
+// tranche (mesure : un tour sur 80 diagnostics depasse 600 s). En production
+// l'appariement budget <= maxDuration - pire appel demeure, porte par le PLI.
 const reglages = {
   table: JUMELLE,
   base,
   moteur: moteurParTranche,
-  budgetTrancheMs: 600_000,
-  battementPerimeMs: 3_600_000,
+  budgetTrancheMs: 3_600_000,
+  battementPerimeMs: 1_800_000,
 } as const
 
 const id = await creerTravailleur(reglages).deposer({

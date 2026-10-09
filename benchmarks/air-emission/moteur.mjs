@@ -665,7 +665,15 @@ const surfaceEnveloppe = () => {
     // Le budget-temps decoupe la boucle en tranches GRATUITEMENT : une
     // suspension en plein tour replie le partiel (CLE_REPARATION), l'etat
     // porte `tours`, la reprise revalide (gratuit) et continue.
-    const PLAFOND_TOURS = 3;
+    const PLAFOND_TOURS = 3; // convergence : tours ACHEVES
+    // LE FILET ANTI-BOUCLE, DISTINCT (arbitrage du 2026-10-09). Les
+    // tentatives comptent les LANCEMENTS, suspensions comprises — or un tour
+    // reel traverse plusieurs tranches (mesure : un tour sur 80 diagnostics
+    // ne tient pas dans 600 s). Confondre tentatives et convergence
+    // etranglait la boucle : 2 des 3 tentatives brulees par le MEME tour 1.
+    // Neuf lancements pour trois tours acheves : marge 3x — et une boucle
+    // dont les tours n'achevent jamais s'arrete toujours.
+    const FILET_TENTATIVES = 9;
     let raisonRefus = null;
     while ((air === null || diagnostics.length > 0) && raisonRefus === null) {
       if (tours.length >= PLAFOND_TOURS) {
@@ -674,10 +682,11 @@ const surfaceEnveloppe = () => {
       }
       // LE FREIN MORD AVANT LE LANCEMENT, acheve ou pas : trois tentatives
       // de reparation au total, a travers toutes les tranches.
-      if (tentativesReparation >= PLAFOND_TOURS) {
+      if (tentativesReparation >= FILET_TENTATIVES) {
         raisonRefus =
-          `${String(PLAFOND_TOURS)} tours de réparation TENTÉS sans converger ` +
-          `(suspensions comprises) : reste ${String(diagnostics.length)} diagnostic(s)`;
+          `filet anti-boucle : ${String(FILET_TENTATIVES)} tentatives de réparation ` +
+          `(suspensions comprises) pour ${String(tours.length)} tour(s) achevé(s) — ` +
+          `reste ${String(diagnostics.length)} diagnostic(s)`;
         break;
       }
       tentativesReparation += 1;
@@ -697,10 +706,20 @@ const surfaceEnveloppe = () => {
           prescriptif,
         );
       } catch (e) {
-        const partiel = e?.assemblagePartiel ?? e?.partiel;
-        const partielDoc = partiel?.document ?? partiel;
+        // LE PARTIEL DE REPARATION VIT SOUS SA PROPRE CLE (CLE_REPARATION =
+        // « reparationPartielle »), PAS sous celle de l'emission. Mesure du
+        // 2026-10-09, tir a8b12457 : ce catch lisait `assemblagePartiel` —
+        // undefined ici — et chaque coupure de budget en plein tour JETAIT
+        // les sections reparees deja payees (~2,9 $ payes deux fois, compte
+        // 80 = 80). Preuve a blanc : continuation, scenario D.
+        const partiel = preservation.partielDeLErreur(e, preservation.CLE_REPARATION);
+        const partielDoc = partiel?.document;
         if (partielDoc !== undefined) acquis = { ...document, ...partielDoc };
         if (e?.budgetTemps === true) return suspendre("reparation");
+        // Le travailleur, lui, replie la cle du CONTRAT (`assemblagePartiel`) :
+        // on traduit — sans quoi une erreur transitoire en plein tour perdrait
+        // les memes sections par le second chemin d'entree.
+        if (e.assemblagePartiel === undefined) e.assemblagePartiel = { document: acquis };
         e.sectionsAcquises = Object.keys(acquis).length;
         throw etiqueter(e);
       }

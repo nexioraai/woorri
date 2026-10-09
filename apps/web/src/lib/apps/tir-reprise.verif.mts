@@ -40,18 +40,19 @@ const moteurParTranche: MoteurContinuation = {
 }
 const w = creerTravailleur({
   table: JUMELLE, base, moteur: moteurParTranche,
-  // LOCAL : aucune borne serverless — 600 s pour qu'un tour de reparation
-  // typique s'acheve d'un trait (120 s etait taille pour l'emission, et
-  // c'est ce qui a casse). En production, l'appariement budget ≤
-  // maxDuration − pire appel demeure.
-  budgetTrancheMs: 600_000, battementPerimeMs: 1_800_000,
+  // LOCAL : aucune borne serverless — 3600 s pour qu'un tour de reparation
+  // ENTIER tienne dans une tranche (mesure du 2026-10-09 : un tour sur 80
+  // diagnostics depasse 600 s). En production, l'appariement budget ≤
+  // maxDuration − pire appel demeure, et c'est le PLI (clef reparationPartielle)
+  // qui porte les tours a travers les tranches courtes.
+  budgetTrancheMs: 3_600_000, battementPerimeMs: 1_800_000,
   // La reprise ne voit que SA ligne — jamais celle d'un autre tir.
   perimetre: { ligne: ID },
 })
 
 const avant = (await base.from(JUMELLE).select('cout_usd').eq('id', ID).single()).data as { cout_usd: number }
 const coutInitial = Number(avant.cout_usd)
-dire(`reprise de ${ID.slice(0, 8)} — aucune nouvelle ligne déposée · coût déjà investi ${coutInitial.toFixed(4)} $ · filet +3 $`)
+dire(`reprise de ${ID.slice(0, 8)} — aucune nouvelle ligne déposée · coût déjà investi ${coutInitial.toFixed(4)} $ · filet +5 $`)
 dire(`sauvegarde continue de l'état : ${cheminEtatLocal(ID)}`)
 const depart = Date.now()
 for (let tick = 1; tick <= 25; tick++) {
@@ -67,8 +68,8 @@ for (let tick = 1; tick <= 25; tick++) {
   )
   if (etape === 'p0') { dire('⛔ ARRÊT — la reprise est repartie à P0 : la continuation a échoué, on repayerait l’acquis'); break }
   if (r.issue === 'livree' || r.issue === 'refusee' || r.issue === 'rien') break
-  if (Number(ligne.cout_usd) - coutInitial > 3) {
-    dire(`⛔ GARDE-FOU : +${(Number(ligne.cout_usd) - coutInitial).toFixed(2)} $ sur cette reprise (> 3 $ incremental) — etat conserve`)
+  if (Number(ligne.cout_usd) - coutInitial > 5) {
+    dire(`⛔ GARDE-FOU : +${(Number(ligne.cout_usd) - coutInitial).toFixed(2)} $ sur cette reprise (> 5 $ incremental) — etat conserve`)
     break
   }
 }

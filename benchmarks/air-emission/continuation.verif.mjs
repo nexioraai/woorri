@@ -14,12 +14,13 @@
 //
 // MESURE : aucun document des corpus v2/v3 ne passe les juges d'aujourd'hui
 // nu — minimum 10 diagnostics (les juges ont durci depuis leur emission).
-// Le client a blanc rend donc des reparations qui ne guerissent pas, et la
-// sous-propriete « une section reparee avec succes n'est pas re-payee a la
-// tranche suivante » n'est PAS prouvable ici : elle exige une reparation qui
-// change le contenu, c'est-a-dire le vrai service. Ce qui est prouve a sa
-// place : une suspension en pleine reparation reprend SANS re-emettre une
-// seule passe, sans re-sonder, sans re-tirer P0.
+// Le client a blanc rend donc des reparations qui ne guerissent pas : la
+// sous-propriete « une section GUERIE n'est pas re-payee » exige le vrai
+// service. Ce qui EST prouve ici : la suspension reprend sans re-emettre,
+// re-sonder ni re-tirer P0 (⑤) — et le CONTENU d'un tour coupe SURVIT a la
+// suspension et a la reprise (scenario D, reponse marquee). Lecon du
+// 2026-10-09 : une preuve de comptage n'est pas une preuve de contenu —
+// le pli de reparation est reste casse sous un ⑦ vert.
 //
 // ── LES BUDGETS SONT CALIBRES, PAS DEVINES.
 //
@@ -161,20 +162,23 @@ const B1 = await lancer({
     JSON.stringify(B2.r.resultat.document) === JSON.stringify(C.r.resultat.document));
 }
 
-// ── ⑦ LE FREIN DES TENTATIVES : des tours qui n'achevent JAMAIS s'arretent
-// au 3e tour tente (defaut mesure, tir 0234da42 : zero tour acheve, aucun
-// frein, 6,87 $ brules — seul le garde-fou du harnais a arrete).
+// ── ⑦ LE FILET DES TENTATIVES : des tours qui n'achevent JAMAIS s'arretent
+// au 9e lancement (defaut mesure, tir 0234da42 : zero tour acheve, aucun
+// frein, 6,87 $ brules — seul le garde-fou du harnais a arrete). Depuis
+// l'arbitrage du 2026-10-09, la CONVERGENCE se compte en tours ACHEVES
+// (3) et le filet anti-boucle en LANCEMENTS (9) — distincts : un tour reel
+// traverse plusieurs tranches, le confondre etranglait la boucle.
 //
 // Le scenario coupe CHAQUE tranche pendant le premier appel de reparation
 // (appel ralenti + budget calibre juste apres son debut) : aucun tour ne
 // s'acheve, et c'est exactement le cas qui n'avait aucun frein.
-console.log("— scenario C2 : tours jamais acheves → frein au 3e tente —");
+console.log("— scenario C2 : tours jamais acheves → filet au 9e lancement —");
 {
   const premiereRep = types(C.journal, "reparation")[0];
   let etatC2 = null;
   let fini = null;
   let tranches = 0;
-  for (; tranches < 8; tranches++) {
+  for (; tranches < 14; tranches++) {
     const r = await lancer({
       lent: (e) => e.type === "reparation",
       budgetMs: rel(premiereRep) + 400,
@@ -185,15 +189,91 @@ console.log("— scenario C2 : tours jamais acheves → frein au 3e tente —");
   }
   verifie("⑦ la boucle S'ARRETE — plus jamais sans frein",
     fini !== null, `encore suspendue apres ${String(tranches)} tranches`);
-  verifie("⑦ exactement 3 tentatives, portees par l'etat a travers les tranches",
-    fini !== null && fini.resultat.tentativesReparation === 3,
+  verifie("⑦ exactement 9 lancements, portes par l'etat a travers les tranches",
+    fini !== null && fini.resultat.tentativesReparation === 9,
     String(fini?.resultat?.tentativesReparation));
-  verifie("⑦ refusee qui DIT « tours TENTES », suspensions comprises",
-    fini !== null && /tours de réparation TENTÉS/.test(fini.resultat.raison ?? ""),
+  verifie("⑦ refusee qui DIT « filet anti-boucle », lancements et tours acheves comptes",
+    fini !== null && /filet anti-boucle : 9 tentatives/.test(fini.resultat.raison ?? ""),
     fini?.resultat?.raison ?? "—");
   verifie("⑦ zero tour acheve — le cas exact du defaut mesure",
     fini !== null && fini.resultat.tours.length === 0,
     String(fini?.resultat?.tours?.length));
+}
+
+// ── ⑧ scenario D : LE CONTENU D'UN TOUR COUPE SURVIT. Lecon du 2026-10-09 :
+// le catch de reparation lisait la cle de l'EMISSION — undefined — et le
+// travail paye d'un tour coupe etait JETE a chaque coupure (80 = 80 apres
+// 2,9 $). ⑦ etait vert pendant ce temps : il comptait les tentatives, pas
+// le contenu. Ce scenario mesure LE CONTENU : la reponse de reparation est
+// MARQUEE, et le marqueur doit se retrouver dans l'acquis suspendu, puis
+// survivre a une reprise, puis voyager sous la cle du CONTRAT quand c'est
+// une erreur transitoire qui coupe le tour.
+console.log("— scenario D : le contenu d'un tour coupe survit (pli + reprise + erreur) —");
+{
+  // Client enveloppant : tout est delegue au client a blanc, SAUF les appels
+  // de reparation — reponse marquee, lente (2,5 s), ou jetee selon le plan.
+  const envelopper = ({ jetteAu = null } = {}) => {
+    const interne = creerClientABlanc({ corpus: CORPUS });
+    let appelsReparation = 0;
+    return {
+      journal: interne.journal,
+      messages: {
+        create: async (appel) => {
+          const texteUser = String(appel?.messages?.[0]?.content ?? "");
+          const props = Object.keys(appel?.output_config?.format?.schema?.properties ?? {});
+          const estReparation =
+            appel.max_tokens !== 1 && !props.includes("acteurs") &&
+            !texteUser.includes("SECTIONS À ÉMETTRE MAINTENANT");
+          if (!estReparation) return interne.messages.create(appel);
+          appelsReparation += 1;
+          if (jetteAu !== null && appelsReparation >= jetteAu) {
+            throw Object.assign(new Error("Connection error simulee en plein tour"), {});
+          }
+          await new Promise((r) => setTimeout(r, 2500));
+          const tranche = { __MARQUEUR_TOUR_COUPE__: `appel-${String(appelsReparation)}` };
+          for (const k of props) tranche[k] = CORPUS[k];
+          return {
+            content: [{ type: "text", text: JSON.stringify(tranche) }],
+            stop_reason: "end_turn",
+            usage: { input_tokens: 100, output_tokens: 50 },
+          };
+        },
+      },
+    };
+  };
+  const premiereRep = types(C.journal, "reparation")[0];
+
+  // D1 — coupure de budget en plein tour : le marqueur est DANS l'acquis.
+  const mD = await creerMoteur({ cleApi: "client-a-blanc", client: envelopper() });
+  const D1 = await mD.poursuivreEmission({
+    brief: BRIEF, slug: "blanc", budgetMs: rel(premiereRep) + 400,
+  });
+  verifie("⑧ D1 suspendu en pleine reparation", D1.fini === false && D1.etat.phase === "reparation");
+  verifie("⑧ D1 LE CONTENU PAYE SURVIT : la section reparee (marquee) est dans l'acquis suspendu",
+    D1.etat.acquis.__MARQUEUR_TOUR_COUPE__ === "appel-1",
+    JSON.stringify(D1.etat.acquis.__MARQUEUR_TOUR_COUPE__));
+
+  // D2 — reprise depuis l'etat JSON-rond, nouvelle coupure : toujours la.
+  const D2 = await mD.poursuivreEmission({
+    brief: BRIEF, slug: "blanc",
+    etat: JSON.parse(JSON.stringify(D1.etat)), budgetMs: 400,
+  });
+  verifie("⑧ D2 repris puis coupe encore : le contenu survit a la traversee JSON et a la reprise",
+    D2.fini === false && D2.etat.acquis.__MARQUEUR_TOUR_COUPE__ !== undefined,
+    JSON.stringify(D2.etat?.acquis?.__MARQUEUR_TOUR_COUPE__));
+
+  // D3 — erreur TRANSITOIRE en plein tour : le contenu paye voyage sous la
+  // cle du CONTRAT (`assemblagePartiel`), celle que le travailleur replie.
+  const mE = await creerMoteur({ cleApi: "client-a-blanc", client: envelopper({ jetteAu: 2 }) });
+  let erreur = null;
+  try {
+    await mE.poursuivreEmission({ brief: BRIEF, slug: "blanc" });
+  } catch (e) { erreur = e; }
+  verifie("⑧ D3 l'erreur transitoire porte le contenu paye sous la cle du contrat",
+    erreur !== null && erreur.assemblagePartiel?.document?.__MARQUEUR_TOUR_COUPE__ === "appel-1",
+    JSON.stringify(erreur?.assemblagePartiel?.document?.__MARQUEUR_TOUR_COUPE__));
+  verifie("⑧ D3 etiquetee transitoire — le travailleur retentera au lieu de refuser",
+    erreur !== null && erreur.transitoire === true, String(erreur?.transitoire));
 }
 
 console.log(
