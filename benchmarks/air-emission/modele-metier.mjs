@@ -2330,6 +2330,17 @@ export function obligationsPrescriptives(nomPasse, modele, plan, destinationsMin
         : `· ${ecranAirDe(ecran.ecranId)} présente les « ${c.parcouru} » DE L'INSTANCE de « ${c.elu} » choisie juste avant : sa liste DOIT porter \`scopeFieldId\` = le champ \`reference\` de ${c.parcouru} qui vise ${c.elu}. Sans lui, l'instance choisie est PERDUE et l'écran montre tout le catalogue.`;
     }).filter((l) => l !== "");
     const parSurface = new Map(surfacesDe(modele).map((sf) => [sf.surfaceId, sf]));
+    // MESURE (reprise a8b12457, tour 2) : face a 79 diagnostics d'un coup,
+    // la reparation a SUPPRIME 19 noeuds — dont les ecrans d'identite poses
+    // au tour precedent. La gate a rejete le tour ; cette clause enleve la
+    // tentation A LA SOURCE, et le canal est permanent (EP-125) : emission
+    // ET reparation recoivent ce texte (EP-073 ②).
+    const conceptsIdentite = modele.concepts
+      .map((c) => c.id)
+      .filter((id) => estConceptIdentite(modele, id));
+    const ecransIdentite = plan.ecrans
+      .filter((e) => (e.surfaces ?? []).some((sid) => conceptsIdentite.includes(parSurface.get(sid)?.concept)))
+      .map((e) => ecranAirDe(e.ecranId));
     return [
       "PRESCRIPTIONS D'ÉCRANS (dérivés du plan — chaque écran est JUSTIFIÉ par ses étapes) :",
       ...plan.ecrans.map((e) => {
@@ -2364,6 +2375,7 @@ export function obligationsPrescriptives(nomPasse, modele, plan, destinationsMin
       ...(portees.length === 0
         ? []
         : ["PORTÉES OBLIGATOIRES (une élection consommée par portée se MATÉRIALISE) :", ...portees]),
+      `· EN RÉPARATION — ces écrans EXISTENT DÉJÀ${ecransIdentite.length === 0 ? "" : ` (dont les écrans d'identité : ${ecransIdentite.join(", ")})`} : en retirer UN SEUL, ou retirer/dénaturer ses blocs, est une AMPUTATION détectée et REJETÉE. Corrige SUR PLACE — n'efface jamais ce qu'un diagnostic ne nomme pas.`,
       "Le NOMBRE d'écrans est une sortie du plan : ni écran libre, ni écran manquant.",
     ].join("\n");
   }

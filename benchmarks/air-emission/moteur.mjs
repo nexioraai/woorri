@@ -437,6 +437,12 @@ const surfaceEnveloppe = () => {
       /Connection error|timed out|ECONNRESET|socket hang up|5\d\d/i.test(String(e?.message ?? e));
     const etiqueter = (e) => {
       e.transitoire = estTransitoire(e);
+      // LE COUT DE LA TRANCHE MORTE VOYAGE AVEC L'ERREUR — memes chiffres
+      // que la suspension. Trou comptable mordu deux fois (tir 6, reprise
+      // a8b12457 : ~1,5-2,5 $ invisibles) : le travailleur replie desormais
+      // ces champs dans la ligne ET dans etat.coutUsd, ensemble.
+      e.coutTrancheUsd = Number((coutSondeTranche + coeur.lireEtatDepense().depense).toFixed(6));
+      e.jetonsTranche = jetons();
       return e;
     };
 
@@ -665,6 +671,41 @@ const surfaceEnveloppe = () => {
     // Le budget-temps decoupe la boucle en tranches GRATUITEMENT : une
     // suspension en plein tour replie le partiel (CLE_REPARATION), l'etat
     // porte `tours`, la reprise revalide (gratuit) et continue.
+    // ── LE DECOUPAGE EN BOUCHEES (arbitrage du 2026-10-09). Mesure, reprise
+    // a8b12457 : demander 79 corrections d'un coup pousse le modele a
+    // AMPUTER (19 noeuds supprimes au tour 2) ; en demander 4 reussit. Une
+    // bouchee = UNE passe, UN rang de famille, au plus K diagnostics — et
+    // l'enveloppe scellee D-093 rend deja, PAR APPEL, l'original quand la
+    // reponse ampute : le rejet par bouchee est porte par le scelle.
+    // Rangs : cablage (recabler des noeuds STABLES d'abord) → additif
+    // (agrandir ensuite) → cosmetique. L'inconnu est traite en cablage.
+    const K_BOUCHEE = 12;
+    const rangFamille = (code) => {
+      const c = String(code ?? "");
+      if (/^(NAVIGATION_ECRAN_PRESCRIT|PRESENTATION_SURFACE_|PRESENTATION_SUPPRESSION|PRESENTATION_DIVULGATION|PRESENTATION_ESPACE_COMPTE)/u.test(c)) return 1;
+      if (/^(CAMPAGNE_|PRESENTATION_)/u.test(c)) return 2;
+      return 0;
+    };
+    const decouperEnBouchees = (diags) => {
+      const groupes = new Map();
+      for (const d of diags) {
+        const passes = repairScope.sectionsAReemettre([d]);
+        if (passes.length === 0) continue; // irreparable par reemission
+        const cle = `${String(rangFamille(d.code))}|${[...passes].sort().join("+")}`;
+        if (!groupes.has(cle)) groupes.set(cle, []);
+        groupes.get(cle).push(d);
+      }
+      const bouchees = [];
+      for (const [cle, liste] of [...groupes.entries()].sort(([a], [b]) => (a < b ? -1 : 1))) {
+        liste.sort((x, y) =>
+          `${String(x.code)}@${String(x.path)}` < `${String(y.code)}@${String(y.path)}` ? -1 : 1,
+        );
+        for (let i = 0; i < liste.length; i += K_BOUCHEE) {
+          bouchees.push({ cle, diags: liste.slice(i, i + K_BOUCHEE) });
+        }
+      }
+      return bouchees;
+    };
     const PLAFOND_TOURS = 3; // convergence : tours ACHEVES
     // LE FILET ANTI-BOUCLE, DISTINCT (arbitrage du 2026-10-09). Les
     // tentatives comptent les LANCEMENTS, suspensions comprises — or un tour
@@ -694,39 +735,63 @@ const surfaceEnveloppe = () => {
       const baseAir = air;
       const baseDiags = diagnostics;
       const coutAvantTour = coutCumule();
-      let resultat;
-      try {
-        resultat = await orchestrationBudgetee.repairSectionsAvecPartiel(
-          document,
-          baseDiags,
-          orchestration.contexteClient(intention),
-          slug,
-          usage,
-          refusals,
-          prescriptif,
-        );
-      } catch (e) {
-        // LE PARTIEL DE REPARATION VIT SOUS SA PROPRE CLE (CLE_REPARATION =
-        // « reparationPartielle »), PAS sous celle de l'emission. Mesure du
-        // 2026-10-09, tir a8b12457 : ce catch lisait `assemblagePartiel` —
-        // undefined ici — et chaque coupure de budget en plein tour JETAIT
-        // les sections reparees deja payees (~2,9 $ payes deux fois, compte
-        // 80 = 80). Preuve a blanc : continuation, scenario D.
-        const partiel = preservation.partielDeLErreur(e, preservation.CLE_REPARATION);
-        const partielDoc = partiel?.document;
-        if (partielDoc !== undefined) acquis = { ...document, ...partielDoc };
-        if (e?.budgetTemps === true) return suspendre("reparation");
-        // Le travailleur, lui, replie la cle du CONTRAT (`assemblagePartiel`) :
-        // on traduit — sans quoi une erreur transitoire en plein tour perdrait
-        // les memes sections par le second chemin d'entree.
-        if (e.assemblagePartiel === undefined) e.assemblagePartiel = { document: acquis };
-        e.sectionsAcquises = Object.keys(acquis).length;
-        throw etiqueter(e);
+      // ── LE TOUR EN BOUCHEES. Les diagnostics eux-memes sont le curseur :
+      // une coupure en plein tour replie les bouchees payees, et la reprise
+      // RE-DECOUPE depuis les diagnostics recomputes — ce qui est gueri ne
+      // revient pas, aucun etat de bouchee n'est serialise.
+      const bouchees = decouperEnBouchees(baseDiags);
+      const journalBouchees = [];
+      let docCourant = baseDoc;
+      for (const bouchee of bouchees) {
+        const coutAvantBouchee = coutCumule();
+        let resultat;
+        try {
+          resultat = await orchestrationBudgetee.repairSectionsAvecPartiel(
+            docCourant,
+            bouchee.diags,
+            orchestration.contexteClient(intention),
+            slug,
+            usage,
+            refusals,
+            prescriptif,
+          );
+        } catch (e) {
+          // LE PARTIEL DE REPARATION VIT SOUS SA PROPRE CLE (CLE_REPARATION =
+          // « reparationPartielle »), PAS sous celle de l'emission (defaut du
+          // 2026-10-09 : 80 = 80 apres 2,9 $ — preuve : scenario D). Et
+          // `docCourant` porte deja les bouchees precedentes retenues.
+          const partiel = preservation.partielDeLErreur(e, preservation.CLE_REPARATION);
+          const partielDoc = partiel?.document;
+          acquis = { ...docCourant, ...(partielDoc ?? {}) };
+          if (e?.budgetTemps === true) return suspendre("reparation");
+          // Le travailleur replie la cle du CONTRAT (`assemblagePartiel`) :
+          // on traduit — sans quoi une erreur transitoire en plein tour
+          // perdrait les memes sections par le second chemin d'entree.
+          if (e.assemblagePartiel === undefined) e.assemblagePartiel = { document: acquis };
+          e.sectionsAcquises = Object.keys(acquis).length;
+          throw etiqueter(e);
+        }
+        const amputeBouchee = resultat.ampute ?? [];
+        journalBouchees.push({
+          n: journalBouchees.length + 1,
+          cle: bouchee.cle,
+          taille: bouchee.diags.length,
+          ampute: amputeBouchee,
+          coutUsd: Number((coutCumule() - coutAvantBouchee).toFixed(4)),
+        });
+        // BOUCHEE AMPUTANTE = BOUCHEE REJETEE (arbitrage du 2026-10-09) :
+        // l'enveloppe scellee a rendu `docCourant` intact, la depense est
+        // consignee, SES diagnostics restent au tour suivant — les autres
+        // bouchees gardent leurs gains. La fatalite de tour etait juste pour
+        // un tour monolithique ; les bouchees isolent le degat.
+        if (amputeBouchee.length > 0) continue;
+        docCourant = resultat.document ?? resultat;
+        acquis = docCourant; // une coupure plus tard conserve les bouchees payees
       }
-      // L'enveloppe de la reparation : `document` est deja le choix SUR —
-      // l'original si amputation, le repare sinon (D-093).
-      const candidat = resultat.document ?? resultat;
-      const ampute = resultat.ampute ?? [];
+      const candidat = docCourant;
+      const rejetees = journalBouchees.filter((b) => b.ampute.length > 0);
+      const toutesAmputees =
+        journalBouchees.length > 0 && rejetees.length === journalBouchees.length;
       ({ air, diagnostics } = validateLocal(candidat, prescriptif));
       diagnostics = [...diagnostics, ...jugerAcceptation(air, prescriptif, intention)];
       const verdict = gateReparation.verdict({
@@ -744,19 +809,22 @@ const surfaceEnveloppe = () => {
         revelation: verdict.revelation,
         introduits: verdict.revelation ? 0 : verdict.introduits.length,
         reveles: verdict.revelation ? verdict.introduits.length : 0,
-        ampute,
+        ampute: rejetees.flatMap((b) => b.ampute),
+        bouchees: journalBouchees,
       };
       tours.push(tour);
-      if (ampute.length > 0) {
-        // Le candidat EST la base (enveloppe D-093) : rien a restaurer, mais
-        // l'etat de jugement doit redevenir celui de la base.
+      if (toutesAmputees) {
+        // Chaque bouchee a ete rejetee par l'enveloppe : le candidat EST la
+        // base, le modele refuse le perimetre ENTIER — on s'arrete en le
+        // disant, plutot que de payer un tour suivant identique.
         document = baseDoc;
         air = baseAir;
         diagnostics = baseDiags;
         tour.rejet = "amputation";
         raisonRefus =
-          `réparation rejetée au tour ${String(tour.n)} — amputation hors périmètre : ` +
-          ampute.slice(0, 6).join(", ");
+          `réparation rejetée au tour ${String(tour.n)} — TOUTES les bouchées amputent ` +
+          `(${String(rejetees.length)}/${String(journalBouchees.length)}) : ` +
+          tour.ampute.slice(0, 6).join(", ");
         break;
       }
       if (verdict.rejetee) {

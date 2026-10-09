@@ -79,11 +79,15 @@ sauverEtatLocal(fin)
 dire('')
 dire(`STATUT FINAL : ${String(fin.statut)} · coût ${Number(fin.cout_usd).toFixed(4)} $`)
 dire(`diagnostics : ${JSON.stringify(fin.diagnostics)}`)
-const j = fin.sections_acquises as { phase?: string; tours?: { n: number; avant: number; apres: number; coutUsd: number; rejet?: string; revelation: boolean; reveles: number; ampute: string[] }[] }
+const j = fin.sections_acquises as { phase?: string; tours?: { n: number; avant: number; apres: number; coutUsd: number; rejet?: string; revelation: boolean; reveles: number; ampute: string[]; bouchees?: { n: number; cle: string; taille: number; ampute: string[]; coutUsd: number }[] }[] }
 for (const t of j.tours ?? []) {
   dire(`  tour ${String(t.n)} — ${String(t.avant)} → ${String(t.apres)} · ${String(t.coutUsd)} $` +
     (t.revelation ? ` · RÉVÉLATION (+${String(t.reveles)})` : '') +
     (t.rejet !== undefined ? ` · rejet: ${t.rejet}` : ''))
+  for (const b of t.bouchees ?? []) {
+    dire(`      bouchée ${String(b.n)} [${b.cle}] ${String(b.taille)} diag · ${String(b.coutUsd)} $` +
+      (b.ampute.length > 0 ? ` · REJETÉE (ampute ${b.ampute.slice(0, 3).join(', ')}${b.ampute.length > 3 ? '…' : ''})` : ' · retenue'))
+  }
 }
 if (fin.document !== null) {
   const { projectAirSchema } = await import('@deribfy/air-schema')

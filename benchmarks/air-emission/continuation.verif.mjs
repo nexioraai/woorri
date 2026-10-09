@@ -274,6 +274,94 @@ console.log("— scenario D : le contenu d'un tour coupe survit (pli + reprise +
     JSON.stringify(erreur?.assemblagePartiel?.document?.__MARQUEUR_TOUR_COUPE__));
   verifie("⑧ D3 etiquetee transitoire — le travailleur retentera au lieu de refuser",
     erreur !== null && erreur.transitoire === true, String(erreur?.transitoire));
+  verifie("⑧ D3 le cout de la tranche morte voyage avec l'erreur — plus de chiffre sous la realite",
+    erreur !== null && typeof erreur.coutTrancheUsd === "number" && erreur.coutTrancheUsd > 0 &&
+      Number(erreur.jetonsTranche?.entree ?? 0) > 0 && Number(erreur.jetonsTranche?.sortie ?? 0) > 0,
+    JSON.stringify({ cout: erreur?.coutTrancheUsd, jetons: erreur?.jetonsTranche }));
+}
+
+// ── ⑨ scenario E : LE TOUR EN BOUCHEES (arbitrage du 2026-10-09). Mesure :
+// 79 corrections demandees d'un coup → 19 noeuds SUPPRIMES ; 4 demandees →
+// reussite. Le tour se decoupe : une bouchee amputante est REJETEE (par
+// l'enveloppe scellee D-093, appelee par bouchee), consignee, les autres
+// gardent leurs gains — refusee SEULEMENT si toutes amputent.
+console.log("— scenario E : bouchees — rejet isole, refus seulement si TOUTES amputent —");
+{
+  // E1 — le decoupage est observable dans le journal du tour (course C).
+  const toursC = C.r.resultat.tours ?? [];
+  const b0 = toursC[0]?.bouchees ?? [];
+  verifie("⑨ E1 chaque tour journalise ses bouchees — au plus K=12 diagnostics chacune",
+    b0.length >= 1 && b0.every((b) => b.taille >= 1 && b.taille <= 12 && typeof b.cle === "string"),
+    JSON.stringify(b0.map((b) => `${b.cle}:${String(b.taille)}`)));
+  verifie("⑨ E1 l'ordre des rangs est cablage → additif → cosmetique, jamais l'inverse",
+    b0.every((b, i) => i === 0 || b0[i - 1].cle.split("|")[0] <= b.cle.split("|")[0]),
+    JSON.stringify(b0.map((b) => b.cle)));
+
+  // L'enveloppe amputante : delegue tout au client a blanc, mais pour les
+  // appels de reparation CHOISIS la reponse SUPPRIME un ECRAN IDENTIFIE —
+  // la fusion de la reparation prend les cles rendues telles quelles, et un
+  // noeud a id retire est exactement ce que l'empreinte d'amputation
+  // detecte. (Premiere version : trancher `rules`/`slots` — noeuds sans id,
+  // invisibles a l'empreinte, qui INTRODUISAIENT un diagnostic : oscillation
+  // au lieu d'amputation. L'essai l'a montre, le scenario s'est corrige.)
+  const envelopperAmputant = (mode) => {
+    const interne = creerClientABlanc({ corpus: CORPUS });
+    let faite = false;
+    return {
+      journal: interne.journal,
+      messages: {
+        create: async (appel) => {
+          const texteUser = String(appel?.messages?.[0]?.content ?? "");
+          const props = Object.keys(appel?.output_config?.format?.schema?.properties ?? {});
+          const estReparation = appel.max_tokens !== 1 && !props.includes("acteurs") &&
+            !texteUser.includes("SECTIONS À ÉMETTRE MAINTENANT");
+          if (!estReparation || (mode === "premiere" && faite)) return interne.messages.create(appel);
+          faite = true;
+          const tranche = {};
+          for (const k of props) tranche[k] = CORPUS[k];
+          tranche.screens = CORPUS.screens.slice(0, -1); // l'ecran retire, a CHAQUE fois
+          return {
+            content: [{ type: "text", text: JSON.stringify(tranche) }],
+            stop_reason: "end_turn",
+            usage: { input_tokens: 100, output_tokens: 50 },
+          };
+        },
+      },
+    };
+  };
+
+  // E2 — UNE bouchee ampute : rejetee et consignee, les autres passent, le
+  // tour n'est PAS rejete pour amputation.
+  const clientE2 = envelopperAmputant("premiere");
+  const mE2 = await creerMoteur({ cleApi: "client-a-blanc", client: clientE2 });
+  const E2 = (await mE2.poursuivreEmission({ brief: BRIEF, slug: "blanc" })).resultat;
+  const tE2 = (E2.tours ?? [])[0];
+  verifie("⑨ E2 la bouchee amputante est REJETEE et consignee, les autres passent",
+    tE2 !== undefined && tE2.bouchees.some((b) => b.ampute.length > 0) &&
+      tE2.bouchees.some((b) => b.ampute.length === 0),
+    JSON.stringify(tE2?.bouchees?.map((b) => b.ampute.length) ?? null));
+  verifie("⑨ E2 le tour n'est PAS rejete pour amputation — la fatalite de tour est morte",
+    tE2 !== undefined && tE2.rejet !== "amputation",
+    `rejet=${String(tE2?.rejet)} · raison=${String(E2.raison ?? "—").slice(0, 70)}`);
+
+  // E3 — TOUTES les bouchees amputent : refusee qui le DIT.
+  const mE3 = await creerMoteur({ cleApi: "client-a-blanc", client: envelopperAmputant("toutes") });
+  const E3 = (await mE3.poursuivreEmission({ brief: BRIEF, slug: "blanc" })).resultat;
+  verifie("⑨ E3 toutes amputent → refusee « TOUTES les bouchées amputent »",
+    E3.ok === false && /TOUTES les bouchées amputent/.test(E3.raison ?? ""),
+    String(E3.raison ?? "—").slice(0, 90));
+
+  // E4 — le rappel anti-suppression vit dans les prescriptions d'ecrans,
+  // le canal que CHAQUE bouchee d'ecrans recoit (EP-073 ②).
+  const mX = await creerMoteur({ cleApi: "client-a-blanc", client: creerClientABlanc({ corpus: CORPUS }) });
+  const texteEcrans = mX.modeleMetier.obligationsPrescriptives(
+    "ecrans", MODELE, mX.modeleMetier.ecransDe(MODELE), mX.presentation.DESTINATIONS_MIN,
+  );
+  verifie("⑨ E4 chaque bouchee d'ecrans recoit le rappel : exister deja, AMPUTATION rejetee",
+    texteEcrans.includes("EN RÉPARATION") &&
+      texteEcrans.includes("AMPUTATION détectée et REJETÉE") &&
+      texteEcrans.includes("n'efface jamais ce qu'un diagnostic ne nomme pas"),
+    texteEcrans.slice(texteEcrans.indexOf("EN RÉPARATION"), texteEcrans.indexOf("EN RÉPARATION") + 80));
 }
 
 console.log(

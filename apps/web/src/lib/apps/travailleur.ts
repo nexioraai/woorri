@@ -372,12 +372,35 @@ export function creerTravailleur({
       // Une erreur NON etiquetee (origine inconnue) garde les reprises.
       const fatale = (e as { transitoire?: boolean }).transitoire === false
       const partiel = (e as { assemblagePartiel?: Record<string, unknown> }).assemblagePartiel
+      // ── LE COUT DE LA TRANCHE MORTE EST REPLIE — dans la COLONNE et dans
+      // `etat.coutUsd`, ENSEMBLE. Mordu deux fois (tir 6, reprise a8b12457 :
+      // ~1,5-2,5 $ invisibles) : ne replier que la colonne la ferait ECRASER
+      // a la suspension suivante, qui recalcule depuis etat.coutUsd. Une
+      // erreur non etiquetee vaut zero : rien ne change pour elle.
+      const facture = e as {
+        coutTrancheUsd?: number
+        jetonsTranche?: { entree?: number; sortie?: number }
+      }
+      const coutTranche = Number(facture.coutTrancheUsd ?? 0)
+      const entreeTranche = Number(facture.jetonsTranche?.entree ?? 0)
+      const sortieTranche = Number(facture.jetonsTranche?.sortie ?? 0)
       const avant = (etat ?? {}) as Record<string, unknown>
       const acquisAvant = (avant.acquis ?? {}) as Record<string, unknown>
+      const jetonsAvant = (avant.jetons ?? {}) as { entree?: number; sortie?: number }
       const nouvelEtat = {
         ...avant,
         phase: avant.phase ?? 'emission',
         acquis: { ...acquisAvant, ...(partiel?.document ?? partiel ?? {}) },
+        coutUsd: Number((Number(avant.coutUsd ?? 0) + coutTranche).toFixed(6)),
+        jetons: {
+          entree: Number(jetonsAvant.entree ?? 0) + entreeTranche,
+          sortie: Number(jetonsAvant.sortie ?? 0) + sortieTranche,
+        },
+      }
+      const comptage = {
+        cout_usd: Number((Number(ligne.cout_usd ?? 0) + coutTranche).toFixed(4)),
+        jetons_entree: Number(ligne.jetons_entree ?? 0) + entreeTranche,
+        jetons_sortie: Number(ligne.jetons_sortie ?? 0) + sortieTranche,
       }
       const reprises = Number(ligne.reprises ?? 0) + 1
       const champs =
@@ -385,6 +408,10 @@ export function creerTravailleur({
           ? {
               statut: 'refusee',
               ok: false,
+              // L'etat (acquis + cout) est conserve MEME sur refusee : une
+              // ligne refusee reste ressuscitable sans rien perdre.
+              sections_acquises: nouvelEtat,
+              ...comptage,
               diagnostics: [
                 fatale
                   ? `erreur fatale (non transitoire) : ${messageErreur.slice(0, 160)}`
@@ -396,6 +423,7 @@ export function creerTravailleur({
               battement: null,
               jeton_travailleur: null,
               sections_acquises: nouvelEtat,
+              ...comptage,
             }
       const ecrit = await ecrire(
         () =>

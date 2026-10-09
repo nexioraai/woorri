@@ -218,6 +218,10 @@ console.log('— V5 : echec transitoire et plafond de reprises —')
       appels,
       jette: () => Object.assign(new Error('Connection error simulee'), {
         assemblagePartiel: { app: { name: 'partiel-paye' } },
+        // Le moteur etiquette le cout de la tranche morte (trou comptable
+        // mordu 2 fois) — le scripte fait pareil, la table doit le VOIR.
+        coutTrancheUsd: 0.1234,
+        jetonsTranche: { entree: 11, sortie: 7 },
       }),
     }),
     budgetTrancheMs: 10_000, battementPerimeMs: 60_000,
@@ -230,6 +234,11 @@ console.log('— V5 : echec transitoire et plafond de reprises —')
     r1[0].issue === 'erreur' && apres1.statut === 'en_attente' &&
       Number(apres1.reprises) === 1 &&
       (apres1.sections_acquises as { acquis?: { app?: { name?: string } } }).acquis?.app?.name === 'partiel-paye')
+  verifie('V5 le cout de la tranche MORTE est replie — colonne ET etat.coutUsd, coherents',
+    Number(apres1.cout_usd) === 0.1234 &&
+      (apres1.sections_acquises as { coutUsd?: number }).coutUsd === 0.1234 &&
+      Number(apres1.jetons_entree) === 11 && Number(apres1.jetons_sortie) === 7,
+    `colonne=${String(apres1.cout_usd)} etat=${String((apres1.sections_acquises as { coutUsd?: number }).coutUsd)}`)
   await w.tourner()
   const r3 = await w.tourner()
   const apres3 = await lire(id)
@@ -238,6 +247,11 @@ console.log('— V5 : echec transitoire et plafond de reprises —')
       String((apres3.diagnostics as string[])[0]).includes('echec repete'),
     `${r3[0].issue} · ${String(apres3.statut)}`)
   verifie('V5 trois tranches = trois appels moteur, pas plus', appels.length === 3)
+  verifie('V5 le cumul des trois tranches mortes est VISIBLE sur la refusee — plus de chiffre sous la realite',
+    Number(apres3.cout_usd) === 0.3702 &&
+      (apres3.sections_acquises as { coutUsd?: number }).coutUsd === 0.3702 &&
+      Number(apres3.jetons_entree) === 33 && Number(apres3.jetons_sortie) === 21,
+    `colonne=${String(apres3.cout_usd)} etat=${String((apres3.sections_acquises as { coutUsd?: number }).coutUsd)}`)
   await purger()
 }
 
@@ -250,7 +264,11 @@ console.log('— V5F : erreur fatale, refus immediat —')
     table: JUMELLE, base,
     moteur: moteurScripte({
       appels,
-      jette: () => Object.assign(new Error('400 credit balance is too low'), { transitoire: false }),
+      jette: () => Object.assign(new Error('400 credit balance is too low'), {
+        transitoire: false,
+        coutTrancheUsd: 0.0421,
+        jetonsTranche: { entree: 5, sortie: 3 },
+      }),
     }),
     budgetTrancheMs: 10_000, battementPerimeMs: 60_000,
     perimetre: { proprietaire: EMAIL_BANC },
@@ -264,6 +282,10 @@ console.log('— V5F : erreur fatale, refus immediat —')
   verifie('V5F la raison DIT que c est fatal, pas un echec repete',
     String((ligne.diagnostics as string[])[0]).startsWith('erreur fatale (non transitoire)'),
     JSON.stringify(ligne.diagnostics))
+  verifie('V5F meme la fatale emporte son cout dans la ligne refusee',
+    Number(ligne.cout_usd) === 0.0421 &&
+      (ligne.sections_acquises as { coutUsd?: number }).coutUsd === 0.0421,
+    `colonne=${String(ligne.cout_usd)}`)
   await purger()
 }
 
