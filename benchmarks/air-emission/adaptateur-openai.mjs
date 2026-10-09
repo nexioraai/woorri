@@ -171,3 +171,19 @@ export function lireUsage(usageBrut) {
 export function construireAppelCampagne(requete, reglages) {
   return construireAppel(requete, reglages);
 }
+
+/**
+ * PARITE DE SURFACE (EP-081 ②) — LE FLUX DE CE DIALECTE N'EST PAS ENCORE
+ * PARLE. Capacite DECLAREE absente, jamais silencieuse : l'adaptateur
+ * anthropic parle en flux depuis le 2026-10-09 (mur serveur ~10 min sur les
+ * connexions non-streaming longues) ; celui-ci rendra la meme surface le
+ * jour ou son dialecte d'evenements sera implemente ET prouve a l'octet —
+ * pas avant. D'ici la : fail-closed qui se nomme.
+ */
+export async function assemblerDepuisFlux() {
+  throw new Error("FLUX_NON_IMPLEMENTE_OPENAI: le reassemblage de flux n'existe que pour anthropic");
+}
+
+export function envelopperEnFlux() {
+  throw new Error("FLUX_NON_IMPLEMENTE_OPENAI: l'enveloppe de flux n'existe que pour anthropic");
+}

@@ -156,14 +156,74 @@ export function estErreurGrammaire(erreur) {
   return erreur?.status === 400;
 }
 
+/**
+ * LE REASSEMBLAGE D'UN FLUX — la reponse NON-streaming, reconstruite a
+ * l'identique depuis les evenements du dialecte.
+ *
+ * POURQUOI (2026-10-09, six « Request timed out. » sur deux tirs) : les
+ * connexions non-streaming longues meurent a ~10 min COTE SERVEUR — mesure
+ * avec timeout client 45 min et zero retry, le client est hors de cause.
+ * Le flux est la voie prevue par le fournisseur pour les operations
+ * longues. Le reassemblage vit ICI, a la frontiere du dialecte : le coeur
+ * scelle, l'orchestration et les harnais voient la MEME forme de reponse
+ * qu'avant — prouve a l'octet (flux-adaptateur.verif.mjs).
+ */
+export async function assemblerDepuisFlux(flux) {
+  let base = null;
+  const blocs = [];
+  const json = new Map(); // index → JSON partiel d'un bloc tool_use
+  let stop_reason = null;
+  let stop_sequence = null;
+  let usage = {};
+  for await (const ev of flux) {
+    if (ev.type === "message_start") {
+      base = JSON.parse(JSON.stringify(ev.message));
+      usage = { ...(ev.message.usage ?? {}) };
+    } else if (ev.type === "content_block_start") {
+      blocs[ev.index] = { ...ev.content_block };
+    } else if (ev.type === "content_block_delta") {
+      if (ev.delta.type === "text_delta") blocs[ev.index].text = (blocs[ev.index].text ?? "") + ev.delta.text;
+      else if (ev.delta.type === "input_json_delta")
+        json.set(ev.index, (json.get(ev.index) ?? "") + ev.delta.partial_json);
+    } else if (ev.type === "content_block_stop") {
+      if (json.has(ev.index)) {
+        blocs[ev.index].input = JSON.parse(json.get(ev.index));
+        json.delete(ev.index);
+      }
+    } else if (ev.type === "message_delta") {
+      stop_reason = ev.delta?.stop_reason ?? stop_reason;
+      stop_sequence = ev.delta?.stop_sequence ?? stop_sequence;
+      usage = { ...usage, ...(ev.usage ?? {}) };
+    }
+  }
+  if (base === null) throw new Error("FLUX_SANS_MESSAGE_START");
+  return { ...base, content: blocs, stop_reason, stop_sequence, usage };
+}
+
+/** L'enveloppe de flux : `messages.create` passe en streaming et rend la
+ *  forme non-streaming exacte. Un appelant qui demande DEJA un flux
+ *  (`stream: true`) le recoit brut, sans double emballage. */
+export function envelopperEnFlux(brut) {
+  return {
+    messages: {
+      create: async (args) => {
+        if (args?.stream === true) return brut.messages.create(args);
+        const flux = await brut.messages.create({ ...args, stream: true });
+        return assemblerDepuisFlux(flux);
+      },
+    },
+  };
+}
+
 /** Le client du fournisseur — SEUL point qui touche le SDK (import
- * dynamique : construire les requêtes et juger ne chargent jamais le SDK). */
+ * dynamique : construire les requêtes et juger ne chargent jamais le SDK).
+ * Depuis le 2026-10-09, il parle en FLUX et rend la forme d'avant. */
 export async function creerClient(lireFichier, options = {}) {
   const contenu = lireFichier(CONFIG.cheminCle);
   const m = contenu.match(CONFIG.motifCle);
   if (!m) throw new Error("ADAPTATEUR_CLE_INTROUVABLE");
   const { default: Anthropic } = await import("@anthropic-ai/sdk");
-  return new Anthropic({ apiKey: m[2].trim(), ...options });
+  return envelopperEnFlux(new Anthropic({ apiKey: m[2].trim(), ...options }));
 }
 
 /** Usage BRUT du dialecte → usage NEUTRE (pour les comptabilités). */
