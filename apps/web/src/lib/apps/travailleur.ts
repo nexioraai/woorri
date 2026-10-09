@@ -221,7 +221,16 @@ export function creerTravailleur({
           .eq('id', id)
           .eq('jeton_travailleur', jeton)
           .select('id')) as Lignes
-        if (b.data === null || b.data.length === 0) depossede = true
+        // ── SEULE UNE REPONSE PROPRE A ZERO LIGNE CERTIFIE LA DEPOSSESSION.
+        //
+        // MESURE (tir 0234da42) : une erreur passagere du battement rendait
+        // `data: null` — et ce test concluait « depossede ». La tranche a
+        // alors JETE 333 secondes de reparation payee, sans ecrire, et la
+        // ligne est restee figee `en_cours` jusqu'a peremption. Une ecriture
+        // en echec ne prouve RIEN : le battement suivant retentera ; c'est
+        // la reponse SANS erreur et sans ligne qui dit « un autre detient le
+        // jeton ».
+        if (b.error === null && (b.data === null || b.data.length === 0)) depossede = true
       })()
     }, rafraichi)
 
