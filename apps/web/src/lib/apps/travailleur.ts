@@ -401,23 +401,38 @@ export function creerTravailleur({
       const coutTranche = Number(facture.coutTrancheUsd ?? 0)
       const entreeTranche = Number(facture.jetonsTranche?.entree ?? 0)
       const sortieTranche = Number(facture.jetonsTranche?.sortie ?? 0)
-      const avant = (etat ?? {}) as Record<string, unknown>
-      const acquisAvant = (avant.acquis ?? {}) as Record<string, unknown>
+      // ── 4e CHEMIN DE PERTE, FERME : si l'erreur porte l'ETAT COMPLET du
+      // moteur (modele, tours, tirages, niveaux — ce que la suspension
+      // ecrit), il FAIT FOI : une erreur avant toute suspension ne tue plus
+      // le P0 paye. Son coutUsd est deja CUMULATIF (tranche comprise) — on
+      // ne rajoute pas coutTranche par-dessus : ce serait compter double.
+      const complet = (e as { etatComplet?: Record<string, unknown> }).etatComplet
+      const stocke = (etat ?? {}) as Record<string, unknown>
+      const avant = { ...stocke, ...(complet ?? {}) }
+      const acquisAvant = (stocke.acquis ?? {}) as Record<string, unknown>
       const jetonsAvant = (avant.jetons ?? {}) as { entree?: number; sortie?: number }
+      const coutEtat =
+        complet !== undefined
+          ? Number(Number(avant.coutUsd ?? 0).toFixed(6))
+          : Number((Number(avant.coutUsd ?? 0) + coutTranche).toFixed(6))
+      const jetonsEtat =
+        complet !== undefined
+          ? { entree: Number(jetonsAvant.entree ?? 0), sortie: Number(jetonsAvant.sortie ?? 0) }
+          : {
+              entree: Number(jetonsAvant.entree ?? 0) + entreeTranche,
+              sortie: Number(jetonsAvant.sortie ?? 0) + sortieTranche,
+            }
       const nouvelEtat = {
         ...avant,
         phase: avant.phase ?? 'emission',
         acquis: { ...acquisAvant, ...(partiel?.document ?? partiel ?? {}) },
-        coutUsd: Number((Number(avant.coutUsd ?? 0) + coutTranche).toFixed(6)),
-        jetons: {
-          entree: Number(jetonsAvant.entree ?? 0) + entreeTranche,
-          sortie: Number(jetonsAvant.sortie ?? 0) + sortieTranche,
-        },
+        coutUsd: coutEtat,
+        jetons: jetonsEtat,
       }
       const comptage = {
-        cout_usd: Number((Number(ligne.cout_usd ?? 0) + coutTranche).toFixed(4)),
-        jetons_entree: Number(ligne.jetons_entree ?? 0) + entreeTranche,
-        jetons_sortie: Number(ligne.jetons_sortie ?? 0) + sortieTranche,
+        cout_usd: Number(coutEtat.toFixed(4)),
+        jetons_entree: jetonsEtat.entree,
+        jetons_sortie: jetonsEtat.sortie,
       }
       const reprises = Number(ligne.reprises ?? 0) + 1
       const champs =

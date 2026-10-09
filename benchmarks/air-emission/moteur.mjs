@@ -182,8 +182,15 @@ const surfaceEnveloppe = () => {
   const client =
     clientFourni ??
     (await adaptateur.creerClient(() => `ANTHROPIC_API_KEY=${cleApi}`, {
-      timeout: 20 * 60 * 1000,
-      maxRetries: 2,
+      // 45 min : 3x au-dela du pire appel legitime MESURE (333 s), sous le
+      // budget de tranche (60 min) — un appel coupe ne peut plus en manger
+      // deux. maxRetries 0 : les reprises appartiennent a NOS etages (moteur
+      // et travailleur), qui PLIENT et COMPTENT ; un retry silencieux du SDK
+      // peut re-payer un appel que le serveur a acheve, et rend l'echec
+      // illisible (trois « Request timed out. » inexpliques, 2026-10-09 —
+      // l'ancien 20 min / 2 retries datait d'AVANT ces trois morts).
+      timeout: 45 * 60 * 1000,
+      maxRetries: 0,
     }));
   const PRIX = {
     in: adaptateur.CONFIG.prixParMtok.entree,
@@ -435,7 +442,7 @@ const surfaceEnveloppe = () => {
     // transitoire ou inconnue → ses reprises habituelles.
     const estTransitoire = (e) =>
       /Connection error|timed out|ECONNRESET|socket hang up|5\d\d/i.test(String(e?.message ?? e));
-    const etiqueter = (e) => {
+    const etiqueter = (e, phase) => {
       e.transitoire = estTransitoire(e);
       // LE COUT DE LA TRANCHE MORTE VOYAGE AVEC L'ERREUR — memes chiffres
       // que la suspension. Trou comptable mordu deux fois (tir 6, reprise
@@ -443,6 +450,23 @@ const surfaceEnveloppe = () => {
       // ces champs dans la ligne ET dans etat.coutUsd, ensemble.
       e.coutTrancheUsd = Number((coutSondeTranche + coeur.lireEtatDepense().depense).toFixed(6));
       e.jetonsTranche = jetons();
+      // LE 4e CHEMIN DE PERTE, FERME (tir c29bd806, 2026-10-09) : une erreur
+      // survenue AVANT toute suspension ne portait que le pli de document —
+      // le modele P0 paye, les tours en bouchees, tirages et niveaux
+      // mouraient avec le processus (46 min de tranche 1 illisibles, re-P0
+      // obligatoire). L'erreur transporte desormais le MEME etat que la
+      // suspension — contenu, pas compteur.
+      e.etatComplet = {
+        phase,
+        modele: modeleP0,
+        tirages,
+        niveaux,
+        premierePasse,
+        tours,
+        tentativesReparation,
+        coutUsd: coutCumule(),
+        jetons: jetonsCumules(),
+      };
       return e;
     };
 
@@ -496,7 +520,7 @@ const surfaceEnveloppe = () => {
             usage,
           );
         } catch (e) {
-          throw etiqueter(e);
+          throw etiqueter(e, "p0");
         }
         const neutreP0 = adaptateur.lireReponse(reponseP0);
         const verdictP0 = passe0.jugerSortieP0(neutreP0.texte, brief, { tronquee: neutreP0.tronquee });
@@ -640,7 +664,7 @@ const surfaceEnveloppe = () => {
         const sections = Object.keys(acquis).length;
         if (reprise >= 2 || !estTransitoire(e) || sections === 0) {
           e.sectionsAcquises = sections;
-          throw etiqueter(e);
+          throw etiqueter(e, "emission");
         }
         console.log(
           `  [${slug}] reprise ${String(reprise + 1)}/2 apres « ${String(e?.message ?? e).slice(0, 60)} » — ` +
@@ -769,7 +793,7 @@ const surfaceEnveloppe = () => {
           // perdrait les memes sections par le second chemin d'entree.
           if (e.assemblagePartiel === undefined) e.assemblagePartiel = { document: acquis };
           e.sectionsAcquises = Object.keys(acquis).length;
-          throw etiqueter(e);
+          throw etiqueter(e, "reparation");
         }
         const amputeBouchee = resultat.ampute ?? [];
         journalBouchees.push({

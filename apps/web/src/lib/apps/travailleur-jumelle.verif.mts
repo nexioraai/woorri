@@ -255,6 +255,65 @@ console.log('— V5 : echec transitoire et plafond de reprises —')
   await purger()
 }
 
+// ════ V5C — L'ERREUR AVANT TOUTE SUSPENSION NE TUE PLUS LE P0 PAYE (4e
+// chemin de perte, tir c29bd806 : 46 min de tranche 1 mortes avec modele,
+// tours et tirages — seul l'acquis survivait). L'erreur porte l'ETAT
+// COMPLET, et la table le garde — CONTENU verifie, pas compteur. ════
+console.log('— V5C : l erreur transporte l etat complet —')
+{
+  const w = creerTravailleur({
+    table: JUMELLE, base,
+    moteur: moteurScripte({
+      appels: [],
+      jette: () => Object.assign(new Error('Request timed out.'), {
+        assemblagePartiel: { document: { app: { name: 'acquis-plie' } } },
+        coutTrancheUsd: 1.5,
+        jetonsTranche: { entree: 100, sortie: 50 },
+        etatComplet: {
+          phase: 'reparation',
+          modele: { version: 'modele-conserve', acteurs: [{ id: 'act_moi' }], concepts: [{ id: 'ent_x' }] },
+          tirages: [{ tentative: 1, arret: 'OK' }],
+          niveaux: { sonde: 'haut' },
+          premierePasse: 9,
+          tours: [{ n: 1, avant: 9, apres: 7, bouchees: [{ n: 1, cle: '0|ecrans', taille: 9, ampute: [], coutUsd: 0.4 }] }],
+          tentativesReparation: 2,
+          coutUsd: 1.5,
+          jetons: { entree: 100, sortie: 50 },
+        },
+      }),
+    }),
+    budgetTrancheMs: 10_000, battementPerimeMs: 60_000,
+    perimetre: { proprietaire: EMAIL_BANC },
+  })
+  const id = await w.deposer({ demande: 'v5c', nom: 'v5c', email: EMAIL_BANC })
+  await w.tourner()
+  const ligne = await lire(id)
+  const sa = ligne.sections_acquises as {
+    phase?: string
+    modele?: { version?: string; acteurs?: unknown[]; concepts?: unknown[] }
+    tours?: { n: number; apres: number; bouchees?: { taille: number }[] }[]
+    tirages?: unknown[]
+    premierePasse?: number
+    tentativesReparation?: number
+    coutUsd?: number
+    acquis?: { app?: { name?: string } }
+  }
+  verifie('V5C le MODELE paye survit a l erreur pre-suspension — en CONTENU dans la table',
+    sa.modele?.version === 'modele-conserve' &&
+      (sa.modele?.acteurs?.length ?? 0) > 0 && (sa.modele?.concepts?.length ?? 0) > 0,
+    JSON.stringify(sa.modele).slice(0, 80))
+  verifie('V5C les TOURS en bouchees survivent — le recit de la tranche est lisible',
+    sa.tours?.[0]?.apres === 7 && sa.tours?.[0]?.bouchees?.[0]?.taille === 9 &&
+      sa.phase === 'reparation' && sa.premierePasse === 9 && sa.tentativesReparation === 2,
+    JSON.stringify(sa.tours).slice(0, 80))
+  verifie('V5C l acquis plie ET l etat complet coexistent, cout cumulatif NON double-compte',
+    sa.acquis?.app?.name === 'acquis-plie' &&
+      Number(ligne.cout_usd) === 1.5 && sa.coutUsd === 1.5 &&
+      Number(ligne.jetons_entree) === 100 && Number(ligne.jetons_sortie) === 50,
+    `colonne=${String(ligne.cout_usd)} etat=${String(sa.coutUsd)}`)
+  await purger()
+}
+
 // ════ V5F — UNE ERREUR FATALE NE SE RETENTE PAS (tir n°6 : le 400 de
 // facturation retente deux fois pour rien). L'etiquette du moteur fait foi.
 console.log('— V5F : erreur fatale, refus immediat —')

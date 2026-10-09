@@ -278,6 +278,19 @@ console.log("— scenario D : le contenu d'un tour coupe survit (pli + reprise +
     erreur !== null && typeof erreur.coutTrancheUsd === "number" && erreur.coutTrancheUsd > 0 &&
       Number(erreur.jetonsTranche?.entree ?? 0) > 0 && Number(erreur.jetonsTranche?.sortie ?? 0) > 0,
     JSON.stringify({ cout: erreur?.coutTrancheUsd, jetons: erreur?.jetonsTranche }));
+  // 4e CHEMIN DE PERTE (tir c29bd806) : l'erreur AVANT suspension doit
+  // porter le MEME etat que la suspension — mesure sur le CONTENU : le
+  // modele P0 (acteurs, concepts), la phase, les comptes de la premiere
+  // passe. Pas un compteur : le modele lui-meme.
+  const complet = erreur?.etatComplet;
+  verifie("⑧ D3 l'erreur porte l'ETAT COMPLET : le modele P0 paye y est, EN CONTENU",
+    complet !== undefined && complet.modele !== null &&
+      (complet.modele?.acteurs?.length ?? 0) > 0 && (complet.modele?.concepts?.length ?? 0) > 0,
+    JSON.stringify({ acteurs: complet?.modele?.acteurs?.length, concepts: complet?.modele?.concepts?.length }));
+  verifie("⑧ D3 l'etat complet dit la phase, les tirages et la premiere passe — le recit survit",
+    complet?.phase === "reparation" && (complet?.tirages?.length ?? 0) >= 1 &&
+      typeof complet?.premierePasse === "number" && Array.isArray(complet?.tours),
+    JSON.stringify({ phase: complet?.phase, tirages: complet?.tirages?.length, pp: complet?.premierePasse }));
 }
 
 // ── ⑨ scenario E : LE TOUR EN BOUCHEES (arbitrage du 2026-10-09). Mesure :
