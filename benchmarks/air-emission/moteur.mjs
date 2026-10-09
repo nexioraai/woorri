@@ -214,7 +214,13 @@ const surfaceEnveloppe = () => {
     callPart: coeur.callPart, extractJson: coeur.extractJson,
   });
 
-  const { validateLocal, jugerAcceptation } = acceptation;
+  const { validateLocal, jugerAcceptation, perimetreDeJugement, elargit } = acceptation;
+  // ── LA GATE ANTI-OSCILLATION — la meme que la campagne, demenagee dans
+  // `gate-reparation.mjs` (egalite a l'octet modulo renommages declares,
+  // prouvee). Sans elle, une reparation qui n'ampute pas remplacait le
+  // document SANS EXAMEN — meme pire qu'avant. Defaut mesure au tir n°2.
+  const { creerGateReparation } = await import(join(HERE, "gate-reparation.mjs"));
+  const gateReparation = creerGateReparation({ validateLocal, perimetreDeJugement, elargit });
 
   // ── LA SONDE DE GRAMMAIRE, UNE FOIS PAR MOTEUR.
   //
@@ -351,6 +357,9 @@ const surfaceEnveloppe = () => {
     let acquis = { ...(etat?.acquis ?? {}) };
     let niveaux = etat?.niveaux ?? null;
     let premierePasse = etat?.premierePasse ?? null;
+    // Le journal des TOURS de reparation — il voyage dans l'etat : le
+    // plafond compte les tours ACHEVES, d'une tranche a l'autre.
+    const tours = [...(etat?.tours ?? [])];
     let prescriptif = null;
 
     /** Les passes qu'il reste a emettre : celles dont une cle manque. */
@@ -371,6 +380,7 @@ const surfaceEnveloppe = () => {
         tirages,
         niveaux,
         premierePasse,
+        tours,
         coutUsd: coutCumule(),
         jetons: jetonsCumules(),
       },
@@ -586,53 +596,122 @@ const surfaceEnveloppe = () => {
     diagnostics = [...diagnostics, ...jugerAcceptation(air, prescriptif, intention)];
     if (premierePasse === null) premierePasse = diagnostics.length;
 
-    // ── UNE REPARATION, comme la campagne : on ne reemet que les sections
-    // que les diagnostics designent. Le budget y mord par la MEME enveloppe ;
-    // une suspension replie le partiel repare dans l'etat — la tranche
-    // suivante revalide (gratuit) et ne repare que ce qui reste.
-    if (air === null || diagnostics.length > 0) {
+    // ══ LA BOUCLE DE CONVERGENCE — volet ① (2026-10-09). ══
+    //
+    // La campagne fait UN tour automatique puis des tours MANUELS
+    // (`--reparer`) ; le produit n'a personne entre les tours. La boucle les
+    // enchaine, bornee et surveillee :
+    //   · 0 diagnostic                      → livree ;
+    //   · gate : introduits sans revelation → rejet, base conservee, refusee ;
+    //   · amputation (resultat.ampute)      → base conservee, refusee NOMMANT
+    //     les identifiants — le tour a coute, il est consigne, jamais tu ;
+    //   · revelation (perimetre elargi)     → retenue MEME si le compte
+    //     monte : les diagnostics sont reveles, la base change ;
+    //   · tour retenu sans reduction STRICTE→ stagnation, refusee qui le dit ;
+    //   · plafond : 3 tours acheves.
+    //
+    // Le budget-temps decoupe la boucle en tranches GRATUITEMENT : une
+    // suspension en plein tour replie le partiel (CLE_REPARATION), l'etat
+    // porte `tours`, la reprise revalide (gratuit) et continue.
+    const PLAFOND_TOURS = 3;
+    let raisonRefus = null;
+    while ((air === null || diagnostics.length > 0) && raisonRefus === null) {
+      if (tours.length >= PLAFOND_TOURS) {
+        raisonRefus = `non convergé en ${String(PLAFOND_TOURS)} tours : reste ${String(diagnostics.length)} diagnostic(s)`;
+        break;
+      }
+      const baseDoc = document;
+      const baseAir = air;
+      const baseDiags = diagnostics;
+      const coutAvantTour = coutCumule();
+      let resultat;
       try {
-        const resultat = await orchestrationBudgetee.repairSectionsAvecPartiel(
+        resultat = await orchestrationBudgetee.repairSectionsAvecPartiel(
           document,
-          diagnostics,
+          baseDiags,
           orchestration.contexteClient(intention),
           slug,
           usage,
           refusals,
           prescriptif,
         );
-        // LA REPARATION REND UNE ENVELOPPE — { sectionsReemises, document,
-        // ampute } — PAS un document. La campagne lit `resultat.document`
-        // (emit-v3, apres la gate anti-oscillation) ; ma premiere version
-        // prenait l'enveloppe pour le document et le second juge criait
-        // SCHEMA sur TOUTES les sections. Attrape par le mode a blanc avant
-        // tout tir reel : les deux tirs payes etaient morts en amont, le
-        // defaut n'avait jamais ete execute.
-        document = resultat.document ?? resultat;
       } catch (e) {
         const partiel = e?.assemblagePartiel ?? e?.partiel;
-        // Meme enveloppe en cas d'erreur : le partiel de reparation porte le
-        // document SOUS la cle `document` — replier l'enveloppe entiere
-        // melerait `sectionsReemises` aux sections du document.
         const partielDoc = partiel?.document ?? partiel;
         if (partielDoc !== undefined) acquis = { ...document, ...partielDoc };
         if (e?.budgetTemps === true) return suspendre("reparation");
         e.sectionsAcquises = Object.keys(acquis).length;
         throw e;
       }
-      ({ air, diagnostics } = validateLocal(document, prescriptif));
+      // L'enveloppe de la reparation : `document` est deja le choix SUR —
+      // l'original si amputation, le repare sinon (D-093).
+      const candidat = resultat.document ?? resultat;
+      const ampute = resultat.ampute ?? [];
+      ({ air, diagnostics } = validateLocal(candidat, prescriptif));
       diagnostics = [...diagnostics, ...jugerAcceptation(air, prescriptif, intention)];
+      const verdict = gateReparation.verdict({
+        diagnosticsAvant: baseDiags.map((x) => ({ code: x.code, path: x.path })),
+        diagnosticsApres: diagnostics,
+        documentAvant: baseDoc,
+        airApres: air,
+        prescriptif,
+      });
+      const tour = {
+        n: tours.length + 1,
+        avant: baseDiags.length,
+        apres: diagnostics.length,
+        coutUsd: Number((coutCumule() - coutAvantTour).toFixed(4)),
+        revelation: verdict.revelation,
+        introduits: verdict.revelation ? 0 : verdict.introduits.length,
+        reveles: verdict.revelation ? verdict.introduits.length : 0,
+        ampute,
+      };
+      tours.push(tour);
+      if (ampute.length > 0) {
+        // Le candidat EST la base (enveloppe D-093) : rien a restaurer, mais
+        // l'etat de jugement doit redevenir celui de la base.
+        document = baseDoc;
+        air = baseAir;
+        diagnostics = baseDiags;
+        tour.rejet = "amputation";
+        raisonRefus =
+          `réparation rejetée au tour ${String(tour.n)} — amputation hors périmètre : ` +
+          ampute.slice(0, 6).join(", ");
+        break;
+      }
+      if (verdict.rejetee) {
+        document = baseDoc;
+        air = baseAir;
+        diagnostics = baseDiags;
+        tour.rejet = "oscillation";
+        raisonRefus =
+          `réparation oscillante au tour ${String(tour.n)} : ` +
+          `${String(verdict.introduits.length)} diagnostic(s) introduit(s) ` +
+          `(${[...new Set(verdict.introduits.map((x) => x.code))].slice(0, 5).join(", ")})`;
+        break;
+      }
+      document = candidat;
+      if (verdict.revelation) continue; // nouvelle base : le compte peut monter
+      if (diagnostics.length >= baseDiags.length) {
+        tour.rejet = "stagnation";
+        raisonRefus =
+          `stagnation au tour ${String(tour.n)} : ${String(baseDiags.length)} → ` +
+          `${String(diagnostics.length)} diagnostic(s)`;
+        break;
+      }
     }
 
     return {
       fini: true,
       resultat: {
         ok: air !== null && diagnostics.length === 0,
+        ...(raisonRefus === null ? {} : { raison: raisonRefus }),
         document: air ?? document,
         modele: prescriptif.modele,
         diagnostics: diagnostics.map((d) => ({ code: d.code, path: d.path })),
         premierePasse,
         tirages,
+        tours,
         refus: refusals.count,
         coutUsd: coutCumule(),
         jetons: jetonsCumules(),

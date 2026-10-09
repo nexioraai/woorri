@@ -89,11 +89,33 @@ const fin = (await base.from(JUMELLE).select('*').eq('id', id).single()).data as
 dire('')
 dire(`STATUT FINAL : ${String(fin.statut)} · coût total ${Number(fin.cout_usd).toFixed(4)} $ · durée ${String(Math.round((Date.now() - depart) / 1000))} s`)
 dire(`document : ${fin.document === null ? 'absent' : 'PRÉSENT'} · diagnostics : ${JSON.stringify(fin.diagnostics)}`)
-const journalFinal = fin.sections_acquises as { phase?: string; tirages?: { tentative: number; arret: string; coutUsd: number; diagnostics: string[]; reparations: string[] }[] }
+const journalFinal = fin.sections_acquises as {
+  phase?: string
+  tirages?: { tentative: number; arret: string; coutUsd: number; diagnostics: string[]; reparations: string[] }[]
+  tours?: { n: number; avant: number; apres: number; coutUsd: number; rejet?: string; revelation: boolean; reveles: number; ampute: string[] }[]
+}
 if (journalFinal.phase === 'terminee') {
   for (const tir of journalFinal.tirages ?? []) {
     dire(`  tirage P0 ${String(tir.tentative)} — arrêt ${tir.arret} · ${String(tir.coutUsd)} $ · ${tir.diagnostics.join(', ') || '—'}`)
     for (const rep of tir.reparations ?? []) dire(`      réparé : ${rep}`)
+  }
+  for (const t of journalFinal.tours ?? []) {
+    dire(
+      `  tour ${String(t.n)} — ${String(t.avant)} → ${String(t.apres)} diagnostic(s) · ${String(t.coutUsd)} $` +
+        (t.revelation ? ` · RÉVÉLATION (+${String(t.reveles)} révélés)` : '') +
+        (t.rejet !== undefined ? ` · rejet: ${t.rejet}` : '') +
+        (t.ampute.length > 0 ? ` · amputés: ${t.ampute.slice(0, 4).join(', ')}` : ''),
+    )
+  }
+}
+if (fin.document !== null) {
+  const { projectAirSchema } = await import('@deribfy/air-schema')
+  const strict = projectAirSchema.safeParse(fin.document)
+  dire(`  schéma STRICT : ${strict.success ? 'PASSE' : 'REFUSÉ'}`)
+  if (strict.success) {
+    const d = fin.document as { entities: { name: string }[]; screens: { id: string }[] }
+    dire(`  entités : ${d.entities.map((e) => e.name).join(', ')}`)
+    dire(`  écrans  : ${d.screens.map((e) => e.id).join(', ')}`)
   }
 }
 if (fin.document !== null) {

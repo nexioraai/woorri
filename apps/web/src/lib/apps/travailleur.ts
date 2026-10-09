@@ -66,6 +66,10 @@ export type MoteurContinuation = {
       document?: unknown
       diagnostics: { code?: string }[]
       tirages: unknown[]
+      /** Volet ① — le journal des tours de reparation (avant/apres, rejets,
+       *  revelations, couts). Optionnel : les moteurs scriptes des harnais
+       *  n'en rendent pas. */
+      tours?: unknown[]
       coutUsd: number
       jetons: { entree: number; sortie: number }
       niveaux?: unknown
@@ -303,6 +307,9 @@ export function creerTravailleur({
               sections_acquises: {
                 phase: 'terminee',
                 tirages: res.tirages,
+                // Volet ① : POURQUOI chaque tour a retenu, rejete ou stagne —
+                // lisible dans la ligne, sans re-payer.
+                tours: res.tours ?? [],
                 niveaux: res.niveaux ?? null,
               },
               cout_usd: res.coutUsd,
