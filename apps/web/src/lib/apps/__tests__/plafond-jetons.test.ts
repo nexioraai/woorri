@@ -56,6 +56,17 @@ describe('CLIQUET — le plafond de jetons', () => {
     expect(lire('benchmarks/air-emission/adaptateur-anthropic.mjs')).toContain('model: "claude-opus-5"')
   })
 
+  it('le MOTEUR PRODUIT porte le plafond du modele mesure — pas un chiffre herite de la campagne', () => {
+    // MESURE (reprise c29bd806, 2026-10-09) : la reemission des ecrans d'un
+    // document agrandi par revelations a depasse les 40000 herites —
+    // RESPONSE TRONQUEE, tour perdu. Meme classe de defaut que le site a
+    // 9000 : un plafond A NOUS coupe les applications riches, et seules les
+    // demandes courtes — nos essais — passent.
+    const moteur = /^  const MAX_TOKENS = (\d+);$/mu.exec(lire('benchmarks/air-emission/moteur.mjs'))
+    expect(moteur, 'MAX_TOKENS introuvable dans moteur.mjs').not.toBeNull()
+    expect(Number(moteur![1])).toBe(PLAFOND_JETONS)
+  })
+
   it('le plafond est reellement passe a l appel', () => {
     // LE CODE SEUL : la mesure de l'API est CITEE en commentaire, et elle
     // contient « max_tokens: 999999 ». Le test butait sur sa propre preuve —

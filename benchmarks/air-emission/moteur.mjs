@@ -201,7 +201,15 @@ const surfaceEnveloppe = () => {
   const TARIFS = { entree: PRIX.in, ecritureCache: PRIX.cacheWrite, lectureCache: PRIX.cacheRead, sortie: PRIX.out };
   const coutUSD = (u) => adaptateur.coutUsd(adaptateur.lireUsage(u));
   const CONTRAT_CIBLE = "1.34.0";
-  const MAX_TOKENS = 40000;
+  // LE PLAFOND EST CELUI DU MODELE, MESURE — PAS UN CHIFFRE HERITE. Le
+  // 40000 venait de la campagne ; mesure du 2026-10-09 (reprise c29bd806) :
+  // la reemission des ecrans d'un document agrandi par revelations depasse
+  // 40000 jetons de sortie — RESPONSE TRONQUEE, 4,13 $ pour rien. Le modele
+  // accepte 128000 (mesure consignee : plafond-jetons.test.ts, req
+  // req_011CfpVM6K6gxenpSx4o6LrA) et l'arbitrage proprietaire du site
+  // s'applique ici aussi : « aucune application ne sera coupee par une
+  // borne que j'aurais choisie ». Un cliquet interdit la re-divergence.
+  const MAX_TOKENS = 128000;
   const PLAFOND_USD = plafondUsd;
   const etatDepense = budgetUsd.DEPENSE_INITIALE;
 
