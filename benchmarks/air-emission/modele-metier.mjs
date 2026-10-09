@@ -901,6 +901,58 @@ export function reparerPlan(modele) {
   const consommateurs = consommateursDIdentite();
   const ECRITURES = new Set(gestesEcrivants());
 
+  // ── ⓪ LE CŒUR FERMÉ SE RÉORDONNE — avant tout, car l'ordre des parcours
+  // est indépendant des étapes que ① et ② réparent.
+  //
+  // MESURE (tirs réels 3 et 5, 2026-10-09) : `MODELE_COEUR_EXIGE_CONNEXION`
+  // au tirage 1, et le reproche informé ne corrige PAS — 0 sur 4 tirages
+  // informés (quand l'identité absente, elle, se corrige en 1). La table
+  // EP-135 le dit depuis le début : « il réordonne ou ouvre, l'humain n'a
+  // rien à répondre » — c'est au GÉNÉRATEUR de réordonner, et personne ne le
+  // faisait : on re-tirait à ~0,10 $ en espérant la chance.
+  //
+  // LES PRÉDICATS SONT CEUX DU JUGE (`jugerAccesSansConnexion`) :
+  // `parcoursParPriorite` dit qui est le cœur, `parcoursFerme` dit fermé ou
+  // ouvert. La réparation tire EXACTEMENT quand le juge tirerait — jamais
+  // plus. « Ouvrir » un parcours, lui, serait du métier : on ne l'invente
+  // pas ; s'il n'existe aucun parcours ouvert, le juge est légitimement
+  // silencieux (le cas « banque ») et rien n'est touché.
+  {
+    const ordre = parcoursParPriorite(modele);
+    const coeur = ordre[0];
+    const premierOuvert = ordre.find((p) => !parcoursFerme(modele, p));
+    if (coeur !== undefined && parcoursFerme(modele, coeur) && premierOuvert !== undefined) {
+      const aPrioriteExplicite = modele.parcours.some((p) => p.priorite !== undefined);
+      let parcoursReordonnes;
+      if (!aPrioriteExplicite) {
+        // L'ordre du tableau fait foi : le premier parcours OUVERT passe en
+        // tête, le reste garde son ordre relatif. Aucun champ ajouté.
+        parcoursReordonnes = [
+          premierOuvert,
+          ...modele.parcours.filter((p) => p !== premierOuvert),
+        ];
+      } else {
+        // Des priorités EXPLICITES existent : réordonner le tableau ne
+        // suffirait pas (le tri lit `priorite ?? index`). L'ordre voulu
+        // s'écrit alors explicitement — 0, 1, 2… dans le nouvel ordre. C'est
+        // de la métadonnée d'ordre, pas du métier : exactement ce que le
+        // juge demande quand il dit « il réordonne ».
+        const nouvelOrdre = [premierOuvert, ...ordre.filter((p) => p !== premierOuvert)];
+        parcoursReordonnes = modele.parcours.map((p) => ({
+          ...p,
+          priorite: nouvelOrdre.indexOf(p),
+        }));
+      }
+      reparations.push({
+        parcours: coeur.id,
+        action:
+          `parcours ouvert « ${premierOuvert.id} » promu en tête — le cœur ` +
+          `« ${coeur.id} » exigeait une connexion (App Store 5.1.1(iv))`,
+      });
+      modele = { ...modele, parcours: parcoursReordonnes };
+    }
+  }
+
   const parcours = (modele.parcours ?? []).map((p) => {
     let etapes = [...(p.etapes ?? [])];
 

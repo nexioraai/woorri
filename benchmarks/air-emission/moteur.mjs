@@ -479,8 +479,35 @@ const surfaceEnveloppe = () => {
           const r = modeleMetier.reparerPlan(verdictP0.modele);
           candidat = r.modele;
           reparationsPlan = r.reparations;
+        } else {
+          // ── LA REPARATION MECANIQUE S'APPLIQUE AUSSI AUX REFUS P1.
+          //
+          // MESURE (tirs 3 et 5) : MODELE_COEUR_EXIGE_CONNEXION est emis par
+          // `validerModele` — arret P1 — et `jugerSortieP0` ne rend PAS le
+          // modele sur un refus (`passe0` est scelle). `reparerPlan` ne
+          // s'executait donc JAMAIS pour ce juge : on re-tirait a ~0,10 $ en
+          // esperant que le modele reordonne lui-meme — 0 reussite sur 4.
+          //
+          // Le moteur parse le texte lui-meme (deja parsable : les
+          // diagnostics viennent de `validerModele`, pas d'un JSON casse) et
+          // tente la reparation. LA REGLE NE S'ASSOUPLIT PAS : le candidat
+          // repare n'est retenu QUE si `validerModele` entier repasse
+          // silencieux — sinon le refus P1 d'origine reste, reproche inclus.
+          let brut = null;
+          try {
+            brut = JSON.parse(neutreP0.texte);
+          } catch {
+            // non-JSON : rien a reparer, le refus d'origine dit deja tout
+          }
+          if (brut !== null && typeof brut === "object") {
+            const r = modeleMetier.reparerPlan(brut);
+            if (r.reparations.length > 0 && modeleMetier.validerModele(r.modele).length === 0) {
+              candidat = r.modele;
+              reparationsPlan = r.reparations;
+            }
+          }
         }
-        const diagnosticsPlan = verdictP0.ok
+        const diagnosticsPlan = candidat !== undefined
           ? (() => {
               const plan = modeleMetier.ecransDe(candidat);
               return [
@@ -494,13 +521,13 @@ const surfaceEnveloppe = () => {
               ];
             })()
           : [];
-        const arret = !verdictP0.ok ? "P1" : diagnosticsPlan.length > 0 ? "P2" : "passe";
-        dernierReproche = reproche(verdictP0.ok ? diagnosticsPlan : verdictP0.diagnostics);
+        const arret = candidat === undefined ? "P1" : diagnosticsPlan.length > 0 ? "P2" : "passe";
+        dernierReproche = reproche(candidat !== undefined ? diagnosticsPlan : verdictP0.diagnostics);
         tirages.push({
           tentative,
           arret,
           coutUsd: Number((coeur.lireEtatDepense().depense - avant).toFixed(4)),
-          diagnostics: (verdictP0.ok ? diagnosticsPlan : verdictP0.diagnostics).map((x) => x.code),
+          diagnostics: (candidat !== undefined ? diagnosticsPlan : verdictP0.diagnostics).map((x) => x.code),
           // CE QUE LE GENERATEUR A CORRIGE LUI-MEME, dit et non tu.
           reparations: reparationsPlan.map((r) => r.action),
         });
