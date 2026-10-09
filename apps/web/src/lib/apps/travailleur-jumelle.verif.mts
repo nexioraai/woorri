@@ -253,7 +253,7 @@ console.log('— V7 : la raison et le detail des tirages persistent —')
         resultat: {
           ok: false,
           raison: 'P0 refuse 3 fois',
-          diagnostics: [],
+          diagnostics: [{ code: 'SCHEMA', path: 'entities[2].fields[0]' }],
           tirages: [
             { tentative: 1, arret: 'P2', coutUsd: 0.21, diagnostics: ['DERIVATION_X'], reparations: ['choisir pose'] },
           ],
@@ -269,6 +269,9 @@ console.log('— V7 : la raison et le detail des tirages persistent —')
   const ligne = await lire(id)
   verifie('V7 la ligne refusee DIT sa raison en tete des diagnostics',
     r[0].issue === 'refusee' && (ligne.diagnostics as string[])[0] === 'P0 refuse 3 fois')
+  verifie('V7 un diagnostic persiste en CODE@CHEMIN — on sait OU, sans re-payer',
+    (ligne.diagnostics as string[])[1] === 'SCHEMA@entities[2].fields[0]',
+    JSON.stringify(ligne.diagnostics))
   const j = ligne.sections_acquises as { phase?: string; tirages?: { arret: string; diagnostics: string[] }[] }
   verifie('V7 le detail des tirages persiste — on peut dire POURQUOI sans re-payer',
     j.phase === 'terminee' && j.tirages?.[0]?.arret === 'P2' && j.tirages[0].diagnostics[0] === 'DERIVATION_X',

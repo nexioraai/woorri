@@ -64,7 +64,7 @@ export type MoteurContinuation = {
     resultat?: {
       ok: boolean
       document?: unknown
-      diagnostics: { code?: string }[]
+      diagnostics: { code?: string; path?: string }[]
       tirages: unknown[]
       /** Volet ① — le journal des tours de reparation (avant/apres, rejets,
        *  revelations, couts). Optionnel : les moteurs scriptes des harnais
@@ -297,7 +297,15 @@ export function creerTravailleur({
       // `sections_acquises` — la colonne du point de reprise devient, une
       // fois la ligne terminee, son JOURNAL : phase `terminee`, aucune
       // nouvelle colonne, aucun SQL a re-poser.
-      const codes = res.diagnostics.map((d) => d.code ?? '?')
+      // ── CODE@CHEMIN, PAS LE CODE SEUL. Tir n°4 : trois SCHEMA en base
+      // conservee, et impossible de dire OU ils tombent — les chemins
+      // mouraient ici, dans ce map. Diagnostiquer exigeait de re-payer un
+      // tir entier. Le chemin est borne a 120 caracteres : il localise, il
+      // ne transporte pas un document.
+      const codes = res.diagnostics.map((d) => {
+        const chemin = String((d as { path?: unknown }).path ?? '').slice(0, 120)
+        return chemin === '' ? (d.code ?? '?') : `${d.code ?? '?'}@${chemin}`
+      })
       const ecrit = await ecrire(
         () =>
           t()
