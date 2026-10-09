@@ -473,7 +473,15 @@ const surfaceEnveloppe = () => {
         const diagnosticsPlan = verdictP0.ok
           ? (() => {
               const plan = modeleMetier.ecransDe(candidat);
-              return [...plan.diagnostics, ...modeleMetier.jugerPlanEcrans(plan, candidat)];
+              return [
+                ...plan.diagnostics,
+                ...modeleMetier.jugerPlanEcrans(plan, candidat),
+                // ── VOLET ② : l'identite s'exige ICI, a 0,11 $ — pas au
+                // document, a 2,94 $. Meme predicat que `jugerBase`
+                // (`estConceptIdentite`), et le reproche informe porte le
+                // message au tirage suivant sans toucher `passe0` (scelle).
+                ...modeleMetier.jugerIdentiteDuModele(candidat),
+              ];
             })()
           : [];
         const arret = !verdictP0.ok ? "P1" : diagnosticsPlan.length > 0 ? "P2" : "passe";

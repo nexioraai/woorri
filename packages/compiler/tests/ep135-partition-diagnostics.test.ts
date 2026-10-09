@@ -42,7 +42,12 @@ describe("EP-135 · la partition est EXHAUSTIVE", () => {
     // c'est tout l'objet du cliquet : un diagnostic neuf ne peut pas entrer
     // en silence.
     // 22 depuis EP-183, qui a ajouté « publier sans compte ».
-    expect(duModele).toHaveLength(22);
+    // 23 depuis le volet ② convergence (2026-10-09) : `MODELE_IDENTITE_ABSENTE`
+    // — l'identité s'exige AU PLAN, à 0,11 $, au lieu de mourir au document à
+    // 2,94 $ (mesuré, tir réel n°2). Classe FP : la plateforme l'exige
+    // inconditionnellement (DÉCISION PRODUIT de presentation.ts), l'humain
+    // n'a rien à répondre — le tirage informé la réclame à P0.
+    expect(duModele).toHaveLength(23);
   });
 
   it("tout code émis par la source est classé", () => {

@@ -12,28 +12,49 @@
 // ============================================================
 
 export const MODELE = {
+  // ETENDU LE 2026-10-09 (volet ② convergence) : le juge de plan exige
+  // desormais un concept d'identite — la fixture, forgee contre les vrais
+  // juges, suit les juges. Sans cette extension, toute course a blanc
+  // s'arretait a P0 sur MODELE_IDENTITE_ABSENTE : exactement le comportement
+  // voulu en production, mais plus aucune passe a eprouver ici.
   version: "modele-metier/1.2.0",
   acteurs: [{ id: "act_client", nom: "Client" }],
-  concepts: [{
-    id: "ent_commande", nom: "Commande", donnees: true,
-    attributs: [
-      { id: "att_numero", nature: "texte", requis: true },
-      { id: "att_montant", nature: "nombre", requis: false },
-    ],
-  }],
+  concepts: [
+    {
+      id: "ent_commande", nom: "Commande", donnees: true,
+      attributs: [
+        { id: "att_numero", nature: "texte", requis: true },
+        { id: "att_montant", nature: "nombre", requis: false },
+      ],
+    },
+    {
+      id: "ent_compte", nom: "Compte", donnees: true,
+      attributs: [{ id: "att_email", nature: "texte", requis: true }],
+    },
+  ],
   relations: [],
-  parcours: [{
-    id: "par_suivi", besoin: "suivre sa commande", acteur: "act_client",
-    etapes: [
-      { concept: "ent_commande", geste: "decouvrir" },
-      { concept: "ent_commande", geste: "choisir" },
-      { concept: "ent_commande", geste: "consulter" },
-    ],
-  }],
+  parcours: [
+    {
+      id: "par_suivi", besoin: "suivre sa commande", acteur: "act_client",
+      etapes: [
+        { concept: "ent_commande", geste: "decouvrir" },
+        { concept: "ent_commande", geste: "choisir" },
+        { concept: "ent_commande", geste: "consulter" },
+      ],
+    },
+    {
+      id: "par_connexion", besoin: "retrouver ses commandes", acteur: "act_client",
+      etapes: [
+        { concept: "ent_compte", geste: "s_identifier" },
+        { concept: "ent_commande", geste: "consulter_historique" },
+      ],
+    },
+  ],
   couverture: {
     couverts: [
       { terme: "commande", noeuds: ["ent_commande"] },
       { terme: "suivre", noeuds: ["par_suivi"] },
+      { terme: "retrouver", noeuds: ["par_connexion"] },
     ],
     nonRetenus: [],
   },

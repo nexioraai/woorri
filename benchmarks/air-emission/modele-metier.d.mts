@@ -234,3 +234,9 @@ export function reparerPlan(modele: ModeleMetier): {
   modele: ModeleMetier;
   reparations: { parcours: string; action: string }[];
 };
+
+/** Volet ② convergence — l'identite s'exige AU PLAN, par le MEME predicat
+ *  (`estConceptIdentite`) que le chemin document. Vide si un concept
+ *  d'identite existe ; sinon `MODELE_IDENTITE_ABSENTE` (faute de
+ *  production : le tirage informe la reclame a P0). */
+export function jugerIdentiteDuModele(modele: ModeleMetier): DiagnosticModele[];

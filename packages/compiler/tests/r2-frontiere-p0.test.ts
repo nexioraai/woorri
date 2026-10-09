@@ -169,6 +169,11 @@ describe("B/C — les dérivations ne travaillent QUE sur le MODEL (balayage COM
     // soit appelée, et une liste de gestes qui changerait en silence est
     // exactement ce que `sources-derivees` existe pour attraper.
     gestesEcrivants: () => derivationsModele.gestesEcrivants(),
+    // ENTRÉE AJOUTÉE CONSCIEMMENT (2026-10-09, volet ② convergence).
+    // `jugerIdentiteDuModele` exige l'identité AU PLAN — même prédicat
+    // (`estConceptIdentite`) que le chemin document. Dérivation pure du
+    // MODÈLE : sa place dans cette batterie est de droit.
+    jugerIdentiteDuModele: (m) => derivationsModele.jugerIdentiteDuModele(m),
   };
 
   it("COMPLÉTUDE — la batterie couvre CHAQUE fonction exportée des dérivations", () => {

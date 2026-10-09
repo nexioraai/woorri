@@ -281,6 +281,7 @@ export const DIAGNOSTICS = {
   ENTITE_PRESCRITE_MANQUANTE: { classe: FP, pourquoi: "le moteur a PRESCRIT cette entité à la passe `entites`, nommément et avec ses attributs : ne pas l'avoir émise est un manquement du générateur, pas une lacune de la demande" },
   MODELE_PUBLICATION_SANS_COMPTE: { classe: FP, pourquoi: "quelqu'un PUBLIE et le modèle ne porte aucun concept d'identité : l'action est réservée à un acteur qui n'a nulle part où s'identifier. Le générateur doit poser le compte, l'humain n'a rien à répondre" },
   MODELE_ENTREE_SANS_COLLECTION: { classe: FP, pourquoi: "le parcours prioritaire consulte un concept qu'il n'a jamais LISTÉ : l'utilisateur qui ouvre l'application ne voit aucun contenu. Le générateur doit poser l'étape manquante, pas l'humain répondre à une question" },
+  MODELE_IDENTITE_ABSENTE: { classe: FP, pourquoi: "exigence de PLATEFORME, pas du métier : presentation.ts refuse tout document sans espace compte (PRESENTATION_ESPACE_COMPTE_ABSENT, DÉCISION PRODUIT) et dit lui-même « l'identité doit être au modèle ». L'humain n'a rien à répondre — la plateforme l'exige inconditionnellement ; c'est au générateur de la poser, et le re-tirage informé ne coûte rien à l'humain" },
   MODELE_COEUR_EXIGE_CONNEXION: { classe: FP, pourquoi: "le générateur a placé en tête un parcours fermé alors que l'application a de quoi en ouvrir un : il réordonne ou ouvre, l'humain n'a rien à répondre" },
 
   // ── LES DEUX SEULS CERTAINS : le moteur ne POUVAIT PAS savoir ──
@@ -783,6 +784,57 @@ export function estConceptIdentite(modele, conceptId) {
   return modele.parcours.some((p) =>
     p.etapes.some((e) => e.geste === "s_identifier" && e.concept === conceptId),
   );
+}
+
+/**
+ * ══════════════════════════════════════════════════════════════════════════
+ * L'IDENTITE S'EXIGE AU PLAN — volet ② de la convergence (2026-10-09).
+ * ══════════════════════════════════════════════════════════════════════════
+ *
+ * ── LE DEFAUT MESURE QUE CE JUGE FERME.
+ *
+ * Tir reel n°2 : les juges de PLAN ont laisse passer un modele sans concept
+ * d'identite (P0 « passe » au premier tirage), et les juges de DOCUMENT
+ * l'ont refuse 2,94 $ plus tard — `PRESENTATION_ESPACE_COMPTE_ABSENT`,
+ * DECISION PRODUIT ecrite dans presentation.ts : « Toute application mobile
+ * en porte un — l'identite doit etre au modele, pas deduite apres coup. »
+ * Le meme refus doit tomber au plan, a 0,11 $.
+ *
+ * ── LE MEME PREDICAT, PAS UNE SECONDE REGLE.
+ *
+ * La chaine cote document est : `estConceptIdentite` →
+ * `prescriptif.ecransDIdentite` → `jugerBase`, qui refuse exactement quand
+ * cette liste est VIDE. Ce juge-ci utilise LE MEME `estConceptIdentite` :
+ * meme condition, deux moments. Un modele sans identite est structurellement
+ * incapable de passer ici puis d'echouer la-bas sur cette branche.
+ *
+ * La SECONDE branche de `jugerBase` — l'identite existe mais aucune
+ * destination n'y mene — est un defaut de CABLAGE du document, l'affaire de
+ * la boucle de reparation, PAS du plan : ce juge ne la couvre pas.
+ *
+ * ── POURQUOI PAS UN IMPORT DE `presentation.ts`.
+ *
+ * Ce module est charge en production par Node nu (fichier trace) : un import
+ * `.ts` reintroduirait mot pour mot le defaut qui a tue la route. Le lien a
+ * la source est tenu par un CLIQUET BIDIRECTIONNEL : si la DECISION PRODUIT
+ * vit dans presentation.ts, ce juge doit etre cable dans le moteur — et si
+ * elle disparait un jour, le cliquet tombe et force a retirer cette garde
+ * aussi. Les deux juges ne peuvent diverger dans aucun sens.
+ */
+export function jugerIdentiteDuModele(modele) {
+  const identite = (modele.concepts ?? []).some((c) => estConceptIdentite(modele, c.id));
+  if (identite) return [];
+  return [
+    d(
+      "MODELE_IDENTITE_ABSENTE",
+      "concepts",
+      "aucun concept d'identité : toute application porte un espace compte " +
+        "(exigence de plateforme). Déclare un concept d'identité — un compte " +
+        "utilisateur, un membre, un profil : ce que TON brief désigne — et un " +
+        "parcours où un acteur s'identifie (geste s_identifier consommant ce " +
+        "concept).",
+    ),
+  ];
 }
 
 /** L'étape IDENTITAIRE la plus proche en amont (transparentes ignorées). */
