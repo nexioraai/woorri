@@ -161,6 +161,41 @@ const B1 = await lancer({
     JSON.stringify(B2.r.resultat.document) === JSON.stringify(C.r.resultat.document));
 }
 
+// ── ⑦ LE FREIN DES TENTATIVES : des tours qui n'achevent JAMAIS s'arretent
+// au 3e tour tente (defaut mesure, tir 0234da42 : zero tour acheve, aucun
+// frein, 6,87 $ brules — seul le garde-fou du harnais a arrete).
+//
+// Le scenario coupe CHAQUE tranche pendant le premier appel de reparation
+// (appel ralenti + budget calibre juste apres son debut) : aucun tour ne
+// s'acheve, et c'est exactement le cas qui n'avait aucun frein.
+console.log("— scenario C2 : tours jamais acheves → frein au 3e tente —");
+{
+  const premiereRep = types(C.journal, "reparation")[0];
+  let etatC2 = null;
+  let fini = null;
+  let tranches = 0;
+  for (; tranches < 8; tranches++) {
+    const r = await lancer({
+      lent: (e) => e.type === "reparation",
+      budgetMs: rel(premiereRep) + 400,
+      ...(etatC2 === null ? {} : { etat: JSON.parse(JSON.stringify(etatC2)) }),
+    });
+    if (r.r.fini) { fini = r.r; break; }
+    etatC2 = r.r.etat;
+  }
+  verifie("⑦ la boucle S'ARRETE — plus jamais sans frein",
+    fini !== null, `encore suspendue apres ${String(tranches)} tranches`);
+  verifie("⑦ exactement 3 tentatives, portees par l'etat a travers les tranches",
+    fini !== null && fini.resultat.tentativesReparation === 3,
+    String(fini?.resultat?.tentativesReparation));
+  verifie("⑦ refusee qui DIT « tours TENTES », suspensions comprises",
+    fini !== null && /tours de réparation TENTÉS/.test(fini.resultat.raison ?? ""),
+    fini?.resultat?.raison ?? "—");
+  verifie("⑦ zero tour acheve — le cas exact du defaut mesure",
+    fini !== null && fini.resultat.tours.length === 0,
+    String(fini?.resultat?.tours?.length));
+}
+
 console.log(
   echecs === 0
     ? "\n✅ continuation : machinerie correcte a blanc — PAS une preuve de production."

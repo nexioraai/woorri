@@ -360,6 +360,13 @@ const surfaceEnveloppe = () => {
     // Le journal des TOURS de reparation — il voyage dans l'etat : le
     // plafond compte les tours ACHEVES, d'une tranche a l'autre.
     const tours = [...(etat?.tours ?? [])];
+    // ── LE FREIN DES TENTATIVES (defaut mesure, tir 0234da42) : le plafond
+    // ne comptait que les tours ACHEVES — or un tour de 44 diagnostics
+    // s'etale sur plusieurs tranches, chaque coupure le laissait inacheve,
+    // et le compteur restait a zero : AUCUN frein, 6,87 $ brules, seul le
+    // garde-fou du harnais a arrete. Les LANCEMENTS comptent desormais,
+    // aboutis ou non, portes par l'etat a travers les tranches.
+    let tentativesReparation = etat?.tentativesReparation ?? 0;
     let prescriptif = null;
 
     /** Les passes qu'il reste a emettre : celles dont une cle manque. */
@@ -381,6 +388,7 @@ const surfaceEnveloppe = () => {
         niveaux,
         premierePasse,
         tours,
+        tentativesReparation,
         coutUsd: coutCumule(),
         jetons: jetonsCumules(),
       },
@@ -664,6 +672,15 @@ const surfaceEnveloppe = () => {
         raisonRefus = `non convergé en ${String(PLAFOND_TOURS)} tours : reste ${String(diagnostics.length)} diagnostic(s)`;
         break;
       }
+      // LE FREIN MORD AVANT LE LANCEMENT, acheve ou pas : trois tentatives
+      // de reparation au total, a travers toutes les tranches.
+      if (tentativesReparation >= PLAFOND_TOURS) {
+        raisonRefus =
+          `${String(PLAFOND_TOURS)} tours de réparation TENTÉS sans converger ` +
+          `(suspensions comprises) : reste ${String(diagnostics.length)} diagnostic(s)`;
+        break;
+      }
+      tentativesReparation += 1;
       const baseDoc = document;
       const baseAir = air;
       const baseDiags = diagnostics;
@@ -749,6 +766,7 @@ const surfaceEnveloppe = () => {
       fini: true,
       resultat: {
         ok: air !== null && diagnostics.length === 0,
+        tentativesReparation,
         ...(raisonRefus === null ? {} : { raison: raisonRefus }),
         document: air ?? document,
         modele: prescriptif.modele,
