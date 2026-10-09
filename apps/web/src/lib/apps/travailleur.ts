@@ -282,12 +282,29 @@ export function creerTravailleur({
             document: null,
             etape: null,
           }
+      // ── TROUS n°2 ET n°3 DU PREMIER TIR REEL.
+      //
+      // ② La ligne refusee etait MUETTE : le refus P0 porte sa cause dans
+      // `raison`, pas dans `diagnostics` — et seul le second etait ecrit.
+      // La raison OUVRE desormais la liste : l'ecran a quelque chose a dire.
+      // ③ Le detail des tirages (arrets, diagnostics, reparations) vivait
+      // dans l'etat et mourait avec le dernier write : impossible de dire
+      // POURQUOI P0 a refuse sans re-payer. Il persiste dans
+      // `sections_acquises` — la colonne du point de reprise devient, une
+      // fois la ligne terminee, son JOURNAL : phase `terminee`, aucune
+      // nouvelle colonne, aucun SQL a re-poser.
+      const codes = res.diagnostics.map((d) => d.code ?? '?')
       const ecrit = await ecrire(
         () =>
           t()
             .update({
               ...final,
-              diagnostics: res.diagnostics.map((d) => d.code ?? '?'),
+              diagnostics: !res.ok && res.raison !== undefined ? [res.raison, ...codes] : codes,
+              sections_acquises: {
+                phase: 'terminee',
+                tirages: res.tirages,
+                niveaux: res.niveaux ?? null,
+              },
               cout_usd: res.coutUsd,
               jetons_entree: res.jetons.entree,
               jetons_sortie: res.jetons.sortie,

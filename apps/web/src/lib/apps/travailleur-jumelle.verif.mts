@@ -242,6 +242,40 @@ console.log('— V6 : les CHECK de la base —')
   await purger()
 }
 
+// ════ V7 — UN REFUS N'EST JAMAIS MUET (trous n°2 et n°3 du premier tir). ════
+console.log('— V7 : la raison et le detail des tirages persistent —')
+{
+  const w = creerTravailleur({
+    table: JUMELLE, base,
+    moteur: {
+      poursuivreEmission: async () => ({
+        fini: true,
+        resultat: {
+          ok: false,
+          raison: 'P0 refuse 3 fois',
+          diagnostics: [],
+          tirages: [
+            { tentative: 1, arret: 'P2', coutUsd: 0.21, diagnostics: ['DERIVATION_X'], reparations: ['choisir pose'] },
+          ],
+          coutUsd: 0.21,
+          jetons: { entree: 10, sortie: 20 },
+        },
+      }),
+    },
+    budgetTrancheMs: 10_000, battementPerimeMs: 60_000,
+  })
+  const id = await w.deposer({ demande: 'v7', nom: 'v7', email: null })
+  const r = await w.tourner()
+  const ligne = await lire(id)
+  verifie('V7 la ligne refusee DIT sa raison en tete des diagnostics',
+    r[0].issue === 'refusee' && (ligne.diagnostics as string[])[0] === 'P0 refuse 3 fois')
+  const j = ligne.sections_acquises as { phase?: string; tirages?: { arret: string; diagnostics: string[] }[] }
+  verifie('V7 le detail des tirages persiste — on peut dire POURQUOI sans re-payer',
+    j.phase === 'terminee' && j.tirages?.[0]?.arret === 'P2' && j.tirages[0].diagnostics[0] === 'DERIVATION_X',
+    JSON.stringify(j).slice(0, 120))
+  await purger()
+}
+
 console.log(
   echecs === 0
     ? '\n✅ travailleur : verrou, fencing, tranches, reprises, contraintes — verts sur la JUMELLE. Pas une preuve de production.'

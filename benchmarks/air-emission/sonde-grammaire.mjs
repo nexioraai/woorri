@@ -77,9 +77,14 @@ export function creerSondeGrammaire({ client, adaptateur, tentativesParNiveau = 
     for (let i = 0; i < part.levels.length; i++) {
       for (let t = 1; t <= tentativesParNiveau; t++) {
         try {
-          await essai(part.levels[i].schema);
+          const reponse = await essai(part.levels[i].schema);
           journal.push({ niveau: i, nom: part.levels[i].name, verdict: "accepte", tentatives: t });
-          return { niveau: i, journal };
+          // L'USAGE DE LA SONDE ACCEPTEE EST RENDU — premier tir reel : la
+          // tranche 1 a travaille 303 s et la table affichait 0,0000 $. Les
+          // sondes ne passent pas par `callPart`, donc ni le compteur de
+          // depense ni les jetons ne les voyaient : de l'argent reel non
+          // enregistre. Un refus, lui, ne facture rien — rien a capturer.
+          return { niveau: i, journal, usage: reponse?.usage ?? null };
         } catch {
           // Volontairement vide : la raison n'entre pas dans la decision.
         }
@@ -106,13 +111,14 @@ export function creerSondeGrammaire({ client, adaptateur, tentativesParNiveau = 
       parts.map(async (part) => ({ part, ...(await niveauAccepte(part)) })),
     );
     const rapport = [];
-    for (const { part, niveau, journal } of resultats) {
+    for (const { part, niveau, journal, usage } of resultats) {
       if (niveau !== null) part.levelIndex = niveau;
       rapport.push({
         passe: part.name,
         niveau,
         nom: niveau === null ? null : part.levels[niveau].name,
         essais: journal.length,
+        usage: usage ?? null,
       });
     }
     return rapport;

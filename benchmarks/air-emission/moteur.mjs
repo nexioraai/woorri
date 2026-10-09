@@ -234,10 +234,12 @@ const surfaceEnveloppe = () => {
   const { creerSondeGrammaire } = await import(join(HERE, "sonde-grammaire.mjs"));
   const sondeGrammaire = creerSondeGrammaire({ client, adaptateur });
   let niveauxSondes = null;
+  /** Rend aussi `fraiche` : seule la tranche qui a REELLEMENT sonde replie
+   *  le cout des sondes — une reprise ne les compterait pas deux fois. */
   async function sonderUneFois() {
-    if (niveauxSondes !== null) return niveauxSondes;
+    if (niveauxSondes !== null) return { niveaux: niveauxSondes, fraiche: false };
     niveauxSondes = await sondeGrammaire.sonder(coeur.PARTS);
-    return niveauxSondes;
+    return { niveaux: niveauxSondes, fraiche: true };
   }
 
   /**
@@ -333,8 +335,10 @@ const surfaceEnveloppe = () => {
     // Le compteur de depense du coeur est PAR PROCESSUS : une tranche est un
     // processus neuf, le cumul voyage donc dans l'etat.
     const coutAnterieur = etat?.coutUsd ?? 0;
+    let coutSondeTranche = 0;
     const jetonsAnterieurs = etat?.jetons ?? { entree: 0, sortie: 0 };
-    const coutCumule = () => Number((coutAnterieur + coeur.lireEtatDepense().depense).toFixed(6));
+    const coutCumule = () =>
+      Number((coutAnterieur + coutSondeTranche + coeur.lireEtatDepense().depense).toFixed(6));
     const jetonsCumules = () => {
       const j = jetons();
       return {
@@ -388,7 +392,19 @@ const surfaceEnveloppe = () => {
       }
     } else {
       if (budgetEpuise()) return suspendre("p0");
-      niveaux = await sonderUneFois();
+      const sonde = await sonderUneFois();
+      niveaux = sonde.niveaux;
+      // ── LE COUT DES SONDES ENTRE DANS LA COMPTABILITE (trou n°1 du
+      // premier tir reel). Les sondes acceptees ont un usage ; il rejoint
+      // les jetons de la tranche, et leur cout s'ajoute au cumul.
+      if (sonde.fraiche) {
+        for (const n of niveaux) {
+          if (n.usage !== null && n.usage !== undefined) {
+            usage.push(n.usage);
+            coutSondeTranche += adaptateur.coutUsd(adaptateur.lireUsage(n.usage));
+          }
+        }
+      }
     }
 
     // ── P0 : comprendre AVANT d'emettre — saute si l'etat porte deja le
