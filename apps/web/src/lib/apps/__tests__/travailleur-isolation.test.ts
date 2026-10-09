@@ -1,0 +1,138 @@
+/**
+ * CLIQUETS — LE TRAVAILLEUR NE PEUT PAS TOUCHER LA VRAIE TABLE DEPUIS UN TEST.
+ *
+ * Regle du proprietaire, posee avant toute ligne : une seule base — la
+ * prod — et AUCUN risque qu'une purge ratee, un WHERE trop large ou le cron
+ * balayeur touche une vraie ligne pendant les tests. L'isolation est tenue
+ * par IMPOSSIBILITE MECANIQUE, et ces cliquets verifient chaque verrou.
+ *
+ * NOTE D'EXEMPTION : ce fichier est le SEUL code de test autorise a ecrire
+ * les deux sequences interdites (le nom nu de la vraie table, et l'option
+ * de production) — précisement parce qu'il teste leurs verrous.
+ */
+import { readFileSync, readdirSync, statSync } from 'node:fs'
+import { join } from 'node:path'
+import { describe, expect, it } from 'vitest'
+import { creerTravailleur, type BaseGeneration, type MoteurContinuation } from '../travailleur'
+import { sqlPour, SQL_TABLE, SQL_TABLE_TEST } from '../journal'
+import { sansCommentaires } from './sans-commentaires'
+
+const RACINE = join(process.cwd(), '..', '..')
+const bidon = {
+  base: { from: () => ({}) } as unknown as BaseGeneration,
+  moteur: { poursuivreEmission: async () => ({ fini: true }) } as unknown as MoteurContinuation,
+  budgetTrancheMs: 1,
+  battementPerimeMs: 1000,
+}
+const NOM_PROD = ['app', 'generations'].join('_') // jamais ecrit nu, meme ici
+const OPTION_PROD = ['production', 'true'].join(': ')
+
+describe('CLIQUET — la fabrique refuse tout ce qui n est pas une table de test', () => {
+  it('le nom de la vraie table est REFUSE sans l option de production', () => {
+    expect(() => creerTravailleur({ table: NOM_PROD, ...bidon })).toThrowError(
+      /TRAVAILLEUR_TABLE_NON_TEST/u,
+    )
+  })
+
+  it('une table absente ou vide est refusee — aucun defaut silencieux', () => {
+    expect(() => creerTravailleur({ table: '', ...bidon })).toThrowError(/TABLE_REQUISE/u)
+    // @ts-expect-error — l'absence du champ est exactement ce qu'on teste
+    expect(() => creerTravailleur({ ...bidon })).toThrowError(/TABLE_REQUISE/u)
+  })
+
+  it('la jumelle passe, et le chemin de production existe mais doit se DIRE', () => {
+    expect(() => creerTravailleur({ table: `${NOM_PROD}_test`, ...bidon })).not.toThrow()
+    expect(() =>
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+      creerTravailleur({ table: NOM_PROD, ...bidon, ...JSON.parse('{"production": true}') }),
+    ).not.toThrow()
+  })
+})
+
+describe('CLIQUET — le module travailleur est aveugle a la base', () => {
+  const SRC = sansCommentaires(
+    readFileSync(join(RACINE, 'apps/web/src/lib/apps/travailleur.ts'), 'utf8'),
+  )
+
+  it('aucun nom de table, aucun import de base, aucun appel sortant', () => {
+    expect(SRC).not.toContain(NOM_PROD)
+    expect(SRC).not.toMatch(/supabase/iu)
+    // Pas d'auto-appel a cet etage : le cron est le porteur, et il n'existe
+    // meme pas encore de route. Structurel, pas promis.
+    expect(SRC).not.toMatch(/fetch\(|https?:/u)
+  })
+})
+
+describe('CLIQUET — personne d autre ne peut ecrire les sequences interdites', () => {
+  // Balayage RECURSIF de tout le code de test et de preuve du depot
+  // concerne : lib/apps entier + les harnais de benchmarks. Le nom nu et
+  // l'option de production n'ont le droit d'exister que dans ce fichier,
+  // dans la source unique du SQL, et (plus tard) dans la route de
+  // production.
+  const AUTORISES_NOM = new Set([
+    'apps/web/src/lib/apps/journal.ts', // la source unique du DDL
+    'apps/web/src/lib/apps/__tests__/journal.test.ts', // ses cliquets
+    'apps/web/src/lib/apps/__tests__/travailleur-isolation.test.ts', // celui-ci
+  ])
+  const AUTORISES_OPTION = new Set([
+    'apps/web/src/lib/apps/__tests__/travailleur-isolation.test.ts',
+  ])
+
+  const fichiers = (dossier: string): string[] =>
+    readdirSync(dossier).flatMap((n) => {
+      const chemin = join(dossier, n)
+      if (statSync(chemin).isDirectory()) return n === 'node_modules' ? [] : fichiers(chemin)
+      return /\.(ts|tsx|mts|mjs)$/u.test(n) ? [chemin] : []
+    })
+
+  const concernes = [
+    ...fichiers(join(RACINE, 'apps/web/src/lib/apps')),
+    ...fichiers(join(RACINE, 'benchmarks/air-emission')).filter((f) =>
+      /travailleur|jumelle/u.test(f),
+    ),
+  ]
+
+  it('le nom nu de la vraie table ne vit que dans la source du SQL et ses cliquets', () => {
+    const motif = new RegExp(`${NOM_PROD}(?!_test)`, 'u')
+    for (const f of concernes) {
+      const rel = f.slice(RACINE.length + 1)
+      if (AUTORISES_NOM.has(rel)) continue
+      expect(sansCommentaires(readFileSync(f, 'utf8'))).not.toMatch(motif)
+    }
+  })
+
+  it('l option de production ne vit nulle part — pas meme la route, qui n existe pas encore', () => {
+    for (const f of concernes) {
+      const rel = f.slice(RACINE.length + 1)
+      if (AUTORISES_OPTION.has(rel)) continue
+      expect(sansCommentaires(readFileSync(f, 'utf8')), rel).not.toContain(OPTION_PROD)
+    }
+  })
+})
+
+describe('CLIQUET — la jumelle est identique a la vraie PAR CONSTRUCTION', () => {
+  it('les deux sorties de sqlPour ne different que par le nom', () => {
+    expect(SQL_TABLE_TEST.replaceAll(`${NOM_PROD}_test`, NOM_PROD)).toBe(SQL_TABLE)
+  })
+
+  it('contraintes et index portent des noms DISTINCTS — la collision est impossible', () => {
+    for (const suffixe of [
+      'statut_valide',
+      'livree_a_document',
+      'en_cours_verrouillee',
+      'created_idx',
+      'ouvertes_idx',
+    ]) {
+      expect(SQL_TABLE).toContain(`${NOM_PROD}_${suffixe}`)
+      expect(SQL_TABLE_TEST).toContain(`${NOM_PROD}_test_${suffixe}`)
+    }
+    // Et le SQL de la jumelle ne mentionne JAMAIS la vraie table : poser la
+    // jumelle ne peut pas toucher l'autre, meme par un copier-coller rate.
+    expect(SQL_TABLE_TEST).not.toMatch(new RegExp(`${NOM_PROD}(?!_test)`, 'u'))
+  })
+
+  it('un nom de table injecte est refuse — le DDL ne se fabrique pas depuis du texte libre', () => {
+    expect(() => sqlPour('app; drop table sites')).toThrowError(/nom de table invalide/u)
+    expect(() => sqlPour('Majuscule')).toThrowError(/nom de table invalide/u)
+  })
+})

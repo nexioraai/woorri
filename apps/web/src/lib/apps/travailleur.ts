@@ -1,0 +1,370 @@
+/**
+ * LE TRAVAILLEUR — etage 3 du plan asynchrone (forme validee le 2026-10-08).
+ *
+ * ── CE QU'IL EST : UN BALAYEUR SANS MEMOIRE.
+ *
+ * Chaque invocation de `tourner` fait la meme chose, qu'elle vienne du cron
+ * ou (plus tard) d'un auto-appel : saisir UNE ligne par compare-and-set,
+ * travailler dans un budget temps via `poursuivreEmission`, consigner l'etat
+ * en base, lacher. Rien ne vit entre deux invocations ailleurs que dans la
+ * table. Supprimez tout declencheur sauf le cron : le systeme reste correct,
+ * juste plus lent — c'est la condition posee par le proprietaire.
+ *
+ * ── LE VERROU, EN DEUX MOITIES.
+ *
+ * LA SAISIE est un unique `UPDATE … WHERE id = X AND statut = 'en_attente'`
+ * (ou battement perime) qui pose d'un meme geste statut, battement et JETON.
+ * Un UPDATE mono-instruction est atomique au niveau ligne : si deux
+ * invocations visent la meme ligne, un seul WHERE matche, l'autre recoit
+ * zero ligne et s'en va.
+ *
+ * LE JETON DE CLOTURE (fencing) : un travailleur declare mort peut se
+ * reveiller apres qu'un autre a repris sa ligne. CHAQUE ecriture porte donc
+ * `WHERE jeton_travailleur = <le mien>` — le ressuscite touche zero ligne,
+ * comprend qu'il est depossede, et s'arrete AVANT son prochain appel payant.
+ *
+ * ── L'ISOLATION, PAR IMPOSSIBILITE MECANIQUE.
+ *
+ * `table` est OBLIGATOIRE et sans defaut ; tout nom qui ne finit pas par
+ * `_test` est REFUSE sauf `production: true` explicite — et un cliquet
+ * interdit `production: true` hors du futur fichier de route. Ce module ne
+ * contient AUCUN nom de table, AUCUN import de base : tout est injecte.
+ * A cet etage, aucune route HTTP n'existe : rien en production ne peut
+ * invoquer ce code.
+ *
+ * ── LES ECRITURES NE SONT JAMAIS AVALEES.
+ *
+ * Le journal de l'etage 1 OBSERVE et avale ses erreurs ; le travailleur
+ * AGIT — un point de reprise perdu, c'est de l'argent dont l'etat est perdu.
+ * Chaque ecriture est attendue et verifiee : echec → UNE reprise d'ecriture,
+ * puis abandon de tranche en laissant la ligne reprenable (battement
+ * perimera). Rien d'avale.
+ */
+import { randomUUID } from 'node:crypto'
+
+type Lignes = { data: Record<string, unknown>[] | null; error: { message: string } | null }
+
+/** La surface Supabase dont le travailleur a besoin — injectee, jamais importee. */
+export type BaseGeneration = {
+  from: (table: string) => {
+    select: (colonnes: string) => unknown
+    insert: (ligne: Record<string, unknown>) => unknown
+    update: (champs: Record<string, unknown>) => unknown
+  }
+}
+
+export type MoteurContinuation = {
+  poursuivreEmission: (o: {
+    brief: string
+    slug: string
+    etat: unknown
+    budgetMs: number
+  }) => Promise<{
+    fini: boolean
+    resultat?: {
+      ok: boolean
+      document?: unknown
+      diagnostics: { code?: string }[]
+      tirages: unknown[]
+      coutUsd: number
+      jetons: { entree: number; sortie: number }
+      niveaux?: unknown
+      raison?: string
+    }
+    etat?: {
+      acquis: Record<string, unknown>
+      tirages: unknown[]
+      niveaux: unknown
+      coutUsd: number
+      jetons: { entree: number; sortie: number }
+    } & Record<string, unknown>
+    etape?: string
+  }>
+}
+
+export type RapportTranche = {
+  readonly id: string | null
+  readonly issue: 'livree' | 'refusee' | 'suspendu' | 'rien' | 'depossede' | 'erreur'
+  readonly etape?: string
+  readonly detail?: string
+}
+
+export function creerTravailleur({
+  table,
+  base,
+  moteur,
+  budgetTrancheMs,
+  battementPerimeMs,
+  battementRafraichiMs,
+  production = false,
+}: {
+  table: string
+  base: BaseGeneration
+  moteur: MoteurContinuation
+  budgetTrancheMs: number
+  battementPerimeMs: number
+  /** Defaut : un tiers de la peremption — trois battements manques avant
+   *  qu'un autre puisse saisir. */
+  battementRafraichiMs?: number
+  production?: boolean
+}) {
+  // ── LE REFUS QUI REND L'ISOLATION MECANIQUE. Le code de test ne PEUT pas
+  // viser la vraie table : il faudrait ecrire `production: true`, et un
+  // cliquet l'interdit hors du fichier de route de production.
+  if (typeof table !== 'string' || table === '') {
+    throw new Error('TRAVAILLEUR_TABLE_REQUISE')
+  }
+  if (!table.endsWith('_test') && production !== true) {
+    throw new Error(
+      `TRAVAILLEUR_TABLE_NON_TEST: « ${table} » — seul le chemin de production declare l'option dediee`,
+    )
+  }
+  const rafraichi = battementRafraichiMs ?? Math.max(1, Math.floor(battementPerimeMs / 3))
+
+  // Les requetes passent par la surface injectee ; le `any` de PostgREST est
+  // confine ici, derriere des aides qui rendent des formes nettes.
+  /* eslint-disable @typescript-eslint/no-explicit-any */
+  const t = () => base.from(table) as any
+
+  /** Une ecriture VERIFIEE : une reprise, puis l'echec se dit. */
+  const ecrire = async (fabrique: () => PromiseLike<Lignes>): Promise<Lignes> => {
+    let r = await fabrique()
+    if (r.error !== null) r = await fabrique()
+    return r
+  }
+
+  /** Depose une demande — une ligne `en_attente`, demande COMPLETE. */
+  async function deposer({
+    demande,
+    nom,
+    email,
+  }: {
+    demande: string
+    nom: string
+    email: string | null
+  }): Promise<string> {
+    const r = (await t()
+      .insert({
+        statut: 'en_attente',
+        demande, // JAMAIS tronquee : c'est l'ENTREE du travail, pas un affichage
+        nom,
+        owner_email: email,
+        ok: false,
+      })
+      .select('id')) as Lignes
+    if (r.error !== null || r.data === null || r.data.length !== 1) {
+      throw new Error(`TRAVAILLEUR_DEPOT_REFUSE: ${r.error?.message ?? 'aucune ligne rendue'}`)
+    }
+    return String(r.data[0].id)
+  }
+
+  /** LA SAISIE — compare-and-set, deux tentatives : en attente, puis perimee. */
+  async function saisir(jeton: string): Promise<Record<string, unknown> | null> {
+    const maintenant = new Date().toISOString()
+    // ① La plus ancienne ligne en attente.
+    const attente = (await t()
+      .select('id')
+      .eq('statut', 'en_attente')
+      .order('created_at', { ascending: true })
+      .limit(1)) as Lignes
+    const candidate = attente.data?.[0]?.id
+    if (candidate !== undefined) {
+      const prise = (await t()
+        .update({ statut: 'en_cours', battement: maintenant, jeton_travailleur: jeton })
+        .eq('id', candidate)
+        .eq('statut', 'en_attente') // la condition et l'ecriture sont la MEME instruction
+        .select('*')) as Lignes
+      if (prise.data !== null && prise.data.length === 1) return prise.data[0]
+    }
+    // ② Sinon, une ligne en cours dont le coeur a cesse de battre.
+    const seuil = new Date(Date.now() - battementPerimeMs).toISOString()
+    const mortes = (await t()
+      .select('id')
+      .eq('statut', 'en_cours')
+      .lt('battement', seuil)
+      .order('battement', { ascending: true })
+      .limit(1)) as Lignes
+    const morte = mortes.data?.[0]?.id
+    if (morte !== undefined) {
+      const prise = (await t()
+        .update({ statut: 'en_cours', battement: maintenant, jeton_travailleur: jeton })
+        .eq('id', morte)
+        .eq('statut', 'en_cours')
+        .lt('battement', seuil) // le CAS re-verifie la peremption DANS l'UPDATE
+        .select('*')) as Lignes
+      if (prise.data !== null && prise.data.length === 1) return prise.data[0]
+    }
+    return null
+  }
+
+  /** Une tranche sur UNE ligne saisie. */
+  async function travailler(ligne: Record<string, unknown>, jeton: string): Promise<RapportTranche> {
+    const id = String(ligne.id)
+    const brutEtat = ligne.sections_acquises
+    const etat =
+      brutEtat !== null && typeof brutEtat === 'object' && Object.keys(brutEtat).length > 0
+        ? brutEtat
+        : null
+
+    // ── LE COEUR BAT PENDANT LA TRANCHE, garde par le jeton. S'il cesse de
+    // toucher une ligne, un autre nous a depossede : on le note, et la
+    // prochaine ecriture — AVANT tout appel payant suivant — s'arretera.
+    let depossede = false
+    const minuterie = setInterval(() => {
+      void (async () => {
+        const b = (await t()
+          .update({ battement: new Date().toISOString() })
+          .eq('id', id)
+          .eq('jeton_travailleur', jeton)
+          .select('id')) as Lignes
+        if (b.data === null || b.data.length === 0) depossede = true
+      })()
+    }, rafraichi)
+
+    try {
+      const r = await moteur.poursuivreEmission({
+        brief: String(ligne.demande),
+        slug: `gen-${id.slice(0, 8)}`,
+        etat,
+        budgetMs: budgetTrancheMs,
+      })
+      if (depossede) return { id, issue: 'depossede' }
+
+      if (!r.fini) {
+        const e = r.etat as NonNullable<typeof r.etat>
+        // ── LA SUSPENSION RELACHE LE VERROU, et V3 l'a exige : ma premiere
+        // version laissait la ligne `en_cours` avec un battement FRAIS — le
+        // balayeur suivant n'avait donc rien a saisir, et chaque tranche
+        // aurait attendu la peremption entiere (dix minutes en production)
+        // avant la suivante. Mesure sur la jumelle : « suspendu → rien »,
+        // ligne figee `en_cours`.
+        //
+        // La semantique juste : le verrou n'est tenu QUE pendant une tranche.
+        // `en_cours` = un travailleur y est EN CE MOMENT ; suspendu = la
+        // ligne redevient `en_attente`, acquis conserves, saisissable par le
+        // tick suivant. `en_cours` au battement perime ne reste que pour les
+        // travailleurs MORTS en pleine tranche.
+        const ecrit = await ecrire(
+          () =>
+            t()
+              .update({
+                statut: 'en_attente',
+                battement: null,
+                jeton_travailleur: null,
+                sections_acquises: e,
+                etape: r.etape ?? null,
+                cout_usd: e.coutUsd,
+                jetons_entree: e.jetons.entree,
+                jetons_sortie: e.jetons.sortie,
+                tirages: e.tirages.length,
+                niveaux_sondes: e.niveaux ?? null,
+              })
+              .eq('id', id)
+              .eq('jeton_travailleur', jeton)
+              .select('id') as PromiseLike<Lignes>,
+        )
+        if (ecrit.error !== null) return { id, issue: 'erreur', detail: ecrit.error.message }
+        if (ecrit.data === null || ecrit.data.length === 0) return { id, issue: 'depossede' }
+        return { id, issue: 'suspendu', etape: r.etape }
+      }
+
+      const res = r.resultat as NonNullable<typeof r.resultat>
+      const final = res.ok
+        ? {
+            statut: 'livree',
+            ok: true,
+            document: res.document,
+            etape: null,
+          }
+        : {
+            statut: 'refusee',
+            ok: false,
+            document: null,
+            etape: null,
+          }
+      const ecrit = await ecrire(
+        () =>
+          t()
+            .update({
+              ...final,
+              diagnostics: res.diagnostics.map((d) => d.code ?? '?'),
+              cout_usd: res.coutUsd,
+              jetons_entree: res.jetons.entree,
+              jetons_sortie: res.jetons.sortie,
+              tirages: res.tirages.length,
+              niveaux_sondes: res.niveaux ?? null,
+              duree_ms: Date.now() - new Date(String(ligne.created_at)).getTime(),
+            })
+            .eq('id', id)
+            .eq('jeton_travailleur', jeton)
+            .select('id') as PromiseLike<Lignes>,
+      )
+      if (ecrit.error !== null) return { id, issue: 'erreur', detail: ecrit.error.message }
+      if (ecrit.data === null || ecrit.data.length === 0) return { id, issue: 'depossede' }
+      return { id, issue: res.ok ? 'livree' : 'refusee' }
+    } catch (e: unknown) {
+      if (depossede) return { id, issue: 'depossede' }
+      // ── ECHEC EN PLEINE TRANCHE. Le partiel voyage avec l'erreur (D-103) ;
+      // il est replie dans l'etat, et la ligne redevient saisissable TOUT DE
+      // SUITE (`en_attente`) plutot que d'attendre la peremption. Trois
+      // echecs → refusee, en disant pourquoi.
+      const messageErreur = e instanceof Error ? e.message : String(e)
+      const partiel = (e as { assemblagePartiel?: Record<string, unknown> }).assemblagePartiel
+      const avant = (etat ?? {}) as Record<string, unknown>
+      const acquisAvant = (avant.acquis ?? {}) as Record<string, unknown>
+      const nouvelEtat = {
+        ...avant,
+        phase: avant.phase ?? 'emission',
+        acquis: { ...acquisAvant, ...(partiel?.document ?? partiel ?? {}) },
+      }
+      const reprises = Number(ligne.reprises ?? 0) + 1
+      const champs =
+        reprises >= 3
+          ? {
+              statut: 'refusee',
+              ok: false,
+              diagnostics: [`echec repete x${String(reprises)}: ${messageErreur.slice(0, 160)}`],
+            }
+          : {
+              statut: 'en_attente',
+              battement: null,
+              jeton_travailleur: null,
+              sections_acquises: nouvelEtat,
+            }
+      const ecrit = await ecrire(
+        () =>
+          t()
+            .update({ ...champs, reprises })
+            .eq('id', id)
+            .eq('jeton_travailleur', jeton)
+            .select('id') as PromiseLike<Lignes>,
+      )
+      if (ecrit.data === null || ecrit.data.length === 0) return { id, issue: 'depossede' }
+      return {
+        id,
+        issue: reprises >= 3 ? 'refusee' : 'erreur',
+        detail: messageErreur.slice(0, 200),
+      }
+    } finally {
+      clearInterval(minuterie)
+    }
+  }
+
+  /** Une invocation de balayeur : au plus `maxLignes` tranches. */
+  async function tourner({ maxLignes = 1 }: { maxLignes?: number } = {}): Promise<RapportTranche[]> {
+    const rapports: RapportTranche[] = []
+    for (let i = 0; i < maxLignes; i++) {
+      const jeton = randomUUID()
+      const ligne = await saisir(jeton)
+      if (ligne === null) {
+        rapports.push({ id: null, issue: 'rien' })
+        break
+      }
+      rapports.push(await travailler(ligne, jeton))
+    }
+    return rapports
+  }
+  /* eslint-enable @typescript-eslint/no-explicit-any */
+
+  return { deposer, tourner }
+}

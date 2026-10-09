@@ -108,9 +108,34 @@ export async function journaliser(l: LigneGeneration): Promise<void> {
  * `journaliser` ecrit. Une colonne ajoutee au code sans l'etre ici — ou
  * l'inverse — fait echouer le test au lieu d'echouer en silence en ligne.
  */
-export const SQL_TABLE = `
+/**
+ * LE DDL POUR UN NOM DE TABLE DONNE — une seule source, deux tables.
+ *
+ * ── POURQUOI UNE FONCTION ET PLUS UNE CONSTANTE.
+ *
+ * L'etage travailleur s'eprouve contre une TABLE JUMELLE
+ * (`app_generations_test`) : il n'existe aucune base de developpement, et le
+ * proprietaire exige qu'aucun code de test ne puisse ecrire la vraie table.
+ * Deux scripts ecrits a la main divergeraient — c'est la lecon constatee
+ * quatre fois dans ce depot. Ici le nom est un parametre : la jumelle est
+ * identique PAR CONSTRUCTION, et un cliquet verifie que les deux sorties ne
+ * different que par le nom.
+ *
+ * ── LES NOMS DE CONTRAINTES ET D'INDEX SUIVENT LE NOM DE LA TABLE.
+ *
+ * Postgres exige leur unicite dans le schema : deux tables ne peuvent pas
+ * partager `..._statut_valide`. Chaque nom derive donc du parametre — la
+ * collision est impossible par construction, pas par relecture.
+ */
+export function sqlPour(nom: string): string {
+  // Fail-closed : ce nom entre dans du DDL. Il vient de nos deux constantes,
+  // mais une garde vaut mieux qu'une confiance.
+  if (!/^[a-z][a-z0-9_]*$/.test(nom)) {
+    throw new Error(`nom de table invalide : ${nom}`)
+  }
+  return `
 -- ════════════════════════════════════════════════════════════════════
--- app_generations — etage 1 de la generation asynchrone (2026-10-08)
+-- ${nom} — schema de la generation asynchrone (2026-10-08)
 -- Rejouable a l'identique : chaque instruction est un no-op au 2e passage.
 -- Mesure avant redaction : table ABSENTE de la base, 0 ligne touchee par
 -- l'UPDATE de retro-remplissage. Le bloc ALTER n'existe que pour le monde
@@ -118,7 +143,7 @@ export const SQL_TABLE = `
 -- ai_usage_log n'apparait nulle part ici.
 -- ════════════════════════════════════════════════════════════════════
 
-create table if not exists public.app_generations (
+create table if not exists public.${nom} (
   id                uuid primary key default gen_random_uuid(),
   created_at        timestamptz not null default now(),
   owner_email       text,
@@ -143,29 +168,29 @@ create table if not exists public.app_generations (
 );
 
 -- Base deja posee (ancienne forme a 12 colonnes) : complement idempotent.
-alter table public.app_generations add column if not exists statut            text;
-alter table public.app_generations add column if not exists etape             text;
-alter table public.app_generations add column if not exists sections_acquises jsonb not null default '{}'::jsonb;
-alter table public.app_generations add column if not exists niveaux_sondes    jsonb;
-alter table public.app_generations add column if not exists document          jsonb;
-alter table public.app_generations add column if not exists battement         timestamptz;
-alter table public.app_generations add column if not exists jeton_travailleur uuid;
-alter table public.app_generations add column if not exists reprises          integer not null default 0;
-alter table public.app_generations alter column ok set default false;
+alter table public.${nom} add column if not exists statut            text;
+alter table public.${nom} add column if not exists etape             text;
+alter table public.${nom} add column if not exists sections_acquises jsonb not null default '{}'::jsonb;
+alter table public.${nom} add column if not exists niveaux_sondes    jsonb;
+alter table public.${nom} add column if not exists document          jsonb;
+alter table public.${nom} add column if not exists battement         timestamptz;
+alter table public.${nom} add column if not exists jeton_travailleur uuid;
+alter table public.${nom} add column if not exists reprises          integer not null default 0;
+alter table public.${nom} alter column ok set default false;
 
 -- Les lignes du journal synchrone sont des generations TERMINEES : leur
 -- statut se DEDUIT de « ok », il n'est pas invente. Zero ligne au rejeu.
-update public.app_generations
+update public.${nom}
    set statut = case when ok then 'livree' else 'refusee' end
  where statut is null;
 
-alter table public.app_generations alter column statut set not null;
-alter table public.app_generations alter column statut set default 'en_attente';
+alter table public.${nom} alter column statut set not null;
+alter table public.${nom} alter column statut set default 'en_attente';
 
 -- ── Trois invariants par CONTRAINTE, pas par discipline de code.
 do $$ begin
-  alter table public.app_generations
-    add constraint app_generations_statut_valide
+  alter table public.${nom}
+    add constraint ${nom}_statut_valide
     check (statut in ('en_attente', 'en_cours', 'livree', 'refusee'));
 exception when duplicate_object then null; end $$;
 
@@ -174,8 +199,8 @@ exception when duplicate_object then null; end $$;
 -- CETTE contrainte ferait echouer ses insertions, en silence puisque le
 -- journal avale ses erreurs.
 do $$ begin
-  alter table public.app_generations
-    add constraint app_generations_livree_a_document
+  alter table public.${nom}
+    add constraint ${nom}_livree_a_document
     check (statut <> 'livree' or document is not null);
 exception when duplicate_object then null; end $$;
 
@@ -183,21 +208,35 @@ exception when duplicate_object then null; end $$;
 -- sans detenir le verrou — la preuve que toute saisie passe par le
 -- compare-and-set complet.
 do $$ begin
-  alter table public.app_generations
-    add constraint app_generations_en_cours_verrouillee
+  alter table public.${nom}
+    add constraint ${nom}_en_cours_verrouillee
     check (statut <> 'en_cours' or (battement is not null and jeton_travailleur is not null));
 exception when duplicate_object then null; end $$;
 
 -- ── Acces : ceux du lot d'origine, reaffirmes (no-ops si deja poses).
-alter table public.app_generations enable row level security;
-revoke all on public.app_generations from anon, authenticated;
+alter table public.${nom} enable row level security;
+revoke all on public.${nom} from anon, authenticated;
 
 -- ── Index.
-create index if not exists app_generations_created_idx
-  on public.app_generations (created_at desc);
+create index if not exists ${nom}_created_idx
+  on public.${nom} (created_at desc);
 -- Le balayeur ne regarde QUE le travail ouvert : index partiel, pour que la
 -- minute du cron ne coute rien quand la table aura grossi.
-create index if not exists app_generations_ouvertes_idx
-  on public.app_generations (created_at)
+create index if not exists ${nom}_ouvertes_idx
+  on public.${nom} (created_at)
   where statut in ('en_attente', 'en_cours');
 `
+}
+
+/** La table de production — strictement le script de l'etage 1. */
+export const SQL_TABLE = sqlPour('app_generations')
+
+/**
+ * LA JUMELLE DE TEST — meme schema, autre nom, par la meme source.
+ *
+ * C'est contre ELLE, et elle seule, que le verrou (CAS + jeton de cloture)
+ * et le travailleur a blanc s'eprouvent. La vraie table n'est jamais ecrite
+ * par du code de test — regle du proprietaire, tenue par les cliquets
+ * d'isolation du travailleur.
+ */
+export const SQL_TABLE_TEST = sqlPour('app_generations_test')
