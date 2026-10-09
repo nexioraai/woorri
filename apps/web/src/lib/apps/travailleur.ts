@@ -101,6 +101,7 @@ export function creerTravailleur({
   battementPerimeMs,
   battementRafraichiMs,
   production = false,
+  perimetre,
 }: {
   table: string
   base: BaseGeneration
@@ -111,6 +112,13 @@ export function creerTravailleur({
    *  qu'un autre puisse saisir. */
   battementRafraichiMs?: number
   production?: boolean
+  /** Restreint le BALAYAGE aux lignes d'UN proprietaire (`owner_email`) ou
+   *  d'UNE ligne (id exact). Lecon du 2026-10-09 : la purge n'etait pas le
+   *  seul chemin de destruction — un balayeur de harnais saisissait la plus
+   *  ancienne `en_attente` QUELLE QU'ELLE SOIT, et un moteur scripte aurait
+   *  ECRASE une ligne payee garee, par UPDATE legal. Un harnais declare son
+   *  perimetre ; la production, elle, balaie tout : option absente. */
+  perimetre?: { proprietaire?: string; ligne?: string }
 }) {
   // ── LE REFUS QUI REND L'ISOLATION MECANIQUE. Le code de test ne PEUT pas
   // viser la vraie table : il faudrait ecrire `production: true`, et un
@@ -129,6 +137,15 @@ export function creerTravailleur({
   // confine ici, derriere des aides qui rendent des formes nettes.
   /* eslint-disable @typescript-eslint/no-explicit-any */
   const t = () => base.from(table) as any
+
+  /** Le perimetre s'applique aux DEUX selections de candidates — la saisie
+   *  (CAS) vise ensuite un id exact, deja filtre ici. */
+  const restreindre = (q: any): any => {
+    let r = q
+    if (perimetre?.proprietaire !== undefined) r = r.eq('owner_email', perimetre.proprietaire)
+    if (perimetre?.ligne !== undefined) r = r.eq('id', perimetre.ligne)
+    return r
+  }
 
   /** Une ecriture VERIFIEE : une reprise, puis l'echec se dit. */
   const ecrire = async (fabrique: () => PromiseLike<Lignes>): Promise<Lignes> => {
@@ -166,9 +183,7 @@ export function creerTravailleur({
   async function saisir(jeton: string): Promise<Record<string, unknown> | null> {
     const maintenant = new Date().toISOString()
     // ① La plus ancienne ligne en attente.
-    const attente = (await t()
-      .select('id')
-      .eq('statut', 'en_attente')
+    const attente = (await restreindre(t().select('id').eq('statut', 'en_attente'))
       .order('created_at', { ascending: true })
       .limit(1)) as Lignes
     const candidate = attente.data?.[0]?.id
@@ -182,9 +197,7 @@ export function creerTravailleur({
     }
     // ② Sinon, une ligne en cours dont le coeur a cesse de battre.
     const seuil = new Date(Date.now() - battementPerimeMs).toISOString()
-    const mortes = (await t()
-      .select('id')
-      .eq('statut', 'en_cours')
+    const mortes = (await restreindre(t().select('id').eq('statut', 'en_cours'))
       .lt('battement', seuil)
       .order('battement', { ascending: true })
       .limit(1)) as Lignes

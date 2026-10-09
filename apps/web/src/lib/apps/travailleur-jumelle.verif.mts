@@ -1,5 +1,11 @@
 /**
- * V1–V6 — LE TRAVAILLEUR CONTRE LA JUMELLE. Manuel, hors CI.
+ * V1–V9 — LE TRAVAILLEUR CONTRE LA JUMELLE. Manuel, hors CI.
+ *
+ * ── LE BANC NE POSSEDE QUE SES LIGNES (lecon du 2026-10-09, ~6,9 $) :
+ * toute ligne creee ici porte EMAIL_BANC, la purge ne connait que ce
+ * filtre, chaque balayeur est a perimetre — et un TEMOIN etranger au
+ * banc, pose en premier (donc le plus ancien), est verifie INTACT en fin
+ * de batterie : il alarme sur la purge sauvage ET le balayage non filtre.
  *
  *   npx tsx apps/web/src/lib/apps/travailleur-jumelle.verif.mts
  *
@@ -19,6 +25,8 @@ import { fileURLToPath } from 'node:url'
 import { createClient } from '@supabase/supabase-js'
 import { creerTravailleur, type MoteurContinuation } from './travailleur.ts'
 import { SQL_TABLE_TEST } from './journal.ts'
+import { purgerBanc, poserTemoin, verifierTemoin, EMAIL_BANC } from './banc-jumelle.ts'
+import { sauverEtatLocal, chargerPourResurrection } from './etat-local.ts'
 
 const ICI = dirname(fileURLToPath(import.meta.url))
 const RACINE = join(ICI, '..', '..', '..', '..', '..')
@@ -38,7 +46,7 @@ const verifie = (nom: string, condition: boolean, detail = ''): void => {
   echecs += 1
 }
 const dormir = (ms: number) => new Promise((r) => setTimeout(r, ms))
-const purger = async () => { await base.from(JUMELLE).delete().not('id', 'is', null) }
+const purger = async () => { await purgerBanc(base, JUMELLE) }
 const lire = async (id: string) =>
   (await base.from(JUMELLE).select('*').eq('id', id).single()).data as Record<string, unknown>
 
@@ -53,6 +61,9 @@ const lire = async (id: string) =>
     process.exit(2)
   }
 }
+// Le temoin D'ABORD : plus ancien que toute ligne du banc, il est la
+// premiere cible de tout balayage non filtre — l'alarme est maximale.
+await poserTemoin(base, JUMELLE)
 await purger()
 
 /** Un moteur scripte et controlable — pour V1/V2/V5, le vrai n'apporte rien. */
@@ -89,9 +100,10 @@ console.log('— V1 : compare-and-set —')
     creerTravailleur({
       table: JUMELLE, base, moteur: moteurScripte({ dureeMs: 120, appels }),
       budgetTrancheMs: 10_000, battementPerimeMs: 60_000,
+      perimetre: { proprietaire: EMAIL_BANC },
     })
   const a = fabrique()
-  await a.deposer({ demande: 'v1', nom: 'v1', email: null })
+  await a.deposer({ demande: 'v1', nom: 'v1', email: EMAIL_BANC })
   const [ra, rb] = await Promise.all([a.tourner(), fabrique().tourner()])
   const issues = [ra[0].issue, rb[0].issue].sort()
   verifie('V1 une saisie gagne, l autre repart les mains vides',
@@ -113,12 +125,14 @@ console.log('— V2 : fencing —')
     budgetTrancheMs: 10_000,
     battementPerimeMs: 400,
     battementRafraichiMs: 3_600_000, // A ne rafraichit JAMAIS : il doit perimer
+    perimetre: { proprietaire: EMAIL_BANC },
   })
   const B = creerTravailleur({
     table: JUMELLE, base, moteur: moteurScripte({ appels: appelsB }),
     budgetTrancheMs: 10_000, battementPerimeMs: 400,
+    perimetre: { proprietaire: EMAIL_BANC },
   })
-  const id = await A.deposer({ demande: 'v2', nom: 'v2', email: null })
+  const id = await A.deposer({ demande: 'v2', nom: 'v2', email: EMAIL_BANC })
   const tourA = A.tourner() // saisit, puis traine derriere la porte
   await dormir(700) // le battement de A perime (400 ms)
   const rb = await B.tourner()
@@ -155,8 +169,9 @@ console.log('— V3 : bout en bout, moteur reel a blanc —')
   const w = creerTravailleur({
     table: JUMELLE, base, moteur: moteurParTranche,
     budgetTrancheMs: 150, battementPerimeMs: 60_000,
+    perimetre: { proprietaire: EMAIL_BANC },
   })
-  const id = await w.deposer({ demande: BRIEF, nom: 'v3', email: 'test@local' })
+  const id = await w.deposer({ demande: BRIEF, nom: 'v3', email: EMAIL_BANC })
   const issues: string[] = []
   for (let tick = 0; tick < 12; tick++) {
     const r = await w.tourner()
@@ -206,8 +221,9 @@ console.log('— V5 : echec transitoire et plafond de reprises —')
       }),
     }),
     budgetTrancheMs: 10_000, battementPerimeMs: 60_000,
+    perimetre: { proprietaire: EMAIL_BANC },
   })
-  const id = await w.deposer({ demande: 'v5', nom: 'v5', email: null })
+  const id = await w.deposer({ demande: 'v5', nom: 'v5', email: EMAIL_BANC })
   const r1 = await w.tourner()
   const apres1 = await lire(id)
   verifie('V5 echec 1 : la ligne redevient saisissable TOUT DE SUITE, acquis replie',
@@ -237,8 +253,9 @@ console.log('— V5F : erreur fatale, refus immediat —')
       jette: () => Object.assign(new Error('400 credit balance is too low'), { transitoire: false }),
     }),
     budgetTrancheMs: 10_000, battementPerimeMs: 60_000,
+    perimetre: { proprietaire: EMAIL_BANC },
   })
-  const id = await w.deposer({ demande: 'v5f', nom: 'v5f', email: null })
+  const id = await w.deposer({ demande: 'v5f', nom: 'v5f', email: EMAIL_BANC })
   const r = await w.tourner()
   const ligne = await lire(id)
   verifie('V5F refusee DES LE PREMIER echec — zero reprise brulee',
@@ -253,7 +270,7 @@ console.log('— V5F : erreur fatale, refus immediat —')
 // ════ V6 — LES CONTRAINTES DE LA BASE MORDENT sur la jumelle. ════
 console.log('— V6 : les CHECK de la base —')
 {
-  const depot = await base.from(JUMELLE).insert({ statut: 'en_attente', demande: 'v6', ok: false }).select('id')
+  const depot = await base.from(JUMELLE).insert({ statut: 'en_attente', demande: 'v6', ok: false, owner_email: EMAIL_BANC }).select('id')
   const id = String(depot.data?.[0]?.id)
   const enCoursNu = await base.from(JUMELLE).update({ statut: 'en_cours' }).eq('id', id)
   verifie('V6 `en_cours` sans battement/jeton : REFUSE par la base elle-meme',
@@ -288,8 +305,9 @@ console.log('— V7 : la raison et le detail des tirages persistent —')
       }),
     },
     budgetTrancheMs: 10_000, battementPerimeMs: 60_000,
+    perimetre: { proprietaire: EMAIL_BANC },
   })
-  const id = await w.deposer({ demande: 'v7', nom: 'v7', email: null })
+  const id = await w.deposer({ demande: 'v7', nom: 'v7', email: EMAIL_BANC })
   const r = await w.tourner()
   const ligne = await lire(id)
   verifie('V7 la ligne refusee DIT sa raison en tete des diagnostics',
@@ -302,6 +320,53 @@ console.log('— V7 : la raison et le detail des tirages persistent —')
     j.phase === 'terminee' && j.tirages?.[0]?.arret === 'P2' && j.tirages[0].diagnostics[0] === 'DERIVATION_X',
     JSON.stringify(j).slice(0, 120))
   await purger()
+}
+
+// ════ V8 — UN ETAT PAYE SURVIT A UNE PURGE : la sauvegarde locale le
+// reconstruit A L'IDENTIQUE. (Lecon 0234da42 : l'etat ne vivait QUE dans
+// la table.) ════
+console.log('— V8 : purge → reconstruction depuis /tmp —')
+{
+  const riche = {
+    owner_email: EMAIL_BANC,
+    demande: 'v8 — ligne au long etat, comme une vraie reprise',
+    nom: 'v8', statut: 'en_attente', ok: false,
+    cout_usd: 1.2345, jetons_entree: 1200, jetons_sortie: 3400,
+    diagnostics: ['BLOCK_FIELD_UNKNOWN@screens[2]', 'FORM_SANS_ACTION@screens[4]'],
+    tirages: 2, etape: 'reparation',
+    sections_acquises: {
+      phase: 'reparation', tours: 1, tentativesReparation: 1,
+      acquis: { app: { name: 'depenses' }, entities: [{ id: 'ent_depense', name: 'depense' }] },
+    },
+  }
+  const depot = await base.from(JUMELLE).insert(riche).select('id')
+  const id = String(depot.data?.[0]?.id)
+  const avant = await lire(id)
+  const chemin = sauverEtatLocal(avant)
+  await purger() // la purge du banc EMPORTE cette ligne (elle est au banc)
+  const disparue = await base.from(JUMELLE).select('id').eq('id', id)
+  verifie('V8 la purge a bien emporte la ligne — le scenario est reel',
+    (disparue.data ?? []).length === 0)
+  const charge = chargerPourResurrection(chemin)
+  const retour = await base.from(JUMELLE).insert(charge).select('id')
+  verifie('V8 la resurrection REDEPOSE la ligne (meme id) sans refus de la base',
+    retour.error === null && String(retour.data?.[0]?.id) === id,
+    retour.error?.message ?? '')
+  const apres = await lire(id)
+  verifie('V8 l etat reconstruit est IDENTIQUE : sections_acquises, cout, diagnostics',
+    JSON.stringify(apres.sections_acquises) === JSON.stringify(avant.sections_acquises) &&
+      Number(apres.cout_usd) === Number(avant.cout_usd) &&
+      JSON.stringify(apres.diagnostics) === JSON.stringify(avant.diagnostics) &&
+      apres.statut === 'en_attente' && apres.jeton_travailleur === null)
+  await purger()
+}
+
+// ════ V9 — LE TEMOIN : la ligne etrangere au banc a survecu a TOUT. ════
+console.log('— V9 : le temoin etranger au banc —')
+{
+  const t = await verifierTemoin(base, JUMELLE)
+  verifie('V9 le temoin (le plus ancien en_attente, hors banc) est INTACT apres toute la batterie — ni purge ni les balayeurs ne l ont touche',
+    t.intact, t.detail)
 }
 
 console.log(

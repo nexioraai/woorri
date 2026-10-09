@@ -11,6 +11,7 @@ import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { createClient } from '@supabase/supabase-js'
 import { creerTravailleur, type MoteurContinuation } from './travailleur.ts'
+import { sauverEtatLocal, cheminEtatLocal } from './etat-local.ts'
 
 const ICI = dirname(fileURLToPath(import.meta.url))
 const RACINE = join(ICI, '..', '..', '..', '..', '..')
@@ -39,14 +40,24 @@ const moteurParTranche: MoteurContinuation = {
 }
 const w = creerTravailleur({
   table: JUMELLE, base, moteur: moteurParTranche,
-  budgetTrancheMs: 120_000, battementPerimeMs: 600_000,
+  // LOCAL : aucune borne serverless — 600 s pour qu'un tour de reparation
+  // typique s'acheve d'un trait (120 s etait taille pour l'emission, et
+  // c'est ce qui a casse). En production, l'appariement budget ≤
+  // maxDuration − pire appel demeure.
+  budgetTrancheMs: 600_000, battementPerimeMs: 1_800_000,
+  // La reprise ne voit que SA ligne — jamais celle d'un autre tir.
+  perimetre: { ligne: ID },
 })
 
-dire(`reprise de ${ID.slice(0, 8)} — aucune nouvelle ligne déposée`)
+const avant = (await base.from(JUMELLE).select('cout_usd').eq('id', ID).single()).data as { cout_usd: number }
+const coutInitial = Number(avant.cout_usd)
+dire(`reprise de ${ID.slice(0, 8)} — aucune nouvelle ligne déposée · coût déjà investi ${coutInitial.toFixed(4)} $ · filet +3 $`)
+dire(`sauvegarde continue de l'état : ${cheminEtatLocal(ID)}`)
 const depart = Date.now()
 for (let tick = 1; tick <= 25; tick++) {
   const r = (await w.tourner())[0]
   const ligne = (await base.from(JUMELLE).select('*').eq('id', ID).single()).data as Record<string, unknown>
+  sauverEtatLocal(ligne) // l'etat paye a TOUJOURS une copie hors base
   const etape = String(r.etape ?? ligne.etape ?? '—')
   dire(
     `tranche ${String(tick).padStart(2)} · ${String(Math.round((Date.now() - depart) / 1000)).padStart(4)} s · ` +
@@ -56,10 +67,14 @@ for (let tick = 1; tick <= 25; tick++) {
   )
   if (etape === 'p0') { dire('⛔ ARRÊT — la reprise est repartie à P0 : la continuation a échoué, on repayerait l’acquis'); break }
   if (r.issue === 'livree' || r.issue === 'refusee' || r.issue === 'rien') break
-  if (Number(ligne.cout_usd) > 6) { dire('⛔ GARDE-FOU 6 $'); break }
+  if (Number(ligne.cout_usd) - coutInitial > 3) {
+    dire(`⛔ GARDE-FOU : +${(Number(ligne.cout_usd) - coutInitial).toFixed(2)} $ sur cette reprise (> 3 $ incremental) — etat conserve`)
+    break
+  }
 }
 
 const fin = (await base.from(JUMELLE).select('*').eq('id', ID).single()).data as Record<string, unknown>
+sauverEtatLocal(fin)
 dire('')
 dire(`STATUT FINAL : ${String(fin.statut)} · coût ${Number(fin.cout_usd).toFixed(4)} $`)
 dire(`diagnostics : ${JSON.stringify(fin.diagnostics)}`)

@@ -15,6 +15,7 @@ import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { createClient } from '@supabase/supabase-js'
 import { creerTravailleur, type MoteurContinuation } from './travailleur.ts'
+import { sauverEtatLocal, cheminEtatLocal } from './etat-local.ts'
 
 const ICI = dirname(fileURLToPath(import.meta.url))
 const RACINE = join(ICI, '..', '..', '..', '..', '..')
@@ -35,8 +36,9 @@ const dire = (t: string): void => {
   writeFileSync(JOURNAL, t + '\n', { flag: 'a' })
 }
 
-// Jumelle propre au depart — l'etat du tir doit etre lisible seul.
-await base.from(JUMELLE).delete().not('id', 'is', null)
+// AUCUNE purge : une ligne payee ne se supprime jamais (lecon du
+// 2026-10-09 — ce wipe a efface 6,87 $ d'etat gare). Le tir suit SA ligne
+// par id, les anciennes lignes ne le genent pas.
 
 const { creerMoteur } = (await import(join(RACINE, 'benchmarks/air-emission/moteur.mjs'))) as {
   creerMoteur: (o: { cleApi: string }) => Promise<{
@@ -52,16 +54,25 @@ const moteurParTranche: MoteurContinuation = {
   },
 }
 
-const w = creerTravailleur({
+// LOCAL : tranches de 600 s — un tour de reparation typique s'acheve d'un
+// trait (120 s etait taille pour l'emission seule, et c'est ce qui a casse).
+// En production l'appariement budget <= maxDuration - pire appel demeure.
+const reglages = {
   table: JUMELLE,
   base,
   moteur: moteurParTranche,
-  budgetTrancheMs: 120_000,
-  battementPerimeMs: 600_000,
-})
+  budgetTrancheMs: 600_000,
+  battementPerimeMs: 3_600_000,
+} as const
 
-const id = await w.deposer({ demande: DEMANDE, nom: 'depenses-du-jour', email: 'tir-reel@test' })
+const id = await creerTravailleur(reglages).deposer({
+  demande: DEMANDE, nom: 'depenses-du-jour', email: 'tir-reel@test',
+})
+// Le balayeur du tir ne voit que SA ligne — il ne peut pas saisir une
+// ligne payee garee par un autre tir.
+const w = creerTravailleur({ ...reglages, perimetre: { ligne: id } })
 dire(`déposé ${id.slice(0, 8)} · « ${DEMANDE} »`)
+dire(`sauvegarde continue de l'état : ${cheminEtatLocal(id)}`)
 
 const depart = Date.now()
 for (let tick = 1; tick <= 25; tick++) {
@@ -70,6 +81,7 @@ for (let tick = 1; tick <= 25; tick++) {
     string,
     unknown
   >
+  sauverEtatLocal(ligne) // l'etat paye a TOUJOURS une copie hors base
   dire(
     `tranche ${String(tick).padStart(2)} · ${String(Math.round((Date.now() - depart) / 1000)).padStart(4)} s · ` +
       `${r.issue.padEnd(9)} · étape ${String(r.etape ?? ligne.etape ?? '—').padEnd(12)} · ` +
@@ -86,6 +98,7 @@ for (let tick = 1; tick <= 25; tick++) {
 }
 
 const fin = (await base.from(JUMELLE).select('*').eq('id', id).single()).data as Record<string, unknown>
+sauverEtatLocal(fin)
 dire('')
 dire(`STATUT FINAL : ${String(fin.statut)} · coût total ${Number(fin.cout_usd).toFixed(4)} $ · durée ${String(Math.round((Date.now() - depart) / 1000))} s`)
 dire(`document : ${fin.document === null ? 'absent' : 'PRÉSENT'} · diagnostics : ${JSON.stringify(fin.diagnostics)}`)

@@ -15,6 +15,7 @@ import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { creerTravailleur, type BaseGeneration, type MoteurContinuation } from '../travailleur'
 import { sqlPour, SQL_TABLE, SQL_TABLE_TEST } from '../journal'
+import { purgerBanc, EMAIL_BANC } from '../banc-jumelle'
 import { sansCommentaires } from './sans-commentaires'
 
 const RACINE = join(process.cwd(), '..', '..')
@@ -136,3 +137,79 @@ describe('CLIQUET — la jumelle est identique a la vraie PAR CONSTRUCTION', () 
     expect(() => sqlPour('Majuscule')).toThrowError(/nom de table invalide/u)
   })
 })
+
+describe('CLIQUET — purge et balayage ne peuvent viser que les lignes du banc', () => {
+  // Lecon du 2026-10-09 (~6,9 $ d'etat efface) : la jumelle melait banc
+  // d'essai purgeable et entrepot d'etat paye, sans separation mecanique.
+  // Ces cliquets la rendent impossible a rouvrir — par le texte des
+  // sources, pas par discipline.
+  const fichiers = (dossier: string): string[] =>
+    readdirSync(dossier).flatMap((n) => {
+      const chemin = join(dossier, n)
+      if (statSync(chemin).isDirectory()) return n === 'node_modules' ? [] : fichiers(chemin)
+      return /\.(ts|tsx|mts|mjs)$/u.test(n) ? [chemin] : []
+    })
+  const LIB_APPS = join(RACINE, 'apps/web/src/lib/apps')
+  // Assemblee, jamais ecrite nue : ce fichier est balaye par son propre
+  // cliquet — meme parade que NOM_PROD.
+  const SEQ_DELETE = ['.de', 'lete('].join('')
+
+  it('la sequence de suppression ne vit QUE dans banc-jumelle.ts — nulle part ailleurs dans lib/apps', () => {
+    for (const f of fichiers(LIB_APPS)) {
+      if (f.endsWith('banc-jumelle.ts')) continue
+      expect(sansCommentaires(readFileSync(f, 'utf8')), f).not.toContain(SEQ_DELETE)
+    }
+  })
+
+  it('le motif de purge totale — delete() enchaine a not( — n existe PLUS NULLE PART', () => {
+    const concernes = [
+      ...fichiers(LIB_APPS),
+      ...fichiers(join(RACINE, 'benchmarks/air-emission')).filter((f) =>
+        /travailleur|jumelle/u.test(f),
+      ),
+    ]
+    for (const f of concernes) {
+      expect(sansCommentaires(readFileSync(f, 'utf8')), f).not.toMatch(
+        /\.delete\(\)\s*\.not\(/u,
+      )
+    }
+  })
+
+  it('purgerBanc filtre par EMAIL_BANC et refuse toute table hors banc', async () => {
+    const appels: [string, string, string][] = []
+    const fausse = {
+      from: (table: string) => ({
+        delete: () => ({
+          eq: (col: string, val: string) => {
+            appels.push([table, col, val])
+            return Promise.resolve({ error: null })
+          },
+        }),
+      }),
+    }
+    await purgerBanc(fausse, `${NOM_PROD}_test`)
+    expect(appels).toEqual([[`${NOM_PROD}_test`, 'owner_email', EMAIL_BANC]])
+    await expect(purgerBanc(fausse, NOM_PROD)).rejects.toThrowError(/PURGE_HORS_BANC/u)
+    expect(appels).toHaveLength(1) // le refus n a RIEN envoye a la base
+  })
+
+  it('les harnais de tir balaient a perimetre d UNE ligne — jamais toute la table', () => {
+    for (const nom of ['tir-reel.verif.mts', 'tir-reprise.verif.mts']) {
+      const src = sansCommentaires(readFileSync(join(LIB_APPS, nom), 'utf8'))
+      expect(src, nom).toContain('perimetre: { ligne:')
+    }
+  })
+
+  it('le harnais jumelle ne fabrique QUE des balayeurs du banc, et purge par le banc', () => {
+    const src = sansCommentaires(
+      readFileSync(join(LIB_APPS, 'travailleur-jumelle.verif.mts'), 'utf8'),
+    )
+    const balayeurs = src.match(/creerTravailleur\(/gu) ?? []
+    const perimetres = src.match(/perimetre: \{ proprietaire: EMAIL_BANC \}/gu) ?? []
+    expect(perimetres.length).toBe(balayeurs.length)
+    expect(src).toContain('purgerBanc(')
+    // et chaque ligne qu il cree est marquee : aucun email qui ne soit au banc
+    expect(src).not.toMatch(/email: (?:null|'(?!banc@)[^']*')/u)
+  })
+})
+
