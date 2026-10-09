@@ -52,7 +52,7 @@ const w = creerTravailleur({
 
 const avant = (await base.from(JUMELLE).select('cout_usd').eq('id', ID).single()).data as { cout_usd: number }
 const coutInitial = Number(avant.cout_usd)
-dire(`reprise de ${ID.slice(0, 8)} — aucune nouvelle ligne déposée · coût déjà investi ${coutInitial.toFixed(4)} $ · filet +5 $`)
+dire(`reprise de ${ID.slice(0, 8)} — aucune nouvelle ligne déposée · coût déjà investi ${coutInitial.toFixed(4)} $ · filet +10 $`)
 dire(`sauvegarde continue de l'état : ${cheminEtatLocal(ID)}`)
 const depart = Date.now()
 for (let tick = 1; tick <= 25; tick++) {
@@ -68,8 +68,8 @@ for (let tick = 1; tick <= 25; tick++) {
   )
   if (etape === 'p0') { dire('⛔ ARRÊT — la reprise est repartie à P0 : la continuation a échoué, on repayerait l’acquis'); break }
   if (r.issue === 'livree' || r.issue === 'refusee' || r.issue === 'rien') break
-  if (Number(ligne.cout_usd) - coutInitial > 5) {
-    dire(`⛔ GARDE-FOU : +${(Number(ligne.cout_usd) - coutInitial).toFixed(2)} $ sur cette reprise (> 5 $ incremental) — etat conserve`)
+  if (Number(ligne.cout_usd) - coutInitial > 10) {
+    dire(`⛔ GARDE-FOU : +${(Number(ligne.cout_usd) - coutInitial).toFixed(2)} $ sur cette reprise (> 10 $ incremental) — etat conserve`)
     break
   }
 }

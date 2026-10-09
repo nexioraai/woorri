@@ -350,6 +350,9 @@ console.log("— scenario E : bouchees — rejet isole, refus seulement si TOUTE
   verifie("⑨ E3 toutes amputent → refusee « TOUTES les bouchées amputent »",
     E3.ok === false && /TOUTES les bouchées amputent/.test(E3.raison ?? ""),
     String(E3.raison ?? "—").slice(0, 90));
+  verifie("⑨ E3 le refus rend la BASE et le MODELE — l'ecriture terminale peut les conserver",
+    E3.document !== undefined && E3.document !== null && E3.modele !== undefined,
+    JSON.stringify({ doc: E3.document !== null, modele: E3.modele !== undefined }));
 
   // E4 — le rappel anti-suppression vit dans les prescriptions d'ecrans,
   // le canal que CHAQUE bouchee d'ecrans recoit (EP-073 ②).

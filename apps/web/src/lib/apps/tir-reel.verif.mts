@@ -91,8 +91,8 @@ for (let tick = 1; tick <= 25; tick++) {
   )
   if (r.issue === 'livree' || r.issue === 'refusee') break
   if (r.issue === 'rien') { dire('plus rien à saisir — état final ci-dessous'); break }
-  if (Number(ligne.cout_usd) > 6) {
-    dire(`⛔ GARDE-FOU : ${Number(ligne.cout_usd).toFixed(4)} $ > 6 $ — plus de nouvelle tranche, état conservé en base`)
+  if (Number(ligne.cout_usd) > 10) {
+    dire(`⛔ GARDE-FOU : ${Number(ligne.cout_usd).toFixed(4)} $ > 10 $ — plus de nouvelle tranche, état conservé en base`)
     break
   }
 }

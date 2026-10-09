@@ -317,6 +317,8 @@ console.log('— V7 : la raison et le detail des tirages persistent —')
         resultat: {
           ok: false,
           raison: 'P0 refuse 3 fois',
+          document: { app: { name: 'base-refusee-conservee' } },
+          modele: { version: 'modele-conserve' },
           diagnostics: [{ code: 'SCHEMA', path: 'entities[2].fields[0]' }],
           tirages: [
             { tentative: 1, arret: 'P2', coutUsd: 0.21, diagnostics: ['DERIVATION_X'], reparations: ['choisir pose'] },
@@ -341,6 +343,10 @@ console.log('— V7 : la raison et le detail des tirages persistent —')
   verifie('V7 le detail des tirages persiste — on peut dire POURQUOI sans re-payer',
     j.phase === 'terminee' && j.tirages?.[0]?.arret === 'P2' && j.tirages[0].diagnostics[0] === 'DERIVATION_X',
     JSON.stringify(j).slice(0, 120))
+  const conserve = ligne.sections_acquises as { acquis?: { app?: { name?: string } }; modele?: { version?: string } }
+  verifie('V7 la BASE survit au refus — acquis et modele dans la ligne refusee, ressuscitable sans re-payer',
+    conserve.acquis?.app?.name === 'base-refusee-conservee' && conserve.modele?.version === 'modele-conserve',
+    JSON.stringify({ acquis: conserve.acquis, modele: conserve.modele }).slice(0, 100))
   await purger()
 }
 

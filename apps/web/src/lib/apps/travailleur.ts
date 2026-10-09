@@ -341,6 +341,23 @@ export function creerTravailleur({
                 // lisible dans la ligne, sans re-payer.
                 tours: res.tours ?? [],
                 niveaux: res.niveaux ?? null,
+                // ── LA BASE SURVIT AU REFUS (3e chemin de perte, ferme le
+                // 2026-10-09). Cette ecriture JETAIT acquis et modele : la
+                // ligne a8b12457 (10,61 $, base elargie + 79 diagnostics
+                // connus) est devenue IRRESSUSCITABLE a l'instant meme du
+                // refus — le moteur rendait pourtant les deux. Une refusee
+                // porte desormais sa base : une resurrection repart d'ici,
+                // sans re-payer l'emission. (La COLONNE document reste nulle :
+                // la contrainte livree_a_document dit qu'un refus n'a pas
+                // d'oeuvre a livrer — la base n'est pas une oeuvre.)
+                ...(res.ok
+                  ? {}
+                  : {
+                      acquis: res.document ?? null,
+                      modele: (res as { modele?: unknown }).modele ?? null,
+                      premierePasse:
+                        (res as { premierePasse?: unknown }).premierePasse ?? null,
+                    }),
               },
               cout_usd: res.coutUsd,
               jetons_entree: res.jetons.entree,
