@@ -174,6 +174,10 @@ describe("B/C — les dérivations ne travaillent QUE sur le MODEL (balayage COM
     // (`estConceptIdentite`) que le chemin document. Dérivation pure du
     // MODÈLE : sa place dans cette batterie est de droit.
     jugerIdentiteDuModele: (m) => derivationsModele.jugerIdentiteDuModele(m),
+    // ENTRÉE AJOUTÉE CONSCIEMMENT (2026-10-09) — `nomAirDe` dérive le `name`
+    // AIR d'un id du modèle (mesuré : le modèle traduisait les noms français
+    // en identifiants, trois SCHEMA par tir). Pure, sans état.
+    nomAirDe: () => derivationsModele.nomAirDe("ent_exemple_test"),
   };
 
   it("COMPLÉTUDE — la batterie couvre CHAQUE fonction exportée des dérivations", () => {

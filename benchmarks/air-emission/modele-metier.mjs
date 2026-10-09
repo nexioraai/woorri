@@ -2216,6 +2216,26 @@ export function decisionDeSurface(surface) {
   return dits.join(" · ");
 }
 
+/**
+ * LE `name` AIR D'UN IDENTIFIANT DU MODELE — derive, jamais traduit.
+ *
+ * MESURE (tirs 4 et reprise db22481a) : l'emission copiait les NOMS
+ * FRANCAIS du modele comme identifiants d'entites — « Depense », « Compte
+ * utilisateur » — la ou le schema exige ^[a-z][a-z0-9_]*$. Trois concepts,
+ * trois SCHEMA@entities.N.name, a chaque tir. La prescription nommait les
+ * ids et les attributs, JAMAIS le champ `name` : le modele traduisait.
+ *
+ * La derivation est MECANIQUE : l'id du modele est deja contraint par le
+ * meme alphabet (regex ID) — on retire le prefixe de famille, rien d'autre.
+ * Pas de normalisation de texte libre ici : il n'y a pas de texte libre.
+ * Garde fail-closed : si le reste ne tient pas seul (prefixe absent, reste
+ * commencant par un chiffre), l'id ENTIER sert de name — toujours valide.
+ */
+export function nomAirDe(idModele) {
+  const reste = String(idModele).replace(/^(ent_|att_|act_|par_)/, "");
+  return ID.test(reste) ? reste : String(idModele);
+}
+
 export function obligationsPrescriptives(nomPasse, modele, plan, destinationsMin) {
   const p = prescriptionsNavigation(plan, destinationsMin);
   if (nomPasse === "base") {
@@ -2284,7 +2304,10 @@ export function obligationsPrescriptives(nomPasse, modele, plan, destinationsMin
       // EP-122 — les attributs sont NOMMÉS un par un : le modèle en portait 7,
       // l'entité émise en avait 4 (mesuré EP-121). Une liste de natures ne dit
       // pas COMBIEN ni LESQUELS.
-      ...concepts.map((c) => `· ent_${c.id.slice(4)} ← concept « ${c.nom} » (${c.id})${(c.attributs ?? []).length ? ` — ${(c.attributs ?? []).length} attributs, TOUS OBLIGATOIRES : ` + (c.attributs ?? []).map((a) => `${a.id}:${a.nature}${a.requis ? " (requis)" : ""}`).join(", ") : ""}`),
+      ...concepts.map((c) => `· ent_${c.id.slice(4)} ← concept « ${c.nom} » (${c.id}) — name EXACTEMENT "${nomAirDe(c.id)}"${(c.attributs ?? []).length ? ` — ${(c.attributs ?? []).length} attributs, TOUS OBLIGATOIRES : ` + (c.attributs ?? []).map((a) => `${a.id} (name "${nomAirDe(a.id)}"):${a.nature}${a.requis ? " (requis)" : ""}`).join(", ") : ""}`),
+      // MESURE (tirs 4 et db22481a) : sans cette ligne, le modele traduisait
+      // le nom francais du concept en identifiant — trois SCHEMA par tir.
+      'Les champs `name` sont EXACTEMENT ceux prescrits ci-dessus — des identifiants techniques, JAMAIS une traduction du nom affiche. Les libelles humains vont dans `label`, pas dans `name`.',
       "N'en invente aucune autre porteuse de données ; n'en omets aucune.",
     ].join("\n");
   }

@@ -240,3 +240,7 @@ export function reparerPlan(modele: ModeleMetier): {
  *  d'identite existe ; sinon `MODELE_IDENTITE_ABSENTE` (faute de
  *  production : le tirage informe la reclame a P0). */
 export function jugerIdentiteDuModele(modele: ModeleMetier): DiagnosticModele[];
+
+/** Le `name` AIR d'un identifiant du modele — prefixe de famille retire,
+ *  garde fail-closed (l'id entier si le reste ne tient pas seul). */
+export function nomAirDe(idModele: string): string;
