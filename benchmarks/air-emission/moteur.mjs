@@ -417,6 +417,21 @@ const surfaceEnveloppe = () => {
       }
     }
 
+    // ── TRANSITOIRE OU FATALE : LE MOTEUR LE SAIT, IL LE DIT.
+    //
+    // MESURE (tir n°6) : un 400 de facturation — « credit balance is too
+    // low » — a ete retente DEUX fois par le travailleur. Un solde epuise ne
+    // se repare pas en reessayant. Le moteur est le seul a savoir classer ;
+    // il ETIQUETTE chaque erreur qu'il laisse sortir (`e.transitoire`), et
+    // le travailleur obeit a l'etiquette : fatale → refusee immediate,
+    // transitoire ou inconnue → ses reprises habituelles.
+    const estTransitoire = (e) =>
+      /Connection error|timed out|ECONNRESET|socket hang up|5\d\d/i.test(String(e?.message ?? e));
+    const etiqueter = (e) => {
+      e.transitoire = estTransitoire(e);
+      return e;
+    };
+
     // ── P0 : comprendre AVANT d'emettre — saute si l'etat porte deja le
     // modele : il a ete paye UNE fois, il ne se re-tire jamais.
     if (modeleP0 === null) {
@@ -457,13 +472,18 @@ const surfaceEnveloppe = () => {
           levelIndex: 0,
         };
         const avant = coeur.lireEtatDepense().depense;
-        const reponseP0 = await coeur.callPart(
-          partP0,
-          requeteP0.system,
-          requeteP0.user + dernierReproche,
-          `${slug}:p0#t${tentative}`,
-          usage,
-        );
+        let reponseP0;
+        try {
+          reponseP0 = await coeur.callPart(
+            partP0,
+            requeteP0.system,
+            requeteP0.user + dernierReproche,
+            `${slug}:p0#t${tentative}`,
+            usage,
+          );
+        } catch (e) {
+          throw etiqueter(e);
+        }
         const neutreP0 = adaptateur.lireReponse(reponseP0);
         const verdictP0 = passe0.jugerSortieP0(neutreP0.texte, brief, { tronquee: neutreP0.tronquee });
         // ── LE GENERATEUR POSE L'ETAPE MANQUANTE AVANT DE JUGER (EP-135).
@@ -586,9 +606,6 @@ const surfaceEnveloppe = () => {
     // DEUX REPRISES AU PLUS, et seulement sur une erreur TRANSITOIRE. Un
     // refus de grammaire ou un budget epuise ne se reprennent pas ici : le
     // premier se reproduirait a l'identique, le second est une SUSPENSION.
-    const estTransitoire = (e) =>
-      /Connection error|timed out|ECONNRESET|socket hang up|5\d\d/i.test(String(e?.message ?? e));
-
     let document;
     for (let reprise = 0; ; reprise++) {
       try {
@@ -609,7 +626,7 @@ const surfaceEnveloppe = () => {
         const sections = Object.keys(acquis).length;
         if (reprise >= 2 || !estTransitoire(e) || sections === 0) {
           e.sectionsAcquises = sections;
-          throw e;
+          throw etiqueter(e);
         }
         console.log(
           `  [${slug}] reprise ${String(reprise + 1)}/2 apres « ${String(e?.message ?? e).slice(0, 60)} » — ` +
@@ -668,7 +685,7 @@ const surfaceEnveloppe = () => {
         if (partielDoc !== undefined) acquis = { ...document, ...partielDoc };
         if (e?.budgetTemps === true) return suspendre("reparation");
         e.sectionsAcquises = Object.keys(acquis).length;
-        throw e;
+        throw etiqueter(e);
       }
       // L'enveloppe de la reparation : `document` est deja le choix SUR —
       // l'original si amputation, le repare sinon (D-093).

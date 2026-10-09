@@ -341,6 +341,14 @@ export function creerTravailleur({
       // SUITE (`en_attente`) plutot que d'attendre la peremption. Trois
       // echecs → refusee, en disant pourquoi.
       const messageErreur = e instanceof Error ? e.message : String(e)
+      // ── FATALE OU TRANSITOIRE : L'ETIQUETTE DU MOTEUR FAIT FOI.
+      //
+      // Tir n°6 : un 400 de facturation retente deux fois — un solde epuise
+      // ne se repare pas en reessayant, les reprises etaient du temps perdu.
+      // Le moteur etiquette (`transitoire: false` = certifie non transitoire)
+      // et le travailleur obeit : refusee IMMEDIATE, en disant pourquoi.
+      // Une erreur NON etiquetee (origine inconnue) garde les reprises.
+      const fatale = (e as { transitoire?: boolean }).transitoire === false
       const partiel = (e as { assemblagePartiel?: Record<string, unknown> }).assemblagePartiel
       const avant = (etat ?? {}) as Record<string, unknown>
       const acquisAvant = (avant.acquis ?? {}) as Record<string, unknown>
@@ -351,11 +359,15 @@ export function creerTravailleur({
       }
       const reprises = Number(ligne.reprises ?? 0) + 1
       const champs =
-        reprises >= 3
+        fatale || reprises >= 3
           ? {
               statut: 'refusee',
               ok: false,
-              diagnostics: [`echec repete x${String(reprises)}: ${messageErreur.slice(0, 160)}`],
+              diagnostics: [
+                fatale
+                  ? `erreur fatale (non transitoire) : ${messageErreur.slice(0, 160)}`
+                  : `echec repete x${String(reprises)}: ${messageErreur.slice(0, 160)}`,
+              ],
             }
           : {
               statut: 'en_attente',
@@ -374,7 +386,7 @@ export function creerTravailleur({
       if (ecrit.data === null || ecrit.data.length === 0) return { id, issue: 'depossede' }
       return {
         id,
-        issue: reprises >= 3 ? 'refusee' : 'erreur',
+        issue: fatale || reprises >= 3 ? 'refusee' : 'erreur',
         detail: messageErreur.slice(0, 200),
       }
     } finally {

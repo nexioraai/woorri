@@ -225,6 +225,31 @@ console.log('— V5 : echec transitoire et plafond de reprises —')
   await purger()
 }
 
+// ════ V5F — UNE ERREUR FATALE NE SE RETENTE PAS (tir n°6 : le 400 de
+// facturation retente deux fois pour rien). L'etiquette du moteur fait foi.
+console.log('— V5F : erreur fatale, refus immediat —')
+{
+  const appels: { brief: string }[] = []
+  const w = creerTravailleur({
+    table: JUMELLE, base,
+    moteur: moteurScripte({
+      appels,
+      jette: () => Object.assign(new Error('400 credit balance is too low'), { transitoire: false }),
+    }),
+    budgetTrancheMs: 10_000, battementPerimeMs: 60_000,
+  })
+  const id = await w.deposer({ demande: 'v5f', nom: 'v5f', email: null })
+  const r = await w.tourner()
+  const ligne = await lire(id)
+  verifie('V5F refusee DES LE PREMIER echec — zero reprise brulee',
+    r[0].issue === 'refusee' && ligne.statut === 'refusee' && appels.length === 1,
+    `${r[0].issue} · appels=${String(appels.length)}`)
+  verifie('V5F la raison DIT que c est fatal, pas un echec repete',
+    String((ligne.diagnostics as string[])[0]).startsWith('erreur fatale (non transitoire)'),
+    JSON.stringify(ligne.diagnostics))
+  await purger()
+}
+
 // ════ V6 — LES CONTRAINTES DE LA BASE MORDENT sur la jumelle. ════
 console.log('— V6 : les CHECK de la base —')
 {
