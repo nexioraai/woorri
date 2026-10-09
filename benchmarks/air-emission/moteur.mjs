@@ -741,8 +741,19 @@ const surfaceEnveloppe = () => {
     const FILET_TENTATIVES = 9;
     let raisonRefus = null;
     while ((air === null || diagnostics.length > 0) && raisonRefus === null) {
-      if (tours.length >= PLAFOND_TOURS) {
-        raisonRefus = `non convergé en ${String(PLAFOND_TOURS)} tours : reste ${String(diagnostics.length)} diagnostic(s)`;
+      // LE PLAFOND NE COMPTE QUE LES TOURS SANS REVELATION (arbitrage du
+      // 2026-10-09) : une revelation est du PROGRES — la gate ne l'accepte
+      // qu'a elargissement STRICT du perimetre juge, lui-meme borne par le
+      // plan : les revelations s'epuisent d'elles-memes, et le filet des
+      // tentatives borne tout le reste. L'ancien compteur confondait progres
+      // et stagnation : c29bd806 (2/3 tours acheves, TOUS revelants, 37 → 1)
+      // aurait ete refusee en pleine convergence saine.
+      const toursDeConvergence = tours.filter((t) => t.revelation !== true).length;
+      if (toursDeConvergence >= PLAFOND_TOURS) {
+        raisonRefus =
+          `non convergé en ${String(PLAFOND_TOURS)} tours de convergence ` +
+          `(${String(tours.length - toursDeConvergence)} révélation(s) non comptée(s)) : ` +
+          `reste ${String(diagnostics.length)} diagnostic(s)`;
         break;
       }
       // LE FREIN MORD AVANT LE LANCEMENT, acheve ou pas : trois tentatives

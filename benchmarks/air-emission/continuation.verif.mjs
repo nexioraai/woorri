@@ -380,6 +380,66 @@ console.log("— scenario E : bouchees — rejet isole, refus seulement si TOUTE
     texteEcrans.slice(texteEcrans.indexOf("EN RÉPARATION"), texteEcrans.indexOf("EN RÉPARATION") + 80));
 }
 
+// ── ⑩ scenario F : LE PLAFOND COMPTE LA CONVERGENCE, PAS LES REVELATIONS
+// (arbitrage du 2026-10-09). Mesure c29bd806 : 2/3 tours acheves TOUS
+// revelants (+37, +38) pendant que le compte fondait 37 → 1 — l'ancien
+// plafond aurait refuse une ligne en pleine convergence saine.
+//
+// LA METHODE : le journal des tours est PRECHARGE dans un etat de reprise —
+// c'est exactement ainsi que les vraies reprises portent leurs tours — et
+// on observe la decision de la tete de boucle. Deterministe, sans dependre
+// de ce que le client a blanc sait guerir (rien : 62 → 62 mesure).
+console.log("— scenario F : le plafond ignore les revelations, coupe la non-convergence —");
+{
+  const tourFait = (n, revelation) => ({
+    n, avant: 70 - n, apres: 70 - n - (revelation ? -30 : 5), coutUsd: 0.1,
+    revelation, introduits: 0, reveles: revelation ? 30 : 0, ampute: [], bouchees: [],
+  });
+  const etatRepris = (tours) => ({
+    phase: "reparation",
+    modele: C.r.resultat.modele,
+    acquis: JSON.parse(JSON.stringify(C.r.resultat.document)),
+    tirages: [], niveaux: C.r.resultat.niveaux ?? null,
+    premierePasse: 62, tours, tentativesReparation: tours.length,
+    coutUsd: 0, jetons: { entree: 0, sortie: 0 },
+  });
+
+  // F1 — TROIS tours REVELANTS au journal : l'ancien plafond refusait ici
+  // meme ; le nouveau LAISSE TRAVAILLER (le tour 4 se lance et s'acheve),
+  // et c'est la stagnation du client a blanc qui arrete — pas le plafond.
+  const F1 = (await (await creerMoteur({ cleApi: "client-a-blanc", client: creerClientABlanc({ corpus: CORPUS }) }))
+    .poursuivreEmission({ brief: BRIEF, slug: "blanc", etat: etatRepris([tourFait(1, true), tourFait(2, true), tourFait(3, true)]) })).resultat;
+  verifie("⑩ F1 trois tours REVELANTS ne declenchent PAS le plafond — le tour 4 se lance et s'acheve",
+    (F1.tours ?? []).length === 4 && (F1.tours ?? [])[3]?.n === 4,
+    `tours=${String(F1.tours?.length)} · raison=${String(F1.raison ?? "—").slice(0, 60)}`);
+  verifie("⑩ F1 le refus final ne vient JAMAIS du plafond de convergence",
+    F1.ok === false && !/non convergé en/.test(F1.raison ?? ""),
+    String(F1.raison ?? "—").slice(0, 80));
+
+  // F2 — TROIS tours acheves SANS revelation, sans convergence : le plafond
+  // coupe AVANT tout nouvel appel payant, en nommant les deux comptes.
+  const clientF2 = creerClientABlanc({ corpus: CORPUS });
+  const avantF2 = clientF2.journal.length;
+  const F2 = (await (await creerMoteur({ cleApi: "client-a-blanc", client: clientF2 }))
+    .poursuivreEmission({ brief: BRIEF, slug: "blanc", etat: etatRepris([tourFait(1, false), tourFait(2, false), tourFait(3, false)]) })).resultat;
+  verifie("⑩ F2 trois tours NON revelants sans convergence → le plafond coupe TOUJOURS",
+    F2.ok === false && /non convergé en 3 tours de convergence/.test(F2.raison ?? "") &&
+      /0 révélation/.test(F2.raison ?? ""),
+    String(F2.raison ?? "—").slice(0, 90));
+  verifie("⑩ F2 la coupe tombe AVANT tout nouvel appel de reparation — zero paye pour mesurer un refus connu",
+    clientF2.journal.slice(avantF2).filter((x) => x.type === "reparation").length === 0,
+    `appels reparation=${String(clientF2.journal.slice(avantF2).filter((x) => x.type === "reparation").length)}`);
+
+  // F3 — la forme EXACTE de c29bd806 : DEUX tours revelants au journal — le
+  // tour 3 doit se lancer (l'ancien comportement l'aurait laisse aussi,
+  // mais une revelation de plus l'aurait tue ; ici elle ne le tuera pas).
+  const F3 = (await (await creerMoteur({ cleApi: "client-a-blanc", client: creerClientABlanc({ corpus: CORPUS }) }))
+    .poursuivreEmission({ brief: BRIEF, slug: "blanc", etat: etatRepris([tourFait(1, true), tourFait(2, true)]) })).resultat;
+  verifie("⑩ F3 la forme c29bd806 (2 tours revelants) : le tour 3 se lance — la ligne reste jouable",
+    (F3.tours ?? []).length === 3 && !/non convergé en/.test(F3.raison ?? ""),
+    `tours=${String(F3.tours?.length)}`);
+}
+
 console.log(
   echecs === 0
     ? "\n✅ continuation : machinerie correcte a blanc — PAS une preuve de production."
