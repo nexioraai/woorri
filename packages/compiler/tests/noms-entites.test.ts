@@ -68,7 +68,7 @@ describe("nomAirDe — la dérivation mécanique", () => {
     const entites = MODELE.concepts.map((c) => ({
       id: (c as { id: string }).id,
       name: derivationsModele.nomAirDe((c as { id: string }).id),
-      fields: ((c as { attributs: { id: string }[] }).attributs ?? []).map((a) => ({
+      fields: (c as { attributs: { id: string }[] }).attributs.map((a) => ({
         id: `fld_${derivationsModele.nomAirDe((c as { id: string }).id)}_${derivationsModele.nomAirDe(a.id)}`,
         name: derivationsModele.nomAirDe(a.id),
         label: [{ locale: "fr", text: "Libellé" }],
