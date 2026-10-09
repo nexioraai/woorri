@@ -15,11 +15,16 @@ const BASE = join(
 // de plus ont quitte le script — la boucle des huit passes et la
 // reparation — pour que le PRODUIT puisse les appeler. Meme raison, meme
 // liste. Un controle qui lit le source du generateur doit lire les quatre.
+// `gate-reparation.mjs` s'ajoute le 2026-10-09 : la gate anti-oscillation a
+// DEMENAGE d'emit-v3 (le produit en avait besoin, la regle doit etre UNE).
+// Six cliquets verifient que ses clauses ne bougent pas — ils lisent cette
+// liste, et la regle vit desormais dans le cinquieme fichier.
 export const FICHIERS_GENERATEUR = [
   "emit-v3.mjs",
   "emission-coeur.mjs",
   "orchestration.mjs",
   "moteur.mjs",
+  "gate-reparation.mjs",
 ] as const;
 
 /** Leur texte, concaténé : un test trouve ce qu'il cherche où qu'il vive. */

@@ -138,7 +138,10 @@ describe("EP-113 — LE DOMAINE DES VALEURS VALIDES EST FOURNI AVEC L'ORDRE", ()
   it("④ le correctif ne touche NI la gate d'EP-102 NI le reste de la clause d'EP-105", () => {
     const emitV3 = SOURCE_GENERATEUR;
     expect(emitV3).toContain("elargit(perimetreAvant, perimetreApres)");
-    expect(emitV3).toContain("if (introduits.length > 0 && !revelation) {");
+    expect(emitV3).toContain(// ÉDITION CONSCIENTE (2026-10-09) : le prédicat a déménagé d'un `if` de
+      // campagne vers une expression NOMMÉE de `gate-reparation.mjs` — texte
+      // du prédicat inchangé à l'octet (extraction-gate.verif.mjs le scelle).
+      "const rejetee = introduits.length > 0 && !revelation;");
     // la clause reste conditionnée aux MÊMES cas qu'EP-105 (silences intacts).
     const air = clone();
     const fiche = ecrans(air).find((s) => s.blocks.some((b) => b.blockType === "detail_header"));

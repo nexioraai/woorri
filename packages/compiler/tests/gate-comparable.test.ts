@@ -101,7 +101,10 @@ describe("les trois cas exigés (EP-102), sur une taille AUTRE que le défaut", 
 describe("branchement — la gate consomme la comparabilité, elle ne s'assouplit pas", () => {
   const emitV3 = SOURCE_GENERATEUR;
   it("le rejet reste la règle ; la révélation est la SEULE exemption, et elle est nommée", () => {
-    expect(emitV3).toContain("if (introduits.length > 0 && !revelation) {");
+    expect(emitV3).toContain(// ÉDITION CONSCIENTE (2026-10-09) : le prédicat a déménagé d'un `if` de
+      // campagne vers une expression NOMMÉE de `gate-reparation.mjs` — texte
+      // du prédicat inchangé à l'octet (extraction-gate.verif.mjs le scelle).
+      "const rejetee = introduits.length > 0 && !revelation;");
     expect(emitV3).toContain("RÉPARATION REJETÉE — OSCILLATION");
     expect(emitV3).toContain("elargit(perimetreAvant, perimetreApres)");
     expect(emitV3).toContain("journal.reparationRevelation");

@@ -203,6 +203,13 @@ RÈGLE ABSOLUE : reproduction à l'IDENTIQUE. Chaque identifiant, chaque valeur,
 
 const acceptation = await import(join(HERE, "acceptation.mjs"));
 const { validateLocal, jugerAcceptation, perimetreDeJugement, elargit } = acceptation;
+// ── LA GATE ANTI-OSCILLATION A DEMENAGE (2026-10-09) : le produit en avait
+// besoin et n'en avait pas — une reparation pouvait remplacer le document
+// sans examen. La regle est UNE, dans `gate-reparation.mjs` ; la campagne et
+// le produit la consomment. `extraction-gate.verif.mjs` prouve l'egalite a
+// l'octet modulo cinq renommages declares.
+const { creerGateReparation } = await import(join(HERE, "gate-reparation.mjs"));
+const gateReparation = creerGateReparation({ validateLocal, perimetreDeJugement, elargit });
 
 /**
  * EP-187 — DEUX TEXTES, DEUX DESTINATAIRES.
@@ -643,22 +650,14 @@ for (const intention of INTENTIONS.slice(start, end)) {
       // qui INTRODUIT des diagnostics absents de l'attempt 1 détruit en
       // réparant — elle est REJETÉE, le document d'origine est conservé et
       // l'oscillation est JOURNALISÉE, jamais maquillée en progrès.
-      const clesAttempt1 = new Set(
-        (journal.attempt1?.diagnostics ?? []).map((x) => `${x.code}|${x.path}`),
-      );
-      const introduits = diagnostics.filter((x) => !clesAttempt1.has(`${x.code}|${x.path}`));
-      // EP-102 · ① — L'OSCILLATION NE SE JUGE QU'ENTRE DOCUMENTS COMPARABLES.
-      // Si la réparation ÉLARGIT le périmètre de jugement (elle rend jugeable
-      // ce qui ne l'était pas), les diagnostics qui apparaissent sont RÉVÉLÉS,
-      // pas introduits : la retenir, et son résultat devient la nouvelle base.
-      // Périmètre ÉGAL ⇒ la gate juge comme avant (L-098-C inchangé) ;
-      // périmètre RÉTRÉCI ⇒ régression franche, rejet.
-      const perimetreAvant = perimetreDeJugement(
-        validateLocal(avantReparation).air,
-        prescriptif,
-      );
-      const perimetreApres = perimetreDeJugement(air, prescriptif);
-      const revelation = elargit(perimetreAvant, perimetreApres);
+      const { introduits, revelation, perimetreAvant, perimetreApres, rejetee } =
+        gateReparation.verdict({
+          diagnosticsAvant: journal.attempt1?.diagnostics ?? [],
+          diagnosticsApres: diagnostics,
+          documentAvant: avantReparation,
+          airApres: air,
+          prescriptif,
+        });
       if (revelation) {
         console.log(
           `  [${intention.slug}] réparation RETENUE — elle RÉTABLIT la jugeabilité (${perimetreAvant.length}→${perimetreApres.length} familles de juges) : ${introduits.length} diagnostic(s) RÉVÉLÉS, non introduits`,
@@ -669,7 +668,7 @@ for (const intention of INTENTIONS.slice(start, end)) {
           revelesNonIntroduits: introduits.length,
         };
       }
-      if (introduits.length > 0 && !revelation) {
+      if (rejetee) {
         console.log(
           `  [${intention.slug}] RÉPARATION REJETÉE — OSCILLATION : ${introduits.length} diagnostic(s) INTRODUITS (${[...new Set(introduits.map((x) => x.code))].join(", ")})`,
         );
