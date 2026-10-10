@@ -34,6 +34,8 @@ import { TABLE_GENERATIONS, journaliserOrphelin } from '../../apps/web/src/lib/a
 import { tournerUneTranche } from '../../apps/web/src/lib/apps/service-generations.ts'
 import {
   executerRondes,
+  plafondDeLaTranche,
+  plafondParLigne,
   prochaineAttenteMs,
   secretsManquants,
 } from '../../apps/web/src/lib/apps/ronde-generation.ts'
@@ -53,14 +55,21 @@ const base = createClient(
 
 // UN moteur par tranche, comme partout : un processus de tranche est neuf,
 // l'etat ne survit QUE par la table.
+const PLAFOND_LIGNE = plafondParLigne(process.env)
+
 const moteurParTranche: MoteurContinuation = {
   poursuivreEmission: async (o) => {
     const { creerMoteur } = (await import(join(RACINE, 'benchmarks/air-emission/moteur.mjs'))) as {
-      creerMoteur: (x: { cleApi: string }) => Promise<{
+      creerMoteur: (x: { cleApi: string; plafondUsd?: number }) => Promise<{
         poursuivreEmission: MoteurContinuation['poursuivreEmission']
       }>
     }
-    const m = await creerMoteur({ cleApi: process.env.ANTHROPIC_API_KEY ?? '' })
+    // LE FREIN DE COUT : ce qui RESTE a la ligne, pas un plafond par
+    // tranche — `etatDepense` est par processus et le runner cree un moteur
+    // neuf a chaque tranche. Les deux gardes du coeur scelle font le reste :
+    // refus AVANT l'appel qui franchirait, recompte APRES.
+    const plafondUsd = plafondDeLaTranche(PLAFOND_LIGNE, o.etat)
+    const m = await creerMoteur({ cleApi: process.env.ANTHROPIC_API_KEY ?? '', plafondUsd })
     return m.poursuivreEmission(o)
   },
 }
@@ -89,7 +98,8 @@ process.on('SIGINT', () => {
 
 console.log(
   `travailleur heberge pret · table=${TABLE_GENERATIONS} · ` +
-    `armement=${process.env.GO_EMISSION_IA === '1' ? 'ARME' : 'DESARME (zero appel possible)'}`,
+    `armement=${process.env.GO_EMISSION_IA === '1' ? 'ARME' : 'DESARME (zero appel possible)'} · ` +
+    `plafond par ligne=${Number.isFinite(PLAFOND_LIGNE) ? `${String(PLAFOND_LIGNE)} $` : 'AUCUN (PLAFOND_USD_PAR_LIGNE absent)'}`,
 )
 
 await executerRondes({
