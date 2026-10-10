@@ -6,6 +6,12 @@ import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import ConversationApplication from './ConversationApplication';
 import { Attente, Bulle, CADRE_CONVERSATION, Composeur, VERRE_BULLE, Escalier } from './Conversation';
+import { modeAsyncActif } from '@/lib/apps/suivi-generation';
+
+// « Application » ne devient cliquable que le jour ou la generation
+// asynchrone est armee — MEME interrupteur que l'ecran de suivi : un seul
+// geste proprietaire allume tout. D'ici la : « Bientot », message doux.
+const APPLICATION_PRETE = modeAsyncActif(process.env.NEXT_PUBLIC_GENERATION_ASYNC);
 import { useTranslation } from '@/lib/translations';
 
 type Msg = { role: 'user' | 'assistant'; content: string };
@@ -127,6 +133,7 @@ export default function OnboardingChat() {
   // une valeur de `siteMode` : si c'etait un mode, tout ce qui lit `siteMode`
   // devrait apprendre a le connaitre. Ici, rien ne le voit.
   const [cibleApplication, setCibleApplication] = useState(false);
+  const [avisBientot, setAvisBientot] = useState(false);
   const typedText = messages.filter((m) => m.role === 'user').map((m) => m.content).join(' ');
   const browserLang = typeof navigator !== 'undefined'
     ? (navigator.language || 'fr').slice(0, 2).toLowerCase()
@@ -379,6 +386,13 @@ export default function OnboardingChat() {
                 <button
                   key={label}
                   onClick={async () => {
+                    // Tant que la generation n'est pas armee, « Application »
+                    // ne s'aiguille pas : message doux, rien d'autre. Les
+                    // trois modes ne passent jamais par cette branche.
+                    if (mode === 0 && !APPLICATION_PRETE) {
+                      setAvisBientot(true);
+                      return;
+                    }
                     const { data: { session: gate } } = await supabase.auth.getSession();
                     if (!gate?.access_token) { router.push('/login'); return; }
                     if (mode === 0) {
@@ -392,11 +406,25 @@ export default function OnboardingChat() {
                       sendText(label);
                     }
                   }}
-                  className="px-5 py-2.5 rounded-full border text-sm transition bg-white/[0.04] border-white/12 text-slate-200 hover:border-[#FA5D1E] hover:text-white hover:bg-white/[0.07]"
+                  className={
+                    mode === 0 && !APPLICATION_PRETE
+                      ? 'px-5 py-2.5 rounded-full border text-sm transition bg-white/[0.02] border-white/8 text-slate-500'
+                      : 'px-5 py-2.5 rounded-full border text-sm transition bg-white/[0.04] border-white/12 text-slate-200 hover:border-[#FA5D1E] hover:text-white hover:bg-white/[0.07]'
+                  }
                 >
                   {t(tkey)}
+                  {mode === 0 && !APPLICATION_PRETE && (
+                    <span className="ml-2 text-[10px] uppercase tracking-wide rounded-full border border-white/15 px-2 py-0.5 text-slate-400 align-middle">
+                      Bientôt
+                    </span>
+                  )}
                 </button>
               ))}
+              {avisBientot && !APPLICATION_PRETE && (
+                <p className="w-full text-xs text-slate-400 mt-1">
+                  La création d’applications arrive très bientôt.
+                </p>
+              )}
               </>
             ) : (
               <>
