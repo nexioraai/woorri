@@ -57,6 +57,7 @@ import * as repair from '@deribfy/repair'
 import * as compiler from '@deribfy/compiler'
 import * as fidelity from '@deribfy/fidelity'
 import { racineDepot } from './racine'
+import type { MoteurContinuation } from './travailleur'
 
 export type Emission = {
   readonly ok: boolean
@@ -74,7 +75,15 @@ type Moteur = {
     cleApi: string
     plafondUsd?: number
     paquets?: Record<string, unknown>
-  }) => Promise<{ emettreApplication: (d: { brief: string; slug: string }) => Promise<Emission> }>
+  }) => Promise<{
+    emettreApplication: (d: { brief: string; slug: string }) => Promise<Emission>
+    poursuivreEmission: (o: {
+      brief: string
+      slug: string
+      etat: unknown
+      budgetMs: number
+    }) => Promise<unknown>
+  }>
 }
 
 /**
@@ -96,18 +105,9 @@ type Moteur = {
  * construit un client au montage, et un import de haut niveau ferait entrer
  * cette construction dans chaque route du site.
  */
-export async function emettreApplication(brief: string, slug: string): Promise<Emission> {
-  const cle = process.env.ANTHROPIC_API_KEY ?? ''
-  if (cle === '') {
-    return {
-      ok: false,
-      raison: 'Clé Anthropic absente du serveur.',
-      diagnostics: [],
-      tirages: [],
-      coutUsd: 0,
-      jetons: { entree: 0, sortie: 0 },
-    }
-  }
+/** La fabrique UNIQUE du moteur cote site — memes paquets, meme mode strict,
+ *  pour l'emission d'un trait (conversation) ET la continuation (cron). */
+async function moteurDuSite(cle: string) {
   const { creerMoteur } = (await import(
     /* webpackIgnore: true */ `${racineDepot()}/benchmarks/air-emission/moteur.mjs`
   )) as Moteur
@@ -139,5 +139,36 @@ export async function emettreApplication(brief: string, slug: string): Promise<E
       vivacite: executionContract,
     },
   })
+  return m
+}
+
+export async function emettreApplication(brief: string, slug: string): Promise<Emission> {
+  const cle = process.env.ANTHROPIC_API_KEY ?? ''
+  if (cle === '') {
+    return {
+      ok: false,
+      raison: 'Clé Anthropic absente du serveur.',
+      diagnostics: [],
+      tirages: [],
+      coutUsd: 0,
+      jetons: { entree: 0, sortie: 0 },
+    }
+  }
+  const m = await moteurDuSite(cle)
   return await m.emettreApplication({ brief, slug })
+}
+
+/**
+ * ETAGE 4 — LA TRANCHE DU CRON. Un moteur NEUF par tranche (un processus
+ * serverless est neuf de toute facon) ; l'etat ne survit QUE par la table.
+ * Cle absente → erreur FATALE etiquetee : le travailleur refuse EN LE
+ * DISANT au lieu de retenter un mur.
+ */
+export const poursuivreEmissionDuSite: MoteurContinuation['poursuivreEmission'] = async (o) => {
+  const cle = process.env.ANTHROPIC_API_KEY ?? ''
+  if (cle === '') {
+    throw Object.assign(new Error('ANTHROPIC_API_KEY absente du serveur'), { transitoire: false })
+  }
+  const m = await moteurDuSite(cle)
+  return (await m.poursuivreEmission(o)) as Awaited<ReturnType<MoteurContinuation['poursuivreEmission']>>
 }

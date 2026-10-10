@@ -159,10 +159,15 @@ export function creerTravailleur({
     demande,
     nom,
     email,
+    proprietaire,
   }: {
     demande: string
     nom: string
     email: string | null
+    /** L'IDENTITE (dette 6a) : l'id d'utilisateur du jeton — l'email n'est
+     *  qu'une donnee d'affichage. Optionnel : les bancs d'essai n'en ont pas,
+     *  et la colonne est nullable tant que le SQL n'est pas re-pose. */
+    proprietaire?: string
   }): Promise<string> {
     const r = (await t()
       .insert({
@@ -170,6 +175,7 @@ export function creerTravailleur({
         demande, // JAMAIS tronquee : c'est l'ENTREE du travail, pas un affichage
         nom,
         owner_email: email,
+        ...(proprietaire === undefined ? {} : { owner_id: proprietaire }),
         ok: false,
       })
       .select('id')) as Lignes

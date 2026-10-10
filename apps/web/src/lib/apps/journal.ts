@@ -146,6 +146,9 @@ export function sqlPour(nom: string): string {
 create table if not exists public.${nom} (
   id                uuid primary key default gen_random_uuid(),
   created_at        timestamptz not null default now(),
+  -- IDENTITE PAR JETON (dette 6a) : l'email change, l'id d'utilisateur non.
+  -- owner_email reste une DONNEE d'affichage, jamais une cle d'identite.
+  owner_id          uuid,
   owner_email       text,
   demande           text not null,
   nom               text,
@@ -168,6 +171,7 @@ create table if not exists public.${nom} (
 );
 
 -- Base deja posee (ancienne forme a 12 colonnes) : complement idempotent.
+alter table public.${nom} add column if not exists owner_id          uuid;
 alter table public.${nom} add column if not exists statut            text;
 alter table public.${nom} add column if not exists etape             text;
 alter table public.${nom} add column if not exists sections_acquises jsonb not null default '{}'::jsonb;
@@ -228,8 +232,12 @@ create index if not exists ${nom}_ouvertes_idx
 `
 }
 
+/** LE nom de la table de production — exporte pour que les routes de
+ *  l'etage 4 ne l'ecrivent jamais nu (cliquet d'isolation etendu a app/). */
+export const TABLE_GENERATIONS = 'app_generations'
+
 /** La table de production — strictement le script de l'etage 1. */
-export const SQL_TABLE = sqlPour('app_generations')
+export const SQL_TABLE = sqlPour(TABLE_GENERATIONS)
 
 /**
  * LA JUMELLE DE TEST — meme schema, autre nom, par la meme source.

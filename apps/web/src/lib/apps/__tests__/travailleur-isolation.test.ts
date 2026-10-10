@@ -75,8 +75,13 @@ describe('CLIQUET — personne d autre ne peut ecrire les sequences interdites',
     'apps/web/src/lib/apps/__tests__/journal.test.ts', // ses cliquets
     'apps/web/src/lib/apps/__tests__/travailleur-isolation.test.ts', // celui-ci
   ])
+  // ETAGE 4 (cadrage valide le 2026-10-10) : les DEUX SEULES routes de
+  // production — le depot et le cron porteur. Liste FERMEE : une troisieme
+  // entree exige de reecrire ce test, c'est-a-dire un arbitrage conscient.
   const AUTORISES_OPTION = new Set([
     'apps/web/src/lib/apps/__tests__/travailleur-isolation.test.ts',
+    'apps/web/src/app/api/generateur/deposer/route.ts',
+    'apps/web/src/app/api/cron/generations/route.ts',
   ])
 
   const fichiers = (dossier: string): string[] =>
@@ -88,6 +93,9 @@ describe('CLIQUET — personne d autre ne peut ecrire les sequences interdites',
 
   const concernes = [
     ...fichiers(join(RACINE, 'apps/web/src/lib/apps')),
+    // ETAGE 4 : les routes aussi — c'est la que vivent les deux seules
+    // ecritures de production, donc la que le balayage doit mordre.
+    ...fichiers(join(RACINE, 'apps/web/src/app/api')),
     ...fichiers(join(RACINE, 'benchmarks/air-emission')).filter((f) =>
       /travailleur|jumelle/u.test(f),
     ),
@@ -135,6 +143,42 @@ describe('CLIQUET — la jumelle est identique a la vraie PAR CONSTRUCTION', () 
   it('un nom de table injecte est refuse — le DDL ne se fabrique pas depuis du texte libre', () => {
     expect(() => sqlPour('app; drop table sites')).toThrowError(/nom de table invalide/u)
     expect(() => sqlPour('Majuscule')).toThrowError(/nom de table invalide/u)
+  })
+})
+
+describe('CLIQUET — etage 4 : la production reste sous trois serrures', () => {
+  const API = join(RACINE, 'apps/web/src/app/api')
+  const fichiersApi = (dossier: string): string[] =>
+    readdirSync(dossier).flatMap((n) => {
+      const chemin = join(dossier, n)
+      if (statSync(chemin).isDirectory()) return n === 'node_modules' ? [] : fichiersApi(chemin)
+      return /\.(ts|tsx)$/u.test(n) ? [chemin] : []
+    })
+
+  it('la JUMELLE n existe pas cote application — aucune route ne peut la nommer', () => {
+    for (const f of fichiersApi(API)) {
+      expect(sansCommentaires(readFileSync(f, 'utf8')), f).not.toContain(`${NOM_PROD}_test`)
+    }
+  })
+
+  it('le cron verifie le kill-switch AVANT de construire le travailleur — l ordre EST la garantie', () => {
+    const src = sansCommentaires(
+      readFileSync(join(API, 'cron/generations/route.ts'), 'utf8'),
+    )
+    expect(src).toContain('tournerUneTranche')
+    // le depot porte une SENTINELLE, le cron le vrai moteur : chacun son role
+    const depot = sansCommentaires(readFileSync(join(API, 'generateur/deposer/route.ts'), 'utf8'))
+    expect(depot).toContain('sentinelle')
+    expect(depot).not.toContain('poursuivreEmissionDuSite')
+  })
+
+  it('le nom de la table de production vient de la CONSTANTE, jamais ecrit nu dans une route', () => {
+    for (const f of fichiersApi(API)) {
+      expect(sansCommentaires(readFileSync(f, 'utf8')), f).not.toMatch(
+        // une quote ou un backtick juste avant le nom nu = litteral en route
+        new RegExp('["\'`]' + NOM_PROD + '(?!_test)', 'u'),
+      )
+    }
   })
 })
 

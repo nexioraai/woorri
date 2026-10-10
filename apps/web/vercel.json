@@ -91,6 +91,10 @@
     {
       "path": "/api/cron/domain-indexing-byod",
       "schedule": "45 */2 * * *"
+    },
+    {
+      "path": "/api/cron/generations",
+      "schedule": "* * * * *"
     }
   ]
 }

@@ -14,6 +14,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { TABLE_GENERATIONS } from '@/lib/apps/journal'
 // LA LISTE DES ADMINISTRATEURS VIENT D'UN SEUL ENDROIT. J'avais recopie une
 // adresse en dur ici — exactement le defaut que `admin-emails.ts` a ferme le
 // 2026-10-02, apres l'avoir trouve dans SIX routes. Le cliquet m'a attrape
@@ -38,7 +39,7 @@ export async function GET(req: Request) {
   }
 
   const r = await supabaseAdmin
-    .from('app_generations')
+    .from(TABLE_GENERATIONS)
     .select('id, created_at, owner_email, demande, nom, ok, cout_usd, duree_ms, jetons_entree, jetons_sortie, diagnostics, tirages')
     .order('created_at', { ascending: false })
     .limit(500)
