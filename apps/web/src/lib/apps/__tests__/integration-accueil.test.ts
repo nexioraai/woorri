@@ -16,7 +16,7 @@
 // aujourd'hui, pas que la frontiere tient.
 // ============================================================
 import { describe, expect, it } from 'vitest'
-import { readFileSync, existsSync } from 'node:fs'
+import { readFileSync, existsSync, readdirSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 import { sansCommentaires } from './sans-commentaires'
 
@@ -262,6 +262,30 @@ describe('CLIQUET — C EST LE MOTEUR A HUIT PASSES QUI CONSTRUIT', () => {
     expect(POUR).not.toContain('construireDepuisModele')
     // Et plus aucun squelette a l expression reguliere ne sert de document.
     expect(POUR).not.toContain('emettreSansIa')
+  })
+
+  it('LA DERIVATION A LA MAIN NE REVIENT JAMAIS — ni le module, ni sa porte, nulle part dans lib/apps', () => {
+    // Le module est SUPPRIME (2026-10-10) : 297 lignes qui remplissaient un
+    // document AIR a la main, sans juge — actions 0, regles 0, intent absent
+    // au tir reel. Ce cliquet interdit sa reapparition sous n'importe quel
+    // nom de fichier : on ne surveille plus `pour.ts` seul, mais TOUT le
+    // dossier, et le FICHIER lui-meme ne doit pas exister.
+    const LIB_APPS = join(__dirname, '..')
+    expect(existsSync(join(LIB_APPS, 'derivation.ts'))).toBe(false)
+    const fichiers = (dossier: string): string[] =>
+      readdirSync(dossier).flatMap((n) => {
+        const chemin = join(dossier, n)
+        if (statSync(chemin).isDirectory()) return fichiers(chemin)
+        return /\.ts$/u.test(n) ? [chemin] : []
+      })
+    // CE FICHIER est le seul autorise a ecrire les deux noms — il teste leur
+    // interdiction (meme exemption nommee que les cliquets d'isolation).
+    for (const f of fichiers(LIB_APPS)) {
+      if (f === __filename) continue
+      const code = sansCommentaires(readFileSync(f, 'utf8'))
+      expect(code, f).not.toContain('construireDepuisModele')
+      expect(code, f).not.toContain('documentDepuisModele')
+    }
   })
 
   it('le moteur est charge PARESSEUSEMENT', () => {

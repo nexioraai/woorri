@@ -59,7 +59,6 @@
 // fonction pour la campagne en ligne de commande ; elle n'est juste plus le
 // chemin du serveur.
 import Anthropic from '@anthropic-ai/sdk'
-import { documentDepuisModele, type Derivation, type TableGestes } from './derivation'
 
 /** Les faits que P0 tire d'une demande. Forme du contrat `modele-metier`. */
 export type ModeleMetier = {
@@ -287,30 +286,14 @@ export function direCeQuOnACompris(m: ModeleMetier): string[] {
   return lignes
 }
 
-/**
- * LE MODÈLE DEVIENT UNE APPLICATION — sans un appel de plus.
+/* LA DERIVATION A LA MAIN EST MORTE, ET ELLE NE REVIENT PAS (2026-10-10).
  *
- * P0 a déjà payé pour comprendre. Ce qu'il a compris commande maintenant la
- * construction : les concepts donnent les entités, les besoins donnent les
- * écrans, et les gestes donnent les blocs — `TABLE_GESTES` le dit depuis
- * longtemps, il suffisait de la lire.
- *
- * La table est CHARGÉE, jamais recopiée. Le dépôt a vu quatre fois « une liste
- * écrite deux fois diverge » ; une cinquième copie ne ferait pas exception.
+ * `construireDepuisModele` vivait ici : l'unique porte d'entree de
+ * `derivation.ts` — 297 lignes qui remplissaient les cases d'un document AIR
+ * a la main. Mesure du 2026-10-08 (marketplace du proprietaire) : actions 0,
+ * regles 0, capacites 0, intent ABSENT — huit ecrans ou il ne se passait
+ * RIEN, et aucun juge pour le dire. Le moteur a huit passes l'a remplacee.
+ * La porte n'avait plus AUCUN appelant : code mort, retire avec son module
+ * et son test. Un cliquet (integration-accueil) interdit desormais le retour
+ * de ce chemin dans tout lib/apps — pas seulement dans `pour.ts`.
  */
-export async function construireDepuisModele(
-  modele: ModeleMetier,
-  identite: { nom: string; description: string | null },
-): Promise<Derivation | null> {
-  try {
-    const { racineDepot } = await import('./racine')
-    const mm = (await import(
-      /* webpackIgnore: true */ `${racineDepot()}/benchmarks/air-emission/modele-metier.mjs`
-    )) as { TABLE_GESTES: TableGestes }
-    return documentDepuisModele(modele as never, mm.TABLE_GESTES, identite)
-  } catch {
-    // La table absente ne doit pas faire perdre la compréhension : l'appelant
-    // retombe sur la lecture simple, et le DIT.
-    return null
-  }
-}
