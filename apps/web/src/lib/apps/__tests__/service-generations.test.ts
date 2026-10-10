@@ -9,7 +9,7 @@
 import { describe, expect, it } from 'vitest'
 import { creerFrom, type JournalPostgrest } from '@/lib/testing/postgrest'
 import { creerTravailleur, type BaseGeneration, type MoteurContinuation } from '../travailleur'
-import { deposerGeneration, tournerUneTranche, etatGeneration } from '../service-generations'
+import { deposerGeneration, tournerUneTranche, etatGeneration, traduireRaison, RAISON_TECHNIQUE, RAISON_NON_ABOUTIE } from '../service-generations'
 
 const sentinelle: MoteurContinuation = {
   poursuivreEmission: async () => {
@@ -41,6 +41,7 @@ describe('deposerGeneration — un INSERT en_attente, aucun moteur', () => {
     expect(charge.demande).toBe(longue) // jamais tronquee, juste ebarbee
     expect(charge.owner_email).toBe('a@b.c') // donnee d'affichage
     expect(charge.owner_id).toBe('user-1') // l'IDENTITE (dette 6a)
+    expect(charge.etape).toBe('p0') // la premiere marche est VRAIE des le depot
   })
 
   it('une demande vide est refusee AVANT la base', async () => {
@@ -85,7 +86,7 @@ describe('etatGeneration — la lecture est au PROPRIETAIRE seul', () => {
     }),
   })
 
-  it('rend la forme de l ecran : statut, etape, cout, diagnostics, aDocument', async () => {
+  it('le payload utilisateur est DEGRAISSE : ni cout, ni diagnostics — un devtools ne voit que ceci', async () => {
     const e = await etatGeneration({
       base: baseAvec({
         id: 'g-1', statut: 'en_cours', etape: 'reparation', nom: 'depenses',
@@ -95,8 +96,40 @@ describe('etatGeneration — la lecture est au PROPRIETAIRE seul', () => {
     })
     expect(e).toEqual({
       id: 'g-1', statut: 'en_cours', etape: 'reparation', nom: 'depenses',
-      coutUsd: 1.5, diagnostics: ['X@y'], aDocument: false,
+      aDocument: false, raison: null,
     })
+    // la preuve par les CLES : rien d'autre ne sort
+    expect(Object.keys(e ?? {}).sort()).toEqual(['aDocument', 'etape', 'id', 'nom', 'raison', 'statut'])
+  })
+
+  it("l'erreur de CREDIT ne sort JAMAIS brute — message generique, etat du compte invisible", async () => {
+    const e = await etatGeneration({
+      base: baseAvec({
+        id: 'g-1', statut: 'refusee', etape: null, nom: 'x', cout_usd: 25.6,
+        diagnostics: ['erreur fatale (non transitoire) : 400 {"type":"error"...Your credit balance is too low...'],
+        document: null,
+      }),
+      table: 't_test', id: 'g-1', proprietaire: 'user-1',
+    })
+    expect(e?.raison).toBe(RAISON_TECHNIQUE)
+    expect(JSON.stringify(e)).not.toMatch(/credit|400|balance|fatale|25\.6/iu)
+  })
+
+  it('les refus de convergence donnent le message rassurant, jamais le jargon du moteur', () => {
+    for (const brute of [
+      'non convergé en 3 tours de convergence (0 révélation(s) non comptée(s)) : reste 4 diagnostic(s)',
+      'filet anti-boucle : 9 tentatives de réparation (suspensions comprises) pour 0 tour(s) achevé(s)',
+      'réparation rejetée au tour 2 — TOUTES les bouchées amputent (3/3) : blk_entree_accroche',
+      'stagnation au tour 2 : 5 → 5 diagnostic(s)',
+      'raison inconnue du futur',
+    ]) {
+      const traduite = traduireRaison(brute)
+      expect(traduite).toBe(RAISON_NON_ABOUTIE)
+      expect(traduite).not.toMatch(/blk_|filet|bouchée/iu)
+    }
+    // et les familles techniques tombent toutes sur le generique
+    expect(traduireRaison('echec repete x3: Request timed out.')).toBe(RAISON_TECHNIQUE)
+    expect(traduireRaison('erreur fatale (non transitoire) : facturation')).toBe(RAISON_TECHNIQUE)
   })
 
   it('la ligne d un autre n existe pas : null, sans distinguer « absent » de « interdit »', async () => {

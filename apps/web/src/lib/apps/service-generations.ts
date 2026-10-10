@@ -59,15 +59,42 @@ export async function tournerUneTranche({
   return { desarme: false, rapports: await travailleur.tourner() }
 }
 
-/** La surface de lecture dont l'ecran a besoin — restreinte au proprietaire. */
+/**
+ * LA TRADUCTION DES REFUS — l'utilisateur ne voit JAMAIS les entrailles.
+ *
+ * Mesure (audit du 2026-10-10) : la raison brute portait le jargon du
+ * moteur (« filet anti-boucle », ids internes) et, PIRE, le JSON brut du
+ * fournisseur avec l'etat du credit API du proprietaire. Regle absolue :
+ * deux messages utilisateur, pas un de plus — le detail complet reste en
+ * admin. Par defaut (raison inconnue) : le message generique, jamais le
+ * brut — fail-closed.
+ */
+export const RAISON_TECHNIQUE = 'Une erreur technique est survenue. Réessayez dans un moment.'
+export const RAISON_NON_ABOUTIE =
+  'La génération n’a pas pu aboutir cette fois. Nous avons été prévenus et regardons ce qui s’est passé.'
+
+export function traduireRaison(brute: string | undefined): string {
+  const r = String(brute ?? '')
+  // erreurs d'infrastructure : credit, facturation, 400 fournisseur,
+  // timeouts, echecs repetes — le message generique, RIEN du brut.
+  if (/^erreur fatale|^echec repete|timed out|credit|facturation|\b4\d\d\b|\b5\d\d\b/iu.test(r)) {
+    return RAISON_TECHNIQUE
+  }
+  // refus de convergence du moteur : filet, plafond, amputation, stagnation…
+  return RAISON_NON_ABOUTIE
+}
+
+/** La surface de lecture dont l'ecran a besoin — restreinte au proprietaire,
+ *  et DEGRAISSEE : ni cout, ni diagnostics bruts (un devtools ouvert ne voit
+ *  que ceci). Le detail complet vit dans la route admin, pour l'operateur. */
 export type EtatGeneration = {
   readonly id: string
   readonly statut: 'en_attente' | 'en_cours' | 'livree' | 'refusee'
   readonly etape: string | null
   readonly nom: string | null
-  readonly coutUsd: number
-  readonly diagnostics: readonly string[]
   readonly aDocument: boolean
+  /** Traduite — jamais la raison brute du moteur ni du fournisseur. */
+  readonly raison: string | null
 }
 
 export type BaseLecture = {
@@ -95,19 +122,20 @@ export async function etatGeneration({
 }): Promise<EtatGeneration | null> {
   const r = await base
     .from(table)
-    .select('id, statut, etape, nom, cout_usd, diagnostics, document')
+    .select('id, statut, etape, nom, diagnostics, document')
     .eq('id', id)
     .eq('owner_id', proprietaire) // dette 6a : l'IDENTITE est l'id du jeton
     .maybeSingle()
   if (r.error !== null || r.data === null) return null
   const l = r.data
+  const statut = l.statut as EtatGeneration['statut']
+  const diagnostics = Array.isArray(l.diagnostics) ? (l.diagnostics as string[]) : []
   return {
     id: String(l.id),
-    statut: l.statut as EtatGeneration['statut'],
+    statut,
     etape: l.etape === null || l.etape === undefined ? null : String(l.etape),
     nom: l.nom === null || l.nom === undefined ? null : String(l.nom),
-    coutUsd: Number(l.cout_usd ?? 0),
-    diagnostics: Array.isArray(l.diagnostics) ? (l.diagnostics as string[]) : [],
     aDocument: l.document !== null && l.document !== undefined,
+    raison: statut === 'refusee' ? traduireRaison(diagnostics[0]) : null,
   }
 }

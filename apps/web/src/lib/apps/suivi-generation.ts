@@ -20,7 +20,8 @@ export const ETAPES_SUIVI = [
 export type EtatPourSuivi = {
   readonly statut: 'en_attente' | 'en_cours' | 'livree' | 'refusee'
   readonly etape: string | null
-  readonly diagnostics: readonly string[]
+  /** Deja TRADUITE par le serveur — le brut du moteur ne voyage jamais. */
+  readonly raison: string | null
 }
 
 export type Marche = {
@@ -45,7 +46,9 @@ export function marcheDuSuivi(etat: EtatPourSuivi | null): Marche {
       courante: 3,
       livree: false,
       refusee: true,
-      raison: etat.diagnostics[0] ?? 'La génération a été refusée.',
+      raison:
+        etat.raison ??
+        'La génération n’a pas pu aboutir cette fois. Nous avons été prévenus et regardons ce qui s’est passé.',
       enCours: false,
     }
   }

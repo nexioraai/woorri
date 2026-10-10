@@ -172,6 +172,10 @@ export function creerTravailleur({
     const r = (await t()
       .insert({
         statut: 'en_attente',
+        // La premiere tranche COMMENCE a p0, et la saisie n'ecrit pas
+        // d'etape : sans cette ligne, l'ecran montrait « ecrire » pendant
+        // que P0 comprenait (audit du 2026-10-10).
+        etape: 'p0',
         demande, // JAMAIS tronquee : c'est l'ENTREE du travail, pas un affichage
         nom,
         owner_email: email,
