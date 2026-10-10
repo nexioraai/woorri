@@ -91,6 +91,13 @@ export type RapportTranche = {
   readonly issue: 'livree' | 'refusee' | 'suspendu' | 'rien' | 'depossede' | 'erreur'
   readonly etape?: string
   readonly detail?: string
+  /** TROU COMPTABLE n°2 — le cout REELLEMENT paye par une tranche
+   *  DEPOSSEDEE : il ne peut pas aller sur la ligne (le fencing l'interdit,
+   *  a raison : elle appartient a un autre), il va au total de la
+   *  plateforme. Present uniquement sur `depossede`, et seulement si le
+   *  moteur a etiquete un chiffre. */
+  readonly coutPerdu?: number
+  readonly jetonsPerdus?: { entree: number; sortie: number }
 }
 
 export function creerTravailleur({
@@ -102,6 +109,7 @@ export function creerTravailleur({
   battementRafraichiMs,
   production = false,
   perimetre,
+  journaliserOrphelin,
 }: {
   table: string
   base: BaseGeneration
@@ -112,6 +120,16 @@ export function creerTravailleur({
    *  qu'un autre puisse saisir. */
   battementRafraichiMs?: number
   production?: boolean
+  /** TROU COMPTABLE n°2 — ou va le cout d'une tranche depossedee. INJECTE :
+   *  le travailleur reste AVEUGLE a la base (cliquet), il delegue. Absent :
+   *  le comportement d'avant, le cout reste perdu (les bancs n'en passent
+   *  pas). L'implementation de production ecrit UNE ligne `ai_usage_log`
+   *  (`usage_type: 'application_orpheline'`) et JAMAIS app_generations. */
+  journaliserOrphelin?: (o: {
+    id: string
+    coutUsd: number
+    jetons: { entree: number; sortie: number }
+  }) => Promise<void>
   /** Restreint le BALAYAGE aux lignes d'UN proprietaire (`owner_email`) ou
    *  d'UNE ligne (id exact). Lecon du 2026-10-09 : la purge n'etait pas le
    *  seul chemin de destruction — un balayeur de harnais saisissait la plus
@@ -145,6 +163,37 @@ export function creerTravailleur({
     if (perimetre?.proprietaire !== undefined) r = r.eq('owner_email', perimetre.proprietaire)
     if (perimetre?.ligne !== undefined) r = r.eq('id', perimetre.ligne)
     return r
+  }
+
+  /**
+   * LA SORTIE DEPOSSEDEE, UNE SEULE FOIS ECRITE (4 sites l'appellent).
+   *
+   * Le fencing a parle : un autre possede la ligne, et aucune de nos
+   * ecritures ne doit l'atteindre. Mais le cout, lui, a ETE paye : il part
+   * au total de la plateforme par le journal INJECTE — jamais sur la ligne,
+   * jamais compte deux fois (le repreneur, lui, reprend un etat qui ne
+   * contient PAS cette tranche : elle n'a jamais ete ecrite).
+   */
+  const sortirDepossede = async (
+    id: string,
+    porteur: { coutTrancheUsd?: number; jetonsTranche?: { entree?: number; sortie?: number } } | null,
+  ): Promise<RapportTranche> => {
+    const coutPerdu = Number(porteur?.coutTrancheUsd ?? 0)
+    const jetonsPerdus = {
+      entree: Number(porteur?.jetonsTranche?.entree ?? 0),
+      sortie: Number(porteur?.jetonsTranche?.sortie ?? 0),
+    }
+    if (coutPerdu > 0 && journaliserOrphelin !== undefined) {
+      try {
+        await journaliserOrphelin({ id, coutUsd: coutPerdu, jetons: jetonsPerdus })
+      } catch {
+        // le journal d'un cout perdu ne doit JAMAIS casser une tranche :
+        // on a deja perdu l'argent, on ne perd pas le rapport en plus.
+      }
+    }
+    return coutPerdu > 0
+      ? { id, issue: 'depossede', coutPerdu, jetonsPerdus }
+      : { id, issue: 'depossede' }
   }
 
   /** Une ecriture VERIFIEE : une reprise, puis l'echec se dit. */
@@ -264,7 +313,15 @@ export function creerTravailleur({
         etat,
         budgetMs: budgetTrancheMs,
       })
-      if (depossede) return { id, issue: 'depossede' }
+      // Depossede PENDANT la tranche (battement sans effet) : ce que le
+      // moteur vient de rendre porte le cout de la tranche — il part en
+      // orphelin, la ligne n'est pas touchee.
+      if (depossede) {
+        return await sortirDepossede(
+          id,
+          (r.resultat ?? r.etat ?? null) as Parameters<typeof sortirDepossede>[1],
+        )
+      }
 
       if (!r.fini) {
         const e = r.etat as NonNullable<typeof r.etat>
@@ -300,7 +357,16 @@ export function creerTravailleur({
               .select('id') as PromiseLike<Lignes>,
         )
         if (ecrit.error !== null) return { id, issue: 'erreur', detail: ecrit.error.message }
-        if (ecrit.data === null || ecrit.data.length === 0) return { id, issue: 'depossede' }
+        if (ecrit.data === null || ecrit.data.length === 0) {
+          // l'etiquette de cout voyage sur l'enveloppe OU dans l'etat selon
+          // la sortie du moteur : on lit les deux, l'enveloppe d'abord.
+          const enveloppe = r as Parameters<typeof sortirDepossede>[1]
+          const dansEtat = e as unknown as Parameters<typeof sortirDepossede>[1]
+          return await sortirDepossede(
+            id,
+            enveloppe?.coutTrancheUsd !== undefined ? enveloppe : dansEtat,
+          )
+        }
         return { id, issue: 'suspendu', etape: r.etape }
       }
 
@@ -381,10 +447,16 @@ export function creerTravailleur({
             .select('id') as PromiseLike<Lignes>,
       )
       if (ecrit.error !== null) return { id, issue: 'erreur', detail: ecrit.error.message }
-      if (ecrit.data === null || ecrit.data.length === 0) return { id, issue: 'depossede' }
+      if (ecrit.data === null || ecrit.data.length === 0) {
+        return await sortirDepossede(id, res as Parameters<typeof sortirDepossede>[1])
+      }
       return { id, issue: res.ok ? 'livree' : 'refusee' }
     } catch (e: unknown) {
-      if (depossede) return { id, issue: 'depossede' }
+      // Depossede ET en erreur : l'erreur porte l'etiquette de cout (4e
+      // chemin) — meme traitement, le cout part en orphelin.
+      if (depossede) {
+        return await sortirDepossede(id, e as Parameters<typeof sortirDepossede>[1])
+      }
       // ── ECHEC EN PLEINE TRANCHE. Le partiel voyage avec l'erreur (D-103) ;
       // il est replie dans l'etat, et la ligne redevient saisissable TOUT DE
       // SUITE (`en_attente`) plutot que d'attendre la peremption. Trois
@@ -475,7 +547,9 @@ export function creerTravailleur({
             .eq('jeton_travailleur', jeton)
             .select('id') as PromiseLike<Lignes>,
       )
-      if (ecrit.data === null || ecrit.data.length === 0) return { id, issue: 'depossede' }
+      if (ecrit.data === null || ecrit.data.length === 0) {
+        return await sortirDepossede(id, e as Parameters<typeof sortirDepossede>[1])
+      }
       return {
         id,
         issue: fatale || reprises >= 3 ? 'refusee' : 'erreur',

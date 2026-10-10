@@ -102,6 +102,56 @@ export async function journaliser(l: LigneGeneration): Promise<void> {
 }
 
 /**
+ * LE COUT D'UNE TRANCHE DEPOSSEDEE — TROU COMPTABLE n°2, ferme le 2026-10-10.
+ *
+ * ── POURQUOI IL NE PEUT PAS ALLER SUR LA LIGNE.
+ *
+ * Quand le jeton de cloture a tourne (un autre travailleur a repris la
+ * ligne), toutes nos ecritures touchent ZERO ligne — c'est le fencing, et il
+ * a raison : ecrire la ligne d'autrui ecraserait son travail (le defaut
+ * exact que V2 existe pour interdire). Mais le cout, lui, a ETE paye.
+ *
+ * ── ALORS IL VA AU TOTAL DE LA PLATEFORME.
+ *
+ * `ai_usage_log` existe precisement « pour que le total de la plateforme
+ * reste juste SANS attendre quoi que ce soit » (en-tete de ce fichier). Un
+ * cout reel sans ligne legitime est exactement son cas. `usage_type` le DIT
+ * — `application_orpheline` — pour qu'un total ne confonde jamais ce qui a
+ * servi avec ce qui a ete paye en vain.
+ *
+ * ZERO DOUBLE-COMPTE, PAR CONSTRUCTION : le repreneur reprend l'etat depuis
+ * `sections_acquises`, qui ne contient PAS cette tranche — elle n'a jamais
+ * ete ecrite. Les deux chemins sont disjoints.
+ *
+ * Avalee en silence comme tout ce fichier : le suivi d'un cout deja perdu ne
+ * doit pas casser une generation en plus.
+ */
+export async function journaliserOrphelin(l: {
+  id: string
+  coutUsd: number
+  jetons: { entree: number; sortie: number }
+}): Promise<void> {
+  let supabaseAdmin
+  try {
+    ;({ supabaseAdmin } = await import('@/lib/supabase-admin'))
+  } catch {
+    return
+  }
+  try {
+    await supabaseAdmin.from('ai_usage_log').insert({
+      site_id: null,
+      usage_type: 'application_orpheline',
+      model: 'claude-opus-5',
+      input_tokens: l.jetons.entree,
+      output_tokens: l.jetons.sortie,
+    })
+  } catch {
+    // silencieux : un cout perdu journalise a moitie vaut mieux qu'une
+    // tranche cassee par son propre journal.
+  }
+}
+
+/**
  * LE SQL A POSER UNE FOIS, ecrit ici pour qu'il vive AVEC le code qui le lit.
  *
  * Il est EXPORTE et non commente : un cliquet le compare aux colonnes que

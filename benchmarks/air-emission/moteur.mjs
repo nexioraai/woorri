@@ -978,6 +978,13 @@ const surfaceEnveloppe = () => {
         refus: refusals.count,
         coutUsd: coutCumule(),
         jetons: jetonsCumules(),
+        // TROU COMPTABLE n°2 (2026-10-10) : si l'ecriture finale tombe sur un
+        // jeton perime (un autre a repris la ligne), TOUT ce qui suit est
+        // jete — le fencing l'exige, a raison. Le travailleur a alors besoin
+        // du cout DE CETTE TRANCHE, pas du cumul, pour le journaliser en
+        // ORPHELIN cote plateforme sans jamais toucher la ligne d'autrui.
+        coutTrancheUsd: Number((coutSondeTranche + coeur.lireEtatDepense().depense).toFixed(6)),
+        jetonsTranche: jetons(),
         // CE QUE LA SONDE A RETENU, dit et non tu : un niveau degrade est
         // une garantie perdue, et personne ne doit l'apprendre par surprise.
         niveaux,

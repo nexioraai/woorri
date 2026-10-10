@@ -23,7 +23,7 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { creerTravailleur, type BaseGeneration } from '@/lib/apps/travailleur'
-import { TABLE_GENERATIONS } from '@/lib/apps/journal'
+import { TABLE_GENERATIONS, journaliserOrphelin } from '@/lib/apps/journal'
 import { poursuivreEmissionDuSite } from '@/lib/apps/moteur'
 import { tournerUneTranche } from '@/lib/apps/service-generations'
 
@@ -48,6 +48,9 @@ export async function GET(req: Request) {
       // ouverture d'appel apres 240 s. (Reserve d'infra ci-dessus.)
       budgetTrancheMs: 240_000,
       battementPerimeMs: 600_000,
+      // Trou comptable n°2 : le cout d'une tranche depossedee part au total
+      // de la plateforme — jamais sur la ligne d'un autre travailleur.
+      journaliserOrphelin,
     }),
     env: process.env,
   })

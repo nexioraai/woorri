@@ -30,7 +30,7 @@ import {
   type BaseGeneration,
   type MoteurContinuation,
 } from '../../apps/web/src/lib/apps/travailleur.ts'
-import { TABLE_GENERATIONS } from '../../apps/web/src/lib/apps/journal.ts'
+import { TABLE_GENERATIONS, journaliserOrphelin } from '../../apps/web/src/lib/apps/journal.ts'
 import { tournerUneTranche } from '../../apps/web/src/lib/apps/service-generations.ts'
 import {
   executerRondes,
@@ -74,6 +74,8 @@ const travailleur = creerTravailleur({
   // l'appel ecrans long passe — c'est toute la raison d'etre de ce service.
   budgetTrancheMs: 3_600_000,
   battementPerimeMs: 1_800_000,
+  // Trou comptable n°2 : cout d'une tranche depossedee → total plateforme.
+  journaliserOrphelin,
 })
 
 let vivant = true
