@@ -55,3 +55,55 @@ export function requis<T>(valeur: T | null | undefined, quoi: string): T {
   }
   return valeur;
 }
+
+/**
+ * LES ARTEFACTS HISTORIQUES PRÉCÈDENT LA RÈGLE DE PROPRIÉTÉ (2026-10-10).
+ *
+ * Les documents de `benchmarks/air-emission/results/` sont des SORTIES DE
+ * MESURE passées — ce que le moteur émettait à une date donnée. Plusieurs
+ * portent des tables que le client mute sans dire à qui appartient une
+ * ligne : `kaviva-spa` laisse lire, modifier et ANNULER le rendez-vous de
+ * n'importe qui, parce que `ent_rendez_vous` ne référence que le soin et le
+ * créneau, jamais la personne. C'est exactement la faille que le juge de
+ * propriété existe pour refuser — et la refuser est JUSTE.
+ *
+ * ⚠️ CES ARTEFACTS NE SONT DONC PAS DES EXEMPLES SÛRS. On ne les corrige
+ * pas : ce sont des mesures, et une mesure qu'on retouche ne mesure plus
+ * rien. Les tests qui s'en servent mesurent AUTRE CHOSE (le fichier de
+ * publication, les clés du manifeste, les primitives émises) : cette
+ * fonction leur déclare la propriété que la règle exige désormais, pour que
+ * ce qu'ils mesurent reste mesurable — sans toucher un octet du fichier.
+ */
+export function avecProprieteDeclaree<T>(doc: T): T {
+  const air = JSON.parse(JSON.stringify(doc)) as {
+    entities: { id: string; name: string; fields: { id: string; type: string; referencesEntityId?: string }[] }[];
+    actions?: { effect?: { kind?: string; entityId?: string; instanceFrom?: string } }[];
+    datasets?: { entityId: string }[];
+  };
+  const actions = air.actions ?? [];
+  const identite = actions.find(
+    (a) => a.effect?.kind === "mutation" && a.effect.instanceFrom === "session",
+  )?.effect?.entityId;
+  if (identite === undefined) return air as unknown as T;
+
+  // Pour chaque entité que le client MUTE sans aucune référence vers les
+  // personnes : on déclare le porteur. Un seul champ, nommé pour qu'il se
+  // voie dans une sortie — personne ne doit croire qu'il vient du moteur.
+  for (const entite of air.entities) {
+    if (entite.id === identite) continue;
+    const mutee = actions.some(
+      (a) => a.effect?.kind === "mutation" && a.effect.entityId === entite.id,
+    );
+    if (!mutee) continue;
+    const aUnPorteur = entite.fields.some((f) => f.type === "reference" && f.referencesEntityId === identite);
+    if (aUnPorteur) continue;
+    entite.fields.push({
+      id: `fld_${entite.name}_porteur_declare_par_le_test`,
+      name: "porteur_declare_par_le_test",
+      type: "reference",
+      required: true,
+      referencesEntityId: identite,
+    } as (typeof entite.fields)[number]);
+  }
+  return air as unknown as T;
+}

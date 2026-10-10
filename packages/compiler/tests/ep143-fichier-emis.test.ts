@@ -8,12 +8,14 @@ import { describe, expect, it } from "vitest";
 import { applyAirMigrations, AIR_MIGRATIONS } from "@deribfy/air-schema";
 import { emitProject } from "../src/emit-project.ts";
 
-import { requis } from "./helpers.ts";
+import { requis, avecProprieteDeclaree } from "./helpers.ts";
 const R = join(import.meta.dirname, "..", "..", "..");
 const charger = (f: string): unknown =>
-  applyAirMigrations(
+  avecProprieteDeclaree(
+    applyAirMigrations(
     JSON.parse(readFileSync(join(R, "benchmarks", "air-emission", "results", f), "utf8")),
     AIR_MIGRATIONS,
+  ),
   );
 
 // DEUX TAILLES : 16 écrans et 23 écrans, deux domaines.

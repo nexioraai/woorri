@@ -1,4 +1,5 @@
 import type { ProjectAir } from "./air.ts";
+import { derivePlanAcces, entiteDIdentite } from "./derive-rls.ts";
 import { projectAirSchema } from "./air.ts";
 
 // Validateur sémantique DÉTERMINISTE (ARCHITECTURE §1) : un AIR émis par LLM
@@ -1427,6 +1428,124 @@ export function validateAir(air: ProjectAir): AirDiagnostic[] {
   }
 
   // Sortie triée (path, code) : même AIR ⇒ même liste, octet pour octet.
+  // ══════════════════════════════════════════════════════════════
+  //  LES DONNÉES ONT-ELLES UN PROPRIÉTAIRE DÉCLARÉ ? (2026-10-10)
+  //
+  // Mesure publique (CVE-2025-48757) : 170+ applications générées par un
+  // concurrent ont exposé e-mails, téléphones, données de paiement et clefs
+  // d'API tierces — 303 points d'entrée, certains EN ÉCRITURE. Le générateur
+  // émettait des tables sans politique, et l'application les interrogeait
+  // depuis le client avec la clef publique.
+  //
+  // LA NUANCE OÙ LEUR CORRECTIF S'ARRÊTE : leur scanner vérifie que la
+  // sécurité par ligne est ACTIVÉE. Il ne vérifie pas que les politiques
+  // FONT quelque chose. Une table protégée par `using (true)` passe son
+  // contrôle et fuit exactement pareil.
+  //
+  // Ces contrôles jugent donc l'EFFECTIVITÉ : toute entité que le client
+  // peut atteindre doit pouvoir dire À QUI appartiennent ses lignes — par un
+  // chemin déclaré vers l'identité, ou par un jeu de données de vitrine qui
+  // ASSUME la lecture publique. Ni l'un ni l'autre : le document est refusé
+  // AVANT la compilation, et il nomme la table.
+  // ══════════════════════════════════════════════════════════════
+  //
+  // ── CE JUGE NE S'APPLIQUE QU'AUX DOCUMENTS QUI ONT UN MODÈLE D'IDENTITÉ
+  //    (arbitrage du propriétaire, 2026-10-10).
+  //
+  // MESURE QUI A IMPOSÉ CETTE PORTE : le premier jet refusait QUATORZE
+  // documents du corpus gelé v3 — et UNIQUEMENT à cause de ce juge (40
+  // diagnostics, aucun d'une autre origine). Ces documents datent d'AVANT
+  // `instanceFrom: "session"` (1.13.0) et `access` (1.28.0) : ils mutent des
+  // entités de personnes sans aucun moyen de dire à qui appartient une ligne.
+  //
+  // ⚠️ ILS PORTENT DONC LA FAILLE EN SUBSTANCE — `bus-intercites` laisse
+  // modifier ET SUPPRIMER la fiche de n'importe quel voyageur depuis le
+  // client. Ils ne sont pas sûrs ; ils ne sont simplement JAMAIS DÉPLOYÉS :
+  // ce sont des références de mesure, et les corriger changerait les
+  // empreintes d'un corpus délibérément figé, sans bénéfice réel. QUE
+  // PERSONNE NE LES PRENNE UN JOUR POUR DES EXEMPLES SÛRS.
+  //
+  // La protection des documents NEUFS vit donc à l'ÉMISSION (cliquet
+  // `juge-propriete.mjs`, appelé par le moteur) : un document qui mute une
+  // entité de personnes sans déclarer son modèle d'identité est refusé là.
+  {
+    const aUnModeleDIdentite = air.access !== undefined || entiteDIdentite(air) !== undefined;
+    const plan = aUnModeleDIdentite ? derivePlanAcces(air) : { tables: [] };
+    const indexEntite = new Map(air.entities.map((e, i) => [e.id, i]));
+    for (const table of plan.tables) {
+      if (!table.atteignable) continue; // interne : rien ne l'expose
+      const chemin = `entities[${String(indexEntite.get(table.entityId) ?? 0)}]`;
+
+      if (table.portee.kind === "orpheline" && table.portee.demoMutee !== undefined) {
+        // La confusion la plus coûteuse, nommée pour elle-même : l'entité
+        // porte des lignes de DÉMONSTRATION et le client l'écrit. Mesurée
+        // sur `resto-quartier` : fiches clients et commandes auraient reçu
+        // une lecture publique si « porte un jeu de données » avait suffi.
+        push(
+          "AIR_RLS_DEMO_PRISE_POUR_VITRINE",
+          chemin,
+          `l'entité "${table.entityId}" porte le jeu de données "${table.portee.demoMutee}" ` +
+            `(des lignes de DÉMONSTRATION) et le client l'écrit : des données de démonstration ne ` +
+            `rendent pas une table publique. Déclarez un propriétaire — un champ qui référence ` +
+            `l'entité des personnes — ou un droit sur les surfaces qui y mènent.`,
+        );
+        continue;
+      }
+
+      if (table.portee.kind === "orpheline") {
+        push(
+          "AIR_RLS_TABLE_ORPHELINE",
+          chemin,
+          `l'entité "${table.entityId}" est atteignable depuis le client mais rien ne dit à qui ` +
+            `appartiennent ses lignes : aucun champ ne référence l'identité` +
+            (plan.entiteIdentite === undefined
+              ? ` (et ce document ne désigne aucune entité de personnes)`
+              : ` "${plan.entiteIdentite}" en ${String(3)} sauts au plus`) +
+            `, et aucun jeu de données ne la déclare en vitrine. Sans propriétaire déclaré, ` +
+            `une politique d'accès ne peut pas être calculée — et une table atteignable sans ` +
+            `politique effective est exactement la faille qui a exposé 170 applications.`,
+        );
+        continue;
+      }
+
+      if (table.politiques.length === 0) {
+        // Ceinture ET bretelles : une portée connue qui ne produit AUCUNE
+        // politique serait un trou dans la dérivation elle-même.
+        push(
+          "AIR_RLS_SANS_POLITIQUE",
+          chemin,
+          `l'entité "${table.entityId}" est atteignable et sa portée est connue ` +
+            `(${table.portee.kind}), mais aucune politique n'en découle`,
+        );
+      }
+
+      // LE PRÉDICAT TAUTOLOGIQUE : « ouvert à tous » n'est légitime QUE sur
+      // une vitrine, et QU'EN LECTURE. Ce contrôle garde la dérivation
+      // elle-même : si une évolution future produisait un `using (true)` sur
+      // une donnée possédée, il refuserait ici plutôt qu'en production.
+      for (const politique of table.politiques) {
+        if (politique.predicat.kind !== "ouvert") continue;
+        if (table.portee.kind !== "vitrine") {
+          push(
+            "AIR_RLS_PREDICAT_TAUTOLOGIQUE",
+            chemin,
+            `la politique "${politique.nom}" ouvre "${table.entityId}" à tous alors que ses ` +
+              `lignes ont un propriétaire déclaré : un prédicat toujours vrai n'est pas une ` +
+              `politique, c'est une table publique qui se croit protégée`,
+          );
+        } else if (politique.operation !== "select") {
+          push(
+            "AIR_RLS_VITRINE_ECRITURE_OUVERTE",
+            chemin,
+            `la politique "${politique.nom}" ouvre l'écriture de la vitrine "${table.entityId}" ` +
+              `à tous : une donnée de vitrine se LIT par tous, elle ne s'écrit jamais ainsi`,
+          );
+        }
+      }
+
+    }
+  }
+
   return diagnostics.sort((a, b) =>
     a.path < b.path ? -1 : a.path > b.path ? 1 : a.code < b.code ? -1 : a.code > b.code ? 1 : 0,
   );

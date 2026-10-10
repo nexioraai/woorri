@@ -42,3 +42,7 @@ export {
 } from "./json-schema.ts";
 
 export * from "./ids.ts";
+
+// Les politiques d'acces se DERIVENT du contrat (2026-10-10) — une seule
+// source, deux consommateurs : le juge (validate) et l'emetteur (compilateur).
+export * from "./derive-rls.ts";

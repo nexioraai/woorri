@@ -235,6 +235,11 @@ const surfaceEnveloppe = () => {
   // prouvee). Sans elle, une reparation qui n'ampute pas remplacait le
   // document SANS EXAMEN — meme pire qu'avant. Defaut mesure au tir n°2.
   const { creerGateReparation } = await import(join(HERE, "gate-reparation.mjs"));
+  // LE CLIQUET D'EMISSION (2026-10-10) : un document NEUF qui mute une
+  // entite de personnes doit dire a qui appartient une ligne. Le juge du
+  // contrat ne mord que sur les documents a modele d'identite (le corpus
+  // GELE n'en a pas) ; celui-ci protege ce que NOUS emettons.
+  const { jugerProprieteDesPersonnes } = await import(join(HERE, "juge-propriete.mjs"));
   const gateReparation = creerGateReparation({ validateLocal, perimetreDeJugement, elargit });
 
   // ── LA SONDE DE GRAMMAIRE, UNE FOIS PAR MOTEUR.
@@ -724,6 +729,16 @@ const surfaceEnveloppe = () => {
     // LA NAVIGATION SE DERIVE DU PLAN, MECANIQUEMENT ET GRATUITEMENT (mesure
     // c29bd806 : des cycles payes a recopier une liste calculable). Avant
     // CHAQUE jugement — l'entree ici, le candidat de chaque tour plus bas.
+    // Le cliquet de propriete : le MODELE est l'autorite de l'identite.
+    const jugerPropriete = (doc) =>
+      doc === null
+        ? []
+        : jugerProprieteDesPersonnes({
+            air: doc,
+            modele: prescriptif.modele,
+            derivations: modeleMetier,
+          });
+
     const reparerMecaniquement = (doc) => {
       const r = modeleMetier.reparerNavigation(doc, prescriptif.plan);
       if (r.change) console.log(`  [${slug}] navigation re-derivee du plan (mecanique, 0 appel)`);
@@ -733,6 +748,7 @@ const surfaceEnveloppe = () => {
     acquis = document;
     let { air, diagnostics } = validateLocal(document, prescriptif);
     diagnostics = [...diagnostics, ...jugerAcceptation(air, prescriptif, intention)];
+    diagnostics = [...diagnostics, ...jugerPropriete(air)];
     if (premierePasse === null) premierePasse = diagnostics.length;
     defautsRestants = diagnostics.length;
 
@@ -889,6 +905,7 @@ const surfaceEnveloppe = () => {
         journalBouchees.length > 0 && rejetees.length === journalBouchees.length;
       ({ air, diagnostics } = validateLocal(candidat, prescriptif));
       diagnostics = [...diagnostics, ...jugerAcceptation(air, prescriptif, intention)];
+      diagnostics = [...diagnostics, ...jugerPropriete(air)];
       defautsRestants = diagnostics.length;
       const verdict = gateReparation.verdict({
         diagnosticsAvant: baseDiags.map((x) => ({ code: x.code, path: x.path })),

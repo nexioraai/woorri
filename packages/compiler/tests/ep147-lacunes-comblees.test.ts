@@ -13,13 +13,15 @@ import { emitProject } from "../src/emit-project.ts";
 import { API_SENSIBLES_PAR_CAPACITE, manifesteConfidentialite } from "../src/emit-manifests.ts";
 import { RELEASE_TRAIN_V1 } from "../src/release-train.ts";
 
-import { requis } from "./helpers.ts";
+import { requis, avecProprieteDeclaree } from "./helpers.ts";
 const R = join(import.meta.dirname, "..", "..", "..");
 const charger = (f: string): ProjectAir =>
-  applyAirMigrations(
+  avecProprieteDeclaree(
+    applyAirMigrations(
     JSON.parse(readFileSync(join(R, "benchmarks", "air-emission", "results", f), "utf8")),
     AIR_MIGRATIONS,
-  ) as ProjectAir;
+  ) as ProjectAir,
+  );
 
 // DEUX TAILLES : 16 et 23 écrans, deux domaines.
 const PETIT = charger("kaviva-spa.2026-09-11T23-00-50-047Z.attempt2.air.json");

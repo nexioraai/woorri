@@ -1,5 +1,6 @@
 // EP-176 — LES QUATRE MAILLONS ENTRE « LE DOCUMENT COMPILE » ET « L'APP SERT ».
 import { readFileSync, readdirSync } from "node:fs";
+import { avecProprieteDeclaree } from "./helpers.ts";
 import { SOURCE_GENERATEUR } from "./source-generateur.ts";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -10,12 +11,14 @@ import { jugerCapacitesSansIntegration } from "../../../benchmarks/air-emission/
 import { requis } from "./helpers.ts";
 const R = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
 const RES = join(R, "benchmarks", "air-emission", "results");
-const DOC = JSON.parse(
+// Artefact HISTORIQUE : la propriété des lignes y est déclarée par le test
+// (voir `avecProprieteDeclaree`) — le fichier n'est pas touché.
+const DOC = avecProprieteDeclaree(JSON.parse(
   readFileSync(
     join(RES, requis(readdirSync(RES).find((f) => f.includes("marche-immobilier") && f.includes("attempt2")), "cludesmarcheimmobilierf.includesattempt2")),
     "utf8",
   ),
-) as ProjectAir;
+)) as ProjectAir;
 const codes = (d: readonly { code: string }[]): string[] => d.map((x) => x.code);
 
 describe("EP-176 ① · une capacité de service désigne son intégration", () => {

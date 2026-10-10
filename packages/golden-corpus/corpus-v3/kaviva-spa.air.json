@@ -1040,6 +1040,20 @@
           "referencesEntityId": "ent_creneau",
           "required": true,
           "type": "reference"
+        },
+        {
+          "id": "fld_rdv_profil",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Cliente"
+            }
+          ],
+          "name": "profil",
+          "referenceDisplayFieldId": "fld_profil_nom",
+          "referencesEntityId": "ent_profil",
+          "required": true,
+          "type": "reference"
         }
       ],
       "id": "ent_rendez_vous",

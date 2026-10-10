@@ -156,12 +156,33 @@ describe("ce qu'une délégation ne peut pas dire", () => {
 });
 
 describe("l'ajout est additif", () => {
-  it("un document SANS délégation reste valide", () => {
-    // Un métier sans mandataire — SGD — ne doit pas bouger parce qu'un autre
-    // métier, ailleurs, en a besoin.
+  it("retirer la délégation de tontine la laisse SANS PROPRIÉTAIRE — et c'est refusé", () => {
+    // ── CE TEST A ÉTÉ REFORMULÉ LE 2026-10-10, ET VOICI POURQUOI.
+    //
+    // Il affirmait « un document SANS délégation reste valide » en RETIRANT
+    // la délégation de tontine. Son commentaire parlait de SGD ; son code
+    // chargeait tontine. Or dans tontine l'identité vient UNIQUEMENT de
+    // `delegation.subjectEntityId` (= ent_utilisateurs) : la retirer prive le
+    // document de toute façon de dire à qui appartient une ligne, et
+    // `ent_membres_tontine` devient orpheline (atteinte par un écran sans
+    // droit — six écrans sur dix en portent un). Le juge de propriété la
+    // refuse donc, À RAISON.
+    //
+    // CE N'EST PAS UNE RÉGRESSION, et aucune session future ne doit le
+    // croire : on ne retire pas la délégation d'une tontine, où le mandataire
+    // EST le métier (« tout membre ne possédant pas de smartphone est
+    // rattaché à un mandataire »). L'intention d'origine — « l'ajout de la
+    // délégation est additif » — est prouvée JUSTE EN DESSOUS, sur le bon
+    // document : gestion, dont l'identité ne dépend d'aucune délégation.
+    //
+    // Le test garde donc sa valeur, retournée : il épingle que retirer le
+    // SEUL marqueur d'identité d'un document le rend invalide — ce qui est la
+    // propriété qu'on veut, pas celle qu'on subit.
     const doc = lire();
     delete exige(doc.access, "access").delegation;
-    expect(() => assertValidAir(migrateAirDocument(brut(doc)))).not.toThrow();
+    expect(() => assertValidAir(migrateAirDocument(brut(doc)))).toThrow(
+      /AIR sémantiquement invalide/u,
+    );
   });
 
   it("le document de gestion, qui n'en déclare aucune, passe toujours", () => {

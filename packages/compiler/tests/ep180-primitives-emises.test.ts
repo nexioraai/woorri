@@ -12,7 +12,7 @@ import type { ProjectAir } from "@deribfy/air-schema";
 import { LIBELLES_PRIMITIFS, jugerLibellesPrimitifs } from "@deribfy/execution-contract";
 import { emitProject } from "../src/emit-project.ts";
 
-import { requis } from "./helpers.ts";
+import { requis, avecProprieteDeclaree } from "./helpers.ts";
 const R = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..");
 const RES = join(R, "benchmarks", "air-emission", "results");
 // UNE SEULE affirmation de type, ici, à la FRONTIÈRE du fichier — et elle ne
@@ -20,12 +20,14 @@ const RES = join(R, "benchmarks", "air-emission", "results");
 // disparaît avec elle, ce sont les 29 accès `any` qui suivaient, où le
 // compilateur ne vérifiait plus RIEN — ni le nom d'un champ, ni sa forme.
 const charger = (motif: string): ProjectAir =>
-  JSON.parse(
+  avecProprieteDeclaree(
+    JSON.parse(
     readFileSync(
       join(RES, requis(readdirSync(RES).find((f) => f.includes(motif)), "résultat de run « " + motif + " »")),
       "utf8",
     ),
-  ) as ProjectAir;
+  ) as ProjectAir,
+  );
 
 // DEUX TAILLES, et désignées par leur HORODATAGE — jamais « le dernier »
 // (L-179-B : une fixture doit désigner un cas, pas une date).

@@ -228,6 +228,36 @@ export const SECTIONS_CORRECTIVES: Readonly<Record<string, readonly SectionEmiss
   // corrigeant la référence. Sans `base` dans ce périmètre, la seule issue
   // serait de retirer le droit de l'écran — l'amputation, encore.
   AIR_ACCESS_RIGHT_UNKNOWN: ["base", "ecrans", "actions"],
+  // ── LA PROPRIÉTÉ DES DONNÉES (2026-10-10). Le correctif ne vit JAMAIS là
+  // où le défaut s'observe : il s'observe sur l'ENTITÉ (« rien ne dit à qui
+  // appartiennent ses lignes »), et il se répare partout où une déclaration
+  // de propriété peut naître. Les trois issues sont légitimes, et aucune
+  // n'est préférable a priori :
+  //
+  //   · donner un PORTEUR à l'entité — un champ qui référence les personnes
+  //     (`donnees`, où vivent les entités) ;
+  //   · exiger un DROIT sur les surfaces qui y mènent (`base` pour `access`,
+  //     `ecrans` et `actions` pour les surfaces elles-mêmes) ;
+  //   · cesser de l'exposer au client (`ecrans`, `actions`).
+  //
+  // Sans `donnees` dans ce périmètre, la seule issue serait de retirer
+  // l'écran ou l'action qui expose la table — l'amputation, encore. C'est la
+  // leçon de ce fichier, appliquée à la famille qui ferme la faille ayant
+  // exposé 170 applications ailleurs.
+  AIR_RLS_TABLE_ORPHELINE: ["donnees", "base", "ecrans", "actions"],
+  // Des lignes de DÉMONSTRATION prises pour une table publique : se répare
+  // en déclarant le porteur (`donnees`), en gardant les surfaces (`base`,
+  // `ecrans`, `actions`), ou en retirant l'écriture (`actions`).
+  AIR_RLS_DEMO_PRISE_POUR_VITRINE: ["donnees", "base", "ecrans", "actions"],
+  // Une portée connue dont aucune politique ne découle : c'est la dérivation
+  // qui a un trou, pas le document. Le périmètre reste celui des données,
+  // pour qu'une réparation ne se croie jamais impossible.
+  AIR_RLS_SANS_POLITIQUE: ["donnees"],
+  // Un prédicat toujours vrai sur une donnée possédée, et une écriture de
+  // vitrine ouverte à tous : deux gardes de la dérivation elle-même. Même
+  // périmètre — ce qui se répare, ce sont les déclarations de propriété.
+  AIR_RLS_PREDICAT_TAUTOLOGIQUE: ["donnees", "base"],
+  AIR_RLS_VITRINE_ECRITURE_OUVERTE: ["donnees", "base", "actions"],
   // Un rôle par défaut inconnu ne s'observe et ne se répare que dans `access`.
   AIR_ACCESS_DEFAULT_ROLE_UNKNOWN: ["base"],
   // L'écran d'entrée hors de portée du rôle par défaut a TROIS correctifs
