@@ -120,3 +120,32 @@ export function Composeur({
     </div>
   );
 }
+
+/**
+ * L'ESCALIER — la progression par marches des trois modes, DEPLACEE ici
+ * (verbatim, classes au caractere pres) depuis OnboardingChat pour que le
+ * suivi de generation (etage 4) REUTILISE la meme marche au lieu d'en
+ * redessiner une : la lecon de ce fichier, appliquee une primitive de plus.
+ */
+export function Escalier({ etapes, courante }: { etapes: string[]; courante: number }) {
+  return (
+    <>
+      {etapes.map((label, i) => {
+        const done = i < courante;
+        const active = i === courante;
+        return (
+          <div key={i} className="flex items-center gap-3 transition-all duration-500" style={{ opacity: i <= courante ? 1 : 0.35 }}>
+            <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-500" style={{ background: done ? '#FA5D1E' : active ? 'rgba(224,112,64,0.2)' : 'rgba(255,255,255,0.06)', border: active ? '2px solid #FA5D1E' : '2px solid transparent' }}>
+              {done ? (
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3"><path d="M20 6L9 17l-5-5" /></svg>
+              ) : active ? (
+                <div className="w-2 h-2 rounded-full bg-[#FA5D1E] animate-pulse" />
+              ) : null}
+            </div>
+            <span className="text-sm transition-colors duration-500" style={{ color: active ? '#fff' : done ? '#cbbfae' : '#6f6456' }}>{label}</span>
+          </div>
+        );
+      })}
+    </>
+  );
+}

@@ -22,7 +22,20 @@
 // ============================================================
 import { useState, useRef, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Attente, Bulle, Composeur } from './Conversation';
+import { Attente, Bulle, Composeur, Escalier } from './Conversation';
+import {
+  ETAPES_SUIVI,
+  marcheDuSuivi,
+  modeAsyncActif,
+  generationDepuisUrl,
+  memoriserGeneration,
+  type EtatPourSuivi,
+} from '@/lib/apps/suivi-generation';
+
+// ETAGE 4 — le drapeau : OFF (defaut), l'UX synchrone ci-dessous reste SEULE
+// au monde ; le chemin async n'existe qu'arme consciemment. L'ecran ne fait
+// que du polling de statut — il ne genere RIEN par lui-meme.
+const ASYNC = modeAsyncActif(process.env.NEXT_PUBLIC_GENERATION_ASYNC);
 
 type Question = { code: string; destination: string; texte: string };
 type Intention = {
@@ -57,6 +70,14 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
   // Le texte REELLEMENT lu — brief et reponses. Les deux autres routes le
   // recoivent ; leur envoyer le dernier message seul perdrait tout le reste.
   const [texteLu, setTexteLu] = useState('');
+  // ── ETAGE 4 (sous drapeau) : la generation suivie, pas executee ici.
+  const [generationId, setGenerationId] = useState<string | null>(() =>
+    ASYNC && typeof window !== 'undefined'
+      ? generationDepuisUrl(window.location.search, window.localStorage)
+      : null,
+  );
+  const [etatGen, setEtatGen] = useState<EtatPourSuivi | null>(null);
+  const minuterieSuivi = useRef<number | null>(null);
 
   const enQuestion = ouvertes.length > 0;
 
@@ -71,6 +92,87 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
     const { data: { session } } = await supabase.auth.getSession();
     return session?.access_token ?? '';
   };
+
+  // (La reprise apres rafraichissement vit dans l'initialiseur de
+  // generationId — pas de setState dans un effet.)
+
+  // ── ETAGE 4 : le polling (5 s) — s'arrete seul sur livree/refusee.
+  useEffect(() => {
+    if (!ASYNC || generationId === null) return;
+    let vivant = true;
+    const lire = async () => {
+      try {
+        const res = await fetch(`/api/generateur/etat?id=${encodeURIComponent(generationId)}`, {
+          headers: { Authorization: `Bearer ${await jeton()}` },
+        });
+        if (!vivant) return;
+        if (res.ok) {
+          const e = (await res.json()) as EtatPourSuivi;
+          setEtatGen(e);
+          if (e.statut === 'livree' || e.statut === 'refusee') return;
+        }
+      } catch {
+        // transitoire : la prochaine lecture reessaiera
+      }
+      if (vivant) minuterieSuivi.current = window.setTimeout(() => { void lire(); }, 5000);
+    };
+    void lire();
+    return () => {
+      vivant = false;
+      if (minuterieSuivi.current !== null) window.clearTimeout(minuterieSuivi.current);
+    };
+  }, [generationId]);
+
+  const deposerAsync = async () => {
+    setTravail('archive');
+    setAvis('');
+    try {
+      const res = await fetch('/api/generateur/deposer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${await jeton()}` },
+        body: JSON.stringify({ demande: texteLu, nom: 'application' }),
+      });
+      const d = (await res.json().catch(() => ({}))) as { id?: string; error?: string };
+      if (!res.ok || typeof d.id !== 'string') {
+        setAvis(String(d.error ?? 'Dépôt impossible.'));
+        return;
+      }
+      window.history.replaceState(null, '', memoriserGeneration(d.id, window.localStorage));
+      setEtatGen(null);
+      setGenerationId(d.id);
+      setAvis('Demande déposée — la génération avance toute seule, vous pouvez fermer cette page et revenir.');
+    } catch {
+      setAvis('Dépôt impossible.');
+    } finally {
+      setTravail('');
+    }
+  };
+
+  const telechargerLivraison = async () => {
+    if (generationId === null) return;
+    setTravail('archive');
+    try {
+      const res = await fetch(`/api/generateur/livraison?id=${encodeURIComponent(generationId)}`, {
+        headers: { Authorization: `Bearer ${await jeton()}` },
+      });
+      if (!res.ok) {
+        const d = (await res.json().catch(() => ({}))) as { error?: string };
+        setAvis(String(d.error ?? 'Téléchargement impossible.'));
+        return;
+      }
+      const url = URL.createObjectURL(await res.blob());
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'application.zip';
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      setAvis('Téléchargement impossible.');
+    } finally {
+      setTravail('');
+    }
+  };
+
 
   /** Un tour : soit une premiere demande, soit une reponse a la question ouverte. */
   const envoyer = async () => {
@@ -189,6 +291,13 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
 
   const telecharger = async () => {
     if (document_ === null) return;
+    // ETAGE 4 : drapeau ON → depot asynchrone ; OFF → le chemin synchrone
+    // historique, inchange. La garde-document reste PREMIERE : on ne depose
+    // pas plus qu'on ne construit ce qu'on n'a pas compris.
+    if (ASYNC) {
+      await deposerAsync();
+      return;
+    }
     setTravail('archive');
     setAvis('');
     try {
@@ -218,6 +327,26 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
 
   return (
     <>
+      {ASYNC && generationId !== null && (
+        <div className="mb-4 rounded-xl border border-white/10 bg-white/[0.03] p-4">
+          <p className="text-xs text-slate-400 mb-3">Suivi de la génération</p>
+          <div className="flex flex-col gap-2">
+            <Escalier etapes={[...ETAPES_SUIVI]} courante={marcheDuSuivi(etatGen).courante} />
+          </div>
+          {marcheDuSuivi(etatGen).refusee && (
+            <p className="mt-3 text-sm text-red-300">{marcheDuSuivi(etatGen).raison}</p>
+          )}
+          {marcheDuSuivi(etatGen).livree && (
+            <button
+              type="button"
+              onClick={() => { void telechargerLivraison(); }}
+              className="mt-3 text-sm underline text-white hover:text-[#FA5D1E]"
+            >
+              Télécharger l’application (zip)
+            </button>
+          )}
+        </div>
+      )}
       {apercu !== '' && (
         <div className="mb-4">
           <div className="flex items-center justify-between mb-2">

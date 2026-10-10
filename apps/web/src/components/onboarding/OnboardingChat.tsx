@@ -5,7 +5,7 @@ import { Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import ConversationApplication from './ConversationApplication';
-import { Attente, Bulle, CADRE_CONVERSATION, Composeur, VERRE_BULLE } from './Conversation';
+import { Attente, Bulle, CADRE_CONVERSATION, Composeur, VERRE_BULLE, Escalier } from './Conversation';
 import { useTranslation } from '@/lib/translations';
 
 type Msg = { role: 'user' | 'assistant'; content: string };
@@ -430,22 +430,10 @@ export default function OnboardingChat() {
                     <p className="text-sm text-slate-400">Cela peut prendre un moment, patientez.</p>
                   </div>
                   <div className="flex flex-col gap-3">
-                    {LOADING_STEPS.map((label, i) => {
-                      const done = i < etape;
-                      const active = i === etape;
-                      return (
-                        <div key={i} className="flex items-center gap-3 transition-all duration-500" style={{ opacity: i <= etape ? 1 : 0.35 }}>
-                          <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-500" style={{ background: done ? '#FA5D1E' : active ? 'rgba(224,112,64,0.2)' : 'rgba(255,255,255,0.06)', border: active ? '2px solid #FA5D1E' : '2px solid transparent' }}>
-                            {done ? (
-                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3"><path d="M20 6L9 17l-5-5" /></svg>
-                            ) : active ? (
-                              <div className="w-2 h-2 rounded-full bg-[#FA5D1E] animate-pulse" />
-                            ) : null}
-                          </div>
-                          <span className="text-sm transition-colors duration-500" style={{ color: active ? '#fff' : done ? '#cbbfae' : '#6f6456' }}>{label}</span>
-                        </div>
-                      );
-                    })}
+                    {/* L'escalier vit desormais dans Conversation.tsx (primitive
+                        partagee) — DEPLACEMENT verbatim, pour que le suivi de
+                        generation reutilise LA meme marche. */}
+                    <Escalier etapes={LOADING_STEPS} courante={etape} />
                   </div>
                 </div>
               ) : null}
