@@ -164,6 +164,17 @@ describe("B/C — les dérivations ne travaillent QUE sur le MODEL (balayage COM
     // pour elle comme pour les autres. On rend la liste des actions, pas le
     // modèle : c'est ce qui se compare.
     reparerPlan: (m) => derivationsModele.reparerPlan(m).reparations,
+    // `reparerNavigation` (2026-10-10) — la navigation se DÉRIVE du plan, le
+    // modèle ne recopie plus une liste calculable : c'est la fermeture de la
+    // mine EP-175 ①/EP-182 ③ (plan=2 destinations / schéma≥3, mesurée à
+    // ~16 $ le cycle sur c29bd806). Déterministe : même modèle ⇒ même plan
+    // élu ⇒ même navigation reconstruite, octet pour octet — exactement la
+    // propriété que cette batterie défend.
+    reparerNavigation: (m) =>
+      derivationsModele.reparerNavigation(
+        { screens: [], navigation: {} },
+        derivationsModele.ecransDe(m, { destinationsMin: 3 }),
+      ).document.navigation,
     // `gestesEcrivants` ne prend AUCUN modèle — elle dérive de la table.
     // Elle entre quand même : la batterie exige que CHAQUE export-fonction
     // soit appelée, et une liste de gestes qui changerait en silence est

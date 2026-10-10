@@ -299,8 +299,43 @@ const surfaceEnveloppe = () => {
    * EP-190 ② — le prescriptif porte les ECRANS D'IDENTITE. Derive,
    * jamais recopie : `estConceptIdentite` decide, `ecranAirDe` traduit.
    */
+  // LA BORNE DES DESTINATIONS SE LIT DU SCHEMA — l'autorite qui refuse.
+  //
+  // MESURE (2026-10-10, scenario H a blanc) : le registre de presentation
+  // scelle declare DESTINATIONS_MIN = 2 quand le schema AIR exige >= 3 — le
+  // troisieme etage de la mine EP-175/EP-182. Armer l'election du 2 du
+  // registre fait produire MECANIQUEMENT une navigation que le transport
+  // refuse. La borne effective est donc LUE du schema (jamais recopiee,
+  // onzieme-copie interdite), et le registre reste un plancher. Si le zod
+  // devient illisible un jour : repli sur le registre, fail-closed et dit.
+  const lireMinDestinationsDuSchema = () => {
+    try {
+      let z = airSchema.projectAirSchema.shape.navigation;
+      for (const etape of ["primary", "destinations"]) {
+        while (z?._def?.innerType !== undefined) z = z._def.innerType;
+        z = z?.shape?.[etape];
+      }
+      while (z?._def?.innerType !== undefined) z = z._def.innerType;
+      // zod v4 : les contraintes vivent dans _def.checks[i]._zod.def
+      for (const c of z?._def?.checks ?? []) {
+        const def = c?._zod?.def ?? c?.def;
+        if (def?.check === "min_length" && typeof def.minimum === "number") return def.minimum;
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  };
+  const BORNE_DESTINATIONS = Math.max(
+    presentation.DESTINATIONS_MIN,
+    lireMinDestinationsDuSchema() ?? 0,
+  );
+
   function prescriptifDe(modeleP0) {
-    const plan = modeleMetier.ecransDe(modeleP0);
+    // ARBITRAGE 2026-10-10 : le plan recoit la borne — il ELIT une racine de
+    // lecture quand les publiques manquent, et la barre n'existe JAMAIS sous
+    // la borne. La mine plan/presentation/schema est fermee A LA SOURCE.
+    const plan = modeleMetier.ecransDe(modeleP0, { destinationsMin: BORNE_DESTINATIONS });
     const conceptsIdentite = modeleP0.concepts
       .map((c) => c.id)
       .filter((id) => modeleMetier.estConceptIdentite(modeleP0, id));
@@ -682,6 +717,16 @@ const surfaceEnveloppe = () => {
     }
     acquis = document;
 
+    // LA NAVIGATION SE DERIVE DU PLAN, MECANIQUEMENT ET GRATUITEMENT (mesure
+    // c29bd806 : des cycles payes a recopier une liste calculable). Avant
+    // CHAQUE jugement — l'entree ici, le candidat de chaque tour plus bas.
+    const reparerMecaniquement = (doc) => {
+      const r = modeleMetier.reparerNavigation(doc, prescriptif.plan);
+      if (r.change) console.log(`  [${slug}] navigation re-derivee du plan (mecanique, 0 appel)`);
+      return r.document;
+    };
+    document = reparerMecaniquement(document);
+    acquis = document;
     let { air, diagnostics } = validateLocal(document, prescriptif);
     diagnostics = [...diagnostics, ...jugerAcceptation(air, prescriptif, intention)];
     if (premierePasse === null) premierePasse = diagnostics.length;
@@ -756,7 +801,9 @@ const surfaceEnveloppe = () => {
       // tentatives borne tout le reste. L'ancien compteur confondait progres
       // et stagnation : c29bd806 (2/3 tours acheves, TOUS revelants, 37 → 1)
       // aurait ete refusee en pleine convergence saine.
-      const toursDeConvergence = tours.filter((t) => t.revelation !== true).length;
+      const toursDeConvergence = tours.filter(
+        (t) => t.revelation !== true && t.reconstruction !== true,
+      ).length;
       if (toursDeConvergence >= PLAFOND_TOURS) {
         raisonRefus =
           `non convergé en ${String(PLAFOND_TOURS)} tours de convergence ` +
@@ -831,7 +878,7 @@ const surfaceEnveloppe = () => {
         docCourant = resultat.document ?? resultat;
         acquis = docCourant; // une coupure plus tard conserve les bouchees payees
       }
-      const candidat = docCourant;
+      const candidat = reparerMecaniquement(docCourant);
       const rejetees = journalBouchees.filter((b) => b.ampute.length > 0);
       const toutesAmputees =
         journalBouchees.length > 0 && rejetees.length === journalBouchees.length;
@@ -844,18 +891,36 @@ const surfaceEnveloppe = () => {
         airApres: air,
         prescriptif,
       });
+      // L'ALIBI DU PERIMETRE, DEMONTE (mesure c29bd806) : quand l'air d'entree
+      // est INVALIDE, le perimetre juge vaut zero — toute re-validation
+      // « elargit strictement » et la gate disait revelation a chaque cycle,
+      // sans aucun progres. Une re-validation depuis le vide est une
+      // RECONSTRUCTION : retenue (la base redevient jugeable), jamais comptee
+      // comme revelation — et DEUX reconstructions consecutives refusent :
+      // une base qui ne tient pas sa validation est un defaut, pas un cycle.
+      const taillePerimetre = (per) => per?.size ?? per?.length ?? 0;
+      const reconstruction = verdict.revelation && taillePerimetre(verdict.perimetreAvant) === 0;
       const tour = {
         n: tours.length + 1,
         avant: baseDiags.length,
         apres: diagnostics.length,
         coutUsd: Number((coutCumule() - coutAvantTour).toFixed(4)),
-        revelation: verdict.revelation,
+        revelation: verdict.revelation && !reconstruction,
+        reconstruction,
         introduits: verdict.revelation ? 0 : verdict.introduits.length,
-        reveles: verdict.revelation ? verdict.introduits.length : 0,
+        reveles: verdict.revelation && !reconstruction ? verdict.introduits.length : 0,
         ampute: rejetees.flatMap((b) => b.ampute),
         bouchees: journalBouchees,
       };
       tours.push(tour);
+      if (reconstruction && tours.length >= 2 && tours[tours.length - 2].reconstruction === true) {
+        document = candidat;
+        tour.rejet = "reconstruction repetee";
+        raisonRefus =
+          `la base ne tient pas sa validation : 2 reconstructions consécutives au tour ${String(tour.n)} ` +
+          `— reste ${String(diagnostics.length)} diagnostic(s)`;
+        break;
+      }
       if (toutesAmputees) {
         // Chaque bouchee a ete rejetee par l'enveloppe : le candidat EST la
         // base, le modele refuse le perimetre ENTIER — on s'arrete en le
@@ -882,7 +947,7 @@ const surfaceEnveloppe = () => {
         break;
       }
       document = candidat;
-      if (verdict.revelation) continue; // nouvelle base : le compte peut monter
+      if (tour.revelation || reconstruction) continue; // nouvelle base : le compte peut monter
       if (diagnostics.length >= baseDiags.length) {
         tour.rejet = "stagnation";
         raisonRefus =

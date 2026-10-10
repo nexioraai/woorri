@@ -1421,7 +1421,7 @@ export function capacitesDe(modele) {
 // écran ; les destinations suivent l'ORDRE des parcours (R-nav, ≥2 ⇒
 // barre) ; les arcs relient les étapes consécutives, avec leur TRANSPORT
 // (table des gestes) ; une identité produite DOIT être consommée en aval.
-export function ecransDe(modele) {
+export function ecransDe(modele, options = {}) {
   const surfaces = surfacesDe(modele);
   const diagnostics = [];
   const parSurface = new Map(surfaces.map((sf) => [sf.surfaceId, sf]));
@@ -1630,6 +1630,45 @@ export function ecransDe(modele) {
     if (i !== -1) racinesReservees.splice(i, 1);
   }
 
+  // ARBITRAGE DU 2026-10-10 — L'ELECTION DE LA RACINE MANQUANTE, et la mine
+  // EP-175 ① / EP-182 ③ REFERMEE (pas contournee).
+  //
+  // MESURE (ligne c29bd806, ~16 $ par cycle) : le plan prescrivait DEUX
+  // destinations (liste close) quand le schema AIR en exige TROIS des que la
+  // barre existe. Le generateur recevait un jeu IMPOSSIBLE : obeir au plan
+  // (2 → SCHEMA refuse) ou au schema (3+ → NAVIGATION_DESTINATIONS_HORS_PLAN).
+  // Il a oscille — chaque re-validation de l'air relancait une « revelation »
+  // de perimetre (0 → N) et l'argent tournait en rond.
+  //
+  // LA REGLE PRODUIT : quand la barre est due (EP-182 ③) mais que les racines
+  // publiques manquent, le plan ELIT des destinations de LECTURE — les ecrans
+  // d'etapes dont le geste CONSULTE (decouverte, historique, detail,
+  // recherche), dans l'ordre des parcours : « voir l'historique » est un vrai
+  // besoin racine, pas un onglet de remplissage. Et si meme l'election ne
+  // atteint pas la borne : LA BARRE N'EXISTE PAS — jamais barre:true sous la
+  // borne, c'est l'invariant qui ferme la mine. La borne est RECUE en option
+  // (onzieme-copie interdite) : sans elle, RIEN ne change pour les appelants
+  // existants ; le moteur produit la passe toujours.
+  let barreElue = barre;
+  const destinationsMin = options?.destinationsMin;
+  if (typeof destinationsMin === "number") {
+    const ROLES_DE_LECTURE = new Set(["decouverte", "historique", "detail", "recherche"]);
+    for (const p of modele.parcours) {
+      if (destinations.length >= destinationsMin) break;
+      for (let i = 0; i < p.etapes.length; i++) {
+        if (destinations.length >= destinationsMin) break;
+        const geste = TABLE_GESTES[p.etapes[i].geste];
+        if (geste === undefined || !ROLES_DE_LECTURE.has(geste.role)) continue;
+        const sf = surfaceDeLEtape(p.id, i);
+        const ecran = sf === undefined ? undefined : ecranDeSurface.get(sf.surfaceId);
+        if (ecran === undefined || destinations.includes(ecran)) continue;
+        if (racinesReservees.includes(ecran)) continue; // le reserve vit DANS le compte
+        destinations.push(ecran);
+      }
+    }
+    if (destinations.length < destinationsMin) barreElue = false;
+  }
+
   // ── arcs + invariants de chaîne ──
   const arcs = [];
   for (const p of modele.parcours) {
@@ -1721,7 +1760,7 @@ export function ecransDe(modele) {
       }
     }
   }
-  return { ecrans, chrome, navigation: { destinations, barre, arcs, racinesReservees }, diagnostics };
+  return { ecrans, chrome, navigation: { destinations, barre: barreElue, arcs, racinesReservees }, diagnostics };
 }
 
 /**
@@ -2069,6 +2108,54 @@ export function prescriptionsNavigation(plan, destinationsMin) {
     destinations,
     barre,
   };
+}
+
+/**
+ * LA NAVIGATION SE REPARE MECANIQUEMENT — derivee du plan, zero appel.
+ *
+ * MESURE (c29bd806) : on a paye un modele, cycle apres cycle, pour recopier
+ * (mal) une liste que le plan calcule — destinations elaguees a 2 (SCHEMA),
+ * ou gonflees hors plan. Meme precedent que reparerPlan ⓪ : ce qui se
+ * derive ne s'emet pas. Idempotente ; conserve les libelles/icones des
+ * destinations existantes (le cosmetique reste au modele) ; cree les routes
+ * manquantes ; si le plan ne prescrit PAS de barre, retire primary.
+ */
+export function reparerNavigation(document, plan) {
+  const cibles = (plan.navigation?.destinations ?? []).map(ecranAirDe);
+  const d2 = JSON.parse(JSON.stringify(document));
+  d2.navigation = d2.navigation ?? {};
+  if (plan.navigation?.barre !== true) {
+    if (d2.navigation.primary === undefined) return { document, change: false };
+    delete d2.navigation.primary;
+    return { document: d2, change: true };
+  }
+  const routes = d2.navigation.routes ?? [];
+  const routeDe = new Map(routes.map((r) => [r.screenId, r]));
+  for (const scr of cibles) {
+    if (!routeDe.has(scr)) {
+      const r = { id: `nav_${scr.replace(/^scr_/u, "")}`, screenId: scr };
+      routes.push(r);
+      routeDe.set(scr, r);
+    }
+  }
+  d2.navigation.routes = routes;
+  const titres = new Map((d2.screens ?? []).map((e) => [e.id, e.title]));
+  const parRoute = new Map((d2.navigation.primary?.destinations ?? []).map((x) => [x.routeId, x]));
+  const destinations = cibles.map((scr, i) => {
+    const r = routeDe.get(scr);
+    const existante = parRoute.get(r.id);
+    if (existante !== undefined) return { ...existante, order: i };
+    const titre = titres.get(scr);
+    return {
+      icon: i === 0 ? "accueil" : "liste",
+      label: [{ text: typeof titre === "string" && titre !== "" ? titre : scr, locale: "fr" }],
+      order: i,
+      routeId: r.id,
+    };
+  });
+  d2.navigation.primary = { ...(d2.navigation.primary ?? {}), destinations };
+  const change = JSON.stringify(d2.navigation) !== JSON.stringify(document.navigation ?? null);
+  return { document: change ? d2 : document, change };
 }
 
 /**

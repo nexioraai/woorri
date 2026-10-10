@@ -440,6 +440,56 @@ console.log("— scenario F : le plafond ignore les revelations, coupe la non-co
     `tours=${String(F3.tours?.length)}`);
 }
 
+// ── ⑪ scenario G : LA NAVIGATION SE REPARE MECANIQUEMENT, AVANT TOUT APPEL.
+// Mesure c29bd806 : des cycles payes a recopier une liste que le plan
+// calcule. Ici : un etat repris dont la navigation est ELAGUEE a 2
+// destinations — le moteur doit la re-deriver du plan AVANT le premier
+// jugement, sans bouchee dediee.
+console.log("— scenario G : navigation re-derivee du plan, zero appel dedie —");
+{
+  const docCasse = JSON.parse(JSON.stringify(C.r.resultat.document));
+  docCasse.navigation.primary.destinations = docCasse.navigation.primary.destinations.slice(0, 2);
+  const etatG = {
+    phase: "reparation", modele: C.r.resultat.modele, acquis: docCasse,
+    tirages: [], niveaux: C.r.resultat.niveaux ?? null, premierePasse: null,
+    tours: [], tentativesReparation: 0, coutUsd: 0, jetons: { entree: 0, sortie: 0 },
+  };
+  const G = (await (await creerMoteur({ cleApi: "client-a-blanc", client: creerClientABlanc({ corpus: CORPUS }) }))
+    .poursuivreEmission({ brief: BRIEF, slug: "blanc", etat: etatG })).resultat;
+  const destsG = G.document?.navigation?.primary?.destinations ?? [];
+  verifie("⑪ G la navigation revient a la borne SANS appel dedie — re-derivee du plan a l'entree",
+    destsG.length >= 3, `destinations=${String(destsG.length)}`);
+  verifie("⑪ G le premier jugement voit le FOND (les vrais diagnostics), pas le SCHEMA de navigation",
+    (G.tours ?? [])[0] !== undefined && (G.tours ?? [])[0].avant > 10,
+    `avant=${String(G.tours?.[0]?.avant)}`);
+}
+
+// ── ⑫ scenario H : UNE RE-VALIDATION N'EST PLUS UNE « REVELATION ».
+// L'alibi demonte (c29bd806) : air invalide ⇒ perimetre juge = 0 ⇒ toute
+// re-validation « elargissait strictement » et la gate disait revelation a
+// CHAQUE cycle. Ici : un defaut de schema HORS navigation (titre numerique),
+// que l'echo du client a blanc guerit au tour 1 — le tour doit etre dit
+// RECONSTRUCTION, jamais revelation, et la boucle continue normalement.
+console.log("— scenario H : reconstruction ≠ revelation —");
+{
+  const docCasse = JSON.parse(JSON.stringify(C.r.resultat.document));
+  docCasse.screens[0] = { ...docCasse.screens[0], title: 12345 };
+  const etatH = {
+    phase: "reparation", modele: C.r.resultat.modele, acquis: docCasse,
+    tirages: [], niveaux: C.r.resultat.niveaux ?? null, premierePasse: null,
+    tours: [], tentativesReparation: 0, coutUsd: 0, jetons: { entree: 0, sortie: 0 },
+  };
+  const H = (await (await creerMoteur({ cleApi: "client-a-blanc", client: creerClientABlanc({ corpus: CORPUS }) }))
+    .poursuivreEmission({ brief: BRIEF, slug: "blanc", etat: etatH })).resultat;
+  const t1 = (H.tours ?? [])[0];
+  verifie("⑫ H le tour qui re-valide l'air est une RECONSTRUCTION, dite comme telle",
+    t1 !== undefined && t1.reconstruction === true && t1.revelation === false,
+    JSON.stringify({ reconstruction: t1?.reconstruction, revelation: t1?.revelation }));
+  verifie("⑫ H la gate ne crie plus revelation sur une re-validation — et la boucle continue au fond",
+    H.ok === false && /stagnation au tour 2/.test(H.raison ?? ""),
+    String(H.raison ?? "—").slice(0, 70));
+}
+
 console.log(
   echecs === 0
     ? "\n✅ continuation : machinerie correcte a blanc — PAS une preuve de production."

@@ -153,7 +153,10 @@ export function capacitesDe(modele: ModeleMetier): {
   capacites: { capacite: string; profilConceptId?: string }[];
   diagnostics: DiagnosticModele[];
 };
-export function ecransDe(modele: ModeleMetier): PlanEcrans;
+export function ecransDe(
+  modele: ModeleMetier,
+  options?: { destinationsMin?: number },
+): PlanEcrans;
 export function jugerPlanEcrans(plan: PlanEcrans, modele?: ModeleMetier): DiagnosticModele[];
 export const GLOSSAIRE_NATURES_TEMPORELLES: Record<string, string>;
 export function ecranAirDe(ecranId: string): string;
@@ -234,6 +237,14 @@ export function reparerPlan(modele: ModeleMetier): {
   modele: ModeleMetier;
   reparations: { parcours: string; action: string }[];
 };
+
+/** Fermeture de la mine EP-175/EP-182 (2026-10-10) — la navigation se
+ *  DERIVE du plan ; idempotente ; retire `primary` si aucune barre n'est
+ *  prescrite. */
+export function reparerNavigation(
+  document: Record<string, unknown>,
+  plan: PlanEcrans,
+): { document: Record<string, unknown>; change: boolean };
 
 /** Volet ② convergence — l'identite s'exige AU PLAN, par le MEME predicat
  *  (`estConceptIdentite`) que le chemin document. Vide si un concept
