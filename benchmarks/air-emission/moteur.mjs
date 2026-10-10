@@ -66,6 +66,25 @@ const REPO = join(HERE, "..", "..");
  * Un appelant qui veut vraiment borner passe `plafondUsd` ; personne ne le
  * fait, et c'est voulu.
  */
+/**
+ * LA DEMANDE COURTE POUR L'EMISSION — le cahier complet reste a P0.
+ *
+ * Bornee a 1200 caracteres : la taille d'une demande tapee a la main, celle
+ * que l'emission a toujours recue. Coupe sur une frontiere de phrase quand
+ * il y en a une, pour ne pas finir au milieu d'un mot. Un brief deja court
+ * passe INCHANGE — le comportement d'avant, a l'octet.
+ */
+export const LONGUEUR_BRIEF_EMISSION = 1200;
+
+export function abregerPourEmission(brief) {
+  const texte = String(brief ?? "").trim();
+  if (texte.length <= LONGUEUR_BRIEF_EMISSION) return texte;
+  const tete = texte.slice(0, LONGUEUR_BRIEF_EMISSION);
+  const fin = Math.max(tete.lastIndexOf(". "), tete.lastIndexOf("\n"));
+  const coupe = fin > LONGUEUR_BRIEF_EMISSION / 2 ? tete.slice(0, fin + 1) : tete;
+  return `${coupe.trim()}\n\n[cahier des charges complet transmis a la comprehension]`;
+}
+
 export async function creerMoteur({ cleApi, plafondUsd = Infinity, paquets, client: clientFourni }) {
   if (typeof cleApi !== "string" || cleApi.trim() === "") {
     throw new Error("MOTEUR_CLE_ABSENTE");
@@ -389,7 +408,28 @@ const surfaceEnveloppe = () => {
         },
         { entree: 0, sortie: 0 },
       );
-    const intention = { text: brief, slug };
+    // ── LE CAHIER DES CHARGES COMPLET NE VA QU'A P0 (2026-10-10).
+    //
+    // MESURE QUI IMPOSE CE PARTAGE : `contexteClient` (orchestration
+    // scellee) met le texte de la demande dans CHAQUE appel d'emission ET
+    // de reparation — une trentaine. Sur un tir reel, l'entree totalisait
+    // 401 627 jetons, soit ~2 $ des ~8 $ depenses. Un cahier des charges de
+    // quarante pages colle dans `brief` couterait donc ~3 $ de plus, par
+    // MULTIPLICATION, pas par addition.
+    //
+    // Or la distillation du cahier EXISTE DEJA : c'est le modele metier que
+    // P0 produit, et il voyage dans le prescriptif a chaque appel. P0 recoit
+    // donc le texte ENTIER (un seul appel), et l'emission garde la demande
+    // COURTE — son premier paragraphe utile, borne. Aucun scelle touche :
+    // c'est le moteur qui compose `intention`.
+    const briefCourt = abregerPourEmission(brief);
+    const intention = { text: briefCourt, slug };
+    if (briefCourt.length < brief.length) {
+      console.log(
+        `  [${slug}] cahier des charges : ${String(brief.length)} caracteres a P0, ` +
+          `${String(briefCourt.length)} a l'emission (x~30 appels evites)`,
+      );
+    }
 
     // ── CE QUI EST REPRIS DE LA TRANCHE PRECEDENTE — et jamais re-paye.
     //

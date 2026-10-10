@@ -144,6 +144,33 @@ console.log("— ④ LE CORPUS GELÉ — empreintes INTACTES, pas un octet chang
   console.log("       références de mesure. NE PAS LES PRENDRE POUR DES EXEMPLES SÛRS.");
 }
 
+console.log("— ⑤ LE CAHIER DES CHARGES COMPLET NE VA QU'A P0 —");
+{
+  const { abregerPourEmission, LONGUEUR_BRIEF_EMISSION } = await import(join(HERE, "moteur.mjs"));
+  // Une demande TAPEE A LA MAIN passe inchangee : le comportement d'avant,
+  // a l'octet. C'est la non-regression qui compte le plus ici.
+  const courte = "une application pour noter mes idees et les relire plus tard";
+  verifie("⑤ une demande courte passe INCHANGEE — a l'octet",
+    abregerPourEmission(courte) === courte);
+
+  // Un cahier des charges de quarante pages : l'emission n'en recoit qu'une
+  // tete bornee, et elle DIT que le reste est alle a la comprehension.
+  const cahier = "Chaque membre cotise une somme fixe chaque semaine. ".repeat(400);
+  const abrege = abregerPourEmission(cahier);
+  verifie("⑤ un cahier des charges est BORNE pour l'emission",
+    abrege.length < cahier.length && abrege.length <= LONGUEUR_BRIEF_EMISSION + 80,
+    `${String(cahier.length)} → ${String(abrege.length)}`);
+  verifie("⑤ l'abrege DIT que le complet est alle a la comprehension",
+    abrege.includes("cahier des charges complet transmis"));
+  verifie("⑤ la coupe tombe sur une frontiere de phrase, jamais au milieu d'un mot",
+    /\.\s*\n\n\[cahier/u.test(abrege), JSON.stringify(abrege.slice(-60)));
+
+  // L'ECONOMIE, chiffree : ce qu'on evite en ne multipliant pas par ~30.
+  const evites = (cahier.length - abrege.length) / 4 * 30;
+  verifie("⑤ l'economie est reelle : >100 000 jetons d'entree evites sur un cahier de 40 pages",
+    evites > 100_000, `${String(Math.round(evites))} jetons`);
+}
+
 console.log(
   echecs === 0
     ? "\n✅ propriete : le cliquet mord sur le NEUF, le corpus gelé est intact."

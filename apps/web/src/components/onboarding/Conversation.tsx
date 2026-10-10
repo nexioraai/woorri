@@ -22,7 +22,7 @@
 // DEPLACEMENT, pas un redessin. Un cliquet verifie que les deux fichiers
 // passent bien par ici au lieu de redeclarer leurs propres bulles.
 // ============================================================
-import { ArrowUp } from 'lucide-react';
+import { ArrowUp, Paperclip } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 /** La hauteur de la conversation : elle REMPLIT l'ecran. Sans cela, une vue
@@ -80,6 +80,9 @@ export function Composeur({
   desactive = false,
   bloque = false,
   etiquette,
+  joindre,
+  longueurMax = 1000,
+  note,
 }: {
   valeur: string;
   onChange: (v: string) => void;
@@ -90,6 +93,22 @@ export function Composeur({
   /** Le champ entier est fige (une generation est en cours). */
   bloque?: boolean;
   etiquette: string;
+  /**
+   * LE CAHIER DES CHARGES JOINT (2026-10-10) — OPTIONNEL.
+   *
+   * « Beaucoup d'utilisateurs serieux arrivent avec un document — les faire
+   * re-taper est penible et appauvrit le resultat. » Les trois modes ne
+   * passent PAS cette prop : leur rendu reste AU CARACTERE PRES celui
+   * d'avant (test-or epingle). Meme discipline que l'Escalier.
+   */
+  joindre?: (fichier: File) => void;
+  /** La borne de saisie. 1000 par defaut — celle des trois modes, inchangee.
+   *  Un cahier des charges entier exige davantage, et seul le chemin
+   *  application le demande. */
+  longueurMax?: number;
+  /** Ce qu'on DIT sous le champ : le cout estime, ou le refus d'un format,
+   *  ou un PDF scanne. Jamais une injection muette. */
+  note?: ReactNode;
 }) {
   return (
     <div className="relative mt-4">
@@ -104,11 +123,33 @@ export function Composeur({
         }}
         placeholder={invite}
         aria-label={etiquette}
-        maxLength={1000}
+        maxLength={longueurMax}
         disabled={bloque}
         rows={1}
         className="w-full bg-black/40 border border-white/10 rounded-[24px] pl-6 pr-16 py-4 text-white text-[15px] placeholder-slate-500 resize-none focus:outline-none transition shadow-xl min-h-[56px] max-h-40"
       />
+      {joindre !== undefined && (
+        <label
+          className="absolute bottom-3 left-4 w-9 h-9 rounded-full flex items-center justify-center text-slate-400 hover:text-white transition cursor-pointer"
+          title="Joindre un cahier des charges (PDF avec texte, .txt, .md)"
+        >
+          <input
+            type="file"
+            accept=".pdf,.txt,.md,text/plain,text/markdown,application/pdf"
+            className="hidden"
+            disabled={bloque}
+            aria-label="Joindre un cahier des charges"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              // Le champ est VIDÉ : rejoindre le même fichier doit relancer
+              // la lecture, sinon « rien ne se passe » au second essai.
+              e.target.value = '';
+              if (f !== undefined) joindre(f);
+            }}
+          />
+          <Paperclip size={18} aria-hidden="true" />
+        </label>
+      )}
       <button
         onClick={onEnvoyer}
         disabled={desactive}
@@ -117,6 +158,7 @@ export function Composeur({
       >
         <ArrowUp size={22} strokeWidth={2.5} className="text-[#FA5D1E]" />
       </button>
+      {note !== undefined && <div className="mt-2 px-2 text-xs text-slate-400">{note}</div>}
     </div>
   );
 }

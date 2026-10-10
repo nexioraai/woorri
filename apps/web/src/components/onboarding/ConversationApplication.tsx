@@ -34,6 +34,13 @@ import {
   memoriserGeneration,
 } from '@/lib/apps/suivi-generation';
 import type { EtatGeneration } from '@/lib/apps/service-generations';
+import {
+  estimation,
+  formatDuFichier,
+  raisonDuRefus,
+  LONGUEUR_AVEC_DOCUMENT,
+  MESSAGE_SCAN,
+} from '@/lib/apps/document-joint';
 
 // ETAGE 4 — le drapeau : OFF (defaut), l'UX synchrone ci-dessous reste SEULE
 // au monde ; le chemin async n'existe qu'arme consciemment. L'ecran ne fait
@@ -83,6 +90,10 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
   const [apercuGen, setApercuGen] = useState<{ version: string; html: string } | null>(null);
   // l'horloge de l'ecoule : posee par le POLL (jamais pendant le rendu — purete)
   const [maintenant, setMaintenant] = useState(0);
+  // ── LE CAHIER DES CHARGES JOINT : ce qu'on DIT sous le champ. Jamais
+  // d'injection muette — le texte extrait remplit la zone, visible et
+  // corrigeable, et la note annonce le cout AVANT l'envoi.
+  const [noteJoint, setNoteJoint] = useState('');
   const minuterieSuivi = useRef<number | null>(null);
 
   const enQuestion = ouvertes.length > 0;
@@ -543,12 +554,54 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
 
       <Composeur
         valeur={saisie}
-        onChange={setSaisie}
+        onChange={(v) => {
+          setSaisie(v);
+          if (noteJoint !== '') setNoteJoint('');
+        }}
         onEnvoyer={() => void envoyer()}
         invite={enQuestion ? 'Votre réponse…' : 'Une application de tontine pour mon quartier…'}
         desactive={enCours || saisie.trim() === ''}
         bloque={travail !== ''}
         etiquette="Décrivez l’application que vous voulez"
+        longueurMax={LONGUEUR_AVEC_DOCUMENT}
+        note={noteJoint === '' ? undefined : noteJoint}
+        joindre={(fichier) => {
+          void (async () => {
+            const format = formatDuFichier(fichier.name, fichier.type);
+            if (format === 'refuse') {
+              setNoteJoint(raisonDuRefus(fichier.name));
+              return;
+            }
+            setNoteJoint(`Lecture de « ${fichier.name} »…`);
+            try {
+              if (format === 'texte') {
+                const texte = (await fichier.text()).trim();
+                if (texte === '') {
+                  setNoteJoint('Ce fichier est vide.');
+                  return;
+                }
+                setSaisie(texte);
+                const e = estimation(texte);
+                setNoteJoint(`« ${fichier.name} » lu — ${e.libelle}. Relisez et corrigez avant d’envoyer.`);
+                return;
+              }
+              // PDF : pdfjs n'est chargé QU'ICI, et dans le navigateur seul.
+              const { extraireTexteDuPdf } = await import('@/lib/apps/extraction-pdf');
+              const r = await extraireTexteDuPdf(await fichier.arrayBuffer());
+              if (!r.ok) {
+                setNoteJoint(r.raison === 'scan' ? MESSAGE_SCAN : `PDF illisible : ${r.detail}`);
+                return;
+              }
+              setSaisie(r.texte);
+              const e = estimation(r.texte);
+              setNoteJoint(
+                `« ${fichier.name} » lu — ${String(r.pages)} page(s), ${e.libelle}. Relisez et corrigez avant d’envoyer.`,
+              );
+            } catch {
+              setNoteJoint('Lecture impossible. Copiez-collez le contenu dans la zone de texte.');
+            }
+          })();
+        }}
       />
 
       {/* ── LES DEUX BOUTONS SUIVENT LE DOCUMENT, PLUS LE DERNIER MESSAGE.
