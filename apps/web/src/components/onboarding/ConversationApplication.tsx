@@ -25,12 +25,15 @@ import { supabase } from '@/lib/supabase';
 import { Attente, Bulle, Composeur, Escalier } from './Conversation';
 import {
   ETAPES_SUIVI,
+  FOURCHETTE_DUREE,
+  ecouleDepuis,
+  ligneActivite,
   marcheDuSuivi,
   modeAsyncActif,
   generationDepuisUrl,
   memoriserGeneration,
-  type EtatPourSuivi,
 } from '@/lib/apps/suivi-generation';
+import type { EtatGeneration } from '@/lib/apps/service-generations';
 
 // ETAGE 4 — le drapeau : OFF (defaut), l'UX synchrone ci-dessous reste SEULE
 // au monde ; le chemin async n'existe qu'arme consciemment. L'ecran ne fait
@@ -76,7 +79,10 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
       ? generationDepuisUrl(window.location.search, window.localStorage)
       : null,
   );
-  const [etatGen, setEtatGen] = useState<EtatPourSuivi | null>(null);
+  const [etatGen, setEtatGen] = useState<EtatGeneration | null>(null);
+  const [apercuGen, setApercuGen] = useState<{ version: string; html: string } | null>(null);
+  // l'horloge de l'ecoule : posee par le POLL (jamais pendant le rendu — purete)
+  const [maintenant, setMaintenant] = useState(0);
   const minuterieSuivi = useRef<number | null>(null);
 
   const enQuestion = ouvertes.length > 0;
@@ -107,7 +113,8 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
         });
         if (!vivant) return;
         if (res.ok) {
-          const e = (await res.json()) as EtatPourSuivi;
+          const e = (await res.json()) as EtatGeneration;
+          setMaintenant(Date.now());
           setEtatGen(e);
           if (e.statut === 'livree' || e.statut === 'refusee') return;
         }
@@ -122,6 +129,28 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
       if (minuterieSuivi.current !== null) window.clearTimeout(minuterieSuivi.current);
     };
   }, [generationId]);
+
+  // L'APERCU v0-STYLE : compile localement cote serveur (zero IA), recharge
+  // UNIQUEMENT quand l'empreinte de l'acquis change — une fois par tranche.
+  useEffect(() => {
+    if (!ASYNC || generationId === null) return;
+    const version = etatGen?.apercuVersion ?? null;
+    if (version === null || apercuGen?.version === version) return;
+    let vivant = true;
+    void (async () => {
+      try {
+        const res = await fetch(`/api/generateur/apercu-live?id=${encodeURIComponent(generationId)}`, {
+          headers: { Authorization: `Bearer ${await jeton()}` },
+        });
+        if (!vivant || !res.ok) return;
+        const d = (await res.json()) as { pret: boolean; html?: string };
+        if (d.pret && typeof d.html === 'string') setApercuGen({ version, html: d.html });
+      } catch {
+        // la prochaine tranche retentera
+      }
+    })();
+    return () => { vivant = false; };
+  }, [etatGen?.apercuVersion, apercuGen?.version, generationId]);
 
   const deposerAsync = async () => {
     setTravail('archive');
@@ -329,9 +358,52 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
     <>
       {ASYNC && generationId !== null && (
         <div className="mb-4 rounded-xl border border-white/10 bg-white/[0.03] p-4">
-          <p className="text-xs text-slate-400 mb-3">Suivi de la génération</p>
+          <p className="text-xs text-slate-400 mb-1">Suivi de la génération</p>
+          {/* LE TRIPTYQUE HONNETE : fourchette sourcee + ecoule reel +
+              battement — jamais de compte a rebours, jamais de simulation. */}
+          <p className="text-xs text-slate-500 mb-3">
+            {`Une application complète prend ${FOURCHETTE_DUREE}. Vous pouvez fermer cette page : la génération continue seule.`}
+            {etatGen !== null && maintenant > 0 && marcheDuSuivi(etatGen).enCours && (
+              <span className="block mt-1 text-slate-400">
+                {`En cours ${ecouleDepuis(etatGen.creeIl, maintenant)}`}
+                {ligneActivite(etatGen.statut, etatGen.activiteSec) !== null &&
+                  ` · ${ligneActivite(etatGen.statut, etatGen.activiteSec) ?? ''}`}
+              </span>
+            )}
+          </p>
           <div className="flex flex-col gap-2">
-            <Escalier etapes={[...ETAPES_SUIVI]} courante={marcheDuSuivi(etatGen).courante} />
+            <Escalier
+              etapes={[...ETAPES_SUIVI]}
+              courante={marcheDuSuivi(etatGen).courante}
+              fraction={
+                etatGen !== null && marcheDuSuivi(etatGen).enCours
+                  ? { ...etatGen.sections, libelle: 'Sections écrites' }
+                  : undefined
+              }
+              compteur={
+                etatGen !== null && etatGen.defautsRestants !== null && marcheDuSuivi(etatGen).enCours
+                  ? { restants: etatGen.defautsRestants, libelle: 'Points à corriger' }
+                  : undefined
+              }
+              panneau={
+                apercuGen !== null ? (
+                  <div className="mt-3">
+                    <p className="text-xs text-slate-400 mb-1">
+                      Aperçu — il se précise à mesure que la génération avance
+                      {etatGen?.apercuVersion !== apercuGen.version && ' · mise à jour en cours…'}
+                    </p>
+                    {/* meme sandbox que l'apercu existant : l'app tourne,
+                        elle ne lit rien du site hote */}
+                    <iframe
+                      title="Aperçu de l’application en construction"
+                      srcDoc={apercuGen.html}
+                      sandbox="allow-scripts"
+                      className="w-full h-[320px] rounded-xl border border-white/10 bg-white"
+                    />
+                  </div>
+                ) : undefined
+              }
+            />
           </div>
           {marcheDuSuivi(etatGen).refusee && (
             <p className="mt-3 text-sm text-red-300">{marcheDuSuivi(etatGen).raison}</p>

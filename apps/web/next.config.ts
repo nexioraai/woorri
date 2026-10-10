@@ -188,6 +188,12 @@ const nextConfig: NextConfig = {
     //
     // La liste est donc UNE, posée au-dessus, et les routes la partagent.
     // Quatre copies divergeraient à la cinquième route.
+    // apercu-live (etage 4) : MEMES besoins que l'apercu synchrone — le
+    // meme assembleur compile l'acquis d'une generation en cours.
+    '/api/generateur/apercu-live': [
+      ...MOTEUR_EMISSION,
+      '../../node_modules/@rolldown/binding-linux-x64-gnu/**',
+    ],
     '/api/generateur/apercu': [
       ...MOTEUR_EMISSION,
       // ── L'APERÇU A BESOIN, EN PLUS, DU BINAIRE NATIF DE `rolldown`.

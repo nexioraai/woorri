@@ -15,6 +15,7 @@
  * ni au moteur — prouve par un harnais qui compte les appels. Meme deploye,
  * l'etage 4 ne PEUT pas depenser tant que le proprietaire n'arme pas.
  */
+import { createHash } from 'node:crypto'
 import type { creerTravailleur, RapportTranche } from './travailleur'
 
 type Travailleur = ReturnType<typeof creerTravailleur>
@@ -95,7 +96,22 @@ export type EtatGeneration = {
   readonly aDocument: boolean
   /** Traduite — jamais la raison brute du moteur ni du fournisseur. */
   readonly raison: string | null
+  /** LE TRIPTYQUE HONNETE (arbitrage 2026-10-10) — des TEMPS et des COMPTES,
+   *  aucune entraille : l'instant de depot (ecoule calcule a l'ecran), l'age
+   *  du dernier battement (l'anti-« plante » 100 % reel), la fraction de
+   *  sections ecrites, le compte de defauts du dernier jugement, et
+   *  l'empreinte d'apercu (l'ecran ne recharge que si elle change). */
+  readonly creeIl: string
+  readonly activiteSec: number | null
+  readonly sections: { faites: number; total: number }
+  readonly defautsRestants: number | null
+  readonly apercuVersion: string | null
 }
+
+/** Les sections attendues d'un document AIR — le total de la fraction.
+ *  Chiffre DERIVE du schema au build des tests (22 cles) ; consigne ici en
+ *  constante nommee pour ne pas charger zod dans un chemin de polling. */
+export const SECTIONS_ATTENDUES = 22
 
 export type BaseLecture = {
   from: (table: string) => {
@@ -122,7 +138,7 @@ export async function etatGeneration({
 }): Promise<EtatGeneration | null> {
   const r = await base
     .from(table)
-    .select('id, statut, etape, nom, diagnostics, document')
+    .select('id, statut, etape, nom, diagnostics, document, created_at, battement, sections_acquises')
     .eq('id', id)
     .eq('owner_id', proprietaire) // dette 6a : l'IDENTITE est l'id du jeton
     .maybeSingle()
@@ -130,6 +146,19 @@ export async function etatGeneration({
   const l = r.data
   const statut = l.statut as EtatGeneration['statut']
   const diagnostics = Array.isArray(l.diagnostics) ? (l.diagnostics as string[]) : []
+  const sa = (l.sections_acquises ?? {}) as {
+    phase?: string
+    acquis?: Record<string, unknown>
+    defautsRestants?: number | null
+  }
+  const acquis = sa.acquis ?? null
+  const faites =
+    statut === 'livree'
+      ? SECTIONS_ATTENDUES
+      : acquis === null
+        ? 0
+        : Math.min(SECTIONS_ATTENDUES, Object.keys(acquis).length)
+  const battement = l.battement === null || l.battement === undefined ? null : String(l.battement)
   return {
     id: String(l.id),
     statut,
@@ -137,5 +166,12 @@ export async function etatGeneration({
     nom: l.nom === null || l.nom === undefined ? null : String(l.nom),
     aDocument: l.document !== null && l.document !== undefined,
     raison: statut === 'refusee' ? traduireRaison(diagnostics[0]) : null,
+    creeIl: String(l.created_at ?? ''),
+    activiteSec:
+      battement === null ? null : Math.max(0, Math.round((Date.now() - new Date(battement).getTime()) / 1000)),
+    sections: { faites, total: SECTIONS_ATTENDUES },
+    defautsRestants: typeof sa.defautsRestants === 'number' ? sa.defautsRestants : null,
+    apercuVersion:
+      acquis === null ? null : createHash('md5').update(JSON.stringify(acquis)).digest('hex').slice(0, 8),
   }
 }

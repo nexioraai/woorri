@@ -127,7 +127,22 @@ export function Composeur({
  * suivi de generation (etage 4) REUTILISE la meme marche au lieu d'en
  * redessiner une : la lecon de ce fichier, appliquee une primitive de plus.
  */
-export function Escalier({ etapes, courante }: { etapes: string[]; courante: number }) {
+export function Escalier({
+  etapes,
+  courante,
+  fraction,
+  compteur,
+  panneau,
+}: {
+  etapes: string[];
+  courante: number;
+  /** ENRICHISSEMENTS DES APPLIS (2026-10-10) — OPTIONNELS : les trois modes
+   *  ne les passent pas et leur rendu reste AU CARACTERE PRES celui d'avant
+   *  (test-or epingle). Tout ce qui suit s'AJOUTE apres les marches. */
+  fraction?: { faites: number; total: number; libelle: string };
+  compteur?: { restants: number; libelle: string };
+  panneau?: React.ReactNode;
+}) {
   return (
     <>
       {etapes.map((label, i) => {
@@ -146,6 +161,25 @@ export function Escalier({ etapes, courante }: { etapes: string[]; courante: num
           </div>
         );
       })}
+      {fraction !== undefined && (
+        <div className="mt-1">
+          <p className="text-xs text-slate-400 mb-1">
+            {fraction.libelle} — {fraction.faites}/{fraction.total}
+          </p>
+          <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden">
+            <div
+              className="h-full rounded-full bg-[#FA5D1E] transition-all duration-700"
+              style={{ width: `${String(Math.min(100, Math.round((fraction.faites / Math.max(1, fraction.total)) * 100)))}%` }}
+            />
+          </div>
+        </div>
+      )}
+      {compteur !== undefined && (
+        <p className="text-xs text-slate-400 mt-1">
+          {compteur.libelle} — <span className="text-white">{compteur.restants}</span> restant{compteur.restants > 1 ? 's' : ''}
+        </p>
+      )}
+      {panneau}
     </>
   );
 }

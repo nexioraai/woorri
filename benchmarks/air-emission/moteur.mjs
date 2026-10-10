@@ -417,6 +417,9 @@ const surfaceEnveloppe = () => {
     // garde-fou du harnais a arrete. Les LANCEMENTS comptent desormais,
     // aboutis ou non, portes par l'etat a travers les tranches.
     let tentativesReparation = etat?.tentativesReparation ?? 0;
+    // Pour l'ecran (triptyque honnete) : le dernier compte juge, porte par
+    // la suspension — null tant qu'aucun jugement n'a eu lieu.
+    let defautsRestants = etat?.defautsRestants ?? null;
     let prescriptif = null;
 
     /** Les passes qu'il reste a emettre : celles dont une cle manque. */
@@ -439,6 +442,7 @@ const surfaceEnveloppe = () => {
         premierePasse,
         tours,
         tentativesReparation,
+        defautsRestants,
         coutUsd: coutCumule(),
         jetons: jetonsCumules(),
       },
@@ -730,6 +734,7 @@ const surfaceEnveloppe = () => {
     let { air, diagnostics } = validateLocal(document, prescriptif);
     diagnostics = [...diagnostics, ...jugerAcceptation(air, prescriptif, intention)];
     if (premierePasse === null) premierePasse = diagnostics.length;
+    defautsRestants = diagnostics.length;
 
     // ══ LA BOUCLE DE CONVERGENCE — volet ① (2026-10-09). ══
     //
@@ -884,6 +889,7 @@ const surfaceEnveloppe = () => {
         journalBouchees.length > 0 && rejetees.length === journalBouchees.length;
       ({ air, diagnostics } = validateLocal(candidat, prescriptif));
       diagnostics = [...diagnostics, ...jugerAcceptation(air, prescriptif, intention)];
+      defautsRestants = diagnostics.length;
       const verdict = gateReparation.verdict({
         diagnosticsAvant: baseDiags.map((x) => ({ code: x.code, path: x.path })),
         diagnosticsApres: diagnostics,

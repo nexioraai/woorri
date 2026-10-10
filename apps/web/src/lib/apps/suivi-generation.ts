@@ -91,3 +91,33 @@ export function memoriserGeneration(id: string, stockage: StockageMinimal): stri
 export function oublierGeneration(stockage: StockageMinimal): void {
   stockage.removeItem(CLE_STOCKAGE)
 }
+
+/**
+ * LA FOURCHETTE AFFICHEE AU DEPOT — arbitrage proprietaire du 2026-10-10 :
+ * prudente mais pas effrayante. SOURCE : mesures de session (P0 2-4 min,
+ * emission+juge 25-30 min, un appel ecrans streame 15-30 min, 2-3 tours) —
+ * AUCUN livree reel n'existe encore pour faire une mediane.
+ * TODO (visible, voulu) : recalibrer depuis la MEDIANE des premiers vrais
+ * livree — requete SQL sur duree_ms, 0 $. Jamais de compte a rebours.
+ */
+export const FOURCHETTE_DUREE = 'généralement 30 à 60 minutes'
+
+/** « en cours depuis 12 min » — l'ecoule REEL, jamais une prediction. */
+export function ecouleDepuis(creeIl: string, maintenant: number): string {
+  const min = Math.max(0, Math.floor((maintenant - new Date(creeIl).getTime()) / 60_000))
+  if (min < 1) return 'depuis moins d’une minute'
+  if (min < 60) return `depuis ${String(min)} min`
+  return `depuis ${String(Math.floor(min / 60))} h ${String(min % 60).padStart(2, '0')}`
+}
+
+/** L'anti-« planté » : le battement est de la telemetrie pure. Entre deux
+ *  tranches (battement nul), la reprise est au pire a une minute (cron). */
+export function ligneActivite(statut: string, activiteSec: number | null): string | null {
+  if (statut === 'en_cours' && activiteSec !== null) {
+    return activiteSec < 90
+      ? `travail actif il y a ${String(activiteSec)} s`
+      : `travail actif il y a ${String(Math.round(activiteSec / 60))} min`
+  }
+  if (statut === 'en_attente') return 'reprise sous une minute'
+  return null
+}

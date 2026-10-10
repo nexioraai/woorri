@@ -94,12 +94,46 @@ describe('etatGeneration — la lecture est au PROPRIETAIRE seul', () => {
       }),
       table: 't_test', id: 'g-1', proprietaire: 'user-1',
     })
-    expect(e).toEqual({
+    expect(e).toMatchObject({
       id: 'g-1', statut: 'en_cours', etape: 'reparation', nom: 'depenses',
       aDocument: false, raison: null,
     })
-    // la preuve par les CLES : rien d'autre ne sort
-    expect(Object.keys(e ?? {}).sort()).toEqual(['aDocument', 'etape', 'id', 'nom', 'raison', 'statut'])
+    // la preuve par les CLES : rien d'autre ne sort — le triptyque ajoute
+    // des TEMPS et des COMPTES, jamais une entraille ni un cout
+    expect(Object.keys(e ?? {}).sort()).toEqual([
+      'aDocument', 'activiteSec', 'apercuVersion', 'creeIl', 'defautsRestants',
+      'etape', 'id', 'nom', 'raison', 'sections', 'statut',
+    ])
+  })
+
+  it('le triptyque est de la TELEMETRIE pure : ecoule, battement, fraction, defauts, empreinte', async () => {
+    const battement = new Date(Date.now() - 42_000).toISOString()
+    const e = await etatGeneration({
+      base: baseAvec({
+        id: 'g-1', statut: 'en_cours', etape: 'reparation', nom: 'x',
+        cout_usd: 9.9, diagnostics: [], document: null,
+        created_at: '2026-10-10T10:00:00.000Z', battement,
+        sections_acquises: { phase: 'reparation', defautsRestants: 12,
+          acquis: { app: 1, screens: 2, actions: 3 } },
+      }),
+      table: 't_test', id: 'g-1', proprietaire: 'user-1',
+    })
+    expect(e?.creeIl).toBe('2026-10-10T10:00:00.000Z')
+    expect(e?.activiteSec).toBeGreaterThanOrEqual(41)
+    expect(e?.activiteSec).toBeLessThanOrEqual(45)
+    expect(e?.sections).toEqual({ faites: 3, total: 22 })
+    expect(e?.defautsRestants).toBe(12)
+    expect(e?.apercuVersion).toMatch(/^[0-9a-f]{8}$/u)
+    // entre deux tranches : battement nul → activite nulle, jamais inventee
+    const e2 = await etatGeneration({
+      base: baseAvec({ id: 'g-1', statut: 'en_attente', etape: 'reparation', nom: 'x',
+        diagnostics: [], document: null, created_at: '2026-10-10T10:00:00.000Z',
+        battement: null, sections_acquises: {} }),
+      table: 't_test', id: 'g-1', proprietaire: 'user-1',
+    })
+    expect(e2?.activiteSec).toBeNull()
+    expect(e2?.sections).toEqual({ faites: 0, total: 22 })
+    expect(e2?.apercuVersion).toBeNull()
   })
 
   it("l'erreur de CREDIT ne sort JAMAIS brute — message generique, etat du compte invisible", async () => {
@@ -112,7 +146,7 @@ describe('etatGeneration — la lecture est au PROPRIETAIRE seul', () => {
       table: 't_test', id: 'g-1', proprietaire: 'user-1',
     })
     expect(e?.raison).toBe(RAISON_TECHNIQUE)
-    expect(JSON.stringify(e)).not.toMatch(/credit|400|balance|fatale|25\.6/iu)
+    expect(JSON.stringify(e)).not.toMatch(/credit|balance|fatale|25\.6/iu)
   })
 
   it('les refus de convergence donnent le message rassurant, jamais le jargon du moteur', () => {
