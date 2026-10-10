@@ -82,6 +82,10 @@ describe('CLIQUET — personne d autre ne peut ecrire les sequences interdites',
     'apps/web/src/lib/apps/__tests__/travailleur-isolation.test.ts',
     'apps/web/src/app/api/generateur/deposer/route.ts',
     'apps/web/src/app/api/cron/generations/route.ts',
+    // 4e EMPLACEMENT CONSCIENT (arbitrage du 2026-10-10) : le travailleur
+    // HEBERGE — le porteur hors serverless de l'appel ecrans indivisible.
+    // Toujours une liste FERMEE : une 5e entree exige de reecrire ce test.
+    'services/generation-travailleur/index.mts',
   ])
 
   const fichiers = (dossier: string): string[] =>
@@ -96,6 +100,8 @@ describe('CLIQUET — personne d autre ne peut ecrire les sequences interdites',
     // ETAGE 4 : les routes aussi — c'est la que vivent les deux seules
     // ecritures de production, donc la que le balayage doit mordre.
     ...fichiers(join(RACINE, 'apps/web/src/app/api')),
+    // Le travailleur heberge : meme regime que tout le monde.
+    ...fichiers(join(RACINE, 'services')),
     ...fichiers(join(RACINE, 'benchmarks/air-emission')).filter((f) =>
       /travailleur|jumelle/u.test(f),
     ),
