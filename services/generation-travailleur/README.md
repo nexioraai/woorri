@@ -14,8 +14,9 @@ dossier est du texte, 0 $.
   (60 s de sommeil par ronde), zéro appel moteur, zéro lecture de table.
   Seul `1` arme. C'est la même serrure prouvée par comptage que le cron.
 
-## Avant d'armer (dans l'ordre, décision propriétaire)
-1. Poser le SQL `owner_id` en console (versionné dans `sqlPour`) ;
-2. Déployer ce service (Render worker ~7 $/mois) avec les 3 secrets, GO absent ;
-3. Armer `GO_EMISSION_IA=1` ici (et/ou sur le cron Vercel — les deux
-   cohabitent : saisie CAS atomique + jeton de clôture, V1/V2).
+## Avant d'armer
+
+La procédure vit dans **`docs/generation-asynchrone/ARMEMENT.md`** — les
+trois gestes dans l'ordre, et la vérification visuelle en cinq points. Elle
+n'est pas recopiée ici : le dépôt a vu quatre fois « une liste écrite deux
+fois diverge ».
