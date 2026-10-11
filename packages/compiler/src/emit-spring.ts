@@ -200,7 +200,9 @@ const entite = (groupe: string, e: ProjectAir["entities"][number]): string => {
     if (f.derived !== undefined) {
       lignes.push(
         `  // 🧮 CHAMP CALCULÉ « ${f.name} » — NON STOCKÉ.`,
-        f.derived.kind === "bareme"
+        f.derived.kind === "calcul"
+          ? "  //    Calcul sur les champs de la ligne (expression du contrat)."
+          : f.derived.kind === "bareme"
           ? `  //    Bareme sur \`${f.derived.fieldId}\` — ${String(f.derived.paliers.length)} palier(s), mode ${f.derived.mode}.`
           : `  //    ${f.derived.kind === "count" ? "Compte" : "Somme"} sur la relation \`${f.derived.relationId}\`.`,
         "  //    Le stocker le ferait diverger de ce dont il dérive, et personne",
@@ -519,6 +521,20 @@ public class SessionApi {
 `;
 };
 
+/** L'expression du contrat, traduite en Java. `null` se propage : une
+ *  valeur manquante ne doit pas produire un chiffre qui a l'air juste. */
+function javaExpr(e: unknown): string {
+  const n = e as {
+    kind?: string; fieldId?: string; valeur?: number;
+    op?: string; gauche?: unknown; droite?: unknown;
+  };
+  if (n.kind === "constante") return `Double.valueOf(${String(n.valeur)}d)`;
+  if (n.kind === "champ") return `nb(ligne.get(${JSON.stringify(n.fieldId)}))`;
+  const g = javaExpr(n.gauche);
+  const d = javaExpr(n.droite);
+  return n.op === "/" ? `div(${g}, ${d})` : `op(${g}, ${d}, '${String(n.op)}')`;
+}
+
 /** Les champs que le document déclare CALCULÉS — à calculer, pas à stocker. */
 const calculs = (groupe: string, air: ProjectAir): string => {
   const l: string[] = [
@@ -532,6 +548,26 @@ const calculs = (groupe: string, air: ProjectAir): string => {
   ];
   // LE TYPE DU PALIER, emis UNIQUEMENT si un bareme l'utilise : une classe
   // inutilisee dans un projet livre est du bruit que le client doit lire.
+  // LES AIDES DU CALCUL, emises UNIQUEMENT si une expression les utilise.
+  // `null` se propage : une valeur manquante ne doit pas produire un
+  // chiffre qui a l'air juste, et une division par zero n'a pas de
+  // resultat — surtout pas l'infini, qui s'affiche et contamine.
+  if (air.entities.some((x) => x.fields.some((y) => y.derived?.kind === "calcul"))) {
+    l.push(
+      "",
+      "  static Double nb(Object v) {",
+      "    return (v instanceof Number num && Double.isFinite(num.doubleValue()))",
+      "      ? Double.valueOf(num.doubleValue()) : null;",
+      "  }",
+      "  static Double op(Double a, Double b, char o) {",
+      "    if (a == null || b == null) return null;",
+      "    return o == '+' ? a + b : o == '-' ? a - b : a * b;",
+      "  }",
+      "  static Double div(Double a, Double b) {",
+      "    return (a == null || b == null || b == 0d) ? null : a / b;",
+      "  }",
+    );
+  }
   if (air.entities.some((x) => x.fields.some((y) => y.derived?.kind === "bareme"))) {
     l.push(
       "",
@@ -545,6 +581,19 @@ const calculs = (groupe: string, air: ProjectAir): string => {
       const d = f.derived;
       if (d === undefined) continue;
       n += 1;
+      // ── LE CALCUL AUSSI S'ECRIT ENTIEREMENT (1.36.0). Il ne lit que la
+      // ligne qu'il calcule : aucune requete, donc aucun trou a combler.
+      if (d.kind === "calcul") {
+        l.push(
+          "",
+          `  /** ${e.name}.${f.name} — expression sur les champs de la ligne. */`,
+          `  public static Double ${CAMEL(f.id)}(java.util.Map<String, Object> ligne) {`,
+          `    return ${javaExpr(d.expression)};`,
+          "  }",
+        );
+        continue;
+      }
+
       // ── LE BAREME S'ECRIT ENTIEREMENT, LUI. Il ne regarde aucune autre
       // ligne : c'est une fonction du champ qui porte la quantite. La ou
       // `sum` et `count` dependent de la base et laissent un trou, celui-ci

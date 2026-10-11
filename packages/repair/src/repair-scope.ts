@@ -76,6 +76,16 @@ export function sectionDuChemin(path: string): SectionEmission {
  * d'exhaustivité interdit qu'un code y tombe par oubli.
  */
 export const SECTIONS_CORRECTIVES: Readonly<Record<string, readonly SectionEmission[]>> = {
+  // ── L'EXPRESSION (1.36.0) — MÊME LOGEMENT QUE LE BARÈME.
+  //
+  // Une expression se déclare sur un CHAMP d'entité. Qu'elle lise un champ
+  // inexistant, se renvoie à elle-même, divise par zéro ou s'enfonce trop
+  // profond — la correction vit toujours dans la déclaration des données.
+  AIR_CALCUL_CHAMP_INCONNU: ["donnees"],
+  AIR_CALCUL_CIRCULAIRE: ["donnees"],
+  AIR_CALCUL_DIVISION_PAR_ZERO: ["donnees"],
+  AIR_CALCUL_TROP_PROFOND: ["donnees"],
+
   // ── LE BARÈME (1.35.0) — QUATRE CODES, UNE SEULE SECTION.
   //
   // Un barème se déclare sur un CHAMP d'entité : paliers, prix unitaire,

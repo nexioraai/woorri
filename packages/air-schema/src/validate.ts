@@ -1,6 +1,6 @@
 import type { ProjectAir } from "./air.ts";
 import { derivePlanAcces, entiteDIdentite } from "./derive-rls.ts";
-import { projectAirSchema } from "./air.ts";
+import { PROFONDEUR_EXPRESSION, projectAirSchema } from "./air.ts";
 
 // Validateur sémantique DÉTERMINISTE (ARCHITECTURE §1) : un AIR émis par LLM
 // est syntaxiquement valide par construction (structured outputs) ; la
@@ -324,6 +324,68 @@ export function validateAir(air: ProjectAir): AirDiagnostic[] {
       if (f.derived === undefined) return;
       const chemin = `entities[${ei}].fields[${fi}].derived`;
       const d = f.derived;
+
+      // ── LE CALCUL NE PASSE PAS PAR UNE RELATION NON PLUS (1.36.0).
+      //
+      // Une expression ne voit QUE la ligne qu'elle calcule. Trois gardes,
+      // et chacune ferme une façon de rendre le document incalculable.
+      if (d.kind === "calcul") {
+        const champs = new Set(e.fields.map((x) => x.id));
+        let profondeur = 0;
+        const visiter = (x: unknown, niveau: number): void => {
+          profondeur = Math.max(profondeur, niveau);
+          const n = x as {
+            kind?: string; fieldId?: string; op?: string;
+            gauche?: unknown; droite?: unknown; valeur?: number;
+          };
+          if (n.kind === "champ") {
+            // ① LE CHAMP EXISTE. Sinon le calcul lit du vide.
+            if (!champs.has(String(n.fieldId))) {
+              push(
+                "AIR_CALCUL_CHAMP_INCONNU",
+                `${chemin}.expression`,
+                `le champ "${String(n.fieldId)}" n'existe pas sur "${e.id}" : ` +
+                  `le calcul lirait du vide`,
+              );
+            }
+            // ② PAS DE RENVOI A SOI-MEME. Un champ qui se calcule depuis
+            // lui-meme n'a pas une valeur : il en a une infinite.
+            if (n.fieldId === f.id) {
+              push(
+                "AIR_CALCUL_CIRCULAIRE",
+                `${chemin}.expression`,
+                `"${f.id}" se calcule depuis lui-meme : aucune valeur definie`,
+              );
+            }
+            return;
+          }
+          if (n.kind === "operation") {
+            // ③ PAS DE DIVISION PAR UNE CONSTANTE NULLE. Elle se voit SANS
+            // executer quoi que ce soit — la refuser ne coute rien.
+            const droite = n.droite as { kind?: string; valeur?: number };
+            if (n.op === "/" && droite.kind === "constante" && droite.valeur === 0) {
+              push(
+                "AIR_CALCUL_DIVISION_PAR_ZERO",
+                `${chemin}.expression`,
+                "division par zero : le resultat n'existe pas",
+              );
+            }
+            visiter(n.gauche, niveau + 1);
+            visiter(n.droite, niveau + 1);
+          }
+        };
+        visiter(d.expression, 1);
+        if (profondeur > PROFONDEUR_EXPRESSION) {
+          push(
+            "AIR_CALCUL_TROP_PROFOND",
+            `${chemin}.expression`,
+            `profondeur ${String(profondeur)} : au-dela de ` +
+              `${String(PROFONDEUR_EXPRESSION)}, une expression cesse d'etre ` +
+              "relisible par un humain",
+          );
+        }
+        return;
+      }
 
       // ── LE BARÈME NE PASSE PAS PAR UNE RELATION (1.35.0).
       //

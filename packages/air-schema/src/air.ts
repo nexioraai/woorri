@@ -444,6 +444,63 @@ export const fieldTypeSchema = z.enum([
   "json",
 ]);
 
+/**
+ * ── L'EXPRESSION (1.36.0) — CE QUI MANQUAIT VRAIMENT.
+ *
+ * MESURE SUR UN CAHIER DES CHARGES REEL. Le contrat savait decrire des
+ * donnees, des ecrans et des capacites. Il ne savait presque aucune REGLE
+ * METIER. Ce qui bloquait l'application entiere n'avait rien d'exotique :
+ * une SOUSTRACTION — « consommation = nouvel index − ancien index ». Et
+ * sur neuf anomalies demandees, UNE SEULE etait exprimable, parce qu'une
+ * assertion compare un champ a une CONSTANTE et jamais deux champs.
+ *
+ * ── POURQUOI UNE FORME GENERALE, ET PAS UNE DE PLUS.
+ *
+ * Ajouter `soustraction`, puis `comparaison`, puis `pourcentage`… serait un
+ * travail sans fin : les regles metier n'ont pas de liste. Une expression
+ * couvre la CLASSE.
+ *
+ * ── ET POURQUOI CE N'EST PAS LE « LANGAGE D'EXPRESSIONS ARBITRAIRES » QUE
+ * CE FICHIER REFUSE PLUS HAUT.
+ *
+ * L'objection etait : « il faudrait l'evaluer pour savoir ce qu'il dit ».
+ * Elle ne tient pas ici, et c'est verifiable : cet arbre est TOTAL et
+ * ANALYSABLE sans evaluation. Pas de boucle, pas d'appel de fonction, pas
+ * d'acces a une autre ligne, pas d'horloge. On sait STATIQUEMENT quels
+ * champs il lit, et sa profondeur est bornee. Ce qu'un juge doit savoir,
+ * il le sait sans executer quoi que ce soit.
+ *
+ * ── CE QUI RESTE DEHORS, ET C'EST VOULU.
+ *
+ * Les autres LIGNES. Agreger reste `sum` et `count`, qui passent par une
+ * relation declaree. Une expression ne voit QUE la ligne qu'elle calcule —
+ * c'est cette frontiere qui la garde analysable.
+ */
+const PROFONDEUR_EXPRESSION_MAX = 8;
+
+type ExpressionBrute =
+  | { kind: "champ"; fieldId: string }
+  | { kind: "constante"; valeur: number }
+  | { kind: "operation"; op: "+" | "-" | "*" | "/"; gauche: ExpressionBrute; droite: ExpressionBrute };
+
+export const expressionSchema: z.ZodType<ExpressionBrute> = z.lazy(() =>
+  z.discriminatedUnion("kind", [
+    /** Un champ de LA MEME LIGNE. Jamais d'une autre — voir ci-dessus. */
+    z.strictObject({ kind: z.literal("champ"), fieldId: fieldIdSchema }),
+    z.strictObject({ kind: z.literal("constante"), valeur: z.number() }),
+    z.strictObject({
+      kind: z.literal("operation"),
+      op: z.enum(["+", "-", "*", "/"]),
+      gauche: expressionSchema,
+      droite: expressionSchema,
+    }),
+  ]),
+);
+
+/** La profondeur se verifie au validateur, pas au schema : zod ne sait pas
+ *  borner une recursion, et un message precis vaut mieux qu'un refus muet. */
+export const PROFONDEUR_EXPRESSION = PROFONDEUR_EXPRESSION_MAX;
+
 const fieldSchema = z.strictObject({
   id: fieldIdSchema,
   name: z.string().regex(/^[a-z][a-z0-9_]*$/),
@@ -546,6 +603,17 @@ const fieldSchema = z.strictObject({
        * l'autre barème — celui de l'impôt — et se trompe de métier. Les
        * deux existent dans la vraie vie, donc les deux se déclarent.
        */
+      /**
+       * LE CALCUL GENERAL (1.36.0) — une expression sur les champs de la
+       * meme ligne. C'est lui qui rend exprimables la soustraction d'index,
+       * l'ecart entre montant facture et montant theorique, et toutes les
+       * comparaisons : il suffit de calculer la difference, puis de la
+       * comparer a une constante avec une regle qui existait deja.
+       */
+      z.strictObject({
+        kind: z.literal("calcul"),
+        expression: expressionSchema,
+      }),
       z.strictObject({
         kind: z.literal("bareme"),
         /** Le champ qui porte la quantité mesurée (kWh, litres, minutes…). */
