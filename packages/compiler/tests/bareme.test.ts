@@ -13,6 +13,10 @@
  */
 import { describe, expect, it } from "vitest";
 import { emettreBaremeTs, evaluerBareme, type Bareme } from "../src/bareme.ts";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { emitProject } from "../src/emit-project.ts";
 
 /** « ≤ 150 kWh → 85 F ; > 150 kWh → 125 F sur TOUT ; + 402 F de frais ». */
 const SNE: Bareme = {
@@ -102,3 +106,69 @@ describe("ce qui ne doit pas produire de montant absurde", () => {
     expect(src).toContain("FRAIS_FIXES = 402");
   });
 });
+
+describe("le barème sort RÉELLEMENT dans le projet émis", () => {
+  // LE DÉFAUT QU'ON FERME ICI : la fonction qui génère le code existait, et
+  // PERSONNE ne l'appelait. Une capacité que rien ne produit est morte —
+  // c'est exactement le défaut trouvé le matin même sur `access` et
+  // `backend`, et je venais de le refaire.
+  //
+  // On part d'un document RÉEL du dépôt, pas d'une maquette : une maquette
+  // qu'on écrit soi-même prouve surtout qu'on sait écrire une maquette.
+  const DOC = join(
+    dirname(fileURLToPath(import.meta.url)),
+    "..", "..", "..", "slices", "validation-appareil", "validation-appareil.air.json",
+  );
+  const reel = (): Record<string, unknown> =>
+    JSON.parse(readFileSync(DOC, "utf8")) as Record<string, unknown>;
+
+  const avecBareme = (): Record<string, unknown> => {
+    const d = reel();
+    const entites = d.entities as { id: string; fields: unknown[] }[];
+    entites[0]?.fields.push({
+      id: "fld_montant_du",
+      name: "montant_du",
+      required: false,
+      type: "number",
+      label: [{ locale: "fr", text: "Montant dû" }],
+      derived: {
+        kind: "bareme",
+        fieldId: "fld_depart_places",
+        paliers: [{ jusqua: 150, prixUnitaire: 85 }, { prixUnitaire: 125 }],
+        mode: "par_tranche",
+        fraisFixes: 402,
+      },
+    });
+    return d;
+  };
+
+  it("SANS barème, aucun fichier de calcul — rien n’est émis par habitude", () => {
+    const p = emitProject(reel());
+    expect([...p.files.keys()].some((k) => k.includes("baremes.generated"))).toBe(false);
+  });
+
+  it("AVEC un barème, le fichier existe et porte les nombres du document", () => {
+    const p = emitProject(avecBareme());
+    const src = p.files.get("lib/calculs/baremes.generated.ts");
+    expect(src, "lib/calculs/baremes.generated.ts").toBeDefined();
+    expect(String(src)).toContain("jusqua: 150");
+    expect(String(src)).toContain("prixUnitaire: 125");
+    expect(String(src)).toContain("FRAIS_FIXES = 402");
+  });
+
+  it("et le code émis CALCULE JUSTE — la règle réelle du propriétaire", () => {
+    // 190 unités : 150 × 85 + 40 × 125 + 402 = 18 152.
+    const src = String(emitProject(avecBareme()).files.get("lib/calculs/baremes.generated.ts"));
+    const js = src
+      .replace(/^export function/mu, "function")
+      .replace(/: \{ jusqua: number \| null; prixUnitaire: number \}\[\]/u, "")
+      .replace(/: number \| null/gu, "")
+      .replace(/\(quantite: number\): number/u, "(quantite)")
+      .replace(/: number/gu, "");
+    const nom = /function (calculer_[A-Za-z0-9_]+)/u.exec(js)?.[1] ?? "";
+    // eslint-disable-next-line @typescript-eslint/no-implied-eval
+    const f = Function(`${js}\nreturn ${nom};`) as () => (q: number) => number;
+    expect(f()(190)).toBe(18152);
+    expect(f()(150)).toBe(13152);
+  });
+})

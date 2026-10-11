@@ -10,6 +10,7 @@
 // matière variable vit dans les modules .data canoniques).
 import { LIBELLES_PRIMITIFS, rendrePublicationMd } from "@deribfy/execution-contract";
 import { normaliserOrdreDestinations } from "./ordre-presentation.ts";
+import { emettreBaremeTs } from "./bareme.ts";
 import { canonicalJson, type ProjectAir, type ProjectLock } from "@deribfy/air-schema";
 import { buildDemoFixtures } from "./demo-fixtures.ts";
 import { emitAppJson, emitPermissionsManifest } from "./emit-manifests.ts";
@@ -1463,6 +1464,45 @@ export function emitProject(
       );
     }
     files.set("lib/tokens/theme.generated.ts", emitThemeModule(air));
+  }
+  // ── LES BARÈMES SORTENT EN CODE, POUR LES DEUX CIBLES (1.35.0).
+  //
+  // C'est ici, et pas dans l'émetteur natif ou l'émetteur web, parce que
+  // les deux partagent cette carte de fichiers : un seul endroit, donc un
+  // seul calcul, donc aucun risque que le téléphone et le navigateur ne
+  // comptent pas pareil.
+  //
+  // Et c'est du CODE, pas un trou. `sum` et `count` posent une exception à
+  // combler parce que leur requête dépend de la base ; un barème ne dépend
+  // de rien — il se transcrit entièrement. Les nombres du document
+  // apparaissent dans la source : on relit le barème sans ouvrir le
+  // contrat.
+  const baremes = air.entities.flatMap((e) =>
+    e.fields
+      .filter((f) => f.derived?.kind === "bareme")
+      .map((f) => ({ e, f, d: f.derived as Extract<NonNullable<typeof f.derived>, { kind: "bareme" }> })),
+  );
+  if (baremes.length > 0) {
+    const nomSur = (id: string): string =>
+      `calculer_${id.replace(/[^a-zA-Z0-9_]/gu, "_")}`;
+    files.set(
+      "lib/calculs/baremes.generated.ts",
+      [
+        "// ÉMIS DEPUIS LE CONTRAT — ne pas modifier à la main.",
+        "// Un barème ne dépend d'aucune base : il se calcule ici, pareil sur",
+        "// le téléphone et dans le navigateur.",
+        "",
+        ...baremes.map(({ e, f, d }) =>
+          [
+            `/** ${e.name} · ${f.name} — barème sur « ${d.fieldId} ». */`,
+            emettreBaremeTs(
+              { paliers: d.paliers, mode: d.mode, fraisFixes: d.fraisFixes },
+              nomSur(f.id),
+            ),
+          ].join("\n"),
+        ),
+      ].join("\n"),
+    );
   }
   files.set("app.json", emitAppJson(air, train));
   // EP-176 ④ — `eas.json` EST DU MÊME ORDRE QU'`app.json`.
