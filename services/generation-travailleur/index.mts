@@ -79,9 +79,32 @@ const travailleur = creerTravailleur({
   production: true,
   base: base as unknown as BaseGeneration,
   moteur: moteurParTranche,
-  // Le dimensionnement PROUVE au feu en local : un tour entier par tranche,
-  // l'appel ecrans long passe — c'est toute la raison d'etre de ce service.
-  budgetTrancheMs: 3_600_000,
+  // ── CINQ MINUTES, ET NON PLUS UNE HEURE. Corrige le 2026-10-11.
+  //
+  // CE QUI NE MARCHAIT PAS. Le mode plan et le pas-a-pas reposent sur la
+  // SUSPENSION du moteur, et le moteur ne suspend que quand ce budget est
+  // epuise. Avec une heure, et une generation mesuree a 53 minutes, il ne
+  // suspendait JAMAIS : la ligne allait jusqu'au bout sans jamais demander
+  // son accord au proprietaire. Les deux fonctions etaient inertes.
+  //
+  // POURQUOI PAS UN BUDGET MINUSCULE. Les deux controles de budget sont
+  // places AVANT le travail (`if (budgetEpuise()) return suspendre("p0")`,
+  // et la sentinelle de `callPartBudgete`). Un budget trop court ferait
+  // suspendre sans rien produire. Le chronometre repartant a chaque
+  // tranche, la PREMIERE unite de travail passe toujours — donc aucun
+  // blocage possible — mais une valeur ridicule donnerait une trentaine
+  // d'arrets pour une seule generation.
+  //
+  // D'OU CINQ MINUTES. Ancrage mesure : une generation complete a pris 53
+  // minutes pour une trentaine d'appels, soit ~1,8 min par appel. Cinq
+  // minutes laissent donc passer deux a trois etapes avant de rendre la
+  // main — une dizaine de validations sur une generation, au lieu de
+  // trente. Et surtout la PREMIERE tombe apres P0, avant le gros de la
+  // depense : c'est elle qui compte.
+  //
+  // C'EST UN REGLAGE, PAS UNE LOI. Un seul chiffre : l'augmenter rend la
+  // main moins souvent, le baisser plus souvent.
+  budgetTrancheMs: 300_000,
   battementPerimeMs: 1_800_000,
   // Trou comptable n°2 : cout d'une tranche depossedee → total plateforme.
   journaliserOrphelin,
