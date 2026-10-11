@@ -87,6 +87,18 @@ export function sectionDuChemin(path: string): SectionEmission {
  * d'exhaustivité interdit qu'un code y tombe par oubli.
  */
 export const SECTIONS_CORRECTIVES: Readonly<Record<string, readonly SectionEmission[]>> = {
+  // ── LES RÈGLES VERSIONNÉES (1.37.0) — MÊME LOGEMENT ENCORE.
+  //
+  // Une version se déclare sur un champ d'entité. Date de référence
+  // inconnue ou du mauvais type, périodes qui se chevauchent ou qui se
+  // ferment avant de s'ouvrir : tout se corrige dans la déclaration des
+  // données.
+  AIR_VERSIONS_DATE_INCONNUE: ["donnees"],
+  AIR_VERSIONS_DATE_MAUVAIS_TYPE: ["donnees"],
+  AIR_VERSIONS_PERIODE_VIDE: ["donnees"],
+  AIR_VERSIONS_CHEVAUCHANTES: ["donnees"],
+  AIR_VERSIONS_PLUSIEURS_OUVERTES: ["donnees"],
+
   // ── L'EXPRESSION (1.36.0) — MÊME LOGEMENT QUE LE BARÈME.
   //
   // Une expression se déclare sur un CHAMP d'entité. Qu'elle lise un champ

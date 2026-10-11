@@ -12,6 +12,7 @@ import { LIBELLES_PRIMITIFS, rendrePublicationMd } from "@deribfy/execution-cont
 import { normaliserOrdreDestinations } from "./ordre-presentation.ts";
 import { emettreBaremeTs } from "./bareme.ts";
 import { emettreCalculTs, PRELUDE_EXPRESSION } from "./expression.ts";
+import { emettreVersionneTs } from "./versions.ts";
 import { canonicalJson, type ProjectAir, type ProjectLock } from "@deribfy/air-schema";
 import { buildDemoFixtures } from "./demo-fixtures.ts";
 import { emitAppJson, emitPermissionsManifest } from "./emit-manifests.ts";
@@ -1491,7 +1492,14 @@ export function emitProject(
       .filter((f) => f.derived?.kind === "calcul")
       .map((f) => ({ e, f, d: f.derived as Extract<NonNullable<typeof f.derived>, { kind: "calcul" }> })),
   );
-  if (baremes.length > 0 || expressions.length > 0) {
+  // 1.37.0 — LES REGLES VERSIONNEES, meme fichier encore : un seul endroit
+  // ou lire TOUS les calculs d'une application.
+  const versionnes = air.entities.flatMap((e) =>
+    e.fields
+      .filter((f) => f.derived?.kind === "versionne")
+      .map((f) => ({ e, f, d: f.derived as Extract<NonNullable<typeof f.derived>, { kind: "versionne" }> })),
+  );
+  if (baremes.length > 0 || expressions.length > 0 || versionnes.length > 0) {
     const nomSur = (id: string): string =>
       `calculer_${id.replace(/[^a-zA-Z0-9_]/gu, "_")}`;
     files.set(
@@ -1501,7 +1509,13 @@ export function emitProject(
         "// Un barème ne dépend d'aucune base : il se calcule ici, pareil sur",
         "// le téléphone et dans le navigateur.",
         "",
-        ...(expressions.length === 0 ? [] : [PRELUDE_EXPRESSION]),
+        ...(expressions.length === 0 && versionnes.length === 0 ? [] : [PRELUDE_EXPRESSION]),
+        ...versionnes.map(({ e, f, d }) =>
+          [
+            `/** ${e.name} · ${f.name} — regle versionnee sur « ${d.dateFieldId} ». */`,
+            emettreVersionneTs(d as Parameters<typeof emettreVersionneTs>[0], nomSur(f.id)),
+          ].join("\n"),
+        ),
         ...expressions.map(({ e, f, d }) =>
           [
             `/** ${e.name} · ${f.name} — expression sur les champs de la ligne. */`,

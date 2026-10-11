@@ -325,6 +325,65 @@ export function validateAir(air: ProjectAir): AirDiagnostic[] {
       const chemin = `entities[${ei}].fields[${fi}].derived`;
       const d = f.derived;
 
+      // ── LA VALIDITÉ DANS LE TEMPS (1.37.0) — SES PROPRES GARDES.
+      //
+      // Trois fautes rendraient le calcul indéfini ou faux, et les trois se
+      // voient sans jamais exécuter quoi que ce soit.
+      if (d.kind === "versionne") {
+        const dateChamp = e.fields.find((x) => x.id === d.dateFieldId);
+        // ① LA DATE DE RÉFÉRENCE EXISTE, ET C'EST UNE DATE. Sans elle,
+        // aucune version ne peut être choisie.
+        if (dateChamp === undefined) {
+          push(
+            "AIR_VERSIONS_DATE_INCONNUE",
+            `${chemin}.dateFieldId`,
+            `le champ "${d.dateFieldId}" n'existe pas sur "${e.id}" : rien ne ` +
+              "dirait alors QUELLE version appliquer",
+          );
+        } else if (dateChamp.type !== "date" && dateChamp.type !== "datetime") {
+          push(
+            "AIR_VERSIONS_DATE_MAUVAIS_TYPE",
+            `${chemin}.dateFieldId`,
+            `"${d.dateFieldId}" est de type "${dateChamp.type}" : une version ` +
+              "se choisit sur une DATE",
+          );
+        }
+        // ② LES VERSIONS NE SE CHEVAUCHENT PAS. Deux versions valables le
+        // même jour donneraient deux montants pour la même facture.
+        let borne: string | null = null;
+        d.versions.forEach((v, vi) => {
+          if (v.depuis !== undefined && v.jusqua !== undefined && v.jusqua <= v.depuis) {
+            push(
+              "AIR_VERSIONS_PERIODE_VIDE",
+              `${chemin}.versions[${vi}]`,
+              `la période se ferme avant de s'ouvrir (${v.depuis} → ${v.jusqua}) : ` +
+                "elle ne couvre aucun jour",
+            );
+          }
+          if (borne !== null && (v.depuis === undefined || v.depuis < borne)) {
+            push(
+              "AIR_VERSIONS_CHEVAUCHANTES",
+              `${chemin}.versions[${vi}]`,
+              "deux versions valent le même jour : la même ligne aurait deux " +
+                "résultats, et personne ne saurait lequel est le bon",
+            );
+          }
+          if (v.jusqua !== undefined) borne = v.jusqua;
+        });
+        // ③ UNE SEULE VERSION OUVERTE A LA FIN. Deux versions sans borne
+        // de fin se recouvrent pour toujours.
+        const ouvertes = d.versions.filter((v) => v.jusqua === undefined).length;
+        if (ouvertes > 1) {
+          push(
+            "AIR_VERSIONS_PLUSIEURS_OUVERTES",
+            `${chemin}.versions`,
+            `${String(ouvertes)} versions n'ont pas de fin : elles se recouvrent ` +
+              "pour toujours",
+          );
+        }
+        return;
+      }
+
       // ── LE CALCUL NE PASSE PAS PAR UNE RELATION NON PLUS (1.36.0).
       //
       // Une expression ne voit QUE la ligne qu'elle calcule. Trois gardes,

@@ -200,7 +200,9 @@ const entite = (groupe: string, e: ProjectAir["entities"][number]): string => {
     if (f.derived !== undefined) {
       lignes.push(
         `  // 🧮 CHAMP CALCULÉ « ${f.name} » — NON STOCKÉ.`,
-        f.derived.kind === "calcul"
+        f.derived.kind === "versionne"
+          ? `  //    Regle VERSIONNEE sur \`${f.derived.dateFieldId}\` — ${String(f.derived.versions.length)} version(s).`
+          : f.derived.kind === "calcul"
           ? "  //    Calcul sur les champs de la ligne (expression du contrat)."
           : f.derived.kind === "bareme"
           ? `  //    Bareme sur \`${f.derived.fieldId}\` — ${String(f.derived.paliers.length)} palier(s), mode ${f.derived.mode}.`
@@ -581,6 +583,28 @@ const calculs = (groupe: string, air: ProjectAir): string => {
       const d = f.derived;
       if (d === undefined) continue;
       n += 1;
+      // ── UNE REGLE VERSIONNEE RESTE A ECRIRE COTE SERVEUR (1.37.0).
+      //
+      // Le choix de version et ses regles sont ECRITS dans le projet
+      // TypeScript (`lib/calculs`), ou l'application s'en sert vraiment.
+      // Cote Java, le contrat les DIT — periodes et sources comprises —
+      // sans les reimplementer : deux transcriptions de la meme regle
+      // finiraient par diverger, et c'est l'argent du client qui en
+      // paierait l'ecart.
+      if (d.kind === "versionne") {
+        l.push(
+          "",
+          `  /** ${e.name}.${f.name} — regle versionnee sur \`${d.dateFieldId}\`. */`,
+          ...d.versions.map(
+            (v) =>
+              `  //  ${v.depuis ?? "depuis toujours"} → ${v.jusqua ?? "en cours"}` +
+              `  [${v.regle.kind}]${v.source === undefined ? "" : `  source : ${v.source}`}`,
+          ),
+          "  //  Le calcul fait foi dans `lib/calculs` du projet emis.",
+        );
+        continue;
+      }
+
       // ── LE CALCUL AUSSI S'ECRIT ENTIEREMENT (1.36.0). Il ne lit que la
       // ligne qu'il calcule : aucune requete, donc aucun trou a combler.
       if (d.kind === "calcul") {

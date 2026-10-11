@@ -501,6 +501,40 @@ export const expressionSchema: z.ZodType<ExpressionBrute> = z.lazy(() =>
  *  borner une recursion, et un message precis vaut mieux qu'un refus muet. */
 export const PROFONDEUR_EXPRESSION = PROFONDEUR_EXPRESSION_MAX;
 
+/**
+ * ── LA VALIDITÉ DANS LE TEMPS (1.37.0) — POUR TOUTE RÈGLE CALCULÉE.
+ *
+ * MESURE SUR UN CAHIER DES CHARGES REEL, section 7 : « Stocker les baremes
+ * comme des regles VERSIONNEES (date de debut, date de fin, portee et
+ * source). NE PAS APPLIQUER AUTOMATIQUEMENT UNE ANCIENNE MESURE A UNE
+ * AUTRE PERIODE. »
+ *
+ * ── POURQUOI UNE FORME GENERALE PLUTOT QUE DES DATES SUR LE BAREME.
+ *
+ * Ajouter `dateDebut`/`dateFin` au bareme seul reglerait ce cas et
+ * laisserait le suivant : un calcul qui change de formule, un seuil
+ * revise. Le besoin n'est pas « un bareme a des dates », c'est « une
+ * regle ne vaut que dans une periode ». Cette forme enveloppe donc
+ * N'IMPORTE QUELLE regle calculee.
+ *
+ * ── LA DECISION QUI COMPTE : PAS D'HORLOGE.
+ *
+ * La version applicable est choisie par un CHAMP DE DATE DE LA LIGNE, pas
+ * par la date du jour. Recalculer une facture de l'an dernier doit
+ * appliquer le tarif de l'an dernier — avec une horloge, elle changerait
+ * de montant a chaque relecture. C'est aussi ce qui garde le calcul PUR :
+ * meme ligne, meme resultat, toujours.
+ *
+ * ── ET SI AUCUNE VERSION NE COUVRE LA DATE : AUCUNE VALEUR.
+ *
+ * Pas de repli sur la plus proche. Le cahier le dit — « ne pas supposer ».
+ * Un montant calcule avec le mauvais tarif a l'air juste, et c'est
+ * precisement ce qu'on refuse.
+ */
+const dateCivileSchema = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/u, "une date civile s'ecrit AAAA-MM-JJ");
+
 const fieldSchema = z.strictObject({
   id: fieldIdSchema,
   name: z.string().regex(/^[a-z][a-z0-9_]*$/),
@@ -613,6 +647,51 @@ const fieldSchema = z.strictObject({
       z.strictObject({
         kind: z.literal("calcul"),
         expression: expressionSchema,
+      }),
+      /**
+       * UNE REGLE QUI CHANGE AVEC LE TEMPS (1.37.0). Les versions se lisent
+       * dans l'ordre ; `depuis` est INCLUSIF, `jusqua` EXCLUSIF — deux
+       * versions qui se touchent ne se chevauchent donc jamais. La premiere
+       * peut omettre `depuis` (elle vaut depuis toujours), la derniere
+       * `jusqua` (elle vaut encore).
+       */
+      z.strictObject({
+        kind: z.literal("versionne"),
+        /** LE CHAMP QUI PORTE LA DATE DE REFERENCE — jamais l'horloge. */
+        dateFieldId: fieldIdSchema,
+        versions: z
+          .array(
+            z.strictObject({
+              depuis: dateCivileSchema.optional(),
+              jusqua: dateCivileSchema.optional(),
+              /** D'OU VIENT LA REGLE — exige par le cahier de reference.
+               *  Une regle sans source ne se conteste pas. */
+              source: z.string().min(1).optional(),
+              regle: z.discriminatedUnion("kind", [
+                z.strictObject({
+                  kind: z.literal("calcul"),
+                  expression: expressionSchema,
+                }),
+                z.strictObject({
+                  kind: z.literal("bareme"),
+                  fieldId: fieldIdSchema,
+                  paliers: z
+                    .array(
+                      z.strictObject({
+                        jusqua: z.number().positive().optional(),
+                        prixUnitaire: z.number().nonnegative(),
+                      }),
+                    )
+                    .min(1)
+                    .max(12),
+                  mode: z.enum(["global", "par_tranche"]),
+                  fraisFixes: z.number().nonnegative().default(0),
+                }),
+              ]),
+            }),
+          )
+          .min(1)
+          .max(24),
       }),
       z.strictObject({
         kind: z.literal("bareme"),
