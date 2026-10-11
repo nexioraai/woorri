@@ -43,17 +43,28 @@ export const SECTION_KEYS: Readonly<Record<SectionEmission, readonly string[]>> 
     "network",
     "native",
     "compliance",
+    // `backend` REJOINT `base` le 2026-10-11, en meme temps qu'il obtient
+    // enfin une passe d'emission (`socle`, qui retombe sur cette section).
+    // Sans cette ligne, une faute sur `backend` serait IRREPARABLE — le
+    // routage ne saurait pas quelle passe reemettre — et la garantie
+    // anti-amputation ne le protegerait pas. C'est l'oubli exact que le
+    // commentaire ci-dessous raconte pour `access` en 1.28.0.
+    "backend",
     // CONTRÔLE D'ACCÈS (1.28.0) — OUBLIÉ ICI à son ajout, et l'oubli avait
     // deux conséquences, pas une : le routage n'aurait jamais réémis `access`
     // (donc un modèle d'accès faux était IRRÉPARABLE), et la garantie
     // d'anti-amputation ne le protégeait pas (une réparation d'une tout autre
     // section pouvait le faire DISPARAÎTRE, ce qui ouvre l'application à tous).
-    "access",
+    //
+    // DEPLACE VERS `capacites` le 2026-10-11 : `access` y a obtenu sa passe
+    // d'emission. Le laisser ici enverrait une faute d'acces vers une passe
+    // qui ne le produit pas — donc une faute irreparable, et une
+    // application ouverte a tous.
   ],
   donnees: ["entities", "relations", "datasets", "rules", "slots"],
   ecrans: ["screens"],
   actions: ["actions"],
-  capacites: ["capabilities", "permissions"],
+  capacites: ["capabilities", "permissions", "access"],
   cablage: ["integrations", "expectedTests"],
   intention: ["intent"],
 };

@@ -37,15 +37,18 @@ const lire = (...p: string[]): string => readFileSync(join(RACINE, ...p), 'utf8'
  * ce qu'ils coutent. Retirer une entree d'ici EXIGE d'avoir ouvert la
  * passe correspondante : c'est le seul moyen de faire passer ce test.
  */
-const TROUS_CONNUS: Readonly<Record<string, string>> = {
-  // Regles 42 et 43 du noyau. Consequence : AUCUNE application generee ne
-  // porte de controle d'acces, et `derive-rls.ts` lit
-  // `air.access?.delegation?.subjectEntityId`, qui ne peut pas exister.
-  access: 'aucune application generee ne porte de controle d acces',
-  // Regle 51 du noyau (« DECLARE TOUJOURS ce noeud »). Consequence : la
-  // fonctionnalite 1.34.0 « qui ecrit le serveur » ne s'exprime jamais.
-  backend: 'aucune application generee ne declare qui ecrit son serveur',
-}
+/**
+ * LE REGISTRE EST VIDE — ET C'EST LE BUT ATTEINT, LE 2026-10-11.
+ *
+ * Il a porte deux entrees pendant une journee : `access` (1.28.0) et
+ * `backend` (1.34.0), ajoutes au schema sans qu'aucune passe puisse les
+ * produire. Les deux ont recu leur passe le jour meme — `access` dans
+ * `capacites`, `backend` dans `socle` — et le registre s'est vide.
+ *
+ * Y REMETTRE UNE ENTREE EXIGE D'ECRIRE CE QU'ELLE COUTE. C'est tout
+ * l'interet : une cle orpheline ne peut plus s'ajouter en silence.
+ */
+const TROUS_CONNUS: Readonly<Record<string, string>> = {}
 
 function clesDuSchema(): string[] {
   const air = lire('packages', 'air-schema', 'src', 'air.ts')
@@ -85,7 +88,9 @@ describe('toute clé du schéma appartient à une passe — ou figure au registr
     }
   })
 
-  it('les deux trous connus sont ceux qu’on croit', () => {
-    expect(Object.keys(TROUS_CONNUS).sort()).toEqual(['access', 'backend'])
+  it('le registre est VIDE — toute clé du schéma a sa passe', () => {
+    // Le jour où cette ligne redevient non vide, c'est qu'on a ajouté une
+    // clé au contrat sans donner au générateur le moyen de la produire.
+    expect(Object.keys(TROUS_CONNUS)).toEqual([])
   })
 })

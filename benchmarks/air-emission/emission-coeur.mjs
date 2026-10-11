@@ -97,7 +97,14 @@ const PARTS = [
   },
   {
     name: "socle",
-    keys: ["design", "network", "native", "compliance"],
+    // `backend` (1.34) REJOINT LE SOCLE le 2026-10-11. Il n'appartenait a
+    // AUCUNE passe : la regle 51 ordonnait « DECLARE TOUJOURS ce noeud » et
+    // la grammaire ne le permettait pas. Une fonctionnalite entiere morte a
+    // la naissance, sans un seul message d'erreur.
+    // ICI parce que `backend.domain` doit figurer dans
+    // `network.allowedDomains` — meme passe, donc contrainte satisfaisable
+    // d'un seul geste. Mesure : 1 755 → 2 016 octets de grammaire.
+    keys: ["design", "network", "native", "compliance", "backend"],
   },
   // SCISSION 2026-09-09 (même patron que D-078, mesuré et non supposé) :
   // « The compiled grammar is too large » sur `donnees` à TOUS les niveaux de
@@ -113,7 +120,14 @@ const PARTS = [
   // aval : elles passent AVANT les écrans. Le cycle écrans↔actions, lui, ne
   // se réordonne pas (blocs→actionId ET actions→blockId) : il est CONTRAINT
   // par les obligations mécaniques (obligations-passes.mjs).
-  { name: "capacites", keys: ["capabilities", "permissions"] },
+  // `access` (1.28) REJOINT LES CAPACITES le 2026-10-11, meme histoire :
+  // les regles 42 et 43 l'ordonnaient, aucune passe ne pouvait le porter.
+  // Consequence mesuree : AUCUNE application generee ne portait de controle
+  // d'acces, et `derive-rls.ts` lisait une valeur qui ne pouvait pas
+  // exister. ICI parce que c'est la passe des DROITS, et qu'elle tourne
+  // APRES `entites` — les entites existent quand l'acces les reference.
+  // Mesure : 1 424 → 3 229 octets, sous les 4 325 qui passent deja.
+  { name: "capacites", keys: ["capabilities", "permissions", "access"] },
   { name: "ecrans", keys: ["screens"] },
   // DÉCOUPAGE (D-078) — mesuré, pas supposé : « The compiled grammar is too
   // large » sur `base` ET `comportement`. Les liaisons de slot et `thenScreenId`
