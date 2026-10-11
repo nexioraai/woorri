@@ -9,6 +9,7 @@
 // libre interpolé dans le code (identifiants validés par regex ; toute la
 // matière variable vit dans les modules .data canoniques).
 import { LIBELLES_PRIMITIFS, rendrePublicationMd } from "@deribfy/execution-contract";
+import { normaliserOrdreDestinations } from "./ordre-presentation.ts";
 import { canonicalJson, type ProjectAir, type ProjectLock } from "@deribfy/air-schema";
 import { buildDemoFixtures } from "./demo-fixtures.ts";
 import { emitAppJson, emitPermissionsManifest } from "./emit-manifests.ts";
@@ -1402,7 +1403,22 @@ export function emitProject(
   // NORMALISATION : le lock a été calculé sur le document MIGRÉ ; émettre
   // depuis l'entrée brute ferait travailler les deux étages sur deux
   // versions du même document (airHash d'un côté, code de l'autre).
-  const air = normalizeAir(input) as ProjectAir;
+  // ── LES DEUX PRIMITIVES REPRENNENT LEUR PLACE. Etape EXPLICITE et
+  // separee : `normalizeAir` traite les migrations de VERSION, et melanger
+  // les deux sujets dans une meme fonction se paierait plus tard.
+  //
+  // MESURE (2026-10-11) : les juges savent que l'accueil va en premier et
+  // le compte en dernier, mais leur verdict est « publie, jamais bloquant »
+  // — il n'entre pas dans la reparation payante et personne ne le lit. Or
+  // plus bas, ce compilateur ecrit `order: d.order` puis trie dessus : il
+  // RESPECTAIT le desordre. L'application sortait avec ses onglets dans le
+  // mauvais ordre, alors que le moteur savait lequel il fallait.
+  //
+  // LE PRECEDENT EST ICI MEME : `libellePrimitif` ECRASE deja le libelle
+  // des deux primitives. Ecraser leur ordre est le meme geste, au meme
+  // endroit, et seules ces deux-la sont touchees — une destination du
+  // domaine garde sa place.
+  const air = normaliserOrdreDestinations(normalizeAir(input) as ProjectAir).air;
   const locale = air.app.locales.defaultAppLocale;
   // ENGINE HARDENING — le PLAN d'assemblage : dérivé UNE fois du document,
   // consommé par l'émission, consultable par les gates avant tout appel.
