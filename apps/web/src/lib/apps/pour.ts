@@ -19,7 +19,7 @@ import { projectAirSchema } from '@deribfy/air-schema'
 import { depenseAutorisee, direCeQuOnACompris, JETON_DEPENSE } from './comprendre'
 import { lireLaPhrase } from './emission'
 import { emettreApplication } from './moteur'
-import { journaliser } from './journal'
+import { codeEtChemin, journaliser } from './journal'
 import {
   fautesDeProduction,
   perimetre,
@@ -177,14 +177,35 @@ export async function documentPour(
     jetonsSortie: emission.jetons.sortie,
     diagnostics: [
       ...new Set([
-        ...emission.diagnostics.map((d) => d.code ?? '?'),
+        ...emission.diagnostics.map(codeEtChemin),
         ...emission.tirages.flatMap((t) => t.diagnostics),
       ]),
     ],
     tirages: emission.tirages.length,
-    // Le document part au journal : la contrainte `livree_a_document` exige
-    // qu'une ligne livree le porte, et il est la, dans la main.
-    document: emission.ok ? emission.document : undefined,
+    // CE QUI SURVIT A UN REFUS, memes noms que cote travailleur.
+    ...(emission.raison === undefined ? {} : { raison: emission.raison }),
+    modele: emission.modele,
+    tiragesDetail: emission.tirages,
+    tours: (emission as { tours?: readonly unknown[] }).tours,
+    niveaux: (emission as { niveaux?: unknown }).niveaux,
+    // ── LE DOCUMENT PART AU JOURNAL, REFUS COMPRIS. Corrige le 2026-10-10.
+    //
+    // Cette ligne valait `emission.ok ? emission.document : undefined` : un
+    // refus jetait ce que le moteur venait de produire. MESURE ce jour-la,
+    // sur la seule ligne du journal : 16,03 $, 53 minutes, 1 252 757 jetons
+    // d'entree, `statut = refusee`, `document = null`. Tout le travail
+    // detruit a l'instant ou il etait refuse, et donc impossible a
+    // examiner, a reparer ou a reprendre — il fallait TOUT repayer.
+    //
+    // Un refus n'est pas un vide : c'est un produit qu'on n'accepte pas.
+    // La contrainte `livree_a_document` ne dit que l'inverse (une ligne
+    // LIVREE doit porter un document) ; elle n'a jamais interdit qu'une
+    // ligne refusee en porte un. Et `livraison` filtre sur
+    // `statut = 'livree'` : un partiel garde ne peut pas etre servi comme
+    // une application finie.
+    // Le produit du moteur, livre ou non : `journaliser` decide ou le
+    // ranger selon `ok`, et il le range comme le travailleur.
+    document: emission.document,
   })
 
   if (emission.ok && emission.document !== undefined) {
@@ -218,7 +239,19 @@ export async function documentPour(
     raison: direALUtilisateur(dg),
     detailTechnique:
       `${emission.raison ?? 'émission refusée'} · ${String(nos.length)} défaut(s) de production : ` +
-      `${[...new Set(nos.map((d) => d.code ?? '?'))].join(', ')} · ${emission.coutUsd.toFixed(4)} $`,
+      // ── LE CHEMIN, PAS SEULEMENT LE CODE. Corrige le 2026-10-10.
+      //
+      // Le type de l'alerte promet « les codes, LES CHEMINS, le detail brut »
+      // (voir plus haut) ; cette ligne ne passait que les codes. L'alerte
+      // recue ce jour-la disait « 3 defaut(s) de production : SCHEMA » —
+      // trois fois le meme mot, et aucune indication de l'endroit. Un code
+      // sans chemin ne permet de reparer RIEN : il faut savoir OU le schema
+      // a casse. Mesure : 16,03 $ de refus impossible a instruire.
+      `${[
+        ...new Set(
+          nos.map((d) => (d.path === undefined ? (d.code ?? '?') : `${d.code ?? '?'} @ ${d.path}`)),
+        ),
+      ].join(', ')} · ${emission.coutUsd.toFixed(4)} $`,
     texteLu,
   }
 }

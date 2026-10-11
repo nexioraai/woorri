@@ -41,6 +41,7 @@
  * perimera). Rien d'avale.
  */
 import { randomUUID } from 'node:crypto'
+import { codeEtChemin } from './journal'
 
 type Lignes = { data: Record<string, unknown>[] | null; error: { message: string } | null }
 
@@ -400,10 +401,8 @@ export function creerTravailleur({
       // mouraient ici, dans ce map. Diagnostiquer exigeait de re-payer un
       // tir entier. Le chemin est borne a 120 caracteres : il localise, il
       // ne transporte pas un document.
-      const codes = res.diagnostics.map((d) => {
-        const chemin = String((d as { path?: unknown }).path ?? '').slice(0, 120)
-        return chemin === '' ? (d.code ?? '?') : `${d.code ?? '?'}@${chemin}`
-      })
+      // LE FORMAT VIT DANS `journal.ts`, appele par les DEUX chemins.
+      const codes = res.diagnostics.map(codeEtChemin)
       const ecrit = await ecrire(
         () =>
           t()

@@ -40,7 +40,22 @@ export type NomPhase = 'comprehension' | 'emission' | 'compilation' | 'apercu'
  * VRAIMENT parti de travers.
  */
 const BORNES: Record<NomPhase, { ms: number; minimumOctets?: number }> = {
-  comprehension: { ms: 90_000 },
+  // ── 60 MIN, ET POURQUOI PAS 90 S. Recalibre le 2026-10-10 sur mesure.
+  //
+  // La borne de 90 s etait JUSTE quand elle a ete posee : `comprehension`
+  // ne couvrait alors que la passe P0, « quelques secondes par tirage ».
+  // Depuis, cette phase enveloppe `documentPour`, donc l'EMISSION ENTIERE
+  // — une trentaine d'appels et l'assemblage complet. Le nom de la phase
+  // n'a pas bouge, ce qu'elle mesure a change d'un facteur trente.
+  //
+  // MESURES du 2026-10-10, journal serveur et alerte, meme cahier :
+  //     7,2 min · 23,0 min · 52,9 min (3 174 s)
+  // Resultat : l'alerte criait « trop_lent » a chaque generation normale,
+  // et une alerte qui crie toujours ne se lit plus. 60 min se tient juste
+  // au-dessus du pire releve. La regle « dix fois l'observe » du bloc
+  // ci-dessus ne s'applique pas ici : dix fois 53 min ferait neuf heures,
+  // une borne qui n'attraperait plus rien.
+  comprehension: { ms: 3_600_000 },
   emission: { ms: 10_000 },
   compilation: { ms: 30_000 },
   apercu: { ms: 60_000, minimumOctets: 50_000 },
