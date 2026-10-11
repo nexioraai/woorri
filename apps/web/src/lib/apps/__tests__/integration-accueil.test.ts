@@ -154,10 +154,25 @@ describe('CLIQUET — IL N Y A QU UNE CONVERSATION, PAS DEUX', () => {
   it('LES PRIMITIVES VIVENT A UN SEUL ENDROIT', () => {
     // La forme de la bulle et celle du composeur ne sont ecrites qu ici.
     expect(PARTAGE).toContain('rounded-[22px] rounded-bl-md')
-    expect(PARTAGE).toContain('rounded-[24px] pl-6 pr-16')
+    // LE COMPOSEUR — pourquoi ce n'est plus UNE chaine mais TROIS morceaux.
+    //
+    // Le 2026-10-10, le trombone est entre dans le champ : pose en bas a
+    // gauche, il occupe 16 → 52 px, la ou le texte commencait a 24 px. Le
+    // padding gauche est donc devenu CONDITIONNEL — `pl-6` sans trombone
+    // (les trois modes, inchanges), `pl-14` avec. La chaine d'un seul tenant
+    // n'existe plus ; la forme, elle, vit toujours dans ce SEUL fichier, et
+    // c'est exactement ce que ce cliquet garde. La decision de padding est
+    // epinglee ici aussi : la deplacer ailleurs casserait ce test.
+    expect(PARTAGE).toContain('rounded-[24px]')
+    expect(PARTAGE).toContain("'pl-14' : 'pl-6'")
+    expect(PARTAGE).toContain('pr-16 py-4')
     for (const fichier of [ACCUEIL_NU, CONVERSATION]) {
       expect(fichier).not.toContain('rounded-[22px] rounded-bl-md')
-      expect(fichier).not.toContain('rounded-[24px] pl-6 pr-16')
+      // PLUS STRICT QU'AVANT : aucun MORCEAU de la forme ne peut etre
+      // recopie chez un consommateur, et plus seulement la chaine entiere.
+      expect(fichier).not.toContain('rounded-[24px]')
+      expect(fichier).not.toMatch(/\bpl-(6|14)\b/u)
+      expect(fichier).not.toContain('pr-16')
     }
   })
 

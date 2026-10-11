@@ -97,7 +97,8 @@ export function estimation(texte: string): {
   caracteres: number
   jetons: number
   coutUsd: number
-  libelle: string
+  /** RESERVE A L'ADMINISTRATION — jamais affiche a l'utilisateur. */
+  libelleAdmin: string
 } {
   const caracteres = texte.length
   const jetons = Math.round(caracteres * JETONS_PAR_CARACTERE)
@@ -106,7 +107,15 @@ export function estimation(texte: string): {
     caracteres,
     jetons,
     coutUsd,
-    libelle: `~${jetons.toLocaleString('fr-FR')} jetons · +${coutUsd.toFixed(2)} $ sur la compréhension`,
+    /**
+     * RESERVE A L'ADMINISTRATION — JAMAIS A L'ECRAN UTILISATEUR.
+     *
+     * Regle du proprietaire, posee le 2026-10-10 apres l'avoir vue violee :
+     * « les utilisateurs ne devraient pas voir les montants ». Un jeton, un
+     * dollar, un nom de passe : ce sont nos entrailles. L'utilisateur lit
+     * « lu — 3 pages », et rien d'autre.
+     */
+    libelleAdmin: `~${jetons.toLocaleString('fr-FR')} jetons · +${coutUsd.toFixed(2)} $`,
   }
 }
 

@@ -35,12 +35,18 @@ import {
 } from '@/lib/apps/suivi-generation';
 import type { EtatGeneration } from '@/lib/apps/service-generations';
 import {
-  estimation,
   formatDuFichier,
   raisonDuRefus,
   LONGUEUR_AVEC_DOCUMENT,
   MESSAGE_SCAN,
 } from '@/lib/apps/document-joint';
+import {
+  DELAI_MAX_MS,
+  MESSAGE_ILLISIBLE,
+  messageDeLEchec,
+  phraseAttente,
+  retirerDernierEcho,
+} from '@/lib/apps/attente-comprehension';
 
 // ETAGE 4 — le drapeau : OFF (defaut), l'UX synchrone ci-dessous reste SEULE
 // au monde ; le chemin async n'existe qu'arme consciemment. L'ecran ne fait
@@ -94,6 +100,11 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
   // d'injection muette — le texte extrait remplit la zone, visible et
   // corrigeable, et la note annonce le cout AVANT l'envoi.
   const [noteJoint, setNoteJoint] = useState('');
+  // ── L'ATTENTE DE LA LECTURE : l'instant du depart et la taille du texte.
+  // Sans eux, l'ecran ne pourrait dire ni CE QU'il lit ni DEPUIS QUAND, et
+  // c'est tout ce qui manquait quand les trois points sont devenus un piege.
+  const [debutLecture, setDebutLecture] = useState('');
+  const [longueurLue, setLongueurLue] = useState(0);
   const minuterieSuivi = useRef<number | null>(null);
 
   const enQuestion = ouvertes.length > 0;
@@ -104,6 +115,30 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
   useEffect(() => {
     filRef.current?.scrollTo({ top: filRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages, enCours]);
+
+  // ── L'HORLOGE DE L'ATTENTE. Elle ne bat que pendant la lecture et s'arrete
+  // avec elle : rien ne tourne quand rien ne travaille.
+  useEffect(() => {
+    if (!enCours) return;
+    // L'heure de depart est posee par le GESTE d'envoi, pas ici : un
+    // `setState` synchrone dans un effet declenche un rendu en cascade, et
+    // le depot l'interdit. Ici, uniquement le battement.
+    const t = window.setInterval(() => { setMaintenant(Date.now()); }, 1000);
+    return () => { window.clearInterval(t); };
+  }, [enCours]);
+
+  /**
+   * RENDRE LA MAIN — le tour n'a pas eu lieu, on efface sa trace.
+   *
+   * La bulle part, le texte revient dans le champ, et la note du document
+   * joint revient avec lui. Sans ca, un echec coutait a l'utilisateur son
+   * cahier des charges entier : il devait le televerser une seconde fois.
+   */
+  const rendreLaMain = (texte: string, note: string) => {
+    setMessages((m) => [...retirerDernierEcho(m, texte)]);
+    setSaisie(texte);
+    setNoteJoint(note);
+  };
 
   const jeton = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -218,10 +253,19 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
   const envoyer = async () => {
     const texte = saisie.trim();
     if (texte === '' || enCours) return;
+    // La note du document joint est MISE DE COTE avant d'etre effacee : si le
+    // tour echoue, elle doit revenir avec le texte.
+    const noteAvant = noteJoint;
+    setNoteJoint('');
     setSaisie('');
     setAvis('');
     setMessages((m) => [...m, { role: 'moi', texte }]);
     setEnCours(true);
+    setDebutLecture(new Date().toISOString());
+    setLongueurLue(texte.length);
+    // La premiere lecture de l'horloge : sans elle, la phrase n'apparaitrait
+    // qu'au bout d'une seconde — et l'ecran recommencerait par du vide.
+    setMaintenant(Date.now());
 
     // ── CE QU'ON ENVOIE DEPEND DE CE QU'ON ATTENDAIT.
     //
@@ -249,14 +293,30 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
           }
         : { demande: texte };
 
+    // ── LE FILET, ET POURQUOI IL EXISTE.
+    //
+    // Le 2026-10-10, une lecture est partie, a travaille, et n'est jamais
+    // revenue : la connexion est restee ouverte sur un travail mort. `fetch`
+    // n'a AUCUNE limite de temps par defaut — la promesse n'a donc ni abouti
+    // ni echoue, le `finally` n'a jamais tourne, et l'ecran est reste sur
+    // trois points sans message et sans issue. Ce filet ferme ce piege : au
+    // pire, on rend la main et on le DIT.
+    const avorteur = new AbortController();
+    const filet = window.setTimeout(() => { avorteur.abort(); }, DELAI_MAX_MS);
     try {
       const res = await fetch('/api/generateur/comprendre', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${await jeton()}` },
         body: JSON.stringify(corps),
+        signal: avorteur.signal,
       });
       const d = await res.json();
-      if (!res.ok) { setAvis(String(d.error ?? 'Lecture impossible.')); return; }
+      if (!res.ok) {
+        // Le serveur a dit non : son motif s'affiche, mais le texte revient.
+        rendreLaMain(texte, noteAvant);
+        setAvis(String(d.error ?? MESSAGE_ILLISIBLE));
+        return;
+      }
 
       setIntention(d.intention ?? null);
       setTexteLu(String(d.texteLu ?? texte));
@@ -295,9 +355,13 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
         ...m,
         { role: 'deribfy', compris: d.compris ?? [], parIA: d.parIA === true, note: d.echecIA },
       ]);
-    } catch {
-      setAvis('Lecture impossible.');
+    } catch (e) {
+      // Le filet a mordu — ou l'onglet a coupe. Dans les deux cas on a rendu
+      // la main, et c'est exactement ce qu'on annonce.
+      rendreLaMain(texte, noteAvant);
+      setAvis(messageDeLEchec(e));
     } finally {
+      window.clearTimeout(filet);
       setEnCours(false);
     }
   };
@@ -547,7 +611,15 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
             </Bulle>
           ),
         )}
-        {enCours && <Attente />}
+        {enCours && (
+          <Attente
+            libelle={
+              debutLecture !== '' && maintenant > 0
+                ? phraseAttente(longueurLue, debutLecture, maintenant)
+                : undefined
+            }
+          />
+        )}
       </div>
 
       {avis !== '' && <p className="text-sm text-amber-300/80 mt-3 text-center">{avis}</p>}
@@ -581,8 +653,7 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
                   return;
                 }
                 setSaisie(texte);
-                const e = estimation(texte);
-                setNoteJoint(`« ${fichier.name} » lu — ${e.libelle}. Relisez et corrigez avant d’envoyer.`);
+                setNoteJoint(`« ${fichier.name} » lu. Relisez et corrigez avant d’envoyer.`);
                 return;
               }
               // PDF : pdfjs n'est chargé QU'ICI, et dans le navigateur seul.
@@ -593,9 +664,8 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
                 return;
               }
               setSaisie(r.texte);
-              const e = estimation(r.texte);
               setNoteJoint(
-                `« ${fichier.name} » lu — ${String(r.pages)} page(s), ${e.libelle}. Relisez et corrigez avant d’envoyer.`,
+                `« ${fichier.name} » lu — ${String(r.pages)} page(s). Relisez et corrigez avant d’envoyer.`,
               );
             } catch {
               setNoteJoint('Lecture impossible. Copiez-collez le contenu dans la zone de texte.');

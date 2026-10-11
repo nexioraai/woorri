@@ -56,7 +56,7 @@ export function Bulle({ moi, children }: { moi: boolean; children: ReactNode }) 
 }
 
 /** Les trois points — la meme attente, des deux cotes. */
-export function Attente() {
+export function Attente({ libelle }: { libelle?: ReactNode } = {}) {
   return (
     <div className="flex justify-start">
       <div className={`${VERRE_BULLE} px-5 py-4`}>
@@ -65,6 +65,14 @@ export function Attente() {
           <span className="w-2 h-2 rounded-full bg-white/50 animate-bounce" style={{ animationDelay: '150ms' }} />
           <span className="w-2 h-2 rounded-full bg-white/50 animate-bounce" style={{ animationDelay: '300ms' }} />
         </div>
+        {/* LA PHRASE HONNETE SOUS LES POINTS — optionnelle, et ABSENTE pour
+            les trois modes, dont l'attente reste exactement ce qu'elle etait.
+            Elle dit ce qu'on lit et depuis combien de temps : jamais un
+            pourcentage, jamais un compte a rebours qu'on serait incapable de
+            tenir. Voir `attente-comprehension.ts`. */}
+        {libelle !== undefined && (
+          <p className="mt-2 text-xs text-slate-400">{libelle}</p>
+        )}
       </div>
     </div>
   );
@@ -111,53 +119,61 @@ export function Composeur({
   note?: ReactNode;
 }) {
   return (
-    <div className="relative mt-4">
-      <textarea
-        value={valeur}
-        onChange={(e) => onChange(e.target.value)}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            onEnvoyer();
-          }
-        }}
-        placeholder={invite}
-        aria-label={etiquette}
-        maxLength={longueurMax}
-        disabled={bloque}
-        rows={1}
-        className="w-full bg-black/40 border border-white/10 rounded-[24px] pl-6 pr-16 py-4 text-white text-[15px] placeholder-slate-500 resize-none focus:outline-none transition shadow-xl min-h-[56px] max-h-40"
-      />
-      {joindre !== undefined && (
-        <label
-          className="absolute bottom-3 left-4 w-9 h-9 rounded-full flex items-center justify-center text-slate-400 hover:text-white transition cursor-pointer"
-          title="Joindre un cahier des charges (PDF avec texte, .txt, .md)"
+    // LE CADRE « relative » NE CONTIENT QUE LE CHAMP ET SES DEUX BOUTONS.
+    // Les boutons sont posés depuis le BAS de ce cadre (`bottom-3`) : tout
+    // ce qu'on y ajoute l'agrandit et les fait DESCENDRE d'autant. La note
+    // vivait dedans — le trombone se posait donc sur son propre texte
+    // (vu à l'écran le 2026-10-10). La note est maintenant une SŒUR du
+    // cadre, pas une fille : elle peut grandir sans rien déplacer.
+    <div className="mt-4">
+      <div className="relative">
+        <textarea
+          value={valeur}
+          onChange={(e) => onChange(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault();
+              onEnvoyer();
+            }
+          }}
+          placeholder={invite}
+          aria-label={etiquette}
+          maxLength={longueurMax}
+          disabled={bloque}
+          rows={1}
+          className={`w-full bg-black/40 border border-white/10 rounded-[24px] ${joindre !== undefined ? 'pl-14' : 'pl-6'} pr-16 py-4 text-white text-[15px] placeholder-slate-500 resize-none focus:outline-none transition shadow-xl min-h-[56px] max-h-40`}
+        />
+        {joindre !== undefined && (
+          <label
+            className="absolute bottom-3 left-4 w-9 h-9 rounded-full flex items-center justify-center text-slate-400 hover:text-white transition cursor-pointer"
+            title="Joindre un cahier des charges (PDF avec texte, .txt, .md)"
+          >
+            <input
+              type="file"
+              accept=".pdf,.txt,.md,text/plain,text/markdown,application/pdf"
+              className="hidden"
+              disabled={bloque}
+              aria-label="Joindre un cahier des charges"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                // Le champ est VIDÉ : rejoindre le même fichier doit relancer
+                // la lecture, sinon « rien ne se passe » au second essai.
+                e.target.value = '';
+                if (f !== undefined) joindre(f);
+              }}
+            />
+            <Paperclip size={18} aria-hidden="true" />
+          </label>
+        )}
+        <button
+          onClick={onEnvoyer}
+          disabled={desactive}
+          aria-label="Envoyer"
+          className="absolute bottom-3 right-3 w-11 h-11 rounded-full flex items-center justify-center bg-white border-2 border-[#FA5D1E] shadow-lg transition disabled:opacity-40 disabled:cursor-not-allowed hover:scale-105"
         >
-          <input
-            type="file"
-            accept=".pdf,.txt,.md,text/plain,text/markdown,application/pdf"
-            className="hidden"
-            disabled={bloque}
-            aria-label="Joindre un cahier des charges"
-            onChange={(e) => {
-              const f = e.target.files?.[0];
-              // Le champ est VIDÉ : rejoindre le même fichier doit relancer
-              // la lecture, sinon « rien ne se passe » au second essai.
-              e.target.value = '';
-              if (f !== undefined) joindre(f);
-            }}
-          />
-          <Paperclip size={18} aria-hidden="true" />
-        </label>
-      )}
-      <button
-        onClick={onEnvoyer}
-        disabled={desactive}
-        aria-label="Envoyer"
-        className="absolute bottom-3 right-3 w-11 h-11 rounded-full flex items-center justify-center bg-white border-2 border-[#FA5D1E] shadow-lg transition disabled:opacity-40 disabled:cursor-not-allowed hover:scale-105"
-      >
-        <ArrowUp size={22} strokeWidth={2.5} className="text-[#FA5D1E]" />
-      </button>
+          <ArrowUp size={22} strokeWidth={2.5} className="text-[#FA5D1E]" />
+        </button>
+      </div>
       {note !== undefined && <div className="mt-2 px-2 text-xs text-slate-400">{note}</div>}
     </div>
   );

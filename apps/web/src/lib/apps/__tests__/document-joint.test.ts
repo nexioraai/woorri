@@ -61,14 +61,14 @@ describe('le coût est ANNONCÉ avant l envoi', () => {
     const e = estimation('a'.repeat(20_000)) // ~8 pages
     expect(e.jetons).toBe(5_000)
     expect(e.coutUsd).toBeCloseTo(0.025, 4)
-    expect(e.libelle).toContain('jetons')
-    expect(e.libelle).toContain('$')
+    expect(e.libelleAdmin).toContain('jetons')
+    expect(e.libelleAdmin).toContain('$')
   })
 
   it('un cahier de quarante pages reste annoncé, pas caché', () => {
     const e = estimation('a'.repeat(100_000))
     expect(e.jetons).toBe(25_000)
-    expect(e.libelle).toMatch(/\+0,13 \$|\+0\.13 \$/u)
+    expect(e.libelleAdmin).toMatch(/\+0,13 \$|\+0\.13 \$/u)
   })
 
   it('la borne de saisie avec document laisse entrer un cahier entier', () => {
@@ -82,9 +82,11 @@ describe('le coût est ANNONCÉ avant l envoi', () => {
 })
 
 describe('l extraction, sur de VRAIS PDF (pdfjs en Node)', () => {
-  // pdfjs refuse son build moderne hors navigateur ; en Node il exige le
-  // build `legacy`. Le chargeur étant injectable, la MÉCANIQUE se prouve
-  // ici telle quelle — c'est le même code que celui du navigateur.
+  // Le navigateur ET ces preuves chargent le MÊME build `legacy` depuis le
+  // 2026-10-10 (Safari cassait sur le moderne : « value of readableStream »).
+  // Seule la désignation du worker diffère : le navigateur la résout par
+  // `import.meta.url`, Node par `createRequire`. Une preuve qui exercerait
+  // un autre chemin que celui qui tourne ne prouverait rien.
   const legacy = async () => {
     const m = (await import('pdfjs-dist/legacy/build/pdf.mjs')) as unknown as {
       GlobalWorkerOptions: { workerSrc: string }
