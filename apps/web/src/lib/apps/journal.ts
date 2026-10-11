@@ -429,6 +429,60 @@ create index if not exists ${nom}_ouvertes_idx
 `
 }
 
+/**
+ * L'HISTORIQUE DES VERSIONS — DANS SA PROPRE TABLE, ET POUR UNE RAISON
+ * MESUREE.
+ *
+ * Les quatre generateurs comparables gardent tous un historique et laissent
+ * y revenir — gratuitement chez Bolt (« restaurer une version ne consomme
+ * aucun jeton »). Nous ecrasions l'etat precedent a chaque suspension : un
+ * seul point dans le temps, jamais une histoire.
+ *
+ * POURQUOI PAS UNE COLONNE SUR LA LIGNE. Mesure sur les documents reels du
+ * depot : le plus gros AIR pese 112 325 octets, soit ~1 Mo pour neuf
+ * suspensions. L'ecran de suivi relit la ligne TOUTES LES CINQ SECONDES —
+ * il relirait ce megaoctet a chaque battement, pour n'en afficher que des
+ * dates. La liste se lit donc SANS la colonne lourde, et l'etat complet
+ * n'est charge qu'au moment de revenir en arriere.
+ *
+ * Le nom ne contient pas celui de la table de production (« generation_ »,
+ * pas « generations ») : le cliquet d'isolation reste tranquille.
+ */
+function sqlVersionsPour(nom: string): string {
+  return `
+create table if not exists public.${nom} (
+  id            uuid primary key default gen_random_uuid(),
+  generation_id uuid not null,
+  -- Le RANG, pas la date : deux suspensions peuvent tomber dans la meme
+  -- milliseconde, et « revenir a la version 3 » doit designer UNE version.
+  rang          integer not null,
+  etape         text,
+  cout_usd      numeric(10,4) not null default 0,
+  etat          jsonb not null,
+  cree_le       timestamptz not null default now()
+);
+
+do $$ begin
+  alter table public.${nom}
+    add constraint ${nom}_rang_unique unique (generation_id, rang);
+exception when duplicate_object then null; end $$;
+
+create index if not exists ${nom}_generation_idx
+  on public.${nom} (generation_id, rang desc);
+
+-- MEMES ACCES QUE LA LIGNE QU'ELLE HISTORISE : personne d'autre que le
+-- service. Une version porte l'etat complet d'une application en cours.
+alter table public.${nom} enable row level security;
+revoke all on public.${nom} from anon, authenticated;
+`
+}
+
+/** La table d'historique — exportee pour que personne n'ecrive son nom nu. */
+export const TABLE_VERSIONS = 'app_generation_versions'
+
+/** Le script de l'historique, idempotent comme celui de la ligne. */
+export const SQL_VERSIONS = sqlVersionsPour(TABLE_VERSIONS)
+
 /** LE nom de la table de production — exporte pour que les routes de
  *  l'etage 4 ne l'ecrivent jamais nu (cliquet d'isolation etendu a app/). */
 export const TABLE_GENERATIONS = 'app_generations'

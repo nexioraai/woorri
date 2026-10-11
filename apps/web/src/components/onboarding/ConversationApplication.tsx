@@ -215,7 +215,10 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
   }, [etatGen?.apercuVersion, apercuGen?.version, generationId]);
 
   /** REPRENDRE — la ligne repart de sa base, le suivi reprend tout seul. */
-  const reprendre = async (geste: 'reprendre' | 'continuer' = 'reprendre') => {
+  const reprendre = async (
+    geste: 'reprendre' | 'continuer' | 'revenir' = 'reprendre',
+    rang?: number,
+  ) => {
     if (generationId === null) return;
     setTravail('archive');
     setAvis('');
@@ -223,7 +226,7 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
       const res = await fetch('/api/generateur/reprendre', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${await jeton()}` },
-        body: JSON.stringify({ id: generationId, geste }),
+        body: JSON.stringify({ id: generationId, geste, ...(rang === undefined ? {} : { rang }) }),
       });
       const d = (await res.json().catch(() => ({}))) as { error?: string };
       if (!res.ok) {
@@ -236,7 +239,9 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
       setAvis(
         geste === 'continuer'
           ? 'C’est reparti — l’étape suivante commence.'
-          : 'Reprise lancée — elle repart de ce qui était déjà écrit.',
+          : geste === 'revenir'
+            ? 'Revenu à cette version. Rien n’a été perdu : les suivantes restent dans la liste.'
+            : 'Reprise lancée — elle repart de ce qui était déjà écrit.',
       );
     } catch {
       setAvis('Reprise impossible.');
@@ -572,6 +577,30 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
               C'est ce que font les quatre generateurs comparables, et ce
               que nous ne faisions pas — une generation allait jusqu'au
               bout, et jusqu'a la facture, sans validation. */}
+          {/* ── L'HISTORIQUE. Chaque suspension laisse une version, et on
+              peut y revenir — GRATUITEMENT, c'est une ecriture en base et
+              aucun appel. Les quatre generateurs comparables l'ont tous ;
+              nous ecrasions l'etat precedent a chaque fois. Revenir ne
+              tronque RIEN : les versions suivantes restent la. */}
+          {(etatGen?.versions.length ?? 0) > 1 && (
+            <div className="mt-3">
+              <p className="text-xs text-slate-400">{'Revenir à une étape précédente — gratuit'}</p>
+              <div className="mt-1 flex flex-wrap gap-1.5">
+                {etatGen?.versions.map((v) => (
+                  <button
+                    key={v.rang}
+                    type="button"
+                    onClick={() => { void reprendre('revenir', v.rang); }}
+                    disabled={travail !== ''}
+                    title={v.etape ?? undefined}
+                    className="px-2.5 py-1 rounded-full text-xs bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10 transition disabled:opacity-40"
+                  >
+                    {`${String(v.rang)}${v.etape === null ? '' : ` · ${v.etape}`}`}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
           {etatGen?.attendVous === true && (
             <div className="mt-3">
               <p className="text-sm text-slate-300">

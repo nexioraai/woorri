@@ -41,7 +41,7 @@
  * perimera). Rien d'avale.
  */
 import { randomUUID } from 'node:crypto'
-import { codeEtChemin } from './journal'
+import { codeEtChemin, TABLE_GENERATIONS, TABLE_VERSIONS } from './journal'
 import { estReprenable, etatDeReprise } from './reprise'
 
 type Lignes = { data: Record<string, unknown>[] | null; error: { message: string } | null }
@@ -157,6 +157,46 @@ export function creerTravailleur({
   // confine ici, derriere des aides qui rendent des formes nettes.
   /* eslint-disable @typescript-eslint/no-explicit-any */
   const t = () => base.from(table) as any
+  // L'HISTORIQUE vit dans SA table — mesure : ~1 Mo pour neuf suspensions,
+  // et l'ecran relit la ligne toutes les cinq secondes. Sur la jumelle de
+  // test, la table d'historique suit le meme suffixe.
+  const tableVersions = table === TABLE_GENERATIONS ? TABLE_VERSIONS : `${TABLE_VERSIONS}_test`
+  const v = () => base.from(tableVersions) as any
+
+  /**
+   * GARDER CETTE VERSION — sans jamais casser la tranche qui l'a produite.
+   *
+   * Un historique est un CONFORT : s'il echoue, la generation continue et
+   * on le DIT au serveur. L'inverse — perdre une tranche payee parce que
+   * son archivage a rate — serait absurde.
+   *
+   * Le rang vient d'un COMPTE, pas d'une date : deux suspensions peuvent
+   * tomber dans la meme milliseconde, et « revenir a la version 3 » doit
+   * designer une seule version. Le fencing garantit un seul travailleur par
+   * ligne, donc ce compte ne court aucune concurrence.
+   */
+  async function garderVersion(
+    id: string,
+    etat: Record<string, unknown>,
+    etape: string | null,
+  ): Promise<void> {
+    try {
+      const deja = (await v().select('id').eq('generation_id', id)) as Lignes
+      const rang = (deja.data?.length ?? 0) + 1
+      const ecrit = (await v().insert({
+        generation_id: id,
+        rang,
+        etape,
+        cout_usd: Number(etat.coutUsd ?? 0),
+        etat,
+      })) as Lignes
+      if (ecrit.error !== null) {
+        console.error(`[historique] version ${String(rang)} non gardee : ${ecrit.error.message}`)
+      }
+    } catch (e) {
+      console.error(`[historique] version non gardee : ${e instanceof Error ? e.message : 'inconnue'}`)
+    }
+  }
 
   /** Le perimetre s'applique aux DEUX selections de candidates — la saisie
    *  (CAS) vise ensuite un id exact, deja filtre ici. */
@@ -332,6 +372,66 @@ export function creerTravailleur({
       : 'rien_a_continuer'
   }
 
+  /**
+   * REVENIR A UNE VERSION — gratuitement, comme chez Bolt.
+   *
+   * « Restaurer une version precedente ne consomme aucun jeton » : c'est
+   * une ecriture en base, rien d'autre. La ligne reprend l'etat archive et
+   * redevient saisissable ; tout ce qui avait ete produit APRES est
+   * abandonne, ce qui est exactement ce qu'on demande en revenant en
+   * arriere.
+   *
+   * L'historique, lui, n'est PAS tronque : les versions suivantes restent
+   * lisibles. Revenir en arriere ne doit pas detruire ce qu'on quitte —
+   * c'est toute la difference avec ce que faisait ce depot jusqu'ici.
+   */
+  async function revenirAVersion({
+    id,
+    rang,
+    proprietaire,
+  }: {
+    id: string
+    rang: number
+    proprietaire: string
+  }): Promise<'revenue' | 'introuvable'> {
+    const possede = (await t()
+      .select('id')
+      .eq('id', id)
+      .eq('owner_id', proprietaire)
+      .limit(1)) as Lignes
+    if (possede.error !== null || possede.data === null || possede.data.length !== 1) {
+      return 'introuvable'
+    }
+    const lu = (await v()
+      .select('etat, etape')
+      .eq('generation_id', id)
+      .eq('rang', rang)
+      .limit(1)) as Lignes
+    if (lu.error !== null || lu.data === null || lu.data.length !== 1) return 'introuvable'
+    const version = lu.data[0] as Record<string, unknown>
+
+    const ecrit = (await t()
+      .update({
+        statut: 'en_attente',
+        // ON REVIENT POUR REGARDER, pas pour relancer : la ligne attend de
+        // nouveau votre accord. Repartir toute seule apres un retour en
+        // arriere serait la derniere chose a faire.
+        attente_validation: true,
+        etape: version.etape ?? null,
+        sections_acquises: version.etat,
+        ok: false,
+        document: null,
+        battement: null,
+        jeton_travailleur: null,
+      })
+      .eq('id', id)
+      .eq('owner_id', proprietaire)
+      .select('id')) as Lignes
+    return ecrit.error === null && ecrit.data !== null && ecrit.data.length === 1
+      ? 'revenue'
+      : 'introuvable'
+  }
+
   /** LA SAISIE — compare-and-set, deux tentatives : en attente, puis perimee. */
   async function saisir(jeton: string): Promise<Record<string, unknown> | null> {
     const maintenant = new Date().toISOString()
@@ -476,6 +576,9 @@ export function creerTravailleur({
             enveloppe?.coutTrancheUsd !== undefined ? enveloppe : dansEtat,
           )
         }
+        // L'ARCHIVE APRES L'ECRITURE DE LA LIGNE, jamais avant : on
+        // n'historise que ce qui est reellement enregistre.
+        await garderVersion(id, e as Record<string, unknown>, r.etape ?? null)
         return { id, issue: 'suspendu', etape: r.etape }
       }
 
@@ -683,5 +786,5 @@ export function creerTravailleur({
   }
   /* eslint-enable @typescript-eslint/no-explicit-any */
 
-  return { continuer, deposer, reprendre, tourner }
+  return { continuer, deposer, reprendre, revenirAVersion, tourner }
 }

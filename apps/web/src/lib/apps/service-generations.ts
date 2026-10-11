@@ -17,7 +17,7 @@
  */
 import { createHash } from 'node:crypto'
 import type { creerTravailleur, RapportTranche } from './travailleur'
-import { diagnosticsDepuisLigne } from './journal'
+import { diagnosticsDepuisLigne, TABLE_VERSIONS } from './journal'
 import { questionsPour, type Question } from './dialogue'
 import { estReprenable } from './reprise'
 
@@ -139,6 +139,15 @@ export type EtatGeneration = {
    *  puis a chaque passe. Sans ca l'ecran afficherait « en cours » sur une
    *  ligne qui ne bougera plus tant que personne ne clique. */
   readonly attendVous: boolean
+  /**
+   * L'HISTORIQUE, EN METADONNEES SEULEMENT.
+   *
+   * Jamais l'etat : mesure sur les documents reels, le plus gros AIR pese
+   * 112 ko et l'ecran relit cette surface toutes les cinq secondes. On
+   * rend de quoi AFFICHER une liste et proposer un retour ; le contenu
+   * n'est charge qu'au moment ou l'on revient.
+   */
+  readonly versions: readonly { rang: number; etape: string | null; creeIl: string }[]
 }
 
 /** Les sections attendues d'un document AIR — le total de la fraction.
@@ -146,6 +155,10 @@ export type EtatGeneration = {
  *  constante nommee pour ne pas charger zod dans un chemin de polling. */
 export const SECTIONS_ATTENDUES = 22
 
+/** La surface de LECTURE, injectee et volontairement etroite : elle dit
+ *  exactement ce que ce module fait, et rien de plus. Deux formes, parce
+ *  qu'il y a deux lectures — la ligne (une seule, par proprietaire) et son
+ *  historique (une liste, triee, SANS la colonne lourde). */
 export type BaseLecture = {
   from: (table: string) => {
     select: (colonnes: string) => {
@@ -153,6 +166,10 @@ export type BaseLecture = {
         eq: (c: string, v: string) => {
           maybeSingle: () => Promise<{ data: Record<string, unknown> | null; error: { message: string } | null }>
         }
+        order: (
+          c: string,
+          o: { ascending: boolean },
+        ) => PromiseLike<{ data: Record<string, unknown>[] | null; error: { message: string } | null }>
       }
     }
   }
@@ -195,6 +212,18 @@ export async function etatGeneration({
         ? 0
         : Math.min(SECTIONS_ATTENDUES, Object.keys(acquis).length)
   const battement = l.battement === null || l.battement === undefined ? null : String(l.battement)
+  // LA COLONNE LOURDE N'EST PAS SELECTIONNEE — c'est tout l'interet d'une
+  // table separee. Une requete indexee sur (generation_id, rang).
+  const vs = await base
+    .from(TABLE_VERSIONS)
+    .select('rang, etape, cree_le')
+    .eq('generation_id', id)
+    .order('rang', { ascending: true })
+  const versions = (Array.isArray(vs.data) ? vs.data : []).map((x: Record<string, unknown>) => ({
+    rang: Number(x.rang ?? 0),
+    etape: (x.etape ?? null) as string | null,
+    creeIl: String(x.cree_le ?? ''),
+  }))
   // GRATUIT : `dialogue.ts` n'appelle aucune API. Seule une ligne refusee
   // peut porter des questions — une livree n'a plus rien a demander.
   const questions =
@@ -210,6 +239,7 @@ export async function etatGeneration({
     tours: Array.isArray(sa.tours) ? sa.tours.length : 0,
     reprenable: estReprenable(statut, l as Parameters<typeof estReprenable>[1]),
     attendVous: l.attente_validation === true,
+    versions,
     creeIl: String(l.created_at ?? ''),
     activiteSec:
       battement === null ? null : Math.max(0, Math.round((Date.now() - new Date(battement).getTime()) / 1000)),

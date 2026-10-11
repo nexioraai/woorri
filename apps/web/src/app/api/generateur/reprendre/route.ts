@@ -34,13 +34,19 @@ export async function POST(req: Request) {
   const corps = (await req.json().catch(() => null)) as {
     id?: unknown
     geste?: unknown
+    rang?: unknown
   } | null
   const id = typeof corps?.id === 'string' ? corps.id.trim() : ''
   // DEUX GESTES, UNE SEULE ROUTE — et c'est voulu. Les deux remettent la
   // meme ligne en marche, et la liste des ecrivains de la vraie table est
   // FERMEE : lui ajouter une sixieme entree pour un geste jumeau serait
   // depenser un arbitrage pour rien.
-  const geste = corps?.geste === 'continuer' ? 'continuer' : 'reprendre'
+  const geste =
+    corps?.geste === 'continuer'
+      ? 'continuer'
+      : corps?.geste === 'revenir'
+        ? 'revenir'
+        : 'reprendre'
   if (id === '') {
     return NextResponse.json({ error: 'Génération inconnue.' }, { status: 400 })
   }
@@ -54,6 +60,17 @@ export async function POST(req: Request) {
       budgetTrancheMs: 1,
       battementPerimeMs: 60_000,
     })
+    if (geste === 'revenir') {
+      // GRATUIT, comme chez Bolt : une ecriture en base, aucun appel.
+      const rang = Number(corps?.rang)
+      if (!Number.isInteger(rang) || rang < 1) {
+        return NextResponse.json({ error: 'Version inconnue.' }, { status: 400 })
+      }
+      const retour = await travailleur.revenirAVersion({ id, rang, proprietaire: garde.userId })
+      return retour === 'revenue'
+        ? NextResponse.json({ id, revenu: rang })
+        : NextResponse.json({ error: 'Version inconnue.' }, { status: 404 })
+    }
     if (geste === 'continuer') {
       const suite = await travailleur.continuer({ id, proprietaire: garde.userId })
       return suite === 'repartie'

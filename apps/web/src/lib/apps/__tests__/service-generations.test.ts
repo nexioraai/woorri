@@ -74,13 +74,20 @@ describe('tournerUneTranche — la garantie de depense, MECANIQUE', () => {
 })
 
 describe('etatGeneration — la lecture est au PROPRIETAIRE seul', () => {
-  const baseAvec = (ligne: Record<string, unknown> | null) => ({
+  /** La doublure porte les DEUX lectures : la ligne (`eq.eq.maybeSingle`)
+   *  et son historique (`eq.order`). `versions` par defaut vide — une
+   *  generation qui n'a jamais suspendu n'a pas d'historique. */
+  const baseAvec = (
+    ligne: Record<string, unknown> | null,
+    versions: Record<string, unknown>[] = [],
+  ) => ({
     from: () => ({
       select: () => ({
         eq: (_c: string, _v: string) => ({
           eq: (_c2: string, _v2: string) => ({
             maybeSingle: async () => ({ data: ligne, error: null }),
           }),
+          order: async () => ({ data: versions, error: null }),
         }),
       }),
     }),
@@ -112,7 +119,7 @@ describe('etatGeneration — la lecture est au PROPRIETAIRE seul', () => {
       'aDocument', 'activiteSec', 'apercuVersion', 'attendVous', 'creeIl',
       'defautsRestants',
       'etape', 'id', 'nom', 'questions', 'raison', 'reprenable', 'sections', 'statut',
-      'tours',
+      'tours', 'versions',
     ])
   })
 
@@ -200,5 +207,56 @@ describe('etatGeneration — la lecture est au PROPRIETAIRE seul', () => {
 
   it('la ligne d un autre n existe pas : null, sans distinguer « absent » de « interdit »', async () => {
     expect(await etatGeneration({ base: baseAvec(null), table: 't_test', id: 'g-1', proprietaire: 'autre-user' })).toBeNull()
+  })
+})
+
+describe('L’HISTORIQUE — des métadonnées, jamais le contenu', () => {
+  const baseHisto = (versions: Record<string, unknown>[]) => ({
+    from: () => ({
+      select: () => ({
+        eq: (_c: string, _v: string) => ({
+          eq: (_c2: string, _v2: string) => ({
+            maybeSingle: async () => ({
+              data: { id: 'g-1', statut: 'en_attente', etape: 'p0', nom: 'x',
+                diagnostics: [], document: null, created_at: '2026-10-11T10:00:00.000Z',
+                battement: null, sections_acquises: {}, attente_validation: true },
+              error: null,
+            }),
+          }),
+          order: async () => ({ data: versions, error: null }),
+        }),
+      }),
+    }),
+  })
+
+  it('rend le rang, l’étape et la date — et RIEN du contenu', async () => {
+    const e = await etatGeneration({
+      base: baseHisto([
+        { rang: 1, etape: 'p0', cree_le: '2026-10-11T10:01:00.000Z' },
+        { rang: 2, etape: 'ecrans', cree_le: '2026-10-11T10:09:00.000Z' },
+      ]),
+      table: 't_test', id: 'g-1', proprietaire: 'user-1',
+    })
+    expect(e?.versions).toEqual([
+      { rang: 1, etape: 'p0', creeIl: '2026-10-11T10:01:00.000Z' },
+      { rang: 2, etape: 'ecrans', creeIl: '2026-10-11T10:09:00.000Z' },
+    ])
+    // Mesure : le plus gros AIR du depot pese 112 ko, et cet ecran relit
+    // la surface toutes les 5 s. L'etat ne doit JAMAIS y figurer.
+    expect(JSON.stringify(e)).not.toContain('etat')
+  })
+
+  it('une génération sans historique rend une liste vide, pas une absence', async () => {
+    const e = await etatGeneration({
+      base: baseHisto([]), table: 't_test', id: 'g-1', proprietaire: 'user-1',
+    })
+    expect(e?.versions).toEqual([])
+  })
+
+  it('« elle vous attend » remonte bien à l’écran', async () => {
+    const e = await etatGeneration({
+      base: baseHisto([]), table: 't_test', id: 'g-1', proprietaire: 'user-1',
+    })
+    expect(e?.attendVous).toBe(true)
   })
 })
