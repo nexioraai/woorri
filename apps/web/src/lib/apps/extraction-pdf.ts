@@ -19,33 +19,55 @@ export type ResultatExtraction =
 /** La surface de pdfjs dont ce module dépend — pas une ligne de plus. */
 export interface Pdfjs {
   readonly GlobalWorkerOptions?: { workerSrc: string }
-  readonly getDocument: (o: { data: ArrayBuffer; isEvalSupported: boolean }) => {
+  readonly getDocument: (o: {
+    data: ArrayBuffer
+    isEvalSupported: boolean
+    disableStream?: boolean
+    disableAutoFetch?: boolean
+    useWorkerFetch?: boolean
+  }) => {
     readonly promise: Promise<{
       readonly numPages: number
       readonly getPage: (n: number) => Promise<{
-        readonly getTextContent: () => Promise<{ readonly items: { str?: string }[] }>
+        /** LE FLUX BRUT, et pas `getTextContent()` — voir la lecture
+         *  ci-dessous : c'est cette méthode-là qui marche dans Safari. */
+        readonly streamTextContent: (o?: Record<string, unknown>) => {
+          readonly getReader: () => {
+            readonly read: () => Promise<{
+              done: boolean
+              value?: { items?: { str?: string }[] }
+            }>
+          }
+        }
       }>
     }>
   }
 }
 
 /**
- * LE CHARGEUR PAR DÉFAUT — le navigateur, et seulement à la demande.
+ * LE CHARGEUR PAR DÉFAUT — LE BUILD `legacy`, DANS LE NAVIGATEUR AUSSI.
  *
- * pdfjs REFUSE le build moderne hors navigateur (« Please use the `legacy`
- * build in Node.js environments », puis `hashOriginal.toHex is not a
- * function`). Le chargeur est donc INJECTABLE : le navigateur prend celui-ci,
- * les preuves prennent le build legacy. Motif maison — ce qui dépend de
- * l'environnement s'injecte, et la mécanique devient prouvable.
+ * MESURÉ DANS SAFARI (2026-10-10, premier essai réel du trombone) : le build
+ * moderne échoue sur « undefined is not a function (near '...value of
+ * readableStream...') ». Safari ne gère pas les mêmes primitives de flux que
+ * Chrome, et le build moderne s'en sert.
+ *
+ * Le build `legacy` existe précisément pour ça : il vise les environnements
+ * qui n'ont pas les dernières primitives. Il servait déjà aux preuves en
+ * Node — l'adopter ici supprime DEUX problèmes d'un coup : Safari marche, et
+ * les preuves exercent désormais EXACTEMENT le code du navigateur. Une
+ * preuve qui teste un autre chemin que celui qui tourne ne prouve rien.
  */
 async function chargerPdfjsDuNavigateur(): Promise<Pdfjs> {
-  const pdfjs = (await import('pdfjs-dist')) as unknown as Pdfjs & {
+  const pdfjs = (await import('pdfjs-dist/legacy/build/pdf.mjs')) as unknown as Pdfjs & {
     GlobalWorkerOptions: { workerSrc: string }
   }
-  // Le worker vit dans le paquet : aucune requête vers un CDN — la politique
-  // réseau l'interdirait, et un document privé ne sort pas de la machine.
+  // Le worker vit dans le paquet, version legacy ASSORTIE au moteur : un
+  // worker d'une autre variante se charge et échoue plus loin, ce qui est
+  // pire qu'une erreur franche. Aucune requête vers un CDN — la politique
+  // réseau l'interdirait, et un document privé ne quitte pas la machine.
   pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-    'pdfjs-dist/build/pdf.worker.min.mjs',
+    'pdfjs-dist/legacy/build/pdf.worker.mjs',
     import.meta.url,
   ).toString()
   return pdfjs
@@ -61,12 +83,45 @@ export async function extraireTexteDuPdf(
 ): Promise<ResultatExtraction> {
   try {
     const pdfjs = await chargerPdfjs()
-    const doc = await pdfjs.getDocument({ data: octets, isEvalSupported: false }).promise
+    // LES FLUX SONT COUPÉS, DÉLIBÉRÉMENT. Le PDF est DÉJÀ en mémoire : il
+    // n'y a rien à télécharger progressivement, et c'est précisément le
+    // chemin de flux qui casse dans Safari. `isEvalSupported: false` ferme
+    // en plus l'évaluation dynamique — un document d'inconnu ne s'exécute
+    // pas chez nous.
+    const doc = await pdfjs.getDocument({
+      data: octets,
+      isEvalSupported: false,
+      disableStream: true,
+      disableAutoFetch: true,
+      useWorkerFetch: false,
+    }).promise
     const morceaux: string[] = []
     for (let n = 1; n <= doc.numPages; n++) {
       const page = await doc.getPage(n)
-      const contenu = await page.getTextContent()
-      morceaux.push(contenu.items.map((i) => i.str ?? '').join(' '))
+      // ── POURQUOI PAS `getTextContent()`, LA MÉTHODE ÉVIDENTE.
+      //
+      // MESURE (Safari, 2026-10-10, deux échecs de suite) : « undefined is
+      // not a function (near '...value of readableStream...') ». La cause
+      // est à la ligne 22362 de pdfjs — DANS `getTextContent` :
+      //
+      //     for await (const value of readableStream) { … }
+      //
+      // `for await … of` sur un ReadableStream exige
+      // `Symbol.asyncIterator`, que Safari n'implémente PAS. Le code est
+      // IDENTIQUE dans les builds moderne et legacy : changer de build ne
+      // pouvait rien y faire, et c'est l'erreur que j'ai commise d'abord.
+      //
+      // `streamTextContent()` est publique et rend le flux brut. On le lit
+      // avec `getReader()` — que Safari gère — et personne n'a besoin qu'on
+      // rafistole un prototype global dans son navigateur.
+      const lecteur = page.streamTextContent({ disableNormalization: false }).getReader()
+      const bouts: string[] = []
+      for (;;) {
+        const { done, value } = await lecteur.read()
+        if (done) break
+        for (const item of value?.items ?? []) bouts.push(item.str ?? '')
+      }
+      morceaux.push(bouts.join(' '))
     }
     const texte = morceaux.join('\n\n').replace(/[ \t]+/gu, ' ').trim()
     if (estProbablementUnScan(texte, doc.numPages)) {
