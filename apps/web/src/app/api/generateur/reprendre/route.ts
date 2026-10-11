@@ -31,8 +31,16 @@ export async function POST(req: Request) {
   const garde = await requireAuthenticatedUser(req)
   if (!garde.ok) return garde.response
 
-  const corps = (await req.json().catch(() => null)) as { id?: unknown } | null
+  const corps = (await req.json().catch(() => null)) as {
+    id?: unknown
+    geste?: unknown
+  } | null
   const id = typeof corps?.id === 'string' ? corps.id.trim() : ''
+  // DEUX GESTES, UNE SEULE ROUTE — et c'est voulu. Les deux remettent la
+  // meme ligne en marche, et la liste des ecrivains de la vraie table est
+  // FERMEE : lui ajouter une sixieme entree pour un geste jumeau serait
+  // depenser un arbitrage pour rien.
+  const geste = corps?.geste === 'continuer' ? 'continuer' : 'reprendre'
   if (id === '') {
     return NextResponse.json({ error: 'Génération inconnue.' }, { status: 400 })
   }
@@ -46,6 +54,15 @@ export async function POST(req: Request) {
       budgetTrancheMs: 1,
       battementPerimeMs: 60_000,
     })
+    if (geste === 'continuer') {
+      const suite = await travailleur.continuer({ id, proprietaire: garde.userId })
+      return suite === 'repartie'
+        ? NextResponse.json({ id, repris: true })
+        : NextResponse.json(
+            { error: 'Cette génération n’attend pas votre accord.' },
+            { status: 409 },
+          )
+    }
     const issue = await travailleur.reprendre({ id, proprietaire: garde.userId })
     if (issue === 'introuvable') {
       return NextResponse.json({ error: 'Génération inconnue.' }, { status: 404 })

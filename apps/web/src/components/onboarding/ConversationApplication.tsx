@@ -215,7 +215,7 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
   }, [etatGen?.apercuVersion, apercuGen?.version, generationId]);
 
   /** REPRENDRE — la ligne repart de sa base, le suivi reprend tout seul. */
-  const reprendre = async () => {
+  const reprendre = async (geste: 'reprendre' | 'continuer' = 'reprendre') => {
     if (generationId === null) return;
     setTravail('archive');
     setAvis('');
@@ -223,7 +223,7 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
       const res = await fetch('/api/generateur/reprendre', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${await jeton()}` },
-        body: JSON.stringify({ id: generationId }),
+        body: JSON.stringify({ id: generationId, geste }),
       });
       const d = (await res.json().catch(() => ({}))) as { error?: string };
       if (!res.ok) {
@@ -233,7 +233,11 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
       // L'etat est efface : le prochain battement du suivi lira la ligne
       // redevenue « en attente », et l'escalier repartira de lui-meme.
       setEtatGen(null);
-      setAvis('Reprise lancée — elle repart de ce qui était déjà écrit.');
+      setAvis(
+        geste === 'continuer'
+          ? 'C’est reparti — l’étape suivante commence.'
+          : 'Reprise lancée — elle repart de ce qui était déjà écrit.',
+      );
     } catch {
       setAvis('Reprise impossible.');
     } finally {
@@ -563,6 +567,26 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
               bouton n'apparait QUE si la ligne porte une base recuperable —
               sinon il relancerait une generation complete deguisee en
               reprise, et ce serait la facture doublee. */}
+          {/* ── ELLE VOUS ATTEND. Mode plan apres P0, puis a chaque passe :
+              rien ne repart tant que vous n'avez pas vu et dit d'avancer.
+              C'est ce que font les quatre generateurs comparables, et ce
+              que nous ne faisions pas — une generation allait jusqu'au
+              bout, et jusqu'a la facture, sans validation. */}
+          {etatGen?.attendVous === true && (
+            <div className="mt-3">
+              <p className="text-sm text-slate-300">
+                {'Regardez ce qui a été compris. Rien ne repart tant que vous ne le dites pas.'}
+              </p>
+              <button
+                type="button"
+                onClick={() => { void reprendre('continuer'); }}
+                disabled={travail !== ''}
+                className="mt-2 px-4 py-2 rounded-full text-sm bg-[#FA5D1E] text-white hover:brightness-110 transition disabled:opacity-40"
+              >
+                Continuer
+              </button>
+            </div>
+          )}
           {etatGen?.reprenable === true && (
             <button
               type="button"

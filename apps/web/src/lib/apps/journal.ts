@@ -362,6 +362,21 @@ alter table public.${nom} add column if not exists document          jsonb;
 alter table public.${nom} add column if not exists battement         timestamptz;
 alter table public.${nom} add column if not exists jeton_travailleur uuid;
 alter table public.${nom} add column if not exists reprises          integer not null default 0;
+-- ── L'ATTENTE DE VALIDATION (2026-10-11). UNE SEULE COLONNE, ET ELLE PORTE
+-- LES DEUX FONCTIONS QUE LES CONCURRENTS ONT ET QUE NOUS N'AVIONS PAS :
+-- le « mode plan » (s'arreter apres P0, montrer ce qui a ete compris) et la
+-- construction PAS A PAS (s'arreter entre les passes). Les deux sont le
+-- meme geste : suspendre, puis ATTENDRE L'HUMAIN au lieu de continuer seul.
+--
+-- Le moteur savait deja suspendre et reprendre ; rien ne permettait de
+-- METTRE UNE LIGNE DE COTE. Le travailleur ramassait toute ligne en
+-- attente, donc une generation repartait toujours seule — jusqu'au bout,
+-- et jusqu'a la facture.
+--
+-- Pourquoi une colonne et pas un drapeau glisse dans la colonne d'etape ou
+-- dans l'etat JSON : une colonne qui dit deux choses se paie six mois plus
+-- tard, et l'etat JSON part au moteur — on n'y met pas du controle.
+alter table public.${nom} add column if not exists attente_validation boolean not null default false;
 alter table public.${nom} alter column ok set default false;
 
 -- Les lignes du journal synchrone sont des generations TERMINEES : leur

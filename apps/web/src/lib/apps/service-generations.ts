@@ -135,6 +135,10 @@ export type EtatGeneration = {
    *  faux sans base recuperable — l'ecran ne propose pas un bouton qui
    *  relancerait une generation complete en la deguisant en reprise. */
   readonly reprenable: boolean
+  /** LA GENERATION ATTEND VOTRE ACCORD pour continuer — mode plan apres P0,
+   *  puis a chaque passe. Sans ca l'ecran afficherait « en cours » sur une
+   *  ligne qui ne bougera plus tant que personne ne clique. */
+  readonly attendVous: boolean
 }
 
 /** Les sections attendues d'un document AIR — le total de la fraction.
@@ -168,7 +172,7 @@ export async function etatGeneration({
   const r = await base
     .from(table)
     .select(
-      'id, statut, etape, nom, diagnostics, document, created_at, battement, sections_acquises, cout_usd, jetons_entree, jetons_sortie',
+      'id, statut, etape, nom, diagnostics, document, created_at, battement, sections_acquises, cout_usd, jetons_entree, jetons_sortie, attente_validation',
     )
     .eq('id', id)
     .eq('owner_id', proprietaire) // dette 6a : l'IDENTITE est l'id du jeton
@@ -205,6 +209,7 @@ export async function etatGeneration({
     questions,
     tours: Array.isArray(sa.tours) ? sa.tours.length : 0,
     reprenable: estReprenable(statut, l as Parameters<typeof estReprenable>[1]),
+    attendVous: l.attente_validation === true,
     creeIl: String(l.created_at ?? ''),
     activiteSec:
       battement === null ? null : Math.max(0, Math.round((Date.now() - new Date(battement).getTime()) / 1000)),

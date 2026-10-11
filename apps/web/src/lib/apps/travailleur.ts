@@ -281,6 +281,10 @@ export function creerTravailleur({
     const ecrit = (await t()
       .update({
         statut: 'en_attente',
+        // UNE LIGNE REPRISE REPART : sans cette remise a zero, elle
+        // retomberait dans l'attente posee par la suspension precedente et
+        // le bouton « reprendre » ne ferait visiblement RIEN.
+        attente_validation: false,
         etape: 'reparation',
         sections_acquises: etat,
         ok: false,
@@ -299,11 +303,45 @@ export function creerTravailleur({
     return 'reprise'
   }
 
+  /**
+   * CONTINUER — le proprietaire a vu, et il dit d'avancer.
+   *
+   * C'est l'autre moitie du « mode plan » et du pas-a-pas : la suspension
+   * POSE l'attente, ce geste la LEVE. Rien d'autre ne bouge — l'acquis, le
+   * cout et les tirages restent ou ils sont ; seule la ligne redevient
+   * saisissable.
+   *
+   * Compare-and-set sur le drapeau lui-meme : deux clics ne relancent
+   * qu'une fois, et le second ne declenche rien.
+   */
+  async function continuer({
+    id,
+    proprietaire,
+  }: {
+    id: string
+    proprietaire: string
+  }): Promise<'repartie' | 'rien_a_continuer'> {
+    const ecrit = (await t()
+      .update({ attente_validation: false })
+      .eq('id', id)
+      .eq('owner_id', proprietaire)
+      .eq('attente_validation', true)
+      .select('id')) as Lignes
+    return ecrit.error === null && ecrit.data !== null && ecrit.data.length === 1
+      ? 'repartie'
+      : 'rien_a_continuer'
+  }
+
   /** LA SAISIE — compare-and-set, deux tentatives : en attente, puis perimee. */
   async function saisir(jeton: string): Promise<Record<string, unknown> | null> {
     const maintenant = new Date().toISOString()
     // ① La plus ancienne ligne en attente.
+    // `attente_validation` ECARTE la ligne : elle est en attente de
+    // l'HUMAIN, pas d'un travailleur. Les deux branches de saisie le
+    // respectent — sinon la reprise des lignes perimees la ramasserait par
+    // la porte de derriere.
     const attente = (await restreindre(t().select('id').eq('statut', 'en_attente'))
+      .eq('attente_validation', false)
       .order('created_at', { ascending: true })
       .limit(1)) as Lignes
     const candidate = attente.data?.[0]?.id
@@ -318,6 +356,7 @@ export function creerTravailleur({
     // ② Sinon, une ligne en cours dont le coeur a cesse de battre.
     const seuil = new Date(Date.now() - battementPerimeMs).toISOString()
     const mortes = (await restreindre(t().select('id').eq('statut', 'en_cours'))
+      .eq('attente_validation', false)
       .lt('battement', seuil)
       .order('battement', { ascending: true })
       .limit(1)) as Lignes
@@ -403,6 +442,15 @@ export function creerTravailleur({
             t()
               .update({
                 statut: 'en_attente',
+                // ── LA LIGNE ATTEND L'HUMAIN, elle ne repart pas seule.
+                //
+                // C'est le « mode plan » et le pas-a-pas d'un seul geste :
+                // le moteur a suspendu, l'acquis est sauf, et c'est au
+                // proprietaire de dire si on continue. Sans ce drapeau la
+                // ligne redevenait saisissable au tick suivant et la
+                // generation allait jusqu'au bout — jusqu'a la facture —
+                // sans que personne n'ait rien valide.
+                attente_validation: true,
                 battement: null,
                 jeton_travailleur: null,
                 sections_acquises: e,
@@ -635,5 +683,5 @@ export function creerTravailleur({
   }
   /* eslint-enable @typescript-eslint/no-explicit-any */
 
-  return { deposer, reprendre, tourner }
+  return { continuer, deposer, reprendre, tourner }
 }

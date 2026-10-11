@@ -109,7 +109,8 @@ describe('etatGeneration — la lecture est au PROPRIETAIRE seul', () => {
     // ligne refusee disait non meme quand il suffisait de demander. Les deux
     // chemins exposent desormais la MEME chose, ni plus ni moins.
     expect(Object.keys(e ?? {}).sort()).toEqual([
-      'aDocument', 'activiteSec', 'apercuVersion', 'creeIl', 'defautsRestants',
+      'aDocument', 'activiteSec', 'apercuVersion', 'attendVous', 'creeIl',
+      'defautsRestants',
       'etape', 'id', 'nom', 'questions', 'raison', 'reprenable', 'sections', 'statut',
       'tours',
     ])
