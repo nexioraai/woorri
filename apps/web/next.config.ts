@@ -208,6 +208,15 @@ const nextConfig: NextConfig = {
       '../../node_modules/@rolldown/binding-linux-x64-gnu/**',
     ],
     '/api/generateur/comprendre': MOTEUR_EMISSION,
+    // ── LE DEPOT CHARGE LE MOTEUR, LUI AUSSI, DEPUIS LE 2026-10-11.
+    //
+    // Il ne GENERE rien — il ecrit une ligne et rend la main. Mais il
+    // construit l'intention (`dialogue.ts` → `creerIntention`,
+    // `texteDIntention`), et ce module vit dans `benchmarks/air-emission/`.
+    // Sans cette entree, la fonction demarrerait EN LIGNE et mourrait sur
+    // « Cannot find module » — le defaut exact que ce bloc raconte deux
+    // fois deja, et que le cliquet `tracage-cloture` a rattrape ici.
+    '/api/generateur/deposer': MOTEUR_EMISSION,
     '/api/generateur/produire': MOTEUR_EMISSION,
     '/api/generateur/sonde': [
       ...MOTEUR_EMISSION,

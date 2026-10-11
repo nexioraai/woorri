@@ -99,11 +99,41 @@ describe('etatGeneration — la lecture est au PROPRIETAIRE seul', () => {
       aDocument: false, raison: null,
     })
     // la preuve par les CLES : rien d'autre ne sort — le triptyque ajoute
-    // des TEMPS et des COMPTES, jamais une entraille ni un cout
+    // des TEMPS et des COMPTES, jamais une entraille ni un cout.
+    //
+    // `questions` EST UN ELARGISSEMENT DELIBERE (2026-10-11), pas un oubli.
+    // Le chemin synchrone partage deja les diagnostics (EP-135) : ce que
+    // l'humain seul peut trancher devient une QUESTION et part a l'ecran,
+    // code compris — l'ecran doit pouvoir referencer la question a laquelle
+    // il repond. Le chemin asynchrone ne savait pas poser de question : une
+    // ligne refusee disait non meme quand il suffisait de demander. Les deux
+    // chemins exposent desormais la MEME chose, ni plus ni moins.
     expect(Object.keys(e ?? {}).sort()).toEqual([
       'aDocument', 'activiteSec', 'apercuVersion', 'creeIl', 'defautsRestants',
-      'etape', 'id', 'nom', 'raison', 'sections', 'statut',
+      'etape', 'id', 'nom', 'questions', 'raison', 'sections', 'statut',
     ])
+  })
+
+  it('le dégraissage tient : ni coût, ni diagnostics bruts, ni entrailles', async () => {
+    // L'elargissement ci-dessus ne doit rien ouvrir d'autre. On le verifie
+    // sur une ligne REFUSEE — le seul cas qui porte des questions, et celui
+    // ou les diagnostics bruts existent vraiment en base.
+    const e = await etatGeneration({
+      base: baseAvec({
+        id: 'g-1', statut: 'refusee', etape: null, nom: 'x',
+        cout_usd: 16.0338,
+        diagnostics: ['stagnation au tour 2 : 3 → 3 diagnostic(s)', 'SCHEMA@entities[2]'],
+        document: null, created_at: '2026-10-10T10:00:00.000Z', battement: null,
+        sections_acquises: {},
+      }),
+      table: 't_test', id: 'g-1', proprietaire: 'user-1',
+    })
+    const vu = JSON.stringify(e)
+    expect(vu).not.toContain('16.03')
+    expect(vu).not.toContain('cout')
+    // Le TEXTE brut de la raison du moteur ne sort pas : il est traduit.
+    expect(vu).not.toContain('stagnation au tour')
+    expect(e?.questions).toEqual([])
   })
 
   it('le triptyque est de la TELEMETRIE pure : ecoule, battement, fraction, defauts, empreinte', async () => {

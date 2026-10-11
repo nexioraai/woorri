@@ -23,7 +23,7 @@ import { describe, expect, it } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { sansCommentaires } from './sans-commentaires'
-import { codeEtChemin } from '../journal'
+import { codeEtChemin, diagnosticsDepuisLigne } from '../journal'
 
 const SRC = join(__dirname, '..', '..', '..')
 const lire = (...p: string[]): string => sansCommentaires(readFileSync(join(SRC, ...p), 'utf8'))
@@ -107,5 +107,38 @@ describe('une écriture de journal qui échoue ne peut plus se taire', () => {
   it('le signalement part au SERVEUR, jamais vers l’écran', () => {
     expect(JOURNAL).toContain('console.error')
     expect(JOURNAL).not.toMatch(/credit balance|Plans & Billing|anthropic-ratelimit/iu)
+  })
+})
+
+describe('le chemin retour — relire ce que la ligne a gardé', () => {
+  it('reconstruit code et chemin', () => {
+    expect(diagnosticsDepuisLigne(['SCHEMA@entities[2].fields[0]'])).toEqual([
+      { code: 'SCHEMA', path: 'entities[2].fields[0]' },
+    ])
+    expect(diagnosticsDepuisLigne(['SCHEMA'])).toEqual([{ code: 'SCHEMA' }])
+  })
+
+  it('IGNORE la raison en français qui ouvre la liste d’un refus', () => {
+    // La forme exacte vue en base le 2026-10-10. Fabriquer une question a
+    // partir de cette phrase serait pire qu'une question manquante.
+    const ligne = ['stagnation au tour 2 : 3 → 3 diagnostic(s)', 'SCHEMA@a.b', 'SCHEMA@c']
+    expect(diagnosticsDepuisLigne(ligne)).toEqual([
+      { code: 'SCHEMA', path: 'a.b' },
+      { code: 'SCHEMA', path: 'c' },
+    ])
+  })
+
+  it('survit à l’aller-retour, quel que soit le diagnostic', () => {
+    for (const d of [
+      { code: 'SCHEMA', path: 'entities[0]' },
+      { code: 'AIR_IMAGE_ORPHELINE' },
+      { code: 'A_B_2', path: 'x@y' },
+    ]) {
+      expect(diagnosticsDepuisLigne([codeEtChemin(d)])[0]).toEqual(d)
+    }
+  })
+
+  it('ne se laisse pas prendre par une phrase contenant une arobase', () => {
+    expect(diagnosticsDepuisLigne(['écrivez à moi@exemple.fr'])).toEqual([])
   })
 })

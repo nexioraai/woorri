@@ -13,6 +13,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin'
 import { creerTravailleur, type BaseGeneration, type MoteurContinuation } from '@/lib/apps/travailleur'
 import { TABLE_GENERATIONS } from '@/lib/apps/journal'
 import { deposerGeneration } from '@/lib/apps/service-generations'
+import { intentionDepuis, premiereIntention, texteDe } from '@/lib/apps/dialogue'
 
 export const runtime = 'nodejs'
 
@@ -26,9 +27,33 @@ export async function POST(req: Request) {
   const garde = await requireAuthenticatedUser(req)
   if (!garde.ok) return garde.response
 
-  const corps = (await req.json().catch(() => null)) as { demande?: unknown; nom?: unknown } | null
-  const demande = typeof corps?.demande === 'string' ? corps.demande : ''
+  const corps = (await req.json().catch(() => null)) as {
+    demande?: unknown
+    intention?: unknown
+    nom?: unknown
+  } | null
   const nom = typeof corps?.nom === 'string' && corps.nom.trim() !== '' ? corps.nom.trim() : 'application'
+
+  // ── CE QU'ON DEPOSE EST LE TEXTE QUE P0 LIRA, PAS LE DERNIER MESSAGE.
+  //
+  // Le chemin synchrone appelait `emettreApplication(texteLu, nom)` ou
+  // `texteLu` = le brief PUIS les reponses aux questions. Le travailleur,
+  // lui, passe `ligne.demande` comme brief. Deposer le seul dernier message
+  // perdrait donc toutes les reponses deja donnees — l'utilisateur aurait
+  // repondu pour rien, et paye pour rien.
+  //
+  // Tout ce bloc est GRATUIT : `dialogue.ts` n'appelle aucune API. Verifie
+  // avant d'etre ecrit — un depot qui paierait serait un piege a depense.
+  const intention =
+    corps?.intention === undefined
+      ? typeof corps?.demande === 'string' && corps.demande.trim() !== ''
+        ? await premiereIntention(corps.demande)
+        : null
+      : await intentionDepuis(corps.intention)
+  if (intention === null) {
+    return NextResponse.json({ error: 'Dites ce que vous voulez construire.' }, { status: 400 })
+  }
+  const demande = await texteDe(intention)
 
   try {
     const travailleur = creerTravailleur({
@@ -40,7 +65,12 @@ export async function POST(req: Request) {
       battementPerimeMs: 60_000,
     })
     const id = await deposerGeneration({ travailleur, demande, nom, email: garde.email, proprietaire: garde.userId })
-    return NextResponse.json({ id })
+    // `texteLu` revient a l'ecran : c'est ce que le moteur va lire, et les
+    // tours suivants le renvoient tel quel. Le brief ne se reecrit jamais.
+    // L'INTENTION REVIENT AUSSI : le tour suivant la renvoie enrichie de sa
+    // reponse, et le brief reste SCELLE. Sans elle, repondre a une question
+    // repartirait de zero — et ferait repayer ce qui a deja ete dit.
+    return NextResponse.json({ id, texteLu: demande, intention })
   } catch (e) {
     const message = e instanceof Error ? e.message : 'Depot impossible.'
     if (message.includes('DEMANDE_VIDE')) {

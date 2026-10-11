@@ -104,6 +104,36 @@ export function codeEtChemin(d: { code?: string; path?: unknown }): string {
   return chemin === '' ? (d.code ?? '?') : `${d.code ?? '?'}@${chemin}`
 }
 
+/**
+ * LE CHEMIN RETOUR — relire ce que `codeEtChemin` a ecrit.
+ *
+ * La ligne terminee ne garde que des CHAINES ; pour en refaire des
+ * questions a poser, il faut retrouver `{ code, path }`. Le couple vit ici,
+ * colle a son inverse : separes, ils divergent.
+ *
+ * ── CE QUI REND L'EXERCICE NON TRIVIAL.
+ *
+ * La liste d'un refus commence par la RAISON, en francais ordinaire
+ * (« stagnation au tour 2 : 3 → 3 diagnostic(s) »), suivie des codes. On ne
+ * peut donc pas tout parser aveuglement. Un code du moteur est en capitales
+ * et sans espace ; une phrase francaise ne l'est jamais. Ce qui ne ressemble
+ * pas a un code est IGNORE plutot que devine — une question fabriquee a
+ * partir d'une phrase serait pire qu'une question manquante.
+ */
+export function diagnosticsDepuisLigne(
+  textes: readonly string[],
+): { code: string; path?: string }[] {
+  const sortie: { code: string; path?: string }[] = []
+  for (const t of textes) {
+    const morceaux = t.split('@')
+    const code = morceaux[0] ?? ''
+    if (!/^[A-Z][A-Z0-9_]*$/u.test(code)) continue
+    const chemin = morceaux.slice(1).join('@')
+    sortie.push(chemin === '' ? { code } : { code, path: chemin })
+  }
+  return sortie
+}
+
 export async function journaliser(l: LigneGeneration): Promise<void> {
   // ── LE CLIENT EST CHARGE ICI, PAS A L'IMPORT.
   //

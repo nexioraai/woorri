@@ -17,6 +17,8 @@
  */
 import { createHash } from 'node:crypto'
 import type { creerTravailleur, RapportTranche } from './travailleur'
+import { diagnosticsDepuisLigne } from './journal'
+import { questionsPour, type Question } from './dialogue'
 
 type Travailleur = ReturnType<typeof creerTravailleur>
 
@@ -106,6 +108,18 @@ export type EtatGeneration = {
   readonly sections: { faites: number; total: number }
   readonly defautsRestants: number | null
   readonly apercuVersion: string | null
+  /**
+   * CE QUE L'HUMAIN SEUL PEUT TRANCHER — et qui n'existait pas ici.
+   *
+   * Le chemin SYNCHRONE partageait les diagnostics (EP-135) : ce que
+   * l'utilisateur peut decider devient une QUESTION, le reste est notre
+   * faute. Le chemin asynchrone, lui, n'en savait rien — zero occurrence du
+   * mot « question » dans le travailleur comme dans ce service. Une ligne
+   * refusee se contentait donc de dire non, meme quand il suffisait de
+   * demander. Derive A LA LECTURE, depuis les diagnostics deja en base :
+   * gratuit, et sans rien ajouter a l'ecriture.
+   */
+  readonly questions: readonly Question[]
 }
 
 /** Les sections attendues d'un document AIR — le total de la fraction.
@@ -159,6 +173,10 @@ export async function etatGeneration({
         ? 0
         : Math.min(SECTIONS_ATTENDUES, Object.keys(acquis).length)
   const battement = l.battement === null || l.battement === undefined ? null : String(l.battement)
+  // GRATUIT : `dialogue.ts` n'appelle aucune API. Seule une ligne refusee
+  // peut porter des questions — une livree n'a plus rien a demander.
+  const questions =
+    statut === 'refusee' ? await questionsPour(diagnosticsDepuisLigne(diagnostics)) : []
   return {
     id: String(l.id),
     statut,
@@ -166,6 +184,7 @@ export async function etatGeneration({
     nom: l.nom === null || l.nom === undefined ? null : String(l.nom),
     aDocument: l.document !== null && l.document !== undefined,
     raison: statut === 'refusee' ? traduireRaison(diagnostics[0]) : null,
+    questions,
     creeIl: String(l.created_at ?? ''),
     activiteSec:
       battement === null ? null : Math.max(0, Math.round((Date.now() - new Date(battement).getTime()) / 1000)),

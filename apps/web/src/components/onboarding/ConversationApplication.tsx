@@ -162,7 +162,23 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
           const e = (await res.json()) as EtatGeneration;
           setMaintenant(Date.now());
           setEtatGen(e);
-          if (e.statut === 'livree' || e.statut === 'refusee') return;
+          if (e.statut === 'livree' || e.statut === 'refusee') {
+            // ── LE DIALOGUE NE MEURT PLUS A L'ARRIVEE.
+            //
+            // Le chemin synchrone partage les diagnostics (EP-135) : ce que
+            // l'humain seul peut trancher devient une QUESTION. Le chemin
+            // asynchrone ne savait pas en poser — une ligne refusee disait
+            // non, meme quand il suffisait de demander, et l'utilisateur
+            // n'avait plus qu'a tout recommencer. Les questions arrivent
+            // maintenant avec l'etat, derivees a la lecture et gratuitement.
+            if (e.statut === 'refusee' && e.questions.length > 0) {
+              setOuvertes([...e.questions]);
+              setMessages((m) => [...m, { role: 'question', questions: [...e.questions] }]);
+            } else if (e.statut === 'refusee') {
+              setMessages((m) => [...m, { role: 'incompris', raison: e.raison ?? '' }]);
+            }
+            return;
+          }
         }
       } catch {
         // transitoire : la prochaine lecture reessaiera
@@ -197,31 +213,6 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
     })();
     return () => { vivant = false; };
   }, [etatGen?.apercuVersion, apercuGen?.version, generationId]);
-
-  const deposerAsync = async () => {
-    setTravail('archive');
-    setAvis('');
-    try {
-      const res = await fetch('/api/generateur/deposer', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${await jeton()}` },
-        body: JSON.stringify({ demande: texteLu, nom: 'application' }),
-      });
-      const d = (await res.json().catch(() => ({}))) as { id?: string; error?: string };
-      if (!res.ok || typeof d.id !== 'string') {
-        setAvis(String(d.error ?? 'Dépôt impossible.'));
-        return;
-      }
-      window.history.replaceState(null, '', memoriserGeneration(d.id, window.localStorage));
-      setEtatGen(null);
-      setGenerationId(d.id);
-      setAvis('Demande déposée — la génération avance toute seule, vous pouvez fermer cette page et revenir.');
-    } catch {
-      setAvis('Dépôt impossible.');
-    } finally {
-      setTravail('');
-    }
-  };
 
   const telechargerLivraison = async () => {
     if (generationId === null) return;
@@ -304,6 +295,57 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
     const avorteur = new AbortController();
     const filet = window.setTimeout(() => { avorteur.abort(); }, DELAI_MAX_MS);
     try {
+      // ══════════════════════════════════════════════════════════════════
+      // ETAGE 4 — LA PORTE CHERE PASSE ENFIN PAR LA BONNE.
+      //
+      // MESURE QUI COMMANDE CE BRANCHEMENT (2026-10-10, tir reel) : ce que
+      // l'ecran appelle « comprendre » ne comprend pas — il CONSTRUIT
+      // l'application entiere. 53 minutes, 16,03 $, 1 252 757 jetons
+      // d'entree. Et toute cette depense passait par la SEULE porte sans
+      // avancement, sans reprise et sans persistance : une coupure, un
+      // rechargement ou un filet, et tout etait perdu. Le proprietaire a
+      // paye trois constructions completes sans en voir aucune.
+      //
+      // Le depot, lui, existait depuis l'etage 4 — construit et teste, mais
+      // accroche au MAUVAIS geste : le bouton « telecharger », APRES une
+      // comprehension qui avait deja tout construit. Il refaisait donc
+      // l'application une seconde fois, payante. Il part d'ici, une fois,
+      // et la generation avance en tranches reprenables : l'ecran la suit,
+      // et on peut fermer la page.
+      //
+      // LE DEPOT EST GRATUIT : il n'ecrit qu'une ligne. Toute la depense a
+      // lieu ensuite, cote travailleur, sous le drapeau d'armement.
+      if (ASYNC) {
+        const res = await fetch('/api/generateur/deposer', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${await jeton()}` },
+          body: JSON.stringify({ ...corps, nom: 'application' }),
+          signal: avorteur.signal,
+        });
+        const d = (await res.json().catch(() => ({}))) as {
+          id?: string; texteLu?: string; intention?: unknown; error?: string;
+        };
+        if (!res.ok || typeof d.id !== 'string') {
+          rendreLaMain(texte, noteAvant);
+          setAvis(String(d.error ?? MESSAGE_ILLISIBLE));
+          return;
+        }
+        // L'INTENTION REVIENT AVEC LE DEPOT : sans elle, repondre a une
+        // question au tour suivant repartirait d'un brief vide, et les
+        // reponses deja donnees seraient perdues — payees pour rien.
+        setIntention((d.intention ?? null) as Intention | null);
+        setTexteLu(String(d.texteLu ?? texte));
+        setOuvertes([]);
+        setPerimetre([]);
+        setDocument(null);
+        setApercuGen(null);
+        setEtatGen(null);
+        window.history.replaceState(null, '', memoriserGeneration(d.id, window.localStorage));
+        setGenerationId(d.id);
+        return;
+      }
+      // ══════════════════════════════════════════════════════════════════
+
       const res = await fetch('/api/generateur/comprendre', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${await jeton()}` },
@@ -395,13 +437,18 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
 
   const telecharger = async () => {
     if (document_ === null) return;
-    // ETAGE 4 : drapeau ON → depot asynchrone ; OFF → le chemin synchrone
-    // historique, inchange. La garde-document reste PREMIERE : on ne depose
-    // pas plus qu'on ne construit ce qu'on n'a pas compris.
-    if (ASYNC) {
-      await deposerAsync();
-      return;
-    }
+    // ── CETTE BRANCHE DEPOSAIT UNE SECONDE GENERATION. Retiree le
+    // 2026-10-11, avec le branchement du depot a l'ENVOI.
+    //
+    // L'enchainement etait : la comprehension construisait l'application
+    // (53 min, 16,03 $ au tir reel), puis ce bouton DEPOSAIT une generation
+    // neuve a partir du meme texte — et la refaisait entierement. Deux
+    // constructions payees pour une seule demande.
+    //
+    // Desormais le depot a lieu une fois, a l'envoi, et la livraison se
+    // telecharge depuis la ligne deposee (`telechargerLivraison`, dans le
+    // bloc de suivi). Ce bouton-ci ne sert plus qu'au chemin SYNCHRONE, ou
+    // `produire` ne fait que COMPILER un document deja en main : zero IA.
     setTravail('archive');
     setAvis('');
     try {
