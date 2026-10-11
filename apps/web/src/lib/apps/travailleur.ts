@@ -42,6 +42,7 @@
  */
 import { randomUUID } from 'node:crypto'
 import { codeEtChemin } from './journal'
+import { estReprenable, etatDeReprise } from './reprise'
 
 type Lignes = { data: Record<string, unknown>[] | null; error: { message: string } | null }
 
@@ -237,6 +238,65 @@ export function creerTravailleur({
       throw new Error(`TRAVAILLEUR_DEPOT_REFUSE: ${r.error?.message ?? 'aucune ligne rendue'}`)
     }
     return String(r.data[0].id)
+  }
+
+  /**
+   * REPRENDRE UNE LIGNE REFUSEE — sans repayer ce qui est deja ecrit.
+   *
+   * Les quatre generateurs comparables reprennent tous ; nous etions les
+   * seuls a tout refaire. La machinerie existait pourtant : `tourner` lit
+   * son etat dans `sections_acquises`. Il manquait de remettre la ligne en
+   * attente AVEC un etat que le moteur sache relire — c'est le role de
+   * `etatDeReprise`, qui traduit le journal de fin en point de reprise.
+   *
+   * TROIS GARDES, et chacune ferme une facon de payer deux fois :
+   *  ① seul le PROPRIETAIRE reprend sa ligne ;
+   *  ② seule une ligne REFUSEE se reprend — une livree est finie, la
+   *     relancer serait repayer une application qu'on possede deja ;
+   *  ③ compare-and-set sur le statut : deux clics ne produisent qu'UNE
+   *     reprise, et le second ne declenche rien.
+   *
+   * Sans base recuperable, on REFUSE — jamais une generation neuve
+   * deguisee en reprise.
+   */
+  async function reprendre({
+    id,
+    proprietaire,
+  }: {
+    id: string
+    proprietaire: string
+  }): Promise<'reprise' | 'rien_a_reprendre' | 'introuvable'> {
+    const lu = (await t()
+      .select('id, statut, sections_acquises, cout_usd, jetons_entree, jetons_sortie')
+      .eq('id', id)
+      .eq('owner_id', proprietaire)
+      .limit(1)) as Lignes
+    if (lu.error !== null || lu.data === null || lu.data.length !== 1) return 'introuvable'
+    const ligne = lu.data[0] as Record<string, unknown>
+    if (!estReprenable(ligne.statut, ligne)) return 'rien_a_reprendre'
+    const etat = etatDeReprise(ligne)
+    if (etat === null) return 'rien_a_reprendre'
+
+    const reprisesAvant = Number(ligne.reprises ?? 0)
+    const ecrit = (await t()
+      .update({
+        statut: 'en_attente',
+        etape: 'reparation',
+        sections_acquises: etat,
+        ok: false,
+        document: null,
+        battement: null,
+        jeton_travailleur: null,
+        reprises: Number.isFinite(reprisesAvant) ? reprisesAvant + 1 : 1,
+      })
+      .eq('id', id)
+      .eq('owner_id', proprietaire)
+      .eq('statut', 'refusee')
+      .select('id')) as Lignes
+    if (ecrit.error !== null || ecrit.data === null || ecrit.data.length === 0) {
+      return 'rien_a_reprendre'
+    }
+    return 'reprise'
   }
 
   /** LA SAISIE — compare-and-set, deux tentatives : en attente, puis perimee. */
@@ -575,5 +635,5 @@ export function creerTravailleur({
   }
   /* eslint-enable @typescript-eslint/no-explicit-any */
 
-  return { deposer, tourner }
+  return { deposer, reprendre, tourner }
 }

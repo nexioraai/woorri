@@ -110,7 +110,8 @@ describe('etatGeneration — la lecture est au PROPRIETAIRE seul', () => {
     // chemins exposent desormais la MEME chose, ni plus ni moins.
     expect(Object.keys(e ?? {}).sort()).toEqual([
       'aDocument', 'activiteSec', 'apercuVersion', 'creeIl', 'defautsRestants',
-      'etape', 'id', 'nom', 'questions', 'raison', 'sections', 'statut',
+      'etape', 'id', 'nom', 'questions', 'raison', 'reprenable', 'sections', 'statut',
+      'tours',
     ])
   })
 

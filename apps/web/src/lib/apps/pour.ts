@@ -20,6 +20,7 @@ import { depenseAutorisee, direCeQuOnACompris, JETON_DEPENSE } from './comprendr
 import { lireLaPhrase } from './emission'
 import { emettreApplication } from './moteur'
 import { codeEtChemin, journaliser } from './journal'
+import { retirerClesInconnues } from './reparation-schema'
 import {
   fautesDeProduction,
   perimetre,
@@ -39,6 +40,16 @@ export type Resultat = {
   /** CE QUE L'ALERTE RECOIT — les codes, les chemins, le detail brut. */
   readonly detailTechnique?: string
   readonly texteLu: string
+  /**
+   * LIVRE MALGRE UN REFUS — l'etiquette, jamais la peine de mort.
+   *
+   * Aucun des quatre generateurs comparables ne refuse de livrer : ils
+   * rendent l'application et signalent ce qui cloche. Nous etions les seuls
+   * a tout detruire — un defaut de qualite rendait ZERO, alors que le
+   * document etait compilable. Ce drapeau dit « c'est a vous, mais ce n'est
+   * pas parfait », et la liste dit quoi.
+   */
+  readonly imparfait?: true
 }
 
 /**
@@ -52,6 +63,27 @@ export type Resultat = {
  * chemin de document ». Elle vaut autant pour un echec : le detail part a
  * l'alerte, la phrase reste a l'ecran.
  */
+/**
+ * CE QU'ON DIT QUAND ON LIVRE QUAND MEME — en francais, jamais un code.
+ *
+ * Le ton compte : l'application EST a lui. On annonce une reserve, pas un
+ * echec. Et on dit combien, parce qu'un « ce n'est pas parfait » sans
+ * chiffre laisse imaginer le pire.
+ */
+export function direLImperfection(defauts: number, retirees: number): string {
+  const quoi =
+    defauts <= 1
+      ? 'un point n’a pas pu être réglé'
+      : `${String(defauts)} points n’ont pas pu être réglés`
+  const nettoyage =
+    retirees === 0
+      ? ''
+      : retirees === 1
+        ? ' Un élément en trop a été retiré pour qu’elle tienne debout.'
+        : ` ${String(retirees)} éléments en trop ont été retirés pour qu’elle tienne debout.`
+  return `Votre application est prête, mais ${quoi}.${nettoyage} Vous pouvez la prendre telle quelle, ou me dire ce qu’il faut reprendre.`
+}
+
 export function direALUtilisateur(diagnostics: Diagnostic[]): string {
   const codes = new Set(diagnostics.map((d) => d.code))
   if (codes.has('P0_SORTIE_TRONQUEE')) {
@@ -116,6 +148,46 @@ export type Incompris = {
  * et l'interface le montre : laisser croire qu'une IA a lu quand c'est une
  * expression régulière serait un mensonge qu'on ne rattrape pas.
  */
+/**
+ * SAUVER CE QUI PEUT L'ETRE — gratuitement, et sans rien inventer.
+ *
+ * Deux chances, dans cet ordre :
+ *  ① le document passe deja le schema. C'est le cas de TOUT refus de
+ *     QUALITE : les juges de fond ne tournent qu'apres `safeParse`, donc
+ *     s'ils ont parle, le document est valide — et compilable. On le jetait
+ *     sans meme le regarder, parce que la garde exigeait `emission.ok`.
+ *  ② il ne passe pas, mais uniquement a cause de cles EN TROP. On les
+ *     retire — operation de texte, zero appel — et on rejuge.
+ *
+ * Tout le reste reste un refus. On ne fabrique jamais une valeur absente.
+ */
+function sauverLivrable(
+  brut: unknown,
+): { readonly document: ProjectAir; readonly retirees: readonly string[] } | null {
+  if (brut === undefined || brut === null) return null
+  const direct = projectAirSchema.safeParse(brut)
+  if (direct.success) return { document: direct.data as ProjectAir, retirees: [] }
+
+  const nettoye = retirerClesInconnues(brut, (d) => {
+    const r = projectAirSchema.safeParse(d)
+    return r.success
+      ? { success: true, issues: [] }
+      : {
+          success: false,
+          issues: r.error.issues.map((i) => ({
+            code: i.code,
+            path: i.path.filter((x): x is string | number => typeof x !== 'symbol'),
+            keys: (i as { keys?: string[] }).keys,
+          })),
+        }
+  })
+  if (nettoye.retirees.length === 0) return null
+  const apres = projectAirSchema.safeParse(nettoye.document)
+  return apres.success
+    ? { document: apres.data as ProjectAir, retirees: nettoye.retirees }
+    : null
+}
+
 export async function documentPour(
   intention: Intention,
   /** Qui demande — pour que l'administration sache a qui la depense se
@@ -166,6 +238,18 @@ export async function documentPour(
   // faut voir.
   //
   // `void` : le journal ne doit jamais retarder ni casser une generation.
+  // ── LE PARTAGE DES DIAGNOSTICS, CALCULE UNE SEULE FOIS.
+  //
+  // Il servait plus bas pour decider quoi dire a l'humain ; il sert aussi au
+  // journal, pour dire QUI a cause la depense. Le calculer deux fois serait
+  // deux verites a tenir d'accord — on le calcule ici, et tout le monde lit
+  // le meme. `fautesDeProduction` et `questionsPour` sont gratuits.
+  const dg: Diagnostic[] = [
+    ...emission.diagnostics,
+    ...emission.tirages.flatMap((t) => t.diagnostics.map((code) => ({ code }))),
+  ]
+  const nos = await fautesDeProduction(dg)
+
   void journaliser({
     email: email ?? null,
     demande: texteLu,
@@ -187,6 +271,12 @@ export async function documentPour(
     modele: emission.modele,
     tiragesDetail: emission.tirages,
     tours: (emission as { tours?: readonly unknown[] }).tours,
+    // QUI A CAUSE LA DEPENSE. Le code distingue depuis longtemps « nos
+    // fautes » de « ses questions » — la distinction ne sortait nulle part.
+    // Elle est enregistree : c'est la base de toute facturation juste, le
+    // jour ou il y aura des clients a facturer.
+    fautesProduction: nos.length,
+    defautsTotal: dg.length,
     niveaux: (emission as { niveaux?: unknown }).niveaux,
     // ── LE DOCUMENT PART AU JOURNAL, REFUS COMPRIS. Corrige le 2026-10-10.
     //
@@ -224,16 +314,39 @@ export async function documentPour(
   // (EP-135) : ce que l'humain seul peut trancher devient une QUESTION, le
   // reste est NOTRE faute et part en alerte. Les codes des tirages P0 entrent
   // dans le meme partage — c'est la que vivent les refus de plan.
-  const dg: Diagnostic[] = [
-    ...emission.diagnostics,
-    ...emission.tirages.flatMap((t) => t.diagnostics.map((code) => ({ code }))),
-  ]
   const questions = await questionsPour(dg)
   if (questions.length > 0) {
     return { questions, perimetre: await perimetre(dg), texteLu, coutUsd: emission.coutUsd }
   }
 
-  const nos = await fautesDeProduction(dg)
+  // ── LE JUGE ETIQUETTE AU LIEU D'ANNULER.
+  //
+  // Mesure du 2026-10-11, les quatre generateurs comparables : AUCUN ne
+  // refuse de livrer. Lovable et Bolt rendent l'application et signalent le
+  // defaut ; Replit boucle jusqu'a ce que ca passe. Nous etions les seuls a
+  // rendre ZERO — et la ligne precedente (`emission.ok && ...`) jetait meme
+  // les documents PARFAITEMENT VALIDES, puisqu'elle ne les regardait pas.
+  //
+  // L'ORDRE COMPTE, et il respecte une regle plus ancienne : une QUESTION
+  // passe AVANT. On ne livre pas une application pendant qu'on demande a
+  // l'humain de trancher — c'est traite au-dessus, et on n'arrive ici que
+  // si les defauts restants sont les NOTRES.
+  const sauve = sauverLivrable(emission.document)
+  if (sauve !== null) {
+    return {
+      document: sauve.document,
+      compris: direCeQuOnACompris(emission.modele as Parameters<typeof direCeQuOnACompris>[0]),
+      parIA: true,
+      imparfait: true,
+      echecIA: direLImperfection(nos.length, sauve.retirees.length),
+      detailTechnique:
+        `livre MALGRE refus · ${emission.raison ?? 'emission refusee'} · ` +
+        `${String(nos.length)} defaut(s) de production · ` +
+        `${sauve.retirees.length === 0 ? 'aucune cle retiree' : `cles retirees : ${sauve.retirees.join(', ')}`}`,
+      texteLu,
+    }
+  }
+
   return {
     incompris: true,
     raison: direALUtilisateur(dg),

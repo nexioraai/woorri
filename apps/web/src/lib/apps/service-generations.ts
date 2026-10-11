@@ -19,6 +19,7 @@ import { createHash } from 'node:crypto'
 import type { creerTravailleur, RapportTranche } from './travailleur'
 import { diagnosticsDepuisLigne } from './journal'
 import { questionsPour, type Question } from './dialogue'
+import { estReprenable } from './reprise'
 
 type Travailleur = ReturnType<typeof creerTravailleur>
 
@@ -120,6 +121,20 @@ export type EtatGeneration = {
    * gratuit, et sans rien ajouter a l'ecriture.
    */
   readonly questions: readonly Question[]
+  /**
+   * COMBIEN DE TOURS DE REPARATION ONT EU LIEU.
+   *
+   * Replit montre ses boucles d'auto-test — « 4 boucles, un defaut attrape
+   * a la boucle 2 ». Nous les comptions deja et ne les montrions pas : un
+   * ecran qui dit « en cours » depuis vingt minutes sans dire qu'il en est
+   * a sa deuxieme reparation ne dit rien d'utile. Un COMPTE, pas le detail
+   * — les tours portent des codes, et les codes ne vont pas a l'ecran.
+   */
+  readonly tours: number
+  /** UNE REPRISE EST-ELLE POSSIBLE. Faux sur une livree (elle est finie) et
+   *  faux sans base recuperable — l'ecran ne propose pas un bouton qui
+   *  relancerait une generation complete en la deguisant en reprise. */
+  readonly reprenable: boolean
 }
 
 /** Les sections attendues d'un document AIR — le total de la fraction.
@@ -152,7 +167,9 @@ export async function etatGeneration({
 }): Promise<EtatGeneration | null> {
   const r = await base
     .from(table)
-    .select('id, statut, etape, nom, diagnostics, document, created_at, battement, sections_acquises')
+    .select(
+      'id, statut, etape, nom, diagnostics, document, created_at, battement, sections_acquises, cout_usd, jetons_entree, jetons_sortie',
+    )
     .eq('id', id)
     .eq('owner_id', proprietaire) // dette 6a : l'IDENTITE est l'id du jeton
     .maybeSingle()
@@ -164,6 +181,7 @@ export async function etatGeneration({
     phase?: string
     acquis?: Record<string, unknown>
     defautsRestants?: number | null
+    tours?: readonly unknown[]
   }
   const acquis = sa.acquis ?? null
   const faites =
@@ -185,6 +203,8 @@ export async function etatGeneration({
     aDocument: l.document !== null && l.document !== undefined,
     raison: statut === 'refusee' ? traduireRaison(diagnostics[0]) : null,
     questions,
+    tours: Array.isArray(sa.tours) ? sa.tours.length : 0,
+    reprenable: estReprenable(statut, l as Parameters<typeof estReprenable>[1]),
     creeIl: String(l.created_at ?? ''),
     activiteSec:
       battement === null ? null : Math.max(0, Math.round((Date.now() - new Date(battement).getTime()) / 1000)),

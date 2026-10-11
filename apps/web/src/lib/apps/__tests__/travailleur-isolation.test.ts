@@ -86,6 +86,13 @@ describe('CLIQUET — personne d autre ne peut ecrire les sequences interdites',
     // HEBERGE — le porteur hors serverless de l'appel ecrans indivisible.
     // Toujours une liste FERMEE : une 5e entree exige de reecrire ce test.
     'services/generation-travailleur/index.mts',
+    // 5e EMPLACEMENT CONSCIENT (arbitrage du 2026-10-11) : LA REPRISE.
+    // Motif — les quatre generateurs comparables reprennent tous une
+    // generation ratee ; nous etions les seuls a tout refaire, donc a tout
+    // refacturer. Sans cette route, la base qu'un refus conserve ne sert a
+    // rien. Elle n'emet RIEN : sentinelle, comme le depot.
+    // Toujours une liste FERMEE : une 6e entree exige de reecrire ce test.
+    'apps/web/src/app/api/generateur/reprendre/route.ts',
   ])
 
   const fichiers = (dossier: string): string[] =>

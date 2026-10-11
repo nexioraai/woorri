@@ -214,6 +214,33 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
     return () => { vivant = false; };
   }, [etatGen?.apercuVersion, apercuGen?.version, generationId]);
 
+  /** REPRENDRE — la ligne repart de sa base, le suivi reprend tout seul. */
+  const reprendre = async () => {
+    if (generationId === null) return;
+    setTravail('archive');
+    setAvis('');
+    try {
+      const res = await fetch('/api/generateur/reprendre', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${await jeton()}` },
+        body: JSON.stringify({ id: generationId }),
+      });
+      const d = (await res.json().catch(() => ({}))) as { error?: string };
+      if (!res.ok) {
+        setAvis(String(d.error ?? 'Reprise impossible.'));
+        return;
+      }
+      // L'etat est efface : le prochain battement du suivi lira la ligne
+      // redevenue « en attente », et l'escalier repartira de lui-meme.
+      setEtatGen(null);
+      setAvis('Reprise lancée — elle repart de ce qui était déjà écrit.');
+    } catch {
+      setAvis('Reprise impossible.');
+    } finally {
+      setTravail('');
+    }
+  };
+
   const telechargerLivraison = async () => {
     if (generationId === null) return;
     setTravail('archive');
@@ -529,6 +556,22 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
           </div>
           {marcheDuSuivi(etatGen).refusee && (
             <p className="mt-3 text-sm text-red-300">{marcheDuSuivi(etatGen).raison}</p>
+          )}
+          {/* ── REPRENDRE PLUTOT QUE TOUT REFAIRE.
+              Les quatre generateurs comparables reprennent tous ; nous
+              etions les seuls a recommencer, donc a tout refacturer. Le
+              bouton n'apparait QUE si la ligne porte une base recuperable —
+              sinon il relancerait une generation complete deguisee en
+              reprise, et ce serait la facture doublee. */}
+          {etatGen?.reprenable === true && (
+            <button
+              type="button"
+              onClick={() => { void reprendre(); }}
+              disabled={travail !== ''}
+              className="mt-3 px-4 py-2 rounded-full text-sm bg-white/10 border border-white/15 text-white hover:bg-white/15 transition disabled:opacity-40"
+            >
+              Reprendre là où ça s’est arrêté
+            </button>
           )}
           {marcheDuSuivi(etatGen).livree && (
             <button

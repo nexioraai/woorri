@@ -59,6 +59,10 @@ export type LigneGeneration = {
   readonly tiragesDetail?: readonly unknown[]
   readonly tours?: readonly unknown[]
   readonly niveaux?: unknown
+  /** QUI A CAUSE LA DEPENSE — nos fautes de production, et le total des
+   *  defauts. La distinction existait en code sans jamais etre ecrite. */
+  readonly fautesProduction?: number
+  readonly defautsTotal?: number
 }
 
 /**
@@ -184,6 +188,7 @@ export async function journaliser(l: LigneGeneration): Promise<void> {
     tirages: l.tiragesDetail ?? [],
     tours: l.tours ?? [],
     niveaux: l.niveaux ?? null,
+    fautes: { production: l.fautesProduction ?? null, total: l.defautsTotal ?? null },
     // UN REFUS GARDE SA BASE : c'est elle qui evite de tout repayer.
     ...(l.ok ? {} : { acquis: l.document ?? null, modele: l.modele ?? null }),
   }
