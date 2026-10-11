@@ -76,6 +76,18 @@ export function sectionDuChemin(path: string): SectionEmission {
  * d'exhaustivité interdit qu'un code y tombe par oubli.
  */
 export const SECTIONS_CORRECTIVES: Readonly<Record<string, readonly SectionEmission[]>> = {
+  // ── LE BARÈME (1.35.0) — QUATRE CODES, UNE SEULE SECTION.
+  //
+  // Un barème se déclare sur un CHAMP d'entité : paliers, prix unitaire,
+  // frais fixes. Qu'il désigne un champ inexistant, que ses paliers ne
+  // montent pas, ou que son dernier palier soit borné — la correction vit
+  // toujours au même endroit, dans la déclaration des données. Aucune de
+  // ces fautes ne se répare dans les écrans ni dans les actions.
+  AIR_BAREME_CHAMP_INCONNU: ["donnees"],
+  AIR_BAREME_PALIERS_DESORDONNES: ["donnees"],
+  AIR_BAREME_PALIER_SANS_BORNE: ["donnees"],
+  AIR_BAREME_DERNIER_PALIER_BORNE: ["donnees"],
+
   // EP-188 ① — UNE ENTITÉ PRESCRITE QUI MANQUE SE RÉPARE DANS `donnees`.
   //
   // Mesuré sur le run EP-186 : `ent_annonce` et `ent_recherche` absentes du

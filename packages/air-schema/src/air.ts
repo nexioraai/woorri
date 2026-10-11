@@ -522,6 +522,57 @@ const fieldSchema = z.strictObject({
         /** Le champ à sommer, sur l'entité au bout de la relation. */
         fieldId: fieldIdSchema,
       }),
+      /**
+       * ── LE BARÈME (1.35.0) — LA TROISIÈME OPÉRATION, ET POURQUOI ELLE
+       * N'OUVRE PAS LA PORTE À UN LANGAGE D'EXPRESSIONS.
+       *
+       * MESURÉ SUR UN CAHIER DES CHARGES RÉEL (suivi de consommation
+       * électrique) : « ≤ 150 kWh → 85 F/kWh ; > 150 kWh → 125 F/kWh sur
+       * TOUT ; plus 402 F de frais fixes ». Le contrat ne savait pas le
+       * dire : `sum` et `count` sont des agrégations, et ceci est une
+       * multiplication conditionnelle. L'application entière était donc
+       * hors de portée pour son calcul central.
+       *
+       * CE QUI REND CETTE FORME ACCEPTABLE, là où une expression libre ne
+       * l'est pas : elle est FERMÉE et FINIE. Des paliers, un prix par
+       * unité, des frais fixes. On la lit sans l'évaluer, elle se traduit
+       * sans ambiguïté, et surtout — contrairement à `sum` et `count` —
+       * elle ne dépend d'AUCUNE base de données. Le compilateur peut donc
+       * l'écrire ENTIÈREMENT, au lieu de laisser un trou à combler.
+       *
+       * LES DEUX MODES NE SONT PAS UN DÉTAIL. Le cahier mesuré insiste :
+       * « Il ne faut PAS facturer les 150 premiers kWh à 85 F puis le
+       * surplus à 125 F ». Sans ce choix explicite, un générateur produit
+       * l'autre barème — celui de l'impôt — et se trompe de métier. Les
+       * deux existent dans la vraie vie, donc les deux se déclarent.
+       */
+      z.strictObject({
+        kind: z.literal("bareme"),
+        /** Le champ qui porte la quantité mesurée (kWh, litres, minutes…). */
+        fieldId: fieldIdSchema,
+        /**
+         * Les paliers, du plus bas au plus haut. `jusqua` est INCLUSIF ; le
+         * dernier palier l'omet — il porte tout ce qui dépasse.
+         */
+        paliers: z
+          .array(
+            z.strictObject({
+              jusqua: z.number().positive().optional(),
+              prixUnitaire: z.number().nonnegative(),
+            }),
+          )
+          .min(1)
+          .max(12),
+        /**
+         * `global` — TOUTE la quantité au prix du palier atteint (le cas
+         * mesuré). `par_tranche` — chaque tranche à son propre prix (le
+         * barème de l'impôt). Aucun défaut : se tromper ici change le
+         * montant, donc le choix se DIT.
+         */
+        mode: z.enum(["global", "par_tranche"]),
+        /** Ce qui s'ajoute quel que soit le volume — abonnement, entretien. */
+        fraisFixes: z.number().nonnegative().default(0),
+      }),
     ])
     .optional(),
   transitions: z

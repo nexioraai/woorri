@@ -42,6 +42,13 @@ const V1_CAPABILITY_IDS = [
   "payments.psp",
   "push_notifications",
   "share",
+  // VINGTIEME CAPACITE (2026-10-11) — LIRE LE TEXTE D UNE PHOTO.
+  // Le registre savait lire un code-barres, pas des chiffres ecrits. Un
+  // cahier des charges reel demandait de photographier un compteur et d en
+  // lire l index : la capacite n existait pas, et l application devait s en
+  // passer. Bibliotheque locale, aucun service distant — l image ne quitte
+  // pas l appareil. Elle PROPOSE une valeur ; l humain confirme.
+  "text_recognition",
 ];
 
 describe("cliquets de registre", () => {
@@ -52,7 +59,7 @@ describe("cliquets de registre", () => {
     }
   });
 
-  it("contient EXACTEMENT les 19 capabilities déclarées, triées", () => {
+  it("contient EXACTEMENT les 20 capabilities déclarées, triées", () => {
     expect(CAPABILITIES.map((c) => c.id)).toEqual(V1_CAPABILITY_IDS);
   });
 

@@ -324,6 +324,59 @@ export function validateAir(air: ProjectAir): AirDiagnostic[] {
       if (f.derived === undefined) return;
       const chemin = `entities[${ei}].fields[${fi}].derived`;
       const d = f.derived;
+
+      // ── LE BARÈME NE PASSE PAS PAR UNE RELATION (1.35.0).
+      //
+      // Il ne regarde AUCUNE autre ligne : c'est une fonction du champ qui
+      // porte la quantité, sur la ligne elle-même. Les gardes ci-dessous
+      // sont donc les siennes, et le contrôle de relation ne le concerne
+      // pas — d'où cette sortie anticipée.
+      if (d.kind === "bareme") {
+        if (!e.fields.some((x) => x.id === d.fieldId)) {
+          push(
+            "AIR_BAREME_CHAMP_INCONNU",
+            `${chemin}.fieldId`,
+            `le champ "${d.fieldId}" n'existe pas sur "${e.id}" : rien ne dit ` +
+              `alors SUR QUOI le barème s'applique`,
+          );
+        }
+        // LES PALIERS MONTENT, ET LE DERNIER EST OUVERT. Un palier non
+        // croissant rend le barème ambigu — deux prix possibles pour la
+        // meme quantite — et un dernier palier borne laisse une quantite
+        // sans prix du tout.
+        let precedent = 0;
+        d.paliers.forEach((p, pi) => {
+          const dernier = pi === d.paliers.length - 1;
+          if (dernier && p.jusqua !== undefined) {
+            push(
+              "AIR_BAREME_DERNIER_PALIER_BORNE",
+              `${chemin}.paliers[${pi}].jusqua`,
+              `le dernier palier porte une borne : au-dela, aucune quantite ` +
+                `n'aurait de prix. Le dernier palier ne se borne pas`,
+            );
+          }
+          if (!dernier && p.jusqua === undefined) {
+            push(
+              "AIR_BAREME_PALIER_SANS_BORNE",
+              `${chemin}.paliers[${pi}]`,
+              `seul le DERNIER palier peut etre ouvert : celui-ci avalerait ` +
+                `tous les suivants`,
+            );
+            return;
+          }
+          if (p.jusqua !== undefined && p.jusqua <= precedent) {
+            push(
+              "AIR_BAREME_PALIERS_DESORDONNES",
+              `${chemin}.paliers[${pi}].jusqua`,
+              `les paliers doivent monter : ${String(p.jusqua)} ne depasse pas ` +
+                `${String(precedent)}, donc deux prix repondraient a la meme quantite`,
+            );
+          }
+          if (p.jusqua !== undefined) precedent = p.jusqua;
+        });
+        return;
+      }
+
       const rel = air.relations.find((r) => r.id === d.relationId);
       if (rel === undefined) {
         push(

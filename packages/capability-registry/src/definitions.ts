@@ -641,6 +641,34 @@ const RAW_DEFINITIONS: CapabilityDefinition[] = [
     provenance: { source: "expo_sdk", reference: "https://docs.expo.dev/versions/latest/sdk/sharing/" },
     buildFootprint: { estimatedSizeKb: 80, buildTimeImpact: "none" },
   },
+  {
+    id: "text_recognition",
+    version: "1.0.0",
+    title: "Lecture de texte sur une image (OCR)",
+    description:
+      "Lit les caracteres presents sur une photo — index de compteur, numero de facture, " +
+      "montant. La lecture est une AIDE : elle propose une valeur, l'humain confirme. " +
+      "Depend de la capability camera ou media_upload pour obtenir l'image.",
+    implementation: { kind: "js_library", package: "tesseract.js", version: "^5" },
+    dependencies: { capabilities: ["camera"], nativeModules: [] },
+    platforms: { ios: { supported: true, minOsVersion: "15.1" }, android: { supported: true, minSdk: 24 } },
+    compatibleRuntimeProfiles: ["core", "standard", "extended"],
+    nativeConfig: { infoPlistKeys: [], androidManifestPermissions: [], entitlements: [] },
+    inducedPermissions: [],
+    cost: { model: "free", notes: "bibliotheque locale, aucun service distant — l'image ne quitte pas l'appareil" },
+    nativeFootprint: { impact: "none", nativeModules: [] },
+    otaCompatible: true,
+    requiresRebuild: false,
+    commerceConstraint: "none",
+    constraints: [
+      "PROPOSE, NE DECIDE PAS : la valeur lue doit etre confirmee par l'humain avant d'etre enregistree",
+      "la reconnaissance echoue sur une photo floue, de travers ou mal eclairee — un chemin de saisie manuelle reste obligatoire",
+      "l'empreinte native vient de la dependance camera ; ce noeud n'ajoute que du JS",
+    ],
+    conflicts: [],
+    provenance: { source: "community_vetted", reference: "https://github.com/naptha/tesseract.js" },
+    buildFootprint: { estimatedSizeKb: 2400, buildTimeImpact: "none" },
+  },
 ];
 
 // Parse fail-closed AU CHARGEMENT : un registre qui ne passe pas son propre

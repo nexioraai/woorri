@@ -264,7 +264,19 @@ export const RELEASE_TRAIN_V1 = {
     // aucun module de paiement n'est ajouté (`expo-linking` seul, déjà
     // présent pour `external_contact`). La coordonnée d'encaissement vient
     // du DOCUMENT. Les seize précédentes sont intactes.
-    "05b98be51d67e646dc9d4c6815b00534bbf0f0bee3a5e7a9a2522624a87440cd",
+    // ── RÉ-SCELLÉ 2026-10-11 : VINGTIÈME CAPACITÉ — `text_recognition`.
+    //
+    // POURQUOI, ET MESURÉ. Un cahier des charges réel demandait de
+    // photographier un compteur et d'en lire l'index. Le registre savait
+    // lire un code-barres, pas des chiffres écrits : la capacité n'existait
+    // pas, et l'application devait s'en passer.
+    //
+    // ÉDITION CONSCIENTE, ADDITIVE : aucune capacité existante ne change.
+    // `tesseract.js` tourne DANS l'appareil — aucun service distant, donc
+    // aucun partage déclaré, aucune API sensible, aucun chiffrement à
+    // l'export. Et une contrainte inscrite au registre : elle PROPOSE une
+    // valeur, l'humain confirme.
+    "7dbe41b09923e6d5690c252245706b641a0c6e51f6b48e9cdf246bbab5004d0f",
   // ÉDITION CONSCIENTE (1.3.0) : l'échelle typographique gagne `display`, un
   // cran au-dessus de `heading`. Ajouté AVEC son consommateur réel (l'écran
   // d'accueil produit), jamais « au cas où » — règle posée par DET-023.

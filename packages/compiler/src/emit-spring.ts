@@ -200,7 +200,9 @@ const entite = (groupe: string, e: ProjectAir["entities"][number]): string => {
     if (f.derived !== undefined) {
       lignes.push(
         `  // 🧮 CHAMP CALCULÉ « ${f.name} » — NON STOCKÉ.`,
-        `  //    ${f.derived.kind === "count" ? "Compte" : "Somme"} sur la relation \`${f.derived.relationId}\`.`,
+        f.derived.kind === "bareme"
+          ? `  //    Bareme sur \`${f.derived.fieldId}\` — ${String(f.derived.paliers.length)} palier(s), mode ${f.derived.mode}.`
+          : `  //    ${f.derived.kind === "count" ? "Compte" : "Somme"} sur la relation \`${f.derived.relationId}\`.`,
         "  //    Le stocker le ferait diverger de ce dont il dérive, et personne",
         "  //    ne s'en apercevrait avant le décompte final.",
       );
@@ -528,12 +530,66 @@ const calculs = (groupe: string, air: ProjectAir): string => {
     "@Component",
     "public final class Calculs {",
   ];
+  // LE TYPE DU PALIER, emis UNIQUEMENT si un bareme l'utilise : une classe
+  // inutilisee dans un projet livre est du bruit que le client doit lire.
+  if (air.entities.some((x) => x.fields.some((y) => y.derived?.kind === "bareme"))) {
+    l.push(
+      "",
+      "  /** Un palier du bareme — borne INCLUSIVE, `null` pour le dernier. */",
+      "  private record Palier(Double jusqua, double prixUnitaire) {}",
+    );
+  }
   let n = 0;
   for (const e of air.entities) {
     for (const f of e.fields) {
       const d = f.derived;
       if (d === undefined) continue;
       n += 1;
+      // ── LE BAREME S'ECRIT ENTIEREMENT, LUI. Il ne regarde aucune autre
+      // ligne : c'est une fonction du champ qui porte la quantite. La ou
+      // `sum` et `count` dependent de la base et laissent un trou, celui-ci
+      // sort compilable et juste — les nombres du document apparaissent
+      // dans la source, relisibles sans ouvrir le contrat.
+      if (d.kind === "bareme") {
+        const paliers = d.paliers
+          .map(
+            (p) =>
+              `      new Palier(${p.jusqua === undefined ? "null" : `${String(p.jusqua)}d`}, ${String(p.prixUnitaire)}d),`,
+          )
+          .join("\n");
+        const corps =
+          d.mode === "global"
+            ? [
+                "    Palier choisi = null;",
+                "    for (Palier p : paliers) { if (p.jusqua != null && q <= p.jusqua) { choisi = p; break; } }",
+                "    if (choisi == null) choisi = paliers[paliers.length - 1];",
+                "    return q * choisi.prixUnitaire + FRAIS;",
+              ]
+            : [
+                "    double reste = q, bas = 0d, total = 0d;",
+                "    for (Palier p : paliers) {",
+                "      if (reste <= 0) break;",
+                "      double haut = p.jusqua == null ? Double.MAX_VALUE : p.jusqua;",
+                "      double dans = Math.min(reste, haut - bas);",
+                "      total += dans * p.prixUnitaire; reste -= dans; bas = haut;",
+                "    }",
+                "    return total + FRAIS;",
+              ];
+        l.push(
+          "",
+          `  /** ${e.name}.${f.name} — bareme sur ${d.fieldId}, mode ${d.mode}. */`,
+          `  public static double ${CAMEL(f.id)}(double quantite) {`,
+          `    final double FRAIS = ${String(d.fraisFixes)}d;`,
+          "    final Palier[] paliers = {",
+          paliers,
+          "    };",
+          "    double q = (Double.isFinite(quantite) && quantite > 0) ? quantite : 0d;",
+          "    if (q == 0d) return FRAIS;",
+          ...corps,
+          "  }",
+        );
+        continue;
+      }
       const rel = air.relations.find((r) => r.id === d.relationId);
       const quoi =
         d.kind === "count"

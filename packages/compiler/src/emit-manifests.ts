@@ -67,6 +67,9 @@ export const CHIFFREMENT_PROPRE_PAR_CAPACITE: Readonly<Record<string, boolean>> 
   analytics: false,
   auth: false,
   barcode_scan: false,
+  // OCR (1.35.0) — `tesseract.js` est une bibliotheque de reconnaissance,
+  // pas de chiffrement. Rien a declarer a l'export.
+  text_recognition: false,
   biometrics: false,
   calendar: false,
   camera: false,
@@ -125,6 +128,11 @@ export const API_SENSIBLES_PAR_CAPACITE: Readonly<Record<string, readonly string
   analytics: [],
   auth: [],
   barcode_scan: [],
+  // OCR (1.35.0) — la reconnaissance tourne en memoire sur une image deja
+  // obtenue par `camera` ou `media_upload`. Elle ne touche NI le systeme de
+  // fichiers, NI les preferences, NI le disque : aucune API sensible a
+  // declarer de son fait. Celles de la camera sont declarees par la camera.
+  text_recognition: [],
   biometrics: [],
   calendar: [],
   camera: [],

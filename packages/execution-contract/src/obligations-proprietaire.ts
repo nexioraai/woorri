@@ -60,6 +60,12 @@ export const PARTAGE_PAR_CAPACITE: Readonly<Record<string, readonly string[]>> =
   auth: ["contact_info", "identifiers"],
   // Lecture locale de l'appareil photo : rien ne sort.
   barcode_scan: [],
+  // VINGTIEME CAPACITE (2026-10-11) — OCR. `tesseract.js` tourne DANS
+  // l'appareil : l'image et le texte lu ne partent nulle part. Aucun
+  // service distant, donc aucun partage a declarer aux magasins. Si cette
+  // capacite passait un jour a un OCR en ligne, cette liste devrait changer
+  // LE MEME JOUR — c'est tout l'interet de ce cliquet.
+  text_recognition: [],
   // Le gabarit biométrique ne quitte JAMAIS l'appareil (Secure Enclave).
   biometrics: [],
   calendar: [],
