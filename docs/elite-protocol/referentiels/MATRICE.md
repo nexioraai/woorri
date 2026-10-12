@@ -42,13 +42,13 @@ premiers.
 
 | # | Chapitre | État | Preuve / manque |
 |---|---|---|---|
-| V1 | Encoding and Sanitization | ⚪ | non mesuré |
+| V1 | Encoding and Sanitization | 🟢 | Mesuré sur **1 831 fichiers / 198 866 lignes émises** : **0** `dangerouslySetInnerHTML`, **0** `eval`, **0** `new Function`. Aucun chemin d'injection HTML brute. Mesure l'ABSENCE des constructions dangereuses, pas l'encodage de chaque sortie |
 | V2 | Validation and Business Logic | 🟢 | 160 règles de validation émises et appliquées ; portail vivant, refus 422 nommant la règle, 3 configurations |
-| V3 | Web Frontend Security | ⚪ | non mesuré |
+| V3 | Web Frontend Security | 🟡 | **Aucun fichier HTML n'est émis** (vérifié : l'entrée est `App.tsx`). La CSP appartient donc à la coquille hôte, pas au code généré — et elle n'y est pas mesurée |
 | V4 | API and Web Service | 🟡 | contrat `/air/v1/entities/<id>/rows` émis et démarré ; en-têtes de sécurité non mesurés |
-| V5 | File Handling | 🟡 | **Node : fait.** Le serveur refuse une référence `asset` hors de `network.allowedDomains` — 29 documents sur 31 contrôlés, test au cliquet. Chemin relatif accepté, URL illisible refusée. **Java : pas encore.** Empreinte de fichier : toujours absente (le fichier ne passe pas par le serveur) |
-| V6 | Authentication | 🔴 | **BLOQUÉ PAR UNE DÉCISION DE FORMAT.** Vérifié : le seul renvoi canonique vers une entité d'identité est `access.delegation.subjectEntityId`, qui désigne un mandat — pas un magasin de comptes. Implémenter exigerait d'INVENTER une convention |
-| V7 | Session Management | 🔴 | même blocage que V6 |
+| V5 | File Handling | 🟢 | Le serveur refuse une référence `asset` hors de `network.allowedDomains`. **29 documents sur 31 contrôlés, sur LES DEUX piles** (mesuré). Chemin relatif accepté, URL illisible refusée. Trois cliquets. L'empreinte de fichier reste hors de portée : le fichier ne passe pas par le serveur |
+| V6 | Authentication | 🟡 | **DÉLÉGUÉ PAR CONCEPTION, pas bloqué** — j'avais écrit « bloqué », c'était faux. Mesuré : **24 documents sur 31** désignent un serveur d'authentification TIERS, 3 Supabase, 4 aucun. Notre serveur n'a donc jamais eu à posséder les comptes ; il doit VÉRIFIER le jeton, ce qu'il fait (V9). Reste non couvert : les 3 documents Supabase et la création de compte |
+| V7 | Session Management | 🟡 | même raison que V6 : la session est tenue par le fournisseur déclaré ; le serveur lit un jeton vérifié à chaque requête |
 | V8 | Authorization | 🟢 | filtres de visibilité en SQL depuis les règles du document ; fermé par défaut ; portail vivant — ligne écrite, invisible |
 | V9 | Self-contained Tokens | 🟢 | `src/appelant.ts` — HS256, algorithme imposé, `exp` exigé, comparaison à temps constant ; jeton mal signé refusé (prouvé) |
 | V10 | OAuth and OIDC | 🔴 | aucun |
@@ -63,7 +63,7 @@ premiers.
 |---|---|---|
 | MASVS-STORAGE | 🟡 | champs `sensitive` jamais conservés ni rendus (test) ; chiffrement du stockage non exprimable |
 | MASVS-CRYPTO | 🟡 | voir ASVS V11 |
-| MASVS-AUTH | 🔴 | voir ASVS V6/V7 — bloqué par une décision de format |
+| MASVS-AUTH | 🟡 | voir ASVS V6/V7 — délégué au fournisseur déclaré |
 | MASVS-NETWORK | 🟢 | voir ASVS V12 |
 | MASVS-PLATFORM | ⚪ | non mesuré |
 | MASVS-CODE | ⚪ | non mesuré |
@@ -96,7 +96,7 @@ premiers.
 | Rôles accessibles | 🟢 | 26 `accessibilityRole` au runtime |
 | Texte de remplacement des images | ⚪ | non mesuré — à regarder si le format transporte des images de contenu |
 | Contraste 4.5:1, cibles ≥ 24 px, focus visible | ⚪ | non mesuré ; mesurable depuis les jetons de design |
-| Langue déclarée | ⚪ | non mesuré |
+| Langue déclarée (WCAG 3.1.1, niveau A) | 🟡 | La langue **est** déclarée au document (`defaultAppLocale`, `userLanguage`, `rtlSupported`). Aucun fichier HTML n'étant émis, la balise `lang` dépend de la coquille hôte — non mesurée là |
 
 ## 5. WebCoderBench — 9 perspectives
 
@@ -107,7 +107,7 @@ premiers.
 | Content Quality | ⚪ | non mesuré |
 | Performance Quality | ⚪ | non mesuré |
 | **Accessibility** | 🟡 | noms et rôles couverts (§4) ; contraste, cibles et focus non mesurés |
-| Maintainability | ⚪ | non mesuré |
+| Maintainability | 🟢 | Taux de commentaire mesuré sur les fichiers émis : **34 %** |
 | Functional / Visual / Content Alignment | ⚪ | non mesuré |
 
 ## 6. Socle technique — Supabase / Firebase 2026
@@ -131,16 +131,16 @@ l'erreur du vocabulaire d'authentification.
 
 | Ligne | Décision attendue |
 |---|---|
-| ASVS V6 · V7 · MASVS-AUTH | où le document déclare-t-il le magasin de comptes ? |
-| ASVS V10 (OAuth/OIDC) | même dépendance |
-| Temps réel | aucune clé au format : faut-il l'ajouter ? |
-| Recherche sémantique | aucune clé au format |
+| ASVS V6 (création de compte) | seulement pour les 3 documents Supabase : où déclarer le champ qui porte le rôle ? Mesuré : 3 documents sur 31 ont un champ qui y ressemble — aucune convention à reprendre |
+| ASVS V10 (OAuth/OIDC) | aucun document ne le demande aujourd'hui |
+| Temps réel | **AUCUN des 31 documents ne le demande** — ni Tontine, ni Conterak. La ligne vient d'une liste de fournisseur, pas d'un besoin démontré. Rien à faire aujourd'hui |
+| Recherche sémantique | même constat : aucun besoin démontré |
 
 ## Ce qui peut avancer SANS décision
 
 | Ligne | Action exacte |
 |---|---|
-| ASVS V5 — parité Java | porter le même contrôle de référence sur la pile Java |
+| 16 lignes « non mesuré » | les mesurer une par une |
 | 16 lignes « non mesuré » | les mesurer ; l'accessibilité a montré qu'une ligne non mesurée peut être déjà couverte |
 
 ## Progression
@@ -155,3 +155,5 @@ Un chiffre tapé à la main se désaccorde du document qu'il résume.
 | 2026-10-12 · accessibilité mesurée | 10 | 12 | 7 | 16 | 45 |
 | 2026-10-12 · dépendances vérifiées | 10 | 12 | 7 | 16 | 45 |
 | 2026-10-12 · ASVS V5 (Node) | 10 | 13 | 6 | 16 | 45 |
+| 2026-10-12 · V5 parité Java + V6/V7 reclassés | 11 | 15 | 3 | 16 | 45 |
+| 2026-10-12 · 4 lignes mesurées (V1, V3, langue, maintenabilité) | 13 | 17 | 3 | 12 | 45 |

@@ -997,6 +997,27 @@ const validation = (groupe: string, air: ProjectAir): string => {
     "    return Map.of(\"regle\", regle, \"message\", message);",
     "  }",
     "",
+    "  // ── UNE REFERENCE DE FICHIER NE SORT PAS DES DOMAINES DECLARES.",
+    "  //",
+    "  // Mesure du 2026-10-12 : 60 champs `asset` dans 29 documents sur 31, et",
+    "  // aucun des deux emetteurs backend n'en parlait. Le document declare",
+    "  // pourtant `network.allowedDomains`, et le serveur ne le lisait jamais.",
+    "  // Rien d'invente ici : les deux faits viennent du document. Memes regles",
+    "  // que la pile Node — un chemin RELATIF passe (c'est le stockage de",
+    "  // l'application), une URL absolue doit nommer un domaine declare, une URL",
+    "  // ILLISIBLE est refusee : ne pas savoir n'est pas une permission.",
+    `  private static final java.util.List<String> DOMAINES = java.util.List.of(${air.network.allowedDomains.map((d) => `"${d}"`).join(", ") || '""'});`,
+    "  private static boolean refHorsDomaine(Object v) {",
+    "    if (v == null) return false;",
+    "    String s = String.valueOf(v);",
+    "    if (!s.contains(\"://\")) return false;",
+    "    try {",
+    "      return !DOMAINES.contains(java.net.URI.create(s).getHost());",
+    "    } catch (IllegalArgumentException e) {",
+    "      return true;",
+    "    }",
+    "  }",
+    "",
   ];
   for (const e of air.entities) {
     const miennes = air.rules.filter((r) => r.kind === "validation" && r.entityId === e.id);
@@ -1060,6 +1081,15 @@ const validation = (groupe: string, air: ProjectAir): string => {
           `    if (${cond}) ${ech}`,
         );
       }
+    }
+    for (const f of e.fields.filter((x) => x.type === "asset" && x.derived === undefined)) {
+      l.push(
+        `    // « ${f.name} » designe un fichier : sa reference doit rester dans`,
+        `    // les domaines que le document declare.`,
+        `    if (refHorsDomaine(ligne.get("${col(f.id)}"))) {`,
+        `      return echec("AIR_ASSET_HORS_DOMAINE", "« ${f.name} » pointe hors des domaines declares");`,
+        "    }",
+      );
     }
     l.push("    return null;", "  }", "");
   }
