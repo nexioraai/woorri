@@ -29,7 +29,8 @@
 // 🟠 Les règles d'ARGENT. `ReglesMetier` lève par construction : séquestre,
 //    tour, pénalités, répartition, enchères appartiennent au propriétaire. Les
 //    tester reviendrait à les avoir écrites à sa place.
-const { existsSync, readFileSync, mkdirSync, writeFileSync, rmSync } = await import("node:fs");
+const { existsSync, readFileSync, mkdirSync, writeFileSync, rmSync, symlinkSync } =
+  await import("node:fs");
 const { execFileSync, spawn } = await import("node:child_process");
 const { tmpdir } = await import("node:os");
 const { join } = await import("node:path");
@@ -58,57 +59,12 @@ if (!existsSync(DOC)) {
 }
 
 const air = assertValidAir(migrateAirDocument(JSON.parse(readFileSync(DOC, "utf8"))));
-const { files } = compileBackend(air);
-if (files.size === 0) {
-  console.error("  🔴 ce document n'émet aucun serveur — rien à démarrer.");
-  process.exit(2);
-}
-rmSync(OUT, { recursive: true, force: true });
-for (const [f, c] of files) {
-  const p = OUT + f;
-  mkdirSync(p.slice(0, p.lastIndexOf("/")), { recursive: true });
-  writeFileSync(p, c);
-}
-
-console.log("═".repeat(78));
-console.log("GATE RACINE — le SERVEUR généré RÉPOND-IL ?");
-console.log("═".repeat(78));
-
-const serveur = spawn(MVN, ["-B", "-q", "spring-boot:run"], {
-  cwd: OUT,
-  env: { ...process.env, JAVA_HOME: JAVA.replace(/\/bin\/java$/, ""), PORT: String(PORT) },
-  stdio: ["ignore", "pipe", "pipe"],
-  detached: true,
-});
-let journal = "";
-serveur.stdout.on("data", (d) => (journal += String(d)));
-serveur.stderr.on("data", (d) => (journal += String(d)));
-
-const arreter = () => {
-  try {
-    process.kill(-serveur.pid, "SIGKILL");
-  } catch {
-    /* déjà mort */
-  }
-};
-
-const B = `http://localhost:${String(PORT)}/air/v1/entities`;
-const attendre = async () => {
-  // 240 s : un premier démarrage télécharge Spring Boot ET compile. Sur une
-  // machine de développement c'est 45 s ; sur un runner partagé au cache vide,
-  // bien plus. Un délai trop court ferait accuser le serveur de ne pas démarrer
-  // alors qu'il téléchargeait encore — un faux rouge vaut un faux vert.
-  for (let i = 0; i < 240; i += 1) {
-    try {
-      const r = await fetch(`${B}/${air.entities[0].id}/rows`);
-      if (r.ok) return true;
-    } catch {
-      /* pas encore */
-    }
-    await new Promise((r) => setTimeout(r, 1000));
-  }
-  return false;
-};
+// ── LES DEUX PILES, DEBOUT, SUR LE MÊME DOCUMENT.
+//
+// Le document choisit la sienne ; ses REFUS, eux, n'en dépendent pas. Et
+// « compile » n'a jamais voulu dire « marche » : c'est tout l'objet de cette
+// gate-ci. Mesurer une seule pile aurait laissé l'autre non démarrée.
+const PILES = ["spring_boot", "fastify"];
 
 const essais = [];
 const dire = (ok, quoi, detail = "") => {
@@ -116,111 +72,197 @@ const dire = (ok, quoi, detail = "") => {
   console.log(`  ${ok ? "🟢" : "🔴"} ${quoi}${detail === "" ? "" : " — " + detail}`);
 };
 
-try {
-  const debout = await attendre();
-  dire(debout, "le serveur DÉMARRE et sert une collection");
-  if (!debout) {
-    console.error("\n" + journal.split("\n").slice(-25).join("\n"));
-    throw new Error("serveur injoignable");
-  }
+console.log("═".repeat(78));
+console.log("GATE RACINE — les SERVEURS générés RÉPONDENT-ILS ?");
+console.log("═".repeat(78));
 
-  // ── LE JOURNAL. L'entité `appendOnly` du document, quelle qu'elle soit.
-  const journalEnt = air.entities.find((e) => e.appendOnly === true);
-  if (journalEnt !== undefined) {
-    const requis = Object.fromEntries(
-      journalEnt.fields
-        .filter((f) => f.required === true && f.derived === undefined && f.sensitive !== true)
-        .map((f) => [
-          f.name,
-          f.type === "datetime"
-            ? "2026-01-01T00:00:00Z"
-            : f.type === "decimal" || f.type === "number"
-              ? "0"
-              : f.type === "boolean"
-                ? "false"
-                : (f.enumValues ?? ["x"])[0],
-        ]),
+for (const [rang, pile] of PILES.entries()) {
+  const estNode = pile === "fastify";
+  // Un port par pile : un serveur tué laisse son port en attente un moment,
+  // et la pile suivante le trouverait occupé.
+  const port = PORT + rang;
+  const { files } = compileBackend(
+      pile === air.backend?.stack ? air : { ...air, backend: { ...air.backend, stack: pile } },
     );
-    const creer = await fetch(`${B}/${journalEnt.id}/rows`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ id: "gate1", ...requis }),
-    });
-    dire(creer.ok, "une ligne de journal se CRÉE", `HTTP ${String(creer.status)}`);
-    const rejouer = await fetch(`${B}/${journalEnt.id}/rows`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ id: "gate1", ...requis }),
-    });
-    dire(rejouer.status === 409, "le journal REFUSE la réécriture", `HTTP ${String(rejouer.status)}`);
-    const effacer = await fetch(`${B}/${journalEnt.id}/rows/gate1`, { method: "DELETE" });
-    dire(effacer.status === 409, "le journal REFUSE l'effacement", `HTTP ${String(effacer.status)}`);
+  if (files.size === 0) {
+    console.error("  🔴 ce document n'émet aucun serveur — rien à démarrer.");
+    process.exit(2);
+  }
+  rmSync(OUT, { recursive: true, force: true });
+  for (const [f, c] of files) {
+    const p = OUT + f;
+    mkdirSync(p.slice(0, p.lastIndexOf("/")), { recursive: true });
+    writeFileSync(p, c);
   }
 
-  // ── LES TRANSITIONS. L'acceptation ET le refus, jamais l'un seul.
-  const avecEtats = air.entities.find((e) => e.fields.some((f) => f.transitions !== undefined));
-  const champEtat = avecEtats?.fields.find((f) => f.transitions !== undefined);
-  if (avecEtats !== undefined && champEtat !== undefined) {
-    const t0 = (champEtat.transitions ?? [])[0];
-    const requis = Object.fromEntries(
-      avecEtats.fields
-        .filter((f) => f.required === true && f.derived === undefined && f.sensitive !== true)
-        .map((f) => [
-          f.name,
-          f.name === champEtat.name
-            ? t0.from
-            : f.type === "datetime"
+  console.log("\n" + "─".repeat(78));
+    console.log(`  PILE « ${pile} » — port ${String(port)}`);
+    console.log("─".repeat(78));
+
+    // ── DÉMARRER NODE N'EST PAS DÉMARRER JAVA.
+    //
+    // Maven résout ses dépendances et lance le serveur. Côté Node, on exécute
+    // la source TELLE QUELLE : ce runtime retire les types lui-même — rien à
+    // installer, et une preuve de plus : le code émis tourne sur Node nu. Il
+    // lui faut seulement `node_modules`, EMPRUNTÉ à la racine comme le fait
+    // la gate de compilation — une gate qui télécharge ne mesure plus le
+    // code, elle mesure le réseau.
+    //
+    // AIR_DEPOT=memoire est indispensable : le dépôt livré par défaut REFUSE
+    // d'écrire — il reste à écrire, et il le dit. Sans ce drapeau, le serveur
+    // démarrerait et répondrait 500 partout, ce qui ne prouverait rien.
+    if (estNode) symlinkSync(join(R, "node_modules"), OUT + "node_modules", "dir");
+    const serveur = estNode
+      ? spawn(process.execPath, ["src/serveur.ts"], {
+          cwd: OUT,
+          env: { ...process.env, PORT: String(port), AIR_DEPOT: "memoire" },
+          stdio: ["ignore", "pipe", "pipe"],
+          detached: true,
+        })
+      : spawn(MVN, ["-B", "-q", "spring-boot:run"], {
+          cwd: OUT,
+          env: { ...process.env, JAVA_HOME: JAVA.replace(/\/bin\/java$/, ""), PORT: String(port) },
+          stdio: ["ignore", "pipe", "pipe"],
+          detached: true,
+        });
+  let journal = "";
+  serveur.stdout.on("data", (d) => (journal += String(d)));
+  serveur.stderr.on("data", (d) => (journal += String(d)));
+
+  const arreter = () => {
+    try {
+      process.kill(-serveur.pid, "SIGKILL");
+    } catch {
+      /* déjà mort */
+    }
+  };
+
+  const B = `http://localhost:${String(port)}/air/v1/entities`;
+  const attendre = async () => {
+    // 240 s : un premier démarrage télécharge Spring Boot ET compile. Sur une
+    // machine de développement c'est 45 s ; sur un runner partagé au cache vide,
+    // bien plus. Un délai trop court ferait accuser le serveur de ne pas démarrer
+    // alors qu'il téléchargeait encore — un faux rouge vaut un faux vert.
+    for (let i = 0; i < 240; i += 1) {
+      try {
+        const r = await fetch(`${B}/${air.entities[0].id}/rows`);
+        if (r.ok) return true;
+      } catch {
+        /* pas encore */
+      }
+      await new Promise((r) => setTimeout(r, 1000));
+    }
+    return false;
+  };
+
+
+  try {
+    const debout = await attendre();
+    dire(debout, "le serveur DÉMARRE et sert une collection");
+    if (!debout) {
+      console.error("\n" + journal.split("\n").slice(-25).join("\n"));
+      throw new Error("serveur injoignable");
+    }
+
+    // ── LE JOURNAL. L'entité `appendOnly` du document, quelle qu'elle soit.
+    const journalEnt = air.entities.find((e) => e.appendOnly === true);
+    if (journalEnt !== undefined) {
+      const requis = Object.fromEntries(
+        journalEnt.fields
+          .filter((f) => f.required === true && f.derived === undefined && f.sensitive !== true)
+          .map((f) => [
+            f.name,
+            f.type === "datetime"
               ? "2026-01-01T00:00:00Z"
               : f.type === "decimal" || f.type === "number"
                 ? "0"
                 : f.type === "boolean"
                   ? "false"
                   : (f.enumValues ?? ["x"])[0],
-        ]),
-    );
-    const creer = await fetch(`${B}/${avecEtats.id}/rows`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ id: "gate2", ...requis }),
-    });
-    dire(creer.ok, `une ligne à états se CRÉE (${t0.from})`, `HTTP ${String(creer.status)}`);
-
-    // ── LE CALCUL NON ÉCRIT NE DOIT PAS RENDRE LA LIGNE ILLISIBLE.
-    const calcule = avecEtats.fields.find((f) => f.derived !== undefined);
-    if (calcule !== undefined) {
-      const lu = await fetch(`${B}/${avecEtats.id}/rows`);
-      const entete = lu.headers.get("X-Air-Non-Calcule") ?? "";
-      dire(
-        lu.ok && entete.includes(calcule.name),
-        "un calcul NON ÉCRIT laisse la ligne lisible et se NOMME",
-        `HTTP ${String(lu.status)} · X-Air-Non-Calcule: ${entete || "(absent)"}`,
+          ]),
       );
+      const creer = await fetch(`${B}/${journalEnt.id}/rows`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ id: "gate1", ...requis }),
+      });
+      dire(creer.ok, "une ligne de journal se CRÉE", `HTTP ${String(creer.status)}`);
+      const rejouer = await fetch(`${B}/${journalEnt.id}/rows`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ id: "gate1", ...requis }),
+      });
+      dire(rejouer.status === 409, "le journal REFUSE la réécriture", `HTTP ${String(rejouer.status)}`);
+      const effacer = await fetch(`${B}/${journalEnt.id}/rows/gate1`, { method: "DELETE" });
+      dire(effacer.status === 409, "le journal REFUSE l'effacement", `HTTP ${String(effacer.status)}`);
     }
 
-    const legal = await fetch(`${B}/${avecEtats.id}/rows`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ id: "gate2", [champEtat.name]: t0.to }),
-    });
-    dire(legal.ok, `la transition DÉCLARÉE est acceptée (${t0.from} → ${t0.to})`, `HTTP ${String(legal.status)}`);
+    // ── LES TRANSITIONS. L'acceptation ET le refus, jamais l'un seul.
+    const avecEtats = air.entities.find((e) => e.fields.some((f) => f.transitions !== undefined));
+    const champEtat = avecEtats?.fields.find((f) => f.transitions !== undefined);
+    if (avecEtats !== undefined && champEtat !== undefined) {
+      const t0 = (champEtat.transitions ?? [])[0];
+      const requis = Object.fromEntries(
+        avecEtats.fields
+          .filter((f) => f.required === true && f.derived === undefined && f.sensitive !== true)
+          .map((f) => [
+            f.name,
+            f.name === champEtat.name
+              ? t0.from
+              : f.type === "datetime"
+                ? "2026-01-01T00:00:00Z"
+                : f.type === "decimal" || f.type === "number"
+                  ? "0"
+                  : f.type === "boolean"
+                    ? "false"
+                    : (f.enumValues ?? ["x"])[0],
+          ]),
+      );
+      const creer = await fetch(`${B}/${avecEtats.id}/rows`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ id: "gate2", ...requis }),
+      });
+      dire(creer.ok, `une ligne à états se CRÉE (${t0.from})`, `HTTP ${String(creer.status)}`);
 
-    const illegal = await fetch(`${B}/${avecEtats.id}/rows`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ id: "gate2", [champEtat.name]: t0.from }),
-    });
-    dire(
-      illegal.status === 409,
-      `la transition NON déclarée est refusée (${t0.to} → ${t0.from})`,
-      `HTTP ${String(illegal.status)}`,
-    );
+      // ── LE CALCUL NON ÉCRIT NE DOIT PAS RENDRE LA LIGNE ILLISIBLE.
+      const calcule = avecEtats.fields.find((f) => f.derived !== undefined);
+      if (calcule !== undefined) {
+        const lu = await fetch(`${B}/${avecEtats.id}/rows`);
+        const entete = lu.headers.get("X-Air-Non-Calcule") ?? "";
+        dire(
+          lu.ok && entete.includes(calcule.name),
+          "un calcul NON ÉCRIT laisse la ligne lisible et se NOMME",
+          `HTTP ${String(lu.status)} · X-Air-Non-Calcule: ${entete || "(absent)"}`,
+        );
+      }
+
+      const legal = await fetch(`${B}/${avecEtats.id}/rows`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ id: "gate2", [champEtat.name]: t0.to }),
+      });
+      dire(legal.ok, `la transition DÉCLARÉE est acceptée (${t0.from} → ${t0.to})`, `HTTP ${String(legal.status)}`);
+
+      const illegal = await fetch(`${B}/${avecEtats.id}/rows`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ id: "gate2", [champEtat.name]: t0.from }),
+      });
+      dire(
+        illegal.status === 409,
+        `la transition NON déclarée est refusée (${t0.to} → ${t0.from})`,
+        `HTTP ${String(illegal.status)}`,
+      );
+    }
+  } catch (e) {
+    dire(false, "la gate n'a pas abouti", String(e instanceof Error ? e.message : e).slice(0, 80));
+  } finally {
+    arreter();
   }
-} catch (e) {
-  dire(false, "la gate n'a pas abouti", String(e instanceof Error ? e.message : e).slice(0, 80));
-} finally {
-  arreter();
+
 }
 
 const ko = essais.filter((x) => !x).length;
 console.log(`\n  ${String(essais.length - ko)}/${String(essais.length)} preuves tenues.`);
-process.exitCode = ko === 0 && essais.length >= 5 ? 0 : 1;
+process.exitCode = ko === 0 && essais.length >= 10 ? 0 : 1;

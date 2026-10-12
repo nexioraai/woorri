@@ -55,6 +55,36 @@ describe("le document choisit la pile, pas le moteur", () => {
   });
 });
 
+// ── L'ADRESSE ET LES CLÉS SONT UN CONTRAT, PAS UN CHOIX D'ÉMETTEUR.
+//
+// Mesuré le 2026-10-11 : cet émetteur servait /<table> et nommait ses clés
+// par identifiant de colonne. Il compilait, et AUCUNE application générée
+// n'aurait pu lui parler — son client appelle /air/v1/entities/<id>/rows et
+// nomme les champs par leur NOM. Deux tests pour que ça ne redérive pas.
+describe("le serveur émis respecte le contrat que le client appelle", () => {
+  it("les routes sont montées sur /air/v1/entities/<id>/rows", () => {
+    const s = sortie();
+    for (const e of air().entities) {
+      const src = s.get(`src/api/${e.id.replace(/^ent_/u, "")}.ts`) ?? "";
+      expect(src, e.id).toContain(`"/air/v1/entities/${e.id}/rows"`);
+    }
+  });
+
+  it("les champs passent par leur NOM, dans les deux sens", () => {
+    const s = sortie();
+    let mesures = 0;
+    for (const e of air().entities) {
+      const src = s.get(`src/api/${e.id.replace(/^ent_/u, "")}.ts`) ?? "";
+      for (const f of e.fields) {
+        if (f.sensitive === true || f.derived !== undefined) continue;
+        mesures += 1;
+        expect(src, `${e.id}.${f.id}`).toContain(JSON.stringify(f.name));
+      }
+    }
+    expect(mesures).toBeGreaterThan(0);
+  });
+});
+
 describe("les refus sont DANS le code, pas en commentaire", () => {
   // Les routes d'un journal EXISTENT et refusent, au lieu d'être absentes.
   // Une route absente répond 404 — « cette adresse n'existe pas » — ce qui

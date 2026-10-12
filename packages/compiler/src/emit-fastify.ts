@@ -105,7 +105,7 @@ function depot(e: Entite): string {
     `export interface ${n}Depot {`,
     `  lister(): Promise<Partial<${n}>[]>;`,
     `  lire(id: string): Promise<Partial<${n}> | null>;`,
-    `  creer(x: Omit<${n}, "id">): Promise<${n}>;`,
+    `  enregistrer(x: Partial<${n}> & { id: string }): Promise<Partial<${n}>>;`,
   ];
   if (journal) {
     l.push(
@@ -113,7 +113,7 @@ function depot(e: Entite): string {
       "  // répare par une ligne NOUVELLE qui annule la première.",
     );
   } else {
-    l.push(`  modifier(id: string, x: Partial<${n}>): Promise<${n}>;`, "  supprimer(id: string): Promise<void>;");
+    l.push("  supprimer(id: string): Promise<void>;");
   }
   l.push(
     "}",
@@ -121,115 +121,215 @@ function depot(e: Entite): string {
     `export function ${CAMEL(e.id)}DepotNonEcrit(): ${n}Depot {`,
     `  const refus = (): never => { throw new Error("AIR_DEPOT_A_ECRIRE:${e.id}"); };`,
     "  return {",
-    "    lister: refus, lire: refus, creer: refus,",
-    ...(journal ? [] : ["    modifier: refus, supprimer: refus,"]),
+    "    lister: refus, lire: refus, enregistrer: refus,",
+    ...(journal ? [] : ["    supprimer: refus,"]),
+    "  };",
+    "}",
+    "",
+    "// ── UN DÉPÔT QUI N'EST PAS UNE PERSISTANCE, ET QUI LE DIT.",
+    "//",
+    "// Il tient les lignes dans la mémoire du processus : tout disparaît à",
+    "// l'arrêt. Il existe pour qu'un serveur puisse DÉMARRER et que ses refus",
+    "// soient vérifiables à l'exécution — « compile » n'a jamais voulu dire",
+    "// « marche ». Il n'est JAMAIS choisi par défaut : il faut le demander par",
+    "// AIR_DEPOT=memoire. Un serveur qui perdrait silencieusement les données",
+    "// serait pire qu'un serveur qui refuse de les écrire.",
+    `export function ${CAMEL(e.id)}DepotEnMemoire(): ${n}Depot {`,
+    `  const lignes = new Map<string, Partial<${n}>>();`,
+    "  return {",
+    "    lister: async () => [...lignes.values()],",
+    "    lire: async (id) => lignes.get(id) ?? null,",
+    "    enregistrer: async (x) => {",
+    "      lignes.set(x.id, x);",
+    "      return x;",
+    "    },",
+    ...(journal ? [] : ["    supprimer: async (id) => { lignes.delete(id); },"]),
     "  };",
     "}",
   );
   return l.join("\n") + "\n";
 }
 
-/**
- * LES TRANSITIONS D'ÉTAT, REFUSÉES SUR LE SERVEUR.
- *
- * Le document dit ce qui SUCCÈDE À QUOI. L'application le respecte déjà en
- * n'affichant pas les boutons impossibles — mais un écran ne protège de rien :
- * la route s'appelle directement. La garde compare l'état AVANT, lu en base,
- * à celui demandé ; une transition non déclarée est refusée en 409.
- *
- * Rendre un tableau de lignes, et non une chaîne, pour que l'appelant garde
- * l'indentation du corps de route dans lequel elles s'insèrent.
- */
-function gardeTransitions(e: Entite): readonly string[] {
+function routes(e: Entite): string {
+  const n = CAMEL(e.id);
+  const journal = e.appendOnly === true;
+  const enBase = e.fields.filter(
+    (f) => f.derived?.kind === "count" || f.derived?.kind === "sum",
+  );
   const avecEtats = e.fields.filter((f) => f.transitions !== undefined);
-  if (avecEtats.length === 0) return [];
   const l = [
-    "    const precedent = await depot.lire(id);",
-    "    if (precedent === null) return rep.code(404).send({ erreur: \"introuvable\" });",
-    "    const ancien = precedent as unknown as Record<string, unknown>;",
+    `import type { FastifyInstance } from "fastify";`,
+    `import { randomUUID } from "node:crypto";`,
+    `import type { ${n} } from "../modele/${table(e)}.ts";`,
+    `import type { ${n}Depot } from "../depot/${table(e)}.ts";`,
+    ...(enBase.length > 0
+      ? [
+          `import { ${enBase
+            .map((f) => `${n}${PASCAL(f.id)}`)
+            .join(", ")} } from "../calcul/en-base.ts";`,
+        ]
+      : []),
+    "",
+    "// L'ADRESSE EST IMPOSÉE PAR LE CONTRAT, ELLE N'EST PAS CHOISIE ICI.",
+    "//",
+    "// L'application générée appelle /air/v1/entities/<id>/rows — c'est ce que",
+    "// son client écrit. Inventer d'autres adresses donnait un serveur qui",
+    "// compile et à qui aucune application ne sait parler.",
+    `const BASE = ${JSON.stringify(`/air/v1/entities/${e.id}/rows`)};`,
+    "",
+    "/**",
+    " * LA VUE D'UNE LIGNE.",
+    " *",
+    " * Les colonnes LISIBLES seulement — un champ sensible ne sort pas d'ici.",
+    " * Un champ qui demande la base est TENTÉ : s'il lève, son nom part dans",
+    " * l'en-tête `X-Air-Non-Calcule` et la ligne reste lisible. Laisser",
+    " * remonter l'exception rendrait illisible une ligne enregistrée — mesuré",
+    " * sur la pile Java, qui répondait 500.",
+    " */",
+    `function enLigne(x: Partial<${n}>, nonCalcules: Set<string>): Record<string, unknown> {`,
+    "  const src = x as unknown as Record<string, unknown>;",
+    "  const vue: Record<string, unknown> = { id: src[\"id\"] };",
+    ...e.fields.flatMap((f) => {
+      if (f.sensitive === true) {
+        return [`  // « ${f.name} » est SENSIBLE : il ne ressort jamais.`];
+      }
+      if (f.derived?.kind === "count" || f.derived?.kind === "sum") {
+        return [
+          "  try {",
+          `    vue[${JSON.stringify(f.name)}] = ${n}${PASCAL(f.id)}(String(src["id"]));`,
+          "  } catch {",
+          `    nonCalcules.add(${JSON.stringify(f.name)});`,
+          "  }",
+        ];
+      }
+      if (f.derived !== undefined) {
+        return [`  // « ${f.name} » est CALCULÉ par le document, pas stocké ici.`];
+      }
+      return [
+        `  if (src[${JSON.stringify(colonne(f))}] !== undefined) {`,
+        `    vue[${JSON.stringify(f.name)}] = src[${JSON.stringify(colonne(f))}];`,
+        "  }",
+      ];
+    }),
+    "  return vue;",
+    "}",
+    "",
+    "/** Ce que le corps de la requête est autorisé à écrire. */",
+    `function retenir(corps: Record<string, unknown>): Partial<${n}> {`,
+    "  const garde: Record<string, unknown> = {};",
+    ...e.fields.flatMap((f) => {
+      if (f.sensitive === true) {
+        return [`  // « ${f.name} » SENSIBLE : saisi, jamais conservé.`];
+      }
+      if (f.derived !== undefined) {
+        return [`  // « ${f.name} » se CALCULE : il ne s'écrit pas.`];
+      }
+      return [
+        `  if (corps[${JSON.stringify(f.name)}] !== undefined) {`,
+        `    garde[${JSON.stringify(colonne(f))}] = corps[${JSON.stringify(f.name)}];`,
+        "  }",
+      ];
+    }),
+    `  return garde as Partial<${n}>;`,
+    "}",
+    "",
+    `/** Routes de « ${e.name} », montées sur le contrat AIR. */`,
+    `export function ${CAMEL(e.id)}Routes(app: FastifyInstance, depot: ${n}Depot): void {`,
+    "  app.get(BASE, async (_req, rep) => {",
+    "    const nonCalcules = new Set<string>();",
+    "    const vues = (await depot.lister()).map((x) => enLigne(x, nonCalcules));",
+    "    if (nonCalcules.size > 0) {",
+    "      void rep.header(\"X-Air-Non-Calcule\", [...nonCalcules].join(\",\"));",
+    "    }",
+    "    return rep.send(vues);",
+    "  });",
+    "",
+    "  // POST est un UPSERT : le contrat ne distingue pas créer de modifier.",
+    "  app.post(BASE, async (req, rep) => {",
+    "    const corps = (req.body ?? {}) as Record<string, unknown>;",
+    "    const brut = corps[\"id\"];",
+    "    const id = brut === undefined || brut === null ? randomUUID() : String(brut);",
+    "    const existante = await depot.lire(id);",
   ];
-  for (const f of avecEtats) {
-    const paires = (f.transitions ?? []).map((t) => `${t.from}>${t.to}`);
+
+  if (journal) {
     l.push(
-      `    // « ${f.name} » : ${String(paires.length)} transition(s) déclarée(s).`,
-      `    const permises${CAMEL(f.id)} = new Set(${JSON.stringify(paires)});`,
-      `    const de${CAMEL(f.id)} = ancien[${JSON.stringify(colonne(f))}];`,
-      `    const vers${CAMEL(f.id)} = corps[${JSON.stringify(colonne(f))}];`,
-      `    if (`,
-      `      de${CAMEL(f.id)} !== undefined &&`,
-      `      vers${CAMEL(f.id)} !== undefined &&`,
-      `      String(de${CAMEL(f.id)}) !== String(vers${CAMEL(f.id)}) &&`,
-      `      !permises${CAMEL(f.id)}.has(\`\${String(de${CAMEL(f.id)})}>\${String(vers${CAMEL(f.id)})}\`)`,
-      `    ) {`,
+      "    // LE DOCUMENT DÉCLARE CETTE ENTITÉ COMME UN JOURNAL.",
+      "    //",
+      "    // Le refus est prononcé, pas obtenu par absence de route : une route",
+      "    // absente répond 404 — « cette adresse n'existe pas » — ce qui est",
+      "    // faux, l'adresse existe et c'est le geste qui est interdit. Et c'est",
+      "    // le refus que prononce déjà la pile Java : un même document ne doit",
+      "    // pas vouloir dire deux choses selon le serveur qu'on en tire.",
+      "    if (existante !== null) {",
       "      return rep.code(409).send({",
-      `        erreur: "AIR_TRANSITION_INTERDITE",`,
-      `        message: \`« \${String(de${CAMEL(f.id)})} » ne mène pas à « \${String(vers${CAMEL(f.id)})} »\`,`,
+      `        error: "AIR_JOURNAL_REECRITURE",`,
+      `        message: ${JSON.stringify(`« ${e.name} » est un journal : une ligne existante ne se réécrit pas`)},`,
       "      });",
       "    }",
     );
   }
-  return l;
-}
 
-function routes(e: Entite): string {
-  const n = CAMEL(e.id);
-  const journal = e.appendOnly === true;
-  const l = [
-    `import type { FastifyInstance } from "fastify";`,
-    `import type { ${n}Depot } from "../depot/${table(e)}.ts";`,
-    "",
-    `/** Routes de « ${e.name} ». Montées sous /${table(e)}. */`,
-    `export function ${CAMEL(e.id)}Routes(app: FastifyInstance, depot: ${n}Depot): void {`,
-    `  app.get("/${table(e)}", async () => depot.lister());`,
-    `  app.get("/${table(e)}/:id", async (req, rep) => {`,
-    "    const { id } = req.params as { id: string };",
-    "    const x = await depot.lire(id);",
-    "    if (x === null) return rep.code(404).send({ erreur: \"introuvable\" });",
-    "    return x;",
+  for (const f of avecEtats) {
+    const paires = (f.transitions ?? []).map((t) => `${t.from}>${t.to}`);
+    l.push(
+      `    // « ${f.name} » : ${String(paires.length)} transition(s) déclarée(s). L'écran`,
+      "    // n'affiche pas les gestes impossibles, mais la route s'appelle",
+      "    // directement — c'est ici que le refus compte.",
+      `    const permises${PASCAL(f.id)} = new Set(${JSON.stringify(paires)});`,
+      `    const de${PASCAL(f.id)} =`,
+      `      existante === null`,
+      "        ? undefined",
+      `        : (existante as unknown as Record<string, unknown>)[${JSON.stringify(colonne(f))}];`,
+      `    const vers${PASCAL(f.id)} = corps[${JSON.stringify(f.name)}];`,
+      "    if (",
+      `      de${PASCAL(f.id)} !== undefined &&`,
+      `      vers${PASCAL(f.id)} !== undefined &&`,
+      `      String(de${PASCAL(f.id)}) !== String(vers${PASCAL(f.id)}) &&`,
+      `      !permises${PASCAL(f.id)}.has(\`\${String(de${PASCAL(f.id)})}>\${String(vers${PASCAL(f.id)})}\`)`,
+      "    ) {",
+      "      return rep.code(409).send({",
+      `        error: "AIR_TRANSITION_INTERDITE",`,
+      `        message: \`« \${String(de${PASCAL(f.id)})} » ne mène pas à « \${String(vers${PASCAL(f.id)})} »\`,`,
+      "      });",
+      "    }",
+    );
+  }
+
+  l.push(
+    "    const ligne = await depot.enregistrer({",
+    "      ...(existante ?? {}),",
+    "      ...retenir(corps),",
+    "      id,",
+    "    });",
+    "    const nonCalcules = new Set<string>();",
+    "    const vue = enLigne(ligne, nonCalcules);",
+    "    if (nonCalcules.size > 0) {",
+    "      void rep.header(\"X-Air-Non-Calcule\", [...nonCalcules].join(\",\"));",
+    "    }",
+    "    return rep.send(vue);",
     "  });",
-    `  app.post("/${table(e)}", async (req, rep) =>`,
-    `    rep.code(201).send(await depot.creer(req.body as never)));`,
-  ];
+    "",
+    "  app.delete(`${BASE}/:id`, async (req, rep) => {",
+  );
+
   if (journal) {
     l.push(
-      "  // LE DOCUMENT DÉCLARE CETTE ENTITÉ COMME UN JOURNAL.",
-      "  //",
-      "  // Les routes EXISTENT et REFUSENT, au lieu d'être absentes. Une route",
-      "  // absente répond 404 — « cette adresse n'existe pas » — ce qui est",
-      "  // faux et se lit comme une erreur de montage côté appelant. Le 409",
-      "  // dit la vraie raison, et c'est le même refus que la pile Java : le",
-      "  // document ne doit pas vouloir dire deux choses selon le serveur.",
-      `  app.patch("/${table(e)}/:id", async (req, rep) => {`,
       "    void req;",
       "    return rep.code(409).send({",
-      `      erreur: "AIR_JOURNAL_REECRITURE",`,
-      `      message: ${JSON.stringify(`« ${e.name} » est un journal : une ligne existante ne se réécrit pas`)},`,
+      `      error: "AIR_JOURNAL_SUPPRESSION",`,
+      `      message: ${JSON.stringify(`« ${e.name} » est un journal : rien ne s'y efface`)},`,
       "    });",
-      "  });",
-      `  app.delete("/${table(e)}/:id", async (req, rep) => {`,
-      "    void req;",
-      "    return rep.code(409).send({",
-      `      erreur: "AIR_JOURNAL_SUPPRESSION",`,
-      `      message: ${JSON.stringify(`« ${e.name} » est un journal : une ligne ne s'efface pas`)},`,
-      "    });",
-      "  });",
     );
   } else {
     l.push(
-      `  app.patch("/${table(e)}/:id", async (req, rep) => {`,
-      "    const { id } = req.params as { id: string };",
-      "    const corps = req.body as Record<string, unknown>;",
-      ...gardeTransitions(e),
-      "    return depot.modifier(id, corps as never);",
-      "  });",
-      `  app.delete("/${table(e)}/:id", async (req, rep) => {`,
       "    const { id } = req.params as { id: string };",
       "    await depot.supprimer(id);",
       "    return rep.code(204).send();",
-      "  });",
     );
   }
-  l.push("}");
+
+  l.push("  });", "}");
   return l.join("\n") + "\n";
 }
 
@@ -311,14 +411,19 @@ function serveur(air: ProjectAir): string {
     `import Fastify from "fastify";`,
     ...air.entities.map((e) => `import { ${CAMEL(e.id)}Routes } from "./api/${table(e)}.ts";`),
     ...air.entities.map(
-      (e) => `import { ${CAMEL(e.id)}DepotNonEcrit } from "./depot/${table(e)}.ts";`,
+      (e) =>
+        `import { ${CAMEL(e.id)}DepotNonEcrit, ${CAMEL(e.id)}DepotEnMemoire } from "./depot/${table(e)}.ts";`,
     ),
     "",
     `// ÉMIS depuis le contrat de « ${air.app.name} ».`,
     "export function construire(): ReturnType<typeof Fastify> {",
     "  const app = Fastify({ logger: true });",
+    "  // Le dépôt PAR DÉFAUT refuse d'écrire : il reste à écrire, et il le dit.",
+    "  // `memoire` existe pour démarrer et vérifier les refus — rien n'y survit.",
+    "  const enMemoire = process.env.AIR_DEPOT === \"memoire\";",
     ...air.entities.map(
-      (e) => `  ${CAMEL(e.id)}Routes(app, ${CAMEL(e.id)}DepotNonEcrit());`,
+      (e) =>
+        `  ${CAMEL(e.id)}Routes(app, enMemoire ? ${CAMEL(e.id)}DepotEnMemoire() : ${CAMEL(e.id)}DepotNonEcrit());`,
     ),
     "  return app;",
     "}",
