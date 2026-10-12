@@ -1,0 +1,157 @@
+# MATRICE DE COUVERTURE — le moteur face aux référentiels externes
+
+> **Ce document ne sert à rien s'il mentit une seule fois.** Chaque ligne
+> « couvert » porte une PREUVE : un test nommé, une ligne de portail, une clé
+> du format, ou une mesure datée. Jamais un `grep` — mesuré le 2026-10-12, le
+> mot « Inv**aria**nts » a fait passer le registre pour accessible.
+>
+> Les lignes « non mesuré » sont honnêtes et attendues : une matrice qui
+> prétend tout savoir dès le premier jour ne se lit plus.
+
+## Pourquoi six sources et pas une
+
+Une seule autorité est un seul point de vue. Mesuré le 2026-10-12 : les trois
+sources de sécurité désignent le même endroit, deux sources indépendantes
+désignent l'accessibilité, et **aucune** ne mentionne le PDF ni les
+graphiques — que seul un cahier des charges réel a révélés.
+
+Les référentiels couvrent ce que **tout le monde** exige. Les cahiers couvrent
+ce que **ce marché** exige. Il faut les deux ; ce document ne porte que les
+premiers.
+
+| Source | Version | Taille | Nature |
+|---|---|---|---|
+| OWASP ASVS | 5.0 (mai 2025) | 17 chapitres, ~350 exigences | sécurité web/API |
+| OWASP MASVS | 2.1.0 | 8 catégories, 24 contrôles | sécurité mobile |
+| Apple / Google Play | 2026 | 5 portes de conformité | obligation de mise en marché |
+| EN 301 549 | 2 sept. 2026 | WCAG 2.2 niveau AA | obligation légale UE (EAA) |
+| WebCoderBench | janv. 2026 | 9 perspectives, 24 métriques | qualité des apps générées |
+| Gartner LCAP | 2026 | 6 capacités | plateforme |
+| Supabase / Firebase | 2026 | socle technique | capacités de plateforme |
+
+## Légende
+
+- 🟢 **couvert** — une preuve nommée, vérifiable aujourd'hui
+- 🟡 **partiel** — une partie seulement, et on dit laquelle
+- 🔴 **absent** — mesuré absent
+- ⚪ **non mesuré** — pas encore regardé ; ne pas lire comme « absent »
+
+---
+
+## 1. OWASP ASVS 5.0 — par chapitre
+
+| # | Chapitre | État | Preuve / manque |
+|---|---|---|---|
+| V1 | Encoding and Sanitization | ⚪ | non mesuré |
+| V2 | Validation and Business Logic | 🟢 | 160 règles de validation émises et appliquées ; portail vivant, refus 422 nommant la règle, 3 configurations |
+| V3 | Web Frontend Security | ⚪ | non mesuré |
+| V4 | API and Web Service | 🟡 | contrat `/air/v1/entities/<id>/rows` émis et démarré ; en-têtes de sécurité non mesurés |
+| V5 | File Handling | 🟡 | **Node : fait.** Le serveur refuse une référence `asset` hors de `network.allowedDomains` — 29 documents sur 31 contrôlés, test au cliquet. Chemin relatif accepté, URL illisible refusée. **Java : pas encore.** Empreinte de fichier : toujours absente (le fichier ne passe pas par le serveur) |
+| V6 | Authentication | 🔴 | **BLOQUÉ PAR UNE DÉCISION DE FORMAT.** Vérifié : le seul renvoi canonique vers une entité d'identité est `access.delegation.subjectEntityId`, qui désigne un mandat — pas un magasin de comptes. Implémenter exigerait d'INVENTER une convention |
+| V7 | Session Management | 🔴 | même blocage que V6 |
+| V8 | Authorization | 🟢 | filtres de visibilité en SQL depuis les règles du document ; fermé par défaut ; portail vivant — ligne écrite, invisible |
+| V9 | Self-contained Tokens | 🟢 | `src/appelant.ts` — HS256, algorithme imposé, `exp` exigé, comparaison à temps constant ; jeton mal signé refusé (prouvé) |
+| V10 | OAuth and OIDC | 🔴 | aucun |
+| V11 | Cryptography | 🟡 | HMAC pour les jetons ; aucun chiffrement au repos exprimable |
+| V12 | Secure Communication | 🟢 | TLS par défaut dès que l'hôte n'est pas local, certificat vérifié ; test l'interdit de régresser |
+| V13 | Configuration | 🟡 | aucun secret dans les fichiers émis (test) ; durcissement non mesuré |
+| V14+ | Data Protection · Malicious Code · Business Logic · WebRTC | ⚪ | non mesuré |
+
+## 2. OWASP MASVS 2.1 — par catégorie
+
+| Catégorie | État | Preuve / manque |
+|---|---|---|
+| MASVS-STORAGE | 🟡 | champs `sensitive` jamais conservés ni rendus (test) ; chiffrement du stockage non exprimable |
+| MASVS-CRYPTO | 🟡 | voir ASVS V11 |
+| MASVS-AUTH | 🔴 | voir ASVS V6/V7 — bloqué par une décision de format |
+| MASVS-NETWORK | 🟢 | voir ASVS V12 |
+| MASVS-PLATFORM | ⚪ | non mesuré |
+| MASVS-CODE | ⚪ | non mesuré |
+| MASVS-RESILIENCE | ⚪ | non mesuré |
+| MASVS-PRIVACY | 🟡 | `dataCollected` déclaré au format ; cliquets de partage tiers existants |
+
+## 3. Obligations de mise en marché — 2026
+
+| Obligation | État | Preuve / manque |
+|---|---|---|
+| Suppression de compte **dans** l'app (Apple 5.1.1(v), Play) | 🟡 | `compliance.accountDeletionRequired` au format ; l'émission du parcours n'est pas mesurée |
+| Déclaration Data Safety | 🟡 | `compliance.dataCollected` au format |
+| API cible Android 36 | 🟡 | le format déclare le MINIMUM (`minAndroidSdk`), pas la cible |
+| Consentement IA (Apple 5.1.2(i)) | ⚪ | une notion de consentement existe ; couverture non vérifiée |
+| Manifeste de confidentialité iOS | ⚪ | un cliquet d'API sensibles iOS existe ; lien non vérifié |
+
+## 4. EN 301 549 → WCAG 2.2 AA — **obligation légale UE**
+
+> **CORRECTION DU 2026-10-12.** J'avais écrit « absent — 0 clé au format ».
+> C'était faux de la manière qui compte : ça laissait croire que les apps
+> générées sont inaccessibles. Mesuré ensuite dans le runtime embarqué :
+> **118 `accessibilityLabel`** et **26 `accessibilityRole`**, dont **46
+> libellés venus du DOCUMENT** (`f.label`, `title`, `search.placeholder`) et
+> **zéro en dur**. L'accessibilité n'est pas au format parce qu'elle n'a pas
+> à y être : le nom accessible EST le libellé que le document déclare déjà.
+
+| Exigence | État | Preuve / manque |
+|---|---|---|
+| Noms accessibles des composants | 🟢 | 118 `accessibilityLabel` au runtime, 46 alimentés par le document, 0 en dur |
+| Rôles accessibles | 🟢 | 26 `accessibilityRole` au runtime |
+| Texte de remplacement des images | ⚪ | non mesuré — à regarder si le format transporte des images de contenu |
+| Contraste 4.5:1, cibles ≥ 24 px, focus visible | ⚪ | non mesuré ; mesurable depuis les jetons de design |
+| Langue déclarée | ⚪ | non mesuré |
+
+## 5. WebCoderBench — 9 perspectives
+
+| Perspective | État | Preuve / manque |
+|---|---|---|
+| Code Quality | 🟢 | lint + typecheck bloquants sur les apps émises (portails `app_compile`, `app_web`) |
+| Visual Quality | ⚪ | non mesuré |
+| Content Quality | ⚪ | non mesuré |
+| Performance Quality | ⚪ | non mesuré |
+| **Accessibility** | 🟡 | noms et rôles couverts (§4) ; contraste, cibles et focus non mesurés |
+| Maintainability | ⚪ | non mesuré |
+| Functional / Visual / Content Alignment | ⚪ | non mesuré |
+
+## 6. Socle technique — Supabase / Firebase 2026
+
+| Capacité | État | Preuve / manque |
+|---|---|---|
+| Base relationnelle | 🟢 | schéma SQL émis, appliqué au démarrage ; SQLite et Postgres réels prouvés |
+| Stockage de fichiers | 🟡 | capacité `media_upload` au registre ; transformations non exprimables |
+| **Temps réel** | 🔴 | **0 clé** au format |
+| Fonctions serveur | 🟢 | deux piles émises et DÉMARRÉES (48/48 preuves) |
+| **Recherche sémantique / vecteurs** | 🔴 | **0 clé** |
+| Hors-ligne | 🟡 | capacité `offline_storage` au registre ; comportement non mesuré |
+
+---
+
+## Ce qui est BLOQUÉ par une décision du propriétaire
+
+Vérifié le 2026-10-12, dépendance par dépendance — ces lignes ne peuvent pas
+avancer sans qu'une convention soit ARBITRÉE, et l'inventer serait refaire
+l'erreur du vocabulaire d'authentification.
+
+| Ligne | Décision attendue |
+|---|---|
+| ASVS V6 · V7 · MASVS-AUTH | où le document déclare-t-il le magasin de comptes ? |
+| ASVS V10 (OAuth/OIDC) | même dépendance |
+| Temps réel | aucune clé au format : faut-il l'ajouter ? |
+| Recherche sémantique | aucune clé au format |
+
+## Ce qui peut avancer SANS décision
+
+| Ligne | Action exacte |
+|---|---|
+| ASVS V5 — parité Java | porter le même contrôle de référence sur la pile Java |
+| 16 lignes « non mesuré » | les mesurer ; l'accessibilité a montré qu'une ligne non mesurée peut être déjà couverte |
+
+## Progression
+
+Le compte est RECALCULÉ depuis le tableau, jamais écrit à la main : j'ai
+annoncé 9/12/9/16 au premier jet alors que le document disait 8/11/9/15.
+Un chiffre tapé à la main se désaccorde du document qu'il résume.
+
+| Date | Couvert | Partiel | Absent | Non mesuré | Lignes |
+|---|---|---|---|---|---|
+| 2026-10-12 · matrice créée | 8 | 11 | 9 | 15 | 43 |
+| 2026-10-12 · accessibilité mesurée | 10 | 12 | 7 | 16 | 45 |
+| 2026-10-12 · dépendances vérifiées | 10 | 12 | 7 | 16 | 45 |
+| 2026-10-12 · ASVS V5 (Node) | 10 | 13 | 6 | 16 | 45 |

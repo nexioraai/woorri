@@ -1001,6 +1001,29 @@ function reglesMetier(air: ProjectAir): string {
     "  return v !== undefined && v !== null && v !== \"\";",
     "}",
     "",
+    "// ── UNE RÉFÉRENCE DE FICHIER NE DOIT PAS SORTIR DES DOMAINES DÉCLARÉS.",
+    "//",
+    "// Mesuré le 2026-10-12 : 60 champs `asset` dans 29 documents sur 31, et",
+    "// les deux émetteurs backend n'en parlaient pas une seule fois. Une ligne",
+    "// pouvait donc porter une référence vers n'importe quel hôte — une image",
+    "// servie depuis un domaine que personne n'a déclaré, et le document dit",
+    "// pourtant lesquels sont permis (`network.allowedDomains`).",
+    "//",
+    "// Rien n'est inventé ici : les deux faits viennent du document.",
+    "//",
+    "// Un chemin RELATIF est accepté : il désigne le stockage de l'application",
+    "// elle-même. Une URL absolue doit nommer un domaine déclaré. Une URL",
+    "// illisible est REFUSÉE — ne pas savoir n'est pas une permission.",
+    `const DOMAINES: readonly string[] = ${JSON.stringify(air.network.allowedDomains)};`,
+    "function refHorsDomaine(v: unknown): boolean {",
+    "  if (typeof v !== \"string\" || !v.includes(\"://\")) return false;",
+    "  try {",
+    "    return !DOMAINES.includes(new URL(v).hostname);",
+    "  } catch {",
+    "    return true;",
+    "  }",
+    "}",
+    "",
   ];
   const validation = air.rules.filter((r) => r.kind === "validation");
   const autorisation = air.rules.filter((r) => r.kind !== "validation");
@@ -1020,7 +1043,17 @@ function reglesMetier(air: ProjectAir): string {
       ` */`,
       `export function verifier${PASCAL(e.id)}(ligne: Record<string, unknown>): Violation | null {`,
     );
-    if (miennes.length === 0) {
+    const assets = e.fields.filter((f) => f.type === "asset" && f.derived === undefined);
+    for (const f of assets) {
+      l.push(
+        `  // « ${f.name} » désigne un fichier : sa référence doit rester dans les`,
+        `  // domaines que le document déclare.`,
+        `  if (refHorsDomaine(ligne[${JSON.stringify(colonne(f))}])) {`,
+        `    return { regle: "AIR_ASSET_HORS_DOMAINE", message: ${JSON.stringify(`« ${f.name} » pointe hors des domaines déclarés`)} };`,
+        "  }",
+      );
+    }
+    if (miennes.length === 0 && assets.length === 0) {
       l.push("  void ligne;", "  // Le document n'en déclare aucune pour cette entité.");
     }
     for (const r of miennes) {

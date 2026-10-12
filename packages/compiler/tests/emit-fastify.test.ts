@@ -257,6 +257,40 @@ describe("une règle sur un champ calculé se déclenche vraiment", () => {
   });
 });
 
+// ── UNE RÉFÉRENCE DE FICHIER NE SORT PAS DES DOMAINES DÉCLARÉS.
+//
+// Mesuré le 2026-10-12 : 60 champs `asset` dans 29 documents sur 31, et les
+// deux émetteurs backend n'en parlaient pas une seule fois. Le document
+// déclare pourtant `network.allowedDomains`, et le serveur ne le lisait
+// jamais. ASVS 5.0 V5 (File Handling).
+describe("les références de fichier restent dans les domaines déclarés", () => {
+  it("chaque champ asset est contrôlé, et le refus se nomme", () => {
+    const a = air();
+    const assets = a.entities.flatMap((e) =>
+      e.fields.filter((f) => f.type === "asset" && f.derived === undefined),
+    );
+    if (assets.length === 0) return;
+    const src = new Map(compileBackend(a).files).get("src/api/regles-metier.ts") ?? "";
+    expect(src).toContain("AIR_ASSET_HORS_DOMAINE");
+    for (const f of assets) expect(src, f.id).toContain(f.id.replace(/^fld_/u, ""));
+  });
+
+  // Un chemin relatif désigne le stockage de l'application : il passe. Une URL
+  // illisible est REFUSÉE — ne pas savoir n'est pas une permission.
+  it("un chemin relatif passe, une URL illisible est refusée", () => {
+    const src = new Map(compileBackend(air()).files).get("src/api/regles-metier.ts") ?? "";
+    expect(src).toContain('!v.includes("://")) return false');
+    expect(src).toMatch(/catch \{\s*\n?\s*return true;/u);
+  });
+
+  // Les domaines viennent du DOCUMENT, jamais d'une liste écrite ici.
+  it("la liste des domaines vient du document", () => {
+    const a = air();
+    const src = new Map(compileBackend(a).files).get("src/api/regles-metier.ts") ?? "";
+    for (const d of a.network.allowedDomains) expect(src, d).toContain(d);
+  });
+});
+
 describe("les règles du document sont faites respecter par le serveur", () => {
   it("chaque règle de validation est dans le code, et nommée", () => {
     const a = air();
