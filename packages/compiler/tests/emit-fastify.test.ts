@@ -263,6 +263,40 @@ describe("une règle sur un champ calculé se déclenche vraiment", () => {
 // deux émetteurs backend n'en parlaient pas une seule fois. Le document
 // déclare pourtant `network.allowedDomains`, et le serveur ne le lisait
 // jamais. ASVS 5.0 V5 (File Handling).
+// ── ON NE CRÉE PAS LE CONTENANT DE CE QU'ON NE GARDE PAS.
+//
+// Mesuré le 2026-10-12 : les 5 champs `sensitive` du corpus avaient une
+// COLONNE dans le schéma émis — `profil_mot_de_passe`,
+// `paiement_numero_carte` — alors que le serveur ne leur écrit jamais rien.
+// Aucune fuite, mais une colonne morte qui invite à être remplie par un autre
+// chemin. ASVS 5.0 V14 (Data Protection).
+describe("un champ sensible n’a pas de colonne en base", () => {
+  it("le schéma SQL ne nomme aucun champ sensible", () => {
+    const a = air();
+    const sensibles = a.entities.flatMap((e) =>
+      e.fields.filter((f) => f.sensitive === true).map((f) => f.id.replace(/^fld_/u, "")),
+    );
+    if (sensibles.length === 0) return;
+    const ddl = new Map(compileBackend(a).files).get("schema.sql") ?? "";
+    for (const c of sensibles) expect(ddl, c).not.toMatch(new RegExp("\\b" + c + "\\b", "u"));
+  });
+
+  // Le schéma et l'ordre d'insertion viennent de la MÊME liste. Les séparer
+  // casserait l'écriture : l'insertion nommerait une colonne inexistante.
+  it("l’insertion ne nomme aucun champ sensible non plus", () => {
+    const a = air();
+    const sensibles = a.entities.flatMap((e) =>
+      e.fields.filter((f) => f.sensitive === true).map((f) => f.id.replace(/^fld_/u, "")),
+    );
+    if (sensibles.length === 0) return;
+    for (const [f, c] of new Map(compileBackend(a).files)) {
+      if (!f.startsWith("src/depot/")) continue;
+      const cols = /const COLS = (\[[^\]]*\])/u.exec(c)?.[1] ?? "[]";
+      for (const s of sensibles) expect(cols, f + " / " + s).not.toContain('"' + s + '"');
+    }
+  });
+});
+
 describe("les références de fichier restent dans les domaines déclarés", () => {
   it("chaque champ asset est contrôlé, et le refus se nomme", () => {
     const a = air();

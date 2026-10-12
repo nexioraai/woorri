@@ -66,6 +66,24 @@ const stockes = (e: Entite): Champ[] => e.fields.filter((f) => f.derived === und
 const lisibles = (e: Entite): Champ[] => stockes(e).filter((f) => f.sensitive !== true);
 
 /**
+ * CE QUI EST RÉELLEMENT CONSERVÉ EN BASE.
+ *
+ * Mesuré le 2026-10-12 : les 5 champs `sensitive` du corpus avaient une
+ * COLONNE dans le schéma émis — `profil_mot_de_passe`,
+ * `paiement_numero_carte` — alors que le serveur ne leur écrit jamais rien.
+ * La colonne était morte, et un schéma qui annonce stocker un numéro de carte
+ * invite à le remplir par un autre chemin : une requête à la main, un import,
+ * un correctif pressé.
+ *
+ * On ne crée pas le contenant de ce qu'on a décidé de ne pas garder.
+ *
+ * MÊME LISTE pour le schéma ET pour l'ordre d'insertion : les séparer
+ * casserait l'écriture au premier champ sensible — l'insertion nommerait une
+ * colonne qui n'existe pas.
+ */
+const conserves = (e: Entite): Champ[] => stockes(e).filter((f) => f.sensitive !== true);
+
+/**
  * LE TYPE SQL D'UN CHAMP.
  *
  * Trois types seulement, et c'est voulu : ils ont le MÊME sens en SQLite et
@@ -108,7 +126,7 @@ function schemaSql(air: ProjectAir): string {
       `-- « ${e.name} »${e.appendOnly === true ? " — JOURNAL : rien ne s'y réécrit ni s'y efface." : ""}`,
       `create table if not exists ${table(e)} (`,
       "  id text primary key",
-      ...stockes(e).map((f) => `, ${colonne(f)} ${typeSql(f)}`),
+      ...conserves(e).map((f) => `, ${colonne(f)} ${typeSql(f)}`),
       ");",
       "",
     );
@@ -387,7 +405,7 @@ function modele(e: Entite): string {
     `export interface ${CAMEL(e.id)} {`,
     "  id: string;",
   ];
-  for (const f of stockes(e)) {
+  for (const f of conserves(e)) {
     l.push(`  ${colonne(f)}${f.required ? "" : "?"}: ${typeTs(f)};`);
   }
   l.push("}");
@@ -493,7 +511,7 @@ function depot(air: ProjectAir, e: Entite): string {
   // refusera. Le dépôt n'a alors aucun filtre à poser — mais il ne doit
   // surtout pas en poser un partiel, qui aurait l'air de protéger.
   const vis = "bloque" in v ? { sql: "", params: [], besoinAppelant: false } : v;
-  const cols = stockes(e).map(colonne);
+  const cols = conserves(e).map(colonne);
   const lus = lisibles(e).map(colonne);
   const journal = e.appendOnly === true;
   const l = [
