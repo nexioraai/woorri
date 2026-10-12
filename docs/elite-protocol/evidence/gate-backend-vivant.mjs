@@ -264,14 +264,80 @@ for (const [rang, { pile, base }] of PILES.entries()) {
       dire(creer.ok, `une ligne à états se CRÉE (${t0.from})`, `HTTP ${String(creer.status)}`);
 
       // ── LE CALCUL NON ÉCRIT NE DOIT PAS RENDRE LA LIGNE ILLISIBLE.
+      // ── UN CALCUL, DEUX ISSUES LÉGITIMES, ET UNE SEULE INTERDITE.
+      //
+      // Si la clé qui relie l'enfant au parent se résout, le serveur doit
+      // rendre un NOMBRE. Si elle est indécidable — deux champs vers le même
+      // parent — il doit refuser en SE NOMMANT dans X-Air-Non-Calcule, et la
+      // ligne doit rester lisible. Ce qui est interdit, c'est de rendre zéro
+      // en silence : une cagnotte à zéro ressemble à une cagnotte vide.
       const calcule = avecEtats.fields.find((f) => f.derived !== undefined);
       if (calcule !== undefined) {
         const lu = await fetch(`${B}/${avecEtats.id}/rows`);
         const entete = lu.headers.get("X-Air-Non-Calcule") ?? "";
+        const rows = lu.ok ? await lu.json() : [];
+        const g2 = rows.find((x) => x.id === "gate2");
+        const v = g2?.values?.[calcule.name];
+        const nomme = entete.includes(calcule.name);
         dire(
-          lu.ok && entete.includes(calcule.name),
-          "un calcul NON ÉCRIT laisse la ligne lisible et se NOMME",
-          `HTTP ${String(lu.status)} · X-Air-Non-Calcule: ${entete || "(absent)"}`,
+          lu.ok && (typeof v === "number" || nomme),
+          nomme
+            ? "un calcul INDÉCIDABLE laisse la ligne lisible et se NOMME"
+            : "un calcul se fait vraiment et rend un NOMBRE",
+          `HTTP ${String(lu.status)} · ${calcule.name} = ${JSON.stringify(v)} (${typeof v})` +
+            ` · X-Air-Non-Calcule: ${entete || "(absent)"}`,
+        );
+      }
+
+      // ── LA SOMME DOIT ÊTRE LA BONNE, PAS SEULEMENT UN NOMBRE.
+      //
+      // Une fonction qui rendrait TOUJOURS zéro passait la preuve ci-dessus.
+      // On écrit donc deux lignes enfant de montants connus, et on exige le
+      // total exact. C'est la seule façon de distinguer « ça calcule » de
+      // « ça rend zéro », et zéro est précisément la valeur qui trompe.
+      const somme = avecEtats.fields.find((f) => f.derived?.kind === "sum");
+      const relS = somme === undefined ? undefined : air.relations.find((r) => r.id === somme.derived.relationId);
+      const enfant = relS === undefined ? undefined : air.entities.find((e) => e.id === relS.toEntityId);
+      const cle = enfant?.fields.filter((f) => f.referencesEntityId === relS?.fromEntityId);
+      const champSomme = enfant?.fields.find((f) => f.id === somme?.derived.fieldId);
+      if (enfant !== undefined && cle?.length === 1 && champSomme !== undefined) {
+        const montants = [250.5, 749.5];
+        for (const [k, m] of montants.entries()) {
+          const corps = { id: `gateS${String(k)}` };
+          for (const f of enfant.fields) {
+            if (f.required !== true || f.derived !== undefined || f.sensitive === true) continue;
+            corps[f.name] =
+              f.id === cle[0].id
+                ? "gate2"
+                : f.id === champSomme.id
+                  ? m
+                  : f.type === "datetime"
+                    ? "2026-01-01T00:00:00Z"
+                    : f.type === "decimal" || f.type === "number"
+                      ? 0
+                      : f.type === "boolean"
+                        ? false
+                        : (f.enumValues ?? ["x"])[0];
+          }
+          corps[cle[0].name] = "gate2";
+          corps[champSomme.name] = m;
+          await fetch(`${B}/${enfant.id}/rows`, {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify(corps),
+          });
+        }
+        const attendu = montants.reduce((t, m) => t + m, 0);
+        const relu = await fetch(`${B}/${avecEtats.id}/rows`);
+        const parents = relu.ok ? await relu.json() : [];
+        const obtenu = parents.find((x) => x.id === "gate2")?.values?.[somme.name];
+        const entete = relu.headers.get("X-Air-Non-Calcule") ?? "";
+        dire(
+          obtenu === attendu || entete.includes(somme.name),
+          entete.includes(somme.name)
+            ? `la somme INDÉCIDABLE se nomme au lieu de rendre zéro (« ${somme.name} »)`
+            : `la somme est EXACTE (« ${somme.name} » = ${String(attendu)})`,
+          `obtenu ${JSON.stringify(obtenu)} sur ${String(montants.length)} ligne(s) de « ${enfant.name} »`,
         );
       }
 

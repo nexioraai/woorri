@@ -141,14 +141,37 @@ describe("les refus sont DANS le code, pas en commentaire", () => {
   // Un `count`/`sum` traverse une relation : la requête dépend de la base
   // réelle. Rendre 0 serait le pire choix — une cagnotte à zéro ressemble à
   // une cagnotte vide. La fonction lève, et nomme le champ.
-  it("un calcul qui demande la base LÈVE au lieu de rendre zéro", () => {
-    const enBase = air().entities.flatMap((e) =>
+  // ── UN CALCUL SE FAIT, OU SE NOMME. JAMAIS ZÉRO EN SILENCE.
+  //
+  // Le trou n'était justifié que tant que l'émetteur ignorait les tables :
+  // il les produit, et la colonne qui relie l'enfant au parent est déclarée
+  // par `referencesEntityId`. Il calcule donc — SAUF si l'enfant porte deux
+  // champs vers le même parent, où rien ne dit lequel compte : il LÈVE
+  // alors, et son nom part dans l'en-tête. Rendre zéro serait le pire des
+  // trois : une cagnotte à zéro ressemble à une cagnotte vide.
+  it("un calcul se fait vraiment, ou se nomme — jamais zéro en silence", () => {
+    const a = air();
+    const enBase = a.entities.flatMap((e) =>
       e.fields.filter((f) => f.derived?.kind === "count" || f.derived?.kind === "sum"),
     );
     if (enBase.length === 0) return;
     const src = sortie().get("src/calcul/en-base.ts") ?? "";
-    for (const f of enBase) expect(src, f.id).toContain(`AIR_CALCUL_A_ECRIRE:${f.id}`);
-    expect(src).not.toContain("return 0");
+    for (const f of enBase) {
+      const d = f.derived;
+      if (d === undefined || (d.kind !== "count" && d.kind !== "sum")) continue;
+      const rel = a.relations.find((r) => r.id === d.relationId);
+      const enfant = a.entities.find((x) => x.id === rel?.toEntityId);
+      const cles =
+        rel === undefined || enfant === undefined
+          ? []
+          : enfant.fields.filter((x) => x.referencesEntityId === rel.fromEntityId);
+      if (cles.length === 1) {
+        expect(src, f.id).toContain(d.kind === "count" ? "count(*)" : "coalesce(sum(");
+      } else {
+        expect(src, f.id).toContain(`AIR_CALCUL_A_ECRIRE:${f.id}`);
+      }
+    }
+    expect(src).not.toContain("return 0;");
   });
 
   it("un champ SENSIBLE ne sort d’aucune lecture", () => {
@@ -232,9 +255,32 @@ describe("ce qui dépend de la base ne se devine pas", () => {
     const enBase = air().entities.flatMap((e) =>
       e.fields.filter((f) => f.derived?.kind === "count" || f.derived?.kind === "sum"),
     );
-    if (enBase.length > 0) expect(tout()).toContain("AIR_CALCUL_A_ECRIRE");
+    // Le calcul n'est plus un trou dès que la clé se résout : ne l'exiger que
+    // là où le document est réellement muet.
+    const muet = enBase.some((f) => {
+      const dd = f.derived;
+      if (dd === undefined || (dd.kind !== "count" && dd.kind !== "sum")) return false;
+      const rel = air().relations.find((r) => r.id === dd.relationId);
+      const enfant = air().entities.find((x) => x.id === rel?.toEntityId);
+      if (rel === undefined || enfant === undefined) return true;
+      return enfant.fields.filter((x) => x.referencesEntityId === rel.fromEntityId).length !== 1;
+    });
+    if (muet) expect(tout()).toContain("AIR_CALCUL_A_ECRIRE");
     if (air().rules.length > 0) expect(tout()).toContain("AIR_REGLE_A_ECRIRE");
     expect(enBase.length + air().rules.length).toBeGreaterThan(0);
+  });
+
+  // ── LE DÉFAUT NE DOIT JAMAIS ÊTRE « EN CLAIR » NI « SANS VÉRIFIER ».
+  //
+  // Mesuré le 2026-10-12 : une URL Supabase sans `sslmode` donne
+  // `ssl = undefined` chez `pg` — connexion EN CLAIR vers l'internet. Ça
+  // marche, et ça fuit : personne ne le voit. Et `rejectUnauthorized: false`
+  // serait pire qu'utile — chiffrer sans protéger.
+  it("un hôte distant est chiffré, et son certificat vérifié", () => {
+    const b = sortie().get("src/base.ts") ?? "";
+    expect(b).toContain("rejectUnauthorized: true");
+    expect(b).not.toContain("rejectUnauthorized: false");
+    expect(b).toContain("localhost");
   });
 
   it("aucun secret, aucune clé dans le code émis", () => {

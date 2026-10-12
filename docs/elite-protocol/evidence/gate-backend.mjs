@@ -86,9 +86,22 @@ for (const [nom, chemin, transformer] of documentsDuCorpus(R)) {
   } catch {
     continue; // la gate de compilation d'app rapporte déjà les documents invalides
   }
+  // ── TOUS LES DOCUMENTS, PAS SEULEMENT CELUI QUI DEMANDE UN SERVEUR.
+  //
+  // Mesuré : sur 31 documents du corpus, UN SEUL déclare `backend: genere`.
+  // Les émetteurs n'étaient donc éprouvés que sur ce document-là — un défaut
+  // qui n'apparaîtrait que sur le dix-septième ne se serait vu qu'en
+  // production. Le corpus est GELÉ : on n'y touche pas, on injecte le
+  // serveur ICI, après validation, comme la gate le fait déjà pour la pile.
+  //
+  // `domain` est volontairement omis : le validateur exige qu'il figure dans
+  // `network.allowedDomains`, et l'inventer ferait échouer des documents sur
+  // une propriété que cette gate ne mesure pas.
   const genere = air.backend !== undefined && air.backend.kind === "genere";
-  for (const pile of genere ? PILES : [air.backend?.stack ?? "aucune"]) {
-  const airPile = genere ? { ...air, backend: { ...air.backend, stack: pile } } : air;
+  for (const pile of PILES) {
+  const airPile = genere
+    ? { ...air, backend: { ...air.backend, stack: pile } }
+    : { ...air, backend: { kind: "genere", stack: pile } };
   const { files } = compileBackend(airPile);
   // ── UN DOCUMENT SANS BACKEND N'EST PAS UN ÉCHEC.
   //
@@ -118,9 +131,28 @@ for (const [nom, chemin, transformer] of documentsDuCorpus(R)) {
   if (air.entities.some((e) => e.fields.some((f) => f.transitions !== undefined))) {
     attendus.push(["états", "AIR_TRANSITION_INTERDITE"]);
   }
-  if (air.entities.some((e) => e.fields.some((f) => f.derived !== undefined))) {
-    attendus.push(["calculé", "AIR_CALCUL_A_ECRIRE"]);
-  }
+  // ── LE REFUS DE CALCULER N'EST EXIGÉ QUE LÀ OÙ LE DOCUMENT EST MUET.
+  //
+  // Longtemps `count`/`sum` étaient des trous : « la requête dépend de votre
+  // base ». C'était vrai avant que l'émetteur produise le schéma. Il le
+  // produit, et la colonne qui relie l'enfant au parent est déclarée par
+  // `referencesEntityId` — le trou n'était plus justifié, il était resté.
+  //
+  // Reste UN cas réellement indécidable : l'enfant porte DEUX champs vers le
+  // même parent (« créé par » et « validé par » vers les utilisateurs). Rien
+  // ne dit lequel compte ; deviner donnerait un chiffre faux avec l'air
+  // d'être juste. Là, et là seulement, le refus est exigé.
+  const indecidable = air.entities.some((e) =>
+    e.fields.some((f) => {
+      const d = f.derived;
+      if (d === undefined || (d.kind !== "count" && d.kind !== "sum")) return false;
+      const rel = air.relations.find((r) => r.id === d.relationId);
+      const enfant = air.entities.find((x) => x.id === rel?.toEntityId);
+      if (rel === undefined || enfant === undefined) return true;
+      return enfant.fields.filter((x) => x.referencesEntityId === rel.fromEntityId).length !== 1;
+    }),
+  );
+  if (indecidable) attendus.push(["calculé", "AIR_CALCUL_A_ECRIRE"]);
   const manquants = attendus.filter(([, marque]) => !tout.includes(marque)).map(([q]) => q);
 
   // ── AUCUN SECRET DANS LE PROJET ÉMIS.
@@ -159,7 +191,10 @@ for (const [nom, chemin, transformer] of documentsDuCorpus(R)) {
       const importees = new Set();
       for (const [f, contenu] of files) {
         if (!f.endsWith(".ts")) continue;
-        for (const m of contenu.matchAll(/from "([^".][^"]*)"/gu)) {
+        // DEUX FORMES, PAS UNE. `pg` est chargé par `import("pg")` — un
+        // balayage qui ne lirait que `from "…"` l'aurait manqué, et avec lui
+        // tout paquet chargé à la demande sans être déclaré.
+        for (const m of contenu.matchAll(/(?:from|import\()\s*"([^".][^"]*)"/gu)) {
           const paquet = m[1].startsWith("@")
             ? m[1].split("/").slice(0, 2).join("/")
             : m[1].split("/")[0];

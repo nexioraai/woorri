@@ -203,7 +203,23 @@ export async function ouvrir(): Promise<Base> {
     // base recevait donc "5000" au lieu de 5000. On convertit À LA LECTURE :
     // le stockage reste exact, et le contrat est respecté.
     types.setTypeParser(1700, (v) => (v === null ? null : Number(v)));
-    const client = new Client({ connectionString: url });
+    // ── CHIFFRER DÈS QUE L'HÔTE N'EST PAS LOCAL.
+    //
+    // Mesuré : une URL Supabase SANS \`sslmode\` donne \`ssl = undefined\` —
+    // le pilote tente alors une connexion EN CLAIR vers l'internet. Un
+    // défaut comme celui-là ne se voit jamais : ça marche, et ça fuit.
+    //
+    // Donc : si l'URL dit explicitement quoi faire, on la laisse décider ;
+    // sinon on chiffre et on VÉRIFIE le certificat. Accepter un certificat
+    // non vérifié par défaut serait chiffrer sans protéger — un test de
+    // l'émetteur l'interdit, et c'est pourquoi la formule n'apparaît même
+    // pas ici : un cliquet qui se déclenche sur un commentaire ne sert plus
+    // à rien, et on finirait par l'assouplir.
+    const hote = new URL(url).hostname;
+    const local = hote === "localhost" || hote === "127.0.0.1" || hote === "::1";
+    const client = /[?&]sslmode=/u.test(url)
+      ? new Client({ connectionString: url })
+      : new Client({ connectionString: url, ssl: local ? false : { rejectUnauthorized: true } });
     await client.connect();
     return {
       moteur: "postgres",
@@ -362,6 +378,7 @@ function routes(e: Entite): string {
     `import { randomUUID } from "node:crypto";`,
     `import type { ${n} } from "../modele/${table(e)}.ts";`,
     `import type { ${n}Depot } from "../depot/${table(e)}.ts";`,
+    `import type { Base } from "../base.ts";`,
     ...(enBase.length > 0
       ? [
           `import { ${enBase
@@ -391,7 +408,7 @@ function routes(e: Entite): string {
     " * remonter l'exception rendrait illisible une ligne enregistrée — mesuré",
     " * sur la pile Java, qui répondait 500.",
     " */",
-    `function enLigne(x: Partial<${n}>, nonCalcules: Set<string>): { id: unknown; values: Record<string, unknown> } {`,
+    `async function enLigne(base: Base, x: Partial<${n}>, nonCalcules: Set<string>): Promise<{ id: unknown; values: Record<string, unknown> }> {`,
     "  const src = x as unknown as Record<string, unknown>;",
     "  const vue: Record<string, unknown> = {};",
     ...e.fields.flatMap((f) => {
@@ -401,7 +418,7 @@ function routes(e: Entite): string {
       if (f.derived?.kind === "count" || f.derived?.kind === "sum") {
         return [
           "  try {",
-          `    vue[${JSON.stringify(f.name)}] = ${n}${PASCAL(f.id)}(String(src["id"]));`,
+          `    vue[${JSON.stringify(f.name)}] = await ${n}${PASCAL(f.id)}(base, String(src["id"]));`,
           "  } catch {",
           `    nonCalcules.add(${JSON.stringify(f.name)});`,
           "  }",
@@ -439,10 +456,12 @@ function routes(e: Entite): string {
     "}",
     "",
     `/** Routes de « ${e.name} », montées sur le contrat AIR. */`,
-    `export function ${CAMEL(e.id)}Routes(app: FastifyInstance, depot: ${n}Depot): void {`,
+    `export function ${CAMEL(e.id)}Routes(app: FastifyInstance, depot: ${n}Depot, base: Base): void {`,
     "  app.get(BASE, async (_req, rep) => {",
     "    const nonCalcules = new Set<string>();",
-    "    const vues = (await depot.lister()).map((x) => enLigne(x, nonCalcules));",
+    "    const vues = await Promise.all(",
+    "      (await depot.lister()).map(async (x) => enLigne(base, x, nonCalcules)),",
+    "    );",
     "    if (nonCalcules.size > 0) {",
     "      void rep.header(\"X-Air-Non-Calcule\", [...nonCalcules].join(\",\"));",
     "    }",
@@ -508,7 +527,7 @@ function routes(e: Entite): string {
     "      id,",
     "    });",
     "    const nonCalcules = new Set<string>();",
-    "    const vue = enLigne(ligne, nonCalcules);",
+    "    const vue = await enLigne(base, ligne, nonCalcules);",
     "    if (nonCalcules.size > 0) {",
     "      void rep.header(\"X-Air-Non-Calcule\", [...nonCalcules].join(\",\"));",
     "    }",
@@ -539,48 +558,109 @@ function routes(e: Entite): string {
 }
 
 /**
- * CE QUI SE COMPTE EN BASE, ET QUI N'EST DONC PAS ÉCRIT ICI.
+ * LA CLÉ QUI RELIE L'ENFANT AU PARENT.
  *
- * Un champ `count` ou `sum` traverse une relation : la requête dépend du
- * schéma réel de votre base, que le document ne décrit pas. L'émetteur
- * pourrait rendre 0 — ce serait le pire choix possible : une cagnotte à zéro
- * ressemble à une cagnotte vide, et personne ne verrait que rien n'a été
- * calculé. La fonction LÈVE, et le nom du champ est dans le message.
+ * Une relation déclare `from`, `to` et `kind` — jamais la colonne. Mais le
+ * champ de l'entité ENFANT la déclare, lui : `referencesEntityId` dit vers
+ * quelle entité il pointe. La clé se résout donc, sans convention inventée.
  *
- * Les autres formes dérivées (`calcul`, `bareme`, `versionne`) sont, elles,
- * entièrement décrites par le document : elles ne passent pas par ici.
+ * Elle ne se résout PAS quand l'enfant porte deux champs vers le même parent
+ * (« créé par » et « validé par » vers les utilisateurs, par exemple) : rien
+ * dans le document ne dit lequel compte. Ce cas-là reste un refus explicite —
+ * deviner aurait produit un chiffre faux avec l'air d'être juste.
+ */
+function cleEtrangere(
+  air: ProjectAir,
+  relationId: string,
+): { enfant: Entite; cle: Champ } | { ambigu: string } {
+  const rel = air.relations.find((r) => r.id === relationId);
+  if (rel === undefined) return { ambigu: `relation « ${relationId} » introuvable` };
+  const enfant = air.entities.find((e) => e.id === rel.toEntityId);
+  if (enfant === undefined) return { ambigu: `entité « ${rel.toEntityId} » introuvable` };
+  const candidats = enfant.fields.filter((f) => f.referencesEntityId === rel.fromEntityId);
+  const [unique] = candidats;
+  if (candidats.length === 1 && unique !== undefined) return { enfant, cle: unique };
+  return {
+    ambigu:
+      candidats.length === 0
+        ? `aucun champ de « ${enfant.id} » ne pointe vers « ${rel.fromEntityId} »`
+        : `${String(candidats.length)} champs de « ${enfant.id} » pointent vers « ${rel.fromEntityId} » : ${candidats.map((c) => c.id).join(", ")}`,
+  };
+}
+
+/** Les champs dont la valeur se compte en base, pour une entité donnée. */
+function champsEnBase(e: Entite): Champ[] {
+  return e.fields.filter((f) => f.derived?.kind === "count" || f.derived?.kind === "sum");
+}
+
+/**
+ * CE QUI SE COMPTE EN BASE — ET QUI EST MAINTENANT ÉCRIT.
+ *
+ * Longtemps un trou, parce que « la requête dépend de votre base ». C'était
+ * vrai avant que l'émetteur produise le schéma : il le produit, il connaît
+ * donc les tables ET la colonne qui relie l'enfant au parent. Le trou n'était
+ * plus justifié, il était seulement resté.
+ *
+ * Reste un refus là où le document est réellement muet : deux chemins
+ * possibles vers le même parent. Il LÈVE alors, et son nom part dans
+ * l'en-tête `X-Air-Non-Calcule` — la ligne reste lisible.
  */
 function calculs(air: ProjectAir): string {
   const l = [
-    "// LES CALCULS QUI DEMANDENT LA BASE.",
-    "//",
-    "// 🔴 À ÉCRIRE. Le document dit QUOI calculer ; la requête dépend de",
-    "//    votre base.",
+    "// ÉMIS depuis le contrat — ne pas modifier à la main.",
+    `import type { Base } from "../base.ts";`,
     "",
   ];
   for (const e of air.entities) {
-    for (const f of e.fields) {
+    for (const f of champsEnBase(e)) {
       const d = f.derived;
+      // `champsEnBase` ne garde que `count`/`sum`, mais le type l'ignore :
+      // cette garde le lui dit, au lieu d'une assertion qui le forcerait.
       if (d === undefined || (d.kind !== "count" && d.kind !== "sum")) continue;
-      const rel = air.relations.find((r) => r.id === d.relationId);
-      const cible = rel?.toEntityId ?? "?";
-      const quoi =
+      const r = cleEtrangere(air, d.relationId);
+      const nomFn = `${CAMEL(e.id)}${PASCAL(f.id)}`;
+      if ("ambigu" in r) {
+        l.push(
+          "/**",
+          ` * ${e.name}.${f.name} — NON CALCULABLE depuis le document.`,
+          ` * ${r.ambigu}.`,
+          " *",
+          " * Deviner la colonne aurait produit un chiffre faux avec l'air",
+          " * d'être juste. Le document doit dire lequel compte.",
+          " */",
+          `export async function ${nomFn}(base: Base, idParent: string): Promise<number> {`,
+          "  void base;",
+          "  void idParent;",
+          `  throw new Error("AIR_CALCUL_A_ECRIRE:${f.id}");`,
+          "}",
+          "",
+        );
+        continue;
+      }
+      const t = table(r.enfant);
+      const cle = colonne(r.cle);
+      const somme =
+        d.kind === "sum"
+          ? (r.enfant.fields.find((x) => x.id === d.fieldId)?.id ?? d.fieldId)
+          : "";
+      const expr =
         d.kind === "count"
-          ? `le NOMBRE de lignes de \`${cible}\``
-          : `la SOMME de \`${d.fieldId}\` sur les lignes de \`${cible}\``;
+          ? "count(*)"
+          : `coalesce(sum(${somme.replace(/^fld_/u, "")}), 0)`;
       l.push(
         "/**",
-        ` * ${e.name}.${f.name} = ${quoi}`,
-        ` * liées par \`${d.relationId}\`.`,
+        ` * ${e.name}.${f.name} = ${d.kind === "count" ? "le NOMBRE" : "la SOMME"} sur « ${r.enfant.name} »,`,
+        ` * reliées par « ${r.cle.name} ».`,
         " */",
-        `export function ${CAMEL(e.id)}${PASCAL(f.id)}(idParent: string): never {`,
-        "  void idParent;",
-        `  throw new Error("AIR_CALCUL_A_ECRIRE:${f.id}");`,
+        `export async function ${nomFn}(base: Base, idParent: string): Promise<number> {`,
+        `  const r = await base.un(\`select ${expr} as v from ${t} where ${cle} = ?\`, [idParent]);`,
+        "  return Number(r?.[\"v\"] ?? 0);",
         "}",
         "",
       );
     }
   }
+  if (l.length === 3) l.push("// Le document n'en déclare aucun.");
   return l.join("\n");
 }
 
@@ -634,7 +714,7 @@ function serveur(air: ProjectAir): string {
     "  const base = await ouvrir();",
     "  await appliquerSchema(base, SCHEMA);",
     "  app.log.info(`base : ${base.moteur}`);",
-    ...air.entities.map((e) => `  ${CAMEL(e.id)}Routes(app, ${CAMEL(e.id)}DepotSql(base));`),
+    ...air.entities.map((e) => `  ${CAMEL(e.id)}Routes(app, ${CAMEL(e.id)}DepotSql(base), base);`),
     "  return app;",
     "}",
     "",

@@ -235,14 +235,60 @@ const entite = (groupe: string, e: ProjectAir["entities"][number]): string => {
 };
 
 /** Le dépôt JPA — une interface, Spring écrit le reste. */
-const depot = (groupe: string, e: ProjectAir["entities"][number]): string =>
+/**
+ * LES CALCULS QUI INTERROGENT CETTE ENTITÉ EN TANT QU'ENFANT.
+ *
+ * Une relation déclare `from`/`to`/`kind`, jamais la colonne — mais le champ
+ * de l'enfant la déclare par `referencesEntityId`. La clé se résout donc sans
+ * convention inventée. Elle ne se résout PAS quand l'enfant porte deux champs
+ * vers le même parent : rien ne dit lequel compte, et deviner donnerait un
+ * chiffre faux avec l'air d'être juste. Ce cas reste un refus explicite.
+ */
+const calculsSur = (
+  air: ProjectAir,
+  enfant: ProjectAir["entities"][number],
+): { parent: ProjectAir["entities"][number]; champ: ProjectAir["entities"][number]["fields"][number]; cle: string; somme: string; kind: "count" | "sum" }[] => {
+  const out = [];
+  for (const parent of air.entities) {
+    for (const champ of parent.fields) {
+      const d = champ.derived;
+      if (d === undefined || (d.kind !== "count" && d.kind !== "sum")) continue;
+      const rel = air.relations.find((r) => r.id === d.relationId);
+      if (rel?.toEntityId !== enfant.id) continue;
+      const cles = enfant.fields.filter((f) => f.referencesEntityId === rel.fromEntityId);
+      const cle = cles[0];
+      if (cles.length !== 1 || cle === undefined) continue;
+      out.push({
+        parent,
+        champ,
+        cle: CAMEL(cle.id),
+        somme: d.kind === "sum" ? CAMEL(d.fieldId) : "",
+        kind: d.kind,
+      });
+    }
+  }
+  return out;
+};
+
+const depot = (groupe: string, air: ProjectAir, e: ProjectAir["entities"][number]): string =>
   `package ${groupe}.depot;
 
 ${entete(`Dépôt de « ${e.name} ».`)}
 import ${groupe}.modele.${PASCAL(e.id)};
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
-public interface ${PASCAL(e.id)}Depot extends JpaRepository<${PASCAL(e.id)}, String> {}
+public interface ${PASCAL(e.id)}Depot extends JpaRepository<${PASCAL(e.id)}, String> {
+${calculsSur(air, e)
+  .map(
+    (c) =>
+      `  // ${c.parent.name}.${c.champ.name} — ${c.kind === "count" ? "nombre" : "somme"} sur « ${e.name} ».\n` +
+      `  @Query("select coalesce(${c.kind === "count" ? "count(t)" : `sum(t.${c.somme})`}, 0) from ${PASCAL(e.id)} t where t.${c.cle} = :id")\n` +
+      `  Double ${CAMEL(c.champ.id)}Calcul(@Param("id") String id);`,
+  )
+  .join("\n")}
+}
 `;
 
 /**
@@ -261,6 +307,26 @@ public interface ${PASCAL(e.id)}Depot extends JpaRepository<${PASCAL(e.id)}, Str
  *   · TRANSITIONS : un passage d'état non déclaré est refusé en 409. Sans ça,
  *     un paiement en échec pourrait repasser « en attente ».
  */
+/**
+ * LES ENTITÉS ENFANT QU'UNE ENTITÉ INTERROGE POUR SES CHAMPS CALCULÉS.
+ *
+ * Dédoublonnées et ordonnées : deux champs calculés sur la même entité ne
+ * doivent pas injecter deux fois le même dépôt.
+ */
+const enfantsCalcules = (air: ProjectAir, e: ProjectAir["entities"][number]): string[] => {
+  const vus = new Set<string>();
+  for (const f of e.fields) {
+    const d = f.derived;
+    if (d === undefined || (d.kind !== "count" && d.kind !== "sum")) continue;
+    const rel = air.relations.find((r) => r.id === d.relationId);
+    const enfant = rel === undefined ? undefined : air.entities.find((x) => x.id === rel.toEntityId);
+    if (rel === undefined || enfant === undefined) continue;
+    if (enfant.fields.filter((x) => x.referencesEntityId === rel.fromEntityId).length !== 1) continue;
+    vus.add(enfant.id);
+  }
+  return [...vus];
+};
+
 const controleur = (groupe: string, air: ProjectAir, e: ProjectAir["entities"][number]): string => {
   const nom = PASCAL(e.id);
   const champsEtats = e.fields.filter((f) => f.transitions !== undefined);
@@ -271,6 +337,7 @@ const controleur = (groupe: string, air: ProjectAir, e: ProjectAir["entities"][n
     entete(`Ressource « ${e.name} » — GET / POST / DELETE sur /air/v1/entities/${e.id}/rows.`),
     `import ${groupe}.modele.${nom};`,
     `import ${groupe}.depot.${nom}Depot;`,
+    ...enfantsCalcules(air, e).map((c) => `import ${groupe}.depot.${PASCAL(c)}Depot;`),
     "import org.springframework.http.ResponseEntity;",
     "import org.springframework.web.bind.annotation.*;",
     "import java.util.*;",
@@ -279,7 +346,16 @@ const controleur = (groupe: string, air: ProjectAir, e: ProjectAir["entities"][n
     `@RequestMapping("/air/v1/entities/${e.id}/rows")`,
     `public class ${nom}Api {`,
     `  private final ${nom}Depot depot;`,
-    `  public ${nom}Api(${nom}Depot depot) { this.depot = depot; }`,
+    // LES DÉPÔTS DES ENFANTS, injectés parce que les champs calculés les
+    // interrogent. Spring les fournit ; les déclarer ici évite un symbole
+    // qui n'existerait nulle part — ce que seul `mvn compile` aurait dit.
+    ...enfantsCalcules(air, e).map((c) => `  private final ${PASCAL(c)}Depot ${CAMEL(c)}Depot;`),
+    `  public ${nom}Api(${nom}Depot depot${enfantsCalcules(air, e)
+      .map((c) => `, ${PASCAL(c)}Depot ${CAMEL(c)}Depot`)
+      .join("")}) {`,
+    "    this.depot = depot;",
+    ...enfantsCalcules(air, e).map((c) => `    this.${CAMEL(c)}Depot = ${CAMEL(c)}Depot;`),
+    "  }",
     "",
     "  // La réponse est le tableau des lignes `{id, values}` — la forme que",
     "  // l'application attend, et qu'elle ne négocie pas.",
@@ -391,6 +467,27 @@ const controleur = (groupe: string, air: ProjectAir, e: ProjectAir["entities"][n
       continue;
     }
     if (f.derived !== undefined) {
+      const d = f.derived;
+      const rel =
+        d.kind === "count" || d.kind === "sum"
+          ? air.relations.find((r) => r.id === d.relationId)
+          : undefined;
+      const enfant =
+        rel === undefined ? undefined : air.entities.find((x) => x.id === rel.toEntityId);
+      const cles =
+        rel === undefined || enfant === undefined
+          ? []
+          : enfant.fields.filter((x) => x.referencesEntityId === rel.fromEntityId);
+      if (enfant !== undefined && cles.length === 1) {
+        // LE CALCUL EST FAIT PAR LA BASE, via le dépôt de l'enfant. Il
+        // n'était un trou que tant que l'émetteur ignorait les tables ; il
+        // les connaît, et la colonne de liaison est déclarée.
+        l.push(
+          `    // « ${f.name} » est CALCULÉ sur « ${enfant.name} », par la base.`,
+          `    v.put("${f.name}", ${CAMEL(enfant.id)}Depot.${CAMEL(f.id)}Calcul(x.getId()));`,
+        );
+        continue;
+      }
       l.push(
         `    // « ${f.name} » est CALCULÉ : voir Calculs.${CAMEL(f.id)}().`,
         // `Calculs` vit dans le MÊME paquet que ce contrôleur : l'appel est
@@ -865,7 +962,7 @@ export function enveloppeSpring(air: ProjectAir): EnveloppeBackend {
   files.set(`${chemin}/${nom}Application.java`, application(groupe, nom));
   for (const e of air.entities) {
     files.set(`${chemin}/modele/${PASCAL(e.id)}.java`, entite(groupe, e));
-    files.set(`${chemin}/depot/${PASCAL(e.id)}Depot.java`, depot(groupe, e));
+    files.set(`${chemin}/depot/${PASCAL(e.id)}Depot.java`, depot(groupe, air, e));
     files.set(`${chemin}/api/${PASCAL(e.id)}Api.java`, controleur(groupe, air, e));
   }
   files.set(`${chemin}/api/SessionApi.java`, session(groupe, air));
