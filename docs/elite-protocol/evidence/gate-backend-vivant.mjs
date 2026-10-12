@@ -108,14 +108,16 @@ for (const [rang, pile] of PILES.entries()) {
     // la gate de compilation — une gate qui télécharge ne mesure plus le
     // code, elle mesure le réseau.
     //
-    // AIR_DEPOT=memoire est indispensable : le dépôt livré par défaut REFUSE
-    // d'écrire — il reste à écrire, et il le dit. Sans ce drapeau, le serveur
-    // démarrerait et répondrait 500 partout, ce qui ne prouverait rien.
+    // DB_FICHIER met la base SQLite dans le dossier de la gate, effacé à
+    // chaque tir. Rien d'autre : le serveur émis ouvre sa base et applique son
+    // schéma tout seul. C'est une VRAIE persistance SQL — la ligne relue
+    // revient de la base, pas d'une mémoire de processus, et c'est ce qui rend
+    // le refus de réécriture du journal réellement probant.
     if (estNode) symlinkSync(join(R, "node_modules"), OUT + "node_modules", "dir");
     const serveur = estNode
       ? spawn(process.execPath, ["src/serveur.ts"], {
           cwd: OUT,
-          env: { ...process.env, PORT: String(port), AIR_DEPOT: "memoire" },
+          env: { ...process.env, PORT: String(port), DB_FICHIER: OUT + "donnees.sqlite" },
           stdio: ["ignore", "pipe", "pipe"],
           detached: true,
         })

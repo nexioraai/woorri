@@ -64,6 +64,188 @@ const stockes = (e: Entite): Champ[] => e.fields.filter((f) => f.derived === und
 /** Ce qu'une lecture a le droit de rendre : jamais un champ sensible. */
 const lisibles = (e: Entite): Champ[] => stockes(e).filter((f) => f.sensitive !== true);
 
+/**
+ * LE TYPE SQL D'UN CHAMP.
+ *
+ * Trois types seulement, et c'est voulu : ils ont le MÊME sens en SQLite et
+ * en Postgres. Un `timestamp` natif aurait obligé à écrire deux schémas, puis
+ * deux dépôts, puis à n'en vérifier qu'un. Les dates sont donc des chaînes
+ * ISO — c'est déjà ce que le contrat transporte.
+ */
+function typeSql(f: Champ): string {
+  switch (f.type) {
+    case "number":
+    case "decimal":
+      return "numeric";
+    case "boolean":
+      return "boolean";
+    default:
+      return "text";
+  }
+}
+
+/**
+ * LE SCHÉMA DES TABLES.
+ *
+ * Java n'en a pas besoin : JPA le déduit des classes et le crée au démarrage
+ * (`ddl-auto`). Node n'a pas d'équivalent, alors le schéma est ÉMIS. Sans
+ * lui, le serveur démarrerait et échouerait à la première écriture — et
+ * personne ne saurait pourquoi.
+ *
+ * `if not exists` dans les deux moteurs : le serveur applique ce fichier à
+ * chaque démarrage sans jamais détruire ce qui est déjà là.
+ */
+function schemaSql(air: ProjectAir): string {
+  const l = [
+    "-- ÉMIS PAR DERIBFY DEPUIS LE CONTRAT — NE PAS ÉDITER À LA MAIN.",
+    "--",
+    "-- Appliqué à chaque démarrage. Rien n'y est détruit.",
+    "",
+  ];
+  for (const e of air.entities) {
+    l.push(
+      `-- « ${e.name} »${e.appendOnly === true ? " — JOURNAL : rien ne s'y réécrit ni s'y efface." : ""}`,
+      `create table if not exists ${table(e)} (`,
+      "  id text primary key",
+      ...stockes(e).map((f) => `, ${colonne(f)} ${typeSql(f)}`),
+      ");",
+      "",
+    );
+  }
+  l.push(
+    "-- `not null` n'est volontairement PAS posé : le contrat dit ce qui est",
+    "-- requis À LA SAISIE, et le serveur le fait respecter. Une colonne",
+    "-- obligatoire en base aurait bloqué la lecture des lignes déjà écrites",
+    "-- avant qu'un champ devienne requis — une migration déguisée en schéma.",
+  );
+  return l.join("\n") + "\n";
+}
+
+/**
+ * LA BASE, ET LE SEUL ENDROIT QUI CONNAÎT LES DEUX MOTEURS.
+ *
+ * Patron repris de la pile Java : ça marche sans rien installer, et UNE
+ * variable d'environnement branche la vraie base. Avec une différence —
+ * Java part sur une base EN MÉMOIRE, donc tout disparaît à l'arrêt ; ici le
+ * défaut est un FICHIER SQLite, intégré au runtime, qui survit au
+ * redémarrage. Un serveur qui perd ses données à chaque arrêt donne une
+ * fausse idée de ce qui marche.
+ *
+ * Les requêtes sont écrites une fois, avec des `?`. Postgres veut `$1` : la
+ * traduction est faite ICI, et nulle part ailleurs.
+ */
+/**
+ * CE QUE `node:sqlite` EXPOSE, DÉCLARÉ ICI.
+ *
+ * Le moteur est INTÉGRÉ au runtime ; ses types, eux, n'arrivent qu'avec une
+ * version récente de `@types/node`. Obliger chaque projet émis à la même
+ * version qu'un autre aurait été une contrainte inventée par l'émetteur.
+ *
+ * On déclare donc la part UTILISÉE, et rien de plus. Une déclaration peut
+ * mentir — c'est pourquoi elle ne sert jamais de preuve : le comportement est
+ * établi par la gate qui DÉMARRE le serveur et relit ce qu'il a écrit.
+ */
+function sqliteDts(): string {
+  return `// ÉMIS PAR DERIBFY — ne pas modifier à la main.
+declare module "node:sqlite" {
+  class StatementSync {
+    all(...params: unknown[]): unknown[];
+    get(...params: unknown[]): unknown;
+    run(...params: unknown[]): { changes: number; lastInsertRowid: number };
+  }
+  export class DatabaseSync {
+    constructor(chemin: string);
+    prepare(sql: string): StatementSync;
+    exec(sql: string): void;
+    close(): void;
+  }
+}
+`;
+}
+
+function baseTs(): string {
+  return `// ÉMIS PAR DERIBFY — ne pas modifier à la main.
+import { DatabaseSync } from "node:sqlite";
+
+export interface Base {
+  readonly moteur: "sqlite" | "postgres";
+  tous(sql: string, params?: readonly unknown[]): Promise<Record<string, unknown>[]>;
+  un(sql: string, params?: readonly unknown[]): Promise<Record<string, unknown> | null>;
+  executer(sql: string, params?: readonly unknown[]): Promise<void>;
+}
+
+/** \`?\` → \`$1\`, \`$2\`… Postgres ne connaît que cette forme. */
+function numeroter(sql: string): string {
+  let n = 0;
+  return sql.replace(/\\?/gu, () => {
+    n += 1;
+    return "$" + String(n);
+  });
+}
+
+/**
+ * OUVRIR LA BASE.
+ *
+ * DB_URL absent → fichier SQLite (DB_FICHIER, sinon ./donnees.sqlite).
+ * DB_URL en postgres://… → la vraie base. \`pg\` est alors chargé À LA
+ * DEMANDE : un serveur qui tourne sur SQLite n'a aucune raison d'exiger un
+ * pilote Postgres installé.
+ */
+export async function ouvrir(): Promise<Base> {
+  const url = process.env.DB_URL ?? "";
+  if (url.startsWith("postgres://") || url.startsWith("postgresql://")) {
+    const { Client } = await import("pg");
+    const client = new Client({ connectionString: url });
+    await client.connect();
+    return {
+      moteur: "postgres",
+      tous: async (sql, params = []) =>
+        (await client.query(numeroter(sql), [...params])).rows as Record<string, unknown>[],
+      un: async (sql, params = []) =>
+        ((await client.query(numeroter(sql), [...params])).rows[0] ?? null) as Record<
+          string,
+          unknown
+        > | null,
+      executer: async (sql, params = []) => {
+        await client.query(numeroter(sql), [...params]);
+      },
+    };
+  }
+  const db = new DatabaseSync(process.env.DB_FICHIER ?? "./donnees.sqlite");
+  return {
+    moteur: "sqlite",
+    tous: async (sql, params = []) =>
+      db.prepare(sql).all(...(params as never[])) as unknown as Record<string, unknown>[],
+    un: async (sql, params = []) =>
+      (db.prepare(sql).get(...(params as never[])) ?? null) as unknown as Record<
+        string,
+        unknown
+      > | null,
+    executer: async (sql, params = []) => {
+      db.prepare(sql).run(...(params as never[]));
+    },
+  };
+}
+
+/**
+ * LE SCHÉMA, APPLIQUÉ AU DÉMARRAGE. IL NE DÉTRUIT RIEN.
+ *
+ * Le SQL arrive en ARGUMENT, il n'est pas lu sur le disque. Deux raisons :
+ * un chemin relatif dépend du dossier depuis lequel on lance le serveur — un
+ * déploiement l'aurait cassé sans prévenir ; et le compilateur de Deribfy a
+ * l'interdiction de toucher au système de fichiers, y compris dans ce qu'il
+ * écrit. \`schema.sql\` reste émis À CÔTÉ, pour qu'un humain le lise ou
+ * l'applique à la main.
+ */
+export async function appliquerSchema(base: Base, ddl: string): Promise<void> {
+  for (const ordre of ddl.split(";")) {
+    const net = ordre.replace(/^\\s*--.*$/gmu, "").trim();
+    if (net !== "") await base.executer(net);
+  }
+}
+`;
+}
+
 function modele(e: Entite): string {
   const l = [
     `// ÉMIS depuis le contrat — ne pas modifier à la main.`,
@@ -94,6 +276,7 @@ function depot(e: Entite): string {
   const journal = e.appendOnly === true;
   const l = [
     `import type { ${n} } from "../modele/${table(e)}.ts";`,
+    `import type { Base } from "../base.ts";`,
     "",
     "// 🔴 À ÉCRIRE : la requête dépend de VOTRE base. Les colonnes, elles,",
     "//    viennent du contrat et sont justes.",
@@ -118,32 +301,41 @@ function depot(e: Entite): string {
   l.push(
     "}",
     "",
-    `export function ${CAMEL(e.id)}DepotNonEcrit(): ${n}Depot {`,
-    `  const refus = (): never => { throw new Error("AIR_DEPOT_A_ECRIRE:${e.id}"); };`,
-    "  return {",
-    "    lister: refus, lire: refus, enregistrer: refus,",
-    ...(journal ? [] : ["    supprimer: refus,"]),
-    "  };",
-    "}",
-    "",
-    "// ── UN DÉPÔT QUI N'EST PAS UNE PERSISTANCE, ET QUI LE DIT.",
+    "// ── LE DÉPÔT, SUR LA VRAIE BASE.",
     "//",
-    "// Il tient les lignes dans la mémoire du processus : tout disparaît à",
-    "// l'arrêt. Il existe pour qu'un serveur puisse DÉMARRER et que ses refus",
-    "// soient vérifiables à l'exécution — « compile » n'a jamais voulu dire",
-    "// « marche ». Il n'est JAMAIS choisi par défaut : il faut le demander par",
-    "// AIR_DEPOT=memoire. Un serveur qui perdrait silencieusement les données",
-    "// serait pire qu'un serveur qui refuse de les écrire.",
-    `export function ${CAMEL(e.id)}DepotEnMemoire(): ${n}Depot {`,
-    `  const lignes = new Map<string, Partial<${n}>>();`,
+    "// Il n'y a PAS de version « à écrire » : Java reçoit sa persistance de",
+    "// JPA, et livrer un Node qui refuse d'enregistrer en aurait fait la pile",
+    "// pauvre. Les requêtes portent des `?` ; `base.ts` les traduit pour",
+    "// Postgres, et c'est le seul endroit qui connaît les deux moteurs.",
+    `export function ${CAMEL(e.id)}DepotSql(base: Base): ${n}Depot {`,
+    `  const LUES = ${JSON.stringify(["id", ...lus].join(", "))};`,
+    `  const COLS = ${JSON.stringify(["id", ...cols])};`,
     "  return {",
-    "    lister: async () => [...lignes.values()],",
-    "    lire: async (id) => lignes.get(id) ?? null,",
+    `    lister: async () => (await base.tous(\`select \${LUES} from ${table(e)}\`)) as Partial<${n}>[],`,
+    "    lire: async (id) =>",
+    `      (await base.un(\`select \${LUES} from ${table(e)} where id = ?\`, [id])) as Partial<${n}> | null,`,
+    "    // UPSERT, parce que le contrat ne distingue pas créer de modifier.",
+    "    // `excluded` désigne la ligne proposée — même mot dans les deux moteurs.",
     "    enregistrer: async (x) => {",
-    "      lignes.set(x.id, x);",
+    "      const src = x as unknown as Record<string, unknown>;",
+    "      const majs = COLS.filter((c) => c !== \"id\")",
+    "        .map((c) => `${c} = excluded.${c}`)",
+    "        .join(\", \");",
+    "      await base.executer(",
+    `        \`insert into ${table(e)} (\${COLS.join(", ")}) \` +`,
+    "          `values (${COLS.map(() => \"?\").join(\", \")}) ` +",
+    "          `on conflict (id) do update set ${majs}`,",
+    "        COLS.map((c) => src[c] ?? null),",
+    "      );",
     "      return x;",
     "    },",
-    ...(journal ? [] : ["    supprimer: async (id) => { lignes.delete(id); },"]),
+    ...(journal
+      ? []
+      : [
+          "    supprimer: async (id) => {",
+          `      await base.executer(\`delete from ${table(e)} where id = ?\`, [id]);`,
+          "    },",
+        ]),
     "  };",
     "}",
   );
@@ -409,28 +601,34 @@ function reglesMetier(air: ProjectAir): string {
 function serveur(air: ProjectAir): string {
   const l = [
     `import Fastify from "fastify";`,
+    `import { appliquerSchema, ouvrir } from "./base.ts";`,
+    `import { SCHEMA } from "./schema.ts";`,
     ...air.entities.map((e) => `import { ${CAMEL(e.id)}Routes } from "./api/${table(e)}.ts";`),
     ...air.entities.map(
-      (e) =>
-        `import { ${CAMEL(e.id)}DepotNonEcrit, ${CAMEL(e.id)}DepotEnMemoire } from "./depot/${table(e)}.ts";`,
+      (e) => `import { ${CAMEL(e.id)}DepotSql } from "./depot/${table(e)}.ts";`,
     ),
     "",
     `// ÉMIS depuis le contrat de « ${air.app.name} ».`,
-    "export function construire(): ReturnType<typeof Fastify> {",
+    "//",
+    "// SANS RIEN INSTALLER : un fichier SQLite, intégré au runtime, à côté du",
+    "// serveur. Les données SURVIVENT au redémarrage — contrairement à la base",
+    "// en mémoire de la pile Java, qui donne une fausse idée de ce qui marche.",
+    "//",
+    "// POUR VOTRE VRAIE BASE : DB_URL=postgres://… et c'est tout. Aucun secret",
+    "// dans les fichiers émis ; un secret versionné ne redevient jamais secret.",
+    "export async function construire(): Promise<ReturnType<typeof Fastify>> {",
     "  const app = Fastify({ logger: true });",
-    "  // Le dépôt PAR DÉFAUT refuse d'écrire : il reste à écrire, et il le dit.",
-    "  // `memoire` existe pour démarrer et vérifier les refus — rien n'y survit.",
-    "  const enMemoire = process.env.AIR_DEPOT === \"memoire\";",
-    ...air.entities.map(
-      (e) =>
-        `  ${CAMEL(e.id)}Routes(app, enMemoire ? ${CAMEL(e.id)}DepotEnMemoire() : ${CAMEL(e.id)}DepotNonEcrit());`,
-    ),
+    "  const base = await ouvrir();",
+    "  await appliquerSchema(base, SCHEMA);",
+    "  app.log.info(`base : ${base.moteur}`);",
+    ...air.entities.map((e) => `  ${CAMEL(e.id)}Routes(app, ${CAMEL(e.id)}DepotSql(base));`),
     "  return app;",
     "}",
     "",
     "if (process.env.NODE_ENV !== \"test\") {",
     "  const port = Number(process.env.PORT ?? 3000);",
-    "  void construire().listen({ port, host: \"0.0.0.0\" });",
+    "  const app = await construire();",
+    "  await app.listen({ port, host: \"0.0.0.0\" });",
     "}",
   ];
   return l.join("\n") + "\n";
@@ -442,9 +640,14 @@ function paquet(air: ProjectAir): string {
       name: `${air.app.slug}-serveur`,
       private: true,
       type: "module",
-      scripts: { dev: "tsx src/serveur.ts", typecheck: "tsc --noEmit" },
-      dependencies: { fastify: "^5" },
-      devDependencies: { tsx: "^4", typescript: "^5" },
+      // `node src/serveur.ts` : ce runtime retire les types lui-même. Pas
+      // d'outil d'exécution à installer, et la gate mesure EXACTEMENT la
+      // commande que vous lancez.
+      scripts: { dev: "node src/serveur.ts", typecheck: "tsc --noEmit" },
+      // `pg` ne sert QUE si DB_URL pointe sur Postgres, et il est chargé à la
+      // demande : sur SQLite le serveur n'en a aucun besoin.
+      dependencies: { fastify: "^5", pg: "^8" },
+      devDependencies: { "@types/pg": "^8", typescript: "^5" },
     },
     null,
     2,
@@ -473,6 +676,20 @@ export function enveloppeFastify(air: ProjectAir): EnveloppeBackend {
   files.set("package.json", paquet(air));
   files.set("tsconfig.json", tsconfig());
   files.set("src/serveur.ts", serveur(air));
+  files.set("src/base.ts", baseTs());
+  files.set("src/sqlite.d.ts", sqliteDts());
+  // Le MÊME texte, deux fois : `schema.sql` pour qu'un humain le lise ou
+  // l'applique à la main, `src/schema.ts` pour que le serveur l'applique sans
+  // dépendre du dossier depuis lequel on l'a lancé. Un test vérifie qu'ils ne
+  // divergent jamais.
+  const ddl = schemaSql(air);
+  files.set("schema.sql", ddl);
+  files.set(
+    "src/schema.ts",
+    "// ÉMIS PAR DERIBFY — copie exacte de schema.sql.\nexport const SCHEMA = " +
+      JSON.stringify(ddl) +
+      ";\n",
+  );
   for (const e of air.entities) {
     files.set(`src/modele/${table(e)}.ts`, modele(e));
     files.set(`src/depot/${table(e)}.ts`, depot(e));

@@ -168,8 +168,62 @@ describe("les refus sont DANS le code, pas en commentaire", () => {
 });
 
 describe("ce qui dépend de la base ne se devine pas", () => {
-  it("les trous portent un code repérable, pas un silence", () => {
-    expect(tout()).toContain("AIR_DEPOT_A_ECRIRE");
+  // Le dépôt N'EST PLUS un trou : il parle à une vraie base. Ce test garde
+  // la porte fermée — un émetteur qui recommencerait à livrer un dépôt « à
+  // écrire » rendrait la pile Node plus pauvre que Java, qui reçoit sa
+  // persistance de JPA.
+  it("le dépôt n’est pas un trou : il parle à une vraie base", () => {
+    expect(tout()).not.toContain("AIR_DEPOT_A_ECRIRE");
+    expect(tout()).toContain("insert into");
+    expect(tout()).toContain("on conflict (id) do update set");
+  });
+
+  // Un seul endroit connaît les deux moteurs. Si une requête SQL apparaissait
+  // ailleurs avec des `$1`, la traduction serait faite deux fois.
+  it("un seul endroit traduit pour Postgres", () => {
+    const s = sortie();
+    for (const [f, c] of s) {
+      if (f === "src/base.ts" || !f.endsWith(".ts")) continue;
+      expect(c, f).not.toMatch(/\$1/u);
+    }
+    expect(s.get("src/base.ts") ?? "").toContain("numeroter");
+  });
+
+  // Le même texte voyage deux fois : lisible par un humain, et embarqué pour
+  // que le serveur ne dépende pas du dossier d'où on le lance. Deux copies
+  // qui divergeraient appliqueraient un schéma différent de celui qu'on lit.
+  it("le schéma lisible et le schéma appliqué sont le MÊME texte", () => {
+    const s = sortie();
+    const fichier = s.get("schema.sql") ?? "";
+    const embarque = s.get("src/schema.ts") ?? "";
+    expect(fichier).not.toBe("");
+    expect(embarque).toContain(JSON.stringify(fichier));
+  });
+
+  // Le schéma est ÉMIS parce que Node n'a pas d'équivalent au `ddl-auto` de
+  // JPA. Sans lui, le serveur démarre et échoue à la première écriture.
+  it("le schéma des tables est émis, et ne détruit rien", () => {
+    const ddl = sortie().get("schema.sql") ?? "";
+    for (const e of air().entities) {
+      expect(ddl, e.id).toContain(`create table if not exists ${e.id.replace(/^ent_/u, "")} (`);
+    }
+    expect(ddl).not.toMatch(/\bdrop\b/iu);
+  });
+
+  // CE QUI RESTE À ÉCRIRE DOIT CONTINUER DE SE NOMMER.
+  //
+  // Un `count`/`sum` traverse une relation : la requête dépend du schéma
+  // réel, que le document ne décrit pas. Les règles métier, elles, n'ont de
+  // marqueur que si le document en déclare — tontine n'en déclare aucune,
+  // alors l'exiger sans condition faisait échouer un test sur une propriété
+  // du document, pas de l'émetteur.
+  it("ce qui dépend vraiment de la base porte un code repérable", () => {
+    const enBase = air().entities.flatMap((e) =>
+      e.fields.filter((f) => f.derived?.kind === "count" || f.derived?.kind === "sum"),
+    );
+    if (enBase.length > 0) expect(tout()).toContain("AIR_CALCUL_A_ECRIRE");
+    if (air().rules.length > 0) expect(tout()).toContain("AIR_REGLE_A_ECRIRE");
+    expect(enBase.length + air().rules.length).toBeGreaterThan(0);
   });
 
   it("aucun secret, aucune clé dans le code émis", () => {
