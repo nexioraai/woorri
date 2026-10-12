@@ -293,8 +293,82 @@ function modele(e: Entite): string {
   return l.join("\n") + "\n";
 }
 
-function depot(e: Entite): string {
+/**
+ * CE QUE LE SERVEUR A LE DROIT D'EXPOSER.
+ *
+ * Mesuré au corpus le 2026-10-12 : 39 règles d'AUTORISATION, et le serveur
+ * rendait TOUTES les lignes à tout le monde. « Seul un bien publié et non
+ * archivé peut apparaître dans la liste des annonces » — et la liste rendait
+ * les archivés. Ce n'est pas un manque de fonctionnalité, c'est une fuite.
+ *
+ * 37 de ces 39 règles sont des filtres sur les DONNÉES : aucune identité
+ * n'est nécessaire pour les appliquer. Elles le sont donc, en SQL, dans la
+ * requête elle-même — pas après coup en mémoire, où un `lire(id)` les
+ * contournerait.
+ *
+ * Les 2 autres désignent l'appelant (`@currentUser.email`). Elles ne peuvent
+ * pas être appliquées : le serveur ne sait pas qui appelle. L'entité est
+ * alors FERMÉE — pas servie sans filtre. C'est la doctrine de ce dépôt
+ * depuis 1.28.0 : un refus se récupère, un accès accordé par erreur non.
+ */
+function visibilite(
+  air: ProjectAir,
+  e: Entite,
+): { sql: string; params: unknown[] } | { bloque: string; regle: string } {
+  const regles = air.rules.filter((r) => r.kind !== "validation" && r.entityId === e.id);
+  const morceaux: string[] = [];
+  const params: unknown[] = [];
+  for (const r of regles) {
+    for (const a2 of r.assertions) {
+      const champ = e.fields.find((x) => x.id === a2.fieldId);
+      if (champ === undefined || champ.derived !== undefined) continue;
+      // Une règle qui désigne l'appelant ne peut pas devenir une condition
+      // SQL : rien dans la requête ne dit qui appelle.
+      if (typeof a2.value === "string" && a2.value.startsWith("@")) {
+        return { bloque: `la règle désigne l'appelant (${a2.value})`, regle: r.id };
+      }
+      const c = colonne(champ);
+      const litteral = (v: unknown): string => {
+        // Les booléens sont ÉCRITS dans le SQL : `true` a le même sens dans
+        // les deux moteurs, alors qu'un booléen passé en paramètre ne se lie
+        // pas de la même façon.
+        if (typeof v === "boolean") return v ? "true" : "false";
+        params.push(v);
+        return "?";
+      };
+      switch (a2.operator) {
+        case "eq":
+          morceaux.push(`${c} = ${litteral(a2.value)}`);
+          break;
+        case "neq":
+          // `col <> x` exclut aussi les lignes où `col` est vide. C'est
+          // VOULU : fermé par défaut — une ligne dont l'état est inconnu ne
+          // doit pas passer pour conforme.
+          morceaux.push(`${c} <> ${litteral(a2.value)}`);
+          break;
+        case "required":
+          morceaux.push(`(${c} is not null and ${c} <> '')`);
+          break;
+        case "in": {
+          const vs = Array.isArray(a2.value) ? (a2.value as unknown[]) : [a2.value];
+          morceaux.push(`${c} in (${vs.map((v) => litteral(v)).join(", ")})`);
+          break;
+        }
+        default:
+          return { bloque: `opérateur « ${a2.operator} » non traduit`, regle: r.id };
+      }
+    }
+  }
+  return { sql: morceaux.join(" and "), params };
+}
+
+function depot(air: ProjectAir, e: Entite): string {
   const n = CAMEL(e.id);
+  const v = visibilite(air, e);
+  // Une entité dont une règle désigne l'appelant est FERMÉE : la route
+  // refusera. Le dépôt n'a alors aucun filtre à poser — mais il ne doit
+  // surtout pas en poser un partiel, qui aurait l'air de protéger.
+  const vis = "bloque" in v ? { sql: "", params: [] } : v;
   const cols = stockes(e).map(colonne);
   const lus = lisibles(e).map(colonne);
   const journal = e.appendOnly === true;
@@ -333,9 +407,24 @@ function depot(e: Entite): string {
     "// Postgres, et c'est le seul endroit qui connaît les deux moteurs.",
     `export function ${CAMEL(e.id)}DepotSql(base: Base): ${n}Depot {`,
     `  const LUES = ${JSON.stringify(["id", ...lus].join(", "))};`,
+    // ── LE FILTRE DE VISIBILITÉ, DANS LA REQUÊTE.
+    //
+    // Filtrer après coup en mémoire laisserait `lire(id)` tout rendre : il
+    // suffirait de deviner un identifiant. La condition est donc DANS le SQL,
+    // des deux côtés.
+    `  const VISIBLE = ${JSON.stringify(vis.sql === "" ? "" : ` where ${vis.sql}`)};`,
+    `  const FILTRE: unknown[] = ${JSON.stringify(vis.params)};`,
     `  const COLS = ${JSON.stringify(["id", ...cols])};`,
     "  return {",
-    `    lister: async () => (await base.tous(\`select \${LUES} from ${table(e)}\`)) as Partial<${n}>[],`,
+    `    lister: async () =>`,
+    `      (await base.tous(\`select \${LUES} from ${table(e)}\${VISIBLE}\`, FILTRE)) as Partial<${n}>[],`,
+    "    // ── `lire` N'EST PAS UNE LECTURE PUBLIQUE, ET NE SE FILTRE PAS.",
+    "    //",
+    "    // Elle sert au contrôle d'EXISTENCE avant écriture. Y poser le filtre",
+    "    // de visibilité ferait passer une ligne cachée pour absente : un",
+    "    // journal invisible redeviendrait réécrivable, et une ligne masquée",
+    "    // serait écrasée comme si elle n'existait pas. Le filtre appartient à",
+    "    // `lister`, qui est la lecture rendue à l'appelant.",
     "    lire: async (id) =>",
     `      (await base.un(\`select \${LUES} from ${table(e)} where id = ?\`, [id])) as Partial<${n}> | null,`,
     "    // UPSERT, parce que le contrat ne distingue pas créer de modifier.",
@@ -366,8 +455,27 @@ function depot(e: Entite): string {
   return l.join("\n") + "\n";
 }
 
-function routes(e: Entite): string {
+function routes(air: ProjectAir, e: Entite): string {
   const n = CAMEL(e.id);
+  // ── UNE ENTITÉ QU'ON NE SAIT PAS FILTRER EST FERMÉE, PAS OUVERTE.
+  //
+  // Deux règles du corpus désignent l'appelant (`@currentUser.email`). Le
+  // serveur ne sait pas qui appelle, donc il ne peut pas les appliquer.
+  // Servir la collection sans filtre exposerait les commandes de tout le
+  // monde ; 403 et le nom de la règle, parce qu'un refus se récupère et
+  // qu'un accès accordé par erreur non.
+  const v = visibilite(air, e);
+  const ferme =
+    "bloque" in v
+      ? [
+          "    // Cette collection est FERMÉE : voir le code ci-dessous.",
+          "    return rep.code(403).send({",
+          `      error: "AIR_VISIBILITE_INAPPLICABLE",`,
+          `      regle: ${JSON.stringify(v.regle)},`,
+          `      message: ${JSON.stringify(v.bloque)},`,
+          "    });",
+        ]
+      : [];
   const journal = e.appendOnly === true;
   const enBase = e.fields.filter(
     (f) => f.derived?.kind === "count" || f.derived?.kind === "sum",
@@ -459,6 +567,7 @@ function routes(e: Entite): string {
     `/** Routes de « ${e.name} », montées sur le contrat AIR. */`,
     `export function ${CAMEL(e.id)}Routes(app: FastifyInstance, depot: ${n}Depot, base: Base): void {`,
     "  app.get(BASE, async (_req, rep) => {",
+    ...ferme,
     "    const nonCalcules = new Set<string>();",
     "    const vues = await Promise.all(",
     "      (await depot.lister()).map(async (x) => enLigne(base, x, nonCalcules)),",
@@ -908,8 +1017,8 @@ export function enveloppeFastify(air: ProjectAir): EnveloppeBackend {
   );
   for (const e of air.entities) {
     files.set(`src/modele/${table(e)}.ts`, modele(e));
-    files.set(`src/depot/${table(e)}.ts`, depot(e));
-    files.set(`src/api/${table(e)}.ts`, routes(e));
+    files.set(`src/depot/${table(e)}.ts`, depot(air, e));
+    files.set(`src/api/${table(e)}.ts`, routes(air, e));
   }
   files.set("src/api/regles-metier.ts", reglesMetier(air));
   if (air.entities.some((e) => e.fields.some((f) => f.derived?.kind === "count" || f.derived?.kind === "sum"))) {

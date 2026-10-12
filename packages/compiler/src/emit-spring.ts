@@ -244,6 +244,63 @@ const entite = (groupe: string, e: ProjectAir["entities"][number]): string => {
  * vers le même parent : rien ne dit lequel compte, et deviner donnerait un
  * chiffre faux avec l'air d'être juste. Ce cas reste un refus explicite.
  */
+/**
+ * CE QUE LE SERVEUR A LE DROIT D'EXPOSER — EN JPQL.
+ *
+ * Même règle, même doctrine que la pile Node : 37 des 39 règles
+ * d'autorisation du corpus sont des filtres sur les données, et le serveur
+ * rendait TOUT. Les 2 qui désignent l'appelant ferment l'entité au lieu de la
+ * servir sans filtre.
+ *
+ * Les valeurs viennent du DOCUMENT, pas d'un appelant. L'apostrophe est tout
+ * de même doublée : un libellé qui en contient aurait cassé la requête, et le
+ * défaut ne serait apparu qu'au démarrage.
+ */
+const visibiliteJpql = (
+  air: ProjectAir,
+  e: ProjectAir["entities"][number],
+): { where: string } | { bloque: string; regle: string } => {
+  const regles = air.rules.filter((r) => r.kind !== "validation" && r.entityId === e.id);
+  const morceaux: string[] = [];
+  const lit = (v: unknown): string =>
+    typeof v === "boolean"
+      ? v
+        ? "true"
+        : "false"
+      : typeof v === "number"
+        ? String(v)
+        : `'${String(v).replace(/'/gu, "''")}'`;
+  for (const r of regles) {
+    for (const a2 of r.assertions) {
+      const champ = e.fields.find((x) => x.id === a2.fieldId);
+      if (champ === undefined || champ.derived !== undefined) continue;
+      if (typeof a2.value === "string" && a2.value.startsWith("@")) {
+        return { bloque: `la regle designe l'appelant (${a2.value})`, regle: r.id };
+      }
+      const c = `t.${CAMEL(champ.id)}`;
+      switch (a2.operator) {
+        case "eq":
+          morceaux.push(`${c} = ${lit(a2.value)}`);
+          break;
+        case "neq":
+          morceaux.push(`${c} <> ${lit(a2.value)}`);
+          break;
+        case "required":
+          morceaux.push(`(${c} is not null and ${c} <> '')`);
+          break;
+        case "in": {
+          const vs = Array.isArray(a2.value) ? (a2.value as unknown[]) : [a2.value];
+          morceaux.push(`${c} in (${vs.map(lit).join(", ")})`);
+          break;
+        }
+        default:
+          return { bloque: `operateur « ${a2.operator} » non traduit`, regle: r.id };
+      }
+    }
+  }
+  return { where: morceaux.join(" and ") };
+};
+
 const calculsSur = (
   air: ProjectAir,
   enfant: ProjectAir["entities"][number],
@@ -277,9 +334,19 @@ ${entete(`Dépôt de « ${e.name} ».`)}
 import ${groupe}.modele.${PASCAL(e.id)};
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import java.util.List;
 import org.springframework.data.repository.query.Param;
 
 public interface ${PASCAL(e.id)}Depot extends JpaRepository<${PASCAL(e.id)}, String> {
+${(() => {
+  const v = visibiliteJpql(air, e);
+  if ("bloque" in v || v.where === "") return "";
+  return (
+    `  // Visibilité imposée par les règles d'autorisation du document.\n` +
+    `  @Query("select t from ${PASCAL(e.id)} t where ${v.where}")\n` +
+    `  List<${PASCAL(e.id)}> visibles();\n`
+  );
+})()}
 ${calculsSur(air, e)
   .map(
     (c) =>
@@ -359,13 +426,37 @@ const controleur = (groupe: string, air: ProjectAir, e: ProjectAir["entities"][n
     "",
     "  // La réponse est le tableau des lignes `{id, values}` — la forme que",
     "  // l'application attend, et qu'elle ne négocie pas.",
-    "  @GetMapping",
-    "  public ResponseEntity<List<Map<String, Object>>> lire() {",
-    "    List<Map<String, Object>> sortie = new ArrayList<>();",
-    "    Set<String> nonCalcules = new LinkedHashSet<>();",
-    `    for (${nom} x : depot.findAll()) sortie.add(enLigne(x, nonCalcules));`,
-    "    return avecEnTete(ResponseEntity.ok(), nonCalcules).body(sortie);",
-    "  }",
+    // ── LA LECTURE : FILTRÉE, OU REFUSÉE. JAMAIS OUVERTE.
+    //
+    // 37 des 39 règles d'autorisation du corpus sont des filtres sur les
+    // données : elles entrent dans la requête. Les 2 qui désignent l'appelant
+    // ne peuvent pas être appliquées — le serveur ne sait pas qui appelle —
+    // et l'entité est alors FERMÉE. Une seule méthode est émise dans ce cas :
+    // émettre aussi le corps normal, même sous un autre chemin, aurait ouvert
+    // une porte dérobée rendant tout sans filtre.
+    ...((): string[] => {
+      const vj = visibiliteJpql(air, e);
+      if ("bloque" in vj) {
+        return [
+          "  @GetMapping",
+          "  public ResponseEntity<List<Map<String, Object>>> lire() {",
+          "    return ResponseEntity.status(403).body(List.of(Map.of(",
+          `        "error", "AIR_VISIBILITE_INAPPLICABLE",`,
+          `        "regle", "${vj.regle}",`,
+          `        "message", "${vj.bloque.replace(/"/gu, "'")}")));`,
+          "  }",
+        ];
+      }
+      return [
+        "  @GetMapping",
+        "  public ResponseEntity<List<Map<String, Object>>> lire() {",
+        "    List<Map<String, Object>> sortie = new ArrayList<>();",
+        "    Set<String> nonCalcules = new LinkedHashSet<>();",
+        `    for (${nom} x : ${vj.where === "" ? "depot.findAll()" : "depot.visibles()"}) sortie.add(enLigne(x, nonCalcules));`,
+        "    return avecEnTete(ResponseEntity.ok(), nonCalcules).body(sortie);",
+        "  }",
+      ];
+    })(),
     "",
     "  @PostMapping",
     "  public ResponseEntity<?> ecrire(@RequestBody Map<String, Object> corps) {",

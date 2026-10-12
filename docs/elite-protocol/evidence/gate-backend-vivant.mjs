@@ -117,6 +117,30 @@ if (entiteReglee !== undefined && champRegle !== undefined) {
   });
 }
 
+// ── UNE RÈGLE DE VISIBILITÉ, AJOUTÉE PAR CETTE GATE.
+//
+// Même raison que la règle de validation : le corpus est gelé et le document
+// de référence ne déclare AUCUNE règle. Les 39 règles réelles du corpus sont
+// éprouvées par la gate de compilation ; celle-ci éprouve le MÉCANISME sur un
+// serveur démarré — ce que « compile » ne dira jamais.
+//
+// L'état exclu est choisi hors des transitions écrites par les autres
+// preuves, pour ne pas leur retirer leurs lignes sous les pieds.
+const REGLE_VISIBILITE = "rule_gate_visibilite";
+const ETAT_CACHE = "TERMINEE";
+const champEtatCache = entiteReglee?.fields.find(
+  (f) => f.transitions !== undefined && (f.enumValues ?? []).includes(ETAT_CACHE),
+);
+if (entiteReglee !== undefined && champEtatCache !== undefined) {
+  air.rules.push({
+    id: REGLE_VISIBILITE,
+    kind: "authorization",
+    entityId: entiteReglee.id,
+    description: `une ${entiteReglee.name} ${ETAT_CACHE} n'apparaît pas dans la liste`,
+    assertions: [{ fieldId: champEtatCache.id, operator: "neq", value: ETAT_CACHE }],
+  });
+}
+
 console.log("═".repeat(78));
 console.log("GATE RACINE — les SERVEURS générés RÉPONDENT-ILS ?");
 console.log("═".repeat(78));
@@ -398,6 +422,27 @@ for (const [rang, { pile, base }] of PILES.entries()) {
         );
       }
 
+      // ── CE QUE LE SERVEUR N'A PAS LE DROIT D'EXPOSER, IL NE L'EXPOSE PAS.
+      //
+      // Mesuré le 2026-10-12 : le serveur rendait TOUTES les lignes. « Seul un
+      // bien publié et non archivé peut apparaître dans la liste » — et la
+      // liste rendait les archivés. Ce n'est pas un manque, c'est une fuite.
+      if (champEtatCache !== undefined && entiteReglee?.id === avecEtats.id) {
+        await fetch(`${B}/${avecEtats.id}/rows`, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ id: "gateV", [champEtatCache.name]: ETAT_CACHE }),
+        });
+        const lu = await fetch(`${B}/${avecEtats.id}/rows`);
+        const vues = lu.ok ? await lu.json() : [];
+        const ids = vues.map((x) => x.id);
+        dire(
+          lu.ok && !ids.includes("gateV") && ids.includes("gate2"),
+          `une ligne ${ETAT_CACHE} est ÉCRITE mais N'APPARAÎT PAS dans la liste`,
+          `HTTP ${String(lu.status)} · lignes vues ${JSON.stringify(ids)}`,
+        );
+      }
+
       const legal = await fetch(`${B}/${avecEtats.id}/rows`, {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -479,4 +524,4 @@ for (const [rang, { pile, base }] of PILES.entries()) {
 
 const ko = essais.filter((x) => !x).length;
 console.log(`\n  ${String(essais.length - ko)}/${String(essais.length)} preuves tenues.`);
-process.exitCode = ko === 0 && essais.length >= 30 ? 0 : 1;
+process.exitCode = ko === 0 && essais.length >= 33 ? 0 : 1;

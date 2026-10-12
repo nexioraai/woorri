@@ -61,6 +61,63 @@ describe("le document choisit la pile, pas le moteur", () => {
 // par identifiant de colonne. Il compilait, et AUCUNE application générée
 // n'aurait pu lui parler — son client appelle /air/v1/entities/<id>/rows et
 // nomme les champs par leur NOM. Deux tests pour que ça ne redérive pas.
+// ── CE QUE LE SERVEUR A LE DROIT D'EXPOSER.
+//
+// Mesuré le 2026-10-12 : 39 règles d'autorisation au corpus, et le serveur
+// rendait TOUTES les lignes. 37 sont des filtres sur les données, les 2
+// autres désignent l'appelant. Trois pièges, trois cliquets.
+describe("la visibilité des lignes est imposée par le serveur", () => {
+  const avecRegle = (operateur: string, valeur: unknown): ProjectAir => {
+    const a = structuredClone(air());
+    const e = a.entities.find((x) => x.fields.some((f) => f.transitions !== undefined));
+    const f = e?.fields.find((x) => x.transitions !== undefined);
+    if (e === undefined || f === undefined) return a;
+    (a.rules as unknown[]).push({
+      id: "rule_test_visibilite",
+      kind: "authorization",
+      entityId: e.id,
+      description: "visibilité de test",
+      assertions: [{ fieldId: f.id, operator: operateur, value: valeur }],
+    });
+    return a;
+  };
+
+  // Filtrer après coup en mémoire se contourne : il suffit de demander une
+  // ligne par son identifiant. La condition doit être DANS la requête.
+  it("le filtre est DANS le SQL, pas appliqué après coup", () => {
+    const files = new Map(compileBackend(avecRegle("neq", "TERMINEE")).files);
+    const depot = [...files.entries()].find(([k]) => k.startsWith("src/depot/tontines"));
+    expect(depot?.[1] ?? "").toContain("where");
+    expect(depot?.[1] ?? "").toContain("<> ?");
+  });
+
+  // `lire` sert au contrôle d'EXISTENCE avant écriture. La filtrer ferait
+  // passer une ligne cachée pour absente : un journal invisible redeviendrait
+  // réécrivable, et une ligne masquée serait écrasée comme si elle n'était
+  // pas là. Le piège le plus facile à introduire de tout ce lot.
+  it("le contrôle d’existence avant écriture n’est PAS filtré", () => {
+    const files = new Map(compileBackend(avecRegle("neq", "TERMINEE")).files);
+    const depot = [...files.entries()].find(([k]) => k.startsWith("src/depot/tontines"));
+    const lire = /lire: async[\s\S]*?\n {4}\/\/|lire: async[\s\S]*?,\n {4}[a-z]/u.exec(depot?.[1] ?? "");
+    expect(depot?.[1] ?? "").toContain("where id = ?`, [id])");
+    expect(lire?.[0] ?? "").not.toContain("VISIBLE");
+  });
+
+  // Une règle qui désigne l'appelant ne peut pas devenir une condition SQL.
+  // L'entité est alors FERMÉE — et AUCUNE autre route ne doit rendre ses
+  // lignes, sinon le refus n'est qu'une façade.
+  it("une entité qu’on ne sait pas filtrer est FERMÉE, sans route de contournement", () => {
+    const a = avecRegle("eq", "@currentUser.email");
+    const files = new Map(compileBackend(a).files);
+    const api = [...files.entries()].find(([k]) => k.startsWith("src/api/tontines"));
+    const src = api?.[1] ?? "";
+    expect(src).toContain("AIR_VISIBILITE_INAPPLICABLE");
+    expect(src).toContain("rep.code(403)");
+    // Une seule route de lecture de collection, et elle refuse.
+    expect((src.match(/app\.get\(/gu) ?? []).length).toBe(1);
+  });
+});
+
 // ── LA BRANCHE QUE LE CORPUS N'ATTEINT JAMAIS.
 //
 // Mesuré le 2026-10-12 : sur les 31 documents, la clé qui relie l'enfant au
