@@ -50,6 +50,25 @@ const TSC = join(R, "node_modules", "typescript", "bin", "tsc");
 // TOUTES à partir du même document, et exige de chacune les mêmes refus.
 const PILES = ["spring_boot", "fastify"];
 
+// ── UN MODE RAPIDE, POUR LE CROCHET DE PRÉ-PUSH SEULEMENT.
+//
+// Mesuré : couvrir les 31 documents fait passer cette gate de 10 s à ~205 s.
+// Le crochet de pré-push rejoue TOUTE la chaîne ; elle dépasse alors dix
+// minutes et GitHub ferme la connexion pendant ce temps — le push échoue sans
+// qu'aucune étape soit rouge.
+//
+// AIR_GATE_RAPIDE=1 limite la mesure aux documents qui DÉCLARENT un serveur.
+// Le CI ne pose pas cette variable : les 31 documents y restent couverts. La
+// barrière avant push subsiste donc, sans être payée dix minutes.
+//
+// Le mode est DIT dans la sortie : une gate qui mesure moins sans le dire
+// serait pire qu'une gate absente.
+const RAPIDE = process.env.AIR_GATE_RAPIDE === "1";
+if (RAPIDE) {
+  console.log("  mode    : RAPIDE — seuls les documents DÉCLARANT un serveur");
+  console.log("            (le CI, lui, mesure les 31 documents du corpus)");
+}
+
 // ── L'OUTILLAGE JAVA, CHERCHÉ PUIS DIT.
 //
 // Sur un runner GitHub, `java` et `mvn` sont fournis. Sur une machine de
@@ -98,6 +117,7 @@ for (const [nom, chemin, transformer] of documentsDuCorpus(R)) {
   // `network.allowedDomains`, et l'inventer ferait échouer des documents sur
   // une propriété que cette gate ne mesure pas.
   const genere = air.backend !== undefined && air.backend.kind === "genere";
+  if (RAPIDE && !genere) continue;
   for (const pile of PILES) {
   const airPile = genere
     ? { ...air, backend: { ...air.backend, stack: pile } }

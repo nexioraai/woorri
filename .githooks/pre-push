@@ -45,6 +45,19 @@ echo "── pre-push : vérification dérivée de .github/workflows/ci.yml"
 echo "   (contourner si nécessaire : git push --no-verify)"
 echo
 
+# ── POURQUOI CE CROCHET MESURE MOINS QUE LE CI.
+#
+# Mesuré le 2026-10-12 : la gate backend couvre les 31 documents du corpus et
+# passe de 10 s à ~205 s. La chaîne complète dépassait alors dix minutes, et
+# GitHub fermait la connexion PENDANT que ce crochet tournait — le push
+# échouait sans qu'aucune étape soit rouge. Un crochet qui empêche de pousser
+# du code vert ne protège plus, il bloque.
+#
+# AIR_GATE_RAPIDE=1 limite cette gate aux documents qui DÉCLARENT un serveur
+# (6,9 s mesuré). Le CI ne pose pas la variable : les 31 documents y restent
+# couverts, et la gate DIT dans sa sortie qu'elle est en mode rapide.
+export AIR_GATE_RAPIDE=1
+
 if npm run --silent verifier; then
   echo
   echo "── pre-push : rien de cassé, le push continue."
