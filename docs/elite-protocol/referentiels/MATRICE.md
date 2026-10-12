@@ -55,7 +55,8 @@ premiers.
 | V11 | Cryptography | 🟡 | HMAC pour les jetons ; aucun chiffrement au repos exprimable |
 | V12 | Secure Communication | 🟢 | TLS par défaut dès que l'hôte n'est pas local, certificat vérifié ; test l'interdit de régresser |
 | V13 | Configuration | 🟡 | aucun secret dans les fichiers émis (test) ; durcissement non mesuré |
-| V14+ | Data Protection · Malicious Code · Business Logic · WebRTC | ⚪ | non mesuré |
+| V14 | Data Protection | 🔴 | **DÉFAUT MESURÉ le 2026-10-12.** 5 champs `sensitive` au corpus : **0 ne ressort d'une lecture** (aucune fuite), mais **les 5 ont une colonne dans le schéma SQL émis** — dont `profil_mot_de_passe` et `paiement_numero_carte`. Le serveur ne leur écrit JAMAIS rien (`retenir()` les saute) : la colonne est morte, et un schéma qui annonce stocker un numéro de carte invite à le remplir par un autre chemin. **Correction : les exclure du schéma** |
+| V15+ | Malicious Code · Business Logic · WebRTC | ⚪ | non mesuré ; `Malicious Code` recoupe V1 (0 `eval`, 0 `new Function`) |
 
 ## 2. OWASP MASVS 2.1 — par catégorie
 
@@ -166,3 +167,4 @@ Un chiffre tapé à la main se désaccorde du document qu'il résume.
 | 2026-10-12 · MASVS-PLATFORM fermé | 16 | 18 | 3 | 10 | 47 |
 | 2026-10-12 · texte alternatif mesuré | 16 | 19 | 3 | 9 | 47 |
 | 2026-10-12 · confidentialité iOS + consentement IA | 16 | 21 | 3 | 7 | 47 |
+| 2026-10-12 · ASVS V14 — défaut trouvé | 16 | 21 | 4 | 7 | 48 |
