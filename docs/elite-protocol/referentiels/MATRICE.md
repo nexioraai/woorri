@@ -65,7 +65,7 @@ premiers.
 | MASVS-CRYPTO | 🟡 | voir ASVS V11 |
 | MASVS-AUTH | 🟡 | voir ASVS V6/V7 — délégué au fournisseur déclaré |
 | MASVS-NETWORK | 🟢 | voir ASVS V12 |
-| MASVS-PLATFORM | ⚪ | non mesuré |
+| MASVS-PLATFORM | 🟡 | Mesuré sur les 31 documents : **31 déclarent des permissions Android**, **15 des descriptions d'usage iOS**. NON VÉRIFIÉ : que chaque permission déclarée corresponde à une capacité qui l'induit — une permission de trop est un défaut, et cette mesure ne le verrait pas |
 | MASVS-CODE | ⚪ | non mesuré |
 | MASVS-RESILIENCE | ⚪ | non mesuré |
 | MASVS-PRIVACY | 🟡 | `dataCollected` déclaré au format ; cliquets de partage tiers existants |
@@ -94,7 +94,7 @@ premiers.
 |---|---|---|
 | Noms accessibles des composants | 🟢 | 118 `accessibilityLabel` au runtime, 46 alimentés par le document, 0 en dur |
 | Rôles accessibles | 🟢 | 26 `accessibilityRole` au runtime |
-| Texte de remplacement des images | ⚪ | non mesuré — à regarder si le format transporte des images de contenu |
+| Texte de remplacement des images (WCAG 1.1.1, niveau A) | ⚪ | Mesuré : **29 documents sur 31 portent des champs `asset`**, et le champ apparaît dans l'interface émise des 29. Mais savoir qu'il APPARAÎT ne dit pas qu'il porte un nom accessible — donc toujours non mesuré |
 | **Contraste 4.5:1** (WCAG 1.4.3, AA) | 🟢 | Calculé sur les jetons émis des **31 documents** : **186 paires, 0 sous 4,5:1**. Paires évaluées : texte/fond, texte/surface, atténué/fond, atténué/surface, surPrimaire/primaire, erreur/fond. Ne couvre pas toutes les combinaisons possibles — seulement celles que les composants utilisent |
 | **Cibles de pointeur ≥ 24 px** (WCAG 2.5.8, AA) | 🟢 | Mesuré sur les **31 documents** : `tapTarget` = **48 px** minimum, `controlHeight` = **54 px** — le double de l'exigence. Les 24 usages de `minHeight` passent tous par ces jetons, aucun nombre en dur |
 | Focus visible (WCAG 2.4.11) | ⚪ | 4 occurrences liées au focus dans le runtime ; ni comptées suffisantes ni insuffisantes — non mesuré |
@@ -161,3 +161,4 @@ Un chiffre tapé à la main se désaccorde du document qu'il résume.
 | 2026-10-12 · 4 lignes mesurées (V1, V3, langue, maintenabilité) | 13 | 17 | 3 | 12 | 45 |
 | 2026-10-12 · contraste WCAG mesuré | 14 | 17 | 3 | 12 | 46 |
 | 2026-10-12 · cibles de pointeur mesurées | 15 | 17 | 3 | 12 | 47 |
+| 2026-10-12 · plateforme mesurée | 15 | 18 | 3 | 11 | 47 |
