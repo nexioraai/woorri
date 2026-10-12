@@ -1352,7 +1352,14 @@ const integrationSchema = z.strictObject({
 const backendSchema = z
   .strictObject({
     kind: z.enum(["genere", "externe"]),
-    stack: z.enum(["spring_boot"]).optional(),
+    /**
+     * LES PILES QUE DERIBFY SAIT ECRIRE. Enumeration FERMEE : ce que le
+     * moteur ne sait pas ecrire, le format ne doit pas savoir le dire.
+     * `fastify` ajoute le 2026-10-11 — un cahier reel l'imposait, et un
+     * document a lire ne remplace pas un serveur ecrit (mesure sur le
+     * meme document : 19 fichiers et 1 016 lignes cote Java).
+     */
+    stack: z.enum(["spring_boot", "fastify"]).optional(),
     /**
      * Le domaine que servira ce backend. Il entre dans `network.allowedDomains`
      * — le validateur le vérifie : une application qui parle à un serveur que

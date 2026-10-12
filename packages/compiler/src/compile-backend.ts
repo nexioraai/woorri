@@ -16,6 +16,7 @@
 //   · absent    — aucun fichier émis, comportement d'avant 1.34.0.
 import type { ProjectAir } from "@deribfy/air-schema";
 import { enveloppeSpring, type EnveloppeBackend } from "./emit-spring.ts";
+import { enveloppeFastify } from "./emit-fastify.ts";
 
 /** Ce que Deribfy écrit comme serveur pour ce document. Vide si rien à écrire. */
 export function compileBackend(air: ProjectAir): EnveloppeBackend {
@@ -25,7 +26,7 @@ export function compileBackend(air: ProjectAir): EnveloppeBackend {
   // projet Java. Le CONTRAT que ce serveur doit honorer est donc livré avec
   // les DOCUMENTS de l'application (`emitProject`), pas ici.
   if (b === undefined || b.kind === "externe") return { files: new Map() };
-  // Le schéma garantit `stack` sur un backend généré, et son énumération est
-  // FERMÉE : un `else` ici serait du code qu'aucune entrée ne peut atteindre.
-  return enveloppeSpring(air);
+  // LE DOCUMENT CHOISIT LA PILE, pas le moteur. L'énumération est FERMÉE :
+  // ce que Deribfy ne sait pas écrire, le format ne sait pas le dire.
+  return b.stack === "fastify" ? enveloppeFastify(air) : enveloppeSpring(air);
 }

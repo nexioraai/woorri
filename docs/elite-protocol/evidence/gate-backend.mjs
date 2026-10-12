@@ -21,7 +21,8 @@
 //    port ; et surtout, les méthodes que le propriétaire doit écrire LÈVENT
 //    par construction. Un serveur généré qui répondrait à tout serait un
 //    serveur qui ment sur ce qui reste à faire.
-const { mkdirSync, writeFileSync, rmSync, existsSync, readFileSync } = await import("node:fs");
+const { mkdirSync, writeFileSync, rmSync, existsSync, readFileSync, symlinkSync } =
+  await import("node:fs");
 const { execFileSync } = await import("node:child_process");
 const { tmpdir } = await import("node:os");
 const { join } = await import("node:path");
@@ -33,6 +34,21 @@ const { compileBackend } = await import(R + "packages/compiler/src/index.ts");
 const { documentsDuCorpus } = await import(R + "docs/elite-protocol/evidence/corpus-documents.mjs");
 
 const OUT = join(tmpdir(), "deribfy-gate-backend") + "/";
+
+// ── LE COMPILATEUR TYPESCRIPT, EMPRUNTE A LA RACINE.
+//
+// Meme regle que pour Fastify : la gate n'installe rien. Si l'outil manque,
+// elle le DIT au lieu de sauter silencieusement les serveurs Node.
+const TSC = join(R, "node_modules", "typescript", "bin", "tsc");
+
+// ── LES PILES MESURÉES.
+//
+// Le document choisit la sienne ; ses RÈGLES, elles, n'en dépendent pas. Un
+// journal qui refuserait la réécriture en Java et l'accepterait en Node serait
+// un document qui veut dire deux choses selon le serveur — et rien ne l'aurait
+// dit, puisque le corpus ne déclare qu'une pile. La gate les mesure donc
+// TOUTES à partir du même document, et exige de chacune les mêmes refus.
+const PILES = ["spring_boot", "fastify"];
 
 // ── L'OUTILLAGE JAVA, CHERCHÉ PUIS DIT.
 //
@@ -55,7 +71,7 @@ rmSync(OUT, { recursive: true, force: true });
 console.log("═".repeat(78));
 console.log("GATE RACINE — le SERVEUR généré compile-t-il ?");
 console.log("═".repeat(78));
-console.log("\n  document                 fichiers   refus    verdict");
+console.log("\n  document · pile                  fichiers   refus    verdict");
 console.log("  " + "─".repeat(72));
 
 let mesures = 0;
@@ -70,7 +86,10 @@ for (const [nom, chemin, transformer] of documentsDuCorpus(R)) {
   } catch {
     continue; // la gate de compilation d'app rapporte déjà les documents invalides
   }
-  const { files } = compileBackend(air);
+  const genere = air.backend !== undefined && air.backend.kind === "genere";
+  for (const pile of genere ? PILES : [air.backend?.stack ?? "aucune"]) {
+  const airPile = genere ? { ...air, backend: { ...air.backend, stack: pile } } : air;
+  const { files } = compileBackend(airPile);
   // ── UN DOCUMENT SANS BACKEND N'EST PAS UN ÉCHEC.
   //
   // `backend` est optionnel, et son absence veut dire « aucun serveur émis ».
@@ -79,7 +98,7 @@ for (const [nom, chemin, transformer] of documentsDuCorpus(R)) {
   if (files.size === 0) continue;
   mesures += 1;
 
-  const dir = OUT + nom + "/";
+  const dir = OUT + nom + "." + pile + "/";
   for (const [f, contenu] of files) {
     const p = dir + f;
     mkdirSync(p.slice(0, p.lastIndexOf("/")), { recursive: true });
@@ -117,19 +136,68 @@ for (const [nom, chemin, transformer] of documentsDuCorpus(R)) {
 
   let verdict = "🟢 BUILD SUCCESS";
   let ko = false;
+  // ── DEUX PILES, DEUX COMPILATEURS, UN SEUL VERDICT.
+  //
+  // Le document choisit sa pile ; cette gate la suit. Un serveur Node
+  // verifie par `mvn` ne prouverait rien, et l'inverse non plus. On
+  // reconnait la pile a ce qui a ete EMIS — pas a ce que le document dit :
+  // si l'emetteur se trompait de pile, c'est precisement ce qu'on veut voir.
+  const estNode = files.has("package.json");
   try {
-    execFileSync(MVN, ["-B", "-q", "compile"], {
-      cwd: dir,
-      stdio: "pipe",
-      timeout: 900000,
-      env: { ...process.env, JAVA_HOME },
-    });
+    if (estNode) {
+      // ── CE QU'ON IMPORTE DOIT ÊTRE DÉCLARÉ.
+      //
+      // Les dépendances sont empruntées à la racine du dépôt : un projet émis
+      // compilerait donc même si son `package.json` oubliait de déclarer ce
+      // qu'il importe — et ne s'installerait nulle part ailleurs. Le vert
+      // mentirait. On confronte les imports au manifeste AVANT de compiler.
+      const manifeste = JSON.parse(files.get("package.json"));
+      const declarees = new Set([
+        ...Object.keys(manifeste.dependencies ?? {}),
+        ...Object.keys(manifeste.devDependencies ?? {}),
+      ]);
+      const importees = new Set();
+      for (const [f, contenu] of files) {
+        if (!f.endsWith(".ts")) continue;
+        for (const m of contenu.matchAll(/from "([^".][^"]*)"/gu)) {
+          const paquet = m[1].startsWith("@")
+            ? m[1].split("/").slice(0, 2).join("/")
+            : m[1].split("/")[0];
+          if (!paquet.startsWith("node:")) importees.add(paquet);
+        }
+      }
+      const nonDeclarees = [...importees].filter((d) => !declarees.has(d));
+      if (nonDeclarees.length > 0) {
+        throw new Error(
+          `error TS: importé sans être déclaré dans package.json : ${nonDeclarees.join(", ")}`,
+        );
+      }
+      // Les dependances sont EMPRUNTEES a la racine, comme le fait la gate
+      // web. On ne les installe pas ici : une gate qui telecharge ne mesure
+      // plus le code, elle mesure le reseau.
+      symlinkSync(join(R, "node_modules"), dir + "node_modules", "dir");
+      execFileSync(process.execPath, [TSC, "--noEmit", "-p", "tsconfig.json"], {
+        cwd: dir,
+        stdio: "pipe",
+        timeout: 300000,
+      });
+    } else {
+      execFileSync(MVN, ["-B", "-q", "compile"], {
+        cwd: dir,
+        stdio: "pipe",
+        timeout: 900000,
+        env: { ...process.env, JAVA_HOME },
+      });
+    }
   } catch (e) {
-    const brut = String(e.stdout ?? "") + String(e.stderr ?? "");
+    // Le message de l'erreur compte autant que la sortie du compilateur :
+    // les refus que CETTE gate prononce elle-même n'ont pas de stdout.
+    const brut =
+      String(e.stdout ?? "") + String(e.stderr ?? "") + "\n" + String(e.message ?? "");
     const ligne =
-      brut.split("\n").find((l) => /\.java:\[\d+/.test(l)) ??
-      brut.split("\n").find((l) => l.includes("[ERROR]")) ??
-      "mvn n'a pas abouti";
+      brut.split("\n").find((l) => /\.(java|ts):?[:(\[]\d+/.test(l)) ??
+      brut.split("\n").find((l) => l.includes("[ERROR]") || l.includes("error TS")) ??
+      (estNode ? "tsc n'a pas abouti" : "mvn n'a pas abouti");
     verdict = `🔴 ${ligne.replace(/^\[ERROR\]\s*/, "").slice(0, 60)}`;
     ko = true;
   }
@@ -143,8 +211,9 @@ for (const [nom, chemin, transformer] of documentsDuCorpus(R)) {
   }
   if (ko) echecs += 1;
   console.log(
-    `  ${nom.padEnd(24)} ${String(files.size).padStart(6)}  ${String(attendus.length - manquants.length + "/" + attendus.length).padStart(7)}   ${verdict}`,
+    `  ${(nom + " · " + pile).padEnd(31)} ${String(files.size).padStart(6)}  ${String(attendus.length - manquants.length + "/" + attendus.length).padStart(7)}   ${verdict}`,
   );
+  }
 }
 
 if (mesures === 0) {
