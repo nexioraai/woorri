@@ -29,6 +29,10 @@
 // 🟠 Les règles d'ARGENT. `ReglesMetier` lève par construction : séquestre,
 //    tour, pénalités, répartition, enchères appartiennent au propriétaire. Les
 //    tester reviendrait à les avoir écrites à sa place.
+const { createHmac } = await import("node:crypto");
+// L'horloge est lue UNE fois : une preuve ne doit pas dépendre du moment où
+// elle s'exécute dans la séquence.
+const DEBUT = Date.now();
 const { existsSync, readFileSync, mkdirSync, writeFileSync, rmSync, symlinkSync } =
   await import("node:fs");
 const { execFileSync, spawn } = await import("node:child_process");
@@ -141,6 +145,57 @@ if (entiteReglee !== undefined && champEtatCache !== undefined) {
   });
 }
 
+// ── UNE RÈGLE QUI DÉSIGNE L'APPELANT, SUR UNE AUTRE ENTITÉ.
+//
+// Posée ailleurs que sur l'entité à états : si elle y était, toutes les
+// lectures des autres preuves exigeraient un jeton et leurs lignes
+// disparaîtraient sous leurs pieds.
+//
+// La colonne comparée n'a pas de sens métier ici — ce qui est éprouvé, c'est
+// que le serveur compare bien une colonne à la REVENDICATION DU JETON, et
+// qu'il refuse quand il n'y a pas de jeton.
+const SECRET_JETON = "secret-de-gate-jamais-en-production";
+const REGLE_APPELANT = "rule_gate_appelant";
+const entiteAppelant = air.entities.find(
+  (e) =>
+    e.appendOnly !== true &&
+    e.id !== entiteReglee?.id &&
+    e.fields.some(
+      (f) => f.derived === undefined && f.sensitive !== true && f.type === "string" && f.required === true,
+    ),
+);
+const champAppelant = entiteAppelant?.fields.find(
+  (f) => f.derived === undefined && f.sensitive !== true && f.type === "string" && f.required === true,
+);
+if (entiteAppelant !== undefined && champAppelant !== undefined) {
+  air.rules.push({
+    id: REGLE_APPELANT,
+    kind: "authorization",
+    entityId: entiteAppelant.id,
+    description: `seul le propriétaire voit sa ligne de ${entiteAppelant.name}`,
+    assertions: [{ fieldId: champAppelant.id, operator: "eq", value: "@currentUser.email" }],
+  });
+}
+
+/** Un jeton HS256 forgé pour la gate. Aucun secret de production ici. */
+const forgerJeton = (email) => {
+  const b64 = (o) =>
+    Buffer.from(JSON.stringify(o))
+      .toString("base64")
+      .replace(/\+/gu, "-")
+      .replace(/\//gu, "_")
+      .replace(/=+$/u, "");
+  const tete = b64({ alg: "HS256", typ: "JWT" });
+  const charge = b64({ sub: "gate-user", email, exp: Math.floor(DEBUT / 1000) + 3600 });
+  const sig = createHmac("sha256", SECRET_JETON)
+    .update(`${tete}.${charge}`)
+    .digest("base64")
+    .replace(/\+/gu, "-")
+    .replace(/\//gu, "_")
+    .replace(/=+$/u, "");
+  return `${tete}.${charge}.${sig}`;
+};
+
 console.log("═".repeat(78));
 console.log("GATE RACINE — les SERVEURS générés RÉPONDENT-ILS ?");
 console.log("═".repeat(78));
@@ -214,6 +269,7 @@ for (const [rang, { pile, base }] of PILES.entries()) {
           ...process.env,
           PORT: String(port),
           DB_FICHIER: OUT + "donnees.sqlite",
+          AIR_JWT_SECRET: SECRET_JETON,
           ...(dbUrl === "" ? {} : { DB_URL: dbUrl }),
         },
           stdio: ["ignore", "pipe", "pipe"],
@@ -246,7 +302,14 @@ for (const [rang, { pile, base }] of PILES.entries()) {
     for (let i = 0; i < 240; i += 1) {
       try {
         const r = await fetch(`${B}/${air.entities[0].id}/rows`);
-        if (r.ok) return true;
+        // ── « DEBOUT » N'EST PAS « OUVERT ».
+        //
+        // Mesuré : une règle de visibilité qui ferme la première entité fait
+        // répondre 403, et la sonde concluait « serveur injoignable » alors
+        // que Tomcat avait démarré et servi la requête. Un refus EST une
+        // réponse : il prouve que le serveur écoute et route. Seul un 5xx ou
+        // une absence de réponse veut dire qu'il n'est pas prêt.
+        if (r.status < 500) return true;
       } catch {
         /* pas encore */
       }
@@ -258,7 +321,7 @@ for (const [rang, { pile, base }] of PILES.entries()) {
 
   try {
     const debout = await attendre();
-    dire(debout, "le serveur DÉMARRE et sert une collection");
+    dire(debout, "le serveur DÉMARRE et répond (un refus est une réponse)");
     if (!debout) {
       console.error("\n" + journal.split("\n").slice(-25).join("\n"));
       throw new Error("serveur injoignable");
@@ -512,6 +575,102 @@ for (const [rang, { pile, base }] of PILES.entries()) {
       );
     }
 
+    // ── « QUI APPELLE » : TROIS SITUATIONS, TROIS RÉPONSES DIFFÉRENTES.
+    //
+    // Sans jeton, la bonne réponse n'est PAS « aucune ligne » : ce serait
+    // indiscernable de « vous n'avez rien ». C'est « je ne sais pas qui vous
+    // êtes » — un refus. Avec un jeton, seules les lignes de l'appelant.
+    //
+    // Cette preuve ne concerne que la pile Node : la pile Java ne lit pas
+    // encore l'appelant, et le dire vaut mieux que de l'omettre.
+    if (estNode && entiteAppelant !== undefined && champAppelant !== undefined) {
+      const corps = { id: "gateA" };
+      for (const f of entiteAppelant.fields) {
+        if (f.required !== true || f.derived !== undefined || f.sensitive === true) continue;
+        corps[f.name] =
+          f.id === champAppelant.id
+            ? "moi@exemple.test"
+            : f.type === "datetime"
+              ? "2026-01-01T00:00:00Z"
+              : f.type === "decimal" || f.type === "number"
+                ? 0
+                : f.type === "boolean"
+                  ? false
+                  : (f.enumValues ?? ["x"])[0];
+      }
+      corps[champAppelant.name] = "moi@exemple.test";
+      const ecrit = await fetch(`${B}/${entiteAppelant.id}/rows`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(corps),
+      });
+
+      // ── UN OUI/NON ÉCRIT DOIT REVENIR EN OUI/NON.
+      //
+      // Mesuré le 2026-10-12 : `node:sqlite` REFUSE un booléen en paramètre
+      // (« Provided value cannot be bound ») là où Postgres l'accepte — tout
+      // document portant un champ oui/non répondait 500 à l'écriture, et
+      // seul un démarrage sur CE moteur pouvait le dire. À la lecture, SQLite
+      // rend 1 ou 0 quand Postgres rend un vrai booléen.
+      const champOuiNon = entiteAppelant.fields.find(
+        (f) => f.type === "boolean" && f.derived === undefined && f.sensitive !== true,
+      );
+      if (champOuiNon !== undefined) {
+        dire(
+          ecrit.ok,
+          `un champ oui/non s'ÉCRIT sans erreur (« ${champOuiNon.name} »)`,
+          `HTTP ${String(ecrit.status)}`,
+        );
+        const relu = await fetch(`${B}/${entiteAppelant.id}/rows`, {
+          headers: { authorization: `Bearer ${forgerJeton("moi@exemple.test")}` },
+        });
+        const l = relu.ok ? await relu.json() : [];
+        const v = l.find((x) => x.id === "gateA")?.values?.[champOuiNon.name];
+        dire(
+          v === undefined || typeof v === "boolean",
+          `un champ oui/non REVIENT en oui/non, pas en 1 ou 0`,
+          `reçu ${JSON.stringify(v)} (${typeof v})`,
+        );
+      }
+
+      const sans = await fetch(`${B}/${entiteAppelant.id}/rows`);
+      dire(
+        sans.status === 403,
+        "sans jeton, le serveur REFUSE au lieu de rendre une liste vide",
+        `HTTP ${String(sans.status)} · écriture HTTP ${String(ecrit.status)}`,
+      );
+
+      const avec = await fetch(`${B}/${entiteAppelant.id}/rows`, {
+        headers: { authorization: `Bearer ${forgerJeton("moi@exemple.test")}` },
+      });
+      const miennes = avec.ok ? await avec.json() : [];
+      dire(
+        avec.ok && miennes.some((x) => x.id === "gateA"),
+        "avec son jeton, l'appelant VOIT sa ligne",
+        `HTTP ${String(avec.status)} · ${String(miennes.length)} ligne(s)`,
+      );
+
+      const autre = await fetch(`${B}/${entiteAppelant.id}/rows`, {
+        headers: { authorization: `Bearer ${forgerJeton("quelquun@autre.test")}` },
+      });
+      const siennes = autre.ok ? await autre.json() : [];
+      dire(
+        autre.ok && !siennes.some((x) => x.id === "gateA"),
+        "avec le jeton d'un AUTRE, la ligne reste invisible",
+        `HTTP ${String(autre.status)} · ${String(siennes.length)} ligne(s)`,
+      );
+
+      // UN JETON FORGÉ AVEC UN AUTRE SECRET NE DOIT RIEN OUVRIR.
+      const faux = await fetch(`${B}/${entiteAppelant.id}/rows`, {
+        headers: { authorization: "Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ4In0.signature-bidon" },
+      });
+      dire(
+        faux.status === 403,
+        "un jeton mal signé est REFUSÉ, pas accepté",
+        `HTTP ${String(faux.status)}`,
+      );
+    }
+
   } catch (e) {
     dire(false, "la gate n'a pas abouti", String(e instanceof Error ? e.message : e).slice(0, 80));
   } finally {
@@ -524,4 +683,4 @@ for (const [rang, { pile, base }] of PILES.entries()) {
 
 const ko = essais.filter((x) => !x).length;
 console.log(`\n  ${String(essais.length - ko)}/${String(essais.length)} preuves tenues.`);
-process.exitCode = ko === 0 && essais.length >= 33 ? 0 : 1;
+process.exitCode = ko === 0 && essais.length >= 44 ? 0 : 1;

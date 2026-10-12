@@ -163,6 +163,105 @@ declare module "node:sqlite" {
 `;
 }
 
+/**
+ * QUI APPELLE — LU D'UN JETON SIGNÉ, JAMAIS DEVINÉ.
+ *
+ * Mesuré au corpus le 2026-10-12 : 2 règles de visibilité désignent
+ * l'appelant (@currentUser.email). Sans savoir qui appelle, l'entité était
+ * FERMÉE — correct, mais inutilisable.
+ *
+ * HS256 avec AIR_JWT_SECRET, pris dans l'environnement. `node:crypto`
+ * suffit : aucune dépendance ajoutée au projet émis.
+ */
+function appelantTs(): string {
+  return [
+    "// \u00c9MIS PAR DERIBFY \u2014 ne pas modifier \u00e0 la main.",
+    "import { createHmac, timingSafeEqual } from \"node:crypto\";",
+    "",
+    "export interface Appelant {",
+    "  readonly id: string;",
+    "  readonly email?: string;",
+    "  readonly droits: readonly string[];",
+    "}",
+    "",
+    "function base64url(entree: Buffer): string {",
+    "  return entree",
+    "    .toString(\"base64\")",
+    "    .replace(/\\+/gu, \"-\")",
+    "    .replace(/\\//gu, \"_\")",
+    "    .replace(/=+$/u, \"\");",
+    "}",
+    "",
+    "/**",
+    " * V\u00c9RIFIE LE JETON, OU REND NULL.",
+    " *",
+    " * timingSafeEqual et non === : comparer deux signatures caract\u00e8re par",
+    " * caract\u00e8re laisse mesurer combien de caract\u00e8res sont bons, et avec assez",
+    " * d'essais la signature se devine.",
+    " *",
+    " * L'algorithme est IMPOS\u00c9, jamais lu dans le jeton pour d\u00e9cider : accepter",
+    " * alg:none parce que le jeton le demande est la faille classique.",
+    " *",
+    " * Un jeton sans exp est REFUS\u00c9 : un jeton \u00e9ternel ne se r\u00e9voque jamais.",
+    " */",
+    "export function lireJeton(jeton: string, secret: string): Appelant | null {",
+    "  const parts = jeton.split(\".\");",
+    "  if (parts.length !== 3) return null;",
+    "  const [entete, charge, signature] = parts as [string, string, string];",
+    "  let tete: { alg?: string };",
+    "  let corps: Record<string, unknown>;",
+    "  try {",
+    "    tete = JSON.parse(Buffer.from(entete, \"base64url\").toString(\"utf8\")) as { alg?: string };",
+    "    corps = JSON.parse(Buffer.from(charge, \"base64url\").toString(\"utf8\")) as Record<",
+    "      string,",
+    "      unknown",
+    "    >;",
+    "  } catch {",
+    "    return null;",
+    "  }",
+    "  if (tete.alg !== \"HS256\") return null;",
+    "  const attendue = base64url(",
+    "    createHmac(\"sha256\", secret)",
+    "      .update(entete + \".\" + charge)",
+    "      .digest(),",
+    "  );",
+    "  const a = Buffer.from(attendue);",
+    "  const b = Buffer.from(signature);",
+    "  if (a.length !== b.length || !timingSafeEqual(a, b)) return null;",
+    "  const exp = corps[\"exp\"];",
+    "  if (typeof exp !== \"number\" || exp * 1000 <= Date.now()) return null;",
+    "  const id = corps[\"sub\"];",
+    "  if (typeof id !== \"string\" || id === \"\") return null;",
+    "  const email = corps[\"email\"];",
+    "  const droits = corps[\"rights\"];",
+    "  return {",
+    "    id,",
+    "    ...(typeof email === \"string\" && email !== \"\" ? { email } : {}),",
+    "    droits: Array.isArray(droits) ? droits.filter((x): x is string => typeof x === \"string\") : [],",
+    "  };",
+    "}",
+    "",
+    "/**",
+    " * L'APPELANT D'UNE REQU\u00caTE, S'IL EN A UN ET S'IL EST V\u00c9RIFIABLE.",
+    " *",
+    " * Le secret vient de l'ENVIRONNEMENT : aucun secret dans les fichiers \u00e9mis,",
+    " * car un secret versionn\u00e9 ne redevient jamais secret.",
+    " *",
+    " * SANS SECRET CONFIGUR\u00c9, rend null \u2014 et les lectures qui exigent une",
+    " * identit\u00e9 refusent. Traiter \u00ab pas de secret \u00bb comme \u00ab tout le monde est",
+    " * autoris\u00e9 \u00bb serait le pire d\u00e9faut possible.",
+    " */",
+    "export function appelantDe(entetes: Record<string, unknown>): Appelant | null {",
+    "  const secret = process.env.AIR_JWT_SECRET ?? \"\";",
+    "  if (secret === \"\") return null;",
+    "  const brut = entetes[\"authorization\"];",
+    "  if (typeof brut !== \"string\" || !brut.startsWith(\"Bearer \")) return null;",
+    "  return lireJeton(brut.slice(7), secret);",
+    "}",
+    "",
+  ].join("\n");
+}
+
 function baseTs(): string {
   return `// ÉMIS PAR DERIBFY — ne pas modifier à la main.
 import { DatabaseSync } from "node:sqlite";
@@ -235,18 +334,29 @@ export async function ouvrir(): Promise<Base> {
       },
     };
   }
+  // ── CE MOTEUR N'ACCEPTE NI BOOLÉEN NI « undefined » EN PARAMÈTRE.
+  //
+  // Mesuré le 2026-10-12 : « Provided value cannot be bound to SQLite
+  // parameter ». Postgres, lui, les accepte. Sans cette conversion, tout
+  // document portant un champ oui/non répondait 500 à l'écriture — et rien
+  // ne le disait avant de démarrer le serveur sur ce moteur-là.
+  //
+  // C'est le seul endroit qui connaît les deux moteurs : la conversion n'a
+  // donc pas à être répétée ailleurs, où on finirait par l'oublier.
+  const lier = (params: readonly unknown[]): unknown[] =>
+    params.map((v) => (typeof v === "boolean" ? (v ? 1 : 0) : v === undefined ? null : v));
   const db = new DatabaseSync(process.env.DB_FICHIER ?? "./donnees.sqlite");
   return {
     moteur: "sqlite",
     tous: async (sql, params = []) =>
-      db.prepare(sql).all(...(params as never[])) as unknown as Record<string, unknown>[],
+      db.prepare(sql).all(...(lier(params) as never[])) as unknown as Record<string, unknown>[],
     un: async (sql, params = []) =>
-      (db.prepare(sql).get(...(params as never[])) ?? null) as unknown as Record<
+      (db.prepare(sql).get(...(lier(params) as never[])) ?? null) as unknown as Record<
         string,
         unknown
       > | null,
     executer: async (sql, params = []) => {
-      db.prepare(sql).run(...(params as never[]));
+      db.prepare(sql).run(...(lier(params) as never[]));
     },
   };
 }
@@ -314,18 +424,26 @@ function modele(e: Entite): string {
 function visibilite(
   air: ProjectAir,
   e: Entite,
-): { sql: string; params: unknown[] } | { bloque: string; regle: string } {
+): { sql: string; params: string[]; besoinAppelant: boolean } | { bloque: string; regle: string } {
   const regles = air.rules.filter((r) => r.kind !== "validation" && r.entityId === e.id);
   const morceaux: string[] = [];
-  const params: unknown[] = [];
+  const params: string[] = [];
+  let besoinAppelant = false;
   for (const r of regles) {
     for (const a2 of r.assertions) {
       const champ = e.fields.find((x) => x.id === a2.fieldId);
       if (champ === undefined || champ.derived !== undefined) continue;
       // Une règle qui désigne l'appelant ne peut pas devenir une condition
       // SQL : rien dans la requête ne dit qui appelle.
+      // Une sentinelle désigne l'appelant. Seul le courriel est résolu : il
+      // correspond à une revendication standard du jeton. Toute autre
+      // sentinelle FERME l'entité au lieu d'inventer une revendication —
+      // deviner où lire l'identité serait inventer de la sécurité.
       if (typeof a2.value === "string" && a2.value.startsWith("@")) {
-        return { bloque: `la règle désigne l'appelant (${a2.value})`, regle: r.id };
+        if (!/^@current_?[Uu]ser\.email$/u.test(a2.value)) {
+          return { bloque: `sentinelle « ${a2.value} » non résoluble`, regle: r.id };
+        }
+        besoinAppelant = true;
       }
       const c = colonne(champ);
       const litteral = (v: unknown): string => {
@@ -333,7 +451,12 @@ function visibilite(
         // les deux moteurs, alors qu'un booléen passé en paramètre ne se lie
         // pas de la même façon.
         if (typeof v === "boolean") return v ? "true" : "false";
-        params.push(v);
+        // Une sentinelle devient une LECTURE DU JETON, pas une constante.
+        params.push(
+          typeof v === "string" && v.startsWith("@")
+            ? "a?.email ?? null"
+            : JSON.stringify(v),
+        );
         return "?";
       };
       switch (a2.operator) {
@@ -359,7 +482,7 @@ function visibilite(
       }
     }
   }
-  return { sql: morceaux.join(" and "), params };
+  return { sql: morceaux.join(" and "), params, besoinAppelant };
 }
 
 function depot(air: ProjectAir, e: Entite): string {
@@ -368,13 +491,14 @@ function depot(air: ProjectAir, e: Entite): string {
   // Une entité dont une règle désigne l'appelant est FERMÉE : la route
   // refusera. Le dépôt n'a alors aucun filtre à poser — mais il ne doit
   // surtout pas en poser un partiel, qui aurait l'air de protéger.
-  const vis = "bloque" in v ? { sql: "", params: [] } : v;
+  const vis = "bloque" in v ? { sql: "", params: [], besoinAppelant: false } : v;
   const cols = stockes(e).map(colonne);
   const lus = lisibles(e).map(colonne);
   const journal = e.appendOnly === true;
   const l = [
     `import type { ${n} } from "../modele/${table(e)}.ts";`,
     `import type { Base } from "../base.ts";`,
+    `import type { Appelant } from "../appelant.ts";`,
     "",
     "// 🔴 À ÉCRIRE : la requête dépend de VOTRE base. Les colonnes, elles,",
     "//    viennent du contrat et sont justes.",
@@ -384,7 +508,11 @@ function depot(air: ProjectAir, e: Entite): string {
     `export const COLONNES_LUES = ${JSON.stringify(lus)} as const;`,
     "",
     `export interface ${n}Depot {`,
-    `  lister(): Promise<Partial<${n}>[]>;`,
+    "  // L'appelant est passé À LA LECTURE : une règle du document peut le",
+    "  // désigner (« seul le propriétaire voit sa commande »). Le filtre",
+    "  // devient une condition SQL sur sa revendication, jamais une",
+    "  // comparaison faite après coup — qui se contournerait.",
+    `  lister(appelant: Appelant | null): Promise<Partial<${n}>[]>;`,
     `  lire(id: string): Promise<Partial<${n}> | null>;`,
     `  enregistrer(x: Partial<${n}> & { id: string }): Promise<Partial<${n}>>;`,
   ];
@@ -413,11 +541,11 @@ function depot(air: ProjectAir, e: Entite): string {
     // suffirait de deviner un identifiant. La condition est donc DANS le SQL,
     // des deux côtés.
     `  const VISIBLE = ${JSON.stringify(vis.sql === "" ? "" : ` where ${vis.sql}`)};`,
-    `  const FILTRE: unknown[] = ${JSON.stringify(vis.params)};`,
+    `  const FILTRE = (a: Appelant | null): unknown[] => [${vis.params.join(", ")}];`,
     `  const COLS = ${JSON.stringify(["id", ...cols])};`,
     "  return {",
-    `    lister: async () =>`,
-    `      (await base.tous(\`select \${LUES} from ${table(e)}\${VISIBLE}\`, FILTRE)) as Partial<${n}>[],`,
+    `    lister: async (a) =>`,
+    `      (await base.tous(\`select \${LUES} from ${table(e)}\${VISIBLE}\`, FILTRE(a))) as Partial<${n}>[],`,
     "    // ── `lire` N'EST PAS UNE LECTURE PUBLIQUE, ET NE SE FILTRE PAS.",
     "    //",
     "    // Elle sert au contrôle d'EXISTENCE avant écriture. Y poser le filtre",
@@ -465,17 +593,30 @@ function routes(air: ProjectAir, e: Entite): string {
   // monde ; 403 et le nom de la règle, parce qu'un refus se récupère et
   // qu'un accès accordé par erreur non.
   const v = visibilite(air, e);
-  const ferme =
+
+
+  // ── UNE LECTURE QUI DÉPEND DE L'APPELANT EXIGE UN APPELANT.
+  //
+  // Sans jeton vérifiable, le filtre comparerait la colonne à `null` et ne
+  // rendrait rien — ce qui ressemblerait à « cette personne n'a aucune
+  // commande » alors que la vraie réponse est « je ne sais pas qui vous
+  // êtes ». Deux situations différentes ne doivent pas donner le même écran.
+  const exigeAppelant =
     "bloque" in v
-      ? [
-          "    // Cette collection est FERMÉE : voir le code ci-dessous.",
-          "    return rep.code(403).send({",
-          `      error: "AIR_VISIBILITE_INAPPLICABLE",`,
-          `      regle: ${JSON.stringify(v.regle)},`,
-          `      message: ${JSON.stringify(v.bloque)},`,
-          "    });",
-        ]
-      : [];
+      ? []
+      : [
+          "    const appelant = appelantDe(req.headers as Record<string, unknown>);",
+          ...(v.besoinAppelant
+            ? [
+                "    if (appelant === null) {",
+                "      return rep.code(403).send({",
+                `        error: "AIR_APPELANT_REQUIS",`,
+                `        message: "cette collection n'est lisible que par son propriétaire",`,
+                "      });",
+                "    }",
+              ]
+            : []),
+        ];
   const journal = e.appendOnly === true;
   const enBase = e.fields.filter(
     (f) => f.derived?.kind === "count" || f.derived?.kind === "sum",
@@ -487,6 +628,7 @@ function routes(air: ProjectAir, e: Entite): string {
     `import type { ${n} } from "../modele/${table(e)}.ts";`,
     `import type { ${n}Depot } from "../depot/${table(e)}.ts";`,
     `import type { Base } from "../base.ts";`,
+    `import { appelantDe } from "../appelant.ts";`,
     `import { verifier${PASCAL(e.id)} } from "./regles-metier.ts";`,
     ...(enBase.length > 0
       ? [
@@ -536,9 +678,22 @@ function routes(air: ProjectAir, e: Entite): string {
       if (f.derived !== undefined) {
         return [`  // « ${f.name} » est CALCULÉ par le document, pas stocké ici.`];
       }
+      const c = JSON.stringify(colonne(f));
+      // UN OUI/NON DOIT RESTER UN OUI/NON. SQLite rend 1 ou 0 ; Postgres rend
+      // un vrai booléen. Le modèle émis annonce `boolean` : sans conversion,
+      // l'application recevrait 1 au lieu de true selon le moteur — même
+      // défaut que le nombre rendu en texte, mesuré la veille.
+      if (f.type === "boolean") {
+        return [
+          `  if (src[${c}] !== undefined && src[${c}] !== null) {`,
+          `    vue[${JSON.stringify(f.name)}] =`,
+          `      src[${c}] === true || src[${c}] === 1 || src[${c}] === "1";`,
+          "  }",
+        ];
+      }
       return [
-        `  if (src[${JSON.stringify(colonne(f))}] !== undefined) {`,
-        `    vue[${JSON.stringify(f.name)}] = src[${JSON.stringify(colonne(f))}];`,
+        `  if (src[${c}] !== undefined) {`,
+        `    vue[${JSON.stringify(f.name)}] = src[${c}];`,
         "  }",
       ];
     }),
@@ -566,17 +721,33 @@ function routes(air: ProjectAir, e: Entite): string {
     "",
     `/** Routes de « ${e.name} », montées sur le contrat AIR. */`,
     `export function ${CAMEL(e.id)}Routes(app: FastifyInstance, depot: ${n}Depot, base: Base): void {`,
-    "  app.get(BASE, async (_req, rep) => {",
-    ...ferme,
-    "    const nonCalcules = new Set<string>();",
-    "    const vues = await Promise.all(",
-    "      (await depot.lister()).map(async (x) => enLigne(base, x, nonCalcules)),",
-    "    );",
-    "    if (nonCalcules.size > 0) {",
-    "      void rep.header(\"X-Air-Non-Calcule\", [...nonCalcules].join(\",\"));",
-    "    }",
-    "    return rep.send(vues);",
-    "  });",
+    // ── LA LECTURE : FILTRÉE, OU REFUSÉE. UNE SEULE DES DEUX EST ÉMISE.
+    //
+    // Émettre aussi le corps normal après un refus laisserait du code qui
+    // référence un appelant inexistant — et, pire, une route qui pourrait
+    // rendre les lignes sans filtre si le refus sautait un jour.
+    ...("bloque" in v
+      ? [
+          "  app.get(BASE, async (_req, rep) =>",
+          "    rep.code(403).send({",
+          `      error: "AIR_VISIBILITE_INAPPLICABLE",`,
+          `      regle: ${JSON.stringify(v.regle)},`,
+          `      message: ${JSON.stringify(v.bloque)},`,
+          "    }));",
+        ]
+      : [
+          "  app.get(BASE, async (req, rep) => {",
+          ...exigeAppelant,
+          "    const nonCalcules = new Set<string>();",
+          "    const vues = await Promise.all(",
+          "      (await depot.lister(appelant)).map(async (x) => enLigne(base, x, nonCalcules)),",
+          "    );",
+          "    if (nonCalcules.size > 0) {",
+          '      void rep.header("X-Air-Non-Calcule", [...nonCalcules].join(","));',
+          "    }",
+          "    return rep.send(vues);",
+          "  });",
+        ]),
     "",
     "  // POST est un UPSERT : le contrat ne distingue pas créer de modifier.",
     "  app.post(BASE, async (req, rep) => {",
@@ -1002,6 +1173,7 @@ export function enveloppeFastify(air: ProjectAir): EnveloppeBackend {
   files.set("tsconfig.json", tsconfig());
   files.set("src/serveur.ts", serveur(air));
   files.set("src/base.ts", baseTs());
+  files.set("src/appelant.ts", appelantTs());
   files.set("src/sqlite.d.ts", sqliteDts());
   // Le MÊME texte, deux fois : `schema.sql` pour qu'un humain le lise ou
   // l'applique à la main, `src/schema.ts` pour que le serveur l'applique sans

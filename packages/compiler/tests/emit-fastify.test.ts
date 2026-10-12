@@ -106,11 +106,23 @@ describe("la visibilité des lignes est imposée par le serveur", () => {
   // Une règle qui désigne l'appelant ne peut pas devenir une condition SQL.
   // L'entité est alors FERMÉE — et AUCUNE autre route ne doit rendre ses
   // lignes, sinon le refus n'est qu'une façade.
-  it("une entité qu’on ne sait pas filtrer est FERMÉE, sans route de contournement", () => {
-    const a = avecRegle("eq", "@currentUser.email");
-    const files = new Map(compileBackend(a).files);
-    const api = [...files.entries()].find(([k]) => k.startsWith("src/api/tontines"));
-    const src = api?.[1] ?? "";
+  // DEUX SENTINELLES, DEUX ISSUES. `@currentUser.email` correspond à une
+  // revendication standard du jeton : elle se RÉSOUT, et la lecture exige
+  // alors un appelant. Toute autre sentinelle ne se résout pas — l'entité est
+  // FERMÉE plutôt que servie sans filtre. Confondre les deux donnerait soit
+  // une fuite, soit une collection inutilisable.
+  it("une sentinelle résoluble exige un APPELANT, pas une fermeture", () => {
+    const files = new Map(compileBackend(avecRegle("eq", "@currentUser.email")).files);
+    const src = [...files.entries()].find(([k]) => k.startsWith("src/api/tontines"))?.[1] ?? "";
+    expect(src).toContain("AIR_APPELANT_REQUIS");
+    expect(src).toContain("appelantDe(req.headers");
+    expect(src).not.toContain("AIR_VISIBILITE_INAPPLICABLE");
+    expect((src.match(/app\.get\(/gu) ?? []).length).toBe(1);
+  });
+
+  it("une sentinelle NON résoluble FERME l’entité, sans route de contournement", () => {
+    const files = new Map(compileBackend(avecRegle("eq", "@currentUser.reference_client")).files);
+    const src = [...files.entries()].find(([k]) => k.startsWith("src/api/tontines"))?.[1] ?? "";
     expect(src).toContain("AIR_VISIBILITE_INAPPLICABLE");
     expect(src).toContain("rep.code(403)");
     // Une seule route de lecture de collection, et elle refuse.
