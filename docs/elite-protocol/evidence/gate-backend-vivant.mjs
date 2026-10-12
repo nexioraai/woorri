@@ -79,6 +79,44 @@ const dire = (ok, quoi, detail = "") => {
   console.log(`  ${ok ? "🟢" : "🔴"} ${quoi}${detail === "" ? "" : " — " + detail}`);
 };
 
+// ── UNE RÈGLE AJOUTÉE PAR CETTE GATE, ET POURQUOI.
+//
+// Le corpus est GELÉ, et le document de référence ne déclare aucune règle de
+// VALIDATION — seulement des règles d'autorisation, que ce contrat ne peut
+// pas faire respecter. La gate en ajoute donc une, ici et nulle part
+// ailleurs, pour éprouver le MÉCANISME sur un vrai serveur démarré.
+//
+// Les 160 règles réelles du corpus, elles, sont éprouvées par la gate de
+// COMPILATION, qui les traverse toutes sur 31 documents.
+//
+// Le seuil est choisi pour que les autres preuves restent valides : les
+// lignes qu'elles écrivent portent 0 et 1234,5, toutes deux ≥ 0.
+const REGLE_GATE = "rule_gate_minimum";
+const entiteReglee = air.entities.find(
+  (e) =>
+    e.appendOnly !== true &&
+    e.fields.some((f) => f.transitions !== undefined) &&
+    e.fields.some(
+      (f) =>
+        (f.type === "decimal" || f.type === "number") &&
+        f.derived === undefined &&
+        f.sensitive !== true,
+    ),
+);
+const champRegle = entiteReglee?.fields.find(
+  (f) =>
+    (f.type === "decimal" || f.type === "number") && f.derived === undefined && f.sensitive !== true,
+);
+if (entiteReglee !== undefined && champRegle !== undefined) {
+  air.rules.push({
+    id: REGLE_GATE,
+    kind: "validation",
+    entityId: entiteReglee.id,
+    description: `« ${champRegle.name} » ne peut pas être négatif`,
+    assertions: [{ fieldId: champRegle.id, operator: "gte", value: 0 }],
+  });
+}
+
 console.log("═".repeat(78));
 console.log("GATE RACINE — les SERVEURS générés RÉPONDENT-ILS ?");
 console.log("═".repeat(78));
@@ -341,6 +379,25 @@ for (const [rang, { pile, base }] of PILES.entries()) {
         );
       }
 
+      // ── UNE RÈGLE DU DOCUMENT DOIT MORDRE SUR LE SERVEUR.
+      //
+      // L'écran la vérifie aussi, mais une vérification côté écran ne protège
+      // de rien : la route s'appelle directement. Et le refus doit NOMMER la
+      // règle — « 422 » sans dire laquelle laisse l'appelant deviner.
+      if (entiteReglee?.id === avecEtats.id && champRegle !== undefined) {
+        const r = await fetch(`${B}/${avecEtats.id}/rows`, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ id: "gateR", [champRegle.name]: -1 }),
+        });
+        const corps = r.status === 422 ? await r.json() : {};
+        dire(
+          r.status === 422 && corps.regle === REGLE_GATE,
+          `une règle du document est FAITE RESPECTER par le serveur (« ${champRegle.name} » ≥ 0)`,
+          `HTTP ${String(r.status)} · règle ${JSON.stringify(corps.regle ?? null)}`,
+        );
+      }
+
       const legal = await fetch(`${B}/${avecEtats.id}/rows`, {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -422,4 +479,4 @@ for (const [rang, { pile, base }] of PILES.entries()) {
 
 const ko = essais.filter((x) => !x).length;
 console.log(`\n  ${String(essais.length - ko)}/${String(essais.length)} preuves tenues.`);
-process.exitCode = ko === 0 && essais.length >= 20 ? 0 : 1;
+process.exitCode = ko === 0 && essais.length >= 30 ? 0 : 1;

@@ -414,6 +414,20 @@ const controleur = (groupe: string, air: ProjectAir, e: ProjectAir["entities"][n
     `    ${nom} x = existante.orElseGet(${nom}::new);`,
     "    x.setId(id);",
     "    appliquer(x, corps);",
+    "    // LES RÈGLES DU DOCUMENT, AVANT D'ÉCRIRE.",
+    "    //",
+    "    // Sur la ligne QUI SERA enregistrée, pas sur le corps de la requête :",
+    "    // une règle peut être tenue par un champ que la requête ne mentionne",
+    "    // pas. 422 : la requête est comprise, c'est son contenu qui est",
+    "    // refusé. Mêmes clés que la pile Node — une même règle ne doit pas",
+    "    // s'appliquer différemment selon le serveur.",
+    `    Map<String, String> violation = Validation.verifier${PASCAL(e.id)}(aValider(x));`,
+    "    if (violation != null) {",
+    "      return ResponseEntity.status(422).body(Map.of(",
+    "          \"error\", \"AIR_REGLE_VIOLEE\",",
+    "          \"regle\", violation.get(\"regle\"),",
+    "          \"message\", violation.get(\"message\")));",
+    "    }",
     "    depot.save(x);",
     "    Set<String> nonCalcules = new LinkedHashSet<>();",
     "    Map<String, Object> ligne = enLigne(x, nonCalcules);",
@@ -511,6 +525,22 @@ const controleur = (groupe: string, air: ProjectAir, e: ProjectAir["entities"][n
     "  // L'en-tête n'apparaît QUE s'il reste quelque chose à écrire. Un",
     "  // en-tête vide sur chaque réponse deviendrait du bruit qu'on cesse de",
     "  // lire — et c'est précisément le jour où il compterait.",
+    `  /**`,
+    `   * LA LIGNE TELLE QU'ELLE SERA ENREGISTRÉE, pour les règles.`,
+    `   *`,
+    `   * Clés = identifiant du champ sans son préfixe — la MÊME convention`,
+    `   * que la pile Node. Les champs calculés n'y sont pas : ils ne`,
+    `   * s'écrivent pas. Les champs sensibles non plus : ils ne sont pas`,
+    `   * conservés, donc la ligne enregistrée ne les porte pas.`,
+    `   */`,
+    `  private Map<String, Object> aValider(${nom} x) {`,
+    "    Map<String, Object> v = new LinkedHashMap<>();",
+    ...e.fields
+      .filter((f) => f.derived === undefined && f.sensitive !== true)
+      .map((f) => `    v.put("${f.id.replace(/^fld_/u, "")}", x.get${PASCAL(f.id)}());`),
+    "    return v;",
+    "  }",
+    "",
     "  private static <T> ResponseEntity.BodyBuilder avecEnTete(",
     "      ResponseEntity.BodyBuilder b, Set<String> nonCalcules) {",
     "    if (nonCalcules.isEmpty()) return b;",
@@ -817,6 +847,125 @@ const calculs = (groupe: string, air: ProjectAir): string => {
  * et elles LÈVENT — un serveur qui rend silencieusement 0 est un serveur qui
  * ment.
  */
+/**
+ * LES RÈGLES DU DOCUMENT, FAITES RESPECTER PAR LE SERVEUR JAVA.
+ *
+ * `ReglesMetier` traite un AUTRE sujet — les exigences que le document
+ * déclare hors de sa portée. Les `rules` du document, elles, n'étaient
+ * appliquées nulle part côté Java. Mesuré au corpus : 160 règles de
+ * validation sur 31 documents, zéro appliquée.
+ *
+ * Les clés de la ligne examinée sont les mêmes que côté Node — l'identifiant
+ * du champ sans son préfixe. Deux conventions auraient voulu dire que la même
+ * règle s'applique différemment selon le serveur.
+ *
+ * LES RÈGLES D'AUTORISATION NE SONT PAS ICI : elles disent QUI a le droit, et
+ * ce contrat ne transporte pas l'identité de l'appelant jusqu'ici. Les
+ * appliquer en devinant l'appelant donnerait l'illusion d'un contrôle
+ * d'accès, ce qui est pire que de ne pas en avoir.
+ */
+const validation = (groupe: string, air: ProjectAir): string => {
+  const col = (id: string): string => id.replace(/^fld_/u, "");
+  const l: string[] = [
+    `package ${groupe}.api;`,
+    "",
+    entete(
+      `Règles de validation — ${String(air.rules.filter((r) => r.kind === "validation").length)} du document, vérifiées AVANT écriture.`,
+    ),
+    "import java.util.*;",
+    "import java.util.regex.Pattern;",
+    "",
+    "public final class Validation {",
+    "  private Validation() {}",
+    "",
+    "  // Une comparaison de grandeur n'a de sens que sur un nombre. Rendre",
+    "  // `null` fait REFUSER la règle au lieu de la laisser passer : une",
+    "  // comparaison avec NaN serait fausse en silence.",
+    "  private static Double nombre(Object v) {",
+    "    if (v == null) return null;",
+    "    if (v instanceof Number n) return n.doubleValue();",
+    "    try { return Double.valueOf(String.valueOf(v).trim()); }",
+    "    catch (NumberFormatException e) { return null; }",
+    "  }",
+    "",
+    "  private static boolean rempli(Object v) {",
+    "    return v != null && !String.valueOf(v).isEmpty();",
+    "  }",
+    "",
+    "  private static Map<String, String> echec(String regle, String message) {",
+    "    return Map.of(\"regle\", regle, \"message\", message);",
+    "  }",
+    "",
+  ];
+  for (const e of air.entities) {
+    const miennes = air.rules.filter((r) => r.kind === "validation" && r.entityId === e.id);
+    l.push(
+      `  /** Les règles de « ${e.name} ». Rend null si la ligne les tient toutes. */`,
+      `  public static Map<String, String> verifier${PASCAL(e.id)}(Map<String, Object> ligne) {`,
+    );
+    for (const r of miennes) {
+      for (const a2 of r.assertions) {
+        const champ = e.fields.find((x) => x.id === a2.fieldId);
+        if (champ === undefined) {
+          l.push(`    // « ${a2.fieldId} » n'est pas un champ de cette entité : ignorée.`);
+          continue;
+        }
+        if (champ.sensitive === true) {
+          l.push(
+            `    // « ${champ.name} » est SENSIBLE : jamais conservé, donc absent de`,
+            `    // la ligne enregistrée. L'écran le vérifie à la saisie.`,
+          );
+          continue;
+        }
+        const c = JSON.stringify(col(champ.id));
+        const v = JSON.stringify(String(a2.value ?? ""));
+        const liste =
+          Array.isArray(a2.value)
+            ? (a2.value as unknown[]).map((x) => JSON.stringify(String(x))).join(", ")
+            : v;
+        const ech = `return echec(${JSON.stringify(r.id)}, ${JSON.stringify(r.description)});`;
+        const cond = (() => {
+          switch (a2.operator) {
+            case "required":
+              return `!rempli(ligne.get(${c}))`;
+            case "eq":
+              return `rempli(ligne.get(${c})) && !String.valueOf(ligne.get(${c})).equals(${v})`;
+            case "neq":
+              return `rempli(ligne.get(${c})) && String.valueOf(ligne.get(${c})).equals(${v})`;
+            case "gt":
+              return `rempli(ligne.get(${c})) && (nombre(ligne.get(${c})) == null || nombre(ligne.get(${c})) <= Double.parseDouble(${v}))`;
+            case "gte":
+              return `rempli(ligne.get(${c})) && (nombre(ligne.get(${c})) == null || nombre(ligne.get(${c})) < Double.parseDouble(${v}))`;
+            case "lte":
+              return `rempli(ligne.get(${c})) && (nombre(ligne.get(${c})) == null || nombre(ligne.get(${c})) > Double.parseDouble(${v}))`;
+            case "matches":
+              return `rempli(ligne.get(${c})) && !Pattern.matches(${v}, String.valueOf(ligne.get(${c})))`;
+            case "in":
+              return `rempli(ligne.get(${c})) && !List.of(${liste}).contains(String.valueOf(ligne.get(${c})))`;
+            default:
+              return "";
+          }
+        })();
+        if (cond === "") {
+          l.push(
+            `    // Opérateur « ${a2.operator} » non couvert : on REFUSE la règle`,
+            `    // plutôt que de l'ignorer — une règle ignorée ne protège plus.`,
+            `    throw new UnsupportedOperationException("AIR_REGLE_A_ECRIRE:${r.id}");`,
+          );
+          continue;
+        }
+        l.push(
+          `    // ${r.description}`,
+          `    if (${cond}) ${ech}`,
+        );
+      }
+    }
+    l.push("    return null;", "  }", "");
+  }
+  l.push("}", "");
+  return l.join("\n");
+};
+
 const reglesMetier = (groupe: string, air: ProjectAir): string => {
   const absents = (air.intent?.needs ?? []).filter(
     (b) => b.resolution.kind === "unexpressible",
@@ -968,6 +1117,7 @@ export function enveloppeSpring(air: ProjectAir): EnveloppeBackend {
   files.set(`${chemin}/api/SessionApi.java`, session(groupe, air));
   files.set(`${chemin}/api/Calculs.java`, calculs(groupe, air));
   files.set(`${chemin}/api/ReglesMetier.java`, reglesMetier(groupe, air));
+  files.set(`${chemin}/api/Validation.java`, validation(groupe, air));
   files.set("src/main/resources/application.yml", configuration(air));
   files.set("LISEZ-MOI.md", lisezMoi(air));
   return { files };

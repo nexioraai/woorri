@@ -379,6 +379,7 @@ function routes(e: Entite): string {
     `import type { ${n} } from "../modele/${table(e)}.ts";`,
     `import type { ${n}Depot } from "../depot/${table(e)}.ts";`,
     `import type { Base } from "../base.ts";`,
+    `import { verifier${PASCAL(e.id)} } from "./regles-metier.ts";`,
     ...(enBase.length > 0
       ? [
           `import { ${enBase
@@ -521,11 +522,23 @@ function routes(e: Entite): string {
   }
 
   l.push(
-    "    const ligne = await depot.enregistrer({",
-    "      ...(existante ?? {}),",
-    "      ...retenir(corps),",
-    "      id,",
-    "    });",
+    "    // LES RÈGLES DU DOCUMENT, AVANT D'ÉCRIRE.",
+    "    //",
+    "    // Sur la ligne QUI SERA enregistrée — l'existante fusionnée avec ce",
+    "    // que la requête propose. Vérifier le seul corps de la requête",
+    "    // laisserait passer une règle tenue par un champ qu'il ne mentionne",
+    "    // pas. 422 : la requête est comprise, c'est son contenu qui est",
+    "    // refusé.",
+    "    const futur = { ...(existante ?? {}), ...retenir(corps), id };",
+    `    const violation = verifier${PASCAL(e.id)}(futur as Record<string, unknown>);`,
+    "    if (violation !== null) {",
+    "      return rep.code(422).send({",
+    `      error: "AIR_REGLE_VIOLEE",`,
+    "        regle: violation.regle,",
+    "        message: violation.message,",
+    "      });",
+    "    }",
+    "    const ligne = await depot.enregistrer(futur);",
     "    const nonCalcules = new Set<string>();",
     "    const vue = await enLigne(base, ligne, nonCalcules);",
     "    if (nonCalcules.size > 0) {",
@@ -664,27 +677,137 @@ function calculs(air: ProjectAir): string {
   return l.join("\n");
 }
 
+/**
+ * LES RÈGLES DU DOCUMENT, FAITES RESPECTER PAR LE SERVEUR.
+ *
+ * L'application les vérifie aussi, mais une vérification côté écran ne
+ * protège de rien : la route s'appelle directement. Mesuré au corpus —
+ * 160 règles de validation sur 31 documents, et le serveur n'en appliquait
+ * AUCUNE : il levait `AIR_REGLE_A_ECRIRE`.
+ *
+ * HUIT opérateurs couvrent ces 160 règles (589 assertions). On les écrit
+ * tous, une fois — pas un par besoin métier.
+ *
+ * LES RÈGLES D'AUTORISATION NE SONT PAS ICI, et c'est une limite assumée :
+ * elles disent QUI a le droit, et ce contrat ne transporte pas l'identité de
+ * l'appelant jusqu'ici. Les appliquer en devinant l'appelant serait pire que
+ * de ne pas les appliquer — ça donnerait l'illusion d'un contrôle d'accès.
+ */
 function reglesMetier(air: ProjectAir): string {
   const l = [
-    "// LES RÈGLES QUE LE SERVEUR DOIT FAIRE RESPECTER.",
-    "//",
-    "// L'application les vérifie aussi, mais une vérification côté client ne",
-    "// protège de rien : elle se contourne. C'est ici que ça compte.",
+    "// ÉMIS depuis le contrat — ne pas modifier à la main.",
+    "",
+    "/** Une règle non tenue : laquelle, et ce qu'elle dit. */",
+    "export interface Violation {",
+    "  readonly regle: string;",
+    "  readonly message: string;",
+    "}",
+    "",
+    "// Les comparaisons de grandeur n'ont de sens que sur des nombres. Un",
+    "// `NaN` rendrait toute comparaison fausse en silence : on refuse alors",
+    "// la règle au lieu de la laisser passer.",
+    "function nombre(v: unknown): number | null {",
+    "  if (typeof v === \"number\") return Number.isFinite(v) ? v : null;",
+    "  if (typeof v === \"string\" && v.trim() !== \"\") {",
+    "    const n = Number(v);",
+    "    return Number.isFinite(n) ? n : null;",
+    "  }",
+    "  return null;",
+    "}",
+    "",
+    "function rempli(v: unknown): boolean {",
+    "  return v !== undefined && v !== null && v !== \"\";",
+    "}",
     "",
   ];
-  if (air.rules.length === 0) l.push("// Le document n'en déclare aucune.");
-  for (const r of air.rules) {
+  const validation = air.rules.filter((r) => r.kind === "validation");
+  const autorisation = air.rules.filter((r) => r.kind !== "validation");
+
+  for (const e of air.entities) {
+    const miennes = validation.filter((r) => r.entityId === e.id);
     l.push(
-      `/** ${r.description} */`,
-      `export function ${CAMEL(r.id)}(ligne: Record<string, unknown>): void {`,
-      ...r.assertions.map(
-        (a) =>
-          `  //   \`${a.fieldId}\` ${a.operator}${a.value === undefined ? "" : ` ${JSON.stringify(a.value)}`}`,
-      ),
-      `  // 🔴 À ÉCRIRE : lever si la règle n'est pas tenue.`,
-      `  void ligne;`,
-      `  throw new Error("AIR_REGLE_A_ECRIRE:${r.id}");`,
-      "}",
+      `/**`,
+      ` * Les règles de « ${e.name} », vérifiées AVANT écriture.`,
+      ` *`,
+      ` * La ligne examinée est celle qui SERA enregistrée — l'existante`,
+      ` * fusionnée avec ce que la requête propose. Vérifier le seul corps de`,
+      ` * la requête laisserait passer une règle tenue par un champ qu'elle ne`,
+      ` * mentionne pas.`,
+      ` */`,
+      `export function verifier${PASCAL(e.id)}(ligne: Record<string, unknown>): Violation | null {`,
+    );
+    if (miennes.length === 0) {
+      l.push("  void ligne;", "  // Le document n'en déclare aucune pour cette entité.");
+    }
+    for (const r of miennes) {
+      for (const a of r.assertions) {
+        const champ = e.fields.find((x) => x.id === a.fieldId);
+        if (champ === undefined) {
+          l.push(`  // « ${a.fieldId} » n'est pas un champ de cette entité : règle ignorée.`);
+          continue;
+        }
+        if (champ.sensitive === true) {
+          l.push(
+            `  // « ${champ.name} » est SENSIBLE : il n'est jamais conservé, donc`,
+            `  // la ligne enregistrée ne le porte pas. Cette assertion ne peut`,
+            `  // pas être vérifiée ici — l'écran la vérifie à la saisie.`,
+          );
+          continue;
+        }
+        const c = JSON.stringify(colonne(champ));
+        const v = JSON.stringify(a.value ?? null);
+        const echec = `return { regle: ${JSON.stringify(r.id)}, message: ${JSON.stringify(r.description)} };`;
+        const cond = (() => {
+          switch (a.operator) {
+            case "required":
+              return `!rempli(ligne[${c}])`;
+            case "eq":
+              return `rempli(ligne[${c}]) && String(ligne[${c}]) !== String(${v})`;
+            case "neq":
+              return `rempli(ligne[${c}]) && String(ligne[${c}]) === String(${v})`;
+            case "gt":
+              return `rempli(ligne[${c}]) && !((nombre(ligne[${c}]) ?? -Infinity) > Number(${v}))`;
+            case "gte":
+              return `rempli(ligne[${c}]) && !((nombre(ligne[${c}]) ?? -Infinity) >= Number(${v}))`;
+            case "lte":
+              return `rempli(ligne[${c}]) && !((nombre(ligne[${c}]) ?? Infinity) <= Number(${v}))`;
+            case "matches":
+              return `rempli(ligne[${c}]) && !new RegExp(String(${v})).test(String(ligne[${c}]))`;
+            case "in":
+              return `rempli(ligne[${c}]) && !(${v} as unknown[]).map(String).includes(String(ligne[${c}]))`;
+            default:
+              return "";
+          }
+        })();
+        if (cond === "") {
+          // AUCUN OPÉRATEUR INCONNU NE PASSE EN SILENCE. S'il en apparaît un,
+          // le serveur REFUSE la règle au lieu de l'ignorer : une règle
+          // ignorée est une règle qui ne protège plus, et personne ne le voit.
+          l.push(
+            `  // Opérateur « ${a.operator} » non couvert par cet émetteur.`,
+            `  throw new Error("AIR_REGLE_A_ECRIRE:${r.id}");`,
+          );
+          continue;
+        }
+        l.push(
+          `  // ${r.description}`,
+          `  //   \`${champ.name}\` ${a.operator}${a.value === undefined ? "" : ` ${JSON.stringify(a.value)}`}`,
+          `  if (${cond}) ${echec}`,
+        );
+      }
+    }
+    l.push("  return null;", "}", "");
+  }
+
+  if (autorisation.length > 0) {
+    l.push(
+      "// ── CE QUE CE SERVEUR NE SAIT PAS FAIRE RESPECTER, ET LE DIT.",
+      "//",
+      `// ${String(autorisation.length)} règle(s) d'AUTORISATION : elles disent QUI a le droit.`,
+      "// Ce contrat ne transporte pas l'identité de l'appelant jusqu'ici ;",
+      "// deviner l'appelant donnerait l'illusion d'un contrôle d'accès, ce",
+      "// qui est pire que de ne pas en avoir.",
+      ...autorisation.map((r) => `//   · ${r.id} — ${r.description}`),
       "",
     );
   }

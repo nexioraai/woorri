@@ -61,6 +61,46 @@ describe("le document choisit la pile, pas le moteur", () => {
 // par identifiant de colonne. Il compilait, et AUCUNE application générée
 // n'aurait pu lui parler — son client appelle /air/v1/entities/<id>/rows et
 // nomme les champs par leur NOM. Deux tests pour que ça ne redérive pas.
+// ── LES RÈGLES DU DOCUMENT NE SONT PAS DÉCORATIVES.
+//
+// Mesuré au corpus le 2026-10-12 : 160 règles de validation sur 31
+// documents, et le serveur n'en appliquait AUCUNE. L'écran les vérifiait
+// seul — or un écran ne protège de rien, la route s'appelle directement.
+describe("les règles du document sont faites respecter par le serveur", () => {
+  it("chaque règle de validation est dans le code, et nommée", () => {
+    const a = air();
+    const validation = a.rules.filter((r) => r.kind === "validation");
+    if (validation.length === 0) return;
+    const src = sortie().get("src/api/regles-metier.ts") ?? "";
+    for (const r of validation) expect(src, r.id).toContain(JSON.stringify(r.id));
+  });
+
+  // Une règle d'AUTORISATION dit QUI a le droit. Ce contrat ne transporte pas
+  // l'identité de l'appelant jusqu'au serveur ; l'appliquer en la devinant
+  // donnerait l'illusion d'un contrôle d'accès — pire que de ne pas en avoir.
+  it("les règles d’autorisation sont dites, pas simulées", () => {
+    const a = air();
+    const autorisation = a.rules.filter((r) => r.kind !== "validation");
+    if (autorisation.length === 0) return;
+    const src = sortie().get("src/api/regles-metier.ts") ?? "";
+    for (const r of autorisation) expect(src, r.id).toContain(r.id);
+    expect(src).toContain("AUTORISATION");
+  });
+
+  it("le refus nomme la règle, et répond 422", () => {
+    const s = sortie();
+    let mesures = 0;
+    for (const e of air().entities) {
+      const src = s.get(`src/api/${e.id.replace(/^ent_/u, "")}.ts`) ?? "";
+      if (!src.includes("AIR_REGLE_VIOLEE")) continue;
+      mesures += 1;
+      expect(src, e.id).toContain("rep.code(422)");
+      expect(src, e.id).toContain("regle: violation.regle");
+    }
+    expect(mesures, "les routes doivent vérifier les règles").toBeGreaterThan(0);
+  });
+});
+
 describe("le serveur émis respecte le contrat que le client appelle", () => {
   it("les routes sont montées sur /air/v1/entities/<id>/rows", () => {
     const s = sortie();
