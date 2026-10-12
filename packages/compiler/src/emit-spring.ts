@@ -642,9 +642,19 @@ public class SessionApi {
 
   @PostMapping("/password-resets")
   public ResponseEntity<?> reinitialiser(@RequestBody Map<String, String> corps) {
-    // Rendre l'ACCEPTATION de l'envoi, jamais l'existence du compte : révéler
-    // qu'une adresse est inscrite est une fuite.
-    return ResponseEntity.accepted().build();
+    // ── 202 EST LA BONNE REPONSE QUAND L'ENVOI A LIEU. ICI, IL N'A PAS LIEU.
+    //
+    // Le principe reste juste : rendre l'ACCEPTATION de l'envoi et jamais
+    // l'existence du compte, car reveler qu'une adresse est inscrite est une
+    // fuite. Mais rien n'envoie encore ce courriel. Un 202 disait donc a
+    // l'application « c'est parti », et l'ecran affichait « verifiez votre
+    // boite » pour un message qui ne partira jamais. Le client lit tout 2xx
+    // comme une acceptation : il ne pouvait pas le savoir.
+    //
+    // 501 et un code : l'ecran affiche un echec, ce qui est la verite. Les
+    // deux autres operations de session refusent deja ainsi.
+    return ResponseEntity.status(501).body(Map.of(
+        "error", "AIR_SESSION_REINITIALISER_A_ECRIRE"));
   }
 }
 `;

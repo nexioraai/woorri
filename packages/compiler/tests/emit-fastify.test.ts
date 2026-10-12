@@ -61,6 +61,55 @@ describe("le document choisit la pile, pas le moteur", () => {
 // par identifiant de colonne. Il compilait, et AUCUNE application générée
 // n'aurait pu lui parler — son client appelle /air/v1/entities/<id>/rows et
 // nomme les champs par leur NOM. Deux tests pour que ça ne redérive pas.
+// ── LA BRANCHE QUE LE CORPUS N'ATTEINT JAMAIS.
+//
+// Mesuré le 2026-10-12 : sur les 31 documents, la clé qui relie l'enfant au
+// parent se résout TOUJOURS — un seul champ candidat. Le refus prévu pour le
+// cas ambigu n'avait donc jamais été exécuté : du code que personne n'a vu
+// tourner, exactement ce que ce dépôt traque.
+//
+// On fabrique donc le cas : un SECOND champ de l'enfant pointant vers le même
+// parent. Rien dans le document ne dit alors lequel compte.
+describe("une clé ambiguë fait REFUSER le calcul, pas deviner", () => {
+  const ambigu = (): ProjectAir => {
+    const a = structuredClone(air());
+    const calcule = a.entities
+      .flatMap((e) => e.fields)
+      .find((f) => f.derived?.kind === "count" || f.derived?.kind === "sum");
+    if (calcule === undefined) return a;
+    const d = calcule.derived as { relationId: string };
+    const rel = a.relations.find((r) => r.id === d.relationId);
+    const enfant = a.entities.find((e) => e.id === rel?.toEntityId);
+    const cle = enfant?.fields.find((f) => f.referencesEntityId === rel?.fromEntityId);
+    if (enfant === undefined || cle === undefined) return a;
+    // Un second chemin vers le même parent — « créé par » et « validé par ».
+    (enfant.fields as unknown[]).push({ ...cle, id: `${cle.id}_bis`, name: `${cle.name} bis` });
+    return a;
+  };
+
+  it("le code LÈVE en nommant le champ, et ne calcule pas", () => {
+    const a = ambigu();
+    const calcule = a.entities
+      .flatMap((e) => e.fields)
+      .find((f) => f.derived?.kind === "count" || f.derived?.kind === "sum");
+    if (calcule === undefined) return;
+    const files = new Map(compileBackend(a).files);
+    const src = files.get("src/calcul/en-base.ts") ?? "";
+    expect(src, "le refus doit nommer le champ").toContain(
+      `AIR_CALCUL_A_ECRIRE:${calcule.id}`,
+    );
+    expect(src, "aucune requête ne doit être inventée").not.toContain("coalesce(sum(");
+    // La raison doit être ÉCRITE : « ça ne marche pas » n'aide personne.
+    expect(src).toMatch(/pointent vers/u);
+  });
+
+  it("le serveur reste lisible : la ligne n’est pas perdue", () => {
+    const files = new Map(compileBackend(ambigu()).files);
+    const api = [...files.entries()].find(([f]) => f.startsWith("src/api/") && f.includes("tontines"));
+    expect(api?.[1] ?? "").toContain("X-Air-Non-Calcule");
+  });
+});
+
 // ── LES RÈGLES DU DOCUMENT NE SONT PAS DÉCORATIVES.
 //
 // Mesuré au corpus le 2026-10-12 : 160 règles de validation sur 31
