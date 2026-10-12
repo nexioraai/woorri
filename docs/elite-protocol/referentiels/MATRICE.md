@@ -55,7 +55,7 @@ premiers.
 | V11 | Cryptography | 🟡 | HMAC pour les jetons ; aucun chiffrement au repos exprimable |
 | V12 | Secure Communication | 🟢 | TLS par défaut dès que l'hôte n'est pas local, certificat vérifié ; test l'interdit de régresser |
 | V13 | Configuration | 🟡 | aucun secret dans les fichiers émis (test) ; durcissement non mesuré |
-| V14 | Data Protection | 🟡 | **Défaut trouvé puis corrigé le 2026-10-12.** Les 5 champs `sensitive` du corpus avaient une colonne dans le schéma émis alors que le serveur ne leur écrit jamais rien. Mesuré après correction : **0 dans le schéma, 0 en lecture, 0 dans l'ordre d'insertion**. Deux cliquets. **Java non mesuré** sur ce point |
+| V14 | Data Protection | 🟢 | Défaut trouvé et corrigé le 2026-10-12 côté Node (colonne morte pour un numéro de carte). **Java vérifié le même jour : 0 des 5 champs sensibles n'a d'attribut dans le modèle JPA** — la pile Java était déjà correcte, le défaut était celui de l'émetteur Node. Mesuré après correction : 0 dans le schéma, 0 en lecture, 0 à l'insertion, sur les deux piles. Deux cliquets |
 | V15+ | Malicious Code · Business Logic · WebRTC | ⚪ | non mesuré ; `Malicious Code` recoupe V1 (0 `eval`, 0 `new Function`) |
 
 ## 2. OWASP MASVS 2.1 — par catégorie
@@ -98,7 +98,7 @@ premiers.
 | Texte de remplacement des images (WCAG 1.1.1, niveau A) | 🟡 | Mesuré : **chaque `<Image>` du runtime porte un `accessibilityLabel`** — alimenté par le TITRE de l'élément dans un cas, par une propriété que l'appelant fournit dans l'autre. Jamais une chaîne en dur. NON VÉRIFIÉ : que tous les appelants la fournissent effectivement. 29 documents sur 31 portent des champs `asset` |
 | **Contraste 4.5:1** (WCAG 1.4.3, AA) | 🟢 | Calculé sur les jetons émis des **31 documents** : **186 paires, 0 sous 4,5:1**. Paires évaluées : texte/fond, texte/surface, atténué/fond, atténué/surface, surPrimaire/primaire, erreur/fond. Ne couvre pas toutes les combinaisons possibles — seulement celles que les composants utilisent |
 | **Cibles de pointeur ≥ 24 px** (WCAG 2.5.8, AA) | 🟢 | Mesuré sur les **31 documents** : `tapTarget` = **48 px** minimum, `controlHeight` = **54 px** — le double de l'exigence. Les 24 usages de `minHeight` passent tous par ces jetons, aucun nombre en dur |
-| Focus visible (WCAG 2.4.11) | ⚪ | 4 occurrences liées au focus dans le runtime ; ni comptées suffisantes ni insuffisantes — non mesuré |
+| Focus visible (WCAG 2.4.7, AA) | 🔴 | **DÉFAUT MESURÉ le 2026-10-12.** Aucune gestion du focus dans le runtime : mes 4 occurrences précédentes étaient des **noms d'icônes** (`eye-outline`), pas du code de focus. Invisible sur une app tactile ; sur la **cible web**, un utilisateur au clavier ne sait pas où il se trouve. Portée : la cible web uniquement |
 | Langue déclarée (WCAG 3.1.1, niveau A) | 🟡 | La langue **est** déclarée au document (`defaultAppLocale`, `userLanguage`, `rtlSupported`). Aucun fichier HTML n'étant émis, la balise `lang` dépend de la coquille hôte — non mesurée là |
 
 ## 5. WebCoderBench — 9 perspectives
@@ -169,3 +169,4 @@ Un chiffre tapé à la main se désaccorde du document qu'il résume.
 | 2026-10-12 · confidentialité iOS + consentement IA | 16 | 21 | 3 | 7 | 47 |
 | 2026-10-12 · ASVS V14 — défaut trouvé | 16 | 21 | 4 | 7 | 48 |
 | 2026-10-12 · ASVS V14 — défaut corrigé | 16 | 22 | 3 | 7 | 48 |
+| 2026-10-12 · V14 Java vérifié + focus mesuré | 17 | 21 | 4 | 6 | 48 |
