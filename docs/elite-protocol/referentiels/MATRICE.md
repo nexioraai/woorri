@@ -95,7 +95,8 @@ premiers.
 | Noms accessibles des composants | 🟢 | 118 `accessibilityLabel` au runtime, 46 alimentés par le document, 0 en dur |
 | Rôles accessibles | 🟢 | 26 `accessibilityRole` au runtime |
 | Texte de remplacement des images | ⚪ | non mesuré — à regarder si le format transporte des images de contenu |
-| Contraste 4.5:1, cibles ≥ 24 px, focus visible | ⚪ | non mesuré ; mesurable depuis les jetons de design |
+| **Contraste 4.5:1** (WCAG 1.4.3, AA) | 🟢 | Calculé sur les jetons émis des **31 documents** : **186 paires, 0 sous 4,5:1**. Paires évaluées : texte/fond, texte/surface, atténué/fond, atténué/surface, surPrimaire/primaire, erreur/fond. Ne couvre pas toutes les combinaisons possibles — seulement celles que les composants utilisent |
+| Cibles ≥ 24 px, focus visible | ⚪ | non mesuré |
 | Langue déclarée (WCAG 3.1.1, niveau A) | 🟡 | La langue **est** déclarée au document (`defaultAppLocale`, `userLanguage`, `rtlSupported`). Aucun fichier HTML n'étant émis, la balise `lang` dépend de la coquille hôte — non mesurée là |
 
 ## 5. WebCoderBench — 9 perspectives
@@ -157,3 +158,4 @@ Un chiffre tapé à la main se désaccorde du document qu'il résume.
 | 2026-10-12 · ASVS V5 (Node) | 10 | 13 | 6 | 16 | 45 |
 | 2026-10-12 · V5 parité Java + V6/V7 reclassés | 11 | 15 | 3 | 16 | 45 |
 | 2026-10-12 · 4 lignes mesurées (V1, V3, langue, maintenabilité) | 13 | 17 | 3 | 12 | 45 |
+| 2026-10-12 · contraste WCAG mesuré | 14 | 17 | 3 | 12 | 46 |
