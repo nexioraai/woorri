@@ -96,14 +96,14 @@ function joursEntre(de: unknown, a: unknown): number | null {
 }
 
 /** La meme expression, en TypeScript, dans l'application generee. */
-export function emettreExpressionTs(e: Expression): string {
+export function emettreExpressionTs(e: Expression, nomLigne = "ligne"): string {
   if (e.kind === "constante") return String(e.valeur);
-  if (e.kind === "champ") return `n(ligne[${JSON.stringify(e.fieldId)}])`;
+  if (e.kind === "champ") return `n(${nomLigne}[${JSON.stringify(e.fieldId)}])`;
   if (e.kind === "jours") {
-    return `jours(ligne[${JSON.stringify(e.de)}], ligne[${JSON.stringify(e.a)}])`;
+    return `jours(${nomLigne}[${JSON.stringify(e.de)}], ${nomLigne}[${JSON.stringify(e.a)}])`;
   }
-  const g = emettreExpressionTs(e.gauche);
-  const d = emettreExpressionTs(e.droite);
+  const g = emettreExpressionTs(e.gauche, nomLigne);
+  const d = emettreExpressionTs(e.droite, nomLigne);
   // La division se protege A L'ENDROIT ou elle se produit : une garde
   // globale laisserait passer une division imbriquee.
   return e.op === "/" ? `div(${g}, ${d})` : `op(${g}, ${d}, "${e.op}")`;

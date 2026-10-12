@@ -184,6 +184,79 @@ describe("une clé ambiguë fait REFUSER le calcul, pas deviner", () => {
 // Mesuré au corpus le 2026-10-12 : 160 règles de validation sur 31
 // documents, et le serveur n'en appliquait AUCUNE. L'écran les vérifiait
 // seul — or un écran ne protège de rien, la route s'appelle directement.
+// ── UNE RÈGLE QUI NE SE DÉCLENCHE JAMAIS EST PIRE QU'UNE RÈGLE ABSENTE.
+//
+// Mesuré le 2026-10-12 en éprouvant un cahier des charges réel (Conterak,
+// « l'index ne peut pas être inférieur au précédent ») : le contrôle était
+// ÉCRIT mais mort. La valeur calculée n'est pas stockée, donc la ligne
+// examinée ne la portait pas, donc la condition était toujours fausse — et le
+// document affirmait protéger quelque chose qui ne l'était pas.
+describe("une règle sur un champ calculé se déclenche vraiment", () => {
+  const avecCalcul = (): ProjectAir => {
+    const a = structuredClone(air());
+    const e = a.entities.find(
+      (x) => x.fields.filter((f) => f.type === "decimal" && f.derived === undefined).length >= 2,
+    );
+    if (e === undefined) return a;
+    const [f1, f2] = e.fields.filter((f) => f.type === "decimal" && f.derived === undefined);
+    if (f1 === undefined || f2 === undefined) return a;
+    (e.fields as unknown[]).push({
+      id: "fld_test_ecart",
+      name: "écart",
+      type: "decimal",
+      required: false,
+      derived: {
+        kind: "calcul",
+        expression: {
+          kind: "operation",
+          op: "-",
+          gauche: { kind: "champ", fieldId: f1.id },
+          droite: { kind: "champ", fieldId: f2.id },
+        },
+      },
+    });
+    (a.rules as unknown[]).push({
+      id: "rule_test_ecart_positif",
+      kind: "validation",
+      entityId: e.id,
+      description: "l'écart ne peut pas être négatif",
+      assertions: [{ fieldId: "fld_test_ecart", operator: "gte", value: 0 }],
+    });
+    return a;
+  };
+
+  it("le calcul est ÉVALUÉ depuis la ligne, et la règle mord", () => {
+    const src =
+      new Map(compileBackend(avecCalcul()).files).get("src/api/regles-metier.ts") ?? "";
+    // La valeur est calculée…
+    expect(src).toMatch(/const calc\w+ = op\(/u);
+    // …et comparée. Pas de `rempli(ligne[…])`, qui serait toujours faux.
+    expect(src).toContain("rule_test_ecart_positif");
+    expect(src).toMatch(/calc\w+ !== null && !\(calc\w+ >= Number\(0\)\)/u);
+    expect(src).not.toMatch(/rempli\(ligne\["test_ecart"\]\)/u);
+  });
+
+  // Un `count`/`sum` dépend de la base : invérifiable à l'écriture. On REFUSE
+  // au lieu de laisser passer — un refus se voit, un silence non.
+  it("un calcul qui dépend de la base fait REFUSER, pas passer", () => {
+    const a = structuredClone(air());
+    const champ = a.entities
+      .flatMap((e) => e.fields)
+      .find((f) => f.derived?.kind === "count" || f.derived?.kind === "sum");
+    if (champ === undefined) return;
+    const ent = a.entities.find((e) => e.fields.some((f) => f.id === champ.id));
+    (a.rules as unknown[]).push({
+      id: "rule_test_en_base",
+      kind: "validation",
+      entityId: ent?.id ?? "",
+      description: "somme positive",
+      assertions: [{ fieldId: champ.id, operator: "gte", value: 0 }],
+    });
+    const src = new Map(compileBackend(a).files).get("src/api/regles-metier.ts") ?? "";
+    expect(src).toContain("AIR_REGLE_NON_VERIFIABLE:rule_test_en_base");
+  });
+});
+
 describe("les règles du document sont faites respecter par le serveur", () => {
   it("chaque règle de validation est dans le code, et nommée", () => {
     const a = air();

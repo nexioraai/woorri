@@ -27,6 +27,7 @@
  */
 import type { ProjectAir } from "@deribfy/air-schema";
 import type { EnveloppeBackend } from "./emit-spring.ts";
+import { PRELUDE_EXPRESSION, emettreExpressionTs } from "./expression.ts";
 
 type Entite = ProjectAir["entities"][number];
 type Champ = Entite["fields"][number];
@@ -977,6 +978,7 @@ function reglesMetier(air: ProjectAir): string {
   const l = [
     "// ÉMIS depuis le contrat — ne pas modifier à la main.",
     "",
+    PRELUDE_EXPRESSION,
     "/** Une règle non tenue : laquelle, et ce qu'elle dit. */",
     "export interface Violation {",
     "  readonly regle: string;",
@@ -1005,6 +1007,8 @@ function reglesMetier(air: ProjectAir): string {
 
   for (const e of air.entities) {
     const miennes = validation.filter((r) => r.entityId === e.id);
+    // Une seule évaluation par champ calculé, même si plusieurs règles le visent.
+    const calculsEcrits = new Set<string>();
     l.push(
       `/**`,
       ` * Les règles de « ${e.name} », vérifiées AVANT écriture.`,
@@ -1032,6 +1036,67 @@ function reglesMetier(air: ProjectAir): string {
             `  // la ligne enregistrée ne le porte pas. Cette assertion ne peut`,
             `  // pas être vérifiée ici — l'écran la vérifie à la saisie.`,
           );
+          continue;
+        }
+        // ── UNE RÈGLE SUR UN CHAMP CALCULÉ NE DOIT PAS PASSER EN SILENCE.
+        //
+        // Mesuré le 2026-10-12, en éprouvant un cahier des charges réel : le
+        // contrôle était ÉCRIT mais ne se déclenchait jamais. La valeur
+        // calculée n'est pas stockée, donc la ligne examinée ne la porte pas,
+        // donc la condition était toujours fausse. « L'index ne peut pas être
+        // inférieur au précédent » aurait passé sans jamais bloquer — pire
+        // qu'une règle absente, parce que le document affirme la protéger.
+        //
+        // Un `calcul` se déduit de la ligne elle-même : on l'ÉVALUE. Les
+        // autres formes dépendent de la base ou d'un barème ; elles ne sont
+        // pas vérifiables à l'écriture, et on le DIT en levant.
+        if (champ.derived !== undefined) {
+          if (champ.derived.kind !== "calcul") {
+            l.push(
+              `  // « ${champ.name} » se calcule hors de la ligne (${champ.derived.kind}) :`,
+              `  // invérifiable à l'écriture. On refuse au lieu de laisser passer.`,
+              `  throw new Error("AIR_REGLE_NON_VERIFIABLE:${r.id}");`,
+            );
+            continue;
+          }
+          const nomCalc = `calc${PASCAL(champ.id)}`;
+          if (!calculsEcrits.has(nomCalc)) {
+            calculsEcrits.add(nomCalc);
+            l.push(
+              `  // « ${champ.name} » — évalué depuis la ligne, pas lu en base.`,
+              `  const parId${PASCAL(e.id)}: Record<string, unknown> = {`,
+              ...stockes(e).map((x) => `    ${JSON.stringify(x.id)}: ligne[${JSON.stringify(colonne(x))}],`),
+              "  };",
+              `  const ${nomCalc} = ${emettreExpressionTs(champ.derived.expression, `parId${PASCAL(e.id)}`)};`,
+            );
+          }
+          const ech2 = `return { regle: ${JSON.stringify(r.id)}, message: ${JSON.stringify(r.description)} };`;
+          const c2 = (() => {
+            switch (a.operator) {
+              case "required":
+                return `${nomCalc} === null`;
+              case "gt":
+                return `${nomCalc} !== null && !(${nomCalc} > Number(${JSON.stringify(a.value ?? 0)}))`;
+              case "gte":
+                return `${nomCalc} !== null && !(${nomCalc} >= Number(${JSON.stringify(a.value ?? 0)}))`;
+              case "lte":
+                return `${nomCalc} !== null && !(${nomCalc} <= Number(${JSON.stringify(a.value ?? 0)}))`;
+              case "eq":
+                return `${nomCalc} !== null && ${nomCalc} !== Number(${JSON.stringify(a.value ?? 0)})`;
+              case "neq":
+                return `${nomCalc} !== null && ${nomCalc} === Number(${JSON.stringify(a.value ?? 0)})`;
+              default:
+                return "";
+            }
+          })();
+          if (c2 === "") {
+            l.push(
+              `  // Opérateur « ${a.operator} » sans sens sur un calcul numérique.`,
+              `  throw new Error("AIR_REGLE_NON_VERIFIABLE:${r.id}");`,
+            );
+            continue;
+          }
+          l.push(`  // ${r.description}`, `  if (${c2}) ${ech2}`);
           continue;
         }
         const c = JSON.stringify(colonne(champ));
