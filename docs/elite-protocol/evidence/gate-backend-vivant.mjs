@@ -64,7 +64,14 @@ const air = assertValidAir(migrateAirDocument(JSON.parse(readFileSync(DOC, "utf8
 // Le document choisit la sienne ; ses REFUS, eux, n'en dépendent pas. Et
 // « compile » n'a jamais voulu dire « marche » : c'est tout l'objet de cette
 // gate-ci. Mesurer une seule pile aurait laissé l'autre non démarrée.
-const PILES = ["spring_boot", "fastify"];
+// Une pile, et la BASE sur laquelle on la démarre. Le serveur Node sait
+// parler à deux moteurs ; n'en démarrer qu'un laissait l'autre chemin
+// inexécuté — du code qui compile et que personne n'a vu tourner.
+const PILES = [
+  { pile: "spring_boot", base: "h2" },
+  { pile: "fastify", base: "sqlite" },
+  { pile: "fastify", base: "postgres" },
+];
 
 const essais = [];
 const dire = (ok, quoi, detail = "") => {
@@ -76,7 +83,7 @@ console.log("═".repeat(78));
 console.log("GATE RACINE — les SERVEURS générés RÉPONDENT-ILS ?");
 console.log("═".repeat(78));
 
-for (const [rang, pile] of PILES.entries()) {
+for (const [rang, { pile, base }] of PILES.entries()) {
   const estNode = pile === "fastify";
   // Un port par pile : un serveur tué laisse son port en attente un moment,
   // et la pile suivante le trouverait occupé.
@@ -96,7 +103,7 @@ for (const [rang, pile] of PILES.entries()) {
   }
 
   console.log("\n" + "─".repeat(78));
-    console.log(`  PILE « ${pile} » — port ${String(port)}`);
+    console.log(`  PILE « ${pile} » sur « ${base} » — port ${String(port)}`);
     console.log("─".repeat(78));
 
     // ── DÉMARRER NODE N'EST PAS DÉMARRER JAVA.
@@ -114,10 +121,39 @@ for (const [rang, pile] of PILES.entries()) {
     // revient de la base, pas d'une mémoire de processus, et c'est ce qui rend
     // le refus de réécriture du journal réellement probant.
     if (estNode) symlinkSync(join(R, "node_modules"), OUT + "node_modules", "dir");
+
+    // ── UN VRAI POSTGRES, SANS DOCKER NI SERVEUR INSTALLÉ.
+    //
+    // PGlite est Postgres compilé en WebAssembly : même moteur SQL, même
+    // protocole réseau. Son serveur de socket écoute, et le serveur émis s'y
+    // connecte avec le VRAI client `pg` — c'est tout le chemin Postgres qui
+    // s'exécute enfin, ici comme sur le CI, sur Mac comme sur Linux.
+    //
+    // Ce que ça NE prouve pas, et qu'il faut dire : ni SSL, ni extensions, ni
+    // pool de connexions d'une base hébergée. Le SQL et le protocole, oui.
+    let pgl;
+    let socketPg;
+    let dbUrl = "";
+    if (base === "postgres") {
+      const { PGlite } = await import(R + "node_modules/@electric-sql/pglite/dist/index.js");
+      const { PGLiteSocketServer } = await import(
+        R + "node_modules/@electric-sql/pglite-socket/dist/index.js"
+      );
+      pgl = await PGlite.create();
+      socketPg = new PGLiteSocketServer({ db: pgl, port: port + 100, host: "127.0.0.1" });
+      await socketPg.start();
+      dbUrl = `postgres://postgres@127.0.0.1:${String(port + 100)}/postgres`;
+      console.log(`  base    : PostgreSQL réel (WebAssembly) sur ${String(port + 100)}`);
+    }
     const serveur = estNode
       ? spawn(process.execPath, ["src/serveur.ts"], {
           cwd: OUT,
-          env: { ...process.env, PORT: String(port), DB_FICHIER: OUT + "donnees.sqlite" },
+          env: {
+          ...process.env,
+          PORT: String(port),
+          DB_FICHIER: OUT + "donnees.sqlite",
+          ...(dbUrl === "" ? {} : { DB_URL: dbUrl }),
+        },
           stdio: ["ignore", "pipe", "pipe"],
           detached: true,
         })
@@ -257,14 +293,67 @@ for (const [rang, pile] of PILES.entries()) {
         `HTTP ${String(illegal.status)}`,
       );
     }
+    // ── LE TYPE D'UNE VALEUR NE DOIT PAS DÉPENDRE DU MOTEUR.
+    //
+    // Mesuré le 2026-10-11, dès le premier vrai démarrage sur Postgres : un
+    // `numeric` revient en TEXTE ("99"), là où SQLite rend un nombre — et le
+    // modèle émis déclare `number`. Une application branchée sur la vraie
+    // base recevrait "5000" au lieu de 5000. Rien ne pouvait le voir sans
+    // exécuter les deux moteurs.
+    const estNombre = (f) =>
+      (f.type === "decimal" || f.type === "number") &&
+      f.derived === undefined &&
+      f.sensitive !== true;
+    const entN = air.entities.find(
+      (e) => e.appendOnly !== true && e.fields.some(estNombre),
+    );
+    const champN = entN?.fields.find(estNombre);
+    if (entN !== undefined && champN !== undefined) {
+      const corps = { id: "gate3" };
+      for (const f of entN.fields) {
+        if (f.required !== true || f.derived !== undefined || f.sensitive === true) continue;
+        corps[f.name] =
+          f.name === champN.name
+            ? 1234.5
+            : f.type === "datetime"
+              ? "2026-01-01T00:00:00Z"
+              : f.type === "decimal" || f.type === "number"
+                ? 0
+                : f.type === "boolean"
+                  ? false
+                  : (f.enumValues ?? ["x"])[0];
+      }
+      corps[champN.name] = 1234.5;
+      const ecrit = await fetch(`${B}/${entN.id}/rows`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(corps),
+      });
+      const relu = await fetch(`${B}/${entN.id}/rows`);
+      const lignesLues = ecrit.ok && relu.ok ? await relu.json() : [];
+      const ligne = lignesLues.find((x) => x.id === "gate3");
+      // La ligne est `{ id, values }` : les champs vivent sous `values`.
+      const valeur = ligne?.values?.[champN.name];
+      dire(
+        typeof valeur === "number",
+        `un nombre revient en NOMBRE, pas en texte (« ${champN.name} »)`,
+        `reçu ${JSON.stringify(valeur)} (${typeof valeur}) · écriture HTTP ${String(ecrit.status)}` +
+          (typeof valeur === "number"
+            ? ""
+            : ` · ${String(lignesLues.length)} ligne(s) · ${JSON.stringify(lignesLues[0] ?? null).slice(0, 300)}`),
+      );
+    }
+
   } catch (e) {
     dire(false, "la gate n'a pas abouti", String(e instanceof Error ? e.message : e).slice(0, 80));
   } finally {
     arreter();
+    if (socketPg !== undefined) await socketPg.stop();
+    if (pgl !== undefined) await pgl.close();
   }
 
 }
 
 const ko = essais.filter((x) => !x).length;
 console.log(`\n  ${String(essais.length - ko)}/${String(essais.length)} preuves tenues.`);
-process.exitCode = ko === 0 && essais.length >= 10 ? 0 : 1;
+process.exitCode = ko === 0 && essais.length >= 20 ? 0 : 1;

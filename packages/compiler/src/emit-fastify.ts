@@ -194,7 +194,15 @@ function numeroter(sql: string): string {
 export async function ouvrir(): Promise<Base> {
   const url = process.env.DB_URL ?? "";
   if (url.startsWith("postgres://") || url.startsWith("postgresql://")) {
-    const { Client } = await import("pg");
+    const { Client, types } = await import("pg");
+    // UN NOMBRE DOIT RESTER UN NOMBRE.
+    //
+    // Postgres rend les \`numeric\` en TEXTE pour ne rien perdre en
+    // précision — mesuré : "1234.5" là où SQLite rend 1234.5, alors que le
+    // modèle émis déclare \`number\`. Une application branchée sur la vraie
+    // base recevait donc "5000" au lieu de 5000. On convertit À LA LECTURE :
+    // le stockage reste exact, et le contrat est respecté.
+    types.setTypeParser(1700, (v) => (v === null ? null : Number(v)));
     const client = new Client({ connectionString: url });
     await client.connect();
     return {
@@ -370,7 +378,12 @@ function routes(e: Entite): string {
     `const BASE = ${JSON.stringify(`/air/v1/entities/${e.id}/rows`)};`,
     "",
     "/**",
-    " * LA VUE D'UNE LIGNE.",
+    " * LA VUE D'UNE LIGNE : `{ id, values }`.",
+    " *",
+    " * C'est la forme que l'application attend et qu'elle NE NÉGOCIE PAS — la",
+    " * pile Java la documente ainsi. Mesuré le 2026-10-11 : cet émetteur",
+    " * rendait une ligne PLATE, donc l'application lisait `undefined` partout",
+    " * en lieu et place de ses données.",
     " *",
     " * Les colonnes LISIBLES seulement — un champ sensible ne sort pas d'ici.",
     " * Un champ qui demande la base est TENTÉ : s'il lève, son nom part dans",
@@ -378,9 +391,9 @@ function routes(e: Entite): string {
     " * remonter l'exception rendrait illisible une ligne enregistrée — mesuré",
     " * sur la pile Java, qui répondait 500.",
     " */",
-    `function enLigne(x: Partial<${n}>, nonCalcules: Set<string>): Record<string, unknown> {`,
+    `function enLigne(x: Partial<${n}>, nonCalcules: Set<string>): { id: unknown; values: Record<string, unknown> } {`,
     "  const src = x as unknown as Record<string, unknown>;",
-    "  const vue: Record<string, unknown> = { id: src[\"id\"] };",
+    "  const vue: Record<string, unknown> = {};",
     ...e.fields.flatMap((f) => {
       if (f.sensitive === true) {
         return [`  // « ${f.name} » est SENSIBLE : il ne ressort jamais.`];
@@ -403,7 +416,7 @@ function routes(e: Entite): string {
         "  }",
       ];
     }),
-    "  return vue;",
+    "  return { id: src[\"id\"], values: vue };",
     "}",
     "",
     "/** Ce que le corps de la requête est autorisé à écrire. */",

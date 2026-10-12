@@ -70,6 +70,17 @@ describe("le serveur émis respecte le contrat que le client appelle", () => {
     }
   });
 
+  // La ligne est `{ id, values }` — la pile Java le documente ainsi et
+  // l'application ne le négocie pas. Mesuré le 2026-10-11 : cet émetteur
+  // rendait une ligne PLATE, et l'application lisait `undefined` partout.
+  it("une ligne rendue est { id, values }, pas une ligne plate", () => {
+    const s = sortie();
+    for (const e of air().entities) {
+      const src = s.get(`src/api/${e.id.replace(/^ent_/u, "")}.ts`) ?? "";
+      expect(src, e.id).toContain('return { id: src["id"], values: vue };');
+    }
+  });
+
   it("les champs passent par leur NOM, dans les deux sens", () => {
     const s = sortie();
     let mesures = 0;
