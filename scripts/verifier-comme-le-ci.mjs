@@ -47,8 +47,9 @@
 //   node scripts/verifier-comme-le-ci.mjs pkg        celles dont l'id contient « pkg »
 //   node scripts/verifier-comme-le-ci.mjs --liste    n'exécute rien, montre le plan
 
-import { readFileSync } from "node:fs";
-import { spawnSync } from "node:child_process";
+import { readFileSync, writeFileSync, rmSync } from "node:fs";
+import { spawnSync, execFileSync } from "node:child_process";
+import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parse } from "yaml";
@@ -336,6 +337,58 @@ for (const e of etapes) {
   );
 }
 
+/**
+ * LA MARQUE DE VÉRIFICATION, ET POURQUOI ELLE EXISTE.
+ *
+ * MESURÉ le 2026-10-12 : git ouvre la connexion SSH AVANT de lancer le
+ * crochet de pré-push, puis la laisse inactive pendant qu'il tourne. Le
+ * message « Connection to github.com closed by remote host » apparaît AU
+ * MILIEU de la sortie de la chaîne. Donc tout crochet qui dure plus de
+ * quelques minutes casse le push — quel que soit son contenu. Optimiser la
+ * chaîne ne pouvait pas régler ça : 9,5 min puis 6,4 min ont échoué pareil.
+ *
+ * La vérification sort donc de cette fenêtre : elle se fait AVANT le push, et
+ * laisse une marque. Le crochet ne vérifie plus rien lui-même — il LIT la
+ * marque, en quelques millisecondes. La protection est identique : on ne peut
+ * pas pousser du code non vérifié.
+ *
+ * LA MARQUE EST L'ARBRE, PAS LE COMMIT. Vérifier puis committer, ou committer
+ * puis vérifier, donne le même ARBRE de fichiers — alors que le commit, lui,
+ * change. Prendre le commit aurait refusé le déroulement normal.
+ *
+ * L'index temporaire est OBLIGATOIRE : `git add` sur l'index réel modifierait
+ * ce que le propriétaire a préparé pour son prochain commit.
+ */
+function arbreDuTravail() {
+  const idx = join(tmpdir(), `air-verif-index-${String(process.pid)}`);
+  try {
+    const env = { ...process.env, GIT_INDEX_FILE: idx };
+    execFileSync("git", ["read-tree", "HEAD"], { env, stdio: "pipe" });
+    execFileSync("git", ["add", "-A"], { env, stdio: "pipe" });
+    return execFileSync("git", ["write-tree"], { env, encoding: "utf8" }).trim();
+  } catch {
+    return "";
+  } finally {
+    try {
+      rmSync(idx, { force: true });
+    } catch {
+      /* rien a nettoyer */
+    }
+  }
+}
+
+function marquerVert() {
+  const arbre = arbreDuTravail();
+  if (arbre === "") return;
+  try {
+    const git = execFileSync("git", ["rev-parse", "--git-dir"], { encoding: "utf8" }).trim();
+    writeFileSync(join(git, "verification-verte"), arbre + "\n");
+  } catch {
+    // Ne JAMAIS faire échouer une chaîne verte parce que la marque n'a pas pu
+    // s'écrire : le crochet refusera, et il dira quoi faire.
+  }
+}
+
 // ── LE VERDICT, AU FORMAT DU GATE.
 //
 // Même forme que la ligne que le gate imprime, pour qu'une comparaison avec un
@@ -395,6 +448,7 @@ if (casses.length === 0) {
       ? "\n✅ toutes les étapes rejouées ont réussi."
       : `\n✅ aucune régression — ${morceaux.join(" · ")}.`,
   );
+  marquerVert();
   process.exit(0);
 }
 

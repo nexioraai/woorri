@@ -45,34 +45,66 @@ echo "── pre-push : vérification dérivée de .github/workflows/ci.yml"
 echo "   (contourner si nécessaire : git push --no-verify)"
 echo
 
-# ── POURQUOI CE CROCHET MESURE MOINS QUE LE CI.
+# ── CE CROCHET NE VÉRIFIE RIEN LUI-MÊME, ET C'EST LA CORRECTION DE FOND.
 #
-# Mesuré le 2026-10-12 : la gate backend couvre les 31 documents du corpus et
-# passe de 10 s à ~205 s. La chaîne complète dépassait alors dix minutes, et
-# GitHub fermait la connexion PENDANT que ce crochet tournait — le push
-# échouait sans qu'aucune étape soit rouge. Un crochet qui empêche de pousser
-# du code vert ne protège plus, il bloque.
+# MESURÉ le 2026-10-12 : git ouvre la connexion SSH AVANT de lancer ce
+# crochet, puis la laisse inactive pendant qu'il tourne. Le message
+# « Connection to github.com closed by remote host » apparaît AU MILIEU de la
+# sortie de la chaîne. Donc tout crochet qui dure plus de quelques minutes
+# casse le push, quel que soit son contenu : 9,5 min puis 6,4 min ont échoué
+# de la même façon. Optimiser la chaîne ne pouvait pas régler ça.
 #
-# AIR_GATE_RAPIDE=1 limite cette gate aux documents qui DÉCLARENT un serveur
-# (6,9 s mesuré). Le CI ne pose pas la variable : les 31 documents y restent
-# couverts, et la gate DIT dans sa sortie qu'elle est en mode rapide.
-export AIR_GATE_RAPIDE=1
+# La vérification sort donc de la fenêtre de connexion : `npm run verifier`
+# la fait AVANT le push et laisse une marque. Ici, on LIT la marque.
+#
+# LA PROTECTION EST IDENTIQUE : on ne peut pas pousser du code non vérifié.
+# Ce qui change, c'est QUAND la chaîne tourne — pas SI elle tourne.
+#
+# La marque est l'ARBRE des fichiers, pas le commit : vérifier puis committer,
+# ou committer puis vérifier, donne le même arbre. Prendre le commit aurait
+# refusé le déroulement normal.
+gitdir="$(git rev-parse --git-dir)"
+marque="$gitdir/verification-verte"
 
-if npm run --silent verifier; then
+if [ ! -f "$marque" ]; then
+  echo "────────────────────────────────────────────────────────────────"
+  echo " PUSH INTERROMPU — aucune vérification enregistrée."
   echo
-  echo "── pre-push : rien de cassé, le push continue."
+  echo " Lancer :  npm run verifier"
+  echo " puis repousser. La chaîne ne peut PAS tourner dans ce crochet :"
+  echo " GitHub ferme la connexion pendant qu'elle tourne (mesuré)."
+  echo "────────────────────────────────────────────────────────────────"
+  exit 1
+fi
+
+# L'arbre du travail courant, calculé sur un index TEMPORAIRE — toucher
+# l'index réel modifierait ce qui est préparé pour le prochain commit.
+idx="$(mktemp -t air-prepush-index)"
+if ! GIT_INDEX_FILE="$idx" git read-tree HEAD >/dev/null 2>&1 \
+  || ! GIT_INDEX_FILE="$idx" git add -A >/dev/null 2>&1; then
+  rm -f "$idx"
+  echo "── pre-push : impossible de calculer l'arbre du travail. Refus."
+  exit 1
+fi
+actuel="$(GIT_INDEX_FILE="$idx" git write-tree 2>/dev/null)"
+rm -f "$idx"
+verifie="$(cat "$marque" 2>/dev/null | tr -d '[:space:]')"
+
+if [ -n "$actuel" ] && [ "$actuel" = "$verifie" ]; then
+  echo "── pre-push : vérification à jour ($actuel) — le push continue."
   exit 0
 fi
 
-echo
 echo "────────────────────────────────────────────────────────────────"
-echo " PUSH INTERROMPU — une étape du CI échoue HORS dette arbitrée."
+echo " PUSH INTERROMPU — le code a changé depuis la dernière"
+echo " vérification verte."
 echo
-echo " Ce n'est pas le CI qui te le dira dans dix minutes : c'est ici,"
-echo " maintenant, avant que la branche distante ne porte la casse."
+echo "   vérifié : ${verifie:-aucun}"
+echo "   actuel  : ${actuel:-inconnu}"
 echo
-echo " Relancer une seule étape :   npm run verifier -- <id>"
-echo " Voir le plan sans exécuter : npm run verifier -- --liste"
+echo " Lancer :  npm run verifier"
+echo " puis repousser."
+echo
 echo " Passer outre sciemment :     git push --no-verify"
 echo "────────────────────────────────────────────────────────────────"
 exit 1
