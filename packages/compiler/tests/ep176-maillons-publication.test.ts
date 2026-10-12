@@ -152,8 +152,17 @@ describe("EP-176 ② · l'icône est écrite en OCTETS", () => {
     //
     // Le jour où un document de campagne portera des employés, ces trois
     // entrées devront QUITTER cette liste — pas y rester par habitude.
+    //
+    // `backend` REJOINT CETTE LISTE le 2026-10-11, pour la meme raison et
+    // par le meme chemin : il vient d'obtenir sa passe d'emission (`socle`),
+    // alors qu'il n'en avait AUCUNE depuis son ajout en 1.34.0 — la regle 51
+    // ordonnait « DECLARE TOUJOURS ce noeud » et la grammaire l'interdisait.
+    // Le corpus de campagne est anterieur, et reste gele.
+    // Il est eprouve ailleurs : `packages/compiler/tests/contrat-serveur.test.ts`
+    // et le portail `backend`, qui COMPILE les serveurs generes a chaque tir.
     expect(jamais.sort()).toEqual([
       "access",
+      "backend",
       "brandIconPngBase64",
       "grantsAllRights",
       "overrides",

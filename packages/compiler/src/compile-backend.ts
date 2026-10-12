@@ -20,6 +20,10 @@ import { enveloppeSpring, type EnveloppeBackend } from "./emit-spring.ts";
 /** Ce que Deribfy écrit comme serveur pour ce document. Vide si rien à écrire. */
 export function compileBackend(air: ProjectAir): EnveloppeBackend {
   const b = air.backend;
+  // CARTE VIDE = AUCUN CODE SERVEUR, et c'est un signal que le portail de
+  // compilation lit : y glisser un document Markdown lui ferait chercher un
+  // projet Java. Le CONTRAT que ce serveur doit honorer est donc livré avec
+  // les DOCUMENTS de l'application (`emitProject`), pas ici.
   if (b === undefined || b.kind === "externe") return { files: new Map() };
   // Le schéma garantit `stack` sur un backend généré, et son énumération est
   // FERMÉE : un `else` ici serait du code qu'aucune entrée ne peut atteindre.

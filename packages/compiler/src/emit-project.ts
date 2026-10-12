@@ -13,6 +13,7 @@ import { normaliserOrdreDestinations } from "./ordre-presentation.ts";
 import { emettreBaremeTs } from "./bareme.ts";
 import { emettreCalculTs, PRELUDE_EXPRESSION } from "./expression.ts";
 import { emettreVersionneTs } from "./versions.ts";
+import { emettreContratServeur } from "./emit-contrat-serveur.ts";
 import { canonicalJson, type ProjectAir, type ProjectLock } from "@deribfy/air-schema";
 import { buildDemoFixtures } from "./demo-fixtures.ts";
 import { emitAppJson, emitPermissionsManifest } from "./emit-manifests.ts";
@@ -1533,6 +1534,19 @@ export function emitProject(
         ),
       ].join("\n"),
     );
+  }
+  // ── LE CONTRAT QUE LE SERVEUR DOIT HONORER (1.34.0, tenu le 2026-10-11).
+  //
+  // La règle 51 du noyau promet : « Deribfy n'émet alors AUCUN code
+  // serveur, SEULEMENT LE CONTRAT QUE CE SERVEUR DOIT HONORER ». Le code
+  // n'était pas émis — c'est voulu — mais le contrat non plus. Le client
+  // repartait avec une application qui appelle un serveur, et rien qui
+  // dise ce que ce serveur doit faire.
+  //
+  // ICI, avec les DOCUMENTS, et pas dans l'enveloppe du code serveur :
+  // celle-ci utilise « carte vide » comme signal de « rien à compiler ».
+  if (air.backend === undefined || air.backend.kind === "externe") {
+    files.set("CONTRAT-SERVEUR.md", emettreContratServeur(air));
   }
   files.set("app.json", emitAppJson(air, train));
   // EP-176 ④ — `eas.json` EST DU MÊME ORDRE QU'`app.json`.
