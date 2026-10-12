@@ -77,8 +77,8 @@ premiers.
 | Suppression de compte **dans** l'app (Apple 5.1.1(v), Play) | 🟡 | `compliance.accountDeletionRequired` au format ; l'émission du parcours n'est pas mesurée |
 | Déclaration Data Safety | 🟡 | `compliance.dataCollected` au format |
 | API cible Android 36 | 🟡 | le format déclare le MINIMUM (`minAndroidSdk`), pas la cible |
-| Consentement IA (Apple 5.1.2(i)) | ⚪ | une notion de consentement existe ; couverture non vérifiée |
-| Manifeste de confidentialité iOS | ⚪ | un cliquet d'API sensibles iOS existe ; lien non vérifié |
+| Consentement IA (Apple 5.1.2(i)) | 🟡 | Mesuré : **aucun des 31 documents n'intègre d'IA** — l'obligation ne s'applique donc à aucun aujourd'hui. NON VÉRIFIÉ pour le jour où un document en intégrera une : rien ne garantit que le consentement serait émis |
+| Manifeste de confidentialité iOS | 🟡 | Mesuré : **0 fichier `PrivacyInfo.xcprivacy` émis**, mais **31 documents sur 31** portent la déclaration d'API sensibles (`NSPrivacyAccessedAPI`). La donnée existe donc ; le fichier est produit par l'outil de construction, pas par l'émetteur — **non mesuré à cet endroit-là** |
 
 ## 4. EN 301 549 → WCAG 2.2 AA — **obligation légale UE**
 
@@ -165,3 +165,4 @@ Un chiffre tapé à la main se désaccorde du document qu'il résume.
 | 2026-10-12 · MASVS-CODE situé | 15 | 19 | 3 | 10 | 47 |
 | 2026-10-12 · MASVS-PLATFORM fermé | 16 | 18 | 3 | 10 | 47 |
 | 2026-10-12 · texte alternatif mesuré | 16 | 19 | 3 | 9 | 47 |
+| 2026-10-12 · confidentialité iOS + consentement IA | 16 | 21 | 3 | 7 | 47 |
