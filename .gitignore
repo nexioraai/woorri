@@ -90,3 +90,7 @@ vitest-results.json
 # `git add -A` les proposait au commit après chaque passage de gate — 300+
 # fichiers dérivés qui auraient noyé toute revue.
 apps-generees/
+
+# Code ÉMIS par les preuves du compilateur, écrit puis importé pour
+# exercer le vrai TypeScript livré. Jetable, régénéré à chaque tir.
+packages/compiler/tests/.emis/

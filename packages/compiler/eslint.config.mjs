@@ -3,7 +3,10 @@
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  { ignores: ["node_modules/**", "coverage/**", "template/**", "runtime/**"] },
+  // `tests/.emis/` : le code EMIS par les preuves, ecrit puis importe pour
+  // exercer le vrai TypeScript livre. Jetable, regenere a chaque tir — et
+  // hors du projet TypeScript, donc illisible pour le linteur.
+  { ignores: ["node_modules/**", "coverage/**", "template/**", "runtime/**", "tests/.emis/**"] },
   ...tseslint.configs.strictTypeChecked,
   ...tseslint.configs.stylisticTypeChecked,
   {

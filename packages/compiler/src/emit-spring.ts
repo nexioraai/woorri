@@ -527,11 +527,14 @@ public class SessionApi {
  *  valeur manquante ne doit pas produire un chiffre qui a l'air juste. */
 function javaExpr(e: unknown): string {
   const n = e as {
-    kind?: string; fieldId?: string; valeur?: number;
+    kind?: string; fieldId?: string; valeur?: number; de?: string; a?: string;
     op?: string; gauche?: unknown; droite?: unknown;
   };
   if (n.kind === "constante") return `Double.valueOf(${String(n.valeur)}d)`;
   if (n.kind === "champ") return `nb(ligne.get(${JSON.stringify(n.fieldId)}))`;
+  if (n.kind === "jours") {
+    return `jours(ligne.get(${JSON.stringify(n.de)}), ligne.get(${JSON.stringify(n.a)}))`;
+  }
   const g = javaExpr(n.gauche);
   const d = javaExpr(n.droite);
   return n.op === "/" ? `div(${g}, ${d})` : `op(${g}, ${d}, '${String(n.op)}')`;
@@ -567,6 +570,16 @@ const calculs = (groupe: string, air: ProjectAir): string => {
       "  }",
       "  static Double div(Double a, Double b) {",
       "    return (a == null || b == null || b == 0d) ? null : a / b;",
+      "  }",
+      "  static Double jours(Object de, Object a) {",
+      "    java.time.LocalDate d = jour(de), f = jour(a);",
+      "    return (d == null || f == null) ? null",
+      "      : Double.valueOf(java.time.temporal.ChronoUnit.DAYS.between(d, f));",
+      "  }",
+      "  private static java.time.LocalDate jour(Object v) {",
+      "    if (!(v instanceof CharSequence cs) || cs.length() < 10) return null;",
+      "    try { return java.time.LocalDate.parse(cs.subSequence(0, 10)); }",
+      "    catch (java.time.format.DateTimeParseException e) { return null; }",
       "  }",
     );
   }

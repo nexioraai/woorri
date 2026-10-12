@@ -87,6 +87,10 @@ export function sectionDuChemin(path: string): SectionEmission {
  * d'exhaustivité interdit qu'un code y tombe par oubli.
  */
 export const SECTIONS_CORRECTIVES: Readonly<Record<string, readonly SectionEmission[]>> = {
+  // ── LE COMPTE DE JOURS (1.38.0) — déclaré sur un champ, réparé là.
+  AIR_JOURS_CHAMP_INCONNU: ["donnees"],
+  AIR_JOURS_MAUVAIS_TYPE: ["donnees"],
+
   // ── LES RÈGLES VERSIONNÉES (1.37.0) — MÊME LOGEMENT ENCORE.
   //
   // Une version se déclare sur un champ d'entité. Date de référence

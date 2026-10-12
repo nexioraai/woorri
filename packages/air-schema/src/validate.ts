@@ -394,7 +394,7 @@ export function validateAir(air: ProjectAir): AirDiagnostic[] {
         const visiter = (x: unknown, niveau: number): void => {
           profondeur = Math.max(profondeur, niveau);
           const n = x as {
-            kind?: string; fieldId?: string; op?: string;
+            kind?: string; fieldId?: string; op?: string; de?: string; a?: string;
             gauche?: unknown; droite?: unknown; valeur?: number;
           };
           if (n.kind === "champ") {
@@ -415,6 +415,28 @@ export function validateAir(air: ProjectAir): AirDiagnostic[] {
                 `${chemin}.expression`,
                 `"${f.id}" se calcule depuis lui-meme : aucune valeur definie`,
               );
+            }
+            return;
+          }
+          if (n.kind === "jours") {
+            // LES DEUX BORNES EXISTENT, ET CE SONT DES DATES. Compter des
+            // jours entre un montant et un nom ne veut rien dire.
+            for (const [role, id] of [["de", n.de], ["a", n.a]] as const) {
+              const c = e.fields.find((x) => x.id === String(id));
+              if (c === undefined) {
+                push(
+                  "AIR_JOURS_CHAMP_INCONNU",
+                  `${chemin}.expression`,
+                  `le champ "${String(id)}" (${role}) n'existe pas sur "${e.id}"`,
+                );
+              } else if (c.type !== "date" && c.type !== "datetime") {
+                push(
+                  "AIR_JOURS_MAUVAIS_TYPE",
+                  `${chemin}.expression`,
+                  `"${String(id)}" est de type "${c.type}" : on ne compte des ` +
+                    "jours qu'entre deux DATES",
+                );
+              }
             }
             return;
           }

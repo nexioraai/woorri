@@ -481,6 +481,7 @@ const PROFONDEUR_EXPRESSION_MAX = 8;
 type ExpressionBrute =
   | { kind: "champ"; fieldId: string }
   | { kind: "constante"; valeur: number }
+  | { kind: "jours"; de: string; a: string }
   | { kind: "operation"; op: "+" | "-" | "*" | "/"; gauche: ExpressionBrute; droite: ExpressionBrute };
 
 export const expressionSchema: z.ZodType<ExpressionBrute> = z.lazy(() =>
@@ -488,6 +489,31 @@ export const expressionSchema: z.ZodType<ExpressionBrute> = z.lazy(() =>
     /** Un champ de LA MEME LIGNE. Jamais d'une autre — voir ci-dessus. */
     z.strictObject({ kind: z.literal("champ"), fieldId: fieldIdSchema }),
     z.strictObject({ kind: z.literal("constante"), valeur: z.number() }),
+    /**
+     * ── LE NOMBRE DE JOURS ENTRE DEUX DATES DE LA LIGNE (1.38.0).
+     *
+     * MESURE, cahier d'une tontine : « penalite de retard calculee a 2 %
+     * PAR JOUR de retard ». Inexprimable : les operations etaient `+ - * /`
+     * et rien ne comptait des jours. Le commentaire du contrat ecartait ce
+     * cas en invoquant une horloge.
+     *
+     * OR IL N'Y A PAS D'HORLOGE ICI. On compte entre DEUX CHAMPS DE LA
+     * LIGNE — une echeance et un paiement — pas entre un champ et
+     * aujourd'hui. Meme ligne, meme resultat, toujours : la purete est
+     * intacte, et c'est elle qui autorisait le refus precedent, pas le
+     * sujet « duree ».
+     *
+     * Le resultat est SIGNE : negatif si `a` precede `de`. Un paiement en
+     * avance n'est pas un retard de zero jour, et confondre les deux
+     * ferait disparaitre l'information.
+     */
+    z.strictObject({
+      kind: z.literal("jours"),
+      /** La date de depart — l'echeance, dans le cas mesure. */
+      de: fieldIdSchema,
+      /** La date d'arrivee — le paiement. */
+      a: fieldIdSchema,
+    }),
     z.strictObject({
       kind: z.literal("operation"),
       op: z.enum(["+", "-", "*", "/"]),

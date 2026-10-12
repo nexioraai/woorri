@@ -30,6 +30,8 @@
 export type Expression =
   | { readonly kind: "champ"; readonly fieldId: string }
   | { readonly kind: "constante"; readonly valeur: number }
+  /** Jours entre deux dates DE LA LIGNE — signé, et sans horloge. */
+  | { readonly kind: "jours"; readonly de: string; readonly a: string }
   | {
       readonly kind: "operation";
       readonly op: "+" | "-" | "*" | "/";
@@ -54,6 +56,9 @@ export function evaluerExpression(
     const v = ligne[e.fieldId];
     return typeof v === "number" && Number.isFinite(v) ? v : null;
   }
+  if (e.kind === "jours") {
+    return joursEntre(ligne[e.de], ligne[e.a]);
+  }
   const g = evaluerExpression(e.gauche, ligne);
   const d = evaluerExpression(e.droite, ligne);
   // UNE VALEUR MANQUANTE CONTAMINE, ET C'EST VOULU : calculer un ecart avec
@@ -67,10 +72,36 @@ export function evaluerExpression(
   }
 }
 
+/**
+ * JOURS ENTRE DEUX DATES — signé, en jours ENTIERS d'horloge.
+ *
+ * MESURE, cahier d'une tontine : « 2 % par jour de retard ». Le resultat
+ * est SIGNE : un paiement en avance rend un nombre negatif, parce que
+ * confondre « en avance » et « zero jour de retard » ferait disparaitre
+ * l'information. C'est a la regle de decider quoi en faire.
+ *
+ * On compare les JOURS CIVILS, pas les instants : deux horodatages du meme
+ * jour donnent zero, meme a 23 heures d'ecart. Une penalite se compte en
+ * jours, pas en heures.
+ */
+function joursEntre(de: unknown, a: unknown): number | null {
+  const jour = (v: unknown): number | null => {
+    if (typeof v !== "string" || !/^\d{4}-\d{2}-\d{2}/u.test(v)) return null;
+    const t = Date.parse(`${v.slice(0, 10)}T00:00:00Z`);
+    return Number.isFinite(t) ? t : null;
+  };
+  const d = jour(de);
+  const f = jour(a);
+  return d === null || f === null ? null : Math.round((f - d) / 86_400_000);
+}
+
 /** La meme expression, en TypeScript, dans l'application generee. */
 export function emettreExpressionTs(e: Expression): string {
   if (e.kind === "constante") return String(e.valeur);
   if (e.kind === "champ") return `n(ligne[${JSON.stringify(e.fieldId)}])`;
+  if (e.kind === "jours") {
+    return `jours(ligne[${JSON.stringify(e.de)}], ligne[${JSON.stringify(e.a)}])`;
+  }
   const g = emettreExpressionTs(e.gauche);
   const d = emettreExpressionTs(e.droite);
   // La division se protege A L'ENDROIT ou elle se produit : une garde
@@ -84,6 +115,17 @@ const n = (v: unknown): Nb => (typeof v === "number" && Number.isFinite(v) ? v :
 const op = (a: Nb, b: Nb, o: "+" | "-" | "*"): Nb =>
   a === null || b === null ? null : o === "+" ? a + b : o === "-" ? a - b : a * b;
 const div = (a: Nb, b: Nb): Nb => (a === null || b === null || b === 0 ? null : a / b);
+// Jours ENTIERS entre deux dates de la ligne, signé. Jamais la date du
+// jour : même ligne, même résultat, toujours.
+const jours = (de: unknown, a: unknown): Nb => {
+  const j = (v: unknown): number | null => {
+    if (typeof v !== "string" || !/^\\d{4}-\\d{2}-\\d{2}/u.test(v)) return null;
+    const t = Date.parse(v.slice(0, 10) + "T00:00:00Z");
+    return Number.isFinite(t) ? t : null;
+  };
+  const d = j(de); const f = j(a);
+  return d === null || f === null ? null : Math.round((f - d) / 86400000);
+};
 `;
 
 /** La fonction complete, prete a etre ecrite dans le projet. */
