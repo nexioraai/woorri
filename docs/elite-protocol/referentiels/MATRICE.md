@@ -94,7 +94,7 @@ premiers.
 |---|---|---|
 | Noms accessibles des composants | 🟢 | 118 `accessibilityLabel` au runtime, 46 alimentés par le document, 0 en dur |
 | Rôles accessibles | 🟢 | 26 `accessibilityRole` au runtime |
-| Texte de remplacement des images (WCAG 1.1.1, niveau A) | ⚪ | Mesuré : **29 documents sur 31 portent des champs `asset`**, et le champ apparaît dans l'interface émise des 29. Mais savoir qu'il APPARAÎT ne dit pas qu'il porte un nom accessible — donc toujours non mesuré |
+| Texte de remplacement des images (WCAG 1.1.1, niveau A) | 🟡 | Mesuré : **chaque `<Image>` du runtime porte un `accessibilityLabel`** — alimenté par le TITRE de l'élément dans un cas, par une propriété que l'appelant fournit dans l'autre. Jamais une chaîne en dur. NON VÉRIFIÉ : que tous les appelants la fournissent effectivement. 29 documents sur 31 portent des champs `asset` |
 | **Contraste 4.5:1** (WCAG 1.4.3, AA) | 🟢 | Calculé sur les jetons émis des **31 documents** : **186 paires, 0 sous 4,5:1**. Paires évaluées : texte/fond, texte/surface, atténué/fond, atténué/surface, surPrimaire/primaire, erreur/fond. Ne couvre pas toutes les combinaisons possibles — seulement celles que les composants utilisent |
 | **Cibles de pointeur ≥ 24 px** (WCAG 2.5.8, AA) | 🟢 | Mesuré sur les **31 documents** : `tapTarget` = **48 px** minimum, `controlHeight` = **54 px** — le double de l'exigence. Les 24 usages de `minHeight` passent tous par ces jetons, aucun nombre en dur |
 | Focus visible (WCAG 2.4.11) | ⚪ | 4 occurrences liées au focus dans le runtime ; ni comptées suffisantes ni insuffisantes — non mesuré |
@@ -164,3 +164,4 @@ Un chiffre tapé à la main se désaccorde du document qu'il résume.
 | 2026-10-12 · plateforme mesurée | 15 | 18 | 3 | 11 | 47 |
 | 2026-10-12 · MASVS-CODE situé | 15 | 19 | 3 | 10 | 47 |
 | 2026-10-12 · MASVS-PLATFORM fermé | 16 | 18 | 3 | 10 | 47 |
+| 2026-10-12 · texte alternatif mesuré | 16 | 19 | 3 | 9 | 47 |
