@@ -65,8 +65,8 @@ premiers.
 | MASVS-CRYPTO | 🟡 | voir ASVS V11 |
 | MASVS-AUTH | 🟡 | voir ASVS V6/V7 — délégué au fournisseur déclaré |
 | MASVS-NETWORK | 🟢 | voir ASVS V12 |
-| MASVS-PLATFORM | 🟡 | Mesuré sur les 31 documents : **31 déclarent des permissions Android**, **15 des descriptions d'usage iOS**. NON VÉRIFIÉ : que chaque permission déclarée corresponde à une capacité qui l'induit — une permission de trop est un défaut, et cette mesure ne le verrait pas |
-| MASVS-CODE | ⚪ | non mesuré |
+| MASVS-PLATFORM | 🟡 | Mesuré sur les 31 documents : **31 déclarent des permissions Android**, **15 des descriptions d'usage iOS**. NON VÉRIFIÉ : que chaque permission corresponde à une capacité qui l'induit — une permission de trop est un défaut. **Le chemin pour le fermer est trouvé** : le projet émet `manifests/permissions.manifest.json`, qu'il suffira de confronter aux `inducedPermissions` du registre |
+| MASVS-CODE | 🟡 | **Hors de portée du générateur** : vérifié, **aucun `package.json` n'est émis** — le projet est une app Expo dont les dépendances viennent du gabarit hôte. L'épinglage des versions ne se décide donc pas ici. Non mesuré sur le gabarit |
 | MASVS-RESILIENCE | ⚪ | non mesuré |
 | MASVS-PRIVACY | 🟡 | `dataCollected` déclaré au format ; cliquets de partage tiers existants |
 
@@ -162,3 +162,4 @@ Un chiffre tapé à la main se désaccorde du document qu'il résume.
 | 2026-10-12 · contraste WCAG mesuré | 14 | 17 | 3 | 12 | 46 |
 | 2026-10-12 · cibles de pointeur mesurées | 15 | 17 | 3 | 12 | 47 |
 | 2026-10-12 · plateforme mesurée | 15 | 18 | 3 | 11 | 47 |
+| 2026-10-12 · MASVS-CODE situé | 15 | 19 | 3 | 10 | 47 |
