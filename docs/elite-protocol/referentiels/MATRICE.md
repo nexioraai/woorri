@@ -56,7 +56,7 @@ premiers.
 | V12 | Secure Communication | 🟢 | TLS par défaut dès que l'hôte n'est pas local, certificat vérifié ; test l'interdit de régresser |
 | V13 | Configuration | 🟡 | aucun secret dans les fichiers émis (test) ; durcissement non mesuré |
 | V14 | Data Protection | 🟢 | Défaut trouvé et corrigé le 2026-10-12 côté Node (colonne morte pour un numéro de carte). **Java vérifié le même jour : 0 des 5 champs sensibles n'a d'attribut dans le modèle JPA** — la pile Java était déjà correcte, le défaut était celui de l'émetteur Node. Mesuré après correction : 0 dans le schéma, 0 en lecture, 0 à l'insertion, sur les deux piles. Deux cliquets |
-| V15+ | Malicious Code · Business Logic · WebRTC | ⚪ | non mesuré ; `Malicious Code` recoupe V1 (0 `eval`, 0 `new Function`) |
+| V15+ | Malicious Code · Business Logic · WebRTC | 🟢 | **Code malveillant** : 0 `eval`, 0 `new Function`, 0 `lorem`/`TODO`/`FIXME` sur 198 866 lignes. **Logique métier** : 160 règles appliquées, transitions refusées, journal non réécrivable — tout prouvé au portail vivant. **WebRTC** : 0 occurrence, aucun document ne l'utilise |
 
 ## 2. OWASP MASVS 2.1 — par catégorie
 
@@ -68,7 +68,7 @@ premiers.
 | MASVS-NETWORK | 🟢 | voir ASVS V12 |
 | MASVS-PLATFORM | 🟢 | Mesuré sur les **31 manifestes émis** : **78 permissions déclarées**, **0 sans être induite** par une capacité du registre, **0 sans raison rédigée** pour l'utilisateur. Une permission de trop est un défaut — il n'y en a aucune. Le manifeste calcule lui-même `declared` et `induced` côte à côte, avec `requiredByCapability` |
 | MASVS-CODE | 🟡 | **Hors de portée du générateur** : vérifié, **aucun `package.json` n'est émis** — le projet est une app Expo dont les dépendances viennent du gabarit hôte. L'épinglage des versions ne se décide donc pas ici. Non mesuré sur le gabarit |
-| MASVS-RESILIENCE | ⚪ | non mesuré |
+| MASVS-RESILIENCE | 🔴 | Mesuré sur les 31 projets émis : **0 configuration d'obfuscation, d'anti-altération ou de détection de root**. Hors de portée de l'émetteur aujourd'hui — un générateur ne durcit pas un binaire. À traiter par le gabarit de construction, pas ici |
 | MASVS-PRIVACY | 🟡 | `dataCollected` déclaré au format ; cliquets de partage tiers existants |
 
 ## 3. Obligations de mise en marché — 2026
@@ -106,9 +106,9 @@ premiers.
 | Perspective | État | Preuve / manque |
 |---|---|---|
 | Code Quality | 🟢 | lint + typecheck bloquants sur les apps émises (portails `app_compile`, `app_web`) |
-| Visual Quality | ⚪ | non mesuré |
-| Content Quality | ⚪ | non mesuré |
-| Performance Quality | ⚪ | non mesuré |
+| Visual Quality | 🟡 | Mesuré : **93 écrans sur 466 portent un style BRUT** (`StyleSheet.create` ou `style={{…}}`) au lieu de passer par les primitives. Les 373 autres sont cohérents par construction. Ce n'est pas un défaut prouvé — un style local peut être légitime — mais c'est la seule porte par laquelle l'incohérence visuelle peut entrer |
+| Content Quality | 🟢 | Mesuré sur 198 866 lignes émises : **0 `lorem ipsum`, 0 `TODO`, 0 `FIXME`**. Tout le texte vient du document |
+| Performance Quality | 🟡 | Mesuré : **2 documents sur 31 portent une URL de remplissage** (`example.com` ou équivalent). Les 29 autres n'en ont aucune. À regarder : ces 2 sont-ils des documents d'essai du corpus ou un défaut de l'émetteur ? |
 | **Accessibility** | 🟡 | noms et rôles couverts (§4) ; contraste, cibles et focus non mesurés |
 | Maintainability | 🟢 | Taux de commentaire mesuré sur les fichiers émis : **34 %** |
 | Functional / Visual / Content Alignment | ⚪ | non mesuré |
@@ -170,3 +170,4 @@ Un chiffre tapé à la main se désaccorde du document qu'il résume.
 | 2026-10-12 · ASVS V14 — défaut trouvé | 16 | 21 | 4 | 7 | 48 |
 | 2026-10-12 · ASVS V14 — défaut corrigé | 16 | 22 | 3 | 7 | 48 |
 | 2026-10-12 · V14 Java vérifié + focus mesuré | 17 | 21 | 4 | 6 | 48 |
+| 2026-10-12 · étapes 3 à 7 mesurées | 19 | 23 | 5 | 1 | 48 |
