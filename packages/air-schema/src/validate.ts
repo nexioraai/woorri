@@ -1477,6 +1477,21 @@ export function validateAir(air: ProjectAir): AirDiagnostic[] {
       }
       vues.add(op);
     });
+    // ⑤ LA VOIX EXIGE L'OREILLE. `voiceInput: true` sans la capacité
+    //    `audio_capture` donnerait un bouton de micro dans une application
+    //    qui n'a pas le droit d'enregistrer — refusé au premier appui, et
+    //    personne ne saurait pourquoi.
+    if (
+      air.agent.voiceInput === true &&
+      !air.capabilities.some((c) => c.capability === "audio_capture")
+    ) {
+      push(
+        "AIR_AGENT_VOICE_WITHOUT_AUDIO",
+        "agent.voiceInput",
+        "la parole est autorisée sans la capacité `audio_capture` : " +
+          "l'application n'aurait pas le droit d'enregistrer",
+      );
+    }
     const droit = air.agent.requiredRightId;
     // `access` est optionnel au format : un document sans modele d'acces ne
     // declare aucun droit, donc exiger un droit y est forcement une erreur.

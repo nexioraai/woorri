@@ -18,6 +18,11 @@ import {
 // migration d'AIR éventuelle + version MAJEURE).
 const V1_CAPABILITY_IDS = [
   "analytics",
+  // 2026-10-13 — LA VOIX. Capacite a part, et pas la camera : `camera` induit
+  // deja le micro pour la video, mais la declarer pour obtenir le micro
+  // serait une PERMISSION DE TROP. La transcription n'est pas ici : elle
+  // depend de la langue et du pays, donc le document la declare comme API.
+  "audio_capture",
   "auth",
   "barcode_scan",
   "biometrics",

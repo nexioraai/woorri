@@ -60,6 +60,20 @@ export const PARTAGE_PAR_CAPACITE: Readonly<Record<string, readonly string[]>> =
   auth: ["contact_info", "identifiers"],
   // Lecture locale de l'appareil photo : rien ne sort.
   barcode_scan: [],
+  // VINGT-ET-UNIEME CAPACITE (2026-10-13) — LA VOIX. `expo-av` enregistre
+  // DANS l'appareil. La capacite, a elle seule, ne partage RIEN : c'est la
+  // meme verite que `camera` juste en dessous.
+  //
+  // MAIS LA PHRASE S'ARRETE LA, ET C'EST IMPORTANT. Un enregistrement qu'on
+  // garde pour soi ne sert a rien : pour qu'une parole devienne une action,
+  // elle est transcrite, et la transcription est une API DECLAREE (1.36.0).
+  // CE PARTAGE-LA EXISTE, et AUCUNE ligne de cette table ne le portera
+  // jamais, parce qu'il n'est pas le fait d'une capacite : il est le fait
+  // d'une API que le document nomme. Mesure du 2026-10-13 : rien ne lit
+  // encore `air.apis` ici. Tant que c'est vrai, une application qui envoie
+  // sa voix a un service a un manifeste INCOMPLET. La table ne doit pas
+  // mentir pour compenser — c'est au connecteur de declarer son partage.
+  audio_capture: [],
   // VINGTIEME CAPACITE (2026-10-11) — OCR. `tesseract.js` tourne DANS
   // l'appareil : l'image et le texte lu ne partent nulle part. Aucun
   // service distant, donc aucun partage a declarer aux magasins. Si cette

@@ -266,6 +266,9 @@ export const SECTIONS_CORRECTIVES: Readonly<Record<string, readonly SectionEmiss
   AIR_AGENT_OPERATION_UNKNOWN: ["cablage"],
   AIR_AGENT_OPERATION_DUPLICATE: ["cablage"],
   AIR_AGENT_RIGHT_UNKNOWN: ["cablage"],
+  // La voix sans oreille se corrige en AJOUTANT la capacite, pas en retirant
+  // la voix : c'est la passe « capacites » qui porte la correction.
+  AIR_AGENT_VOICE_WITHOUT_AUDIO: ["capacites", "cablage"],
   AIR_FIELD_DISPLAY_MISSING: ["donnees"],
   AIR_FIELD_DISPLAY_NOT_REFERENCE: ["donnees"],
   AIR_FIELD_ENUM_VALUES_MISSING: ["donnees"],

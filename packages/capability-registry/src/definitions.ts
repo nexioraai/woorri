@@ -147,6 +147,54 @@ const RAW_DEFINITIONS: CapabilityDefinition[] = [
     buildFootprint: { estimatedSizeKb: 180, buildTimeImpact: "low" },
   },
   {
+    // LA VOIX (2026-10-13) — l'oreille de l'agent.
+    //
+    // Décision du propriétaire : on doit pouvoir PARLER à l'agent, pas
+    // seulement lui écrire.
+    //
+    // POURQUOI UNE CAPACITÉ À PART, et pas la caméra. Mesuré : `camera`
+    // induit déjà `RECORD_AUDIO` et `NSMicrophoneUsageDescription` — pour la
+    // vidéo. Déclarer la caméra pour obtenir le micro serait une PERMISSION
+    // DE TROP : une application qui demande l'appareil photo sans en avoir
+    // besoin. Le 2026-10-12 j'ai mesuré 78 permissions déclarées au corpus et
+    // ZÉRO en trop ; cette capacité existe pour que ça reste vrai.
+    //
+    // POURQUOI ELLE N'INCLUT PAS LA TRANSCRIPTION. Reconnaître une parole en
+    // français, en anglais et en arabe — ce que demande un cahier réel — ne
+    // se fait pas avec le même service partout. Figer un fournisseur ici
+    // l'imposerait à toutes les applications générées. La transcription est
+    // donc une API DÉCLARÉE par le document (1.36.0), comme le taux de
+    // change. Cette capacité donne l'oreille ; le document choisit qui
+    // écoute.
+    id: "audio_capture",
+    version: "1.0.0",
+    title: "Enregistrement audio",
+    description:
+      "Capter la voix dans l'app — parler à l'agent au lieu d'écrire. L'app ENREGISTRE ; la reconnaissance de la parole est une API déclarée par le document, parce qu'elle dépend de la langue et du pays.",
+    implementation: { kind: "expo_module", package: "expo-av", version: "~16" },
+    dependencies: { capabilities: [], nativeModules: [] },
+    platforms: { ios: { supported: true, minOsVersion: "15.1" }, android: { supported: true, minSdk: 24 } },
+    compatibleRuntimeProfiles: ["extended"],
+    nativeConfig: {
+      infoPlistKeys: ["NSMicrophoneUsageDescription"],
+      androidManifestPermissions: ["android.permission.RECORD_AUDIO"],
+      entitlements: [],
+    },
+    inducedPermissions: [
+      { platform: "ios", permission: "NSMicrophoneUsageDescription", purposeKey: "permission.microphone" },
+      { platform: "android", permission: "android.permission.RECORD_AUDIO", purposeKey: "permission.microphone" },
+    ],
+    cost: { model: "free", notes: "aucun coût direct ; la transcription, elle, est une API déclarée" },
+    nativeFootprint: { impact: "heavy", nativeModules: ["expo-av"] },
+    otaCompatible: false,
+    requiresRebuild: true,
+    commerceConstraint: "none",
+    constraints: ["validation finale sur appareil physique exigée (non-négociable #20)"],
+    conflicts: [],
+    provenance: { source: "expo_sdk", reference: "https://docs.expo.dev/versions/latest/sdk/av/" },
+    buildFootprint: { estimatedSizeKb: 420, buildTimeImpact: "medium" },
+  },
+  {
     id: "camera",
     version: "1.0.0",
     title: "Caméra",

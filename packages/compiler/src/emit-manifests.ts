@@ -65,6 +65,10 @@ const versionGte = (a: string, b: string): boolean => {
  */
 export const CHIFFREMENT_PROPRE_PAR_CAPACITE: Readonly<Record<string, boolean>> = {
   analytics: false,
+  // VOIX (registre 1.4) — `expo-av` enregistre et lit du son. Il n'embarque
+  // AUCUN chiffrement propre : rien a declarer a l'export. Le transport, lui,
+  // est chiffre par l'API declaree qui recoit l'enregistrement.
+  audio_capture: false,
   auth: false,
   barcode_scan: false,
   // OCR (1.35.0) — `tesseract.js` est une bibliotheque de reconnaissance,
@@ -126,6 +130,10 @@ export const API_SENSIBLES_SOCLE: readonly { readonly type: string; readonly rai
 
 export const API_SENSIBLES_PAR_CAPACITE: Readonly<Record<string, readonly string[]>> = {
   analytics: [],
+  // VOIX (registre 1.4) — l'enregistrement est ECRIT sur le disque avant
+  // d'etre envoye : `expo-av` passe par le systeme de fichiers. C'est la meme
+  // raison que pour la camera, et la meme categorie Apple.
+  audio_capture: ["NSPrivacyAccessedAPICategoryFileTimestamp"],
   auth: [],
   barcode_scan: [],
   // OCR (1.35.0) — la reconnaissance tourne en memoire sur une image deja

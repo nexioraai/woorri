@@ -325,7 +325,17 @@ export const RELEASE_TRAIN_V1 = {
     // aucun partage déclaré, aucune API sensible, aucun chiffrement à
     // l'export. Et une contrainte inscrite au registre : elle PROPOSE une
     // valeur, l'humain confirme.
-    "7dbe41b09923e6d5690c252245706b641a0c6e51f6b48e9cdf246bbab5004d0f",
+    // Re-scelle 2026-10-13 : VINGT-ET-UNIEME capacite, `audio_capture`.
+    // EDITION CONSCIENTE. Decision du proprietaire : on doit pouvoir PARLER a
+    // l agent. Une capacite A PART, et pas la camera — `camera` induit deja le
+    // micro pour la video, mais la declarer pour obtenir le micro serait une
+    // PERMISSION DE TROP, et un magasin la lit comme une collecte non
+    // justifiee. Elle ENREGISTRE et ne transcrit pas : reconnaitre une parole
+    // en francais, en anglais ou en arabe depend du service, donc le document
+    // declare la transcription comme une API (1.36.0). La capacite donne
+    // l oreille, le document choisit qui ecoute. Les vingt precedentes sont
+    // intactes, rien n est retire.
+    "5853d753e87bc563992916f69fc56fe4379d5d9ace8c07f0633e06d82341a7e2",
   // ÉDITION CONSCIENTE (1.3.0) : l'échelle typographique gagne `display`, un
   // cran au-dessus de `heading`. Ajouté AVEC son consommateur réel (l'écran
   // d'accueil produit), jamais « au cas où » — règle posée par DET-023.
