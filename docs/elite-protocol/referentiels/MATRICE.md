@@ -87,7 +87,7 @@ premiers.
 |---|---|---|
 | Suppression de compte **dans** l'app (Apple 5.1.1(v), Play) | 🟡④ | Mesuré : **30 documents sur 31 l'exigent** (`accountDeletionRequired`), et le parcours est **présent dans l'émis des 30**. Périmètre de la mesure : la présence du parcours, pas son fonctionnement — non démarré |
 | Déclaration Data Safety | 🟡④ | `compliance.dataCollected` au format |
-| API cible Android 36 | 🟡① | le format déclare le MINIMUM (`minAndroidSdk`), pas la cible |
+| API cible Android 36 | 🟢 | **Vérifié le 2026-10-12 : déjà fait, et au bon endroit.** `targetSdkVersion` est émis depuis `train.androidTargetSdk`, **épinglé à 36** dans `release-train.ts` — l'exigence 2026 exactement. J'avais recommandé d'ajouter une clé au format : **c'était faux**. La version CIBLE appartient au train de construction, pas au besoin métier d'une application ; le document déclare le MINIMUM supporté, ce qui est son rôle. Aucun ajout au format |
 | Consentement IA (Apple 5.1.2(i)) | 🟡③ | Mesuré : **aucun des 31 documents n'intègre d'IA** — l'obligation ne s'applique donc à aucun aujourd'hui. NON VÉRIFIÉ pour le jour où un document en intégrera une : rien ne garantit que le consentement serait émis |
 | Manifeste de confidentialité iOS | 🟡② | Mesuré : **0 fichier `PrivacyInfo.xcprivacy` émis**, mais **31 documents sur 31** portent la déclaration d'API sensibles (`NSPrivacyAccessedAPI`). La donnée existe donc ; le fichier est produit par l'outil de construction, pas par l'émetteur — **non mesuré à cet endroit-là** |
 
@@ -186,3 +186,4 @@ Un chiffre tapé à la main se désaccorde du document qu'il résume.
 | 2026-10-12 · texte alternatif CORRIGÉ | 21 | 21 | 5 | 1 | 48 |
 | 2026-10-12 · V4 et Visual Quality tranchés | 22 | 19 | 6 | 1 | 48 |
 | 2026-10-12 · V4 CORRIGÉ — fin de session | 23 | 19 | 5 | 1 | 48 |
+| 2026-10-12 · API cible — déjà faite, recommandation réfutée | 24 | 18 | 5 | 1 | 48 |
