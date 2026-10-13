@@ -16,6 +16,7 @@ import { ROLES_ICONES } from "@deribfy/primitives/roles-icones";
 import {
   BUTTON_BLOCK_STATES,
   SEARCH_ENTRY_BLOCK_STATES,
+  AGENT_BLOCK_STATES,
   GRAPHIQUE_BLOCK_STATES,
   PROSE_BLOCK_STATES,
   SPACER_BLOCK_STATES,
@@ -577,6 +578,33 @@ export const BLOCKS: readonly BlockDefinition[] = [
     actionRefProps: [],
     states: GRAPHIQUE_BLOCK_STATES,
     porteAffordance: false,
+  },
+  {
+    // AGENT (2026-10-13) — ONZIEME bloc. Decision du proprietaire : chaque
+    // utilisateur a un bouton pour reveiller l'agent ; qui veut s'en servir
+    // l'active et lui parle, a la voix ou en ecrivant.
+    //
+    // Le bloc ne porte AUCUN texte du moteur : le libelle du bouton et
+    // l'invite viennent du document. Il PORTE une affordance — c'est un geste,
+    // pas un affichage.
+    //
+    // Ce que l'agent peut FAIRE n'est pas ici : c'est `agent.allowedOperations`
+    // au document, une liste fermee d'operations d'API. Le bloc est la porte,
+    // pas le pouvoir.
+    id: "agent",
+    version: "1.0.0",
+    description: "Agent — un bouton qui le reveille, puis la parole ou l'ecrit.",
+    entity: "forbidden",
+    propsSchema: z.strictObject({
+      label: z.string().min(1),
+      placeholder: z.string().min(1),
+    }),
+    fieldRefProps: [],
+    fieldRefPropsAffichage: [],
+    fieldRefPropsFiltrage: [],
+    actionRefProps: [],
+    states: AGENT_BLOCK_STATES,
+    porteAffordance: true,
   },
 ];
 

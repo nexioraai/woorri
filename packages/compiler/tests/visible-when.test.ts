@@ -87,6 +87,9 @@ describe("le runtime ÉMIS sait évaluer la condition", () => {
     // consentement ne concerne qu un utilisateur connecte).
     // 2026-10-13 : 9 — `AirGraphique` consulte la visibilite comme les autres.
     // Un graphique de couts peut n'avoir de sens que pour un role donne.
-    expect(occurrences).toBe(9);
+    // 2026-10-13 : 10 — `AirAgent` consulte la visibilite comme les autres.
+    // Le bouton qui reveille une machine qui AGIT a plus de raisons que les
+    // autres de dependre du role et de la session.
+    expect(occurrences).toBe(10);
   });
 });

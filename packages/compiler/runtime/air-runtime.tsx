@@ -23,6 +23,7 @@ import {
   HeaderBlock,
   ListBlock,
   SpacerBlock,
+  AgentBlock,
   GraphiqueBlock,
   ProseBlock,
   SearchEntryBlock,
@@ -693,6 +694,48 @@ export function AirProse({ screen, blockId }: BlockRef) {
  * viennent d'ailleurs. Une serie absente ou mal formee rend `null` plutot
  * qu'un graphique vide — un graphique a zero se lit comme une mesure reelle.
  */
+/**
+ * AGENT (2026-10-13) — la porte, tenue par le runtime.
+ *
+ * Le wrapper tient l'etat LOCAL : ouvert ou ferme, le texte en cours. Il ne
+ * decide RIEN de ce que l agent fait : l envoi est un effet de capacite, et
+ * ce que l agent peut appeler vit dans `agent.allowedOperations` au document.
+ *
+ * FERME PAR DEFAUT a chaque montage. Un agent qui resterait ouvert entre deux
+ * ecrans donnerait l impression d ecouter en permanence.
+ *
+ * F3 : aucun texte ici. Libelle et invite viennent des props du bloc, donc du
+ * document. Sans eux, le bloc ne se rend pas — un bouton sans nom ne se
+ * clique pas.
+ */
+export function AirAgent({ screen, blockId }: BlockRef) {
+  const visible = useBlockVisible(screen, blockId);
+  const b = block(screen, blockId);
+  const [ouvert, setOuvert] = useState(false);
+  const [texte, setTexte] = useState("");
+  if (!visible) return null;
+  const props = b.props ?? {};
+  const label = typeof props.label === "string" ? props.label : undefined;
+  const placeholder = typeof props.placeholder === "string" ? props.placeholder : undefined;
+  if (label === undefined || placeholder === undefined) return null;
+  return (
+    <AgentBlock
+      testID={b.id}
+      label={label}
+      placeholder={placeholder}
+      open={ouvert}
+      onToggle={() => {
+        setOuvert(!ouvert);
+      }}
+      value={texte}
+      onChangeText={setTexte}
+      onSend={() => {
+        setTexte("");
+      }}
+    />
+  );
+}
+
 export function AirGraphique({ screen, blockId }: BlockRef) {
   const visible = useBlockVisible(screen, blockId);
   const b = block(screen, blockId);

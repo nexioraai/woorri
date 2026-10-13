@@ -25,7 +25,7 @@ import {
 // 1.7.1 (E3.3, D-131) : provenance APLANIE (sourceKind/sourceIntegrationId/
 //   sourceDomain/sourceRefreshSeconds) — l'union 1.7.0 dépassait la limite
 //   réelle de grammaire de l'API (classe D-078) ; sémantique inchangée.
-export const AIR_SCHEMA_VERSION = "1.36.0";
+export const AIR_SCHEMA_VERSION = "1.37.0";
 
 export const semverSchema = z.string().regex(/^\d+\.\d+\.\d+$/);
 export const sha256Schema = z.string().regex(/^[0-9a-f]{64}$/);
@@ -1599,6 +1599,40 @@ export const projectAirSchema = z.strictObject({
   access: accessSchema.optional(),
   design: designSchema,
   integrations: z.array(integrationSchema),
+  /**
+   * L'AGENT QUI AGIT POUR LA PERSONNE (1.37.0) — OPTIONNEL.
+   *
+   * ── CE QU'IL EST, ET CE QU'IL N'EST PAS.
+   *
+   * Un agent ne « comprend » rien au sens du document : il reçoit une demande
+   * en mots, et il peut APPELER des opérations. Tout son pouvoir tient dans
+   * `allowedOperations` — une liste FERMÉE d'opérations d'API déjà déclarées.
+   * Hors de cette liste, il n'a aucune main.
+   *
+   * ── FERMÉ PAR DÉFAUT, comme le reste du contrôle d'accès.
+   *
+   * Absent ⇒ aucun agent, aucun bouton, exactement comme avant. Une liste
+   * d'opérations vide est REFUSÉE par le validateur : un agent qui ne peut
+   * rien faire est un bouton qui ment.
+   *
+   * ── CE QUI S'ANNULE ET CE QUI NE S'ANNULE PAS.
+   *
+   * `confirmBeforeAct` suspend l'exécution et attend un accord explicite.
+   * Le document le pose à `false` EN CONNAISSANCE DE CAUSE : une réservation
+   * payée ne se défait pas d'un bouton « annuler ».
+   */
+  agent: z
+    .strictObject({
+      /** Qui a le droit de le réveiller. Absent ⇒ tout le monde. */
+      requiredRightId: rightIdSchema.optional(),
+      /** CE QU'IL PEUT FAIRE — et rien d'autre. */
+      allowedOperations: z.array(apiOperationIdSchema).min(1),
+      /** Demander un accord avant d'agir. */
+      confirmBeforeAct: z.boolean(),
+      /** Accepter la parole, et pas seulement l'écrit. */
+      voiceInput: z.boolean().optional(),
+    })
+    .optional(),
   /**
    * LES API EXTERNES QUE L'APPLICATION APPELLE (1.36.0) — OPTIONNEL.
    *

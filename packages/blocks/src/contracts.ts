@@ -263,6 +263,7 @@ export interface Blocks {
   SpacerBlock: ComponentType<SpacerBlockProps>;
   ProseBlock: ComponentType<ProseBlockProps>;
   GraphiqueBlock: ComponentType<GraphiqueBlockProps>;
+  AgentBlock: ComponentType<AgentBlockProps>;
   EmptyStateBlock: ComponentType<EmptyStateBlockProps>;
   DetailHeaderBlock: ComponentType<DetailHeaderBlockProps>;
 }
@@ -312,6 +313,49 @@ export const PROSE_BLOCK_STATES = ["ready"] as const;
  * zero, et les deux cahiers se trompent la-dessus de la meme facon.
  */
 export const GRAPHIQUE_BLOCK_STATES = ["ready", "loading", "empty", "error"] as const;
+
+/**
+ * AGENT (2026-10-13) — le bouton qui le reveille, et la parole.
+ *
+ * Decision du proprietaire : chaque utilisateur a ce bouton ; qui veut s'en
+ * servir l'active et lui parle, a la voix ou en ecrivant.
+ *
+ * Le bloc ne PENSE rien : il recueille une demande et montre ce qui revient.
+ * Il ne porte AUCUN texte du moteur — l'invite, le libelle du bouton et les
+ * messages viennent du document (F3). Il n'invente pas non plus de reponse :
+ * `reply` est ce que l'appelant lui donne.
+ *
+ * `awaitingConfirmation` existe parce que certains gestes ne s'annulent pas.
+ * Quand le document pose `confirmBeforeAct`, l'agent SUSPEND et le bloc
+ * montre ce qu'il s'apprete a faire, avec deux issues explicites.
+ */
+export const AGENT_BLOCK_STATES = ["ready", "loading", "error"] as const;
+
+export interface AgentBlockProps extends BlockA11yProps {
+  /** Ce que le bouton dit. Vient du document. */
+  label: string;
+  /** L'invite du champ. Vient du document. */
+  placeholder: string;
+  /** Ouvert ou non — l'appelant tient l'etat. */
+  open: boolean;
+  onToggle: () => void;
+  value: string;
+  onChangeText: (v: string) => void;
+  onSend: () => void;
+  /** Ce que l'agent a repondu. Jamais fabrique ici. */
+  reply?: string;
+  /** La parole, si le document l'autorise. */
+  voice?: { label: string; listening: boolean; onToggle: () => void };
+  /** Un geste qui ne s'annule pas attend un accord explicite. */
+  awaitingConfirmation?: {
+    summary: string;
+    confirmLabel: string;
+    cancelLabel: string;
+    onConfirm: () => void;
+    onCancel: () => void;
+  };
+  state?: { kind: "ready" } | { kind: "loading"; title: string } | { kind: "error"; title: string; message?: string };
+}
 
 export interface GraphiqueSerie {
   readonly label: string;

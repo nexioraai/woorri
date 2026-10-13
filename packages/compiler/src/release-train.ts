@@ -82,7 +82,11 @@ export const RELEASE_TRAIN_V1 = {
   // des API pour qu'un agent travaille dedans — on ne peut pas prevoir les
   // besoins des utilisateurs d'une plateforme. Montee ADDITIVE : cle
   // optionnelle, migration identite.
-  airSchemaVersion: "1.36.0",
+  // 1.36.0 -> 1.37.0 (2026-10-13) : `agent`. La machine qui agit POUR la
+  // personne, dans des limites declarees. Tout son pouvoir tient dans
+  // `allowedOperations` — une liste FERMEE d'operations d'API. Montee
+  // ADDITIVE : cle optionnelle, migration identite.
+  airSchemaVersion: "1.37.0",
   // Porté à 1.1.0 le 2026-08-31 (D-060) : montée STRICTEMENT ADDITIVE du
   // registre de blocs — `form` gagne `loading`/`empty`, `detail_header` gagne un
   // état, les trois blocs à données gagnent les props de titres. Rien n'est
@@ -276,7 +280,15 @@ export const RELEASE_TRAIN_V1 = {
     // intact. Le sceau change parce qu'un bloc ENTRE au registre ; les neuf
     // precedents sont intacts, rien n'est retire, et le bloc n'ecrit AUCUN
     // texte : etiquettes et valeurs viennent du document (F3).
-    "8f0c59550e4c26a765214c4b7a465a93a4a9c7ce16064acdd735423ed4e03fc5",
+    // Re-scelle 2026-10-13 : ONZIEME BLOC, `agent`.
+    // EDITION CONSCIENTE. Decision du proprietaire : chaque utilisateur a un
+    // bouton pour reveiller l agent ; qui veut s en servir l active et lui
+    // parle, a la voix ou en ecrivant. Le bloc est la PORTE, pas le pouvoir —
+    // ce que l agent peut faire vit dans `agent.allowedOperations` au
+    // document, une liste fermee. Il porte une affordance, il ne porte aucun
+    // texte du moteur, et il est FERME par defaut. Les dix precedents sont
+    // intacts, rien n est retire.
+    "4c5afba2139ef568d06464c902bb71c960ccbba509b36eb116a90ab0e7bc3881",
   // EP-134 — ajout compatible `external_contact` : version MINEURE du registre.
   /**
    * EP-147 ③ — LE NIVEAU D'API ANDROID VISÉ, épinglé par le train.

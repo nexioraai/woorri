@@ -230,6 +230,9 @@ export const EXECUTION_ENVELOPE_V1: ExecutionEnvelope = {
     // ressemblerait a un graphique a zero — et les deux cahiers des charges
     // qui le reclamaient se trompent la-dessus de la meme facon.
     graphique: ["ready", "loading", "empty", "error"],
+    // 2026-10-13 — `agent`. Trois etats : il attend, il travaille, il echoue.
+    // Pas de `empty` : un agent sans reponse n'est pas vide, il attend.
+    agent: ["ready", "loading", "error"],
   },
 
   // Mesuré : ajouter la capability `maps` (implémentation `react-native-maps`)

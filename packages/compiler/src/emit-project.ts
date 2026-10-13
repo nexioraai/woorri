@@ -102,6 +102,8 @@ export const WRAPPER_BY_BLOCK_TYPE: Readonly<Record<string, string>> = {
   prose: "AirProse",
   // 2026-10-13 — GRAPHIQUE. Dixieme bloc, reclame par deux cahiers reels.
   graphique: "AirGraphique",
+  // 2026-10-13 — AGENT. La porte ; le pouvoir vit dans `agent.allowedOperations`.
+  agent: "AirAgent",
 };
 
 // CODE SLOTS (Phase 9 — ARCHITECTURE §4). Le compilateur reçoit un BUNDLE

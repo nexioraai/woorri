@@ -530,6 +530,22 @@ export const AIR_MIGRATIONS: readonly AirMigration[] = [
       "⇒ aucune API appelée, exactement comme avant.",
     migrate: (document) => document,
   },
+  {
+    from: "1.36.0",
+    to: "1.37.0",
+    description:
+      "AIR 1.37.0 : `agent` — la machine qui agit POUR la personne, dans des " +
+      "limites déclarées. Décision du propriétaire : une plateforme ne peut " +
+      "pas prévoir les demandes de ses utilisateurs, donc l'application doit " +
+      "pouvoir recevoir une demande en mots et AGIR. Tout le pouvoir de " +
+      "l'agent tient dans `allowedOperations` — une liste FERMÉE d'opérations " +
+      "d'API déjà déclarées (1.36.0) : hors de cette liste, il n'a aucune " +
+      "main. FERMÉ PAR DÉFAUT comme le reste du contrôle d'accès : absent ⇒ " +
+      "aucun agent, aucun bouton. Et `confirmBeforeAct` suspend l'exécution " +
+      "quand le geste ne s'annule pas — une réservation payée ne se défait " +
+      "pas d'un bouton « annuler ». Migration IDENTITÉ : clé optionnelle.",
+    migrate: (document) => document,
+  },
 ];
 
 export class AirMigrationError extends Error {

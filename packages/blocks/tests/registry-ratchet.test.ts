@@ -39,6 +39,8 @@ const V1_BLOCK_IDS = [
   // valeurs nommees — et aucun bloc ne savait le dire. Les neuf premiers ne
   // bougent pas.
   "graphique",
+  // 2026-10-13 — ONZIEME bloc : `agent`. La porte, pas le pouvoir.
+  "agent",
 ];
 
 describe("cliquets du registre de blocs", () => {

@@ -53,6 +53,10 @@ export const ZONE_PAR_BLOCK_TYPE: Readonly<Record<string, ZoneEcran>> = {
   // 2026-10-13 — un graphique est du CONTENU : il se defile avec le reste.
   // Le chrome est reserve a ce qui doit rester sous la main (la recherche).
   graphique: "contenu",
+  // 2026-10-13 — l'agent est du CHROME : son bouton doit rester sous la main
+  // pendant que l'ecran defile. C'est le deuxieme bloc de cette nature, avec
+  // la recherche, et pour la meme raison : on le reveille a tout moment.
+  agent: "chrome",
 };
 
 export interface SectionPlan {

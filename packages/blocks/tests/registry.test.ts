@@ -25,7 +25,7 @@ describe("pont AIR ↔ registre de blocs", () => {
     // 1.14.0 (EP-198) : `prose` -> 9 — le texte suivi. Le registre n avait
     // AUCUN bloc capable de porter plus qu un sous-titre, et les surfaces
     // legales annoncaient donc « le texte sera fourni ». Additif.
-    expect(listBlockIds()).toHaveLength(10);
+    expect(listBlockIds()).toHaveLength(11);
     expect(getBlock("list")?.entity).toBe("required");
     expect(getBlock("carousel")).toBeUndefined();
   });

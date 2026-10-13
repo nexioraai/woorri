@@ -47,7 +47,16 @@ describe("affordance — la déclaration est LIÉE au contrat (D-104)", () => {
   it("la source dérivée contient exactement les blocs actionnables", () => {
     // Mission composition 2026-09-10 : `search_entry` est ACTIONNABLE par
     // nature — tout son sens est de naviguer. Édition consciente.
-    expect([...BLOCS_AFFORDANTS].sort()).toEqual(["button", "empty_state", "form", "list", "search_entry"]);
+    // 2026-10-13 : `agent` est ACTIONNABLE par nature — tout son sens est
+    // d'etre reveille puis de recevoir une demande. Edition consciente.
+    expect([...BLOCS_AFFORDANTS].sort()).toEqual([
+      "agent",
+      "button",
+      "empty_state",
+      "form",
+      "list",
+      "search_entry",
+    ]);
     for (const sans of ["header", "detail_header"]) {
       expect(BLOCS_AFFORDANTS.has(sans), `${sans} n'est pas actionnable`).toBe(false);
     }

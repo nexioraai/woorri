@@ -256,6 +256,16 @@ export const SECTIONS_CORRECTIVES: Readonly<Record<string, readonly SectionEmiss
   AIR_API_DOMAIN_UNDECLARED: ["cablage"],
   AIR_API_OPERATION_DUPLICATE: ["cablage"],
   AIR_API_PATH_PARAM_UNDECLARED: ["cablage"],
+  // L'AGENT (1.37.0). Il vit dans la meme passe que les API dont il depend :
+  // corriger une operation inconnue ou un agent sans main, c'est reemettre le
+  // CABLAGE. Le droit inconnu fait exception en apparence — les droits vivent
+  // dans « capacites » — mais la correction juste reste le cablage : inventer
+  // un droit de plus pour satisfaire un agent serait elargir le controle
+  // d'acces pour couvrir une erreur de declaration.
+  AIR_AGENT_NO_API: ["cablage"],
+  AIR_AGENT_OPERATION_UNKNOWN: ["cablage"],
+  AIR_AGENT_OPERATION_DUPLICATE: ["cablage"],
+  AIR_AGENT_RIGHT_UNKNOWN: ["cablage"],
   AIR_FIELD_DISPLAY_MISSING: ["donnees"],
   AIR_FIELD_DISPLAY_NOT_REFERENCE: ["donnees"],
   AIR_FIELD_ENUM_VALUES_MISSING: ["donnees"],

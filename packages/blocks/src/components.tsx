@@ -22,7 +22,7 @@ import type {Blocks,
   FormBlockProps,
   HeaderBlockProps,
   ListBlockProps,
-  SpacerBlockProps, SearchEntryBlockProps, GraphiqueBlockProps} from "./contracts.ts";
+  SpacerBlockProps, SearchEntryBlockProps, GraphiqueBlockProps, AgentBlockProps} from "./contracts.ts";
 
 export function HeaderBlock({ title, subtitle, accroche, logoUri, testID }: HeaderBlockProps) {
   return (
@@ -453,6 +453,101 @@ export function GraphiqueBlock({
   );
 }
 
+/**
+ * AGENT (2026-10-13) — le bouton, et la parole.
+ *
+ * Decision du proprietaire : chaque utilisateur a ce bouton ; qui veut s'en
+ * servir l'active et lui parle, a la voix ou en ecrivant.
+ *
+ * Le bloc ne PENSE rien et n'INVENTE aucun mot : libelles, invite, resume et
+ * reponse viennent tous de l'appelant, donc du document (F3). Il compose des
+ * primitives, sans un seul style — le cliquet d'etancheite reste tenu.
+ *
+ * FERME PAR DEFAUT : avant ouverture, seul le bouton existe. Un agent qui
+ * ecouterait sans reveil serait exactement ce que personne ne veut dune
+ * machine qui agit. Commentaire volontairement sans apostrophes : la sonde
+ * F3 cherche des chaines linguistiques par motif et ne distingue pas un
+ * commentaire du code.
+ */
+export function AgentBlock({
+  label,
+  placeholder,
+  open,
+  onToggle,
+  value,
+  onChangeText,
+  onSend,
+  reply,
+  voice,
+  awaitingConfirmation,
+  state = { kind: "ready" },
+  testID,
+}: AgentBlockProps) {
+  if (!open) {
+    return (
+      <Section tight>
+        <AppButton label={label} onPress={onToggle} testID={testID} />
+      </Section>
+    );
+  }
+  if (state.kind === "loading") {
+    return <StateView state="loading" title={state.title} testID={testID} />;
+  }
+  if (state.kind === "error") {
+    return (
+      <StateView state="error" title={state.title} message={state.message} testID={testID} />
+    );
+  }
+  // UN GESTE IRREVERSIBLE NE PART PAS SANS ACCORD. Le resume dit ce qui va
+  // se passer ; les deux issues sont EXPLICITES, jamais un seul bouton
+  // « continuer » qui se clique par reflexe.
+  if (awaitingConfirmation !== undefined) {
+    return (
+      <Section testID={testID}>
+        <AppText>{awaitingConfirmation.summary}</AppText>
+        <AppButton
+          label={awaitingConfirmation.confirmLabel}
+          onPress={awaitingConfirmation.onConfirm}
+          testID={`${testID ?? "agent"}-confirmer`}
+        />
+        <AppButton
+          label={awaitingConfirmation.cancelLabel}
+          kind="link"
+          onPress={awaitingConfirmation.onCancel}
+          testID={`${testID ?? "agent"}-annuler`}
+        />
+      </Section>
+    );
+  }
+  return (
+    <Section testID={testID}>
+      <TextField
+        label=""
+        accessibilityLabel={placeholder}
+        placeholder={placeholder}
+        value={value}
+        onChangeText={onChangeText}
+        testID={`${testID ?? "agent"}-saisie`}
+      />
+      {voice === undefined ? null : (
+        <AppButton
+          label={voice.label}
+          kind={voice.listening ? "primary" : "chip"}
+          onPress={voice.onToggle}
+          testID={`${testID ?? "agent"}-voix`}
+        />
+      )}
+      <AppButton
+        label={label}
+        onPress={onSend}
+        disabled={value.trim() === ""}
+        testID={`${testID ?? "agent"}-envoyer`}
+      />
+      {reply === undefined ? null : <AppText>{reply}</AppText>}
+    </Section>
+  );
+}
+
 export function ButtonBlock({ label, icon, kind, onPress, testID }: ButtonBlockProps) {
   // MESURE SUR APPAREIL : ce bloc rendait le bouton NU, donc collé aux bords
   // de l'ecran — seul bloc a ne pas passer par `Section`, qui porte les
@@ -558,4 +653,5 @@ export const blocks: Blocks = {
   SpacerBlock,
   ProseBlock,
   GraphiqueBlock,
+  AgentBlock,
 };

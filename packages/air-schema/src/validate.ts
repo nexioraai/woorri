@@ -1440,6 +1440,55 @@ export function validateAir(air: ProjectAir): AirDiagnostic[] {
     });
   });
 
+  // ── 8ter. L'AGENT (1.37.0) : QUATRE REFUS.
+  //
+  // ① Chaque opération qu'il peut appeler doit EXISTER. Un agent autorisé sur
+  //    une opération inconnue serait un agent dont on croit connaître les
+  //    pouvoirs.
+  // ② Le droit exigé pour le réveiller doit exister, sinon personne ne peut
+  //    le réveiller et le bouton ment.
+  // ③ Deux fois la même opération ne veut rien dire de plus.
+  // ④ Un agent sans API déclarée n'a aucune main : le refuser ici vaut mieux
+  //    que de livrer un bouton qui ne fait rien.
+  if (air.agent !== undefined) {
+    const operations = new Set((air.apis ?? []).flatMap((a2) => a2.operations.map((o) => o.id)));
+    if (operations.size === 0) {
+      push(
+        "AIR_AGENT_NO_API",
+        "agent",
+        "un agent est déclaré alors qu'aucune API ne l'est : il n'aurait aucune main",
+      );
+    }
+    const vues = new Set<string>();
+    air.agent.allowedOperations.forEach((op, i) => {
+      if (!operations.has(op)) {
+        push(
+          "AIR_AGENT_OPERATION_UNKNOWN",
+          `agent.allowedOperations[${i}]`,
+          `l'opération « ${op} » n'est déclarée dans aucune API`,
+        );
+      }
+      if (vues.has(op)) {
+        push(
+          "AIR_AGENT_OPERATION_DUPLICATE",
+          `agent.allowedOperations[${i}]`,
+          `l'opération « ${op} » est autorisée deux fois`,
+        );
+      }
+      vues.add(op);
+    });
+    const droit = air.agent.requiredRightId;
+    // `access` est optionnel au format : un document sans modele d'acces ne
+    // declare aucun droit, donc exiger un droit y est forcement une erreur.
+    if (droit !== undefined && !(air.access?.rights ?? []).some((r) => r.id === droit)) {
+      push(
+        "AIR_AGENT_RIGHT_UNKNOWN",
+        "agent.requiredRightId",
+        `le droit « ${droit} » n'existe pas : personne ne pourrait réveiller l'agent`,
+      );
+    }
+  }
+
   // 9. Permissions et intégrations : capabilities déclarées uniquement.
   air.permissions.forEach((p, i) => {
     if (!declaredCapabilities.has(p.requiredByCapability)) {
