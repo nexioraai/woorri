@@ -29,6 +29,7 @@ import type { ProjectAir } from "@deribfy/air-schema";
 import type { EnveloppeBackend } from "./emit-spring.ts";
 import { PRELUDE_EXPRESSION, emettreExpressionTs } from "./expression.ts";
 import { moduleConnecteur, routesConnecteur } from "./emit-connecteur.ts";
+import { routesAgent } from "./emit-agent.ts";
 
 type Entite = ProjectAir["entities"][number];
 type Champ = Entite["fields"][number];
@@ -1261,6 +1262,9 @@ function serveur(air: ProjectAir): string {
     `import { SCHEMA } from "./schema.ts";`,
     ...air.entities.map((e) => `import { ${CAMEL(e.id)}Routes } from "./api/${table(e)}.ts";`),
     ...(avecApis(air) ? [`import { connecteurRoutes } from "./api/connecteur.ts";`] : []),
+    ...(avecApis(air) && air.agent !== undefined
+      ? [`import { agentRoutes } from "./api/agent.ts";`]
+      : []),
     ...air.entities.map(
       (e) => `import { ${CAMEL(e.id)}DepotSql } from "./depot/${table(e)}.ts";`,
     ),
@@ -1301,6 +1305,7 @@ function serveur(air: ProjectAir): string {
     "  app.log.info(`base : ${base.moteur}`);",
     ...air.entities.map((e) => `  ${CAMEL(e.id)}Routes(app, ${CAMEL(e.id)}DepotSql(base), base);`),
     ...(avecApis(air) ? ["  connecteurRoutes(app);"] : []),
+    ...(avecApis(air) && air.agent !== undefined ? ["  agentRoutes(app);"] : []),
     "  return app;",
     "}",
     "",
@@ -1391,6 +1396,13 @@ export function enveloppeFastify(air: ProjectAir): EnveloppeBackend {
       files.set(`src/connecteur/${api.id}.ts`, moduleConnecteur(api));
     }
     files.set("src/api/connecteur.ts", routesConnecteur(air.apis));
+    // ── LA PORTE DE L'AGENT — PLUS ETROITE QUE CELLE DU CONNECTEUR.
+    //
+    // Le validateur refuse un agent sans API (AIR_AGENT_NO_API), donc cette
+    // porte ne s'emet qu'a l'interieur du bloc qui a deja des API.
+    if (air.agent !== undefined) {
+      files.set("src/api/agent.ts", routesAgent(air));
+    }
   }
   if (air.entities.some((e) => e.fields.some((f) => f.derived?.kind === "count" || f.derived?.kind === "sum"))) {
     files.set("src/calcul/en-base.ts", calculs(air));
