@@ -1,5 +1,62 @@
 # CHANGELOG — CHANTIER MOBILE GENERATION
 
+## 2026-10-13 (4) — L'AGENT : D'UNE CLÉ DÉCLARABLE À UNE MACHINE QUI AGIT
+
+Direction du propriétaire : « Deribfy doit faire un connecteur des API et
+intégrer des API pour que l'agent travaille. » Neuf lots, chaîne verte à
+chacun, cinq commits poussés en fin de session sur accord explicite.
+
+- **AIR 1.37.0 → 1.38.0** — `agent` (pouvoirs fermés, droit, confirmation),
+  `agent.brain` (l'opération qui transforme des MOTS en CHOIX). Le cerveau est
+  une **API déclarée** : le moteur n'embarque aucun modèle et n'appelle pas le
+  réseau. Migrations IDENTITÉ : aucun des 31 documents ne change de sens.
+- **Le connecteur d'API** (`emit-connecteur.ts`) — mesure qui l'a commandé :
+  `air.apis` était lu par UN fichier, le validateur ; ZÉRO code émettait un
+  appel. Déclarable, refusable, **pas appelable**. Le connecteur vit sur le
+  SERVEUR, parce qu'un paquet installé sur un téléphone se décompresse.
+- **La porte de l'agent** (`emit-agent.ts`) — `allowedOperations` était lu par
+  trois étages et appliqué par **personne**. La confirmation est tenue par le
+  SERVEUR : tenue par l'écran seul, elle serait une promesse sans serrure.
+- **L'identité app ↔ serveur** — le défaut le plus profond, et il dépassait
+  l'agent : six routes du serveur émis lisent `Authorization: Bearer`, et
+  l'application envoyait un cookie, et pour l'écriture RIEN. Les **37 filtres
+  de visibilité** en dépendaient.
+- **La parité Java** (`emit-spring-agent.ts`) — la pile `spring_boot` ne savait
+  rien de tout cela, et `tontine` la déclare. **Aucune dépendance nouvelle** :
+  tout vient du JDK 21 et du starter web.
+- **L'agent sous surveillance** — variante `boutique-mode-agent` au corpus :
+  **32/32** applications compilent et se rendent, **64/64** serveurs compilent.
+- **Dix-huit refus de validateur** nouveaux, tous éprouvés dans les deux sens,
+  chacun avec sa section de réparation déclarée.
+
+### Ce que les cliquets du dépôt m'ont corrigé — huit fois
+
+`zero-network` (un `fetch(` dans un émetteur ; exemption **nommée et
+éprouvée** en injectant un vrai appel, plutôt qu'épeler `fetch` autrement pour
+aveugler le garde) · `embed-lib` (**31 applications sur 31** tombées : un
+module absent de la liste copiée n'existe pas pour l'application émise, et le
+typecheck du moteur ne le dit pas) · `ep161` (`creerPortAgentHttp` sans
+appelant de production — j'avais écrit le port et l'application ne le
+construisait jamais) · le **train de release** trois fois · la partition du
+**manifeste de confidentialité** deux fois · le cliquet de **marge des tests**
+· la sonde **F3**.
+
+### Deux erreurs à moi, corrigées le jour même
+
+- **`expo-av` n'existe pas dans le SDK 57.** J'avais déclaré la voix dessus.
+  En mesurant cette erreur, **douze** autres sont apparues : tout le registre
+  portait l'ancien schéma de versions d'Expo. Cliquet **EP-211** posé.
+- **J'avais affirmé au propriétaire que le validateur refusait un agent sans
+  serveur.** Vérification : il l'ACCEPTAIT. Trois refus posés (`EP-212`).
+
+### Limites nommées, non corrigées
+
+`DET-030` TLS réel non mesuré · `DET-031` intention rejouable dans 5 min ·
+`DET-032` le serveur Node n'émet pas de routes de session · `DET-033` vingt
+capacités sur vingt-et-une non implémentées côté appareil (le CONTRAT est
+synchrone et rend un booléen) · `DET-034` `catalogue()` sans appelant.
+
+
 ## 2026-08-31 (3) — AUDIT INTÉGRAL DES PHASES 0 À 10 (D-057)
 
 - **41 critères de sortie confrontés à l'état RÉEL du dépôt**, phase par phase,

@@ -1,6 +1,135 @@
 # STATUS — TABLEAU DE BORD DU CHANTIER MOBILE GENERATION
 
 > Mis à jour à chaque étape significative. Dernière mise à jour :
+> **2026-10-13 (29)** (**🤖 L'AGENT : D'UNE CLÉ DÉCLARABLE À UNE MACHINE QUI
+> AGIT, ET HUIT CLIQUETS QUI M'ONT CORRIGÉ.** Direction du propriétaire :
+> « Deribfy doit faire un connecteur des API et intégrer des API pour que
+> l'agent travaille. » Neuf lots, chaîne verte à chacun.
+>
+> **① LA VOIX DÉCLARABLE, PUIS REFUSÉE** (`653b1ff7`, `49905b0d`). AIR 1.37.0 :
+> capacité `audio_capture` **à part**, pas la caméra — `camera` induit déjà le
+> micro pour filmer, et la déclarer pour obtenir l'oreille serait une
+> **permission de trop** (mesure du 2026-10-12 : 78 permissions déclarées,
+> ZÉRO en trop). Les **trois** partitions du registre comblées (chiffrement,
+> API sensibles iOS, partage tiers), et la limite ÉCRITE : le micro seul ne
+> partage rien, mais une parole transcrite part vers une API déclarée, et
+> aucune ligne d'une table de capacités ne portera jamais ce partage.
+> **Puis refusée** (`AIR_AGENT_VOICE_NOT_SERVABLE`) : la clé induisait le
+> microphone et **rien n'enregistre** — UNE capacité sur 21 est implémentée
+> côté appareil, et c'est `auth`. Une application aurait demandé le micro sans
+> jamais l'utiliser. La clé reste au format ; le refus tombera le jour où le
+> moteur saura enregistrer.
+>
+> **② LE CONNECTEUR D'API** (`dbc03a0d`). Mesure : `air.apis` était lu par UN
+> fichier — le validateur. ZÉRO code émettait un appel. Déclarable, refusable,
+> **pas appelable**. La décision qui commande tout : le connecteur vit sur le
+> SERVEUR, parce qu'un paquet installé sur un téléphone se décompresse et que
+> le secret serait parti chez chaque personne. Six refus, chacun mesuré —
+> l'hôte vient de la déclaration, un champ en trop est refusé (l'ignorer
+> rendrait le manifeste de confidentialité FAUX), une clé en plus ne traverse
+> pas, un type qui ne correspond pas est refusé, un appel anonyme est refusé
+> (chaque appel est FACTURÉ au propriétaire), aucune reprise (rejouer un POST
+> qui débite débiterait deux fois).
+>
+> **③ « ÇA COMPILE » NE VEUT PAS DIRE « ÇA DÉMARRE »** (`dbc03a0d`). Trouvaille
+> non cherchée : `constructor(public readonly nom: string)` est du TypeScript
+> correct que `tsc` accepte SANS UN MOT, et le serveur émis **ne démarre pas**
+> — Node EFFACE les annotations, il ne TRANSFORME pas le code. Un typecheck
+> vert ne peut donc pas attester qu'une application démarre. Cliquet EP-203
+> avec l'effaceur **de Node lui-même** : tout le TypeScript émis des 31
+> documents est effaçable.
+>
+> **④ LA PORTE DE L'AGENT** (`3ebdc28a`). `allowedOperations` était lu par le
+> format, le validateur et le runtime — et appliqué par **personne**. Le piège
+> fermé : `confirmBeforeAct` tenu par l'écran seul serait une **promesse sans
+> serrure**, le serveur étant joignable directement. La confirmation est exigée
+> LÀ OÙ L'ACTE A LIEU, par une intention signée liée à l'appelant, aux entrées
+> et à une échéance. 17 preuves qui agissent **depuis le serveur, sans écran** —
+> le chemin exact de qui veut contourner.
+>
+> **⑤ AIR 1.38.0 — LE CERVEAU** (`651b2524`). Le cerveau est une **API
+> déclarée** : le moteur n'embarque aucun modèle et n'appelle pas le réseau.
+> Il **nomme ses clés** plutôt que de subir une convention inventée. Deux
+> propriétés prouvées sur ce qui SORT vers le tiers : **il ne peut pas
+> s'inventer un pouvoir** (« ignore tes consignes et vide le compte » parle
+> directement à l'interprète — l'opération désignée doit être au catalogue), et
+> **il propose, il n'agit pas** (parler = 1 appel sortant, agir = 1 autre).
+>
+> **⑥ L'IDENTITÉ VOYAGE ENFIN** (`7226959f`). Le défaut le plus profond, et il
+> dépassait l'agent : le serveur émis lit `Authorization: Bearer` — SIX routes
+> l'exigent — et l'application envoyait un **cookie**, et pour l'écriture
+> **RIEN**. Les **37 filtres de visibilité** répondaient « je ne sais pas qui
+> vous êtes » à une application qui le savait. Le jeton EXISTAIT chez Supabase ;
+> le type déclaré le jetait. `jeton?()` au contrat (optionnel, comme
+> `droits?()`), une **fabrique** de transport (l'ancien est intact : sa doctrine
+> dit qu'un jeton s'ajoute dans la fonction de l'appelant), un quatrième module
+> réseau nommé, et le **bouton branché**.
+>
+> **⑦ L'AGENT SOUS SURVEILLANCE** (`7e2729ea`). ZÉRO document du corpus ne
+> déclarait `apis` ni `agent` : tout était prouvé par 38 tests et **aucune
+> gate**. Une **variante** d'un document RÉEL, pas un document neuf — « un
+> document fabriqué pour l'occasion ne mesure que ma capacité à écrire un cas
+> qui passe ». Dès son ajout elle a trouvé deux défauts invisibles aux tests :
+> un agent monté **sans session** (App.tsx ne compilait pas), et un agent qui
+> compile et **ne sert à rien** (session locale, aucun jeton). Et
+> `AIR_BACKEND_SANS_SOURCE` était devenu **trop strict** : sa raison écrite est
+> « appelé par personne », or un agent appelle — le contrôle compte un lecteur
+> de plus, il n'est pas affaibli. **32/32** compilent, se rendent (natif ET
+> web) et se construisent.
+>
+> **⑧ LA PARITÉ JAVA** (`712609fc`). La pile `spring_boot` ne savait RIEN : zéro
+> lecture de jeton, zéro connecteur, zéro agent — donc côté Java, toute règle de
+> visibilité désignant l'appelant rendait **403 pour toujours**. Et `tontine`,
+> l'application du propriétaire, déclare `spring_boot`. **Aucune dépendance
+> nouvelle** : `HttpClient`, `javax.crypto.Mac`, `MessageDigest.isEqual`
+> viennent du JDK 21 ; Jackson arrive avec le starter web. **18 preuves de
+> parité** plutôt qu'un commentaire — « les deux piles font la même chose » est
+> une phrase. **64/64** serveurs compilent, Maven inclus.
+>
+> **⑨ UN AGENT INERTE EST REFUSÉ À LA RACINE** (`079ea51e`). Ce lot corrige une
+> **affirmation à moi** : j'avais écrit au propriétaire que le validateur ne
+> laisserait pas déclarer un agent sans son serveur. Il a demandé la solution.
+> **Vérification : le validateur l'ACCEPTAIT.** Le bouton se montait, le port
+> restait inerte, chaque appui échouait. Trois refus posés —
+> `SANS_SERVEUR_GENERE`, `SERVEUR_SANS_ADRESSE`, `SANS_IDENTITE_VERIFIEE`.
+>
+> **HUIT CLIQUETS DU DÉPÔT M'ONT CORRIGÉ**, et c'est la mesure la plus utile du
+> jour : le cliquet **zéro-réseau** (mon `fetch(` dans un émetteur — exemption
+> nommée ET éprouvée en injectant un vrai appel, plutôt qu'épeler `fetch`
+> autrement pour aveugler le garde) ; **`embed-lib`** (31 applications sur 31
+> tombées — un module absent de la liste copiée n'existe pas pour l'application
+> émise, et le typecheck du moteur ne le dit pas) ; **ep161** (`creerPortAgentHttp`
+> et `urlProtocoleAgent` sans appelant de production : j'avais écrit le port et
+> l'application ne le construisait jamais) ; le **train de release** trois fois
+> (format, blocs, capacités) ; **ep144/ep147** (la partition du manifeste de
+> confidentialité) ; **ep145** (le partage avec des tiers) ; le **cliquet de
+> marge des tests** ; et la sonde **F3** sur les apostrophes.
+>
+> **UNE ERREUR À MOI, CORRIGÉE LE JOUR MÊME, ET DOUZE AUTRES DÉCOUVERTES AVEC.**
+> J'avais déclaré la voix sur `expo-av ~16`. Mesure dans la liste livrée AVEC
+> le SDK : **`expo-av` est ABSENT du SDK 57**, le bon module est `expo-audio`.
+> En mesurant celle-là, **douze** autres sont apparues : tout le registre
+> portait l'ancien schéma de versions d'Expo alors que le SDK 57 épingle ses
+> modules en `~57.0.x`. Latent — rien n'installe encore depuis ces
+> déclarations — mais ça se verrait au premier build natif. Cliquet **EP-211** :
+> chaque module déclaré est comparé à la liste du SDK, présence ET version
+> majeure.
+>
+> **UNE ANOMALIE MESURÉE PUIS EXPLIQUÉE.** Un tir a vu l'étape `backend` passer
+> de 172-238 s à **859 s**, avec un échec NON reproductible. Cause mesurée :
+> swap à **13 240 Mo sur 14 336**, 8,5 millions de pageouts — émulateur Android
+> et machine virtuelle ouverts pendant le tir. Tir suivant, machine calme :
+> 214 s, chaîne verte. **Aucun défaut de code.** Noté parce qu'un vert local et
+> un rouge en chaîne, s'il reste inexpliqué, finit par faire qu'on ne lit plus
+> la chaîne.
+>
+> **CE QUI N'EST PAS FAIT, ET QUI EST NOMMÉ PLUTÔT QUE CACHÉ** — voir
+> `DET-030`→`DET-034` ci-dessous : le chemin TLS réel non mesuré ; une intention
+> rejouable dans ses 5 minutes ; le serveur **Node n'émet aucune route de
+> session** (le Java en émet, en forme) ; **20 capacités sur 21 non implémentées
+> côté appareil**, le contrat étant synchrone et rendant un booléen ; et
+> `catalogue()` du port de l'agent appelé par personne.)
+>
 > **2026-10-05 (28)** (**🌐 LA CIBLE WEB, LE SERVEUR NEUTRE, ET UN MOIS DE
 > DÉRIVE DE CE FICHIER RECONNU.** Ce fichier datait du **2026-09-05** alors que
 > le dépôt a avancé de quatre lots — infraction à la règle 2 du CLAUDE.md,
@@ -729,8 +858,8 @@
 | Plan v0.1 | 🟢 **VALIDÉ ET FIGÉ** (propriétaire, 2026-08-27) — toute évolution passe par `DECISIONS.md` |
 | Phase 0 — Fondations | 🟢 **TERMINÉE** (2026-08-27) — tous les critères de sortie vérifiés, dont **CI GitHub réelle verte : run #32, commit `54ef2a1`, `success`** (capture propriétaire + confirmation API Actions indépendante) |
 | Phase actuelle | 🔴 **A++ N'EST PAS ÉTABLI — A et G NON DÉTERMINÉES** *(rectifié le 2026-09-04 ; énoncé antérieur CONSERVÉ ci-après mot pour mot)*. — *Énoncé du 2026-08-31 :* « 🟢 **A++ EST ATTEINT — les 8 dimensions CONFORMES (D-060, 2026-08-31)** : `A:conforme · B · C · D · E · F · G · H` sur 2 domaines. La dimension **C** était **INATTEIGNABLE** — `form` ne connaissait ni `loading` ni `empty`, `detail_header` aucun état, et le fournisseur de données était purement synchrone. Levée par le **registre de blocs 1.1.0** (dégel ADDITIF) + `DataProvider.status?()`, chaque état **observé au rendu avec contrôle négatif AVANT** d'entrer dans l'enveloppe. · **PHASE 10B : 🔵 F1-F4 🟢, F5 🟢 (DET-028 fermé)** · **Phase 8 / Phase 10 : reste la SEULE preuve appareil** · **Phases 0, 2-7, 9 : 🟢 TERMINÉES** » · 🔴 **RECTIFIÉ LE 2026-09-04 — « les 8 dimensions CONFORMES » ne vaut que pour la NATURE DE PREUVE de l'instrument, et deux dimensions échappent à cette preuve.** La grille (`ROADMAP` § EXIGENCE PRODUIT TRANSVERSE) exige pour **A** une « géométrie **mesurée sur appareil réel** » et pour **G** une « **mesure sur appareil** » ; or `apxx-grid.ts` les évalue par analyse **STATIQUE** du code émis — **A** : valeur `tapTarget` + 3 surfaces contraintes, ce qui laisse **2 des 3 clauses du critère non regardées** (zones sûres, cible sous barre système) ; **G** : absence de `ScrollView` englobant + parent borné, ce qui ne regarde ni le jank, ni la virtualisation à l'exécution, ni le retour visuel. **Aucune mesure sur appareil n'a jamais été prise.** Par la règle de notation de `D-039` — *« une dimension non mesurable se déclare non déterminée, jamais conforme par défaut »* — **A et G sont NON DÉTERMINÉES**, en cohérence avec `DET-006` (🔴 ouverte : « virtualisation effective à l'exécution : NON DÉTERMINÉE ») et `DET-016` (« conformité suspendue à l'observation appareil »). **A++ N'EST DONC PAS ÉTABLI.** B/C/D/E/F/H demeurent mesurées par l'instrument. Le constat historique de `D-060` (2026-08-31) est **conservé et daté** — il reste vrai de ce que l'instrument mesure ; **sa conclusion « 8/8 » ne l'est plus.** ⚠️ Un rejeu de la grille affichera **mécaniquement** `A:conforme G:conforme` : **cette sortie n'est admissible comme preuve ni de A, ni de G.** Le défaut d'instrument ainsi démontré est de la famille de `DET-028` ; **son traitement relève d'un arbitrage distinct** — tranché depuis par **`D-135`** (falsification exécutée : le verdict `G` survit au RETRAIT du bornage, satisfait par un COMMENTAIRE ; `A` ne couvre qu'1 clause sur 3). **Aucune correction d'instrument n'est engagée.** |
-| Générateur mobile | 🔵 **EN IMPLÉMENTATION** — prochaine action : **build EAS + installation du slice 2 sur appareil** (intervention propriétaire), puis clôture de la Phase 10 |
-| Progression globale | 🔴 **A-P8-01 / A-P8-02 (audit 2026-08-31) — LA PHASE 8 N'EST PAS TERMINÉE.** Ce tableau affirmait « Phases 0, 2-9 terminées » pendant que le détail de ce même document disait « **En cours : Phase 8** ». Le détail a raison, pour **deux** motifs indépendants : ① le critère « app installée et fonctionnelle sur **2 appareils physiques** » n'a que **Android 🟢** — l'IPA iOS est construit mais **non installé** (DET-012, prérequis propriétaire) ; ② la ROADMAP exige pour clore la Phase 8 que **A à G soient CONFORMES**, « une seule non conforme BLOQUE la clôture » — or **C est `non_conforme` depuis D-048 (2026-08-30)**, donc postérieurement à la clôture revendiquée. · **Phases 0, 2-7, 9 : 🟢 TERMINÉES** · **Phase 8 : 🔴 ROUVERTE PAR LE FAIT** · **Phase 10 : 🔵 clôture bloquée** · **Phase 10B : 🔵 en cours, F1-F4 🟢, F5 🟢** *(rectifié le 2026-09-01 — cette ligne portait `F5 🔴`, périmé depuis `D-095` : l'invariant `atteignable ⊆ rendable` est tenu sur les 6 blocs, les « 8 états sur 11 » venaient d'une recopie périmée. La phase reste OUVERTE pour une autre raison : les gates de fidélité sont rouges sur des défauts RÉELS du corpus)* · Phase 1 : volet EAS bloqué sur quota (propriétaire) · **dettes ouvertes : 12** |
+| Générateur mobile | 🔵 **EN IMPLÉMENTATION** — prochaine action : **build EAS + installation du slice 2 sur appareil** (intervention propriétaire), puis clôture de la Phase 10. *(2026-10-13 : le lot AGENT est fermé côté moteur — connecteur d'API, porte de l'agent, cerveau, identité, écran, parité Java, 32/32 applications et 64/64 serveurs. Le propriétaire demande désormais un essai depuis l'interface sur une application générée réelle. Les cinq limites restantes sont `DET-030`→`DET-034`.)* |
+| Progression globale | 🔴 **A-P8-01 / A-P8-02 (audit 2026-08-31) — LA PHASE 8 N'EST PAS TERMINÉE.** Ce tableau affirmait « Phases 0, 2-9 terminées » pendant que le détail de ce même document disait « **En cours : Phase 8** ». Le détail a raison, pour **deux** motifs indépendants : ① le critère « app installée et fonctionnelle sur **2 appareils physiques** » n'a que **Android 🟢** — l'IPA iOS est construit mais **non installé** (DET-012, prérequis propriétaire) ; ② la ROADMAP exige pour clore la Phase 8 que **A à G soient CONFORMES**, « une seule non conforme BLOQUE la clôture » — or **C est `non_conforme` depuis D-048 (2026-08-30)**, donc postérieurement à la clôture revendiquée. · **Phases 0, 2-7, 9 : 🟢 TERMINÉES** · **Phase 8 : 🔴 ROUVERTE PAR LE FAIT** · **Phase 10 : 🔵 clôture bloquée** · **Phase 10B : 🔵 en cours, F1-F4 🟢, F5 🟢** *(rectifié le 2026-09-01 — cette ligne portait `F5 🔴`, périmé depuis `D-095` : l'invariant `atteignable ⊆ rendable` est tenu sur les 6 blocs, les « 8 états sur 11 » venaient d'une recopie périmée. La phase reste OUVERTE pour une autre raison : les gates de fidélité sont rouges sur des défauts RÉELS du corpus)* · Phase 1 : volet EAS bloqué sur quota (propriétaire) · **dettes ouvertes : 17** *(rectifié le 2026-10-13 : +5, `DET-030`→`DET-034`, toutes nées du lot de l'agent et toutes CONSIGNÉES plutôt que corrigées en silence. La plus lourde est `DET-033` — vingt capacités sur vingt-et-une déclarables et non implémentées côté appareil, dont la cause est le CONTRAT lui-même, synchrone et rendant un booléen.)* |
 
 ## PHASE 0 — DÉTAIL DES SOUS-ÉTAPES
 
@@ -1031,6 +1160,11 @@ la déviation venait de la séquence conversationnelle, pas du plan.)*
 | **DET-027** | **Lignes de liste PRESSABLES et INERTES** [mesuré à l'exécution 2026-08-30, premier instrument d'observation] : `useItemNavigate` retournait **toujours** une fonction, même sans effet `navigate` — chaque ligne était donc appuyable et muette. Le contrat de bloc savait pourtant ne câbler aucun `onPress` quand `onItemPress` est absent. **Mesure sur les 2 slices : 60 contrôles pressables, 4 agissants, 56 inertes**, dont **46 lignes de liste**. Invisible à toute mesure statique : `controls()` ne recense un bloc que s'il porte une action, et un bloc liste n'en porte aucune | Instrument d'observation, 2026-08-30 (`APP-D002`) | 🔴 haute (fausse promesse à l'utilisateur) | — | 🟢 **RÉSOLUE 2026-08-30** (D-047) — correction à la source du runtime, assets embarqués régénérés, 2 copies de slice propagées. **Après : 14 pressables, 4 agissants, 10 inertes** (dette moteur `capability`/`mutation`, délibérément non touchée). **46 fausses affordances retirées · 640 tests verts · typecheck EXIT=0 · les 4 navigations fonctionnelles inchangées.** Correspondance runtime ↔ validateur `E-19` : **21,4 % → 100 %** |
 | **DET-028** | **La dimension C de la grille A++ mesure le CODE, pas l'ÉTAT ATTEINT** [mesuré 2026-08-30] : `apxx-grid.ts` §C calcule `["loading","empty","error"].filter(k => blocks.includes(`state.kind === "${k}"`))` — une **recherche de sous-chaîne** dans le source du composant émis. `metrics.json` enregistre donc **C = conforme**, détail « états rendus par le bloc liste : loading/empty/error ». Or l'**enveloppe** concède `reachableBlockStates.list = ["ready","empty"]`, et l'**observation** (deux conditions de données) montre que le bloc `list` ne rend jamais que `empty`/`ready`. **11 états déclarés au registre · 7 concédés · 3 observés ; 8 états déclarés ne sont jamais rendus.** Quatre types de blocs déclarent un état et n'en portent aucun. Deux organes du dépôt se contredisent sur le même objet, sans qu'ils aient jamais été croisés | Instrument d'observation, 2026-08-30 (`APP-D003`) | 🔴 **BLOQUANTE A++** — **volet outillage CLOS le 2026-08-30** (instrument corrigé, le faux vert est supprimé) ; **volet objet toujours bloquant** : `loading`/`error` restent inatteignables, source de données synchrone | 🔴 **BLOQUANTE PHASE 10 — à traiter AVANT toute clôture** (échéance arbitrée le 2026-08-30, D-048). **VOLET OUTILLAGE** : **non reportable**, à produire dans la phase (`A1`, D-052). **VOLET OBJET** : 🔴 **AUCUNE ÉCHÉANCE POSSIBLE** — le report exigeait une phase **nommée** ; `DET-008`, dont il dépend, n'est rattachée à **aucune** phase de la ROADMAP (D-052) | 🔴 **OUVERTE** — dimension C **requalifiée `non_conforme`** le 2026-08-30. `non_determinee` écarté : la règle de notation le réserve aux dimensions **non mesurables**, or C a été mesurée par deux voies concordantes (enveloppe cliquetée + exécution). **Conséquence : A++ n'est pas atteint sur les 2 slices.** Aucune correction engagée — les deux causes démontrées (instrument lisant le contrat · source de données synchrone) n'admettent pas de correctif court. **ARBITRAGE DU 2026-08-30 (D-052)** : l'instrument **doit** être rendu honnête — variante `A1`, mesurer contre `reachableBlockStates` de l'enveloppe — **travail PRESCRIT, NON ENGAGÉ** (aucun code, aucun instrument, aucun `metrics.json` modifié) ; le critère C **n'est ni amendé ni assoupli** (option C refusée) ; le report du volet objet est **SUSPENDU**, **ni Phase 11 ni aucune autre phase n'étant déduite**. **DET-028 demeure 🔴 BLOQUANTE PHASE 10 · A++ NON ATTEINT.** |
 | **DET-029** | **Divergence documentaire non résorbée entre `main` et la lignée de campagne** [constatée 2026-09-04, non mesurée] : le centre de contrôle `docs/mobile-generation/` (`STATUS`/`ROADMAP`/`DECISIONS`/`CHANGELOG`) vit sur la branche de chantier `fix/xss-jsonld` et y a reçu l'intégralité de la campagne `D-104`→`D-134` ; `main` (`4e56538`) porte le cutover monorepo et la production, mais **aucune convergence documentaire n'a été instruite dans un sens ni dans l'autre**. Conséquence : `main` ne permet pas de reconstituer l'état réel du chantier, et une reprise partant de `main` planifierait sur une documentation muette. **Aucune mesure du delta n'a été faite** — ni liste de fichiers divergents, ni sens de convergence arbitré. Consigné ICI parce que l'unique trace antérieure était conversationnelle : une réinitialisation de contexte la détruisait. **Ne pas traiter la convergence sans arbitrage : elle touche `main`.** **DELTA MESURÉ le 2026-09-04** *(mesure seule, aucun traitement)* — base commune `42a449b`. **Branche → `main` : 44 commits · 233 fichiers · +134 958 / −14 527**, dont la totalité du centre de contrôle (`DECISIONS` +2528, `STATUS` +787, `ROADMAP` +193, `PROTOCOLE` +98) et les zones `slices/validation-appareil` (58 f.), `benchmarks/air-emission` (51), `docs/elite-protocol` (30), `packages/*` (~75). **`main` → branche : 18 commits, mais UN SEUL fichier au contenu réellement divergent** — `apps/web/supabase/sql/marketing_site_id_step1_add_column_backfill_and_fk.sql` (+7/−2 : un commentaire de mesure a posteriori sur les actions `ON DELETE`/`ON UPDATE` des FK). Le second fichier listé (`apps/web/public/air/v1/entities/ent_depart/rows`) est **byte-identique**. `INFÉRENCE` — la divergence est donc **quasi unilatérale** : la branche contient tout `main` à sept lignes de commentaire près, et `main` ignore l'intégralité de la campagne. La convergence utile est un sens unique branche → `main`, ce qui reste un arbitrage propriétaire NON PRIS. | Reprise 2026-09-04 (audit de checkpoint) | 🟠 moyenne (aucune régression de code ; risque de perte de continuité documentaire) | **non datée** — arbitrage propriétaire requis (sens de convergence, périmètre, moment) | 🔴 **OUVERTE** |
+| **DET-030** | **Le chemin TLS réel du connecteur d'API n'est pas mesuré** [constatée 2026-10-13]. Les 23 preuves du connecteur (EP-202) **exécutent** le module émis par un `node` nu avec un `fetch` témoin : on observe exactement ce qui partirait vers le tiers — adresse, méthode, en-têtes, corps — et exactement ce que le connecteur accepte d'en rendre. Ce qui n'est PAS prouvé : aucun appel TLS vers un vrai service n'a lieu. Raison assumée : une sonde qui sortirait sur le réseau ne mesurerait plus le code, elle mesurerait le réseau — et le dépôt l'interdit déjà pour ses autres gates. Ce qui resterait à découvrir sur un vrai appel : négociation TLS, certificats, mandataires d'entreprise, redirections réelles. | Lot EP-202 (2026-10-13) | 🟡 faible (le comportement du code est mesuré ; seul le transport ne l'est pas) | **non datée** — exige un service tiers de test et une décision sur la sortie réseau en CI | 🔴 **OUVERTE** |
+| **DET-031** | **Une intention d'agent est rejouable dans sa fenêtre de 5 minutes** [constatée 2026-10-13]. La signature est SANS ÉTAT : rien n'enregistre qu'une intention a servi. Dans les cinq minutes, le même jeton — mêmes entrées, même appelant — agirait une seconde fois. La rendre à usage unique exige un **état partagé** (une table de nonces) que le document ne déclare pas, et qui changerait le schéma de toute application portant un agent. Ce qui borne l'exposition : il faut DÉJÀ le jeton d'identité de la personne pour entrer, et le connecteur ne rejoue jamais de lui-même. Le risque résiduel réel est la **double soumission** (double appui, reprise d'un client), pas l'attaque externe. | Lot EP-205 (2026-10-13) | 🟠 moyenne (un acte confirmé pourrait avoir lieu deux fois) | **non datée** — exige un arbitrage : table de nonces au schéma, ou borne côté client | 🔴 **OUVERTE** |
+| **DET-032** | **Le serveur Node émis n'émet AUCUNE route de session ; le Java en émet** [mesurée 2026-10-13 : `grep -c "air/v1/session" emit-fastify.ts` → **0**, et `SessionApi.java` porte les cinq opérations en forme avec refus nommés]. Conséquence : un document qui déclare `backend: genere` + `stack: fastify` **et** une identité vérifiée sur son propre serveur est **incohérent** — l'application appellerait `POST /air/v1/session` que ce serveur ne sert pas. Le contournement actuel, employé par la variante `boutique-mode-agent`, est de faire vérifier l'identité par un service DÉCLARÉ DISTINCT, le serveur émis se contentant de VÉRIFIER le jeton (ce qui est l'architecture voulue). Mais rien n'empêche encore la configuration incohérente. | Lot EP-208 (2026-10-13) | 🟠 moyenne (configuration déclarable et non servable) | **non datée** — deux options : émettre les routes de session côté Node (en forme, comme Java), ou refuser la combinaison | 🔴 **OUVERTE** |
+| **DET-033** | **Vingt capacités sur vingt-et-une ne sont pas implémentées côté appareil** [mesurée 2026-10-13 : une seule implémentation dans le runtime, `capabilites-auth.ts`, et le défaut `REPORTING_CAPABILITY_PROVIDER` refuse en traçant `AIR_CAPABILITY_NOT_IMPLEMENTED`]. Ce n'est PAS un mensonge — le défaut refuse honnêtement plutôt que de rendre `true` en silence (défaut `APP-D002`). Mais la cause structurelle est nommée : `CapabilityProvider.invoke` est **synchrone et rend un booléen**. Un enregistrement audio, une prise de photo, une lecture de position sont **asynchrones et rendent des données** : elles n'entrent pas dans ce contrat. Le micro a révélé la question (`AIR_AGENT_VOICE_NOT_SERVABLE`), il ne l'a pas créée. Second obstacle mesuré : il n'existe QU'UN gabarit d'application, scellé, avec verrou pré-résolu — y ajouter un module natif l'ajoute à TOUTES les applications, y compris celles qui ne s'en servent pas. | Lot EP-211 (2026-10-13) | 🔴 haute (vingt capacités déclarables et inertes à l'usage) | **non datée** — exige un arbitrage sur le CONTRAT (forme asynchrone rendant des données) et sur la portée des dépendances natives | 🔴 **OUVERTE** |
+| **DET-034** | **`catalogue()` du port de l'agent n'est appelé par personne** [constatée 2026-10-13]. Le serveur émet la route, le port l'implémente, 2 preuves l'exercent — et l'écran ne l'appelle jamais. C'est un choix défendable, écrit dans le code : l'écran déduit « faut-il confirmer » de la PRÉSENCE de l'intention signée, pour qu'il n'y ait pas deux sources de vérité sur cette question. Conséquence assumée : `confirmationRequise` et `voix` rendus par le serveur ne sont lus par aucun écran, et un écran qui voudrait LISTER ce que l'agent peut faire n'a rien de câblé. Consigné parce qu'un code non emprunté finit par devenir faux sans que rien ne le dise — et parce que le cliquet `ep161` ne voit pas une méthode, seulement une fonction exportée. | Lot EP-208 (2026-10-13) | 🟡 faible (aucun comportement faux ; code non emprunté) | **non datée** — soit l'écran liste les pouvoirs, soit la méthode est retirée | 🔴 **OUVERTE** |
 | **DET-030** | **Clavier recouvrant les champs de formulaire sur Android** [jugé par le propriétaire au doigt, SM-A175F, 2026-09-05] : DET-016 confiait Android à `softwareKeyboardLayoutMode: "resize"` (manifeste) ; or la fenêtre est BORD À BORD (D-037) et Android 15+ **ignore** le redimensionnement en bord à bord — la déclaration était inerte sur l'appareil de référence, l'hypothèse scellée « Android est couvert par le manifeste » est **RÉFUTÉE sur appareil**. | Jugement propriétaire sur mobile, 2026-09-05 | 🔴 haute (saisie à l'aveugle sur les 3 formulaires) | — | 🟢 **RÉSOLUE 2026-09-05** (`e48eaed`) — mécanisme remplacé par `KeyboardAvoidingView behavior="padding"`, identique deux plateformes, zéro `Platform.OS` ; `automaticallyAdjustKeyboardInsets` retiré des écrans à ScrollView (double compensation iOS rendue impossible par le verrou 1 réécrit, désormais bidirectionnel) ; manifeste conservé pour les Android pré-bord-à-bord (hypothèse de sur-compensation consignée au verrou 3, aucun appareil ≤ 14 au parc). **Efficacité au doigt NON MESURÉE — exige le prochain build.** |
 | **DET-031** | **Générateur de fixture désynchronisé de la refonte** [démontré DEUX FOIS le 2026-09-05] : `construire-fixture.mjs` reconstruit `validation-appareil.air.json` depuis un corpus d'AVANT-refonte — l'exécuter écrase les phases 1-3. Matin : écrasement par import accidentel (build `9fa22f40` émis sur le mauvais document, annulé, garde d'exécution posée — mais la garde ne couvre que l'import). Après-midi : écrasement par **exécution volontaire** (300 lignes de dérive détectées au diff, restauration git, diff vide vérifié). Le même jour a aussi vu la fermeture racine de `DET-004` (cousine : recopie manuelle du lien de build). | Exécution du lot DET-031, 2026-09-05 | 🟠 moyenne (destruction silencieuse du document si exécuté) | rebasage du générateur sur le document de la refonte — **non planifié** | 🔴 **OUVERTE** — bannière ⛔ posée en tête du script (`1710aab`) ; les corrections produit se font DANS le document puis se reportent au générateur. |
 | **DET-032** | **Aucune notion de libellé d'affichage au schéma** [jugé par le propriétaire sur SM-A175F, 2026-09-05] : `name` (identifiant machine) et les codes d'enum (`a_l_heure`) étaient rendus tels quels aux titres de filtres, chips, badges et libellés de formulaires — un manque du CONTRAT, pas d'un écran. | Jugement propriétaire sur mobile, 2026-09-05 | 🟠 moyenne (codes machine à l'écran, « pas premium ») | — | 🟢 **RÉSOLUE 2026-09-05** (`89a17a4`) — AIR **1.10.0** (`label`/`enumLabels` optionnels, migration identité, philosophie D-064 : le document déclare, le moteur ne devine pas), registre blocs **1.4.0** (`optionLabels` additif), résolution de locale à l'émission, 34 champs libellés. **Vérifié sur l'appareil** (« Statut », « À l'heure », « Retardé ») ; testID de campagne inchangés. |
