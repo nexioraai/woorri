@@ -1440,7 +1440,7 @@ export function validateAir(air: ProjectAir): AirDiagnostic[] {
     });
   });
 
-  // ── 8ter. L'AGENT (1.37.0) : QUATRE REFUS.
+  // ── 8ter. L'AGENT (1.37.0) : SIX REFUS.
   //
   // ① Chaque opération qu'il peut appeler doit EXISTER. Un agent autorisé sur
   //    une opération inconnue serait un agent dont on croit connaître les
@@ -1451,7 +1451,25 @@ export function validateAir(air: ProjectAir): AirDiagnostic[] {
   // ④ Un agent sans API déclarée n'a aucune main : le refuser ici vaut mieux
   //    que de livrer un bouton qui ne fait rien.
   if (air.agent !== undefined) {
-    const operations = new Set((air.apis ?? []).flatMap((a2) => a2.operations.map((o) => o.id)));
+    // ── COMBIEN D'API PORTENT CET IDENTIFIANT ? (refus ⑥, 2026-10-13)
+    //
+    // L'unicite d'un identifiant d'operation est garantie PAR API — le refus
+    // AIR_API_OPERATION_DUPLICATE compte dans un ensemble cree a l'interieur
+    // de la boucle par API, juste au-dessus. Deux API peuvent donc declarer
+    // chacune une operation « envoyer ».
+    //
+    // Les routes du connecteur, elles, portent l'API dans leur adresse
+    // (/air/v1/apis/<api>/<operation>) : aucune ambiguite de ce cote. Mais
+    // `agent.allowedOperations` ne nomme QUE l'operation. Un agent autorise
+    // sur « envoyer » aurait donc un pouvoir que personne ne sait nommer :
+    // celui d'une API anodine, ou celui d'une API qui deplace de l'argent.
+    const porteuses = new Map<string, number>();
+    for (const a2 of air.apis ?? []) {
+      for (const o of a2.operations) {
+        porteuses.set(o.id, (porteuses.get(o.id) ?? 0) + 1);
+      }
+    }
+    const operations = new Set(porteuses.keys());
     if (operations.size === 0) {
       push(
         "AIR_AGENT_NO_API",
@@ -1473,6 +1491,19 @@ export function validateAir(air: ProjectAir): AirDiagnostic[] {
           "AIR_AGENT_OPERATION_DUPLICATE",
           `agent.allowedOperations[${i}]`,
           `l'opération « ${op} » est autorisée deux fois`,
+        );
+      }
+      // ⑥ UNE OPÉRATION QU'ON NE SAIT PAS DÉSIGNER N'EST PAS UN POUVOIR
+      //    QU'ON PEUT ACCORDER. Plutôt que de choisir la première API venue —
+      //    un choix silencieux que personne ne pourrait relire — on refuse, et
+      //    on dit quoi faire : renommer l'une des deux opérations.
+      if ((porteuses.get(op) ?? 0) > 1) {
+        push(
+          "AIR_AGENT_OPERATION_AMBIGUOUS",
+          `agent.allowedOperations[${i}]`,
+          `l'opération « ${op} » est déclarée par ${String(porteuses.get(op))} API : ` +
+            `l'agent ne peut pas recevoir un pouvoir qu'on ne sait pas désigner. ` +
+            `Renommez l'une des opérations.`,
         );
       }
       vues.add(op);
