@@ -1397,6 +1397,49 @@ export function validateAir(air: ProjectAir): AirDiagnostic[] {
     });
   });
 
+  // ── 8bis. LES API EXTERNES (1.36.0) : TROIS REFUS.
+  //
+  // ① L'hôte doit figurer dans `network.allowedDomains`. Une application ne
+  //    doit pas joindre un hôte que le document ne déclare pas — c'est la
+  //    règle déjà tenue pour les références de fichier.
+  // ② Les segments `{nom}` du chemin doivent être annoncés dans `sends` :
+  //    sinon l'appel se construirait avec un trou, découvert à l'exécution.
+  // ③ Deux opérations ne peuvent pas porter le même identifiant, sinon
+  //    l'appelant ne sait plus laquelle il désigne.
+  const domainesAutorises = new Set(air.network.allowedDomains);
+  (air.apis ?? []).forEach((api, i) => {
+    if (!domainesAutorises.has(api.domain)) {
+      push(
+        "AIR_API_DOMAIN_UNDECLARED",
+        `apis[${i}].domain`,
+        `« ${api.domain} » n'est pas dans network.allowedDomains : une ` +
+          `application ne joint pas un hôte que le document ne déclare pas`,
+      );
+    }
+    const vues = new Set<string>();
+    api.operations.forEach((op, j) => {
+      if (vues.has(op.id)) {
+        push(
+          "AIR_API_OPERATION_DUPLICATE",
+          `apis[${i}].operations[${j}].id`,
+          `l'opération « ${op.id} » est déclarée deux fois`,
+        );
+      }
+      vues.add(op.id);
+      const annonces = new Set(op.sends ?? []);
+      for (const m of op.path.matchAll(/\{([a-zA-Z0-9_]+)\}/gu)) {
+        const nom = m[1] ?? "";
+        if (!annonces.has(nom)) {
+          push(
+            "AIR_API_PATH_PARAM_UNDECLARED",
+            `apis[${i}].operations[${j}].path`,
+            `le chemin attend « ${nom} », que \`sends\` n'annonce pas`,
+          );
+        }
+      }
+    });
+  });
+
   // 9. Permissions et intégrations : capabilities déclarées uniquement.
   air.permissions.forEach((p, i) => {
     if (!declaredCapabilities.has(p.requiredByCapability)) {

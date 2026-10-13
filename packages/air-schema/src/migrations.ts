@@ -512,6 +512,24 @@ export const AIR_MIGRATIONS: readonly AirMigration[] = [
       "optionnelle, aucun document existant ne change de sens.",
     migrate: (document) => document,
   },
+  {
+    from: "1.35.0",
+    to: "1.36.0",
+    description:
+      "AIR 1.36.0 : `apis` — LE CONNECTEUR. Le format savait déclarer des " +
+      "capacités d'APPAREIL, choisies dans une liste FERMÉE de 20, et son " +
+      "propre protocole. Il ne savait pas dire « mon application appelle " +
+      "CETTE API-là ». Un cahier des charges réel l'exige — afficher un prix " +
+      "dans la monnaie de l'utilisateur demande un service de taux, et " +
+      "personne ne peut prévoir quel fournisseur un propriétaire choisira. " +
+      "Trois règles tenues : l'hôte doit figurer dans `network.allowedDomains` " +
+      "(même règle que pour les fichiers), AUCUN secret dans le document (le " +
+      "nom de la variable d'environnement, jamais sa valeur), et ce que la " +
+      "réponse contient est DÉCLARÉ — une réponse non décrite ferait deviner " +
+      "le code appelant. Migration IDENTITÉ : la clé est optionnelle, absente " +
+      "⇒ aucune API appelée, exactement comme avant.",
+    migrate: (document) => document,
+  },
 ];
 
 export class AirMigrationError extends Error {

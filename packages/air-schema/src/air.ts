@@ -1,6 +1,8 @@
 import { z } from "zod";
 import {
   actionIdSchema,
+  apiIdSchema,
+  apiOperationIdSchema,
   blockIdSchema,
   capabilityRefSchema,
   datasetIdSchema,
@@ -23,7 +25,7 @@ import {
 // 1.7.1 (E3.3, D-131) : provenance APLANIE (sourceKind/sourceIntegrationId/
 //   sourceDomain/sourceRefreshSeconds) — l'union 1.7.0 dépassait la limite
 //   réelle de grammaire de l'API (classe D-078) ; sémantique inchangée.
-export const AIR_SCHEMA_VERSION = "1.35.0";
+export const AIR_SCHEMA_VERSION = "1.36.0";
 
 export const semverSchema = z.string().regex(/^\d+\.\d+\.\d+$/);
 export const sha256Schema = z.string().regex(/^[0-9a-f]{64}$/);
@@ -1281,6 +1283,74 @@ const accessSchema = z.strictObject({
     .optional(),
 });
 
+/**
+ * UNE API EXTERNE QUE L'APPLICATION APPELLE (1.36.0).
+ *
+ * ── CE QUI MANQUAIT, MESURÉ.
+ *
+ * Le format savait déclarer des capacités d'APPAREIL — caméra, position,
+ * notifications — choisies dans une liste FERMÉE de 20, et son propre
+ * protocole (`air_http`). Il ne savait pas dire « mon application appelle
+ * CETTE API-là ». Un cahier des charges réel l'exige : afficher un prix dans
+ * la monnaie de l'utilisateur demande un service de taux, et personne ne peut
+ * prévoir quel fournisseur un propriétaire choisira.
+ *
+ * ── TROIS RÈGLES QUI NE SE NÉGOCIENT PAS.
+ *
+ * ① LE DOMAINE EST DÉJÀ DÉCLARÉ. `network.allowedDomains` existe depuis
+ *    longtemps ; le validateur exige que l'hôte d'une API y figure. Une
+ *    application ne doit pas pouvoir joindre un hôte que le document ne
+ *    déclare pas — c'est la même règle que pour les fichiers.
+ * ② AUCUN SECRET ICI. Le document porte le NOM de la variable
+ *    d'environnement, jamais sa valeur : un secret versionné ne redevient
+ *    jamais secret.
+ * ③ CE QUI REVIENT EST DÉCLARÉ. Une réponse non décrite obligerait le code
+ *    appelant à deviner, et une supposition sur la forme d'une réponse se
+ *    découvre en production.
+ */
+const apiOperationSchema = z.strictObject({
+  id: apiOperationIdSchema,
+  name: z.string().min(1),
+  method: z.enum(["GET", "POST", "PUT", "PATCH", "DELETE"]),
+  /** Chemin relatif au domaine. Les segments `{nom}` sont fournis à l'appel. */
+  path: z.string().regex(/^\/[A-Za-z0-9/_\-.{}]*$/),
+  /** Ce que l'appel envoie — des NOMS, jamais des valeurs. */
+  sends: z.array(z.string().regex(/^[a-z][a-zA-Z0-9_]*$/)).optional(),
+  /** Ce que la réponse contient, et de quel type. */
+  returns: z
+    .array(
+      z.strictObject({
+        key: z.string().regex(/^[a-z][a-zA-Z0-9_]*$/),
+        type: z.enum(["string", "number", "boolean"]),
+      }),
+    )
+    .min(1),
+});
+
+const externalApiSchema = z.strictObject({
+  id: apiIdSchema,
+  name: z.string().min(1),
+  /** L'hôte. Le validateur exige qu'il figure dans `network.allowedDomains`. */
+  domain: z.string().regex(/^([a-z0-9-]+\.)+[a-z]{2,}$/),
+  /**
+   * L'AUTHENTIFICATION, SANS LE SECRET.
+   *
+   * `none` : une API publique. `header_secret` : un en-tête dont la VALEUR
+   * vient de l'environnement — le document ne porte que le nom de la
+   * variable. Il n'y a pas de troisième forme aujourd'hui : en inventer une
+   * sans besoin mesuré serait figer une convention que personne n'a demandée.
+   */
+  auth: z.union([
+    z.strictObject({ kind: z.literal("none") }),
+    z.strictObject({
+      kind: z.literal("header_secret"),
+      headerName: z.string().regex(/^[A-Za-z][A-Za-z0-9-]*$/),
+      secretEnvName: z.string().regex(/^[A-Z][A-Z0-9_]*$/),
+    }),
+  ]),
+  operations: z.array(apiOperationSchema).min(1),
+});
+
 const capabilityRequestSchema = z.strictObject({
   capability: capabilityRefSchema,
   config: flatConfigSchema.optional(),
@@ -1529,6 +1599,13 @@ export const projectAirSchema = z.strictObject({
   access: accessSchema.optional(),
   design: designSchema,
   integrations: z.array(integrationSchema),
+  /**
+   * LES API EXTERNES QUE L'APPLICATION APPELLE (1.36.0) — OPTIONNEL.
+   *
+   * Absent ⇒ l'application n'appelle aucun service tiers, exactement comme
+   * avant. Aucun document existant ne change de sens.
+   */
+  apis: z.array(externalApiSchema).optional(),
   /**
    * QUI ÉCRIT LE SERVEUR (1.34.0) — OPTIONNEL.
    *

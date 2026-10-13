@@ -75,7 +75,14 @@ export const RELEASE_TRAIN_V1 = {
   // n'etait exprimable qu'au prix d'un champ calcule intermediaire, et « les
   // requetes du mois ne depassent pas le plafond du compte » ne l'etait pas
   // du tout. Montee ADDITIVE : la cle est optionnelle, migration identite.
-  airSchemaVersion: "1.35.0",
+  // 1.35.0 -> 1.36.0 (2026-10-13) : `apis` — LE CONNECTEUR. Le format savait
+  // declarer des capacites d'APPAREIL, choisies dans une liste FERMEE de 20,
+  // et son propre protocole. Il ne savait pas dire « mon application appelle
+  // CETTE API-la ». Decision du proprietaire : Deribfy doit pouvoir brancher
+  // des API pour qu'un agent travaille dedans — on ne peut pas prevoir les
+  // besoins des utilisateurs d'une plateforme. Montee ADDITIVE : cle
+  // optionnelle, migration identite.
+  airSchemaVersion: "1.36.0",
   // Porté à 1.1.0 le 2026-08-31 (D-060) : montée STRICTEMENT ADDITIVE du
   // registre de blocs — `form` gagne `loading`/`empty`, `detail_header` gagne un
   // état, les trois blocs à données gagnent les props de titres. Rien n'est

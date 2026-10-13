@@ -16,6 +16,17 @@ export const entityIdSchema = idSchema("ent");
 export const fieldIdSchema = idSchema("fld");
 export const relationIdSchema = idSchema("rel");
 export const datasetIdSchema = idSchema("data");
+/**
+ * UNE API EXTERNE, ET UNE DE SES OPERATIONS (1.36.0).
+ *
+ * Le moteur savait declarer des capacites d'APPAREIL (camera, position) et
+ * son propre protocole. Il ne savait pas dire « mon application appelle CETTE
+ * API-la » — un service de taux de change, un fournisseur de reservation, un
+ * agregateur de paiement. Mesure : les 20 capacites du registre sont une
+ * liste FERMEE, et `air_http` designe le protocole du moteur, pas un tiers.
+ */
+export const apiIdSchema = idSchema("api");
+export const apiOperationIdSchema = idSchema("apiop");
 export const actionIdSchema = idSchema("act");
 export const ruleIdSchema = idSchema("rule");
 export const slotIdSchema = idSchema("slot");

@@ -244,6 +244,18 @@ export const SECTIONS_CORRECTIVES: Readonly<Record<string, readonly SectionEmiss
   AIR_RULE_OTHER_FIELD_UNKNOWN: ["donnees"],
   AIR_RULE_VALUE_AND_FIELD: ["donnees"],
   AIR_RULE_SELF_COMPARISON: ["donnees"],
+  // LE CONNECTEUR (1.36.0). `apis` vit dans la passe « cablage », avec
+  // `integrations` : c'est elle qu'il faut reemettre pour corriger un domaine
+  // non declare, une operation en double ou un parametre de chemin oublie.
+  //
+  // Le domaine non declare est le seul des trois qui pourrait venir
+  // d'AILLEURS : `network.allowedDomains` vit dans « socle ». Mais la
+  // correction juste est de reemettre le CABLAGE — declarer un domaine de
+  // plus au socle pour satisfaire une API inventee serait ouvrir l'acces
+  // reseau pour corriger une erreur de l'appelant.
+  AIR_API_DOMAIN_UNDECLARED: ["cablage"],
+  AIR_API_OPERATION_DUPLICATE: ["cablage"],
+  AIR_API_PATH_PARAM_UNDECLARED: ["cablage"],
   AIR_FIELD_DISPLAY_MISSING: ["donnees"],
   AIR_FIELD_DISPLAY_NOT_REFERENCE: ["donnees"],
   AIR_FIELD_ENUM_VALUES_MISSING: ["donnees"],
