@@ -43,6 +43,22 @@ export interface EtatSessionDistante {
   readonly rights?: readonly string[];
   /** Le compte existe et attend une confirmation hors application. */
   readonly pendingConfirmation?: boolean;
+  /**
+   * LE JETON, SI CE SERVEUR EN DELIVRE UN (2026-10-13).
+   *
+   * Cette session s'identifie par COOKIE : le serveur declare en pose un, et
+   * le transport l'envoie (`credentials: "include"`). Un cookie ne sert a
+   * rien pour parler a un AUTRE serveur — et un document qui declare
+   * `backend: genere` en a precisement un autre, qui lit un en-tete
+   * `Authorization: Bearer`.
+   *
+   * Absent ⇒ `jeton()` rend `undefined`, c'est-a-dire « cette session ne sait
+   * pas le dire ». Les routes qui exigent une identite refusent alors, ferme
+   * par defaut, en nommant la cause. On ne fabrique pas de jeton pour
+   * combler : un jeton invente serait refuse par la signature, plus tard et
+   * plus obscurement.
+   */
+  readonly token?: string;
 }
 
 /**
@@ -69,6 +85,8 @@ export interface SessionVerifieeHttp extends SessionProvider {
   enAttenteConfirmation(): boolean;
   /** Cette implémentation le fournit TOUJOURS — voir le commentaire du corps. */
   droits(): readonly string[];
+  /** Present si le serveur declare en delivre un ; `undefined` sinon. */
+  jeton(): string | undefined;
   ouvrir(email: string, motDePasse: string): Promise<boolean>;
   creer(email: string, motDePasse: string): Promise<boolean>;
   fermer(): Promise<void>;
@@ -90,10 +108,15 @@ const lireEtat = (corps: unknown): EtatSessionDistante => {
   const rights = Array.isArray(o["rights"])
     ? o["rights"].filter((x): x is string => typeof x === "string")
     : undefined;
+  // Meme lecture defensive que pour le reste : un serveur ecrit par
+  // quelqu'un d'autre peut rendre `token: null` ou une chaine vide. Un jeton
+  // vide ferait envoyer un en-tete « Bearer » sans rien derriere.
+  const token = typeof o["token"] === "string" && o["token"] !== "" ? o["token"] : undefined;
   return {
     ...(userId === undefined ? {} : { userId }),
     ...(rights === undefined ? {} : { rights }),
     ...(o["pendingConfirmation"] === true ? { pendingConfirmation: true } : {}),
+    ...(token === undefined ? {} : { token }),
   };
 };
 
@@ -138,6 +161,7 @@ export function creerSessionHttp(options: {
   return {
     estAuthentifie: () => etat.userId !== undefined,
     identifiant: () => etat.userId,
+    jeton: () => etat.token,
     enAttenteConfirmation: () => etat.pendingConfirmation === true,
     // ── CE FOURNISSEUR NE PEUT PAS DIRE « JE NE SAIS PAS », ET C'EST DIT.
     //

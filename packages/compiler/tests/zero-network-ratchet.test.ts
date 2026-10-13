@@ -58,6 +58,20 @@ const EXEMPTIONS_FETCH = [
   join("runtime", "source-reseau.ts"),
   join("runtime", "ecriture-http.ts"),
   join("runtime", "session-http.ts"),
+  // ÉDITION CONSCIENTE (2026-10-13) — QUATRIÈME module réseau, et la même
+  // raison que les trois précédents : il ne s'exécute QUE dans l'application
+  // émise, sur l'appareil. Le chemin de compilation reste zéro-réseau.
+  //
+  // POURQUOI UN DE PLUS, ET PAS UN DES TROIS. Mesuré : `ecriture-http` rend
+  // `{ ok, status }` et JETTE le corps de la réponse — or l'agent a besoin du
+  // corps, c'est la proposition elle-même ; `session-http` parle les cinq URL
+  // de la session ; `source-reseau` lit des collections, pas des actes.
+  //
+  // ET POURQUOI IL FALLAIT QU'IL EXISTE. Six routes du serveur émis exigent
+  // une identité, lue dans un en-tête `Authorization: Bearer`. L'application
+  // envoyait un cookie, et pour l'écriture RIEN. Les deux bouts ne se
+  // rencontraient jamais.
+  join("runtime", "agent-http.ts"),
   join("src", "embedded-assets.generated.ts"),
   // ÉDITION CONSCIENTE (2026-10-13) — LE CONNECTEUR D'API, ET LA MÊME RAISON
   // QUE `embedded-assets.generated.ts` : `fetch(` y est une DONNÉE.

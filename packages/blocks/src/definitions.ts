@@ -598,7 +598,34 @@ export const BLOCKS: readonly BlockDefinition[] = [
     propsSchema: z.strictObject({
       label: z.string().min(1),
       placeholder: z.string().min(1),
-    }),
+      // ── LES DEUX LIBELLES DE L ACCORD (2026-10-13, cablage de l ecran).
+      //
+      // `agent.confirmBeforeAct` est tenu par le SERVEUR : il rend une
+      // intention signee, et l acte l exige. L ecran, lui, doit DEMANDER cet
+      // accord — et pour le demander il faut des mots.
+      //
+      // Le moteur n a pas la langue de la personne : « Confirmer » en
+      // francais, en anglais ou en bambara n est pas la meme chaine, et un
+      // bouton sans nom ne se clique pas. Ces deux libelles viennent donc du
+      // document. OPTIONNELS : un agent qui ne demande aucun accord n en a
+      // pas besoin, et les documents ecrits avant ne changent pas de sens.
+      //
+      // Les deux ENSEMBLE ou aucun : offrir « confirmer » sans « annuler »
+      // laisserait une personne devant un seul bouton, qui se clique par
+      // reflexe. Le validateur le refuse.
+      confirmLabel: z.string().min(1).optional(),
+      cancelLabel: z.string().min(1).optional(),
+    }).refine(
+      (p) => (p.confirmLabel === undefined) === (p.cancelLabel === undefined),
+      {
+        // UN SEUL BOUTON SE CLIQUE PAR REFLEXE. Offrir « confirmer » sans
+        // « annuler » met une personne devant une issue unique devant un
+        // geste qui ne s annule pas. Les deux, ou aucun.
+        message:
+          "confirmLabel et cancelLabel vont ensemble : un accord sans refus possible n est pas un accord",
+        path: ["confirmLabel"],
+      },
+    ),
     fieldRefProps: [],
     fieldRefPropsAffichage: [],
     fieldRefPropsFiltrage: [],

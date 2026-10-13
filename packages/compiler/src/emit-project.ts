@@ -19,7 +19,7 @@ import { buildDemoFixtures } from "./demo-fixtures.ts";
 import { emitAppJson, emitPermissionsManifest } from "./emit-manifests.ts";
 import { applyThemeOverrides, emitThemeModule, hasThemeOverrides } from "./emit-theme.ts";
 import { EMBEDDED_ASSETS } from "./embedded-assets.generated.ts";
-import { normalizeAir, resolveLock } from "./resolve-lock.ts";
+import { normalizeAir, resolveLock, urlProtocoleAgent } from "./resolve-lock.ts";
 import { RELEASE_TRAIN_V1, type ReleaseTrain } from "./release-train.ts";
 import { planifierComposition, validerPlan, type EcranPlan } from "./plan-composition.ts";
 import type { CibleRemoteResolue } from "./resolve-lock.ts";
@@ -1034,6 +1034,26 @@ function emitApp(
   ciblesRemote: readonly CibleRemoteResolue[] = [],
 ): string {
   const avecRemote = ciblesRemote.length > 0;
+  // ── L'AGENT N'EXISTE A L'ECRAN QUE SI SES ROUTES EXISTENT (2026-10-13).
+  //
+  // Trois conditions, et aucune n'est de confort :
+  //   — `agent` declare, sinon il n'y a pas de bouton ;
+  //   — `backend.kind === "genere"`, parce que les routes de l'agent sont
+  //     EMISES par le moteur : un serveur externe ne les porte pas, et rien
+  //     ne permet de supposer qu'il les porte ;
+  //   — `backend.domain`, parce qu'une adresse ne se devine pas. Sans lui,
+  //     l'application appellerait un chemin relatif — qui marcherait sur le
+  //     web servi par le meme hote, et nulle part sur un telephone.
+  //
+  // Faute d'une des trois, aucune racine n'est montee : le contexte reste
+  // INERTE et le bloc rend un refus NOMME. Il ne tombe pas, et il ne fait pas
+  // semblant.
+  const agentDeclare = air.agent;
+  const backendEmis =
+    air.backend?.kind === "genere" && typeof air.backend.domain === "string"
+      ? air.backend.domain
+      : undefined;
+  const avecAgent = agentDeclare !== undefined && backendEmis !== undefined;
   // Phase 4 — la SESSION n'est émise que si le document s'en sert : un
   // prédicat de visibilité de session, ou un effet visant la capability
   // `auth`. Sans cela l'app émise reste byte-identique à 1.10.0 (additivité
@@ -1150,10 +1170,21 @@ function emitApp(
           'import { slotRegistry } from "./slots";',
         ]
       : []),
+    // ── LES IMPORTS DE L'AGENT, INDEPENDANTS DE LA SESSION.
+    //
+    // Meme lecon que le commentaire ci-dessus sur `slots` : un import que
+    // l'application emise ne resout pas ne se voit NI au typecheck du moteur
+    // (le fichier existe de son cote), NI dans un test de source. Il se voit
+    // a la compilation de l'application — et la, c'est 31 sur 31 qui tombent.
+    ...(avecAgent
+      ? [
+          'import { AgentRoot } from "./lib/runtime/agent-racine";',
+          'import { creerPortAgentHttp } from "./lib/runtime/agent-http";',
+        ]
+      : []),
     ...(avecSession
       ? [
           'import { CapabilityRoot } from "./lib/runtime/capability-provider";',
-          
           'import { SessionRoot } from "./lib/runtime/session-provider";',
           ...(configAuth === undefined
             ? [
@@ -1288,10 +1319,31 @@ function emitApp(
           "I18nManager.allowRTL(true);",
         ]
       : []),
+    ...(avecAgent
+      ? [
+          `const URLS_AGENT = ${canonicalJson({
+            // TypeScript a deja retreci `backendEmis` et `agentDeclare` ici :
+            // `avecAgent` les a tous deux verifies. Un `?? ""` de plus serait
+            // un garde-fou qui ne garde rien, et le lint le dit.
+            catalogue: urlProtocoleAgent(`https://${backendEmis}`, "catalogue"),
+            ...(agentDeclare.brain === undefined
+              ? {}
+              : { parler: urlProtocoleAgent(`https://${backendEmis}`, "parler") }),
+            agir: urlProtocoleAgent(`https://${backendEmis}`, "agir"),
+          })} as const;`,
+          "// Le jeton vient de la session — jamais fabrique ici, et relu a",
+          "// chaque appel : le service qui l'a delivre le rafraichit.",
+          "const portAgent = creerPortAgentHttp({",
+          "  urls: URLS_AGENT,",
+          "  jeton: () => session.jeton?.(),",
+          "});",
+        ]
+      : []),
     "",
     "export default function App() {",
     "  return (",
     "    <ThemeRoot>",
+    ...(avecAgent ? ["      <AgentRoot port={portAgent}>"] : []),
     ...(avecSession
       ? [
           "      <SessionRoot provider={session}>",
@@ -1312,6 +1364,7 @@ function emitApp(
       : ["        <FormStateRoot>", "          <Navigation />", "        </FormStateRoot>"]),
     "      </DataRoot>",
     ...(avecSession ? ["      </CapabilityRoot>", "      </SessionRoot>"] : []),
+    ...(avecAgent ? ["      </AgentRoot>"] : []),
     "    </ThemeRoot>",
     "  );",
     "}",

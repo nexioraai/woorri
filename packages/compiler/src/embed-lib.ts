@@ -137,6 +137,29 @@ export const EMBEDDED_SOURCES: readonly EmbeddedSourceSpec[] = [
     target: "lib/runtime/session-contract.ts",
     rewrites: {},
   },
+  // ── L'AGENT (2026-10-13) — TROIS FICHIERS, ET LE DEFAUT QU'ILS ONT CAUSE.
+  //
+  // Mesure : avoir ajoute l'import dans `air-runtime.tsx` SANS inscrire les
+  // fichiers ici a fait tomber 31 applications sur 31 — « Cannot find
+  // module ». Le runtime du moteur et le runtime COPIE dans l'application
+  // sont deux choses : un module qui n'est pas dans cette liste n'existe pas
+  // pour l'application emise, et le typecheck du moteur ne le dit pas,
+  // puisque de son cote le fichier est bien la.
+  {
+    source: "compiler/runtime/agent-contract.ts",
+    target: "lib/runtime/agent-contract.ts",
+    rewrites: {},
+  },
+  {
+    source: "compiler/runtime/agent-http.ts",
+    target: "lib/runtime/agent-http.ts",
+    rewrites: {},
+  },
+  {
+    source: "compiler/runtime/agent-racine.tsx",
+    target: "lib/runtime/agent-racine.tsx",
+    rewrites: {},
+  },
   {
     source: "compiler/runtime/session-provider.tsx",
     target: "lib/runtime/session-provider.tsx",

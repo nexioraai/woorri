@@ -135,6 +135,33 @@ export const OPERATIONS_SESSION = {
   reinitialiser: { methode: "POST", chemin: "/air/v1/password-resets" },
 } as const;
 
+/**
+ * LES TROIS OPERATIONS DE L'AGENT (2026-10-13) — MEME SOURCE UNIQUE.
+ *
+ * Elles vivent ici, a cote de celles de la session, pour la raison qui a fait
+ * naitre ce fichier : une adresse inventee a l'emission est une adresse que
+ * le serveur emis ne sert pas, et l'ecart ne se voit qu'a l'execution. Le
+ * serveur emis (`emit-agent.ts`) ecrit EXACTEMENT ces chemins ; un test les
+ * compare.
+ *
+ * `parler` n'existe que si le document declare un cerveau — le serveur
+ * n'emet alors aucune route, et l'application ne doit pas appeler une
+ * adresse absente.
+ */
+export const OPERATIONS_AGENT = {
+  catalogue: { methode: "GET", chemin: "/air/v1/agent" },
+  parler: { methode: "POST", chemin: "/air/v1/agent/parler" },
+  agir: { methode: "POST", chemin: "/air/v1/agent/act" },
+} as const;
+
+/** L'URL d'une opération de l'agent, sur le serveur qui porte l'application. */
+export function urlProtocoleAgent(
+  base: string,
+  operation: keyof typeof OPERATIONS_AGENT,
+): string {
+  return `${base.replace(/\/+$/, "")}${OPERATIONS_AGENT[operation].chemin}`;
+}
+
 /** L'URL d'une opération de session, sur le serveur déclaré par l'intégration. */
 export function urlProtocoleSession(
   base: string,

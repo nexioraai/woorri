@@ -13,6 +13,8 @@ import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { champsDeSaisie } from "./champs-de-saisie";
 import {lignesVisibles, optionsDistinctes, formatValeur} from "./list-pipeline";
 import type { FiltreEffectif, OperateurFiltre } from "./list-pipeline";
+import { usePortAgent } from "./agent-racine";
+import type { AgentProposition } from "./agent-contract";
 import { useNavigation } from "./navigation-contrat";
 import { allerVers } from "./racines-navigation";
 import {
@@ -28,7 +30,7 @@ import {
   ProseBlock,
   SearchEntryBlock,
 } from "../blocks/components";
-import type { FormFieldSpec, ListItemData } from "../blocks/contracts";
+import type { AgentBlockProps, FormFieldSpec, ListItemData } from "../blocks/contracts";
 import { useDataProvider } from "./data-provider";
 import { useSlotRegistry } from "./slot-provider";
 import { detientLeDroit } from "./acces";
@@ -711,13 +713,91 @@ export function AirProse({ screen, blockId }: BlockRef) {
 export function AirAgent({ screen, blockId }: BlockRef) {
   const visible = useBlockVisible(screen, blockId);
   const b = block(screen, blockId);
+  const port = usePortAgent();
   const [ouvert, setOuvert] = useState(false);
   const [texte, setTexte] = useState("");
+  // ── TROIS ETATS, ET PAS UN DE PLUS.
+  //
+  // `enCours` pendant qu on attend ; `proposition` quand le serveur a
+  // repondu et que le document demande un accord ; `echec` porte le CODE
+  // rendu par le serveur. Aucun de ces etats ne fabrique de phrase : les
+  // mots viennent du document (le NOM de l operation, les libelles).
+  const [enCours, setEnCours] = useState(false);
+  const [proposition, setProposition] = useState<AgentProposition | null>(null);
+  const [echec, setEchec] = useState<string | null>(null);
+  const [reponse, setReponse] = useState<string | undefined>(undefined);
   if (!visible) return null;
   const props = b.props ?? {};
   const label = typeof props.label === "string" ? props.label : undefined;
   const placeholder = typeof props.placeholder === "string" ? props.placeholder : undefined;
   if (label === undefined || placeholder === undefined) return null;
+  // Les libelles de l accord viennent du document : un bouton sans nom ne se
+  // clique pas, et le moteur n a pas la langue de la personne.
+  const confirmLabel = typeof props.confirmLabel === "string" ? props.confirmLabel : undefined;
+  const cancelLabel = typeof props.cancelLabel === "string" ? props.cancelLabel : undefined;
+
+  const fermerLAttente = () => {
+    setProposition(null);
+    setEchec(null);
+  };
+
+  const agir = (p: AgentProposition) => {
+    setEnCours(true);
+    void port.agir(p.operation, p.entrees, p.intention).then((r) => {
+      setEnCours(false);
+      setProposition(null);
+      if (r.ok) {
+        // CE QUI REVIENT N EST PAS AFFICHE TEL QUEL. On confirme le NOM de ce
+        // qui a eu lieu, pas le corps de la reponse du tiers : il peut porter
+        // des identifiants internes qui ne veulent rien dire pour personne.
+        setReponse(p.nom);
+        setEchec(null);
+      } else {
+        setEchec(r.code);
+      }
+    });
+  };
+
+  const envoyer = () => {
+    const mots = texte.trim();
+    // Une parole vide ne part pas : l appel au cerveau serait facture pour
+    // rien, et le serveur le refuserait de toute facon.
+    if (mots === "") return;
+    setTexte("");
+    setEchec(null);
+    setReponse(undefined);
+    setEnCours(true);
+    void port.parler(mots).then((r) => {
+      setEnCours(false);
+      if (!r.ok) {
+        setEchec(r.code);
+        return;
+      }
+      // ── UNE PROPOSITION NE S EXECUTE PAS TOUTE SEULE.
+      //
+      // Le serveur rend une intention signee QUAND le document demande un
+      // accord. Sa presence est donc le signal : il n y a pas deux sources de
+      // verite sur « faut-il confirmer », il y en a une, et c est le serveur.
+      // Sans les libelles au document, on ne peut pas demander l accord — on
+      // ne force pas, on refuse en le nommant.
+      if (r.valeur.intention !== undefined) {
+        if (confirmLabel === undefined || cancelLabel === undefined) {
+          setEchec("AIR_AGENT_LIBELLES_ACCORD_ABSENTS");
+          return;
+        }
+        setProposition(r.valeur);
+        return;
+      }
+      agir(r.valeur);
+    });
+  };
+
+  const etat: AgentBlockProps["state"] = enCours
+    ? { kind: "loading", title: label }
+    : echec === null
+      ? { kind: "ready" }
+      : { kind: "error", title: label, message: echec };
+
   return (
     <AgentBlock
       testID={b.id}
@@ -726,12 +806,26 @@ export function AirAgent({ screen, blockId }: BlockRef) {
       open={ouvert}
       onToggle={() => {
         setOuvert(!ouvert);
+        fermerLAttente();
       }}
       value={texte}
       onChangeText={setTexte}
-      onSend={() => {
-        setTexte("");
-      }}
+      onSend={envoyer}
+      state={etat}
+      {...(reponse === undefined ? {} : { reply: reponse })}
+      {...(proposition === null || confirmLabel === undefined || cancelLabel === undefined
+        ? {}
+        : {
+            awaitingConfirmation: {
+              summary: proposition.nom,
+              confirmLabel,
+              cancelLabel,
+              onConfirm: () => {
+                agir(proposition);
+              },
+              onCancel: fermerLAttente,
+            },
+          })}
     />
   );
 }

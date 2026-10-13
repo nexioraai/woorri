@@ -293,7 +293,21 @@ export const RELEASE_TRAIN_V1 = {
     // document, une liste fermee. Il porte une affordance, il ne porte aucun
     // texte du moteur, et il est FERME par defaut. Les dix precedents sont
     // intacts, rien n est retire.
-    "4c5afba2139ef568d06464c902bb71c960ccbba509b36eb116a90ab0e7bc3881",
+    // Re-scelle 2026-10-13 : le bloc `agent` gagne DEUX props optionnelles,
+    // `confirmLabel` et `cancelLabel`. EDITION CONSCIENTE.
+    //
+    // `agent.confirmBeforeAct` est tenu par le SERVEUR — il rend une intention
+    // signee et l'acte l'exige (EP-205). L'ECRAN, lui, doit DEMANDER cet
+    // accord, et pour demander il faut des mots : le moteur n'a pas la langue
+    // de la personne, « Confirmer » n'est pas la meme chaine en francais, en
+    // anglais ou en bambara, et un bouton sans nom ne se clique pas.
+    //
+    // LES DEUX ENSEMBLE OU AUCUN, refuse par un raffinement du schema :
+    // offrir « confirmer » sans « annuler » met une personne devant une issue
+    // unique, qui se clique par reflexe, devant un geste qui ne s'annule pas.
+    //
+    // Optionnelles : les documents ecrits avant ne changent pas de sens.
+    "bbe943aa5fe2c55795814399292e2c112b6e549449d55be0e757c1f56c794ac7",
   // EP-134 — ajout compatible `external_contact` : version MINEURE du registre.
   /**
    * EP-147 ③ — LE NIVEAU D'API ANDROID VISÉ, épinglé par le train.

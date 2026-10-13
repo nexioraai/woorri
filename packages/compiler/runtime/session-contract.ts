@@ -42,4 +42,31 @@ export interface SessionProvider {
    * comportement des versions antérieures est donc inchangé.
    */
   droits?(): readonly string[];
+  /**
+   * LE JETON QUI PROUVE L'IDENTITE A UN AUTRE SERVEUR (2026-10-13).
+   *
+   * MESURE QUI A COMMANDE CETTE METHODE. Un document qui declare
+   * `backend: genere` recoit un serveur Node emis. Ce serveur VERIFIE une
+   * identite — six de ses routes l'exigent — en lisant un en-tete
+   * `Authorization: Bearer`. L'application emise, elle, envoyait un COOKIE
+   * (`credentials: "include"`) et, pour l'ecriture, RIEN DU TOUT. Les deux
+   * bouts ne se rencontraient jamais : les filtres de visibilite, le
+   * connecteur et l'agent etaient injoignables.
+   *
+   * CE QUE CETTE METHODE N'EST PAS. Ce n'est pas une facon d'OUVRIR une
+   * session : le serveur emis ne delivre aucun jeton, et c'est volontaire —
+   * il verifie, il n'emet pas. Le document declare OU l'identite est
+   * verifiee ; ce jeton est celui que CE service a delivre, transporte tel
+   * quel.
+   *
+   * `undefined` n'est PAS « pas de jeton » : c'est « cette session ne sait
+   * pas le dire » — exactement comme `droits?()` juste au-dessus. Les deux
+   * cas produisent le meme refus, ferme par defaut, mais pas la meme cause a
+   * chercher : « aucun jeton » envoie vers la connexion, « session muette »
+   * envoie vers l'integration.
+   *
+   * OPTIONNEL : une session locale n'a aucun serveur a convaincre et ne le
+   * porte pas. Le comportement des versions anterieures est inchange.
+   */
+  jeton?(): string | undefined;
 }
