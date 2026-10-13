@@ -478,7 +478,28 @@ export const RELEASE_TRAIN_V1 = {
     //
     // Lock régénéré DEUX FOIS DEPUIS ZÉRO, byte-identique (vérifié, non
     // supposé) : la condition du scellé est tenue.
-    "b9fea52c0be543ec1ac20b07cef21c9bb9ed002c13dd5ece47043a03daeca50d",
+    // Re-scelle 2026-10-13 — SECURITE DU GABARIT, A LA DEMANDE DU PROPRIETAIRE.
+    // EDITION CONSCIENTE, et aucune dependance DECLAREE ne change.
+    //
+    // GitHub signalait 263 vulnerabilites sur la branche par defaut. Mesure :
+    // elles viennent de TRENTE verrous differents dans le depot, et GitHub les
+    // additionne. Celui-ci est le seul qui parte CHEZ CHAQUE CLIENT.
+    //
+    // `npm audit fix` SANS `--force` — jamais avec. Le `--force` aurait
+    // retrograde Expo 57 vers 44 et React Native 0.86 vers 0.72 : c'est ce que
+    // l'audit appelle un « correctif » quand la seule issue est un retour en
+    // arriere majeur. Mesure APRES : expo 57.0.17, react-native 0.86.3,
+    // expo-updates 57.0.21 — EXACTEMENT les versions epinglees du train.
+    //
+    // RESULTAT : la seule vulnerabilite CRITIQUE du gabarit (`shell-quote`)
+    // est fermee, et le total passe de 31 a 23. `package.json` est INCHANGE —
+    // seules les resolutions transitives avancent. La propriete documentee du
+    // verrou tient : regenere deux fois, byte-identique, et identique a ce que
+    // `audit fix` a produit.
+    //
+    // Ce qui RESTE : 23, dont le « correctif » est le retour a Expo 44. Elles
+    // sont consignees, pas masquees.
+    "6ef5f31e0ec3acfb23e096269d558e5dbf1d9dffb3570f0a00c6ac28277b0048",
   templateDevDependencies: {
     "@types/react": "19.2.15",
     typescript: "5.9.3",
