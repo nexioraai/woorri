@@ -51,10 +51,14 @@ construisait jamais) · le **train de release** trois fois · la partition du
 
 ### Limites nommées, non corrigées
 
-`DET-030` TLS réel non mesuré · `DET-031` intention rejouable dans 5 min ·
-`DET-032` le serveur Node n'émet pas de routes de session · `DET-033` vingt
+`DET-042` TLS réel non mesuré · `DET-043` intention rejouable dans 5 min ·
+`DET-044` le serveur Node n'émet pas de routes de session · `DET-045` vingt
 capacités sur vingt-et-une non implémentées côté appareil (le CONTRAT est
-synchrone et rend un booléen) · `DET-034` `catalogue()` sans appelant.
+synchrone et rend un booléen) · `DET-046` `catalogue()` sans appelant.
+
+*Numérotées `DET-030`→`DET-034` au premier jet — identifiants DÉJÀ PRIS, cinq
+fiches existantes écrasées. Renumérotées après avoir mesuré les identifiants
+occupés : `DET-001`→`DET-041` le sont tous.*
 
 
 ## 2026-08-31 (3) — AUDIT INTÉGRAL DES PHASES 0 À 10 (D-057)
