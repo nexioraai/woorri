@@ -1863,8 +1863,27 @@ export function validateAir(air: ProjectAir): AirDiagnostic[] {
     // est joignable : s'il ne sert aucune donnée, les deux moitiés existent et
     // ne se touchent pas — le défaut « émis et inerte » que ce dépôt paie en
     // boucle. Sans adresse, le serveur est en construction, et c'est légitime.
+    //
+    // ÉTENDU le 2026-10-13 — L'AGENT EST UN LECTEUR, LUI AUSSI.
+    //
+    // Ce contrôle a été écrit avant l'agent (1.37.0). Sa raison est écrite
+    // juste au-dessus : « appelé par personne ». Or un agent déclaré APPELLE
+    // ce serveur — ses trois routes y vivent, et l'application a besoin de
+    // l'adresse pour les joindre (un chemin relatif marcherait sur le web
+    // servi par le même hôte, et nulle part sur un téléphone).
+    //
+    // Sans cette extension, une application dont le serveur sert UNIQUEMENT
+    // l'agent était impossible à déclarer : refusée si elle donnait l'adresse,
+    // injoignable si elle l'omettait. Le contrôle n'est pas affaibli — il
+    // compte un lecteur de plus, qui en est vraiment un.
     const distants = air.datasets.filter((d) => d.sourceKind === "remote");
-    if (b.kind === "genere" && b.domain !== undefined && distants.length === 0) {
+    const agentLitLeServeur = air.agent !== undefined;
+    if (
+      b.kind === "genere" &&
+      b.domain !== undefined &&
+      distants.length === 0 &&
+      !agentLitLeServeur
+    ) {
       push(
         "AIR_BACKEND_SANS_SOURCE",
         "backend",

@@ -43,7 +43,7 @@ const codes = (air: ProjectAir): string[] => validateAir(air).map((d) => d.code)
 
 /** L'opération qui AGIT — le pouvoir de l'agent. */
 const POUVOIR = {
-  id: "envoyer_argent",
+  id: "apiop_envoyer_argent",
   name: "Envoyer de l'argent",
   method: "POST" as const,
   path: "/v1/transferts",
@@ -53,7 +53,7 @@ const POUVOIR = {
 
 /** L'opération qui RÉFLÉCHIT — le cerveau. Elle n'est pas un pouvoir. */
 const CERVEAU_OP = {
-  id: "interpreter",
+  id: "apiop_interpreter",
   name: "Interpréter une demande",
   method: "POST" as const,
   path: "/v1/comprendre",
@@ -65,7 +65,7 @@ const CERVEAU_OP = {
 };
 
 const UNE_API = {
-  id: "service",
+  id: "api_service",
   name: "Service",
   domain: "api.exemple-service.com",
   auth: { kind: "header_secret" as const, headerName: "X-Api-Key", secretEnvName: "SERVICE_KEY" },
@@ -73,7 +73,7 @@ const UNE_API = {
 };
 
 const CERVEAU = {
-  operationId: "interpreter",
+  operationId: "apiop_interpreter",
   wordsInput: "mots",
   catalogueInput: "catalogue",
   choiceOutput: "operation",
@@ -91,7 +91,7 @@ const avec = (agent: unknown, api: unknown = UNE_API): ProjectAir => {
   } as ProjectAir;
 };
 
-const AGENT = { allowedOperations: ["envoyer_argent"], confirmBeforeAct: true };
+const AGENT = { allowedOperations: ["apiop_envoyer_argent"], confirmBeforeAct: true };
 
 describe("EP-206 ① · la version est montée, et la migration ne casse rien", () => {
   it("le format est en 1.38.0", () => {
@@ -114,6 +114,13 @@ describe("EP-206 ① · la version est montée, et la migration ne casse rien", 
     expect(codes(avec({ ...AGENT, brain: CERVEAU }))).toEqual([]);
   });
 
+  it("ET IL PASSE LE SCHÉMA — les identifiants portent leurs préfixes", () => {
+    // Même cliquet qu'en EP-204 : `validateAir` ne juge pas la FORME des
+    // identifiants. Une fixture qui ne passe pas le schéma décrit un document
+    // impossible, et ne prouve rien sur un vrai.
+    expect(() => assertValidAir(avec({ ...AGENT, brain: CERVEAU }))).not.toThrow();
+  });
+
   it("le catalogue d'entrée est OPTIONNEL — un service déjà configuré n'en a pas besoin", () => {
     const sansCatalogue = { ...CERVEAU };
     delete (sansCatalogue as { catalogueInput?: string }).catalogueInput;
@@ -126,7 +133,7 @@ describe("EP-206 ② · LES SIX REFUS", () => {
     // La parole ne mènerait nulle part, et le bouton de micro ne répondrait
     // jamais.
     expect(
-      codes(avec({ ...AGENT, brain: { ...CERVEAU, operationId: "inexistante" } })),
+      codes(avec({ ...AGENT, brain: { ...CERVEAU, operationId: "apiop_inexistante" } })),
     ).toContain("AIR_AGENT_BRAIN_UNKNOWN");
   });
 
@@ -136,7 +143,7 @@ describe("EP-206 ② · LES SIX REFUS", () => {
     const air = copie(lire());
     const seconde = {
       ...UNE_API,
-      id: "autre",
+      id: "api_autre",
       name: "Autre service",
       domain: "api.exemple-autre.com",
     };
@@ -206,7 +213,7 @@ describe("EP-206 ② · LES SIX REFUS", () => {
     expect(
       codes(
         avec({
-          allowedOperations: ["envoyer_argent", "interpreter"],
+          allowedOperations: ["apiop_envoyer_argent", "apiop_interpreter"],
           confirmBeforeAct: true,
           brain: CERVEAU,
         }),
@@ -218,7 +225,7 @@ describe("EP-206 ② · LES SIX REFUS", () => {
 describe("EP-206 ③ · le cerveau ne dispense d'aucun refus de 1.37.0", () => {
   it("un pouvoir inconnu reste refusé, cerveau ou pas", () => {
     expect(
-      codes(avec({ allowedOperations: ["inexistante"], confirmBeforeAct: true, brain: CERVEAU })),
+      codes(avec({ allowedOperations: ["apiop_inexistante"], confirmBeforeAct: true, brain: CERVEAU })),
     ).toContain("AIR_AGENT_OPERATION_UNKNOWN");
   });
 
@@ -226,7 +233,7 @@ describe("EP-206 ③ · le cerveau ne dispense d'aucun refus de 1.37.0", () => {
     expect(
       codes(
         avec({
-          allowedOperations: ["envoyer_argent"],
+          allowedOperations: ["apiop_envoyer_argent"],
           confirmBeforeAct: true,
           voiceInput: true,
           brain: CERVEAU,

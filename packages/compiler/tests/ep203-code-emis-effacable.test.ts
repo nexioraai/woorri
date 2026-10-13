@@ -146,13 +146,13 @@ describe("EP-203 ③ · le connecteur d’API, en particulier", () => {
       },
       apis: [
         {
-          id: "sms",
+          id: "api_sms",
           name: "Envoi de SMS",
           domain: "api.exemple-sms.com",
           auth: { kind: "header_secret", headerName: "X-Api-Key", secretEnvName: "SMS_API_KEY" },
           operations: [
             {
-              id: "envoyer",
+              id: "apiop_envoyer",
               name: "Envoyer",
               method: "POST",
               path: "/v2/messages",
@@ -163,7 +163,7 @@ describe("EP-203 ③ · le connecteur d’API, en particulier", () => {
         },
       ],
     });
-    const connecteur = files.get("src/connecteur/sms.ts");
+    const connecteur = files.get("src/connecteur/api_sms.ts");
     const routes = files.get("src/api/connecteur.ts");
     expect(connecteur).toBeDefined();
     expect(routes).toBeDefined();

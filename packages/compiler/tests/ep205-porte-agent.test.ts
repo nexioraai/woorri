@@ -32,13 +32,13 @@ const SECRET = "secret-de-jeton-pour-la-preuve";
 const NUL = "\u0000";
 
 const API = {
-  id: "sms",
+  id: "api_sms",
   name: "Envoi de SMS",
   domain: "api.exemple-sms.com",
   auth: { kind: "header_secret" as const, headerName: "X-Api-Key", secretEnvName: "SMS_API_KEY" },
   operations: [
     {
-      id: "envoyer",
+      id: "apiop_envoyer",
       name: "Envoyer un message",
       method: "POST" as const,
       path: "/v2/messages",
@@ -48,7 +48,7 @@ const API = {
     {
       // DÉCLARÉE à l'API, mais PAS dans les pouvoirs de l'agent. C'est elle
       // qui permet de mesurer que `allowedOperations` sert vraiment.
-      id: "supprimer",
+      id: "apiop_supprimer",
       name: "Supprimer un message",
       method: "DELETE" as const,
       path: "/v2/messages/{identifiant}",
@@ -170,8 +170,8 @@ function parler(agent: Record<string, unknown>, appels: readonly Appel[]): reado
   }
 }
 
-const AGENT_CONFIRME = { allowedOperations: ["envoyer"], confirmBeforeAct: true };
-const AGENT_DIRECT = { allowedOperations: ["envoyer"], confirmBeforeAct: false };
+const AGENT_CONFIRME = { allowedOperations: ["apiop_envoyer"], confirmBeforeAct: true };
+const AGENT_DIRECT = { allowedOperations: ["apiop_envoyer"], confirmBeforeAct: false };
 
 describe("EP-205 ① · l'agent a SA porte, et elle n'existe que s'il est déclaré", () => {
   it("un document avec API mais SANS agent n'émet aucune porte d'agent", () => {
@@ -197,9 +197,9 @@ describe("EP-205 ① · l'agent a SA porte, et elle n'existe que s'il est décla
 
   it("la porte ne porte AUCUNE branche pour une opération non autorisée", () => {
     const porte = emis(AGENT_CONFIRME).get("src/api/agent.ts") ?? "";
-    expect(porte).toContain('case "envoyer"');
+    expect(porte).toContain('case "apiop_envoyer"');
     // `supprimer` est déclarée à l'API, et absente des pouvoirs de l'agent.
-    expect(porte).not.toContain('case "supprimer"');
+    expect(porte).not.toContain('case "apiop_supprimer"');
   });
 
   it("le catalogue ne dit RIEN du fournisseur", () => {
@@ -224,7 +224,7 @@ describe("EP-205 ② · LE RÉVEIL EXIGE UNE IDENTITÉ", () => {
     ]);
     expect(r?.statut).toBe(200);
     const ops = r?.corps.operations as { id: string; nom: string }[];
-    expect(ops.map((o) => o.id)).toEqual(["envoyer"]);
+    expect(ops.map((o) => o.id)).toEqual(["apiop_envoyer"]);
     expect(ops[0]?.nom).toBe("Envoyer un message");
     expect(r?.corps.confirmationRequise).toBe(true);
   });
@@ -240,7 +240,7 @@ describe("EP-205 ③ · LA CONFIRMATION EST TENUE PAR LE SERVEUR, PAS PAR L'ÉCR
         route: "/air/v1/agent/act",
         methode: "POST",
         jeton: jeton("p1", []),
-        corps: { operation: "envoyer", entrees: { destinataire: "+1", texte: "x" } },
+        corps: { operation: "apiop_envoyer", entrees: { destinataire: "+1", texte: "x" } },
       },
     ]);
     expect(r?.statut).toBe(403);
@@ -255,7 +255,7 @@ describe("EP-205 ③ · LA CONFIRMATION EST TENUE PAR LE SERVEUR, PAS PAR L'ÉCR
         route: "/air/v1/agent/intention",
         methode: "POST",
         jeton: j,
-        corps: { operation: "envoyer", entrees },
+        corps: { operation: "apiop_envoyer", entrees },
       },
     ]);
     expect(intention?.statut).toBe(200);
@@ -267,7 +267,7 @@ describe("EP-205 ③ · LA CONFIRMATION EST TENUE PAR LE SERVEUR, PAS PAR L'ÉCR
         route: "/air/v1/agent/act",
         methode: "POST",
         jeton: j,
-        corps: { operation: "envoyer", entrees, intention: intention?.corps.intention },
+        corps: { operation: "apiop_envoyer", entrees, intention: intention?.corps.intention },
       },
     ]);
     expect(acte?.statut, JSON.stringify(acte?.corps)).toBe(200);
@@ -283,7 +283,7 @@ describe("EP-205 ③ · LA CONFIRMATION EST TENUE PAR LE SERVEUR, PAS PAR L'ÉCR
         route: "/air/v1/agent/intention",
         methode: "POST",
         jeton: j,
-        corps: { operation: "envoyer", entrees: { destinataire: "+1", texte: "petit" } },
+        corps: { operation: "apiop_envoyer", entrees: { destinataire: "+1", texte: "petit" } },
       },
     ]);
     const [acte] = parler(AGENT_CONFIRME, [
@@ -292,7 +292,7 @@ describe("EP-205 ③ · LA CONFIRMATION EST TENUE PAR LE SERVEUR, PAS PAR L'ÉCR
         methode: "POST",
         jeton: j,
         corps: {
-          operation: "envoyer",
+          operation: "apiop_envoyer",
           entrees: { destinataire: "+1", texte: "ENORME" },
           intention: intention?.corps.intention,
         },
@@ -311,7 +311,7 @@ describe("EP-205 ③ · LA CONFIRMATION EST TENUE PAR LE SERVEUR, PAS PAR L'ÉCR
         route: "/air/v1/agent/intention",
         methode: "POST",
         jeton: jeton("p1", []),
-        corps: { operation: "envoyer", entrees },
+        corps: { operation: "apiop_envoyer", entrees },
       },
     ]);
     const [acte] = parler(AGENT_CONFIRME, [
@@ -319,7 +319,7 @@ describe("EP-205 ③ · LA CONFIRMATION EST TENUE PAR LE SERVEUR, PAS PAR L'ÉCR
         route: "/air/v1/agent/act",
         methode: "POST",
         jeton: jeton("p2", []),
-        corps: { operation: "envoyer", entrees, intention: intention?.corps.intention },
+        corps: { operation: "apiop_envoyer", entrees, intention: intention?.corps.intention },
       },
     ]);
     expect(acte?.statut).toBe(403);
@@ -332,14 +332,14 @@ describe("EP-205 ③ · LA CONFIRMATION EST TENUE PAR LE SERVEUR, PAS PAR L'ÉCR
     const j = jeton("p1", []);
     const entrees = { destinataire: "+1", texte: "x" };
     const echeance = Math.floor(Date.now() / 1000) - 10;
-    const charge = ["envoyer", JSON.stringify(entrees), "p1", String(echeance)].join(NUL);
+    const charge = ["apiop_envoyer", JSON.stringify(entrees), "p1", String(echeance)].join(NUL);
     const sig = createHmac("sha256", SECRET).update(charge).digest("base64url");
     const [acte] = parler(AGENT_CONFIRME, [
       {
         route: "/air/v1/agent/act",
         methode: "POST",
         jeton: j,
-        corps: { operation: "envoyer", entrees, intention: String(echeance) + "." + sig },
+        corps: { operation: "apiop_envoyer", entrees, intention: String(echeance) + "." + sig },
       },
     ]);
     expect(acte?.statut).toBe(403);
@@ -356,7 +356,7 @@ describe("EP-205 ③ · LA CONFIRMATION EST TENUE PAR LE SERVEUR, PAS PAR L'ÉCR
         route: "/air/v1/agent/act",
         methode: "POST",
         jeton: jeton("p1", []),
-        corps: { operation: "envoyer", entrees: { destinataire: "+1", texte: "x" } },
+        corps: { operation: "apiop_envoyer", entrees: { destinataire: "+1", texte: "x" } },
       },
     ]);
     expect(acte?.statut, JSON.stringify(acte?.corps)).toBe(200);
@@ -370,7 +370,7 @@ describe("EP-205 ④ · UNE OPÉRATION HORS DES POUVOIRS N'EST PAS ATTEIGNABLE",
         route: "/air/v1/agent/act",
         methode: "POST",
         jeton: jeton("p1", []),
-        corps: { operation: "supprimer", entrees: { identifiant: "m-1" } },
+        corps: { operation: "apiop_supprimer", entrees: { identifiant: "m-1" } },
       },
     ]);
     expect(r?.statut).toBe(403);
@@ -429,7 +429,7 @@ describe("EP-205 ⑤ · LE DROIT EXIGÉ PAR LE DOCUMENT EST TENU", () => {
         route: "/air/v1/agent/act",
         methode: "POST",
         jeton: jeton("p1", []),
-        corps: { operation: "envoyer", entrees: { destinataire: "+1", texte: "x" } },
+        corps: { operation: "apiop_envoyer", entrees: { destinataire: "+1", texte: "x" } },
       },
     ]);
     expect(r?.statut).toBe(403);

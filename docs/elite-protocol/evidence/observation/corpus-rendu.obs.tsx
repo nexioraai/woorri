@@ -59,7 +59,16 @@ describe("GATE RACINE — les applications émises se MONTENT vraiment", () => {
     // n'était dans aucune gate alors qu'elle sert de document de référence à
     // plusieurs cliquets d'émission. C'est ELLE qui a révélé que les chips de
     // filtre montraient l'identifiant d'une référence au lieu du nom déclaré.
-    expect(apps.length, "les applications des deux corpus").toBe(31);
+    // ÉDITION CONSCIENTE (2026-10-13, quatrième) : 32 avec
+    // `boutique-mode-agent`. Mesure qui l'a imposée : ZÉRO document du corpus
+    // ne déclarait `apis` ni `agent`. Le connecteur d'API, la porte de
+    // l'agent, son cerveau et son écran étaient prouvés par trente-huit tests
+    // et par AUCUNE gate — donc « émis et supposé bon ». Dès son ajout, la
+    // gate de compilation a trouvé ce que les tests ne voyaient pas : un
+    // agent monté SANS racine de session, dont chaque appel aurait été refusé
+    // 403. Une variante d'un document RÉEL, pas un document fabriqué : un cas
+    // écrit pour l'occasion ne mesure que ma capacité à le faire passer.
+    expect(apps.length, "les applications des deux corpus").toBe(32);
 
     let ecrans = 0;
     let identites = 0;

@@ -80,5 +80,128 @@ export function documentsDuCorpus(R) {
         return doc;
       },
     ],
+    // ── L'AGENT ET SON CONNECTEUR, MESURES COMME LE RESTE (2026-10-13).
+    //
+    // MEME TROU, MEME REMEDE QUE LE SERVEUR NEUTRE JUSTE AU-DESSUS. Mesure du
+    // 2026-10-13 : ZERO document du corpus ne declare `apis` ni `agent`. Tout
+    // le connecteur d'API, la porte de l'agent, son cerveau et son ecran
+    // etaient prouves par des tests — et par AUCUNE gate. Un lot prouve par
+    // ses seuls tests reste « emis et suppose bon » : rien ne verifiait que
+    // l'application COMPILE, se REND, et se CONSTRUISE avec un agent dedans.
+    //
+    // ET POURQUOI UNE VARIANTE, PAS UN DOCUMENT NEUF. La raison est ecrite
+    // au-dessus et vaut ici mot pour mot : un document fabrique pour
+    // l'occasion n'aurait mesure que ma capacite a ecrire un cas qui passe.
+    // Celui-ci est un document REEL du corpus ; seules les cles de l'agent
+    // sont ajoutees.
+    [
+      "boutique-mode-agent",
+      R + "packages/golden-corpus/corpus-v3/boutique-mode.air.json",
+      (doc) => {
+        const ecran = (doc.screens ?? [])[0];
+        if (ecran === undefined) return undefined; // aucun ecran : rien a mesurer
+        // ── UNE IDENTITE VERIFIEE, SINON L'AGENT EST INERTE.
+        //
+        // TOUTES les routes de l'agent exigent un appelant verifiable. Mesure
+        // du 2026-10-13 : l'integration d'authentification de ce document
+        // porte la cle `baseUrl`, pas `url` — la resolution ne la reconnait
+        // donc pas, et l'application tombait sur la session LOCALE, qui ne
+        // produit aucun jeton. Chaque appel de l'agent aurait ete refuse 403 :
+        // emis, et inerte.
+        //
+        // L'identite est verifiee par un service DECLARE, pas par le serveur
+        // emis — celui-ci VERIFIE un jeton, il n'en delivre pas. C'est la
+        // meme forme que la variante du serveur neutre juste au-dessus.
+        const intg = (doc.integrations ?? []).find((i) => i.capability === "auth");
+        if (intg === undefined) return undefined; // pas d'auth : rien a mesurer
+        const domaineAuth = "api.exemple-auth.com";
+        intg.config = [
+          { key: "url", value: "https://" + domaineAuth },
+          { key: "provider", value: "air_http" },
+        ];
+        // Le serveur est EMIS : c'est lui qui porte les routes de l'agent.
+        // Son domaine entre dans la politique reseau — le validateur l'exige,
+        // et une application qui parle a un hote que sa propre politique
+        // interdit ne joint rien.
+        const domaine = "api.boutique-mode.app";
+        doc.backend = { kind: "genere", stack: "fastify", domain: domaine };
+        const domaineApi = "api.exemple-service.com";
+        doc.network = {
+          ...doc.network,
+          allowedDomains: [
+            ...(doc.network?.allowedDomains ?? []),
+            domaineApi,
+            domaineAuth,
+          ],
+        };
+        doc.apis = [
+          {
+            id: "api_service",
+            name: "Service de messages",
+            domain: domaineApi,
+            auth: {
+              kind: "header_secret",
+              headerName: "X-Api-Key",
+              secretEnvName: "SERVICE_API_KEY",
+            },
+            operations: [
+              {
+                id: "apiop_envoyer_message",
+                name: "Envoyer un message au client",
+                method: "POST",
+                path: "/v1/messages",
+                sends: ["destinataire", "texte"],
+                returns: [{ key: "identifiant", type: "string" }],
+              },
+              {
+                // Le CERVEAU. Il n'est PAS dans les pouvoirs de l'agent :
+                // reflechir n'est pas agir, et le validateur le refuse.
+                id: "apiop_interpreter_demande",
+                name: "Interpreter une demande",
+                method: "POST",
+                path: "/v1/comprendre",
+                sends: ["mots", "catalogue"],
+                returns: [
+                  { key: "operation", type: "string" },
+                  { key: "valeurs", type: "string" },
+                ],
+              },
+            ],
+          },
+        ];
+        doc.agent = {
+          allowedOperations: ["apiop_envoyer_message"],
+          // VRAI, pas `false` : c'est le chemin le plus long — le serveur rend
+          // une intention signee, et l'ecran doit demander l'accord. Mesurer
+          // le chemin court n'aurait pas mesure le chemin qui compte.
+          confirmBeforeAct: true,
+          brain: {
+            operationId: "apiop_interpreter_demande",
+            wordsInput: "mots",
+            catalogueInput: "catalogue",
+            choiceOutput: "operation",
+            inputsOutput: "valeurs",
+          },
+        };
+        // LE BLOC, SUR UN VRAI ECRAN. Sans lui, on mesurerait un document qui
+        // declare un agent que personne ne voit : le bouton est precisement ce
+        // que le proprietaire a demande.
+        ecran.blocks = [
+          ...(ecran.blocks ?? []),
+          {
+            blockType: "agent",
+            id: "blk_accueil_agent",
+            props: [
+              { key: "label", value: "Assistant" },
+              { key: "placeholder", value: "Que voulez-vous faire ?" },
+              // Les deux libelles ENSEMBLE : le schema refuse un seul bouton.
+              { key: "confirmLabel", value: "Confirmer" },
+              { key: "cancelLabel", value: "Annuler" },
+            ],
+          },
+        ];
+        return doc;
+      },
+    ],
   ].filter(([, p]) => existsSync(p));
 }

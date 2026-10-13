@@ -50,13 +50,13 @@ const avecApi = (): ProjectAir => {
     },
     apis: [
       {
-        id: "sms",
+        id: "api_sms",
         name: "Envoi de SMS",
         domain: "api.exemple-sms.com",
         auth: { kind: "header_secret", headerName: "X-Api-Key", secretEnvName: "SMS_API_KEY" },
         operations: [
           {
-            id: "envoyer",
+            id: "apiop_envoyer",
             name: "Envoyer un message",
             method: "POST",
             path: "/v2/messages",
@@ -67,7 +67,7 @@ const avecApi = (): ProjectAir => {
             ],
           },
           {
-            id: "etat",
+            id: "apiop_etat",
             name: "Lire l'état d'un message",
             method: "GET",
             path: "/v2/messages/{identifiant}",
@@ -109,7 +109,7 @@ function tirer(
 ): Tir {
   const dossier = mkdtempSync(join(tmpdir(), "deribfy-connecteur-"));
   try {
-    writeFileSync(join(dossier, "sms.ts"), emis().get("src/connecteur/sms.ts") ?? "");
+    writeFileSync(join(dossier, "sms.ts"), emis().get("src/connecteur/api_sms.ts") ?? "");
     writeFileSync(
       join(dossier, "pilote.mjs"),
       [
@@ -177,14 +177,14 @@ describe("EP-202 ① · une API déclarée devient appelable", () => {
 
   it("une API déclarée émet UN fichier par API, et ses routes", () => {
     const f = [...emis().keys()];
-    expect(f).toContain("src/connecteur/sms.ts");
+    expect(f).toContain("src/connecteur/api_sms.ts");
     expect(f).toContain("src/api/connecteur.ts");
   });
 
   it("une opération NON déclarée n’a pas de route — elle n’existe pas", () => {
     const routes = emis().get("src/api/connecteur.ts") ?? "";
-    expect(routes).toContain('"/air/v1/apis/sms/envoyer"');
-    expect(routes).toContain('"/air/v1/apis/sms/etat"');
+    expect(routes).toContain('"/air/v1/apis/api_sms/apiop_envoyer"');
+    expect(routes).toContain('"/air/v1/apis/api_sms/apiop_etat"');
     // Deux opérations déclarées, deux routes. Pas une de plus.
     expect([...routes.matchAll(/app\.post\(/gu)]).toHaveLength(2);
   });
@@ -213,7 +213,7 @@ describe("EP-202 ② · LE SECRET NE PART PAS DANS L’APPLICATION", () => {
 
   it("À L’EXÉCUTION, le secret part dans l’en-tête déclaré — et nulle part ailleurs", () => {
     const t = tirer(
-      "envoyer",
+      "apiopEnvoyer",
       { destinataire: "+22399000000", texte: "bonjour" },
       { corps: { identifiant: "m-1", livre: true } },
     );
@@ -226,7 +226,7 @@ describe("EP-202 ② · LE SECRET NE PART PAS DANS L’APPLICATION", () => {
 
   it("secret absent de l’environnement ⇒ REFUS NOMMÉ, pas un appel sans en-tête", () => {
     const t = tirer(
-      "envoyer",
+      "apiopEnvoyer",
       { destinataire: "+22399000000", texte: "bonjour" },
       { corps: { identifiant: "m-1", livre: true } },
       { SMS_API_KEY: "" },
@@ -241,7 +241,7 @@ describe("EP-202 ② · LE SECRET NE PART PAS DANS L’APPLICATION", () => {
 
 describe("EP-202 ③ · L’ADRESSE VIENT DE LA DÉCLARATION, JAMAIS DE LA REQUÊTE", () => {
   it("l’hôte est celui du document", () => {
-    const t = tirer("envoyer", { destinataire: "+1", texte: "x" }, { corps: { identifiant: "a", livre: false } });
+    const t = tirer("apiopEnvoyer", { destinataire: "+1", texte: "x" }, { corps: { identifiant: "a", livre: false } });
     expect(t.vu?.url.startsWith("https://api.exemple-sms.com/v2/messages")).toBe(true);
   });
 
@@ -249,7 +249,7 @@ describe("EP-202 ③ · L’ADRESSE VIENT DE LA DÉCLARATION, JAMAIS DE LA REQU�
     // Si le segment n'était pas échappé, `../../admin` changerait l'adresse
     // appelée, et `?x=1` y ajouterait une question. C'est la classe d'attaque
     // que l'échappement ferme.
-    const t = tirer("etat", { identifiant: "../../admin?x=1" }, { corps: { etat: "lu" } });
+    const t = tirer("apiopEtat", { identifiant: "../../admin?x=1" }, { corps: { etat: "lu" } });
     expect(t.ok, t.erreur).toBe(true);
     const url = t.vu?.url ?? "";
     expect(url).toContain("/v2/messages/");
@@ -258,13 +258,13 @@ describe("EP-202 ③ · L’ADRESSE VIENT DE LA DÉCLARATION, JAMAIS DE LA REQU�
   });
 
   it("le secret ne suit pas une redirection — `redirect: \"error\"` est volontaire", () => {
-    expect(emis().get("src/connecteur/sms.ts") ?? "").toContain('redirect: "error"');
+    expect(emis().get("src/connecteur/api_sms.ts") ?? "").toContain('redirect: "error"');
   });
 });
 
 describe("EP-202 ④ · EXACTEMENT LES ENTRÉES DÉCLARÉES", () => {
   it("une entrée manquante est refusée AVANT l’appel", () => {
-    const t = tirer("envoyer", { destinataire: "+1" }, { corps: {} });
+    const t = tirer("apiopEnvoyer", { destinataire: "+1" }, { corps: {} });
     expect(t.erreur).toBe("EntreeManquante");
     expect(t.vu).toBeNull();
   });
@@ -274,7 +274,7 @@ describe("EP-202 ④ · EXACTEMENT LES ENTRÉES DÉCLARÉES", () => {
     // n'a déclaré — et le manifeste de confidentialité, qui ne parle que des
     // champs déclarés, deviendrait FAUX.
     const t = tirer(
-      "envoyer",
+      "apiopEnvoyer",
       { destinataire: "+1", texte: "x", numero_de_carte: "4111111111111111" },
       { corps: {} },
     );
@@ -283,7 +283,7 @@ describe("EP-202 ④ · EXACTEMENT LES ENTRÉES DÉCLARÉES", () => {
   });
 
   it("un GET met ses entrées dans le chemin, pas un corps", () => {
-    const t = tirer("etat", { identifiant: "m-42" }, { corps: { etat: "livre" } });
+    const t = tirer("apiopEtat", { identifiant: "m-42" }, { corps: { etat: "livre" } });
     expect(t.vu?.methode).toBe("GET");
     expect(t.vu?.corps).toBeNull();
     expect(t.vu?.url).toContain("/v2/messages/m-42");
@@ -293,7 +293,7 @@ describe("EP-202 ④ · EXACTEMENT LES ENTRÉES DÉCLARÉES", () => {
 describe("EP-202 ⑤ · EXACTEMENT LES SORTIES DÉCLARÉES — LE CLIQUET DE CONFIDENTIALITÉ", () => {
   it("une clé que l’API ajoute NE TRAVERSE PAS", () => {
     const t = tirer(
-      "envoyer",
+      "apiopEnvoyer",
       { destinataire: "+1", texte: "x" },
       {
         corps: {
@@ -312,7 +312,7 @@ describe("EP-202 ⑤ · EXACTEMENT LES SORTIES DÉCLARÉES — LE CLIQUET DE CON
   });
 
   it("une clé déclarée mais ABSENTE est un refus, pas un `undefined` silencieux", () => {
-    const t = tirer("envoyer", { destinataire: "+1", texte: "x" }, { corps: { identifiant: "m-1" } });
+    const t = tirer("apiopEnvoyer", { destinataire: "+1", texte: "x" }, { corps: { identifiant: "m-1" } });
     expect(t.erreur).toBe("ReponseInattendue");
   });
 
@@ -320,7 +320,7 @@ describe("EP-202 ⑤ · EXACTEMENT LES SORTIES DÉCLARÉES — LE CLIQUET DE CON
     // Beaucoup d'API rendent un booléen en texte. Convertir ferait entrer une
     // valeur fausse sans que personne ne sache d'où elle vient.
     const t = tirer(
-      "envoyer",
+      "apiopEnvoyer",
       { destinataire: "+1", texte: "x" },
       { corps: { identifiant: "m-1", livre: "oui" } },
     );
@@ -331,7 +331,7 @@ describe("EP-202 ⑤ · EXACTEMENT LES SORTIES DÉCLARÉES — LE CLIQUET DE CON
 describe("EP-202 ⑥ · UN TIERS EN PANNE NE FAIT PAS TOMBER L’APPLICATION", () => {
   it("un refus du tiers est rendu comme tel, et son CORPS ne traverse pas", () => {
     const t = tirer(
-      "envoyer",
+      "apiopEnvoyer",
       { destinataire: "+1", texte: "x" },
       { statut: 403, corps: { message: "clé révoquée", trace_interne: "pod-7/secret=abc" } },
     );
@@ -345,7 +345,7 @@ describe("EP-202 ⑥ · UN TIERS EN PANNE NE FAIT PAS TOMBER L’APPLICATION", (
     // Mesuré à l'exécution : le connecteur passe un AbortSignal (le témoin
     // refuse de jouer sans), et il traduit `TimeoutError` en ApiTropLente,
     // que les routes rendent en 504.
-    const t = tirer("envoyer", { destinataire: "+1", texte: "x" }, { lent: true });
+    const t = tirer("apiopEnvoyer", { destinataire: "+1", texte: "x" }, { lent: true });
     expect(t.erreur).toBe("ApiTropLente");
   });
 
@@ -353,13 +353,13 @@ describe("EP-202 ⑥ · UN TIERS EN PANNE NE FAIT PAS TOMBER L’APPLICATION", (
     // Ce qu'un test rapide ne peut pas prouver, un test rapide doit le dire :
     // on ne vérifie pas ici qu'une attente de dix secondes se termine. On
     // vérifie que le délai est câblé et que sa valeur est celle annoncée.
-    const source = emis().get("src/connecteur/sms.ts") ?? "";
+    const source = emis().get("src/connecteur/api_sms.ts") ?? "";
     expect(source).toContain("signal: AbortSignal.timeout(DELAI_MS)");
     expect(source).toContain("const DELAI_MS = 10000;");
   });
 
   it("AUCUNE reprise automatique — rejouer un POST débiterait deux fois", () => {
-    const source = emis().get("src/connecteur/sms.ts") ?? "";
+    const source = emis().get("src/connecteur/api_sms.ts") ?? "";
     expect(source).not.toMatch(/retry|tentative|réessay/iu);
     expect(source).toContain("AUCUNE REPRISE");
   });

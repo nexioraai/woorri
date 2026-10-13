@@ -57,7 +57,16 @@ describe("GATE RACINE — les applications WEB émises se MONTENT vraiment", () 
       // 31 d'un côté, 29 de l'autre, quatre heures après la naissance de
       // celle-ci. Une cible qui mesure un document que l'autre ignore ne se
       // voit pas — les deux gates restent vertes.
-      expect(apps.length, "les applications web du corpus").toBe(31);
+      // ÉDITION CONSCIENTE (2026-10-13, quatrième) : 32 avec
+      // `boutique-mode-agent`. Mesure qui l'a imposée : ZÉRO document du corpus
+      // ne déclarait `apis` ni `agent`. Le connecteur d'API, la porte de
+      // l'agent, son cerveau et son écran étaient prouvés par trente-huit tests
+      // et par AUCUNE gate — donc « émis et supposé bon ». Dès son ajout, la
+      // gate de compilation a trouvé ce que les tests ne voyaient pas : un
+      // agent monté SANS racine de session, dont chaque appel aurait été refusé
+      // 403. Une variante d'un document RÉEL, pas un document fabriqué : un cas
+      // écrit pour l'occasion ne mesure que ma capacité à le faire passer.
+      expect(apps.length, "les applications web du corpus").toBe(32);
 
       let ecrans = 0;
       const problemes: string[] = [];

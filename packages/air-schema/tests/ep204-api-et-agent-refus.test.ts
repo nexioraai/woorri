@@ -42,13 +42,13 @@ const codes = (air: ProjectAir): string[] => validateAir(air).map((d) => d.code)
 
 /** Une API minimale mais COMPLÈTE, posée sur un document réel. */
 const UNE_API = {
-  id: "sms",
+  id: "api_sms",
   name: "Envoi de SMS",
   domain: "api.exemple-sms.com",
   auth: { kind: "header_secret" as const, headerName: "X-Api-Key", secretEnvName: "SMS_API_KEY" },
   operations: [
     {
-      id: "envoyer",
+      id: "apiop_envoyer",
       name: "Envoyer un message",
       method: "POST" as const,
       path: "/v2/messages",
@@ -84,6 +84,20 @@ describe("EP-204 ① · le point de départ est SAIN — sinon on ne prouve rien
     // Si ce test échouait, tous les refus ci-dessous seraient des faux
     // positifs : ils refuseraient un document déjà refusé pour autre chose.
     expect(codes(avecApi())).toEqual([]);
+  });
+
+  it("ET IL PASSE LE SCHÉMA — pas seulement les contrôles sémantiques", () => {
+    // MESURE DU 2026-10-13, TROUVÉE EN AJOUTANT LA VARIANTE AU CORPUS.
+    //
+    // `validateAir` vérifie les RELATIONS entre les parties du document ; il
+    // ne vérifie PAS la forme des identifiants. Mes fixtures portaient
+    // « envoyer » et « sms » là où le schéma exige « apiop_ » et « api_ » :
+    // elles décrivaient des documents IMPOSSIBLES, et les refus mesurés
+    // ci-dessous l'étaient sur du sable.
+    //
+    // Cette preuve est le cliquet : une fixture qui ne passe pas le schéma
+    // ne prouve rien sur un vrai document.
+    expect(() => assertValidAir(avecApi())).not.toThrow();
   });
 });
 
@@ -133,7 +147,7 @@ describe("EP-204 ③ · LES SIX REFUS DE L'AGENT (1.37.0)", () => {
 
   it("un agent AVEC une API et une opération connue est valide", () => {
     expect(
-      codes(avecAgent({ allowedOperations: ["envoyer"], confirmBeforeAct: true })),
+      codes(avecAgent({ allowedOperations: ["apiop_envoyer"], confirmBeforeAct: true })),
     ).toEqual([]);
   });
 
@@ -141,7 +155,7 @@ describe("EP-204 ③ · LES SIX REFUS DE L'AGENT (1.37.0)", () => {
     // Un agent autorisé sur une opération inexistante serait un agent dont on
     // CROIT connaître les pouvoirs.
     expect(
-      codes(avecAgent({ allowedOperations: ["inexistante"], confirmBeforeAct: true })),
+      codes(avecAgent({ allowedOperations: ["apiop_inexistante"], confirmBeforeAct: true })),
     ).toContain("AIR_AGENT_OPERATION_UNKNOWN");
   });
 
@@ -149,14 +163,14 @@ describe("EP-204 ③ · LES SIX REFUS DE L'AGENT (1.37.0)", () => {
     const air = copie(lire());
     const fautif = {
       ...air,
-      agent: { allowedOperations: ["envoyer"], confirmBeforeAct: true },
+      agent: { allowedOperations: ["apiop_envoyer"], confirmBeforeAct: true },
     } as ProjectAir;
     expect(codes(fautif)).toContain("AIR_AGENT_NO_API");
   });
 
   it("③ la même opération autorisée DEUX FOIS est refusée", () => {
     expect(
-      codes(avecAgent({ allowedOperations: ["envoyer", "envoyer"], confirmBeforeAct: true })),
+      codes(avecAgent({ allowedOperations: ["apiop_envoyer", "apiop_envoyer"], confirmBeforeAct: true })),
     ).toContain("AIR_AGENT_OPERATION_DUPLICATE");
   });
 
@@ -164,7 +178,7 @@ describe("EP-204 ③ · LES SIX REFUS DE L'AGENT (1.37.0)", () => {
     expect(
       codes(
         avecAgent({
-          allowedOperations: ["envoyer"],
+          allowedOperations: ["apiop_envoyer"],
           confirmBeforeAct: true,
           requiredRightId: "droit_qui_nexiste_pas",
         }),
@@ -177,7 +191,7 @@ describe("EP-204 ③ · LES SIX REFUS DE L'AGENT (1.37.0)", () => {
     // micro dans une application qui n'a pas le droit d'enregistrer : refusé
     // au premier appui, et personne ne saurait pourquoi.
     const air = avecAgent({
-      allowedOperations: ["envoyer"],
+      allowedOperations: ["apiop_envoyer"],
       confirmBeforeAct: true,
       voiceInput: true,
     });
@@ -199,7 +213,7 @@ describe("EP-204 ③ · LES SIX REFUS DE L'AGENT (1.37.0)", () => {
     const air = copie(lire());
     const seconde = {
       ...UNE_API,
-      id: "courriel",
+      id: "api_courriel",
       name: "Envoi de courriel",
       domain: "api.exemple-mail.com",
     };
@@ -220,7 +234,7 @@ describe("EP-204 ③ · LES SIX REFUS DE L'AGENT (1.37.0)", () => {
     // L'agent, lui, est refusé.
     const avec = {
       ...deux,
-      agent: { allowedOperations: ["envoyer"], confirmBeforeAct: true },
+      agent: { allowedOperations: ["apiop_envoyer"], confirmBeforeAct: true },
     } as ProjectAir;
     expect(codes(avec)).toContain("AIR_AGENT_OPERATION_AMBIGUOUS");
   });
@@ -229,10 +243,10 @@ describe("EP-204 ③ · LES SIX REFUS DE L'AGENT (1.37.0)", () => {
     const air = copie(lire());
     const seconde = {
       ...UNE_API,
-      id: "courriel",
+      id: "api_courriel",
       name: "Envoi de courriel",
       domain: "api.exemple-mail.com",
-      operations: [{ ...UNE_API.operations[0], id: "envoyer_courriel" }],
+      operations: [{ ...UNE_API.operations[0], id: "apiop_envoyer_courriel" }],
     };
     const avec = {
       ...air,
@@ -245,7 +259,7 @@ describe("EP-204 ③ · LES SIX REFUS DE L'AGENT (1.37.0)", () => {
         ],
       },
       apis: [UNE_API, seconde],
-      agent: { allowedOperations: ["envoyer", "envoyer_courriel"], confirmBeforeAct: true },
+      agent: { allowedOperations: ["apiop_envoyer", "apiop_envoyer_courriel"], confirmBeforeAct: true },
     } as ProjectAir;
     expect(codes(avec)).toEqual([]);
   });

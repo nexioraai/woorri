@@ -27,13 +27,13 @@ const ICI = dirname(fileURLToPath(import.meta.url));
 const DOC = join(ICI, "..", "..", "..", "slices", "tontine", "tontine.air.json");
 
 const API = {
-  id: "service",
+  id: "api_service",
   name: "Service",
   domain: "api.exemple-service.com",
   auth: { kind: "header_secret" as const, headerName: "X-Api-Key", secretEnvName: "SERVICE_KEY" },
   operations: [
     {
-      id: "envoyer",
+      id: "apiop_envoyer",
       name: "Envoyer",
       method: "POST" as const,
       path: "/v1/envois",
@@ -41,7 +41,7 @@ const API = {
       returns: [{ key: "reference", type: "string" as const }],
     },
     {
-      id: "interpreter",
+      id: "apiop_interpreter",
       name: "Interpréter",
       method: "POST" as const,
       path: "/v1/comprendre",
@@ -70,16 +70,16 @@ const porte = (agent: Record<string, unknown>): string => {
 };
 
 const AVEC_CERVEAU = {
-  allowedOperations: ["envoyer"],
+  allowedOperations: ["apiop_envoyer"],
   confirmBeforeAct: true,
   brain: {
-    operationId: "interpreter",
+    operationId: "apiop_interpreter",
     wordsInput: "mots",
     choiceOutput: "operation",
     inputsOutput: "valeurs",
   },
 };
-const SANS_CERVEAU = { allowedOperations: ["envoyer"], confirmBeforeAct: true };
+const SANS_CERVEAU = { allowedOperations: ["apiop_envoyer"], confirmBeforeAct: true };
 
 describe("EP-208 ① · LES ADRESSES — une seule source, les deux bouts", () => {
   it("le serveur émis écrit EXACTEMENT les chemins du protocole", () => {

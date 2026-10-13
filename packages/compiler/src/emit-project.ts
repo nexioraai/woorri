@@ -1129,7 +1129,22 @@ function emitApp(
     //
     // Mesuré avant de poser cette clause : le document de gestion déclare 12
     // droits et 2 rôles, et son `App.tsx` ne portait AUCUN `SessionRoot`.
-    air.access !== undefined;
+    air.access !== undefined ||
+    // ── UN AGENT IMPLIQUE UNE SESSION (2026-10-13), MEME RAISON, MEME DEFAUT.
+    //
+    // TOUTES les routes de l'agent exigent un appelant verifiable : le
+    // catalogue, la parole, l'acte. Monter l'agent sans racine de session
+    // produit un bouton dont CHAQUE appel est refuse 403 — emis, et inerte.
+    // C'est exactement le defaut decrit juste au-dessus pour `access`, et que
+    // ce depot paie en boucle.
+    //
+    // MESURE QUI A POSE CETTE CLAUSE : la variante `boutique-mode-agent`
+    // ajoutee au corpus le 2026-10-13 a fait echouer `app_compile` sur
+    // « Cannot find name 'session' ». Mes trente-huit preuves de l'agent ne
+    // l'avaient pas vu : elles emettaient depuis un document qui, lui, avait
+    // une session. C'est la gate qui l'a trouve — et c'est pour ca qu'elle
+    // existe.
+    air.agent !== undefined;
   return [
     "// GÉNÉRÉ — NE PAS ÉDITER (racine d'app : thème + données + navigation).",
     "// S7 (D-026) : tokens scellés 1.0.0, design.theme transporté sans effet.",
