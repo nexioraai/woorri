@@ -25,7 +25,7 @@ import {
 // 1.7.1 (E3.3, D-131) : provenance APLANIE (sourceKind/sourceIntegrationId/
 //   sourceDomain/sourceRefreshSeconds) — l'union 1.7.0 dépassait la limite
 //   réelle de grammaire de l'API (classe D-078) ; sémantique inchangée.
-export const AIR_SCHEMA_VERSION = "1.37.0";
+export const AIR_SCHEMA_VERSION = "1.38.0";
 
 export const semverSchema = z.string().regex(/^\d+\.\d+\.\d+$/);
 export const sha256Schema = z.string().regex(/^[0-9a-f]{64}$/);
@@ -1308,6 +1308,16 @@ const accessSchema = z.strictObject({
  *    appelant à deviner, et une supposition sur la forme d'une réponse se
  *    découvre en production.
  */
+/**
+ * LE NOM D'UN CHAMP D'API — UNE SEULE REGLE, ECRITE UNE SEULE FOIS.
+ *
+ * Elle etait en ligne a DEUX endroits (`sends` et la cle de `returns`). Le
+ * cerveau (1.38.0) la designe une troisieme fois : trois copies de la meme
+ * expression auraient divergé au premier ajustement. Meme expression,
+ * exactement — rien ne change de sens pour un document existant.
+ */
+const apiFieldNameSchema = z.string().regex(/^[a-z][a-zA-Z0-9_]*$/);
+
 const apiOperationSchema = z.strictObject({
   id: apiOperationIdSchema,
   name: z.string().min(1),
@@ -1315,12 +1325,12 @@ const apiOperationSchema = z.strictObject({
   /** Chemin relatif au domaine. Les segments `{nom}` sont fournis à l'appel. */
   path: z.string().regex(/^\/[A-Za-z0-9/_\-.{}]*$/),
   /** Ce que l'appel envoie — des NOMS, jamais des valeurs. */
-  sends: z.array(z.string().regex(/^[a-z][a-zA-Z0-9_]*$/)).optional(),
+  sends: z.array(apiFieldNameSchema).optional(),
   /** Ce que la réponse contient, et de quel type. */
   returns: z
     .array(
       z.strictObject({
-        key: z.string().regex(/^[a-z][a-zA-Z0-9_]*$/),
+        key: apiFieldNameSchema,
         type: z.enum(["string", "number", "boolean"]),
       }),
     )
@@ -1631,6 +1641,64 @@ export const projectAirSchema = z.strictObject({
       confirmBeforeAct: z.boolean(),
       /** Accepter la parole, et pas seulement l'écrit. */
       voiceInput: z.boolean().optional(),
+      /**
+       * LE CERVEAU (1.38.0) — L'OPÉRATION QUI TRANSFORME DES MOTS EN CHOIX.
+       *
+       * ── POURQUOI C'EST UNE API, ET PAS UN MORCEAU DU MOTEUR.
+       *
+       * Décider que « envoie 5000 à Awa » correspond à telle opération
+       * demande un modèle de langue. Le moteur n'en embarque aucun : il
+       * n'appelle pas le réseau, c'est un critère tenu et prouvé. Le cerveau
+       * est donc une API DÉCLARÉE comme les autres — avec son domaine, son
+       * secret en variable d'environnement, son délai et ses refus. Le
+       * document choisit qui réfléchit ; le moteur ne choisit pour personne.
+       *
+       * ── IL NOMME SES ENTRÉES ET SES SORTIES. AUCUNE CONVENTION INVENTÉE.
+       *
+       * Il aurait été plus court d'imposer des noms de clés — `texte`,
+       * `operation` — et de les chercher dans la réponse. Ç'aurait été une
+       * convention que personne n'a demandée, invisible au document, et
+       * fausse le jour où un service nomme ses champs autrement. Le document
+       * DIT quelle clé porte quoi, et le validateur vérifie que chacune
+       * existe vraiment dans l'opération déclarée.
+       *
+       * ── LES VALEURS REVIENNENT EN TEXTE, ET C'EST UNE CONTRAINTE RÉELLE.
+       *
+       * `returns` n'autorise que `string`, `number`, `boolean` : une API ne
+       * peut pas déclarer rendre un objet. Les valeurs choisies par le
+       * cerveau arrivent donc en TEXTE JSON, que le serveur analyse. Ce n'est
+       * pas un contournement : les refus du connecteur policent ensuite
+       * chaque champ — un cerveau qui invente une entrée est refusé par le
+       * garde même qui protège le manifeste de confidentialité.
+       *
+       * ── CE QUE LE CERVEAU NE PEUT PAS FAIRE.
+       *
+       * IL NE PEUT PAS S'INVENTER UN POUVOIR : l'opération qu'il désigne doit
+       * être dans `allowedOperations`, sinon elle est refusée. IL N'AGIT PAS
+       * TOUT SEUL : il PROPOSE, et l'acte reste une demande distincte.
+       *
+       * Absent ⇒ l'agent n'interprète rien et exécute ce qu'on lui désigne,
+       * exactement comme en 1.37.0.
+       */
+      brain: z
+        .strictObject({
+          /** L'opération qui réfléchit. Elle n'est PAS un pouvoir de l'agent. */
+          operationId: apiOperationIdSchema,
+          /** La clé de `sends` qui reçoit les mots de la personne. */
+          wordsInput: apiFieldNameSchema,
+          /**
+           * La clé de `sends` qui reçoit ce que l'agent peut faire.
+           *
+           * Optionnelle : un service dont le catalogue est déjà configuré
+           * chez lui n'a pas besoin qu'on le lui redonne à chaque phrase.
+           */
+          catalogueInput: apiFieldNameSchema.optional(),
+          /** La clé de `returns` qui porte l'identifiant de l'opération choisie. */
+          choiceOutput: apiFieldNameSchema,
+          /** La clé de `returns` qui porte les valeurs, en TEXTE JSON. */
+          inputsOutput: apiFieldNameSchema,
+        })
+        .optional(),
     })
     .optional(),
   /**

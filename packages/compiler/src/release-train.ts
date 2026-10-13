@@ -86,7 +86,12 @@ export const RELEASE_TRAIN_V1 = {
   // personne, dans des limites declarees. Tout son pouvoir tient dans
   // `allowedOperations` — une liste FERMEE d'operations d'API. Montee
   // ADDITIVE : cle optionnelle, migration identite.
-  airSchemaVersion: "1.37.0",
+  // 1.38.0 (2026-10-13) — `agent.brain` : l'operation qui transforme des MOTS
+  // en CHOIX. Le moteur n'embarque aucun modele de langue et n'appelle pas le
+  // reseau ; le cerveau est donc une API DECLAREE comme les autres. Cle
+  // optionnelle, migration IDENTITE : les 31 documents du corpus ne changent
+  // pas de sens.
+  airSchemaVersion: "1.38.0",
   // Porté à 1.1.0 le 2026-08-31 (D-060) : montée STRICTEMENT ADDITIVE du
   // registre de blocs — `form` gagne `loading`/`empty`, `detail_header` gagne un
   // état, les trois blocs à données gagnent les props de titres. Rien n'est

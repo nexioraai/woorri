@@ -546,6 +546,26 @@ export const AIR_MIGRATIONS: readonly AirMigration[] = [
       "pas d'un bouton « annuler ». Migration IDENTITÉ : clé optionnelle.",
     migrate: (document) => document,
   },
+  {
+    from: "1.37.0",
+    to: "1.38.0",
+    description:
+      "AIR 1.38.0 : `agent.brain` — l'opération qui transforme des MOTS en " +
+      "CHOIX. Décider que « envoie 5000 à Awa » correspond à telle opération " +
+      "demande un modèle de langue ; le moteur n'en embarque aucun, et " +
+      "n'appelle pas le réseau — c'est un critère tenu et prouvé. Le cerveau " +
+      "est donc une API DÉCLARÉE comme les autres. Il NOMME ses entrées et " +
+      "ses sorties plutôt que de subir une convention inventée par le " +
+      "moteur, et le validateur vérifie que chaque clé existe vraiment dans " +
+      "l'opération. Les valeurs reviennent en TEXTE JSON parce que `returns` " +
+      "n'autorise que string/number/boolean : les refus du connecteur les " +
+      "policent ensuite champ par champ, donc un cerveau qui invente une " +
+      "entrée est refusé. Deux choses qu'il ne peut pas faire : s'inventer un " +
+      "pouvoir hors de `allowedOperations`, et agir tout seul — il PROPOSE. " +
+      "Migration IDENTITÉ : clé optionnelle, absente ⇒ l'agent n'interprète " +
+      "rien et exécute ce qu'on lui désigne, exactement comme en 1.37.0.",
+    migrate: (document) => document,
+  },
 ];
 
 export class AirMigrationError extends Error {

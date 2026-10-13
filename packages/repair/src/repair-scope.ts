@@ -272,6 +272,14 @@ export const SECTIONS_CORRECTIVES: Readonly<Record<string, readonly SectionEmiss
   // L'ambiguite se repare en renommant une operation : c'est le cablage des
   // API qui change, et la liste des pouvoirs de l'agent avec.
   AIR_AGENT_OPERATION_AMBIGUOUS: ["cablage"],
+  // LE CERVEAU (1.38.0) — six refus, tous reparables dans le CABLAGE : c'est
+  // l'operation declaree, ses cles, ou la liste des pouvoirs qui changent.
+  AIR_AGENT_BRAIN_UNKNOWN: ["cablage"],
+  AIR_AGENT_BRAIN_AMBIGUOUS: ["cablage"],
+  AIR_AGENT_BRAIN_INPUT_UNKNOWN: ["cablage"],
+  AIR_AGENT_BRAIN_OUTPUT_UNKNOWN: ["cablage"],
+  AIR_AGENT_BRAIN_OUTPUT_NOT_TEXT: ["cablage"],
+  AIR_AGENT_BRAIN_IS_A_POWER: ["cablage"],
   AIR_FIELD_DISPLAY_MISSING: ["donnees"],
   AIR_FIELD_DISPLAY_NOT_REFERENCE: ["donnees"],
   AIR_FIELD_ENUM_VALUES_MISSING: ["donnees"],

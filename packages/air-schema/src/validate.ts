@@ -1523,6 +1523,99 @@ export function validateAir(air: ProjectAir): AirDiagnostic[] {
           "l'application n'aurait pas le droit d'enregistrer",
       );
     }
+    // ── LE CERVEAU (1.38.0) : SIX REFUS DE PLUS.
+    //
+    // Le cerveau est une API déclarée qui transforme des mots en choix. Il
+    // NOMME ses clés plutôt que de subir une convention inventée par le
+    // moteur — donc chaque nom doit être vérifié, sinon le document promet
+    // une clé que le service ne porte pas, et l'erreur n'apparaîtrait qu'à la
+    // première phrase prononcée par une personne réelle.
+    const cerveau = air.agent.brain;
+    if (cerveau !== undefined) {
+      const porteusesDuCerveau = (air.apis ?? []).flatMap((api2) =>
+        api2.operations.filter((o) => o.id === cerveau.operationId),
+      );
+      if (porteusesDuCerveau.length === 0) {
+        // ⑦ Un cerveau introuvable est un agent dont la parole ne mène nulle
+        //    part — et un bouton de micro qui ne répondra jamais.
+        push(
+          "AIR_AGENT_BRAIN_UNKNOWN",
+          "agent.brain.operationId",
+          `l'opération « ${cerveau.operationId} » n'est déclarée dans aucune API : ` +
+            `l'agent n'aurait rien pour interpréter la parole`,
+        );
+      } else if (porteusesDuCerveau.length > 1) {
+        // ⑧ La même raison que pour les pouvoirs : l'unicité d'un identifiant
+        //    n'est garantie QUE par API. Choisir la première venue serait un
+        //    choix que personne ne pourrait relire.
+        push(
+          "AIR_AGENT_BRAIN_AMBIGUOUS",
+          "agent.brain.operationId",
+          `l'opération « ${cerveau.operationId} » est déclarée par ` +
+            `${String(porteusesDuCerveau.length)} API : on ne saurait pas qui réfléchit. ` +
+            `Renommez l'une des opérations.`,
+        );
+      } else {
+        const op = porteusesDuCerveau[0];
+        const envoyees = new Set(op?.sends ?? []);
+        for (const [champ, nom] of [
+          ["wordsInput", cerveau.wordsInput],
+          ...(cerveau.catalogueInput === undefined
+            ? []
+            : [["catalogueInput", cerveau.catalogueInput] as const]),
+        ] as readonly (readonly [string, string])[]) {
+          if (!envoyees.has(nom)) {
+            // ⑨ Une entrée promise que l'opération n'envoie pas : l'appel se
+            //    construirait sans les mots, et le cerveau répondrait à une
+            //    question vide.
+            push(
+              "AIR_AGENT_BRAIN_INPUT_UNKNOWN",
+              `agent.brain.${champ}`,
+              `« ${nom} » n'est pas dans les \`sends\` de « ${cerveau.operationId} » : ` +
+                `cette clé n'arriverait jamais au service`,
+            );
+          }
+        }
+        const rendues = new Map((op?.returns ?? []).map((r) => [r.key, r.type]));
+        for (const [champ, nom] of [
+          ["choiceOutput", cerveau.choiceOutput],
+          ["inputsOutput", cerveau.inputsOutput],
+        ] as readonly (readonly [string, string])[]) {
+          const type = rendues.get(nom);
+          if (type === undefined) {
+            push(
+              "AIR_AGENT_BRAIN_OUTPUT_UNKNOWN",
+              `agent.brain.${champ}`,
+              `« ${nom} » n'est pas dans les \`returns\` de « ${cerveau.operationId} » : ` +
+                `le serveur lirait une clé que le service ne rend pas`,
+            );
+          } else if (type !== "string") {
+            // ⑩ Un identifiant d'opération et un texte JSON sont du TEXTE.
+            //    Déclarés en nombre, ils seraient refusés par le connecteur à
+            //    l'exécution — mieux vaut le dire ici qu'à la première phrase.
+            push(
+              "AIR_AGENT_BRAIN_OUTPUT_NOT_TEXT",
+              `agent.brain.${champ}`,
+              `« ${nom} » est déclarée « ${type} » : ` +
+                `un identifiant d'opération et des valeurs en JSON sont du texte`,
+            );
+          }
+        }
+      }
+      // ⑪ RÉFLÉCHIR N'EST PAS AGIR. Un cerveau qui serait aussi un pouvoir de
+      //    l'agent ne veut rien dire : l'agent pourrait « agir » en appelant
+      //    son propre interprète, et la liste de ses pouvoirs cesserait de
+      //    décrire ce qu'il fait au monde.
+      if (air.agent.allowedOperations.includes(cerveau.operationId)) {
+        push(
+          "AIR_AGENT_BRAIN_IS_A_POWER",
+          "agent.brain.operationId",
+          `« ${cerveau.operationId} » est à la fois le cerveau et un pouvoir : ` +
+            `réfléchir n'est pas agir`,
+        );
+      }
+    }
+
     const droit = air.agent.requiredRightId;
     // `access` est optionnel au format : un document sans modele d'acces ne
     // declare aucun droit, donc exiger un droit y est forcement une erreur.

@@ -98,6 +98,28 @@ export function operationsDeLAgent(air: ProjectAir): readonly OperationDeLAgent[
   return sortie;
 }
 
+/**
+ * LE CERVEAU, RÉSOLU VERS SON API.
+ *
+ * Même garde que pour les pouvoirs : le validateur refuse un cerveau
+ * introuvable ou ambigu, et l'émission s'arrête plutôt que de choisir pour
+ * l'auteur.
+ */
+export function cerveauDeLAgent(air: ProjectAir): OperationDeLAgent | null {
+  const brain = air.agent?.brain;
+  if (brain === undefined) return null;
+  const porteuses = (air.apis ?? []).flatMap((api) =>
+    api.operations.filter((op) => op.id === brain.operationId).map((op) => ({ api, op })),
+  );
+  if (porteuses.length !== 1) {
+    throw new Error(
+      `AIR_AGENT_BRAIN_* à l'émission : « ${brain.operationId} » est portée par ` +
+        `${String(porteuses.length)} API. Le validateur doit l'avoir refusé.`,
+    );
+  }
+  return porteuses[0] as OperationDeLAgent;
+}
+
 /** Ce qu'une opération attend : ses `sends` ET les segments de son chemin. */
 const attendues = (op: Operation): readonly string[] => {
   const vues = new Set<string>();
@@ -110,7 +132,12 @@ export function routesAgent(air: ProjectAir): string {
   const agent = air.agent;
   if (agent === undefined) throw new Error("routesAgent appelé sans agent déclaré");
   const ops = operationsDeLAgent(air);
-  const modules = [...new Set(ops.map((o) => o.api.id))];
+  const cerveau = cerveauDeLAgent(air);
+  const brain = agent.brain;
+  // Le module du cerveau peut etre une API differente de celles des pouvoirs.
+  const modules = [
+    ...new Set([...ops.map((o) => o.api.id), ...(cerveau === null ? [] : [cerveau.api.id])]),
+  ];
   const droit = agent.requiredRightId;
   const confirme = agent.confirmBeforeAct;
 
@@ -246,6 +273,108 @@ export function routesAgent(air: ProjectAir): string {
       "      expireDans: FENETRE_S,",
       "      intention: `${String(echeance)}.${signer(charge(voulue.id, entrees, appelant, echeance))}`,",
       "    };",
+      "  });",
+    );
+  }
+
+  if (cerveau !== null && brain !== undefined) {
+    const attendCatalogue = brain.catalogueInput !== undefined;
+    l.push(
+      "",
+      "  // ── PARLER : DES MOTS, ET UNE PROPOSITION. JAMAIS UN ACTE.",
+      "  //",
+      "  // Le cerveau PROPOSE. L'acte reste une demande distincte, pour une",
+      "  // raison simple : un interprète qui agirait en même temps qu'il",
+      "  // comprend ne laisserait aucun endroit où refuser. Ici, ce qui",
+      "  // revient est une proposition — et, si le document demande une",
+      "  // confirmation, l'intention signée qui permettra d'agir.",
+      "  app.post(\"/air/v1/agent/parler\", async (req, rep) => {",
+      "    const appelant = appelantDe(req.headers as Record<string, unknown>);",
+      "    if (appelant === null) {",
+      "      return rep.code(403).send({",
+      "        error: \"AIR_APPELANT_REQUIS\",",
+      "        message: \"l'agent n'écoute que pour une identité vérifiable\",",
+      "      });",
+      "    }",
+      ...gardeDuDroit,
+      "    const corps = (req.body ?? {}) as { mots?: unknown };",
+      "    if (typeof corps.mots !== \"string\" || corps.mots.trim() === \"\") {",
+      "      return rep.code(400).send({",
+      "        error: \"AIR_AGENT_MOTS_MANQUANTS\",",
+      "        message: \"aucune parole n'a été transmise\",",
+      "      });",
+      "    }",
+      "    let brut;",
+      "    try {",
+      `      brut = await ${CAMEL(cerveau.api.id)}.${CAMEL(cerveau.op.id)}({`,
+      `        ${JSON.stringify(brain.wordsInput)}: corps.mots,`,
+      ...(attendCatalogue
+        ? [
+            `        ${JSON.stringify(brain.catalogueInput ?? "")}: JSON.stringify(CATALOGUE),`,
+          ]
+        : [
+            "        // Le document ne declare pas de cle de catalogue : ce",
+            "        // service connait deja ce qu'il peut proposer.",
+          ]),
+      "      });",
+      "    } catch (e) {",
+      "      return rep.code(statut(e)).send({ error: code(e), message: message(e) });",
+      "    }",
+      `      const choisie = (brut as Record<string, unknown>)[${JSON.stringify(brain.choiceOutput)}];`,
+      "    // ── LE CERVEAU NE PEUT PAS S'INVENTER UN POUVOIR.",
+      "    //",
+      "    // C'est le refus central de cette route. Un modèle de langue se",
+      "    // trompe, et un modèle manipulé par la phrase qu'on lui donne se",
+      "    // trompe exprès. L'opération qu'il désigne doit être dans le",
+      "    // catalogue — qui ne contient QUE les pouvoirs déclarés.",
+      "    const permise = CATALOGUE.find((c) => c.id === choisie);",
+      "    if (permise === undefined) {",
+      "      return rep.code(403).send({",
+      "        error: \"AIR_AGENT_CHOIX_HORS_POUVOIRS\",",
+      "        message: \"l'interprète a désigné une opération qui n'est pas un pouvoir de l'agent\",",
+      "      });",
+      "    }",
+      `      const texteValeurs = (brut as Record<string, unknown>)[${JSON.stringify(brain.inputsOutput)}];`,
+      "    // Les valeurs arrivent en TEXTE JSON : `returns` n'autorise que",
+      "    // string, number et boolean, donc une API ne peut pas déclarer",
+      "    // rendre un objet. Un texte qui n'est pas du JSON d'objet est",
+      "    // refusé ici ; les CHAMPS, eux, seront policés par le connecteur.",
+      "    let valeurs;",
+      "    try {",
+      "      valeurs = JSON.parse(String(texteValeurs));",
+      "    } catch {",
+      "      return rep.code(502).send({",
+      "        error: \"AIR_AGENT_VALEURS_ILLISIBLES\",",
+      "        message: \"l'interprète n'a pas rendu des valeurs lisibles\",",
+      "      });",
+      "    }",
+      "    if (typeof valeurs !== \"object\" || valeurs === null || Array.isArray(valeurs)) {",
+      "      return rep.code(502).send({",
+      "        error: \"AIR_AGENT_VALEURS_ILLISIBLES\",",
+      "        message: \"l'interprète n'a pas rendu des valeurs lisibles\",",
+      "      });",
+      "    }",
+      "    const proposition = {",
+      "      operation: permise.id,",
+      "      nom: permise.nom,",
+      "      entrees: valeurs as Record<string, unknown>,",
+      "    };",
+      ...(confirme
+        ? [
+            "    const echeance = Math.floor(Date.now() / 1000) + FENETRE_S;",
+            "    return {",
+            "      ...proposition,",
+            "      expireDans: FENETRE_S,",
+            "      intention: `${String(echeance)}.${signer(",
+            "        charge(permise.id, proposition.entrees, appelant, echeance),",
+            "      )}`,",
+            "    };",
+          ]
+        : [
+            "    // Ce document ne demande pas de confirmation : la proposition",
+            "    // suffit, et l'acte se demande ensuite sans intention.",
+            "    return proposition;",
+          ]),
       "  });",
     );
   }
