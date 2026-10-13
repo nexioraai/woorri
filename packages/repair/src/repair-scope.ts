@@ -272,6 +272,11 @@ export const SECTIONS_CORRECTIVES: Readonly<Record<string, readonly SectionEmiss
   // Se repare en retirant `voiceInput` — et la capacite audio avec, si elle
   // n'etait la que pour elle. Les deux sections, donc.
   AIR_AGENT_VOICE_NOT_SERVABLE: ["capacites", "cablage"],
+  // Un agent inerte se repare dans le CABLAGE : le serveur, son adresse, ou
+  // l'integration d'identite.
+  AIR_AGENT_SANS_SERVEUR_GENERE: ["cablage"],
+  AIR_AGENT_SERVEUR_SANS_ADRESSE: ["cablage"],
+  AIR_AGENT_SANS_IDENTITE_VERIFIEE: ["cablage"],
   // L'ambiguite se repare en renommant une operation : c'est le cablage des
   // API qui change, et la liste des pouvoirs de l'agent avec.
   AIR_AGENT_OPERATION_AMBIGUOUS: ["cablage"],

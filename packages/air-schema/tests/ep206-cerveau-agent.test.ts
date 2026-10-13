@@ -41,6 +41,56 @@ const lire = (): ProjectAir =>
 const copie = (air: ProjectAir): ProjectAir => JSON.parse(JSON.stringify(air)) as ProjectAir;
 const codes = (air: ProjectAir): string[] => validateAir(air).map((d) => d.code);
 
+/**
+ * UN AGENT A BESOIN DE SON SERVEUR ET D'UNE IDENTITE — SINON IL EST REFUSE.
+ *
+ * Mesure du 2026-10-13 : mes fixtures declaraient des agents SANS backend ni
+ * integration d'authentification. Le validateur les acceptait, et les deux
+ * nouveaux refus (AIR_AGENT_SANS_SERVEUR_GENERE, AIR_AGENT_SANS_IDENTITE_
+ * VERIFIEE) les ont fait tomber — a juste titre : un tel agent monte son
+ * bouton et echoue a chaque appui.
+ *
+ * Cette aide ajoute le MINIMUM COHERENT, et rien de plus : le serveur qui
+ * porte les routes, son adresse, et l'identite qui delivre le jeton.
+ */
+const avecServeurEtIdentite = (air: ProjectAir): ProjectAir => {
+  const domaineServeur = "api.gestion.test";
+  const domaineAuth = "api.gestion-auth.test";
+  return {
+    ...air,
+    backend: { kind: "genere", stack: "fastify", domain: domaineServeur },
+    network: {
+      ...air.network,
+      allowedDomains: [...air.network.allowedDomains, domaineServeur, domaineAuth],
+    },
+    capabilities: [
+      ...air.capabilities,
+      ...(air.capabilities.some((c) => c.capability === "auth")
+        ? []
+        // `capabilityRequestSchema` est STRICT : `capability` et, au plus,
+        // `config`. Mon premier jet ajoutait `reason`, que le schema refuse —
+        // et c'est le schema qui avait raison : la raison d'une PERMISSION se
+        // declare sur la permission, pas sur la capacite.
+        : [{ capability: "auth" as const }]),
+    ],
+    integrations: [
+      ...air.integrations,
+      {
+        id: "intg_auth_agent",
+        capability: "auth",
+        // `providerClass` est EXIGE par le schema, et je l'avais oublie. La
+        // valeur est celle qu'emploient les documents reels du corpus : la
+        // forme d'une integration ne s'invente pas, elle se lit.
+        providerClass: "managed_auth",
+        config: [
+          { key: "url", value: `https://${domaineAuth}` },
+          { key: "provider", value: "air_http" },
+        ],
+      },
+    ],
+  };
+};
+
 /** L'opération qui AGIT — le pouvoir de l'agent. */
 const POUVOIR = {
   id: "apiop_envoyer_argent",
@@ -81,7 +131,7 @@ const CERVEAU = {
 };
 
 const avec = (agent: unknown, api: unknown = UNE_API): ProjectAir => {
-  const air = copie(lire());
+  const air = avecServeurEtIdentite(copie(lire()));
   const domaine = (api as { domain: string }).domain;
   return {
     ...air,

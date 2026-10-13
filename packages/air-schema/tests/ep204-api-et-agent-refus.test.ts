@@ -41,6 +41,56 @@ const copie = (air: ProjectAir): ProjectAir => JSON.parse(JSON.stringify(air)) a
 const codes = (air: ProjectAir): string[] => validateAir(air).map((d) => d.code);
 
 /** Une API minimale mais COMPLÈTE, posée sur un document réel. */
+/**
+ * UN AGENT A BESOIN DE SON SERVEUR ET D'UNE IDENTITE — SINON IL EST REFUSE.
+ *
+ * Mesure du 2026-10-13 : mes fixtures declaraient des agents SANS backend ni
+ * integration d'authentification. Le validateur les acceptait, et les deux
+ * nouveaux refus (AIR_AGENT_SANS_SERVEUR_GENERE, AIR_AGENT_SANS_IDENTITE_
+ * VERIFIEE) les ont fait tomber — a juste titre : un tel agent monte son
+ * bouton et echoue a chaque appui.
+ *
+ * Cette aide ajoute le MINIMUM COHERENT, et rien de plus : le serveur qui
+ * porte les routes, son adresse, et l'identite qui delivre le jeton.
+ */
+const avecServeurEtIdentite = (air: ProjectAir): ProjectAir => {
+  const domaineServeur = "api.gestion.test";
+  const domaineAuth = "api.gestion-auth.test";
+  return {
+    ...air,
+    backend: { kind: "genere", stack: "fastify", domain: domaineServeur },
+    network: {
+      ...air.network,
+      allowedDomains: [...air.network.allowedDomains, domaineServeur, domaineAuth],
+    },
+    capabilities: [
+      ...air.capabilities,
+      ...(air.capabilities.some((c) => c.capability === "auth")
+        ? []
+        // `capabilityRequestSchema` est STRICT : `capability` et, au plus,
+        // `config`. Mon premier jet ajoutait `reason`, que le schema refuse —
+        // et c'est le schema qui avait raison : la raison d'une PERMISSION se
+        // declare sur la permission, pas sur la capacite.
+        : [{ capability: "auth" as const }]),
+    ],
+    integrations: [
+      ...air.integrations,
+      {
+        id: "intg_auth_agent",
+        capability: "auth",
+        // `providerClass` est EXIGE par le schema, et je l'avais oublie. La
+        // valeur est celle qu'emploient les documents reels du corpus : la
+        // forme d'une integration ne s'invente pas, elle se lit.
+        providerClass: "managed_auth",
+        config: [
+          { key: "url", value: `https://${domaineAuth}` },
+          { key: "provider", value: "air_http" },
+        ],
+      },
+    ],
+  };
+};
+
 const UNE_API = {
   id: "api_sms",
   name: "Envoi de SMS",
@@ -143,7 +193,7 @@ describe("EP-204 ② · LES TROIS REFUS DE L'API (1.36.0)", () => {
 
 describe("EP-204 ③ · LES SIX REFUS DE L'AGENT (1.37.0)", () => {
   const avecAgent = (agent: unknown, api: unknown = UNE_API): ProjectAir =>
-    ({ ...avecApi(api), agent } as ProjectAir);
+    ({ ...avecServeurEtIdentite(avecApi(api)), agent } as ProjectAir);
 
   it("un agent AVEC une API et une opération connue est valide", () => {
     expect(
@@ -199,6 +249,42 @@ describe("EP-204 ③ · LES SIX REFUS DE L'AGENT (1.37.0)", () => {
     expect(codes(air)).toContain("AIR_AGENT_VOICE_WITHOUT_AUDIO");
   });
 
+  it("UN AGENT SANS SERVEUR GÉNÉRÉ est refusé — ses routes sont ÉMISES", () => {
+    // MESURE QUI A POSÉ CE REFUS, ET ELLE CORRIGE UNE AFFIRMATION À MOI.
+    // J'avais dit que le validateur ne laisserait pas déclarer un agent sans
+    // son serveur. VÉRIFIÉ : il l'ACCEPTAIT. Le bouton se montait, le port
+    // restait inerte, et chaque appui échouait sur AIR_AGENT_ABSENT.
+    const sansServeur = { ...avecApi(), agent: { allowedOperations: ["apiop_envoyer"], confirmBeforeAct: true } } as ProjectAir;
+    expect(codes(sansServeur)).toContain("AIR_AGENT_SANS_SERVEUR_GENERE");
+  });
+
+  it("UN SERVEUR SANS ADRESSE est refusé — il n'y aurait rien à joindre", () => {
+    // Un chemin relatif marcherait sur le web servi par le même hôte, et
+    // NULLE PART sur un téléphone.
+    const base = avecServeurEtIdentite(avecApi());
+    const sansAdresse = {
+      ...base,
+      backend: { kind: "genere", stack: "fastify" },
+      agent: { allowedOperations: ["apiop_envoyer"], confirmBeforeAct: true },
+    } as ProjectAir;
+    expect(codes(sansAdresse)).toContain("AIR_AGENT_SERVEUR_SANS_ADRESSE");
+  });
+
+  it("UN AGENT SANS IDENTITÉ VÉRIFIABLE est refusé — tout serait 403", () => {
+    // Sans intégration `auth` portant une `url`, l'application tombe sur la
+    // session LOCALE, qui ne produit aucun jeton. L'agent compilerait,
+    // s'afficherait, et ne servirait à rien — mesuré le jour même sur la
+    // variante du corpus, dont l'intégration portait `baseUrl` et non `url`.
+    const air = avecApi();
+    const sansIdentite = {
+      ...air,
+      backend: { kind: "genere", stack: "fastify", domain: "api.gestion.test" },
+      network: { ...air.network, allowedDomains: [...air.network.allowedDomains, "api.gestion.test"] },
+      agent: { allowedOperations: ["apiop_envoyer"], confirmBeforeAct: true },
+    } as ProjectAir;
+    expect(codes(sansIdentite)).toContain("AIR_AGENT_SANS_IDENTITE_VERIFIEE");
+  });
+
   it("⑥ UNE OPÉRATION AMBIGUË est refusée — le trou trouvé le 2026-10-13", () => {
     // L'unicité d'un identifiant d'opération est garantie PAR API : le refus
     // AIR_API_OPERATION_DUPLICATE compte dans un ensemble créé à l'intérieur
@@ -233,7 +319,7 @@ describe("EP-204 ③ · LES SIX REFUS DE L'AGENT (1.37.0)", () => {
     expect(codes(deux).filter((c) => c.startsWith("AIR_API_"))).toEqual([]);
     // L'agent, lui, est refusé.
     const avec = {
-      ...deux,
+      ...avecServeurEtIdentite(deux),
       agent: { allowedOperations: ["apiop_envoyer"], confirmBeforeAct: true },
     } as ProjectAir;
     expect(codes(avec)).toContain("AIR_AGENT_OPERATION_AMBIGUOUS");
@@ -260,7 +346,7 @@ describe("EP-204 ③ · LES SIX REFUS DE L'AGENT (1.37.0)", () => {
       },
       apis: [UNE_API, seconde],
       agent: { allowedOperations: ["apiop_envoyer", "apiop_envoyer_courriel"], confirmBeforeAct: true },
-    } as ProjectAir;
-    expect(codes(avec)).toEqual([]);
+    };
+    expect(codes(avecServeurEtIdentite(avec as ProjectAir))).toEqual([]);
   });
 });

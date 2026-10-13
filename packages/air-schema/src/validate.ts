@@ -1545,6 +1545,57 @@ export function validateAir(air: ProjectAir): AirDiagnostic[] {
     // LA CLÉ RESTE AU FORMAT. Elle n'est pas retirée : le jour où le moteur
     // sait enregistrer, ce refus tombe et rien d'autre ne change. Ce qui
     // manque est nommé dans le message, pas caché.
+    // ── UN AGENT INERTE EST REFUSE A LA RACINE (2026-10-13).
+    //
+    // MESURE QUI A POSE CES DEUX REFUS, ET ELLE CORRIGE UNE AFFIRMATION A MOI.
+    // J'avais dit au proprietaire que le validateur ne laisserait pas
+    // declarer un agent sans son serveur. VERIFIE : il l'ACCEPTAIT. Un
+    // document pouvait declarer un agent sans aucun backend — le bouton se
+    // montait, le port restait INERTE, et chaque appui echouait sur
+    // AIR_AGENT_ABSENT. « Emis et inerte », le defaut que ce depot paie en
+    // boucle, et que je venais de fermer deux fois ailleurs.
+    //
+    // ① LE SERVEUR. Les trois routes de l'agent sont EMISES par le moteur :
+    //    un backend `externe` ne les porte pas, et rien ne permet de supposer
+    //    qu'il les porte. Et sans `domain`, l'application n'a aucune adresse
+    //    a joindre — un chemin relatif marcherait sur le web servi par le
+    //    meme hote, et NULLE PART sur un telephone.
+    const b = air.backend;
+    if (b?.kind !== "genere") {
+      push(
+        "AIR_AGENT_SANS_SERVEUR_GENERE",
+        "agent",
+        "un agent est déclaré sans serveur `genere` : ses trois routes sont " +
+          "ÉMISES par le moteur, donc un serveur externe ne les porte pas. " +
+          "Le bouton se monterait et chaque appui échouerait.",
+      );
+    } else if (b.domain === undefined) {
+      push(
+        "AIR_AGENT_SERVEUR_SANS_ADRESSE",
+        "backend.domain",
+        "un agent est déclaré et le serveur n'a pas d'adresse : l'application " +
+          "n'aurait rien à joindre. Déclarez `backend.domain`.",
+      );
+    }
+    // ② L'IDENTITE. TOUTES les routes de l'agent exigent un appelant
+    //    verifiable. Sans integration d'authentification portant une `url`,
+    //    l'application tombe sur la session LOCALE, qui ne produit aucun
+    //    jeton : chaque appel serait refuse 403. L'agent compilerait,
+    //    s'afficherait, et ne servirait a rien — mesure faite le jour meme sur
+    //    la variante du corpus, dont l'integration portait `baseUrl` et non
+    //    `url`.
+    const authAgent = air.integrations.find((i) => i.capability === "auth");
+    const urlAuth = (authAgent?.config ?? []).find((c) => c.key === "url")?.value;
+    if (authAgent === undefined || typeof urlAuth !== "string" || urlAuth === "") {
+      push(
+        "AIR_AGENT_SANS_IDENTITE_VERIFIEE",
+        "agent",
+        "un agent est déclaré sans identité vérifiable : toutes ses routes " +
+          "exigent un appelant, et sans intégration `auth` portant une `url` " +
+          "l'application n'aurait aucun jeton à présenter. Chaque appel serait " +
+          "refusé.",
+      );
+    }
     if (air.agent.voiceInput === true) {
       push(
         "AIR_AGENT_VOICE_NOT_SERVABLE",
