@@ -32,7 +32,17 @@ premiers.
 ## Légende
 
 - 🟢 **couvert** — une preuve nommée, vérifiable aujourd'hui
-- 🟡 **partiel** — une partie seulement, et on dit laquelle
+- 🟡 **partiel** — et « partiel » cachait quatre situations très différentes.
+  Mesuré le 2026-10-12 : 22 lignes dans un même seau, c'est un seau qui ne dit
+  plus rien. Une seule des quatre demande du travail sur le moteur :
+  - 🟡① **le mécanisme existe, sa couverture totale n'est pas prouvée** →
+    **c'est le seul cas qui demande du travail sur le moteur**
+  - 🟡② **hors de portée du générateur** — la responsabilité est ailleurs
+    (gabarit hôte, outil de construction). Rien à faire ici
+  - 🟡③ **l'obligation ne s'applique pas aujourd'hui** — aucun document ne la
+    déclenche. Rien à faire, et à revoir le jour où un document la déclenche
+  - 🟡④ **mesuré sur un périmètre restreint** → il faut élargir la MESURE,
+    pas le moteur
 - 🔴 **absent** — mesuré absent
 - ⚪ **non mesuré** — pas encore regardé ; ne pas lire comme « absent »
 
@@ -44,17 +54,17 @@ premiers.
 |---|---|---|---|
 | V1 | Encoding and Sanitization | 🟢 | Mesuré sur **1 831 fichiers / 198 866 lignes émises** : **0** `dangerouslySetInnerHTML`, **0** `eval`, **0** `new Function`. Aucun chemin d'injection HTML brute. Mesure l'ABSENCE des constructions dangereuses, pas l'encodage de chaque sortie |
 | V2 | Validation and Business Logic | 🟢 | 160 règles de validation émises et appliquées ; portail vivant, refus 422 nommant la règle, 3 configurations |
-| V3 | Web Frontend Security | 🟡 | **Aucun fichier HTML n'est émis** (vérifié : l'entrée est `App.tsx`). La CSP appartient donc à la coquille hôte, pas au code généré — et elle n'y est pas mesurée |
-| V4 | API and Web Service | 🟡 | contrat `/air/v1/entities/<id>/rows` émis et démarré ; en-têtes de sécurité non mesurés |
+| V3 | Web Frontend Security | 🟡② | **Aucun fichier HTML n'est émis** (vérifié : l'entrée est `App.tsx`). La CSP appartient donc à la coquille hôte, pas au code généré — et elle n'y est pas mesurée |
+| V4 | API and Web Service | 🟡① | contrat `/air/v1/entities/<id>/rows` émis et démarré ; en-têtes de sécurité non mesurés |
 | V5 | File Handling | 🟢 | Le serveur refuse une référence `asset` hors de `network.allowedDomains`. **29 documents sur 31 contrôlés, sur LES DEUX piles** (mesuré). Chemin relatif accepté, URL illisible refusée. Trois cliquets. L'empreinte de fichier reste hors de portée : le fichier ne passe pas par le serveur |
-| V6 | Authentication | 🟡 | **DÉLÉGUÉ PAR CONCEPTION, pas bloqué** — j'avais écrit « bloqué », c'était faux. Mesuré : **24 documents sur 31** désignent un serveur d'authentification TIERS, 3 Supabase, 4 aucun. Notre serveur n'a donc jamais eu à posséder les comptes ; il doit VÉRIFIER le jeton, ce qu'il fait (V9). Reste non couvert : les 3 documents Supabase et la création de compte |
-| V7 | Session Management | 🟡 | même raison que V6 : la session est tenue par le fournisseur déclaré ; le serveur lit un jeton vérifié à chaque requête |
+| V6 | Authentication | 🟡③ | **DÉLÉGUÉ PAR CONCEPTION, pas bloqué** — j'avais écrit « bloqué », c'était faux. Mesuré : **24 documents sur 31** désignent un serveur d'authentification TIERS, 3 Supabase, 4 aucun. Notre serveur n'a donc jamais eu à posséder les comptes ; il doit VÉRIFIER le jeton, ce qu'il fait (V9). Reste non couvert : les 3 documents Supabase et la création de compte |
+| V7 | Session Management | 🟡③ | même raison que V6 : la session est tenue par le fournisseur déclaré ; le serveur lit un jeton vérifié à chaque requête |
 | V8 | Authorization | 🟢 | filtres de visibilité en SQL depuis les règles du document ; fermé par défaut ; portail vivant — ligne écrite, invisible |
 | V9 | Self-contained Tokens | 🟢 | `src/appelant.ts` — HS256, algorithme imposé, `exp` exigé, comparaison à temps constant ; jeton mal signé refusé (prouvé) |
 | V10 | OAuth and OIDC | 🔴 | aucun |
-| V11 | Cryptography | 🟡 | HMAC pour les jetons ; aucun chiffrement au repos exprimable |
+| V11 | Cryptography | 🟡① | HMAC pour les jetons ; aucun chiffrement au repos exprimable |
 | V12 | Secure Communication | 🟢 | TLS par défaut dès que l'hôte n'est pas local, certificat vérifié ; test l'interdit de régresser |
-| V13 | Configuration | 🟡 | aucun secret dans les fichiers émis (test) ; durcissement non mesuré |
+| V13 | Configuration | 🟡④ | aucun secret dans les fichiers émis (test) ; durcissement non mesuré |
 | V14 | Data Protection | 🟢 | Défaut trouvé et corrigé le 2026-10-12 côté Node (colonne morte pour un numéro de carte). **Java vérifié le même jour : 0 des 5 champs sensibles n'a d'attribut dans le modèle JPA** — la pile Java était déjà correcte, le défaut était celui de l'émetteur Node. Mesuré après correction : 0 dans le schéma, 0 en lecture, 0 à l'insertion, sur les deux piles. Deux cliquets |
 | V15+ | Malicious Code · Business Logic · WebRTC | 🟢 | **Code malveillant** : 0 `eval`, 0 `new Function`, 0 `lorem`/`TODO`/`FIXME` sur 198 866 lignes. **Logique métier** : 160 règles appliquées, transitions refusées, journal non réécrivable — tout prouvé au portail vivant. **WebRTC** : 0 occurrence, aucun document ne l'utilise |
 
@@ -62,24 +72,24 @@ premiers.
 
 | Catégorie | État | Preuve / manque |
 |---|---|---|
-| MASVS-STORAGE | 🟡 | champs `sensitive` jamais conservés ni rendus (test) ; chiffrement du stockage non exprimable |
-| MASVS-CRYPTO | 🟡 | voir ASVS V11 |
-| MASVS-AUTH | 🟡 | voir ASVS V6/V7 — délégué au fournisseur déclaré |
+| MASVS-STORAGE | 🟡① | champs `sensitive` jamais conservés ni rendus (test) ; chiffrement du stockage non exprimable |
+| MASVS-CRYPTO | 🟡① | voir ASVS V11 |
+| MASVS-AUTH | 🟡③ | voir ASVS V6/V7 — délégué au fournisseur déclaré |
 | MASVS-NETWORK | 🟢 | voir ASVS V12 |
 | MASVS-PLATFORM | 🟢 | Mesuré sur les **31 manifestes émis** : **78 permissions déclarées**, **0 sans être induite** par une capacité du registre, **0 sans raison rédigée** pour l'utilisateur. Une permission de trop est un défaut — il n'y en a aucune. Le manifeste calcule lui-même `declared` et `induced` côte à côte, avec `requiredByCapability` |
-| MASVS-CODE | 🟡 | **Hors de portée du générateur** : vérifié, **aucun `package.json` n'est émis** — le projet est une app Expo dont les dépendances viennent du gabarit hôte. L'épinglage des versions ne se décide donc pas ici. Non mesuré sur le gabarit |
+| MASVS-CODE | 🟡② | **Hors de portée du générateur** : vérifié, **aucun `package.json` n'est émis** — le projet est une app Expo dont les dépendances viennent du gabarit hôte. L'épinglage des versions ne se décide donc pas ici. Non mesuré sur le gabarit |
 | MASVS-RESILIENCE | 🔴 | Mesuré sur les 31 projets émis : **0 configuration d'obfuscation, d'anti-altération ou de détection de root**. Hors de portée de l'émetteur aujourd'hui — un générateur ne durcit pas un binaire. À traiter par le gabarit de construction, pas ici |
-| MASVS-PRIVACY | 🟡 | `dataCollected` déclaré au format ; cliquets de partage tiers existants |
+| MASVS-PRIVACY | 🟡④ | `dataCollected` déclaré au format ; cliquets de partage tiers existants |
 
 ## 3. Obligations de mise en marché — 2026
 
 | Obligation | État | Preuve / manque |
 |---|---|---|
-| Suppression de compte **dans** l'app (Apple 5.1.1(v), Play) | 🟡 | `compliance.accountDeletionRequired` au format ; l'émission du parcours n'est pas mesurée |
-| Déclaration Data Safety | 🟡 | `compliance.dataCollected` au format |
-| API cible Android 36 | 🟡 | le format déclare le MINIMUM (`minAndroidSdk`), pas la cible |
-| Consentement IA (Apple 5.1.2(i)) | 🟡 | Mesuré : **aucun des 31 documents n'intègre d'IA** — l'obligation ne s'applique donc à aucun aujourd'hui. NON VÉRIFIÉ pour le jour où un document en intégrera une : rien ne garantit que le consentement serait émis |
-| Manifeste de confidentialité iOS | 🟡 | Mesuré : **0 fichier `PrivacyInfo.xcprivacy` émis**, mais **31 documents sur 31** portent la déclaration d'API sensibles (`NSPrivacyAccessedAPI`). La donnée existe donc ; le fichier est produit par l'outil de construction, pas par l'émetteur — **non mesuré à cet endroit-là** |
+| Suppression de compte **dans** l'app (Apple 5.1.1(v), Play) | 🟡① | `compliance.accountDeletionRequired` au format ; l'émission du parcours n'est pas mesurée |
+| Déclaration Data Safety | 🟡④ | `compliance.dataCollected` au format |
+| API cible Android 36 | 🟡① | le format déclare le MINIMUM (`minAndroidSdk`), pas la cible |
+| Consentement IA (Apple 5.1.2(i)) | 🟡③ | Mesuré : **aucun des 31 documents n'intègre d'IA** — l'obligation ne s'applique donc à aucun aujourd'hui. NON VÉRIFIÉ pour le jour où un document en intégrera une : rien ne garantit que le consentement serait émis |
+| Manifeste de confidentialité iOS | 🟡② | Mesuré : **0 fichier `PrivacyInfo.xcprivacy` émis**, mais **31 documents sur 31** portent la déclaration d'API sensibles (`NSPrivacyAccessedAPI`). La donnée existe donc ; le fichier est produit par l'outil de construction, pas par l'émetteur — **non mesuré à cet endroit-là** |
 
 ## 4. EN 301 549 → WCAG 2.2 AA — **obligation légale UE**
 
@@ -95,21 +105,21 @@ premiers.
 |---|---|---|
 | Noms accessibles des composants | 🟢 | 118 `accessibilityLabel` au runtime, 46 alimentés par le document, 0 en dur |
 | Rôles accessibles | 🟢 | 26 `accessibilityRole` au runtime |
-| Texte de remplacement des images (WCAG 1.1.1, niveau A) | 🟡 | Mesuré : **chaque `<Image>` du runtime porte un `accessibilityLabel`** — alimenté par le TITRE de l'élément dans un cas, par une propriété que l'appelant fournit dans l'autre. Jamais une chaîne en dur. NON VÉRIFIÉ : que tous les appelants la fournissent effectivement. 29 documents sur 31 portent des champs `asset` |
+| Texte de remplacement des images (WCAG 1.1.1, niveau A) | 🟡① | Mesuré : **chaque `<Image>` du runtime porte un `accessibilityLabel`** — alimenté par le TITRE de l'élément dans un cas, par une propriété que l'appelant fournit dans l'autre. Jamais une chaîne en dur. NON VÉRIFIÉ : que tous les appelants la fournissent effectivement. 29 documents sur 31 portent des champs `asset` |
 | **Contraste 4.5:1** (WCAG 1.4.3, AA) | 🟢 | Calculé sur les jetons émis des **31 documents** : **186 paires, 0 sous 4,5:1**. Paires évaluées : texte/fond, texte/surface, atténué/fond, atténué/surface, surPrimaire/primaire, erreur/fond. Ne couvre pas toutes les combinaisons possibles — seulement celles que les composants utilisent |
 | **Cibles de pointeur ≥ 24 px** (WCAG 2.5.8, AA) | 🟢 | Mesuré sur les **31 documents** : `tapTarget` = **48 px** minimum, `controlHeight` = **54 px** — le double de l'exigence. Les 24 usages de `minHeight` passent tous par ces jetons, aucun nombre en dur |
 | Focus visible (WCAG 2.4.7, AA) | 🔴 | **DÉFAUT MESURÉ le 2026-10-12.** Aucune gestion du focus : mes 4 occurrences précédentes étaient des **noms d'icônes** (`eye-outline`). Invisible sur une app tactile ; sur la **cible web**, un utilisateur au clavier ne sait pas où il est. **CHEMIN DE CORRECTION, localisé** : ① un jeton d'anneau de focus dans `packages/design-tokens/src/schema.ts` — `size` est un `strictObject`, donc changement de schéma puis régénération de `theme.generated.ts` ; ② l'état de focus sur le geste interactif, `packages/primitives/src/hotes.tsx` (54 lignes, réexporte `Pressable as Geste`) ; ③ régénérer les ressources par `scripts/embed-assets.mjs` ; ④ revérifier 62/62, 48/48 et la chaîne. Non commencé : une chaîne touchant le schéma scellé des jetons ne doit pas être laissée à moitié |
-| Langue déclarée (WCAG 3.1.1, niveau A) | 🟡 | La langue **est** déclarée au document (`defaultAppLocale`, `userLanguage`, `rtlSupported`). Aucun fichier HTML n'étant émis, la balise `lang` dépend de la coquille hôte — non mesurée là |
+| Langue déclarée (WCAG 3.1.1, niveau A) | 🟡② | La langue **est** déclarée au document (`defaultAppLocale`, `userLanguage`, `rtlSupported`). Aucun fichier HTML n'étant émis, la balise `lang` dépend de la coquille hôte — non mesurée là |
 
 ## 5. WebCoderBench — 9 perspectives
 
 | Perspective | État | Preuve / manque |
 |---|---|---|
 | Code Quality | 🟢 | lint + typecheck bloquants sur les apps émises (portails `app_compile`, `app_web`) |
-| Visual Quality | 🟡 | Mesuré : **93 écrans sur 466 portent un style BRUT** (`StyleSheet.create` ou `style={{…}}`) au lieu de passer par les primitives. Les 373 autres sont cohérents par construction. Ce n'est pas un défaut prouvé — un style local peut être légitime — mais c'est la seule porte par laquelle l'incohérence visuelle peut entrer |
+| Visual Quality | 🟡① | Mesuré : **93 écrans sur 466 portent un style BRUT** (`StyleSheet.create` ou `style={{…}}`) au lieu de passer par les primitives. Les 373 autres sont cohérents par construction. Ce n'est pas un défaut prouvé — un style local peut être légitime — mais c'est la seule porte par laquelle l'incohérence visuelle peut entrer |
 | Content Quality | 🟢 | Mesuré sur 198 866 lignes émises : **0 `lorem ipsum`, 0 `TODO`, 0 `FIXME`**. Tout le texte vient du document |
 | Performance Quality | 🟢 | **Question tranchée le 2026-10-12, aucun défaut.** Les 2 URL de remplissage (`picsum.photos`) vivent dans `demo.data.ts` — les données de DÉMONSTRATION, pas le code de l'app — et surtout `picsum.photos` **EST déclaré** dans `network.allowedDomains` des deux documents. L'émetteur ne sort donc jamais des hôtes autorisés. Les 29 autres documents n'ont aucune URL de remplissage |
-| **Accessibility** | 🟡 | noms et rôles couverts (§4) ; contraste, cibles et focus non mesurés |
+| **Accessibility** | 🟡④ | noms et rôles couverts (§4) ; contraste, cibles et focus non mesurés |
 | Maintainability | 🟢 | Taux de commentaire mesuré sur les fichiers émis : **34 %** |
 | Functional / Visual / Content Alignment | ⚪ | non mesuré |
 
@@ -118,11 +128,11 @@ premiers.
 | Capacité | État | Preuve / manque |
 |---|---|---|
 | Base relationnelle | 🟢 | schéma SQL émis, appliqué au démarrage ; SQLite et Postgres réels prouvés |
-| Stockage de fichiers | 🟡 | capacité `media_upload` au registre ; transformations non exprimables |
+| Stockage de fichiers | 🟡① | capacité `media_upload` au registre ; transformations non exprimables |
 | **Temps réel** | 🔴 | **0 clé** au format |
 | Fonctions serveur | 🟢 | deux piles émises et DÉMARRÉES (48/48 preuves) |
 | **Recherche sémantique / vecteurs** | 🔴 | **0 clé** |
-| Hors-ligne | 🟡 | capacité `offline_storage` au registre ; comportement non mesuré |
+| Hors-ligne | 🟡④ | capacité `offline_storage` au registre ; comportement non mesuré |
 
 ---
 
