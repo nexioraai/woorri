@@ -1,6 +1,8 @@
 # STATUS — TABLEAU DE BORD DU CHANTIER MOBILE GENERATION
 
 > Mis à jour à chaque étape significative. Dernière mise à jour :
+> **2026-10-13 (30)** — voir l'entrée juste sous celle du lot de l'agent.
+>
 > **2026-10-13 (29)** (**🤖 L'AGENT : D'UNE CLÉ DÉCLARABLE À UNE MACHINE QUI
 > AGIT, ET HUIT CLIQUETS QUI M'ONT CORRIGÉ.** Direction du propriétaire :
 > « Deribfy doit faire un connecteur des API et intégrer des API pour que
@@ -129,6 +131,85 @@
 > session** (le Java en émet, en forme) ; **20 capacités sur 21 non implémentées
 > côté appareil**, le contrat étant synchrone et rendant un booléen ; et
 > `catalogue()` du port de l'agent appelé par personne.)
+>
+> **2026-10-13 (30)** (**🔍 LES DIX-NEUF DETTES CONFRONTÉES AU MOTEUR, UNE PAR
+> UNE.** Demande du propriétaire : « passe les 19 fiches une par une contre le
+> moteur, et dis-moi lesquelles sont encore vraies ». Mesure, pas relecture.
+> **AUCUNE fiche n'est requalifiée par ce lot** — requalifier est un geste
+> distinct, et trois fiches le méritent sur preuve ci-dessous.
+>
+> **TROIS FICHES SONT PÉRIMÉES, MESURÉ.**
+>
+> `DET-003` « le gabarit ne produit pas d'`eas.json` » — **le moteur l'émet** :
+> mesuré à la racine de chaque application produite (`app.json`, `eas.json`,
+> `.easignore`, `.fingerprintignore`, `PUBLICATION.md`). La fiche parlait du
+> GABARIT, et c'est l'ÉMETTEUR qui le produit — la gêne décrite (« ajouté à la
+> main pour le slice ») n'existe plus.
+>
+> `DET-026` « `app.locales.rtlSupported` est INERTE » — **lu à TROIS endroits**
+> (`emit-project` ×2, `emit-web` ×1). Le commentaire du code dit lui-même
+> « n'était lu par AUCUN étage », **au passé** : corrigé par `D-063`, et la
+> fiche n'a pas suivi.
+>
+> `DET-029` « divergence documentaire : `main` est muet sur la campagne » —
+> **RENVERSÉE**. Mesuré : `main` porte `STATUS.md` à l'entrée **29** (ce jour)
+> et est **+244 commits** devant `fix/xss-jsonld`, qui est à l'entrée 27 du
+> 2026-09-05 et **0 commit** devant `main`. La convergence s'est faite dans le
+> sens utile, par le travail quotidien sur `main`. La fiche décrit l'état
+> inverse de l'état réel.
+>
+> **UNE FICHE EST VRAIE MAIS MAL IMPUTÉE, ET C'EST LA TROUVAILLE QUI COMPTE.**
+>
+> `DET-024` « écran déclaré mais INATTEIGNABLE ». Mesuré avec
+> `reachableScreens(air, ["ui","lifecycle","data"])` — la notion du MOTEUR, pas
+> une mienne : **11 documents sur 32** portent au moins un écran inatteignable.
+> Mais la répartition dit tout : **corpus v3, produit PAR le moteur : 16
+> documents, ZÉRO écran mort.** Corpus v2, gelé et écrit à la main : 12
+> documents, **9** touchés. Slices : 4 documents, 2 touchés.
+> **LE GÉNÉRATEUR NE PRODUIT PAS D'ÉCRAN MORT.** Le défaut vit dans les vieux
+> documents écrits à la main. La fiche accuse le moteur d'un défaut qui n'est
+> pas le sien.
+>
+> *(Au premier jet j'ai mesuré 31/32 avec une notion d'atteignabilité inventée
+> par moi — élément de liste, détail et slot n'y étaient pas. 31/32 ne disait
+> pas que le moteur était mauvais, il disait que ma mesure était fausse. La
+> notion du moteur existait : `execution-contract/graph.ts`.)*
+>
+> **UNE CAUSE EXACTE TROUVÉE POUR LA DETTE QUI BLOQUE A++.**
+>
+> `DET-028` — la dimension **C** est `non_conforme` parce que `loading` et
+> `error` ne sont jamais atteints. Mesuré POURQUOI : le magasin réel
+> (`magasin-donnees.ts`) EXPOSE `status(entityId): DataStatus` ; le fournisseur
+> de **DÉMO** (`demo-provider.ts`) n'en a **aucun**. Et **0 document sur 32**
+> déclare une source distante — donc **toutes** les applications mesurées par
+> les gates tournent sur la démo. La cause n'est pas « la source de données est
+> synchrone » en général : c'est **le fournisseur de démo qui ne sait pas dire
+> « en cours » ni « échec »**. C'est du code, et il est à notre portée — à la
+> différence de A et G, qui exigent un appareil réel.
+>
+> **CE QUI RESTE VRAI, CONFIRMÉ PAR MESURE.**
+>
+> `DET-005` `expo-dev-client` absent du gabarit — vérifié, absent.
+> `DET-008` aucun backend vivant en preview — **0 document sur 32** déclare
+> `sourceKind: "remote"`. `DET-007` seed partiel — **11 entités sur 145**, dans
+> **10 documents**, n'ont aucun jeu de données ; la règle « seules les entités
+> portant un `dataset` reçoivent des données » tient toujours.
+>
+> **CE QUI N'EST PAS DU CODE, ET QUE LE MOTEUR NE PEUT PAS FERMER.**
+>
+> `DET-009` (provisionnement Supabase à ~170 s), `DET-010` (build iOS local en
+> échec, CocoaPods), `DET-012` (**le port USB-C de l'iPhone 16 ne fonctionne
+> pas** — du matériel), `DET-013` (Expo Go incompatible avec le train).
+> Ces quatre bloquent la validation sur appareil, donc la Phase 8, donc les
+> dimensions A et G, donc A++. **Aucune ne touche la génération.**
+>
+> **LA CONCLUSION QUE CE LOT ÉTABLIT, ET QU'IL FAUT DIRE EN UNE LIGNE : LE
+> MOTEUR GÉNÈRE. IL NE PUBLIE PAS.** Les dix-neuf dettes, les sept points du
+> registre, les phases rouvertes — rien n'empêche de fabriquer une
+> application : **32/32** compilent, se rendent et se construisent, **64/64**
+> serveurs compilent. Ce qui manque est APRÈS : signer, soumettre, publier,
+> mettre à jour, gérer une flotte — les Phases 11 à 14, dont 12/13/14 ne sont
+> pas commencées.)
 >
 > **2026-10-05 (28)** (**🌐 LA CIBLE WEB, LE SERVEUR NEUTRE, ET UN MOIS DE
 > DÉRIVE DE CE FICHIER RECONNU.** Ce fichier datait du **2026-09-05** alors que

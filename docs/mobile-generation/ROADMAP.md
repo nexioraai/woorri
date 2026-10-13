@@ -1142,6 +1142,38 @@ conditions sont satisfaites. Une condition partiellement satisfaite vaut
 `RN-20` DET-026 `rtlSupported` inerte · `RN-21` banc de coûts EAS · `RN-22` alarme `G23` (9 analyses / 1 construction) ·
 `RN-23` conditions 1/3/4/5/7 du protocole (`REFERENCE` § O).
 
+### Confrontation des dettes au moteur — 2026-10-13
+
+Demande du propriétaire : savoir lesquelles des 19 dettes ouvertes sont encore
+VRAIES. Mesuré, pas relu. Détail et preuves : `STATUS.md` entrée **30**.
+
+| Fiche | Verdict MESURÉ | Ce qu'il faut en faire |
+|---|---|---|
+| `DET-003` | 🟢 **PÉRIMÉE** — le moteur émet `eas.json` à la racine de chaque application | requalifier (geste distinct) |
+| `DET-026` | 🟢 **PÉRIMÉE** — `rtlSupported` lu à 3 endroits ; le code dit « n'était lu », au passé (`D-063`) | requalifier |
+| `DET-029` | 🟢 **RENVERSÉE** — `main` porte l'entrée 29 et est **+244** devant `fix/xss-jsonld`, qui est **0** devant | requalifier |
+| `DET-024` | 🟠 **VRAIE, MAL IMPUTÉE** — corpus v3 produit par le moteur : **0/16** écran mort ; corpus v2 écrit à la main : **9/12** | réécrire l'imputation : ce n'est pas un défaut du générateur |
+| `DET-028` | 🔴 **VRAIE, CAUSE EXACTE TROUVÉE** — le magasin réel expose `status()`, le fournisseur de **démo** non, et 0/32 documents déclarent une source distante | **actionnable en code** : donner un état au fournisseur de démo |
+| `DET-005` | 🔴 VRAIE — `expo-dev-client` absent du gabarit | inchangée |
+| `DET-007` | 🔴 VRAIE — **11 entités sur 145**, dans 10 documents, sans jeu de données | inchangée |
+| `DET-008` | 🔴 VRAIE — **0/32** documents déclarent `sourceKind: "remote"` | inchangée |
+| `DET-006` | ⚪ **NON MESURABLE ICI** — exige un appareil réel | prérequis propriétaire |
+| `DET-009` `DET-010` `DET-012` `DET-013` | ⚪ **HORS CODE** — service tiers, CocoaPods, **port USB-C de l'iPhone 16 hors service**, Expo Go | prérequis propriétaire |
+| `DET-031` | 🔴 VRAIE — générateur de fixture désynchronisé | inchangée |
+| `DET-042`→`DET-046` | 🔴 VRAIES — nées du lot de l'agent, ce jour | inchangées |
+
+**CE QUE CETTE CONFRONTATION ÉTABLIT.** Le registre **exagérait** : trois
+fiches sur dix-neuf décrivaient un état que le moteur a dépassé, et une
+quatrième accusait le générateur d'un défaut appartenant aux documents écrits
+à la main. Un registre qui exagère coûte autant qu'un registre qui minimise —
+il fait planifier sur du faux.
+
+**ET IL ÉTABLIT LA PHRASE QUI COMPTE : LE MOTEUR GÉNÈRE, IL NE PUBLIE PAS.**
+Rien dans ces dix-neuf fiches n'empêche de fabriquer une application — 32/32
+compilent, se rendent, se construisent ; 64/64 serveurs compilent. Ce qui
+manque est APRÈS la génération : signer, soumettre, publier, mettre à jour,
+gérer une flotte. Phases 11 à 14, dont **12, 13 et 14 ne sont pas commencées**.
+
 ### Synchronisations documentaires
 
 | ID | Objet | Resp. | État |
