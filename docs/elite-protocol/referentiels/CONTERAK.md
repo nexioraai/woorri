@@ -36,14 +36,23 @@
 | **Graphiques** | types de blocs disponibles : `button, detail_header, empty_state, form, header, list, prose, search_entry, spacer` — aucun graphique | « graphiques mensuels de consommation et de montants » |
 | **Empreinte de fichier** | `createHash` = **0**. Le seul `sha256` est celui du HMAC qui signe les jetons — faux positif vérifié | « calculer une empreinte numérique du fichier pour repérer une modification ultérieure » |
 
-### Et une quatrième, de nature différente
+### La quatrième est FERMÉE — 2026-10-12
 
-**L'unicité en base.** Le cahier exige qu'« une référence de transaction ne
-puisse être utilisée qu'une seule fois dans toute l'application, toutes villes
-et tous opérateurs confondus ». Le format sait le déclarer (`unique: true` sur
-un champ), et le schéma SQL émis **ne porte aucune contrainte d'unicité** —
-mesuré. Ce n'est donc pas un manque du format mais un manque de l'émetteur, et
-c'est le moins coûteux des quatre à fermer.
+**L'unicité.** Le cahier exige qu'« une référence de transaction ne puisse
+être utilisée qu'une seule fois dans toute l'application, toutes villes et
+tous opérateurs confondus ».
+
+Mesuré avant : 72 champs `unique` dans 28 documents, **aucune contrainte** au
+schéma émis. Mesuré après : **72 sur 72 contraints, sur LES DEUX piles**.
+
+Pourquoi ça compte au-delà du cahier : sans contrainte en base, deux écritures
+simultanées passent toutes les deux. Une vérification applicative ne protège
+pas d'une course — elle lit, puis écrit, et quelqu'un d'autre écrit entre les
+deux.
+
+Deux cliquets : chaque champ `unique` conservé est contraint, et un champ
+sensible n'en reçoit jamais — il n'a pas de colonne, les deux règles ne
+doivent pas se contredire.
 
 ## Pourquoi je ne les ferme pas cette nuit
 

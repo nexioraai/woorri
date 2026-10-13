@@ -126,7 +126,19 @@ function schemaSql(air: ProjectAir): string {
       `-- « ${e.name} »${e.appendOnly === true ? " — JOURNAL : rien ne s'y réécrit ni s'y efface." : ""}`,
       `create table if not exists ${table(e)} (`,
       "  id text primary key",
-      ...conserves(e).map((f) => `, ${colonne(f)} ${typeSql(f)}`),
+      // ── `unique` DU DOCUMENT DEVIENT UNE CONTRAINTE, PAS UN COMMENTAIRE.
+      //
+      // Mesuré le 2026-10-12 : 72 champs `unique` dans 28 documents, et le
+      // schéma émis n'en portait AUCUNE contrainte. Un cahier réel l'exige
+      // mot pour mot — « une référence de transaction ne peut être utilisée
+      // qu'une seule fois dans toute l'application ». Sans contrainte en
+      // base, deux écritures simultanées passent toutes les deux : la
+      // vérification applicative ne protège pas d'une course.
+      //
+      // Même mot-clé dans les deux moteurs.
+      ...conserves(e).map(
+        (f) => `, ${colonne(f)} ${typeSql(f)}${f.unique === true ? " unique" : ""}`,
+      ),
       ");",
       "",
     );

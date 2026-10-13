@@ -214,7 +214,12 @@ const entite = (groupe: string, e: ProjectAir["entities"][number]): string => {
     }
     const t = typeJava(f.type);
     lignes.push(
-      `  @Column(name = "${f.name}"${f.required ? ", nullable = false" : ""})`,
+      // `unique` du document devient une contrainte en base, comme cote Node.
+      // Mesure du 2026-10-12 : 72 champs `unique` dans 28 documents, aucune
+      // contrainte emise. Sans elle, deux ecritures simultanees passent
+      // toutes les deux — une verification applicative ne protege pas d'une
+      // course.
+      `  @Column(name = "${f.name}"${f.required ? ", nullable = false" : ""}${f.unique === true ? ", unique = true" : ""})`,
       `  private ${t} ${CAMEL(f.id)};`,
     );
   }

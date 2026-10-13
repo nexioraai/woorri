@@ -270,6 +270,43 @@ describe("une règle sur un champ calculé se déclenche vraiment", () => {
 // `paiement_numero_carte` — alors que le serveur ne leur écrit jamais rien.
 // Aucune fuite, mais une colonne morte qui invite à être remplie par un autre
 // chemin. ASVS 5.0 V14 (Data Protection).
+// ── `unique` DU DOCUMENT DEVIENT UNE CONTRAINTE EN BASE.
+//
+// Mesuré le 2026-10-12 : 72 champs `unique` dans 28 documents, et le schéma
+// émis n'en portait aucune contrainte. Un cahier réel l'exige mot pour mot —
+// « une référence de transaction ne peut servir qu'une fois dans toute
+// l'application ». Sans contrainte en base, deux écritures simultanées
+// passent toutes les deux : une vérification applicative ne protège pas
+// d'une course.
+describe("un champ unique porte sa contrainte en base", () => {
+  it("chaque champ `unique` conservé est contraint dans le schéma", () => {
+    const a = air();
+    const u = a.entities.flatMap((e) =>
+      e.fields.filter(
+        (f) => f.unique === true && f.derived === undefined && f.sensitive !== true,
+      ),
+    );
+    if (u.length === 0) return;
+    const ddl = new Map(compileBackend(a).files).get("schema.sql") ?? "";
+    for (const f of u) {
+      const c = f.id.replace(/^fld_/u, "");
+      expect(ddl, c).toMatch(new RegExp("\\b" + c + "\\s+\\w+\\s+unique", "u"));
+    }
+  });
+
+  // Un champ sensible n'a pas de colonne : il ne peut donc pas en porter la
+  // contrainte. Les deux règles ne doivent pas se contredire.
+  it("un champ sensible ne reçoit pas de contrainte d’unicité", () => {
+    const a = air();
+    const s = a.entities.flatMap((e) =>
+      e.fields.filter((f) => f.sensitive === true).map((f) => f.id.replace(/^fld_/u, "")),
+    );
+    if (s.length === 0) return;
+    const ddl = new Map(compileBackend(a).files).get("schema.sql") ?? "";
+    for (const c of s) expect(ddl, c).not.toMatch(new RegExp("\\b" + c + "\\b", "u"));
+  });
+});
+
 describe("un champ sensible n’a pas de colonne en base", () => {
   it("le schéma SQL ne nomme aucun champ sensible", () => {
     const a = air();
