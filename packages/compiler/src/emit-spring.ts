@@ -38,6 +38,14 @@
 // 🔴 AUCUN SECRET. Pas de mot de passe de base, pas de clé d'opérateur. La
 //    configuration vient de l'environnement, et le projet émis le dit.
 import type { ProjectAir } from "@deribfy/air-schema";
+import {
+  agentApiJava,
+  appelantJava,
+  connecteurApiJava,
+  connecteurJava,
+  echecsJava,
+  PASCAL_API,
+} from "./emit-spring-agent.ts";
 
 export interface EnveloppeBackend {
   readonly files: ReadonlyMap<string, string>;
@@ -1262,6 +1270,30 @@ export function enveloppeSpring(air: ProjectAir): EnveloppeBackend {
   files.set(`${chemin}/api/Calculs.java`, calculs(groupe, air));
   files.set(`${chemin}/api/ReglesMetier.java`, reglesMetier(groupe, air));
   files.set(`${chemin}/api/Validation.java`, validation(groupe, air));
+  // ── LA PARITE : IDENTITE, CONNECTEUR, AGENT (2026-10-13).
+  //
+  // Mesure qui l'a imposee : la pile `fastify` savait lire un appelant,
+  // appeler une API declaree et tenir la porte de l'agent ; la pile
+  // `spring_boot` ne savait RIEN de tout cela. Cote Java, toute regle de
+  // visibilite designant l'appelant rendait 403 POUR TOUJOURS — honnete, mais
+  // indisponible. Et `tontine`, l'application du proprietaire, declare
+  // `spring_boot` : elle aurait eu un agent declare et aucun serveur pour lui.
+  //
+  // L'APPELANT EST EMIS DANS TOUS LES CAS : c'est lui qui debloque les regles
+  // de visibilite, qui n'ont rien a voir avec l'agent.
+  files.set(`${chemin}/Appelant.java`, appelantJava(groupe));
+  if (air.apis !== undefined && air.apis.length > 0) {
+    files.set(`${chemin}/connecteur/Echecs.java`, echecsJava(groupe));
+    for (const api of air.apis) {
+      // PASCAL_API, pas le PASCAL local : lui ne retire pas le prefixe `api_`,
+      // et le nom du fichier ne correspondrait pas au nom de la classe.
+      files.set(`${chemin}/connecteur/${PASCAL_API(api.id)}.java`, connecteurJava(groupe, api));
+    }
+    files.set(`${chemin}/api/ConnecteurApi.java`, connecteurApiJava(groupe, air.apis));
+    if (air.agent !== undefined) {
+      files.set(`${chemin}/api/AgentApi.java`, agentApiJava(groupe, air));
+    }
+  }
   files.set("src/main/resources/application.yml", configuration(air));
   files.set("LISEZ-MOI.md", lisezMoi(air));
   return { files };
