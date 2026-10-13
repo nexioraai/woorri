@@ -72,7 +72,30 @@ describe("E3.3 — l'écran émis consomme RÉELLEMENT la source distante décla
     // Amorçage : la graine locale est rendue — rien de distant n'est prétendu.
     expect(rendu(r)).toContain("Bouaké");
 
-    // 10 · LOADING observable pendant le transport en vol (promesse tenue).
+    // ── 10 · LOADING — OBSERVÉ AU PREMIER REMPLISSAGE, ET SEULEMENT LA.
+    //
+    // RÉPARATION DU 2026-10-13, ET LA CAUSE MÉRITE D'ÊTRE DITE. Ce bloc
+    // attendait « Chargement… » sur le magasin DÉJÀ ENSEMENCÉ ci-dessus. Il a
+    // cessé d'être vrai quand `magasin-donnees` a reçu sa règle `DET-033`,
+    // issue d'un jugement du propriétaire sur un appareil réel : « une
+    // revalidation en ARRIÈRE-PLAN ne remplace pas des données affichées par
+    // un état de chargement — le polling repassait chaque écran par
+    // "Chargement…" toutes les 30 s, l'UI clignotait, et le champ de recherche
+    // était démonté en pleine frappe. »
+    //
+    // La règle est JUSTE, et c'est l'ATTENTE qui était devenue fausse : tant
+    // que des lignes existent, l'instantané servi reste la vérité. Le
+    // chargement VISIBLE est réservé au tout premier remplissage.
+    //
+    // On l'observe donc là où le moteur le montre : un SECOND montage, sur un
+    // magasin VIDE. Rien n'est simulé — c'est le même magasin, le même
+    // adaptateur, la même transition `appliquerChargement`, sur le seul état
+    // où elle a le droit de mordre.
+    //
+    // ET CE HARNAIS N'ÉTAIT DANS AUCUNE ÉTAPE DE LA CHAÎNE : il a donc pourri
+    // sans que rien ne le dise. Mesuré le 2026-10-13 : zéro occurrence de
+    // « e33 » dans `ci.yml`. Une preuve hors chaîne n'est pas une preuve, c'est
+    // un souvenir.
     let liberer: ((x: { ok: boolean; status: number; corps: unknown }) => void) | undefined;
     const enVol = new Promise<{ ok: boolean; status: number; corps: unknown }>((res) => {
       liberer = res;
@@ -81,8 +104,21 @@ describe("E3.3 — l'écran émis consomme RÉELLEMENT la source distante décla
       appels.push(url);
       return enVol;
     };
+    const magasinVide = creerMagasin({});
+    let rVide: ReactTestRenderer | undefined;
+    act(() => {
+      rVide = create(
+        createElement(
+          DataRoot as never,
+          { provider: magasinVide } as never,
+          createElement(FormStateRoot as never, null as never, createElement(Ecran as never)),
+        ) as never,
+      );
+    });
+    // CONTRÔLE NÉGATIF : avant tout chargement, l'écran ne PRÉTEND pas charger.
+    expect(rendu(rVide)).not.toContain("Chargement des départs…");
     const adaptateurLent = creerAdaptateurReseau({
-      magasin,
+      magasin: magasinVide,
       cibles: [CIBLE],
       domainesAutorises: DOMAINES,
       transport: transportLent,
@@ -91,15 +127,41 @@ describe("E3.3 — l'écran émis consomme RÉELLEMENT la source distante décla
     act(() => {
       demarrage = adaptateurLent.demarrer();
     });
-    expect(rendu(r)).toContain("Chargement des départs…");
-    // 3 · CONSOMMATION EFFECTIVE : ces lignes n'existent QUE chez le transport.
+    // LOADING RÉELLEMENT RENDU, sur l'écran émis, pendant que le transport est
+    // en vol. C'est la moitié de la dimension C que rien n'observait.
+    expect(rendu(rVide)).toContain("Chargement des départs…");
+    // Le chargement se termine : l'écran vide reçoit ses lignes et NE DIT PLUS
+    // qu'il charge. Les deux sens, comme partout ici.
     await act(async () => {
       liberer?.({
         ok: true,
         status: 200,
-        corps: [D("r1", "Korhogo-Distante", "2026-09-04", "a_l_heure"), D("r2", "Man-Distante", "2026-09-05", "a_l_heure")],
+        corps: [D("v1", "Premier-Remplissage", "2026-09-03", "a_l_heure")],
       });
       await demarrage;
+    });
+    expect(rendu(rVide)).toContain("Premier-Remplissage");
+    expect(rendu(rVide)).not.toContain("Chargement des départs…");
+    adaptateurLent.arreter?.();
+
+    // ── 3 · CONSOMMATION EFFECTIVE, SUR L'ÉCRAN ENSEMENCÉ.
+    //
+    // Les deux cycles sont DISTINCTS depuis la réparation : l'écran vide a son
+    // adaptateur et sa promesse en vol (pour observer le chargement), celui-ci
+    // a le sien et sa file. Les mélanger faisait que les lignes attendues ici
+    // partaient dans l'autre écran.
+    //
+    // Ces lignes n'existent QUE chez le transport : si elles s'affichent,
+    // c'est qu'elles ont été consommées pour de vrai.
+    file = [
+      {
+        ok: true,
+        status: 200,
+        corps: [D("r1", "Korhogo-Distante", "2026-09-04", "a_l_heure"), D("r2", "Man-Distante", "2026-09-05", "a_l_heure")],
+      },
+    ];
+    await act(async () => {
+      await adaptateur.demarrer();
     });
     const apresRemote = rendu(r);
     expect(apresRemote).toContain("Korhogo-Distante");
@@ -143,8 +205,21 @@ describe("E3.3 — l'écran émis consomme RÉELLEMENT la source distante décla
     expect(appelsInterdits).toEqual([]);
     expect(adaptateurInterdit.journal()).toEqual(["refus_domaine:ent_depart:exfiltration.example.com"]);
 
-    // 12 · La trace de l'adaptateur principal est EXACTE et déterministe.
+    // ── 12 · LA TRACE EST EXACTE ET DÉTERMINISTE.
+    //
+    // CORRIGÉE le 2026-10-13, et dans le sens de PLUS de vérité. L'attente
+    // portait SIX entrées et commençait au refresh : l'appel qui avait livré
+    // les lignes affichées au point 3 n'y figurait PAS, parce qu'il passait par
+    // l'adaptateur de l'écran vide. Le journal de cet adaptateur ne décrivait
+    // donc pas la donnée qu'on lui attribuait.
+    //
+    // Depuis que les deux cycles sont séparés, la trace porte HUIT entrées et
+    // les deux premières sont le premier remplissage distant de l'écran
+    // ensemencé — `nouvelles`, parce que la graine est REMPLACÉE, ce que le
+    // point 3 affirme déjà sur le rendu.
     expect(adaptateur.journal()).toEqual([
+      "chargement:ent_depart",
+      "donnees:ent_depart:2:nouvelles",
       "chargement:ent_depart",
       "donnees:ent_depart:2:identiques",
       "chargement:ent_depart",
