@@ -55,7 +55,7 @@ premiers.
 | V1 | Encoding and Sanitization | 🟢 | Mesuré sur **1 831 fichiers / 198 866 lignes émises** : **0** `dangerouslySetInnerHTML`, **0** `eval`, **0** `new Function`. Aucun chemin d'injection HTML brute. Mesure l'ABSENCE des constructions dangereuses, pas l'encodage de chaque sortie |
 | V2 | Validation and Business Logic | 🟢 | 160 règles de validation émises et appliquées ; portail vivant, refus 422 nommant la règle, 3 configurations |
 | V3 | Web Frontend Security | 🟡② | **Aucun fichier HTML n'est émis** (vérifié : l'entrée est `App.tsx`). La CSP appartient donc à la coquille hôte, pas au code généré — et elle n'y est pas mesurée |
-| V4 | API and Web Service | 🟡① | contrat `/air/v1/entities/<id>/rows` émis et démarré ; en-têtes de sécurité non mesurés |
+| V4 | API and Web Service | 🟢 | **Défaut trouvé ET corrigé le 2026-10-12.** Avant : **0 serveur sur 31** ne posait d'en-tête de protection. Après : **31 sur 31** — `nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer`, et HSTS **uniquement derrière TLS** (l'annoncer en clair ne protège rien et casse le développement local). Aucune dépendance ajoutée : quatre lignes au lieu d'un paquet. 48/48 preuves tenues après |
 | V5 | File Handling | 🟢 | Le serveur refuse une référence `asset` hors de `network.allowedDomains`. **29 documents sur 31 contrôlés, sur LES DEUX piles** (mesuré). Chemin relatif accepté, URL illisible refusée. Trois cliquets. L'empreinte de fichier reste hors de portée : le fichier ne passe pas par le serveur |
 | V6 | Authentication | 🟡③ | **DÉLÉGUÉ PAR CONCEPTION, pas bloqué** — j'avais écrit « bloqué », c'était faux. Mesuré : **24 documents sur 31** désignent un serveur d'authentification TIERS, 3 Supabase, 4 aucun. Notre serveur n'a donc jamais eu à posséder les comptes ; il doit VÉRIFIER le jeton, ce qu'il fait (V9). Reste non couvert : les 3 documents Supabase et la création de compte |
 | V7 | Session Management | 🟡③ | même raison que V6 : la session est tenue par le fournisseur déclaré ; le serveur lit un jeton vérifié à chaque requête |
@@ -116,7 +116,7 @@ premiers.
 | Perspective | État | Preuve / manque |
 |---|---|---|
 | Code Quality | 🟢 | lint + typecheck bloquants sur les apps émises (portails `app_compile`, `app_web`) |
-| Visual Quality | 🟡① | Mesuré : **93 écrans sur 466 portent un style BRUT** (`StyleSheet.create` ou `style={{…}}`) au lieu de passer par les primitives. Les 373 autres sont cohérents par construction. Ce n'est pas un défaut prouvé — un style local peut être légitime — mais c'est la seule porte par laquelle l'incohérence visuelle peut entrer |
+| Visual Quality | 🟢 | **Question tranchée le 2026-10-12, aucune dérive.** Les 93 écrans sur 466 à « style brut » ne portent que `style={{ flex: 1 }}` — une structure de disposition : **aucune couleur, aucun espacement, aucune typographie**. Les jetons restent la seule source visuelle, et la cohérence des composants et des icônes est garantie par les primitives |
 | Content Quality | 🟢 | Mesuré sur 198 866 lignes émises : **0 `lorem ipsum`, 0 `TODO`, 0 `FIXME`**. Tout le texte vient du document |
 | Performance Quality | 🟢 | **Question tranchée le 2026-10-12, aucun défaut.** Les 2 URL de remplissage (`picsum.photos`) vivent dans `demo.data.ts` — les données de DÉMONSTRATION, pas le code de l'app — et surtout `picsum.photos` **EST déclaré** dans `network.allowedDomains` des deux documents. L'émetteur ne sort donc jamais des hôtes autorisés. Les 29 autres documents n'ont aucune URL de remplissage |
 | **Accessibility** | 🟡④ | noms et rôles couverts (§4) ; contraste, cibles et focus non mesurés |
@@ -184,3 +184,5 @@ Un chiffre tapé à la main se désaccorde du document qu'il résume.
 | 2026-10-12 · URL de remplissage tranchées | 20 | 22 | 5 | 1 | 48 |
 | 2026-10-12 · lot 1 — suppression de compte + texte alternatif | 20 | 21 | 6 | 1 | 48 |
 | 2026-10-12 · texte alternatif CORRIGÉ | 21 | 21 | 5 | 1 | 48 |
+| 2026-10-12 · V4 et Visual Quality tranchés | 22 | 19 | 6 | 1 | 48 |
+| 2026-10-12 · V4 CORRIGÉ — fin de session | 23 | 19 | 5 | 1 | 48 |
