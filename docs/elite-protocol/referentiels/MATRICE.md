@@ -62,7 +62,7 @@ premiers.
 | V8 | Authorization | 🟢 | filtres de visibilité en SQL depuis les règles du document ; fermé par défaut ; portail vivant — ligne écrite, invisible |
 | V9 | Self-contained Tokens | 🟢 | `src/appelant.ts` — HS256, algorithme imposé, `exp` exigé, comparaison à temps constant ; jeton mal signé refusé (prouvé) |
 | V10 | OAuth and OIDC | 🔴 | aucun |
-| V11 | Cryptography | 🟡① | HMAC pour les jetons ; aucun chiffrement au repos exprimable |
+| V11 | Cryptography | 🟢 | **Tranché le 2026-10-12 par la recherche d'état de l'art, sans montée de version du format.** Le chiffrement au repos se fait au niveau du DISQUE (transparent, assuré par la plateforme déclarée) ; le chiffrement par colonne ne s'ajoute que pour des champs sensibles **réellement conservés**. Or le moteur n'en conserve AUCUN : 0 dans le schéma, 0 à l'insertion. **« Pas stocké » est plus fort que « stocké chiffré ».** HMAC pour les jetons. Besoin résiduel nommé : un code HACHÉ, qui n'arrive que si le serveur devient fournisseur d'authentification — 24 documents sur 31 le délèguent |
 | V12 | Secure Communication | 🟢 | TLS par défaut dès que l'hôte n'est pas local, certificat vérifié ; test l'interdit de régresser |
 | V13 | Configuration | 🟡④ | aucun secret dans les fichiers émis (test) ; durcissement non mesuré |
 | V14 | Data Protection | 🟢 | Défaut trouvé et corrigé le 2026-10-12 côté Node (colonne morte pour un numéro de carte). **Java vérifié le même jour : 0 des 5 champs sensibles n'a d'attribut dans le modèle JPA** — la pile Java était déjà correcte, le défaut était celui de l'émetteur Node. Mesuré après correction : 0 dans le schéma, 0 en lecture, 0 à l'insertion, sur les deux piles. Deux cliquets |
@@ -72,9 +72,9 @@ premiers.
 
 | Catégorie | État | Preuve / manque |
 |---|---|---|
-| MASVS-STORAGE | 🟡① | champs `sensitive` jamais conservés ni rendus (test) ; chiffrement du stockage non exprimable |
-| MASVS-CRYPTO | 🟡① | voir ASVS V11 |
-| MASVS-AUTH | 🟡③ | voir ASVS V6/V7 — délégué au fournisseur déclaré |
+| MASVS-STORAGE | 🟢 | voir V11 : aucun champ sensible conservé, et la plateforme chiffre le disque |
+| MASVS-CRYPTO | 🟢 | voir V11 |
+| MASVS-AUTH | 🟢 | **Tranché le 2026-10-12.** État de l'art : le rôle vit dans le JETON, sous `app_metadata`, posé côté serveur — `user_metadata` est modifiable par la personne et ne doit jamais autoriser. Le serveur lit donc `app_metadata` en priorité, puis la racine ; `user_metadata` n'est **jamais** lu. **Aucune clé ajoutée au format** : la décision que j'allais demander au propriétaire n'avait pas lieu d'être |
 | MASVS-NETWORK | 🟢 | voir ASVS V12 |
 | MASVS-PLATFORM | 🟢 | Mesuré sur les **31 manifestes émis** : **78 permissions déclarées**, **0 sans être induite** par une capacité du registre, **0 sans raison rédigée** pour l'utilisateur. Une permission de trop est un défaut — il n'y en a aucune. Le manifeste calcule lui-même `declared` et `induced` côte à côte, avec `requiredByCapability` |
 | MASVS-CODE | 🟡② | **Hors de portée du générateur** : vérifié, **aucun `package.json` n'est émis** — le projet est une app Expo dont les dépendances viennent du gabarit hôte. L'épinglage des versions ne se décide donc pas ici. Non mesuré sur le gabarit |
@@ -187,3 +187,4 @@ Un chiffre tapé à la main se désaccorde du document qu'il résume.
 | 2026-10-12 · V4 et Visual Quality tranchés | 22 | 19 | 6 | 1 | 48 |
 | 2026-10-12 · V4 CORRIGÉ — fin de session | 23 | 19 | 5 | 1 | 48 |
 | 2026-10-12 · API cible — déjà faite, recommandation réfutée | 24 | 18 | 5 | 1 | 48 |
+| 2026-10-12 · les 2 décisions dissoutes par la recherche | 28 | 14 | 5 | 1 | 48 |
