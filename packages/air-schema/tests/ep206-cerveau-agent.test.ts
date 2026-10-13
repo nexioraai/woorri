@@ -144,8 +144,20 @@ const avec = (agent: unknown, api: unknown = UNE_API): ProjectAir => {
 const AGENT = { allowedOperations: ["apiop_envoyer_argent"], confirmBeforeAct: true };
 
 describe("EP-206 ① · la version est montée, et la migration ne casse rien", () => {
-  it("le format est en 1.38.0", () => {
-    expect(AIR_SCHEMA_VERSION).toBe("1.38.0");
+  it("LA CLE `brain` SURVIT AUX MONTEES DE VERSION — ce qui compte vraiment", () => {
+    // MON PREMIER JET ECRIVAIT `AIR_SCHEMA_VERSION >= "1.38.0"`, et le lint
+    // l'a refuse a juste titre : les deux cotes sont des LITTERAUX, la
+    // comparaison est vraie a la COMPILATION, et ce test ne mesurait plus
+    // RIEN. Une assertion toujours vraie est pire qu'une assertion absente —
+    // elle occupe la place d'une mesure.
+    //
+    // Ce qui compte n'est pas le numero : c'est que la cle `brain` reste
+    // acceptee par le schema apres les montees suivantes. On le mesure en
+    // VALIDANT un document qui la porte.
+    expect(typeof AIR_SCHEMA_VERSION).toBe("string");
+    const air = avec({ ...AGENT, brain: CERVEAU });
+    expect(codes(air)).toEqual([]);
+    expect(() => assertValidAir(air)).not.toThrow();
   });
 
   it("un document RÉEL du corpus, écrit avant, reste valide", () => {

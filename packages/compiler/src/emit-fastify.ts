@@ -987,13 +987,49 @@ function calculs(air: ProjectAir): string {
         d.kind === "count"
           ? "count(*)"
           : `coalesce(sum(${somme.replace(/^fld_/u, "")}), 0)`;
+      // ── LA CONDITION (1.39.0) — UNE CLAUSE `where` DE PLUS, ET RIEN D'AUTRE.
+      //
+      // Elle est fermee par le format : un champ de l'entite au bout de la
+      // relation, un operateur d'un ensemble fini, une valeur litterale. Elle
+      // se traduit donc en SQL sans ambiguite — et la valeur passe en
+      // PARAMETRE, jamais dans le texte de la requete.
+      const cond = "condition" in d ? d.condition : undefined;
+      const SQL_OP: Readonly<Record<string, string>> = {
+        eq: "=",
+        neq: "<>",
+        gt: ">",
+        gte: ">=",
+        lt: "<",
+        lte: "<=",
+      };
+      const filtreSql =
+        cond === undefined
+          ? ""
+          : cond.operateur === "in"
+            ? ` and ${cond.fieldId.replace(/^fld_/u, "")} in (${(cond.valeur as readonly unknown[]).map(() => "?").join(", ")})`
+            : ` and ${cond.fieldId.replace(/^fld_/u, "")} ${SQL_OP[cond.operateur] ?? "="} ?`;
+      const parametres =
+        cond === undefined
+          ? "[idParent]"
+          : cond.operateur === "in"
+            ? `[idParent, ${(cond.valeur as readonly unknown[]).map((v) => JSON.stringify(v)).join(", ")}]`
+            : `[idParent, ${JSON.stringify(cond.valeur)}]`;
       l.push(
         "/**",
         ` * ${e.name}.${f.name} = ${d.kind === "count" ? "le NOMBRE" : "la SOMME"} sur « ${r.enfant.name} »,`,
         ` * reliées par « ${r.cle.name} ».`,
+        ...(cond === undefined
+          ? []
+          : [
+              " *",
+              ` * FILTRÉ : seules les lignes dont « ${cond.fieldId} » ${cond.operateur}`,
+              ` * ${JSON.stringify(cond.valeur)} sont comptées. Le document le dit ; le`,
+              " * serveur le fait. La valeur voyage en PARAMÈTRE : une valeur",
+              " * recopiée dans le texte de la requête est une injection qui attend.",
+            ]),
         " */",
         `export async function ${nomFn}(base: Base, idParent: string): Promise<number> {`,
-        `  const r = await base.un(\`select ${expr} as v from ${t} where ${cle} = ?\`, [idParent]);`,
+        `  const r = await base.un(\`select ${expr} as v from ${t} where ${cle} = ?${filtreSql}\`, ${parametres});`,
         "  return Number(r?.[\"v\"] ?? 0);",
         "}",
         "",

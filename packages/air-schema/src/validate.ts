@@ -563,6 +563,87 @@ export function validateAir(air: ProjectAir): AirDiagnostic[] {
           );
         }
       }
+      // ── LA CONDITION D'AGREGAT (1.39.0) : QUATRE REFUS.
+      //
+      // Un filtre faux ne leve AUCUNE erreur a l'execution : il rend
+      // silencieusement zero, ou un total partiel. C'est la pire espece de
+      // defaut — un chiffre qui a l'air juste. Les quatre fautes possibles se
+      // voient toutes SANS executer quoi que ce soit.
+      // A ce point, les autres sortes ont deja rendu : le type est count|sum,
+      // et le lint refuse une condition toujours vraie. On lit directement.
+      {
+        const cond = d.condition;
+        if (cond !== undefined) {
+          const cible = air.entities.find((x) => x.id === rel.toEntityId);
+          const champ = cible?.fields.find((x) => x.id === cond.fieldId);
+          // ① LE CHAMP FILTRE EXISTE SUR L'ENTITE AU BOUT DE LA RELATION.
+          //    Filtrer sur un champ de la ligne PARENTE donnerait le meme
+          //    resultat pour toutes les lignes — faux, et long a voir.
+          if (champ === undefined) {
+            push(
+              "AIR_AGREGAT_CONDITION_CHAMP_INCONNU",
+              `${chemin}.condition.fieldId`,
+              `"${cond.fieldId}" n'est pas un champ de "${rel.toEntityId}" : ` +
+                `la condition porte sur les lignes AGREGEES, pas sur celle qui agrege`,
+            );
+          } else {
+            const liste = Array.isArray(cond.valeur);
+            // ② `in` EXIGE UNE LISTE, LES AUTRES UNE VALEUR SEULE. Comparer
+            //    un champ a une liste avec `eq` est indefini en SQL.
+            if (cond.operateur === "in" && !liste) {
+              push(
+                "AIR_AGREGAT_CONDITION_LISTE_ATTENDUE",
+                `${chemin}.condition.valeur`,
+                "`in` compare a plusieurs valeurs : il en faut une LISTE",
+              );
+            }
+            if (cond.operateur !== "in" && liste) {
+              push(
+                "AIR_AGREGAT_CONDITION_LISTE_INATTENDUE",
+                `${chemin}.condition.valeur`,
+                `"${cond.operateur}" compare a UNE valeur : une liste ne se compare pas ainsi`,
+              );
+            }
+            // ③ UN FILTRE QUI NE PEUT JAMAIS ETRE VRAI EST REFUSE.
+            //
+            //    C'est le refus qui compte. Filtrer un champ `enum` sur une
+            //    valeur qu'il ne peut pas porter rend TOUJOURS zero, et
+            //    personne ne saurait pourquoi le total est vide : ni erreur,
+            //    ni avertissement, juste un chiffre faux qui a l'air juste.
+            if (champ.type === "enum" && champ.enumValues !== undefined) {
+              const permises = new Set(champ.enumValues);
+              const essayees = (liste ? cond.valeur : [cond.valeur]) as readonly unknown[];
+              const hors = essayees.filter((v) => typeof v !== "string" || !permises.has(v));
+              if (hors.length > 0) {
+                push(
+                  "AIR_AGREGAT_CONDITION_VALEUR_IMPOSSIBLE",
+                  `${chemin}.condition.valeur`,
+                  `"${champ.id}" ne peut pas valoir ${hors.map((v) => JSON.stringify(v)).join(", ")} ` +
+                    `— ses valeurs sont ${champ.enumValues.join(", ")}. Le filtre rendrait ` +
+                    `TOUJOURS zero, sans erreur et sans que personne le sache`,
+                );
+              }
+            }
+            // ④ LES COMPARAISONS D'ORDRE N'ONT DE SENS QUE SUR CE QUI S'ORDONNE.
+            //    `gt` sur un booleen ou un enum ne veut rien dire, et chaque
+            //    base SQL en decide autrement.
+            const ordonnable =
+              champ.type === "number" ||
+              champ.type === "decimal" ||
+              champ.type === "date" ||
+              champ.type === "datetime";
+            if (["gt", "gte", "lt", "lte"].includes(cond.operateur) && !ordonnable) {
+              push(
+                "AIR_AGREGAT_CONDITION_ORDRE_IMPOSSIBLE",
+                `${chemin}.condition.operateur`,
+                `"${cond.operateur}" ordonne, et "${champ.id}" est de type "${champ.type}" : ` +
+                  `chaque base SQL trancherait autrement, donc le total dependrait de la base`,
+              );
+            }
+          }
+        }
+      }
+
       // ── ET IL NE SE SAISIT JAMAIS.
       //
       // Un champ dérivé qu'on peut taper finira par contredire ce dont il

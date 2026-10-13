@@ -317,7 +317,7 @@ const visibiliteJpql = (
 const calculsSur = (
   air: ProjectAir,
   enfant: ProjectAir["entities"][number],
-): { parent: ProjectAir["entities"][number]; champ: ProjectAir["entities"][number]["fields"][number]; cle: string; somme: string; kind: "count" | "sum" }[] => {
+): { parent: ProjectAir["entities"][number]; champ: ProjectAir["entities"][number]["fields"][number]; cle: string; somme: string; kind: "count" | "sum"; filtre: string }[] => {
   const out = [];
   for (const parent of air.entities) {
     for (const champ of parent.fields) {
@@ -328,12 +328,32 @@ const calculsSur = (
       const cles = enfant.fields.filter((f) => f.referencesEntityId === rel.fromEntityId);
       const cle = cles[0];
       if (cles.length !== 1 || cle === undefined) continue;
+      // ── LA CONDITION (1.39.0) — LA MEME QU'EN NODE, EN JPQL.
+      //
+      // La parite n'est pas un commentaire : un document qui choisit Java doit
+      // compter les MEMES lignes qu'un document qui choisit Node. La valeur
+      // est ecrite en LITTERAL JPQL — pas de parametre ici, parce qu'elle
+      // vient du DOCUMENT et jamais d'une requete : il n'y a aucune entree
+      // d'utilisateur a injecter. Les textes sont echappes.
+      const OP: Readonly<Record<string, string>> = {
+        eq: "=", neq: "<>", gt: ">", gte: ">=", lt: "<", lte: "<=",
+      };
+      const litteral = (v: unknown): string =>
+        typeof v === "string" ? `'${v.replace(/'/gu, "''")}'` : String(v);
+      const cond = d.condition;
+      const filtre =
+        cond === undefined
+          ? ""
+          : cond.operateur === "in"
+            ? ` and t.${CAMEL(cond.fieldId)} in (${(cond.valeur as readonly unknown[]).map(litteral).join(", ")})`
+            : ` and t.${CAMEL(cond.fieldId)} ${OP[cond.operateur] ?? "="} ${litteral(cond.valeur)}`;
       out.push({
         parent,
         champ,
         cle: CAMEL(cle.id),
         somme: d.kind === "sum" ? CAMEL(d.fieldId) : "",
         kind: d.kind,
+        filtre,
       });
     }
   }
@@ -364,7 +384,7 @@ ${calculsSur(air, e)
   .map(
     (c) =>
       `  // ${c.parent.name}.${c.champ.name} — ${c.kind === "count" ? "nombre" : "somme"} sur « ${e.name} ».\n` +
-      `  @Query("select coalesce(${c.kind === "count" ? "count(t)" : `sum(t.${c.somme})`}, 0) from ${PASCAL(e.id)} t where t.${c.cle} = :id")\n` +
+      `  @Query("select coalesce(${c.kind === "count" ? "count(t)" : `sum(t.${c.somme})`}, 0) from ${PASCAL(e.id)} t where t.${c.cle} = :id${c.filtre}")\n` +
       `  Double ${CAMEL(c.champ.id)}Calcul(@Param("id") String id);`,
   )
   .join("\n")}

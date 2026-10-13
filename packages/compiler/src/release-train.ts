@@ -91,7 +91,13 @@ export const RELEASE_TRAIN_V1 = {
   // reseau ; le cerveau est donc une API DECLAREE comme les autres. Cle
   // optionnelle, migration IDENTITE : les 31 documents du corpus ne changent
   // pas de sens.
-  airSchemaVersion: "1.38.0",
+  // 1.39.0 (2026-10-13) — une CONDITION sur `count` et `sum`. Mesure qui l'a
+  // imposee, et elle etait ecrite dans le depot depuis un mois : le cahier
+  // d'une tontine reelle demandait de repartir une cagnotte entre les membres
+  // ACTIFS, et le document avait declare l'exigence INEXPRIMABLE en nommant
+  // le manquant — « une condition que `sum` et `count` ne portent pas ».
+  // Cle optionnelle, migration IDENTITE : absente, toutes les lignes comptent.
+  airSchemaVersion: "1.39.0",
   // Porté à 1.1.0 le 2026-08-31 (D-060) : montée STRICTEMENT ADDITIVE du
   // registre de blocs — `form` gagne `loading`/`empty`, `detail_header` gagne un
   // état, les trois blocs à données gagnent les props de titres. Rien n'est

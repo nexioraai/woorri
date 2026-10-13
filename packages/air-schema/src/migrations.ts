@@ -566,6 +566,26 @@ export const AIR_MIGRATIONS: readonly AirMigration[] = [
       "rien et exécute ce qu'on lui désigne, exactement comme en 1.37.0.",
     migrate: (document) => document,
   },
+  {
+    from: "1.38.0",
+    to: "1.39.0",
+    description:
+      "AIR 1.39.0 : une CONDITION sur `count` et `sum`. Mesure qui l'a " +
+      "imposée, et elle est écrite dans un document du dépôt : le cahier " +
+      "d'une tontine réelle demande que la cagnotte « se répartisse à parts " +
+      "égales en fin de cycle », et le document a déclaré cette exigence " +
+      "INEXPRIMABLE en nommant le manquant — « elle divise par le nombre de " +
+      "membres ACTIFS, une condition que `sum` et `count` ne portent pas ». " +
+      "La forme est FERMÉE — un champ de l'entité au bout de la relation, un " +
+      "opérateur d'un ensemble fini, une valeur littérale — donc elle se " +
+      "traduit en UNE clause `where` SQL sans ambiguïté et reste jugeable " +
+      "sans évaluation. `matches` est exclu : une expression régulière ne se " +
+      "traduit pas identiquement d'un moteur SQL à l'autre, et un filtre qui " +
+      "compte différemment selon la base est pire que pas de filtre. " +
+      "Migration IDENTITÉ : clé optionnelle, absente ⇒ toutes les lignes, " +
+      "exactement comme avant.",
+    migrate: (document) => document,
+  },
 ];
 
 export class AirMigrationError extends Error {

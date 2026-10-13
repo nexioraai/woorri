@@ -277,6 +277,15 @@ export const SECTIONS_CORRECTIVES: Readonly<Record<string, readonly SectionEmiss
   AIR_AGENT_SANS_SERVEUR_GENERE: ["cablage"],
   AIR_AGENT_SERVEUR_SANS_ADRESSE: ["cablage"],
   AIR_AGENT_SANS_IDENTITE_VERIFIEE: ["cablage"],
+  // LA CONDITION D'AGREGAT (1.39.0) — cinq refus, tous reparables dans
+  // `donnees`, la section qui porte `entities` : un champ derive vit sur un
+  // champ d'entite, et c'est son filtre qui change. J'avais ecrit "calculs",
+  // qui n'est pas une section du format — le typecheck l'a refuse.
+  AIR_AGREGAT_CONDITION_CHAMP_INCONNU: ["donnees"],
+  AIR_AGREGAT_CONDITION_LISTE_ATTENDUE: ["donnees"],
+  AIR_AGREGAT_CONDITION_LISTE_INATTENDUE: ["donnees"],
+  AIR_AGREGAT_CONDITION_VALEUR_IMPOSSIBLE: ["donnees"],
+  AIR_AGREGAT_CONDITION_ORDRE_IMPOSSIBLE: ["donnees"],
   // L'ambiguite se repare en renommant une operation : c'est le cablage des
   // API qui change, et la liste des pouvoirs de l'agent avec.
   AIR_AGENT_OPERATION_AMBIGUOUS: ["cablage"],

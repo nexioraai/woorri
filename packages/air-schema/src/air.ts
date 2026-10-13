@@ -25,7 +25,7 @@ import {
 // 1.7.1 (E3.3, D-131) : provenance APLANIE (sourceKind/sourceIntegrationId/
 //   sourceDomain/sourceRefreshSeconds) — l'union 1.7.0 dépassait la limite
 //   réelle de grammaire de l'API (classe D-078) ; sémantique inchangée.
-export const AIR_SCHEMA_VERSION = "1.38.0";
+export const AIR_SCHEMA_VERSION = "1.39.0";
 
 export const semverSchema = z.string().regex(/^\d+\.\d+\.\d+$/);
 export const sha256Schema = z.string().regex(/^[0-9a-f]{64}$/);
@@ -478,6 +478,46 @@ export const fieldTypeSchema = z.enum([
  * relation declaree. Une expression ne voit QUE la ligne qu'elle calcule —
  * c'est cette frontiere qui la garde analysable.
  */
+/**
+ * UNE CONDITION SUR LES LIGNES AGREGEES (1.39.0).
+ *
+ * ── MESURE QUI L'A IMPOSEE, ET ELLE EST ECRITE DANS LE DOCUMENT LUI-MEME.
+ *
+ * Cahier d'une tontine reelle : « les primes d'encheres s'accumulent pendant
+ * tout le cycle, puis se repartissent a parts egales en fin de cycle ». Le
+ * document a declare cette exigence INEXPRIMABLE, et sa raison nomme le
+ * manquant : « elle divise par le nombre de membres ACTIFS — une condition
+ * que `sum` et `count` ne portent pas ».
+ *
+ * Mesure du 2026-10-13 : exact. `count` ne portait qu'une relation, `sum` une
+ * relation et un champ. Rien pour restreindre les lignes.
+ *
+ * ── POURQUOI CETTE FORME, ET PAS UNE EXPRESSION.
+ *
+ * Elle est FERMEE : un champ de l'entite au bout de la relation, un operateur
+ * d'un ensemble fini, une valeur litterale. Elle se traduit en UNE clause
+ * `where` SQL, sans ambiguite et sans evaluation. On sait STATIQUEMENT quel
+ * champ elle lit et quelle valeur elle compare — c'est ce qui la garde
+ * jugeable, exactement comme l'expression de 1.36.0.
+ *
+ * `matches` est EXCLU volontairement : une expression reguliere ne se traduit
+ * pas identiquement d'un moteur SQL a l'autre, et un filtre qui compte
+ * differemment selon la base est pire que pas de filtre.
+ */
+const conditionAgregatSchema = z.strictObject({
+  /** Le champ de l'entite AU BOUT de la relation. Jamais de la ligne parente. */
+  fieldId: fieldIdSchema,
+  /** Ensemble FINI, et tous traduisibles en SQL a l'identique. */
+  operateur: z.enum(["eq", "neq", "gt", "gte", "lt", "lte", "in"]),
+  /** La valeur comparee. `in` exige une liste, les autres une valeur seule. */
+  valeur: z.union([
+    z.string(),
+    z.number(),
+    z.boolean(),
+    z.array(z.union([z.string(), z.number()])).min(1),
+  ]),
+});
+
 const PROFONDEUR_EXPRESSION_MAX = 8;
 
 type ExpressionBrute =
@@ -634,12 +674,19 @@ const fieldSchema = z.strictObject({
         kind: z.literal("count"),
         /** La relation qui mène aux lignes à compter. */
         relationId: relationIdSchema,
+        /**
+         * NE COMPTER QUE CERTAINES LIGNES (1.39.0). Absente ⇒ toutes, comme
+         * avant : aucun document existant ne change de sens.
+         */
+        condition: conditionAgregatSchema.optional(),
       }),
       z.strictObject({
         kind: z.literal("sum"),
         relationId: relationIdSchema,
         /** Le champ à sommer, sur l'entité au bout de la relation. */
         fieldId: fieldIdSchema,
+        /** NE SOMMER QUE CERTAINES LIGNES (1.39.0). Absente ⇒ toutes. */
+        condition: conditionAgregatSchema.optional(),
       }),
       /**
        * ── LE BARÈME (1.35.0) — LA TROISIÈME OPÉRATION, ET POURQUOI ELLE
