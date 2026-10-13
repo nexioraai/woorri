@@ -28,6 +28,7 @@
 import type { ProjectAir } from "@deribfy/air-schema";
 import type { EnveloppeBackend } from "./emit-spring.ts";
 import { PRELUDE_EXPRESSION, emettreExpressionTs } from "./expression.ts";
+import { moduleConnecteur, routesConnecteur } from "./emit-connecteur.ts";
 
 type Entite = ProjectAir["entities"][number];
 type Champ = Entite["fields"][number];
@@ -1259,6 +1260,7 @@ function serveur(air: ProjectAir): string {
     `import { appliquerSchema, ouvrir } from "./base.ts";`,
     `import { SCHEMA } from "./schema.ts";`,
     ...air.entities.map((e) => `import { ${CAMEL(e.id)}Routes } from "./api/${table(e)}.ts";`),
+    ...(avecApis(air) ? [`import { connecteurRoutes } from "./api/connecteur.ts";`] : []),
     ...air.entities.map(
       (e) => `import { ${CAMEL(e.id)}DepotSql } from "./depot/${table(e)}.ts";`,
     ),
@@ -1298,6 +1300,7 @@ function serveur(air: ProjectAir): string {
     "  await appliquerSchema(base, SCHEMA);",
     "  app.log.info(`base : ${base.moteur}`);",
     ...air.entities.map((e) => `  ${CAMEL(e.id)}Routes(app, ${CAMEL(e.id)}DepotSql(base), base);`),
+    ...(avecApis(air) ? ["  connecteurRoutes(app);"] : []),
     "  return app;",
     "}",
     "",
@@ -1347,6 +1350,10 @@ const tsconfig = (): string =>
     2,
   )}\n`;
 
+/** Un document declare-t-il au moins une API ? Rien n'est emis sinon. */
+const avecApis = (air: ProjectAir): boolean =>
+  air.apis !== undefined && air.apis.length > 0;
+
 export function enveloppeFastify(air: ProjectAir): EnveloppeBackend {
   const files = new Map<string, string>();
   files.set("package.json", paquet(air));
@@ -1373,6 +1380,18 @@ export function enveloppeFastify(air: ProjectAir): EnveloppeBackend {
     files.set(`src/api/${table(e)}.ts`, routes(air, e));
   }
   files.set("src/api/regles-metier.ts", reglesMetier(air));
+  // ── LE CONNECTEUR — UN FICHIER PAR API DECLAREE, SUR LE SERVEUR.
+  //
+  // Un document sans `apis` n'emet AUCUN de ces fichiers : le connecteur
+  // n'est pas une dependance du serveur, c'est une consequence d'une
+  // declaration. Les 31 documents du corpus continuent d'emettre exactement
+  // ce qu'ils emettaient.
+  if (air.apis !== undefined && air.apis.length > 0) {
+    for (const api of air.apis) {
+      files.set(`src/connecteur/${api.id}.ts`, moduleConnecteur(api));
+    }
+    files.set("src/api/connecteur.ts", routesConnecteur(air.apis));
+  }
   if (air.entities.some((e) => e.fields.some((f) => f.derived?.kind === "count" || f.derived?.kind === "sum"))) {
     files.set("src/calcul/en-base.ts", calculs(air));
   }

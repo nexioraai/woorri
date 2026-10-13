@@ -59,7 +59,34 @@ const EXEMPTIONS_FETCH = [
   join("runtime", "ecriture-http.ts"),
   join("runtime", "session-http.ts"),
   join("src", "embedded-assets.generated.ts"),
+  // ÉDITION CONSCIENTE (2026-10-13) — LE CONNECTEUR D'API, ET LA MÊME RAISON
+  // QUE `embedded-assets.generated.ts` : `fetch(` y est une DONNÉE.
+  //
+  // `emit-connecteur.ts` est un ÉMETTEUR. Il assemble des chaînes de
+  // caractères et les rend ; le texte qu'il produit est écrit dans un fichier
+  // que LE SERVEUR émis exécutera. Le compilateur, lui, n'appelle rien : la
+  // propriété que ce cliquet protège — aucun accès réseau dans le chemin de
+  // compilation — reste entière, et le volet DYNAMIQUE (campagne 12×10 sous
+  // harnais qui tue tout accès réseau) la mesure à l'exécution.
+  //
+  // Un grep ne sait pas distinguer un appel d'une chaîne. C'est pourquoi une
+  // preuve de FORME est ajoutée plus bas : dans ce fichier, toute occurrence
+  // de `fetch(` doit être à l'intérieur d'un littéral de chaîne. Une
+  // exemption sans cette preuve serait un trou.
+  join("src", "emit-connecteur.ts"),
 ];
+
+/**
+ * UNE EXEMPTION N'EST PAS UN PERMIS : ELLE EST UNE DETTE À PROUVER.
+ *
+ * Pour les émetteurs exemptés, on exige que chaque occurrence de `fetch(`
+ * soit DANS une chaîne. La mesure est volontairement grossière et donc
+ * SÛRE : on n'essaie pas de deviner la grammaire de TypeScript, on exige que
+ * la ligne commence par un guillemet — la forme qu'ont toutes les lignes
+ * d'un tableau de texte émis. Une ligne qui appellerait vraiment `fetch` ne
+ * commence pas par un guillemet.
+ */
+const EMETTEURS_A_PROUVER = [join("src", "emit-connecteur.ts")];
 
 describe("cliquet statique zéro-réseau (chemin de compilation)", () => {
   it("aucun import de module réseau/LLM dans src/ ni runtime/", () => {
@@ -70,7 +97,14 @@ describe("cliquet statique zéro-réseau (chemin de compilation)", () => {
         expect(content.includes(forbidden), `${file} → ${forbidden}`).toBe(false);
       }
       if (EXEMPTIONS_FETCH.includes(file)) {
-        if (file.startsWith("runtime")) vues.add(file);
+        vues.add(file);
+        if (EMETTEURS_A_PROUVER.includes(file)) {
+          const fautives = content
+            .split("\n")
+            .filter((l) => l.includes("fetch("))
+            .filter((l) => !/^\s*["'`]/u.test(l));
+          expect(fautives, `${file} → un \`fetch(\` hors chaîne`).toEqual([]);
+        }
         continue; // seules exemptions `fetch(` — voir ÉDITION CONSCIENTE ci-dessus
       }
       expect(content.includes("fetch("), `${file} → fetch(`).toBe(false);
@@ -82,8 +116,13 @@ describe("cliquet statique zéro-réseau (chemin de compilation)", () => {
     // dont le fichier serait renommé ou supprimé resterait déclarée sans que
     // rien ne le dise — et une exemption qui ne correspond à rien finit par
     // couvrir, un jour, un fichier portant par hasard le même nom.
+    // RENFORCÉ le 2026-10-13 : la vérification portait sur les seules
+    // exemptions de `runtime/`. Celles de `src/` n'étaient pas vérifiées —
+    // une exemption de `src/` dont le fichier serait renommé resterait
+    // déclarée en silence, et finirait un jour par couvrir un fichier
+    // portant par hasard le même nom. Les DEUX dossiers sont vérifiés.
     expect([...vues].sort(), "exemption déclarée dont le fichier n'existe pas").toEqual(
-      EXEMPTIONS_FETCH.filter((e) => e.startsWith("runtime")).sort(),
+      [...EXEMPTIONS_FETCH].sort(),
     );
   });
 
