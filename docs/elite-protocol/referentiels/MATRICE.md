@@ -108,7 +108,7 @@ premiers.
 | Code Quality | 🟢 | lint + typecheck bloquants sur les apps émises (portails `app_compile`, `app_web`) |
 | Visual Quality | 🟡 | Mesuré : **93 écrans sur 466 portent un style BRUT** (`StyleSheet.create` ou `style={{…}}`) au lieu de passer par les primitives. Les 373 autres sont cohérents par construction. Ce n'est pas un défaut prouvé — un style local peut être légitime — mais c'est la seule porte par laquelle l'incohérence visuelle peut entrer |
 | Content Quality | 🟢 | Mesuré sur 198 866 lignes émises : **0 `lorem ipsum`, 0 `TODO`, 0 `FIXME`**. Tout le texte vient du document |
-| Performance Quality | 🟡 | Mesuré : **2 documents sur 31 portent une URL de remplissage** (`example.com` ou équivalent). Les 29 autres n'en ont aucune. À regarder : ces 2 sont-ils des documents d'essai du corpus ou un défaut de l'émetteur ? |
+| Performance Quality | 🟢 | **Question tranchée le 2026-10-12, aucun défaut.** Les 2 URL de remplissage (`picsum.photos`) vivent dans `demo.data.ts` — les données de DÉMONSTRATION, pas le code de l'app — et surtout `picsum.photos` **EST déclaré** dans `network.allowedDomains` des deux documents. L'émetteur ne sort donc jamais des hôtes autorisés. Les 29 autres documents n'ont aucune URL de remplissage |
 | **Accessibility** | 🟡 | noms et rôles couverts (§4) ; contraste, cibles et focus non mesurés |
 | Maintainability | 🟢 | Taux de commentaire mesuré sur les fichiers émis : **34 %** |
 | Functional / Visual / Content Alignment | ⚪ | non mesuré |
@@ -171,3 +171,4 @@ Un chiffre tapé à la main se désaccorde du document qu'il résume.
 | 2026-10-12 · ASVS V14 — défaut corrigé | 16 | 22 | 3 | 7 | 48 |
 | 2026-10-12 · V14 Java vérifié + focus mesuré | 17 | 21 | 4 | 6 | 48 |
 | 2026-10-12 · étapes 3 à 7 mesurées | 19 | 23 | 5 | 1 | 48 |
+| 2026-10-12 · URL de remplissage tranchées | 20 | 22 | 5 | 1 | 48 |
