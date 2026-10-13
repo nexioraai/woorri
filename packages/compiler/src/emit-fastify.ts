@@ -1177,7 +1177,24 @@ function reglesMetier(air: ProjectAir): string {
           continue;
         }
         const c = JSON.stringify(colonne(champ));
-        const v = JSON.stringify(a.value ?? null);
+        // ── COMPARER À UN AUTRE CHAMP DE LA MÊME LIGNE (1.35.0).
+        //
+        // Mesuré sur deux cahiers réels : « l'index ne peut pas être inférieur
+        // au précédent » et « les requêtes du mois ne dépassent pas le plafond
+        // du compte ». Les deux butaient sur la même limite — une assertion ne
+        // se comparait qu'à une CONSTANTE.
+        //
+        // Le côté droit devient donc une LECTURE DE LA LIGNE quand
+        // `otherFieldId` est posé. Le validateur a déjà refusé un champ d'une
+        // autre entité, les deux formes ensemble, et la comparaison d'un champ
+        // avec lui-même.
+        const autre = a.otherFieldId;
+        const champAutre =
+          autre === undefined ? undefined : e.fields.find((x) => x.id === autre);
+        const v =
+          champAutre === undefined
+            ? JSON.stringify(a.value ?? null)
+            : `ligne[${JSON.stringify(colonne(champAutre))}]`;
         const echec = `return { regle: ${JSON.stringify(r.id)}, message: ${JSON.stringify(r.description)} };`;
         const cond = (() => {
           switch (a.operator) {

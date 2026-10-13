@@ -497,6 +497,21 @@ export const AIR_MIGRATIONS: readonly AirMigration[] = [
       "mesurent — et personne ne l'a demandé.",
     migrate: (document) => document,
   },
+  {
+    from: "1.34.0",
+    to: "1.35.0",
+    description:
+      "AIR 1.35.0 : `otherFieldId` — comparer deux champs de la MÊME ligne. " +
+      "Jusqu'ici une assertion ne se comparait qu'à une CONSTANTE, et deux " +
+      "cahiers des charges réels butaient sur le même mur : « l'index ne peut " +
+      "pas être inférieur au précédent » n'était exprimable qu'au prix d'un " +
+      "champ calculé intermédiaire, et « les requêtes du mois ne dépassent " +
+      "pas le plafond du compte » ne l'était pas du tout. Une seule addition " +
+      "couvre la CLASSE — quotas, plafonds, soldes, dates encadrées — au lieu " +
+      "de figer un besoin métier à la fois. Migration IDENTITÉ : la clé est " +
+      "optionnelle, aucun document existant ne change de sens.",
+    migrate: (document) => document,
+  },
 ];
 
 export class AirMigrationError extends Error {

@@ -1359,6 +1359,41 @@ export function validateAir(air: ProjectAir): AirDiagnostic[] {
           `champ "${assertion.fieldId}" absent de l'entité "${r.entityId}"`,
         );
       }
+      // ── COMPARER DEUX CHAMPS (1.35.0) : TROIS REFUS.
+      //
+      // ① Le champ désigné doit exister SUR LA MÊME entité. Traverser une
+      //    relation demanderait de lire une autre ligne, donc la base : ce ne
+      //    serait plus une règle de saisie, et le serveur la vérifie AVANT
+      //    d'écrire.
+      // ② `value` et `otherFieldId` ensemble ne diraient pas à quoi comparer.
+      // ③ Un champ comparé à LUI-MÊME est toujours vrai ou toujours faux —
+      //    dans les deux cas la règle ne protège rien, et son auteur croit le
+      //    contraire.
+      const autre = assertion.otherFieldId;
+      if (autre !== undefined) {
+        if (!fieldIds.has(autre)) {
+          push(
+            "AIR_RULE_OTHER_FIELD_UNKNOWN",
+            `rules[${i}].assertions[${j}].otherFieldId`,
+            `champ "${autre}" absent de l'entité "${r.entityId}" : une règle ne ` +
+              `compare que deux champs de la MÊME ligne`,
+          );
+        }
+        if (assertion.value !== undefined) {
+          push(
+            "AIR_RULE_VALUE_AND_FIELD",
+            `rules[${i}].assertions[${j}]`,
+            `\`value\` et \`otherFieldId\` ensemble : à quoi comparer ?`,
+          );
+        }
+        if (autre === assertion.fieldId) {
+          push(
+            "AIR_RULE_SELF_COMPARISON",
+            `rules[${i}].assertions[${j}].otherFieldId`,
+            `un champ comparé à lui-même ne protège rien`,
+          );
+        }
+      }
     });
   });
 

@@ -69,7 +69,13 @@ export const RELEASE_TRAIN_V1 = {
   // (mesuré EP-061/R6 : 8 arcs prescrits morts, l'intention portée par un
   // param que rien ne lisait).
   // EP-137/145/147 — genres d'écran successifs, migrations identité.
-  airSchemaVersion: "1.34.0",
+  // 1.34.0 -> 1.35.0 (2026-10-13) : `otherFieldId` — une regle compare deux
+  // champs de la MEME ligne. Mesure sur DEUX cahiers des charges reels, et
+  // c'etait le meme mur : « l'index ne peut pas etre inferieur au precedent »
+  // n'etait exprimable qu'au prix d'un champ calcule intermediaire, et « les
+  // requetes du mois ne depassent pas le plafond du compte » ne l'etait pas
+  // du tout. Montee ADDITIVE : la cle est optionnelle, migration identite.
+  airSchemaVersion: "1.35.0",
   // Porté à 1.1.0 le 2026-08-31 (D-060) : montée STRICTEMENT ADDITIVE du
   // registre de blocs — `form` gagne `loading`/`empty`, `detail_header` gagne un
   // état, les trois blocs à données gagnent les props de titres. Rien n'est

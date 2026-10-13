@@ -278,6 +278,44 @@ describe("une règle sur un champ calculé se déclenche vraiment", () => {
 // l'application ». Sans contrainte en base, deux écritures simultanées
 // passent toutes les deux : une vérification applicative ne protège pas
 // d'une course.
+// ── UNE REGLE QUI COMPARE DEUX CHAMPS DE LA MEME LIGNE (AIR 1.35.0).
+//
+// Mesuré sur deux cahiers des charges réels, et c'était le même mur :
+// « l'index ne peut pas être inférieur au précédent » n'était exprimable
+// qu'au prix d'un champ calculé intermédiaire, et « les requêtes du mois ne
+// dépassent pas le plafond du compte » ne l'était pas du tout. Une assertion
+// ne se comparait qu'à une CONSTANTE.
+describe("une règle compare deux champs de la même ligne", () => {
+  const avecDeuxChamps = (): ProjectAir => {
+    const a = structuredClone(air());
+    const e = a.entities.find(
+      (x) => x.fields.filter((f) => f.type === "decimal" && f.derived === undefined).length >= 2,
+    );
+    if (e === undefined) return a;
+    const [g, d] = e.fields.filter((f) => f.type === "decimal" && f.derived === undefined);
+    if (g === undefined || d === undefined) return a;
+    (a.rules as unknown[]).push({
+      id: "rule_test_plafond",
+      kind: "validation",
+      entityId: e.id,
+      description: "le montant ne dépasse pas le plafond déclaré sur la ligne",
+      assertions: [{ fieldId: g.id, operator: "lte", otherFieldId: d.id }],
+    });
+    return a;
+  };
+
+  it("le côté droit devient une LECTURE de la ligne, pas une constante", () => {
+    const a = avecDeuxChamps();
+    const r = a.rules.find((x) => x.id === "rule_test_plafond");
+    if (r === undefined) return;
+    const src = new Map(compileBackend(a).files).get("src/api/regles-metier.ts") ?? "";
+    expect(src).toContain("rule_test_plafond");
+    // La comparaison lit l'autre colonne — pas un littéral.
+    const autre = (r.assertions[0] as { otherFieldId?: string }).otherFieldId ?? "";
+    expect(src).toContain(`ligne[${JSON.stringify(autre.replace(/^fld_/u, ""))}]`);
+  });
+});
+
 describe("un champ unique porte sa contrainte en base", () => {
   it("chaque champ `unique` conservé est contraint dans le schéma", () => {
     const a = air();

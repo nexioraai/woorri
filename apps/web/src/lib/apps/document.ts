@@ -23,7 +23,7 @@
  * (`backend.kind: "externe"`, protocole `/air/v1/…`) mais n'est pas branché
  * ici. C'est le lot suivant, et il faut le dire plutôt que de laisser croire.
  */
-import type { ProjectAir } from '@deribfy/air-schema'
+import { AIR_SCHEMA_VERSION, type ProjectAir } from '@deribfy/air-schema'
 
 export type BoutiqueSource = {
   /** Sert d'identité technique : slug de l'application, identifiant de projet. */
@@ -79,7 +79,13 @@ export function documentDeLaBoutique(b: BoutiqueSource): ProjectAir {
     // La version COURANTE du contrat. Les documents du corpus déclarent 1.0.0
     // et sont migrés en mémoire ; un document NEUF n'a aucune raison de naître
     // périmé.
-    airSchemaVersion: '1.34.0',
+    //
+    // LA CONSTANTE, PAS LE LITTÉRAL. Mesuré le 2026-10-13 : la montée en
+    // 1.35.0 a cassé ce fichier parce qu'il recopiait « 1.34.0 » à la main,
+    // juste sous un commentaire qui promettait « la version courante ». Un
+    // littéral de version se désaccorde au premier changement, et le
+    // commentaire continue d'affirmer le contraire.
+    airSchemaVersion: AIR_SCHEMA_VERSION,
     projectId: `prj_${id}`,
     app: {
       name: b.nom,

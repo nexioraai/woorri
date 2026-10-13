@@ -32,7 +32,7 @@
 
 | Manque | Mesure | Ce que le cahier exige |
 |---|---|---|
-| **Génération PDF** | **0 occurrence** dans le format, les blocs et l'émis | **trois** documents : facture mensuelle, historique annuel, **dossier de contestation** |
+| **Génération PDF** | **CORRECTION DU 2026-10-13 : mon verdict était FAUX.** Le format SAIT l'exprimer — capacité `document.export` au registre, « Document produit par le serveur, remis à la personne ». Ma mesure cherchait `pdf` dans le code de l'application, où il n'a rien à faire : l'app ne compose pas le document, elle le reçoit. Le vrai manque est ailleurs — **les trois émetteurs ignorent cette capacité : 0 occurrence** dans `emit-fastify`, `emit-spring` et `emit-project`. Un document qui la déclare n'obtient rien. Même forme que le défaut `asset` : le format déclare, l'émetteur n'écoute pas | **trois** documents : facture mensuelle, historique annuel, **dossier de contestation** |
 | **Graphiques** | types de blocs disponibles : `button, detail_header, empty_state, form, header, list, prose, search_entry, spacer` — aucun graphique | « graphiques mensuels de consommation et de montants » |
 | **Empreinte de fichier** | `createHash` = **0**. Le seul `sha256` est celui du HMAC qui signe les jetons — faux positif vérifié | « calculer une empreinte numérique du fichier pour repérer une modification ultérieure » |
 

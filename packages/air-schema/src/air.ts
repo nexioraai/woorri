@@ -23,7 +23,7 @@ import {
 // 1.7.1 (E3.3, D-131) : provenance APLANIE (sourceKind/sourceIntegrationId/
 //   sourceDomain/sourceRefreshSeconds) — l'union 1.7.0 dépassait la limite
 //   réelle de grammaire de l'API (classe D-078) ; sémantique inchangée.
-export const AIR_SCHEMA_VERSION = "1.34.0";
+export const AIR_SCHEMA_VERSION = "1.35.0";
 
 export const semverSchema = z.string().regex(/^\d+\.\d+\.\d+$/);
 export const sha256Schema = z.string().regex(/^[0-9a-f]{64}$/);
@@ -1125,6 +1125,30 @@ const ruleAssertionSchema = z.strictObject({
   fieldId: fieldIdSchema,
   operator: z.enum(["eq", "neq", "gt", "gte", "lt", "lte", "in", "matches", "required"]),
   value: jsonLeafSchema.optional(),
+  /**
+   * COMPARER DEUX CHAMPS DE LA MÊME LIGNE (1.35.0).
+   *
+   * Jusqu'ici une assertion ne pouvait se comparer qu'à une CONSTANTE. Mesuré
+   * sur deux cahiers des charges réels, et c'était le même blocage :
+   *
+   * · « l'index ne peut pas être inférieur au précédent » (suivi de
+   *   compteurs) — il fallait un champ calculé intermédiaire pour l'exprimer,
+   *   ce qui ne marchait que si le document en avait déjà un ;
+   * · « les requêtes du mois ne dépassent pas le plafond du compte »
+   *   (plateforme de réservation) — inexprimable, point.
+   *
+   * Une seule addition couvre la CLASSE : quotas, plafonds, soldes, dates
+   * encadrées, tout ce qui compare deux valeurs d'une même ligne. Pas un
+   * besoin métier figé un par un.
+   *
+   * Le champ désigné appartient à la MÊME entité — le validateur le vérifie.
+   * Traverser une relation demanderait de lire une autre ligne, donc la base,
+   * donc ce ne serait plus une règle de saisie.
+   *
+   * `value` et `otherFieldId` s'excluent : les deux ensemble ne diraient pas
+   * à quoi comparer.
+   */
+  otherFieldId: fieldIdSchema.optional(),
 });
 
 const ruleSchema = z.strictObject({

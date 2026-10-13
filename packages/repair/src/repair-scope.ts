@@ -237,6 +237,13 @@ export const SECTIONS_CORRECTIVES: Readonly<Record<string, readonly SectionEmiss
   AIR_REL_ENTITY_UNKNOWN: ["donnees"],
   AIR_RULE_ENTITY_UNKNOWN: ["donnees"],
   AIR_RULE_FIELD_UNKNOWN: ["donnees"],
+  // Comparer deux champs de la meme ligne (1.35.0). Meme section que les deux
+  // codes ci-dessus : une regle vit dans `rules`, donc dans la passe
+  // « donnees ». Reemettre une autre passe ne corrigerait rien et couterait un
+  // appel.
+  AIR_RULE_OTHER_FIELD_UNKNOWN: ["donnees"],
+  AIR_RULE_VALUE_AND_FIELD: ["donnees"],
+  AIR_RULE_SELF_COMPARISON: ["donnees"],
   AIR_FIELD_DISPLAY_MISSING: ["donnees"],
   AIR_FIELD_DISPLAY_NOT_REFERENCE: ["donnees"],
   AIR_FIELD_ENUM_VALUES_MISSING: ["donnees"],

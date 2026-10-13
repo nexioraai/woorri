@@ -1045,7 +1045,15 @@ const validation = (groupe: string, air: ProjectAir): string => {
           continue;
         }
         const c = JSON.stringify(col(champ.id));
-        const v = JSON.stringify(String(a2.value ?? ""));
+        // Comparer a un AUTRE champ de la meme ligne (1.35.0) — meme regle que
+        // la pile Node : le cote droit devient une lecture de la ligne.
+        const autre = a2.otherFieldId;
+        const champAutre =
+          autre === undefined ? undefined : e.fields.find((x) => x.id === autre);
+        const v =
+          champAutre === undefined
+            ? JSON.stringify(String(a2.value ?? ""))
+            : `String.valueOf(ligne.get("${col(champAutre.id)}"))`;
         const liste =
           Array.isArray(a2.value)
             ? (a2.value as unknown[]).map((x) => JSON.stringify(String(x))).join(", ")
