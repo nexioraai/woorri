@@ -269,6 +269,9 @@ export const SECTIONS_CORRECTIVES: Readonly<Record<string, readonly SectionEmiss
   // La voix sans oreille se corrige en AJOUTANT la capacite, pas en retirant
   // la voix : c'est la passe « capacites » qui porte la correction.
   AIR_AGENT_VOICE_WITHOUT_AUDIO: ["capacites", "cablage"],
+  // Se repare en retirant `voiceInput` — et la capacite audio avec, si elle
+  // n'etait la que pour elle. Les deux sections, donc.
+  AIR_AGENT_VOICE_NOT_SERVABLE: ["capacites", "cablage"],
   // L'ambiguite se repare en renommant une operation : c'est le cablage des
   // API qui change, et la liste des pouvoirs de l'agent avec.
   AIR_AGENT_OPERATION_AMBIGUOUS: ["cablage"],

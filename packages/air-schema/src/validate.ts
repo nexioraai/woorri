@@ -1523,6 +1523,38 @@ export function validateAir(air: ProjectAir): AirDiagnostic[] {
           "l'application n'aurait pas le droit d'enregistrer",
       );
     }
+    // ── LA PAROLE EST DÉCLARABLE ET PAS ENCORE SERVABLE (2026-10-13).
+    //
+    // MESURE, le jour même où j'ai ajouté cette clé. `voiceInput: true` fait
+    // DEUX choses : il induit `RECORD_AUDIO` et `NSMicrophoneUsageDescription`,
+    // et il inscrit l'audio au manifeste de confidentialité. Il ne fait rien
+    // d'autre — AUCUN module du runtime n'enregistre. Mesure : UNE capacité
+    // sur vingt-et-une est implémentée côté appareil, et c'est `auth`.
+    //
+    // Une application demanderait donc le microphone et ne l'utiliserait
+    // jamais. C'est une PERMISSION DE TROP — précisément ce qu'un magasin
+    // rejette, et précisément la propriété que le registre existe pour tenir :
+    // le 2026-10-12, 78 permissions déclarées au corpus et ZÉRO en trop.
+    //
+    // POURQUOI UN REFUS ET NON UN COMMENTAIRE. Un refus se lit, se répare, et
+    // nomme l'alternative : on écrit à l'agent, il comprend, il propose, il
+    // agit — tout cela marche sans la parole. Laisser la clé INERTE
+    // produirait un bouton muet qui réclame le micro, et personne ne saurait
+    // pourquoi le magasin a refusé.
+    //
+    // LA CLÉ RESTE AU FORMAT. Elle n'est pas retirée : le jour où le moteur
+    // sait enregistrer, ce refus tombe et rien d'autre ne change. Ce qui
+    // manque est nommé dans le message, pas caché.
+    if (air.agent.voiceInput === true) {
+      push(
+        "AIR_AGENT_VOICE_NOT_SERVABLE",
+        "agent.voiceInput",
+        "la parole est déclarée mais le moteur ne sait pas encore enregistrer : " +
+          "l'application demanderait le microphone sans jamais l'utiliser, et ce " +
+          "serait une permission de trop. Retirez `voiceInput` — on écrit à " +
+          "l'agent, il comprend et il agit.",
+      );
+    }
     // ── LE CERVEAU (1.38.0) : SIX REFUS DE PLUS.
     //
     // Le cerveau est une API déclarée qui transforme des mots en choix. Il

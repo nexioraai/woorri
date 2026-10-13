@@ -354,7 +354,26 @@ export const RELEASE_TRAIN_V1 = {
     // declare la transcription comme une API (1.36.0). La capacite donne
     // l oreille, le document choisit qui ecoute. Les vingt precedentes sont
     // intactes, rien n est retire.
-    "5853d753e87bc563992916f69fc56fe4379d5d9ace8c07f0633e06d82341a7e2",
+    // Re-scelle 2026-10-13 (seconde fois du jour) — LES VERSIONS DES MODULES
+    // EXPO. EDITION CONSCIENTE, et elle corrige une erreur a moi.
+    //
+    // J'avais declare la voix sur `expo-av ~16`. Mesure dans la liste livree
+    // AVEC le SDK : `expo-av` est ABSENT du SDK 57 ; le bon module est
+    // `expo-audio`. En mesurant cette erreur-la, DOUZE autres sont apparues :
+    // tout le registre portait l'ancien schema de versions d'Expo
+    // (`expo-camera ~17`, `expo-linking ~8`, `expo-notifications ~0.32`),
+    // alors que le SDK 57 epingle TOUS ses modules de premiere partie en
+    // `~57.0.x`.
+    //
+    // Latent, parce que rien n'installe encore depuis ces declarations. Le
+    // jour ou quelque chose le fera, il installerait des versions que le SDK
+    // ne prevoit pas — et ca se verrait au premier build natif, pas avant.
+    //
+    // Les VINGT-ET-UNE capacites sont intactes ; aucune n'est retiree. Seules
+    // changent le module de la voix et treize contraintes de version. Un
+    // cliquet (EP-211) les compare desormais a la liste du SDK, presence ET
+    // version majeure, pour que ca ne derive plus en silence.
+    "aff1855269d6e8ff50807baca99372f33853eaf39b198e7d845f52226c71b19d",
   // ÉDITION CONSCIENTE (1.3.0) : l'échelle typographique gagne `display`, un
   // cran au-dessus de `heading`. Ajouté AVEC son consommateur réel (l'écran
   // d'accueil produit), jamais « au cas où » — règle posée par DET-023.

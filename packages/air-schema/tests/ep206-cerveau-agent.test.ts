@@ -229,7 +229,29 @@ describe("EP-206 ③ · le cerveau ne dispense d'aucun refus de 1.37.0", () => {
     ).toContain("AIR_AGENT_OPERATION_UNKNOWN");
   });
 
-  it("la voix sans l'oreille reste refusée, cerveau ou pas", () => {
+  it("LA PAROLE EST REFUSÉE TANT QUE RIEN N'ENREGISTRE — même avec l'oreille", () => {
+    // Mesure du 2026-10-13 : UNE capacité sur vingt-et-une est implémentée
+    // côté appareil, et c'est `auth`. `voiceInput` induit donc le microphone
+    // et ne l'utilise jamais : une permission de trop, ce qu'un magasin
+    // rejette. Le refus nomme l'alternative — on ÉCRIT à l'agent.
+    const air = avec({
+      allowedOperations: ["apiop_envoyer_argent"],
+      confirmBeforeAct: true,
+      voiceInput: true,
+      brain: CERVEAU,
+    });
+    expect(codes(air)).toContain("AIR_AGENT_VOICE_NOT_SERVABLE");
+  });
+
+  it("SANS `voiceInput`, tout le reste marche — l'agent n'a pas besoin de la parole", () => {
+    // C'est la moitié qui compte : le refus ci-dessus ne coûte RIEN de ce que
+    // l'agent sait faire. On lui écrit, il comprend, il propose, il agit.
+    expect(
+      codes(avec({ allowedOperations: ["apiop_envoyer_argent"], confirmBeforeAct: true, brain: CERVEAU })),
+    ).toEqual([]);
+  });
+
+  it("la voix sans l'oreille reste refusée AUSSI — les deux refus coexistent", () => {
     expect(
       codes(
         avec({

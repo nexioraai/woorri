@@ -60,7 +60,7 @@ export const PARTAGE_PAR_CAPACITE: Readonly<Record<string, readonly string[]>> =
   auth: ["contact_info", "identifiers"],
   // Lecture locale de l'appareil photo : rien ne sort.
   barcode_scan: [],
-  // VINGT-ET-UNIEME CAPACITE (2026-10-13) — LA VOIX. `expo-av` enregistre
+  // VINGT-ET-UNIEME CAPACITE (2026-10-13) — LA VOIX. `expo-audio` enregistre
   // DANS l'appareil. La capacite, a elle seule, ne partage RIEN : c'est la
   // meme verite que `camera` juste en dessous.
   //

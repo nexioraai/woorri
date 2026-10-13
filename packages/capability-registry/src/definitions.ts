@@ -70,7 +70,7 @@ const RAW_DEFINITIONS: CapabilityDefinition[] = [
     title: "Lecture de codes-barres / QR",
     description:
       "Scan de codes (produits, tickets, QR) via le flux caméra — dépend de la capability camera.",
-    implementation: { kind: "expo_module", package: "expo-camera", version: "~17" },
+    implementation: { kind: "expo_module", package: "expo-camera", version: "~57" },
     dependencies: { capabilities: ["camera"], nativeModules: [] },
     platforms: { ios: { supported: true, minOsVersion: "15.1" }, android: { supported: true, minSdk: 24 } },
     compatibleRuntimeProfiles: ["core", "standard", "extended"],
@@ -93,7 +93,7 @@ const RAW_DEFINITIONS: CapabilityDefinition[] = [
     version: "1.0.0",
     title: "Authentification biométrique",
     description: "Face ID / Touch ID / empreinte pour déverrouiller des actions sensibles.",
-    implementation: { kind: "expo_module", package: "expo-local-authentication", version: "~17" },
+    implementation: { kind: "expo_module", package: "expo-local-authentication", version: "~57" },
     dependencies: { capabilities: [], nativeModules: [] },
     platforms: { ios: { supported: true, minOsVersion: "15.1" }, android: { supported: true, minSdk: 24 } },
     compatibleRuntimeProfiles: ["standard", "extended"],
@@ -122,7 +122,7 @@ const RAW_DEFINITIONS: CapabilityDefinition[] = [
     title: "Calendrier de l'appareil",
     description:
       "Lecture/écriture d'événements dans le calendrier (réservations, rendez-vous).",
-    implementation: { kind: "expo_module", package: "expo-calendar", version: "~15" },
+    implementation: { kind: "expo_module", package: "expo-calendar", version: "~57" },
     dependencies: { capabilities: [], nativeModules: [] },
     platforms: { ios: { supported: true, minOsVersion: "15.1" }, android: { supported: true, minSdk: 24 } },
     compatibleRuntimeProfiles: ["standard", "extended"],
@@ -171,7 +171,20 @@ const RAW_DEFINITIONS: CapabilityDefinition[] = [
     title: "Enregistrement audio",
     description:
       "Capter la voix dans l'app — parler à l'agent au lieu d'écrire. L'app ENREGISTRE ; la reconnaissance de la parole est une API déclarée par le document, parce qu'elle dépend de la langue et du pays.",
-    implementation: { kind: "expo_module", package: "expo-av", version: "~16" },
+    // ── CORRIGE LE 2026-10-13, LE JOUR MEME OU JE L'AI ECRIT.
+    //
+    // J'avais declare `expo-av ~16`. MESURE, dans la liste des modules
+    // livree AVEC le SDK (`expo/bundledNativeModules.json`) : `expo-av` est
+    // ABSENT du SDK 57. Le bon module est `expo-audio`, en ~57.0.4.
+    //
+    // Les numeros le disaient deja : `expo-audio` suit le SDK (57.x) tandis
+    // que `expo-av` est reste sur l'ancien schema independant (16.x). Declarer
+    // `expo-av` aurait donne a chaque application declarant le micro une
+    // dependance ORPHELINE — installee, et hors du SDK.
+    //
+    // Un cliquet mesure desormais CHAQUE module declare contre cette liste :
+    // treize declarations passaient, une seule tombait, et c'etait celle-la.
+    implementation: { kind: "expo_module", package: "expo-audio", version: "~57" },
     dependencies: { capabilities: [], nativeModules: [] },
     platforms: { ios: { supported: true, minOsVersion: "15.1" }, android: { supported: true, minSdk: 24 } },
     compatibleRuntimeProfiles: ["extended"],
@@ -185,7 +198,7 @@ const RAW_DEFINITIONS: CapabilityDefinition[] = [
       { platform: "android", permission: "android.permission.RECORD_AUDIO", purposeKey: "permission.microphone" },
     ],
     cost: { model: "free", notes: "aucun coût direct ; la transcription, elle, est une API déclarée" },
-    nativeFootprint: { impact: "heavy", nativeModules: ["expo-av"] },
+    nativeFootprint: { impact: "heavy", nativeModules: ["expo-audio"] },
     otaCompatible: false,
     requiresRebuild: true,
     commerceConstraint: "none",
@@ -199,7 +212,7 @@ const RAW_DEFINITIONS: CapabilityDefinition[] = [
     version: "1.0.0",
     title: "Caméra",
     description: "Prise de photo/vidéo dans l'app (produits, justificatifs, avatars).",
-    implementation: { kind: "expo_module", package: "expo-camera", version: "~17" },
+    implementation: { kind: "expo_module", package: "expo-camera", version: "~57" },
     dependencies: { capabilities: [], nativeModules: [] },
     platforms: { ios: { supported: true, minOsVersion: "15.1" }, android: { supported: true, minSdk: 24 } },
     compatibleRuntimeProfiles: ["extended"],
@@ -230,7 +243,7 @@ const RAW_DEFINITIONS: CapabilityDefinition[] = [
     title: "Liens profonds / universels",
     description:
       "Ouverture directe d'un écran depuis une URL (partages, campagnes, QR).",
-    implementation: { kind: "expo_module", package: "expo-linking", version: "~8" },
+    implementation: { kind: "expo_module", package: "expo-linking", version: "~57" },
     dependencies: { capabilities: [], nativeModules: [] },
     platforms: { ios: { supported: true, minOsVersion: "15.1" }, android: { supported: true, minSdk: 24 } },
     compatibleRuntimeProfiles: ["standard", "extended"],
@@ -257,7 +270,7 @@ const RAW_DEFINITIONS: CapabilityDefinition[] = [
     version: "1.0.0",
     title: "Géolocalisation",
     description: "Position de l'utilisateur (livraison, points de vente proches).",
-    implementation: { kind: "expo_module", package: "expo-location", version: "~19" },
+    implementation: { kind: "expo_module", package: "expo-location", version: "~57" },
     dependencies: { capabilities: [], nativeModules: [] },
     platforms: { ios: { supported: true, minOsVersion: "15.1" }, android: { supported: true, minSdk: 24 } },
     compatibleRuntimeProfiles: ["standard", "extended"],
@@ -309,7 +322,7 @@ const RAW_DEFINITIONS: CapabilityDefinition[] = [
     version: "1.0.0",
     title: "Import de médias",
     description: "Sélection de photos/vidéos de la galerie et envoi vers le stockage de l'app.",
-    implementation: { kind: "expo_module", package: "expo-image-picker", version: "~17" },
+    implementation: { kind: "expo_module", package: "expo-image-picker", version: "~57" },
     dependencies: { capabilities: [], nativeModules: [] },
     platforms: { ios: { supported: true, minOsVersion: "15.1" }, android: { supported: true, minSdk: 24 } },
     compatibleRuntimeProfiles: ["standard", "extended"],
@@ -337,7 +350,7 @@ const RAW_DEFINITIONS: CapabilityDefinition[] = [
     version: "1.0.0",
     title: "Stockage hors-ligne",
     description: "Base locale SQLite pour le mode hors-ligne et le cache structuré.",
-    implementation: { kind: "expo_module", package: "expo-sqlite", version: "~16" },
+    implementation: { kind: "expo_module", package: "expo-sqlite", version: "~57" },
     dependencies: { capabilities: [], nativeModules: [] },
     platforms: { ios: { supported: true, minOsVersion: "15.1" }, android: { supported: true, minSdk: 24 } },
     compatibleRuntimeProfiles: ["standard", "extended"],
@@ -385,7 +398,7 @@ const RAW_DEFINITIONS: CapabilityDefinition[] = [
     title: "Document produit par le serveur, remis à la personne",
     description:
       "L'application DEMANDE à son serveur un document (procès-verbal, reçu, rapport), le reçoit, et le remet à la personne — enregistrement ou partage. Elle ne le compose pas : un document qui engage doit être reproductible et archivé, ce qu'une fabrication sur téléphone ne garantit pas.",
-    implementation: { kind: "expo_module", package: "expo-sharing", version: "~14" },
+    implementation: { kind: "expo_module", package: "expo-sharing", version: "~57" },
     dependencies: { capabilities: ["share"], nativeModules: [] },
     platforms: { ios: { supported: true, minOsVersion: "15.1" }, android: { supported: true, minSdk: 24 } },
     compatibleRuntimeProfiles: ["standard", "extended"],
@@ -547,7 +560,7 @@ const RAW_DEFINITIONS: CapabilityDefinition[] = [
       "L'application AFFICHE une coordonnée d'encaissement portée par les données et OUVRE un canal de contact vers elle. Aucun opérateur intégré, aucun appel réseau : le transfert a lieu hors de l'application, comme un paiement de la main à la main.",
     // `expo-linking` et rien d'autre : ouvrir un canal, composer un numéro.
     // La capacité n'apporte AUCUN module de paiement.
-    implementation: { kind: "expo_module", package: "expo-linking", version: "~8" },
+    implementation: { kind: "expo_module", package: "expo-linking", version: "~57" },
     dependencies: { capabilities: ["external_contact"], nativeModules: [] },
     platforms: { ios: { supported: true, minOsVersion: "15.1" }, android: { supported: true, minSdk: 24 } },
     compatibleRuntimeProfiles: ["standard", "extended"],
@@ -604,7 +617,7 @@ const RAW_DEFINITIONS: CapabilityDefinition[] = [
     // (rappels) — l'implémentation expo-notifications est commune.
     description:
       "Notifications transactionnelles push (commande, réservation, statut) ET notifications locales programmées sur l'appareil (rappels).",
-    implementation: { kind: "expo_module", package: "expo-notifications", version: "~0.32" },
+    implementation: { kind: "expo_module", package: "expo-notifications", version: "~57" },
     dependencies: { capabilities: [], nativeModules: [] },
     platforms: { ios: { supported: true, minOsVersion: "15.1" }, android: { supported: true, minSdk: 24 } },
     compatibleRuntimeProfiles: ["standard", "extended"],
@@ -646,7 +659,7 @@ const RAW_DEFINITIONS: CapabilityDefinition[] = [
     title: "Contact externe",
     description:
       "Ouverture d'un canal de contact vers un destinataire porté par les données (appel, message, courriel), via les schémas d'URI du système.",
-    implementation: { kind: "expo_module", package: "expo-linking", version: "~8" },
+    implementation: { kind: "expo_module", package: "expo-linking", version: "~57" },
     dependencies: { capabilities: [], nativeModules: [] },
     platforms: { ios: { supported: true, minOsVersion: "15.1" }, android: { supported: true, minSdk: 24 } },
     compatibleRuntimeProfiles: ["standard", "extended"],
@@ -673,7 +686,7 @@ const RAW_DEFINITIONS: CapabilityDefinition[] = [
     version: "1.0.0",
     title: "Partage système",
     description: "Partage de contenus via la feuille de partage native.",
-    implementation: { kind: "expo_module", package: "expo-sharing", version: "~14" },
+    implementation: { kind: "expo_module", package: "expo-sharing", version: "~57" },
     dependencies: { capabilities: [], nativeModules: [] },
     platforms: { ios: { supported: true, minOsVersion: "15.1" }, android: { supported: true, minSdk: 24 } },
     compatibleRuntimeProfiles: ["standard", "extended"],
@@ -721,6 +734,25 @@ const RAW_DEFINITIONS: CapabilityDefinition[] = [
 
 // Parse fail-closed AU CHARGEMENT : un registre qui ne passe pas son propre
 // schéma n'existe pas. Trié par id — sortie déterministe.
+/**
+ * LES VERSIONS DES MODULES EXPO SONT CELLES DU SDK, PAS LES LEURS (2026-10-13).
+ *
+ * MESURE : les treize declarations portaient l'ANCIEN schema de versions
+ * d'Expo — `expo-camera ~17`, `expo-linking ~8`, `expo-notifications ~0.32`.
+ * Or la liste livree AVEC le SDK (`expo/bundledNativeModules.json`) epingle
+ * TOUS ces modules en `~57.0.x` : Expo a aligne ses modules de premiere
+ * partie sur la version du SDK.
+ *
+ * Le defaut etait LATENT — rien n'installe encore depuis ces declarations,
+ * puisque l'application emise n'a pas de `package.json`. Le jour ou quelque
+ * chose le fera, il installerait des versions que le SDK ne prevoit pas, et
+ * ca se verrait au premier build natif, pas avant.
+ *
+ * Decouvert en corrigeant une erreur a moi : j'avais declare `expo-av ~16`
+ * pour la voix, un module ABSENT du SDK 57. En mesurant celle-la, les douze
+ * autres sont apparues. Un cliquet (EP-211) compare desormais chaque
+ * declaration a la liste du SDK — presence ET version majeure.
+ */
 export const CAPABILITIES: readonly CapabilityDefinition[] = z
   .array(capabilityDefinitionSchema)
   .parse(RAW_DEFINITIONS)
