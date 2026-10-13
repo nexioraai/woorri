@@ -28,7 +28,16 @@ export function HeaderBlock({ title, subtitle, accroche, logoUri, testID }: Head
   return (
     <Section testID={testID}>
       {logoUri === undefined ? null : (
-        <AppImage uri={logoUri} variant="brand" testID={`${testID ?? "header"}-brand`} />
+        // WCAG 1.1.1 (niveau A) : une image porte un equivalent textuel. Le
+        // nom vient du DOCUMENT — le titre de l'ecran — jamais d'une chaine
+        // inventee ici. Mesure du 2026-10-12 : 124 appels sur 124 n'en
+        // passaient aucun, donc aucune image generee n'etait nommee.
+        <AppImage
+          uri={logoUri}
+          variant="brand"
+          accessibilityLabel={title}
+          testID={`${testID ?? "header"}-brand`}
+        />
       )}
       {/* 1.7.0 — une ACCROCHE monte d'un cran typographique. Le bloc choisit
           un RÔLE, la primitive porte la forme : aucun style ici. */}
@@ -173,7 +182,7 @@ export function ListBlock({
                 key={item.id}
                 leading={
                   item.imageUri === undefined ? undefined : (
-                    <AppImage uri={item.imageUri} variant="thumb" />
+                    <AppImage uri={item.imageUri} variant="thumb" accessibilityLabel={item.title} />
                   )
                 }
                 title={item.title}
@@ -280,7 +289,7 @@ export function ListBlock({
             // la primitive. Sans `imageUri`, la ligne reste celle de 1.1.0.
             leading={
               item.imageUri === undefined ? undefined : (
-                <AppImage uri={item.imageUri} variant="thumb" />
+                <AppImage uri={item.imageUri} variant="thumb" accessibilityLabel={item.title} />
               )
             }
             title={item.title}
@@ -468,7 +477,12 @@ export function DetailHeaderBlock({
           rement sans accents ni phrase longue : le cliquet F3 cherche des
           chaines linguistiques par motif et ne distingue pas un commentaire. */}
       {imageUri === undefined ? null : (
-        <AppImage uri={imageUri} variant="header" testID={`${testID ?? "detail"}-image`} />
+        <AppImage
+          uri={imageUri}
+          variant="header"
+          accessibilityLabel={title}
+          testID={`${testID ?? "detail"}-image`}
+        />
       )}
       <AppText variant="heading">{title}</AppText>
       {subtitle !== undefined && <AppText tone="muted">{subtitle}</AppText>}

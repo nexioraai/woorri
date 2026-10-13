@@ -239,7 +239,17 @@ export const RELEASE_TRAIN_V1 = {
     // pas parce qu une prop bouge. Les huit precedents sont intacts, rien n
     // est retire, et `prose` ne porte aucun texte du moteur — ses paragraphes
     // viennent du DOCUMENT (F3, EP-143 preserve).
-    "452776455571f4a351e20941c3163e3b8e2ee2374fcd38c3684689eaa84fe634",
+    // Re-scelle 2026-10-12 : LE NOM ACCESSIBLE DES IMAGES.
+    // EDITION CONSCIENTE. Mesure du jour : `AppImage` accepte
+    // `accessibilityLabel`, le transmet, et n a aucune valeur par defaut —
+    // et 124 appels emis sur 124 n en passaient AUCUN. Donc aucune image
+    // generee n avait de nom accessible : WCAG 1.1.1, NIVEAU A, le plus bas,
+    // contraignant en Europe par EN 301 549.
+    // Quatre appels nommes, et le nom vient du DOCUMENT — titre de l ecran,
+    // titre de l element. Aucune chaine du moteur (F3 preserve) : le sceau
+    // change parce qu une PROP MANQUANTE est ajoutee, aucune n est retiree,
+    // aucun bloc n entre ni ne sort. Mesure apres : 124 nommees, 0 sans.
+    "e4620727fad6e6a617fc4f6422e6e6a8bb0af746f26ea746f0003274c2cab1a4",
   // EP-134 — ajout compatible `external_contact` : version MINEURE du registre.
   /**
    * EP-147 ③ — LE NIVEAU D'API ANDROID VISÉ, épinglé par le train.
