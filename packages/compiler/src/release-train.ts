@@ -97,7 +97,13 @@ export const RELEASE_TRAIN_V1 = {
   // ACTIFS, et le document avait declare l'exigence INEXPRIMABLE en nommant
   // le manquant — « une condition que `sum` et `count` ne portent pas ».
   // Cle optionnelle, migration IDENTITE : absente, toutes les lignes comptent.
-  airSchemaVersion: "1.39.0",
+  // 1.40.0 (2026-10-13) — l'operateur `designe` : « cette valeur designe une
+  // ligne existante d'une autre entite ». Il LIT LA BASE, contrairement aux
+  // neuf autres, donc il ne peut etre tenu QUE par le serveur : verifier un
+  // code d'adhesion dans l'ecran supposerait de lui livrer la LISTE DES
+  // CODES. La cible doit etre `unique`, sinon « designe UNE ligne » ne
+  // designe personne. Migration IDENTITE : un operateur de plus.
+  airSchemaVersion: "1.40.0",
   // Porté à 1.1.0 le 2026-08-31 (D-060) : montée STRICTEMENT ADDITIVE du
   // registre de blocs — `form` gagne `loading`/`empty`, `detail_header` gagne un
   // état, les trois blocs à données gagnent les props de titres. Rien n'est

@@ -857,7 +857,7 @@ function routes(air: ProjectAir, e: Entite): string {
     "    // pas. 422 : la requête est comprise, c'est son contenu qui est",
     "    // refusé.",
     "    const futur = { ...(existante ?? {}), ...retenir(corps), id };",
-    `    const violation = verifier${PASCAL(e.id)}(futur as Record<string, unknown>);`,
+    `    const violation = await verifier${PASCAL(e.id)}(futur as Record<string, unknown>, base);`,
     "    if (violation !== null) {",
     "      return rep.code(422).send({",
     `      error: "AIR_REGLE_VIOLEE",`,
@@ -1060,6 +1060,10 @@ function reglesMetier(air: ProjectAir): string {
   const l = [
     "// ÉMIS depuis le contrat — ne pas modifier à la main.",
     "",
+    // La base est necessaire depuis 1.40.0 : `designe` cherche parmi des
+    // lignes d'une autre entite. Le type suffit — rien n'est execute ici.
+    'import type { Base } from "../base.ts";',
+    "",
     PRELUDE_EXPRESSION,
     "/** Une règle non tenue : laquelle, et ce qu'elle dit. */",
     "export interface Violation {",
@@ -1123,7 +1127,17 @@ function reglesMetier(air: ProjectAir): string {
       ` * la requête laisserait passer une règle tenue par un champ qu'elle ne`,
       ` * mentionne pas.`,
       ` */`,
-      `export function verifier${PASCAL(e.id)}(ligne: Record<string, unknown>): Violation | null {`,
+      // ── POURQUOI CETTE VERIFICATION EST ASYNCHRONE ET VOIT LA BASE (1.40.0).
+      //
+      // Les neuf premiers operateurs comparent DANS la ligne : rien a lire
+      // ailleurs. `designe` cherche PARMI DES LIGNES d'une autre entite — il
+      // lui faut la base. Garder une signature synchrone aurait oblige a
+      // verifier le code dans l'ecran, ce qui supposerait de lui livrer la
+      // LISTE DES CODES : n'importe qui pourrait alors rejoindre n'importe
+      // quelle tontine. La verification se fait la ou les codes ne sortent
+      // jamais.
+      `export async function verifier${PASCAL(e.id)}(ligne: Record<string, unknown>, base: Base): Promise<Violation | null> {`,
+      "  void base;",
     );
     const assets = e.fields.filter((f) => f.type === "asset" && f.derived === undefined);
     for (const f of assets) {
@@ -1256,6 +1270,29 @@ function reglesMetier(air: ProjectAir): string {
               return "";
           }
         })();
+        // ── `designe` (1.40.0) — UNE LECTURE, PAS UNE COMPARAISON.
+        //
+        // La valeur saisie doit correspondre a une ligne EXISTANTE. Le
+        // validateur a deja exige que le champ cible soit `unique`, donc il y
+        // a au plus une ligne : « existe ou non » est une question qui a une
+        // reponse. La valeur voyage en PARAMETRE — une valeur recopiee dans
+        // le texte de la requete est une injection qui attend.
+        if (a.operator === "designe" && a.designe !== undefined) {
+          const tableCible = a.designe.entityId.replace(/^ent_/u, "");
+          const colCible = a.designe.fieldId.replace(/^fld_/u, "");
+          l.push(
+            `  // ${r.description}`,
+            `  //   \`${champ.name}\` doit designer une ligne de « ${a.designe.entityId} »`,
+            `  if (rempli(ligne[${c}])) {`,
+            `    const trouvee = await base.un(`,
+            `      \`select 1 as v from ${tableCible} where ${colCible} = ? limit 1\`,`,
+            `      [ligne[${c}]],`,
+            "    );",
+            `    if (trouvee === undefined || trouvee === null) ${echec}`,
+            "  }",
+          );
+          continue;
+        }
         if (cond === "") {
           // AUCUN OPÉRATEUR INCONNU NE PASSE EN SILENCE. S'il en apparaît un,
           // le serveur REFUSE la règle au lieu de l'ignorer : une règle

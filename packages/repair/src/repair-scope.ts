@@ -286,6 +286,15 @@ export const SECTIONS_CORRECTIVES: Readonly<Record<string, readonly SectionEmiss
   AIR_AGREGAT_CONDITION_LISTE_INATTENDUE: ["donnees"],
   AIR_AGREGAT_CONDITION_VALEUR_IMPOSSIBLE: ["donnees"],
   AIR_AGREGAT_CONDITION_ORDRE_IMPOSSIBLE: ["donnees"],
+  // `designe` (1.40.0) — cinq refus. Les regles vivent dans `donnees`, et la
+  // cible non unique s'y repare aussi : c'est le champ d'entite qui gagne
+  // `unique: true`.
+  AIR_RULE_DESIGNE_SANS_CIBLE: ["donnees"],
+  AIR_RULE_CIBLE_SANS_DESIGNE: ["donnees"],
+  AIR_RULE_DESIGNE_ENTITE_INCONNUE: ["donnees"],
+  AIR_RULE_DESIGNE_CHAMP_INCONNU: ["donnees"],
+  AIR_RULE_DESIGNE_CIBLE_NON_UNIQUE: ["donnees"],
+  AIR_RULE_DESIGNE_TYPES_INCOMPATIBLES: ["donnees"],
   // L'ambiguite se repare en renommant une operation : c'est le cablage des
   // API qui change, et la liste des pouvoirs de l'agent avec.
   AIR_AGENT_OPERATION_AMBIGUOUS: ["cablage"],

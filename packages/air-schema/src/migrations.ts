@@ -586,6 +586,25 @@ export const AIR_MIGRATIONS: readonly AirMigration[] = [
       "exactement comme avant.",
     migrate: (document) => document,
   },
+  {
+    from: "1.39.0",
+    to: "1.40.0",
+    description:
+      "AIR 1.40.0 : l'opérateur `designe` — « cette valeur désigne une ligne " +
+      "existante d'une autre entité ». Mesure qui l'a imposé, écrite dans un " +
+      "document du dépôt : le cahier d'une tontine demande qu'« un membre " +
+      "rejoigne la tontine de son président en saisissant le code reçu ; un " +
+      "code inconnu est refusé », et le document a déclaré l'exigence " +
+      "INEXPRIMABLE en nommant le manquant. CET OPÉRATEUR LIT LA BASE, et " +
+      "c'est assumé : les neuf autres comparent dans la ligne, celui-ci " +
+      "cherche parmi des lignes, donc il ne peut être tenu QUE par le " +
+      "serveur. Le faire dans l'écran supposerait de lui livrer la LISTE DES " +
+      "CODES — n'importe qui pourrait alors rejoindre n'importe quelle " +
+      "tontine. Et la cible doit être `unique`, sinon « désigne une ligne » " +
+      "ne désigne personne. Migration IDENTITÉ : un opérateur de plus à " +
+      "l'énumération, aucun document existant ne change de sens.",
+    migrate: (document) => document,
+  },
 ];
 
 export class AirMigrationError extends Error {

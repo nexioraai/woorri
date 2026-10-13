@@ -25,7 +25,7 @@ import {
 // 1.7.1 (E3.3, D-131) : provenance APLANIE (sourceKind/sourceIntegrationId/
 //   sourceDomain/sourceRefreshSeconds) — l'union 1.7.0 dépassait la limite
 //   réelle de grammaire de l'API (classe D-078) ; sémantique inchangée.
-export const AIR_SCHEMA_VERSION = "1.39.0";
+export const AIR_SCHEMA_VERSION = "1.40.0";
 
 export const semverSchema = z.string().regex(/^\d+\.\d+\.\d+$/);
 export const sha256Schema = z.string().regex(/^[0-9a-f]{64}$/);
@@ -1172,8 +1172,65 @@ const actionSchema = z.strictObject({
 
 const ruleAssertionSchema = z.strictObject({
   fieldId: fieldIdSchema,
-  operator: z.enum(["eq", "neq", "gt", "gte", "lt", "lte", "in", "matches", "required"]),
+  operator: z.enum([
+    "eq",
+    "neq",
+    "gt",
+    "gte",
+    "lt",
+    "lte",
+    "in",
+    "matches",
+    "required",
+    /**
+     * ── CETTE VALEUR DESIGNE UNE LIGNE EXISTANTE D'UNE AUTRE ENTITE (1.40.0).
+     *
+     * MESURE QUI L'A IMPOSE, ecrite dans un document du depot : le cahier
+     * d'une tontine demande qu'« un membre rejoigne la tontine de son
+     * president en saisissant le code recu ; un code inconnu est refuse ». Le
+     * document a declare l'exigence INEXPRIMABLE, et sa raison nommait le
+     * manquant : « rien n'y exprime "cette valeur designe une ligne existante
+     * d'une autre entite" ».
+     *
+     * ── IL FAUT DIRE EN QUOI CET OPERATEUR EST DIFFERENT DES NEUF AUTRES.
+     *
+     * Le commentaire ci-dessous ecarte la traversee d'une relation : « lire
+     * une autre ligne, donc la base, donc ce ne serait plus une regle de
+     * saisie ». Cet operateur-la LIT LA BASE, et c'est assume : il ne
+     * pretend pas etre une regle de saisie. Il ne peut etre tenu QUE par le
+     * serveur, et l'emission ne le pose nulle part ailleurs.
+     *
+     * ── ET LE FAIRE DANS L'APPLICATION SERAIT UNE FUITE.
+     *
+     * La raison du document le dit : verifier un code dans l'ecran
+     * supposerait de LUI LIVRER LA LISTE DES CODES — n'importe qui pourrait
+     * alors rejoindre n'importe quelle tontine. Le rapprochement se fait la
+     * ou les codes ne sortent jamais.
+     *
+     * ── LA CIBLE DOIT ETRE UNIQUE, SINON « UNE LIGNE » NE VEUT RIEN DIRE.
+     *
+     * Si deux lignes portent le meme code, « designe une ligne existante » ne
+     * designe personne. Le validateur exige `unique: true` sur le champ
+     * cible — et c'est un refus qui mord sur un document reel : le code
+     * d'adhesion de la tontine n'etait PAS declare unique.
+     */
+    "designe",
+  ]),
   value: jsonLeafSchema.optional(),
+  /**
+   * LA LIGNE DESIGNEE — exigee par `designe`, interdite ailleurs (1.40.0).
+   *
+   * Nommer l'entite ET le champ, plutot que de deviner par une relation : une
+   * relation dit qu'un lien EXISTE, pas par quelle valeur on le retrouve. Un
+   * code d'adhesion n'est pas une cle etrangere — c'est une valeur qu'on
+   * SAISIT pour en trouver une.
+   */
+  designe: z
+    .strictObject({
+      entityId: entityIdSchema,
+      fieldId: fieldIdSchema,
+    })
+    .optional(),
   /**
    * COMPARER DEUX CHAMPS DE LA MÊME LIGNE (1.35.0).
    *

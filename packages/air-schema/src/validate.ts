@@ -1475,6 +1475,81 @@ export function validateAir(air: ProjectAir): AirDiagnostic[] {
           );
         }
       }
+      // ── `designe` (1.40.0) : CINQ REFUS.
+      //
+      // Cet opérateur LIT LA BASE — il cherche parmi des lignes au lieu de
+      // comparer dans la ligne. Chacune des cinq fautes rendrait la règle
+      // muette ou ambiguë, et toutes se voient sans exécuter quoi que ce soit.
+      const cible = assertion.designe;
+      const estDesigne = assertion.operator === "designe";
+      // ① LA CHARGE ET L'OPÉRATEUR VONT ENSEMBLE. Une cible sans `designe`
+      //    ne serait jamais lue ; `designe` sans cible ne dirait pas où
+      //    chercher.
+      if (estDesigne && cible === undefined) {
+        push(
+          "AIR_RULE_DESIGNE_SANS_CIBLE",
+          `rules[${i}].assertions[${j}]`,
+          "`designe` ne dit pas QUELLE ligne : il faut `designe.entityId` et " +
+            "`designe.fieldId`",
+        );
+      }
+      if (!estDesigne && cible !== undefined) {
+        push(
+          "AIR_RULE_CIBLE_SANS_DESIGNE",
+          `rules[${i}].assertions[${j}].designe`,
+          `l'opérateur est "${assertion.operator}" : la cible ne serait jamais lue`,
+        );
+      }
+      if (estDesigne && cible !== undefined) {
+        const ent = air.entities.find((x) => x.id === cible.entityId);
+        // ② L'ENTITÉ DÉSIGNÉE EXISTE.
+        if (ent === undefined) {
+          push(
+            "AIR_RULE_DESIGNE_ENTITE_INCONNUE",
+            `rules[${i}].assertions[${j}].designe.entityId`,
+            `l'entité "${cible.entityId}" n'existe pas : il n'y a aucune ligne à désigner`,
+          );
+        } else {
+          const champCible = ent.fields.find((x) => x.id === cible.fieldId);
+          // ③ LE CHAMP DÉSIGNÉ EXISTE SUR ELLE.
+          if (champCible === undefined) {
+            push(
+              "AIR_RULE_DESIGNE_CHAMP_INCONNU",
+              `rules[${i}].assertions[${j}].designe.fieldId`,
+              `"${cible.fieldId}" n'est pas un champ de "${cible.entityId}" : ` +
+                `on ne peut pas chercher ce qui n'y est pas`,
+            );
+          } else {
+            // ④ LA CIBLE DOIT ÊTRE UNIQUE — LE REFUS QUI COMPTE.
+            //
+            //    Si deux lignes portent le même code, « désigne une ligne
+            //    existante » ne désigne PERSONNE : le serveur en trouverait
+            //    deux et devrait choisir, et choisir pour l'auteur est
+            //    exactement ce que ce format refuse.
+            if (champCible.unique !== true) {
+              push(
+                "AIR_RULE_DESIGNE_CIBLE_NON_UNIQUE",
+                `rules[${i}].assertions[${j}].designe.fieldId`,
+                `"${champCible.id}" n'est pas déclaré \`unique\` : deux lignes ` +
+                  `pourraient porter la même valeur, et « désigne UNE ligne » ne ` +
+                  `désignerait personne. Déclarez-le unique.`,
+              );
+            }
+            // ⑤ LES DEUX CHAMPS SE COMPARENT. Chercher un texte dans une
+            //    colonne de nombres ne trouverait jamais rien, sans erreur.
+            const source = entity.fields.find((x) => x.id === assertion.fieldId);
+            if (source !== undefined && source.type !== champCible.type) {
+              push(
+                "AIR_RULE_DESIGNE_TYPES_INCOMPATIBLES",
+                `rules[${i}].assertions[${j}].designe`,
+                `"${assertion.fieldId}" est de type "${source.type}" et ` +
+                  `"${champCible.id}" de type "${champCible.type}" : la recherche ` +
+                  `ne trouverait jamais rien, et sans erreur`,
+              );
+            }
+          }
+        }
+      }
     });
   });
 
