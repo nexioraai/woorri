@@ -255,7 +255,21 @@ export const RELEASE_TRAIN_V1 = {
     // titre de l element. Aucune chaine du moteur (F3 preserve) : le sceau
     // change parce qu une PROP MANQUANTE est ajoutee, aucune n est retiree,
     // aucun bloc n entre ni ne sort. Mesure apres : 124 nommees, 0 sans.
-    "e4620727fad6e6a617fc4f6422e6e6a8bb0af746f26ea746f0003274c2cab1a4",
+    // Re-scelle 2026-10-13 : DIXIEME BLOC, `graphique`.
+    // EDITION CONSCIENTE. Deux cahiers des charges reels, deux metiers sans
+    // rapport, reclamaient la meme chose — comparer des valeurs nommees — et
+    // aucun bloc ne savait le dire : « graphiques mensuels de consommation et
+    // de montants » d'un cote, « volumes, taux de succes, couts, recettes,
+    // commissions, marge » de l'autre. Le troisieme cahier l'aurait redemande.
+    //
+    // DES BARRES, PAS DES COURBES : une courbe aurait exige `react-native-svg`
+    // dans CHAQUE application generee, alors que les deux besoins s'expriment
+    // en comparaisons. Aucune dependance ajoutee, et la primitive `Barre`
+    // porte toute la forme — le bloc reste sans style, cliquet d'etancheite
+    // intact. Le sceau change parce qu'un bloc ENTRE au registre ; les neuf
+    // precedents sont intacts, rien n'est retire, et le bloc n'ecrit AUCUN
+    // texte : etiquettes et valeurs viennent du document (F3).
+    "8f0c59550e4c26a765214c4b7a465a93a4a9c7ce16064acdd735423ed4e03fc5",
   // EP-134 — ajout compatible `external_contact` : version MINEURE du registre.
   /**
    * EP-147 ③ — LE NIVEAU D'API ANDROID VISÉ, épinglé par le train.

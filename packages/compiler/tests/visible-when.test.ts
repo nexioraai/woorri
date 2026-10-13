@@ -85,6 +85,8 @@ describe("le runtime ÉMIS sait évaluer la condition", () => {
     // 1.14.0 (EP-198) : 8 — `AirProse` consulte la visibilite comme les
     // autres. Un texte legal peut dependre de la session (un retrait de
     // consentement ne concerne qu un utilisateur connecte).
-    expect(occurrences).toBe(8);
+    // 2026-10-13 : 9 — `AirGraphique` consulte la visibilite comme les autres.
+    // Un graphique de couts peut n'avoir de sens que pour un role donne.
+    expect(occurrences).toBe(9);
   });
 });

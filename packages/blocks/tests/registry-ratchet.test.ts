@@ -34,6 +34,11 @@ const V1_BLOCK_IDS = [
   // 1.14.0 (EP-198) — NEUVIEME bloc, ajoute en queue : l ordre du registre est
   // celui de la declaration, et les huit premiers ne bougent pas.
   "prose",
+  // 2026-10-13 — DIXIEME bloc, ajoute en queue : `graphique`. Deux cahiers des
+  // charges reels et sans rapport reclamaient la meme chose — comparer des
+  // valeurs nommees — et aucun bloc ne savait le dire. Les neuf premiers ne
+  // bougent pas.
+  "graphique",
 ];
 
 describe("cliquets du registre de blocs", () => {

@@ -192,6 +192,20 @@ export interface BadgeProps extends A11yProps {
   tone?: "info" | "success" | "warn" | "error";
 }
 
+/**
+ * UNE BARRE D'UN GRAPHIQUE.
+ *
+ * `ratio` est une PROPORTION (0..1) calculee par l'appelant depuis le maximum
+ * de sa serie. La primitive ne connait ni les donnees ni leur echelle : elle
+ * pose une longueur. `valeur` est le texte DEJA FORMATE par le document — la
+ * primitive n'arrondit rien et n'ajoute aucune unite (F3).
+ */
+export interface BarreProps extends A11yProps {
+  label: string;
+  valeur: string;
+  ratio: number;
+}
+
 export interface StateViewProps extends A11yProps {
   state: "loading" | "empty" | "error";
   title: string;

@@ -6,7 +6,7 @@
 // de styling reste remplaçable (D-021) et les tokens restent la seule
 // source visuelle. AUCUNE syntaxe Maestro/Detox : les blocs sont
 // E2E-agnostiques (D-022/D-023), seuls les testID standard sont exposés.
-import {Liste, GridCard, AppButton,
+import {Liste, GridCard, AppButton, Barre,
   AppText,
   Badge,
   ListRow,
@@ -22,7 +22,7 @@ import type {Blocks,
   FormBlockProps,
   HeaderBlockProps,
   ListBlockProps,
-  SpacerBlockProps, SearchEntryBlockProps} from "./contracts.ts";
+  SpacerBlockProps, SearchEntryBlockProps, GraphiqueBlockProps} from "./contracts.ts";
 
 export function HeaderBlock({ title, subtitle, accroche, logoUri, testID }: HeaderBlockProps) {
   return (
@@ -407,6 +407,52 @@ export function ProseBlock({ paragraphs, title, brouillon, testID }: ProseBlockP
   );
 }
 
+/**
+ * GRAPHIQUE (2026-10-13) — la classe que DEUX cahiers reclamaient.
+ *
+ * Le bloc choisit un ROLE, la primitive porte la forme : aucun style ici, le
+ * cliquet d'etancheite reste tenu. Il ne CALCULE que la proportion — le
+ * maximum de la serie — et n'ecrit AUCUN texte : les etiquettes et les
+ * valeurs affichees viennent du document (F3).
+ *
+ * Un maximum nul ou negatif donne des barres vides plutot qu'une division par
+ * zero. Une serie entierement a zero est une information, pas une erreur.
+ */
+export function GraphiqueBlock({
+  title,
+  series,
+  state = { kind: "ready" },
+  testID,
+}: GraphiqueBlockProps) {
+  if (state.kind === "loading") {
+    return <StateView state="loading" title={state.title} testID={testID} />;
+  }
+  if (state.kind === "empty") {
+    return (
+      <StateView state="empty" title={state.title} message={state.message} testID={testID} />
+    );
+  }
+  if (state.kind === "error") {
+    return (
+      <StateView state="error" title={state.title} message={state.message} testID={testID} />
+    );
+  }
+  const max = series.reduce((m, p) => (p.value > m ? p.value : m), 0);
+  return (
+    <Section title={title} testID={testID}>
+      {series.map((p, i) => (
+        <Barre
+          key={`${testID ?? "graphique"}-${String(i)}`}
+          label={p.label}
+          valeur={p.display}
+          ratio={max > 0 ? p.value / max : 0}
+          testID={`${testID ?? "graphique"}-barre-${String(i)}`}
+        />
+      ))}
+    </Section>
+  );
+}
+
 export function ButtonBlock({ label, icon, kind, onPress, testID }: ButtonBlockProps) {
   // MESURE SUR APPAREIL : ce bloc rendait le bouton NU, donc collé aux bords
   // de l'ecran — seul bloc a ne pas passer par `Section`, qui porte les
@@ -511,4 +557,5 @@ export const blocks: Blocks = {
   DetailHeaderBlock,
   SpacerBlock,
   ProseBlock,
+  GraphiqueBlock,
 };

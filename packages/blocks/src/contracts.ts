@@ -262,6 +262,7 @@ export interface Blocks {
   ButtonBlock: ComponentType<ButtonBlockProps>;
   SpacerBlock: ComponentType<SpacerBlockProps>;
   ProseBlock: ComponentType<ProseBlockProps>;
+  GraphiqueBlock: ComponentType<GraphiqueBlockProps>;
   EmptyStateBlock: ComponentType<EmptyStateBlockProps>;
   DetailHeaderBlock: ComponentType<DetailHeaderBlockProps>;
 }
@@ -293,6 +294,42 @@ export const HEADER_BLOCK_STATES = ["ready"] as const;
 /** 1.8.0 — le spacer n'a qu'un état : il est là, ou il ne l'est pas. */
 export const SPACER_BLOCK_STATES = ["ready"] as const;
 export const PROSE_BLOCK_STATES = ["ready"] as const;
+
+/**
+ * GRAPHIQUE (2026-10-13) — comparer des valeurs nommees.
+ *
+ * Mesure : DEUX cahiers des charges reels, deux metiers sans rapport, le meme
+ * trou. « Graphiques mensuels de consommation et de montants » d'un cote,
+ * « volumes, taux de succes, couts API/IA, recettes, commissions, marge » de
+ * l'autre. Aucun type de bloc ne savait le dire.
+ *
+ * Le bloc ne CALCULE rien : le document fournit des couples etiquette/valeur
+ * deja formates. La proportion se deduit du maximum de la serie — de
+ * l'arithmetique, pas du contenu.
+ *
+ * Les trois etats du registre : une serie peut se charger, revenir vide, ou
+ * echouer. Un graphique vide sans etat declare ressemblerait a un graphique a
+ * zero, et les deux cahiers se trompent la-dessus de la meme facon.
+ */
+export const GRAPHIQUE_BLOCK_STATES = ["ready", "loading", "empty", "error"] as const;
+
+export interface GraphiqueSerie {
+  readonly label: string;
+  /** Le nombre qui donne la PROPORTION. */
+  readonly value: number;
+  /** Le texte AFFICHE, formate par le document : unite, devise, arrondi. */
+  readonly display: string;
+}
+
+export interface GraphiqueBlockProps extends BlockA11yProps {
+  title?: string;
+  series: readonly GraphiqueSerie[];
+  state?:
+    | { kind: "ready" }
+    | { kind: "loading"; title: string }
+    | { kind: "empty"; title: string; message?: string }
+    | { kind: "error"; title: string; message?: string };
+}
 export const SEARCH_ENTRY_BLOCK_STATES = ["ready"] as const;
 
 /**

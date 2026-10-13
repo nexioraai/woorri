@@ -16,6 +16,7 @@ import { ROLES_ICONES } from "@deribfy/primitives/roles-icones";
 import {
   BUTTON_BLOCK_STATES,
   SEARCH_ENTRY_BLOCK_STATES,
+  GRAPHIQUE_BLOCK_STATES,
   PROSE_BLOCK_STATES,
   SPACER_BLOCK_STATES,
   DETAIL_HEADER_BLOCK_STATES,
@@ -536,6 +537,45 @@ export const BLOCKS: readonly BlockDefinition[] = [
     fieldRefPropsFiltrage: [],
     actionRefProps: [],
     states: PROSE_BLOCK_STATES,
+    porteAffordance: false,
+  },
+  {
+    // GRAPHIQUE (2026-10-13) — la classe que DEUX cahiers des charges reels
+    // reclamaient, chacun de son cote et sans rapport l'un avec l'autre :
+    // « graphiques mensuels de consommation et de montants » (suivi de
+    // compteurs), « volumes, taux de succes, couts, recettes, commissions,
+    // marge » (plateforme de reservation). Aucun type de bloc ne savait le
+    // dire, et le troisieme cahier l'aurait redemande.
+    //
+    // DES BARRES, PAS DES COURBES : une courbe aurait exige `react-native-svg`
+    // dans chaque application generee, alors que les deux besoins s'expriment
+    // en COMPARAISONS. Aucune dependance ajoutee.
+    //
+    // Le bloc ne porte AUCUN texte : etiquettes et valeurs affichees viennent
+    // du document, deja formatees (F3). Il ne calcule que la proportion.
+    id: "graphique",
+    version: "1.0.0",
+    description: "Graphique en barres — compare des valeurs nommees.",
+    entity: "forbidden",
+    propsSchema: z.strictObject({
+      title: z.string().min(1).optional(),
+      series: z
+        .array(
+          z.strictObject({
+            label: z.string().min(1),
+            value: z.number(),
+            // Le texte AFFICHE : unite, devise, arrondi. Le moteur n'en
+            // fabrique aucun — il ne saurait ni la devise ni la precision.
+            display: z.string().min(1),
+          }),
+        )
+        .min(1),
+    }),
+    fieldRefProps: [],
+    fieldRefPropsAffichage: [],
+    fieldRefPropsFiltrage: [],
+    actionRefProps: [],
+    states: GRAPHIQUE_BLOCK_STATES,
     porteAffordance: false,
   },
 ];

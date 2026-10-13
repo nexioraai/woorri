@@ -10,6 +10,7 @@ import { ActivityIndicator, Image, Pressable, Text, TextInput, View } from "reac
 // promet que des glyphes qu'il sait dessiner.
 import Ionicons from "@expo/vector-icons/Ionicons";
 import type {
+  BarreProps,
   AppImageProps,
   AppButtonProps,
   AppTextProps,
@@ -492,6 +493,45 @@ export function ListRow({
     >
       {body}
     </Pressable>
+  );
+}
+
+/**
+ * UNE BARRE — l'element d'un graphique, et le seul.
+ *
+ * Mesure du 2026-10-13 : deux cahiers des charges reels et sans rapport
+ * demandaient le meme trou — « graphiques mensuels de consommation et de
+ * montants » d'un cote, « volumes, taux de succes, couts » de l'autre. Aucun
+ * type de bloc ne savait le dire.
+ *
+ * DES BARRES, PAS DES COURBES, et c'est un choix : une courbe aurait exige
+ * `react-native-svg`, donc une dependance de plus dans chaque application
+ * generee, pour un besoin que les deux cahiers expriment en COMPARAISONS.
+ *
+ * La primitive ne connait ni les donnees ni leur echelle. `ratio` est une
+ * proportion deja calculee ; `valeur` est un texte deja formate par le
+ * document. Rien n'est arrondi ni suffixe ici (F3 : aucun texte du moteur).
+ */
+export function Barre({ label, valeur, ratio, testID, accessibilityLabel }: BarreProps) {
+  const s = useStyles();
+  // Une proportion hors bornes viendrait d'une donnee aberrante, pas d'une
+  // intention : on la ramene dans [0,1] plutot que de dessiner hors du cadre.
+  const part = Number.isFinite(ratio) ? Math.min(1, Math.max(0, ratio)) : 0;
+  return (
+    <View
+      style={s.barreLigne}
+      testID={testID}
+      accessibilityLabel={accessibilityLabel ?? `${label} ${valeur}`}
+    >
+      <View style={s.barreEntete}>
+        <Text style={s.barreValeur}>{label}</Text>
+        <Text style={s.barreValeur}>{valeur}</Text>
+      </View>
+      <View style={s.barrePiste}>
+        <View style={[s.barreRemplissage, { flex: part }]} />
+        <View style={[s.barreReste, { flex: 1 - part }]} />
+      </View>
+    </View>
   );
 }
 

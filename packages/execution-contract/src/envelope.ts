@@ -225,6 +225,11 @@ export const EXECUTION_ENVELOPE_V1: ExecutionEnvelope = {
     // chargement, ni vide a signaler, ni erreur possible. Un bloc sans
     // paragraphe n est pas rendu du tout.
     prose: ["ready"],
+    // 2026-10-13 — `graphique`. Les quatre etats du registre : une serie se
+    // charge, revient vide, ou echoue. Un graphique vide SANS etat declare
+    // ressemblerait a un graphique a zero — et les deux cahiers des charges
+    // qui le reclamaient se trompent la-dessus de la meme facon.
+    graphique: ["ready", "loading", "empty", "error"],
   },
 
   // Mesuré : ajouter la capability `maps` (implémentation `react-native-maps`)

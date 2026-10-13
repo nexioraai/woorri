@@ -23,6 +23,7 @@ import {
   HeaderBlock,
   ListBlock,
   SpacerBlock,
+  GraphiqueBlock,
   ProseBlock,
   SearchEntryBlock,
 } from "../blocks/components";
@@ -680,6 +681,39 @@ export function AirProse({ screen, blockId }: BlockRef) {
       paragraphs={paragraphs}
       {...(titre === undefined ? {} : { title: titre })}
       {...(brouillon ? { brouillon: true } : {})}
+    />
+  );
+}
+
+/**
+ * GRAPHIQUE (2026-10-13) — dixieme bloc.
+ *
+ * La lecture est DEFENSIVE, comme partout ici : le document est valide, mais
+ * ce wrapper recoit aussi des props SURCHARGEES par des sorties de slots, qui
+ * viennent d'ailleurs. Une serie absente ou mal formee rend `null` plutot
+ * qu'un graphique vide — un graphique a zero se lit comme une mesure reelle.
+ */
+export function AirGraphique({ screen, blockId }: BlockRef) {
+  const visible = useBlockVisible(screen, blockId);
+  const b = block(screen, blockId);
+  if (!visible) return null;
+  const props = b.props ?? {};
+  const brut = Array.isArray(props.series) ? (props.series as unknown[]) : [];
+  const series = brut.filter(
+    (p): p is { label: string; value: number; display: string } =>
+      typeof p === "object" &&
+      p !== null &&
+      typeof (p as { label?: unknown }).label === "string" &&
+      typeof (p as { value?: unknown }).value === "number" &&
+      typeof (p as { display?: unknown }).display === "string",
+  );
+  if (series.length === 0) return null;
+  const titre = typeof props.title === "string" ? props.title : undefined;
+  return (
+    <GraphiqueBlock
+      testID={b.id}
+      series={series}
+      {...(titre === undefined ? {} : { title: titre })}
     />
   );
 }

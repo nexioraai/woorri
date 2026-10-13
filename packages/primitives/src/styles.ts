@@ -392,6 +392,38 @@ const makeSheet = (c: Palette) =>
       color: c.primaryText,
       marginStart: theme.space.md,
     },
+    // — Barre d'un graphique —
+    //
+    // Deux cahiers des charges reels demandent des comparaisons mensuelles :
+    // consommation et montants d'un cote, volumes et taux de l'autre. Des
+    // BARRES suffisent, et elles ne coutent aucune dependance : une courbe
+    // aurait exige SVG. La piste porte la longueur totale, le remplissage la
+    // proportion — le bloc ne decide d'aucune couleur.
+    barreLigne: {
+      marginTop: theme.space.xs,
+    },
+    barreEntete: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+    },
+    barrePiste: {
+      backgroundColor: c.border,
+      borderRadius: theme.radius.sm,
+      height: theme.space.md,
+      overflow: "hidden",
+      marginTop: theme.space.xxs,
+      flexDirection: "row",
+    },
+    // Le RESTE de la piste. Deux `flex` fratries donnent la proportion sans
+    // chaine de pourcentage — qui ne se type pas en React Native.
+    barreReste: {},
+    barreRemplissage: {
+      backgroundColor: c.primary,
+      borderRadius: theme.radius.sm,
+      height: "100%",
+    },
+    barreValeur: { fontSize: theme.font.label, color: c.muted },
     // — Badge —
     badge: {
       backgroundColor: c.badgeBg,

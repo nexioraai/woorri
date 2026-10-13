@@ -42,6 +42,7 @@ import type {
   AppButtonProps,
   AppTextProps,
   BadgeProps,
+  BarreProps,
   GridCardProps,
   RangeeProps,
   SearchEntryProps,
@@ -520,6 +521,38 @@ export function ListRow({
     >
       {body}
     </Pressable>
+  );
+}
+
+/**
+ * UNE BARRE — jumelle web de la primitive native (2026-10-13).
+ *
+ * Les deux cibles partagent la MEME feuille de styles : seule la couche
+ * d'hotes differe. Ecrire la barre ici n'est donc pas une duplication de
+ * decision visuelle — c'est la meme forme, posee sur l'autre hote.
+ *
+ * Mesure du jour : le bloc `graphique` compilait en natif et CASSAIT l'apercu
+ * web, parce que `primitives-web` est un paquet SEPARE. Une primitive qui
+ * n'existe que d'un cote est une application qui ne se construit plus.
+ */
+export function Barre({ label, valeur, ratio, testID, accessibilityLabel }: BarreProps) {
+  const s = useStyles();
+  const part = Number.isFinite(ratio) ? Math.min(1, Math.max(0, ratio)) : 0;
+  return (
+    <View
+      style={s.barreLigne}
+      testID={testID}
+      accessibilityLabel={accessibilityLabel ?? `${label} ${valeur}`}
+    >
+      <View style={s.barreEntete}>
+        <Text style={s.barreValeur}>{label}</Text>
+        <Text style={s.barreValeur}>{valeur}</Text>
+      </View>
+      <View style={s.barrePiste}>
+        <View style={[s.barreRemplissage, { flex: part }]} />
+        <View style={[s.barreReste, { flex: 1 - part }]} />
+      </View>
+    </View>
   );
 }
 

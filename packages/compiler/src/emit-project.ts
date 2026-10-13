@@ -100,6 +100,8 @@ export const WRAPPER_BY_BLOCK_TYPE: Readonly<Record<string, string>> = {
   list: "AirList",
   // 1.14.0 (EP-198) — TEXTE SUIVI.
   prose: "AirProse",
+  // 2026-10-13 — GRAPHIQUE. Dixieme bloc, reclame par deux cahiers reels.
+  graphique: "AirGraphique",
 };
 
 // CODE SLOTS (Phase 9 — ARCHITECTURE §4). Le compilateur reçoit un BUNDLE

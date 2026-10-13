@@ -50,6 +50,9 @@ export const ZONE_PAR_BLOCK_TYPE: Readonly<Record<string, ZoneEcran>> = {
   spacer: "contenu",
   // 1.14.0 (EP-198) — le texte suivi COULE dans le flux, comme tout contenu.
   prose: "contenu",
+  // 2026-10-13 — un graphique est du CONTENU : il se defile avec le reste.
+  // Le chrome est reserve a ce qui doit rester sous la main (la recherche).
+  graphique: "contenu",
 };
 
 export interface SectionPlan {
