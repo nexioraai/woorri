@@ -217,13 +217,37 @@ export function envelopperEnFlux(brut) {
 
 /** Le client du fournisseur — SEUL point qui touche le SDK (import
  * dynamique : construire les requêtes et juger ne chargent jamais le SDK).
- * Depuis le 2026-10-09, il parle en FLUX et rend la forme d'avant. */
+ * Depuis le 2026-10-09, il parle en FLUX et rend la forme d'avant.
+ *
+ * ── LE SDK PEUT ÊTRE FOURNI, ET EN LIGNE IL DOIT L'ÊTRE (2026-10-14).
+ *
+ * MESURÉ EN PRODUCTION, sur une vraie demande du propriétaire :
+ *   « Cannot find package '/var/task/node_modules/@anthropic-ai/sdk/index.js'
+ *     imported from /var/task/benchmarks/air-emission/adaptateur-anthropic.mjs »
+ * Trois reprises, puis refus. Coût : zéro — l'échec précède tout appel.
+ *
+ * LA CAUSE. Ce fichier est chargé en `webpackIgnore` : le bundler ne voit
+ * donc PAS cet import, et ne l'emporte pas. Le SDK est bien une dépendance
+ * de `apps/web`, mais HISSÉ à la racine du dépôt — en local la résolution
+ * remonte et le trouve, en ligne la fonction déployée n'a pas cette racine.
+ *
+ * MÊME DÉFAUT, MÊME RÉPARATION QU'EN P0 (voir `comprendre.ts`, 2026-10-09) :
+ * là-bas le SDK est redevenu un import NORMAL côté site, que le bundler suit
+ * tout seul avec ses six dépendances. Ici, l'appelant le FOURNIT.
+ *
+ * Le repli reste l'import dynamique : la campagne en ligne de commande, elle,
+ * tourne depuis la racine du dépôt et n'a rien à fournir.
+ *
+ * `sdk` est retiré des options AVANT la construction : le reste est passé tel
+ * quel au constructeur, et y glisser une classe serait une option inconnue.
+ */
 export async function creerClient(lireFichier, options = {}) {
   const contenu = lireFichier(CONFIG.cheminCle);
   const m = contenu.match(CONFIG.motifCle);
   if (!m) throw new Error("ADAPTATEUR_CLE_INTROUVABLE");
-  const { default: Anthropic } = await import("@anthropic-ai/sdk");
-  return envelopperEnFlux(new Anthropic({ apiKey: m[2].trim(), ...options }));
+  const { sdk, ...reste } = options;
+  const Anthropic = sdk ?? (await import("@anthropic-ai/sdk")).default;
+  return envelopperEnFlux(new Anthropic({ apiKey: m[2].trim(), ...reste }));
 }
 
 /** Usage BRUT du dialecte → usage NEUTRE (pour les comptabilités). */

@@ -85,7 +85,7 @@ export function abregerPourEmission(brief) {
   return `${coupe.trim()}\n\n[cahier des charges complet transmis a la comprehension]`;
 }
 
-export async function creerMoteur({ cleApi, plafondUsd = Infinity, paquets, client: clientFourni }) {
+export async function creerMoteur({ cleApi, plafondUsd = Infinity, paquets, client: clientFourni, sdk }) {
   if (typeof cleApi !== "string" || cleApi.trim() === "") {
     throw new Error("MOTEUR_CLE_ABSENTE");
   }
@@ -201,6 +201,19 @@ const surfaceEnveloppe = () => {
   const client =
     clientFourni ??
     (await adaptateur.creerClient(() => `ANTHROPIC_API_KEY=${cleApi}`, {
+      // ── LE SDK VIENT DE L'APPELANT EN LIGNE (2026-10-14).
+      //
+      // Mesure en production : l'adaptateur est charge en `webpackIgnore`, le
+      // bundler ne voit donc pas son import du SDK et ne l'emporte pas. En
+      // local la resolution remonte jusqu'a la racine du depot et trouve le
+      // paquet hisse ; dans la fonction deployee, cette racine n'existe pas.
+      // « Cannot find package ... @anthropic-ai/sdk », trois reprises, refus.
+      //
+      // Le site le passe ici — il l'importe NORMALEMENT, donc le bundler le
+      // suit avec ses dependances. Absent (campagne en ligne de commande),
+      // l'adaptateur retombe sur son import dynamique, qui marche depuis la
+      // racine.
+      sdk,
       // 45 min : 3x au-dela du pire appel legitime MESURE (333 s), sous le
       // budget de tranche (60 min) — un appel coupe ne peut plus en manger
       // deux. maxRetries 0 : les reprises appartiennent a NOS etages (moteur

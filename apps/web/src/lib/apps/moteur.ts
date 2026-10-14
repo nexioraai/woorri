@@ -56,6 +56,26 @@ import * as primitives from '@deribfy/primitives/roles-icones'
 import * as repair from '@deribfy/repair'
 import * as compiler from '@deribfy/compiler'
 import * as fidelity from '@deribfy/fidelity'
+// ── LE SDK EST IMPORTÉ ICI, NORMALEMENT, ET PASSÉ AU MOTEUR.
+//
+// MESURÉ EN PRODUCTION le 2026-10-14, sur une vraie demande :
+//   « Cannot find package '/var/task/node_modules/@anthropic-ai/sdk/index.js'
+//     imported from /var/task/benchmarks/air-emission/adaptateur-anthropic.mjs »
+// Trois reprises, puis refus. Coût zéro — l'échec précède tout appel, mais la
+// génération était morte.
+//
+// L'adaptateur est chargé en `webpackIgnore` : le bundler ne voit donc PAS
+// son `await import("@anthropic-ai/sdk")`, et ne l'emporte pas. Le paquet est
+// bien une dépendance de cette application, mais HISSÉ à la racine du dépôt —
+// en local la résolution remonte et le trouve, dans la fonction déployée
+// cette racine n'existe pas.
+//
+// C'EST EXACTEMENT LE DÉFAUT DÉJÀ PAYÉ EN P0 (`comprendre.ts`, 2026-10-09) et
+// la même réparation : un import NORMAL, que le bundler suit tout seul avec
+// les six dépendances du SDK. Allonger une liste de fichiers tracés ne marche
+// pas — un fichier tracé est copié comme une DONNÉE, ses `import` ne sont pas
+// lus.
+import Anthropic from '@anthropic-ai/sdk'
 import { racineDepot } from './racine'
 import type { MoteurContinuation } from './travailleur'
 
@@ -75,6 +95,8 @@ type Moteur = {
     cleApi: string
     plafondUsd?: number
     paquets?: Record<string, unknown>
+    /** Le SDK, fourni par le site : en ligne il ne se résout pas seul. */
+    sdk?: unknown
   }) => Promise<{
     emettreApplication: (d: { brief: string; slug: string }) => Promise<Emission>
     poursuivreEmission: (o: {
@@ -113,6 +135,8 @@ async function moteurDuSite(cle: string) {
   )) as Moteur
   const m = await creerMoteur({
     cleApi: cle,
+    // Le SDK voyage par ici, jamais par une résolution depuis `benchmarks/`.
+    sdk: Anthropic,
     // Les index reexportent tout ce que le moteur demande — verifie module
     // par module avant d'ecrire cette ligne, pas suppose.
     paquets: {
