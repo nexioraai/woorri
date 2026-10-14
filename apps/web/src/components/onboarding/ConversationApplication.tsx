@@ -601,11 +601,52 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
               </div>
             </div>
           )}
+          {/* ── NE PROMETTRE QUE CE QU'ON MONTRE (defaut 2026-10-14).
+              MESURE, rapportee par le proprietaire sur sa generation :
+              l'ecran disait « Regardez ce qui a ete compris » et il n'y
+              avait RIEN a regarder. Verifie en base : pause a l'etape P0,
+              `sections acquises = AUCUNE`, 0 sur 22. L'apercu vivant juste
+              au-dessus n'existe qu'a partir de la PREMIERE section ecrite.
+              L'ecran envoyait donc chercher une vue qui n'est pas encore
+              nee, et la seule reponse possible etait de cliquer a l'aveugle
+              — exactement ce que le mode plan veut empecher.
+              Deux moments, deux phrases : apres P0 on dit ce qui a ete
+              COMPRIS (le brief relu) ; a partir de la premiere section on
+              renvoie a l'apercu, qui existe alors vraiment. */}
           {etatGen?.attendVous === true && (
             <div className="mt-3">
-              <p className="text-sm text-slate-300">
-                {'Regardez ce qui a été compris. Rien ne repart tant que vous ne le dites pas.'}
-              </p>
+              {etatGen.sections.faites === 0 ? (
+                <>
+                  <p className="text-sm text-slate-300">
+                    {'Votre demande a été comprise. Rien n’est encore écrit — et rien ne partira tant que vous ne le dites pas.'}
+                  </p>
+                  {intention !== null && intention.brief.trim() !== '' && (
+                    <div className="mt-2 max-h-56 overflow-auto rounded-xl border border-white/10 bg-white/5 p-3">
+                      <p className="text-xs uppercase tracking-wide text-slate-400">
+                        {'Ce qui a été retenu de votre demande'}
+                      </p>
+                      <p className="mt-1 text-sm text-slate-200 whitespace-pre-wrap">
+                        {intention.brief}
+                      </p>
+                      {intention.addendum.length > 0 && (
+                        <ul className="mt-2 space-y-1">
+                          {intention.addendum.map((a) => (
+                            <li key={a.rang} className="text-sm text-slate-300">
+                              <span className="text-slate-400">{a.question}</span>
+                              {' — '}
+                              {a.reponse}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <p className="text-sm text-slate-300">
+                  {'Regardez l’aperçu ci-dessus. Rien ne repart tant que vous ne le dites pas.'}
+                </p>
+              )}
               <button
                 type="button"
                 onClick={() => { void reprendre('continuer'); }}
