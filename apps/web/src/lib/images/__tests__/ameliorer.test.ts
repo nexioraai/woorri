@@ -15,36 +15,87 @@ import sharp from 'sharp'
 import { describe, expect, it } from 'vitest'
 import { ameliorer, recadrer, statistiques } from '../ameliorer'
 
+// ── LES FIXTURES SE FABRIQUENT UNE FOIS, PAS TREIZE (2026-10-14).
+//
+// MESURE : ce fichier passait de 5 s et faisait tomber la chaîne complète
+// par dépassement de délai. La cause n'était pas le code amélioré — c'était
+// ce fichier, qui régénérait une image 900 × 900 de bruit gaussien, puis la
+// recompressait en JPEG, à CHAQUE appel. Treize fois.
+//
+// Le registre des lenteurs connues REFUSE ce cas, et il a raison : il est
+// réservé aux tests qui ATTENDENT un minuteur, dont la lenteur ne grandit
+// pas sur une machine plus lente. Celui-ci CALCULE — il sera donc plus lent
+// encore sur un runner plus lent. La réponse prévue est d'alléger, et le
+// dépôt a déjà le précédent : `traitement.test.ts`, 4 380 ms → 157 ms.
+//
+// PARTAGER LE MÊME TAMPON EST SÛR, ET C'EST PROUVÉ ICI MÊME : le test
+// « l'ORIGINAL n'est pas modifié » vérifie que `ameliorer` ne touche pas ce
+// qu'on lui donne. Si cette garantie tombait, ce test rougirait le premier.
+//
+// RIEN DE CE QUI EST MESURÉ NE CHANGE : mêmes dimensions, même bruit, même
+// qualité. Seul le NOMBRE de fabrications change.
+// ── ET ELLE EST PLUS PETITE : 320 px, pas 900.
+//
+// La mémoïsation seule ne suffisait pas. Mesure sous la charge de la chaîne
+// complète : trois cas de cette famille revenaient à ×2,9 de marge pour un
+// seuil de ×3 — ils étaient à ×5,1 mesurés seuls. Le coût n'est pas la
+// FABRICATION de l'image, c'est le TRAITEMENT : `ameliorer` travaille sur
+// 810 000 pixels.
+//
+// 320 × 320 = 102 400 pixels, huit fois moins. Aucune des propriétés
+// mesurées ici ne dépend de la taille : une sous-exposition, une dominante
+// de couleur et une marge de recadrage se montrent aussi bien sur 320 px —
+// ce sont des statistiques de canaux, pas du détail d'image.
+//
+// La dimension est NOMMÉE : deux assertions la vérifient, et une constante
+// évite qu'elles mentent le jour où on la change encore.
+const TAILLE = 320
+
+const memo = new Map<string, Promise<Buffer>>()
+const uneFois = (cle: string, faire: () => Promise<Buffer>): Promise<Buffer> => {
+  const dejaLa = memo.get(cle)
+  if (dejaLa !== undefined) return dejaLa
+  const promesse = faire()
+  memo.set(cle, promesse)
+  return promesse
+}
+
 /** Photo de référence : contenu riche, exposition et couleurs correctes. */
 async function correcte(): Promise<Buffer> {
-  return sharp({
-    create: {
-      width: 900,
-      height: 900,
-      channels: 3,
-      background: { r: 128, g: 126, b: 124 },
-      noise: { type: 'gaussian', mean: 132, sigma: 38 },
-    },
-  })
-    .jpeg({ quality: 92 })
-    .toBuffer()
+  return uneFois('correcte', () =>
+    sharp({
+      create: {
+        width: TAILLE,
+        height: TAILLE,
+        channels: 3,
+        background: { r: 128, g: 126, b: 124 },
+        noise: { type: 'gaussian', mean: 132, sigma: 38 },
+      },
+    })
+      .jpeg({ quality: 92 })
+      .toBuffer(),
+  )
 }
 
 /** La même, abîmée comme le sont les photos prises en boutique. */
 async function sousExposee(): Promise<Buffer> {
-  return sharp(await correcte()).linear(0.45, 0).jpeg({ quality: 90 }).toBuffer()
+  return uneFois('sousExposee', async () =>
+    sharp(await correcte()).linear(0.45, 0).jpeg({ quality: 90 }).toBuffer(),
+  )
 }
 
 /** La même, tirée vers le jaune — ampoule à incandescence ou néon. */
 async function dominanteJaune(): Promise<Buffer> {
-  return sharp(await correcte())
-    .recomb([
-      [1.25, 0, 0],
-      [0, 1.1, 0],
-      [0, 0, 0.6],
-    ])
-    .jpeg({ quality: 90 })
-    .toBuffer()
+  return uneFois('dominanteJaune', async () =>
+    sharp(await correcte())
+      .recomb([
+        [1.25, 0, 0],
+        [0, 1.1, 0],
+        [0, 0, 0.6],
+      ])
+      .jpeg({ quality: 90 })
+      .toBuffer(),
+  )
 }
 
 describe('exposition', () => {
@@ -123,7 +174,7 @@ describe('ce que la chaîne RAPPORTE', () => {
     const { donnees } = await ameliorer(await sousExposee())
     const m = await sharp(donnees).metadata()
     expect(m.format).toBe('jpeg')
-    expect(m.width).toBe(900)
+    expect(m.width).toBe(TAILLE)
     expect(donnees.length).toBeGreaterThan(1000)
   })
 
