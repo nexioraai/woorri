@@ -632,8 +632,31 @@ const controleur = (groupe: string, air: ProjectAir, e: ProjectAir["entities"][n
         // simple. La première version préfixait par le dernier segment du
         // groupe (`tontineCalculs.…`) — un symbole qui n'existe nulle part, et
         // que seul un vrai `mvn compile` pouvait dire.
-        `    try { v.put("${f.name}", Calculs.${CAMEL(f.id)}(x.getId())); }`,
-        `    catch (UnsupportedOperationException e) { nonCalcules.add("${f.name}"); }`,
+        // ── DEUX FAMILLES DE CALCUL, DEUX ARGUMENTS. (defaut corrige le
+        //    2026-10-13.)
+        //
+        // Un AGREGAT (`count`, `sum`, `max`, `min`, `porteur`) interroge
+        // d'AUTRES lignes : il lui faut l'IDENTIFIANT du parent. Une
+        // EXPRESSION (`calcul`, `bareme`, `versionne`) lit les champs de LA
+        // MEME ligne : il lui faut la LIGNE.
+        //
+        // Cet appel passait `x.getId()` dans les DEUX cas. Le defaut etait
+        // LATENT : `tontine` est le seul document en `spring_boot`, et il
+        // n'avait aucune expression jusqu'a ce que son cahier en reclame une
+        // — « 70 % au groupe, 30 % a la plateforme ». Maven l'a dit d'un
+        // coup : « String cannot be converted to Map ». Rien d'autre ne
+        // pouvait le dire.
+        ...(f.derived.kind === "calcul" ||
+        f.derived.kind === "bareme" ||
+        f.derived.kind === "versionne"
+          ? [
+              `    try { v.put("${f.name}", Calculs.${CAMEL(f.id)}(v)); }`,
+              `    catch (UnsupportedOperationException e) { nonCalcules.add("${f.name}"); }`,
+            ]
+          : [
+              `    try { v.put("${f.name}", Calculs.${CAMEL(f.id)}(x.getId())); }`,
+              `    catch (UnsupportedOperationException e) { nonCalcules.add("${f.name}"); }`,
+            ]),
       );
       continue;
     }
@@ -998,6 +1021,71 @@ const calculs = (groupe: string, air: ProjectAir): string => {
  * appliquer en devinant l'appelant donnerait l'illusion d'un contrôle
  * d'accès, ce qui est pire que de ne pas en avoir.
  */
+/**
+ * UN DOUBLON REPOND 409, ET NOMME LE CHAMP DECLARE.
+ *
+ * Mesure le 2026-10-13 sur la pile Node : deux lignes portant le meme
+ * « code_adhesion » faisaient repondre 500 avec le message brut du moteur,
+ * qui livrait le nom physique de la table et de la colonne. La pile Java
+ * porte la meme contrainte depuis le 2026-10-12 et donc le meme defaut :
+ * `save` leve `DataIntegrityViolationException`, et Spring en fait un 500.
+ *
+ * Une meme faute ne doit pas recevoir deux reponses selon le serveur. Les
+ * cles sont donc identiques a celles de la pile Node, au mot pres.
+ *
+ * La table est la SEULE traduction colonne vers champ : le schema physique
+ * n'est pas une information publique. Colonnes essayees de la plus longue a
+ * la plus courte — « code » se trouve dans « code_adhesion ».
+ */
+const doublons = (groupe: string, air: ProjectAir): string => {
+  const paires: string[] = [];
+  for (const e of air.entities) {
+    for (const f of e.fields) {
+      if (f.unique !== true || f.derived !== undefined || f.sensitive === true) continue;
+      paires.push(`      Map.entry("${f.name}", "${f.name}")`);
+    }
+  }
+  return [
+    `package ${groupe}.api;`,
+    "",
+    entete("Un doublon sur un champ `unique` est une faute de l'appelant, pas une panne."),
+    "import java.util.*;",
+    "import org.springframework.dao.DataIntegrityViolationException;",
+    "import org.springframework.http.ResponseEntity;",
+    "import org.springframework.web.bind.annotation.ExceptionHandler;",
+    "import org.springframework.web.bind.annotation.RestControllerAdvice;",
+    "",
+    "@RestControllerAdvice",
+    "public class Doublons {",
+    paires.length === 0
+      ? "  private static final List<Map.Entry<String, String>> UNIQUES = List.of();"
+      : [
+          "  private static final List<Map.Entry<String, String>> UNIQUES = List.of(",
+          paires.join(",\n"),
+          "  );",
+        ].join("\n"),
+    "",
+    "  @ExceptionHandler(DataIntegrityViolationException.class)",
+    "  public ResponseEntity<?> doublon(DataIntegrityViolationException e) {",
+    "    String texte = String.valueOf(e.getMostSpecificCause().getMessage());",
+    "    String champ = null;",
+    "    int plusLong = -1;",
+    "    for (Map.Entry<String, String> p : UNIQUES) {",
+    "      if (texte.contains(p.getKey()) && p.getKey().length() > plusLong) {",
+    "        plusLong = p.getKey().length();",
+    "        champ = p.getValue();",
+    "      }",
+    "    }",
+    "    Map<String, Object> corps = new LinkedHashMap<>();",
+    '    corps.put("error", "AIR_VALEUR_DEJA_PRISE");',
+    '    corps.put("champ", champ);',
+    "    return ResponseEntity.status(409).body(corps);",
+    "  }",
+    "}",
+    "",
+  ].join("\n");
+};
+
 const validation = (groupe: string, air: ProjectAir): string => {
   const col = (id: string): string => id.replace(/^fld_/u, "");
   const l: string[] = [
@@ -1024,6 +1112,27 @@ const validation = (groupe: string, air: ProjectAir): string => {
     "",
     "  private static boolean rempli(Object v) {",
     "    return v != null && !String.valueOf(v).isEmpty();",
+    "  }",
+    "",
+    "  // ── COMPARER UNE VALEUR DE BASE A UNE VALEUR DU DOCUMENT.",
+    "  //",
+    "  // Jumeau de `memeValeur` cote Node. Une base rend `0` / `1` pour un",
+    "  // booleen la ou le document ecrit `true` : comparer les textes ferait",
+    "  // echouer la comparaison en silence, et le garde ne se declencherait",
+    "  // jamais. Un `null` n'est egal a rien — pas meme a `false`.",
+    "  private static boolean memeValeur(Object a, Object b) {",
+    "    if (a == null || b == null) return a == null && b == null;",
+    "    if (b instanceof Boolean) {",
+    "      String t = String.valueOf(a).trim().toLowerCase();",
+    "      boolean vrai = t.equals(\"true\") || t.equals(\"1\") || t.equals(\"t\");",
+    "      boolean faux = t.equals(\"false\") || t.equals(\"0\") || t.equals(\"f\");",
+    "      if (!vrai && !faux) return false;",
+    "      return vrai == ((Boolean) b).booleanValue();",
+    "    }",
+    "    Double na = nombre(a);",
+    "    Double nb = nombre(b);",
+    "    if (na != null && nb != null) return na.doubleValue() == nb.doubleValue();",
+    "    return String.valueOf(a).equals(String.valueOf(b));",
     "  }",
     "",
     "  private static Map<String, String> echec(String regle, String message) {",
@@ -1059,6 +1168,56 @@ const validation = (groupe: string, air: ProjectAir): string => {
       `  public static Map<String, String> verifier${PASCAL(e.id)}(Map<String, Object> ligne) {`,
     );
     for (const r of miennes) {
+      // ── LE GARDE (1.42.0) : LA REGLE NE SE VERIFIE QUE S'IL EST VRAI.
+      //
+      // Mesure le 2026-10-13 : cette pile IGNORAIT `appliqueSi`. Une regle
+      // conditionnelle y etait emise INCONDITIONNELLE — le serveur Java
+      // refusait en 422 une ecriture que le document autorise et que le
+      // serveur Node acceptait. Deux serveurs, deux reponses, un seul
+      // document : le pire des defauts, parce que chacun des deux paraissait
+      // correct tant qu'on ne les comparait pas.
+      //
+      // Memes operateurs et meme semantique que la pile Node.
+      const garde = (r.appliqueSi ?? [])
+        .map((g) => {
+          const champG = e.fields.find((x) => x.id === g.fieldId);
+          if (champG === undefined) return "";
+          const cg = `ligne.get("${col(champG.id)}")`;
+          const litteral =
+            typeof g.value === "boolean"
+              ? `Boolean.valueOf(${String(g.value)})`
+              : typeof g.value === "number"
+                ? `Double.valueOf(${String(g.value)})`
+                : JSON.stringify(String(g.value ?? ""));
+          switch (g.operator) {
+            case "required":
+              return `rempli(${cg})`;
+            case "eq":
+              return `memeValeur(${cg}, ${litteral})`;
+            case "neq":
+              return `!memeValeur(${cg}, ${litteral})`;
+            case "in":
+              return `java.util.List.of(${(Array.isArray(g.value) ? g.value : []).map((x) => JSON.stringify(String(x))).join(", ")}).contains(String.valueOf(${cg}))`;
+            case "gt":
+              return `(nombre(${cg}) != null && nombre(${cg}) > ${String(Number(g.value))})`;
+            case "gte":
+              return `(nombre(${cg}) != null && nombre(${cg}) >= ${String(Number(g.value))})`;
+            case "lt":
+              return `(nombre(${cg}) != null && nombre(${cg}) < ${String(Number(g.value))})`;
+            case "lte":
+              return `(nombre(${cg}) != null && nombre(${cg}) <= ${String(Number(g.value))})`;
+            default:
+              return "";
+          }
+        })
+        .filter((x) => x !== "");
+      if (garde.length > 0) {
+        l.push(
+          `    // ${r.description}`,
+          `    //   NE S'APPLIQUE QUE SI : ${(r.appliqueSi ?? []).map((g) => `${g.fieldId} ${g.operator}${g.value === undefined ? "" : ` ${JSON.stringify(g.value)}`}`).join(" ET ")}`,
+          `    if (${garde.join(" && ")}) {`,
+        );
+      }
       for (const a2 of r.assertions) {
         const champ = e.fields.find((x) => x.id === a2.fieldId);
         if (champ === undefined) {
@@ -1099,6 +1258,15 @@ const validation = (groupe: string, air: ProjectAir): string => {
               return `rempli(ligne.get(${c})) && (nombre(ligne.get(${c})) == null || nombre(ligne.get(${c})) <= Double.parseDouble(${v}))`;
             case "gte":
               return `rempli(ligne.get(${c})) && (nombre(ligne.get(${c})) == null || nombre(ligne.get(${c})) < Double.parseDouble(${v}))`;
+            // ── `lt` MANQUAIT A CETTE PILE (mesure du 2026-10-13).
+            //
+            // Node le couvre depuis toujours, Java non : une regle employant
+            // « strictement inferieur » etait TENUE cote Node et REFUSEE cote
+            // Java. Le MEME document, deux comportements — et le choix de la
+            // pile change ce que l'application accepte. Aucun document du
+            // corpus ne l'employait, donc rien ne le disait.
+            case "lt":
+              return `rempli(ligne.get(${c})) && (nombre(ligne.get(${c})) == null || nombre(ligne.get(${c})) >= Double.parseDouble(${v}))`;
             case "lte":
               return `rempli(ligne.get(${c})) && (nombre(ligne.get(${c})) == null || nombre(ligne.get(${c})) > Double.parseDouble(${v}))`;
             case "matches":
@@ -1110,10 +1278,29 @@ const validation = (groupe: string, air: ProjectAir): string => {
           }
         })();
         if (cond === "") {
+          // ── UN `throw` SUIVI D'UN `return` NE COMPILE PAS EN JAVA.
+          //
+          // DEFAUT MESURE LE 2026-10-13 : « unreachable statement ». Ce bloc
+          // emettait le refus, puis la fonction emettait son `return null`
+          // final — que Java refuse apres un lancement inconditionnel. Le
+          // serveur entier ne compilait plus des qu'un operateur non couvert
+          // apparaissait dans un document.
+          //
+          // Le defaut etait LATENT : aucun document en `spring_boot` n'avait
+          // d'operateur non couvert, jusqu'a ce que le cahier de la tontine
+          // reclame `designe`. Ce que seul un vrai `mvn compile` pouvait
+          // dire — et c'est exactement pourquoi cette gate existe.
+          //
+          // Le refus est CONSERVE : une regle ignoree ne protege plus. Il est
+          // simplement enveloppe dans un `if (true)`, que Java accepte,
+          // parce que le chemin devient conditionnel a ses yeux.
           l.push(
-            `    // Opérateur « ${a2.operator} » non couvert : on REFUSE la règle`,
-            `    // plutôt que de l'ignorer — une règle ignorée ne protège plus.`,
-            `    throw new UnsupportedOperationException("AIR_REGLE_A_ECRIRE:${r.id}");`,
+            `    // Opérateur « ${a2.operator} » non couvert par cet émetteur : on`,
+            `    // REFUSE la règle plutôt que de l'ignorer — une règle ignorée ne`,
+            `    // protège plus, et personne ne le voit.`,
+            "    if (true) {",
+            `      throw new UnsupportedOperationException("AIR_REGLE_A_ECRIRE:${r.id}");`,
+            "    }",
           );
           continue;
         }
@@ -1122,6 +1309,7 @@ const validation = (groupe: string, air: ProjectAir): string => {
           `    if (${cond}) ${ech}`,
         );
       }
+      if (garde.length > 0) l.push("    }");
     }
     for (const f of e.fields.filter((x) => x.type === "asset" && x.derived === undefined)) {
       l.push(
@@ -1290,6 +1478,7 @@ export function enveloppeSpring(air: ProjectAir): EnveloppeBackend {
   files.set(`${chemin}/api/Calculs.java`, calculs(groupe, air));
   files.set(`${chemin}/api/ReglesMetier.java`, reglesMetier(groupe, air));
   files.set(`${chemin}/api/Validation.java`, validation(groupe, air));
+  files.set(`${chemin}/api/Doublons.java`, doublons(groupe, air));
   // ── LA PARITE : IDENTITE, CONNECTEUR, AGENT (2026-10-13).
   //
   // Mesure qui l'a imposee : la pile `fastify` savait lire un appelant,

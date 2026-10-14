@@ -302,6 +302,11 @@ export const SECTIONS_CORRECTIVES: Readonly<Record<string, readonly SectionEmiss
   AIR_PORTEUR_DEPARTAGE_INCONNU: ["donnees"],
   AIR_PORTEUR_DEPARTAGE_NON_ORDONNABLE: ["donnees"],
   AIR_PORTEUR_DEPARTAGE_INUTILE: ["donnees"],
+  // Le garde d'une regle (1.42.0) : les regles vivent dans `donnees`.
+  AIR_RULE_GARDE_IMPOSSIBLE: ["donnees"],
+  // Une liste indistincte se repare sur l'ECRAN : c'est le bloc qui doit
+  // porter un sous-titre, une valeur ou un badge.
+  AIR_LISTE_INDISTINCTE: ["ecrans"],
   // L'ambiguite se repare en renommant une operation : c'est le cablage des
   // API qui change, et la liste des pouvoirs de l'agent avec.
   AIR_AGENT_OPERATION_AMBIGUOUS: ["cablage"],

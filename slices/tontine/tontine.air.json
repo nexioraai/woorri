@@ -202,7 +202,7 @@
             }
           ],
           "type": "string",
-          "required": true,
+          "required": false,
           "unique": true
         },
         {
@@ -255,6 +255,17 @@
           "type": "asset",
           "required": false,
           "sensitive": true
+        },
+        {
+          "id": "fld_utilisateurs_type_piece",
+          "name": "type_piece",
+          "type": "enum",
+          "required": false,
+          "enumValues": [
+            "CNI",
+            "PASSEPORT",
+            "RECEPISSE_CNI"
+          ]
         },
         {
           "id": "fld_utilisateurs_est_president_verifie",
@@ -406,7 +417,8 @@
             }
           ],
           "type": "string",
-          "required": true
+          "required": true,
+          "unique": true
         },
         {
           "id": "fld_tontines_cree_le",
@@ -419,6 +431,79 @@
           ],
           "type": "datetime",
           "required": true
+        },
+        {
+          "id": "fld_tontines_versements_reussis",
+          "name": "versements_reussis",
+          "type": "number",
+          "required": false,
+          "derived": {
+            "kind": "count",
+            "relationId": "rel_transaction_tontine",
+            "condition": {
+              "fieldId": "fld_transactions_statut",
+              "operateur": "eq",
+              "valeur": "PAYOUT_SUCCES"
+            }
+          }
+        },
+        {
+          "id": "fld_tontines_tour_courant",
+          "name": "tour_courant",
+          "type": "number",
+          "required": false,
+          "derived": {
+            "kind": "calcul",
+            "expression": {
+              "kind": "operation",
+              "op": "+",
+              "gauche": {
+                "kind": "champ",
+                "fieldId": "fld_tontines_versements_reussis"
+              },
+              "droite": {
+                "kind": "constante",
+                "valeur": 1
+              }
+            }
+          }
+        },
+        {
+          "id": "fld_tontines_prime_la_plus_forte",
+          "name": "prime_la_plus_forte",
+          "type": "decimal",
+          "required": false,
+          "derived": {
+            "kind": "max",
+            "relationId": "rel_transaction_tontine",
+            "fieldId": "fld_transactions_montant_enchere",
+            "condition": {
+              "fieldId": "fld_transactions_type_op",
+              "operateur": "eq",
+              "valeur": "ENCHERE"
+            }
+          }
+        },
+        {
+          "id": "fld_tontines_enchere_gagnante",
+          "name": "enchere_gagnante",
+          "type": "string",
+          "required": false,
+          "derived": {
+            "kind": "porteur",
+            "relationId": "rel_transaction_tontine",
+            "fieldId": "fld_transactions_montant_enchere",
+            "sens": "max",
+            "departage": {
+              "fieldId": "fld_transactions_date_transaction",
+              "sens": "asc"
+            },
+            "condition": {
+              "fieldId": "fld_transactions_type_op",
+              "operateur": "eq",
+              "valeur": "ENCHERE"
+            }
+          }
         }
       ]
     },
@@ -508,6 +593,23 @@
           ],
           "type": "decimal",
           "required": true
+        },
+        {
+          "id": "fld_membres_tontine_statut_paiement",
+          "name": "statut_paiement",
+          "type": "enum",
+          "required": true,
+          "enumValues": [
+            "NON_PAYE",
+            "PAYE",
+            "RETARD"
+          ]
+        },
+        {
+          "id": "fld_membres_tontine_horodatage_paiement",
+          "name": "horodatage_paiement",
+          "type": "datetime",
+          "required": false
         }
       ]
     },
@@ -649,7 +751,22 @@
             }
           ],
           "type": "decimal",
-          "required": true
+          "required": false,
+          "derived": {
+            "kind": "calcul",
+            "expression": {
+              "kind": "operation",
+              "op": "*",
+              "gauche": {
+                "kind": "champ",
+                "fieldId": "fld_transactions_montant_penalite"
+              },
+              "droite": {
+                "kind": "constante",
+                "valeur": 0.3
+              }
+            }
+          }
         },
         {
           "id": "fld_transactions_part_penalite_tontine",
@@ -661,7 +778,22 @@
             }
           ],
           "type": "decimal",
-          "required": true
+          "required": false,
+          "derived": {
+            "kind": "calcul",
+            "expression": {
+              "kind": "operation",
+              "op": "*",
+              "gauche": {
+                "kind": "champ",
+                "fieldId": "fld_transactions_montant_penalite"
+              },
+              "droite": {
+                "kind": "constante",
+                "valeur": 0.7
+              }
+            }
+          }
         },
         {
           "id": "fld_transactions_commission_plateforme",
@@ -882,6 +1014,38 @@
             {
               "key": "titleFieldId",
               "value": "fld_transactions_type_op"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_transactions_date_transaction"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_transactions_total_paye"
+            },
+            {
+              "key": "badgeFieldId",
+              "value": "fld_transactions_statut"
+            },
+            {
+              "key": "sortFieldId",
+              "value": "fld_transactions_date_transaction"
+            },
+            {
+              "key": "sortDirection",
+              "value": "desc"
+            },
+            {
+              "key": "pageSize",
+              "value": 20
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Aucun mouvement"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Les cotisations et versements apparaitront ici."
             }
           ]
         }
@@ -980,7 +1144,35 @@
           "props": [
             {
               "key": "titleFieldId",
+              "value": "fld_membres_tontine_utilisateur"
+            },
+            {
+              "key": "subtitleFieldId",
               "value": "fld_membres_tontine_role"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_membres_tontine_ordre_passage"
+            },
+            {
+              "key": "badgeFieldId",
+              "value": "fld_membres_tontine_statut_paiement"
+            },
+            {
+              "key": "sortFieldId",
+              "value": "fld_membres_tontine_ordre_passage"
+            },
+            {
+              "key": "sortDirection",
+              "value": "asc"
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Aucun membre"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Les membres apparaitront ici des quils rejoignent la tontine."
             }
           ]
         }
@@ -1017,6 +1209,38 @@
             {
               "key": "titleFieldId",
               "value": "fld_transactions_type_op"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_transactions_date_transaction"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_transactions_total_paye"
+            },
+            {
+              "key": "badgeFieldId",
+              "value": "fld_transactions_statut"
+            },
+            {
+              "key": "sortFieldId",
+              "value": "fld_transactions_date_transaction"
+            },
+            {
+              "key": "sortDirection",
+              "value": "desc"
+            },
+            {
+              "key": "pageSize",
+              "value": 20
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Aucun mouvement"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Les cotisations et versements apparaitront ici."
             }
           ]
         }
@@ -1132,7 +1356,35 @@
           "props": [
             {
               "key": "titleFieldId",
+              "value": "fld_membres_tontine_utilisateur"
+            },
+            {
+              "key": "subtitleFieldId",
               "value": "fld_membres_tontine_role"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_membres_tontine_ordre_passage"
+            },
+            {
+              "key": "badgeFieldId",
+              "value": "fld_membres_tontine_statut_paiement"
+            },
+            {
+              "key": "sortFieldId",
+              "value": "fld_membres_tontine_ordre_passage"
+            },
+            {
+              "key": "sortDirection",
+              "value": "asc"
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Aucun membre"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Les membres apparaitront ici des quils rejoignent la tontine."
             }
           ]
         }
@@ -1169,6 +1421,38 @@
             {
               "key": "titleFieldId",
               "value": "fld_transactions_type_op"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_transactions_date_transaction"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_transactions_total_paye"
+            },
+            {
+              "key": "badgeFieldId",
+              "value": "fld_transactions_statut"
+            },
+            {
+              "key": "sortFieldId",
+              "value": "fld_transactions_date_transaction"
+            },
+            {
+              "key": "sortDirection",
+              "value": "desc"
+            },
+            {
+              "key": "pageSize",
+              "value": 20
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Aucun mouvement"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Les cotisations et versements apparaitront ici."
             }
           ]
         }
@@ -1205,6 +1489,38 @@
             {
               "key": "titleFieldId",
               "value": "fld_transactions_type_op"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_transactions_date_transaction"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_transactions_total_paye"
+            },
+            {
+              "key": "badgeFieldId",
+              "value": "fld_transactions_statut"
+            },
+            {
+              "key": "sortFieldId",
+              "value": "fld_transactions_date_transaction"
+            },
+            {
+              "key": "sortDirection",
+              "value": "desc"
+            },
+            {
+              "key": "pageSize",
+              "value": 20
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Aucun mouvement"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Les cotisations et versements apparaitront ici."
             }
           ]
         }
@@ -1296,7 +1612,43 @@
       }
     }
   ],
-  "rules": [],
+  "rules": [
+    {
+      "id": "rule_mandataire_si_sans_telephone",
+      "description": "Un membre sans telephone est rattache a un mandataire.",
+      "kind": "validation",
+      "entityId": "ent_utilisateurs",
+      "appliqueSi": [
+        {
+          "fieldId": "fld_utilisateurs_est_sans_telephone",
+          "operator": "eq",
+          "value": true
+        }
+      ],
+      "assertions": [
+        {
+          "fieldId": "fld_utilisateurs_mandataire",
+          "operator": "required"
+        }
+      ]
+    },
+    {
+      "id": "rule_code_adhesion_connu",
+      "description": "Un code dadhesion inconnu est refuse.",
+      "kind": "validation",
+      "entityId": "ent_membres_tontine",
+      "assertions": [
+        {
+          "fieldId": "fld_membres_tontine_code_saisi",
+          "operator": "designe",
+          "designe": {
+            "entityId": "ent_tontines",
+            "fieldId": "fld_tontines_code_adhesion"
+          }
+        }
+      ]
+    }
+  ],
   "slots": [],
   "capabilities": [
     {
@@ -1602,8 +1954,12 @@
         "id": "need_encheres",
         "statement": "Le pot est attribué par enchère : le membre qui propose la plus forte prime l'emporte.",
         "resolution": {
-          "kind": "unexpressible",
-          "reason": "Une enchère est une CONCURRENCE entre plusieurs membres sur un même objet, avec un gagnant et une clôture. Le format décrit des écrans, des listes et des gestes individuels ; il n'a aucun nœud pour un mécanisme où le geste d'un membre invalide celui d'un autre."
+          "kind": "satisfied",
+          "nodeIds": [
+            "fld_tontines_prime_la_plus_forte",
+            "fld_tontines_enchere_gagnante",
+            "fld_transactions_montant_enchere"
+          ]
         }
       },
       {
@@ -1611,7 +1967,7 @@
         "statement": "Les pénalités de retard valent 2 % par jour et se répartissent 70 % au groupe, 30 % à la plateforme.",
         "resolution": {
           "kind": "unexpressible",
-          "reason": "Calcul sur une DURÉE, puis partage. Le format ne porte ni l'un ni l'autre : `rules.kind = \"validation\"` sait refuser une saisie, jamais produire un montant. C'est la même famille que le stock calculé de SGD, resté inexprimable."
+          "reason": "LE PARTAGE est desormais TENU : `part_penalite_tontine` et `part_penalite_createur` sont declares 70 % et 30 % du montant de la penalite, calcules sur la meme ligne. Ce qui RESTE dehors est le CALCUL du montant lui-meme : « 2 % par jour de retard » multiplie un TAUX par un NOMBRE DE JOURS, et le taux (`taux_penalite_jour`) vit sur la TONTINE tandis que la penalite vit sur la TRANSACTION. Une expression ne voit que sa propre ligne — le contrat le dit. Le nombre de jours, lui, est exprimable depuis 1.38.0 (`jours`). Il ne manque donc plus que la traversee dune relation, le meme manque que `need_piece_exigee_du_bureau`."
         }
       },
       {
@@ -1619,7 +1975,7 @@
         "statement": "Les primes d'enchères s'accumulent pendant tout le cycle, puis se répartissent à parts égales en fin de cycle.",
         "resolution": {
           "kind": "unexpressible",
-          "reason": "L'ACCUMULATION est portée : `cagnotte_interets_cumulee` est déclarée somme des primes d'enchères de ses transactions, et le validateur refuse qu'un formulaire la propose à la saisie. C'est la RÉPARTITION qui reste dehors, et pour deux raisons distinctes : elle divise par le nombre de membres ACTIFS — une condition que `sum` et `count` ne portent pas — et elle se déclenche À LA FIN DU CYCLE, un événement métier qu'aucun déclencheur ne connaît. Diviser et choisir son moment appartiennent au serveur, avec le reste de l'argent."
+          "reason": "LA RAISON A CHANGE, et il faut le dire. La condition sur `count` existe depuis 1.39.0 : compter des lignes selon un critere est devenu possible. Ce qui bloque maintenant est que LE CAHIER NE DEFINIT PAS « membre ACTIF ». Il ecrit « divisee a parts egales entre tous les membres actifs du cycle » sans dire ce qui rend un membre actif — a jour de ses cotisations ? non exclu ? present a la derniere seance ? Choisir a la place de lauteur serait inventer une regle financiere. La question est pour le proprietaire du cahier, plus pour le moteur."
         }
       },
       {
@@ -1651,8 +2007,11 @@
         "id": "need_tour_courant",
         "statement": "À chaque séance, un membre et un seul encaisse le pot, selon l'ordre de passage.",
         "resolution": {
-          "kind": "unexpressible",
-          "reason": "`ordre_passage` est un nombre sur une ligne. Rien ne dit QUEL tour est en cours, ni que le tour avance quand le pot est versé. L'état d'avancement d'un cycle n'a pas de place au format."
+          "kind": "satisfied",
+          "nodeIds": [
+            "fld_tontines_versements_reussis",
+            "fld_tontines_tour_courant"
+          ]
         }
       },
       {
@@ -1683,8 +2042,41 @@
         "id": "need_adhesion_par_code",
         "statement": "Un membre rejoint la tontine de son president en saisissant le code recu ; un code inconnu est refuse.",
         "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "rule_code_adhesion_connu",
+            "fld_tontines_code_adhesion",
+            "fld_membres_tontine_code_saisi"
+          ]
+        }
+      },
+      {
+        "id": "need_photo_tous",
+        "statement": "Chaque participant a sa photo de profil — pas une autre image.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "fld_utilisateurs_photo_profil"
+          ]
+        }
+      },
+      {
+        "id": "need_piece_non_visible",
+        "statement": "La piece didentite est stockee dans le systeme et nest PAS visible aux autres membres.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "fld_utilisateurs_piece_identite",
+            "fld_utilisateurs_type_piece"
+          ]
+        }
+      },
+      {
+        "id": "need_piece_exigee_du_bureau",
+        "statement": "Les membres de gestion — President, Secretaire, Tresorier, Censeur — doivent avoir leur piece didentite au systeme ; les simples membres non.",
+        "resolution": {
           "kind": "unexpressible",
-          "reason": "Resoudre un code vers une tontine est une RECHERCHE entre lignes. Une regle de ce format est de niveau CHAMP — required, matches, comparaisons — et rien n'y exprime « cette valeur designe une ligne existante d'une autre entite ». Et le faire dans l'application supposerait de lui livrer la liste des codes : n'importe qui pourrait alors rejoindre n'importe quelle tontine. Le rapprochement doit donc se faire la ou les codes ne sortent jamais."
+          "reason": "Le ROLE vit sur ladhesion (`ent_membres_tontine`) et la PIECE sur la personne (`ent_utilisateurs`) : exiger lune selon lautre traverse une relation. Une assertion de ce format ne voit QUE sa propre entite — le contrat le dit : « le champ designe appartient a la MEME entite ». Et ce nest pas un oubli : lire une autre ligne demande la base, donc ce ne serait plus une regle de saisie. La meme personne peut dailleurs etre Presidente dune tontine et simple membre dune autre, donc lexigence ne porte ni sur la personne seule, ni sur ladhesion seule. Le serveur doit la tenir au moment ou un role de gestion est attribue."
         }
       }
     ]

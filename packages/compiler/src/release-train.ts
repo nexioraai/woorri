@@ -110,7 +110,13 @@ export const RELEASE_TRAIN_V1 = {
   // proposer la meme prime, et sans departage le serveur rendrait « la
   // premiere ligne que la base donne ». Le gagnant d'une enchere ne peut pas
   // dependre de l'index.
-  airSchemaVersion: "1.41.0",
+  // 1.42.0 (2026-10-13) — `rules[].appliqueSi` : une regle qui ne vaut que
+  // sous condition. Mesure, cahier reel de la tontine : « tout membre ne
+  // possedant pas de smartphone est rattache a un membre parrain ». Les
+  // assertions devant TOUTES etre vraies TOUJOURS, exiger un mandataire
+  // revenait a l'exiger de tout le monde. Il ne manquait pas un operateur :
+  // il manquait le SI.
+  airSchemaVersion: "1.42.0",
   // Porté à 1.1.0 le 2026-08-31 (D-060) : montée STRICTEMENT ADDITIVE du
   // registre de blocs — `form` gagne `loading`/`empty`, `detail_header` gagne un
   // état, les trois blocs à données gagnent les props de titres. Rien n'est

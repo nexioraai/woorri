@@ -78,6 +78,22 @@ const PILES = [
 ];
 
 const essais = [];
+// ── UNE VALEUR TEXTE NE DOIT PAS COLLISIONNER AVEC LA LIGNE PRECEDENTE.
+//
+// Mesure le 2026-10-13 : chaque charge posait « x » dans tout champ texte.
+// Depuis que `unique` du document devient une contrainte en base
+// (2026-10-12), la deuxieme ligne ecrite violait la contrainte, et la preuve
+// « un nombre revient en NOMBRE » mesurait en realite une collision. Un
+// rouge qui ne parle pas de ce qu'il annonce est pire qu'un vert.
+//
+// La valeur reste constante POUR UNE MEME LIGNE : une preuve ne doit jamais
+// dependre du moment ou elle tourne.
+const valeurTexte = (f, idLigne) => {
+  const choix = f.enumValues;
+  if (Array.isArray(choix) && choix.length > 0) return choix[0];
+  return f.unique === true ? `x-${String(idLigne)}` : "x";
+};
+
 const dire = (ok, quoi, detail = "") => {
   essais.push(ok);
   console.log(`  ${ok ? "🟢" : "🔴"} ${quoi}${detail === "" ? "" : " — " + detail}`);
@@ -341,7 +357,7 @@ for (const [rang, { pile, base }] of PILES.entries()) {
                 ? "0"
                 : f.type === "boolean"
                   ? "false"
-                  : (f.enumValues ?? ["x"])[0],
+                  : valeurTexte(f, "gate1"),
           ]),
       );
       const creer = await fetch(`${B}/${journalEnt.id}/rows`, {
@@ -378,7 +394,7 @@ for (const [rang, { pile, base }] of PILES.entries()) {
                   ? "0"
                   : f.type === "boolean"
                     ? "false"
-                    : (f.enumValues ?? ["x"])[0],
+                    : valeurTexte(f, "gate2"),
           ]),
       );
       const creer = await fetch(`${B}/${avecEtats.id}/rows`, {
@@ -442,7 +458,7 @@ for (const [rang, { pile, base }] of PILES.entries()) {
                       ? 0
                       : f.type === "boolean"
                         ? false
-                        : (f.enumValues ?? ["x"])[0];
+                        : valeurTexte(f, corps.id);
           }
           corps[cle[0].name] = "gate2";
           corps[champSomme.name] = m;
@@ -552,7 +568,7 @@ for (const [rang, { pile, base }] of PILES.entries()) {
                 ? 0
                 : f.type === "boolean"
                   ? false
-                  : (f.enumValues ?? ["x"])[0];
+                  : valeurTexte(f, corps.id);
       }
       corps[champN.name] = 1234.5;
       const ecrit = await fetch(`${B}/${entN.id}/rows`, {
@@ -572,6 +588,66 @@ for (const [rang, { pile, base }] of PILES.entries()) {
           (typeof valeur === "number"
             ? ""
             : ` · ${String(lignesLues.length)} ligne(s) · ${JSON.stringify(lignesLues[0] ?? null).slice(0, 300)}`),
+      );
+    }
+
+    // ── UN DOUBLON EST UNE FAUTE DE L'APPELANT, PAS UNE PANNE.
+    //
+    // Mesuré le 2026-10-13 : la contrainte `unique` était posée en base
+    // depuis la veille, mais sa violation remontait telle quelle — HTTP 500
+    // avec « UNIQUE constraint failed: tontines.tontines_code_adhesion ».
+    // Deux défauts dans une seule réponse. L'appelant ne peut pas
+    // distinguer SA faute d'une panne du serveur, donc il réessaie ce qui
+    // ne marchera jamais ; et le corps livre le nom physique de la table et
+    // de la colonne à qui le demande.
+    //
+    // Cette preuve exige les DEUX : le bon code, et le silence sur le
+    // schéma. Un 409 qui fuiterait encore le nom de la table passerait la
+    // moitié du contrôle — et ne vaudrait rien.
+    const estUniqueEcrit = (f) =>
+      f.unique === true && f.derived === undefined && f.sensitive !== true && f.type === "string";
+    const entU = air.entities.find(
+      (e) => e.appendOnly !== true && e.fields.some(estUniqueEcrit),
+    );
+    const champU = entU?.fields.find(estUniqueEcrit);
+    if (entU !== undefined && champU !== undefined) {
+      const faire = async (idLigne) => {
+        const corps = { id: idLigne };
+        for (const f of entU.fields) {
+          if (f.required !== true || f.derived !== undefined || f.sensitive === true) continue;
+          corps[f.name] =
+            f.name === champU.name
+              ? "MEME-VALEUR"
+              : f.type === "datetime"
+                ? "2026-01-01T00:00:00Z"
+                : f.type === "decimal" || f.type === "number"
+                  ? 0
+                  : f.type === "boolean"
+                    ? false
+                    : valeurTexte(f, idLigne);
+        }
+        corps[champU.name] = "MEME-VALEUR";
+        return fetch(`${B}/${entU.id}/rows`, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(corps),
+        });
+      };
+      const un = await faire("gateU1");
+      const deux = await faire("gateU2");
+      const corpsDeux = await deux.text();
+      dire(
+        un.ok && deux.status === 409,
+        `un doublon sur « ${champU.name} » répond 409, pas 500`,
+        `première HTTP ${String(un.status)} · seconde HTTP ${String(deux.status)}`,
+      );
+      // Le nom physique est le nom du champ préfixé par la table. S'il
+      // apparaît dans la réponse, le schéma a fui.
+      const nomPhysique = `${entU.id.replace(/^ent_/u, "")}_${champU.name}`;
+      dire(
+        !corpsDeux.includes(nomPhysique) && !corpsDeux.includes("constraint"),
+        "le refus ne livre PAS le nom physique de la colonne",
+        `cherché « ${nomPhysique} » et « constraint » dans ${corpsDeux.slice(0, 160)}`,
       );
     }
 
@@ -596,7 +672,7 @@ for (const [rang, { pile, base }] of PILES.entries()) {
                 ? 0
                 : f.type === "boolean"
                   ? false
-                  : (f.enumValues ?? ["x"])[0];
+                  : valeurTexte(f, corps.id);
       }
       corps[champAppelant.name] = "moi@exemple.test";
       const ecrit = await fetch(`${B}/${entiteAppelant.id}/rows`, {

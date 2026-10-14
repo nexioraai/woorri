@@ -52,6 +52,15 @@ const champDate = (): string => {
 };
 
 /** Le document, plus les deux champs que l'enchere reclame. */
+/**
+ * LE DOCUMENT PORTE DESORMAIS SA PROPRE ENCHERE.
+ *
+ * Depuis que le cahier de la tontine est applique, `tontine.air.json` declare
+ * `prime_la_plus_forte` et `enchere_gagnante`. Ces preuves en posaient
+ * d'identiques — AIR_DUP_ID, et le cliquet avait raison. Elles prennent donc
+ * des identifiants A ELLES : elles mesurent le MECANISME, pas le document du
+ * jour, et resteront vraies quoi qu'il declare demain.
+ */
 const avecEnchere = (porteur?: Record<string, unknown>): ProjectAir => {
   const air = JSON.parse(JSON.stringify(lu())) as ProjectAir;
   const t = air.entities.find((e) => e.id === "ent_tontines");
@@ -59,15 +68,15 @@ const avecEnchere = (porteur?: Record<string, unknown>): ProjectAir => {
   t.fields = [
     ...t.fields,
     {
-      id: "fld_tontines_prime_la_plus_forte",
-      name: "prime_la_plus_forte",
+      id: "fld_tontines_preuve_prime_max",
+      name: "preuve_prime_max",
       type: "decimal",
       required: false,
       derived: { kind: "max", relationId: "rel_transaction_tontine", fieldId: champMontant() },
     },
     {
-      id: "fld_tontines_gagnant",
-      name: "gagnant",
+      id: "fld_tontines_preuve_gagnant",
+      name: "preuve_gagnant",
       type: "string",
       required: false,
       derived:
@@ -178,8 +187,8 @@ describe("EP-216 ③ · L'ENCHÈRE SE JOUE VRAIMENT, ÉGALITÉ COMPRISE", () => 
           "    [o.id, 't1', o.montant, o.date],",
           "  );",
           "}",
-          "const fMax = Object.entries(calculs).find(([n]) => /PrimeLaPlusForte$/.test(n));",
-          "const fQui = Object.entries(calculs).find(([n]) => /Gagnant$/.test(n));",
+          "const fMax = Object.entries(calculs).find(([n]) => /PreuvePrimeMax$/.test(n));",
+          "const fQui = Object.entries(calculs).find(([n]) => /PreuveGagnant$/.test(n));",
           "if (fMax === undefined || fQui === undefined) throw new Error('calculs non emis : ' + Object.keys(calculs).join(','));",
           "console.log('@@' + JSON.stringify({ max: await fMax[1](base, 't1'), gagnant: await fQui[1](base, 't1') }));",
         ].join("\n"),

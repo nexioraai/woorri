@@ -1503,6 +1503,56 @@ export function validateAir(air: ProjectAir): AirDiagnostic[] {
     });
   });
 
+    // ── UNE LISTE TITREE PAR UNE ENUMERATION NE DISTINGUE RIEN (2026-10-13).
+  //
+  // MESURE QUI A IMPOSE CE REFUS, ET C'EST LE PROPRIETAIRE QUI L'A VUE
+  // AVANT MOI. Il a ouvert l'application web generee : trente cartes
+  // identiques, chacune portant un seul mot en majuscules — COTISATION,
+  // COTISATION, ENCHERE, COTISATION. Ni montant, ni date, ni etat.
+  //
+  // La cause n'etait PAS le moteur : le bloc liste porte VINGT-SIX
+  // proprietes — sous-titre, valeur a droite, badge, tri, pagination. Le
+  // document n'en demandait qu'UNE, `titleFieldId`, branchee sur le type
+  // d'operation.
+  //
+  // ── POURQUOI UNE ENUMERATION, PRECISEMENT.
+  //
+  // Une enumeration a PEU de valeurs distinctes — c'est sa definition. Une
+  // liste titree par elle affiche donc le MEME texte sur des lignes
+  // differentes, et aucune ne se distingue. Ce n'est pas une question de
+  // gout : c'est une propriete DECIDABLE du document. Un titre libre
+  // (`string`) peut etre unique par ligne ; une enumeration, jamais.
+  //
+  // Le refus demande donc au moins UN autre porteur d'information. Il ne
+  // dit pas lequel — c'est le document qui sait si le montant, la date ou
+  // l'etat distingue le mieux ses lignes.
+  air.screens.forEach((ecran, si) => {
+    ecran.blocks.forEach((bloc, bi) => {
+      if (bloc.blockType !== "list" || bloc.entityId === undefined) return;
+      const props = new Map(
+        (bloc.props ?? []).map((pr) => [pr.key, pr.value] as const),
+      );
+      const titre = props.get("titleFieldId");
+      if (typeof titre !== "string") return;
+      const cible = air.entities.find((x) => x.id === bloc.entityId);
+      const champ = cible?.fields.find((x) => x.id === titre);
+      if (champ?.type !== "enum") return;
+      const distingue = ["subtitleFieldId", "trailingFieldId", "badgeFieldId"].some(
+        (k) => typeof props.get(k) === "string",
+      );
+      if (!distingue) {
+        push(
+          "AIR_LISTE_INDISTINCTE",
+          `screens[${si}].blocks[${bi}].props.titleFieldId`,
+          `cette liste est titrée par « ${titre} », une énumération de ` +
+            `${String(champ.enumValues?.length ?? 0)} valeurs : plusieurs lignes ` +
+            `porteraient le MÊME texte et rien ne les distinguerait. Ajoutez au ` +
+            `moins un \`subtitleFieldId\`, \`trailingFieldId\` ou \`badgeFieldId\`.`,
+        );
+      }
+    });
+  });
+
   // 8. Règles : entité existante, champs des assertions appartenant à
   // l'entité ciblée.
   air.rules.forEach((r, i) => {
@@ -1512,6 +1562,54 @@ export function validateAir(air: ProjectAir): AirDiagnostic[] {
       return;
     }
     const fieldIds = new Set(entity.fields.map((f) => f.id));
+    // ── LE GARDE EST CONTROLE COMME LES ASSERTIONS (1.42.0).
+    //
+    // Un garde fautif est PIRE qu'une assertion fautive : si sa condition ne
+    // peut jamais etre vraie, la regle ne s'applique JAMAIS — elle est
+    // presente, elle a l'air de proteger, et elle ne protege rien. Aucune
+    // erreur ne le dirait.
+    //
+    // Les deux listes passent donc par le MEME contrôle. `appliqueSi` est
+    // marque dans le chemin pour que la reparation sache laquelle corriger.
+    const listes: readonly (readonly [string, typeof r.assertions])[] = [
+      ["appliqueSi", r.appliqueSi ?? []],
+      ["assertions", r.assertions],
+    ];
+    listes.forEach(([nomListe, liste]) => {
+      liste.forEach((assertion, j) => {
+        if (!fieldIds.has(assertion.fieldId)) {
+          push(
+            "AIR_RULE_FIELD_UNKNOWN",
+            `rules[${i}].${nomListe}[${j}].fieldId`,
+            `champ "${assertion.fieldId}" absent de l'entité "${r.entityId}"`,
+          );
+        }
+      });
+    });
+    // ── UN GARDE QUI NE PEUT JAMAIS ETRE VRAI REND LA REGLE MUETTE.
+    //
+    // Filtrer un champ a valeurs fermees sur une valeur qu'il ne peut pas
+    // porter : la regle ne s'appliquerait JAMAIS. Meme famille que
+    // AIR_AGREGAT_CONDITION_VALEUR_IMPOSSIBLE, et meme raison — un garde
+    // impossible ne leve aucune erreur, il desactive silencieusement une
+    // protection.
+    (r.appliqueSi ?? []).forEach((g, j) => {
+      const champ = entity.fields.find((x) => x.id === g.fieldId);
+      if (champ?.type !== "enum" || champ.enumValues === undefined) return;
+      const essayees = Array.isArray(g.value) ? g.value : [g.value];
+      const hors = essayees.filter(
+        (v) => v !== undefined && (typeof v !== "string" || !champ.enumValues?.includes(v)),
+      );
+      if (hors.length > 0 && (g.operator === "eq" || g.operator === "in")) {
+        push(
+          "AIR_RULE_GARDE_IMPOSSIBLE",
+          `rules[${i}].appliqueSi[${j}].value`,
+          `"${champ.id}" ne peut pas valoir ${hors.map((v) => JSON.stringify(v)).join(", ")} ` +
+            `— ses valeurs sont ${champ.enumValues.join(", ")}. La règle ne ` +
+            `s'appliquerait JAMAIS, et rien ne le dirait.`,
+        );
+      }
+    });
     r.assertions.forEach((assertion, j) => {
       if (!fieldIds.has(assertion.fieldId)) {
         push(

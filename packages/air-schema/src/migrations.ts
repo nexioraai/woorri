@@ -625,6 +625,26 @@ export const AIR_MIGRATIONS: readonly AirMigration[] = [
       "de plus, aucun document existant ne change de sens.",
     migrate: (document) => document,
   },
+  {
+    from: "1.41.0",
+    to: "1.42.0",
+    description:
+      "AIR 1.42.0 : `rules[].appliqueSi` — une règle qui ne vaut QUE sous " +
+      "condition. Mesure qui l'a imposée, écrite dans un cahier des charges " +
+      "réel : la tontine du Cameroun exige que « tout membre ne possédant pas " +
+      "de smartphone soit rattaché à un membre parrain certifié ». " +
+      "Inexprimable, et pour une raison simple : les assertions d'une règle " +
+      "doivent TOUTES être vraies, TOUJOURS — exiger un mandataire revenait " +
+      "donc à l'exiger de TOUT LE MONDE, y compris de ceux qui ont un " +
+      "téléphone. Il ne manquait pas un opérateur : il manquait le SI. Le " +
+      "garde reprend la MÊME forme que les assertions — un champ, un " +
+      "opérateur, une valeur — parce qu'inventer une seconde grammaire " +
+      "aurait doublé ce qu'un juge doit savoir lire, pour rien. Il ne " +
+      "traverse aucune relation : comme les assertions, il ne voit que sa " +
+      "propre ligne. Migration IDENTITÉ : clé optionnelle, absente ⇒ la " +
+      "règle s'applique toujours, exactement comme avant.",
+    migrate: (document) => document,
+  },
 ];
 
 export class AirMigrationError extends Error {

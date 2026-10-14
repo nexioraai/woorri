@@ -25,7 +25,7 @@ import {
 // 1.7.1 (E3.3, D-131) : provenance APLANIE (sourceKind/sourceIntegrationId/
 //   sourceDomain/sourceRefreshSeconds) — l'union 1.7.0 dépassait la limite
 //   réelle de grammaire de l'API (classe D-078) ; sémantique inchangée.
-export const AIR_SCHEMA_VERSION = "1.41.0";
+export const AIR_SCHEMA_VERSION = "1.42.0";
 
 export const semverSchema = z.string().regex(/^\d+\.\d+\.\d+$/);
 export const sha256Schema = z.string().regex(/^[0-9a-f]{64}$/);
@@ -1328,6 +1328,37 @@ const ruleSchema = z.strictObject({
   description: z.string().min(1),
   kind: z.enum(["validation", "authorization"]),
   entityId: entityIdSchema,
+  /**
+   * ── CETTE REGLE NE VAUT QUE QUAND... (1.42.0)
+   *
+   * MESURE QUI L'A IMPOSEE, ecrite dans un cahier des charges reel. Le
+   * cahier d'une tontine exige : « Tout membre ne possedant pas de smartphone
+   * ni de compte de paiement est rattache a un membre parrain certifie. »
+   *
+   * Inexprimable jusqu'ici, et pour une raison simple : les assertions d'une
+   * regle doivent TOUTES etre vraies, TOUJOURS. Exiger un mandataire
+   * revenait donc a l'exiger de TOUT LE MONDE — y compris des membres qui ont
+   * un telephone, pour qui le parrainage n'a aucun sens.
+   *
+   * Il ne manquait pas un operateur. Il manquait le SI.
+   *
+   * ── POURQUOI LA MEME FORME QUE LES ASSERTIONS.
+   *
+   * Un garde est une condition, et une condition de ce format a deja sa
+   * forme : un champ, un operateur, une valeur. Inventer une seconde grammaire
+   * aurait double ce qu'un juge doit savoir lire, pour rien. Les assertions du
+   * garde doivent TOUTES etre vraies pour que la regle s'applique.
+   *
+   * ── ET CE QU'IL NE FAIT PAS.
+   *
+   * Il ne traverse aucune relation : comme les assertions, il ne voit que sa
+   * propre ligne. « La piece d'identite exigee des membres de gestion » reste
+   * donc dehors — le role vit sur l'adhesion, la piece sur la personne. C'est
+   * un second manque, et il est nomme au document plutot que masque ici.
+   *
+   * Absent ⇒ la regle s'applique toujours, exactement comme avant.
+   */
+  appliqueSi: z.array(ruleAssertionSchema).min(1).optional(),
   assertions: z.array(ruleAssertionSchema).min(1),
 });
 
@@ -1418,7 +1449,7 @@ const accessSchema = z.strictObject({
    * NOM DE QUI ». SGD ne pouvait pas le montrer : un employé y agit toujours
    * pour lui-même.
    *
-   * Mesuré le 2026-10-05 sur le cahier des charges d'une tontine camerounaise :
+   * Mesuré le 2026-10-05 sur le cahier des charges réel d'une tontine :
    * « tout membre ne possédant pas de smartphone est rattaché à un mandataire.
    * Le membre remet la somme en espèces ; le mandataire saisit la transaction
    * et crédite le séquestre. Lors du tour de gain, le décaissement est versé au

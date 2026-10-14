@@ -640,7 +640,22 @@ describe("ce qui dépend de la base ne se devine pas", () => {
       return enfant.fields.filter((x) => x.referencesEntityId === rel.fromEntityId).length !== 1;
     });
     if (muet) expect(tout()).toContain("AIR_CALCUL_A_ECRIRE");
-    if (air().rules.length > 0) expect(tout()).toContain("AIR_REGLE_A_ECRIRE");
+    // ── CE TEST AFFIRMAIT QU'UN TROU EXISTE. CORRIGE LE 2026-10-13.
+    //
+    // Il exigeait `AIR_REGLE_A_ECRIRE` des que le document portait UNE regle
+    // — autrement dit il affirmait que l'emetteur ne sait pas les tenir. Ce
+    // n'est plus vrai : la pile Node couvre les neuf operateurs du contrat,
+    // `designe` compris. Le code de refus ne doit apparaitre QUE si le
+    // document emploie un operateur reellement non couvert.
+    //
+    // Une assertion qui exige un trou empeche de le combler.
+    const COUVERTS = new Set([
+      "required", "eq", "neq", "gt", "gte", "lt", "lte", "matches", "in", "designe",
+    ]);
+    const nonCouvert = air().rules.some((r) =>
+      [...(r.appliqueSi ?? []), ...r.assertions].some((a) => !COUVERTS.has(a.operator)),
+    );
+    if (nonCouvert) expect(tout()).toContain("AIR_REGLE_A_ECRIRE");
     expect(enBase.length + air().rules.length).toBeGreaterThan(0);
   });
 

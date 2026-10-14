@@ -320,6 +320,62 @@ export interface Base {
   executer(sql: string, params?: readonly unknown[]): Promise<void>;
 }
 
+/**
+ * UN DOUBLON N'EST PAS UNE PANNE DU SERVEUR.
+ *
+ * Mesuré le 2026-10-13 : deux lignes portant le même « code_adhesion »
+ * faisaient répondre 500 avec le message brut du moteur — « UNIQUE
+ * constraint failed: tontines.tontines_code_adhesion ». Deux défauts dans
+ * une seule réponse. L'appelant ne peut pas distinguer SA faute d'une panne
+ * du serveur, donc il réessaie ce qui ne marchera jamais. Et le corps de
+ * réponse livre le nom physique de la table et de la colonne à qui le
+ * demande — un plan du schéma offert sur une erreur.
+ *
+ * La contrainte \`unique\` a été posée en base le 2026-10-12 ; sa traduction
+ * en réponse ne l'avait pas été. Le défaut est né de ce décalage.
+ *
+ * Les deux moteurs disent la même chose autrement : SQLite dans le message,
+ * Postgres dans le code 23505, le détail et le nom de la contrainte. Le
+ * texte rassemblé porte, chez l'un comme chez l'autre, le nom de la
+ * colonne — c'est lui qui permet de nommer le champ DÉCLARÉ.
+ */
+function texteErreur(e: unknown): string {
+  if (typeof e !== "object" || e === null) return String(e);
+  const o = e as Record<string, unknown>;
+  return [o["message"], o["detail"], o["constraint"]]
+    .map((x) => (x === undefined || x === null ? "" : String(x)))
+    .join(" | ");
+}
+
+export function estDoublon(e: unknown): boolean {
+  if (typeof e === "object" && e !== null) {
+    const o = e as Record<string, unknown>;
+    // Postgres nomme la faute par son code, et lui seul est sans ambiguïté.
+    if (o["code"] === "23505") return true;
+  }
+  const t = texteErreur(e);
+  return t.includes("UNIQUE constraint failed") || t.includes("duplicate key value");
+}
+
+/**
+ * QUEL CHAMP DÉCLARÉ est en cause — jamais quelle colonne.
+ *
+ * Les colonnes sont essayées de la plus longue à la plus courte : « code »
+ * se trouve dans « code_adhesion », et répondre « code » serait faux.
+ *
+ * \`null\` quand la colonne n'est pas reconnue : mieux vaut un 409 sans nom
+ * de champ qu'un 409 qui en nomme un au hasard.
+ */
+export function champDoublon(
+  e: unknown,
+  colonnes: ReadonlyArray<readonly [string, string]>,
+): string | null {
+  const t = texteErreur(e);
+  const triees = [...colonnes].sort((a, b) => b[0].length - a[0].length);
+  for (const [col, champ] of triees) if (t.includes(col)) return champ;
+  return null;
+}
+
 /** \`?\` → \`$1\`, \`$2\`… Postgres ne connaît que cette forme. */
 function numeroter(sql: string): string {
   let n = 0;
@@ -1137,6 +1193,31 @@ function reglesMetier(air: ProjectAir): string {
     "  return v !== undefined && v !== null && v !== \"\";",
     "}",
     "",
+    "// ── COMPARER DES VALEURS QUI NE VIENNENT PAS DU MEME MONDE.",
+    "//",
+    "// DEFAUT MESURE LE 2026-10-13, et il preexistait a ce lot. La ligne jugee",
+    "// est `{ ...existante, ...corps }` : `existante` vient de la BASE, ou un",
+    "// booleen vaut 0 ou 1, tandis que le document ecrit `true`. Une",
+    "// comparaison par texte donnait donc `\"0\" === \"true\"` — FAUX — et la",
+    "// regle etait silencieusement sautee a la MISE A JOUR, alors qu'elle",
+    "// mordait a la creation. Aucune erreur, aucun signe : juste une",
+    "// protection qui s'eteint une fois sur deux.",
+    "//",
+    "// On normalise donc les deux cotes AVANT de comparer : un booleen reste",
+    "// un booleen, qu'il arrive de SQLite en 0/1 ou du document en true.",
+    "function memeValeur(a: unknown, b: unknown): boolean {",
+    "  const bool = (v: unknown): boolean | null => {",
+    "    if (typeof v === \"boolean\") return v;",
+    "    if (v === 1 || v === \"1\" || v === \"true\") return true;",
+    "    if (v === 0 || v === \"0\" || v === \"false\") return false;",
+    "    return null;",
+    "  };",
+    "  const ba = bool(a);",
+    "  const bb = bool(b);",
+    "  if (ba !== null && bb !== null) return ba === bb;",
+    "  return String(a) === String(b);",
+    "}",
+    "",
     "// ── UNE RÉFÉRENCE DE FICHIER NE DOIT PAS SORTIR DES DOMAINES DÉCLARÉS.",
     "//",
     "// Mesuré le 2026-10-12 : 60 champs `asset` dans 29 documents sur 31, et",
@@ -1203,6 +1284,47 @@ function reglesMetier(air: ProjectAir): string {
       l.push("  void ligne;", "  // Le document n'en déclare aucune pour cette entité.");
     }
     for (const r of miennes) {
+      // ── LE GARDE (1.42.0) : LA REGLE NE SE VERIFIE QUE S'IL EST VRAI.
+      //
+      // Toutes ses conditions doivent tenir. Il est emis en UNE expression,
+      // juste devant les assertions, et les assertions sont indentees dedans :
+      // le code emis se lit comme la regle se dit — « si sans telephone,
+      // alors le mandataire est exige ».
+      const garde = (r.appliqueSi ?? [])
+        .map((g) => {
+          const champG = e.fields.find((x) => x.id === g.fieldId);
+          if (champG === undefined) return "";
+          const cg = JSON.stringify(colonne(champG));
+          const vg = JSON.stringify(g.value ?? null);
+          switch (g.operator) {
+            case "required":
+              return `rempli(ligne[${cg}])`;
+            case "eq":
+              return `memeValeur(ligne[${cg}], ${vg})`;
+            case "neq":
+              return `!memeValeur(ligne[${cg}], ${vg})`;
+            case "in":
+              return `(${vg} as unknown[]).map(String).includes(String(ligne[${cg}]))`;
+            case "gt":
+              return `(nombre(ligne[${cg}]) ?? -Infinity) > Number(${vg})`;
+            case "gte":
+              return `(nombre(ligne[${cg}]) ?? -Infinity) >= Number(${vg})`;
+            case "lt":
+              return `(nombre(ligne[${cg}]) ?? Infinity) < Number(${vg})`;
+            case "lte":
+              return `(nombre(ligne[${cg}]) ?? Infinity) <= Number(${vg})`;
+            default:
+              return "";
+          }
+        })
+        .filter((x) => x !== "");
+      if (garde.length > 0) {
+        l.push(
+          `  // ${r.description}`,
+          `  //   NE S'APPLIQUE QUE SI : ${(r.appliqueSi ?? []).map((g) => `${g.fieldId} ${g.operator}${g.value === undefined ? "" : ` ${JSON.stringify(g.value)}`}`).join(" ET ")}`,
+          `  if (${garde.join(" && ")}) {`,
+        );
+      }
       for (const a of r.assertions) {
         const champ = e.fields.find((x) => x.id === a.fieldId);
         if (champ === undefined) {
@@ -1303,9 +1425,9 @@ function reglesMetier(air: ProjectAir): string {
             case "required":
               return `!rempli(ligne[${c}])`;
             case "eq":
-              return `rempli(ligne[${c}]) && String(ligne[${c}]) !== String(${v})`;
+              return `rempli(ligne[${c}]) && !memeValeur(ligne[${c}], ${v})`;
             case "neq":
-              return `rempli(ligne[${c}]) && String(ligne[${c}]) === String(${v})`;
+              return `rempli(ligne[${c}]) && memeValeur(ligne[${c}], ${v})`;
             case "gt":
               return `rempli(ligne[${c}]) && !((nombre(ligne[${c}]) ?? -Infinity) > Number(${v}))`;
             case "gte":
@@ -1359,6 +1481,9 @@ function reglesMetier(air: ProjectAir): string {
           `  if (${cond}) ${echec}`,
         );
       }
+      // On referme le garde APRES toutes les assertions : elles sont toutes
+      // sous la meme condition, ce qui est exactement ce que la regle dit.
+      if (garde.length > 0) l.push("  }");
     }
     l.push("  return null;", "}", "");
   }
@@ -1381,7 +1506,7 @@ function reglesMetier(air: ProjectAir): string {
 function serveur(air: ProjectAir): string {
   const l = [
     `import Fastify from "fastify";`,
-    `import { appliquerSchema, ouvrir } from "./base.ts";`,
+    `import { appliquerSchema, champDoublon, estDoublon, ouvrir } from "./base.ts";`,
     `import { SCHEMA } from "./schema.ts";`,
     ...air.entities.map((e) => `import { ${CAMEL(e.id)}Routes } from "./api/${table(e)}.ts";`),
     ...(avecApis(air) ? [`import { connecteurRoutes } from "./api/connecteur.ts";`] : []),
@@ -1402,6 +1527,34 @@ function serveur(air: ProjectAir): string {
     "// dans les fichiers émis ; un secret versionné ne redevient jamais secret.",
     "export async function construire(): Promise<ReturnType<typeof Fastify>> {",
     "  const app = Fastify({ logger: true });",
+    "  // ── UN DOUBLON RÉPOND 409 ET NOMME LE CHAMP DÉCLARÉ.",
+    "  //",
+    "  // Posé ICI et non dans chaque route : la contrainte peut être violée",
+    "  // par n'importe quelle écriture de n'importe quelle entité, et un",
+    "  // traitement recopié vingt fois est un traitement qui finira par",
+    "  // manquer quelque part.",
+    "  //",
+    "  // La table ci-dessous est la SEULE traduction colonne → champ. Elle",
+    "  // existe pour que la réponse ne porte jamais le nom physique : le",
+    "  // schéma n'est pas une information publique.",
+    "  const UNIQUES: ReadonlyArray<readonly [string, string]> = [",
+    ...air.entities.flatMap((e) =>
+      conserves(e)
+        .filter((f) => f.unique === true)
+        .map((f) => `    ["${colonne(f)}", "${f.name}"],`),
+    ),
+    "  ];",
+    "  app.setErrorHandler((err, _req, rep) => {",
+    "    if (estDoublon(err)) {",
+    "      return rep.code(409).send({",
+    '        error: "AIR_VALEUR_DEJA_PRISE",',
+    "        champ: champDoublon(err, UNIQUES),",
+    "      });",
+    "    }",
+    "    // Tout le reste garde le comportement par défaut de Fastify : une",
+    "    // erreur inconnue ne doit pas être déguisée en faute de l'appelant.",
+    "    return rep.send(err);",
+    "  });",
     "  // ── LES EN-TÊTES DE PROTECTION, SUR CHAQUE RÉPONSE.",
     "  //",
     "  // Mesuré le 2026-10-12 : 0 serveur sur 31 n'en posait AUCUN. Le contrat",

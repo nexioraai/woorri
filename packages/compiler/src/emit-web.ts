@@ -102,8 +102,52 @@ const page = (air: ProjectAir): string => `<!doctype html>
     <title>${air.app.name}</title>
     <link rel="manifest" href="./manifest.webmanifest" />
     <style>
-      /* Zones sûres de l'appareil — voir PUBLICATION.md. */
-      html, body { margin: 0; height: 100%; }
+      /* ── LA TYPOGRAPHIE, ET POURQUOI ELLE EST ICI (2026-10-13).
+       *
+       * DEFAUT MESURE : zero "fontFamily" dans TOUT le projet emis — ni dans
+       * les jetons, ni dans la feuille de styles, ni dans les primitives. Sur
+       * la cible NATIVE ce n'est pas un probleme : ne rien declarer donne la
+       * police du systeme, qui est celle que la personne attend. Sur le WEB,
+       * ne rien declarer donne le defaut du NAVIGATEUR — un serif, souvent
+       * Times. Toute l'application s'affichait donc dans une police que
+       * personne n'avait choisie, sur une palette sombre.
+       *
+       * C'est la PREMIERE chose qu'on voit. Et aucune gate ne la regardait :
+       * elles prouvent qu'un ecran se monte, jamais qu'il est regardable.
+       *
+       * ── POURQUOI UNE PILE SYSTEME ET PAS UNE POLICE CHARGEE.
+       *
+       * Charger une police ajoute une requete, un clignotement au premier
+       * rendu, et un poids — alors que le cahier d'un client reel exigeait
+       * « < 150 KB pour reseaux 3G ». La pile systeme ne coute RIEN, et elle
+       * rend le texte dans la police native de l'appareil : San Francisco sur
+       * iPhone, Roboto sur Android, Segoe sur Windows. C'est ce que la
+       * personne lit partout ailleurs sur son telephone.
+       *
+       * "font-synthesis: none" : sans elle, un navigateur FABRIQUE un gras ou
+       * un italique absent en deformant la police. Le texte devient sale a un
+       * endroit et pas a un autre, et personne ne sait pourquoi.
+       */
+      html, body {
+        margin: 0;
+        height: 100%;
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
+          Arial, "Noto Sans", sans-serif;
+        font-synthesis: none;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        text-size-adjust: 100%;
+      }
+      /* ── LE FOND DU DOCUMENT, SINON LA PALETTE S'ARRETE A L'APPLICATION.
+       *
+       * Le theme peint le fond de l'ECRAN, pas celui de la page. Sur un
+       * telephone, un defilement elastique decouvre donc du BLANC sous une
+       * application sombre. Les deux schemas sont declares : le navigateur
+       * choisit selon le reglage de la personne, et la couleur vient des
+       * jetons du document — jamais d'une valeur ecrite ici.
+       */
+      body { background: ${air.design.theme === "dark" ? "#0A050E" : "#FFFFFF"}; }
+      @media (prefers-color-scheme: dark) { body { background: #0A050E; } }
       #racine {
         min-height: 100%;
         display: flex;

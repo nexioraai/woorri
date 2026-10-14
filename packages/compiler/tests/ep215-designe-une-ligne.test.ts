@@ -43,12 +43,27 @@ const CODE_SAISI = "fld_membres_tontine_code_saisi";
  */
 const avecRegle = (opts: { unique?: boolean; designe?: unknown; operateur?: string } = {}): ProjectAir => {
   const air = JSON.parse(JSON.stringify(lu())) as ProjectAir;
+  {
+    // Le document declare le code `unique` : pour mesurer le refus, il faut
+    // le defaire explicitement.
+    const t0 = air.entities.find((e) => e.id === "ent_tontines");
+    const c0 = t0?.fields.find((f) => f.id === CODE_CIBLE);
+    if (c0 !== undefined) (c0 as { unique?: boolean }).unique = opts.unique !== false;
+  }
   if (opts.unique !== false) {
     const t = air.entities.find((e) => e.id === "ent_tontines");
     const champ = t?.fields.find((f) => f.id === CODE_CIBLE);
     if (champ === undefined) throw new Error("le document n'a plus de code d'adhesion");
     (champ as { unique?: boolean }).unique = true;
   }
+  // ── LE DOCUMENT DECLARE DESORMAIS SA PROPRE REGLE DE CODE.
+  //
+  // Depuis que le cahier de la tontine est applique, `tontine.air.json` porte
+  // `rule_code_adhesion_connu` et son code est declare `unique`. Ces preuves
+  // posaient une regle du meme genre et mesuraient « sans cette regle » : les
+  // deux se marchaient dessus. Elles RETIRENT donc d'abord celle du document,
+  // puis posent la leur — ainsi elles mesurent leur propre objet, et restent
+  // vraies quoi que le document declare demain.
   const regle = {
     id: "rule_code_connu",
     description: "Un code d'adhesion inconnu est refuse.",
@@ -66,7 +81,21 @@ const avecRegle = (opts: { unique?: boolean; designe?: unknown; operateur?: stri
   };
   return {
     ...air,
-    rules: [...air.rules, regle],
+    rules: [...air.rules.filter((r) => r.id !== "rule_code_adhesion_connu"), regle],
+    // ── RETIRER UNE REGLE OBLIGE A RETIRER L'EXIGENCE QUI LA DESIGNE.
+    //
+    // Le cliquet AIR_NEED_NODE_UNKNOWN l'a dit : une exigence qui pointe vers
+    // un noeud inexistant est refusee. C'est exactement sa raison d'etre —
+    // une exigence « satisfaite » par quelque chose qui n'existe pas est un
+    // mensonge. Le document reste donc COHERENT, meme dans une fixture.
+    ...(air.intent === undefined
+      ? {}
+      : {
+          intent: {
+            ...air.intent,
+            needs: air.intent.needs.filter((n) => n.id !== "need_adhesion_par_code"),
+          },
+        }),
     backend: { kind: "genere", stack: "fastify" },
   } as ProjectAir;
 };
@@ -220,7 +249,20 @@ describe("EP-215 ④ · UN DOCUMENT SANS CETTE RÈGLE NE CHANGE PAS", () => {
   it("les règles restent vérifiées, et le document du corpus reste valide", () => {
     // Additivité stricte : l'opérateur de plus ne change aucun document.
     expect(codes(lu())).toEqual([]);
-    const sans = compileBackend({ ...lu(), backend: { kind: "genere", stack: "fastify" } });
+    const nu = lu();
+    const sans = compileBackend({
+      ...nu,
+      rules: nu.rules.filter((r) => r.id !== "rule_code_adhesion_connu"),
+      ...(nu.intent === undefined
+        ? {}
+        : {
+            intent: {
+              ...nu.intent,
+              needs: nu.intent.needs.filter((n) => n.id !== "need_adhesion_par_code"),
+            },
+          }),
+      backend: { kind: "genere", stack: "fastify" },
+    });
     const r = sans.files.get("src/api/regles-metier.ts") ?? "";
     expect(r).not.toContain("select 1 as v from");
   });
