@@ -202,7 +202,8 @@
             }
           ],
           "type": "string",
-          "required": false
+          "required": true,
+          "unique": true
         },
         {
           "id": "fld_utilisateurs_est_sans_telephone",
@@ -240,7 +241,7 @@
             }
           ],
           "type": "asset",
-          "required": false
+          "required": true
         },
         {
           "id": "fld_utilisateurs_piece_identite",
@@ -252,7 +253,8 @@
             }
           ],
           "type": "asset",
-          "required": false
+          "required": false,
+          "sensitive": true
         },
         {
           "id": "fld_utilisateurs_est_president_verifie",
@@ -1094,7 +1096,7 @@
             },
             {
               "key": "imageFieldId",
-              "value": "fld_utilisateurs_piece_identite"
+              "value": "fld_utilisateurs_photo_profil"
             }
           ]
         }

@@ -982,6 +982,26 @@ export function validateAir(air: ProjectAir): AirDiagnostic[] {
       if (entiteAffichee.get(e.id) !== true) return;
       e.fields.forEach((f, j) => {
         if (f.type !== "asset" || imagesMontrees.has(f.id)) return;
+        // ── UN CHAMP SENSIBLE N'EST PAS UN ORPHELIN (2026-10-13).
+        //
+        // MESURE QUI A IMPOSE CETTE EXEMPTION, et c'etait une CONTRADICTION
+        // entre deux regles du meme validateur. `AIR_FIELD_SENSITIVE_DISPLAYED`
+        // INTERDIT d'afficher un champ sensible ; `AIR_IMAGE_ORPHELINE`
+        // EXIGEAIT qu'une image declaree sur une entite affichee soit montree.
+        // Les deux ensemble rendaient une image sensible IMPOSSIBLE a
+        // declarer : quoi qu'on fasse, un refus tombait.
+        //
+        // Trouvee en appliquant une demande reelle, du proprietaire du cahier
+        // de la tontine : « les membres de gestion doivent avoir leur piece
+        // d'identite stockee directement dans le systeme mais PAS VISIBLE aux
+        // autres membres ». Une piece d'identite est exactement cela — gardee,
+        // jamais montree.
+        //
+        // L'exemption ne relache rien : le champ reste refuse a l'AFFICHAGE
+        // par l'autre regle. Elle dit seulement qu'un champ qu'on a INTERDIT
+        // de montrer ne peut pas, en meme temps, etre reproche de ne pas
+        // l'etre.
+        if (f.sensitive === true) return;
         const porteur = porteurDe.get(e.id);
         if (porteur !== undefined) {
           push(
