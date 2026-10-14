@@ -1298,6 +1298,16 @@
       "en_livraison",
       "livree",
       "annulee"
+     ],
+     "enumTones": [
+      {
+       "value": "livree",
+       "tone": "success"
+      },
+      {
+       "value": "annulee",
+       "tone": "error"
+      }
      ]
     },
     {
@@ -1520,6 +1530,20 @@
       "autorise",
       "en_attente",
       "refuse"
+     ],
+     "enumTones": [
+      {
+       "value": "en_attente",
+       "tone": "warn"
+      },
+      {
+       "value": "refuse",
+       "tone": "error"
+      },
+      {
+       "value": "rembourse",
+       "tone": "warn"
+      }
      ]
     },
     {

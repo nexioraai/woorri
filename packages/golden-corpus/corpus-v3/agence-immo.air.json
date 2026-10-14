@@ -589,13 +589,25 @@
           "name": "nom",
           "required": true,
           "type": "string",
-          "unique": true
+          "unique": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Nom"
+            }
+          ]
         },
         {
           "id": "fld_quartier_ville",
           "name": "ville",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Ville"
+            }
+          ]
         },
         {
           "id": "fld_quartier_description",
@@ -613,13 +625,25 @@
           "id": "fld_quartier_prix_m2_moyen",
           "name": "prix_m2_moyen",
           "required": false,
-          "type": "decimal"
+          "type": "decimal",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Prix moyen au m²"
+            }
+          ]
         },
         {
           "id": "fld_quartier_nb_biens",
           "name": "nb_biens",
           "required": false,
-          "type": "number"
+          "type": "number",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Nombre de biens"
+            }
+          ]
         }
       ],
       "id": "ent_quartier",
@@ -631,7 +655,13 @@
           "id": "fld_bien_titre",
           "name": "titre",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Titre"
+            }
+          ]
         },
         {
           "id": "fld_bien_reference",
@@ -658,7 +688,69 @@
           "id": "fld_bien_type",
           "name": "type_bien",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "appartement",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Appartement"
+                }
+              ]
+            },
+            {
+              "value": "maison",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Maison"
+                }
+              ]
+            },
+            {
+              "value": "studio",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Studio"
+                }
+              ]
+            },
+            {
+              "value": "loft",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Loft"
+                }
+              ]
+            },
+            {
+              "value": "terrain",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Terrain"
+                }
+              ]
+            },
+            {
+              "value": "local_commercial",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Local commercial"
+                }
+              ]
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Type de bien"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -668,13 +760,45 @@
           "id": "fld_bien_transaction",
           "name": "transaction",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "vente",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Vente"
+                }
+              ]
+            },
+            {
+              "value": "location",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Location"
+                }
+              ]
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Transaction"
+            }
+          ]
         },
         {
           "id": "fld_bien_prix",
           "name": "prix",
           "required": true,
-          "type": "decimal"
+          "type": "decimal",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Prix"
+            }
+          ]
         },
         {
           "id": "fld_bien_charges",
@@ -719,7 +843,78 @@
           "id": "fld_bien_dpe",
           "name": "classe_energie",
           "required": false,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "A",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "A"
+                }
+              ]
+            },
+            {
+              "value": "B",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "B"
+                }
+              ]
+            },
+            {
+              "value": "C",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "C"
+                }
+              ]
+            },
+            {
+              "value": "D",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "D"
+                }
+              ]
+            },
+            {
+              "value": "E",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "E"
+                }
+              ]
+            },
+            {
+              "value": "F",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "F"
+                }
+              ]
+            },
+            {
+              "value": "G",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "G"
+                }
+              ]
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Classe énergétique"
+            }
+          ]
         },
         {
           "id": "fld_bien_quartier",
@@ -727,13 +922,25 @@
           "referenceDisplayFieldId": "fld_quartier_nom",
           "referencesEntityId": "ent_quartier",
           "required": true,
-          "type": "reference"
+          "type": "reference",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Quartier"
+            }
+          ]
         },
         {
           "id": "fld_bien_adresse",
           "name": "adresse",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Adresse"
+            }
+          ]
         },
         {
           "id": "fld_bien_latitude",
@@ -763,7 +970,57 @@
           "id": "fld_bien_statut",
           "name": "statut",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "disponible",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Disponible"
+                }
+              ]
+            },
+            {
+              "value": "sous_offre",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Sous offre"
+                }
+              ]
+            },
+            {
+              "value": "loue",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Loué"
+                }
+              ]
+            },
+            {
+              "value": "vendu",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Vendu"
+                }
+              ]
+            }
+          ],
+          "enumTones": [
+            {
+              "value": "disponible",
+              "tone": "success"
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Statut"
+            }
+          ]
         },
         {
           "id": "fld_bien_conseiller",
@@ -793,7 +1050,13 @@
           "id": "fld_creneau_libelle",
           "name": "libelle",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Libellé"
+            }
+          ]
         },
         {
           "id": "fld_creneau_bien",
@@ -807,31 +1070,61 @@
           "id": "fld_creneau_date",
           "name": "date_visite",
           "required": true,
-          "type": "date"
+          "type": "date",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Date de la visite"
+            }
+          ]
         },
         {
           "id": "fld_creneau_heure_debut",
           "name": "heure_debut",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Heure de début"
+            }
+          ]
         },
         {
           "id": "fld_creneau_heure_fin",
           "name": "heure_fin",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Heure de fin"
+            }
+          ]
         },
         {
           "id": "fld_creneau_disponible",
           "name": "disponible",
           "required": true,
-          "type": "boolean"
+          "type": "boolean",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Disponible"
+            }
+          ]
         },
         {
           "id": "fld_creneau_places_restantes",
           "name": "places_restantes",
           "required": false,
-          "type": "number"
+          "type": "number",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Places restantes"
+            }
+          ]
         }
       ],
       "id": "ent_creneau",
@@ -844,7 +1137,13 @@
           "name": "reference",
           "required": true,
           "type": "string",
-          "unique": true
+          "unique": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Référence"
+            }
+          ]
         },
         {
           "id": "fld_dv_bien",
@@ -852,7 +1151,13 @@
           "referenceDisplayFieldId": "fld_bien_titre",
           "referencesEntityId": "ent_bien",
           "required": true,
-          "type": "reference"
+          "type": "reference",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Bien"
+            }
+          ]
         },
         {
           "id": "fld_dv_creneau",
@@ -860,31 +1165,61 @@
           "referenceDisplayFieldId": "fld_creneau_libelle",
           "referencesEntityId": "ent_creneau",
           "required": true,
-          "type": "reference"
+          "type": "reference",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Créneau"
+            }
+          ]
         },
         {
           "id": "fld_dv_nom",
           "name": "nom_complet",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Nom complet"
+            }
+          ]
         },
         {
           "id": "fld_dv_email",
           "name": "email",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Adresse e-mail"
+            }
+          ]
         },
         {
           "id": "fld_dv_telephone",
           "name": "telephone",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Téléphone"
+            }
+          ]
         },
         {
           "id": "fld_dv_message",
           "name": "message",
           "required": false,
-          "type": "text"
+          "type": "text",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Message"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -897,19 +1232,106 @@
           "id": "fld_dv_statut",
           "name": "statut",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "en_attente",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "En attente"
+                }
+              ]
+            },
+            {
+              "value": "confirmee",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Confirmée"
+                }
+              ]
+            },
+            {
+              "value": "refusee",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Refusée"
+                }
+              ]
+            },
+            {
+              "value": "annulee",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Annulée"
+                }
+              ]
+            },
+            {
+              "value": "realisee",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Réalisée"
+                }
+              ]
+            }
+          ],
+          "enumTones": [
+            {
+              "value": "en_attente",
+              "tone": "warn"
+            },
+            {
+              "value": "confirmee",
+              "tone": "success"
+            },
+            {
+              "value": "refusee",
+              "tone": "error"
+            },
+            {
+              "value": "annulee",
+              "tone": "error"
+            },
+            {
+              "value": "realisee",
+              "tone": "success"
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Statut"
+            }
+          ]
         },
         {
           "id": "fld_dv_consentement",
           "name": "consentement_rgpd",
           "required": true,
-          "type": "boolean"
+          "type": "boolean",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Consentement RGPD"
+            }
+          ]
         },
         {
           "id": "fld_dv_cree_le",
           "name": "cree_le",
           "required": true,
-          "type": "datetime"
+          "type": "datetime",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Créé le"
+            }
+          ]
         }
       ],
       "id": "ent_demande_visite",
@@ -921,7 +1343,13 @@
           "id": "fld_fav_libelle",
           "name": "libelle",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Libellé"
+            }
+          ]
         },
         {
           "id": "fld_fav_bien",
@@ -929,25 +1357,49 @@
           "referenceDisplayFieldId": "fld_bien_titre",
           "referencesEntityId": "ent_bien",
           "required": true,
-          "type": "reference"
+          "type": "reference",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Bien"
+            }
+          ]
         },
         {
           "id": "fld_fav_note",
           "name": "note",
           "required": false,
-          "type": "text"
+          "type": "text",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Note"
+            }
+          ]
         },
         {
           "id": "fld_fav_alerte_prix",
           "name": "alerte_baisse_prix",
           "required": true,
-          "type": "boolean"
+          "type": "boolean",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Alerte baisse de prix"
+            }
+          ]
         },
         {
           "id": "fld_fav_ajoute_le",
           "name": "ajoute_le",
           "required": true,
-          "type": "datetime"
+          "type": "datetime",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Ajouté le"
+            }
+          ]
         }
       ],
       "id": "ent_favori",
@@ -959,20 +1411,38 @@
           "id": "fld_profil_nom",
           "name": "nom_complet",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Nom complet"
+            }
+          ]
         },
         {
           "id": "fld_profil_email",
           "name": "email",
           "required": true,
           "type": "string",
-          "unique": true
+          "unique": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Adresse e-mail"
+            }
+          ]
         },
         {
           "id": "fld_profil_telephone",
           "name": "telephone",
           "required": false,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Téléphone"
+            }
+          ]
         },
         {
           "id": "fld_profil_quartier_prefere",
@@ -980,13 +1450,25 @@
           "referenceDisplayFieldId": "fld_quartier_nom",
           "referencesEntityId": "ent_quartier",
           "required": false,
-          "type": "reference"
+          "type": "reference",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Quartier préféré"
+            }
+          ]
         },
         {
           "id": "fld_profil_budget_max",
           "name": "budget_max",
           "required": false,
-          "type": "decimal"
+          "type": "decimal",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Budget maximum"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -997,13 +1479,54 @@
           "id": "fld_profil_type_recherche",
           "name": "type_recherche",
           "required": false,
-          "type": "enum"
+          "type": "enum",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Type de recherche"
+            }
+          ],
+          "enumLabels": [
+            {
+              "value": "vente",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Vente"
+                }
+              ]
+            },
+            {
+              "value": "location",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Location"
+                }
+              ]
+            },
+            {
+              "value": "les_deux",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Les deux"
+                }
+              ]
+            }
+          ]
         },
         {
           "id": "fld_profil_alertes_email",
           "name": "alertes_email",
           "required": true,
-          "type": "boolean"
+          "type": "boolean",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Alertes par e-mail"
+            }
+          ]
         }
       ],
       "id": "ent_profil",

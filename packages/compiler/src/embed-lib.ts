@@ -223,6 +223,10 @@ export const EMBEDDED_SOURCES: readonly EmbeddedSourceSpec[] = [
     rewrites: {
       "@deribfy/primitives": "../primitives",
       "@deribfy/primitives/theme-bridge": "../primitives/theme-bridge",
+      // `size.measure` (jetons 1.4.0) : la largeur de lisibilite du contenu.
+      // Meme reecriture que `styles.ts` — le projet genere lit les jetons
+      // par `lib/tokens`, jamais par le nom du paquet du depot.
+      "@deribfy/design-tokens": "../tokens",
     },
   },
   {

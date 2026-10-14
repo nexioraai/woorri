@@ -1011,7 +1011,17 @@
           ],
           "name": "statut",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumTones": [
+            {
+              "value": "confirme",
+              "tone": "success"
+            },
+            {
+              "value": "annule",
+              "tone": "error"
+            }
+          ]
         },
         {
           "id": "fld_rdv_soin",

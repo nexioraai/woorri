@@ -304,7 +304,13 @@
      "name": "mot_de_passe",
      "type": "string",
      "required": false,
-     "sensitive": true
+     "sensitive": true,
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Mot de passe"
+      }
+     ]
     },
     {
      "id": "fld_profil_telephone",
@@ -824,7 +830,13 @@
      "type": "decimal",
      "required": true,
      "unit": "FCFA",
-     "sensitive": false
+     "sensitive": false,
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Prix"
+      }
+     ]
     },
     {
      "id": "fld_produit_etat",
@@ -1066,7 +1078,13 @@
      "type": "number",
      "required": true,
      "unit": "unités",
-     "sensitive": false
+     "sensitive": false,
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Quantité"
+      }
+     ]
     },
     {
      "id": "fld_panier_prix_unitaire",
@@ -1082,7 +1100,13 @@
      "type": "decimal",
      "required": false,
      "unit": "FCFA",
-     "sensitive": false
+     "sensitive": false,
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Total de la ligne"
+      }
+     ]
     },
     {
      "id": "fld_panier_ajoute_le",
@@ -1237,6 +1261,24 @@
       "expediee",
       "livree",
       "en_livraison"
+     ],
+     "enumTones": [
+      {
+       "value": "en_attente",
+       "tone": "warn"
+      },
+      {
+       "value": "confirmee",
+       "tone": "success"
+      },
+      {
+       "value": "livree",
+       "tone": "success"
+      },
+      {
+       "value": "annulee",
+       "tone": "error"
+      }
      ]
     },
     {
@@ -1245,7 +1287,13 @@
      "type": "decimal",
      "required": true,
      "unit": "FCFA",
-     "sensitive": false
+     "sensitive": false,
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Total"
+      }
+     ]
     },
     {
      "id": "fld_commande_nb_articles",
@@ -1253,7 +1301,13 @@
      "type": "number",
      "required": false,
      "unit": "articles",
-     "sensitive": false
+     "sensitive": false,
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Nombre d'articles"
+      }
+     ]
     },
     {
      "id": "fld_commande_client",
@@ -1381,7 +1435,13 @@
      "type": "decimal",
      "required": false,
      "unit": "FCFA",
-     "sensitive": false
+     "sensitive": false,
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Frais de livraison"
+      }
+     ]
     },
     {
      "id": "fld_commande_livraison_estimee",
@@ -1521,7 +1581,13 @@
      "type": "decimal",
      "required": true,
      "unit": "FCFA",
-     "sensitive": false
+     "sensitive": false,
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Prix de la ligne"
+      }
+     ]
     }
    ]
   }

@@ -516,7 +516,13 @@
           "name": "nom",
           "required": true,
           "type": "string",
-          "unique": true
+          "unique": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Nom"
+            }
+          ]
         },
         {
           "id": "fld_lieu_photo",
@@ -528,19 +534,37 @@
           "id": "fld_lieu_adresse",
           "name": "adresse",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Adresse"
+            }
+          ]
         },
         {
           "id": "fld_lieu_ville",
           "name": "ville",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Ville"
+            }
+          ]
         },
         {
           "id": "fld_lieu_capacite",
           "name": "capacite",
           "required": true,
-          "type": "number"
+          "type": "number",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Capacité"
+            }
+          ]
         },
         {
           "id": "fld_lieu_acces",
@@ -558,13 +582,25 @@
           "id": "fld_concert_titre",
           "name": "titre",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Titre"
+            }
+          ]
         },
         {
           "id": "fld_concert_artiste",
           "name": "artiste",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Artiste"
+            }
+          ]
         },
         {
           "id": "fld_concert_affiche",
@@ -576,7 +612,13 @@
           "id": "fld_concert_date",
           "name": "date_heure",
           "required": true,
-          "type": "datetime"
+          "type": "datetime",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Date et heure"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -590,13 +632,81 @@
           "id": "fld_concert_genre",
           "name": "genre",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "rock",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Rock"
+                }
+              ]
+            },
+            {
+              "value": "jazz",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Jazz"
+                }
+              ]
+            },
+            {
+              "value": "chanson",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Chanson"
+                }
+              ]
+            },
+            {
+              "value": "electro",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Électroménager"
+                }
+              ]
+            },
+            {
+              "value": "hip_hop",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Hip-hop"
+                }
+              ]
+            },
+            {
+              "value": "classique",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Classique"
+                }
+              ]
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Genre"
+            }
+          ]
         },
         {
           "id": "fld_concert_prix_min",
           "name": "prix_min",
           "required": true,
-          "type": "decimal"
+          "type": "decimal",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Prix minimum"
+            }
+          ]
         },
         {
           "id": "fld_concert_lieu",
@@ -627,7 +737,56 @@
           "id": "fld_concert_statut",
           "name": "statut",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "en_vente",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "En vente"
+                }
+              ]
+            },
+            {
+              "value": "complet",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Complet"
+                }
+              ]
+            },
+            {
+              "value": "annule",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Annulé"
+                }
+              ]
+            }
+          ],
+          "enumTones": [
+            {
+              "value": "en_vente",
+              "tone": "success"
+            },
+            {
+              "value": "complet",
+              "tone": "warn"
+            },
+            {
+              "value": "annule",
+              "tone": "error"
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Statut"
+            }
+          ]
         }
       ],
       "id": "ent_concert",
@@ -639,13 +798,25 @@
           "id": "fld_tarif_nom",
           "name": "nom",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Nom"
+            }
+          ]
         },
         {
           "id": "fld_tarif_prix",
           "name": "prix",
           "required": true,
-          "type": "decimal"
+          "type": "decimal",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Prix"
+            }
+          ]
         },
         {
           "id": "fld_tarif_concert",
@@ -653,13 +824,25 @@
           "referenceDisplayFieldId": "fld_concert_titre",
           "referencesEntityId": "ent_concert",
           "required": true,
-          "type": "reference"
+          "type": "reference",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Concert"
+            }
+          ]
         },
         {
           "id": "fld_tarif_description",
           "name": "description",
           "required": false,
-          "type": "text"
+          "type": "text",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Description"
+            }
+          ]
         },
         {
           "id": "fld_tarif_disponible",
@@ -677,26 +860,50 @@
           "id": "fld_client_nom",
           "name": "nom",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Nom"
+            }
+          ]
         },
         {
           "id": "fld_client_email",
           "name": "email",
           "required": true,
           "type": "string",
-          "unique": true
+          "unique": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Adresse e-mail"
+            }
+          ]
         },
         {
           "id": "fld_client_telephone",
           "name": "telephone",
           "required": false,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Téléphone"
+            }
+          ]
         },
         {
           "id": "fld_client_ville",
           "name": "ville",
           "required": false,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Ville"
+            }
+          ]
         }
       ],
       "id": "ent_client",
@@ -709,7 +916,13 @@
           "name": "reference",
           "required": true,
           "type": "string",
-          "unique": true
+          "unique": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Référence"
+            }
+          ]
         },
         {
           "id": "fld_commande_concert",
@@ -717,7 +930,13 @@
           "referenceDisplayFieldId": "fld_concert_titre",
           "referencesEntityId": "ent_concert",
           "required": true,
-          "type": "reference"
+          "type": "reference",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Concert"
+            }
+          ]
         },
         {
           "id": "fld_commande_tarif",
@@ -725,7 +944,13 @@
           "referenceDisplayFieldId": "fld_tarif_nom",
           "referencesEntityId": "ent_tarif",
           "required": true,
-          "type": "reference"
+          "type": "reference",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Tarif"
+            }
+          ]
         },
         {
           "id": "fld_commande_client",
@@ -733,19 +958,37 @@
           "referenceDisplayFieldId": "fld_client_email",
           "referencesEntityId": "ent_client",
           "required": true,
-          "type": "reference"
+          "type": "reference",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Client"
+            }
+          ]
         },
         {
           "id": "fld_commande_quantite",
           "name": "quantite",
           "required": true,
-          "type": "number"
+          "type": "number",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Quantité"
+            }
+          ]
         },
         {
           "id": "fld_commande_montant",
           "name": "montant_total",
           "required": true,
-          "type": "decimal"
+          "type": "decimal",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Montant total"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -756,13 +999,68 @@
           "id": "fld_commande_statut",
           "name": "statut",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "a_payer",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "À payer"
+                }
+              ]
+            },
+            {
+              "value": "payee",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Payée"
+                }
+              ]
+            },
+            {
+              "value": "annulee",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Annulée"
+                }
+              ]
+            }
+          ],
+          "enumTones": [
+            {
+              "value": "a_payer",
+              "tone": "warn"
+            },
+            {
+              "value": "payee",
+              "tone": "success"
+            },
+            {
+              "value": "annulee",
+              "tone": "error"
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Statut"
+            }
+          ]
         },
         {
           "id": "fld_commande_date",
           "name": "date_commande",
           "required": true,
-          "type": "datetime"
+          "type": "datetime",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Date de la commande"
+            }
+          ]
         }
       ],
       "id": "ent_commande",
@@ -776,31 +1074,61 @@
           "referenceDisplayFieldId": "fld_commande_reference",
           "referencesEntityId": "ent_commande",
           "required": true,
-          "type": "reference"
+          "type": "reference",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Commande"
+            }
+          ]
         },
         {
           "id": "fld_paiement_titulaire",
           "name": "titulaire_carte",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Titulaire de la carte"
+            }
+          ]
         },
         {
           "id": "fld_paiement_numero_carte",
           "name": "numero_carte",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Numéro de carte"
+            }
+          ]
         },
         {
           "id": "fld_paiement_expiration",
           "name": "expiration",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Date d'expiration"
+            }
+          ]
         },
         {
           "id": "fld_paiement_montant",
           "name": "montant",
           "required": true,
-          "type": "decimal"
+          "type": "decimal",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Montant"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -811,13 +1139,25 @@
           "id": "fld_paiement_statut",
           "name": "statut",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Statut"
+            }
+          ]
         },
         {
           "id": "fld_paiement_date",
           "name": "date_paiement",
           "required": false,
-          "type": "datetime"
+          "type": "datetime",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Date du paiement"
+            }
+          ]
         }
       ],
       "id": "ent_paiement",
@@ -830,7 +1170,13 @@
           "name": "code_scan",
           "required": true,
           "type": "string",
-          "unique": true
+          "unique": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Code scanné"
+            }
+          ]
         },
         {
           "id": "fld_billet_qr",
@@ -844,7 +1190,13 @@
           "referenceDisplayFieldId": "fld_concert_titre",
           "referencesEntityId": "ent_concert",
           "required": true,
-          "type": "reference"
+          "type": "reference",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Concert"
+            }
+          ]
         },
         {
           "id": "fld_billet_titulaire",
@@ -866,13 +1218,25 @@
           "id": "fld_billet_categorie",
           "name": "categorie",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Catégorie"
+            }
+          ]
         },
         {
           "id": "fld_billet_date_concert",
           "name": "date_concert",
           "required": true,
-          "type": "datetime"
+          "type": "datetime",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Date du concert"
+            }
+          ]
         },
         {
           "id": "fld_billet_lieu_nom",
@@ -889,7 +1253,52 @@
           "id": "fld_billet_statut",
           "name": "statut",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "valide",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Validé"
+                }
+              ]
+            },
+            {
+              "value": "utilise",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Utilisé"
+                }
+              ]
+            },
+            {
+              "value": "annule",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Annulé"
+                }
+              ]
+            }
+          ],
+          "enumTones": [
+            {
+              "value": "valide",
+              "tone": "success"
+            },
+            {
+              "value": "annule",
+              "tone": "error"
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Statut"
+            }
+          ]
         }
       ],
       "id": "ent_billet",

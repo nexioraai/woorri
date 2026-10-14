@@ -578,13 +578,25 @@
           "id": "fld_pack_title",
           "name": "title",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Titre"
+            }
+          ]
         },
         {
           "id": "fld_pack_subtitle",
           "name": "subtitle",
           "required": false,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Sous-titre"
+            }
+          ]
         },
         {
           "id": "fld_pack_description",
@@ -603,7 +615,60 @@
           "id": "fld_pack_language",
           "name": "language",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "fr",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Français"
+                }
+              ]
+            },
+            {
+              "value": "en",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Anglais"
+                }
+              ]
+            },
+            {
+              "value": "es",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Espagnol"
+                }
+              ]
+            },
+            {
+              "value": "de",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Allemand"
+                }
+              ]
+            },
+            {
+              "value": "it",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Italien"
+                }
+              ]
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Langue"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -616,7 +681,60 @@
           "id": "fld_pack_level",
           "name": "level",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "a1",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "A1"
+                }
+              ]
+            },
+            {
+              "value": "a2",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "A2"
+                }
+              ]
+            },
+            {
+              "value": "b1",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "B1"
+                }
+              ]
+            },
+            {
+              "value": "b2",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "B2"
+                }
+              ]
+            },
+            {
+              "value": "c1",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "C1"
+                }
+              ]
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Niveau"
+            }
+          ]
         },
         {
           "id": "fld_pack_iap_product_id",
@@ -678,7 +796,13 @@
           "id": "fld_lesson_title",
           "name": "title",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Titre"
+            }
+          ]
         },
         {
           "id": "fld_lesson_pack_ref",
@@ -747,7 +871,13 @@
           "name": "lesson",
           "referencesEntityId": "ent_lesson",
           "required": true,
-          "type": "reference"
+          "type": "reference",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Leçon"
+            }
+          ]
         },
         {
           "id": "fld_progress_pack_ref",

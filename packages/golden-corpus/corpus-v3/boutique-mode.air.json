@@ -594,13 +594,25 @@
           "name": "nom",
           "required": true,
           "type": "string",
-          "unique": true
+          "unique": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Nom"
+            }
+          ]
         },
         {
           "id": "fld_categorie_description",
           "name": "description",
           "required": false,
-          "type": "text"
+          "type": "text",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Description"
+            }
+          ]
         },
         {
           "id": "fld_categorie_visuel",
@@ -618,7 +630,13 @@
           "id": "fld_categorie_nb_articles",
           "name": "nombre_articles",
           "required": false,
-          "type": "number"
+          "type": "number",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Nombre d'articles"
+            }
+          ]
         }
       ],
       "id": "ent_categorie",
@@ -630,27 +648,51 @@
           "id": "fld_article_nom",
           "name": "nom",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Nom"
+            }
+          ]
         },
         {
           "id": "fld_article_reference",
           "name": "reference",
           "required": true,
           "type": "string",
-          "unique": true
+          "unique": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Référence"
+            }
+          ]
         },
         {
           "id": "fld_article_code_barres",
           "name": "code_barres",
           "required": true,
           "type": "string",
-          "unique": true
+          "unique": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Code-barres"
+            }
+          ]
         },
         {
           "id": "fld_article_description",
           "name": "description",
           "required": false,
-          "type": "text"
+          "type": "text",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Description"
+            }
+          ]
         },
         {
           "id": "fld_article_photo",
@@ -668,7 +710,13 @@
           "id": "fld_article_prix_affiche",
           "name": "prix_affiche",
           "required": false,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Prix affiché"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -683,19 +731,102 @@
           "id": "fld_article_taille",
           "name": "taille",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "XS",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "XS"
+                }
+              ]
+            },
+            {
+              "value": "S",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "S"
+                }
+              ]
+            },
+            {
+              "value": "M",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "M"
+                }
+              ]
+            },
+            {
+              "value": "L",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "L"
+                }
+              ]
+            },
+            {
+              "value": "XL",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "XL"
+                }
+              ]
+            },
+            {
+              "value": "XXL",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "XXL"
+                }
+              ]
+            },
+            {
+              "value": "taille_unique",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Taille unique"
+                }
+              ]
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Taille"
+            }
+          ]
         },
         {
           "id": "fld_article_couleur",
           "name": "couleur",
           "required": false,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Couleur"
+            }
+          ]
         },
         {
           "id": "fld_article_matiere",
           "name": "matiere",
           "required": false,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Matière"
+            }
+          ]
         },
         {
           "id": "fld_article_stock",
@@ -721,7 +852,13 @@
           "referenceDisplayFieldId": "fld_categorie_nom",
           "referencesEntityId": "ent_categorie",
           "required": true,
-          "type": "reference"
+          "type": "reference",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Catégorie"
+            }
+          ]
         }
       ],
       "id": "ent_article",
@@ -735,19 +872,37 @@
           "referenceDisplayFieldId": "fld_article_nom",
           "referencesEntityId": "ent_article",
           "required": true,
-          "type": "reference"
+          "type": "reference",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Article"
+            }
+          ]
         },
         {
           "id": "fld_ligne_panier_libelle",
           "name": "libelle",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Libellé"
+            }
+          ]
         },
         {
           "id": "fld_ligne_panier_visuel",
           "name": "visuel",
           "required": false,
-          "type": "asset"
+          "type": "asset",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Visuel"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -762,31 +917,126 @@
           "id": "fld_ligne_panier_taille",
           "name": "taille_choisie",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "XS",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "XS"
+                }
+              ]
+            },
+            {
+              "value": "S",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "S"
+                }
+              ]
+            },
+            {
+              "value": "M",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "M"
+                }
+              ]
+            },
+            {
+              "value": "L",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "L"
+                }
+              ]
+            },
+            {
+              "value": "XL",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "XL"
+                }
+              ]
+            },
+            {
+              "value": "XXL",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "XXL"
+                }
+              ]
+            },
+            {
+              "value": "taille_unique",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Taille unique"
+                }
+              ]
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Taille choisie"
+            }
+          ]
         },
         {
           "id": "fld_ligne_panier_quantite",
           "name": "quantite",
           "required": true,
-          "type": "number"
+          "type": "number",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Quantité"
+            }
+          ]
         },
         {
           "id": "fld_ligne_panier_prix_unitaire",
           "name": "prix_unitaire",
           "required": true,
-          "type": "decimal"
+          "type": "decimal",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Prix unitaire"
+            }
+          ]
         },
         {
           "id": "fld_ligne_panier_sous_total",
           "name": "sous_total",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Sous-total"
+            }
+          ]
         },
         {
           "id": "fld_ligne_panier_ajoute_le",
           "name": "ajoute_le",
           "required": true,
-          "type": "datetime"
+          "type": "datetime",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Ajouté le"
+            }
+          ]
         }
       ],
       "id": "ent_ligne_panier",
@@ -798,44 +1048,86 @@
           "id": "fld_client_nom",
           "name": "nom_complet",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Nom complet"
+            }
+          ]
         },
         {
           "id": "fld_client_email",
           "name": "email",
           "required": true,
           "type": "string",
-          "unique": true
+          "unique": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Adresse e-mail"
+            }
+          ]
         },
         {
           "id": "fld_client_telephone",
           "name": "telephone",
           "required": false,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Téléphone"
+            }
+          ]
         },
         {
           "id": "fld_client_adresse",
           "name": "adresse_postale",
           "required": false,
-          "type": "text"
+          "type": "text",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Adresse postale"
+            }
+          ]
         },
         {
           "id": "fld_client_ville",
           "name": "ville",
           "required": false,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Ville"
+            }
+          ]
         },
         {
           "id": "fld_client_code_postal",
           "name": "code_postal",
           "required": false,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Code postal"
+            }
+          ]
         },
         {
           "id": "fld_client_newsletter",
           "name": "newsletter",
           "required": false,
-          "type": "boolean"
+          "type": "boolean",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Lettre d'information"
+            }
+          ]
         }
       ],
       "id": "ent_client",
@@ -848,13 +1140,25 @@
           "name": "numero",
           "required": true,
           "type": "string",
-          "unique": true
+          "unique": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Numéro"
+            }
+          ]
         },
         {
           "id": "fld_commande_date",
           "name": "date_commande",
           "required": true,
-          "type": "datetime"
+          "type": "datetime",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Date de la commande"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -869,25 +1173,132 @@
           "id": "fld_commande_statut",
           "name": "statut",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "en_attente_paiement",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "En attente de paiement"
+                }
+              ]
+            },
+            {
+              "value": "payee",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Payée"
+                }
+              ]
+            },
+            {
+              "value": "en_preparation",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "En préparation"
+                }
+              ]
+            },
+            {
+              "value": "expediee",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Expédiée"
+                }
+              ]
+            },
+            {
+              "value": "en_livraison",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "En livraison"
+                }
+              ]
+            },
+            {
+              "value": "livree",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Livrée"
+                }
+              ]
+            },
+            {
+              "value": "annulee",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Annulée"
+                }
+              ]
+            }
+          ],
+          "enumTones": [
+            {
+              "value": "en_attente_paiement",
+              "tone": "warn"
+            },
+            {
+              "value": "payee",
+              "tone": "success"
+            },
+            {
+              "value": "livree",
+              "tone": "success"
+            },
+            {
+              "value": "annulee",
+              "tone": "error"
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Statut"
+            }
+          ]
         },
         {
           "id": "fld_commande_statut_libelle",
           "name": "statut_libelle",
           "required": false,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Statut"
+            }
+          ]
         },
         {
           "id": "fld_commande_total",
           "name": "total",
           "required": true,
-          "type": "decimal"
+          "type": "decimal",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Total"
+            }
+          ]
         },
         {
           "id": "fld_commande_total_affiche",
           "name": "total_affiche",
           "required": false,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Total"
+            }
+          ]
         },
         {
           "id": "fld_commande_client",
@@ -895,25 +1306,49 @@
           "referenceDisplayFieldId": "fld_client_nom",
           "referencesEntityId": "ent_client",
           "required": true,
-          "type": "reference"
+          "type": "reference",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Client"
+            }
+          ]
         },
         {
           "id": "fld_commande_adresse_livraison",
           "name": "adresse_livraison",
           "required": true,
-          "type": "text"
+          "type": "text",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Adresse de livraison"
+            }
+          ]
         },
         {
           "id": "fld_commande_ville_livraison",
           "name": "ville_livraison",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Ville de livraison"
+            }
+          ]
         },
         {
           "id": "fld_commande_code_postal_livraison",
           "name": "code_postal_livraison",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Code postal de livraison"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -922,25 +1357,60 @@
           "id": "fld_commande_mode_paiement",
           "name": "mode_paiement",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Mode de paiement"
+            }
+          ],
+          "enumLabels": [
+            {
+              "value": "carte_bancaire",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Carte bancaire"
+                }
+              ]
+            }
+          ]
         },
         {
           "id": "fld_commande_titulaire_carte",
           "name": "titulaire_carte",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Titulaire de la carte"
+            }
+          ]
         },
         {
           "id": "fld_commande_suivi_transporteur",
           "name": "suivi_transporteur",
           "required": false,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Suivi du transporteur"
+            }
+          ]
         },
         {
           "id": "fld_commande_date_livraison_prevue",
           "name": "date_livraison_prevue",
           "required": false,
-          "type": "date"
+          "type": "date",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Livraison prévue"
+            }
+          ]
         }
       ],
       "id": "ent_commande",
@@ -968,7 +1438,13 @@
           "id": "fld_ligne_commande_libelle",
           "name": "libelle",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Libellé"
+            }
+          ]
         },
         {
           "id": "fld_ligne_commande_visuel",
@@ -989,13 +1465,90 @@
           "id": "fld_ligne_commande_taille",
           "name": "taille",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "XS",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "XS"
+                }
+              ]
+            },
+            {
+              "value": "S",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "S"
+                }
+              ]
+            },
+            {
+              "value": "M",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "M"
+                }
+              ]
+            },
+            {
+              "value": "L",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "L"
+                }
+              ]
+            },
+            {
+              "value": "XL",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "XL"
+                }
+              ]
+            },
+            {
+              "value": "XXL",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "XXL"
+                }
+              ]
+            },
+            {
+              "value": "taille_unique",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Taille unique"
+                }
+              ]
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Taille"
+            }
+          ]
         },
         {
           "id": "fld_ligne_commande_quantite",
           "name": "quantite",
           "required": true,
-          "type": "number"
+          "type": "number",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Quantité"
+            }
+          ]
         },
         {
           "id": "fld_ligne_commande_prix_unitaire",
@@ -1007,7 +1560,13 @@
           "id": "fld_ligne_commande_sous_total",
           "name": "sous_total",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Sous-total"
+            }
+          ]
         }
       ],
       "id": "ent_ligne_commande",

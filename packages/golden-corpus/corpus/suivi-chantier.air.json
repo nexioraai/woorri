@@ -755,13 +755,25 @@
           "name": "reference",
           "required": true,
           "type": "string",
-          "unique": true
+          "unique": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Référence"
+            }
+          ]
         },
         {
           "id": "fld_chantier_nom",
           "name": "nom",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Nom"
+            }
+          ]
         },
         {
           "id": "fld_chantier_adresse",
@@ -840,31 +852,61 @@
           "name": "chantier",
           "referencesEntityId": "ent_chantier",
           "required": true,
-          "type": "reference"
+          "type": "reference",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Chantier"
+            }
+          ]
         },
         {
           "id": "fld_releve_titre",
           "name": "titre",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Titre"
+            }
+          ]
         },
         {
           "id": "fld_releve_commentaire",
           "name": "commentaire",
           "required": false,
-          "type": "text"
+          "type": "text",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Commentaire"
+            }
+          ]
         },
         {
           "id": "fld_releve_photo",
           "name": "photo",
           "required": true,
-          "type": "asset"
+          "type": "asset",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Photo"
+            }
+          ]
         },
         {
           "id": "fld_releve_avancement_pct",
           "name": "avancement_pct",
           "required": true,
-          "type": "number"
+          "type": "number",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Avancement"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -877,43 +919,85 @@
           "id": "fld_releve_lot",
           "name": "lot",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Lot"
+            }
+          ]
         },
         {
           "id": "fld_releve_pris_le",
           "name": "pris_le",
           "required": true,
-          "type": "datetime"
+          "type": "datetime",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Pris le"
+            }
+          ]
         },
         {
           "id": "fld_releve_auteur_email",
           "name": "auteur_email",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "E-mail de l'auteur"
+            }
+          ]
         },
         {
           "id": "fld_releve_latitude",
           "name": "latitude",
           "required": false,
-          "type": "decimal"
+          "type": "decimal",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Latitude"
+            }
+          ]
         },
         {
           "id": "fld_releve_longitude",
           "name": "longitude",
           "required": false,
-          "type": "decimal"
+          "type": "decimal",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Longitude"
+            }
+          ]
         },
         {
           "id": "fld_releve_visible_client",
           "name": "visible_client",
           "required": true,
-          "type": "boolean"
+          "type": "boolean",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Visible par le client"
+            }
+          ]
         },
         {
           "id": "fld_releve_synchronise",
           "name": "synchronise",
           "required": true,
-          "type": "boolean"
+          "type": "boolean",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Synchronisé"
+            }
+          ]
         }
       ],
       "id": "ent_releve",
@@ -926,19 +1010,37 @@
           "name": "chantier",
           "referencesEntityId": "ent_chantier",
           "required": true,
-          "type": "reference"
+          "type": "reference",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Chantier"
+            }
+          ]
         },
         {
           "id": "fld_incident_titre",
           "name": "titre",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Titre"
+            }
+          ]
         },
         {
           "id": "fld_incident_description",
           "name": "description",
           "required": true,
-          "type": "text"
+          "type": "text",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Description"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -949,7 +1051,13 @@
           "id": "fld_incident_gravite",
           "name": "gravite",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Gravité"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -963,25 +1071,49 @@
           "id": "fld_incident_categorie",
           "name": "categorie",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Catégorie"
+            }
+          ]
         },
         {
           "id": "fld_incident_photo",
           "name": "photo",
           "required": false,
-          "type": "asset"
+          "type": "asset",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Photo"
+            }
+          ]
         },
         {
           "id": "fld_incident_constate_le",
           "name": "constate_le",
           "required": true,
-          "type": "datetime"
+          "type": "datetime",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Constaté le"
+            }
+          ]
         },
         {
           "id": "fld_incident_auteur_email",
           "name": "auteur_email",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "E-mail de l'auteur"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -992,31 +1124,61 @@
           "id": "fld_incident_statut",
           "name": "statut",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Statut"
+            }
+          ]
         },
         {
           "id": "fld_incident_arret_chantier",
           "name": "arret_chantier",
           "required": true,
-          "type": "boolean"
+          "type": "boolean",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Arrêt de chantier"
+            }
+          ]
         },
         {
           "id": "fld_incident_visible_client",
           "name": "visible_client",
           "required": true,
-          "type": "boolean"
+          "type": "boolean",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Visible par le client"
+            }
+          ]
         },
         {
           "id": "fld_incident_synchronise",
           "name": "synchronise",
           "required": true,
-          "type": "boolean"
+          "type": "boolean",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Synchronisé"
+            }
+          ]
         },
         {
           "id": "fld_incident_metadonnees",
           "name": "metadonnees",
           "required": false,
-          "type": "json"
+          "type": "json",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Métadonnées"
+            }
+          ]
         }
       ],
       "id": "ent_incident",

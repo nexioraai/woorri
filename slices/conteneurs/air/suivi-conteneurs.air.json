@@ -515,32 +515,62 @@
           "name": "numero_conteneur",
           "required": true,
           "type": "string",
-          "unique": true
+          "unique": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Numéro de conteneur"
+            }
+          ]
         },
         {
           "id": "fld_conteneur_navire",
           "name": "navire",
           "referencesEntityId": "ent_navire",
           "required": true,
-          "type": "reference"
+          "type": "reference",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Navire"
+            }
+          ]
         },
         {
           "id": "fld_conteneur_port_depart",
           "name": "port_depart",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Port de départ"
+            }
+          ]
         },
         {
           "id": "fld_conteneur_port_arrivee",
           "name": "port_arrivee",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Port d'arrivée"
+            }
+          ]
         },
         {
           "id": "fld_conteneur_eta",
           "name": "date_arrivee_estimee",
           "required": true,
-          "type": "date"
+          "type": "date",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Arrivée estimée"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -554,31 +584,135 @@
           "id": "fld_conteneur_statut_douane",
           "name": "statut_douane",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "en_attente_documents",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "En attente de documents"
+                }
+              ]
+            },
+            {
+              "value": "declaration_deposee",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Déclaration déposée"
+                }
+              ]
+            },
+            {
+              "value": "en_cours_verification",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Vérification en cours"
+                }
+              ]
+            },
+            {
+              "value": "droits_a_payer",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Droits à payer"
+                }
+              ]
+            },
+            {
+              "value": "dedouane",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Dédouané"
+                }
+              ]
+            },
+            {
+              "value": "litige",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Litige"
+                }
+              ]
+            }
+          ],
+          "enumTones": [
+            {
+              "value": "en_attente_documents",
+              "tone": "warn"
+            },
+            {
+              "value": "droits_a_payer",
+              "tone": "warn"
+            },
+            {
+              "value": "dedouane",
+              "tone": "success"
+            },
+            {
+              "value": "litige",
+              "tone": "error"
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Statut en douane"
+            }
+          ]
         },
         {
           "id": "fld_conteneur_reference_client",
           "name": "reference_client",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Référence client"
+            }
+          ]
         },
         {
           "id": "fld_conteneur_transitaire",
           "name": "transitaire_en_charge",
           "required": false,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Transitaire en charge"
+            }
+          ]
         },
         {
           "id": "fld_conteneur_maj_le",
           "name": "mis_a_jour_le",
           "required": true,
-          "type": "datetime"
+          "type": "datetime",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Mis à jour le"
+            }
+          ]
         },
         {
           "id": "fld_conteneur_notes",
           "name": "notes",
           "required": false,
-          "type": "text"
+          "type": "text",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Notes"
+            }
+          ]
         }
       ],
       "id": "ent_conteneur",
@@ -619,25 +753,123 @@
           "id": "fld_alerte_nouveau_statut",
           "name": "nouveau_statut",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "en_attente_documents",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "En attente de documents"
+                }
+              ]
+            },
+            {
+              "value": "declaration_deposee",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Déclaration déposée"
+                }
+              ]
+            },
+            {
+              "value": "en_cours_verification",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Vérification en cours"
+                }
+              ]
+            },
+            {
+              "value": "droits_a_payer",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Droits à payer"
+                }
+              ]
+            },
+            {
+              "value": "dedouane",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Dédouané"
+                }
+              ]
+            },
+            {
+              "value": "litige",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Litige"
+                }
+              ]
+            }
+          ],
+          "enumTones": [
+            {
+              "value": "en_attente_documents",
+              "tone": "warn"
+            },
+            {
+              "value": "droits_a_payer",
+              "tone": "warn"
+            },
+            {
+              "value": "dedouane",
+              "tone": "success"
+            },
+            {
+              "value": "litige",
+              "tone": "error"
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Nouveau statut"
+            }
+          ]
         },
         {
           "id": "fld_alerte_titre",
           "name": "titre",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Titre"
+            }
+          ]
         },
         {
           "id": "fld_alerte_message",
           "name": "message",
           "required": false,
-          "type": "text"
+          "type": "text",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Message"
+            }
+          ]
         },
         {
           "id": "fld_alerte_survenue_le",
           "name": "survenue_le",
           "required": true,
-          "type": "datetime"
+          "type": "datetime",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Survenue le"
+            }
+          ]
         },
         {
           "id": "fld_alerte_lue",

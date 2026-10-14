@@ -486,19 +486,37 @@
           "id": "fld_chantier_nom",
           "name": "nom",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Nom"
+            }
+          ]
         },
         {
           "id": "fld_chantier_client",
           "name": "client_nom",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Nom du client"
+            }
+          ]
         },
         {
           "id": "fld_chantier_adresse",
           "name": "adresse",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Adresse"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -510,13 +528,73 @@
           "id": "fld_chantier_statut",
           "name": "statut",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "planifie",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Planifié"
+                }
+              ]
+            },
+            {
+              "value": "en_cours",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "En cours"
+                }
+              ]
+            },
+            {
+              "value": "suspendu",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Suspendu"
+                }
+              ]
+            },
+            {
+              "value": "receptionne",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Réceptionné"
+                }
+              ]
+            }
+          ],
+          "enumTones": [
+            {
+              "value": "suspendu",
+              "tone": "warn"
+            },
+            {
+              "value": "receptionne",
+              "tone": "success"
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Statut"
+            }
+          ]
         },
         {
           "id": "fld_chantier_avancement",
           "name": "avancement_pct",
           "required": true,
-          "type": "number"
+          "type": "number",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Avancement"
+            }
+          ]
         },
         {
           "id": "fld_chantier_date_debut",
@@ -546,7 +624,13 @@
           "id": "fld_chantier_derniere_sync",
           "name": "derniere_synchronisation",
           "required": false,
-          "type": "datetime"
+          "type": "datetime",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Dernière synchronisation"
+            }
+          ]
         }
       ],
       "id": "ent_chantier",
@@ -558,62 +642,122 @@
           "id": "fld_releve_titre",
           "name": "titre",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Titre"
+            }
+          ]
         },
         {
           "id": "fld_releve_chantier",
           "name": "chantier",
           "referencesEntityId": "ent_chantier",
           "required": true,
-          "type": "reference"
+          "type": "reference",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Chantier"
+            }
+          ]
         },
         {
           "id": "fld_releve_date",
           "name": "date_releve",
           "required": true,
-          "type": "datetime"
+          "type": "datetime",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Date du relevé"
+            }
+          ]
         },
         {
           "id": "fld_releve_avancement",
           "name": "avancement_pct",
           "required": true,
-          "type": "number"
+          "type": "number",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Avancement"
+            }
+          ]
         },
         {
           "id": "fld_releve_commentaire",
           "name": "commentaire",
           "required": false,
-          "type": "text"
+          "type": "text",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Commentaire"
+            }
+          ]
         },
         {
           "id": "fld_releve_photo",
           "name": "photo",
           "required": true,
-          "type": "asset"
+          "type": "asset",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Photo"
+            }
+          ]
         },
         {
           "id": "fld_releve_auteur",
           "name": "auteur",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Auteur"
+            }
+          ]
         },
         {
           "id": "fld_releve_latitude",
           "name": "latitude",
           "required": false,
-          "type": "decimal"
+          "type": "decimal",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Latitude"
+            }
+          ]
         },
         {
           "id": "fld_releve_longitude",
           "name": "longitude",
           "required": false,
-          "type": "decimal"
+          "type": "decimal",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Longitude"
+            }
+          ]
         },
         {
           "id": "fld_releve_synchronise",
           "name": "synchronise",
           "required": true,
-          "type": "boolean"
+          "type": "boolean",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Synchronisé"
+            }
+          ]
         }
       ],
       "id": "ent_releve",
@@ -625,20 +769,38 @@
           "id": "fld_incident_titre",
           "name": "titre",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Titre"
+            }
+          ]
         },
         {
           "id": "fld_incident_chantier",
           "name": "chantier",
           "referencesEntityId": "ent_chantier",
           "required": true,
-          "type": "reference"
+          "type": "reference",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Chantier"
+            }
+          ]
         },
         {
           "id": "fld_incident_date",
           "name": "date_constat",
           "required": true,
-          "type": "datetime"
+          "type": "datetime",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Date du constat"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -649,7 +811,52 @@
           "id": "fld_incident_gravite",
           "name": "gravite",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "mineur",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Mineur"
+                }
+              ]
+            },
+            {
+              "value": "majeur",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Majeur"
+                }
+              ]
+            },
+            {
+              "value": "critique",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Critique"
+                }
+              ]
+            }
+          ],
+          "enumTones": [
+            {
+              "value": "majeur",
+              "tone": "warn"
+            },
+            {
+              "value": "critique",
+              "tone": "error"
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Gravité"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -660,31 +867,100 @@
           "id": "fld_incident_statut",
           "name": "statut",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "ouvert",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Ouvert"
+                }
+              ]
+            },
+            {
+              "value": "en_traitement",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "En traitement"
+                }
+              ]
+            },
+            {
+              "value": "resolu",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Résolu"
+                }
+              ]
+            }
+          ],
+          "enumTones": [
+            {
+              "value": "ouvert",
+              "tone": "warn"
+            },
+            {
+              "value": "resolu",
+              "tone": "success"
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Statut"
+            }
+          ]
         },
         {
           "id": "fld_incident_description",
           "name": "description",
           "required": true,
-          "type": "text"
+          "type": "text",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Description"
+            }
+          ]
         },
         {
           "id": "fld_incident_photo",
           "name": "photo",
           "required": false,
-          "type": "asset"
+          "type": "asset",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Photo"
+            }
+          ]
         },
         {
           "id": "fld_incident_declarant",
           "name": "declarant",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Déclarant"
+            }
+          ]
         },
         {
           "id": "fld_incident_synchronise",
           "name": "synchronise",
           "required": true,
-          "type": "boolean"
+          "type": "boolean",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Synchronisé"
+            }
+          ]
         }
       ],
       "id": "ent_incident",

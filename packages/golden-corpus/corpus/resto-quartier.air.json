@@ -451,13 +451,25 @@
           "name": "nom",
           "required": true,
           "type": "string",
-          "unique": true
+          "unique": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Nom"
+            }
+          ]
         },
         {
           "id": "fld_plat_description",
           "name": "description",
           "required": false,
-          "type": "text"
+          "type": "text",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Description"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -471,7 +483,69 @@
           "id": "fld_plat_categorie",
           "name": "categorie",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "entree",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Entrée"
+                }
+              ]
+            },
+            {
+              "value": "plat_principal",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Plat principal"
+                }
+              ]
+            },
+            {
+              "value": "grillade",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Grillade"
+                }
+              ]
+            },
+            {
+              "value": "accompagnement",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Accompagnement"
+                }
+              ]
+            },
+            {
+              "value": "dessert",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Dessert"
+                }
+              ]
+            },
+            {
+              "value": "boisson",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Boisson"
+                }
+              ]
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Catégorie"
+            }
+          ]
         },
         {
           "id": "fld_plat_prix_xof",
@@ -514,19 +588,37 @@
           "name": "numero",
           "required": true,
           "type": "string",
-          "unique": true
+          "unique": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Numéro"
+            }
+          ]
         },
         {
           "id": "fld_cmd_client_nom",
           "name": "client_nom",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Nom du client"
+            }
+          ]
         },
         {
           "id": "fld_cmd_client_telephone",
           "name": "client_telephone",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Téléphone du client"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -541,7 +633,13 @@
           "id": "fld_cmd_statut",
           "name": "statut",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Statut"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -554,37 +652,73 @@
           "id": "fld_cmd_statut_paiement",
           "name": "statut_paiement",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Statut du paiement"
+            }
+          ]
         },
         {
           "id": "fld_cmd_total_xof",
           "name": "total_xof",
           "required": true,
-          "type": "decimal"
+          "type": "decimal",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Total"
+            }
+          ]
         },
         {
           "id": "fld_cmd_heure_retrait",
           "name": "heure_retrait_souhaitee",
           "required": false,
-          "type": "datetime"
+          "type": "datetime",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Retrait souhaité"
+            }
+          ]
         },
         {
           "id": "fld_cmd_note",
           "name": "note_client",
           "required": false,
-          "type": "text"
+          "type": "text",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Note du client"
+            }
+          ]
         },
         {
           "id": "fld_cmd_creee_le",
           "name": "creee_le",
           "required": true,
-          "type": "datetime"
+          "type": "datetime",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Créée le"
+            }
+          ]
         },
         {
           "id": "fld_cmd_notifiee_prete",
           "name": "notifiee_prete",
           "required": true,
-          "type": "boolean"
+          "type": "boolean",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Notifiée « prête »"
+            }
+          ]
         }
       ],
       "id": "ent_commande",
@@ -604,7 +738,13 @@
           "name": "plat",
           "referencesEntityId": "ent_plat",
           "required": true,
-          "type": "reference"
+          "type": "reference",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Plat"
+            }
+          ]
         },
         {
           "id": "fld_lig_quantite",

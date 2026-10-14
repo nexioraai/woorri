@@ -624,13 +624,54 @@
           "id": "fld_cours_niveau",
           "name": "niveau",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "debutant",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Débutant"
+                }
+              ]
+            },
+            {
+              "value": "intermediaire",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Intermédiaire"
+                }
+              ]
+            },
+            {
+              "value": "avance",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Avancé"
+                }
+              ]
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Niveau"
+            }
+          ]
         },
         {
           "id": "fld_cours_duree_minutes",
           "name": "duree_minutes",
           "required": true,
-          "type": "number"
+          "type": "number",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Durée (minutes)"
+            }
+          ]
         },
         {
           "id": "fld_cours_prix_affiche",
@@ -667,7 +708,13 @@
           "id": "fld_cours_date_publication",
           "name": "date_publication",
           "required": false,
-          "type": "date"
+          "type": "date",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Date de publication"
+            }
+          ]
         }
       ],
       "id": "ent_cours",
@@ -772,7 +819,13 @@
           "id": "fld_recette_temps_minutes",
           "name": "temps_minutes",
           "required": true,
-          "type": "number"
+          "type": "number",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Temps (minutes)"
+            }
+          ]
         },
         {
           "id": "fld_recette_photo",

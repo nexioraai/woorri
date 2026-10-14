@@ -416,13 +416,25 @@
           "name": "titre",
           "required": true,
           "type": "string",
-          "unique": true
+          "unique": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Titre"
+            }
+          ]
         },
         {
           "id": "fld_prog_sous_titre",
           "name": "sous_titre",
           "required": false,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Sous-titre"
+            }
+          ]
         },
         {
           "id": "fld_prog_description",
@@ -445,7 +457,42 @@
           "id": "fld_prog_niveau",
           "name": "niveau",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "debutant",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Débutant"
+                }
+              ]
+            },
+            {
+              "value": "intermediaire",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Intermédiaire"
+                }
+              ]
+            },
+            {
+              "value": "avance",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Avancé"
+                }
+              ]
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Niveau"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -458,19 +505,84 @@
           "id": "fld_prog_objectif",
           "name": "objectif",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "perte_de_poids",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Perte de poids"
+                }
+              ]
+            },
+            {
+              "value": "prise_de_masse",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Prise de masse"
+                }
+              ]
+            },
+            {
+              "value": "cardio",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Cardio"
+                }
+              ]
+            },
+            {
+              "value": "mobilite",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Mobilité"
+                }
+              ]
+            },
+            {
+              "value": "renforcement",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Renforcement"
+                }
+              ]
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Objectif"
+            }
+          ]
         },
         {
           "id": "fld_prog_duree_semaines",
           "name": "duree_semaines",
           "required": true,
-          "type": "number"
+          "type": "number",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Durée (semaines)"
+            }
+          ]
         },
         {
           "id": "fld_prog_nb_seances",
           "name": "nombre_seances",
           "required": true,
-          "type": "number"
+          "type": "number",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Nombre de séances"
+            }
+          ]
         },
         {
           "id": "fld_prog_reserve_abonnes",
@@ -494,7 +606,13 @@
           "id": "fld_video_titre",
           "name": "titre",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Titre"
+            }
+          ]
         },
         {
           "id": "fld_video_programme",
@@ -502,7 +620,13 @@
           "referenceDisplayFieldId": "fld_prog_titre",
           "referencesEntityId": "ent_programme",
           "required": true,
-          "type": "reference"
+          "type": "reference",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Programme"
+            }
+          ]
         },
         {
           "id": "fld_video_vignette",
@@ -514,7 +638,13 @@
           "id": "fld_video_duree_minutes",
           "name": "duree_minutes",
           "required": true,
-          "type": "number"
+          "type": "number",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Durée (minutes)"
+            }
+          ]
         },
         {
           "id": "fld_video_ordre",
@@ -543,7 +673,42 @@
           "id": "fld_video_intensite",
           "name": "intensite",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "douce",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Douce"
+                }
+              ]
+            },
+            {
+              "value": "moderee",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Modérée"
+                }
+              ]
+            },
+            {
+              "value": "intense",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Intense"
+                }
+              ]
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Intensité"
+            }
+          ]
         },
         {
           "id": "fld_video_materiel",
@@ -561,7 +726,13 @@
           "id": "fld_journal_date",
           "name": "date",
           "required": true,
-          "type": "date"
+          "type": "date",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Date"
+            }
+          ]
         },
         {
           "id": "fld_journal_video",
@@ -569,7 +740,13 @@
           "referenceDisplayFieldId": "fld_video_titre",
           "referencesEntityId": "ent_seance_video",
           "required": true,
-          "type": "reference"
+          "type": "reference",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Séance vidéo"
+            }
+          ]
         },
         {
           "id": "fld_journal_membre",
@@ -577,13 +754,25 @@
           "referenceDisplayFieldId": "fld_membre_nom",
           "referencesEntityId": "ent_membre",
           "required": true,
-          "type": "reference"
+          "type": "reference",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Membre"
+            }
+          ]
         },
         {
           "id": "fld_journal_duree_minutes",
           "name": "duree_minutes",
           "required": true,
-          "type": "number"
+          "type": "number",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Durée (minutes)"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -594,25 +783,84 @@
           "id": "fld_journal_ressenti",
           "name": "ressenti",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "facile",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Facile"
+                }
+              ]
+            },
+            {
+              "value": "juste_bien",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Juste bien"
+                }
+              ]
+            },
+            {
+              "value": "difficile",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Difficile"
+                }
+              ]
+            }
+          ],
+          "enumTones": [
+            {
+              "value": "juste_bien",
+              "tone": "success"
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Ressenti"
+            }
+          ]
         },
         {
           "id": "fld_journal_notes",
           "name": "notes",
           "required": false,
-          "type": "text"
+          "type": "text",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Notes"
+            }
+          ]
         },
         {
           "id": "fld_journal_termine",
           "name": "terminee",
           "required": true,
-          "type": "boolean"
+          "type": "boolean",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Terminée"
+            }
+          ]
         },
         {
           "id": "fld_journal_calories",
           "name": "calories_estimees",
           "required": false,
-          "type": "number"
+          "type": "number",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Calories estimées"
+            }
+          ]
         }
       ],
       "id": "ent_seance_journal",
@@ -625,19 +873,37 @@
           "name": "nom",
           "required": true,
           "type": "string",
-          "unique": true
+          "unique": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Nom"
+            }
+          ]
         },
         {
           "id": "fld_offre_description",
           "name": "description",
           "required": true,
-          "type": "text"
+          "type": "text",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Description"
+            }
+          ]
         },
         {
           "id": "fld_offre_prix_mensuel",
           "name": "prix_mensuel",
           "required": true,
-          "type": "decimal"
+          "type": "decimal",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Prix mensuel"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -646,7 +912,24 @@
           "id": "fld_offre_periode",
           "name": "periode",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "mensuel",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Mensuel"
+                }
+              ]
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Période"
+            }
+          ]
         },
         {
           "id": "fld_offre_avantages",
@@ -683,14 +966,26 @@
           "id": "fld_membre_nom",
           "name": "nom",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Nom"
+            }
+          ]
         },
         {
           "id": "fld_membre_email",
           "name": "email",
           "required": true,
           "type": "string",
-          "unique": true
+          "unique": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Adresse e-mail"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -702,7 +997,61 @@
           "id": "fld_membre_statut_abonnement",
           "name": "statut_abonnement",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "inactif",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Inactif"
+                }
+              ]
+            },
+            {
+              "value": "essai",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Essai"
+                }
+              ]
+            },
+            {
+              "value": "actif",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Actif"
+                }
+              ]
+            },
+            {
+              "value": "expire",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Expiré"
+                }
+              ]
+            }
+          ],
+          "enumTones": [
+            {
+              "value": "actif",
+              "tone": "success"
+            },
+            {
+              "value": "expire",
+              "tone": "error"
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Statut de l'abonnement"
+            }
+          ]
         },
         {
           "id": "fld_membre_offre",
@@ -710,19 +1059,37 @@
           "referenceDisplayFieldId": "fld_offre_nom",
           "referencesEntityId": "ent_offre_abonnement",
           "required": false,
-          "type": "reference"
+          "type": "reference",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Offre"
+            }
+          ]
         },
         {
           "id": "fld_membre_debut_abonnement",
           "name": "debut_abonnement",
           "required": false,
-          "type": "date"
+          "type": "date",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Début de l'abonnement"
+            }
+          ]
         },
         {
           "id": "fld_membre_fin_abonnement",
           "name": "fin_abonnement",
           "required": false,
-          "type": "date"
+          "type": "date",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Fin de l'abonnement"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -735,13 +1102,72 @@
           "id": "fld_membre_objectif",
           "name": "objectif",
           "required": false,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "perte_de_poids",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Perte de poids"
+                }
+              ]
+            },
+            {
+              "value": "prise_de_masse",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Prise de masse"
+                }
+              ]
+            },
+            {
+              "value": "cardio",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Cardio"
+                }
+              ]
+            },
+            {
+              "value": "mobilite",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Mobilité"
+                }
+              ]
+            },
+            {
+              "value": "renforcement",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Renforcement"
+                }
+              ]
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Objectif"
+            }
+          ]
         },
         {
           "id": "fld_membre_seances_realisees",
           "name": "seances_realisees",
           "required": true,
-          "type": "number"
+          "type": "number",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Séances réalisées"
+            }
+          ]
         }
       ],
       "id": "ent_membre",

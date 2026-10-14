@@ -571,19 +571,37 @@
           "id": "fld_plat_nom",
           "name": "nom",
           "type": "string",
-          "required": true
+          "required": true,
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Nom"
+            }
+          ]
         },
         {
           "id": "fld_plat_description",
           "name": "description",
           "type": "text",
-          "required": false
+          "required": false,
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Description"
+            }
+          ]
         },
         {
           "id": "fld_plat_prix",
           "name": "prix",
           "type": "number",
-          "required": true
+          "required": true,
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Prix"
+            }
+          ]
         },
         {
           "id": "fld_plat_categorie",
@@ -608,7 +626,13 @@
           "id": "fld_plat_temps_preparation",
           "name": "temps_preparation",
           "type": "number",
-          "required": false
+          "required": false,
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Temps de préparation"
+            }
+          ]
         },
         {
           "id": "fld_plat_photo",
@@ -644,7 +668,13 @@
           "id": "fld_commande_numero",
           "name": "numero",
           "type": "string",
-          "required": true
+          "required": true,
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Numéro"
+            }
+          ]
         },
         {
           "id": "fld_commande_statut",
@@ -656,13 +686,69 @@
             "en_preparation",
             "prete",
             "retiree"
+          ],
+          "enumLabels": [
+            {
+              "value": "recue",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Reçue"
+                }
+              ]
+            },
+            {
+              "value": "en_preparation",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "En préparation"
+                }
+              ]
+            },
+            {
+              "value": "prete",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Prête"
+                }
+              ]
+            },
+            {
+              "value": "retiree",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Retirée"
+                }
+              ]
+            }
+          ],
+          "enumTones": [
+            {
+              "value": "prete",
+              "tone": "success"
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Statut"
+            }
           ]
         },
         {
           "id": "fld_commande_total",
           "name": "total",
           "type": "number",
-          "required": true
+          "required": true,
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Total"
+            }
+          ]
         },
         {
           "id": "fld_commande_passee_le",
@@ -680,7 +766,13 @@
           "id": "fld_commande_note",
           "name": "note",
           "type": "text",
-          "required": false
+          "required": false,
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Note"
+            }
+          ]
         }
       ]
     },
@@ -694,19 +786,37 @@
           "type": "reference",
           "required": true,
           "referencesEntityId": "ent_plat",
-          "referenceDisplayFieldId": "fld_plat_nom"
+          "referenceDisplayFieldId": "fld_plat_nom",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Plat"
+            }
+          ]
         },
         {
           "id": "fld_ligne_quantite",
           "name": "quantite",
           "type": "number",
-          "required": true
+          "required": true,
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Quantité"
+            }
+          ]
         },
         {
           "id": "fld_ligne_prix_ligne",
           "name": "prix_ligne",
           "type": "number",
-          "required": true
+          "required": true,
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Prix de la ligne"
+            }
+          ]
         }
       ]
     },
@@ -718,19 +828,37 @@
           "id": "fld_client_nom",
           "name": "nom",
           "type": "string",
-          "required": true
+          "required": true,
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Nom"
+            }
+          ]
         },
         {
           "id": "fld_client_telephone",
           "name": "telephone",
           "type": "string",
-          "required": true
+          "required": true,
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Téléphone"
+            }
+          ]
         },
         {
           "id": "fld_client_email",
           "name": "email",
           "type": "string",
-          "required": false
+          "required": false,
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Adresse e-mail"
+            }
+          ]
         }
       ]
     }

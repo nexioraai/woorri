@@ -610,7 +610,13 @@
           "id": "fld_bien_titre",
           "name": "titre",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Titre"
+            }
+          ]
         },
         {
           "id": "fld_bien_description",
@@ -630,7 +636,69 @@
           "id": "fld_bien_type",
           "name": "type_bien",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "appartement",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Appartement"
+                }
+              ]
+            },
+            {
+              "value": "maison",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Maison"
+                }
+              ]
+            },
+            {
+              "value": "studio",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Studio"
+                }
+              ]
+            },
+            {
+              "value": "loft",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Loft"
+                }
+              ]
+            },
+            {
+              "value": "terrain",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Terrain"
+                }
+              ]
+            },
+            {
+              "value": "local_commercial",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Local commercial"
+                }
+              ]
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Type de bien"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -640,13 +708,45 @@
           "id": "fld_bien_transaction",
           "name": "transaction",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "vente",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Vente"
+                }
+              ]
+            },
+            {
+              "value": "location",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Location"
+                }
+              ]
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Transaction"
+            }
+          ]
         },
         {
           "id": "fld_bien_prix",
           "name": "prix",
           "required": true,
-          "type": "decimal"
+          "type": "decimal",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Prix"
+            }
+          ]
         },
         {
           "id": "fld_bien_surface",
@@ -673,13 +773,90 @@
           "id": "fld_bien_quartier",
           "name": "quartier",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "centre_ville",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Centre-ville"
+                }
+              ]
+            },
+            {
+              "value": "vieille_ville",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Vieille ville"
+                }
+              ]
+            },
+            {
+              "value": "bords_de_seine",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Bords de Seine"
+                }
+              ]
+            },
+            {
+              "value": "quartier_gare",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Quartier de la gare"
+                }
+              ]
+            },
+            {
+              "value": "parc_nord",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Parc Nord"
+                }
+              ]
+            },
+            {
+              "value": "coteaux_sud",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Coteaux Sud"
+                }
+              ]
+            },
+            {
+              "value": "zone_pavillonnaire",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Zone pavillonnaire"
+                }
+              ]
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Quartier"
+            }
+          ]
         },
         {
           "id": "fld_bien_adresse",
           "name": "adresse",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Adresse"
+            }
+          ]
         },
         {
           "id": "fld_bien_code_postal",
@@ -731,7 +908,87 @@
           "id": "fld_bien_dpe",
           "name": "classe_energie",
           "required": false,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "A",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "A"
+                }
+              ]
+            },
+            {
+              "value": "B",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "B"
+                }
+              ]
+            },
+            {
+              "value": "C",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "C"
+                }
+              ]
+            },
+            {
+              "value": "D",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "D"
+                }
+              ]
+            },
+            {
+              "value": "E",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "E"
+                }
+              ]
+            },
+            {
+              "value": "F",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "F"
+                }
+              ]
+            },
+            {
+              "value": "G",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "G"
+                }
+              ]
+            },
+            {
+              "value": "non_soumis",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Non soumis"
+                }
+              ]
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Classe énergétique"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -742,7 +999,48 @@
           "id": "fld_bien_statut",
           "name": "statut",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "disponible",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Disponible"
+                }
+              ]
+            },
+            {
+              "value": "sous_offre",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Sous offre"
+                }
+              ]
+            },
+            {
+              "value": "archive",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Archivé"
+                }
+              ]
+            }
+          ],
+          "enumTones": [
+            {
+              "value": "disponible",
+              "tone": "success"
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Statut"
+            }
+          ]
         },
         {
           "id": "fld_bien_publie",
@@ -767,43 +1065,85 @@
           "name": "bien",
           "referencesEntityId": "ent_bien",
           "required": true,
-          "type": "reference"
+          "type": "reference",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Bien"
+            }
+          ]
         },
         {
           "id": "fld_dv_nom",
           "name": "nom_complet",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Nom complet"
+            }
+          ]
         },
         {
           "id": "fld_dv_email",
           "name": "email",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Adresse e-mail"
+            }
+          ]
         },
         {
           "id": "fld_dv_telephone",
           "name": "telephone",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Téléphone"
+            }
+          ]
         },
         {
           "id": "fld_dv_creneau_debut",
           "name": "creneau_debut",
           "required": true,
-          "type": "datetime"
+          "type": "datetime",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Début du créneau"
+            }
+          ]
         },
         {
           "id": "fld_dv_creneau_fin",
           "name": "creneau_fin",
           "required": true,
-          "type": "datetime"
+          "type": "datetime",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Fin du créneau"
+            }
+          ]
         },
         {
           "id": "fld_dv_message",
           "name": "message",
           "required": false,
-          "type": "text"
+          "type": "text",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Message"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -814,7 +1154,42 @@
           "id": "fld_dv_canal",
           "name": "canal_preference",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Canal préféré"
+            }
+          ],
+          "enumLabels": [
+            {
+              "value": "telephone",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Téléphone"
+                }
+              ]
+            },
+            {
+              "value": "email",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "E-mail"
+                }
+              ]
+            },
+            {
+              "value": "sms",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "SMS"
+                }
+              ]
+            }
+          ]
         },
         {
           "enumValues": [
@@ -826,19 +1201,37 @@
           "id": "fld_dv_statut",
           "name": "statut",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Statut"
+            }
+          ]
         },
         {
           "id": "fld_dv_date_creation",
           "name": "date_creation",
           "required": true,
-          "type": "datetime"
+          "type": "datetime",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Date de création"
+            }
+          ]
         },
         {
           "id": "fld_dv_consentement",
           "name": "consentement_contact",
           "required": true,
-          "type": "boolean"
+          "type": "boolean",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Consentement de contact"
+            }
+          ]
         }
       ],
       "id": "ent_demande_visite",
@@ -857,25 +1250,49 @@
           "id": "fld_fav_libelle",
           "name": "libelle",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Libellé"
+            }
+          ]
         },
         {
           "id": "fld_fav_note",
           "name": "note_personnelle",
           "required": false,
-          "type": "text"
+          "type": "text",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Note personnelle"
+            }
+          ]
         },
         {
           "id": "fld_fav_date_ajout",
           "name": "date_ajout",
           "required": true,
-          "type": "datetime"
+          "type": "datetime",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Date d'ajout"
+            }
+          ]
         },
         {
           "id": "fld_fav_alerte_prix",
           "name": "alerte_baisse_prix",
           "required": true,
-          "type": "boolean"
+          "type": "boolean",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Alerte baisse de prix"
+            }
+          ]
         }
       ],
       "id": "ent_favori",

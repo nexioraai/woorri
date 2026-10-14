@@ -40,6 +40,7 @@ import { Vue as View } from "@deribfy/primitives";
 // c'est justement le fichier qui doit valoir pour les deux.
 import { StatusBar, useSafeAreaInsets } from "./plateforme";
 import { useThemeBridge } from "@deribfy/primitives/theme-bridge";
+import { theme } from "@deribfy/design-tokens";
 import type { PropsWithChildren, ReactNode } from "react";
 
 export interface AppShellProps {
@@ -69,9 +70,38 @@ export function AppShell({
     >
       <StatusBar style={scheme === "dark" ? "light" : "dark"} />
       {chrome}
+      {/* ── LA MESURE : LE CONTENU A UNE LARGEUR DE LISIBILITÉ.
+          //
+          // Mesuré le 2026-10-13 : `maxWidth` n'existait NULLE PART dans le
+          // moteur. L'application générée était donc une mise en page de
+          // téléphone ÉTIRÉE sur un écran de bureau — sur 1440 px, une ligne
+          // de liste fait 1440 px de large, le titre à l'extrême gauche, le
+          // montant à l'extrême droite, et un désert entre les deux. C'est
+          // la première cause du jugement « visuellement nul » porté sur une
+          // application générée, captures à l'appui.
+          //
+          // Posé ICI parce que ce fichier est le propriétaire UNIQUE de la
+          // géométrie du viewport (EP-002). Le poser dans chaque écran, ou
+          // dans chaque bloc, serait la dispersion que ce module a
+          // précisément supprimée.
+          //
+          // UNE SEULE RÈGLE, DEUX CIBLES : 768 ne mord jamais sur un
+          // téléphone de 390 px, et borne la tablette en paysage comme
+          // l'écran de bureau. Aucune ramification de plateforme.
+          //
+          // `width: "100%"` est indispensable AVEC `maxWidth` : sans lui, un
+          // conteneur en colonne centré se réduit à la largeur de son
+          // contenu le plus large, et les lignes ne tiendraient plus la
+          // largeur disponible sur un téléphone. */}
       <View
         testID="app-shell-contenu"
-        style={{ flex: 1, paddingBottom: navigation === undefined ? insets.bottom : 0 }}
+        style={{
+          flex: 1,
+          width: "100%",
+          maxWidth: theme.size.measure,
+          alignSelf: "center",
+          paddingBottom: navigation === undefined ? insets.bottom : 0,
+        }}
       >
         {children}
       </View>

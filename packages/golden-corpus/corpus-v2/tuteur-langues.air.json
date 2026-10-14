@@ -440,13 +440,25 @@
           "name": "title",
           "required": true,
           "type": "string",
-          "unique": true
+          "unique": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Titre"
+            }
+          ]
         },
         {
           "id": "fld_pack_subtitle",
           "name": "subtitle",
           "required": false,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Sous-titre"
+            }
+          ]
         },
         {
           "id": "fld_pack_description",
@@ -478,7 +490,60 @@
           "id": "fld_pack_level",
           "name": "level",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "a1",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "A1"
+                }
+              ]
+            },
+            {
+              "value": "a2",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "A2"
+                }
+              ]
+            },
+            {
+              "value": "b1",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "B1"
+                }
+              ]
+            },
+            {
+              "value": "b2",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "B2"
+                }
+              ]
+            },
+            {
+              "value": "c1",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "C1"
+                }
+              ]
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Niveau"
+            }
+          ]
         },
         {
           "id": "fld_pack_product_id",
@@ -491,7 +556,13 @@
           "id": "fld_pack_price_label",
           "name": "price_label",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Prix affiché"
+            }
+          ]
         },
         {
           "id": "fld_pack_lesson_count",
@@ -527,13 +598,25 @@
           "id": "fld_lesson_title",
           "name": "title",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Titre"
+            }
+          ]
         },
         {
           "id": "fld_lesson_summary",
           "name": "summary",
           "required": false,
-          "type": "text"
+          "type": "text",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Résumé"
+            }
+          ]
         },
         {
           "id": "fld_lesson_pack",
@@ -546,13 +629,25 @@
           "id": "fld_lesson_order",
           "name": "position",
           "required": true,
-          "type": "number"
+          "type": "number",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Position"
+            }
+          ]
         },
         {
           "id": "fld_lesson_duration_min",
           "name": "duration_min",
           "required": true,
-          "type": "number"
+          "type": "number",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Durée (minutes)"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -563,7 +658,48 @@
           "id": "fld_lesson_status",
           "name": "status",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "not_started",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Non commencé"
+                }
+              ]
+            },
+            {
+              "value": "in_progress",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "En cours"
+                }
+              ]
+            },
+            {
+              "value": "completed",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Terminé"
+                }
+              ]
+            }
+          ],
+          "enumTones": [
+            {
+              "value": "completed",
+              "tone": "success"
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Statut"
+            }
+          ]
         },
         {
           "id": "fld_lesson_content",
@@ -588,43 +724,85 @@
           "name": "lesson",
           "referencesEntityId": "ent_lesson",
           "required": true,
-          "type": "reference"
+          "type": "reference",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Leçon"
+            }
+          ]
         },
         {
           "id": "fld_prog_score",
           "name": "score",
           "required": true,
-          "type": "decimal"
+          "type": "decimal",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Score"
+            }
+          ]
         },
         {
           "id": "fld_prog_completed_at",
           "name": "completed_at",
           "required": false,
-          "type": "datetime"
+          "type": "datetime",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Terminé le"
+            }
+          ]
         },
         {
           "id": "fld_prog_review_due_on",
           "name": "review_due_on",
           "required": false,
-          "type": "date"
+          "type": "date",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "À revoir le"
+            }
+          ]
         },
         {
           "id": "fld_prog_reminder_enabled",
           "name": "reminder_enabled",
           "required": true,
-          "type": "boolean"
+          "type": "boolean",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Rappel activé"
+            }
+          ]
         },
         {
           "id": "fld_prog_reminder_time",
           "name": "reminder_time",
           "required": false,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Heure du rappel"
+            }
+          ]
         },
         {
           "id": "fld_prog_notes",
           "name": "notes",
           "required": false,
-          "type": "text"
+          "type": "text",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Notes"
+            }
+          ]
         }
       ],
       "id": "ent_progress_entry",

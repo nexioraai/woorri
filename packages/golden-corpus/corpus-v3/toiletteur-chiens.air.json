@@ -253,44 +253,86 @@
           "id": "fld_proprietaire_nom_complet",
           "name": "nom_complet",
           "type": "string",
-          "required": true
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Nom complet"
+            }
+          ]
         },
         {
           "id": "fld_proprietaire_email",
           "name": "email",
           "type": "string",
           "required": true,
-          "unique": true
+          "unique": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Adresse e-mail"
+            }
+          ]
         },
         {
           "id": "fld_proprietaire_telephone",
           "name": "telephone",
           "type": "string",
-          "required": true
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Téléphone"
+            }
+          ]
         },
         {
           "id": "fld_proprietaire_adresse",
           "name": "adresse",
           "type": "text",
-          "required": false
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Adresse"
+            }
+          ]
         },
         {
           "id": "fld_proprietaire_ville",
           "name": "ville",
           "type": "string",
-          "required": false
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Ville"
+            }
+          ]
         },
         {
           "id": "fld_proprietaire_accepte_rappels",
           "name": "accepte_rappels",
           "type": "boolean",
-          "required": true
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Accepte les rappels"
+            }
+          ]
         },
         {
           "id": "fld_proprietaire_date_inscription",
           "name": "date_inscription",
           "type": "date",
-          "required": false
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Date d'inscription"
+            }
+          ]
         }
       ]
     },
@@ -302,19 +344,37 @@
           "id": "fld_animal_nom",
           "name": "nom",
           "type": "string",
-          "required": true
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Nom"
+            }
+          ]
         },
         {
           "id": "fld_animal_photo",
           "name": "photo",
           "type": "asset",
-          "required": false
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Photo"
+            }
+          ]
         },
         {
           "id": "fld_animal_race",
           "name": "race",
           "type": "string",
-          "required": true
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Race"
+            }
+          ]
         },
         {
           "id": "fld_animal_taille",
@@ -326,6 +386,50 @@
             "moyen",
             "grand",
             "tres_grand"
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Taille"
+            }
+          ],
+          "enumLabels": [
+            {
+              "value": "petit",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Petit"
+                }
+              ]
+            },
+            {
+              "value": "moyen",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Moyen"
+                }
+              ]
+            },
+            {
+              "value": "grand",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Grand"
+                }
+              ]
+            },
+            {
+              "value": "tres_grand",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Très grand"
+                }
+              ]
+            }
           ]
         },
         {
@@ -339,6 +443,59 @@
             "long",
             "frise",
             "dur"
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Type de poil"
+            }
+          ],
+          "enumLabels": [
+            {
+              "value": "court",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Court"
+                }
+              ]
+            },
+            {
+              "value": "mi_long",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Mi-long"
+                }
+              ]
+            },
+            {
+              "value": "long",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Long"
+                }
+              ]
+            },
+            {
+              "value": "frise",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Frisé"
+                }
+              ]
+            },
+            {
+              "value": "dur",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Dur"
+                }
+              ]
+            }
           ]
         },
         {
@@ -349,19 +506,57 @@
           "enumValues": [
             "male",
             "femelle"
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Sexe"
+            }
+          ],
+          "enumLabels": [
+            {
+              "value": "male",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Mâle"
+                }
+              ]
+            },
+            {
+              "value": "femelle",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Femelle"
+                }
+              ]
+            }
           ]
         },
         {
           "id": "fld_animal_date_naissance",
           "name": "date_naissance",
           "type": "date",
-          "required": false
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Date de naissance"
+            }
+          ]
         },
         {
           "id": "fld_animal_poids_kg",
           "name": "poids_kg",
           "type": "decimal",
-          "required": false
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Poids (kg)"
+            }
+          ]
         },
         {
           "id": "fld_animal_caractere",
@@ -373,19 +568,85 @@
             "joueur",
             "craintif",
             "nerveux"
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Caractère"
+            }
+          ],
+          "enumLabels": [
+            {
+              "value": "calme",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Calme"
+                }
+              ]
+            },
+            {
+              "value": "joueur",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Joueur"
+                }
+              ]
+            },
+            {
+              "value": "craintif",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Craintif"
+                }
+              ]
+            },
+            {
+              "value": "nerveux",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Nerveux"
+                }
+              ]
+            }
+          ],
+          "enumTones": [
+            {
+              "value": "craintif",
+              "tone": "warn"
+            },
+            {
+              "value": "nerveux",
+              "tone": "warn"
+            }
           ]
         },
         {
           "id": "fld_animal_notes",
           "name": "notes",
           "type": "text",
-          "required": false
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Notes"
+            }
+          ]
         },
         {
           "id": "fld_animal_vaccins_a_jour",
           "name": "vaccins_a_jour",
           "type": "boolean",
-          "required": true
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Vaccins à jour"
+            }
+          ]
         },
         {
           "id": "fld_animal_proprietaire",
@@ -393,7 +654,13 @@
           "type": "reference",
           "required": true,
           "referencesEntityId": "ent_proprietaire",
-          "referenceDisplayFieldId": "fld_proprietaire_nom_complet"
+          "referenceDisplayFieldId": "fld_proprietaire_nom_complet",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Propriétaire"
+            }
+          ]
         }
       ]
     },
@@ -405,7 +672,13 @@
           "id": "fld_prestation_nom",
           "name": "nom",
           "type": "string",
-          "required": true
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Nom"
+            }
+          ]
         },
         {
           "id": "fld_prestation_photo",
@@ -424,19 +697,84 @@
             "coupe_ciseaux",
             "soin",
             "forfait"
+          ],
+          "enumLabels": [
+            {
+              "value": "bain",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Bain"
+                }
+              ]
+            },
+            {
+              "value": "tonte",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Tonte"
+                }
+              ]
+            },
+            {
+              "value": "coupe_ciseaux",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Coupe aux ciseaux"
+                }
+              ]
+            },
+            {
+              "value": "soin",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Soin"
+                }
+              ]
+            },
+            {
+              "value": "forfait",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Forfait"
+                }
+              ]
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Catégorie"
+            }
           ]
         },
         {
           "id": "fld_prestation_description",
           "name": "description",
           "type": "text",
-          "required": false
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Description"
+            }
+          ]
         },
         {
           "id": "fld_prestation_prix",
           "name": "prix",
           "type": "decimal",
-          "required": true
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Prix"
+            }
+          ]
         },
         {
           "id": "fld_prestation_duree_minutes",
@@ -455,13 +793,72 @@
             "grand",
             "tres_grand",
             "toutes"
+          ],
+          "enumLabels": [
+            {
+              "value": "petit",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Petit"
+                }
+              ]
+            },
+            {
+              "value": "moyen",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Moyen"
+                }
+              ]
+            },
+            {
+              "value": "grand",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Grand"
+                }
+              ]
+            },
+            {
+              "value": "tres_grand",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Très grand"
+                }
+              ]
+            },
+            {
+              "value": "toutes",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Toutes"
+                }
+              ]
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Taille conseillée"
+            }
           ]
         },
         {
           "id": "fld_prestation_disponible",
           "name": "disponible",
           "type": "boolean",
-          "required": true
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Disponible"
+            }
+          ]
         }
       ]
     },
@@ -474,7 +871,13 @@
           "name": "reference",
           "type": "string",
           "required": true,
-          "unique": true
+          "unique": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Référence"
+            }
+          ]
         },
         {
           "id": "fld_rdv_animal",
@@ -482,7 +885,13 @@
           "type": "reference",
           "required": true,
           "referencesEntityId": "ent_animal",
-          "referenceDisplayFieldId": "fld_animal_nom"
+          "referenceDisplayFieldId": "fld_animal_nom",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Animal"
+            }
+          ]
         },
         {
           "id": "fld_rdv_prestation",
@@ -490,13 +899,25 @@
           "type": "reference",
           "required": true,
           "referencesEntityId": "ent_prestation",
-          "referenceDisplayFieldId": "fld_prestation_nom"
+          "referenceDisplayFieldId": "fld_prestation_nom",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Prestation"
+            }
+          ]
         },
         {
           "id": "fld_rdv_date_heure",
           "name": "date_heure",
           "type": "datetime",
-          "required": true
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Date et heure"
+            }
+          ]
         },
         {
           "id": "fld_rdv_statut",
@@ -508,6 +929,64 @@
             "confirme",
             "termine",
             "annule"
+          ],
+          "enumLabels": [
+            {
+              "value": "demande",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Demande"
+                }
+              ]
+            },
+            {
+              "value": "confirme",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Confirmé"
+                }
+              ]
+            },
+            {
+              "value": "termine",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Terminé"
+                }
+              ]
+            },
+            {
+              "value": "annule",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Annulé"
+                }
+              ]
+            }
+          ],
+          "enumTones": [
+            {
+              "value": "confirme",
+              "tone": "success"
+            },
+            {
+              "value": "termine",
+              "tone": "success"
+            },
+            {
+              "value": "annule",
+              "tone": "error"
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Statut"
+            }
           ]
         },
         {
@@ -517,25 +996,60 @@
           "required": true,
           "enumValues": [
             "sur_place"
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Mode de paiement"
+            }
+          ],
+          "enumLabels": [
+            {
+              "value": "sur_place",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Sur place"
+                }
+              ]
+            }
           ]
         },
         {
           "id": "fld_rdv_montant_estime",
           "name": "montant_estime",
           "type": "decimal",
-          "required": false
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Montant estimé"
+            }
+          ]
         },
         {
           "id": "fld_rdv_demandes_particulieres",
           "name": "demandes_particulieres",
           "type": "text",
-          "required": false
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Demandes particulières"
+            }
+          ]
         },
         {
           "id": "fld_rdv_cree_le",
           "name": "cree_le",
           "type": "datetime",
-          "required": false
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Créé le"
+            }
+          ]
         }
       ]
     },
@@ -547,7 +1061,13 @@
           "id": "fld_visite_intitule",
           "name": "intitule",
           "type": "string",
-          "required": true
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Intitulé"
+            }
+          ]
         },
         {
           "id": "fld_visite_animal",
@@ -555,7 +1075,13 @@
           "type": "reference",
           "required": true,
           "referencesEntityId": "ent_animal",
-          "referenceDisplayFieldId": "fld_animal_nom"
+          "referenceDisplayFieldId": "fld_animal_nom",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Animal"
+            }
+          ]
         },
         {
           "id": "fld_visite_prestation",
@@ -563,13 +1089,25 @@
           "type": "reference",
           "required": true,
           "referencesEntityId": "ent_prestation",
-          "referenceDisplayFieldId": "fld_prestation_nom"
+          "referenceDisplayFieldId": "fld_prestation_nom",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Prestation"
+            }
+          ]
         },
         {
           "id": "fld_visite_date",
           "name": "date",
           "type": "date",
-          "required": true
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Date"
+            }
+          ]
         },
         {
           "id": "fld_visite_toiletteur",
@@ -581,7 +1119,13 @@
           "id": "fld_visite_montant_paye",
           "name": "montant_paye",
           "type": "decimal",
-          "required": true
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Montant payé"
+            }
+          ]
         },
         {
           "id": "fld_visite_mode_paiement",
@@ -592,6 +1136,41 @@
             "especes_sur_place",
             "carte_sur_place",
             "cheque_sur_place"
+          ],
+          "enumLabels": [
+            {
+              "value": "especes_sur_place",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Espèces sur place"
+                }
+              ]
+            },
+            {
+              "value": "carte_sur_place",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Carte sur place"
+                }
+              ]
+            },
+            {
+              "value": "cheque_sur_place",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Chèque sur place"
+                }
+              ]
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Mode de paiement"
+            }
           ]
         },
         {
@@ -610,6 +1189,64 @@
             "bon",
             "noeuds_legers",
             "noeuds_importants"
+          ],
+          "enumLabels": [
+            {
+              "value": "excellent",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Excellent"
+                }
+              ]
+            },
+            {
+              "value": "bon",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Bon"
+                }
+              ]
+            },
+            {
+              "value": "noeuds_legers",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Nœuds légers"
+                }
+              ]
+            },
+            {
+              "value": "noeuds_importants",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Nœuds importants"
+                }
+              ]
+            }
+          ],
+          "enumTones": [
+            {
+              "value": "excellent",
+              "tone": "success"
+            },
+            {
+              "value": "bon",
+              "tone": "success"
+            },
+            {
+              "value": "noeuds_importants",
+              "tone": "warn"
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "État du pelage"
+            }
           ]
         }
       ]
@@ -622,7 +1259,13 @@
           "id": "fld_vaccination_intitule",
           "name": "intitule",
           "type": "string",
-          "required": true
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Intitulé"
+            }
+          ]
         },
         {
           "id": "fld_vaccination_animal",
@@ -630,7 +1273,13 @@
           "type": "reference",
           "required": true,
           "referencesEntityId": "ent_animal",
-          "referenceDisplayFieldId": "fld_animal_nom"
+          "referenceDisplayFieldId": "fld_animal_nom",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Animal"
+            }
+          ]
         },
         {
           "id": "fld_vaccination_type",
@@ -643,25 +1292,96 @@
             "toux_du_chenil",
             "leishmaniose",
             "piroplasmose"
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Type de vaccin"
+            }
+          ],
+          "enumLabels": [
+            {
+              "value": "chvpi",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "CHVPi"
+                }
+              ]
+            },
+            {
+              "value": "rage",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Rage"
+                }
+              ]
+            },
+            {
+              "value": "toux_du_chenil",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Toux du chenil"
+                }
+              ]
+            },
+            {
+              "value": "leishmaniose",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Leishmaniose"
+                }
+              ]
+            },
+            {
+              "value": "piroplasmose",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Piroplasmose"
+                }
+              ]
+            }
           ]
         },
         {
           "id": "fld_vaccination_date_injection",
           "name": "date_injection",
           "type": "date",
-          "required": true
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Date d'injection"
+            }
+          ]
         },
         {
           "id": "fld_vaccination_date_rappel",
           "name": "date_rappel",
           "type": "date",
-          "required": true
+          "required": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Date du rappel"
+            }
+          ]
         },
         {
           "id": "fld_vaccination_veterinaire",
           "name": "veterinaire",
           "type": "string",
-          "required": false
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Vétérinaire"
+            }
+          ]
         },
         {
           "id": "fld_vaccination_statut",
@@ -672,13 +1392,68 @@
             "a_jour",
             "rappel_proche",
             "expire"
+          ],
+          "enumLabels": [
+            {
+              "value": "a_jour",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "À jour"
+                }
+              ]
+            },
+            {
+              "value": "rappel_proche",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Rappel proche"
+                }
+              ]
+            },
+            {
+              "value": "expire",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Expiré"
+                }
+              ]
+            }
+          ],
+          "enumTones": [
+            {
+              "value": "a_jour",
+              "tone": "success"
+            },
+            {
+              "value": "rappel_proche",
+              "tone": "warn"
+            },
+            {
+              "value": "expire",
+              "tone": "error"
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Statut"
+            }
           ]
         },
         {
           "id": "fld_vaccination_notes",
           "name": "notes",
           "type": "text",
-          "required": false
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Notes"
+            }
+          ]
         }
       ]
     }

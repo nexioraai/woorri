@@ -591,7 +591,13 @@
           "id": "fld_panier_nom",
           "name": "nom",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Nom"
+            }
+          ]
         },
         {
           "id": "fld_panier_description",
@@ -608,13 +614,54 @@
           "id": "fld_panier_taille",
           "name": "taille",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "petit",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Petit"
+                }
+              ]
+            },
+            {
+              "value": "moyen",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Moyen"
+                }
+              ]
+            },
+            {
+              "value": "familial",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Familial"
+                }
+              ]
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Taille"
+            }
+          ]
         },
         {
           "id": "fld_panier_prix",
           "name": "prix",
           "required": true,
-          "type": "decimal"
+          "type": "decimal",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Prix"
+            }
+          ]
         },
         {
           "id": "fld_panier_photo",
@@ -626,7 +673,13 @@
           "id": "fld_panier_semaine_debut",
           "name": "semaine_debut",
           "required": true,
-          "type": "date"
+          "type": "date",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Semaine de début"
+            }
+          ]
         },
         {
           "id": "fld_panier_contenu",
@@ -638,7 +691,13 @@
           "id": "fld_panier_stock",
           "name": "stock",
           "required": true,
-          "type": "number"
+          "type": "number",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Stock"
+            }
+          ]
         },
         {
           "id": "fld_panier_disponible",
@@ -656,31 +715,61 @@
           "id": "fld_adresse_libelle",
           "name": "libelle",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Libellé"
+            }
+          ]
         },
         {
           "id": "fld_adresse_rue",
           "name": "rue",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Rue"
+            }
+          ]
         },
         {
           "id": "fld_adresse_complement",
           "name": "complement",
           "required": false,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Complément d'adresse"
+            }
+          ]
         },
         {
           "id": "fld_adresse_code_postal",
           "name": "code_postal",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Code postal"
+            }
+          ]
         },
         {
           "id": "fld_adresse_ville",
           "name": "ville",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Ville"
+            }
+          ]
         },
         {
           "id": "fld_adresse_latitude",
@@ -698,13 +787,25 @@
           "id": "fld_adresse_instructions",
           "name": "instructions",
           "required": false,
-          "type": "text"
+          "type": "text",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Instructions"
+            }
+          ]
         },
         {
           "id": "fld_adresse_par_defaut",
           "name": "par_defaut",
           "required": true,
-          "type": "boolean"
+          "type": "boolean",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Par défaut"
+            }
+          ]
         }
       ],
       "id": "ent_adresse_livraison",

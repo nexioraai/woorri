@@ -447,13 +447,25 @@
           "name": "nom",
           "required": true,
           "type": "string",
-          "unique": true
+          "unique": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Nom"
+            }
+          ]
         },
         {
           "id": "fld_plat_description",
           "name": "description",
           "required": false,
-          "type": "text"
+          "type": "text",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Description"
+            }
+          ]
         },
         {
           "id": "fld_plat_photo",
@@ -471,7 +483,13 @@
           "id": "fld_plat_prix_affiche",
           "name": "prix_affiche",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Prix affiché"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -485,7 +503,69 @@
           "id": "fld_plat_categorie",
           "name": "categorie",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "entrees",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Entrées"
+                }
+              ]
+            },
+            {
+              "value": "plats",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Plats"
+                }
+              ]
+            },
+            {
+              "value": "grillades",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Grillades"
+                }
+              ]
+            },
+            {
+              "value": "accompagnements",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Accompagnements"
+                }
+              ]
+            },
+            {
+              "value": "boissons",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Boissons"
+                }
+              ]
+            },
+            {
+              "value": "desserts",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Desserts"
+                }
+              ]
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Catégorie"
+            }
+          ]
         },
         {
           "id": "fld_plat_disponible",
@@ -502,7 +582,56 @@
           "id": "fld_plat_statut_stock",
           "name": "statut_stock",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "disponible",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Disponible"
+                }
+              ]
+            },
+            {
+              "value": "bientot_epuise",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Bientôt épuisé"
+                }
+              ]
+            },
+            {
+              "value": "epuise",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Épuisé"
+                }
+              ]
+            }
+          ],
+          "enumTones": [
+            {
+              "value": "disponible",
+              "tone": "success"
+            },
+            {
+              "value": "bientot_epuise",
+              "tone": "warn"
+            },
+            {
+              "value": "epuise",
+              "tone": "error"
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Statut du stock"
+            }
+          ]
         },
         {
           "id": "fld_plat_temps_preparation",
@@ -527,19 +656,37 @@
           "name": "reference",
           "required": true,
           "type": "string",
-          "unique": true
+          "unique": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Référence"
+            }
+          ]
         },
         {
           "id": "fld_cmd_nom_client",
           "name": "nom_client",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Nom du client"
+            }
+          ]
         },
         {
           "id": "fld_cmd_telephone",
           "name": "telephone",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Téléphone"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -553,43 +700,85 @@
           "id": "fld_cmd_statut",
           "name": "statut",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Statut"
+            }
+          ]
         },
         {
           "id": "fld_cmd_statut_libelle",
           "name": "statut_libelle",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Statut"
+            }
+          ]
         },
         {
           "id": "fld_cmd_total",
           "name": "total",
           "required": true,
-          "type": "decimal"
+          "type": "decimal",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Total"
+            }
+          ]
         },
         {
           "id": "fld_cmd_total_affiche",
           "name": "total_affiche",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Total"
+            }
+          ]
         },
         {
           "id": "fld_cmd_creee_le",
           "name": "creee_le",
           "required": true,
-          "type": "datetime"
+          "type": "datetime",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Créée le"
+            }
+          ]
         },
         {
           "id": "fld_cmd_heure_retrait",
           "name": "heure_retrait_estimee",
           "required": false,
-          "type": "datetime"
+          "type": "datetime",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Retrait estimé"
+            }
+          ]
         },
         {
           "id": "fld_cmd_note",
           "name": "note_cuisine",
           "required": false,
-          "type": "text"
+          "type": "text",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Note pour la cuisine"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -602,7 +791,78 @@
           "id": "fld_cmd_paiement_statut",
           "name": "paiement_statut",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "non_paye",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Non payé"
+                }
+              ]
+            },
+            {
+              "value": "autorise",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Autorisé"
+                }
+              ]
+            },
+            {
+              "value": "capture",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Encaissé"
+                }
+              ]
+            },
+            {
+              "value": "rembourse",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Remboursé"
+                }
+              ]
+            },
+            {
+              "value": "echoue",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Échoué"
+                }
+              ]
+            }
+          ],
+          "enumTones": [
+            {
+              "value": "non_paye",
+              "tone": "error"
+            },
+            {
+              "value": "capture",
+              "tone": "success"
+            },
+            {
+              "value": "rembourse",
+              "tone": "warn"
+            },
+            {
+              "value": "echoue",
+              "tone": "error"
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Statut du paiement"
+            }
+          ]
         }
       ],
       "id": "ent_commande",
@@ -628,13 +888,25 @@
           "id": "fld_lig_libelle",
           "name": "libelle",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Libellé"
+            }
+          ]
         },
         {
           "id": "fld_lig_quantite",
           "name": "quantite",
           "required": true,
-          "type": "number"
+          "type": "number",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Quantité"
+            }
+          ]
         },
         {
           "id": "fld_lig_prix_unitaire",
@@ -652,7 +924,13 @@
           "id": "fld_lig_sous_total_affiche",
           "name": "sous_total_affiche",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Sous-total"
+            }
+          ]
         }
       ],
       "id": "ent_ligne_commande",

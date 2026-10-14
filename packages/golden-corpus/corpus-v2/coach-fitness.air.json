@@ -395,13 +395,25 @@
           "name": "titre",
           "required": true,
           "type": "string",
-          "unique": true
+          "unique": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Titre"
+            }
+          ]
         },
         {
           "id": "fld_programme_resume",
           "name": "resume",
           "required": false,
-          "type": "text"
+          "type": "text",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Résumé"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -412,13 +424,54 @@
           "id": "fld_programme_niveau",
           "name": "niveau",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "debutant",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Débutant"
+                }
+              ]
+            },
+            {
+              "value": "intermediaire",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Intermédiaire"
+                }
+              ]
+            },
+            {
+              "value": "avance",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Avancé"
+                }
+              ]
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Niveau"
+            }
+          ]
         },
         {
           "id": "fld_programme_duree_minutes",
           "name": "duree_minutes",
           "required": true,
-          "type": "number"
+          "type": "number",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Durée (minutes)"
+            }
+          ]
         },
         {
           "id": "fld_programme_nb_seances",
@@ -442,7 +495,13 @@
           "id": "fld_programme_premium",
           "name": "premium",
           "required": true,
-          "type": "boolean"
+          "type": "boolean",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Premium"
+            }
+          ]
         },
         {
           "id": "fld_programme_publie_le",
@@ -461,19 +520,37 @@
           "name": "programme",
           "referencesEntityId": "ent_programme",
           "required": true,
-          "type": "reference"
+          "type": "reference",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Programme"
+            }
+          ]
         },
         {
           "id": "fld_seance_titre",
           "name": "titre",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Titre"
+            }
+          ]
         },
         {
           "id": "fld_seance_date",
           "name": "date",
           "required": true,
-          "type": "datetime"
+          "type": "datetime",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Date"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -484,25 +561,88 @@
           "id": "fld_seance_statut",
           "name": "statut",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "planifiee",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Planifiée"
+                }
+              ]
+            },
+            {
+              "value": "realisee",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Réalisée"
+                }
+              ]
+            },
+            {
+              "value": "annulee",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Annulée"
+                }
+              ]
+            }
+          ],
+          "enumTones": [
+            {
+              "value": "realisee",
+              "tone": "success"
+            },
+            {
+              "value": "annulee",
+              "tone": "error"
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Statut"
+            }
+          ]
         },
         {
           "id": "fld_seance_duree_minutes",
           "name": "duree_minutes",
           "required": false,
-          "type": "number"
+          "type": "number",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Durée (minutes)"
+            }
+          ]
         },
         {
           "id": "fld_seance_ressenti",
           "name": "ressenti",
           "required": false,
-          "type": "number"
+          "type": "number",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Ressenti"
+            }
+          ]
         },
         {
           "id": "fld_seance_notes",
           "name": "notes",
           "required": false,
-          "type": "text"
+          "type": "text",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Notes"
+            }
+          ]
         }
       ],
       "id": "ent_seance",
@@ -514,7 +654,13 @@
           "id": "fld_abonnement_produit",
           "name": "produit",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Produit"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -535,13 +681,77 @@
           "id": "fld_abonnement_statut",
           "name": "statut",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "essai",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Essai"
+                }
+              ]
+            },
+            {
+              "value": "actif",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Actif"
+                }
+              ]
+            },
+            {
+              "value": "expire",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Expiré"
+                }
+              ]
+            },
+            {
+              "value": "annule",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Annulé"
+                }
+              ]
+            }
+          ],
+          "enumTones": [
+            {
+              "value": "actif",
+              "tone": "success"
+            },
+            {
+              "value": "expire",
+              "tone": "error"
+            },
+            {
+              "value": "annule",
+              "tone": "error"
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Statut"
+            }
+          ]
         },
         {
           "id": "fld_abonnement_debut_le",
           "name": "debut_le",
           "required": true,
-          "type": "date"
+          "type": "date",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Début"
+            }
+          ]
         },
         {
           "id": "fld_abonnement_fin_le",
@@ -553,13 +763,25 @@
           "id": "fld_abonnement_renouvellement_auto",
           "name": "renouvellement_auto",
           "required": true,
-          "type": "boolean"
+          "type": "boolean",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Renouvellement automatique"
+            }
+          ]
         },
         {
           "id": "fld_abonnement_prix",
           "name": "prix",
           "required": false,
-          "type": "decimal"
+          "type": "decimal",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Prix"
+            }
+          ]
         }
       ],
       "id": "ent_abonnement",

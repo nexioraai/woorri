@@ -704,7 +704,13 @@
           "name": "reference",
           "required": true,
           "type": "string",
-          "unique": true
+          "unique": true,
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Référence"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -719,13 +725,90 @@
           "id": "fld_req_category",
           "name": "category",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "fuite",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Fuite"
+                }
+              ]
+            },
+            {
+              "value": "engorgement",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Engorgement"
+                }
+              ]
+            },
+            {
+              "value": "chauffe_eau",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Chauffe-eau"
+                }
+              ]
+            },
+            {
+              "value": "robinetterie",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Robinetterie"
+                }
+              ]
+            },
+            {
+              "value": "wc_sanitaires",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "WC et sanitaires"
+                }
+              ]
+            },
+            {
+              "value": "installation",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Installation"
+                }
+              ]
+            },
+            {
+              "value": "autre",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Autre"
+                }
+              ]
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Catégorie"
+            }
+          ]
         },
         {
           "id": "fld_req_description",
           "name": "description",
           "required": true,
-          "type": "text"
+          "type": "text",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Description"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -736,7 +819,48 @@
           "id": "fld_req_urgency",
           "name": "urgency",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Urgence"
+            }
+          ],
+          "enumLabels": [
+            {
+              "value": "normal",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Normal"
+                }
+              ]
+            },
+            {
+              "value": "rapide",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Rapide"
+                }
+              ]
+            },
+            {
+              "value": "urgence",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Urgence"
+                }
+              ]
+            }
+          ],
+          "enumTones": [
+            {
+              "value": "urgence",
+              "tone": "error"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -751,79 +875,236 @@
           "id": "fld_req_status",
           "name": "status",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "brouillon",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Brouillon"
+                }
+              ]
+            },
+            {
+              "value": "envoyee",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Envoyée"
+                }
+              ]
+            },
+            {
+              "value": "acceptee",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Acceptée"
+                }
+              ]
+            },
+            {
+              "value": "planifiee",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Planifiée"
+                }
+              ]
+            },
+            {
+              "value": "en_cours",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "En cours"
+                }
+              ]
+            },
+            {
+              "value": "terminee",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Terminée"
+                }
+              ]
+            },
+            {
+              "value": "annulee",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Annulée"
+                }
+              ]
+            }
+          ],
+          "enumTones": [
+            {
+              "value": "acceptee",
+              "tone": "success"
+            },
+            {
+              "value": "terminee",
+              "tone": "success"
+            },
+            {
+              "value": "annulee",
+              "tone": "error"
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Statut"
+            }
+          ]
         },
         {
           "id": "fld_req_address_line",
           "name": "address_line",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Adresse"
+            }
+          ]
         },
         {
           "id": "fld_req_postal_code",
           "name": "postal_code",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Code postal"
+            }
+          ]
         },
         {
           "id": "fld_req_city",
           "name": "city",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Ville"
+            }
+          ]
         },
         {
           "id": "fld_req_access_notes",
           "name": "access_notes",
           "required": false,
-          "type": "text"
+          "type": "text",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Consignes d'accès"
+            }
+          ]
         },
         {
           "id": "fld_req_latitude",
           "name": "latitude",
           "required": false,
-          "type": "decimal"
+          "type": "decimal",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Latitude"
+            }
+          ]
         },
         {
           "id": "fld_req_longitude",
           "name": "longitude",
           "required": false,
-          "type": "decimal"
+          "type": "decimal",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Longitude"
+            }
+          ]
         },
         {
           "id": "fld_req_location_consent",
           "name": "location_consent",
           "required": true,
-          "type": "boolean"
+          "type": "boolean",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Partage de position"
+            }
+          ]
         },
         {
           "id": "fld_req_preferred_date",
           "name": "preferred_date",
           "required": false,
-          "type": "date"
+          "type": "date",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Date souhaitée"
+            }
+          ]
         },
         {
           "id": "fld_req_contact_name",
           "name": "contact_name",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Nom du contact"
+            }
+          ]
         },
         {
           "id": "fld_req_contact_phone",
           "name": "contact_phone",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Téléphone du contact"
+            }
+          ]
         },
         {
           "id": "fld_req_created_at",
           "name": "created_at",
           "required": true,
-          "type": "datetime"
+          "type": "datetime",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Créé le"
+            }
+          ]
         },
         {
           "id": "fld_req_updated_at",
           "name": "updated_at",
           "required": false,
-          "type": "datetime"
+          "type": "datetime",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Mis à jour le"
+            }
+          ]
         }
       ],
       "id": "ent_service_request",

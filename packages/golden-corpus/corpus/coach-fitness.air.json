@@ -442,7 +442,42 @@
           "id": "fld_programme_niveau",
           "name": "niveau",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "debutant",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Débutant"
+                }
+              ]
+            },
+            {
+              "value": "intermediaire",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Intermédiaire"
+                }
+              ]
+            },
+            {
+              "value": "avance",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Avancé"
+                }
+              ]
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Niveau"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -455,7 +490,60 @@
           "id": "fld_programme_objectif",
           "name": "objectif",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "perte_de_poids",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Perte de poids"
+                }
+              ]
+            },
+            {
+              "value": "prise_de_masse",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Prise de masse"
+                }
+              ]
+            },
+            {
+              "value": "endurance",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Endurance"
+                }
+              ]
+            },
+            {
+              "value": "mobilite",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Mobilité"
+                }
+              ]
+            },
+            {
+              "value": "remise_en_forme",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Remise en forme"
+                }
+              ]
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Objectif"
+            }
+          ]
         },
         {
           "id": "fld_programme_duree_semaines",
@@ -583,19 +671,37 @@
           "name": "seance",
           "referencesEntityId": "ent_seance",
           "required": true,
-          "type": "reference"
+          "type": "reference",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Séance"
+            }
+          ]
         },
         {
           "id": "fld_journal_date_realisee",
           "name": "date_realisee",
           "required": true,
-          "type": "datetime"
+          "type": "datetime",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Date de réalisation"
+            }
+          ]
         },
         {
           "id": "fld_journal_duree_reelle",
           "name": "duree_reelle_minutes",
           "required": true,
-          "type": "number"
+          "type": "number",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Durée réelle (minutes)"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -607,25 +713,49 @@
           "id": "fld_journal_ressenti",
           "name": "ressenti",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Ressenti"
+            }
+          ]
         },
         {
           "id": "fld_journal_terminee",
           "name": "terminee",
           "required": true,
-          "type": "boolean"
+          "type": "boolean",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Terminée"
+            }
+          ]
         },
         {
           "id": "fld_journal_progression_pourcent",
           "name": "progression_pourcent",
           "required": true,
-          "type": "decimal"
+          "type": "decimal",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Progression"
+            }
+          ]
         },
         {
           "id": "fld_journal_notes",
           "name": "notes",
           "required": false,
-          "type": "text"
+          "type": "text",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Notes"
+            }
+          ]
         }
       ],
       "id": "ent_journal_seance",

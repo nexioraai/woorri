@@ -434,13 +434,25 @@
           "name": "nom",
           "required": true,
           "type": "string",
-          "unique": true
+          "unique": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Nom"
+            }
+          ]
         },
         {
           "id": "fld_categorie_description",
           "name": "description",
           "required": false,
-          "type": "text"
+          "type": "text",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Description"
+            }
+          ]
         },
         {
           "id": "fld_categorie_visuel",
@@ -452,13 +464,25 @@
           "id": "fld_categorie_ordre",
           "name": "ordre_affichage",
           "required": true,
-          "type": "number"
+          "type": "number",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Ordre d'affichage"
+            }
+          ]
         },
         {
           "id": "fld_categorie_active",
           "name": "active",
           "required": true,
-          "type": "boolean"
+          "type": "boolean",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Actif"
+            }
+          ]
         }
       ],
       "id": "ent_categorie",
@@ -471,25 +495,49 @@
           "name": "reference",
           "required": true,
           "type": "string",
-          "unique": true
+          "unique": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Référence"
+            }
+          ]
         },
         {
           "id": "fld_article_nom",
           "name": "nom",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Nom"
+            }
+          ]
         },
         {
           "id": "fld_article_description",
           "name": "description",
           "required": false,
-          "type": "text"
+          "type": "text",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Description"
+            }
+          ]
         },
         {
           "id": "fld_article_prix",
           "name": "prix",
           "required": true,
-          "type": "decimal"
+          "type": "decimal",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Prix"
+            }
+          ]
         },
         {
           "id": "fld_article_photo",
@@ -509,13 +557,81 @@
           "id": "fld_article_taille",
           "name": "taille",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "XS",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "XS"
+                }
+              ]
+            },
+            {
+              "value": "S",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "S"
+                }
+              ]
+            },
+            {
+              "value": "M",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "M"
+                }
+              ]
+            },
+            {
+              "value": "L",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "L"
+                }
+              ]
+            },
+            {
+              "value": "XL",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "XL"
+                }
+              ]
+            },
+            {
+              "value": "XXL",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "XXL"
+                }
+              ]
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Taille"
+            }
+          ]
         },
         {
           "id": "fld_article_couleur",
           "name": "couleur",
           "required": false,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Couleur"
+            }
+          ]
         },
         {
           "id": "fld_article_code_barres",
@@ -534,7 +650,13 @@
           "id": "fld_article_disponible",
           "name": "disponible",
           "required": true,
-          "type": "boolean"
+          "type": "boolean",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Disponible"
+            }
+          ]
         },
         {
           "id": "fld_article_categorie",
@@ -554,13 +676,25 @@
           "name": "numero",
           "required": true,
           "type": "string",
-          "unique": true
+          "unique": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Numéro"
+            }
+          ]
         },
         {
           "id": "fld_commande_date",
           "name": "date_creation",
           "required": true,
-          "type": "datetime"
+          "type": "datetime",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Date de création"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -574,43 +708,159 @@
           "id": "fld_commande_statut",
           "name": "statut",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "en_attente_paiement",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "En attente de paiement"
+                }
+              ]
+            },
+            {
+              "value": "payee",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Payée"
+                }
+              ]
+            },
+            {
+              "value": "en_preparation",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "En préparation"
+                }
+              ]
+            },
+            {
+              "value": "expediee",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Expédiée"
+                }
+              ]
+            },
+            {
+              "value": "livree",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Livrée"
+                }
+              ]
+            },
+            {
+              "value": "annulee",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Annulée"
+                }
+              ]
+            }
+          ],
+          "enumTones": [
+            {
+              "value": "en_attente_paiement",
+              "tone": "warn"
+            },
+            {
+              "value": "payee",
+              "tone": "success"
+            },
+            {
+              "value": "livree",
+              "tone": "success"
+            },
+            {
+              "value": "annulee",
+              "tone": "error"
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Statut"
+            }
+          ]
         },
         {
           "id": "fld_commande_total",
           "name": "total",
           "required": true,
-          "type": "decimal"
+          "type": "decimal",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Total"
+            }
+          ]
         },
         {
           "id": "fld_commande_lignes",
           "name": "lignes",
           "required": true,
-          "type": "json"
+          "type": "json",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Lignes"
+            }
+          ]
         },
         {
           "id": "fld_commande_email",
           "name": "email_client",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "E-mail du client"
+            }
+          ]
         },
         {
           "id": "fld_commande_adresse",
           "name": "adresse_livraison",
           "required": true,
-          "type": "text"
+          "type": "text",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Adresse de livraison"
+            }
+          ]
         },
         {
           "id": "fld_commande_suivi",
           "name": "numero_suivi",
           "required": false,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Numéro de suivi"
+            }
+          ]
         },
         {
           "id": "fld_commande_livraison_prevue",
           "name": "livraison_prevue",
           "required": false,
-          "type": "date"
+          "type": "date",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Livraison prévue"
+            }
+          ]
         }
       ],
       "id": "ent_commande",

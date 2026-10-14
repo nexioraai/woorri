@@ -141,6 +141,62 @@ describe("GATE RACINE — les applications WEB émises se MONTENT vraiment", () 
             ).length;
             if (ids === 0) problemes.push(`${app}/${f} — AUCUNE identité adressable`);
 
+            // ── AUCUN CODE MACHINE SOUS LES YEUX D'UN HUMAIN (2026-10-13).
+            //
+            // MESURE QUI A IMPOSÉ CE CONTRÔLE. Le propriétaire a ouvert une
+            // application web générée et a jugé : « visuellement nul ».
+            // Compté ensuite sur le corpus : 33 documents sur 46 affichaient
+            // des valeurs BRUTES — « en_attente_documents »,
+            // « SEQUESTRE_BLOQUE », « coupe_ciseaux », « bientot_epuise ».
+            // 98 champs montrés, 229 valeurs distinctes.
+            //
+            // ── POURQUOI ICI EN PLUS DU VALIDATEUR.
+            //
+            // `AIR_ENUM_CODE_MONTRE` refuse le DOCUMENT qui n'a pas nommé ses
+            // états. C'est la bonne porte, et elle ne suffit pas : elle ne
+            // voit que les quatre propriétés qu'elle connaît. Un code peut
+            // arriver à l'écran par un autre chemin — un champ non énuméré,
+            // un libellé de bouton, un titre d'écran recopié depuis un
+            // identifiant. Ce contrôle lit le TEXTE RENDU et ne suppose
+            // aucun chemin. Deux portes, pas une (règle des chemins
+            // d'entrée : fermer par cliquet, pas par correction).
+            //
+            // ── CE QU'IL APPELLE UN CODE, ET CE QU'IL LAISSE PASSER.
+            //
+            // Deux formes mécaniques, sans aucun jugement de langue :
+            // `mot_mot` en minuscules, et MOT_MOT en capitales avec tiret
+            // bas. Rien d'autre. « XXL » passe — c'est une taille légitime,
+            // et une règle sur les capitales seules l'aurait faussement
+            // accusé (mesuré : 1 faux sur 69). Une date ISO passe aussi :
+            // c'est un autre défaut, consigné et non traité ici.
+            //
+            // Les textes des DONNÉES DE DÉMONSTRATION sont concernés comme
+            // les autres : c'est ce que le propriétaire voit à l'écran.
+            const CODE = /^[a-z0-9]+(_[a-z0-9]+)+$|^[A-Z0-9]+(_[A-Z0-9]+)+$/;
+            const textesVus: string[] = [];
+            const ramasser = (n: unknown): void => {
+              if (typeof n === "string") {
+                textesVus.push(n);
+                return;
+              }
+              if (Array.isArray(n)) {
+                n.forEach(ramasser);
+                return;
+              }
+              const o = n as { children?: unknown } | null;
+              if (o !== null && typeof o === "object" && o.children !== undefined) {
+                ramasser(o.children);
+              }
+            };
+            ramasser(r!.toJSON());
+            const codesVus = [...new Set(textesVus.map((t) => t.trim()).filter((t) => CODE.test(t)))];
+            if (codesVus.length > 0) {
+              problemes.push(
+                `${app}/${f} — CODE MACHINE À L'ÉCRAN : ` +
+                  codesVus.slice(0, 4).map((c) => `« ${c} »`).join(", "),
+              );
+            }
+
             // ── PRESSER, PAS SEULEMENT MONTER.
             //
             // Sur le web, un geste est un `<button onClick>` : `Geste`

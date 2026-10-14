@@ -467,13 +467,25 @@
           "id": "fld_evenement_titre",
           "name": "titre",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Titre"
+            }
+          ]
         },
         {
           "id": "fld_evenement_artiste",
           "name": "artiste",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Artiste"
+            }
+          ]
         },
         {
           "id": "fld_evenement_description",
@@ -491,7 +503,13 @@
           "id": "fld_evenement_debut",
           "name": "date_debut",
           "required": true,
-          "type": "datetime"
+          "type": "datetime",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Date de début"
+            }
+          ]
         },
         {
           "id": "fld_evenement_fin",
@@ -503,13 +521,25 @@
           "id": "fld_evenement_prix",
           "name": "prix_unitaire",
           "required": true,
-          "type": "decimal"
+          "type": "decimal",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Prix unitaire"
+            }
+          ]
         },
         {
           "id": "fld_evenement_places",
           "name": "places_restantes",
           "required": true,
-          "type": "number"
+          "type": "number",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Places restantes"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -522,7 +552,78 @@
           "id": "fld_evenement_statut",
           "name": "statut",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "brouillon",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Brouillon"
+                }
+              ]
+            },
+            {
+              "value": "en_vente",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "En vente"
+                }
+              ]
+            },
+            {
+              "value": "complet",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Complet"
+                }
+              ]
+            },
+            {
+              "value": "annule",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Annulé"
+                }
+              ]
+            },
+            {
+              "value": "termine",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Terminé"
+                }
+              ]
+            }
+          ],
+          "enumTones": [
+            {
+              "value": "en_vente",
+              "tone": "success"
+            },
+            {
+              "value": "complet",
+              "tone": "warn"
+            },
+            {
+              "value": "annule",
+              "tone": "error"
+            },
+            {
+              "value": "termine",
+              "tone": "success"
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Statut"
+            }
+          ]
         },
         {
           "id": "fld_evenement_lieu",
@@ -542,45 +643,87 @@
           "name": "reference",
           "required": true,
           "type": "string",
-          "unique": true
+          "unique": true,
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Référence"
+            }
+          ]
         },
         {
           "id": "fld_billet_evenement",
           "name": "evenement",
           "referencesEntityId": "ent_evenement",
           "required": true,
-          "type": "reference"
+          "type": "reference",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Événement"
+            }
+          ]
         },
         {
           "id": "fld_billet_acheteur_nom",
           "name": "acheteur_nom",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Nom de l'acheteur"
+            }
+          ]
         },
         {
           "id": "fld_billet_acheteur_email",
           "name": "acheteur_email",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "E-mail de l'acheteur"
+            }
+          ]
         },
         {
           "id": "fld_billet_quantite",
           "name": "quantite",
           "required": true,
-          "type": "number"
+          "type": "number",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Quantité"
+            }
+          ]
         },
         {
           "id": "fld_billet_montant",
           "name": "montant_total",
           "required": true,
-          "type": "decimal"
+          "type": "decimal",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Montant total"
+            }
+          ]
         },
         {
           "id": "fld_billet_code_scan",
           "name": "code_scan",
           "required": true,
           "type": "string",
-          "unique": true
+          "unique": true,
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Code scanné"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -593,19 +736,102 @@
           "id": "fld_billet_statut",
           "name": "statut",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Statut"
+            }
+          ],
+          "enumLabels": [
+            {
+              "value": "en_attente_paiement",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "En attente de paiement"
+                }
+              ]
+            },
+            {
+              "value": "valide",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Validé"
+                }
+              ]
+            },
+            {
+              "value": "utilise",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Utilisé"
+                }
+              ]
+            },
+            {
+              "value": "annule",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Annulé"
+                }
+              ]
+            },
+            {
+              "value": "rembourse",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Remboursé"
+                }
+              ]
+            }
+          ],
+          "enumTones": [
+            {
+              "value": "en_attente_paiement",
+              "tone": "warn"
+            },
+            {
+              "value": "valide",
+              "tone": "success"
+            },
+            {
+              "value": "annule",
+              "tone": "error"
+            },
+            {
+              "value": "rembourse",
+              "tone": "warn"
+            }
+          ]
         },
         {
           "id": "fld_billet_date_achat",
           "name": "date_achat",
           "required": true,
-          "type": "datetime"
+          "type": "datetime",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Date d'achat"
+            }
+          ]
         },
         {
           "id": "fld_billet_ajout_calendrier",
           "name": "ajoute_au_calendrier",
           "required": true,
-          "type": "boolean"
+          "type": "boolean",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Ajouté au calendrier"
+            }
+          ]
         }
       ],
       "id": "ent_billet",

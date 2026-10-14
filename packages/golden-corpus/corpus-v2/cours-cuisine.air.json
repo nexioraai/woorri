@@ -426,13 +426,25 @@
           "id": "fld_cours_titre",
           "name": "titre",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Titre"
+            }
+          ]
         },
         {
           "id": "fld_cours_sous_titre",
           "name": "sous_titre",
           "required": false,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Sous-titre"
+            }
+          ]
         },
         {
           "id": "fld_cours_description",
@@ -444,7 +456,13 @@
           "id": "fld_cours_chef",
           "name": "chef",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Chef de chantier"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -455,19 +473,66 @@
           "id": "fld_cours_niveau",
           "name": "niveau",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "debutant",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Débutant"
+                }
+              ]
+            },
+            {
+              "value": "intermediaire",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Intermédiaire"
+                }
+              ]
+            },
+            {
+              "value": "avance",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Avancé"
+                }
+              ]
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Niveau"
+            }
+          ]
         },
         {
           "id": "fld_cours_duree_minutes",
           "name": "duree_minutes",
           "required": true,
-          "type": "number"
+          "type": "number",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Durée (minutes)"
+            }
+          ]
         },
         {
           "id": "fld_cours_prix_affiche",
           "name": "prix_affiche",
           "required": false,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Prix affiché"
+            }
+          ]
         },
         {
           "id": "fld_cours_produit_iap",
@@ -510,13 +575,25 @@
           "id": "fld_recette_titre",
           "name": "titre",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Titre"
+            }
+          ]
         },
         {
           "id": "fld_recette_resume",
           "name": "resume",
           "required": false,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Résumé"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -529,13 +606,72 @@
           "id": "fld_recette_categorie",
           "name": "categorie",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "entree",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Entrée"
+                }
+              ]
+            },
+            {
+              "value": "plat",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Plat"
+                }
+              ]
+            },
+            {
+              "value": "dessert",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Dessert"
+                }
+              ]
+            },
+            {
+              "value": "boulangerie",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Boulangerie"
+                }
+              ]
+            },
+            {
+              "value": "sauce",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Sauce"
+                }
+              ]
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Catégorie"
+            }
+          ]
         },
         {
           "id": "fld_recette_temps_minutes",
           "name": "temps_minutes",
           "required": true,
-          "type": "number"
+          "type": "number",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Temps (minutes)"
+            }
+          ]
         },
         {
           "id": "fld_recette_ingredients",

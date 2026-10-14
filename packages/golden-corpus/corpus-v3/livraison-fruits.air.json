@@ -665,13 +665,25 @@
           "id": "fld_panier_nom",
           "name": "nom",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Nom"
+            }
+          ]
         },
         {
           "id": "fld_panier_description",
           "name": "description",
           "required": false,
-          "type": "text"
+          "type": "text",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Description"
+            }
+          ]
         },
         {
           "id": "fld_panier_photo",
@@ -683,7 +695,13 @@
           "id": "fld_panier_prix",
           "name": "prix",
           "required": true,
-          "type": "decimal"
+          "type": "decimal",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Prix"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -694,31 +712,90 @@
           "id": "fld_panier_taille",
           "name": "taille",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "Solo",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Solo"
+                }
+              ]
+            },
+            {
+              "value": "Duo",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Duo"
+                }
+              ]
+            },
+            {
+              "value": "Famille",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Famille"
+                }
+              ]
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Taille"
+            }
+          ]
         },
         {
           "id": "fld_panier_composition",
           "name": "composition",
           "required": false,
-          "type": "text"
+          "type": "text",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Composition"
+            }
+          ]
         },
         {
           "id": "fld_panier_semaine",
           "name": "semaine",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Semaine"
+            }
+          ]
         },
         {
           "id": "fld_panier_origine",
           "name": "origine",
           "required": false,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Origine"
+            }
+          ]
         },
         {
           "id": "fld_panier_bio",
           "name": "bio",
           "required": true,
-          "type": "boolean"
+          "type": "boolean",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Présentation"
+            }
+          ]
         },
         {
           "id": "fld_panier_disponible",
@@ -730,7 +807,13 @@
           "id": "fld_panier_stock",
           "name": "stock",
           "required": true,
-          "type": "number"
+          "type": "number",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Stock"
+            }
+          ]
         }
       ],
       "id": "ent_panier",
@@ -742,7 +825,13 @@
           "id": "fld_ligne_libelle",
           "name": "libelle",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Libellé"
+            }
+          ]
         },
         {
           "id": "fld_ligne_panier_ref",
@@ -750,19 +839,37 @@
           "referenceDisplayFieldId": "fld_panier_nom",
           "referencesEntityId": "ent_panier",
           "required": true,
-          "type": "reference"
+          "type": "reference",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Panier"
+            }
+          ]
         },
         {
           "id": "fld_ligne_quantite",
           "name": "quantite",
           "required": true,
-          "type": "number"
+          "type": "number",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Quantité"
+            }
+          ]
         },
         {
           "id": "fld_ligne_prix_total",
           "name": "prix_total",
           "required": true,
-          "type": "decimal"
+          "type": "decimal",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Prix total"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -772,7 +879,13 @@
           "id": "fld_ligne_statut",
           "name": "statut",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Statut"
+            }
+          ]
         },
         {
           "id": "fld_ligne_commande_ref",
@@ -780,7 +893,13 @@
           "referenceDisplayFieldId": "fld_commande_reference",
           "referencesEntityId": "ent_commande",
           "required": false,
-          "type": "reference"
+          "type": "reference",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Commande"
+            }
+          ]
         },
         {
           "id": "fld_ligne_client_ref",
@@ -788,7 +907,13 @@
           "referenceDisplayFieldId": "fld_client_nom",
           "referencesEntityId": "ent_client",
           "required": true,
-          "type": "reference"
+          "type": "reference",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Client"
+            }
+          ]
         }
       ],
       "id": "ent_ligne_panier",
@@ -800,55 +925,109 @@
           "id": "fld_adresse_libelle",
           "name": "libelle",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Libellé"
+            }
+          ]
         },
         {
           "id": "fld_adresse_rue",
           "name": "rue",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Rue"
+            }
+          ]
         },
         {
           "id": "fld_adresse_complement",
           "name": "complement",
           "required": false,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Complément d'adresse"
+            }
+          ]
         },
         {
           "id": "fld_adresse_code_postal",
           "name": "code_postal",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Code postal"
+            }
+          ]
         },
         {
           "id": "fld_adresse_ville",
           "name": "ville",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Ville"
+            }
+          ]
         },
         {
           "id": "fld_adresse_latitude",
           "name": "latitude",
           "required": false,
-          "type": "decimal"
+          "type": "decimal",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Latitude"
+            }
+          ]
         },
         {
           "id": "fld_adresse_longitude",
           "name": "longitude",
           "required": false,
-          "type": "decimal"
+          "type": "decimal",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Longitude"
+            }
+          ]
         },
         {
           "id": "fld_adresse_instructions",
           "name": "instructions",
           "required": false,
-          "type": "text"
+          "type": "text",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Instructions"
+            }
+          ]
         },
         {
           "id": "fld_adresse_par_defaut",
           "name": "par_defaut",
           "required": true,
-          "type": "boolean"
+          "type": "boolean",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Par défaut"
+            }
+          ]
         },
         {
           "id": "fld_adresse_client_ref",
@@ -856,7 +1035,13 @@
           "referenceDisplayFieldId": "fld_client_nom",
           "referencesEntityId": "ent_client",
           "required": true,
-          "type": "reference"
+          "type": "reference",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Client"
+            }
+          ]
         }
       ],
       "id": "ent_adresse",
@@ -869,13 +1054,25 @@
           "name": "reference",
           "required": true,
           "type": "string",
-          "unique": true
+          "unique": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Référence"
+            }
+          ]
         },
         {
           "id": "fld_commande_date",
           "name": "date_commande",
           "required": true,
-          "type": "datetime"
+          "type": "datetime",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Date de la commande"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -888,19 +1085,94 @@
           "id": "fld_commande_statut",
           "name": "statut",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "en_preparation",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "En préparation"
+                }
+              ]
+            },
+            {
+              "value": "expediee",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Expédiée"
+                }
+              ]
+            },
+            {
+              "value": "en_livraison",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "En livraison"
+                }
+              ]
+            },
+            {
+              "value": "livree",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Livrée"
+                }
+              ]
+            },
+            {
+              "value": "annulee",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Annulée"
+                }
+              ]
+            }
+          ],
+          "enumTones": [
+            {
+              "value": "livree",
+              "tone": "success"
+            },
+            {
+              "value": "annulee",
+              "tone": "error"
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Statut"
+            }
+          ]
         },
         {
           "id": "fld_commande_montant",
           "name": "montant",
           "required": true,
-          "type": "decimal"
+          "type": "decimal",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Montant"
+            }
+          ]
         },
         {
           "id": "fld_commande_creneau",
           "name": "creneau_livraison",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Créneau de livraison"
+            }
+          ]
         },
         {
           "id": "fld_commande_adresse_ref",
@@ -908,7 +1180,13 @@
           "referenceDisplayFieldId": "fld_adresse_libelle",
           "referencesEntityId": "ent_adresse",
           "required": true,
-          "type": "reference"
+          "type": "reference",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Adresse"
+            }
+          ]
         },
         {
           "id": "fld_commande_client_ref",
@@ -916,7 +1194,13 @@
           "referenceDisplayFieldId": "fld_client_nom",
           "referencesEntityId": "ent_client",
           "required": true,
-          "type": "reference"
+          "type": "reference",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Client"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -927,19 +1211,80 @@
           "id": "fld_commande_paiement_statut",
           "name": "paiement_statut",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Statut du paiement"
+            }
+          ],
+          "enumLabels": [
+            {
+              "value": "en_attente",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "En attente"
+                }
+              ]
+            },
+            {
+              "value": "paye",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Payé"
+                }
+              ]
+            },
+            {
+              "value": "echoue",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Échoué"
+                }
+              ]
+            }
+          ],
+          "enumTones": [
+            {
+              "value": "en_attente",
+              "tone": "warn"
+            },
+            {
+              "value": "paye",
+              "tone": "success"
+            },
+            {
+              "value": "echoue",
+              "tone": "error"
+            }
+          ]
         },
         {
           "id": "fld_commande_notification_livraison",
           "name": "notification_livraison",
           "required": true,
-          "type": "boolean"
+          "type": "boolean",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Notification de livraison"
+            }
+          ]
         },
         {
           "id": "fld_commande_suivi",
           "name": "suivi",
           "required": false,
-          "type": "text"
+          "type": "text",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Suivi"
+            }
+          ]
         }
       ],
       "id": "ent_commande",
@@ -951,25 +1296,49 @@
           "id": "fld_paiement_titulaire",
           "name": "titulaire",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Titulaire"
+            }
+          ]
         },
         {
           "id": "fld_paiement_numero_carte",
           "name": "numero_carte",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Numéro de carte"
+            }
+          ]
         },
         {
           "id": "fld_paiement_expiration",
           "name": "expiration",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Date d'expiration"
+            }
+          ]
         },
         {
           "id": "fld_paiement_montant",
           "name": "montant",
           "required": true,
-          "type": "decimal"
+          "type": "decimal",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Montant"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -980,13 +1349,60 @@
           "id": "fld_paiement_statut",
           "name": "statut",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "initie",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Initié"
+                }
+              ]
+            },
+            {
+              "value": "autorise",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Autorisé"
+                }
+              ]
+            },
+            {
+              "value": "refuse",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Refusé"
+                }
+              ]
+            }
+          ],
+          "enumTones": [
+            {
+              "value": "refuse",
+              "tone": "error"
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Statut"
+            }
+          ]
         },
         {
           "id": "fld_paiement_date",
           "name": "date_paiement",
           "required": false,
-          "type": "datetime"
+          "type": "datetime",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Date du paiement"
+            }
+          ]
         },
         {
           "id": "fld_paiement_commande_ref",
@@ -994,7 +1410,13 @@
           "referenceDisplayFieldId": "fld_commande_reference",
           "referencesEntityId": "ent_commande",
           "required": false,
-          "type": "reference"
+          "type": "reference",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Commande"
+            }
+          ]
         }
       ],
       "id": "ent_paiement",
@@ -1006,26 +1428,50 @@
           "id": "fld_client_nom",
           "name": "nom",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Nom"
+            }
+          ]
         },
         {
           "id": "fld_client_email",
           "name": "email",
           "required": true,
           "type": "string",
-          "unique": true
+          "unique": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Adresse e-mail"
+            }
+          ]
         },
         {
           "id": "fld_client_telephone",
           "name": "telephone",
           "required": false,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Téléphone"
+            }
+          ]
         },
         {
           "id": "fld_client_notifications_push",
           "name": "notifications_push",
           "required": true,
-          "type": "boolean"
+          "type": "boolean",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Notifications"
+            }
+          ]
         },
         {
           "id": "fld_client_adresse_defaut",
@@ -1033,7 +1479,13 @@
           "referenceDisplayFieldId": "fld_adresse_libelle",
           "referencesEntityId": "ent_adresse",
           "required": false,
-          "type": "reference"
+          "type": "reference",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Adresse par défaut"
+            }
+          ]
         }
       ],
       "id": "ent_client",

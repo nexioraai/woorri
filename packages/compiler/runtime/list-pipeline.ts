@@ -239,6 +239,53 @@ export function tailleApercu(layout: string | undefined, pageSize: number | unde
  */
 const CODE_MONNAIE = /^[A-Z]{3}$/;
 
+/**
+ * UNE DATE NE SE MONTRE PAS EN ISO.
+ *
+ * ── MESURE QUI L'A IMPOSE, et c'est une lecture d'ECRAN, pas de moteur.
+ *
+ * Le 2026-10-13, en montant les dix ecrans d'une application generee pour
+ * lire le texte REELLEMENT rendu, la liste des mouvements affichait en
+ * sous-titre : « 2026-12-21T21:47:00.000Z ». Un horodatage machine, avec le
+ * fuseau et les millisecondes, sous les yeux d'un client.
+ *
+ * ── POURQUOI C'EST AU MOTEUR DE LE FAIRE, ICI, ET NON AU DOCUMENT.
+ *
+ * C'est la difference exacte avec les libelles d'etat. Nommer « ECHEC » en
+ * « Echec » demande de connaitre une LANGUE, et le moteur n'en connait
+ * aucune — le document le dit. Mettre en forme une date demande de connaitre
+ * un TYPE et une convention d'ecriture : c'est de la typographie, pas du
+ * vocabulaire, et `Intl` la porte deja. Le document n'a rien a declarer.
+ *
+ * ── LA LIMITE, DITE PLUTOT QUE CACHEE.
+ *
+ * « fr-FR » est code en dur, exactement comme dans `formatValeur` juste en
+ * dessous, et pour la meme raison : le compilateur resout les textes dans la
+ * langue de l'app et le runtime n'en recoit aucune. Les 46 documents du
+ * corpus sont tous en francais, donc cette limite ne se voit pas aujourd'hui.
+ * Elle existe. Elle est CONSIGNEE et partagee par les deux formateurs — la
+ * corriger demande de faire voyager la locale jusqu'au runtime, ce qui est un
+ * lot a part.
+ *
+ * ── CE QU'ELLE NE FAIT PAS.
+ *
+ * Une valeur illisible est rendue TELLE QUELLE. Perdre la donnee pour cause
+ * de mise en forme serait pire que l'afficher brute : l'un se voit et se
+ * corrige, l'autre efface silencieusement.
+ */
+export function formatDate(brut: string, avecHeure: boolean): string {
+  const t = Date.parse(brut);
+  if (!Number.isFinite(t)) return brut;
+  try {
+    return new Intl.DateTimeFormat("fr-FR", {
+      dateStyle: "medium",
+      ...(avecHeure ? ({ timeStyle: "short" } as const) : {}),
+    }).format(new Date(t));
+  } catch {
+    return brut;
+  }
+}
+
 export function formatValeur(brut: string, unit: string | undefined): string {
   if (unit === undefined) return brut;
   const n = Number(brut);

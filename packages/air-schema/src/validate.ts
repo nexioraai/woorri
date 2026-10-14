@@ -2,6 +2,34 @@ import type { ProjectAir } from "./air.ts";
 import { derivePlanAcces, entiteDIdentite } from "./derive-rls.ts";
 import { PROFONDEUR_EXPRESSION, projectAirSchema } from "./air.ts";
 
+/**
+ * LES PROPRIÉTÉS DE BLOC QUI METTENT DU TEXTE SOUS LES YEUX DE QUELQU'UN.
+ *
+ * Exportées pour qu'un cliquet du paquet `blocks` les compare au registre :
+ * `air-schema` ne dépend pas de `blocks` — le format ne doit pas connaître
+ * les blocs — mais une liste recopiée sans gardien dérive. Celle-ci a dérivé
+ * TROIS FOIS en une journée, et chaque fois un code machine passait à
+ * l'écran par la propriété qu'elle venait d'oublier.
+ */
+export const PORTEURS_DE_TEXTE_SINGULIERS = [
+  "titleFieldId",
+  "subtitleFieldId",
+  "trailingFieldId",
+  "badgeFieldId",
+] as const;
+
+/** Les mêmes, quand la propriété porte une LISTE d'identifiants de champ. */
+export const PORTEURS_DE_TEXTE_EN_LISTE = [
+  "badgeFieldIds",
+  // Les champs d'un FORMULAIRE : leurs valeurs d'énumération deviennent des
+  // options ou des puces de choix, donc du texte visible.
+  "fieldIds",
+  // Classé FILTRAGE par le registre, et c'est juste — le prop filtre. Mais
+  // ses valeurs deviennent les LIBELLÉS des puces de filtre. Les deux
+  // lectures sont vraies ; celle qui compte ici est la seconde.
+  "userFilterFieldIds",
+] as const;
+
 // Validateur sémantique DÉTERMINISTE (ARCHITECTURE §1) : un AIR émis par LLM
 // est syntaxiquement valide par construction (structured outputs) ; la
 // cohérence référentielle, elle, se vérifie ici — jamais par un LLM.
@@ -1550,6 +1578,107 @@ export function validateAir(air: ProjectAir): AirDiagnostic[] {
             `moins un \`subtitleFieldId\`, \`trailingFieldId\` ou \`badgeFieldId\`.`,
         );
       }
+    });
+  });
+
+  // ── UN CODE MACHINE NE SE MONTRE PAS A UN HUMAIN (2026-10-13).
+  //
+  // MESURE QUI A IMPOSE CE REFUS : 33 documents du corpus sur 46 affichaient
+  // des valeurs BRUTES — « en_attente_documents », « coupe_ciseaux »,
+  // « SEQUESTRE_BLOQUE », « bientot_epuise ». 98 champs montres, 229 valeurs
+  // distinctes. Jugement du proprietaire sur une application generee,
+  // captures a l'appui : « visuellement nul ».
+  //
+  // ── CE QUI MANQUAIT N'ETAIT PAS LE MOYEN, MAIS L'EXIGENCE.
+  //
+  // `enumLabels` existe depuis 1.10.0, il est consomme par le runtime
+  // (DET-032), et la regle de prose n° 32 l'ENSEIGNE au generateur depuis
+  // longtemps. Rien ne le VERIFIAIT. Un document pouvait donc etre
+  // parfaitement valide et montrer un identifiant de base de donnees a un
+  // utilisateur. C'est exactement la forme de defaut qu'un cliquet existe
+  // pour fermer : enseigner n'est pas exiger.
+  //
+  // ── POURQUOI LA REGLE EST UNIFORME, SANS EXCEPTION.
+  //
+  // Elle vaut pour TOUTE valeur d'un champ montre, meme une valeur deja
+  // lisible — auquel cas le libelle la repete, ce qui coute une ligne. La
+  // tentation etait de n'exiger un libelle que pour ce qui RESSEMBLE a un
+  // code : un tiret bas, des capitales. Deux raisons de refuser :
+  //
+  //   1. Ca rate. « XXL » est en capitales et parfaitement legitime ; une
+  //      regle sur les capitales l'aurait faussement accuse. Mesure : sur
+  //      les 69 valeurs qu'un tel test accusait, « XXL » etait un faux.
+  //   2. Ca fait deviner le MOTEUR. Decider qu'une chaine « ressemble a un
+  //      code » est un jugement de langue, et EP-201 l'interdit pour la
+  //      meme raison qu'il interdit un nom de pays au moteur.
+  //
+  // La regle uniforme ne devine rien : si vous le montrez, vous le nommez.
+  //
+  // ── OU ELLE S'APPLIQUE.
+  //
+  // Aux QUATRE proprietes qui portent du texte a l'ecran. Un champ `enum`
+  // jamais affiche n'a besoin d'aucun libelle — exiger l'inverse serait du
+  // travail sans lecteur.
+  // ── TROIS DÉCOUVERTES SUCCESSIVES, ET C'EST LA LEÇON.
+  //
+  // La première passe ne fermait que les quatre propriétés SINGULIÈRES. Huit
+  // écrans de détail montraient encore « sous_offre », « tres_grand »,
+  // « mi_long » — par `badgeFieldIds`, AU PLURIEL. Fermé. Un écran montrait
+  // encore « toux_du_chenil » — par `userFilterFieldIds`, dont les valeurs
+  // deviennent des PUCES de filtre visibles. Fermé.
+  //
+  // Trois découvertes pour un seul défaut : la liste est donc la chose à
+  // surveiller, pas le défaut. Elle est EXPORTÉE, et un cliquet du paquet
+  // `blocks` la compare au registre des blocs — qui seul connaît
+  // `fieldRefPropsAffichage`. `air-schema` ne dépend pas de `blocks`, et ce
+  // n'est pas un oubli : le format ne doit pas connaître les blocs. Mais une
+  // liste recopiée sans gardien dérive, et c'est ce qui vient d'arriver
+  // trois fois de suite.
+  //
+  // `imageFieldId` n'y est PAS : une image n'est pas du texte, et son
+  // identifiant ne s'affiche jamais.
+  //
+  // `userFilterFieldIds` est classé FILTRAGE par le registre, et c'est juste
+  // — le prop filtre. Mais ses valeurs deviennent les LIBELLÉS des puces,
+  // donc du texte sous les yeux de quelqu'un. Les deux lectures sont vraies ;
+  // celle qui compte ici est la seconde.
+  air.screens.forEach((ecran, si) => {
+    ecran.blocks.forEach((bloc, bi) => {
+      if (bloc.entityId === undefined) return;
+      const cible = air.entities.find((x) => x.id === bloc.entityId);
+      if (cible === undefined) return;
+      const props = new Map(
+        (bloc.props ?? []).map((pr) => [pr.key, pr.value] as const),
+      );
+      const aVerifier: { cle: string; fid: string }[] = [];
+      PORTEURS_DE_TEXTE_SINGULIERS.forEach((cle) => {
+        const fid = props.get(cle);
+        if (typeof fid === "string") aVerifier.push({ cle, fid });
+      });
+      PORTEURS_DE_TEXTE_EN_LISTE.forEach((cle) => {
+        const liste = props.get(cle);
+        if (!Array.isArray(liste)) return;
+        liste.forEach((fid, k) => {
+          if (typeof fid === "string") aVerifier.push({ cle: `${cle}[${String(k)}]`, fid });
+        });
+      });
+      aVerifier.forEach(({ cle, fid }) => {
+        const champ = cible.fields.find((x) => x.id === fid);
+        if (champ?.type !== "enum" || champ.enumValues === undefined) return;
+        const nommees = new Set((champ.enumLabels ?? []).map((x) => x.value));
+        const muettes = champ.enumValues.filter((v) => !nommees.has(v));
+        if (muettes.length > 0) {
+          push(
+            "AIR_ENUM_CODE_MONTRE",
+            `screens[${si}].blocks[${bi}].props.${cle}`,
+            `« ${champ.name} » est affiché ici, et ${String(muettes.length)} de ses ` +
+              `valeurs n'ont aucun libellé : ${muettes.map((v) => `« ${v} »`).join(", ")}. ` +
+              `Un code de base de données se retrouverait à l'écran. Déclarez ` +
+              `\`enumLabels\` pour CHACUNE des ${String(champ.enumValues.length)} valeurs — ` +
+              `si l'une est déjà lisible, son libellé la répète.`,
+          );
+        }
+      });
     });
   });
 

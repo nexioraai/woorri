@@ -483,13 +483,25 @@
           "name": "titre",
           "required": true,
           "type": "string",
-          "unique": true
+          "unique": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Titre"
+            }
+          ]
         },
         {
           "id": "fld_cours_chef",
           "name": "chef",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Chef de chantier"
+            }
+          ]
         },
         {
           "id": "fld_cours_visuel",
@@ -501,13 +513,25 @@
           "id": "fld_cours_description",
           "name": "description",
           "required": true,
-          "type": "text"
+          "type": "text",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Description"
+            }
+          ]
         },
         {
           "id": "fld_cours_prix",
           "name": "prix",
           "required": true,
-          "type": "decimal"
+          "type": "decimal",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Prix"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -521,7 +545,69 @@
           "id": "fld_cours_categorie",
           "name": "categorie",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "patisserie",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Pâtisserie"
+                }
+              ]
+            },
+            {
+              "value": "cuisine_salee",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Cuisine salée"
+                }
+              ]
+            },
+            {
+              "value": "boulangerie",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Boulangerie"
+                }
+              ]
+            },
+            {
+              "value": "techniques",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Techniques"
+                }
+              ]
+            },
+            {
+              "value": "vegetarien",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Végétarien"
+                }
+              ]
+            },
+            {
+              "value": "desserts",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Desserts"
+                }
+              ]
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Catégorie"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -532,7 +618,42 @@
           "id": "fld_cours_niveau",
           "name": "niveau",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "debutant",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Débutant"
+                }
+              ]
+            },
+            {
+              "value": "intermediaire",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Intermédiaire"
+                }
+              ]
+            },
+            {
+              "value": "avance",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Avancé"
+                }
+              ]
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Niveau"
+            }
+          ]
         },
         {
           "id": "fld_cours_duree_minutes",
@@ -572,7 +693,33 @@
           "id": "fld_cours_langue",
           "name": "langue",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "fr",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Français"
+                }
+              ]
+            },
+            {
+              "value": "en",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Anglais"
+                }
+              ]
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Langue"
+            }
+          ]
         }
       ],
       "id": "ent_cours",
@@ -584,13 +731,25 @@
           "id": "fld_lecon_titre",
           "name": "titre",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Titre"
+            }
+          ]
         },
         {
           "id": "fld_lecon_numero",
           "name": "numero",
           "required": true,
-          "type": "number"
+          "type": "number",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Numéro"
+            }
+          ]
         },
         {
           "id": "fld_lecon_cours",
@@ -598,7 +757,13 @@
           "referenceDisplayFieldId": "fld_cours_titre",
           "referencesEntityId": "ent_cours",
           "required": true,
-          "type": "reference"
+          "type": "reference",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Cours"
+            }
+          ]
         },
         {
           "id": "fld_lecon_miniature",
@@ -616,19 +781,37 @@
           "id": "fld_lecon_duree_minutes",
           "name": "duree_minutes",
           "required": true,
-          "type": "number"
+          "type": "number",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Durée (minutes)"
+            }
+          ]
         },
         {
           "id": "fld_lecon_description",
           "name": "description",
           "required": false,
-          "type": "text"
+          "type": "text",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Description"
+            }
+          ]
         },
         {
           "id": "fld_lecon_apercu_gratuit",
           "name": "apercu_gratuit",
           "required": true,
-          "type": "boolean"
+          "type": "boolean",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Aperçu gratuit"
+            }
+          ]
         }
       ],
       "id": "ent_lecon",
@@ -641,7 +824,13 @@
           "name": "titre",
           "required": true,
           "type": "string",
-          "unique": true
+          "unique": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Titre"
+            }
+          ]
         },
         {
           "id": "fld_recette_photo",
@@ -653,19 +842,37 @@
           "id": "fld_recette_resume",
           "name": "resume",
           "required": true,
-          "type": "text"
+          "type": "text",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Résumé"
+            }
+          ]
         },
         {
           "id": "fld_recette_ingredients",
           "name": "ingredients",
           "required": true,
-          "type": "text"
+          "type": "text",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Ingrédients"
+            }
+          ]
         },
         {
           "id": "fld_recette_etapes",
           "name": "etapes",
           "required": true,
-          "type": "text"
+          "type": "text",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Étapes"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -679,7 +886,69 @@
           "id": "fld_recette_categorie",
           "name": "categorie",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "patisserie",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Pâtisserie"
+                }
+              ]
+            },
+            {
+              "value": "cuisine_salee",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Cuisine salée"
+                }
+              ]
+            },
+            {
+              "value": "boulangerie",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Boulangerie"
+                }
+              ]
+            },
+            {
+              "value": "techniques",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Techniques"
+                }
+              ]
+            },
+            {
+              "value": "vegetarien",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Végétarien"
+                }
+              ]
+            },
+            {
+              "value": "desserts",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Desserts"
+                }
+              ]
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Catégorie"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -690,13 +959,54 @@
           "id": "fld_recette_difficulte",
           "name": "difficulte",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "facile",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Facile"
+                }
+              ]
+            },
+            {
+              "value": "moyenne",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Moyenne"
+                }
+              ]
+            },
+            {
+              "value": "difficile",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Difficile"
+                }
+              ]
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Difficulté"
+            }
+          ]
         },
         {
           "id": "fld_recette_temps_minutes",
           "name": "temps_minutes",
           "required": true,
-          "type": "number"
+          "type": "number",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Temps (minutes)"
+            }
+          ]
         },
         {
           "id": "fld_recette_cours_associe",
@@ -710,7 +1020,13 @@
           "id": "fld_recette_publiee_le",
           "name": "publiee_le",
           "required": true,
-          "type": "date"
+          "type": "date",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Publiée le"
+            }
+          ]
         }
       ],
       "id": "ent_recette",
@@ -723,7 +1039,13 @@
           "name": "reference",
           "required": true,
           "type": "string",
-          "unique": true
+          "unique": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Référence"
+            }
+          ]
         },
         {
           "id": "fld_achat_cours",
@@ -731,7 +1053,13 @@
           "referenceDisplayFieldId": "fld_cours_titre",
           "referencesEntityId": "ent_cours",
           "required": true,
-          "type": "reference"
+          "type": "reference",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Cours"
+            }
+          ]
         },
         {
           "id": "fld_achat_compte",
@@ -739,19 +1067,37 @@
           "referenceDisplayFieldId": "fld_compte_email",
           "referencesEntityId": "ent_compte",
           "required": true,
-          "type": "reference"
+          "type": "reference",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Compte"
+            }
+          ]
         },
         {
           "id": "fld_achat_montant",
           "name": "montant",
           "required": true,
-          "type": "decimal"
+          "type": "decimal",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Montant"
+            }
+          ]
         },
         {
           "id": "fld_achat_date",
           "name": "date_achat",
           "required": true,
-          "type": "datetime"
+          "type": "datetime",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Date d'achat"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -763,25 +1109,105 @@
           "id": "fld_achat_statut",
           "name": "statut",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "en_attente",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "En attente"
+                }
+              ]
+            },
+            {
+              "value": "paye",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Payé"
+                }
+              ]
+            },
+            {
+              "value": "rembourse",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Remboursé"
+                }
+              ]
+            },
+            {
+              "value": "echoue",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Échoué"
+                }
+              ]
+            }
+          ],
+          "enumTones": [
+            {
+              "value": "en_attente",
+              "tone": "warn"
+            },
+            {
+              "value": "paye",
+              "tone": "success"
+            },
+            {
+              "value": "rembourse",
+              "tone": "warn"
+            },
+            {
+              "value": "echoue",
+              "tone": "error"
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Statut"
+            }
+          ]
         },
         {
           "id": "fld_achat_email",
           "name": "email_recu",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "E-mail du reçu"
+            }
+          ]
         },
         {
           "id": "fld_achat_conditions",
           "name": "conditions_acceptees",
           "required": true,
-          "type": "boolean"
+          "type": "boolean",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Conditions acceptées"
+            }
+          ]
         },
         {
           "id": "fld_achat_progression",
           "name": "progression_pourcent",
           "required": false,
-          "type": "number"
+          "type": "number",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Progression"
+            }
+          ]
         }
       ],
       "id": "ent_achat",
@@ -793,14 +1219,26 @@
           "id": "fld_compte_nom",
           "name": "nom",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Nom"
+            }
+          ]
         },
         {
           "id": "fld_compte_email",
           "name": "email",
           "required": true,
           "type": "string",
-          "unique": true
+          "unique": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Adresse e-mail"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -810,25 +1248,69 @@
           "id": "fld_compte_langue",
           "name": "langue_preferee",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Langue préférée"
+            }
+          ],
+          "enumLabels": [
+            {
+              "value": "fr",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Français"
+                }
+              ]
+            },
+            {
+              "value": "en",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Anglais"
+                }
+              ]
+            }
+          ]
         },
         {
           "id": "fld_compte_notifications",
           "name": "recevoir_nouveautes",
           "required": true,
-          "type": "boolean"
+          "type": "boolean",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Recevoir les nouveautés"
+            }
+          ]
         },
         {
           "id": "fld_compte_cree_le",
           "name": "cree_le",
           "required": true,
-          "type": "datetime"
+          "type": "datetime",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Créé le"
+            }
+          ]
         },
         {
           "id": "fld_compte_nb_cours",
           "name": "nb_cours_possedes",
           "required": false,
-          "type": "number"
+          "type": "number",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Cours possédés"
+            }
+          ]
         }
       ],
       "id": "ent_compte",

@@ -307,6 +307,10 @@ export const SECTIONS_CORRECTIVES: Readonly<Record<string, readonly SectionEmiss
   // Une liste indistincte se repare sur l'ECRAN : c'est le bloc qui doit
   // porter un sous-titre, une valeur ou un badge.
   AIR_LISTE_INDISTINCTE: ["ecrans"],
+  // Un code machine montre a un humain (1.43.0) se repare sur les DONNEES :
+  // c'est le CHAMP qui doit porter `enumLabels`, pas l'ecran qui l'affiche.
+  // L'ecran a raison de montrer cet etat ; c'est l'etat qui n'a pas de nom.
+  AIR_ENUM_CODE_MONTRE: ["donnees"],
   // L'ambiguite se repare en renommant une operation : c'est le cablage des
   // API qui change, et la liste des pouvoirs de l'agent avec.
   AIR_AGENT_OPERATION_AMBIGUOUS: ["cablage"],

@@ -28,6 +28,12 @@ export {
   validateAirIntentRequirement,
   assertValidAir,
   AirSemanticError,
+  // EP-219 : les propriétés de bloc qui mettent du texte sous les yeux de
+  // quelqu'un. Exportées pour qu'un cliquet les compare au registre des
+  // blocs — `air-schema` ne dépend pas de `blocks`, et une liste recopiée
+  // sans gardien dérive. Celle-ci a dérivé trois fois en une journée.
+  PORTEURS_DE_TEXTE_SINGULIERS,
+  PORTEURS_DE_TEXTE_EN_LISTE,
 } from "./validate.ts";
 export type { AirDiagnostic } from "./validate.ts";
 

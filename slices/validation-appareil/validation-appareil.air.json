@@ -722,15 +722,6 @@
        ]
       },
       {
-       "value": "annule",
-       "label": [
-        {
-         "locale": "fr",
-         "text": "Annulé"
-        }
-       ]
-      },
-      {
        "value": "retarde",
        "label": [
         {
@@ -738,6 +729,29 @@
          "text": "Retardé"
         }
        ]
+      },
+      {
+       "value": "annule",
+       "label": [
+        {
+         "locale": "fr",
+         "text": "Annulé"
+        }
+       ]
+      }
+     ],
+     "enumTones": [
+      {
+       "value": "a_l_heure",
+       "tone": "success"
+      },
+      {
+       "value": "retarde",
+       "tone": "warn"
+      },
+      {
+       "value": "annule",
+       "tone": "error"
       }
      ]
     },
@@ -947,15 +961,6 @@
      ],
      "enumLabels": [
       {
-       "value": "annule",
-       "label": [
-        {
-         "locale": "fr",
-         "text": "Annulé"
-        }
-       ]
-      },
-      {
        "value": "en_attente_paiement",
        "label": [
         {
@@ -981,6 +986,29 @@
          "text": "Utilisé"
         }
        ]
+      },
+      {
+       "value": "annule",
+       "label": [
+        {
+         "locale": "fr",
+         "text": "Annulé"
+        }
+       ]
+      }
+     ],
+     "enumTones": [
+      {
+       "value": "en_attente_paiement",
+       "tone": "warn"
+      },
+      {
+       "value": "paye",
+       "tone": "success"
+      },
+      {
+       "value": "annule",
+       "tone": "error"
       }
      ]
     },

@@ -249,6 +249,7 @@ interface ScreenSlice {
           referenceDisplayFieldId?: string;
           label?: string;
           enumLabels?: Readonly<Record<string, string>>;
+          enumTones?: Readonly<Record<string, string>>;
           sensitive?: boolean;
           required?: boolean;
         }[];
@@ -444,6 +445,23 @@ function buildScreenSlice(air: ProjectAir, screen: ProjectAir["screens"][number]
                   valeur,
                   resolveLocalized(texte, locale, `${entity.id}.${f.id}.enumLabels.${valeur}`),
                 ]),
+              ),
+            }),
+        // ── LE SENS D'UN ÉTAT (1.43.0) — MÊME CHEMIN QUE LE LIBELLÉ.
+        //
+        // Mesuré le 2026-10-13 : la primitive `Badge` accepte un `tone`
+        // depuis l'origine, et `success`/`warn`/`error` étaient déjà dans la
+        // feuille de style. ZÉRO usage. Aucun bloc n'en passait, donc toutes
+        // les pastilles sortaient du même gris — vingt lignes d'une liste
+        // étaient rigoureusement indistinguables.
+        //
+        // Pas de traduction ici : un ton n'est pas un mot. Il ne passe donc
+        // pas par `resolveLocalized` — ce serait lui chercher une langue.
+        ...(f.enumTones === undefined
+          ? {}
+          : {
+              enumTones: Object.fromEntries(
+                f.enumTones.map(({ value: valeur, tone }) => [valeur, tone]),
               ),
             }),
         // TRAVERSÉE DE RELATION (1.4.0, D-064) : de quoi résoudre l'identifiant

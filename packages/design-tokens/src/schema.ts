@@ -9,9 +9,18 @@
 // (vigilance consignée en D-021).
 import { z } from "zod";
 
+// 1.5.0 — `size.measure` : la LARGEUR DE LISIBILITÉ du contenu, avec son
+// consommateur réel (`AppShell`, propriétaire unique de la géométrie).
+//
+// POURQUOI 1.5.0 ET NON 1.4.0 : le registre du cliquet de surface décrit
+// déjà `size.controlHeight` comme l'ajout « 1.4.0 » (2026-09-09), alors que
+// ce littéral était resté à 1.3.0 — le numéro avait dérivé. Reprendre 1.4.0
+// écrirait un faux dans le registre. Cette dérive est SIGNALÉE, pas
+// réécrite : renommer un ajout déjà consigné sort du périmètre.
+//
 // 1.3.0 — l'échelle typographique gagne `display`, un cran au-dessus de
 // `heading`, avec son consommateur réel (accroche de l'écran d'accueil).
-export const DESIGN_TOKENS_VERSION = "1.3.0";
+export const DESIGN_TOKENS_VERSION = "1.5.0";
 
 const hexColor = z.string().regex(/^#[0-9A-Fa-f]{6}$/);
 const dimension = z.number().int().positive();
@@ -89,7 +98,31 @@ export const designTokensSchema = z.strictObject({
   // `controlHeight` (2026-09-09, jugement propriétaire « les boutons ne sont
   // pas premium ») : la hauteur d'un CONTRÔLE PRINCIPAL — au-dessus du
   // minimum tactile, qui reste la borne basse de TOUTES les surfaces.
-  size: z.strictObject({ tapTarget: dimension, controlHeight: dimension }),
+  // `measure` (1.4.0) — LA LARGEUR DE LISIBILITÉ DU CONTENU.
+  //
+  // DET-023 avait écarté `breakpoint`/`density` faute de consommateur. Celui
+  // -ci en a un, et il répare un défaut MESURÉ : `maxWidth` n'apparaissait
+  // nulle part dans le moteur. L'application générée était donc une mise en
+  // page de téléphone ÉTIRÉE sur un écran de bureau — sur 1440 px, une ligne
+  // de liste fait 1440 px, le titre à l'extrême gauche, le montant à
+  // l'extrême droite, et un désert au milieu. Jugement du propriétaire
+  // (2026-10-13), capture à l'appui : « visuellement nul ».
+  //
+  // PROVENANCE DE LA VALEUR, pas une invention : 768, soit le `max-w-3xl`
+  // que SGD applique réellement à ses pages de contenu (mesuré dans
+  // `src/app/clients/page.tsx` — `mx-auto max-w-3xl px-4 py-8`). SGD est la
+  // référence que le propriétaire oppose aux applications générées ; copier
+  // SA mesure vaut mieux qu'en choisir une.
+  //
+  // UNE SEULE RÈGLE POUR LES DEUX CIBLES, et c'est l'intérêt du nombre : sur
+  // un téléphone de 390 px, une borne à 768 ne mord jamais ; sur une
+  // tablette en paysage et sur un écran de bureau, elle borne. Aucune
+  // ramification de plateforme, aucune nouvelle couture.
+  size: z.strictObject({
+    tapTarget: dimension,
+    controlHeight: dimension,
+    measure: dimension,
+  }),
 });
 
 export type DesignTokens = z.infer<typeof designTokensSchema>;

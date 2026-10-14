@@ -631,7 +631,7 @@ export const AIR_MIGRATIONS: readonly AirMigration[] = [
     description:
       "AIR 1.42.0 : `rules[].appliqueSi` — une règle qui ne vaut QUE sous " +
       "condition. Mesure qui l'a imposée, écrite dans un cahier des charges " +
-      "réel : la tontine du Cameroun exige que « tout membre ne possédant pas " +
+      "réel : le cahier d'une tontine exige que « tout membre ne possédant pas " +
       "de smartphone soit rattaché à un membre parrain certifié ». " +
       "Inexprimable, et pour une raison simple : les assertions d'une règle " +
       "doivent TOUTES être vraies, TOUJOURS — exiger un mandataire revenait " +
@@ -643,6 +643,30 @@ export const AIR_MIGRATIONS: readonly AirMigration[] = [
       "traverse aucune relation : comme les assertions, il ne voit que sa " +
       "propre ligne. Migration IDENTITÉ : clé optionnelle, absente ⇒ la " +
       "règle s'applique toujours, exactement comme avant.",
+    migrate: (document) => document,
+  },
+  {
+    from: "1.42.0",
+    to: "1.43.0",
+    description:
+      "AIR 1.43.0 : `fields[].enumLabels` et `fields[].enumTones` — ce qu'une " +
+      "valeur d'état MONTRE, et ce qu'elle SIGNIFIE. Deux mesures l'ont " +
+      "imposé, le même jour. Les écrans affichaient les valeurs BRUTES — " +
+      "« NON_PAYE », « SEQUESTRE_BLOQUE », « AMENDE_DISCIPLINAIRE » ; et la " +
+      "primitive `Badge` acceptait un `tone` depuis l'origine, avec " +
+      "`success`/`warn`/`error` déjà dans la feuille de style, pour ZÉRO " +
+      "usage : aucun bloc n'en passait, donc toutes les pastilles sortaient " +
+      "du même gris et vingt lignes d'une liste étaient indistinguables. " +
+      "POURQUOI DÉCLARÉ ET NON DÉDUIT, dans les deux cas : remplacer le " +
+      "tiret bas par une espace donnerait « Non paye », une faute " +
+      "d'orthographe visible, et aucune règle mécanique ne sait accentuer ; " +
+      "deviner que « ECHEC » est mauvais exigerait du moteur un " +
+      "dictionnaire de sens dans une langue donnée, ce qu'EP-201 interdit " +
+      "par la même raison qu'il interdit un nom de pays. La langue et le " +
+      "sens appartiennent au document, écrit par qui connaît le métier. " +
+      "Migration IDENTITÉ : deux clés optionnelles ; absentes, la valeur " +
+      "s'affiche telle quelle et la pastille reste neutre — exactement le " +
+      "comportement d'avant.",
     migrate: (document) => document,
   },
 ];

@@ -107,7 +107,26 @@ function fixtureValue(
   switch (field.type) {
     case "string":
     case "text":
-      return `${field.name} ${n}`;
+      // ── LE REPLI NE DOIT PAS ÉCRIRE UN NOM DE COLONNE À L'ÉCRAN.
+      //
+      // MESURÉ le 2026-10-13, en montant les écrans d'une application générée
+      // pour lire le texte RÉELLEMENT rendu : la liste des membres affichait
+      // « nom_complet 2 », « nom_complet 8 ». C'est ce que le propriétaire
+      // voit en OUVRANT l'application, avant toute donnée réelle — donc c'est
+      // ce sur quoi il juge, et il a jugé « visuellement nul ».
+      //
+      // Le libellé DÉCLARÉ remplace le nom technique : « Nom complet 2 » au
+      // lieu de « nom_complet 2 ». Ce n'est pas joli, et ce n'est pas le but :
+      // une donnée de démonstration doit se voir COMME telle. Le but est
+      // qu'aucun identifiant de base de données n'atteigne un écran.
+      //
+      // LA VRAIE RÉPONSE reste `demoValues`, que le document déclare depuis
+      // 1.20.0 : des valeurs plausibles, choisies par qui connaît le métier.
+      // Ce repli est le filet, pas la solution.
+      //
+      // Le premier texte suffit : les documents portent une seule langue, et
+      // une donnée de démonstration n'a pas à être traduite.
+      return `${field.label?.[0]?.text ?? field.name} ${n}`;
     case "number":
       // EP-188 ③ — CE TIRAGE EST LE DERNIER RECOURS, ET IL EST MAINTENANT DIT.
       //

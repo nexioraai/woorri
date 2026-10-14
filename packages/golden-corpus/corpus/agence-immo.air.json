@@ -764,7 +764,13 @@
           "id": "fld_property_title",
           "name": "title",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Titre"
+            }
+          ]
         },
         {
           "id": "fld_property_description",
@@ -780,7 +786,33 @@
           "id": "fld_property_transaction",
           "name": "transaction_type",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "vente",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Vente"
+                }
+              ]
+            },
+            {
+              "value": "location",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Location"
+                }
+              ]
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Type de transaction"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -793,7 +825,60 @@
           "id": "fld_property_kind",
           "name": "property_kind",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "appartement",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Appartement"
+                }
+              ]
+            },
+            {
+              "value": "maison",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Maison"
+                }
+              ]
+            },
+            {
+              "value": "studio",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Studio"
+                }
+              ]
+            },
+            {
+              "value": "terrain",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Terrain"
+                }
+              ]
+            },
+            {
+              "value": "local_commercial",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Local commercial"
+                }
+              ]
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Type de bien"
+            }
+          ]
         },
         {
           "id": "fld_property_price",
@@ -832,25 +917,49 @@
           "id": "fld_property_surface",
           "name": "surface_m2",
           "required": true,
-          "type": "number"
+          "type": "number",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Surface (m²)"
+            }
+          ]
         },
         {
           "id": "fld_property_rooms",
           "name": "rooms",
           "required": false,
-          "type": "number"
+          "type": "number",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Pièces"
+            }
+          ]
         },
         {
           "id": "fld_property_bedrooms",
           "name": "bedrooms",
           "required": false,
-          "type": "number"
+          "type": "number",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Chambres"
+            }
+          ]
         },
         {
           "id": "fld_property_floor",
           "name": "floor",
           "required": false,
-          "type": "number"
+          "type": "number",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Étage"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -866,7 +975,87 @@
           "id": "fld_property_energy_class",
           "name": "energy_class",
           "required": false,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "A",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "A"
+                }
+              ]
+            },
+            {
+              "value": "B",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "B"
+                }
+              ]
+            },
+            {
+              "value": "C",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "C"
+                }
+              ]
+            },
+            {
+              "value": "D",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "D"
+                }
+              ]
+            },
+            {
+              "value": "E",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "E"
+                }
+              ]
+            },
+            {
+              "value": "F",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "F"
+                }
+              ]
+            },
+            {
+              "value": "G",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "G"
+                }
+              ]
+            },
+            {
+              "value": "non_soumis",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Non soumis"
+                }
+              ]
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Classe énergétique"
+            }
+          ]
         },
         {
           "id": "fld_property_latitude",
@@ -902,7 +1091,61 @@
           "id": "fld_property_status",
           "name": "status",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "brouillon",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Brouillon"
+                }
+              ]
+            },
+            {
+              "value": "publie",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Publié"
+                }
+              ]
+            },
+            {
+              "value": "sous_offre",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Sous offre"
+                }
+              ]
+            },
+            {
+              "value": "archive",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Archivé"
+                }
+              ]
+            }
+          ],
+          "enumTones": [
+            {
+              "value": "publie",
+              "tone": "success"
+            },
+            {
+              "value": "sous_offre",
+              "tone": "warn"
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Statut"
+            }
+          ]
         },
         {
           "id": "fld_property_visit_enabled",
@@ -933,49 +1176,97 @@
           "name": "property",
           "referencesEntityId": "ent_property",
           "required": true,
-          "type": "reference"
+          "type": "reference",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Bien"
+            }
+          ]
         },
         {
           "id": "fld_visit_user_ref",
           "name": "user_ref",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Référence"
+            }
+          ]
         },
         {
           "id": "fld_visit_full_name",
           "name": "full_name",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Nom complet"
+            }
+          ]
         },
         {
           "id": "fld_visit_email",
           "name": "email",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Adresse e-mail"
+            }
+          ]
         },
         {
           "id": "fld_visit_phone",
           "name": "phone",
           "required": false,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Téléphone"
+            }
+          ]
         },
         {
           "id": "fld_visit_slot_start",
           "name": "slot_start",
           "required": true,
-          "type": "datetime"
+          "type": "datetime",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Début du créneau"
+            }
+          ]
         },
         {
           "id": "fld_visit_slot_end",
           "name": "slot_end",
           "required": true,
-          "type": "datetime"
+          "type": "datetime",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Fin du créneau"
+            }
+          ]
         },
         {
           "id": "fld_visit_message",
           "name": "message",
           "required": false,
-          "type": "text"
+          "type": "text",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Message"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -988,19 +1279,37 @@
           "id": "fld_visit_status",
           "name": "status",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Statut"
+            }
+          ]
         },
         {
           "id": "fld_visit_created_at",
           "name": "created_at",
           "required": true,
-          "type": "datetime"
+          "type": "datetime",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Créé le"
+            }
+          ]
         },
         {
           "id": "fld_visit_consent",
           "name": "contact_consent",
           "required": true,
-          "type": "boolean"
+          "type": "boolean",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Consentement de contact"
+            }
+          ]
         }
       ],
       "id": "ent_visit_request",

@@ -116,7 +116,7 @@ export const RELEASE_TRAIN_V1 = {
   // assertions devant TOUTES etre vraies TOUJOURS, exiger un mandataire
   // revenait a l'exiger de tout le monde. Il ne manquait pas un operateur :
   // il manquait le SI.
-  airSchemaVersion: "1.42.0",
+  airSchemaVersion: "1.43.0",
   // Porté à 1.1.0 le 2026-08-31 (D-060) : montée STRICTEMENT ADDITIVE du
   // registre de blocs — `form` gagne `loading`/`empty`, `detail_header` gagne un
   // état, les trois blocs à données gagnent les props de titres. Rien n'est
@@ -189,6 +189,19 @@ export const RELEASE_TRAIN_V1 = {
   // ajouté ni retiré : le rendu natif est identique, seule l'importation
   // change de place.
   blocksSourcesHash:
+    // RÉ-SCELLÉ 2026-10-13 (registre 1.5.0) — ÉDITION CONSCIENTE.
+    //
+    // `ListItemData.badgeTone` et `BadgeTone` : le SENS d'un état voyage
+    // désormais jusqu'à la pastille. Mesure qui l'a imposé : la primitive
+    // `Badge` acceptait un `tone` depuis l'origine, `success`/`warn`/`error`
+    // étaient déjà dans la feuille de style, et le compte le 2026-10-13
+    // donnait ZÉRO usage. Aucune des deux surfaces qui affichent un badge ne
+    // pouvait le transmettre — la propriété n'existait pas. Toutes les
+    // pastilles sortaient donc du même gris, et vingt lignes d'une liste
+    // étaient rigoureusement indistinguables.
+    //
+    // ADDITIF : aucun type de bloc, aucun état ajouté ni retiré. Absent ⇒
+    // pastille neutre, c'est-à-dire exactement le rendu d'avant.
     // Ré-scellé 2026-10-04 (registre 1.15.0) : `searchMode` sur la liste. La
     // recherche cherchait la saisie ENTIÈRE comme sous-chaîne — « filtre toyota »
     // ne trouvait pas « filtre à huile toyota », les deux mots étant séparés par
@@ -332,7 +345,7 @@ export const RELEASE_TRAIN_V1 = {
     // unique, qui se clique par reflexe, devant un geste qui ne s'annule pas.
     //
     // Optionnelles : les documents ecrits avant ne changent pas de sens.
-    "bbe943aa5fe2c55795814399292e2c112b6e549449d55be0e757c1f56c794ac7",
+    "633b785c38e5415819be4f6e94bc9073d4ebd0baec2d26f822995106091eb6e8",
   // EP-134 — ajout compatible `external_contact` : version MINEURE du registre.
   /**
    * EP-147 ③ — LE NIVEAU D'API ANDROID VISÉ, épinglé par le train.
@@ -402,7 +415,7 @@ export const RELEASE_TRAIN_V1 = {
   // ÉDITION CONSCIENTE (1.3.0) : l'échelle typographique gagne `display`, un
   // cran au-dessus de `heading`. Ajouté AVEC son consommateur réel (l'écran
   // d'accueil produit), jamais « au cas où » — règle posée par DET-023.
-  designTokensVersion: "1.3.0",
+  designTokensVersion: "1.5.0",
   // Ré-scellé le 2026-08-29 (D-039/D-039-R1) : évolution des tokens en
   // 1.1.0 — correction de DEUX non-conformités A++ prouvées. Dimension B :
   // `onPrimary` passe de #FFFFFF à #16181D (blanc sur l'accent #FA5D1E =
@@ -423,7 +436,18 @@ export const RELEASE_TRAIN_V1 = {
     // Ré-scellé (tokens 1.3.0) : ajout de `font.display`.
   // Ré-scellé 2026-09-09 (lot premium) : token `size.controlHeight` (54 dp,
     // consommé par `button`) — jugement propriétaire « boutons pas premium ».
-    "2d1d23ea91876aa25756b9ea392b39c22518cb2b6a32f77ca49e13a4479f1446",
+    // RÉ-SCELLÉ 2026-10-13 (tokens 1.5.0) — ÉDITION CONSCIENTE.
+    //
+    // `size.measure` = 768 : la largeur de LISIBILITÉ du contenu, consommée
+    // par `AppShell`. Elle répare un défaut MESURÉ — `maxWidth` n'existait
+    // nulle part dans le moteur, et l'application générée était une mise en
+    // page de téléphone ÉTIRÉE sur un écran de bureau. Jugement du
+    // propriétaire, captures à l'appui : « visuellement nul ».
+    //
+    // La valeur n'est pas choisie : c'est le `max-w-3xl` que SGD applique
+    // réellement à ses pages de contenu. SGD est la référence opposée aux
+    // applications générées ; copier SA mesure vaut mieux qu'en inventer une.
+    "577cb18ded6fe9aabb160704590ee38445540c6b526a0ba61591570af19bb7f7",
 
   // Toolchain du projet généré (pins exacts démontrés — lock.toolchain).
   // Planchers RÉELS de plateforme du train (mesurés sur le prebuild du

@@ -120,12 +120,22 @@ describe("cliquet de surface de majeure — compatibilité mineure MÉCANIQUE", 
     // minimum tactile qui reste la borne basse. Consommateur réel : `button`
     // dans les primitives. La règle de DET-023 tient : pas de token « au cas
     // où ».
+    // 1.5.0 (2026-10-13, jugement propriétaire « visuellement nul » sur une
+    // application générée, captures à l'appui) : `size.measure` — la largeur
+    // de LISIBILITÉ du contenu. Il répare un défaut mesuré : `maxWidth`
+    // n'apparaissait nulle part dans le moteur, et l'application générée
+    // était une mise en page de téléphone ÉTIRÉE sur un écran de bureau.
+    // Consommateur réel : `AppShell`, propriétaire unique de la géométrie du
+    // viewport. Valeur NON inventée : 768, le `max-w-3xl` que SGD applique
+    // réellement — SGD étant la référence que le propriétaire oppose aux
+    // applications générées. La règle de DET-023 tient.
     expect(added).toEqual([
       "font.display",
       "fontWeight.bold",
       "fontWeight.semibold",
       "opacity.disabled",
       "size.controlHeight",
+      "size.measure",
       "size.tapTarget",
       "space.xxs",
     ]);

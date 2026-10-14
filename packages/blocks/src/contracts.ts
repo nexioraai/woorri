@@ -66,6 +66,20 @@ export interface ListFilterSpec {
   optionLabels?: Readonly<Record<string, string>>;
 }
 
+/**
+ * LES QUATRE SENS QU'UN ÉTAT PEUT PORTER (1.5.0, AIR 1.43.0).
+ *
+ * `neutral` est l'absence de jugement, et c'est le mot JUSTE côté document :
+ * la primitive l'appelle `info`, qui est un mot d'interface, pas un mot de
+ * métier. La traduction se fait à la frontière, UNE fois, dans le composant —
+ * jamais dans le document, qui ne doit pas connaître le vocabulaire du rendu.
+ *
+ * Quatre et pas cinq : ce sont les seules couleurs de sens que la palette
+ * porte. Une cinquième exigerait un jeton de plus, donc une décision de
+ * design — pas une commodité d'écriture.
+ */
+export type BadgeTone = "neutral" | "success" | "warn" | "error";
+
 export interface ListItemData {
   id: string;
   /** Vignette de la ligne (1.2.0) — absente = ligne purement textuelle. */
@@ -74,6 +88,20 @@ export interface ListItemData {
   subtitle?: string;
   trailing?: string;
   badge?: string;
+  /**
+   * LE SENS DU BADGE (1.5.0, AIR 1.43.0) — pas sa couleur : son SENS.
+   *
+   * Mesuré le 2026-10-13 : la primitive `Badge` accepte un `tone` depuis
+   * l'origine, et `success`/`warn`/`error` vivaient déjà dans la feuille de
+   * style. ZÉRO usage. Aucun bloc n'en passait, donc toutes les pastilles
+   * sortaient du même gris, et vingt lignes d'une liste étaient
+   * indistinguables.
+   *
+   * Absent = `neutral`, c'est-à-dire AUCUN jugement. C'est le bon défaut :
+   * une pastille colorée sur chaque ligne ne distingue plus rien, et
+   * colorer au hasard dirait quelque chose de faux.
+   */
+  badgeTone?: BadgeTone;
 }
 
 // F3 (revue pré-gel 2026-08-28) : état DISCRIMINÉ — les libellés d'état

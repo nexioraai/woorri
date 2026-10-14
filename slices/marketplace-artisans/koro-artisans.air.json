@@ -295,7 +295,13 @@
      "name": "mot_de_passe",
      "type": "string",
      "required": false,
-     "sensitive": true
+     "sensitive": true,
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Mot de passe"
+      }
+     ]
     },
     {
      "id": "fld_profil_telephone",
@@ -437,7 +443,13 @@
        ]
       }
      ],
-     "sensitive": false
+     "sensitive": false,
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Spécialité"
+      }
+     ]
     },
     {
      "id": "fld_vendeur_description",
@@ -933,7 +945,31 @@
        ]
       }
      ],
-     "sensitive": false
+     "sensitive": false,
+     "enumTones": [
+      {
+       "value": "en_attente",
+       "tone": "warn"
+      },
+      {
+       "value": "confirmee",
+       "tone": "success"
+      },
+      {
+       "value": "livree",
+       "tone": "success"
+      },
+      {
+       "value": "annulee",
+       "tone": "error"
+      }
+     ],
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Statut"
+      }
+     ]
     },
     {
      "id": "fld_commande_montant_total",
@@ -1107,7 +1143,13 @@
      "name": "numero_carte",
      "type": "string",
      "required": true,
-     "sensitive": true
+     "sensitive": true,
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Numéro de carte"
+      }
+     ]
     },
     {
      "id": "fld_paiement_expiration",
@@ -1126,7 +1168,13 @@
      "name": "cvv",
      "type": "string",
      "required": true,
-     "sensitive": true
+     "sensitive": true,
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Code de sécurité"
+      }
+     ]
     },
     {
      "id": "fld_paiement_montant",
@@ -1179,7 +1227,13 @@
        ]
       }
      ],
-     "sensitive": false
+     "sensitive": false,
+     "label": [
+      {
+       "locale": "fr",
+       "text": "Statut"
+      }
+     ]
     },
     {
      "id": "fld_paiement_date",

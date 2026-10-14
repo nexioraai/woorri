@@ -714,13 +714,25 @@
           "name": "numero",
           "required": true,
           "type": "string",
-          "unique": true
+          "unique": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Numéro"
+            }
+          ]
         },
         {
           "id": "fld_commande_date",
           "name": "date_creation",
           "required": true,
-          "type": "datetime"
+          "type": "datetime",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Date de création"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -736,19 +748,37 @@
           "id": "fld_commande_statut",
           "name": "statut",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Statut"
+            }
+          ]
         },
         {
           "id": "fld_commande_lignes",
           "name": "lignes",
           "required": true,
-          "type": "json"
+          "type": "json",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Lignes"
+            }
+          ]
         },
         {
           "id": "fld_commande_total",
           "name": "total",
           "required": true,
-          "type": "decimal"
+          "type": "decimal",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Total"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -757,49 +787,97 @@
           "id": "fld_commande_devise",
           "name": "devise",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Devise"
+            }
+          ]
         },
         {
           "id": "fld_commande_email",
           "name": "email_client",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "E-mail du client"
+            }
+          ]
         },
         {
           "id": "fld_commande_telephone",
           "name": "telephone_client",
           "required": false,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Téléphone du client"
+            }
+          ]
         },
         {
           "id": "fld_commande_adresse_livraison",
           "name": "adresse_livraison",
           "required": true,
-          "type": "text"
+          "type": "text",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Adresse de livraison"
+            }
+          ]
         },
         {
           "id": "fld_commande_transporteur",
           "name": "transporteur",
           "required": false,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Transporteur"
+            }
+          ]
         },
         {
           "id": "fld_commande_suivi",
           "name": "numero_suivi",
           "required": false,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Numéro de suivi"
+            }
+          ]
         },
         {
           "id": "fld_commande_paiement_reference",
           "name": "reference_paiement",
           "required": false,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Référence du paiement"
+            }
+          ]
         },
         {
           "id": "fld_commande_livraison_estimee",
           "name": "livraison_estimee",
           "required": false,
-          "type": "date"
+          "type": "date",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Livraison estimée"
+            }
+          ]
         }
       ],
       "id": "ent_commande",

@@ -393,19 +393,37 @@
           "id": "fld_animal_nom",
           "name": "nom",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Nom"
+            }
+          ]
         },
         {
           "id": "fld_animal_photo",
           "name": "photo",
           "required": false,
-          "type": "asset"
+          "type": "asset",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Photo"
+            }
+          ]
         },
         {
           "id": "fld_animal_race",
           "name": "race",
           "required": false,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Race"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -415,55 +433,129 @@
           "id": "fld_animal_sexe",
           "name": "sexe",
           "required": false,
-          "type": "enum"
+          "type": "enum",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Sexe"
+            }
+          ],
+          "enumLabels": [
+            {
+              "value": "male",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Mâle"
+                }
+              ]
+            },
+            {
+              "value": "femelle",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Femelle"
+                }
+              ]
+            }
+          ]
         },
         {
           "id": "fld_animal_date_naissance",
           "name": "date_naissance",
           "required": false,
-          "type": "date"
+          "type": "date",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Date de naissance"
+            }
+          ]
         },
         {
           "id": "fld_animal_poids_kg",
           "name": "poids_kg",
           "required": false,
-          "type": "decimal"
+          "type": "decimal",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Poids (kg)"
+            }
+          ]
         },
         {
           "id": "fld_animal_proprietaire",
           "name": "proprietaire",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Propriétaire"
+            }
+          ]
         },
         {
           "id": "fld_animal_telephone",
           "name": "telephone",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Téléphone"
+            }
+          ]
         },
         {
           "id": "fld_animal_vaccin_date",
           "name": "vaccination_derniere",
           "required": false,
-          "type": "date"
+          "type": "date",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Dernière vaccination"
+            }
+          ]
         },
         {
           "id": "fld_animal_vaccin_rappel",
           "name": "vaccination_rappel",
           "required": false,
-          "type": "date"
+          "type": "date",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Rappel de vaccination"
+            }
+          ]
         },
         {
           "id": "fld_animal_rappel_actif",
           "name": "rappel_actif",
           "required": true,
-          "type": "boolean"
+          "type": "boolean",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Rappel actif"
+            }
+          ]
         },
         {
           "id": "fld_animal_notes",
           "name": "notes",
           "required": false,
-          "type": "text"
+          "type": "text",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Notes"
+            }
+          ]
         }
       ],
       "id": "ent_animal",
@@ -476,13 +568,25 @@
           "name": "animal",
           "referencesEntityId": "ent_animal",
           "required": true,
-          "type": "reference"
+          "type": "reference",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Animal"
+            }
+          ]
         },
         {
           "id": "fld_rdv_date_heure",
           "name": "date_heure",
           "required": true,
-          "type": "datetime"
+          "type": "datetime",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Date et heure"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -495,13 +599,72 @@
           "id": "fld_rdv_prestation",
           "name": "prestation",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "bain",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Bain"
+                }
+              ]
+            },
+            {
+              "value": "tonte",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Tonte"
+                }
+              ]
+            },
+            {
+              "value": "coupe_ciseaux",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Coupe aux ciseaux"
+                }
+              ]
+            },
+            {
+              "value": "demelage",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Démêlage"
+                }
+              ]
+            },
+            {
+              "value": "soin_complet",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Soin complet"
+                }
+              ]
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Prestation"
+            }
+          ]
         },
         {
           "id": "fld_rdv_duree_minutes",
           "name": "duree_minutes",
           "required": false,
-          "type": "number"
+          "type": "number",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Durée (minutes)"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -513,19 +676,89 @@
           "id": "fld_rdv_statut",
           "name": "statut",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "demande",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Demande"
+                }
+              ]
+            },
+            {
+              "value": "confirme",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Confirmé"
+                }
+              ]
+            },
+            {
+              "value": "honore",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Honoré"
+                }
+              ]
+            },
+            {
+              "value": "annule",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Annulé"
+                }
+              ]
+            }
+          ],
+          "enumTones": [
+            {
+              "value": "confirme",
+              "tone": "success"
+            },
+            {
+              "value": "honore",
+              "tone": "success"
+            },
+            {
+              "value": "annule",
+              "tone": "error"
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Statut"
+            }
+          ]
         },
         {
           "id": "fld_rdv_prix_estime",
           "name": "prix_estime",
           "required": false,
-          "type": "decimal"
+          "type": "decimal",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Prix estimé"
+            }
+          ]
         },
         {
           "id": "fld_rdv_notes",
           "name": "notes",
           "required": false,
-          "type": "text"
+          "type": "text",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Notes"
+            }
+          ]
         }
       ],
       "id": "ent_rendez_vous",
@@ -544,7 +777,13 @@
           "id": "fld_visite_date",
           "name": "date_visite",
           "required": true,
-          "type": "date"
+          "type": "date",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Date de la visite"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -557,7 +796,60 @@
           "id": "fld_visite_prestation",
           "name": "prestation",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "bain",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Bain"
+                }
+              ]
+            },
+            {
+              "value": "tonte",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Tonte"
+                }
+              ]
+            },
+            {
+              "value": "coupe_ciseaux",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Coupe aux ciseaux"
+                }
+              ]
+            },
+            {
+              "value": "demelage",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Démêlage"
+                }
+              ]
+            },
+            {
+              "value": "soin_complet",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Soin complet"
+                }
+              ]
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Prestation"
+            }
+          ]
         },
         {
           "id": "fld_visite_toiletteur",
@@ -569,7 +861,13 @@
           "id": "fld_visite_montant_regle",
           "name": "montant_regle",
           "required": true,
-          "type": "decimal"
+          "type": "decimal",
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Montant réglé"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -580,7 +878,42 @@
           "id": "fld_visite_mode_paiement",
           "name": "mode_paiement",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "especes_sur_place",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Espèces sur place"
+                }
+              ]
+            },
+            {
+              "value": "carte_sur_place",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Carte sur place"
+                }
+              ]
+            },
+            {
+              "value": "cheque_sur_place",
+              "label": [
+                {
+                  "locale": "fr-FR",
+                  "text": "Chèque sur place"
+                }
+              ]
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr-FR",
+              "text": "Mode de paiement"
+            }
+          ]
         },
         {
           "id": "fld_visite_photo_apres",

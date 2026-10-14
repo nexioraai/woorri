@@ -11,7 +11,7 @@
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 // E1/E2 (D-129) — la vérité des lignes visibles vit dans un module PUR.
 import { champsDeSaisie } from "./champs-de-saisie";
-import {lignesVisibles, optionsDistinctes, formatValeur} from "./list-pipeline";
+import { lignesVisibles, optionsDistinctes, formatValeur, formatDate } from "./list-pipeline";
 import type { FiltreEffectif, OperateurFiltre } from "./list-pipeline";
 import { usePortAgent } from "./agent-racine";
 import type { AgentProposition } from "./agent-contract";
@@ -30,7 +30,12 @@ import {
   ProseBlock,
   SearchEntryBlock,
 } from "../blocks/components";
-import type { AgentBlockProps, FormFieldSpec, ListItemData } from "../blocks/contracts";
+import type {
+  AgentBlockProps,
+  BadgeTone,
+  FormFieldSpec,
+  ListItemData,
+} from "../blocks/contracts";
 import { useDataProvider } from "./data-provider";
 import { useSlotRegistry } from "./slot-provider";
 import { detientLeDroit } from "./acces";
@@ -98,6 +103,13 @@ export interface AirFieldData {
       dans la langue de l'app ; absents = comportement 1.9.0 (name/valeur). */
   label?: string;
   enumLabels?: Readonly<Record<string, string>>;
+  /**
+   * LE SENS D'UNE VALEUR D'ÉTAT (AIR 1.43.0) — « payé » est bon, « échec »
+   * est mauvais. Le moteur ne le déduit pas : il ne connaît aucune langue,
+   * et EP-201 lui interdit tout dictionnaire de sens, pour la même raison
+   * qu'aucun nom de pays n'y figure. Absent ⇒ pastille neutre.
+   */
+  enumTones?: Readonly<Record<string, string>>;
   /** 1.21.0 — unité d'affichage (« FCFA ») : le nombre se formate, l'unité
       vient du document. */
   unit?: string;
@@ -374,6 +386,34 @@ function useBlockVisible(screen: AirScreenData, blockId: string): boolean {
  * La résolution n'a lieu que si le document a DÉCLARÉ quoi montrer. Sans
  * déclaration, l'identifiant reste affiché — on ne devine pas.
  */
+/**
+ * LE SENS D'UNE VALEUR, résolu comme son libellé l'est déjà.
+ *
+ * Mesuré le 2026-10-13 : la primitive `Badge` acceptait un `tone` depuis
+ * l'origine, et `success`/`warn`/`error` étaient déclarés dans la feuille de
+ * style. ZÉRO usage — aucune des deux surfaces qui affichent un badge ne
+ * pouvait le transmettre. Toutes les pastilles sortaient donc du même gris,
+ * et vingt lignes d'une liste étaient rigoureusement indistinguables.
+ *
+ * Il ne lit QUE ce que le document déclare. Pas de repli, pas de devinette :
+ * une valeur sans sens déclaré n'en reçoit aucun.
+ */
+function useResolveTone(
+  screen: AirScreenData,
+  entityId: string | undefined,
+): (fieldId: unknown, brut: string | undefined) => BadgeTone | undefined {
+  return (fieldId, brut) => {
+    if (typeof fieldId !== "string" || brut === undefined || entityId === undefined) {
+      return undefined;
+    }
+    const champ = screen.entities[entityId]?.fields.find((f) => f.id === fieldId);
+    const ton = champ?.enumTones?.[brut];
+    return ton === "success" || ton === "warn" || ton === "error" || ton === "neutral"
+      ? ton
+      : undefined;
+  };
+}
+
 function useResolveField(
   screen: AirScreenData,
   entityId: string | undefined,
@@ -392,6 +432,18 @@ function useResolveField(
     // une DONNÉE du document — le moteur n'en invente aucune (F3).
     if (champ?.unit !== undefined) {
       return formatValeur(brut, champ.unit);
+    }
+    // ── UNE DATE NE SE MONTRE PAS EN ISO (2026-10-13).
+    //
+    // Mesuré en montant les écrans d'une application générée pour lire le
+    // texte RÉELLEMENT rendu : « 2026-12-21T21:47:00.000Z » en sous-titre
+    // d'une liste de mouvements. Un horodatage machine, fuseau et
+    // millisecondes compris, sous les yeux d'un client.
+    //
+    // Posé ici, dans le résolveur UNIQUE, et non dans chaque bloc : c'est le
+    // seul endroit par lequel une valeur passe avant d'être affichée.
+    if (champ?.type === "datetime" || champ?.type === "date") {
+      return formatDate(brut, champ.type === "datetime");
     }
     // ── UN BOOLÉEN NE SE MONTRE PAS « true ».
     //
@@ -888,6 +940,7 @@ export function AirDetailHeader({
   const provider = useDataProvider();
   const statut = useDataStatus(b.entityId);
   const resoudre = useResolveField(screen, b.entityId);
+  const ton = useResolveTone(screen, b.entityId);
   if (!visible) return null;
   if (b.entityId === undefined) throw new Error(`AIR_RUNTIME_ENTITY_MISSING:${blockId}`);
   const instance = provider.getInstance(b.entityId, itemId);
@@ -948,6 +1001,7 @@ export function AirList({ screen, blockId, itemId }: BlockRef & { itemId?: strin
   const provider = useDataProvider();
   const statut = useDataStatus(b.entityId);
   const resoudre = useResolveField(screen, b.entityId);
+  const ton = useResolveTone(screen, b.entityId);
   // Saisie de recherche — LOCALE à la liste : chercher dans un catalogue n'est
   // pas un état d'application, et le partager entre écrans surprendrait.
   const [recherche, setRecherche] = useState("");
@@ -1082,6 +1136,10 @@ export function AirList({ screen, blockId, itemId }: BlockRef & { itemId?: strin
     subtitle: pick(props.subtitleFieldId, instance.values),
     trailing: pick(props.trailingFieldId, instance.values),
     badge: pick(props.badgeFieldId, instance.values),
+    // Le SENS vient de la valeur BRUTE, pas du libellé : c'est le code qui
+    // est déclaré dans `enumTones`, et le libellé peut être n'importe quel
+    // texte dans n'importe quelle langue.
+    badgeTone: ton(props.badgeFieldId, instance.values[String(props.badgeFieldId)]),
   }));
   const emptyTitle = str(props.emptyTitle);
   const loadingTitle = str(props.loadingTitle);

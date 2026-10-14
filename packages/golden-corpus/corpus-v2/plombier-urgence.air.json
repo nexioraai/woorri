@@ -556,19 +556,37 @@
           "name": "reference",
           "required": true,
           "type": "string",
-          "unique": true
+          "unique": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Référence"
+            }
+          ]
         },
         {
           "id": "fld_demande_titre",
           "name": "titre",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Titre"
+            }
+          ]
         },
         {
           "id": "fld_demande_description",
           "name": "description",
           "required": true,
-          "type": "text"
+          "type": "text",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Description"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -583,7 +601,78 @@
           "id": "fld_demande_categorie",
           "name": "categorie",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Catégorie"
+            }
+          ],
+          "enumLabels": [
+            {
+              "value": "fuite",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Fuite"
+                }
+              ]
+            },
+            {
+              "value": "canalisation_bouchee",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Canalisation bouchée"
+                }
+              ]
+            },
+            {
+              "value": "chauffe_eau",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Chauffe-eau"
+                }
+              ]
+            },
+            {
+              "value": "robinetterie",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Robinetterie"
+                }
+              ]
+            },
+            {
+              "value": "wc",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "WC"
+                }
+              ]
+            },
+            {
+              "value": "installation",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Installation"
+                }
+              ]
+            },
+            {
+              "value": "autre",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Autre"
+                }
+              ]
+            }
+          ]
         },
         {
           "enumValues": [
@@ -594,7 +683,48 @@
           "id": "fld_demande_urgence",
           "name": "urgence",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Urgence"
+            }
+          ],
+          "enumLabels": [
+            {
+              "value": "normale",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Normale"
+                }
+              ]
+            },
+            {
+              "value": "rapide",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Rapide"
+                }
+              ]
+            },
+            {
+              "value": "urgence",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Urgence"
+                }
+              ]
+            }
+          ],
+          "enumTones": [
+            {
+              "value": "urgence",
+              "tone": "error"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -609,49 +739,172 @@
           "id": "fld_demande_statut",
           "name": "statut",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "nouvelle",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Nouvelle"
+                }
+              ]
+            },
+            {
+              "value": "prise_en_charge",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Prise en charge"
+                }
+              ]
+            },
+            {
+              "value": "visite_planifiee",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Visite planifiée"
+                }
+              ]
+            },
+            {
+              "value": "devis_envoye",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Devis envoyé"
+                }
+              ]
+            },
+            {
+              "value": "intervention_planifiee",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Intervention planifiée"
+                }
+              ]
+            },
+            {
+              "value": "terminee",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Terminée"
+                }
+              ]
+            },
+            {
+              "value": "annulee",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Annulée"
+                }
+              ]
+            }
+          ],
+          "enumTones": [
+            {
+              "value": "terminee",
+              "tone": "success"
+            },
+            {
+              "value": "annulee",
+              "tone": "error"
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Statut"
+            }
+          ]
         },
         {
           "id": "fld_demande_adresse_intervention",
           "name": "adresse_intervention",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Adresse d'intervention"
+            }
+          ]
         },
         {
           "id": "fld_demande_code_postal",
           "name": "code_postal",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Code postal"
+            }
+          ]
         },
         {
           "id": "fld_demande_ville",
           "name": "ville",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Ville"
+            }
+          ]
         },
         {
           "id": "fld_demande_latitude",
           "name": "latitude",
           "required": false,
-          "type": "decimal"
+          "type": "decimal",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Latitude"
+            }
+          ]
         },
         {
           "id": "fld_demande_longitude",
           "name": "longitude",
           "required": false,
-          "type": "decimal"
+          "type": "decimal",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Longitude"
+            }
+          ]
         },
         {
           "id": "fld_demande_complement_acces",
           "name": "complement_acces",
           "required": false,
-          "type": "text"
+          "type": "text",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Complément d'accès"
+            }
+          ]
         },
         {
           "id": "fld_demande_date_souhaitee",
           "name": "date_souhaitee",
           "required": false,
-          "type": "date"
+          "type": "date",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Date souhaitée"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -663,32 +916,100 @@
           "id": "fld_demande_creneau",
           "name": "creneau",
           "required": false,
-          "type": "enum"
+          "type": "enum",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Créneau"
+            }
+          ],
+          "enumLabels": [
+            {
+              "value": "matin",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Matin"
+                }
+              ]
+            },
+            {
+              "value": "apres_midi",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Après-midi"
+                }
+              ]
+            },
+            {
+              "value": "soiree",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Soirée"
+                }
+              ]
+            },
+            {
+              "value": "indifferent",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Indifférent"
+                }
+              ]
+            }
+          ]
         },
         {
           "id": "fld_demande_message_plombier",
           "name": "message_plombier",
           "required": false,
-          "type": "text"
+          "type": "text",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Message au plombier"
+            }
+          ]
         },
         {
           "id": "fld_demande_cree_le",
           "name": "cree_le",
           "required": true,
-          "type": "datetime"
+          "type": "datetime",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Créé le"
+            }
+          ]
         },
         {
           "id": "fld_demande_maj_le",
           "name": "maj_le",
           "required": true,
-          "type": "datetime"
+          "type": "datetime",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Mis à jour le"
+            }
+          ]
         },
         {
           "id": "fld_demande_client",
           "name": "client",
           "referencesEntityId": "ent_client",
           "required": true,
-          "type": "reference"
+          "type": "reference",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Client"
+            }
+          ]
         }
       ],
       "id": "ent_demande",
@@ -706,13 +1027,25 @@
           "id": "fld_photo_legende",
           "name": "legende",
           "required": false,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Légende"
+            }
+          ]
         },
         {
           "id": "fld_photo_ajoutee_le",
           "name": "ajoutee_le",
           "required": true,
-          "type": "datetime"
+          "type": "datetime",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Ajoutée le"
+            }
+          ]
         },
         {
           "id": "fld_photo_demande",

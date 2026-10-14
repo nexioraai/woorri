@@ -391,6 +391,7 @@ export function GridCard({
   subtitle,
   trailing,
   badge,
+  badgeTone,
   imageUri,
   onPress,
   testID,
@@ -428,7 +429,7 @@ export function GridCard({
         {subtitle !== undefined && (
           <Text style={s.rowSubtitle}>{subtitle}</Text>
         )}
-        {badge !== undefined && <Badge label={badge} />}
+        {badge !== undefined && <Badge label={badge} tone={badgeTone} />}
         {trailing !== undefined && <Text style={s.gridCardTrailing}>{trailing}</Text>}
       </View>
     </>
@@ -458,6 +459,7 @@ export function ListRow({
   title,
   subtitle,
   badge,
+  badgeTone,
   trailing,
   leading,
   onPress,
@@ -471,7 +473,7 @@ export function ListRow({
       <View style={s.rowBody}>
         <Text style={s.rowTitle}>{title}</Text>
         {subtitle !== undefined && <Text style={s.rowSubtitle}>{subtitle}</Text>}
-        {badge !== undefined && <Badge label={badge} />}
+        {badge !== undefined && <Badge label={badge} tone={badgeTone} />}
       </View>
       {trailing !== undefined && <Text style={s.rowTrailing}>{trailing}</Text>}
     </>

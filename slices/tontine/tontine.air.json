@@ -190,7 +190,17 @@
             }
           ],
           "type": "string",
-          "required": true
+          "required": true,
+          "demoValues": [
+            "Amadou Bello",
+            "Samuel Eto'o",
+            "Marthe Ngo Bakoa",
+            "Ibrahim Sali",
+            "Clarisse Mbarga",
+            "Joseph Tchoupo",
+            "Fatima Aliou",
+            "Pierre Nkoulou"
+          ]
         },
         {
           "id": "fld_utilisateurs_telephone",
@@ -203,7 +213,13 @@
           ],
           "type": "string",
           "required": false,
-          "unique": true
+          "unique": true,
+          "demoValues": [
+            "+237 6 55 01 02 03",
+            "+237 6 99 14 15 16",
+            "+237 6 77 28 29 30",
+            "+237 6 70 41 42 43"
+          ]
         },
         {
           "id": "fld_utilisateurs_est_sans_telephone",
@@ -307,7 +323,13 @@
             }
           ],
           "type": "string",
-          "required": true
+          "required": true,
+          "demoValues": [
+            "Tontine des Amis",
+            "Njangi du Marche",
+            "Cercle Familial",
+            "Groupe Espoir"
+          ]
         },
         {
           "id": "fld_tontines_montant_cotisation",
@@ -319,7 +341,8 @@
             }
           ],
           "type": "decimal",
-          "required": true
+          "required": true,
+          "unit": "XAF"
         },
         {
           "id": "fld_tontines_frequence",
@@ -352,7 +375,8 @@
             "kind": "sum",
             "relationId": "rel_transaction_tontine",
             "fieldId": "fld_transactions_montant_enchere"
-          }
+          },
+          "unit": "XAF"
         },
         {
           "id": "fld_tontines_taux_penalite_jour",
@@ -364,7 +388,8 @@
             }
           ],
           "type": "decimal",
-          "required": true
+          "required": true,
+          "unit": "%"
         },
         {
           "id": "fld_tontines_statut",
@@ -418,7 +443,13 @@
           ],
           "type": "string",
           "required": true,
-          "unique": true
+          "unique": true,
+          "demoValues": [
+            "TNT-4821",
+            "TNT-9043",
+            "TNT-1576",
+            "TNT-6209"
+          ]
         },
         {
           "id": "fld_tontines_cree_le",
@@ -482,7 +513,8 @@
               "operateur": "eq",
               "valeur": "ENCHERE"
             }
-          }
+          },
+          "unit": "XAF"
         },
         {
           "id": "fld_tontines_enchere_gagnante",
@@ -568,6 +600,53 @@
             "TRESORIER",
             "CENSEUR",
             "MEMBRE"
+          ],
+          "enumLabels": [
+            {
+              "value": "PRESIDENT",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Président"
+                }
+              ]
+            },
+            {
+              "value": "SECRETAIRE",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Secrétaire"
+                }
+              ]
+            },
+            {
+              "value": "TRESORIER",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Trésorier"
+                }
+              ]
+            },
+            {
+              "value": "CENSEUR",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Censeur"
+                }
+              ]
+            },
+            {
+              "value": "MEMBRE",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Membre"
+                }
+              ]
+            }
           ]
         },
         {
@@ -592,7 +671,8 @@
             }
           ],
           "type": "decimal",
-          "required": true
+          "required": true,
+          "unit": "XAF"
         },
         {
           "id": "fld_membres_tontine_statut_paiement",
@@ -603,13 +683,68 @@
             "NON_PAYE",
             "PAYE",
             "RETARD"
+          ],
+          "enumLabels": [
+            {
+              "value": "NON_PAYE",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Non payé"
+                }
+              ]
+            },
+            {
+              "value": "PAYE",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Payé"
+                }
+              ]
+            },
+            {
+              "value": "RETARD",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "En retard"
+                }
+              ]
+            }
+          ],
+          "enumTones": [
+            {
+              "value": "NON_PAYE",
+              "tone": "error"
+            },
+            {
+              "value": "PAYE",
+              "tone": "success"
+            },
+            {
+              "value": "RETARD",
+              "tone": "warn"
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Statut du paiement"
+            }
           ]
         },
         {
           "id": "fld_membres_tontine_horodatage_paiement",
           "name": "horodatage_paiement",
           "type": "datetime",
-          "required": false
+          "required": false,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Horodatage du paiement"
+            }
+          ]
         }
       ]
     },
@@ -691,6 +826,67 @@
             "AMENDE_DISCIPLINAIRE",
             "DISTRIBUTION_INTERETS",
             "PAYOUT_POT"
+          ],
+          "enumLabels": [
+            {
+              "value": "COTISATION",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Cotisation"
+                }
+              ]
+            },
+            {
+              "value": "ENCHERE",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Enchère"
+                }
+              ]
+            },
+            {
+              "value": "AMENDE_DISCIPLINAIRE",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Amende disciplinaire"
+                }
+              ]
+            },
+            {
+              "value": "DISTRIBUTION_INTERETS",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Distribution d'intérêts"
+                }
+              ]
+            },
+            {
+              "value": "PAYOUT_POT",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Versement du pot"
+                }
+              ]
+            }
+          ],
+          "enumTones": [
+            {
+              "value": "AMENDE_DISCIPLINAIRE",
+              "tone": "warn"
+            },
+            {
+              "value": "DISTRIBUTION_INTERETS",
+              "tone": "success"
+            },
+            {
+              "value": "PAYOUT_POT",
+              "tone": "success"
+            }
           ]
         },
         {
@@ -703,7 +899,8 @@
             }
           ],
           "type": "decimal",
-          "required": true
+          "required": true,
+          "unit": "XAF"
         },
         {
           "id": "fld_transactions_montant_enchere",
@@ -715,7 +912,8 @@
             }
           ],
           "type": "decimal",
-          "required": true
+          "required": true,
+          "unit": "XAF"
         },
         {
           "id": "fld_transactions_frais_reseau_mobile",
@@ -727,7 +925,8 @@
             }
           ],
           "type": "decimal",
-          "required": true
+          "required": true,
+          "unit": "XAF"
         },
         {
           "id": "fld_transactions_montant_penalite",
@@ -739,7 +938,8 @@
             }
           ],
           "type": "decimal",
-          "required": true
+          "required": true,
+          "unit": "XAF"
         },
         {
           "id": "fld_transactions_part_penalite_createur",
@@ -766,7 +966,8 @@
                 "valeur": 0.3
               }
             }
-          }
+          },
+          "unit": "XAF"
         },
         {
           "id": "fld_transactions_part_penalite_tontine",
@@ -793,7 +994,8 @@
                 "valeur": 0.7
               }
             }
-          }
+          },
+          "unit": "XAF"
         },
         {
           "id": "fld_transactions_commission_plateforme",
@@ -805,7 +1007,8 @@
             }
           ],
           "type": "decimal",
-          "required": true
+          "required": true,
+          "unit": "XAF"
         },
         {
           "id": "fld_transactions_total_paye",
@@ -817,7 +1020,8 @@
             }
           ],
           "type": "decimal",
-          "required": true
+          "required": true,
+          "unit": "XAF"
         },
         {
           "id": "fld_transactions_operateur",
@@ -846,7 +1050,13 @@
             }
           ],
           "type": "string",
-          "required": false
+          "required": false,
+          "demoValues": [
+            "OM-20261101-7741",
+            "MTN-20261105-3182",
+            "OM-20261113-9064",
+            "MTN-20261118-2297"
+          ]
         },
         {
           "id": "fld_transactions_code_otp_payout",
@@ -893,6 +1103,58 @@
             {
               "from": "SEQUESTRE_BLOQUE",
               "to": "ECHEC"
+            }
+          ],
+          "enumLabels": [
+            {
+              "value": "EN_ATTENTE",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "En attente"
+                }
+              ]
+            },
+            {
+              "value": "SEQUESTRE_BLOQUE",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Bloqué en séquestre"
+                }
+              ]
+            },
+            {
+              "value": "PAYOUT_SUCCES",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Versement effectué"
+                }
+              ]
+            },
+            {
+              "value": "ECHEC",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Échec"
+                }
+              ]
+            }
+          ],
+          "enumTones": [
+            {
+              "value": "EN_ATTENTE",
+              "tone": "warn"
+            },
+            {
+              "value": "PAYOUT_SUCCES",
+              "tone": "success"
+            },
+            {
+              "value": "ECHEC",
+              "tone": "error"
             }
           ]
         },

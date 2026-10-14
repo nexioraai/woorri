@@ -571,31 +571,61 @@
           "name": "nom",
           "required": true,
           "type": "string",
-          "unique": true
+          "unique": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Nom"
+            }
+          ]
         },
         {
           "id": "fld_prestation_description",
           "name": "description",
           "required": false,
-          "type": "text"
+          "type": "text",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Description"
+            }
+          ]
         },
         {
           "id": "fld_prestation_duree_minutes",
           "name": "duree_minutes",
           "required": true,
-          "type": "number"
+          "type": "number",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Durée (minutes)"
+            }
+          ]
         },
         {
           "id": "fld_prestation_prix_indicatif",
           "name": "prix_indicatif",
           "required": false,
-          "type": "decimal"
+          "type": "decimal",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Prix indicatif"
+            }
+          ]
         },
         {
           "id": "fld_prestation_duree_libelle",
           "name": "duree_libelle",
           "required": false,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Durée"
+            }
+          ]
         },
         {
           "id": "fld_prestation_active",
@@ -613,25 +643,49 @@
           "id": "fld_coiffeur_nom",
           "name": "nom",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Nom"
+            }
+          ]
         },
         {
           "id": "fld_coiffeur_specialite",
           "name": "specialite",
           "required": false,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Spécialité"
+            }
+          ]
         },
         {
           "id": "fld_coiffeur_presentation",
           "name": "presentation",
           "required": false,
-          "type": "text"
+          "type": "text",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Présentation"
+            }
+          ]
         },
         {
           "id": "fld_coiffeur_actif",
           "name": "actif",
           "required": true,
-          "type": "boolean"
+          "type": "boolean",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Actif"
+            }
+          ]
         }
       ],
       "id": "ent_coiffeur",
@@ -643,7 +697,13 @@
           "id": "fld_creneau_libelle",
           "name": "libelle",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Libellé"
+            }
+          ]
         },
         {
           "id": "fld_creneau_debut",
@@ -661,7 +721,13 @@
           "id": "fld_creneau_duree_minutes",
           "name": "duree_minutes",
           "required": true,
-          "type": "number"
+          "type": "number",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Durée (minutes)"
+            }
+          ]
         },
         {
           "id": "fld_creneau_prestation",
@@ -677,7 +743,13 @@
           "referenceDisplayFieldId": "fld_coiffeur_nom",
           "referencesEntityId": "ent_coiffeur",
           "required": true,
-          "type": "reference"
+          "type": "reference",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Coiffeur"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -688,7 +760,52 @@
           "id": "fld_creneau_statut",
           "name": "statut",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "disponible",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Disponible"
+                }
+              ]
+            },
+            {
+              "value": "reserve",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Réservé"
+                }
+              ]
+            },
+            {
+              "value": "indisponible",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Indisponible"
+                }
+              ]
+            }
+          ],
+          "enumTones": [
+            {
+              "value": "disponible",
+              "tone": "success"
+            },
+            {
+              "value": "indisponible",
+              "tone": "error"
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Statut"
+            }
+          ]
         }
       ],
       "id": "ent_creneau",
@@ -701,25 +818,49 @@
           "name": "reference",
           "required": true,
           "type": "string",
-          "unique": true
+          "unique": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Référence"
+            }
+          ]
         },
         {
           "id": "fld_rdv_client_nom",
           "name": "client_nom",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Nom du client"
+            }
+          ]
         },
         {
           "id": "fld_rdv_client_telephone",
           "name": "client_telephone",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Téléphone du client"
+            }
+          ]
         },
         {
           "id": "fld_rdv_client_email",
           "name": "client_email",
           "required": false,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "E-mail du client"
+            }
+          ]
         },
         {
           "id": "fld_rdv_prestation",
@@ -727,7 +868,13 @@
           "referenceDisplayFieldId": "fld_prestation_nom",
           "referencesEntityId": "ent_prestation",
           "required": true,
-          "type": "reference"
+          "type": "reference",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Prestation"
+            }
+          ]
         },
         {
           "id": "fld_rdv_creneau",
@@ -735,7 +882,13 @@
           "referenceDisplayFieldId": "fld_creneau_libelle",
           "referencesEntityId": "ent_creneau",
           "required": true,
-          "type": "reference"
+          "type": "reference",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Créneau"
+            }
+          ]
         },
         {
           "id": "fld_rdv_coiffeur",
@@ -743,13 +896,25 @@
           "referenceDisplayFieldId": "fld_coiffeur_nom",
           "referencesEntityId": "ent_coiffeur",
           "required": false,
-          "type": "reference"
+          "type": "reference",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Coiffeur"
+            }
+          ]
         },
         {
           "id": "fld_rdv_date_heure",
           "name": "date_heure",
           "required": true,
-          "type": "datetime"
+          "type": "datetime",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Date et heure"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -761,31 +926,117 @@
           "id": "fld_rdv_statut",
           "name": "statut",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "en_attente",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "En attente"
+                }
+              ]
+            },
+            {
+              "value": "confirme",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Confirmé"
+                }
+              ]
+            },
+            {
+              "value": "annule",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Annulé"
+                }
+              ]
+            },
+            {
+              "value": "honore",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Honoré"
+                }
+              ]
+            }
+          ],
+          "enumTones": [
+            {
+              "value": "en_attente",
+              "tone": "warn"
+            },
+            {
+              "value": "confirme",
+              "tone": "success"
+            },
+            {
+              "value": "annule",
+              "tone": "error"
+            },
+            {
+              "value": "honore",
+              "tone": "success"
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Statut"
+            }
+          ]
         },
         {
           "id": "fld_rdv_notes",
           "name": "notes",
           "required": false,
-          "type": "text"
+          "type": "text",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Notes"
+            }
+          ]
         },
         {
           "id": "fld_rdv_paiement_sur_place",
           "name": "paiement_sur_place",
           "required": true,
-          "type": "boolean"
+          "type": "boolean",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Paiement sur place"
+            }
+          ]
         },
         {
           "id": "fld_rdv_rappel_actif",
           "name": "rappel_actif",
           "required": true,
-          "type": "boolean"
+          "type": "boolean",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Rappel actif"
+            }
+          ]
         },
         {
           "id": "fld_rdv_cree_le",
           "name": "cree_le",
           "required": false,
-          "type": "datetime"
+          "type": "datetime",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Créé le"
+            }
+          ]
         }
       ],
       "id": "ent_rendez_vous",
@@ -797,13 +1048,25 @@
           "id": "fld_rappel_titre",
           "name": "titre",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Titre"
+            }
+          ]
         },
         {
           "id": "fld_rappel_message",
           "name": "message",
           "required": true,
-          "type": "text"
+          "type": "text",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Message"
+            }
+          ]
         },
         {
           "id": "fld_rappel_rendez_vous",
@@ -811,13 +1074,25 @@
           "referenceDisplayFieldId": "fld_rdv_reference",
           "referencesEntityId": "ent_rendez_vous",
           "required": true,
-          "type": "reference"
+          "type": "reference",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Rendez-vous"
+            }
+          ]
         },
         {
           "id": "fld_rappel_planifie_le",
           "name": "planifie_le",
           "required": true,
-          "type": "datetime"
+          "type": "datetime",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Planifié le"
+            }
+          ]
         },
         {
           "id": "fld_rappel_delai_heures",
@@ -833,7 +1108,33 @@
           "id": "fld_rappel_canal",
           "name": "canal",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "push",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Notification"
+                }
+              ]
+            },
+            {
+              "value": "local",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Local"
+                }
+              ]
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Canal"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -844,7 +1145,48 @@
           "id": "fld_rappel_statut",
           "name": "statut",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "planifie",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Planifié"
+                }
+              ]
+            },
+            {
+              "value": "envoye",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Envoyé"
+                }
+              ]
+            },
+            {
+              "value": "annule",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Annulé"
+                }
+              ]
+            }
+          ],
+          "enumTones": [
+            {
+              "value": "annule",
+              "tone": "error"
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Statut"
+            }
+          ]
         }
       ],
       "id": "ent_rappel",
@@ -856,19 +1198,37 @@
           "id": "fld_salon_nom",
           "name": "nom",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Nom"
+            }
+          ]
         },
         {
           "id": "fld_salon_adresse",
           "name": "adresse",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Adresse"
+            }
+          ]
         },
         {
           "id": "fld_salon_telephone",
           "name": "telephone",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Téléphone"
+            }
+          ]
         },
         {
           "id": "fld_salon_horaires",
@@ -880,7 +1240,13 @@
           "id": "fld_salon_info_paiement",
           "name": "info_paiement",
           "required": true,
-          "type": "text"
+          "type": "text",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Informations de paiement"
+            }
+          ]
         }
       ],
       "id": "ent_salon",

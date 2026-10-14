@@ -163,6 +163,7 @@ export function ListBlock({
                     subtitle={item.subtitle}
                     trailing={item.trailing}
                     badge={item.badge}
+                    badgeTone={item.badgeTone === undefined || item.badgeTone === "neutral" ? undefined : item.badgeTone}
                     imageUri={item.imageUri}
                     onPress={
                       onItemPress === undefined
@@ -189,6 +190,7 @@ export function ListBlock({
                 subtitle={item.subtitle}
                 trailing={item.trailing}
                 badge={item.badge}
+                badgeTone={item.badgeTone === undefined || item.badgeTone === "neutral" ? undefined : item.badgeTone}
                 onPress={
                   onItemPress === undefined
                     ? undefined
@@ -223,6 +225,7 @@ export function ListBlock({
                 subtitle={item.subtitle}
                 trailing={item.trailing}
                 badge={item.badge}
+                badgeTone={item.badgeTone === undefined || item.badgeTone === "neutral" ? undefined : item.badgeTone}
                 imageUri={item.imageUri}
                 onPress={
                   onItemPress === undefined
@@ -273,6 +276,7 @@ export function ListBlock({
               subtitle={item.subtitle}
               trailing={item.trailing}
               badge={item.badge}
+              badgeTone={item.badgeTone === undefined || item.badgeTone === "neutral" ? undefined : item.badgeTone}
               imageUri={item.imageUri}
               onPress={
                 onItemPress === undefined
@@ -296,6 +300,7 @@ export function ListBlock({
             subtitle={item.subtitle}
             trailing={item.trailing}
             badge={item.badge}
+            badgeTone={item.badgeTone === undefined || item.badgeTone === "neutral" ? undefined : item.badgeTone}
             onPress={
               onItemPress === undefined
                 ? undefined

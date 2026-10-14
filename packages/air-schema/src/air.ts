@@ -25,7 +25,7 @@ import {
 // 1.7.1 (E3.3, D-131) : provenance APLANIE (sourceKind/sourceIntegrationId/
 //   sourceDomain/sourceRefreshSeconds) — l'union 1.7.0 dépassait la limite
 //   réelle de grammaire de l'API (classe D-078) ; sémantique inchangée.
-export const AIR_SCHEMA_VERSION = "1.42.0";
+export const AIR_SCHEMA_VERSION = "1.43.0";
 
 export const semverSchema = z.string().regex(/^\d+\.\d+\.\d+$/);
 export const sha256Schema = z.string().regex(/^[0-9a-f]{64}$/);
@@ -612,6 +612,41 @@ const fieldSchema = z.strictObject({
   // Exigé ssi type=enum / type=reference — cohérence vérifiée par le
   // validateur sémantique (un schéma zod ne voit pas les autres champs).
   enumValues: z.array(z.string().min(1)).min(1).optional(),
+  /**
+   * ── CE QU'UNE VALEUR D'ÉNUMÉRATION SIGNIFIE (1.43.0)
+   *
+   * MESURE : la primitive `Badge` accepte un `tone` depuis l'origine, et
+   * `success` / `warn` / `error` étaient déclarés dans la feuille de style.
+   * Comptés le 2026-10-13 : ZÉRO usage. Aucun bloc ne passait de `tone`, et
+   * toutes les pastilles sortaient donc du même gris — ce qui rendait vingt
+   * lignes d'une liste rigoureusement indistinguables.
+   *
+   * POURQUOI DÉCLARÉ ET NON DÉDUIT. Deviner que « ECHEC » est mauvais et
+   * que « PAYE » est bon exigerait que le moteur connaisse du vocabulaire
+   * métier, dans une langue donnée. C'est exactement ce qu'EP-201 interdit :
+   * aucun nom de pays, aucun nom d'opérateur, et par la même raison aucun
+   * dictionnaire de sens. Le document le dit, ou personne ne le dit.
+   *
+   * QUATRE SENS, PAS CINQ : `neutral` est l'absence de jugement, et il est
+   * le défaut. Les trois autres sont les seules couleurs de sens que la
+   * palette porte — en ajouter une exigerait un jeton de plus, donc une
+   * décision de design, pas une commodité d'écriture.
+   *
+   * LISTE DE PAIRES, PAS UN DICTIONNAIRE — même forme que `enumLabels`, et
+   * pour la même raison déjà payée : l'API de sorties structurées REFUSE
+   * tout `additionalProperties` ouvert (mesuré le 2026-09-09, erreur 400).
+   * Un dictionnaire rendrait le générateur incapable d'émettre ce champ DU
+   * TOUT. La forme n'est donc pas un goût : c'est une contrainte.
+   */
+  enumTones: z
+    .array(
+      z.strictObject({
+        value: z.string().min(1),
+        tone: z.enum(["neutral", "success", "warn", "error"]),
+      }),
+    )
+    .min(1)
+    .optional(),
   referencesEntityId: entityIdSchema.optional(),
   /**
    * LES PASSAGES D'ÉTAT PERMIS (1.30.0) — sur un champ `enum`, et lui seul.

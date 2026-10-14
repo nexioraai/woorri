@@ -586,45 +586,87 @@
           "name": "reference",
           "required": true,
           "type": "string",
-          "unique": true
+          "unique": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Référence"
+            }
+          ]
         },
         {
           "id": "fld_rdv_client_nom",
           "name": "client_nom",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Nom du client"
+            }
+          ]
         },
         {
           "id": "fld_rdv_client_telephone",
           "name": "client_telephone",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Téléphone du client"
+            }
+          ]
         },
         {
           "id": "fld_rdv_client_email",
           "name": "client_email",
           "required": false,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "E-mail du client"
+            }
+          ]
         },
         {
           "id": "fld_rdv_prestation",
           "name": "prestation",
           "referencesEntityId": "ent_prestation",
           "required": true,
-          "type": "reference"
+          "type": "reference",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Prestation"
+            }
+          ]
         },
         {
           "id": "fld_rdv_creneau",
           "name": "creneau",
           "referencesEntityId": "ent_creneau",
           "required": true,
-          "type": "reference"
+          "type": "reference",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Créneau"
+            }
+          ]
         },
         {
           "id": "fld_rdv_debut",
           "name": "debut",
           "required": true,
-          "type": "datetime"
+          "type": "datetime",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Début"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -636,31 +678,61 @@
           "id": "fld_rdv_statut",
           "name": "statut",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Statut"
+            }
+          ]
         },
         {
           "id": "fld_rdv_rappel_actif",
           "name": "rappel_actif",
           "required": true,
-          "type": "boolean"
+          "type": "boolean",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Rappel actif"
+            }
+          ]
         },
         {
           "id": "fld_rdv_rappel_planifie_le",
           "name": "rappel_planifie_le",
           "required": false,
-          "type": "datetime"
+          "type": "datetime",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Rappel planifié le"
+            }
+          ]
         },
         {
           "id": "fld_rdv_notes",
           "name": "notes",
           "required": false,
-          "type": "text"
+          "type": "text",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Notes"
+            }
+          ]
         },
         {
           "id": "fld_rdv_cree_le",
           "name": "cree_le",
           "required": true,
-          "type": "datetime"
+          "type": "datetime",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Créé le"
+            }
+          ]
         }
       ],
       "id": "ent_rendez_vous",

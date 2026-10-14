@@ -367,25 +367,49 @@
           "name": "name",
           "required": true,
           "type": "string",
-          "unique": true
+          "unique": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Nom"
+            }
+          ]
         },
         {
           "id": "fld_service_description",
           "name": "description",
           "required": false,
-          "type": "text"
+          "type": "text",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Description"
+            }
+          ]
         },
         {
           "id": "fld_service_duration_minutes",
           "name": "duration_minutes",
           "required": true,
-          "type": "number"
+          "type": "number",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Durée (minutes)"
+            }
+          ]
         },
         {
           "id": "fld_service_price",
           "name": "price",
           "required": true,
-          "type": "decimal"
+          "type": "decimal",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Prix"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -398,7 +422,60 @@
           "id": "fld_service_category",
           "name": "category",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "coupe",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Coupe"
+                }
+              ]
+            },
+            {
+              "value": "couleur",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Couleur"
+                }
+              ]
+            },
+            {
+              "value": "coiffage",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Coiffage"
+                }
+              ]
+            },
+            {
+              "value": "soin",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Soin"
+                }
+              ]
+            },
+            {
+              "value": "barbe",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Barbe"
+                }
+              ]
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Catégorie"
+            }
+          ]
         },
         {
           "id": "fld_service_is_active",
@@ -422,13 +499,25 @@
           "id": "fld_slot_starts_at",
           "name": "starts_at",
           "required": true,
-          "type": "datetime"
+          "type": "datetime",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Début"
+            }
+          ]
         },
         {
           "id": "fld_slot_ends_at",
           "name": "ends_at",
           "required": true,
-          "type": "datetime"
+          "type": "datetime",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Fin"
+            }
+          ]
         },
         {
           "id": "fld_slot_day",
@@ -440,7 +529,13 @@
           "id": "fld_slot_stylist_name",
           "name": "stylist_name",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Nom du coiffeur"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -452,7 +547,57 @@
           "id": "fld_slot_status",
           "name": "status",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "available",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Disponible"
+                }
+              ]
+            },
+            {
+              "value": "held",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Retenu"
+                }
+              ]
+            },
+            {
+              "value": "booked",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Réservé"
+                }
+              ]
+            },
+            {
+              "value": "closed",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Fermé"
+                }
+              ]
+            }
+          ],
+          "enumTones": [
+            {
+              "value": "available",
+              "tone": "success"
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Statut"
+            }
+          ]
         },
         {
           "id": "fld_slot_service",
@@ -478,39 +623,75 @@
           "name": "reference",
           "required": true,
           "type": "string",
-          "unique": true
+          "unique": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Référence"
+            }
+          ]
         },
         {
           "id": "fld_appt_service",
           "name": "service",
           "referencesEntityId": "ent_service",
           "required": true,
-          "type": "reference"
+          "type": "reference",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Service"
+            }
+          ]
         },
         {
           "id": "fld_appt_slot",
           "name": "slot",
           "referencesEntityId": "ent_time_slot",
           "required": true,
-          "type": "reference"
+          "type": "reference",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Créneau"
+            }
+          ]
         },
         {
           "id": "fld_appt_customer_name",
           "name": "customer_name",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Nom du client"
+            }
+          ]
         },
         {
           "id": "fld_appt_customer_phone",
           "name": "customer_phone",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Téléphone du client"
+            }
+          ]
         },
         {
           "id": "fld_appt_starts_at",
           "name": "starts_at",
           "required": true,
-          "type": "datetime"
+          "type": "datetime",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Début"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -522,31 +703,117 @@
           "id": "fld_appt_status",
           "name": "status",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "pending",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "En attente"
+                }
+              ]
+            },
+            {
+              "value": "confirmed",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Confirmé"
+                }
+              ]
+            },
+            {
+              "value": "cancelled",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Annulé"
+                }
+              ]
+            },
+            {
+              "value": "completed",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Terminé"
+                }
+              ]
+            }
+          ],
+          "enumTones": [
+            {
+              "value": "pending",
+              "tone": "warn"
+            },
+            {
+              "value": "confirmed",
+              "tone": "success"
+            },
+            {
+              "value": "cancelled",
+              "tone": "error"
+            },
+            {
+              "value": "completed",
+              "tone": "success"
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Statut"
+            }
+          ]
         },
         {
           "id": "fld_appt_notes",
           "name": "notes",
           "required": false,
-          "type": "text"
+          "type": "text",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Notes"
+            }
+          ]
         },
         {
           "id": "fld_appt_reminder_enabled",
           "name": "reminder_enabled",
           "required": true,
-          "type": "boolean"
+          "type": "boolean",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Rappel activé"
+            }
+          ]
         },
         {
           "id": "fld_appt_reminder_at",
           "name": "reminder_at",
           "required": false,
-          "type": "datetime"
+          "type": "datetime",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Rappel"
+            }
+          ]
         },
         {
           "id": "fld_appt_created_at",
           "name": "created_at",
           "required": true,
-          "type": "datetime"
+          "type": "datetime",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Créé le"
+            }
+          ]
         }
       ],
       "id": "ent_appointment",

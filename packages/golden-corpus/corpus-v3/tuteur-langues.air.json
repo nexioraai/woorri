@@ -663,14 +663,26 @@
           "id": "fld_utilisateur_nom",
           "name": "nom_complet",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Nom complet"
+            }
+          ]
         },
         {
           "id": "fld_utilisateur_email",
           "name": "email",
           "required": true,
           "type": "string",
-          "unique": true
+          "unique": true,
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Adresse e-mail"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -683,7 +695,60 @@
           "id": "fld_utilisateur_langue_cible",
           "name": "langue_cible",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Langue cible"
+            }
+          ],
+          "enumLabels": [
+            {
+              "value": "francais",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Français"
+                }
+              ]
+            },
+            {
+              "value": "anglais",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Anglais"
+                }
+              ]
+            },
+            {
+              "value": "espagnol",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Espagnol"
+                }
+              ]
+            },
+            {
+              "value": "allemand",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Allemand"
+                }
+              ]
+            },
+            {
+              "value": "italien",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Italien"
+                }
+              ]
+            }
+          ]
         },
         {
           "enumValues": [
@@ -694,31 +759,90 @@
           "id": "fld_utilisateur_niveau",
           "name": "niveau",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Niveau"
+            }
+          ],
+          "enumLabels": [
+            {
+              "value": "debutant",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Débutant"
+                }
+              ]
+            },
+            {
+              "value": "intermediaire",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Intermédiaire"
+                }
+              ]
+            },
+            {
+              "value": "avance",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Avancé"
+                }
+              ]
+            }
+          ]
         },
         {
           "id": "fld_utilisateur_objectif_quotidien",
           "name": "objectif_quotidien_minutes",
           "required": true,
-          "type": "number"
+          "type": "number",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Objectif quotidien (minutes)"
+            }
+          ]
         },
         {
           "id": "fld_utilisateur_serie_jours",
           "name": "serie_jours",
           "required": false,
-          "type": "number"
+          "type": "number",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Série (jours)"
+            }
+          ]
         },
         {
           "id": "fld_utilisateur_avatar",
           "name": "avatar",
           "required": false,
-          "type": "asset"
+          "type": "asset",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Photo de profil"
+            }
+          ]
         },
         {
           "id": "fld_utilisateur_cree_le",
           "name": "cree_le",
           "required": true,
-          "type": "datetime"
+          "type": "datetime",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Créé le"
+            }
+          ]
         }
       ],
       "id": "ent_utilisateur",
@@ -730,13 +854,25 @@
           "id": "fld_pack_titre",
           "name": "titre",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Titre"
+            }
+          ]
         },
         {
           "id": "fld_pack_resume",
           "name": "resume",
           "required": true,
-          "type": "text"
+          "type": "text",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Résumé"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -760,7 +896,42 @@
           "id": "fld_pack_niveau",
           "name": "niveau",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "debutant",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Débutant"
+                }
+              ]
+            },
+            {
+              "value": "intermediaire",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Intermédiaire"
+                }
+              ]
+            },
+            {
+              "value": "avance",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Avancé"
+                }
+              ]
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Niveau"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -774,7 +945,69 @@
           "id": "fld_pack_categorie",
           "name": "categorie",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "conversation",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Conversation"
+                }
+              ]
+            },
+            {
+              "value": "grammaire",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Grammaire"
+                }
+              ]
+            },
+            {
+              "value": "vocabulaire",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Vocabulaire"
+                }
+              ]
+            },
+            {
+              "value": "prononciation",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Prononciation"
+                }
+              ]
+            },
+            {
+              "value": "affaires",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Affaires"
+                }
+              ]
+            },
+            {
+              "value": "voyage",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Voyage"
+                }
+              ]
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Catégorie"
+            }
+          ]
         },
         {
           "id": "fld_pack_nb_lecons",
@@ -786,7 +1019,13 @@
           "id": "fld_pack_prix_affiche",
           "name": "prix_affiche",
           "required": true,
-          "type": "decimal"
+          "type": "decimal",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Prix affiché"
+            }
+          ]
         },
         {
           "id": "fld_pack_produit_iap",
@@ -817,7 +1056,13 @@
           "id": "fld_lecon_titre",
           "name": "titre",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Titre"
+            }
+          ]
         },
         {
           "id": "fld_lecon_pack",
@@ -825,19 +1070,37 @@
           "referenceDisplayFieldId": "fld_pack_titre",
           "referencesEntityId": "ent_pack",
           "required": true,
-          "type": "reference"
+          "type": "reference",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Pack"
+            }
+          ]
         },
         {
           "id": "fld_lecon_ordre",
           "name": "ordre",
           "required": true,
-          "type": "number"
+          "type": "number",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Ordre"
+            }
+          ]
         },
         {
           "id": "fld_lecon_duree",
           "name": "duree_minutes",
           "required": true,
-          "type": "number"
+          "type": "number",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Durée (minutes)"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -850,13 +1113,72 @@
           "id": "fld_lecon_type",
           "name": "type_exercice",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "dialogue",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Dialogue"
+                }
+              ]
+            },
+            {
+              "value": "quiz",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Quiz"
+                }
+              ]
+            },
+            {
+              "value": "dictee",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Dictée"
+                }
+              ]
+            },
+            {
+              "value": "flashcards",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Cartes mémoire"
+                }
+              ]
+            },
+            {
+              "value": "lecture",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Lecture"
+                }
+              ]
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Type d'exercice"
+            }
+          ]
         },
         {
           "id": "fld_lecon_contenu",
           "name": "contenu",
           "required": true,
-          "type": "text"
+          "type": "text",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Contenu"
+            }
+          ]
         },
         {
           "id": "fld_lecon_exercices",
@@ -897,7 +1219,13 @@
           "referenceDisplayFieldId": "fld_pack_titre",
           "referencesEntityId": "ent_pack",
           "required": true,
-          "type": "reference"
+          "type": "reference",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Pack"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -910,19 +1238,106 @@
           "id": "fld_achat_statut",
           "name": "statut",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "en_attente",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "En attente"
+                }
+              ]
+            },
+            {
+              "value": "valide",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Validé"
+                }
+              ]
+            },
+            {
+              "value": "restaure",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Restauré"
+                }
+              ]
+            },
+            {
+              "value": "rembourse",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Remboursé"
+                }
+              ]
+            },
+            {
+              "value": "echoue",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Échoué"
+                }
+              ]
+            }
+          ],
+          "enumTones": [
+            {
+              "value": "en_attente",
+              "tone": "warn"
+            },
+            {
+              "value": "valide",
+              "tone": "success"
+            },
+            {
+              "value": "restaure",
+              "tone": "success"
+            },
+            {
+              "value": "rembourse",
+              "tone": "warn"
+            },
+            {
+              "value": "echoue",
+              "tone": "error"
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Statut"
+            }
+          ]
         },
         {
           "id": "fld_achat_montant",
           "name": "montant",
           "required": true,
-          "type": "decimal"
+          "type": "decimal",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Montant"
+            }
+          ]
         },
         {
           "id": "fld_achat_date",
           "name": "date_achat",
           "required": true,
-          "type": "datetime"
+          "type": "datetime",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Date d'achat"
+            }
+          ]
         }
       ],
       "id": "ent_achat",
@@ -936,7 +1351,13 @@
           "referenceDisplayFieldId": "fld_utilisateur_nom",
           "referencesEntityId": "ent_utilisateur",
           "required": true,
-          "type": "reference"
+          "type": "reference",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Utilisateur"
+            }
+          ]
         },
         {
           "id": "fld_progression_lecon",
@@ -944,7 +1365,13 @@
           "referenceDisplayFieldId": "fld_lecon_titre",
           "referencesEntityId": "ent_lecon",
           "required": true,
-          "type": "reference"
+          "type": "reference",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Leçon"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -956,37 +1383,121 @@
           "id": "fld_progression_statut",
           "name": "statut",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "non_commencee",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Non commencée"
+                }
+              ]
+            },
+            {
+              "value": "en_cours",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "En cours"
+                }
+              ]
+            },
+            {
+              "value": "terminee",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Terminée"
+                }
+              ]
+            },
+            {
+              "value": "a_reviser",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "À réviser"
+                }
+              ]
+            }
+          ],
+          "enumTones": [
+            {
+              "value": "terminee",
+              "tone": "success"
+            },
+            {
+              "value": "a_reviser",
+              "tone": "warn"
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Statut"
+            }
+          ]
         },
         {
           "id": "fld_progression_pourcentage",
           "name": "pourcentage",
           "required": true,
-          "type": "number"
+          "type": "number",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Pourcentage"
+            }
+          ]
         },
         {
           "id": "fld_progression_score",
           "name": "score",
           "required": false,
-          "type": "number"
+          "type": "number",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Score"
+            }
+          ]
         },
         {
           "id": "fld_progression_minutes",
           "name": "minutes_travaillees",
           "required": false,
-          "type": "number"
+          "type": "number",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Minutes travaillées"
+            }
+          ]
         },
         {
           "id": "fld_progression_derniere_activite",
           "name": "derniere_activite",
           "required": false,
-          "type": "datetime"
+          "type": "datetime",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Dernière activité"
+            }
+          ]
         },
         {
           "id": "fld_progression_note",
           "name": "note_personnelle",
           "required": false,
-          "type": "text"
+          "type": "text",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Note personnelle"
+            }
+          ]
         }
       ],
       "id": "ent_progression",
@@ -998,7 +1509,13 @@
           "id": "fld_rappel_libelle",
           "name": "libelle",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Libellé"
+            }
+          ]
         },
         {
           "id": "fld_rappel_utilisateur",
@@ -1006,13 +1523,25 @@
           "referenceDisplayFieldId": "fld_utilisateur_nom",
           "referencesEntityId": "ent_utilisateur",
           "required": true,
-          "type": "reference"
+          "type": "reference",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Utilisateur"
+            }
+          ]
         },
         {
           "id": "fld_rappel_heure",
           "name": "heure_locale",
           "required": true,
-          "type": "string"
+          "type": "string",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Heure locale"
+            }
+          ]
         },
         {
           "enumValues": [
@@ -1023,25 +1552,78 @@
           "id": "fld_rappel_frequence",
           "name": "frequence",
           "required": true,
-          "type": "enum"
+          "type": "enum",
+          "enumLabels": [
+            {
+              "value": "quotidien",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Quotidien"
+                }
+              ]
+            },
+            {
+              "value": "jours_ouvres",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Jours ouvrés"
+                }
+              ]
+            },
+            {
+              "value": "hebdomadaire",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Hebdomadaire"
+                }
+              ]
+            }
+          ],
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Fréquence"
+            }
+          ]
         },
         {
           "id": "fld_rappel_actif",
           "name": "actif",
           "required": true,
-          "type": "boolean"
+          "type": "boolean",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Actif"
+            }
+          ]
         },
         {
           "id": "fld_rappel_message",
           "name": "message",
           "required": false,
-          "type": "text"
+          "type": "text",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Message"
+            }
+          ]
         },
         {
           "id": "fld_rappel_prochaine_occurrence",
           "name": "prochaine_occurrence",
           "required": false,
-          "type": "datetime"
+          "type": "datetime",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Prochaine occurrence"
+            }
+          ]
         }
       ],
       "id": "ent_rappel",
