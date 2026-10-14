@@ -222,6 +222,29 @@ const nextConfig: NextConfig = {
       ...MOTEUR_EMISSION,
       '../../node_modules/@rolldown/binding-linux-x64-gnu/**',
     ],
+    // ── LA ROUTE QUI FAIT TOUT LE TRAVAIL MANQUAIT A CETTE LISTE.
+    //
+    // MESURE EN PRODUCTION, 2026-10-14, sur la generation du proprietaire :
+    //   « Cannot find module '/var/task/benchmarks/air-emission/moteur.mjs' »
+    // Trois reprises, puis refus. Cout : zero de plus — l'echec precede tout
+    // appel, mais la generation etait morte.
+    //
+    // CE QUI REND CE DEFAUT SI FACILE A MANQUER. Cette liste se declare ROUTE
+    // PAR ROUTE. Six routes du generateur y sont ; la SEPTIEME — le cron, qui
+    // passe chaque minute et porte TOUTE l'emission — n'y etait pas. Les six
+    // presentes expliquent d'ailleurs ce qu'on observait : `deposer` est dans
+    // la liste, donc la COMPREHENSION aboutissait, et le cron mourait juste
+    // apres. Deux moities du meme parcours, une seule emballee.
+    //
+    // C'est la TROISIEME fois que ce bloc raconte la meme histoire — passe0,
+    // puis le SDK Anthropic, maintenant le cron. A chaque fois : un module
+    // charge en `webpackIgnore`, que le bundler ne voit pas, et qu'il faut
+    // lui designer a la main.
+    //
+    // Les memes fichiers que les six autres : le cron appelle
+    // `poursuivreEmissionDuSite`, qui charge `moteur.mjs`, lequel tire tout
+    // `benchmarks/air-emission/`.
+    '/api/cron/generations': MOTEUR_EMISSION,
     '/api/cron/photos-pro': [
       './public/modeles/u2netp.onnx',
       '../../node_modules/onnxruntime-web/dist/*.wasm',

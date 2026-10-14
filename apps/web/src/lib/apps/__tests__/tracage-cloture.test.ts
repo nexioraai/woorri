@@ -101,15 +101,48 @@ describe('CLIQUET — tracage : la cloture des dependances', () => {
     // Les routes sont DÉCOUVERTES, pas listées : une cinquième route qui
     // chargerait un module d'émission se ferait attraper sans que personne
     // pense à revenir ici.
-    const base = join(RACINE, 'apps/web/src/app/api/generateur')
+    // ── TOUT `api/`, PAS SEULEMENT `api/generateur/` (2026-10-14).
+    //
+    // Cette preuve promettait : « les routes sont DECOUVERTES, pas listees ».
+    // Elles l'etaient — dans UN SEUL dossier. Et le travail reel de
+    // l'emission ne s'y trouve pas : il est dans `api/cron/generations`, qui
+    // passe chaque minute et porte TOUTE la generation.
+    //
+    // MESURE EN PRODUCTION : la generation du proprietaire est morte sur
+    // « Cannot find module '/var/task/benchmarks/air-emission/moteur.mjs' »,
+    // trois reprises, parce que cette route n'etait pas dans la liste de
+    // tracage — et que cette preuve-ci ne regardait pas la ou elle vit.
+    //
+    // Un angle mort dans un cliquet est pire qu'une absence de cliquet : il
+    // donne le vert ET la tranquillite.
+    const racineApi = join(RACINE, 'apps/web/src/app/api')
+    const routesDeApi = (dossier: string, prefixe: string): string[] => {
+      const trouvees: string[] = []
+      for (const e of readdirSync(dossier, { withFileTypes: true })) {
+        if (!e.isDirectory()) continue
+        const chemin = join(dossier, e.name)
+        const route = `${prefixe}/${e.name}`
+        const f = join(chemin, 'route.ts')
+        if (existsSync(f)) trouvees.push(route)
+        trouvees.push(...routesDeApi(chemin, route))
+      }
+      return trouvees
+    }
     const chargeurs: string[] = []
-    for (const r of readdirSync(base)) {
-      const f = join(base, r, 'route.ts')
-      if (!existsSync(f)) continue
+    for (const route of routesDeApi(racineApi, '/api')) {
+      const f = join(RACINE, 'apps/web/src/app', route.slice(1), 'route.ts')
       const code = sansCommentaires(readFileSync(f, 'utf8'))
       // Direct, ou par un module de `lib/apps` qui charge le moteur.
-      const indirect = /from '@\/lib\/apps\/(dialogue|comprendre|pour|apercu)'/.test(code)
-      if (indirect || code.includes('air-emission')) chargeurs.push(`/api/generateur/${r}`)
+      // `moteur` s'ajoute a la liste : c'est par lui que le cron atteint
+      // `moteur.mjs`, et l'ignorer laissait passer le defaut.
+      //
+      // `service-generations` N'Y EST PAS, et c'est delibere : mesure, il est
+      // aussi importe par `/api/generateur/etat`, qui ne fait que LIRE une
+      // ligne. L'inclure accusait une route qui ne charge rien — un cliquet
+      // qui crie a tort finit par etre desarme.
+      const indirect =
+        /from '@\/lib\/apps\/(dialogue|comprendre|pour|apercu|moteur)'/.test(code)
+      if (indirect || code.includes('air-emission')) chargeurs.push(route)
     }
     expect(chargeurs.length).toBeGreaterThan(0)
     for (const route of chargeurs) {
