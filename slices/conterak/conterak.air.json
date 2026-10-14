@@ -3287,7 +3287,7 @@
         "statement": "Afficher des graphiques mensuels de consommation et de montants pour montrer les hausses et les baisses.",
         "resolution": {
           "kind": "unexpressible",
-          "reason": "Le registre compte onze types de blocs — bouton, en-tete de fiche, etat vide, formulaire, en-tete, liste, prose, entree de recherche, espaceur — et aucun ne dessine. Un bloc de graphique est une decision de registre, donc une montee de version du format, pas une prop de plus."
+          "reason": "Le bloc `graphique` EXISTE au registre (ajoute le 2026-10-13) et il dessine. Ce qui manque est le LIEN AUX DONNEES : ses `series` sont des paires {label, value, display} ECRITES DANS LE DOCUMENT, et ses listes de proprietes qui referencent un champ sont VIDES — mesure. Il sait donc dessiner un exemple fige, pas la consommation reelle de la personne qui regarde, qui change a chaque releve. Le cahier demande la seconde. Fermer ce besoin demande une prop de liaison a une entite, donc une decision de registre."
         }
       },
       {
@@ -3295,7 +3295,7 @@
         "statement": "Calculer une empreinte numerique du fichier pour reperer une modification ulterieure et detecter les doublons de fichiers.",
         "resolution": {
           "kind": "unexpressible",
-          "reason": "Mesure au depot : `createHash` n'apparait nulle part dans le moteur hormis le HMAC qui signe les jetons. Le format ne sait pas dire « ce champ porte l'empreinte de ce fichier », et une empreinte calculee par l'application ne prouverait rien — elle doit l'etre par le serveur, a la reception."
+          "reason": "Mesure sur le code EMIS, et non sur le depot : le seul `sha256` du serveur produit est celui du HMAC qui signe les jetons, et l'application n'en porte aucun. Le moteur sait pourtant hacher — il le fait pour ses propres artefacts — mais il ne l'EMET jamais. Et le format ne sait pas dire « ce champ porte l'empreinte de ce fichier ». Une empreinte calculee par l'application ne prouverait de toute facon rien : elle doit l'etre par le serveur, a la reception."
         }
       }
     ]
