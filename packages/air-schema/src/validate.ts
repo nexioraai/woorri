@@ -544,6 +544,66 @@ export function validateAir(air: ProjectAir): AirDiagnostic[] {
         );
         return;
       }
+      // ── `max`, `min`, `porteur` (1.41.0) : QUATRE REFUS.
+      //
+      // Classer suppose un ordre. Classer ce qui ne s'ordonne pas laisse
+      // chaque base SQL trancher autrement — et le gagnant d'une enchere
+      // dependrait du moteur.
+      if (d.kind === "max" || d.kind === "min" || d.kind === "porteur") {
+        const cible = air.entities.find((x) => x.id === rel.toEntityId);
+        const champ = cible?.fields.find((x) => x.id === d.fieldId);
+        const ordonnable = (t: string | undefined): boolean =>
+          t === "number" || t === "decimal" || t === "date" || t === "datetime";
+        // ① LE CHAMP CLASSE EXISTE.
+        if (champ === undefined) {
+          push(
+            "AIR_EXTREMUM_CHAMP_INCONNU",
+            `${chemin}.fieldId`,
+            `"${d.fieldId}" n'est pas un champ de "${rel.toEntityId}" : ` +
+              `on ne peut pas classer ce qui n'y est pas`,
+          );
+        } else if (!ordonnable(champ.type)) {
+          // ② ET IL S'ORDONNE.
+          push(
+            "AIR_EXTREMUM_CHAMP_NON_ORDONNABLE",
+            `${chemin}.fieldId`,
+            `"${champ.id}" est de type "${champ.type}" : classer ce qui ne ` +
+              `s'ordonne pas laisse chaque base SQL trancher autrement`,
+          );
+        }
+        if (d.kind === "porteur") {
+          const dep = cible?.fields.find((x) => x.id === d.departage.fieldId);
+          // ③ LE DEPARTAGE EXISTE ET S'ORDONNE. Sans lui, une egalite rendrait
+          //    « la premiere ligne que la base donne » — et le gagnant d'une
+          //    enchere ne peut pas dependre de l'index.
+          if (dep === undefined) {
+            push(
+              "AIR_PORTEUR_DEPARTAGE_INCONNU",
+              `${chemin}.departage.fieldId`,
+              `"${d.departage.fieldId}" n'est pas un champ de "${rel.toEntityId}" : ` +
+                `rien ne departagerait une egalite`,
+            );
+          } else if (!ordonnable(dep.type)) {
+            push(
+              "AIR_PORTEUR_DEPARTAGE_NON_ORDONNABLE",
+              `${chemin}.departage.fieldId`,
+              `"${dep.id}" est de type "${dep.type}" : un departage doit s'ordonner`,
+            );
+          }
+          // ④ LE DEPARTAGE N'EST PAS LE CHAMP CLASSE. Departager par le champ
+          //    sur lequel il y a egalite ne departage RIEN — et son auteur
+          //    croirait le contraire.
+          if (d.departage.fieldId === d.fieldId) {
+            push(
+              "AIR_PORTEUR_DEPARTAGE_INUTILE",
+              `${chemin}.departage.fieldId`,
+              `le departage porte sur "${d.fieldId}", le champ meme sur lequel ` +
+                `l'egalite a lieu : il ne departage rien`,
+            );
+          }
+        }
+        return;
+      }
       if (d.kind === "sum") {
         const cible = air.entities.find((x) => x.id === rel.toEntityId);
         const champ = cible?.fields.find((x) => x.id === d.fieldId);

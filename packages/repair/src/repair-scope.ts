@@ -295,6 +295,13 @@ export const SECTIONS_CORRECTIVES: Readonly<Record<string, readonly SectionEmiss
   AIR_RULE_DESIGNE_CHAMP_INCONNU: ["donnees"],
   AIR_RULE_DESIGNE_CIBLE_NON_UNIQUE: ["donnees"],
   AIR_RULE_DESIGNE_TYPES_INCOMPATIBLES: ["donnees"],
+  // `max`, `min`, `porteur` (1.41.0) — quatre refus, dans `donnees` : c'est le
+  // champ classe ou son departage qui change.
+  AIR_EXTREMUM_CHAMP_INCONNU: ["donnees"],
+  AIR_EXTREMUM_CHAMP_NON_ORDONNABLE: ["donnees"],
+  AIR_PORTEUR_DEPARTAGE_INCONNU: ["donnees"],
+  AIR_PORTEUR_DEPARTAGE_NON_ORDONNABLE: ["donnees"],
+  AIR_PORTEUR_DEPARTAGE_INUTILE: ["donnees"],
   // L'ambiguite se repare en renommant une operation : c'est le cablage des
   // API qui change, et la liste des pouvoirs de l'agent avec.
   AIR_AGENT_OPERATION_AMBIGUOUS: ["cablage"],

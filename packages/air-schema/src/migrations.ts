@@ -605,6 +605,26 @@ export const AIR_MIGRATIONS: readonly AirMigration[] = [
       "l'énumération, aucun document existant ne change de sens.",
     migrate: (document) => document,
   },
+  {
+    from: "1.40.0",
+    to: "1.41.0",
+    description:
+      "AIR 1.41.0 : `max`, `min`, et `porteur` — qui porte l'extremum. " +
+      "Mesure qui les a imposés, écrite dans un document du dépôt : le " +
+      "cahier d'une tontine attribue le pot « par enchère : le membre qui " +
+      "propose la plus forte prime l'emporte », et le document a déclaré " +
+      "l'exigence INEXPRIMABLE. `max` et `min` rendent un NOMBRE et se " +
+      "traduisent en SQL sur n'importe quel moteur. `porteur` rend une " +
+      "LIGNE, et c'est une autre question : deux membres peuvent proposer " +
+      "EXACTEMENT la même prime. L'égalité n'est pas un cas limite dans une " +
+      "enchère, c'est une situation courante — alors `departage` est " +
+      "OBLIGATOIRE. Sans lui, le serveur rendrait « la première ligne que la " +
+      "base lui donne » : un ordre qui dépend du moteur, de l'index et du " +
+      "jour, et le gagnant d'une enchère ne peut pas dépendre de ça. Choisir " +
+      "à la place de l'auteur serait pire. Migration IDENTITÉ : trois sortes " +
+      "de plus, aucun document existant ne change de sens.",
+    migrate: (document) => document,
+  },
 ];
 
 export class AirMigrationError extends Error {

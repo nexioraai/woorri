@@ -25,7 +25,7 @@ import {
 // 1.7.1 (E3.3, D-131) : provenance APLANIE (sourceKind/sourceIntegrationId/
 //   sourceDomain/sourceRefreshSeconds) — l'union 1.7.0 dépassait la limite
 //   réelle de grammaire de l'API (classe D-078) ; sémantique inchangée.
-export const AIR_SCHEMA_VERSION = "1.40.0";
+export const AIR_SCHEMA_VERSION = "1.41.0";
 
 export const semverSchema = z.string().regex(/^\d+\.\d+\.\d+$/);
 export const sha256Schema = z.string().regex(/^[0-9a-f]{64}$/);
@@ -686,6 +686,72 @@ const fieldSchema = z.strictObject({
         /** Le champ à sommer, sur l'entité au bout de la relation. */
         fieldId: fieldIdSchema,
         /** NE SOMMER QUE CERTAINES LIGNES (1.39.0). Absente ⇒ toutes. */
+        condition: conditionAgregatSchema.optional(),
+      }),
+      /**
+       * ── LE PLUS HAUT, LE PLUS BAS (1.41.0).
+       *
+       * MESURE QUI LES A IMPOSES, ecrite dans un document du depot : le cahier
+       * d'une tontine attribue le pot « par enchere : le membre qui propose la
+       * plus forte prime l'emporte ». `sum` et `count` ne savaient pas dire
+       * « la plus forte ».
+       *
+       * Memes garanties que les deux premiers : une relation declaree, un
+       * champ au bout, une condition optionnelle. `max` et `min` se traduisent
+       * en SQL sans ambiguite, et sur n'importe quel moteur.
+       *
+       * ── ILS RENDENT UN NOMBRE, PAS UN GAGNANT.
+       *
+       * « La plus forte prime » est un montant ; « qui l'emporte » est une
+       * personne. Les deux questions sont distinctes, et la seconde a une
+       * difficulte que la premiere n'a pas : l'egalite. Voir `porteur`.
+       */
+      z.strictObject({
+        kind: z.literal("max"),
+        relationId: relationIdSchema,
+        fieldId: fieldIdSchema,
+        condition: conditionAgregatSchema.optional(),
+      }),
+      z.strictObject({
+        kind: z.literal("min"),
+        relationId: relationIdSchema,
+        fieldId: fieldIdSchema,
+        condition: conditionAgregatSchema.optional(),
+      }),
+      /**
+       * ── QUI PORTE LE PLUS HAUT (1.41.0) — ET LE DEPARTAGE EST OBLIGATOIRE.
+       *
+       * « Le membre qui propose la plus forte prime l'emporte » demande une
+       * LIGNE, pas un nombre. D'ou cette operation : elle rend l'identifiant
+       * de la ligne qui porte l'extremum.
+       *
+       * ── POURQUOI `departage` N'EST PAS OPTIONNEL.
+       *
+       * Deux membres peuvent proposer EXACTEMENT la meme prime. L'egalite
+       * n'est pas un cas limite : dans une enchere, c'est une situation
+       * courante. Si le format se taisait, le serveur rendrait « la premiere
+       * ligne que la base lui donne » — un ordre qui depend du moteur, de
+       * l'index, et du jour. Le gagnant d'une enchere ne peut pas dependre de
+       * ca.
+       *
+       * Et choisir a la place de l'auteur serait pire : c'est exactement ce
+       * que ce format refuse de faire ailleurs. Le document DIT donc comment
+       * on departage — par la date la plus ancienne, par un numero d'ordre,
+       * par ce qu'il veut, pourvu que ca s'ordonne.
+       */
+      z.strictObject({
+        kind: z.literal("porteur"),
+        relationId: relationIdSchema,
+        /** Le champ classe : le plus haut l'emporte, sauf `sens: "min"`. */
+        fieldId: fieldIdSchema,
+        /** `max` (defaut) ou `min` : qui l'emporte, le plus haut ou le plus bas. */
+        sens: z.enum(["max", "min"]).optional(),
+        /** CE QUI DEPARTAGE UNE EGALITE. Obligatoire — voir ci-dessus. */
+        departage: z.strictObject({
+          fieldId: fieldIdSchema,
+          /** `asc` : le plus ancien / le plus petit l'emporte. */
+          sens: z.enum(["asc", "desc"]),
+        }),
         condition: conditionAgregatSchema.optional(),
       }),
       /**

@@ -39,6 +39,22 @@ function direLeCalcul(d: NonNullable<ProjectAir["entities"][number]["fields"][nu
     const m = d.mode === "global" ? "TOUTE la quantité au prix du palier atteint" : "chaque tranche à son prix";
     return `un barème sur \`${d.fieldId}\` — ${String(d.paliers.length)} palier(s), ${m}, frais fixes ${String(d.fraisFixes)}`;
   }
+  // 1.41.0 — les extremums. Le contrat remis au proprietaire doit les DIRE :
+  // un serveur qui ignore comment on departage une egalite rendrait un
+  // gagnant different du notre, et personne ne saurait lequel est le bon.
+  if (d.kind === "max" || d.kind === "min") {
+    return `le ${d.kind === "max" ? "PLUS HAUT" : "PLUS BAS"} \`${d.fieldId}\` sur les lignes liées par \`${d.relationId}\``;
+  }
+  if (d.kind === "porteur") {
+    const sens = d.sens === "min" ? "plus bas" : "plus haut";
+    const dep = d.departage.sens === "asc" ? "le plus petit" : "le plus grand";
+    return (
+      `la LIGNE qui porte le ${sens} \`${d.fieldId}\` (lignes liées par ` +
+      `\`${d.relationId}\`) — en cas d'ÉGALITÉ, ${dep} \`${d.departage.fieldId}\` ` +
+      `l'emporte. Ce départage n'est pas un détail : sans lui, deux serveurs ` +
+      `rendraient deux gagnants.`
+    );
+  }
   return `une règle qui CHANGE avec le temps, choisie sur \`${d.dateFieldId}\` — ${String(d.versions.length)} version(s)`;
 }
 

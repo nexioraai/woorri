@@ -219,7 +219,7 @@ const surfaceEnveloppe = () => {
   };
   const TARIFS = { entree: PRIX.in, ecritureCache: PRIX.cacheWrite, lectureCache: PRIX.cacheRead, sortie: PRIX.out };
   const coutUSD = (u) => adaptateur.coutUsd(adaptateur.lireUsage(u));
-  const CONTRAT_CIBLE = "1.40.0";
+  const CONTRAT_CIBLE = "1.41.0";
   // LE PLAFOND EST CELUI DU MODELE, MESURE — PAS UN CHIFFRE HERITE. Le
   // 40000 venait de la campagne ; mesure du 2026-10-09 (reprise c29bd806) :
   // la reemission des ecrans d'un document agrandi par revelations depasse

@@ -666,7 +666,7 @@ function routes(air: ProjectAir, e: Entite): string {
         ];
   const journal = e.appendOnly === true;
   const enBase = e.fields.filter(
-    (f) => f.derived?.kind === "count" || f.derived?.kind === "sum",
+    (f) => f.derived?.kind === "count" || f.derived?.kind === "sum" || f.derived?.kind === "max" || f.derived?.kind === "min" || f.derived?.kind === "porteur",
   );
   const avecEtats = e.fields.filter((f) => f.transitions !== undefined);
   const l = [
@@ -713,7 +713,7 @@ function routes(air: ProjectAir, e: Entite): string {
       if (f.sensitive === true) {
         return [`  // « ${f.name} » est SENSIBLE : il ne ressort jamais.`];
       }
-      if (f.derived?.kind === "count" || f.derived?.kind === "sum") {
+      if (f.derived?.kind === "count" || f.derived?.kind === "sum" || f.derived?.kind === "max" || f.derived?.kind === "min" || f.derived?.kind === "porteur") {
         return [
           "  try {",
           `    vue[${JSON.stringify(f.name)}] = await ${n}${PASCAL(f.id)}(base, String(src["id"]));`,
@@ -930,7 +930,7 @@ function cleEtrangere(
 
 /** Les champs dont la valeur se compte en base, pour une entité donnée. */
 function champsEnBase(e: Entite): Champ[] {
-  return e.fields.filter((f) => f.derived?.kind === "count" || f.derived?.kind === "sum");
+  return e.fields.filter((f) => f.derived?.kind === "count" || f.derived?.kind === "sum" || f.derived?.kind === "max" || f.derived?.kind === "min" || f.derived?.kind === "porteur");
 }
 
 /**
@@ -956,7 +956,17 @@ function calculs(air: ProjectAir): string {
       const d = f.derived;
       // `champsEnBase` ne garde que `count`/`sum`, mais le type l'ignore :
       // cette garde le lui dit, au lieu d'une assertion qui le forcerait.
-      if (d === undefined || (d.kind !== "count" && d.kind !== "sum")) continue;
+      // `.includes()` ne RESTREINT pas le type : la disjonction explicite si.
+      if (
+        d === undefined ||
+        (d.kind !== "count" &&
+          d.kind !== "sum" &&
+          d.kind !== "max" &&
+          d.kind !== "min" &&
+          d.kind !== "porteur")
+      ) {
+        continue;
+      }
       const r = cleEtrangere(air, d.relationId);
       const nomFn = `${CAMEL(e.id)}${PASCAL(f.id)}`;
       if ("ambigu" in r) {
@@ -980,13 +990,53 @@ function calculs(air: ProjectAir): string {
       const t = table(r.enfant);
       const cle = colonne(r.cle);
       const somme =
-        d.kind === "sum"
+        d.kind === "sum" || d.kind === "max" || d.kind === "min" || d.kind === "porteur"
           ? (r.enfant.fields.find((x) => x.id === d.fieldId)?.id ?? d.fieldId)
           : "";
+      // 1.41.0 — quatre sortes d'agregat, et le `porteur` n'en est pas un :
+      // il rend un IDENTIFIANT. Il est donc emis a part, juste apres.
+      const colSomme = somme.replace(/^fld_/u, "");
       const expr =
         d.kind === "count"
           ? "count(*)"
-          : `coalesce(sum(${somme.replace(/^fld_/u, "")}), 0)`;
+          : d.kind === "max"
+            ? `max(${colSomme})`
+            : d.kind === "min"
+              ? `min(${colSomme})`
+              : `coalesce(sum(${colSomme}), 0)`;
+      // ── LE PORTEUR (1.41.0) — IL REND UNE LIGNE, PAS UN NOMBRE.
+      //
+      // `order by` sur le champ classe, PUIS sur le departage : c'est ce
+      // second critere qui rend le gagnant reproductible. Sans lui, deux
+      // bases donneraient deux gagnants, et aucune ne serait fautive.
+      if (d.kind === "porteur") {
+        const colClasse = somme.replace(/^fld_/u, "");
+        const colDep = d.departage.fieldId.replace(/^fld_/u, "");
+        const sens = d.sens === "min" ? "asc" : "desc";
+        l.push(
+          "/**",
+          ` * ${e.name}.${f.name} = la LIGNE de « ${r.enfant.name} » qui porte le`,
+          ` * ${d.sens === "min" ? "plus bas" : "plus haut"} « ${d.fieldId} ».`,
+          " *",
+          ` * EN CAS D'EGALITE, « ${d.departage.fieldId} » ${d.departage.sens === "asc" ? "le plus petit" : "le plus grand"} l'emporte.`,
+          " * Ce second critere n'est pas un ornement : sans lui, la base",
+          " * rendrait « la premiere ligne qu'elle trouve » — un ordre qui",
+          " * depend du moteur et de l'index. Le gagnant d'une enchere ne peut",
+          " * pas dependre de ca.",
+          " */",
+          `export async function ${nomFn}(base: Base, idParent: string): Promise<string | null> {`,
+          `  const r = await base.un(`,
+          `    \`select id as v from ${t} where ${cle} = ? order by ${colClasse} ${sens}, ${colDep} ${d.departage.sens} limit 1\`,`,
+          "    [idParent],",
+          "  );",
+          "  const v = r?.[\"v\"];",
+          "  return v === undefined || v === null ? null : String(v);",
+          "}",
+          "",
+        );
+        continue;
+      }
+
       // ── LA CONDITION (1.39.0) — UNE CLAUSE `where` DE PLUS, ET RIEN D'AUTRE.
       //
       // Elle est fermee par le format : un champ de l'entite au bout de la
@@ -1477,7 +1527,7 @@ export function enveloppeFastify(air: ProjectAir): EnveloppeBackend {
       files.set("src/api/agent.ts", routesAgent(air));
     }
   }
-  if (air.entities.some((e) => e.fields.some((f) => f.derived?.kind === "count" || f.derived?.kind === "sum"))) {
+  if (air.entities.some((e) => e.fields.some((f) => f.derived?.kind === "count" || f.derived?.kind === "sum" || f.derived?.kind === "max" || f.derived?.kind === "min" || f.derived?.kind === "porteur"))) {
     files.set("src/calcul/en-base.ts", calculs(air));
   }
   return { files };

@@ -103,7 +103,14 @@ export const RELEASE_TRAIN_V1 = {
   // code d'adhesion dans l'ecran supposerait de lui livrer la LISTE DES
   // CODES. La cible doit etre `unique`, sinon « designe UNE ligne » ne
   // designe personne. Migration IDENTITE : un operateur de plus.
-  airSchemaVersion: "1.40.0",
+  // 1.41.0 (2026-10-13) — `max`, `min`, et `porteur`. Mesure : le cahier
+  // d'une tontine attribue le pot « par enchere : le membre qui propose la
+  // plus forte prime l'emporte ». `max`/`min` rendent un NOMBRE ; `porteur`
+  // rend une LIGNE, et son `departage` est OBLIGATOIRE — deux membres peuvent
+  // proposer la meme prime, et sans departage le serveur rendrait « la
+  // premiere ligne que la base donne ». Le gagnant d'une enchere ne peut pas
+  // dependre de l'index.
+  airSchemaVersion: "1.41.0",
   // Porté à 1.1.0 le 2026-08-31 (D-060) : montée STRICTEMENT ADDITIVE du
   // registre de blocs — `form` gagne `loading`/`empty`, `detail_header` gagne un
   // état, les trois blocs à données gagnent les props de titres. Rien n'est
