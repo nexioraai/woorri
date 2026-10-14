@@ -11,6 +11,9 @@ export const CONTRAINTES_GRAMMAIRE: {
   bornesNumeriquesEntiers: boolean;
   /** EP-149 — sixième écart : le service refuse `maxItems` sur les tableaux. */
   maxItemsSupporte: boolean;
+  /** EP-221 — septième écart : le service refuse une définition qui se cite
+   *  elle-même (« Circular reference detected »), mesuré en production. */
+  referencesCirculairesSupportees: boolean;
 };
 export function degraderGrammaire(canonique: unknown): { grammaire: unknown; ecarts: string[] };
 export function degradationsPourEchelle(jsonSchema: unknown): { name: string; schema: unknown }[];

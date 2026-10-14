@@ -38,6 +38,22 @@ export const CONTRAINTES_GRAMMAIRE = {
   // elle appartient à l'adaptateur, jamais au contrat (le schéma AIR continue
   // de borner ses tableaux, et P1 continue de le vérifier).
   maxItemsSupporte: false,
+  // ── SEPTIEME ECART, MESURE EN PRODUCTION LE 2026-10-14.
+  //
+  // Le service refuse une definition qui se cite elle-meme :
+  //   « output_config.format.schema: Invalid schema: Circular reference
+  //     detected in schema definition » — 400, aucun jeton consomme.
+  //
+  // Le contrat dit « une operation, c'est deux expressions ». C'est une
+  // recursion LEGITIME cote contrat, et le format continue de la porter :
+  // ce qui est declare ici est un ECART DU DIALECTE, pas une correction du
+  // format. Meme frontiere qu'EP-049, meme raison que `maxItems`.
+  //
+  // MESURE DE L'ETENDUE, faite avant d'ecrire quoi que ce soit : sur les
+  // huit passes du moteur, UNE SEULE porte un cycle — `entites`. Les sept
+  // autres sont propres. L'ecart existait depuis l'entree des expressions au
+  // contrat, et aucune generation n'avait tourne depuis.
+  referencesCirculairesSupportees: false,
 };
 
 /** Grammaire canonique → grammaire du dialecte, ÉCARTS DÉCLARÉS. */
