@@ -430,6 +430,133 @@ for (const [rang, { pile, base }] of PILES.entries()) {
         );
       }
 
+      // ── UN CALCUL DE LIGNE N'A AUCUNE EXCUSE (2026-10-14).
+      //
+      // MESURE QUI A IMPOSÉ CETTE PREUVE, et elle vient d'un serveur
+      // DÉMARRÉ, pas d'une lecture de code. On écrit un relevé de compteur
+      // — ancien index 2 005, nouvel index 2 310 — le serveur répond
+      // HTTP 200, et la ligne rendue ne porte NI la consommation NI le
+      // montant. Les deux valeurs centrales du cahier, absentes en silence.
+      //
+      // La cause : cette pile ne calculait QUE les dérivés d'agrégation,
+      // ceux qui interrogent la base. Les dérivés DE LIGNE — une expression
+      // sur les champs de la ligne elle-même — recevaient un commentaire,
+      // « est CALCULÉ par le document, pas stocké ici », et rien d'autre.
+      // Les deux autres cibles les calculaient depuis toujours.
+      //
+      // ── POURQUOI LA PREUVE AU-DESSUS NE SUFFISAIT PAS.
+      //
+      // Elle accepte DEUX issues : un nombre, ou un refus qui SE NOMME dans
+      // X-Air-Non-Calcule. C'est juste pour une agrégation — la clé qui
+      // relie l'enfant au parent peut être indécidable. Un calcul de ligne,
+      // lui, n'interroge rien : il n'a aucune raison d'échouer, donc aucune
+      // excuse. Cette preuve-ci n'a donc qu'une seule issue.
+      //
+      // ET ELLE EXIGE LA VALEUR EXACTE, pas un nombre. Une fonction qui
+      // rendrait toujours zéro passerait « c'est un nombre ».
+      const estCalculDeLigne = (f) =>
+        f.derived?.kind === "calcul" && f.sensitive !== true;
+      // L'expression ne doit lire que des champs STOCKÉS et numériques :
+      // sinon la gate devrait deviner ce qu'elle vaut, et une preuve qui
+      // devine ne prouve rien.
+      const lus = (expr, vus = []) => {
+        if (expr === null || typeof expr !== "object") return vus;
+        if (expr.kind === "champ") vus.push(expr.fieldId);
+        if (expr.kind === "operation") {
+          lus(expr.gauche, vus);
+          lus(expr.droite, vus);
+        }
+        return vus;
+      };
+      const entL = air.entities.find(
+        (e) =>
+          e.fields.some(
+            (f) =>
+              estCalculDeLigne(f) &&
+              lus(f.derived.expression).every((id) => {
+                const c = e.fields.find((x) => x.id === id);
+                return (
+                  c !== undefined &&
+                  c.derived === undefined &&
+                  c.sensitive !== true &&
+                  (c.type === "number" || c.type === "decimal")
+                );
+              }),
+          ),
+      );
+      const champL = entL?.fields.find(
+        (f) =>
+          estCalculDeLigne(f) &&
+          lus(f.derived.expression).every((id) => {
+            const c = entL.fields.find((x) => x.id === id);
+            return (
+              c !== undefined &&
+              c.derived === undefined &&
+              c.sensitive !== true &&
+              (c.type === "number" || c.type === "decimal")
+            );
+          }),
+      );
+      // UNE PREUVE QUI SE TAIT EST PIRE QUE PAS DE PREUVE : si ce document
+      // ne porte aucun calcul de ligne lisible, on le DIT, au lieu de
+      // laisser croire que le contrôle a eu lieu.
+      if (entL === undefined || champL === undefined) {
+        console.log(
+          "  ⚪ aucun calcul DE LIGNE sur champs stockés dans ce document : " +
+            "cette preuve ne s'applique pas ici",
+        );
+      }
+      if (entL !== undefined && champL !== undefined) {
+        // Des valeurs CHOISIES, distinctes et non rondes : avec des zéros,
+        // une addition et une multiplication donneraient le même résultat.
+        const choisies = new Map();
+        lus(champL.derived.expression).forEach((id, k) => {
+          if (!choisies.has(id)) choisies.set(id, 13 + k * 29);
+        });
+        const corps = { id: "gateL" };
+        for (const f of entL.fields) {
+          if (f.derived !== undefined || f.sensitive === true) continue;
+          if (choisies.has(f.id)) {
+            corps[f.name] = choisies.get(f.id);
+            continue;
+          }
+          if (f.required !== true) continue;
+          corps[f.name] =
+            f.type === "datetime"
+              ? "2026-01-01T00:00:00Z"
+              : f.type === "date"
+                ? "2026-01-01"
+                : f.type === "decimal" || f.type === "number"
+                  ? 0
+                  : f.type === "boolean"
+                    ? false
+                    : valeurTexte(f, "gateL");
+        }
+        // L'ATTENDU EST CALCULÉ PAR LA RÉFÉRENCE DU COMPILATEUR, jamais
+        // réécrit ici : deux arithmétiques écrites à deux endroits finissent
+        // par diverger, et c'est alors la preuve qui a tort.
+        const { evaluerExpression } = await import(
+          R + "/packages/compiler/src/expression.ts"
+        );
+        const attendu = evaluerExpression(
+          champL.derived.expression,
+          Object.fromEntries(choisies),
+        );
+        const ecrit = await fetch(`${B}/${entL.id}/rows`, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(corps),
+        });
+        const corpsEcrit = ecrit.ok ? await ecrit.json() : null;
+        const obtenu = corpsEcrit?.values?.[champL.name];
+        dire(
+          ecrit.ok && obtenu === attendu,
+          `un calcul DE LIGNE rend sa valeur EXACTE (« ${champL.name} »)`,
+          `HTTP ${String(ecrit.status)} · attendu ${JSON.stringify(attendu)} · ` +
+            `obtenu ${JSON.stringify(obtenu)} (${typeof obtenu})`,
+        );
+      }
+
       // ── LA SOMME DOIT ÊTRE LA BONNE, PAS SEULEMENT UN NOMBRE.
       //
       // Une fonction qui rendrait TOUJOURS zéro passait la preuve ci-dessus.

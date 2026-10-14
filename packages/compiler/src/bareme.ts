@@ -84,11 +84,26 @@ export function evaluerBareme(bareme: Bareme, quantite: number): number {
  * document sous les yeux — et les preuves comparent la sortie de ce code a
  * celle de la reference ci-dessus.
  */
+/**
+ * LES CONSTANTES VIVENT DANS LA FONCTION, ET C'EST UNE CORRECTION.
+ *
+ * MESURE du 2026-10-14 : `PALIERS` et `FRAIS_FIXES` etaient declares au
+ * niveau du MODULE. Les emetteurs concatenent tous les baremes d'une
+ * application dans UN SEUL fichier — un seul endroit ou les lire, ce qui est
+ * le bon choix. Deux baremes produisaient donc deux `const PALIERS` et deux
+ * `const FRAIS_FIXES` dans le meme module : TypeScript refuse, identifiant
+ * duplique, et l'application ne compilait plus.
+ *
+ * Le defaut a survecu parce qu'UN SEUL document du corpus porte un bareme.
+ * Il aurait eclate au premier cahier a deux tarifs — un social et un plein,
+ * ce qui est banal. Mesure : un second bareme ajoute au document de Conterak
+ * donnait `PALIERS x2`.
+ */
 export function emettreBaremeTs(bareme: Bareme, nom: string): string {
   const paliers = bareme.paliers
     .map(
       (p) =>
-        `  { jusqua: ${p.jusqua === undefined ? "null" : String(p.jusqua)}, prixUnitaire: ${String(p.prixUnitaire)} },`,
+        `    { jusqua: ${p.jusqua === undefined ? "null" : String(p.jusqua)}, prixUnitaire: ${String(p.prixUnitaire)} },`,
     )
     .join("\n");
   const corps =
@@ -110,12 +125,11 @@ export function emettreBaremeTs(bareme: Bareme, nom: string): string {
 
   return `// Barème émis depuis le contrat — ${bareme.mode === "global" ? "TOUTE la quantité au prix du palier atteint" : "chaque tranche à son prix"}.
 // Les nombres viennent du document : relisez-les ici sans l'ouvrir.
-const PALIERS: { jusqua: number | null; prixUnitaire: number }[] = [
-${paliers}
-];
-const FRAIS_FIXES = ${String(bareme.fraisFixes)};
-
 export function ${nom}(quantite: number): number {
+  const PALIERS: { jusqua: number | null; prixUnitaire: number }[] = [
+${paliers}
+  ];
+  const FRAIS_FIXES = ${String(bareme.fraisFixes)};
   const q = Number.isFinite(quantite) && quantite > 0 ? quantite : 0;
   if (q === 0) return FRAIS_FIXES;
 ${corps}

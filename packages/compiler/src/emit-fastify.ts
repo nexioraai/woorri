@@ -28,6 +28,92 @@
 import type { ProjectAir } from "@deribfy/air-schema";
 import type { EnveloppeBackend } from "./emit-spring.ts";
 import { PRELUDE_EXPRESSION, emettreExpressionTs } from "./expression.ts";
+import { emettreBaremeTs } from "./bareme.ts";
+
+/**
+ * LES DERIVES DE LIGNE — « calcul » ET « bareme », DANS L'ORDRE.
+ *
+ * ── CE QUI MANQUAIT, ET COMMENT ON L'A SU.
+ *
+ * MESURE du 2026-10-14, serveur DEMARRE, pas lue dans le code : on ecrit un
+ * releve de compteur (index 2005 → 2310), le serveur repond HTTP 200, et la
+ * ligne rendue ne porte NI `consommation` NI `montant_estime`. Les deux
+ * valeurs centrales du cahier, absentes en silence.
+ *
+ * Cette pile ne calculait que les derives d'AGREGATION — `sum`, `count`,
+ * `max`, `min`, `porteur` — ceux qui interrogent la base. Les derives DE
+ * LIGNE, qui n'ont besoin d'aucune base, recevaient un commentaire :
+ * « est CALCULE par le document, pas stocke ici ». Vrai, et sans suite.
+ *
+ * Les deux autres cibles les calculent depuis toujours (l'application web et
+ * la pile Java). Le defaut a survecu parce qu'UN SEUL document du corpus
+ * declare la pile Node ET porte un derive de ligne.
+ *
+ * ── L'ORDRE DE DEPENDANCE N'EST PAS UN DETAIL.
+ *
+ * Le bareme du cahier mesure la CONSOMMATION, qui est elle-meme un calcul.
+ * Calculer le bareme avant elle lirait du vide et rendrait les frais fixes
+ * seuls — 402 F au lieu de 32 527 F. Un chiffre qui a l'air juste.
+ *
+ * `versionne` n'est PAS couvert : aucun document du corpus ne l'emploie, et
+ * emettre du code que personne n'exerce est le defaut que ce depot traque.
+ * Il leve donc, et `enLigne` transforme la levee en en-tete
+ * `X-Air-Non-Calcule` — visible, jamais silencieux.
+ */
+const derivesDeLigne = (e: Entite): Champ[] => {
+  const estDeLigne = (f: Champ): boolean =>
+    f.derived?.kind === "calcul" ||
+    f.derived?.kind === "bareme" ||
+    f.derived?.kind === "versionne";
+  const restants = e.fields.filter((f) => estDeLigne(f) && f.sensitive !== true);
+  // Ce qu'un derive LIT : les champs de l'expression, ou la quantite du bareme.
+  const lit = (f: Champ): string[] => {
+    const d = f.derived;
+    if (d === undefined) return [];
+    if (d.kind === "bareme") return [d.fieldId];
+    if (d.kind === "versionne") return [d.dateFieldId];
+    const vus: string[] = [];
+    const visiter = (x: unknown): void => {
+      const o = x as { kind?: string; fieldId?: string; de?: string; a?: string; gauche?: unknown; droite?: unknown };
+      if (o.kind === "champ" && typeof o.fieldId === "string") vus.push(o.fieldId);
+      else if (o.kind === "jours") {
+        if (typeof o.de === "string") vus.push(o.de);
+        if (typeof o.a === "string") vus.push(o.a);
+      } else if (o.kind === "operation") {
+        visiter(o.gauche);
+        visiter(o.droite);
+      }
+    };
+    if (d.kind === "calcul") visiter(d.expression);
+    return vus;
+  };
+  // Tri topologique. Un cycle est deja refuse par le validateur
+  // (AIR_CALCUL_CIRCULAIRE) ; la borne de boucle est une ceinture, pas une
+  // politique — sans elle un cycle qui passerait ferait tourner l'emetteur.
+  const sortie: Champ[] = [];
+  const faits = new Set<string>();
+  let garde = restants.length + 1;
+  while (sortie.length < restants.length && garde > 0) {
+    garde -= 1;
+    for (const f of restants) {
+      if (faits.has(f.id)) continue;
+      const attend = lit(f).filter(
+        (id) => restants.some((x) => x.id === id) && !faits.has(id),
+      );
+      if (attend.length === 0) {
+        sortie.push(f);
+        faits.add(f.id);
+      }
+    }
+  }
+  // Ce qui reste (cycle non detecte en amont) part en fin de liste plutot que
+  // de disparaitre : un champ absent est plus difficile a voir qu'un faux.
+  for (const f of restants) if (!faits.has(f.id)) sortie.push(f);
+  return sortie;
+};
+
+/** Le nom de la fonction emise pour un derive de ligne. */
+const nomDeLigne = (f: Champ): string => `calculer${PASCAL(f.id)}`;
 import { moduleConnecteur, routesConnecteur } from "./emit-connecteur.ts";
 import { routesAgent } from "./emit-agent.ts";
 
@@ -686,6 +772,65 @@ function depot(air: ProjectAir, e: Entite): string {
   return l.join("\n") + "\n";
 }
 
+/**
+ * LE FICHIER DES CALCULS DE LIGNE — un seul endroit pour tous les lire.
+ *
+ * Aucune base n'y est interrogee : c'est la propriete qui distingue ces
+ * derives des agregations, et c'est pourquoi le serveur peut les ecrire
+ * ENTIEREMENT au lieu de laisser un trou.
+ *
+ * Meme philosophie que la cible web, qui les rassemble dans
+ * `lib/calculs/baremes.generated.ts` : les chercher dans deux fichiers serait
+ * deja une occasion d'en oublier un.
+ */
+function calculsDeLigne(air: ProjectAir): string {
+  const champs = air.entities.flatMap((e) =>
+    derivesDeLigne(e).map((f) => ({ e, f })),
+  );
+  const l: string[] = [
+    "// ÉMIS depuis le contrat — ne pas modifier à la main.",
+    "//",
+    "// Les champs CALCULÉS depuis la LIGNE elle-même : aucune base n'est",
+    "// interrogée ici. Les mêmes nombres que l'application web et que la pile",
+    "// Java — un document, un seul résultat, quel que soit le serveur.",
+    "",
+    PRELUDE_EXPRESSION,
+  ];
+  for (const { e, f } of champs) {
+    const d = f.derived;
+    if (d === undefined) continue;
+    if (d.kind === "calcul") {
+      l.push(
+        `/** ${e.name} · ${f.name} — expression sur les champs de la ligne. */`,
+        `export function ${nomDeLigne(f)}(ligne: Record<string, unknown>): number | null {`,
+        `  return ${emettreExpressionTs(d.expression, "ligne")};`,
+        "}",
+        "",
+      );
+    } else if (d.kind === "bareme") {
+      l.push(
+        `/** ${e.name} · ${f.name} — barème sur « ${d.fieldId} ». */`,
+        emettreBaremeTs(
+          { paliers: d.paliers, mode: d.mode, fraisFixes: d.fraisFixes },
+          nomDeLigne(f),
+        ),
+      );
+    } else {
+      // `versionne` : aucun document du corpus ne l'emploie. On LEVE plutot
+      // que de rendre un chiffre faux, et `enLigne` transforme la levee en
+      // en-tete `X-Air-Non-Calcule`.
+      l.push(
+        `/** ${e.name} · ${f.name} — règle versionnée : NON écrite par cet émetteur. */`,
+        `export function ${nomDeLigne(f)}(_ligne: Record<string, unknown>): number | null {`,
+        `  throw new Error("AIR_CALCUL_A_ECRIRE:${f.id}");`,
+        "}",
+        "",
+      );
+    }
+  }
+  return l.join("\n") + "\n";
+}
+
 function routes(air: ProjectAir, e: Entite): string {
   const n = CAMEL(e.id);
   // ── UNE ENTITÉ QU'ON NE SAIT PAS FILTRER EST FERMÉE, PAS OUVERTE.
@@ -740,6 +885,13 @@ function routes(air: ProjectAir, e: Entite): string {
             .join(", ")} } from "../calcul/en-base.ts";`,
         ]
       : []),
+    ...(derivesDeLigne(e).length > 0
+      ? [
+          `import { ${derivesDeLigne(e)
+            .map((f) => nomDeLigne(f))
+            .join(", ")} } from "../calcul/ligne.ts";`,
+        ]
+      : []),
     "",
     "// L'ADRESSE EST IMPOSÉE PAR LE CONTRAT, ELLE N'EST PAS CHOISIE ICI.",
     "//",
@@ -778,8 +930,10 @@ function routes(air: ProjectAir, e: Entite): string {
           "  }",
         ];
       }
+      // Les dérivés DE LIGNE sont calculés plus bas, dans l'ordre de leurs
+      // dépendances : un barème qui mesure un calcul doit le lire APRÈS lui.
       if (f.derived !== undefined) {
-        return [`  // « ${f.name} » est CALCULÉ par le document, pas stocké ici.`];
+        return [`  // « ${f.name} » est CALCULÉ depuis la ligne — voir plus bas.`];
       }
       const c = JSON.stringify(colonne(f));
       // UN OUI/NON DOIT RESTER UN OUI/NON. SQLite rend 1 ou 0 ; Postgres rend
@@ -800,6 +954,64 @@ function routes(air: ProjectAir, e: Entite): string {
         "  }",
       ];
     }),
+    // ── LES DERIVES DE LIGNE, DANS L'ORDRE DE LEURS DEPENDANCES.
+    //
+    // Mesure du 2026-10-14, serveur DEMARRE : un releve ecrit en HTTP 200
+    // revenait SANS sa consommation ni son montant. Les deux champs centraux
+    // du cahier, absents en silence, parce que cette pile ne calculait que
+    // les derives qui interrogent la base.
+    //
+    // `parId` est la ligne vue par IDENTIFIANT de champ — la forme que les
+    // expressions attendent, et la meme que les regles metier construisent
+    // deja. Les valeurs calculees y RENTRENT a mesure, pour que le bareme
+    // lise la consommation que le calcul vient de produire.
+    //
+    // Chaque calcul est TENTE separement : un champ qui echoue part dans
+    // `X-Air-Non-Calcule` et n'emporte pas les autres avec lui.
+    ...(derivesDeLigne(e).length === 0
+      ? []
+      : [
+          "  const parId: Record<string, unknown> = {",
+          ...stockes(e).map(
+            (x) => `    ${JSON.stringify(x.id)}: src[${JSON.stringify(colonne(x))}],`,
+          ),
+          "  };",
+          ...derivesDeLigne(e).flatMap((f) => {
+            const d = f.derived;
+            const nom = JSON.stringify(f.name);
+            if (d?.kind === "bareme") {
+              return [
+                `  // « ${f.name} » — barème sur « ${d.fieldId} », qui doit être calculé AVANT.`,
+                "  try {",
+                `    const q${PASCAL(f.id)} = parId[${JSON.stringify(d.fieldId)}];`,
+                `    if (typeof q${PASCAL(f.id)} === "number" && Number.isFinite(q${PASCAL(f.id)})) {`,
+                `      const v${PASCAL(f.id)} = ${nomDeLigne(f)}(q${PASCAL(f.id)});`,
+                `      parId[${JSON.stringify(f.id)}] = v${PASCAL(f.id)};`,
+                `      vue[${nom}] = v${PASCAL(f.id)};`,
+                "    } else {",
+                `      nonCalcules.add(${nom});`,
+                "    }",
+                "  } catch {",
+                `    nonCalcules.add(${nom});`,
+                "  }",
+              ];
+            }
+            return [
+              `  // « ${f.name} » — depuis la ligne, aucune base interrogée.`,
+              "  try {",
+              `    const v${PASCAL(f.id)} = ${nomDeLigne(f)}(parId);`,
+              `    parId[${JSON.stringify(f.id)}] = v${PASCAL(f.id)};`,
+              `    if (v${PASCAL(f.id)} === null) {`,
+              `      nonCalcules.add(${nom});`,
+              "    } else {",
+              `      vue[${nom}] = v${PASCAL(f.id)};`,
+              "    }",
+              "  } catch {",
+              `    nonCalcules.add(${nom});`,
+              "  }",
+            ];
+          }),
+        ]),
     "  return { id: src[\"id\"], values: vue };",
     "}",
     "",
@@ -1682,6 +1894,11 @@ export function enveloppeFastify(air: ProjectAir): EnveloppeBackend {
   }
   if (air.entities.some((e) => e.fields.some((f) => f.derived?.kind === "count" || f.derived?.kind === "sum" || f.derived?.kind === "max" || f.derived?.kind === "min" || f.derived?.kind === "porteur"))) {
     files.set("src/calcul/en-base.ts", calculs(air));
+  }
+  // Les derives DE LIGNE sont independants des agregations : ils n'ont besoin
+  // d'aucune base, donc leur fichier s'emet des qu'un seul existe.
+  if (air.entities.some((e) => derivesDeLigne(e).length > 0)) {
+    files.set("src/calcul/ligne.ts", calculsDeLigne(air));
   }
   return { files };
 }

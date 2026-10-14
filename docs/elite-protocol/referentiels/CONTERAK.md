@@ -11,7 +11,7 @@
 
 | Exigence du cahier | Preuve |
 |---|---|
-| **Barème progressif** 150 kWh à 85 F, surplus à 125 F, + 402 F fixes | **11/11 valeurs exactes** du vecteur de test que le cahier fournit lui-même : 0 → 402 F, 155 → 13 777 F, 305 → 32 527 F |
+| **Barème progressif** 150 kWh à 85 F, surplus à 125 F, + 402 F fixes | **11/11, EXÉCUTÉ le 2026-10-14** — `calculer_fld_releves_montant_estime` importé depuis le module réellement émis, appliqué aux onze valeurs du cahier. ⚠️ **La version du 2026-10-12 de cette ligne annonçait le même résultat SANS preuve exécutable** : aucune de ces valeurs n'existait dans le code. C'était un calcul à la main présenté comme une mesure. Mode `par_tranche` — mesuré : `global` ne tient que 5/11 |
 | Index nouveau − ancien | expressions du compilateur ; et une règle posée sur ce calcul **se déclenche** (corrigé ce jour — elle était silencieuse) |
 | Barèmes historiques datés avec source | versions choisies par une **date de la ligne**, jamais par l'horloge |
 | « Index inférieur au précédent → bloquer » | le serveur **calcule** l'écart depuis la ligne et refuse si négatif |

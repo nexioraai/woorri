@@ -1,0 +1,3303 @@
+{
+  "airSchemaVersion": "1.43.0",
+  "projectId": "prj_conterak",
+  "app": {
+    "name": "Conterak",
+    "slug": "conterak",
+    "description": [
+      {
+        "locale": "fr",
+        "text": "Suivi des compteurs d'électricité : preuves datées, calcul progressif et vérification des factures SNE."
+      }
+    ],
+    "locales": {
+      "userLanguage": "fr",
+      "appLocales": [
+        "fr"
+      ],
+      "defaultAppLocale": "fr",
+      "contentLocales": [
+        "fr"
+      ],
+      "rtlSupported": false
+    }
+  },
+  "navigation": {
+    "entryScreenId": "scr_accueil",
+    "primary": {
+      "destinations": [
+        {
+          "routeId": "nav_accueil",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Mon compteur"
+            }
+          ],
+          "order": 0,
+          "icon": "accueil"
+        },
+        {
+          "routeId": "nav_releves",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Mes relevés"
+            }
+          ],
+          "order": 1,
+          "icon": "liste"
+        },
+        {
+          "routeId": "nav_factures",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Factures SNE"
+            }
+          ],
+          "order": 2,
+          "icon": "billet"
+        },
+        {
+          "routeId": "nav_abonnement",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Mon abonnement"
+            }
+          ],
+          "order": 3,
+          "icon": "panier"
+        },
+        {
+          "routeId": "nav_profil",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Mon profil"
+            }
+          ],
+          "order": 4,
+          "icon": "compte"
+        }
+      ]
+    },
+    "routes": [
+      {
+        "id": "nav_accueil",
+        "screenId": "scr_accueil",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Mon compteur"
+          }
+        ]
+      },
+      {
+        "id": "nav_releves",
+        "screenId": "scr_releves",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Mes relevés"
+          }
+        ]
+      },
+      {
+        "id": "nav_factures",
+        "screenId": "scr_factures",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Factures SNE"
+          }
+        ]
+      },
+      {
+        "id": "nav_abonnement",
+        "screenId": "scr_abonnement",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Mon abonnement"
+          }
+        ]
+      },
+      {
+        "id": "nav_profil",
+        "screenId": "scr_profil",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Mon profil"
+          }
+        ]
+      },
+      {
+        "id": "nav_releve_nouveau",
+        "screenId": "scr_releve_nouveau",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Nouveau relevé"
+          }
+        ]
+      },
+      {
+        "id": "nav_releve_detail",
+        "screenId": "scr_releve_detail",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Estimation du mois"
+          }
+        ]
+      },
+      {
+        "id": "nav_facture_nouvelle",
+        "screenId": "scr_facture_nouvelle",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Importer une facture"
+          }
+        ]
+      },
+      {
+        "id": "nav_preuve_nouvelle",
+        "screenId": "scr_preuve_nouvelle",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Envoyer ma preuve"
+          }
+        ]
+      },
+      {
+        "id": "nav_paiements",
+        "screenId": "scr_paiements",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Mes preuves de paiement"
+          }
+        ]
+      },
+      {
+        "id": "nav_admin_villes",
+        "screenId": "scr_admin_villes",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Numéros par ville"
+          }
+        ]
+      },
+      {
+        "id": "nav_admin_ville_fiche",
+        "screenId": "scr_admin_ville_fiche",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Fiche de la ville"
+          }
+        ]
+      },
+      {
+        "id": "nav_journal",
+        "screenId": "scr_journal",
+        "title": [
+          {
+            "locale": "fr",
+            "text": "Journal"
+          }
+        ]
+      }
+    ]
+  },
+  "entities": [
+    {
+      "id": "ent_profils",
+      "name": "profils",
+      "fields": [
+        {
+          "id": "fld_profils_nom_complet",
+          "name": "nom_complet",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Nom complet"
+            }
+          ],
+          "type": "string",
+          "required": true,
+          "demoValues": [
+            "Hamid Abakar Mahamat",
+            "Achta Djimet",
+            "Mahamat Nour Adoum",
+            "Fatimé Bichara",
+            "Youssouf Ali Brahim",
+            "Zara Hassan",
+            "Idriss Oumar Déby",
+            "Khadidja Saleh"
+          ]
+        },
+        {
+          "id": "fld_profils_ville",
+          "name": "ville",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Ville du compteur"
+            }
+          ],
+          "type": "enum",
+          "required": true,
+          "enumValues": [
+            "NDJAMENA",
+            "MOUNDOU",
+            "SARH",
+            "ABECHE"
+          ],
+          "enumLabels": [
+            {
+              "value": "NDJAMENA",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "N'Djaména"
+                }
+              ]
+            },
+            {
+              "value": "MOUNDOU",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Moundou"
+                }
+              ]
+            },
+            {
+              "value": "SARH",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Sarh"
+                }
+              ]
+            },
+            {
+              "value": "ABECHE",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Abéché"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "fld_profils_quartier",
+          "name": "quartier",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Quartier"
+            }
+          ],
+          "type": "string",
+          "required": true,
+          "demoValues": [
+            "Moursal",
+            "Chagoua",
+            "Klemat",
+            "Paris-Congo",
+            "Ardep-Djoumal",
+            "Dembé",
+            "Walia",
+            "Gassi"
+          ]
+        },
+        {
+          "id": "fld_profils_moyen_contact",
+          "name": "moyen_contact",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Moyen de contact"
+            }
+          ],
+          "type": "enum",
+          "required": true,
+          "enumValues": [
+            "TELEPHONE",
+            "EMAIL"
+          ],
+          "enumLabels": [
+            {
+              "value": "TELEPHONE",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Téléphone"
+                }
+              ]
+            },
+            {
+              "value": "EMAIL",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Adresse e-mail"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "fld_profils_telephone",
+          "name": "telephone",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Téléphone"
+            }
+          ],
+          "type": "string",
+          "required": false,
+          "unique": true,
+          "demoValues": [
+            "+235 66 11 22 33",
+            "+235 99 44 55 66",
+            "+235 65 77 88 99",
+            "+235 90 12 34 56"
+          ]
+        },
+        {
+          "id": "fld_profils_email",
+          "name": "email",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Adresse e-mail"
+            }
+          ],
+          "type": "string",
+          "required": false,
+          "unique": true,
+          "demoValues": [
+            "hamid.abakar@exemple.td",
+            "achta.djimet@exemple.td",
+            "mahamat.nour@exemple.td",
+            "fatime.bichara@exemple.td"
+          ]
+        },
+        {
+          "id": "fld_profils_code_personnel",
+          "name": "code_personnel",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Code personnel à 4 chiffres"
+            }
+          ],
+          "type": "string",
+          "required": true,
+          "sensitive": true
+        },
+        {
+          "id": "fld_profils_statut",
+          "name": "statut",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Statut du compte"
+            }
+          ],
+          "type": "enum",
+          "required": true,
+          "enumValues": [
+            "ACTIF",
+            "SUSPENDU"
+          ],
+          "enumLabels": [
+            {
+              "value": "ACTIF",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Actif"
+                }
+              ]
+            },
+            {
+              "value": "SUSPENDU",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Suspendu"
+                }
+              ]
+            }
+          ],
+          "enumTones": [
+            {
+              "value": "ACTIF",
+              "tone": "success"
+            },
+            {
+              "value": "SUSPENDU",
+              "tone": "error"
+            }
+          ],
+          "transitions": [
+            {
+              "from": "ACTIF",
+              "to": "SUSPENDU"
+            },
+            {
+              "from": "SUSPENDU",
+              "to": "ACTIF"
+            }
+          ]
+        },
+        {
+          "id": "fld_profils_abonnement_fin",
+          "name": "abonnement_fin",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Abonnement valable jusqu'au"
+            }
+          ],
+          "type": "date",
+          "required": false
+        },
+        {
+          "id": "fld_profils_cree_le",
+          "name": "cree_le",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Compte créé le"
+            }
+          ],
+          "type": "datetime",
+          "required": true
+        }
+      ]
+    },
+    {
+      "id": "ent_compteurs",
+      "name": "compteurs",
+      "fields": [
+        {
+          "id": "fld_compteurs_numero",
+          "name": "numero",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Numéro de compteur SNE"
+            }
+          ],
+          "type": "string",
+          "required": true,
+          "unique": true,
+          "demoValues": [
+            "SNE-004127",
+            "SNE-118204",
+            "SNE-220561",
+            "SNE-307842",
+            "SNE-415093",
+            "SNE-562310",
+            "SNE-678451",
+            "SNE-790128"
+          ]
+        },
+        {
+          "id": "fld_compteurs_proprietaire",
+          "name": "proprietaire",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Titulaire"
+            }
+          ],
+          "type": "reference",
+          "required": true,
+          "referencesEntityId": "ent_profils",
+          "referenceDisplayFieldId": "fld_profils_nom_complet"
+        },
+        {
+          "id": "fld_compteurs_ville",
+          "name": "ville",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Ville"
+            }
+          ],
+          "type": "enum",
+          "required": true,
+          "enumValues": [
+            "NDJAMENA",
+            "MOUNDOU",
+            "SARH",
+            "ABECHE"
+          ],
+          "enumLabels": [
+            {
+              "value": "NDJAMENA",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "N'Djaména"
+                }
+              ]
+            },
+            {
+              "value": "MOUNDOU",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Moundou"
+                }
+              ]
+            },
+            {
+              "value": "SARH",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Sarh"
+                }
+              ]
+            },
+            {
+              "value": "ABECHE",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Abéché"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "fld_compteurs_quartier",
+          "name": "quartier",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Quartier"
+            }
+          ],
+          "type": "string",
+          "required": true,
+          "demoValues": [
+            "Moursal",
+            "Chagoua",
+            "Klemat",
+            "Dembé"
+          ]
+        },
+        {
+          "id": "fld_compteurs_repere",
+          "name": "repere",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Repère d'accès"
+            }
+          ],
+          "type": "string",
+          "required": false,
+          "demoValues": [
+            "Face à la pharmacie",
+            "Derrière le marché",
+            "Rue du lycée",
+            "Près du château d'eau"
+          ]
+        },
+        {
+          "id": "fld_compteurs_prochain_releve_attendu",
+          "name": "prochain_releve_attendu",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Prochain relevé attendu"
+            }
+          ],
+          "type": "date",
+          "required": false
+        }
+      ]
+    },
+    {
+      "id": "ent_releves",
+      "name": "releves",
+      "fields": [
+        {
+          "id": "fld_releves_compteur",
+          "name": "compteur",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Compteur"
+            }
+          ],
+          "type": "reference",
+          "required": true,
+          "referencesEntityId": "ent_compteurs",
+          "referenceDisplayFieldId": "fld_compteurs_numero"
+        },
+        {
+          "id": "fld_releves_type_releve",
+          "name": "type_releve",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Type de relevé"
+            }
+          ],
+          "type": "enum",
+          "required": true,
+          "enumValues": [
+            "MENSUEL",
+            "HEBDOMADAIRE",
+            "JOURNALIER"
+          ],
+          "enumLabels": [
+            {
+              "value": "MENSUEL",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Mensuel (facturable)"
+                }
+              ]
+            },
+            {
+              "value": "HEBDOMADAIRE",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Hebdomadaire (indicatif)"
+                }
+              ]
+            },
+            {
+              "value": "JOURNALIER",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Journalier (indicatif)"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "fld_releves_periode_debut",
+          "name": "periode_debut",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Début de période"
+            }
+          ],
+          "type": "date",
+          "required": true
+        },
+        {
+          "id": "fld_releves_periode_fin",
+          "name": "periode_fin",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Fin de période"
+            }
+          ],
+          "type": "date",
+          "required": true
+        },
+        {
+          "id": "fld_releves_index_ancien",
+          "name": "index_ancien",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Ancien index"
+            }
+          ],
+          "type": "number",
+          "required": true,
+          "unit": "kWh",
+          "demoValues": [
+            "2005",
+            "2310",
+            "2600",
+            "2900",
+            "1420",
+            "870",
+            "3150",
+            "4005"
+          ]
+        },
+        {
+          "id": "fld_releves_index_nouveau",
+          "name": "index_nouveau",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Nouvel index"
+            }
+          ],
+          "type": "number",
+          "required": true,
+          "unit": "kWh",
+          "demoValues": [
+            "2310",
+            "2600",
+            "2900",
+            "3205",
+            "1575",
+            "870",
+            "3440",
+            "4310"
+          ]
+        },
+        {
+          "id": "fld_releves_consommation",
+          "name": "consommation",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Consommation de la période"
+            }
+          ],
+          "type": "number",
+          "required": false,
+          "unit": "kWh",
+          "derived": {
+            "kind": "calcul",
+            "expression": {
+              "kind": "operation",
+              "op": "-",
+              "gauche": {
+                "kind": "champ",
+                "fieldId": "fld_releves_index_nouveau"
+              },
+              "droite": {
+                "kind": "champ",
+                "fieldId": "fld_releves_index_ancien"
+              }
+            }
+          }
+        },
+        {
+          "id": "fld_releves_montant_estime",
+          "name": "montant_estime",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Montant estimé"
+            }
+          ],
+          "type": "decimal",
+          "required": false,
+          "unit": "XAF",
+          "derived": {
+            "kind": "bareme",
+            "fieldId": "fld_releves_consommation",
+            "paliers": [
+              {
+                "jusqua": 150,
+                "prixUnitaire": 85
+              },
+              {
+                "prixUnitaire": 125
+              }
+            ],
+            "mode": "par_tranche",
+            "fraisFixes": 402
+          }
+        },
+        {
+          "id": "fld_releves_photo",
+          "name": "photo",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Photo du compteur"
+            }
+          ],
+          "type": "asset",
+          "required": false
+        },
+        {
+          "id": "fld_releves_video",
+          "name": "video",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Vidéo (facultative)"
+            }
+          ],
+          "type": "asset",
+          "required": false
+        },
+        {
+          "id": "fld_releves_date_appareil",
+          "name": "date_appareil",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Date déclarée par l'appareil"
+            }
+          ],
+          "type": "datetime",
+          "required": false
+        },
+        {
+          "id": "fld_releves_date_serveur",
+          "name": "date_serveur",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Date de réception"
+            }
+          ],
+          "type": "datetime",
+          "required": true
+        },
+        {
+          "id": "fld_releves_cause_index_inchange",
+          "name": "cause_index_inchange",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Index inchangé — cause déclarée"
+            }
+          ],
+          "type": "enum",
+          "required": false,
+          "enumValues": [
+            "COUPURE",
+            "PAS_DE_CONSOMMATION"
+          ],
+          "enumLabels": [
+            {
+              "value": "COUPURE",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Coupure de courant / pas d'alimentation"
+                }
+              ]
+            },
+            {
+              "value": "PAS_DE_CONSOMMATION",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Pas de consommation observée"
+                }
+              ]
+            }
+          ],
+          "enumTones": [
+            {
+              "value": "COUPURE",
+              "tone": "warn"
+            }
+          ]
+        },
+        {
+          "id": "fld_releves_statut",
+          "name": "statut",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Statut du relevé"
+            }
+          ],
+          "type": "enum",
+          "required": true,
+          "enumValues": [
+            "EN_ATTENTE",
+            "VALIDE",
+            "BLOQUE",
+            "CORRIGE"
+          ],
+          "enumLabels": [
+            {
+              "value": "EN_ATTENTE",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "En attente de validation"
+                }
+              ]
+            },
+            {
+              "value": "VALIDE",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Validé"
+                }
+              ]
+            },
+            {
+              "value": "BLOQUE",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Bloqué — index à vérifier"
+                }
+              ]
+            },
+            {
+              "value": "CORRIGE",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Corrigé"
+                }
+              ]
+            }
+          ],
+          "enumTones": [
+            {
+              "value": "EN_ATTENTE",
+              "tone": "warn"
+            },
+            {
+              "value": "VALIDE",
+              "tone": "success"
+            },
+            {
+              "value": "BLOQUE",
+              "tone": "error"
+            },
+            {
+              "value": "CORRIGE",
+              "tone": "warn"
+            }
+          ],
+          "transitions": [
+            {
+              "from": "EN_ATTENTE",
+              "to": "VALIDE"
+            },
+            {
+              "from": "EN_ATTENTE",
+              "to": "BLOQUE"
+            },
+            {
+              "from": "BLOQUE",
+              "to": "CORRIGE"
+            },
+            {
+              "from": "CORRIGE",
+              "to": "VALIDE"
+            }
+          ]
+        },
+        {
+          "id": "fld_releves_motif_correction",
+          "name": "motif_correction",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Motif de la correction"
+            }
+          ],
+          "type": "string",
+          "required": false
+        }
+      ]
+    },
+    {
+      "id": "ent_factures_sne",
+      "name": "factures_sne",
+      "fields": [
+        {
+          "id": "fld_factures_sne_compteur",
+          "name": "compteur",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Compteur"
+            }
+          ],
+          "type": "reference",
+          "required": true,
+          "referencesEntityId": "ent_compteurs",
+          "referenceDisplayFieldId": "fld_compteurs_numero"
+        },
+        {
+          "id": "fld_factures_sne_periode_debut",
+          "name": "periode_debut",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Début de période"
+            }
+          ],
+          "type": "date",
+          "required": true
+        },
+        {
+          "id": "fld_factures_sne_periode_fin",
+          "name": "periode_fin",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Fin de période"
+            }
+          ],
+          "type": "date",
+          "required": true
+        },
+        {
+          "id": "fld_factures_sne_index_ancien_sne",
+          "name": "index_ancien_sne",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Ancien index (facture SNE)"
+            }
+          ],
+          "type": "number",
+          "required": false,
+          "unit": "kWh"
+        },
+        {
+          "id": "fld_factures_sne_index_nouveau_sne",
+          "name": "index_nouveau_sne",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Nouvel index (facture SNE)"
+            }
+          ],
+          "type": "number",
+          "required": false,
+          "unit": "kWh"
+        },
+        {
+          "id": "fld_factures_sne_kwh_factures",
+          "name": "kwh_factures",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "kWh facturés par la SNE"
+            }
+          ],
+          "type": "number",
+          "required": false,
+          "unit": "kWh"
+        },
+        {
+          "id": "fld_factures_sne_montant_sne",
+          "name": "montant_sne",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Montant facturé par la SNE"
+            }
+          ],
+          "type": "decimal",
+          "required": true,
+          "unit": "XAF"
+        },
+        {
+          "id": "fld_factures_sne_montant_estime_app",
+          "name": "montant_estime_app",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Montant estimé par Conterak"
+            }
+          ],
+          "type": "decimal",
+          "required": true,
+          "unit": "XAF"
+        },
+        {
+          "id": "fld_factures_sne_ecart",
+          "name": "ecart",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Écart"
+            }
+          ],
+          "type": "decimal",
+          "required": false,
+          "unit": "XAF",
+          "derived": {
+            "kind": "calcul",
+            "expression": {
+              "kind": "operation",
+              "op": "-",
+              "gauche": {
+                "kind": "champ",
+                "fieldId": "fld_factures_sne_montant_sne"
+              },
+              "droite": {
+                "kind": "champ",
+                "fieldId": "fld_factures_sne_montant_estime_app"
+              }
+            }
+          }
+        },
+        {
+          "id": "fld_factures_sne_original",
+          "name": "original",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Facture SNE importée"
+            }
+          ],
+          "type": "asset",
+          "required": true
+        },
+        {
+          "id": "fld_factures_sne_statut",
+          "name": "statut",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Statut de la comparaison"
+            }
+          ],
+          "type": "enum",
+          "required": true,
+          "enumValues": [
+            "IMPORTEE",
+            "ECART_A_VERIFIER",
+            "CONFORME"
+          ],
+          "enumLabels": [
+            {
+              "value": "IMPORTEE",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Importée"
+                }
+              ]
+            },
+            {
+              "value": "ECART_A_VERIFIER",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Écart à vérifier"
+                }
+              ]
+            },
+            {
+              "value": "CONFORME",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Conforme au calcul"
+                }
+              ]
+            }
+          ],
+          "enumTones": [
+            {
+              "value": "ECART_A_VERIFIER",
+              "tone": "warn"
+            },
+            {
+              "value": "CONFORME",
+              "tone": "success"
+            }
+          ],
+          "transitions": [
+            {
+              "from": "IMPORTEE",
+              "to": "ECART_A_VERIFIER"
+            },
+            {
+              "from": "IMPORTEE",
+              "to": "CONFORME"
+            },
+            {
+              "from": "ECART_A_VERIFIER",
+              "to": "CONFORME"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ent_paiements",
+      "name": "paiements",
+      "fields": [
+        {
+          "id": "fld_paiements_profil",
+          "name": "profil",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Abonné"
+            }
+          ],
+          "type": "reference",
+          "required": true,
+          "referencesEntityId": "ent_profils",
+          "referenceDisplayFieldId": "fld_profils_nom_complet"
+        },
+        {
+          "id": "fld_paiements_operateur",
+          "name": "operateur",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Opérateur"
+            }
+          ],
+          "type": "enum",
+          "required": true,
+          "enumValues": [
+            "MOOV",
+            "AIRTEL"
+          ],
+          "enumLabels": [
+            {
+              "value": "MOOV",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Moov Money"
+                }
+              ]
+            },
+            {
+              "value": "AIRTEL",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Airtel Money"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "fld_paiements_montant",
+          "name": "montant",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Montant payé"
+            }
+          ],
+          "type": "decimal",
+          "required": true,
+          "unit": "XAF",
+          "demoValues": [
+            "1000",
+            "2000",
+            "6000",
+            "12000",
+            "1000",
+            "6000",
+            "2000",
+            "12000"
+          ]
+        },
+        {
+          "id": "fld_paiements_duree_mois",
+          "name": "duree_mois",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Durée accordée (mois)"
+            }
+          ],
+          "type": "number",
+          "required": true,
+          "demoValues": [
+            "1",
+            "2",
+            "6",
+            "12",
+            "1",
+            "6",
+            "2",
+            "12"
+          ]
+        },
+        {
+          "id": "fld_paiements_reference_transaction",
+          "name": "reference_transaction",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Référence de la transaction"
+            }
+          ],
+          "type": "string",
+          "required": true,
+          "unique": true,
+          "demoValues": [
+            "MV-7741-20261101",
+            "AT-3182-20261105",
+            "MV-9064-20261113",
+            "AT-2297-20261118",
+            "MV-5520-20261122",
+            "AT-8831-20261127",
+            "MV-1093-20261201",
+            "AT-4476-20261205"
+          ]
+        },
+        {
+          "id": "fld_paiements_recu",
+          "name": "recu",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Reçu ou capture du SMS"
+            }
+          ],
+          "type": "asset",
+          "required": true
+        },
+        {
+          "id": "fld_paiements_numero_affiche",
+          "name": "numero_affiche",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Numéro affiché lors du paiement"
+            }
+          ],
+          "type": "string",
+          "required": true,
+          "demoValues": [
+            "+235 66 00 11 22",
+            "+235 99 00 33 44",
+            "+235 66 00 55 66",
+            "+235 99 00 77 88"
+          ]
+        },
+        {
+          "id": "fld_paiements_statut",
+          "name": "statut",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Statut de la preuve"
+            }
+          ],
+          "type": "enum",
+          "required": true,
+          "enumValues": [
+            "PREUVE_RECUE",
+            "EN_VERIFICATION",
+            "CONFIRMEE",
+            "REJETEE"
+          ],
+          "enumLabels": [
+            {
+              "value": "PREUVE_RECUE",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Preuve reçue"
+                }
+              ]
+            },
+            {
+              "value": "EN_VERIFICATION",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "En vérification"
+                }
+              ]
+            },
+            {
+              "value": "CONFIRMEE",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Confirmée"
+                }
+              ]
+            },
+            {
+              "value": "REJETEE",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Rejetée"
+                }
+              ]
+            }
+          ],
+          "enumTones": [
+            {
+              "value": "PREUVE_RECUE",
+              "tone": "warn"
+            },
+            {
+              "value": "EN_VERIFICATION",
+              "tone": "warn"
+            },
+            {
+              "value": "CONFIRMEE",
+              "tone": "success"
+            },
+            {
+              "value": "REJETEE",
+              "tone": "error"
+            }
+          ],
+          "transitions": [
+            {
+              "from": "PREUVE_RECUE",
+              "to": "EN_VERIFICATION"
+            },
+            {
+              "from": "EN_VERIFICATION",
+              "to": "CONFIRMEE"
+            },
+            {
+              "from": "EN_VERIFICATION",
+              "to": "REJETEE"
+            },
+            {
+              "from": "REJETEE",
+              "to": "EN_VERIFICATION"
+            }
+          ]
+        },
+        {
+          "id": "fld_paiements_motif_rejet",
+          "name": "motif_rejet",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Motif du rejet"
+            }
+          ],
+          "type": "string",
+          "required": false
+        },
+        {
+          "id": "fld_paiements_soumis_le",
+          "name": "soumis_le",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Soumis le"
+            }
+          ],
+          "type": "datetime",
+          "required": true
+        }
+      ]
+    },
+    {
+      "id": "ent_numeros_ville",
+      "name": "numeros_ville",
+      "fields": [
+        {
+          "id": "fld_numeros_ville_ville",
+          "name": "ville",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Ville"
+            }
+          ],
+          "type": "enum",
+          "required": true,
+          "enumValues": [
+            "NDJAMENA",
+            "MOUNDOU",
+            "SARH",
+            "ABECHE"
+          ],
+          "enumLabels": [
+            {
+              "value": "NDJAMENA",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "N'Djaména"
+                }
+              ]
+            },
+            {
+              "value": "MOUNDOU",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Moundou"
+                }
+              ]
+            },
+            {
+              "value": "SARH",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Sarh"
+                }
+              ]
+            },
+            {
+              "value": "ABECHE",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Abéché"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "fld_numeros_ville_operateur",
+          "name": "operateur",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Opérateur"
+            }
+          ],
+          "type": "enum",
+          "required": true,
+          "enumValues": [
+            "MOOV",
+            "AIRTEL"
+          ],
+          "enumLabels": [
+            {
+              "value": "MOOV",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Moov Money"
+                }
+              ]
+            },
+            {
+              "value": "AIRTEL",
+              "label": [
+                {
+                  "locale": "fr",
+                  "text": "Airtel Money"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "fld_numeros_ville_numero",
+          "name": "numero",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Numéro de réception"
+            }
+          ],
+          "type": "string",
+          "required": true,
+          "demoValues": [
+            "+235 66 00 11 22",
+            "+235 99 00 33 44",
+            "+235 66 00 55 66",
+            "+235 99 00 77 88"
+          ]
+        },
+        {
+          "id": "fld_numeros_ville_beneficiaire",
+          "name": "beneficiaire",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Nom du bénéficiaire"
+            }
+          ],
+          "type": "string",
+          "required": false,
+          "demoValues": [
+            "Conterak SARL",
+            "Conterak SARL",
+            "Conterak SARL",
+            "Conterak SARL"
+          ]
+        },
+        {
+          "id": "fld_numeros_ville_consigne",
+          "name": "consigne",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Consigne de paiement"
+            }
+          ],
+          "type": "string",
+          "required": false,
+          "demoValues": [
+            "Indiquez votre numéro de compteur en référence",
+            "Conservez le SMS de confirmation",
+            "Indiquez votre numéro de compteur en référence",
+            "Conservez le SMS de confirmation"
+          ]
+        },
+        {
+          "id": "fld_numeros_ville_actif",
+          "name": "actif",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Actif"
+            }
+          ],
+          "type": "boolean",
+          "required": true
+        },
+        {
+          "id": "fld_numeros_ville_maj_le",
+          "name": "maj_le",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Mis à jour le"
+            }
+          ],
+          "type": "datetime",
+          "required": true
+        }
+      ]
+    },
+    {
+      "id": "ent_journal",
+      "name": "journal",
+      "appendOnly": true,
+      "fields": [
+        {
+          "id": "fld_journal_quoi",
+          "name": "quoi",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Événement"
+            }
+          ],
+          "type": "string",
+          "required": true,
+          "demoValues": [
+            "Numéro Moov modifié",
+            "Abonnement confirmé",
+            "Relevé bloqué",
+            "Correction de relevé",
+            "Numéro Airtel désactivé",
+            "Preuve rejetée",
+            "Compte suspendu",
+            "Relevé validé"
+          ]
+        },
+        {
+          "id": "fld_journal_ancienne_valeur",
+          "name": "ancienne_valeur",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Ancienne valeur"
+            }
+          ],
+          "type": "string",
+          "required": false
+        },
+        {
+          "id": "fld_journal_nouvelle_valeur",
+          "name": "nouvelle_valeur",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Nouvelle valeur"
+            }
+          ],
+          "type": "string",
+          "required": false
+        },
+        {
+          "id": "fld_journal_auteur",
+          "name": "auteur",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Auteur"
+            }
+          ],
+          "type": "reference",
+          "required": false,
+          "referencesEntityId": "ent_profils",
+          "referenceDisplayFieldId": "fld_profils_nom_complet"
+        },
+        {
+          "id": "fld_journal_horodatage",
+          "name": "horodatage",
+          "label": [
+            {
+              "locale": "fr",
+              "text": "Horodatage"
+            }
+          ],
+          "type": "datetime",
+          "required": true
+        }
+      ]
+    }
+  ],
+  "relations": [
+    {
+      "id": "rel_profil_compteurs",
+      "fromEntityId": "ent_profils",
+      "toEntityId": "ent_compteurs",
+      "kind": "one_to_many"
+    },
+    {
+      "id": "rel_compteur_releves",
+      "fromEntityId": "ent_compteurs",
+      "toEntityId": "ent_releves",
+      "kind": "one_to_many"
+    },
+    {
+      "id": "rel_compteur_factures",
+      "fromEntityId": "ent_compteurs",
+      "toEntityId": "ent_factures_sne",
+      "kind": "one_to_many"
+    },
+    {
+      "id": "rel_profil_paiements",
+      "fromEntityId": "ent_profils",
+      "toEntityId": "ent_paiements",
+      "kind": "one_to_many"
+    },
+    {
+      "id": "rel_profil_journal",
+      "fromEntityId": "ent_profils",
+      "toEntityId": "ent_journal",
+      "kind": "one_to_many"
+    }
+  ],
+  "backend": {
+    "kind": "genere",
+    "stack": "fastify"
+  },
+  "datasets": [
+    {
+      "id": "data_profils",
+      "entityId": "ent_profils",
+      "contentHash": "e3b115a13d4f209c5b42b137ad255541beb454409d05a2906e89fa66efe96b19",
+      "rowCount": 8,
+      "sourceKind": "seed"
+    },
+    {
+      "id": "data_compteurs",
+      "entityId": "ent_compteurs",
+      "contentHash": "88072851246fb04655b625d9c0fb407680ed3c0130630fe738fe101becedfd6d",
+      "rowCount": 8,
+      "sourceKind": "seed"
+    },
+    {
+      "id": "data_releves",
+      "entityId": "ent_releves",
+      "contentHash": "b5f5b9a6a5b30135f4ac81fd80dcb7cba2ad880224584dc70ba65ebc183a3a35",
+      "rowCount": 8,
+      "sourceKind": "seed"
+    },
+    {
+      "id": "data_factures_sne",
+      "entityId": "ent_factures_sne",
+      "contentHash": "2bb27eb56441e8e784a010ac6c6fa8d332f8c50b1e0dd2551b85939081c37b23",
+      "rowCount": 4,
+      "sourceKind": "seed"
+    },
+    {
+      "id": "data_paiements",
+      "entityId": "ent_paiements",
+      "contentHash": "8c290759fe2e90fa3343217c40756d88d361e9abb8f5c9e78bc640d5ed6c131b",
+      "rowCount": 8,
+      "sourceKind": "seed"
+    },
+    {
+      "id": "data_numeros_ville",
+      "entityId": "ent_numeros_ville",
+      "contentHash": "f994830fdedb5b7944f2ba178223cbddd75e0bb4ef23c8e5f537ebd7f9553783",
+      "rowCount": 4,
+      "sourceKind": "seed"
+    },
+    {
+      "id": "data_journal",
+      "entityId": "ent_journal",
+      "contentHash": "8261f607212a7d5fca574e36510bba7800618a6a60a6cb5c5ff629cb0207291e",
+      "rowCount": 8,
+      "sourceKind": "seed"
+    }
+  ],
+  "screens": [
+    {
+      "id": "scr_accueil",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Mon compteur"
+        }
+      ],
+      "showsPrimaryNav": true,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_accueil_entete",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Mon compteur"
+            }
+          ]
+        },
+        {
+          "id": "blk_accueil_photographier",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Photographier / filmer mon compteur"
+            },
+            {
+              "key": "kind",
+              "value": "primary"
+            },
+            {
+              "key": "actionId",
+              "value": "act_photographier"
+            }
+          ]
+        },
+        {
+          "id": "blk_accueil_derniers",
+          "blockType": "list",
+          "entityId": "ent_releves",
+          "props": [
+            {
+              "key": "titleFieldId",
+              "value": "fld_releves_type_releve"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_releves_periode_fin"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_releves_montant_estime"
+            },
+            {
+              "key": "badgeFieldId",
+              "value": "fld_releves_statut"
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_releves_photo"
+            },
+            {
+              "key": "sortFieldId",
+              "value": "fld_releves_periode_fin"
+            },
+            {
+              "key": "sortDirection",
+              "value": "desc"
+            },
+            {
+              "key": "pageSize",
+              "value": 5
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Aucun relevé"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Photographiez votre compteur pour enregistrer le premier relevé."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_releve_nouveau",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Nouveau relevé"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_releve_form",
+          "blockType": "form",
+          "entityId": "ent_releves",
+          "props": [
+            {
+              "key": "fieldIds",
+              "value": [
+                "fld_releves_compteur",
+                "fld_releves_type_releve",
+                "fld_releves_periode_debut",
+                "fld_releves_periode_fin",
+                "fld_releves_index_ancien",
+                "fld_releves_index_nouveau",
+                "fld_releves_photo",
+                "fld_releves_video",
+                "fld_releves_cause_index_inchange"
+              ]
+            },
+            {
+              "key": "submitLabel",
+              "value": "Enregistrer le relevé"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_releves",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Mes relevés"
+        }
+      ],
+      "showsPrimaryNav": true,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_releves_entete",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Mes relevés"
+            }
+          ]
+        },
+        {
+          "id": "blk_releves_liste",
+          "blockType": "list",
+          "entityId": "ent_releves",
+          "props": [
+            {
+              "key": "titleFieldId",
+              "value": "fld_releves_type_releve"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_releves_periode_fin"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_releves_montant_estime"
+            },
+            {
+              "key": "badgeFieldId",
+              "value": "fld_releves_statut"
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_releves_video"
+            },
+            {
+              "key": "sortFieldId",
+              "value": "fld_releves_periode_fin"
+            },
+            {
+              "key": "sortDirection",
+              "value": "desc"
+            },
+            {
+              "key": "userFilterFieldIds",
+              "value": [
+                "fld_releves_type_releve",
+                "fld_releves_statut"
+              ]
+            },
+            {
+              "key": "userFilterOperators",
+              "value": [
+                "eq",
+                "eq"
+              ]
+            },
+            {
+              "key": "userFilterInputTypes",
+              "value": [
+                "choice",
+                "choice"
+              ]
+            },
+            {
+              "key": "pageSize",
+              "value": 20
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Aucun relevé"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Les relevés mensuels, hebdomadaires et journaliers apparaîtront ici."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_releve_detail",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Estimation du mois"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_releve_entete",
+          "blockType": "detail_header",
+          "entityId": "ent_releves",
+          "props": [
+            {
+              "key": "titleFieldId",
+              "value": "fld_releves_type_releve"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_releves_periode_fin"
+            },
+            {
+              "key": "badgeFieldIds",
+              "value": [
+                "fld_releves_statut"
+              ]
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_releves_montant_estime"
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_releves_photo"
+            }
+          ]
+        },
+        {
+          "id": "blk_releve_mention",
+          "blockType": "prose",
+          "props": [
+            {
+              "key": "paragraphs",
+              "value": [
+                "Estimation de l'application — document non officiel, distinct d'une facture SNE.",
+                "Barème appliqué : les 150 premiers kWh à 85 F, le surplus à 125 F, plus 201 F de location de compteur et 201 F d'entretien de branchement."
+              ]
+            }
+          ]
+        },
+        {
+          "id": "blk_releve_exporter",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Exporter l'estimation"
+            },
+            {
+              "key": "kind",
+              "value": "ghost"
+            },
+            {
+              "key": "actionId",
+              "value": "act_exporter_estimation"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_factures",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Factures SNE"
+        }
+      ],
+      "showsPrimaryNav": true,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_factures_entete",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Factures SNE"
+            }
+          ]
+        },
+        {
+          "id": "blk_factures_liste",
+          "blockType": "list",
+          "entityId": "ent_factures_sne",
+          "props": [
+            {
+              "key": "titleFieldId",
+              "value": "fld_factures_sne_compteur"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_factures_sne_periode_fin"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_factures_sne_ecart"
+            },
+            {
+              "key": "badgeFieldId",
+              "value": "fld_factures_sne_statut"
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_factures_sne_original"
+            },
+            {
+              "key": "sortFieldId",
+              "value": "fld_factures_sne_periode_fin"
+            },
+            {
+              "key": "sortDirection",
+              "value": "desc"
+            },
+            {
+              "key": "pageSize",
+              "value": 20
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Aucune facture importée"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Importez une facture SNE pour la comparer à votre estimation."
+            }
+          ]
+        },
+        {
+          "id": "blk_factures_importer",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Importer une facture SNE"
+            },
+            {
+              "key": "kind",
+              "value": "primary"
+            },
+            {
+              "key": "actionId",
+              "value": "act_importer_facture"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_facture_nouvelle",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Importer une facture"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_facture_form",
+          "blockType": "form",
+          "entityId": "ent_factures_sne",
+          "props": [
+            {
+              "key": "fieldIds",
+              "value": [
+                "fld_factures_sne_compteur",
+                "fld_factures_sne_periode_debut",
+                "fld_factures_sne_periode_fin",
+                "fld_factures_sne_index_ancien_sne",
+                "fld_factures_sne_index_nouveau_sne",
+                "fld_factures_sne_kwh_factures",
+                "fld_factures_sne_montant_sne",
+                "fld_factures_sne_montant_estime_app",
+                "fld_factures_sne_original"
+              ]
+            },
+            {
+              "key": "submitLabel",
+              "value": "Comparer à mon estimation"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_abonnement",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Mon abonnement"
+        }
+      ],
+      "showsPrimaryNav": true,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_abonnement_entete",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Mon abonnement"
+            }
+          ]
+        },
+        {
+          "id": "blk_abonnement_tarifs",
+          "blockType": "prose",
+          "props": [
+            {
+              "key": "paragraphs",
+              "value": [
+                "1 000 F CFA par mois.",
+                "Vous pouvez payer 1, 2, 6 ou 12 mois d'avance : 1 000 F, 2 000 F, 6 000 F ou 12 000 F.",
+                "Les mois achetés s'ajoutent à votre date de fin — ils ne sont jamais perdus."
+              ]
+            }
+          ]
+        },
+        {
+          "id": "blk_abonnement_numeros",
+          "blockType": "list",
+          "entityId": "ent_numeros_ville",
+          "props": [
+            {
+              "key": "titleFieldId",
+              "value": "fld_numeros_ville_operateur"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_numeros_ville_numero"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_numeros_ville_beneficiaire"
+            },
+            {
+              "key": "badgeFieldId",
+              "value": "fld_numeros_ville_ville"
+            },
+            {
+              "key": "filterFieldId",
+              "value": "fld_numeros_ville_actif"
+            },
+            {
+              "key": "filterOperator",
+              "value": "eq"
+            },
+            {
+              "key": "filterValue",
+              "value": "true"
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Moyen de paiement momentanément indisponible"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Aucun numéro n'est configuré pour votre ville. Aucun numéro d'une autre ville ne sera proposé."
+            }
+          ]
+        },
+        {
+          "id": "blk_abonnement_soumettre",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "J'ai payé — envoyer ma preuve"
+            },
+            {
+              "key": "kind",
+              "value": "primary"
+            },
+            {
+              "key": "actionId",
+              "value": "act_soumettre_preuve"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_preuve_nouvelle",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Envoyer ma preuve"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_preuve_form",
+          "blockType": "form",
+          "entityId": "ent_paiements",
+          "props": [
+            {
+              "key": "fieldIds",
+              "value": [
+                "fld_paiements_profil",
+                "fld_paiements_operateur",
+                "fld_paiements_montant",
+                "fld_paiements_duree_mois",
+                "fld_paiements_reference_transaction",
+                "fld_paiements_numero_affiche",
+                "fld_paiements_recu"
+              ]
+            },
+            {
+              "key": "submitLabel",
+              "value": "Envoyer la preuve"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_paiements",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Mes preuves de paiement"
+        }
+      ],
+      "showsPrimaryNav": true,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_paiements_entete",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Mes preuves de paiement"
+            }
+          ]
+        },
+        {
+          "id": "blk_paiements_liste",
+          "blockType": "list",
+          "entityId": "ent_paiements",
+          "props": [
+            {
+              "key": "titleFieldId",
+              "value": "fld_paiements_operateur"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_paiements_soumis_le"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_paiements_montant"
+            },
+            {
+              "key": "badgeFieldId",
+              "value": "fld_paiements_statut"
+            },
+            {
+              "key": "imageFieldId",
+              "value": "fld_paiements_recu"
+            },
+            {
+              "key": "sortFieldId",
+              "value": "fld_paiements_soumis_le"
+            },
+            {
+              "key": "sortDirection",
+              "value": "desc"
+            },
+            {
+              "key": "pageSize",
+              "value": 20
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Aucune preuve envoyée"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Vos captures et reçus apparaîtront ici avec leur statut."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_admin_villes",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Numéros par ville"
+        }
+      ],
+      "showsPrimaryNav": true,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_admin_villes_entete",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Numéros par ville"
+            }
+          ]
+        },
+        {
+          "id": "blk_admin_villes_liste",
+          "blockType": "list",
+          "entityId": "ent_numeros_ville",
+          "props": [
+            {
+              "key": "titleFieldId",
+              "value": "fld_numeros_ville_ville"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_numeros_ville_numero"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_numeros_ville_maj_le"
+            },
+            {
+              "key": "badgeFieldId",
+              "value": "fld_numeros_ville_operateur"
+            },
+            {
+              "key": "userFilterFieldIds",
+              "value": [
+                "fld_numeros_ville_ville"
+              ]
+            },
+            {
+              "key": "userFilterOperators",
+              "value": [
+                "eq"
+              ]
+            },
+            {
+              "key": "userFilterInputTypes",
+              "value": [
+                "choice"
+              ]
+            },
+            {
+              "key": "pageSize",
+              "value": 20
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Aucune ville configurée"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Ajoutez N'Djaména, Moundou, Sarh et Abéché pour commencer."
+            }
+          ]
+        },
+        {
+          "id": "blk_admin_villes_ajouter",
+          "blockType": "button",
+          "props": [
+            {
+              "key": "label",
+              "value": "Configurer une ville"
+            },
+            {
+              "key": "kind",
+              "value": "primary"
+            },
+            {
+              "key": "actionId",
+              "value": "act_configurer_ville"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_admin_ville_fiche",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Fiche de la ville"
+        }
+      ],
+      "showsPrimaryNav": false,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_admin_ville_form",
+          "blockType": "form",
+          "entityId": "ent_numeros_ville",
+          "props": [
+            {
+              "key": "fieldIds",
+              "value": [
+                "fld_numeros_ville_ville",
+                "fld_numeros_ville_operateur",
+                "fld_numeros_ville_numero",
+                "fld_numeros_ville_beneficiaire",
+                "fld_numeros_ville_consigne",
+                "fld_numeros_ville_actif"
+              ]
+            },
+            {
+              "key": "submitLabel",
+              "value": "Enregistrer et publier"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_journal",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Journal"
+        }
+      ],
+      "showsPrimaryNav": true,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_journal_entete",
+          "blockType": "header",
+          "props": [
+            {
+              "key": "title",
+              "value": "Journal des changements"
+            }
+          ]
+        },
+        {
+          "id": "blk_journal_liste",
+          "blockType": "list",
+          "entityId": "ent_journal",
+          "props": [
+            {
+              "key": "titleFieldId",
+              "value": "fld_journal_quoi"
+            },
+            {
+              "key": "subtitleFieldId",
+              "value": "fld_journal_horodatage"
+            },
+            {
+              "key": "trailingFieldId",
+              "value": "fld_journal_auteur"
+            },
+            {
+              "key": "sortFieldId",
+              "value": "fld_journal_horodatage"
+            },
+            {
+              "key": "sortDirection",
+              "value": "desc"
+            },
+            {
+              "key": "pageSize",
+              "value": 30
+            },
+            {
+              "key": "emptyTitle",
+              "value": "Journal vide"
+            },
+            {
+              "key": "emptyMessage",
+              "value": "Les modifications de numéros, validations et corrections y seront tracées."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scr_profil",
+      "title": [
+        {
+          "locale": "fr",
+          "text": "Mon profil"
+        }
+      ],
+      "showsPrimaryNav": true,
+      "showsScreenTitle": true,
+      "presentation": "card",
+      "blocks": [
+        {
+          "id": "blk_profil_form",
+          "blockType": "form",
+          "entityId": "ent_profils",
+          "props": [
+            {
+              "key": "fieldIds",
+              "value": [
+                "fld_profils_nom_complet",
+                "fld_profils_ville",
+                "fld_profils_quartier",
+                "fld_profils_moyen_contact",
+                "fld_profils_telephone",
+                "fld_profils_email",
+                "fld_profils_code_personnel"
+              ]
+            },
+            {
+              "key": "submitLabel",
+              "value": "Enregistrer mon profil"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "actions": [
+    {
+      "id": "act_photographier",
+      "name": "Photographier ou filmer le compteur",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_accueil_photographier"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_releve_nouveau"
+      }
+    },
+    {
+      "id": "act_importer_facture",
+      "name": "Importer une facture SNE",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_factures_importer"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_facture_nouvelle"
+      }
+    },
+    {
+      "id": "act_soumettre_preuve",
+      "name": "Envoyer la preuve de paiement",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_abonnement_soumettre"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_preuve_nouvelle"
+      }
+    },
+    {
+      "id": "act_configurer_ville",
+      "name": "Configurer les numéros d'une ville",
+      "requiredRightId": "right_config_ville",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_admin_villes_ajouter"
+      },
+      "effect": {
+        "kind": "navigate",
+        "screenId": "scr_admin_ville_fiche"
+      }
+    },
+    {
+      "id": "act_exporter_estimation",
+      "name": "Exporter l'estimation du mois",
+      "trigger": {
+        "kind": "ui",
+        "blockId": "blk_releve_exporter"
+      },
+      "effect": {
+        "kind": "capability",
+        "capability": "document.export",
+        "method": "export"
+      }
+    }
+  ],
+  "rules": [
+    {
+      "id": "rule_index_non_decroissant",
+      "description": "L'index est inférieur au relevé précédent : la facturation est bloquée.",
+      "kind": "validation",
+      "entityId": "ent_releves",
+      "assertions": [
+        {
+          "fieldId": "fld_releves_consommation",
+          "operator": "gte",
+          "value": "0"
+        }
+      ]
+    },
+    {
+      "id": "rule_photo_mensuelle",
+      "description": "Un relevé mensuel exige la photo du compteur.",
+      "kind": "validation",
+      "entityId": "ent_releves",
+      "appliqueSi": [
+        {
+          "fieldId": "fld_releves_type_releve",
+          "operator": "eq",
+          "value": "MENSUEL"
+        }
+      ],
+      "assertions": [
+        {
+          "fieldId": "fld_releves_photo",
+          "operator": "required"
+        }
+      ]
+    },
+    {
+      "id": "rule_motif_si_correction",
+      "description": "Une correction de relevé exige son motif.",
+      "kind": "validation",
+      "entityId": "ent_releves",
+      "appliqueSi": [
+        {
+          "fieldId": "fld_releves_statut",
+          "operator": "eq",
+          "value": "CORRIGE"
+        }
+      ],
+      "assertions": [
+        {
+          "fieldId": "fld_releves_motif_correction",
+          "operator": "required"
+        }
+      ]
+    },
+    {
+      "id": "rule_contact_telephone",
+      "description": "Le moyen de contact choisi est le téléphone : il est exigé.",
+      "kind": "validation",
+      "entityId": "ent_profils",
+      "appliqueSi": [
+        {
+          "fieldId": "fld_profils_moyen_contact",
+          "operator": "eq",
+          "value": "TELEPHONE"
+        }
+      ],
+      "assertions": [
+        {
+          "fieldId": "fld_profils_telephone",
+          "operator": "required"
+        }
+      ]
+    },
+    {
+      "id": "rule_contact_email",
+      "description": "Le moyen de contact choisi est l'e-mail : il est exigé.",
+      "kind": "validation",
+      "entityId": "ent_profils",
+      "appliqueSi": [
+        {
+          "fieldId": "fld_profils_moyen_contact",
+          "operator": "eq",
+          "value": "EMAIL"
+        }
+      ],
+      "assertions": [
+        {
+          "fieldId": "fld_profils_email",
+          "operator": "required"
+        }
+      ]
+    },
+    {
+      "id": "rule_montant_abonnement",
+      "description": "Le montant doit valoir 1 000, 2 000, 6 000 ou 12 000 F CFA.",
+      "kind": "validation",
+      "entityId": "ent_paiements",
+      "assertions": [
+        {
+          "fieldId": "fld_paiements_montant",
+          "operator": "in",
+          "value": [
+            "1000",
+            "2000",
+            "6000",
+            "12000"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "rule_motif_si_rejet",
+      "description": "Un rejet de preuve exige son motif.",
+      "kind": "validation",
+      "entityId": "ent_paiements",
+      "appliqueSi": [
+        {
+          "fieldId": "fld_paiements_statut",
+          "operator": "eq",
+          "value": "REJETEE"
+        }
+      ],
+      "assertions": [
+        {
+          "fieldId": "fld_paiements_motif_rejet",
+          "operator": "required"
+        }
+      ]
+    },
+    {
+      "id": "rule_code_quatre_chiffres",
+      "description": "Le code personnel compte exactement quatre chiffres.",
+      "kind": "validation",
+      "entityId": "ent_profils",
+      "assertions": [
+        {
+          "fieldId": "fld_profils_code_personnel",
+          "operator": "matches",
+          "value": "^[0-9]{4}$"
+        }
+      ]
+    }
+  ],
+  "slots": [],
+  "capabilities": [
+    {
+      "capability": "camera"
+    },
+    {
+      "capability": "media_upload"
+    },
+    {
+      "capability": "text_recognition"
+    },
+    {
+      "capability": "push_notifications"
+    },
+    {
+      "capability": "document.export"
+    },
+    {
+      "capability": "share"
+    },
+    {
+      "capability": "offline_storage"
+    }
+  ],
+  "permissions": [
+    {
+      "platform": "android",
+      "permission": "android.permission.CAMERA",
+      "reason": [
+        {
+          "locale": "fr",
+          "text": "La camera sert a photographier le compteur : la photo est la preuve datee du releve, et le cahier la rend obligatoire pour toute facturation."
+        }
+      ],
+      "requiredByCapability": "camera"
+    },
+    {
+      "platform": "android",
+      "permission": "android.permission.POST_NOTIFICATIONS",
+      "reason": [
+        {
+          "locale": "fr",
+          "text": "Les notifications servent aux trois rappels du jour de releve, et elles s'arretent des que la photo mensuelle est enregistree."
+        }
+      ],
+      "requiredByCapability": "push_notifications"
+    },
+    {
+      "platform": "android",
+      "permission": "android.permission.READ_MEDIA_IMAGES",
+      "reason": [
+        {
+          "locale": "fr",
+          "text": "L'acces aux images sert a importer une facture SNE ou un recu de paiement deja enregistre sur votre telephone."
+        }
+      ],
+      "requiredByCapability": "media_upload"
+    },
+    {
+      "platform": "android",
+      "permission": "android.permission.RECORD_AUDIO",
+      "reason": [
+        {
+          "locale": "fr",
+          "text": "Le micro n'est utilise que si vous FILMEZ le compteur. La video est facultative et ne remplace jamais la photo."
+        }
+      ],
+      "requiredByCapability": "camera"
+    },
+    {
+      "platform": "ios",
+      "permission": "NSCameraUsageDescription",
+      "reason": [
+        {
+          "locale": "fr",
+          "text": "La camera sert a photographier le compteur : la photo est la preuve datee du releve, et le cahier la rend obligatoire pour toute facturation."
+        }
+      ],
+      "requiredByCapability": "camera"
+    },
+    {
+      "platform": "ios",
+      "permission": "NSMicrophoneUsageDescription",
+      "reason": [
+        {
+          "locale": "fr",
+          "text": "Le micro n'est utilise que si vous FILMEZ le compteur. La video est facultative et ne remplace jamais la photo."
+        }
+      ],
+      "requiredByCapability": "camera"
+    },
+    {
+      "platform": "ios",
+      "permission": "NSPhotoLibraryUsageDescription",
+      "reason": [
+        {
+          "locale": "fr",
+          "text": "L'acces aux images sert a importer une facture SNE ou un recu de paiement deja enregistre sur votre telephone."
+        }
+      ],
+      "requiredByCapability": "media_upload"
+    }
+  ],
+  "access": {
+    "rights": [
+      {
+        "id": "right_releve",
+        "name": "releve",
+        "label": [
+          {
+            "locale": "fr",
+            "text": "Enregistrer les relevés de son propre compteur"
+          }
+        ]
+      },
+      {
+        "id": "right_valider_paiement",
+        "name": "valider_paiement",
+        "label": [
+          {
+            "locale": "fr",
+            "text": "Vérifier une preuve de paiement et activer un abonnement"
+          }
+        ]
+      },
+      {
+        "id": "right_config_ville",
+        "name": "config_ville",
+        "label": [
+          {
+            "locale": "fr",
+            "text": "Configurer les numéros de paiement d'une ville"
+          }
+        ]
+      },
+      {
+        "id": "right_toutes_villes",
+        "name": "toutes_villes",
+        "label": [
+          {
+            "locale": "fr",
+            "text": "Gérer les numéros de toutes les villes"
+          }
+        ]
+      }
+    ],
+    "roles": [
+      {
+        "id": "role_consommateur",
+        "name": "consommateur",
+        "label": [
+          {
+            "locale": "fr",
+            "text": "Consommateur"
+          }
+        ],
+        "rightIds": [
+          "right_releve"
+        ]
+      },
+      {
+        "id": "role_gestionnaire",
+        "name": "gestionnaire",
+        "label": [
+          {
+            "locale": "fr",
+            "text": "Gestionnaire local"
+          }
+        ],
+        "rightIds": [
+          "right_releve",
+          "right_valider_paiement",
+          "right_config_ville"
+        ]
+      },
+      {
+        "id": "role_administrateur",
+        "name": "administrateur",
+        "label": [
+          {
+            "locale": "fr",
+            "text": "Administrateur"
+          }
+        ],
+        "rightIds": [],
+        "grantsAllRights": true
+      }
+    ],
+    "defaultRoleId": "role_consommateur"
+  },
+  "design": {
+    "theme": "conterak_sobre"
+  },
+  "integrations": [],
+  "network": {
+    "policy": "deny_by_default",
+    "allowedDomains": []
+  },
+  "native": {
+    "minIosVersion": "16.0",
+    "minAndroidSdk": 26
+  },
+  "compliance": {
+    "commerceClass": "physical_or_offapp",
+    "accountDeletionRequired": true,
+    "dataCollected": [
+      "identifiers",
+      "contact_info",
+      "financial_info",
+      "user_content",
+      "usage_data"
+    ]
+  },
+  "expectedTests": [],
+  "intent": {
+    "request": "Une application de suivi des compteurs d'électricité au Tchad : photo mensuelle obligatoire comme preuve datée, calcul progressif de la consommation (150 premiers kWh à 85 F, surplus à 125 F, 402 F de frais fixes), blocage d'un index incohérent, comparaison avec la facture SNE, abonnement de 1 000 F par mois payé par Moov Money ou Airtel Money avec des numéros configurés par ville, et isolation stricte entre comptes.",
+    "requestLocale": "fr",
+    "needs": [
+      {
+        "id": "need_bareme",
+        "statement": "Calculer la consommation au barème progressif : jusqu'à 150 kWh à 85 F/kWh, surplus au-delà à 125 F/kWh, plus 201 F de location de compteur et 201 F d'entretien de branchement.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "fld_releves_montant_estime",
+            "fld_releves_consommation"
+          ]
+        }
+      },
+      {
+        "id": "need_index",
+        "statement": "La consommation d'une période est la différence des deux index, et l'index mensuel validé devient l'ancien index du cycle suivant.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "fld_releves_index_ancien",
+            "fld_releves_index_nouveau",
+            "fld_releves_consommation"
+          ]
+        }
+      },
+      {
+        "id": "need_index_decroissant",
+        "statement": "Si le nouvel index est inférieur à l'ancien, bloquer la facturation automatique et ne jamais créer de consommation négative.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "rule_index_non_decroissant",
+            "fld_releves_statut"
+          ]
+        }
+      },
+      {
+        "id": "need_photo",
+        "statement": "La photo est obligatoire pour tout relevé utilisé pour la facturation ; la vidéo peut compléter la preuve sans la remplacer.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "rule_photo_mensuelle",
+            "fld_releves_photo",
+            "fld_releves_video"
+          ]
+        }
+      },
+      {
+        "id": "need_intermediaires",
+        "statement": "Les relevés quotidiens ou hebdomadaires restent indicatifs et ne génèrent aucune facture intermédiaire.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "fld_releves_type_releve"
+          ]
+        }
+      },
+      {
+        "id": "need_correction_tracee",
+        "statement": "Ne jamais autoriser une modification rétroactive silencieuse : conserver l'original, la correction, l'auteur, l'heure et le motif.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "rule_motif_si_correction",
+            "ent_journal",
+            "fld_releves_statut"
+          ]
+        }
+      },
+      {
+        "id": "need_comparaison_sne",
+        "statement": "Comparer le montant de la facture SNE au calcul théorique et signaler « écart à vérifier », jamais « fraude confirmée ».",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "fld_factures_sne_ecart",
+            "fld_factures_sne_statut"
+          ]
+        }
+      },
+      {
+        "id": "need_reference_unique",
+        "statement": "Une référence de transaction ne peut être utilisée qu'une seule fois dans toute l'application, toutes villes et tous opérateurs confondus.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "fld_paiements_reference_transaction"
+          ]
+        }
+      },
+      {
+        "id": "need_numeros_par_ville",
+        "statement": "Chaque ville possède deux numéros de réception configurables, un Moov et un Airtel, jamais codés en dur ; une ville sans numéro ne voit aucun numéro de remplacement d'une autre ville.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "ent_numeros_ville",
+            "blk_abonnement_numeros",
+            "right_config_ville",
+            "right_toutes_villes"
+          ]
+        }
+      },
+      {
+        "id": "need_pas_de_confirmation_auto",
+        "statement": "Ne jamais confirmer un paiement sur la seule base d'une image : la preuve passe par une vérification avant d'être confirmée.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "fld_paiements_statut",
+            "right_valider_paiement"
+          ]
+        }
+      },
+      {
+        "id": "need_code_protege",
+        "statement": "Le code personnel à 4 chiffres doit être protégé et jamais stocké en clair.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "fld_profils_code_personnel"
+          ]
+        }
+      },
+      {
+        "id": "need_isolation",
+        "statement": "Aucun utilisateur ne peut consulter les données, photos, factures ou reçus d'un autre.",
+        "resolution": {
+          "kind": "satisfied",
+          "nodeIds": [
+            "role_consommateur",
+            "right_releve"
+          ]
+        }
+      },
+      {
+        "id": "need_pdf",
+        "statement": "Produire trois documents PDF : la facture mensuelle, l'historique annuel et le dossier de contestation.",
+        "resolution": {
+          "kind": "unexpressible",
+          "reason": "L'application sait PARTAGER un document — la capacite `document.export` est declaree et cablee. Ce qui manque est la moitie qui PRODUIT le document : aucune adresse du contrat ne rend un PDF, et aucun client ne la demande. Emettre une route serveur aujourd'hui produirait du code que personne n'appelle. Fermer ce besoin demande une decision de contrat, pas un correctif d'emetteur."
+        }
+      },
+      {
+        "id": "need_graphiques",
+        "statement": "Afficher des graphiques mensuels de consommation et de montants pour montrer les hausses et les baisses.",
+        "resolution": {
+          "kind": "unexpressible",
+          "reason": "Le registre compte onze types de blocs — bouton, en-tete de fiche, etat vide, formulaire, en-tete, liste, prose, entree de recherche, espaceur — et aucun ne dessine. Un bloc de graphique est une decision de registre, donc une montee de version du format, pas une prop de plus."
+        }
+      },
+      {
+        "id": "need_empreinte",
+        "statement": "Calculer une empreinte numerique du fichier pour reperer une modification ulterieure et detecter les doublons de fichiers.",
+        "resolution": {
+          "kind": "unexpressible",
+          "reason": "Mesure au depot : `createHash` n'apparait nulle part dans le moteur hormis le HMAC qui signe les jetons. Le format ne sait pas dire « ce champ porte l'empreinte de ce fichier », et une empreinte calculee par l'application ne prouverait rien — elle doit l'etre par le serveur, a la reception."
+        }
+      }
+    ]
+  }
+}

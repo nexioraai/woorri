@@ -598,6 +598,23 @@ const controleur = (groupe: string, air: ProjectAir, e: ProjectAir["entities"][n
     "  // faux : c'est exactement ce que le serveur sait dire.",
     `  private Map<String, Object> enLigne(${nom} x, Set<String> nonCalcules) {`,
     "    Map<String, Object> v = new LinkedHashMap<>();",
+    "    // ── DEUX CARTES, ET C'EST UNE CORRECTION (2026-10-14).",
+    "    //",
+    "    // `v` est la VUE rendue au client : ses clés sont les NOMS déclarés.",
+    "    // `parId` est la ligne telle qu'une EXPRESSION la lit : ses clés sont",
+    "    // les IDENTIFIANTS de champ. Les deux sont nécessaires et ne se",
+    "    // confondent pas.",
+    "    //",
+    "    // MESURÉ par la gate vivante, sur serveur démarré : l'appel passait",
+    "    // `v` au calcul, qui cherchait « fld_transactions_montant_penalite »",
+    "    // dans une carte où la clé est « montant_penalite ». La recherche",
+    "    // rendait donc toujours null, et TOUS les calculs de ligne de cette",
+    "    // pile étaient morts — en silence, avec un HTTP 200.",
+    "    //",
+    "    // Les valeurs calculées RENTRENT dans `parId` à mesure : un barème",
+    "    // qui mesure une consommation doit lire celle que le calcul vient de",
+    "    // produire, pas du vide.",
+    "    Map<String, Object> parId = new LinkedHashMap<>();",
   );
   for (const f of e.fields) {
     if (f.sensitive === true) {
@@ -646,12 +663,30 @@ const controleur = (groupe: string, air: ProjectAir, e: ProjectAir["entities"][n
         // — « 70 % au groupe, 30 % a la plateforme ». Maven l'a dit d'un
         // coup : « String cannot be converted to Map ». Rien d'autre ne
         // pouvait le dire.
-        ...(f.derived.kind === "calcul" ||
-        f.derived.kind === "bareme" ||
-        f.derived.kind === "versionne"
+        ...(f.derived.kind === "bareme"
           ? [
-              `    try { v.put("${f.name}", Calculs.${CAMEL(f.id)}(v)); }`,
-              `    catch (UnsupportedOperationException e) { nonCalcules.add("${f.name}"); }`,
+              // ── UN BAREME PREND UNE QUANTITE, PAS UNE LIGNE.
+              //
+              // Sa signature Java est `(double quantite)`. L'appel lui
+              // passait la carte : « Map cannot be converted to double » —
+              // le serveur ne compilait tout simplement pas. Latent tant
+              // qu'aucun document en `spring_boot` ne portait de bareme.
+              `    try {`,
+              `      Object q${PASCAL(f.id)} = parId.get("${f.derived.fieldId}");`,
+              `      if (q${PASCAL(f.id)} instanceof Number nq${PASCAL(f.id)}) {`,
+              `        double r${PASCAL(f.id)} = Calculs.${CAMEL(f.id)}(nq${PASCAL(f.id)}.doubleValue());`,
+              `        v.put("${f.name}", r${PASCAL(f.id)});`,
+              `        parId.put("${f.id}", r${PASCAL(f.id)});`,
+              `      } else { nonCalcules.add("${f.name}"); }`,
+              `    } catch (UnsupportedOperationException e) { nonCalcules.add("${f.name}"); }`,
+            ]
+          : f.derived.kind === "calcul" || f.derived.kind === "versionne"
+          ? [
+              `    try {`,
+              `      Object r${PASCAL(f.id)} = Calculs.${CAMEL(f.id)}(parId);`,
+              `      v.put("${f.name}", r${PASCAL(f.id)});`,
+              `      parId.put("${f.id}", r${PASCAL(f.id)});`,
+              `    } catch (UnsupportedOperationException e) { nonCalcules.add("${f.name}"); }`,
             ]
           : [
               `    try { v.put("${f.name}", Calculs.${CAMEL(f.id)}(x.getId())); }`,
@@ -660,7 +695,10 @@ const controleur = (groupe: string, air: ProjectAir, e: ProjectAir["entities"][n
       );
       continue;
     }
-    l.push(`    v.put("${f.name}", x.get${PASCAL(f.id)}());`);
+    l.push(
+      `    v.put("${f.name}", x.get${PASCAL(f.id)}());`,
+      `    parId.put("${f.id}", x.get${PASCAL(f.id)}());`,
+    );
   }
   l.push(
     "    Map<String, Object> ligne = new LinkedHashMap<>();",

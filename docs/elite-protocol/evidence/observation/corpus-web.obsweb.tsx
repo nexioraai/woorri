@@ -229,6 +229,88 @@ describe("GATE RACINE — les applications WEB émises se MONTENT vraiment", () 
       // sorties de console par test et les masque quand il passe. Un compte
       // qu'on ne voit qu'en échec ne sert à rien — c'est précisément quand la
       // gate est verte qu'il faut pouvoir vérifier qu'elle a travaillé.
+      // ── CHANGER D'ADRESSE DOIT CHANGER L'ÉCRAN (2026-10-14).
+      //
+      // MESURE, et c'est le PROPRIÉTAIRE qui l'a vue sur une capture : la
+      // barre d'adresse affichait « #/scr_profil » et l'écran montrait
+      // toujours « Mon compteur ». L'onglet actif restait « Accueil ».
+      // L'application paraissait gelée.
+      //
+      // ── LA CAUSE N'ÉTAIT PAS L'ABONNEMENT. IL MARCHAIT.
+      //
+      // `NavigationWeb` s'abonne à `hashchange` et `popstate` depuis
+      // toujours, et appelle bien son `setState`. Mais l'écran lui arrive en
+      // `children` — une PROP. Quand un composant se redessine à cause de son
+      // propre état, React compare l'élément `children` au précédent, le
+      // trouve RÉFÉRENTIELLEMENT identique, et écarte tout son sous-arbre.
+      // L'abonnement fonctionnait parfaitement et ne servait à rien.
+      //
+      // C'est la classe de défaut la plus coûteuse de ce dépôt : le code qui
+      // doit agir EXISTE, se lit comme correct, et n'a aucun effet.
+      //
+      // ── POURQUOI CETTE GATE NE LE VOYAIT PAS, ALORS QU'ELLE PRESSE TOUT.
+      //
+      // Elle monte 244 écrans et presse chaque geste — elle vérifie qu'aucune
+      // pression ne LÈVE, jamais que l'écran a CHANGÉ. Un bouton de
+      // navigation parfaitement mort la passait. C'était son angle mort, et
+      // il est fermé ici.
+      //
+      // ── SUR LE RUNTIME ÉMIS, PAS SUR CELUI DU DÉPÔT.
+      //
+      // Le module testé est celui que l'application EMPORTE. Une correction
+      // qui resterait dans le dépôt sans être recopiée ne passerait pas.
+      {
+        const base = RACINE + apps[0] + "/";
+        const { NavigationWeb, ecranDeLAdresse } = await import(
+          base + "lib/runtime/navigation-web.tsx"
+        );
+        const ecouteurs = new Map<string, Set<() => void>>();
+        const faux = {
+          location: { hash: "#/depart" },
+          addEventListener: (t: string, f: () => void) => {
+            const g = ecouteurs.get(t) ?? new Set<() => void>();
+            g.add(f);
+            ecouteurs.set(t, g);
+          },
+          removeEventListener: (t: string, f: () => void) => {
+            ecouteurs.get(t)?.delete(f);
+          },
+          history: { replaceState: () => undefined },
+        };
+        const avant = (globalThis as { window?: unknown }).window;
+        (globalThis as { window?: unknown }).window = faux;
+        try {
+          const Enfant = () =>
+            createElement("span", null, (ecranDeLAdresse as (d: string) => string)("depart"));
+          let rn: ReactTestRenderer | undefined;
+          act(() => {
+            rn = create(
+              createElement(
+                NavigationWeb as never,
+                { ecranDEntree: "depart" } as never,
+                createElement(Enfant),
+              ) as never,
+            );
+          });
+          const lire = (): string => JSON.stringify(rn?.toJSON() ?? null);
+          const depart = lire().includes("depart");
+          act(() => {
+            faux.location.hash = "#/arrivee";
+            for (const f of ecouteurs.get("hashchange") ?? []) f();
+          });
+          const arrive = lire().includes("arrivee") && !lire().includes("depart");
+          if (!depart || !arrive) {
+            problemes.push(
+              `${apps[0]} — L'ADRESSE CHANGE, L'ÉCRAN NON : ` +
+                `départ=${String(depart)} arrivée=${String(arrive)} · rendu ${lire().slice(0, 120)}`,
+            );
+          }
+        } finally {
+          if (avant === undefined) delete (globalThis as { window?: unknown }).window;
+          else (globalThis as { window?: unknown }).window = avant;
+        }
+      }
+
       process.stdout.write(
         `\n  ${String(apps.length)} applications web · ${String(ecrans)} écrans montés\n`,
       );

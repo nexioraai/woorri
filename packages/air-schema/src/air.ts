@@ -807,11 +807,26 @@ const fieldSchema = z.strictObject({
        * elle ne dépend d'AUCUNE base de données. Le compilateur peut donc
        * l'écrire ENTIÈREMENT, au lieu de laisser un trou à combler.
        *
-       * LES DEUX MODES NE SONT PAS UN DÉTAIL. Le cahier mesuré insiste :
-       * « Il ne faut PAS facturer les 150 premiers kWh à 85 F puis le
-       * surplus à 125 F ». Sans ce choix explicite, un générateur produit
-       * l'autre barème — celui de l'impôt — et se trompe de métier. Les
-       * deux existent dans la vraie vie, donc les deux se déclarent.
+       * LES DEUX MODES NE SONT PAS UN DÉTAIL : se tromper change le
+       * montant, pas la présentation. Les deux existent dans la vraie vie,
+       * donc les deux se déclarent, et aucun n'est le défaut.
+       *
+       * ── CORRECTION DU 2026-10-14, ET ELLE PORTE SUR CE COMMENTAIRE.
+       *
+       * Il affirmait que le cahier mesuré exige « PAS les 150 premiers kWh
+       * à 85 F puis le surplus à 125 F » — donc le mode `global`. Le cahier
+       * dit l'inverse, et il le dit lui-même : il fournit ONZE valeurs de
+       * contrôle. Mesure, en exécutant les deux modes dessus :
+       *
+       *     par_tranche : 11/11      global : 5/11
+       *
+       * Les six valeurs au-dessus de 150 kWh départagent — 155 kWh vaut
+       * 13 777 F (150 × 85 + 5 × 125 + 402), pas 19 777 F. Le mode exigé
+       * est donc `par_tranche`.
+       *
+       * Ce qui reste vrai de la phrase d'origine : le choix doit être
+       * EXPLICITE. Un générateur qui devine produit l'autre barème et se
+       * trompe de métier. C'est la raison d'être de `mode`.
        */
       /**
        * LE CALCUL GENERAL (1.36.0) — une expression sur les champs de la

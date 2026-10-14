@@ -20,7 +20,7 @@
 // PRINCIPALE n'empile pas. Sans cela, revenir en arrière ferait défiler les
 // onglets à l'envers — défaut vu sur appareil (voir `racines-navigation`), et
 // qui se reproduirait à l'identique avec le bouton retour du navigateur.
-import { useEffect, useMemo, useState, type PropsWithChildren } from "react";
+import { Fragment, useEffect, useMemo, useState, type PropsWithChildren } from "react";
 import { NavigationRoot, type Navigateur } from "./navigation-contrat";
 
 /** L'écran que l'adresse désigne. Le fragment, pour n'exiger aucun serveur. */
@@ -109,11 +109,40 @@ export function NavigationWeb({
     [],
   );
 
-  // L'écran courant est LU de l'adresse à chaque rendu : c'est elle qui fait
-  // foi, jamais un état parallèle qui pourrait en diverger.
-  // L'écran courant est lu par `Navigation` (fichier émis) à chaque rendu ;
-  // la racine n'a qu'à garantir qu'un changement d'adresse redessine.
-  void ecranDEntree;
+  // ── REDESSINER LA RACINE NE REDESSINE PAS L'ÉCRAN. (défaut 2026-10-14)
+  //
+  // MESURE, et c'est le PROPRIÉTAIRE qui l'a vue sur une capture : l'adresse
+  // affichait `#/scr_profil` et l'écran montrait toujours « Mon compteur ».
+  // L'onglet actif restait « Accueil ». Rien ne bougeait.
+  //
+  // La cause est une propriété de React, pas une erreur d'abonnement :
+  // `children` arrive en PROP. Quand ce composant se redessine à cause de son
+  // propre état, l'élément `children` est RÉFÉRENTIELLEMENT le même, et React
+  // écarte son sous-arbre. L'abonnement à `hashchange` fonctionnait donc
+  // parfaitement, et ne servait à rien.
+  //
+  // Le commentaire que cette correction remplace promettait exactement
+  // l'inverse : « la racine n'a qu'à garantir qu'un changement d'adresse
+  // redessine ». Elle ne le garantissait pas.
+  //
+  // ── LA CLÉ, ET POURQUOI ELLE EST LE BON OUTIL ICI.
+  //
+  // Changer la `key` d'un sous-arbre le remonte. C'est exactement la
+  // sémantique d'un changement d'écran : un écran qui s'ouvre part d'un état
+  // neuf, il n'hérite pas de la saisie à moitié remplie du précédent.
+  //
+  // L'adresse COMPLÈTE sert de clé — fragment ET paramètres — parce que
+  // passer d'une fiche à une autre change l'écran autant que changer d'écran.
+  //
+  // Pourquoi pas un contexte : il faudrait que le fichier émis consomme un
+  // crochet, donc changer le contrat de `Navigation`. La clé obtient le même
+  // résultat sans toucher à ce que le moteur écrit.
+  const cle =
+    typeof window === "undefined" ? ecranDEntree : window.location.hash;
 
-  return <NavigationRoot navigateur={navigateur}>{children}</NavigationRoot>;
+  return (
+    <NavigationRoot navigateur={navigateur}>
+      <Fragment key={cle}>{children}</Fragment>
+    </NavigationRoot>
+  );
 }

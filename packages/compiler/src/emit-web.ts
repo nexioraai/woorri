@@ -398,6 +398,28 @@ const gabarit = (air: ProjectAir): ReadonlyMap<string, string> =>
         dependencies: { react: "^19.2.0", "react-dom": "^19.2.0" },
         devDependencies: {
           "@vitejs/plugin-react": "^5",
+          // ── LES TYPES DE REACT SONT UNE DÉPENDANCE DU PROJET LIVRÉ.
+          //
+          // MESURÉ le 2026-10-14, en construisant une application réelle à
+          // partir d'un cahier des charges : `npm install` puis
+          // `npx tsc --noEmit` sur le projet livré rendait **163 erreurs**.
+          // Toutes de la même cause — `@types/react` absent — et la
+          // cascade est trompeuse : sans ces types, TypeScript ne sait plus
+          // que `key` est une prop réservée de React, et accuse les
+          // composants émis d'un défaut qui n'est pas le leur.
+          //
+          // CE QUI A MASQUÉ LE DÉFAUT, et c'est le plus instructif : la
+          // gate d'émission web installe `@types/react` ELLE-MÊME dans son
+          // répertoire de dépendances partagé. Les 32 applications
+          // passaient donc leur typecheck avec des types que la GATE
+          // fournissait et que la LIVRAISON ne déclarait pas. Une gate qui
+          // prouve ce que le client ne reçoit pas ne prouve rien.
+          //
+          // Le projet émet un `tsconfig.json` et déclare `typescript` :
+          // il promet donc d'être vérifiable. Ces deux lignes tiennent la
+          // promesse.
+          "@types/react": "^19",
+          "@types/react-dom": "^19",
           typescript: "^5",
           vite: "^7",
         },
