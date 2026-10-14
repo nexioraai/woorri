@@ -236,6 +236,21 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
       // L'etat est efface : le prochain battement du suivi lira la ligne
       // redevenue « en attente », et l'escalier repartira de lui-meme.
       setEtatGen(null);
+      // ── DEUX MESSAGES QUI SE CONTREDISENT (defaut 2026-10-14).
+      //
+      // SIGNALE PAR LE PROPRIETAIRE, capture a l'appui : l'ecran affichait
+      // « Je n'ai pas compris — je ne construis rien » ET, juste en dessous,
+      // « Reprise lancee — elle repart de ce qui etait deja ecrit ». Les deux
+      // au present, les deux faux ensemble.
+      //
+      // La bulle de refus appartenait a l'historique, donc elle restait. Mais
+      // son texte est une affirmation au PRESENT : « je ne construis rien »
+      // cesse d'etre vrai des qu'une reprise part. Garder un historique est
+      // juste ; garder une phrase qui ment ne l'est pas.
+      //
+      // On retire donc les refus, et EUX SEULS : la demande, les questions et
+      // les reponses restent — c'est la conversation, et elle n'a pas change.
+      setMessages((anciens) => anciens.filter((m) => m.role !== 'incompris'));
       setAvis(
         geste === 'continuer'
           ? 'C’est reparti — l’étape suivante commence.'

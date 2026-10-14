@@ -513,14 +513,35 @@ const surfaceEnveloppe = () => {
     // Le niveau acceptable est une propriete du SCHEMA, pas de la demande ni
     // de la tranche : re-sonder a chaque tranche paierait pour re-mesurer la
     // meme chose. L'etat le porte, et une reprise n'emet AUCUN appel de sonde.
-    if (niveaux !== null) {
+    // ── UN ECHEC DE SONDE N'EST PAS UN RESULTAT (defaut 2026-10-14).
+    //
+    // MESURE EN PRODUCTION : une ligne reprise portait, de sa tranche
+    // precedente, `{passe:"entites", niveau:null}` — c'est-a-dire « aucun
+    // barreau de l'echelle n'a ete accepte ». Le code passait outre, laissait
+    // `levelIndex` a sa valeur par defaut 0, et repartait donc avec LE
+    // BARREAU LE PLUS GROS : celui dont la sonde venait precisement de
+    // prouver qu'il est refuse. Resultat : 400 « The compiled grammar is too
+    // large », marque erreur FATALE, generation morte.
+    //
+    // Reutiliser un echec comme un resultat est la pire des trois issues
+    // possibles. Les deux autres : re-sonder (gratuit — une grammaire
+    // refusee rend un 400 sans consommer de jeton), ou refuser clairement.
+    // On re-sonde.
+    //
+    // CE QUE CA NE CASSE PAS : l'intention d'origine tient. Une reprise dont
+    // TOUS les niveaux sont connus n'emet toujours AUCUN appel de sonde — on
+    // ne re-mesure que ce qui n'a jamais abouti.
+    const sondeIncomplete = niveaux !== null && niveaux.some((n) => n.niveau === null);
+    if (niveaux !== null && !sondeIncomplete) {
       niveauxSondes = niveaux;
       for (const n of niveaux) {
-        if (n.niveau === null) continue;
         const part = coeur.PARTS.find((x) => x.name === n.passe);
         if (part !== undefined) part.levelIndex = n.niveau;
       }
     } else {
+      // Une sonde incomplete est JETEE : la garder ferait court-circuiter
+      // `sonderUneFois`, qui rend l'etat memorise sans rien mesurer.
+      if (sondeIncomplete) niveauxSondes = null;
       if (budgetEpuise()) return suspendre("p0");
       const sonde = await sonderUneFois();
       niveaux = sonde.niveaux;
