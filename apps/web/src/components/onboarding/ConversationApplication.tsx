@@ -65,7 +65,8 @@ type Message =
   // UNE QUESTION EST UN TOUR A PART ENTIERE, pas une note en bas d'un resultat.
   | { role: 'question'; questions: Question[]; avertissement?: string }
   // UN REFUS DE CONSTRUIRE EST UN TOUR A PART, pas une note sous un resultat.
-  | { role: 'incompris'; raison: string };
+  | { role: 'incompris'; raison: string }
+  | { role: 'notre_faute'; raison: string };
 
 export default function ConversationApplication({ onRetour }: { onRetour: () => void }) {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -171,12 +172,38 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
             // non, meme quand il suffisait de demander, et l'utilisateur
             // n'avait plus qu'a tout recommencer. Les questions arrivent
             // maintenant avec l'etat, derivees a la lecture et gratuitement.
+            // ── UN DEFAUT DU GENERATEUR N'EST PAS UNE INCOMPREHENSION.
+            //
+            // SIGNALE PAR LE PROPRIETAIRE, capture a l'appui : un refus
+            // « P0 refuse 3 fois » s'affichait sous « Je n'ai pas compris
+            // — je ne construis rien ». EP-135 classe ces codes en
+            // `faute_de_production`, dont la definition dit le contraire :
+            // « le generateur doit poser l'etape manquante, pas l'humain
+            // repondre a une question ». On reprochait au proprietaire un
+            // defaut qui n'etait pas le sien, et qu'il ne pouvait pas
+            // corriger — il n'avait plus qu'a reecrire son cahier.
+            //
+            // Le serveur tranche (`notreFaute`), parce que lui seul tient
+            // la table de classification ; l'ecran ne fait que le dire.
             if (e.statut === 'refusee' && e.questions.length > 0) {
               setOuvertes([...e.questions]);
               setMessages((m) => [...m, { role: 'question', questions: [...e.questions] }]);
             } else if (e.statut === 'refusee') {
-              setMessages((m) => [...m, { role: 'incompris', raison: e.raison ?? '' }]);
+              setMessages((m) => [
+                ...m,
+                e.notreFaute === true
+                  ? { role: 'notre_faute', raison: e.raison ?? '' }
+                  : { role: 'incompris', raison: e.raison ?? '' },
+              ]);
             }
+            // ── L'AVIS D'UNE REPRISE NE SURVIT PAS A L'ISSUE (defaut 2026-10-15).
+            //
+            // « C'est reparti — l'etape suivante commence. » restait affiche
+            // SOUS le refus qui avait suivi : l'avis n'etait efface qu'au
+            // prochain geste de l'humain, jamais par la lecture du suivi.
+            // La correction du 2026-10-14 avait retire la bulle qui mentait
+            // et laisse l'avis qui ment : la contradiction a change de cote.
+            if (e.statut === 'refusee' || e.statut === 'livree') setAvis('');
             return;
           }
         }
@@ -250,7 +277,9 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
       //
       // On retire donc les refus, et EUX SEULS : la demande, les questions et
       // les reponses restent — c'est la conversation, et elle n'a pas change.
-      setMessages((anciens) => anciens.filter((m) => m.role !== 'incompris'));
+      setMessages((anciens) =>
+        anciens.filter((m) => m.role !== 'incompris' && m.role !== 'notre_faute'),
+      );
       setAvis(
         geste === 'continuer'
           ? 'C’est reparti — l’étape suivante commence.'
@@ -765,6 +794,13 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
           m.role === 'moi' ? (
             <Bulle key={i} moi>
               {m.texte}
+            </Bulle>
+          ) : m.role === 'notre_faute' ? (
+            <Bulle key={i} moi={false}>
+              <span className="block text-xs text-amber-300/80 mb-2">
+                L’échec vient de nous — votre demande n’est pas en cause
+              </span>
+              {m.raison}
             </Bulle>
           ) : m.role === 'incompris' ? (
             <Bulle key={i} moi={false}>

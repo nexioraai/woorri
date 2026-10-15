@@ -35,7 +35,23 @@ const FIXTURE = migrerModele(
 // RE-SCELLEMENT CONSCIENT (post-série, D6 O-1) : le glossaire temporel
 // entre au prompt — v1 98014b65… reste l'estampille de la mesure T2
 // (EP-032) ; v2 est le prompt des exécutions FUTURES.
-const HASH_PROMPT_FIGE = "76e75ecb25230bd8617faf92bc4114d6e4f0e408d1c2d301aa21e3f4f8adac5c";
+//
+// RE-SCELLEMENT CONSCIENT v3 (EP-222, 2026-10-15) — v2 76e75ecb… reste
+// l'estampille des mesures antérieures. MOTIF, et il est mesuré, pas
+// supposé : tir réel `app_generations` b3a37d92, trois refus P0 pour
+// 2,4386 $ et rien de produit. Deux juges exigeaient des règles que ce
+// prompt n'énonçait JAMAIS — le mot « confirmer » n'y apparaissait pas
+// une seule fois, et l'observabilité d'un état n'était exigée que dans
+// le point « transition exogène » alors que le juge la veut pour TOUT
+// état atteint, geste mutant compris. Le modèle les apprenait par le
+// reproche, c'est-à-dire APRÈS un refus payé.
+//
+// AUCUN JUGE N'A BOUGÉ. Ce qui change est l'enseignement, et c'est bien
+// « une information sur le contrat, jamais une retouche de prompt » :
+// le contrat disait une chose que le prompt taisait. EP-222 verrouille
+// désormais l'accord prose/table — si la table des gestes gagne une
+// écriture et que le prompt l'oublie, le cliquet rougit avant le tir.
+const HASH_PROMPT_FIGE = "429a3aff64b7bbf7d9d4765b244a8d67d61ff7f5f5228945deceb2ebf00cf734";
 
 describe("intégration minimale P0 — l'instrument, pas l'exécution", () => {
   it("CLIQUET — le hash du prompt est figé", () => {

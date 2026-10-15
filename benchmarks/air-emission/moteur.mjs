@@ -659,6 +659,7 @@ const surfaceEnveloppe = () => {
         // REPASSENT APRES, inchanges.
         let candidat = verdictP0.ok ? verdictP0.modele : undefined;
         let reparationsPlan = [];
+        let residuelsP1 = null;
         if (verdictP0.ok) {
           const r = modeleMetier.reparerPlan(verdictP0.modele);
           candidat = r.modele;
@@ -685,9 +686,32 @@ const surfaceEnveloppe = () => {
           }
           if (brut !== null && typeof brut === "object") {
             const r = modeleMetier.reparerPlan(brut);
-            if (r.reparations.length > 0 && modeleMetier.validerModele(r.modele).length === 0) {
+            const restants = modeleMetier.validerModele(r.modele);
+            if (r.reparations.length > 0 && restants.length === 0) {
               candidat = r.modele;
               reparationsPlan = r.reparations;
+            } else if (r.reparations.length > 0) {
+              // ── LA REPARATION PARTIELLE NE SE JETTE PLUS.
+              //
+              // MESURE (tir du 2026-10-15, tirage 1) : `reparerPlan` a bien
+              // reordonne le coeur, mais `MODELE_ETAT_NON_OBSERVABLE` restait
+              // — alors TOUT etait jete, `reparations: []`, et le reproche
+              // citait `MODELE_COEUR_EXIGE_CONNEXION` au modele. On lui
+              // reprochait donc ce que le moteur venait de corriger seul : le
+              // tirage 2 a depense son effort a re-reordonner, et le tirage 3
+              // a repaye la meme reparation (elle y figure).
+              //
+              // LE MODELE REPARE N'AVANCE PAS : il reste invalide, `candidat`
+              // reste `undefined`, l'arret reste P1 et aucun juge ne bouge.
+              // Seul le REPROCHE change — il ne cite plus que le RESIDU.
+              // Garde-fou : on n'accepte le residu que s'il REDUIT STRICTEMENT
+              // et n'introduit AUCUN code nouveau.
+              const codesAvant = new Set(verdictP0.diagnostics.map((x) => x.code));
+              const sansNouveau = restants.every((x) => codesAvant.has(x.code));
+              if (sansNouveau && restants.length < verdictP0.diagnostics.length) {
+                reparationsPlan = r.reparations;
+                residuelsP1 = restants;
+              }
             }
           }
         }
@@ -706,12 +730,26 @@ const surfaceEnveloppe = () => {
             })()
           : [];
         const arret = candidat === undefined ? "P1" : diagnosticsPlan.length > 0 ? "P2" : "passe";
-        dernierReproche = reproche(candidat !== undefined ? diagnosticsPlan : verdictP0.diagnostics);
+        // Le reproche porte le RESIDU quand le moteur a deja repare le reste ;
+        // la trace, elle, garde le refus d'origine — ce que le modele a VRAIMENT emis.
+        dernierReproche = reproche(
+          candidat !== undefined ? diagnosticsPlan : (residuelsP1 ?? verdictP0.diagnostics),
+        );
         tirages.push({
           tentative,
           arret,
           coutUsd: Number((coeur.lireEtatDepense().depense - avant).toFixed(4)),
           diagnostics: (candidat !== undefined ? diagnosticsPlan : verdictP0.diagnostics).map((x) => x.code),
+          // ── CE QUI MANQUAIT POUR DIAGNOSTIQUER UN REFUS APRES COUP.
+          //
+          // MESURE (tir du 2026-10-15, 2,4386 $) : trois refus, et la trace
+          // ne gardait que les CODES. `DERIVATION_CONFIRMATION_SANS_ECRITURE`
+          // deux fois, sans savoir QUEL parcours — donc rien a corriger a la
+          // racine sans re-tirer. Le `path` et le message voyagent deja dans
+          // le reproche au modele ; ils sont desormais gardes pour l'humain.
+          // Champ ADDITIF : `diagnostics` reste `string[]`, son contrat tient.
+          details: (candidat !== undefined ? diagnosticsPlan : verdictP0.diagnostics)
+            .map((x) => `${x.path} : ${x.message}`),
           // CE QUE LE GENERATEUR A CORRIGE LUI-MEME, dit et non tu.
           reparations: reparationsPlan.map((r) => r.action),
         });

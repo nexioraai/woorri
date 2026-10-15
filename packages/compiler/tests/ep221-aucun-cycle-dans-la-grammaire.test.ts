@@ -42,7 +42,11 @@ import {
 } from "../../../benchmarks/air-emission/adaptateur-anthropic.mjs";
 
 /** Les découpes de passes du moteur, telles que `emission-coeur` les déclare. */
-const PASSES: Readonly<Record<string, readonly string[]>> = {
+// `satisfies` et NON une annotation : une annotation `Record<string, …>` est une
+// signature d'index, et sous `noUncheckedIndexedAccess` chaque valeur relue
+// devient `| undefined` — y compris via `Object.entries`. En `satisfies`, les
+// clés restent littérales, la contrainte est vérifiée, et rien n'est optionnel.
+const PASSES = {
   socle: [
     "app",
     "projectId",
@@ -61,7 +65,7 @@ const PASSES: Readonly<Record<string, readonly string[]>> = {
   actions: ["actions"],
   cablage: ["expectedTests", "integrations"],
   intention: ["intent"],
-};
+} satisfies Readonly<Record<string, readonly string[]>>;
 
 const grammaireDe = (cles: readonly string[]): unknown =>
   z.toJSONSchema(

@@ -34,6 +34,15 @@ export type Marche = {
   readonly enCours: boolean
 }
 
+/**
+ * L'ETAPE DU MOTEUR, LUE EN MARCHE — une seule table pour `en_cours` ET
+ * pour `refusee`. Deux lectures separees, c'est deux verites possibles
+ * pour un meme etat : exactement le defaut que ce fichier a porte.
+ */
+function marcheDeLEtape(etape: string | null): number {
+  return etape === 'p0' ? 1 : etape === 'reparation' ? 3 : 2
+}
+
 export function marcheDuSuivi(etat: EtatPourSuivi | null): Marche {
   if (etat === null) {
     return { courante: 0, livree: false, refusee: false, raison: null, enCours: true }
@@ -43,7 +52,18 @@ export function marcheDuSuivi(etat: EtatPourSuivi | null): Marche {
   }
   if (etat.statut === 'refusee') {
     return {
-      courante: 3,
+      // ── LA MARCHE DU REFUS N'EST PLUS UN MENSONGE (defaut 2026-10-15).
+      //
+      // Elle valait 3 EN DUR — « Verifier et reparer » — quel que soit
+      // l'endroit ou la generation etait morte. Capture du proprietaire a
+      // l'appui : un tir mort en P0, avec `sections=0` et `modele: null`,
+      // affichait « Comprendre la demande » ET « Ecrire l'application »
+      // cochees. Deux marches vertes jamais atteintes, et la troisieme
+      // presentee comme en cours alors qu'elle n'avait jamais commence.
+      //
+      // On lit desormais l'etape REELLE — la meme table que `en_cours`,
+      // une seule lecture pour les deux statuts.
+      courante: marcheDeLEtape(etat.etape),
       livree: false,
       refusee: true,
       raison:
@@ -57,7 +77,7 @@ export function marcheDuSuivi(etat: EtatPourSuivi | null): Marche {
   }
   // en_cours : l'etape du moteur dit la marche — p0 comprend, reparation
   // verifie, tout le reste est l'ecriture des sections.
-  const marche = etat.etape === 'p0' ? 1 : etat.etape === 'reparation' ? 3 : 2
+  const marche = marcheDeLEtape(etat.etape)
   return { courante: marche, livree: false, refusee: false, raison: null, enCours: true }
 }
 

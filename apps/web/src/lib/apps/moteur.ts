@@ -84,7 +84,15 @@ export type Emission = {
   readonly document?: unknown
   readonly modele?: unknown
   readonly diagnostics: { code?: string; path?: string }[]
-  readonly tirages: { tentative: number; arret: string; coutUsd: number; diagnostics: string[] }[]
+  // `details` porte `path : message` — ce qui manquait pour diagnostiquer un
+  // refus apres coup (EP-222). Optionnel : les traces deja en base ne l'ont pas.
+  readonly tirages: {
+    tentative: number
+    arret: string
+    coutUsd: number
+    diagnostics: string[]
+    details?: string[]
+  }[]
   readonly coutUsd: number
   readonly jetons: { entree: number; sortie: number }
   readonly raison?: string

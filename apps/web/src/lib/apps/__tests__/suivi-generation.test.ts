@@ -87,3 +87,54 @@ describe('survivre au rafraichissement', () => {
     expect(memoriserGeneration('g 3', stockage())).toBe('?generation=g%203')
   })
 })
+
+/**
+ * EP-223 · LA MARCHE D'UN REFUS DIT LA VÉRITÉ.
+ *
+ * SIGNALÉ PAR LE PROPRIÉTAIRE, capture à l'appui (2026-10-15). L'escalier
+ * affichait « Comprendre la demande ✓ · Écrire l'application ✓ · Vérifier
+ * et réparer en cours » sur un tir mort en P0, avec `sections=0` et
+ * `modele: null`. Deux marches vertes jamais atteintes, et une troisième
+ * présentée comme en cours alors qu'elle n'avait jamais commencé.
+ *
+ * Cause : `courante: 3` EN DUR dans la branche `refusee`.
+ */
+describe('EP-223 — la marche du refus est lue, jamais figée', () => {
+  const refus = (etape: string | null) =>
+    marcheDuSuivi({ statut: 'refusee', etape, raison: null })
+
+  it('un refus en P0 s arrete a « Comprendre la demande »', () => {
+    const m = refus('p0')
+    expect(m.courante, 'la marche 3 serait un mensonge : P0 n a jamais abouti').toBe(1)
+    expect(ETAPES_SUIVI[m.courante]).toBe('Comprendre la demande')
+    expect(m.refusee).toBe(true)
+  })
+
+  it('CONTRÔLE NÉGATIF — un refus en réparation reste bien a la marche 3', () => {
+    // Sans ce contrôle, on aurait pu remplacer un mensonge par un autre en
+    // ramenant TOUT refus a la premiere marche.
+    const m = refus('reparation')
+    expect(m.courante).toBe(3)
+    expect(ETAPES_SUIVI[m.courante]).toBe('Vérifier et réparer')
+  })
+
+  it('un refus pendant l ecriture reste a « Écrire l application »', () => {
+    expect(refus('ecrans').courante).toBe(2)
+    expect(refus(null).courante).toBe(2)
+  })
+
+  it('la marche d un refus se lit comme celle d un en_cours — une seule table', () => {
+    // LE CONTRÔLE QUI COMPTE : deux lectures séparées, c'est deux vérités
+    // possibles pour un même état — exactement le défaut mesuré.
+    for (const etape of ['p0', 'reparation', 'ecrans', null]) {
+      expect(
+        marcheDuSuivi({ statut: 'refusee', etape, raison: null }).courante,
+        `« ${String(etape)} » se lit differemment selon le statut`,
+      ).toBe(marcheDuSuivi({ statut: 'en_cours', etape, raison: null }).courante)
+    }
+  })
+
+  it('un refus porte toujours une raison lisible, jamais une page vide', () => {
+    expect(refus('p0').raison).toMatch(/n’a pas pu aboutir/u)
+  })
+})

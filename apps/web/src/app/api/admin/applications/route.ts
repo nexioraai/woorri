@@ -40,7 +40,7 @@ export async function GET(req: Request) {
 
   const r = await supabaseAdmin
     .from(TABLE_GENERATIONS)
-    .select('id, created_at, owner_email, demande, nom, ok, cout_usd, duree_ms, jetons_entree, jetons_sortie, diagnostics, tirages')
+    .select('id, created_at, owner_email, demande, nom, ok, cout_usd, duree_ms, jetons_entree, jetons_sortie, diagnostics, tirages, sections_acquises')
     .order('created_at', { ascending: false })
     .limit(500)
 
@@ -53,7 +53,21 @@ export async function GET(req: Request) {
     })
   }
 
-  const lignes = r.data
+  // ── LE JOURNAL DU REFUS DEVIENT LISIBLE (defaut 2026-10-15).
+  //
+  // Le moteur garde desormais `path : message` pour chaque diagnostic
+  // (EP-222) — mais cette route ne selectionnait pas la colonne qui les
+  // porte. Une mesure que personne ne lit ne vaut rien : c'est elle qui
+  // evite de RE-PAYER un tir pour savoir ou il a echoue.
+  //
+  // DEGRAISSE : on ne renvoie pas la colonne entiere (elle porte l'acquis
+  // et les usages jeton par jeton), seulement le journal des tirages.
+  const lignes = r.data.map((x) => {
+    const sa = (x.sections_acquises ?? {}) as { tirages?: readonly Record<string, unknown>[] }
+    const reste = { ...x }
+    delete (reste as Record<string, unknown>).sections_acquises
+    return { ...reste, journal: Array.isArray(sa.tirages) ? sa.tirages : [] }
+  })
   const somme = (f: (x: (typeof lignes)[number]) => number): number =>
     lignes.reduce((a, x) => a + f(x), 0)
 

@@ -1749,9 +1749,9 @@ export function ecransDe(modele, options = {}) {
     // amont dans le MÊME parcours, il n'y a rien à confirmer.
     for (const [i, e] of p.etapes.entries()) {
       if (e.geste !== "confirmer") continue;
-      const ecritAvant = p.etapes.slice(0, i).some((x) =>
-        x.geste === "saisir" || x.geste === "payer" || x.geste === "retirer",
-      );
+      // LA TABLE EST LA SEULE SOURCE : recopier « saisir/payer/retirer » ici
+      // ferait vivre deux vérités, et la prose P0 en dérive une troisième.
+      const ecritAvant = p.etapes.slice(0, i).some((x) => gestesEcrivants().includes(x.geste));
       if (!ecritAvant) {
         diagnostics.push(
           d("DERIVATION_CONFIRMATION_SANS_ECRITURE", `parcours[${p.id}].etapes[${i}]`,

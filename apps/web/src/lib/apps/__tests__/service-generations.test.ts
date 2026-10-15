@@ -93,6 +93,92 @@ describe('etatGeneration — la lecture est au PROPRIETAIRE seul', () => {
     }),
   })
 
+  // ══════════════════════════════════════════════════════════════════
+  // EP-223 · UN DÉFAUT DU GÉNÉRATEUR N'EST PAS UNE INCOMPRÉHENSION.
+  //
+  // SIGNALÉ PAR LE PROPRIÉTAIRE, capture à l'appui (2026-10-15) : un refus
+  // « P0 refuse 3 fois » s'affichait sous « Je n'ai pas compris — je ne
+  // construis rien ». EP-135 classe ces codes en `faute_de_production`,
+  // dont la définition dit l'inverse : l'humain n'a RIEN à répondre.
+  //
+  // Cause mesurée : la colonne `diagnostics` porte alors une PHRASE, que
+  // `diagnosticsDepuisLigne` ne sait pas lire (regex `^[A-Z][A-Z0-9_]*$`).
+  // Zéro diagnostic lu, donc zéro question, donc la branche par défaut.
+  // Les VRAIS codes vivaient dans le journal des tirages, jamais relu.
+  // ══════════════════════════════════════════════════════════════════
+
+  const refusP0 = (tirages: unknown[]) => ({
+    id: 'g-f', statut: 'refusee', etape: null, nom: 'conterak',
+    cout_usd: 2.4386, diagnostics: ['P0 refuse 3 fois'], document: null,
+    sections_acquises: { phase: 'terminee', acquis: null, modele: null, tirages },
+  })
+
+  it('EP-223 — un refus P0 est NOTRE faute, pas une incompréhension', async () => {
+    const e = await etatGeneration({
+      base: baseAvec(
+        refusP0([{ arret: 'P2', diagnostics: ['DERIVATION_CONFIRMATION_SANS_ECRITURE'] }]),
+      ),
+      table: 't_test', id: 'g-f', proprietaire: 'user-1',
+    })
+    expect(e?.notreFaute, 'le code est classé faute_de_production : rien à demander').toBe(true)
+    expect(e?.questions, 'une faute de production ne pose aucune question').toEqual([])
+  })
+
+  it('EP-223 — CONTRÔLE NÉGATIF : un refus que l humain peut trancher reste une QUESTION', async () => {
+    // Sans ce contrôle, on aurait pu déclarer TOUT refus « notre faute » et
+    // ne plus jamais rien demander — l'autre moitié du même mensonge.
+    const e = await etatGeneration({
+      base: baseAvec(refusP0([{ arret: 'P1', diagnostics: ['MODELE_DISCRIMINANT_ABSENT'] }])),
+      table: 't_test', id: 'g-f', proprietaire: 'user-1',
+    })
+    const aDesQuestions = (e?.questions.length ?? 0) > 0
+    expect(
+      aDesQuestions || e?.notreFaute === true,
+      'un refus doit TOUJOURS aboutir a une question ou a un aveu — jamais au silence',
+    ).toBe(true)
+    if (aDesQuestions) expect(e?.notreFaute).toBe(false)
+  })
+
+  it('EP-223 — un refus inclassable est NOTRE faute : fail-closed vers nous', async () => {
+    const e = await etatGeneration({
+      base: baseAvec(refusP0([])),
+      table: 't_test', id: 'g-f', proprietaire: 'user-1',
+    })
+    expect(
+      e?.notreFaute,
+      'ne pas savoir classer n autorise pas a mettre la faute sur l humain',
+    ).toBe(true)
+  })
+
+  it('EP-223 — la marche du refus est déduite de l artefact, jamais effacée', async () => {
+    const sansRien = await etatGeneration({
+      base: baseAvec(refusP0([])),
+      table: 't_test', id: 'g-f', proprietaire: 'user-1',
+    })
+    expect(sansRien?.etape, 'ni modele ni acquis : le refus est en P0').toBe('p0')
+
+    const ligne = refusP0([]) as Record<string, unknown>
+    ligne.sections_acquises = { phase: 'terminee', acquis: { ecrans: {} }, modele: {}, tirages: [] }
+    const avecAcquis = await etatGeneration({
+      base: baseAvec(ligne),
+      table: 't_test', id: 'g-f', proprietaire: 'user-1',
+    })
+    expect(avecAcquis?.etape, 'des sections existent : le refus n est PAS en P0').toBeNull()
+  })
+
+  it('EP-223 — l aveu ne fait fuir AUCUN code : ni entrailles, ni coût', async () => {
+    const e = await etatGeneration({
+      base: baseAvec(
+        refusP0([{ arret: 'P2', diagnostics: ['DERIVATION_CONFIRMATION_SANS_ECRITURE'] }]),
+      ),
+      table: 't_test', id: 'g-f', proprietaire: 'user-1',
+    })
+    const paquet = JSON.stringify(e)
+    expect(paquet, 'un code du moteur a fui vers l ecran').not.toMatch(/DERIVATION_/u)
+    expect(paquet, 'un cout a fui vers l ecran').not.toMatch(/2\.4386/u)
+    expect(paquet).not.toMatch(/P0 refuse/u)
+  })
+
   it('le payload utilisateur est DEGRAISSE : ni cout, ni diagnostics — un devtools ne voit que ceci', async () => {
     const e = await etatGeneration({
       base: baseAvec({
@@ -115,11 +201,19 @@ describe('etatGeneration — la lecture est au PROPRIETAIRE seul', () => {
     // il repond. Le chemin asynchrone ne savait pas poser de question : une
     // ligne refusee disait non meme quand il suffisait de demander. Les deux
     // chemins exposent desormais la MEME chose, ni plus ni moins.
+    //
+    // `notreFaute` EST UN SECOND ELARGISSEMENT DELIBERE (2026-10-15), et il
+    // n'ouvre RIEN : c'est un booleen de CLASSEMENT, pas une entraille. Il
+    // dit « l'echec vient de nous », jamais lequel ni a quel prix — les
+    // codes, les chemins et le cout restent en admin. Il existe parce que
+    // l'ecran accusait le proprietaire d'un refus classe
+    // `faute_de_production` : « Je n'ai pas compris — je ne construis
+    // rien » sur un defaut qu'il ne pouvait pas corriger.
     expect(Object.keys(e ?? {}).sort()).toEqual([
       'aDocument', 'activiteSec', 'apercuVersion', 'attendVous', 'creeIl',
       'defautsRestants',
-      'etape', 'id', 'nom', 'questions', 'raison', 'reprenable', 'sections', 'statut',
-      'tours', 'versions',
+      'etape', 'id', 'nom', 'notreFaute', 'questions', 'raison', 'reprenable', 'sections',
+      'statut', 'tours', 'versions',
     ])
   })
 

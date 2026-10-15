@@ -18,7 +18,7 @@
 import { createHash } from 'node:crypto'
 import type { creerTravailleur, RapportTranche } from './travailleur'
 import { diagnosticsDepuisLigne, TABLE_VERSIONS } from './journal'
-import { questionsPour, type Question } from './dialogue'
+import { questionsPour, type Question, fautesDeProduction } from './dialogue'
 import { estReprenable } from './reprise'
 
 type Travailleur = ReturnType<typeof creerTravailleur>
@@ -73,6 +73,26 @@ export async function tournerUneTranche({
  * admin. Par defaut (raison inconnue) : le message generique, jamais le
  * brut — fail-closed.
  */
+/**
+ * LA MARCHE OU LE REFUS A EU LIEU — deduite de l'ARTEFACT, jamais devinee.
+ *
+ * MESURE (capture du 2026-10-15) : le travailleur ecrit `etape: null` en
+ * meme temps que `statut: 'refusee'`, et l'ecran figeait alors la marche a
+ * « Verifier et reparer ». Le tir mesure etait mort en P0 : l'ecran
+ * affichait DEUX marches vertes — « Comprendre la demande » et « Ecrire
+ * l'application » — qui n'avaient jamais eu lieu, sur une ligne portant
+ * `sections=0` et `modele: null`.
+ *
+ * La ligne, elle, sait : pas de modele et rien d'acquis = P0 n'a jamais
+ * abouti. Sinon des sections existent, et l'ecriture avait commence.
+ */
+export function etapeDuRefus(statut: string, sa: Record<string, unknown>): string | null {
+  if (statut !== 'refusee') return null
+  const sansModele = sa.modele === null || sa.modele === undefined
+  const sansAcquis = sa.acquis === null || sa.acquis === undefined
+  return sansModele && sansAcquis ? 'p0' : null
+}
+
 export const RAISON_TECHNIQUE = 'Une erreur technique est survenue. Réessayez dans un moment.'
 export const RAISON_NON_ABOUTIE =
   'La génération n’a pas pu aboutir cette fois. Nous avons été prévenus et regardons ce qui s’est passé.'
@@ -121,6 +141,8 @@ export type EtatGeneration = {
    * gratuit, et sans rien ajouter a l'ecriture.
    */
   readonly questions: readonly Question[]
+  /** Le refus est de NOTRE cote : l'humain n'a rien a corriger (EP-135). */
+  readonly notreFaute: boolean
   /**
    * COMBIEN DE TOURS DE REPARATION ONT EU LIEU.
    *
@@ -201,6 +223,11 @@ export async function etatGeneration({
   const sa = (l.sections_acquises ?? {}) as {
     phase?: string
     acquis?: Record<string, unknown>
+    // Le JOURNAL du refus : arrets, codes et reparations de chaque tirage.
+    // C'est la, et nulle part ailleurs, que vivent les VRAIS codes d'un
+    // refus P0 — la colonne `diagnostics` n'en porte qu'une phrase.
+    tirages?: readonly Record<string, unknown>[]
+    modele?: unknown
     defautsRestants?: number | null
     tours?: readonly unknown[]
   }
@@ -224,18 +251,44 @@ export async function etatGeneration({
     etape: (x.etape ?? null) as string | null,
     creeIl: String(x.cree_le ?? ''),
   }))
+  // ── LES VRAIS CODES D'UN REFUS P0 NE SE PERDENT PLUS (defaut 2026-10-15).
+  //
+  // MESURE, capture du proprietaire a l'appui : un refus P0 ecrit dans
+  // `diagnostics` une PHRASE — « P0 refuse 3 fois » — et non un code.
+  // `diagnosticsDepuisLigne` exige `^[A-Z][A-Z0-9_]*$` : elle n'en lit
+  // donc AUCUN, `questionsPour` rend zero question, et l'ecran tombait
+  // dans sa branche par defaut « Je n'ai pas compris — je ne construis
+  // rien ». On accusait le proprietaire d'un defaut classe
+  // `faute_de_production`, dont la table dit l'inverse : il n'a rien a
+  // repondre. Les vrais codes vivaient dans le journal des tirages, que
+  // personne ne lisait.
+  const codesDesTirages = Array.isArray(sa.tirages)
+    ? (sa.tirages as Record<string, unknown>[]).flatMap((t) =>
+        Array.isArray(t.diagnostics) ? (t.diagnostics as unknown[]).map((x) => String(x)) : [],
+      )
+    : []
+  const diagsLus = diagnosticsDepuisLigne([...diagnostics, ...codesDesTirages])
   // GRATUIT : `dialogue.ts` n'appelle aucune API. Seule une ligne refusee
   // peut porter des questions — une livree n'a plus rien a demander.
-  const questions =
-    statut === 'refusee' ? await questionsPour(diagnosticsDepuisLigne(diagnostics)) : []
+  const questions = statut === 'refusee' ? await questionsPour(diagsLus) : []
+  // NOTRE FAUTE, ET ON LE DIT. Fail-closed vers NOUS : un refus qu'on ne
+  // sait pas classer n'autorise pas a mettre la faute sur l'humain.
+  const notreFaute =
+    statut === 'refusee' &&
+    questions.length === 0 &&
+    (diagsLus.length === 0 || (await fautesDeProduction(diagsLus)).length > 0)
   return {
     id: String(l.id),
     statut,
-    etape: l.etape === null || l.etape === undefined ? null : String(l.etape),
+    etape:
+      l.etape === null || l.etape === undefined
+        ? etapeDuRefus(statut, sa)
+        : String(l.etape),
     nom: l.nom === null || l.nom === undefined ? null : String(l.nom),
     aDocument: l.document !== null && l.document !== undefined,
     raison: statut === 'refusee' ? traduireRaison(diagnostics[0]) : null,
     questions,
+    notreFaute,
     tours: Array.isArray(sa.tours) ? sa.tours.length : 0,
     reprenable: estReprenable(statut, l as Parameters<typeof estReprenable>[1]),
     attendVous: l.attente_validation === true,

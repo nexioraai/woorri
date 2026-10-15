@@ -20,6 +20,7 @@ import {
   consommateursDIdentite,
   sourcesDIdentite,
   gestesParcoursDeCollection,
+  gestesEcrivants,
   TABLE_GESTES,
   GLOSSAIRE_NATURES_TEMPORELLES,
   NATURES_ATTRIBUT,
@@ -65,9 +66,13 @@ export const PROMPT_P0 = [
   "· payer = un paiement QUI A LIEU DANS L'APPLICATION — c'est le seul des gestes d'écriture (" +
     GESTES.filter((g) => TABLE_GESTES[g].effet === "mutation").join("/") +
     ") qui déclenche une capacité de paiement. Un paiement à la réception, sur place ou hors application N'EST PAS un geste payer : le parcours s'écrit SANS payer et le modèle ne porte PAS de champ commerce.",
+  "· UNE CONFIRMATION OBSERVE UNE ÉCRITURE : une étape confirmer exige, EN AMONT DU MÊME PARCOURS, une étape d'écriture (gestes dérivés : " +
+    gestesEcrivants().join("/") +
+    "). Une confirmation que rien n'écrit en amont est REFUSÉE — il n'y a rien à confirmer. COROLLAIRE DU POINT PRÉCÉDENT : un paiement hors application se confirme par la SAISIE de sa preuve (saisir — numéro de transaction, photo du reçu), JAMAIS par payer ; c'est cette saisie que la confirmation observe. Ajoute l'écriture manquante plutôt que de retirer la confirmation.",
   "· TRANSITION EXOGÈNE : quand un état change SANS acte de l'utilisateur (le système, le temps, un événement du monde), la transition se déclare {vers, exogene: " +
     NATURES_EXOGENES.join("|") +
     "} — JAMAIS un geste que personne n'accomplit. L'état atteint doit rester VISIBLE : une étape de lecture le consomme (etat), sinon le modèle est refusé.",
+  "· TOUT ÉTAT ATTEINT SE MONTRE — LA RÈGLE N'EST PAS RÉSERVÉE À L'EXOGÈNE : tout état cible d'une transition, qu'elle soit causée par un geste MUTANT ou exogène, doit être consommé (etat) par AU MOINS UNE étape de lecture. Un état qu'aucune surface ne distingue est REFUSÉ : ajoute l'étape qui le montre, ou retire la transition qui y mène.",
   "· AUCUN TABLEAU EXIGÉ NE RESTE VIDE — chacun porte AU MOINS un élément : " +
     cheminsMinItems().join(" · ") +
     ". Un tableau vide à l'un de ces chemins est REFUSÉ (mesuré : un fournisseur sans grammaire imposée a rendu noeuds vide — EP-085).",
