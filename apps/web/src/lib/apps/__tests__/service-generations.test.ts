@@ -110,6 +110,32 @@ describe('etatGeneration — la lecture est au PROPRIETAIRE seul', () => {
   // l'écran ne la montrait JAMAIS.
   // ══════════════════════════════════════════════════════════════════
 
+  it("EP-233 — « comprise » suit le MODÈLE, jamais le vide", async () => {
+    // MESURE sur la vraie ligne du 2026-10-15 à 20:51 : `attente_validation`
+    // vrai, zéro section, et `modele: null`. L écran annonçait pourtant
+    // « Votre demande a été comprise ». P0 n avait RIEN produit — un tirage
+    // venait d être refusé par les juges.
+    const sans = await etatGeneration({
+      base: baseAvec({
+        id: 'g-c', statut: 'en_attente', etape: 'p0', nom: 'conterak',
+        cout_usd: 1.04, diagnostics: [], document: null, attente_validation: true,
+        sections_acquises: { phase: 'p0', modele: null, acquis: null },
+      }),
+      table: 't_test', id: 'g-c', proprietaire: 'user-1',
+    })
+    expect(sans?.comprise, 'modele null : rien n a été compris').toBe(false)
+
+    const avec = await etatGeneration({
+      base: baseAvec({
+        id: 'g-c', statut: 'en_attente', etape: 'p0', nom: 'conterak',
+        cout_usd: 1.04, diagnostics: [], document: null, attente_validation: true,
+        sections_acquises: { phase: 'p0', modele: { acteurs: [] }, acquis: null },
+      }),
+      table: 't_test', id: 'g-c', proprietaire: 'user-1',
+    })
+    expect(avec?.comprise, 'un modèle existe : la demande EST comprise').toBe(true)
+  })
+
   it("EP-229 — un ARRÊT VOULU n est ni une panne, ni notre faute", async () => {
     // SIGNALÉ PAR LE PROPRIÉTAIRE, capture à l appui : il a appuyé sur
     // Arrêter, et l écran lui a répondu « La génération n a pas pu aboutir
@@ -306,8 +332,12 @@ describe('etatGeneration — la lecture est au PROPRIETAIRE seul', () => {
     // l'ecran accusait le proprietaire d'un refus classe
     // `faute_de_production` : « Je n'ai pas compris — je ne construis
     // rien » sur un defaut qu'il ne pouvait pas corriger.
+    // `comprise` EST UN TROISIEME ELARGISSEMENT DELIBERE (2026-10-15) : un
+    // booleen, derive du seul fait qui compte — P0 a-t-il produit un modele.
+    // Il existe parce que l'ecran annoncait « Votre demande a été comprise »
+    // sur une ligne dont `modele` valait `null`.
     expect(Object.keys(e ?? {}).sort()).toEqual([
-      'aDocument', 'activiteSec', 'apercuVersion', 'attendVous', 'creeIl',
+      'aDocument', 'activiteSec', 'apercuVersion', 'attendVous', 'comprise', 'creeIl',
       'defautsRestants',
       'etape', 'id', 'nom', 'notreFaute', 'questions', 'raison', 'reprenable', 'sections',
       'statut', 'tours', 'versions',

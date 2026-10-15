@@ -700,7 +700,9 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
               {etatGen.sections.faites === 0 ? (
                 <>
                   <p className="text-sm text-slate-300">
-                    {'Votre demande a été comprise. Rien n’est encore écrit — et rien ne partira tant que vous ne le dites pas.'}
+                    {etatGen.comprise
+                      ? 'Votre demande a été comprise. Rien n’est encore écrit — et rien ne partira tant que vous ne le dites pas.'
+                      : 'La compréhension de votre demande n’est pas encore terminée. Rien n’est écrit, et rien ne partira tant que vous ne le dites pas.'}
                   </p>
                   {intention !== null && intention.brief.trim() !== '' && (
                     <div className="mt-2 max-h-56 overflow-auto rounded-xl border border-white/10 bg-white/5 p-3">

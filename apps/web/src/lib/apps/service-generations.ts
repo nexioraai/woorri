@@ -153,6 +153,8 @@ export type EtatGeneration = {
   readonly questions: readonly Question[]
   /** Le refus est de NOTRE cote : l'humain n'a rien a corriger (EP-135). */
   readonly notreFaute: boolean
+  /** P0 a REELLEMENT produit un modele. Sans lui, rien n'a ete compris. */
+  readonly comprise: boolean
   /**
    * COMBIEN DE TOURS DE REPARATION ONT EU LIEU.
    *
@@ -304,6 +306,17 @@ export async function etatGeneration({
     raison: statut === 'refusee' ? traduireRaison(diagnostics[0]) : null,
     questions,
     notreFaute,
+    // ── « COMPRISE » DOIT VOULOIR DIRE COMPRISE (defaut 2026-10-15, capture).
+    //
+    // L'ecran affichait « Votre demande a ete comprise » des que la ligne
+    // attendait l'humain avec zero section ecrite. MESURE sur la vraie
+    // ligne : `attente_validation: true`, `sections: 0` — et `modele: null`.
+    // P0 n'avait RIEN produit ; un tirage venait d'etre refuse par les
+    // juges. On annoncait une comprehension qui n'avait pas eu lieu.
+    //
+    // Le modele P0 est le SEUL fait qui dit qu'on a compris : il existe, ou
+    // il n'existe pas. Aucune entraille ne sort — juste ce booleen.
+    comprise: sa.modele !== null && sa.modele !== undefined,
     tours: Array.isArray(sa.tours) ? sa.tours.length : 0,
     reprenable: estReprenable(statut, l as Parameters<typeof estReprenable>[1]),
     attendVous: l.attente_validation === true,

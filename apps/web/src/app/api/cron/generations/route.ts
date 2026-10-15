@@ -44,11 +44,24 @@ export const runtime = 'nodejs'
 // Ce n'était ni un défaut du moteur ni une demande trop grosse : la tranche
 // était plus courte que le travail qu'elle devait porter.
 //
-// 800 s est le plafond STANDARD de l'offre Pro (1 800 s existe, en bêta —
-// on ne bâtit pas une production sur une bêta). La durée étendue l'emporte
-// sur le travailleur hébergé parce qu'elle ne change AUCUNE architecture :
-// le pli, les reprises et la reprise par cron restent identiques.
-export const maxDuration = 800
+// 800 s etait le plafond STANDARD de l'offre Pro. L'arbitrage precedent
+// ecartait les 1 800 s parce qu'ils sont en BETA — « on ne batit pas une
+// production sur une beta ». CE QUI A CHANGE, et qui rouvre la decision :
+//
+//   · le chemin a 800 s a ECHOUE QUATRE FOIS le 2026-10-15 sur une vraie
+//     demande. Un seul tirage P0 mesure 28 000 jetons a 47 jetons/s, soit
+//     ~10 min — et la sonde passe AVANT. Le budget n'y suffit pas ;
+//   · la machinerie de secours (pli, reprise, echeance) existe desormais ET
+//     est eprouvee a cout nul (EP-230). Si la beta se derobe, on retombe
+//     exactement sur le comportement d'avant, pas sur un trou ;
+//   · conditions de la beta VERIFIEES sur ce compte, pas supposees : offre
+//     Pro, `nodeVersion` 24.x (nodejs24.x est supporte), aucun Secure
+//     Compute ni IP statique, et la configuration est POSEE PAR FONCTION —
+//     la seule forme que la beta accepte.
+//
+// La duree etendue ne change toujours AUCUNE architecture : c'est un
+// chiffre, et les trois lignes ci-dessous bougent avec lui.
+export const maxDuration = 1800
 
 export async function GET(req: Request) {
   // Fail-closed, comme tout le lot crons : secret absent = refus.
@@ -65,9 +78,10 @@ export async function GET(req: Request) {
       base: supabaseAdmin as unknown as BaseGeneration,
       moteur: { poursuivreEmission: poursuivreEmissionDuSite },
       // Appariement budget <= maxDuration - marge : aucune NOUVELLE
-      // ouverture d'appel apres 740 s, soit 800 s moins la MEME marge de 60 s
-      // qu'avant. Un tirage P0 mesure a ~480 s y tient largement.
-      budgetTrancheMs: 740_000,
+      // ouverture d'appel apres 1 700 s, soit 1 800 s moins 100 s. La marge
+      // passe de 60 a 100 s parce qu'une tranche plus longue a plus de
+      // choses a ecrire quand elle rend la main.
+      budgetTrancheMs: 1_700_000,
       // ── LE CHIEN DE GARDE DOIT RESTER AU-DESSUS DU BUDGET.
       //
       // Il valait 600 s. Avec une tranche qui peut desormais travailler
@@ -76,9 +90,18 @@ export async function GET(req: Request) {
       // battement ne se rafraichit PAS pendant un appel : mesure, 9 minutes
       // de silence sur un seul tirage.
       //
-      // 900 s laisse 160 s au-dela du budget : de quoi encaisser un appel
-      // long sans jamais accuser a tort un travailleur qui travaille.
-      battementPerimeMs: 900_000,
+      // ── ET IL BOUGE AVEC LE BUDGET, SINON IL DEVIENT UN VOLEUR.
+      //
+      // A 900 s, il serait desormais PLUS COURT qu'une tranche (1 700 s) :
+      // un travailleur parfaitement vivant, en plein appel, aurait ete
+      // declare mort au bout de 15 minutes et sa ligne volee par un autre —
+      // qui serait reparti de zero. Exactement la boucle a vide du
+      // 2026-10-15, mais fabriquee par nous.
+      //
+      // 2 000 s laisse 300 s au-dela du budget. L'invariant qui compte, et
+      // qu'un cliquet tient maintenant : battement > budget > 0, et
+      // budget < maxDuration.
+      battementPerimeMs: 2_000_000,
       // Trou comptable n°2 : le cout d'une tranche depossedee part au total
       // de la plateforme — jamais sur la ligne d'un autre travailleur.
       journaliserOrphelin,
