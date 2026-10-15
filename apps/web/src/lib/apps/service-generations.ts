@@ -17,7 +17,7 @@
  */
 import { createHash } from 'node:crypto'
 import type { creerTravailleur, RapportTranche } from './travailleur'
-import { diagnosticsDepuisLigne, TABLE_VERSIONS } from './journal'
+import { diagnosticsDepuisLigne, RAISON_ARRET_PROPRIETAIRE, TABLE_VERSIONS } from './journal'
 import { questionsPour, type Question, fautesDeProduction } from './dialogue'
 import { estReprenable } from './reprise'
 
@@ -97,8 +97,18 @@ export const RAISON_TECHNIQUE = 'Une erreur technique est survenue. Réessayez d
 export const RAISON_NON_ABOUTIE =
   'La génération n’a pas pu aboutir cette fois. Nous avons été prévenus et regardons ce qui s’est passé.'
 
+export const RAISON_ARRETEE =
+  'Vous avez arrêté cette génération. Rien n’a été lancé depuis.'
+
 export function traduireRaison(brute: string | undefined): string {
   const r = String(brute ?? '')
+  // ── UN ARRET VOULU N'EST PAS UNE PANNE (defaut 2026-10-15, capture).
+  //
+  // Le proprietaire a appuye sur Arreter, et l'ecran lui repondait « La
+  // generation n'a pas pu aboutir cette fois. Nous avons ete prevenus et
+  // regardons ce qui s'est passe. » — une panne racontee la ou il y a eu
+  // une DECISION. On ne previent personne quand quelqu'un decide.
+  if (r === RAISON_ARRET_PROPRIETAIRE) return RAISON_ARRETEE
   // erreurs d'infrastructure : credit, facturation, 400 fournisseur,
   // timeouts, echecs repetes — le message generique, RIEN du brut.
   if (/^erreur fatale|^echec repete|timed out|credit|facturation|\b4\d\d\b|\b5\d\d\b/iu.test(r)) {
@@ -273,8 +283,13 @@ export async function etatGeneration({
   const questions = statut === 'refusee' ? await questionsPour(diagsLus) : []
   // NOTRE FAUTE, ET ON LE DIT. Fail-closed vers NOUS : un refus qu'on ne
   // sait pas classer n'autorise pas a mettre la faute sur l'humain.
+  // UN ARRET VOULU N'EST LA FAUTE DE PERSONNE. Sans cette exclusion,
+  // l'ecran repondait « L'echec vient de nous » a quelqu'un qui venait
+  // d'appuyer sur Arreter — on s'accusait d'une decision.
+  const arretVoulu = diagnostics[0] === RAISON_ARRET_PROPRIETAIRE
   const notreFaute =
     statut === 'refusee' &&
+    !arretVoulu &&
     questions.length === 0 &&
     (diagsLus.length === 0 || (await fautesDeProduction(diagsLus)).length > 0)
   return {

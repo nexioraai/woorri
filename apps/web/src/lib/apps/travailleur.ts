@@ -41,7 +41,7 @@
  * perimera). Rien d'avale.
  */
 import { randomUUID } from 'node:crypto'
-import { codeEtChemin, TABLE_GENERATIONS, TABLE_VERSIONS } from './journal'
+import { codeEtChemin, RAISON_ARRET_PROPRIETAIRE, TABLE_GENERATIONS, TABLE_VERSIONS } from './journal'
 import { estReprenable, etatDeReprise } from './reprise'
 
 type Lignes = { data: Record<string, unknown>[] | null; error: { message: string } | null }
@@ -370,7 +370,7 @@ export function creerTravailleur({
         statut: 'refusee',
         ok: false,
         etape: null,
-        diagnostics: ['arret demande par le proprietaire'],
+        diagnostics: [RAISON_ARRET_PROPRIETAIRE],
       })
       .eq('id', id)
       .eq('owner_id', proprietaire)

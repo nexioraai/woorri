@@ -111,6 +111,53 @@ describe("EP-225 · l'appel est solidaire de la tranche", () => {
     await expect(appeler(brut, () => 300_000)).rejects.not.toMatchObject({ budgetTemps: true });
   });
 
+  it("LE CABLAGE REEL pose le signal — pas seulement l enveloppe isolée", async () => {
+    // ── LE CONTRÔLE QUI MANQUAIT, ET QUI A COÛTÉ UN TIR ENTIER.
+    //
+    // Ma premiere version branchait `echeance: () => echeanceTranche` alors
+    // que `echeanceTranche` EST une fonction : l adaptateur recevait donc
+    // une fonction au lieu d un nombre, `Number.isFinite` la refusait EN
+    // SILENCE, et aucun signal n etait pose. La tranche du 2026-10-15 a
+    // 17:26 est morte exactement comme avant la correction.
+    //
+    // Les controles precedents passaient tous : ils fournissaient
+    // `() => 20_500` A LA MAIN. Ils eprouvaient l enveloppe, jamais le
+    // CABLAGE. Celui-ci monte un vrai moteur avec un faux SDK, et regarde
+    // ce que le SDK recoit — la seule chose qui compte en production.
+    const recus: { signal: unknown }[] = [];
+    class FauxSdk {
+      messages = {
+        create: (_corps: unknown, options?: { signal?: unknown }) => {
+          recus.push({ signal: options?.signal });
+          const e = new Error("BUDGET_TEMPS");
+          (e as Error & { budgetTemps?: boolean }).budgetTemps = true;
+          return Promise.reject(e);
+        },
+      };
+      // PAS DE CONSTRUCTEUR : une classe sans constructeur accepte deja
+      // `new FauxSdk({ apiKey })` et ignore l'argument. En ecrire un vide
+      // serait du bruit que le lint refuse, a raison.
+    }
+    const { creerMoteur } = (await import(CHEMIN_MOTEUR)) as { creerMoteur: (o: unknown) => Promise<{
+      poursuivreEmission: (o: unknown) => Promise<unknown>
+    }> };
+    const m = await creerMoteur({
+      cleApi: "ANTHROPIC_API_KEY=sk-faux-pour-le-cablage",
+      sdk: FauxSdk,
+      lireFichier: () => "ANTHROPIC_API_KEY=sk-faux-pour-le-cablage",
+    });
+    await m.poursuivreEmission({
+      brief: "une application de suivi",
+      slug: "ep225-cablage",
+      budgetMs: 740_000,
+    });
+    expect(recus.length, "le faux SDK n a jamais ete appele").toBeGreaterThan(0);
+    expect(
+      recus[0]?.signal,
+      "le SDK n a recu AUCUN signal : l echeance ne l atteint pas, et la tranche mourra comme avant",
+    ).toBeDefined();
+  });
+
   it("le moteur SUSPEND au lieu de mourir quand l échéance tombe", async () => {
     // Le comportement de bout en bout : un fournisseur qui n'annonce que
     // l'échéance doit produire une SUSPENSION — un état réutilisable —

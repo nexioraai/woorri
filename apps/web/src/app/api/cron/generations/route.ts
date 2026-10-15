@@ -85,6 +85,51 @@ export async function GET(req: Request) {
     }),
     env: process.env,
   })
+  // ── « NOUS AVONS ETE PREVENUS » DEVIENT VRAI (defaut 2026-10-15).
+  //
+  // L'ecran promettait, sur CHAQUE echec : « Nous avons été prévenus et
+  // regardons ce qui s'est passé. » MESURE : `alerter` n'etait appele que
+  // depuis les routes du chemin SYNCHRONE. Sur le chemin de l'interface —
+  // le seul que le proprietaire utilise — PERSONNE n'etait prevenu, jamais.
+  //
+  // Mesure a l'appui : le 2026-10-15 a 14:54, une generation est morte sur
+  // un refus de l'API (credit epuise). Aucun message n'est parti. Le
+  // proprietaire ne l'a su qu'en me le demandant, trois heures plus tard.
+  //
+  // L'alerte vit ICI, a la frontiere, et non dans le travailleur : celui-ci
+  // reste pur et testable sans reseau. Un envoi qui echoue ne fait jamais
+  // echouer la tranche — le travail est deja ecrit en base.
+  const echecs = r.desarme ? [] : r.rapports.filter((x) => x.issue === 'refusee' || x.issue === 'erreur')
+  if (echecs.length > 0) {
+    try {
+      const { alerter } = await import('@/lib/apps/surveillance')
+      await alerter({
+        demande: `generation(s) en echec : ${echecs.map((x) => String(x.id ?? '?')).join(', ')}`,
+        // `NomPhase` est une union FERMEE, et on ne l'elargit pas pour une
+        // alerte : l'etape du moteur se TRADUIT dans son vocabulaire.
+        // `p0` comprend la demande ; tout le reste ecrit l'application.
+        traces: echecs.map((x) => ({
+          phase: (x.etape === 'p0' ? 'comprehension' : 'emission') as 'comprehension' | 'emission',
+          ms: 0,
+          ok: false,
+          ...(x.detail === undefined ? {} : { detail: x.detail }),
+        })),
+        // Le code est lui aussi une union FERMEE : `echec` est le seul qui
+        // dise la verite ici. L'issue precise voyage dans le message, que
+        // l'alerte affiche en entier.
+        anomalies: echecs.map((x) => ({
+          phase: (x.etape === 'p0' ? 'comprehension' : 'emission') as 'comprehension' | 'emission',
+          code: 'echec' as const,
+          message: `${x.issue} · ${String(x.id ?? '?')} — ${x.detail ?? 'sans detail'}`,
+        })),
+        msTotal: 0,
+        saine: false,
+      })
+    } catch {
+      // Prevenir est un CONFORT, jamais une condition : une alerte qui
+      // echoue ne doit pas faire croire au cron que la tranche a rate.
+    }
+  }
   return NextResponse.json(
     r.desarme
       ? { desarme: true, note: 'GO_EMISSION_IA non arme : aucune tranche, aucune depense.' }

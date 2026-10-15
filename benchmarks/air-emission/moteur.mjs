@@ -208,7 +208,14 @@ const surfaceEnveloppe = () => {
   const client =
     clientFourni ??
     (await adaptateur.creerClient(() => `ANTHROPIC_API_KEY=${cleApi}`, {
-      echeance: () => echeanceTranche,
+      // DEUX NIVEAUX, ET UN SEUL APPEL DE PLUS — le defaut de ma premiere
+      // version (mesure du 2026-10-15, tir de 17:26) : `echeanceTranche`
+      // EST une fonction, et rendre la fonction elle-meme donnait a
+      // l'adaptateur une valeur non numerique. `Number.isFinite` la
+      // refusait en silence, aucun signal n'etait pose, et la tranche est
+      // morte exactement comme avant. Le test unitaire ne l'a pas vu : il
+      // fournissait `() => 20_500` directement, pas le CABLAGE reel.
+      echeance: () => (echeanceTranche === null ? null : echeanceTranche()),
       // ── LE SDK VIENT DE L'APPELANT EN LIGNE (2026-10-14).
       //
       // Mesure en production : l'adaptateur est charge en `webpackIgnore`, le

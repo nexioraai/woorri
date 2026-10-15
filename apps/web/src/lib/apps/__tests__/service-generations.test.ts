@@ -110,6 +110,40 @@ describe('etatGeneration — la lecture est au PROPRIETAIRE seul', () => {
   // l'écran ne la montrait JAMAIS.
   // ══════════════════════════════════════════════════════════════════
 
+  it("EP-229 — un ARRÊT VOULU n est ni une panne, ni notre faute", async () => {
+    // SIGNALÉ PAR LE PROPRIÉTAIRE, capture à l appui : il a appuyé sur
+    // Arrêter, et l écran lui a répondu « La génération n a pas pu aboutir
+    // cette fois. Nous avons été prévenus et regardons ce qui s est passé. »
+    // Une panne racontée là où il y a eu une DÉCISION — et on ne prévient
+    // personne quand quelqu un décide.
+    const e = await etatGeneration({
+      base: baseAvec({
+        id: 'g-a', statut: 'refusee', etape: null, nom: 'conterak',
+        cout_usd: 0, diagnostics: ['arret demande par le proprietaire'],
+        document: null, sections_acquises: {},
+      }),
+      table: 't_test', id: 'g-a', proprietaire: 'user-1',
+    })
+    expect(e?.raison, "l écran doit dire que l arrêt vient de l humain").toMatch(/arrêté/u)
+    expect(e?.raison, "et surtout PAS raconter une panne").not.toMatch(/n’a pas pu aboutir/u)
+    expect(e?.notreFaute, "s accuser d une décision de l humain est un mensonge").toBe(false)
+  })
+
+  it("EP-229 — CONTRÔLE NÉGATIF : un vrai refus reste une panne de NOTRE côté", async () => {
+    // Sans ce contrôle, traiter tout refus comme « voulu » ferait
+    // disparaître l aveu légitime du cas précédent.
+    const e = await etatGeneration({
+      base: baseAvec({
+        id: 'g-r', statut: 'refusee', etape: null, nom: 'conterak',
+        cout_usd: 2, diagnostics: ['P0 refuse 3 fois'], document: null,
+        sections_acquises: { tirages: [{ arret: 'P2', diagnostics: ['DERIVATION_CONFIRMATION_SANS_ECRITURE'] }] },
+      }),
+      table: 't_test', id: 'g-r', proprietaire: 'user-1',
+    })
+    expect(e?.notreFaute).toBe(true)
+    expect(e?.raison).toMatch(/n’a pas pu aboutir/u)
+  })
+
   it("EP-226 — une application LIVRÉE est regardable, même sans acquis", async () => {
     const e = await etatGeneration({
       base: baseAvec({

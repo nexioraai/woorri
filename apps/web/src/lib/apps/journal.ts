@@ -487,6 +487,16 @@ export const SQL_VERSIONS = sqlVersionsPour(TABLE_VERSIONS)
  *  l'etage 4 ne l'ecrivent jamais nu (cliquet d'isolation etendu a app/). */
 export const TABLE_GENERATIONS = 'app_generations'
 
+/**
+ * LA RAISON D'UN ARRET VOULU — un seul littéral, lu des deux côtés.
+ *
+ * Le travailleur l'ÉCRIT, le service de lecture la RECONNAÎT. En la
+ * recopiant, on obtiendrait deux vérités : l'écran continuerait de dire
+ * « la génération n'a pas pu aboutir » là où quelqu'un a simplement
+ * appuyé sur Arrêter. Signalé par le propriétaire, capture à l'appui.
+ */
+export const RAISON_ARRET_PROPRIETAIRE = 'arret demande par le proprietaire' 
+
 /** La table de production — strictement le script de l'etage 1. */
 export const SQL_TABLE = sqlPour(TABLE_GENERATIONS)
 
