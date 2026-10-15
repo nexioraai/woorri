@@ -218,14 +218,61 @@ export async function assemblerDepuisFlux(flux) {
 
 /** L'enveloppe de flux : `messages.create` passe en streaming et rend la
  *  forme non-streaming exacte. Un appelant qui demande DEJA un flux
- *  (`stream: true`) le recoit brut, sans double emballage. */
-export function envelopperEnFlux(brut) {
+ *  (`stream: true`) le recoit brut, sans double emballage.
+ *
+ * ── L'ECHEANCE, ET POURQUOI ELLE A COUTE UNE HEURE DE RIEN (2026-10-15).
+ *
+ * MESURE : une generation lancee depuis l'interface a tourne 1 h 10 avec
+ * ZERO tirage, ZERO dollar et AUCUNE ecriture en base. Cause : le moteur
+ * ne verifie son budget de tranche qu'ENTRE deux appels — « jamais
+ * pendant », et c'est ecrit dans son code. L'appel, lui, a un delai client
+ * de 45 minutes. Vercel tue la fonction a 800 secondes. Un appel demarre
+ * avec 300 secondes de budget restant et qui en prend 600 fait donc tuer
+ * la fonction EN PLEIN VOL : rien n'est ecrit, rien n'est compte, et le
+ * chien de garde confie la ligne a un autre travailleur 15 minutes plus
+ * tard, qui refait exactement la meme chose. Boucle sans fin.
+ *
+ * L'echeance rend l'appel SOLIDAIRE de la tranche : il s'interrompt avant
+ * que l'hote ne tue tout, l'erreur porte `budgetTemps`, et le moteur la
+ * traite comme la suspension propre qu'il sait deja faire — l'etat est
+ * ecrit, la reprise repart de la.
+ *
+ * `echeance` rend les millisecondes RESTANTES, ou `null` quand il n'y a pas
+ * de limite (campagne en terminal : elle n'en a jamais eu besoin).
+ */
+export function envelopperEnFlux(brut, echeance = null) {
+  const avecSignal = (args) => {
+    const restant = typeof echeance === "function" ? echeance() : null;
+    if (restant === null || restant === undefined || !Number.isFinite(restant)) return [args, undefined];
+    // UNE MARGE, pas le budget nu : l'assemblage du flux et l'ecriture en
+    // base vivent APRES l'appel. Rendre la main pile a l'echeance ferait
+    // tuer la fonction pendant l'ecriture — le defaut deplace, pas corrige.
+    const MARGE_MS = 20_000;
+    return [args, { signal: AbortSignal.timeout(Math.max(1_000, restant - MARGE_MS)) }];
+  };
+  const marquer = (e) => {
+    // Le SDK et `fetch` ne nomment pas l'abandon de la meme facon selon les
+    // versions : on lit les trois formes, et on ne devine jamais.
+    const nom = String(e?.name ?? "");
+    const abandon =
+      nom === "TimeoutError" || nom === "AbortError" || e?.code === "ABORT_ERR";
+    if (!abandon) return e;
+    const marque = new Error("BUDGET_TEMPS — appel interrompu par l'echeance de la tranche");
+    marque.budgetTemps = true;
+    marque.cause = e;
+    return marque;
+  };
   return {
     messages: {
       create: async (args) => {
-        if (args?.stream === true) return brut.messages.create(args);
-        const flux = await brut.messages.create({ ...args, stream: true });
-        return assemblerDepuisFlux(flux);
+        const [corps, options] = avecSignal(args);
+        try {
+          if (corps?.stream === true) return await brut.messages.create(corps, options);
+          const flux = await brut.messages.create({ ...corps, stream: true }, options);
+          return await assemblerDepuisFlux(flux);
+        } catch (e) {
+          throw marquer(e);
+        }
       },
     },
   };
@@ -261,9 +308,9 @@ export async function creerClient(lireFichier, options = {}) {
   const contenu = lireFichier(CONFIG.cheminCle);
   const m = contenu.match(CONFIG.motifCle);
   if (!m) throw new Error("ADAPTATEUR_CLE_INTROUVABLE");
-  const { sdk, ...reste } = options;
+  const { sdk, echeance, ...reste } = options;
   const Anthropic = sdk ?? (await import("@anthropic-ai/sdk")).default;
-  return envelopperEnFlux(new Anthropic({ apiKey: m[2].trim(), ...reste }));
+  return envelopperEnFlux(new Anthropic({ apiKey: m[2].trim(), ...reste }), echeance ?? null);
 }
 
 /** Usage BRUT du dialecte → usage NEUTRE (pour les comptabilités). */

@@ -298,7 +298,22 @@ export async function etatGeneration({
       battement === null ? null : Math.max(0, Math.round((Date.now() - new Date(battement).getTime()) / 1000)),
     sections: { faites, total: SECTIONS_ATTENDUES },
     defautsRestants: typeof sa.defautsRestants === 'number' ? sa.defautsRestants : null,
+    // ── UNE APPLICATION LIVREE DOIT POUVOIR SE REGARDER (defaut 2026-10-15).
+    //
+    // L'empreinte ne se calculait que sur `acquis` — ce que le moteur ecrit
+    // ENTRE deux tranches. Une generation qui aboutit sans jamais se
+    // suspendre n'ecrit aucun acquis : l'empreinte restait nulle, l'ecran
+    // ne declenchait jamais l'apercu, et le proprietaire ne voyait JAMAIS
+    // son application — meme en cas de succes complet. Seul le zip restait.
+    //
+    // La route `apercu-live` savait deja preferer le DOCUMENT quand la
+    // ligne est livree ; c'est le declencheur qui l'ignorait. Une oeuvre
+    // livree ne change plus : son empreinte est donc constante.
     apercuVersion:
-      acquis === null ? null : createHash('md5').update(JSON.stringify(acquis)).digest('hex').slice(0, 8),
+      statut === 'livree' && l.document !== null && l.document !== undefined
+        ? 'livree'
+        : acquis === null
+          ? null
+          : createHash('md5').update(JSON.stringify(acquis)).digest('hex').slice(0, 8),
   }
 }

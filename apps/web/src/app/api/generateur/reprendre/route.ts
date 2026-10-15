@@ -37,16 +37,25 @@ export async function POST(req: Request) {
     rang?: unknown
   } | null
   const id = typeof corps?.id === 'string' ? corps.id.trim() : ''
-  // DEUX GESTES, UNE SEULE ROUTE — et c'est voulu. Les deux remettent la
-  // meme ligne en marche, et la liste des ecrivains de la vraie table est
-  // FERMEE : lui ajouter une sixieme entree pour un geste jumeau serait
-  // depenser un arbitrage pour rien.
+  // QUATRE GESTES, UNE SEULE ROUTE — et c'est voulu. Tous passent par le
+  // MEME ecrivain (le travailleur) : la liste des ecrivains de la vraie
+  // table reste donc FERMEE, et aucun arbitrage nouveau n'est depense.
+  //
+  // `arreter` et `relancer` sont arrives le 2026-10-15, apres une mesure :
+  // une generation morte en P0 n'affichait AUCUN bouton — ni pour couper,
+  // ni pour recommencer. `estReprenable` refuse une ligne sans acquis, et
+  // c'est juste : il n'y a rien a reprendre. Mais il y a toujours quelque
+  // chose a RELANCER, et toujours quelque chose a ARRETER.
   const geste =
     corps?.geste === 'continuer'
       ? 'continuer'
       : corps?.geste === 'revenir'
         ? 'revenir'
-        : 'reprendre'
+        : corps?.geste === 'arreter'
+          ? 'arreter'
+          : corps?.geste === 'relancer'
+            ? 'relancer'
+            : 'reprendre'
   if (id === '') {
     return NextResponse.json({ error: 'Génération inconnue.' }, { status: 400 })
   }
@@ -70,6 +79,25 @@ export async function POST(req: Request) {
       return retour === 'revenue'
         ? NextResponse.json({ id, revenu: rang })
         : NextResponse.json({ error: 'Version inconnue.' }, { status: 404 })
+    }
+    if (geste === 'arreter') {
+      // GRATUIT : une ecriture en base, aucun appel. Le travail deja en vol
+      // chez le fournisseur ne peut pas etre tue d'ici — mais la ligne cesse
+      // d'etre saisissable, donc plus aucun tour ne repartira dessus.
+      const issue = await travailleur.arreter({ id, proprietaire: garde.userId })
+      return issue === 'arretee'
+        ? NextResponse.json({ id, arrete: true })
+        : NextResponse.json(
+            { error: 'Cette génération n’est plus en cours.' },
+            { status: 409 },
+          )
+    }
+    if (geste === 'relancer') {
+      // PAYANT, et c'est dit a l'ecran : une relance est un travail NEUF.
+      const issue = await travailleur.relancer({ id, proprietaire: garde.userId })
+      return issue === 'introuvable'
+        ? NextResponse.json({ error: 'Génération inconnue.' }, { status: 404 })
+        : NextResponse.json({ id: issue.id, relance: true })
     }
     if (geste === 'continuer') {
       const suite = await travailleur.continuer({ id, proprietaire: garde.userId })

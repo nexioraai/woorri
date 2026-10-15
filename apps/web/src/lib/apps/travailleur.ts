@@ -344,6 +344,83 @@ export function creerTravailleur({
   }
 
   /**
+   * ARRETER — le proprietaire coupe une generation qui tourne.
+   *
+   * ── POURQUOI CE GESTE N'EXISTAIT PAS, ET CE QUE CA A COUTE.
+   *
+   * MESURE DU 2026-10-15 : une generation a tourne 1 h 10 en boucle a vide.
+   * Le proprietaire ne pouvait RIEN faire — l'ecran ne portait aucun bouton,
+   * et la seule facon de l'arreter a ete que j'ecrive en base a sa place.
+   * Personne ne doit dependre de moi pour stopper une panne.
+   *
+   * Compare-and-set sur le statut : une ligne deja terminee n'est pas
+   * re-ecrite, et deux clics n'arretent qu'une fois. Le travail en vol n'est
+   * pas tue — on ne peut pas tuer une fonction distante — mais la ligne
+   * cesse d'etre saisissable, donc le prochain cron ne la reprendra pas.
+   */
+  async function arreter({
+    id,
+    proprietaire,
+  }: {
+    id: string
+    proprietaire: string
+  }): Promise<'arretee' | 'rien_a_arreter'> {
+    const ecrit = (await t()
+      .update({
+        statut: 'refusee',
+        ok: false,
+        etape: null,
+        diagnostics: ['arret demande par le proprietaire'],
+      })
+      .eq('id', id)
+      .eq('owner_id', proprietaire)
+      .in('statut', ['en_attente', 'en_cours'])
+      .select('id')) as Lignes
+    return ecrit.error === null && ecrit.data !== null && ecrit.data.length === 1
+      ? 'arretee'
+      : 'rien_a_arreter'
+  }
+
+  /**
+   * RELANCER — repartir de la MEME demande, dans une ligne NEUVE.
+   *
+   * Ce n'est PAS une reprise : une reprise repart de ce qui est deja ecrit,
+   * et une ligne morte en P0 n'a rien d'ecrit — `estReprenable` la refuse,
+   * donc aucun bouton n'apparaissait et le proprietaire restait coince.
+   *
+   * La demande est relue EN BASE, jamais renvoyee par l'ecran : le cahier
+   * des charges ne refait pas l'aller-retour, et une ligne relancee porte
+   * exactement le texte d'origine — pas une version re-saisie.
+   *
+   * HONNETE SUR LE PRIX : une relance est un travail NEUF, donc un cout
+   * neuf. Elle ne se declenche que sur un geste explicite.
+   */
+  async function relancer({
+    id,
+    proprietaire,
+  }: {
+    id: string
+    proprietaire: string
+  }): Promise<{ id: string } | 'introuvable'> {
+    const lu = (await t()
+      .select('demande, nom, owner_email')
+      .eq('id', id)
+      .eq('owner_id', proprietaire)
+      .maybeSingle()) as { data: Record<string, unknown> | null; error: unknown }
+    const ligne = lu.data
+    if (lu.error !== null || ligne === null) return 'introuvable'
+    const demande = typeof ligne.demande === 'string' ? ligne.demande : ''
+    if (demande.trim() === '') return 'introuvable'
+    const neuf = await deposer({
+      demande,
+      nom: typeof ligne.nom === 'string' ? ligne.nom : 'application',
+      email: typeof ligne.owner_email === 'string' ? ligne.owner_email : null,
+      proprietaire,
+    })
+    return { id: neuf }
+  }
+
+  /**
    * CONTINUER — le proprietaire a vu, et il dit d'avancer.
    *
    * C'est l'autre moitie du « mode plan » et du pas-a-pas : la suspension
@@ -786,5 +863,5 @@ export function creerTravailleur({
   }
   /* eslint-enable @typescript-eslint/no-explicit-any */
 
-  return { continuer, deposer, reprendre, revenirAVersion, tourner }
+  return { arreter, continuer, deposer, relancer, reprendre, revenirAVersion, tourner }
 }

@@ -55,6 +55,18 @@ const sourceFiles = (dir: string): string[] =>
 // n'avait donc rien à implémenter. Ces deux modules parlent le protocole
 // `/air/v1/...` en HTTP nu, sans aucun paquet.
 const EXEMPTIONS_FETCH = [
+  // ÉDITION CONSCIENTE (EP-224, 2026-10-15) — l'émetteur web produit le
+  // SERVICE WORKER de l'application. Ce worker appelle `fetch` : c'est sa
+  // raison d'être, et sans gestionnaire `fetch` aucun navigateur Chromium
+  // ne propose l'installation sur l'écran d'accueil. Le code s'exécute sur
+  // l'APPAREIL de l'utilisateur, jamais pendant la compilation.
+  //
+  // IL EST DANS `EMETTEURS_A_PROUVER` : chaque `fetch(` de ce fichier doit
+  // vivre dans une chaîne, ligne commençant par un guillemet. Le worker est
+  // donc écrit en lignes citées — pas par confort de style, mais parce que
+  // c'est la forme que ce cliquet sait VÉRIFIER. Le garde ne s'assouplit
+  // pas : il reçoit une preuve.
+  join("src", "emit-web.ts"),
   join("runtime", "source-reseau.ts"),
   join("runtime", "ecriture-http.ts"),
   join("runtime", "session-http.ts"),
@@ -100,7 +112,7 @@ const EXEMPTIONS_FETCH = [
  * d'un tableau de texte émis. Une ligne qui appellerait vraiment `fetch` ne
  * commence pas par un guillemet.
  */
-const EMETTEURS_A_PROUVER = [join("src", "emit-connecteur.ts")];
+const EMETTEURS_A_PROUVER = [join("src", "emit-connecteur.ts"), join("src", "emit-web.ts")];
 
 describe("cliquet statique zéro-réseau (chemin de compilation)", () => {
   it("aucun import de module réseau/LLM dans src/ ni runtime/", () => {

@@ -94,6 +94,69 @@ describe('etatGeneration — la lecture est au PROPRIETAIRE seul', () => {
   })
 
   // ══════════════════════════════════════════════════════════════════
+  // EP-226 · APRÈS UN ÉCHEC IL Y A UNE SORTIE, APRÈS UN SUCCÈS IL Y A
+  // QUELQUE CHOSE À REGARDER.
+  //
+  // MESURE DU 2026-10-15, vérifiée contre la vraie ligne en base : une
+  // génération morte en P0 n'affichait AUCUN bouton. `reprenable` faux
+  // (rien d'écrit à reprendre — et c'est juste), `attendVous` faux,
+  // `livree` faux, `document` nul. Zéro action possible : le propriétaire
+  // était coincé, et la seule façon d'arrêter a été que j'écrive en base
+  // à sa place. Personne ne doit dépendre de moi pour stopper une panne.
+  //
+  // Et le symétrique, plus sournois : l'aperçu ne se déclenchait que sur
+  // `acquis`, écrit ENTRE deux tranches. Une génération qui aboutit sans
+  // jamais se suspendre n'en écrit aucun — l'application existait, et
+  // l'écran ne la montrait JAMAIS.
+  // ══════════════════════════════════════════════════════════════════
+
+  it("EP-226 — une application LIVRÉE est regardable, même sans acquis", async () => {
+    const e = await etatGeneration({
+      base: baseAvec({
+        id: 'g-l', statut: 'livree', etape: null, nom: 'conterak',
+        cout_usd: 3, diagnostics: [], document: { app: { slug: 'conterak' } },
+        sections_acquises: {},
+      }),
+      table: 't_test', id: 'g-l', proprietaire: 'user-1',
+    })
+    expect(
+      e?.apercuVersion,
+      "aucune empreinte d aperçu : l écran ne montrerait jamais l application livrée",
+    ).not.toBeNull()
+  })
+
+  it("EP-226 — CONTRÔLE NÉGATIF : sans document, rien à regarder", async () => {
+    // Sans ce contrôle, rendre une empreinte constante ferait croire
+    // l écran qu il y a toujours quelque chose à afficher.
+    const e = await etatGeneration({
+      base: baseAvec({
+        id: 'g-v', statut: 'refusee', etape: null, nom: 'x',
+        cout_usd: 0, diagnostics: ['P0 refuse 3 fois'], document: null,
+        sections_acquises: {},
+      }),
+      table: 't_test', id: 'g-v', proprietaire: 'user-1',
+    })
+    expect(e?.apercuVersion).toBeNull()
+  })
+
+  it("EP-226 — une ligne refusée reste RELANÇABLE même sans rien d acquis", async () => {
+    // Le bouton « Relancer » s affiche sur le statut, pas sur `reprenable` :
+    // c est toute la différence entre reprendre (ce qui est écrit) et
+    // recommencer (la demande d origine). Ici `reprenable` DOIT être faux,
+    // et l écran doit quand même avoir une sortie.
+    const e = await etatGeneration({
+      base: baseAvec({
+        id: 'g-v', statut: 'refusee', etape: null, nom: 'x',
+        cout_usd: 0, diagnostics: ['P0 refuse 3 fois'], document: null,
+        sections_acquises: {},
+      }),
+      table: 't_test', id: 'g-v', proprietaire: 'user-1',
+    })
+    expect(e?.reprenable, 'rien n est écrit : il n y a rien à REPRENDRE').toBe(false)
+    expect(e?.statut, 'mais le statut suffit à offrir une RELANCE').toBe('refusee')
+  })
+
+  // ══════════════════════════════════════════════════════════════════
   // EP-223 · UN DÉFAUT DU GÉNÉRATEUR N'EST PAS UNE INCOMPRÉHENSION.
   //
   // SIGNALÉ PAR LE PROPRIÉTAIRE, capture à l'appui (2026-10-15) : un refus

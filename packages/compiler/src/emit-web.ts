@@ -93,6 +93,30 @@ createRoot(racine).render(
  * installée occupe l'écran entier, encoche comprise. Sans eux, l'application
  * s'affiche dans un cadre blanc une fois posée sur l'écran d'accueil — ce qui
  * la fait ressembler à une page web ouverte, pas à une application.
+ *
+ * ── LES BALISES APPLE, ET POURQUOI ELLES NE SONT PAS REDONDANTES (2026-10-15).
+ *
+ * iOS n'a pas lu le manifeste avant la version 17. Sans
+ * `apple-mobile-web-app-capable`, une application posée sur l'écran d'accueil
+ * d'un iPhone ou d'un iPad s'ouvre DANS Safari, barre d'adresse comprise :
+ * elle ressemble à un marque-page, pas à une application. Sans
+ * `apple-touch-icon`, iOS pose une capture d'écran en guise d'icône.
+ * L'icône tactile accepte le SVG depuis iOS 17 ; en dessous, le LISEZ-MOI
+ * dit quel PNG déposer — c'est le seul reste qu'on ne peut pas combler ici,
+ * les fichiers émis étant du texte.
+ *
+ * ── L'ENREGISTREMENT DU SERVICE WORKER.
+ *
+ * L'invite d'installation de Chrome, de Samsung Internet et du navigateur
+ * Huawei n'apparaît QUE si un service worker répond à `fetch`. L'objet est
+ * absent hors HTTPS (présent sur localhost) : on teste au lieu de supposer,
+ * et un échec d'enregistrement ne casse jamais l'application — elle marche
+ * simplement sans secours hors ligne.
+ *
+ * ── ET AUCUN DE CES MOTS NE PART DANS LA PAGE. C'est la règle énoncée plus
+ * haut dans ce fichier, mesurée le 2026-10-05 : un commentaire posé dans le
+ * gabarit est servi à CHAQUE visiteur. Vite ne retire pas les commentaires
+ * HTML. Ils vivent donc ici, où seul le mainteneur les lit.
  */
 const page = (air: ProjectAir): string => `<!doctype html>
 <html lang="${air.app.locales.defaultAppLocale}"${air.app.locales.rtlSupported ? ' dir="auto"' : ""}>
@@ -100,7 +124,14 @@ const page = (air: ProjectAir): string => `<!doctype html>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>${air.app.name}</title>
+    <meta name="theme-color" content="${couleurDeMarque(air.app.slug)}" />
     <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" href="./icone.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="./icone.svg" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="${air.app.name}" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <style>
       /* ── LA TYPOGRAPHIE, ET POURQUOI ELLE EST ICI (2026-10-13).
        *
@@ -162,9 +193,114 @@ const page = (air: ProjectAir): string => `<!doctype html>
   <body>
     <div id="racine"></div>
     <script type="module" src="./index.tsx"></script>
+    <script>
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", function () {
+          navigator.serviceWorker.register("./sw.js").catch(function () {});
+        });
+      }
+    </script>
   </body>
 </html>
 `;
+
+/**
+ * LA COULEUR DE MARQUE, DÉTERMINISTE — dérivée du slug, jamais tirée au sort.
+ *
+ * Deux émissions du même document donnent la même couleur : c'est une
+ * exigence du dépôt, pas un confort. Le slug est stable, la teinte l'est
+ * donc aussi. Saturation et clarté sont FIXES — seule la teinte bouge,
+ * ce qui garantit un contraste suffisant avec le blanc du glyphe quelle
+ * que soit l'application.
+ */
+const couleurDeMarque = (slug: string): string => {
+  let h = 0;
+  for (const c of slug) h = (h * 31 + (c.codePointAt(0) ?? 0)) % 360;
+  // HSL → HEX, sans dépendance : S=58%, L=38% (mesuré lisible sur blanc ET
+  // sur noir, les deux fonds que les systèmes d'exploitation appliquent).
+  const [s2, l2] = [0.58, 0.38];
+  const k = (n: number) => (n + h / 30) % 12;
+  const a = s2 * Math.min(l2, 1 - l2);
+  const f = (n: number) => l2 - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+  const hex = (n: number) =>
+    Math.round(255 * f(n))
+      .toString(16)
+      .padStart(2, "0");
+  return `#${hex(0)}${hex(8)}${hex(4)}`;
+};
+
+/**
+ * L'ICÔNE — en SVG, parce que les fichiers émis sont du TEXTE.
+ *
+ * MESURE (2026-10-15) : le manifeste ne déclarait AUCUNE icône, et la note
+ * du LISEZ-MOI disait que c'était délibéré — « annoncer un fichier absent
+ * ferait refuser l'installation ». Le raisonnement était juste ; la
+ * conclusion ne l'était plus, parce qu'on peut ÉMETTRE le fichier.
+ *
+ * Sans icône, aucun navigateur Chromium ne propose l'installation : ni
+ * Chrome, ni Samsung Internet, ni le navigateur Huawei. L'application
+ * restait une page web, jamais une application posée sur l'écran.
+ *
+ * `maskable` compris : Android découpe l'icône à sa guise (cercle, carré
+ * arrondi, goutte). Sans cette déclaration il ajoute un cadre blanc autour.
+ * La zone sûre est le disque central de 80 % — le glyphe y tient.
+ */
+const icone = (air: ProjectAir): string => {
+  const fond = couleurDeMarque(air.app.slug);
+  // LA PREMIÈRE LETTRE, en capitale — et « lettre » au sens de ce qu'un
+  // humain voit, pas d'une unité de code. `Intl.Segmenter` est la seule
+  // lecture correcte : un prénom accentué ou un emoji comptent pour UN.
+  const premier = [
+    ...new Intl.Segmenter(air.app.locales.defaultAppLocale, { granularity: "grapheme" }).segment(
+      air.app.name.trim(),
+    ),
+  ][0]?.segment;
+  const lettre = (premier ?? "?").toUpperCase();
+  const echappe = lettre.replace(/&/gu, "&amp;").replace(/</gu, "&lt;").replace(/>/gu, "&gt;");
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="${air.app.name.replace(/"/gu, "&quot;")}">
+  <rect width="512" height="512" fill="${fond}"/>
+  <text x="256" y="256" fill="#ffffff" font-family="-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif" font-size="256" font-weight="600" text-anchor="middle" dominant-baseline="central">${echappe}</text>
+</svg>
+`;
+};
+
+/**
+ * LE SERVICE WORKER — le second verrou de l'installation.
+ *
+ * Un manifeste avec icônes NE SUFFIT PAS : Chrome, Samsung Internet et le
+ * navigateur Huawei exigent AUSSI un service worker qui réponde à `fetch`.
+ * Sans lui, pas d'invite d'installation — seulement un raccourci.
+ *
+ * Il est délibérément MINIMAL et sans ruse : réseau d'abord, cache en
+ * secours. Une application qui sert une version périmée sans le dire
+ * serait pire que pas de cache du tout — le secours ne s'active QUE si le
+ * réseau a échoué.
+ */
+const serviceWorker = (air: ProjectAir): string =>
+  [
+    "// GÉNÉRÉ — NE PAS ÉDITER (service worker : installation + secours hors ligne).",
+    `const CACHE = "${air.app.slug}-v1";`,
+    "",
+    'self.addEventListener("install", () => { self.skipWaiting(); });',
+    'self.addEventListener("activate", (e) => { e.waitUntil(self.clients.claim()); });',
+    "",
+    "// RÉSEAU D'ABORD. Le cache ne répond que si le réseau a ÉCHOUÉ — jamais",
+    "// pour aller plus vite au prix d'une version périmée servie en silence.",
+    'self.addEventListener("fetch", (e) => {',
+    '  if (e.request.method !== "GET") return;',
+    "  e.respondWith(",
+    "    fetch(e.request)",
+    "      .then((r) => {",
+    "        const copie = r.clone();",
+    "        caches.open(CACHE).then((c) => c.put(e.request, copie)).catch(() => {});",
+    "        return r;",
+    "      })",
+    "      .catch(() => caches.match(e.request).then((c) => c ?? Response.error())),",
+    "  );",
+    "});",
+    "",
+  ].join("\n");
+
 
 /**
  * Le manifeste qui rend l'application INSTALLABLE.
@@ -179,11 +315,26 @@ const page = (air: ProjectAir): string => `<!doctype html>
  */
 const manifeste = (air: ProjectAir): string =>
   json({
+    // `id` STABLE : sans lui, un changement de `start_url` fait croire au
+    // système qu'il s'agit d'une AUTRE application, et l'installation se
+    // duplique au lieu de se mettre à jour.
+    id: `./?app=${air.app.slug}`,
     name: air.app.name,
     short_name: air.app.name,
     start_url: "./",
+    scope: "./",
     display: "standalone",
     lang: air.app.locales.defaultAppLocale,
+    theme_color: couleurDeMarque(air.app.slug),
+    background_color: couleurDeMarque(air.app.slug),
+    icons: [
+      // `sizes: "any"` est ce qui rend un SVG acceptable là où les
+      // navigateurs réclament du 192 et du 512 : une image vectorielle
+      // LES a toutes. Déclarée deux fois car `purpose` ne se cumule pas
+      // de façon fiable d'un navigateur à l'autre.
+      { src: "./icone.svg", sizes: "any", type: "image/svg+xml", purpose: "any" },
+      { src: "./icone.svg", sizes: "any", type: "image/svg+xml", purpose: "maskable" },
+    ],
     ...(air.app.locales.rtlSupported ? { dir: "auto" } : {}),
   });
 
@@ -334,9 +485,30 @@ const publication = (air: ProjectAir): string => {
     "",
     "- **HTTPS est obligatoire.** Sans lui, le navigateur refuse l'installation",
     "  sur l'écran d'accueil, et l'application reste une page web ordinaire.",
-    "- **Les icônes.** Le manifeste n'en déclare AUCUNE, délibérément : annoncer",
-    "  un fichier absent ferait refuser l'installation entière. Ajoutez vos",
-    "  icônes puis déclarez-les dans `manifest.webmanifest`.",
+    "  Une seule exception : `localhost`, pour que vous puissiez essayer.",
+    "- **Votre icône.** Celle qui est fournie (`icone.svg`) porte l'initiale de",
+    "  l'application sur une couleur dérivée de son nom. Elle est VALIDE et",
+    "  suffit à l'installation — remplacez-la quand vous aurez la vôtre, sans",
+    "  rien changer d'autre : le manifeste la désigne par son nom de fichier.",
+    "- **Les iPhone et iPad d'avant iOS 17** ne lisent pas le SVG comme icône",
+    "  d'écran d'accueil : ils affichent une capture à la place. Si cela compte",
+    "  pour vous, déposez un `icone-180.png` et ajoutez dans `index.html` :",
+    '  `<link rel="apple-touch-icon" href="./icone-180.png" />`.',
+    "",
+    "## Installer l'application sur un appareil",
+    "",
+    "Il n'y a ni App Store ni Play Store à passer, et aucun compte développeur.",
+    "Une fois le dossier `dist/` déposé chez un hébergeur en HTTPS, ouvrez son",
+    "adresse sur l'appareil :",
+    "",
+    "- **iPhone, iPad** — Safari, bouton Partager, « Sur l'écran d'accueil ».",
+    "- **Mac** — Safari : Fichier, « Ajouter au Dock ». Chrome : l'icône",
+    "  d'installation apparaît au bout de la barre d'adresse.",
+    "- **Android, Samsung, Huawei** — le navigateur propose « Installer »",
+    "  de lui-même. Sinon : menu, « Ajouter à l'écran d'accueil ».",
+    "",
+    "L'application s'ouvre alors en plein écran, sans barre d'adresse, et garde",
+    "sa dernière version consultable même sans réseau.",
   ];
   if (collecte.length > 0) {
     l.push(
@@ -507,6 +679,8 @@ export function enveloppeWeb(air: ProjectAir, pascal: (id: string) => string): E
     ["index.html", page(air)],
     ["index.tsx", ENTREE],
     ["manifest.webmanifest", manifeste(air)],
+    ["icone.svg", icone(air)],
+    ["sw.js", serviceWorker(air)],
     ["App.tsx", racine(air, avecSession)],
     ["navigation.tsx", navigation(air, pascal)],
     ...gabarit(air),

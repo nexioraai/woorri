@@ -42,3 +42,16 @@ export function creerClient(
   lireFichier: (chemin: string[]) => string,
   options?: Record<string, unknown>,
 ): Promise<unknown>;
+
+/**
+ * L'enveloppe de flux. Publique depuis EP-225 : elle porte desormais
+ * l'ECHEANCE de la tranche, et c'est elle qu'un cliquet doit pouvoir
+ * interroger sans monter un moteur entier.
+ *
+ * `echeance` rend les millisecondes RESTANTES de la tranche, ou `null`
+ * quand il n'y en a pas (campagne en terminal).
+ */
+export function envelopperEnFlux(
+  brut: unknown,
+  echeance?: (() => number | null) | null,
+): { messages: { create: (args: unknown) => Promise<unknown> } };

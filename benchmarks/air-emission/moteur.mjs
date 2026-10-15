@@ -198,9 +198,17 @@ const surfaceEnveloppe = () => {
   // ce qui permet d'eprouver la machinerie de continuation a cout nul, avec
   // un client a blanc qui vit dans le fichier de preuve, jamais dans un
   // chemin de production. Aucun appelant de production ne fournit de client.
+  // ── L'ECHEANCE DE LA TRANCHE EN COURS.
+  //
+  // Le client est construit UNE fois ; la tranche, elle, change a chaque
+  // reveil du cron. Ce porteur est donc mutable, et c'est `poursuivreEmission`
+  // qui le renseigne au debut de chaque tranche. `null` = aucune limite,
+  // le cas de la campagne en terminal.
+  let echeanceTranche = null;
   const client =
     clientFourni ??
     (await adaptateur.creerClient(() => `ANTHROPIC_API_KEY=${cleApi}`, {
+      echeance: () => echeanceTranche,
       // ── LE SDK VIENT DE L'APPELANT EN LIGNE (2026-10-14).
       //
       // Mesure en production : l'adaptateur est charge en `webpackIgnore`, le
@@ -408,6 +416,10 @@ const surfaceEnveloppe = () => {
   async function poursuivreEmission({ brief, slug, etat = null, budgetMs = Infinity }) {
     const depart = Date.now();
     const budgetEpuise = () => Date.now() - depart >= budgetMs;
+    // L'APPEL DEVIENT SOLIDAIRE DE LA TRANCHE. Sans cette ligne, le budget
+    // n'etait verifie qu'ENTRE deux appels : un seul appel plus long que le
+    // reste du budget faisait tuer la fonction par l'hote, sans ecriture.
+    echeanceTranche = Number.isFinite(budgetMs) ? () => budgetMs - (Date.now() - depart) : null;
 
     const usage = [];
     const refusals = { count: 0 };
@@ -543,7 +555,16 @@ const surfaceEnveloppe = () => {
       // `sonderUneFois`, qui rend l'etat memorise sans rien mesurer.
       if (sondeIncomplete) niveauxSondes = null;
       if (budgetEpuise()) return suspendre("p0");
-      const sonde = await sonderUneFois();
+      let sonde;
+      try {
+        sonde = await sonderUneFois();
+      } catch (e) {
+        // LA SONDE AUSSI. Elle enchaine des dizaines d'appels courts ; si
+        // l'echeance tombe au milieu, l'etat deja mesure doit etre ECRIT,
+        // sinon la tranche suivante recommence de zero — indefiniment.
+        if (e?.budgetTemps === true) return suspendre("p0");
+        throw e;
+      }
       niveaux = sonde.niveaux;
       // ── LE COUT DES SONDES ENTRE DANS LA COMPTABILITE (trou n°1 du
       // premier tir reel). Les sondes acceptees ont un usage ; il rejoint
@@ -646,6 +667,12 @@ const surfaceEnveloppe = () => {
             usage,
           );
         } catch (e) {
+          // L'ECHEANCE N'EST PAS UNE PANNE. `emission` et `reparation`
+          // savaient deja suspendre sur `budgetTemps` (lignes plus bas) ;
+          // P0 ne le savait pas, et c'est exactement la que la generation
+          // mesuree est morte en boucle. Les autres erreurs se propagent
+          // comme avant — la suspension n'existe que pour le budget.
+          if (e?.budgetTemps === true) return suspendre("p0");
           throw etiqueter(e, "p0");
         }
         const neutreP0 = adaptateur.lireReponse(reponseP0);

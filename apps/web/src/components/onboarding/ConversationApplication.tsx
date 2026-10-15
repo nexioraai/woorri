@@ -241,9 +241,42 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
     return () => { vivant = false; };
   }, [etatGen?.apercuVersion, apercuGen?.version, generationId]);
 
+  /**
+   * DECLENCHER UN TELECHARGEMENT — et pourquoi ce n'est pas trois lignes.
+   *
+   * SIGNALE PAR LE PROPRIETAIRE (2026-10-15) : « j'arrive pas a telecharger
+   * sur mon iPhone ». Le code faisait `a.click()` PUIS `revokeObjectURL` a
+   * la ligne suivante.
+   *
+   * Safari demarre le telechargement de maniere ASYNCHRONE : revoquer tout
+   * de suite detruit l'objet AVANT qu'il ait commence a etre lu. Chrome
+   * tolere — il a deja saisi le blob —, Safari non. Sur iPhone, il ne se
+   * passait donc rien du tout, sans le moindre message.
+   *
+   * Deuxieme cause, plus discrete : l'ancre n'etait jamais INSEREE dans le
+   * document. Chrome accepte un clic sur un element detache ; Safari
+   * l'ignore. Les deux causes frappent le meme navigateur, et ni l'une ni
+   * l'autre ne produit d'erreur a attraper.
+   *
+   * On insere donc, on clique, on retire, et on ne revoque qu'APRES — une
+   * minute, large de trois ordres de grandeur devant ce qu'il faut.
+   */
+  const telechargerLeBlob = (contenu: Blob, nom: string) => {
+    const url = URL.createObjectURL(contenu);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = nom;
+    a.rel = 'noopener';
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.setTimeout(() => { URL.revokeObjectURL(url); }, 60_000);
+  };
+
   /** REPRENDRE — la ligne repart de sa base, le suivi reprend tout seul. */
   const reprendre = async (
-    geste: 'reprendre' | 'continuer' | 'revenir' = 'reprendre',
+    geste: 'reprendre' | 'continuer' | 'revenir' | 'arreter' | 'relancer' = 'reprendre',
     rang?: number,
   ) => {
     if (generationId === null) return;
@@ -255,9 +288,22 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${await jeton()}` },
         body: JSON.stringify({ id: generationId, geste, ...(rang === undefined ? {} : { rang }) }),
       });
-      const d = (await res.json().catch(() => ({}))) as { error?: string };
+      const d = (await res.json().catch(() => ({}))) as { error?: string; id?: string };
       if (!res.ok) {
         setAvis(String(d.error ?? 'Reprise impossible.'));
+        return;
+      }
+      // ── UNE RELANCE REND UNE LIGNE NEUVE : on la SUIT, sinon l'ecran
+      // resterait colle a la ligne morte et donnerait l'impression que
+      // le bouton n'a rien fait.
+      if (geste === 'relancer' && typeof d.id === 'string' && d.id !== generationId) {
+        setMessages((anciens) =>
+          anciens.filter((m) => m.role !== 'incompris' && m.role !== 'notre_faute'),
+        );
+        setEtatGen(null);
+        setAvis('C’est reparti sur une demande neuve.');
+        window.history.replaceState(null, '', memoriserGeneration(d.id, window.localStorage));
+        setGenerationId(d.id);
         return;
       }
       // L'etat est efface : le prochain battement du suivi lira la ligne
@@ -281,7 +327,9 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
         anciens.filter((m) => m.role !== 'incompris' && m.role !== 'notre_faute'),
       );
       setAvis(
-        geste === 'continuer'
+        geste === 'arreter'
+          ? 'Génération arrêtée. Rien de plus ne sera lancé dessus.'
+          : geste === 'continuer'
           ? 'C’est reparti — l’étape suivante commence.'
           : geste === 'revenir'
             ? 'Revenu à cette version. Rien n’a été perdu : les suivantes restent dans la liste.'
@@ -306,12 +354,7 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
         setAvis(String(d.error ?? 'Téléchargement impossible.'));
         return;
       }
-      const url = URL.createObjectURL(await res.blob());
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'application.zip';
-      a.click();
-      URL.revokeObjectURL(url);
+      telechargerLeBlob(await res.blob(), 'application.zip');
     } catch {
       setAvis('Téléchargement impossible.');
     } finally {
@@ -542,12 +585,7 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
         setAvis(String(d.error ?? 'Construction impossible.'));
         return;
       }
-      const url = URL.createObjectURL(await res.blob());
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'application.zip';
-      a.click();
-      URL.revokeObjectURL(url);
+      telechargerLeBlob(await res.blob(), 'application.zip');
       setAvis('Application construite. Le fichier est dans vos téléchargements.');
     } catch {
       setAvis('Construction impossible.');
@@ -699,6 +737,38 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
               >
                 Continuer
               </button>
+            </div>
+          )}
+          {/* ── APRES UN ECHEC, IL Y A TOUJOURS UNE SORTIE (defaut 2026-10-15).
+              MESURE : une generation morte en P0 n'affichait AUCUN bouton.
+              `reprenable` est faux (rien d'ecrit a reprendre — et c'est
+              juste), `attendVous` est faux, `livree` est faux. Zero action
+              possible : le proprietaire etait coince, et la seule facon
+              d'arreter a ete que j'ecrive en base a sa place. */}
+          {etatGen !== null && (etatGen.statut === 'en_cours' || etatGen.statut === 'en_attente') && (
+            <button
+              type="button"
+              onClick={() => { void reprendre('arreter'); }}
+              disabled={travail !== ''}
+              className="mt-3 ml-3 px-4 py-2 rounded-full text-sm bg-white/5 border border-white/15 text-slate-300 hover:bg-white/10 transition disabled:opacity-40"
+            >
+              Arrêter
+            </button>
+          )}
+          {etatGen?.statut === 'refusee' && (
+            <div className="mt-3">
+              <button
+                type="button"
+                onClick={() => { void reprendre('relancer'); }}
+                disabled={travail !== ''}
+                className="px-4 py-2 rounded-full text-sm bg-[#FA5D1E] hover:bg-[#FA5D1E]/90 text-white font-semibold transition disabled:opacity-40"
+              >
+                Relancer la génération
+              </button>
+              {/* LE PRIX EST DIT AVANT LE CLIC, jamais apres. */}
+              <p className="mt-2 text-xs text-slate-400">
+                {'Repart de votre demande d’origine, du début. C’est un nouveau travail.'}
+              </p>
             </div>
           )}
           {etatGen?.reprenable === true && (
