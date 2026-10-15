@@ -31,6 +31,7 @@ import {
   ecransDe,
   jugerPlanEcrans,
   validerModele,
+  DIAGNOSTICS,
   type ModeleMetier,
 } from "../../../benchmarks/air-emission/modele-metier.mjs";
 
@@ -150,6 +151,34 @@ describe("EP-222 · les règles de fermeture sont enseignées", () => {
       ).toContain("DERIVATION_CONFIRMATION_SANS_ECRITURE");
     }
   });
+
+  it("EP-231 — l invite énonce la règle du partage entre acteurs", () => {
+    // MESURE PAYÉE (tir du 2026-10-15 à 19:10, tirage 1, 0,8397 $) :
+    // « ecrans[ecr_entree] : écran traversé par 2 acteurs avec surface NON
+    // publique ». Le juge l'exigeait, `porteeDe` la dérive — et l'invite ne
+    // la prononçait NULLE PART. Même famille qu'EP-222.
+    expect(INVITE).toMatch(/DEUX ACTEURS NE PARTAGENT/u)
+    const ligne = INVITE.split("\n").find((l) => l.includes("DEUX ACTEURS NE PARTAGENT"))
+    // Les deux sources de privauté, telles que `porteeDe` les calcule.
+    expect(ligne, "consulter_historique rend TOUJOURS l étape privée").toMatch(
+      /consulter_historique/u,
+    )
+    expect(ligne, "un geste sur un concept que l acteur PRODUIT est privé, sauf saisir").toMatch(
+      /saisir/u,
+    )
+    // Et la sortie : ce que le générateur doit faire à la place.
+    expect(ligne, "la règle doit dire quoi faire, pas seulement interdire").toMatch(/chercher/u)
+  })
+
+  it("EP-231 — CONTRÔLE NÉGATIF : le juge refuse bien ce que la règle décrit", () => {
+    // Sans ce contrôle, enseigner la règle serait inutile — et si le juge
+    // changeait d avis, la prose mentirait.
+    const codes = Object.keys(DIAGNOSTICS)
+    expect(
+      codes,
+      "le code que la règle enseigne n existe plus dans la table des juges",
+    ).toContain("DERIVATION_TRAVERSEE_ACTEUR")
+  })
 
   // ══════════════════════════════════════════════════════════════════
   // ② TOUT ÉTAT ATTEINT SE MONTRE — et pas seulement l'exogène.

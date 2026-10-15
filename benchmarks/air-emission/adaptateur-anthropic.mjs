@@ -250,13 +250,23 @@ export function envelopperEnFlux(brut, echeance = null) {
     const MARGE_MS = 20_000;
     return [args, { signal: AbortSignal.timeout(Math.max(1_000, restant - MARGE_MS)) }];
   };
-  const marquer = (e) => {
-    // Le SDK et `fetch` ne nomment pas l'abandon de la meme facon selon les
-    // versions : on lit les trois formes, et on ne devine jamais.
-    const nom = String(e?.name ?? "");
-    const abandon =
-      nom === "TimeoutError" || nom === "AbortError" || e?.code === "ABORT_ERR";
-    if (!abandon) return e;
+  const marquer = (e, signal) => {
+    // ── ON NE DEVINE PLUS LE NOM DE L'ABANDON : ON INTERROGE NOTRE SIGNAL.
+    //
+    // MESURE (tir du 2026-10-15 a 19:10, 1,0104 $) : l'echeance a bien
+    // interrompu l'appel — c'est deja un progres, la tranche a ecrit — mais
+    // le SDK enveloppe l'abandon dans SA classe, `APIUserAbortError`, dont
+    // le message est « Request was aborted. » et dont ni `name` ni `code`
+    // ne valent ce que je testais. Resultat : l'abandon a ete classe
+    // « erreur fatale (non transitoire) » et la generation a ete REFUSEE
+    // au lieu d'etre suspendue.
+    //
+    // Lire un nom de classe ou un message anglais serait une devinette de
+    // plus, fragile a la prochaine version du SDK. Le signal, lui, est le
+    // NOTRE : s'il est expire, c'est notre echeance, et rien d'autre ne
+    // peut le dire. S'il ne l'est pas, l'erreur passe INTACTE — une vraie
+    // panne deguisee en manque de temps serait retentee sans fin.
+    if (signal?.aborted !== true) return e;
     const marque = new Error("BUDGET_TEMPS — appel interrompu par l'echeance de la tranche");
     marque.budgetTemps = true;
     marque.cause = e;
@@ -266,12 +276,27 @@ export function envelopperEnFlux(brut, echeance = null) {
     messages: {
       create: async (args) => {
         const [corps, options] = avecSignal(args);
+        const signal = options?.signal;
         try {
-          if (corps?.stream === true) return await brut.messages.create(corps, options);
-          const flux = await brut.messages.create({ ...corps, stream: true }, options);
-          return await assemblerDepuisFlux(flux);
+          const resultat =
+            corps?.stream === true
+              ? await brut.messages.create(corps, options)
+              : await assemblerDepuisFlux(
+                  await brut.messages.create({ ...corps, stream: true }, options),
+                );
+          // ── UN FLUX COUPE NE LEVE PAS TOUJOURS : il peut simplement
+          // S'ARRETER, et l'assemblage rend alors une reponse TRONQUEE que
+          // le juge refuse en « sortie non parsable » — vu au tirage 2 du
+          // tir de 19:10, a 0,0577 $. Si notre signal a expire, ce qu'on
+          // tient n'est pas une reponse : c'est un morceau.
+          //
+          // LE CONTROLE VAUT POUR LES DEUX CHEMINS. Premiere version : il
+          // vivait apres le `return` du chemin « flux brut », donc ce
+          // chemin-la n'etait jamais garde — mon propre test l'a montre.
+          if (signal?.aborted === true) throw marquer(new Error("flux interrompu"), signal);
+          return resultat;
         } catch (e) {
-          throw marquer(e);
+          throw marquer(e, signal);
         }
       },
     },

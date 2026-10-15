@@ -76,6 +76,50 @@ describe("EP-225 · l'appel est solidaire de la tranche", () => {
     await expect(appeler(brut, () => 20_500)).rejects.toMatchObject({ budgetTemps: true });
   });
 
+  it("l abandon est reconnu même quand le SDK l habille de SA classe", async () => {
+    // ── LE DÉFAUT QUE LE TIR DE 19:10 A RÉVÉLÉ (1,0104 $).
+    //
+    // L échéance interrompait bien l appel, mais le SDK enveloppe l abandon
+    // dans `APIUserAbortError` — message « Request was aborted. », ni `name`
+    // ni `code` ne valant ce que je testais. L abandon etait donc classe
+    // « erreur fatale (non transitoire) » et la generation REFUSEE au lieu
+    // d etre suspendue. On n interroge plus le nom : on interroge NOTRE
+    // signal, le seul qui sache de quoi il retourne.
+    class APIUserAbortError extends Error {
+      constructor() {
+        super("Request was aborted.");
+      }
+    }
+    const brut = {
+      messages: {
+        create: (_c: unknown, o?: { signal?: AbortSignal }) =>
+          new Promise((_r, rejeter) => {
+            o?.signal?.addEventListener("abort", () => { rejeter(new APIUserAbortError()); });
+          }),
+      },
+    };
+    await expect(appeler(brut, () => 20_500)).rejects.toMatchObject({ budgetTemps: true });
+  });
+
+  it("un flux qui S ARRÊTE sans lever n est PAS pris pour une réponse", async () => {
+    // Tirage 2 du même tir : 0,0577 $ et « sortie non parsable ». Un flux
+    // coupé ne lève pas toujours — il peut simplement finir, et l assemblage
+    // rend alors un MORCEAU que le juge refuse. Si notre signal a expiré,
+    // ce qu on tient n est pas une réponse.
+    const brut = {
+      messages: {
+        create: (_c: unknown, o?: { signal?: AbortSignal }) =>
+          new Promise((resoudre) => {
+            // Rend une reponse TRONQUEE juste apres l abandon, sans lever.
+            o?.signal?.addEventListener("abort", () => {
+              setTimeout(() => { resoudre({ content: [], usage: {}, tronquee: true }); }, 5);
+            });
+          }),
+      },
+    };
+    await expect(appeler(brut, () => 20_500)).rejects.toMatchObject({ budgetTemps: true });
+  });
+
   it("CONTRÔLE NÉGATIF — sans échéance, le même appel aboutit", async () => {
     // Sans ce contrôle, un code qui interromprait TOUT passerait au vert.
     // C'est le cas de la campagne en terminal : aucune limite, rien ne change.

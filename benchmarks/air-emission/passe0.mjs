@@ -66,6 +66,7 @@ export const PROMPT_P0 = [
   "· payer = un paiement QUI A LIEU DANS L'APPLICATION — c'est le seul des gestes d'écriture (" +
     GESTES.filter((g) => TABLE_GESTES[g].effet === "mutation").join("/") +
     ") qui déclenche une capacité de paiement. Un paiement à la réception, sur place ou hors application N'EST PAS un geste payer : le parcours s'écrit SANS payer et le modèle ne porte PAS de champ commerce.",
+  "· DEUX ACTEURS NE PARTAGENT QU'UNE ÉTAPE PUBLIQUE. Une étape est PRIVÉE dès qu'elle porte l'identité de son acteur : consulter_historique TOUJOURS, et tout geste SAUF saisir sur un concept que CET acteur produit lui-même. Si deux parcours d'acteurs DIFFÉRENTS portent la même étape privée, ils aboutissent au même écran avec une surface qui n'est pas partageable, et le modèle est REFUSÉ. Donne alors à chaque rôle SON parcours, ou ne partage que des étapes publiques — chercher, ou la lecture d'un concept qu'aucun des deux ne produit.",
   "· UNE CONFIRMATION OBSERVE UNE ÉCRITURE : une étape confirmer exige, EN AMONT DU MÊME PARCOURS, une étape d'écriture (gestes dérivés : " +
     gestesEcrivants().join("/") +
     "). Une confirmation que rien n'écrit en amont est REFUSÉE — il n'y a rien à confirmer. COROLLAIRE DU POINT PRÉCÉDENT : un paiement hors application se confirme par la SAISIE de sa preuve (saisir — numéro de transaction, photo du reçu), JAMAIS par payer ; c'est cette saisie que la confirmation observe. Ajoute l'écriture manquante plutôt que de retirer la confirmation.",

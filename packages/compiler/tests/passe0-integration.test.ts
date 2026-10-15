@@ -51,7 +51,17 @@ const FIXTURE = migrerModele(
 // le contrat disait une chose que le prompt taisait. EP-222 verrouille
 // désormais l'accord prose/table — si la table des gestes gagne une
 // écriture et que le prompt l'oublie, le cliquet rougit avant le tir.
-const HASH_PROMPT_FIGE = "429a3aff64b7bbf7d9d4765b244a8d67d61ff7f5f5228945deceb2ebf00cf734";
+//
+// RE-SCELLEMENT CONSCIENT v4 (EP-231, 2026-10-15) — v3 429a3aff… reste
+// l'estampille des mesures de la journee. MOTIF, paye et mesure : le tir
+// de 19:10 a refuse au tirage 1 sur `DERIVATION_TRAVERSEE_ACTEUR`, pour
+// 0,8397 $, avec ce detail — « ecrans[ecr_entree] : ecran traverse par 2
+// acteurs avec surface NON publique ». La regle existait dans le juge et
+// se derive de `porteeDe` ; l'invite ne la prononcait NULLE PART. Meme
+// famille qu'EP-222 : un juge qui punit ce que la prose n'enseigne pas.
+//
+// AUCUN JUGE N'A BOUGE. Seul l'enseignement change.
+const HASH_PROMPT_FIGE = "5ee9dad3d36a55c977229716cc9f4cd2a03456713313a34cd365c3cf940c1bc8";
 
 describe("intégration minimale P0 — l'instrument, pas l'exécution", () => {
   it("CLIQUET — le hash du prompt est figé", () => {

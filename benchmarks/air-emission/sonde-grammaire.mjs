@@ -85,8 +85,22 @@ export function creerSondeGrammaire({ client, adaptateur, tentativesParNiveau = 
           // depense ni les jetons ne les voyaient : de l'argent reel non
           // enregistre. Un refus, lui, ne facture rien — rien a capturer.
           return { niveau: i, journal, usage: reponse?.usage ?? null };
-        } catch {
-          // Volontairement vide : la raison n'entre pas dans la decision.
+        } catch (e) {
+          // ── UNE EXCEPTION : NOTRE PROPRE ECHEANCE (EP-230, 2026-10-15).
+          //
+          // « La raison n'entre pas dans la decision » reste vrai pour tout
+          // ce qui vient du FOURNISSEUR : refus de grammaire, panne, quota —
+          // la sonde ne pose qu'une question, « l'appel a-t-il abouti ? ».
+          //
+          // Mais une interruption decidee par NOUS n'est pas une reponse du
+          // fournisseur. Avalee, elle faisait croire a un barreau refuse :
+          // la sonde passait au suivant, puis a la passe suivante, et brulait
+          // la tranche entiere en marquant REFUSES des barreaux jamais
+          // essayes. Le resultat ecrit etait alors un mensonge.
+          //
+          // Trouve par la REPETITION a cout nul, jamais par un tir paye.
+          if (e?.budgetTemps === true) throw e;
+          // Volontairement muet pour tout le reste.
         }
       }
       journal.push({ niveau: i, nom: part.levels[i].name, verdict: "refuse", tentatives: tentativesParNiveau });

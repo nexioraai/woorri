@@ -58,6 +58,17 @@ const PLAFOND = BUDGET / MARGE
  */
 const CONNUS = [
   {
+    motif: /ep230-repetition[\s\S]*reste REPRENABLE/u,
+    plafond: 3500,
+    raison:
+      'ATTENTE d’un VRAI abandon. L’échéance d’une tranche a un PLANCHER d’une ' +
+      'seconde en production — on ne coupe jamais un appel plus tôt, même quand ' +
+      'le budget restant est inférieur à la marge. Ce test attend donc cette ' +
+      'seconde-là, plus le chargement du moteur. L’alléger reviendrait à ' +
+      'éprouver autre chose que le comportement réel ; c’est précisément ce que ' +
+      'quatre tirs payés ont coûté.',
+  },
+  {
     motif: /cjFetch[\s\S]*timeout/u,
     plafond: 16_000,
     raison:
