@@ -166,6 +166,66 @@ export function deroulerCycles(node, profondeur) {
   return sortie;
 }
 
+/**
+ * LE DERNIER BARREAU : UNE UNION D'OBJETS TROP LOURDE DEVIENT LIBRE.
+ *
+ * ── CE QUI L'A IMPOSE, MESURE EN PRODUCTION (2026-10-14).
+ *
+ * Apres la correction des cycles, la passe `entites` restait refusee :
+ *   400 — « The compiled grammar is too large, which would cause performance
+ *          issues »
+ * La sonde a essaye les CINQ barreaux de l'echelle. Les cinq refuses, y
+ * compris le plus petit a 7 670 octets. Raboter des octets ne suffisait plus.
+ *
+ * ── OU EST LA MASSE, MESUREE AVANT DE TOUCHER A QUOI QUE CE SOIT.
+ *
+ * Dans `entites`, une seule union pese 5 883 octets sur 9 326 — SOIXANTE-
+ * TROIS POUR CENT. C'est `derived` : six formes de champ calcule, chacune
+ * avec sa grammaire, plus les expressions deroulees a l'interieur.
+ *
+ * La rendre LIBRE ramene la passe a 3 460 octets — sous les 5 168 de la
+ * seule taille connue comme ACCEPTEE.
+ *
+ * ── CE QU'ON PERD, ET POURQUOI C'EST LE BON ECHANGE.
+ *
+ * La grammaire cesse de GUIDER la forme de ce champ. Elle ne cesse pas de
+ * l'autoriser, et le VALIDATEUR reste seul juge — il porte une dizaine de
+ * refus dedies aux calculs. L'invite, elle, enseigne ces formes en detail.
+ *
+ * Une generation qui aboutit avec une reparation vaut mieux qu'une
+ * generation qui meurt en 400. Et ce barreau est le DERNIER : il ne sert
+ * que si tous les autres ont ete refuses.
+ *
+ * ── POURQUOI UN SEUIL, ET POURQUOI CELUI-LA.
+ *
+ * Mesure des unions d'objets, toutes passes confondues : `entites` porte
+ * 5 883 / 912 / 781, `actions` 2 796 / 826 / 566, `ecrans` 434, `intention`
+ * 409. Un seuil a 3 000 ne vise QUE la masse de `entites` et laisse
+ * `actions` intacte — or `actions` passe deja. On ne degrade pas ce qui
+ * marche.
+ *
+ * SEULEMENT des unions d'OBJETS : une union de chaines est une enumeration
+ * deguisee, et la rendre libre perdrait le sens sans rien gagner en taille.
+ */
+const SEUIL_UNION_LOURDE = 3000;
+
+export function libererUnionsLourdes(node, seuil = SEUIL_UNION_LOURDE) {
+  if (Array.isArray(node)) return node.map((n) => libererUnionsLourdes(n, seuil));
+  if (node === null || typeof node !== "object") return node;
+  const union = node.anyOf ?? node.oneOf;
+  if (
+    Array.isArray(union) &&
+    union.length > 0 &&
+    union.every((b) => b !== null && typeof b === "object" && b.type === "object") &&
+    JSON.stringify(node).length > seuil
+  ) {
+    return { type: "object" };
+  }
+  const out = {};
+  for (const [k, v] of Object.entries(node)) out[k] = libererUnionsLourdes(v, seuil);
+  return out;
+}
+
 export function incompatibilitesDe(contraintes) {
   const clefs = [];
   if (contraintes.maxItemsSupporte === false) clefs.push("maxItems");
@@ -243,10 +303,21 @@ export function makeLevels(jsonSchema, contraintes) {
         ),
       }))
     : [];
+  // LE DERNIER BARREAU, et il n'existe que s'il CHANGE quelque chose : une
+  // passe sans union lourde le verrait identique au precedent, et bruler une
+  // sonde pour apprendre deux fois la meme chose est exactement ce qu'on
+  // vient de corriger ailleurs.
+  const plusPetit = parProfondeur.length > 0 ? parProfondeur[parProfondeur.length - 1].schema : L2;
+  const libere = libererUnionsLourdes(plusPetit);
+  const barreauLibere =
+    JSON.stringify(libere).length < JSON.stringify(plusPetit).length
+      ? [{ name: "unions-lourdes-libres", schema: libere }]
+      : [];
   return [
     { name: "incompatibilites-connues", schema: L0 },
     { name: "sans-longueurs", schema: L1 },
     { name: "sans-patterns", schema: L2 },
     ...parProfondeur,
+    ...barreauLibere,
   ];
 }

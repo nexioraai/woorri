@@ -147,6 +147,43 @@ describe("EP-221 · aucune grammaire envoyée au service ne se cite elle-même",
     expect(() => deroulerCycles(impossible, 2)).toThrow(/AUCUNE branche non recursive/u);
   });
 
+  it("la masse d'une passe est BORNÉE : un dernier barreau la libère", () => {
+    // ── CE QUI A IMPOSÉ CE CONTRÔLE, ET IL A COÛTÉ UNE GÉNÉRATION.
+    //
+    // Les cycles réparés, `entites` restait refusée : « The compiled grammar
+    // is too large ». La sonde a essayé les CINQ barreaux — tous refusés, y
+    // compris le plus petit à 7 670 octets.
+    //
+    // Mesure : UNE union pesait 5 883 octets sur 9 326, soit 63 % — celle de
+    // `derived`. Le dernier barreau la rend libre, et la passe tombe sous la
+    // seule taille connue comme acceptée (5 168, le socle).
+    //
+    // Ce contrôle ne fige pas un nombre : il exige que la passe la plus
+    // lourde du contrat ait un barreau ACCESSIBLE. Un contrat qui grossirait
+    // demain sans que l'échelle suive serait attrapé ici.
+    const ladder = makeLevels(grammaireDe(["entities"]), CONTRAINTES_GRAMMAIRE);
+    const plusPetit = Math.min(
+      ...ladder.map((n) => JSON.stringify(n.schema).length),
+    );
+    // 5 168 : la seule taille MESURÉE comme acceptée par le service (socle,
+    // neuf sections acquises en production). Pas une estimation.
+    expect(
+      plusPetit,
+      `le barreau le plus bas de « entites » pèse ${String(plusPetit)} o — ` +
+        "au-dessus de la seule taille connue comme acceptée",
+    ).toBeLessThan(5168);
+  });
+
+  it("libérer une union ne touche QUE les passes qui en ont une lourde", () => {
+    // `actions` porte une union de 2 796 octets et PASSE déjà. La dégrader
+    // serait abîmer ce qui marche — le seuil est mesuré pour l'épargner.
+    for (const [passe, cles] of Object.entries(PASSES)) {
+      if (passe === "entites") continue;
+      const ladder = makeLevels(grammaireDe(cles), CONTRAINTES_GRAMMAIRE);
+      expect(ladder, `« ${passe} » a gagné un barreau sans raison`).toHaveLength(3);
+    }
+  });
+
   it("une échelle SANS cycle ne gagne aucun barreau", () => {
     // Les barreaux de profondeur coûtent une sonde chacun. Les ajouter à une
     // passe qui n'a pas de cycle donnait deux barreaux IDENTIQUES — mesuré et
