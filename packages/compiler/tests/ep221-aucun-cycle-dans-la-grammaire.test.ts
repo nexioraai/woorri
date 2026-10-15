@@ -184,6 +184,70 @@ describe("EP-221 · aucune grammaire envoyée au service ne se cite elle-même",
     }
   });
 
+  it("TOUT objet, à TOUT barreau, déclare `additionalProperties`", () => {
+    // ── CE QUI A IMPOSÉ CE CONTRÔLE, ET IL A COÛTÉ UN ALLER-RETOUR.
+    //
+    // MESURE EN PRODUCTION (2026-10-15) : le barreau le plus bas était refusé
+    //   « output_config.format.schema: For 'object' type,
+    //     'additionalProperties' must be explicitly [...] »
+    // parce que je l'avais fabriqué à la main — `{ type: "object" }` — là où
+    // tout le reste vient de zod, qui la pose toujours.
+    //
+    // Les schémas VENUS du contrat portent cette clé par construction. Seuls
+    // ceux que l'échelle FABRIQUE peuvent l'oublier, et c'est exactement ce
+    // qui est arrivé. Ce contrôle garde les deux.
+    const sansCle = (n: unknown, out: string[] = []): string[] => {
+      if (Array.isArray(n)) {
+        n.forEach((x) => sansCle(x, out));
+        return out;
+      }
+      if (n !== null && typeof n === "object") {
+        const o = n as Record<string, unknown>;
+        if (o.type === "object" && o.additionalProperties === undefined) {
+          out.push(JSON.stringify(o).slice(0, 80));
+        }
+        Object.values(o).forEach((v) => sansCle(v, out));
+      }
+      return out;
+    };
+    const fautes: string[] = [];
+    for (const [passe, cles] of Object.entries(PASSES)) {
+      for (const niveau of degradationsPourEchelle(grammaireDe(cles))) {
+        for (const f of sansCle(niveau.schema)) {
+          fautes.push(`${passe}/${niveau.name} — ${f}`);
+        }
+      }
+    }
+    expect(
+      fautes,
+      `le service refuse un objet sans \`additionalProperties\` : ${fautes.slice(0, 3).join(" · ")}`,
+    ).toEqual([]);
+  });
+
+  it("une propriété retirée n'est plus EXIGÉE", () => {
+    // Un schéma qui réclame ce qu'il n'autorise pas ne se satisfait jamais :
+    // le modèle ne pourrait produire aucune sortie valide, et on le
+    // découvrirait en 400 après avoir payé l'appel.
+    const coherent = (n: unknown): boolean => {
+      if (Array.isArray(n)) return n.every(coherent);
+      if (n === null || typeof n !== "object") return true;
+      const o = n as { properties?: Record<string, unknown>; required?: unknown };
+      if (Array.isArray(o.required) && o.properties !== undefined) {
+        const connues = Object.keys(o.properties);
+        if (!o.required.every((r) => connues.includes(String(r)))) return false;
+      }
+      return Object.values(o).every(coherent);
+    };
+    for (const [passe, cles] of Object.entries(PASSES)) {
+      for (const niveau of degradationsPourEchelle(grammaireDe(cles))) {
+        expect(
+          coherent(niveau.schema),
+          `${passe}/${niveau.name} exige une propriété qu'il n'autorise pas`,
+        ).toBe(true);
+      }
+    }
+  });
+
   it("une échelle SANS cycle ne gagne aucun barreau", () => {
     // Les barreaux de profondeur coûtent une sonde chacun. Les ajouter à une
     // passe qui n'a pas de cycle donnait deux barreaux IDENTIQUES — mesuré et

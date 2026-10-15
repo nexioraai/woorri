@@ -209,20 +209,59 @@ export function deroulerCycles(node, profondeur) {
  */
 const SEUIL_UNION_LOURDE = 3000;
 
-export function libererUnionsLourdes(node, seuil = SEUIL_UNION_LOURDE) {
-  if (Array.isArray(node)) return node.map((n) => libererUnionsLourdes(n, seuil));
-  if (node === null || typeof node !== "object") return node;
-  const union = node.anyOf ?? node.oneOf;
-  if (
+const estUnionLourde = (n, seuil) => {
+  if (n === null || typeof n !== "object") return false;
+  const union = n.anyOf ?? n.oneOf;
+  return (
     Array.isArray(union) &&
     union.length > 0 &&
     union.every((b) => b !== null && typeof b === "object" && b.type === "object") &&
-    JSON.stringify(node).length > seuil
-  ) {
-    return { type: "object" };
-  }
+    JSON.stringify(n).length > seuil
+  );
+};
+
+/**
+ * ── POURQUOI ON RETIRE, AU LIEU DE RENDRE LIBRE (correction 2026-10-15).
+ *
+ * La premiere version remplacait l'union par `{ type: "object" }`. MESURE EN
+ * PRODUCTION : refuse, mais par une AUTRE erreur —
+ *   « For 'object' type, 'additionalProperties' must be explicitly [...] »
+ * Le dialecte exige que TOUT objet la declare. Et la declarer `false` sans
+ * `properties` n'autorise qu'un objet VIDE : la propriete serait presente et
+ * inutilisable, ce qui est pire que son absence.
+ *
+ * Cette erreur a quand meme appris quelque chose de precieux : le barreau
+ * avait FRANCHI le cap de la taille. Le probleme de masse est resolu ; seule
+ * la forme du remplacement etait fautive.
+ *
+ * On retire donc la PROPRIETE de son parent, et de ses `required`. Le modele
+ * ne la proposera pas a ce barreau — c'est une perte REELLE, assumee, et qui
+ * n'arrive qu'en DERNIER recours, quand tous les autres barreaux ont ete
+ * refuses. Un document sans champs calcules vaut mieux qu'aucun document.
+ */
+export function retirerUnionsLourdes(node, seuil = SEUIL_UNION_LOURDE) {
+  if (Array.isArray(node)) return node.map((n) => retirerUnionsLourdes(n, seuil));
+  if (node === null || typeof node !== "object") return node;
   const out = {};
-  for (const [k, v] of Object.entries(node)) out[k] = libererUnionsLourdes(v, seuil);
+  for (const [k, v] of Object.entries(node)) {
+    if (k === "properties" && v !== null && typeof v === "object") {
+      const gardees = {};
+      const retirees = [];
+      for (const [nom, sous] of Object.entries(v)) {
+        if (estUnionLourde(sous, seuil)) retirees.push(nom);
+        else gardees[nom] = retirerUnionsLourdes(sous, seuil);
+      }
+      out.properties = gardees;
+      // Une propriete retiree ne peut plus etre exigee : un schema qui
+      // reclame ce qu'il n'autorise pas ne se satisfait jamais.
+      if (retirees.length > 0 && Array.isArray(node.required)) {
+        out.required = node.required.filter((r) => !retirees.includes(r));
+      }
+      continue;
+    }
+    if (k === "required" && out.required !== undefined) continue;
+    out[k] = retirerUnionsLourdes(v, seuil);
+  }
   return out;
 }
 
@@ -308,10 +347,10 @@ export function makeLevels(jsonSchema, contraintes) {
   // sonde pour apprendre deux fois la meme chose est exactement ce qu'on
   // vient de corriger ailleurs.
   const plusPetit = parProfondeur.length > 0 ? parProfondeur[parProfondeur.length - 1].schema : L2;
-  const libere = libererUnionsLourdes(plusPetit);
+  const allege = retirerUnionsLourdes(plusPetit);
   const barreauLibere =
-    JSON.stringify(libere).length < JSON.stringify(plusPetit).length
-      ? [{ name: "unions-lourdes-libres", schema: libere }]
+    JSON.stringify(allege).length < JSON.stringify(plusPetit).length
+      ? [{ name: "sans-unions-lourdes", schema: allege }]
       : [];
   return [
     { name: "incompatibilites-connues", schema: L0 },
