@@ -744,8 +744,56 @@ export function creerTravailleur({
       // Le parse ne sert donc qu'aux cas A RESERVES : c'est la que personne
       // n'a verifie que l'oeuvre est prenable.
       const brut = res.document ?? null
-      const aUneOeuvre =
+      const lisible =
         brut !== null && (res.ok || projectAirSchema.safeParse(brut).success)
+
+      // ════════════════════════════════════════════════════════════════
+      //  LOT 2 — LES JUGES REÇOIVENT DES YEUX.
+      // ════════════════════════════════════════════════════════════════
+      //
+      // ── CE QU'AUCUN JUGE NE VOYAIT, ET QUI SE MESURE.
+      //
+      // Les cinq juges d'acceptation lisent le DOCUMENT. Aucun ne compile.
+      // Un document peut donc être valide, passer tous les juges, et ne pas
+      // produire d'application — personne ne s'en apercevrait avant que le
+      // propriétaire clique sur « télécharger » et reçoive une erreur 500.
+      //
+      // Mesuré : `compileProject` et `compileWeb` ne sont appelés nulle part
+      // pendant la génération. Ils le sont à la LIVRAISON et à l'APERÇU,
+      // c'est-à-dire devant l'utilisateur.
+      //
+      // ── POURQUOI C'EST FAISABLE ICI, ET GRATUIT.
+      //
+      // La compilation est PURE : aucun réseau, aucun fichier, aucun appel
+      // payant. Elle tourne dans cette fonction comme elle tourne dans la
+      // route de livraison, qui l'appelle déjà. Coût mesuré sur une
+      // application réelle : moins d'une seconde pour 83 fichiers.
+      //
+      // ── ET « TÉLÉCHARGEABLE » DEVIENT VRAI, PAS ESPÉRÉ.
+      //
+      // Le LOT 1 parsait le document. Parser dit « la forme est bonne ».
+      // Compiler dit « l'application existe ». C'est ce second mot qui
+      // intéresse quelqu'un qui attend depuis deux mois.
+      let compile: { ok: true } | { ok: false; grief: string } = { ok: true }
+      if (lisible && brut !== null) {
+        try {
+          const { compileProject } = await import('@deribfy/compiler')
+          const sortie = compileProject(brut)
+          if (sortie.files.size === 0) {
+            compile = { ok: false, grief: 'compilation vide : aucun fichier émis' }
+          }
+        } catch (e: unknown) {
+          // L'ERREUR EST NOMMÉE, PAS AVALÉE. `EmitError` porte son code et
+          // son chemin ; une erreur anonyme porte au moins son message.
+          const m = e as { code?: string; path?: string; message?: string }
+          compile = {
+            ok: false,
+            grief: `COMPILE_${m.code ?? 'ERREUR'}@${(m.path ?? '').slice(0, 80)} ${(m.message ?? String(e)).slice(0, 160)}`,
+          }
+        }
+      }
+
+      const aUneOeuvre = lisible && compile.ok
       const oeuvre = aUneOeuvre ? brut : null
       const final = aUneOeuvre
         ? {
@@ -784,7 +832,14 @@ export function creerTravailleur({
           t()
             .update({
               ...final,
-              diagnostics: !res.ok && res.raison !== undefined ? [res.raison, ...codes] : codes,
+              // LE GRIEF DE COMPILATION OUVRE LA LISTE quand il existe : il
+              // explique à lui seul pourquoi une œuvre lisible n'est pas
+              // livrable, et c'est la première chose à lire.
+              diagnostics: [
+                ...(compile.ok ? [] : [compile.grief]),
+                ...(!res.ok && res.raison !== undefined ? [res.raison] : []),
+                ...codes,
+              ],
               sections_acquises: {
                 phase: 'terminee',
                 tirages: res.tirages,

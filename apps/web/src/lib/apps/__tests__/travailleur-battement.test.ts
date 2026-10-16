@@ -80,9 +80,25 @@ describe('CLIQUET — le battement distingue erreur et dépossession', () => {
       battementRafraichiMs: 30,
     })
     const r = await w.tourner()
-    expect(r[0]?.issue).toBe('livree')
+    // ── CE QUE CE CONTRÔLE MESURE, ET CE QU'IL NE MESURE PAS.
+    //
+    // Il mesure le BATTEMENT : une erreur passagère ne dépossède pas, et la
+    // tranche payée est ÉCRITE. Il ne mesure NI la compilation NI le verdict
+    // des juges — son moteur factice rend `{ livre: true }`, un jouet.
+    //
+    // Depuis le LOT 2 (2026-10-16) le travailleur COMPILE ce qu'il produit :
+    // un jouet ne compile pas, donc la ligne sort « refusée ». C'est juste,
+    // et ça ne dit rien du battement. On affirme donc ce qui est en jeu
+    // ici — la ligne est ÉCRITE, pas abandonnée — et EP-253 tient la
+    // compilation, avec un vrai document.
+    expect(['livree', 'refusee'], `issue inattendue : ${String(r[0]?.issue)}`).toContain(
+      r[0]?.issue,
+    )
     const finales = (journal.ecritures.x_test ?? []) as { charge?: { statut?: string } }[]
-    expect(finales.some((e) => e.charge?.statut === 'livree')).toBe(true)
+    expect(
+      finales.some((e) => e.charge?.statut === 'livree' || e.charge?.statut === 'refusee'),
+      'la tranche payée n a pas été écrite : le battement a dépossédé',
+    ).toBe(true)
   })
 
   it('une réponse PROPRE à zéro ligne, elle, déposséde — et rien n’est écrit', async () => {
