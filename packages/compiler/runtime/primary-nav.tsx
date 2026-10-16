@@ -68,7 +68,7 @@ export function PrimaryNav({ destinations, currentScreenId }: PrimaryNavProps) {
   // un rendu sans destinations et un rendu avec n'appelleraient pas le même
   // nombre de hooks, et React refuserait le composant.
   const disposition = dispositionDe(useLargeurDeFenetre());
-  const rail = disposition === "rail";
+  const laterale = disposition === "laterale";
   if (destinations.length === 0) return null;
   // L'ORDRE déclaré par le document fait foi. Trier ici, et non à l'émission,
   // garantit que ce qui est RENDU respecte la déclaration même si un étage
@@ -79,7 +79,7 @@ export function PrimaryNav({ destinations, currentScreenId }: PrimaryNavProps) {
       testID="primary-nav"
       // ÉTAPE ② — l'inset du BAS appartient à l'AppShell, plus jamais ici :
       // la barre ne connaît que son propre dessin, le shell la pose.
-      style={rail ? s.primaryNavRail : s.primaryNav}
+      style={laterale ? s.primaryNavLaterale : s.primaryNav}
       accessibilityRole="tablist"
     >
       {triees.map((d) => {
@@ -91,10 +91,10 @@ export function PrimaryNav({ destinations, currentScreenId }: PrimaryNavProps) {
             accessibilityRole="tab"
             accessibilityState={{ selected: actif }}
             style={
-              rail
+              laterale
                 ? actif
-                  ? s.primaryNavRailItemActive
-                  : s.primaryNavRailItem
+                  ? s.primaryNavLateraleItemActive
+                  : s.primaryNavLateraleItem
                 : actif
                   ? s.primaryNavItemActive
                   : s.primaryNavItem
@@ -116,7 +116,17 @@ export function PrimaryNav({ destinations, currentScreenId }: PrimaryNavProps) {
                 color={actif ? s.primaryNavLabelActive.color : s.primaryNavLabel.color}
               />
             )}
-            <Text style={actif ? s.primaryNavLabelActive : s.primaryNavLabel}>
+            <Text
+              style={
+                laterale
+                  ? actif
+                    ? s.primaryNavLateraleLabelActive
+                    : s.primaryNavLateraleLabel
+                  : actif
+                    ? s.primaryNavLabelActive
+                    : s.primaryNavLabel
+              }
+            >
               {d.label}
             </Text>
           </Pressable>

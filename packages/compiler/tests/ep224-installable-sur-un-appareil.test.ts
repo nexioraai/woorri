@@ -25,6 +25,17 @@
  * page le déclare. Si l'un manque, aucun navigateur ne propose rien ; s'ils
  * sont tous là, la décision appartient au navigateur, pas à nous.
  */
+// ── LES FICHIERS D'INSTALLATION ONT CHANGÉ DE PLACE LE 2026-10-16.
+//
+// Ils vivaient à la racine du projet émis. Mesure de ce jour-là, sur la
+// CONSTRUCTION de production : aucun n'arrivait dans `dist/` — Vite ne copie
+// que ce qui est importé par le code, ou placé dans `public/`. La PWA
+// construite n'avait donc ni service worker ni icône.
+//
+// Ces cliquets protégeaient la bonne règle au mauvais endroit : ils
+// vérifiaient que le moteur ÉMET, pas que la construction LIVRE. Les chemins
+// suivent désormais `public/`, et EP-250 ajoute le contrôle qui manquait —
+// aucun de ces fichiers ne doit traîner à la racine, où Vite le hacherait.
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -74,11 +85,14 @@ describe("EP-224 · l'application se pose sur un écran d'accueil", () => {
     // l'installation ENTIÈRE — il ne l'ignore pas.
     for (const { nom, air } of await documents()) {
       const f = await projet(air);
-      const m = JSON.parse(f.get("manifest.webmanifest") ?? "{}") as Manifeste;
+      const m = JSON.parse(f.get("public/manifest.webmanifest") ?? "{}") as Manifeste;
       expect(m.icons, `« ${nom} » ne déclare aucune icône : rien ne s'installera`).toBeDefined()
       expect((m.icons ?? []).length, `« ${nom} » : liste d'icônes vide`).toBeGreaterThan(0)
       for (const ic of m.icons ?? []) {
-        const chemin = ic.src.replace(/^\.\//u, "")
+        // Le manifeste cite `./icone.svg` ; le fichier vit sous `public/`,
+        // d'où Vite le copie à la racine de la construction — c'est la MÊME
+        // adresse une fois servi, et c'est ce qui rend le lien juste.
+        const chemin = "public/" + ic.src.replace(/^\.\//u, "")
         expect(
           f.has(chemin),
           `« ${nom} » promet « ${ic.src} » que le projet n'émet PAS — le navigateur refusera tout`,
@@ -89,13 +103,21 @@ describe("EP-224 · l'application se pose sur un écran d'accueil", () => {
 
   it("le manifeste porte ce qu'un navigateur réclame pour installer", async () => {
     for (const { nom, air } of await documents()) {
-      const m = JSON.parse((await projet(air)).get("manifest.webmanifest") ?? "{}") as Manifeste
+      const m = JSON.parse((await projet(air)).get("public/manifest.webmanifest") ?? "{}") as Manifeste
       expect(m.display, `« ${nom} » sans display standalone s'ouvre dans l'onglet`).toBe("standalone")
       expect(m.start_url, `« ${nom} » sans start_url`).toBeTruthy()
       expect(m.scope, `« ${nom} » sans scope`).toBeTruthy()
       expect(m.id, `« ${nom} » sans id : une mise à jour se dupliquerait`).toBeTruthy()
-      expect(m.theme_color, `« ${nom} » sans theme_color`).toMatch(/^#[0-9a-f]{6}$/u)
-      expect(m.background_color, `« ${nom} » sans background_color`).toMatch(/^#[0-9a-f]{6}$/u)
+      // CASSE INDIFFÉRENTE, et il a fallu le corriger : cette expression
+      // n acceptait que des minuscules. Depuis que la couleur vient du moteur
+      // de thème (EP-250) et non d un hachage du slug, elle arrive en
+      // MAJUSCULES — comme toute la palette des jetons. L hexadécimal CSS est
+      // insensible à la casse : c est le contrôle qui était trop étroit, pas
+      // la valeur qui est fausse.
+      expect(m.theme_color, `« ${nom} » sans theme_color`).toMatch(/^#[0-9a-fA-F]{6}$/u)
+      expect(m.background_color, `« ${nom} » sans background_color`).toMatch(
+        /^#[0-9a-fA-F]{6}$/u,
+      )
       // `maskable` : sans lui Android encadre l'icône de blanc.
       expect(
         (m.icons ?? []).some((i) => (i.purpose ?? "").includes("maskable")),
@@ -109,7 +131,7 @@ describe("EP-224 · l'application se pose sur un écran d'accueil", () => {
     // d'installation QUE si un service worker gère `fetch`. Un fichier
     // présent mais muet ne suffirait pas — on vérifie le gestionnaire.
     for (const { nom, air } of await documents()) {
-      const sw = (await projet(air)).get("sw.js")
+      const sw = (await projet(air)).get("public/sw.js")
       expect(sw, `« ${nom} » n'émet aucun sw.js`).toBeDefined()
       expect(sw, `« ${nom} » : sw.js sans gestionnaire fetch`).toMatch(
         /addEventListener\(\s*["']fetch["']/u,
@@ -151,7 +173,7 @@ describe("EP-224 · l'application se pose sur un écran d'accueil", () => {
 
   it("l icône est un SVG valide qui porte l initiale de l application", async () => {
     for (const { nom, air } of await documents()) {
-      const svg = (await projet(air)).get("icone.svg") ?? ""
+      const svg = (await projet(air)).get("public/icone.svg") ?? ""
       expect(svg, `« ${nom} » : icône absente`).toMatch(/^<svg /u)
       expect(svg, `« ${nom} » : icône sans viewBox`).toMatch(/viewBox="0 0 512 512"/u)
       expect(svg, `« ${nom} » : icône sans libellé accessible`).toMatch(/aria-label=/u)
@@ -165,7 +187,7 @@ describe("EP-224 · l'application se pose sur un écran d'accueil", () => {
     expect(premier, "le corpus est vide : le contrôle ne prouverait rien").toBeDefined()
     if (premier === undefined) return
     const lire = async (): Promise<Manifeste> =>
-      JSON.parse((await projet(premier.air)).get("manifest.webmanifest") ?? "{}") as Manifeste
+      JSON.parse((await projet(premier.air)).get("public/manifest.webmanifest") ?? "{}") as Manifeste
     const une = await lire()
     const deux = await lire()
     expect(une.theme_color).toBe(deux.theme_color)
@@ -177,7 +199,7 @@ describe("EP-224 · l'application se pose sur un écran d'accueil", () => {
     const docs = await documents()
     const couleurs = new Set<string>()
     for (const { air } of docs) {
-      const m = JSON.parse((await projet(air)).get("manifest.webmanifest") ?? "{}") as Manifeste
+      const m = JSON.parse((await projet(air)).get("public/manifest.webmanifest") ?? "{}") as Manifeste
       couleurs.add(String(m.theme_color))
     }
     expect(

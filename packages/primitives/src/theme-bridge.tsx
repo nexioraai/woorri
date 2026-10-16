@@ -5,7 +5,7 @@
 // app est un acte de COMPILATION (le compilateur émettra un module de
 // tokens propre à chaque app — modèle copie-régénérable §3), jamais un
 // mécanisme runtime.
-import { createContext, useContext, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import type { PropsWithChildren } from "react";
 import type { Scheme, ThemeBridge } from "./contracts.ts";
 import { SHEETS, type Sheet } from "./styles.ts";
@@ -20,6 +20,21 @@ export function ThemeRoot({
   initialScheme = "light",
 }: PropsWithChildren<{ initialScheme?: Scheme }>) {
   const [scheme, setScheme] = useState<Scheme>(initialScheme);
+  // ── LE SCHÉMA SUIT LE SYSTÈME QUAND CELUI-CI CHANGE.
+  //
+  // `useState` ne retient que la valeur du PREMIER rendu. Sans cette
+  // synchronisation, une personne qui bascule son appareil en sombre
+  // pendant que l'application est ouverte ne verrait rien changer — il
+  // faudrait relancer. Apple et Google exigent tous deux que les deux
+  // apparences soient servies ; servir la bonne seulement au démarrage ne
+  // tient pas l'exigence.
+  //
+  // `setScheme` reste exposé : une préférence DANS l'application pourra
+  // l'emporter plus tard. Aujourd'hui personne ne l'appelle, et le dire
+  // vaut mieux que de laisser croire à un réglage qui n'existe pas.
+  useEffect(() => {
+    setScheme(initialScheme);
+  }, [initialScheme]);
   const value = useMemo(() => ({ scheme, setScheme }), [scheme]);
   return <SchemeContext.Provider value={value}>{children}</SchemeContext.Provider>;
 }

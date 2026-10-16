@@ -69,3 +69,32 @@ export function useSafeAreaInsets(): {
 } {
   return { top: 0, bottom: 0, left: 0, right: 0 };
 }
+
+/**
+ * LE SCHÉMA SYSTÈME, CÔTÉ WEB — même contrat, autre source.
+ *
+ * `matchMedia("(prefers-color-scheme: dark)")` est la lecture normalisée du
+ * réglage du système d'exploitation. On s'abonne à ses changements : une
+ * personne qui bascule son Mac en sombre doit voir l'application suivre, pas
+ * attendre un rechargement.
+ *
+ * Le repli sans document rend « clair », comme le natif rend « clair » quand
+ * le système se tait. Les deux cibles se taisent de la même façon.
+ */
+const REQUETE_SOMBRE = "(prefers-color-scheme: dark)";
+
+const abonnerAuSchema = (relire: () => void): (() => void) => {
+  const mq = window.matchMedia(REQUETE_SOMBRE);
+  mq.addEventListener("change", relire);
+  return () => {
+    mq.removeEventListener("change", relire);
+  };
+};
+
+export function useSchemaSysteme(): "light" | "dark" {
+  return useSyncExternalStore(
+    abonnerAuSchema,
+    () => (window.matchMedia(REQUETE_SOMBRE).matches ? "dark" : "light"),
+    () => "light",
+  );
+}

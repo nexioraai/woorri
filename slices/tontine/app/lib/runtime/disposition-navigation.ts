@@ -40,22 +40,22 @@
 // n'est pas « web contre natif », c'est UNE FONCTION DE LA LARGEUR. Apple en
 // fait même une bascule automatique — la bonne lecture.
 //
-// ── POURQUOI 840, ET PAS 600 NI 1024.
+// ── POURQUOI 840, ET PAS 600 NI 1200.
 //
 // Material 3 laisse le choix entre barre et rail dans la classe medium
-// (600–839) et devient net à partir de 840. Chez nous, l'arithmétique tombe
-// sur le même nombre :
+// (600–839) et devient net à partir de 840. Chez nous, le même nombre tombe
+// d'une contrainte de lisibilité :
 //
-//     largeur de lisibilité du contenu .... 768 px  (theme.size.measure)
-//   + largeur du rail .................... ~ 80 px
-//                                          ────────
-//                                            848 px
+// À 840, une barre latérale de 256 px laisse 584 px au contenu. C'est
+// au-dessus de la largeur de lecture confortable, et bien en deçà du plafond
+// de 768 — qui est un PLAFOND, jamais un minimum. En dessous de 840, la
+// colonne tomberait sous 580 px et le texte deviendrait serré.
 //
-// En dessous de ~840, un rail VOLERAIT de la largeur au texte — il faudrait
-// réduire la colonne de lecture pour le loger. Au-dessus, il tient sans rien
-// prendre. Le seuil du référentiel et celui de notre mise en page sont le
-// même nombre, et ce n'est pas une coïncidence : les deux dérivent de la
-// même contrainte de lisibilité.
+// Material 3 place le tiroir permanent plus haut encore (1200 dp). On s'en
+// écarte DÉLIBÉRÉMENT et on dit pourquoi : leur échelle suppose un rail
+// d'icônes entre 840 et 1199, et nous n'avons pas d'icônes sur le web. Entre
+// une barre du bas étirée sur 1 000 px et une barre latérale, la seconde est
+// celle que les trois référentiels recommandent.
 //
 // ── CE QUE CE FICHIER NE DÉCIDE PAS.
 //
@@ -69,8 +69,32 @@
 // Apple la recommande sur iOS, et aucune des 29 applications natives ne
 // change de dessin sur téléphone.
 
+// ── POURQUOI UNE BARRE LATÉRALE ET NON LE « RAIL » DE MATERIAL 3.
+//
+// Material 3 distingue deux composants pour les grandes largeurs : le RAIL
+// (~80 dp, une icône surmontée d'un libellé court) et le TIROIR / barre
+// latérale (360 dp, du texte aligné à gauche).
+//
+// MESURE DU 2026-10-16, ET ELLE TRANCHE : sur la cible web, `Signe` rend un
+// `<span aria-hidden>` VIDE. La police de glyphes n'y est pas embarquée —
+// c'est une décision documentée des primitives web, pas un oubli. Une
+// première version a donc produit un rail de 96 px SANS ICÔNES : les
+// libellés y passaient à la ligne trois fois, et le propriétaire l'a comparé
+// à une vraie barre latérale, à raison.
+//
+// Un rail sans icônes n'est pas un rail, c'est une colonne de texte trop
+// étroite. On prend donc le composant qui correspond à ce qu'on sait
+// RÉELLEMENT dessiner : une barre latérale textuelle. C'est aussi ce que
+// décrivent Apple (« sidebar ») et NN/g (« left-side vertical navigation »)
+// — le mot « rail » n'appartient qu'à Material.
+//
+// CE QUI RESTE OUVERT, ET QUI EST DIT PLUTÔT QU'HABILLÉ : les 11 glyphes du
+// vocabulaire fermé pourraient être embarqués en SVG pour la cible web. Tant
+// que ce n'est pas fait, la navigation web est textuelle — en haut comme sur
+// le côté.
+
 /** Les deux dispositions que le moteur sait rendre. Liste FERMÉE. */
-export type DispositionNavigation = "barre" | "rail";
+export type DispositionNavigation = "barre" | "laterale";
 
 /**
  * LE SEUIL, EN POINTS INDÉPENDANTS DE LA DENSITÉ.
@@ -79,15 +103,15 @@ export type DispositionNavigation = "barre" | "rail";
  * réécrit `840` dans son propre fichier ne prouve plus rien le jour où la
  * valeur change ici.
  */
-export const SEUIL_RAIL = 840;
+export const SEUIL_LATERALE = 840;
 
 /**
  * La disposition qu'une largeur commande.
  *
- * Strictement au-dessous du seuil : barre du bas. À partir du seuil : rail
- * vertical. La borne est INCLUSIVE côté rail, comme Material 3 compte ses
+ * Strictement au-dessous du seuil : barre du bas. À partir du seuil : barre
+ * latérale. La borne est INCLUSIVE côté latéral, comme Material 3 compte ses
  * classes (expanded commence À 840, pas après).
  */
 export function dispositionDe(largeur: number): DispositionNavigation {
-  return largeur >= SEUIL_RAIL ? "rail" : "barre";
+  return largeur >= SEUIL_LATERALE ? "laterale" : "barre";
 }

@@ -76,23 +76,23 @@ describe("étape ② — un seul propriétaire du shell mobile", () => {
     expect(monteurs).toEqual(["lib/runtime/app-shell.tsx"]);
   });
 
-  it("l'inset du BAS est écrit UNE fois par cas — et il y a DEUX cas depuis le rail", () => {
+  it("l'inset du BAS est écrit UNE fois par cas — et il y a DEUX cas depuis la barre latérale", () => {
     // ── CE QUE CE CLIQUET TENAIT, ET POURQUOI SON TEXTE A CHANGÉ.
     //
     // La règle EP-002 n'a pas bougé : l'inset du bas appartient au shell, et
     // il est écrit une seule fois par situation. Ce qui a changé, c'est le
-    // nombre de situations — depuis le 2026-10-16 la navigation peut être un
-    // RAIL vertical (≥ 840 px), et un rail ne couvre pas le bas de l'écran.
+    // nombre de situations — depuis le 2026-10-16 la navigation peut être une
+    // BARRE LATÉRALE (≥ 840 px), et elle ne couvre pas le bas de l'écran.
     //
     // Il y a donc trois cas, et le contenu porte l'inset dans deux d'entre
-    // eux : pas de navigation du tout, ou navigation en rail. La barre du bas
+    // eux : pas de navigation du tout, ou navigation latérale. La barre du bas
     // reste le seul cas où c'est la zone de navigation qui le porte.
     const shell = files.get("lib/runtime/app-shell.tsx") ?? "";
     expect(shell).toContain('testID="app-shell-navigation"');
     expect(
       shell,
-      "le contenu ne porte plus l inset quand la navigation est un rail",
-    ).toContain("navigation === undefined || rail ? insets.bottom : 0");
+      "le contenu ne porte plus l inset quand la navigation est latérale",
+    ).toContain("navigation === undefined || laterale ? insets.bottom : 0");
 
     // La barre d'onglets, elle, ne connaît toujours RIEN des insets.
     const nav = files.get("lib/runtime/primary-nav.tsx") ?? "";
@@ -104,7 +104,7 @@ describe("étape ② — un seul propriétaire du shell mobile", () => {
     //
     // La version d origine affirmait « chrome → contenu → navigation ». Elle
     // décrivait une COLONNE, parce que c était la seule disposition qui
-    // existait. Avec le rail, la navigation se place en DÉBUT DE LIGNE — donc
+    // existait. En latéral, la navigation se place en DÉBUT DE LIGNE — donc
     // avant le contenu, ce qui la met à gauche en français et à droite en
     // arabe, sans ramification de langue.
     //
@@ -113,19 +113,20 @@ describe("étape ② — un seul propriétaire du shell mobile", () => {
     const shell = files.get("lib/runtime/app-shell.tsx") ?? "";
     const iChrome = shell.indexOf("{chrome}");
     const iContenu = shell.indexOf('testID="app-shell-contenu"');
-    const iRail = shell.indexOf("rail && navigation !== undefined");
-    const iBarre = shell.indexOf("!rail && navigation !== undefined");
+    const iLaterale = shell.indexOf("laterale && navigation !== undefined");
+    const iBarre = shell.indexOf("!laterale && navigation !== undefined");
 
     expect(iChrome, "le chrome a disparu").toBeGreaterThan(0);
     expect(iContenu, "la zone de contenu a disparu").toBeGreaterThan(iChrome);
-    expect(iRail, "la disposition en rail n existe pas").toBeGreaterThan(0);
+    expect(iLaterale, "la disposition latérale n existe pas").toBeGreaterThan(0);
     expect(iBarre, "la disposition en barre n existe pas").toBeGreaterThan(0);
 
     // EN COLONNE : la navigation vient APRÈS le contenu.
     expect(iBarre, "la barre du bas est écrite avant le contenu").toBeGreaterThan(iContenu);
     // EN LIGNE : elle vient AVANT — c est ce qui la place au bord de départ.
-    expect(iRail, "le rail est écrit après le contenu : il serait à droite").toBeLessThan(
-      iContenu,
-    );
+    expect(
+      iLaterale,
+      "la barre latérale est écrite après le contenu : elle serait à droite",
+    ).toBeLessThan(iContenu);
   });
 });

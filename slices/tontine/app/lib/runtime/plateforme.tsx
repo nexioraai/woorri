@@ -13,7 +13,7 @@
 export { StatusBar } from "expo-status-bar";
 export { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { useWindowDimensions } from "react-native";
+import { useColorScheme, useWindowDimensions } from "react-native";
 
 /**
  * LA LARGEUR DE LA FENÊTRE, EN POINTS INDÉPENDANTS DE LA DENSITÉ.
@@ -33,4 +33,30 @@ import { useWindowDimensions } from "react-native";
  */
 export function useLargeurDeFenetre(): number {
   return useWindowDimensions().width;
+}
+
+/**
+ * LE SCHÉMA DE COULEURS CHOISI PAR LA PERSONNE, AU NIVEAU DU SYSTÈME.
+ *
+ * ── POURQUOI C'EST UNE EXIGENCE ET NON UN CONFORT.
+ *
+ * Google Play, Core App Quality : « The app's content, and all web content
+ * accessed by the app, must support both light and dark themes. » Apple,
+ * Human Interface Guidelines : le mode sombre n'est pas optionnel, chaque
+ * écran doit être éprouvé dans les deux apparences.
+ *   https://developer.android.com/docs/quality-guidelines/core-app-quality
+ *   https://developers.apple.com/design/human-interface-guidelines/foundations/dark-mode/
+ *
+ * MESURE DU 2026-10-16 : les deux palettes étaient émises dans CHAQUE
+ * application générée — douze couleurs claires, douze sombres — et
+ * `ThemeRoot` n'était MONTÉ NULLE PART. Toutes tournaient donc sur le
+ * contexte par défaut, `scheme: "light"`, en dur. La palette sombre existait
+ * et restait inatteignable.
+ *
+ * `null` devient « clair » : React Native rend `null` quand le système ne
+ * dit rien. Supposer sombre dans ce cas retournerait l'application entière
+ * sur une absence d'information.
+ */
+export function useSchemaSysteme(): "light" | "dark" {
+  return useColorScheme() === "dark" ? "dark" : "light";
 }

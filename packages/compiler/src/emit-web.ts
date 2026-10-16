@@ -40,6 +40,7 @@ import { theme } from "@deribfy/design-tokens";
 // L'identité EFFECTIVE de l'application — celle que son document décide —
 // et non les jetons par défaut du générateur. Voir `reactifEtFocus`.
 import { applyThemeOverrides } from "./emit-theme.ts";
+import { enBase64, pngUni } from "./png-uni.ts";
 import { EmitError } from "./emit-project.ts";
 import { EMBEDDED_TEMPLATE_WEB } from "./embedded-template-web.generated.ts";
 
@@ -237,7 +238,7 @@ const page = (air: ProjectAir): string => `<!doctype html>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>${air.app.name}</title>
-    <meta name="theme-color" content="${couleurDeMarque(air.app.slug)}" />
+    <meta name="theme-color" content="${couleurDeMarque(air)}" />
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="icon" href="./icone.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="./icone.svg" />
@@ -327,21 +328,39 @@ const page = (air: ProjectAir): string => `<!doctype html>
  * ce qui garantit un contraste suffisant avec le blanc du glyphe quelle
  * que soit l'application.
  */
-const couleurDeMarque = (slug: string): string => {
-  let h = 0;
-  for (const c of slug) h = (h * 31 + (c.codePointAt(0) ?? 0)) % 360;
-  // HSL → HEX, sans dépendance : S=58%, L=38% (mesuré lisible sur blanc ET
-  // sur noir, les deux fonds que les systèmes d'exploitation appliquent).
-  const [s2, l2] = [0.58, 0.38];
-  const k = (n: number) => (n + h / 30) % 12;
-  const a = s2 * Math.min(l2, 1 - l2);
-  const f = (n: number) => l2 - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
-  const hex = (n: number) =>
-    Math.round(255 * f(n))
-      .toString(16)
-      .padStart(2, "0");
-  return `#${hex(0)}${hex(8)}${hex(4)}`;
+/**
+ * LA COULEUR DE L'APPLICATION — CELLE DE SON DOCUMENT, PAS D'UN HACHAGE.
+ *
+ * ── LE DÉFAUT, MESURÉ LE 2026-10-16.
+ *
+ * Le manifeste de `tontine` déclarait `#992999` (un violet) pendant que
+ * l'application affichait `#1E4DFA` (le bleu dérivé de son thème). Deux
+ * identités pour un seul document : l'onglet du navigateur et l'icône
+ * installée ne portaient pas la couleur de l'application.
+ *
+ * Le hachage du slug a été écrit quand `air.design.theme` n'était LU par
+ * aucun étage — il donnait au moins une couleur stable et distincte par
+ * application. Depuis D-067 le thème décide de l'accent ; le hachage est
+ * devenu une seconde source, donc une contradiction.
+ *
+ * L'ancienne fonction de hachage est SUPPRIMÉE, pas laissée de côté : une
+ * fonction morte finit toujours par être rappelée. Son seul mérite — une
+ * couleur stable et distincte par application — est tenu par le thème, qui
+ * est lui aussi déterministe et propre au document.
+ */
+const couleurDeMarque = (air: ProjectAir): string => {
+  const palettes = applyThemeOverrides(air).theme.color;
+  const accent = palettes.light?.primary;
+  if (typeof accent !== "string") {
+    throw new EmitError(
+      "THEME_PALETTE_INCOMPLETE",
+      "design.theme.light.primary",
+      "la palette effective ne porte pas d'accent",
+    );
+  }
+  return accent;
 };
+
 
 /**
  * L'ICÔNE — en SVG, parce que les fichiers émis sont du TEXTE.
@@ -360,7 +379,7 @@ const couleurDeMarque = (slug: string): string => {
  * La zone sûre est le disque central de 80 % — le glyphe y tient.
  */
 const icone = (air: ProjectAir): string => {
-  const fond = couleurDeMarque(air.app.slug);
+  const fond = couleurDeMarque(air);
   // LA PREMIÈRE LETTRE, en capitale — et « lettre » au sens de ce qu'un
   // humain voit, pas d'une unité de code. `Intl.Segmenter` est la seule
   // lecture correcte : un prénom accentué ou un emoji comptent pour UN.
@@ -439,15 +458,35 @@ const manifeste = (air: ProjectAir): string =>
     scope: "./",
     display: "standalone",
     lang: air.app.locales.defaultAppLocale,
-    theme_color: couleurDeMarque(air.app.slug),
-    background_color: couleurDeMarque(air.app.slug),
+    theme_color: couleurDeMarque(air),
+    background_color: couleurDeMarque(air),
     icons: [
-      // `sizes: "any"` est ce qui rend un SVG acceptable là où les
-      // navigateurs réclament du 192 et du 512 : une image vectorielle
-      // LES a toutes. Déclarée deux fois car `purpose` ne se cumule pas
-      // de façon fiable d'un navigateur à l'autre.
+      // ── LE SVG D'ABORD : c'est lui qui PORTE LA LETTRE.
+      //
+      // `sizes: "any"` déclare une image vectorielle, qui a toutes les
+      // tailles. Déclaré deux fois car `purpose` ne se cumule pas de façon
+      // fiable d'un navigateur à l'autre.
       { src: "./icone.svg", sizes: "any", type: "image/svg+xml", purpose: "any" },
       { src: "./icone.svg", sizes: "any", type: "image/svg+xml", purpose: "maskable" },
+      // ── PUIS LES DEUX PNG, ET C'EST CE QUI REND L'INSTALLATION POSSIBLE.
+      //
+      // MESURE DU 2026-10-16 : ce manifeste ne déclarait QUE du SVG. Les
+      // critères d'installabilité de Chrome demandent une icône 192×192 et
+      // une 512×512, et donnent le PNG comme le format éprouvé — le support
+      // du SVG y est décrit comme limité, et les sources se contredisent.
+      //   https://developer.chrome.com/docs/lighthouse/pwa/installable-manifest
+      //
+      // On ne parie pas sur la lecture la plus favorable : on émet les deux
+      // PNG EN PLUS. La déclaration devient valide sous toutes les lectures.
+      //
+      // LIMITE DITE : ces PNG portent la COULEUR de l'application, pas sa
+      // lettre — dessiner un glyphe exigerait un rasteriseur de police, que
+      // le moteur n'embarque pas et n'a pas vocation à embarquer. Le SVG, lui,
+      // la porte. La vraie source d'une icône reste `app.brandIconPngBase64`,
+      // déjà au contrat et déjà consommée par l'émetteur natif.
+      { src: "./icone-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
+      { src: "./icone-512.png", sizes: "512x512", type: "image/png", purpose: "any" },
+      { src: "./icone-512.png", sizes: "512x512", type: "image/png", purpose: "maskable" },
     ],
     ...(air.app.locales.rtlSupported ? { dir: "auto" } : {}),
   });
@@ -792,9 +831,41 @@ export function enveloppeWeb(air: ProjectAir, pascal: (id: string) => string): E
   const files = new Map<string, string>([
     ["index.html", page(air)],
     ["index.tsx", ENTREE],
-    ["manifest.webmanifest", manifeste(air)],
-    ["icone.svg", icone(air)],
-    ["sw.js", serviceWorker(air)],
+    // ── LES FICHIERS DE L'INSTALLATION VONT DANS `public/`, ET C'EST VITAL.
+    //
+    // MESURE DU 2026-10-16, SUR LA CONSTRUCTION DE PRODUCTION : aucun des
+    // cinq fichiers — service worker, manifeste, icônes — n'arrivait dans
+    // `dist/`. Vite ne copie que ce qui est IMPORTÉ par le code, ou placé
+    // dans `public/`. Ces fichiers n'étaient ni l'un ni l'autre.
+    //
+    // Le serveur de prévisualisation répondait pourtant HTTP 200 sur chacun :
+    // c'était le repli d'application monopage, qui rend `index.html` pour
+    // toute adresse inconnue. J'ai mesuré le CODE DE STATUT et conclu que le
+    // fichier existait. Il faut lire les OCTETS.
+    //
+    // Conséquence : la PWA construite n'avait ni service worker ni icône —
+    // donc aucune invite d'installation, nulle part. Elle n'était pas une
+    // application posable sur un écran d'accueil, seulement une page web.
+    //
+    // ── ET POURQUOI `public/` ET PAS UNE RÉFÉRENCE DEPUIS LE CODE.
+    //
+    // Un fichier importé est HACHÉ par Vite (`icone-DtQikVm5.svg`). Le
+    // manifeste, lui, cite `./icone.svg` en clair, et rien ne réécrit cette
+    // chaîne : l'icône serait copiée sous un autre nom et la déclaration
+    // pointerait dans le vide. `public/` est copié TEL QUEL, à la racine —
+    // les noms sont conservés, et les chemins relatifs du manifeste tombent
+    // juste.
+    ["public/manifest.webmanifest", manifeste(air)],
+    ["public/icone.svg", icone(air)],
+    // ── LES DEUX PNG QUE LE MANIFESTE DÉCLARE.
+    //
+    // Déclarer un fichier sans le produire ferait échouer l'installation —
+    // le défaut exact que la note de l'icône raconte avoir déjà payé. Les
+    // octets sont portés en base64 : c'est la convention de cette carte, et
+    // l'écrivain d'application décode tout `.png` avant d'écrire sur disque.
+    ["public/icone-192.png", enBase64(pngUni(192, couleurDeMarque(air)))],
+    ["public/icone-512.png", enBase64(pngUni(512, couleurDeMarque(air)))],
+    ["public/sw.js", serviceWorker(air)],
     ["App.tsx", racine(air, avecSession)],
     ["navigation.tsx", navigation(air, pascal)],
     ...gabarit(air),

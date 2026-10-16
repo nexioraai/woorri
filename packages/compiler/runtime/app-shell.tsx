@@ -38,9 +38,14 @@ import { Vue as View } from "@deribfy/primitives";
 // Barre d'état et zones sûres passent par une COUTURE — voir ./plateforme.
 // Sans elle, le shell imposait deux paquets natifs à la cible web, alors que
 // c'est justement le fichier qui doit valoir pour les deux.
-import { StatusBar, useSafeAreaInsets, useLargeurDeFenetre } from "./plateforme";
+import {
+  StatusBar,
+  useSafeAreaInsets,
+  useLargeurDeFenetre,
+  useSchemaSysteme,
+} from "./plateforme";
 import { dispositionDe } from "./disposition-navigation";
-import { useThemeBridge } from "@deribfy/primitives/theme-bridge";
+import { ThemeRoot } from "@deribfy/primitives/theme-bridge";
 import { theme } from "@deribfy/design-tokens";
 import type { PropsWithChildren, ReactNode } from "react";
 
@@ -63,15 +68,31 @@ export function AppShell({
   children,
 }: PropsWithChildren<AppShellProps>) {
   const insets = useSafeAreaInsets();
-  const { scheme } = useThemeBridge();
+  // ── LE SCHÉMA VIENT DU SYSTÈME, ET LE PONT EST MONTÉ ICI.
+  //
+  // MESURE DU 2026-10-16 : `ThemeRoot` n'était monté NULLE PART dans une
+  // application générée. Toutes tournaient sur le contexte par défaut —
+  // `scheme: "light"` en dur — pendant que la palette sombre était émise
+  // dans chaque application, inatteignable.
+  //
+  // Google Play en fait une EXIGENCE (« must support both light and dark
+  // themes »), Apple écrit que le mode sombre n'est pas optionnel. Ce n'était
+  // donc pas un agrément manquant : c'était un motif de refus.
+  //
+  // Monté ICI parce que ce fichier possède déjà la géométrie système
+  // (EP-002) et qu'il est le seul par lequel TOUS les écrans passent. Le
+  // monter dans chaque écran émis serait la dispersion que ce module a
+  // précisément supprimée.
+  const scheme = useSchemaSysteme();
   // ── POURQUOI LE SHELL AUSSI INTERROGE LA LARGEUR.
   //
   // La barre se pose SOUS le contenu, le rail À CÔTÉ : ce n'est pas le même
   // axe, et c'est ce fichier qui possède la géométrie du viewport (EP-002).
   // `PrimaryNav` décide de son propre DESSIN, le shell décide de sa PLACE —
   // les deux lisent la même fonction, aucun ne redécide la règle.
-  const rail = dispositionDe(useLargeurDeFenetre()) === "rail";
+  const laterale = dispositionDe(useLargeurDeFenetre()) === "laterale";
   return (
+    <ThemeRoot initialScheme={scheme}>
     <View
       testID="app-shell"
       style={{ flex: 1, paddingTop: avecEntete ? 0 : insets.top }}
@@ -103,20 +124,20 @@ export function AppShell({
           // largeur disponible sur un téléphone. */}
       {/* ── DEUX AXES, UNE SEULE DÉFINITION DU CONTENU.
           //
-          // En barre, tout s'empile : contenu puis navigation. En rail, la
-          // navigation se met À CÔTÉ — le conteneur passe donc en ligne, et
-          // le rail vient EN PREMIER (début de ligne), ce qui le place à
-          // gauche en français et à droite en arabe, sans ramification.
+          // En barre, tout s'empile : contenu puis navigation. En latéral,
+          // la navigation se met À CÔTÉ — le conteneur passe donc en ligne, et
+          // elle vient EN PREMIER (début de ligne), ce qui la place à gauche
+          // en français et à droite en arabe, sans ramification.
           //
           // Le nœud `app-shell-contenu` est écrit UNE fois : sa largeur de
           // lisibilité ne doit pas dépendre de la disposition, sinon les deux
           // finiraient par diverger au premier ajustement. */}
-      <View style={rail ? { flex: 1, flexDirection: "row" } : { flex: 1 }}>
-        {rail && navigation !== undefined ? (
+      <View style={laterale ? { flex: 1, flexDirection: "row" } : { flex: 1 }}>
+        {laterale && navigation !== undefined ? (
           <View
             testID="app-shell-navigation"
-            // L'encoche du BORD, pas celle du bas : en paysage, un rail collé
-            // au bord gauche passerait sous l'encoche d'un iPhone.
+            // L'encoche du BORD, pas celle du bas : en paysage, une barre
+            // latérale collée au bord passerait sous l'encoche d'un iPhone.
             style={{ paddingStart: insets.left, paddingBottom: insets.bottom }}
           >
             {navigation}
@@ -130,18 +151,19 @@ export function AppShell({
               width: "100%",
               maxWidth: theme.size.measure,
               alignSelf: "center",
-              paddingBottom: navigation === undefined || rail ? insets.bottom : 0,
+              paddingBottom: navigation === undefined || laterale ? insets.bottom : 0,
             }}
           >
             {children}
           </View>
         </View>
       </View>
-      {!rail && navigation !== undefined ? (
+      {!laterale && navigation !== undefined ? (
         <View testID="app-shell-navigation" style={{ paddingBottom: insets.bottom }}>
           {navigation}
         </View>
       ) : null}
     </View>
+    </ThemeRoot>
   );
 }

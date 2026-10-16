@@ -33,7 +33,7 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { migrateAirDocument, type ProjectAir } from "@deribfy/air-schema";
 import {
-  SEUIL_RAIL,
+  SEUIL_LATERALE,
   dispositionDe,
 } from "../runtime/disposition-navigation.ts";
 import { theme } from "@deribfy/design-tokens";
@@ -46,42 +46,44 @@ const document = (): ProjectAir =>
     JSON.parse(readFileSync(join(RACINE, "slices/tontine/tontine.air.json"), "utf8")),
   );
 
-describe("EP-249 · barre en bas ou rail vertical, selon la place disponible", () => {
-  it("LA RÈGLE — barre sous le seuil, rail à partir du seuil", () => {
+describe("EP-249 · barre en bas ou barre latérale, selon la place disponible", () => {
+  it("LA RÈGLE — barre sous le seuil, latérale à partir du seuil", () => {
     // Les largeurs d'appareils réels, pas des nombres choisis pour passer.
     expect(dispositionDe(320), "iPhone SE, écran de couverture pliable").toBe("barre");
     expect(dispositionDe(390), "iPhone 15/17 en portrait").toBe("barre");
     expect(dispositionDe(768), "iPad en portrait").toBe("barre");
     expect(dispositionDe(839), "juste sous le seuil").toBe("barre");
-    expect(dispositionDe(SEUIL_RAIL), "la borne est INCLUSIVE côté rail").toBe("rail");
-    expect(dispositionDe(1024), "iPad en paysage").toBe("rail");
-    expect(dispositionDe(1600), "la fenêtre du propriétaire").toBe("rail");
+    expect(dispositionDe(SEUIL_LATERALE), "la borne est INCLUSIVE côté latéral").toBe(
+      "laterale",
+    );
+    expect(dispositionDe(1024), "iPad en paysage").toBe("laterale");
+    expect(dispositionDe(1600), "la fenêtre du propriétaire").toBe("laterale");
   });
 
   it("LE SEUIL VAUT CE QUE LA MISE EN PAGE EXIGE, et ce n est pas un hasard", () => {
-    // ── L ARITHMÉTIQUE QUI JUSTIFIE 840.
+    // ── L ARITHMÉTIQUE QUI JUSTIFIE 840, ET CE QU ELLE PROTÈGE.
     //
-    // Material 3 devient net à partir de la classe « expanded » (840 dp).
-    // Chez nous le même nombre tombe d une contrainte de lisibilité : sous
-    // ~840, un rail VOLERAIT de la largeur à la colonne de texte.
-    //
-    //   largeur de lisibilité  768 px  (theme.size.measure)
-    // + rail                  ~ 80 px
-    //                         ────────
-    //                           848 px
+    // Material 3 devient net à partir de « expanded » (840 dp). Chez nous le
+    // même nombre tombe d une contrainte de lisibilité : au seuil, la barre
+    // latérale prend 256 px et laisse 584 px au contenu. Plus bas, la colonne
+    // de lecture deviendrait serrée ; plus large, la barre gagnerait contre
+    // ce qu elle sert à atteindre.
     //
     // Ce contrôle n affirme pas « 840 » — il affirme la RELATION. Si la
     // largeur de lisibilité changeait, c est ici qu on verrait que le seuil
     // ne lui correspond plus.
-    const largeurRail = theme.size.tapTarget * 2;
+    const largeurLaterale = theme.size.measure / 3;
+    // Au seuil, ce qui reste au contenu une fois la barre posée.
+    const resteAuSeuil = SEUIL_LATERALE - largeurLaterale;
     expect(
-      SEUIL_RAIL + largeurRail,
-      "le seuil ne laisse plus la place au rail À CÔTÉ de la colonne de lecture",
-    ).toBeGreaterThanOrEqual(theme.size.measure + largeurRail);
+      resteAuSeuil,
+      "au seuil, la colonne de lecture tombe sous 580 px : le texte serait serré",
+    ).toBeGreaterThanOrEqual(580);
+    // Et la barre ne gagne jamais contre ce qu elle sert à atteindre.
     expect(
-      SEUIL_RAIL,
-      "le seuil est tombé sous la largeur de lisibilité : le rail mordrait le texte",
-    ).toBeGreaterThanOrEqual(theme.size.measure);
+      largeurLaterale,
+      "la navigation occupe plus du tiers de la largeur de lecture",
+    ).toBeLessThanOrEqual(theme.size.measure / 3);
   });
 
   it("LES TROIS RÉFÉRENTIELS SONT NOMMÉS dans la règle, avec leurs adresses", () => {
@@ -140,19 +142,21 @@ describe("EP-249 · barre en bas ou rail vertical, selon la place disponible", (
 
     const nav = fichiers.get("lib/runtime/primary-nav.tsx") ?? "";
     expect(nav, "la navigation ne lit pas la règle").toMatch(/dispositionDe/u);
-    expect(nav, "la navigation n a pas de dessin en rail").toMatch(/primaryNavRail/u);
+    expect(nav, "la navigation n a pas de dessin latéral").toMatch(/primaryNavLaterale/u);
 
     const shell = fichiers.get("lib/runtime/app-shell.tsx") ?? "";
     expect(shell, "le shell ne lit pas la règle").toMatch(/dispositionDe/u);
     expect(shell, "le shell ne change jamais d axe").toMatch(/flexDirection: "row"/u);
   });
 
-  it("LE DESSIN DU RAIL VIENT DES JETONS — aucune valeur en dur", async () => {
+  it("LE DESSIN DE LA BARRE LATÉRALE VIENT DES JETONS — aucune valeur en dur", async () => {
     const { compileWeb } = await import("../src/index.ts");
     const styles = compileWeb(document()).files.get("lib/primitives/styles.ts") ?? "";
 
-    expect(styles, "le rail n existe pas dans la feuille").toMatch(/primaryNavRail:/u);
-    expect(styles, "l entrée active du rail n existe pas").toMatch(/primaryNavRailItemActive:/u);
+    expect(styles, "la barre latérale n existe pas dans la feuille").toMatch(
+      /primaryNavLaterale:/u,
+    );
+    expect(styles, "l entrée active n existe pas").toMatch(/primaryNavLateraleItemActive:/u);
 
     // ── LA DIFFÉRENCE QUI COMPTE ENTRE LES DEUX DESSINS.
     //
@@ -160,11 +164,16 @@ describe("EP-249 · barre en bas ou rail vertical, selon la place disponible", (
     // partager la largeur. Le rail empile en COLONNE, et `flex: 1` y
     // étirerait chaque entrée sur toute la hauteur : quatre destinations
     // occuperaient l écran entier.
-    const blocRail = /primaryNavRailItem: \{[^}]*\}/u.exec(styles)?.[0] ?? "";
-    expect(blocRail, "le dessin du rail est introuvable").not.toBe("");
-    expect(blocRail, "`flex: 1` dans une colonne : les entrées rempliront l écran").not.toMatch(
+    const bloc = /primaryNavLateraleItem: \{[^}]*\}/u.exec(styles)?.[0] ?? "";
+    expect(bloc, "le dessin de la barre latérale est introuvable").not.toBe("");
+    expect(bloc, "`flex: 1` dans une colonne : les entrées rempliront l écran").not.toMatch(
       /flex: 1/u,
     );
+    // ET LE LIBELLÉ EST DU TEXTE DE LECTURE, pas la vignette de la barre.
+    expect(
+      styles,
+      "le libellé latéral garde la taille minuscule de la barre du bas",
+    ).toMatch(/primaryNavLateraleLabel: \{ fontSize: theme\.font\.body/u);
 
     // LA BORDURE EST LOGIQUE, pas physique : en arabe le rail passe à droite
     // et sa séparation doit suivre.

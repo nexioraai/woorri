@@ -248,25 +248,42 @@ const makeSheet = (c: Palette) =>
     // `borderEndWidth` et non `borderRightWidth` : propriété LOGIQUE, comme
     // tout le reste de cette feuille — en arabe le rail passe à droite tout
     // seul, et une bordure physique se serait trompée de côté.
-    primaryNavRail: {
+    primaryNavLaterale: {
       flexDirection: "column",
+      // ── LA LARGEUR, ET POURQUOI ELLE EST DÉRIVÉE.
+      //
+      // 768 / 3 = 256 px. Dérivée de la largeur de lisibilité, jamais écrite
+      // à la main : si la colonne de lecture change un jour, la barre suit.
+      //
+      // Material 3 prescrit 360 dp pour un tiroir permanent. On prend moins,
+      // et c'est un choix mesuré : à 840 px de fenêtre, 360 ne laisserait que
+      // 480 px au contenu, pendant que 256 en laisse 584. La navigation ne
+      // doit pas gagner contre ce qu'elle sert à atteindre.
+      width: theme.size.measure / 3,
       backgroundColor: c.surface,
       borderEndWidth: 1,
       borderEndColor: c.border,
-      paddingVertical: theme.space.sm,
-      paddingHorizontal: theme.space.xs,
+      paddingVertical: theme.space.md,
+      paddingHorizontal: theme.space.sm,
       gap: theme.space.xxs,
     },
+    // ── L'ENTRÉE D'UNE BARRE LATÉRALE SE LIT, ELLE NE SE DEVINE PAS.
+    //
     // `flex: 1` est ABSENT, et c'est la différence qui compte : dans une
-    // colonne il étirerait chaque entrée sur toute la hauteur disponible,
-    // et quatre destinations occuperaient l'écran entier.
-    primaryNavRailItem: {
-      width: theme.size.tapTarget * 2,
-      minHeight: theme.size.tapTarget,
+    // colonne il étirerait chaque entrée sur toute la hauteur disponible, et
+    // quatre destinations occuperaient l'écran entier.
+    //
+    // Le contenu est en LIGNE et aligné au DÉBUT : un glyphe puis son
+    // libellé, comme une liste se lit. Centrer le texte d'une barre latérale
+    // casse l'alignement vertical des premières lettres, qui est justement ce
+    // qui la rend parcourable d'un coup d'œil (NN/g).
+    primaryNavLateraleItem: {
+      flexDirection: "row",
       alignItems: "center",
-      justifyContent: "center",
-      paddingHorizontal: theme.space.xxs,
-      paddingVertical: theme.space.xs,
+      gap: theme.space.sm,
+      minHeight: theme.size.tapTarget,
+      paddingHorizontal: theme.space.md,
+      paddingVertical: theme.space.sm,
       borderRadius: theme.radius.md,
     },
     primaryNavItem: {
@@ -289,16 +306,32 @@ const makeSheet = (c: Palette) =>
       borderRadius: theme.radius.md,
       backgroundColor: c.badgeBg,
     },
-    /** L'entrée ACTIVE du rail : même marque d'état, autre géométrie. */
-    primaryNavRailItemActive: {
-      width: theme.size.tapTarget * 2,
-      minHeight: theme.size.tapTarget,
+    /** L'entrée ACTIVE : même marque d'état que la barre, autre géométrie. */
+    primaryNavLateraleItemActive: {
+      flexDirection: "row",
       alignItems: "center",
-      justifyContent: "center",
-      paddingHorizontal: theme.space.xxs,
-      paddingVertical: theme.space.xs,
+      gap: theme.space.sm,
+      minHeight: theme.size.tapTarget,
+      paddingHorizontal: theme.space.md,
+      paddingVertical: theme.space.sm,
       borderRadius: theme.radius.md,
       backgroundColor: c.badgeBg,
+    },
+    /**
+     * LE LIBELLÉ D'UNE BARRE LATÉRALE EST DU TEXTE DE LECTURE.
+     *
+     * Dans la barre du bas il est minuscule (`font.label`, 12) parce qu'il
+     * tient sous un glyphe dans un cinquième de largeur. Ici il a 256 px : le
+     * garder à 12 px produirait une colonne de texte timide à côté d'un
+     * contenu en 14. Mesuré sur l'écran du propriétaire — c'est l'une des
+     * deux raisons pour lesquelles le premier essai ne ressemblait pas à une
+     * barre latérale.
+     */
+    primaryNavLateraleLabel: { fontSize: theme.font.body, color: c.muted },
+    primaryNavLateraleLabelActive: {
+      fontSize: theme.font.body,
+      fontWeight: theme.fontWeight.semibold,
+      color: c.primaryText,
     },
     // Taille du glyphe d'onglet — portée par un TOKEN, jamais par un nombre
     // écrit dans le composant : la dimension D interdit toute valeur en dur.
