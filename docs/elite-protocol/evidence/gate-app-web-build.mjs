@@ -165,7 +165,27 @@ for (const app of apps) {
     : "";
   const actifs = existsSync(dir + "dist/assets") ? readdirSync(dir + "dist/assets") : [];
   const js = actifs.filter((f) => f.endsWith(".js"));
-  const manifeste = actifs.find((f) => f.endsWith(".webmanifest"));
+  // ── LE MANIFESTE PEUT VIVRE À DEUX ENDROITS, ET LES DEUX SONT JUSTES.
+  //
+  // Jusqu'au 2026-10-16 il était IMPORTÉ depuis `index.html`, donc haché par
+  // Vite dans `dist/assets/`. Il vit désormais dans `public/`, donc copié TEL
+  // QUEL à la racine de `dist/`.
+  //
+  // CE QUI A MOTIVÉ LE DÉPLACEMENT, et que cette gate ne voyait pas : un
+  // manifeste haché cite ses icônes en clair (`./icone.svg`), et RIEN ne
+  // réécrit ces chaînes. L'icône était copiée sous un autre nom, et toutes
+  // les déclarations du manifeste pointaient dans le vide. La gate validait
+  // le lien VERS le manifeste, jamais les liens QU'IL PORTE.
+  const racine = existsSync(dir + "dist") ? readdirSync(dir + "dist") : [];
+  const manifesteRacine = racine.find((f) => f.endsWith(".webmanifest"));
+  const manifesteHache = actifs.find((f) => f.endsWith(".webmanifest"));
+  const manifeste = manifesteRacine ?? manifesteHache;
+  const cheminManifeste =
+    manifesteRacine !== undefined
+      ? dir + "dist/" + manifesteRacine
+      : manifesteHache !== undefined
+        ? dir + "dist/assets/" + manifesteHache
+        : "";
   const poids = js.reduce(
     (n, f) => n + readFileSync(dir + "dist/assets/" + f, "utf8").length,
     0,
@@ -180,6 +200,38 @@ for (const app of apps) {
   // et refuse l'installation — en silence, et seulement sur un vrai appareil.
   if (manifeste === undefined) griefs.push("manifeste absent de dist/");
   else if (!html.includes(manifeste)) griefs.push(`lien du manifeste périmé (${manifeste})`);
+  else {
+    // ── CE QUE LE MANIFESTE PROMET DOIT EXISTER, SINON RIEN NE S'INSTALLE.
+    //
+    // Un navigateur qui ne trouve pas une icône annoncée refuse
+    // l'installation ENTIÈRE — il ne l'ignore pas. C'est le contrôle qui
+    // manquait, et son absence a laissé passer des mois de manifestes dont
+    // AUCUNE icône n'était atteignable.
+    //
+    // Les chemins sont relatifs au MANIFESTE, pas à la page : `./icone.svg`
+    // depuis `dist/manifest.webmanifest` vaut `dist/icone.svg`.
+    const base = cheminManifeste.slice(0, cheminManifeste.lastIndexOf("/") + 1);
+    let icones = [];
+    try {
+      icones = JSON.parse(readFileSync(cheminManifeste, "utf8")).icons ?? [];
+    } catch {
+      griefs.push("manifeste illisible");
+    }
+    if (icones.length === 0) griefs.push("manifeste sans icône : rien ne s'installera");
+    const absentes = icones
+      .map((i) => String(i.src ?? "").replace(/^\.\//u, ""))
+      .filter((src) => src !== "" && !existsSync(base + src));
+    if (absentes.length > 0) {
+      griefs.push(`icône(s) promise(s) et absente(s) : ${[...new Set(absentes)].join(", ")}`);
+    }
+    // ET LES DEUX TAILLES QUE CHROME RÉCLAME POUR PROPOSER L'INSTALLATION.
+    const png = icones.filter((i) => String(i.type ?? "") === "image/png");
+    for (const taille of ["192x192", "512x512"]) {
+      if (!png.some((i) => String(i.sizes ?? "") === taille)) {
+        griefs.push(`aucune icône PNG ${taille}`);
+      }
+    }
+  }
   // AUCUN REACT NATIVE DANS L'ARTEFACT LIVRÉ. La gate de compilation le
   // vérifie sur les SOURCES ; ici c'est le bundle, c'est-à-dire ce que le
   // navigateur reçoit vraiment.

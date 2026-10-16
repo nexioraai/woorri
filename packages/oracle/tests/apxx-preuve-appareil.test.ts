@@ -171,7 +171,19 @@ describe("V2 — A et G ne concluent JAMAIS à la conformité", () => {
     // ÉDITION CONSCIENTE (mission chrome, 2026-09-11) : 9 → 10. La CAMÉRA
     // de recherche visuelle porte `tapTarget` en largeur ET hauteur —
     // née contrainte, comme chaque surface qui entre.
-    expect(a?.detail).toContain("10 surface(s) contrainte(s)");
+    // ÉDITION CONSCIENTE (navigation adaptative, 2026-10-16) : 10 → 12. La
+    // barre de navigation devient LATÉRALE à partir de 840 px — Material 3,
+    // Apple HIG et Nielsen Norman convergent, et une barre du bas étirée sur
+    // 1 600 px de fenêtre avait été jugée « une appli React Native » à
+    // l'écran. Son entrée et son entrée ACTIVE portent toutes deux
+    // `tapTarget` en hauteur : deux surfaces, nées contraintes, comme chaque
+    // surface qui entre.
+    //
+    // LE COMPTE NE SE RECOPIE PAS, IL SE MESURE : la version précédente de
+    // cette ligne disait 10 parce que la feuille en portait 10. Elle en
+    // porte 12, et c'est la feuille qui a changé — pas le seuil qu'on ajuste
+    // pour faire passer un test.
+    expect(a?.detail).toContain("12 surface(s) contrainte(s)");
     expect(a?.detail).toContain("NON MESURÉ : zones sûres");
     expect(g?.detail).toContain("0 encapsulé dans un ScrollView");
     expect(g?.detail).toContain("NON MESURÉ : jank au défilement");
