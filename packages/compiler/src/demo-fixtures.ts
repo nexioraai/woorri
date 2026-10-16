@@ -11,6 +11,31 @@
 import type { ProjectAir } from "@deribfy/air-schema";
 
 // mulberry32 — PRNG 32 bits déterministe, sans dépendance.
+/**
+ * Le nombre de sous-unités d'une devise — zéro pour le franc CFA.
+ *
+ * `Intl` le tient de CLDR : c'est une donnée normalisée, pas une opinion.
+ * Sans unité déclarée, on garde deux décimales — le comportement d'avant,
+ * au caractère près, pour tout champ qui n'est pas un montant.
+ *
+ * Un code inconnu de l'environnement fait lever `Intl` : on retombe alors
+ * sur deux décimales plutôt que d'échouer l'émission entière pour une
+ * valeur de démonstration.
+ */
+function decimalesDe(unit: string | undefined): number {
+  if (unit === undefined || !/^[A-Z]{3}$/u.test(unit)) return 2;
+  try {
+    // `maximumFractionDigits` est optionnel au type, jamais à l'exécution
+    // pour un style `currency` — le repli garde la forme d'avant.
+    return (
+      new Intl.NumberFormat("fr", { style: "currency", currency: unit }).resolvedOptions()
+        .maximumFractionDigits ?? 2
+    );
+  } catch {
+    return 2;
+  }
+}
+
 function mulberry32(seed: number): () => number {
   let a = seed >>> 0;
   return () => {
@@ -67,6 +92,9 @@ export function buildDemoFixtures(air: ProjectAir): Record<string, DemoInstance[
         if (field.sensitive === true) continue;
         values[field.id] = fixtureValue(field, offset + i, rand, {
           rowCountByEntity,
+          // Une entité en AJOUT SEUL est un journal : ses écritures sont
+          // passées, par définition. Voir le cas `datetime`.
+          journal: entity.appendOnly === true,
         });
       }
       rows.push({ id: rowId(dataset.entityId, offset + i), values });
@@ -78,6 +106,8 @@ export function buildDemoFixtures(air: ProjectAir): Record<string, DemoInstance[
 
 interface RefContext {
   rowCountByEntity: Map<string, number>;
+  /** L'entité est-elle un journal en ajout seul ? Décide du sens du temps. */
+  journal: boolean;
 }
 
 function fixtureValue(
@@ -148,7 +178,22 @@ function fixtureValue(
       // sens, comme la règle 1.20 l'exige déjà pour les images.
       return String(1 + Math.floor(rand() * 999));
     case "decimal":
-      return (Math.floor(rand() * 99_900) / 100 + 1).toFixed(2);
+      // ── UN MONTANT RESPECTE LES SOUS-UNITÉS DE SA DEVISE.
+      //
+      // MESURÉ le 2026-10-16 sur l'écran d'une application de tontine
+      // camerounaise : « 897,31 FCFA ». Ce montant N'EXISTE PAS — le franc
+      // CFA n'a pas de centimes. Deux décimales étaient posées sur TOUT
+      // champ décimal, quelle que soit sa devise.
+      //
+      // Ce n'est pas une devinette, contrairement à l'ÉCHELLE d'un nombre :
+      // le document déclare `unit` (code ISO 4217) et le nombre de
+      // sous-unités est une donnée NORMALISÉE, que `Intl` tient de CLDR.
+      // XAF et XOF : zéro. EUR et USD : deux. TND : trois. Aucune table à
+      // maintenir ici, aucune valeur à inventer.
+      //
+      // L'ÉCHELLE, elle, reste indevinable et le reste — voir `number`
+      // ci-dessus. La réponse est `demoValues` dans le document.
+      return (Math.floor(rand() * 99_900) / 100 + 1).toFixed(decimalesDe(field.unit));
     case "boolean":
       return rand() < 0.5 ? "true" : "false";
     case "date": {
@@ -158,8 +203,23 @@ function fixtureValue(
         .slice(0, 10);
     }
     case "datetime": {
+      // ── UN JOURNAL D'ARGENT NE CONTIENT PAS D'ÉCRITURE À VENIR.
+      //
+      // MESURÉ le 2026-10-16 sur une application de tontine : SEPT des
+      // vingt-quatre mouvements étaient datés dans le futur, le plus
+      // lointain au 21 décembre. Une cotisation encaissée dans deux mois,
+      // affichée en tête du relevé.
+      //
+      // L'entité le DIT déjà : `appendOnly` marque le journal qu'on ne
+      // réécrit pas. Ce qui ne se réécrit pas ne s'anticipe pas non plus —
+      // c'est la même propriété, lue dans l'autre sens.
+      //
+      // Pour tout le reste — une échéance, un rendez-vous, une date de
+      // livraison — le futur est LÉGITIME, et le tirage ne change pas.
       const minutes = Math.floor(rand() * 365 * 24 * 60);
-      return new Date(BASE_2026_01_01_MS + minutes * 60_000).toISOString();
+      if (!refs.journal) return new Date(BASE_2026_01_01_MS + minutes * 60_000).toISOString();
+      // Les douze mois QUI PRÉCÈDENT la borne, jamais ceux qui la suivent.
+      return new Date(BASE_2026_01_01_MS - minutes * 60_000).toISOString();
     }
     case "enum": {
       const options = field.enumValues ?? [];
