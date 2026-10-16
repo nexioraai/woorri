@@ -32,14 +32,43 @@ const POUR = lire('lib', 'apps', 'pour.ts')
 const JOURNAL = lire('lib', 'apps', 'journal.ts')
 const TRAVAILLEUR = lire('lib', 'apps', 'travailleur.ts')
 
-describe('un refus garde sa base — et au MEME endroit des deux côtés', () => {
-  it('le journal synchrone range la base dans `acquis`, jamais dans `document`', () => {
-    expect(JOURNAL).toContain('acquis: l.document ?? null')
-    expect(JOURNAL).toContain('document: l.ok ? (l.document ?? null) : null')
+describe('le produit du moteur est GARDE — au MEME endroit des deux côtés', () => {
+  // ── CE QUI A CHANGE LE 2026-10-16, ET CE QUI NE CHANGE PAS.
+  //
+  // L'invariant de ce fichier n'a jamais ete « acquis » : c'est « une depense
+  // laisse toujours une trace, et au MEME endroit des deux cotes ». Le
+  // rangement, lui, a change — et c'est une decision, pas une derive.
+  //
+  // AVANT : un seul diagnostic restant suffisait a mettre `document: null`.
+  // L'oeuvre existait et on la detruisait. Douze generations sur CONTERAK,
+  // ~29 $, et jamais une application a l'ecran.
+  //
+  // DEPUIS : le produit va dans `document`, des deux cotes. Les juges
+  // gardent la parole — `ok` porte leur verdict exact — mais perdent le
+  // veto. `acquis` ne garde plus que ce qui n'est PAS livrable.
+  it('le journal synchrone range le produit dans `document`, toujours', () => {
+    expect(JOURNAL).toContain('document: l.document ?? null')
+    // Et il ne le conditionne PLUS au verdict des juges.
+    expect(JOURNAL).not.toMatch(/document:\s*l\.ok\s*\?/u)
   })
 
   it('le travailleur range au même endroit — c’est lui la référence', () => {
-    expect(TRAVAILLEUR).toContain('acquis: res.document ?? null')
+    expect(TRAVAILLEUR).toContain('document: oeuvre')
+    expect(TRAVAILLEUR).not.toMatch(/document:\s*res\.ok\s*\?/u)
+  })
+
+  it('« LIVREE » veut dire TELECHARGEABLE — on parse avant de promettre', () => {
+    // Promettre une application qu'on ne peut pas prendre serait pire qu'un
+    // refus franc : la route de livraison parse et rend 500. Les DEUX
+    // ecrivains parsent donc avant d'ecrire le statut.
+    expect(TRAVAILLEUR).toContain('projectAirSchema.safeParse')
+    expect(JOURNAL).toContain('projectAirSchema.safeParse')
+  })
+
+  it('ce qui n’est PAS livrable survit quand même, pour la reprise', () => {
+    // Une base illisible n'est pas une oeuvre, mais elle evite de tout
+    // repayer : elle reste dans `acquis`.
+    expect(TRAVAILLEUR).toContain('acquis: brut')
   })
 
   it('le moteur rend son produit même en refusant, et on le transmet', () => {

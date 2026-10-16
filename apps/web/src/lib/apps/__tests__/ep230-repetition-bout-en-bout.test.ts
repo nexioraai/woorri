@@ -295,8 +295,19 @@ describe('EP-230 · une tranche trop longue sauvegarde, elle ne meurt pas', () =
     // la chaîne TRAVERSE — plusieurs tranches, une reprise de l acquis, le
     // geste du propriétaire, les huit passes écrites, les juges rendus — et
     // se termine sur un VERDICT, jamais sur un silence.
+    // ── LE PRODUIT A CHANGÉ D ADRESSE (2026-10-16), PAS L INVARIANT.
+    //
+    // Ce contrôle prouve que la chaîne TRAVERSE : les huit passes écrites,
+    // les juges rendus. Il le mesurait en comptant les sections dans
+    // `sections_acquises.acquis` — l'endroit où un REFUS rangeait sa base.
+    //
+    // Depuis que toute œuvre prenable est LIVRÉE, le produit vit dans sa
+    // propre colonne. La preuve est donc lisible au même titre, et à un
+    // meilleur endroit : dans l'application elle-même. On regarde les deux —
+    // livrée ou non, la chaîne doit avoir traversé.
     const sa = (ligne().sections_acquises ?? {}) as Record<string, unknown>
-    const sections = Object.keys((sa.acquis ?? {}) as object).length
+    const produit = (ligne().document ?? sa.acquis ?? {}) as object
+    const sections = Object.keys(produit).length
     expect(
       sections,
       `seulement ${String(sections)} sections écrites : les passes n ont pas traversé`,

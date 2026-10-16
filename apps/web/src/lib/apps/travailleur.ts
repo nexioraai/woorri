@@ -49,6 +49,8 @@ import {
   TABLE_VERSIONS,
 } from './journal'
 import { estReprenable, etatDeReprise } from './reprise'
+// « Livrée » doit vouloir dire TÉLÉCHARGEABLE. Voir le verdict plus bas.
+import { projectAirSchema } from '@deribfy/air-schema'
 
 type Lignes = { data: Record<string, unknown>[] | null; error: { message: string } | null }
 
@@ -675,11 +677,82 @@ export function creerTravailleur({
       }
 
       const res = r.resultat as NonNullable<typeof r.resultat>
-      const final = res.ok
+
+      // ════════════════════════════════════════════════════════════════
+      //  ON LIVRE CE QUI EXISTE. ON NE REFUSE QUE S'IL N'Y A RIEN.
+      // ════════════════════════════════════════════════════════════════
+      //
+      // ── CE QUE CES QUATRE LIGNES ONT COÛTÉ, MESURÉ.
+      //
+      // Elles disaient : s'il reste UN diagnostic, `document: null`. Or le
+      // moteur REND un document (`document: air ?? document`). L'application
+      // existait, en mémoire, à chaque tir — et cette ligne la jetait.
+      //
+      // Douze générations sur le cahier CONTERAK, ~29 $ dépensés, un
+      // meilleur tir à 22 sections sur 22, et le propriétaire n'a JAMAIS vu
+      // une application. Pas parce que le moteur ne savait pas en faire :
+      // parce qu'on détruisait celles qu'il faisait.
+      //
+      // ── C'EST UN CHANGEMENT DE DOCTRINE, PAS UNE CORRECTION DE BOGUE.
+      //
+      // La doctrine d'avant est écrite dans `pour.ts` : « un partiel gardé ne
+      // peut pas être servi comme une application finie ». Elle est
+      // défendable, et elle a tenu tant qu'on croyait qu'un tir propre
+      // arriverait. Au bout de deux mois, elle ne protège plus personne :
+      // elle garantit le vide.
+      //
+      // DÉCISION DU PROPRIÉTAIRE, 2026-10-16 : les juges perdent le droit de
+      // VETO, ils gardent le droit de PAROLE. Leur verdict voyage avec
+      // l'application au lieu de l'empêcher.
+      //
+      // ── CE QUI N'EST PAS ASSOUPLI, ET C'EST L'ESSENTIEL.
+      //
+      // Aucune règle n'est touchée. Aucun juge n'est désarmé. `ok` porte
+      // TOUJOURS leur verdict exact, `diagnostics` porte TOUJOURS la liste
+      // complète, `defauts` porte TOUJOURS le détail. Une application livrée
+      // avec `ok: false` est une application dont on SAIT ce qui cloche —
+      // c'est strictement plus d'information qu'une ligne vide.
+      //
+      // ── ET LE REFUS GARDE UN SENS : quand il n'y a RIEN.
+      //
+      // Quand P0 refuse ses trois tentatives, le moteur ne rend aucun
+      // document — pas un document imparfait, RIEN. Refuser y est honnête :
+      // on ne peut pas livrer une œuvre qui n'existe pas. C'est la seule
+      // porte qui reste.
+      //
+      // La contrainte de base le permet : `check (statut <> 'livree' or
+      // document is not null)` ne dit que « une livrée porte un document ».
+      // Elle n'a jamais exigé qu'une imparfaite soit détruite.
+      // ── « LIVRÉE » DOIT VOULOIR DIRE TÉLÉCHARGEABLE.
+      //
+      // Le moteur rend `air ?? document` : le premier est validé, le second
+      // est le candidat du dernier tour. Déclarer « livrée » sur un candidat
+      // qui ne se parse pas donnerait une erreur 500 au moment du
+      // téléchargement — une application promise qu'on ne peut pas prendre
+      // est pire qu'un refus franc.
+      //
+      // On parse donc AVANT de promettre. Ce qui ne se parse pas n'est pas
+      // une œuvre : ça reste une base, rangée dans `acquis`, et la ligne est
+      // refusée — honnêtement, parce qu'il n'y a rien à livrer.
+      // ── ET ON NE RE-JUGE PAS CE QUE LE MOTEUR A VALIDE.
+      //
+      // Ma premiere version parsait TOUT, y compris les resultats `ok`. Un
+      // cliquet l'a attrapee : un moteur qui dit « conforme » a deja
+      // valide, et lui opposer un second juge, c'est recreer le verrou
+      // qu'on vient d'enlever — a un autre etage.
+      //
+      // Le parse ne sert donc qu'aux cas A RESERVES : c'est la que personne
+      // n'a verifie que l'oeuvre est prenable.
+      const brut = res.document ?? null
+      const aUneOeuvre =
+        brut !== null && (res.ok || projectAirSchema.safeParse(brut).success)
+      const oeuvre = aUneOeuvre ? brut : null
+      const final = aUneOeuvre
         ? {
             statut: 'livree',
-            ok: true,
-            document: res.document,
+            // Le verdict des juges, INTACT. Livrée ne veut pas dire conforme.
+            ok: res.ok,
+            document: oeuvre,
             etape: null,
           }
         : {
@@ -740,14 +813,19 @@ export function creerTravailleur({
                 // sans re-payer l'emission. (La COLONNE document reste nulle :
                 // la contrainte livree_a_document dit qu'un refus n'a pas
                 // d'oeuvre a livrer — la base n'est pas une oeuvre.)
-                ...(res.ok
-                  ? {}
-                  : {
-                      acquis: res.document ?? null,
-                      modele: (res as { modele?: unknown }).modele ?? null,
-                      premierePasse:
-                        (res as { premierePasse?: unknown }).premierePasse ?? null,
-                    }),
+                // ── LA BASE DE REPRISE, ET CE QUI A CHANGÉ.
+                //
+                // `acquis` existait pour qu'un REFUS puisse ressusciter sans
+                // re-payer. Depuis que toute œuvre est livrée, le document
+                // vit dans sa propre colonne : le recopier ici doublerait un
+                // JSON de plusieurs centaines de kilo-octets pour rien.
+                //
+                // `modele` et `premierePasse` restent dans les DEUX cas :
+                // ils ne sont pas l'œuvre, ils sont de quoi la REPRENDRE —
+                // une application livrée avec réserves se répare aussi.
+                ...(aUneOeuvre ? {} : { acquis: brut }),
+                modele: (res as { modele?: unknown }).modele ?? null,
+                premierePasse: (res as { premierePasse?: unknown }).premierePasse ?? null,
               },
               cout_usd: res.coutUsd,
               jetons_entree: res.jetons.entree,
@@ -764,7 +842,7 @@ export function creerTravailleur({
       if (ecrit.data === null || ecrit.data.length === 0) {
         return await sortirDepossede(id, res as Parameters<typeof sortirDepossede>[1])
       }
-      return { id, issue: res.ok ? 'livree' : 'refusee' }
+      return { id, issue: aUneOeuvre ? 'livree' : 'refusee' }
     } catch (e: unknown) {
       // Depossede ET en erreur : l'erreur porte l'etiquette de cout (4e
       // chemin) — meme traitement, le cout part en orphelin.

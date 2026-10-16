@@ -73,8 +73,21 @@ describe('CLIQUET — le SQL et le code ecrivent les MEMES colonnes', () => {
     // le journal avale ses erreurs pour ne jamais casser une generation.
     const bloc = JOURNAL.slice(JOURNAL.indexOf("from('app_generations').insert({"))
     const insertion = bloc.slice(0, bloc.indexOf('})'))
-    expect(insertion).toContain("statut: l.ok ? 'livree' : 'refusee'")
+    // ── LE STATUT NE SUIT PLUS `ok` (2026-10-16).
+    //
+    // Il suivait le verdict des juges : un seul diagnostic restant et la
+    // ligne devenait « refusee », document detruit. Il suit desormais ce qui
+    // est REELLEMENT livrable — le document parse, ou il ne parse pas.
+    //
+    // L'invariant que ce controle protege n'a pas bouge : le statut est DIT
+    // (jamais laisse au defaut `en_attente`, qu'un balayeur regenererait en
+    // payant), et une ligne « livree » porte un document.
+    expect(insertion).toContain("statut: telechargeable ? 'livree' : 'refusee'")
     expect(insertion).toContain('document:')
+    // ET IL EST CALCULE PAR UN PARSE, pas par le verdict des juges : sans
+    // cela, « livree » pourrait promettre une application que la route de
+    // livraison refuserait en 500.
+    expect(JOURNAL).toContain('projectAirSchema.safeParse(l.document).success')
     // Et les trois invariants vivent bien dans le SQL, par CONTRAINTE.
     for (const c of [
       'app_generations_statut_valide',

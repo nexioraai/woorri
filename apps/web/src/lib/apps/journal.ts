@@ -188,6 +188,25 @@ export async function journaliser(l: LigneGeneration): Promise<void> {
     return
   }
 
+  // ── « LIVREE » DOIT VOULOIR DIRE TELECHARGEABLE.
+  //
+  // Le moteur rend son produit meme quand les juges ont des reserves, et on
+  // le livre desormais (decision du proprietaire, 2026-10-16). Mais promettre
+  // une application qu'on ne peut pas prendre serait pire qu'un refus franc :
+  // la route de livraison parse le document et rend 500 s'il ne passe pas.
+  //
+  // On parse donc AVANT de promettre. Le schema est charge ICI, comme le
+  // client : ce fichier n'a AUCUN import de haut niveau, et c'est voulu.
+  // PAS DE `try` ICI, ET C'EST VOULU : `safeParse` ne leve jamais, et si le
+  // schema lui-meme devenait introuvable ce serait un vrai defaut — qu'un
+  // `catch` muet transformerait en « refuse » silencieux. Le cliquet des
+  // catch muets a attrape ma premiere version, et il avait raison.
+  const { projectAirSchema } = await import('@deribfy/air-schema')
+  // Un resultat que le moteur a VALIDE n'est pas re-juge ici : lui opposer
+  // un second juge recreerait le verrou qu'on vient d'enlever, un etage plus
+  // bas. Le parse ne sert qu'aux cas a reserves.
+  const telechargeable = l.ok || projectAirSchema.safeParse(l.document).success
+
   // ── 1. LE TOTAL DE LA PLATEFORME, dans la table qui existe deja.
   try {
     const { error } = await supabaseAdmin.from('ai_usage_log').insert({
@@ -235,16 +254,32 @@ export async function journaliser(l: LigneGeneration): Promise<void> {
       // du chemin SYNCHRONE est, elle, deja TERMINEE : la laisser au defaut
       // en ferait du « travail en attente » qu'un balayeur essaierait de
       // generer une seconde fois, en payant.
-      statut: l.ok ? 'livree' : 'refusee',
-      // ── ALIGNE SUR LE TRAVAILLEUR, PAS SUR UNE SECONDE IDEE.
+      // ── ON LIVRE CE QUI EXISTE (2026-10-16, decision du proprietaire).
       //
-      // J'avais d'abord range le produit d'un refus DANS `document`. Le
-      // chemin asynchrone avait deja tranche l'inverse, et en le disant :
-      // « la contrainte livree_a_document dit qu'un refus n'a pas d'oeuvre
-      // a livrer — la base n'est pas une oeuvre ». Deux rangements pour la
-      // meme chose, c'est pire que n'importe lequel des deux : un lecteur
-      // ne sait plus ou chercher. Le synchrone suit donc l'asynchrone.
-      document: l.ok ? (l.document ?? null) : null,
+      // Cette ligne disait `l.ok ? 'livree' : 'refusee'` : un seul
+      // diagnostic restant suffisait a declarer la ligne refusee, et la
+      // suivante mettait son document a `null`. L'oeuvre existait et on la
+      // detruisait.
+      //
+      // Le chemin ASYNCHRONE a tranche le premier, et ce fichier dit
+      // lui-meme « le synchrone suit l'asynchrone » : on suit.
+      //
+      // Le refus garde un sens exact — quand il n'y a RIEN a livrer. Les
+      // juges gardent la parole : `ok` porte toujours leur verdict.
+      statut: telechargeable ? 'livree' : 'refusee',
+      // ── ALIGNE SUR LE TRAVAILLEUR, ET LA DOCTRINE A CHANGE.
+      //
+      // Pendant longtemps les deux chemins mettaient `document: null` des
+      // que `ok` etait faux : « un refus n'a pas d'oeuvre a livrer ». La
+      // regle etait coherente, et elle a garanti le vide pendant deux mois.
+      //
+      // Depuis le 2026-10-16 les deux chemins livrent ce qui existe. Le
+      // rangement reste UNIQUE — un lecteur n'a toujours qu'un endroit ou
+      // chercher — mais il n'efface plus.
+      // Le produit est range ICI dans les deux cas. Ce qui ne se parse pas ne
+      // peut pas etre telecharge : la ligne est alors refusee (ci-dessus),
+      // mais son produit survit — il reste de quoi reprendre sans repayer.
+      document: l.document ?? null,
       owner_email: l.email,
       demande: l.demande.slice(0, 4000),
       nom: l.nom,
