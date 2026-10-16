@@ -316,6 +316,7 @@ const surfaceEnveloppe = () => {
   // processus. C'est VOULU : le niveau acceptable est une propriete du
   // SCHEMA, pas de la demande. Deux generations simultanees mesureraient la
   // meme chose.
+  const reparationParcours = await import(join(HERE, "reparation-parcours.mjs"));
   const { creerSondeGrammaire } = await import(join(HERE, "sonde-grammaire.mjs"));
   const sondeGrammaire = creerSondeGrammaire({ client, adaptateur });
   let niveauxSondes = null;
@@ -821,6 +822,43 @@ const surfaceEnveloppe = () => {
           const r = modeleMetier.reparerPlan(verdictP0.modele);
           candidat = r.modele;
           reparationsPlan = r.reparations;
+          // ── LA SECONDE REPARATION MECANIQUE DU MODELE (EP-243).
+          //
+          // POURQUOI ICI, ET PAS A COTE DE `reparerNavigation`. Celle-la
+          // repare le DOCUMENT AIR, en phase d'emission ; celle-ci repare le
+          // MODELE METIER — parcours et etapes, l'objet que P0 produit. Les
+          // brancher au meme endroit lui donnerait un document au lieu d'un
+          // modele. Son voisin juste est `reparerPlan`, ci-dessus.
+          //
+          // CE QU'ELLE REPARE, et ce qu'il en coutait : `TRAVERSEE_ACTEUR` et
+          // `IDENTITE_NON_CONSOMMEE` ont refuse CONTERAK aux TROIS tours pour
+          // 2,7352 $, sans jamais converger — le modele ne savait pas s'en
+          // sortir seul, et rien ne le corrigeait pour lui.
+          //
+          // AUCUN JUGE N'EST DESARME : elle repare le modele, et les juges
+          // repassent apres, inchanges. Sa propre garde refuse tout modele
+          // repare dont les diagnostics ne DIMINUENT PAS strictement, ou qui
+          // ferait apparaitre un code nouveau.
+          const rp = reparationParcours.reparerParcours(candidat, {
+            ecransDe: modeleMetier.ecransDe,
+            surfacesDe: modeleMetier.surfacesDe,
+            consommateursDIdentite: modeleMetier.consommateursDIdentite,
+            // Les MEMES juges que le pipeline lit juste apres : une
+            // reparation qui s'evaluerait sur d'autres juges ne prouverait
+            // rien de ce qui va la juger.
+            juger: (m) => {
+              const plan = modeleMetier.ecransDe(m);
+              return [
+                ...plan.diagnostics,
+                ...modeleMetier.jugerPlanEcrans(plan, m),
+                ...modeleMetier.validerModele(m),
+              ];
+            },
+          });
+          if (rp.reparations.length > 0) {
+            candidat = rp.modele;
+            reparationsPlan = [...reparationsPlan, ...rp.reparations];
+          }
         } else {
           // ── LA REPARATION MECANIQUE S'APPLIQUE AUSSI AUX REFUS P1.
           //
