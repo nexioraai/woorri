@@ -42,7 +42,7 @@
 // générateur pour porter CE métier ?
 // ============================================================
 
-import { writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 // `createHash` sert de GRAINE déterministe aux fixtures de démonstration —
 // voir `DATASETS` plus bas. Aucune cryptographie ici : de la reproductibilité.
 import { createHash } from "node:crypto";
@@ -822,6 +822,77 @@ const air = {
 };
 
 const sortie = join(ICI, "tontine.air.json");
+
+// ════════════════════════════════════════════════════════════════════
+//  CE FICHIER N'EST PLUS LA SOURCE DE VÉRITÉ — ET IL REFUSE DE FAIRE
+//  SEMBLANT DE L'ÊTRE.
+// ════════════════════════════════════════════════════════════════════
+//
+// ── CE QUI S'EST PASSÉ, MESURÉ LE 2026-10-16.
+//
+// Ce générateur a produit `tontine.air.json` le 6 octobre. Entre le 13 et le
+// 14, TROIS commits ont enrichi le DOCUMENT directement — 9 champs nouveaux,
+// 4 besoins, et 21 des 39 champs communs modifiés (valeurs de démonstration
+// réelles, unicité du téléphone, photo rendue obligatoire). Ces changements
+// n'ont jamais été remontés ici.
+//
+// Le générateur n'a pas « expiré » : rien n'expire. Il a été CONTOURNÉ. On a
+// modifié le produit au lieu de modifier la machine, et la machine a continué
+// à produire fidèlement la version du 6 octobre. Elle était donc devenue une
+// MACHINE À RÉGRESSER, et rien ne le signalait.
+//
+// Mesure de ce qu'un lancement coûtait : 2 230 lignes supprimées, 10 625
+// octets de document perdus, 4 besoins effacés — en silence, avec un message
+// de succès à l'écran.
+//
+// ── POURQUOI UN REFUS, ET PAS UNE RESYNCHRONISATION.
+//
+// La resynchronisation serait le bon geste si ce fichier devait rester la
+// source. Il ne le doit plus : sa raison d'être était de DÉRIVER l'AIR du
+// schéma PostgreSQL du cahier V1.2 — « les réécrire d'après la prose aurait
+// mesuré ma lecture, pas le format », dit l'en-tête. Or le cahier V1.3 ne
+// porte AUCUN schéma (mesuré : 29 marqueurs en V1.2, zéro en V1.3). La
+// prémisse a disparu avec lui.
+//
+// Le document est devenu l'artefact vivant, et c'est très bien : il est
+// validé (`assertValidAir`), il porte sa traçabilité (`intent.needs`), et
+// c'est de LUI que les deux cibles sont compilées.
+//
+// Ce fichier reste comme ARCHIVE de la dérivation d'origine, et comme outil
+// de comparaison. Il ne peut plus écraser quoi que ce soit.
+//
+// ── LE GARDE-FOU, ET CE QU'IL NE FAIT PAS.
+//
+// Il ne compare pas des dates — une date ne prouve rien. Il compare ce qu'il
+// VA écrire avec ce qui EXISTE, et refuse dès qu'un octet diffère. Pour
+// passer outre, il faut le dire : `--ecraser`. Un geste délibéré, nommé, qui
+// ne peut plus arriver par distraction.
+if (existsSync(sortie) && !process.argv.includes("--ecraser")) {
+  const existant = readFileSync(sortie, "utf8");
+  const propose = JSON.stringify(air, null, 1);
+  if (existant !== propose) {
+    const lu = JSON.parse(existant);
+    const idsExistants = new Set((lu.intent?.needs ?? []).map((b) => b.id));
+    const perdus = [...idsExistants].filter(
+      (id) => !air.intent.needs.some((b) => b.id === id),
+    );
+    console.error("REFUS — ce générateur n'est plus la source de vérité.");
+    console.error("");
+    console.error(`  document existant : ${existant.length} octets`);
+    console.error(`  ce fichier produit : ${propose.length} octets`);
+    console.error(`  écart              : ${existant.length - propose.length} octets perdus`);
+    if (perdus.length > 0) {
+      console.error(`  besoins effacés    : ${perdus.join(", ")}`);
+    }
+    console.error("");
+    console.error("  La source est `tontine.air.json` lui-même. Pour faire évoluer");
+    console.error("  l'application, modifiez le DOCUMENT puis lancez `emettre.mjs`.");
+    console.error("");
+    console.error("  Si vous voulez vraiment écraser : node depuis-cahier.mjs --ecraser");
+    process.exit(1);
+  }
+}
+
 writeFileSync(sortie, JSON.stringify(air, null, 1), "utf8");
 
 const portes = air.intent.needs.filter((b) => b.resolution.kind === "satisfied");
