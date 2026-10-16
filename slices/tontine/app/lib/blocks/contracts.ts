@@ -66,6 +66,20 @@ export interface ListFilterSpec {
   optionLabels?: Readonly<Record<string, string>>;
 }
 
+/**
+ * LES QUATRE SENS QU'UN ÉTAT PEUT PORTER (1.5.0, AIR 1.43.0).
+ *
+ * `neutral` est l'absence de jugement, et c'est le mot JUSTE côté document :
+ * la primitive l'appelle `info`, qui est un mot d'interface, pas un mot de
+ * métier. La traduction se fait à la frontière, UNE fois, dans le composant —
+ * jamais dans le document, qui ne doit pas connaître le vocabulaire du rendu.
+ *
+ * Quatre et pas cinq : ce sont les seules couleurs de sens que la palette
+ * porte. Une cinquième exigerait un jeton de plus, donc une décision de
+ * design — pas une commodité d'écriture.
+ */
+export type BadgeTone = "neutral" | "success" | "warn" | "error";
+
 export interface ListItemData {
   id: string;
   /** Vignette de la ligne (1.2.0) — absente = ligne purement textuelle. */
@@ -74,6 +88,20 @@ export interface ListItemData {
   subtitle?: string;
   trailing?: string;
   badge?: string;
+  /**
+   * LE SENS DU BADGE (1.5.0, AIR 1.43.0) — pas sa couleur : son SENS.
+   *
+   * Mesuré le 2026-10-13 : la primitive `Badge` accepte un `tone` depuis
+   * l'origine, et `success`/`warn`/`error` vivaient déjà dans la feuille de
+   * style. ZÉRO usage. Aucun bloc n'en passait, donc toutes les pastilles
+   * sortaient du même gris, et vingt lignes d'une liste étaient
+   * indistinguables.
+   *
+   * Absent = `neutral`, c'est-à-dire AUCUN jugement. C'est le bon défaut :
+   * une pastille colorée sur chaque ligne ne distingue plus rien, et
+   * colorer au hasard dirait quelque chose de faux.
+   */
+  badgeTone?: BadgeTone;
 }
 
 // F3 (revue pré-gel 2026-08-28) : état DISCRIMINÉ — les libellés d'état
@@ -262,6 +290,8 @@ export interface Blocks {
   ButtonBlock: ComponentType<ButtonBlockProps>;
   SpacerBlock: ComponentType<SpacerBlockProps>;
   ProseBlock: ComponentType<ProseBlockProps>;
+  GraphiqueBlock: ComponentType<GraphiqueBlockProps>;
+  AgentBlock: ComponentType<AgentBlockProps>;
   EmptyStateBlock: ComponentType<EmptyStateBlockProps>;
   DetailHeaderBlock: ComponentType<DetailHeaderBlockProps>;
 }
@@ -293,6 +323,85 @@ export const HEADER_BLOCK_STATES = ["ready"] as const;
 /** 1.8.0 — le spacer n'a qu'un état : il est là, ou il ne l'est pas. */
 export const SPACER_BLOCK_STATES = ["ready"] as const;
 export const PROSE_BLOCK_STATES = ["ready"] as const;
+
+/**
+ * GRAPHIQUE (2026-10-13) — comparer des valeurs nommees.
+ *
+ * Mesure : DEUX cahiers des charges reels, deux metiers sans rapport, le meme
+ * trou. « Graphiques mensuels de consommation et de montants » d'un cote,
+ * « volumes, taux de succes, couts API/IA, recettes, commissions, marge » de
+ * l'autre. Aucun type de bloc ne savait le dire.
+ *
+ * Le bloc ne CALCULE rien : le document fournit des couples etiquette/valeur
+ * deja formates. La proportion se deduit du maximum de la serie — de
+ * l'arithmetique, pas du contenu.
+ *
+ * Les trois etats du registre : une serie peut se charger, revenir vide, ou
+ * echouer. Un graphique vide sans etat declare ressemblerait a un graphique a
+ * zero, et les deux cahiers se trompent la-dessus de la meme facon.
+ */
+export const GRAPHIQUE_BLOCK_STATES = ["ready", "loading", "empty", "error"] as const;
+
+/**
+ * AGENT (2026-10-13) — le bouton qui le reveille, et la parole.
+ *
+ * Decision du proprietaire : chaque utilisateur a ce bouton ; qui veut s'en
+ * servir l'active et lui parle, a la voix ou en ecrivant.
+ *
+ * Le bloc ne PENSE rien : il recueille une demande et montre ce qui revient.
+ * Il ne porte AUCUN texte du moteur — l'invite, le libelle du bouton et les
+ * messages viennent du document (F3). Il n'invente pas non plus de reponse :
+ * `reply` est ce que l'appelant lui donne.
+ *
+ * `awaitingConfirmation` existe parce que certains gestes ne s'annulent pas.
+ * Quand le document pose `confirmBeforeAct`, l'agent SUSPEND et le bloc
+ * montre ce qu'il s'apprete a faire, avec deux issues explicites.
+ */
+export const AGENT_BLOCK_STATES = ["ready", "loading", "error"] as const;
+
+export interface AgentBlockProps extends BlockA11yProps {
+  /** Ce que le bouton dit. Vient du document. */
+  label: string;
+  /** L'invite du champ. Vient du document. */
+  placeholder: string;
+  /** Ouvert ou non — l'appelant tient l'etat. */
+  open: boolean;
+  onToggle: () => void;
+  value: string;
+  onChangeText: (v: string) => void;
+  onSend: () => void;
+  /** Ce que l'agent a repondu. Jamais fabrique ici. */
+  reply?: string;
+  /** La parole, si le document l'autorise. */
+  voice?: { label: string; listening: boolean; onToggle: () => void };
+  /** Un geste qui ne s'annule pas attend un accord explicite. */
+  awaitingConfirmation?: {
+    summary: string;
+    confirmLabel: string;
+    cancelLabel: string;
+    onConfirm: () => void;
+    onCancel: () => void;
+  };
+  state?: { kind: "ready" } | { kind: "loading"; title: string } | { kind: "error"; title: string; message?: string };
+}
+
+export interface GraphiqueSerie {
+  readonly label: string;
+  /** Le nombre qui donne la PROPORTION. */
+  readonly value: number;
+  /** Le texte AFFICHE, formate par le document : unite, devise, arrondi. */
+  readonly display: string;
+}
+
+export interface GraphiqueBlockProps extends BlockA11yProps {
+  title?: string;
+  series: readonly GraphiqueSerie[];
+  state?:
+    | { kind: "ready" }
+    | { kind: "loading"; title: string }
+    | { kind: "empty"; title: string; message?: string }
+    | { kind: "error"; title: string; message?: string };
+}
 export const SEARCH_ENTRY_BLOCK_STATES = ["ready"] as const;
 
 /**

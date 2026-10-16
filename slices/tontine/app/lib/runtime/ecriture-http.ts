@@ -113,6 +113,47 @@ export function creerPortHttp(options: {
   };
 }
 
+/**
+ * LE TRANSPORT QUI PORTE L'IDENTITE (2026-10-13).
+ *
+ * MESURE QUI A COMMANDE CETTE FABRIQUE. Un document qui declare
+ * `backend: genere` recoit un serveur Node emis dont les routes de lecture
+ * FILTRENT par appelant — trente-sept filtres de visibilite, poses parce
+ * qu'une collection servie sans filtre exposait les commandes de tout le
+ * monde. Ces routes lisent l'identite dans un en-tete
+ * `Authorization: Bearer`. Le transport ci-dessous, lui, n'envoyait RIEN :
+ * ni jeton, ni meme le cookie. L'application ne pouvait donc jamais etre
+ * reconnue par son propre serveur.
+ *
+ * POURQUOI UNE FABRIQUE, ET PAS UNE MODIFICATION DU TRANSPORT EXISTANT.
+ * `TransportEcriture` est volontairement plus pauvre que `fetch` : le
+ * commentaire du type le dit, un jeton s'ajoute dans LA FONCTION DE
+ * L'APPELANT. Changer `transportEcritureHttp` aurait impose un choix
+ * d'identite a tous les documents, y compris ceux qui n'en ont pas besoin.
+ * L'ancien transport reste exactement ce qu'il etait.
+ *
+ * LE JETON EST LU A CHAQUE APPEL, jamais capture une fois : il est
+ * rafraichi par le service qui l'a delivre, et un jeton capture au montage
+ * serait expire au bout d'une heure.
+ */
+export const creerTransportEcritureHttp =
+  (jeton: () => string | undefined): TransportEcriture =>
+  async (url, methode, corps) => {
+    const porteur = jeton();
+    const r = await fetch(url, {
+      method: methode,
+      // Le cookie est envoye AUSSI : un serveur qui s'identifie ainsi reste
+      // servi, et les deux voies ne se genent pas.
+      credentials: "include",
+      headers: {
+        ...(porteur === undefined ? {} : { authorization: `Bearer ${porteur}` }),
+        ...(corps === undefined ? {} : { "content-type": "application/json" }),
+      },
+      ...(corps === undefined ? {} : { body: JSON.stringify(corps) }),
+    });
+    return { ok: r.ok, status: r.status };
+  };
+
 /** Le transport réel : `fetch`, et rien de plus. */
 export const transportEcritureHttp: TransportEcriture = async (url, methode, corps) => {
   const r = await fetch(url, {

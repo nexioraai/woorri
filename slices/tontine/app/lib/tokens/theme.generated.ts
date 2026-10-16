@@ -62,7 +62,8 @@ export const theme = {
   },
   "size": {
     "tapTarget": 48,
-    "controlHeight": 54
+    "controlHeight": 54,
+    "measure": 768
   }
 } as const;
 export type SchemeName = keyof typeof theme.color;

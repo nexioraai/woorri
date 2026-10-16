@@ -1,4 +1,4 @@
-# Publier « Tontine »
+# Publier « Tontine.SY »
 
 Votre application est générée et compilable. Avant de la déposer sur les
 magasins, il reste des choses que personne ne peut faire à votre place.

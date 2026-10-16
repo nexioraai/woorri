@@ -133,6 +133,16 @@ export interface ListRowProps extends A11yProps {
   title: string;
   subtitle?: string;
   badge?: string;
+  /**
+   * LE SENS DU BADGE (2026-10-13) — il voyage AVEC lui, jamais séparément.
+   *
+   * `Badge` acceptait un `tone` depuis l'origine, mais aucune des deux
+   * surfaces qui affichent un badge ne pouvait le lui transmettre : la
+   * propriété n'existait pas. Comptés le même jour : zéro usage de
+   * `badgeSuccess`/`badgeWarn`/`badgeError`, pourtant déclarés dans la
+   * feuille de style. La couleur de sens était écrite et inatteignable.
+   */
+  badgeTone?: BadgeProps["tone"];
   /** Texte de fin de ligne (prix, valeur, méta) — position logique RTL. */
   trailing?: string;
   /** Contenu de tête de ligne fourni par le bloc (avatar, icône…). */
@@ -167,6 +177,8 @@ export interface GridCardProps extends A11yProps {
   subtitle?: string;
   trailing?: string;
   badge?: string;
+  /** Le SENS du badge — même raison que `ListRowProps.badgeTone`. */
+  badgeTone?: BadgeProps["tone"];
   imageUri?: string;
   onPress?: () => void;
 }
@@ -190,6 +202,20 @@ export interface AppImageProps extends A11yProps {
 export interface BadgeProps extends A11yProps {
   label: string;
   tone?: "info" | "success" | "warn" | "error";
+}
+
+/**
+ * UNE BARRE D'UN GRAPHIQUE.
+ *
+ * `ratio` est une PROPORTION (0..1) calculee par l'appelant depuis le maximum
+ * de sa serie. La primitive ne connait ni les donnees ni leur echelle : elle
+ * pose une longueur. `valeur` est le texte DEJA FORMATE par le document — la
+ * primitive n'arrondit rien et n'ajoute aucune unite (F3).
+ */
+export interface BarreProps extends A11yProps {
+  label: string;
+  valeur: string;
+  ratio: number;
 }
 
 export interface StateViewProps extends A11yProps {

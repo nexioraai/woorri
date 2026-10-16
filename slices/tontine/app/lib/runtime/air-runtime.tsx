@@ -11,8 +11,10 @@
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 // E1/E2 (D-129) — la vérité des lignes visibles vit dans un module PUR.
 import { champsDeSaisie } from "./champs-de-saisie";
-import {lignesVisibles, optionsDistinctes, formatValeur} from "./list-pipeline";
+import { lignesVisibles, optionsDistinctes, formatValeur, formatDate } from "./list-pipeline";
 import type { FiltreEffectif, OperateurFiltre } from "./list-pipeline";
+import { usePortAgent } from "./agent-racine";
+import type { AgentProposition } from "./agent-contract";
 import { useNavigation } from "./navigation-contrat";
 import { allerVers } from "./racines-navigation";
 import {
@@ -23,10 +25,17 @@ import {
   HeaderBlock,
   ListBlock,
   SpacerBlock,
+  AgentBlock,
+  GraphiqueBlock,
   ProseBlock,
   SearchEntryBlock,
 } from "../blocks/components";
-import type { FormFieldSpec, ListItemData } from "../blocks/contracts";
+import type {
+  AgentBlockProps,
+  BadgeTone,
+  FormFieldSpec,
+  ListItemData,
+} from "../blocks/contracts";
 import { useDataProvider } from "./data-provider";
 import { useSlotRegistry } from "./slot-provider";
 import { detientLeDroit } from "./acces";
@@ -94,6 +103,13 @@ export interface AirFieldData {
       dans la langue de l'app ; absents = comportement 1.9.0 (name/valeur). */
   label?: string;
   enumLabels?: Readonly<Record<string, string>>;
+  /**
+   * LE SENS D'UNE VALEUR D'ÉTAT (AIR 1.43.0) — « payé » est bon, « échec »
+   * est mauvais. Le moteur ne le déduit pas : il ne connaît aucune langue,
+   * et EP-201 lui interdit tout dictionnaire de sens, pour la même raison
+   * qu'aucun nom de pays n'y figure. Absent ⇒ pastille neutre.
+   */
+  enumTones?: Readonly<Record<string, string>>;
   /** 1.21.0 — unité d'affichage (« FCFA ») : le nombre se formate, l'unité
       vient du document. */
   unit?: string;
@@ -370,6 +386,34 @@ function useBlockVisible(screen: AirScreenData, blockId: string): boolean {
  * La résolution n'a lieu que si le document a DÉCLARÉ quoi montrer. Sans
  * déclaration, l'identifiant reste affiché — on ne devine pas.
  */
+/**
+ * LE SENS D'UNE VALEUR, résolu comme son libellé l'est déjà.
+ *
+ * Mesuré le 2026-10-13 : la primitive `Badge` acceptait un `tone` depuis
+ * l'origine, et `success`/`warn`/`error` étaient déclarés dans la feuille de
+ * style. ZÉRO usage — aucune des deux surfaces qui affichent un badge ne
+ * pouvait le transmettre. Toutes les pastilles sortaient donc du même gris,
+ * et vingt lignes d'une liste étaient rigoureusement indistinguables.
+ *
+ * Il ne lit QUE ce que le document déclare. Pas de repli, pas de devinette :
+ * une valeur sans sens déclaré n'en reçoit aucun.
+ */
+function useResolveTone(
+  screen: AirScreenData,
+  entityId: string | undefined,
+): (fieldId: unknown, brut: string | undefined) => BadgeTone | undefined {
+  return (fieldId, brut) => {
+    if (typeof fieldId !== "string" || brut === undefined || entityId === undefined) {
+      return undefined;
+    }
+    const champ = screen.entities[entityId]?.fields.find((f) => f.id === fieldId);
+    const ton = champ?.enumTones?.[brut];
+    return ton === "success" || ton === "warn" || ton === "error" || ton === "neutral"
+      ? ton
+      : undefined;
+  };
+}
+
 function useResolveField(
   screen: AirScreenData,
   entityId: string | undefined,
@@ -388,6 +432,39 @@ function useResolveField(
     // une DONNÉE du document — le moteur n'en invente aucune (F3).
     if (champ?.unit !== undefined) {
       return formatValeur(brut, champ.unit);
+    }
+    // ── UNE DATE NE SE MONTRE PAS EN ISO (2026-10-13).
+    //
+    // Mesuré en montant les écrans d'une application générée pour lire le
+    // texte RÉELLEMENT rendu : « 2026-12-21T21:47:00.000Z » en sous-titre
+    // d'une liste de mouvements. Un horodatage machine, fuseau et
+    // millisecondes compris, sous les yeux d'un client.
+    //
+    // Posé ici, dans le résolveur UNIQUE, et non dans chaque bloc : c'est le
+    // seul endroit par lequel une valeur passe avant d'être affichée.
+    if (champ?.type === "datetime" || champ?.type === "date") {
+      return formatDate(brut, champ.type === "datetime");
+    }
+    // ── UN BOOLÉEN NE SE MONTRE PAS « true ».
+    //
+    // MESURÉ LE 2026-10-07 sur les 31 applications émises : VINGT ET UN blocs
+    // affichaient une pastille portant littéralement `true` ou `false`. Et pas
+    // sur des écrans secondaires —
+    //
+    //     dougplace/blk_accueil_boutiques  → fld_vendeur_verifie
+    //     dougplace/blk_adresse_liste      → fld_adresse_par_defaut
+    //     v3-agence-immo/…_creneaux        → fld_creneau_disponible
+    //
+    // Un vendeur vérifié portait donc l'étiquette « true » sur l'accueil d'une
+    // place de marché. Le propriétaire l'a vu et n'a rien compris — c'est la
+    // bonne réaction : `true` n'est un mot dans aucune langue d'utilisateur.
+    //
+    // Ce que fait un humain : il écrit CE QUE LE CHAMP SIGNIFIE quand c'est
+    // vrai, et il n'écrit RIEN quand c'est faux. Une pastille « non vérifié »
+    // sur chaque vendeur ordinaire serait du bruit ; son absence se lit toute
+    // seule. Le libellé vient du DOCUMENT — le moteur n'invente aucun mot.
+    if (champ?.type === "boolean") {
+      return brut === "true" ? (champ.label ?? undefined) : undefined;
     }
     // DET-032 — un code d'enum ne se montre pas : si le document a déclaré un
     // libellé pour cette valeur, c'est LUI qui s'affiche. Données, filtrage et
@@ -663,6 +740,173 @@ export function AirProse({ screen, blockId }: BlockRef) {
   );
 }
 
+/**
+ * GRAPHIQUE (2026-10-13) — dixieme bloc.
+ *
+ * La lecture est DEFENSIVE, comme partout ici : le document est valide, mais
+ * ce wrapper recoit aussi des props SURCHARGEES par des sorties de slots, qui
+ * viennent d'ailleurs. Une serie absente ou mal formee rend `null` plutot
+ * qu'un graphique vide — un graphique a zero se lit comme une mesure reelle.
+ */
+/**
+ * AGENT (2026-10-13) — la porte, tenue par le runtime.
+ *
+ * Le wrapper tient l'etat LOCAL : ouvert ou ferme, le texte en cours. Il ne
+ * decide RIEN de ce que l agent fait : l envoi est un effet de capacite, et
+ * ce que l agent peut appeler vit dans `agent.allowedOperations` au document.
+ *
+ * FERME PAR DEFAUT a chaque montage. Un agent qui resterait ouvert entre deux
+ * ecrans donnerait l impression d ecouter en permanence.
+ *
+ * F3 : aucun texte ici. Libelle et invite viennent des props du bloc, donc du
+ * document. Sans eux, le bloc ne se rend pas — un bouton sans nom ne se
+ * clique pas.
+ */
+export function AirAgent({ screen, blockId }: BlockRef) {
+  const visible = useBlockVisible(screen, blockId);
+  const b = block(screen, blockId);
+  const port = usePortAgent();
+  const [ouvert, setOuvert] = useState(false);
+  const [texte, setTexte] = useState("");
+  // ── TROIS ETATS, ET PAS UN DE PLUS.
+  //
+  // `enCours` pendant qu on attend ; `proposition` quand le serveur a
+  // repondu et que le document demande un accord ; `echec` porte le CODE
+  // rendu par le serveur. Aucun de ces etats ne fabrique de phrase : les
+  // mots viennent du document (le NOM de l operation, les libelles).
+  const [enCours, setEnCours] = useState(false);
+  const [proposition, setProposition] = useState<AgentProposition | null>(null);
+  const [echec, setEchec] = useState<string | null>(null);
+  const [reponse, setReponse] = useState<string | undefined>(undefined);
+  if (!visible) return null;
+  const props = b.props ?? {};
+  const label = typeof props.label === "string" ? props.label : undefined;
+  const placeholder = typeof props.placeholder === "string" ? props.placeholder : undefined;
+  if (label === undefined || placeholder === undefined) return null;
+  // Les libelles de l accord viennent du document : un bouton sans nom ne se
+  // clique pas, et le moteur n a pas la langue de la personne.
+  const confirmLabel = typeof props.confirmLabel === "string" ? props.confirmLabel : undefined;
+  const cancelLabel = typeof props.cancelLabel === "string" ? props.cancelLabel : undefined;
+
+  const fermerLAttente = () => {
+    setProposition(null);
+    setEchec(null);
+  };
+
+  const agir = (p: AgentProposition) => {
+    setEnCours(true);
+    void port.agir(p.operation, p.entrees, p.intention).then((r) => {
+      setEnCours(false);
+      setProposition(null);
+      if (r.ok) {
+        // CE QUI REVIENT N EST PAS AFFICHE TEL QUEL. On confirme le NOM de ce
+        // qui a eu lieu, pas le corps de la reponse du tiers : il peut porter
+        // des identifiants internes qui ne veulent rien dire pour personne.
+        setReponse(p.nom);
+        setEchec(null);
+      } else {
+        setEchec(r.code);
+      }
+    });
+  };
+
+  const envoyer = () => {
+    const mots = texte.trim();
+    // Une parole vide ne part pas : l appel au cerveau serait facture pour
+    // rien, et le serveur le refuserait de toute facon.
+    if (mots === "") return;
+    setTexte("");
+    setEchec(null);
+    setReponse(undefined);
+    setEnCours(true);
+    void port.parler(mots).then((r) => {
+      setEnCours(false);
+      if (!r.ok) {
+        setEchec(r.code);
+        return;
+      }
+      // ── UNE PROPOSITION NE S EXECUTE PAS TOUTE SEULE.
+      //
+      // Le serveur rend une intention signee QUAND le document demande un
+      // accord. Sa presence est donc le signal : il n y a pas deux sources de
+      // verite sur « faut-il confirmer », il y en a une, et c est le serveur.
+      // Sans les libelles au document, on ne peut pas demander l accord — on
+      // ne force pas, on refuse en le nommant.
+      if (r.valeur.intention !== undefined) {
+        if (confirmLabel === undefined || cancelLabel === undefined) {
+          setEchec("AIR_AGENT_LIBELLES_ACCORD_ABSENTS");
+          return;
+        }
+        setProposition(r.valeur);
+        return;
+      }
+      agir(r.valeur);
+    });
+  };
+
+  const etat: AgentBlockProps["state"] = enCours
+    ? { kind: "loading", title: label }
+    : echec === null
+      ? { kind: "ready" }
+      : { kind: "error", title: label, message: echec };
+
+  return (
+    <AgentBlock
+      testID={b.id}
+      label={label}
+      placeholder={placeholder}
+      open={ouvert}
+      onToggle={() => {
+        setOuvert(!ouvert);
+        fermerLAttente();
+      }}
+      value={texte}
+      onChangeText={setTexte}
+      onSend={envoyer}
+      state={etat}
+      {...(reponse === undefined ? {} : { reply: reponse })}
+      {...(proposition === null || confirmLabel === undefined || cancelLabel === undefined
+        ? {}
+        : {
+            awaitingConfirmation: {
+              summary: proposition.nom,
+              confirmLabel,
+              cancelLabel,
+              onConfirm: () => {
+                agir(proposition);
+              },
+              onCancel: fermerLAttente,
+            },
+          })}
+    />
+  );
+}
+
+export function AirGraphique({ screen, blockId }: BlockRef) {
+  const visible = useBlockVisible(screen, blockId);
+  const b = block(screen, blockId);
+  if (!visible) return null;
+  const props = b.props ?? {};
+  const brut = Array.isArray(props.series) ? (props.series as unknown[]) : [];
+  const series = brut.filter(
+    (p): p is { label: string; value: number; display: string } =>
+      typeof p === "object" &&
+      p !== null &&
+      typeof (p as { label?: unknown }).label === "string" &&
+      typeof (p as { value?: unknown }).value === "number" &&
+      typeof (p as { display?: unknown }).display === "string",
+  );
+  if (series.length === 0) return null;
+  const titre = typeof props.title === "string" ? props.title : undefined;
+  return (
+    <GraphiqueBlock
+      testID={b.id}
+      series={series}
+      {...(titre === undefined ? {} : { title: titre })}
+    />
+  );
+}
+
 export function AirEmptyState({ screen, blockId }: BlockRef) {
   const visible = useBlockVisible(screen, blockId);
   const b = block(screen, blockId);
@@ -696,6 +940,7 @@ export function AirDetailHeader({
   const provider = useDataProvider();
   const statut = useDataStatus(b.entityId);
   const resoudre = useResolveField(screen, b.entityId);
+  const ton = useResolveTone(screen, b.entityId);
   if (!visible) return null;
   if (b.entityId === undefined) throw new Error(`AIR_RUNTIME_ENTITY_MISSING:${blockId}`);
   const instance = provider.getInstance(b.entityId, itemId);
@@ -756,6 +1001,7 @@ export function AirList({ screen, blockId, itemId }: BlockRef & { itemId?: strin
   const provider = useDataProvider();
   const statut = useDataStatus(b.entityId);
   const resoudre = useResolveField(screen, b.entityId);
+  const ton = useResolveTone(screen, b.entityId);
   // Saisie de recherche — LOCALE à la liste : chercher dans un catalogue n'est
   // pas un état d'application, et le partager entre écrans surprendrait.
   const [recherche, setRecherche] = useState("");
@@ -829,7 +1075,9 @@ export function AirList({ screen, blockId, itemId }: BlockRef & { itemId?: strin
   // (identifiant machine) ne sert que de repli 1.9.0.
   const champsEntite = screen.entities[b.entityId]?.fields ?? [];
   const nomsChamps = new Map(champsEntite.map((f) => [f.id, f.label ?? f.name]));
-  const enumLabelsParChamp = new Map(champsEntite.map((f) => [f.id, f.enumLabels]));
+  // `enumLabelsParChamp` a disparu avec la branche qu'il servait : les chips
+  // passent par `resoudre`, qui lit `enumLabels` lui-même. Une table sans
+  // consommateur finit par être recopiée ailleurs.
   const filtresSpec =
     champsPilotes.length === 0
       ? undefined
@@ -840,13 +1088,38 @@ export function AirList({ screen, blockId, itemId }: BlockRef & { itemId?: strin
             setSaisiesFiltres((s) => ({ ...s, [i]: v })),
           inputType: (typesPilotes[i] === "choice" ? "choice" : "text") as "text" | "choice",
           ...(typesPilotes[i] === "choice"
-            ? {
-                options: optionsDistinctes(scopees, fieldId),
+            ? (() => {
+                const options = optionsDistinctes(scopees, fieldId);
+                // ── LES CHIPS PASSENT PAR LE RÉSOLVEUR, PAS PAR UNE BRANCHE.
+                //
                 // DET-032 — les chips affichent le libellé, filtrent la valeur.
-                ...(enumLabelsParChamp.get(fieldId) === undefined
-                  ? {}
-                  : { optionLabels: enumLabelsParChamp.get(fieldId) }),
-              }
+                // Mais la version d'origine ne lisait QUE `enumLabels` : un
+                // champ `reference` n'en a aucun, et ses chips montraient
+                // l'identifiant de ligne.
+                //
+                // Mesuré le 2026-10-05 sur `dougplace/scr_catalogue` :
+                // QUATRE chips « ent_categorie_row_1 » à
+                // « ent_categorie_row_4 », alors que le document déclare
+                // pourtant `referenceDisplayFieldId: fld_categorie_nom`. La
+                // résolution existait, les chips n'y passaient pas.
+                //
+                // `resoudre` est le résolveur UNIQUE (`useResolveField`) : il
+                // traite les trois cas d'un coup — libellé d'enum, traversée
+                // de référence, et unité. Y brancher les chips supprime une
+                // branche au lieu d'en ajouter une.
+                const libelles: Record<string, string> = {};
+                for (const option of options) {
+                  const lisible = resoudre(fieldId, option);
+                  // Seules les entrées qui CHANGENT quelque chose. Une
+                  // identité n'apporte rien et le bloc retombe déjà sur la
+                  // valeur brute (`optionLabels?.[option] ?? option`).
+                  if (lisible !== undefined && lisible !== option) libelles[option] = lisible;
+                }
+                return {
+                  options,
+                  ...(Object.keys(libelles).length === 0 ? {} : { optionLabels: libelles }),
+                };
+              })()
             : {}),
         }));
   const pick = (fieldId: unknown, values: Readonly<Record<string, string>>) =>
@@ -863,6 +1136,10 @@ export function AirList({ screen, blockId, itemId }: BlockRef & { itemId?: strin
     subtitle: pick(props.subtitleFieldId, instance.values),
     trailing: pick(props.trailingFieldId, instance.values),
     badge: pick(props.badgeFieldId, instance.values),
+    // Le SENS vient de la valeur BRUTE, pas du libellé : c'est le code qui
+    // est déclaré dans `enumTones`, et le libellé peut être n'importe quel
+    // texte dans n'importe quelle langue.
+    badgeTone: ton(props.badgeFieldId, instance.values[String(props.badgeFieldId)]),
   }));
   const emptyTitle = str(props.emptyTitle);
   const loadingTitle = str(props.loadingTitle);

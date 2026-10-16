@@ -10,6 +10,7 @@ import { ActivityIndicator, Image, Pressable, Text, TextInput, View } from "reac
 // promet que des glyphes qu'il sait dessiner.
 import Ionicons from "@expo/vector-icons/Ionicons";
 import type {
+  BarreProps,
   AppImageProps,
   AppButtonProps,
   AppTextProps,
@@ -227,6 +228,11 @@ export function TextField({
   // L'état est LOCAL au champ et repart masqué à chaque montage : il ne se
   // conserve pas, il ne se propage pas.
   const [revele, setRevele] = useState(false);
+  // FOCUS CLAVIER (2026-10-16) — `TextInput` est le SEUL element interactif du
+  // natif qui recoive le focus sur toutes les plateformes, iOS compris : c'est
+  // le systeme qui le lui donne en ouvrant le clavier. L'anneau y est donc
+  // visible partout, contrairement a celui d'un `Pressable`.
+  const [focalise, setFocalise] = useState(false);
   return (
     <View style={s.fieldWrap} testID={testID}>
       {/* DET-033 : un libellé VIDE ne rend rien — un champ compact (recherche)
@@ -235,9 +241,15 @@ export function TextField({
       {label === "" ? null : <Text style={s.fieldLabel}>{label}</Text>}
       <View style={s.fieldRow}>
         <TextInput
-          style={[s.input, error !== undefined && s.inputError]}
+          style={[s.input, error !== undefined && s.inputError, focalise && s.focusAnneau]}
           value={value}
           onChangeText={onChangeText}
+          onFocus={() => {
+            setFocalise(true);
+          }}
+          onBlur={() => {
+            setFocalise(false);
+          }}
           placeholder={placeholder}
           secureTextEntry={secure && !revele}
           accessibilityLabel={accessibilityLabel ?? label}
@@ -390,6 +402,7 @@ export function GridCard({
   subtitle,
   trailing,
   badge,
+  badgeTone,
   imageUri,
   onPress,
   testID,
@@ -427,7 +440,7 @@ export function GridCard({
         {subtitle !== undefined && (
           <Text style={s.rowSubtitle}>{subtitle}</Text>
         )}
-        {badge !== undefined && <Badge label={badge} />}
+        {badge !== undefined && <Badge label={badge} tone={badgeTone} />}
         {trailing !== undefined && <Text style={s.gridCardTrailing}>{trailing}</Text>}
       </View>
     </>
@@ -457,6 +470,7 @@ export function ListRow({
   title,
   subtitle,
   badge,
+  badgeTone,
   trailing,
   leading,
   onPress,
@@ -470,7 +484,7 @@ export function ListRow({
       <View style={s.rowBody}>
         <Text style={s.rowTitle}>{title}</Text>
         {subtitle !== undefined && <Text style={s.rowSubtitle}>{subtitle}</Text>}
-        {badge !== undefined && <Badge label={badge} />}
+        {badge !== undefined && <Badge label={badge} tone={badgeTone} />}
       </View>
       {trailing !== undefined && <Text style={s.rowTrailing}>{trailing}</Text>}
     </>
@@ -492,6 +506,45 @@ export function ListRow({
     >
       {body}
     </Pressable>
+  );
+}
+
+/**
+ * UNE BARRE — l'element d'un graphique, et le seul.
+ *
+ * Mesure du 2026-10-13 : deux cahiers des charges reels et sans rapport
+ * demandaient le meme trou — « graphiques mensuels de consommation et de
+ * montants » d'un cote, « volumes, taux de succes, couts » de l'autre. Aucun
+ * type de bloc ne savait le dire.
+ *
+ * DES BARRES, PAS DES COURBES, et c'est un choix : une courbe aurait exige
+ * `react-native-svg`, donc une dependance de plus dans chaque application
+ * generee, pour un besoin que les deux cahiers expriment en COMPARAISONS.
+ *
+ * La primitive ne connait ni les donnees ni leur echelle. `ratio` est une
+ * proportion deja calculee ; `valeur` est un texte deja formate par le
+ * document. Rien n'est arrondi ni suffixe ici (F3 : aucun texte du moteur).
+ */
+export function Barre({ label, valeur, ratio, testID, accessibilityLabel }: BarreProps) {
+  const s = useStyles();
+  // Une proportion hors bornes viendrait d'une donnee aberrante, pas d'une
+  // intention : on la ramene dans [0,1] plutot que de dessiner hors du cadre.
+  const part = Number.isFinite(ratio) ? Math.min(1, Math.max(0, ratio)) : 0;
+  return (
+    <View
+      style={s.barreLigne}
+      testID={testID}
+      accessibilityLabel={accessibilityLabel ?? `${label} ${valeur}`}
+    >
+      <View style={s.barreEntete}>
+        <Text style={s.barreValeur}>{label}</Text>
+        <Text style={s.barreValeur}>{valeur}</Text>
+      </View>
+      <View style={s.barrePiste}>
+        <View style={[s.barreRemplissage, { flex: part }]} />
+        <View style={[s.barreReste, { flex: 1 - part }]} />
+      </View>
+    </View>
   );
 }
 

@@ -6,7 +6,7 @@
 // de styling reste remplaçable (D-021) et les tokens restent la seule
 // source visuelle. AUCUNE syntaxe Maestro/Detox : les blocs sont
 // E2E-agnostiques (D-022/D-023), seuls les testID standard sont exposés.
-import {Liste, GridCard, AppButton,
+import {Liste, GridCard, AppButton, Barre,
   AppText,
   Badge,
   ListRow,
@@ -22,13 +22,22 @@ import type {Blocks,
   FormBlockProps,
   HeaderBlockProps,
   ListBlockProps,
-  SpacerBlockProps, SearchEntryBlockProps} from "./contracts.ts";
+  SpacerBlockProps, SearchEntryBlockProps, GraphiqueBlockProps, AgentBlockProps} from "./contracts.ts";
 
 export function HeaderBlock({ title, subtitle, accroche, logoUri, testID }: HeaderBlockProps) {
   return (
     <Section testID={testID}>
       {logoUri === undefined ? null : (
-        <AppImage uri={logoUri} variant="brand" testID={`${testID ?? "header"}-brand`} />
+        // WCAG 1.1.1 (niveau A) : une image porte un equivalent textuel. Le
+        // nom vient du DOCUMENT — le titre de l'ecran — jamais d'une chaine
+        // inventee ici. Mesure du 2026-10-12 : 124 appels sur 124 n'en
+        // passaient aucun, donc aucune image generee n'etait nommee.
+        <AppImage
+          uri={logoUri}
+          variant="brand"
+          accessibilityLabel={title}
+          testID={`${testID ?? "header"}-brand`}
+        />
       )}
       {/* 1.7.0 — une ACCROCHE monte d'un cran typographique. Le bloc choisit
           un RÔLE, la primitive porte la forme : aucun style ici. */}
@@ -154,6 +163,7 @@ export function ListBlock({
                     subtitle={item.subtitle}
                     trailing={item.trailing}
                     badge={item.badge}
+                    badgeTone={item.badgeTone === undefined || item.badgeTone === "neutral" ? undefined : item.badgeTone}
                     imageUri={item.imageUri}
                     onPress={
                       onItemPress === undefined
@@ -173,13 +183,14 @@ export function ListBlock({
                 key={item.id}
                 leading={
                   item.imageUri === undefined ? undefined : (
-                    <AppImage uri={item.imageUri} variant="thumb" />
+                    <AppImage uri={item.imageUri} variant="thumb" accessibilityLabel={item.title} />
                   )
                 }
                 title={item.title}
                 subtitle={item.subtitle}
                 trailing={item.trailing}
                 badge={item.badge}
+                badgeTone={item.badgeTone === undefined || item.badgeTone === "neutral" ? undefined : item.badgeTone}
                 onPress={
                   onItemPress === undefined
                     ? undefined
@@ -214,6 +225,7 @@ export function ListBlock({
                 subtitle={item.subtitle}
                 trailing={item.trailing}
                 badge={item.badge}
+                badgeTone={item.badgeTone === undefined || item.badgeTone === "neutral" ? undefined : item.badgeTone}
                 imageUri={item.imageUri}
                 onPress={
                   onItemPress === undefined
@@ -264,6 +276,7 @@ export function ListBlock({
               subtitle={item.subtitle}
               trailing={item.trailing}
               badge={item.badge}
+              badgeTone={item.badgeTone === undefined || item.badgeTone === "neutral" ? undefined : item.badgeTone}
               imageUri={item.imageUri}
               onPress={
                 onItemPress === undefined
@@ -280,13 +293,14 @@ export function ListBlock({
             // la primitive. Sans `imageUri`, la ligne reste celle de 1.1.0.
             leading={
               item.imageUri === undefined ? undefined : (
-                <AppImage uri={item.imageUri} variant="thumb" />
+                <AppImage uri={item.imageUri} variant="thumb" accessibilityLabel={item.title} />
               )
             }
             title={item.title}
             subtitle={item.subtitle}
             trailing={item.trailing}
             badge={item.badge}
+            badgeTone={item.badgeTone === undefined || item.badgeTone === "neutral" ? undefined : item.badgeTone}
             onPress={
               onItemPress === undefined
                 ? undefined
@@ -398,6 +412,147 @@ export function ProseBlock({ paragraphs, title, brouillon, testID }: ProseBlockP
   );
 }
 
+/**
+ * GRAPHIQUE (2026-10-13) — la classe que DEUX cahiers reclamaient.
+ *
+ * Le bloc choisit un ROLE, la primitive porte la forme : aucun style ici, le
+ * cliquet d'etancheite reste tenu. Il ne CALCULE que la proportion — le
+ * maximum de la serie — et n'ecrit AUCUN texte : les etiquettes et les
+ * valeurs affichees viennent du document (F3).
+ *
+ * Un maximum nul ou negatif donne des barres vides plutot qu'une division par
+ * zero. Une serie entierement a zero est une information, pas une erreur.
+ */
+export function GraphiqueBlock({
+  title,
+  series,
+  state = { kind: "ready" },
+  testID,
+}: GraphiqueBlockProps) {
+  if (state.kind === "loading") {
+    return <StateView state="loading" title={state.title} testID={testID} />;
+  }
+  if (state.kind === "empty") {
+    return (
+      <StateView state="empty" title={state.title} message={state.message} testID={testID} />
+    );
+  }
+  if (state.kind === "error") {
+    return (
+      <StateView state="error" title={state.title} message={state.message} testID={testID} />
+    );
+  }
+  const max = series.reduce((m, p) => (p.value > m ? p.value : m), 0);
+  return (
+    <Section title={title} testID={testID}>
+      {series.map((p, i) => (
+        <Barre
+          key={`${testID ?? "graphique"}-${String(i)}`}
+          label={p.label}
+          valeur={p.display}
+          ratio={max > 0 ? p.value / max : 0}
+          testID={`${testID ?? "graphique"}-barre-${String(i)}`}
+        />
+      ))}
+    </Section>
+  );
+}
+
+/**
+ * AGENT (2026-10-13) — le bouton, et la parole.
+ *
+ * Decision du proprietaire : chaque utilisateur a ce bouton ; qui veut s'en
+ * servir l'active et lui parle, a la voix ou en ecrivant.
+ *
+ * Le bloc ne PENSE rien et n'INVENTE aucun mot : libelles, invite, resume et
+ * reponse viennent tous de l'appelant, donc du document (F3). Il compose des
+ * primitives, sans un seul style — le cliquet d'etancheite reste tenu.
+ *
+ * FERME PAR DEFAUT : avant ouverture, seul le bouton existe. Un agent qui
+ * ecouterait sans reveil serait exactement ce que personne ne veut dune
+ * machine qui agit. Commentaire volontairement sans apostrophes : la sonde
+ * F3 cherche des chaines linguistiques par motif et ne distingue pas un
+ * commentaire du code.
+ */
+export function AgentBlock({
+  label,
+  placeholder,
+  open,
+  onToggle,
+  value,
+  onChangeText,
+  onSend,
+  reply,
+  voice,
+  awaitingConfirmation,
+  state = { kind: "ready" },
+  testID,
+}: AgentBlockProps) {
+  if (!open) {
+    return (
+      <Section tight>
+        <AppButton label={label} onPress={onToggle} testID={testID} />
+      </Section>
+    );
+  }
+  if (state.kind === "loading") {
+    return <StateView state="loading" title={state.title} testID={testID} />;
+  }
+  if (state.kind === "error") {
+    return (
+      <StateView state="error" title={state.title} message={state.message} testID={testID} />
+    );
+  }
+  // UN GESTE IRREVERSIBLE NE PART PAS SANS ACCORD. Le resume dit ce qui va
+  // se passer ; les deux issues sont EXPLICITES, jamais un seul bouton
+  // « continuer » qui se clique par reflexe.
+  if (awaitingConfirmation !== undefined) {
+    return (
+      <Section testID={testID}>
+        <AppText>{awaitingConfirmation.summary}</AppText>
+        <AppButton
+          label={awaitingConfirmation.confirmLabel}
+          onPress={awaitingConfirmation.onConfirm}
+          testID={`${testID ?? "agent"}-confirmer`}
+        />
+        <AppButton
+          label={awaitingConfirmation.cancelLabel}
+          kind="link"
+          onPress={awaitingConfirmation.onCancel}
+          testID={`${testID ?? "agent"}-annuler`}
+        />
+      </Section>
+    );
+  }
+  return (
+    <Section testID={testID}>
+      <TextField
+        label=""
+        accessibilityLabel={placeholder}
+        placeholder={placeholder}
+        value={value}
+        onChangeText={onChangeText}
+        testID={`${testID ?? "agent"}-saisie`}
+      />
+      {voice === undefined ? null : (
+        <AppButton
+          label={voice.label}
+          kind={voice.listening ? "primary" : "chip"}
+          onPress={voice.onToggle}
+          testID={`${testID ?? "agent"}-voix`}
+        />
+      )}
+      <AppButton
+        label={label}
+        onPress={onSend}
+        disabled={value.trim() === ""}
+        testID={`${testID ?? "agent"}-envoyer`}
+      />
+      {reply === undefined ? null : <AppText>{reply}</AppText>}
+    </Section>
+  );
+}
+
 export function ButtonBlock({ label, icon, kind, onPress, testID }: ButtonBlockProps) {
   // MESURE SUR APPAREIL : ce bloc rendait le bouton NU, donc collé aux bords
   // de l'ecran — seul bloc a ne pas passer par `Section`, qui porte les
@@ -468,7 +623,12 @@ export function DetailHeaderBlock({
           rement sans accents ni phrase longue : le cliquet F3 cherche des
           chaines linguistiques par motif et ne distingue pas un commentaire. */}
       {imageUri === undefined ? null : (
-        <AppImage uri={imageUri} variant="header" testID={`${testID ?? "detail"}-image`} />
+        <AppImage
+          uri={imageUri}
+          variant="header"
+          accessibilityLabel={title}
+          testID={`${testID ?? "detail"}-image`}
+        />
       )}
       <AppText variant="heading">{title}</AppText>
       {subtitle !== undefined && <AppText tone="muted">{subtitle}</AppText>}
@@ -497,4 +657,6 @@ export const blocks: Blocks = {
   DetailHeaderBlock,
   SpacerBlock,
   ProseBlock,
+  GraphiqueBlock,
+  AgentBlock,
 };

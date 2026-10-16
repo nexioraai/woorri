@@ -19,6 +19,22 @@ const makeSheet = (c: Palette) =>
   creerFeuille({
     // — ScreenShell —
     shell: { flex: 1, backgroundColor: c.bg },
+    // ── L'ANNEAU DE FOCUS CLAVIER, UNIQUE POUR LES DEUX CIBLES.
+    //
+    // `outlineWidth` / `outlineColor` / `outlineOffset` existent dans
+    // `ViewStyle` depuis React Native 0.76 — VERIFIE dans les types de la
+    // version installee (0.86.3, StyleSheetTypes.d.ts lignes 496-499). On ne
+    // passe PAS par une bordure : une bordure occupe de la place et decalerait
+    // la mise en page au moment du focus.
+    //
+    // La couleur est l'accent des jetons, identique dans les deux schemas
+    // (mesure : `#FA5D1E` en clair comme en sombre).
+    focusAnneau: {
+      outlineWidth: 3,
+      outlineStyle: "solid" as const,
+      outlineColor: c.primary,
+      outlineOffset: 2,
+    },
     shellTitle: {
       fontSize: theme.font.heading,
       fontWeight: theme.fontWeight.bold,
@@ -392,6 +408,38 @@ const makeSheet = (c: Palette) =>
       color: c.primaryText,
       marginStart: theme.space.md,
     },
+    // — Barre d'un graphique —
+    //
+    // Deux cahiers des charges reels demandent des comparaisons mensuelles :
+    // consommation et montants d'un cote, volumes et taux de l'autre. Des
+    // BARRES suffisent, et elles ne coutent aucune dependance : une courbe
+    // aurait exige SVG. La piste porte la longueur totale, le remplissage la
+    // proportion — le bloc ne decide d'aucune couleur.
+    barreLigne: {
+      marginTop: theme.space.xs,
+    },
+    barreEntete: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+    },
+    barrePiste: {
+      backgroundColor: c.border,
+      borderRadius: theme.radius.sm,
+      height: theme.space.md,
+      overflow: "hidden",
+      marginTop: theme.space.xxs,
+      flexDirection: "row",
+    },
+    // Le RESTE de la piste. Deux `flex` fratries donnent la proportion sans
+    // chaine de pourcentage — qui ne se type pas en React Native.
+    barreReste: {},
+    barreRemplissage: {
+      backgroundColor: c.primary,
+      borderRadius: theme.radius.sm,
+      height: "100%",
+    },
+    barreValeur: { fontSize: theme.font.label, color: c.muted },
     // — Badge —
     badge: {
       backgroundColor: c.badgeBg,
