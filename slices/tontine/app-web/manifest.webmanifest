@@ -1,0 +1,25 @@
+{
+  "id": "./?app=tontine-sy",
+  "name": "Tontine.SY",
+  "short_name": "Tontine.SY",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "lang": "fr",
+  "theme_color": "#992999",
+  "background_color": "#992999",
+  "icons": [
+    {
+      "src": "./icone.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "./icone.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}

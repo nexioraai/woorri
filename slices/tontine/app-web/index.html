@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Tontine.SY</title>
+    <meta name="theme-color" content="#992999" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="icon" href="./icone.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="./icone.svg" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Tontine.SY" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <style>
+      /* ── LA TYPOGRAPHIE, ET POURQUOI ELLE EST ICI (2026-10-13).
+       *
+       * DEFAUT MESURE : zero "fontFamily" dans TOUT le projet emis — ni dans
+       * les jetons, ni dans la feuille de styles, ni dans les primitives. Sur
+       * la cible NATIVE ce n'est pas un probleme : ne rien declarer donne la
+       * police du systeme, qui est celle que la personne attend. Sur le WEB,
+       * ne rien declarer donne le defaut du NAVIGATEUR — un serif, souvent
+       * Times. Toute l'application s'affichait donc dans une police que
+       * personne n'avait choisie, sur une palette sombre.
+       *
+       * C'est la PREMIERE chose qu'on voit. Et aucune gate ne la regardait :
+       * elles prouvent qu'un ecran se monte, jamais qu'il est regardable.
+       *
+       * ── POURQUOI UNE PILE SYSTEME ET PAS UNE POLICE CHARGEE.
+       *
+       * Charger une police ajoute une requete, un clignotement au premier
+       * rendu, et un poids — alors que le cahier d'un client reel exigeait
+       * « < 150 KB pour reseaux 3G ». La pile systeme ne coute RIEN, et elle
+       * rend le texte dans la police native de l'appareil : San Francisco sur
+       * iPhone, Roboto sur Android, Segoe sur Windows. C'est ce que la
+       * personne lit partout ailleurs sur son telephone.
+       *
+       * "font-synthesis: none" : sans elle, un navigateur FABRIQUE un gras ou
+       * un italique absent en deformant la police. Le texte devient sale a un
+       * endroit et pas a un autre, et personne ne sait pourquoi.
+       */
+      html, body {
+        margin: 0;
+        height: 100%;
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",
+          Arial, "Noto Sans", sans-serif;
+        font-synthesis: none;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        text-size-adjust: 100%;
+      }
+      /* ── LE FOND DU DOCUMENT, SINON LA PALETTE S'ARRETE A L'APPLICATION.
+       *
+       * Le theme peint le fond de l'ECRAN, pas celui de la page. Sur un
+       * telephone, un defilement elastique decouvre donc du BLANC sous une
+       * application sombre. Les deux schemas sont declares : le navigateur
+       * choisit selon le reglage de la personne, et la couleur vient des
+       * jetons du document — jamais d'une valeur ecrite ici.
+       */
+      body { background: #FFFFFF; }
+      @media (prefers-color-scheme: dark) { body { background: #0A050E; } }
+      #racine {
+        min-height: 100%;
+        display: flex;
+        flex-direction: column;
+        padding-top: env(safe-area-inset-top);
+        padding-bottom: env(safe-area-inset-bottom);
+        padding-left: env(safe-area-inset-left);
+        padding-right: env(safe-area-inset-right);
+      }
+      :root{--db-g1:repeat(1,minmax(0,1fr));--db-g2:repeat(1,minmax(0,1fr));--db-g3:repeat(1,minmax(0,1fr));--db-g4:repeat(2,minmax(0,1fr));--db-gouttiere:0px;--db-focus:#FA5D1E;--db-focus-fond:#F6F7F9}
+      @media (prefers-color-scheme:dark){:root{--db-focus-fond:#0A050E}}
+      @media (min-width:400px){:root{--db-g2:repeat(2,minmax(0,1fr));--db-g3:repeat(2,minmax(0,1fr));--db-g4:repeat(2,minmax(0,1fr))}}
+      @media (min-width:600px){:root{--db-g3:repeat(3,minmax(0,1fr));--db-g4:repeat(3,minmax(0,1fr));--db-gouttiere:8px}}
+      @media (min-width:1024px){:root{--db-g4:repeat(4,minmax(0,1fr));--db-gouttiere:16px}}
+      [data-testid="app-shell-contenu"]{padding-inline:var(--db-gouttiere)}
+      :where(button,input,textarea,select,a,[tabindex]):focus-visible{outline:3px solid var(--db-focus);outline-offset:2px;box-shadow:0 0 0 2px var(--db-focus-fond)}
+    </style>
+  </head>
+  <body>
+    <div id="racine"></div>
+    <script type="module" src="./index.tsx"></script>
+    <script>
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", function () {
+          navigator.serviceWorker.register("./sw.js").catch(function () {});
+        });
+      }
+    </script>
+  </body>
+</html>

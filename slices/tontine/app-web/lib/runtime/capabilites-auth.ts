@@ -1,0 +1,107 @@
+// RUNTIME COPIÉ — FOURNISSEUR DE CAPABILITIES POUR `auth` (Phase 4).
+//
+// Première capability du registre gelé dont la déclaration produit RÉELLEMENT
+// du code dans l'app émise. Les autres restent sans effet : ce fournisseur
+// n'honore QUE `auth`, et REFUSE tout le reste — il ne devient pas un
+// fourre-tout qui prétendrait implémenter ce qu'il n'implémente pas.
+//
+// Méthodes honorées : `signIn` (paramètre `identifiant`) et `signOut`.
+// Toute autre méthode d'`auth` est refusée et tracée, comme le défaut.
+import type { CapabilityCall, CapabilityProvider } from "./capability-provider";
+import type { SessionLocale } from "./session-locale";
+import type { SessionVerifiee } from "./session-supabase";
+
+export function creerCapabilitesAuth(session: SessionLocale): CapabilityProvider {
+  return {
+    invoke: (call: CapabilityCall): boolean => {
+      if (call.capability !== "auth") {
+        // Code, jamais texte naturel (F3) — module de runtime moteur.
+        console.warn(`AIR_CAPABILITY_NOT_IMPLEMENTED:${call.capability}.${call.method}`);
+        return false;
+      }
+      if (call.method === "signOut") {
+        session.fermer();
+        return true;
+      }
+      if (call.method === "signUp") {
+        // DOUBLURE FERMÉE (jugement propriétaire) : `signUp` n'était qu'un
+        // alias de `signIn` — « Créer mon compte » ouvrait une session sans
+        // rien créer, promesse morte. Sur une session LOCALE, créer et ouvrir
+        // sont indissociables (aucun serveur ne tient de registre) : le
+        // fournisseur le DIT au lieu de le masquer, et le distingue quand
+        // même par son code de trace. Sur une session VÉRIFIÉE
+        // (`session-supabase`), ce sont deux appels serveur différents.
+        console.warn("AIR_CAPABILITY_AUTH_SIGNUP_LOCAL_EQUALS_SIGNIN");
+      }
+      if (call.method === "signIn" || call.method === "signUp") {
+        // Le document DÉCLARE quel champ porte l'identité (`identifiantFieldId`)
+        // — deviner « le premier champ e-mail » serait une convention, donc une
+        // supposition. Sans déclaration, rien n'est établi : on refuse.
+        const champ = call.params.identifiantFieldId;
+        if (typeof champ !== "string") {
+          console.warn("AIR_CAPABILITY_AUTH_IDENTIFIANT_FIELD_MISSING");
+          return false;
+        }
+        const brut = call.params[champ];
+        return typeof brut === "string" && session.ouvrir(brut);
+      }
+      console.warn(`AIR_CAPABILITY_NOT_IMPLEMENTED:${call.capability}.${call.method}`);
+      return false;
+    },
+  };
+}
+
+/**
+ * Variante VÉRIFIÉE — même effet AIR, serveur derrière.
+ *
+ * Deux différences que le document doit assumer : l'identité exige un MOT DE
+ * PASSE (le champ est DÉCLARÉ, jamais deviné), et les opérations sont
+ * asynchrones. `invoke` reste synchrone par contrat : il rend `true` quand
+ * l'appel a été ÉMIS, et la session notifie ses abonnés quand le serveur a
+ * répondu. Prétendre le contraire — attendre pour rendre un booléen — ferait
+ * mentir un contrat que 14 autres capabilities partagent.
+ */
+export function creerCapabilitesAuthVerifiee(session: SessionVerifiee): CapabilityProvider {
+  return {
+    invoke: (call: CapabilityCall): boolean => {
+      if (call.capability !== "auth") {
+        console.warn(`AIR_CAPABILITY_NOT_IMPLEMENTED:${call.capability}.${call.method}`);
+        return false;
+      }
+      if (call.method === "signOut") {
+        void session.fermer();
+        return true;
+      }
+      if (call.method === "resetPassword") {
+        // Le mot de passe oublié n'exige QUE l'identifiant : demander le
+        // secret à quelqu'un qui l'a perdu n'aurait aucun sens.
+        const champ = call.params.identifiantFieldId;
+        if (typeof champ !== "string") {
+          console.warn("AIR_CAPABILITY_AUTH_FIELDS_MISSING");
+          return false;
+        }
+        const adresse = call.params[champ];
+        if (typeof adresse !== "string" || adresse.trim() === "") return false;
+        void session.reinitialiser(adresse);
+        return true;
+      }
+      if (call.method !== "signIn" && call.method !== "signUp") {
+        console.warn(`AIR_CAPABILITY_NOT_IMPLEMENTED:${call.capability}.${call.method}`);
+        return false;
+      }
+      const champId = call.params.identifiantFieldId;
+      const champMdp = call.params.motDePasseFieldId;
+      if (typeof champId !== "string" || typeof champMdp !== "string") {
+        console.warn("AIR_CAPABILITY_AUTH_FIELDS_MISSING");
+        return false;
+      }
+      const identifiant = call.params[champId];
+      const motDePasse = call.params[champMdp];
+      if (typeof identifiant !== "string" || typeof motDePasse !== "string") return false;
+      if (identifiant.trim() === "" || motDePasse === "") return false;
+      if (call.method === "signUp") void session.creer(identifiant, motDePasse);
+      else void session.ouvrir(identifiant, motDePasse);
+      return true;
+    },
+  };
+}
