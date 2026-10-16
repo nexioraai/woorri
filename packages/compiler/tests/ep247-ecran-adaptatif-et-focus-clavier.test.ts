@@ -39,7 +39,6 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { migrateAirDocument, type ProjectAir } from "@deribfy/air-schema";
-import { theme } from "@deribfy/design-tokens";
 
 const ICI = dirname(fileURLToPath(import.meta.url));
 const RACINE = join(ICI, "..", "..", "..");
@@ -156,15 +155,40 @@ describe("EP-247 · l ecran adaptatif et le focus clavier, mesures sur le produi
     const source = readFileSync(join(RACINE, "packages/compiler/src/emit-web.ts"), "utf8");
     const blocFocus = /const reactifEtFocus[\s\S]*?\n\};/u.exec(source)?.[0] ?? "";
     expect(blocFocus, "le bloc reactif n a pas ete trouve dans la source").not.toBe("");
+
+    // ── ON MESURE LE CODE, PAS LA PROSE — deuxième fois le même jour.
+    //
+    // Ma première version lisait le bloc ENTIER, commentaires compris. Elle a
+    // rougi dès que le commentaire a expliqué quelle couleur venait d où, en
+    // citant les deux valeurs en clair. Mesurer la prose laisse deux issues :
+    // appauvrir l explication pour satisfaire une expression régulière, ou
+    // désarmer le contrôle. Ni l une ni l autre.
+    const codeSeul = blocFocus
+      .replace(/\/\*[\s\S]*?\*\//gu, "")
+      .replace(/\/\/[^\n]*/gu, "");
     expect(
-      blocFocus,
+      codeSeul,
       "une couleur en dur dans l emetteur : elle ne suivra plus les jetons",
     ).not.toMatch(/#[0-9A-Fa-f]{6}/u);
 
     // Et la valeur emise est BIEN celle du jeton.
     const { compileWeb } = await import("../src/index.ts");
     const html = compileWeb(document()).files.get("index.html") ?? "";
-    expect(html).toContain("--db-focus:" + theme.color.light.primary);
+    // ── CETTE ASSERTION ENCODAIT LE DÉFAUT, et il faut le dire.
+    //
+    // Elle affirmait que l anneau porte `theme.color.light.primary` — les
+    // jetons PAR DÉFAUT du générateur. Elle passait donc au vert PRÉCISÉMENT
+    // parce que l application d un client affichait l orange de Deribfy
+    // (défaut mesuré le même jour, fermé par EP-248). Un contrôle peut être
+    // vert ET faux : celui-ci l était.
+    //
+    // Ce qu il faut tenir est l inverse : l anneau porte l accent que le
+    // DOCUMENT décide. L égalité avec les jetons émis est tenue par EP-248 ;
+    // ici on tient la source — le moteur de thème, jamais les jetons bruts.
+    const { applyThemeOverrides } = await import("../src/emit-theme.ts");
+    const attendu = applyThemeOverrides(document()).theme.color.light?.primary;
+    expect(attendu, "le moteur de thème ne rend plus d accent").toBeDefined();
+    expect(html).toContain("--db-focus:" + String(attendu));
   });
 
   it("LA CIBLE NATIVE porte l etat focalise, et il vient des jetons", async () => {

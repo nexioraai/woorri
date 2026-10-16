@@ -10,6 +10,7 @@
 // navigation, gabarit).
 import { emitProject, type EmittedProject } from "./emit-project.ts";
 import { enveloppeWeb } from "./emit-web.ts";
+import { emitThemeModule, hasThemeOverrides } from "./emit-theme.ts";
 import { EMBEDDED_ASSETS_WEB } from "./embedded-assets.generated.ts";
 import type { ProjectAir } from "@deribfy/air-schema";
 
@@ -51,6 +52,42 @@ export function compileWeb(input: unknown): EmittedProject {
   // COMMUNE, donc le fichier revenait juste après. Une ligne juste, au mauvais
   // endroit, ne fait rien et le fait silencieusement.
   files.delete("lib/runtime/navigation-native.tsx");
+  // ── L'IDENTITÉ DE L'APPLICATION SE REPOSE APRÈS L'OVERLAY.
+  //
+  // ── LE DÉFAUT, MESURÉ LE 2026-10-16 SUR L'ÉCRAN D'UN CLIENT.
+  //
+  // Le document `tontine` déclare `design.theme: "tontine_sobre"`, dont le
+  // moteur dérive un accent BLEU (`#1E4DFA`). L'application native l'affichait
+  // bien. La PWA du même document, construite la même minute, affichait
+  // `#FA5D1E` — L'ORANGE DE DERIBFY. Deux identités pour un seul document, et
+  // la cible web portait la marque du GÉNÉRATEUR dans l'application d'un
+  // client.
+  //
+  // ── LA CAUSE N'ÉTAIT PAS UN OUBLI, C'ÉTAIT UN ORDRE.
+  //
+  // `emitProject` calcule et pose déjà le thème propre à l'app
+  // (`emit-project.ts`, « THÈME PAR APP »). Mais `EMBEDDED_ASSETS_WEB`
+  // contient la table COMMUNE — ce fichier le dit lui-même vingt lignes plus
+  // haut — et l'overlay REPOSE donc par-dessus la copie par défaut des
+  // jetons. Le calcul avait lieu, et son résultat était écrasé.
+  //
+  // C'est EXACTEMENT le piège déjà payé pour `navigation-native.tsx` : « une
+  // ligne juste, au mauvais endroit, ne fait rien et le fait silencieusement ».
+  // Il a mordu deux fois sur le même mécanisme, pour deux fichiers différents.
+  //
+  // ── POURQUOI ICI, ET PAS EN RETIRANT LE FICHIER DE LA TABLE COMMUNE.
+  //
+  // Les jetons DOIVENT rester dans la table commune : une application sans
+  // identité propre s'en sert, et l'en retirer la laisserait sans thème du
+  // tout. Ce qui doit changer n'est pas la table, c'est le MOMENT — ce qui
+  // appartient à l'application passe après ce qui appartient à la plateforme.
+  //
+  // Aucune logique n'est dupliquée : on rappelle la fonction que l'émetteur
+  // natif emploie. La validation des surcharges, elle, a déjà eu lieu dans
+  // `emitProject`, qui lève avant d'arriver ici.
+  if (hasThemeOverrides(air)) {
+    files.set("lib/tokens/theme.generated.ts", emitThemeModule(air));
+  }
   for (const [nom, contenu] of enveloppeWeb(air, pascal).files) files.set(nom, contenu);
   return { ...natif, files };
 }

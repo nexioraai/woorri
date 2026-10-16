@@ -37,6 +37,10 @@ import type { ProjectAir } from "@deribfy/air-schema";
 // Le verrou de dépendances du gabarit web, scellé depuis un `npm install`
 // RÉEL sur le `package.json` émis — voir `template-web/LISEZ-MOI.md`.
 import { theme } from "@deribfy/design-tokens";
+// L'identité EFFECTIVE de l'application — celle que son document décide —
+// et non les jetons par défaut du générateur. Voir `reactifEtFocus`.
+import { applyThemeOverrides } from "./emit-theme.ts";
+import { EmitError } from "./emit-project.ts";
 import { EMBEDDED_TEMPLATE_WEB } from "./embedded-template-web.generated.ts";
 
 /** Ce que l'enveloppe web ajoute à ce que `emitProject` a déjà produit. */
@@ -174,15 +178,47 @@ createRoot(racine).render(
 // la source, et la feuille émise est dense.
 const reactifEtFocus = (air: ProjectAir): string => {
   const sombre = air.design.theme === "dark";
+  // ── L'ANNEAU PORTE L'ACCENT DE L'APPLICATION, PAS CELUI DU GÉNÉRATEUR.
+  //
+  // DÉFAUT QUE J'AI ÉCRIT MOI-MÊME CE MATIN, mesuré l'après-midi : cette
+  // fonction lisait `theme.color.light.primary`, c'est-à-dire les jetons PAR
+  // DÉFAUT — l'orange `#FA5D1E` de Deribfy. Les montants de l'application
+  // sortaient en `#1E4DFA`, l'accent dérivé de son thème, et l'anneau de
+  // focus en orange. Deux accents dans une même page, dont un qui n'est pas
+  // celui du client.
+  //
+  // `applyThemeOverrides` rend la palette EFFECTIVE : le même calcul que
+  // celui qui produit `lib/tokens/theme.generated.ts`. Une seule source, donc
+  // un seul accent. La validation des surcharges a déjà eu lieu dans
+  // `emitProject`, qui lève avant d'arriver ici.
+  const palettes = applyThemeOverrides(air).theme.color;
+  // Les deux schémas existent toujours — la palette effective est clonée
+  // depuis les jetons, qui les portent. Mais se REPLIER sur le défaut si l'un
+  // manquait remettrait l'orange du générateur en douce : c'est exactement le
+  // défaut qu'on vient de fermer. On refuse bruyamment plutôt que d'habiller.
+  const lire = (schema: "light" | "dark", jeton: "primary" | "bg"): string => {
+    const v = palettes[schema]?.[jeton];
+    if (typeof v !== "string") {
+      throw new EmitError(
+        "THEME_PALETTE_INCOMPLETE",
+        `design.theme.${schema}.${jeton}`,
+        "la palette effective ne porte pas ce jeton",
+      );
+    }
+    return v;
+  };
+  const accent = lire("light", "primary");
+  const fondClair = lire("light", "bg");
+  const fondSombre = lire("dark", "bg");
   const g = (n: number): string => "repeat(" + String(n) + ",minmax(0,1fr))";
   return [
     ":root{" +
       "--db-g1:" + g(1) + ";--db-g2:" + g(1) + ";--db-g3:" + g(1) + ";--db-g4:" + g(2) + ";" +
       "--db-gouttiere:0px;" +
-      "--db-focus:" + theme.color.light.primary + ";" +
-      "--db-focus-fond:" + (sombre ? theme.color.dark.bg : theme.color.light.bg) +
+      "--db-focus:" + accent + ";" +
+      "--db-focus-fond:" + (sombre ? fondSombre : fondClair) +
     "}",
-    "@media (prefers-color-scheme:dark){:root{--db-focus-fond:" + theme.color.dark.bg + "}}",
+    "@media (prefers-color-scheme:dark){:root{--db-focus-fond:" + fondSombre + "}}",
     "@media (min-width:400px){:root{--db-g2:" + g(2) + ";--db-g3:" + g(2) + ";--db-g4:" + g(2) + "}}",
     "@media (min-width:600px){:root{--db-g3:" + g(3) + ";--db-g4:" + g(3) + ";" +
       "--db-gouttiere:" + String(theme.space.sm) + "px}}",
