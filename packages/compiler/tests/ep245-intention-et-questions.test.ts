@@ -54,9 +54,12 @@ describe("EP-245 · l intention est lue, l ambiguïté est questionnée", () => 
     const ambigu = [
       { code: "MODELE_TERME_AMBIGU", path: "couverture", message: "« tontine » : sens non tranché" },
     ];
+    // `questions` est READONLY dans le module : le declarer mutable ici
+    // forcerait une conversion par `unknown`, qui ne protege rien et masque
+    // les vraies incompatibilites. On respecte le contrat tel qu il est.
     const r = elicitationDe(ambigu, { interlocuteur: true }) as {
       statut: string
-      questions: { code: string; texte: string }[]
+      questions: readonly { code: string; texte: string }[]
     };
     expect(r.statut, "une demande ambiguë n a produit aucune question").toBe("questions");
     expect(r.questions.length).toBeGreaterThan(0);

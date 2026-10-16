@@ -171,7 +171,14 @@ describe("EP-243 · le moteur APPELLE la réparation des parcours", () => {
     // du mouvement là où il n y a rien à corriger — et on ne saurait plus
     // distinguer une réparation utile d une habitude.
     const sain = JSON.parse(JSON.stringify(MODELE_FAUTIF)) as typeof MODELE_FAUTIF;
-    sain.parcours[1].etapes[1].geste = "chercher";
+    // L etape visee est AFFIRMEE avant d etre ecrite : sous
+    // `noUncheckedIndexedAccess`, un index peut etre indefini, et une
+    // affectation sur `undefined` planterait a l execution au lieu de rougir
+    // ici. Si la maquette change de forme, c est cette ligne qui le dira.
+    const etape = sain.parcours[1]?.etapes[1];
+    expect(etape, "la maquette n a plus la forme attendue").toBeDefined();
+    if (etape === undefined) return;
+    etape.geste = "chercher";
     expect(codes(sain as unknown as ModeleMetier)).not.toContain("DERIVATION_TRAVERSEE_ACTEUR");
 
     const { creerMoteur } = (await import(CHEMIN_MOTEUR)) as {
@@ -191,7 +198,7 @@ describe("EP-243 · le moteur APPELLE la réparation des parcours", () => {
     const tirages = r.etat?.tirages ?? r.resultat?.tirages ?? [];
     const reparations = tirages.flatMap((t) => t.reparations ?? []);
     expect(
-      reparations.filter((x) => /chercher/u.test(x)),
+      reparations.filter((x) => x.includes("chercher")),
       "un modèle sain a été « réparé » : la garde ne tient pas",
     ).toEqual([]);
   }, 30_000);
