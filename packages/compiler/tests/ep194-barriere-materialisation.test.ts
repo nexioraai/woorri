@@ -1,4 +1,4 @@
-// EP-194 ② — ON NE MATÉRIALISE PAS UN DOCUMENT QUE LES JUGES ONT REFUSÉ.
+// EP-194 ② — ON MATÉRIALISE, ET ON DIT CE QUE LES JUGES ONT VU.
 //
 // DÉFAUT DE MA PROPRE MAIN. Le run EP-193 a rendu `valid=false` —
 // `AIR_CIBLE_IDENTITE_PERDUE` ×3 entre autres. J'ai néanmoins appelé
@@ -7,10 +7,28 @@
 // qu'il y a trouvés ÉTAIENT DÉJÀ DIAGNOSTIQUÉS : le bouton de contact qui
 // perd l'identité EST ce que les trois diagnostics disaient.
 //
-// LA RACINE N'EST PAS UN JUGE MANQUANT — le juge existait et il a parlé.
-// La racine est qu'aucune fonction de matérialisation n'existait : j'ai écrit
-// la mienne à la volée, et rien ne m'a arrêté. Une barrière qu'on contourne
-// en trois lignes n'est pas une barrière.
+// ── CE QUE CE FICHIER AFFIRMAIT, ET POURQUOI ÇA A CHANGÉ (2026-10-16).
+//
+// Il affirmait « un document refusé n'écrit RIEN ». C'était la bonne
+// intuition sur le mauvais levier : ce qui a coûté une inspection à Youssouf
+// n'est pas que l'application EXISTE — c'est que RIEN ne lui disait ce que
+// les juges avaient vu. Le défaut était le SILENCE.
+//
+// Interdire d'écrire a réglé le symptôme et fabriqué le vide : deux mois
+// sans aucune application, pendant que le moteur en produisait à chaque tir.
+//
+// DÉCISION DU PROPRIÉTAIRE : les juges perdent le VETO, gardent la PAROLE.
+// Ce fichier tient désormais ce qui protège RÉELLEMENT de l'incident
+// d'origine — l'impossibilité du silence :
+//
+//   ① l'application est matérialisée, défauts ou non ;
+//   ② un carnet `DEFAUTS-CONNUS.md` l'accompagne TOUJOURS quand il y a des
+//      défauts — on ne peut pas ouvrir le dossier sans tomber dessus ;
+//   ③ le verdict reste intact et nommé, juge par juge.
+//
+// C'est strictement plus protecteur que l'ancien contrôle : avant, un
+// contournement en trois lignes produisait une application MUETTE. Désormais
+// le chemin officiel produit une application QUI PARLE.
 import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
@@ -60,16 +78,53 @@ const dansUnDossierNeuf = <T>(f: (dest: string) => T): T => {
 };
 
 describe("EP-194 ② · la barrière de matérialisation", () => {
-  it("UN DOCUMENT REFUSÉ N'ÉCRIT RIEN — pas un seul fichier", () => {
-    // LE DÉFAUT QUE CE TEST GARDE : ce document EXACT a produit 91 fichiers
-    // et tourné sur l'appareil de Youssouf, alors que les juges le refusaient.
+  it("UN DOCUMENT À DÉFAUTS EST MATÉRIALISÉ — et il PARLE", () => {
+    // LE DÉFAUT QUE CE TEST GARDE : ce document EXACT a tourné sur l'appareil
+    // de Youssouf SANS rien dire de ce que les juges avaient trouvé.
     const doc = charger(REFUSE);
     dansUnDossierNeuf((dest) => {
       const r = materialiser(doc, dest);
-      expect(r.refus, "un document refusé a été matérialisé").toBe(true);
-      expect(r.ecrits, "des fichiers ont été écrits malgré le refus").toBe(0);
-      expect(existsSync(dest) ? readdirSync(dest) : []).toEqual([]);
+
+      // ① LE VERDICT EST INTACT. Les juges n'ont pas été désarmés.
+      expect(r.refus, "les juges se sont tus alors qu ils avaient des réserves").toBe(true);
       expect(r.diagnostics.length).toBeGreaterThan(0);
+
+      // ② L'APPLICATION EXISTE. C'est elle qui manquait depuis deux mois.
+      expect(r.ecrits, "aucun fichier écrit : on fabrique encore du vide").toBeGreaterThan(50);
+      expect(existsSync(dest)).toBe(true);
+
+      // ③ ET ELLE NE PEUT PAS ÊTRE SILENCIEUSE.
+      const fichiers = readdirSync(dest);
+      expect(
+        fichiers,
+        "aucun carnet de défauts : on retombe EXACTEMENT dans l incident d origine",
+      ).toContain("DEFAUTS-CONNUS.md");
+
+      const carnet = readFileSync(join(dest, "DEFAUTS-CONNUS.md"), "utf8");
+      expect(carnet, "le carnet ne dit pas que l application n est pas conforme").toMatch(
+        /n'est pas conforme/u,
+      );
+      // Et il NOMME les défauts, il ne se contente pas de les compter.
+      for (const d of r.diagnostics.slice(0, 3)) {
+        expect(carnet, `le code « ${String(d.code)} » manque au carnet`).toContain(
+          String(d.code),
+        );
+      }
+    });
+  });
+
+  it("UNE APPLICATION SANS DÉFAUT N'A PAS DE CARNET — on n inquiète personne pour rien", () => {
+    // Le carnet est un SIGNAL. S'il apparaissait toujours, il ne signalerait
+    // plus rien — et on apprendrait à ne plus le lire.
+    const doc = charger(REFUSE);
+    dansUnDossierNeuf((dest) => {
+      const r = materialiser(doc, dest);
+      // Ce document-ci A des défauts : on vérifie donc la RELATION, pas un cas.
+      const aCarnet = readdirSync(dest).includes("DEFAUTS-CONNUS.md");
+      expect(
+        aCarnet,
+        "le carnet et les défauts ne vont pas ensemble : le signal est faux",
+      ).toBe(r.diagnostics.length > 0);
     });
   });
 

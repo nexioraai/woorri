@@ -80,9 +80,23 @@ export function materialiser(document, destination, { prescriptif } = {}) {
       ? []
       : presentation.jugerPlacement(air, () => "contenu", presentation.contexteDeDocument(air));
   diagnostics.push(...deLEcran);
-  if (diagnostics.length > 0) {
-    return { ecrits: 0, diagnostics, refus: true };
-  }
+  // ── ON ÉCRIT, ET ON DIT. (2026-10-16 — décision du propriétaire.)
+  //
+  // Cette fonction REFUSAIT d'écrire dès qu'un diagnostic subsistait. Le
+  // raisonnement d'origine, inscrit en tête de ce fichier, visait un VRAI
+  // défaut : j'avais fait inspecter à Youssouf une application que les juges
+  // avaient rejetée, et il a perdu une inspection à retrouver des défauts
+  // DÉJÀ diagnostiqués.
+  //
+  // MAIS LE DÉFAUT ÉTAIT LE SILENCE, PAS L'ÉCRITURE. Ce qui lui a coûté une
+  // inspection, ce n'est pas que l'application existe : c'est que rien ne
+  // lui disait ce que les juges avaient vu. Interdire d'écrire a réglé le
+  // symptôme et fabriqué le vide — deux mois sans aucune application.
+  //
+  // Le chemin web a tranché le premier (LOT 1) : les juges perdent le VETO,
+  // ils gardent la PAROLE. Ce chemin-ci suit, et il parle PLUS FORT qu'avant
+  // — le verdict voyage AVEC l'application, dans un fichier qu'on ne peut
+  // pas ne pas voir.
   const compile = compiler.compileProject(aJuger);
   let ecrits = 0;
   for (const [chemin, contenu] of compile.files) {
@@ -91,7 +105,57 @@ export function materialiser(document, destination, { prescriptif } = {}) {
     writeFileSync(abs, contenu);
     ecrits += 1;
   }
-  return { ecrits, diagnostics: [], refus: false, rootHash: compile.rootHash };
+
+  // ── LE CARNET DE DÉFAUTS, À CÔTÉ DE L'APPLICATION.
+  //
+  // En MAJUSCULES et en tête de dossier : quelqu'un qui ouvre ce répertoire
+  // doit tomber dessus avant d'ouvrir un écran. C'est la forme que « dire »
+  // prend ici, et c'est elle qui remplace le refus.
+  if (diagnostics.length > 0) {
+    const par = {};
+    for (const d of diagnostics) {
+      const c = d.code ?? "SANS_CODE";
+      par[c] = (par[c] ?? 0) + 1;
+    }
+    const lignes = [
+      "# CE QUE LES JUGES ONT VU",
+      "",
+      `Cette application est MATÉRIALISÉE, et ${String(diagnostics.length)} diagnostic(s)`,
+      "subsistent. Elle n'est pas conforme — elle existe.",
+      "",
+      "## Par code",
+      "",
+      ...Object.entries(par)
+        .sort((a, b) => b[1] - a[1])
+        .map(([c, n]) => `- **${c}** × ${String(n)}`),
+      "",
+      "## Le détail",
+      "",
+      ...diagnostics
+        .slice(0, 100)
+        .map((d) => `- \`${d.code ?? "SANS_CODE"}\` @ ${String(d.path ?? "?")} — ${String(d.message ?? "")}`),
+      "",
+      diagnostics.length > 100 ? `_(${String(diagnostics.length - 100)} autres non listés)_` : "",
+      "",
+      "---",
+      "",
+      "Ce fichier existe parce qu'une application rejetée a déjà été inspectée",
+      "SANS que personne sache ce que les juges avaient trouvé. Le défaut était",
+      "le silence. Il ne se reproduira pas par ce chemin.",
+      "",
+    ];
+    writeFileSync(join(destination, "DEFAUTS-CONNUS.md"), lignes.join("\n"));
+    ecrits += 1;
+  }
+
+  return {
+    ecrits,
+    diagnostics,
+    // `refus` garde son nom et son sens : les juges ont parlé. Ce qui change,
+    // c'est qu'il ne commande plus la destruction de l'œuvre.
+    refus: diagnostics.length > 0,
+    rootHash: compile.rootHash,
+  };
 }
 
 // Appel direct : `node materialiser.mjs <document.air.json> <destination>`
@@ -102,15 +166,24 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     process.exit(2);
   }
   const r = materialiser(JSON.parse(readFileSync(doc, "utf8")), dest);
+  console.log(`✓ ${String(r.ecrits)} fichiers écrits · hash ${String(r.rootHash).slice(0, 16)}`);
   if (r.refus) {
+    // ── ON A ÉCRIT, ET MAINTENANT ON PARLE — FORT.
+    //
+    // Avant : « RIEN n'a été écrit », et le vide. L'application existe
+    // désormais, et ce bloc est ce qui empêche qu'on la croie conforme.
     const par = {};
     for (const d of r.diagnostics) par[d.code ?? "SANS_CODE"] = (par[d.code ?? "SANS_CODE"] ?? 0) + 1;
-    console.error(`⛔ REFUS — ${String(r.diagnostics.length)} diagnostic(s), RIEN n'a été écrit.`);
+    console.error("");
+    console.error(`⚠️  ${String(r.diagnostics.length)} diagnostic(s) SUBSISTENT — cette application n'est PAS conforme.`);
     for (const [c, n] of Object.entries(par).sort((a, b) => b[1] - a[1])) {
       console.error(`   ${String(n).padStart(3)} × ${c}`);
     }
-    console.error("Un document refusé ne va pas sur un appareil — corrige au MOTEUR, jamais ici.");
+    console.error("");
+    console.error("   Le détail est dans DEFAUTS-CONNUS.md, à côté de l'application.");
+    console.error("   Corrige au MOTEUR, jamais dans les fichiers émis.");
+    // Le code de sortie reste 1 : un script qui enchaîne doit pouvoir
+    // distinguer « conforme » de « livré avec réserves » sans lire la sortie.
     process.exit(1);
   }
-  console.log(`✓ ${String(r.ecrits)} fichiers écrits · hash ${String(r.rootHash).slice(0, 16)}`);
 }

@@ -243,8 +243,19 @@ export async function journaliser(l: LigneGeneration): Promise<void> {
     tours: l.tours ?? [],
     niveaux: l.niveaux ?? null,
     fautes: { production: l.fautesProduction ?? null, total: l.defautsTotal ?? null },
-    // UN REFUS GARDE SA BASE : c'est elle qui evite de tout repayer.
-    ...(l.ok ? {} : { acquis: l.document ?? null, modele: l.modele ?? null }),
+    // ── CE QUI N'EST PAS LIVRABLE GARDE SA BASE : elle evite de tout
+    // repayer. Ce qui EST livrable n'en a plus besoin — le document vit
+    // dans sa propre colonne, et le recopier ici doublerait un JSON de
+    // plusieurs centaines de kilo-octets.
+    //
+    // La condition suivait `ok` ; elle suit desormais la LIVRABILITE, comme
+    // dans le travailleur. Une oeuvre livree AVEC RESERVES a `ok: false` et
+    // n'a pourtant aucune raison d'etre rangee deux fois.
+    //
+    // `modele` reste dans les DEUX cas : ce n'est pas l'oeuvre, c'est de
+    // quoi la REPRENDRE — une application livree avec reserves se repare.
+    ...(telechargeable ? {} : { acquis: l.document ?? null }),
+    modele: l.modele ?? null,
   }
 
   try {

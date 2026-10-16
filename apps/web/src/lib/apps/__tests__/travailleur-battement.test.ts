@@ -15,6 +15,34 @@
 import { describe, expect, it } from 'vitest'
 import { creerFrom, type JournalPostgrest } from '@/lib/testing/postgrest'
 import { creerTravailleur, type BaseGeneration, type MoteurContinuation } from '../travailleur'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
+import { migrateAirDocument } from '@deribfy/air-schema'
+
+/**
+ * UN VRAI DOCUMENT, ET POURQUOI IL A FALLU LE METTRE.
+ *
+ * Ce moteur factice rendait `{ livre: true }` — un jouet. Tant que le
+ * travailleur se contentait de lire `ok`, ça suffisait. Depuis le LOT 2 il
+ * COMPILE ce qu'il produit, et un jouet ne compile pas : la ligne sortait
+ * « refusée » et l'assertion « livrée » tombait.
+ *
+ * J'avais d'abord ÉLARGI l'assertion à `['livree', 'refusee']`. C'était
+ * maquiller : un contrôle qui accepte les deux réponses ne contrôle plus
+ * rien. La bonne correction est ici — donner au faux moteur ce qu'un vrai
+ * moteur rend, c'est-à-dire une application.
+ */
+const DOCUMENT_REEL = migrateAirDocument(
+  JSON.parse(
+    readFileSync(
+      join(
+        __dirname, '..', '..', '..', '..', '..', '..',
+        'packages', 'golden-corpus', 'corpus-v3', 'bus-intercites.air.json',
+      ),
+      'utf8',
+    ),
+  ) as Record<string, unknown>,
+)
 
 const LIGNE = {
   id: 'ligne-test',
@@ -58,7 +86,7 @@ const moteurLent = (ms: number): MoteurContinuation => ({
       fini: true,
       resultat: {
         ok: true,
-        document: { livre: true },
+        document: DOCUMENT_REEL,
         diagnostics: [],
         tirages: [],
         coutUsd: 0,
@@ -80,25 +108,9 @@ describe('CLIQUET — le battement distingue erreur et dépossession', () => {
       battementRafraichiMs: 30,
     })
     const r = await w.tourner()
-    // ── CE QUE CE CONTRÔLE MESURE, ET CE QU'IL NE MESURE PAS.
-    //
-    // Il mesure le BATTEMENT : une erreur passagère ne dépossède pas, et la
-    // tranche payée est ÉCRITE. Il ne mesure NI la compilation NI le verdict
-    // des juges — son moteur factice rend `{ livre: true }`, un jouet.
-    //
-    // Depuis le LOT 2 (2026-10-16) le travailleur COMPILE ce qu'il produit :
-    // un jouet ne compile pas, donc la ligne sort « refusée ». C'est juste,
-    // et ça ne dit rien du battement. On affirme donc ce qui est en jeu
-    // ici — la ligne est ÉCRITE, pas abandonnée — et EP-253 tient la
-    // compilation, avec un vrai document.
-    expect(['livree', 'refusee'], `issue inattendue : ${String(r[0]?.issue)}`).toContain(
-      r[0]?.issue,
-    )
+    expect(r[0]?.issue).toBe('livree')
     const finales = (journal.ecritures.x_test ?? []) as { charge?: { statut?: string } }[]
-    expect(
-      finales.some((e) => e.charge?.statut === 'livree' || e.charge?.statut === 'refusee'),
-      'la tranche payée n a pas été écrite : le battement a dépossédé',
-    ).toBe(true)
+    expect(finales.some((e) => e.charge?.statut === 'livree')).toBe(true)
   })
 
   it('une réponse PROPRE à zéro ligne, elle, déposséde — et rien n’est écrit', async () => {
