@@ -63,7 +63,7 @@ const SANS_UNITE = new Set([
  * `right` : l'application déclare `rtlSupported` au contrat, et une marge
  * physique se tromperait de côté en arabe.
  */
-const RACCOURCIS: Readonly<Record<string, readonly string[]>> = {
+export const RACCOURCIS: Readonly<Record<string, readonly string[]>> = {
   paddingHorizontal: ["paddingLeft", "paddingRight"],
   paddingVertical: ["paddingTop", "paddingBottom"],
   marginHorizontal: ["marginLeft", "marginRight"],
@@ -72,6 +72,18 @@ const RACCOURCIS: Readonly<Record<string, readonly string[]>> = {
   paddingEnd: ["paddingInlineEnd"],
   marginStart: ["marginInlineStart"],
   marginEnd: ["marginInlineEnd"],
+  // LES BORDURES LOGIQUES (2026-10-16). React Native écrit `borderEndWidth`
+  // là où le CSS écrit `border-inline-end-width`. Le passage en tiret seul
+  // donnerait `border-end-width` — une propriété qui n'existe pas, donc
+  // IGNORÉE EN SILENCE : le rail de navigation aurait perdu sa séparation
+  // verticale sur le web, et rien ne l'aurait dit.
+  //
+  // Attrapé par le crible de `css.test.ts` AVANT livraison, ce qui est
+  // exactement sa raison d'être.
+  borderStartWidth: ["borderInlineStartWidth"],
+  borderEndWidth: ["borderInlineEndWidth"],
+  borderStartColor: ["borderInlineStartColor"],
+  borderEndColor: ["borderInlineEndColor"],
   // POSITIONNEMENT LOGIQUE. React Native écrit `end: 0` là où le CSS écrit
   // `inset-inline-end`. Laisser passer `end` tel quel donnerait une propriété
   // que le navigateur ignore — et un élément positionné qui ne l'est pas se

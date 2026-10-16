@@ -38,7 +38,8 @@ import { Vue as View } from "../primitives";
 // Barre d'état et zones sûres passent par une COUTURE — voir ./plateforme.
 // Sans elle, le shell imposait deux paquets natifs à la cible web, alors que
 // c'est justement le fichier qui doit valoir pour les deux.
-import { StatusBar, useSafeAreaInsets } from "./plateforme";
+import { StatusBar, useSafeAreaInsets, useLargeurDeFenetre } from "./plateforme";
+import { dispositionDe } from "./disposition-navigation";
 import { useThemeBridge } from "../primitives/theme-bridge";
 import { theme } from "../tokens";
 import type { PropsWithChildren, ReactNode } from "react";
@@ -63,6 +64,13 @@ export function AppShell({
 }: PropsWithChildren<AppShellProps>) {
   const insets = useSafeAreaInsets();
   const { scheme } = useThemeBridge();
+  // ── POURQUOI LE SHELL AUSSI INTERROGE LA LARGEUR.
+  //
+  // La barre se pose SOUS le contenu, le rail À CÔTÉ : ce n'est pas le même
+  // axe, et c'est ce fichier qui possède la géométrie du viewport (EP-002).
+  // `PrimaryNav` décide de son propre DESSIN, le shell décide de sa PLACE —
+  // les deux lisent la même fonction, aucun ne redécide la règle.
+  const rail = dispositionDe(useLargeurDeFenetre()) === "rail";
   return (
     <View
       testID="app-shell"
@@ -93,23 +101,47 @@ export function AppShell({
           // conteneur en colonne centré se réduit à la largeur de son
           // contenu le plus large, et les lignes ne tiendraient plus la
           // largeur disponible sur un téléphone. */}
-      <View
-        testID="app-shell-contenu"
-        style={{
-          flex: 1,
-          width: "100%",
-          maxWidth: theme.size.measure,
-          alignSelf: "center",
-          paddingBottom: navigation === undefined ? insets.bottom : 0,
-        }}
-      >
-        {children}
+      {/* ── DEUX AXES, UNE SEULE DÉFINITION DU CONTENU.
+          //
+          // En barre, tout s'empile : contenu puis navigation. En rail, la
+          // navigation se met À CÔTÉ — le conteneur passe donc en ligne, et
+          // le rail vient EN PREMIER (début de ligne), ce qui le place à
+          // gauche en français et à droite en arabe, sans ramification.
+          //
+          // Le nœud `app-shell-contenu` est écrit UNE fois : sa largeur de
+          // lisibilité ne doit pas dépendre de la disposition, sinon les deux
+          // finiraient par diverger au premier ajustement. */}
+      <View style={rail ? { flex: 1, flexDirection: "row" } : { flex: 1 }}>
+        {rail && navigation !== undefined ? (
+          <View
+            testID="app-shell-navigation"
+            // L'encoche du BORD, pas celle du bas : en paysage, un rail collé
+            // au bord gauche passerait sous l'encoche d'un iPhone.
+            style={{ paddingStart: insets.left, paddingBottom: insets.bottom }}
+          >
+            {navigation}
+          </View>
+        ) : null}
+        <View style={{ flex: 1 }}>
+          <View
+            testID="app-shell-contenu"
+            style={{
+              flex: 1,
+              width: "100%",
+              maxWidth: theme.size.measure,
+              alignSelf: "center",
+              paddingBottom: navigation === undefined || rail ? insets.bottom : 0,
+            }}
+          >
+            {children}
+          </View>
+        </View>
       </View>
-      {navigation === undefined ? null : (
+      {!rail && navigation !== undefined ? (
         <View testID="app-shell-navigation" style={{ paddingBottom: insets.bottom }}>
           {navigation}
         </View>
-      )}
+      ) : null}
     </View>
   );
 }

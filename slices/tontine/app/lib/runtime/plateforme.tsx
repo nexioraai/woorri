@@ -12,3 +12,25 @@
 // le même contrat, et `app-shell` n'en connaît aucun des deux.
 export { StatusBar } from "expo-status-bar";
 export { useSafeAreaInsets } from "react-native-safe-area-context";
+
+import { useWindowDimensions } from "react-native";
+
+/**
+ * LA LARGEUR DE LA FENÊTRE, EN POINTS INDÉPENDANTS DE LA DENSITÉ.
+ *
+ * ── POURQUOI LA COUTURE, ET PAS LA NAVIGATION ELLE-MÊME.
+ *
+ * Connaître la largeur est un FAIT DE PLATEFORME : le natif l'obtient d'un
+ * module de React Native, le web d'une propriété du document. Les deux
+ * répondent la même chose — un nombre — et c'est tout ce que l'interface a le
+ * droit de savoir. La DÉCISION qu'on en tire (barre ou rail) vit ailleurs, dans
+ * `disposition-navigation`, pour qu'elle soit lisible en un seul endroit.
+ *
+ * `useWindowDimensions` est un abonnement, pas une lecture : la valeur suit la
+ * rotation de l'appareil et le redimensionnement d'une fenêtre sur iPad. Lire
+ * `Dimensions.get("window")` une fois aurait figé la disposition au premier
+ * rendu — un iPad tourné serait resté en barre du bas.
+ */
+export function useLargeurDeFenetre(): number {
+  return useWindowDimensions().width;
+}

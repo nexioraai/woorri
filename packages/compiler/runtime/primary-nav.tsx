@@ -29,6 +29,8 @@ import { useNavigation } from "./navigation-contrat";
 import { useStyles } from "@deribfy/primitives/theme-bridge";
 import { GLYPHE_PAR_ROLE, type RoleIcone } from "@deribfy/primitives/roles-icones";
 import { allerVers } from "./racines-navigation";
+import { useLargeurDeFenetre } from "./plateforme";
+import { dispositionDe } from "./disposition-navigation";
 
 // Étape ③ (EP-003) — la table rôle → glyphe vient de LA source unique
 // (primitives/roles-icones) : plus aucune copie locale.
@@ -52,6 +54,21 @@ export interface PrimaryNavProps {
 export function PrimaryNav({ destinations, currentScreenId }: PrimaryNavProps) {
   const navigation = useNavigation();
   const s = useStyles();
+  // ── LA DISPOSITION SUIT LA LARGEUR, JAMAIS LA PLATEFORME.
+  //
+  // Mesuré le 2026-10-16 : ce composant ne portait AUCUNE logique de largeur.
+  // Une barre du bas s'étalait sur 1 600 px de fenêtre Safari pendant que le
+  // contenu restait dans sa colonne — « on dirait une appli React Native ».
+  //
+  // La règle et ses trois sources (Material 3, Apple HIG, Nielsen Norman)
+  // vivent dans `disposition-navigation`. Ici on l'applique, on ne la
+  // redécide pas : deux endroits qui décident finissent par se contredire.
+  //
+  // Le hook est appelé AVANT le retour anticipé — règle des hooks de React :
+  // un rendu sans destinations et un rendu avec n'appelleraient pas le même
+  // nombre de hooks, et React refuserait le composant.
+  const disposition = dispositionDe(useLargeurDeFenetre());
+  const rail = disposition === "rail";
   if (destinations.length === 0) return null;
   // L'ORDRE déclaré par le document fait foi. Trier ici, et non à l'émission,
   // garantit que ce qui est RENDU respecte la déclaration même si un étage
@@ -62,7 +79,7 @@ export function PrimaryNav({ destinations, currentScreenId }: PrimaryNavProps) {
       testID="primary-nav"
       // ÉTAPE ② — l'inset du BAS appartient à l'AppShell, plus jamais ici :
       // la barre ne connaît que son propre dessin, le shell la pose.
-      style={s.primaryNav}
+      style={rail ? s.primaryNavRail : s.primaryNav}
       accessibilityRole="tablist"
     >
       {triees.map((d) => {
@@ -73,7 +90,15 @@ export function PrimaryNav({ destinations, currentScreenId }: PrimaryNavProps) {
             testID={`primary-nav-${d.routeId}`}
             accessibilityRole="tab"
             accessibilityState={{ selected: actif }}
-            style={actif ? s.primaryNavItemActive : s.primaryNavItem}
+            style={
+              rail
+                ? actif
+                  ? s.primaryNavRailItemActive
+                  : s.primaryNavRailItem
+                : actif
+                  ? s.primaryNavItemActive
+                  : s.primaryNavItem
+            }
             onPress={() => {
               allerVers(navigation, d.screenId);
             }}

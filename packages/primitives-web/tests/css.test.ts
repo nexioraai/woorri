@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
-import { versCss, versTexteCss } from "../src/css.ts";
+import { RACCOURCIS, versCss, versTexteCss } from "../src/css.ts";
 
 // ════════════════════════════════════════════════════════════════════
 //  L'ADAPTATEUR DE STYLES — LA PIÈCE QUI SE PROUVE.
@@ -141,11 +141,13 @@ describe("SUR LA VRAIE FEUILLE DU DESIGN SYSTEM", () => {
     const employees = new Set(
       [...source.matchAll(/^[ \t]{4,}([a-zA-Z]+):[ \t]*[^,{\s]/gm)].flatMap((m) => m[1] ?? []),
     );
-    // Celles que `versCss` traduit explicitement.
-    const traduites = new Set([
-      "paddingHorizontal", "paddingVertical", "marginHorizontal", "marginVertical",
-      "paddingStart", "paddingEnd", "marginStart", "marginEnd", "start", "end",
-    ]);
+    // ── CELLES QUE `versCss` TRADUIT — LUES DANS LA VRAIE TABLE.
+    //
+    // Cette liste était RECOPIÉE ici. Le 2026-10-16, quatre bordures logiques
+    // ont été ajoutées à `css.ts` et le crible les a déclarées inconnues :
+    // il mesurait sa propre copie, pas le code. Une table de vérité recopiée
+    // n'est plus une table de vérité.
+    const traduites = new Set(Object.keys(RACCOURCIS));
     // Celles qui portent déjà leur nom CSS.
     const communes = new Set([
       "backgroundColor", "alignItems", "fontSize", "color", "justifyContent", "minHeight",

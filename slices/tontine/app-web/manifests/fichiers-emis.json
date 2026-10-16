@@ -33,6 +33,7 @@
     "lib/runtime/champs-de-saisie.ts",
     "lib/runtime/data-provider.tsx",
     "lib/runtime/demo-provider.ts",
+    "lib/runtime/disposition-navigation.ts",
     "lib/runtime/ecriture-http.ts",
     "lib/runtime/ecriture-supabase.ts",
     "lib/runtime/form-state.tsx",

@@ -1,3 +1,5 @@
+import { useSyncExternalStore } from "react";
+
 // LA COUTURE DE PLATEFORME, CÔTÉ WEB.
 //
 // ── LA BARRE D'ÉTAT N'EXISTE PAS DANS UN NAVIGATEUR.
@@ -23,6 +25,39 @@
 /** Inerte : une page web déclare son thème, elle ne commande pas la barre. */
 export function StatusBar(_props: { style?: "light" | "dark" }) {
   return null;
+}
+
+/**
+ * LA LARGEUR DE LA FENÊTRE — le pendant web, même contrat, autre source.
+ *
+ * ── POURQUOI `useSyncExternalStore` ET PAS `useState` + `useEffect`.
+ *
+ * Avec un état et un effet, le PREMIER rendu se fait sur une valeur inventée,
+ * puis l'effet corrige. Sur un écran large, cela afficherait une barre du bas
+ * pendant une image avant de la remplacer par un rail — un saut visible, à
+ * chaque chargement. `useSyncExternalStore` lit la vraie valeur dès le premier
+ * rendu et s'abonne ensuite.
+ *
+ * ── LE TROISIÈME ARGUMENT, ET CE QU'IL DÉCIDE.
+ *
+ * C'est la valeur rendue quand il n'y a PAS de document — rendu côté serveur.
+ * On rend zéro, c'est-à-dire la classe la plus étroite : si jamais on ne sait
+ * pas, on sert la disposition du téléphone. Mobile d'abord, y compris dans
+ * l'incertitude.
+ */
+const abonnerALaLargeur = (relire: () => void): (() => void) => {
+  window.addEventListener("resize", relire);
+  return () => {
+    window.removeEventListener("resize", relire);
+  };
+};
+
+export function useLargeurDeFenetre(): number {
+  return useSyncExternalStore(
+    abonnerALaLargeur,
+    () => window.innerWidth,
+    () => 0,
+  );
 }
 
 /** Zéro partout : l'encoche est traitée en CSS sur la racine du document. */

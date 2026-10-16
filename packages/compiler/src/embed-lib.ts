@@ -198,6 +198,18 @@ export const EMBEDDED_SOURCES: readonly EmbeddedSourceSpec[] = [
     rewrites: {},
   },
   {
+    // OÙ VA LA NAVIGATION SELON LA LARGEUR — la règle et ses trois sources
+    // (Material 3, Apple HIG, Nielsen Norman). Lue par `primary-nav`, qui
+    // décide son DESSIN, et par `app-shell`, qui décide sa PLACE : elle doit
+    // donc être copiée avant les deux.
+    //
+    // Module de DONNÉES et de décision pure — aucune plateforme, aucun React.
+    // C'est ce qui lui permet d'être le même fichier pour les deux cibles.
+    source: "compiler/runtime/disposition-navigation.ts",
+    target: "lib/runtime/disposition-navigation.ts",
+    rewrites: {},
+  },
+  {
     // LA COUTURE DE NAVIGATION (2026-10-05). `air-runtime.tsx`, 1 029 lignes,
     // n'importait de plateforme qu'une seule chose : `useNavigation`. Le
     // contrat est désormais PARTAGÉ et chaque cible le remplit — même remède

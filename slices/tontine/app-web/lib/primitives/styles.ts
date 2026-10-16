@@ -238,6 +238,37 @@ const makeSheet = (c: Palette) =>
       paddingHorizontal: theme.space.xs,
       gap: theme.space.xxs,
     },
+    // ── LE RAIL VERTICAL — la même navigation, à partir de 840 px.
+    //
+    // Material 3 : barre en compact/medium, RAIL en expanded et au-delà.
+    // Apple : pas de barre d'onglets sur macOS, barre latérale sur iPad.
+    // NN/g : la navigation verticale à gauche se parcourt mieux sur bureau.
+    // La règle et ses sources vivent dans `disposition-navigation`.
+    //
+    // `borderEndWidth` et non `borderRightWidth` : propriété LOGIQUE, comme
+    // tout le reste de cette feuille — en arabe le rail passe à droite tout
+    // seul, et une bordure physique se serait trompée de côté.
+    primaryNavRail: {
+      flexDirection: "column",
+      backgroundColor: c.surface,
+      borderEndWidth: 1,
+      borderEndColor: c.border,
+      paddingVertical: theme.space.sm,
+      paddingHorizontal: theme.space.xs,
+      gap: theme.space.xxs,
+    },
+    // `flex: 1` est ABSENT, et c'est la différence qui compte : dans une
+    // colonne il étirerait chaque entrée sur toute la hauteur disponible,
+    // et quatre destinations occuperaient l'écran entier.
+    primaryNavRailItem: {
+      width: theme.size.tapTarget * 2,
+      minHeight: theme.size.tapTarget,
+      alignItems: "center",
+      justifyContent: "center",
+      paddingHorizontal: theme.space.xxs,
+      paddingVertical: theme.space.xs,
+      borderRadius: theme.radius.md,
+    },
     primaryNavItem: {
       flex: 1,
       minHeight: theme.size.tapTarget,
@@ -250,6 +281,17 @@ const makeSheet = (c: Palette) =>
     // ÉTAT ACTIF LISIBLE SANS LIRE — pastille pleine sur l'onglet courant.
     primaryNavItemActive: {
       flex: 1,
+      minHeight: theme.size.tapTarget,
+      alignItems: "center",
+      justifyContent: "center",
+      paddingHorizontal: theme.space.xxs,
+      paddingVertical: theme.space.xs,
+      borderRadius: theme.radius.md,
+      backgroundColor: c.badgeBg,
+    },
+    /** L'entrée ACTIVE du rail : même marque d'état, autre géométrie. */
+    primaryNavRailItemActive: {
+      width: theme.size.tapTarget * 2,
       minHeight: theme.size.tapTarget,
       alignItems: "center",
       justifyContent: "center",
