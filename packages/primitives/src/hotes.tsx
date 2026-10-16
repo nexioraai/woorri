@@ -14,7 +14,70 @@
 // pour les deux cibles. Ici ils ne sont qu'un renommage ; côté web, ils rendent
 // du HTML. C'est toute la différence, et elle est enfermée dans ces deux
 // fichiers.
-export { View as Vue, Text as Texte, Pressable as Geste } from "react-native";
+export { View as Vue, Text as Texte } from "react-native";
+
+// ════════════════════════════════════════════════════════════════════
+//  UN GESTE QUI DIT OU SE TROUVE LE CLAVIER.
+// ════════════════════════════════════════════════════════════════════
+//
+// ── CE QUI ETAIT LA, ET CE QUI MANQUAIT.
+//
+// `Geste` etait un simple renommage de `Pressable`. Mesure du 2026-10-16 sur
+// une application reellement emise : zero `onFocus`, zero etat focalise. Une
+// personne qui navigue au clavier — clavier externe sur tablette, navigation
+// directionnelle sur Android TV, commutateur d'accessibilite — ne voyait donc
+// jamais ou elle se trouvait.
+//
+// Le renommage devient un enveloppement MINIMAL : l'etat focalise, et un
+// anneau qui vient de la feuille partagee. Aucun des vingt appelants ne
+// change.
+//
+// ── LES DEUX PIEGES, ET AUCUN N'EST THEORIQUE.
+//
+// ① `style` DE `Pressable` PEUT ETRE UNE FONCTION. La signature accepte
+//    `({ pressed }) => style` et plusieurs primitives s'en servent pour l'etat
+//    presse. Remplacer `style` par un tableau casserait ces appelants EN
+//    SILENCE — le style presse ne s'appliquerait plus, et rien ne planterait.
+//    On preserve donc la forme : si l'appelant donne une fonction, on
+//    l'appelle avec l'etat recu, puis on ajoute l'anneau.
+//
+// ② LES RAPPELS DE L'APPELANT DOIVENT SURVIVRE. `onFocus` et `onBlur` sont des
+//    proprietes legitimes de `Pressable` : les ecraser ferait disparaitre un
+//    comportement qu'un appelant aurait pose. On enchaine.
+//
+// ── OU CELA MORD VRAIMENT, SANS L'EMBELLIR.
+//
+// Sur iOS, une vue ordinaire ne recoit pas le focus clavier : l'anneau y
+// restera invisible tant qu'Apple n'enverra pas l'evenement. Il mord sur
+// Android (vues focalisables), sur tvOS, et — c'est le cas qui compte ici —
+// sur la cible WEB, ou `primitives-web/src/hotes.tsx` rend un vrai `<button>`
+// et ou la feuille emise porte la regle `:focus-visible`.
+import { Pressable } from "react-native";
+import { useState } from "react";
+import type { PressableProps, StyleProp, ViewStyle } from "react-native";
+import { useStyles } from "./theme-bridge.tsx";
+
+export function Geste({ style, onFocus, onBlur, ...reste }: PressableProps) {
+  const s = useStyles();
+  const [focalise, setFocalise] = useState(false);
+  return (
+    <Pressable
+      {...reste}
+      onFocus={(e) => {
+        setFocalise(true);
+        onFocus?.(e);
+      }}
+      onBlur={(e) => {
+        setFocalise(false);
+        onBlur?.(e);
+      }}
+      style={(etat): StyleProp<ViewStyle> => [
+        typeof style === "function" ? style(etat) : style,
+        focalise ? s.focusAnneau : null,
+      ]}
+    />
+  );
+}
 
 // ── LES DEUX CONTENEURS D'ÉCRAN.
 //

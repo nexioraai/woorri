@@ -19,6 +19,22 @@ const makeSheet = (c: Palette) =>
   creerFeuille({
     // — ScreenShell —
     shell: { flex: 1, backgroundColor: c.bg },
+    // ── L'ANNEAU DE FOCUS CLAVIER, UNIQUE POUR LES DEUX CIBLES.
+    //
+    // `outlineWidth` / `outlineColor` / `outlineOffset` existent dans
+    // `ViewStyle` depuis React Native 0.76 — VERIFIE dans les types de la
+    // version installee (0.86.3, StyleSheetTypes.d.ts lignes 496-499). On ne
+    // passe PAS par une bordure : une bordure occupe de la place et decalerait
+    // la mise en page au moment du focus.
+    //
+    // La couleur est l'accent des jetons, identique dans les deux schemas
+    // (mesure : `#FA5D1E` en clair comme en sombre).
+    focusAnneau: {
+      outlineWidth: 3,
+      outlineStyle: "solid" as const,
+      outlineColor: c.primary,
+      outlineOffset: 2,
+    },
     shellTitle: {
       fontSize: theme.font.heading,
       fontWeight: theme.fontWeight.bold,

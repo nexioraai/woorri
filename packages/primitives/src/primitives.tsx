@@ -228,6 +228,11 @@ export function TextField({
   // L'état est LOCAL au champ et repart masqué à chaque montage : il ne se
   // conserve pas, il ne se propage pas.
   const [revele, setRevele] = useState(false);
+  // FOCUS CLAVIER (2026-10-16) — `TextInput` est le SEUL element interactif du
+  // natif qui recoive le focus sur toutes les plateformes, iOS compris : c'est
+  // le systeme qui le lui donne en ouvrant le clavier. L'anneau y est donc
+  // visible partout, contrairement a celui d'un `Pressable`.
+  const [focalise, setFocalise] = useState(false);
   return (
     <View style={s.fieldWrap} testID={testID}>
       {/* DET-033 : un libellé VIDE ne rend rien — un champ compact (recherche)
@@ -236,9 +241,15 @@ export function TextField({
       {label === "" ? null : <Text style={s.fieldLabel}>{label}</Text>}
       <View style={s.fieldRow}>
         <TextInput
-          style={[s.input, error !== undefined && s.inputError]}
+          style={[s.input, error !== undefined && s.inputError, focalise && s.focusAnneau]}
           value={value}
           onChangeText={onChangeText}
+          onFocus={() => {
+            setFocalise(true);
+          }}
+          onBlur={() => {
+            setFocalise(false);
+          }}
           placeholder={placeholder}
           secureTextEntry={secure && !revele}
           accessibilityLabel={accessibilityLabel ?? label}

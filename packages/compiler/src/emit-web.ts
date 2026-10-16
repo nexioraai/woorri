@@ -36,6 +36,7 @@
 import type { ProjectAir } from "@deribfy/air-schema";
 // Le verrou de dépendances du gabarit web, scellé depuis un `npm install`
 // RÉEL sur le `package.json` émis — voir `template-web/LISEZ-MOI.md`.
+import { theme } from "@deribfy/design-tokens";
 import { EMBEDDED_TEMPLATE_WEB } from "./embedded-template-web.generated.ts";
 
 /** Ce que l'enveloppe web ajoute à ce que `emitProject` a déjà produit. */
@@ -118,6 +119,82 @@ createRoot(racine).render(
  * gabarit est servi à CHAQUE visiteur. Vite ne retire pas les commentaires
  * HTML. Ils vivent donc ici, où seul le mainteneur les lit.
  */
+// ════════════════════════════════════════════════════════════════════
+//  L'ADAPTATION A L'ECRAN, ET L'ANNEAU DE FOCUS CLAVIER.
+// ════════════════════════════════════════════════════════════════════
+//
+// ── POURQUOI CES DEUX CHOSES SONT ICI, ENSEMBLE.
+//
+// Mesuré le 2026-10-16 sur une application RÉELLEMENT émise
+// (`apps-generees/kaviva-spa`, hors node_modules) : `@media` = 1 — et cette
+// unique occurrence est le fond de page clair/sombre. `:focus-visible` = 0.
+// Autrement dit : l'application ne s'adapte à AUCUNE largeur, et une personne
+// qui navigue au clavier ne voit jamais où elle se trouve.
+//
+// Les deux vivent ici parce que les styles des primitives sont INLINE. Une
+// règle `@media` ne peut pas atteindre un attribut `style`, et `:focus-visible`
+// n'est pas exprimable dans un objet de style — c'est un état que seul le
+// navigateur connaît. Il faut donc une FEUILLE, et la seule du projet est ce
+// bloc `<style>`.
+//
+// ── LE MÉCANISME : DES VARIABLES, PAS DES CLASSES.
+//
+// Les points de rupture ne redéfinissent pas des règles de mise en page : ils
+// redéfinissent des PROPRIÉTÉS PERSONNALISÉES, que les styles inline lisent
+// avec `var()`. C'est le même mécanisme que le thème clair/sombre — une valeur
+// qui change, un consommateur qui ne sait pas qu'elle a changé. Aucune classe
+// à poser, aucune ramification dans les primitives.
+//
+// ── POURQUOI `repeat()` N'EST PAS CALCULÉ.
+//
+// `repeat(var(--n), …)` est INVALIDE : la grammaire CSS y exige un entier
+// littéral, pas une substitution. D'où une variable par nombre de colonnes
+// (`--db-g1` à `--db-g4`) portant la valeur COMPLÈTE. L'échelle lit donc le
+// nombre déclaré par le document comme un MAXIMUM, atteint au plus large.
+//
+// Mesuré : les documents émis déclarent `colonnes = 2` (grille) ou `1`. Le
+// palier qui mord réellement est donc celui de 400 px — en dessous, une grille
+// de deux cartes passe à une colonne, ce qui concerne les téléphones étroits
+// (320 px) et les écrans de couverture pliables (280 px).
+//
+// ── L'ANNEAU A DEUX TONS, ET CE N'EST PAS DÉCORATIF.
+//
+// Un anneau de la couleur d'accent posé sur un bouton d'accent est invisible.
+// Le `box-shadow` intercalaire peint les 2 px de décalage avec le FOND de la
+// page : l'anneau est alors séparé de l'élément quelle que soit la couleur de
+// celui-ci. C'est la technique qu'emploie Chrome pour son anneau par défaut.
+//
+// Mesuré : `theme.color.light.primary` et `theme.color.dark.primary` valent
+// tous deux `#FA5D1E` — une seule variable suffit pour les deux schémas, et
+// seul le FOND intercalaire change.
+//
+// ── CE QUE CE BLOC N'ÉCRIT PAS : DE LA PROSE.
+//
+// Ce `<style>` part chez chaque visiteur. L'explication reste donc ICI, dans
+// la source, et la feuille émise est dense.
+const reactifEtFocus = (air: ProjectAir): string => {
+  const sombre = air.design.theme === "dark";
+  const g = (n: number): string => "repeat(" + String(n) + ",minmax(0,1fr))";
+  return [
+    ":root{" +
+      "--db-g1:" + g(1) + ";--db-g2:" + g(1) + ";--db-g3:" + g(1) + ";--db-g4:" + g(2) + ";" +
+      "--db-gouttiere:0px;" +
+      "--db-focus:" + theme.color.light.primary + ";" +
+      "--db-focus-fond:" + (sombre ? theme.color.dark.bg : theme.color.light.bg) +
+    "}",
+    "@media (prefers-color-scheme:dark){:root{--db-focus-fond:" + theme.color.dark.bg + "}}",
+    "@media (min-width:400px){:root{--db-g2:" + g(2) + ";--db-g3:" + g(2) + ";--db-g4:" + g(2) + "}}",
+    "@media (min-width:600px){:root{--db-g3:" + g(3) + ";--db-g4:" + g(3) + ";" +
+      "--db-gouttiere:" + String(theme.space.sm) + "px}}",
+    "@media (min-width:1024px){:root{--db-g4:" + g(4) + ";" +
+      "--db-gouttiere:" + String(theme.space.lg) + "px}}",
+    '[data-testid="app-shell-contenu"]{padding-inline:var(--db-gouttiere)}',
+    ":where(button,input,textarea,select,a,[tabindex]):focus-visible{" +
+      "outline:3px solid var(--db-focus);outline-offset:2px;" +
+      "box-shadow:0 0 0 2px var(--db-focus-fond)}",
+  ].join("\n      ");
+};
+
 const page = (air: ProjectAir): string => `<!doctype html>
 <html lang="${air.app.locales.defaultAppLocale}"${air.app.locales.rtlSupported ? ' dir="auto"' : ""}>
   <head>
@@ -188,6 +265,7 @@ const page = (air: ProjectAir): string => `<!doctype html>
         padding-left: env(safe-area-inset-left);
         padding-right: env(safe-area-inset-right);
       }
+      ${reactifEtFocus(air)}
     </style>
   </head>
   <body>

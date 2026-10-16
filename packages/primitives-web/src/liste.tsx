@@ -45,7 +45,24 @@ export function Liste<T>({
         {
           display: grille ? "grid" : "flex",
           ...(grille
-            ? { gridTemplateColumns: "repeat(" + String(colonnes) + ", minmax(0, 1fr))" }
+            ? {
+                // ── LA GRILLE S'ADAPTE A LA LARGEUR, ET LE DOCUMENT GARDE LE
+                // DERNIER MOT.
+                //
+                // `colonnes` est lu comme un MAXIMUM, atteint au plus large.
+                // L'echelle vit dans la feuille emise (`emit-web.ts`) sous la
+                // forme d'une variable par nombre de colonnes : la grammaire
+                // CSS refuse `repeat(var(--n), …)`, qui exige un entier
+                // litteral. Le repli porte la valeur d'origine — au-dela de
+                // quatre colonnes, aucune variable n'existe et la grille se
+                // comporte exactement comme avant.
+                gridTemplateColumns:
+                  "var(--db-g" +
+                  String(colonnes) +
+                  ", repeat(" +
+                  String(colonnes) +
+                  ", minmax(0, 1fr)))",
+              }
             : { flexDirection: horizontal === true ? "row" : "column" }),
           // Le défilement appartient à la liste, jamais à la page : c'est ce
           // qui garde l'en-tête et la barre de navigation en place.

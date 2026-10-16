@@ -157,8 +157,67 @@ describe("SUR LA VRAIE FEUILLE DU DESIGN SYSTEM", () => {
       "flexShrink", "aspectRatio", "maxHeight", "textDecorationLine", "fontFamily",
       "borderTopColor", "borderBottomColor", "margin", "paddingTop", "paddingBottom",
       "paddingLeft", "paddingRight", "marginLeft", "marginRight",
+      // L'ANNEAU DE FOCUS (2026-10-16). Les quatre portent deja leur nom CSS
+      // — `outline-width`, `outline-style`, `outline-color`, `outline-offset`.
+      // Elles ne sont pas inscrites ici sur parole : le test qui suit PROUVE
+      // que `versCss` les rend correctement, unite comprise.
+      "outlineWidth", "outlineStyle", "outlineColor", "outlineOffset",
     ]);
     const inconnues = [...employees].filter((p) => !traduites.has(p) && !communes.has(p));
     expect(inconnues, "propriétés que la cible web ne sait pas rendre").toEqual([]);
+  });
+
+  it("L ANNEAU DE FOCUS se traduit vraiment, unité comprise", () => {
+    // ── POURQUOI CE TEST ET PAS SEULEMENT L'INSCRIPTION AU CRIBLE.
+    //
+    // Ajouter un nom à la liste des « communes » est une AFFIRMATION : « le
+    // web sait rendre ceci ». Tant qu'elle n'est pas mesurée, elle vaut une
+    // supposition — et une propriété mal rendue est ignorée EN SILENCE par le
+    // navigateur, ce qui est exactement le défaut que ce fichier existe pour
+    // empêcher.
+    //
+    // Le piège réel est l'unité : `outlineWidth: 3` sans `px` est une
+    // déclaration invalide, donc jetée, donc aucun anneau — et la page
+    // s'affiche quand même.
+    // ── POURQUOI ON NE L'IMPORTE PAS, ET COMMENT ON RESTE HONNETE.
+    //
+    // Importer `@deribfy/primitives/styles` tire `./feuille.ts`, donc
+    // `react-native`, donc du Flow que l'outillage de ce paquet ne sait pas
+    // lire — MESURE : « Flow is not supported », node_modules/react-native/
+    // index.js:1. C'est exactement pour cela que ce fichier lit la feuille en
+    // TEXTE au-dessus.
+    //
+    // La chaine de preuve se fait donc en deux maillons, et aucun n'est une
+    // parole : le crible ci-dessus lit la VRAIE feuille et constate qu'elle
+    // emploie ces quatre proprietes ; ce test-ci verifie que `versCss` les
+    // rend. Les valeurs sont celles de la feuille — relues dans sa source.
+    const bloc = /focusAnneau: \{[\s\S]*?\}/u.exec(source)?.[0] ?? "";
+    expect(bloc, "l anneau a disparu de la feuille").not.toBe("");
+    const nombre = (nom: string): number => {
+      const m = new RegExp(nom + ":\\s*(\\d+)", "u").exec(bloc);
+      expect(m, nom + " n est plus un nombre dans la feuille").not.toBeNull();
+      return Number(m?.[1]);
+    };
+    const css = versCss({
+      outlineWidth: nombre("outlineWidth"),
+      outlineStyle: "solid",
+      outlineColor: "#FA5D1E",
+      outlineOffset: nombre("outlineOffset"),
+    });
+    expect(css.outlineWidth, "largeur sans unité : déclaration invalide, anneau invisible").toMatch(
+      /^\d+px$/u,
+    );
+    expect(css.outlineOffset, "décalage sans unité : l anneau collerait à l élément").toMatch(
+      /^\d+px$/u,
+    );
+    expect(css.outlineStyle).toBe("solid");
+    // ET LA COULEUR VIENT DES JETONS DANS LA FEUILLE — on le mesure sur sa
+    // source, pas sur la valeur qu on vient de passer soi-meme.
+    expect(bloc, "la couleur de l anneau ne vient plus des jetons").toMatch(
+      /outlineColor: c\.primary/u,
+    );
+    expect(css.outlineColor, "une couleur ne doit PAS recevoir d unité").not.toMatch(/px/u);
+    // ET LE TEXTE FINAL, tel qu'un attribut `style` le recevrait.
+    expect(versTexteCss(css)).toMatch(/outline-width: 3px/u);
   });
 });
