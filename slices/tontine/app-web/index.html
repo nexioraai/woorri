@@ -74,6 +74,7 @@
       @media (min-width:600px){:root{--db-g3:repeat(3,minmax(0,1fr));--db-g4:repeat(3,minmax(0,1fr));--db-gouttiere:8px}}
       @media (min-width:1024px){:root{--db-g4:repeat(4,minmax(0,1fr));--db-gouttiere:16px}}
       [data-testid="app-shell-contenu"]{padding-inline:var(--db-gouttiere)}
+      @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:0.01ms !important;animation-iteration-count:1 !important;transition-duration:0.01ms !important;scroll-behavior:auto !important}}
       :where(button,input,textarea,select,a,[tabindex]):focus-visible{outline:3px solid var(--db-focus);outline-offset:2px;box-shadow:0 0 0 2px var(--db-focus-fond)}
     </style>
   </head>

@@ -40,6 +40,15 @@ export {
   isOverridableKey,
 } from "./emit-theme.ts";
 export type { ThemeOverrideProblem } from "./emit-theme.ts";
+// ── LA CONFORMITÉ AUX MAGASINS, EXPORTÉE PARCE QU'ELLE DOIT AGIR.
+//
+// Ce module a d'abord été écrit comme une LISTE, et la mesure du 2026-10-16
+// a été nette : personne ne l'importait. Un référentiel que rien ne lit ne
+// distingue rien — il documente. `verifier` rend le constat par règle
+// APPLICABLE À LA CIBLE, et c'est ce qui fait la différence entre « Deribfy
+// sait » et « Deribfy a écrit qu'il savait ».
+export { AUTORITES, REGLES, reglesPour, reglesOuvertes, verifier } from "./conformite-magasins.ts";
+export type { Autorite, Cible, Constat, RegleConformite } from "./conformite-magasins.ts";
 export type { DemoInstance } from "./demo-fixtures.ts";
 export { EMBEDDED_SOURCES, buildEmbeddedAssets, rewriteEmbeddedSource } from "./embed-lib.ts";
 export {

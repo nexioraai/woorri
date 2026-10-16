@@ -226,6 +226,24 @@ const reactifEtFocus = (air: ProjectAir): string => {
     "@media (min-width:1024px){:root{--db-g4:" + g(4) + ";" +
       "--db-gouttiere:" + String(theme.space.lg) + "px}}",
     '[data-testid="app-shell-contenu"]{padding-inline:var(--db-gouttiere)}',
+    // ── LE MOUVEMENT SE COUPE QUAND LA PERSONNE LE DEMANDE (WCAG 2.3.3).
+    //
+    // Obligation LÉGALE en Europe depuis le 28 juin 2025 — European
+    // Accessibility Act → EN 301 549 → WCAG 2.1 AA. Pas une préférence de
+    // design : une exigence assortie d'amendes.
+    //
+    // MESURÉ le 2026-10-16 : l'application émise ne porte AUJOURD'HUI aucune
+    // animation visuelle. La règle serait donc « sans objet »… jusqu'au jour
+    // où quelqu'un en ajoute une, et ce jour-là personne ne penserait à la
+    // garde. On la pose MAINTENANT : elle ne coûte rien sur une page sans
+    // mouvement, et elle couvre par construction tout ce qui viendra.
+    //
+    // `0.01ms` et non `0` : une durée nulle empêche l'événement de fin
+    // d'animation de se déclencher, et du code qui l'attend resterait bloqué.
+    // C'est la forme retenue partout pour cette raison précise.
+    "@media (prefers-reduced-motion:reduce){*,*::before,*::after{" +
+      "animation-duration:0.01ms !important;animation-iteration-count:1 !important;" +
+      "transition-duration:0.01ms !important;scroll-behavior:auto !important}}",
     ":where(button,input,textarea,select,a,[tabindex]):focus-visible{" +
       "outline:3px solid var(--db-focus);outline-offset:2px;" +
       "box-shadow:0 0 0 2px var(--db-focus-fond)}",

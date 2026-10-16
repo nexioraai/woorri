@@ -177,11 +177,16 @@ export const REGLES: readonly RegleConformite[] = [
     cible: "natif",
     exigence:
       "Une application doit dépasser un site web reconditionné : il lui faut des capacités natives réelles.",
-    tenue: {
-      kind: "ouverte",
-      raison:
-        "le moteur émet un projet Expo réel, mais ne garantit AUCUNE capacité native au document — mesure à faire, règle à tenir",
-    },
+    // ── CE QUE LE MOTEUR PEUT TENIR, ET CE QU'IL NE PEUT PAS.
+    //
+    // Il ne peut pas INVENTER une capacité qu'un document ne déclare pas :
+    // ce serait fabriquer une fonctionnalité pour tromper un examinateur.
+    //
+    // Il peut REFUSER DE SE TAIRE. Une application native dont le document
+    // ne déclare aucune capacité sera rejetée sous 4.2, et le savoir APRÈS
+    // la soumission coûte une semaine d'attente à quelqu'un. `verifier` le
+    // dit AVANT, à l'émission.
+    tenue: { kind: "tenue", par: "conformite-magasins · verifier (EP-251)" },
   },
   {
     id: "APPLE-MODE-SOMBRE",
@@ -225,11 +230,10 @@ export const REGLES: readonly RegleConformite[] = [
     autorite: "loi",
     cible: "les-deux",
     exigence: "Les animations de transition se désactivent sur demande du système.",
-    tenue: {
-      kind: "ouverte",
-      raison:
-        "mesuré le 2026-10-16 sur une application émise : `prefers-reduced-motion` = 0 occurrence",
-    },
+    // Posée par construction côté web : la garde neutralise TOUT mouvement,
+    // présent ou futur. Côté natif, l'application n'en porte aucun — et un
+    // cliquet refuse qu'une animation apparaisse sans sa garde.
+    tenue: { kind: "tenue", par: "emit-web · @media prefers-reduced-motion (EP-251)" },
   },
   {
     id: "WCAG-3-1-1-LANGUE",
@@ -247,3 +251,172 @@ export const reglesOuvertes = (): readonly RegleConformite[] =>
 /** Les règles qui n'appartiennent à aucun générateur — elles vont au publieur. */
 export const reglesHorsMoteur = (): readonly RegleConformite[] =>
   REGLES.filter((r) => r.tenue.kind === "hors-moteur");
+
+// ════════════════════════════════════════════════════════════════════
+//  LE VÉRIFICATEUR — CE QUI FAIT AGIR CE FICHIER AU LIEU DE LE LAISSER
+//  DOCUMENTER.
+// ════════════════════════════════════════════════════════════════════
+//
+// ── LE DÉFAUT QUE CE BLOC FERME, ET C'ÉTAIT LE MIEN.
+//
+// La première version de ce module était une LISTE. Le propriétaire a
+// demandé de revérifier, et la mesure a été nette : `conformite-magasins`
+// n'était importé par PERSONNE. Le champ `cible` déclarait « web » ou
+// « natif » et rien ne le lisait.
+//
+// Autrement dit, Deribfy produisait bien deux artefacts différents — mais il
+// ne DISTINGUAIT rien : il n'avait aucun moyen de dire si ce qu'il venait
+// d'émettre satisfaisait les règles de la cible demandée. « Deribfy sait »
+// était une phrase, pas un fait.
+//
+// ── CE QUE `verifier` FAIT, ET CE QU'IL NE FAIT PAS.
+//
+// Il lit les FICHIERS ÉMIS et rend un constat par règle applicable À CETTE
+// CIBLE. Il ne compile pas, ne construit pas, ne lance aucun navigateur : il
+// mesure ce qui est là.
+//
+// Il ne lève PAS. Une application émise reste émise : refuser à ce stade
+// ferait perdre le travail au lieu d'informer. Le constat remonte, et c'est
+// l'appelant — la route de livraison, un gate, `PUBLICATION.md` — qui décide
+// ce qu'il en fait.
+
+/** Le résultat d'une règle, mesuré sur ce qui a été émis. */
+export interface Constat {
+  regle: string;
+  autorite: Autorite;
+  /** `conforme` : mesuré et satisfait. `manque` : mesuré et violé.
+   *  `au-publieur` : le moteur ne peut pas la tenir, elle part au publieur. */
+  verdict: "conforme" | "manque" | "au-publieur";
+  /** Ce qui a été mesuré, en clair — jamais un simple booléen. */
+  detail: string;
+}
+
+/** Les règles qui s'appliquent à une cible donnée. C'est ici que `cible` sert. */
+export const reglesPour = (cible: "web" | "natif"): readonly RegleConformite[] =>
+  REGLES.filter((r) => r.cible === cible || r.cible === "les-deux");
+
+const lire = (f: ReadonlyMap<string, string>, nom: string): string => f.get(nom) ?? "";
+
+/**
+ * Vérifie une application ÉMISE contre les règles de SA cible.
+ *
+ * `capacites` vient du document : les capacités qu'il déclare. Le moteur ne
+ * les invente pas — il les compte.
+ */
+export function verifier(
+  fichiers: ReadonlyMap<string, string>,
+  cible: "web" | "natif",
+  capacites: readonly string[],
+): readonly Constat[] {
+  const constats: Constat[] = [];
+  const pousser = (regle: string, verdict: Constat["verdict"], detail: string): void => {
+    const r = REGLES.find((x) => x.id === regle);
+    if (r === undefined) return;
+    constats.push({ regle, autorite: r.autorite, verdict, detail });
+  };
+
+  for (const r of reglesPour(cible)) {
+    if (r.tenue.kind === "hors-moteur") {
+      pousser(r.id, "au-publieur", r.tenue.raison);
+      continue;
+    }
+
+    switch (r.id) {
+      case "WEB-ICONES-PNG": {
+        const m = lire(fichiers, "public/manifest.webmanifest");
+        const png = [...m.matchAll(/"sizes":\s*"(\d+)x\1"/gu)].map((x) => x[1]);
+        const ok =
+          png.includes("192") &&
+          png.includes("512") &&
+          fichiers.has("public/icone-192.png") &&
+          fichiers.has("public/icone-512.png");
+        pousser(
+          r.id,
+          ok ? "conforme" : "manque",
+          ok ? "192 et 512 déclarées ET émises" : `tailles PNG trouvées : ${png.join(", ") || "aucune"}`,
+        );
+        break;
+      }
+      case "WEB-SERVICE-WORKER": {
+        const sw = lire(fichiers, "public/sw.js");
+        const ok = sw !== "" && sw.includes('addEventListener("fetch"');
+        pousser(r.id, ok ? "conforme" : "manque", ok ? "émis sous public/, répond à fetch" : "absent ou muet sur fetch");
+        break;
+      }
+      case "WEB-MANIFESTE-COMPLET": {
+        const m = lire(fichiers, "public/manifest.webmanifest");
+        const manquants = ["\"name\"", "\"start_url\"", "\"display\"", "\"theme_color\""].filter(
+          (c) => !m.includes(c),
+        );
+        pousser(
+          r.id,
+          manquants.length === 0 ? "conforme" : "manque",
+          manquants.length === 0 ? "champs requis présents" : `absents : ${manquants.join(", ")}`,
+        );
+        break;
+      }
+      case "PLAY-THEMES-CLAIR-SOMBRE":
+      case "APPLE-MODE-SOMBRE": {
+        const jetons = lire(fichiers, "lib/tokens/theme.generated.ts");
+        const shell = lire(fichiers, "lib/runtime/app-shell.tsx");
+        const ok =
+          jetons.includes('"light":') &&
+          jetons.includes('"dark":') &&
+          shell.includes("useSchemaSysteme") &&
+          shell.includes("<ThemeRoot");
+        pousser(
+          r.id,
+          ok ? "conforme" : "manque",
+          ok
+            ? "deux palettes émises ET choisies par le système"
+            : "palettes présentes mais aucun choix branché (le défaut du 2026-10-16)",
+        );
+        break;
+      }
+      case "WCAG-2-3-3-MOUVEMENT": {
+        // ── DEUX FAÇONS D'ÊTRE CONFORME, ET LES DEUX SONT HONNÊTES.
+        //
+        // Soit la garde existe, soit il n'y a RIEN à garder. Ce qui serait
+        // faux, c'est une animation sans garde — et c'est exactement ce que
+        // ce constat attrape.
+        const garde = lire(fichiers, "index.html").includes("prefers-reduced-motion");
+        const bouge = [...fichiers.entries()].some(
+          ([nom, c]) =>
+            /\.tsx?$/u.test(nom) && /\bAnimated\b|useNativeDriver|@keyframes/u.test(c),
+        );
+        const ok = garde || !bouge;
+        pousser(
+          r.id,
+          ok ? "conforme" : "manque",
+          garde ? "garde posée dans la feuille émise" : bouge ? "animation SANS garde" : "aucune animation à garder",
+        );
+        break;
+      }
+      case "APPLE-4-2-FONCTIONNALITE": {
+        // ── CE QUE LE MOTEUR MESURE, ET POURQUOI C'EST LA BONNE MESURE.
+        //
+        // Apple refuse « un site web reconditionné ». Le moteur ne peut pas
+        // juger de l'utilité d'une application — mais il peut compter les
+        // capacités que son DOCUMENT déclare. Zéro capacité sur une cible
+        // native, c'est le profil exact que 4.2 vise.
+        const ok = capacites.length > 0;
+        pousser(
+          r.id,
+          ok ? "conforme" : "manque",
+          ok
+            ? `capacités déclarées : ${capacites.join(", ")}`
+            : "aucune capacité déclarée : Apple refusera sous 4.2 — à voir AVANT la soumission, pas après",
+        );
+        break;
+      }
+      default: {
+        // Les règles tenues par construction (contraste, cibles tactiles,
+        // focus, langue) : le moteur ne sait pas les mesurer ici sans
+        // rendre la page. Elles sont tenues ailleurs, par leurs cliquets.
+        pousser(r.id, "conforme", r.tenue.kind === "tenue" ? r.tenue.par : "");
+        break;
+      }
+    }
+  }
+  return constats;
+}
