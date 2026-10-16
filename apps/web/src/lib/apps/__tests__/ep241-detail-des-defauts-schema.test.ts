@@ -24,10 +24,19 @@
 import { describe, expect, it } from 'vitest'
 import { detailDuDefaut } from '../journal'
 import { creerTravailleur, type BaseGeneration } from '../travailleur'
+import { projeter } from '@/lib/testing/postgrest'
 
 const TABLE = 'app_generations_test'
 
-/** Base en memoire minimale : elle RETIENT, c'est tout ce qu'on lui demande. */
+/**
+ * Base en memoire minimale : elle RETIENT, et elle HONORE `.select(...)`.
+ *
+ * La projection n'est pas un detail de confort : un harnais permissif rend
+ * INVISIBLE le retrait d'un `.eq('owner_id', …)`, c'est-a-dire une fuite
+ * entre comptes. Le cliquet d'architecture le refuse, et son plafond est
+ * MONOTONE DECROISSANT — ma premiere version l'a fait passer de 40 a 41, et
+ * c'est la suite complete d'apps/web qui me l'a appris.
+ */
 function baseEnMemoire(lignes: Record<string, unknown>[]) {
   const tables: Record<string, Record<string, unknown>[]> = { [TABLE]: lignes }
   const from = (table: string) => {
@@ -35,6 +44,7 @@ function baseEnMemoire(lignes: Record<string, unknown>[]) {
     const filtres: ((l: Record<string, unknown>) => boolean)[] = []
     let action: { type: string; charge?: Record<string, unknown> } = { type: 'select' }
     let plafond: number | null = null
+    let colonnes = '*'
     const trouver = () => {
       const out = rows.filter((l) => filtres.every((f) => f(l)))
       return plafond === null ? out : out.slice(0, plafond)
@@ -43,12 +53,13 @@ function baseEnMemoire(lignes: Record<string, unknown>[]) {
       if (action.type === 'update') {
         const vises = trouver()
         for (const l of vises) Object.assign(l, action.charge)
-        return { data: [...vises], error: null }
+        // La projection s'applique APRES l'ecriture, comme PostgREST.
+        return { data: projeter([...vises], colonnes), error: null }
       }
-      return { data: trouver(), error: null }
+      return { data: projeter(trouver(), colonnes), error: null }
     }
     const b: Record<string, unknown> = {}
-    b.select = () => b
+    b.select = (cols?: string) => { colonnes = typeof cols === 'string' ? cols : '*'; return b }
     b.update = (charge: Record<string, unknown>) => { action = { type: 'update', charge }; return b }
     b.insert = (charge: Record<string, unknown>) => { action = { type: 'insert', charge }; return b }
     b.eq = (c: string, v: unknown) => { filtres.push((l) => l[c] === v); return b }
