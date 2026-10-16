@@ -9,7 +9,9 @@
 import { describe, expect, it } from 'vitest'
 import { creerFrom, type JournalPostgrest } from '@/lib/testing/postgrest'
 import { creerTravailleur, type BaseGeneration, type MoteurContinuation } from '../travailleur'
-import { deposerGeneration, tournerUneTranche, etatGeneration, traduireRaison, RAISON_TECHNIQUE, RAISON_NON_ABOUTIE } from '../service-generations'
+import { deposerGeneration, tournerUneTranche, etatGeneration, traduireRaison, RAISON_TECHNIQUE, RAISON_NON_ABOUTIE,
+  RAISON_INDISPONIBLE,
+} from '../service-generations'
 
 const sentinelle: MoteurContinuation = {
   poursuivreEmission: async () => {
@@ -136,6 +138,39 @@ describe('etatGeneration — la lecture est au PROPRIETAIRE seul', () => {
     expect(avec?.comprise, 'un modèle existe : la demande EST comprise').toBe(true)
   })
 
+  it("EP-240 — un solde épuisé ne dit pas « réessayez »", async () => {
+    // MESURE, capture à l appui : la génération arrivée à 22/22 s est
+    // arrêtée sur « Your credit balance is too low ». L écran répondait
+    // « Réessayez dans un moment » — le propriétaire pouvait cliquer dix
+    // fois pour rien. Un solde épuisé n est pas passager.
+    const e = await etatGeneration({
+      base: baseAvec({
+        id: 'g-s', statut: 'refusee', etape: 'reparation', nom: 'x',
+        cout_usd: 11.68, document: null, sections_acquises: {},
+        diagnostics: ['erreur fatale (non transitoire) : {"message":"Your credit balance is too low"}'],
+      }),
+      table: 't_test', id: 'g-s', proprietaire: 'user-1',
+    })
+    expect(e?.raison, 'inviter à réessayer est ici un mensonge').not.toMatch(/Réessayez/u)
+    expect(e?.raison, 'il faut dire que réessayer ne suffira pas').toMatch(/indisponible/iu)
+    // ET SANS NOMMER LE FOURNISSEUR NI UN MONTANT.
+    expect(e?.raison).not.toMatch(/Anthropic|crédit|credit|\$/u)
+  })
+
+  it("EP-240 — CONTRÔLE NÉGATIF : une panne PASSAGÈRE dit toujours « réessayez »", async () => {
+    // Sans ceci, on enlèverait l invitation partout — y compris là où
+    // réessayer est exactement la bonne chose à faire.
+    const e = await etatGeneration({
+      base: baseAvec({
+        id: 'g-t', statut: 'refusee', etape: 'p0', nom: 'x',
+        cout_usd: 0, document: null, sections_acquises: {},
+        diagnostics: ['erreur fatale (non transitoire) : 529 overloaded'],
+      }),
+      table: 't_test', id: 'g-t', proprietaire: 'user-1',
+    })
+    expect(e?.raison, 'une surcharge passagère SE réessaie').toMatch(/Réessayez/u)
+  })
+
   it("EP-229 — un ARRÊT VOULU n est ni une panne, ni notre faute", async () => {
     // SIGNALÉ PAR LE PROPRIÉTAIRE, capture à l appui : il a appuyé sur
     // Arrêter, et l écran lui a répondu « La génération n a pas pu aboutir
@@ -153,6 +188,10 @@ describe('etatGeneration — la lecture est au PROPRIETAIRE seul', () => {
     expect(e?.raison, "l écran doit dire que l arrêt vient de l humain").toMatch(/arrêté/u)
     expect(e?.raison, "et surtout PAS raconter une panne").not.toMatch(/n’a pas pu aboutir/u)
     expect(e?.notreFaute, "s accuser d une décision de l humain est un mensonge").toBe(false)
+    // EP-239 : et surtout PAS « Je n ai pas compris ». En excluant l arrêt
+    // de `notreFaute`, je l avais fait retomber sur l étiquette qui accuse
+    // le propriétaire — PIRE qu avant ma correction. Il lui faut la sienne.
+    expect(e?.arrete, 'un arrêt voulu doit porter sa propre étiquette').toBe(true)
   })
 
   it("EP-229 — CONTRÔLE NÉGATIF : un vrai refus reste une panne de NOTRE côté", async () => {
@@ -167,6 +206,7 @@ describe('etatGeneration — la lecture est au PROPRIETAIRE seul', () => {
       table: 't_test', id: 'g-r', proprietaire: 'user-1',
     })
     expect(e?.notreFaute).toBe(true)
+    expect(e?.arrete, 'un vrai refus n est pas un arrêt demandé').toBe(false)
     expect(e?.raison).toMatch(/n’a pas pu aboutir/u)
   })
 
@@ -336,8 +376,13 @@ describe('etatGeneration — la lecture est au PROPRIETAIRE seul', () => {
     // booleen, derive du seul fait qui compte — P0 a-t-il produit un modele.
     // Il existe parce que l'ecran annoncait « Votre demande a été comprise »
     // sur une ligne dont `modele` valait `null`.
+    // `arrete` EST LE QUATRIEME ELARGISSEMENT DELIBERE (2026-10-15), et il
+    // repare un defaut que j'avais MOI-MEME introduit : en excluant l'arret
+    // volontaire de `notreFaute`, je l'avais fait retomber sur l'etiquette
+    // « Je n'ai pas compris » — on accusait le proprietaire au moment meme
+    // ou il venait d'appuyer sur Arreter. Trois etats, trois etiquettes.
     expect(Object.keys(e ?? {}).sort()).toEqual([
-      'aDocument', 'activiteSec', 'apercuVersion', 'attendVous', 'comprise', 'creeIl',
+      'aDocument', 'activiteSec', 'apercuVersion', 'arrete', 'attendVous', 'comprise', 'creeIl',
       'defautsRestants',
       'etape', 'id', 'nom', 'notreFaute', 'questions', 'raison', 'reprenable', 'sections',
       'statut', 'tours', 'versions',
@@ -405,7 +450,15 @@ describe('etatGeneration — la lecture est au PROPRIETAIRE seul', () => {
       }),
       table: 't_test', id: 'g-1', proprietaire: 'user-1',
     })
-    expect(e?.raison).toBe(RAISON_TECHNIQUE)
+    // ── EDITION CONSCIENTE (EP-240, 2026-10-15). Ce controle figeait
+    // `RAISON_TECHNIQUE`, qui dit « Reessayez dans un moment ». MESURE :
+    // la generation arrivee a 22/22 s est arretee sur un solde epuise, et
+    // l ecran invitait a reessayer — ce qui ne donnera RIEN tant que le
+    // compte n est pas recharge.
+    //
+    // CE QUE LE CONTROLE PROTEGEAIT RESTE INTACT, et c est l essentiel :
+    // aucune entraille, aucun montant, aucun nom de fournisseur.
+    expect(e?.raison).toBe(RAISON_INDISPONIBLE)
     expect(JSON.stringify(e)).not.toMatch(/credit|balance|fatale|25\.6/iu)
   })
 
@@ -423,7 +476,10 @@ describe('etatGeneration — la lecture est au PROPRIETAIRE seul', () => {
     }
     // et les familles techniques tombent toutes sur le generique
     expect(traduireRaison('echec repete x3: Request timed out.')).toBe(RAISON_TECHNIQUE)
-    expect(traduireRaison('erreur fatale (non transitoire) : facturation')).toBe(RAISON_TECHNIQUE)
+    // Une facturation refusee ne se reessaie pas : elle se resout (EP-240).
+    expect(traduireRaison('erreur fatale (non transitoire) : facturation')).toBe(
+      RAISON_INDISPONIBLE,
+    )
   })
 
   it('la ligne d un autre n existe pas : null, sans distinguer « absent » de « interdit »', async () => {

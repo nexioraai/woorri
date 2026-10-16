@@ -320,6 +320,94 @@ describe('EP-230 · une tranche trop longue sauvegarde, elle ne meurt pas', () =
     ).toBeGreaterThan(0)
   }, 60_000)
 
+  it("EP-235 — la PREMIÈRE tranche écrit le sondage, et ne part pas dans le noir", async () => {
+    // ── SIGNALÉ PAR LE PROPRIÉTAIRE, et il avait raison de ne pas me croire.
+    //
+    // « Tu peux pas me convaincre que 86 caractères demandent 6 minutes à
+    // comprendre. » MESURE au même instant : 8,4 min écoulées, ZÉRO jeton
+    // écrit, ZÉRO dollar, sondage PAS persisté. Ce n était pas de la
+    // compréhension — c était de l INVISIBILITÉ : rien ne s écrit tant
+    // qu une tranche ne finit pas, et elles durent 30 minutes.
+    //
+    // Ce contrôle exige qu une tranche rende la main DÈS que le sondage est
+    // connu : l écran montre un progrès réel, la sonde n est jamais refaite,
+    // et P0 démarre la tranche suivante avec un budget ENTIER.
+    const racine = new URL('../../../../../../', import.meta.url)
+    const { creerClientABlanc } = (await import(
+      /* @vite-ignore */ new URL('benchmarks/air-emission/client-a-blanc.mjs', racine).href
+    )) as { creerClientABlanc: (o: unknown) => unknown }
+    const { creerMoteur } = (await import(
+      /* @vite-ignore */ new URL('benchmarks/air-emission/moteur.mjs', racine).href
+    )) as { creerMoteur: (o: unknown) => Promise<unknown> }
+    const { migrateAirDocument } = await import('@deribfy/air-schema')
+    const { readFileSync } = await import('node:fs')
+    const corpus = migrateAirDocument(
+      JSON.parse(
+        readFileSync(
+          new URL('packages/golden-corpus/corpus-v3/bus-intercites.air.json', racine),
+          'utf8',
+        ),
+      ),
+    )
+    const { base, tables } = baseEnMemoire([
+      {
+        id: 'g-4', statut: 'en_attente', etape: 'p0', demande: 'une application simple',
+        nom: 'application', owner_id: 'u-1', owner_email: 'x@y.z',
+        created_at: '2026-10-15T00:00:00.000Z', battement: null,
+        attente_validation: false, reprises: 0,
+        sections_acquises: null, document: null, ok: false, cout_usd: 0,
+      },
+    ])
+    const w = creerTravailleur({
+      table: TABLE,
+      base,
+      moteur: (await creerMoteur({
+        cleApi: 'client-a-blanc',
+        client: creerClientABlanc({ corpus }),
+      })) as Parameters<typeof creerTravailleur>[0]['moteur'],
+      // Budget LARGE à dessein : rien d autre ne doit forcer la suspension.
+      // Avec un budget serré, la tranche se posait de toute façon et le
+      // contrôle passait au vert sans rien prouver — mon premier mutant est
+      // resté vert, et c est ce qui me l a montré.
+      budgetTrancheMs: 60_000,
+      battementPerimeMs: 900_000,
+    })
+
+    await w.tourner()
+    const sa = (tables[TABLE][0].sections_acquises ?? {}) as Record<string, unknown>
+    expect(
+      sa.niveaux,
+      'la PREMIÈRE tranche n a rien écrit : l écran resterait muet 30 minutes',
+    ).toBeDefined()
+    expect(
+      Array.isArray(sa.niveaux) && (sa.niveaux as unknown[]).length,
+      'le sondage écrit est vide',
+    ).toBeTruthy()
+    // LE CONTRÔLE QUI COMPTE : elle s est posée JUSTE APRÈS le sondage, donc
+    // AVANT d engager le moindre tirage. C est le « quand », pas le « si ».
+    expect(
+      sa.tirages,
+      'la tranche a enchaîné sur P0 : le sondage n a pas été posé tout de suite',
+    ).toEqual([])
+    expect(sa.modele ?? null, 'aucun modèle ne doit exister à ce stade').toBeNull()
+    // Et la ligne doit être reprenable TOUT DE SUITE, pas dans 15 minutes.
+    expect(
+      tables[TABLE][0].statut,
+      'la ligne doit repasser en attente pour que le tour suivant la saisisse',
+    ).toBe('en_attente')
+    // ── EP-237 : ET SANS RÉCLAMER UN CLIC POUR RIEN.
+    //
+    // Le travailleur arme `attente_validation` à chaque suspension — à
+    // raison : « sans ce drapeau la génération allait jusqu'à la facture
+    // sans que personne n'ait rien validé ». Mais le point d'arrêt du
+    // sondage ne DÉCIDE rien : il range une mesure. Exiger un clic dessus
+    // serait une friction que j'ai failli livrer.
+    expect(
+      tables[TABLE][0].attente_validation,
+      'le point d arrêt du sondage réclame un accord qu il n a aucune raison de demander',
+    ).toBe(false)
+  }, 30_000)
+
   it("CONTRÔLE NÉGATIF — une VRAIE panne reste une panne", async () => {
     // Sans ce contrôle, tout marquer « manque de temps » ferait retenter
     // indéfiniment une panne réelle, en repayant à chaque tour.

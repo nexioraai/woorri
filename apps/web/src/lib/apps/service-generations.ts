@@ -94,6 +94,23 @@ export function etapeDuRefus(statut: string, sa: Record<string, unknown>): strin
 }
 
 export const RAISON_TECHNIQUE = 'Une erreur technique est survenue. Réessayez dans un moment.'
+
+/**
+ * ── « REESSAYEZ » QUAND REESSAYER NE DONNERA RIEN (defaut 2026-10-15).
+ *
+ * MESURE, capture a l'appui : la generation arrivee a 22/22 s'est arretee
+ * sur « Your credit balance is too low ». L'ecran affichait « Une erreur
+ * technique est survenue. Reessayez dans un moment. » — le proprietaire
+ * pouvait cliquer dix fois pour rien.
+ *
+ * Un solde epuise n'est PAS passager. Le dire autrement fait perdre du
+ * temps a celui qui lit, et c'est la definition d'un mensonge utile a
+ * personne. Le message ne nomme NI le fournisseur NI un montant : il dit
+ * qu'il faut agir et que reessayer ne suffira pas.
+ */
+export const RAISON_INDISPONIBLE =
+  'La génération est indisponible pour le moment. Réessayer n’y changera rien — ' +
+  'nous sommes prévenus et nous rétablissons le service.'
 export const RAISON_NON_ABOUTIE =
   'La génération n’a pas pu aboutir cette fois. Nous avons été prévenus et regardons ce qui s’est passé.'
 
@@ -111,7 +128,13 @@ export function traduireRaison(brute: string | undefined): string {
   if (r === RAISON_ARRET_PROPRIETAIRE) return RAISON_ARRETEE
   // erreurs d'infrastructure : credit, facturation, 400 fournisseur,
   // timeouts, echecs repetes — le message generique, RIEN du brut.
-  if (/^erreur fatale|^echec repete|timed out|credit|facturation|\b4\d\d\b|\b5\d\d\b/iu.test(r)) {
+  // ① D'ABORD CE QUI NE SE RESOUT PAS TOUT SEUL : un solde epuise, une
+  //    facturation refusee. « Reessayez » y serait un mensonge.
+  if (/credit|facturation|billing|quota/iu.test(r)) {
+    return RAISON_INDISPONIBLE
+  }
+  // ② PUIS LE PASSAGER : coupure, 4xx/5xx, expiration.
+  if (/^erreur fatale|^echec repete|timed out|\b4\d\d\b|\b5\d\d\b/iu.test(r)) {
     return RAISON_TECHNIQUE
   }
   // refus de convergence du moteur : filet, plafond, amputation, stagnation…
@@ -155,6 +178,8 @@ export type EtatGeneration = {
   readonly notreFaute: boolean
   /** P0 a REELLEMENT produit un modele. Sans lui, rien n'a ete compris. */
   readonly comprise: boolean
+  /** Le proprietaire a appuye sur Arreter. Ni panne, ni incomprehension. */
+  readonly arrete: boolean
   /**
    * COMBIEN DE TOURS DE REPARATION ONT EU LIEU.
    *
@@ -306,6 +331,18 @@ export async function etatGeneration({
     raison: statut === 'refusee' ? traduireRaison(diagnostics[0]) : null,
     questions,
     notreFaute,
+    // ── UN ARRET VOULU N'EST NI UNE PANNE NI UNE INCOMPREHENSION.
+    //
+    // DEFAUT QUE J'AI MOI-MEME INTRODUIT (EP-229, corrige ici) : en
+    // excluant l'arret volontaire de `notreFaute`, je l'ai fait retomber
+    // sur la branche par defaut de l'ecran — « Je n'ai pas compris, je ne
+    // construis rien ». Le proprietaire venait d'appuyer sur Arreter, et on
+    // lui repondait qu'on n'avait pas compris sa demande. C'etait PIRE
+    // qu'avant ma correction.
+    //
+    // Trois etats, trois etiquettes : notre faute, son incomprehension, ou
+    // sa DECISION. La troisieme manquait.
+    arrete: arretVoulu,
     // ── « COMPRISE » DOIT VOULOIR DIRE COMPRISE (defaut 2026-10-15, capture).
     //
     // L'ecran affichait « Votre demande a ete comprise » des que la ligne

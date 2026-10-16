@@ -138,3 +138,60 @@ describe('EP-223 — la marche du refus est lue, jamais figée', () => {
     expect(refus('p0').raison).toMatch(/n’a pas pu aboutir/u)
   })
 })
+
+/**
+ * EP-238 · « EN FILE D'ATTENTE » SUR UNE APPLICATION DÉJÀ ÉCRITE.
+ *
+ * MESURE, capture du propriétaire à l'appui (2026-10-15, 18:12) :
+ * `sections 22/22`, phase `reparation`, 30 défauts restants, 7,818 $
+ * dépensés, 123 116 jetons écrits — et l'escalier affichait « En file
+ * d'attente », toutes les marches suivantes grisées.
+ *
+ * C'était le tir qui est allé LE PLUS LOIN depuis l'interface, et l'écran
+ * le présentait comme s'il n'avait pas commencé.
+ *
+ * Cause : une ligne SUSPENDUE repasse `en_attente` — c'est juste, le verrou
+ * n'est tenu que pendant une tranche — et la branche rendait la marche 0
+ * sans regarder ce qui était déjà fait.
+ */
+describe('EP-238 — une ligne suspendue n est pas une ligne en file', () => {
+  it('22 sections écrites : l escalier montre l étape RÉELLE', () => {
+    const m = marcheDuSuivi({
+      statut: 'en_attente',
+      etape: 'reparation',
+      raison: null,
+      attendVous: true,
+      sections: { faites: 22, total: 22 },
+    })
+    expect(m.courante, 'une application écrite n est pas « en file d attente »').toBe(3)
+    expect(ETAPES_SUIVI[m.courante]).toBe('Vérifier et réparer')
+  })
+
+  it('elle attend le propriétaire, donc elle ne « tourne » pas', () => {
+    // Afficher un travail en cours alors que la ligne attend un clic ferait
+    // croire qu il n y a rien à faire — et elle attendrait indéfiniment.
+    const m = marcheDuSuivi({
+      statut: 'en_attente', etape: 'reparation', raison: null,
+      attendVous: true, sections: { faites: 22, total: 22 },
+    })
+    expect(m.enCours).toBe(false)
+  })
+
+  it('CONTRÔLE NÉGATIF — une ligne NEUVE est bien « en file d attente »', () => {
+    // Sans ceci, on afficherait « Comprendre la demande » sur une ligne qui
+    // n a jamais été saisie — le mensonge inverse. Le dépôt écrit déjà
+    // `etape: 'p0'`, donc l étape seule ne suffit PAS à distinguer.
+    const m = marcheDuSuivi({
+      statut: 'en_attente', etape: 'p0', raison: null,
+      attendVous: false, sections: { faites: 0, total: 22 },
+    })
+    expect(m.courante, 'une ligne jamais travaillée EST en file').toBe(0)
+    expect(m.enCours).toBe(true)
+  })
+
+  it('CONTRÔLE NÉGATIF — un dépôt sans information reste en file', () => {
+    // Les champs sont optionnels : un appelant qui ne les fournit pas doit
+    // garder le comportement prudent d avant.
+    expect(marcheDuSuivi({ statut: 'en_attente', etape: 'p0', raison: null }).courante).toBe(0)
+  })
+})

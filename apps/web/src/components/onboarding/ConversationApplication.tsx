@@ -66,7 +66,8 @@ type Message =
   | { role: 'question'; questions: Question[]; avertissement?: string }
   // UN REFUS DE CONSTRUIRE EST UN TOUR A PART, pas une note sous un resultat.
   | { role: 'incompris'; raison: string }
-  | { role: 'notre_faute'; raison: string };
+  | { role: 'notre_faute'; raison: string }
+  | { role: 'arrete'; raison: string };
 
 export default function ConversationApplication({ onRetour }: { onRetour: () => void }) {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -191,9 +192,11 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
             } else if (e.statut === 'refusee') {
               setMessages((m) => [
                 ...m,
-                e.notreFaute === true
-                  ? { role: 'notre_faute', raison: e.raison ?? '' }
-                  : { role: 'incompris', raison: e.raison ?? '' },
+                e.arrete === true
+                  ? { role: 'arrete', raison: e.raison ?? '' }
+                  : e.notreFaute === true
+                    ? { role: 'notre_faute', raison: e.raison ?? '' }
+                    : { role: 'incompris', raison: e.raison ?? '' },
               ]);
             }
             // ── L'AVIS D'UNE REPRISE NE SURVIT PAS A L'ISSUE (defaut 2026-10-15).
@@ -298,7 +301,9 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
       // le bouton n'a rien fait.
       if (geste === 'relancer' && typeof d.id === 'string' && d.id !== generationId) {
         setMessages((anciens) =>
-          anciens.filter((m) => m.role !== 'incompris' && m.role !== 'notre_faute'),
+          anciens.filter(
+            (m) => m.role !== 'incompris' && m.role !== 'notre_faute' && m.role !== 'arrete',
+          ),
         );
         setEtatGen(null);
         setAvis('C’est reparti sur une demande neuve.');
@@ -324,7 +329,9 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
       // On retire donc les refus, et EUX SEULS : la demande, les questions et
       // les reponses restent — c'est la conversation, et elle n'a pas change.
       setMessages((anciens) =>
-        anciens.filter((m) => m.role !== 'incompris' && m.role !== 'notre_faute'),
+        anciens.filter(
+          (m) => m.role !== 'incompris' && m.role !== 'notre_faute' && m.role !== 'arrete',
+        ),
       );
       setAvis(
         geste === 'arreter'
@@ -866,6 +873,11 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
           m.role === 'moi' ? (
             <Bulle key={i} moi>
               {m.texte}
+            </Bulle>
+          ) : m.role === 'arrete' ? (
+            <Bulle key={i} moi={false}>
+              <span className="block text-xs text-slate-400 mb-2">{'Arrêt demandé'}</span>
+              {m.raison}
             </Bulle>
           ) : m.role === 'notre_faute' ? (
             <Bulle key={i} moi={false}>

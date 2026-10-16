@@ -61,7 +61,22 @@ const FIXTURE = migrerModele(
 // famille qu'EP-222 : un juge qui punit ce que la prose n'enseigne pas.
 //
 // AUCUN JUGE N'A BOUGE. Seul l'enseignement change.
-const HASH_PROMPT_FIGE = "5ee9dad3d36a55c977229716cc9f4cd2a03456713313a34cd365c3cf940c1bc8";
+//
+// RE-SCELLEMENT CONSCIENT v5 (EP-234, 2026-10-15) — v4 5ee9dad3… n'aura
+// vecu que deux heures, et c'est la mesure qui l'a tuee. MOTIF : trois
+// tirages a 2,7352 $, et `DERIVATION_TRAVERSEE_ACTEUR` est tombe DEUX fois
+// sur le MEME ecran APRES que la regle v4 eut ete enseignee.
+//
+// POURQUOI v4 NE POUVAIT PAS MARCHER : elle disait « une etape est privee
+// si l'acteur produit le concept ». Pour l'appliquer, le modele devait
+// calculer qui produit quoi, PUIS deduire sur quel ECRAN ses etapes
+// atterriraient — alors que les ecrans sont derives APRES, par le moteur.
+// On lui demandait de predire le resultat d'un calcul qu'il ne fait pas.
+// La regle etait VRAIE et INAPPLICABLE.
+//
+// v5 dit la meme chose dans ce que le modele ECRIT : deux acteurs ne font
+// jamais le meme geste sur le meme concept. Verifiable en ecrivant.
+const HASH_PROMPT_FIGE = "0ddf147858dc2931a866b460b302578ca3245c913757626c7a31663e9ce8696f";
 
 describe("intégration minimale P0 — l'instrument, pas l'exécution", () => {
   it("CLIQUET — le hash du prompt est figé", () => {

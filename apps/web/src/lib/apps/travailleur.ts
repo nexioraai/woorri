@@ -41,7 +41,13 @@
  * perimera). Rien d'avale.
  */
 import { randomUUID } from 'node:crypto'
-import { codeEtChemin, RAISON_ARRET_PROPRIETAIRE, TABLE_GENERATIONS, TABLE_VERSIONS } from './journal'
+import {
+  codeEtChemin,
+  detailDuDefaut,
+  RAISON_ARRET_PROPRIETAIRE,
+  TABLE_GENERATIONS,
+  TABLE_VERSIONS,
+} from './journal'
 import { estReprenable, etatDeReprise } from './reprise'
 
 type Lignes = { data: Record<string, unknown>[] | null; error: { message: string } | null }
@@ -627,7 +633,16 @@ export function creerTravailleur({
                 // ligne redevenait saisissable au tick suivant et la
                 // generation allait jusqu'au bout — jusqu'a la facture —
                 // sans que personne n'ait rien valide.
-                attente_validation: true,
+                // ── ET SEULEMENT QUAND IL Y A QUELQUE CHOSE A VALIDER.
+                //
+                // Le moteur distingue desormais deux suspensions : celle qui
+                // DECIDE (on s'apprete a depenser pour ecrire l'application)
+                // et celle qui RANGE une mesure et rend la main. La seconde
+                // ne doit pas faire cliquer le proprietaire sur un arret qui
+                // ne lui demande rien.
+                //
+                // Defaut PRUDENT : sans reponse du moteur, on attend l'accord.
+                attente_validation: (r as { accordRequis?: boolean }).accordRequis !== false,
                 battement: null,
                 jeton_travailleur: null,
                 sections_acquises: e,
@@ -700,6 +715,18 @@ export function creerTravailleur({
               sections_acquises: {
                 phase: 'terminee',
                 tirages: res.tirages,
+                // ── LE DETAIL DE CHAQUE DEFAUT, ET PAS SEULEMENT SON CODE.
+                //
+                // `diagnostics` ne garde que `CODE@chemin` : pour un defaut
+                // de schema cela donne `SCHEMA@entities.1.fields.2` — on sait
+                // OU, jamais QUOI. Le message de zod porte le fait, et il
+                // existe deja sur le diagnostic ; il mourait dans le `map`
+                // au-dessus. Champ ADDITIF : `diagnostics` garde son contrat.
+                //
+                // Ce qui n'y est PAS, et pourquoi : `issue.code`
+                // (`unrecognized_keys`…) et `issue.keys` sont jetes dans
+                // `acceptation.mjs`, module SCELLE. On ne l'ouvre pas.
+                defauts: res.diagnostics.map(detailDuDefaut),
                 // Volet ① : POURQUOI chaque tour a retenu, rejete ou stagne —
                 // lisible dans la ligne, sans re-payer.
                 tours: res.tours ?? [],

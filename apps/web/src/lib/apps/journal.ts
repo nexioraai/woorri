@@ -103,6 +103,41 @@ function direLEchecDEcriture(table: string, cause: unknown): void {
  * Le chemin est borne a 120 caracteres : il localise, il ne transporte pas
  * un document.
  */
+/**
+ * LE DETAIL COMPLET D'UN DEFAUT — code, chemin ET message.
+ *
+ * ── POURQUOI `codeEtChemin` NE SUFFIT PAS.
+ *
+ * Elle rend `CODE@chemin`, et c'est tout ce que la colonne `diagnostics`
+ * conserve. Pour un defaut de SCHEMA, cela donne `SCHEMA@entities.1.fields.2`
+ * — on sait OU, jamais QUOI. Le message de zod, lui, porte le fait :
+ * « Unrecognized key: "x" », « Invalid input: expected string, received
+ * number ». Il existe deja sur le diagnostic ; il mourait ici.
+ *
+ * ── CE QU'ON NE PEUT PAS CAPTURER, ET POURQUOI ON NE LE FORCE PAS.
+ *
+ * `issue.code` (`unrecognized_keys`, `invalid_type`) et `issue.keys` sont
+ * jetes en amont, dans `acceptation.mjs`, qui mappe chaque issue zod en
+ * `{ code: "SCHEMA", path, message }`. Ce module est SCELLE. Les reprendre
+ * exigerait de l'ouvrir — on s'arrete donc au message, qui contient la cle
+ * en clair pour `unrecognized_keys` et les deux types pour `invalid_type`.
+ *
+ * Bornes : chemin 120 caracteres (il localise, il ne transporte pas un
+ * document), message 240 — assez pour la phrase de zod, jamais pour une
+ * charge utile.
+ */
+export function detailDuDefaut(d: {
+  code?: string
+  path?: unknown
+  message?: unknown
+}): { code: string; path: string; message: string } {
+  return {
+    code: d.code ?? '?',
+    path: String(d.path ?? '').slice(0, 120),
+    message: String(d.message ?? '').slice(0, 240),
+  }
+}
+
 export function codeEtChemin(d: { code?: string; path?: unknown }): string {
   const chemin = String(d.path ?? '').slice(0, 120)
   return chemin === '' ? (d.code ?? '?') : `${d.code ?? '?'}@${chemin}`

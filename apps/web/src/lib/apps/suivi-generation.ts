@@ -20,6 +20,10 @@ export const ETAPES_SUIVI = [
 export type EtatPourSuivi = {
   readonly statut: 'en_attente' | 'en_cours' | 'livree' | 'refusee'
   readonly etape: string | null
+  /** Une ligne qui attend l'accord a DÉJÀ travaillé : elle n'est pas en file. */
+  readonly attendVous?: boolean
+  /** Ce qui est déjà écrit. Zéro ne prouve rien ; plus de zéro, si. */
+  readonly sections?: { readonly faites: number; readonly total: number }
   /** Deja TRADUITE par le serveur — le brut du moteur ne voyage jamais. */
   readonly raison: string | null
 }
@@ -73,7 +77,30 @@ export function marcheDuSuivi(etat: EtatPourSuivi | null): Marche {
     }
   }
   if (etat.statut === 'en_attente') {
-    return { courante: 0, livree: false, refusee: false, raison: null, enCours: true }
+    // ── « EN FILE D'ATTENTE » SUR UNE APPLICATION DÉJÀ ÉCRITE (2026-10-15).
+    //
+    // MESURE, capture du propriétaire à l'appui : `sections 22/22`, phase
+    // `reparation`, 7,818 $ dépensés — et l'escalier affichait « En file
+    // d'attente », toutes les marches suivantes grisées.
+    //
+    // Cause : une ligne SUSPENDUE repasse `en_attente` (c'est juste : le
+    // verrou n'est tenu que pendant une tranche), et cette branche rendait
+    // la marche 0 sans regarder ce qui avait déjà été fait.
+    //
+    // Une ligne qui ATTEND L'ACCORD du propriétaire, ou qui porte des
+    // sections, a forcément déjà travaillé. Elle n'est pas en file : elle
+    // est posée, à l'étape où elle s'est arrêtée.
+    const aTravaille = etat.attendVous === true || (etat.sections?.faites ?? 0) > 0
+    if (!aTravaille) {
+      return { courante: 0, livree: false, refusee: false, raison: null, enCours: true }
+    }
+    return {
+      courante: marcheDeLEtape(etat.etape),
+      livree: false,
+      refusee: false,
+      raison: null,
+      enCours: etat.attendVous !== true,
+    }
   }
   // en_cours : l'etape du moteur dit la marche — p0 comprend, reparation
   // verifie, tout le reste est l'ecriture des sections.

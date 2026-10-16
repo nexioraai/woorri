@@ -40,6 +40,7 @@
 // et il exige une cle. Importer ce module ne coute rien.
 // ============================================================
 import { z } from "zod";
+import { createHash as creerHash } from "node:crypto";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -85,7 +86,18 @@ export function abregerPourEmission(brief) {
   return `${coupe.trim()}\n\n[cahier des charges complet transmis a la comprehension]`;
 }
 
-export async function creerMoteur({ cleApi, plafondUsd = Infinity, paquets, client: clientFourni, sdk }) {
+export async function creerMoteur({
+  cleApi,
+  plafondUsd = Infinity,
+  paquets,
+  client: clientFourni,
+  sdk,
+  // ── LE PARTAGE DE SONDE, FOURNI PAR L'APPELANT (EP-236).
+  //
+  // Le moteur ne sait pas lire une base ; le travailleur, si. Absent — cas
+  // de la campagne en terminal — rien ne change : on sonde comme avant.
+  sondePartagee = null,
+}) {
   if (typeof cleApi !== "string" || cleApi.trim() === "") {
     throw new Error("MOTEUR_CLE_ABSENTE");
   }
@@ -307,11 +319,62 @@ const surfaceEnveloppe = () => {
   const { creerSondeGrammaire } = await import(join(HERE, "sonde-grammaire.mjs"));
   const sondeGrammaire = creerSondeGrammaire({ client, adaptateur });
   let niveauxSondes = null;
+
+  // ── L'EMPREINTE DE CE QUE LA SONDE MESURE (EP-236, 2026-10-15).
+  //
+  // Le commentaire ci-dessus dit juste : « le niveau acceptable est une
+  // propriete du SCHEMA, pas de la demande ». La sonde envoie d'ailleurs
+  // `system: "x"`, `user: "x"` — la demande n'y est PAS.
+  //
+  // Mais la reutilisation ne vivait que dans l'etat de MODULE, donc dans un
+  // seul processus. Sur serverless, chaque reveil du cron est un processus
+  // NEUF : cette reutilisation n'a jamais servi EN PRODUCTION. Chaque
+  // generation refaisait 9 a 22 allers-retours pour redecouvrir exactement
+  // la meme reponse — mesure du proprietaire : 16 minutes d'ecran muet sur
+  // une demande de 86 caracteres.
+  //
+  // L'empreinte porte TOUT ce qui peut changer la reponse : les schemas de
+  // chaque barreau, et les ecarts de dialecte declares. Le modele n'y entre
+  // pas : il ne decide pas ce que la grammaire accepte, l'API le decide.
+  const empreinteGrammaire = creerHash("sha256")
+    .update(
+      JSON.stringify({
+        parts: coeur.PARTS.map((p) => ({ nom: p.name, niveaux: p.levels.map((n) => n.schema) })),
+        ecarts: adaptateur.CONTRAINTES_GRAMMAIRE ?? null,
+      }),
+    )
+    .digest("hex")
+    .slice(0, 16);
+
   /** Rend aussi `fraiche` : seule la tranche qui a REELLEMENT sonde replie
    *  le cout des sondes — une reprise ne les compterait pas deux fois. */
   async function sonderUneFois() {
     if (niveauxSondes !== null) return { niveaux: niveauxSondes, fraiche: false };
+    // ① LE PARTAGE AVANT L'APPEL. Fourni par l'appelant (le travailleur sait
+    //    lire la base ; le moteur, non). Absent en campagne : rien ne change.
+    if (sondePartagee !== null && sondePartagee !== undefined) {
+      try {
+        const connue = await sondePartagee.lire(empreinteGrammaire);
+        if (Array.isArray(connue) && connue.length > 0 && connue.every((n) => n.niveau !== null)) {
+          niveauxSondes = connue;
+          return { niveaux: niveauxSondes, fraiche: false };
+        }
+      } catch {
+        // Un partage indisponible n'empeche JAMAIS de sonder : on retombe
+        // sur le comportement d'avant, qui marche.
+      }
+    }
     niveauxSondes = await sondeGrammaire.sonder(coeur.PARTS);
+    // ② ET ON LE RANGE, pour que la generation suivante n'ait rien a payer.
+    if (sondePartagee !== null && sondePartagee !== undefined) {
+      try {
+        if (niveauxSondes.every((n) => n.niveau !== null)) {
+          await sondePartagee.ecrire(empreinteGrammaire, niveauxSondes);
+        }
+      } catch {
+        // Ranger est un CONFORT : echouer ici ne doit pas perdre la sonde.
+      }
+    }
     return { niveaux: niveauxSondes, fraiche: true };
   }
 
@@ -503,8 +566,23 @@ const surfaceEnveloppe = () => {
     const restantes = (p) =>
       coeur.partsPour(p).filter((part) => !part.keys.every((k) => acquis[k] !== undefined));
 
-    const suspendre = (phase) => ({
+    // ── TOUTE SUSPENSION N'EST PAS UNE DECISION (EP-237, 2026-10-15).
+    //
+    // Le travailleur pose `attente_validation` a CHAQUE suspension, et il a
+    // raison : « sans ce drapeau la generation allait jusqu'a la facture
+    // sans que personne n'ait rien valide ».
+    //
+    // Mais le point d'arret pose APRES LA SONDE ne decide rien : il range
+    // une mesure et rend la main, le temps d'un battement. Exiger un clic
+    // pour ca ferait cliquer le proprietaire sur un arret qui ne lui demande
+    // RIEN — friction pure, et je l'avais introduite une heure plus tot sans
+    // la voir.
+    //
+    // `accordRequis` dit lequel des deux c'est. Defaut `true` : un
+    // appelant qui ne sait pas repondre garde le comportement prudent.
+    const suspendre = (phase, { accordRequis = true } = {}) => ({
       fini: false,
+      accordRequis,
       raison: "budget_temps",
       etape:
         phase === "emission" && prescriptif !== null
@@ -583,6 +661,33 @@ const surfaceEnveloppe = () => {
             coutSondeTranche += adaptateur.coutUsd(adaptateur.lireUsage(n.usage));
           }
         }
+        // ── UNE SONDE FRAICHE SE POSE AVANT D'ALLER PLUS LOIN (EP-235).
+        //
+        // SIGNALE PAR LE PROPRIETAIRE, et il avait raison de ne pas me
+        // croire : « tu peux pas me convaincre que 86 caracteres demandent
+        // 6 minutes a comprendre ». MESURE au meme instant : 8,4 min,
+        // ZERO jeton ecrit, ZERO dollar, sondage PAS ENCORE persiste.
+        //
+        // Ce n'etaient pas 6 minutes de comprehension : c'etaient 8 minutes
+        // d'INVISIBILITE. Rien n'est ecrit tant qu'une tranche ne finit pas,
+        // et les tranches durent desormais 30 minutes.
+        //
+        // TROIS CHOSES D'UN SEUL GESTE :
+        //   · l'ecran montre un progres REEL des la premiere minute ;
+        //   · la sonde n'est jamais refaite — elle coute des appels ;
+        //   · et surtout P0 demarre la tranche SUIVANTE avec un budget
+        //     ENTIER, au lieu de ce que la sonde lui a laisse.
+        //
+        // La reprise est immediate : la ligne repasse `en_attente` et le
+        // cron la saisit au tour d'apres, une minute plus tard.
+        //
+        // GARDE : on ne se pose QUE si la sonde est complete. Une sonde
+        // partielle se re-mesure au tour suivant — se poser dessus ferait
+        // une boucle qui ecrit toujours la meme chose.
+        if (niveaux.every((n) => n.niveau !== null)) {
+          // Rien n'a ete decide : on range une mesure, on rend la main.
+          return suspendre("p0", { accordRequis: false });
+        }
       }
     }
 
@@ -651,7 +756,25 @@ const surfaceEnveloppe = () => {
             `\n\nCes refus sont STRUCTURELS, jamais une question au client : un geste ` +
             `qui consulte une instance exige en amont, DANS LE MEME PARCOURS, une etape ` +
             `du MEME concept qui l'elit ; une confirmation exige une ecriture en amont. ` +
-            `Ajoute les etapes manquantes plutot que de supprimer le parcours.`;
+            `Ajoute les etapes manquantes plutot que de supprimer le parcours.` +
+            // ── LE REMEDE, PAS SEULEMENT LE REPROCHE (mesure du 2026-10-15).
+            //
+            // Trois tirages, 2,7352 $ : `DERIVATION_TRAVERSEE_ACTEUR` est tombe
+            // DEUX fois sur le MEME ecran, apres que la regle eut ete enseignee.
+            // Le message nommait l'ecran — un objet que le modele n'ecrit PAS,
+            // puisque les ecrans sont derives apres coup. Lui dire « ecran
+            // traverse par 2 acteurs », c'est lui montrer une consequence dont
+            // il ne connait pas la cause dans SON texte.
+            //
+            // Le remede, lui, se formule dans ce qu'il ECRIT : deux parcours,
+            // deux acteurs, le meme couple (concept, geste).
+            (diags.some((x) => x.code === "DERIVATION_TRAVERSEE_ACTEUR")
+              ? `\n\nPOUR LA TRAVERSEE D'ACTEUR, le remede est dans TES PARCOURS, pas ` +
+                `dans l'ecran : deux parcours d'acteurs DIFFERENTS portent le MEME couple ` +
+                `(concept, geste). Trouve-le et change le GESTE de l'un des deux — ` +
+                `chercher est fait pour ca et ne traverse jamais — ou donne a ce role des ` +
+                `etapes distinctes. Ne retire pas l'acteur.`
+              : "");
       let dernierReproche = "";
 
       for (let tentative = tirages.length + 1; ; tentative++) {

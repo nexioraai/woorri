@@ -24,6 +24,7 @@
 // ne sait pas échouer ne prouve rien.
 // ============================================================
 import { describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
 import { PROMPT_P0 } from "../../../benchmarks/air-emission/passe0.mjs";
 import {
   GESTES,
@@ -152,22 +153,44 @@ describe("EP-222 · les règles de fermeture sont enseignées", () => {
     }
   });
 
-  it("EP-231 — l invite énonce la règle du partage entre acteurs", () => {
-    // MESURE PAYÉE (tir du 2026-10-15 à 19:10, tirage 1, 0,8397 $) :
-    // « ecrans[ecr_entree] : écran traversé par 2 acteurs avec surface NON
-    // publique ». Le juge l'exigeait, `porteeDe` la dérive — et l'invite ne
-    // la prononçait NULLE PART. Même famille qu'EP-222.
-    expect(INVITE).toMatch(/DEUX ACTEURS NE PARTAGENT/u)
-    const ligne = INVITE.split("\n").find((l) => l.includes("DEUX ACTEURS NE PARTAGENT"))
-    // Les deux sources de privauté, telles que `porteeDe` les calcule.
-    expect(ligne, "consulter_historique rend TOUJOURS l étape privée").toMatch(
-      /consulter_historique/u,
+  it("EP-234 — la règle des acteurs est VÉRIFIABLE EN ÉCRIVANT", () => {
+    // ── POURQUOI LA PREMIÈRE VERSION A ÉCHOUÉ, ET CE QUE ÇA A COÛTÉ.
+    //
+    // v4 (EP-231) disait : « une étape est privée si l acteur produit le
+    // concept ». Trois tirages plus tard, 2,7352 $, et le MÊME refus est
+    // tombé DEUX fois sur le MÊME écran — règle pourtant enseignée.
+    //
+    // Pour l appliquer, le modèle devait calculer qui produit quoi, PUIS
+    // déduire sur quel ÉCRAN ses étapes atterriraient — alors que les
+    // écrans sont dérivés APRÈS, par le moteur. On lui demandait de prédire
+    // le résultat d un calcul qu il ne fait pas. Vraie, et inapplicable.
+    //
+    // CE CONTRÔLE TIENT LA FORME, PAS SEULEMENT LE SUJET : la règle doit
+    // parler de ce que le modèle ÉCRIT (concept, geste, parcours), jamais
+    // d un écran qu il ne compose pas.
+    expect(INVITE).toMatch(/DEUX ACTEURS NE FONT JAMAIS LE MÊME GESTE/u)
+    const ligne = INVITE.split("\n").find((l) => l.includes("DEUX ACTEURS NE FONT JAMAIS"))
+    expect(ligne, "la règle doit nommer le COUPLE que le modèle écrit").toMatch(/concept/u)
+    expect(ligne, "…et le geste").toMatch(/geste/u)
+    expect(ligne, "la règle doit dire quoi FAIRE : changer de geste").toMatch(/chercher/u)
+    // LE CONTRÔLE QUI COMPTE : plus un mot sur l écran, qu il ne compose pas.
+    expect(
+      ligne,
+      "la règle parle encore d un ÉCRAN — objet que le modèle ne décide pas",
+    ).not.toMatch(/écran traversé|surface NON publique/u)
+  })
+
+  it("EP-234 — le reproche porte le REMÈDE, pas seulement le reproche", () => {
+    // Le message du juge nomme l écran ; le reproche, lui, doit nommer le
+    // geste à changer. Sinon on répète au modèle une conséquence dont il ne
+    // connaît pas la cause dans son propre texte.
+    const moteur = readFileSync(
+      new URL("../../../benchmarks/air-emission/moteur.mjs", import.meta.url),
+      "utf8",
     )
-    expect(ligne, "un geste sur un concept que l acteur PRODUIT est privé, sauf saisir").toMatch(
-      /saisir/u,
+    expect(moteur, "aucun remède ciblé pour la traversée d acteur").toMatch(
+      /DERIVATION_TRAVERSEE_ACTEUR[\s\S]{0,400}chercher/u,
     )
-    // Et la sortie : ce que le générateur doit faire à la place.
-    expect(ligne, "la règle doit dire quoi faire, pas seulement interdire").toMatch(/chercher/u)
   })
 
   it("EP-231 — CONTRÔLE NÉGATIF : le juge refuse bien ce que la règle décrit", () => {
