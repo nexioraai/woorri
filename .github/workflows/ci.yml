@@ -300,7 +300,12 @@ jobs:
       #
       # Bloquante : le defaut qu'elle garde est celui qui rend une application
       # inutilisable sans rien dire.
-      - name: Apps emises — une regle ne juge que ce que le formulaire collecte
+      # ÉLARGIE LE 2026-10-17 — elle lance AUSSI `comportement`, qui pressait
+      # depuis des semaines sans qu'aucune gate ne le lance, et qui montait la
+      # tranche COMMISE (runtime fige au 2026-09-11) : il etait VERT sur un
+      # instantane de cinq semaines. Preuve mesuree : en cassant l'ecriture du
+      # runtime, l'ancienne version rendait 3 passed, la nouvelle 1 failed.
+      - name: Apps emises — une regle ne juge que ce que le formulaire collecte, et l'app AGIT
         id: app_regles
         continue-on-error: true
         working-directory: .

@@ -26,7 +26,7 @@
     "gate:invariants": "node --experimental-strip-types docs/elite-protocol/evidence/harnais-invariants.mjs",
     "gate:navigation": "node --experimental-strip-types docs/elite-protocol/evidence/gate-navigation.mjs",
     "gate:controles": "vitest run --config docs/elite-protocol/evidence/observation/obs.config.ts controles-fantomes",
-    "gate:app-regles": "vitest run --config docs/elite-protocol/evidence/observation/obs.config.ts ep258",
+    "gate:app-regles": "vitest run --config docs/elite-protocol/evidence/observation/obs.config.ts ep258 comportement",
     "gate:bench-parse": "for f in benchmarks/air-emission/*.mjs; do node --check \"$f\" || exit 1; done && echo 'scripts du banc : syntaxe OK'",
     "gate:e33-remote": "node --experimental-strip-types docs/elite-protocol/evidence/observation/e33-emettre-fixture.mjs && vitest run --config docs/elite-protocol/evidence/observation/obs.config.ts e33-source-reseau",
     "gate:app-rendu": "vitest run --config docs/elite-protocol/evidence/observation/obs.config.ts corpus-rendu",

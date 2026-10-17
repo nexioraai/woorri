@@ -6,9 +6,15 @@
 import { createElement } from "react";
 import { act, create } from "react-test-renderer";
 import type { ReactTestRenderer } from "react-test-renderer";
-import { describe, expect, it } from "vitest";
-const REPO = new URL("../../../../", import.meta.url).pathname;
-const APP = REPO + "slices/resto-riche/app/";
+import { beforeAll, describe, expect, it } from "vitest";
+import { compilerANeuf } from "./app-fraiche.ts";
+
+let APP = "";
+beforeAll(async () => {
+  const a = await compilerANeuf("slices/resto-riche/chez-nous.air.json", "deribfy-comportement");
+  APP = a.base;
+  expect(a.fichiers, "aucun fichier émis : il n'y a rien à monter").toBeGreaterThan(20);
+}, 180_000);
 
 interface Instance { id: string; values: Record<string, string> }
 
