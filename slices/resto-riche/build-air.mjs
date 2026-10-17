@@ -1,7 +1,18 @@
 // DÉMONSTRATION — le MÊME moteur, un document RICHE écrit à la main.
 // Aucune dépense LLM. But : isoler la cause. Si l'app sort riche, le moteur
 // n'est pas le plafond — c'est ce qu'on demande au générateur.
-const R = "/Users/yia/Documents/woorri/";
+// ── LA RACINE SE DÉDUIT, ELLE NE SE GRAVE PLUS (2026-10-17).
+//
+// Ce script portait `const R = "/Users/yia/Documents/woorri/"` — l'ancien
+// emplacement du dépôt, abandonné le 2026-10-11 quand il est sorti d'iCloud.
+// Il échouait donc au PREMIER appel, sur un message parlant d'un module
+// introuvable plutôt que d'un chemin mort. Quarante fichiers portaient encore
+// cette adresse ; ceux qui SERVENT sont corrigés, les campagnes historiques
+// sont laissées telles quelles.
+//
+// `import.meta.url` est l'emplacement RÉEL de ce fichier : le dépôt peut
+// déménager encore, le script suivra.
+const R = new URL("../../", import.meta.url).pathname;
 // Marque PROVISOIRE (même statut que l'étoile de Bus Intercités) : une
 // assiette stylisée aux couleurs du thème. Un vrai logo la remplacera par
 // ce seul fichier.

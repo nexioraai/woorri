@@ -7,9 +7,29 @@
 import { createElement } from "react";
 import { act, create } from "react-test-renderer";
 import type { ReactTestRenderer, ReactTestInstance } from "react-test-renderer";
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
+import { compilerANeuf } from "./app-fraiche.ts";
 
-const APP = "/tmp/nav-preuve/app/";
+// ── LE FIXTURE AVAIT DISPARU, ET IL NE REVIENDRA PAS (2026-10-17).
+//
+// Ce fichier visait `/tmp/nav-preuve/app/` — un dossier temporaire qu'AUCUN
+// script du depot ne remplit. Il echouait donc depuis longtemps, non pas sur
+// un defaut mais sur un fixture evapore. Un cliquet qui ne peut pas tourner
+// ne protege rien ; celui-ci garde la propriete D-086, qui est exactement ce
+// qui DIFFERE entre la cible web et la cible native.
+//
+// Le document est `resto-quartier` : seul des 22 documents du depot a porter
+// les CINQ ecrans attendus et une navigation principale a 5 destinations.
+// Compile A NEUF — le cliquet juge le compilateur d'aujourd'hui.
+const DOCUMENT = "packages/golden-corpus/corpus-v3/resto-quartier.air.json";
+let APP = "";
+beforeAll(async () => {
+  const a = await compilerANeuf(DOCUMENT, "deribfy-composition");
+  APP = a.base;
+  // Un zero se voit : un dossier vide rendrait tout montage impossible pour
+  // une raison qu'on mettrait longtemps a nommer.
+  expect(a.fichiers, "aucun fichier emis : il n'y a rien a monter").toBeGreaterThan(10);
+}, 180_000);
 
 async function monter(ecran: string): Promise<ReactTestRenderer> {
   const { DataRoot } = await import(APP + "lib/runtime/data-provider.tsx");

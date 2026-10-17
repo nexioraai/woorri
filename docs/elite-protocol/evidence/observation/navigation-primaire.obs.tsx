@@ -6,10 +6,31 @@
 import { createElement } from "react";
 import { act, create } from "react-test-renderer";
 import type { ReactTestRenderer, ReactTestInstance } from "react-test-renderer";
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
+import { compilerANeuf } from "./app-fraiche.ts";
+import { cibleAttendue, type DonneesEcran } from "./attendu-du-plan.ts";
 import { journal as navJournal, reset as navReset } from "./stub-navigation.ts";
 
-const APP = "/tmp/nav-preuve/app/";
+// ── LE FIXTURE AVAIT DISPARU, ET IL NE REVIENDRA PAS (2026-10-17).
+//
+// Ce fichier visait `/tmp/nav-preuve/app/` — un dossier temporaire qu'AUCUN
+// script du depot ne remplit. Il echouait donc depuis longtemps, non pas sur
+// un defaut mais sur un fixture evapore. Un cliquet qui ne peut pas tourner
+// ne protege rien ; celui-ci garde la propriete D-086, qui est exactement ce
+// qui DIFFERE entre la cible web et la cible native.
+//
+// Le document est `resto-quartier` : seul des 22 documents du depot a porter
+// les CINQ ecrans attendus et une navigation principale a 5 destinations.
+// Compile A NEUF — le cliquet juge le compilateur d'aujourd'hui.
+const DOCUMENT = "packages/golden-corpus/corpus-v3/resto-quartier.air.json";
+let APP = "";
+beforeAll(async () => {
+  const a = await compilerANeuf(DOCUMENT, "deribfy-navigation-primaire");
+  APP = a.base;
+  // Un zero se voit : un dossier vide rendrait tout montage impossible pour
+  // une raison qu'on mettrait longtemps a nommer.
+  expect(a.fichiers, "aucun fichier emis : il n'y a rien a monter").toBeGreaterThan(10);
+}, 180_000);
 
 async function racine() {
   const { DataRoot } = await import(APP + "lib/runtime/data-provider.tsx");
@@ -35,8 +56,43 @@ async function monter(ecran: string): Promise<ReactTestRenderer> {
 const barre = (r: ReactTestRenderer): ReactTestInstance | undefined =>
   r.root.findAll((n) => (n.props as { testID?: string }).testID === "primary-nav")[0];
 
-const onglets = (r: ReactTestRenderer): ReactTestInstance[] =>
-  r.root.findAll((n) => String((n.props as { testID?: string }).testID ?? "").startsWith("primary-nav-"));
+/**
+ * LES ONGLETS, DEDUPLIQUES PAR IDENTITE — et pourquoi c'est juste.
+ *
+ * MESURE DU 2026-10-17 : `findAll` rendait DIX noeuds pour CINQ onglets. Ce
+ * n'etait pas une barre doublee — la sonde l'a montre : un seul `primary-nav`,
+ * et chaque onglet rendu comme `Geste` ENVELOPPANT un `Pressable`, les deux
+ * portant le meme `testID`. L'ancien selecteur comptait le composant ET son
+ * element hote.
+ *
+ * On garde donc UN noeud par identite, comme `app-complete` et `couverture`
+ * le font deja. La propriete mesuree — « cinq onglets, dans l'ordre du
+ * document » — c'est bien cinq identites distinctes.
+ *
+ * CE QUI N'EST PAS PERDU : une barre REELLEMENT doublee ne se verrait plus
+ * ici, puisque les identites resteraient cinq. C'est pourquoi le controle
+ * `barreUnique` ci-dessous est AJOUTE — il garde ce que cette deduplication
+ * cesse de voir.
+ */
+const onglets = (r: ReactTestRenderer): ReactTestInstance[] => {
+  const vus = new Set<string>();
+  return r.root
+    .findAll((n) => String((n.props as { testID?: string }).testID ?? "").startsWith("primary-nav-"))
+    .filter((n) => {
+      const id = String((n.props as { testID?: string }).testID ?? "");
+      if (vus.has(id)) return false;
+      vus.add(id);
+      return true;
+    });
+};
+
+/** Le nombre de barres rendues. Deux barres seraient un defaut grave —
+ *  l'utilisateur verrait deux rangees d'onglets — et la deduplication
+ *  ci-dessus ne le montrerait plus. Ce compte le garde. */
+const barreUnique = (r: ReactTestRenderer): number =>
+  r.root.findAll(
+    (n) => (n.props as { testID?: string }).testID === "primary-nav" && typeof n.type === "string",
+  ).length;
 
 const libelle = (n: ReactTestInstance): string => {
   const t = n.findAll(() => true)
@@ -122,15 +178,38 @@ describe("PREUVE 8 — la ligne de liste ouvre le détail", () => {
     );
     navReset();
     let trouve: { name: string; params?: unknown } | undefined;
+    let identite: string | undefined;
     for (const p of pressables) {
       navReset();
       act(() => { (p.props as { onPress: () => void }).onPress(); });
       const j = navJournal[0];
-      if (j?.params !== undefined) { trouve = j; break; }
+      if (j?.params !== undefined) {
+        trouve = j;
+        identite = String((p.props as { testID?: string }).testID ?? "");
+        break;
+      }
     }
     console.log("[PREUVE 8] navigation contextuelle :", JSON.stringify(trouve));
     expect(trouve, "une ligne de liste doit naviguer AVEC un itemId").toBeDefined();
-    expect(trouve?.name).toBe("scr_plat_detail");
+
+    // ── L'ATTENTE VIENT DU PLAN, PLUS DU CODE DE CE FICHIER (2026-10-17).
+    //
+    // Cette ligne exigeait `"scr_plat_detail"` EN DUR. Sur `resto-quartier`,
+    // l'accueil declare DEUX navigations contextuelles legitimes — les
+    // categories vers le menu, les suggestions vers le detail — et la boucle
+    // retient la premiere. Le test accusait donc une application saine.
+    //
+    // On lit desormais ce que les DONNEES EMISES promettent pour l'identite
+    // reellement pressee. Doctrine de `couverture`, et meme module.
+    const { screenData } = (await import(APP + "screens/scr_accueil.data.ts")) as {
+      screenData: DonneesEcran;
+    };
+    const attendu = cibleAttendue(screenData, String(identite ?? ""));
+    expect(
+      attendu,
+      `le plan ne promet aucune navigation pour « ${String(identite)} »`,
+    ).not.toBeNull();
+    expect(trouve?.name, "la navigation observee diverge de ce que le plan promet").toBe(attendu);
     expect((trouve?.params as { itemId?: string } | undefined)?.itemId).toBeTypeOf("string");
     r.unmount();
   });

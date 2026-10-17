@@ -326,11 +326,28 @@ jobs:
       #
       # Bloquante : les brancher aveugles aurait ete pire que les laisser
       # dormir — un VERT achete une confiance qu'il ne merite pas.
-      - name: Apps emises — les neuf observations, sur du code FRAIS
+      - name: Apps emises — les ONZE observations, sur du code FRAIS
         id: app_observations
         continue-on-error: true
         working-directory: .
         run: npm run gate:app-observations
+
+      # L'ARTEFACT SUR DISQUE — une question DIFFERENTE, et elle est due.
+      #
+      # `chez-tantie` inspecte un projet REEL pose sur le disque, avec le code
+      # HUMAIN de son auteur (4 slots) et ses vraies fixtures. Il est AVEUGLE
+      # aux changements du compilateur, et c'est VOULU : sa question n'est pas
+      # « le compilateur est-il sain ? » (c'est `app_observations` qui la
+      # porte) mais « l'artefact pose tient-il debout ? ».
+      #
+      # Mesure du 2026-10-17 : il echouait depuis le 2026-10-11 sur un chemin
+      # absolu vers l'ANCIEN emplacement du depot, sorti d'iCloud ce jour-la.
+      # Six jours de silence, pour un chemin mort et non un defaut.
+      - name: Artefact sur disque — l'app posee tient debout (slots d'auteur compris)
+        id: app_livrable
+        continue-on-error: true
+        working-directory: .
+        run: npm run gate:app-livrable
 
       # GATE NAVIGATION (D-086) — empeche le retour des destinations globales
       # transformees en gros boutons dans le contenu. Cliquet a 121, la mesure
@@ -430,8 +447,8 @@ jobs:
           if [ "${FIDELITE_BLOQUANTE}" = "true" ] && [ "${{ steps.app_fidelite.outcome }}" != "success" ]; then
             fidelite_ko=true
           fi
-          if [ "$fidelite_ko" = "true" ] || [ "${{ steps.typecheck.outcome }}" != "success" ] || [ "${{ steps.test.outcome }}" != "success" ] || [ "${{ steps.test_marge.outcome }}" != "success" ] || [ "${{ steps.build.outcome }}" != "success" ] || [ "${{ steps.apidocs.outcome }}" != "success" ] || [ "${{ steps.pkg_typecheck.outcome }}" != "success" ] || [ "${{ steps.pkg_lint.outcome }}" != "success" ] || [ "${{ steps.pkg_test.outcome }}" != "success" ] || [ "${{ steps.app_compile.outcome }}" != "success" ] || [ "${{ steps.app_web.outcome }}" != "success" ] || [ "${{ steps.app_web_rendu.outcome }}" != "success" ] || [ "${{ steps.app_web_build.outcome }}" != "success" ] || [ "${{ steps.backend.outcome }}" != "success" ] || [ "${{ steps.backend_vivant.outcome }}" != "success" ] || [ "${{ steps.app_rendu.outcome }}" != "success" ] || [ "${{ steps.app_controles.outcome }}" != "success" ] || [ "${{ steps.app_regles.outcome }}" != "success" ] || [ "${{ steps.app_observations.outcome }}" != "success" ] || [ "${{ steps.app_session.outcome }}" != "success" ] || [ "${{ steps.app_remote.outcome }}" != "success" ] || [ "${{ steps.app_navigation.outcome }}" != "success" ] || [ "${{ steps.app_composition.outcome }}" != "success" ] || [ "${{ steps.app_invariants.outcome }}" != "success" ] || [ "${{ steps.lint_cliquet.outcome }}" != "success" ]; then
-            echo "Étape(s) en échec — typecheck=${{ steps.typecheck.outcome }} test=${{ steps.test.outcome }} test_marge=${{ steps.test_marge.outcome }} build=${{ steps.build.outcome }} apidocs=${{ steps.apidocs.outcome }} pkg_typecheck=${{ steps.pkg_typecheck.outcome }} pkg_lint=${{ steps.pkg_lint.outcome }} pkg_test=${{ steps.pkg_test.outcome }} app_compile=${{ steps.app_compile.outcome }} app_web=${{ steps.app_web.outcome }} app_web_rendu=${{ steps.app_web_rendu.outcome }} app_web_build=${{ steps.app_web_build.outcome }} backend=${{ steps.backend.outcome }} backend_vivant=${{ steps.backend_vivant.outcome }} app_rendu=${{ steps.app_rendu.outcome }} app_controles=${{ steps.app_controles.outcome }} app_regles=${{ steps.app_regles.outcome }} app_observations=${{ steps.app_observations.outcome }} app_session=${{ steps.app_session.outcome }} app_navigation=${{ steps.app_navigation.outcome }} app_composition=${{ steps.app_composition.outcome }} app_fidelite=${{ steps.app_fidelite.outcome }} app_invariants=${{ steps.app_invariants.outcome }} lint_cliquet=${{ steps.lint_cliquet.outcome }}"
+          if [ "$fidelite_ko" = "true" ] || [ "${{ steps.typecheck.outcome }}" != "success" ] || [ "${{ steps.test.outcome }}" != "success" ] || [ "${{ steps.test_marge.outcome }}" != "success" ] || [ "${{ steps.build.outcome }}" != "success" ] || [ "${{ steps.apidocs.outcome }}" != "success" ] || [ "${{ steps.pkg_typecheck.outcome }}" != "success" ] || [ "${{ steps.pkg_lint.outcome }}" != "success" ] || [ "${{ steps.pkg_test.outcome }}" != "success" ] || [ "${{ steps.app_compile.outcome }}" != "success" ] || [ "${{ steps.app_web.outcome }}" != "success" ] || [ "${{ steps.app_web_rendu.outcome }}" != "success" ] || [ "${{ steps.app_web_build.outcome }}" != "success" ] || [ "${{ steps.backend.outcome }}" != "success" ] || [ "${{ steps.backend_vivant.outcome }}" != "success" ] || [ "${{ steps.app_rendu.outcome }}" != "success" ] || [ "${{ steps.app_controles.outcome }}" != "success" ] || [ "${{ steps.app_regles.outcome }}" != "success" ] || [ "${{ steps.app_observations.outcome }}" != "success" ] || [ "${{ steps.app_livrable.outcome }}" != "success" ] || [ "${{ steps.app_session.outcome }}" != "success" ] || [ "${{ steps.app_remote.outcome }}" != "success" ] || [ "${{ steps.app_navigation.outcome }}" != "success" ] || [ "${{ steps.app_composition.outcome }}" != "success" ] || [ "${{ steps.app_invariants.outcome }}" != "success" ] || [ "${{ steps.lint_cliquet.outcome }}" != "success" ]; then
+            echo "Étape(s) en échec — typecheck=${{ steps.typecheck.outcome }} test=${{ steps.test.outcome }} test_marge=${{ steps.test_marge.outcome }} build=${{ steps.build.outcome }} apidocs=${{ steps.apidocs.outcome }} pkg_typecheck=${{ steps.pkg_typecheck.outcome }} pkg_lint=${{ steps.pkg_lint.outcome }} pkg_test=${{ steps.pkg_test.outcome }} app_compile=${{ steps.app_compile.outcome }} app_web=${{ steps.app_web.outcome }} app_web_rendu=${{ steps.app_web_rendu.outcome }} app_web_build=${{ steps.app_web_build.outcome }} backend=${{ steps.backend.outcome }} backend_vivant=${{ steps.backend_vivant.outcome }} app_rendu=${{ steps.app_rendu.outcome }} app_controles=${{ steps.app_controles.outcome }} app_regles=${{ steps.app_regles.outcome }} app_observations=${{ steps.app_observations.outcome }} app_livrable=${{ steps.app_livrable.outcome }} app_session=${{ steps.app_session.outcome }} app_navigation=${{ steps.app_navigation.outcome }} app_composition=${{ steps.app_composition.outcome }} app_fidelite=${{ steps.app_fidelite.outcome }} app_invariants=${{ steps.app_invariants.outcome }} lint_cliquet=${{ steps.lint_cliquet.outcome }}"
             exit 1
           fi
           echo "Toutes les étapes bloquantes ont réussi."

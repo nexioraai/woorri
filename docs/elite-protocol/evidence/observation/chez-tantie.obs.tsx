@@ -1,14 +1,41 @@
 // INSPECTION DE L'APPLICATION QU'ON ENVOIE — « Chez Tantie — Commandes ».
 //
 // Les gates couvrent les projets ÉMIS EN MÉMOIRE avec des slots bouchons. Ce
-// fichier inspecte le projet RÉEL, celui qui part en build : sur disque, avec
-// ses vraies implémentations d'auteur, ses vraies fixtures.
+// fichier inspecte un projet RÉEL, SUR DISQUE, avec ses vraies
+// implémentations d'auteur et ses vraies fixtures.
+//
+// ── CE QU'IL MESURE, ET CE QU'IL NE MESURE PAS (dit le 2026-10-17).
+//
+// Il disait « celui qui part en build ». VÉRIFIÉ : aucun pipeline du dépôt ne
+// référence `v3-resto-quartier`. La phrase promettait plus que le fait ; elle
+// est corrigée plutôt que gardée.
+//
+// IL EST AVEUGLE AUX CHANGEMENTS DU COMPILATEUR, ET C'EST VOULU. L'artefact
+// est commis (dernier commit 2026-10-13) : casser `ScreenShell` dans le
+// compilateur ne le touche pas, et ce fichier reste vert — mesuré. Les dix
+// autres observations ont été converties pour compiler À NEUF ; celle-ci
+// GARDE sa cible, parce que sa question est différente : « l'artefact posé
+// sur le disque, avec le code humain de son auteur, tient-il debout ? »
+//
+// Une seule chose compte alors : ne jamais lire son vert comme une preuve sur
+// le compilateur. C'est `gate:app-observations` qui porte cette preuve-là.
 import { createElement } from "react";
 import { act, create } from "react-test-renderer";
 import type { ReactTestRenderer } from "react-test-renderer";
 import { readdirSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-const APP = "/Users/yia/Documents/woorri/slices/v3-resto-quartier/app/";
+// ── LE CHEMIN ÉTAIT MORT (2026-10-17).
+//
+// Il visait `/Users/yia/Documents/woorri/...`, l'ancien emplacement du dépôt,
+// abandonné le 2026-10-11 quand il est sorti d'iCloud. Ce fichier échouait
+// donc depuis six jours sur un « module introuvable », et non sur un défaut.
+//
+// CE FICHIER GARDE SA RAISON D'ÊTRE, et c'est pourquoi il n'est PAS converti
+// en compilation fraîche comme les neuf autres : son en-tête le dit — il
+// inspecte « le projet RÉEL, celui qui part en build : sur disque, avec ses
+// vraies implémentations d'auteur ». Vérifier l'artefact livré est une
+// question distincte de vérifier le compilateur, et les deux sont dues.
+const APP = new URL("../../../../slices/v3-resto-quartier/app/", import.meta.url).pathname;
 const ID = /^(ent_|scr_|act_|fld_|blk_|slot_|data_|rule_|need_|nav_)/;
 
 const textes = (r: ReactTestRenderer): string[] =>

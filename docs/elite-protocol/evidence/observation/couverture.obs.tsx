@@ -9,6 +9,7 @@ import { readdirSync } from "node:fs";
 import { beforeAll, describe, expect, it } from "vitest";
 import { compilerANeuf } from "./app-fraiche.ts";
 import { journal, reset } from "./stub-navigation";
+import { cibleAttendue, type DonneesEcran } from "./attendu-du-plan.ts";
 
 // ── CE QU'IL BALAYAIT, JUSQU'AU 2026-10-17, ET C'EST LE PLUS LARGE DES NEUF.
 //
@@ -62,23 +63,6 @@ const slice = (p: string): string => {
   throw new Error(`tranche inconnue pour ${p}`);
 };
 
-interface Donnees { screenId: string; blocks: { id: string; blockType: string; props: Record<string, unknown> }[];
-  actions: Record<string, { kind: string; screenId?: string }>; uiActionsByBlock: Record<string, string>; }
-
-/** Cible ATTENDUE par le plan pour une identité pressée — lue dans les données émises. */
-function cibleAttendue(d: Donnees, testID: string): string | null {
-  const row = /^(.*)-row-.+$/.exec(testID);
-  const blockId = row ? row[1] : testID;
-  const bloc = d.blocks.find((b) => b.id === blockId);
-  if (!bloc) return null;
-  const parProp = typeof bloc.props.actionId === "string" ? bloc.props.actionId : undefined;
-  const parDeclencheur = d.uiActionsByBlock[blockId];
-  const actionId = ["button", "empty_state"].includes(bloc.blockType) ? parProp : parDeclencheur;
-  if (!actionId) return null;
-  const eff = d.actions[actionId];
-  return eff?.kind === "navigate" && eff.screenId ? eff.screenId : null;
-}
-
 describe("INSTRUMENT v1 — couverture des écrans émis des 2 slices", () => {
   it("presse toutes les identités de tous les écrans et confronte au plan", async () => {
     const bilan: Record<string, { ids: number; handlers: number; conformes: number; inertes: number;
@@ -89,7 +73,7 @@ describe("INSTRUMENT v1 — couverture des écrans émis des 2 slices", () => {
       const s = slice(cheminEcran);
       try {
       const nomData = cheminEcran.replace(/\.tsx$/, ".data.ts");
-      const modData = await (DONNEES[nomData] as () => Promise<{ screenData: Donnees }>)();
+      const modData = await (DONNEES[nomData] as () => Promise<{ screenData: DonneesEcranEcran }>)();
       const d = modData.screenData;
       const { DataRoot } = await (Object.entries(PROVIDERS).find(([k]) => slice(k) === s)![1] as
         () => Promise<{ DataRoot: (p: unknown) => unknown }>)();
