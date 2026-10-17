@@ -124,7 +124,44 @@ describe('EP-260 · le sélecteur d’appareil', () => {
     ).toBe(0)
   })
 
-  it('⑤ LE BAC À SABLE RESTE FERMÉ — l’application ne lit rien du site hôte', () => {
+  it('⑤ L’ICÔNE PORTE LE SENS, MAIS LE MOT RESTE', () => {
+    // ── POURQUOI UNE ICÔNE SEULE NE SUFFIT PAS.
+    //
+    // Un bouton d'icône nue est un mot de passe visuel : qui ne reconnaît pas
+    // le pictogramme ne peut pas deviner ce qu'il règle. Les trois portent
+    // donc leur libellé, et le groupe se nomme pour qui navigue au clavier
+    // ou à la voix.
+    const c = CONVERSATION()
+    const i = c.indexOf('export function ApercuAppareil')
+    const bloc = c.slice(i, c.indexOf('export function', i + 40))
+    for (const icone of ['Smartphone', 'Tablet', 'Monitor']) {
+      expect(c, `l’icône ${icone} n’est pas importée`).toMatch(
+        new RegExp(`\\b${icone}\\b.*lucide-react|lucide-react.*\\b${icone}\\b`, 'u'),
+      )
+    }
+    expect(bloc, 'les boutons n’affichent aucune icône').toMatch(/<a\.Icone/u)
+    // ── CETTE ASSERTION A ÉTÉ CORRIGÉE APRÈS AVOIR ÉTÉ VERTE À TORT.
+    //
+    // Elle cherchait d'abord `{a.libelle}` n'importe où dans le bloc. Mesuré
+    // par mutation le 2026-10-17 : retirer le libellé AFFICHÉ la laissait
+    // VERTE, parce que `a.libelle` subsiste dans l'attribut `title`. Un
+    // contrôle vert pour une mauvaise raison ne contrôle rien.
+    //
+    // On exige donc le libellé comme ENFANT JSX — `>{a.libelle}<` — ce qu'un
+    // attribut ne peut pas produire.
+    expect(bloc, 'le libellé a disparu : l’icône devient un mot de passe visuel').toMatch(
+      />\{a\.libelle\}</u,
+    )
+    expect(bloc, 'le groupe n’est pas nommé pour les technologies d’assistance').toMatch(
+      /aria-label="Taille de l’aperçu"/u,
+    )
+    // L'ÉTAT COURANT EST DIT EN TOUTES LETTRES sous le cadre : la couleur
+    // seule ne porterait pas l'information pour qui ne la distingue pas.
+    expect(bloc, 'la taille courante n’est pas écrite').toMatch(/courant\.largeur/u)
+    expect(bloc, 'la disposition courante n’est pas dite').toMatch(/courant\.note/u)
+  })
+
+  it('⑥ LE BAC À SABLE RESTE FERMÉ — l’application ne lit rien du site hôte', () => {
     const c = CONVERSATION()
     expect(c, 'le sandbox a disparu').toMatch(/sandbox="allow-scripts"/u)
     expect(

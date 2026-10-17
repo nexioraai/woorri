@@ -22,7 +22,7 @@
 // DEPLACEMENT, pas un redessin. Un cliquet verifie que les deux fichiers
 // passent bien par ici au lieu de redeclarer leurs propres bulles.
 // ============================================================
-import { ArrowUp, Paperclip } from 'lucide-react';
+import { ArrowUp, Monitor, Paperclip, Smartphone, Tablet } from 'lucide-react';
 import { useState } from 'react';
 import type { ReactNode } from 'react';
 
@@ -147,9 +147,9 @@ export function ChoixFermes({
  * Deux largeurs auraient laissé un seuil sans témoin.
  */
 const APPAREILS = [
-  { cle: 'telephone', libelle: 'Téléphone', largeur: 390, note: 'barre du bas' },
-  { cle: 'tablette', libelle: 'Tablette', largeur: 768, note: 'barre du bas' },
-  { cle: 'bureau', libelle: 'Bureau', largeur: 1280, note: 'rail latéral' },
+  { cle: 'telephone', libelle: 'Téléphone', largeur: 390, note: 'barre du bas', Icone: Smartphone },
+  { cle: 'tablette', libelle: 'Tablette', largeur: 768, note: 'barre du bas', Icone: Tablet },
+  { cle: 'bureau', libelle: 'Bureau', largeur: 1280, note: 'rail latéral', Icone: Monitor },
 ] as const;
 
 export function ApercuAppareil({
@@ -169,44 +169,81 @@ export function ApercuAppareil({
   const courant = APPAREILS.find((a) => a.largeur === largeur) ?? APPAREILS[0];
   return (
     <div>
-      <div className="flex items-center justify-between gap-2 mb-2">
-        <p className="text-xs text-slate-400 truncate">{titre}</p>
-        {/* LE SÉLECTEUR EST DANS LA BARRE DE L'APERÇU, au-dessus du cadre —
-            la place que v0 lui donne, et la seule qui se lise comme « ceci
-            règle ce que je vois dessous ». */}
-        <div className="flex shrink-0 rounded-lg border border-white/10 overflow-hidden">
-          {APPAREILS.map((a) => (
-            <button
-              key={a.cle}
-              type="button"
-              aria-pressed={a.largeur === largeur}
-              title={`${a.libelle} — ${String(a.largeur)} px · ${a.note}`}
-              onClick={() => { setLargeur(a.largeur); }}
-              className={`px-2.5 py-1 text-[11px] transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#FA5D1E] ${
-                a.largeur === largeur
-                  ? 'bg-[#FA5D1E] text-white'
-                  : 'bg-white/[0.03] text-slate-300 hover:bg-white/[0.08]'
-              }`}
-            >
-              {a.libelle}
-            </button>
-          ))}
+      <div className="flex items-center justify-between gap-3 mb-2">
+        <p className="min-w-0 truncate text-xs text-slate-400">{titre}</p>
+        {/* ── LE SÉLECTEUR EST DANS LA BARRE DE L'APERÇU, au-dessus du cadre :
+            la place de la capture, et la seule qui se lise comme « ceci règle
+            ce que je vois dessous ».
+
+            L'ICÔNE PORTE LE SENS, le libellé reste pour qui ne la lit pas —
+            un bouton d'icône seule est un mot de passe visuel. En dessous de
+            `sm`, le libellé s'efface et l'icône suffit : la barre ne doit pas
+            pousser le titre hors du cadre. */}
+        {/* ── LE LANGAGE VISUEL VIENT DE LA CONCURRENCE, ET LE PROPRIETAIRE
+            L'A DESIGNE (capture de bolt.new, 2026-10-17) : « les icones en
+            bas sont vraiment claires ».
+
+            CE QU'ON EN REPREND : une TUILE par choix — icone en grand,
+            libelle dessous —, et la selection marquee par une BORDURE plus
+            un fond teinte, pas par une simple couleur de texte. Une pastille
+            textuelle se lit de pres ; une tuile se reconnait d'un coup d'oeil.
+
+            CE QU'ON N'EN REPREND PAS : la taille. Chez Bolt ces tuiles sont
+            l'element central d'une page d'accueil ; ici elles vivent dans la
+            barre d'un apercu et ne doivent pas chasser le titre. */}
+        <div
+          role="group"
+          aria-label="Taille de l’aperçu"
+          className="flex shrink-0 items-stretch gap-1.5"
+        >
+          {APPAREILS.map((a) => {
+            const actif = a.largeur === largeur;
+            return (
+              <button
+                key={a.cle}
+                type="button"
+                aria-pressed={actif}
+                title={`${a.libelle} — ${String(a.largeur)} px · ${a.note}`}
+                onClick={() => { setLargeur(a.largeur); }}
+                className={`group flex w-[58px] flex-col items-center gap-1 rounded-xl border px-1 py-1.5 transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FA5D1E] ${
+                  actif
+                    ? 'border-[#FA5D1E]/70 bg-[#FA5D1E]/[0.14] shadow-[0_0_18px_-6px_rgba(250,93,30,0.7)]'
+                    : 'border-white/10 bg-white/[0.03] hover:border-white/20 hover:bg-white/[0.07]'
+                }`}
+              >
+                <a.Icone
+                  size={20}
+                  strokeWidth={1.75}
+                  aria-hidden
+                  className={actif ? 'text-[#FA5D1E]' : 'text-slate-400 group-hover:text-slate-200'}
+                />
+                <span
+                  className={`text-[10px] font-medium leading-none ${
+                    actif ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'
+                  }`}
+                >{a.libelle}</span>
+              </button>
+            );
+          })}
         </div>
       </div>
       {/* LA LARGEUR EST CELLE DU CADRE, pas une mise à l'échelle : c'est ce
           que l'application LIT. Une transformation `scale` tromperait —
           `window.innerWidth` resterait celui du conteneur. */}
-      <div className="overflow-x-auto rounded-xl bg-black/20 p-2">
+      <div className="overflow-x-auto rounded-2xl border border-white/[0.07] bg-black/25 p-2.5">
         <iframe
           title={titre}
           srcDoc={srcDoc}
           sandbox="allow-scripts"
           style={{ width: `${String(largeur)}px`, height: `${String(hauteur)}px` }}
-          className="mx-auto block max-w-full rounded-lg border border-white/10 bg-white"
+          className="mx-auto block max-w-full rounded-xl border border-white/10 bg-white shadow-2xl shadow-black/40"
         />
       </div>
-      <p className="mt-1 text-[11px] text-slate-500">
-        {courant.libelle} · {courant.largeur} px — {courant.note}
+      <p className="mt-1.5 flex items-center gap-1.5 text-[11px] text-slate-500">
+        <courant.Icone size={12} strokeWidth={2} aria-hidden />
+        <span className="tabular-nums">{courant.largeur} px</span>
+        <span className="text-slate-600">·</span>
+        <span>{courant.note}</span>
       </p>
       {children}
     </div>
