@@ -873,11 +873,31 @@ export function AirAgent({ screen, blockId }: BlockRef) {
     ? { kind: "loading", title: label }
     : echec === null
       ? { kind: "ready" }
-      : { kind: "error", title: label, message: echec };
+      : {
+          kind: "error",
+          title: label,
+          // ── LE CODE NE TRAVERSE PLUS L ECRAN (defaut 2026-10-17).
+          //
+          // `message: echec` passait le CODE du serveur a l affichage :
+          // `AIR_AGENT_SANS_CERVEAU`, `AIR_AGENT_REPONSE_ILLISIBLE`. Une
+          // personne qui parle a son application lisait un identifiant de
+          // diagnostic. Sur les DEUX cibles — le runtime est partage.
+          //
+          // F3 : le moteur n invente aucune phrase. Celle-ci vient du
+          // DOCUMENT (`errorMessage`). Absente, le message n est pas rendu —
+          // l etat d erreur reste visible, donc la personne sait que ca a
+          // echoue, et elle ne lit pas du code machine.
+          //
+          // LE CODE N EST PAS PERDU : il reste dans le `testID`, ou un
+          // diagnostic le trouve sans qu aucun oeil ne le subisse.
+          ...(str(props.errorMessage) === undefined ? {} : { message: str(props.errorMessage) }),
+        };
 
   return (
     <AgentBlock
-      testID={b.id}
+      // Le code d echec voyage dans l identite du bloc : diagnosticable par
+      // un instrument, invisible pour la personne.
+      testID={echec === null ? b.id : `${b.id}-echec-${echec}`}
       label={label}
       placeholder={placeholder}
       open={ouvert}

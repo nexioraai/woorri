@@ -84,7 +84,14 @@ import {
 // ADDITIF STRICT : absent = la liste de 1.18.0 au caractere pres. L image
 // declaree prime toujours ; l avatar est le repli pour les lignes dont le
 // DOCUMENT dit qu elles sont des personnes.
-export const BLOCK_REGISTRY_VERSION = "1.19.0";
+// 1.20.0 (2026-10-17) — `agent` gagne `errorMessage`. L agent DISAIT UN CODE
+// a l utilisateur : `AirAgent` passait le code du serveur comme message, donc
+// une personne lisait « AIR_AGENT_SANS_CERVEAU » dans son application, sur les
+// DEUX cibles (le runtime de l agent est partage). Le bloc n avait aucun moyen
+// de declarer une phrase, alors que `list`, `form` et `detail_header` l ont
+// depuis 1.1.0 (D-060) : meme montee, meme patron. ADDITIF — prop optionnelle,
+// et sans elle le message n est simplement pas rendu.
+export const BLOCK_REGISTRY_VERSION = "1.20.0";
 
 // Motifs d'identités stables — IDENTIQUES à @deribfy/air-schema (ids.ts) ;
 // redéclarés structurellement (patron AirCapabilitySlice : pas de couplage
@@ -665,6 +672,21 @@ export const BLOCKS: readonly BlockDefinition[] = [
       // reflexe. Le validateur le refuse.
       confirmLabel: z.string().min(1).optional(),
       cancelLabel: z.string().min(1).optional(),
+      // ── L AGENT DISAIT UN CODE A L UTILISATEUR (defaut 2026-10-17).
+      //
+      // Mesure : en cas d echec, `AirAgent` passait le CODE du serveur comme
+      // message — `AIR_AGENT_SANS_CERVEAU`, `AIR_AGENT_REPONSE_ILLISIBLE`.
+      // Une personne qui demande quelque chose a son application lisait donc
+      // un identifiant de diagnostic. Sur LES DEUX CIBLES : le runtime de
+      // l agent est partage.
+      //
+      // Le bloc n avait AUCUN moyen de declarer une phrase, alors que `list`,
+      // `form` et `detail_header` l ont depuis le registre 1.1.0 (D-060). La
+      // meme montee, au meme patron : DONNEES du document, jamais texte
+      // moteur (F3). Sans phrase declaree, le message n est PAS rendu — l etat
+      // d erreur reste visible (la personne sait que ca a echoue), et le code
+      // ne traverse plus l ecran.
+      errorMessage: z.string().min(1).optional(),
     }).refine(
       (p) => (p.confirmLabel === undefined) === (p.cancelLabel === undefined),
       {

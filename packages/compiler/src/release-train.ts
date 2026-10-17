@@ -163,7 +163,7 @@ export const RELEASE_TRAIN_V1 = {
   // avait aucun capable de porter plus qu un sous-titre, et les surfaces
   // legales annoncaient donc « le texte complet sera fourni ». Le generateur
   // ne refusait pas d ecrire : il n avait aucun endroit ou le faire.
-  blockRegistryVersion: "1.19.0",
+  blockRegistryVersion: "1.20.0",
   // Ré-scellé le 2026-08-29 (DET-006 / D-039) : `ListBlock` DÉCLARE désormais
   // `fill` sur sa Section, afin que la liste virtualisée reçoive un parent
   // BORNÉ. Cause démontrée : imbriquée dans un ScrollView de même axe, une
@@ -380,7 +380,18 @@ export const RELEASE_TRAIN_V1 = {
     // et le montage a rendu 16 lignes et ZERO rond — rien n avait echoue.
     //
     // ADDITIF : prop optionnelle sur `list`. Ancien sceau : b9d960253ad836f8…
-    "65cae33638917b939b954222ef532452540bf46f3610e31bf25cbc0bd9aa898f",
+    // RE-SCELLE 2026-10-17 (registre 1.20.0) — L AGENT NE DIT PLUS UN CODE.
+    //
+    // Mesure : en cas d echec, `AirAgent` passait le CODE du serveur comme
+    // message. Une personne qui parle a son application lisait
+    // « AIR_AGENT_SANS_CERVEAU ». Sur LES DEUX CIBLES — le runtime de l agent
+    // est partage.
+    //
+    // Le bloc n avait aucun moyen de declarer une phrase, la ou `list`, `form`
+    // et `detail_header` l ont depuis 1.1.0. ADDITIF : prop optionnelle, et le
+    // code part dans le `testID` — diagnosticable, invisible.
+    // Ancien sceau : 65cae33638917b93…
+    "c0e22cbd690e528677567b1cf578f74bf26763b8cf2c9b881e5f1c524f998433",
   // EP-134 — ajout compatible `external_contact` : version MINEURE du registre.
   /**
    * EP-147 ③ — LE NIVEAU D'API ANDROID VISÉ, épinglé par le train.

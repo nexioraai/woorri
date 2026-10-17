@@ -162,7 +162,23 @@ describe("cliquets du registre de blocs", () => {
     // la liste virtualisee) — n en cabler qu un a rendu 16 lignes et ZERO
     // rond ; et `primitives.tsx` n est PAS partage entre les cibles, si bien
     // que la poser cote natif seulement a casse 32/32 applications web.
-    expect(BLOCK_REGISTRY_VERSION).toBe("1.19.0");
+    // 1.20.0 (2026-10-17) — `agent` gagne `errorMessage`.
+    //
+    // DEFAUT MESURE, et il atteignait l utilisateur FINAL : en cas d echec,
+    // `AirAgent` passait le CODE du serveur comme message d erreur. Une
+    // personne qui parle a son application lisait « AIR_AGENT_SANS_CERVEAU »
+    // ou « AIR_AGENT_REPONSE_ILLISIBLE ». Sur LES DEUX CIBLES — le runtime de
+    // l agent est partage entre natif et web.
+    //
+    // Le bloc n avait AUCUN moyen de declarer une phrase, alors que `list`,
+    // `form` et `detail_header` l ont depuis 1.1.0 (D-060). La meme montee, au
+    // meme patron : DONNEES du document, jamais texte moteur (F3).
+    //
+    // ADDITIF : prop optionnelle. Sans elle, le message n est pas rendu —
+    // l etat d erreur reste visible, donc la personne sait que ca a echoue, et
+    // le code part dans le `testID`, ou un instrument le trouve sans qu aucun
+    // oeil ne le subisse.
+    expect(BLOCK_REGISTRY_VERSION).toBe("1.20.0");
     expect(BLOCKS.map((b) => b.id)).toEqual(V1_BLOCK_IDS);
   });
 
