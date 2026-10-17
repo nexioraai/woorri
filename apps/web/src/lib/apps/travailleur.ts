@@ -379,6 +379,31 @@ export function creerTravailleur({
         ok: false,
         etape: null,
         diagnostics: [RAISON_ARRET_PROPRIETAIRE],
+        // ── RELACHER LE JETON, SINON L'ARRET SE FAIT ECRASER.
+        //
+        // Le travail en vol ne se tue pas — c'est ecrit plus haut. Et chaque
+        // ecriture du travailleur est clôturee par `.eq('jeton_travailleur',
+        // jeton)`. Tant que le jeton RESTE sur la ligne, le travailleur qui
+        // revient la retrouve, ecrit son verdict par-dessus, et l'arret
+        // disparait — avec les diagnostics qui le portaient, donc avec la
+        // seule trace qui permet a l'ecran de dire « vous avez arrete »
+        // plutot que « ca n'a pas abouti ».
+        //
+        // Le LOT 1 a AGGRAVE la consequence : toute oeuvre lisible est
+        // desormais livree. L'ecrasement ne produisait qu'un refus ; il
+        // produirait maintenant une application LIVREE sur une ligne que le
+        // proprietaire venait d'arreter.
+        //
+        // Jeton retire, le fencing joue POUR l'arret : l'ecriture du
+        // travailleur touche zero ligne et tombe dans `sortirDepossede`, qui
+        // n'ecrit RIEN sur la ligne et envoie le cout paye au journal des
+        // orphelins. L'arret tient, l'argent reste compte.
+        //
+        // Aucune reprise n'est ouverte par ce retrait : les deux saisies sont
+        // clôturees sur `statut in ('en_attente','en_cours')`, et la ligne est
+        // `refusee`. La contrainte de base ne dit qu'un sens — `en_cours`
+        // EXIGE un jeton — et ne regit pas les lignes terminees.
+        jeton_travailleur: null,
       })
       .eq('id', id)
       .eq('owner_id', proprietaire)
