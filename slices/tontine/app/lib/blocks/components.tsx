@@ -6,7 +6,7 @@
 // de styling reste remplaçable (D-021) et les tokens restent la seule
 // source visuelle. AUCUNE syntaxe Maestro/Detox : les blocs sont
 // E2E-agnostiques (D-022/D-023), seuls les testID standard sont exposés.
-import {Liste, GridCard, AppButton, Barre,
+import {Liste, GridCard, AppButton, AvatarInitiales, Barre,
   AppText,
   Badge,
   ListRow,
@@ -22,9 +22,17 @@ import type {Blocks,
   FormBlockProps,
   HeaderBlockProps,
   ListBlockProps,
-  SpacerBlockProps, SearchEntryBlockProps, GraphiqueBlockProps, AgentBlockProps} from "./contracts.ts";
+  SpacerBlockProps, SearchEntryBlockProps, GraphiqueBlockProps, AgentBlockProps,
+  StatistiquesBlockProps, StatistiqueItem} from "./contracts.ts";
 
-export function HeaderBlock({ title, subtitle, accroche, logoUri, testID }: HeaderBlockProps) {
+export function HeaderBlock({
+  title,
+  subtitle,
+  surtitre,
+  accroche,
+  logoUri,
+  testID,
+}: HeaderBlockProps) {
   return (
     <Section testID={testID}>
       {logoUri === undefined ? null : (
@@ -41,6 +49,15 @@ export function HeaderBlock({ title, subtitle, accroche, logoUri, testID }: Head
       )}
       {/* 1.7.0 — une ACCROCHE monte d'un cran typographique. Le bloc choisit
           un RÔLE, la primitive porte la forme : aucun style ici. */}
+      {/* SURTITRE (2026-10-17) — la ligne qui SITUE, au-dessus du titre.
+          Chez Bolt : PILOTAGE, JOURNAL FINANCIER, COMMUNAUTE. Trois niveaux,
+          pas deux. Le bloc choisit un ROLE, la primitive porte la forme :
+          aucun style ici, aucune casse imposee — le document ecrit le texte. */}
+      {surtitre !== undefined && (
+        <AppText variant="label" tone="muted">
+          {surtitre}
+        </AppText>
+      )}
       <AppText variant={accroche === true ? "display" : "heading"}>{title}</AppText>
       {subtitle !== undefined && <AppText tone="muted">{subtitle}</AppText>}
     </Section>
@@ -58,6 +75,7 @@ export function ListBlock({
   bounded,
   seeAll,
   testID,
+  avatarInitiales,
 }: ListBlockProps) {
   // DET-033 (jugement propriétaire sur appareil) : les états ne remplacent
   // plus le BLOC ENTIER — ils ne remplacent que la ZONE DE CONTENU. Avant,
@@ -182,9 +200,15 @@ export function ListBlock({
               <ListRow
                 key={item.id}
                 leading={
-                  item.imageUri === undefined ? undefined : (
+                  item.imageUri !== undefined ? (
                     <AppImage uri={item.imageUri} variant="thumb" accessibilityLabel={item.title} />
-                  )
+                  ) : avatarInitiales === true ? (
+                    // REPLI, PAS REMPLACEMENT : l image prime toujours. Et le
+                    // document DIT que ces lignes sont des personnes — le
+                    // moteur ne le devine pas, un catalogue afficherait sinon
+                    // « CB » pour « Collier baoule ».
+                    <AvatarInitiales nom={item.title} testID={`${testID ?? "list"}-avatar-${item.id}`} />
+                  ) : undefined
                 }
                 title={item.title}
                 subtitle={item.subtitle}
@@ -291,10 +315,21 @@ export function ListBlock({
           <ListRow
             // VIGNETTE (1.2.0, D-087) : `leading` existait deja au contrat de
             // la primitive. Sans `imageUri`, la ligne reste celle de 1.1.0.
+            //
+            // DEUX CHEMINS DE RENDU, ET J AI CABLE LE MAUVAIS D ABORD
+            // (2026-10-17). `ListBlock` rend ses lignes de DEUX facons : la
+            // carte `items.map` ci-dessus, employee quand la liste est BORNEE
+            // (l apercu), et cette liste virtualisee, employee partout
+            // ailleurs. J ai pose l avatar sur la premiere ; le montage a
+            // rendu 16 lignes et ZERO rond. C est la cinquieme fois que ce
+            // depot voit « une liste ecrite deux fois diverge » — le controle
+            // ⑥ d EP-262 exige desormais que les deux chemins s accordent.
             leading={
-              item.imageUri === undefined ? undefined : (
+              item.imageUri !== undefined ? (
                 <AppImage uri={item.imageUri} variant="thumb" accessibilityLabel={item.title} />
-              )
+              ) : avatarInitiales === true ? (
+                <AvatarInitiales nom={item.title} testID={`${testID ?? "list"}-avatar-${item.id}`} />
+              ) : undefined
             }
             title={item.title}
             subtitle={item.subtitle}
@@ -455,6 +490,83 @@ export function GraphiqueBlock({
         />
       ))}
     </Section>
+  );
+}
+
+/**
+ * STATISTIQUES (2026-10-17) — LE CHIFFRE QUI OUVRE UN TABLEAU DE BORD.
+ *
+ * CE QUI A COMMANDE CE BLOC : comparaison avec Bolt, detail par detail. Son
+ * tableau de bord de tontine ouvre sur QUATRE cartes — solde, cotisations
+ * collectees, membres actifs, prochaine echeance. Libelle discret, grand
+ * nombre, legende qui le situe. Deribfy ne savait dessiner que sept formes,
+ * et aucune n etait celle-la.
+ *
+ * CE QU IL NE FAIT PAS (F3) : il ne formate rien. `valeur` arrive ecrite.
+ *
+ * LE TON RESOUT LES JETONS SEMANTIQUES QUE RIEN N EMPLOYAIT : `success` et
+ * `error` existent dans les 44 tokens, et aucun bloc ne les utilisait. La
+ * couleur ne disait donc jamais si un montant entre ou sort. `ton` le dit,
+ * et le moteur n en choisit pas la teinte.
+ *
+ * SANS APOSTROPHES NI ACCENTS, comme les autres commentaires de ce fichier :
+ * le cliquet F3 extrait les chaines par leurs delimiteurs, et une apostrophe
+ * francaise en ouvre une fausse. Convention mesuree, pas un gout.
+ */
+export function StatistiquesBlock({
+  title,
+  items,
+  state = { kind: "ready" },
+  testID,
+}: StatistiquesBlockProps) {
+  if (state.kind === "loading") {
+    return <StateView state="loading" title={state.title} testID={testID} />;
+  }
+  if (state.kind === "empty") {
+    return (
+      <StateView state="empty" title={state.title} message={state.message} testID={testID} />
+    );
+  }
+  if (state.kind === "error") {
+    return (
+      <StateView state="error" title={state.title} message={state.message} testID={testID} />
+    );
+  }
+  return (
+    <Section title={title} testID={testID}>
+      <Rangee>
+        {items.map((it, i) => (
+          <CarteChiffre
+            key={`${testID ?? "stat"}-${String(i)}`}
+            item={it}
+            testID={`${testID ?? "stat"}-item-${String(i)}`}
+          />
+        ))}
+      </Rangee>
+    </Section>
+  );
+}
+
+/** Une carte. Separee pour que la grille reste lisible, et parce qu un
+ *  composant qui fait deux choses se corrige deux fois. */
+function CarteChiffre({ item, testID }: { item: StatistiqueItem; testID: string }) {
+  const tonBadge =
+    item.ton === "positif"
+      ? "success"
+      : item.ton === "negatif"
+        ? "error"
+        : item.ton === "attention"
+          ? "warn"
+          : undefined;
+  return (
+    <GridCard
+      compact
+      title={item.valeur}
+      subtitle={item.label}
+      testID={testID}
+      {...(item.legende === undefined ? {} : { trailing: item.legende })}
+      {...(tonBadge === undefined ? {} : { badge: item.valeur, badgeTone: tonBadge })}
+    />
   );
 }
 
@@ -658,5 +770,6 @@ export const blocks: Blocks = {
   SpacerBlock,
   ProseBlock,
   GraphiqueBlock,
+  StatistiquesBlock,
   AgentBlock,
 };

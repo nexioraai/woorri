@@ -45,7 +45,23 @@ export function StatusBar(_props: { style?: "light" | "dark" }) {
  * pas, on sert la disposition du téléphone. Mobile d'abord, y compris dans
  * l'incertitude.
  */
+// ── IL FAUT SURVIVRE À L'ABSENCE DE DOCUMENT, ET PAS SEULEMENT AU SERVEUR.
+//
+// MESURÉ le 2026-10-16 : la gate de rendu des applications web monte chaque
+// écran avec `environment: "node"`. Aucun `window` n'y existe, et toutes les
+// applications ont rendu « window is not defined ».
+//
+// Le troisième argument de `useSyncExternalStore` ne suffit PAS : il n'est
+// employé que sur le vrai chemin de rendu serveur. Un moteur de rendu de test
+// prend le chemin CLIENT, donc appelle l'abonnement et la lecture.
+//
+// Ce n'est pas une concession au harnais. Une page construite par Vite peut
+// être pré-rendue, et un module qui suppose `window` casse alors en
+// production — exactement de la même façon, pour la même raison.
+const sansDocument = (): boolean => typeof window === "undefined";
+
 const abonnerALaLargeur = (relire: () => void): (() => void) => {
+  if (sansDocument()) return () => undefined;
   window.addEventListener("resize", relire);
   return () => {
     window.removeEventListener("resize", relire);
@@ -55,7 +71,7 @@ const abonnerALaLargeur = (relire: () => void): (() => void) => {
 export function useLargeurDeFenetre(): number {
   return useSyncExternalStore(
     abonnerALaLargeur,
-    () => window.innerWidth,
+    () => (sansDocument() ? 0 : window.innerWidth),
     () => 0,
   );
 }
@@ -84,6 +100,7 @@ export function useSafeAreaInsets(): {
 const REQUETE_SOMBRE = "(prefers-color-scheme: dark)";
 
 const abonnerAuSchema = (relire: () => void): (() => void) => {
+  if (sansDocument()) return () => undefined;
   const mq = window.matchMedia(REQUETE_SOMBRE);
   mq.addEventListener("change", relire);
   return () => {
@@ -94,7 +111,7 @@ const abonnerAuSchema = (relire: () => void): (() => void) => {
 export function useSchemaSysteme(): "light" | "dark" {
   return useSyncExternalStore(
     abonnerAuSchema,
-    () => (window.matchMedia(REQUETE_SOMBRE).matches ? "dark" : "light"),
+    () => (sansDocument() || !window.matchMedia(REQUETE_SOMBRE).matches ? "light" : "dark"),
     () => "light",
   );
 }

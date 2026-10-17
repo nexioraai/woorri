@@ -199,6 +199,23 @@ export interface AppImageProps extends A11yProps {
   variant: "thumb" | "header" | "brand";
 }
 
+/**
+ * AVATAR A INITIALES (2026-10-17) — la tete de ligne d une personne.
+ *
+ * MESURE : chaque ligne de la liste des membres chez Bolt porte un rond
+ * d initiales — AM, PE, JM. Deribfy ne savait montrer qu une VIGNETTE, et
+ * seulement quand le document declare une image : une liste de personnes
+ * sans photo restait du texte nu.
+ *
+ * LE TEXTE VIENT DU DOCUMENT. La primitive n en DERIVE que les initiales,
+ * ce qui est une operation typographique, pas une invention de contenu.
+ */
+export interface AvatarInitialesProps {
+  /** Le nom affiche ailleurs sur la ligne — jamais un texte invente ici. */
+  nom: string;
+  testID?: string;
+}
+
 export interface BadgeProps extends A11yProps {
   label: string;
   tone?: "info" | "success" | "warn" | "error";

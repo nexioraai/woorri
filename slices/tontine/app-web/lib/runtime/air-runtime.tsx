@@ -27,6 +27,7 @@ import {
   SpacerBlock,
   AgentBlock,
   GraphiqueBlock,
+  StatistiquesBlock,
   ProseBlock,
   SearchEntryBlock,
 } from "../blocks/components";
@@ -201,6 +202,29 @@ function reglesRespectees(
   for (const regle of regles ?? []) {
     if (regle.entityId !== entityId) continue;
     for (const a of regle.assertions) {
+      // ── CE QUE LE CLIENT A LE DROIT DE JUGER (défaut du 2026-10-17).
+      //
+      // MESURÉ SUR LES 15 DOCUMENTS DU DÉPÔT : VINGT formulaires, dans DOUZE
+      // documents, ne pouvaient PAS être soumis. Jamais, et en silence.
+      //
+      // Le mécanisme : une règle porte un invariant sur une ENTITÉ
+      // (« le statut d'un billet appartient à ce cycle de vie »), le
+      // formulaire ne collecte pas ce champ — à raison, personne ne tape un
+      // statut — et l'assertion était tout de même évaluée. `in` comparait la
+      // chaîne « undefined » à sa liste, `required` voyait du vide, `matches`
+      // refusait `undefined`. Faux pour TOUTE saisie possible. Et le bouton
+      // restait ACTIF : l'utilisateur remplissait, appuyait, et rien.
+      //
+      // C'ÉTAIT UNE ERREUR DE CATÉGORIE. Ce que le client valide, c'est la
+      // SAISIE de l'utilisateur. Les invariants de la table ont leur gardien,
+      // et ce n'est pas lui : `derive-rls.ts` les porte côté serveur.
+      //
+      // CE QUI N'EST PAS AFFAIBLI, et c'est tout l'enjeu : un champ que le
+      // formulaire EXPOSE porte toujours sa clé — `AirForm` l'amorce à vide
+      // pour chaque champ déclaré. Laissé vide, il échoue `required` et
+      // BLOQUE, exactement comme avant. On distingue « le formulaire ne
+      // collecte pas ce champ » de « l'utilisateur ne l'a pas rempli ».
+      if (!(a.fieldId in valeurs)) continue;
       const brut = valeurs[a.fieldId];
       const nombre = brut === undefined ? Number.NaN : Number(brut);
       const attendu = a.value;
@@ -632,6 +656,7 @@ export function AirHeader({ screen, blockId }: BlockRef) {
       testID={b.id}
       title={title}
       subtitle={str(props.subtitle)}
+      surtitre={str(props.surtitre)}
       accroche={props.accroche === true}
       logoUri={str(props.logoUri)}
     />
@@ -882,20 +907,82 @@ export function AirAgent({ screen, blockId }: BlockRef) {
   );
 }
 
+/**
+ * STATISTIQUES (2026-10-17) — les chiffres clés d'un écran.
+ *
+ * Même discipline que `AirGraphique` : le bloc ne FORMATE rien et
+ * n'INVENTE rien. Une entrée sans libellé ou sans valeur est écartée
+ * plutôt que rendue à moitié — une carte vide se verrait, et mentirait.
+ */
+export function AirStatistiques({ screen, blockId }: BlockRef) {
+  const visible = useBlockVisible(screen, blockId);
+  const b = block(screen, blockId);
+  if (!visible) return null;
+  const props = b.props ?? {};
+  // ── LES COLONNES SONT RASSEMBLÉES ICI, PAR LEUR RANG.
+  //
+  // Le document ne peut pas porter un tableau d'objets — `flatConfigSchema`
+  // n'admet qu'une primitive ou un tableau de primitives, et c'est une
+  // contrainte MESURÉE de l'API de sorties structurées. Les quatre colonnes
+  // arrivent donc en parallèle ; une carte n'existe que si son libellé ET sa
+  // valeur sont là. Une colonne plus courte ne fabrique pas de carte vide.
+  const texte = (v: unknown, i: number): string | undefined =>
+    Array.isArray(v) && typeof v[i] === "string" && v[i] !== "" ? (v[i] as string) : undefined;
+  const libelles = Array.isArray(props["items.label"]) ? props["items.label"] : [];
+  const items: { label: string; valeur: string; legende?: string; ton?: string }[] = [];
+  for (let i = 0; i < libelles.length; i += 1) {
+    const label = texte(props["items.label"], i);
+    const valeur = texte(props["items.valeur"], i);
+    if (label === undefined || valeur === undefined) continue;
+    const legende = texte(props["items.legende"], i);
+    const ton = texte(props["items.ton"], i);
+    items.push({
+      label,
+      valeur,
+      ...(legende === undefined ? {} : { legende }),
+      ...(ton === undefined ? {} : { ton }),
+    });
+  }
+  if (items.length === 0) return null;
+  const titre = typeof props.title === "string" ? props.title : undefined;
+  return (
+    <StatistiquesBlock
+      testID={b.id}
+      items={items as never}
+      {...(titre === undefined ? {} : { title: titre })}
+    />
+  );
+}
+
 export function AirGraphique({ screen, blockId }: BlockRef) {
   const visible = useBlockVisible(screen, blockId);
   const b = block(screen, blockId);
   if (!visible) return null;
   const props = b.props ?? {};
-  const brut = Array.isArray(props.series) ? (props.series as unknown[]) : [];
-  const series = brut.filter(
-    (p): p is { label: string; value: number; display: string } =>
-      typeof p === "object" &&
-      p !== null &&
-      typeof (p as { label?: unknown }).label === "string" &&
-      typeof (p as { value?: unknown }).value === "number" &&
-      typeof (p as { display?: unknown }).display === "string",
-  );
+  // ── LES COLONNES SONT ASSEMBLEES ICI, PAR LEUR RANG (2026-10-17).
+  //
+  // Ce bloc attendait un tableau d OBJETS, que `flatConfigSchema` interdit :
+  // il etait donc INEMPLOYABLE depuis sa creation, et zero document ne le
+  // portait. Les trois colonnes arrivent desormais en parallele ; une barre
+  // n existe que si son libelle, sa valeur ET son texte affiche sont la.
+  // LES TROIS CLES SONT LUES LITTERALEMENT, et ce n est pas du style : le
+  // cliquet `props-cablees` verifie que le runtime LIT chaque prop declaree,
+  // et il ne peut pas suivre une cle cachee derriere une variable. Un helper
+  // aurait rendu la verification impossible — explicite vaut mieux.
+  const tableau = (v: unknown): unknown[] => (Array.isArray(v) ? v : []);
+  const labels = tableau(props["series.label"]);
+  const valeurs = tableau(props["series.value"]);
+  const affiches = tableau(props["series.display"]);
+  const series: { label: string; value: number; display: string }[] = [];
+  for (let i = 0; i < labels.length; i += 1) {
+    const label = labels[i];
+    const value = valeurs[i];
+    const display = affiches[i];
+    if (typeof label !== "string" || label === "") continue;
+    if (typeof value !== "number") continue;
+    if (typeof display !== "string" || display === "") continue;
+    series.push({ label, value, display });
+  }
   if (series.length === 0) return null;
   const titre = typeof props.title === "string" ? props.title : undefined;
   return (
@@ -1158,6 +1245,11 @@ export function AirList({ screen, blockId, itemId }: BlockRef & { itemId?: strin
       title={str(props.title)}
       items={mode === "apercu" && typeof compo?.apercu === "number" ? items.slice(0, compo.apercu) : items}
       state={state}
+      // AVATAR A INITIALES (2026-10-17) — le dernier maillon, celui qui a
+      // manque a `accroche` et `logoUri` : declare au bloc, porte par le
+      // document, et JAMAIS transmis. Rien n echouait, la liste rendait sa
+      // forme d avant.
+      avatarInitiales={props.avatarInitiales === true}
       bounded={mode === "apercu"}
       // 1.21.0 — « Voir plus » : libellé du DOCUMENT + geste SECONDAIRE du
       // bloc. L'un sans l'autre ne rend rien : aucune promesse muette.
@@ -1266,8 +1358,20 @@ export function AirForm({ screen, blockId, itemId }: BlockRef & { itemId?: strin
     idEdite === undefined || b.entityId === undefined
       ? undefined
       : provider.getInstance(b.entityId, idEdite);
+  // ── CHAQUE CHAMP EXPOSÉ PORTE SA CLÉ, MÊME INTOUCHÉ.
+  //
+  // `useFormValues` n'écrit une clé qu'au PREMIER caractère tapé : un champ
+  // affiché et laissé vide n'existait donc pas dans la soumission. Depuis que
+  // `reglesRespectees` ignore les champs que le formulaire ne collecte pas
+  // (ci-dessus), un requis intouché serait devenu INVISIBLE à la validation —
+  // et le formulaire se serait soumis vide. L'amorce ferme ce trou : le champ
+  // est là, à vide, et `required` le refuse.
+  const amorce: Record<string, string> = {};
+  for (const id of fieldIds) if (typeof id === "string") amorce[id] = "";
   const values: Readonly<Record<string, string>> =
-    existant === undefined ? saisies : { ...existant.values, ...saisies };
+    existant === undefined
+      ? { ...amorce, ...saisies }
+      : { ...amorce, ...existant.values, ...saisies };
   const submitLabel = str(props.submitLabel);
   if (submitLabel === undefined) {
     throw new Error(`AIR_RUNTIME_PROP_MISSING:${blockId}:submitLabel`);

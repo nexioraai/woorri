@@ -31,6 +31,21 @@ export interface HeaderBlockProps extends BlockA11yProps {
    * ouvre sur la sienne. L'URL vient du DOCUMENT, jamais du moteur.
    */
   logoUri?: string;
+  /**
+   * SURTITRE (2026-10-17) — la ligne qui SITUE, au-dessus du titre.
+   *
+   * MESURE : comparaison detail par detail avec Bolt, demandee par le
+   * proprietaire. Chacun de ses ecrans ouvre sur une petite ligne grise en
+   * capitales — PILOTAGE, JOURNAL FINANCIER, COMMUNAUTE, ESPACE DE TRAVAIL —
+   * puis le grand titre, puis une phrase. Trois niveaux, pas deux.
+   *
+   * Deribfy n en portait que DEUX : titre et sous-titre. Le lecteur ne savait
+   * donc jamais OU il se trouve avant d avoir lu le titre entier.
+   *
+   * Le moteur n en choisit ni la casse ni la couleur : il recoit le texte du
+   * document, deja ecrit (F3).
+   */
+  surtitre?: string;
 }
 
 /**
@@ -140,6 +155,23 @@ export interface ListBlockProps extends BlockA11yProps {
   /** État EXPLICITE (défaut { kind: "ready" }) — jamais déduit des données. */
   state?: ListBlockState;
   onItemPress?: (itemId: string) => void;
+  /**
+   * AVATAR A INITIALES (2026-10-17) — quand les lignes sont des PERSONNES.
+   *
+   * MESURE : chaque ligne de la liste des membres chez Bolt porte un rond
+   * d initiales (AM, PE, JM). Deribfy ne montrait qu une VIGNETTE, et
+   * seulement si le document declare une image : une liste de personnes sans
+   * photo restait du texte nu.
+   *
+   * LE DOCUMENT LE DIT, LE MOTEUR NE LE DEVINE PAS. Un catalogue de colliers
+   * ne doit pas afficher « CB » pour « Collier baoule » — deviner qu une
+   * entite designe des personnes serait exactement la devinette de domaine
+   * que ce depot interdit partout ailleurs.
+   *
+   * L IMAGE PRIME : si la ligne porte une vignette, elle gagne. L avatar est
+   * le REPLI, pas un remplacement.
+   */
+  avatarInitiales?: boolean;
 }
 
 export interface FormFieldSpec {
@@ -291,6 +323,7 @@ export interface Blocks {
   SpacerBlock: ComponentType<SpacerBlockProps>;
   ProseBlock: ComponentType<ProseBlockProps>;
   GraphiqueBlock: ComponentType<GraphiqueBlockProps>;
+  StatistiquesBlock: ComponentType<StatistiquesBlockProps>;
   AgentBlock: ComponentType<AgentBlockProps>;
   EmptyStateBlock: ComponentType<EmptyStateBlockProps>;
   DetailHeaderBlock: ComponentType<DetailHeaderBlockProps>;
@@ -341,6 +374,63 @@ export const PROSE_BLOCK_STATES = ["ready"] as const;
  * zero, et les deux cahiers se trompent la-dessus de la meme facon.
  */
 export const GRAPHIQUE_BLOCK_STATES = ["ready", "loading", "empty", "error"] as const;
+
+/**
+ * STATISTIQUES (2026-10-17) — LA CARTE DE CHIFFRE, ET POURQUOI ELLE MANQUAIT.
+ *
+ * ── LA MESURE QUI COMMANDE CE BLOC.
+ *
+ * Comparaison détaillée avec Bolt, demandée par le propriétaire : son
+ * tableau de bord de tontine ouvre sur QUATRE cartes — solde, cotisations
+ * collectées, membres actifs, prochaine échéance. Chacune porte un libellé
+ * discret, un grand nombre, et une légende qui le situe (« +12,5 % ce
+ * mois-ci »).
+ *
+ * Deribfy ne savait dessiner que SEPT formes : en-tête, bouton, liste,
+ * formulaire, état vide, en-tête de détail, champ de recherche. Avec le plus
+ * beau thème du monde, une liste de lignes de texte ne ressemblera jamais à
+ * un tableau de bord.
+ *
+ * ── CE QUE LE BLOC NE FAIT PAS, ET C'EST LA RÈGLE F3.
+ *
+ * Il ne FORMATE aucun nombre. `valeur` arrive déjà écrite — « 265 000 FCFA »,
+ * « 27 déc. », « 12 ». Le moteur ne saurait ni la devise, ni la précision, ni
+ * la langue. Même contrat que `graphique`, pour la même raison.
+ *
+ * ── LE TON EST SÉMANTIQUE, PAS DÉCORATIF.
+ *
+ * `positif`/`negatif` disent ce que le chiffre SIGNIFIE, jamais une couleur.
+ * Ils se résolvent sur les jetons `success` et `error`, qui existent depuis
+ * toujours dans les 44 tokens et que RIEN n'employait.
+ */
+export const STATISTIQUES_BLOCK_STATES = ["ready", "loading", "empty", "error"] as const;
+
+/** Le sens d'un chiffre — jamais sa couleur. */
+export type TonStatistique = "neutre" | "positif" | "negatif" | "attention";
+
+export interface StatistiqueItem {
+  readonly label: string;
+  /** DÉJÀ FORMATÉ par le document (F3) : « 265 000 FCFA », « 27 déc. ». */
+  readonly valeur: string;
+  /** Ce qui situe le chiffre : « +12,5 % ce mois-ci », « 2 nouveaux ». */
+  readonly legende?: string;
+  readonly ton?: TonStatistique;
+}
+
+export interface StatistiquesBlockProps extends BlockA11yProps {
+  title?: string;
+  /** QUATRE AU PLUS, et ce n'est pas arbitraire : au-delà, la grille d'un
+   *  téléphone casse et les cartes deviennent illisibles. Bolt en pose
+   *  exactement quatre. */
+  items: readonly StatistiqueItem[];
+  /** Même forme que `graphique` : les états viennent du document, le moteur
+   *  n'invente aucun titre. */
+  state?:
+    | { kind: "ready" }
+    | { kind: "loading"; title: string }
+    | { kind: "empty"; title: string; message?: string }
+    | { kind: "error"; title: string; message?: string };
+}
 
 /**
  * AGENT (2026-10-13) — le bouton qui le reveille, et la parole.

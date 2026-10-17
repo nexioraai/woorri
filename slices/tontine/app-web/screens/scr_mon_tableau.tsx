@@ -7,7 +7,7 @@
 // appartiennent à AppShell — cet écran ne touche JAMAIS à la safe area.
 import { ScreenShell } from "../lib/primitives";
 import { AppShell } from "../lib/runtime/app-shell";
-import { AirHeader, AirList } from "../lib/runtime/air-runtime";
+import { AirGraphique, AirHeader, AirList, AirStatistiques } from "../lib/runtime/air-runtime";
 import { PrimaryNav } from "../lib/runtime/primary-nav";
 import { primaryNav } from "../nav.data";
 import type { AirScreenProps } from "../lib/runtime/air-runtime";
@@ -21,6 +21,8 @@ export default function ScrMonTableauScreen({ route }: AirScreenProps) {
         navigation={<PrimaryNav destinations={primaryNav} currentScreenId="scr_mon_tableau" />}
       >
         <AirHeader screen={screenData} blockId="blk_mon_tableau_entete" />
+        <AirStatistiques screen={screenData} blockId="blk_tableau_chiffres" />
+        <AirGraphique screen={screenData} blockId="blk_tableau_graphique" />
         <AirList screen={screenData} blockId="blk_mon_tableau_liste" itemId={route?.params?.itemId} />
       </AppShell>
     </ScreenShell>
