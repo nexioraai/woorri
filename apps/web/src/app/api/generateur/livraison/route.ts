@@ -5,6 +5,7 @@
  */
 import { NextResponse } from 'next/server'
 import { compileProject, compileWeb } from '@deribfy/compiler'
+import { noteDeLivraison } from '@/lib/apps/ce-que-je-dois-dire'
 import { projectAirSchema } from '@deribfy/air-schema'
 import { requireAuthenticatedUser } from '@/lib/auth/require-authenticated-user'
 import { supabaseAdmin } from '@/lib/supabase-admin'
@@ -36,7 +37,7 @@ export async function GET(req: Request) {
 
   const r = await supabaseAdmin
     .from(TABLE_GENERATIONS)
-    .select('statut, document')
+    .select('statut, document, diagnostics')
     .eq('id', id)
     .eq('owner_id', garde.userId) // dette 6a : l'identite est l'id du jeton
     .maybeSingle()
@@ -52,7 +53,29 @@ export async function GET(req: Request) {
     // Le MEME document AIR nourrit les deux cibles : rien n'est regenere,
     // rien n'est repaye — seule la compilation change.
     const projet = cible === 'expo' ? compileProject(lu.data) : compileWeb(lu.data)
-    const archive = zipper(new Map<string, string | Buffer>(projet.files))
+
+    // ── LA NOTE VOYAGE AVEC L'APPLICATION (LOT 3, 2026-10-16).
+    //
+    // Deribfy savait déjà ce qu'il avait supposé, ce qu'il ne tenait pas et
+    // où vivaient les données : quatre besoins `unexpressible` avec leur
+    // motif, un `backend` déclaré, une unité sur chaque montant. Tout cela
+    // dormait dans un JSON de 62 ko que personne n'ouvre.
+    //
+    // Mis DANS LE ZIP, et pas seulement à l'écran : un fichier survit à la
+    // conversation, au rechargement de la page, et au changement de
+    // personne. C'est la propriété qui manquait face à Lovable — dire au
+    // moment où ça compte, pas quand on y repense.
+    //
+    // Les diagnostics ouvrent la note quand il y en a : depuis le LOT 1 une
+    // application peut être livrée AVEC RÉSERVES, et les taire reviendrait
+    // à refaire le silence que le LOT 1 vient de casser.
+    const reserves = Array.isArray(r.data.diagnostics)
+      ? (r.data.diagnostics as unknown[]).map(String)
+      : []
+    const fichiers = new Map<string, string | Buffer>(projet.files)
+    fichiers.set('LISEZ-MOI.md', noteDeLivraison(lu.data, reserves))
+
+    const archive = zipper(fichiers)
     return new Response(new Uint8Array(archive), {
       headers: {
         'Content-Type': 'application/zip',
