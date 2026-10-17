@@ -23,6 +23,7 @@
 // passent bien par ici au lieu de redeclarer leurs propres bulles.
 // ============================================================
 import { ArrowUp, Paperclip } from 'lucide-react';
+import { useState } from 'react';
 import type { ReactNode } from 'react';
 
 /** La hauteur de la conversation : elle REMPLIT l'ecran. Sans cela, une vue
@@ -106,6 +107,108 @@ export function ChoixFermes({
           {c.texte}
         </button>
       ))}
+    </div>
+  );
+}
+
+/**
+ * L'APERÇU À LA TAILLE D'UN APPAREIL — et pourquoi ce n'est pas décoratif.
+ *
+ * ── D'OÙ VIENT L'IDÉE.
+ *
+ * Le propriétaire a entouré cette icône dans une capture de v0 (2026-10-17) :
+ * un sélecteur téléphone / tablette / bureau, posé dans la barre de l'aperçu.
+ *
+ * ── CE QUE ÇA MONTRE ICI, ET C'EST MESURÉ, PAS SUPPOSÉ.
+ *
+ * L'aperçu est bâti par `compileWeb` : c'est la cible WEB. Deux mécanismes y
+ * dépendent de la largeur, et TOUS DEUX lisent la fenêtre — donc, dans un
+ * `iframe`, la largeur de l'IFRAME :
+ *
+ *   • les ruptures CSS du document émis : `@media (min-width: 400|600|1024)` ;
+ *   • la disposition de la navigation : `useLargeurDeFenetre()` rend
+ *     `window.innerWidth` via `useSyncExternalStore`, avec un écouteur
+ *     `resize` — au-delà de `SEUIL_LATERALE = 840`, la barre du bas devient
+ *     un RAIL latéral.
+ *
+ * Cet écouteur `resize` est ce qui rend le sélecteur vivant : changer la
+ * largeur refait basculer la navigation sous les yeux, sans recharger.
+ *
+ * Jusqu'ici l'`iframe` était figé en pleine largeur : ces quatre seuils
+ * existaient et PERSONNE ne pouvait les voir.
+ *
+ * ── POURQUOI CES TROIS LARGEURS.
+ *
+ * Elles traversent les quatre seuils, vérifié :
+ *   390  → aucun seuil franchi            → barre du bas
+ *   768  → 400 et 600 franchis            → barre du bas
+ *   1280 → les quatre franchis            → RAIL latéral
+ *
+ * Deux largeurs auraient laissé un seuil sans témoin.
+ */
+const APPAREILS = [
+  { cle: 'telephone', libelle: 'Téléphone', largeur: 390, note: 'barre du bas' },
+  { cle: 'tablette', libelle: 'Tablette', largeur: 768, note: 'barre du bas' },
+  { cle: 'bureau', libelle: 'Bureau', largeur: 1280, note: 'rail latéral' },
+] as const;
+
+export function ApercuAppareil({
+  titre,
+  srcDoc,
+  hauteur = 420,
+  children,
+}: {
+  titre: string;
+  srcDoc: string;
+  /** Hauteur du cadre. L'aperçu en cours est plus court que le final. */
+  hauteur?: number;
+  /** Ce qui s'affiche SOUS le cadre — le téléchargement partiel, par exemple. */
+  children?: ReactNode;
+}) {
+  const [largeur, setLargeur] = useState<number>(390);
+  const courant = APPAREILS.find((a) => a.largeur === largeur) ?? APPAREILS[0];
+  return (
+    <div>
+      <div className="flex items-center justify-between gap-2 mb-2">
+        <p className="text-xs text-slate-400 truncate">{titre}</p>
+        {/* LE SÉLECTEUR EST DANS LA BARRE DE L'APERÇU, au-dessus du cadre —
+            la place que v0 lui donne, et la seule qui se lise comme « ceci
+            règle ce que je vois dessous ». */}
+        <div className="flex shrink-0 rounded-lg border border-white/10 overflow-hidden">
+          {APPAREILS.map((a) => (
+            <button
+              key={a.cle}
+              type="button"
+              aria-pressed={a.largeur === largeur}
+              title={`${a.libelle} — ${String(a.largeur)} px · ${a.note}`}
+              onClick={() => { setLargeur(a.largeur); }}
+              className={`px-2.5 py-1 text-[11px] transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-[#FA5D1E] ${
+                a.largeur === largeur
+                  ? 'bg-[#FA5D1E] text-white'
+                  : 'bg-white/[0.03] text-slate-300 hover:bg-white/[0.08]'
+              }`}
+            >
+              {a.libelle}
+            </button>
+          ))}
+        </div>
+      </div>
+      {/* LA LARGEUR EST CELLE DU CADRE, pas une mise à l'échelle : c'est ce
+          que l'application LIT. Une transformation `scale` tromperait —
+          `window.innerWidth` resterait celui du conteneur. */}
+      <div className="overflow-x-auto rounded-xl bg-black/20 p-2">
+        <iframe
+          title={titre}
+          srcDoc={srcDoc}
+          sandbox="allow-scripts"
+          style={{ width: `${String(largeur)}px`, height: `${String(hauteur)}px` }}
+          className="mx-auto block max-w-full rounded-lg border border-white/10 bg-white"
+        />
+      </div>
+      <p className="mt-1 text-[11px] text-slate-500">
+        {courant.libelle} · {courant.largeur} px — {courant.note}
+      </p>
+      {children}
     </div>
   );
 }

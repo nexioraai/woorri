@@ -22,7 +22,7 @@
 // ============================================================
 import { useState, useRef, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Attente, Bulle, ChoixFermes, Composeur, Escalier } from './Conversation';
+import { ApercuAppareil, Attente, Bulle, ChoixFermes, Composeur, Escalier } from './Conversation';
 import {
   ETAPES_SUIVI,
   FOURCHETTE_DUREE,
@@ -865,18 +865,15 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
               panneau={
                 apercuGen !== null ? (
                   <div className="mt-3">
-                    <p className="text-xs text-slate-400 mb-1">
-                      Aperçu — il se précise à mesure que la génération avance
-                      {etatGen?.apercuVersion !== apercuGen.version && ' · mise à jour en cours…'}
-                    </p>
-                    {/* meme sandbox que l'apercu existant : l'app tourne,
-                        elle ne lit rien du site hote */}
-                    <iframe
-                      title="Aperçu de l’application en construction"
+                    {/* Le sandbox reste SANS `allow-same-origin` : l'app
+                        tourne, elle ne lit rien du site hote. */}
+                    <ApercuAppareil
+                      titre={`Aperçu — il se précise à mesure que la génération avance${
+                        etatGen?.apercuVersion !== apercuGen.version ? ' · mise à jour en cours…' : ''
+                      }`}
                       srcDoc={apercuGen.html}
-                      sandbox="allow-scripts"
-                      className="w-full h-[320px] rounded-xl border border-white/10 bg-white"
-                    />
+                      hauteur={360}
+                    >
                     {/* ── LOT 7 — TELECHARGER CE QU'ON VOIT, SANS ATTENDRE LA FIN.
                         Tir reel du 2026-10-10 : 53 minutes, 16,03 $, et rien
                         de vu. L'acquis etait pourtant la, compilable — cet
@@ -895,6 +892,7 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
                         ? 'Préparation…'
                         : 'Télécharger cette version partielle'}
                     </button>
+                    </ApercuAppareil>
                   </div>
                 ) : undefined
               }
@@ -1051,20 +1049,14 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
       )}
       {apercu !== '' && (
         <div className="mb-4">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-xs text-slate-400">Votre application</p>
+          <div className="flex items-center justify-end mb-1">
             <button type="button" onClick={() => setApercu('')} className="text-xs text-slate-400 hover:text-white underline">
               Fermer
             </button>
           </div>
           {/* `sandbox` SANS `allow-same-origin` : l'application tourne, et
               elle ne peut rien lire du site qui l'héberge. */}
-          <iframe
-            title="Aperçu de l’application"
-            srcDoc={apercu}
-            sandbox="allow-scripts"
-            className="w-full h-[380px] rounded-xl border border-white/10 bg-white"
-          />
+          <ApercuAppareil titre="Votre application" srcDoc={apercu} hauteur={420} />
         </div>
       )}
 
