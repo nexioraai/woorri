@@ -101,6 +101,7 @@ export const WRAPPER_BY_BLOCK_TYPE: Readonly<Record<string, string>> = {
   // 1.14.0 (EP-198) — TEXTE SUIVI.
   prose: "AirProse",
   // 2026-10-13 — GRAPHIQUE. Dixieme bloc, reclame par deux cahiers reels.
+  statistiques: "AirStatistiques",
   graphique: "AirGraphique",
   // 2026-10-13 — AGENT. La porte ; le pouvoir vit dans `agent.allowedOperations`.
   agent: "AirAgent",

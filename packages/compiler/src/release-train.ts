@@ -163,7 +163,7 @@ export const RELEASE_TRAIN_V1 = {
   // avait aucun capable de porter plus qu un sous-titre, et les surfaces
   // legales annoncaient donc « le texte complet sera fourni ». Le generateur
   // ne refusait pas d ecrire : il n avait aucun endroit ou le faire.
-  blockRegistryVersion: "1.15.0",
+  blockRegistryVersion: "1.16.0",
   // Ré-scellé le 2026-08-29 (DET-006 / D-039) : `ListBlock` DÉCLARE désormais
   // `fill` sur sa Section, afin que la liste virtualisée reçoive un parent
   // BORNÉ. Cause démontrée : imbriquée dans un ScrollView de même axe, une
@@ -345,7 +345,18 @@ export const RELEASE_TRAIN_V1 = {
     // unique, qui se clique par reflexe, devant un geste qui ne s'annule pas.
     //
     // Optionnelles : les documents ecrits avant ne changent pas de sens.
-    "633b785c38e5415819be4f6e94bc9073d4ebd0baec2d26f822995106091eb6e8",
+    // RE-SCELLE 2026-10-17 (registre 1.16.0) — EDITION CONSCIENTE.
+    //
+    // DOUZIEME bloc : `statistiques`, la carte de chiffre. Comparaison
+    // detail par detail avec Bolt, demandee par le proprietaire : son
+    // tableau de bord ouvre sur QUATRE cartes, et Deribfy ne savait
+    // dessiner que sept formes. Le manque n etait pas le THEME, c etait
+    // le VOCABULAIRE.
+    //
+    // STRICTEMENT ADDITIF : aucun bloc retire, aucun etat supprime,
+    // aucune prop devenue obligatoire. Un appelant 1.15.0 se comporte a
+    // l identique. Ancien sceau : 633b785c38e54158…
+    "a610afd2472d4012ef8369460f9823382978761c91001bc92011a195de51097e",
   // EP-134 — ajout compatible `external_contact` : version MINEURE du registre.
   /**
    * EP-147 ③ — LE NIVEAU D'API ANDROID VISÉ, épinglé par le train.

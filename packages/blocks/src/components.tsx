@@ -22,7 +22,8 @@ import type {Blocks,
   FormBlockProps,
   HeaderBlockProps,
   ListBlockProps,
-  SpacerBlockProps, SearchEntryBlockProps, GraphiqueBlockProps, AgentBlockProps} from "./contracts.ts";
+  SpacerBlockProps, SearchEntryBlockProps, GraphiqueBlockProps, AgentBlockProps,
+  StatistiquesBlockProps, StatistiqueItem} from "./contracts.ts";
 
 export function HeaderBlock({ title, subtitle, accroche, logoUri, testID }: HeaderBlockProps) {
   return (
@@ -459,6 +460,83 @@ export function GraphiqueBlock({
 }
 
 /**
+ * STATISTIQUES (2026-10-17) — LE CHIFFRE QUI OUVRE UN TABLEAU DE BORD.
+ *
+ * CE QUI A COMMANDE CE BLOC : comparaison avec Bolt, detail par detail. Son
+ * tableau de bord de tontine ouvre sur QUATRE cartes — solde, cotisations
+ * collectees, membres actifs, prochaine echeance. Libelle discret, grand
+ * nombre, legende qui le situe. Deribfy ne savait dessiner que sept formes,
+ * et aucune n etait celle-la.
+ *
+ * CE QU IL NE FAIT PAS (F3) : il ne formate rien. `valeur` arrive ecrite.
+ *
+ * LE TON RESOUT LES JETONS SEMANTIQUES QUE RIEN N EMPLOYAIT : `success` et
+ * `error` existent dans les 44 tokens, et aucun bloc ne les utilisait. La
+ * couleur ne disait donc jamais si un montant entre ou sort. `ton` le dit,
+ * et le moteur n en choisit pas la teinte.
+ *
+ * SANS APOSTROPHES NI ACCENTS, comme les autres commentaires de ce fichier :
+ * le cliquet F3 extrait les chaines par leurs delimiteurs, et une apostrophe
+ * francaise en ouvre une fausse. Convention mesuree, pas un gout.
+ */
+export function StatistiquesBlock({
+  title,
+  items,
+  state = { kind: "ready" },
+  testID,
+}: StatistiquesBlockProps) {
+  if (state.kind === "loading") {
+    return <StateView state="loading" title={state.title} testID={testID} />;
+  }
+  if (state.kind === "empty") {
+    return (
+      <StateView state="empty" title={state.title} message={state.message} testID={testID} />
+    );
+  }
+  if (state.kind === "error") {
+    return (
+      <StateView state="error" title={state.title} message={state.message} testID={testID} />
+    );
+  }
+  return (
+    <Section title={title} testID={testID}>
+      <Rangee>
+        {items.map((it, i) => (
+          <CarteChiffre
+            key={`${testID ?? "stat"}-${String(i)}`}
+            item={it}
+            testID={`${testID ?? "stat"}-item-${String(i)}`}
+          />
+        ))}
+      </Rangee>
+    </Section>
+  );
+}
+
+/** Une carte. Separee pour que la grille reste lisible, et parce qu un
+ *  composant qui fait deux choses se corrige deux fois. */
+function CarteChiffre({ item, testID }: { item: StatistiqueItem; testID: string }) {
+  const tonBadge =
+    item.ton === "positif"
+      ? "success"
+      : item.ton === "negatif"
+        ? "error"
+        : item.ton === "attention"
+          ? "warn"
+          : undefined;
+  return (
+    <GridCard
+      compact
+      title={item.valeur}
+      subtitle={item.label}
+      testID={testID}
+      {...(item.legende === undefined ? {} : { trailing: item.legende })}
+      {...(tonBadge === undefined ? {} : { badge: item.valeur, badgeTone: tonBadge })}
+    />
+  );
+}
+
+/**
  * AGENT (2026-10-13) — le bouton, et la parole.
  *
  * Decision du proprietaire : chaque utilisateur a ce bouton ; qui veut s'en
@@ -658,5 +736,6 @@ export const blocks: Blocks = {
   SpacerBlock,
   ProseBlock,
   GraphiqueBlock,
+  StatistiquesBlock,
   AgentBlock,
 };

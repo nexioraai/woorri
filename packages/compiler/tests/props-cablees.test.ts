@@ -30,7 +30,20 @@ describe("cliquet — aucune prop déclarée ne meurt en chemin", () => {
       const schema = bloc.propsSchema as { shape?: Record<string, unknown> };
       for (const cle of Object.keys(schema.shape ?? {})) {
         if (LUES_INDIRECTEMENT.has(cle)) continue;
-        if (!RUNTIME.includes(`props.${cle}`)) orphelines.push(`${bloc.id}.${cle}`);
+        // ── DEUX NOTATIONS, ET LA SECONDE EST OBLIGATOIRE (2026-10-17).
+        //
+        // Une clé POINTÉE — `items.label` — ne PEUT PAS se lire en notation
+        // point : `props.items.label` chercherait un objet imbriqué, que
+        // `flatConfigSchema` interdit précisément. Le runtime écrit donc
+        // `props["items.label"]`, et ce cliquet ne le voyait pas.
+        //
+        // Ce n'est pas un assouplissement : on accepte la SEULE forme par
+        // laquelle une clé pointée peut être lue. Une prop qui n'est lue
+        // d'AUCUNE des deux reste orpheline — le contrôle négatif ci-dessous
+        // le vérifie.
+        const lue =
+          RUNTIME.includes(`props.${cle}`) || RUNTIME.includes(`props["${cle}"]`);
+        if (!lue) orphelines.push(`${bloc.id}.${cle}`);
       }
     }
     expect(orphelines, "props déclarées que le runtime ne lit pas").toEqual([]);

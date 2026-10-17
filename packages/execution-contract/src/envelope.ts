@@ -218,6 +218,11 @@ export const EXECUTION_ENVELOPE_V1: ExecutionEnvelope = {
     // Mission composition 2026-09-10 — l'entrée de recherche est rendue ou ne
     // l'est pas : aucune donnée, aucun état intermédiaire.
     search_entry: ["ready"],
+    // 1.x (2026-10-17) — LA CARTE DE CHIFFRE. Les quatre etats sont
+    // ATTEINTS : le runtime ecarte une carte sans libelle ou sans valeur, et
+    // rend `empty` quand il n en reste aucune. Les deux autres viennent du
+    // meme chemin que `graphique` — la source dit si elle charge ou echoue.
+    statistiques: ["ready", "loading", "empty", "error"],
     // 1.8.0 — le spacer n'a qu'un état, et il est ATTEINT dès qu'il est rendu :
     // il n'a ni donnée à charger, ni vide à signaler, ni erreur possible.
     spacer: ["ready"],

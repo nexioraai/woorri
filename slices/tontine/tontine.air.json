@@ -1410,6 +1410,52 @@
           ]
         },
         {
+          "blockType": "statistiques",
+          "id": "blk_tableau_chiffres",
+          "props": [
+            {
+              "key": "title",
+              "value": "Votre tontine en un coup d’œil"
+            },
+            {
+              "key": "items.label",
+              "value": [
+                "Cagnotte du tour",
+                "Cotisations reçues",
+                "Membres actifs",
+                "Prochaine échéance"
+              ]
+            },
+            {
+              "key": "items.valeur",
+              "value": [
+                "265 000 FCFA",
+                "50 000 FCFA",
+                "12",
+                "27 déc."
+              ]
+            },
+            {
+              "key": "items.legende",
+              "value": [
+                "+12,5 % ce mois-ci",
+                "Sur 30 jours",
+                "2 nouveaux",
+                "25 000 FCFA"
+              ]
+            },
+            {
+              "key": "items.ton",
+              "value": [
+                "positif",
+                "neutre",
+                "neutre",
+                "attention"
+              ]
+            }
+          ]
+        },
+        {
           "id": "blk_mon_tableau_liste",
           "blockType": "list",
           "entityId": "ent_transactions",

@@ -57,6 +57,10 @@ export const ZONE_PAR_BLOCK_TYPE: Readonly<Record<string, ZoneEcran>> = {
   // pendant que l'ecran defile. C'est le deuxieme bloc de cette nature, avec
   // la recherche, et pour la meme raison : on le reveille a tout moment.
   agent: "chrome",
+
+  // 2026-10-17 — la carte de chiffre COULE dans le flux : elle ouvre un
+  // tableau de bord, elle ne l encadre pas. Meme zone que `graphique`.
+  statistiques: "contenu",
 };
 
 export interface SectionPlan {

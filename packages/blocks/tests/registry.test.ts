@@ -25,7 +25,11 @@ describe("pont AIR ↔ registre de blocs", () => {
     // 1.14.0 (EP-198) : `prose` -> 9 — le texte suivi. Le registre n avait
     // AUCUN bloc capable de porter plus qu un sous-titre, et les surfaces
     // legales annoncaient donc « le texte sera fourni ». Additif.
-    expect(listBlockIds()).toHaveLength(11);
+    // 2026-10-17 : `statistiques` -> 12 — la carte de chiffre. Comparaison
+    // detail par detail avec Bolt : son tableau de bord ouvre sur QUATRE
+    // cartes, et Deribfy ne savait dessiner que sept formes. Le manque n
+    // etait pas le theme, c etait le vocabulaire. Additif.
+    expect(listBlockIds()).toHaveLength(12);
     expect(getBlock("list")?.entity).toBe("required");
     expect(getBlock("carousel")).toBeUndefined();
   });

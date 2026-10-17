@@ -291,6 +291,7 @@ export interface Blocks {
   SpacerBlock: ComponentType<SpacerBlockProps>;
   ProseBlock: ComponentType<ProseBlockProps>;
   GraphiqueBlock: ComponentType<GraphiqueBlockProps>;
+  StatistiquesBlock: ComponentType<StatistiquesBlockProps>;
   AgentBlock: ComponentType<AgentBlockProps>;
   EmptyStateBlock: ComponentType<EmptyStateBlockProps>;
   DetailHeaderBlock: ComponentType<DetailHeaderBlockProps>;
@@ -341,6 +342,63 @@ export const PROSE_BLOCK_STATES = ["ready"] as const;
  * zero, et les deux cahiers se trompent la-dessus de la meme facon.
  */
 export const GRAPHIQUE_BLOCK_STATES = ["ready", "loading", "empty", "error"] as const;
+
+/**
+ * STATISTIQUES (2026-10-17) — LA CARTE DE CHIFFRE, ET POURQUOI ELLE MANQUAIT.
+ *
+ * ── LA MESURE QUI COMMANDE CE BLOC.
+ *
+ * Comparaison détaillée avec Bolt, demandée par le propriétaire : son
+ * tableau de bord de tontine ouvre sur QUATRE cartes — solde, cotisations
+ * collectées, membres actifs, prochaine échéance. Chacune porte un libellé
+ * discret, un grand nombre, et une légende qui le situe (« +12,5 % ce
+ * mois-ci »).
+ *
+ * Deribfy ne savait dessiner que SEPT formes : en-tête, bouton, liste,
+ * formulaire, état vide, en-tête de détail, champ de recherche. Avec le plus
+ * beau thème du monde, une liste de lignes de texte ne ressemblera jamais à
+ * un tableau de bord.
+ *
+ * ── CE QUE LE BLOC NE FAIT PAS, ET C'EST LA RÈGLE F3.
+ *
+ * Il ne FORMATE aucun nombre. `valeur` arrive déjà écrite — « 265 000 FCFA »,
+ * « 27 déc. », « 12 ». Le moteur ne saurait ni la devise, ni la précision, ni
+ * la langue. Même contrat que `graphique`, pour la même raison.
+ *
+ * ── LE TON EST SÉMANTIQUE, PAS DÉCORATIF.
+ *
+ * `positif`/`negatif` disent ce que le chiffre SIGNIFIE, jamais une couleur.
+ * Ils se résolvent sur les jetons `success` et `error`, qui existent depuis
+ * toujours dans les 44 tokens et que RIEN n'employait.
+ */
+export const STATISTIQUES_BLOCK_STATES = ["ready", "loading", "empty", "error"] as const;
+
+/** Le sens d'un chiffre — jamais sa couleur. */
+export type TonStatistique = "neutre" | "positif" | "negatif" | "attention";
+
+export interface StatistiqueItem {
+  readonly label: string;
+  /** DÉJÀ FORMATÉ par le document (F3) : « 265 000 FCFA », « 27 déc. ». */
+  readonly valeur: string;
+  /** Ce qui situe le chiffre : « +12,5 % ce mois-ci », « 2 nouveaux ». */
+  readonly legende?: string;
+  readonly ton?: TonStatistique;
+}
+
+export interface StatistiquesBlockProps extends BlockA11yProps {
+  title?: string;
+  /** QUATRE AU PLUS, et ce n'est pas arbitraire : au-delà, la grille d'un
+   *  téléphone casse et les cartes deviennent illisibles. Bolt en pose
+   *  exactement quatre. */
+  items: readonly StatistiqueItem[];
+  /** Même forme que `graphique` : les états viennent du document, le moteur
+   *  n'invente aucun titre. */
+  state?:
+    | { kind: "ready" }
+    | { kind: "loading"; title: string }
+    | { kind: "empty"; title: string; message?: string }
+    | { kind: "error"; title: string; message?: string };
+}
 
 /**
  * AGENT (2026-10-13) — le bouton qui le reveille, et la parole.

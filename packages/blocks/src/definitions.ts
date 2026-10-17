@@ -18,6 +18,7 @@ import {
   SEARCH_ENTRY_BLOCK_STATES,
   AGENT_BLOCK_STATES,
   GRAPHIQUE_BLOCK_STATES,
+  STATISTIQUES_BLOCK_STATES,
   PROSE_BLOCK_STATES,
   SPACER_BLOCK_STATES,
   DETAIL_HEADER_BLOCK_STATES,
@@ -69,7 +70,10 @@ import {
 // toyota » ne trouvait pas « filtre à huile toyota » — les deux mots y sont,
 // séparés par « à huile ». Écran vide, pièce en stock, client qui attend. ADDITIF : absent = `sous_chaine`, comportement
 // d'avant, aucune application existante ne change de réponse.
-export const BLOCK_REGISTRY_VERSION = "1.15.0";
+// 1.16.0 (2026-10-17) — DOUZIEME bloc : `statistiques`. ADDITIF STRICT :
+// aucun bloc retire, aucun etat supprime, aucune prop devenue obligatoire.
+// Un appelant 1.15.0 se comporte a l identique.
+export const BLOCK_REGISTRY_VERSION = "1.16.0";
 
 // Motifs d'identités stables — IDENTIQUES à @deribfy/air-schema (ids.ts) ;
 // redéclarés structurellement (patron AirCapabilitySlice : pas de couplage
@@ -540,7 +544,7 @@ export const BLOCKS: readonly BlockDefinition[] = [
     states: PROSE_BLOCK_STATES,
     porteAffordance: false,
   },
-  {
+    {
     // GRAPHIQUE (2026-10-13) — la classe que DEUX cahiers des charges reels
     // reclamaient, chacun de son cote et sans rapport l'un avec l'autre :
     // « graphiques mensuels de consommation et de montants » (suivi de
@@ -632,6 +636,64 @@ export const BLOCKS: readonly BlockDefinition[] = [
     actionRefProps: [],
     states: AGENT_BLOCK_STATES,
     porteAffordance: true,
+  },
+  {
+    // STATISTIQUES (2026-10-17) — LE CHIFFRE QUI OUVRE UN TABLEAU DE BORD.
+    //
+    // MESURE QUI COMMANDE CE BLOC : comparaison détail par détail avec Bolt,
+    // demandée par le propriétaire. Son tableau de bord de tontine ouvre sur
+    // QUATRE cartes — solde, cotisations collectées, membres actifs,
+    // prochaine échéance. Deribfy ne savait dessiner que SEPT formes, et
+    // aucune n'était celle-là : avec le plus beau thème du monde, une liste
+    // de lignes de texte ne ressemblera jamais à un tableau de bord.
+    //
+    // AUCUN FORMATAGE (F3) : `valeur` arrive déjà écrite — « 265 000 FCFA »,
+    // « 27 déc. ». Le moteur ne saurait ni la devise, ni la précision, ni la
+    // langue. Même contrat que `graphique`, pour la même raison.
+    //
+    // QUATRE AU PLUS : au-delà, la grille d'un téléphone casse. Ce n'est pas
+    // une préférence — c'est la largeur de l'écran.
+    //
+    // LE TON EST SÉMANTIQUE : `positif`/`negatif` disent ce que le chiffre
+    // SIGNIFIE, et se résolvent sur les jetons `success`/`error` qui
+    // existaient dans les 44 tokens sans que RIEN ne les emploie.
+    id: "statistiques",
+    version: "1.0.0",
+    description:
+      "Cartes de chiffres clés — un libellé, une valeur déjà formatée, une légende.",
+    entity: "forbidden",
+    // ── DES TABLEAUX PARALLÈLES, ET CE N'EST PAS UN GOÛT.
+    //
+    // CAUSE RACINE TROUVÉE LE 2026-10-17 : `flatConfigSchema` n'admet qu'une
+    // primitive ou un TABLEAU DE PRIMITIVES — jamais un objet. Son en-tête
+    // dit pourquoi, et c'est mesuré : « la platitude est une contrainte de
+    // l'API de sorties structurées (≤ 24 paramètres optionnels par schéma) ;
+    // un groupement s'exprime par des clés pointées ».
+    //
+    // CONSÉQUENCE QUE PERSONNE N'AVAIT VUE : le bloc `graphique` exige
+    // `series: [{label, value, display}]` — un tableau d'OBJETS. C'est
+    // INEXPRIMABLE dans un document. Voilà pourquoi ZÉRO document sur 23 ne
+    // l'emploie : non pas que le générateur l'ignore (il est dans l'allowlist
+    // fermée qu'on lui transmet), mais qu'il ne PEUT PAS l'écrire.
+    //
+    // Ce bloc-ci suit donc l'idiome prescrit : des tableaux parallèles, un
+    // par colonne, liés par leur rang. Le runtime les rassemble.
+    propsSchema: z.strictObject({
+      title: z.string().min(1).optional(),
+      "items.label": z.array(z.string().min(1)).min(1).max(4),
+      "items.valeur": z.array(z.string().min(1)).min(1).max(4),
+      "items.legende": z.array(z.string()).max(4).optional(),
+      "items.ton": z
+        .array(z.enum(["neutre", "positif", "negatif", "attention"]))
+        .max(4)
+        .optional(),
+    }),
+    fieldRefProps: [],
+    fieldRefPropsAffichage: [],
+    fieldRefPropsFiltrage: [],
+    actionRefProps: [],
+    states: STATISTIQUES_BLOCK_STATES,
+    porteAffordance: false,
   },
 ];
 

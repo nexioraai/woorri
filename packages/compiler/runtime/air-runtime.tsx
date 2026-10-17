@@ -27,6 +27,7 @@ import {
   SpacerBlock,
   AgentBlock,
   GraphiqueBlock,
+  StatistiquesBlock,
   ProseBlock,
   SearchEntryBlock,
 } from "../blocks/components";
@@ -901,6 +902,53 @@ export function AirAgent({ screen, blockId }: BlockRef) {
               onCancel: fermerLAttente,
             },
           })}
+    />
+  );
+}
+
+/**
+ * STATISTIQUES (2026-10-17) — les chiffres clés d'un écran.
+ *
+ * Même discipline que `AirGraphique` : le bloc ne FORMATE rien et
+ * n'INVENTE rien. Une entrée sans libellé ou sans valeur est écartée
+ * plutôt que rendue à moitié — une carte vide se verrait, et mentirait.
+ */
+export function AirStatistiques({ screen, blockId }: BlockRef) {
+  const visible = useBlockVisible(screen, blockId);
+  const b = block(screen, blockId);
+  if (!visible) return null;
+  const props = b.props ?? {};
+  // ── LES COLONNES SONT RASSEMBLÉES ICI, PAR LEUR RANG.
+  //
+  // Le document ne peut pas porter un tableau d'objets — `flatConfigSchema`
+  // n'admet qu'une primitive ou un tableau de primitives, et c'est une
+  // contrainte MESURÉE de l'API de sorties structurées. Les quatre colonnes
+  // arrivent donc en parallèle ; une carte n'existe que si son libellé ET sa
+  // valeur sont là. Une colonne plus courte ne fabrique pas de carte vide.
+  const texte = (v: unknown, i: number): string | undefined =>
+    Array.isArray(v) && typeof v[i] === "string" && v[i] !== "" ? (v[i] as string) : undefined;
+  const libelles = Array.isArray(props["items.label"]) ? props["items.label"] : [];
+  const items: { label: string; valeur: string; legende?: string; ton?: string }[] = [];
+  for (let i = 0; i < libelles.length; i += 1) {
+    const label = texte(props["items.label"], i);
+    const valeur = texte(props["items.valeur"], i);
+    if (label === undefined || valeur === undefined) continue;
+    const legende = texte(props["items.legende"], i);
+    const ton = texte(props["items.ton"], i);
+    items.push({
+      label,
+      valeur,
+      ...(legende === undefined ? {} : { legende }),
+      ...(ton === undefined ? {} : { ton }),
+    });
+  }
+  if (items.length === 0) return null;
+  const titre = typeof props.title === "string" ? props.title : undefined;
+  return (
+    <StatistiquesBlock
+      testID={b.id}
+      items={items as never}
+      {...(titre === undefined ? {} : { title: titre })}
     />
   );
 }

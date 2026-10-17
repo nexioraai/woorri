@@ -41,6 +41,25 @@ const V1_BLOCK_IDS = [
   "graphique",
   // 2026-10-13 — ONZIEME bloc : `agent`. La porte, pas le pouvoir.
   "agent",
+  // 2026-10-17 — DOUZIEME bloc, ajoute en queue : `statistiques`.
+  //
+  // COMPARAISON DETAIL PAR DETAIL AVEC BOLT, demandee par le proprietaire.
+  // Son tableau de bord de tontine ouvre sur QUATRE cartes — solde,
+  // cotisations collectees, membres actifs, prochaine echeance. Deribfy ne
+  // savait dessiner que sept formes, et aucune n etait celle-la : avec le
+  // plus beau theme du monde, une liste de lignes de texte ne ressemblera
+  // jamais a un tableau de bord. Le manque n etait pas le THEME, c etait le
+  // VOCABULAIRE.
+  //
+  // DES COLONNES PARALLELES, ET LA RAISON EST UNE CAUSE RACINE TROUVEE LE
+  // MEME JOUR : `flatConfigSchema` n admet qu une primitive ou un tableau de
+  // primitives — jamais un objet. Consequence que personne n avait vue :
+  // `graphique` exige `series: [{label, value, display}]`, donc il est
+  // INEXPRIMABLE dans un document, et c est pourquoi ZERO document sur 23 ne
+  // l emploie. Ce bloc-ci suit l idiome prescrit par `flatConfigSchema`.
+  //
+  // Les onze premiers ne bougent pas.
+  "statistiques",
 ];
 
 describe("cliquets du registre de blocs", () => {
@@ -109,7 +128,15 @@ describe("cliquets du registre de blocs", () => {
     // refusait pas d ecrire, il n avait AUCUN endroit ou le faire.
     // Premiere montee qui AJOUTE un bloc et non une prop — et rien n est
     // retire : les huit precedents sont intacts.
-    expect(BLOCK_REGISTRY_VERSION).toBe("1.15.0");
+    // 1.16.0 (2026-10-17) — DOUZIEME bloc : `statistiques`, la carte de
+    // chiffre. Comparaison detail par detail avec Bolt, demandee par le
+    // proprietaire : son tableau de bord ouvre sur QUATRE cartes, et Deribfy
+    // ne savait dessiner que sept formes. Le manque n etait pas le THEME,
+    // c etait le VOCABULAIRE.
+    //
+    // ADDITIF STRICT : aucun bloc retire, aucun etat supprime, aucune prop
+    // devenue obligatoire. Les onze precedents sont intacts.
+    expect(BLOCK_REGISTRY_VERSION).toBe("1.16.0");
     expect(BLOCKS.map((b) => b.id)).toEqual(V1_BLOCK_IDS);
   });
 
