@@ -5,15 +5,62 @@
 import { createElement } from "react";
 import { act, create } from "react-test-renderer";
 import type { ReactTestRenderer } from "react-test-renderer";
-import { describe, expect, it } from "vitest";
+import { readdirSync } from "node:fs";
+import { beforeAll, describe, expect, it } from "vitest";
+import { compilerANeuf } from "./app-fraiche.ts";
 import { journal, reset } from "./stub-navigation";
 
-const ECRANS = import.meta.glob("../../../../slices/*/app/screens/*.tsx");
-const DONNEES = import.meta.glob("../../../../slices/*/app/screens/*.data.ts");
-const PROVIDERS = import.meta.glob("../../../../slices/*/app/lib/runtime/data-provider.tsx");
-const DEMOPROV = import.meta.glob("../../../../slices/*/app/lib/runtime/demo-provider.ts");
-const DEMODATA = import.meta.glob("../../../../slices/*/app/demo.data.ts");
-const slice = (p: string): string => p.split("/slices/")[1].split("/")[0];
+// ── CE QU'IL BALAYAIT, JUSQU'AU 2026-10-17, ET C'EST LE PLUS LARGE DES NEUF.
+//
+// `import.meta.glob("../../../../slices/*/app/...")` est resolu par Vite A LA
+// TRANSFORMATION : il chargeait les ecrans de TOUTES les tranches COMMISES,
+// dont les runtimes n'avaient pas bouge depuis le 2026-08-31 et le 2026-09-11.
+//
+// DEMONTRE, PAS DEDUIT : en cassant `ScreenShell` dans le compilateur — la
+// primitive que TOUT ecran emis importe —, `gate:app-compile` rend 0/32 et ce
+// fichier rendait « 1 passed ».
+//
+// Les deux tranches sont donc COMPILEES A NEUF, et l'etiquette de tranche est
+// resolue depuis le dossier emis au lieu d'etre lue dans un chemin de depot.
+const TRANCHES = [
+  { nom: "resto-riche", doc: "slices/resto-riche/chez-nous.air.json" },
+  { nom: "conteneurs", doc: "slices/conteneurs/air/suivi-conteneurs.air.json" },
+] as const;
+
+type Chargeur = () => Promise<Record<string, unknown>>;
+const bases = new Map<string, string>();
+let ECRANS: Record<string, Chargeur> = {};
+let DONNEES: Record<string, Chargeur> = {};
+let PROVIDERS: Record<string, Chargeur> = {};
+let DEMOPROV: Record<string, Chargeur> = {};
+let DEMODATA: Record<string, Chargeur> = {};
+
+beforeAll(async () => {
+  for (const t of TRANCHES) {
+    const a = await compilerANeuf(t.doc, `deribfy-couverture-${t.nom}`);
+    // Un zero se voit : un dossier vide rendrait tout montage impossible.
+    expect(a.fichiers, `aucun fichier emis pour ${t.nom}`).toBeGreaterThan(10);
+    bases.set(a.base, t.nom);
+    const lien = (sous: string): [string, Chargeur] => [
+      a.base + sous,
+      () => import(a.base + sous) as Promise<Record<string, unknown>>,
+    ];
+    for (const nom of readdirSync(a.base + "screens").sort()) {
+      if (nom.endsWith(".data.ts")) DONNEES = { ...DONNEES, ...Object.fromEntries([lien("screens/" + nom)]) };
+      else if (nom.endsWith(".tsx")) ECRANS = { ...ECRANS, ...Object.fromEntries([lien("screens/" + nom)]) };
+    }
+    PROVIDERS = { ...PROVIDERS, ...Object.fromEntries([lien("lib/runtime/data-provider.tsx")]) };
+    DEMOPROV = { ...DEMOPROV, ...Object.fromEntries([lien("lib/runtime/demo-provider.ts")]) };
+    DEMODATA = { ...DEMODATA, ...Object.fromEntries([lien("demo.data.ts")]) };
+  }
+}, 300_000);
+
+/** L'etiquette de tranche, resolue sur le dossier emis — plus sur un chemin
+ *  de depot, qui n'existe plus dans ce que l'on monte. */
+const slice = (p: string): string => {
+  for (const [base, nom] of bases) if (p.startsWith(base)) return nom;
+  throw new Error(`tranche inconnue pour ${p}`);
+};
 
 interface Donnees { screenId: string; blocks: { id: string; blockType: string; props: Record<string, unknown> }[];
   actions: Record<string, { kind: string; screenId?: string }>; uiActionsByBlock: Record<string, string>; }

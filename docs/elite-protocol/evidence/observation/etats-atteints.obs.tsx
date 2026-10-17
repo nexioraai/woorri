@@ -10,9 +10,28 @@
 import { createElement } from "react";
 import { act, create } from "react-test-renderer";
 import type { ReactTestRenderer } from "react-test-renderer";
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
+import { compilerANeuf } from "./app-fraiche.ts";
 const REPO = new URL("../../../../", import.meta.url).pathname;
-const APP = REPO + "slices/resto-riche/app/";
+
+// ── CE QU'IL MONTAIT, JUSQU'AU 2026-10-17, ET POURQUOI C'ETAIT AVEUGLE.
+//
+// Ce fichier lisait `slices/resto-riche/app/` — l'application COMMISE. Elle
+// emporte sa propre copie du runtime, dont le dernier commit date du
+// 2026-09-11. Il mesurait donc le compilateur de SEPTEMBRE.
+//
+// DEMONTRE, PAS DEDUIT : en cassant `ScreenShell` dans le compilateur — la
+// primitive que TOUT ecran emis importe —, `gate:app-compile` rend 0/32 et
+// ce fichier rendait « passed ». Il compile desormais a neuf.
+let APP = "";
+beforeAll(async () => {
+  const a = await compilerANeuf("slices/resto-riche/chez-nous.air.json", "deribfy-etats-atteints");
+  APP = a.base;
+  // Un zero se voit : sans ce controle, un dossier vide rendrait tout
+  // montage impossible pour une raison qu'on mettrait longtemps a nommer.
+  expect(a.fichiers, "aucun fichier emis : il n'y a rien a monter").toBeGreaterThan(20);
+}, 180_000);
+
 
 const textes = (r: ReactTestRenderer): string[] =>
   r.root

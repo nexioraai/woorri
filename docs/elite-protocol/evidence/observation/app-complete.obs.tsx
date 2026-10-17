@@ -7,10 +7,57 @@
 import { createElement } from "react";
 import { act, create } from "react-test-renderer";
 import type { ReactTestRenderer } from "react-test-renderer";
-import { describe, expect, it } from "vitest";
+import { readdirSync } from "node:fs";
+import { beforeAll, describe, expect, it } from "vitest";
+import { compilerANeuf } from "./app-fraiche.ts";
 const REPO = new URL("../../../../", import.meta.url).pathname;
-const APP = REPO + "slices/resto-riche/app/";
-const ECRANS = import.meta.glob("../../../../slices/resto-riche/app/screens/*.tsx");
+
+// ── CE QU'IL MONTAIT, JUSQU'AU 2026-10-17, ET POURQUOI C'ETAIT AVEUGLE.
+//
+// Ce fichier lisait `slices/resto-riche/app/` — l'application COMMISE. Elle
+// emporte sa propre copie du runtime, dont le dernier commit date du
+// 2026-09-11. Il mesurait donc le compilateur de SEPTEMBRE.
+//
+// DEMONTRE, PAS DEDUIT : en cassant `ScreenShell` dans le compilateur — la
+// primitive que TOUT ecran emis importe —, `gate:app-compile` rend 0/32 et
+// ce fichier rendait « passed ». Il compile desormais a neuf.
+let APP = "";
+beforeAll(async () => {
+  const a = await compilerANeuf("slices/resto-riche/chez-nous.air.json", "deribfy-app-complete", [
+    // Le Code Slot est du code HUMAIN : le compilateur emet le mecanisme,
+    // jamais le contenu. Il est donc superpose a l'emission fraiche.
+    "slices/resto-riche/app/slots",
+  ]);
+  APP = a.base;
+  // Un zero se voit : sans ce controle, un dossier vide rendrait tout
+  // montage impossible pour une raison qu'on mettrait longtemps a nommer.
+  expect(a.fichiers, "aucun fichier emis : il n'y a rien a monter").toBeGreaterThan(20);
+  ECRANS = Object.fromEntries(
+    readdirSync(APP + "screens")
+      .filter((x) => x.endsWith(".tsx"))
+      .sort()
+      .map((nom) => [
+        APP + "screens/" + nom,
+        (() => import(APP + "screens/" + nom)) as ChargeurEcran,
+      ]),
+  );
+}, 180_000);
+
+// ── POURQUOI LE GLOB A DISPARU, ET C'ETAIT LA MOITIE DE L'AVEUGLEMENT.
+//
+// `import.meta.glob` est resolu par Vite A LA TRANSFORMATION, contre un chemin
+// LITTERAL. Il chargeait donc les ecrans de la tranche COMMISE, meme apres que
+// le runtime, lui, fut compile a neuf : du code frais par-dessus des ecrans
+// figes, et la casse ne les atteignait jamais.
+//
+// MESURE : apres la seule conversion du runtime, ce fichier rendait encore
+// « 2 passed » avec `ScreenShell` casse dans le compilateur. Les trois autres
+// convertis le meme jour voyaient deja la casse — lui pas.
+//
+// La liste est donc construite A L'EXECUTION, sur le dossier fraichement
+// emis, et chaque ecran est importe dynamiquement.
+type ChargeurEcran = () => Promise<{ default: unknown }>;
+let ECRANS: Record<string, ChargeurEcran> = {};
 
 const textes = (r: ReactTestRenderer): string[] =>
   r.root

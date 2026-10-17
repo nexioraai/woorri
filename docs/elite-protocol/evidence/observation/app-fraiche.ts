@@ -27,7 +27,15 @@
 // `scripts/verifier-une-app.mjs` et `ep258-regle-portee.obs.tsx`. Ce dépôt a
 // vu quatre fois « une liste écrite deux fois diverge » ; une procédure n'y
 // échappe pas.
-import { existsSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import {
+  cpSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 
@@ -59,8 +67,27 @@ export interface AppFraiche {
  * @param document chemin du `.air.json`, relatif à la racine du dépôt
  * @param nom      nom du dossier temporaire — distinct par cliquet, sinon
  *                 deux fichiers d'observation s'écrasent l'un l'autre
+ * @param superposer dossiers du dépôt à RECOPIER par-dessus l'émission.
+ *
+ * ── POURQUOI LA SUPERPOSITION EXISTE, ET CE QU'ELLE N'EST PAS.
+ *
+ * Mesuré le 2026-10-17 en convertissant `slot-invoque` : il importe
+ * `slots/index.ts`, du code ÉCRIT À LA MAIN (commis le 2026-08-31) que le
+ * compilateur n'émet pas — il émet le MÉCANISME (`slot-provider.tsx`), jamais
+ * le contenu d'un Code Slot, qui appartient à l'utilisateur.
+ *
+ * Compiler à neuf SANS cette superposition détruisait donc ce que le cliquet
+ * mesure : l'intégration d'un slot humain dans une application émise.
+ *
+ * CE QU'ELLE NE FAIT PAS : recopier le runtime. Si un jour quelqu'un passait
+ * `lib/runtime` ici, il remettrait l'aveuglement que ce module existe pour
+ * fermer — c'est pourquoi ce chemin-là est REFUSÉ.
  */
-export async function compilerANeuf(document: string, nom: string): Promise<AppFraiche> {
+export async function compilerANeuf(
+  document: string,
+  nom: string,
+  superposer: readonly string[] = [],
+): Promise<AppFraiche> {
   const { migrateAirDocument } = (await import(REPO + "packages/air-schema/src/index.ts")) as {
     migrateAirDocument: (d: Record<string, unknown>) => unknown;
   };
@@ -93,6 +120,25 @@ export async function compilerANeuf(document: string, nom: string): Promise<AppF
     );
   }
   symlinkSync(DEPENDANCES, join(base, "node_modules"), "dir");
+
+  // ── LA SUPERPOSITION, ET SON GARDE-FOU.
+  //
+  // Recopier `lib/runtime` reviendrait à remettre le code figé par-dessus le
+  // code frais — exactement l'aveuglement que ce module ferme. On REFUSE,
+  // plutôt que de laisser l'erreur passer en silence.
+  for (const dossier of superposer) {
+    if (/(^|\/)lib(\/runtime)?(\/|$)/u.test(dossier)) {
+      throw new Error(
+        `app-fraiche — superposition REFUSÉE : « ${dossier} » recouvrirait le ` +
+          "runtime fraîchement compilé, ce qui rendrait le cliquet aveugle.",
+      );
+    }
+    const depuis = join(REPO, dossier);
+    if (!existsSync(depuis)) {
+      throw new Error(`app-fraiche — dossier à superposer introuvable : ${depuis}`);
+    }
+    cpSync(depuis, join(base, dossier.split("/").pop() ?? dossier), { recursive: true });
+  }
 
   return { base, fichiers: fichiers.size };
 }

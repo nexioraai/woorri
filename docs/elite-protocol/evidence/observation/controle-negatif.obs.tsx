@@ -13,16 +13,48 @@
 // d'hôtes RN — niveau JS, pas niveau appareil.
 import { act, create } from "react-test-renderer";
 import type { ReactTestRenderer } from "react-test-renderer";
-import { describe, expect, it } from "vitest";
-import { DataRoot } from "../../../../slices/conteneurs/app/lib/runtime/data-provider";
-import { buildDemoProvider } from "../../../../slices/conteneurs/app/lib/runtime/demo-provider";
-import { demoData } from "../../../../slices/conteneurs/app/demo.data";
-import Ecran from "../../../../slices/conteneurs/app/screens/scr_conteneurs";
+import { createElement } from "react";
+import { beforeAll, describe, expect, it } from "vitest";
+import { compilerANeuf } from "./app-fraiche.ts";
 import { journal, reset } from "./stub-navigation";
+
+// ── POURQUOI LES IMPORTS STATIQUES ONT DISPARU (2026-10-17).
+//
+// Ce fichier importait STATIQUEMENT `slices/conteneurs/app/...` — l'application
+// COMMISE, dont le runtime n'a pas bouge depuis le 2026-08-31, SEPT semaines.
+// Un import statique porte un chemin LITTERAL : il ne peut pas viser une
+// emission fraiche, et le fichier mesurait donc le compilateur d'aout.
+//
+// DEMONTRE, PAS DEDUIT : en cassant `ScreenShell` dans le compilateur,
+// `gate:app-compile` rend 0/32 et ce fichier rendait « 2 passed ».
+//
+// Les quatre liens deviennent dynamiques, resolus apres la compilation.
+let DataRoot: unknown;
+let provider: unknown;
+let Ecran: unknown;
+
+beforeAll(async () => {
+  const a = await compilerANeuf(
+    "slices/conteneurs/air/suivi-conteneurs.air.json",
+    "deribfy-controle-negatif",
+  );
+  // Un zero se voit : un dossier vide rendrait le montage impossible pour une
+  // raison qu'on mettrait longtemps a nommer.
+  expect(a.fichiers, "aucun fichier emis : il n'y a rien a monter").toBeGreaterThan(10);
+  DataRoot = (await import(a.base + "lib/runtime/data-provider.tsx")).DataRoot;
+  const { buildDemoProvider } = await import(a.base + "lib/runtime/demo-provider.ts");
+  const { demoData } = await import(a.base + "demo.data.ts");
+  provider = buildDemoProvider(demoData);
+  Ecran = (await import(a.base + "screens/scr_conteneurs.tsx")).default;
+}, 180_000);
 
 const rendre = (): ReactTestRenderer => {
   let r: ReactTestRenderer | undefined;
-  act(() => { r = create(<DataRoot provider={buildDemoProvider(demoData)}><Ecran /></DataRoot>); });
+  act(() => {
+    r = create(
+      createElement(DataRoot as never, { provider } as never, createElement(Ecran as never)) as never,
+    );
+  });
   if (!r) throw new Error("rendu impossible");
   return r;
 };

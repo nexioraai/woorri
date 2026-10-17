@@ -5,13 +5,42 @@
 import { createElement } from "react";
 import { act, create } from "react-test-renderer";
 import type { ReactTestRenderer } from "react-test-renderer";
-import { describe, expect, it } from "vitest";
+import { readdirSync } from "node:fs";
+import { beforeAll, describe, expect, it } from "vitest";
+import { compilerANeuf } from "./app-fraiche.ts";
 import { readFileSync } from "node:fs";
 import { journal, reset } from "./stub-navigation";
 
 const REPO = new URL("../../../../", import.meta.url).pathname;
-const ECRANS = import.meta.glob("../../../../slices/conteneurs/app/screens/*.tsx");
-const DONNEES = import.meta.glob("../../../../slices/conteneurs/app/screens/*.data.ts");
+// ── CE QU'IL MONTAIT, JUSQU'AU 2026-10-17, ET POURQUOI C'ETAIT AVEUGLE.
+//
+// `import.meta.glob` est resolu par Vite A LA TRANSFORMATION, contre un chemin
+// LITTERAL : il chargeait les ecrans de `slices/conteneurs/app/`, l'application
+// COMMISE, dont le runtime n'a pas bouge depuis le 2026-08-31 — SEPT semaines.
+//
+// DEMONTRE, PAS DEDUIT : en cassant `ScreenShell` dans le compilateur — la
+// primitive que TOUT ecran emis importe —, `gate:app-compile` rend 0/32 et ce
+// fichier rendait « passed ».
+//
+// La liste est donc construite A L'EXECUTION sur l'emission fraiche.
+type Chargeur<T> = () => Promise<T>;
+let APP = "";
+let ECRANS: Record<string, Chargeur<{ default: unknown }>> = {};
+let DONNEES: Record<string, Chargeur<unknown>> = {};
+beforeAll(async () => {
+  const a = await compilerANeuf("slices/conteneurs/air/suivi-conteneurs.air.json", "deribfy-e19-correspondance");
+  APP = a.base;
+  // Un zero se voit : un dossier vide rendrait tout montage impossible pour
+  // une raison qu'on mettrait longtemps a nommer.
+  expect(a.fichiers, "aucun fichier emis : il n'y a rien a monter").toBeGreaterThan(10);
+  const noms = readdirSync(APP + "screens").sort();
+  ECRANS = Object.fromEntries(
+    noms.filter((n) => n.endsWith(".tsx")).map((n) => [APP + "screens/" + n, () => import(APP + "screens/" + n)]),
+  );
+  DONNEES = Object.fromEntries(
+    noms.filter((n) => n.endsWith(".data.ts")).map((n) => [APP + "screens/" + n, () => import(APP + "screens/" + n)]),
+  );
+}, 180_000);
 
 describe("E-19 — correspondance runtime ↔ validateur", () => {
   it("confronte le recensement statique à l'exécution, contrôle par contrôle", async () => {
@@ -24,9 +53,9 @@ describe("E-19 — correspondance runtime ↔ validateur", () => {
     const parBloc = new Map(recensement.map((c) => [c.blockId, c]));
 
     // ── CÔTÉ EXÉCUTION
-    const { DataRoot } = await import(REPO + "slices/conteneurs/app/lib/runtime/data-provider.tsx");
-    const { buildDemoProvider } = await import(REPO + "slices/conteneurs/app/lib/runtime/demo-provider.ts");
-    const { demoData } = await import(REPO + "slices/conteneurs/app/demo.data.ts");
+    const { DataRoot } = await import(APP + "lib/runtime/data-provider.tsx");
+    const { buildDemoProvider } = await import(APP + "lib/runtime/demo-provider.ts");
+    const { demoData } = await import(APP + "demo.data.ts");
     const provider = buildDemoProvider(demoData);
 
     const lignes: { ecran: string; id: string; bloc: string; predit: string; observe: string; verdict: string }[] = [];
