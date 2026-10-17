@@ -1404,6 +1404,10 @@
           "blockType": "header",
           "props": [
             {
+              "key": "surtitre",
+              "value": "PILOTAGE"
+            },
+            {
               "key": "title",
               "value": "Mon tableau de bord"
             }
@@ -1517,6 +1521,10 @@
           "blockType": "header",
           "props": [
             {
+              "key": "surtitre",
+              "value": "MES TONTINES"
+            },
+            {
               "key": "title",
               "value": "Mes tontines"
             }
@@ -1593,6 +1601,10 @@
           "blockType": "header",
           "props": [
             {
+              "key": "surtitre",
+              "value": "COMMUNAUTÉ"
+            },
+            {
               "key": "title",
               "value": "Membres et ordre de passage"
             }
@@ -1656,6 +1668,10 @@
           "id": "blk_transactions_entete",
           "blockType": "header",
           "props": [
+            {
+              "key": "surtitre",
+              "value": "JOURNAL FINANCIER"
+            },
             {
               "key": "title",
               "value": "Mouvements du séquestre"
@@ -1725,6 +1741,10 @@
           "blockType": "header",
           "props": [
             {
+              "key": "surtitre",
+              "value": "ANNUAIRE"
+            },
+            {
               "key": "title",
               "value": "Annuaire des membres"
             }
@@ -1765,6 +1785,10 @@
           "blockType": "header",
           "props": [
             {
+              "key": "surtitre",
+              "value": "CONTRÔLE"
+            },
+            {
               "key": "title",
               "value": "Vérification d'identité"
             }
@@ -1804,6 +1828,10 @@
           "id": "blk_discipline_entete",
           "blockType": "header",
           "props": [
+            {
+              "key": "surtitre",
+              "value": "DISCIPLINE"
+            },
             {
               "key": "title",
               "value": "Amendes disciplinaires"
@@ -1868,6 +1896,10 @@
           "id": "blk_encaissement_entete",
           "blockType": "header",
           "props": [
+            {
+              "key": "surtitre",
+              "value": "ENCAISSEMENT"
+            },
             {
               "key": "title",
               "value": "Encaisser en espèces"
@@ -1937,6 +1969,10 @@
           "blockType": "header",
           "props": [
             {
+              "key": "surtitre",
+              "value": "SÉANCE EN COURS"
+            },
+            {
               "key": "title",
               "value": "Séance et enchères"
             }
@@ -2003,6 +2039,10 @@
           "id": "blk_parametres_entete",
           "blockType": "header",
           "props": [
+            {
+              "key": "surtitre",
+              "value": "RÉGLAGES"
+            },
             {
               "key": "title",
               "value": "Paramètres"

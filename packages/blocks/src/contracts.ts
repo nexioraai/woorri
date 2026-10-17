@@ -31,6 +31,21 @@ export interface HeaderBlockProps extends BlockA11yProps {
    * ouvre sur la sienne. L'URL vient du DOCUMENT, jamais du moteur.
    */
   logoUri?: string;
+  /**
+   * SURTITRE (2026-10-17) — la ligne qui SITUE, au-dessus du titre.
+   *
+   * MESURE : comparaison detail par detail avec Bolt, demandee par le
+   * proprietaire. Chacun de ses ecrans ouvre sur une petite ligne grise en
+   * capitales — PILOTAGE, JOURNAL FINANCIER, COMMUNAUTE, ESPACE DE TRAVAIL —
+   * puis le grand titre, puis une phrase. Trois niveaux, pas deux.
+   *
+   * Deribfy n en portait que DEUX : titre et sous-titre. Le lecteur ne savait
+   * donc jamais OU il se trouve avant d avoir lu le titre entier.
+   *
+   * Le moteur n en choisit ni la casse ni la couleur : il recoit le texte du
+   * document, deja ecrit (F3).
+   */
+  surtitre?: string;
 }
 
 /**

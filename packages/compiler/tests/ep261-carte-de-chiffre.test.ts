@@ -132,6 +132,41 @@ describe("EP-261 · la carte de chiffre", () => {
     }
   });
 
+  it("⑦ LE SURTITRE SITUE, ET IL ATTEINT L'ÉCRAN", () => {
+    // ── TROIS NIVEAUX DE HIÉRARCHIE, PAS DEUX.
+    //
+    // MESURE : chaque écran de Bolt ouvre sur une petite ligne grise en
+    // capitales — PILOTAGE, JOURNAL FINANCIER, COMMUNAUTÉ — puis le grand
+    // titre, puis une phrase. Deribfy n'en portait que DEUX, et le lecteur ne
+    // savait pas OÙ il était avant d'avoir lu le titre entier.
+    //
+    // ET LA CHAÎNE ENTIÈRE EST TENUE : déclaré au bloc, rendu par le
+    // composant, TRANSMIS par le runtime. Ce dernier maillon est celui qui
+    // avait manqué à `accroche` et `logoUri` — déclarés, portés, et jamais
+    // passés. Rien n'échouait : l'en-tête rendait sa forme d'avant.
+    const air = tontine();
+    const avecSurtitre = air.screens
+      .flatMap((s) => s.blocks)
+      .filter((b) => (b.props ?? []).some((p) => p.key === "surtitre"));
+    expect(
+      avecSurtitre.length,
+      "aucun écran ne porte de surtitre : ce cliquet ne mesure plus rien",
+    ).toBeGreaterThan(0);
+
+    const tout = [...compileProject(air).files.values()]
+      .filter((v) => typeof v === "string")
+      .join("\n");
+    expect(tout, "le surtitre n'atteint pas l'application émise").toContain("PILOTAGE");
+
+    // LE MAILLON DU RUNTIME, nommément : sans lui le surtitre resterait au
+    // document et personne ne le verrait.
+    const rt = readFileSync(
+      join(R, "packages", "compiler", "runtime", "air-runtime.tsx"),
+      "utf8",
+    );
+    expect(rt, "le runtime ne transmet pas le surtitre").toContain("surtitre={str(props.surtitre)}");
+  });
+
   it("⑥ QUATRE AU PLUS — éprouvé, pas lu dans le texte du schéma", () => {
     // ── CE CONTRÔLE A ÉTÉ CORRIGÉ APRÈS AVOIR ÉTÉ FAUX.
     //

@@ -656,6 +656,7 @@ export function AirHeader({ screen, blockId }: BlockRef) {
       testID={b.id}
       title={title}
       subtitle={str(props.subtitle)}
+      surtitre={str(props.surtitre)}
       accroche={props.accroche === true}
       logoUri={str(props.logoUri)}
     />

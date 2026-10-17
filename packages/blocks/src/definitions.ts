@@ -73,7 +73,7 @@ import {
 // 1.16.0 (2026-10-17) — DOUZIEME bloc : `statistiques`. ADDITIF STRICT :
 // aucun bloc retire, aucun etat supprime, aucune prop devenue obligatoire.
 // Un appelant 1.15.0 se comporte a l identique.
-export const BLOCK_REGISTRY_VERSION = "1.16.0";
+export const BLOCK_REGISTRY_VERSION = "1.17.0";
 
 // Motifs d'identités stables — IDENTIQUES à @deribfy/air-schema (ids.ts) ;
 // redéclarés structurellement (patron AirCapabilitySlice : pas de couplage
@@ -332,6 +332,13 @@ export const BLOCKS: readonly BlockDefinition[] = [
     propsSchema: z.strictObject({
       title: z.string().min(1),
       subtitle: z.string().min(1).optional(),
+      // SURTITRE (2026-10-17) — la ligne qui SITUE, au-dessus du titre.
+      // Mesure : chaque ecran de Bolt ouvre sur une petite ligne grise en
+      // capitales (PILOTAGE, JOURNAL FINANCIER, COMMUNAUTE), puis le grand
+      // titre, puis une phrase. TROIS niveaux. Deribfy n en portait que
+      // deux, et le lecteur ne savait pas OU il etait avant d avoir lu le
+      // titre entier. Additif : un document d avant ne change pas de sens.
+      surtitre: z.string().min(1).optional(),
       // 1.7.0 — ACCROCHE : le titre monte d'un cran typographique. Réservé à
       // la première phrase qu'une personne lit ; optionnel, donc additif.
       accroche: z.boolean().optional(),

@@ -136,7 +136,10 @@ describe("cliquets du registre de blocs", () => {
     //
     // ADDITIF STRICT : aucun bloc retire, aucun etat supprime, aucune prop
     // devenue obligatoire. Les onze precedents sont intacts.
-    expect(BLOCK_REGISTRY_VERSION).toBe("1.16.0");
+    // 1.17.0 (2026-10-17) — le SURTITRE sur `header`. Trois niveaux de
+    // hierarchie au lieu de deux. ADDITIF : prop optionnelle, aucun bloc
+    // ajoute ni retire.
+    expect(BLOCK_REGISTRY_VERSION).toBe("1.17.0");
     expect(BLOCKS.map((b) => b.id)).toEqual(V1_BLOCK_IDS);
   });
 

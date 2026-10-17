@@ -25,7 +25,14 @@ import type {Blocks,
   SpacerBlockProps, SearchEntryBlockProps, GraphiqueBlockProps, AgentBlockProps,
   StatistiquesBlockProps, StatistiqueItem} from "./contracts.ts";
 
-export function HeaderBlock({ title, subtitle, accroche, logoUri, testID }: HeaderBlockProps) {
+export function HeaderBlock({
+  title,
+  subtitle,
+  surtitre,
+  accroche,
+  logoUri,
+  testID,
+}: HeaderBlockProps) {
   return (
     <Section testID={testID}>
       {logoUri === undefined ? null : (
@@ -42,6 +49,15 @@ export function HeaderBlock({ title, subtitle, accroche, logoUri, testID }: Head
       )}
       {/* 1.7.0 — une ACCROCHE monte d'un cran typographique. Le bloc choisit
           un RÔLE, la primitive porte la forme : aucun style ici. */}
+      {/* SURTITRE (2026-10-17) — la ligne qui SITUE, au-dessus du titre.
+          Chez Bolt : PILOTAGE, JOURNAL FINANCIER, COMMUNAUTE. Trois niveaux,
+          pas deux. Le bloc choisit un ROLE, la primitive porte la forme :
+          aucun style ici, aucune casse imposee — le document ecrit le texte. */}
+      {surtitre !== undefined && (
+        <AppText variant="label" tone="muted">
+          {surtitre}
+        </AppText>
+      )}
       <AppText variant={accroche === true ? "display" : "heading"}>{title}</AppText>
       {subtitle !== undefined && <AppText tone="muted">{subtitle}</AppText>}
     </Section>
