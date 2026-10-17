@@ -14,7 +14,7 @@ export const theme = {
       "border": "#D3DAE2",
       "error": "#C42B1C",
       "success": "#1F7A3D",
-      "warn": "#866A00",
+      "warn": "#816600",
       "badgeBg": "#E8EDF2",
       "primaryText": "#15607F"
     },

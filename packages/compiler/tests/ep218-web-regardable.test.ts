@@ -59,6 +59,12 @@ const htmlDe = async (air: ProjectAir): Promise<string> => {
   return compileWeb(air).files.get("index.html") ?? "";
 };
 
+/** La carte complete des fichiers emis — pour peser ce qui voyage vraiment. */
+const filesDe = async (air: ProjectAir): Promise<Map<string, string>> => {
+  const { compileWeb } = await import("../src/index.ts");
+  return compileWeb(air).files as Map<string, string>;
+};
+
 describe("EP-218 ① · CHAQUE application web emise declare sa typographie", () => {
   it("une police est declaree, avec un repli systeme, sur TOUT le corpus", async () => {
     const docs = await documents();
@@ -73,28 +79,103 @@ describe("EP-218 ① · CHAQUE application web emise declare sa typographie", ()
     expect(sans).toEqual([]);
   });
 
-  it("la pile commence par `system-ui` et finit par `sans-serif`", async () => {
+  it("la pile du CORPS commence par `system-ui` et finit par `sans-serif`", async () => {
     // L'ORDRE compte. `system-ui` donne la police NATIVE de l'appareil — San
     // Francisco sur iPhone, Roboto sur Android — celle que la personne lit
     // partout ailleurs. Et le dernier repli doit etre `sans-serif` : sans
     // lui, un navigateur exotique retombe sur son serif, et on revient au
     // defaut qu'on corrige ici.
+    //
+    // ── CE CONTROLE A ETE CORRIGE APRES ETRE DEVENU VERT A TORT (2026-10-17).
+    //
+    // Il prenait la PREMIERE regle `font-family` du document. Depuis que les
+    // themes serif declarent trois `@font-face`, cette premiere regle est
+    // celle d'une FACE — `font-family: "DeribfySerif"` — et plus celle du
+    // corps. Le controle mesurait donc une autre regle que la sienne.
+    //
+    // Il ne l'a pas dit tout de suite : il lisait le PREMIER document du
+    // corpus, dont le theme est en police systeme et qui n'a donc aucune
+    // `@font-face`. Vert, et aveugle. On lit desormais la regle `html, body`
+    // NOMMEMENT, et sur TOUT le corpus.
     const docs = await documents();
-    const html = await htmlDe((docs[0] as { air: ProjectAir }).air);
-    const regle = /font-family\s*:([^;]+);/u.exec(html)?.[1] ?? "";
-    expect(regle.trimStart().startsWith("system-ui")).toBe(true);
-    expect(regle.trimEnd().endsWith("sans-serif")).toBe(true);
+    expect(docs.length, "corpus introuvable : ce controle ne mesure plus rien").toBeGreaterThan(20);
+    const fautifs: string[] = [];
+    for (const { nom, air } of docs) {
+      const html = await htmlDe(air);
+      const regle = /html,\s*body\s*\{[\s\S]*?font-family\s*:([^;]+);/u.exec(html)?.[1] ?? "";
+      if (!regle.trimStart().startsWith("system-ui") || !regle.trimEnd().endsWith("sans-serif")) {
+        fautifs.push(`${nom} → ${regle.trim().slice(0, 60)}`);
+      }
+    }
+    expect(fautifs, "la pile du corps a derive").toEqual([]);
   });
 
-  it("AUCUNE police n'est TELECHARGEE — un cahier reel exigeait moins de 150 Ko", async () => {
-    // Charger une police ajoute une requete, un clignotement au premier rendu
-    // et du poids. Le cahier d'un client reel exige « < 150 KB pour reseaux
-    // 3G ». La pile systeme ne coute rien.
+  it("AUCUNE police TIERCE, et le poids des faces reste sous le cahier client", async () => {
+    // ── CE CLIQUET A FAILLI REFUSER LE THEME, ET IL AVAIT DE BONNES RAISONS.
+    //
+    // Il interdisait TOUT `@font-face`, au motif qu'« un cahier reel exige
+    // < 150 KB pour reseaux 3G ». Le 2026-10-17, le proprietaire a demande que
+    // la cible native ait la meme identite typographique que le web (« il faut
+    // surtout pas oublier native »). Les deux instructions se heurtaient.
+    //
+    // ── CE QUI A DECIDE : LA MESURE, SUR UNE APPLICATION CONSTRUITE.
+    //
+    //   · JS                 304 811 o → 88 390 o gzip
+    //   · index.html           6 492 o →  2 669 o gzip
+    //   · 3 faces TrueType   128 296 o → 73 723 o gzip  → total 164 Ko
+    //   · 3 faces WOFF2       57 620 o (deja compresse) → total 147 Ko
+    //
+    // Le WOFF2 garde la promesse, le TrueType la rompt. Le format n'est donc
+    // pas une preference : c'est la condition pour que ce lot existe.
+    //
+    // Et le cahier est tenu DEUX FOIS : une application dont le theme est en
+    // police systeme n'emet AUCUNE face — onze des vingt-deux documents.
+    //
+    // ── CE QUI RESTE INTERDIT, ET SANS AMENDEMENT POSSIBLE.
+    //
+    // Une police TIERCE. `fonts.googleapis`/`fonts.gstatic` ajoutent une
+    // requete vers un domaine qu'on ne controle pas, une resolution DNS, un
+    // risque de vie privee, et une panne dont on n'est pas maitre. Les faces
+    // sont SERVIES PAR L'APPLICATION, meme origine, deja en cache au second
+    // ecran.
     const docs = await documents();
-    const html = await htmlDe((docs[0] as { air: ProjectAir }).air);
-    expect(html).not.toContain("@font-face");
-    expect(html).not.toContain("fonts.googleapis");
-    expect(html).not.toContain("fonts.gstatic");
+    expect(docs.length, "corpus introuvable").toBeGreaterThan(20);
+    const PLAFOND_FACES = 60 * 1024;
+    const tiers: string[] = [];
+    const tropLourds: string[] = [];
+    const formatsInterdits: string[] = [];
+    for (const { nom, air } of docs) {
+      const html = await htmlDe(air);
+      for (const domaine of ["fonts.googleapis", "fonts.gstatic", "use.typekit", "//fonts."]) {
+        if (html.includes(domaine)) tiers.push(`${nom} → ${domaine}`);
+      }
+      if (!html.includes("@font-face")) continue;
+      // UNE FACE DECLAREE DOIT ETRE EN WOFF2 : le TrueType fait passer le
+      // total au-dessus du cahier, mesure a l'appui.
+      for (const m of html.matchAll(/src:\s*url\("([^"]+)"\)/gu)) {
+        if (!(m[1] ?? "").endsWith(".woff2")) formatsInterdits.push(`${nom} → ${m[1] ?? ""}`);
+      }
+      // ET LE POIDS REEL DES FACES EMISES EST BORNE.
+      const fichiers = [...(await filesDe(air)).entries()].filter(([k]) =>
+        k.startsWith("public/polices/"),
+      );
+      const octets = fichiers.reduce(
+        (n, [, v]) => n + (typeof v === "string" ? Buffer.from(v, "base64").length : 0),
+        0,
+      );
+      if (octets > PLAFOND_FACES) {
+        tropLourds.push(`${nom} → ${String(Math.round(octets / 1024))} Ko`);
+      }
+    }
+    expect(tiers, "une police TIERCE est chargee : requete hors de notre controle").toEqual([]);
+    expect(
+      formatsInterdits,
+      "une face n'est pas en WOFF2 : le total passerait au-dessus du cahier client",
+    ).toEqual([]);
+    expect(
+      tropLourds,
+      `des faces depassent le plafond de ${String(PLAFOND_FACES / 1024)} Ko`,
+    ).toEqual([]);
   });
 });
 

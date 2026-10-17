@@ -38,6 +38,20 @@ const { execFileSync } = await import("node:child_process");
 const { tmpdir } = await import("node:os");
 const { join } = await import("node:path");
 const { fileURLToPath } = await import("node:url");
+// ── LE CONTENU BINAIRE EST DÉCODÉ, ET LA DÉCISION EST UNIQUE.
+//
+// Mesuré le 2026-10-17 : cette gate écrivait le base64 des fichiers binaires
+// EN TEXTE. Ça ne gênait personne tant que `.png` était le seul — aucune gate
+// ne le lit. Les faces de police, elles, sont copiées par Vite et chargées par
+// le moteur natif : une face écrite en texte est une face invalide, et une
+// famille introuvable NE LÈVE PAS — elle retombe en silence sur la police
+// système. Soit exactement le défaut que l'embarquement ferme.
+//
+// NEUF écrivains de cartes de fichiers existent dans ce dépôt. La décision vit
+// dans `packages/compiler/src/fichiers-binaires.ts`, une seule fois.
+const { estBinaire } = await import(
+  new URL("../../../packages/compiler/src/fichiers-binaires.ts", import.meta.url).href,
+);
 const R = join(fileURLToPath(import.meta.url), "..", "..", "..", "..") + "/";
 const { documentsDuCorpus } = await import(R + "docs/elite-protocol/evidence/corpus-documents.mjs");
 const { migrateAirDocument } = await import(R + "packages/air-schema/src/migrations.ts");
@@ -111,7 +125,7 @@ for (const [nom, chemin, transformer] of docs) {
   for (const [f, contenu] of c.files) {
     const p = dir + f;
     mkdirSync(p.slice(0, p.lastIndexOf("/")), { recursive: true });
-    writeFileSync(p, contenu);
+    writeFileSync(p, estBinaire(p) ? Buffer.from(contenu, "base64") : contenu);
   }
   symlinkSync(BASE, dir + "node_modules", "dir");
 

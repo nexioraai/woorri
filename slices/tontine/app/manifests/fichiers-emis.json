@@ -44,6 +44,7 @@
     "lib/runtime/navigation-contrat.tsx",
     "lib/runtime/navigation-native.tsx",
     "lib/runtime/plateforme.tsx",
+    "lib/runtime/polices.tsx",
     "lib/runtime/primary-nav.tsx",
     "lib/runtime/racines-navigation.ts",
     "lib/runtime/session-contract.ts",

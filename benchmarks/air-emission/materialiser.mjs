@@ -22,6 +22,16 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+// ── LE BINAIRE EST DÉCODÉ, ET LA DÉCISION EST UNIQUE (2026-10-17).
+//
+// Les faces de police embarquées voyagent en base64 dans la carte de fichiers.
+// Écrire ce base64 EN TEXTE produit un fichier présent, non vide et INVALIDE —
+// et une famille introuvable ne lève pas : elle retombe en silence sur la
+// police système. NEUF écrivains existaient ; `fichiers-binaires.ts` est le
+// seul endroit où la décision vit.
+const { estBinaire } = await import(
+  new URL("../../packages/compiler/src/fichiers-binaires.ts", import.meta.url).href,
+);
 
 const REPO = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const acceptation = await import("./acceptation.mjs");
@@ -102,7 +112,7 @@ export function materialiser(document, destination, { prescriptif } = {}) {
   for (const [chemin, contenu] of compile.files) {
     const abs = join(destination, chemin);
     mkdirSync(dirname(abs), { recursive: true });
-    writeFileSync(abs, contenu);
+    writeFileSync(abs, estBinaire(abs) ? Buffer.from(contenu, "base64") : contenu);
     ecrits += 1;
   }
 

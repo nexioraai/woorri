@@ -32,6 +32,16 @@ const { outillageJava } = await import(R + "docs/elite-protocol/evidence/outilla
 const { migrateAirDocument, assertValidAir } = await import(R + "packages/air-schema/src/index.ts");
 const { compileBackend } = await import(R + "packages/compiler/src/index.ts");
 const { documentsDuCorpus } = await import(R + "docs/elite-protocol/evidence/corpus-documents.mjs");
+// ── LE BINAIRE EST DÉCODÉ, ET LA DÉCISION EST UNIQUE (2026-10-17).
+//
+// Les faces de police embarquées voyagent en base64 dans la carte de fichiers.
+// Écrire ce base64 EN TEXTE produit un fichier présent, non vide et INVALIDE —
+// et une famille introuvable ne lève pas : elle retombe en silence sur la
+// police système. NEUF écrivains existaient ; `fichiers-binaires.ts` est le
+// seul endroit où la décision vit.
+const { estBinaire } = await import(
+  new URL("../../../packages/compiler/src/fichiers-binaires.ts", import.meta.url).href,
+);
 
 const OUT = join(tmpdir(), "deribfy-gate-backend") + "/";
 
@@ -135,7 +145,7 @@ for (const [nom, chemin, transformer] of documentsDuCorpus(R)) {
   for (const [f, contenu] of files) {
     const p = dir + f;
     mkdirSync(p.slice(0, p.lastIndexOf("/")), { recursive: true });
-    writeFileSync(p, contenu);
+    writeFileSync(p, estBinaire(p) ? Buffer.from(contenu, "base64") : contenu);
   }
 
   // ── LES REFUS DU DOCUMENT DOIVENT ÊTRE DANS LE CODE PRODUIT.

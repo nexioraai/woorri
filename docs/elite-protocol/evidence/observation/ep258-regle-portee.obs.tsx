@@ -45,6 +45,14 @@ import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
 import { champDuTestID, valeurPourChamp, type AssertionData } from "./saisie-conforme.ts";
+// ── LE BINAIRE EST DÉCODÉ, ET LA DÉCISION EST UNIQUE (2026-10-17).
+//
+// Les faces de police embarquées voyagent en base64 dans la carte de fichiers.
+// Écrire ce base64 EN TEXTE produit un fichier présent, non vide et INVALIDE —
+// et une famille introuvable ne lève pas : elle retombe en silence sur la
+// police système. NEUF écrivains existaient ; `fichiers-binaires.ts` est le
+// seul endroit où la décision vit.
+import { estBinaire } from "../../../../packages/compiler/src/fichiers-binaires.ts";
 
 const REPO = new URL("../../../../", import.meta.url).pathname;
 const DOC = REPO + "slices/validation-appareil/validation-appareil.air.json";
@@ -115,7 +123,7 @@ beforeAll(async () => {
     const abs = join(APP, nom);
     mkdirSync(dirname(abs), { recursive: true });
     // Les `.png` voyagent en base64 dans la carte — convention du dépôt.
-    writeFileSync(abs, nom.endsWith(".png") ? Buffer.from(contenu, "base64") : contenu);
+    writeFileSync(abs, estBinaire(nom) ? Buffer.from(contenu, "base64") : contenu);
   }
   // L'emprunt est INDISPENSABLE, et son absence se DIT : un échec dont on
   // ignore la cause vaut moins qu'un refus net.

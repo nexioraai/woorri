@@ -416,9 +416,27 @@ export function evaluateApxxGrid(
   //     propriétés de MISE EN PAGE (flex, alignItems, textAlign…) restent
   //     hors périmètre : ce ne sont pas des valeurs de design, et les
   //     tokeniser n'aurait aucun sens.
+  //     FAUX POSITIF CORRIGE LE 2026-10-17 : l instrument lisait le fichier
+  //     ENTIER, commentaires compris. Il a donc declare D `non_conforme` pour
+  //     `lib/primitives/feuille.ts:typographie fontWeight=700` — une valeur
+  //     citee dans un COMMENTAIRE qui explique precisement pourquoi elle ne
+  //     doit pas etre ecrite en dur. L instrument accusait la phrase qui
+  //     enonce sa propre regle.
+  //
+  //     C est la lecon que `keyboard-a11y-locks` avait deja payee — « un mot
+  //     dans un commentaire n est pas du code (lecon d une sonde anterieure
+  //     qui avait produit un faux positif) » — et que celui-ci n avait pas
+  //     apprise.
+  //
+  //     CE QUI N EST PAS AFFAIBLI : une valeur en dur dans du CODE reste vue.
+  //     Seules les lignes `//` et les blocs `/* */` disparaissent, et un
+  //     controle negatif l eprouve.
+  const sansCommentaires = (x: string): string =>
+    x.replace(/\/\*[\s\S]*?\*\//g, "").replace(/^[ \t]*\/\/.*$/gm, "");
   const hardcoded: string[] = [];
-  for (const [path, code] of codeFiles(files)) {
+  for (const [path, brut] of codeFiles(files)) {
     if (path === "lib/tokens/theme.generated.ts") continue;
+    const code = sansCommentaires(brut);
     // couleurs
     for (const m of code.matchAll(/#[0-9A-Fa-f]{6}/g)) hardcoded.push(`${path}:couleur ${m[0]}`);
     // espacements — literal numérique là où un token d'espacement est attendu

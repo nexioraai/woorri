@@ -10,12 +10,26 @@ import { theme } from "@deribfy/design-tokens";
 // L'appel au moteur de styles passe par une COUTURE : c'est le seul mot de
 // React Native qu'il restait ici, et la cible web le remplace par l'identité.
 // Voir ./feuille.ts — la feuille, elle, reste UNIQUE pour les deux cibles.
-import { creerFeuille, familleDe } from "./feuille.ts";
+import { creerFeuille, styleDePolice } from "./feuille.ts";
 import type { Scheme } from "./contracts.ts";
 
 export type Palette = (typeof theme.color)[Scheme];
 
-const FAMILLE = familleDe(theme.font.famille);
+// ── LA POLICE DES CINQ RÔLES DE TEXTE, RÉSOLUE UNE FOIS.
+//
+// La couture rend famille ET graisse, et c'est elle qui sait laquelle des deux
+// poser : côté natif une FACE nommée sans `fontWeight` (Android ne synthétise
+// pas un gras), côté web une famille unique dont les `@font-face` portent les
+// graisses. Composer ici garderait la connaissance de plateforme dans une
+// feuille qui doit rester pure.
+// Les graisses viennent des JETONS — la couture décide seulement LAQUELLE des
+// deux propriétés poser, jamais sa valeur.
+const GRAISSES = { semibold: theme.fontWeight.semibold, bold: theme.fontWeight.bold };
+const POLICE = {
+  regular: styleDePolice(theme.font.famille, "regular", GRAISSES),
+  semibold: styleDePolice(theme.font.famille, "semibold", GRAISSES),
+  bold: styleDePolice(theme.font.famille, "bold", GRAISSES),
+} as const;
 
 const makeSheet = (c: Palette) =>
   creerFeuille({
@@ -109,11 +123,19 @@ const makeSheet = (c: Palette) =>
     // `familleDe` rend `undefined` pour le rôle `systeme` : la propriété n'est
     // alors PAS posée, et le rendu est celui d'avant au pixel près. C'est
     // pourquoi cette montée est strictement additive.
-    textLabel: { fontFamily: FAMILLE, fontSize: theme.font.label, color: c.text },
-    textBody: { fontFamily: FAMILLE, fontSize: theme.font.body, color: c.text },
-    textTitle: { fontFamily: FAMILLE, fontSize: theme.font.title, fontWeight: theme.fontWeight.semibold, color: c.text },
-    textHeading: { fontFamily: FAMILLE, fontSize: theme.font.heading, fontWeight: theme.fontWeight.bold, color: c.text },
-    textDisplay: { fontFamily: FAMILLE, fontSize: theme.font.display, fontWeight: theme.fontWeight.bold, color: c.text },
+    // ── LA GRAISSE NE VIENT PLUS DU JETON, MAIS DE LA COUTURE.
+    //
+    // `theme.fontWeight.semibold` ("600") était posé ici en dur à côté de la
+    // famille. Avec une face embarquée par graisse, c'est FAUX sur Android :
+    // la face est déjà grasse, et `fontWeight` par-dessus déclenche au mieux
+    // rien, au pire une seconde synthèse. La couture décide — famille nommée
+    // OU graisse, jamais les deux — et les jetons de graisse restent la source
+    // pour le rôle `systeme`, qu'elle lit.
+    textLabel: { ...POLICE.regular, fontSize: theme.font.label, color: c.text },
+    textBody: { ...POLICE.regular, fontSize: theme.font.body, color: c.text },
+    textTitle: { ...POLICE.semibold, fontSize: theme.font.title, color: c.text },
+    textHeading: { ...POLICE.bold, fontSize: theme.font.heading, color: c.text },
+    textDisplay: { ...POLICE.bold, fontSize: theme.font.display, color: c.text },
     toneMuted: { color: c.muted },
     tonePrimary: { color: c.primaryText },
     toneError: { color: c.error },

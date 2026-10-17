@@ -14,11 +14,20 @@ const { buildEmbeddedAssets, buildEmbeddedAssetsWeb } = await import(
   join(HERE, "..", "src", "embed-lib.ts")
 );
 
-const assets = buildEmbeddedAssets((rel) =>
-  readFileSync(join(PACKAGES, rel), "utf8"),
-);
+// ── LE LECTEUR CONNAÎT LE BINAIRE, et il le connaît PAR LA DÉCISION UNIQUE.
+//
+// Les faces de police voyagent en base64. Réécrire ici le test d'extension
+// aurait fait un CINQUIÈME endroit où il vit — `fichiers-binaires.ts` est le
+// seul, et les quatre écrivains d'app en dépendent déjà.
+const { estBinaire } = await import(join(HERE, "..", "src", "fichiers-binaires.ts"));
+const lire = (rel) =>
+  estBinaire(rel)
+    ? readFileSync(join(PACKAGES, rel)).toString("base64")
+    : readFileSync(join(PACKAGES, rel), "utf8");
+
+const assets = buildEmbeddedAssets(lire);
 const targets = Object.keys(assets).sort();
-const assetsWeb = buildEmbeddedAssetsWeb((rel) => readFileSync(join(PACKAGES, rel), "utf8"));
+const assetsWeb = buildEmbeddedAssetsWeb(lire);
 const ciblesWeb = Object.keys(assetsWeb).sort();
 const fingerprint = createHash("sha256")
   .update(targets.map((t) => `${t} ${createHash("sha256").update(assets[t]).digest("hex")}`).join("\n"))

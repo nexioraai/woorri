@@ -30,6 +30,14 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { compileBackend } from "../src/compile-backend.ts";
 import { migrateAirDocument, validateAir, type ProjectAir } from "@deribfy/air-schema";
+// ── LE BINAIRE EST DÉCODÉ, ET LA DÉCISION EST UNIQUE (2026-10-17).
+//
+// Les faces de police embarquées voyagent en base64 dans la carte de fichiers.
+// Écrire ce base64 EN TEXTE produit un fichier présent, non vide et INVALIDE —
+// et une famille introuvable ne lève pas : elle retombe en silence sur la
+// police système. NEUF écrivains existaient ; `fichiers-binaires.ts` est le
+// seul endroit où la décision vit.
+import { estBinaire } from "../../../packages/compiler/src/fichiers-binaires.ts";
 
 const ICI = dirname(fileURLToPath(import.meta.url));
 const DOC = join(ICI, "..", "..", "..", "slices", "tontine", "tontine.air.json");
@@ -158,7 +166,7 @@ describe("EP-216 ③ · L'ENCHÈRE SE JOUE VRAIMENT, ÉGALITÉ COMPRISE", () => 
       for (const [chemin, contenu] of compileBackend(air).files) {
         const cible = join(dossier, chemin);
         mkdirSync(dirname(cible), { recursive: true });
-        writeFileSync(cible, contenu);
+        writeFileSync(cible, estBinaire(cible) ? Buffer.from(contenu, "base64") : contenu);
       }
       execFileSync("ln", [
         "-s",

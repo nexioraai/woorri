@@ -13,6 +13,7 @@ import { enveloppeWeb } from "./emit-web.ts";
 import { emitThemeModule, hasThemeOverrides } from "./emit-theme.ts";
 import { EMBEDDED_ASSETS_WEB } from "./embedded-assets.generated.ts";
 import type { ProjectAir } from "@deribfy/air-schema";
+import { policesRequises } from "./emit-theme.ts";
 
 const pascal = (id: string): string =>
   id.split("_").map((p) => p.charAt(0).toUpperCase() + p.slice(1)).join("");
@@ -33,13 +34,37 @@ export function compileWeb(input: unknown): EmittedProject {
   for (const f of ["app.json", "eas.json", ".easignore", ".fingerprintignore", "index.ts"]) {
     files.delete(f);
   }
+  // ── LES FACES TRUETYPE DU NATIF SORTENT : LE WEB A LES SIENNES EN WOFF2.
+  //
+  // DÉFAUT MESURÉ EN POSANT CE LOT : `compileWeb` part de l'émission NATIVE
+  // puis superpose. Les TrueType arrivaient donc par là, et l'overlay ajoutait
+  // les WOFF2 PAR-DESSUS sans retirer les premiers — chaque application web
+  // portait 182 Ko de faces dont 125 jamais lues.
+  //
+  // Rien ne l'aurait dit sans le plafond de poids d'`ep218`, le cliquet que ce
+  // lot a dû amender et qui a servi dans l'heure.
+  //
+  // On retire par EXTENSION, pas par nom : une quatrième face ajoutée demain
+  // sortira aussi, sans que personne n'ait à y penser.
+  for (const f of [...files.keys()]) {
+    if (f.startsWith("public/polices/") && f.endsWith(".ttf")) files.delete(f);
+  }
   // ── LES PRIMITIVES WEB REMPLACENT LES NATIVES.
   //
   // C'est le branchement final, et le seul qui touche la bibliothèque : tout le
   // reste de `lib/` — blocs, runtime, jetons — est le même fichier des deux
   // côtés. Sans ce remplacement, l'application web embarquerait des composants
   // React Native et ne monterait pas : elle serait émise, et morte.
-  for (const [cible, contenu] of Object.entries(EMBEDDED_ASSETS_WEB)) files.set(cible, contenu);
+  // ── LES FACES NE VOYAGENT QUE SI LE THÈME LES EMPLOIE.
+  //
+  // Mesuré sur une application construite : elle expédie 91 Ko gzip. Les trois
+  // WOFF2 en ajoutent 56 — les onze documents en police système ne doivent pas
+  // les payer, et le cliquet `ep218` l'exige, cahier client à l'appui.
+  const avecPolices = policesRequises(air);
+  for (const [cible, contenu] of Object.entries(EMBEDDED_ASSETS_WEB)) {
+    if (!avecPolices && cible.startsWith("public/polices/")) continue;
+    files.set(cible, contenu);
+  }
   // ── LA COUTURE NATIVE SORT APRÈS L'OVERLAY, ET L'ORDRE EST LE POINT.
   //
   // `navigation-native.tsx` remplit la couture avec React Navigation. Laissé

@@ -1,3 +1,4 @@
+import type { Graisse, Graisses } from "./contracts.ts";
 // LA COUTURE DE LA FEUILLE DE STYLES — un seul mot de React Native.
 //
 // ── POURQUOI UNE COUTURE, ET NON UNE SECONDE FEUILLE.
@@ -19,60 +20,76 @@ import { StyleSheet } from "react-native";
 export const creerFeuille = StyleSheet.create;
 
 /**
- * LE RÔLE DE FAMILLE DE CARACTÈRES — ET POURQUOI LE NATIF NE LE SERT PAS
- * ENCORE.
+ * LA POLICE D'UN RÔLE DE TEXTE — CÔTÉ NATIF, AVEC SA FACE EMBARQUÉE.
  *
- * ── CE QUE J'AI ESSAYÉ, ET LE CLIQUET QUI M'A ARRÊTÉ.
+ * ── CE QUI A ÉTÉ ESSAYÉ, REFUSÉ, PUIS RÉSOLU.
  *
- * Premier essai : `Platform.OS === "ios" ? "Georgia" : "serif"`. Le cliquet
- * 4 de `keyboard-a11y-locks` a rougi — il interdit tout `Platform.OS` dans le
- * code ÉMIS, et j'ai vérifié : le dépôt n'en contenait AUCUN avant moi. La
- * propriété est donc réelle et intacte, et elle vaut mieux que ce lot.
+ * Premier essai : `Platform.OS === "ios" ? "Georgia" : "serif"`. Le cliquet 4
+ * de `keyboard-a11y-locks` a rougi — il interdit tout `Platform.OS` dans le
+ * code ÉMIS, et j'ai vérifié que le dépôt n'en contenait AUCUN avant moi. Ce
+ * qu'il protège est réel : un branchement d'exécution ferait rendre les deux
+ * plateformes différemment, et TOUTE observation de ce dépôt monte avec un
+ * stub `ios`. `Platform.select` a été écarté aussi : littéral différent, même
+ * effet, ç'aurait été maquiller le cliquet.
  *
- * CE QU'ELLE PROTÈGE, et ce n'est pas du zèle : un branchement d'exécution
- * ferait rendre les deux plateformes DIFFÉREMMENT. Or toute observation de ce
- * dépôt monte avec un stub `ios` — un comportement propre à Android ne serait
- * jamais regardé. C'est exactement la famille de défaut « vert et faux » que
- * neuf fichiers d'observation ont déjà coûtée ici.
+ * Deuxième état, livré puis dépassé : le natif ne servait PAS le rôle. Une
+ * identité visuelle présente sur la moitié des appareils n'en est pas une.
+ * Jugement du propriétaire, 2026-10-17 : « il faut surtout pas oublier native,
+ * on fait les 2 pour ne pas en oublier une ».
  *
- * J'ai aussi écarté `Platform.select` : il ne contient pas le littéral que le
- * cliquet cherche, mais il fait la MÊME chose. Le contourner serait maquiller
- * le cliquet, pas le respecter.
+ * État actuel : la face est EMBARQUÉE dans l'application
+ * (`assets/polices/DeribfySerif-*.ttf`) et chargée au démarrage. Un fichier
+ * embarqué porte le même nom sur les deux plateformes — aucun branchement, et
+ * l'identité est garantie au lieu d'être espérée.
  *
- * ── POURQUOI UN SEUL NOM NE SUFFIT PAS, ET C'EST MESURÉ.
+ * ── POURQUOI CETTE FONCTION REND AUSSI LA GRAISSE, ET POURQUOI C'EST L'UN OU
+ *    L'AUTRE.
  *
- * Aucun nom de police n'existe sur iOS ET Android à la fois. iOS porte
- * Georgia, Palatino, Menlo ; Android porte Noto Serif, Roboto et les alias
- * génériques `serif`/`monospace`. Et `fontFamily` du natif prend UN nom, pas
- * une pile : contrairement au web, il ne se dégrade pas. Un nom absent ne
- * lève pas — il retombe EN SILENCE sur la police système.
+ * Android ne SYNTHÉTISE pas : demander `fontWeight: "700"` sur une famille qui
+ * n'a qu'une face Regular rend du Regular. Chaque graisse est donc une FACE
+ * portant son propre nom de famille, et on la désigne NOMMÉMENT — sans poser
+ * `fontWeight`, qui n'aurait rien à faire là et pourrait déclencher une
+ * seconde synthèse par-dessus une face déjà grasse.
  *
- * Écrire « Georgia » ici, c'était donc livrer un serif sur iOS et la police
- * système sur Android, sans qu'aucun signal ne le dise. Une identité visuelle
- * qui n'existe que sur la moitié des appareils est une identité qu'on ne peut
- * pas promettre.
- *
- * ── CE QUI EST FAIT, ET CE QUI RESTE.
- *
- * Le natif rend donc `undefined` pour TOUS les rôles : la pile système, le
- * comportement exact d'avant les tokens 1.6.0, aucune régression. La cible WEB
- * sert le rôle pour de vrai — une pile CSS se dégrade, le navigateur prend la
- * première police présente, et il n'y a là aucun branchement de plateforme.
- *
- * CE QU'IL FAUDRAIT POUR SERVIR LE NATIF : embarquer un fichier de police
- * (`expo-font` est déjà installé, aucune dépendance nouvelle). Un `.ttf`
- * embarqué porte le MÊME nom sur les deux plateformes — donc aucun
- * branchement, et l'identité est garantie au lieu d'être espérée. Cela ajoute
- * un binaire au dépôt et engage une licence : c'est une décision du
- * propriétaire, pas un détail d'implémentation, et elle n'est pas prise ici.
- *
- * Le contrôle ⑥ d'EP-263 tient cet état EXACTEMENT tel qu'il est écrit : si
- * quelqu'un fait rendre un nom au natif sans embarquer de police, il rougit.
+ * Pour le rôle `systeme`, l'inverse : aucune famille — ce qui laisse la pile
+ * système, SF ou Roboto, le meilleur rendu possible — et la graisse passe par
+ * `fontWeight`, exactement comme avant les tokens 1.6.0.
  */
-export const familleDe = (role: "systeme" | "serif" | "mono"): string | undefined => {
-  // Le role est LU — et deliberement non servi, voir ci-dessus. Le nommer
-  // plutot que de l ignorer garde la signature identique a la couture web :
-  // `styles.ts` est la MEME feuille pour les deux cibles.
-  void role;
-  return undefined;
+/**
+ * ── LA GRAISSE VIENT DU JETON, PAS DE CETTE FONCTION (correction du jour).
+ *
+ * J'avais écrit `"600"` et `"700"` en littéral ici. L'Oracle l'a vu — sa
+ * dimension D mesure « zéro style en dur » et elle est passée à
+ * `non_conforme` : « 1 valeur(s) en dur : lib/primitives/feuille.ts:
+ * typographie fontWeight=700 ». Il avait raison, et c'est exactement le genre
+ * de valeur que les jetons existent pour porter.
+ *
+ * Cette couture décide LAQUELLE des deux propriétés poser — famille nommée OU
+ * graisse — ce qui est une connaissance de plateforme. La VALEUR de la graisse
+ * n'en est pas une : elle arrive de la feuille, qui lit les jetons.
+ */
+export interface StyleDePolice {
+  readonly fontFamily?: string;
+  readonly fontWeight?: Graisse;
+}
+
+
+
+export const styleDePolice = (
+  role: "systeme" | "serif" | "mono",
+  poids: "regular" | "semibold" | "bold",
+  graisses: Graisses,
+): StyleDePolice => {
+  // ── `mono` N'A PAS DE FACE EMBARQUÉE, ET C'EST DÉLIBÉRÉ.
+  //
+  // Aucun thème du catalogue ne le demande. Embarquer un fichier que personne
+  // n'emploie serait le jeton « au cas où » que DET-023 a écarté. Le cliquet
+  // EP-263 exige qu'un rôle EMPLOYÉ ait sa face : le jour où un thème prendra
+  // `mono`, il rougira — plutôt que de retomber en silence, ici, sur la police
+  // système.
+  if (role !== "serif") {
+    return poids === "regular" ? {} : { fontWeight: graisses[poids] };
+  }
+  const face = poids === "bold" ? "Bold" : poids === "semibold" ? "SemiBold" : "Regular";
+  return { fontFamily: `DeribfySerif-${face}` };
 };

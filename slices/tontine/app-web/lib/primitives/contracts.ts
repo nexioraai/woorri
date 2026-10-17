@@ -266,3 +266,21 @@ export interface ThemeBridge {
   scheme: Scheme;
   setScheme: (scheme: Scheme) => void;
 }
+
+/**
+ * Les neuf graisses que CSS et React Native reconnaissent tous deux.
+ *
+ * Le type est précis, et il doit l'être : `string` ferait perdre
+ * l'assignabilité à `TextStyle` de React Native, dont `fontWeight` est une
+ * union de littéraux — mesuré, 4 erreurs de typage dans les primitives.
+ * Le schéma des jetons contraint déjà la forme (`^[1-9]00$`), et le module de
+ * thème émis est `as const` : les valeurs arrivent donc ici en littéraux, sans
+ * aucune conversion forcée.
+ */
+export type Graisse = "100" | "200" | "300" | "400" | "500" | "600" | "700" | "800" | "900";
+
+/** Les graisses DÉCLARÉES par les jetons, passées par la feuille. */
+export interface Graisses {
+  readonly semibold: Graisse;
+  readonly bold: Graisse;
+}

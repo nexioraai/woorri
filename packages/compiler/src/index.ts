@@ -38,6 +38,7 @@ export {
   emitThemeModule,
   hasThemeOverrides,
   isOverridableKey,
+  policesRequises,
 } from "./emit-theme.ts";
 export type { ThemeOverrideProblem } from "./emit-theme.ts";
 // ── LA CONFORMITÉ AUX MAGASINS, EXPORTÉE PARCE QU'ELLE DOIT AGIR.

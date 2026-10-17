@@ -48,7 +48,7 @@ import {
   EXECUTION_ENVELOPE_V1,
   analyzeFeasibility,
 } from "@deribfy/execution-contract";
-import { emitThemeModule, hasThemeOverrides } from "@deribfy/compiler";
+import { emitThemeModule, hasThemeOverrides, policesRequises } from "@deribfy/compiler";
 import { wcagFailures } from "./apxx-grid.ts";
 
 export interface OracleCheck {
@@ -230,12 +230,32 @@ export function runOracleLevel1(
     // autant, il RECALCULE ce que le thème doit être et compare.
     const themePath = "lib/tokens/theme.generated.ts";
     const attenduTheme = hasThemeOverrides(air) ? emitThemeModule(air) : EMBEDDED_ASSETS[themePath];
+    // ── LES FACES DE POLICE SONT CONDITIONNELLES (2026-10-17).
+    //
+    // Ce contrôle exigeait CHAQUE copie embarquée, octet à octet. Depuis que
+    // les faces ne sont émises que si le thème les emploie, il déclarait
+    // « copies modifiées : public/polices/… » sur les onze documents en police
+    // système — où le fichier est ABSENT, ce qui est exactement ce qu'on veut.
+    //
+    // Le poids d'une police jamais lue est précisément ce que le cahier d'un
+    // client réel interdit (« < 150 KB pour réseaux 3G »). L'exemption n'est
+    // donc pas un relâchement : elle dit la règle.
+    //
+    // ON RÉUTILISE LE PRÉDICAT DU COMPILATEUR, jamais une seconde condition :
+    // ce dépôt a vu sept fois « une liste écrite deux fois diverge », et deux
+    // conditions sur la même question en seraient la huitième.
+    const avecPolices = policesRequises(air);
     const drifted = Object.keys(EMBEDDED_ASSETS)
-      .filter((path) =>
-        path === themePath
+      .filter((path) => {
+        if (!avecPolices && path.startsWith("public/polices/")) {
+          // La face doit être ABSENTE, et son absence est vérifiée : une face
+          // émise sans raison serait un défaut, pas une tolérance.
+          return compiled.files.get(path) !== undefined;
+        }
+        return path === themePath
           ? compiled.files.get(path) !== attenduTheme
-          : compiled.files.get(path) !== EMBEDDED_ASSETS[path],
-      )
+          : compiled.files.get(path) !== EMBEDDED_ASSETS[path];
+      })
       .sort(byCodeUnit);
     checks.push({
       name: "copies_integrite",

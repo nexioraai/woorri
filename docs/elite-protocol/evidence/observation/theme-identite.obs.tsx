@@ -36,6 +36,8 @@ import { createElement } from "react";
 import { act, create } from "react-test-renderer";
 import type { ReactTestRenderer } from "react-test-renderer";
 import { beforeAll, describe, expect, it } from "vitest";
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import { compilerANeuf } from "./app-fraiche.ts";
 
 // ── DEUX DOCUMENTS AUX MONDES OPPOSÉS, ET C'EST LE POINT.
@@ -162,37 +164,69 @@ describe("PREUVE — le thème fait deux mondes visuels à l'écran", () => {
     ).not.toBe(f.rayons.join("/"));
   });
 
-  it("③ LE NATIF NE POSE AUCUNE FAMILLE — et c'est un ÉTAT TENU, pas un oubli", async () => {
-    // ── POURQUOI CE CONTRÔLE DIT « AUCUNE » ALORS QUE LE THÈME DIT `serif`.
+  it("③ LE NATIF APPLIQUE SES FACES EMBARQUÉES — et aucune famille sans fichier", async () => {
+    // ── CE CONTRÔLE A ÉTÉ RÉÉCRIT, ET IL AVAIT PRÉVU SA PROPRE RÉÉCRITURE.
     //
-    // `kaviva-spa` est en `soin_doux`, dont la famille est `serif`. Le natif
-    // ne la sert PAS, et ce n'est pas un maillon manquant : c'est une décision
-    // mesurée, écrite dans `primitives/feuille.ts`.
+    // Sa version précédente exigeait ZÉRO famille côté natif, et son message
+    // d'échec disait : « soit un fichier de police a été embarqué (alors ce
+    // contrôle doit être réécrit), soit un nom a été posé qui sera absent
+    // d'une des deux plateformes ». C'est le premier cas qui s'est produit.
     //
-    // Mon premier essai posait `Platform.OS === "ios" ? "Georgia" : "serif"`.
-    // Le cliquet 4 de `keyboard-a11y-locks` a rougi : il interdit tout
-    // `Platform.OS` dans le code ÉMIS, et le dépôt n'en contenait AUCUN avant
-    // moi. Ce qu'il protège est réel — un branchement d'exécution ferait
-    // rendre les deux plateformes différemment, et TOUTE observation d'ici
-    // monte avec un stub `ios` : le comportement Android ne serait jamais
-    // regardé.
+    // ── POURQUOI L'ÉTAT A CHANGÉ.
     //
-    // Et un seul nom ne suffit pas : `fontFamily` du natif prend UN nom, pas
-    // une pile, et aucun nom n'existe sur les deux systèmes. Un nom absent ne
-    // lève pas, il retombe en silence sur la police système — une identité
-    // visuelle livrée sur la moitié des appareils seulement.
+    // Le natif ne servait pas le rôle de famille : `fontFamily` y prend UN
+    // nom, pas une pile, et aucun nom n'existe sur iOS ET Android. Brancher
+    // par plateforme était interdit par le cliquet `Platform.OS` du code émis
+    // — à raison. Jugement du propriétaire, 2026-10-17 : « il faut surtout pas
+    // oublier native, on fait les 2 pour ne pas en oublier une ».
     //
-    // CE CONTRÔLE TIENT DONC L'ÉTAT EXACT : si quelqu'un fait rendre un nom au
-    // natif sans embarquer de fichier de police, il rougit ici. La cible WEB,
-    // elle, sert le rôle pour de vrai — prouvé dans `theme-web.obsweb.tsx`.
+    // Un `.ttf` EMBARQUÉ porte le même nom partout : aucun branchement, et
+    // l'identité est garantie au lieu d'être espérée.
+    //
+    // ── LA PROPRIÉTÉ TENUE ICI EST PLUS FORTE QUE « UNE FAMILLE EST POSÉE ».
+    //
+    // Une famille posée sans fichier correspondant ne lève PAS : elle retombe
+    // en silence sur la police système, et c'est précisément le défaut que
+    // l'embarquement ferme. On exige donc que CHAQUE famille appliquée ait son
+    // fichier dans l'application émise ET sa clé d'enregistrement dans la
+    // racine qui les charge. Les trois maillons, mesurés ensemble.
     const s = await appliques(SPA);
     console.log(`[THÈME] natif familles appliquées : ${JSON.stringify(s.familles)}`);
     expect(
-      s.familles,
-      "le natif pose une famille de caractères : soit un fichier de police a " +
-        "été embarqué (alors ce contrôle doit être réécrit), soit un nom a été " +
-        "posé qui sera absent d'une des deux plateformes, en silence",
-    ).toEqual([]);
+      s.familles.length,
+      "aucune famille appliquée : le thème déclare `serif` et l'écran reste en " +
+        "police système — le maillon qui a manqué quatre fois dans ce dépôt",
+    ).toBeGreaterThan(0);
+
+    const racine = readFileSync(join(SPA, "lib", "runtime", "polices.tsx"), "utf8");
+    for (const famille of s.familles) {
+      expect(
+        existsSync(join(SPA, "public", "polices", `${famille}.ttf`)),
+        `la famille « ${famille} » est appliquée mais son fichier n'est pas dans ` +
+          "l'application émise : elle retombera EN SILENCE sur la police système",
+      ).toBe(true);
+      expect(
+        racine,
+        `la famille « ${famille} » n'est pas enregistrée par \`PoliceRoot\` : un ` +
+          "fichier embarqué que personne ne charge est un fichier invisible",
+      ).toContain(famille);
+    }
+
+    // ── ET LES FACES NE SONT PAS VIDES.
+    //
+    // Un `.ttf` écrit en UTF-8 au lieu d'être décodé depuis base64 serait
+    // présent, non vide, et INVALIDE. On vérifie la signature : un TrueType
+    // commence par 0x00010000, et c'est ce que le piège base64 — « fermé deux
+    // fois déjà » selon l'écrivain d'app — produirait de travers.
+    for (const famille of s.familles) {
+      const octets = readFileSync(join(SPA, "public", "polices", `${famille}.ttf`));
+      expect(octets.length, `la face « ${famille} » est vide`).toBeGreaterThan(10_000);
+      expect(
+        octets.readUInt32BE(0),
+        `la face « ${famille} » n'est pas un TrueType valide : elle a probablement ` +
+          "été écrite en texte au lieu d'être décodée depuis base64",
+      ).toBe(0x00010000);
+    }
   });
 
   it("④ LES DEUX APPLICATIONS PEIGNENT BIEN DEUX ACCENTS DISTINCTS", async () => {

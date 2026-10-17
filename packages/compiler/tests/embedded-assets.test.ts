@@ -10,9 +10,19 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { EMBEDDED_SOURCES, buildEmbeddedAssets } from "../src/embed-lib.ts";
 import { EMBEDDED_ASSETS } from "../src/embedded-assets.generated.ts";
+import { estBinaire } from "../src/fichiers-binaires.ts";
 
 const PACKAGES = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
-const readSource = (rel: string): string => readFileSync(join(PACKAGES, rel), "utf8");
+// ── LE LECTEUR CONNAÎT LE BINAIRE, et par la MÊME décision que l'écrivain.
+//
+// Les faces de police embarquées voyagent en base64. Lire ici en UTF-8 ferait
+// échouer la non-dérive pour une raison qui n'est pas une dérive : le codegen
+// et le test ne liraient pas la même chose. Et réécrire le test d'extension
+// serait un vingtième endroit où il vit — `fichiers-binaires.ts` est le seul.
+const readSource = (rel: string): string =>
+  estBinaire(rel)
+    ? readFileSync(join(PACKAGES, rel)).toString("base64")
+    : readFileSync(join(PACKAGES, rel), "utf8");
 
 describe("copies embarquées — non-dérive", () => {
   it("le module généré = recalcul exact depuis les sources réelles", () => {

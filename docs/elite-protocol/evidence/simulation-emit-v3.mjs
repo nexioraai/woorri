@@ -141,12 +141,26 @@ if (!f4.passed) console.log("   F4 :", f4.failures.join(" · "));
 // PREUVE FINALE — le document simulé compile-t-il et se rend-il ?
 const { mkdirSync, writeFileSync, rmSync, symlinkSync } = await import("node:fs");
 const { execFileSync } = await import("node:child_process");
+// ── LE CONTENU BINAIRE EST DÉCODÉ, ET LA DÉCISION EST UNIQUE.
+//
+// Mesuré le 2026-10-17 : cette gate écrivait le base64 des fichiers binaires
+// EN TEXTE. Ça ne gênait personne tant que `.png` était le seul — aucune gate
+// ne le lit. Les faces de police, elles, sont copiées par Vite et chargées par
+// le moteur natif : une face écrite en texte est une face invalide, et une
+// famille introuvable NE LÈVE PAS — elle retombe en silence sur la police
+// système. Soit exactement le défaut que l'embarquement ferme.
+//
+// NEUF écrivains de cartes de fichiers existent dans ce dépôt. La décision vit
+// dans `packages/compiler/src/fichiers-binaires.ts`, une seule fois.
+const { estBinaire } = await import(
+  new URL("../../../packages/compiler/src/fichiers-binaires.ts", import.meta.url).href,
+);
 const dir = "/tmp/sim-app/";
 rmSync(dir, { recursive: true, force: true });
 for (const [f, contenu] of c.files) {
   const q = dir + f;
   mkdirSync(q.slice(0, q.lastIndexOf("/")), { recursive: true });
-  writeFileSync(q, contenu);
+  writeFileSync(q, estBinaire(q) ? Buffer.from(contenu, "base64") : contenu);
 }
 symlinkSync(R + "slices/resto-riche/app/node_modules", dir + "node_modules", "dir");
 try {

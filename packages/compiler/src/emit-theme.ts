@@ -303,3 +303,24 @@ export function emitThemeModule(air: ProjectAir): string {
  */
 export const hasThemeOverrides = (air: ProjectAir): boolean =>
   (air.design.overrides ?? []).length > 0 || air.design.theme.length > 0;
+
+/**
+ * LES FACES SONT-ELLES NÉCESSAIRES À CETTE APPLICATION ?
+ *
+ * ── POURQUOI CETTE QUESTION A UNE RÉPONSE MESURÉE.
+ *
+ * Onze des vingt-deux documents portent un thème en police SYSTÈME —
+ * `gestion_sobre`, `effort_vif`, `frais_marche`, `commerce_confiance`. Leur
+ * rendu ne touche jamais une face embarquée : la pile système est ce qu'ils
+ * veulent, et c'est ce qu'ils ont.
+ *
+ * Leur faire porter 128 Ko (natif) ou 56 Ko (web) de police inutilisée serait
+ * exactement le genre de poids que le cahier d'un client réel interdit
+ * (« < 150 KB pour réseaux 3G », cité par `ep218-web-regardable`). Pour ces
+ * onze, le coût est ZÉRO octet.
+ *
+ * Et c'est la même discipline que DET-023 appliquée au poids : rien « au cas
+ * où ».
+ */
+export const policesRequises = (air: ProjectAir): boolean =>
+  applyThemeOverrides(air).theme.font.famille !== "systeme";

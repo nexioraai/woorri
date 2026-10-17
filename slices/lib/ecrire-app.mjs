@@ -13,6 +13,15 @@
 // ne sont jamais touchés : ils n'appartiennent pas à l'émission.
 import { mkdirSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { join, relative, sep } from "node:path";
+// ── UNE SEULE DÉCISION POUR LES FICHIERS BINAIRES (2026-10-17).
+//
+// `.png` n'est plus seul : les polices embarquées voyagent aussi en base64.
+// Quatre écrivains décidaient séparément, et l'en-tête de celui-ci dit
+// « piège base64 fermé DEUX FOIS déjà ». La décision vit dans
+// `packages/compiler/src/fichiers-binaires.ts`, une fois.
+const { estBinaire } = await import(
+  new URL("../../packages/compiler/src/fichiers-binaires.ts", import.meta.url).href,
+);
 
 const DOSSIERS_MOTEUR = ["screens", "lib", "manifests"];
 
@@ -55,7 +64,7 @@ export function ecrireApp(out, files) {
   for (const [f, contenu] of files) {
     const p = join(racine, ...f.split("/"));
     mkdirSync(join(racine, ...f.split("/").slice(0, -1)), { recursive: true });
-    writeFileSync(p, f.endsWith(".png") ? Buffer.from(contenu, "base64") : contenu);
+    writeFileSync(p, estBinaire(f) ? Buffer.from(contenu, "base64") : contenu);
   }
   // Le manifeste s'écrit APRÈS l'élagage : il décrit l'état RÉEL du disque.
   const liste = [...files.keys()].sort();

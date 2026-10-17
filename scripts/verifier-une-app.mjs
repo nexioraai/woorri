@@ -36,6 +36,13 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const REPO = join(dirname(fileURLToPath(import.meta.url)), "..");
+// ── UNE SEULE DÉCISION POUR LES FICHIERS BINAIRES (2026-10-17).
+//
+// `.png` n'est plus seul : les polices embarquées voyagent aussi en base64.
+// Quatre écrivains décidaient séparément, et l'en-tête de celui-ci dit
+// « piège base64 fermé DEUX FOIS déjà ». La décision vit dans
+// `packages/compiler/src/fichiers-binaires.ts`, une fois.
+const { estBinaire } = await import(join(REPO, "packages/compiler/src/fichiers-binaires.ts"));
 const doc = process.argv[2];
 
 if (doc === undefined) {
@@ -85,7 +92,7 @@ for (const [nom, contenu] of fichiers) {
   const abs = join(DEST, nom);
   mkdirSync(dirname(abs), { recursive: true });
   // Les `.png` voyagent en base64 dans la carte — convention du dépôt.
-  writeFileSync(abs, nom.endsWith(".png") ? Buffer.from(contenu, "base64") : contenu);
+  writeFileSync(abs, estBinaire(nom) ? Buffer.from(contenu, "base64") : contenu);
 }
 
 // ── LE `node_modules` DE RÉFÉRENCE, ET POURQUOI IL EST INDISPENSABLE.

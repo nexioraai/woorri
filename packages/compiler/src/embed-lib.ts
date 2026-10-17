@@ -15,7 +15,89 @@ export interface EmbeddedSourceSpec {
   rewrites: Readonly<Record<string, string>>;
 }
 
+/**
+ * LES FACES DE POLICE EMBARQUÉES — le seul contenu BINAIRE de cette table.
+ *
+ * ── POURQUOI UN FICHIER DE POLICE VOYAGE AVEC CHAQUE APPLICATION.
+ *
+ * Mesuré le 2026-10-17 : `fontFamily` du natif prend UN nom, pas une pile, et
+ * aucun nom de police n'existe sur iOS ET Android à la fois. Un nom absent ne
+ * lève pas — il retombe EN SILENCE sur la police système. Brancher par
+ * plateforme a été refusé par le cliquet `Platform.OS` du code émis, et à
+ * raison. Un `.ttf` embarqué porte le MÊME nom partout : aucun branchement, et
+ * l'identité est garantie au lieu d'être espérée.
+ *
+ * ── TROIS FACES, PARCE QUE LE NATIF NE SYNTHÉTISE PAS.
+ *
+ * Android ne fabrique pas un gras à partir d'un régulier : demander
+ * `fontWeight: "700"` sur une famille qui n'a qu'une face Regular rend du
+ * Regular. Chaque graisse est donc une FACE portant son propre nom de
+ * famille, et le style la désigne NOMMÉMENT.
+ *
+ * ── LE CONTENU EST EN BASE64, et c'est pourquoi `fichiers-binaires.ts` existe.
+ *
+ * Quatre écrivains décidaient séparément quelles extensions décoder. En
+ * ajoutant la deuxième, j'aurais programmé le sixième épisode de « une liste
+ * écrite deux fois diverge » — avec, au bout, une police corrompue qui retombe
+ * en silence sur la police système.
+ */
+const FACES = ["Regular", "SemiBold", "Bold"] as const;
+
+/**
+ * LES FACES POUR LE NATIF — en TrueType, parce que React Native ne lit rien
+ * d'autre.
+ *
+ * Le natif ne paie AUCUN réseau : le fichier est dans le paquet. Son poids
+ * compte pour la taille de l'application, pas pour le temps de premier rendu.
+ */
+const POLICES_NATIF: readonly EmbeddedSourceSpec[] = FACES.map((poids) => ({
+  source: `design-tokens/polices/DeribfySerif-${poids}.ttf`,
+  target: `public/polices/DeribfySerif-${poids}.ttf`,
+  rewrites: {},
+}));
+
+/**
+ * LES FACES POUR LE WEB — en WOFF2, et la mesure a DÉCIDÉ ce format.
+ *
+ * ── LE CLIQUET QUI A FAILLI REFUSER CE LOT, ET IL AVAIT DE BONNES RAISONS.
+ *
+ * `ep218-web-regardable` interdisait tout `@font-face`, au motif qu'« un
+ * cahier réel exige < 150 KB pour réseaux 3G ». J'ai mesuré ce qui VOYAGE
+ * réellement, gzip compris, sur une application construite :
+ *
+ *   · JS                 304 811 o → 88 390 o gzip
+ *   · index.html           6 492 o →  2 669 o gzip
+ *   · 3 faces TrueType   128 296 o → 73 723 o gzip
+ *   · 3 faces WOFF2       57 620 o (déjà compressé, gzip ne gagne rien)
+ *
+ * Soit 91 Ko expédiés aujourd'hui. Avec les TrueType : 164 Ko — AU-DESSUS du
+ * cahier. Avec les WOFF2 : 147 Ko — DESSOUS. Le format n'est pas une
+ * préférence, c'est ce qui garde la promesse faite au client.
+ *
+ * ── ET AUCUNE APPLICATION NE PAIE POUR UNE POLICE QU'ELLE N'EMPLOIE PAS.
+ *
+ * Onze des vingt-deux documents portent un thème en police système. Les faces
+ * ne sont émises que si le thème le demande — voir `famillesRequises` dans les
+ * émetteurs. Pour ces onze, le coût est ZÉRO octet.
+ */
+const POLICES_WEB: readonly EmbeddedSourceSpec[] = FACES.map((poids) => ({
+  source: `design-tokens/polices/DeribfySerif-${poids}.woff2`,
+  target: `public/polices/DeribfySerif-${poids}.woff2`,
+  rewrites: {},
+}));
+
+/**
+ * CE QUE LE WEB RETIRE de la table commune.
+ *
+ * Mécanisme AJOUTÉ le 2026-10-17, et il manquait vraiment : la table web était
+ * « la commune, plus ce qu'elle remplace ». Les faces ne se REMPLACENT pas —
+ * elles changent de FORMAT, donc de nom de fichier. Sans retrait, chaque
+ * application web aurait embarqué les deux jeux : 185 Ko dont 128 jamais lus.
+ */
+const RETIRES_WEB: readonly string[] = POLICES_NATIF.map((p) => p.target);
+
 export const EMBEDDED_SOURCES: readonly EmbeddedSourceSpec[] = [
+  ...POLICES_NATIF,
   {
     source: "design-tokens/src/theme.generated.ts",
     target: "lib/tokens/theme.generated.ts",
@@ -24,6 +106,16 @@ export const EMBEDDED_SOURCES: readonly EmbeddedSourceSpec[] = [
   {
     source: "compiler/runtime/tokens-index.ts",
     target: "lib/tokens/index.ts",
+    rewrites: {},
+  },
+  // ── LA RACINE QUI ENREGISTRE LES FACES (2026-10-17).
+  //
+  // Sans elle, les trois `.ttf` voyageraient avec l'application et personne ne
+  // les lirait : une famille inconnue ne lève pas, elle retombe sur la police
+  // système. C'est le maillon qui a manqué quatre fois dans ce dépôt.
+  {
+    source: "compiler/runtime/polices.tsx",
+    target: "lib/runtime/polices.tsx",
     rewrites: {},
   },
   {
@@ -349,6 +441,14 @@ export function rewriteEmbeddedSource(
  * embarquer un runtime d'une autre époque sans que rien ne le dise.
  */
 const SOURCES_WEB: readonly EmbeddedSourceSpec[] = [
+  // Le web n'enregistre aucune police par du code : ses `@font-face` sont dans
+  // la feuille émise. La racine y est donc l'identité — même patron que
+  // `creerFeuille`.
+  {
+    source: "compiler/runtime/polices-web.tsx",
+    target: "lib/runtime/polices.tsx",
+    rewrites: {},
+  },
   { source: "primitives-web/src/css.ts", target: "lib/primitives/css.ts", rewrites: {} },
   { source: "primitives-web/src/hotes.tsx", target: "lib/primitives/hotes.tsx", rewrites: {} },
   {
@@ -363,7 +463,14 @@ const SOURCES_WEB: readonly EmbeddedSourceSpec[] = [
     },
   },
   { source: "primitives-web/src/liste.tsx", target: "lib/primitives/liste.tsx", rewrites: {} },
-  { source: "primitives-web/src/feuille.ts", target: "lib/primitives/feuille.ts", rewrites: {} },
+  {
+    source: "primitives-web/src/feuille.ts",
+    target: "lib/primitives/feuille.ts",
+    // La couture web lit le type `Graisse` des contrats PARTAGÉS : le
+    // spécificateur de paquet doit devenir le chemin de la copie, sinon
+    // l application émise ne le résout pas.
+    rewrites: { "@deribfy/primitives/contracts": "./contracts" },
+  },
   {
     source: "compiler/runtime/navigation-web.tsx",
     target: "lib/runtime/navigation-web.tsx",
@@ -393,8 +500,16 @@ export function buildEmbeddedAssets(
 export function buildEmbeddedAssetsWeb(
   readSource: (repoRelativePath: string) => string,
 ): Record<string, string> {
-  const assets = buildEmbeddedAssets(readSource);
-  for (const spec of SOURCES_WEB) {
+  const tous = buildEmbeddedAssets(readSource);
+  // Les faces TrueType du natif PARTENT avant que les WOFF2 n'arrivent : le web
+  // ne doit embarquer qu'un seul jeu. On RECONSTRUIT la table sans elles plutôt
+  // que d'en retirer des clés calculées — le lint du dépôt refuse `delete` sur
+  // une propriété dynamique, et il a raison : reconstruire dit ce qu'on garde.
+  const retires = new Set(RETIRES_WEB);
+  const assets: Record<string, string> = Object.fromEntries(
+    Object.entries(tous).filter(([cible]) => !retires.has(cible)),
+  );
+  for (const spec of [...SOURCES_WEB, ...POLICES_WEB]) {
     assets[spec.target] = rewriteEmbeddedSource(spec, readSource(spec.source));
   }
   return assets;

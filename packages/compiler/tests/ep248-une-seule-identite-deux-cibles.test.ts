@@ -73,6 +73,14 @@ const ECARTS_LEGITIMES = new Set([
   "lib/primitives/liste.tsx",
   "lib/primitives/primitives.tsx",
   "lib/runtime/plateforme.tsx",
+  // ── LA RACINE DES POLICES (2026-10-17) — ÉDITION CONSCIENTE.
+  //
+  // Le natif ENREGISTRE les faces embarquées auprès du moteur (`useFonts`) et
+  // attend qu'elles soient prêtes ; le web n'a rien à faire, ses `@font-face`
+  // vivent dans la feuille émise. C'est une couture de plateforme au même
+  // titre que `feuille.ts` : la même question, deux réponses dictées par la
+  // plateforme.
+  "lib/runtime/polices.tsx",
   // L'enveloppe : point d'entrée, racine et navigation.
   "App.tsx",
   "navigation.tsx",
@@ -211,7 +219,19 @@ describe("EP-248 · l identité du document traverse les deux cibles", () => {
     // l overlay, les tests ci-dessus rougiraient — mais le motif, lui, se
     // perdrait. On le nomme donc ici.
     const source = readFileSync(join(RACINE, "packages/compiler/src/compile-web.ts"), "utf8");
-    const posOverlay = source.indexOf("EMBEDDED_ASSETS_WEB)) files.set");
+    // ── CE CONTRÔLE CHERCHAIT UNE FORME DE CODE, ET IL A ROUGI POUR RIEN.
+      //
+      // Il cherchait le littéral `EMBEDDED_ASSETS_WEB)) files.set` — soit une
+      // boucle écrite sur UNE ligne. Le 2026-10-17, cette boucle a gagné un
+      // corps (les faces de police ne sont émises que si le thème les
+      // emploie), et le contrôle est devenu rouge alors que RIEN n'avait
+      // changé de l'ordre qu'il protège.
+      //
+      // Troisième fois du jour qu'un cliquet recopie une forme au lieu de
+      // mesurer une propriété. La propriété est : « l'overlay web arrive AVANT
+      // le thème propre à l'application ». On cherche donc l'overlay par ce
+      // qui ne peut pas changer de forme — son nom.
+      const posOverlay = source.indexOf("EMBEDDED_ASSETS_WEB");
     const posTheme = source.indexOf("emitThemeModule(air)");
     expect(posOverlay, "l overlay web a disparu").toBeGreaterThan(0);
     expect(posTheme, "le thème propre à l app n est plus posé côté web").toBeGreaterThan(0);

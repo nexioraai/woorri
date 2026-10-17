@@ -51,7 +51,27 @@
 // texte/surface sous 4,5:1 fait LEVER. Une palette jolie et illisible ne peut
 // pas entrer dans ce fichier — c'est la même discipline que la dérivation
 // d'encre, appliquée aux jetons qu'elle ne couvre pas.
-import { contrast, WCAG_AA } from "@deribfy/design-tokens";
+import { contrast, theme as BASE, WCAG_AA } from "@deribfy/design-tokens";
+
+/**
+ * LES COULEURS SÉMANTIQUES DE BASE — lues aux jetons, jamais recopiées.
+ *
+ * Un thème qui ne redéclare pas son rouge hérite de celui-ci, et c'est ce
+ * qu'on doit MESURER : hériter d'une couleur illisible sur son propre fond est
+ * exactement le défaut que l'Oracle a trouvé dans mes palettes.
+ */
+const BASE_SEMANTIQUE = {
+  light: {
+    error: BASE.color.light.error,
+    success: BASE.color.light.success,
+    warn: BASE.color.light.warn,
+  },
+  dark: {
+    error: BASE.color.dark.error,
+    success: BASE.color.dark.success,
+    warn: BASE.color.dark.warn,
+  },
+} as const;
 
 /** Les sept jetons qu'un thème du catalogue dessine. */
 export interface PaletteCatalogue {
@@ -105,6 +125,7 @@ export const CATALOGUE: Readonly<Record<string, ThemeCatalogue>> = {
     light: {
       bg: "#F4F6F8", surface: "#FFFFFF", text: "#14191F", muted: "#55606D",
       primary: "#15607F", border: "#D3DAE2", badgeBg: "#E8EDF2",
+      warn: "#816600",
     },
     dark: {
       bg: "#0E1419", surface: "#18212A", text: "#EEF2F6", muted: "#9BA7B4",
@@ -121,6 +142,7 @@ export const CATALOGUE: Readonly<Record<string, ThemeCatalogue>> = {
     light: {
       bg: "#FBF6F0", surface: "#FFFFFF", text: "#2A1C13", muted: "#6B5543",
       primary: "#B5431C", border: "#E7D9C9", badgeBg: "#F4E8DB",
+      success: "#1E763B", warn: "#816600",
     },
     dark: {
       bg: "#1A120C", surface: "#261A12", text: "#F7EFE7", muted: "#B9A290",
@@ -137,6 +159,7 @@ export const CATALOGUE: Readonly<Record<string, ThemeCatalogue>> = {
     light: {
       bg: "#F6F3F8", surface: "#FFFFFF", text: "#1D1424", muted: "#5F5170",
       primary: "#6B2FA8", border: "#DED5E6", badgeBg: "#EDE6F3",
+      success: "#1E763B", warn: "#7C6200",
     },
     dark: {
       bg: "#0D0813", surface: "#18101F", text: "#F3EEF8", muted: "#A79BB4",
@@ -153,6 +176,7 @@ export const CATALOGUE: Readonly<Record<string, ThemeCatalogue>> = {
     light: {
       bg: "#F2F4F3", surface: "#FFFFFF", text: "#111614", muted: "#4E5956",
       primary: "#126E4B", border: "#D2D9D6", badgeBg: "#E6ECE9",
+      success: "#1E763B", warn: "#816600",
     },
     dark: {
       bg: "#0B0F0D", surface: "#141B18", text: "#EEF4F1", muted: "#96A5A0",
@@ -169,6 +193,7 @@ export const CATALOGUE: Readonly<Record<string, ThemeCatalogue>> = {
     light: {
       bg: "#F5F8F4", surface: "#FFFFFF", text: "#16201A", muted: "#4F6157",
       primary: "#2C7A4B", border: "#D5E0D7", badgeBg: "#E7EFE8",
+      warn: "#816600",
     },
     dark: {
       bg: "#0C120E", surface: "#161F19", text: "#EEF5F0", muted: "#99AB9F",
@@ -185,6 +210,7 @@ export const CATALOGUE: Readonly<Record<string, ThemeCatalogue>> = {
     light: {
       bg: "#F5F6FA", surface: "#FFFFFF", text: "#13161F", muted: "#525A6B",
       primary: "#2F49C4", border: "#D7DAE5", badgeBg: "#E9ECF4",
+      warn: "#816600",
     },
     dark: {
       bg: "#0B0D14", surface: "#151823", text: "#EFF1F7", muted: "#9AA1B3",
@@ -201,6 +227,7 @@ export const CATALOGUE: Readonly<Record<string, ThemeCatalogue>> = {
     light: {
       bg: "#FAF5F4", surface: "#FFFFFF", text: "#241A1B", muted: "#6B5455",
       primary: "#A33A5B", border: "#E9D9D9", badgeBg: "#F4E7E7",
+      success: "#1E763B", warn: "#816600",
     },
     dark: {
       bg: "#150F10", surface: "#211819", text: "#F6EEEF", muted: "#B79FA1",
@@ -217,6 +244,7 @@ export const CATALOGUE: Readonly<Record<string, ThemeCatalogue>> = {
     light: {
       bg: "#F7F6F2", surface: "#FFFFFF", text: "#1B1A16", muted: "#5B5950",
       primary: "#1F5A8F", border: "#DFDCD3", badgeBg: "#EEEBE3",
+      warn: "#816600",
     },
     dark: {
       bg: "#101010", surface: "#1A1A19", text: "#F2F1ED", muted: "#A3A199",
@@ -254,12 +282,42 @@ const verifierCatalogue = (): void => {
   for (const [nom, t] of Object.entries(CATALOGUE)) {
     for (const schema of ["light", "dark"] as const) {
       const p = t[schema];
+      // ── LES PAIRES SONT CELLES DE L'ORACLE, ET CE N'EST PAS UN CHOIX.
+      //
+      // Ma première liste en comptait SIX. L'Oracle en mesure DIX-HUIT, et il
+      // a trouvé ce que j'avais laissé passer : `light:success/badgeBg = 4,45`
+      // et `light:warn/badgeBg = 4,27` sur `table_chaleureuse`. Deux paires
+      // sous le seuil, dans MES palettes, parce que j'avais changé `badgeBg`
+      // en gardant les couleurs sémantiques de base.
+      //
+      // Mon propre commentaire disait qu'un thème « peut les redéclarer quand
+      // son fond les rendrait illisibles, et le cliquet l'y OBLIGE le cas
+      // échéant ». Il n'obligeait rien : il ne regardait pas ces paires.
+      //
+      // Elles sont désormais alignées sur celles de l'Oracle, et le contrôle ⑧
+      // d'EP-263 lit la liste de l'Oracle À LA SOURCE pour refuser qu'elles
+      // divergent — ce dépôt a vu six fois « une liste écrite deux fois ».
+      //
+      // `primaryText` et `onPrimary` n'y sont pas : ils sont DÉRIVÉS après le
+      // catalogue, et la dérivation garantit déjà leur contraste.
+      const semantique = (cle: "error" | "success" | "warn"): string =>
+        p[cle] ?? BASE_SEMANTIQUE[schema][cle];
       const paires: readonly [string, string, string, number][] = [
         ["text/bg", p.text, p.bg, WCAG_AA],
         ["text/surface", p.text, p.surface, WCAG_AA],
         ["text/badgeBg", p.text, p.badgeBg, WCAG_AA],
         ["muted/bg", p.muted, p.bg, WCAG_AA],
         ["muted/surface", p.muted, p.surface, WCAG_AA],
+        ["muted/badgeBg", p.muted, p.badgeBg, WCAG_AA],
+        ["error/bg", semantique("error"), p.bg, WCAG_AA],
+        ["error/surface", semantique("error"), p.surface, WCAG_AA],
+        ["error/badgeBg", semantique("error"), p.badgeBg, WCAG_AA],
+        ["success/bg", semantique("success"), p.bg, WCAG_AA],
+        ["success/surface", semantique("success"), p.surface, WCAG_AA],
+        ["success/badgeBg", semantique("success"), p.badgeBg, WCAG_AA],
+        ["warn/bg", semantique("warn"), p.bg, WCAG_AA],
+        ["warn/surface", semantique("warn"), p.surface, WCAG_AA],
+        ["warn/badgeBg", semantique("warn"), p.badgeBg, WCAG_AA],
         ["border/surface", p.border, p.surface, 1.2],
       ];
       for (const [quoi, a, b, seuil] of paires) {

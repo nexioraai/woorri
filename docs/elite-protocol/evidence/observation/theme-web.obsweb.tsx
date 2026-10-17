@@ -8,31 +8,37 @@
 // `mono` — et la couture de plateforme le résout. Les deux cibles n'en sont
 // PAS au même point, et il faut le dire :
 //
-//   · le NATIF ne le sert pas. `fontFamily` y prend UN nom, pas une pile, et
-//     aucun nom n'existe sur iOS ET Android ; un nom absent retombe EN
-//     SILENCE sur la police système. Servir le rôle exigerait soit un
-//     `Platform.OS` — interdit par le cliquet 4 de `keyboard-a11y-locks`, et
-//     le dépôt n'en contenait aucun avant ce lot — soit un fichier de police
-//     embarqué, qui est une décision du propriétaire (binaire + licence).
+// ── L'ASYMÉTRIE A EXISTÉ UNE DEMI-JOURNÉE, ET ELLE N'EXISTE PLUS.
 //
-//   · le WEB le sert POUR DE VRAI. Une pile CSS se dégrade : le navigateur
-//     prend la première police présente, et il n'y a là aucun branchement de
-//     plateforme à inventer.
+// Premier état livré : le web servait le rôle, le natif non. `fontFamily` du
+// natif prend UN nom, pas une pile, et aucun nom n'existe sur iOS ET Android ;
+// un nom absent retombe EN SILENCE sur la police système. Brancher par
+// plateforme était interdit par le cliquet 4 de `keyboard-a11y-locks`.
 //
-// La moitié servie est donc prouvée ici, par montage. L'autre moitié est
-// nommée, avec sa cause exacte, et tenue par le contrôle ③ de
-// `theme-identite.obs.tsx` — qui ROUGIT si quelqu'un pose un nom au natif.
+// Jugement du propriétaire, 2026-10-17 : « il faut surtout pas oublier native,
+// on fait les 2 pour ne pas en oublier une ». Les trois faces sont désormais
+// EMBARQUÉES — un `.ttf` porte le même nom partout, aucun branchement.
+//
+// ── CE QUI RESTE DIFFÉRENT, ET C'EST DANS LA NATURE DES DEUX CIBLES.
+//
+// Le web déclare les trois faces sous UNE famille, chacune avec sa
+// `font-weight` : le navigateur choisit, et 600 est servi par SemiBold sans
+// synthèse. Le natif nomme une FACE par graisse, parce qu'Android ne
+// synthétise pas. Et la pile web finit par un générique, donc le CARACTÈRE
+// survit même si la face ne se charge pas — un `fontFamily` natif, lui, ne
+// sait pas se replier.
 //
 // ── CE QUE CE FICHIER TIENT.
 //
-// ① l'application d'un thème `serif` porte une pile de polices à l'écran ;
-// ② cette pile finit par un GÉNÉRIQUE — sinon la dégradation n'aboutit pas ;
-// ③ CONTRÔLE NÉGATIF : un thème `systeme` n'en porte aucune.
+// ① l'application d'un thème `serif` porte la face embarquée à l'écran ;
+// ② la pile finit par un GÉNÉRIQUE — sinon la dégradation n'aboutit pas ;
+// ③ CONTRÔLE NÉGATIF : un thème `systeme` n'en porte aucune ;
+// ④ les trois `@font-face` sont déclarées ET leurs fichiers sont servis.
 import { createElement } from "react";
 import { act, create } from "react-test-renderer";
 import type { ReactTestRenderer } from "react-test-renderer";
 import { describe, expect, it } from "vitest";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -89,8 +95,18 @@ describe("PREUVE WEB — la police du thème atteint l'écran", () => {
     expect(
       familles.length,
       "aucune famille appliquée : le thème déclare `serif` et l'écran reste " +
-        "en police système — le maillon qui a manqué trois fois dans ce dépôt",
+        "en police système — le maillon qui a manqué quatre fois dans ce dépôt",
     ).toBeGreaterThan(0);
+    // LA FACE EMBARQUÉE EST EN TÊTE DE PILE. Si elle n'y était pas, le
+    // navigateur servirait Georgia — présent sur beaucoup de machines, donc le
+    // défaut passerait inaperçu chez qui l'a, et pas chez les autres.
+    for (const f of familles) {
+      expect(
+        f,
+        `la pile « ${f} » ne commence pas par la face embarquée : le rendu ` +
+          "dépendrait des polices installées sur la machine du lecteur",
+      ).toMatch(/^"DeribfySerif"/u);
+    }
   });
 
   it("② LA PILE FINIT PAR UN GÉNÉRIQUE — sinon la dégradation n'aboutit pas", async () => {
@@ -127,5 +143,70 @@ describe("PREUVE WEB — la police du thème atteint l'écran", () => {
       familles,
       "une famille est posée alors que le thème dit `systeme`",
     ).toEqual([]);
+  });
+  it("④ LES TROIS @font-face SONT DÉCLARÉES, ET LEURS FICHIERS SERVIS", () => {
+    // ── LE MAILLON QUI NE SE VOIT PAS AU MONTAGE.
+    //
+    // `react-test-renderer` lit les styles, pas le CSS du document. Une pile
+    // `"DeribfySerif", Georgia, serif` passerait donc les contrôles ① à ③
+    // même si AUCUNE `@font-face` n'était déclarée — le navigateur servirait
+    // Georgia, et personne ne verrait la différence sur une machine qui l'a.
+    //
+    // On lit donc l'enveloppe émise, et on exige les trois faces AVEC leurs
+    // fichiers. `publicDir: "assets"` est ce qui fait arriver les fichiers :
+    // sans lui, Vite ne les copie pas et les URL pointent dans le vide.
+    const b = base(SPA);
+    expect(existsSync(b), "lancer d'abord `npm run gate:app-web`").toBe(true);
+    const html = readFileSync(join(b, "index.html"), "utf8");
+    const vite = readFileSync(join(b, "vite.config.ts"), "utf8");
+    // ── CETTE ASSERTION ENCODE UNE ERREUR QUE J'AI FAITE, ET MESURÉE.
+    //
+    // Premier essai : les faces en `assets/polices/` + `publicDir: "assets"`.
+    // Résultat mesuré : **0/32 applications web se CONSTRUISAIENT**. Un
+    // `public/` existait déjà — manifeste PWA, service worker, icônes — et le
+    // redéfinir les a sortis de `dist/`.
+    //
+    // Les faces vivent donc dans `public/polices/`, que Vite copie PAR DÉFAUT.
+    // On exige l'inverse de ce qu'on exigeait : que personne ne redéfinisse
+    // `publicDir`, parce que le faire casse tout le reste.
+    expect(
+      vite,
+      "`publicDir` est redéfini : un `public/` existe déjà avec le manifeste " +
+        "PWA, le service worker et les icônes. Le redéfinir les sort de " +
+        "`dist/` — mesuré, 0/32 applications web construites.",
+    ).not.toContain("publicDir");
+    for (const [face, poids] of [
+      ["Regular", "400"],
+      ["SemiBold", "600"],
+      ["Bold", "700"],
+    ] as const) {
+      // ── LE FORMAT EST WOFF2, ET C'EST LA MESURE QUI L'A DÉCIDÉ.
+      //
+      // Un cliquet du dépôt interdisait tout `@font-face`, cahier client à
+      // l'appui : « < 150 KB pour réseaux 3G ». Mesuré sur une application
+      // construite, ce qui VOYAGE : 88 Ko de JS gzip + 2,6 Ko d'enveloppe.
+      // Avec trois faces TrueType (73 Ko gzip) → 164 Ko, au-DESSUS. Avec trois
+      // WOFF2 (56 Ko, déjà compressés) → 147 Ko, DESSOUS.
+      //
+      // Le natif garde le TrueType : React Native ne lit pas le WOFF2, et son
+      // fichier ne voyage pas — il est dans le paquet.
+      expect(html, `la face ${face} n'est pas déclarée`).toContain(
+        `DeribfySerif-${face}.woff2`,
+      );
+      expect(html, `la graisse ${poids} n'est pas déclarée`).toMatch(
+        new RegExp(`DeribfySerif-${face}\\.woff2[\\s\\S]{0,120}font-weight:\\s*${poids}`, "u"),
+      );
+      const fichier = join(b, "public", "polices", `DeribfySerif-${face}.woff2`);
+      expect(existsSync(fichier), `le fichier de la face ${face} est absent`).toBe(true);
+      const octets = readFileSync(fichier);
+      // La signature d'un WOFF2 est `wOF2`. Un fichier écrit en TEXTE au lieu
+      // d'être décodé depuis base64 serait présent, non vide et INVALIDE —
+      // c'est ainsi que le cinquième écrivain non routé a été trouvé.
+      expect(
+        octets.subarray(0, 4).toString("latin1"),
+        `la face ${face} n'est pas un WOFF2 valide : écrite en texte au lieu ` +
+          "d'être décodée depuis base64 ?",
+      ).toBe("wOF2");
+    }
   });
 });

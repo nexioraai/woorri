@@ -39,7 +39,7 @@ import type { ProjectAir } from "@deribfy/air-schema";
 import { theme } from "@deribfy/design-tokens";
 // L'identité EFFECTIVE de l'application — celle que son document décide —
 // et non les jetons par défaut du générateur. Voir `reactifEtFocus`.
-import { applyThemeOverrides } from "./emit-theme.ts";
+import { applyThemeOverrides, policesRequises } from "./emit-theme.ts";
 import { enBase64, pngUni } from "./png-uni.ts";
 import { EmitError } from "./emit-project.ts";
 import { EMBEDDED_TEMPLATE_WEB } from "./embedded-template-web.generated.ts";
@@ -291,7 +291,48 @@ const page = (air: ProjectAir): string => `<!doctype html>
        * un italique absent en deformant la police. Le texte devient sale a un
        * endroit et pas a un autre, et personne ne sait pourquoi.
        */
-      html, body {
+${
+        policesRequises(air)
+          ? `      /* ── LES TROIS FACES EMBARQUEES (2026-10-17).
+       *
+       * Une seule famille, trois "font-weight" : le navigateur choisit la face
+       * lui-meme, et "font-weight: 600" est servi par SemiBold SANS synthese —
+       * ce que "font-synthesis: none" ci-dessus exige. Cote natif c est
+       * l inverse : une FACE par graisse, nommee, parce qu Android ne
+       * synthetise pas.
+       *
+       * "font-display: swap" : le texte s affiche TOUT DE SUITE dans la pile de
+       * replis, puis la face embarquee le remplace. L alternative montrerait du
+       * texte invisible pendant trois secondes sur une connexion lente — et ces
+       * applications sont faites pour des reseaux ou cela arrive.
+       *
+       * Le chemin est "./polices/" et non "./assets/polices/" : Vite recoit
+       * "assets" comme dossier PUBLIC, donc son contenu arrive a la racine.
+       */
+      @font-face {
+        font-family: "DeribfySerif";
+        src: url("./polices/DeribfySerif-Regular.woff2") format("woff2");
+        font-weight: 400;
+        font-style: normal;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: "DeribfySerif";
+        src: url("./polices/DeribfySerif-SemiBold.woff2") format("woff2");
+        font-weight: 600;
+        font-style: normal;
+        font-display: swap;
+      }
+      @font-face {
+        font-family: "DeribfySerif";
+        src: url("./polices/DeribfySerif-Bold.woff2") format("woff2");
+        font-weight: 700;
+        font-style: normal;
+        font-display: swap;
+      }
+`
+          : ""
+      }      html, body {
         margin: 0;
         height: 100%;
         font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue",

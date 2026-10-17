@@ -52,6 +52,16 @@ const REPO = new URL("../../../../", import.meta.url).pathname;
  * d'une tranche déjà installée. On fait pareil. Si l'emprunt est impossible,
  * on le DIT : un échec dont on ignore la cause vaut moins qu'un refus net.
  */
+// ── UNE SEULE DÉCISION POUR LES FICHIERS BINAIRES (2026-10-17).
+//
+// `.png` n'est plus seul : les polices embarquées voyagent aussi en base64.
+// Quatre écrivains décidaient séparément, et l'en-tête de celui-ci dit
+// « piège base64 fermé DEUX FOIS déjà ». La décision vit dans
+// `packages/compiler/src/fichiers-binaires.ts`, une fois.
+const { estBinaire } = (await import(REPO + "packages/compiler/src/fichiers-binaires.ts")) as {
+  estBinaire: (chemin: string) => boolean;
+};
+
 const DEPENDANCES = REPO + "slices/resto-riche/app/node_modules";
 
 export interface AppFraiche {
@@ -110,7 +120,7 @@ export async function compilerANeuf(
     const abs = join(base, chemin);
     mkdirSync(dirname(abs), { recursive: true });
     // Les `.png` voyagent en base64 dans la carte — convention du dépôt.
-    writeFileSync(abs, chemin.endsWith(".png") ? Buffer.from(contenu, "base64") : contenu);
+    writeFileSync(abs, estBinaire(chemin) ? Buffer.from(contenu, "base64") : contenu);
   }
 
   if (!existsSync(DEPENDANCES)) {

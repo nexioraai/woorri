@@ -242,100 +242,176 @@ describe("EP-263 · le catalogue de thèmes", () => {
     );
   });
 
-  it("⑥ LA FAMILLE EST UN RÔLE, ET L'ASYMÉTRIE DES DEUX CIBLES EST TENUE", () => {
+  it("⑥ LA FAMILLE EST UN RÔLE, ET SA FACE EST EMBARQUÉE SUR LES DEUX CIBLES", () => {
     // ── POURQUOI UN RÔLE ET PAS UN NOM, ET C'EST MESURÉ.
     //
     // Aucun nom de police n'existe sur iOS ET Android à la fois : iOS porte
     // Georgia, Palatino, Menlo ; Android porte Noto Serif, Roboto et les alias
     // génériques. Un nom absent NE LÈVE PAS — il retombe en silence sur la
-    // police système, et l'identité disparaît sans qu'aucun signal ne le dise.
+    // police système. Le jeton porte donc le rôle ; les noms vivent dans la
+    // couture de plateforme.
     const tok = lire("packages", "design-tokens", "tokens.json");
     expect(tok, "le jeton de famille a disparu").toContain('"famille"');
-    for (const nom of ["Georgia", "Menlo", "Roboto", "Noto"]) {
+    for (const nom of ["Georgia", "Menlo", "Roboto", "Noto", "DeribfySerif"]) {
       expect(
         tok,
-        `le nom de police « ${nom} » est écrit dans le jeton : il sera absent ` +
-          "d'une des deux plateformes, en silence",
+        `le nom de police « ${nom} » est écrit dans le jeton : les noms ` +
+          "appartiennent à la couture de plateforme, pas au vocabulaire",
       ).not.toContain(nom);
     }
 
-    // ── L'ÉTAT RÉEL DES DEUX CIBLES, ET IL EST ASYMÉTRIQUE.
+    // ── LE NATIF NE BRANCHE PAS PAR PLATEFORME, ET ÇA RESTE VRAI.
     //
-    // J'ai d'abord servi le rôle au natif avec
-    // `Platform.OS === "ios" ? "Georgia" : "serif"`. Le cliquet 4 de
-    // `keyboard-a11y-locks` a rougi : il interdit tout `Platform.OS` dans le
-    // code ÉMIS, et j'ai VÉRIFIÉ qu'aucun n'existait avant moi — la propriété
-    // était intacte. Ce qu'elle protège est réel : un branchement d'exécution
-    // ferait rendre les deux plateformes différemment, et toute observation de
-    // ce dépôt monte avec un stub `ios`.
+    // Mon premier essai posait `Platform.OS === "ios" ? "Georgia" : "serif"`.
+    // Le cliquet 4 de `keyboard-a11y-locks` a rougi — il interdit tout
+    // `Platform.OS` dans le code ÉMIS, et j'ai VÉRIFIÉ qu'aucun n'existait
+    // avant moi. Ce qu'il protège est réel : un branchement d'exécution ferait
+    // rendre les deux plateformes différemment, et toute observation de ce
+    // dépôt monte avec un stub `ios`. `Platform.select` a été écarté aussi :
+    // littéral différent, même effet — maquiller, pas respecter.
     //
-    // J'ai aussi écarté `Platform.select`, qui ne contient pas le littéral
-    // cherché mais fait la même chose : ç'aurait été maquiller le cliquet.
-    const natif = lire("packages", "primitives", "src", "feuille.ts");
-    const web = lire("packages", "primitives-web", "src", "feuille.ts");
+    // La sortie n'était pas de renoncer, mais d'EMBARQUER le fichier : un
+    // `.ttf` porte le même nom partout.
     const sansCommentaires = (x: string): string =>
       x.replace(/\/\*[\s\S]*?\*\//gu, "").replace(/^\s*\/\/.*$/gmu, "");
-
-    expect(natif, "la couture native a perdu sa fonction").toContain("familleDe");
-    expect(web, "la couture web a perdu sa fonction").toContain("familleDe");
-
-    // LE NATIF NE BRANCHE PAS, et ne nomme AUCUNE police. Si quelqu'un y pose
-    // un nom sans embarquer de fichier de police, il rougit ici — et c'est
-    // exactement l'intention : une identité livrée sur la moitié des appareils
-    // n'est pas une identité qu'on peut promettre.
-    const codeNatif = sansCommentaires(natif);
+    const natif = sansCommentaires(lire("packages", "primitives", "src", "feuille.ts"));
     expect(
-      codeNatif,
-      "la couture native branche par plateforme : le cliquet `Platform.OS` " +
-        "du code émis tombera, et les deux plateformes rendront différemment",
-    ).not.toContain("Platform");
-    // ── ON MESURE LE CORPS, PAS LE FICHIER, ET C'EST UNE CORRECTION.
+      natif,
+      "la couture native branche par plateforme : le cliquet `Platform.OS` du " +
+        "code émis tombera, et les deux plateformes rendront différemment",
+    ).not.toContain("Platform.");
+
+    // ── TOUTE FACE NOMMÉE PAR UNE COUTURE A SON FICHIER DANS LE DÉPÔT.
     //
-    // Première forme : « le code natif ne contient pas le mot `serif` ». Elle
-    // rougissait, et pour une mauvaise raison — `serif` est un nom de RÔLE,
-    // il figure dans la signature `(role: "systeme" | "serif" | "mono")`. Une
-    // assertion qui confond le vocabulaire des rôles avec un nom de police ne
-    // mesure pas ce qu'elle croit.
-    //
-    // On exige donc que le CORPS ne rende aucune chaîne : un nom de police ne
-    // peut entrer que par un `return "…"`.
-    const corpsNatif = codeNatif.slice(codeNatif.indexOf("familleDe"));
-    expect(
-      corpsNatif,
-      "la couture native rend un nom de police : il sera absent d'une des deux " +
-        "plateformes et y retombera EN SILENCE sur la police système. Servir le " +
-        "natif demande un fichier de police embarqué (décision propriétaire).",
-    ).not.toMatch(/return\s+["'`]/u);
-    expect(corpsNatif, "la couture native ne rend plus rien d'explicite").toContain(
-      "return undefined",
+    // C'est le contrôle décisif, et il est générique : on EXTRAIT les noms des
+    // deux coutures et on exige le fichier. Une faute de frappe, un renommage
+    // de fichier, une face ajoutée sans son `.ttf` — tout cela rendrait une
+    // famille introuvable, qui NE LÈVE PAS : elle retombe sur la police
+    // système, et l'identité disparaît sans signal.
+    const web = sansCommentaires(lire("packages", "primitives-web", "src", "feuille.ts"));
+    const nommees = new Set(
+      [...natif.matchAll(/DeribfySerif-(\w+)/gu), ...web.matchAll(/DeribfySerif-(\w+)/gu)].map(
+        (m) => m[1] ?? "",
+      ),
     );
-
-    // LE WEB SERT LE RÔLE POUR DE VRAI — une pile CSS se dégrade, et elle
-    // finit par un générique pour que le CARACTÈRE survive à l'absence de
-    // toute police nommée.
-    const codeWeb = sansCommentaires(web);
-    expect(codeWeb, "la couture web ne nomme plus aucune police").toContain("Georgia");
-    for (const generique of ["serif", "monospace"]) {
+    // La couture native nomme les trois faces par interpolation ; on y ajoute
+    // donc les graisses qu'elle construit, lues à la source.
+    for (const face of ["Regular", "SemiBold", "Bold"]) {
+      if (natif.includes(`"${face}"`)) nommees.add(face);
+    }
+    expect(nommees.size, "aucune face nommée : la couture ne sert plus le rôle").toBeGreaterThan(0);
+    for (const face of nommees) {
       expect(
-        codeWeb,
-        `la pile web ne finit pas par le générique « ${generique} »`,
-      ).toContain(generique);
+        existsSync(join(R, "packages", "design-tokens", "polices", `DeribfySerif-${face}.ttf`)),
+        `la face « ${face} » est nommée par une couture mais son fichier est ` +
+          "absent du dépôt : la famille sera introuvable et retombera EN SILENCE",
+      ).toBe(true);
     }
 
-    // ── ET LA FEUILLE L'APPLIQUE AUX CINQ RÔLES DE TEXTE.
+    // ── ET ELLES SONT DANS LA TABLE D'EMBARQUEMENT, DONC DANS L'APPLICATION.
+    const embarque = lire("packages", "compiler", "src", "embed-lib.ts");
+    expect(embarque, "les faces ne sont pas embarquées").toContain("design-tokens/polices/");
+    const racine = lire("packages", "compiler", "runtime", "polices.tsx");
+    for (const face of nommees) {
+      expect(
+        racine,
+        `la face « ${face} » n'est pas enregistrée par \`PoliceRoot\` : un fichier ` +
+          "embarqué que personne ne charge est un fichier invisible",
+      ).toContain(`DeribfySerif-${face}`);
+    }
+
+    // ── LE RÔLE `mono` N'A PAS DE FACE, ET AUCUN THÈME NE LE DEMANDE.
     //
-    // Un seul rôle habillé serait pire que rien : le titre dans une police, le
-    // corps dans une autre. La feuille est COMMUNE aux deux cibles — c'est
-    // elle qui garantit qu'un jeton ajouté se voit des deux côtés le même jour.
+    // Embarquer un fichier que personne n'emploie serait le jeton « au cas où »
+    // que DET-023 a écarté. Mais un thème qui le demanderait SANS face
+    // retomberait en silence : ce contrôle lie les deux.
+    const rolesEmployes = new Set(Object.values(CATALOGUE).map((t) => t.famille));
+    for (const role of rolesEmployes) {
+      if (role === "systeme") continue;
+      expect(
+        nommees.size,
+        `le catalogue emploie le rôle « ${role} » : il lui faut une face embarquée`,
+      ).toBeGreaterThan(0);
+    }
+    expect(
+      rolesEmployes.has("mono"),
+      "un thème demande `mono`, dont aucune face n'est embarquée : il retombera " +
+        "EN SILENCE sur la police système. Embarquer la face, ou changer le thème.",
+    ).toBe(false);
+
+    // ── LA GRAISSE VIENT DE LA COUTURE, PAS DU JETON, ET C'EST L'UN OU L'AUTRE.
+    //
+    // Android ne SYNTHÉTISE pas : `fontWeight: "700"` sur une famille qui n'a
+    // qu'une face Regular rend du Regular. Poser les deux ensemble côté natif
+    // serait au mieux inutile, au pire une seconde synthèse sur une face déjà
+    // grasse — ce que la feuille web interdit explicitement par
+    // `font-synthesis: none`.
     const styles = lire("packages", "primitives", "src", "styles.ts");
     for (const role of ["textLabel", "textBody", "textTitle", "textHeading", "textDisplay"]) {
       const i = styles.indexOf(`${role}: {`);
       expect(i, `le rôle de texte ${role} a disparu`).toBeGreaterThan(-1);
+      const zone = styles.slice(i, styles.indexOf("}", i));
+      expect(zone, `${role} ne passe pas par la couture de police`).toContain("POLICE.");
       expect(
-        styles.slice(i, styles.indexOf("}", i)),
-        `${role} n'applique pas la famille de caractères`,
-      ).toContain("fontFamily");
+        zone,
+        `${role} pose une graisse en dur à côté de la famille : sur une face déjà ` +
+          "grasse, c'est au mieux inutile, au pire une double synthèse",
+      ).not.toContain("fontWeight");
     }
+  });
+
+  it("⑧ LE CLIQUET DU CATALOGUE MESURE LES MÊMES PAIRES QUE L'ORACLE", () => {
+    // ── POURQUOI CE CONTRÔLE EXISTE, ET IL A UNE DETTE À PAYER.
+    //
+    // Ma première liste de paires en comptait SIX. L'Oracle en mesure
+    // DIX-HUIT, et il a trouvé ce que j'avais laissé passer :
+    // `light:success/badgeBg = 4,45` et `light:warn/badgeBg = 4,27` sur
+    // `table_chaleureuse`. Deux paires sous le seuil, dans MES palettes,
+    // parce que j'avais changé `badgeBg` en gardant les sémantiques de base.
+    //
+    // Mon propre commentaire promettait que « le cliquet l'y OBLIGE le cas
+    // échéant ». Il n'obligeait rien. Une promesse qu'un contrôle ne tient pas
+    // est pire qu'une absence de contrôle : elle achète de la confiance.
+    //
+    // ── POURQUOI ON LIT LA LISTE DE L'ORACLE À LA SOURCE.
+    //
+    // Le compilateur ne dépend pas de l'Oracle (c'est l'inverse), donc on ne
+    // peut pas importer sa liste. La recopier serait la SEPTIÈME fois que ce
+    // dépôt voit « une liste écrite deux fois diverge ». On la LIT, et on
+    // exige la couverture.
+    const grille = lire("packages", "oracle", "src", "apxx-grid.ts");
+    const i = grille.indexOf("const TEXT_PAIRS");
+    expect(i, "la liste de paires de l'Oracle a disparu ou changé de nom").toBeGreaterThan(-1);
+    const bloc = grille.slice(i, grille.indexOf("];", i));
+    const pairesOracle = [...bloc.matchAll(/\["(\w+)",\s*"(\w+)"\]/gu)].map(
+      (m) => `${m[1] ?? ""}/${m[2] ?? ""}`,
+    );
+    expect(pairesOracle.length, "aucune paire lue : ce contrôle ne mesure plus rien").toBeGreaterThan(
+      10,
+    );
+
+    const catalogue = lire("packages", "compiler", "src", "themes-catalogue.ts");
+    const i2 = catalogue.indexOf("const paires:");
+    const bloc2 = catalogue.slice(i2, catalogue.indexOf("];", i2));
+    const pairesCatalogue = new Set(
+      [...bloc2.matchAll(/\["(\w+)\/(\w+)"/gu)].map((m) => `${m[1] ?? ""}/${m[2] ?? ""}`),
+    );
+
+    // ── LES DÉRIVÉES SONT EXEMPTÉES, ET POUR UNE RAISON PRÉCISE.
+    //
+    // `primaryText` et `onPrimary` sont recalculés APRÈS le catalogue, contre
+    // la surface la plus exigeante. Les mesurer ici reviendrait à juger une
+    // valeur qui n'existe pas encore.
+    const DERIVEES = ["primaryText", "onPrimary"];
+    const manquantes = pairesOracle.filter(
+      (q) => !DERIVEES.includes(q.split("/")[0] ?? "") && !pairesCatalogue.has(q),
+    );
+    expect(
+      manquantes,
+      "ces paires sont mesurées par l'Oracle et PAS par le cliquet du " +
+        "catalogue : une palette illisible entrerait dans le dépôt et ne " +
+        "serait découverte qu'au verdict de l'Oracle, bien plus tard",
+    ).toEqual([]);
   });
 
   it("⑦ LA VERSION DES TOKENS A MONTÉ — ajout compatible", () => {

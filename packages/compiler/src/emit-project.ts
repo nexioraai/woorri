@@ -17,7 +17,12 @@ import { emettreContratServeur } from "./emit-contrat-serveur.ts";
 import { canonicalJson, type ProjectAir, type ProjectLock } from "@deribfy/air-schema";
 import { buildDemoFixtures } from "./demo-fixtures.ts";
 import { emitAppJson, emitPermissionsManifest } from "./emit-manifests.ts";
-import { applyThemeOverrides, emitThemeModule, hasThemeOverrides } from "./emit-theme.ts";
+import {
+  applyThemeOverrides,
+  emitThemeModule,
+  hasThemeOverrides,
+  policesRequises,
+} from "./emit-theme.ts";
 import { EMBEDDED_ASSETS } from "./embedded-assets.generated.ts";
 import { normalizeAir, resolveLock, urlProtocoleAgent } from "./resolve-lock.ts";
 import { RELEASE_TRAIN_V1, type ReleaseTrain } from "./release-train.ts";
@@ -1166,7 +1171,10 @@ function emitApp(
     air.agent !== undefined;
   return [
     "// GÉNÉRÉ — NE PAS ÉDITER (racine d'app : thème + données + navigation).",
-    "// S7 (D-026) : tokens scellés 1.0.0, design.theme transporté sans effet.",
+    "// THÈME (2026-10-17) : design.theme choisit un MONDE VISUEL dans le",
+    "// catalogue fermé — palette complète, rayons, famille de caracteres. La",
+    "// mention « transporté sans effet » était vraie jusque-là : le nom",
+    "// n'était haché qu'en une rotation de teinte, 2 jetons sur 12.",
     "// Provider demo (D-030) : fixtures déterministes compilées (demo.data).",
     // RTL (D-063) : `app.locales.rtlSupported` n'était lu par AUCUN étage —
     // le drapeau était transporté et sans effet (non-négociable #16 non tenu).
@@ -1175,6 +1183,12 @@ function emitApp(
       ? ['import { I18nManager } from "react-native";']
       : []),
     'import { ThemeRoot } from "./lib/primitives";',
+    // ── LES FACES EMBARQUÉES SONT ENREGISTRÉES AVANT LE PREMIER RENDU.
+    //
+    // Côté natif, `PoliceRoot` attend `useFonts` — sinon le premier écran
+    // s'affiche en police système puis saute. Côté web, c'est l'identité : les
+    // `@font-face` vivent dans la feuille émise.
+    'import { PoliceRoot } from "./lib/runtime/polices";',
     'import { DataRoot } from "./lib/runtime/data-provider";',
     'import { FormStateRoot } from "./lib/runtime/form-state";',
     // Provenance distante (E3.3, D-132) : le magasin observable remplace le
@@ -1376,6 +1390,7 @@ function emitApp(
     "",
     "export default function App() {",
     "  return (",
+    "    <PoliceRoot>",
     "    <ThemeRoot>",
     ...(avecAgent ? ["      <AgentRoot port={portAgent}>"] : []),
     ...(avecSession
@@ -1400,6 +1415,7 @@ function emitApp(
     ...(avecSession ? ["      </CapabilityRoot>", "      </SessionRoot>"] : []),
     ...(avecAgent ? ["      </AgentRoot>"] : []),
     "    </ThemeRoot>",
+    "    </PoliceRoot>",
     "  );",
     "}",
     "",
@@ -1541,7 +1557,15 @@ export function emitProject(
   // y en a dans tout le compilateur et ses tests. Une carte SÉPARÉE laisse
   // l'existant intact et dit ce qu'elle porte.
   const binaries = new Map<string, Uint8Array>();
+  // ── LES FACES DE POLICE NE VOYAGENT QUE SI LE THÈME LES EMPLOIE.
+  //
+  // Onze des vingt-deux documents sont en police système : leur faire porter
+  // 128 Ko de police jamais lue serait le poids « au cas où » que le cahier
+  // d'un client réel interdit (« < 150 KB pour réseaux 3G », cité par
+  // `ep218-web-regardable`). Pour eux, zéro octet.
+  const avecPolices = policesRequises(air);
   for (const [target, content] of Object.entries(EMBEDDED_ASSETS)) {
+    if (!avecPolices && target.startsWith("public/polices/")) continue;
     files.set(target, content);
   }
   // THÈME PAR APP (v2, P-007) : n'écrase la copie embarquée que si l'AIR

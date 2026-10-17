@@ -12,6 +12,8 @@ import { EmitError, emitProject } from "../src/emit-project.ts";
 import { compileProject } from "../src/compile-project.ts";
 import { LockResolutionError, normalizeAir } from "../src/resolve-lock.ts";
 import { EMBEDDED_SOURCES } from "../src/embed-lib.ts";
+import { policesRequises } from "../src/emit-theme.ts";
+import type { ProjectAir } from "@deribfy/air-schema";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const CORPUS_V2 = join(HERE, "..", "..", "golden-corpus", "corpus-v2");
@@ -53,8 +55,23 @@ describe("émetteur — corpus ACTIF v2", () => {
       for (const base of ["App.tsx", "navigation.tsx", "nav.data.ts"]) {
         expect(files.has(base), base).toBe(true);
       }
+      // ── LES FACES DE POLICE SONT CONDITIONNELLES (2026-10-17).
+      //
+      // La table d'embarquement les DÉCLARE, mais elles ne sont émises que si
+      // le thème du document les emploie : onze des vingt-deux documents sont
+      // en police système, et leur faire porter 128 Ko de police jamais lue
+      // serait le poids « au cas où » que le cahier d'un client réel interdit
+      // (« < 150 KB pour réseaux 3G »).
+      //
+      // Ce contrôle exige donc la CONDITION, pas la présence inconditionnelle
+      // — ce qui le rend plus fort qu'avant : il refuse une face émise sans
+      // raison AUTANT qu'une face manquante.
+      const faut = policesRequises(doc as unknown as ProjectAir);
       for (const spec of EMBEDDED_SOURCES) {
-        expect(files.has(spec.target), spec.target).toBe(true);
+        const estFace = spec.target.startsWith("public/polices/");
+        expect(files.has(spec.target), `${spec.target} (faces requises: ${String(faut)})`).toBe(
+          estFace ? faut : true,
+        );
       }
 
       // Chaque écran : code + données ; ScreenShell OBLIGATOIRE (3.4) ;
