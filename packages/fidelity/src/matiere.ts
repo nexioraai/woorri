@@ -97,16 +97,47 @@ export interface DiagnosticNombres {
  * comme pour les images. Ce juge exige qu'il soit posé — même patron que
  * `imagesDeVitrine`, qui exige déjà des URLs réelles.
  *
- * PORTÉE : les champs REQUIS seulement. Un champ facultatif peut rester vide
- * dans une démonstration, et exiger des valeurs pour ce que l'utilisateur ne
- * verra pas serait du zèle.
+ * ── PORTÉE : REQUIS **OU AFFICHÉ**, et l'élargissement est mesuré.
+ *
+ * Ce juge ne regardait que les champs `required`, au motif qu'« exiger des
+ * valeurs pour ce que l'utilisateur ne verra pas serait du zèle ». Le motif
+ * est juste ; la portée ne le suivait pas.
+ *
+ * MESURÉ LE 2026-10-17 sur la tontine du propriétaire : le juge rendait ZÉRO
+ * grief, et les données de démonstration portaient un **ordre de passage à
+ * 314**. Le champ `fld_membres_tontine_ordre_passage` n'est pas `required` —
+ * mais il est affiché DEUX FOIS, en `trailingFieldId` et en `sortFieldId`,
+ * sur deux listes. L'utilisateur le voit donc, et le juge le laissait passer.
+ *
+ * On applique le critère que ce juge se donne LUI-MÊME : ce que
+ * l'utilisateur VERRA. Un champ référencé par une prop d'un bloc est vu ;
+ * un champ facultatif que rien n'affiche reste hors de portée, comme avant.
  */
+
+/** Les champs qu'un écran MONTRE — toute prop de bloc qui cite un `fld_…`,
+ *  seule ou dans une liste. On ne suppose pas la forme des props : on lit
+ *  les valeurs, et un identifiant de champ se reconnaît à son préfixe. */
+function champsAffiches(air: ProjectAir): Set<string> {
+  const vus = new Set<string>();
+  const ajouter = (v: unknown): void => {
+    if (typeof v === "string" && v.startsWith("fld_")) vus.add(v);
+    else if (Array.isArray(v)) v.forEach(ajouter);
+  };
+  for (const e of air.screens) {
+    for (const b of e.blocks) {
+      for (const p of b.props ?? []) ajouter((p as { value?: unknown }).value);
+    }
+  }
+  return vus;
+}
+
 export function nombresVraisemblables(air: ProjectAir): DiagnosticNombres[] {
   const out: DiagnosticNombres[] = [];
+  const affiches = champsAffiches(air);
   air.entities.forEach((e, i) => {
     e.fields.forEach((f, j) => {
       if (f.type !== "number" && f.type !== "decimal") return;
-      if (!f.required) return;
+      if (!f.required && !affiches.has(f.id)) return;
       if (f.demoValues !== undefined && f.demoValues.length > 0) return;
       out.push({
         code: "CAMPAGNE_NOMBRES_DEMO_MANQUANTS",

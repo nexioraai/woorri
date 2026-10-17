@@ -29,6 +29,7 @@
     "gate:app-regles": "vitest run --config docs/elite-protocol/evidence/observation/obs.config.ts ep258 comportement",
     "gate:app-observations": "vitest run --config docs/elite-protocol/evidence/observation/obs.config.ts app-complete controle-negatif couverture e19-correspondance etats-atteints etats-blocs g2-adressabilite slot-invoque traversee navigation-primaire composition",
     "gate:app-livrable": "vitest run --config docs/elite-protocol/evidence/observation/obs.config.ts chez-tantie",
+    "gate:app-donnees": "node --experimental-strip-types docs/elite-protocol/evidence/gate-donnees-plausibles.mjs",
     "gate:bench-parse": "for f in benchmarks/air-emission/*.mjs; do node --check \"$f\" || exit 1; done && echo 'scripts du banc : syntaxe OK'",
     "gate:e33-remote": "node --experimental-strip-types docs/elite-protocol/evidence/observation/e33-emettre-fixture.mjs && vitest run --config docs/elite-protocol/evidence/observation/obs.config.ts e33-source-reseau",
     "gate:app-rendu": "vitest run --config docs/elite-protocol/evidence/observation/obs.config.ts corpus-rendu",

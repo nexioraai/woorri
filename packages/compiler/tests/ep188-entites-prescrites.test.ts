@@ -115,13 +115,49 @@ describe("EP-188 ③ · un nombre sans demoValues est tiré au hasard", () => {
     expect(nombresVraisemblables(doc as never)).toEqual([]);
   });
 
-  it("SEULS LES CHAMPS REQUIS sont exigés — un facultatif peut rester vide", async () => {
+  it("UN FACULTATIF QUE RIEN N'AFFICHE peut rester vide", async () => {
+    // ── LA PORTÉE A ÉTÉ CORRIGÉE LE 2026-10-17, ET CE TEST AVEC ELLE.
+    //
+    // Il rendait tous les champs facultatifs et attendait zéro grief. Mais
+    // `fld_bien_surface`, `fld_bien_pieces` et `fld_annonce_prix` restent
+    // AFFICHÉS dans ce document : les rendre facultatifs ne les cache pas.
+    // Le test contredisait donc sa propre justification — « exiger des
+    // valeurs pour ce que l'utilisateur ne verra pas serait du zèle ».
+    //
+    // DÉFAUT MESURÉ QUI A RÉVÉLÉ L'ÉCART : sur la tontine du propriétaire, le
+    // juge rendait ZÉRO grief et les données affichaient un ORDRE DE PASSAGE
+    // À 314. Le champ n'est pas `required` — il est montré deux fois, en
+    // `trailingFieldId` et en `sortFieldId`.
+    //
+    // Le critère est donc : requis OU AFFICHÉ. Ce test garde l'intention
+    // d'origine — un facultatif INVISIBLE reste hors de portée — en retirant
+    // ce qui l'affiche.
+    const { nombresVraisemblables } = await import("@deribfy/fidelity");
+    const doc = structuredClone(lire("marche-immobilier.2026-09-13T18-29-46-907Z.attempt1")) as {
+      entities: { fields: { type: string; required?: boolean }[] }[];
+      screens: unknown[];
+    };
+    for (const e of doc.entities) for (const f of e.fields) f.required = false;
+    doc.screens = [];
+    expect(nombresVraisemblables(doc as never)).toEqual([]);
+  });
+
+  it("UN FACULTATIF QUI EST AFFICHÉ reste exigé — l'ordre de passage à 314", async () => {
+    // L'AUTRE MOITIÉ, et c'est elle qui manquait. Sans ce contrôle, la
+    // correction de portée pourrait être annulée sans que rien ne tombe.
     const { nombresVraisemblables } = await import("@deribfy/fidelity");
     const doc = structuredClone(lire("marche-immobilier.2026-09-13T18-29-46-907Z.attempt1")) as {
       entities: { fields: { type: string; required?: boolean }[] }[];
     };
     for (const e of doc.entities) for (const f of e.fields) f.required = false;
-    expect(nombresVraisemblables(doc as never)).toEqual([]);
+    const champs = nombresVraisemblables(doc as never).map(
+      (x) => /« ([^»]+) »/.exec(x.message)?.[1],
+    );
+    expect(
+      champs.length,
+      "aucun champ affiché n'est exigé : un nombre tiré au sort atteindra l'écran",
+    ).toBeGreaterThan(0);
+    expect(champs, "le prix affiché n'est plus exigé").toContain("fld_annonce_prix");
   });
 
   it("LE TIRAGE RESTE, ET LA SOURCE DIT POURQUOI", () => {

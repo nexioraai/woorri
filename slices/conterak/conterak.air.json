@@ -825,7 +825,15 @@
             ],
             "mode": "par_tranche",
             "fraisFixes": 402
-          }
+          },
+          "demoValues": [
+            "8500",
+            "12000",
+            "15500",
+            "22000",
+            "28500",
+            "35000"
+          ]
         },
         {
           "id": "fld_releves_photo",
@@ -1076,7 +1084,15 @@
           ],
           "type": "number",
           "required": false,
-          "unit": "kWh"
+          "unit": "kWh",
+          "demoValues": [
+            "12480",
+            "13120",
+            "13890",
+            "14520",
+            "15210",
+            "15980"
+          ]
         },
         {
           "id": "fld_factures_sne_index_nouveau_sne",
@@ -1089,7 +1105,15 @@
           ],
           "type": "number",
           "required": false,
-          "unit": "kWh"
+          "unit": "kWh",
+          "demoValues": [
+            "12872",
+            "13540",
+            "14310",
+            "14980",
+            "15670",
+            "16420"
+          ]
         },
         {
           "id": "fld_factures_sne_kwh_factures",
@@ -1102,7 +1126,15 @@
           ],
           "type": "number",
           "required": false,
-          "unit": "kWh"
+          "unit": "kWh",
+          "demoValues": [
+            "392",
+            "420",
+            "421",
+            "460",
+            "460",
+            "440"
+          ]
         },
         {
           "id": "fld_factures_sne_montant_sne",
@@ -1115,7 +1147,15 @@
           ],
           "type": "decimal",
           "required": true,
-          "unit": "XAF"
+          "unit": "XAF",
+          "demoValues": [
+            "9800",
+            "10500",
+            "10525",
+            "11500",
+            "11500",
+            "11000"
+          ]
         },
         {
           "id": "fld_factures_sne_montant_estime_app",
@@ -1128,7 +1168,15 @@
           ],
           "type": "decimal",
           "required": true,
-          "unit": "XAF"
+          "unit": "XAF",
+          "demoValues": [
+            "9600",
+            "10400",
+            "10800",
+            "11300",
+            "11700",
+            "11200"
+          ]
         },
         {
           "id": "fld_factures_sne_ecart",
@@ -1156,7 +1204,15 @@
                 "fieldId": "fld_factures_sne_montant_estime_app"
               }
             }
-          }
+          },
+          "demoValues": [
+            "200",
+            "100",
+            "275",
+            "200",
+            "200",
+            "200"
+          ]
         },
         {
           "id": "fld_factures_sne_original",
