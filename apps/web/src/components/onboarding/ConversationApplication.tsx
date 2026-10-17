@@ -877,6 +877,24 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
                       sandbox="allow-scripts"
                       className="w-full h-[320px] rounded-xl border border-white/10 bg-white"
                     />
+                    {/* ── LOT 7 — TELECHARGER CE QU'ON VOIT, SANS ATTENDRE LA FIN.
+                        Tir reel du 2026-10-10 : 53 minutes, 16,03 $, et rien
+                        de vu. L'acquis etait pourtant la, compilable — cet
+                        apercu le PROUVE : il n'existe que parce que l'acquis
+                        compile. La meme condition ouvre donc le
+                        telechargement, sans rien recalculer.
+                        LE NOM DU BOUTON NE MENT PAS : le zip s'appelle
+                        « -PARTIEL » et sa note ouvre sur un avertissement. */}
+                    <button
+                      type="button"
+                      onClick={() => { void telechargerLivraison(); }}
+                      disabled={travail !== ''}
+                      className="mt-2 w-full rounded-xl border border-white/10 bg-white/[0.04] py-2 text-sm text-slate-200 transition hover:border-[#FA5D1E]/50 hover:bg-white/[0.07] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FA5D1E] disabled:opacity-40"
+                    >
+                      {travail === 'archive'
+                        ? 'Préparation…'
+                        : 'Télécharger cette version partielle'}
+                    </button>
                   </div>
                 ) : undefined
               }

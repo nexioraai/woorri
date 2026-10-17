@@ -211,9 +211,38 @@ export function ceQuIlFautDire(air: ProjectAir): CeQuIlFautDire {
 export function noteDeLivraison(
   air: ProjectAir,
   diagnostics: readonly string[] = [],
+  options: { readonly partielle?: boolean } = {},
 ): string {
   const d = ceQuIlFautDire(air)
   const l: string[] = [`# ${air.app.name}`, '']
+
+  // ── UNE LIVRAISON PARTIELLE LE DIT EN PREMIER (LOT 7).
+  //
+  // Depuis le LOT 7, on peut télécharger ce qui existe AVANT la fin : un
+  // acquis schéma-valide qui compile est une application réelle, et
+  // l'attendre pendant 53 minutes — mesuré sur un vrai tir — pour n'avoir
+  // peut-être rien est le défaut que ce lot ferme.
+  //
+  // Mais la taire serait pire que l'attente : quelqu'un publierait une
+  // application à moitié écrite en croyant la tenir entière. Elle ouvre donc
+  // la note, AVANT les réserves, parce que c'est la première chose à savoir.
+  if (options.partielle === true) {
+    l.push(
+      '## ⏳ Ceci est une livraison PARTIELLE',
+      '',
+      "La génération n'était pas terminée quand vous avez téléchargé. Ce que",
+      'vous tenez est ce que le moteur avait déjà produit : cela compile et',
+      "s'affiche, et ce n'est pas tout ce qui a été demandé.",
+      '',
+      `À cet instant : ${pluriel(air.screens.length, 'écran', 'écrans')}, ` +
+        `${pluriel(air.entities.length, 'donnée', 'types de données')}.`,
+      '',
+      '**Ne publiez pas cette version.** Attendez la fin, puis téléchargez à',
+      'nouveau : le lien ne change pas, et la version complète remplacera',
+      'celle-ci.',
+      '',
+    )
+  }
 
   if (diagnostics.length > 0) {
     l.push(

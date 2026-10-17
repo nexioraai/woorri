@@ -37,17 +37,56 @@ export async function GET(req: Request) {
 
   const r = await supabaseAdmin
     .from(TABLE_GENERATIONS)
-    .select('statut, document, diagnostics')
+    .select('statut, document, diagnostics, sections_acquises')
     .eq('id', id)
     .eq('owner_id', garde.userId) // dette 6a : l'identite est l'id du jeton
     .maybeSingle()
-  if (r.error !== null || r.data === null || r.data.statut !== 'livree' || r.data.document === null) {
+  if (r.error !== null || r.data === null) {
     return NextResponse.json({ error: 'rien a livrer' }, { status: 404 })
   }
 
-  const lu = projectAirSchema.safeParse(r.data.document)
+  // ══════════════════════════════════════════════════════════════════
+  // LOT 7 — ON LIVRE CE QUI EXISTE, SANS ATTENDRE LA FIN.
+  // ══════════════════════════════════════════════════════════════════
+  //
+  // ── LA MESURE QUI COMMANDE CE LOT.
+  //
+  // Tir reel du 2026-10-10 : 53 MINUTES, 16,03 $, et le proprietaire n'a
+  // rien vu. Cette route exigeait `statut === 'livree'` : pendant tout ce
+  // temps, l'acquis etait la, en base, schema-valide et compilable — la
+  // route `apercu-live` le COMPILAIT deja pour l'afficher a l'ecran — et le
+  // telechargement le refusait.
+  //
+  // C'est le meme verrou que le LOT 1 a leve un etage plus haut : un juge
+  // placé AVANT la livraison plutot qu'une MESURE de la livraison. On ne
+  // demande plus « est-ce fini ? » mais « y a-t-il une oeuvre ? ».
+  //
+  // ── CE QUI FAIT FOI, ET DANS QUEL ORDRE.
+  //
+  // L'oeuvre finale d'abord : une fois `livree`, la colonne `document` est
+  // la seule verite. Sinon l'acquis en cours. Meme ordre que `apercu-live` —
+  // l'ecran et le zip ne doivent jamais montrer deux choses differentes.
+  const sa = (r.data.sections_acquises ?? {}) as { acquis?: unknown }
+  const finale = r.data.statut === 'livree' && r.data.document !== null
+  const source = finale ? r.data.document : (sa.acquis ?? null)
+  if (source === null) {
+    return NextResponse.json({ error: 'rien a livrer' }, { status: 404 })
+  }
+
+  const lu = projectAirSchema.safeParse(source)
   if (!lu.success) {
-    return NextResponse.json({ error: 'document illisible' }, { status: 500 })
+    // ── UN ACQUIS MI-PLIE N'EST PAS UNE PANNE.
+    //
+    // En cours de route, un acquis peut etre invalide le temps d'une tranche
+    // (plein tour). `apercu-live` rend alors `pret: false` ; ici on rend 409
+    // — « pas encore », pas 500 « casse ». La difference compte : l'ecran
+    // doit reproposer, pas afficher une erreur.
+    return NextResponse.json(
+      finale
+        ? { error: 'document illisible' }
+        : { error: "l'application n'est pas encore montrable ; reessayez dans un instant" },
+      { status: finale ? 500 : 409 },
+    )
   }
   try {
     // Le MEME document AIR nourrit les deux cibles : rien n'est regenere,
@@ -73,7 +112,10 @@ export async function GET(req: Request) {
       ? (r.data.diagnostics as unknown[]).map(String)
       : []
     const fichiers = new Map<string, string | Buffer>(projet.files)
-    fichiers.set('LISEZ-MOI.md', noteDeLivraison(lu.data, reserves))
+    // LOT 7 — UNE LIVRAISON PARTIELLE LE DIT DANS SA NOTE. La taire serait
+    // pire que l'attente : quelqu'un publierait une application a moitie
+    // ecrite en croyant la tenir entiere.
+    fichiers.set('LISEZ-MOI.md', noteDeLivraison(lu.data, reserves, { partielle: !finale }))
 
     const archive = zipper(fichiers)
     return new Response(new Uint8Array(archive), {
@@ -81,7 +123,10 @@ export async function GET(req: Request) {
         'Content-Type': 'application/zip',
         // Le nom du fichier DIT la cible : deux zips du meme projet dans un
         // dossier de telechargements ne doivent pas se confondre.
-        'Content-Disposition': `attachment; filename="${lu.data.app.slug}-${cible}.zip"`,
+        // LOT 7 — LE NOM DIT L'ETAT. Un partiel et un final dans le meme
+        // dossier de telechargements ne doivent pas se confondre : c'est le
+        // partiel qu'on risque de publier par erreur.
+        'Content-Disposition': `attachment; filename="${lu.data.app.slug}-${cible}${finale ? '' : '-PARTIEL'}.zip"`,
         'Content-Length': String(archive.length),
         'Cache-Control': 'no-store',
       },
