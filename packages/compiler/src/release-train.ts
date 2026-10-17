@@ -602,7 +602,25 @@ export const RELEASE_TRAIN_V1 = {
     //
     // Ce qui RESTE : 23, dont le « correctif » est le retour a Expo 44. Elles
     // sont consignees, pas masquees.
-    "6ef5f31e0ec3acfb23e096269d558e5dbf1d9dffb3570f0a00c6ac28277b0048",
+    // RÉ-SCELLÉ 2026-10-17 — ÉDITION CONSCIENTE : `expo-font` DÉCLARÉ.
+    //
+    // Le runtime natif importe `useFonts` depuis `expo-font` pour enregistrer
+    // les faces embarquées. Le paquet arrivait TRANSITIVEMENT par `expo` : tout
+    // compilait, les 32 applications passaient `tsc`, et la dependance n etait
+    // pas un contrat. `expo` peut cesser de la tirer a n importe quelle montee
+    // mineure — et alors l application d un client ne se construit plus pour
+    // une ligne que personne n a touchee.
+    //
+    // VERSION INCHANGEE EN PRATIQUE : 57.0.3 est exactement ce que le verrou
+    // resolvait deja. Aucun octet installe ne change ; seule la DECLARATION
+    // apparait, a la racine du `package.json` ET du verrou — sans quoi
+    // `npm ci` refuse le projet, et aucune gate ne lance `npm ci` sur une
+    // application native (elles empruntent un `node_modules` installe).
+    //
+    // EP-265 tient desormais la propriete generale, sur les DEUX cibles : tout
+    // import nu d une application emise est declare.
+    // Ancien sceau : 6ef5f31e0ec3acfb…
+    "9449dfc2d956093286db1582c44245e185c7615adf24c8192baab89347e5f590",
   templateDevDependencies: {
     "@types/react": "19.2.15",
     typescript: "5.9.3",
@@ -622,6 +640,22 @@ export const RELEASE_TRAIN_V1 = {
     "@supabase/supabase-js": "2.58.0",
     expo: "57.0.17",
     "expo-build-properties": "57.0.15",
+    // AJOUTÉE 2026-10-17 (polices embarquées) — et ce n'est PAS une nouvelle
+    // dépendance installée : `expo-font` arrivait déjà transitivement par
+    // `expo`, et le verrou la résolvait déjà en 57.0.3. Aucun octet installé
+    // ne change.
+    //
+    // CE QUI CHANGE EST LE CONTRAT. Le runtime natif l'importe directement
+    // (`useFonts`) pour enregistrer les faces embarquées. Une dépendance
+    // transitive n'est pas un contrat : `expo` peut cesser de la tirer à
+    // n'importe quelle montée mineure, et l'application d'un client ne se
+    // construirait plus pour une ligne que personne n'a touchée.
+    //
+    // Le défaut était INVISIBLE : les 32 applications passaient `tsc`, la gate
+    // était verte, et j'avais déjà écrit « les deux cibles servent la même
+    // police ». EP-265 tient désormais la propriété générale sur les DEUX
+    // cibles : tout import nu d'une application émise est déclaré.
+    "expo-font": "57.0.3",
     "expo-status-bar": "3.0.9",
     // AJOUTÉE 2026-09-09 (Phase 11, feu vert propriétaire) — le runtime qui
     // REÇOIT une livraison. Sans lui, le routeur savait décider et n'avait

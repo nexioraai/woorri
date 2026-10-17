@@ -15,19 +15,19 @@ import type { SessionProvider } from "./session-contract";
 /** Sous-ensemble EXACT de `@supabase/supabase-js` dont ce module dépend. */
 export interface ClientAuth {
   auth: {
-    getSession(): Promise<{ data: { session: { user: { id: string } } | null } }>;
+    getSession(): Promise<{ data: { session: { user: { id: string }; access_token?: string } | null } }>;
     signInWithPassword(c: { email: string; password: string }): Promise<{
-      data: { session: { user: { id: string } } | null };
+      data: { session: { user: { id: string }; access_token?: string } | null };
       error: { message: string } | null;
     }>;
     signUp(c: { email: string; password: string }): Promise<{
-      data: { session: { user: { id: string } } | null };
+      data: { session: { user: { id: string }; access_token?: string } | null };
       error: { message: string } | null;
     }>;
     signOut(): Promise<{ error: { message: string } | null }>;
     resetPasswordForEmail(email: string): Promise<{ error: { message: string } | null }>;
     onAuthStateChange(
-      cb: (evenement: string, session: { user: { id: string } } | null) => void,
+      cb: (evenement: string, session: { user: { id: string }; access_token?: string } | null) => void,
     ): { data: { subscription: { unsubscribe(): void } } };
   };
 }
@@ -48,14 +48,28 @@ export interface SessionVerifiee extends SessionProvider {
 
 export function creerSessionSupabase(client: ClientAuth): SessionVerifiee {
   let identite: string | undefined;
+  // Le jeton que CE service a delivre. Garde pour etre transporte tel quel
+  // vers un serveur emis qui le VERIFIE — jamais fabrique ici.
+  let jetonCourant: string | undefined;
   // 1.14.0 — compte créé, session non ouverte : le serveur attend un clic.
   let attenteConfirmation = false;
   const ecouteurs = new Set<() => void>();
   const notifier = (): void => {
     for (const e of ecouteurs) e();
   };
-  const appliquer = (session: { user: { id: string } } | null): void => {
+  const appliquer = (session: { user: { id: string }; access_token?: string } | null): void => {
     const suivant = session?.user.id;
+    // Un jeton vide n'est pas un jeton : le traiter comme tel ferait envoyer
+    // un en-tete « Bearer » sans rien derriere, et le serveur repondrait un
+    // refus incomprehensible.
+    const jetonSuivant =
+      typeof session?.access_token === "string" && session.access_token !== ""
+        ? session.access_token
+        : undefined;
+    // Le jeton change a chaque rafraichissement SANS que l'identite change :
+    // il doit donc etre mis a jour AVANT la sortie rapide ci-dessous, sinon
+    // l'application continuerait d'envoyer un jeton expire.
+    jetonCourant = jetonSuivant;
     // Une session ÉTABLIE lève l'attente : la confirmation a eu lieu.
     if (suivant !== undefined && attenteConfirmation) attenteConfirmation = false;
     if (suivant === identite) return;
@@ -73,6 +87,7 @@ export function creerSessionSupabase(client: ClientAuth): SessionVerifiee {
   return {
     estAuthentifie: () => identite !== undefined,
     identifiant: () => identite,
+    jeton: () => jetonCourant,
     enAttenteConfirmation: () => attenteConfirmation,
     abonner: (ecouteur) => {
       ecouteurs.add(ecouteur);

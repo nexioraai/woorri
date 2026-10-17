@@ -5,32 +5,32 @@
 export const theme = {
   "color": {
     "light": {
-      "bg": "#F6F7F9",
+      "bg": "#FBF6F0",
       "surface": "#FFFFFF",
-      "text": "#16181D",
-      "muted": "#5A616E",
-      "primary": "#FA7E1E",
-      "onPrimary": "#16181D",
-      "border": "#D9DDE3",
+      "text": "#2A1C13",
+      "muted": "#6B5543",
+      "primary": "#B5431C",
+      "onPrimary": "#E8E8E8",
+      "border": "#E7D9C9",
       "error": "#C42B1C",
-      "success": "#1F7A3D",
-      "warn": "#866A00",
-      "badgeBg": "#EEF1F5",
-      "primaryText": "#B25915"
+      "success": "#1E763B",
+      "warn": "#816600",
+      "badgeBg": "#F4E8DB",
+      "primaryText": "#B5431C"
     },
     "dark": {
-      "bg": "#0A050E",
-      "surface": "#17121C",
-      "text": "#F2F0F4",
-      "muted": "#A49FAC",
-      "primary": "#FA7E1E",
+      "bg": "#1A120C",
+      "surface": "#261A12",
+      "text": "#F7EFE7",
+      "muted": "#B9A290",
+      "primary": "#F08050",
       "onPrimary": "#16181D",
-      "border": "#2E2836",
+      "border": "#3B2A1E",
       "error": "#FF6B5E",
       "success": "#4CC17A",
       "warn": "#E3C25A",
-      "badgeBg": "#241E2B",
-      "primaryText": "#FA7E1E"
+      "badgeBg": "#2E2017",
+      "primaryText": "#F08050"
     }
   },
   "space": {
@@ -42,11 +42,12 @@ export const theme = {
     "xl": 24
   },
   "radius": {
-    "sm": 6,
-    "md": 10,
-    "lg": 16
+    "sm": 8,
+    "md": 14,
+    "lg": 22
   },
   "font": {
+    "famille": "serif",
     "label": 12,
     "body": 14,
     "title": 17,
@@ -62,7 +63,8 @@ export const theme = {
   },
   "size": {
     "tapTarget": 48,
-    "controlHeight": 54
+    "controlHeight": 54,
+    "measure": 768
   }
 } as const;
 export type SchemeName = keyof typeof theme.color;

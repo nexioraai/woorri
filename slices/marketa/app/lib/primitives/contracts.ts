@@ -133,6 +133,16 @@ export interface ListRowProps extends A11yProps {
   title: string;
   subtitle?: string;
   badge?: string;
+  /**
+   * LE SENS DU BADGE (2026-10-13) — il voyage AVEC lui, jamais séparément.
+   *
+   * `Badge` acceptait un `tone` depuis l'origine, mais aucune des deux
+   * surfaces qui affichent un badge ne pouvait le lui transmettre : la
+   * propriété n'existait pas. Comptés le même jour : zéro usage de
+   * `badgeSuccess`/`badgeWarn`/`badgeError`, pourtant déclarés dans la
+   * feuille de style. La couleur de sens était écrite et inatteignable.
+   */
+  badgeTone?: BadgeProps["tone"];
   /** Texte de fin de ligne (prix, valeur, méta) — position logique RTL. */
   trailing?: string;
   /** Contenu de tête de ligne fourni par le bloc (avatar, icône…). */
@@ -167,6 +177,8 @@ export interface GridCardProps extends A11yProps {
   subtitle?: string;
   trailing?: string;
   badge?: string;
+  /** Le SENS du badge — même raison que `ListRowProps.badgeTone`. */
+  badgeTone?: BadgeProps["tone"];
   imageUri?: string;
   onPress?: () => void;
 }
@@ -187,9 +199,40 @@ export interface AppImageProps extends A11yProps {
   variant: "thumb" | "header" | "brand";
 }
 
+/**
+ * AVATAR A INITIALES (2026-10-17) — la tete de ligne d une personne.
+ *
+ * MESURE : chaque ligne de la liste des membres chez Bolt porte un rond
+ * d initiales — AM, PE, JM. Deribfy ne savait montrer qu une VIGNETTE, et
+ * seulement quand le document declare une image : une liste de personnes
+ * sans photo restait du texte nu.
+ *
+ * LE TEXTE VIENT DU DOCUMENT. La primitive n en DERIVE que les initiales,
+ * ce qui est une operation typographique, pas une invention de contenu.
+ */
+export interface AvatarInitialesProps {
+  /** Le nom affiche ailleurs sur la ligne — jamais un texte invente ici. */
+  nom: string;
+  testID?: string;
+}
+
 export interface BadgeProps extends A11yProps {
   label: string;
   tone?: "info" | "success" | "warn" | "error";
+}
+
+/**
+ * UNE BARRE D'UN GRAPHIQUE.
+ *
+ * `ratio` est une PROPORTION (0..1) calculee par l'appelant depuis le maximum
+ * de sa serie. La primitive ne connait ni les donnees ni leur echelle : elle
+ * pose une longueur. `valeur` est le texte DEJA FORMATE par le document — la
+ * primitive n'arrondit rien et n'ajoute aucune unite (F3).
+ */
+export interface BarreProps extends A11yProps {
+  label: string;
+  valeur: string;
+  ratio: number;
 }
 
 export interface StateViewProps extends A11yProps {
@@ -222,4 +265,22 @@ export interface Primitives {
 export interface ThemeBridge {
   scheme: Scheme;
   setScheme: (scheme: Scheme) => void;
+}
+
+/**
+ * Les neuf graisses que CSS et React Native reconnaissent tous deux.
+ *
+ * Le type est précis, et il doit l'être : `string` ferait perdre
+ * l'assignabilité à `TextStyle` de React Native, dont `fontWeight` est une
+ * union de littéraux — mesuré, 4 erreurs de typage dans les primitives.
+ * Le schéma des jetons contraint déjà la forme (`^[1-9]00$`), et le module de
+ * thème émis est `as const` : les valeurs arrivent donc ici en littéraux, sans
+ * aucune conversion forcée.
+ */
+export type Graisse = "100" | "200" | "300" | "400" | "500" | "600" | "700" | "800" | "900";
+
+/** Les graisses DÉCLARÉES par les jetons, passées par la feuille. */
+export interface Graisses {
+  readonly semibold: Graisse;
+  readonly bold: Graisse;
 }

@@ -10,9 +10,12 @@
 // (implémentations : Phases 5+/9 — lecture consignée D-028).
 import { useEffect, useMemo, useState, useSyncExternalStore } from "react";
 // E1/E2 (D-129) — la vérité des lignes visibles vit dans un module PUR.
-import {lignesVisibles, optionsDistinctes, formatValeur} from "./list-pipeline";
+import { champsDeSaisie } from "./champs-de-saisie";
+import { lignesVisibles, optionsDistinctes, formatValeur, formatDate } from "./list-pipeline";
 import type { FiltreEffectif, OperateurFiltre } from "./list-pipeline";
-import { useNavigation } from "@react-navigation/native";
+import { usePortAgent } from "./agent-racine";
+import type { AgentProposition } from "./agent-contract";
+import { useNavigation } from "./navigation-contrat";
 import { allerVers } from "./racines-navigation";
 import {
   ButtonBlock,
@@ -22,11 +25,21 @@ import {
   HeaderBlock,
   ListBlock,
   SpacerBlock,
+  AgentBlock,
+  GraphiqueBlock,
+  StatistiquesBlock,
+  ProseBlock,
   SearchEntryBlock,
 } from "../blocks/components";
-import type { FormFieldSpec, ListItemData } from "../blocks/contracts";
+import type {
+  AgentBlockProps,
+  BadgeTone,
+  FormFieldSpec,
+  ListItemData,
+} from "../blocks/contracts";
 import { useDataProvider } from "./data-provider";
 import { useSlotRegistry } from "./slot-provider";
+import { detientLeDroit } from "./acces";
 import { useCapabilityProvider } from "./capability-provider";
 import { useSessionProvider } from "./session-provider";
 import { useAllFormValues, useFormValues } from "./form-state";
@@ -91,6 +104,13 @@ export interface AirFieldData {
       dans la langue de l'app ; absents = comportement 1.9.0 (name/valeur). */
   label?: string;
   enumLabels?: Readonly<Record<string, string>>;
+  /**
+   * LE SENS D'UNE VALEUR D'ÉTAT (AIR 1.43.0) — « payé » est bon, « échec »
+   * est mauvais. Le moteur ne le déduit pas : il ne connaît aucune langue,
+   * et EP-201 lui interdit tout dictionnaire de sens, pour la même raison
+   * qu'aucun nom de pays n'y figure. Absent ⇒ pastille neutre.
+   */
+  enumTones?: Readonly<Record<string, string>>;
   /** 1.21.0 — unité d'affichage (« FCFA ») : le nombre se formate, l'unité
       vient du document. */
   unit?: string;
@@ -134,6 +154,15 @@ export interface AirScreenData {
   /** 1.21.0 — gestes SECONDAIRES (« Voir plus » d'un en-tête de section). */
   uiSecondaryActionsByBlock?: Readonly<Record<string, string>>;
   entities: Readonly<Record<string, { fields: readonly AirFieldData[] }>>;
+  /**
+   * LE DROIT QUI OUVRE CET ÉCRAN (1.28.0 — émission du 2026-10-04).
+   *
+   * Absent = ouvert à tous, comportement de toute version antérieure. Présent,
+   * il est vérifié dans `useBlockVisible` — l'UNIQUE couture de visibilité —
+   * et non à l'entrée de l'écran : une garde posée à l'entrée se contourne par
+   * n'importe quelle autre route, celle-ci non.
+   */
+  requiredRightId?: string;
   /** Slots LIÉS dont au moins une sortie alimente un bloc de cet écran (1.3.0). */
   slotInvocations?: readonly AirSlotInvocationData[];
   /** Règles de validation des entités écrites depuis cet écran (D-062). */
@@ -173,6 +202,29 @@ function reglesRespectees(
   for (const regle of regles ?? []) {
     if (regle.entityId !== entityId) continue;
     for (const a of regle.assertions) {
+      // ── CE QUE LE CLIENT A LE DROIT DE JUGER (défaut du 2026-10-17).
+      //
+      // MESURÉ SUR LES 15 DOCUMENTS DU DÉPÔT : VINGT formulaires, dans DOUZE
+      // documents, ne pouvaient PAS être soumis. Jamais, et en silence.
+      //
+      // Le mécanisme : une règle porte un invariant sur une ENTITÉ
+      // (« le statut d'un billet appartient à ce cycle de vie »), le
+      // formulaire ne collecte pas ce champ — à raison, personne ne tape un
+      // statut — et l'assertion était tout de même évaluée. `in` comparait la
+      // chaîne « undefined » à sa liste, `required` voyait du vide, `matches`
+      // refusait `undefined`. Faux pour TOUTE saisie possible. Et le bouton
+      // restait ACTIF : l'utilisateur remplissait, appuyait, et rien.
+      //
+      // C'ÉTAIT UNE ERREUR DE CATÉGORIE. Ce que le client valide, c'est la
+      // SAISIE de l'utilisateur. Les invariants de la table ont leur gardien,
+      // et ce n'est pas lui : `derive-rls.ts` les porte côté serveur.
+      //
+      // CE QUI N'EST PAS AFFAIBLI, et c'est tout l'enjeu : un champ que le
+      // formulaire EXPOSE porte toujours sa clé — `AirForm` l'amorce à vide
+      // pour chaque champ déclaré. Laissé vide, il échoue `required` et
+      // BLOQUE, exactement comme avant. On distingue « le formulaire ne
+      // collecte pas ce champ » de « l'utilisateur ne l'a pas rempli ».
+      if (!(a.fieldId in valeurs)) continue;
       const brut = valeurs[a.fieldId];
       const nombre = brut === undefined ? Number.NaN : Number(brut);
       const attendu = a.value;
@@ -318,6 +370,26 @@ function useBlockVisible(screen: AirScreenData, blockId: string): boolean {
     () => (session.estAuthentifie() ? "auth" : session.enAttenteConfirmation?.() === true ? "attente" : "anon"),
   );
   const authentifie = etat === "auth";
+  // ── LE DROIT D'ABORD, ET AVANT TOUTE AUTRE CONDITION.
+  //
+  // Mesuré le 2026-10-04 : le modèle d'accès 1.28.0 n'atteignait AUCUN fichier
+  // émis — chaque écran restait ouvert à tout le monde. Conduire quelqu'un vers
+  // la porte que ses droits lui ouvrent ne suffisait pas : rien n'empêchait
+  // d'atteindre un écran réservé par une AUTRE route, et une protection
+  // contournable par un chemin latéral n'est pas une protection.
+  //
+  // La vérification vit ICI, dans l'unique couture de visibilité, et pas à
+  // l'entrée de l'écran : il n'existe qu'un seul chemin vers le rendu d'un
+  // bloc, donc un seul endroit à fermer. La règle elle-même n'est pas réécrite
+  // — `detientLeDroit` en est l'unique exemplaire.
+  //
+  // CE QUE CE GARDE NE FAIT PAS, et il faut le dire : il n'explique rien. Le
+  // runtime s'interdit tout texte naturel (F3) — les libellés viennent du
+  // document — et aucun champ ne porte encore un message de refus. Un écran
+  // réservé se rend donc VIDE, sous son titre. C'est sûr, c'est diagnosticable
+  // par le `testID`, et ce n'est pas aimable : porter la phrase au document
+  // demandera une montée de contrat, consignée et non faite ici.
+  if (!detientLeDroit(session.droits?.(), screen.requiredRightId)) return false;
   const condition = block(screen, blockId).visibleWhen;
   if (condition === undefined) return true;
   // Discrimination POSITIVE sur les prédicats de DONNÉES : eux seuls portent
@@ -338,6 +410,34 @@ function useBlockVisible(screen: AirScreenData, blockId: string): boolean {
  * La résolution n'a lieu que si le document a DÉCLARÉ quoi montrer. Sans
  * déclaration, l'identifiant reste affiché — on ne devine pas.
  */
+/**
+ * LE SENS D'UNE VALEUR, résolu comme son libellé l'est déjà.
+ *
+ * Mesuré le 2026-10-13 : la primitive `Badge` acceptait un `tone` depuis
+ * l'origine, et `success`/`warn`/`error` étaient déclarés dans la feuille de
+ * style. ZÉRO usage — aucune des deux surfaces qui affichent un badge ne
+ * pouvait le transmettre. Toutes les pastilles sortaient donc du même gris,
+ * et vingt lignes d'une liste étaient rigoureusement indistinguables.
+ *
+ * Il ne lit QUE ce que le document déclare. Pas de repli, pas de devinette :
+ * une valeur sans sens déclaré n'en reçoit aucun.
+ */
+function useResolveTone(
+  screen: AirScreenData,
+  entityId: string | undefined,
+): (fieldId: unknown, brut: string | undefined) => BadgeTone | undefined {
+  return (fieldId, brut) => {
+    if (typeof fieldId !== "string" || brut === undefined || entityId === undefined) {
+      return undefined;
+    }
+    const champ = screen.entities[entityId]?.fields.find((f) => f.id === fieldId);
+    const ton = champ?.enumTones?.[brut];
+    return ton === "success" || ton === "warn" || ton === "error" || ton === "neutral"
+      ? ton
+      : undefined;
+  };
+}
+
 function useResolveField(
   screen: AirScreenData,
   entityId: string | undefined,
@@ -356,6 +456,39 @@ function useResolveField(
     // une DONNÉE du document — le moteur n'en invente aucune (F3).
     if (champ?.unit !== undefined) {
       return formatValeur(brut, champ.unit);
+    }
+    // ── UNE DATE NE SE MONTRE PAS EN ISO (2026-10-13).
+    //
+    // Mesuré en montant les écrans d'une application générée pour lire le
+    // texte RÉELLEMENT rendu : « 2026-12-21T21:47:00.000Z » en sous-titre
+    // d'une liste de mouvements. Un horodatage machine, fuseau et
+    // millisecondes compris, sous les yeux d'un client.
+    //
+    // Posé ici, dans le résolveur UNIQUE, et non dans chaque bloc : c'est le
+    // seul endroit par lequel une valeur passe avant d'être affichée.
+    if (champ?.type === "datetime" || champ?.type === "date") {
+      return formatDate(brut, champ.type === "datetime");
+    }
+    // ── UN BOOLÉEN NE SE MONTRE PAS « true ».
+    //
+    // MESURÉ LE 2026-10-07 sur les 31 applications émises : VINGT ET UN blocs
+    // affichaient une pastille portant littéralement `true` ou `false`. Et pas
+    // sur des écrans secondaires —
+    //
+    //     dougplace/blk_accueil_boutiques  → fld_vendeur_verifie
+    //     dougplace/blk_adresse_liste      → fld_adresse_par_defaut
+    //     v3-agence-immo/…_creneaux        → fld_creneau_disponible
+    //
+    // Un vendeur vérifié portait donc l'étiquette « true » sur l'accueil d'une
+    // place de marché. Le propriétaire l'a vu et n'a rien compris — c'est la
+    // bonne réaction : `true` n'est un mot dans aucune langue d'utilisateur.
+    //
+    // Ce que fait un humain : il écrit CE QUE LE CHAMP SIGNIFIE quand c'est
+    // vrai, et il n'écrit RIEN quand c'est faux. Une pastille « non vérifié »
+    // sur chaque vendeur ordinaire serait du bruit ; son absence se lit toute
+    // seule. Le libellé vient du DOCUMENT — le moteur n'invente aucun mot.
+    if (champ?.type === "boolean") {
+      return brut === "true" ? (champ.label ?? undefined) : undefined;
     }
     // DET-032 — un code d'enum ne se montre pas : si le document a déclaré un
     // libellé pour cette valeur, c'est LUI qui s'affiche. Données, filtrage et
@@ -407,11 +540,19 @@ function useDispatch(screen: AirScreenData) {
         // sans identité — l'effet s'exécuterait, et ne pourrait rien établir.
         // Les params DÉCLARÉS restent prioritaires : ils sont la configuration
         // du document, la saisie est la donnée de l'instant.
-        capabilities.invoke({
+        const honore = capabilities.invoke({
           capability: effect.capability,
           method: effect.method ?? "",
           params: { ...(values ?? saisies), ...(effect.params ?? {}) },
         });
+        // 1.22.0 (EP-064) — MÊME CONTRAT QUE LA MUTATION (D-070) : on ne
+        // navigue QUE si le fournisseur a HONORÉ l'appel. Mesuré sur la
+        // première traversée réelle (EP-061/R6) : sans ce chemin, la
+        // navigation post-connexion était morte — 8 arcs prescrits
+        // inexécutables, l'intention portée par un param que rien ne lisait.
+        if (honore && effect.thenScreenId !== undefined) {
+          allerVers(navigation, effect.thenScreenId);
+        }
         return;
       }
       // MUTATION (D-061) : l'effet n'est plus une non-opération. L'écriture est
@@ -515,6 +656,7 @@ export function AirHeader({ screen, blockId }: BlockRef) {
       testID={b.id}
       title={title}
       subtitle={str(props.subtitle)}
+      surtitre={str(props.surtitre)}
       accroche={props.accroche === true}
       logoUri={str(props.logoUri)}
     />
@@ -595,6 +737,263 @@ export function AirSpacer({ screen, blockId }: BlockRef) {
   return <SpacerBlock testID={b.id} />;
 }
 
+/**
+ * TEXTE SUIVI (1.14.0, EP-198) — le contenu vient du DOCUMENT, entier.
+ *
+ * Le runtime ne compose aucune phrase : il lit `paragraphs` tel quel. C'est
+ * ce qui permet aux surfaces legales de porter un texte reel au lieu d une
+ * promesse, sans que le moteur en redige un mot (F3, EP-143).
+ */
+export function AirProse({ screen, blockId }: BlockRef) {
+  const visible = useBlockVisible(screen, blockId);
+  const b = block(screen, blockId);
+  if (!visible) return null;
+  const props = b.props ?? {};
+  const paragraphs = Array.isArray(props.paragraphs)
+    ? (props.paragraphs as string[]).filter((p): p is string => typeof p === "string")
+    : [];
+  if (paragraphs.length === 0) return null;
+  const titre = typeof props.title === "string" ? props.title : undefined;
+  const brouillon = props.brouillon === true;
+  return (
+    <ProseBlock
+      testID={b.id}
+      paragraphs={paragraphs}
+      {...(titre === undefined ? {} : { title: titre })}
+      {...(brouillon ? { brouillon: true } : {})}
+    />
+  );
+}
+
+/**
+ * GRAPHIQUE (2026-10-13) — dixieme bloc.
+ *
+ * La lecture est DEFENSIVE, comme partout ici : le document est valide, mais
+ * ce wrapper recoit aussi des props SURCHARGEES par des sorties de slots, qui
+ * viennent d'ailleurs. Une serie absente ou mal formee rend `null` plutot
+ * qu'un graphique vide — un graphique a zero se lit comme une mesure reelle.
+ */
+/**
+ * AGENT (2026-10-13) — la porte, tenue par le runtime.
+ *
+ * Le wrapper tient l'etat LOCAL : ouvert ou ferme, le texte en cours. Il ne
+ * decide RIEN de ce que l agent fait : l envoi est un effet de capacite, et
+ * ce que l agent peut appeler vit dans `agent.allowedOperations` au document.
+ *
+ * FERME PAR DEFAUT a chaque montage. Un agent qui resterait ouvert entre deux
+ * ecrans donnerait l impression d ecouter en permanence.
+ *
+ * F3 : aucun texte ici. Libelle et invite viennent des props du bloc, donc du
+ * document. Sans eux, le bloc ne se rend pas — un bouton sans nom ne se
+ * clique pas.
+ */
+export function AirAgent({ screen, blockId }: BlockRef) {
+  const visible = useBlockVisible(screen, blockId);
+  const b = block(screen, blockId);
+  const port = usePortAgent();
+  const [ouvert, setOuvert] = useState(false);
+  const [texte, setTexte] = useState("");
+  // ── TROIS ETATS, ET PAS UN DE PLUS.
+  //
+  // `enCours` pendant qu on attend ; `proposition` quand le serveur a
+  // repondu et que le document demande un accord ; `echec` porte le CODE
+  // rendu par le serveur. Aucun de ces etats ne fabrique de phrase : les
+  // mots viennent du document (le NOM de l operation, les libelles).
+  const [enCours, setEnCours] = useState(false);
+  const [proposition, setProposition] = useState<AgentProposition | null>(null);
+  const [echec, setEchec] = useState<string | null>(null);
+  const [reponse, setReponse] = useState<string | undefined>(undefined);
+  if (!visible) return null;
+  const props = b.props ?? {};
+  const label = typeof props.label === "string" ? props.label : undefined;
+  const placeholder = typeof props.placeholder === "string" ? props.placeholder : undefined;
+  if (label === undefined || placeholder === undefined) return null;
+  // Les libelles de l accord viennent du document : un bouton sans nom ne se
+  // clique pas, et le moteur n a pas la langue de la personne.
+  const confirmLabel = typeof props.confirmLabel === "string" ? props.confirmLabel : undefined;
+  const cancelLabel = typeof props.cancelLabel === "string" ? props.cancelLabel : undefined;
+
+  const fermerLAttente = () => {
+    setProposition(null);
+    setEchec(null);
+  };
+
+  const agir = (p: AgentProposition) => {
+    setEnCours(true);
+    void port.agir(p.operation, p.entrees, p.intention).then((r) => {
+      setEnCours(false);
+      setProposition(null);
+      if (r.ok) {
+        // CE QUI REVIENT N EST PAS AFFICHE TEL QUEL. On confirme le NOM de ce
+        // qui a eu lieu, pas le corps de la reponse du tiers : il peut porter
+        // des identifiants internes qui ne veulent rien dire pour personne.
+        setReponse(p.nom);
+        setEchec(null);
+      } else {
+        setEchec(r.code);
+      }
+    });
+  };
+
+  const envoyer = () => {
+    const mots = texte.trim();
+    // Une parole vide ne part pas : l appel au cerveau serait facture pour
+    // rien, et le serveur le refuserait de toute facon.
+    if (mots === "") return;
+    setTexte("");
+    setEchec(null);
+    setReponse(undefined);
+    setEnCours(true);
+    void port.parler(mots).then((r) => {
+      setEnCours(false);
+      if (!r.ok) {
+        setEchec(r.code);
+        return;
+      }
+      // ── UNE PROPOSITION NE S EXECUTE PAS TOUTE SEULE.
+      //
+      // Le serveur rend une intention signee QUAND le document demande un
+      // accord. Sa presence est donc le signal : il n y a pas deux sources de
+      // verite sur « faut-il confirmer », il y en a une, et c est le serveur.
+      // Sans les libelles au document, on ne peut pas demander l accord — on
+      // ne force pas, on refuse en le nommant.
+      if (r.valeur.intention !== undefined) {
+        if (confirmLabel === undefined || cancelLabel === undefined) {
+          setEchec("AIR_AGENT_LIBELLES_ACCORD_ABSENTS");
+          return;
+        }
+        setProposition(r.valeur);
+        return;
+      }
+      agir(r.valeur);
+    });
+  };
+
+  const etat: AgentBlockProps["state"] = enCours
+    ? { kind: "loading", title: label }
+    : echec === null
+      ? { kind: "ready" }
+      : { kind: "error", title: label, message: echec };
+
+  return (
+    <AgentBlock
+      testID={b.id}
+      label={label}
+      placeholder={placeholder}
+      open={ouvert}
+      onToggle={() => {
+        setOuvert(!ouvert);
+        fermerLAttente();
+      }}
+      value={texte}
+      onChangeText={setTexte}
+      onSend={envoyer}
+      state={etat}
+      {...(reponse === undefined ? {} : { reply: reponse })}
+      {...(proposition === null || confirmLabel === undefined || cancelLabel === undefined
+        ? {}
+        : {
+            awaitingConfirmation: {
+              summary: proposition.nom,
+              confirmLabel,
+              cancelLabel,
+              onConfirm: () => {
+                agir(proposition);
+              },
+              onCancel: fermerLAttente,
+            },
+          })}
+    />
+  );
+}
+
+/**
+ * STATISTIQUES (2026-10-17) — les chiffres clés d'un écran.
+ *
+ * Même discipline que `AirGraphique` : le bloc ne FORMATE rien et
+ * n'INVENTE rien. Une entrée sans libellé ou sans valeur est écartée
+ * plutôt que rendue à moitié — une carte vide se verrait, et mentirait.
+ */
+export function AirStatistiques({ screen, blockId }: BlockRef) {
+  const visible = useBlockVisible(screen, blockId);
+  const b = block(screen, blockId);
+  if (!visible) return null;
+  const props = b.props ?? {};
+  // ── LES COLONNES SONT RASSEMBLÉES ICI, PAR LEUR RANG.
+  //
+  // Le document ne peut pas porter un tableau d'objets — `flatConfigSchema`
+  // n'admet qu'une primitive ou un tableau de primitives, et c'est une
+  // contrainte MESURÉE de l'API de sorties structurées. Les quatre colonnes
+  // arrivent donc en parallèle ; une carte n'existe que si son libellé ET sa
+  // valeur sont là. Une colonne plus courte ne fabrique pas de carte vide.
+  const texte = (v: unknown, i: number): string | undefined =>
+    Array.isArray(v) && typeof v[i] === "string" && v[i] !== "" ? (v[i] as string) : undefined;
+  const libelles = Array.isArray(props["items.label"]) ? props["items.label"] : [];
+  const items: { label: string; valeur: string; legende?: string; ton?: string }[] = [];
+  for (let i = 0; i < libelles.length; i += 1) {
+    const label = texte(props["items.label"], i);
+    const valeur = texte(props["items.valeur"], i);
+    if (label === undefined || valeur === undefined) continue;
+    const legende = texte(props["items.legende"], i);
+    const ton = texte(props["items.ton"], i);
+    items.push({
+      label,
+      valeur,
+      ...(legende === undefined ? {} : { legende }),
+      ...(ton === undefined ? {} : { ton }),
+    });
+  }
+  if (items.length === 0) return null;
+  const titre = typeof props.title === "string" ? props.title : undefined;
+  return (
+    <StatistiquesBlock
+      testID={b.id}
+      items={items as never}
+      {...(titre === undefined ? {} : { title: titre })}
+    />
+  );
+}
+
+export function AirGraphique({ screen, blockId }: BlockRef) {
+  const visible = useBlockVisible(screen, blockId);
+  const b = block(screen, blockId);
+  if (!visible) return null;
+  const props = b.props ?? {};
+  // ── LES COLONNES SONT ASSEMBLEES ICI, PAR LEUR RANG (2026-10-17).
+  //
+  // Ce bloc attendait un tableau d OBJETS, que `flatConfigSchema` interdit :
+  // il etait donc INEMPLOYABLE depuis sa creation, et zero document ne le
+  // portait. Les trois colonnes arrivent desormais en parallele ; une barre
+  // n existe que si son libelle, sa valeur ET son texte affiche sont la.
+  // LES TROIS CLES SONT LUES LITTERALEMENT, et ce n est pas du style : le
+  // cliquet `props-cablees` verifie que le runtime LIT chaque prop declaree,
+  // et il ne peut pas suivre une cle cachee derriere une variable. Un helper
+  // aurait rendu la verification impossible — explicite vaut mieux.
+  const tableau = (v: unknown): unknown[] => (Array.isArray(v) ? v : []);
+  const labels = tableau(props["series.label"]);
+  const valeurs = tableau(props["series.value"]);
+  const affiches = tableau(props["series.display"]);
+  const series: { label: string; value: number; display: string }[] = [];
+  for (let i = 0; i < labels.length; i += 1) {
+    const label = labels[i];
+    const value = valeurs[i];
+    const display = affiches[i];
+    if (typeof label !== "string" || label === "") continue;
+    if (typeof value !== "number") continue;
+    if (typeof display !== "string" || display === "") continue;
+    series.push({ label, value, display });
+  }
+  if (series.length === 0) return null;
+  const titre = typeof props.title === "string" ? props.title : undefined;
+  return (
+    <GraphiqueBlock
+      testID={b.id}
+      series={series}
+      {...(titre === undefined ? {} : { title: titre })}
+    />
+  );
+}
+
 export function AirEmptyState({ screen, blockId }: BlockRef) {
   const visible = useBlockVisible(screen, blockId);
   const b = block(screen, blockId);
@@ -628,6 +1027,7 @@ export function AirDetailHeader({
   const provider = useDataProvider();
   const statut = useDataStatus(b.entityId);
   const resoudre = useResolveField(screen, b.entityId);
+  const ton = useResolveTone(screen, b.entityId);
   if (!visible) return null;
   if (b.entityId === undefined) throw new Error(`AIR_RUNTIME_ENTITY_MISSING:${blockId}`);
   const instance = provider.getInstance(b.entityId, itemId);
@@ -688,6 +1088,7 @@ export function AirList({ screen, blockId, itemId }: BlockRef & { itemId?: strin
   const provider = useDataProvider();
   const statut = useDataStatus(b.entityId);
   const resoudre = useResolveField(screen, b.entityId);
+  const ton = useResolveTone(screen, b.entityId);
   // Saisie de recherche — LOCALE à la liste : chercher dans un catalogue n'est
   // pas un état d'application, et le partager entre écrans surprendrait.
   const [recherche, setRecherche] = useState("");
@@ -740,6 +1141,10 @@ export function AirList({ screen, blockId, itemId }: BlockRef & { itemId?: strin
     instanceId: itemId,
     rechercheChamp,
     recherche,
+    // COMMENT LA QUESTION EST LUE (registre de blocs 1.15.0). Le mode vient du
+    // DOCUMENT ; absent, la recherche reste une sous-chaîne — le comportement
+    // d'avant, pour que rien ne change là où personne ne l'a demandé.
+    rechercheMode: props.searchMode === "tous_les_mots" ? "tous_les_mots" : undefined,
     filtres,
     triChamp: str(props.sortFieldId),
     triDesc: props.sortDirection === "desc",
@@ -757,7 +1162,9 @@ export function AirList({ screen, blockId, itemId }: BlockRef & { itemId?: strin
   // (identifiant machine) ne sert que de repli 1.9.0.
   const champsEntite = screen.entities[b.entityId]?.fields ?? [];
   const nomsChamps = new Map(champsEntite.map((f) => [f.id, f.label ?? f.name]));
-  const enumLabelsParChamp = new Map(champsEntite.map((f) => [f.id, f.enumLabels]));
+  // `enumLabelsParChamp` a disparu avec la branche qu'il servait : les chips
+  // passent par `resoudre`, qui lit `enumLabels` lui-même. Une table sans
+  // consommateur finit par être recopiée ailleurs.
   const filtresSpec =
     champsPilotes.length === 0
       ? undefined
@@ -768,13 +1175,38 @@ export function AirList({ screen, blockId, itemId }: BlockRef & { itemId?: strin
             setSaisiesFiltres((s) => ({ ...s, [i]: v })),
           inputType: (typesPilotes[i] === "choice" ? "choice" : "text") as "text" | "choice",
           ...(typesPilotes[i] === "choice"
-            ? {
-                options: optionsDistinctes(scopees, fieldId),
+            ? (() => {
+                const options = optionsDistinctes(scopees, fieldId);
+                // ── LES CHIPS PASSENT PAR LE RÉSOLVEUR, PAS PAR UNE BRANCHE.
+                //
                 // DET-032 — les chips affichent le libellé, filtrent la valeur.
-                ...(enumLabelsParChamp.get(fieldId) === undefined
-                  ? {}
-                  : { optionLabels: enumLabelsParChamp.get(fieldId) }),
-              }
+                // Mais la version d'origine ne lisait QUE `enumLabels` : un
+                // champ `reference` n'en a aucun, et ses chips montraient
+                // l'identifiant de ligne.
+                //
+                // Mesuré le 2026-10-05 sur `dougplace/scr_catalogue` :
+                // QUATRE chips « ent_categorie_row_1 » à
+                // « ent_categorie_row_4 », alors que le document déclare
+                // pourtant `referenceDisplayFieldId: fld_categorie_nom`. La
+                // résolution existait, les chips n'y passaient pas.
+                //
+                // `resoudre` est le résolveur UNIQUE (`useResolveField`) : il
+                // traite les trois cas d'un coup — libellé d'enum, traversée
+                // de référence, et unité. Y brancher les chips supprime une
+                // branche au lieu d'en ajouter une.
+                const libelles: Record<string, string> = {};
+                for (const option of options) {
+                  const lisible = resoudre(fieldId, option);
+                  // Seules les entrées qui CHANGENT quelque chose. Une
+                  // identité n'apporte rien et le bloc retombe déjà sur la
+                  // valeur brute (`optionLabels?.[option] ?? option`).
+                  if (lisible !== undefined && lisible !== option) libelles[option] = lisible;
+                }
+                return {
+                  options,
+                  ...(Object.keys(libelles).length === 0 ? {} : { optionLabels: libelles }),
+                };
+              })()
             : {}),
         }));
   const pick = (fieldId: unknown, values: Readonly<Record<string, string>>) =>
@@ -791,6 +1223,10 @@ export function AirList({ screen, blockId, itemId }: BlockRef & { itemId?: strin
     subtitle: pick(props.subtitleFieldId, instance.values),
     trailing: pick(props.trailingFieldId, instance.values),
     badge: pick(props.badgeFieldId, instance.values),
+    // Le SENS vient de la valeur BRUTE, pas du libellé : c'est le code qui
+    // est déclaré dans `enumTones`, et le libellé peut être n'importe quel
+    // texte dans n'importe quelle langue.
+    badgeTone: ton(props.badgeFieldId, instance.values[String(props.badgeFieldId)]),
   }));
   const emptyTitle = str(props.emptyTitle);
   const loadingTitle = str(props.loadingTitle);
@@ -809,6 +1245,11 @@ export function AirList({ screen, blockId, itemId }: BlockRef & { itemId?: strin
       title={str(props.title)}
       items={mode === "apercu" && typeof compo?.apercu === "number" ? items.slice(0, compo.apercu) : items}
       state={state}
+      // AVATAR A INITIALES (2026-10-17) — le dernier maillon, celui qui a
+      // manque a `accroche` et `logoUri` : declare au bloc, porte par le
+      // document, et JAMAIS transmis. Rien n echouait, la liste rendait sa
+      // forme d avant.
+      avatarInitiales={props.avatarInitiales === true}
       bounded={mode === "apercu"}
       // 1.21.0 — « Voir plus » : libellé du DOCUMENT + geste SECONDAIRE du
       // bloc. L'un sans l'autre ne rend rien : aucune promesse muette.
@@ -867,6 +1308,17 @@ export function AirForm({ screen, blockId, itemId }: BlockRef & { itemId?: strin
   // DET-032 (AIR 1.10.0) : le libellé rendu est celui que le document DÉCLARE
   // (`field.label`, résolu par le compilateur) ; `field.name` reste le repli
   // 1.9.0 — donnée AIR dans les deux cas, jamais un texte moteur (D-028/F3).
+  // EP-159 — LES SAISIES QUI N'EXISTENT PAS EN BASE, dérivées des props.
+  // La décision vit dans un module PUR (`champsDeSaisie`) : ici on lit, on
+  // délègue, on rend. Un champ de cette famille n'est JAMAIS transmis à
+  // l'écriture — sa valeur est vérifiée puis oubliée.
+  const saisieRoles = strArray(props.saisieRoles);
+  const saisieCibles = strArray(props.saisieCibles);
+  const champsSecrets = fieldIds
+    .filter((id): id is string => typeof id === "string")
+    .filter((id) => fieldsById.get(id)?.sensitive === true);
+  const saisiesPures = champsDeSaisie(saisieRoles, saisieCibles, champsSecrets);
+
   const fields: FormFieldSpec[] = fieldIds.flatMap((fieldId) => {
     if (typeof fieldId !== "string") return [];
     const field = fieldsById.get(fieldId);
@@ -884,6 +1336,18 @@ export function AirForm({ screen, blockId, itemId }: BlockRef & { itemId?: strin
       },
     ];
   });
+
+  // Les saisies pures se posent APRÈS les champs de l'entité : elles les
+  // confirment ou les complètent, elles ne les précèdent pas.
+  for (const [i, saisie] of saisiesPures.entries()) {
+    fields.push({
+      id: `saisie_${saisie.role}_${String(i)}`,
+      label: saisie.role,
+      required: true,
+      ...(saisie.secret ? { secure: true } : {}),
+      saisieSeule: { role: saisie.role, ...(saisie.cible === undefined ? {} : { cible: saisie.cible }) },
+    });
+  }
   // PRÉREMPLISSAGE — la ligne existante fournit les VALEURS PAR DÉFAUT, la
   // saisie l'emporte toujours. Sans cela, la relecture serveur restait
   // invisible : les données étaient là, l'écran restait vide.
@@ -894,8 +1358,20 @@ export function AirForm({ screen, blockId, itemId }: BlockRef & { itemId?: strin
     idEdite === undefined || b.entityId === undefined
       ? undefined
       : provider.getInstance(b.entityId, idEdite);
+  // ── CHAQUE CHAMP EXPOSÉ PORTE SA CLÉ, MÊME INTOUCHÉ.
+  //
+  // `useFormValues` n'écrit une clé qu'au PREMIER caractère tapé : un champ
+  // affiché et laissé vide n'existait donc pas dans la soumission. Depuis que
+  // `reglesRespectees` ignore les champs que le formulaire ne collecte pas
+  // (ci-dessus), un requis intouché serait devenu INVISIBLE à la validation —
+  // et le formulaire se serait soumis vide. L'amorce ferme ce trou : le champ
+  // est là, à vide, et `required` le refuse.
+  const amorce: Record<string, string> = {};
+  for (const id of fieldIds) if (typeof id === "string") amorce[id] = "";
   const values: Readonly<Record<string, string>> =
-    existant === undefined ? saisies : { ...existant.values, ...saisies };
+    existant === undefined
+      ? { ...amorce, ...saisies }
+      : { ...amorce, ...existant.values, ...saisies };
   const submitLabel = str(props.submitLabel);
   if (submitLabel === undefined) {
     throw new Error(`AIR_RUNTIME_PROP_MISSING:${blockId}:submitLabel`);

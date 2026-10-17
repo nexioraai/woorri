@@ -23,7 +23,23 @@ const { estBinaire } = await import(
   new URL("../../packages/compiler/src/fichiers-binaires.ts", import.meta.url).href,
 );
 
-const DOSSIERS_MOTEUR = ["screens", "lib", "manifests"];
+// ── `public` AJOUTÉ LE 2026-10-17, ET IL MANQUAIT VRAIMENT.
+//
+// DÉFAUT MESURÉ : la tranche `tontine` porte un thème en police SYSTÈME, donc
+// l'émission ne produit AUCUNE face — `policesRequises` rend `false`, vérifié.
+// Et pourtant les TROIS faces d'une émission PRÉCÉDENTE restaient sur le
+// disque, dans `public/polices/`.
+//
+// C'est exactement le défaut qui a fait naître ce fichier : « trois écrans
+// d'une émission précédente restaient sur le disque de Marketa ». Le moteur
+// possède désormais `public/` — manifeste PWA, service worker, icônes, faces
+// de police, sur les DEUX cibles — et tout fichier absent du jeu émis y est un
+// cadavre.
+//
+// LA CONSÉQUENCE SI ON NE L'ÉLAGUE PAS : l'artefact qu'on peut OUVRIR porte
+// 128 Ko de police que le thème n'emploie pas, pendant que le moteur a raison.
+// La « vérité d'écran contre vérité de moteur », une fois de plus.
+const DOSSIERS_MOTEUR = ["screens", "lib", "manifests", "public"];
 
 function fichiersSous(racine) {
   const resultat = [];

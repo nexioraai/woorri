@@ -52,6 +52,25 @@ describe("release train v1 — pins exacts (cliquet)", () => {
       // D-029 (édition consciente du cliquet) : config native air.native
       // appliquée au prebuild — bundledNativeModules SDK 57.
       "expo-build-properties": "57.0.15",
+      // ── AJOUTÉE 2026-10-17, ET IL FAUT DIRE EXACTEMENT CE QUI EST PROUVÉ.
+      //
+      // Ce cliquet s'appelle « versions prouvées sur device au banc V4 ». Pour
+      // `expo-font@57.0.3`, la vérité est double et je ne la confonds pas :
+      //
+      //   · LE PAQUET tourne déjà sur les appareils du banc. Il arrivait
+      //     transitivement par `expo`, le verrou le résolvait en 57.0.3, et
+      //     chaque APK construit depuis ce gabarit l'embarquait. Aucun octet
+      //     installé ne change avec cette déclaration.
+      //
+      //   · NOTRE USAGE DIRECT — `useFonts` et les trois faces embarquées —
+      //     n'a PAS été vu sur un appareil. Il est prouvé par montage (une
+      //     application compilée à neuf, `theme-identite.obs.tsx`) et par
+      //     compilation (32/32). Ce n'est pas la même chose, et la roadmap du
+      //     chantier le sait : une preuve d'appareil se gagne sur appareil.
+      //
+      // La déclaration, elle, répare un défaut réel : le runtime importait un
+      // paquet non déclaré. Une dépendance transitive n'est pas un contrat.
+      "expo-font": "57.0.3",
       "expo-status-bar": "3.0.9",
       // ÉDITION CONSCIENTE DU CLIQUET (2026-09-09, Phase 11 — FEU VERT
       // PROPRIÉTAIRE, demandé en langage clair et obtenu). Même classe de

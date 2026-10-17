@@ -10,10 +10,12 @@ import { ActivityIndicator, Image, Pressable, Text, TextInput, View } from "reac
 // promet que des glyphes qu'il sait dessiner.
 import Ionicons from "@expo/vector-icons/Ionicons";
 import type {
+  BarreProps,
   AppImageProps,
   AppButtonProps,
   AppTextProps,
   BadgeProps,
+  AvatarInitialesProps,
   GridCardProps,
   RangeeProps,
   SearchEntryProps,
@@ -27,6 +29,8 @@ import type {
   TextVariant,
 } from "./contracts.ts";
 import { useStyles } from "./theme-bridge.tsx";
+import { GLYPHE_PAR_ROLE } from "./roles-icones.ts";
+import { decisionMedia } from "./media-repli.ts";
 import type { Sheet } from "./styles.ts";
 
 const VARIANT_STYLE: Record<TextVariant, keyof Sheet> = {
@@ -195,7 +199,7 @@ export function AppButton({
         <>
           {icon === undefined ? null : (
             <Ionicons
-              name={(GLYPHE_PAR_ROLE[icon] ?? icon) as never}
+              name={((GLYPHE_PAR_ROLE as Readonly<Record<string, string>>)[icon] ?? icon) as never}
               style={[s.buttonIcon, ghost ? s.buttonGhostText : s.buttonText]}
             />
           )}
@@ -225,6 +229,11 @@ export function TextField({
   // L'état est LOCAL au champ et repart masqué à chaque montage : il ne se
   // conserve pas, il ne se propage pas.
   const [revele, setRevele] = useState(false);
+  // FOCUS CLAVIER (2026-10-16) — `TextInput` est le SEUL element interactif du
+  // natif qui recoive le focus sur toutes les plateformes, iOS compris : c'est
+  // le systeme qui le lui donne en ouvrant le clavier. L'anneau y est donc
+  // visible partout, contrairement a celui d'un `Pressable`.
+  const [focalise, setFocalise] = useState(false);
   return (
     <View style={s.fieldWrap} testID={testID}>
       {/* DET-033 : un libellé VIDE ne rend rien — un champ compact (recherche)
@@ -233,9 +242,15 @@ export function TextField({
       {label === "" ? null : <Text style={s.fieldLabel}>{label}</Text>}
       <View style={s.fieldRow}>
         <TextInput
-          style={[s.input, error !== undefined && s.inputError]}
+          style={[s.input, error !== undefined && s.inputError, focalise && s.focusAnneau]}
           value={value}
           onChangeText={onChangeText}
+          onFocus={() => {
+            setFocalise(true);
+          }}
+          onBlur={() => {
+            setFocalise(false);
+          }}
           placeholder={placeholder}
           secureTextEntry={secure && !revele}
           accessibilityLabel={accessibilityLabel ?? label}
@@ -272,11 +287,40 @@ export function TextField({
 
 export function AppImage({ uri, variant, testID, accessibilityLabel }: AppImageProps) {
   const s = useStyles();
+  // EP-132 — un média PROMIS qui n'arrive pas laissait un rectangle vide.
+  // L'échec est un fait de rendu : seule cette couche peut l'observer. Ce
+  // qu'on en fait est décidé ailleurs, par une fonction pure et prouvée.
+  const [echec, setEchec] = useState(false);
+  const decision = decisionMedia({ uri, texte: accessibilityLabel ?? "", echec });
+  if (decision.rend === "aucun") return null;
+  if (decision.rend === "repli") {
+    return (
+      <View
+        testID={testID === undefined ? undefined : `${testID}-repli`}
+        accessibilityLabel={accessibilityLabel}
+        style={
+          variant === "thumb"
+            ? [s.imageThumb, s.imageRepli]
+            : variant === "brand"
+              ? [s.imageBrand, s.imageRepli]
+              : [s.imageHeader, s.imageRepli]
+        }
+      >
+        {/* AUCUNE troncature : le cliquet de typographie l'interdit, et il a
+            raison — un repli qui coupe son propre texte ne dit plus ce qu'il
+            remplace dès que la police système grandit. La place s'étire. */}
+        <Text style={s.imageRepliTexte}>{decision.texte}</Text>
+      </View>
+    );
+  }
   return (
     <Image
       testID={testID}
       accessibilityLabel={accessibilityLabel}
-      source={{ uri }}
+      onError={() => {
+        setEchec(true);
+      }}
+      source={{ uri: decision.uri }}
       style={
         variant === "thumb"
           ? s.imageThumb
@@ -314,19 +358,8 @@ export function ListFooter() {
  * FERMÉE, partagée par la barre de navigation et les boutons. Un nom
  * Ionicons brut, hérité des documents antérieurs, passe tel quel.
  */
-export const GLYPHE_PAR_ROLE: Readonly<Record<string, string>> = {
-  accueil: "home-outline",
-  recherche: "search-outline",
-  liste: "list-outline",
-  billet: "ticket-outline",
-  panier: "cart-outline",
-  calendrier: "calendar-outline",
-  carte: "map-outline",
-  compte: "person-outline",
-  favoris: "heart-outline",
-  message: "chatbubble-outline",
-  reglages: "settings-outline",
-};
+// Étape ③ (EP-003) — la table vit dans `roles-icones.ts`, LA source unique,
+// importée en tête et RÉ-EXPORTÉE par l'index (compatibilité inchangée).
 
 export function SearchEntry({ placeholder, onPress, visual, testID, accessibilityLabel }: SearchEntryProps) {
   const s = useStyles();
@@ -370,19 +403,36 @@ export function GridCard({
   subtitle,
   trailing,
   badge,
+  badgeTone,
   imageUri,
   onPress,
   testID,
   accessibilityLabel,
 }: GridCardProps) {
   const s = useStyles();
+  // EP-132 — MÊME DÉCISION, MÊME SOURCE. La carte portait un second
+  // emplacement de média, hors de `AppImage` : le corriger seulement là où
+  // le défaut avait été observé aurait laissé ce chemin-ci ouvert.
+  // MESURE AU PASSAGE : cette image ne portait AUCUN libellé accessible —
+  // le titre est juste en dessous, mais l'image elle-même ne disait rien.
+  const [echecImage, setEchecImage] = useState(false);
+  const media = decisionMedia({ uri: imageUri, texte: title, echec: echecImage });
   const corps = (
     <>
-      {imageUri !== undefined && (
+      {media.rend === "repli" && (
+        <View style={[s.gridCardImage, s.imageRepli]} accessibilityLabel={title}>
+          <Text style={s.imageRepliTexte}>{media.texte}</Text>
+        </View>
+      )}
+      {media.rend === "image" && (
         <Image
-          source={{ uri: imageUri }}
+          source={{ uri: media.uri }}
           style={s.gridCardImage}
           resizeMode="cover"
+          accessibilityLabel={title}
+          onError={() => {
+            setEchecImage(true);
+          }}
           accessibilityIgnoresInvertColors
         />
       )}
@@ -391,7 +441,7 @@ export function GridCard({
         {subtitle !== undefined && (
           <Text style={s.rowSubtitle}>{subtitle}</Text>
         )}
-        {badge !== undefined && <Badge label={badge} />}
+        {badge !== undefined && <Badge label={badge} tone={badgeTone} />}
         {trailing !== undefined && <Text style={s.gridCardTrailing}>{trailing}</Text>}
       </View>
     </>
@@ -421,6 +471,7 @@ export function ListRow({
   title,
   subtitle,
   badge,
+  badgeTone,
   trailing,
   leading,
   onPress,
@@ -434,7 +485,7 @@ export function ListRow({
       <View style={s.rowBody}>
         <Text style={s.rowTitle}>{title}</Text>
         {subtitle !== undefined && <Text style={s.rowSubtitle}>{subtitle}</Text>}
-        {badge !== undefined && <Badge label={badge} />}
+        {badge !== undefined && <Badge label={badge} tone={badgeTone} />}
       </View>
       {trailing !== undefined && <Text style={s.rowTrailing}>{trailing}</Text>}
     </>
@@ -456,6 +507,75 @@ export function ListRow({
     >
       {body}
     </Pressable>
+  );
+}
+
+/**
+ * UNE BARRE — l'element d'un graphique, et le seul.
+ *
+ * Mesure du 2026-10-13 : deux cahiers des charges reels et sans rapport
+ * demandaient le meme trou — « graphiques mensuels de consommation et de
+ * montants » d'un cote, « volumes, taux de succes, couts » de l'autre. Aucun
+ * type de bloc ne savait le dire.
+ *
+ * DES BARRES, PAS DES COURBES, et c'est un choix : une courbe aurait exige
+ * `react-native-svg`, donc une dependance de plus dans chaque application
+ * generee, pour un besoin que les deux cahiers expriment en COMPARAISONS.
+ *
+ * La primitive ne connait ni les donnees ni leur echelle. `ratio` est une
+ * proportion deja calculee ; `valeur` est un texte deja formate par le
+ * document. Rien n'est arrondi ni suffixe ici (F3 : aucun texte du moteur).
+ */
+export function Barre({ label, valeur, ratio, testID, accessibilityLabel }: BarreProps) {
+  const s = useStyles();
+  // Une proportion hors bornes viendrait d'une donnee aberrante, pas d'une
+  // intention : on la ramene dans [0,1] plutot que de dessiner hors du cadre.
+  const part = Number.isFinite(ratio) ? Math.min(1, Math.max(0, ratio)) : 0;
+  return (
+    <View
+      style={s.barreLigne}
+      testID={testID}
+      accessibilityLabel={accessibilityLabel ?? `${label} ${valeur}`}
+    >
+      <View style={s.barreEntete}>
+        <Text style={s.barreValeur}>{label}</Text>
+        <Text style={s.barreValeur}>{valeur}</Text>
+      </View>
+      <View style={s.barrePiste}>
+        <View style={[s.barreRemplissage, { flex: part }]} />
+        <View style={[s.barreReste, { flex: 1 - part }]} />
+      </View>
+    </View>
+  );
+}
+
+/**
+ * AVATAR A INITIALES — le rond de tete de ligne d une personne.
+ *
+ * DEUX LETTRES AU PLUS, prises sur les deux premiers MOTS : « Aminata
+ * Mbarga » donne AM, « Samuel Eto o » donne SE. Un nom d un seul mot donne
+ * sa premiere lettre. C est une operation typographique sur un texte du
+ * DOCUMENT — la primitive n invente rien.
+ *
+ * `accessibilityLabel` porte le nom ENTIER : les initiales sont un raccourci
+ * visuel, et une personne qui ecoute l ecran doit entendre le nom.
+ */
+export function AvatarInitiales({ nom, testID }: AvatarInitialesProps) {
+  const s = useStyles();
+  const mots = nom.trim().split(/\s+/u).filter((m) => m.length > 0);
+  const initiales =
+    mots.length === 0
+      ? ""
+      : mots
+          .slice(0, 2)
+          .map((m) => m[0] ?? "")
+          .join("")
+          .toLocaleUpperCase();
+  if (initiales === "") return null;
+  return (
+    <View style={s.avatar} testID={testID} accessibilityLabel={nom}>
+      <Text style={s.avatarTexte}>{initiales}</Text>
+    </View>
   );
 }
 

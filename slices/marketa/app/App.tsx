@@ -1,7 +1,11 @@
 // GÉNÉRÉ — NE PAS ÉDITER (racine d'app : thème + données + navigation).
-// S7 (D-026) : tokens scellés 1.0.0, design.theme transporté sans effet.
+// THÈME (2026-10-17) : design.theme choisit un MONDE VISUEL dans le
+// catalogue fermé — palette complète, rayons, famille de caracteres. La
+// mention « transporté sans effet » était vraie jusque-là : le nom
+// n'était haché qu'en une rotation de teinte, 2 jetons sur 12.
 // Provider demo (D-030) : fixtures déterministes compilées (demo.data).
 import { ThemeRoot } from "./lib/primitives";
+import { PoliceRoot } from "./lib/runtime/polices";
 import { DataRoot } from "./lib/runtime/data-provider";
 import { FormStateRoot } from "./lib/runtime/form-state";
 import { buildDemoProvider } from "./lib/runtime/demo-provider";
@@ -21,6 +25,7 @@ const capabilities = creerCapabilitesAuth(session);
 
 export default function App() {
   return (
+    <PoliceRoot>
     <ThemeRoot>
       <SessionRoot provider={session}>
       <CapabilityRoot provider={capabilities}>
@@ -32,5 +37,6 @@ export default function App() {
       </CapabilityRoot>
       </SessionRoot>
     </ThemeRoot>
+    </PoliceRoot>
   );
 }

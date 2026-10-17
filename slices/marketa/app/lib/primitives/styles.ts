@@ -7,15 +7,57 @@
 // graisses, pas fin d'espacement et opacité d'état viennent des tokens ;
 // l'accent n'est plus utilisé comme couleur de texte (encre dérivée).
 import { theme } from "../tokens";
-import { StyleSheet } from "react-native";
+// L'appel au moteur de styles passe par une COUTURE : c'est le seul mot de
+// React Native qu'il restait ici, et la cible web le remplace par l'identité.
+// Voir ./feuille.ts — la feuille, elle, reste UNIQUE pour les deux cibles.
+import { creerFeuille, styleDePolice } from "./feuille.ts";
 import type { Scheme } from "./contracts.ts";
 
 export type Palette = (typeof theme.color)[Scheme];
 
+// ── LA POLICE DES CINQ RÔLES DE TEXTE, RÉSOLUE UNE FOIS.
+//
+// La couture rend famille ET graisse, et c'est elle qui sait laquelle des deux
+// poser : côté natif une FACE nommée sans `fontWeight` (Android ne synthétise
+// pas un gras), côté web une famille unique dont les `@font-face` portent les
+// graisses. Composer ici garderait la connaissance de plateforme dans une
+// feuille qui doit rester pure.
+// Les graisses viennent des JETONS — la couture décide seulement LAQUELLE des
+// deux propriétés poser, jamais sa valeur.
+const GRAISSES = { semibold: theme.fontWeight.semibold, bold: theme.fontWeight.bold };
+const POLICE = {
+  regular: styleDePolice(theme.font.famille, "regular", GRAISSES),
+  semibold: styleDePolice(theme.font.famille, "semibold", GRAISSES),
+  bold: styleDePolice(theme.font.famille, "bold", GRAISSES),
+} as const;
+
 const makeSheet = (c: Palette) =>
-  StyleSheet.create({
+  creerFeuille({
     // — ScreenShell —
     shell: { flex: 1, backgroundColor: c.bg },
+    // ── L'ANNEAU DE FOCUS CLAVIER, UNIQUE POUR LES DEUX CIBLES.
+    //
+    // `outlineWidth` / `outlineColor` / `outlineOffset` existent dans
+    // `ViewStyle` depuis React Native 0.76 — VERIFIE dans les types de la
+    // version installee (0.86.3, StyleSheetTypes.d.ts lignes 496-499). On ne
+    // passe PAS par une bordure : une bordure occupe de la place et decalerait
+    // la mise en page au moment du focus.
+    //
+    // La couleur est l'accent des jetons, identique dans les deux schémas —
+    // mesuré, pas supposé.
+    //
+    // LA VALEUR N'EST PAS CITÉE ICI, et c'est délibéré : l'oracle de la
+    // dimension D compte les couleurs en dur sur le FICHIER ENTIER,
+    // commentaires compris. Écrire l'hexadécimal dans une explication suffit
+    // à faire tomber « zéro valeur en dur » — c'est arrivé le 2026-10-16.
+    // L'instrument a raison sur le fond ; on ne l'assouplit pas pour une
+    // phrase qui peut se dire autrement.
+    focusAnneau: {
+      outlineWidth: 3,
+      outlineStyle: "solid" as const,
+      outlineColor: c.primary,
+      outlineOffset: 2,
+    },
     shellTitle: {
       fontSize: theme.font.heading,
       fontWeight: theme.fontWeight.bold,
@@ -71,11 +113,29 @@ const makeSheet = (c: Palette) =>
       marginBottom: theme.space.md,
     },
     // — AppText (variantes = tokens de police ; tons = tokens de couleur) —
-    textLabel: { fontSize: theme.font.label, color: c.text },
-    textBody: { fontSize: theme.font.body, color: c.text },
-    textTitle: { fontSize: theme.font.title, fontWeight: theme.fontWeight.semibold, color: c.text },
-    textHeading: { fontSize: theme.font.heading, fontWeight: theme.fontWeight.bold, color: c.text },
-    textDisplay: { fontSize: theme.font.display, fontWeight: theme.fontWeight.bold, color: c.text },
+    // ── LA FAMILLE DE CARACTÈRES (1.6.0) — SUR LES CINQ RÔLES.
+    //
+    // Mesuré le 2026-10-17 : le groupe `font` ne portait que des TAILLES. Les
+    // 22 applications s'écrivaient dans la police système, la même pour un
+    // spa et un chantier — alors que la typographie est le premier marqueur
+    // d'identité visuelle, et le seul que le moteur ne savait pas dire.
+    //
+    // `familleDe` rend `undefined` pour le rôle `systeme` : la propriété n'est
+    // alors PAS posée, et le rendu est celui d'avant au pixel près. C'est
+    // pourquoi cette montée est strictement additive.
+    // ── LA GRAISSE NE VIENT PLUS DU JETON, MAIS DE LA COUTURE.
+    //
+    // `theme.fontWeight.semibold` ("600") était posé ici en dur à côté de la
+    // famille. Avec une face embarquée par graisse, c'est FAUX sur Android :
+    // la face est déjà grasse, et `fontWeight` par-dessus déclenche au mieux
+    // rien, au pire une seconde synthèse. La couture décide — famille nommée
+    // OU graisse, jamais les deux — et les jetons de graisse restent la source
+    // pour le rôle `systeme`, qu'elle lit.
+    textLabel: { ...POLICE.regular, fontSize: theme.font.label, color: c.text },
+    textBody: { ...POLICE.regular, fontSize: theme.font.body, color: c.text },
+    textTitle: { ...POLICE.semibold, fontSize: theme.font.title, color: c.text },
+    textHeading: { ...POLICE.bold, fontSize: theme.font.heading, color: c.text },
+    textDisplay: { ...POLICE.bold, fontSize: theme.font.display, color: c.text },
     toneMuted: { color: c.muted },
     tonePrimary: { color: c.primaryText },
     toneError: { color: c.error },
@@ -219,6 +279,54 @@ const makeSheet = (c: Palette) =>
       paddingHorizontal: theme.space.xs,
       gap: theme.space.xxs,
     },
+    // ── LE RAIL VERTICAL — la même navigation, à partir de 840 px.
+    //
+    // Material 3 : barre en compact/medium, RAIL en expanded et au-delà.
+    // Apple : pas de barre d'onglets sur macOS, barre latérale sur iPad.
+    // NN/g : la navigation verticale à gauche se parcourt mieux sur bureau.
+    // La règle et ses sources vivent dans `disposition-navigation`.
+    //
+    // `borderEndWidth` et non `borderRightWidth` : propriété LOGIQUE, comme
+    // tout le reste de cette feuille — en arabe le rail passe à droite tout
+    // seul, et une bordure physique se serait trompée de côté.
+    primaryNavLaterale: {
+      flexDirection: "column",
+      // ── LA LARGEUR, ET POURQUOI ELLE EST DÉRIVÉE.
+      //
+      // 768 / 3 = 256 px. Dérivée de la largeur de lisibilité, jamais écrite
+      // à la main : si la colonne de lecture change un jour, la barre suit.
+      //
+      // Material 3 prescrit 360 dp pour un tiroir permanent. On prend moins,
+      // et c'est un choix mesuré : à 840 px de fenêtre, 360 ne laisserait que
+      // 480 px au contenu, pendant que 256 en laisse 584. La navigation ne
+      // doit pas gagner contre ce qu'elle sert à atteindre.
+      width: theme.size.measure / 3,
+      backgroundColor: c.surface,
+      borderEndWidth: 1,
+      borderEndColor: c.border,
+      paddingVertical: theme.space.md,
+      paddingHorizontal: theme.space.sm,
+      gap: theme.space.xxs,
+    },
+    // ── L'ENTRÉE D'UNE BARRE LATÉRALE SE LIT, ELLE NE SE DEVINE PAS.
+    //
+    // `flex: 1` est ABSENT, et c'est la différence qui compte : dans une
+    // colonne il étirerait chaque entrée sur toute la hauteur disponible, et
+    // quatre destinations occuperaient l'écran entier.
+    //
+    // Le contenu est en LIGNE et aligné au DÉBUT : un glyphe puis son
+    // libellé, comme une liste se lit. Centrer le texte d'une barre latérale
+    // casse l'alignement vertical des premières lettres, qui est justement ce
+    // qui la rend parcourable d'un coup d'œil (NN/g).
+    primaryNavLateraleItem: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: theme.space.sm,
+      minHeight: theme.size.tapTarget,
+      paddingHorizontal: theme.space.md,
+      paddingVertical: theme.space.sm,
+      borderRadius: theme.radius.md,
+    },
     primaryNavItem: {
       flex: 1,
       minHeight: theme.size.tapTarget,
@@ -238,6 +346,33 @@ const makeSheet = (c: Palette) =>
       paddingVertical: theme.space.xs,
       borderRadius: theme.radius.md,
       backgroundColor: c.badgeBg,
+    },
+    /** L'entrée ACTIVE : même marque d'état que la barre, autre géométrie. */
+    primaryNavLateraleItemActive: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: theme.space.sm,
+      minHeight: theme.size.tapTarget,
+      paddingHorizontal: theme.space.md,
+      paddingVertical: theme.space.sm,
+      borderRadius: theme.radius.md,
+      backgroundColor: c.badgeBg,
+    },
+    /**
+     * LE LIBELLÉ D'UNE BARRE LATÉRALE EST DU TEXTE DE LECTURE.
+     *
+     * Dans la barre du bas il est minuscule (`font.label`, 12) parce qu'il
+     * tient sous un glyphe dans un cinquième de largeur. Ici il a 256 px : le
+     * garder à 12 px produirait une colonne de texte timide à côté d'un
+     * contenu en 14. Mesuré sur l'écran du propriétaire — c'est l'une des
+     * deux raisons pour lesquelles le premier essai ne ressemblait pas à une
+     * barre latérale.
+     */
+    primaryNavLateraleLabel: { fontSize: theme.font.body, color: c.muted },
+    primaryNavLateraleLabelActive: {
+      fontSize: theme.font.body,
+      fontWeight: theme.fontWeight.semibold,
+      color: c.primaryText,
     },
     // Taille du glyphe d'onglet — portée par un TOKEN, jamais par un nombre
     // écrit dans le composant : la dimension D interdit toute valeur en dur.
@@ -357,6 +492,22 @@ const makeSheet = (c: Palette) =>
       borderRadius: theme.radius.sm,
       backgroundColor: c.border,
     },
+    // EP-132 — la place d'un média PROMIS qui n'est pas arrivé. Elle garde
+    // exactement la forme du média qu'elle remplace (la mise en page ne
+    // bouge pas), et porte le texte que le document fournit déjà. Aucune
+    // couleur neuve : le fond est celui des surfaces, l'encre celle des
+    // textes secondaires — un emplacement en attente, pas une alarme.
+    imageRepli: {
+      backgroundColor: c.border,
+      alignItems: "center",
+      justifyContent: "center",
+      padding: theme.space.xs,
+    },
+    imageRepliTexte: {
+      fontSize: theme.font.label,
+      color: c.muted,
+      textAlign: "center",
+    },
     rowBody: { flex: 1 },
     rowTitle: { fontSize: theme.font.body, fontWeight: theme.fontWeight.semibold, color: c.text },
     rowSubtitle: {
@@ -373,6 +524,38 @@ const makeSheet = (c: Palette) =>
       color: c.primaryText,
       marginStart: theme.space.md,
     },
+    // — Barre d'un graphique —
+    //
+    // Deux cahiers des charges reels demandent des comparaisons mensuelles :
+    // consommation et montants d'un cote, volumes et taux de l'autre. Des
+    // BARRES suffisent, et elles ne coutent aucune dependance : une courbe
+    // aurait exige SVG. La piste porte la longueur totale, le remplissage la
+    // proportion — le bloc ne decide d'aucune couleur.
+    barreLigne: {
+      marginTop: theme.space.xs,
+    },
+    barreEntete: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+    },
+    barrePiste: {
+      backgroundColor: c.border,
+      borderRadius: theme.radius.sm,
+      height: theme.space.md,
+      overflow: "hidden",
+      marginTop: theme.space.xxs,
+      flexDirection: "row",
+    },
+    // Le RESTE de la piste. Deux `flex` fratries donnent la proportion sans
+    // chaine de pourcentage — qui ne se type pas en React Native.
+    barreReste: {},
+    barreRemplissage: {
+      backgroundColor: c.primary,
+      borderRadius: theme.radius.sm,
+      height: "100%",
+    },
+    barreValeur: { fontSize: theme.font.label, color: c.muted },
     // — Badge —
     badge: {
       backgroundColor: c.badgeBg,
@@ -383,6 +566,30 @@ const makeSheet = (c: Palette) =>
       marginTop: theme.space.xs,
     },
     badgeText: { fontSize: theme.font.label, color: c.muted },
+    // — Avatar a initiales (2026-10-17) —
+    //
+    // MESURE : chaque ligne de la liste des membres chez Bolt porte un rond
+    // d initiales (AM, PE, JM). Deribfy ne pouvait montrer qu une VIGNETTE,
+    // et seulement quand le document declare une image. Une liste de
+    // personnes sans photo restait une liste de texte nu.
+    //
+    // UN SEUL FOND, pas une teinte par personne : une couleur par individu
+    // exigerait une palette que les 44 jetons ne portent pas. On ne bricole
+    // pas une teinte ici — ce serait une decision de design deguisee en
+    // commodite d ecriture.
+    avatar: {
+      backgroundColor: c.badgeBg,
+      borderRadius: theme.size.tapTarget,
+      width: theme.size.tapTarget,
+      height: theme.size.tapTarget,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    avatarTexte: {
+      fontSize: theme.font.label,
+      fontWeight: theme.fontWeight.semibold,
+      color: c.muted,
+    },
     badgeSuccess: { color: c.success },
     badgeWarn: { color: c.warn },
     badgeError: { color: c.error },
