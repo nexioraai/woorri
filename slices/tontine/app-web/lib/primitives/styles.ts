@@ -10,10 +10,12 @@ import { theme } from "../tokens";
 // L'appel au moteur de styles passe par une COUTURE : c'est le seul mot de
 // React Native qu'il restait ici, et la cible web le remplace par l'identité.
 // Voir ./feuille.ts — la feuille, elle, reste UNIQUE pour les deux cibles.
-import { creerFeuille } from "./feuille.ts";
+import { creerFeuille, familleDe } from "./feuille.ts";
 import type { Scheme } from "./contracts.ts";
 
 export type Palette = (typeof theme.color)[Scheme];
+
+const FAMILLE = familleDe(theme.font.famille);
 
 const makeSheet = (c: Palette) =>
   creerFeuille({
@@ -97,11 +99,21 @@ const makeSheet = (c: Palette) =>
       marginBottom: theme.space.md,
     },
     // — AppText (variantes = tokens de police ; tons = tokens de couleur) —
-    textLabel: { fontSize: theme.font.label, color: c.text },
-    textBody: { fontSize: theme.font.body, color: c.text },
-    textTitle: { fontSize: theme.font.title, fontWeight: theme.fontWeight.semibold, color: c.text },
-    textHeading: { fontSize: theme.font.heading, fontWeight: theme.fontWeight.bold, color: c.text },
-    textDisplay: { fontSize: theme.font.display, fontWeight: theme.fontWeight.bold, color: c.text },
+    // ── LA FAMILLE DE CARACTÈRES (1.6.0) — SUR LES CINQ RÔLES.
+    //
+    // Mesuré le 2026-10-17 : le groupe `font` ne portait que des TAILLES. Les
+    // 22 applications s'écrivaient dans la police système, la même pour un
+    // spa et un chantier — alors que la typographie est le premier marqueur
+    // d'identité visuelle, et le seul que le moteur ne savait pas dire.
+    //
+    // `familleDe` rend `undefined` pour le rôle `systeme` : la propriété n'est
+    // alors PAS posée, et le rendu est celui d'avant au pixel près. C'est
+    // pourquoi cette montée est strictement additive.
+    textLabel: { fontFamily: FAMILLE, fontSize: theme.font.label, color: c.text },
+    textBody: { fontFamily: FAMILLE, fontSize: theme.font.body, color: c.text },
+    textTitle: { fontFamily: FAMILLE, fontSize: theme.font.title, fontWeight: theme.fontWeight.semibold, color: c.text },
+    textHeading: { fontFamily: FAMILLE, fontSize: theme.font.heading, fontWeight: theme.fontWeight.bold, color: c.text },
+    textDisplay: { fontFamily: FAMILLE, fontSize: theme.font.display, fontWeight: theme.fontWeight.bold, color: c.text },
     toneMuted: { color: c.muted },
     tonePrimary: { color: c.primaryText },
     toneError: { color: c.error },

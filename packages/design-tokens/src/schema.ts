@@ -20,7 +20,7 @@ import { z } from "zod";
 //
 // 1.3.0 — l'échelle typographique gagne `display`, un cran au-dessus de
 // `heading`, avec son consommateur réel (accroche de l'écran d'accueil).
-export const DESIGN_TOKENS_VERSION = "1.5.0";
+export const DESIGN_TOKENS_VERSION = "1.6.0";
 
 const hexColor = z.string().regex(/^#[0-9A-Fa-f]{6}$/);
 const dimension = z.number().int().positive();
@@ -66,6 +66,38 @@ export const designTokensSchema = z.strictObject({
   }),
   radius: z.strictObject({ sm: dimension, md: dimension, lg: dimension }),
   font: z.strictObject({
+    /**
+     * LA FAMILLE DE CARACTÈRES — un RÔLE, jamais un nom de police (1.6.0).
+     *
+     * ── LE DÉFAUT, MESURÉ LE 2026-10-17.
+     *
+     * Ce groupe ne portait que des TAILLES : 12/14/17/22/34. Aucune famille.
+     * Les 22 applications s'écrivaient donc dans la police par défaut de la
+     * plateforme — la même pour un spa, un chantier et une salle de concert.
+     * La typographie est le premier marqueur d'identité visuelle, et c'était
+     * le seul que le moteur ne savait pas exprimer.
+     *
+     * ── POURQUOI UN RÔLE ET PAS UN NOM, ET C'EST UNE MESURE.
+     *
+     * Aucun nom de police n'existe sur les deux plateformes à la fois : iOS
+     * porte Georgia, Palatino, Menlo ; Android porte Noto Serif, Roboto,
+     * monospace. Poser un NOM dans le jeton, c'était garantir un repli muet
+     * sur l'une des deux — une police absente ne lève pas, elle retombe en
+     * silence sur la police système, et l'identité disparaît sans rien dire.
+     *
+     * Le jeton porte donc le RÔLE, et la couture de plateforme
+     * (`primitives/feuille.ts` et son équivalent web) le résout en une
+     * famille RÉELLEMENT présente. C'est le joint qui existe déjà pour le
+     * moteur de styles : aucun joint nouveau.
+     *
+     * ── POURQUOI CES TROIS RÔLES, ET PAS DIX.
+     *
+     * Chacun a un consommateur réel dans le catalogue de thèmes — la règle
+     * posée par DET-023, qui a écarté `elevation` et `motion` faute d'usage.
+     * `systeme` est l'actuel, donc le défaut : un projet qui ne dit rien ne
+     * change pas d'un pixel.
+     */
+    famille: z.enum(["systeme", "serif", "mono"]),
     label: dimension,
     body: dimension,
     title: dimension,

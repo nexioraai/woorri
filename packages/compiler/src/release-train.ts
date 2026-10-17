@@ -450,7 +450,7 @@ export const RELEASE_TRAIN_V1 = {
   // ÉDITION CONSCIENTE (1.3.0) : l'échelle typographique gagne `display`, un
   // cran au-dessus de `heading`. Ajouté AVEC son consommateur réel (l'écran
   // d'accueil produit), jamais « au cas où » — règle posée par DET-023.
-  designTokensVersion: "1.5.0",
+  designTokensVersion: "1.6.0",
   // Ré-scellé le 2026-08-29 (D-039/D-039-R1) : évolution des tokens en
   // 1.1.0 — correction de DEUX non-conformités A++ prouvées. Dimension B :
   // `onPrimary` passe de #FFFFFF à #16181D (blanc sur l'accent #FA5D1E =
@@ -482,7 +482,26 @@ export const RELEASE_TRAIN_V1 = {
     // La valeur n'est pas choisie : c'est le `max-w-3xl` que SGD applique
     // réellement à ses pages de contenu. SGD est la référence opposée aux
     // applications générées ; copier SA mesure vaut mieux qu'en inventer une.
-    "577cb18ded6fe9aabb160704590ee38445540c6b526a0ba61591570af19bb7f7",
+    // RÉ-SCELLÉ 2026-10-17 (tokens 1.6.0) — ÉDITION CONSCIENTE.
+    //
+    // `font.famille` : LE RÔLE DE FAMILLE DE CARACTERES. Mesuré le même jour :
+    // le groupe `font` ne portait que des TAILLES (12/14/17/22/34), et les 22
+    // applications s ecrivaient dans la police systeme — la même pour un spa,
+    // un chantier et une salle de concert. La typographie est le premier
+    // marqueur d identite visuelle, et c etait le seul que le moteur ne savait
+    // pas dire.
+    //
+    // UN ROLE, JAMAIS UN NOM, et c est une mesure : aucun nom de police
+    // n existe sur iOS ET Android a la fois (iOS a Georgia et Menlo, Android
+    // les alias generiques). Un nom absent ne leve pas — il retombe EN SILENCE
+    // sur la police systeme. La couture de plateforme (`primitives/feuille.ts`
+    // et son jumeau web) resout le role en une famille reellement presente.
+    //
+    // ADDITIF : `systeme` est le defaut et ne pose AUCUNE `fontFamily` — un
+    // projet qui ne dit rien rend exactement comme en 1.5.0, au pixel pres, et
+    // le controle ④ d EP-263 l exige.
+    // Ancien sceau : 577cb18ded6fe9aa…
+    "73bfd02a6ba24353cd7f0985979c0d674f9edc3b4b93cb422ffa88b16e8608a9",
 
   // Toolchain du projet généré (pins exacts démontrés — lock.toolchain).
   // Planchers RÉELS de plateforme du train (mesurés sur le prebuild du

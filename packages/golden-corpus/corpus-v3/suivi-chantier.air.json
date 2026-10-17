@@ -568,7 +568,7 @@
     }
   ],
   "design": {
-    "theme": "btp_chantier"
+    "theme": "gestion_sobre"
   },
   "entities": [
     {

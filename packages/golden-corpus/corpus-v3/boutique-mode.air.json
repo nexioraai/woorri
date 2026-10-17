@@ -584,7 +584,7 @@
     }
   ],
   "design": {
-    "theme": "boutique_mode"
+    "theme": "commerce_confiance"
   },
   "entities": [
     {

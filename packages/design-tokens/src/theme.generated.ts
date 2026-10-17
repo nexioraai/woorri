@@ -47,6 +47,7 @@ export const theme = {
     "lg": 16
   },
   "font": {
+    "famille": "systeme",
     "label": 12,
     "body": 14,
     "title": 17,

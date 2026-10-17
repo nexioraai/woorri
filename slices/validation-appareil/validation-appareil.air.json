@@ -594,7 +594,7 @@
     }
   ],
   "design": {
-    "theme": "transit_light"
+    "theme": "gestion_sobre"
   },
   "entities": [
     {

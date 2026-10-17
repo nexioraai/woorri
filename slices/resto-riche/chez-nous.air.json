@@ -1110,7 +1110,7 @@
   "capabilities": [],
   "permissions": [],
   "design": {
-    "theme": "chez_nous",
+    "theme": "table_chaleureuse",
     "overrides": [
       {
         "key": "radius.sm",

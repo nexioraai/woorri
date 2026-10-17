@@ -222,7 +222,7 @@
     ]
   },
   "design": {
-    "theme": "soft_care"
+    "theme": "soin_doux"
   },
   "network": {
     "policy": "deny_by_default",

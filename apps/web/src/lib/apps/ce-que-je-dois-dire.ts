@@ -120,9 +120,21 @@ const hypothesesDe = (air: ProjectAir): Hypothese[] => {
   // Base44 l'annonce dès sa première phrase (« bleu nuit et ambre ») ; ici
   // elle était décidée en silence.
   if (air.design.theme.length > 0) {
+    // ── CETTE PHRASE EST DEVENUE FAUSSE, ET ELLE A ÉTÉ CORRIGÉE (2026-10-17).
+    //
+    // Elle disait « change la TEINTE ». C'était vrai : le nom du thème était
+    // haché en degrés et faisait tourner le seul jeton `primary` — mesuré,
+    // 2 jetons sur 12, et la teinte obtenue n'avait aucun rapport avec le sens
+    // du nom (un spa recevait du magenta).
+    //
+    // Depuis le catalogue de thèmes, le nom choisit un MONDE VISUEL ENTIER :
+    // fond, surface, texte, bordure, pastille, accent, rayons, et la famille
+    // de caractères. Laisser « la teinte » aurait fait dire à l'écran moins
+    // que ce que le moteur fait — et une phrase qui sous-dit est une phrase
+    // qui trompe, au même titre qu'une qui sur-dit.
     out.push({
-      quoi: `La couleur de l'application est dérivée du thème « ${air.design.theme} » déclaré dans votre document.`,
-      ou: 'Changer ce nom change la teinte, de façon stable et reproductible.',
+      quoi: `L'apparence de l'application vient du thème « ${air.design.theme} » déclaré dans votre document.`,
+      ou: 'Ce nom choisit un ensemble complet — couleurs, contrastes, arrondis — de façon stable et reproductible.',
     })
   }
 

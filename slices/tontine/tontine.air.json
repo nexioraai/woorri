@@ -2346,7 +2346,7 @@
     }
   },
   "design": {
-    "theme": "tontine_sobre"
+    "theme": "gestion_sobre"
   },
   "integrations": [
     {

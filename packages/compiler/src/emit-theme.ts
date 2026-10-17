@@ -18,6 +18,7 @@
 //  3. la dérivation est REJOUÉE sur la palette effective — changer l'accent
 //     recalcule l'encre de texte, donc le seuil WCAG tient par construction.
 import { contrast, deriveTextInk, theme as BASE_THEME } from "@deribfy/design-tokens";
+import { CATALOGUE } from "./themes-catalogue.ts";
 import type { ProjectAir } from "@deribfy/air-schema";
 
 const SCHEMES = ["light", "dark"] as const;
@@ -76,7 +77,11 @@ interface EffectiveTheme {
   color: Record<string, Palette>;
   space: Record<string, number>;
   radius: Record<string, number>;
-  font: Record<string, number>;
+  // `famille` est une CHAÎNE (le rôle), les autres clés des tailles. Ce type
+  // décrivait `font` comme « que des nombres » — fidèle jusqu'à 1.6.0, et
+  // faux depuis : le dire ici, plutôt que d'élargir en `unknown`, garde
+  // l'erreur de frappe au compilateur.
+  font: { famille: "systeme" | "serif" | "mono" } & Record<string, number | string>;
   fontWeight: Record<string, string>;
   opacity: Record<string, number>;
   size: Record<string, number>;
@@ -151,11 +156,49 @@ export function applyThemeOverrides(air: ProjectAir): {
   // pour n'importe quel accent (dimension B). Déterministe : même nom → même
   // teinte, toujours. Les overrides explicites sont appliqués APRÈS et gardent
   // donc la priorité — le document reste maître.
+  // ── LE CATALOGUE D'ABORD, ET IL REMPLACE LA PALETTE ENTIÈRE (2026-10-17).
+  //
+  // La rotation ci-dessous ne touchait QUE `primary`. Mesuré de bout en bout
+  // sur les deux cibles : entre `kaviva-spa` et `coach-fitness`, le module de
+  // thème émis diffère sur 4 lignes sur 71 — `bg`, `surface`, `text`,
+  // `muted`, `border`, `badgeBg`, `radius` identiques pour les 22 documents.
+  // Et la teinte qui bougeait était un HACHAGE DU NOM : un spa recevait du
+  // magenta, une salle de concert de l'orange sur fond blanc. Arbitraire,
+  // donc pire qu'absent — ça avait l'apparence d'un thème.
+  //
+  // Un nom DU CATALOGUE pose maintenant le monde visuel complet. Le catalogue
+  // est FERMÉ, comme le registre de blocs : le moteur n'invente pas une
+  // palette et ne la déduit pas d'un nom, il la LIT.
+  const duCatalogue = CATALOGUE[air.design.theme];
+  if (duCatalogue !== undefined) {
+    for (const scheme of SCHEMES) {
+      const palette = effective.color[scheme];
+      const source = duCatalogue[scheme];
+      if (palette === undefined) continue;
+      for (const cle of PALETTE_KEYS) {
+        const v = source[cle];
+        if (typeof v === "string") palette[cle] = v;
+      }
+    }
+    for (const cle of RADIUS_KEYS) effective.radius[cle] = duCatalogue.radius[cle];
+    // ── ET LA FAMILLE DE CARACTÈRES (tokens 1.6.0).
+    //
+    // LE MAILLON QUI A MANQUÉ TROIS FOIS DANS CE DÉPÔT — `accroche`,
+    // `logoUri`, puis l'avatar à initiales : déclaré, porté, et JAMAIS
+    // transmis. Rien n'échouait ; la chose rendait sa forme d'avant.
+    effective.font.famille = duCatalogue.famille;
+  }
+
+  // ── LA ROTATION RESTE, POUR LES NOMS HORS CATALOGUE.
+  //
+  // Ce n'est pas une faveur, c'est la COMPATIBILITÉ : un document qui n'a pas
+  // migré compile exactement comme avant. Le cliquet EP-263 compte combien en
+  // sont encore là, et ce compte ne peut que descendre.
   let rotation = 7;
   for (let i = 0; i < air.design.theme.length; i += 1) {
     rotation = (rotation * 31 + air.design.theme.charCodeAt(i)) % 360;
   }
-  if (rotation !== 0) {
+  if (rotation !== 0 && duCatalogue === undefined) {
     for (const scheme of SCHEMES) {
       const palette = effective.color[scheme];
       if (palette === undefined) continue;

@@ -5,32 +5,32 @@
 export const theme = {
   "color": {
     "light": {
-      "bg": "#F6F7F9",
+      "bg": "#F4F6F8",
       "surface": "#FFFFFF",
-      "text": "#16181D",
-      "muted": "#5A616E",
-      "primary": "#1E4DFA",
-      "onPrimary": "#E1E1E2",
-      "border": "#D9DDE3",
+      "text": "#14191F",
+      "muted": "#55606D",
+      "primary": "#15607F",
+      "onPrimary": "#D0D1D2",
+      "border": "#D3DAE2",
       "error": "#C42B1C",
       "success": "#1F7A3D",
       "warn": "#866A00",
-      "badgeBg": "#EEF1F5",
-      "primaryText": "#1E4DFA"
+      "badgeBg": "#E8EDF2",
+      "primaryText": "#15607F"
     },
     "dark": {
-      "bg": "#0A050E",
-      "surface": "#17121C",
-      "text": "#F2F0F4",
-      "muted": "#A49FAC",
-      "primary": "#1E4DFA",
-      "onPrimary": "#E1E1E2",
-      "border": "#2E2836",
+      "bg": "#0E1419",
+      "surface": "#18212A",
+      "text": "#EEF2F6",
+      "muted": "#9BA7B4",
+      "primary": "#4FB3D9",
+      "onPrimary": "#16181D",
+      "border": "#2A3542",
       "error": "#FF6B5E",
       "success": "#4CC17A",
       "warn": "#E3C25A",
-      "badgeBg": "#241E2B",
-      "primaryText": "#5074FB"
+      "badgeBg": "#1F2A34",
+      "primaryText": "#4FB3D9"
     }
   },
   "space": {
@@ -42,11 +42,12 @@ export const theme = {
     "xl": 24
   },
   "radius": {
-    "sm": 6,
-    "md": 10,
-    "lg": 16
+    "sm": 4,
+    "md": 6,
+    "lg": 10
   },
   "font": {
+    "famille": "systeme",
     "label": 12,
     "body": 14,
     "title": 17,

@@ -50,7 +50,16 @@ describe('EP-254 · ce que Deribfy sait, il le dit', () => {
     // Les données de démonstration sont COMPTÉES, pas évoquées.
     expect(tout, 'le nombre de lignes d exemple n est pas dit').toMatch(/43 lignes/u)
     // L identité visuelle est nommée — Base44 l annonce, Deribfy se taisait.
-    expect(tout, 'le thème du document n est pas nommé').toMatch(/tontine_sobre/u)
+    // ── LE NOM EST LU DANS LE DOCUMENT, PLUS RECOPIÉ ICI.
+    //
+    // Cette assertion cherchait le littéral `tontine_sobre`. Elle a rougi le
+    // 2026-10-17 quand le document a migré vers un thème du catalogue — et
+    // elle avait raison de rougir, mais pour la mauvaise raison : rien
+    // n'était cassé, un nom avait changé. Un cliquet qui recopie une valeur
+    // du document mesure la copie, pas la propriété.
+    //
+    // La propriété est : « le thème DU DOCUMENT est nommé à l'écran ».
+    expect(tout, 'le thème du document n est pas nommé').toContain(document().design.theme)
     // L écran d entrée est nommé par son TITRE, pas par son identifiant.
     expect(tout, 'l écran d ouverture est donné en code machine').toMatch(
       /Mon tableau de bord/u,

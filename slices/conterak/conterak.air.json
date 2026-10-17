@@ -3169,7 +3169,7 @@
     "defaultRoleId": "role_consommateur"
   },
   "design": {
-    "theme": "conterak_sobre"
+    "theme": "gestion_sobre"
   },
   "integrations": [],
   "network": {

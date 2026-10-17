@@ -232,7 +232,7 @@
     ]
   },
   "design": {
-    "theme": "marketplace_artisanat_chaleureux"
+    "theme": "table_chaleureuse"
   },
   "network": {
     "policy": "deny_by_default",

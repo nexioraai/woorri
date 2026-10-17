@@ -656,7 +656,7 @@
     }
   ],
   "design": {
-    "theme": "marche_frais"
+    "theme": "frais_marche"
   },
   "entities": [
     {

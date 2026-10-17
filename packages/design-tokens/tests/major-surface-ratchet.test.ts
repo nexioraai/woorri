@@ -129,8 +129,29 @@ describe("cliquet de surface de majeure — compatibilité mineure MÉCANIQUE", 
     // viewport. Valeur NON inventée : 768, le `max-w-3xl` que SGD applique
     // réellement — SGD étant la référence que le propriétaire oppose aux
     // applications générées. La règle de DET-023 tient.
+    // 1.6.0 (2026-10-17, « les concurrents font des thèmes absolument
+    // géniaux, contrairement à ce que Deribfy fait ») : `font.famille` — LE
+    // RÔLE DE FAMILLE DE CARACTÈRES.
+    //
+    // Défaut MESURÉ : ce groupe ne portait que des TAILLES (12/14/17/22/34).
+    // Les 22 applications s'écrivaient donc dans la police système, la même
+    // pour un spa, un chantier et une salle de concert — alors que la
+    // typographie est le premier marqueur d'identité visuelle, et c'était le
+    // seul que le moteur ne savait pas dire.
+    //
+    // UN RÔLE, JAMAIS UN NOM, et c'est une mesure : aucun nom de police
+    // n'existe sur iOS ET Android à la fois, et `fontFamily` du natif prend UN
+    // nom, pas une pile. Un nom absent ne lève pas, il retombe EN SILENCE sur
+    // la police système. Les noms vivent donc dans la couture de plateforme.
+    //
+    // Consommateurs RÉELS, la règle de DET-023 tient : les cinq rôles de texte
+    // de `styles.ts`, et les huit thèmes du catalogue qui le déclarent.
+    //
+    // ADDITIF : `systeme` est le défaut et ne pose AUCUNE `fontFamily` — un
+    // projet qui ne dit rien rend exactement comme en 1.5.0.
     expect(added).toEqual([
       "font.display",
+      "font.famille",
       "fontWeight.bold",
       "fontWeight.semibold",
       "opacity.disabled",
