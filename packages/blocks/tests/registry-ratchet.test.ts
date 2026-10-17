@@ -145,7 +145,24 @@ describe("cliquets du registre de blocs", () => {
     // document sur 23 ne le portait. Le retrait de `series` ne casse rien —
     // aucun document ne POUVAIT la porter. Le contrat du COMPOSANT est
     // inchange ; seule la face DOCUMENT s aplatit.
-    expect(BLOCK_REGISTRY_VERSION).toBe("1.18.0");
+    // 1.19.0 (2026-10-17) — l AVATAR A INITIALES sur `list`. Chaque ligne de
+    // la liste des membres chez Bolt porte un rond d initiales ; Deribfy ne
+    // savait poser qu une VIGNETTE, et seulement si le document declare
+    // `imageFieldId` : une liste de personnes sans photo restait du texte nu.
+    //
+    // ADDITIF : prop optionnelle et BOOLEENNE — elle ne designe aucun champ,
+    // elle dit « ces lignes sont des gens ». Le document le DIT, le moteur ne
+    // le devine pas : deduire qu une entite designe des personnes serait la
+    // devinette de domaine interdite ailleurs (F3, EP-201), et un catalogue
+    // afficherait « CB » pour « Collier baoule ». L image declaree PRIME
+    // toujours ; l avatar est le repli.
+    //
+    // DEUX DEFAUTS TROUVES EN LA POSANT, et aucun des deux ne se voyait au
+    // typage : `ListBlock` rend ses lignes a DEUX endroits (l apercu borne et
+    // la liste virtualisee) — n en cabler qu un a rendu 16 lignes et ZERO
+    // rond ; et `primitives.tsx` n est PAS partage entre les cibles, si bien
+    // que la poser cote natif seulement a casse 32/32 applications web.
+    expect(BLOCK_REGISTRY_VERSION).toBe("1.19.0");
     expect(BLOCKS.map((b) => b.id)).toEqual(V1_BLOCK_IDS);
   });
 

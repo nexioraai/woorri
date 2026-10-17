@@ -1689,6 +1689,10 @@
             {
               "key": "emptyMessage",
               "value": "Les membres apparaitront ici des quils rejoignent la tontine."
+            },
+            {
+              "key": "avatarInitiales",
+              "value": true
             }
           ]
         }
@@ -1805,6 +1809,10 @@
             {
               "key": "imageFieldId",
               "value": "fld_utilisateurs_photo_profil"
+            },
+            {
+              "key": "avatarInitiales",
+              "value": true
             }
           ]
         }
@@ -1917,6 +1925,10 @@
             {
               "key": "emptyMessage",
               "value": "Les membres apparaitront ici des quils rejoignent la tontine."
+            },
+            {
+              "key": "avatarInitiales",
+              "value": true
             }
           ]
         }

@@ -155,6 +155,23 @@ export interface ListBlockProps extends BlockA11yProps {
   /** État EXPLICITE (défaut { kind: "ready" }) — jamais déduit des données. */
   state?: ListBlockState;
   onItemPress?: (itemId: string) => void;
+  /**
+   * AVATAR A INITIALES (2026-10-17) — quand les lignes sont des PERSONNES.
+   *
+   * MESURE : chaque ligne de la liste des membres chez Bolt porte un rond
+   * d initiales (AM, PE, JM). Deribfy ne montrait qu une VIGNETTE, et
+   * seulement si le document declare une image : une liste de personnes sans
+   * photo restait du texte nu.
+   *
+   * LE DOCUMENT LE DIT, LE MOTEUR NE LE DEVINE PAS. Un catalogue de colliers
+   * ne doit pas afficher « CB » pour « Collier baoule » — deviner qu une
+   * entite designe des personnes serait exactement la devinette de domaine
+   * que ce depot interdit partout ailleurs.
+   *
+   * L IMAGE PRIME : si la ligne porte une vignette, elle gagne. L avatar est
+   * le REPLI, pas un remplacement.
+   */
+  avatarInitiales?: boolean;
 }
 
 export interface FormFieldSpec {

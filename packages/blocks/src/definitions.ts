@@ -73,7 +73,18 @@ import {
 // 1.16.0 (2026-10-17) — DOUZIEME bloc : `statistiques`. ADDITIF STRICT :
 // aucun bloc retire, aucun etat supprime, aucune prop devenue obligatoire.
 // Un appelant 1.15.0 se comporte a l identique.
-export const BLOCK_REGISTRY_VERSION = "1.18.0";
+// 1.17.0 (2026-10-17) — l en-tete gagne un SURTITRE. ADDITIF.
+// 1.18.0 (2026-10-17) — `graphique` devient EXPRIMABLE. Il portait depuis sa
+// creation un tableau d objets, que `flatConfigSchema` refuse : aucun
+// document ne pouvait le declarer, et la preuve est un document REFUSE. Ses
+// props passent en cles pointees (`series.label`, `series.value`,
+// `series.display`). RUPTURE de contrat sur un bloc que personne n avait pu
+// utiliser — zero appelant, donc zero migration.
+// 1.19.0 (2026-10-17) — la liste gagne l AVATAR A INITIALES (`avatarInitiales`).
+// ADDITIF STRICT : absent = la liste de 1.18.0 au caractere pres. L image
+// declaree prime toujours ; l avatar est le repli pour les lignes dont le
+// DOCUMENT dit qu elles sont des personnes.
+export const BLOCK_REGISTRY_VERSION = "1.19.0";
 
 // Motifs d'identités stables — IDENTIQUES à @deribfy/air-schema (ids.ts) ;
 // redéclarés structurellement (patron AirCapabilitySlice : pas de couplage
@@ -382,6 +393,22 @@ export const BLOCKS: readonly BlockDefinition[] = [
       // IMAGE ET RECHERCHE (1.2.0, D-087) — additives, optionnelles. Sans
       // elles, la liste rend EXACTEMENT ce qu'elle rendait en 1.1.0.
       imageFieldId: fieldRef.optional(),
+      // AVATAR A INITIALES (2026-10-17) — quand les lignes sont des PERSONNES.
+      //
+      // Mesure : chaque ligne de la liste des membres chez Bolt porte un rond
+      // d initiales (AM, PE, JM). Deribfy ne montrait qu une VIGNETTE, et
+      // seulement si le document declare `imageFieldId` : une liste de
+      // personnes sans photo restait du texte nu.
+      //
+      // LE DOCUMENT LE DIT, LE MOTEUR NE LE DEVINE PAS. Deduire d une entite
+      // qu elle designe des personnes serait la devinette de domaine que ce
+      // depot interdit partout ailleurs (EP-201, F3) : un catalogue
+      // afficherait « CB » pour « Collier baoule ».
+      //
+      // L IMAGE PRIME TOUJOURS : l avatar est le REPLI, jamais un
+      // remplacement. Un booleen, donc, et pas un `fieldRef` — il ne designe
+      // aucun champ, il dit « ces lignes sont des gens ».
+      avatarInitiales: z.boolean().optional(),
       searchFieldId: fieldRef.optional(),
       searchPlaceholder: z.string().min(1).optional(),
       // ── COMMENT LA QUESTION EST LUE (registre 1.15.0).

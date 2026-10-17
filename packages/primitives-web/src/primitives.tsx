@@ -41,6 +41,7 @@ import type {
   AppImageProps,
   AppButtonProps,
   AppTextProps,
+  AvatarInitialesProps,
   BadgeProps,
   BarreProps,
   GridCardProps,
@@ -554,6 +555,36 @@ export function Barre({ label, valeur, ratio, testID, accessibilityLabel }: Barr
         <View style={[s.barreRemplissage, { flex: part }]} />
         <View style={[s.barreReste, { flex: 1 - part }]} />
       </View>
+    </View>
+  );
+}
+
+/**
+ * AVATAR A INITIALES — le rond de tete de ligne d une personne.
+ *
+ * DEUX LETTRES AU PLUS, prises sur les deux premiers MOTS : « Aminata
+ * Mbarga » donne AM, « Samuel Eto o » donne SE. Un nom d un seul mot donne
+ * sa premiere lettre. C est une operation typographique sur un texte du
+ * DOCUMENT — la primitive n invente rien.
+ *
+ * `accessibilityLabel` porte le nom ENTIER : les initiales sont un raccourci
+ * visuel, et une personne qui ecoute l ecran doit entendre le nom.
+ */
+export function AvatarInitiales({ nom, testID }: AvatarInitialesProps) {
+  const s = useStyles();
+  const mots = nom.trim().split(/\s+/u).filter((m) => m.length > 0);
+  const initiales =
+    mots.length === 0
+      ? ""
+      : mots
+          .slice(0, 2)
+          .map((m) => m[0] ?? "")
+          .join("")
+          .toLocaleUpperCase();
+  if (initiales === "") return null;
+  return (
+    <View style={s.avatar} testID={testID} accessibilityLabel={nom}>
+      <Text style={s.avatarTexte}>{initiales}</Text>
     </View>
   );
 }

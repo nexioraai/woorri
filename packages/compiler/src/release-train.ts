@@ -163,7 +163,7 @@ export const RELEASE_TRAIN_V1 = {
   // avait aucun capable de porter plus qu un sous-titre, et les surfaces
   // legales annoncaient donc « le texte complet sera fourni ». Le generateur
   // ne refusait pas d ecrire : il n avait aucun endroit ou le faire.
-  blockRegistryVersion: "1.18.0",
+  blockRegistryVersion: "1.19.0",
   // Ré-scellé le 2026-08-29 (DET-006 / D-039) : `ListBlock` DÉCLARE désormais
   // `fill` sur sa Section, afin que la liste virtualisée reçoive un parent
   // BORNÉ. Cause démontrée : imbriquée dans un ScrollView de même axe, une
@@ -365,7 +365,22 @@ export const RELEASE_TRAIN_V1 = {
     //
     // ADDITIF : prop optionnelle sur `header`. Un document d avant ne change
     // pas de sens. Ancien sceau : a610afd2472d4012…
-    "b9d960253ad836f827ee31a6a6a38eaca5320cb9ee5103d653f3379bf4911208",
+    // RE-SCELLE 2026-10-17 (registre 1.19.0) — l AVATAR A INITIALES.
+    //
+    // Chaque ligne de la liste des membres chez Bolt porte un rond d initiales.
+    // Deribfy ne savait poser qu une VIGNETTE, et seulement si le document
+    // declare `imageFieldId` : une liste de personnes sans photo restait du
+    // texte nu. L image declaree prime toujours ; l avatar est le REPLI.
+    //
+    // ET LE DRAPEAU VIENT DU DOCUMENT, jamais d une deduction : un catalogue
+    // afficherait « CB » pour « Collier baoule » (F3, EP-201).
+    //
+    // CE QUE CE RE-SCELLEMENT COUVRE EN PLUS DU BLOC : les DEUX sites de
+    // rendu de ligne de `ListBlock`. Le premier essai n en avait cable qu un,
+    // et le montage a rendu 16 lignes et ZERO rond — rien n avait echoue.
+    //
+    // ADDITIF : prop optionnelle sur `list`. Ancien sceau : b9d960253ad836f8…
+    "65cae33638917b939b954222ef532452540bf46f3610e31bf25cbc0bd9aa898f",
   // EP-134 — ajout compatible `external_contact` : version MINEURE du registre.
   /**
    * EP-147 ③ — LE NIVEAU D'API ANDROID VISÉ, épinglé par le train.

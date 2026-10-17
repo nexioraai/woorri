@@ -6,7 +6,7 @@
 // de styling reste remplaçable (D-021) et les tokens restent la seule
 // source visuelle. AUCUNE syntaxe Maestro/Detox : les blocs sont
 // E2E-agnostiques (D-022/D-023), seuls les testID standard sont exposés.
-import {Liste, GridCard, AppButton, Barre,
+import {Liste, GridCard, AppButton, AvatarInitiales, Barre,
   AppText,
   Badge,
   ListRow,
@@ -75,6 +75,7 @@ export function ListBlock({
   bounded,
   seeAll,
   testID,
+  avatarInitiales,
 }: ListBlockProps) {
   // DET-033 (jugement propriétaire sur appareil) : les états ne remplacent
   // plus le BLOC ENTIER — ils ne remplacent que la ZONE DE CONTENU. Avant,
@@ -199,9 +200,15 @@ export function ListBlock({
               <ListRow
                 key={item.id}
                 leading={
-                  item.imageUri === undefined ? undefined : (
+                  item.imageUri !== undefined ? (
                     <AppImage uri={item.imageUri} variant="thumb" accessibilityLabel={item.title} />
-                  )
+                  ) : avatarInitiales === true ? (
+                    // REPLI, PAS REMPLACEMENT : l image prime toujours. Et le
+                    // document DIT que ces lignes sont des personnes — le
+                    // moteur ne le devine pas, un catalogue afficherait sinon
+                    // « CB » pour « Collier baoule ».
+                    <AvatarInitiales nom={item.title} testID={`${testID ?? "list"}-avatar-${item.id}`} />
+                  ) : undefined
                 }
                 title={item.title}
                 subtitle={item.subtitle}
@@ -308,10 +315,21 @@ export function ListBlock({
           <ListRow
             // VIGNETTE (1.2.0, D-087) : `leading` existait deja au contrat de
             // la primitive. Sans `imageUri`, la ligne reste celle de 1.1.0.
+            //
+            // DEUX CHEMINS DE RENDU, ET J AI CABLE LE MAUVAIS D ABORD
+            // (2026-10-17). `ListBlock` rend ses lignes de DEUX facons : la
+            // carte `items.map` ci-dessus, employee quand la liste est BORNEE
+            // (l apercu), et cette liste virtualisee, employee partout
+            // ailleurs. J ai pose l avatar sur la premiere ; le montage a
+            // rendu 16 lignes et ZERO rond. C est la cinquieme fois que ce
+            // depot voit « une liste ecrite deux fois diverge » — le controle
+            // ⑥ d EP-262 exige desormais que les deux chemins s accordent.
             leading={
-              item.imageUri === undefined ? undefined : (
+              item.imageUri !== undefined ? (
                 <AppImage uri={item.imageUri} variant="thumb" accessibilityLabel={item.title} />
-              )
+              ) : avatarInitiales === true ? (
+                <AvatarInitiales nom={item.title} testID={`${testID ?? "list"}-avatar-${item.id}`} />
+              ) : undefined
             }
             title={item.title}
             subtitle={item.subtitle}

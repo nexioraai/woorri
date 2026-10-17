@@ -1245,6 +1245,11 @@ export function AirList({ screen, blockId, itemId }: BlockRef & { itemId?: strin
       title={str(props.title)}
       items={mode === "apercu" && typeof compo?.apercu === "number" ? items.slice(0, compo.apercu) : items}
       state={state}
+      // AVATAR A INITIALES (2026-10-17) — le dernier maillon, celui qui a
+      // manque a `accroche` et `logoUri` : declare au bloc, porte par le
+      // document, et JAMAIS transmis. Rien n echouait, la liste rendait sa
+      // forme d avant.
+      avatarInitiales={props.avatarInitiales === true}
       bounded={mode === "apercu"}
       // 1.21.0 — « Voir plus » : libellé du DOCUMENT + geste SECONDAIRE du
       // bloc. L'un sans l'autre ne rend rien : aucune promesse muette.

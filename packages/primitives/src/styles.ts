@@ -532,6 +532,30 @@ const makeSheet = (c: Palette) =>
       marginTop: theme.space.xs,
     },
     badgeText: { fontSize: theme.font.label, color: c.muted },
+    // — Avatar a initiales (2026-10-17) —
+    //
+    // MESURE : chaque ligne de la liste des membres chez Bolt porte un rond
+    // d initiales (AM, PE, JM). Deribfy ne pouvait montrer qu une VIGNETTE,
+    // et seulement quand le document declare une image. Une liste de
+    // personnes sans photo restait une liste de texte nu.
+    //
+    // UN SEUL FOND, pas une teinte par personne : une couleur par individu
+    // exigerait une palette que les 44 jetons ne portent pas. On ne bricole
+    // pas une teinte ici — ce serait une decision de design deguisee en
+    // commodite d ecriture.
+    avatar: {
+      backgroundColor: c.badgeBg,
+      borderRadius: theme.size.tapTarget,
+      width: theme.size.tapTarget,
+      height: theme.size.tapTarget,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    avatarTexte: {
+      fontSize: theme.font.label,
+      fontWeight: theme.fontWeight.semibold,
+      color: c.muted,
+    },
     badgeSuccess: { color: c.success },
     badgeWarn: { color: c.warn },
     badgeError: { color: c.error },
