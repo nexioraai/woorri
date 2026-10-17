@@ -73,7 +73,7 @@ import {
 // 1.16.0 (2026-10-17) — DOUZIEME bloc : `statistiques`. ADDITIF STRICT :
 // aucun bloc retire, aucun etat supprime, aucune prop devenue obligatoire.
 // Un appelant 1.15.0 se comporte a l identique.
-export const BLOCK_REGISTRY_VERSION = "1.17.0";
+export const BLOCK_REGISTRY_VERSION = "1.18.0";
 
 // Motifs d'identités stables — IDENTIQUES à @deribfy/air-schema (ids.ts) ;
 // redéclarés structurellement (patron AirCapabilitySlice : pas de couplage
@@ -569,19 +569,31 @@ export const BLOCKS: readonly BlockDefinition[] = [
     version: "1.0.0",
     description: "Graphique en barres — compare des valeurs nommees.",
     entity: "forbidden",
+    // ── APLATI LE 2026-10-17, ET LE DEFAUT EST PROUVE.
+    //
+    // Ce bloc exigeait `series: [{label, value, display}]` — un tableau
+    // d OBJETS. Or `flatConfigSchema` n admet qu une primitive ou un tableau
+    // de PRIMITIVES ; son en-tete le justifie, et c est mesure : « la
+    // platitude est une contrainte de l API de sorties structurees (≤ 24
+    // parametres optionnels) ; un groupement s exprime par des cles pointees ».
+    //
+    // PREUVE, pas deduction : un document d essai portant un `graphique` sous
+    // l ancienne forme est REFUSE par `migrateAirDocument`. Le bloc etait donc
+    // INEMPLOYABLE depuis sa creation le 2026-10-13 — et c est pourquoi ZERO
+    // document sur 23 ne le porte, alors qu il figure dans l allowlist FERMEE
+    // transmise au generateur. Deux cahiers des charges reels le reclamaient.
+    //
+    // CE RETRAIT NE CASSE RIEN, et c est ce qui le rend legitime : aucun
+    // document ne POUVAIT porter `series`, donc aucun ne regresse. Le contrat
+    // du COMPOSANT est inchange — il recoit toujours des objets, que le
+    // runtime assemble par leur rang.
     propsSchema: z.strictObject({
       title: z.string().min(1).optional(),
-      series: z
-        .array(
-          z.strictObject({
-            label: z.string().min(1),
-            value: z.number(),
-            // Le texte AFFICHE : unite, devise, arrondi. Le moteur n'en
-            // fabrique aucun — il ne saurait ni la devise ni la precision.
-            display: z.string().min(1),
-          }),
-        )
-        .min(1),
+      "series.label": z.array(z.string().min(1)).min(1),
+      "series.value": z.array(z.number()).min(1),
+      // Le texte AFFICHE : unite, devise, arrondi. Le moteur n en fabrique
+      // aucun — il ne saurait ni la devise ni la precision.
+      "series.display": z.array(z.string().min(1)).min(1),
     }),
     fieldRefProps: [],
     fieldRefPropsAffichage: [],

@@ -959,15 +959,30 @@ export function AirGraphique({ screen, blockId }: BlockRef) {
   const b = block(screen, blockId);
   if (!visible) return null;
   const props = b.props ?? {};
-  const brut = Array.isArray(props.series) ? (props.series as unknown[]) : [];
-  const series = brut.filter(
-    (p): p is { label: string; value: number; display: string } =>
-      typeof p === "object" &&
-      p !== null &&
-      typeof (p as { label?: unknown }).label === "string" &&
-      typeof (p as { value?: unknown }).value === "number" &&
-      typeof (p as { display?: unknown }).display === "string",
-  );
+  // ── LES COLONNES SONT ASSEMBLEES ICI, PAR LEUR RANG (2026-10-17).
+  //
+  // Ce bloc attendait un tableau d OBJETS, que `flatConfigSchema` interdit :
+  // il etait donc INEMPLOYABLE depuis sa creation, et zero document ne le
+  // portait. Les trois colonnes arrivent desormais en parallele ; une barre
+  // n existe que si son libelle, sa valeur ET son texte affiche sont la.
+  // LES TROIS CLES SONT LUES LITTERALEMENT, et ce n est pas du style : le
+  // cliquet `props-cablees` verifie que le runtime LIT chaque prop declaree,
+  // et il ne peut pas suivre une cle cachee derriere une variable. Un helper
+  // aurait rendu la verification impossible — explicite vaut mieux.
+  const tableau = (v: unknown): unknown[] => (Array.isArray(v) ? v : []);
+  const labels = tableau(props["series.label"]);
+  const valeurs = tableau(props["series.value"]);
+  const affiches = tableau(props["series.display"]);
+  const series: { label: string; value: number; display: string }[] = [];
+  for (let i = 0; i < labels.length; i += 1) {
+    const label = labels[i];
+    const value = valeurs[i];
+    const display = affiches[i];
+    if (typeof label !== "string" || label === "") continue;
+    if (typeof value !== "number") continue;
+    if (typeof display !== "string" || display === "") continue;
+    series.push({ label, value, display });
+  }
   if (series.length === 0) return null;
   const titre = typeof props.title === "string" ? props.title : undefined;
   return (

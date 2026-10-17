@@ -132,6 +132,42 @@ describe("EP-261 · la carte de chiffre", () => {
     }
   });
 
+  it("⑧ `graphique` EST ENFIN EXPRIMABLE — le bloc mort depuis sa création", () => {
+    // ── LE DÉFAUT, PROUVÉ PUIS RÉPARÉ LE MÊME JOUR.
+    //
+    // `graphique` exigeait `series: [{label, value, display}]` — un tableau
+    // d'OBJETS, que `flatConfigSchema` interdit. PROUVE, pas déduit : un
+    // document d'essai portant cette forme était REFUSÉ par
+    // `migrateAirDocument`. Le bloc était donc INEMPLOYABLE depuis sa
+    // création (2026-10-13), et zéro document sur 23 ne le portait — alors
+    // qu'il figure dans l'allowlist FERMÉE transmise au générateur, et que
+    // DEUX cahiers des charges réels le réclamaient.
+    //
+    // Sa face DOCUMENT est maintenant plate ; le contrat du COMPOSANT est
+    // inchangé — le runtime assemble les colonnes par leur rang.
+    const def = getBlock("graphique");
+    const cles = Object.keys(
+      (def?.propsSchema as { shape?: Record<string, unknown> } | undefined)?.shape ?? {},
+    );
+    expect(cles, "les colonnes parallèles ont disparu").toContain("series.label");
+    expect(cles, "la colonne des valeurs a disparu").toContain("series.value");
+    expect(
+      cles.some((k) => k === "series"),
+      "la prop `series` monolithique est revenue : le bloc redevient INEXPRIMABLE",
+    ).toBe(false);
+
+    // ET IL ATTEINT L'ÉCRAN, pas seulement le schéma.
+    const air = tontine();
+    const bloc = air.screens.flatMap((s) => s.blocks).find((b) => b.blockType === "graphique");
+    expect(bloc, "le témoin a disparu de la tontine").not.toBeUndefined();
+    const tout = [...compileProject(air).files.values()]
+      .filter((v) => typeof v === "string")
+      .join("\n");
+    expect(tout, "le graphique n'atteint pas l'application émise").toContain(
+      "Évolution de la cagnotte",
+    );
+  });
+
   it("⑦ LE SURTITRE SITUE, ET IL ATTEINT L'ÉCRAN", () => {
     // ── TROIS NIVEAUX DE HIÉRARCHIE, PAS DEUX.
     //

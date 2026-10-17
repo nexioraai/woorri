@@ -163,7 +163,7 @@ export const RELEASE_TRAIN_V1 = {
   // avait aucun capable de porter plus qu un sous-titre, et les surfaces
   // legales annoncaient donc « le texte complet sera fourni ». Le generateur
   // ne refusait pas d ecrire : il n avait aucun endroit ou le faire.
-  blockRegistryVersion: "1.17.0",
+  blockRegistryVersion: "1.18.0",
   // Ré-scellé le 2026-08-29 (DET-006 / D-039) : `ListBlock` DÉCLARE désormais
   // `fill` sur sa Section, afin que la liste virtualisée reçoive un parent
   // BORNÉ. Cause démontrée : imbriquée dans un ScrollView de même axe, une
@@ -356,7 +356,7 @@ export const RELEASE_TRAIN_V1 = {
     // STRICTEMENT ADDITIF : aucun bloc retire, aucun etat supprime,
     // aucune prop devenue obligatoire. Un appelant 1.15.0 se comporte a
     // l identique. Ancien sceau : 633b785c38e54158…
-    // RE-SCELLE 2026-10-17 (registre 1.17.0) — le SURTITRE.
+    // RE-SCELLE 2026-10-17 (registre 1.18.0) — le SURTITRE, puis `graphique` APLATI.
     //
     // Chaque ecran de Bolt ouvre sur une petite ligne grise en capitales —
     // PILOTAGE, JOURNAL FINANCIER, COMMUNAUTE — puis le grand titre, puis une
@@ -365,7 +365,7 @@ export const RELEASE_TRAIN_V1 = {
     //
     // ADDITIF : prop optionnelle sur `header`. Un document d avant ne change
     // pas de sens. Ancien sceau : a610afd2472d4012…
-    "e2a574b1ab8089271c0601dddc3dac0aad5709b320b29c799d33472e20f5f788",
+    "b9d960253ad836f827ee31a6a6a38eaca5320cb9ee5103d653f3379bf4911208",
   // EP-134 — ajout compatible `external_contact` : version MINEURE du registre.
   /**
    * EP-147 ③ — LE NIVEAU D'API ANDROID VISÉ, épinglé par le train.

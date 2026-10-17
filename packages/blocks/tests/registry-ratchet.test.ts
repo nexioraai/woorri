@@ -139,7 +139,13 @@ describe("cliquets du registre de blocs", () => {
     // 1.17.0 (2026-10-17) — le SURTITRE sur `header`. Trois niveaux de
     // hierarchie au lieu de deux. ADDITIF : prop optionnelle, aucun bloc
     // ajoute ni retire.
-    expect(BLOCK_REGISTRY_VERSION).toBe("1.17.0");
+    // 1.18.0 (2026-10-17) — `graphique` APLATI. Il exigeait un tableau d
+    // OBJETS, que `flatConfigSchema` interdit : PROUVE par un document d
+    // essai REFUSE. Il etait donc INEMPLOYABLE depuis sa creation, et zero
+    // document sur 23 ne le portait. Le retrait de `series` ne casse rien —
+    // aucun document ne POUVAIT la porter. Le contrat du COMPOSANT est
+    // inchange ; seule la face DOCUMENT s aplatit.
+    expect(BLOCK_REGISTRY_VERSION).toBe("1.18.0");
     expect(BLOCKS.map((b) => b.id)).toEqual(V1_BLOCK_IDS);
   });
 

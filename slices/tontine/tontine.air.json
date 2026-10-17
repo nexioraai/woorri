@@ -1460,6 +1460,49 @@
           ]
         },
         {
+          "blockType": "graphique",
+          "id": "blk_tableau_graphique",
+          "props": [
+            {
+              "key": "title",
+              "value": "Évolution de la cagnotte"
+            },
+            {
+              "key": "series.label",
+              "value": [
+                "Juil",
+                "Août",
+                "Sept",
+                "Oct",
+                "Nov",
+                "Déc"
+              ]
+            },
+            {
+              "key": "series.value",
+              "value": [
+                120000,
+                145000,
+                138000,
+                190000,
+                225000,
+                265000
+              ]
+            },
+            {
+              "key": "series.display",
+              "value": [
+                "120 000 FCFA",
+                "145 000 FCFA",
+                "138 000 FCFA",
+                "190 000 FCFA",
+                "225 000 FCFA",
+                "265 000 FCFA"
+              ]
+            }
+          ]
+        },
+        {
           "id": "blk_mon_tableau_liste",
           "blockType": "list",
           "entityId": "ent_transactions",
