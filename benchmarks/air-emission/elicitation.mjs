@@ -163,12 +163,52 @@ export function deviseSuggeree(pays) {
  * autre chose qu'une donnée structurelle, elle se verrait ici.
  */
 export const QUESTIONS_DE_CONFIGURATION = {
+  // ── EP-255 B — LA QUESTION QUI AIGUILLE, ET POURQUOI ELLE PASSE EN PREMIER.
+  //
+  // DÉFAUT MESURÉ LE 2026-10-17 : les quatre questions de configuration
+  // étaient formulées pour une BOUTIQUE — « votre boutique », « vos
+  // produits », « vos acheteurs ». Deribfy émet aussi des tontines, des
+  // lignes de bus, des restaurants. Les poser telles quelles demandait à un
+  // propriétaire de tontine quel numéro reçoit l'argent de ses ACHETEURS.
+  //
+  // CE QU'ON NE FAIT PAS POUR LE RÉSOUDRE : deviner le domaine depuis le
+  // texte de la demande. Ce serait la devinette de produit que tout ce
+  // module existe pour interdire — et l'erreur exacte de v0, qui a déduit
+  // « France » de la langue française puis affiché un tarif EDF.
+  //
+  // CE QU'ON FAIT : L'HUMAIN DÉCIDE. Un choix FERMÉ, posé avant tout appel
+  // payant, répondable sans connaître le moteur (critère EP-135), et dont la
+  // réponse décide des questions suivantes. Une tontine répond « elle
+  // affiche seulement des montants » et le dialogue s'arrête là.
+  ARGENT_DANS_APP: {
+    structure: "encaissement",
+    /** LES RÉPONSES SONT DES DONNÉES, PAS UNE PHRASE À ANALYSER.
+     *
+     *  L'écran les rend en choix fermés — un clic — et le moteur ne reçoit
+     *  que `valeur`, jamais le texte que l'humain a lu. C'est ce qui rend
+     *  l'aiguillage vérifiable : il n'y a rien à interpréter.
+     *
+     *  L'ORDRE EST CROISSANT : chaque palier ajoute ce que le précédent
+     *  n'exigeait pas. « produits » implique « paiements ». */
+    choix: Object.freeze([
+      { valeur: "aucun", texte: "Elle affiche seulement des montants" },
+      { valeur: "paiements", texte: "Elle encaisse des paiements" },
+      { valeur: "produits", texte: "Elle vend des produits à livrer" },
+    ]),
+    demande: () =>
+      `Que fait votre application avec l'argent ? Votre réponse décide des ` +
+      `questions suivantes — et si aucune ne correspond, dites-le.`,
+  },
   MARCHE_VISE: {
     structure: "currency",
+    // FORMULATION NEUTRE EN DOMAINE (défaut du 2026-10-17). Elle disait
+    // « votre boutique vend-elle » : une tontine n'a pas de boutique, et
+    // une ligne de bus ne vend rien au sens où l'entendait cette phrase.
+    // La devise, elle, vaut pour TOUTE application qui affiche un montant.
     demande: () =>
-      `Dans quel pays votre boutique vend-elle ? Cela me sert à proposer la ` +
-      `devise d'affichage — vous pourrez la changer si vous vendez dans une ` +
-      `autre monnaie.`,
+      `Dans quel pays votre application sera-t-elle utilisée ? Cela me sert ` +
+      `à proposer la devise d'affichage — vous pourrez la changer si vos ` +
+      `montants sont dans une autre monnaie.`,
   },
   DEVISE_RETENUE: {
     structure: "currency",
@@ -232,6 +272,42 @@ export const QUESTIONS_DE_CONFIGURATION = {
   }
 }
 
+// CLIQUET AU CHARGEMENT — UN CHOIX FERMÉ QUI N'OFFRE RIEN EST UN PIÈGE.
+//
+// Une question déclarant `choix` promet à l'écran une liste à cliquer, et à
+// `configurationDe` une table de valeurs admises. Vide, dupliquée, ou sans
+// texte, elle rend la question IMPOSSIBLE À RÉPONDRE : l'aiguillage
+// n'aiguille plus rien et le dialogue tourne sans que personne ne le voie.
+// Le module refuse alors d'exister, comme pour les deux cliquets au-dessus.
+{
+  const fautifs = [];
+  for (const [code, q] of Object.entries(QUESTIONS_DE_CONFIGURATION)) {
+    if (q.choix === undefined) continue;
+    const valeurs = q.choix.map((c) => c?.valeur);
+    if (q.choix.length < 2) fautifs.push(`${code} (moins de deux choix)`);
+    if (valeurs.some((v) => typeof v !== "string" || v.length === 0)) {
+      fautifs.push(`${code} (valeur vide)`);
+    }
+    if (new Set(valeurs).size !== valeurs.length) fautifs.push(`${code} (valeurs en double)`);
+    if (q.choix.some((c) => typeof c?.texte !== "string" || c.texte.length === 0)) {
+      fautifs.push(`${code} (choix sans texte lisible)`);
+    }
+  }
+  if (fautifs.length > 0) {
+    throw new Error(`EP-201 — choix fermé(s) inutilisable(s) : ${fautifs.join(", ")}.`);
+  }
+}
+
+/**
+ * LES TROIS PALIERS D'ENCAISSEMENT, LUS DEPUIS LA TABLE DES QUESTIONS.
+ *
+ * Recopier les valeurs ici créerait deux vérités : un palier ajouté au
+ * choix et oublié dans cette liste serait refusé en silence. On les DÉRIVE.
+ */
+const ENCAISSEMENTS = Object.freeze(
+  QUESTIONS_DE_CONFIGURATION.ARGENT_DANS_APP.choix.map((c) => c.valeur),
+);
+
 /**
  * EP-201 B — LA RÉPONSE STRUCTURELLE, ET RIEN D'AUTRE.
  *
@@ -245,6 +321,16 @@ export const QUESTIONS_DE_CONFIGURATION = {
  */
 export function configurationDe(reponses = {}) {
   const pays = reponses.MARCHE_VISE;
+  // ── L'AIGUILLAGE EST UN FAIT, PAS UN AIGUILLAGE SEULEMENT.
+  //
+  // Il ne sert pas qu'à choisir les questions suivantes : il DIT si
+  // l'application encaisse, et le moteur a besoin de le savoir. Seule une
+  // valeur de la table sort — un texte libre arrivé par ce canal ne
+  // produirait aucun fait, donc la question resterait ouverte et serait
+  // re-posée. Visible, plutôt que supposé.
+  const encaissement = ENCAISSEMENTS.includes(reponses.ARGENT_DANS_APP)
+    ? reponses.ARGENT_DANS_APP
+    : null;
   const suggeree = pays === undefined ? null : deviseSuggeree(pays);
   const saisie = reponses.DEVISE_RETENUE;
   // L'humain prime TOUJOURS sur la suggestion (EP-201 C).
@@ -255,6 +341,7 @@ export function configurationDe(reponses = {}) {
   const logistique = reponses.LOGISTIQUE_PROPRE;
   const numero = reponses.NUMERO_ENCAISSEUR;
   const out = {};
+  if (encaissement !== null) out.encaissement = encaissement;
   if (devise !== null && devise !== undefined) out.currency = devise;
   if (typeof logistique === "boolean") out.logistiqueParLeMarchand = logistique;
   if (typeof numero === "string" && numero.trim() !== "") {
@@ -326,16 +413,59 @@ export function elicitationDe(diagnostics, { interlocuteur = false } = {}) {
  * interlocuteur, on REFUSE au lieu de supposer.
  */
 export function configurationADemander({ interlocuteur = false, reponses = {} } = {}) {
-  const ordre = ["MARCHE_VISE", "DEVISE_RETENUE", "LOGISTIQUE_PROPRE", "NUMERO_ENCAISSEUR"];
   const suggeree =
     reponses.MARCHE_VISE === undefined ? null : deviseSuggeree(reponses.MARCHE_VISE);
+
+  // ── UNE RÉPONSE HORS TABLE N'EST PAS UNE RÉPONSE.
+  //
+  // `reponses[code] === undefined` ne suffit pas pour un choix fermé : un
+  // texte libre arrivé là serait compté comme répondu, et l'aiguillage
+  // partirait sur rien. La question reste alors OUVERTE — elle revient à
+  // l'écran, ce qui est visible, au lieu d'être supposée.
+  const repondu = (code) => {
+    const v = reponses[code];
+    if (v === undefined) return false;
+    const choix = QUESTIONS_DE_CONFIGURATION[code].choix;
+    return choix === undefined || choix.some((c) => c.valeur === v);
+  };
+
+  // ── L'AIGUILLAGE. Ce que l'humain a répondu décide de la suite.
+  //
+  // DEUX QUESTIONS POUR TOUT LE MONDE : ce que l'application fait de
+  // l'argent, et où elle est utilisée — la devise vaut pour toute
+  // application qui affiche un montant, y compris une tontine.
+  //
+  // LA DEVISE N'EST RE-DEMANDÉE QUE SI LE PAYS NE LA DONNE PAS. Quand la
+  // table ISO 4217 suggère, l'écran montre la suggestion et l'humain la
+  // corrige s'il veut : `configurationDe` honore toujours `DEVISE_RETENUE`,
+  // répondue ou non. Un pays inconnu, lui, ne suggère RIEN — la question
+  // devient alors indispensable, et elle est posée.
+  //
+  // LES DEUX DERNIÈRES NE CONCERNENT QUE CEUX QU'ELLES CONCERNENT.
+  const encaissement = repondu("ARGENT_DANS_APP") ? reponses.ARGENT_DANS_APP : null;
+  const ordre = ["ARGENT_DANS_APP", "MARCHE_VISE"];
+  if (repondu("MARCHE_VISE") && suggeree === null) ordre.push("DEVISE_RETENUE");
+  if (encaissement === "paiements" || encaissement === "produits") {
+    ordre.push("NUMERO_ENCAISSEUR");
+  }
+  if (encaissement === "produits") ordre.push("LOGISTIQUE_PROPRE");
+
   const questions = ordre
-    .filter((code) => reponses[code] === undefined)
-    .map((code) => ({
-      code,
-      structure: QUESTIONS_DE_CONFIGURATION[code].structure,
-      texte: QUESTIONS_DE_CONFIGURATION[code].demande(suggeree),
-    }));
+    .filter((code) => !repondu(code))
+    .map((code) => {
+      const q = QUESTIONS_DE_CONFIGURATION[code];
+      return {
+        code,
+        structure: q.structure,
+        texte: q.demande(suggeree),
+        // Les choix VOYAGENT avec la question : sans eux l'écran devrait les
+        // recopier, et une table recopiée est une seconde vérité.
+        ...(q.choix === undefined ? {} : { choix: q.choix }),
+        // La suggestion est dite À PART du texte : l'écran peut la montrer
+        // comme un défaut modifiable plutôt que comme une phrase à lire.
+        ...(code === "MARCHE_VISE" && suggeree !== null ? { suggestion: suggeree } : {}),
+      };
+    });
   if (questions.length === 0) {
     return { statut: "aucune_question", questions: [], configuration: configurationDe(reponses) };
   }

@@ -37,6 +37,7 @@ import { NextResponse } from 'next/server'
 import { requireAuthenticatedUser } from '@/lib/auth/require-authenticated-user'
 import { documentPour } from '@/lib/apps/pour'
 import { intentionDepuis, premiereIntention, sterile } from '@/lib/apps/dialogue'
+import { briefAvec, type ConfigurationRetenue } from '@/lib/apps/avant-de-depenser'
 import { Veille, alerter } from '@/lib/apps/surveillance'
 
 export const runtime = 'nodejs'
@@ -61,6 +62,10 @@ export async function POST(req: Request) {
     demande?: unknown
     intention?: unknown
     perimetre?: unknown
+    /** LOT 5 — l'échappatoire en texte libre du pré-vol. */
+    autreChose?: unknown
+    /** LOT 5 — la réponse STRUCTURELLE du pré-vol (jamais un nom de pays). */
+    configuration?: unknown
   } | null
 
   // DEUX ENTRÉES, UNE SEULE SORTIE. Premier message : une phrase. Tours
@@ -69,7 +74,25 @@ export async function POST(req: Request) {
     corps?.intention === undefined || corps.intention === null
       ? await (async () => {
           const demande = typeof corps?.demande === 'string' ? corps.demande.trim() : ''
-          return demande === '' ? null : await premiereIntention(demande)
+          if (demande === '') return null
+          // ── LE BRIEF EST COMPOSÉ UNE FOIS, PUIS SCELLÉ (LOT 5).
+          //
+          // Trois morceaux, tous antérieurs au scellement : la demande, le
+          // texte libre du pré-vol — celui qui a tout changé chez Replit — et
+          // les précisions STRUCTURELLES issues des choix fermés.
+          //
+          // Après le scellement, plus rien ne s'y ajoute : le hold-out exige
+          // un brief non modifié, et une empreinte qui couvrirait un texte
+          // évolutif ne prouverait plus rien. C'est précisément pour cela que
+          // le pré-vol passe AVANT, et pas après.
+          const config =
+            corps?.configuration !== null &&
+            typeof corps?.configuration === 'object' &&
+            !Array.isArray(corps.configuration)
+              ? (corps.configuration as ConfigurationRetenue)
+              : null
+          const autre = typeof corps?.autreChose === 'string' ? corps.autreChose : null
+          return await premiereIntention(briefAvec(demande, autre, config))
         })()
       : await intentionDepuis(corps.intention)
 

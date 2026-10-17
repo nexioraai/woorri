@@ -55,6 +55,61 @@ export function Bulle({ moi, children }: { moi: boolean; children: ReactNode }) 
   );
 }
 
+/**
+ * LES CHOIX FERMES DU PRE-VOL (LOT 5) — ET POURQUOI C'EST UN COMPOSANT.
+ *
+ * ── CE QU'IL REND, ET D'OU VIENT LA FORME.
+ *
+ * Replit pose sa question a treize secondes, AVANT de coder : trois boutons
+ * radio, un clic. L'option cochee disait « releves seulement » ; c'est le
+ * champ libre, a cote, qui a transforme l'application en reconnaissance
+ * d'image. Les deux ont leur place ; celui-ci rend les boutons.
+ *
+ * ── POURQUOI IL N'EST PAS RESTE DANS LA PAGE.
+ *
+ * J'avais d'abord ecrit le `.map()` des choix DANS le rendu de la
+ * conversation, avec `onClick={() => repondreAvant(...)}`. `react-hooks/purity`
+ * a alors suivi la chaine rendu → gestionnaire → `Date.now()` et refuse le
+ * fichier, qui lintait propre avant moi. Desactiver la regle aurait masque un
+ * vrai signal.
+ *
+ * Le fichier portait deja la reponse : `Composeur` recoit `onEnvoyer` en
+ * PROP. Un gestionnaire passe n'est pas un gestionnaire appele. On suit son
+ * idiome, et les primitives restent ici — comme l'exige l'en-tete de ce
+ * fichier, parce qu'une bulle ecrite deux fois diverge.
+ */
+export function ChoixFermes({
+  choix,
+  actif,
+  onChoisir,
+}: {
+  choix: readonly { valeur: string; texte: string }[];
+  /** `false` pendant un tour en cours, ou sur une question deja repondue :
+   *  sans cela, un double clic enverrait deux reponses. */
+  actif: boolean;
+  onChoisir: (valeur: string) => void;
+}) {
+  return (
+    <div className="mt-3 flex flex-col gap-2">
+      {choix.map((c) => (
+        <button
+          key={c.valeur}
+          type="button"
+          disabled={!actif}
+          onClick={() => { onChoisir(c.valeur); }}
+          className={`text-left rounded-lg border px-3 py-2 text-sm transition ${
+            actif
+              ? 'border-white/10 bg-white/[0.03] text-slate-200 hover:border-[#FA5D1E]/50 hover:bg-white/[0.06]'
+              : 'border-white/5 bg-white/[0.02] text-slate-500'
+          } focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FA5D1E]`}
+        >
+          {c.texte}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 /** Les trois points — la meme attente, des deux cotes. */
 export function Attente({ libelle }: { libelle?: ReactNode } = {}) {
   return (

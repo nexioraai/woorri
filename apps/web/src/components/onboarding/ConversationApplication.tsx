@@ -22,7 +22,7 @@
 // ============================================================
 import { useState, useRef, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Attente, Bulle, Composeur, Escalier } from './Conversation';
+import { Attente, Bulle, ChoixFermes, Composeur, Escalier } from './Conversation';
 import {
   ETAPES_SUIVI,
   FOURCHETTE_DUREE,
@@ -54,6 +54,31 @@ import {
 const ASYNC = modeAsyncActif(process.env.NEXT_PUBLIC_GENERATION_ASYNC);
 
 type Question = { code: string; destination: string; texte: string };
+// ── LOT 5 — LA QUESTION DU PRE-VOL, ET CE QUI LA DISTINGUE.
+//
+// Une `Question` projette un diagnostic : elle n'existe qu'APRES que P0 a lu,
+// donc apres la depense. Une `QuestionAvant` precede tout juge — et `choix`
+// la rend cliquable, comme les trois boutons radio de Replit a treize
+// secondes. `suggestion` voyage A PART du texte : l'ecran la montre comme un
+// defaut modifiable, pas comme une phrase a lire.
+type Choix = { valeur: string; texte: string };
+type QuestionAvant = {
+  code: string;
+  structure: string;
+  texte: string;
+  choix?: Choix[];
+  suggestion?: string;
+};
+type Configuration = {
+  encaissement?: string;
+  currency?: string;
+  logistiqueParLeMarchand?: boolean;
+  numeroEncaisseur?: string;
+};
+/** Le code de l'echappatoire. Il ne part JAMAIS au module d'elicitation : ce
+ *  n'est pas une question de configuration, c'est du texte libre qui entre
+ *  dans le brief avant son scellement. */
+const AUTRE_CHOSE = 'AUTRE_CHOSE';
 type Intention = {
   brief: string;
   addendum: { rang: number; code: string; destination: string; question: string; reponse: string }[];
@@ -64,6 +89,8 @@ type Message =
   | { role: 'deribfy'; compris: string[]; parIA: boolean; note?: string }
   // UNE QUESTION EST UN TOUR A PART ENTIERE, pas une note en bas d'un resultat.
   | { role: 'question'; questions: Question[]; avertissement?: string }
+  // LOT 5 — UN TOUR GRATUIT, ET L'ECRAN LE DIT.
+  | { role: 'avant'; question: QuestionAvant }
   // UN REFUS DE CONSTRUIRE EST UN TOUR A PART, pas une note sous un resultat.
   | { role: 'incompris'; raison: string }
   | { role: 'notre_faute'; raison: string }
@@ -84,6 +111,19 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
   // garde rien, et la conversation survit a un rechargement de page.
   const [intention, setIntention] = useState<Intention | null>(null);
   const [ouvertes, setOuvertes] = useState<Question[]>([]);
+  // ── LOT 5 — L'ETAT DU PRE-VOL, CHEZ LE CLIENT comme l'addendum d'EP-136.
+  //
+  // Le serveur ne garde rien : les reponses repartent a chaque tour, et le
+  // dialogue survit a un rechargement de page. Rien n'est cru sur parole pour
+  // autant — une valeur hors de la table des choix ne compte pas comme une
+  // reponse, et sa question revient.
+  const [reponsesAvant, setReponsesAvant] = useState<Record<string, unknown>>({});
+  const [questionAvant, setQuestionAvant] = useState<QuestionAvant | null>(null);
+  const [configuration, setConfiguration] = useState<Configuration>({});
+  const [autreChose, setAutreChose] = useState('');
+  /** La demande d'origine, gardee pendant le pre-vol : le brief n'est compose
+   *  qu'une fois toutes les reponses obtenues. */
+  const [demandeEnAttente, setDemandeEnAttente] = useState('');
   const [perimetre, setPerimetre] = useState<string[]>([]);
   // Le texte REELLEMENT lu — brief et reponses. Les deux autres routes le
   // recoivent ; leur envoyer le dernier message seul perdrait tout le reste.
@@ -370,17 +410,195 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
   };
 
 
+  /**
+   * LOT 5 — LE PRE-VOL : ON DEMANDE PENDANT QUE CA COUTE ENCORE 0,00 $.
+   *
+   * ── CE QUI A COMMANDE CETTE FONCTION, ET SON PRIX.
+   *
+   * Douze generations, ~29 $, aucune application vue. L'ordre reel etait :
+   * depenser → faire juger → questionner. Replit fait l'inverse, chronometre
+   * le 2026-10-16 : treize secondes entre la phrase et la premiere question.
+   *
+   * Elle appelle `/avant`, la seule route du generateur qui ne peut rien
+   * couter : elle n'importe ni client, ni cle, ni moteur — EP-257 le mesure
+   * sur sa source. Tant qu'elle rend une question, RIEN n'est depense.
+   *
+   * ── L'ECHAPPATOIRE EST LE DERNIER TOUR, ET ELLE N'EST PAS DECORATIVE.
+   *
+   * Chez Replit, l'option cochee disait « releves seulement » ; le champ
+   * libre a transforme l'application en reconnaissance d'image. Les trois
+   * options n'etaient PAS les bonnes. On la pose donc toujours, apres les
+   * choix fermes — et elle est passable : « non » suffit a l'ignorer.
+   */
+  const lancerPreVol = async (
+    demande: string,
+    reponses: Record<string, unknown>,
+    // ── POURQUOI CECI EST UN ARGUMENT ET NON UNE LECTURE D'ETAT.
+    //
+    // DEFAUT QUE J'AI INTRODUIT PUIS CORRIGE ICI : `setAutreChose(x)` suivi
+    // de `envoyer()` dans le MEME tour fait lire a la fermeture l'ANCIENNE
+    // valeur — React n'applique l'etat qu'au rendu suivant. L'echappatoire
+    // qui a tout change chez Replit serait arrivee vide au brief, un tour
+    // trop tard, et personne ne l'aurait vu. Ce qui doit etre juste au moment
+    // de l'appel VOYAGE ; l'etat ne sert plus qu'a l'affichage.
+    autre: string,
+  ) => {
+    setEnCours(true);
+    try {
+      const res = await fetch('/api/generateur/avant', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${await jeton()}` },
+        body: JSON.stringify({ reponses }),
+      });
+      const d = (await res.json().catch(() => ({}))) as {
+        questions?: QuestionAvant[];
+        configuration?: Configuration;
+        complet?: boolean;
+        error?: string;
+      };
+      if (!res.ok) {
+        // ── LE PRE-VOL NE DOIT JAMAIS BLOQUER LA CONSTRUCTION.
+        //
+        // Il AMELIORE le brief ; il n'en est pas la condition. Une panne ici
+        // ferait perdre une demande deja ecrite pour une etape qui ne coute
+        // rien — on le DIT, et on construit avec ce qu'on a.
+        setAvis('Je n’ai pas pu poser mes questions préalables ; je construis avec votre phrase seule.');
+        setQuestionAvant(null);
+        await construire({ texte: demande, autre, config: {}, dejaAffiche: true });
+        return;
+      }
+      const config = d.configuration ?? {};
+      setConfiguration(config);
+      const suivante = (d.questions ?? [])[0];
+      if (suivante !== undefined) {
+        setQuestionAvant(suivante);
+        setMessages((m) => [...m, { role: 'avant', question: suivante }]);
+        return;
+      }
+      // ── PLUS AUCUNE QUESTION DE CONFIGURATION : L'ECHAPPATOIRE, UNE FOIS.
+      if (reponses[AUTRE_CHOSE] === undefined) {
+        const q: QuestionAvant = {
+          code: AUTRE_CHOSE,
+          structure: 'brief',
+          texte:
+            'Autre chose d’important que je devrais savoir ? Si mes questions ' +
+            'sont passées à côté de l’essentiel, c’est le moment de le dire. ' +
+            'Écrivez « non » s’il n’y a rien.',
+        };
+        setQuestionAvant(q);
+        setMessages((m) => [...m, { role: 'avant', question: q }]);
+        return;
+      }
+      // Tout est repondu : on passe la porte chere, une seule fois.
+      setQuestionAvant(null);
+      await construire({ texte: demande, autre, config, dejaAffiche: true });
+    } catch {
+      setAvis('Je n’ai pas pu poser mes questions préalables ; je construis avec votre phrase seule.');
+      setQuestionAvant(null);
+      await construire({ texte: demande, autre, config: {}, dejaAffiche: true });
+    } finally {
+      setEnCours(false);
+    }
+  };
+
+  /** Une reponse a un CHOIX FERME — un clic, pas une phrase a interpreter. */
+  const choisirAvant = (valeur: string) => { void repondreAvant(valeur); };
+
+  const repondreAvant = async (valeur: string) => {
+    const code = questionAvant?.code;
+    if (enCours || code === undefined) return;
+    const choisi = questionAvant?.choix?.find((c) => c.valeur === valeur);
+    setMessages((m) => [...m, { role: 'moi', texte: choisi?.texte ?? valeur }]);
+    const suite = { ...reponsesAvant, [code]: valeur };
+    setReponsesAvant(suite);
+    await lancerPreVol(demandeEnAttente, suite, autreChose);
+  };
+
   /** Un tour : soit une premiere demande, soit une reponse a la question ouverte. */
   const envoyer = async () => {
     const texte = saisie.trim();
     if (texte === '' || enCours) return;
+
+    // ══════════════════════════════════════════════════════════════════
+    // LOT 5 — LA PORTE GRATUITE PASSE AVANT LA PORTE CHERE.
+    //
+    // DEUX CAS, ET AUCUN NE DEPENSE :
+    //   ① une question du pre-vol est ouverte → ce qu'on ecrit EST sa reponse
+    //      (l'echappatoire comprise, qui n'est pas une question de
+    //      configuration et ne part jamais au module d'elicitation) ;
+    //   ② premier message, hors question projetee → on pose le pre-vol.
+    //
+    // `forcer` est la sortie : une fois tout repondu, `lancerPreVol` rappelle
+    // cette fonction et la porte chere s'ouvre. Sans ce drapeau, le pre-vol
+    // se reposerait indefiniment et rien ne se construirait jamais.
+    {
+      if (questionAvant !== null) {
+        setSaisie('');
+        setMessages((m) => [...m, { role: 'moi', texte }]);
+        const suite = { ...reponsesAvant, [questionAvant.code]: texte };
+        setReponsesAvant(suite);
+        if (questionAvant.code === AUTRE_CHOSE) {
+          // « non » n'est pas une precision : on l'ecarte du brief plutot que
+          // de faire lire a P0 une phrase qui ne dit rien.
+          const vide = /^(non|rien|aucun[e]?)\.?$/iu.test(texte.trim());
+          const retenu = vide ? '' : texte;
+          setAutreChose(retenu);
+          await lancerPreVol(demandeEnAttente, suite, retenu);
+          return;
+        }
+        await lancerPreVol(demandeEnAttente, suite, autreChose);
+        return;
+      }
+      if (!enQuestion && intention === null) {
+        setSaisie('');
+        setMessages((m) => [...m, { role: 'moi', texte }]);
+        setDemandeEnAttente(texte);
+        setReponsesAvant({});
+        setAutreChose('');
+        await lancerPreVol(texte, {}, '');
+        return;
+      }
+    }
+    // ══════════════════════════════════════════════════════════════════
+    // RIEN A DEMANDER AVANT : on passe la porte chere.
+    await construire({ texte });
+  };
+
+  /**
+   * LE CHEMIN PAYANT, EXTRAIT DE LA PORTE QUI LE GARDE (LOT 5).
+   *
+   * ── POURQUOI CETTE EXTRACTION, ET CE QU'ELLE A CORRIGE.
+   *
+   * J'avais d'abord fait rappeler `envoyer` par `lancerPreVol`. Le cycle
+   * `envoyer ↔ lancerPreVol` a fait perdre a `react-hooks/purity` la trace
+   * du gestionnaire d'evenement : il a classe `Date.now()` comme un appel de
+   * RENDU et refuse le fichier. Le fichier lintait propre avant moi — la
+   * faute etait la mienne, et la desactiver aurait masque un vrai signal.
+   *
+   * La bonne correction est cette separation, et elle est meilleure en soi :
+   * `envoyer` est la PORTE — elle decide si l'on depense. `construire` est le
+   * chemin qui DEPENSE. Deux responsabilites, deux fonctions, aucun cycle.
+   */
+  const construire = async (opts: {
+    texte: string;
+    /** L'echappatoire et la configuration sont PASSEES, jamais relues : React
+     *  n'applique l'etat qu'au rendu suivant, et les lire ici les prendrait
+     *  vides d'un tour. */
+    autre?: string;
+    config?: Configuration;
+    /** `true` quand la porte du pre-vol a deja affiche la demande. */
+    dejaAffiche?: boolean;
+  }) => {
+    const texte = opts.texte;
     // La note du document joint est MISE DE COTE avant d'etre effacee : si le
     // tour echoue, elle doit revenir avec le texte.
     const noteAvant = noteJoint;
     setNoteJoint('');
     setSaisie('');
     setAvis('');
-    setMessages((m) => [...m, { role: 'moi', texte }]);
+    // LA PORTE DU PRE-VOL L'A DEJA AFFICHE : le re-ajouter montrerait la
+    // demande deux fois, une fois avant les questions et une fois apres.
+    if (opts.dejaAffiche !== true) setMessages((m) => [...m, { role: 'moi', texte }]);
     setEnCours(true);
     setDebutLecture(new Date().toISOString());
     setLongueurLue(texte.length);
@@ -412,7 +630,19 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
             },
             perimetre,
           }
-        : { demande: texte };
+        : {
+            demande: texte,
+            // ── LOT 5 — CE QUE LE PRE-VOL A RECOLTE VOYAGE AVEC LA DEMANDE.
+            //
+            // `comprendre` compose le brief UNE FOIS avec `briefAvec`, puis
+            // le scelle. Sans ces deux champs, on aurait fait repondre
+            // quelqu'un pour rien — et c'est le defaut exact que le LOT 3 a
+            // ferme ailleurs : une reponse recoltee et jetee.
+            ...(opts.autre !== undefined && opts.autre !== '' ? { autreChose: opts.autre } : {}),
+            ...(opts.config !== undefined && Object.keys(opts.config).length > 0
+              ? { configuration: opts.config }
+              : {}),
+          };
 
     // ── LE FILET, ET POURQUOI IL EXISTE.
     //
@@ -909,6 +1139,44 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
               {m.questions.length > 1 && (
                 <span className="block mt-3 text-xs text-slate-500">
                   Répondez à la première ; je poserai la suivante ensuite.
+                </span>
+              )}
+            </Bulle>
+          ) : m.role === 'avant' ? (
+            // ── LOT 5 — LE TOUR QUI NE COUTE RIEN, ET QUI LE DIT.
+            //
+            // Replit pose sa question a treize secondes, AVANT de coder. Ici
+            // le prix est affiche : c'est l'information que personne n'avait
+            // en depensant ~29 $ pour douze generations.
+            <Bulle key={i} moi={false}>
+              <span className="block text-xs text-emerald-400/90 mb-2">
+                Avant de construire — et ceci ne coûte rien
+              </span>
+              <span className="block">{m.question.texte}</span>
+              {m.question.suggestion !== undefined && (
+                <span className="block mt-2 text-xs text-slate-400">
+                  Par défaut, j’afficherai vos montants en {m.question.suggestion}. Vous
+                  pouvez l’écrire autrement.
+                </span>
+              )}
+              {/* ── CE QUI EST DEJA ACQUIS, SUR LA QUESTION EN COURS SEULEMENT.
+                   Le porter sur une bulle ancienne montrerait l'etat d'AUJOURD'HUI
+                   sous une question d'HIER. Et la devise est dite des que le pays
+                   est repondu, au lieu d'attendre la fin du dialogue. */}
+              {questionAvant?.code === m.question.code && configuration.currency !== undefined && (
+                <span className="block mt-2 text-xs text-emerald-400/80">
+                  Déjà noté : vos montants s’afficheront en {configuration.currency}.
+                </span>
+              )}
+              {m.question.choix !== undefined ? (
+                <ChoixFermes
+                  choix={m.question.choix}
+                  actif={!enCours && questionAvant?.code === m.question.code}
+                  onChoisir={choisirAvant}
+                />
+              ) : (
+                <span className="block mt-3 text-xs text-slate-500">
+                  Répondez en écrivant ci-dessous.
                 </span>
               )}
             </Bulle>
