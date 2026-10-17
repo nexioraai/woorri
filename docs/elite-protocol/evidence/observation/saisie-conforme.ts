@@ -77,6 +77,79 @@ export function satisfait(valeur: string, a: AssertionData): boolean {
 }
 
 /**
+ * SYNTHÉTISER UNE CHAÎNE DEPUIS UN MOTIF — ajouté le 2026-10-17.
+ *
+ * ── LE TROU MESURÉ, ET IL EST RESTÉ OUVERT SIX SEMAINES.
+ *
+ * Les cinq candidats ci-dessus ne satisfont AUCUN motif exigeant une longue
+ * suite de chiffres. Mesuré sur `billetterie-concerts` :
+ * `fld_paiement_numero_carte` exige `^[0-9]{13,19}$` et
+ * `fld_paiement_expiration` exige `^(0[1-9]|1[0-2])/[0-9]{2}$` — aucun
+ * candidat ne passe, la valeur de repli non plus, et le formulaire de
+ * paiement était compté FANTÔME alors qu'il fonctionne.
+ *
+ * Même famille exacte que la cause racine de ce fichier : l'instrument
+ * punissait le document le mieux validé.
+ *
+ * ── CE QU'IL COUVRE, ET CE QU'IL NE PRÉTEND PAS COUVRIR.
+ *
+ * Les constructions que les documents emploient réellement : classes bornées
+ * (`[0-9]{13,19}`), alternatives (`(0[1-9]|1[0-2])`), littéraux, séparateurs,
+ * échappements. Il ne résout PAS une expression régulière quelconque — et
+ * c'est pourquoi son résultat est VÉRIFIÉ contre le motif avant d'être
+ * retenu. Un échec retombe sur la valeur historique, comme avant.
+ */
+export function depuisMotif(motif: string): string {
+  let m = motif.replace(/^\^/u, "").replace(/\$$/u, "");
+  let sortie = "";
+  for (let garde = 0; m.length > 0 && garde < 200; garde += 1) {
+    const alt = /^\(([^()]*)\)(\?)?/u.exec(m);
+    if (alt !== null) {
+      // La PREMIÈRE branche, développée récursivement.
+      if (alt[2] !== "?") sortie += depuisMotif((alt[1] ?? "").split("|")[0] ?? "");
+      m = m.slice(alt[0].length);
+      continue;
+    }
+    const cls = /^\[([^\]]+)\](?:\{(\d+)(?:,(\d+))?\}|(\+)|(\*)|(\?))?/u.exec(m);
+    if (cls !== null) {
+      const corps = cls[1] ?? "";
+      const car = /0-9/u.test(corps)
+        ? "1"
+        : /a-z/u.test(corps)
+          ? "a"
+          : /A-Z/u.test(corps)
+            ? "A"
+            : (corps.replace(/\\./gu, "").replace(/\^/u, "")[0] ?? "x");
+      const n =
+        cls[2] !== undefined
+          ? Number(cls[2])
+          : cls[4] !== undefined
+            ? 1
+            : cls[5] !== undefined || cls[6] !== undefined
+              ? 0
+              : 1;
+      sortie += car.repeat(n);
+      m = m.slice(cls[0].length);
+      continue;
+    }
+    const ech = /^\\(.)/u.exec(m);
+    if (ech !== null) {
+      sortie += ech[1] === "d" ? "1" : ech[1] === "s" ? " " : (ech[1] ?? "");
+      m = m.slice(2);
+      continue;
+    }
+    const nu = /^([^[(\\])(\{(\d+)(?:,\d+)?\}|\+|\*|\?)?/u.exec(m);
+    if (nu === null) break;
+    const car = nu[1] ?? "";
+    const q = nu[2];
+    sortie +=
+      q === undefined || q === "+" ? car : q === "*" || q === "?" ? "" : car.repeat(Number(nu[3] ?? 1));
+    m = m.slice(nu[0].length);
+  }
+  return sortie;
+}
+
+/**
  * Valeur à saisir dans un champ, compte tenu des règles du document.
  *
  * Un champ SANS assertion garde la valeur historique : la correction est
@@ -94,7 +167,13 @@ export function valeurPourChamp(
     enumere !== undefined && Array.isArray(enumere.value) && enumere.value.length > 0
       ? [String(enumere.value[0])]
       : [];
-  const liste = [...premiere, ...CANDIDATS];
+  // Un `eq` DIT la valeur : le document ne laisse rien à choisir.
+  const egal = propres.find((a) => a.operator === "eq");
+  const imposee = egal === undefined ? [] : [String(egal.value)];
+  // Un motif que nul candidat ne satisfait est DÉVELOPPÉ (2026-10-17).
+  const motif = propres.find((a) => a.operator === "matches" && typeof a.value === "string");
+  const synthese = motif === undefined ? [] : [depuisMotif(String(motif.value))];
+  const liste = [...imposee, ...premiere, ...CANDIDATS, ...synthese];
   return liste.find((c) => propres.every((a) => satisfait(c, a))) ?? VALEUR_PAR_DEFAUT;
 }
 

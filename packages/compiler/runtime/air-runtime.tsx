@@ -201,6 +201,29 @@ function reglesRespectees(
   for (const regle of regles ?? []) {
     if (regle.entityId !== entityId) continue;
     for (const a of regle.assertions) {
+      // ── CE QUE LE CLIENT A LE DROIT DE JUGER (défaut du 2026-10-17).
+      //
+      // MESURÉ SUR LES 15 DOCUMENTS DU DÉPÔT : VINGT formulaires, dans DOUZE
+      // documents, ne pouvaient PAS être soumis. Jamais, et en silence.
+      //
+      // Le mécanisme : une règle porte un invariant sur une ENTITÉ
+      // (« le statut d'un billet appartient à ce cycle de vie »), le
+      // formulaire ne collecte pas ce champ — à raison, personne ne tape un
+      // statut — et l'assertion était tout de même évaluée. `in` comparait la
+      // chaîne « undefined » à sa liste, `required` voyait du vide, `matches`
+      // refusait `undefined`. Faux pour TOUTE saisie possible. Et le bouton
+      // restait ACTIF : l'utilisateur remplissait, appuyait, et rien.
+      //
+      // C'ÉTAIT UNE ERREUR DE CATÉGORIE. Ce que le client valide, c'est la
+      // SAISIE de l'utilisateur. Les invariants de la table ont leur gardien,
+      // et ce n'est pas lui : `derive-rls.ts` les porte côté serveur.
+      //
+      // CE QUI N'EST PAS AFFAIBLI, et c'est tout l'enjeu : un champ que le
+      // formulaire EXPOSE porte toujours sa clé — `AirForm` l'amorce à vide
+      // pour chaque champ déclaré. Laissé vide, il échoue `required` et
+      // BLOQUE, exactement comme avant. On distingue « le formulaire ne
+      // collecte pas ce champ » de « l'utilisateur ne l'a pas rempli ».
+      if (!(a.fieldId in valeurs)) continue;
       const brut = valeurs[a.fieldId];
       const nombre = brut === undefined ? Number.NaN : Number(brut);
       const attendu = a.value;
@@ -1266,8 +1289,20 @@ export function AirForm({ screen, blockId, itemId }: BlockRef & { itemId?: strin
     idEdite === undefined || b.entityId === undefined
       ? undefined
       : provider.getInstance(b.entityId, idEdite);
+  // ── CHAQUE CHAMP EXPOSÉ PORTE SA CLÉ, MÊME INTOUCHÉ.
+  //
+  // `useFormValues` n'écrit une clé qu'au PREMIER caractère tapé : un champ
+  // affiché et laissé vide n'existait donc pas dans la soumission. Depuis que
+  // `reglesRespectees` ignore les champs que le formulaire ne collecte pas
+  // (ci-dessus), un requis intouché serait devenu INVISIBLE à la validation —
+  // et le formulaire se serait soumis vide. L'amorce ferme ce trou : le champ
+  // est là, à vide, et `required` le refuse.
+  const amorce: Record<string, string> = {};
+  for (const id of fieldIds) if (typeof id === "string") amorce[id] = "";
   const values: Readonly<Record<string, string>> =
-    existant === undefined ? saisies : { ...existant.values, ...saisies };
+    existant === undefined
+      ? { ...amorce, ...saisies }
+      : { ...amorce, ...existant.values, ...saisies };
   const submitLabel = str(props.submitLabel);
   if (submitLabel === undefined) {
     throw new Error(`AIR_RUNTIME_PROP_MISSING:${blockId}:submitLabel`);

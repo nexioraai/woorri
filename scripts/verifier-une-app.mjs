@@ -227,28 +227,34 @@ const nbFormulaires = (air.screens ?? []).reduce(
   0,
 );
 
-if (formulairesBloques.length === 0) {
-  console.log(
-    `  ⑤ ${String(nbFormulaires)} formulaire(s) SOUMETTABLE(S)` +
-      (nbFormulaires === 0 ? " — aucun formulaire dans ce document" : ""),
-  );
-} else {
-  console.error(
-    `  ⑤ ${String(formulairesBloques.length)} formulaire(s) sur ${String(nbFormulaires)} NE PEUVENT PAS ÊTRE SOUMIS`,
-  );
+console.log(
+  `  ⑤ ${String(nbFormulaires)} formulaire(s)` +
+    (nbFormulaires === 0 ? " — aucun formulaire dans ce document" : " SOUMETTABLE(S)"),
+);
+// ── CE QUI RESTE À DIRE APRÈS LE CORRECTIF, ET POURQUOI CE N'EST PLUS UN REFUS.
+//
+// Ce niveau a refusé 20 formulaires le 2026-10-17, et il avait raison AVANT le
+// correctif du runtime. Depuis, `reglesRespectees` n'évalue plus une assertion
+// portant sur un champ que le formulaire ne collecte pas : la soumission
+// aboutit. Garder le refus serait tenir un rouge dont la cause est fermée.
+//
+// Le fait, lui, reste VRAI et mérite d'être dit : une règle qu'aucun
+// formulaire ne collecte n'est jamais vérifiée PAR LE CLIENT. Son gardien est
+// le serveur (`derive-rls.ts`). Qui livre sans serveur doit le savoir.
+if (formulairesBloques.length > 0) {
   for (const f of formulairesBloques) {
     const detail = [...f.bloquants]
       .map(([champ, ops]) => `${champ} (${[...ops].sort().join("/")})`)
       .sort()
       .join(", ");
-    console.error(`     🔴 ${f.ecran}/${f.bloc} — champ(s) sous règle absent(s) : ${detail}`);
+    console.log(
+      `     ⚪ ${f.ecran}/${f.bloc} — règle(s) non vérifiables côté client : ${detail}`,
+    );
   }
-  console.error(
-    "     Le bouton est ACTIF et l'appui ne produit RIEN, sans message :\n" +
-      "     la règle porte sur un champ que le formulaire n'expose pas.\n" +
-      "     Deux issues : exposer le champ, ou que le moteur le renseigne.",
+  console.log(
+    "        Ces champs ne sont collectés par aucun formulaire : leur invariant\n" +
+      "        est tenu par le serveur, pas par l'application.",
   );
-  process.exit(1);
 }
 
 // ── ⑥ L'APPLICATION AGIT-ELLE ? (LOT 6)
@@ -262,96 +268,42 @@ if (formulairesBloques.length === 0) {
 // faux cliquet, et n'en exiger aucune d'une application qui en promet
 // laisserait passer la promesse morte. Le document arbitre.
 /**
- * ── CE QU'ON SAISIT DANS CHAQUE CHAMP, ET POURQUOI ÇA VIENT DU DOCUMENT.
+ * ── CE QU'ON SAISIT DANS CHAQUE CHAMP, ET POURQUOI ÇA NE S'ÉCRIT PAS ICI.
  *
- * DÉFAUT MESURÉ SUR MOI-MÊME, le 2026-10-17. Ma première sonde remplissait
- * TOUT avec « 42 ». Sur `bus-intercites` : 136 appuis, 32 champs, ZÉRO
- * écriture — et j'ai failli conclure que l'application était muette.
+ * J'avais d'abord écrit mon propre choix de valeurs dans ce fichier. Il avait
+ * trois trous, chacun mesuré : une seule assertion lue par champ (`gte 1` ET
+ * `lte 8` donnait « 42 »), `eq` ignoré, et aucun candidat pour un motif comme
+ * `^[0-9]{13,19}$`. Chacun produisait « 0 écriture » sur une application SAINE.
  *
- * Diagnostic : le document déclare six règles de validation, dont
- * `^[^@\s]+@[^@\s]+\.[a-z]{2,}$` sur l'e-mail et une liste fermée sur le
- * statut d'un billet. « 42 » les viole. La soumission était refusée À RAISON.
+ * Puis j'ai trouvé `saisie-conforme.ts`, écrit le 2026-09-01 pour la gate des
+ * contrôles fantômes. Il fait DÉJÀ mieux : il retient le premier candidat qui
+ * satisfait TOUTES les assertions du champ. Son en-tête raconte la même cause
+ * racine, mesurée alors sur 26 applications — « le document le mieux validé
+ * était le plus puni ».
  *
- * Un instrument qui crie au loup sur une application saine est PIRE que pas
- * d'instrument : on apprend à l'ignorer. Les valeurs viennent donc des
- * assertions du document lui-même.
- *
- * LA FRONTIÈRE : on ne devine rien. Une énumération donne sa première valeur
- * admise ; un motif est ÉPROUVÉ contre les candidats, et c'est le regex DU
- * DOCUMENT qui tranche ; le reste suit le `type` déclaré. Un champ dont le
- * document ne dit rien reçoit un témoin neutre.
+ * Je n'en écris donc pas un second. Ce dépôt a vu quatre fois « une liste
+ * écrite deux fois diverge ». Ce qui me manquait — le développement d'un motif
+ * et le cas `eq` — est allé DANS ce module, où la gate des fantômes en profite
+ * aussi.
  */
-const CANDIDATS = [
-  "temoin@exemple.com",
-  "2026-01-15",
-  "2026-01-15T10:00:00Z",
-  "+23566000000",
-  "42",
-  "Temoin",
-];
+const { valeurPourChamp } = await import(
+  join(REPO, "docs/elite-protocol/evidence/observation/saisie-conforme.ts")
+);
 
 const valeursParChamp = (() => {
-  // ① LES CONTRAINTES, RAMASSÉES OÙ ELLES VIVENT : les assertions des règles.
-  const contraintes = new Map();
-  const balayerRegles = (o) => {
-    if (Array.isArray(o)) return void o.forEach(balayerRegles);
+  const assertions = [];
+  const ramasser = (o) => {
+    if (Array.isArray(o)) return void o.forEach(ramasser);
     if (o === null || typeof o !== "object") return;
     if (Array.isArray(o.rules)) {
-      for (const r of o.rules) {
-        for (const a of r?.assertions ?? []) {
-          if (typeof a?.fieldId !== "string") continue;
-          const liste = contraintes.get(a.fieldId) ?? [];
-          liste.push(a);
-          contraintes.set(a.fieldId, liste);
-        }
-      }
+      for (const r of o.rules) assertions.push(...(r?.assertions ?? []));
     }
-    for (const v of Object.values(o)) balayerRegles(v);
+    for (const v of Object.values(o)) ramasser(v);
   };
-  balayerRegles(air);
-
-  const parType = {
-    number: "42",
-    decimal: "42",
-    integer: "42",
-    date: "2026-01-15",
-    datetime: "2026-01-15T10:00:00Z",
-    boolean: "true",
-    text: "Temoin",
-    string: "Temoin",
-  };
-
+  ramasser(air);
   const out = {};
   for (const e of air.entities ?? []) {
-    for (const f of e.fields ?? []) {
-      const regles = contraintes.get(f.id) ?? [];
-      // ① UNE LISTE FERMÉE : sa première valeur, celle du document.
-      const liste =
-        regles.find((a) => a.operator === "in" && Array.isArray(a.value))?.value ??
-        (Array.isArray(f.options) ? f.options : undefined);
-      if (liste !== undefined && liste.length > 0) {
-        out[f.id] = String(typeof liste[0] === "object" ? (liste[0].value ?? liste[0].id) : liste[0]);
-        continue;
-      }
-      // ② UN MOTIF : on ÉPROUVE les candidats contre le regex du document.
-      const motif = regles.find((a) => a.operator === "matches" && typeof a.value === "string");
-      if (motif !== undefined) {
-        let retenu;
-        try {
-          const re = new RegExp(motif.value, "u");
-          retenu = CANDIDATS.find((c) => re.test(c));
-        } catch {
-          // Un motif que la plateforme refuse de compiler n'est pas notre
-          // affaire ici : on retombe sur le type, et on ne cache rien.
-        }
-        if (retenu !== undefined) {
-          out[f.id] = retenu;
-          continue;
-        }
-      }
-      // ③ SINON, LE TYPE DÉCLARÉ. Un champ muet reçoit un témoin neutre.
-      out[f.id] = parType[String(f.type ?? "")] ?? "Temoin";
-    }
+    for (const f of e.fields ?? []) out[f.id] = valeurPourChamp(f.id, assertions);
   }
   return out;
 })();
