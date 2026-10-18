@@ -91,7 +91,14 @@ import {
 // de declarer une phrase, alors que `list`, `form` et `detail_header` l ont
 // depuis 1.1.0 (D-060) : meme montee, meme patron. ADDITIF — prop optionnelle,
 // et sans elle le message n est simplement pas rendu.
-export const BLOCK_REGISTRY_VERSION = "1.20.0";
+// 1.21.0 (2026-10-18) — `header` gagne `titreContinu`. D8 chez Bolt : le
+// sous-titre POURSUIT le titre sur une seule ligne, en gris apres le gras.
+// Le vocabulaire existait — `title` ET `subtitle` — mais la FORME n etait que
+// « l un sous l autre ». MESURE : zero document n ecrit un titre qui se
+// poursuit, et ce n est pas un desinteret — la forme n existait pas, donc P0
+// ne pouvait pas l ecrire. Meme raison que `graphique`, inemploye parce
+// qu inexprimable. ADDITIF : absent = rendu de 1.20.0 au caractere pres.
+export const BLOCK_REGISTRY_VERSION = "1.21.0";
 
 // Motifs d'identités stables — IDENTIQUES à @deribfy/air-schema (ids.ts) ;
 // redéclarés structurellement (patron AirCapabilitySlice : pas de couplage
@@ -350,6 +357,32 @@ export const BLOCKS: readonly BlockDefinition[] = [
     propsSchema: z.strictObject({
       title: z.string().min(1),
       subtitle: z.string().min(1).optional(),
+      // ── LE TITRE QUI SE POURSUIT (2026-10-18) — D8 chez Bolt.
+      //
+      // Son tableau de bord ouvre sur « Bonjour Aminata, » en gras suivi de
+      // « voici votre espace. » en gris, SUR LA MEME LIGNE. Deribfy porte
+      // depuis toujours `title` ET `subtitle` — le vocabulaire etait la — mais
+      // les rend sur DEUX lignes. Ce n est donc pas une absence de mots, c est
+      // une absence de FORME.
+      //
+      // MESURE QUI A DECIDE DE L AJOUT : zero document du depot n ecrit un
+      // titre qui se poursuit. Ce n est pas un desinteret — c est que la
+      // forme n existait pas, donc P0 ne pouvait pas l ecrire. Meme raison
+      // que `graphique`, inemploye parce qu inexprimable.
+      //
+      // LE DOCUMENT LE DIT, LE MOTEUR NE LE DEVINE PAS : « Votre tontine en un
+      // coup d oeil » apres « Mon tableau de bord » sur une seule ligne serait
+      // illisible. Seul celui qui ecrit les deux parties sait si elles forment
+      // une phrase.
+      titreContinu: z
+        .boolean()
+        .optional()
+        .describe(
+          "Quand le sous-titre POURSUIT le titre dans la meme phrase : " +
+            "« Bonjour Aminata, » + « voici votre espace. » Rendu sur une seule " +
+            "ligne, le sous-titre en gris. N employer que si les deux parties " +
+            "se lisent d un trait.",
+        ),
       // SURTITRE (2026-10-17) — la ligne qui SITUE, au-dessus du titre.
       // Mesure : chaque ecran de Bolt ouvre sur une petite ligne grise en
       // capitales (PILOTAGE, JOURNAL FINANCIER, COMMUNAUTE), puis le grand

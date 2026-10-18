@@ -657,6 +657,11 @@ export function AirHeader({ screen, blockId }: BlockRef) {
       title={title}
       subtitle={str(props.subtitle)}
       surtitre={str(props.surtitre)}
+      // ── LE MAILLON, ENCORE (2026-10-18). `accroche`, `logoUri`, l avatar,
+      // la famille de caracteres, la phrase de l agent : cinq fois une prop
+      // declaree, portee par le document, et JAMAIS transmise. Rien
+      // n echouait ; la chose rendait sa forme d avant.
+      titreContinu={props.titreContinu === true}
       accroche={props.accroche === true}
       logoUri={str(props.logoUri)}
     />

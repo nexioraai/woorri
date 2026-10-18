@@ -27,13 +27,37 @@ export interface A11yProps {
 export type TextVariant = "label" | "body" | "title" | "heading" | "display";
 export type TextTone = "default" | "muted" | "primary" | "error" | "success" | "warn";
 
+/**
+ * LA SUITE D'UN TEXTE — la seconde partie d'une même phrase, en ton atténué.
+ *
+ * ── POURQUOI CE N'EST PAS LE BLOC QUI LA COMPOSE.
+ *
+ * Le bloc d'en-tête voulait rendre « Bonjour Aminata, » suivi de « voici
+ * votre espace. » sur une seule ligne. Composer les deux demandait un ESPACE,
+ * et le cliquet F3 l'a refusé — à raison : « un libellé humain porte presque
+ * toujours une signature détectable dans un littéral : espace, diacritique,
+ * points de suspension ». Un espace dans un bloc est la signature d'un texte
+ * fabriqué par le moteur.
+ *
+ * La règle que ce dépôt applique partout ailleurs donne la sortie, et elle est
+ * écrite dans le bloc lui-même : « Le bloc choisit un RÔLE, la primitive porte
+ * la forme ». Un séparateur typographique EST une forme. Il vit donc ici.
+ */
 export type AppTextProps = PropsWithChildren<
   A11yProps & {
     variant?: TextVariant;
     tone?: TextTone;
     /** Alignement LOGIQUE (miroir RTL automatique) — jamais left/right. */
     align?: "start" | "center" | "end";
-  }
+      /**
+     * La SECONDE partie de la même phrase, rendue inline et atténuée.
+     *
+     * Absente, le texte est celui d'avant au caractère près. Les deux parties
+     * viennent du DOCUMENT ; seul l'espace qui les sépare appartient à la
+     * primitive.
+     */
+    suite?: string;
+}
 >;
 
 export type ScreenShellProps = PropsWithChildren<A11yProps & { title: string }>;

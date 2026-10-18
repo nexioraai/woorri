@@ -178,7 +178,20 @@ describe("cliquets du registre de blocs", () => {
     // l etat d erreur reste visible, donc la personne sait que ca a echoue, et
     // le code part dans le `testID`, ou un instrument le trouve sans qu aucun
     // oeil ne le subisse.
-    expect(BLOCK_REGISTRY_VERSION).toBe("1.20.0");
+    // 1.21.0 (2026-10-18) — `header` gagne `titreContinu` (D8).
+    //
+    // Le sous-titre POURSUIT le titre sur une seule ligne. Le vocabulaire
+    // existait deja — `title` ET `subtitle` — mais la FORME n etait que « l un
+    // sous l autre », et Bolt ouvre sur « Bonjour Aminata, » en gras suivi de
+    // « voici votre espace. » en gris.
+    //
+    // MESURE QUI A DECIDE L AJOUT : zero document du depot n ecrit un titre
+    // qui se poursuit. Ce n est pas un desinteret — la forme n existait pas,
+    // donc P0 ne pouvait pas l ecrire. Meme raison que `graphique`.
+    //
+    // ADDITIF : prop optionnelle et BOOLEENNE. Absente, le sous-titre reste
+    // sur sa ligne et le rendu est celui de 1.20.0 au caractere pres.
+    expect(BLOCK_REGISTRY_VERSION).toBe("1.21.0");
     expect(BLOCKS.map((b) => b.id)).toEqual(V1_BLOCK_IDS);
   });
 

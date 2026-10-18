@@ -42,6 +42,8 @@ import { beforeAll, describe, expect, it } from "vitest";
 import { compilerANeuf } from "./app-fraiche.ts";
 
 const DOCUMENT = "slices/tontine/tontine.air.json";
+/** Le fixture du titre qui se POURSUIT — un salut en deux parties. */
+const FIXTURE_TITRE = "docs/elite-protocol/evidence/fixtures/titre-continu.air.json";
 let APP = "";
 beforeAll(async () => {
   const a = await compilerANeuf(DOCUMENT, "deribfy-vocabulaire");
@@ -262,5 +264,56 @@ describe("PREUVE NATIVE — le vocabulaire de Bolt est rendu", () => {
         "transmis et IGNORÉ, la sémantique est débranchée",
     ).toBe(couleurParTon.size);
     r.unmount();
+  });
+
+  it("D8 · LE TITRE QUI SE POURSUIT TIENT SUR UNE LIGNE", async () => {
+    // ── LE VOCABULAIRE EXISTAIT ; LA FORME NON.
+    //
+    // Bolt ouvre sur « Bonjour Aminata, » en gras suivi de « voici votre
+    // espace. » en gris, SUR LA MEME LIGNE. Deribfy portait `title` ET
+    // `subtitle` depuis toujours, et les rendait l'un SOUS l'autre.
+    //
+    // MESURE QUI A DÉCIDÉ L'AJOUT : zéro document du dépôt n'écrit un titre
+    // qui se poursuit. Ce n'est pas un désintérêt — la forme n'existait pas,
+    // donc P0 ne pouvait pas l'écrire. Même raison que `graphique`, inemployé
+    // parce qu'inexprimable. Le registre transmet les props à P0 en JSON
+    // Schema, description comprise : l'ajouter la rend DISPONIBLE.
+    //
+    // Le fixture est explicite (`fixtures/titre-continu.air.json`), et c'est
+    // assumé : poser un salut à la place du titre d'un document réel serait
+    // réécrire son contenu, ce qui appartient à celui qui l'écrit.
+    const a = await compilerANeuf(FIXTURE_TITRE, "deribfy-titre-continu");
+    const precedent = APP;
+    APP = a.base;
+    try {
+      const r = await monter("scr_mon_tableau");
+      const t = textes(r);
+      console.log(`[VOC] titre continu : ${t.slice(0, 4).join(" | ")}`);
+      expect(t, "le titre n'atteint pas l'écran").toContain("Bonjour Aminata,");
+      // ── LA SUITE EST UN ENFANT DU TITRE, PAS UNE LIGNE À PART.
+      //
+      // C'est la seule forme qu'un rendu « l'un sous l'autre » ne peut pas
+      // produire : on cherche le nœud du TITRE, et on exige que la suite soit
+      // DEDANS.
+      const titre = r.root
+        .findAll(() => true)
+        .find((n) => {
+          const k = Array.isArray(n.props.children) ? n.props.children : [n.props.children];
+          return k.some((c) => c === "Bonjour Aminata,");
+        });
+      expect(titre, "aucun nœud ne porte le titre").not.toBeUndefined();
+      const dedans = (titre as ReactTestInstance)
+        .findAll(() => true)
+        .flatMap((x) => (Array.isArray(x.props.children) ? x.props.children : [x.props.children]))
+        .filter((c): c is string => typeof c === "string")
+        .join("");
+      expect(
+        dedans,
+        "la suite n'est pas DANS le titre : elle est rendue sur sa propre " +
+          "ligne, et le titre ne se poursuit pas",
+      ).toContain("voici votre tontine.");
+    } finally {
+      APP = precedent;
+    }
   });
 });

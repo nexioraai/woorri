@@ -157,6 +157,7 @@ export function AppText({
   variant = "body",
   tone = "default",
   align,
+  suite,
   children,
   testID,
   accessibilityLabel,
@@ -178,6 +179,15 @@ export function AppText({
       accessibilityLabel={accessibilityLabel}
     >
       {children}
+      {suite === undefined ? null : (
+        <Text style={s.toneMuted}>
+          {/* L ESPACE VIT ICI, et nulle part ailleurs. Un bloc qui le poserait
+              fabriquerait du texte — ce que F3 interdit, et ce que son cliquet
+              detecte precisement par la presence d un espace dans un litteral. */}
+          {" "}
+          {suite}
+        </Text>
+      )}
     </Text>
   );
 }
