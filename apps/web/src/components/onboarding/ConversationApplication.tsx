@@ -37,6 +37,7 @@ import {
 import { resumeDuJournal } from '@/lib/apps/journal-tirages';
 import type { EtatGeneration } from '@/lib/apps/service-generations';
 import type { EtatMagasin } from '@/lib/apps/exigences-magasin';
+import { moteurChoisi } from '@/lib/apps/interrupteur-moteur';
 import {
   formatDuFichier,
   raisonDuRefus,
@@ -55,6 +56,16 @@ import {
 // au monde ; le chemin async n'existe qu'arme consciemment. L'ecran ne fait
 // que du polling de statut — il ne genere RIEN par lui-meme.
 const ASYNC = modeAsyncActif(process.env.NEXT_PUBLIC_GENERATION_ASYNC);
+
+/**
+ * QUEL MOTEUR CET ÉCRAN SERT (EP-276).
+ *
+ * Miroir PUBLIC de l'interrupteur serveur. Il décide seulement ce que
+ * l'écran montre et quelle route il appelle. L'AUTORITÉ RESTE AU SERVEUR,
+ * qui revérifie et refuse net (409) si ce miroir a dérivé — un miroir ne
+ * peut donc pas ouvrir une porte à lui seul.
+ */
+const MOTEUR = moteurChoisi(process.env.NEXT_PUBLIC_GENERATEUR_MOTEUR);
 
 type Question = { code: string; destination: string; texte: string };
 // ── LOT 5 — LA QUESTION DU PRE-VOL, ET CE QUI LA DISTINGUE.
@@ -771,6 +782,55 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
       //
       // LE DEPOT EST GRATUIT : il n'ecrit qu'une ligne. Toute la depense a
       // lieu ensuite, cote travailleur, sous le drapeau d'armement.
+      // ── L'AUTRE ARCHITECTURE, QUAND L'INTERRUPTEUR EST DESSUS (EP-276).
+      //
+      // D-001 avait examiné DEUX chemins et retenu celui du document. L'autre
+      // — l'IA écrit le code — est ici, MIS À L'ÉPREUVE, pas choisi. Un seul
+      // est atteignable à la fois : exigence du propriétaire, et elle est
+      // juste — treize tirs ont déjà été payés sans pouvoir attribuer un
+      // résultat après coup.
+      //
+      // IL EST SYNCHRONE, et c'est délibéré : le chemin du document dure
+      // 26 minutes (mesuré le 2026-10-18) et a donc besoin d'une file et de
+      // tranches reprenables. Celui-ci vise la minute. Une machinerie
+      // d'attente pour un travail qui tient dans une requête serait une
+      // machinerie de trop.
+      if (MOTEUR === 'direct') {
+        const res = await fetch('/api/generateur/direct', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${await jeton()}` },
+          body: JSON.stringify({ demande: texte }),
+          signal: avorteur.signal,
+        });
+        const d = (await res.json().catch(() => ({}))) as {
+          ok?: boolean; html?: string; motif?: string; error?: string;
+          tours?: unknown[]; dureeMs?: number;
+        };
+        if (!res.ok || d.ok !== true || typeof d.html !== 'string') {
+          rendreLaMain(texte, noteAvant);
+          setAvis(String(d.error ?? d.motif ?? MESSAGE_ILLISIBLE));
+          return;
+        }
+        // L'APPLICATION EST LÀ TOUT DE SUITE. On la montre dans le cadre
+        // isolé qui sert déjà l'aperçu — même bac à sable, mêmes garanties.
+        setApercu(d.html);
+        // ON RÉUTILISE LA FORME EXISTANTE `deribfy` plutôt que d'en inventer
+        // une : sept formes de message suffisent, et une huitième obligerait
+        // chaque endroit qui les lit à apprendre un cas de plus.
+        setMessages((m) => [
+          ...m,
+          {
+            role: 'deribfy',
+            parIA: true,
+            compris: [
+              `Votre application est prête en ${String(Math.round((d.dureeMs ?? 0) / 1000))} secondes` +
+                ` (${String(d.tours?.length ?? 1)} essai(s)).`,
+            ],
+          },
+        ]);
+        return;
+      }
+
       if (ASYNC) {
         const res = await fetch('/api/generateur/deposer', {
           method: 'POST',
@@ -970,7 +1030,6 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
                   <JournalGeneration
                     lignes={etatGen?.journal ?? []}
                     resume={resumeDuJournal(etatGen?.journal ?? [])}
-                    coutUsd={etatGen?.coutUsd ?? null}
                     competences={etatGen?.competences ?? []}
                   />
                   {apercuGen !== null ? (

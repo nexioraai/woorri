@@ -405,20 +405,17 @@ export function Composeur({
 export function JournalGeneration({
   lignes,
   resume,
-  coutUsd,
   competences = [],
 }: {
   lignes: readonly {
     rang: number
     quoi: string
     reparations: readonly string[]
-    coutUsd: number | null
     points: number
     accepte: boolean
   }[]
   resume: { tirages: number; reparations: number }
   /** Ce que la génération a coûté. `null` ne devient pas « 0,00 $ ». */
-  coutUsd: number | null
   /**
    * CE QUE L'APPLICATION SAURA FAIRE, en mots du REGISTRE.
    *
@@ -435,17 +432,20 @@ export function JournalGeneration({
   // taire jusque-là, c'était garder le silence au moment où il est le plus
   // pénible.
   if (lignes.length === 0 && competences.length === 0) return null
-  // Quatre décimales : à 0,10 $ le re-tirage, deux arrondiraient des essais
-  // entiers à zéro, et « 0,00 $ » se lit comme gratuit.
-  const sou = (c: number): string => `${c.toFixed(4).replace('.', ',')} $`
+  // ── LE COÛT NE S'AFFICHE PLUS ICI. DÉCISION DU PROPRIÉTAIRE, 2026-10-18.
+  //
+  // Il avait demandé à le voir le 2026-10-17 ; il a tranché l'inverse après
+  // l'avoir vu en situation : « je t'ai interdit de montrer aux utilisateurs
+  // ça ». Ce que le moteur dépense regarde l'éditeur, pas la personne qui
+  // attend son application — et le lui montrer transforme son attente en
+  // compteur qui tourne.
+  //
+  // LE CHIFFRE N'EST PAS PERDU : il reste en base (`cout_usd`), il reste
+  // dans l'admin, et `etatGeneration` continue de le rendre. On cesse de
+  // l'AFFICHER ICI, on ne cesse pas de le mesurer.
   return (
     <div className="mt-3 rounded-xl border border-white/10 bg-white/[0.03] p-3">
       <p className="text-xs text-slate-400">
-        {coutUsd !== null && (
-          <>
-            <span className="text-white tabular-nums">{sou(coutUsd)}</span> ·{' '}
-          </>
-        )}
         {resume.tirages} essai{resume.tirages > 1 ? 's' : ''}
         {resume.reparations > 0 && (
           <> · {resume.reparations} correction{resume.reparations > 1 ? 's' : ''} automatique
@@ -495,9 +495,6 @@ export function JournalGeneration({
                     {' '}
                     ({l.points} point{l.points > 1 ? 's' : ''} à corriger)
                   </span>
-                )}
-                {l.coutUsd !== null && (
-                  <span className="text-slate-500 tabular-nums"> · {sou(l.coutUsd)}</span>
                 )}
                 {l.reparations.length > 0 && (
                   <ul className="mt-1 flex flex-col gap-1 border-s border-white/10 ps-2">

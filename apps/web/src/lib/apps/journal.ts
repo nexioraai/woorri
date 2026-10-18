@@ -469,6 +469,21 @@ update public.${nom}
 alter table public.${nom} alter column statut set not null;
 alter table public.${nom} alter column statut set default 'en_attente';
 
+-- ── QUEL MOTEUR A PRODUIT CETTE GENERATION (2026-10-18).
+--
+-- Deux architectures coexistent desormais : AIR (document + compilateur
+-- deterministe, le choix de D-001) et DIRECT (l'IA ecrit le code, l'autre
+-- option de D-001, mise a l'epreuve). Un interrupteur decide laquelle est
+-- atteignable, jamais les deux.
+--
+-- SANS CETTE COLONNE, ON NE POURRAIT PLUS ATTRIBUER UN RESULTAT. Treize tirs
+-- et 66 $ ont deja ete depenses sans savoir, apres coup, quelle passe avait
+-- produit quoi. Une epreuve dont on ne sait pas lire le verdict n'est pas une
+-- epreuve.
+--
+-- Defaut AIR : les lignes anterieures viennent toutes de celui-la.
+alter table public.${nom} add column if not exists moteur text not null default 'air';
+
 -- ── PUBLIER (2026-10-18, choix du proprietaire). DEUX COLONNES.
 --
 -- Le jeton est un SECRET NEUF, pas l'identifiant de la ligne : cet

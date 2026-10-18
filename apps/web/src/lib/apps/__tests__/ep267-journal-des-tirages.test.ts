@@ -221,10 +221,25 @@ describe('EP-267 · le journal des tirages', () => {
         'par l’API, passé au composant, et affiché vide',
     ).toMatch(/lignes=\{etatGen\?\.journal/u)
     expect(zone, 'le résumé ne vient pas de l’état').toMatch(/resume=\{resumeDuJournal\(etatGen\?\.journal/u)
+    // ── ÉDITION CONSCIENTE DU CLIQUET, 2026-10-18 : LE COÛT NE S'AFFICHE PLUS.
+    //
+    // Ce contrôle EXIGEAIT que le coût soit passé au panneau — « le
+    // propriétaire a demandé à le voir », décision du 2026-10-17. Il a
+    // tranché l'inverse le lendemain, APRÈS l'avoir vu en situation : « je
+    // t'ai interdit de montrer aux utilisateurs ça ».
+    //
+    // Ce que le moteur dépense regarde l'éditeur, pas la personne qui attend
+    // son application. Le lui montrer transforme son attente en compteur.
+    //
+    // LE CHIFFRE N'EST PAS PERDU, ET C'EST CE QUE CE CONTRÔLE TIENT
+    // MAINTENANT : il reste en base, il reste dans l'admin (contrôle ⑦
+    // ci-dessous), et `etatGeneration` continue de le rendre (contrôle ⑤).
+    // On cesse de l'AFFICHER, on ne cesse pas de le MESURER.
     expect(
       zone,
-      'le coût n’est pas passé au panneau : le propriétaire a demandé à le voir',
-    ).toMatch(/coutUsd=\{etatGen\?\.coutUsd/u)
+      'le coût est de nouveau passé à l’écran de la personne qui attend son ' +
+        'application : décision du propriétaire du 2026-10-18, il n’y a plus sa place',
+    ).not.toMatch(/coutUsd=/u)
   })
 
   it('⑦ L’ADMIN AFFICHE LE DÉTAIL PAR TIRAGE — pas seulement le compte', () => {
