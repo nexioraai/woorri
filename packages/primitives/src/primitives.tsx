@@ -4,12 +4,23 @@
 // harnais 3.4. Les rôles a11y sont posés ici (C2) ; les contrats n'exposent
 // que testID/accessibilityLabel.
 import { useState } from "react";
-import { ActivityIndicator, Image, Pressable, Text, TextInput, View } from "react-native";
+import Svg, { Circle } from "react-native-svg";
+import {
+  ActivityIndicator,
+  Image,
+  Pressable,
+  ScrollView as Defilement,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 // 1.6.0 — SIGNE des boutons. Même paquet, même vocabulaire fermé et même
 // police EMBARQUÉE que les onglets : aucun accès réseau, et le moteur ne
 // promet que des glyphes qu'il sait dessiner.
 import Ionicons from "@expo/vector-icons/Ionicons";
 import type {
+  AnneauProps,
+  TableauProps,
   BarreProps,
   AppImageProps,
   AppButtonProps,
@@ -29,6 +40,7 @@ import type {
   TextVariant,
 } from "./contracts.ts";
 import { useStyles } from "./theme-bridge.tsx";
+import { GEOMETRIE_ANNEAU } from "./styles.ts";
 import { GLYPHE_PAR_ROLE } from "./roles-icones.ts";
 import { decisionMedia } from "./media-repli.ts";
 import type { Sheet } from "./styles.ts";
@@ -587,6 +599,124 @@ export function AvatarInitiales({ nom, testID }: AvatarInitialesProps) {
   return (
     <View style={s.avatar} testID={testID} accessibilityLabel={nom}>
       <Text style={s.avatarTexte}>{initiales}</Text>
+    </View>
+  );
+}
+
+/**
+ * UN TABLEAU — des colonnes alignees, un en-tete, une ligne par enregistrement.
+ *
+ * ── IL DEBORDE PLUTOT QUE DE TRONQUER.
+ *
+ * Quatre colonnes sur un telephone ne tiennent pas. Les comprimer rendrait
+ * chaque cellule illisible ; les couper montrerait MOINS que la verite. Le
+ * tableau defile donc horizontalement : il montre tout, quitte a demander un
+ * geste.
+ *
+ * ── LA PRIMITIVE N ECRIT AUCUN MOT.
+ *
+ * Les en-tetes viennent des CHAMPS du document, les cellules de ses donnees,
+ * deja formatees par l appelant. Aucune casse n est imposee : si le document
+ * ecrit « Montant », l ecran lit « Montant ».
+ */
+export function Tableau({ colonnes, lignes, testID, accessibilityLabel }: TableauProps) {
+  const s = useStyles();
+  return (
+    <Defilement horizontal style={s.tableau} testID={testID} accessibilityLabel={accessibilityLabel}>
+      <View>
+        <View style={s.tableauEntete}>
+          {colonnes.map((c, i) => (
+            <View key={i} style={s.tableauCellule}>
+              <Text style={s.tableauEnteteTexte}>{c}</Text>
+            </View>
+          ))}
+        </View>
+        {lignes.map((l) => (
+          <View key={l.id} style={s.tableauLigne} testID={`${testID ?? "tableau"}-ligne-${l.id}`}>
+            {l.cellules.map((v, i) => (
+              // CHAQUE CELLULE EST ADRESSABLE. Sans identite, un instrument ne
+              // peut pas distinguer une cellule d un noeud de texte, et le
+              // compte glisse — mesure : huit « cellules » pour quatre
+              // colonnes cote web, ou composite et hote se comptent deux fois.
+              <View key={i} style={s.tableauCellule} testID={`${testID ?? "tableau"}-c-${l.id}-${String(i)}`}>
+                <Text style={s.tableauCelluleTexte}>{v}</Text>
+              </View>
+            ))}
+          </View>
+        ))}
+      </View>
+    </Defilement>
+  );
+}
+
+/**
+ * UN ANNEAU DE PROGRESSION (D11) — cible NATIVE, par un arc SVG.
+ *
+ * ── POURQUOI SVG, ET CE QUE J AI REFUSE DE FAIRE.
+ *
+ * Un arc a angle arbitraire ne se dessine pas en React Native sans
+ * `react-native-svg`. L alternative sans dependance — quatre quarts de cercle
+ * en bordures — ne sait montrer que 25, 50, 75 et 100 % : elle MENTIRAIT sur
+ * toute autre proportion. Maquiller une proportion est pire que ne pas la
+ * dessiner, et ce depot refuse l un comme l autre.
+ *
+ * ── LE TRAIT EST UN CERCLE, PAS UN ARC CALCULE.
+ *
+ * `strokeDasharray` pose la circonference, `strokeDashoffset` la part NON
+ * remplie. Le navigateur — ou le moteur natif — fait le reste. Aucune
+ * trigonometrie ici : moins de code, et rien a se tromper.
+ */
+export function Anneau({
+  ratio,
+  valeur,
+  libelle,
+  legende,
+  testID,
+  accessibilityLabel,
+}: AnneauProps) {
+  const s = useStyles();
+  // Une proportion hors bornes vient d une donnee aberrante, pas d une
+  // intention : on la ramene dans [0,1] plutot que de dessiner hors du cadre.
+  const part = Number.isFinite(ratio) ? Math.min(1, Math.max(0, ratio)) : 0;
+  const { diametre, trait } = GEOMETRIE_ANNEAU;
+  const rayon = (diametre - trait) / 2;
+  const tour = 2 * Math.PI * rayon;
+  return (
+    <View
+      style={s.anneau}
+      testID={testID}
+      accessibilityLabel={accessibilityLabel ?? `${valeur} ${libelle ?? ""}`}
+    >
+      <View style={{ width: diametre, height: diametre }} testID={`${testID ?? "anneau"}-arc`}>
+        <Svg width={diametre} height={diametre}>
+          <Circle
+            cx={diametre / 2}
+            cy={diametre / 2}
+            r={rayon}
+            stroke={s.anneauPiste.borderColor}
+            strokeWidth={trait}
+            fill="none"
+          />
+          <Circle
+            cx={diametre / 2}
+            cy={diametre / 2}
+            r={rayon}
+            stroke={s.anneauRempli.borderColor}
+            strokeWidth={trait}
+            fill="none"
+            strokeDasharray={tour}
+            strokeDashoffset={tour * (1 - part)}
+            strokeLinecap="round"
+            // L ARC PART DU HAUT, comme toute jauge que l oeil sait lire.
+            transform={`rotate(-90 ${String(diametre / 2)} ${String(diametre / 2)})`}
+          />
+        </Svg>
+        <View style={s.anneauCentre}>
+          <Text style={s.anneauValeur}>{valeur}</Text>
+        </View>
+      </View>
+      {libelle === undefined ? null : <Text style={s.anneauValeurLibelle}>{libelle}</Text>}
+      {legende === undefined ? null : <Text style={s.anneauLegende}>{legende}</Text>}
     </View>
   );
 }

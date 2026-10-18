@@ -30,6 +30,7 @@ import {
   Visuel as Image,
   Geste as Pressable,
   Texte as Text,
+  Defilement,
   Saisie as TextInput,
   Vue as View,
 } from "./hotes.tsx";
@@ -38,6 +39,8 @@ import {
 // promet que des glyphes qu'il sait dessiner.
 import { Signe as Ionicons } from "./hotes.tsx";
 import type {
+  AnneauProps,
+  TableauProps,
   AppImageProps,
   AppButtonProps,
   AppTextProps,
@@ -59,7 +62,7 @@ import type {
 import { useStyles } from "./theme-bridge";
 import { GLYPHE_PAR_ROLE } from "./roles-icones";
 import { decisionMedia } from "./media-repli";
-import type { Sheet } from "./styles";
+import { GEOMETRIE_ANNEAU, type Sheet } from "./styles";
 
 const VARIANT_STYLE: Record<TextVariant, keyof Sheet> = {
   label: "textLabel",
@@ -597,6 +600,113 @@ export function AvatarInitiales({ nom, testID }: AvatarInitialesProps) {
   return (
     <View style={s.avatar} testID={testID} accessibilityLabel={nom}>
       <Text style={s.avatarTexte}>{initiales}</Text>
+    </View>
+  );
+}
+
+/**
+ * UN TABLEAU — des colonnes alignees, un en-tete, une ligne par enregistrement.
+ *
+ * ── IL DEBORDE PLUTOT QUE DE TRONQUER.
+ *
+ * Quatre colonnes sur un telephone ne tiennent pas. Les comprimer rendrait
+ * chaque cellule illisible ; les couper montrerait MOINS que la verite. Le
+ * tableau defile donc horizontalement : il montre tout, quitte a demander un
+ * geste.
+ *
+ * ── LA PRIMITIVE N ECRIT AUCUN MOT.
+ *
+ * Les en-tetes viennent des CHAMPS du document, les cellules de ses donnees,
+ * deja formatees par l appelant. Aucune casse n est imposee : si le document
+ * ecrit « Montant », l ecran lit « Montant ».
+ */
+export function Tableau({ colonnes, lignes, testID, accessibilityLabel }: TableauProps) {
+  const s = useStyles();
+  return (
+    <Defilement horizontal style={s.tableau} testID={testID} accessibilityLabel={accessibilityLabel}>
+      <View>
+        <View style={s.tableauEntete}>
+          {colonnes.map((c, i) => (
+            <View key={i} style={s.tableauCellule}>
+              <Text style={s.tableauEnteteTexte}>{c}</Text>
+            </View>
+          ))}
+        </View>
+        {lignes.map((l) => (
+          <View key={l.id} style={s.tableauLigne} testID={`${testID ?? "tableau"}-ligne-${l.id}`}>
+            {l.cellules.map((v, i) => (
+              // CHAQUE CELLULE EST ADRESSABLE. Sans identite, un instrument ne
+              // peut pas distinguer une cellule d un noeud de texte, et le
+              // compte glisse — mesure : huit « cellules » pour quatre
+              // colonnes cote web, ou composite et hote se comptent deux fois.
+              <View key={i} style={s.tableauCellule} testID={`${testID ?? "tableau"}-c-${l.id}-${String(i)}`}>
+                <Text style={s.tableauCelluleTexte}>{v}</Text>
+              </View>
+            ))}
+          </View>
+        ))}
+      </View>
+    </Defilement>
+  );
+}
+
+/**
+ * UN ANNEAU DE PROGRESSION (D11) — cible WEB, SANS AUCUNE DEPENDANCE.
+ *
+ * ── POURQUOI LE WEB NE PAIE RIEN DE CE QUE LE NATIF PAIE.
+ *
+ * Le natif a besoin de `react-native-svg` pour tracer un arc. Le web, lui,
+ * sait dessiner un anneau en CSS pur : un `conic-gradient` peint le secteur,
+ * un masque radial perce le centre. Zero octet ajoute.
+ *
+ * Les deux cibles rendent donc LA MEME chose par DES MOYENS DIFFERENTS, et
+ * c est exactement ce que la couture de plateforme existe pour permettre.
+ * Imposer SVG au web aurait fait payer une dependance a une cible qui n en a
+ * pas besoin.
+ *
+ * ── LA PROPORTION EST UN ANGLE, ET RIEN D AUTRE N EST CALCULE ICI.
+ *
+ * `valeur` est le texte DEJA ecrit par le document. La primitive n arrondit
+ * rien et n invente aucun pourcentage.
+ */
+export function Anneau({
+  ratio,
+  valeur,
+  libelle,
+  legende,
+  testID,
+  accessibilityLabel,
+}: AnneauProps) {
+  const s = useStyles();
+  const part = Number.isFinite(ratio) ? Math.min(1, Math.max(0, ratio)) : 0;
+  const { diametre, trait } = GEOMETRIE_ANNEAU;
+  const rempli = s.anneauRempli.borderColor;
+  const piste = s.anneauPiste.borderColor;
+  const trou = `calc(100% - ${String(trait * 2)}px)`;
+  return (
+    <View
+      style={s.anneau}
+      testID={testID}
+      accessibilityLabel={accessibilityLabel ?? `${valeur} ${libelle ?? ""}`}
+    >
+      <View style={{ width: diametre, height: diametre }} testID={`${testID ?? "anneau"}-arc`}>
+        <View
+          style={{
+            width: diametre,
+            height: diametre,
+            borderRadius: diametre / 2,
+            // L ARC PART DU HAUT, comme toute jauge que l oeil sait lire.
+            backgroundImage: `conic-gradient(${rempli} ${String(part * 360)}deg, ${piste} 0deg)`,
+            WebkitMaskImage: `radial-gradient(circle, transparent ${trou}, black 0)`,
+            maskImage: `radial-gradient(circle, transparent ${trou}, black 0)`,
+          }}
+        />
+        <View style={s.anneauCentre}>
+          <Text style={s.anneauValeur}>{valeur}</Text>
+        </View>
+      </View>
+      {libelle === undefined ? null : <Text style={s.anneauValeurLibelle}>{libelle}</Text>}
+      {legende === undefined ? null : <Text style={s.anneauLegende}>{legende}</Text>}
     </View>
   );
 }

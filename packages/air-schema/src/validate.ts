@@ -28,6 +28,15 @@ export const PORTEURS_DE_TEXTE_EN_LISTE = [
   // ses valeurs deviennent les LIBELLÉS des puces de filtre. Les deux
   // lectures sont vraies ; celle qui compte ici est la seconde.
   "userFilterFieldIds",
+  // Les colonnes d'un TABLEAU (2026-10-18). Un tableau montre ses valeurs
+  // COTE A COTE, en clair, dans ses cellules : une enumeration sans libelles
+  // y affiche son code brut, et plus visiblement que partout ailleurs.
+  //
+  // CETTE LIGNE MANQUAIT depuis l arrivee du bloc `tableau`. Elle n a pas ete
+  // trouvee par relecture mais par le cliquet EP-219, qui compare la liste du
+  // validateur a ce que le REGISTRE declare afficher. C est exactement le
+  // chemin que ce cliquet existe pour fermer.
+  "columnFieldIds",
 ] as const;
 
 // Validateur sémantique DÉTERMINISTE (ARCHITECTURE §1) : un AIR émis par LLM

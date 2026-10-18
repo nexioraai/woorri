@@ -163,7 +163,7 @@ export const RELEASE_TRAIN_V1 = {
   // avait aucun capable de porter plus qu un sous-titre, et les surfaces
   // legales annoncaient donc « le texte complet sera fourni ». Le generateur
   // ne refusait pas d ecrire : il n avait aucun endroit ou le faire.
-  blockRegistryVersion: "1.22.0",
+  blockRegistryVersion: "1.24.0",
   // Ré-scellé le 2026-08-29 (DET-006 / D-039) : `ListBlock` DÉCLARE désormais
   // `fill` sur sa Section, afin que la liste virtualisée reçoive un parent
   // BORNÉ. Cause démontrée : imbriquée dans un ScrollView de même axe, une
@@ -397,7 +397,7 @@ export const RELEASE_TRAIN_V1 = {
     // existait (`title` + `subtitle`), la FORME non. Zero document ne l ecrit
     // — parce que la forme n existait pas, donc P0 ne pouvait pas l ecrire.
     // ADDITIF : absent = rendu de 1.20.0 au caractere pres.
-    "ebb13ec802eaaf456f65e4df566fcff5b12537b31cd33d9e0c5f7d2514d0f883",
+    "ca2578f83630ef3eef6ac258ea20cd01a988579d61e5003281a6d86425df520f",
   // EP-134 — ajout compatible `external_contact` : version MINEURE du registre.
   /**
    * EP-147 ③ — LE NIVEAU D'API ANDROID VISÉ, épinglé par le train.
@@ -637,7 +637,22 @@ export const RELEASE_TRAIN_V1 = {
     // EP-265 tient desormais la propriete generale, sur les DEUX cibles : tout
     // import nu d une application emise est declare.
     // Ancien sceau : 6ef5f31e0ec3acfb…
-    "9449dfc2d956093286db1582c44245e185c7615adf24c8192baab89347e5f590",
+    // RE-SCELLE 2026-10-18 — EDITION CONSCIENTE : `react-native-svg` DECLARE.
+    //
+    // D11 : l anneau de progression. Cette fois ce n est PAS une declaration a
+    // cout nul comme `expo-font` juste au-dessus — le paquet n existait NULLE
+    // PART, ni direct ni transitif, et il porte du code natif (`android/`,
+    // `apple/`, une podspec). L empreinte native CHANGE donc, et aucun APK
+    // existant ne le contient : une preuve d appareil exigera un build neuf.
+    //
+    // Verrou du gabarit regenere par un vrai `npm install` : 523 -> 539
+    // paquets. Les 16 nouveaux sont `react-native-svg` et ses transitives
+    // (`css-select`, `css-tree`, `boolbase`, `domhandler`, `domutils`, …).
+    // VERIFIE et non suppose : zero paquet a disparu par NOM — cinq ont change
+    // de place dans l arbre, et 58 versions ont derive au niveau correctif a
+    // l interieur de leurs fourchettes existantes.
+    // Ancien sceau : 9449dfc2d956093286db1582c44245e185c7615adf24c8192baab893…
+    "88574d4ef06941e9726922844febd864a28d4e207b30aa4185c20b0949e900c2",
   templateDevDependencies: {
     "@types/react": "19.2.15",
     typescript: "5.9.3",
@@ -684,6 +699,16 @@ export const RELEASE_TRAIN_V1 = {
     "@react-navigation/native-stack": "7.18.10",
     "react-native-screens": "4.26.2",
     "react-native-safe-area-context": "5.7.0",
+    // AJOUTEE 2026-10-18 (D11, feu vert proprietaire) — l ANNEAU de
+    // progression, version du bundle Expo 57 : c est la seule facon de
+    // dessiner un arc a angle ARBITRAIRE. L alternative sans
+    // dependance — quatre quarts de cercle en bordures — ne sait montrer que
+    // 25, 50, 75 et 100 % : elle MENTIRAIT sur toute autre proportion.
+    //
+    // LE WEB NE LA PAIE PAS : `compileWeb` dessine le meme anneau en CSS pur
+    // (`conic-gradient` + masque radial), et cette ligne ne voyage pas chez
+    // lui. Deux cibles, meme contrat, moyens differents.
+    "react-native-svg": "15.15.4",
   },
 } as const;
 

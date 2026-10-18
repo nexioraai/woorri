@@ -91,6 +91,36 @@ describe("release train v1 — pins exacts (cliquet)", () => {
       "@react-navigation/native-stack": "7.18.10",
       "react-native-screens": "4.26.2",
       "react-native-safe-area-context": "5.7.0",
+      // ── AJOUTEE 2026-10-18 (D11, FEU VERT PROPRIETAIRE), ET CE CLIQUET
+      //    S'APPELLE « versions prouvees sur device au banc V4 ».
+      //
+      // Je dis donc exactement ce qui est prouve, et `react-native-svg` est
+      // dans une situation PLUS FAIBLE qu'`expo-font` juste au-dessus :
+      //
+      //   · `expo-font` tournait DEJA sur les appareils du banc — il arrivait
+      //     transitivement par `expo`, et chaque APK l'embarquait. Seule sa
+      //     DECLARATION manquait ; aucun octet installe ne changeait.
+      //
+      //   · `react-native-svg` n'etait NULLE PART. Ni direct, ni transitif.
+      //     Elle n'est dans AUCUN APK existant — pas dans celui du banc
+      //     (c96c4359). C'est un MODULE NATIF : il porte `android/`, `apple/`
+      //     et une podspec, donc l'empreinte native CHANGE et une preuve
+      //     d'appareil exige un BUILD NEUF. Aucun n'a ete fait.
+      //
+      // CE QUI EST PROUVE AUJOURD'HUI : compilation (32/32 applications), et
+      // MONTAGE — l'arc est monte et son angle lu au pixel pres, sur les deux
+      // cibles, par `vocabulaire.obs.tsx` et `vocabulaire-web.obsweb.tsx`.
+      // Chaque jumeau a ete mute et ne tue que sa propre cible.
+      //
+      // CE QUI N'EST PAS PROUVE : l'affichage sur un appareil reel, et le
+      // poids ajoute a l'APK. Le depot n'a de balance que cote web (EP-218) ;
+      // il n'en a AUCUNE cote natif. Poids mesurable ici : 7,6 Mo installes
+      // sur disque, dont 1,43 Mo de JS consommable et 2,09 Mo de sources
+      // natives. Ce n'est pas le poids de l'APK et je ne le presente pas
+      // comme tel.
+      //
+      // Version EXACTE prise dans `bundledNativeModules` du SDK 57.
+      "react-native-svg": "15.15.4",
     });
   });
 

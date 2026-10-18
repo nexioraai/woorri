@@ -60,6 +60,9 @@ export const ZONE_PAR_BLOCK_TYPE: Readonly<Record<string, ZoneEcran>> = {
 
   // 2026-10-17 — la carte de chiffre COULE dans le flux : elle ouvre un
   // tableau de bord, elle ne l encadre pas. Meme zone que `graphique`.
+  // Un TABLEAU est du contenu : il se defile avec le reste, et il porte son
+  // propre defilement HORIZONTAL par-dessus. Il n encadre pas l ecran.
+  tableau: "contenu",
   statistiques: "contenu",
 };
 

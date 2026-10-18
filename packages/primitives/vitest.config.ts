@@ -8,6 +8,14 @@ export default defineConfig({
   },
   resolve: {
     alias: {
+      // ⚠️ AVANT `react-native` — L'ORDRE EST LA CORRECTION.
+      //
+      // Vite résout les alias par PRÉFIXE : « react-native-svg » commence par
+      // « react-native ». Placé après, il serait réécrit vers le stub de
+      // react-native et le module SVG n'existerait jamais.
+      "react-native-svg": fileURLToPath(
+        new URL("./tests/stubs/react-native-svg.ts", import.meta.url),
+      ),
       // E1 (dossier 3.2 validé) : les tests structurels s'exécutent en node
       // avec un STUB de react-native (composants hôtes purs pour
       // react-test-renderer). Le typage, lui, se fait contre les VRAIS types

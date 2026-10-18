@@ -6,7 +6,7 @@
 // de styling reste remplaçable (D-021) et les tokens restent la seule
 // source visuelle. AUCUNE syntaxe Maestro/Detox : les blocs sont
 // E2E-agnostiques (D-022/D-023), seuls les testID standard sont exposés.
-import {Liste, GridCard, AppButton, AvatarInitiales, Barre,
+import {Liste, GridCard, AppButton, Anneau, AvatarInitiales, Barre, Tableau,
   AppText,
   Badge,
   ListRow,
@@ -14,7 +14,8 @@ import {Liste, GridCard, AppButton, AvatarInitiales, Barre,
   StateView,
   AppImage,
   TextField, ListFooter, SearchEntry, Rangee} from "../primitives";
-import type {Blocks,
+import type {
+  TableauBlockProps,Blocks,
   ProseBlockProps,
   ButtonBlockProps,
   DetailHeaderBlockProps,
@@ -76,6 +77,36 @@ export function HeaderBlock({
       {subtitle !== undefined && titreContinu !== true && (
         <AppText tone="muted">{subtitle}</AppText>
       )}
+    </Section>
+  );
+}
+
+/**
+ * LE TABLEAU — des colonnes de meme rang, et un etat quand il n y a rien.
+ *
+ * Le bloc compose ; la primitive dessine. Aucun style ici, aucun mot : les
+ * en-tetes et les cellules arrivent deja resolus par le runtime depuis les
+ * CHAMPS et les DONNEES du document.
+ */
+export function TableauBlock({
+  title,
+  colonnes,
+  lignes,
+  state = { kind: "ready" },
+  testID,
+}: TableauBlockProps) {
+  if (state.kind !== "ready") {
+    return (
+      <Section testID={testID}>
+        {title === undefined ? null : <AppText variant="title">{title}</AppText>}
+        <StateView state={state.kind} title={state.title} testID={`${testID ?? "tableau"}-etat`} />
+      </Section>
+    );
+  }
+  return (
+    <Section testID={testID}>
+      {title === undefined ? null : <AppText variant="title">{title}</AppText>}
+      <Tableau colonnes={colonnes} lignes={lignes} testID={testID} />
     </Section>
   );
 }
@@ -554,13 +585,23 @@ export function StatistiquesBlock({
   return (
     <Section title={title} testID={testID}>
       <Rangee>
-        {items.map((it, i) => (
-          <CarteChiffre
-            key={`${testID ?? "stat"}-${String(i)}`}
-            item={it}
-            testID={`${testID ?? "stat"}-item-${String(i)}`}
-          />
-        ))}
+        {items.map((it, i) =>
+          // LA PART CHOISIT LA FORME. Sans elle, la carte est celle d avant au
+          // caractere pres : la montee reste additive.
+          it.part === undefined ? (
+            <CarteChiffre
+              key={`${testID ?? "stat"}-${String(i)}`}
+              item={it}
+              testID={`${testID ?? "stat"}-item-${String(i)}`}
+            />
+          ) : (
+            <CarteAnneau
+              key={`${testID ?? "stat"}-${String(i)}`}
+              item={it}
+              testID={`${testID ?? "stat"}-item-${String(i)}`}
+            />
+          ),
+        )}
       </Rangee>
     </Section>
   );
@@ -585,6 +626,40 @@ function CarteChiffre({ item, testID }: { item: StatistiqueItem; testID: string 
       testID={testID}
       {...(item.legende === undefined ? {} : { trailing: item.legende })}
       {...(tonBadge === undefined ? {} : { badge: item.valeur, badgeTone: tonBadge })}
+    />
+  );
+}
+
+/**
+ * LA CARTE QUI PORTE UNE PROPORTION — un ANNEAU (D11).
+ *
+ * Chez Bolt, le tableau de bord pose « 75 % » au centre d un anneau. C est la
+ * MEME carte de chiffre, avec une proportion en plus : l anneau dit ce qu un
+ * nombre seul ne dit pas — ou l on en est par rapport au total.
+ *
+ * LA VALEUR RESTE LE TEXTE DU DOCUMENT. La primitive n arrondit rien et
+ * n invente aucun pourcentage : « 75 % » est ecrit, pas calcule.
+ *
+ * Separee de `CarteChiffre` pour la meme raison qu elle : un composant qui
+ * fait deux choses se corrige deux fois.
+ */
+function CarteAnneau({ item, testID }: { item: StatistiqueItem; testID: string }) {
+  return (
+    <Anneau
+      ratio={item.part ?? 0}
+      valeur={item.valeur}
+      // ── LE LIBELLE RESTE, ET J AI FAILLI LE PERDRE.
+      //
+      // Ma premiere version ne passait que `valeur` et `legende` : les quatre
+      // cartes du tableau de bord sont devenues des anneaux ANONYMES —
+      // « 265 000 FCFA » sans « Cagnotte du tour ». Mesure : le controle D9 a
+      // rougi sur un libelle disparu de l ecran.
+      //
+      // Un anneau sans libelle est un chiffre sans question : il montre ou on
+      // en est, sans dire DE QUOI.
+      libelle={item.label}
+      {...(item.legende === undefined ? {} : { legende: item.legende })}
+      testID={testID}
     />
   );
 }
@@ -791,4 +866,5 @@ export const blocks: Blocks = {
   GraphiqueBlock,
   StatistiquesBlock,
   AgentBlock,
+  TableauBlock,
 };

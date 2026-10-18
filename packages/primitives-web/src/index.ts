@@ -5,7 +5,8 @@
 // entre les deux cibles sans qu'une ligne ne change.
 export {
   ScreenShell, Section, AppText, AppButton, TextField, AppImage, ListFooter,
-  SearchEntry, Rangee, GridCard, ListRow, Badge, Barre, StateView, Spinner, primitives,
+  SearchEntry, Rangee, GridCard, ListRow, Badge,
+  Tableau, Barre, StateView, Spinner, primitives,
 } from "./primitives.tsx";
 export { Liste } from "./liste.tsx";
 export type { ProprietesListe } from "./liste.tsx";

@@ -248,6 +248,72 @@ export interface AvatarInitialesProps {
   testID?: string;
 }
 
+/**
+ * UN TABLEAU — des colonnes alignées, un en-tête, une ligne par enregistrement.
+ *
+ * ── CE QU'IL AJOUTE À UNE LISTE, ET POURQUOI CE N'EST PAS LA MÊME CHOSE.
+ *
+ * Une LISTE porte des rôles fixes : un titre, un sous-titre, une pastille, une
+ * valeur de fin. Elle répond à « qu'est-ce que c'est ? ». Un TABLEAU porte N
+ * colonnes de même rang et répond à « compare-les ». Les applications de
+ * gestion — celles que ce générateur produit le plus souvent — vivent de la
+ * seconde question.
+ *
+ * ── LES MOTS VIENNENT DU DOCUMENT, Y COMPRIS LES EN-TÊTES.
+ *
+ * `colonnes` porte les libellés déjà résolus par l'appelant depuis les CHAMPS
+ * de l'entité. La primitive n'invente aucun titre de colonne et n'impose
+ * aucune casse — c'est le document qui écrit « Montant », pas le moteur.
+ */
+export interface TableauProps extends A11yProps {
+  /** Les en-têtes, dans l'ordre des cellules. Écrits par le DOCUMENT. */
+  colonnes: readonly string[];
+  /** Une ligne par enregistrement : ses cellules, déjà formatées. */
+  lignes: readonly { readonly id: string; readonly cellules: readonly string[] }[];
+}
+
+/**
+ * UN ANNEAU DE PROGRESSION — une proportion, lue d'un coup d'œil.
+ *
+ * ── POURQUOI IL A COÛTÉ UNE DÉPENDANCE, ET QUI L'A DÉCIDÉ.
+ *
+ * Un arc à angle arbitraire ne se dessine pas en React Native sans
+ * `react-native-svg`. La seule alternative sans dépendance — quatre quarts de
+ * cercle en bordures — ne sait montrer que 25, 50, 75 et 100 % : elle
+ * MENTIRAIT sur toute autre proportion, et maquiller une proportion est pire
+ * que ne pas la dessiner.
+ *
+ * Mesuré le 2026-10-18 : 7,6 Mo installés sur disque — 1,43 Mo de JS
+ * consommable, 2,09 Mo de sources natives, le reste en cartes de source et en
+ * portages non utilisés. Ce qui arrive dans l'APK n'est PAS mesuré : le dépôt
+ * n'a de balance que côté web. Version 15.15.4, celle que
+ * le bundle d'Expo 57 déclare. Décision du propriétaire, 2026-10-18.
+ *
+ * ── CE QUE LA PRIMITIVE NE FAIT PAS.
+ *
+ * Elle n'arrondit rien et ne formate rien. `valeur` est le texte DÉJÀ écrit
+ * par le document — « 75 % », « 9/12 », ce qu'il veut. `ratio` est une
+ * proportion 0..1 calculée par l'appelant : la primitive pose un angle, elle
+ * ne connaît ni les données ni leur échelle.
+ */
+export interface AnneauProps extends A11yProps {
+  /** La proportion remplie, 0..1. Hors bornes, elle est ramenée dedans. */
+  ratio: number;
+  /** Le texte au centre, DÉJÀ formaté par le document. */
+  valeur: string;
+  /** CE QUE LA PROPORTION MESURE — sous l'anneau. « Cagnotte du tour ». */
+  libelle?: string;
+  /**
+   * CE QUI SITUE LE CHIFFRE — sous le libellé, en ton atténué.
+   *
+   * « +12,5 % ce mois-ci ». J'ai failli le perdre : ma première version ne
+   * passait que la valeur et une seule ligne, et les quatre cartes du tableau
+   * de bord sont devenues des anneaux ANONYMES. Un anneau sans libellé est un
+   * chiffre sans question — il montre où l'on en est, sans dire DE QUOI.
+   */
+  legende?: string;
+}
+
 export interface BadgeProps extends A11yProps {
   label: string;
   tone?: "info" | "success" | "warn" | "error";

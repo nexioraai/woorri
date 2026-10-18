@@ -574,6 +574,56 @@ const makeSheet = (c: Palette) =>
     //
     // LE POINT NE REMPLACE PAS LE MOT. Il porte la couleur, le mot porte le
     // sens — une couleur seule exclurait qui ne la distingue pas.
+    // ── LE TABLEAU (D16) — des colonnes, un en-tête, et de quoi déborder.
+    //
+    // Bolt pose ses données de gestion en TABLES : en-têtes, colonnes
+    // alignées, une ligne par enregistrement. Deribfy ne savait dessiner
+    // qu'une LISTE — titre, sous-titre, pastille, valeur de fin — et une
+    // liste ne montre pas quatre valeurs de front.
+    //
+    // LA LARGEUR MINIMALE DE COLONNE EXISTE POUR QUE LE TABLEAU DÉBORDE.
+    // Sans elle, quatre colonnes se compriment sur un téléphone jusqu'à
+    // l'illisible. Avec elle, le tableau dépasse et DÉFILE — il montre tout,
+    // quitte à demander un geste.
+    tableau: { marginTop: theme.space.sm },
+    tableauLigne: { flexDirection: "row", alignItems: "center" },
+    tableauEntete: {
+      flexDirection: "row",
+      alignItems: "center",
+      borderBottomWidth: 1,
+      borderBottomColor: c.border,
+      paddingBottom: theme.space.xs,
+      marginBottom: theme.space.xs,
+    },
+    tableauCellule: {
+      minWidth: theme.size.tapTarget * 2,
+      paddingEnd: theme.space.md,
+      paddingVertical: theme.space.xs,
+    },
+    tableauCelluleTexte: { fontSize: theme.font.body, color: c.text },
+    tableauEnteteTexte: { fontSize: theme.font.label, color: c.muted },
+    // ── L ANNEAU (D11) — une proportion lue d un coup d oeil.
+    //
+    // LE DIAMÈTRE EST UN JETON, pas un nombre : `size.controlHeight` est la
+    // hauteur d un contrôle principal, et un anneau se lit à cette échelle-là.
+    anneau: { alignItems: "center", marginTop: theme.space.sm },
+    // Les deux couleurs de l arc. SVG prend une COULEUR, pas une feuille : on
+    // la lui passe depuis ces styles, pour qu elle reste un jeton.
+    anneauPiste: { borderColor: c.border },
+    anneauRempli: { borderColor: c.primary },
+    anneauCentre: {
+      position: "absolute",
+      top: 0,
+      bottom: 0,
+      start: 0,
+      end: 0,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    anneauValeur: { fontSize: theme.font.title, fontWeight: theme.fontWeight.bold, color: c.text },
+    // Le LIBELLE sous l anneau : ce que la proportion mesure.
+    anneauValeurLibelle: { fontSize: theme.font.body, color: c.text, marginTop: theme.space.xs },
+    anneauLegende: { fontSize: theme.font.label, color: c.muted, marginTop: theme.space.xxs },
     badgePoint: {
       flexDirection: "row",
       alignItems: "center",
@@ -640,6 +690,22 @@ const makeSheet = (c: Palette) =>
     },
     stateTitleError: { color: c.error },
   });
+
+/**
+ * LA GÉOMÉTRIE DE L'ANNEAU — des JETONS, pas des nombres.
+ *
+ * SVG exige des nombres (rayon, circonférence) : ils ne peuvent pas vivre dans
+ * une feuille de styles. Ils vivent donc ICI, dérivés des mêmes jetons que
+ * tout le reste — `controlHeight` est la hauteur d'un contrôle principal, et
+ * un anneau se lit à cette échelle-là.
+ *
+ * Écrire « 86 » et « 8 » dans la primitive aurait été deux valeurs de design
+ * en dur, ce que l'Oracle refuse et ce que la dimension D mesure.
+ */
+export const GEOMETRIE_ANNEAU = {
+  diametre: theme.size.controlHeight * 1.6,
+  trait: theme.space.sm,
+} as const;
 
 export type Sheet = ReturnType<typeof makeSheet>;
 

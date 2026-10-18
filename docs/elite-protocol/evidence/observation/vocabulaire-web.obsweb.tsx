@@ -25,13 +25,14 @@ import { createElement } from "react";
 import { act, create } from "react-test-renderer";
 import type { ReactTestRenderer, ReactTestInstance } from "react-test-renderer";
 import { beforeAll, describe, expect, it } from "vitest";
-import { mkdirSync, writeFileSync, rmSync, symlinkSync, existsSync } from "node:fs";
+import { mkdirSync, writeFileSync, rmSync, symlinkSync, existsSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 
 const REPO = new URL("../../../../", import.meta.url).pathname;
 const DOCUMENT = "slices/tontine/tontine.air.json";
 /** Le fixture du titre qui se POURSUIT — un salut en deux parties. */
+const REPO_RACINE = REPO;
 const FIXTURE_TITRE = "docs/elite-protocol/evidence/fixtures/titre-continu.air.json";
 let APP = "";
 
@@ -97,17 +98,38 @@ async function compilerWebANeuf(document: string, nom: string): Promise<string> 
   return base;
 }
 
-async function monter(ecran: string): Promise<ReactTestRenderer> {
+/**
+ * Monte un écran, avec les DROITS que la personne détient.
+ *
+ * ── POURQUOI LA SESSION, ET CE QUE J'AI FAILLI ACCUSER À TORT.
+ *
+ * `scr_transactions` porte `requiredRightId: right_tresorerie`. Le garde
+ * d'accès vit dans l'unique couture de visibilité : sans session porteuse,
+ * l'écran se rend VIDE sous son titre — c'est écrit dans `useBlockVisible`, et
+ * c'est voulu.
+ *
+ * Six des neuf écrans de ce document sont à droit. Un harnais qui n'en passe
+ * aucun rend la moitié de l'application invisible, et fait accuser le code
+ * d'un défaut qui serait le sien.
+ */
+async function monter(ecran: string, droits: readonly string[] = []): Promise<ReactTestRenderer> {
   const { DataRoot } = await import(APP + "lib/runtime/data-provider.tsx");
   const { FormStateRoot } = await import(APP + "lib/runtime/form-state.tsx");
+  const { SessionRoot } = await import(APP + "lib/runtime/session-provider.tsx");
   const { buildDemoProvider } = await import(APP + "lib/runtime/demo-provider.ts");
   const { demoData } = await import(APP + "demo.data.ts");
   const Ecran = (await import(APP + `screens/${ecran}.tsx`)).default as () => unknown;
   let r: ReactTestRenderer | undefined;
   act(() => {
     r = create(
-      createElement(DataRoot as never, { provider: buildDemoProvider(demoData) } as never,
-        createElement(FormStateRoot as never, null as never, createElement(Ecran as never))) as never,
+      createElement(SessionRoot as never, { provider: {
+        estAuthentifie: () => droits.length > 0,
+        identifiant: () => (droits.length > 0 ? "obs-vocabulaire" : undefined),
+        abonner: () => () => undefined,
+        droits: () => droits,
+      } } as never,
+        createElement(DataRoot as never, { provider: buildDemoProvider(demoData) } as never,
+        createElement(FormStateRoot as never, null as never, createElement(Ecran as never)))) as never,
     );
   });
   return r!;
@@ -121,6 +143,31 @@ async function monter(ecran: string): Promise<ReactTestRenderer> {
  * HTML. Ne chercher que l'un des deux rendrait zéro nœud sur la moitié des
  * contrôles, et un vert mensonger sur l'autre.
  */
+/** L identite d un noeud, quel que soit le nom de l attribut. */
+const identiteDe = (n: ReactTestInstance): string => {
+  const p = n.props as Record<string, unknown>;
+  return String(p["data-testid"] ?? p.testID ?? "");
+};
+
+/**
+ * LES ANGLES RÉELLEMENT DESSINÉS PAR LES ANNEAUX — cible WEB.
+ *
+ * Le web n'a pas de SVG : il peint un `conic-gradient` dont le premier arrêt
+ * porte l'angle. On lit cet angle dans le style appliqué — la seule valeur qui
+ * porte la proportion de ce côté-ci.
+ */
+const anglesDAnneau = (r: ReactTestRenderer): string[] => {
+  const aplatir = (s: unknown): Record<string, unknown>[] =>
+    Array.isArray(s) ? s.flatMap(aplatir) : s === null || s === undefined || s === false ? [] : [s as Record<string, unknown>];
+  return r.root
+    .findAll(() => true)
+    .flatMap((n) => aplatir((n.props as { style?: unknown }).style))
+    .map((d) => d.backgroundImage)
+    .filter((v): v is string => typeof v === "string" && v.includes("conic-gradient"))
+    .map((v) => /(-?[\d.]+)deg/u.exec(v)?.[1] ?? "")
+    .filter((v) => v !== "");
+};
+
 const parID = (r: ReactTestRenderer, fragment: string): ReactTestInstance[] =>
   r.root.findAll((n) => {
     const p = n.props as Record<string, unknown>;
@@ -261,7 +308,16 @@ describe("PREUVE WEB — le vocabulaire de Bolt est rendu", () => {
     //
     // Ce qui manquait n'était pas le mécanisme — c'était la PREUVE qu'il
     // agit. La voici, et elle manquait sur les deux cibles.
-    const r = await monter("scr_mon_tableau");
+    // ── ON MESURE LA OÙ LES PASTILLES VIVENT.
+    //
+    // CORRECTION MESURÉE : ce contrôle montait `scr_mon_tableau`, et trois de
+    // ses quatre cartes de chiffre sont devenues des ANNEAUX (D11) tandis que
+    // sa liste est passée aux POINTS (D15). Il ne restait qu'une pastille
+    // pleine — et un contrôle qui ne voit qu'un ton ne discrimine rien.
+    //
+    // `scr_membres` porte des pastilles pleines sur ses statuts de paiement :
+    // c'est l'écran où cette propriété se juge.
+    const r = await monter("scr_membres");
     const lignes = parID(r, "-row-");
     expect(lignes.length, "aucune ligne : rien à juger").toBeGreaterThan(0);
     const tons = r.root
@@ -302,6 +358,18 @@ describe("PREUVE WEB — le vocabulaire de Bolt est rendu", () => {
     )) {
       const ton = String((n.props as { tone: string }).tone);
       if (!SEMANTIQUES.includes(ton) || couleurParTon.has(ton)) continue;
+      // ── ON LIT LA COULEUR DE LA FORME QU'ON MESURE.
+      //
+      // CORRECTION MESURÉE : une PASTILLE porte son ton dans la couleur du
+      // TEXTE ; un POINT le porte dans le fond de son rond, et son texte
+      // reste gris pour tous. Lire « la dernière couleur » mélangeait les
+      // deux et faisait collapser trois tons sur deux — un contrôle qui
+      // accusait la sémantique d'un défaut qui était le sien.
+      //
+      // Les points ont leur propre contrôle (D15). Ici on ne juge que les
+      // pastilles.
+      const estPoint = (n.props as { forme?: unknown }).forme === "point";
+      if (estPoint) continue;
       const couleurs = n
         .findAll(() => true)
         .flatMap((x) => aplatirS((x.props as { style?: unknown }).style))
@@ -436,6 +504,152 @@ describe("PREUVE WEB — le vocabulaire de Bolt est rendu", () => {
       t.some((x) => x.trim() !== "" && x.length < 40),
       "le point a remplacé le mot : une couleur seule n'informe pas",
     ).toBe(true);
+    r.unmount();
+  });
+
+  it("D16 · LE TABLEAU REND SES COLONNES, SES EN-TÊTES ET SES LIGNES", async () => {
+    // ── CE QU'UN TABLEAU AJOUTE À UNE LISTE.
+    //
+    // Une LISTE porte des rôles fixes — titre, sous-titre, pastille, valeur de
+    // fin — et répond à « qu'est-ce que c'est ? ». Un TABLEAU porte N colonnes
+    // de même rang et répond à « compare-les ». Les applications de gestion,
+    // celles que ce générateur produit le plus souvent, vivent de la seconde
+    // question, et `list` seul ne savait pas la poser.
+    //
+    // ── L'ÉCRAN EST UN ÉCRAN À DROIT.
+    //
+    // `scr_transactions` porte `requiredRightId: right_tresorerie`. Sans
+    // session porteuse, il se rend VIDE sous son titre — et le contrôle
+    // accuserait le tableau d'un défaut qui serait le sien.
+    const r = await monter("scr_transactions", ["right_tresorerie"]);
+    const lignes = parID(r, "-ligne-");
+    const t = textes(r);
+    console.log(`[VOC-WEB] tableau — lignes : ${String(lignes.length)}`);
+    expect(lignes.length, "aucune ligne de tableau rendue").toBeGreaterThan(0);
+
+    // ── LES EN-TÊTES VIENNENT DES CHAMPS, PAS DU BLOC.
+    //
+    // Le document écrit le libellé de chaque champ une fois ; le redéclarer au
+    // bloc serait deux vérités pour un même mot — ce que ce dépôt a payé six
+    // fois. On exige donc les libellés RÉELS de l'entité.
+    const brut = JSON.parse(readFileSync(join(REPO_RACINE, DOCUMENT), "utf8")) as {
+      entities: { id: string; fields: { id: string; label?: { text: string }[] }[] }[];
+      screens: { blocks: { blockType: string; props?: { key: string; value: unknown }[] }[] }[];
+    };
+    const bloc = brut.screens
+      .flatMap((s) => s.blocks)
+      .find((b) => b.blockType === "tableau");
+    expect(bloc, "le document ne porte plus de tableau").not.toBeUndefined();
+    const cols = (bloc?.props ?? []).find((p) => p.key === "columnFieldIds")?.value as string[];
+    const ent = brut.entities.find((e) => e.fields.some((f) => cols.includes(f.id)));
+    for (const id of cols) {
+      const libelle = ent?.fields.find((f) => f.id === id)?.label?.[0]?.text;
+      expect(libelle, `le champ ${id} n'a pas de libellé`).not.toBeUndefined();
+      expect(
+        t,
+        `l'en-tête « ${String(libelle)} » n'atteint pas l'écran : il vient du ` +
+          "CHAMP, et c'est ce qui évite de l'écrire deux fois",
+      ).toContain(libelle);
+    }
+
+    // ── ET CHAQUE LIGNE PORTE AUTANT DE CELLULES QUE DE COLONNES.
+    //
+    // Une ligne courte alignerait ses valeurs sous les mauvaises colonnes —
+    // un tableau qui ment est pire qu'une liste qui ne compare pas.
+    const vues = new Set<string>();
+    for (const l of lignes) {
+      const id = identiteDe(l);
+      if (vues.has(id)) continue;
+      vues.add(id);
+      // ── ON COMPTE LES CELLULES PAR LEUR IDENTITÉ, DÉDUPLIQUÉES.
+      //
+      // CORRECTION MESURÉE : compter les nœuds de texte rendait HUIT cellules
+      // pour quatre colonnes côté web — composite et hôte se comptent deux
+      // fois. Un contrôle qui compte deux fois accuse le code de son propre
+      // défaut, et c'est la septième fois aujourd'hui.
+      const cellules = [
+        ...new Set(
+          l.findAll(() => true).map(identiteDe).filter((x) => x.includes("-c-")),
+        ),
+      ];
+      expect(
+        cellules.length,
+        `la ligne ${id} porte ${String(cellules.length)} cellule(s) pour ` +
+          `${String(cols.length)} colonne(s) : les valeurs glissent`,
+      ).toBe(cols.length);
+    }
+
+    // ── AUCUN CODE MACHINE DANS LES CELLULES.
+    //
+    // Les valeurs passent par le MÊME résolveur que la liste — donc la même
+    // traduction des énumérations. Un `en_attente_documents` ici signerait un
+    // second chemin, et ce dépôt en a assez vu.
+    // ── LES DEUX FORMES, ET MA PREMIÈRE N'EN COUVRAIT QU'UNE.
+    //
+    // Mutation M61 — faire passer la valeur BRUTE au lieu de la résolue —
+    // laissait ce contrôle VERT. Cause : je ne cherchais que `mot_mot` en
+    // minuscules, et les codes de ce document sont en CAPITALES :
+    // `SEQUESTRE_BLOQUE`, `AMENDE_DISCIPLINAIRE`, `EN_ATTENTE`.
+    //
+    // Le dépôt porte déjà les DEUX formes dans `corpus-web.obsweb.tsx`, avec
+    // sa justification mesurée (« XXL » passe, une date ISO aussi). On les
+    // reprend au lieu d'en inventer une troisième.
+    const CODE = /^[a-z0-9]+(_[a-z0-9]+)+$|^[A-Z0-9]+(_[A-Z0-9]+)+$/;
+    expect(
+      t.filter((x) => CODE.test(x)),
+      "un code machine atteint une cellule : le tableau n'emprunte pas le " +
+        "résolveur commun",
+    ).toEqual([]);
+    r.unmount();
+  });
+
+  it("D11 · L'ANNEAU REND UNE PROPORTION, ET IL LA REND JUSTE", async () => {
+    // ── CE QU'IL A COÛTÉ, ET QUI L'A DÉCIDÉ.
+    //
+    // Un arc à angle arbitraire ne se dessine pas en React Native sans
+    // `react-native-svg` — 7,6 Mo installés (mesure du 2026-10-18 ; ce qui
+    // arrive dans l'APK n'est pas mesuré, le dépôt n'a pas de balance
+    // native). La seule
+    // alternative sans dépendance (quatre quarts de cercle en bordures) ne
+    // sait montrer que 25, 50, 75 et 100 % : elle MENTIRAIT sur toute autre
+    // proportion, et maquiller une proportion est pire que ne pas la dessiner.
+    //
+    // Décision du propriétaire, 2026-10-18 : « fais les 2 ».
+    //
+    // ── ET LE WEB N EN PAIE RIEN.
+    //
+    // Il dessine son anneau en CSS pur (`conic-gradient` + masque radial).
+    // Même contrat, moyens différents : c'est exactement ce que la couture de
+    // plateforme existe pour permettre.
+    const r = await monter("scr_mon_tableau");
+    const arcs = parID(r, "-arc");
+    const t = textes(r);
+    console.log(`[VOC-WEB] anneaux rendus : ${String(arcs.length)}`);
+    expect(arcs.length, "aucun anneau rendu : la part n'atteint pas la carte").toBeGreaterThan(0);
+
+    // ── LA VALEUR EST CELLE DU DOCUMENT, PAS UN POURCENTAGE CALCULÉ.
+    //
+    // Si le moteur affichait « 75 % » déduit de `part`, il inventerait un
+    // format — ce que F3 interdit. Le document écrit « 265 000 FCFA », et
+    // c'est ce qu'on doit lire au centre.
+    expect(
+      t,
+      "la valeur du document n'est plus au centre de l'anneau : le moteur " +
+        "aurait fabriqué un pourcentage",
+    ).toContain("265 000 FCFA");
+
+    // ── LA PROPORTION EST RÉELLEMENT DESSINÉE, ET ELLE VARIE.
+    //
+    // Quatre anneaux tous pleins, ou tous vides, passeraient « quatre
+    // anneaux ». On lit l'angle RÉEL de chacun — l'arc SVG côté natif, le
+    // dégradé conique côté web — et on exige qu'ils diffèrent.
+    const angles = anglesDAnneau(r);
+    console.log(`[VOC-WEB] angles distincts : ${[...new Set(angles)].slice(0, 5).join(" ")}`);
+    expect(angles.length, "aucun angle lisible sur les anneaux").toBeGreaterThan(1);
+    expect(
+      new Set(angles).size,
+      "tous les anneaux dessinent le même angle : la part n'est pas lue",
+    ).toBeGreaterThan(1);
     r.unmount();
   });
 });

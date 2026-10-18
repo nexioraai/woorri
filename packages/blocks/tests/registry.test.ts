@@ -29,7 +29,10 @@ describe("pont AIR ↔ registre de blocs", () => {
     // detail par detail avec Bolt : son tableau de bord ouvre sur QUATRE
     // cartes, et Deribfy ne savait dessiner que sept formes. Le manque n
     // etait pas le theme, c etait le vocabulaire. Additif.
-    expect(listBlockIds()).toHaveLength(12);
+    // TREIZIEME bloc le 2026-10-18 : `tableau` (D16). Une liste porte des
+    // roles fixes et repond a « qu est-ce que c est ? » ; un tableau porte N
+    // colonnes de meme rang et repond a « compare-les ».
+    expect(listBlockIds()).toHaveLength(13);
     expect(getBlock("list")?.entity).toBe("required");
     expect(getBlock("carousel")).toBeUndefined();
   });

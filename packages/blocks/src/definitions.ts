@@ -19,6 +19,7 @@ import {
   AGENT_BLOCK_STATES,
   GRAPHIQUE_BLOCK_STATES,
   STATISTIQUES_BLOCK_STATES,
+  TABLEAU_BLOCK_STATES,
   PROSE_BLOCK_STATES,
   SPACER_BLOCK_STATES,
   DETAIL_HEADER_BLOCK_STATES,
@@ -105,7 +106,25 @@ import {
 // semantique peut diverger, et ce depot a vu six fois « une liste ecrite deux
 // fois ». LE POINT NE REMPLACE PAS LE MOT : il porte la couleur, le mot porte
 // le sens. ADDITIF : absent = pastille pleine, rendu de 1.21.0 inchange.
-export const BLOCK_REGISTRY_VERSION = "1.22.0";
+// 1.23.0 (2026-10-18) — TREIZIEME bloc : `tableau` (D16). Une LISTE porte des
+// roles fixes — titre, sous-titre, pastille, valeur de fin — et repond a
+// « qu est-ce que c est ? ». Un TABLEAU porte N colonnes de meme rang et
+// repond a « compare-les ». Les applications de GESTION, celles que ce
+// generateur produit le plus souvent, vivent de la seconde question, et
+// `list` seul ne savait pas la poser. Les EN-TETES sont les libelles des
+// CHAMPS : le document les ecrit deja, les redeclarer serait deux verites pour
+// un meme mot. ADDITIF STRICT : aucun bloc retire, les douze precedents sont
+// intacts.
+// 1.24.0 (2026-10-18) — `statistiques` gagne `items.part` (D11). Une part
+// 0..1 fait de la carte de chiffre un ANNEAU, avec sa valeur au centre.
+// L anneau dit ce qu un nombre seul ne dit pas : ou l on en est par rapport
+// au total. IL A COUTE UNE DEPENDANCE au natif — `react-native-svg` 15.15.4,
+// la version du bundle Expo 57 — parce qu un arc a angle arbitraire ne
+// se dessine pas autrement, et que quatre quarts de cercle en bordures
+// MENTIRAIENT sur toute autre proportion que 25/50/75/100. Decision du
+// proprietaire. LE WEB NE PAIE RIEN : il dessine le meme anneau en CSS pur.
+// ADDITIF : absente, la carte est celle de 1.23.0 au caractere pres.
+export const BLOCK_REGISTRY_VERSION = "1.24.0";
 
 // Motifs d'identités stables — IDENTIQUES à @deribfy/air-schema (ids.ts) ;
 // redéclarés structurellement (patron AirCapabilitySlice : pas de couplage
@@ -815,6 +834,25 @@ export const BLOCKS: readonly BlockDefinition[] = [
         .array(z.enum(["neutre", "positif", "negatif", "attention"]))
         .max(4)
         .optional(),
+      // ── LA PART FAIT DE LA CARTE UN ANNEAU (2026-10-18) — D11 chez Bolt.
+      //
+      // Son tableau de bord pose « 75 % » au centre d un anneau. C est la MEME
+      // carte de chiffre, avec une proportion en plus : l anneau dit ce qu un
+      // nombre seul ne dit pas — ou l on en est par rapport au total.
+      //
+      // 0..1, et RIEN n est calcule par le moteur : `items.valeur` reste le
+      // texte ECRIT par le document. « 75 % » s ecrit, il ne se deduit pas de
+      // la part — sinon le moteur inventerait un format (F3).
+      //
+      // ADDITIF : absente, la carte est celle de 1.23.0 au caractere pres.
+      "items.part": z
+        .array(z.number().min(0).max(1))
+        .optional()
+        .describe(
+          "La proportion de chaque carte, 0..1. Presente, la carte devient un " +
+            "ANNEAU avec sa valeur au centre. `items.valeur` reste le texte " +
+            "affiche : l ecrire, ne pas le deduire de la part.",
+        ),
     }),
     fieldRefProps: [],
     fieldRefPropsAffichage: [],
@@ -822,6 +860,48 @@ export const BLOCKS: readonly BlockDefinition[] = [
     actionRefProps: [],
     states: STATISTIQUES_BLOCK_STATES,
     porteAffordance: false,
+  },
+  {
+    id: "tableau",
+    version: "1.0.0",
+    description:
+      "Tableau d'instances d'une entité : des colonnes de même rang, un en-tête par champ.",
+    entity: "required",
+    propsSchema: z.strictObject({
+      title: z.string().min(1).optional(),
+      // ── LES COLONNES SONT DES CHAMPS, ET L ORDRE EST CELUI DU DOCUMENT.
+      //
+      // Une LISTE porte des roles fixes — titre, sous-titre, pastille, valeur
+      // de fin — et repond a « qu est-ce que c est ? ». Un TABLEAU porte N
+      // colonnes de meme rang et repond a « compare-les ». Les applications de
+      // gestion, celles que ce generateur produit le plus souvent, vivent de
+      // la seconde question, et `list` seul ne savait pas la poser.
+      //
+      // LES EN-TETES NE SONT PAS ICI : ce sont les LIBELLES des champs, que le
+      // document ecrit deja. Les redeclarer serait deux verites pour un meme
+      // mot — et ce depot a vu six fois ce que cela coute.
+      columnFieldIds: z
+        .array(fieldRef)
+        .min(1)
+        .describe(
+          "Les champs a montrer en colonnes, dans l ordre. L en-tete de chaque " +
+            "colonne est le LIBELLE du champ : ne pas le repeter ici.",
+        ),
+      // Memes etats que `list` (D-060) : DONNEES du document, jamais texte
+      // moteur. Sans titre declare, l etat n est pas rendu.
+      loadingTitle: z.string().min(1).optional(),
+      emptyTitle: z.string().min(1).optional(),
+      emptyMessage: z.string().min(1).optional(),
+      errorTitle: z.string().min(1).optional(),
+      errorMessage: z.string().min(1).optional(),
+    }),
+    fieldRefProps: ["columnFieldIds"],
+    fieldRefPropsAffichage: ["columnFieldIds"],
+    fieldRefPropsFiltrage: [],
+    actionRefProps: [],
+    // Un tableau MONTRE ; il ne porte aucun geste. Comparer n est pas agir.
+    porteAffordance: false,
+    states: TABLEAU_BLOCK_STATES,
   },
 ];
 

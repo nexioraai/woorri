@@ -1456,6 +1456,14 @@
                 "neutre",
                 "attention"
               ]
+            },
+            {
+              "key": "items.part",
+              "value": [
+                0.75,
+                0.6,
+                1.0
+              ]
             }
           ]
         },
@@ -1730,37 +1738,22 @@
           ]
         },
         {
-          "id": "blk_transactions_liste",
-          "blockType": "list",
+          "id": "blk_transactions_tableau",
+          "blockType": "tableau",
           "entityId": "ent_transactions",
           "props": [
             {
-              "key": "titleFieldId",
-              "value": "fld_transactions_type_op"
+              "key": "title",
+              "value": "Tous les mouvements"
             },
             {
-              "key": "subtitleFieldId",
-              "value": "fld_transactions_date_transaction"
-            },
-            {
-              "key": "trailingFieldId",
-              "value": "fld_transactions_total_paye"
-            },
-            {
-              "key": "badgeFieldId",
-              "value": "fld_transactions_statut"
-            },
-            {
-              "key": "sortFieldId",
-              "value": "fld_transactions_date_transaction"
-            },
-            {
-              "key": "sortDirection",
-              "value": "desc"
-            },
-            {
-              "key": "pageSize",
-              "value": 20
+              "key": "columnFieldIds",
+              "value": [
+                "fld_transactions_date_transaction",
+                "fld_transactions_type_op",
+                "fld_transactions_total_paye",
+                "fld_transactions_statut"
+              ]
             },
             {
               "key": "emptyTitle",
@@ -1769,10 +1762,6 @@
             {
               "key": "emptyMessage",
               "value": "Les cotisations et versements apparaitront ici."
-            },
-            {
-              "key": "badgeForme",
-              "value": "point"
             }
           ]
         }

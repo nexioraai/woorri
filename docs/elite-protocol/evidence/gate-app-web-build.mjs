@@ -58,7 +58,29 @@ if (apps.length === 0) {
 }
 
 // ── L'INSTALLATION PARTAGÉE, DEPUIS LE `package.json` ÉMIS.
-if (!existsSync(CACHE + "node_modules")) {
+// ── UN CACHE À MOITIÉ INSTALLÉ SURVIVAIT POUR TOUJOURS (2026-10-18).
+//
+// Le garde ne regardait que le DOSSIER `node_modules`. Mesuré : un `npm ci`
+// interrompu laisse le dossier — `vite` y était — mais sans
+// `.package-lock.json`, le marqueur que npm écrit À LA FIN d'une installation
+// complète. Le garde passait, le build échouait sur « Could not resolve
+// 'vite' », et la gate annonçait « 0/32 applications web se CONSTRUISENT » :
+// ce qui se lit comme un défaut du code émis.
+//
+// PIRE : ce cache masquait un VRAI défaut. Le verrou du gabarit web datait du
+// 2026-10-05, et `@types/react` est entré dans le `package.json` émis le
+// 2026-10-14 — QUATRE JOURS de désaccord que `npm ci` aurait refusé, et qu'il
+// n'a jamais eu l'occasion de refuser parce que l'installation était sautée.
+// La gate était VERTE POUR UNE MAUVAISE RAISON, et c'est exactement ce que ce
+// fichier existe pour empêcher.
+//
+// On regarde désormais le MARQUEUR DE FIN. Un cache partiel est refait au lieu
+// d'être cru.
+if (!existsSync(CACHE + "node_modules/.package-lock.json")) {
+  if (existsSync(CACHE + "node_modules")) {
+    console.log("  deps    : cache INCOMPLET (installation interrompue) — on refait…");
+    rmSync(CACHE + "node_modules", { recursive: true, force: true });
+  }
   mkdirSync(CACHE, { recursive: true });
   writeFileSync(CACHE + "package.json", readFileSync(SOURCE + apps[0] + "/package.json", "utf8"));
   // ── `npm ci` ET NON `npm install` — C'EST LE CONTRÔLE, PAS UN DÉTAIL.

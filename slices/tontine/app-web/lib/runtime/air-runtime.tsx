@@ -28,6 +28,7 @@ import {
   AgentBlock,
   GraphiqueBlock,
   StatistiquesBlock,
+  TableauBlock,
   ProseBlock,
   SearchEntryBlock,
 } from "../blocks/components";
@@ -36,6 +37,7 @@ import type {
   BadgeTone,
   FormFieldSpec,
   ListItemData,
+  TableauBlockProps,
 } from "../blocks/contracts";
 import { useDataProvider } from "./data-provider";
 import { useSlotRegistry } from "./slot-provider";
@@ -961,11 +963,23 @@ export function AirStatistiques({ screen, blockId }: BlockRef) {
     if (label === undefined || valeur === undefined) continue;
     const legende = texte(props["items.legende"], i);
     const ton = texte(props["items.ton"], i);
+      // ── LA PART (D11) — un NOMBRE, pas un texte : la colonne parallele est
+      // un tableau de nombres, et `texte` ne saurait pas la lire.
+      //
+      // LE MAILLON QUI A MANQUE SIX FOIS DANS CE DEPOT : `accroche`,
+      // `logoUri`, l avatar, la famille de caracteres, la phrase de l agent,
+      // la forme de pastille. Declare, porte par le document, jamais transmis.
+      const brutPart = props["items.part"];
+      const part =
+        Array.isArray(brutPart) && typeof brutPart[i] === "number"
+          ? (brutPart[i] as number)
+          : undefined;
     items.push({
       label,
       valeur,
       ...(legende === undefined ? {} : { legende }),
       ...(ton === undefined ? {} : { ton }),
+        ...(part === undefined ? {} : { part }),
     });
   }
   if (items.length === 0) return null;
@@ -1099,6 +1113,75 @@ export function AirDetailHeader({
       trailing={
         props.trailingFieldId === undefined ? undefined : value(props.trailingFieldId)
       }
+    />
+  );
+}
+
+/**
+ * LE TABLEAU — N colonnes de meme rang (D16).
+ *
+ * ── CE QU IL RESOUT, ET QUI N EST PAS LE TRAVAIL DU BLOC.
+ *
+ * Les EN-TETES sont les libelles des CHAMPS : le document les a deja ecrits,
+ * et les redeclarer au bloc serait deux verites pour un meme mot. Les CELLULES
+ * sont les valeurs resolues — meme chemin que la liste, donc meme traduction
+ * des enumerations : aucun code machine ne traverse.
+ *
+ * LE MAILLON QUI A MANQUE CINQ FOIS DANS CE DEPOT — `accroche`, `logoUri`,
+ * l avatar, la famille de caracteres, la phrase de l agent : declare, porte
+ * par le document, et jamais transmis.
+ */
+export function AirTableau({ screen, blockId }: BlockRef) {
+  const visible = useBlockVisible(screen, blockId);
+  const b = block(screen, blockId);
+  const props = useBlockProps(screen, blockId);
+  const provider = useDataProvider();
+  const statut = useDataStatus(b.entityId);
+  const resoudre = useResolveField(screen, b.entityId);
+  // Les champs de l entite, lus comme partout ailleurs dans ce fichier.
+  const champsEntite = b.entityId === undefined ? [] : (screen.entities[b.entityId]?.fields ?? []);
+  const colonnesIds = Array.isArray(props.columnFieldIds)
+    ? props.columnFieldIds.filter((x): x is string => typeof x === "string")
+    : [];
+  const instances = b.entityId === undefined ? [] : provider.listInstances(b.entityId);
+  if (!visible) return null;
+
+  // L EN-TETE VIENT DU CHAMP, jamais du bloc : un libelle ecrit deux fois
+  // divergerait au premier mot change.
+  // L EN-TETE VIENT DU CHAMP. Sans libelle declare, la colonne porte son
+  // identifiant — et c est un defaut VISIBLE, pas un silence : mieux vaut
+  // « fld_montant » qu une colonne anonyme dont personne ne sait ce qu elle
+  // montre. Le validateur du document, lui, exige les libelles.
+  const colonnes = colonnesIds.map(
+    (id) => champsEntite.find((f) => f.id === id)?.label ?? id,
+  );
+  const lignes = instances.map((instance) => ({
+    id: instance.id,
+    cellules: colonnesIds.map((id) => resoudre(id, instance.values[id]) ?? ""),
+  }));
+
+  // Memes etats que la liste (D-060) : sans titre DECLARE, l etat n est pas
+  // rendu — le moteur n invente aucun texte.
+  const titreEtat =
+    statut === "loading"
+      ? str(props.loadingTitle)
+      : statut === "error"
+        ? str(props.errorTitle)
+        : lignes.length === 0
+          ? str(props.emptyTitle)
+          : undefined;
+  const etat: TableauBlockProps["state"] =
+    titreEtat === undefined
+      ? { kind: "ready" }
+      : { kind: statut === "ready" ? "empty" : statut, title: titreEtat };
+
+  return (
+    <TableauBlock
+      testID={b.id}
+      {...(str(props.title) === undefined ? {} : { title: str(props.title) })}
+      colonnes={colonnes}
+      lignes={lignes}
+      state={etat}
     />
   );
 }

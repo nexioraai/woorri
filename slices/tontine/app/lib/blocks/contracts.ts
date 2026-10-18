@@ -148,6 +148,20 @@ export type ListBlockState =
       onRetry?: () => void;
     };
 
+/**
+ * LE TABLEAU — N colonnes de meme rang.
+ *
+ * Les en-tetes sont les LIBELLES des champs, resolus par le runtime ; les
+ * cellules sont les valeurs DEJA FORMATEES. Le bloc ne lit ni l entite ni le
+ * document : il recoit ce qu il affiche.
+ */
+export interface TableauBlockProps extends BlockA11yProps {
+  title?: string;
+  colonnes: readonly string[];
+  lignes: readonly { readonly id: string; readonly cellules: readonly string[] }[];
+  state?: { kind: "ready" } | { kind: "loading" | "empty" | "error"; title: string };
+}
+
 export interface ListBlockProps extends BlockA11yProps {
   /** 1.21.0 — lien d'en-tête de section (« Voir plus » ), libellé du document. */
   seeAll?: { label: string; onPress: () => void };
@@ -342,6 +356,7 @@ export interface Blocks {
   ProseBlock: ComponentType<ProseBlockProps>;
   GraphiqueBlock: ComponentType<GraphiqueBlockProps>;
   StatistiquesBlock: ComponentType<StatistiquesBlockProps>;
+  TableauBlock: ComponentType<TableauBlockProps>;
   AgentBlock: ComponentType<AgentBlockProps>;
   EmptyStateBlock: ComponentType<EmptyStateBlockProps>;
   DetailHeaderBlock: ComponentType<DetailHeaderBlockProps>;
@@ -423,6 +438,16 @@ export const GRAPHIQUE_BLOCK_STATES = ["ready", "loading", "empty", "error"] as 
  */
 export const STATISTIQUES_BLOCK_STATES = ["ready", "loading", "empty", "error"] as const;
 
+/**
+ * LES ÉTATS D'UN TABLEAU — les mêmes que ceux d'une liste.
+ *
+ * Il consomme des données : il peut charger, ne rien trouver, ou échouer.
+ * Déclarés ICI et pointés par le registre : une liste littérale au registre
+ * serait une seconde vérité, et le cliquet `le registre POINTE sur les
+ * tableaux du contrat` l'interdit.
+ */
+export const TABLEAU_BLOCK_STATES = ["ready", "loading", "empty", "error"] as const;
+
 /** Le sens d'un chiffre — jamais sa couleur. */
 export type TonStatistique = "neutre" | "positif" | "negatif" | "attention";
 
@@ -433,6 +458,18 @@ export interface StatistiqueItem {
   /** Ce qui situe le chiffre : « +12,5 % ce mois-ci », « 2 nouveaux ». */
   readonly legende?: string;
   readonly ton?: TonStatistique;
+  /**
+   * LA PART, 0..1 — la carte devient un ANNEAU (D11).
+   *
+   * Chez Bolt, le tableau de bord pose « 75 % » au centre d'un anneau. C'est
+   * la même carte de chiffre, avec une proportion en plus : l'anneau DIT ce
+   * qu'un nombre seul ne dit pas — où l'on en est par rapport au total.
+   *
+   * Absente, la carte reste celle d'avant au caractère près. Et `valeur`
+   * continue d'être le texte ÉCRIT par le document : la primitive n'arrondit
+   * rien et n'invente aucun pourcentage.
+   */
+  readonly part?: number;
 }
 
 export interface StatistiquesBlockProps extends BlockA11yProps {

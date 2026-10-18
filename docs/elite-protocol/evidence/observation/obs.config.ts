@@ -31,6 +31,9 @@ export default defineConfig({
       { find: /^@expo\/vector-icons(\/.*)?$/, replacement: ici("./stub-icones.ts") },
       // Étape ② — la barre d'état déclarée par AppShell, observable en node.
       { find: "expo-status-bar", replacement: ici("./stub-status-bar.ts") },
+      // `react-native-svg` AVANT `react-native` : l ordre compte, le second
+      // est un PREFIXE du premier et l intercepterait.
+      { find: "react-native-svg", replacement: ici("./stub-svg.ts") },
       { find: "react-native", replacement: ici("./stub-rn.ts") },
       // Une SEULE instance de react, partagée par le rendu et les composants émis.
       { find: "react-test-renderer", replacement: ici("../../../../packages/blocks/node_modules/react-test-renderer") },

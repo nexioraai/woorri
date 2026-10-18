@@ -223,6 +223,12 @@ export const EXECUTION_ENVELOPE_V1: ExecutionEnvelope = {
     // rend `empty` quand il n en reste aucune. Les deux autres viennent du
     // meme chemin que `graphique` — la source dit si elle charge ou echoue.
     statistiques: ["ready", "loading", "empty", "error"],
+    // ── LE TABLEAU (2026-10-18) — mêmes états atteignables qu'une liste.
+    //
+    // Il consomme des données : il peut charger, ne rien trouver, ou échouer.
+    // Et comme partout depuis D-060, un état n'est RENDU que si le document a
+    // déclaré son titre — le moteur n'invente aucun texte.
+    tableau: ["ready", "loading", "empty", "error"],
     // 1.8.0 — le spacer n'a qu'un état, et il est ATTEINT dès qu'il est rendu :
     // il n'a ni donnée à charger, ni vide à signaler, ni erreur possible.
     spacer: ["ready"],

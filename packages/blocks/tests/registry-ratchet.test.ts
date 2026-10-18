@@ -60,6 +60,15 @@ const V1_BLOCK_IDS = [
   //
   // Les onze premiers ne bougent pas.
   "statistiques",
+  // 2026-10-18 — TREIZIEME bloc : `tableau`. Une LISTE porte des roles fixes
+  // — titre, sous-titre, pastille, valeur de fin — et repond a « qu est-ce
+  // que c est ? ». Un TABLEAU porte N colonnes de meme rang et repond a
+  // « compare-les ». Les applications de GESTION, celles que ce generateur
+  // produit le plus souvent, vivent de la seconde question.
+  //
+  // Les douze precedents ne bougent pas, et il est ajoute EN QUEUE : l ordre
+  // du registre est celui de la declaration.
+  "tableau",
 ];
 
 describe("cliquets du registre de blocs", () => {
@@ -204,7 +213,45 @@ describe("cliquets du registre de blocs", () => {
     // sens — une couleur seule exclurait qui ne la distingue pas.
     //
     // ADDITIF : absent = pastille pleine, rendu de 1.21.0 au caractere pres.
-    expect(BLOCK_REGISTRY_VERSION).toBe("1.22.0");
+    // 1.23.0 (2026-10-18) — TREIZIEME bloc : `tableau` (D16).
+    //
+    // Une LISTE porte des roles fixes et repond a « qu est-ce que c est ? ».
+    // Un TABLEAU porte N colonnes de meme rang et repond a « compare-les ».
+    // Les applications de GESTION vivent de la seconde question, et `list`
+    // seul ne savait pas la poser.
+    //
+    // LES EN-TETES SONT LES LIBELLES DES CHAMPS : le document les ecrit deja.
+    // Les redeclarer au bloc serait deux verites pour un meme mot — ce que ce
+    // depot a paye six fois.
+    //
+    // IL DEBORDE PLUTOT QUE DE TRONQUER : quatre colonnes ne tiennent pas sur
+    // un telephone, et couper montrerait MOINS que la verite.
+    //
+    // ADDITIF STRICT : aucun bloc retire, les douze precedents intacts.
+    // 1.24.0 (2026-10-18) — `statistiques` gagne `items.part` (D11).
+    //
+    // Une part 0..1 fait de la carte un ANNEAU, valeur au centre. Il dit ce
+    // qu un nombre seul ne dit pas : ou l on en est par rapport au total.
+    //
+    // IL A COUTE UNE DEPENDANCE au natif — `react-native-svg` 15.15.4,
+    // celle du bundle Expo 57.
+    //
+    // POIDS REEL, mesure le 2026-10-18 : 7,6 Mo installes sur disque, dont
+    // 1,43 Mo de JS consommable et 2,09 Mo de sources natives. CE QUI ARRIVE
+    // DANS L APK N EST PAS MESURE : le depot n a de balance que cote web
+    // (EP-218), aucune cote natif. J avais annonce « 3,65 Mo » au
+    // proprietaire — ce chiffre ne correspondait a AUCUNE de ces mesures.
+    //
+    // La seule alternative sans dependance — quatre quarts de
+    // cercle en bordures — ne sait montrer que 25, 50, 75 et 100 % : elle
+    // MENTIRAIT sur toute autre proportion. Decision du proprietaire,
+    // 2026-10-18.
+    //
+    // LE WEB N EN PAIE RIEN : il dessine son anneau en CSS pur
+    // (`conic-gradient` + masque radial). Meme contrat, moyens differents.
+    //
+    // ADDITIF : absente, la carte est celle de 1.23.0 au caractere pres.
+    expect(BLOCK_REGISTRY_VERSION).toBe("1.24.0");
     expect(BLOCKS.map((b) => b.id)).toEqual(V1_BLOCK_IDS);
   });
 

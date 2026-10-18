@@ -92,6 +92,13 @@ describe("le runtime ÉMIS sait évaluer la condition", () => {
     // autres de dependre du role et de la session.
     // 2026-10-17 : 11 — `AirStatistiques` consulte la visibilite comme les
     // autres. Des chiffres cles peuvent n avoir de sens que pour un role.
-    expect(occurrences).toBe(11);
+    // 2026-10-18 : 12 — `AirTableau` consulte la visibilite comme les autres.
+    // Un tableau est le bloc le plus SUSCEPTIBLE de dependre d un droit : il
+    // montre des colonnes cote a cote, donc il en montre plus qu une liste.
+    //
+    // CE COMPTEUR ETAIT RESTE A 11 depuis l arrivee du bloc `tableau` : le
+    // wrapper consultait bien la visibilite, mais le cliquet qui l EXIGE de
+    // chacun ne le comptait pas. Trouve par la gate, pas par relecture.
+    expect(occurrences).toBe(12);
   });
 });
