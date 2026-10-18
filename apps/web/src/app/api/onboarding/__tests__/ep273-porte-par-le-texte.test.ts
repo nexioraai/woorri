@@ -32,6 +32,7 @@
  *    n'existait pas du tout.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { readFileSync } from 'node:fs'
 
 const getUserMock = vi.fn()
 vi.mock('@/lib/supabase', () => ({
@@ -158,6 +159,66 @@ describe('EP-273 · la route transporte le signal jusqu’à l’écran', () => 
       const d = (await (await POST(requete('bonjour'))).json()) as { estApplication?: unknown }
       expect(d.estApplication, `« ${JSON.stringify(douteux)} » a été promu en vrai`).toBe(false)
     }
+  })
+})
+
+describe('EP-273 · la CONSIGNE elle-même ne peut plus se contredire', () => {
+  // ── POURQUOI UN CONTRÔLE SUR LE TEXTE DE LA CONSIGNE.
+  //
+  // Ici la consigne EST l'artefact : ce n'est pas lire des mentions d'un
+  // câblage, c'est vérifier l'instruction elle-même. Et elle s'est
+  // contredite, mesuré le 2026-10-18 sur le propriétaire :
+  //
+  //   · un point disait « dis-lui que le choix s'appelle Application » —
+  //     le « allez cliquer » qu'il n'a pas su suivre ;
+  //   · un autre disait « demande-lui s'il veut une application », sans fin —
+  //     la même question posée TROIS FOIS pendant qu'il répondait oui.
+  //
+  // Le câblage, lui, était bon : le JavaScript servi contenait déjà
+  // `"ask"===n.type && !0===n.estApplication && O(!0)`. Rien n'arrivait
+  // parce que la consigne, plus ancienne et plus précise, l'emportait.
+  const CONSIGNE = (() => {
+    const src = readFileSync(new URL('../route.ts', import.meta.url), 'utf8')
+    const i = src.indexOf('NATIVE / WEB APPLICATIONS')
+    const j = src.indexOf('AFTER the required info is gathered', i)
+    return src.slice(i, j)
+  })()
+
+  it('⑥ ELLE N’ENVOIE PLUS PERSONNE CLIQUER', () => {
+    for (const interdit of [
+      'named "Application"',
+      'pick that choice',
+      'SEPARATE choice on this same home screen',
+    ]) {
+      expect(
+        CONSIGNE.includes(interdit),
+        `la consigne contient « ${interdit} » : elle renvoie à un bouton que ` +
+          `la majorité des gens ne cherchera jamais`,
+      ).toBe(false)
+    }
+    expect(CONSIGNE, 'elle ne dit pas que l’écran bascule seul').toContain('switches BY ITSELF')
+  })
+
+  it('⑦ ELLE NE DEMANDE QU’UNE FOIS', () => {
+    expect(CONSIGNE, 'rien ne borne la question : elle se reposera en boucle').toContain(
+      'ASK EXACTLY ONCE',
+    )
+    expect(CONSIGNE).toContain('never put it again')
+  })
+
+  it('⑧ LE DRAPEAU EST ÉCRIT EN TÊTE, pas en queue', () => {
+    // La sortie est bornée à 600 jetons. Un drapeau écrit en dernier peut
+    // être coupé avant d'avoir été lu — et c'est silencieux.
+    const src = readFileSync(new URL('../route.ts', import.meta.url), 'utf8')
+    const format = src.slice(src.indexOf('- To ask a question:'))
+    const posType = format.indexOf('"type":"ask"')
+    const posApp = format.indexOf('"estApplication"')
+    const posReply = format.indexOf('"reply"')
+    expect(posApp, 'le drapeau n’est pas dans le format').toBeGreaterThan(-1)
+    expect(posApp, 'le drapeau passe APRÈS le message : une coupure l’emporte').toBeLessThan(
+      posReply,
+    )
+    expect(posApp).toBeGreaterThan(posType)
   })
 })
 
