@@ -48,6 +48,61 @@ const base = (app: string): string => join(tmpdir(), "deribfy-gate-web", app) + 
 const SPA = "v3-kaviva-spa";
 const FIT = "v3-coach-fitness";
 
+/** Les valeurs de style réellement appliquées aux nœuds montés. */
+interface Applique {
+  readonly familles: readonly string[];
+  readonly fonds: readonly string[];
+  readonly rayons: readonly number[];
+}
+
+/**
+ * MONTE UNE APPLICATION ET REND CE QUE SES NŒUDS PORTENT VRAIMENT.
+ *
+ * ── POURQUOI CETTE FONCTION A ÉTÉ AJOUTÉE LE 2026-10-18.
+ *
+ * Ce fichier ne mesurait que les POLICES. La palette et les rayons du thème
+ * n'avaient de preuve montée QUE sur la cible native (`theme-identite`), et
+ * c'est exactement ce que le propriétaire demandait de vérifier : « est-ce que
+ * les absences sont couvertes des 2 côtés ».
+ *
+ * Déduire du natif aurait été l'erreur qui a cassé 32/32 applications web
+ * quand l'avatar à initiales avait été posé d'un seul côté.
+ */
+async function appliques(app: string): Promise<Applique> {
+  const familles = await famillesDe(app);
+  const b = base(app);
+  const { DataRoot } = await import(b + "lib/runtime/data-provider.tsx");
+  const { FormStateRoot } = await import(b + "lib/runtime/form-state.tsx");
+  const { buildDemoProvider } = await import(b + "lib/runtime/demo-provider.ts");
+  const { demoData } = await import(b + "demo.data.ts");
+  const nav = (await import(b + "nav.data.ts")) as { primaryNav?: { screenId: string }[] };
+  const premier = nav.primaryNav?.[0]?.screenId ?? "";
+  const Ecran = (await import(b + `screens/${premier}.tsx`)).default as () => unknown;
+  let r: ReactTestRenderer | undefined;
+  act(() => {
+    r = create(
+      createElement(DataRoot as never, { provider: buildDemoProvider(demoData) } as never,
+        createElement(FormStateRoot as never, null as never, createElement(Ecran as never))) as never,
+    );
+  });
+  type Decl = { backgroundColor?: unknown; borderRadius?: unknown };
+  const aplatir = (s: unknown): Decl[] =>
+    Array.isArray(s) ? s.flatMap(aplatir) : s === null || s === undefined || s === false ? [] : [s as Decl];
+  const decls = (r?.root.findAll(() => true) ?? []).flatMap((n) =>
+    aplatir((n.props as { style?: unknown }).style),
+  );
+  const uniques = <T,>(xs: readonly T[]): T[] => [...new Set(xs)];
+  const out = {
+    familles,
+    fonds: uniques(decls.map((d) => d.backgroundColor).filter((x): x is string => typeof x === "string")),
+    rayons: uniques(decls.map((d) => d.borderRadius).filter((x): x is number => typeof x === "number")).sort(
+      (a, b) => a - b,
+    ),
+  };
+  r?.unmount();
+  return out;
+}
+
 /** Les familles de polices réellement déclarées dans les styles montés. */
 async function famillesDe(app: string): Promise<readonly string[]> {
   const b = base(app);
@@ -208,5 +263,46 @@ describe("PREUVE WEB — la police du thème atteint l'écran", () => {
           "d'être décodée depuis base64 ?",
       ).toBe("wOF2");
     }
+  });
+  it("⑤ LES DEUX APPLICATIONS NE PEIGNENT PAS LE MÊME FOND — sur le WEB aussi", async () => {
+    // ── LE CONTRÔLE QUI MANQUAIT, ET QUI EXISTAIT DÉJÀ CÔTÉ NATIF.
+    //
+    // `theme-identite.obs.tsx` ① tient cette propriété depuis le 2026-10-17.
+    // Ce fichier-ci ne mesurait que les polices : la palette du thème n'avait
+    // AUCUNE preuve montée sur la cible web.
+    //
+    // La forme de l'assertion est celle du natif, volontairement — deux mondes
+    // opposés ne partagent QUE LE BLANC. Un deuxième fond commun signifie que
+    // la palette de base reparaît, donc que le catalogue n'agit plus.
+    const s = await appliques(SPA);
+    const f = await appliques(FIT);
+    console.log(`\n[THÈME-WEB] spa fonds   : ${s.fonds.slice(0, 5).join(" ")}`);
+    console.log(`[THÈME-WEB] coach fonds : ${f.fonds.slice(0, 5).join(" ")}`);
+    expect(s.fonds.length, "aucun fond appliqué sur le spa").toBeGreaterThan(1);
+    expect(f.fonds.length, "aucun fond appliqué sur le coach").toBeGreaterThan(1);
+    const communs = s.fonds.filter((c) => f.fonds.includes(c));
+    console.log(`[THÈME-WEB] fonds communs : ${communs.join(" ")}`);
+    expect(
+      communs,
+      "les deux thèmes partagent plus que le blanc sur la cible WEB : la " +
+        "palette de base reparaît, le catalogue n'agit plus de ce côté",
+    ).toEqual(["#FFFFFF"]);
+  });
+
+  it("⑥ ELLES N'ARRONDISSENT PAS PAREIL — sur le WEB aussi", async () => {
+    // Un salon de soins et une application d'entraînement n'ont pas les mêmes
+    // coins. Le rayon ne bougeait pour AUCUN des 22 documents avant le
+    // catalogue : 6/10/16 pour tout le monde. La preuve existait côté natif,
+    // pas ici.
+    const s = await appliques(SPA);
+    const f = await appliques(FIT);
+    console.log(`[THÈME-WEB] rayons — spa ${s.rayons.join("/")} · coach ${f.rayons.join("/")}`);
+    expect(s.rayons.length, "aucun rayon appliqué sur le spa").toBeGreaterThan(0);
+    expect(f.rayons.length, "aucun rayon appliqué sur le coach").toBeGreaterThan(0);
+    expect(
+      s.rayons.join("/"),
+      "les deux thèmes arrondissent identiquement sur la cible WEB : le rayon " +
+        "du catalogue n'y agit pas",
+    ).not.toBe(f.rayons.join("/"));
   });
 });
