@@ -7,6 +7,7 @@ import { supabase } from '@/lib/supabase';
 import ConversationApplication from './ConversationApplication';
 import { Attente, Bulle, CADRE_CONVERSATION, Composeur, VERRE_BULLE, Escalier } from './Conversation';
 import { modeAsyncActif } from '@/lib/apps/suivi-generation';
+import { doitAiguillerVersApplication } from '@/lib/apps/aiguillage';
 
 // « Application » ne devient cliquable que le jour ou la generation
 // asynchrone est armee — MEME interrupteur que l'ecran de suivi : un seul
@@ -273,6 +274,22 @@ export default function OnboardingChat() {
       } else if (data.type === 'ask' && data.reply) {
         setMessages((m) => [...m, { role: 'assistant', content: data.reply }]);
         setSkippable(data.skippable === true);
+        // ── LA PORTE PAR LE TEXTE (2026-10-18).
+        //
+        // DEFAUT MESURE SUR LA TENTATIVE DU PROPRIETAIRE : il a decrit son
+        // application en detail, le modele l'a comprise, et la seule chose
+        // que l'ecran savait faire etait de lui dire d'aller cliquer sur un
+        // bouton qu'il n'a pas trouve.
+        //
+        // Dire d'aller cliquer n'est pas un aiguillage. La plupart des gens
+        // tapent ce qu'ils veulent sans jamais regarder les boutons. L'ecran
+        // s'aiguille donc tout seul, exactement comme le ferait le bouton —
+        // meme geste, meme destination.
+        //
+        // IL N'ARRIVE QU'APRES CONFIRMATION : le modele ne pose ce drapeau
+        // qu'une fois la personne d'accord. Basculer quelqu'un qui voulait
+        // une boutique serait pire que l'impasse qu'on repare.
+        if (doitAiguillerVersApplication(data, APPLICATION_PRETE)) setCibleApplication(true);
       } else if (data.type === 'need_dropship_type') {
         setShowDropshipPicker(true);
       } else {

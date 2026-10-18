@@ -28,7 +28,6 @@
  * L'écriture est tirée et oubliée, sous `try`. Perdre une mesure est bénin ;
  * perdre un tir payé parce qu'on le mesurait serait absurde.
  */
-import { supabaseAdmin } from '@/lib/supabase-admin'
 import { TABLE_APPELS } from './journal'
 
 /** Le tir en cours, posé par la continuation avant chaque tranche. */
@@ -80,19 +79,20 @@ function ecrire(ligne: {
   jetons_sortie: number
   issue: string
 }): void {
-  // TIRÉE ET OUBLIÉE. On n'attend pas, et on n'échoue pas : le `catch` du
-  // `void` attrape aussi bien le rejet que l'exception synchrone.
-  try {
-    void supabaseAdmin
-      .from(TABLE_APPELS)
-      .insert({ slug: slugCourant, ...ligne })
-      .then(
-        () => undefined,
-        () => undefined,
-      )
-  } catch {
-    // Une panne du journal ne touche pas le tir en cours.
-  }
+  // ── TIRÉE ET OUBLIÉE, ET L'IMPORT EST PARESSEUX.
+  //
+  // `supabase-admin` LÈVE au chargement si la clé de service manque. Importé
+  // au sommet, ce module faisait échouer le CHARGEMENT de deux fichiers de
+  // test qui ne touchent ni à la base ni au journal — mesuré : « 0 test »
+  // sur `plafond-jetons` et `livrer-malgre-refus`. C'est le silence même
+  // qu'EP-269 ferme ailleurs, et je venais de le rouvrir par une autre porte.
+  //
+  // On n'attend rien et on n'échoue jamais : une panne du journal ne doit
+  // pas toucher un tir payé.
+  void (async () => {
+    const { supabaseAdmin } = await import('@/lib/supabase-admin')
+    await supabaseAdmin.from(TABLE_APPELS).insert({ slug: slugCourant, ...ligne })
+  })().catch(() => undefined)
 }
 
 type Constructeur = new (options: Record<string, unknown>) => {

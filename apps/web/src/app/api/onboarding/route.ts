@@ -51,12 +51,20 @@ It is NOT one of the 3 site modes: it has its own entry. When the user asks for 
   4. Emit {"type":"ask", ...} with detectedMode: null, and ask whether they want an application (and should pick that choice) or a website/shop (and you continue here).
 NEVER claim Deribfy cannot do mobile or native applications. It can.
 
+THE DOOR OPENS BY ITSELF — "estApplication".
+Measured defect, 2026-10-18, on the owner's own attempt: he described his app in full, you understood it perfectly and wrote "pick the Application choice". He could not find the button, and gave up. Telling someone to go click is NOT a route; it is a dead end for anyone who simply types what they want.
+So there is now a MACHINE-READABLE field, and the screen acts on it:
+  · Set "estApplication": true ONLY when the user has CONFIRMED, in this conversation, that they want an application (mobile and/or web) rather than a website or a shop. A confirmation is an answer to your question — never your own guess.
+  · Until they confirm, keep it false and ASK, exactly as described above. Switching someone to the application path when they wanted a shop would be worse than the dead end.
+  · When you set it to true, your "reply" must simply say you are taking them there. Do NOT ask them to click anything: the screen switches by itself.
+
 AFTER the required info is gathered, OPTIONALLY offer (each optional, user can skip and edit later — say so):
 A) A preferred brand COLOR if they have one (name or hex). This is the ONLY design question allowed.
 B) Real CONTACT details: professional phone, email, WhatsApp link, address.
 
 OUTPUT FORMAT — respond with ONLY a JSON object, no markdown, no code fences:
-- To ask a question: {"type":"ask","reply":"<message in user's language>","skippable":<boolean>,"detectedMode":<1|2|3|null>,"detectedDropshipType":<"reseller"|"pod_brand"|"pod_custom"|null>}
+- To ask a question: {"type":"ask","reply":"<message in user's language>","skippable":<boolean>,"detectedMode":<1|2|3|null>,"detectedDropshipType":<"reseller"|"pod_brand"|"pod_custom"|null>,"estApplication":<boolean>}
+  "estApplication" is false in the overwhelming majority of replies. Set it true ONLY after the user confirms they want an application — see the section above.
   Set "skippable":true on EVERY optional offer (color AND contact). Set "skippable":false only for required questions (sector, what they sell).
   ALWAYS fill "detectedMode" with your best current guess (or null if truly unclear yet). Fill "detectedDropshipType" only when mode is 3 AND the sub-type is clear from the user's words, else null.
 - When everything needed is gathered (or optional parts skipped): {"type":"done","summary":"<a single rich English paragraph: sector, what they sell, the preferred color if given (state explicitly), and any real contact details provided. Be factual — only what the user actually said.>","detectedLang":"<ISO 639-1 code of the language the USER wrote in during this conversation: fr, en, ar, es, etc. This is the language their website must be written in. Look at what the user typed, not at your own replies.>","detectedMode":<1|2|3>,"detectedDropshipType":<"reseller"|"pod_brand"|"pod_custom"|null>}
@@ -187,7 +195,16 @@ export async function POST(req: Request) {
         const replyMatch = clean.match(/"reply"\s*:\s*"([\s\S]*?)"\s*(?:,\s*"skippable"|})/);
         const reply = replyMatch ? replyMatch[1] : '';
         const skip = /"skippable"\s*:\s*true/i.test(clean);
-        if (reply) intent = { type: 'ask', reply, skippable: skip };
+        // ── L'AIGUILLAGE SURVIT À UN JSON CASSÉ.
+        //
+        // Cette extraction tolérante existe parce qu'un modèle casse parfois
+        // son JSON (apostrophes, guillemets). Elle reconstruisait `type`,
+        // `reply` et `skippable` — et PERDAIT `estApplication` en silence.
+        // La personne restait alors dans l'entonnoir des sites sans que rien
+        // ne le signale : exactement le défaut qu'EP-273 répare, mais par une
+        // autre porte. On le récupère ici aussi.
+        const estApp = /"estApplication"\s*:\s*true/i.test(clean);
+        if (reply) intent = { type: 'ask', reply, skippable: skip, estApplication: estApp };
       }
       if (!intent) {
         return NextResponse.json({ type: 'ask', reply: FALLBACK, skippable: false });
@@ -197,7 +214,27 @@ export async function POST(req: Request) {
     if (intent.type === 'ask' && typeof intent.reply === 'string') {
       // Si le reply contient malgré tout un payload technique, on le bloque
       const safeReply = looksLikePayload(intent.reply) ? FALLBACK : intent.reply;
-      return NextResponse.json({ type: 'ask', reply: safeReply, skippable: intent.skippable === true });
+      // ── L'AIGUILLAGE VERS L'APPLICATION VOYAGE JUSQU'A L'ECRAN.
+      //
+      // DEFAUT MESURE LE 2026-10-18, sur la tentative du proprietaire
+      // lui-meme : il a decrit son application en detail, le modele l'a
+      // parfaitement compris et lui a repondu « choisissez l'option
+      // Application ». Il n'a pas trouve le bouton.
+      //
+      // Dire a quelqu'un d'aller cliquer n'est PAS un aiguillage : c'est une
+      // impasse pour tous ceux qui tapent simplement ce qu'ils veulent — et
+      // ils sont la majorite. Le signal existait dans la tete du modele et
+      // nulle part dans la reponse. Il y est maintenant.
+      //
+      // `=== true` STRICTEMENT : une valeur absente, nulle ou « truthy »
+      // n'aiguille personne. Basculer quelqu'un qui voulait une boutique
+      // serait pire que l'impasse qu'on repare.
+      return NextResponse.json({
+        type: 'ask',
+        reply: safeReply,
+        skippable: intent.skippable === true,
+        estApplication: intent.estApplication === true,
+      });
     }
 
     // Mode final : bouton explicite prioritaire, sinon detection agent

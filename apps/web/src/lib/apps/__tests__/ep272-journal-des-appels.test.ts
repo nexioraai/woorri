@@ -53,6 +53,17 @@ const fauxSdk = (reponse: unknown, retard = 0) =>
     }
   } as never
 
+/**
+ * L'ÉCRITURE EST ASYNCHRONE, ET LE CONTRÔLE DOIT L'ÊTRE AUSSI.
+ *
+ * Le journal importe `supabase-admin` PARESSEUSEMENT : importé au sommet, il
+ * lève au chargement quand la clé de service manque, et il faisait taire deux
+ * fichiers de test étrangers (« 0 test »). L'écriture part donc dans une
+ * micro-tâche. Lire `ecrites` tout de suite mesurerait la vitesse de
+ * JavaScript, pas le journal.
+ */
+const laisserEcrire = () => new Promise((r) => setTimeout(r, 0))
+
 const GRAMMAIRE = { type: 'object', properties: { a: { type: 'string'.repeat(400) } } }
 
 const requete = (texte: string) => ({
@@ -70,6 +81,7 @@ describe('EP-272 · le journal des appels', () => {
     const Sdk = sdkJournalise(fauxSdk({ usage: { input_tokens: 21000, output_tokens: 3200 } }, 30))
     const c = new Sdk({})
     await c.messages.create(requete('SECTIONS À ÉMETTRE MAINTENANT : entities.') as never)
+    await laisserEcrire()
 
     expect(ecrites.length, 'aucune ligne écrite : le journal ne mesure rien').toBe(1)
     const l = ecrites[0] as Record<string, unknown>
@@ -88,6 +100,7 @@ describe('EP-272 · le journal des appels', () => {
     const Sdk = sdkJournalise(fauxSdk({ usage: { input_tokens: 5, output_tokens: 1 } }))
     const c = new Sdk({})
     await c.messages.create(requete('x') as never)
+    await laisserEcrire()
     expect(
       (ecrites[0] as Record<string, unknown>).partie,
       'la sonde est comptée comme une émission : on ne saura pas séparer les 22 ' +
@@ -101,6 +114,7 @@ describe('EP-272 · le journal des appels', () => {
     )
     const c = new Sdk({})
     await c.messages.create(requete('SECTIONS À ÉMETTRE MAINTENANT : screens.') as never)
+    await laisserEcrire()
     const l = ecrites[0] as Record<string, unknown>
     expect(l.issue, 'une troncature passe pour un succès').toBe('tronquee')
     expect(l.jetons_sortie, 'les jetons payés puis jetés ne sont pas comptés').toBe(128000)
@@ -113,6 +127,7 @@ describe('EP-272 · le journal des appels', () => {
     await expect(
       c.messages.create(requete('SECTIONS À ÉMETTRE MAINTENANT : entities.') as never),
     ).rejects.toThrow('grammaire refusée')
+    await laisserEcrire()
     expect(ecrites.length, 'un aller-retour refusé n’est pas compté : il a pourtant eu lieu').toBe(1)
     expect((ecrites[0] as Record<string, unknown>).issue).toBe('http_400')
   })
@@ -141,6 +156,7 @@ describe('EP-272 · le journal des appels', () => {
     direQuelTirCommence(null)
     const Sdk = sdkJournalise(fauxSdk({ usage: {} }))
     await new Sdk({}).messages.create(requete('x') as never)
+    await laisserEcrire()
     expect(
       (ecrites[0] as Record<string, unknown>).slug,
       'un appel hors tranche est attribué à la génération précédente',

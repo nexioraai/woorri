@@ -56,7 +56,6 @@ import * as primitives from '@deribfy/primitives/roles-icones'
 import * as repair from '@deribfy/repair'
 import * as compiler from '@deribfy/compiler'
 import * as fidelity from '@deribfy/fidelity'
-import { supabaseAdmin } from '@/lib/supabase-admin'
 import { TABLE_SONDES } from './journal'
 import { direQuelTirCommence, sdkJournalise } from './journal-appels'
 // ── LE SDK EST IMPORTÉ ICI, NORMALEMENT, ET PASSÉ AU MOTEUR.
@@ -169,9 +168,19 @@ type Moteur = {
  * doit JAMAIS mourir parce qu'un cache est en panne.
  */
 function sondeDeLaBase() {
+  // ── L'IMPORT EST PARESSEUX, ET CE N'EST PAS UN DÉTAIL DE STYLE.
+  //
+  // `supabase-admin` LÈVE au chargement si la clé de service manque. Importé
+  // au sommet, il faisait échouer le CHARGEMENT de deux fichiers de test qui
+  // ne touchent ni à la base ni à la sonde — mesuré : `plafond-jetons` et
+  // `livrer-malgre-refus` affichaient « 0 test », exactement le silence
+  // qu'EP-269 ferme ailleurs.
+  //
+  // Ici le client n'est construit que lorsqu'on s'en sert vraiment.
+  const base = async () => (await import('@/lib/supabase-admin')).supabaseAdmin
   return {
     async lire(empreinte: string): Promise<unknown> {
-      const r = await supabaseAdmin
+      const r = await (await base())
         .from(TABLE_SONDES)
         .select('niveaux')
         .eq('empreinte', empreinte)
@@ -183,7 +192,7 @@ function sondeDeLaBase() {
       // `upsert` et pas `insert` : deux generations peuvent sonder en meme
       // temps sur une empreinte neuve, et la seconde ne doit pas echouer sur
       // la cle primaire — elle ecrit la meme chose.
-      await supabaseAdmin.from(TABLE_SONDES).upsert({ empreinte, niveaux })
+      await (await base()).from(TABLE_SONDES).upsert({ empreinte, niveaux })
     },
   }
 }
