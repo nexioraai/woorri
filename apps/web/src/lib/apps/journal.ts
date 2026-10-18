@@ -595,6 +595,105 @@ export const SQL_VERSIONS = sqlVersionsPour(TABLE_VERSIONS)
 
 /** LE nom de la table de production — exporte pour que les routes de
  *  l'etage 4 ne l'ecrivent jamais nu (cliquet d'isolation etendu a app/). */
+/**
+ * LA SONDE DE GRAMMAIRE, PARTAGEE ENTRE TOUTES LES GENERATIONS.
+ *
+ * ── LE DEFAUT, MESURE LE 2026-10-18, ET IL ETAIT DEJA ECRIT DANS LE MOTEUR.
+ *
+ * Avant d'ecrire une seule ligne d'application, le moteur TESTE sa grammaire :
+ * il demande au service quel niveau de contrainte passe, partie par partie.
+ * Cout : 9 a 22 allers-retours. Mesure du proprietaire : SEIZE MINUTES
+ * d'ecran muet sur une demande de 86 caracteres.
+ *
+ * Le resultat ne depend PAS de la demande — la sonde envoie `system: "x"`,
+ * `user: "x"`. Il ne depend que du SCHEMA. Il devrait donc se calculer une
+ * fois pour toutes.
+ *
+ * Le moteur sait deja le partager : il accepte `sondePartagee` et range le
+ * resultat sous une empreinte du schema (EP-236). MAIS PERSONNE NE LE LUI
+ * FOURNISSAIT. Mesure du jour : `sondePartagee` n'apparaissait que dans le
+ * moteur qui l'attend, zero fois dans le site qui l'appelle. Huitieme
+ * machine posee et debranchee de ce chantier.
+ *
+ * ── POURQUOI UNE TABLE A PART, ET PAS UNE COLONNE DE PLUS.
+ *
+ * La cle est l'EMPREINTE DU SCHEMA, pas une generation. Deux generations qui
+ * partagent le meme schema partagent la meme reponse ; une montee de version
+ * du registre de blocs change l'empreinte et la fait repayer UNE fois.
+ * Ranger ca sur une ligne de generation obligerait a deviner laquelle lire.
+ */
+/**
+ * LE JOURNAL DES APPELS — UNE LIGNE PAR ALLER-RETOUR AU MODELE.
+ *
+ * ── CE QU'IL REPARE : ON NE SAVAIT PAS OU PARTAIT L'HEURE.
+ *
+ * Mesure du 2026-10-18 sur la base : une demande d'UNE PHRASE (25 jetons) a
+ * coute 23,46 $ et 101 minutes. En deduisant depuis les jetons d'entree, le
+ * moteur a fait ~73 appels la ou neuf suffiraient. Mais DEDUIRE n'est pas
+ * MESURER : on ignore quelle partie echoue, a quel niveau, et combien de
+ * temps chacune prend.
+ *
+ * Le moteur compte les JETONS de chaque appel depuis toujours. Il n'a jamais
+ * compte le TEMPS. Sans cette ligne, toute optimisation serait un pari — et
+ * un pari se paie ici 20 $ le tir.
+ *
+ * ── POURQUOI UNE TABLE, ET PAS LE JOURNAL DU SERVEUR.
+ *
+ * Les traces d'un hebergeur s'effacent, et on ne les recoupe pas avec une
+ * generation. Ici chaque ligne porte son tir : on peut enfin repondre
+ * « lesquels echouent, a quel niveau » par une requete, pas par une lecture.
+ *
+ * ── IL NE DOIT JAMAIS CASSER UNE GENERATION.
+ *
+ * L'ecriture est TIREE ET OUBLIEE : une panne du journal ne touche pas le
+ * tir en cours. Perdre une mesure est benin ; perdre une generation payee
+ * parce qu'on la mesurait serait absurde.
+ */
+export const TABLE_APPELS = 'app_generation_calls'
+
+export const SQL_APPELS = `
+create table if not exists public.${TABLE_APPELS} (
+  id            uuid primary key default gen_random_uuid(),
+  -- Le slug porte le debut de l'identifiant de generation (\`gen-xxxxxxxx\`) :
+  -- c'est la seule chose que le client voit, et elle suffit a recouper.
+  slug          text,
+  -- \`sonde\` ou la liste des sections demandees. Lu dans le texte envoye,
+  -- jamais devine.
+  partie        text,
+  -- La TAILLE de la grammaire identifie le barreau de l'escalier : les six
+  -- niveaux pesent 41, 40, 33, 28, 25 et 20 Ko. Plus fiable qu'un numero
+  -- qu'il faudrait faire voyager a travers un module scelle.
+  grammaire_ko  integer,
+  ms            integer not null,
+  jetons_entree integer not null default 0,
+  jetons_sortie integer not null default 0,
+  -- \`ok\`, \`tronquee\`, \`refusee\`, ou le statut HTTP d'une erreur.
+  issue         text not null,
+  cree_le       timestamptz not null default now()
+);
+
+create index if not exists ${TABLE_APPELS}_slug_idx on public.${TABLE_APPELS} (slug, cree_le);
+
+-- MEMES ACCES QUE LE RESTE DU GENERATEUR : personne d'autre que le service.
+alter table public.${TABLE_APPELS} enable row level security;
+revoke all on public.${TABLE_APPELS} from anon, authenticated;
+`
+
+export const TABLE_SONDES = 'app_grammar_probes'
+
+export const SQL_SONDES = `
+create table if not exists public.${TABLE_SONDES} (
+  -- L'empreinte du SCHEMA, telle que le moteur la calcule (sha256 tronque).
+  empreinte  text primary key,
+  niveaux    jsonb not null,
+  cree_le    timestamptz not null default now()
+);
+
+-- MEMES ACCES QUE LE RESTE DU GENERATEUR : personne d'autre que le service.
+alter table public.${TABLE_SONDES} enable row level security;
+revoke all on public.${TABLE_SONDES} from anon, authenticated;
+`
+
 export const TABLE_GENERATIONS = 'app_generations'
 
 /**

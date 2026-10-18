@@ -56,6 +56,9 @@ import * as primitives from '@deribfy/primitives/roles-icones'
 import * as repair from '@deribfy/repair'
 import * as compiler from '@deribfy/compiler'
 import * as fidelity from '@deribfy/fidelity'
+import { supabaseAdmin } from '@/lib/supabase-admin'
+import { TABLE_SONDES } from './journal'
+import { direQuelTirCommence, sdkJournalise } from './journal-appels'
 // ── LE SDK EST IMPORTÉ ICI, NORMALEMENT, ET PASSÉ AU MOTEUR.
 //
 // MESURÉ EN PRODUCTION le 2026-10-14, sur une vraie demande :
@@ -105,6 +108,16 @@ type Moteur = {
     paquets?: Record<string, unknown>
     /** Le SDK, fourni par le site : en ligne il ne se résout pas seul. */
     sdk?: unknown
+    /**
+     * LE PARTAGE DE LA SONDE DE GRAMMAIRE (EP-236, branché le 2026-10-18).
+     *
+     * Le moteur ne sait pas lire une base ; le site, si. Absent — campagne en
+     * terminal — rien ne change : on sonde comme avant.
+     */
+    sondePartagee?: {
+      lire: (empreinte: string) => Promise<unknown>
+      ecrire: (empreinte: string, niveaux: unknown) => Promise<void>
+    }
   }) => Promise<{
     emettreApplication: (d: { brief: string; slug: string }) => Promise<Emission>
     poursuivreEmission: (o: {
@@ -135,6 +148,46 @@ type Moteur = {
  * construit un client au montage, et un import de haut niveau ferait entrer
  * cette construction dans chaque route du site.
  */
+/**
+ * LE PARTAGE DE LA SONDE DE GRAMMAIRE — ce que le moteur attendait depuis EP-236.
+ *
+ * ── CE QU'IL REPARE, ET C'EST LA MESURE DU PROPRIETAIRE.
+ *
+ * Avant d'ecrire une ligne d'application, le moteur teste sa grammaire : 9 a
+ * 22 allers-retours, SEIZE MINUTES d'ecran muet sur une demande de 86
+ * caracteres. Le resultat ne depend que du SCHEMA — la sonde envoie
+ * `system: "x"`, `user: "x"` — donc il se calcule UNE FOIS.
+ *
+ * Le moteur sait le partager. Il ne manquait que ca : quelqu'un pour le lui
+ * donner. `sondePartagee` n'existait nulle part ailleurs que dans le moteur
+ * qui l'attend. Huitieme machine posee et debranchee de ce chantier.
+ *
+ * ── IL NE CASSE RIEN S'IL ECHOUE, ET C'EST VOULU.
+ *
+ * Le moteur entoure deja `lire` et `ecrire` de `try`. Un partage indisponible
+ * fait retomber sur le comportement d'avant — on resonde. Une generation ne
+ * doit JAMAIS mourir parce qu'un cache est en panne.
+ */
+function sondeDeLaBase() {
+  return {
+    async lire(empreinte: string): Promise<unknown> {
+      const r = await supabaseAdmin
+        .from(TABLE_SONDES)
+        .select('niveaux')
+        .eq('empreinte', empreinte)
+        .maybeSingle()
+      if (r.error !== null || r.data === null) return null
+      return r.data.niveaux
+    },
+    async ecrire(empreinte: string, niveaux: unknown): Promise<void> {
+      // `upsert` et pas `insert` : deux generations peuvent sonder en meme
+      // temps sur une empreinte neuve, et la seconde ne doit pas echouer sur
+      // la cle primaire — elle ecrit la meme chose.
+      await supabaseAdmin.from(TABLE_SONDES).upsert({ empreinte, niveaux })
+    },
+  }
+}
+
 /** La fabrique UNIQUE du moteur cote site — memes paquets, meme mode strict,
  *  pour l'emission d'un trait (conversation) ET la continuation (cron). */
 async function moteurDuSite(cle: string) {
@@ -143,8 +196,19 @@ async function moteurDuSite(cle: string) {
   )) as Moteur
   const m = await creerMoteur({
     cleApi: cle,
+    // ── LA SONDE PARTAGEE (EP-271). Sans cette ligne, chaque generation
+    //    repaie 9 a 22 allers-retours pour redecouvrir la meme reponse.
+    sondePartagee: sondeDeLaBase(),
     // Le SDK voyage par ici, jamais par une résolution depuis `benchmarks/`.
-    sdk: Anthropic,
+    // ── LE SDK EST INSTRUMENTÉ (EP-272, 2026-10-18).
+    //
+    // Le moteur compte les JETONS de chaque appel depuis toujours ; il n'a
+    // jamais compté le TEMPS. On enveloppe donc la seule méthode qui part
+    // sur le réseau, ICI, parce que `emission-coeur.mjs` est scellé.
+    //
+    // Rien n'est remplacé : flux, échéance de tranche et comptabilité
+    // passent exactement comme avant. On observe.
+    sdk: sdkJournalise(Anthropic as never),
     // Les index reexportent tout ce que le moteur demande — verifie module
     // par module avant d'ecrire cette ligne, pas suppose.
     paquets: {
@@ -202,5 +266,17 @@ export const poursuivreEmissionDuSite: MoteurContinuation['poursuivreEmission'] 
     throw Object.assign(new Error('ANTHROPIC_API_KEY absente du serveur'), { transitoire: false })
   }
   const m = await moteurDuSite(cle)
-  return (await m.poursuivreEmission(o)) as Awaited<ReturnType<MoteurContinuation['poursuivreEmission']>>
+  // Le journal des appels n'a que le slug pour recoudre ses lignes au tir :
+  // c'est la seule chose que le client voit, et `gen-xxxxxxxx` suffit.
+  direQuelTirCommence(o.slug)
+  try {
+    return (await m.poursuivreEmission(o)) as Awaited<
+      ReturnType<MoteurContinuation['poursuivreEmission']>
+    >
+  } finally {
+    // Une tranche qui se termine ne doit pas laisser son slug derrière elle :
+    // le processus serverless est réutilisé, et les appels d'une AUTRE
+    // génération seraient attribués à celle-ci.
+    direQuelTirCommence(null)
+  }
 }
