@@ -21,6 +21,7 @@ import { diagnosticsDepuisLigne, RAISON_ARRET_PROPRIETAIRE, TABLE_VERSIONS } fro
 import { questionsPour, type Question, fautesDeProduction } from './dialogue'
 import { estReprenable } from './reprise'
 import { journalDesTirages, type LigneTirage } from './journal-tirages'
+import { competencesDeclarees, type Competence } from './competences'
 
 type Travailleur = ReturnType<typeof creerTravailleur>
 
@@ -202,6 +203,13 @@ export type EtatGeneration = {
    * traduisible — se taire vaut mieux qu'une phrase fabriquee.
    */
   readonly journal: readonly LigneTirage[]
+  /**
+   * CE QUE L'APPLICATION SAURA FAIRE, en mots du REGISTRE.
+   *
+   * Vide tant que P0 n'a rien produit : on n'annonce pas ce qu'on ne sait pas
+   * encore. Un identifiant hors registre est tu, jamais affiché brut.
+   */
+  readonly competences: readonly Competence[]
   /**
    * CE QUE CETTE GÉNÉRATION A COÛTÉ, en dollars.
    *
@@ -388,6 +396,21 @@ export async function etatGeneration({
     // refus (« Deja TRADUITE par le serveur — le brut du moteur ne voyage
     // jamais »). Les codes et les chemins du validateur restent en base.
     journal: journalDesTirages(sa.tirages),
+    // ── CE QUE L'APPLICATION SAURA FAIRE (2026-10-18).
+    //
+    // Le registre de capacités en déclare VINGT ET UNE, chacune avec un titre
+    // écrit en français par un humain. Vingt documents sur vingt-deux en
+    // portent. AUCUN écran ne les montrait : septième « machine posée,
+    // débranchée » de ce chantier.
+    //
+    // La source est `acquis`, qui DEVIENT le document quand P0 aboutit
+    // (`moteur.mjs` : `acquis = document`). Tant qu'il n'a rien produit, la
+    // liste est vide — et c'est juste : on n'annonce pas ce qu'on ne sait pas
+    // encore.
+    //
+    // AUCUNE PHRASE N'EST FABRIQUÉE : les mots viennent du registre, et un
+    // identifiant hors registre est TU plutôt qu'affiché brut.
+    competences: competencesDeclarees(acquis),
     // ── LE COÛT RÉEL, ET IL NE SE DÉDUIT PAS DU JOURNAL.
     //
     // DÉCISION DU PROPRIÉTAIRE, 2026-10-18 : « oui je veux voir ». Le dépôt

@@ -406,6 +406,7 @@ export function JournalGeneration({
   lignes,
   resume,
   coutUsd,
+  competences = [],
 }: {
   lignes: readonly {
     rang: number
@@ -418,8 +419,22 @@ export function JournalGeneration({
   resume: { tirages: number; reparations: number }
   /** Ce que la génération a coûté. `null` ne devient pas « 0,00 $ ». */
   coutUsd: number | null
+  /**
+   * CE QUE L'APPLICATION SAURA FAIRE, en mots du REGISTRE.
+   *
+   * Optionnel et vide par défaut : tant que P0 n'a rien produit, on n'annonce
+   * rien. Chez Bolt, l'agent déclare ses compétences avant d'agir — c'est ce
+   * qui transforme « ça travaille » en « voilà ce qu'il construit ».
+   */
+  competences?: readonly { id: string; titre: string }[]
 }) {
-  if (lignes.length === 0) return null
+  // ── LE PANNEAU S'OUVRE DÈS QU'IL A QUELQUE CHOSE À DIRE.
+  //
+  // Avant, il fallait un essai. Les compétences, elles, sont connues dès que
+  // P0 a produit son modèle — souvent bien avant le premier tirage jugé. Les
+  // taire jusque-là, c'était garder le silence au moment où il est le plus
+  // pénible.
+  if (lignes.length === 0 && competences.length === 0) return null
   // Quatre décimales : à 0,10 $ le re-tirage, deux arrondiraient des essais
   // entiers à zéro, et « 0,00 $ » se lit comme gratuit.
   const sou = (c: number): string => `${c.toFixed(4).replace('.', ',')} $`
@@ -437,6 +452,24 @@ export function JournalGeneration({
             {resume.reparations > 1 ? 's' : ''}</>
         )}
       </p>
+      {competences.length > 0 && (
+        <div className="mt-2">
+          <p className="text-xs text-slate-500">Ce que votre application saura faire</p>
+          <ul className="mt-1 flex flex-wrap gap-1.5">
+            {competences.map((c) => (
+              <li
+                key={c.id}
+                className="rounded-full border border-white/10 bg-white/[0.05] px-2 py-0.5 text-xs text-slate-300"
+              >
+                {/* LE MOT VIENT DU REGISTRE — pas une phrase n'est fabriquée
+                    ici, et un identifiant hors registre n'arrive jamais
+                    jusqu'à cette ligne. */}
+                {c.titre}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       <ol className="mt-2 flex flex-col gap-2">
         {lignes.map((l) => (
           <li key={l.rang} className="text-xs">

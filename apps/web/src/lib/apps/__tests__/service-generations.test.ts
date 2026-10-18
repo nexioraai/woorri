@@ -431,13 +431,24 @@ describe('etatGeneration — la lecture est au PROPRIETAIRE seul', () => {
     // moteur. Un cout est un montant, pas une entraille — et la ligne est
     // filtree sur `owner_id` : c'est SON argent sur SA ligne.
     //
+    // `competences` EST LE SEPTIEME ELARGISSEMENT (2026-10-18), et il ferme la
+    // SEPTIEME « machine posee, debranchee » : `capability-registry` declare
+    // VINGT ET UNE capacites, chacune avec un titre ECRIT EN FRANCAIS par un
+    // humain, et vingt documents sur vingt-deux en portent. Aucun ecran ne les
+    // montrait.
+    //
+    // IL N'OUVRE AUCUNE ENTRAILLE : les mots viennent du REGISTRE, pas une
+    // phrase n'est fabriquee, et un identifiant HORS registre est TU plutot
+    // qu'affiche brut — le defaut que ce depot vient de fermer sur l'agent,
+    // ou une personne lisait « AIR_AGENT_SANS_CERVEAU ».
+    //
     // C'EST LA COLONNE, PAS UNE SOMME DES TIRAGES : ceux-ci ne portent que le
     // cout de la passe P0, et une generation paie aussi ses tours de
     // reparation. Additionner donnerait un montant trop bas qui se lirait
     // comme le total.
     expect(Object.keys(e ?? {}).sort()).toEqual([
-      'aDocument', 'activiteSec', 'apercuVersion', 'arrete', 'attendVous', 'comprise',
-      'coutUsd', 'creeIl', 'defautsRestants',
+      'aDocument', 'activiteSec', 'apercuVersion', 'arrete', 'attendVous', 'competences',
+      'comprise', 'coutUsd', 'creeIl', 'defautsRestants',
       'etape', 'id', 'journal', 'nom', 'notreFaute', 'questions', 'raison', 'reprenable',
       'sections', 'statut', 'tours', 'versions',
     ])
