@@ -58,18 +58,25 @@ export type LigneTirage = {
   readonly quoi: string
   /** Ce que le générateur a corrigé de lui-même. Déjà en français. */
   readonly reparations: readonly string[]
-  // ── LE COÛT N'EST PAS ICI, ET CE N'EST PAS UN OUBLI.
-  //
-  // J'avais écrit `coutUsd` sur chaque ligne, en me disant que le propriétaire
-  // y tient — douze générations, 29 $, aucune application vue. Le cliquet du
-  // DÉGRAISSAGE m'a arrêté, et il a raison : le dépôt a DÉJÀ décidé que l'état
-  // rendu à l'écran « ajoute des TEMPS et des COMPTES, jamais une entraille ni
-  // un coût », et un contrôle vérifie qu'aucun montant ne fuit.
-  //
-  // Renverser une décision consignée en passant par la porte d'un autre lot,
-  // ce n'est pas la discuter : c'est la contourner. Le coût reste en admin, et
-  // la question « le veux-tu sur ton écran ? » est posée au propriétaire — pas
-  // tranchée ici.
+  /**
+   * CE QUE CE TIRAGE A COÛTÉ. `null` quand le moteur ne l'a pas dit.
+   *
+   * ── LA DÉCISION A CHANGÉ, ET ELLE A CHANGÉ PAR LA BONNE PORTE.
+   *
+   * Le dépôt avait décidé que l'état rendu à l'écran « ajoute des TEMPS et des
+   * COMPTES, jamais une entraille ni un coût ». J'avais posé le coût ici sans
+   * le voir ; le cliquet du dégraissage m'a arrêté, et j'ai retiré plutôt que
+   * de contourner — puis j'ai posé la question au propriétaire.
+   *
+   * Sa réponse, le 2026-10-18 : « oui je veux voir et il faut mettre dans
+   * admin si c possible ». La décision est donc RÉÉCRITE, consciemment, par
+   * celui à qui elle appartient — pas enjambée par un lot de passage.
+   *
+   * CE QUE ÇA N'OUVRE PAS : la route est restreinte au propriétaire
+   * (`.eq('owner_id', …)`). C'est SON argent sur SA ligne. Les utilisateurs
+   * des applications générées n'ont aucun accès à cet écran.
+   */
+  readonly coutUsd: number | null
   /** Combien de points le refus portait — un NOMBRE, jamais les codes. */
   readonly points: number
   /** Ce tirage est-il celui qui a abouti ? */
@@ -139,6 +146,7 @@ export function journalDesTirages(tirages: unknown): readonly LigneTirage[] {
       rang: rang === null ? i + 1 : rang,
       quoi,
       reparations: phrases(t.reparations),
+      coutUsd: nombre(t.coutUsd),
       // Le NOMBRE de points, jamais les codes : l'ampleur sans le jargon.
       points: phrases(t.diagnostics).length,
       accepte: t.arret === 'passe',
@@ -150,8 +158,16 @@ export function journalDesTirages(tirages: unknown): readonly LigneTirage[] {
 /**
  * CE QUE LE JOURNAL DIT EN UNE LIGNE — pour l'en-tête du panneau.
  *
- * Le nombre d'essais et le nombre de corrections automatiques : deux COMPTES,
- * ce que l'état rendu à l'écran admet. Pas de montant — voir `LigneTirage`.
+ * ── CE QU'ON NE SOMME PAS, ET POURQUOI C'EST IMPORTANT.
+ *
+ * On pourrait additionner les coûts des tirages et appeler ça « le coût ». Ce
+ * serait FAUX : les tirages portent le coût de la passe P0, et une génération
+ * paie aussi ses tours de réparation. La somme serait toujours INFÉRIEURE au
+ * vrai total, et elle se lirait comme le total.
+ *
+ * Le vrai montant vient de la colonne `cout_usd` — celui que le moteur a
+ * réellement dépensé — et il voyage à part (`coutUsd` sur l'état). Ici on ne
+ * rend que ce qu'on peut rendre juste : des comptes.
  */
 export function resumeDuJournal(lignes: readonly LigneTirage[]): {
   readonly tirages: number

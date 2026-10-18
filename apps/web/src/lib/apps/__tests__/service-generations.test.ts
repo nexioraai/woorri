@@ -338,7 +338,15 @@ describe('etatGeneration — la lecture est au PROPRIETAIRE seul', () => {
     })
     const paquet = JSON.stringify(e)
     expect(paquet, 'un code du moteur a fui vers l ecran').not.toMatch(/DERIVATION_/u)
-    expect(paquet, 'un cout a fui vers l ecran').not.toMatch(/2\.4386/u)
+    // ── LE COUT N'EST PLUS INTERDIT ICI (decision proprietaire, 2026-10-18).
+    //
+    // Ce controle refusait `2.4386`. Le proprietaire a tranche : « oui je veux
+    // voir ». Un montant est ce qu'IL a depense sur SA ligne — la requete est
+    // filtree sur `owner_id` — ce n'est pas une entraille du moteur.
+    //
+    // CE QUE LE CONTROLE PROTEGE RESTE ENTIER, et c'est l'essentiel : les
+    // CODES du moteur et son TEXTE BRUT ne sortent toujours pas. C'etait le
+    // sujet d'EP-223, et il ne bouge pas.
     expect(paquet).not.toMatch(/P0 refuse/u)
   })
 
@@ -402,9 +410,34 @@ describe('etatGeneration — la lecture est au PROPRIETAIRE seul', () => {
     // Ce qui sort en plus, ce sont les REPARATIONS que le moteur a faites
     // lui-meme, dans les phrases francaises qu'il compose deja. Elles disent
     // qu'il travaille au lieu d'echouer en silence.
+    //
+    // `coutUsd` EST LE SIXIEME ELARGISSEMENT (2026-10-18), ET IL RENVERSE UNE
+    // DECISION DE CE FICHIER. C'est le seul de la liste dans ce cas, et il
+    // faut dire comment.
+    //
+    // La regle etait : « le triptyque ajoute des TEMPS et des COMPTES, jamais
+    // une entraille ni un cout ». J'avais pose le cout par tirage sans la
+    // voir ; le controle suivant m'a arrete, et j'ai RETIRE plutot que de
+    // contourner — puis j'ai pose la question au proprietaire.
+    //
+    // Sa reponse : « oui je veux voir et il faut mettre dans admin si c
+    // possible » (2026-10-18). La decision est donc reecrite par celui a qui
+    // elle appartient. Renverser une regle consignee par la porte d'un lot de
+    // passage aurait ete la contourner ; la faire trancher par son
+    // proprietaire, c'est la respecter.
+    //
+    // CE QUE L'ELARGISSEMENT N'OUVRE PAS, et le controle suivant le tient
+    // toujours : les CODES bruts, les CHEMINS du validateur, le TEXTE brut du
+    // moteur. Un cout est un montant, pas une entraille — et la ligne est
+    // filtree sur `owner_id` : c'est SON argent sur SA ligne.
+    //
+    // C'EST LA COLONNE, PAS UNE SOMME DES TIRAGES : ceux-ci ne portent que le
+    // cout de la passe P0, et une generation paie aussi ses tours de
+    // reparation. Additionner donnerait un montant trop bas qui se lirait
+    // comme le total.
     expect(Object.keys(e ?? {}).sort()).toEqual([
-      'aDocument', 'activiteSec', 'apercuVersion', 'arrete', 'attendVous', 'comprise', 'creeIl',
-      'defautsRestants',
+      'aDocument', 'activiteSec', 'apercuVersion', 'arrete', 'attendVous', 'comprise',
+      'coutUsd', 'creeIl', 'defautsRestants',
       'etape', 'id', 'journal', 'nom', 'notreFaute', 'questions', 'raison', 'reprenable',
       'sections', 'statut', 'tours', 'versions',
     ])
@@ -424,9 +457,19 @@ describe('etatGeneration — la lecture est au PROPRIETAIRE seul', () => {
       }),
       table: 't_test', id: 'g-1', proprietaire: 'user-1',
     })
-    const vu = JSON.stringify(e)
-    expect(vu).not.toContain('16.03')
-    expect(vu).not.toContain('cout')
+          const vu = JSON.stringify(e)
+      // ── LE MONTANT SORT DESORMAIS, ET LE RESTE NON (2026-10-18).
+      //
+      // Ce controle refusait `16.03` et le mot `cout`. Le proprietaire a
+      // tranche : « oui je veux voir ». 16,0338 $ est precisement le tir qu'il
+      // a paye 53 minutes sans rien voir — le lui cacher sur son propre ecran
+      // n'a jamais protege que son ignorance.
+      //
+      // CE QUI RESTE INTERDIT, et c'est ce que ce controle existe pour tenir :
+      // les DIAGNOSTICS bruts, les CHEMINS du validateur, le TEXTE du moteur.
+      // Un montant est un fait sur sa ligne ; un code est une entraille.
+      expect(vu, 'un diagnostic brut a fui').not.toContain('SCHEMA@entities')
+      expect(vu, 'le texte brut du moteur a fui').not.toContain('stagnation au tour')
     // Le TEXTE brut de la raison du moteur ne sort pas : il est traduit.
     expect(vu).not.toContain('stagnation au tour')
     expect(e?.questions).toEqual([])
@@ -480,7 +523,22 @@ describe('etatGeneration — la lecture est au PROPRIETAIRE seul', () => {
     // CE QUE LE CONTROLE PROTEGEAIT RESTE INTACT, et c est l essentiel :
     // aucune entraille, aucun montant, aucun nom de fournisseur.
     expect(e?.raison).toBe(RAISON_INDISPONIBLE)
-    expect(JSON.stringify(e)).not.toMatch(/credit|balance|fatale|25\.6/iu)
+    // ── LE MONTANT DU TIR SORT ; L'ETAT DU COMPTE, JAMAIS (2026-10-18).
+    //
+    // Ce controle refusait aussi `25.6`. Il faut distinguer deux choses que le
+    // meme chiffre pourrait laisser confondre :
+    //
+    //   · 25,60 $ est ce que CETTE GENERATION a consomme avant de mourir.
+    //     C'est de l'argent du proprietaire, sur sa ligne, et c'est exactement
+    //     le « paye pour rien » que l'admin met deja en avant comme « LE
+    //     CHIFFRE QUI COMPTE LE PLUS ». Il a demande a le voir.
+    //
+    //   · l'ETAT DU COMPTE fournisseur — un solde, une facturation, un nom de
+    //     fournisseur — n'est a personne d'autre qu'a nous, et ne sort pas.
+    //
+    // Le second reste interdit, mot pour mot. C'etait le sujet du controle, et
+    // il ne bouge pas.
+    expect(JSON.stringify(e)).not.toMatch(/credit|balance|fatale/iu)
   })
 
   it('les refus de convergence donnent le message rassurant, jamais le jargon du moteur', () => {

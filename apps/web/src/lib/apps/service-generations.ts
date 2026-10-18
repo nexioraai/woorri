@@ -202,6 +202,13 @@ export type EtatGeneration = {
    * traduisible — se taire vaut mieux qu'une phrase fabriquee.
    */
   readonly journal: readonly LigneTirage[]
+  /**
+   * CE QUE CETTE GÉNÉRATION A COÛTÉ, en dollars.
+   *
+   * Décision du propriétaire (2026-10-18). `null` si la base ne le porte pas —
+   * un montant inconnu ne devient pas « 0,00 $ », qui se lirait comme gratuit.
+   */
+  readonly coutUsd: number | null
   /** UNE REPRISE EST-ELLE POSSIBLE. Faux sur une livree (elle est finie) et
    *  faux sans base recuperable — l'ecran ne propose pas un bouton qui
    *  relancerait une generation complete en la deguisant en reprise. */
@@ -381,6 +388,22 @@ export async function etatGeneration({
     // refus (« Deja TRADUITE par le serveur — le brut du moteur ne voyage
     // jamais »). Les codes et les chemins du validateur restent en base.
     journal: journalDesTirages(sa.tirages),
+    // ── LE COÛT RÉEL, ET IL NE SE DÉDUIT PAS DU JOURNAL.
+    //
+    // DÉCISION DU PROPRIÉTAIRE, 2026-10-18 : « oui je veux voir ». Le dépôt
+    // avait décidé l'inverse — « des TEMPS et des COMPTES, jamais un coût » —
+    // et cette décision est RÉÉCRITE par celui à qui elle appartient, pas
+    // contournée par un lot de passage.
+    //
+    // C'est la COLONNE qui sort, pas une somme des tirages : ceux-ci ne
+    // portent que le coût de la passe P0, et une génération paie aussi ses
+    // tours de réparation. Additionner donnerait un montant toujours trop bas
+    // qui se lirait comme le total.
+    //
+    // CE QUE ÇA N'OUVRE PAS : la ligne est filtrée sur `owner_id`. C'est SON
+    // argent sur SA ligne, et les utilisateurs des applications générées n'ont
+    // aucun accès à cet écran.
+    coutUsd: typeof l.cout_usd === 'number' ? Number(l.cout_usd.toFixed(4)) : null,
     reprenable: estReprenable(statut, l as Parameters<typeof estReprenable>[1]),
     attendVous: l.attente_validation === true,
     versions,

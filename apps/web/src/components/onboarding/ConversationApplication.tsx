@@ -875,6 +875,7 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
                   <JournalGeneration
                     lignes={etatGen?.journal ?? []}
                     resume={resumeDuJournal(etatGen?.journal ?? [])}
+                    coutUsd={etatGen?.coutUsd ?? null}
                   />
                   {apercuGen !== null ? (
                   <div className="mt-3">

@@ -386,14 +386,18 @@ export function Composeur({
  *
  * ── CE QUE CE PANNEAU MONTRE, ET DANS CET ORDRE.
  *
- * Les RÉPARATIONS d'abord, parce qu'elles disent que le générateur travaille au
- * lieu d'échouer en silence. Puis le détail des refus, par un NOMBRE —
- * l'ampleur sans le jargon.
+ * Le COÛT d'abord — décision du propriétaire, 2026-10-18 : « oui je veux voir ».
+ * Douze générations ont coûté 29 $ sans qu'une application soit vue ; le lui
+ * cacher sur son propre écran ne protégeait que son ignorance.
  *
- * AUCUN MONTANT, et c'est une décision du dépôt que je ne renverse pas : l'état
- * rendu à l'écran « ajoute des TEMPS et des COMPTES, jamais une entraille ni un
- * coût », et un cliquet le vérifie. J'avais écrit le coût par essai ; il m'a
- * arrêté. La question reste posée au propriétaire.
+ * Le montant TOTAL vient de la ligne, pas d'une somme des essais : ceux-ci ne
+ * portent que le coût de la passe P0, et une génération paie aussi ses tours de
+ * réparation. Additionner donnerait un chiffre trop bas qui se lirait comme le
+ * total.
+ *
+ * Puis les RÉPARATIONS, parce qu'elles disent que le générateur travaille au
+ * lieu d'échouer en silence. Le détail des refus en dernier, par un NOMBRE —
+ * l'ampleur sans le jargon.
  *
  * Rien ici ne fabrique de phrase : `journalDesTirages` a déjà traduit, côté
  * serveur, et refuse de deviner un arrêt qu'il ne connaît pas.
@@ -401,20 +405,32 @@ export function Composeur({
 export function JournalGeneration({
   lignes,
   resume,
+  coutUsd,
 }: {
   lignes: readonly {
     rang: number
     quoi: string
     reparations: readonly string[]
+    coutUsd: number | null
     points: number
     accepte: boolean
   }[]
   resume: { tirages: number; reparations: number }
+  /** Ce que la génération a coûté. `null` ne devient pas « 0,00 $ ». */
+  coutUsd: number | null
 }) {
   if (lignes.length === 0) return null
+  // Quatre décimales : à 0,10 $ le re-tirage, deux arrondiraient des essais
+  // entiers à zéro, et « 0,00 $ » se lit comme gratuit.
+  const sou = (c: number): string => `${c.toFixed(4).replace('.', ',')} $`
   return (
     <div className="mt-3 rounded-xl border border-white/10 bg-white/[0.03] p-3">
       <p className="text-xs text-slate-400">
+        {coutUsd !== null && (
+          <>
+            <span className="text-white tabular-nums">{sou(coutUsd)}</span> ·{' '}
+          </>
+        )}
         {resume.tirages} essai{resume.tirages > 1 ? 's' : ''}
         {resume.reparations > 0 && (
           <> · {resume.reparations} correction{resume.reparations > 1 ? 's' : ''} automatique
@@ -446,6 +462,9 @@ export function JournalGeneration({
                     {' '}
                     ({l.points} point{l.points > 1 ? 's' : ''} à corriger)
                   </span>
+                )}
+                {l.coutUsd !== null && (
+                  <span className="text-slate-500 tabular-nums"> · {sou(l.coutUsd)}</span>
                 )}
                 {l.reparations.length > 0 && (
                   <ul className="mt-1 flex flex-col gap-1 border-s border-white/10 ps-2">

@@ -26,6 +26,29 @@ interface Ligne {
   jetons_sortie: number;
   diagnostics: string[] | null;
   tirages: number;
+  /**
+   * LE JOURNAL BRUT DES TIRAGES — rendu par l'API DEPUIS LE DÉBUT, et jamais
+   * affiché. La colonne « Tirages » n'en montrait que le COMPTE.
+   *
+   * Mesuré le 2026-10-18 : `route.ts` renvoie
+   * `journal: sections_acquises.tirages` — chaque essai avec son arrêt, son
+   * coût, ses codes, ses chemins et ses réparations. La page ne le lisait pas.
+   * C'est le même défaut que celui réparé sur l'écran du propriétaire, un
+   * étage plus haut : la donnée était là, personne ne la regardait.
+   *
+   * ICI LE BRUT EST LÉGITIME. L'admin est l'endroit où les codes et les
+   * chemins doivent vivre — c'est l'écran du propriétaire qui les traduit,
+   * pas celui-ci. Le commentaire de `travailleur.ts` le dit : sans le chemin,
+   * diagnostiquer un refus exigeait de RE-PAYER un tir entier.
+   */
+  journal?: readonly {
+    tentative?: number;
+    arret?: string;
+    coutUsd?: number;
+    diagnostics?: readonly string[];
+    details?: readonly string[];
+    reparations?: readonly string[];
+  }[];
 }
 interface Data {
   tableAbsente: boolean;
@@ -140,7 +163,51 @@ export default function ApplicationsPage() {
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap tabular-nums">{usd(Number(l.cout_usd))}</td>
                         <td className="px-4 py-3 whitespace-nowrap tabular-nums text-slate-400">{secondes(l.duree_ms)}</td>
-                        <td className="px-4 py-3 whitespace-nowrap tabular-nums text-slate-400">{String(l.tirages)}</td>
+                        {/* ── LE DÉTAIL, PAS LE COMPTE (2026-10-18).
+                            « 3 » ne disait ni ce que ces trois essais avaient
+                            coûté, ni pourquoi ils avaient échoué — alors que
+                            l'API le renvoyait déjà. */}
+                        <td className="px-4 py-3 text-slate-400 min-w-[22rem]">
+                          <span className="tabular-nums">{String(l.tirages)}</span>
+                          {(l.journal ?? []).length > 0 && (
+                            <ol className="mt-1 flex flex-col gap-1">
+                              {(l.journal ?? []).map((t, i) => (
+                                <li key={i} className="text-xs">
+                                  <span className="text-slate-300 tabular-nums">
+                                    #{String(t.tentative ?? i + 1)}
+                                  </span>{" "}
+                                  <span
+                                    className={
+                                      t.arret === "passe" ? "text-emerald-400" : "text-amber-300/90"
+                                    }
+                                  >
+                                    {t.arret ?? "—"}
+                                  </span>
+                                  {typeof t.coutUsd === "number" && (
+                                    <span className="text-slate-400 tabular-nums"> · {usd(t.coutUsd)}</span>
+                                  )}
+                                  {(t.diagnostics ?? []).length > 0 && (
+                                    <span className="block text-slate-500">
+                                      {[...new Set(t.diagnostics ?? [])].slice(0, 3).join(", ")}
+                                    </span>
+                                  )}
+                                  {/* LE CHEMIN : sans lui, diagnostiquer un
+                                      refus exigeait de RE-PAYER un tir. */}
+                                  {(t.details ?? []).slice(0, 2).map((d, k) => (
+                                    <span key={k} className="block text-slate-600 break-all">
+                                      {d}
+                                    </span>
+                                  ))}
+                                  {(t.reparations ?? []).map((r, k) => (
+                                    <span key={k} className="block text-sky-300/80">
+                                      réparé : {r}
+                                    </span>
+                                  ))}
+                                </li>
+                              ))}
+                            </ol>
+                          )}
+                        </td>
                       </tr>
                     ))}
                   </tbody>

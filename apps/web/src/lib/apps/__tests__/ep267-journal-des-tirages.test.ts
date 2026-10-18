@@ -88,29 +88,35 @@ describe('EP-267 · le journal des tirages', () => {
     ])
   })
 
-  it('④ AUCUN MONTANT NE SORT — décision du dépôt, pas la mienne', () => {
-    // ── CE CONTRÔLE A REMPLACÉ LE MIEN, ET LE MIEN AVAIT TORT.
+  it('④ LE COÛT EST DIT — décision du propriétaire, et par la bonne porte', () => {
+    // ── CE CONTRÔLE A CHANGÉ DE SENS DEUX FOIS EN UN JOUR, ET C'EST NORMAL.
     //
-    // J'avais écrit « le coût est sommé, et l'inconnu ne devient pas zéro » —
-    // en me disant que le propriétaire y tient : douze générations, 29 $,
-    // aucune application vue.
+    // ① J'avais mis le coût par essai. Le cliquet du DÉGRAISSAGE l'a refusé —
+    //    « des TEMPS et des COMPTES, jamais une entraille ni un coût » — et
+    //    j'ai RETIRÉ plutôt que de contourner, puis posé la question.
+    // ② Le propriétaire a tranché : « oui je veux voir et il faut mettre dans
+    //    admin si c possible » (2026-10-18).
     //
-    // Le cliquet du DÉGRAISSAGE m'a arrêté. L'état rendu à l'écran « ajoute des
-    // TEMPS et des COMPTES, jamais une entraille ni un coût », et un contrôle
-    // vérifie qu'aucun montant ne fuit — y compris `16.0338`, le tir qui a
-    // coûté le plus cher.
-    //
-    // La décision était consignée AVANT moi. La renverser par la porte d'un
-    // autre lot, ce n'est pas la discuter : c'est la contourner. Le coût reste
-    // en admin, et la question est posée au propriétaire — pas tranchée ici.
+    // La règle est donc réécrite par celui à qui elle appartient. La différence
+    // entre les deux chemins n'est pas le résultat — c'est QUI décide.
     const lignes = journalDesTirages([TIRAGE_REFUSE, TIRAGE_ACCEPTE])
-    const vu = JSON.stringify(lignes)
-    expect(vu, 'un montant sort par le journal').not.toContain('0.1234')
-    expect(vu, 'un montant sort par le journal').not.toContain('coutUsd')
+    expect(lignes[0]?.coutUsd, 'le coût de l’essai n’est pas dit').toBeCloseTo(0.1234, 4)
+    expect(lignes[1]?.coutUsd, 'le coût de l’essai n’est pas dit').toBeCloseTo(0.2, 4)
+    // UN COÛT INCONNU NE DEVIENT PAS ZÉRO : « 0,00 $ » se lit comme gratuit.
+    expect(
+      journalDesTirages([{ ...TIRAGE_ACCEPTE, coutUsd: undefined }])[0]?.coutUsd,
+      'un coût inconnu est présenté comme zéro',
+    ).toBeNull()
+
+    // ── ET LE RÉSUMÉ NE SOMME PAS LES ESSAIS, DÉLIBÉRÉMENT.
+    //
+    // Les tirages ne portent que le coût de la passe P0 ; une génération paie
+    // aussi ses tours de réparation. Une somme serait toujours INFÉRIEURE au
+    // vrai total et se lirait comme le total. Le vrai montant vient de la
+    // colonne `cout_usd`, et il voyage à part.
     const r = resumeDuJournal(lignes)
     expect(r.tirages).toBe(2)
-    expect(r.reparations, 'les réparations ne sont pas comptées').toBe(1)
-    expect(JSON.stringify(r), 'le résumé porte un montant').not.toContain('cout')
+    expect(JSON.stringify(r), 'le résumé fabrique un total par addition').not.toContain('cout')
   })
 
   it('⑤ L’ÉTAT REND VRAIMENT LE JOURNAL — mesuré, pas lu dans la source', async () => {
@@ -172,6 +178,13 @@ describe('EP-267 · le journal des tirages', () => {
     )
     // ET LE BRUT NE SORT TOUJOURS PAS PAR CE CHEMIN-LÀ.
     expect(JSON.stringify(etat?.journal), 'un code traverse l’état').not.toContain('DERIVATION_')
+    // ── LE COÛT RÉEL VIENT DE LA COLONNE, PAS D'UNE SOMME.
+    //
+    // La ligne porte `cout_usd: 0.32` ; les deux tirages valent 0,1234 et 0,2,
+    // soit 0,3234. Exiger 0,32 prouve qu'on rend la COLONNE — le montant que
+    // le moteur a réellement dépensé, tours de réparation compris — et non une
+    // addition qui serait toujours trop basse.
+    expect(etat?.coutUsd, 'le coût réel de la génération n’est pas rendu').toBeCloseTo(0.32, 4)
   })
 
   it('⑥ L’ÉCRAN AFFICHE LE JOURNAL — le dernier maillon, exigé nommément', () => {
@@ -208,6 +221,41 @@ describe('EP-267 · le journal des tirages', () => {
         'par l’API, passé au composant, et affiché vide',
     ).toMatch(/lignes=\{etatGen\?\.journal/u)
     expect(zone, 'le résumé ne vient pas de l’état').toMatch(/resume=\{resumeDuJournal\(etatGen\?\.journal/u)
+    expect(
+      zone,
+      'le coût n’est pas passé au panneau : le propriétaire a demandé à le voir',
+    ).toMatch(/coutUsd=\{etatGen\?\.coutUsd/u)
   })
 
+  it('⑦ L’ADMIN AFFICHE LE DÉTAIL PAR TIRAGE — pas seulement le compte', () => {
+    // ── LE MÊME DÉFAUT, UN ÉTAGE PLUS HAUT.
+    //
+    // `api/admin/applications/route.ts` renvoie `journal: sections_acquises.tirages`
+    // DEPUIS LE DÉBUT — chaque essai avec son arrêt, son coût, ses codes, ses
+    // chemins et ses réparations. La page n'affichait que le COMPTE.
+    //
+    // « 3 » ne dit ni ce que ces trois essais ont coûté, ni pourquoi ils ont
+    // échoué. Et le commentaire de `travailleur.ts` le dit : sans le chemin,
+    // diagnostiquer un refus exigeait de RE-PAYER un tir entier.
+    //
+    // ICI LE BRUT EST LÉGITIME : l'admin est l'endroit où les codes vivent.
+    // C'est l'écran du propriétaire qui les traduit, pas celui-ci.
+    const api = readFileSync(
+      join(__dirname, '..', '..', '..', 'app', 'api', 'admin', 'applications', 'route.ts'),
+      'utf8',
+    )
+    expect(api, 'l’API admin ne renvoie plus le journal').toContain('journal:')
+    const page = readFileSync(
+      join(__dirname, '..', '..', '..', 'app', 'admin', 'applications', 'page.tsx'),
+      'utf8',
+    )
+    expect(
+      page,
+      'l’admin n’affiche pas le journal que son API renvoie : la donnée est là ' +
+        'et personne ne la regarde',
+    ).toMatch(/l\.journal/u)
+    for (const champ of ['arret', 'coutUsd', 'details', 'reparations']) {
+      expect(page, `l’admin n’affiche pas \`${champ}\` de chaque tirage`).toContain(`t.${champ}`)
+    }
+  })
 })
