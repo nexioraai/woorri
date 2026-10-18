@@ -17,6 +17,8 @@
  *      pouvoir attribuer un résultat après coup.
  */
 import { describe, expect, it, vi, beforeEach } from 'vitest'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 // LE NOM DE LA TABLE VIENT DE LA CONSTANTE, jamais écrit nu : un cliquet du
 // dépôt l'exige, et il a raison — un nom recopié survit au jour où la vraie
 // table change, et le test passerait au vert contre du vide.
@@ -59,13 +61,29 @@ vi.mock('@/lib/supabase-admin', async () => {
   }
 })
 
-/** Un faux modèle : aucun réseau, aucun centime. */
+/**
+ * Un faux modèle : aucun réseau, aucun centime.
+ *
+ * IL N'EXPOSE QUE `stream`, PAS `create` — et c'est délibéré.
+ *
+ * DÉFAUT MESURÉ LE 2026-10-18, au premier essai du propriétaire : le SDK
+ * REFUSE un appel non-streamé dès que `max_tokens` autorise une réponse
+ * pouvant dépasser dix minutes. Ma route appelait `create`. Rien n'est parti,
+ * rien n'a été facturé, et rien ne pouvait marcher.
+ *
+ * Un double qui offrirait AUSSI `create` laisserait la route y revenir sans
+ * que personne le voie. Ici, y revenir fait rougir.
+ */
 vi.mock('@anthropic-ai/sdk', () => ({
   default: class {
     messages = {
-      create: () => ({
-        content: [{ type: 'text', text: reponses.texte[Math.min(reponses.i++, reponses.texte.length - 1)] ?? '' }],
-        usage: { input_tokens: 1200, output_tokens: 3400 },
+      stream: () => ({
+        finalMessage: () => ({
+          content: [
+            { type: 'text', text: reponses.texte[Math.min(reponses.i++, reponses.texte.length - 1)] ?? '' },
+          ],
+          usage: { input_tokens: 1200, output_tokens: 3400 },
+        }),
       }),
     }
   },
@@ -144,6 +162,25 @@ describe('EP-276 · la route de l’écriture directe', () => {
     expect(l.moteur).toBe('direct')
     expect(Number(l.cout_usd), 'un échec payé est compté à zéro').toBeGreaterThan(0)
     expect(l.document, 'un échec ne doit pas prétendre porter une œuvre').toBeNull()
+  })
+
+  it('⑤ L’APPEL EST EN FLUX — sinon le SDK refuse avant même d’envoyer', async () => {
+    // ── DÉFAUT MESURÉ SUR LE PREMIER ESSAI DU PROPRIÉTAIRE, 2026-10-18.
+    //
+    // « Streaming is required for operations that may take longer than 10
+    // minutes. » Le SDK refuse côté client : rien ne part, rien n’est
+    // facturé, et l’écran montre une erreur qui n’a aucun rapport avec
+    // l’architecture qu’on met à l’épreuve.
+    //
+    // Le moteur AIR réglait déjà ce point de son côté. Cette route l’avait
+    // ignoré. Ce contrôle lit la SOURCE parce que le défaut est dans le NOM
+    // de la méthode appelée — le double ne peut que le refléter, pas le dire.
+    const src = readFileSync(join(__dirname, '..', 'route.ts'), 'utf8')
+    const code = src.replace(/\/\*[\s\S]*?\*\//gu, '').replace(/^\s*\/\/.*$/gmu, '')
+    expect(code, 'l’appel n’est pas en flux : le SDK refusera avant d’envoyer').toContain(
+      'client.messages.stream(',
+    )
+    expect(code, 'un appel non streamé subsiste').not.toContain('client.messages.create(')
   })
 
   it('④ UNE DEMANDE VIDE EST REFUSÉE AVANT TOUT APPEL', async () => {

@@ -87,12 +87,25 @@ export async function POST(req: Request) {
   const appeler = async (
     messages: readonly { role: 'user' | 'assistant'; content: string }[],
   ): Promise<string> => {
-    const r = await client.messages.create({
+    // ── EN FLUX, ET CE N'EST PAS UN CHOIX DE CONFORT.
+    //
+    // DEFAUT MESURE LE 2026-10-18, au premier essai du proprietaire : le SDK
+    // REFUSE un appel non-streame des que `max_tokens` autorise une reponse
+    // pouvant depasser dix minutes — « Streaming is required for operations
+    // that may take longer than 10 minutes ». Rien n'etait parti, rien n'a
+    // ete facture, et rien ne pouvait marcher.
+    //
+    // Le moteur AIR reglait deja ce point de son cote (`envelopperEnFlux`,
+    // apres « six Request timed out sur deux tirs »). J'avais ecrit cette
+    // route sans en tenir compte. `stream()` ouvre le flux et
+    // `finalMessage()` rend le message complet, usage compris.
+    const flux = client.messages.stream({
       model: MODELE,
       max_tokens: 32_000,
       system: [{ type: 'text', text: CONSIGNE, cache_control: { type: 'ephemeral' } }],
       messages: messages.map((m) => ({ role: m.role, content: m.content })),
     })
+    const r = await flux.finalMessage()
     entree += r.usage.input_tokens
     sortie += r.usage.output_tokens
     return r.content.map((b) => (b.type === 'text' ? b.text : '')).join('')
