@@ -98,7 +98,14 @@ import {
 // poursuit, et ce n est pas un desinteret — la forme n existait pas, donc P0
 // ne pouvait pas l ecrire. Meme raison que `graphique`, inemploye parce
 // qu inexprimable. ADDITIF : absent = rendu de 1.20.0 au caractere pres.
-export const BLOCK_REGISTRY_VERSION = "1.21.0";
+// 1.22.0 (2026-10-18) — `list` gagne `badgeForme` (D15). Les listes DENSES de
+// Bolt posent « A jour · En attente · En retard » en POINTS colores, pas en
+// pastilles pleines : meme information, forme plus legere. VARIANTE et non
+// primitive de plus — deux primitives, ce serait deux endroits ou la
+// semantique peut diverger, et ce depot a vu six fois « une liste ecrite deux
+// fois ». LE POINT NE REMPLACE PAS LE MOT : il porte la couleur, le mot porte
+// le sens. ADDITIF : absent = pastille pleine, rendu de 1.21.0 inchange.
+export const BLOCK_REGISTRY_VERSION = "1.22.0";
 
 // Motifs d'identités stables — IDENTIQUES à @deribfy/air-schema (ids.ts) ;
 // redéclarés structurellement (patron AirCapabilitySlice : pas de couplage
@@ -449,6 +456,26 @@ export const BLOCKS: readonly BlockDefinition[] = [
       // remplacement. Un booleen, donc, et pas un `fieldRef` — il ne designe
       // aucun champ, il dit « ces lignes sont des gens ».
       avatarInitiales: z.boolean().optional(),
+      // ── LA PASTILLE EN POINT (2026-10-18) — D15 chez Bolt.
+      //
+      // Ses listes denses posent « A jour · En attente · En retard » en POINTS
+      // colores, pas en pastilles pleines. Meme information, forme plus
+      // legere : un rond de la taille d une ponctuation, suivi du mot.
+      //
+      // LE POINT NE REMPLACE PAS LE MOT. Il porte la couleur, le mot porte le
+      // sens — une couleur seule exclurait qui ne la distingue pas.
+      //
+      // LE DOCUMENT LE DIT : une liste de trois lignes merite sa pastille
+      // pleine, une liste de quarante merite le point. Seul celui qui connait
+      // la densite de l ecran peut trancher.
+      badgeForme: z
+        .enum(["pastille", "point"])
+        .optional()
+        .describe(
+          "Forme de la pastille de statut : « pastille » (pleine, par defaut) " +
+            "ou « point » (un rond colore suivi du mot). Le point convient aux " +
+            "listes DENSES, ou une pastille pleine par ligne alourdit l ecran.",
+        ),
       searchFieldId: fieldRef.optional(),
       searchPlaceholder: z.string().min(1).optional(),
       // ── COMMENT LA QUESTION EST LUE (registre 1.15.0).

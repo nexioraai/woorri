@@ -92,6 +92,7 @@ export function ListBlock({
   seeAll,
   testID,
   avatarInitiales,
+  badgeForme,
 }: ListBlockProps) {
   // DET-033 (jugement propriétaire sur appareil) : les états ne remplacent
   // plus le BLOC ENTIER — ils ne remplacent que la ZONE DE CONTENU. Avant,
@@ -230,6 +231,7 @@ export function ListBlock({
                 subtitle={item.subtitle}
                 trailing={item.trailing}
                 badge={item.badge}
+                {...(badgeForme === undefined ? {} : { badgeForme })}
                 badgeTone={item.badgeTone === undefined || item.badgeTone === "neutral" ? undefined : item.badgeTone}
                 onPress={
                   onItemPress === undefined
@@ -351,7 +353,8 @@ export function ListBlock({
             subtitle={item.subtitle}
             trailing={item.trailing}
             badge={item.badge}
-            badgeTone={item.badgeTone === undefined || item.badgeTone === "neutral" ? undefined : item.badgeTone}
+            {...(badgeForme === undefined ? {} : { badgeForme })}
+                badgeTone={item.badgeTone === undefined || item.badgeTone === "neutral" ? undefined : item.badgeTone}
             onPress={
               onItemPress === undefined
                 ? undefined

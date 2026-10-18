@@ -1275,6 +1275,8 @@ export function AirList({ screen, blockId, itemId }: BlockRef & { itemId?: strin
       // document, et JAMAIS transmis. Rien n echouait, la liste rendait sa
       // forme d avant.
       avatarInitiales={props.avatarInitiales === true}
+      // Le point ne s impose jamais : absent, la pastille reste pleine.
+      {...(props.badgeForme === "point" ? { badgeForme: "point" as const } : {})}
       bounded={mode === "apercu"}
       // 1.21.0 — « Voir plus » : libellé du DOCUMENT + geste SECONDAIRE du
       // bloc. L'un sans l'autre ne rend rien : aucune promesse muette.

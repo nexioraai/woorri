@@ -191,7 +191,20 @@ describe("cliquets du registre de blocs", () => {
     //
     // ADDITIF : prop optionnelle et BOOLEENNE. Absente, le sous-titre reste
     // sur sa ligne et le rendu est celui de 1.20.0 au caractere pres.
-    expect(BLOCK_REGISTRY_VERSION).toBe("1.21.0");
+    // 1.22.0 (2026-10-18) — `list` gagne `badgeForme` (D15).
+    //
+    // Les listes DENSES de Bolt posent « A jour · En attente · En retard » en
+    // POINTS colores. Meme information qu une pastille, forme plus legere.
+    //
+    // VARIANTE, ET NON PRIMITIVE DE PLUS : deux primitives, ce serait deux
+    // endroits ou la semantique peut diverger, et ce depot a vu SIX fois « une
+    // liste ecrite deux fois ».
+    //
+    // LE POINT NE REMPLACE PAS LE MOT : il porte la couleur, le mot porte le
+    // sens — une couleur seule exclurait qui ne la distingue pas.
+    //
+    // ADDITIF : absent = pastille pleine, rendu de 1.21.0 au caractere pres.
+    expect(BLOCK_REGISTRY_VERSION).toBe("1.22.0");
     expect(BLOCKS.map((b) => b.id)).toEqual(V1_BLOCK_IDS);
   });
 

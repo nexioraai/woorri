@@ -19,6 +19,17 @@ export interface HeaderBlockProps extends BlockA11yProps {
   title: string;
   subtitle?: string;
   /**
+   * LE SOUS-TITRE POURSUIT LE TITRE, sur une seule ligne (1.21.0) — D8.
+   *
+   * « Bonjour Aminata, » en gras suivi de « voici votre espace. » en gris.
+   * Le vocabulaire existait déjà — `title` et `subtitle` — mais la forme
+   * n'était que « l'un sous l'autre ».
+   *
+   * Le DOCUMENT le dit ; sans lui, le sous-titre reste sur sa ligne et le
+   * rendu est celui d'avant, au caractère près.
+   */
+  titreContinu?: boolean;
+  /**
    * ACCROCHE (1.7.0) — le titre est rendu dans la variante `display`, un cran
    * au-dessus de `heading`. Réservé à la PREMIÈRE phrase qu'une personne lit :
    * un écran d'accueil produit. Absent = comportement 1.6.0 inchangé.
@@ -172,6 +183,13 @@ export interface ListBlockProps extends BlockA11yProps {
    * le REPLI, pas un remplacement.
    */
   avatarInitiales?: boolean;
+  /**
+   * LA FORME DE LA PASTILLE DE STATUT — pleine, ou en POINT (D15).
+   *
+   * Le document le dit : une liste dense se lit mieux avec un point qu'avec
+   * une pastille pleine par ligne.
+   */
+  badgeForme?: "pastille" | "point";
 }
 
 export interface FormFieldSpec {

@@ -1542,6 +1542,10 @@
             {
               "key": "emptyMessage",
               "value": "Les cotisations et versements apparaitront ici."
+            },
+            {
+              "key": "badgeForme",
+              "value": "point"
             }
           ]
         }
@@ -1765,6 +1769,10 @@
             {
               "key": "emptyMessage",
               "value": "Les cotisations et versements apparaitront ici."
+            },
+            {
+              "key": "badgeForme",
+              "value": "point"
             }
           ]
         }
@@ -2001,6 +2009,10 @@
             {
               "key": "emptyMessage",
               "value": "Les cotisations et versements apparaitront ici."
+            },
+            {
+              "key": "badgeForme",
+              "value": "point"
             }
           ]
         }
@@ -2073,6 +2085,10 @@
             {
               "key": "emptyMessage",
               "value": "Les cotisations et versements apparaitront ici."
+            },
+            {
+              "key": "badgeForme",
+              "value": "point"
             }
           ]
         }

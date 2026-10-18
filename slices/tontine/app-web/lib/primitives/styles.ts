@@ -566,6 +566,32 @@ const makeSheet = (c: Palette) =>
       marginTop: theme.space.xs,
     },
     badgeText: { fontSize: theme.font.label, color: c.muted },
+    // ── LA FORME DISCRÈTE (D15) — un point coloré suivi du mot.
+    //
+    // Bolt pose « À jour · En attente · En retard » en points dans ses listes
+    // denses. Même information qu'une pastille, forme plus légère : pas de
+    // fond, pas de cadre, un rond de la taille d'une ponctuation.
+    //
+    // LE POINT NE REMPLACE PAS LE MOT. Il porte la couleur, le mot porte le
+    // sens — une couleur seule exclurait qui ne la distingue pas.
+    badgePoint: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: theme.space.xs,
+      alignSelf: "flex-start",
+      marginTop: theme.space.xxs,
+    },
+    badgeRond: {
+      width: theme.space.sm,
+      height: theme.space.sm,
+      borderRadius: theme.space.sm / 2,
+      // La couleur du rond est posée par la primitive depuis le TON : ici,
+      // seule la forme. `backgroundColor` arrive en surcharge.
+      backgroundColor: c.muted,
+    },
+    badgeRondSuccess: { backgroundColor: c.success },
+    badgeRondWarn: { backgroundColor: c.warn },
+    badgeRondError: { backgroundColor: c.error },
     // — Avatar a initiales (2026-10-17) —
     //
     // MESURE : chaque ligne de la liste des membres chez Bolt porte un rond

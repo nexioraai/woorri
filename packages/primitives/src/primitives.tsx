@@ -482,6 +482,7 @@ export function ListRow({
   subtitle,
   badge,
   badgeTone,
+  badgeForme,
   trailing,
   leading,
   onPress,
@@ -495,7 +496,8 @@ export function ListRow({
       <View style={s.rowBody}>
         <Text style={s.rowTitle}>{title}</Text>
         {subtitle !== undefined && <Text style={s.rowSubtitle}>{subtitle}</Text>}
-        {badge !== undefined && <Badge label={badge} tone={badgeTone} />}
+        {badge !== undefined && <Badge
+          {...(badgeForme === undefined ? {} : { forme: badgeForme })} label={badge} tone={badgeTone} />}
       </View>
       {trailing !== undefined && <Text style={s.rowTrailing}>{trailing}</Text>}
     </>
@@ -589,8 +591,34 @@ export function AvatarInitiales({ nom, testID }: AvatarInitialesProps) {
   );
 }
 
-export function Badge({ label, tone = "info", testID, accessibilityLabel }: BadgeProps) {
+export function Badge({
+  label,
+  tone = "info",
+  forme = "pastille",
+  testID,
+  accessibilityLabel,
+}: BadgeProps) {
   const s = useStyles();
+  // ── LA FORME DISCRETE (D15) — un point colore suivi du mot.
+  //
+  // Meme information qu une pastille, forme plus legere. LE POINT NE REMPLACE
+  // PAS LE MOT : il porte la couleur, le mot porte le sens — une couleur seule
+  // exclurait qui ne la distingue pas.
+  if (forme === "point") {
+    return (
+      <View style={s.badgePoint} testID={testID} accessibilityLabel={accessibilityLabel}>
+        <View
+          style={[
+            s.badgeRond,
+            tone === "success" && s.badgeRondSuccess,
+            tone === "warn" && s.badgeRondWarn,
+            tone === "error" && s.badgeRondError,
+          ]}
+        />
+        <Text style={s.badgeText}>{label}</Text>
+      </View>
+    );
+  }
   return (
     <View style={s.badge} testID={testID} accessibilityLabel={accessibilityLabel}>
       <Text

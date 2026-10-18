@@ -183,6 +183,13 @@ export interface ListBlockProps extends BlockA11yProps {
    * le REPLI, pas un remplacement.
    */
   avatarInitiales?: boolean;
+  /**
+   * LA FORME DE LA PASTILLE DE STATUT — pleine, ou en POINT (D15).
+   *
+   * Le document le dit : une liste dense se lit mieux avec un point qu'avec
+   * une pastille pleine par ligne.
+   */
+  badgeForme?: "pastille" | "point";
 }
 
 export interface FormFieldSpec {

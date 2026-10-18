@@ -167,6 +167,14 @@ export interface ListRowProps extends A11yProps {
    * feuille de style. La couleur de sens était écrite et inatteignable.
    */
   badgeTone?: BadgeProps["tone"];
+  /**
+   * LA FORME DE LA PASTILLE D'UNE LIGNE — pleine, ou en POINT (D15).
+   *
+   * Une liste dense se lit mieux avec un point qu'avec une pastille pleine :
+   * c'est ce que Bolt pose sur « À jour · En attente · En retard ». Le
+   * DOCUMENT le dit ; le moteur ne le devine pas.
+   */
+  badgeForme?: BadgeProps["forme"];
   /** Texte de fin de ligne (prix, valeur, méta) — position logique RTL. */
   trailing?: string;
   /** Contenu de tête de ligne fourni par le bloc (avatar, icône…). */
@@ -243,6 +251,26 @@ export interface AvatarInitialesProps {
 export interface BadgeProps extends A11yProps {
   label: string;
   tone?: "info" | "success" | "warn" | "error";
+  /**
+   * LA FORME DISCRÈTE — un POINT coloré suivi du mot (D15 chez Bolt).
+   *
+   * ── POURQUOI CE N'EST PAS UNE PRIMITIVE DE PLUS.
+   *
+   * Bolt pose « À jour · En attente · En retard » en points colorés dans ses
+   * listes denses, et des pastilles pleines ailleurs. C'est LA MÊME
+   * information — un état, un ton — dans deux formes.
+   *
+   * En faire deux primitives, ce serait deux endroits où la sémantique peut
+   * diverger, et ce dépôt a vu six fois « une liste écrite deux fois ». La
+   * forme est donc une VARIANTE : même contrat, même ton, même mot.
+   *
+   * ── CE QUE LE POINT NE FAIT PAS : SE SUBSTITUER AU MOT.
+   *
+   * Le point porte la couleur, le mot porte le sens. Une couleur seule
+   * exclurait qui ne la distingue pas — la règle que ce dépôt applique déjà
+   * au journal de génération et au sélecteur d'appareil.
+   */
+  forme?: "pastille" | "point";
 }
 
 /**

@@ -163,7 +163,7 @@ export const RELEASE_TRAIN_V1 = {
   // avait aucun capable de porter plus qu un sous-titre, et les surfaces
   // legales annoncaient donc « le texte complet sera fourni ». Le generateur
   // ne refusait pas d ecrire : il n avait aucun endroit ou le faire.
-  blockRegistryVersion: "1.21.0",
+  blockRegistryVersion: "1.22.0",
   // Ré-scellé le 2026-08-29 (DET-006 / D-039) : `ListBlock` DÉCLARE désormais
   // `fill` sur sa Section, afin que la liste virtualisée reçoive un parent
   // BORNÉ. Cause démontrée : imbriquée dans un ScrollView de même axe, une
@@ -397,7 +397,7 @@ export const RELEASE_TRAIN_V1 = {
     // existait (`title` + `subtitle`), la FORME non. Zero document ne l ecrit
     // — parce que la forme n existait pas, donc P0 ne pouvait pas l ecrire.
     // ADDITIF : absent = rendu de 1.20.0 au caractere pres.
-    "21add3bdc7830fdb2b67351c0c30a0d68c099a0c66a4bedfa727ae04c1ca91fc",
+    "ebb13ec802eaaf456f65e4df566fcff5b12537b31cd33d9e0c5f7d2514d0f883",
   // EP-134 — ajout compatible `external_contact` : version MINEURE du registre.
   /**
    * EP-147 ③ — LE NIVEAU D'API ANDROID VISÉ, épinglé par le train.

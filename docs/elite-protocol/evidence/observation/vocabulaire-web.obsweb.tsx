@@ -375,4 +375,67 @@ describe("PREUVE WEB — le vocabulaire de Bolt est rendu", () => {
       APP = precedent;
     }
   });
+
+  it("D15 · LA PASTILLE EN POINT — même sens, forme plus légère", async () => {
+    // ── POURQUOI UNE VARIANTE ET NON UNE PRIMITIVE DE PLUS.
+    //
+    // Bolt pose « À jour · En attente · En retard » en POINTS colorés dans ses
+    // listes denses, et des pastilles pleines ailleurs. C'est LA MÊME
+    // information — un état, un ton — dans deux formes.
+    //
+    // En faire deux primitives, ce serait deux endroits où la sémantique peut
+    // diverger, et ce dépôt a vu six fois « une liste écrite deux fois ».
+    //
+    // ── ET LE POINT NE REMPLACE PAS LE MOT.
+    //
+    // Il porte la couleur, le mot porte le sens. Une couleur seule exclurait
+    // qui ne la distingue pas — la règle appliquée au journal de génération et
+    // au sélecteur d'appareil.
+    const r = await monter("scr_mon_tableau");
+    const t = textes(r);
+    const aplatirP = (s: unknown): Record<string, unknown>[] =>
+      Array.isArray(s) ? s.flatMap(aplatirP) : s === null || s === undefined || s === false ? [] : [s as Record<string, unknown>];
+    // Un POINT est un nœud SANS texte dont le style porte un rayon et une
+    // couleur de fond : c'est la forme, pas un mot.
+    // ── ON LIT LA COULEUR QUI GAGNE, PAS LA PREMIÈRE.
+    //
+    // CORRECTION MESURÉE : ma première sonde filtrait les styles portant
+    // `borderRadius` + `width` — c'est-à-dire le style de BASE du rond, dont
+    // la couleur est `muted`. La teinte du ton arrive dans un SECOND objet du
+    // tableau de styles, sans rayon ni largeur, et la sonde le jetait.
+    //
+    // Résultat : seize points « tous gris », et un contrôle qui accusait le
+    // code d'un défaut qui était le sien. On prend donc la DERNIÈRE couleur de
+    // fond du sous-arbre — celle que React Native applique.
+    const pointsDuBadge = r.root
+      .findAll(
+        (n) =>
+          typeof (n.props as { tone?: unknown }).tone === "string" &&
+          (n.props as { forme?: unknown }).forme === "point",
+      )
+      .map((n) => {
+        const fonds = n
+          .findAll(() => true)
+          .flatMap((x) => aplatirP((x.props as { style?: unknown }).style))
+          .map((d) => d.backgroundColor)
+          .filter((c): c is string => typeof c === "string");
+        return fonds[fonds.length - 1] ?? "";
+      });
+    const ronds = pointsDuBadge;
+    const couleurs = [...new Set(pointsDuBadge.filter((c) => c !== ""))];
+    console.log(`[VOC-WEB] ronds de statut : ${String(ronds.length)} · couleurs : ${couleurs.join(" ")}`);
+    expect(ronds.length, "aucun point de statut rendu : la forme ne s'applique pas").toBeGreaterThan(
+      0,
+    );
+    expect(
+      couleurs.length,
+      "tous les points sont de la même couleur : le ton ne les atteint pas",
+    ).toBeGreaterThan(1);
+    // ── LE MOT EST TOUJOURS LÀ, et c'est la condition de l'ajout.
+    expect(
+      t.some((x) => x.trim() !== "" && x.length < 40),
+      "le point a remplacé le mot : une couleur seule n'informe pas",
+    ).toBe(true);
+    r.unmount();
+  });
 });

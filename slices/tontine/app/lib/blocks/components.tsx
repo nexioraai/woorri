@@ -31,6 +31,7 @@ export function HeaderBlock({
   surtitre,
   accroche,
   logoUri,
+  titreContinu,
   testID,
 }: HeaderBlockProps) {
   return (
@@ -58,8 +59,23 @@ export function HeaderBlock({
           {surtitre}
         </AppText>
       )}
-      <AppText variant={accroche === true ? "display" : "heading"}>{title}</AppText>
-      {subtitle !== undefined && <AppText tone="muted">{subtitle}</AppText>}
+      {/* ── LE TITRE QUI SE POURSUIT (2026-10-18) — D8 chez Bolt.
+          « Bonjour Aminata, » en gras suivi de « voici votre espace. » en
+          gris, SUR LA MEME LIGNE. Le vocabulaire existait — `title` et
+          `subtitle` — mais la FORME n etait que « l un sous l autre ».
+          LE DOCUMENT LE DIT par `titreContinu` ; le moteur ne le devine pas.
+          « Votre tontine en un coup d oeil » colle a « Mon tableau de bord »
+          serait illisible : seul celui qui ecrit les deux parties sait si
+          elles forment une phrase. */}
+      <AppText
+        variant={accroche === true ? "display" : "heading"}
+        {...(subtitle !== undefined && titreContinu === true ? { suite: subtitle } : {})}
+      >
+        {title}
+      </AppText>
+      {subtitle !== undefined && titreContinu !== true && (
+        <AppText tone="muted">{subtitle}</AppText>
+      )}
     </Section>
   );
 }
@@ -76,6 +92,7 @@ export function ListBlock({
   seeAll,
   testID,
   avatarInitiales,
+  badgeForme,
 }: ListBlockProps) {
   // DET-033 (jugement propriétaire sur appareil) : les états ne remplacent
   // plus le BLOC ENTIER — ils ne remplacent que la ZONE DE CONTENU. Avant,
@@ -214,6 +231,7 @@ export function ListBlock({
                 subtitle={item.subtitle}
                 trailing={item.trailing}
                 badge={item.badge}
+                {...(badgeForme === undefined ? {} : { badgeForme })}
                 badgeTone={item.badgeTone === undefined || item.badgeTone === "neutral" ? undefined : item.badgeTone}
                 onPress={
                   onItemPress === undefined
@@ -335,7 +353,8 @@ export function ListBlock({
             subtitle={item.subtitle}
             trailing={item.trailing}
             badge={item.badge}
-            badgeTone={item.badgeTone === undefined || item.badgeTone === "neutral" ? undefined : item.badgeTone}
+            {...(badgeForme === undefined ? {} : { badgeForme })}
+                badgeTone={item.badgeTone === undefined || item.badgeTone === "neutral" ? undefined : item.badgeTone}
             onPress={
               onItemPress === undefined
                 ? undefined

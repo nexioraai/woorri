@@ -657,6 +657,11 @@ export function AirHeader({ screen, blockId }: BlockRef) {
       title={title}
       subtitle={str(props.subtitle)}
       surtitre={str(props.surtitre)}
+      // ── LE MAILLON, ENCORE (2026-10-18). `accroche`, `logoUri`, l avatar,
+      // la famille de caracteres, la phrase de l agent : cinq fois une prop
+      // declaree, portee par le document, et JAMAIS transmise. Rien
+      // n echouait ; la chose rendait sa forme d avant.
+      titreContinu={props.titreContinu === true}
       accroche={props.accroche === true}
       logoUri={str(props.logoUri)}
     />
@@ -1270,6 +1275,8 @@ export function AirList({ screen, blockId, itemId }: BlockRef & { itemId?: strin
       // document, et JAMAIS transmis. Rien n echouait, la liste rendait sa
       // forme d avant.
       avatarInitiales={props.avatarInitiales === true}
+      // Le point ne s impose jamais : absent, la pastille reste pleine.
+      {...(props.badgeForme === "point" ? { badgeForme: "point" as const } : {})}
       bounded={mode === "apercu"}
       // 1.21.0 — « Voir plus » : libellé du DOCUMENT + geste SECONDAIRE du
       // bloc. L'un sans l'autre ne rend rien : aucune promesse muette.
