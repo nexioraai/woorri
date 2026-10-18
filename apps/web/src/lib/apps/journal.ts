@@ -469,6 +469,25 @@ update public.${nom}
 alter table public.${nom} alter column statut set not null;
 alter table public.${nom} alter column statut set default 'en_attente';
 
+-- ── PUBLIER (2026-10-18, choix du proprietaire). DEUX COLONNES.
+--
+-- Le jeton est un SECRET NEUF, pas l'identifiant de la ligne : cet
+-- identifiant circule deja dans les routes d'etat, les journaux et les
+-- diagnostics, et un secret qui a deja circule n'en est pas un.
+--
+-- Il est UNIQUE par construction, et c'est une contrainte, pas une esperance :
+-- deux lignes partageant un jeton serviraient deux applications a la meme
+-- adresse, et la route publique n'aurait aucun moyen de choisir.
+--
+-- La colonne publie_le dit QUAND, et sa seule raison d'etre est de pouvoir repondre
+-- plus tard a « depuis quand ce lien tourne-t-il ». Il ne commande rien.
+alter table public.${nom} add column if not exists publication_jeton text;
+alter table public.${nom} add column if not exists publie_le          timestamptz;
+do $$ begin
+  create unique index ${nom}_publication_jeton_unique
+    on public.${nom} (publication_jeton) where publication_jeton is not null;
+exception when duplicate_table then null; end $$;
+
 -- ── Trois invariants par CONTRAINTE, pas par discipline de code.
 do $$ begin
   alter table public.${nom}
@@ -484,6 +503,16 @@ do $$ begin
   alter table public.${nom}
     add constraint ${nom}_livree_a_document
     check (statut <> 'livree' or document is not null);
+exception when duplicate_object then null; end $$;
+
+-- UN JETON DE PUBLICATION SANS DOCUMENT SERVIRAIT UNE PAGE VIDE. La route
+-- publique compile le document pour rendre la page ; sans document elle n'a
+-- rien a compiler, et le visiteur verrait un cadre blanc sans savoir pourquoi.
+-- Postgres le refuse, donc aucun chemin de code ne peut l'ecrire.
+do $$ begin
+  alter table public.${nom}
+    add constraint ${nom}_publie_a_document
+    check (publication_jeton is null or document is not null);
 exception when duplicate_object then null; end $$;
 
 -- Une ligne EN COURS exige battement ET jeton : on ne peut pas etre « en cours »

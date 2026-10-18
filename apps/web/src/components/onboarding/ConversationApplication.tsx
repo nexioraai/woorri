@@ -20,7 +20,7 @@
 // `sites`. Les 48 fichiers qui lisent `site.mode` ne verront jamais passer
 // une application, et c'est la garantie que rien de ce qui marche ne casse.
 // ============================================================
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
 import { ApercuAppareil, Attente, Bulle, ChoixFermes, Composeur, Escalier,
   JournalGeneration } from './Conversation';
@@ -36,6 +36,7 @@ import {
 } from '@/lib/apps/suivi-generation'
 import { resumeDuJournal } from '@/lib/apps/journal-tirages';
 import type { EtatGeneration } from '@/lib/apps/service-generations';
+import type { EtatMagasin } from '@/lib/apps/exigences-magasin';
 import {
   formatDuFichier,
   raisonDuRefus,
@@ -102,7 +103,7 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
   const [messages, setMessages] = useState<Message[]>([]);
   const [saisie, setSaisie] = useState('');
   const [enCours, setEnCours] = useState(false);
-  const [travail, setTravail] = useState<'' | 'apercu' | 'archive'>('');
+  const [travail, setTravail] = useState<'' | 'apercu' | 'archive' | 'publication'>('');
   const [apercu, setApercu] = useState('');
   const [avis, setAvis] = useState('');
   // LE DOCUMENT COMPRIS, GARDE ICI. Sans lui, « voir » et « telecharger »
@@ -138,6 +139,42 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
   );
   const [etatGen, setEtatGen] = useState<EtatGeneration | null>(null);
   const [apercuGen, setApercuGen] = useState<{ version: string; html: string } | null>(null);
+  // ── LE LIEN PUBLIÉ (2026-10-18). Il ne vient JAMAIS d'ici : on l'obtient de
+  // la route, qui seule connaît le jeton. L'écran ne fabrique pas d'adresse —
+  // il montre celle qui existe, et seulement après qu'elle existe.
+  const [lienPublie, setLienPublie] = useState('');
+  const [lienCopie, setLienCopie] = useState(false);
+  // ── CE QUE LES MAGASINS EXIGENT ENCORE. Mesuré sur le projet natif
+  // RÉELLEMENT émis, jamais une liste écrite ici : une liste dérive le jour
+  // où le moteur gagne une icône, et l'écran réclamerait ce qui est déjà là.
+  const [exigences, setExigences] = useState<EtatMagasin | null>(null);
+  // « Déjà demandé » est une MÉMOIRE, pas un état : rien à l'écran n'en
+  // dépend. Une ref, donc — et elle ne devient pas une dépendance du sondage,
+  // ce qui éviterait de recréer la minuterie à chaque réponse.
+  const exigencesDemandees = useRef(false);
+
+  /**
+   * OUBLIER LA PUBLICATION PRÉCÉDENTE.
+   *
+   * Sans ce geste, démarrer une application neuve laisserait à l'écran le
+   * LIEN DE LA PRÉCÉDENTE et son panneau d'exigences. Quelqu'un l'enverrait,
+   * et montrerait l'application de quelqu'un d'autre — ou la sienne, mais
+   * pas celle qu'il croit.
+   *
+   * Une seule fonction pour les trois points de remise à zéro : trois copies
+   * divergent, et celle qu'on oublie est exactement celle qui fait le dégât.
+   */
+  // `useCallback` et pas une fonction nue : MESURÉ le 2026-10-18 — ajouter
+  // une fonction de plus au corps du composant fait basculer l'analyse du
+  // compilateur React, qui se met alors à voir un `Date.now()` d'un
+  // gestionnaire d'événement comme un appel de rendu. Une identité stable
+  // lève l'ambiguïté sans toucher à une ligne du code voisin.
+  const oublierLaPublication = useCallback(() => {
+    setLienPublie('');
+    setLienCopie(false);
+    setExigences(null);
+    exigencesDemandees.current = false;
+  }, []);
   // l'horloge de l'ecoule : posee par le POLL (jamais pendant le rendu — purete)
   const [maintenant, setMaintenant] = useState(0);
   // ── LE CAHIER DES CHARGES JOINT : ce qu'on DIT sous le champ. Jamais
@@ -206,6 +243,28 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
           const e = (await res.json()) as EtatGeneration;
           setMaintenant(Date.now());
           setEtatGen(e);
+          // ── LES EXIGENCES DES MAGASINS : UNE SEULE FOIS, A L'ARRIVEE.
+          //
+          // Elles exigent de COMPILER le projet natif — c'est la seule facon
+          // de lire le vrai `app.json` plutot qu'une liste ecrite a cote. On
+          // ne paie donc ce calcul qu'une fois, au passage a « livree », et
+          // jamais pendant le sondage : la garde `exigences === null` le tient.
+          if (e.statut === 'livree' && !exigencesDemandees.current) {
+            exigencesDemandees.current = true;
+            void (async () => {
+              try {
+                const r = await fetch(
+                  `/api/generateur/publier?id=${encodeURIComponent(generationId)}`,
+                  { headers: { Authorization: `Bearer ${await jeton()}` } },
+                );
+                if (!r.ok || !vivant) return;
+                setExigences((await r.json()) as EtatMagasin);
+              } catch {
+                // Le panneau est un COMPLÉMENT : s'il ne vient pas, le
+                // téléchargement et la publication web marchent quand même.
+              }
+            })();
+          }
           if (e.statut === 'livree' || e.statut === 'refusee') {
             // ── LE DIALOGUE NE MEURT PLUS A L'ARRIVEE.
             //
@@ -349,6 +408,7 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
         );
         setEtatGen(null);
         setAvis('C’est reparti sur une demande neuve.');
+        oublierLaPublication();
         window.history.replaceState(null, '', memoriserGeneration(d.id, window.localStorage));
         setGenerationId(d.id);
         return;
@@ -356,6 +416,7 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
       // L'etat est efface : le prochain battement du suivi lira la ligne
       // redevenue « en attente », et l'escalier repartira de lui-meme.
       setEtatGen(null);
+      oublierLaPublication();
       // ── DEUX MESSAGES QUI SE CONTREDISENT (defaut 2026-10-14).
       //
       // SIGNALE PAR LE PROPRIETAIRE, capture a l'appui : l'ecran affichait
@@ -386,6 +447,39 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
       );
     } catch {
       setAvis('Reprise impossible.');
+    } finally {
+      setTravail('');
+    }
+  };
+
+  /**
+   * PUBLIER — ET LE BOUTON NE MENT PAS SUR CE QU'IL FAIT.
+   *
+   * Il donne une ADRESSE WEB. Il ne dépose rien sur Google Play ni sur l'App
+   * Store : ces deux-là exigent de l'argent et des identifiants, et le
+   * panneau juste en dessous dit lesquels. Un bouton qui promettrait les
+   * magasins serait pire que pas de bouton — quelqu'un cliquerait en croyant
+   * tenir une publication.
+   *
+   * Republier est sans danger : la route rend le MÊME lien.
+   */
+  const publier = async () => {
+    if (generationId === null) return;
+    setTravail('publication');
+    try {
+      const res = await fetch(`/api/generateur/publier?id=${encodeURIComponent(generationId)}`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${await jeton()}` },
+      });
+      const d = (await res.json().catch(() => ({}))) as { lien?: string; error?: string };
+      if (!res.ok || typeof d.lien !== 'string') {
+        setAvis(String(d.error ?? 'Publication impossible.'));
+        return;
+      }
+      setLienPublie(d.lien);
+      setLienCopie(false);
+    } catch {
+      setAvis('Publication impossible.');
     } finally {
       setTravail('');
     }
@@ -702,6 +796,7 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
         setDocument(null);
         setApercuGen(null);
         setEtatGen(null);
+        oublierLaPublication();
         window.history.replaceState(null, '', memoriserGeneration(d.id, window.localStorage));
         setGenerationId(d.id);
         return;
@@ -1053,13 +1148,103 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
             </button>
           )}
           {marcheDuSuivi(etatGen).livree && (
-            <button
-              type="button"
-              onClick={() => { void telechargerLivraison(); }}
-              className="mt-3 text-sm underline text-white hover:text-[#FA5D1E]"
-            >
-              Télécharger l’application (zip)
-            </button>
+            <div className="mt-3">
+              <div className="flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => { void telechargerLivraison(); }}
+                  className="text-sm underline text-white hover:text-[#FA5D1E]"
+                >
+                  Télécharger l’application (zip)
+                </button>
+                {/* ── PUBLIER : LE BOUTON NE PROMET QUE CE QU'IL FAIT.
+                    Il donne une ADRESSE WEB. Il ne dépose rien sur Google Play
+                    ni sur l'App Store — le panneau en dessous dit ce que
+                    celles-là exigent encore. Un bouton « Publier » tout court
+                    laisserait croire aux magasins. */}
+                <button
+                  type="button"
+                  onClick={() => { void publier(); }}
+                  disabled={travail === 'publication'}
+                  className="px-4 py-2 rounded-full text-sm bg-[#FA5D1E] text-white hover:brightness-110 transition disabled:opacity-40"
+                >
+                  {travail === 'publication'
+                    ? 'Publication…'
+                    : lienPublie === ''
+                      ? 'Publier sur le web'
+                      : 'Republier'}
+                </button>
+              </div>
+
+              {lienPublie !== '' && (
+                <div className="mt-3 rounded-xl border border-white/15 bg-white/5 p-3">
+                  <p className="text-xs text-slate-300">
+                    {'Votre application est en ligne. Envoyez ce lien à qui vous voulez — il n’y a pas besoin de compte pour l’ouvrir.'}
+                  </p>
+                  <div className="mt-2 flex items-center gap-2">
+                    <a
+                      href={lienPublie}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex-1 truncate text-sm text-[#FA5D1E] underline"
+                    >
+                      {lienPublie}
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        void navigator.clipboard.writeText(lienPublie).then(
+                          () => { setLienCopie(true); },
+                          () => { setLienCopie(false); },
+                        );
+                      }}
+                      className="shrink-0 px-3 py-1 rounded-full text-xs bg-white/10 border border-white/15 text-white hover:bg-white/15 transition"
+                    >
+                      {lienCopie ? 'Copié' : 'Copier'}
+                    </button>
+                  </div>
+                  {/* Le lien ne change jamais : republier remplace le contenu,
+                      pas l'adresse. Le dire évite qu'on renvoie un lien neuf
+                      à chaque fois « pour être sûr ». */}
+                  <p className="mt-2 text-xs text-slate-400">
+                    {'Ce lien ne changera pas. Republiez autant de fois que vous voulez : les personnes qui l’ont déjà verront la nouvelle version.'}
+                  </p>
+                </div>
+              )}
+
+              {/* ── ET LES MAGASINS, QUI NE SONT PAS GRATUITS.
+                  Trois états, et la distinction EST la valeur du panneau :
+                  ce qui est déjà là, ce qui manque CHEZ NOUS, et ce que
+                  personne d'autre que lui ne peut fournir. Les confondre le
+                  laisserait payer 25 $ pour découvrir qu'il manquait une
+                  icône que NOUS n'émettons pas. */}
+              {exigences !== null && (
+                <details className="mt-3 rounded-xl border border-white/15 bg-white/5 p-3">
+                  <summary className="cursor-pointer text-sm text-white">
+                    {`Google Play et App Store : ${String(exigences.manquantsMoteur + exigences.manquantsProprietaire)} point(s) à régler`}
+                  </summary>
+                  <ul className="mt-3 space-y-2">
+                    {exigences.exigences.map((x) => (
+                      <li key={x.quoi} className="text-xs">
+                        <span className="text-slate-200">
+                          {x.qui === 'satisfait' ? '✅ ' : x.qui === 'moteur' ? '🔧 ' : '👤 '}
+                          {x.quoi}
+                        </span>
+                        {x.qui === 'moteur' && (
+                          <span className="ml-1 text-slate-400">{'— à nous de le construire'}</span>
+                        )}
+                        {x.qui === 'proprietaire' && (
+                          <span className="ml-1 text-slate-400">{'— à vous de le fournir'}</span>
+                        )}
+                        {x.pourquoi !== undefined && (
+                          <p className="mt-0.5 text-slate-400">{x.pourquoi}</p>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </details>
+              )}
+            </div>
           )}
         </div>
       )}

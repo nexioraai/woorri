@@ -185,6 +185,15 @@ export default defineConfig({
       'src/lib/images/**/*.test.ts',
       // Le pont vers le moteur de génération (lot « brancher Deribfy »).
       'src/lib/apps/**/*.test.ts',
+      // Les routes du GENERATEUR d'applications. Le motif manquait : un test
+      // ecrit sous `src/app/api/generateur/` n'etait JAMAIS execute, et
+      // vitest disait « No test files found » sans que rien ne rougisse
+      // ailleurs. Mesure du 2026-10-18 : 313 fichiers sur disque, 312 joues.
+      'src/app/api/generateur/**/*.test.ts',
+      // La route PUBLIQUE de la page publiee. Meme motif manquant que
+      // ci-dessus : elle est la plus exposee du depot, et aucun test ecrit
+      // la ne se serait execute.
+      'src/app/p/**/*.test.ts',
       // CHANTIER 5 -- src/lib/site-profile/ porte la borne de `area_served`
       // et l'allowlist de `price_range`. Prefixe absent : sans cette ligne,
       // leurs tests passent en isolation mais ne sont JAMAIS collectes.
