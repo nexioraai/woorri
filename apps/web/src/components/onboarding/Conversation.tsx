@@ -375,6 +375,97 @@ export function Composeur({
 }
 
 /**
+ * LE JOURNAL DE LA GÉNÉRATION — CE QUE LE MOTEUR A FAIT, DIT.
+ *
+ * ── CE QU'IL RÉPARE.
+ *
+ * Le moteur écrit le détail de chaque tirage depuis le 2026-10-15 : ce qui a
+ * été refusé, ce qu'il a corrigé LUI-MÊME, et ce que ça a coûté. L'écran
+ * montrait cinq marches. Le propriétaire a regardé 53 minutes de génération à
+ * 16,03 $ sans savoir ce qui se passait.
+ *
+ * ── CE QUE CE PANNEAU MONTRE, ET DANS CET ORDRE.
+ *
+ * Les RÉPARATIONS d'abord, parce qu'elles disent que le générateur travaille au
+ * lieu d'échouer en silence. Puis le détail des refus, par un NOMBRE —
+ * l'ampleur sans le jargon.
+ *
+ * AUCUN MONTANT, et c'est une décision du dépôt que je ne renverse pas : l'état
+ * rendu à l'écran « ajoute des TEMPS et des COMPTES, jamais une entraille ni un
+ * coût », et un cliquet le vérifie. J'avais écrit le coût par essai ; il m'a
+ * arrêté. La question reste posée au propriétaire.
+ *
+ * Rien ici ne fabrique de phrase : `journalDesTirages` a déjà traduit, côté
+ * serveur, et refuse de deviner un arrêt qu'il ne connaît pas.
+ */
+export function JournalGeneration({
+  lignes,
+  resume,
+}: {
+  lignes: readonly {
+    rang: number
+    quoi: string
+    reparations: readonly string[]
+    points: number
+    accepte: boolean
+  }[]
+  resume: { tirages: number; reparations: number }
+}) {
+  if (lignes.length === 0) return null
+  return (
+    <div className="mt-3 rounded-xl border border-white/10 bg-white/[0.03] p-3">
+      <p className="text-xs text-slate-400">
+        {resume.tirages} essai{resume.tirages > 1 ? 's' : ''}
+        {resume.reparations > 0 && (
+          <> · {resume.reparations} correction{resume.reparations > 1 ? 's' : ''} automatique
+            {resume.reparations > 1 ? 's' : ''}</>
+        )}
+      </p>
+      <ol className="mt-2 flex flex-col gap-2">
+        {lignes.map((l) => (
+          <li key={l.rang} className="text-xs">
+            <span className="flex items-start gap-2">
+              {/* L'état se lit à la FORME autant qu'à la couleur : un point
+                  plein pour l'essai qui aboutit, un cercle pour les autres.
+                  La couleur seule exclurait qui ne la distingue pas. */}
+              <span
+                aria-hidden="true"
+                className="mt-1 h-2 w-2 flex-shrink-0 rounded-full"
+                style={
+                  l.accepte
+                    ? { background: '#4CC17A' }
+                    : { border: '1px solid rgba(255,255,255,0.35)' }
+                }
+              />
+              <span className="flex-1">
+                <span className="text-slate-200">
+                  Essai {l.rang} — {l.quoi}
+                </span>
+                {l.points > 0 && (
+                  <span className="text-slate-500">
+                    {' '}
+                    ({l.points} point{l.points > 1 ? 's' : ''} à corriger)
+                  </span>
+                )}
+                {l.reparations.length > 0 && (
+                  <ul className="mt-1 flex flex-col gap-1 border-s border-white/10 ps-2">
+                    {l.reparations.map((r, k) => (
+                      <li key={k} className="text-[#cbbfae]">
+                        Corrigé : {r}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </span>
+            </span>
+          </li>
+        ))}
+      </ol>
+    </div>
+  )
+}
+
+/**
  * L'ESCALIER — la progression par marches des trois modes, DEPLACEE ici
  * (verbatim, classes au caractere pres) depuis OnboardingChat pour que le
  * suivi de generation (etage 4) REUTILISE la meme marche au lieu d'en

@@ -381,11 +381,32 @@ describe('etatGeneration — la lecture est au PROPRIETAIRE seul', () => {
     // volontaire de `notreFaute`, je l'avais fait retomber sur l'etiquette
     // « Je n'ai pas compris » — on accusait le proprietaire au moment meme
     // ou il venait d'appuyer sur Arreter. Trois etats, trois etiquettes.
+    // `journal` EST LE CINQUIEME ELARGISSEMENT DELIBERE (2026-10-17), et il
+    // ferme la SIXIEME « machine posee, debranchee » de ce chantier : le moteur
+    // ecrit le detail de chaque tirage depuis le 2026-10-15 —
+    // `sections_acquises.tirages` — et `etatGeneration` le LISAIT sans le
+    // rendre. Le proprietaire a regarde 53 minutes de generation sans savoir ce
+    // qui se passait, pendant que le moteur l'ecrivait.
+    //
+    // IL N'OUVRE AUCUNE ENTRAILLE, et c'est la condition de son existence :
+    //   · l'arret (`P1`/`P2`/`passe`) est TRADUIT en une phrase, et un arret
+    //     inconnu est TU — jamais une phrase fabriquee ;
+    //   · les CODES ne sortent pas : seul leur NOMBRE, l'ampleur sans le
+    //     jargon ;
+    //   · les CHEMINS du validateur ne sortent pas du tout ;
+    //   · et AUCUN MONTANT. J'avais ecrit le cout par essai ; le controle
+    //     suivant m'a arrete, et il avait raison — la decision « des TEMPS et
+    //     des COMPTES, jamais un cout » etait consignee avant moi, et la
+    //     renverser par la porte d'un autre lot aurait ete la contourner.
+    //
+    // Ce qui sort en plus, ce sont les REPARATIONS que le moteur a faites
+    // lui-meme, dans les phrases francaises qu'il compose deja. Elles disent
+    // qu'il travaille au lieu d'echouer en silence.
     expect(Object.keys(e ?? {}).sort()).toEqual([
       'aDocument', 'activiteSec', 'apercuVersion', 'arrete', 'attendVous', 'comprise', 'creeIl',
       'defautsRestants',
-      'etape', 'id', 'nom', 'notreFaute', 'questions', 'raison', 'reprenable', 'sections',
-      'statut', 'tours', 'versions',
+      'etape', 'id', 'journal', 'nom', 'notreFaute', 'questions', 'raison', 'reprenable',
+      'sections', 'statut', 'tours', 'versions',
     ])
   })
 

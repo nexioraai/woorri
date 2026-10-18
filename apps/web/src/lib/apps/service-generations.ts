@@ -20,6 +20,7 @@ import type { creerTravailleur, RapportTranche } from './travailleur'
 import { diagnosticsDepuisLigne, RAISON_ARRET_PROPRIETAIRE, TABLE_VERSIONS } from './journal'
 import { questionsPour, type Question, fautesDeProduction } from './dialogue'
 import { estReprenable } from './reprise'
+import { journalDesTirages, type LigneTirage } from './journal-tirages'
 
 type Travailleur = ReturnType<typeof creerTravailleur>
 
@@ -190,6 +191,17 @@ export type EtatGeneration = {
    * — les tours portent des codes, et les codes ne vont pas a l'ecran.
    */
   readonly tours: number
+  /**
+   * LE JOURNAL DES TIRAGES, TRADUIT.
+   *
+   * Chaque ligne dit ce qui s'est passe, ce que le generateur a repare
+   * lui-meme, et ce que le tirage a coute. Aucun code, aucun chemin de
+   * validateur : le brut reste en base, ou un diagnostic le trouve.
+   *
+   * Vide quand le moteur n'a rien ecrit, ou quand aucun arret n'est
+   * traduisible — se taire vaut mieux qu'une phrase fabriquee.
+   */
+  readonly journal: readonly LigneTirage[]
   /** UNE REPRISE EST-ELLE POSSIBLE. Faux sur une livree (elle est finie) et
    *  faux sans base recuperable — l'ecran ne propose pas un bouton qui
    *  relancerait une generation complete en la deguisant en reprise. */
@@ -355,6 +367,20 @@ export async function etatGeneration({
     // il n'existe pas. Aucune entraille ne sort — juste ce booleen.
     comprise: sa.modele !== null && sa.modele !== undefined,
     tours: Array.isArray(sa.tours) ? sa.tours.length : 0,
+    // ── LE JOURNAL DES TIRAGES, ENFIN RENDU (defaut 2026-10-17).
+    //
+    // `sa.tirages` etait LU juste au-dessus — son type est declare depuis le
+    // 2026-10-15, avec le commentaire « C'est la, et nulle part ailleurs, que
+    // vivent les VRAIS codes d'un refus P0 ». Et il ne sortait pas d'ici.
+    //
+    // Le proprietaire a regarde 53 minutes de generation a 16,03 $ sans savoir
+    // ce qui se passait, pendant que le moteur l'ecrivait. SIXIEME « machine
+    // posee, debranchee » de ce chantier.
+    //
+    // TRADUIT, jamais brut : c'est la regle que ce fichier applique deja aux
+    // refus (« Deja TRADUITE par le serveur — le brut du moteur ne voyage
+    // jamais »). Les codes et les chemins du validateur restent en base.
+    journal: journalDesTirages(sa.tirages),
     reprenable: estReprenable(statut, l as Parameters<typeof estReprenable>[1]),
     attendVous: l.attente_validation === true,
     versions,

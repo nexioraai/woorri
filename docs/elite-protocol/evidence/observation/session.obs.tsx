@@ -145,5 +145,21 @@ describe("Phase 4 — la session change RÉELLEMENT l'écran", () => {
     expect(capabilities.invoke({ capability: "maps", method: "open", params: {} })).toBe(false);
 
     r?.unmount();
-  });
+    // ── CE TEST COMPILE UNE APPLICATION ENTIÈRE : IL LUI FAUT SON DÉLAI.
+    //
+    // Mesuré le 2026-10-17 : « Test timed out in 5000ms » dans la gate
+    // complète, et VERT en 1,1 s lancé seul. Ce n'était donc pas une
+    // régression — c'était le délai PAR DÉFAUT de vitest, atteint sous la
+    // charge des vingt-neuf étapes.
+    //
+    // La fragilité, elle, était là avant : tous les autres fichiers de ce
+    // dossier compilent dans un `beforeAll` qui DÉCLARE son délai (180 s,
+    // 240 s). Celui-ci compile dans son corps, au défaut. Mon lot l'a fait
+    // basculer — trois faces de police de plus à écrire à chaque compilation —
+    // mais il aurait basculé un jour, sur une machine plus chargée, et
+    // personne n'aurait su pourquoi.
+    //
+    // On déclare donc le délai, à la mesure du travail réel : compiler et
+    // monter une application n'est pas une assertion de 5 ms.
+  }, 180_000);
 });

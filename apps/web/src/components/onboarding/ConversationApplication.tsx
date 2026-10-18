@@ -22,7 +22,8 @@
 // ============================================================
 import { useState, useRef, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { ApercuAppareil, Attente, Bulle, ChoixFermes, Composeur, Escalier } from './Conversation';
+import { ApercuAppareil, Attente, Bulle, ChoixFermes, Composeur, Escalier,
+  JournalGeneration } from './Conversation';
 import {
   ETAPES_SUIVI,
   FOURCHETTE_DUREE,
@@ -32,7 +33,8 @@ import {
   modeAsyncActif,
   generationDepuisUrl,
   memoriserGeneration,
-} from '@/lib/apps/suivi-generation';
+} from '@/lib/apps/suivi-generation'
+import { resumeDuJournal } from '@/lib/apps/journal-tirages';
 import type { EtatGeneration } from '@/lib/apps/service-generations';
 import {
   formatDuFichier,
@@ -863,7 +865,18 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
                   : undefined
               }
               panneau={
-                apercuGen !== null ? (
+                <>
+                  {/* ── LE JOURNAL, APRÈS LES MARCHES ET AVANT L'APERÇU.
+                      Il répond à « que se passe-t-il ? » ; l'aperçu répond à
+                      « à quoi ça ressemble ? ». La première question se pose
+                      d'abord, et elle se posait sans réponse : le moteur
+                      écrivait son journal depuis le 2026-10-15, et l'écran ne
+                      le lisait pas. */}
+                  <JournalGeneration
+                    lignes={etatGen?.journal ?? []}
+                    resume={resumeDuJournal(etatGen?.journal ?? [])}
+                  />
+                  {apercuGen !== null ? (
                   <div className="mt-3">
                     {/* Le sandbox reste SANS `allow-same-origin` : l'app
                         tourne, elle ne lit rien du site hote. */}
@@ -894,7 +907,8 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
                     </button>
                     </ApercuAppareil>
                   </div>
-                ) : undefined
+                  ) : undefined}
+                </>
               }
             />
           </div>
