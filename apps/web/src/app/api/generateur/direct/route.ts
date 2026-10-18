@@ -26,28 +26,17 @@
  * jetons par appel, et le cout REEL rendu a l'appelant.
  */
 import { NextResponse } from 'next/server'
-import Anthropic from '@anthropic-ai/sdk'
 import { requireAuthenticatedUser } from '@/lib/auth/require-authenticated-user'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { TABLE_GENERATIONS } from '@/lib/apps/journal'
 import { moteurChoisi } from '@/lib/apps/interrupteur-moteur'
 import { boucleEcriture, CONSIGNE, pageAutonome } from '@/lib/apps/boucle-directe'
+import { appelerFournisseur, CONFIGS, fournisseurChoisi } from '@/lib/apps/fournisseur'
 
 export const runtime = 'nodejs'
 export const maxDuration = 300
 
-/**
- * LE MEME MODELE QUE L'AUTRE CHEMIN, et c'est deliberе.
- *
- * Mesure du 2026-10-18 : les concurrents qui livrent en moins de quatre
- * minutes tournent eux aussi sur un modele de ce rang. Si l'option 1 gagne,
- * il faut que ce soit par l'architecture — pas parce qu'on a change de
- * modele en chemin.
- */
-const MODELE = 'claude-opus-5'
 
-/** Tarifs du fournisseur, les memes que ceux du moteur AIR. */
-const PRIX = { entree: 5, sortie: 25 } as const
 
 export async function POST(req: Request) {
   const garde = await requireAuthenticatedUser(req)
@@ -66,14 +55,23 @@ export async function POST(req: Request) {
     )
   }
 
-  const cle = process.env.ANTHROPIC_API_KEY ?? ''
-  if (cle === '') return NextResponse.json({ error: 'Clé absente du serveur.' }, { status: 500 })
+  // ── LE FOURNISSEUR EST UN INTERRUPTEUR, PAS UN CHOIX EN DUR.
+  //
+  // Mesuré le 2026-10-18 : le crédit Anthropic du propriétaire est tombé à
+  // zéro en plein tir, et un rechargement n'y a rien changé — la clé rend
+  // encore « credit balance is too low ». Un produit dont la seule porte est
+  // fermée n'a plus de porte.
+  const fournisseur = fournisseurChoisi(process.env.GENERATEUR_FOURNISSEUR)
+  const config = CONFIGS[fournisseur]
+  const cle = process.env[config.variableCle] ?? ''
+  if (cle === '') {
+    return NextResponse.json({ error: 'Clé absente du serveur.' }, { status: 500 })
+  }
 
   const corps = (await req.json().catch(() => ({}))) as { demande?: unknown }
   const demande = typeof corps.demande === 'string' ? corps.demande.trim() : ''
   if (demande === '') return NextResponse.json({ error: 'demande requise' }, { status: 400 })
 
-  const client = new Anthropic({ apiKey: cle })
   let entree = 0
   let sortie = 0
 
@@ -83,32 +81,18 @@ export async function POST(req: Request) {
    * Pas de grammaire compilee, pas de sorties structurees, pas de decoupe en
    * neuf passes. C'est tout le pari : le modele ecrit a pleine vitesse, et
    * c'est le compilateur qui juge apres — pas une grammaire pendant.
+   *
+   * Le DIALECTE du fournisseur vit dans `fournisseur.ts`, jamais ici : l'un
+   * exige le flux, l'autre plafonne sa sortie a 8 192 jetons. Cette route
+   * n'a pas a le savoir.
    */
   const appeler = async (
     messages: readonly { role: 'user' | 'assistant'; content: string }[],
   ): Promise<string> => {
-    // ── EN FLUX, ET CE N'EST PAS UN CHOIX DE CONFORT.
-    //
-    // DEFAUT MESURE LE 2026-10-18, au premier essai du proprietaire : le SDK
-    // REFUSE un appel non-streame des que `max_tokens` autorise une reponse
-    // pouvant depasser dix minutes — « Streaming is required for operations
-    // that may take longer than 10 minutes ». Rien n'etait parti, rien n'a
-    // ete facture, et rien ne pouvait marcher.
-    //
-    // Le moteur AIR reglait deja ce point de son cote (`envelopperEnFlux`,
-    // apres « six Request timed out sur deux tirs »). J'avais ecrit cette
-    // route sans en tenir compte. `stream()` ouvre le flux et
-    // `finalMessage()` rend le message complet, usage compris.
-    const flux = client.messages.stream({
-      model: MODELE,
-      max_tokens: 32_000,
-      system: [{ type: 'text', text: CONSIGNE, cache_control: { type: 'ephemeral' } }],
-      messages: messages.map((m) => ({ role: m.role, content: m.content })),
-    })
-    const r = await flux.finalMessage()
-    entree += r.usage.input_tokens
-    sortie += r.usage.output_tokens
-    return r.content.map((b) => (b.type === 'text' ? b.text : '')).join('')
+    const r = await appelerFournisseur(fournisseur, cle, CONSIGNE, messages)
+    entree += r.usage.entree
+    sortie += r.usage.sortie
+    return r.texte
   }
 
   const debut = Date.now()
@@ -120,7 +104,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: message.slice(0, 200) }, { status: 502 })
   }
   const dureeMs = Date.now() - debut
-  const coutUsd = (entree * PRIX.entree + sortie * PRIX.sortie) / 1e6
+  const coutUsd = (entree * config.prix.entree + sortie * config.prix.sortie) / 1e6
 
   // ── LA LIGNE EST ECRITE DANS LES DEUX CAS, SUCCES COMME ECHEC.
   //
@@ -138,6 +122,10 @@ export async function POST(req: Request) {
     owner_id: garde.userId,
     demande,
     moteur: 'direct',
+    // QUEL FOURNISSEUR a écrit, pour que la comparaison reste lisible.
+    // Sa propre colonne : `nom` porte le nom de l'application, pas celui
+    // d'un fournisseur — y ranger ceci écraserait une donnée d'affichage.
+    fournisseur,
     ok: resultat.ok,
     statut: resultat.ok ? 'livree' : 'refusee',
     cout_usd: Number(coutUsd.toFixed(4)),

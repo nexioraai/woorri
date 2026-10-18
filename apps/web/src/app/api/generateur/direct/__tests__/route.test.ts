@@ -175,7 +175,12 @@ describe('EP-276 · la route de l’écriture directe', () => {
     // Le moteur AIR réglait déjà ce point de son côté. Cette route l’avait
     // ignoré. Ce contrôle lit la SOURCE parce que le défaut est dans le NOM
     // de la méthode appelée — le double ne peut que le refléter, pas le dire.
-    const src = readFileSync(join(__dirname, '..', 'route.ts'), 'utf8')
+    // L'APPEL A DÉMÉNAGÉ dans `fournisseur.ts` quand DeepSeek est arrivé :
+    // deux dialectes, un seul endroit qui les connaît. Le contrôle suit.
+    const src = readFileSync(
+      join(__dirname, '..', '..', '..', '..', '..', 'lib', 'apps', 'fournisseur.ts'),
+      'utf8',
+    )
     const code = src.replace(/\/\*[\s\S]*?\*\//gu, '').replace(/^\s*\/\/.*$/gmu, '')
     expect(code, 'l’appel n’est pas en flux : le SDK refusera avant d’envoyer').toContain(
       'client.messages.stream(',

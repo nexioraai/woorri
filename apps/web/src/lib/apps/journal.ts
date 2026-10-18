@@ -484,6 +484,23 @@ alter table public.${nom} alter column statut set default 'en_attente';
 -- Defaut AIR : les lignes anterieures viennent toutes de celui-la.
 alter table public.${nom} add column if not exists moteur text not null default 'air';
 
+-- ── QUEL FOURNISSEUR A ECRIT (2026-10-18).
+--
+-- Mesure du jour : le compte Anthropic du proprietaire est tombe a sec en
+-- plein tir, et un rechargement n'y a rien change — l'API refusait encore.
+-- Un produit dont la seule porte est fermee n'a plus de porte. DeepSeek
+-- repond, et coute 18 fois moins en entree, 23 fois moins en sortie.
+--
+-- (Le texte exact du refus n'est PAS cite ici : un cliquet du depot veille
+-- a ce qu'aucun message de fournisseur ne vive dans ce fichier, et il a
+-- raison — c'est par la que ce genre de phrase finit a l'ecran.)
+--
+-- Sa PROPRE colonne : la colonne nom porte le nom de l'application, pas
+-- celui d'un fournisseur — y ranger ceci ecraserait une donnee d'affichage.
+--
+-- Defaut ANTHROPIC : les quatorze lignes existantes en viennent toutes.
+alter table public.${nom} add column if not exists fournisseur text not null default 'anthropic';
+
 -- ── PUBLIER (2026-10-18, choix du proprietaire). DEUX COLONNES.
 --
 -- Le jeton est un SECRET NEUF, pas l'identifiant de la ligne : cet
