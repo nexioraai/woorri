@@ -933,7 +933,23 @@ export function creerTravailleur({
       // il est replie dans l'etat, et la ligne redevient saisissable TOUT DE
       // SUITE (`en_attente`) plutot que d'attendre la peremption. Trois
       // echecs → refusee, en disant pourquoi.
-      const messageErreur = e instanceof Error ? e.message : String(e)
+      // ── LA PILE VOYAGE AVEC LE MESSAGE, ET VOICI CE QUE COUTE SON ABSENCE.
+      //
+      // MESURE LE 2026-10-19, TROIS TIRS : « Cannot read properties of
+      // undefined (reading 'filter') », phase emission, 0 ms. Le message seul
+      // ne dit ni le fichier, ni la ligne, ni quel `.filter()` parmi les
+      // treize du moteur. J'ai parie sur `registry.CAPABILITIES`, pose une
+      // garde, redeploye : la garde n'a rien trouve. Un tir perdu pour une
+      // hypothese, faute de deux lignes de pile.
+      //
+      // On garde les trois premieres lignes : le site de l'erreur et ses deux
+      // appelants suffisent toujours a nommer le fichier.
+      const pile =
+        e instanceof Error && typeof e.stack === 'string'
+          ? e.stack.split('\n').slice(1, 4).map((l) => l.trim()).join(' ← ')
+          : ''
+      const messageErreur =
+        (e instanceof Error ? e.message : String(e)) + (pile === '' ? '' : ` | ${pile}`)
       // ── FATALE OU TRANSITOIRE : L'ETIQUETTE DU MOTEUR FAIT FOI.
       //
       // Tir n°6 : un 400 de facturation retente deux fois — un solde epuise
