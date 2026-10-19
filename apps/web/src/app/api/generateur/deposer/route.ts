@@ -9,6 +9,7 @@
  */
 import { NextResponse } from 'next/server'
 import { requireAuthenticatedUser } from '@/lib/auth/require-authenticated-user'
+import { refusSiPasAir } from '@/lib/apps/interrupteur-moteur'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { creerTravailleur, type BaseGeneration, type MoteurContinuation } from '@/lib/apps/travailleur'
 import { TABLE_GENERATIONS } from '@/lib/apps/journal'
@@ -26,6 +27,19 @@ const sentinelle: MoteurContinuation = {
 export async function POST(req: Request) {
   const garde = await requireAuthenticatedUser(req)
   if (!garde.ok) return garde.response
+
+  // ── L'INTERRUPTEUR FERME LES DEUX CÔTÉS, OU IL NE FERME RIEN.
+  //
+  // Cette route DÉPENSE : elle lance ou relance une émission AIR, mesurée à
+  // 8,46 $. Tant qu'une autre architecture est à l'essai, elle doit refuser —
+  // sinon un bouton resté à l'écran suffit à payer le moteur qu'on a éteint.
+  const refus = refusSiPasAir()
+  if (refus !== null) {
+    return NextResponse.json(
+      { error: refus.raison },
+      { status: 409, headers: { 'Cache-Control': 'no-store' } },
+    )
+  }
 
   const corps = (await req.json().catch(() => null)) as {
     demande?: unknown

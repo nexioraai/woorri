@@ -56,7 +56,23 @@ import {
 // ETAGE 4 — le drapeau : OFF (defaut), l'UX synchrone ci-dessous reste SEULE
 // au monde ; le chemin async n'existe qu'arme consciemment. L'ecran ne fait
 // que du polling de statut — il ne genere RIEN par lui-meme.
-const ASYNC = modeAsyncActif(process.env.NEXT_PUBLIC_GENERATION_ASYNC);
+// ── LE SUIVI ASYNCHRONE APPARTIENT À L'ANCIEN MOTEUR, ET À LUI SEUL.
+//
+// DÉFAUT MESURÉ LE 2026-10-19. L'interrupteur n'était consulté qu'à UN
+// endroit : l'envoi d'une demande. Au chargement, l'écran restaurait la
+// dernière génération AIR — arrêtée depuis — et affichait son panneau de
+// suivi, avec dessus un bouton « Relancer la génération ».
+//
+// Ce bouton appelle `travailleur.relancer(...)`. Coût mesuré d'une émission
+// AIR complète : 8,46 $. Il est resté joignable pendant tout l'essai de
+// l'autre architecture, contre la règle posée par le propriétaire.
+//
+// Le moteur direct ne produit AUCUNE génération asynchrone : il répond dans
+// sa propre requête. Il n'y a donc rien à suivre, rien à restaurer, et
+// aucune raison d'offrir de quoi relancer l'autre moteur.
+const ASYNC =
+  moteurChoisi(process.env.NEXT_PUBLIC_GENERATEUR_MOTEUR) === 'air' &&
+  modeAsyncActif(process.env.NEXT_PUBLIC_GENERATION_ASYNC);
 
 /**
  * QUEL MOTEUR CET ÉCRAN SERT (EP-276).

@@ -12,6 +12,7 @@
 import { NextResponse } from 'next/server'
 import { compileWeb } from '@deribfy/compiler'
 import { requireAuthenticatedUser } from '@/lib/auth/require-authenticated-user'
+import { refusSiPasAir } from '@/lib/apps/interrupteur-moteur'
 import { documentPour, documentFourni } from '@/lib/apps/pour'
 import { premiereIntention } from '@/lib/apps/dialogue'
 import { zipper } from '@/lib/apps/zip'
@@ -22,6 +23,19 @@ export const maxDuration = 300
 export async function POST(req: Request) {
   const garde = await requireAuthenticatedUser(req)
   if (!garde.ok) return garde.response
+
+  // ── L'INTERRUPTEUR FERME LES DEUX CÔTÉS, OU IL NE FERME RIEN.
+  //
+  // Cette route DÉPENSE : elle lance ou relance une émission AIR, mesurée à
+  // 8,46 $. Tant qu'une autre architecture est à l'essai, elle doit refuser —
+  // sinon un bouton resté à l'écran suffit à payer le moteur qu'on a éteint.
+  const refus = refusSiPasAir()
+  if (refus !== null) {
+    return NextResponse.json(
+      { error: refus.raison },
+      { status: 409, headers: { 'Cache-Control': 'no-store' } },
+    )
+  }
 
   const corps = (await req.json().catch(() => null)) as { demande?: unknown } | null
   const demande = typeof corps?.demande === 'string' ? corps.demande.trim() : ''

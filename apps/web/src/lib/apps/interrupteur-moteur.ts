@@ -55,3 +55,41 @@ export function direLeMoteur(m: Moteur): string {
     ? 'Écriture directe — version à l’essai'
     : 'Construction par document — version habituelle'
 }
+
+/**
+ * LE REFUS SYMÉTRIQUE — la porte de l'ANCIEN moteur, quand le nouveau sert.
+ *
+ * ── LE DÉFAUT, MESURÉ LE 2026-10-19.
+ *
+ * Le propriétaire avait posé la règle le 2026-10-18 : « il faut que un soit
+ * accessible depuis interface le temps tester ; ce qui est accessible,
+ * l'autre ne doit pas être accessible en même temps ».
+ *
+ * J'ai fermé LA PORTE D'ENTRÉE : la route d'écriture directe refuse si
+ * l'interrupteur n'est pas sur `direct`. Je n'ai pas fermé les PORTES DE
+ * SERVICE. Cinq routes de l'ancien moteur ne consultaient pas l'interrupteur,
+ * et l'écran affichait toujours son panneau de suivi avec, dessus, un bouton
+ * « Relancer la génération ».
+ *
+ * Ce bouton appelle `travailleur.relancer(...)`. Coût mesuré d'une émission
+ * AIR complète : 8,46 $.
+ *
+ * C'est le défaut de la veille, à l'identique : boucher un chemin et déclarer
+ * la chose close. Un interrupteur qui ne ferme qu'un côté n'est pas un
+ * interrupteur — c'est une préférence.
+ *
+ * ── CE QUE CETTE FONCTION NE FAIT PAS.
+ *
+ * Elle ne touche PAS au cron. Celui-ci ne DÉMARRE rien : il fait avancer une
+ * émission déjà en cours. Le bloquer abandonnerait un travail en vol, alors
+ * que le but est d'empêcher d'en LANCER un nouveau.
+ */
+export function refusSiPasAir(): { readonly raison: string } | null {
+  if (moteurChoisi(process.env.GENERATEUR_MOTEUR) === 'air') return null
+  return {
+    raison:
+      'Cette version du générateur n’est pas active. ' +
+      'Une autre architecture est en cours d’essai, et deux moteurs joignables ' +
+      'en même temps rendraient tout résultat inattribuable.',
+  }
+}
