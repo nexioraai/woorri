@@ -9,6 +9,7 @@
  * donc prouvees a 0 $. La garantie de depense reste `tournerUneTranche`
  * (GO_EMISSION_IA verifie AVANT tout, preuve par comptage existante).
  */
+import { CONFIGS, fournisseurChoisi } from './fournisseur'
 import type { RapportTranche } from './travailleur'
 
 export type IssueRonde = { desarme: boolean; rapports: readonly RapportTranche[] }
@@ -27,7 +28,7 @@ export function prochaineAttenteMs(r: IssueRonde): number {
  *  NOMMANT (fail-closed, jamais un crash-loop muet). GO_EMISSION_IA n'en
  *  fait pas partie : absent = desarme, c'est l'etat de livraison. */
 export function secretsManquants(env: Record<string, string | undefined>): string[] {
-  return ['NEXT_PUBLIC_SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', 'ANTHROPIC_API_KEY'].filter(
+  return ['NEXT_PUBLIC_SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY', CONFIGS[fournisseurChoisi(process.env.GENERATEUR_FOURNISSEUR)].variableCle].filter(
     (n) => env[n] === undefined || env[n] === '',
   )
 }

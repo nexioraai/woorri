@@ -16,12 +16,12 @@
 // contrat). Écart compté à la veille EP-037.
 export const CONFIG = {
   fournisseur: "deepseek",
-  model: "deepseek-chat",
+  model: "deepseek-v4-pro",
   baseURL: "https://api.deepseek.com",
   cheminCle: ["apps", "web", ".env.local"],
   motifCle: /^DEEPSEEK_API_KEY=("?)([^"\n]+)\1$/m,
   // Tarifs PARAMÈTRES (à confirmer au GO du tirage — consignés alors).
-  prixParMtok: { entree: 0.27, ecritureCache: 0, lectureCache: 0.07, sortie: 1.1 },
+  prixParMtok: { entree: 0.66, ecritureCache: 0, lectureCache: 0.07, sortie: 1.98 },
 };
 
 /** DÉCLARÉES, PAS MESURÉES : aucune contrainte de schéma n'est imposée au
@@ -86,7 +86,9 @@ export function construireAppel(requete, reglages) {
     // est bornée à 8192 tokens — un max_tokens supérieur est un 400. Le
     // clamp est un écart d'adaptateur ; une sortie tronquée reste signalée
     // par le signal neutre (tronquee) et traitée fail-closed en aval.
-    max_tokens: Math.min(reglages.max_tokens, 8192),
+    // CORRIGE 2026-10-19 : plafond reel mesure contre l'API = 393216.
+    // 65536 retenu (≈3 min a 350 jetons/s) — la route est synchrone.
+    max_tokens: Math.min(reglages.max_tokens, 65_536),
     messages: [
       {
         role: "system",

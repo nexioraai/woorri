@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server';
 import { sansQuota } from '@/lib/admin-emails';
 import { isKnownDropshipSubtype, requiresDropshipSubtype } from '@/lib/dropship/subtypeAdmission';
-import Anthropic from '@anthropic-ai/sdk';
+import { clientIA, MODELE_LEGER } from '@/lib/ia/client';
 import { supabase as supabaseAnon } from '@/lib/supabase';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+// LE FOURNISSEUR N'EST PLUS EN DUR : il vit dans `lib/ia/client`.
+const anthropic = clientIA();
 
 const MAX_TURNS = 12;
 
@@ -157,7 +158,7 @@ export async function POST(req: Request) {
 
 
     const interview = await anthropic.messages.create({
-      model: 'claude-haiku-4-5-20251001',
+      model: MODELE_LEGER,
       max_tokens: 600,
       system: SYSTEM,
       messages: [

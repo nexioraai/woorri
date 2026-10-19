@@ -77,6 +77,11 @@ export type Config = {
   /** Tarifs par million de jetons, tels que le dépôt les déclare déjà. */
   readonly prix: { readonly entree: number; readonly sortie: number }
   readonly variableCle: string
+  /** Base REST du dialecte. Anthropic passe par son SDK : sans objet. */
+  readonly baseURL?: string
+  /** Modele LEGER : conversations, questions, taches courtes. Le gros
+   *  modele ecrit des applications ; il n'a rien a faire dans un dialogue. */
+  readonly modeleLeger: string
 }
 
 export const CONFIGS: Readonly<Record<Fournisseur, Config>> = {
@@ -87,6 +92,8 @@ export const CONFIGS: Readonly<Record<Fournisseur, Config>> = {
     maxJetons: 32_000,
     prix: { entree: 5, sortie: 25 },
     variableCle: 'ANTHROPIC_API_KEY',
+    baseURL: undefined,
+    modeleLeger: 'claude-haiku-4-5-20251001',
   },
   deepseek: {
     // ARBITRAGE DU PROPRIÉTAIRE, 2026-10-19 : le plus capable des deux.
@@ -109,6 +116,8 @@ export const CONFIGS: Readonly<Record<Fournisseur, Config>> = {
     // Tarifs deepseek-v4-pro, relevés à la documentation le 2026-10-19.
     prix: { entree: 0.66, sortie: 1.98 },
     variableCle: 'DEEPSEEK_API_KEY',
+    baseURL: 'https://api.deepseek.com',
+    modeleLeger: 'deepseek-flash',
   },
 }
 

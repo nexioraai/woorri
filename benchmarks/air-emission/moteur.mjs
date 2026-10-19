@@ -219,7 +219,11 @@ const surfaceEnveloppe = () => {
   let echeanceTranche = null;
   const client =
     clientFourni ??
-    (await adaptateur.creerClient(() => `ANTHROPIC_API_KEY=${cleApi}`, {
+    // CORRIGE 2026-10-19 : le NOM de la variable suit l'adaptateur charge.
+    // En dur, `ANTHROPIC_API_KEY=` ne pouvait jamais satisfaire le motif
+    // de DeepSeek — la cle etait invisible meme adaptateur bascule.
+    (await adaptateur.creerClient(
+      () => `${adaptateur.CONFIG.motifCle.source.includes("DEEPSEEK") ? "DEEPSEEK_API_KEY" : "ANTHROPIC_API_KEY"}=${cleApi}`, {
       // DEUX NIVEAUX, ET UN SEUL APPEL DE PLUS — le defaut de ma premiere
       // version (mesure du 2026-10-15, tir de 17:26) : `echeanceTranche`
       // EST une fonction, et rendre la fonction elle-meme donnait a

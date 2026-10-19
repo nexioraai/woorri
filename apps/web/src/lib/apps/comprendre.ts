@@ -59,6 +59,7 @@
 // fonction pour la campagne en ligne de commande ; elle n'est juste plus le
 // chemin du serveur.
 import Anthropic from '@anthropic-ai/sdk'
+import { CONFIGS, fournisseurChoisi } from './fournisseur'
 
 /** Les faits que P0 tire d'une demande. Forme du contrat `modele-metier`. */
 export type ModeleMetier = {
@@ -161,8 +162,9 @@ export async function comprendre(demande: string): Promise<Comprehension> {
         meta: unknown,
       ) => { ok: boolean; diagnostics?: { code?: string; path?: string; message?: string }[] }
     }
+    const f = fournisseurChoisi(process.env.GENERATEUR_FOURNISSEUR)
     const adaptateur = (await import(
-      /* webpackIgnore: true */ `${base}/benchmarks/air-emission/adaptateur-anthropic.mjs`
+      /* webpackIgnore: true */ `${base}/benchmarks/air-emission/adaptateur-${f}.mjs`
     )) as {
       degraderGrammaire: (g: unknown) => { grammaire: unknown; ecarts: string[] }
       construireAppel: (r: unknown, g: unknown) => unknown
@@ -194,9 +196,8 @@ export async function comprendre(demande: string): Promise<Comprehension> {
     // `apps/web/.env.local`. Ce fichier n'est PAS déployé — il est ignoré par
     // git, et c'est très bien ainsi. Sur le serveur, la clé vit dans
     // `process.env`.
-    const cle = process.env.ANTHROPIC_API_KEY ?? ''
-    if (cle === '') return { ok: false, raison: 'Clé Anthropic absente du serveur.' }
-    const client = new Anthropic({ apiKey: cle })
+    const cle = process.env[CONFIGS[f].variableCle] ?? ''
+    if (cle === '') return { ok: false, raison: `Clé ${CONFIGS[f].variableCle} absente du serveur.` }
     // L'ADAPTATEUR POSSEDE LA FORME DU DIALECTE, y compris `output_config`,
     // que la surface typee du SDK ne declare pas. Le cast dit cette frontiere
     // au lieu de la masquer : c'est l'adaptateur qui sait, pas le type.
@@ -219,9 +220,28 @@ export async function comprendre(demande: string): Promise<Comprehension> {
     // `finalMessage()` rend exactement la forme qu'attend `lireReponse` —
     // `content`, `stop_reason`, `usage`. L'adaptateur ne change pas d'une
     // ligne, et le signal de troncature continue d'arriver.
-    const reponse = (await client.messages
-      .stream(appel as Parameters<typeof client.messages.stream>[0])
-      .finalMessage()) as { usage?: unknown }
+    // ── DEUX DIALECTES, DEUX MODES D'APPEL.
+    //
+    // DeepSeek est du REST pur : `fetch` suffit, aucun SDK n'est importe,
+    // donc le defaut `webpackIgnore`/paquet-introuvable ne s'applique pas.
+    // Anthropic EXIGE le flux des que `max_tokens` depasse ~21 333.
+    let reponse: { usage?: unknown }
+    if (f === 'deepseek') {
+      const r = await fetch(`${CONFIGS[f].baseURL ?? 'https://api.deepseek.com'}/chat/completions`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${cle}`, 'content-type': 'application/json' },
+        body: JSON.stringify(appel),
+      })
+      if (!r.ok) {
+        return { ok: false, raison: `Fournisseur ${String(r.status)} : ${(await r.text()).slice(0, 200)}` }
+      }
+      reponse = (await r.json()) as { usage?: unknown }
+    } else {
+      const client = new Anthropic({ apiKey: cle })
+      reponse = (await client.messages
+        .stream(appel as Parameters<typeof client.messages.stream>[0])
+        .finalMessage()) as { usage?: unknown }
+    }
     const { texte, tronquee, refusee } = adaptateur.lireReponse(reponse)
 
     const usage = adaptateur.lireUsage(reponse.usage) as { entree?: number; sortie?: number }

@@ -79,6 +79,7 @@ import { direQuelTirCommence, sdkJournalise } from './journal-appels'
 // lus.
 import Anthropic from '@anthropic-ai/sdk'
 import { racineDepot } from './racine'
+import { CONFIGS, fournisseurChoisi } from './fournisseur'
 import type { MoteurContinuation } from './travailleur'
 
 export type Emission = {
@@ -248,11 +249,12 @@ async function moteurDuSite(cle: string) {
 }
 
 export async function emettreApplication(brief: string, slug: string): Promise<Emission> {
-  const cle = process.env.ANTHROPIC_API_KEY ?? ''
+  const f = fournisseurChoisi(process.env.GENERATEUR_FOURNISSEUR)
+  const cle = process.env[CONFIGS[f].variableCle] ?? ''
   if (cle === '') {
     return {
       ok: false,
-      raison: 'Clé Anthropic absente du serveur.',
+      raison: `Clé ${CONFIGS[f].variableCle} absente du serveur.`,
       diagnostics: [],
       tirages: [],
       coutUsd: 0,
@@ -270,9 +272,10 @@ export async function emettreApplication(brief: string, slug: string): Promise<E
  * DISANT au lieu de retenter un mur.
  */
 export const poursuivreEmissionDuSite: MoteurContinuation['poursuivreEmission'] = async (o) => {
-  const cle = process.env.ANTHROPIC_API_KEY ?? ''
+  const f = fournisseurChoisi(process.env.GENERATEUR_FOURNISSEUR)
+  const cle = process.env[CONFIGS[f].variableCle] ?? ''
   if (cle === '') {
-    throw Object.assign(new Error('ANTHROPIC_API_KEY absente du serveur'), { transitoire: false })
+    throw Object.assign(new Error(`${CONFIGS[f].variableCle} absente du serveur`), { transitoire: false })
   }
   const m = await moteurDuSite(cle)
   // Le journal des appels n'a que le slug pour recoudre ses lignes au tir :

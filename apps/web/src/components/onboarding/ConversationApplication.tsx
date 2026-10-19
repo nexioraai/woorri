@@ -569,10 +569,44 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
   ) => {
     setEnCours(true);
     try {
+      // ── LIRE AVANT DE DEMANDER (2026-10-19).
+      //
+      // DEFAUT MESURE : un cahier des charges de douze pages joint, et la
+      // premiere question posee etait « Que fait votre application avec
+      // l'argent ? » — ecrit page 7. `configurationADemander` ne recoit QUE
+      // les reponses : le brief ne lui parvient jamais.
+      //
+      // CE N'EST PAS LA DEVINETTE QU'EP-255 B INTERDIT. Deduire « France »
+      // de la langue francaise est une devinette ; lire « Tchad » ecrit en
+      // toutes lettres n'en est pas une. La route filtre sa propre sortie
+      // contre la table : le modele ne peut que la remplir, jamais l'elargir.
+      //
+      // UNE SEULE FOIS, AU PREMIER TOUR : ensuite les reponses humaines
+      // existent, et elles priment — la fusion les met en dernier.
+      let lues = reponses;
+      if (Object.keys(reponses).length === 0) {
+        try {
+          const rl = await fetch('/api/generateur/lire-brief', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${await jeton()}` },
+            body: JSON.stringify({ demande }),
+          });
+          const dl = (await rl.json().catch(() => ({}))) as {
+            deduites?: Record<string, unknown>;
+          };
+          const deduites = dl.deduites ?? {};
+          if (Object.keys(deduites).length > 0) {
+            lues = { ...deduites, ...reponses };
+            setReponsesAvant(lues);
+          }
+        } catch {
+          // UNE LECTURE RATEE NE BLOQUE RIEN : on pose les questions comme avant.
+        }
+      }
       const res = await fetch('/api/generateur/avant', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${await jeton()}` },
-        body: JSON.stringify({ reponses }),
+        body: JSON.stringify({ reponses: lues }),
       });
       const d = (await res.json().catch(() => ({}))) as {
         questions?: QuestionAvant[];
@@ -600,7 +634,7 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
         return;
       }
       // ── PLUS AUCUNE QUESTION DE CONFIGURATION : L'ECHAPPATOIRE, UNE FOIS.
-      if (reponses[AUTRE_CHOSE] === undefined) {
+      if (lues[AUTRE_CHOSE] === undefined) {
         const q: QuestionAvant = {
           code: AUTRE_CHOSE,
           structure: 'brief',
