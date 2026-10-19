@@ -6,7 +6,12 @@ import { supabase as supabaseAnon } from '@/lib/supabase';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 
 // LE FOURNISSEUR N'EST PLUS EN DUR : il vit dans `lib/ia/client`.
-const anthropic = clientIA();
+//
+// ET LE CLIENT NAIT DANS LE HANDLER, PAS A L'IMPORT. J'avais ecrit
+// `const anthropic = clientIA()` au niveau module : `clientIA` JETTE quand
+// la cle manque, donc importer ce fichier suffisait a le casser — le test
+// l'a dit avant la production. C'est la regle que `moteur.mjs` enonce deja :
+// « aucun client n'est construit a l'import ».
 
 const MAX_TURNS = 12;
 
@@ -157,7 +162,7 @@ export async function POST(req: Request) {
     }
 
 
-    const interview = await anthropic.messages.create({
+    const interview = await clientIA().messages.create({
       model: MODELE_LEGER,
       max_tokens: 600,
       system: SYSTEM,

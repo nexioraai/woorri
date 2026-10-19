@@ -74,6 +74,11 @@ function req(body: Record<string, unknown>) {
 
 beforeEach(() => {
   fromMock.mockReset();
+  // LE CLIENT EXIGE UNE CLE DEPUIS EP-282 : `clientIA` jette sans elle, et
+  // c'est voulu — un appel sans cle est une panne, pas un cas a simuler.
+  // Le SDK reste mocke : rien ne part sur le reseau, cette valeur n'est
+  // qu'un laissez-passer pour franchir la garde.
+  process.env.ANTHROPIC_API_KEY = 'sk-test-onboarding';
   messagesCreateMock.mockReset();
   getUserMock.mockReset();
   getUserMock.mockResolvedValue({ data: { user: { id: 'u1', email: 'm@test.com' } }, error: null });
