@@ -44,6 +44,7 @@ import {
   LONGUEUR_AVEC_DOCUMENT,
   MESSAGE_SCAN,
 } from '@/lib/apps/document-joint';
+import { lireReponseQuiBat } from '@/lib/apps/flux-lignes';
 import {
   DELAI_MAX_MS,
   MESSAGE_ILLISIBLE,
@@ -802,10 +803,19 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
           body: JSON.stringify({ demande: texte }),
           signal: avorteur.signal,
         });
-        const d = (await res.json().catch(() => ({}))) as {
-          ok?: boolean; html?: string; motif?: string; error?: string;
-          tours?: unknown[]; dureeMs?: number;
-        };
+        // ── ON LIT UN FLUX QUI BAT, PAS UN JSON D'UN BLOC.
+        //
+        // MESURÉ EN PRODUCTION LE 2026-10-19 : la route a travaillé
+        // 255 secondes, abouti, et écrit sa ligne — pendant que cet écran
+        // affichait déjà « Lecture impossible ». La connexion, restée sans
+        // un octet plus de quatre minutes, avait été fermée par une couche
+        // intermédiaire. La route émet désormais un battement ; `res.json()`
+        // s'étranglerait sur ces lignes vides.
+        const d =
+          (await lireReponseQuiBat<{
+            ok?: boolean; html?: string; motif?: string; error?: string;
+            tours?: unknown[]; dureeMs?: number;
+          }>(res).catch(() => null)) ?? {};
         if (!res.ok || d.ok !== true || typeof d.html !== 'string') {
           rendreLaMain(texte, noteAvant);
           setAvis(String(d.error ?? d.motif ?? MESSAGE_ILLISIBLE));

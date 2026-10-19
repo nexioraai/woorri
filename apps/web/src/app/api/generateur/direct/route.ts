@@ -104,13 +104,73 @@ export async function POST(req: Request) {
     return { texte: r.texte, tronquee: r.tronquee }
   }
 
+  // L'IDENTITÉ EST CAPTURÉE ICI, hors du flux : à l'intérieur, TypeScript ne
+  // sait plus que le garde a répondu `ok` et refuserait de lire `userId`.
+  const proprietaire = garde.userId
+
+  // ── TOUT CE QUI SUIT PART EN FLUX, ET CE N'EST PAS UN CONFORT.
+  //
+  // DÉFAUT MESURÉ EN PRODUCTION LE 2026-10-19. La fonction a travaillé
+  // 255 secondes, abouti, et écrit sa ligne. L'écran, lui, avait déjà
+  // renoncé : « Lecture impossible ». Le filet du navigateur est à
+  // 45 minutes — ce n'est donc pas lui. C'est la connexion, restée SANS UN
+  // SEUL OCTET pendant plus de quatre minutes, qu'une couche intermédiaire
+  // a fermée.
+  //
+  // La documentation de l'hébergeur le dit mot pour mot : « HTTP/1.1 clients
+  // and intermediate network layers may still close idle connections. For
+  // those cases, stream progress or heartbeat data while work is running. »
+  //
+  // On émet donc un octet toutes les dix secondes. La réponse devient un
+  // flux de lignes : des lignes vides pendant le travail, et UNE SEULE ligne
+  // JSON à la fin. Un lecteur qui prend la dernière ligne non vide lit aussi
+  // bien ce flux qu'une réponse ordinaire — c'est ce qui permet aux refus
+  // rapides ci-dessus de rester du JSON simple.
+  const encodeur = new TextEncoder()
+  const flux = new ReadableStream<Uint8Array>({
+    async start(bouche) {
+      const battement = setInterval(() => {
+        try {
+          bouche.enqueue(encodeur.encode('\n'))
+        } catch {
+          // Le lecteur est parti : le travail continue, la ligne sera écrite.
+        }
+      }, 10_000)
+      try {
+        const fin = await travailler()
+        bouche.enqueue(encodeur.encode(JSON.stringify(fin)))
+      } catch (e: unknown) {
+        const message = e instanceof Error ? e.message : String(e)
+        bouche.enqueue(
+          encodeur.encode(JSON.stringify({ ok: false, error: message.slice(0, 200) })),
+        )
+      } finally {
+        clearInterval(battement)
+        bouche.close()
+      }
+    },
+  })
+
+  return new Response(flux, {
+    headers: {
+      'Content-Type': 'application/x-ndjson; charset=utf-8',
+      'Cache-Control': 'no-store',
+      // SANS CECI, UN PROXY PEUT TOUT GARDER EN TAMPON et ne rien relâcher
+      // avant la fin — ce qui annulerait exactement le battement qu'on vient
+      // de poser.
+      'X-Accel-Buffering': 'no',
+    },
+  })
+
+  /** Le travail lui-même, inchangé — il rend l'objet que le flux publiera. */
+  async function travailler() {
   const debut = Date.now()
   let resultat
   try {
     resultat = await boucleEcriture({ demande, appeler })
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : String(e)
-    return NextResponse.json({ error: message.slice(0, 200) }, { status: 502 })
+    return { ok: false as const, error: message.slice(0, 200) }
   }
   const dureeMs = Date.now() - debut
   const coutUsd = (entree * config.prix.entree + sortie * config.prix.sortie) / 1e6
@@ -128,7 +188,7 @@ export async function POST(req: Request) {
     // `ownerIdentityRatchets` tient la liste EXACTE des routes qui le portent
     // encore, pour qu'aucune nouvelle ne s'y ajoute en silence. Celle-ci
     // n'avait aucune raison d'y entrer.
-    owner_id: garde.userId,
+    owner_id: proprietaire,
     demande,
     moteur: 'direct',
     // QUEL FOURNISSEUR a écrit, pour que la comparaison reste lisible.
@@ -177,22 +237,17 @@ export async function POST(req: Request) {
     const phrase =
       `${resultat.motif} Le code produit ne s'est pas assemblé ` +
       `(${String(resultat.tours.length)} essai(s), ${String(Math.round(dureeMs / 1000))} s).`
-    return NextResponse.json(
-      { ok: false, error: phrase, motif: phrase, tours: resultat.tours, coutUsd, dureeMs },
-      { status: 200, headers: { 'Cache-Control': 'no-store' } },
-    )
+    return { ok: false as const, error: phrase, motif: phrase, tours: resultat.tours, coutUsd, dureeMs }
   }
 
-  return NextResponse.json(
-    {
-      ok: true,
-      id: ecrit.data?.id ?? null,
-      html: pageAutonome(resultat.code, 'Votre application'),
-      fichiers: resultat.fichiers.size,
-      tours: resultat.tours,
-      coutUsd,
-      dureeMs,
-    },
-    { headers: { 'Cache-Control': 'no-store' } },
-  )
+  return {
+    ok: true as const,
+    id: ecrit.data?.id ?? null,
+    html: pageAutonome(resultat.code, 'Votre application'),
+    fichiers: resultat.fichiers.size,
+    tours: resultat.tours,
+    coutUsd,
+    dureeMs,
+  }
+  }
 }

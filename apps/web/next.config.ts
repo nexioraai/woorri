@@ -207,6 +207,23 @@ const nextConfig: NextConfig = {
       // local elle n'est pas installée, et c'est normal.
       '../../node_modules/@rolldown/binding-linux-x64-gnu/**',
     ],
+    // ── LA ROUTE DE L'ÉCRITURE DIRECTE, ET C'EST LA QUATRIÈME FOIS.
+    //
+    // MESURÉ EN PRODUCTION, 2026-10-19, sur le tir du propriétaire :
+    //   « Failed to load external module rolldown : Cannot find native
+    //     binding »
+    // Trois tours, 0,11 $, et le compilateur n'a jamais lu une ligne du code
+    // produit. Les trois échecs ne disaient rien du modèle : ils disaient que
+    // MON bac à sable n'était pas dans la fonction.
+    //
+    // Ce bloc raconte déjà trois fois la même histoire — passe0, le SDK
+    // Anthropic, le cron. Celle-ci est la quatrième, et elle est pire : la
+    // solution était ÉCRITE JUSTE AU-DESSUS, pour quatre routes, et j'ai
+    // ajouté une cinquième route sans l'y inscrire.
+    //
+    // Cette route n'a PAS besoin de `MOTEUR_EMISSION` : elle ne touche pas
+    // la chaîne AIR. Elle n'a besoin que de l'assembleur.
+    '/api/generateur/direct': ['../../node_modules/@rolldown/binding-linux-x64-gnu/**'],
     '/api/generateur/comprendre': MOTEUR_EMISSION,
     // ── LE DEPOT CHARGE LE MOTEUR, LUI AUSSI, DEPUIS LE 2026-10-11.
     //
@@ -245,6 +262,22 @@ const nextConfig: NextConfig = {
     // `poursuivreEmissionDuSite`, qui charge `moteur.mjs`, lequel tire tout
     // `benchmarks/air-emission/`.
     '/api/cron/generations': MOTEUR_EMISSION,
+    // ── LE LIEN PUBLIC, TROUVÉ PAR LE CLIQUET LE JOUR OÙ IL EST NÉ.
+    //
+    // Cette route sert l'application publiée à qui reçoit le lien. Elle
+    // appelle `construireApercu`, donc `rolldown`, donc la liaison native —
+    // et elle n'était PAS dans cette liste.
+    //
+    // Elle n'a jamais été exercée en ligne : la fonctionnalité « Publier »
+    // date du 2026-10-18 et le propriétaire n'a encore aucune application
+    // livrée à publier. Le défaut attendait donc le premier partage, c'est-
+    // à-dire le pire moment — devant quelqu'un d'autre que lui.
+    //
+    // Je ne l'ai pas vue en relisant. Le contrôle EP-278 l'a vue à sa
+    // première exécution, et c'est précisément pourquoi il existe : je
+    // viens de prouver, deux fois en deux jours, que je ne suis pas un
+    // mécanisme de complétude fiable.
+    '/p/[jeton]': ['../../node_modules/@rolldown/binding-linux-x64-gnu/**'],
     '/api/cron/photos-pro': [
       './public/modeles/u2netp.onnx',
       '../../node_modules/onnxruntime-web/dist/*.wasm',
