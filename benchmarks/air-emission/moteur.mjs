@@ -1115,7 +1115,21 @@ const surfaceEnveloppe = () => {
       }
       return bouchees;
     };
-    const PLAFOND_TOURS = 3; // convergence : tours ACHEVES
+    // ── 6, ET C'EST LE PRIX QUI LE DECIDE — MESURE LE 2026-10-19.
+    //
+    // 3 fut calibre quand un tour coutait ~2,80 $ : un quatrieme tour pesait
+    // plus que l'application. Premier tir complet sur DeepSeek : 0,2912 $ les
+    // TROIS tours, soit ~0,10 $ le tour. Vingt-neuf fois moins que les 8,46 $
+    // d'une emission Anthropic.
+    //
+    // A ce prix, le filet protege contre une depense qui n'existe plus. Six
+    // tours valent 0,60 $ au pire — quatorze fois moins qu'UN tir d'avant. Ce
+    // que le filet borne encore, et qui reste vrai : une boucle qui ne
+    // converge pas doit s'arreter. Elle s'arrete juste plus tard.
+    //
+    // Si la divergence persiste a 6, le defaut n'est pas la : il est dans le
+    // schema non impose au decodage (EP-082), et c'est LA qu'il faudra aller.
+    const PLAFOND_TOURS = 6; // convergence : tours ACHEVES
     // LE FILET ANTI-BOUCLE, DISTINCT (arbitrage du 2026-10-09). Les
     // tentatives comptent les LANCEMENTS, suspensions comprises — or un tour
     // reel traverse plusieurs tranches (mesure : un tour sur 80 diagnostics
@@ -1123,7 +1137,7 @@ const surfaceEnveloppe = () => {
     // etranglait la boucle : 2 des 3 tentatives brulees par le MEME tour 1.
     // Neuf lancements pour trois tours acheves : marge 3x — et une boucle
     // dont les tours n'achevent jamais s'arrete toujours.
-    const FILET_TENTATIVES = 9;
+    const FILET_TENTATIVES = 18; // meme marge 3x que pour 3 tours
     let raisonRefus = null;
     while ((air === null || diagnostics.length > 0) && raisonRefus === null) {
       // LE PLAFOND NE COMPTE QUE LES TOURS SANS REVELATION (arbitrage du
