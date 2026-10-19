@@ -200,6 +200,75 @@ export async function boucleEcriture(o: {
 }
 
 /**
+ * LE PRÉLUDE — ce que la page doit à l'application avant qu'elle démarre.
+ *
+ * ── CE QU'IL RÉPARE, MESURÉ LE 2026-10-19.
+ *
+ * Première application livrée du projet. Elle compile, elle pèse 63 695
+ * caractères, et l'écran est resté BLANC.
+ *
+ *     SecurityError: Failed to read the 'localStorage' property from
+ *     'Window': The document is sandboxed and lacks the 'allow-same-origin'
+ *     flag.
+ *         at commitHookEffectListMount
+ *
+ * Le cadre qui montre l'application porte `sandbox="allow-scripts"` SANS
+ * `allow-same-origin`, et c'est délibéré : sans cette restriction,
+ * l'application générée pourrait lire le site qui l'héberge. On ne touche
+ * donc pas au cadre.
+ *
+ * Mais dans une origine opaque, `localStorage` LÈVE à la simple lecture.
+ * L'application en faisait un usage parfaitement normal — un `useEffect` qui
+ * oublie un identifiant à la déconnexion. React a propagé, démonté, et laissé
+ * du blanc.
+ *
+ * ── ET CE N'EST PAS UN DÉFAUT DE CETTE APPLICATION-LÀ.
+ *
+ * TOUTE application qui garde des données ferait exactement ça. Demander au
+ * modèle d'entourer chaque accès d'un `try` serait traiter le symptôme :
+ * c'est la PAGE qui doit offrir une plateforme qui fonctionne, pas
+ * l'application qui doit deviner dans quel cadre on l'a mise.
+ *
+ * Deux gestes, donc, et ils ne coûtent qu'un millier de caractères :
+ *
+ *   ① UN STOCKAGE DE SECOURS, en mémoire, installé seulement si le vrai est
+ *      inaccessible. L'application fonctionne ; ses données vivent le temps
+ *      de la session. Dans un aperçu, c'est exactement ce qu'on veut.
+ *   ② UN FILET QUI AFFICHE. Une page blanche ne dit rien à personne — ni au
+ *      propriétaire, ni à moi. Il m'a fallu poser ce filet à la main pour
+ *      trouver ce défaut en deux minutes ; il reste désormais posé.
+ */
+const PRELUDE = `(function(){
+try{window.localStorage.getItem("_")}catch(e){
+var M={},S={};
+function faux(m){return{getItem:function(k){return k in m?m[k]:null},
+setItem:function(k,v){m[k]=String(v)},removeItem:function(k){delete m[k]},
+clear:function(){for(var k in m)delete m[k]},
+key:function(i){return Object.keys(m)[i]||null},
+get length(){return Object.keys(m).length}}}
+try{Object.defineProperty(window,"localStorage",{value:faux(M),configurable:true});
+Object.defineProperty(window,"sessionStorage",{value:faux(S),configurable:true})}catch(e2){}}
+function montrer(titre,detail){
+var p=document.createElement("div");
+p.setAttribute("data-deribfy-erreur","1");
+p.style.cssText="padding:18px;font:14px/1.5 system-ui,-apple-system,sans-serif;color:#7f1d1d;background:#fef2f2;border-bottom:2px solid #dc2626";
+var h=document.createElement("strong");h.textContent=titre;
+var d=document.createElement("details");d.style.marginTop="8px";
+var r=document.createElement("summary");r.textContent="Detail technique";r.style.cursor="pointer";
+var c=document.createElement("pre");
+c.style.cssText="white-space:pre-wrap;font:12px ui-monospace,monospace;margin:8px 0 0";
+c.textContent=detail;d.appendChild(r);d.appendChild(c);
+p.appendChild(h);p.appendChild(d);
+(document.body||document.documentElement).insertBefore(p,(document.body||document.documentElement).firstChild)}
+window.addEventListener("error",function(e){
+montrer("Cette application s'est arretee en cours d'execution.",
+String(e.message||"")+"\\n\\n"+String((e.error&&e.error.stack)||""))});
+window.addEventListener("unhandledrejection",function(e){
+montrer("Cette application s'est arretee en cours d'execution.",
+String((e.reason&&e.reason.stack)||e.reason))});
+})()`
+
+/**
  * LA PAGE — autonome, comme celle de l'aperçu.
  *
  * Elle ne demande rien à personne : ni police distante, ni script externe.
@@ -213,6 +282,9 @@ export function pageAutonome(code: string, titre: string): string {
     '<meta name="viewport" content="width=device-width, initial-scale=1" />',
     `<title>${sur}</title>`,
     '<style>*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,sans-serif}</style>',
+    // LE PRÉLUDE PART EN PREMIER, et en script ORDINAIRE : un module serait
+    // différé, donc installé APRÈS que l'application a déjà échoué.
+    `<script>${PRELUDE}</script>`,
     '</head><body><div id="racine"></div>',
     `<script type="module">${code}</script>`,
     '</body></html>',

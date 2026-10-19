@@ -63,6 +63,8 @@ const NAVIGATEUR =
 const DEROGATIONS: Record<string, string> = {
   'src/lib/shop/buyerNonce.ts':
     "identifiant d'acheteur cote client, volontairement stocke dans le navigateur. Le SERVEUR ne le lit jamais depuis le stockage : `shop/checkout` le recoit comme PARAMETRE OPAQUE et le compose avec son propre etat commercial (checkoutSignature.ts). Un client natif fournirait son propre identifiant stable par appareil sans qu'une ligne de serveur change — la dependance est cote emetteur, pas cote contrat.",
+  'src/lib/apps/boucle-directe.ts':
+    "page HTML EMISE pour une application generee, jamais executee ici. Les douze occurrences (`window.addEventListener`, `document.createElement`, `localStorage`) vivent TOUTES a l'interieur de la constante `PRELUDE`, une chaine que `pageAutonome` colle dans un document destine a un navigateur. Ce module n'APPELLE aucune de ces APIs : un client natif qui invoque `pageAutonome()` recoit une chaine et ne touche rien — la dependance est cote emetteur, pas cote contrat. ET LA DEROGATION EST BORNEE : le controle EP-280 ⑥ verifie que ces jetons n'apparaissent QUE dans `PRELUDE`, de sorte qu'un vrai `localStorage` pose un jour ailleurs dans ce fichier ferait rougir malgre cette ligne.",
   'src/lib/translations/index.tsx':
     "detection de langue et persistance du choix, purement presentationnelles. Aucune regle metier n'en depend : `mode`, sous-type, admission, prix et checkout sont tous decides sans consulter ce module.",
 }
