@@ -88,6 +88,9 @@ const requete = (texte: string) =>
   })
 
 beforeEach(() => {
+  // LE CLIENT EXIGE UNE CLE : `clientIA` jette sans elle. Le SDK reste
+  // mocke — rien ne part sur le reseau ; c'est un laissez-passer.
+  process.env.ANTHROPIC_API_KEY = 'sk-test';
   getUserMock.mockResolvedValue({ data: { user: { id: 'u-1', email: 'a@b.c' } }, error: null })
 })
 
