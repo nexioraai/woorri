@@ -159,14 +159,56 @@ export async function creerClient(lireFichier, options = {}) {
   if (!m) throw new Error("ADAPTATEUR_CLE_INTROUVABLE");
   const cle = m[2].trim();
   const base = options.baseURL ?? CONFIG.baseURL;
+  // ── L'ECHEANCE DE LA TRANCHE, HONOREE ICI AUSSI (2026-10-19).
+  //
+  // L'adaptateur anthropic l'a apprise le 2026-10-15, et son commentaire
+  // decrit EXACTEMENT ce qu'on a mesure aujourd'hui : « le chien de garde
+  // confie la ligne a un autre travailleur 15 minutes plus tard, qui refait
+  // exactement la meme chose. Boucle sans fin. »
+  //
+  // MESURE, ligne bac4579f : 187 defauts, cout fige a 1,5082 $ pendant plus
+  // d'une heure, battement a 607 s. Des tranches partaient, un appel long
+  // debordait la duree de la fonction, l'hote tuait tout en plein vol — pas
+  // d'exception, pas de `catch`, RIEN d'ecrit. La ligne redevenait saisissable
+  // et recommencait. Budget de tranche 1 700 s, hote 1 800 s : 100 s de marge
+  // pour un appel qui en demande ~180.
+  //
+  // Celui-ci est du REST pur : `fetch` prend un signal nativement, et c'est
+  // plus simple que chez l'autre dialecte. La MARGE est la meme (20 s) et
+  // pour la meme raison — l'assemblage et l'ecriture en base vivent APRES
+  // l'appel ; rendre la main pile a l'echeance deplacerait le defaut.
+  const signalDeTranche = () => {
+    const restant = typeof options.echeance === "function" ? options.echeance() : null;
+    if (restant === null || restant === undefined || !Number.isFinite(restant)) return undefined;
+    const MARGE_MS = 20_000;
+    return AbortSignal.timeout(Math.max(1_000, restant - MARGE_MS));
+  };
+  // ON N'INTERROGE PAS LE NOM DE L'ERREUR, ON INTERROGE NOTRE SIGNAL. Lire
+  // un nom de classe ou un message anglais serait une devinette fragile —
+  // c'est la lecon du 2026-10-15, ou un abandon a ete classe « fatal » et
+  // la generation REFUSEE au lieu d'etre suspendue.
+  const marquer = (e, signal) => {
+    if (signal?.aborted !== true) return e;
+    const marque = new Error("BUDGET_TEMPS — appel interrompu par l'echeance de la tranche");
+    marque.budgetTemps = true;
+    marque.cause = e;
+    return marque;
+  };
   return {
     messages: {
       create: async (appel) => {
-        const rep = await fetch(`${base}/chat/completions`, {
-          method: "POST",
-          headers: { "content-type": "application/json", authorization: `Bearer ${cle}` },
-          body: JSON.stringify(appel),
-        });
+        const signal = signalDeTranche();
+        let rep;
+        try {
+          rep = await fetch(`${base}/chat/completions`, {
+            method: "POST",
+            headers: { "content-type": "application/json", authorization: `Bearer ${cle}` },
+            body: JSON.stringify(appel),
+            signal,
+          });
+        } catch (e) {
+          throw marquer(e, signal);
+        }
         if (!rep.ok) {
           const corps = await rep.text();
           const erreur = new Error(`DEEPSEEK_${rep.status}: ${corps.slice(0, 300)}`);
