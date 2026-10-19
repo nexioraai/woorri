@@ -228,6 +228,18 @@ const nextConfig: NextConfig = {
     // LIRE AVANT DE DEMANDER : cette route importe `elicitation.mjs`
     // pour FILTRER sa sortie contre la table. Sans le tracage, le
     // module manque en ligne et la lecture meurt avant d'avoir lu.
+    // LE PRE-VOL CHARGE `elicitation.mjs` ET N'ETAIT PAS TRACE.
+    //
+    // MESURE EN PRODUCTION le 2026-10-19 : 500 sur /avant a CHAQUE
+    // dialogue, pendant que le local repondait 200. C'est le defaut que
+    // ce depot nomme « vert en local, mort en ligne », paye deux fois
+    // deja : `racineDepot()` remonte a la racine du depot, qui n'existe
+    // pas dans la fonction deployee.
+    //
+    // Tracer des FICHIERS ne change pas la SOURCE : EP-257 mesure que
+    // cette route n'importe ni client, ni cle, ni moteur, et elle ne les
+    // importe toujours pas. Elle ne peut toujours rien couter.
+    '/api/generateur/avant': MOTEUR_EMISSION,
     '/api/generateur/lire-brief': MOTEUR_EMISSION,
     // ── LE DEPOT CHARGE LE MOTEUR, LUI AUSSI, DEPUIS LE 2026-10-11.
     //

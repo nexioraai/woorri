@@ -132,7 +132,23 @@ export function traduireRaison(brute: string | undefined): string {
   // timeouts, echecs repetes — le message generique, RIEN du brut.
   // ① D'ABORD CE QUI NE SE RESOUT PAS TOUT SEUL : un solde epuise, une
   //    facturation refusee. « Reessayez » y serait un mensonge.
-  if (/credit|facturation|billing|quota/iu.test(r)) {
+  //
+  // ET LE MOTIF A RATE D'UN CHEVEU LE 2026-10-19. Cette regle a ete ecrite
+  // le 15 apres « Your credit balance is too low » — elle capte « credit ».
+  // L'autre fournisseur dit « Insufficient Balance », et DEEPSEEK_402 :
+  // aucun des quatre mots. L'erreur retombait sur `^erreur fatale` et
+  // rendait « Reessayez dans un moment » — le mensonge exact que cette
+  // regle existe pour empecher. Mesure : une heure perdue a chercher un
+  // defaut de convergence pendant qu'un solde attendait d'etre recharge.
+  //
+  // 402 est le code HTTP « Payment Required » : il ne dit jamais autre
+  // chose. Il est teste ICI, avant `\b4\d\d\b` plus bas, qui le
+  // classerait passager.
+  // RESSERRE : « balance » seul captait « 503 load balancer » — un incident
+  // PASSAGER qu'on aurait dit definitif. Et \b402\b ne matche PAS
+  // DEEPSEEK_402 : « _ » est un caractere de mot, il n'y a pas de
+  // frontiere entre « _ » et « 4 ». D'ou la paire de regards negatifs.
+  if (/credit|facturation|billing|quota|insufficient balance|solde insuffisant|(?<!\d)402(?!\d)/iu.test(r)) {
     return RAISON_INDISPONIBLE
   }
   // ② PUIS LE PASSAGER : coupure, 4xx/5xx, expiration.
