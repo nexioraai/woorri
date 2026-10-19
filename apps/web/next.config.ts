@@ -225,6 +225,10 @@ const nextConfig: NextConfig = {
     // la chaîne AIR. Elle n'a besoin que de l'assembleur.
     '/api/generateur/direct': ['../../node_modules/@rolldown/binding-linux-x64-gnu/**'],
     '/api/generateur/comprendre': MOTEUR_EMISSION,
+    // LIRE AVANT DE DEMANDER : cette route importe `elicitation.mjs`
+    // pour FILTRER sa sortie contre la table. Sans le tracage, le
+    // module manque en ligne et la lecture meurt avant d'avoir lu.
+    '/api/generateur/lire-brief': MOTEUR_EMISSION,
     // ── LE DEPOT CHARGE LE MOTEUR, LUI AUSSI, DEPUIS LE 2026-10-11.
     //
     // Il ne GENERE rien — il ecrit une ligne et rend la main. Mais il
