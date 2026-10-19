@@ -200,10 +200,45 @@ function sondeDeLaBase() {
 
 /** La fabrique UNIQUE du moteur cote site — memes paquets, meme mode strict,
  *  pour l'emission d'un trait (conversation) ET la continuation (cron). */
+/**
+ * CE QUE LE MOTEUR ATTEND DE CHAQUE PAQUET, VERIFIE AVANT DE PARTIR.
+ *
+ * DEFAUT MESURE EN PRODUCTION le 2026-10-19 : « Cannot read properties of
+ * undefined (reading 'filter') », etape emission, 0 ms. Le moteur lit
+ * `registry.CAPABILITIES` ; le paquet l'exporte bien, mais un module
+ * transpile peut arriver emballe dans `default` — l'export nomme est alors
+ * absent et l'erreur ne dit RIEN du paquet en cause.
+ *
+ * Deux gestes, et ils sont distincts. `aplatir` repare l'emballage quand
+ * c'est lui. La garde NOMME ce qui manque quand ce n'est pas lui : un
+ * message qui cite le paquet et la cle vaut mieux qu'une trace anonyme.
+ */
+function aplatir(mod: unknown, cle: string): unknown {
+  const m = mod as Record<string, unknown> | undefined
+  if (m !== undefined && m[cle] !== undefined) return m
+  const d = m?.default as Record<string, unknown> | undefined
+  if (d !== undefined && d[cle] !== undefined) return d
+  return mod
+}
+
+function exigerForme(nom: string, mod: unknown, cles: readonly string[]): void {
+  const m = mod as Record<string, unknown> | undefined
+  const absentes = cles.filter((c) => m?.[c] === undefined)
+  if (absentes.length > 0) {
+    throw new Error(
+      `PAQUET_INCOMPLET: « ${nom} » n'expose pas ${absentes.join(', ')} — ` +
+        `recu : ${m === undefined ? 'undefined' : Object.keys(m).slice(0, 12).join(', ')}`,
+    )
+  }
+}
+
 async function moteurDuSite(cle: string) {
   const { creerMoteur } = (await import(
     /* webpackIgnore: true */ `${racineDepot()}/benchmarks/air-emission/moteur.mjs`
   )) as Moteur
+  // LA VERIFICATION A LIEU AVANT L'APPEL, pas pendant l'emission.
+  const registreAplati = aplatir(registry, 'CAPABILITIES')
+  exigerForme('@deribfy/capability-registry', registreAplati, ['CAPABILITIES'])
   const m = await creerMoteur({
     cleApi: cle,
     // ── LA SONDE PARTAGEE (EP-271). Sans cette ligne, chaque generation
@@ -227,7 +262,7 @@ async function moteurDuSite(cle: string) {
       // manquant qu une erreur de resolution illisible.
       __strict: true,
       airSchema,
-      registry,
+      registry: registreAplati,
       blocksRegistry,
       presentation: executionContract,
       executionContract,
