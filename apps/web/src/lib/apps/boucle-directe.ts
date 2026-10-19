@@ -67,6 +67,8 @@ export type Tour = {
   readonly ok: boolean
   readonly motif?: string
   readonly ms: number
+  /** Le fournisseur a-t-il coupé ce tour ? Jamais déduit — toujours lu. */
+  readonly tronquee?: boolean
 }
 
 export type Resultat =
@@ -90,8 +92,17 @@ export type Resultat =
       readonly dernierTexte: string
     }
 
-/** Ce que l'appelant fournit : un modèle, et rien d'autre. */
-export type Appeler = (messages: readonly { role: 'user' | 'assistant'; content: string }[]) => Promise<string>
+/**
+ * Ce que l'appelant fournit : un modèle, et rien d'autre.
+ *
+ * IL REND DEUX CHOSES, ET LA SECONDE N'EST PAS UN CONFORT. Un texte seul ne
+ * dit pas s'il est ENTIER. Sans `tronquee`, une réponse coupée et une réponse
+ * fausse arrivent ici sous la même forme — et c'est exactement la confusion
+ * qui a coûté deux tirs le 2026-10-19.
+ */
+export type Appeler = (
+  messages: readonly { role: 'user' | 'assistant'; content: string }[],
+) => Promise<{ readonly texte: string; readonly tronquee: boolean }>
 
 export const TOURS_MAX = 3
 
@@ -118,16 +129,27 @@ export async function boucleEcriture(o: {
 
   for (let rang = 1; rang <= toursMax; rang += 1) {
     const debut = Date.now()
-    const texte = await o.appeler(messages)
+    const { texte, tronquee } = await o.appeler(messages)
     dernierTexte = texte
     const lus = lireFichiers(texte)
 
-    // ── TROIS REFUS, DANS CET ORDRE, DU MOINS CHER AU PLUS CHER.
+    // ── QUATRE REFUS, DANS CET ORDRE, DU MOINS CHER AU PLUS CHER.
     //
     // Lire coûte zéro. Vérifier les imports coûte zéro. Assembler coûte du
-    // processeur. On ne paie le troisième que si les deux premiers passent.
+    // processeur. On ne paie le dernier que si les précédents passent.
+    //
+    // ET LA TRONCATURE PASSE AVANT TOUT, parce qu'elle est la CAUSE et que
+    // les autres n'en seraient que les symptômes. Une réponse coupée échoue
+    // aussi à l'assemblage — « Expected } but found EOF » — et ce message-là
+    // est vrai mais trompeur : il décrit le texte, pas ce qui lui est arrivé.
+    // Le 2026-10-19 j'ai relayé ce symptôme au modèle comme un diagnostic. Il
+    // a « corrigé » du code qui n'était pas faux, et s'est fait couper encore.
     let motif: string | null = null
-    if (lus.length === 0) {
+    if (tronquee) {
+      motif =
+        'Ta réponse a été coupée : tu as atteint le plafond de jetons avant ' +
+        "d'avoir fini. Le code n'est pas faux, il est incomplet."
+    } else if (lus.length === 0) {
       motif = 'Aucun fichier reçu. Rends UNIQUEMENT des fichiers au format « === chemin === ».'
     } else {
       const interdits = importsInterdits(lus)
@@ -148,15 +170,25 @@ export async function boucleEcriture(o: {
       motif = `La construction a échoué :\n${v.erreur}`
     }
 
-    tours.push({ rang, fichiers: lus.length, ok: false, motif, ms: Date.now() - debut })
+    tours.push({ rang, fichiers: lus.length, ok: false, motif, tronquee, ms: Date.now() - debut })
 
     // ── ON RENVOIE L'ERREUR TELLE QUELLE, ET ON REDEMANDE TOUT.
     //
     // Pas de correctif partiel : le modèle réécrit les fichiers concernés
     // avec le reste. Un patch partiel exigerait un format de patch, donc une
     // grammaire — exactement ce qu'on vient de quitter.
+    //
+    // MAIS ON NE DEMANDE PAS LA MÊME CHOSE DANS LES DEUX CAS, et c'est le
+    // cœur de la correction. « Corrige » n'a aucun sens pour un texte coupé :
+    // il n'y a rien à corriger, il y a trop à écrire. Redemander la même
+    // application au même modèle la ferait couper au même endroit.
+    const suite = tronquee
+      ? 'Récris la MÊME application, en entier, mais plus COMPACTE : moins de ' +
+        'lignes, pas de commentaires, pas de variantes décoratives. Toutes les ' +
+        'fonctions demandées restent, aucune ne disparaît.'
+      : 'Corrige et rends TOUS les fichiers.'
     messages.push({ role: 'assistant', content: texte })
-    messages.push({ role: 'user', content: `${motif}\n\nCorrige et rends TOUS les fichiers.` })
+    messages.push({ role: 'user', content: `${motif}\n\n${suite}` })
   }
 
   return {

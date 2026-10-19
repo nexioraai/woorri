@@ -26,13 +26,21 @@ import { describe, expect, it } from 'vitest'
 import { boucleEcriture, CONSIGNE, pageAutonome, TOURS_MAX } from '../boucle-directe'
 import { PAQUETS_AUTORISES } from '../ecriture-directe'
 
-/** Un faux modèle : il rend les textes qu'on lui dicte, dans l'ordre. */
-const modele = (...reponses: string[]) => {
+/**
+ * Un faux modèle : il rend les textes qu'on lui dicte, dans l'ordre.
+ *
+ * UN TEXTE SEUL EST UNE RÉPONSE ENTIÈRE. Pour dire qu'un tour a été COUPÉ —
+ * le défaut du 2026-10-19 —, on passe `coupe('…')` à la place.
+ */
+const coupe = (texte: string) => ({ texte, tronquee: true })
+
+const modele = (...reponses: (string | { texte: string; tronquee: boolean })[]) => {
   let i = 0
   const vus: { role: string; content: string }[][] = []
   const appeler = async (m: readonly { role: 'user' | 'assistant'; content: string }[]) => {
     vus.push([...m])
-    return reponses[Math.min(i++, reponses.length - 1)] ?? ''
+    const r = reponses[Math.min(i++, reponses.length - 1)] ?? ''
+    return typeof r === 'string' ? { texte: r, tronquee: false } : r
   }
   return { appeler, vus }
 }
@@ -125,6 +133,58 @@ describe('EP-276 · la boucle', () => {
 })
 
 describe('EP-276 · la consigne et la page', () => {
+  it('⑨ UNE RÉPONSE COUPÉE EST NOMMÉE COUPÉE, pas fautive', async () => {
+    // ── LE DÉFAUT QUI A COÛTÉ DEUX TIRS, 2026-10-19.
+    //
+    // Mesuré : 24 576 jetons de sortie pour trois tours — 8 192 au jeton près
+    // à chaque tour, soit MA borne atteinte trois fois. Le compilateur disait
+    // « Expected } but found EOF », et je relayais ce message au modèle comme
+    // une faute de syntaxe. Il « corrigeait » du code qui n'était pas faux,
+    // et se faisait couper au même endroit. Trois fois, pour rien.
+    //
+    // Un texte coupé et un texte fautif se ressemblent. Seul le fournisseur
+    // sait lequel des deux il vient de rendre.
+    const { appeler, vus } = modele(coupe('=== a.tsx ===\nconst x = {{{ ;'), BON)
+    const r = await boucleEcriture({ demande: 'x', appeler })
+    expect(r.ok).toBe(true)
+
+    const dit = vus[1]?.at(-1)?.content ?? ''
+    // LA CAUSE EST NOMMÉE, et le symptôme ne la masque pas.
+    expect(dit, 'la coupure n’est pas nommée au modèle').toContain('coupée')
+    expect(dit, 'on accuse le code alors qu’il est seulement incomplet').toContain('incomplet')
+    expect(dit, 'le symptôme du compilateur masque encore la cause').not.toContain(
+      'La construction a échoué',
+    )
+
+    // ── ET ON NE DEMANDE PAS LA MÊME CHOSE. C'est le cœur de la correction.
+    //
+    // « Corrige » n'a aucun sens pour un texte coupé : il n'y a rien à
+    // corriger, il y a trop à écrire. Redemander à l'identique le ferait
+    // couper exactement au même endroit.
+    expect(dit, 'on redemande une correction là où il faut demander plus court').toContain(
+      'COMPACTE',
+    )
+    expect(dit, 'le modèle va sacrifier des fonctions pour tenir').toContain('aucune ne disparaît')
+  })
+
+  it('⑩ LE TOUR GARDE QU’IL A ÉTÉ COUPÉ — sinon le journal ment', async () => {
+    // Sans ce fait dans la ligne, le propriétaire relit un échec et ne peut
+    // pas distinguer « le modèle écrit mal » de « ma borne l'a coupé ». C'est
+    // exactement l'aveuglement qui a duré deux tirs.
+    const { appeler } = modele(coupe('=== a.tsx ===\nconst x = {{{ ;'))
+    const r = await boucleEcriture({ demande: 'x', appeler })
+    expect(r.ok).toBe(false)
+    expect(r.tours.every((t) => t.tronquee === true), 'la coupure n’est pas journalisée').toBe(true)
+
+    // Et l'inverse : un échec ORDINAIRE ne doit pas se faire passer pour une
+    // coupure, sinon on irait chercher une borne qui n'a rien fait.
+    const o = await boucleEcriture({
+      demande: 'x',
+      appeler: modele('=== a.tsx ===\nconst x = {{{ ;').appeler,
+    })
+    expect(o.tours.every((t) => t.tronquee === false)).toBe(true)
+  })
+
   it('⑦ LA CONSIGNE NOMME LES PAQUETS AUTORISÉS, un par un', () => {
     // Si la liste n'est pas DANS la consigne, le modèle importe ce qu'il veut
     // et on ne fait que le refuser après — un tour payé pour rien.

@@ -34,7 +34,13 @@ import { boucleEcriture, CONSIGNE, pageAutonome } from '@/lib/apps/boucle-direct
 import { appelerFournisseur, CONFIGS, fournisseurChoisi } from '@/lib/apps/fournisseur'
 
 export const runtime = 'nodejs'
-export const maxDuration = 300
+// ── QUINZE MINUTES, ET C'EST UNE CONSÉQUENCE DU PLAFOND, PAS UN CONFORT.
+//
+// Trois tours à 65 536 jetons font environ neuf minutes dans le pire cas
+// (350 jetons/seconde, mesuré). 300 secondes auraient coupé la requête AVANT
+// le modèle — on aurait remplacé une borne par une autre, et le propriétaire
+// aurait encore payé pour un échec sans réponse.
+export const maxDuration = 900
 
 
 
@@ -88,11 +94,14 @@ export async function POST(req: Request) {
    */
   const appeler = async (
     messages: readonly { role: 'user' | 'assistant'; content: string }[],
-  ): Promise<string> => {
+  ) => {
     const r = await appelerFournisseur(fournisseur, cle, CONSIGNE, messages)
     entree += r.usage.entree
     sortie += r.usage.sortie
-    return r.texte
+    // LA TRONCATURE VOYAGE AVEC LE TEXTE. La boucle ne peut pas la deviner :
+    // un texte coupé ressemble à un texte fautif, et seul le fournisseur sait
+    // lequel des deux il vient de rendre.
+    return { texte: r.texte, tronquee: r.tronquee }
   }
 
   const debut = Date.now()
