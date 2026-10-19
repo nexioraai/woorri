@@ -75,6 +75,55 @@ function contexteClient(intention) {
   );
 }
 
+/**
+ * L'ECART DE FORME, LU A LA PASSE — ET CE QU'IL A COUTE DE NE PAS LE LIRE.
+ *
+ * MESURE LE 2026-10-19, tir 1,5082 $ : le document assemble ne passait pas
+ * `projectAirSchema`. Aucun juge semantique ne pouvait donc tourner — le
+ * perimetre de jugement etait VIDE (`acceptation.mjs:79` : `air === null`),
+ * et le moteur a etiquete le tour `reconstruction`. Les neuf passes etaient
+ * deja payees : P0 seul vaut 1,2732 $, 84 % du tir.
+ *
+ * Chaque passe porte pourtant son schema — `part.zod`, pose a
+ * `emission-coeur.mjs:243`. Il servait a DECRIRE le contrat (converti en
+ * JSON Schema et transmis au modele), jamais a VERIFIER la reponse. Chez
+ * Anthropic cela se defendait : le schema etait impose au decodage. Chez
+ * DeepSeek il ne l'est pas (`schemaImpose: false`) — le modele recoit le
+ * contrat en texte et fait de son mieux.
+ *
+ * DEUX PIEGES, MESURES AVANT D'ECRIRE CE CODE.
+ *
+ * ① `.pick()` CONSERVE le strict : une cle en trop est refusee, comme elle
+ *    le sera a l'assemblage. Valider ici ne rejette donc RIEN de nouveau.
+ * ② `screens: []` est refuse — « expected array to have >=1 items ». Or les
+ *    lots d'ecrans emettent chacun une PARTIE : un lot vide est legitime,
+ *    le minimum ne vaut que pour le document entier. Une cle accumulee se
+ *    juge donc element par element, jamais sur son minimum.
+ */
+function ecartDeForme(part, emis) {
+  const issues = [];
+  for (const k of part.keys) {
+    if (emis[k] === undefined) continue;
+    const sous = part.zod?.shape?.[k];
+    if (sous === undefined) continue;
+    if (k === part.accumule && Array.isArray(emis[k])) {
+      const elem = sous.element ?? sous._def?.type;
+      if (elem === undefined) continue;
+      emis[k].forEach((e, i) => {
+        const r = elem.safeParse(e);
+        if (!r.success) issues.push(`${k}[${String(i)}] : ${r.error.issues[0]?.message ?? "forme invalide"}`);
+      });
+    } else {
+      const r = sous.safeParse(emis[k]);
+      if (!r.success) issues.push(`${k} : ${r.error.issues[0]?.message ?? "forme invalide"}`);
+    }
+  }
+  for (const k of Object.keys(emis)) {
+    if (!part.keys.includes(k)) issues.push(`${k} : clé hors contrat`);
+  }
+  return issues;
+}
+
 async function emitSections(system, contextText, label, usage, refusals, accumulateur, prescriptif) {
   const assembled = accumulateur ?? {};
   for (const part of partsPour(prescriptif)) {
@@ -109,7 +158,26 @@ async function emitSections(system, contextText, label, usage, refusals, accumul
         throw new Error(`refus persistant sur ${part.name}`);
       }
     }
-    const emis = extractJson(response);
+    let emis = extractJson(response);
+    // ── UNE REPRISE, JAMAIS UN REFUS.
+    //
+    // Le pipeline SAIT se rattraper : le tir du 2026-10-19 a rendu valide un
+    // document qui ne parsait pas. Rejeter ici echangerait du cout contre des
+    // echecs. On tente donc UNE reemission ciblee, on ne garde le resultat que
+    // s'il est STRICTEMENT meilleur, et on continue quoi qu'il arrive. Pire
+    // cas : +0,14 $ et le comportement d'aujourd'hui.
+    const ecarts = ecartDeForme(part, emis);
+    if (ecarts.length > 0) {
+      const userForme =
+        `${user}\n\nTa réponse précédente ne respecte pas le contrat de forme :\n` +
+        `${ecarts.slice(0, 10).join("\n")}\n\n` +
+        `Réémets la MÊME section, corrigée. Ne retire rien : corrige la forme.`;
+      const r2 = await callPart(part, system, userForme, `${label}:${part.name}#forme`, usage);
+      if (!adaptateur.lireReponse(r2).refusee) {
+        const emis2 = extractJson(r2);
+        if (ecartDeForme(part, emis2).length < ecarts.length) emis = emis2;
+      }
+    }
     if (part.accumule !== undefined) {
       // SANS CECI, CHAQUE LOT EFFACERAIT LE PRÉCÉDENT et le document ne
       // porterait que les écrans du dernier appel.
