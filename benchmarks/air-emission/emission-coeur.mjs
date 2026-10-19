@@ -724,6 +724,21 @@ async function callPart(part, system, userText, label, usage) {
  * témoigne plus de ce que le modèle a réellement produit.
  */
 function texteBrut(response) {
+  // ── LE DIALECTE SE LIT PAR L'ADAPTATEUR, JAMAIS EN DUR.
+  //
+  // DEFAUT MESURE EN PRODUCTION le 2026-10-19 : « Cannot read properties of
+  // undefined (reading 'filter') », emission, 0 ms. Ces deux fonctions
+  // lisaient `response.content[].text` — la forme d'UN fournisseur. DeepSeek
+  // rend `choices[0].message.content`, une chaine : `content` vaut undefined
+  // et `.filter` casse avant le moindre octet utile.
+  //
+  // `callPart` appelle `adaptateur.lireReponse` trois lignes plus haut pour
+  // la troncature. La frontiere etait donc tenue a un endroit et percee a
+  // deux autres. Le repli garde l'ancienne forme : un appelant qui passerait
+  // une reponse deja normalisee continue de fonctionner.
+  if (typeof adaptateur?.lireReponse === "function") {
+    return adaptateur.lireReponse(response).texte ?? "";
+  }
   return (response?.content ?? [])
     .filter((b) => b.type === "text")
     .map((b) => b.text)
@@ -731,11 +746,8 @@ function texteBrut(response) {
 }
 
 function extractJson(response) {
-  const text = response.content
-    .filter((b) => b.type === "text")
-    .map((b) => b.text)
-    .join("")
-    .trim();
+  // MEME FRONTIERE QUE `texteBrut` : le dialecte appartient a l'adaptateur.
+  const text = texteBrut(response).trim();
   const cleaned = text.startsWith("```")
     ? text.replace(/^```(?:json)?\s*/, "").replace(/\s*```$/, "")
     : text;
