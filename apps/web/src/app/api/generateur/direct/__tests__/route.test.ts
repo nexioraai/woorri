@@ -188,6 +188,42 @@ describe('EP-276 · la route de l’écriture directe', () => {
     expect(code, 'un appel non streamé subsiste').not.toContain('client.messages.create(')
   })
 
+  it('⑥ UN ÉCHEC GARDE TOUT CE QU’IL FAUT POUR LE COMPRENDRE', async () => {
+    // ── DÉFAUT MESURÉ SUR LE PREMIER TIR DIRECT, 2026-10-18.
+    //
+    // 63 secondes, 4 centimes, « Non convergé en 3 tours » — et AUCUN moyen
+    // de dire pourquoi. Ni l'erreur du compilateur, ni ce que le modèle avait
+    // écrit. Un échec qu'on ne sait pas lire est un échec qu'on repaiera.
+    //
+    // Et l'écran, lui, avait affiché « Lecture impossible » : son repli quand
+    // la réponse ne porte ni `error` ni `motif`.
+    reponses.texte = ['=== a.tsx ===\nconst x = {{{ ;']
+    const d = (await (await POST(appel())).json()) as {
+      ok: boolean
+      error?: string
+      motif?: string
+      tours?: { motif?: string }[]
+    }
+    expect(d.ok).toBe(false)
+    // LES DEUX CHAMPS portent une phrase : quel que soit celui que l'écran
+    // lit, il trouve quelque chose à dire.
+    expect(d.error, 'l’écran retombera sur « Lecture impossible »').toContain('Non convergé')
+    expect(d.motif).toBe(d.error)
+    expect(d.error, 'la phrase ne dit pas ce qui a échoué').toContain('ne s’est pas assemblé'.replace('’', "'"))
+
+    const l = lignesEcrites()[0] ?? {}
+    const sa = l.sections_acquises as { tours?: unknown[]; dernierTexte?: string }
+    expect(sa.tours?.length, 'les tours ne sont pas gardés').toBe(3)
+    expect(
+      sa.dernierTexte,
+      'le brut du dernier essai est perdu : impossible de dire si le modèle ' +
+        'écrit mal ou si le lecteur lit mal',
+    ).toContain('{{{')
+    // Chaque tour garde SON motif — sinon on sait qu'il a échoué trois fois,
+    // pas pourquoi à chaque fois.
+    expect((sa.tours as { motif?: string }[])[0]?.motif).toContain('construction a échoué')
+  })
+
   it('④ UNE DEMANDE VIDE EST REFUSÉE AVANT TOUT APPEL', async () => {
     const res = await POST(appel('   '))
     expect(res.status).toBe(400)

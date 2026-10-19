@@ -71,7 +71,24 @@ export type Tour = {
 
 export type Resultat =
   | { readonly ok: true; readonly code: string; readonly fichiers: ReadonlyMap<string, string>; readonly tours: readonly Tour[] }
-  | { readonly ok: false; readonly motif: string; readonly tours: readonly Tour[] }
+  | {
+      readonly ok: false
+      readonly motif: string
+      readonly tours: readonly Tour[]
+      /**
+       * CE QUE LE MODÈLE AVAIT ÉCRIT AU DERNIER TOUR, BRUT.
+       *
+       * DÉFAUT MESURÉ LE 2026-10-18 : le premier tir direct a échoué en
+       * 63 secondes pour 4 centimes — « Non convergé en 3 tours » — et je
+       * n'avais AUCUN moyen de dire pourquoi. Ni l'erreur du compilateur, ni
+       * ce que le modèle avait produit.
+       *
+       * C'est exactement le défaut que j'avais décrit le matin même sur
+       * l'autre moteur, et que je venais de reproduire. Un échec qu'on ne
+       * sait pas lire est un échec qu'on repaiera pour comprendre.
+       */
+      readonly dernierTexte: string
+    }
 
 /** Ce que l'appelant fournit : un modèle, et rien d'autre. */
 export type Appeler = (messages: readonly { role: 'user' | 'assistant'; content: string }[]) => Promise<string>
@@ -94,6 +111,7 @@ export async function boucleEcriture(o: {
 }): Promise<Resultat> {
   const toursMax = o.toursMax ?? TOURS_MAX
   const tours: Tour[] = []
+  let dernierTexte = ''
   const messages: { role: 'user' | 'assistant'; content: string }[] = [
     { role: 'user', content: o.demande },
   ]
@@ -101,6 +119,7 @@ export async function boucleEcriture(o: {
   for (let rang = 1; rang <= toursMax; rang += 1) {
     const debut = Date.now()
     const texte = await o.appeler(messages)
+    dernierTexte = texte
     const lus = lireFichiers(texte)
 
     // ── TROIS REFUS, DANS CET ORDRE, DU MOINS CHER AU PLUS CHER.
@@ -144,6 +163,7 @@ export async function boucleEcriture(o: {
     ok: false,
     motif: `Non convergé en ${String(toursMax)} tours.`,
     tours,
+    dernierTexte,
   }
 }
 

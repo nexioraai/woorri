@@ -137,12 +137,39 @@ export async function POST(req: Request) {
     // La colonne `document` porte l'oeuvre. Ici l'oeuvre est du CODE, pas un
     // document AIR : on range les fichiers, qui sont ce qui se recompile.
     document: resultat.ok ? { fichiers: Object.fromEntries(resultat.fichiers) } : null,
+    // ── LE DÉTAIL DE CHAQUE TOUR, ET LE BRUT DU DERNIER ESSAI.
+    //
+    // DÉFAUT MESURÉ LE 2026-10-18 : le premier tir direct a échoué en
+    // 63 secondes pour 4 centimes, et la ligne ne portait que « Non convergé
+    // en 3 tours ». Impossible de dire si DeepSeek écrivait mal, si le
+    // plafond de 8 192 jetons tronquait, ou si mon lecteur ne savait pas lire
+    // sa forme de réponse.
+    //
+    // Un échec qu'on ne sait pas lire est un échec qu'on repaiera pour
+    // comprendre. Le brut est borné à 20 000 caractères : assez pour voir la
+    // forme, pas assez pour gonfler la ligne.
+    sections_acquises: {
+      tours: resultat.tours,
+      dernierTexte: resultat.ok ? null : resultat.dernierTexte.slice(0, 20_000),
+    },
   }
   const ecrit = await supabaseAdmin.from(TABLE_GENERATIONS).insert(ligne).select('id').maybeSingle()
 
   if (!resultat.ok) {
+    // ── `error` EN PLUS DE `motif`, ET CE N'EST PAS DE LA REDONDANCE.
+    //
+    // DÉFAUT MESURÉ : l'écran a affiché « Lecture impossible » — son repli
+    // quand la réponse ne porte NI `error` NI `motif`. La ligne en base, elle,
+    // portait bien « Non convergé en 3 tours ». Le message s'est perdu en
+    // chemin, et la personne n'a rien appris de son essai payé.
+    //
+    // Les deux champs portent désormais une phrase lisible : quel que soit
+    // celui que l'écran lit, il trouve quelque chose à dire.
+    const phrase =
+      `${resultat.motif} Le code produit ne s'est pas assemblé ` +
+      `(${String(resultat.tours.length)} essai(s), ${String(Math.round(dureeMs / 1000))} s).`
     return NextResponse.json(
-      { ok: false, motif: resultat.motif, tours: resultat.tours, coutUsd, dureeMs },
+      { ok: false, error: phrase, motif: phrase, tours: resultat.tours, coutUsd, dureeMs },
       { status: 200, headers: { 'Cache-Control': 'no-store' } },
     )
   }
