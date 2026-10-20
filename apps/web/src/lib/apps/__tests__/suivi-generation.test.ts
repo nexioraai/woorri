@@ -3,7 +3,7 @@
  * Zero navigateur, zero appel : la logique est pure, c'est elle qu'on prouve.
  */
 import { describe, expect, it } from 'vitest'
-import {
+import { decisionDuSuivi,
   ETAPES_SUIVI,
   marcheDuSuivi,
   modeAsyncActif,
@@ -193,5 +193,23 @@ describe('EP-238 — une ligne suspendue n est pas une ligne en file', () => {
     // Les champs sont optionnels : un appelant qui ne les fournit pas doit
     // garder le comportement prudent d avant.
     expect(marcheDuSuivi({ statut: 'en_attente', etape: 'p0', raison: null }).courante).toBe(0)
+  })
+})
+
+describe('decisionDuSuivi — un 404 n’est pas une panne passagère', () => {
+  it('un état lisible se lit', () => {
+    for (const s of [200, 204, 299]) expect(decisionDuSuivi(s)).toBe('lire')
+  })
+  it('404 : DÉFINITIF — la ligne n’existe plus, on libère au lieu d’insister', () => {
+    // Le défaut : l'écran redemandait une ligne absente toutes les 5 s,
+    // sans état donc sans AUCUN bouton — pas même Arrêter.
+    expect(decisionDuSuivi(404)).toBe('abandonner')
+  })
+  it('CONTRÔLE NÉGATIF : 401, 500, 502, 503 restent PASSAGERS', () => {
+    // Un jeton expiré ou une coupure doivent continuer de réessayer :
+    // abandonner là ferait perdre le suivi d'une génération bien vivante.
+    for (const s of [401, 403, 429, 500, 502, 503]) {
+      expect(decisionDuSuivi(s)).toBe('reessayer')
+    }
   })
 })

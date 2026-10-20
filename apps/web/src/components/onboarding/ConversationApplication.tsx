@@ -33,6 +33,8 @@ import {
   modeAsyncActif,
   generationDepuisUrl,
   memoriserGeneration,
+  oublierGeneration,
+  decisionDuSuivi,
 } from '@/lib/apps/suivi-generation'
 import { resumeDuJournal } from '@/lib/apps/journal-tirages';
 import type { EtatGeneration } from '@/lib/apps/service-generations';
@@ -267,7 +269,8 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
           headers: { Authorization: `Bearer ${await jeton()}` },
         });
         if (!vivant) return;
-        if (res.ok) {
+        const issue = decisionDuSuivi(res.status);
+        if (issue === 'lire') {
           const e = (await res.json()) as EtatGeneration;
           setMaintenant(Date.now());
           setEtatGen(e);
@@ -338,6 +341,35 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
             if (e.statut === 'refusee' || e.statut === 'livree') setAvis('');
             return;
           }
+        } else if (issue === 'abandonner') {
+          // ── UN 404 N'EST PAS UNE PANNE PASSAGERE (defaut 2026-10-19).
+          //
+          // SIGNALE PAR LE PROPRIETAIRE, capture a l'appui : « je n'ai meme
+          // pas un Button pour annuler ». Le bouton Arreter existait, teste
+          // et correctement conditionne sur en_cours/en_attente — mais il
+          // pend a `etatGen`, et le `if (res.ok)` n'avait PAS d'`else`.
+          //
+          // Sur un 404 (la ligne n'existe plus pour ce proprietaire), rien
+          // n'etait fait : pas d'etat, donc AUCUN bouton ; pas de message,
+          // donc aucune explication ; et on redemandait la meme ligne
+          // inexistante toutes les 5 s, indefiniment. L'ecran restait
+          // l'otage d'un identifiant perime garde dans le stockage, sans
+          // aucun geste possible pour s'en defaire.
+          //
+          // `oublierGeneration` existait depuis le debut, exportee et
+          // appelee NULLE PART : la sortie de secours etait ecrite, pas
+          // branchee. On la branche, et on ne reprogramme pas de lecture —
+          // une ligne absente ne reapparait pas.
+          //
+          // On ne traite QUE le 404. Un 401 (jeton expire) ou un 5xx sont
+          // passagers : ils continuent de reessayer, et c'est juste.
+          oublierGeneration(window.localStorage);
+          window.history.replaceState(null, '', window.location.pathname);
+          oublierLaPublication();
+          setEtatGen(null);
+          setGenerationId(null);
+          setAvis('Cette génération n’existe plus. L’écran est libéré — vous pouvez en lancer une nouvelle.');
+          return;
         }
       } catch {
         // transitoire : la prochaine lecture reessaiera
@@ -349,7 +381,11 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
       vivant = false;
       if (minuterieSuivi.current !== null) window.clearTimeout(minuterieSuivi.current);
     };
-  }, [generationId]);
+    // `oublierLaPublication` est un useCallback a dependances VIDES (voir le
+    // commentaire du 2026-10-18 a sa definition) : son identite ne change
+    // jamais, donc la citer ici ne relance pas le suivi. C'est la raison
+    // pour laquelle cette stabilite avait deja ete payee.
+  }, [generationId, oublierLaPublication]);
 
   // L'APERCU v0-STYLE : compile localement cote serveur (zero IA), recharge
   // UNIQUEMENT quand l'empreinte de l'acquis change — une fois par tranche.

@@ -140,6 +140,30 @@ export function oublierGeneration(stockage: StockageMinimal): void {
 }
 
 /**
+ * CE QU'ON FAIT D'UNE REPONSE DU SUIVI — pure, donc prouvable sans navigateur.
+ *
+ * MESURE (defaut 2026-10-19, capture du proprietaire) : l'ecran ne traitait
+ * QUE `res.ok`. Un 404 — la ligne n'existe plus pour ce proprietaire — ne
+ * produisait rien : pas d'etat, donc aucun bouton (pas meme Arreter, qui
+ * existait et etait teste) ; pas de message ; et une relecture toutes les
+ * 5 s d'une ligne inexistante, indefiniment.
+ *
+ * Les trois issues sont differentes et doivent le rester :
+ *  - `lire`        : on a un etat, on l'affiche.
+ *  - `abandonner`  : DEFINITIF. Une ligne absente ne reapparait pas ; on
+ *                    libere l'ecran et on arrete de demander.
+ *  - `reessayer`   : PASSAGER — jeton expire (401), coupure, 5xx. La
+ *                    prochaine lecture retentera, et c'est juste.
+ */
+export type IssueDuSuivi = 'lire' | 'abandonner' | 'reessayer'
+
+export function decisionDuSuivi(status: number): IssueDuSuivi {
+  if (status >= 200 && status < 300) return 'lire'
+  if (status === 404) return 'abandonner'
+  return 'reessayer'
+}
+
+/**
  * LA FOURCHETTE AFFICHEE AU DEPOT — arbitrage proprietaire du 2026-10-10 :
  * prudente mais pas effrayante. SOURCE : mesures de session (P0 2-4 min,
  * emission+juge 25-30 min, un appel ecrans streame 15-30 min, 2-3 tours) —
