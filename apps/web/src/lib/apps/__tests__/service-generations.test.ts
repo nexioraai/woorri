@@ -572,6 +572,41 @@ describe('etatGeneration — la lecture est au PROPRIETAIRE seul', () => {
     )
   })
 
+  it("EP-240 — le solde epuise est reconnu QUELLE QUE SOIT la formulation du fournisseur", () => {
+    // Le test de la ligne du dessus n'eprouvait qu'UNE formulation :
+    // « facturation ». Le 19 octobre, l'autre fournisseur a dit
+    // « Insufficient Balance » dans un DEEPSEEK_402 — aucun des mots
+    // cherches. L'ecran a repondu « Reessayez dans un moment » a un solde
+    // a zero, et la cause a attendu une heure dans le champ diagnostics.
+    //
+    // Un filet ecrit avec UN SEUL fournisseur en tete ne protege qu'un
+    // fournisseur. Les deux formulations connues sont ici, et les deux
+    // pieges rencontres en les captant sont en controle negatif.
+    const definitifs = [
+      'erreur fatale (non transitoire) : DEEPSEEK_402: {"error":{"message":"Insufficient Balance (request_id: 0ad1)"}}',
+      'erreur fatale (non transitoire) : Your credit balance is too low',
+      'erreur fatale (non transitoire) : facturation',
+      'solde insuffisant chez le fournisseur',
+    ]
+    for (const brute of definitifs) {
+      expect(traduireRaison(brute)).toBe(RAISON_INDISPONIBLE)
+    }
+
+    // CONTROLE NEGATIF ①. « balance » seul captait « load balancer » : une
+    // coupure PASSAGERE qu'on aurait juree definitive — le mensonge exact,
+    // retourne. Le motif cherche « insufficient balance », pas « balance ».
+    expect(traduireRaison('erreur fatale : 503 load balancer unavailable')).toBe(RAISON_TECHNIQUE)
+    // CONTROLE NEGATIF ②. Une surcharge reste passagere.
+    expect(traduireRaison('erreur fatale (non transitoire) : ANTHROPIC_529 overloaded')).toBe(
+      RAISON_TECHNIQUE,
+    )
+    // Et le refus de convergence ne bascule pas : 187 defauts ne sont pas
+    // un probleme de paiement.
+    expect(traduireRaison('filet de tentatives epuise, 187 defauts restants')).toBe(
+      RAISON_NON_ABOUTIE,
+    )
+  })
+
   it('la ligne d un autre n existe pas : null, sans distinguer « absent » de « interdit »', async () => {
     expect(await etatGeneration({ base: baseAvec(null), table: 't_test', id: 'g-1', proprietaire: 'autre-user' })).toBeNull()
   })
