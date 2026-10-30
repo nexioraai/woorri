@@ -87,7 +87,35 @@ export async function assembler(
       ],
     })
     const { output } = await paquet.generate({ format: 'esm' })
-    return { ok: true, code: output[0]?.code ?? '', ms: Date.now() - debut }
+    const code = output[0]?.code ?? ''
+    // ── FAIL-CLOSED : UN IMPORT NU DANS LE BUNDLE EST UNE ERREUR, PAS UN AVIS.
+    //
+    // MESURE EN PRODUCTION LE 2026-10-30, sur l'ecran du proprietaire :
+    // quand rolldown ne resout pas un paquet (node_modules absent de la
+    // fonction), il le laisse en import EXTERNE — un avertissement, pas un
+    // refus. L'assembleur disait « ok », la page partait, et le navigateur
+    // mourait sur « 'react-dom/client' does not resolve to a valid URL ».
+    //
+    // Un bundle autonome ne doit importer PERSONNE : tout ce qu'il emploie
+    // doit etre DEDANS. Un import nu restant signifie que l'environnement n'a
+    // pas pu fournir le paquet — et livrer ca, c'est livrer une application
+    // morte avec un verdict vert. Local : zero import restant, mesure sur
+    // 955 839 caracteres. Ce controle rend le defaut IMPOSSIBLE a livrer,
+    // quel que soit le milieu.
+    const nus = [...new Set(
+      [...code.matchAll(/(?:^|\n)\s*import\s[^;]*?from\s*["']([^"'./][^"']*)["']/gu)].map((m) => m[1]),
+    )]
+    if (nus.length > 0) {
+      return {
+        ok: false,
+        erreur:
+          `paquet(s) non embarqué(s) dans le bundle : ${nus.join(', ')} — ` +
+          `l'environnement d'assemblage ne les fournit pas ; l'application ` +
+          `mourrait au chargement dans le navigateur`,
+        ms: Date.now() - debut,
+      }
+    }
+    return { ok: true, code, ms: Date.now() - debut }
   } catch (e: unknown) {
     const brut = e instanceof Error ? e.message : String(e)
     // On borne la trace : le modèle a besoin de la CAUSE, pas de la pile

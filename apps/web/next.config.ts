@@ -190,9 +190,30 @@ const nextConfig: NextConfig = {
     // Quatre copies divergeraient à la cinquième route.
     // apercu-live (etage 4) : MEMES besoins que l'apercu synchrone — le
     // meme assembleur compile l'acquis d'une generation en cours.
+    // ── CE QU'UN ASSEMBLAGE EXIGE, ET C'EST MESURE DU 2026-10-30.
+    //
+    // Le binaire natif de rolldown NE SUFFIT PAS. L'assembleur doit aussi
+    // LIRE les sources de react, react-dom et scheduler pour les embarquer
+    // dans le bundle — or Next emploie SA copie vendue de React
+    // (next/dist/compiled) : le traceur n'embarque donc jamais
+    // node_modules/react-dom dans une fonction.
+    //
+    // Consequence, vue a l'ecran du proprietaire : rolldown ne resout pas
+    // `react-dom/client`, le laisse en import EXTERNE sans erreur, et le
+    // navigateur meurt sur « does not resolve to a valid URL ». Local :
+    // bundle de 955 839 caracteres, zero import restant — node_modules
+    // existe ici. Production : la meme oeuvre, cassee. Le defaut existait
+    // depuis le premier jour, masque par le binaire manquant puis par
+    // localStorage ; le filet d'erreur d'EP-280 l'a enfin montre.
+    //
+    // (La parade cote code existe aussi : l'assembleur refuse desormais tout
+    // bundle portant un import nu — fail-closed, quel que soit le milieu.)
     '/api/generateur/apercu-live': [
       ...MOTEUR_EMISSION,
       '../../node_modules/@rolldown/binding-linux-x64-gnu/**',
+      '../../node_modules/react/**',
+      '../../node_modules/react-dom/**',
+      '../../node_modules/scheduler/**',
     ],
     '/api/generateur/apercu': [
       ...MOTEUR_EMISSION,
@@ -206,6 +227,9 @@ const nextConfig: NextConfig = {
       // Le glob est résolu AU BUILD, sur Linux, où cette liaison existe. En
       // local elle n'est pas installée, et c'est normal.
       '../../node_modules/@rolldown/binding-linux-x64-gnu/**',
+      '../../node_modules/react/**',
+      '../../node_modules/react-dom/**',
+      '../../node_modules/scheduler/**',
     ],
     // ── LA ROUTE DE L'ÉCRITURE DIRECTE, ET C'EST LA QUATRIÈME FOIS.
     //
@@ -223,7 +247,10 @@ const nextConfig: NextConfig = {
     //
     // Cette route n'a PAS besoin de `MOTEUR_EMISSION` : elle ne touche pas
     // la chaîne AIR. Elle n'a besoin que de l'assembleur.
-    '/api/generateur/direct': ['../../node_modules/@rolldown/binding-linux-x64-gnu/**'],
+    '/api/generateur/direct': ['../../node_modules/@rolldown/binding-linux-x64-gnu/**',
+      '../../node_modules/react/**',
+      '../../node_modules/react-dom/**',
+      '../../node_modules/scheduler/**'],
     // ── LA ROUTE QUI REVOIT UNE APPLICATION ASSEMBLE, ELLE AUSSI.
     //
     // Elle recompile les fichiers stockes pour les rendre a l'ecran. Sans
@@ -231,7 +258,10 @@ const nextConfig: NextConfig = {
     // binding » — le defaut exact du 2026-10-19, qui a coute 0,11 $ et trois
     // tours avant que le compilateur ne lise une seule ligne. Le cliquet
     // EP-278 l'exige maintenant ; cette entree est la pour qu'il soit vert.
-    '/api/generateur/direct/[id]': ['../../node_modules/@rolldown/binding-linux-x64-gnu/**'],
+    '/api/generateur/direct/[id]': ['../../node_modules/@rolldown/binding-linux-x64-gnu/**',
+      '../../node_modules/react/**',
+      '../../node_modules/react-dom/**',
+      '../../node_modules/scheduler/**'],
     '/api/generateur/comprendre': MOTEUR_EMISSION,
     // LIRE AVANT DE DEMANDER : cette route importe `elicitation.mjs`
     // pour FILTRER sa sortie contre la table. Sans le tracage, le
@@ -262,6 +292,9 @@ const nextConfig: NextConfig = {
     '/api/generateur/sonde': [
       ...MOTEUR_EMISSION,
       '../../node_modules/@rolldown/binding-linux-x64-gnu/**',
+      '../../node_modules/react/**',
+      '../../node_modules/react-dom/**',
+      '../../node_modules/scheduler/**',
     ],
     // ── LA ROUTE QUI FAIT TOUT LE TRAVAIL MANQUAIT A CETTE LISTE.
     //
@@ -301,7 +334,10 @@ const nextConfig: NextConfig = {
     // première exécution, et c'est précisément pourquoi il existe : je
     // viens de prouver, deux fois en deux jours, que je ne suis pas un
     // mécanisme de complétude fiable.
-    '/p/[jeton]': ['../../node_modules/@rolldown/binding-linux-x64-gnu/**'],
+    '/p/[jeton]': ['../../node_modules/@rolldown/binding-linux-x64-gnu/**',
+      '../../node_modules/react/**',
+      '../../node_modules/react-dom/**',
+      '../../node_modules/scheduler/**'],
     '/api/cron/photos-pro': [
       './public/modeles/u2netp.onnx',
       '../../node_modules/onnxruntime-web/dist/*.wasm',

@@ -155,6 +155,45 @@ describe('EP-278 · toute route qui assemble emmène son assembleur', () => {
     ).toEqual([])
   })
 
+  it('④ CHAQUE ROUTE QUI ASSEMBLE EMBARQUE AUSSI LES SOURCES DE REACT', () => {
+    // ── LE BINAIRE NE SUFFIT PAS — MESURE EN PRODUCTION LE 2026-10-30.
+    //
+    // Next emploie SA copie vendue de React (next/dist/compiled) : le
+    // traceur n'embarque donc jamais node_modules/react-dom dans une
+    // fonction. Rolldown, ne pouvant resoudre `react-dom/client`, le
+    // laissait en import EXTERNE — sans erreur — et le navigateur mourait
+    // sur « does not resolve to a valid URL ». L'oeuvre etait livree verte
+    // et cassee. Le defaut existait depuis le premier jour, masque par
+    // d'autres couches ; le filet d'EP-280 l'a enfin montre a l'ecran.
+    for (const paquet of ['react/', 'react-dom/', 'scheduler/']) {
+      const manques = concernees.filter(
+        (r) => !(traces[r] ?? []).some((c) => c.includes(`node_modules/${paquet}`)),
+      )
+      expect(
+        manques,
+        `ces routes assemblent sans embarquer ${paquet} : rolldown laissera ` +
+          'l import externe et l application mourra au chargement',
+      ).toEqual([])
+    }
+  })
+
+  it('⑤ L’ASSEMBLEUR REFUSE UN BUNDLE QUI IMPORTE ENCORE', async () => {
+    // La parade cote CODE, independante du milieu : meme si une fonction
+    // perd ses node_modules demain, le defaut devient un refus NOMME au lieu
+    // d'une livraison morte. On le prouve en executant l'assembleur sur un
+    // import qu'aucun environnement ne fournit.
+    const { assembler } = await import('../bac-a-sable')
+    const v = await assembler(
+      new Map([['index.tsx', "import x from 'paquet-fantome-qui-nexiste-pas'\nexport default x"]]),
+    )
+    expect(v.ok, 'un bundle troue est reparti avec un verdict vert').toBe(false)
+    if (!v.ok) {
+      expect(v.erreur, 'le refus ne nomme pas le paquet manquant').toContain(
+        'paquet-fantome-qui-nexiste-pas',
+      )
+    }
+  })
+
   it('③ rolldown RESTE EXTERNE — sinon la liaison désignée ne sert à rien', () => {
     // Si Next l'empaquetait, le `.node` serait cherché dans le bundle et non
     // dans `node_modules` : la liaison tracée deviendrait inutile et le
