@@ -6,6 +6,7 @@ import { supabase as supabaseAnon } from '@/lib/supabase';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { computeAiScore } from '@/app/lib/aiScore';
 import { logGenerationFailure } from '@/lib/generationFailures';
+import { logAiUsage } from '@/lib/ai-usage';
 import { isKnownDropshipSubtype, resolvePersistedSubtype } from '@/lib/dropship/subtypeAdmission';
 import { usesCatalogSelections } from '@/lib/dropship/catalogAdmission';
 
@@ -725,7 +726,24 @@ Return ONLY valid JSON, no markdown:
     // pas au-dessus. 8000 aligne sur le precedent deja en production dans ce
     // depot pour le meme modele (catalog/enhance/route.ts), avec une marge
     // reelle (~1.8x) au-dessus du point de troncature observe.
-    const MAIN_MAX_TOKENS = 8000;
+    // ── 32 000, ET LA BORNE PRECEDENTE A ETE MESUREE EN TRAIN DE COUPER.
+    //
+    // 8 000 avait ete calibre sur `claude-haiku` (mesure d'epoque :
+    // 4 227 / 4 416 jetons en succes). L'autre fournisseur ecrit plus long,
+    // et le 2026-10-30 une boutique mode 2 est morte dessus :
+    //
+    //     failure_type = json_parse · stop_reason = MAX_TOKENS
+    //     « Unterminated string in JSON at position 4025 »
+    //     fin du brut : "Nous acceptons les cartes de credit   ← coupe net
+    //
+    // Ce n'etait pas un JSON mal forme : c'etait un JSON INTERROMPU. Meme
+    // defaut que le moteur direct le 2026-10-19 — une borne juste pour un
+    // modele, fausse pour le suivant, et un message d'erreur qui accusait
+    // le modele au lieu de nommer la coupure.
+    //
+    // 32 000 : quatre fois ce qui a coupe, tres en dessous du plafond reel
+    // de l'API (393 216, mesure). Cout du pire cas : 0,063 $.
+    const MAIN_MAX_TOKENS = 32000;
     const mainCallParams = {
       // ── ICI LE MODÈLE LOURD, ET C'EST UN ÉCART ASSUMÉ.
       //
@@ -799,7 +817,17 @@ Return ONLY valid JSON, no markdown:
       const messageErreur = e instanceof Error ? e.message : String(e)
       console.error('AI JSON validation failed:', messageErreur || e, '\nRaw text (tail):', text.slice(-2000));
       return NextResponse.json(
-        { error: "La génération IA a produit un résultat invalide. Merci de réessayer." },
+        {
+          // ── LA COUPURE SE DIT, elle ne se cache pas derriere « invalide ».
+          //
+          // Un JSON tronque et un JSON fautif ne se reparent pas pareil :
+          // l'un demande une borne plus haute, l'autre un modele qui ecrit
+          // mieux. Les confondre a deja coute deux nuits sur l'autre moteur.
+          error:
+            response.stop_reason === 'max_tokens'
+              ? 'La réponse du modèle a été coupée avant la fin (limite de longueur atteinte). Réessayez : si cela se répète, la limite doit être relevée.'
+              : "La génération IA a produit un résultat invalide. Merci de réessayer.",
+        },
         { status: 502 }
       );
     }
@@ -1086,6 +1114,26 @@ Return ONLY valid JSON, no markdown:
         price_range: parsed.priceRange,
       } as any);
       await supabaseAdmin.from('score_history').insert({ slug, score, reason: 'Création du site' });
+
+      // ── CE QU'UN SITE COUTE, MESURE PLUTOT QUE SUPPOSE.
+      //
+      // DEFAUT MESURE LE 2026-10-30 : SEPT routes enregistrent leur
+      // consommation — blog, catalogue, marketing, agent. La generation de
+      // SITE, celle que le produit vend, ne l'a jamais fait. `ai_usage_log`
+      // comptait 14 lignes et PAS UNE generation de site.
+      //
+      // Consequence directe : a la question « combien coute un site en mode
+      // 1, 2, 3 ? », la seule reponse honnete etait « je ne sais pas ». Les
+      // jetons existaient dans la reponse, personne ne les rangeait.
+      //
+      // Le MODE voyage dans `usage_type`, pour que les trois se comparent
+      // sans jointure ni supposition.
+      await logAiUsage({
+        siteId: null,
+        usageType: `site_mode${String(siteMode)}`,
+        model: MODELE_LOURD,
+        usage: response.usage,
+      });
     } catch (e) {
       console.error('score_history insert failed:', e);
     }
