@@ -73,6 +73,19 @@ function mockSitesChain() {
 }
 
 beforeEach(() => {
+  // ── LA CLE EST DESORMAIS EXIGEE, ET CE CONTROLE L'EXERCE.
+  //
+  // La route construisait son propre client avec `apiKey: undefined`, ce qui
+  // ne jetait jamais. Elle passe maintenant par `clientIA()`, qui REFUSE une
+  // cle absente — c'est une garde reelle, mesuree le 2026-10-30 : le solde
+  // Anthropic etait a zero et dix routes mouraient en 400 sans que rien ne
+  // le dise avant la production.
+  //
+  // On fournit donc une cle de test. Les DEUX, parce que `clientIA` lit
+  // l'interrupteur de fournisseur : laquelle est demandee depend de
+  // `GENERATEUR_FOURNISSEUR`, et ce controle ne doit pas dependre de lui.
+  process.env.ANTHROPIC_API_KEY = 'cle-de-test';
+  process.env.DEEPSEEK_API_KEY = 'cle-de-test';
   getUserMock.mockReset();
   fromMock.mockReset();
   anthropicCreateMock.mockReset();

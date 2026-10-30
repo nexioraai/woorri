@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { sansQuota } from '@/lib/admin-emails';
-import Anthropic from '@anthropic-ai/sdk';
 import { z } from 'zod';
+import { clientIA, MODELE_LEGER, MODELE_LOURD } from '@/lib/ia/client';
 import { supabase as supabaseAnon } from '@/lib/supabase';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { computeAiScore } from '@/app/lib/aiScore';
@@ -9,7 +9,35 @@ import { logGenerationFailure } from '@/lib/generationFailures';
 import { isKnownDropshipSubtype, resolvePersistedSubtype } from '@/lib/dropship/subtypeAdmission';
 import { usesCatalogSelections } from '@/lib/dropship/catalogAdmission';
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+// ── LE FOURNISSEUR NE SE CHOISIT PLUS ICI.
+//
+// DÉFAUT MESURÉ LE 2026-10-30. Cette route portait
+// `new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })` et des noms de
+// modèles Claude en dur, alors que la bascule vers DeepSeek n'avait touché
+// que `clientIA()` — deux routes sur douze.
+//
+//     POST /v1/messages → HTTP 400
+//     « Your credit balance is too low to access the Anthropic API. »
+//     request_id req_011CgYG67NamPZSwwLkJEdrY   (coût zéro : rien n'est émis)
+//
+// LA GÉNÉRATION DE SITE ÉTAIT DONC MORTE EN PRODUCTION, et avec elle les
+// trois modes que le propriétaire cherchait à éprouver. L'entretien pouvait
+// bien aboutir : l'appel suivant répondait 400.
+//
+// `clientIA()` lit l'interrupteur de fournisseur. Cette route n'a plus à
+// savoir qui répond — c'était précisément le savoir qui s'est périmé.
+//
+// ── ET LE CLIENT NAÎT DANS LE HANDLER, PAS À L'IMPORT.
+//
+// J'avais écrit `const anthropic = clientIA()` ici, au niveau module.
+// `clientIA` JETTE quand la clé manque : importer ce fichier suffisait donc
+// à le casser, et la gate l'a dit — `sectorPrompt.test.ts` est mort à
+// l'import, pas en appelant quoi que ce soit.
+//
+// LA RÈGLE ÉTAIT DÉJÀ ÉCRITE, dans `onboarding/route.ts`, qui avait commis
+// puis corrigé exactement cette faute : « aucun client n'est construit à
+// l'import ». Je l'ai lue il y a une heure et je l'ai refaite quand même.
+const ia = () => clientIA();
 
 // Valide la sortie JSON du modele avant toute utilisation — jusqu'ici
 // JSON.parse() seul, sans garantie de champ present ni de type correct.
@@ -473,8 +501,11 @@ export async function POST(req: Request) {
     // Pre-check AI seulement si prompt court/ambigu
     if (trimmed.length < 40 || wordCount < 5) {
       try {
-        const preCheck = await anthropic.messages.create({
-          model: 'claude-haiku-4-5-20251001',
+        const preCheck = await ia().messages.create({
+          // CLASSEMENT COURT — « est-ce une salutation, du charabia, ou une
+          // vraie demande ? ». 250 jetons. C'est exactement le rôle que
+          // `claude-haiku` tenait : le modèle léger le tient à l'identique.
+          model: MODELE_LEGER,
           max_tokens: 250,
           messages: [{
             role: 'user',
@@ -696,11 +727,21 @@ Return ONLY valid JSON, no markdown:
     // reelle (~1.8x) au-dessus du point de troncature observe.
     const MAIN_MAX_TOKENS = 8000;
     const mainCallParams = {
-      model: 'claude-haiku-4-5-20251001' as const,
+      // ── ICI LE MODÈLE LOURD, ET C'EST UN ÉCART ASSUMÉ.
+      //
+      // L'ancienne route employait `claude-haiku`, le palier LÉGER. Le
+      // report fidèle serait donc `MODELE_LEGER`. Je prends le lourd, et
+      // voici pourquoi : cet appel écrit le SITE ENTIER — c'est l'œuvre que
+      // la personne paie, pas une tâche d'appoint. 8 000 jetons de sortie
+      // coûtent 0,016 $ au tarif lourd. L'économie du palier léger ne vaut
+      // pas le risque sur la seule chose que le produit livre.
+      //
+      // Écart de ma main : le propriétaire peut le renverser en une ligne.
+      model: MODELE_LOURD,
       max_tokens: MAIN_MAX_TOKENS,
       messages: [{ role: 'user' as const, content: PROMPT + sectorPrompt + '\n\nBusiness request: ' + message }],
     };
-    let response = await anthropic.messages.create(mainCallParams);
+    let response = await ia().messages.create(mainCallParams);
 
     // Retry unique, strictement conditionne a une troncature reelle (audit
     // FUNC-04) : jamais sur end_turn, jamais sur une erreur reseau (qui leve
@@ -712,7 +753,7 @@ Return ONLY valid JSON, no markdown:
     // le relais normalement si la 2e tentative est encore tronquee.
     if (response.stop_reason === 'max_tokens') {
       console.warn('[chat] max_tokens atteint au 1er essai, retry unique', { sector, siteMode });
-      response = await anthropic.messages.create(mainCallParams);
+      response = await ia().messages.create(mainCallParams);
     }
 
     const text = response.content.map((item: any) => item.type === 'text' ? item.text : '').join('');
