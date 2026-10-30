@@ -8,13 +8,60 @@ import { supabase } from '@/lib/supabase';
 import { computeAiScore } from '@/app/lib/aiScore';
 import { useTranslation } from '@/lib/translations';
 
+/**
+ * UNE APPLICATION TELLE QUE LA LISTE LA MONTRE.
+ *
+ * Le fichier environnant emploie `any` pour ses sites — dette anterieure que
+ * je ne touche pas. Mais je n'en AJOUTE pas : ce panneau est neuf, son
+ * contrat est connu, et le declarer coute une dizaine de lignes.
+ *
+ * `revoyable` est le champ qui compte : il dit si les FICHIERS existent, pas
+ * si le statut promet. Les deux divergent, et c'est cette divergence qui
+ * decide d'afficher « Revoir » ou non.
+ */
+type Application = {
+  id: string;
+  creeLe: string;
+  statut: string;
+  nom: string | null;
+  demande: string;
+  dureeMs: number;
+  fichiers: number;
+  revoyable: boolean;
+};
+
 export default function DashboardPage() {
   const router = useRouter();
   const { t } = useTranslation();
   const [user, setUser] = useState<any>(null);
   const [sites, setSites] = useState<any[]>([]);
+  // ── LES APPLICATIONS N'APPARAISSAIENT NULLE PART, JAMAIS.
+  //
+  // DEFAUT MESURE LE 2026-10-30 : douze routes d'API lisaient la table des
+  // generations, AUCUNE PAGE ne la lisait. Le proprietaire a produit CONTERAK
+  // deux fois ; les deux fois, la seule facon de la retrouver a ete d'en
+  // sortir les fichiers a la main. Une oeuvre payee que le produit perdait.
+  const [applications, setApplications] = useState<Application[]>([]);
   const [history, setHistory] = useState<Record<string, number[]>>({});
   const [loading, setLoading] = useState(true);
+
+  // Les applications se chargent A COTE des sites : si leur route echoue, le
+  // tableau de bord affiche quand meme ce qu'il sait. Un panneau vide vaut
+  // mieux qu'une page blanche.
+  useEffect(() => {
+    void (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+      try {
+        const res = await fetch('/api/generateur/mes-applications', {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+        if (!res.ok) return;
+        const d = (await res.json()) as { applications?: Application[] };
+        setApplications(Array.isArray(d.applications) ? d.applications : []);
+      } catch { /* le panneau reste vide, le reste du tableau de bord vit */ }
+    })();
+  }, []);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -198,6 +245,57 @@ export default function DashboardPage() {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* ── LES APPLICATIONS, ENFIN VISIBLES.
+            Le panneau ne s'affiche que s'il y a quelque chose a montrer : un
+            cadre vide sur un tableau de bord de sites ne dirait rien a qui
+            n'a jamais genere d'application. */}
+        {applications.length > 0 && (
+          <div className="mt-16">
+            <h2 className="text-white/90 text-xl font-semibold mb-6">Vos applications</h2>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {applications.map((a) => (
+                <div key={a.id}
+                  className="border border-white/[0.06] rounded-2xl p-5 flex flex-col gap-3"
+                  style={{ background: 'rgba(255,255,255,0.02)' }}>
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-white/90 font-semibold text-sm truncate">
+                      {a.nom ?? 'Application'}
+                    </span>
+                    <span className={`text-[11px] px-2 py-0.5 rounded-full border shrink-0 ${
+                      a.statut === 'livree'
+                        ? 'border-emerald-500/30 text-emerald-400 bg-emerald-500/10'
+                        : 'border-white/10 text-white/50'
+                    }`}>
+                      {a.statut === 'livree' ? 'livrée' : a.statut}
+                    </span>
+                  </div>
+                  <p className="text-white/40 text-xs leading-relaxed line-clamp-3">{a.demande}</p>
+                  <div className="text-white/30 text-[11px] flex items-center gap-3 mt-auto pt-2">
+                    <span>{new Date(a.creeLe).toLocaleDateString('fr-FR')}</span>
+                    {a.fichiers > 0 && <span>{a.fichiers} fichier{a.fichiers > 1 ? 's' : ''}</span>}
+                    {a.dureeMs > 0 && <span>{Math.round(a.dureeMs / 1000)} s</span>}
+                  </div>
+                  {/* ── « REVOIR » N'APPARAIT QUE SI LA MATIERE EXISTE.
+                      Le statut dit ce que la machine a cru ; les fichiers
+                      disent ce qu'elle a garde. Offrir le lien sans la
+                      matiere, c'est promettre un 404 — et faire croire a la
+                      personne qu'elle a perdu son application une 2e fois. */}
+                  {a.revoyable ? (
+                    <a href={`/api/generateur/direct/${a.id}`} target="_blank" rel="noreferrer"
+                      className="text-center px-3 py-2 rounded-xl text-sm font-semibold border border-white/10 text-white/70 hover:text-white hover:border-white/30 transition-all">
+                      Revoir
+                    </a>
+                  ) : (
+                    <span className="text-center px-3 py-2 rounded-xl text-xs text-white/25 border border-white/[0.04]">
+                      Aucun fichier conservé
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>

@@ -224,6 +224,14 @@ const nextConfig: NextConfig = {
     // Cette route n'a PAS besoin de `MOTEUR_EMISSION` : elle ne touche pas
     // la chaîne AIR. Elle n'a besoin que de l'assembleur.
     '/api/generateur/direct': ['../../node_modules/@rolldown/binding-linux-x64-gnu/**'],
+    // ── LA ROUTE QUI REVOIT UNE APPLICATION ASSEMBLE, ELLE AUSSI.
+    //
+    // Elle recompile les fichiers stockes pour les rendre a l'ecran. Sans
+    // cette ligne, elle demarrerait et mourrait sur « Cannot find native
+    // binding » — le defaut exact du 2026-10-19, qui a coute 0,11 $ et trois
+    // tours avant que le compilateur ne lise une seule ligne. Le cliquet
+    // EP-278 l'exige maintenant ; cette entree est la pour qu'il soit vert.
+    '/api/generateur/direct/[id]': ['../../node_modules/@rolldown/binding-linux-x64-gnu/**'],
     '/api/generateur/comprendre': MOTEUR_EMISSION,
     // LIRE AVANT DE DEMANDER : cette route importe `elicitation.mjs`
     // pour FILTRER sa sortie contre la table. Sans le tracage, le
