@@ -45,16 +45,30 @@ body {
 }
 
 /* ===== NEXIORA BRAND IDENTITY ===== */
+/* ── LE FOND DE MARQUE, SANS SA GRILLE (2026-10-30).
+ *
+ * Les deux premieres couches tracaient un quadrillage de 40 px a 4 %
+ * d'opacite. Le proprietaire l'a vu au travers de l'ecran de creation et a
+ * demande son retrait.
+ *
+ * CE QUI RESTE INTACT, et c'est tout l'interet : les quatre halos de marque
+ * (bleu, accent, or, prune) et la couleur de fond. Le retrait ne touche que
+ * le quadrillage.
+ *
+ * ET `background-size` SUIT, poste par poste. C'est le piege de cette
+ * propriete : elle s'aligne sur les couches de `background` DANS L'ORDRE.
+ * Retirer deux couches sans retirer leurs deux `40px 40px` decalerait tout
+ * le reste d'un cran — chaque halo prendrait la taille du suivant, et le
+ * dernier n'en aurait plus. Sept valeurs pour sept couches, cinq pour cinq.
+ */
 .nexiora-bg {
   background:
-    linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px),
     radial-gradient(ellipse at 15% 15%, rgba(79,110,245,0.35) 0%, transparent 50%),
     radial-gradient(ellipse at 85% 20%, rgba(224,112,64,0.35) 0%, transparent 50%),
     radial-gradient(ellipse at 80% 80%, rgba(201,168,76,0.25) 0%, transparent 45%),
     radial-gradient(ellipse at 20% 85%, rgba(139,34,82,0.25) 0%, transparent 40%),
     #0a050e;
-  background-size: 40px 40px, 40px 40px, 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%;
+  background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%;
 }
 .btn-nexiora {
   background: linear-gradient(135deg, #4F6EF5 0%, #FA5D1E 60%, #C9A84C 100%);
@@ -301,12 +315,9 @@ html[data-storefront-theme="noir"] [data-cookie-consent-panel] [data-cookie-decl
   box-shadow: 0 0 32px 4px color-mix(in srgb, var(--color-accent) 45%, transparent);
 }
 
-.grid-bg {
-  background-image:
-    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
-  background-size: 40px 40px;
-}
+/* `.grid-bg` A ETE SUPPRIMEE : zero fichier l'employait. Elle portait le
+ * meme quadrillage que `.nexiora-bg` et l'aurait fait revenir par une autre
+ * porte le jour ou quelqu'un l'aurait appliquee en croyant bien faire. */
 
 
 /* Anti-zoom iOS : sous 16px, Safari mobile zoome automatiquement au focus d'un champ
