@@ -103,6 +103,38 @@ describe('EP-288 · aucune borne que la réflexion épuise', () => {
     }
   })
 
+  it('⑤ LA CONSIGNE LIT LE SILENCE D’UN DOCUMENT COMPLET', () => {
+    // ── LE DEFAUT LE PLUS REPETE DE CE CHANTIER, 2026-10-30.
+    //
+    // L'ancienne consigne disait « si ce n'est pas ecrit, tu OMETS la cle ».
+    // Le modele obeissait : un cahier des charges COMPLET, sans un mot sur
+    // l'argent, rendait {} pour ARGENT_DANS_APP — et la question « Que fait
+    // votre application avec l'argent ? » revenait, encore et encore, alors
+    // que le silence du document Y REPONDAIT. Mesure sur trois briefs apres
+    // correction : complet-sans-argent → "aucun" ; court → {} ; complet-
+    // avec-encaissement → "paiements".
+    //
+    // La frontiere n'est pas « ecrit ou pas » mais « document complet ou
+    // fragment ». Ce controle tient les DEUX moities : le silence structure
+    // se lit, la demande vague continue de declencher les questions.
+    const code = readFileSync(
+      join(SRC, 'app', 'api', 'generateur', 'lire-brief', 'route.ts'),
+      'utf8',
+    )
+    const bloc = code.slice(code.indexOf('const CONSIGNE'), code.indexOf('].join'))
+    // ── M166 N'A PAS MORDU SUR /silence/i : le MOT survivait a une regle
+    // affaiblie. On exige la REGLE — « aucun » rattache au document complet.
+    expect(bloc, 'la consigne ne lit plus le silence d’un document complet').toMatch(
+      /aucun[\s\S]{0,120}cahier des charges COMPLET/u,
+    )
+    expect(bloc, 'la moitié « fragment » a disparu : une demande vague cesserait de questionner').toMatch(
+      /COURTE ou VAGUE/u,
+    )
+    // Et l'interdit de DEVINER reste entier — c'est lui qui sépare cette
+    // lecture de l'erreur de v0 (pays déduit de la langue).
+    expect(bloc, 'l’interdit de deviner a disparu avec la correction').toMatch(/deviner/iu)
+  })
+
   it('④ `lire-brief` DISTINGUE « RIEN DÉDUIT » DE « PAS PU LIRE »', () => {
     // ── LE DEFAUT PROFOND, celui qui rendait le precedent invisible.
     //
