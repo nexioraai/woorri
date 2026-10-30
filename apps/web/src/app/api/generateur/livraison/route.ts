@@ -13,6 +13,7 @@ import { TABLE_GENERATIONS } from '@/lib/apps/journal'
 import { zipper } from '@/lib/apps/zip'
 import { assembler } from '@/lib/apps/bac-a-sable'
 import { pageAutonome } from '@/lib/apps/boucle-directe'
+import { projetLivrable } from '@/lib/apps/projet-livrable'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -90,9 +91,12 @@ export async function GET(req: Request) {
         { status: 500 },
       )
     }
-    const fichiersZip = new Map<string, string | Buffer>(Object.entries(docDirect.fichiers))
-    fichiersZip.set('index.html', pageAutonome(v.code, 'Application'))
-    const archive = zipper(fichiersZip)
+    // UN PROJET, PAS UN TAS DE FICHIERS : sources sous src/, outillage
+    // (package.json epingle sur la version de react qui a compile, vite,
+    // tsconfig), README en francais, et la page autonome en index.html.
+    // Exigence du proprietaire, 2026-10-30 : « de bonnes applis web
+    // telechargeables, sinon je veux pas accepter ».
+    const archive = zipper(projetLivrable(docDirect.fichiers, pageAutonome(v.code, 'Application')))
     return new Response(new Uint8Array(archive), {
       headers: {
         'Content-Type': 'application/zip',

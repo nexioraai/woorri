@@ -68,9 +68,16 @@ export default function DashboardPage() {
         method: 'POST',
         headers: { Authorization: `Bearer ${session.access_token}` },
       });
-      const d = (await res.json().catch(() => null)) as { url?: string; error?: string } | null;
-      if (!res.ok || !d?.url) { setApercuErreur(d?.error ?? 'La publication a échoué.'); return; }
-      setLienPublic({ id: a.id, url: d.url });
+      // ── LE CHAMP S'APPELLE `lien`, PAS `url` — BUG ATTRAPÉ EN PROD.
+      //
+      // Mesuré le 2026-10-30 : la route a répondu 200 avec
+      // {"lien":"https://…/p/…"} pendant que ce code lisait `d.url` — le
+      // bouton aurait dit « échec » sur une publication RÉUSSIE. On lit les
+      // deux : si la route renomme un jour, le bouton survit.
+      const d = (await res.json().catch(() => null)) as { lien?: string; url?: string; error?: string } | null;
+      const lien = d?.lien ?? d?.url;
+      if (!res.ok || !lien) { setApercuErreur(d?.error ?? 'La publication a échoué.'); return; }
+      setLienPublic({ id: a.id, url: lien });
     } catch { setApercuErreur('La publication a échoué. Réessayez.'); }
   };
 
