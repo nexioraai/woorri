@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import Anthropic from '@anthropic-ai/sdk';
+import { clientIA, MODELE_LEGER, MODELE_LOURD } from '@/lib/ia/client';
 import { requireSiteOwner } from '@/lib/auth/require-site-owner';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { logAiUsage } from '@/lib/ai-usage';
@@ -35,7 +35,10 @@ import { createPost, slugifyArticleTitle, ecritureRefusee } from '@/lib/blog';
 // PAS DE `canTransact` : le blog est commun aux trois modes.
 // ============================================================
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+// Le fournisseur vient de l'interrupteur, et le client NAIT DANS LE
+// HANDLER : `clientIA` jette quand la cle manque, donc l'appeler au
+// niveau module casserait le simple import (EP-283 ⑤).
+const ia = () => clientIA();
 
 /** Meme fenetre et meme plafond que `/api/blog/generate` : un redacteur
  *  n'ecrit pas dix articles par minute, une boucle si. */
@@ -126,12 +129,12 @@ export async function POST(req: Request) {
     if ((cache as { brief?: unknown } | null)?.brief) {
       brief = (cache as { brief: unknown }).brief;
     } else {
-      const res = await anthropic.messages.create({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 1500,
+      const res = await ia().messages.create({
+        model: MODELE_LEGER,
+        max_tokens: 6000,
         messages: [{ role: 'user', content: buildBriefPrompt(siteRow) }],
       });
-      await logAiUsage({ siteId: siteRow.id, usageType: 'blog', model: 'claude-haiku-4-5-20251001', usage: res.usage });
+      await logAiUsage({ siteId: siteRow.id, usageType: 'blog', model: MODELE_LEGER, usage: res.usage });
       brief = parseJson(res.content.map((c) => (c.type === 'text' ? c.text : '')).join(''));
 
       // CACHE EN LECTURE SEULE, DELIBEREMENT.
@@ -155,12 +158,12 @@ export async function POST(req: Request) {
 
     // 4. ARTICLE -- meme prompt, mot pour mot, que `/api/marketing/generate`
     //    au format `article`.
-    const res = await anthropic.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 2500,
+    const res = await ia().messages.create({
+      model: MODELE_LOURD,
+      max_tokens: 10000,
       messages: [{ role: 'user', content: buildContentPrompt(siteRow, brief, 'article') }],
     });
-    await logAiUsage({ siteId: siteRow.id, usageType: 'blog', model: 'claude-sonnet-4-6', usage: res.usage });
+    await logAiUsage({ siteId: siteRow.id, usageType: 'blog', model: MODELE_LOURD, usage: res.usage });
     const contenu = parseJson(res.content.map((c) => (c.type === 'text' ? c.text : '')).join(''));
 
     const titre = typeof contenu?.titre === 'string' ? contenu.titre.trim() : '';

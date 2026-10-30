@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import Anthropic from '@anthropic-ai/sdk';
+import { clientIA, MODELE_LEGER } from '@/lib/ia/client';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { usesCatalogSelections } from '@/lib/dropship/catalogAdmission';
 import { suppliersForDropshipType } from '@/lib/dropship/suppliers';
@@ -8,7 +8,10 @@ import { logAiUsage } from '@/lib/ai-usage';
 
 export const maxDuration = 45;
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+// Le fournisseur vient de l'interrupteur, et le client NAIT DANS LE
+// HANDLER : `clientIA` jette quand la cle manque, donc l'appeler au
+// niveau module casserait le simple import (EP-283 ⑤).
+const ia = () => clientIA();
 
 /**
  * POST /api/catalog/curate
@@ -121,9 +124,9 @@ export async function POST(req: NextRequest) {
     const lang = site.lang || 'fr';
     const nicheLabel = site.type || keywords.join(', ');
 
-    const msg = await anthropic.messages.create({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 3000,
+    const msg = await ia().messages.create({
+      model: MODELE_LEGER,
+      max_tokens: 12000,
       messages: [{
         role: 'user',
         content: 'You are a STRICT e-commerce product curator.\n\n' +
@@ -155,7 +158,7 @@ export async function POST(req: NextRequest) {
           'If only 5 products are truly relevant, return only those 5 in "products". NEVER pad with irrelevant products.'
       }],
     });
-    await logAiUsage({ siteId: site.id, usageType: 'curate', model: 'claude-haiku-4-5-20251001', usage: msg.usage });
+    await logAiUsage({ siteId: site.id, usageType: 'curate', model: MODELE_LEGER, usage: msg.usage });
 
     const raw = msg.content[0].type === 'text' ? msg.content[0].text : '';
     let selections: { index: number; reason: string }[];

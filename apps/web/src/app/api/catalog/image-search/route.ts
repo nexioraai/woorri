@@ -1,11 +1,14 @@
 import { NextResponse } from 'next/server';
 import { usesCatalogSelections } from '@/lib/dropship/catalogAdmission';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import Anthropic from '@anthropic-ai/sdk';
+import { clientIA, MODELE_LOURD } from '@/lib/ia/client';
 import { sitePricing } from '@/lib/pricing';
 import { logAiUsage } from '@/lib/ai-usage';
 
-const anthropic = new Anthropic();
+// Le fournisseur vient de l'interrupteur, et le client NAIT DANS LE
+// HANDLER : `clientIA` jette quand la cle manque, donc l'appeler au
+// niveau module casserait le simple import (EP-283 ⑤).
+const ia = () => clientIA();
 
 export async function POST(req: Request) {
   try {
@@ -79,9 +82,9 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Trop de requetes, reessayez dans une minute.' }, { status: 429 });
     }
 
-    const msg = await anthropic.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 150,
+    const msg = await ia().messages.create({
+      model: MODELE_LOURD,
+      max_tokens: 2000,
       messages: [{
         role: 'user',
         content: [
@@ -90,7 +93,7 @@ export async function POST(req: Request) {
         ],
       }],
     });
-    await logAiUsage({ siteId: site.id, usageType: 'image', model: 'claude-sonnet-4-6', usage: msg.usage });
+    await logAiUsage({ siteId: site.id, usageType: 'image', model: MODELE_LOURD, usage: msg.usage });
 
     const keywords = ((msg.content[0] as any)?.text || '').trim();
     if (!keywords) {

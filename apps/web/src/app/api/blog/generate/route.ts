@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import Anthropic from "@anthropic-ai/sdk";
+import { clientIA, MODELE_LOURD } from '@/lib/ia/client';
 import { requirePlatformAdmin } from "@/lib/auth/require-platform-admin";
 import { logAiUsage } from "@/lib/ai-usage";
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+// Le fournisseur vient de l'interrupteur, et le client NAIT DANS LE
+// HANDLER : `clientIA` jette quand la cle manque, donc l'appeler au
+// niveau module casserait le simple import (EP-283 ⑤).
+const ia = () => clientIA();
 
 // ============================================================
 // LOT 6 -- CETTE ROUTE ETAIT OUVERTE A TOUT INTERNET.
@@ -95,9 +98,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const msg = await anthropic.messages.create({
-      model: "claude-sonnet-4-6",
-      max_tokens: 2000,
+    const msg = await ia().messages.create({
+      model: MODELE_LOURD,
+      max_tokens: 8000,
       messages: [
         {
           role: "user",
@@ -109,7 +112,7 @@ export async function POST(req: NextRequest) {
     // 3. TRACE -- la depense est comptabilisee AVANT l'ecriture : meme si
     // l'article echoue a s'inserer, l'appel a bien ete facture et doit peser
     // sur la fenetre. `siteId: null` -- le blog central n'a pas de site.
-    await logAiUsage({ siteId: null, usageType: "blog", model: "claude-sonnet-4-6", usage: msg.usage });
+    await logAiUsage({ siteId: null, usageType: "blog", model: MODELE_LOURD, usage: msg.usage });
 
     const raw = msg.content
       .map((b) => (b.type === "text" ? b.text : ""))

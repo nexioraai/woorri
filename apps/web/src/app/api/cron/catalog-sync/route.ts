@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { clientIA, MODELE_LEGER } from '@/lib/ia/client';
+const ia = () => clientIA();
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { cjAdapter } from '@/lib/suppliers/cj-adapter';
 import { printfulAdapter } from '@/lib/suppliers/printful-adapter';
@@ -163,27 +165,32 @@ export async function GET(req: NextRequest) {
 /** Expande une niche en mots-clés de recherche via Claude Haiku. */
 async function expandNiche(niche: string): Promise<string[]> {
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': process.env.ANTHROPIC_API_KEY || '',
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 200,
-        messages: [{
-          role: 'user',
-          content: `You are a product search keyword generator for dropshipping/POD suppliers (CJ Dropshipping, Printful, Printify).
+    // ── L'URL ETAIT ECRITE EN DUR, ET C'EST LA PIRE FORME DE LA DETTE.
+    //
+    // Cette fonction appelait `https://api.anthropic.com` directement, sans
+    // passer par le SDK ni par l'interrupteur. Elle est donc morte le jour ou
+    // le solde Anthropic est tombe a zero — HTTP 400, « Your credit balance
+    // is too low » — et rien ne pouvait le signaler : un `fetch` en dur ne
+    // figure dans aucun inventaire de client.
+    //
+    // La borne passait de 200 jetons. Le fournisseur actuel rend
+    // `[thinking, text]` et la reflexion est facturee sur `max_tokens` :
+    // 200 partaient entierement en reflexion, et le texte revenait VIDE.
+    const res = await ia().messages.create({
+      model: MODELE_LEGER,
+      max_tokens: 2000,
+      messages: [{
+        role: 'user' as const,
+        content: `You are a product search keyword generator for dropshipping/POD suppliers (CJ Dropshipping, Printful, Printify).
 Given this business type: "${niche}"
 Return exactly 7 short English product search keywords that would find relevant products on these platforms.
 Return ONLY a JSON array of strings, nothing else. Example: ["keyword1","keyword2","keyword3","keyword4","keyword5","keyword6","keyword7"]`,
-        }],
-      }),
+      }],
     });
-    const data = await res.json();
-    const text = data?.content?.[0]?.text || '';
+    // LE SDK REND DES BLOCS TYPES : on ne prend que le texte, et on les
+    // CONCATENE — le fournisseur en emet deux (`thinking` puis `text`), et
+    // lire `content[0]` ne ramenait que la reflexion.
+    const text = res.content.map((b) => (b.type === 'text' ? b.text : '')).join('');
     const match = text.match(/\[[\s\S]*\]/);
     if (match) {
       const keywords = JSON.parse(match[0]);

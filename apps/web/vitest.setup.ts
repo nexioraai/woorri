@@ -66,3 +66,23 @@ globalThis.fetch = ((entree: unknown, options?: unknown) => {
     ),
   );
 }) as typeof fetch;
+
+// ============================================================
+// EP-285 — AUCUN TEST N'A DE CLE, ET LE CODE EN EXIGE UNE DESORMAIS.
+//
+// LE DEFAUT MESURE (2026-10-30) : `clientIA()` JETTE quand la cle manque.
+// C'est une garde REELLE — elle existe parce que dix routes sont mortes en
+// silence le jour ou le solde Anthropic est tombe a zero. Mais en test,
+// aucune cle n'existe : chaque route migree vers l'interrupteur tombait a
+// l'appel, avec une erreur qui ne parlait pas du test mais de l'absence de
+// cle.
+//
+// LA MAUVAISE REPONSE AURAIT ETE DE DESARMER `clientIA`. On fournit une cle
+// de TEST a la place : la garde reste entiere, et les doubles de
+// `@anthropic-ai/sdk` interceptent l'appel avant qu'un octet ne parte — le
+// garde-fou reseau ci-dessus s'en assure.
+//
+// LES DEUX, parce que laquelle est exigee depend de l'interrupteur de
+// fournisseur : un test ne doit pas dependre de ce reglage pour demarrer.
+process.env.ANTHROPIC_API_KEY ||= 'cle-de-test-aucun-appel'
+process.env.DEEPSEEK_API_KEY ||= 'cle-de-test-aucun-appel'

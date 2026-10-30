@@ -24,6 +24,8 @@ vi.mock('@/lib/rate-limit/rateLimit', () => ({
   consommerJeton: (...a: unknown[]) => jetonMock(...a),
 }));
 
+import { MODELE_LEGER, MODELE_LOURD } from '@/lib/ia/client';
+
 const anthropicMock = vi.fn();
 vi.mock('@anthropic-ai/sdk', () => ({
   default: class {
@@ -137,7 +139,15 @@ describe('réutilisation du moteur extrait au lot 2', () => {
   it('cache de brief présent -> UN SEUL appel Claude (le contenu)', async () => {
     await POST(req({ site: 'mon-site' }));
     expect(anthropicMock).toHaveBeenCalledTimes(1);
-    expect(anthropicMock.mock.calls[0][0].model).toBe('claude-sonnet-4-6');
+    // ── LE PALIER, PAS LE NOM DU MODELE.
+    //
+    // Ce controle epinglait `claude-sonnet-4-6`. Il disait donc « ce
+    // fournisseur-la, ce modele-la » alors que l'intention est « le palier
+    // LOURD ecrit le contenu ». Il s'est perime a la bascule, et il se
+    // serait perime a chaque suivante.
+    //
+    // Lie a la constante, il mesure l'INTENTION et survit aux fournisseurs.
+    expect(anthropicMock.mock.calls[0][0].model).toBe(MODELE_LOURD);
   });
 
   it('cache absent -> brief généré (Haiku) puis contenu (Sonnet), et mis en cache', async () => {
@@ -147,7 +157,8 @@ describe('réutilisation du moteur extrait au lot 2', () => {
       .mockResolvedValueOnce(reponseIA(ARTICLE_IA));
     await POST(req({ site: 'mon-site' }));
     expect(anthropicMock).toHaveBeenCalledTimes(2);
-    expect(anthropicMock.mock.calls[0][0].model).toBe('claude-haiku-4-5-20251001');
+    // Le brief est une tache courte : palier LEGER. Meme raison qu'au-dessus.
+    expect(anthropicMock.mock.calls[0][0].model).toBe(MODELE_LEGER);
     // Le cache est LU avec la bonne projection et le bon filtre, jamais ECRIT.
     expect(journal.projections.marketing_briefs).toBe('brief');
     expect(journal.filtres.marketing_briefs).toContainEqual(['eq', 'slug', 'mon-site']);
@@ -280,8 +291,25 @@ describe('cliquet structurel', () => {
     expect(CODE).toContain("from '@/lib/blog'");
   });
 
-  it('la borne de dépense précède le premier appel Claude', () => {
-    expect(CODE.indexOf('consommerJeton')).toBeLessThan(CODE.indexOf('anthropic.messages.create'));
+  it('la borne de dépense précède le premier appel au modèle', () => {
+    // ── L'ANCRE NE NOMME PLUS UN FOURNISSEUR, ET C'EST LE SUJET.
+    //
+    // Elle cherchait `anthropic.messages.create`. La route passe désormais
+    // par l'interrupteur (`ia().messages.create`) : le fournisseur ne se
+    // choisit plus ici. L'ancre devait donc cesser de le nommer, sinon elle
+    // se périme à chaque bascule — ce qu'elle a fait, bruyamment, le
+    // 2026-10-30. Elle a ÉCHOUÉ plutôt que de passer à vide : c'est bien.
+    const borne = CODE.indexOf('consommerJeton');
+    const appel = CODE.indexOf('messages.create');
+    // ── ET VOICI LE TROU QUE JE FERME EN PASSANT.
+    //
+    // Si `consommerJeton` disparaissait, `indexOf` rendrait -1, et -1 est
+    // INFÉRIEUR à toute position : le contrôle serait passé au vert en
+    // certifiant une borne de dépense qui n'existe plus. On exige donc que
+    // les deux soient PRÉSENTS avant de comparer leur ordre.
+    expect(borne, 'la borne de dépense a disparu de cette route').toBeGreaterThan(-1);
+    expect(appel, 'plus aucun appel au modèle : ce contrôle ne mesure rien').toBeGreaterThan(-1);
+    expect(borne, 'le modèle est appelé AVANT que la dépense soit bornée').toBeLessThan(appel);
   });
 
   it('le cache marketing n’est jamais ÉCRIT — `owner_email` reste hors de ce lot', () => {

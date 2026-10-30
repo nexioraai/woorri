@@ -1,9 +1,16 @@
 import { NextResponse } from 'next/server';
-import Anthropic from '@anthropic-ai/sdk';
+// LE TYPE RESTE, LE CLIENT PART. Cette route decrit ses outils avec les
+// types du SDK (`Anthropic.Tool`) : c'est du vocabulaire de compilation, pas
+// une dependance d'execution — le fournisseur, lui, vient de l'interrupteur.
+import type Anthropic from '@anthropic-ai/sdk';
+import { clientIA, MODELE_LOURD } from '@/lib/ia/client';
 import { requireSiteOwner } from '@/lib/auth/require-site-owner';
 import { supabaseAdmin as supabase } from '@/lib/supabase-admin';
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+// Le fournisseur vient de l'interrupteur, et le client NAIT DANS LE
+// HANDLER : `clientIA` jette quand la cle manque, donc l'appeler au
+// niveau module casserait le simple import (EP-283 ⑤).
+const ia = () => clientIA();
 import { logAiUsage } from '@/lib/ai-usage';
 // ETAPE 3 -- les familles d'outils par mode vivent desormais dans une
 // primitive dediee, en allowlists positives. Cette route ne decide plus.
@@ -790,14 +797,14 @@ Be concise, helpful, and proactive. When the owner asks for a change to the site
       ...(message.trim() ? [{ role: 'user' as const, content: message }] : []),
     ];
 
-    const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 2000,
+    const response = await ia().messages.create({
+      model: MODELE_LOURD,
+      max_tokens: 8000,
       system: systemPrompt,
       tools: getToolsForSite(site.mode, site.dropship_type),
       messages,
     });
-    await logAiUsage({ siteId: site.id, usageType: 'agent', model: 'claude-sonnet-4-6', usage: response.usage });
+    await logAiUsage({ siteId: site.id, usageType: 'agent', model: MODELE_LOURD, usage: response.usage });
 
     return NextResponse.json({
       role: 'assistant',

@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import Anthropic from '@anthropic-ai/sdk';
+import { clientIA, MODELE_LEGER } from '@/lib/ia/client';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { startCronRun, finishCronRun } from '@/lib/cron-tracker';
 import { suppliersForDropshipType } from '@/lib/dropship/suppliers';
 
 export const maxDuration = 300;
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+// Le fournisseur vient de l'interrupteur, et le client NAIT DANS LE
+// HANDLER : `clientIA` jette quand la cle manque, donc l'appeler au
+// niveau module casserait le simple import (EP-283 ⑤).
+const ia = () => clientIA();
 
 /**
  * Cron hebdomadaire : détecte les nouveaux produits trending pour chaque site reseller.
@@ -81,9 +84,9 @@ export async function GET(req: NextRequest) {
 
       const lang = site.lang || 'fr';
 
-      const msg = await anthropic.messages.create({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 1500,
+      const msg = await ia().messages.create({
+        model: MODELE_LEGER,
+        max_tokens: 6000,
         messages: [{
           role: 'user',
           content: `Tu es un expert e-commerce. Le marchand a une boutique : "${site.type}".

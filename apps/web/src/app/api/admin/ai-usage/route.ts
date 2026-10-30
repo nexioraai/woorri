@@ -4,12 +4,30 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 
 import { ADMIN_EMAILS } from '@/lib/admin-emails';
 
-// Tarifs Anthropic en USD par million de tokens (input / output)
+// ── TARIFS EN USD PAR MILLION DE JETONS (entree / sortie).
+//
+// DEFAUT MESURE LE 2026-10-30 : ce tableau ne connaissait que les modeles
+// Claude. Depuis la bascule de fournisseur, CHAQUE ligne du journal etait
+// donc chiffree au tarif par defaut — celui de `claude-sonnet`, 3 / 15 —
+// alors que les appels partent chez un fournisseur qui facture 0,66 / 1,98.
+//
+// Le tableau ne plantait pas : il MENTAIT, d'un facteur sept. Un chiffre
+// faux est pire qu'un chiffre absent, parce qu'on le croit.
 const PRICING: Record<string, { in: number; out: number }> = {
+  // Anthropic — conserves : le journal porte encore des lignes d'avant la
+  // bascule, et les rechiffrer au tarif du nouveau fournisseur falsifierait
+  // le passe.
   'claude-haiku-4-5-20251001': { in: 1.0, out: 5.0 },
   'claude-sonnet-4-6': { in: 3.0, out: 15.0 },
+  'claude-opus-5': { in: 5.0, out: 25.0 },
+  // DeepSeek — releves a la documentation du fournisseur le 2026-10-19.
+  'deepseek-flash': { in: 0.15, out: 0.6 },
+  'deepseek-v4-pro': { in: 0.66, out: 1.98 },
 };
-const DEFAULT_PRICE = { in: 3.0, out: 15.0 };
+// LE DEFAUT RESTE LE PLUS CHER CONNU : un modele inconnu doit ALARMER par
+// son coût, jamais rassurer. Sous-estimer une depense qu'on ne sait pas
+// nommer est la seule erreur qui ne se voit pas.
+const DEFAULT_PRICE = { in: 5.0, out: 25.0 };
 
 function costOf(model: string | null, inTok: number, outTok: number): number {
   const p = (model && PRICING[model]) || DEFAULT_PRICE;

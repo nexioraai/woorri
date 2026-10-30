@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import Anthropic from '@anthropic-ai/sdk';
+import { clientIA, MODELE_LEGER } from '@/lib/ia/client';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { requireSiteOwner } from '@/lib/auth/require-site-owner';
 import { logAiUsage } from '@/lib/ai-usage';
@@ -7,7 +7,10 @@ import { usesCatalogSelections } from '@/lib/dropship/catalogAdmission';
 
 export const maxDuration = 45;
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+// Le fournisseur vient de l'interrupteur, et le client NAIT DANS LE
+// HANDLER : `clientIA` jette quand la cle manque, donc l'appeler au
+// niveau module casserait le simple import (EP-283 ⑤).
+const ia = () => clientIA();
 
 /**
  * POST /api/catalog/enhance
@@ -77,9 +80,9 @@ export async function POST(req: NextRequest) {
       return `${i}|${cp.name}|${cp.description?.substring(0, 100) || ''}|${cp.category}|${cp.price}${cp.currency}`;
     }).join('\n');
 
-    const msg = await anthropic.messages.create({
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 8000,
+    const msg = await ia().messages.create({
+      model: MODELE_LEGER,
+      max_tokens: 16000,
       messages: [{
         role: 'user',
         content: `Tu es un expert copywriter e-commerce.
@@ -104,7 +107,7 @@ Réponds UNIQUEMENT en JSON :
 Pas de texte avant ou après.`
       }],
     });
-    await logAiUsage({ siteId: site.id, usageType: 'enhance', model: 'claude-haiku-4-5-20251001', usage: msg.usage });
+    await logAiUsage({ siteId: site.id, usageType: 'enhance', model: MODELE_LEGER, usage: msg.usage });
 
     const raw = msg.content[0].type === 'text' ? msg.content[0].text : '';
     const cleaned = raw.replace(/```json\s?/g, '').replace(/```/g, '').trim();

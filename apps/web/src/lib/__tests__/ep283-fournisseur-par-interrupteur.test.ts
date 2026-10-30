@@ -73,16 +73,17 @@ const DIALECTE = new Set(['lib/ia/client.ts', 'lib/apps/fournisseur.ts'])
  * changement de fournisseur. Cette liste ne peut que RÉTRÉCIR.
  */
 const DETTE = [
-  'app/api/agent/[slug]/chat/route.ts',
-  'app/api/blog/generate/route.ts',
-  'app/api/blog/posts/generate/route.ts',
-  'app/api/catalog/curate/route.ts',
-  'app/api/catalog/enhance/route.ts',
-  'app/api/catalog/image-search/route.ts',
-  'app/api/cron/catalog-suggest/route.ts',
+  // ── NEUF ENTREES SOLDEES LE 2026-10-30, ET DEUX RAISONS DE RESTER.
+  //
+  // Blog, Catalogue, Marketing, Agent et le cron de synchronisation passent
+  // desormais par `clientIA()`. `lib/anthropic.ts` a ete SUPPRIME : personne
+  // ne l'importait, il ne servait qu'a porter une cle morte.
+  //
+  // `generateur/sonde` construit un client avec une fausse cle pour verifier
+  // la FORME du SDK, sans jamais appeler — c'est un instrument, pas un
+  // appelant. `comprendre.ts` appartient a la chaine AIR et connait son
+  // dialecte, flux compris.
   'app/api/generateur/sonde/route.ts',
-  'app/api/marketing/generate/route.ts',
-  'lib/anthropic.ts',
   'lib/apps/comprendre.ts',
 ]
 

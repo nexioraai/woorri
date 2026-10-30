@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import Anthropic from '@anthropic-ai/sdk';
+import { clientIA, MODELE_LEGER, MODELE_LOURD } from '@/lib/ia/client';
 import { requireSiteOwner } from '@/lib/auth/require-site-owner';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { logAiUsage } from '@/lib/ai-usage';
@@ -7,7 +7,10 @@ import { sanitizeAreaServedForPrompt } from '@/lib/site-profile/areaServed';
 import { VALID_FORMATS, type Format, buildBriefPrompt, buildContentPrompt, parseJson }
   from '@/lib/marketing/prompts';
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+// Le fournisseur vient de l'interrupteur, et le client NAIT DANS LE
+// HANDLER : `clientIA` jette quand la cle manque, donc l'appeler au
+// niveau module casserait le simple import (EP-283 ⑤).
+const ia = () => clientIA();
 
 // ============ GÉNÉRATION D'IMAGE (posts sociaux uniquement) ============
 // Construit un prompt visuel à partir du brief + business, puis appelle GPT Image 1.5.
@@ -200,12 +203,12 @@ export async function POST(req: Request) {
     if (cached?.brief) {
       brief = cached.brief;
     } else {
-      const briefRes = await anthropic.messages.create({
-        model: 'claude-haiku-4-5-20251001',
-        max_tokens: 1500,
+      const briefRes = await ia().messages.create({
+        model: MODELE_LEGER,
+        max_tokens: 6000,
         messages: [{ role: 'user', content: buildBriefPrompt(site) }],
       });
-      await logAiUsage({ siteId: site.id, usageType: 'marketing', model: 'claude-haiku-4-5-20251001', usage: briefRes.usage });
+      await logAiUsage({ siteId: site.id, usageType: 'marketing', model: MODELE_LEGER, usage: briefRes.usage });
       const briefText = briefRes.content.map((c: any) => (c.type === 'text' ? c.text : '')).join('');
       brief = parseJson(briefText);
 
@@ -230,12 +233,12 @@ export async function POST(req: Request) {
     // ==============================================================================
 
     // ============ ÉTAPE 2 : CONTENU (Sonnet) ============
-    const contentRes = await anthropic.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 2500,
+    const contentRes = await ia().messages.create({
+      model: MODELE_LOURD,
+      max_tokens: 10000,
       messages: [{ role: 'user', content: buildContentPrompt(site, brief, format as Format) }],
     });
-    await logAiUsage({ siteId: site.id, usageType: 'marketing', model: 'claude-sonnet-4-6', usage: contentRes.usage });
+    await logAiUsage({ siteId: site.id, usageType: 'marketing', model: MODELE_LOURD, usage: contentRes.usage });
     const contentText = contentRes.content.map((c: any) => (c.type === 'text' ? c.text : '')).join('');
     const content = parseJson(contentText);
     // ====================================================
