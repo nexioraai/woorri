@@ -344,6 +344,14 @@ const nextConfig: NextConfig = {
     // première exécution, et c'est précisément pourquoi il existe : je
     // viens de prouver, deux fois en deux jours, que je ne suis pas un
     // mécanisme de complétude fiable.
+    // ── L'ADRESSE NOMMEE ASSEMBLE, comme /p : tracee A LA CREATION de la
+    // route, pour une fois AVANT que le cliquet EP-278 ne me rattrape.
+    '/a/[sous]': [
+      '../../node_modules/@rolldown/binding-linux-x64-gnu/**',
+      '../../node_modules/react/**',
+      '../../node_modules/react-dom/**',
+      '../../node_modules/scheduler/**'
+    ],
     '/p/[jeton]': ['../../node_modules/@rolldown/binding-linux-x64-gnu/**',
       '../../node_modules/react/**',
       '../../node_modules/react-dom/**',

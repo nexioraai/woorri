@@ -5,6 +5,7 @@ import {
 } from './app/sites/[slug]/themes/shared'
 import { varianteHote, cibleCanonique } from './lib/domains/canonicalHost'
 import { EN_TETE_LANGUE, EN_TETE_SITE, normaliserLangue } from './lib/seo/langueServie'
+import { NOMS_RESERVES } from './lib/apps/sous-domaine'
 
 const INTERNAL_HOSTS = ['nexiora.ca', 'www.nexiora.ca', 'woorri.com', 'www.woorri.com', 'deribfy.com', 'www.deribfy.com', 'localhost']
 
@@ -64,6 +65,27 @@ export async function proxy(req: NextRequest) {
     host.endsWith('.woorri.com') ||
     host.endsWith('.deribfy.com')
   ) {
+    // ── <nom>.deribfy.com SERT UNE APPLICATION PUBLIEE (EP-291, 2026-10-30).
+    //
+    // L'application est un DOCUMENT autonome : quel que soit le chemin
+    // demande, c'est elle qu'on sert — pas de sous-navigation cote serveur.
+    // `www` et l'apex passent leur chemin normal ; les noms reserves aussi
+    // (admin.deribfy.com ne servira jamais une oeuvre : c'est l'hameconnage
+    // cle en main, signe par notre propre domaine).
+    //
+    // POSE DANS CE FICHIER ET PAS DANS UN middleware.ts : Next 16 exige UN
+    // seul routeur d'hotes — mon premier essai en a cree un second, et le
+    // build l'a refuse net. Ce proxy existait deja et routait deja les
+    // domaines clients ; la logique des applications vit donc chez lui.
+    if (host.endsWith('.deribfy.com') && host !== 'www.deribfy.com') {
+      const nom = host.slice(0, -'.deribfy.com'.length)
+      if (nom !== '' && !nom.includes('.') && !NOMS_RESERVES.has(nom)) {
+        const url = req.nextUrl.clone()
+        url.pathname = `/a/${nom}`
+        return NextResponse.rewrite(url)
+      }
+    }
+
     const platformMatch = pathname.match(PLATFORM_SITE_SITEMAP)
     if (platformMatch) {
       const url = req.nextUrl.clone()

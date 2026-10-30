@@ -23,6 +23,7 @@
  */
 import { NextResponse } from 'next/server'
 import { requireAuthenticatedUser } from '@/lib/auth/require-authenticated-user'
+import { creerSousDomaine, nomValide } from '@/lib/apps/sous-domaine'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { TABLE_GENERATIONS } from '@/lib/apps/journal'
 import { jetonPour, lienDePublication } from '@/lib/apps/publication'
@@ -109,6 +110,32 @@ export async function POST(req: Request) {
     )
   }
 
+  // ── LE NOM PUBLIC, SI LA PERSONNE EN CHOISIT UN (EP-291, 2026-10-30).
+  //
+  // `?sous=cpa-tchad` cree cpa-tchad.deribfy.com : CNAME chez Cloudflare,
+  // domaine chez Vercel, adresse en base. Optionnel — sans lui, le lien par
+  // jeton continue de servir, comme avant.
+  const sous = new URL(req.url).searchParams.get('sous')?.toLowerCase().trim() ?? ''
+  if (sous !== '' && !nomValide(sous)) {
+    return NextResponse.json(
+      { error: 'Ce nom n est pas utilisable : minuscules, chiffres et tirets, 3 a 40 signes, sans nom reserve.' },
+      { status: 400 },
+    )
+  }
+  if (sous !== '') {
+    // LE NOM EST UNIQUE, et l unicite se verifie contre les AUTRES oeuvres :
+    // republier la sienne sous le meme nom doit rester possible.
+    const pris = await supabaseAdmin
+      .from(TABLE_GENERATIONS)
+      .select('id')
+      .eq('publication_slug', sous)
+      .neq('id', id)
+      .maybeSingle()
+    if (pris.data !== null) {
+      return NextResponse.json({ error: `« ${sous} » est deja pris par une autre application.` }, { status: 409 })
+    }
+  }
+
   const jeton = jetonPour(lu.data.publication_jeton)
   const dejaPublie = jeton === lu.data.publication_jeton
 
@@ -129,8 +156,48 @@ export async function POST(req: Request) {
   // developpement c'est `localhost`, en production le domaine. Une base
   // configuree ailleurs se trompe toujours sur l'un des deux.
   const origine = new URL(req.url).origin
+  const lienJeton = lienDePublication(jeton, origine)
+
+  // ── LE SOUS-DOMAINE, APRES le jeton : s il echoue, la publication par
+  // jeton TIENT quand meme, et l erreur est dite au lieu d etre avalee.
+  if (sous !== '') {
+    const clefs = {
+      cloudflareToken: process.env.CLOUDFLARE_API_TOKEN ?? '',
+      vercelToken: process.env.VERCEL_API_TOKEN ?? '',
+      vercelProjectId: process.env.VERCEL_PROJECT_ID ?? '',
+    }
+    if (Object.values(clefs).some((v) => v === '')) {
+      return NextResponse.json(
+        { lien: lienJeton, dejaPublie, erreurSousDomaine: 'cles de sous-domaine absentes du serveur' },
+        { headers: { 'Cache-Control': 'no-store' } },
+      )
+    }
+    const sd = await creerSousDomaine(sous, clefs)
+    if (!sd.ok) {
+      return NextResponse.json(
+        { lien: lienJeton, dejaPublie, erreurSousDomaine: sd.erreur },
+        { headers: { 'Cache-Control': 'no-store' } },
+      )
+    }
+    const ecritSlug = await supabaseAdmin
+      .from(TABLE_GENERATIONS)
+      .update({ publication_slug: sous })
+      .eq('id', id)
+      .eq('owner_id', garde.userId)
+    if (ecritSlug.error !== null) {
+      return NextResponse.json(
+        { lien: lienJeton, dejaPublie, erreurSousDomaine: 'adresse creee mais non enregistree — reessayez' },
+        { headers: { 'Cache-Control': 'no-store' } },
+      )
+    }
+    return NextResponse.json(
+      { lien: `https://${sd.hote}`, lienJeton, dejaPublie },
+      { headers: { 'Cache-Control': 'no-store' } },
+    )
+  }
+
   return NextResponse.json(
-    { lien: lienDePublication(jeton, origine), dejaPublie },
+    { lien: lienJeton, dejaPublie },
     { headers: { 'Cache-Control': 'no-store' } },
   )
 }

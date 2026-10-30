@@ -63,20 +63,38 @@ export default function DashboardPage() {
     setApercuErreur(null);
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) { setApercuErreur('Session expirée — reconnectez-vous.'); return; }
+    // LE NOM PUBLIC : propose, jamais impose. Vide = publication par jeton.
+    const suggestion = (a.nom ?? a.demande).toLowerCase().normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '').slice(0, 30).replace(/-+$/g, '');
+    const sous = window.prompt(
+      'Adresse publique de votre application :\n<nom>.deribfy.com\n\nMinuscules, chiffres et tirets (laisser vide pour un lien simple).',
+      suggestion,
+    );
+    if (sous === null) return; // la personne a annulé
     try {
-      const res = await fetch(`/api/generateur/publier?id=${encodeURIComponent(a.id)}`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${session.access_token}` },
-      });
+      const res = await fetch(
+        `/api/generateur/publier?id=${encodeURIComponent(a.id)}${sous.trim() !== '' ? `&sous=${encodeURIComponent(sous.trim().toLowerCase())}` : ''}`,
+        {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        },
+      );
       // ── LE CHAMP S'APPELLE `lien`, PAS `url` — BUG ATTRAPÉ EN PROD.
       //
       // Mesuré le 2026-10-30 : la route a répondu 200 avec
       // {"lien":"https://…/p/…"} pendant que ce code lisait `d.url` — le
       // bouton aurait dit « échec » sur une publication RÉUSSIE. On lit les
       // deux : si la route renomme un jour, le bouton survit.
-      const d = (await res.json().catch(() => null)) as { lien?: string; url?: string; error?: string } | null;
+      const d = (await res.json().catch(() => null)) as {
+        lien?: string; url?: string; error?: string; erreurSousDomaine?: string;
+      } | null;
       const lien = d?.lien ?? d?.url;
       if (!res.ok || !lien) { setApercuErreur(d?.error ?? 'La publication a échoué.'); return; }
+      // L'adresse nommee a pu echouer SANS casser la publication par jeton :
+      // on montre le lien qui marche ET la raison de l'echec, jamais l'un
+      // sans l'autre.
+      if (d?.erreurSousDomaine) setApercuErreur(`Adresse nommée refusée : ${d.erreurSousDomaine}`);
       setLienPublic({ id: a.id, url: lien });
     } catch { setApercuErreur('La publication a échoué. Réessayez.'); }
   };
