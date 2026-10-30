@@ -105,6 +105,45 @@ describe('EP-284 · la borne tient compte de la réflexion', () => {
     )
   })
 
+  it('⑤ L’APPEL PRINCIPAL PART EN FLUX — sinon le SDK refuse avant d’envoyer', () => {
+    // ── LE DÉFAUT QUE J'AVAIS DÉJÀ RÉSOLU, ET REFAIT DOUZE JOURS APRÈS.
+    //
+    // En relevant la borne à 32 000 pour corriger une troncature, j'ai
+    // franchi un seuil du SDK : il REFUSE côté client dès que `max_tokens`
+    // autorise une réponse longue.
+    //
+    //     « Streaming is required for operations that may take longer
+    //       than 10 minutes. »
+    //
+    // Rien ne partait. L'écran disait « Failed to generate business » et la
+    // table des échecs restait VIDE — parce qu'aucune réponse n'existait à
+    // enregistrer. Mode 1 est mort ainsi, après avoir fonctionné.
+    //
+    // Seuil mesuré par dichotomie, à coût nul puisque aucune requête ne
+    // part : dernier accepté 21 312, premier refusé 21 406.
+    //
+    // J'avais tiré cette leçon le 2026-10-18 sur l'autre moteur, et j'y
+    // avais posé un cliquet. Il ne regardait pas cette route. UN CLIQUET NE
+    // PROTÈGE QUE CE QU'IL REGARDE.
+    expect(CODE, 'l’appel principal n’est pas en flux : au-delà de 21 312 le SDK refusera').toMatch(
+      /messages\.stream\(mainCallParams\)\.finalMessage\(\)/u,
+    )
+    expect(CODE, 'un appel non streamé subsiste sur le chemin principal').not.toMatch(
+      /messages\.create\(mainCallParams\)/u,
+    )
+    // LA COHÉRENCE DES DEUX : une borne au-dessus du seuil SANS flux est la
+    // combinaison exacte qui a tué le mode 1.
+    const m = CODE.match(/MAIN_MAX_TOKENS\s*=\s*([0-9_]+)/u)
+    const borne = Number((m?.[1] ?? '0').replace(/_/gu, ''))
+    if (borne > 21_312) {
+      expect(
+        CODE,
+        `la borne vaut ${String(borne)}, au-dessus du seuil mesuré du SDK (21 312) : ` +
+          'sans flux, chaque appel est refusé avant d’être envoyé',
+      ).toContain('.stream(')
+    }
+  })
+
   it('④ LE PRÉ-CONTRÔLE RESTE AU PALIER LÉGER, LE SITE AU LOURD', () => {
     // Le pré-contrôle classe une phrase ; le second écrit le site entier.
     // Les confondre, c'est payer le lourd pour dire « bonjour » — ou écrire

@@ -759,7 +759,31 @@ Return ONLY valid JSON, no markdown:
       max_tokens: MAIN_MAX_TOKENS,
       messages: [{ role: 'user' as const, content: PROMPT + sectorPrompt + '\n\nBusiness request: ' + message }],
     };
-    let response = await ia().messages.create(mainCallParams);
+    // ── EN FLUX, ET CE N'EST PAS UN CONFORT : LE SDK REFUSE SANS LUI.
+    //
+    // DÉFAUT MESURÉ LE 2026-10-30, sur le mode 1 du propriétaire. Après
+    // avoir relevé la borne à 32 000 pour corriger une troncature, la route
+    // a cessé de produire quoi que ce soit — « Failed to generate
+    // business. », sans la moindre ligne dans la table des échecs, parce que
+    // RIEN N'ÉTAIT PARTI :
+    //
+    //     « Streaming is required for operations that may take longer
+    //       than 10 minutes. »
+    //
+    // Le SDK refuse CÔTÉ CLIENT dès que `max_tokens` autorise une réponse
+    // longue. Seuil mesuré par dichotomie, à coût nul puisque aucune requête
+    // ne part : dernier accepté 21 312, premier refusé 21 406.
+    //
+    // ── ET J'AVAIS DÉJÀ RÉSOLU EXACTEMENT CECI, LE 2026-10-18.
+    //
+    // Sur l'autre moteur, le même refus avait coûté un tir. J'en avais tiré
+    // `client.messages.stream()` et un cliquet qui l'exige. J'ai relevé
+    // cette borne-ci sans m'en souvenir. Le cliquet d'à côté ne protégeait
+    // pas cette route : un cliquet ne protège que ce qu'il regarde.
+    //
+    // En flux, la borne n'est plus bridée par ce seuil — et `finalMessage()`
+    // rend le même objet que `create()`, donc rien d'autre ne change.
+    let response = await ia().messages.stream(mainCallParams).finalMessage();
 
     // Retry unique, strictement conditionne a une troncature reelle (audit
     // FUNC-04) : jamais sur end_turn, jamais sur une erreur reseau (qui leve
@@ -771,7 +795,7 @@ Return ONLY valid JSON, no markdown:
     // le relais normalement si la 2e tentative est encore tronquee.
     if (response.stop_reason === 'max_tokens') {
       console.warn('[chat] max_tokens atteint au 1er essai, retry unique', { sector, siteMode });
-      response = await ia().messages.create(mainCallParams);
+      response = await ia().messages.stream(mainCallParams).finalMessage();
     }
 
     const text = response.content.map((item: any) => item.type === 'text' ? item.text : '').join('');

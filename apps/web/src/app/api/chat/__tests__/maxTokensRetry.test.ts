@@ -22,9 +22,26 @@ vi.mock('@/lib/supabase-admin', () => ({
 vi.mock('@/lib/generationFailures', () => ({
   logGenerationFailure: (...a: unknown[]) => logGenerationFailureMock(...a),
 }));
+// ── LE DOUBLE N'EXPOSE QUE `stream`, ET C'EST DELIBERE.
+//
+// DEFAUT MESURE LE 2026-10-30 : apres avoir releve la borne a 32 000, le SDK
+// a REFUSE l'appel cote client — « Streaming is required for operations that
+// may take longer than 10 minutes » — et la route rendait « Failed to
+// generate business » sans qu'une seule ligne n'entre dans la table des
+// echecs, parce que RIEN N'ETAIT PARTI.
+//
+// Seuil mesure par dichotomie, a cout nul : dernier accepte 21 312.
+//
+// Un double qui offrirait AUSSI `create` laisserait la route y revenir sans
+// que personne le voie. Ici, y revenir fait rougir — c'est le meme choix que
+// sur l'autre moteur, ou ce defaut avait deja coute un tir le 2026-10-18.
 vi.mock('@anthropic-ai/sdk', () => ({
   default: class {
-    messages = { create: (...a: unknown[]) => anthropicCreateMock(...a) };
+    messages = {
+      stream: (...a: unknown[]) => ({
+        finalMessage: () => anthropicCreateMock(...a),
+      }),
+    };
   },
 }));
 vi.mock('@/app/lib/aiScore', () => ({
