@@ -172,7 +172,26 @@ export async function POST(req: Request) {
       ],
     });
 
-    const text = ('{' + interview.content.map((c: any) => (c.type === 'text' ? c.text : '')).join('')).trim();
+    // ── L'AMORCE N'EST PAS HONORÉE PAR TOUS LES FOURNISSEURS.
+    //
+    // DÉFAUT MESURÉ LE 2026-10-30, contre l'API réellement servie :
+    //
+    //   amorce { role: 'assistant', content: '{' }
+    //   → DeepSeek rend  {"type":"ask","reply":"..."}   ← il RECOMMENCE
+    //   → la route ajoutait un second « { »
+    //   → {{"type":...  → JSON.parse ÉCHOUE
+    //
+    // L'écran montrait alors les deux replis de cette route : la chaîne
+    // BRUTE non déséchappée (« !\n\nSouhaitez-vous… » affiché en toutes
+    // lettres), puis « Pouvez-vous préciser votre activité ? » — la phrase
+    // de secours, prise pour une question du modèle alors que c'est la
+    // route qui renonçait.
+    //
+    // Anthropic honore l'amorce, DeepSeek non. On ne choisit donc PAS un
+    // fournisseur : on n'ajoute l'accolade que si elle manque. Le code est
+    // juste dans les deux cas, et le restera au troisième fournisseur.
+    const brut = interview.content.map((c: any) => (c.type === 'text' ? c.text : '')).join('');
+    const text = (brut.trimStart().startsWith('{') ? brut : '{' + brut).trim();
     let clean = text.replace(/```json/g, '').replace(/```/g, '').trim();
     // Isoler le bloc JSON même si l'IA ajoute du texte autour
     const firstBrace = clean.indexOf('{');
