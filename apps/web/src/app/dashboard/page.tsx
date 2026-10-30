@@ -42,6 +42,38 @@ export default function DashboardPage() {
   // deux fois ; les deux fois, la seule facon de la retrouver a ete d'en
   // sortir les fichiers a la main. Une oeuvre payee que le produit perdait.
   const [applications, setApplications] = useState<Application[]>([]);
+  // ── L'APPLICATION SE REGARDE DANS UN CADRE ISOLE, JAMAIS EN ONGLET.
+  //
+  // DEFAUT MESURE LE 2026-10-30, au premier clic du proprietaire : « Revoir »
+  // etait un simple lien vers la route — un onglet neuf n'envoie AUCUN jeton,
+  // la route repondait {"error":"Non authentifie."}.
+  //
+  // Et le lien etait une faute DEUX fois : meme authentifie, un document
+  // ouvert en onglet s'execute avec l'ORIGINE deribfy.com — l'application
+  // generee pourrait lire la session du site qui l'heberge. Le cadre
+  // sandbox="allow-scripts" (sans allow-same-origin) est la meme isolation
+  // que l'ecran de generation : l'app tourne, et ne voit rien de Deribfy.
+  const [apercuApp, setApercuApp] = useState<{ nom: string; html: string } | null>(null);
+  const [apercuErreur, setApercuErreur] = useState<string | null>(null);
+
+  const revoir = async (a: Application) => {
+    setApercuErreur(null);
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) { setApercuErreur('Session expirée — reconnectez-vous.'); return; }
+    try {
+      const res = await fetch(`/api/generateur/direct/${a.id}`, {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      if (!res.ok) {
+        const d = (await res.json().catch(() => null)) as { error?: string } | null;
+        setApercuErreur(d?.error ?? `Impossible d'ouvrir cette application (HTTP ${res.status}).`);
+        return;
+      }
+      setApercuApp({ nom: a.nom ?? 'Votre application', html: await res.text() });
+    } catch {
+      setApercuErreur("Le chargement de l'application a échoué. Réessayez.");
+    }
+  };
   const [history, setHistory] = useState<Record<string, number[]>>({});
   const [loading, setLoading] = useState(true);
 
@@ -252,6 +284,25 @@ export default function DashboardPage() {
             Le panneau ne s'affiche que s'il y a quelque chose a montrer : un
             cadre vide sur un tableau de bord de sites ne dirait rien a qui
             n'a jamais genere d'application. */}
+        {apercuErreur !== null && (
+          <p className="mt-6 text-sm text-red-400">{apercuErreur}</p>
+        )}
+        {apercuApp !== null && (
+          <div className="fixed inset-0 z-50 flex flex-col bg-black/80 p-4 sm:p-8">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-white/90 font-semibold">{apercuApp.nom}</span>
+              <button type="button" onClick={() => setApercuApp(null)}
+                className="text-sm text-white/60 hover:text-white underline">
+                Fermer
+              </button>
+            </div>
+            {/* sandbox SANS allow-same-origin : l'application tourne et ne
+                peut rien lire du site qui l'héberge — même garantie que
+                l'écran de génération. */}
+            <iframe title={apercuApp.nom} sandbox="allow-scripts" srcDoc={apercuApp.html}
+              className="flex-1 w-full rounded-2xl border border-white/10 bg-white" />
+          </div>
+        )}
         {applications.length > 0 && (
           <div className="mt-16">
             <h2 className="text-white/90 text-xl font-semibold mb-6">Vos applications</h2>
@@ -284,10 +335,10 @@ export default function DashboardPage() {
                       matiere, c'est promettre un 404 — et faire croire a la
                       personne qu'elle a perdu son application une 2e fois. */}
                   {a.revoyable ? (
-                    <a href={`/api/generateur/direct/${a.id}`} target="_blank" rel="noreferrer"
+                    <button type="button" onClick={() => { void revoir(a); }}
                       className="text-center px-3 py-2 rounded-xl text-sm font-semibold border border-white/10 text-white/70 hover:text-white hover:border-white/30 transition-all">
                       Revoir
-                    </a>
+                    </button>
                   ) : (
                     <span className="text-center px-3 py-2 rounded-xl text-xs text-white/25 border border-white/[0.04]">
                       Aucun fichier conservé

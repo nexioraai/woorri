@@ -83,6 +83,19 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
       // ne doit la retenir — ni un proxy, ni un CDN.
       'Cache-Control': 'private, no-store',
       'X-Content-Type-Options': 'nosniff',
+      // ── L'ŒUVRE NE PORTE JAMAIS L'ORIGINE DE DERIBFY.
+      //
+      // DEFAUT EVITE DE JUSTESSE LE 2026-10-30 : « Revoir » etait un lien qui
+      // ouvrait ce document EN ONGLET. Le 401 (pas de jeton en navigation) a
+      // arrete le proprietaire AVANT le vrai danger : un document de premier
+      // niveau s'execute avec l'origine du site — l'application generee
+      // aurait pu lire la session deribfy.com de la personne.
+      //
+      // L'ecran l'affiche desormais dans un cadre sandbox, et cet en-tete
+      // rend la protection NON CONTOURNABLE : meme servie en document
+      // direct, la page tourne en origine opaque. Deux verrous, un seul
+      // suffit, aucun ne depend de l'autre.
+      'Content-Security-Policy': 'sandbox allow-scripts',
     },
   })
 }

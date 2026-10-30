@@ -88,12 +88,37 @@ describe('EP-287 · revoir une application', () => {
     // rien n'interdit une `livree` vide. Offrir le lien sans la matière,
     // c'est promettre un 404 et faire croire à la personne qu'elle a perdu
     // son application une seconde fois.
+    // ── REVOIR EST UN CHARGEMENT AUTHENTIFIE, JAMAIS UN LIEN.
+    //
+    // DEFAUT MESURE LE 2026-10-30, premier clic du proprietaire : « Revoir »
+    // etait un <a href> vers la route — un onglet neuf n'envoie AUCUN jeton,
+    // et l'ecran affichait {"error":"Non authentifie."}. Pire : meme
+    // authentifie, un document de premier niveau s'execute avec l'ORIGINE
+    // deribfy.com — l'application generee lirait la session du site.
+    expect(ECRAN, 'Revoir est redevenu un lien : 401 garanti, origine exposee').not.toMatch(
+      /href=\{`\/api\/generateur\/direct\//u,
+    )
     const i = ECRAN.indexOf('/api/generateur/direct/')
-    expect(i, 'l’écran ne mène plus à une application').toBeGreaterThan(-1)
+    expect(i, 'l’écran ne charge plus d’application').toBeGreaterThan(-1)
     expect(
-      ECRAN.slice(Math.max(0, i - 400), i),
-      'le lien « Revoir » n’est plus conditionné à l’existence des fichiers',
+      ECRAN.slice(Math.max(0, i - 400), i + 200),
+      'le chargement ne porte pas le jeton de session',
+    ).toContain('Authorization')
+    // Le bouton reste conditionné à l'existence des FICHIERS.
+    const j = ECRAN.indexOf('revoir(a)')
+    expect(j, 'le geste « revoir » a disparu').toBeGreaterThan(-1)
+    expect(
+      ECRAN.slice(Math.max(0, j - 300), j),
+      'le bouton « Revoir » n’est plus conditionné à l’existence des fichiers',
     ).toContain('revoyable')
+    // Et l'œuvre s'affiche dans le cadre isolé, sans allow-same-origin.
+    const k = ECRAN.indexOf('srcDoc={apercuApp.html}')
+    expect(k, 'l’œuvre ne passe plus par le cadre isolé').toBeGreaterThan(-1)
+    const cadre = ECRAN.slice(Math.max(0, k - 300), k + 100)
+    expect(cadre).toContain('sandbox="allow-scripts"')
+    expect(cadre, 'allow-same-origin donnerait à l’app la session du site').not.toContain(
+      'allow-same-origin',
+    )
   })
 
   it('⑤ L’ŒUVRE EST SERVIE EN DOCUMENT, jamais montée dans la page', () => {
@@ -104,6 +129,11 @@ describe('EP-287 · revoir une application', () => {
     // Et aucun cache partagé ne retient l'œuvre d'une personne.
     expect(REVOIR, 'un proxy pourrait retenir l’application d’une personne').toMatch(
       /private[^'"]*no-store|no-store[^'"]*private/u,
+    )
+    // Et le serveur impose lui-même l'origine opaque : même servie en
+    // document direct, l'œuvre ne porte jamais l'origine de Deribfy.
+    expect(REVOIR, 'le serveur n’impose plus l’origine opaque').toMatch(
+      /Content-Security-Policy[^:]*:\s*['"]sandbox allow-scripts['"]/u,
     )
   })
 })
