@@ -34,6 +34,8 @@ import { projectAirSchema } from '@deribfy/air-schema'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { TABLE_GENERATIONS } from '@/lib/apps/journal'
 import { construireApercu } from '@/lib/apps/apercu'
+import { assembler } from '@/lib/apps/bac-a-sable'
+import { pageAutonome } from '@/lib/apps/boucle-directe'
 import { ENTETES_PAGE_PUBLIEE, jetonValide } from '@/lib/apps/publication'
 
 export const runtime = 'nodejs'
@@ -63,6 +65,23 @@ export async function GET(_req: Request, ctx: { params: Promise<{ jeton: string 
     .eq('publication_jeton', jeton)
     .maybeSingle()
   if (lu.error !== null || lu.data === null) return introuvable()
+
+  // ── L'ŒUVRE DU MOTEUR DIRECT SE PUBLIE AUSSI (EP-290, 2026-10-30).
+  //
+  // Cette route ne connaissait que le document AIR : une génération directe
+  // range `{fichiers}` — du TSX brut — et le lien public rendait 404 sur une
+  // application pourtant livrée et payée. On recompile les fichiers stockés,
+  // comme « Revoir » : AUCUN modèle n'est appelé, publier reste gratuit.
+  // Les en-têtes sont les mêmes : CSP `sandbox` (origine opaque), noindex.
+  const doc = lu.data.document as { fichiers?: Record<string, string> } | null
+  if (doc?.fichiers !== undefined && Object.keys(doc.fichiers).length > 0) {
+    const v = await assembler(new Map(Object.entries(doc.fichiers)))
+    if (!v.ok) return introuvable()
+    return new Response(pageAutonome(v.code, 'Application'), {
+      status: 200,
+      headers: ENTETES_PAGE_PUBLIEE,
+    })
+  }
 
   const air = projectAirSchema.safeParse(lu.data.document)
   if (!air.success) return introuvable()

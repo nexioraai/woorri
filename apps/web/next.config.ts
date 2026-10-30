@@ -287,6 +287,16 @@ const nextConfig: NextConfig = {
     // Sans cette entree, la fonction demarrerait EN LIGNE et mourrait sur
     // « Cannot find module » — le defaut exact que ce bloc raconte deux
     // fois deja, et que le cliquet `tracage-cloture` a rattrape ici.
+    // ── LA LIVRAISON ASSEMBLE DEPUIS EP-290 : elle recompile les sources
+    // d'une oeuvre directe pour joindre un index.html autonome au zip. Le
+    // cliquet EP-278 l'a attrapee UNE MINUTE apres la modification — c'est
+    // sa raison d'etre : personne n'a eu a y penser.
+    '/api/generateur/livraison': [
+      '../../node_modules/@rolldown/binding-linux-x64-gnu/**',
+      '../../node_modules/react/**',
+      '../../node_modules/react-dom/**',
+      '../../node_modules/scheduler/**'
+    ],
     '/api/generateur/deposer': MOTEUR_EMISSION,
     '/api/generateur/produire': MOTEUR_EMISSION,
     '/api/generateur/sonde': [

@@ -11,6 +11,8 @@ import { requireAuthenticatedUser } from '@/lib/auth/require-authenticated-user'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { TABLE_GENERATIONS } from '@/lib/apps/journal'
 import { zipper } from '@/lib/apps/zip'
+import { assembler } from '@/lib/apps/bac-a-sable'
+import { pageAutonome } from '@/lib/apps/boucle-directe'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -71,6 +73,33 @@ export async function GET(req: Request) {
   const source = finale ? r.data.document : (sa.acquis ?? null)
   if (source === null) {
     return NextResponse.json({ error: 'rien a livrer' }, { status: 404 })
+  }
+
+  // ── L'ŒUVRE DU MOTEUR DIRECT SE TÉLÉCHARGE AUSSI (EP-290, 2026-10-30).
+  //
+  // Une génération directe range `{fichiers}` — les SOURCES TSX. Le zip rend
+  // ces sources telles quelles, plus un `index.html` autonome recompilé :
+  // la personne repart avec son code ET une page qui s'ouvre en double-clic.
+  // Rien n'est régénéré, rien n'est repayé.
+  const docDirect = source as { fichiers?: Record<string, string> }
+  if (docDirect.fichiers !== undefined && Object.keys(docDirect.fichiers).length > 0) {
+    const v = await assembler(new Map(Object.entries(docDirect.fichiers)))
+    if (!v.ok) {
+      return NextResponse.json(
+        { error: `cette application ne se recompile plus : ${v.erreur.slice(0, 200)}` },
+        { status: 500 },
+      )
+    }
+    const fichiersZip = new Map<string, string | Buffer>(Object.entries(docDirect.fichiers))
+    fichiersZip.set('index.html', pageAutonome(v.code, 'Application'))
+    const archive = zipper(fichiersZip)
+    return new Response(new Uint8Array(archive), {
+      headers: {
+        'Content-Type': 'application/zip',
+        'Content-Disposition': 'attachment; filename="application-web.zip"',
+        'Cache-Control': 'private, no-store',
+      },
+    })
   }
 
   const lu = projectAirSchema.safeParse(source)

@@ -59,7 +59,13 @@ RÈGLES, et chacune vient d'un défaut réel :
    décoratif. Pas d'images d'illustration, pas d'écrans en plus.
 
 6. Tu écris des valeurs d'exemple PLAUSIBLES quand il en faut — des montants
-   et des dates qu'une personne du métier reconnaîtrait.`
+   et des dates qu'une personne du métier reconnaîtrait.
+
+7. LA NAVIGATION PRINCIPALE EST UNE BARRE LATÉRALE GAUCHE, fixe, sur grand
+   écran — jamais une barre horizontale en haut. Sur mobile, elle se replie
+   en menu. Règle posée par le propriétaire du produit le 2026-10-30, après
+   la première application livrée : la navigation était en haut, il la veut
+   à gauche, pour toutes les applications générées.`
 
 export type Tour = {
   readonly rang: number

@@ -55,6 +55,47 @@ export default function DashboardPage() {
   // que l'ecran de generation : l'app tourne, et ne voit rien de Deribfy.
   const [apercuApp, setApercuApp] = useState<{ nom: string; html: string } | null>(null);
   const [apercuErreur, setApercuErreur] = useState<string | null>(null);
+  // Le lien public de l'application qu'on vient de publier — affiché sous la
+  // carte, copiable. Un seul à la fois : publier en remplace l'affichage.
+  const [lienPublic, setLienPublic] = useState<{ id: string; url: string } | null>(null);
+
+  const publier = async (a: Application) => {
+    setApercuErreur(null);
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) { setApercuErreur('Session expirée — reconnectez-vous.'); return; }
+    try {
+      const res = await fetch(`/api/generateur/publier?id=${encodeURIComponent(a.id)}`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      const d = (await res.json().catch(() => null)) as { url?: string; error?: string } | null;
+      if (!res.ok || !d?.url) { setApercuErreur(d?.error ?? 'La publication a échoué.'); return; }
+      setLienPublic({ id: a.id, url: d.url });
+    } catch { setApercuErreur('La publication a échoué. Réessayez.'); }
+  };
+
+  const telecharger = async (a: Application) => {
+    setApercuErreur(null);
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) { setApercuErreur('Session expirée — reconnectez-vous.'); return; }
+    try {
+      const res = await fetch(`/api/generateur/livraison?id=${encodeURIComponent(a.id)}&cible=web`, {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      if (!res.ok) {
+        const d = (await res.json().catch(() => null)) as { error?: string } | null;
+        setApercuErreur(d?.error ?? `Le téléchargement a échoué (HTTP ${res.status}).`);
+        return;
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const lien = document.createElement('a');
+      lien.href = url;
+      lien.download = 'application-web.zip';
+      lien.click();
+      URL.revokeObjectURL(url);
+    } catch { setApercuErreur('Le téléchargement a échoué. Réessayez.'); }
+  };
 
   const revoir = async (a: Application) => {
     setApercuErreur(null);
@@ -335,10 +376,33 @@ export default function DashboardPage() {
                       matiere, c'est promettre un 404 — et faire croire a la
                       personne qu'elle a perdu son application une 2e fois. */}
                   {a.revoyable ? (
-                    <button type="button" onClick={() => { void revoir(a); }}
-                      className="text-center px-3 py-2 rounded-xl text-sm font-semibold border border-white/10 text-white/70 hover:text-white hover:border-white/30 transition-all">
-                      Revoir
-                    </button>
+                    <div className="flex flex-col gap-2">
+                      <div className="grid grid-cols-3 gap-2">
+                        <button type="button" onClick={() => { void revoir(a); }}
+                          className="px-2 py-2 rounded-xl text-sm font-semibold border border-white/10 text-white/70 hover:text-white hover:border-white/30 transition-all">
+                          Revoir
+                        </button>
+                        <button type="button" onClick={() => { void publier(a); }}
+                          className="px-2 py-2 rounded-xl text-sm font-semibold border border-white/10 text-white/70 hover:text-white hover:border-white/30 transition-all">
+                          Publier
+                        </button>
+                        <button type="button" onClick={() => { void telecharger(a); }}
+                          className="px-2 py-2 rounded-xl text-sm font-semibold border border-white/10 text-white/70 hover:text-white hover:border-white/30 transition-all">
+                          Télécharger
+                        </button>
+                      </div>
+                      {lienPublic?.id === a.id && (
+                        <div className="flex items-center gap-2 text-xs">
+                          <a href={lienPublic.url} target="_blank" rel="noreferrer"
+                            className="flex-1 truncate text-emerald-400 underline">{lienPublic.url}</a>
+                          <button type="button"
+                            onClick={() => { void navigator.clipboard.writeText(lienPublic.url); }}
+                            className="shrink-0 px-2 py-1 rounded-lg border border-white/10 text-white/60 hover:text-white">
+                            Copier
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   ) : (
                     <span className="text-center px-3 py-2 rounded-xl text-xs text-white/25 border border-white/[0.04]">
                       Aucun fichier conservé
