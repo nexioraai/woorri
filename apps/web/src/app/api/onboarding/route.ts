@@ -164,7 +164,17 @@ export async function POST(req: Request) {
 
     const interview = await clientIA().messages.create({
       model: MODELE_LEGER,
-      max_tokens: 600,
+      // ── 2 000, PAR MARGE PLUTOT QUE PAR CORRECTION.
+      //
+      // Mesure du 2026-10-30 : a 600 jetons, avec la vraie consigne de
+      // 10 643 caracteres, le texte revient bien — cette borne n'etait PAS
+      // cassee. Mais un seul echantillon n'est pas une garantie : une
+      // demande plus longue fait reflechir plus longtemps, et la panne est
+      // MUETTE quand elle arrive.
+      //
+      // Relever ne coute rien : on ne paie que les jetons produits. La
+      // reponse de cette route reste courte ; seule la marge change.
+      max_tokens: 2000,
       system: SYSTEM,
       messages: [
         ...history.map((t) => ({ role: t.role, content: t.content })),

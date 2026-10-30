@@ -148,9 +148,21 @@ describe('EP-284 · la borne tient compte de la réflexion', () => {
     // Le pré-contrôle classe une phrase ; le second écrit le site entier.
     // Les confondre, c'est payer le lourd pour dire « bonjour » — ou écrire
     // une boutique avec le modèle du tri.
-    const i = CODE.indexOf('max_tokens: 250')
+    // ── L'ANCRE NE PEUT PAS ÊTRE UNE VALEUR DE BORNE.
+    //
+    // Elle cherchait `max_tokens: 250`. Deux heures plus tard, cette borne
+    // est passée à 2 000 — parce que 250 était justement trop bas pour un
+    // fournisseur qui réfléchit avant de répondre — et ce contrôle est
+    // tombé. Il épinglait un CHIFFRE là où il voulait désigner un APPEL.
+    //
+    // `preCheck` nomme ce qu'il est : le classement court qui précède tout.
+    // Il survivra au prochain réglage de borne.
+    const i = CODE.indexOf('preCheck = await')
     expect(i, 'le pré-contrôle a disparu').toBeGreaterThan(-1)
-    expect(CODE.slice(Math.max(0, i - 200), i), 'le pré-contrôle n’est plus au palier léger').toContain(
+    // Le modèle est déclaré APRÈS l'ouverture de l'appel, pas avant : on
+    // regarde donc vers l'avant. Mon ancre précédente était une borne, et
+    // elle se lisait à rebours ; en la changeant j'ai dû changer le sens.
+    expect(CODE.slice(i, i + 400), 'le pré-contrôle n’est plus au palier léger').toContain(
       'MODELE_LEGER',
     )
     // L'APPEL PRINCIPAL, repéré par sa borne — pas par une occurrence

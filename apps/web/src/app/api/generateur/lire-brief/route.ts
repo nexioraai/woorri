@@ -70,7 +70,27 @@ export async function POST(req: Request) {
 
     const r = await clientIA().messages.create({
       model: MODELE_LEGER,
-      max_tokens: 400,
+      // ── 8 000, ET 400 FAISAIT EXACTEMENT CE QUE CETTE ROUTE DOIT EMPECHER.
+      //
+      // MESURE LE 2026-10-30, contre l'API reellement servie :
+      //
+      //     max_tokens=400   → blocs [thinking] SEUL, texte VIDE
+      //     max_tokens=4000  → blocs [thinking, text], 831 caracteres
+      //
+      // Ce fournisseur rend DEUX blocs et facture la reflexion sur
+      // `max_tokens`. A 400, tout le budget part a reflechir et il ne reste
+      // RIEN pour repondre. `brut` vaut "", `indexOf('{')` vaut -1, et la
+      // route rendait `{}` — en silence.
+      //
+      // Le proprietaire a donc joint un cahier des charges de douze pages et
+      // s'est vu demander « Que fait votre application avec l'argent ? ». La
+      // route ecrite POUR eviter cette question la provoquait.
+      //
+      // 400 etait calibre sur un modele qui ne reflechissait pas. Un brief
+      // COURT demande deja 962 jetons de sortie ; douze pages en demandent
+      // plus. 8 000 laisse la marge et reste sous le seuil de 21 312 au-dela
+      // duquel le SDK exige le flux.
+      max_tokens: 8000,
       system: CONSIGNE,
       // Le brief est borné : au-delà, on lit le début, qui porte l'intention.
       messages: [{ role: 'user', content: demande.slice(0, 24_000) }],
@@ -79,7 +99,31 @@ export async function POST(req: Request) {
     const brut = r.content.map((b) => (b.type === 'text' ? b.text : '')).join('')
     const d = brut.indexOf('{')
     const f = brut.lastIndexOf('}')
-    if (d === -1 || f <= d) return NextResponse.json({ deduites: {}, coutUsd: 0 })
+    if (d === -1 || f <= d) {
+      // ── « RIEN DEDUIT » ET « PAS PU LIRE » NE SONT PAS LA MEME CHOSE.
+      //
+      // C'est le defaut PROFOND, celui qui a rendu le precedent invisible.
+      // Cette route rendait `{}` dans les DEUX cas : un brief muet et une
+      // lecture ratee produisaient la meme reponse. L'ecran posait donc
+      // toutes ses questions, et personne ne pouvait savoir pourquoi.
+      //
+      // Elle le DIT maintenant, et distingue la TRONCATURE du reste : meme
+      // lecon que sur l'autre moteur, ou « Expected } but found EOF » se
+      // lisait « mauvais code » alors que c'etait une coupure.
+      const tronquee = r.stop_reason === 'max_tokens'
+      console.warn('[lire-brief] reponse illisible', {
+        stop_reason: r.stop_reason,
+        blocs: r.content.map((b) => b.type),
+        caracteres: brut.length,
+      })
+      return NextResponse.json({
+        deduites: {},
+        illisible: true,
+        motif: tronquee
+          ? 'La lecture du brief a ete coupee avant la fin : la limite de longueur est atteinte.'
+          : 'La lecture du brief n a rien rendu d exploitable.',
+      })
+    }
     const lu = JSON.parse(brut.slice(d, f + 1)) as Record<string, unknown>
 
     // ── LE FILTRE. La table décide, jamais le modèle.

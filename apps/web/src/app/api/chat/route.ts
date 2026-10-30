@@ -507,7 +507,20 @@ export async function POST(req: Request) {
           // vraie demande ? ». 250 jetons. C'est exactement le rôle que
           // `claude-haiku` tenait : le modèle léger le tient à l'identique.
           model: MODELE_LEGER,
-          max_tokens: 250,
+          // ── 2 000, ET 250 ETAIT LE MEME PIEGE QUE `lire-brief`.
+          //
+          // Ce fournisseur rend `[thinking, text]` et facture la reflexion
+          // sur `max_tokens`. Mesure du 2026-10-30 : a 400 jetons, un brief
+          // rendait des blocs [thinking] SEULS et un texte VIDE.
+          //
+          // Ici le repli est silencieux lui aussi : `JSON.parse("")` leve,
+          // l'erreur est avalee, et une salutation passe pour une demande
+          // valide. L'ecran lance alors une generation sur « bonjour ».
+          //
+          // RELEVER UNE BORNE NE COUTE RIEN : on ne paie que les jetons
+          // REELLEMENT produits. Le plafond n'est pas un budget, c'est un
+          // garde-fou — et un garde-fou place trop bas ne garde rien.
+          max_tokens: 2000,
           messages: [{
             role: 'user',
             content: `You are Deribfy, a friendly AI website builder. Analyze this user input: "${message}"
