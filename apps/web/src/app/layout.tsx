@@ -7,6 +7,7 @@ import { donneesPlateforme, estPagePlateforme } from "@/lib/seo/donneesStructure
 import JsonLdScript from "@/app/sites/[slug]/themes/JsonLdScript";
 import CookieConsent from "@/components/CookieConsent";
 import "./globals.css";
+import { MarqueurMoteur } from '@/components/MarqueurMoteur';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -106,6 +107,9 @@ export default async function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} ${fraunces.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        {/* Ce que le navigateur a RECU pour son reglage de moteur : lu par
+            le controle d'apres-deploiement (EP-306). Valeur publique assumee. */}
+        <MarqueurMoteur />
         {/* L'identité de la plateforme, pour les moteurs — jamais sur la
             boutique d'un marchand (voir `estPagePlateforme`). */}
         {plateforme && <JsonLdScript data={donneesPlateforme()} />}

@@ -19,14 +19,39 @@ jobs:
     if: github.event.deployment_status.state == 'success'
     runs-on: ubuntu-latest
     steps:
-      - name: La fonction du tir payant assemble (bac à sable, mémoire)
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      # ── LE CONTROLE ROUGIT, IL NE SIGNALE PAS (exigence du 2026-10-31).
+      #
+      # La sonde RAPPORTAIT la divergence des deux reglages du moteur et
+      # l'indisponibilite du juge de demarrage. Rapporter n'est pas echouer :
+      # c'etait la QUATRIEME version du meme defaut, apres « TOUT ROULE »,
+      # « indisponible » et « hors perimetre ». verifier-sonde.mjs sort en 1
+      # des qu'une anomalie existe — croix rouge sur main, courriel au
+      # committeur. Mesure sur corps forges : coherent → 0, divergence → 1,
+      # juge indisponible → 1.
+      - name: La fonction du tir payant est saine (assemblage, juge, interrupteur)
         run: |
-          r=$(curl -fsS --max-time 60 \
+          curl -fsS --max-time 90 \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
-            "https://www.deribfy.com/api/generateur/direct")
-          echo "$r" | head -c 400; echo
-          ok=$(echo "$r" | python3 -c "import json,sys; print(json.load(sys.stdin)['assemblage']['ok'])")
-          test "$ok" = "True" || { echo "🔴 la fonction de génération n'assemble plus"; exit 1; }
+            "https://www.deribfy.com/api/generateur/direct" > /tmp/sonde.json
+          head -c 400 /tmp/sonde.json; echo
+          # ── ET CE QUE LE NAVIGATEUR RECOIT VRAIMENT : la page publique.
+          #
+          # NEXT_PUBLIC_* est fige dans le paquet client au build. Lire la
+          # variable cote serveur mentirait si le reglage avait change sans
+          # redeploiement ; la graver dans un fichier deplacerait le faux
+          # vert. On mesure donc le paquet client LA OU IL VIT.
+          # INTERDICTION DE CACHE : sans elle, on validerait un deploiement en
+          # lisant la page d'HIER — et la divergence qu'on cherche a attraper
+          # est justement « change chez l'hebergeur sans redeployer ».
+          curl -fsS --max-time 60 \
+            -H "Cache-Control: no-store" -H "Pragma: no-cache" \
+            "https://www.deribfy.com/?anticache=${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" \
+            > /tmp/page.html
+          node apps/web/scripts/verifier-sonde.mjs /tmp/page.html < /tmp/sonde.json
       - name: La chaîne générale (émission, compilation, aperçu)
         run: |
           r=$(curl -fsS --max-time 120 \

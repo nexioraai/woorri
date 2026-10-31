@@ -41,6 +41,35 @@ Après la course : preuve zip (install/build/start, répertoire neuf) et
 vérification mécanique d'installabilité de la page publiée (manifeste,
 icônes, CSP) — le geste du téléphone appartient au propriétaire.
 
+## Leçon de méthode — 2026-10-31 : la discipline a évité deux correctifs faux
+
+Trois gates d'affilée ont rougi sur des étapes différentes (`test_marge`,
+`app_rendu`, `backend`). J'avais DÉDUIT une cause — « les tests qui exercent
+la boucle paient un processus d'exécution » — et j'allais injecter un juge
+muet dans EP-299 ③ et inscrire EP-302 ④ au registre des tests lents.
+
+Le propriétaire a imposé l'arrêt : **rien ne tourne pendant la gate, et on
+ne corrige rien tant qu'on ne sait pas ce qui est fiable.** La gate relancée
+sur un arbre libre, machine au repos :
+
+    GATE COMPLET EXIT=0 · 29 étapes · aucun rouge hors dette
+
+Les trois rouges étaient MES PROPRES INTERFÉRENCES : j'avais lancé des
+tests et un `npm ci` pendant que les gates tournaient. Les deux correctifs
+auraient donc « réparé » deux tests sains — et rendu EP-302 ④ aveugle au
+passage, puisque sa lenteur EST son sujet (il lance trois processus pour
+prouver que le verrou réseau mord).
+
+Règle qui en sort, et qui vaut plus que les deux correctifs évités :
+**toute mesure chronométrée prise pendant une gate est nulle.** Un seuil
+calibré sur une machine perturbée est faux dans le sens dangereux — trop
+généreux — et laissera passer demain ce qu'il devait attraper.
+
+Corollaire appliqué au plafond du juge d'exécution : il ne se calibre pas
+sur une machine de développement, puisque le juge tourne dans la lambda.
+Les mesures qui comptent sont celles de production, sur PLUSIEURS œuvres,
+la plus grosse comprise.
+
 ## Ce que le registre a déjà appris (2026-10-31)
 
 - **Même demande, trois issues** : `9ee1ca86` a coûté 0,2511 $ (refus

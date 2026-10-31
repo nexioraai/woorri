@@ -29,7 +29,7 @@ import { NextResponse } from 'next/server'
 import { requireAuthenticatedUser } from '@/lib/auth/require-authenticated-user'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { TABLE_GENERATIONS } from '@/lib/apps/journal'
-import { coherenceInterrupteur, moteurChoisi } from '@/lib/apps/interrupteur-moteur'
+import { moteurChoisi } from '@/lib/apps/interrupteur-moteur'
 import { boucleEcriture, CONSIGNE, pageAutonome } from '@/lib/apps/boucle-directe'
 import { appelerFournisseur, CONFIGS, fournisseurChoisi } from '@/lib/apps/fournisseur'
 import { assembler } from '@/lib/apps/bac-a-sable'
@@ -106,23 +106,55 @@ export async function GET(req: Request) {
   // modèle, une lecture. Repli sur le témoin si la base n'en a pas — et la
   // réponse DIT laquelle a servi : une preuve qui ne dit pas sur quoi elle
   // porte n'est pas une preuve.
-  const derniere = await supabaseAdmin
+  // ── COMBIEN D'ŒUVRES ? Par défaut une ; `?oeuvres=N` en monte plusieurs.
+  //
+  // Le plafond du juge d'exécution doit être calibré sur la LAMBDA, pas sur
+  // une machine de développement — et quatre mesures d'UNE SEULE œuvre ne
+  // suffisent pas : il faut le pire cas réel, la plus grosse comprise.
+  // Chaque montage coûte zéro appel de modèle : une lecture et un processus.
+  const combien = Math.min(
+    Math.max(1, Number(new URL(req.url).searchParams.get('oeuvres') ?? '1') || 1),
+    8,
+  )
+  const lues = await supabaseAdmin
     .from(TABLE_GENERATIONS)
     .select('id, document')
     .eq('statut', 'livree')
     .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle()
-  const fichiersOeuvre = (derniere.data?.document as { fichiers?: Record<string, string> } | null)
-    ?.fichiers
-  const surQuoi =
-    fichiersOeuvre === undefined || Object.keys(fichiersOeuvre).length === 0
-      ? { nom: 'témoin', fichiers: TEMOIN_FICHIERS }
-      : {
-          nom: `œuvre ${String(derniere.data?.id ?? '').slice(0, 8)}`,
-          fichiers: new Map(Object.entries(fichiersOeuvre)) as ReadonlyMap<string, string>,
-        }
+    .limit(combien)
+  const oeuvres = (lues.data ?? [])
+    .map((l) => ({
+      nom: `œuvre ${String(l.id).slice(0, 8)}`,
+      fichiers: new Map(
+        Object.entries((l.document as { fichiers?: Record<string, string> } | null)?.fichiers ?? {}),
+      ) as ReadonlyMap<string, string>,
+    }))
+    .filter((o) => o.fichiers.size > 0)
+  if (oeuvres.length === 0) oeuvres.push({ nom: 'témoin', fichiers: TEMOIN_FICHIERS })
 
+  // Chaque œuvre est montée à son tour ; la réponse porte le détail ET le
+  // PIRE CAS, puisque c'est de lui que le plafond doit venir.
+  const mesures: {
+    surQuoi: string
+    octets: number
+    utilisable: boolean
+    demarre: boolean
+    ms: number
+  }[] = []
+  for (const o of oeuvres.slice(1)) {
+    const a = await assembler(o.fichiers)
+    if (!a.ok) continue
+    const j = await jugerExecution(a.code)
+    mesures.push({
+      surQuoi: o.nom,
+      octets: a.code.length,
+      utilisable: j.indisponible === undefined,
+      demarre: j.demarre,
+      ms: j.ms,
+    })
+  }
+
+  const surQuoi = oeuvres[0]!
   const v = await assembler(surQuoi.fichiers)
   // ── LE JUGE D'EXÉCUTION TOURNE-T-IL DANS LA VRAIE FONCTION ?
   //
@@ -140,19 +172,24 @@ export async function GET(req: Request) {
   // refusent bien, donc rien ne depense — mais l'impasse serait MUETTE, et
   // un defaut de configuration qui ne se raconte pas se decouvre par un
   // acheteur. La sonde le dit.
-  const divergence = coherenceInterrupteur(
-    process.env.GENERATEUR_MOTEUR,
-    process.env.NEXT_PUBLIC_GENERATEUR_MOTEUR,
-  )
+  const serveurBrut = process.env.GENERATEUR_MOTEUR
+  const etat = {
+    serveur: moteurChoisi(serveurBrut),
+    serveurPresente: serveurBrut !== undefined,
+  }
   return NextResponse.json(
     {
-      interrupteur: {
-        serveur: moteurChoisi(process.env.GENERATEUR_MOTEUR),
-        ecran: moteurChoisi(process.env.NEXT_PUBLIC_GENERATEUR_MOTEUR),
-        ...(divergence === null ? { coherent: true } : { coherent: false, raison: divergence.raison }),
-      },
+      interrupteur: etat,
+      // Le détail par œuvre, et le pire cas — la base du plafond (EP-302).
+      ...(mesures.length === 0
+        ? {}
+        : {
+            mesures,
+            pireCasMs: Math.max(...mesures.map((m) => m.ms), 0),
+          }),
       execution: {
         surQuoi: surQuoi.nom,
+        octets: v.ok ? v.code.length : 0,
         utilisable: execution.indisponible === undefined,
         demarre: execution.demarre,
         ms: execution.ms,

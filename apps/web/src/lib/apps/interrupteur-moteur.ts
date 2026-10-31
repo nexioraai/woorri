@@ -97,37 +97,64 @@ export function direLeMoteur(m: Moteur): string {
  * que le but est d'empêcher d'en LANCER un nouveau.
  */
 /**
- * LES DEUX RÉGLAGES SONT-ILS D'ACCORD ? (EP-306)
+ * LES DEUX MONDES SONT-ILS D'ACCORD ? (EP-306)
  *
- * ── LE DÉFAUT, SOULEVÉ PAR LE PROPRIÉTAIRE LE 2026-10-31.
+ * ── PREMIERE VERSION, ET POURQUOI ELLE MENTAIT.
  *
- * L'interrupteur a DEUX réglages chez l'hébergeur : `GENERATEUR_MOTEUR`
- * (lu par le serveur) et `NEXT_PUBLIC_GENERATEUR_MOTEUR` (lu par l'écran,
- * figé au build). RIEN ne force leur égalité — on en change un, on oublie
- * l'autre, et les deux moitiés du produit partent sur deux moteurs.
+ * Elle comparait `GENERATEUR_MOTEUR` et `NEXT_PUBLIC_GENERATEUR_MOTEUR`,
+ * LUS TOUS DEUX COTE SERVEUR. Le proprietaire l'a corrigee le 2026-10-31 :
+ * `NEXT_PUBLIC_*` est FIGE dans le paquet client au moment du build. La
+ * valeur que l'ecran emploie est celle CUITE dans le JavaScript telecharge.
+ * Changer le reglage chez l'hebergeur SANS REDEPLOYER laisse donc l'ecran
+ * sur l'ancienne valeur — et l'ancienne version de ce controle aurait dit
+ * « coherent ». Un faux vert, exactement la famille qu'on ferme.
  *
- * MESURÉ : les deux portes refusent bien (EP-281 tient), donc rien ne
- * DÉPENSE à tort. Le défaut n'est pas une fuite : c'est une IMPASSE MUETTE.
- * L'écran frappe à une porte que le serveur a fermée, la personne lit
- * « cette version n'est pas active » sans avoir rien fait de mal, et le
- * produit paraît cassé alors qu'il se protège.
+ * La comparaison porte desormais sur DEUX MONDES REELS, lus chacun LA OU IL
+ * VIT : la valeur que le NAVIGATEUR a recue (lue dans la page publique
+ * deployee, balise `deribfy-moteur-client`, posee par un composant client
+ * dont la valeur est substituee a la compilation) et l'environnement
+ * d'EXECUTION du serveur (lu par la sonde). Une version precedente gravait
+ * cette valeur dans un fichier au build : elle deplacait le faux vert d'un
+ * cran, puisque rien ne prouvait que l'hebergeur avait regenere.
  *
- * Cette fonction NOMME la divergence pour qu'elle se dise — à la sonde, au
- * démarrage, partout où quelqu'un regarde. Un défaut de configuration qui
- * ne se raconte pas se découvre par un acheteur.
+ * ── ET « ABSENTE » N'EST PAS « LUE ».
+ *
+ * Une variable absente tombe sur le fail-safe (EP-305 : `direct`). Ce n'est
+ * pas une faute — le moteur servi reste le bon — mais ce n'est pas la meme
+ * chose qu'une valeur posee, et les confondre rend le controle aveugle au
+ * cas le plus courant : la variable oubliee. L'etat porte donc les deux.
  */
-export function coherenceInterrupteur(
+export type EtatInterrupteur = {
+  readonly serveur: Moteur
+  readonly client: Moteur
+  readonly serveurPresente: boolean
+  readonly clientCuitPresente: boolean
+  readonly coherent: boolean
+  readonly raison?: string
+}
+
+export function etatInterrupteur(
   valeurServeur: string | undefined,
-  valeurEcran: string | undefined,
-): { readonly raison: string } | null {
+  luClient: { readonly presente: boolean; readonly moteur: Moteur },
+): EtatInterrupteur {
   const serveur = moteurChoisi(valeurServeur)
-  const ecran = moteurChoisi(valeurEcran)
-  if (serveur === ecran) return null
+  const client = luClient.moteur
+  const base = {
+    serveur,
+    client,
+    serveurPresente: valeurServeur !== undefined,
+    clientCuitPresente: luClient.presente,
+  }
+  if (serveur === client) return { ...base, coherent: true }
   return {
+    ...base,
+    coherent: false,
     raison:
-      `Les deux réglages du moteur se contredisent : le serveur sert « ${serveur} », ` +
-      `l'écran appelle « ${ecran} ». Une génération lancée frappera une porte fermée. ` +
-      'Alignez GENERATEUR_MOTEUR et NEXT_PUBLIC_GENERATEUR_MOTEUR chez l’hébergeur.',
+      `Les deux mondes se contredisent : le serveur sert « ${serveur} » (execution), ` +
+      `l'ecran appelle « ${client} » (cuit au build). Une generation lancee frappera une ` +
+      'porte fermee. Alignez GENERATEUR_MOTEUR et NEXT_PUBLIC_GENERATEUR_MOTEUR chez ' +
+      'l\'hebergeur, PUIS REDEPLOYEZ : changer le reglage sans redeployer ne change pas ' +
+      "ce que l'ecran a recu.",
   }
 }
 
