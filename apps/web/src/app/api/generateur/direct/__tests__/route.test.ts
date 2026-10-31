@@ -137,7 +137,8 @@ describe('EP-276 · la route de l’écriture directe', () => {
       coutUsd: number
     }
     expect(d.ok, 'la boucle n’aboutit pas').toBe(true)
-    expect(d.fichiers).toBe(2)
+    // 2 fichiers du modèle + 3 de la bibliothèque injectée (EP-299).
+    expect(d.fichiers).toBe(5)
     expect(d.html, 'la page n’est pas montable').toContain('<div id="racine">')
     // LE COÛT EST RÉEL, pas inventé : 1200 entrée + 3400 sortie aux tarifs
     // du fournisseur. S'il tombait à zéro, personne ne verrait la dépense.

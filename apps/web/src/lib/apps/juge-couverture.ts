@@ -84,7 +84,9 @@ export function jugerCouverture(
   const cahier = demande.toLowerCase()
   const perimetre = (fichiers.get(FICHIER_PERIMETRE) ?? '').toLowerCase()
   const codeEntier = [...fichiers.entries()]
-    .filter(([n]) => n !== FICHIER_PERIMETRE)
+    // La bibliothèque injectée est à DERIBFY : ses mots (« recherche » d'une
+    // icône…) ne couvrent pas une exigence du cahier à la place du modèle.
+    .filter(([n]) => n !== FICHIER_PERIMETRE && !n.startsWith('systeme/'))
     .map(([, c]) => c)
     .join('\n')
     .toLowerCase()

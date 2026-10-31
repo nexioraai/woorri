@@ -79,6 +79,9 @@ export function jugerVivacite(fichiers: ReadonlyMap<string, string>): DefautViva
   const defauts: DefautVivacite[] = []
   for (const [fichier, brut] of fichiers) {
     if (!/\.(tsx|jsx)$/u.test(fichier)) continue
+    // La bibliothèque injectée (systeme/) est à Deribfy, testée par EP-299 :
+    // la juger ici ferait porter au modèle des défauts qu'il ne peut corriger.
+    if (fichier.startsWith('systeme/')) continue
     const source = brut.replace(/\/\*[\s\S]*?\*\//gu, ' ').replace(/^\s*\/\/.*$/gmu, ' ')
     // La démonstration assumée doit se VOIR : le marqueur technique sans le
     // mot à l'écran est une démonstration cachée — refusée aussi.

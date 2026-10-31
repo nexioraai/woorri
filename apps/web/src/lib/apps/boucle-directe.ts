@@ -23,6 +23,7 @@ import { importsInterdits, lireFichiers, PAQUETS_AUTORISES } from './ecriture-di
 import { jugerVivacite, type DefautVivacite } from './juge-vivacite'
 import { FICHIER_PERIMETRE, jugerCouverture, type RapportCouverture } from './juge-couverture'
 import { jugerDevise, marqueRecommandee } from './juge-devise'
+import { CONSIGNE_BIBLIOTHEQUE, fichiersSysteme } from './bibliotheque-ui'
 
 /**
  * LA CONSIGNE — et chaque phrase y répond à un défaut mesuré.
@@ -84,7 +85,9 @@ RÈGLES, et chacune vient d'un défaut réel :
    composant et à un niveau de l'échelle typographique — jamais une phrase
    qui flotte hors de toute carte.
 
-10. TU DÉCLARES CE QUE TU NE LIVRES PAS. Un fichier \`PERIMETRE.md\` liste ce
+10. ${CONSIGNE_BIBLIOTHEQUE}
+
+11. TU DÉCLARES CE QUE TU NE LIVRES PAS. Un fichier \`PERIMETRE.md\` liste ce
    que le cahier demande et que cette version ne couvre pas, un motif d'une
    ligne par entrée. Le silence est interdit : une exigence absente de
    l'application ET de ce fichier te sera renvoyée.`
@@ -243,7 +246,23 @@ export async function boucleEcriture(o: {
       }
     }
 
-    const carte = new Map(lus.map((f) => [f.chemin, f.contenu]))
+    // ── LE PRÉFIXE systeme/ EST À DERIBFY, EN BLOC : ce que le modèle y
+    // écrit n'entre JAMAIS dans la carte — pas seulement les trois noms
+    // fournis : un systeme/autre.tsx écrit par le modèle échapperait aux
+    // juges (qui sautent le préfixe) et y cacherait ce qu'on interdit
+    // ailleurs. Un import vers un fichier écarté casse l'assemblage avec un
+    // chemin nommé : le modèle se corrige au tour suivant.
+    const carte = new Map(
+      lus.filter((f) => !f.chemin.startsWith('systeme/')).map((f) => [f.chemin, f.contenu]),
+    )
+    // La bibliothèque fournie s'injecte ensuite. La devise du client est
+    // CUITE dans systeme/argent.ts — une seule source, jamais un code
+    // monnaie écrit par le modèle (lot UI du 2026-10-31).
+    for (const [chemin, contenu] of fichiersSysteme(
+      typeof o.configuration?.currency === 'string' ? o.configuration.currency : undefined,
+    )) {
+      carte.set(chemin, contenu)
+    }
     if (motif === null) {
       const v = await assembler(carte)
       if (v.ok) {

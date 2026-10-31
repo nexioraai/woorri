@@ -58,6 +58,9 @@ export function jugerDevise(
   const defauts: DefautDevise[] = []
   for (const [fichier, source] of fichiers) {
     if (!/\.(tsx|ts|jsx|md)$/u.test(fichier)) continue
+    // Le préfixe systeme/ est à Deribfy et PURGÉ des écrits du modèle par la
+    // boucle : nos gabarits (« 0 ${ESPACE.m}px ») ne sont pas des prix.
+    if (fichier.startsWith('systeme/')) continue
     for (const [marque, motif] of DETECTEURS) {
       if (permises.has(marque.toUpperCase())) continue
       motif.lastIndex = 0
