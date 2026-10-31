@@ -34,15 +34,21 @@ import { direLeMoteur, moteurChoisi } from '../interrupteur-moteur'
 // survivre à l'accident qu'il décrit.
 
 describe('EP-275 · l’interrupteur', () => {
-  it('① SEULE LA VALEUR EXACTE BASCULE — tout le reste sert le connu', () => {
-    expect(moteurChoisi('direct'), 'l’interrupteur ne bascule pas').toBe('direct')
-    // ── FAIL-SAFE VERS LE CONNU, ET C'EST LE POINT.
+  it('① SEULE LA VALEUR EXACTE BASCULE — tout le reste sert le moteur VIVANT', () => {
+    // ── LA MISSION N'A PAS BOUGÉ, SON SENS A SUIVI LES FAITS (EP-305).
     //
-    // Un interrupteur qui part sur l'architecture à l'essai à la moindre
-    // faute de frappe est un piège. La casse, les espaces, les valeurs
-    // « vraies » d'autres variables : tout retombe sur `air`.
-    for (const v of [undefined, '', 'DIRECT', 'Direct', ' direct', 'direct ', '1', 'true', 'air']) {
-      expect(moteurChoisi(v), `« ${String(v)} » a fait basculer le moteur`).toBe('air')
+    // Règle d'origine : à la moindre faute de frappe, on retombe sur le
+    // moteur CONNU-BON — et le 2026-10-18 c'était `air`. Le 2026-10-31,
+    // `air` est éteint depuis la veille, son dernier tir a échoué, et
+    // toute la production sert `direct`. Mesuré en exerçant la fonction :
+    // `undefined`, `""`, `DIRECT`, `dirct` tombaient tous sur le moteur
+    // MORT — une faute de casse chez l'hébergeur y renvoyait la production.
+    //
+    // Le fail-safe pointe donc vers `direct`, et c'est `air` qui demande
+    // désormais une intention EXACTE. Il reste atteignable, intact.
+    expect(moteurChoisi('air'), 'l’option 2 n’est plus atteignable du tout').toBe('air')
+    for (const v of [undefined, '', 'AIR', 'Air', ' air', 'air ', '1', 'true', 'direct']) {
+      expect(moteurChoisi(v), `« ${String(v)} » ne sert pas le moteur vivant`).toBe('direct')
     }
   })
 

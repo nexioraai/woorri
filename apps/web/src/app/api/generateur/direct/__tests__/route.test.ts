@@ -115,17 +115,36 @@ beforeEach(() => {
 })
 
 describe('EP-276 · la route de l’écriture directe', () => {
-  it('① UNE SEULE PORTE — interrupteur sur l’autre moteur, la route REFUSE', async () => {
+  it('① UNE SEULE PORTE — sur « air », cette route REFUSE', async () => {
     // ── EXIGENCE DU PROPRIÉTAIRE, 2026-10-18.
     //
     // « il faut que un soit accessible depuis interface le temps tester ce
     // qui est accessible l'autre ne doit pas etre accessible en meme temps ».
-    for (const v of [undefined, '', 'air', 'DIRECT']) {
+    //
+    // ── CE QUI A CHANGÉ LE 2026-10-31, ET POURQUOI CE CONTRÔLE SUIT.
+    //
+    // La mission est intacte : une seule porte à la fois. Mais le fail-safe
+    // a basculé (EP-305) : `air` est éteint depuis le 30, son dernier tir a
+    // échoué, et toute la production sert `direct`. Une valeur fautive —
+    // absente, vide, « DIRECT » — renvoyait la production vers le moteur
+    // MORT ; elle sert désormais le vivant. Ce contrôle épingle donc ce
+    // qu'il doit : seul `air` EXACT ferme cette porte, et une valeur
+    // fautive ne la ferme plus. La symétrie, elle, est tenue par EP-306 ⑤,
+    // qui exerce la porte d'en face.
+    for (const v of ['air']) {
+      process.env.GENERATEUR_MOTEUR = v
+      const res = await POST(appel())
+      expect(res.status, `« ${v} » laisse la porte ouverte`).toBe(409)
+      expect(lignesEcrites().length, 'une ligne a été écrite alors que la route refuse').toBe(0)
+    }
+    // Et le fail-safe : une valeur fautive ne doit PAS fermer la porte du
+    // moteur vivant — sinon une faute de casse chez l'hébergeur arrêterait
+    // la production (mesuré : c'était le cas avant EP-305).
+    for (const v of [undefined, '', 'DIRECT', 'dirct']) {
       if (v === undefined) delete process.env.GENERATEUR_MOTEUR
       else process.env.GENERATEUR_MOTEUR = v
       const res = await POST(appel())
-      expect(res.status, `« ${String(v)} » laisse la porte ouverte`).toBe(409)
-      expect(lignesEcrites().length, 'une ligne a été écrite alors que la route refuse').toBe(0)
+      expect(res.status, `« ${String(v)} » ferme la porte du moteur vivant`).not.toBe(409)
     }
   })
 

@@ -29,7 +29,7 @@ import { NextResponse } from 'next/server'
 import { requireAuthenticatedUser } from '@/lib/auth/require-authenticated-user'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { TABLE_GENERATIONS } from '@/lib/apps/journal'
-import { moteurChoisi } from '@/lib/apps/interrupteur-moteur'
+import { coherenceInterrupteur, moteurChoisi } from '@/lib/apps/interrupteur-moteur'
 import { boucleEcriture, CONSIGNE, pageAutonome } from '@/lib/apps/boucle-directe'
 import { appelerFournisseur, CONFIGS, fournisseurChoisi } from '@/lib/apps/fournisseur'
 import { assembler } from '@/lib/apps/bac-a-sable'
@@ -135,8 +135,22 @@ export async function GET(req: Request) {
   const execution = v.ok
     ? await jugerExecution(v.code)
     : { demarre: false, indisponible: 'témoin inassemblable', ms: 0, erreurs: [], octetsRendus: 0, texte: '' }
+  // EP-306 : les deux reglages peuvent diverger chez l'hebergeur, et alors
+  // l'ecran frappe a une porte que le serveur a fermee. Les deux portes
+  // refusent bien, donc rien ne depense — mais l'impasse serait MUETTE, et
+  // un defaut de configuration qui ne se raconte pas se decouvre par un
+  // acheteur. La sonde le dit.
+  const divergence = coherenceInterrupteur(
+    process.env.GENERATEUR_MOTEUR,
+    process.env.NEXT_PUBLIC_GENERATEUR_MOTEUR,
+  )
   return NextResponse.json(
     {
+      interrupteur: {
+        serveur: moteurChoisi(process.env.GENERATEUR_MOTEUR),
+        ecran: moteurChoisi(process.env.NEXT_PUBLIC_GENERATEUR_MOTEUR),
+        ...(divergence === null ? { coherent: true } : { coherent: false, raison: divergence.raison }),
+      },
       execution: {
         surQuoi: surQuoi.nom,
         utilisable: execution.indisponible === undefined,
