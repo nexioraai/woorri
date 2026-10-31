@@ -95,7 +95,35 @@ export async function GET(req: Request) {
       return null
     }
   }
-  const v = await assembler(TEMOIN_FICHIERS)
+  // ── LA SONDE MONTE UNE VRAIE ŒUVRE, PAS UN TÉMOIN.
+  //
+  // Exigence du propriétaire, 2026-10-31 : « ta sonde prouve que le chemin
+  // du témoin fonctionne — pas tous les chemins. Une vraie application, avec
+  // du balisage plus riche, peut réclamer un de ces fichiers de données que
+  // le témoin n'a jamais fait charger. » Juste : le témoin monte deux
+  // balises ; une œuvre réelle en monte des centaines et visite ses écrans.
+  // On prend donc la DERNIÈRE ŒUVRE LIVRÉE en base. Coût : zéro appel de
+  // modèle, une lecture. Repli sur le témoin si la base n'en a pas — et la
+  // réponse DIT laquelle a servi : une preuve qui ne dit pas sur quoi elle
+  // porte n'est pas une preuve.
+  const derniere = await supabaseAdmin
+    .from(TABLE_GENERATIONS)
+    .select('id, document')
+    .eq('statut', 'livree')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  const fichiersOeuvre = (derniere.data?.document as { fichiers?: Record<string, string> } | null)
+    ?.fichiers
+  const surQuoi =
+    fichiersOeuvre === undefined || Object.keys(fichiersOeuvre).length === 0
+      ? { nom: 'témoin', fichiers: TEMOIN_FICHIERS }
+      : {
+          nom: `œuvre ${String(derniere.data?.id ?? '').slice(0, 8)}`,
+          fichiers: new Map(Object.entries(fichiersOeuvre)) as ReadonlyMap<string, string>,
+        }
+
+  const v = await assembler(surQuoi.fichiers)
   // ── LE JUGE D'EXÉCUTION TOURNE-T-IL DANS LA VRAIE FONCTION ?
   //
   // Le cliquet EP-302 ⑦ refuse qu'une route INJECTE un faux juge — c'est une
@@ -110,6 +138,7 @@ export async function GET(req: Request) {
   return NextResponse.json(
     {
       execution: {
+        surQuoi: surQuoi.nom,
         utilisable: execution.indisponible === undefined,
         demarre: execution.demarre,
         ms: execution.ms,

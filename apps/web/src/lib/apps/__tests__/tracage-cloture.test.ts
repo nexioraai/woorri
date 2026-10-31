@@ -25,6 +25,7 @@
  * (du WebAssembly, un binaire natif), pas le code. Les exempter n'affaiblit
  * pas le cliquet : ça le rend exact.
  */
+import { createRequire } from 'node:module'
 import { readFileSync, existsSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
@@ -55,38 +56,48 @@ function paquetDe(chemin: string): string | null {
 }
 
 /**
- * UN PAQUET SANS AUCUN FICHIER EXÉCUTABLE NE PEUT PAS ÊTRE CHARGÉ.
+ * CE QUI NE PEUT PAS ÊTRE ATTEINT À L'EXÉCUTION N'A PAS À ÊTRE EMPORTÉ.
  *
  * `happy-dom` déclare `@types/node`, `@types/whatwg-mimetype` et, par
- * ricochet, `undici-types` dans ses `dependencies` — MESURÉ le 2026-10-31 :
- * zéro `.js`, zéro `.cjs`, zéro `.mjs`, zéro `.node` ; uniquement des
- * déclarations de types, lues par le compilateur, jamais par l'exécution.
- * Les tracer mettrait 2,5 Mo de poids mort dans une fonction bornée à 250.
+ * ricochet, `undici-types` : 2,5 Mo de déclarations de types, dans une
+ * fonction bornée à 250 Mo.
  *
- * L'exemption est MESURÉE, pas devinée au préfixe du nom : un paquet nommé
- * « @types/x » qui porterait du code serait exigé comme les autres. C'est la
- * même doctrine que celle déjà écrite plus haut pour `serverExternalPackages`
- * — exempter ce qui ne peut pas être chargé rend le cliquet EXACT.
+ * ── LE CRITÈRE A ÉTÉ CORRIGÉ, ET LA CORRECTION COMPTE.
+ *
+ * Première version : « aucun fichier .js/.cjs/.mjs/.node ». FAUX, et le
+ * propriétaire l'a vu avant moi — un `.json` n'est pas du code et peut
+ * pourtant être chargé à l'exécution (tables d'entités HTML, listes de
+ * propriétés CSS). MESURÉ : `happy-dom` porte justement un fichier de
+ * données `.json`. Un tel paquet exempté aurait tué le juge EN LIGNE —
+ * la classe exacte qu'on venait de fermer.
+ *
+ * Le critère juste n'est pas « ce n'est pas du code », c'est « RIEN NE PEUT
+ * L'ATTEINDRE ». Il se mesure par la seule porte qui existe : la résolution.
+ * Si `require.resolve` échoue, aucun `import` ni `require` ne peut charger
+ * quoi que ce soit de ce paquet — ses données comprises. MESURÉ le
+ * 2026-10-31 : les trois paquets de types rendent MODULE_NOT_FOUND ;
+ * happy-dom, entities et ws se résolvent — et restent exigés.
+ *
+ * ── ET ELLE SE RECALCULE À CHAQUE PASSAGE, jamais figée.
+ *
+ * « Inatteignable » est vrai de la version d'aujourd'hui. Une mise à jour
+ * qui ajouterait un point d'entrée rendrait le paquet résoluble, et ce
+ * contrôle l'exigerait au passage suivant — il n'y a aucune liste gelée
+ * dans ce fichier, c'est le disque qui répond, à chaque fois.
  */
-function porteDuCodeExecutable(nom: string): boolean {
-  const racine = join(MODULES, nom)
-  if (!existsSync(racine)) return true
-  const pile = [racine]
-  while (pile.length > 0) {
-    const d = pile.pop()
-    if (d === undefined) continue
-    for (const e of readdirSync(d, { withFileTypes: true })) {
-      if (e.isDirectory()) pile.push(join(d, e.name))
-      else if (/\.(js|cjs|mjs|node)$/u.test(e.name)) return true
-    }
+function atteignableALExecution(nom: string): boolean {
+  try {
+    createRequire(join(MODULES, 'x')).resolve(nom)
+    return true
+  } catch {
+    return false
   }
-  return false
 }
 
 /** Fermeture transitive des `dependencies` réelles, lue dans node_modules. */
 function cloture(nom: string, vus = new Set<string>()): Set<string> {
   if (vus.has(nom)) return vus
-  if (!porteDuCodeExecutable(nom)) return vus
+  if (!atteignableALExecution(nom)) return vus
   vus.add(nom)
   const manifeste = join(MODULES, nom, 'package.json')
   if (!existsSync(manifeste)) return vus
