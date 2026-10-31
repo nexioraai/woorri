@@ -32,6 +32,7 @@ import { TABLE_GENERATIONS } from '@/lib/apps/journal'
 import { moteurChoisi } from '@/lib/apps/interrupteur-moteur'
 import { boucleEcriture, CONSIGNE, pageAutonome } from '@/lib/apps/boucle-directe'
 import { appelerFournisseur, CONFIGS, fournisseurChoisi } from '@/lib/apps/fournisseur'
+import { assembler } from '@/lib/apps/bac-a-sable'
 
 export const runtime = 'nodejs'
 // ── QUINZE MINUTES, ET C'EST UNE CONSÉQUENCE DU PLAFOND, PAS UN CONFORT.
@@ -43,6 +44,82 @@ export const runtime = 'nodejs'
 export const maxDuration = 900
 
 
+
+
+/**
+ * ── LA SONDE DE CETTE FONCTION — « tu dois savoir aussi », appliqué ICI.
+ *
+ * MESURÉ LES 2026-10-31 01:02 ET 08:18 : deux tirs payés (0,45 $ au total)
+ * sont morts dans CETTE fonction sur « react non embarqué » — pendant que
+ * /p/[jeton] assemblait LA MÊME œuvre, avec les MÊMES imports, dans la
+ * sienne. Deux fonctions, deux disques : le vert de la sonde générale ne
+ * dit RIEN de celui-ci, et c'est exactement ainsi que 0,45 $ sont partis
+ * contre un mur qu'aucun contrôle ne regardait.
+ *
+ * Ce GET assemble un témoin DANS la fonction du tir payant et photographie
+ * le disque réel (cwd, node_modules présents ou non). AUCUN MODÈLE n'est
+ * appelé : zéro centime, à n'importe quelle fréquence. Même porte que la
+ * sonde générale : le secret des crons — un geste qui coûte du processeur
+ * ne s'offre pas à l'anonyme.
+ */
+const TEMOIN_FICHIERS: ReadonlyMap<string, string> = new Map([
+  [
+    'index.tsx',
+    "import { createRoot } from 'react-dom/client'\n" +
+      "import { App } from './App'\n" +
+      'export function monter(noeud: Element) {\n' +
+      '  createRoot(noeud).render(<App />)\n' +
+      '}\n',
+  ],
+  ['App.tsx', "import { useState } from 'react'\n" +
+    'export function App() {\n' +
+    '  const [n] = useState(12)\n' +
+    '  return <p>témoin {n}</p>\n' +
+    '}\n'],
+])
+
+export async function GET(req: Request) {
+  const secret = process.env.CRON_SECRET
+  if (!secret || req.headers.get('authorization') !== 'Bearer ' + secret) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+  const { existsSync, readdirSync } = await import('node:fs')
+  const { join } = await import('node:path')
+  const cwd = process.cwd()
+  const present = (p: string) => existsSync(p)
+  const lister = (p: string) => {
+    try {
+      return readdirSync(p).slice(0, 60)
+    } catch {
+      return null
+    }
+  }
+  const v = await assembler(TEMOIN_FICHIERS)
+  return NextResponse.json(
+    {
+      assemblage: v.ok
+        ? { ok: true, ms: v.ms, octets: v.code.length }
+        : { ok: false, ms: v.ms, erreur: v.erreur },
+      cwd,
+      disque: {
+        'cwd/node_modules/react': present(join(cwd, 'node_modules', 'react', 'package.json')),
+        'cwd/node_modules/react-dom': present(join(cwd, 'node_modules', 'react-dom', 'package.json')),
+        'cwd/node_modules/scheduler': present(join(cwd, 'node_modules', 'scheduler', 'package.json')),
+        'cwd/node_modules/rolldown': present(join(cwd, 'node_modules', 'rolldown', 'package.json')),
+        'cwd/apps/web/node_modules/react': present(
+          join(cwd, 'apps', 'web', 'node_modules', 'react', 'package.json'),
+        ),
+        '/var/task/node_modules/react': present('/var/task/node_modules/react/package.json'),
+        '/var/task/apps/web/node_modules/react': present(
+          '/var/task/apps/web/node_modules/react/package.json',
+        ),
+      },
+      racine: lister(cwd),
+      paquets: lister(join(cwd, 'node_modules')),
+    },
+    { headers: { 'Cache-Control': 'no-store' } },
+  )
+}
 
 export async function POST(req: Request) {
   const garde = await requireAuthenticatedUser(req)
