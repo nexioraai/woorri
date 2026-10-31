@@ -119,6 +119,9 @@ export const CSP_PAGE_PUBLIEE = [
   "script-src 'unsafe-inline'",
   "style-src 'unsafe-inline'",
   "img-src data: blob:",
+  // N2 : le manifeste PWA est cuit dans la page (data:). Mesuré bloquant
+  // sous default-src 'none' — sans cette ligne, rien ne s'installe.
+  "manifest-src data:",
   "font-src data:",
   "connect-src 'none'",
   "form-action 'none'",

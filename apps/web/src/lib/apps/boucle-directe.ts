@@ -436,12 +436,49 @@ String((e.reason&&e.reason.stack)||e.reason))});
  * C'est ce qui lui permet d'être servie dans un cadre isolé, et d'être
  * publiée par le lien de partage sans toucher l'origine de Deribfy.
  */
+/**
+ * N2 (2026-10-31) — LA PAGE PUBLIÉE S'INSTALLE SUR LE TÉLÉPHONE.
+ *
+ * Arbitrage du propriétaire : N3 a retiré la promesse native fausse ; N2
+ * rend VRAIE la phrase « s'installe sur le téléphone » — manifeste PWA cuit
+ * en data:, icônes PNG pleines embarquées (552 et 1996 caractères — aucune
+ * requête externe, la page reste autonome), affichage standalone, et les
+ * balises Apple pour « Sur l'écran d'accueil ». Chrome n'exige plus de
+ * service worker pour installer ; iOS passe par ses balises. La CSP de
+ * publication autorise manifest-src data: — mesurée bloquante sinon.
+ */
+const ICONE_192 = 'iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAIAAADdvvtQAAABZElEQVR42u3SQQ0AAAjEsNODJYRjBwuEd5MqWJbqgbdIgIEwEAbCQGAgDISBMBAYCANhIAwEBsJAGAgDgYEwEAbCQBgIDISBMBAGAgNhIAyEgcBAGAgDYSAwEAbCQBgIA4GBMBAGwkBgIAyEgTAQGAgDYSAMBAbCQBgIA4GBMBAGwkAYCAyEgTAQBgIDYSAMhIHAQBgIA2EgMBAGwkAYCAOBgTAQBsJAYCAMhIEwEBgIA2EgDAQGwkAYCANhIDAQBsJAGAgMhIEwEAYCA2EgDISBwEAYCANhIDAQBsJAGAgDgYEwEAbCQGAgDISBMBAYCANhIAwEBsJAGAgDYSAwEAbCQBgIDISBMBAGAgNhIAyEgcBAGAgDYSAMpAIGwkAYCAOBgTAQBsJAYCAMhIEwEBgIA2EgDAQGwkAYCANhIDAQBsJAGAgMhIEwEAYCA2EgDISBwEAYCANhIAwEBsJAGAgDwdUCr6bLbgmsov8AAAAASUVORK5CYII='
+const ICONE_512 = 'iVBORw0KGgoAAAANSUhEUgAAAgAAAAIACAIAAAB7GkOtAAAFn0lEQVR42u3VMQ0AAAgEsdeDJYRjBw+sNKmCWy7VA8BDkQDAAAAwAAAMAAADAMAAADAAAAwAAAMAwAAAMAAADAAAAwDAAAAwAAAMAAADAMAAADAAAAwAAAMAwAAAMAAADADAAAAwAAAMAAADAMAAADAAAAwAAAMAwAAAMAAADAAAAwDAAAAwAAAMAAADAMAAADAAAAwAAAMAwAAAMAAADADAAFQAMAAADAAAAwDAAAAwAAAMAAADAMAAADAAAAwAAAMAwAAAMAAADAAAAwDAAAAwAAAMAAADAMAAADAAAAwAAAMAMAAADAAAAwDAAAAwAAAMAAADAMAAADAAAAwAAAMAwAAAMAAADAAAAwDAAAAwAAAMAAADAMAAADAAAAwAAAMAMAAVAAwAAAMAwAAAMAAADAAAAwDAAAAwAAAMAAADAMAAADAAAAwAAAMAwAAAMAAADAAAAwDAAAAwAAAMAAADAMAAAAwAAAMAwAAAMAAADAAAAwDAAAAwAAAMAAADAMAAADAAAAwAAAMAwAAAMAAADAAAAwDAAAAwAAAMAAADAMAAAAwAAAMAwAAAMAAADAAAAwDAAAAwAAAMAAADAMAAADAAAAwAAAMAwAAAMAAADAAAAwDAAAAwAAAMAAADAMAAADAAAAMAwAAAMAAADAAAAwDAAAAwAAAMAAADAMAAADAAAAwAAAMAwAAAMAAADAAAAwDAAAAwAAAMAAADAMAAADAAAAMAwAAAMAAADAAAAwDAAAAwAAAMAAADAMAAADAAAAwAAAMAwAAAMAAADAAAAwDAAAAwAAAMAAADAMAAADAAAAwAwAAAMAAADAAAAwDAAAAwAAAMAAADAMAAADAAAAwAAAMAwAAAMAAADAAAAwDAAAAwAAAMAAADAMAAADAAAAwAwAAAMAAADAAAAwDAAAAwAAAMAAADAMAAADAAAAwAAAMAwAAAMAAADAAAAwDAAAAwAAAMAAADAMAAADAAAAwAwAAkADAAAAwAAAMAwAAAMAAADAAAAwDAAAAwAAAMAAADAMAAADAAAAwAAAMAwAAAMAAADAAAAwDAAAAwAAAMAAADADAAAAwAAAMAwAAAMAAADAAAAwDAAAAwAAAMAAADAMAAADAAAAwAAAMAwAAAMAAADAAAAwDAAAAwAAAMAAADADAAFQAMAAADAMAAADAAAAwAAAMAwAAAMAAADAAAAwDAAAAwAAAMAAADAMAAADAAAAwAAAMAwAAAMAAADAAAAwDAAAAMAAADAMAAADAAAAwAAAMAwAAAMAAADAAAAwDAAAAwAAAMAAADAMAAADAAAAwAAAMAwAAAMAAADAAAAwDAAAAMQAUAAwDAAAAwAAAMAAADAMAAADAAAAwAAAMAwAAAMAAADAAAAwDAAAAwAAAMAAADAMAAADAAAAwAAAMAwAAAMAAAAwDAAAAwAAAMAAADAMAAADAAAAwAAAMAwAAAMAAADAAAAwDAAAAwAAAMAAADAMAAADAAAAwAAAMAwAAAMAAAAwDAAAAwAAAMAAADAMAAADAAAAwAAAMAwAAAMAAADAAAAwDAAAAwAAAMAAADAMAAADAAAAwAAAMAwAAAMAAADADAAAAwAAAMAAADAMAAADAAAAwAAAMAwAAAMAAADAAAAwDAAAAwAAAMAAADAMAAADAAAAwAAAMAwAAAMAAADADAAAAwAAAMAAADAMAAADAAAAwAAAMAwAAAMAAADAAAAwDAAAAwAAAMAAADAMAAADAAAAwAAAMAwAAAMAAADAAAAwAwAAAMAAADAMAAADAAAAwAAAMAwAAAMAAADAAAAwDAAAAwAAAMAAADAMAAADAAAAwAAAMAwAAAMAAADAAAAwAwAAAMAAADAMAAADAAAAwAAAMAwAAAMAAADAAAAwDAAAAwAAAMAAADAMAAADAAAAwAgJsFHTpRkbhBA2kAAAAASUVORK5CYII='
+
+function manifesteDataUri(titre: string): string {
+  const manifeste = {
+    name: titre,
+    short_name: titre.slice(0, 24),
+    display: 'standalone',
+    start_url: '.',
+    background_color: '#f7f8fb',
+    theme_color: '#2a5bd7',
+    icons: [
+      { src: 'data:image/png;base64,' + ICONE_192, sizes: '192x192', type: 'image/png', purpose: 'any maskable' },
+      { src: 'data:image/png;base64,' + ICONE_512, sizes: '512x512', type: 'image/png', purpose: 'any maskable' },
+    ],
+  }
+  return 'data:application/manifest+json,' + encodeURIComponent(JSON.stringify(manifeste))
+}
+
 export function pageAutonome(code: string, titre: string): string {
   const sur = titre.replace(/[<>&"]/gu, '')
   return [
     '<!doctype html><html lang="fr"><head><meta charset="utf-8" />',
     '<meta name="viewport" content="width=device-width, initial-scale=1" />',
     `<title>${sur}</title>`,
+    // N2 : installable — manifeste cuit, balises Apple, couleur de thème.
+    `<link rel="manifest" href="${manifesteDataUri(sur)}" />`,
+    '<meta name="theme-color" content="#2a5bd7" />',
+    '<meta name="apple-mobile-web-app-capable" content="yes" />',
+    '<meta name="apple-mobile-web-app-status-bar-style" content="default" />',
+    `<meta name="apple-mobile-web-app-title" content="${sur}" />`,
+    `<link rel="apple-touch-icon" href="data:image/png;base64,${ICONE_192}" />`,
     '<style>*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,sans-serif}</style>',
     // LE PRÉLUDE PART EN PREMIER, et en script ORDINAIRE : un module serait
     // différé, donc installé APRÈS que l'application a déjà échoué.
