@@ -1,0 +1,37 @@
+# ── C DE L'ARBITRAGE DU 2026-10-31 : L'ALERTE QUE QUELQU'UN LIT.
+#
+# A (EP-294) a embarqué react dans le bundle ; B (verifier-tracage) refuse un
+# BUILD au traçage amputé. Mais ni l'un ni l'autre ne voit une dérive côté
+# Vercel APRÈS le build — groupement de lambdas, cache, régression d'infra.
+# Les deux tirs payés du 31-10 sont morts exactement dans cet angle : la
+# sonde générale disait « TOUT ROULE » pendant que la fonction du tir avait
+# un disque amputé.
+#
+# Donc : après CHAQUE déploiement de production réussi, on interroge les
+# sondes DANS les fonctions réelles. Échec = CROIX ROUGE sur main — le canal
+# que personne ne peut manquer — et le courriel d'échec GitHub au committeur.
+# Zéro appel de modèle : les deux sondes sont gratuites par construction.
+name: sonde-apres-deploiement
+on:
+  deployment_status:
+jobs:
+  sonder:
+    if: github.event.deployment_status.state == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: La fonction du tir payant assemble (bac à sable, mémoire)
+        run: |
+          r=$(curl -fsS --max-time 60 \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "https://www.deribfy.com/api/generateur/direct")
+          echo "$r" | head -c 400; echo
+          ok=$(echo "$r" | python3 -c "import json,sys; print(json.load(sys.stdin)['assemblage']['ok'])")
+          test "$ok" = "True" || { echo "🔴 la fonction de génération n'assemble plus"; exit 1; }
+      - name: La chaîne générale (émission, compilation, aperçu)
+        run: |
+          r=$(curl -fsS --max-time 120 \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "https://www.deribfy.com/api/generateur/sonde")
+          v=$(echo "$r" | python3 -c "import json,sys; print(json.load(sys.stdin)['verdict'])")
+          echo "verdict: $v"
+          test "$v" = "TOUT ROULE" || { echo "🔴 un maillon de la chaîne est mort"; echo "$r" | head -c 800; exit 1; }
