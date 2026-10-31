@@ -20,6 +20,8 @@
  */
 import { assembler } from './bac-a-sable'
 import { importsInterdits, lireFichiers, PAQUETS_AUTORISES } from './ecriture-directe'
+import { jugerVivacite, type DefautVivacite } from './juge-vivacite'
+import { FICHIER_PERIMETRE, jugerCouverture, type RapportCouverture } from './juge-couverture'
 
 /**
  * LA CONSIGNE — et chaque phrase y répond à un défaut mesuré.
@@ -43,9 +45,9 @@ RÈGLES, et chacune vient d'un défaut réel :
    d'identifiant "racine" avec \`createRoot\`. Sans lui, rien ne s'affiche.
 
 2. TU N'IMPORTES QUE CES PAQUETS : ${PAQUETS_AUTORISES.join(', ')}.
-   Aucun autre, jamais, même pour une date ou un graphique. Un paquet hors
-   de cette liste casse la construction de l'application mobile et fait
-   refuser sa publication sur les magasins. Écris la fonction toi-même.
+   Aucun autre, jamais, même pour une date ou un graphique. L'environnement
+   d'assemblage ne fournit QUE ces paquets : un import hors liste casse la
+   construction, ici même, à coup sûr. Écris la fonction toi-même.
 
 3. TU FAIS LE TRAVAIL DEMANDÉ. Si on demande un calcul, tu écris le calcul
    et tu l'exécutes à l'écran. Un bouton qui mène à un formulaire sans jamais
@@ -65,7 +67,19 @@ RÈGLES, et chacune vient d'un défaut réel :
    écran — jamais une barre horizontale en haut. Sur mobile, elle se replie
    en menu. Règle posée par le propriétaire du produit le 2026-10-30, après
    la première application livrée : la navigation était en haut, il la veut
-   à gauche, pour toutes les applications générées.`
+   à gauche, pour toutes les applications générées.
+
+8. AUCUN CONTRÔLE MORT. Chaque bouton, champ ou formulaire est relié à une
+   action réelle : un état qui change, un calcul exécuté, une liste qui
+   s'allonge. Ce que tu ne peux pas câbler réellement, tu le marques
+   \`data-demonstration\` ET tu écris « Démonstration » à l'écran, visible.
+   Un écran qui a l'air de fonctionner et ne fait rien est le pire défaut
+   de ce produit : il se découvre après l'achat.
+
+9. TU DÉCLARES CE QUE TU NE LIVRES PAS. Un fichier \`PERIMETRE.md\` liste ce
+   que le cahier demande et que cette version ne couvre pas, un motif d'une
+   ligne par entrée. Le silence est interdit : une exigence absente de
+   l'application ET de ce fichier te sera renvoyée.`
 
 export type Tour = {
   readonly rang: number
@@ -75,10 +89,27 @@ export type Tour = {
   readonly ms: number
   /** Le fournisseur a-t-il coupé ce tour ? Jamais déduit — toujours lu. */
   readonly tronquee?: boolean
+  /**
+   * LES FICHIERS DU TOUR REFUSÉ, ENTIERS — ordre du propriétaire après le
+   * 2026-10-31 : le tir refusé de 08:18 avait produit 30 fichiers, plus que
+   * la version livrée (14), et ils n'étaient pas stockés — la comparaison
+   * de couverture était impossible après coup. Borné à 200 000 caractères
+   * par tour : assez pour comparer, pas assez pour gonfler la ligne.
+   */
+  readonly source?: Record<string, string>
 }
 
 export type Resultat =
-  | { readonly ok: true; readonly code: string; readonly fichiers: ReadonlyMap<string, string>; readonly tours: readonly Tour[] }
+  | {
+      readonly ok: true
+      readonly code: string
+      readonly fichiers: ReadonlyMap<string, string>
+      readonly tours: readonly Tour[]
+      /** Les contrôles encore morts à l'acceptation — JAMAIS tus (EP-297). */
+      readonly vivacite: readonly DefautVivacite[]
+      /** Le rapport chiffré qui accompagne toute génération (EP-297). */
+      readonly couverture: RapportCouverture
+    }
   | {
       readonly ok: false
       readonly motif: string
@@ -208,13 +239,57 @@ export async function boucleEcriture(o: {
     if (motif === null) {
       const v = await assembler(carte)
       if (v.ok) {
-        tours.push({ rang, fichiers: lus.length, ok: true, ms: Date.now() - debut })
-        return { ok: true, code: v.code, fichiers: carte, tours }
+        // ── LES DEUX JUGES (EP-297) : « ça s'assemble » ne suffit plus.
+        //
+        // Mesuré le 2026-10-31 (tir eb7b62b5) : un « Agent IA premium » sans
+        // un seul gestionnaire — la PHOTO de la fonction centrale — et une
+        // couverture paiement 2/34, livrés sans un mot. Le compilateur juge
+        // la syntaxe ; ces deux-là jugent la vie et la parole tenue.
+        const vivacite = jugerVivacite(carte)
+        const couverture = jugerCouverture(o.demande, carte)
+        const reproches: string[] = []
+        if (vivacite.length > 0) {
+          reproches.push(
+            'DES CONTRÔLES MORTS — un écran qui a l’air de fonctionner et ne fait rien :\n' +
+              vivacite
+                .slice(0, 12)
+                .map((d) => `- ${d.fichier} : ${d.manque} → ${d.extrait}`)
+                .join('\n') +
+              '\nLie chacun à une action réelle (état qui change, calcul exécuté), ou marque-le data-demonstration ET dis « Démonstration » à l’écran.',
+          )
+        }
+        if (couverture.absentes.length > 0) {
+          reproches.push(
+            'DES EXIGENCES DU CAHIER SONT MUETTES — ni dans l’application, ni déclarées :\n' +
+              couverture.absentes
+                .map((e) => `- ${e.exigence} (le cahier y insiste ${e.cahier} fois, le code n’en dit rien)`)
+                .join('\n') +
+              `\nCouvre-les, ou déclare-les dans ${FICHIER_PERIMETRE} avec un motif d’une ligne. Le silence est interdit.`,
+          )
+        }
+        if (reproches.length > 0 && rang < toursMax) {
+          motif = reproches.join('\n\n')
+        } else {
+          // Au dernier tour, les défauts restants ne REFUSENT pas l'œuvre —
+          // ils l'ACCOMPAGNENT, dits : refuser re-brûlerait l'argent du
+          // propriétaire, taire referait le défaut fondateur.
+          tours.push({ rang, fichiers: lus.length, ok: true, ms: Date.now() - debut })
+          return { ok: true, code: v.code, fichiers: carte, tours, vivacite, couverture }
+        }
+      } else {
+        motif = `La construction a échoué :\n${v.erreur}`
       }
-      motif = `La construction a échoué :\n${v.erreur}`
     }
 
-    tours.push({ rang, fichiers: lus.length, ok: false, motif, tronquee, ms: Date.now() - debut })
+    // ── LE TOUR REFUSÉ GARDE SES SOURCES — bornées, jamais tues (EP-297).
+    const source: Record<string, string> = {}
+    let budget = 200_000
+    for (const f of lus) {
+      const part = f.contenu.slice(0, Math.max(0, budget))
+      source[f.chemin] = part.length < f.contenu.length ? part + '\n— tronqué par le journal —' : part
+      budget -= part.length
+    }
+    tours.push({ rang, fichiers: lus.length, ok: false, motif, tronquee, ms: Date.now() - debut, source })
 
     // ── ON RENVOIE L'ERREUR TELLE QUELLE, ET ON REDEMANDE TOUT.
     //

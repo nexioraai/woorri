@@ -1,0 +1,145 @@
+/**
+ * EP-297 — LES DEUX JUGES : la boucle n'accepte plus « ça s'assemble »,
+ * elle exige « c'est vivant » et « ça couvre, ou ça le DIT ».
+ *
+ * ── LES DEUX DÉFAUTS FONDATEURS, MESURÉS LE 2026-10-31 (tir eb7b62b5) :
+ * « Agent IA premium » = une PHOTO d'agent (bulle en dur, champ et bouton
+ * sans aucun gestionnaire) ; couverture = paiement 2 occurrences au code
+ * pour 34 au cahier, anglais/arabe/RTL/connexion : zéro — et la génération
+ * s'est dite « livrée » sans un mot. Faite à la main, cette analyse est
+ * désormais un juge. Règle du propriétaire : on n'apprend pas à CETTE
+ * application à marcher, on apprend à DERIBFY à juger ses œuvres.
+ */
+import { describe, expect, it } from 'vitest'
+import { boucleEcriture } from '../boucle-directe'
+import { jugerVivacite } from '../juge-vivacite'
+import { FICHIER_PERIMETRE, jugerCouverture } from '../juge-couverture'
+
+/** La PHOTO d'agent du tir réel, réduite à sa forme mesurée. */
+const AGENT_MORT = `export function AgentIA() {
+  return (
+    <div>
+      <p>Bonjour ! Je suis votre agent IA premium.</p>
+      <input placeholder="Posez votre question" />
+      <button>Envoyer</button>
+    </div>
+  )
+}`
+
+const AGENT_VIVANT = `import { useState } from 'react'
+export function AgentIA() {
+  const [q, setQ] = useState('')
+  const [reponses, setReponses] = useState<string[]>([])
+  return (
+    <form onSubmit={(e) => { e.preventDefault(); setReponses((r) => [...r, q]) }}>
+      <input value={q} onChange={(e) => setQ(e.target.value)} />
+      <button type="submit">Envoyer</button>
+    </form>
+  )
+}`
+
+describe('EP-297 · le juge de vivacité', () => {
+  it('① LA PHOTO D’AGENT DU TIR RÉEL EST REFUSÉE — champ et bouton morts', () => {
+    const d = jugerVivacite(new Map([['AgentIA.tsx', AGENT_MORT]]))
+    expect(d.length, 'le défaut mesuré du 2026-10-31 passe encore').toBeGreaterThanOrEqual(2)
+    expect(d.map((x) => x.manque).join(' ')).toContain('sans action liée')
+  })
+
+  it('② LE MÊME ÉCRAN CÂBLÉ PASSE — état local + soumission', () => {
+    expect(jugerVivacite(new Map([['AgentIA.tsx', AGENT_VIVANT]]))).toEqual([])
+  })
+
+  it('③ UN GESTIONNAIRE VIDE EST UNE PHOTO, PAS UN CONTRÔLE', () => {
+    const d = jugerVivacite(new Map([['A.tsx', '<button onClick={() => {}}>Ok</button>']]))
+    expect(d.length).toBe(1)
+    expect(d[0]!.manque).toContain('VIDE')
+  })
+
+  it('④ LA DÉMONSTRATION ASSUMÉE PASSE — SI l’écran le dit', () => {
+    const cachee = jugerVivacite(new Map([['A.tsx', '<button data-demonstration>Payer</button>']]))
+    expect(cachee.length, 'une démonstration cachée doit être refusée').toBe(1)
+    const dite = jugerVivacite(
+      new Map([['A.tsx', '<div><span>Démonstration</span><button data-demonstration>Payer</button></div>']]),
+    )
+    expect(dite).toEqual([])
+  })
+
+  it('⑤ LA FLÈCHE DANS L’ATTRIBUT NE CASSE PAS LE LECTEUR DE BALISES', () => {
+    const src = '<button onClick={() => setN((n) => n + 1)}>Plus</button>'
+    expect(jugerVivacite(new Map([['A.tsx', src]]))).toEqual([])
+  })
+})
+
+describe('EP-297 · le juge de couverture', () => {
+  const CAHIER =
+    'Le paiement est central : paiement mobile, paiement carte, moyens de paiement multiples. ' +
+    'Interface en anglais et en arabe, support arabe RTL complet, version anglaise obligatoire. ' +
+    'Les notifications sont mentionnées une fois.'
+
+  it('⑥ UNE EXIGENCE INSISTANTE ET MUETTE AU CODE EST UN DÉFAUT NOMMÉ', () => {
+    const r = jugerCouverture(CAHIER, new Map([['App.tsx', 'export const a = 1']]))
+    const noms = r.absentes.map((e) => e.exigence)
+    expect(noms).toContain('paiement')
+    expect(noms).toContain('multilingue')
+    expect(r.taux).toBeLessThan(1)
+  })
+
+  it('⑦ DÉCLARÉE HORS PÉRIMÈTRE AVEC MOTIF, ELLE N’EST PLUS MUETTE', () => {
+    const r = jugerCouverture(
+      CAHIER,
+      new Map([
+        ['App.tsx', 'export const a = 1'],
+        [FICHIER_PERIMETRE, '## Hors périmètre\n- paiement : nécessite un prestataire, non câblé dans cette version.'],
+      ]),
+    )
+    const paiement = r.exigences.find((e) => e.exigence === 'paiement')
+    expect(paiement?.statut).toBe('declaree-hors-perimetre')
+    expect(r.absentes.map((e) => e.exigence)).not.toContain('paiement')
+  })
+
+  it('⑧ COUVERTE AU CODE, ELLE EST COUVERTE — et le rapport chiffre', () => {
+    const r = jugerCouverture(CAHIER, new Map([['Paiement.tsx', 'const libelle = "Choisissez votre moyen de paiement"']]))
+    expect(r.exigences.find((e) => e.exigence === 'paiement')?.statut).toBe('couverte')
+    expect(r.exigences.find((e) => e.exigence === 'paiement')?.cahier).toBeGreaterThanOrEqual(3)
+  })
+
+  it('⑨ LE CAHIER QUI N’INSISTE PAS NE CRÉE PAS D’EXIGENCE — contrôle négatif', () => {
+    const r = jugerCouverture(CAHIER, new Map([['App.tsx', '']]))
+    expect(r.exigences.map((e) => e.exigence), 'une mention unique a été retenue').not.toContain(
+      'notifications',
+    )
+  })
+})
+
+describe('EP-297 · la boucle exige la vie et la couverture', () => {
+  const REPONSES = [
+    // Tour 1 : s'assemble, mais l'agent est une photo et PERIMETRE manque.
+    '=== index.tsx ===\nexport const a = 1\n=== AgentIA.tsx ===\n' + AGENT_MORT,
+    // Tour 2 : câblé, et le périmètre déclare ce qui manque.
+    '=== index.tsx ===\nexport const a = 1\n=== AgentIA.tsx ===\n' +
+      AGENT_VIVANT +
+      '\n=== PERIMETRE.md ===\n- paiement : non câblé (prestataire requis), dit à l’écran.\n- multilingue : version française seule dans cette itération.',
+  ]
+  const appels: string[][] = []
+  const appeler = async (messages: readonly { role: string; content: string }[]) => {
+    appels.push(messages.map((m) => m.content))
+    return { texte: REPONSES[appels.length - 1] ?? '', tronquee: false, jetonsEntree: 1, jetonsSortie: 1 }
+  }
+
+  it('⑩ LE TOUR MORT EST RENVOYÉ AU MODÈLE, le tour vivant accepté avec rapport', async () => {
+    const r = await boucleEcriture({
+      demande: 'Plateforme de paiement : paiement mobile et paiement carte, interface anglais/arabe, version arabe RTL.',
+      appeler: appeler as never,
+    })
+    expect(appels.length, 'le tour mort n’a pas été renvoyé').toBe(2)
+    const retour = appels[1]!.join('\n')
+    expect(retour, 'le motif ne nomme pas le contrôle mort').toMatch(/sans action liée/u)
+    expect(retour, 'le motif ne nomme pas l’exigence muette').toMatch(/paiement/u)
+    expect(r.ok).toBe(true)
+    if (r.ok) {
+      expect(r.vivacite).toEqual([])
+      expect(r.couverture.absentes).toEqual([])
+      expect(r.couverture.exigences.length).toBeGreaterThan(0)
+    }
+  })
+})

@@ -901,6 +901,11 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
           (await lireReponseQuiBat<{
             ok?: boolean; html?: string; motif?: string; error?: string;
             tours?: unknown[]; dureeMs?: number;
+            vivacite?: { fichier: string; manque: string }[];
+            couverture?: {
+              exigences?: { exigence: string; statut: string }[];
+              absentes?: { exigence: string; cahier: number }[];
+            };
           }>(res).catch(() => null)) ?? {};
         if (!res.ok || d.ok !== true || typeof d.html !== 'string') {
           rendreLaMain(texte, noteAvant);
@@ -921,6 +926,34 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
             compris: [
               `Votre application est prête en ${String(Math.round((d.dureeMs ?? 0) / 1000))} secondes` +
                 ` (${String(d.tours?.length ?? 1)} essai(s)).`,
+              ...(() => {
+                const ex = d.couverture?.exigences ?? [];
+                const absentes = d.couverture?.absentes ?? [];
+                const morts = d.vivacite ?? [];
+                const lignes: string[] = [];
+                if (ex.length > 0) {
+                  const couvertes = ex.filter((x) => x.statut === 'couverte').length;
+                  const declarees = ex.filter((x) => x.statut === 'declaree-hors-perimetre');
+                  lignes.push(
+                    `Couverture du cahier : ${String(couvertes)}/${String(ex.length)} exigences couvertes` +
+                      (declarees.length > 0
+                        ? `, ${String(declarees.length)} déclarée(s) hors périmètre (${declarees.map((x) => x.exigence).join(', ')})`
+                        : '') +
+                      '.',
+                  );
+                }
+                if (absentes.length > 0) {
+                  lignes.push(
+                    `⚠ Non couvert et non déclaré : ${absentes.map((x) => x.exigence).join(', ')} — à exiger ou à accepter en connaissance.`,
+                  );
+                }
+                if (morts.length > 0) {
+                  lignes.push(
+                    `⚠ ${String(morts.length)} contrôle(s) sans action réelle (${[...new Set(morts.map((x) => x.fichier))].slice(0, 3).join(', ')}).`,
+                  );
+                }
+                return lignes;
+              })(),
             ],
           },
         ]);

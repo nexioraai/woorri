@@ -296,7 +296,19 @@ export async function POST(req: Request) {
     jetons_entree: entree,
     jetons_sortie: sortie,
     tirages: resultat.tours.length,
-    diagnostics: resultat.ok ? [] : [resultat.motif],
+    diagnostics: resultat.ok
+      ? [
+          ...(resultat.vivacite.length > 0
+            ? [`${String(resultat.vivacite.length)} contrôle(s) sans action — voir le rapport de vivacité`]
+            : []),
+          ...(resultat.couverture.absentes.length > 0
+            ? [
+                'Couverture partielle, non déclarée : ' +
+                  resultat.couverture.absentes.map((e) => e.exigence).join(', '),
+              ]
+            : []),
+        ]
+      : [resultat.motif],
     // La colonne `document` porte l'oeuvre. Ici l'oeuvre est du CODE, pas un
     // document AIR : on range les fichiers, qui sont ce qui se recompile.
     document: resultat.ok ? { fichiers: Object.fromEntries(resultat.fichiers) } : null,
@@ -314,6 +326,10 @@ export async function POST(req: Request) {
     sections_acquises: {
       configuration,
       tours: resultat.tours,
+      // EP-297 : les deux juges accompagnent toute œuvre acceptée. Sans eux,
+      // « livrée » redevient un mot sans mesure — le défaut fondateur.
+      vivacite: resultat.ok ? resultat.vivacite : null,
+      couverture: resultat.ok ? resultat.couverture : null,
       dernierTexte: resultat.ok ? null : resultat.dernierTexte.slice(0, 20_000),
     },
   }
@@ -341,6 +357,10 @@ export async function POST(req: Request) {
     html: pageAutonome(resultat.code, 'Votre application'),
     fichiers: resultat.fichiers.size,
     tours: resultat.tours,
+    // EP-297 : le rapport chiffré VOYAGE avec l'œuvre — l'écran le montre,
+    // le propriétaire le lit, « livrée » n'est plus un mot sans mesure.
+    vivacite: resultat.vivacite,
+    couverture: resultat.couverture,
     coutUsd,
     dureeMs,
   }
