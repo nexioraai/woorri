@@ -3,6 +3,7 @@ import {
   fetchLangueParSlug,
   fetchSiteEtLangueParDomaine,
   fetchSiteParSlug,
+  fetchSiteParNomPublic,
 } from './app/sites/[slug]/themes/shared'
 import { varianteHote, cibleCanonique } from './lib/domains/canonicalHost'
 import { EN_TETE_LANGUE, EN_TETE_SITE, normaliserLangue } from './lib/seo/langueServie'
@@ -75,12 +76,22 @@ export async function proxy(req: NextRequest) {
     // proxy (edge) sait interroger `sites_public`, pas la table des
     // generations (service seul). `publier` refuse en face tout nom d'app
     // qui heurterait un slug de site : l'ordre ne cree donc pas d'ombre.
+    // ① LE NOM CHOISI d'un site (table sites_sous_domaines) — les slugs
+    // portent un horodatage, personne n'imprime ça sur une carte.
+    const parNom = await fetchSiteParNomPublic(nom)
+    if (parNom !== null) {
+      const url = req.nextUrl.clone()
+      url.pathname = pathname === '/' ? `/sites/${parNom.slug}` : `/sites/${parNom.slug}${pathname}`
+      return NextResponse.rewrite(url, avecLangue(req, parNom.lang))
+    }
+    // ② Le slug brut d'un site, s'il tient dans un hôte.
     const site = await fetchSiteParSlug(nom)
     if (site !== null) {
       const url = req.nextUrl.clone()
       url.pathname = pathname === '/' ? `/sites/${nom}` : `/sites/${nom}${pathname}`
       return NextResponse.rewrite(url, avecLangue(req, site.lang))
     }
+    // ③ Sinon, une application publiée.
     const url = req.nextUrl.clone()
     url.pathname = `/a/${nom}`
     return NextResponse.rewrite(url)

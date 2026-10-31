@@ -99,6 +99,30 @@ export default function DashboardPage() {
     } catch { setApercuErreur('La publication a échoué. Réessayez.'); }
   };
 
+  // L'ADRESSE PUBLIQUE D'UN SITE : meme geste que pour une application.
+  const adresseSite = async (site: { slug: string; name?: string }) => {
+    setApercuErreur(null);
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) { setApercuErreur('Session expirée — reconnectez-vous.'); return; }
+    const suggestion = String(site.name ?? site.slug).toLowerCase().normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '').slice(0, 30).replace(/-+$/g, '');
+    const nom = window.prompt(
+      'Adresse publique de votre site :\n<nom>.deribfy.app\n\nMinuscules, chiffres et tirets.',
+      suggestion,
+    );
+    if (nom === null || nom.trim() === '') return;
+    try {
+      const res = await fetch(
+        `/api/sites/adresse?slug=${encodeURIComponent(site.slug)}&nom=${encodeURIComponent(nom.trim().toLowerCase())}`,
+        { method: 'POST', headers: { Authorization: `Bearer ${session.access_token}` } },
+      );
+      const d = (await res.json().catch(() => null)) as { lien?: string; error?: string } | null;
+      if (!res.ok || !d?.lien) { setApercuErreur(d?.error ?? "L'adresse n'a pas pu être créée."); return; }
+      setLienPublic({ id: site.slug, url: d.lien });
+    } catch { setApercuErreur("L'adresse n'a pas pu être créée. Réessayez."); }
+  };
+
   const telecharger = async (a: Application) => {
     setApercuErreur(null);
     const { data: { session } } = await supabase.auth.getSession();
@@ -328,12 +352,17 @@ export default function DashboardPage() {
                       <Pencil className="w-3.5 h-3.5" />
                       {t('dashboard.edit')}
                     </Link>
-                    {site.published && (
+                    {site.published && (<>
+                    <button type="button" onClick={() => { void adresseSite(site); }}
+                      title="Adresse gratuite <nom>.deribfy.app"
+                      className="flex items-center justify-center px-3 py-2.5 rounded-xl text-sm font-semibold border border-white/10 text-white/70 hover:text-white hover:border-white/30 transition-all">
+                      .app
+                    </button>
                     <Link href={`/domaine/${site.slug}`}
                       className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-sm font-semibold border border-white/10 text-white/70 hover:text-white hover:border-white/30 transition-all">
                       <Globe className="w-3.5 h-3.5" />
                     </Link>
-                    )}
+                    </>)}
                     <button onClick={() => handlePublish(site.slug, site.published)}
                       className={`flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-sm font-semibold border transition-all ${site.published ? 'border-emerald-500/30 text-emerald-400 bg-emerald-500/10' : 'border-white/10 text-white/70 hover:text-white hover:border-white/30'}`}>
                       <span className={`w-2 h-2 rounded-full nexiora-pulse-dot ${site.published ? 'bg-emerald-400' : 'bg-[#FA5D1E]'}`} />
@@ -350,6 +379,15 @@ export default function DashboardPage() {
             Le panneau ne s'affiche que s'il y a quelque chose a montrer : un
             cadre vide sur un tableau de bord de sites ne dirait rien a qui
             n'a jamais genere d'application. */}
+        {lienPublic !== null && (
+          <div className="mt-6 flex items-center gap-2 text-sm">
+            <a href={lienPublic.url} target="_blank" rel="noreferrer" className="text-emerald-400 underline truncate">{lienPublic.url}</a>
+            <button type="button" onClick={() => { void navigator.clipboard.writeText(lienPublic.url); }}
+              className="shrink-0 px-2 py-1 rounded-lg border border-white/10 text-white/60 hover:text-white text-xs">
+              Copier
+            </button>
+          </div>
+        )}
         {apercuErreur !== null && (
           <p className="mt-6 text-sm text-red-400">{apercuErreur}</p>
         )}

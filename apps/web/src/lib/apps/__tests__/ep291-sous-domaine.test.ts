@@ -32,6 +32,7 @@ const nu = (s: string) => s.replace(/\/\*[\s\S]*?\*\//gu, ' ').replace(/^\s*\/\/
 const MIDDLEWARE = nu(readFileSync(join(SRC, 'proxy.ts'), 'utf8'))
 const ROUTE_A = nu(readFileSync(join(SRC, 'app', 'a', '[sous]', 'route.ts'), 'utf8'))
 const PUBLIER = nu(readFileSync(join(SRC, 'app', 'api', 'generateur', 'publier', 'route.ts'), 'utf8'))
+const ADRESSE = nu(readFileSync(join(SRC, 'app', 'api', 'sites', 'adresse', 'route.ts'), 'utf8'))
 
 afterEach(() => { vi.unstubAllGlobals() })
 
@@ -135,6 +136,28 @@ describe('EP-291 · le middleware et les routes', () => {
     expect(PUBLIER, 'la collision avec un slug de site n’est plus vérifiée').toMatch(
       /from\(['"]sites['"]\)[\s\S]{0,120}\.eq\(\s*['"]slug['"]/u,
     )
+  })
+
+  it('⑨ L’ADRESSE D’UN SITE TIENT LES MÊMES RÈGLES QUE CELLE D’UNE APP', () => {
+    // Même machinerie, mêmes garde-fous : propriété filtrée DANS la requête,
+    // nom validé, collisions croisées (sites ↔ applications), aucun modèle.
+    expect(ADRESSE).toContain('requireAuthenticatedUser')
+    // `owner_id`, PAS `owner_email` : le cliquet de dette 6a a refusé la
+    // gate quand cette route est née avec le courriel — un courriel se
+    // change et se réassigne, l'id du jeton non.
+    expect(ADRESSE, 'la propriété du site n’est plus filtrée dans la requête').toMatch(
+      /\.eq\(\s*['"]owner_id['"]/u,
+    )
+    expect(ADRESSE, 'owner_email est revenu comme clé d’identité').not.toMatch(
+      /\.eq\(\s*['"]owner_email['"]/u,
+    )
+    expect(ADRESSE).toContain('nomValide(')
+    expect(ADRESSE, 'la collision avec une application n’est plus vérifiée').toContain(
+      'publication_slug',
+    )
+    for (const interdit of ['clientIA', 'appelerFournisseur', 'messages.create']) {
+      expect(ADRESSE, `l’adresse d’un site appelle un modèle (${interdit})`).not.toContain(interdit)
+    }
   })
 
   it('⑧ L’ÉCHEC DU SOUS-DOMAINE N’AVALE PAS LA PUBLICATION', () => {

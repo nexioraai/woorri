@@ -615,6 +615,34 @@ export async function fetchSiteParSlug(
   return { lang: (data as { lang: string | null }).lang }
 }
 
+/**
+ * LE NOM PUBLIC D'UN SITE — <nom>.deribfy.app → quel site ?
+ *
+ * Les slugs portent un horodatage (l-eclat-coiffure-1793365006190) : ce
+ * n'est pas une adresse qu'on imprime. La table `sites_sous_domaines` associe
+ * un NOM CHOISI à un slug ; elle est remplie à la publication de l'adresse.
+ *
+ * FAIL-SOFT : si la table n'existe pas encore (déploiement avant la
+ * migration SQL), on rend null — le proxy retombe sur les autres branches
+ * au lieu de casser tous les sous-domaines.
+ */
+export async function fetchSiteParNomPublic(
+  nom: string,
+): Promise<{ slug: string; lang: string | null } | null> {
+  try {
+    const { data, error } = await supabase
+      .from('sites_sous_domaines')
+      .select('site_slug')
+      .eq('nom', nom)
+      .single()
+    if (error || !data) return null
+    const slug = (data as { site_slug: string }).site_slug
+    return { slug, lang: await fetchLangueParSlug(slug) }
+  } catch {
+    return null
+  }
+}
+
 export async function fetchSiteByDomain(
 domain: string
 ): Promise<string | null> {
