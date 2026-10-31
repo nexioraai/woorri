@@ -33,6 +33,7 @@ import { moteurChoisi } from '@/lib/apps/interrupteur-moteur'
 import { boucleEcriture, CONSIGNE, pageAutonome } from '@/lib/apps/boucle-directe'
 import { appelerFournisseur, CONFIGS, fournisseurChoisi } from '@/lib/apps/fournisseur'
 import { assembler } from '@/lib/apps/bac-a-sable'
+import { jugerExecution } from '@/lib/apps/juge-execution'
 
 export const runtime = 'nodejs'
 // ── QUINZE MINUTES, ET C'EST UNE CONSÉQUENCE DU PLAFOND, PAS UN CONFORT.
@@ -95,8 +96,26 @@ export async function GET(req: Request) {
     }
   }
   const v = await assembler(TEMOIN_FICHIERS)
+  // ── LE JUGE D'EXÉCUTION TOURNE-T-IL DANS LA VRAIE FONCTION ?
+  //
+  // Le cliquet EP-302 ⑦ refuse qu'une route INJECTE un faux juge — c'est une
+  // garantie de CONSTRUCTION. Mais le juge lance un PROCESSUS (spawn, drapeaux
+  // de permission, simulateur de DOM) : rien ne dit qu'une lambda le permette,
+  // et s'il échoue il se déclare « indisponible »... en silence. Ce serait la
+  // classe « vert local, mort en ligne » rouverte sur le juge lui-même.
+  // Exigence du propriétaire : que la sonde l'atteste DANS la fonction réelle.
+  const execution = v.ok
+    ? await jugerExecution(v.code)
+    : { demarre: false, indisponible: 'témoin inassemblable', ms: 0, erreurs: [], octetsRendus: 0, texte: '' }
   return NextResponse.json(
     {
+      execution: {
+        utilisable: execution.indisponible === undefined,
+        demarre: execution.demarre,
+        ms: execution.ms,
+        ...(execution.indisponible === undefined ? {} : { indisponible: execution.indisponible }),
+        ...(execution.erreurs.length === 0 ? {} : { erreurs: execution.erreurs.slice(0, 3) }),
+      },
       assemblage: v.ok
         ? { ok: true, ms: v.ms, octets: v.code.length }
         : { ok: false, ms: v.ms, erreur: v.erreur },
@@ -298,6 +317,14 @@ export async function POST(req: Request) {
     tirages: resultat.tours.length,
     diagnostics: resultat.ok
       ? [
+          ...(resultat.execution !== null && resultat.execution.indisponible !== undefined
+            ? [
+                'Le juge de demarrage n a pas pu s executer : cette application ' +
+                  'n a PAS ete eprouvee (' +
+                  resultat.execution.indisponible.slice(0, 120) +
+                  ')',
+              ]
+            : []),
           ...(resultat.execution !== null &&
           resultat.execution.indisponible === undefined &&
           !resultat.execution.demarre

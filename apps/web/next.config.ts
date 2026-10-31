@@ -121,6 +121,29 @@ const BAC_A_SABLE = [
   '../../node_modules/scheduler/**',
 ]
 
+// ── CE QUE LE JUGE D'EXÉCUTION EMPORTE, ET POURQUOI IL LE FAUT (EP-302).
+//
+// Il lance un PROCESSUS qui charge deux choses que le traceur ne suit pas :
+// son propre corps (`juge-execution-enfant.mjs`, résolu par une URL de
+// module, pas par un import) et le simulateur de DOM (importé DANS l'enfant,
+// donc invisible au traceur du parent). Sans ces deux lignes, le juge se
+// déclarerait « indisponible » EN LIGNE pendant que le local dirait vert :
+// la classe « vert local, mort en ligne », rouverte sur le juge lui-même.
+// `scripts/verifier-tracage.mjs` l'exige désormais au BUILD.
+const JUGE_EXECUTION = [
+  './src/lib/apps/juge-execution-enfant.mjs',
+  '../../node_modules/@happy-dom/**',
+  '../../node_modules/happy-dom/**',
+  // ET LES DEPENDANCES DE happy-dom : un fichier TRACE est copie comme une
+  // DONNEE, le traceur ne lit pas ses imports. Le cliquet `tracage-cloture`
+  // les a nommees une par une — c'est sa raison d'etre, et c'est la
+  // troisieme fois aujourd'hui que cette regle me rattrape.
+  '../../node_modules/whatwg-mimetype/**',
+  '../../node_modules/buffer-image-size/**',
+  '../../node_modules/ws/**',
+  '../../node_modules/entities/**',
+]
+
 const nextConfig: NextConfig = {
   // ── LE MOTEUR ENTRE DANS LE SITE.
   //
@@ -239,7 +262,7 @@ const nextConfig: NextConfig = {
     //
     // Cette route n'a PAS besoin de `MOTEUR_EMISSION` : elle ne touche pas
     // la chaîne AIR. Elle n'a besoin que de l'assembleur.
-    '/api/generateur/direct': BAC_A_SABLE,
+    '/api/generateur/direct': [...BAC_A_SABLE, ...JUGE_EXECUTION],
     // ── LA ROUTE QUI REVOIT UNE APPLICATION ASSEMBLE, ELLE AUSSI.
     //
     // Elle recompile les fichiers stockes pour les rendre a l'ecran. Sans

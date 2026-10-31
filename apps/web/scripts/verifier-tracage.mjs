@@ -36,6 +36,13 @@ export const ROUTES_EMISSION = [
   'api/cron/generations',
 ]
 
+/**
+ * Le juge d'exécution (EP-302) ne vit que dans la route qui écrit : son corps
+ * et son simulateur de DOM doivent entrer dans CETTE fonction, sinon il se
+ * déclare « indisponible » en ligne, en silence.
+ */
+export const ROUTES_JUGE_EXECUTION = ['api/generateur/direct']
+
 /** Routes qui assemblent (rolldown) : binding natif + canari obligatoires. */
 export const ROUTES_ASSEMBLEUSES = [
   'api/generateur/direct',
@@ -73,7 +80,19 @@ export function verifier() {
     if (zod === 0) echecs.push(`${r} : zod absent — les modules tracés sont copiés comme des DONNÉES, leurs paquets doivent suivre`)
   }
 
-  for (const r of ROUTES_ASSEMBLEUSES) {
+  // Le juge d'exécution (EP-302) ne vit que dans la route qui écrit : son
+// corps et son simulateur de DOM doivent entrer dans CETTE fonction, sinon
+// il se déclare « indisponible » en ligne, en silence.
+for (const r of ROUTES_JUGE_EXECUTION) {
+  if (compte(r, 'juge-execution-enfant.mjs') === 0) {
+    echecs.push(`${r} : le corps du juge d'exécution n'est pas tracé — le juge sera muet en ligne`)
+  }
+  if (compte(r, 'happy-dom') === 0) {
+    echecs.push(`${r} : le simulateur de DOM n'est pas tracé — le juge ne pourra rien monter`)
+  }
+}
+
+for (const r of ROUTES_ASSEMBLEUSES) {
     const canari = compte(r, '/node_modules/scheduler/')
     if (canari === 0) echecs.push(`${r} : CANARI absent — la clé de traçage de cette route est morte`)
     if (process.platform === 'linux') {

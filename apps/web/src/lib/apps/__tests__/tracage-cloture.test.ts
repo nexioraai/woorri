@@ -54,9 +54,39 @@ function paquetDe(chemin: string): string | null {
   return reste[0].startsWith('@') ? `${reste[0]}/${reste[1] ?? ''}` : reste[0]
 }
 
+/**
+ * UN PAQUET SANS AUCUN FICHIER EXÉCUTABLE NE PEUT PAS ÊTRE CHARGÉ.
+ *
+ * `happy-dom` déclare `@types/node`, `@types/whatwg-mimetype` et, par
+ * ricochet, `undici-types` dans ses `dependencies` — MESURÉ le 2026-10-31 :
+ * zéro `.js`, zéro `.cjs`, zéro `.mjs`, zéro `.node` ; uniquement des
+ * déclarations de types, lues par le compilateur, jamais par l'exécution.
+ * Les tracer mettrait 2,5 Mo de poids mort dans une fonction bornée à 250.
+ *
+ * L'exemption est MESURÉE, pas devinée au préfixe du nom : un paquet nommé
+ * « @types/x » qui porterait du code serait exigé comme les autres. C'est la
+ * même doctrine que celle déjà écrite plus haut pour `serverExternalPackages`
+ * — exempter ce qui ne peut pas être chargé rend le cliquet EXACT.
+ */
+function porteDuCodeExecutable(nom: string): boolean {
+  const racine = join(MODULES, nom)
+  if (!existsSync(racine)) return true
+  const pile = [racine]
+  while (pile.length > 0) {
+    const d = pile.pop()
+    if (d === undefined) continue
+    for (const e of readdirSync(d, { withFileTypes: true })) {
+      if (e.isDirectory()) pile.push(join(d, e.name))
+      else if (/\.(js|cjs|mjs|node)$/u.test(e.name)) return true
+    }
+  }
+  return false
+}
+
 /** Fermeture transitive des `dependencies` réelles, lue dans node_modules. */
 function cloture(nom: string, vus = new Set<string>()): Set<string> {
   if (vus.has(nom)) return vus
+  if (!porteDuCodeExecutable(nom)) return vus
   vus.add(nom)
   const manifeste = join(MODULES, nom, 'package.json')
   if (!existsSync(manifeste)) return vus

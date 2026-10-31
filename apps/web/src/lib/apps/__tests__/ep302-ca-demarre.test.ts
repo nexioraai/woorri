@@ -130,6 +130,25 @@ describe('EP-302 · le juge d’exécution', () => {
     60_000,
   )
 
+  it('⑧ UN JUGE INDISPONIBLE SE DIT — jamais un silence poli', () => {
+    // Troisieme visage du meme defaut en une journee (le proprietaire l'a
+    // nomme) : « indisponible » allait devenir ce que « hors perimetre »
+    // allait devenir. Une oeuvre livree pendant qu'un juge ne tournait pas
+    // est une oeuvre dont PERSONNE ne sait qu'elle n'a pas ete eprouvee.
+    const nu = (p: string) =>
+      readFileSync(p, 'utf8').replace(/\/\*[\s\S]*?\*\//gu, ' ').replace(/^\s*\/\/.*$/gmu, ' ')
+    const ROUTE = nu(join(__dirname, '..', '..', '..', 'app', 'api', 'generateur', 'direct', 'route.ts'))
+    expect(ROUTE, 'un juge indisponible ne remonte pas aux diagnostics').toMatch(
+      /indisponible !== undefined[\s\S]{0,200}PAS/u,
+    )
+    const ECRAN = nu(
+      join(__dirname, '..', '..', '..', 'components', 'onboarding', 'ConversationApplication.tsx'),
+    )
+    expect(ECRAN, 'l’écran tait le juge indisponible').toMatch(
+      /exec\.indisponible !== undefined/u,
+    )
+  })
+
   it('⑦ LA PRODUCTION N’INJECTE AUCUN JUGE — le muet reste aux contrôles', () => {
     // Le juge est remplaçable pour que les cliquets de couverture ne paient
     // pas un processus par tour. Le jour où une route passerait `juger`, le

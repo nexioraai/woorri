@@ -950,11 +950,13 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
                   );
                 }
                 const exec = d.execution;
-                if (exec !== undefined && exec.indisponible === undefined) {
+                if (exec !== undefined) {
                   lignes.push(
-                    exec.demarre
-                      ? `Démarrage vérifié : l’application s’ouvre et ${String(exec.ecransVisites ?? 0)} écran(s) ont été parcourus.`
-                      : `⚠ L’application ne démarre pas : ${exec.erreurs[0]?.message ?? 'cause inconnue'}.`,
+                    exec.indisponible !== undefined
+                      ? '⚠ Le juge de démarrage n’a pas pu s’exécuter : cette application n’a PAS été éprouvée.'
+                      : exec.demarre
+                        ? `Démarrage vérifié : l’application s’ouvre et ${String(exec.ecransVisites ?? 0)} écran(s) ont été parcourus.`
+                        : `⚠ L’application ne démarre pas : ${exec.erreurs[0]?.message ?? 'cause inconnue'}.`,
                   );
                 }
                 const jetonsMorts = d.jetons ?? [];
