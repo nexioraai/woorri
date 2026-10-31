@@ -47,6 +47,11 @@ const SEUIL_CAHIER = 3
  * réelle — pas d'un inventaire théorique.
  */
 const LEXIQUE: readonly (readonly [string, RegExp])[] = [
+  // ② DU TIR DE VALIDATION 88c94164 : le cahier disait « Application mobile
+  // Android et iPhone », le modèle a TENTÉ react-native au tour 1 (refusé
+  // par le fail-closed) — et ce juge, sans famille correspondante, n'a rien
+  // exigé en retour. Le système savait, et se taisait. Plus maintenant.
+  ['application native (Android/iPhone)', /\bandroid\b|\biphone\b|\bios\b|app store|google play|application mobile|application native/gu],
   ['paiement', /paiement|payer\b|payeur/gu],
   ['mobile money', /mobile money|airtel|moov|orange money|mtn\b|wave\b/gu],
   ['carte bancaire', /carte bancaire|visa\b|mastercard|stripe|paypal/gu],

@@ -103,6 +103,17 @@ describe('EP-297 · le juge de couverture', () => {
     expect(r.exigences.find((e) => e.exigence === 'paiement')?.cahier).toBeGreaterThanOrEqual(3)
   })
 
+  it('⑧bis LE NATIF EXIGÉ PAR LE CAHIER NE PEUT PLUS ÊTRE TU — tir 88c94164', () => {
+    // Mesuré : « Application mobile Android et iPhone » au cahier, tentative
+    // react-native du modèle refusée au tour 1 — et AUCUNE exigence levée :
+    // la famille n'existait pas. Le système savait, et se taisait.
+    const r = jugerCouverture(
+      'Application mobile Android et iPhone. Publication App Store et Google Play. Application mobile pour les agences.',
+      new Map([['App.tsx', 'export const a = 1']]),
+    )
+    expect(r.absentes.map((e) => e.exigence)).toContain('application native (Android/iPhone)')
+  })
+
   it('⑨ LE CAHIER QUI N’INSISTE PAS NE CRÉE PAS D’EXIGENCE — contrôle négatif', () => {
     const r = jugerCouverture(CAHIER, new Map([['App.tsx', '']]))
     expect(r.exigences.map((e) => e.exigence), 'une mention unique a été retenue').not.toContain(

@@ -241,6 +241,9 @@ export const CONSIGNE_BIBLIOTHEQUE = `L'INTERFACE VIENT DE LA BIBLIOTHÈQUE FOUR
    sont fournis et seront écrasés si tu les écris) :
    · ./systeme/jetons : GRIS, SEMANTIQUE, ESPACE, RAYON, OMBRE, TYPO —
      toute couleur, espace ou taille vient de là, jamais en dur.
+     TYPO n'a que QUATRE niveaux : surtitre, libelle, valeur, legende.
+     En inventer un autre (corps, petit, h1…) lit undefined et PLANTE
+     l'application au démarrage — mesuré sur un tir réel.
    · ./systeme/argent : formaterMontant(montant) — TOUT montant affiché
      passe par lui ; tu n'écris JAMAIS un code ou symbole de monnaie.
    · ./systeme/ui : Icone (noms : accueil, recherche, calendrier, personne,
