@@ -105,12 +105,20 @@ describe('EP-291 · le middleware et les routes', () => {
     // Premier middleware du dépôt : il voit TOUT. Les domaines clients
     // (biyaminchine.com…) ne finissent pas par .deribfy.com et doivent
     // passer sans qu'un doigt soit posé dessus.
-    expect(MIDDLEWARE).toContain(".endsWith('.deribfy.com')")
+    // deribfy.app est LE domaine du contenu client depuis le 2026-10-30.
+    expect(MIDDLEWARE).toContain(".endsWith('.deribfy.app')")
     expect(MIDDLEWARE, 'les noms réservés ne sont plus écartés').toContain('NOMS_RESERVES.has(')
-    expect(MIDDLEWARE, 'www serait réécrit vers une application').toContain("host !== 'www.deribfy.com'")
+    // L'apex et www du domaine client ramènent à la plateforme.
+    expect(MIDDLEWARE).toContain("host === 'deribfy.app' || host === 'www.deribfy.app'")
     expect(MIDDLEWARE).toContain("`/a/${nom}`")
-    // Et le matcher du proxy écarte toujours /api et les actifs : la ligne
-    // existante du dépôt, que cette logique NE doit PAS avoir délogée.
+    // SITE D'ABORD : le proxy sait lire sites_public, pas la table des
+    // générations — et publier refuse les collisions en face.
+    expect(MIDDLEWARE, 'le site n’est plus servi en priorité sur le sous-domaine').toContain(
+      'fetchSiteParSlug(',
+    )
+    // Le legacy .deribfy.com (cpa) continue de servir.
+    expect(MIDDLEWARE).toContain(".endsWith('.deribfy.com')")
+    // Et le matcher du proxy écarte toujours /api et les actifs.
     expect(MIDDLEWARE).toMatch(/matcher:.*api.*_next/u)
   })
 
@@ -119,6 +127,14 @@ describe('EP-291 · le middleware et les routes', () => {
     for (const interdit of ['clientIA', 'appelerFournisseur', 'messages.create']) {
       expect(ROUTE_A, `l’adresse publique appelle un modèle (${interdit})`).not.toContain(interdit)
     }
+  })
+
+  it('⑧bis UN NOM QUI HEURTE UN SITE EST REFUSÉ', () => {
+    // Le proxy sert les sites D'ABORD : une application nommée comme un site
+    // existant montrerait LE SITE à l'adresse qu'on vient d'annoncer.
+    expect(PUBLIER, 'la collision avec un slug de site n’est plus vérifiée').toMatch(
+      /from\(['"]sites['"]\)[\s\S]{0,120}\.eq\(\s*['"]slug['"]/u,
+    )
   })
 
   it('⑧ L’ÉCHEC DU SOUS-DOMAINE N’AVALE PAS LA PUBLICATION', () => {

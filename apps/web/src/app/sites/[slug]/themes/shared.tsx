@@ -595,6 +595,26 @@ export async function fetchLangueParSlug(slug: string): Promise<string | null> {
   return (data as { lang: string | null }).lang
 }
 
+/**
+ * UN SITE EXISTE-T-IL SOUS CE SLUG ? — pour le routage par sous-domaine.
+ *
+ * `fetchLangueParSlug` rend `null` aussi bien quand le site N'EXISTE PAS que
+ * quand sa langue est nulle : impossible d'y lire l'existence. Le proxy des
+ * sous-domaines (<nom>.deribfy.app) doit, lui, TRANCHER : site → /sites/,
+ * sinon → application. D'où ce fetcher qui rend l'existence ET la langue.
+ */
+export async function fetchSiteParSlug(
+  slug: string,
+): Promise<{ lang: string | null } | null> {
+  const { data, error } = await supabase
+    .from('sites_public')
+    .select('slug, lang')
+    .eq('slug', slug)
+    .single()
+  if (error || !data) return null
+  return { lang: (data as { lang: string | null }).lang }
+}
+
 export async function fetchSiteByDomain(
 domain: string
 ): Promise<string | null> {

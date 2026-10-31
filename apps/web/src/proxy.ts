@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import {
   fetchLangueParSlug,
   fetchSiteEtLangueParDomaine,
+  fetchSiteParSlug,
 } from './app/sites/[slug]/themes/shared'
 import { varianteHote, cibleCanonique } from './lib/domains/canonicalHost'
 import { EN_TETE_LANGUE, EN_TETE_SITE, normaliserLangue } from './lib/seo/langueServie'
@@ -55,6 +56,35 @@ const DOCUMENTATION_ANGLAISE = /^\/documentation\/en(?:\/|$)/
 export async function proxy(req: NextRequest) {
   const host = (req.headers.get('host') || '').split(':')[0].toLowerCase()
   const pathname = req.nextUrl.pathname
+
+  // ── deribfy.app : LE DOMAINE DU CONTENU CLIENT (EP-291, 2026-10-30).
+  //
+  // Achete par le proprietaire precisement pour separer les oeuvres des
+  // clients de la marque — le modele de myshopify.com, webflow.io,
+  // lovable.app. Chaque nom y sert UN site ou UNE application ; l'apex et
+  // www, eux, ramenent a la plateforme : il n'y a rien a montrer d'autre.
+  if (host === 'deribfy.app' || host === 'www.deribfy.app') {
+    return NextResponse.redirect('https://www.deribfy.com' + pathname + req.nextUrl.search, 308)
+  }
+  if (host.endsWith('.deribfy.app')) {
+    const nom = host.slice(0, -'.deribfy.app'.length)
+    if (nom === '' || nom.includes('.') || NOMS_RESERVES.has(nom)) {
+      return NextResponse.redirect('https://www.deribfy.com', 308)
+    }
+    // SITE D'ABORD, APPLICATION ENSUITE — et ce n'est pas arbitraire : le
+    // proxy (edge) sait interroger `sites_public`, pas la table des
+    // generations (service seul). `publier` refuse en face tout nom d'app
+    // qui heurterait un slug de site : l'ordre ne cree donc pas d'ombre.
+    const site = await fetchSiteParSlug(nom)
+    if (site !== null) {
+      const url = req.nextUrl.clone()
+      url.pathname = pathname === '/' ? `/sites/${nom}` : `/sites/${nom}${pathname}`
+      return NextResponse.rewrite(url, avecLangue(req, site.lang))
+    }
+    const url = req.nextUrl.clone()
+    url.pathname = `/a/${nom}`
+    return NextResponse.rewrite(url)
+  }
 
   // Domaines internes ou Vercel → comportement normal, sauf le sitemap
   // d'un site precis (ex. www.deribfy.com/sites/{slug}/sitemap.xml)

@@ -134,6 +134,17 @@ export async function POST(req: Request) {
     if (pris.data !== null) {
       return NextResponse.json({ error: `« ${sous} » est deja pris par une autre application.` }, { status: 409 })
     }
+    // ET PAR UN SITE : le proxy sert les sites D'ABORD sur deribfy.app —
+    // un nom d'application qui heurte un slug de site serait une adresse
+    // qui montre autre chose que ce qu'on vient de publier.
+    const prisSite = await supabaseAdmin
+      .from('sites')
+      .select('id')
+      .eq('slug', sous)
+      .maybeSingle()
+    if (prisSite.data !== null) {
+      return NextResponse.json({ error: `« ${sous} » est deja pris par un site.` }, { status: 409 })
+    }
   }
 
   const jeton = jetonPour(lu.data.publication_jeton)

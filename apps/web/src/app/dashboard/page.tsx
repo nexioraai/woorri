@@ -68,7 +68,7 @@ export default function DashboardPage() {
       .replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '').slice(0, 30).replace(/-+$/g, '');
     const sous = window.prompt(
-      'Adresse publique de votre application :\n<nom>.deribfy.com\n\nMinuscules, chiffres et tirets (laisser vide pour un lien simple).',
+      'Adresse publique de votre application :\n<nom>.deribfy.app\n\nMinuscules, chiffres et tirets (laisser vide pour un lien simple).',
       suggestion,
     );
     if (sous === null) return; // la personne a annulé

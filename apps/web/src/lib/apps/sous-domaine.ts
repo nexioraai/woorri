@@ -38,6 +38,9 @@
  * paiement…). Un sous-domaine d'application est servi en origine opaque,
  * mais l'ADRESSE, elle, est lue par des humains.
  */
+/** Le domaine du contenu client — jamais la marque. Achete le 2026-10-30. */
+export const DOMAINE_PUBLIC = 'deribfy.app'
+
 export const NOMS_RESERVES: ReadonlySet<string> = new Set([
   'www', 'api', 'app', 'apps', 'admin', 'dashboard', 'mail', 'email',
   'login', 'auth', 'compte', 'account', 'paiement', 'payment', 'pay',
@@ -86,16 +89,16 @@ export type ResultatSousDomaine =
  */
 export async function creerSousDomaine(nom: string, clefs: Clefs): Promise<ResultatSousDomaine> {
   if (!nomValide(nom)) return { ok: false, erreur: 'nom invalide ou réservé' }
-  const hote = `${nom}.deribfy.com`
+  const hote = `${nom}.${DOMAINE_PUBLIC}`
   const cf = { Authorization: `Bearer ${clefs.cloudflareToken}`, 'content-type': 'application/json' }
 
   // ── LA ZONE, RETROUVÉE PAR SON NOM — jamais un id écrit en dur, qui
   // survivrait à une migration de compte et pointerait dans le vide.
   const zr = (await (
-    await fetch('https://api.cloudflare.com/client/v4/zones?name=deribfy.com', { headers: cf })
+    await fetch(`https://api.cloudflare.com/client/v4/zones?name=${DOMAINE_PUBLIC}`, { headers: cf })
   ).json()) as { success?: boolean; result?: { id: string }[] }
   const zone = zr.result?.[0]?.id
-  if (zone === undefined) return { ok: false, erreur: 'zone deribfy.com introuvable chez Cloudflare' }
+  if (zone === undefined) return { ok: false, erreur: `zone ${DOMAINE_PUBLIC} introuvable chez Cloudflare` }
 
   // ── ① LE CNAME, S'IL N'EXISTE PAS DÉJÀ.
   const existants = (await (
