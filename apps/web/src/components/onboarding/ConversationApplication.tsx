@@ -902,7 +902,7 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
             ok?: boolean; html?: string; motif?: string; error?: string;
             tours?: unknown[]; dureeMs?: number;
             jetons?: { fichier: string; reference: string }[];
-            execution?: { demarre: boolean; indisponible?: string; ecransVisites?: number; erreurs: { quoi: string; message: string }[] };
+            execution?: { demarre: boolean; indisponible?: string; ecransVisites?: number; ecransDecouverts?: number; erreurs: { quoi: string; message: string }[] };
             vivacite?: { fichier: string; manque: string }[];
             couverture?: {
               exigences?: { exigence: string; statut: string }[];
@@ -955,7 +955,16 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
                     exec.indisponible !== undefined
                       ? '⚠ Le juge de démarrage n’a pas pu s’exécuter : cette application n’a PAS été éprouvée.'
                       : exec.demarre
-                        ? `Démarrage vérifié : l’application s’ouvre et ${String(exec.ecransVisites ?? 0)} écran(s) ont été parcourus.`
+                        ? (() => {
+                            const vus = exec.ecransVisites ?? 0;
+                            const trouves = Math.max(exec.ecransDecouverts ?? vus, vus);
+                            // LE DÉNOMINATEUR SE DIT TOUJOURS : un rapport qui
+                            // ne le donne que lorsqu'il est mauvais est un
+                            // rapport qu'on apprend à ne plus lire.
+                            return trouves > vus
+                              ? `⚠ Application PARTIELLEMENT éprouvée : ${String(vus)} contrôle(s) ouverts sur ${String(trouves)} trouvés. Le reste n’a pas été vérifié.`
+                              : `Démarrage vérifié : l’application s’ouvre, ${String(vus)} contrôle(s) sur ${String(trouves)} ouverts et éprouvés.`;
+                          })()
                         : `⚠ L’application ne démarre pas : ${exec.erreurs[0]?.message ?? 'cause inconnue'}.`,
                   );
                 }

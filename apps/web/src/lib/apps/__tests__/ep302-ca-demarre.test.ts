@@ -162,9 +162,58 @@ describe('EP-302 · le juge d’exécution', () => {
     expect(MUET, 'le juge muet a quitté le dossier des contrôles').toContain('jugeMuet')
   })
 
-  it('⑥ LE PLAFOND EST MESURÉ — huit fois le pire cas des œuvres stockées', () => {
-    // Mesuré : 786 à 1777 ms, visite des écrans comprise. Un plafond sous
-    // 5 s serait « trop juste » sur un processeur de fonction plus lent.
-    expect(PLAFOND_MS).toBeGreaterThanOrEqual(10_000)
+  it(
+    '⑩ LES CONTRÔLES NÉS APRÈS NAVIGATION SONT VUS — et le reste est DIT',
+    async () => {
+      // MESURÉ le 2026-10-31 : la première version énumérait UNE SEULE FOIS,
+      // avant tout clic. Un écran atteint depuis un autre écran n'était donc
+      // JAMAIS ouvert, et le rapport disait « démarrage vérifié » sans un
+      // mot. Sixième visage du même défaut.
+      const code = await assembleOuEchoue(
+        page(
+          "import { useState } from 'react'\n" +
+            'function App() {\n' +
+            "  const [e, setE] = useState('accueil')\n" +
+            "  if (e === 'second') { const t: any = undefined; return <p>{t.x}</p> }\n" +
+            "  if (e === 'premier') return <button onClick={() => setE('second')}>Aller au second</button>\n" +
+            "  return <button onClick={() => setE('premier')}>Aller au premier</button>\n" +
+            '}',
+        ),
+      )
+      const v = await jugerExecution(code)
+      // Le contrôle fautif n'existe QU'APRÈS deux navigations : une
+      // énumération unique ne l'aurait jamais ouvert.
+      expect(v.demarre, 'un écran de second niveau est passé inaperçu').toBe(false)
+      expect(v.erreurs.map((e) => e.quoi).join(' ')).toMatch(/second/u)
+    },
+    60_000,
+  )
+
+  it(
+    '⑪ LE DÉNOMINATEUR EST TOUJOURS RENDU — visités ET découverts',
+    async () => {
+      const code = await assembleOuEchoue(
+        page("function App() { return <nav><button>A</button><button>B</button></nav> }"),
+      )
+      const v = await jugerExecution(code)
+      expect(v.ecransVisites, 'aucun contrôle ouvert').toBeGreaterThan(0)
+      expect(v.ecransDecouverts, 'le dénominateur manque').toBeGreaterThanOrEqual(
+        v.ecransVisites ?? 0,
+      )
+    },
+    60_000,
+  )
+
+  it('⑥ LE PLAFOND VIENT DE LA PRODUCTION, et il est large À DESSEIN', () => {
+    // MESURÉ DANS LA LAMBDA le 2026-10-31, cinq œuvres réelles : 858, 1035,
+    // 1057, 1345, 1850 ms. Pire cas réel 1850 ms ; plafond 15 s = 8,1×.
+    //
+    // Large à dessein, et l'asymétrie le commande : une boucle ne finit
+    // jamais, donc TOUT plafond l'attrape — il ne décide que du délai de
+    // détection. Trop serré, en revanche, un plafond refuse une œuvre saine
+    // mais lente et fait repartir le modèle pour un tour : de l'argent réel
+    // dépensé sur un faux défaut. Resserrer ce nombre sans une mesure de
+    // production qui l'exige serait une régression, pas une rigueur.
+    expect(PLAFOND_MS).toBeGreaterThanOrEqual(8 * 1850)
   })
 })

@@ -397,6 +397,14 @@ export async function POST(req: Request) {
     tirages: resultat.tours.length,
     diagnostics: resultat.ok
       ? [
+          ...(resultat.execution !== null &&
+          resultat.execution.indisponible === undefined &&
+          (resultat.execution.ecransDecouverts ?? 0) > (resultat.execution.ecransVisites ?? 0)
+            ? [
+                `Application PARTIELLEMENT éprouvée : ${String(resultat.execution.ecransVisites ?? 0)} ` +
+                  `contrôle(s) ouverts sur ${String(resultat.execution.ecransDecouverts ?? 0)} trouvés`,
+              ]
+            : []),
           ...(resultat.execution !== null && resultat.execution.indisponible !== undefined
             ? [
                 'Le juge de demarrage n a pas pu s executer : cette application ' +

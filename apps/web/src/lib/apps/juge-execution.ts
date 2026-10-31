@@ -25,10 +25,9 @@
  *
  * ── LE PLAFOND EST MESURÉ, PAS DEVINÉ (condition du propriétaire).
  *
- * Sur les cinq œuvres livrées stockées, visite de tous les écrans comprise :
- * 786 à 1777 ms de processus complet (démarrage de Node, DOM et décantation
- * inclus). Le plafond est posé à 15 s — huit fois le pire cas mesuré. Un
- * dépassement est un VERDICT (l'œuvre boucle), pas une panne.
+ * Mesuré EN PRODUCTION sur cinq œuvres réelles : 858 à 1850 ms. Le plafond
+ * est posé à 15 s — 8,1 fois le pire cas réel. Un dépassement est un
+ * VERDICT (l'œuvre boucle), pas une panne.
  */
 import { spawn } from 'node:child_process'
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
@@ -46,19 +45,61 @@ export type VerdictExecution = {
   readonly erreurs: readonly ErreurExecution[]
   readonly octetsRendus: number
   readonly texte: string
-  /** Combien d'écrans ont été ouverts et jugés — condition 4 du propriétaire. */
+  /** Combien de contrôles ont été ouverts et jugés. */
   readonly ecransVisites?: number
+  /**
+   * Combien ont été DÉCOUVERTS. Visités < découverts signifie que l'œuvre
+   * n'a été éprouvée QUE PARTIELLEMENT — et ça se dit, toujours : un juge
+   * qui s'arrête sans l'annoncer est un juge qui ment par omission.
+   */
+  readonly ecransDecouverts?: number
+  /** Combien d ECRANS distincts ont ete atteints — la profondeur du parcours. */
+  readonly ecransDistincts?: number
   readonly ms: number
   /** Dit quand le juge n'a pas pu se prononcer — jamais confondu avec un refus. */
   readonly indisponible?: string
 }
 
 /**
- * MESURÉ sur les cinq œuvres livrées stockées, visite des écrans comprise :
- * 786 / 952 / 953 / 1303 / 1777 ms de processus complet. Le plafond est posé
- * à 15 s — huit fois le pire cas mesuré — pour absorber un processeur de
- * fonction plus lent sans jamais être « trop juste » (condition 2 du
- * propriétaire : le plafond se mesure, il ne se devine pas).
+ * LE PLAFOND VIENT DE LA LAMBDA, PAS D'UNE MACHINE DE DÉVELOPPEMENT.
+ *
+ * Première version : 786–1777 ms mesurés en local. Le propriétaire l'a
+ * refusée, et il avait raison deux fois — ces chiffres avaient été pris
+ * pendant qu'une gate tournait (règle 8 : nulle), et surtout le juge ne
+ * tourne PAS sur cette machine. Ils ne valaient que comme plancher de
+ * vraisemblance.
+ *
+ * MESURÉ EN PRODUCTION le 2026-10-31, cinq œuvres réelles montées par la
+ * sonde dans la fonction elle-même (`?oeuvres=6`) :
+ *
+ *     88c94164   519 787 o →  858 ms   (échoue tôt : elle ne démarre pas)
+ *     cbf1cb34   543 276 o → 1035 ms
+ *     4a6e160d   560 508 o → 1057 ms   ← la plus GROSSE
+ *     eb7b62b5   531 630 o → 1345 ms
+ *     7be93be8   557 420 o → 1850 ms   ← PIRE CAS RÉEL
+ *
+ * Enseignement au passage : la taille ne commande pas le temps. La plus
+ * grosse œuvre est à 1057 ms, la plus lente à 1850 ms — c'est le nombre
+ * d'écrans visités qui pèse, pas les octets.
+ *
+ * ── POURQUOI 15 s ET NON UN PLAFOND SERRÉ : L'ASYMÉTRIE DES ERREURS.
+ *
+ * Le propriétaire craignait qu'un plafond trop généreux « laisse passer
+ * demain ce qu'il devait attraper ». Mesure et raisonnement disent le
+ * contraire ici, et c'est dit plutôt que tu : une BOUCLE NE FINIT JAMAIS,
+ * donc n'importe quel plafond l'attrape — le plafond ne décide pas SI on la
+ * voit, seulement QUAND. Les deux erreurs ne coûtent pas la même chose :
+ *
+ *   · trop SERRÉ : une œuvre saine mais lente reçoit le verdict « boucle »,
+ *     est refusée, et le modèle repart pour un tour — de l'argent réel
+ *     dépensé sur un faux défaut, et un propriétaire qui voit un échec
+ *     inventé ;
+ *   · trop LARGE : une œuvre qui boucle est détectée 13 secondes plus tard.
+ *     Aucune dépense, aucun faux verdict.
+ *
+ * 15 s = 8,1 fois le pire cas RÉEL. La marge absorbe un démarrage à froid
+ * que ces mesures ne distinguent pas (elles sont probablement tièdes), et
+ * la route elle-même tolère 900 s.
  */
 export const PLAFOND_MS = 15_000
 /** Mesuré : React rend par tranches — 57 caractères à 0 ms, 759 à 300 ms. */
@@ -153,6 +194,8 @@ export async function jugerExecution(
       octetsRendus: number
       texte: string
       ecransVisites?: number
+      ecransDecouverts?: number
+      ecransDistincts?: number
     }
     return {
       demarre: lu.monte && lu.erreurs.length === 0,
@@ -160,6 +203,8 @@ export async function jugerExecution(
       octetsRendus: lu.octetsRendus,
       texte: lu.texte,
       ecransVisites: lu.ecransVisites ?? 0,
+      ecransDecouverts: lu.ecransDecouverts ?? 0,
+      ecransDistincts: lu.ecransDistincts ?? 0,
       ms: Date.now() - debut,
     }
   } catch (e) {

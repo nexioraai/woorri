@@ -121,10 +121,54 @@ await new Promise((r) => setTimeout(r, Number(attenteMs) || 400))
 // parcourt donc l'INTERFACE RÉELLE : chaque contrôle de navigation est
 // actionné, et l'erreur est imputée à l'écran qu'il ouvre.
 const racineNav = document.getElementById('racine')
-const visites = []
+const SELECTEUR = 'button, [role="button"], a[href^="#"], nav *[data-ecran]'
+/** Combien de contrôles on accepte d'ouvrir. Borne de COÛT, pas de vérité. */
+const BUDGET_VISITES = 24
+let visites = 0
+let decouverts = 0
+let ecransDistincts = 1
 if (racineNav !== null) {
-  const controles = [...racineNav.querySelectorAll('button, [role="button"], a[href^="#"], nav *[data-ecran]')]
-  for (const controle of controles.slice(0, 24)) {
+  // ── ON RÉÉNUMÈRE APRÈS CHAQUE CLIC, et c'est la correction du défaut.
+  //
+  // MESURÉ le 2026-10-31 sur les œuvres stockées : la première version
+  // énumérait UNE SEULE FOIS, avant tout clic. Les contrôles qui
+  // n'apparaissent qu'APRÈS navigation n'étaient donc JAMAIS ouverts —
+  // l'œuvre 7be93be8 porte 16 contrôles à l'accueil et un ensemble
+  // DIFFÉRENT ensuite. Le juge ne voyait que le premier niveau, et ne le
+  // disait pas : sixième visage du même défaut (« tout roule »,
+  // « indisponible », « hors périmètre », la sonde qui signale,
+  // l'arrêt à 24 muet).
+  const vus = new Set()
+  const connus = new Set()
+  // ── L'ECRAN S'IDENTIFIE PAR CE QU'IL AFFICHE, pas par le bouton cliqué.
+  //
+  // Deux approximations ont ete mesurees et rejetees le 2026-10-31 :
+  //   · clef « balise + texte » seule → SOUS-COMPTAIT (deux « Modifier » sur
+  //     deux ecrans comptaient pour un), donc GONFLAIT le ratio : faux vert ;
+  //   · ecran = libelle du controle cliqué → SUR-COMPTAIT (un bouton qui ne
+  //     navigue pas creait un faux ecran : 161 « decouvertes » sur une
+  //     oeuvre qui n'a qu'une poignee d'ecrans).
+  // L'empreinte du CONTENU RENDU tranche : meme ecran = meme texte, qu'on y
+  // arrive par un chemin ou par un autre, et un bouton qui ne change rien ne
+  // cree aucun ecran.
+  const empreinte = () => {
+    const t = (racineNav.textContent ?? '').replace(/\s+/gu, ' ').trim().slice(0, 400)
+    let h = 0
+    for (let i = 0; i < t.length; i += 1) h = (h * 31 + t.charCodeAt(i)) | 0
+    return String(h)
+  }
+  let ecranCourant = empreinte()
+  const ecransVus = new Set([ecranCourant])
+  const clef = (c) =>
+    `${c.tagName}|${ecranCourant}|${(c.textContent ?? '').replace(/\s+/gu, ' ').trim().slice(0, 60)}`
+  for (let tour = 0; tour < BUDGET_VISITES; tour += 1) {
+    const presents = [...racineNav.querySelectorAll(SELECTEUR)]
+    const cles = presents.map((c) => clef(c))
+    for (const k of cles) connus.add(k)
+    const rang = cles.findIndex((k) => !vus.has(k))
+    if (rang === -1) break
+    vus.add(cles[rang])
+    const controle = presents[rang]
     const etiquette = (controle.textContent ?? '').replace(/\s+/gu, ' ').trim().slice(0, 40) || '(sans texte)'
     const avant = erreurs.length
     try {
@@ -138,8 +182,17 @@ if (racineNav !== null) {
     for (let i = avant; i < erreurs.length; i += 1) {
       erreurs[i] = { ...erreurs[i], quoi: `${erreurs[i].quoi} — écran « ${etiquette} »` }
     }
-    visites.push({ etiquette, octets: (racineNav.innerHTML ?? '').length })
+    visites += 1
+    // L'ECRAN COURANT devient celui que ce controle vient d'ouvrir : c'est
+    // lui qui distingue deux « Modifier » poses sur deux ecrans.
+    ecranCourant = empreinte()
+    ecransVus.add(ecranCourant)
   }
+  // Ce qui reste connu mais non ouvert, le budget epuise : DIT, jamais taire.
+  const restants = [...racineNav.querySelectorAll(SELECTEUR)].map((c) => clef(c))
+  for (const k of restants) connus.add(k)
+  decouverts = connus.size
+  ecransDistincts = ecransVus.size
 }
 
 const racine = document.getElementById('racine')
@@ -154,7 +207,9 @@ writeFileSync(
     erreurs,
     octetsRendus: rendu.length,
     texte: texte.slice(0, 400),
-    ecransVisites: visites.length,
+    ecransVisites: visites,
+    ecransDecouverts: decouverts,
+    ecransDistincts: ecransDistincts,
   }),
 )
 process.exit(0)
