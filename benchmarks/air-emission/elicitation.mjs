@@ -152,6 +152,43 @@ export function deviseSuggeree(pays) {
 }
 
 /**
+ * ISO 4217, CODES ACTIFS — la liste que la question promet.
+ *
+ * ── LE DÉFAUT QUI L'A RENDUE NÉCESSAIRE, MESURÉ LE 2026-10-31.
+ *
+ * La question disait « code international à trois lettres (par exemple EUR,
+ * USD, XAF) ». La réponse « les 3 » a été acceptée, stockée, et l'écran a
+ * rejoué : « vos montants s'afficheront en LES 3 ». Une réponse que la
+ * question elle-même déclare invalide devenait un fait du document.
+ *
+ * LA FORME NE SUFFIT PAS : « EUU » a trois lettres et n'existe pas. On
+ * valide contre la liste réelle — un code que personne ne peut afficher ne
+ * doit jamais entrer dans un document.
+ */
+const CODES_ISO_4217 = Object.freeze(new Set([
+  "AED","AFN","ALL","AMD","ANG","AOA","ARS","AUD","AWG","AZN",
+  "BAM","BBD","BDT","BGN","BHD","BIF","BMD","BND","BOB","BRL","BSD","BTN","BWP","BYN","BZD",
+  "CAD","CDF","CHF","CLP","CNY","COP","CRC","CUP","CVE","CZK",
+  "DJF","DKK","DOP","DZD","EGP","ERN","ETB","EUR","FJD","FKP",
+  "GBP","GEL","GHS","GIP","GMD","GNF","GTQ","GYD","HKD","HNL","HTG","HUF",
+  "IDR","ILS","INR","IQD","IRR","ISK","JMD","JOD","JPY",
+  "KES","KGS","KHR","KMF","KPW","KRW","KWD","KYD","KZT",
+  "LAK","LBP","LKR","LRD","LSL","LYD",
+  "MAD","MDL","MGA","MKD","MMK","MNT","MOP","MRU","MUR","MVR","MWK","MXN","MYR","MZN",
+  "NAD","NGN","NIO","NOK","NPR","NZD","OMR",
+  "PAB","PEN","PGK","PHP","PKR","PLN","PYG","QAR","RON","RSD","RUB","RWF",
+  "SAR","SBD","SCR","SDG","SEK","SGD","SHP","SLE","SOS","SRD","SSP","STN","SYP","SZL",
+  "THB","TJS","TMT","TND","TOP","TRY","TTD","TWD","TZS",
+  "UAH","UGX","USD","UYU","UZS","VES","VND","VUV","WST",
+  "XAF","XCD","XOF","XPF","YER","ZAR","ZMW","ZWG",
+]));
+
+/** Un code de devise valide : trois lettres, ET présent dans ISO 4217. */
+export function deviseValide(texte) {
+  return typeof texte === "string" && CODES_ISO_4217.has(texte.trim().toUpperCase());
+}
+
+/**
  * EP-201 A — CE QUE L'HUMAIN SEUL PEUT FOURNIR.
  *
  * Ces questions ne projettent aucun diagnostic : elles précèdent tout juge.
@@ -212,13 +249,25 @@ export const QUESTIONS_DE_CONFIGURATION = {
   },
   DEVISE_RETENUE: {
     structure: "currency",
-    // Le pays a pré-rempli ; cette question CONFIRME ou CORRIGE. Elle porte
-    // la suggestion dans son texte, ce qui évite à l'humain de connaître les
-    // codes ISO sans que le moteur, lui, n'en apprenne davantage.
+    // ── LA RÉPONSE EST VALIDÉE, ET LA DÉCISION MULTI-DEVISES EST DITE.
+    //
+    // DEUX DÉFAUTS MESURÉS LE 2026-10-31, même tir :
+    //   · « les 3 » accepté puis rejoué en « LES 3 » — aucune validation ;
+    //   · « tchad comme base mais plateforme universel » au pays, puis une
+    //     question qui suppose UNE devise sans dire quoi faire du multi.
+    //
+    // LA DÉCISION, EXPLICITE : le document porte UNE devise de RÉFÉRENCE.
+    // L'affichage multi-devises est l'affaire de l'application générée, pas
+    // de cette configuration — et la question le dit en toutes lettres au
+    // lieu de forcer une réponse unique en silence.
+    valide: deviseValide,
     demande: (suggestion) =>
       suggestion === null || suggestion === undefined
-        ? `Dans quelle monnaie affichez-vous vos prix ? Indiquez son code ` +
-          `international à trois lettres (par exemple EUR, USD, XAF).`
+        ? `Dans quelle monnaie affichez-vous vos prix ? Un seul code ` +
+          `international à trois lettres (par exemple EUR, USD, XAF). Si vous ` +
+          `opérez dans plusieurs pays ou devises, donnez la devise de ` +
+          `RÉFÉRENCE — votre application pourra en afficher d'autres, mais le ` +
+          `document n'en porte qu'une.`
         : `J'afficherai vos prix en ${suggestion}. Si vous vendez dans une ` +
           `autre monnaie, indiquez son code à trois lettres.`,
   },
@@ -333,10 +382,16 @@ export function configurationDe(reponses = {}) {
     : null;
   const suggeree = pays === undefined ? null : deviseSuggeree(pays);
   const saisie = reponses.DEVISE_RETENUE;
-  // L'humain prime TOUJOURS sur la suggestion (EP-201 C).
-  const devise =
-    typeof saisie === "string" && saisie.trim() !== ""
-      ? saisie.trim().toUpperCase()
+  // L'humain prime TOUJOURS sur la suggestion (EP-201 C) — quand sa réponse
+  // EST une devise. « les 3 » n'en est pas une : la garde est ici en DERNIER
+  // rempart, même si l'appelant a oublié de re-poser la question. Un code
+  // invalide ne devient jamais un fait ; la suggestion ne le remplace pas
+  // non plus (elle dirait autre chose que ce que l'humain a voulu dire) :
+  // la question reste simplement ouverte.
+  const devise = deviseValide(saisie)
+    ? saisie.trim().toUpperCase()
+    : typeof saisie === "string" && saisie.trim() !== ""
+      ? null
       : suggeree;
   const logistique = reponses.LOGISTIQUE_PROPRE;
   const numero = reponses.NUMERO_ENCAISSEUR;
@@ -425,8 +480,16 @@ export function configurationADemander({ interlocuteur = false, reponses = {} } 
   const repondu = (code) => {
     const v = reponses[code];
     if (v === undefined) return false;
-    const choix = QUESTIONS_DE_CONFIGURATION[code].choix;
-    return choix === undefined || choix.some((c) => c.valeur === v);
+    const q = QUESTIONS_DE_CONFIGURATION[code];
+    if (q.choix !== undefined) return q.choix.some((c) => c.valeur === v);
+    // ── UNE STRUCTURE LIBRE SE VALIDE AUSSI (EP-293, 2026-10-31).
+    //
+    // Ce commentaire disait déjà la règle pour les choix fermés ; les
+    // structures libres y échappaient : « les 3 » comptait pour répondu, la
+    // question ne revenait jamais, et l'écran rejouait « LES 3 » comme un
+    // fait. Même mécanisme désormais : invalide ⇒ la question reste OUVERTE
+    // et revient à l'écran — visible, plutôt que supposé.
+    return q.valide === undefined || q.valide(String(v));
   };
 
   // ── L'AIGUILLAGE. Ce que l'humain a répondu décide de la suite.
@@ -454,10 +517,16 @@ export function configurationADemander({ interlocuteur = false, reponses = {} } 
     .filter((code) => !repondu(code))
     .map((code) => {
       const q = QUESTIONS_DE_CONFIGURATION[code];
+      // LA RÉ-INTERROGATION S'EXPLIQUE : sans cela, la personne retape la
+      // même chose et tourne en rond. La réponse refusée est citée.
+      const refusee =
+        reponses[code] !== undefined && q.valide !== undefined && !q.valide(String(reponses[code]))
+          ? ` (Votre réponse « ${String(reponses[code]).slice(0, 40)} » ne correspond pas : un seul code à trois lettres.)`
+          : "";
       return {
         code,
         structure: q.structure,
-        texte: q.demande(suggeree),
+        texte: q.demande(suggeree) + refusee,
         // Les choix VOYAGENT avec la question : sans eux l'écran devrait les
         // recopier, et une table recopiée est une seconde vérité.
         ...(q.choix === undefined ? {} : { choix: q.choix }),
