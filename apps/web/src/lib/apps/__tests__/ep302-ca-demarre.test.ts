@@ -130,6 +130,19 @@ describe('EP-302 · le juge d’exécution', () => {
     60_000,
   )
 
+  it('⑦ LA PRODUCTION N’INJECTE AUCUN JUGE — le muet reste aux contrôles', () => {
+    // Le juge est remplaçable pour que les cliquets de couverture ne paient
+    // pas un processus par tour. Le jour où une route passerait `juger`, le
+    // démarrage cesserait d'être vérifié SANS QUE RIEN NE LE DISE — c'est
+    // exactement la forme de panne que ce dépôt passe ses journées à fermer.
+    const nu = (p: string) =>
+      readFileSync(p, 'utf8').replace(/\/\*[\s\S]*?\*\//gu, ' ').replace(/^\s*\/\/.*$/gmu, ' ')
+    const ROUTE = nu(join(__dirname, '..', '..', '..', 'app', 'api', 'generateur', 'direct', 'route.ts'))
+    expect(ROUTE, 'la route de production désarme le juge d’exécution').not.toMatch(/\bjuger\s*:/u)
+    const MUET = nu(join(__dirname, 'juge-muet.ts'))
+    expect(MUET, 'le juge muet a quitté le dossier des contrôles').toContain('jugeMuet')
+  })
+
   it('⑥ LE PLAFOND EST MESURÉ — huit fois le pire cas des œuvres stockées', () => {
     // Mesuré : 786 à 1777 ms, visite des écrans comprise. Un plafond sous
     // 5 s serait « trop juste » sur un processeur de fonction plus lent.

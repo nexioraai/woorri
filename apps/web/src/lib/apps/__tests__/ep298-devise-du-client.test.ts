@@ -7,6 +7,7 @@
  * contrôle.
  */
 import { describe, expect, it } from 'vitest'
+import { jugeMuet } from './juge-muet'
 import { boucleEcriture } from '../boucle-directe'
 import { jugerDevise } from '../juge-devise'
 
@@ -44,6 +45,7 @@ describe('EP-298 · le juge de devise', () => {
       demande: 'Une page de prix.',
       configuration: { currency: 'XAF' },
       appeler: appeler as never,
+      juger: jugeMuet,
     })
     expect(appels.length, 'le tour en EUR n’a pas été renvoyé').toBe(2)
     expect(appels[1]!.join('\n')).toMatch(/FCFA|XAF/u)

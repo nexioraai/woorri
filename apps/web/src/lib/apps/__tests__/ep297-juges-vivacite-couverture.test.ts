@@ -11,6 +11,7 @@
  * application à marcher, on apprend à DERIBFY à juger ses œuvres.
  */
 import { describe, expect, it } from 'vitest'
+import { jugeMuet } from './juge-muet'
 import { boucleEcriture } from '../boucle-directe'
 import { jugerVivacite } from '../juge-vivacite'
 import { FICHIER_PERIMETRE, jugerCouverture } from '../juge-couverture'
@@ -141,6 +142,7 @@ describe('EP-297 · la boucle exige la vie et la couverture', () => {
     const r = await boucleEcriture({
       demande: 'Plateforme de paiement : paiement mobile et paiement carte, interface anglais/arabe, version arabe RTL.',
       appeler: appeler as never,
+      juger: jugeMuet,
     })
     expect(appels.length, 'le tour mort n’a pas été renvoyé').toBe(2)
     const retour = appels[1]!.join('\n')

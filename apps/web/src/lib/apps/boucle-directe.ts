@@ -211,6 +211,16 @@ export async function boucleEcriture(o: {
   readonly configuration?: ConfigurationClient
   readonly appeler: Appeler
   readonly toursMax?: number
+  /**
+   * LE JUGE D'EXÉCUTION, REMPLAÇABLE — et le défaut reste le VRAI.
+   *
+   * Les contrôles qui éprouvent la couverture ou la devise n'ont pas à
+   * payer un processus par tour (mesuré : +800 ms chacun, deux cliquets
+   * passés sous la marge de la gate). Ils injectent donc un juge muet.
+   * L'oubli en production ne désarme RIEN : sans injection, c'est le juge
+   * réel qui tourne — fail-closed, comme tout le reste de cette boucle.
+   */
+  readonly juger?: typeof jugerExecution
 }): Promise<Resultat> {
   const toursMax = o.toursMax ?? TOURS_MAX
   const tours: Tour[] = []
@@ -297,7 +307,7 @@ export async function boucleEcriture(o: {
         // si les jetons sont sains : inutile de monter une œuvre dont on
         // sait déjà qu'elle mourra, et un tour coûte de l'argent.
         const execution: VerdictExecution | null =
-          jetons.length === 0 ? await jugerExecution(v.code) : null
+          jetons.length === 0 ? await (o.juger ?? jugerExecution)(v.code) : null
         const reproches: string[] = []
         if (jetons.length > 0) {
           reproches.push(
