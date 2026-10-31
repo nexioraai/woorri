@@ -121,8 +121,46 @@ export const TOURS_MAX = 3
  * faux modèle, sans réseau et sans un centime — et c'est ainsi qu'elle a été
  * écrite, avant qu'un seul appel payant ne parte.
  */
+/** La configuration éludée, telle que le pré-vol la résout. */
+export type ConfigurationClient = { readonly [cle: string]: unknown }
+
+/**
+ * LE BLOC DE CONFIGURATION — la source de vérité AVANT le cahier.
+ *
+ * MESURÉ LE 2026-10-31 (tir eb7b62b5) : le pré-vol validait la devise
+ * (EP-293) puis l'écran n'envoyait que la demande — plateforme tchadienne
+ * rendue en EUR. Ce bloc précède le cahier dans le message : ce que le
+ * client a RÉPONDU prime sur ce que le modèle déduirait du document.
+ *
+ * Dernier rempart sur la devise : l'élicitation valide en amont, mais une
+ * requête forgée peut contourner l'écran — une devise qui n'a pas la forme
+ * d'un code (trois lettres) n'est JAMAIS transmise comme un fait.
+ */
+export function texteDeConfiguration(configuration: ConfigurationClient): string {
+  const lignes: string[] = []
+  const libelles: Record<string, string> = {
+    currency: 'DEVISE (tous les montants affichés l’emploient, aucune autre)',
+    market: 'MARCHÉ VISÉ',
+    collector_msisdn: 'NUMÉRO D’ENCAISSEMENT',
+    logistics: 'LOGISTIQUE',
+  }
+  for (const [cle, valeur] of Object.entries(configuration)) {
+    if (typeof valeur !== 'string' || valeur.trim() === '') continue
+    if (cle === 'currency' && !/^[A-Z]{3}$/u.test(valeur.trim().toUpperCase())) continue
+    lignes.push(`- ${libelles[cle] ?? cle.toUpperCase()} : ${valeur.trim()}`)
+  }
+  if (lignes.length === 0) return ''
+  return (
+    'CONFIGURATION DU CLIENT — source de vérité, elle PRIME sur toute ' +
+    'déduction du cahier :' + '\n' +
+    lignes.join('\n') +
+    '\n\n'
+  )
+}
+
 export async function boucleEcriture(o: {
   readonly demande: string
+  readonly configuration?: ConfigurationClient
   readonly appeler: Appeler
   readonly toursMax?: number
 }): Promise<Resultat> {
@@ -130,7 +168,7 @@ export async function boucleEcriture(o: {
   const tours: Tour[] = []
   let dernierTexte = ''
   const messages: { role: 'user' | 'assistant'; content: string }[] = [
-    { role: 'user', content: o.demande },
+    { role: 'user', content: texteDeConfiguration(o.configuration ?? {}) + o.demande },
   ]
 
   for (let rang = 1; rang <= toursMax; rang += 1) {

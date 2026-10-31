@@ -886,7 +886,7 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
         const res = await fetch('/api/generateur/direct', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${await jeton()}` },
-          body: JSON.stringify({ demande: texte }),
+          body: JSON.stringify({ demande: texte, configuration }),
           signal: avorteur.signal,
         });
         // ── ON LIT UN FLUX QUI BAT, PAS UN JSON D'UN BLOC.
@@ -1435,9 +1435,10 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
             <p className="text-slate-400 text-[15px] leading-relaxed max-w-md mx-auto">
               Décrivez l’application que vous voulez. Deribfy vous dira ce qu’il a compris,
               et vous <strong className="text-slate-200">posera des questions</strong> sur ce
-              qu’il ne peut pas deviner — rien n’est construit avant. Elle sort en version{' '}
-              <strong className="text-slate-200">mobile</strong> et{' '}
-              <strong className="text-slate-200">web</strong>.
+              qu’il ne peut pas deviner — rien n’est construit avant. Elle sort en{' '}
+              <strong className="text-slate-200">application web</strong> — utilisable sur
+              téléphone comme sur ordinateur, <strong className="text-slate-200">téléchargeable</strong>{' '}
+              en projet complet et <strong className="text-slate-200">publiée à son adresse</strong>.
             </p>
             {/* ── LE RETOUR NE VIT QUE SUR L'ECRAN VIDE, et c'est la reponse a
                 « je vois pas pourquoi tu l'as mis ici ».

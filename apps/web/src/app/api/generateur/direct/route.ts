@@ -151,9 +151,26 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Clé absente du serveur.' }, { status: 500 })
   }
 
-  const corps = (await req.json().catch(() => ({}))) as { demande?: unknown }
+  const corps = (await req.json().catch(() => ({}))) as {
+    demande?: unknown
+    configuration?: unknown
+  }
   const demande = typeof corps.demande === 'string' ? corps.demande.trim() : ''
   if (demande === '') return NextResponse.json({ error: 'demande requise' }, { status: 400 })
+  // ── LA CONFIGURATION DU PRÉ-VOL VOYAGE AVEC LA DEMANDE (EP-296).
+  //
+  // Mesuré le 2026-10-31 : l'écran n'envoyait que la demande — la devise
+  // validée par EP-293 n'atteignait jamais le moteur, et le tir livré
+  // affichait EUR sur une base tchadienne. On ne garde que des champs
+  // chaîne : le bloc transmis au modèle est du texte, pas un objet.
+  const configuration: Record<string, string> = {}
+  if (typeof corps.configuration === 'object' && corps.configuration !== null) {
+    for (const [cle, valeur] of Object.entries(corps.configuration as Record<string, unknown>)) {
+      if (typeof valeur === 'string' && valeur.trim() !== '' && cle.length <= 40) {
+        configuration[cle] = valeur.trim().slice(0, 200)
+      }
+    }
+  }
 
   let entree = 0
   let sortie = 0
@@ -244,7 +261,7 @@ export async function POST(req: Request) {
   const debut = Date.now()
   let resultat
   try {
-    resultat = await boucleEcriture({ demande, appeler })
+    resultat = await boucleEcriture({ demande, configuration, appeler })
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : String(e)
     return { ok: false as const, error: message.slice(0, 200) }
@@ -295,6 +312,7 @@ export async function POST(req: Request) {
     // comprendre. Le brut est borné à 20 000 caractères : assez pour voir la
     // forme, pas assez pour gonfler la ligne.
     sections_acquises: {
+      configuration,
       tours: resultat.tours,
       dernierTexte: resultat.ok ? null : resultat.dernierTexte.slice(0, 20_000),
     },
