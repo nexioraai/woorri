@@ -182,8 +182,13 @@ describe('EP-273 · la CONSIGNE elle-même ne peut plus se contredire', () => {
   // parce que la consigne, plus ancienne et plus précise, l'emportait.
   const CONSIGNE = (() => {
     const src = readFileSync(new URL('../route.ts', import.meta.url), 'utf8')
-    const i = src.indexOf('NATIVE / WEB APPLICATIONS')
+    // N3 (2026-10-31) : le titre affirme désormais la vérité mesurée — le
+    // web se construit, le natif ne se promet pas. Et l'ancre se VÉRIFIE :
+    // introuvable, elle découpait n'importe quoi et les contrôles ⑥⑦
+    // juged du vide (mesuré en renommant ce titre).
+    const i = src.indexOf('WEB APPLICATIONS — DERIBFY BUILDS THEM')
     const j = src.indexOf('AFTER the required info is gathered', i)
+    if (i < 0 || j < 0) throw new Error('ancre de la consigne introuvable — le titre a changé sans ce test')
     return src.slice(i, j)
   })()
 

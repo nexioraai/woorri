@@ -234,7 +234,13 @@ describe('CLIQUET — IL N Y A QU UNE CONVERSATION, PAS DEUX', () => {
     const ONBOARDING = sansCommentaires(
       lire('app', 'api', 'onboarding', 'route.ts'),
     )
-    expect(ONBOARDING).toContain('NEVER claim Deribfy cannot do mobile or native applications')
+    // N3 (2026-10-31, preuve 2) : le livrable vérifié ne contient AUCUN
+    // artefact natif. La règle a donc DEUX moitiés désormais : ne jamais
+    // nier l'application web (le mensonge d'omission d'origine), ne jamais
+    // affirmer la native (le mensonge d'invention, même classe que
+    // « réessayez » sur un solde mort, déplacée dans l'argumentaire).
+    expect(ONBOARDING).toContain('NEVER deny the web application, NEVER affirm a native one')
+    expect(ONBOARDING).toContain('does NOT offer a native App Store / Google Play build today')
     // Et il n interviewe pas pour une application : ce chemin n est pas le sien.
     expect(ONBOARDING).toContain('do NOT assign a mode')
   })
