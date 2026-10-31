@@ -901,6 +901,8 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
           (await lireReponseQuiBat<{
             ok?: boolean; html?: string; motif?: string; error?: string;
             tours?: unknown[]; dureeMs?: number;
+            jetons?: { fichier: string; reference: string }[];
+            execution?: { demarre: boolean; indisponible?: string; ecransVisites?: number; erreurs: { quoi: string; message: string }[] };
             vivacite?: { fichier: string; manque: string }[];
             couverture?: {
               exigences?: { exigence: string; statut: string }[];
@@ -945,6 +947,20 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
                 if (absentes.length > 0) {
                   lignes.push(
                     `⚠ Non couvert et non déclaré : ${absentes.map((x) => x.exigence).join(', ')} — à exiger ou à accepter en connaissance.`,
+                  );
+                }
+                const exec = d.execution;
+                if (exec !== undefined && exec.indisponible === undefined) {
+                  lignes.push(
+                    exec.demarre
+                      ? `Démarrage vérifié : l’application s’ouvre et ${String(exec.ecransVisites ?? 0)} écran(s) ont été parcourus.`
+                      : `⚠ L’application ne démarre pas : ${exec.erreurs[0]?.message ?? 'cause inconnue'}.`,
+                  );
+                }
+                const jetonsMorts = d.jetons ?? [];
+                if (jetonsMorts.length > 0) {
+                  lignes.push(
+                    `⚠ ${String(jetonsMorts.length)} référence(s) à des éléments inexistants (${[...new Set(jetonsMorts.map((x) => x.reference))].slice(0, 4).join(', ')}) — l’application peut s’arrêter au démarrage.`,
                   );
                 }
                 if (morts.length > 0) {

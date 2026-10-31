@@ -22,6 +22,8 @@
  * feuille, et un style inline ne peut pas pointer dans le vide.
  */
 
+import { vocabulaireDe } from './juge-jetons'
+
 /** Les jetons : la seule source des couleurs, espaces, rayons et niveaux. */
 const JETONS = `/** JETONS DE DESIGN — fournis par Deribfy, ne pas modifier. */
 
@@ -234,6 +236,22 @@ export function fichiersSysteme(deviseConfiguree: string | undefined): ReadonlyM
   ])
 }
 
+/**
+ * LES NOMS EXACTS, ÉNUMÉRÉS AU MODÈLE — dérivés des fichiers émis.
+ *
+ * Mesuré sur le tir 88c94164 : le modèle a inventé dans TOUS les espaces
+ * (TYPO.corps, GRIS.fond, SEMANTIQUE.attention, RAYON.moyen…) — onze
+ * références mortes. Il avait les fichiers et devinait quand même. On les
+ * lui DIT, et la liste se dérive de la source : la recopier ici la ferait
+ * diverger au premier jeton ajouté.
+ */
+function vocabulaireEnumere(): string {
+  const systeme = fichiersSysteme(undefined)
+  const { espaces, icones } = vocabulaireDe(systeme)
+  const lignes = [...espaces.entries()].map(([nom, membres]) => `     ${nom} : ${membres.join(', ')}`)
+  return lignes.join('\n') + `\n     Icone nom= : ${icones.join(', ')}`
+}
+
 /** Ce que la CONSIGNE raconte de la bibliothèque — tenu au même endroit
  *  qu'elle, pour que le texte et les fichiers ne divergent jamais. */
 export const CONSIGNE_BIBLIOTHEQUE = `L'INTERFACE VIENT DE LA BIBLIOTHÈQUE FOURNIE — tu ne la réécris jamais.
@@ -241,9 +259,10 @@ export const CONSIGNE_BIBLIOTHEQUE = `L'INTERFACE VIENT DE LA BIBLIOTHÈQUE FOUR
    sont fournis et seront écrasés si tu les écris) :
    · ./systeme/jetons : GRIS, SEMANTIQUE, ESPACE, RAYON, OMBRE, TYPO —
      toute couleur, espace ou taille vient de là, jamais en dur.
-     TYPO n'a que QUATRE niveaux : surtitre, libelle, valeur, legende.
-     En inventer un autre (corps, petit, h1…) lit undefined et PLANTE
-     l'application au démarrage — mesuré sur un tir réel.
+     LES SEULS NOMS QUI EXISTENT, et tu n'en inventes AUCUN autre —
+     en inventer un lit undefined et PLANTE l'application au démarrage
+     (mesuré sur un tir réel : onze références mortes) :
+${vocabulaireEnumere()}
    · ./systeme/argent : formaterMontant(montant) — TOUT montant affiché
      passe par lui ; tu n'écris JAMAIS un code ou symbole de monnaie.
    · ./systeme/ui : Icone (noms : accueil, recherche, calendrier, personne,

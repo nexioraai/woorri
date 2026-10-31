@@ -24,6 +24,8 @@ import { jugerVivacite, type DefautVivacite } from './juge-vivacite'
 import { FICHIER_PERIMETRE, jugerCouverture, type RapportCouverture } from './juge-couverture'
 import { jugerDevise, marqueRecommandee } from './juge-devise'
 import { CONSIGNE_BIBLIOTHEQUE, fichiersSysteme } from './bibliotheque-ui'
+import { jugerJetons, type DefautJeton } from './juge-jetons'
+import { jugerExecution, type VerdictExecution } from './juge-execution'
 
 /**
  * LA CONSIGNE — et chaque phrase y répond à un défaut mesuré.
@@ -117,6 +119,10 @@ export type Resultat =
       readonly fichiers: ReadonlyMap<string, string>
       readonly tours: readonly Tour[]
       /** Les contrôles encore morts à l'acceptation — JAMAIS tus (EP-297). */
+      /** Les jetons inventés encore présents à l'acceptation (EP-301). */
+      readonly jetons: readonly DefautJeton[]
+      /** Ce qu'a donné le montage réel — null si les jetons l'ont évité. */
+      readonly execution: VerdictExecution | null
       readonly vivacite: readonly DefautVivacite[]
       /** Le rapport chiffré qui accompagne toute génération (EP-297). */
       readonly couverture: RapportCouverture
@@ -258,9 +264,10 @@ export async function boucleEcriture(o: {
     // La bibliothèque fournie s'injecte ensuite. La devise du client est
     // CUITE dans systeme/argent.ts — une seule source, jamais un code
     // monnaie écrit par le modèle (lot UI du 2026-10-31).
-    for (const [chemin, contenu] of fichiersSysteme(
+    const systeme = fichiersSysteme(
       typeof o.configuration?.currency === 'string' ? o.configuration.currency : undefined,
-    )) {
+    )
+    for (const [chemin, contenu] of systeme) {
       carte.set(chemin, contenu)
     }
     if (motif === null) {
@@ -272,6 +279,11 @@ export async function boucleEcriture(o: {
         // un seul gestionnaire — la PHOTO de la fonction centrale — et une
         // couverture paiement 2/34, livrés sans un mot. Le compilateur juge
         // la syntaxe ; ces deux-là jugent la vie et la parole tenue.
+        // EP-301 : les jetons AVANT tout le reste — c'est le moins cher des
+        // juges (lecture pure) et il ferme la famille qui a tué le tir
+        // 88c94164 : onze références inventées (TYPO.corps, GRIS.fond,
+        // SEMANTIQUE.attention…) dans une œuvre pourtant livrée.
+        const jetons = jugerJetons(carte, systeme)
         const vivacite = jugerVivacite(carte)
         const couverture = jugerCouverture(o.demande, carte)
         // EP-298 : l'argent parle la devise configurée. EP-296 transmet,
@@ -280,7 +292,24 @@ export async function boucleEcriture(o: {
         const deviseConfiguree =
           typeof o.configuration?.currency === 'string' ? o.configuration.currency : undefined
         const devises = jugerDevise(carte, deviseConfiguree)
+        // EP-302 : ÇA DÉMARRE. Le quatrième critère, et le seul qui ait vu
+        // le défaut qui a frappé l'écran du propriétaire. N'est exercé que
+        // si les jetons sont sains : inutile de monter une œuvre dont on
+        // sait déjà qu'elle mourra, et un tour coûte de l'argent.
+        const execution: VerdictExecution | null =
+          jetons.length === 0 ? await jugerExecution(v.code) : null
         const reproches: string[] = []
+        if (jetons.length > 0) {
+          reproches.push(
+            'DES JETONS QUI N’EXISTENT PAS — l’application MOURRAIT au démarrage ' +
+              '(mesuré : undefined.fontSize sur un tir réel) :\n' +
+              jetons
+                .slice(0, 15)
+                .map((d) => `- ${d.fichier} : ${d.reference} — ce qui existe : ${d.connus.join(', ')}`)
+                .join('\n') +
+              '\nEmploie EXACTEMENT les noms fournis par la bibliothèque, aucun autre.',
+          )
+        }
         if (devises.length > 0 && deviseConfiguree !== undefined) {
           reproches.push(
             `LA DEVISE DU CLIENT EST ${deviseConfiguree} (affichée « ${marqueRecommandee(deviseConfiguree)} ») — le code montre d'autres monnaies :\n` +
@@ -300,6 +329,17 @@ export async function boucleEcriture(o: {
               '\nLie chacun à une action réelle (état qui change, calcul exécuté), ou marque-le data-demonstration ET dis « Démonstration » à l’écran.',
           )
         }
+        if (execution !== null && execution.indisponible === undefined && !execution.demarre) {
+          reproches.push(
+            "L'APPLICATION NE DÉMARRE PAS — montée dans un navigateur simulé, elle " +
+              'échoue avant de rendre quoi que ce soit :\n' +
+              execution.erreurs
+                .slice(0, 8)
+                .map((e) => `- ${e.quoi} : ${e.message}${e.indice === '' ? '' : ` (${e.indice})`}`)
+                .join('\n') +
+              '\nCorrige la cause : une application livrée doit s’ouvrir et afficher ses écrans.',
+          )
+        }
         if (couverture.absentes.length > 0) {
           reproches.push(
             'DES EXIGENCES DU CAHIER SONT MUETTES — ni dans l’application, ni déclarées :\n' +
@@ -316,7 +356,7 @@ export async function boucleEcriture(o: {
           // ils l'ACCOMPAGNENT, dits : refuser re-brûlerait l'argent du
           // propriétaire, taire referait le défaut fondateur.
           tours.push({ rang, fichiers: lus.length, ok: true, ms: Date.now() - debut })
-          return { ok: true, code: v.code, fichiers: carte, tours, vivacite, couverture }
+          return { ok: true, code: v.code, fichiers: carte, tours, jetons, execution, vivacite, couverture }
         }
       } else {
         motif = `La construction a échoué :\n${v.erreur}`
