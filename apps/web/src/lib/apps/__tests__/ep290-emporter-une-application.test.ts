@@ -41,6 +41,18 @@ describe('EP-290 · emporter une application', () => {
     // Chaque pièce manquante casse un usage précis : sans package.json, pas
     // de `npm install` ; sans dev.html, pas de serveur de développement ;
     // sans README, personne ne sait qu'il y a DEUX façons de s'en servir.
+    // PREUVE 1 DU 2026-10-31, exécutée dans un répertoire neuf : `npm start`
+    // — la première commande qu'un acheteur tape — répondait « Missing
+    // script: start », et le build ne produisait AUCUN site servable à la
+    // racine (dist/dev.html seulement). Les trois pins suivants tiennent la
+    // séquence install → build → start pour toujours.
+    const manifeste = String(zip.get('package.json'))
+    expect(manifeste, 'npm start a redisparu du projet livré').toContain('"start"')
+    expect(manifeste, 'npm run preview a redisparu').toContain('"preview"')
+    const vite = String(zip.get('vite.config.ts'))
+    expect(vite, 'le build ne remet plus la page autonome à la racine de dist').toContain(
+      "copyFileSync('index.html', 'dist/index.html')",
+    )
     for (const piece of ['index.html', 'README.md', 'package.json', 'vite.config.ts', 'tsconfig.json', 'dev.html']) {
       expect([...zip.keys()], `le projet livré n’a plus de ${piece}`).toContain(piece)
     }

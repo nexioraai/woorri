@@ -146,10 +146,16 @@ export function ChoixFermes({
  *
  * Deux largeurs auraient laissé un seuil sans témoin.
  */
+// D2 (2026-10-31) : la note annonçait « barre du bas » pendant qu'un tir
+// réel rendait un rail latéral à 390 px — la loi (dispositionDe, seuil 840)
+// vit dans le moteur de rendu, pas dans les œuvres du moteur direct. La
+// légende ne dit donc QUE ce qui est vrai pour TOUTE œuvre : la largeur.
+// La disposition redeviendra une promesse quand la coquille injectée la
+// garantira — pas avant.
 const APPAREILS = [
-  { cle: 'telephone', libelle: 'Téléphone', largeur: 390, note: 'barre du bas', Icone: Smartphone },
-  { cle: 'tablette', libelle: 'Tablette', largeur: 768, note: 'barre du bas', Icone: Tablet },
-  { cle: 'bureau', libelle: 'Bureau', largeur: 1280, note: 'rail latéral', Icone: Monitor },
+  { cle: 'telephone', libelle: 'Téléphone', largeur: 390, note: '390 px', Icone: Smartphone },
+  { cle: 'tablette', libelle: 'Tablette', largeur: 768, note: '768 px', Icone: Tablet },
+  { cle: 'bureau', libelle: 'Bureau', largeur: 1280, note: '1280 px', Icone: Monitor },
 ] as const;
 
 export function ApercuAppareil({

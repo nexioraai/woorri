@@ -22,6 +22,7 @@ import { assembler } from './bac-a-sable'
 import { importsInterdits, lireFichiers, PAQUETS_AUTORISES } from './ecriture-directe'
 import { jugerVivacite, type DefautVivacite } from './juge-vivacite'
 import { FICHIER_PERIMETRE, jugerCouverture, type RapportCouverture } from './juge-couverture'
+import { jugerDevise, marqueRecommandee } from './juge-devise'
 
 /**
  * LA CONSIGNE — et chaque phrase y répond à un défaut mesuré.
@@ -63,11 +64,12 @@ RÈGLES, et chacune vient d'un défaut réel :
 6. Tu écris des valeurs d'exemple PLAUSIBLES quand il en faut — des montants
    et des dates qu'une personne du métier reconnaîtrait.
 
-7. LA NAVIGATION PRINCIPALE EST UNE BARRE LATÉRALE GAUCHE, fixe, sur grand
-   écran — jamais une barre horizontale en haut. Sur mobile, elle se replie
-   en menu. Règle posée par le propriétaire du produit le 2026-10-30, après
-   la première application livrée : la navigation était en haut, il la veut
-   à gauche, pour toutes les applications générées.
+7. LA NAVIGATION SUIT LA LOI DU PRODUIT, la même que son moteur de rendu :
+   à partir de 840 px de largeur, une BARRE LATÉRALE GAUCHE fixe — jamais
+   une barre horizontale en haut ; EN DESSOUS de 840 px, une BARRE DU BAS
+   fixe, pas un menu replié. Règles posées par le propriétaire (2026-10-30 :
+   latérale à gauche ; 2026-10-31 : barre du bas sur petit écran, mesurée
+   absente sur un tir réel pendant que la légende de l'aperçu l'annonçait).
 
 8. AUCUN CONTRÔLE MORT. Chaque bouton, champ ou formulaire est relié à une
    action réelle : un état qui change, un calcul exécuté, une liste qui
@@ -76,7 +78,13 @@ RÈGLES, et chacune vient d'un défaut réel :
    Un écran qui a l'air de fonctionner et ne fait rien est le pire défaut
    de ce produit : il se découvre après l'achat.
 
-9. TU DÉCLARES CE QUE TU NE LIVRES PAS. Un fichier \`PERIMETRE.md\` liste ce
+9. LES FORMULAIRES ONT UNE GÉOMÉTRIE : le CHAMP grandit avec la place, le
+   BOUTON prend la largeur de son contenu — jamais l'inverse (mesuré : un
+   « Envoyer » large de cinq champs). Et TOUT texte rendu appartient à un
+   composant et à un niveau de l'échelle typographique — jamais une phrase
+   qui flotte hors de toute carte.
+
+10. TU DÉCLARES CE QUE TU NE LIVRES PAS. Un fichier \`PERIMETRE.md\` liste ce
    que le cahier demande et que cette version ne couvre pas, un motif d'une
    ligne par entrée. Le silence est interdit : une exigence absente de
    l'application ET de ce fichier te sera renvoyée.`
@@ -247,7 +255,22 @@ export async function boucleEcriture(o: {
         // la syntaxe ; ces deux-là jugent la vie et la parole tenue.
         const vivacite = jugerVivacite(carte)
         const couverture = jugerCouverture(o.demande, carte)
+        // EP-298 : l'argent parle la devise configurée. EP-296 transmet,
+        // celui-ci VÉRIFIE — une instruction sans contrôle est un vœu
+        // (mesuré : 10× EUR sur une base tchadienne, devise validée).
+        const deviseConfiguree =
+          typeof o.configuration?.currency === 'string' ? o.configuration.currency : undefined
+        const devises = jugerDevise(carte, deviseConfiguree)
         const reproches: string[] = []
+        if (devises.length > 0 && deviseConfiguree !== undefined) {
+          reproches.push(
+            `LA DEVISE DU CLIENT EST ${deviseConfiguree} (affichée « ${marqueRecommandee(deviseConfiguree)} ») — le code montre d'autres monnaies :\n` +
+              devises
+                .map((d) => `- ${d.fichier} : « ${d.marque} » ×${String(d.occurrences)}`)
+                .join('\n') +
+              '\nRemplace chacune : tous les montants visibles emploient la devise du client, aucune autre.',
+          )
+        }
         if (vivacite.length > 0) {
           reproches.push(
             'DES CONTRÔLES MORTS — un écran qui a l’air de fonctionner et ne fait rien :\n' +

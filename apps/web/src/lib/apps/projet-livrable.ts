@@ -43,7 +43,9 @@ const PACKAGE_JSON = `{
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build"
+    "build": "vite build",
+    "start": "vite preview --open",
+    "preview": "vite preview --open"
   },
   "dependencies": {
     "react": "${VERSIONS.react}",
@@ -57,13 +59,28 @@ const PACKAGE_JSON = `{
 }
 `
 
-const VITE_CONFIG = `import { defineConfig } from 'vite'
+const VITE_CONFIG = `import { copyFileSync } from 'node:fs'
+import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
 // L'entrée de développement est dev.html : index.html est la page COMPILÉE,
 // autonome, qu'on ouvre en double-clic — elle n'a pas besoin de Vite.
+//
+// MAIS LE BUILD DOIT PRODUIRE UN SITE SERVABLE À LA RACINE : mesuré le
+// 2026-10-31, \`npm run build\` ne sortait que dist/dev.html, et
+// \`npm start\` n'existait pas — les premières commandes qu'un acheteur
+// tape. La page autonome est COPIÉE telle quelle en dist/index.html : déjà
+// compilée, elle n'a rien à gagner à repasser par un bundler.
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    {
+      name: 'emporter-la-page-autonome',
+      closeBundle() {
+        copyFileSync('index.html', 'dist/index.html')
+      },
+    },
+  ],
   server: { open: '/dev.html' },
   build: { rollupOptions: { input: 'dev.html' } },
 })
@@ -119,7 +136,18 @@ Le navigateur s'ouvre sur l'application en mode développement : chaque
 modification d'un fichier de \`src/\` s'affiche immédiatement.
 
 - \`src/\` contient tout le code de l'application.
-- \`npm run build\` produit une version optimisée dans \`dist/\`.
+
+## 3. La construire et la servir (pour la mettre en ligne)
+
+\`\`\`
+npm run build
+npm start
+\`\`\`
+
+\`npm run build\` produit le site complet dans \`dist/\` — page d'accueil
+comprise — et \`npm start\` le sert en local, tel qu'un hébergeur le
+servirait. Déployer = envoyer \`dist/\` chez n'importe quel hébergeur
+statique.
 `
 
 /**
