@@ -124,6 +124,15 @@ const cheminDeRoute = (fichier: string): string =>
 describe('EP-278 · toute route qui assemble emmène son assembleur', () => {
   const traces = (nextConfig.outputFileTracingIncludes ?? {}) as Record<string, string[]>
 
+  // Une clé LITTÉRALE s'applique aussi à ses routes descendantes (mesuré au
+  // nft le 2026-10-31 : '/p' a porté ses fichiers jusqu'à /p/[jeton]). Une
+  // clé à CROCHETS, elle, ne matche jamais rien — EP-295 les interdit. La
+  // couverture d'une route se lit donc : sa clé exacte + ses clés ancêtres.
+  const entreesPour = (route: string): string[] =>
+    Object.entries(traces)
+      .filter(([cle]) => cle === route || route.startsWith(cle + '/'))
+      .flatMap(([, entrees]) => entrees)
+
   const concernees = routes(APP)
     .filter((f) => atteintLePaquet(f))
     .map(cheminDeRoute)
@@ -146,7 +155,7 @@ describe('EP-278 · toute route qui assemble emmène son assembleur', () => {
     // DÉPENSE — puis meurt à l'assemblage sur « Cannot find native binding ».
     // L'échec arrive APRÈS la dépense, et il ne dit rien du modèle.
     const manques = concernees.filter(
-      (r) => !(traces[r] ?? []).some((c) => c.includes(LIAISON)),
+      (r) => !entreesPour(r).some((c) => c.includes(LIAISON)),
     )
     expect(
       manques,
@@ -155,24 +164,35 @@ describe('EP-278 · toute route qui assemble emmène son assembleur', () => {
     ).toEqual([])
   })
 
-  it('④ CHAQUE ROUTE QUI ASSEMBLE EMBARQUE AUSSI LES SOURCES DE REACT', () => {
-    // ── LE BINAIRE NE SUFFIT PAS — MESURE EN PRODUCTION LE 2026-10-30.
+  it('④ CHAQUE ROUTE QUI ASSEMBLE PORTE LE CANARI — et plus jamais react', () => {
+    // ── L'HISTOIRE A DEUX TEMPS, ET LE CONTRÔLE LES RACONTE.
     //
-    // Next emploie SA copie vendue de React (next/dist/compiled) : le
-    // traceur n'embarque donc jamais node_modules/react-dom dans une
-    // fonction. Rolldown, ne pouvant resoudre `react-dom/client`, le
-    // laissait en import EXTERNE — sans erreur — et le navigateur mourait
-    // sur « does not resolve to a valid URL ». L'oeuvre etait livree verte
-    // et cassee. Le defaut existait depuis le premier jour, masque par
-    // d'autres couches ; le filet d'EP-280 l'a enfin montre a l'ecran.
-    for (const paquet of ['react/', 'react-dom/', 'scheduler/']) {
-      const manques = concernees.filter(
-        (r) => !(traces[r] ?? []).some((c) => c.includes(`node_modules/${paquet}`)),
-      )
+    // 2026-10-30 : Next emploie SA copie vendue de React, le traceur
+    // n'embarque donc jamais node_modules/react-dom — rolldown laissait
+    // `react-dom/client` en import externe et le navigateur mourait. On a
+    // alors TRACÉ react, route par route. 2026-10-31 : deux tirs payés
+    // meurent quand même — clé morte, cache — et EP-294 ferme la classe en
+    // EMBARQUANT les sources dans le bundle du serveur.
+    //
+    // Donc désormais : le CANARI (scheduler, visible sur toute plateforme,
+    // vérifié aussi au build par scripts/verifier-tracage.mjs) prouve que la
+    // clé de la route est VIVANTE ; et le traçage react/react-dom est
+    // INTERDIT — un retour signalerait un contournement d'EP-294, du poids
+    // mort qui remettrait l'assemblage sous la loi du disque.
+    const sansCanari = concernees.filter(
+      (r) => !entreesPour(r).some((c) => c.includes('node_modules/scheduler/')),
+    )
+    expect(
+      sansCanari,
+      'ces routes assemblent sans canari : leur clé de traçage est morte ou absente',
+    ).toEqual([])
+    for (const interdit of ['node_modules/react/', 'node_modules/react-dom/']) {
+      const revenus = Object.entries(traces)
+        .filter(([, entrees]) => entrees.some((c) => c.includes(interdit)))
+        .map(([cle]) => cle)
       expect(
-        manques,
-        `ces routes assemblent sans embarquer ${paquet} : rolldown laissera ` +
-          'l import externe et l application mourra au chargement',
+        revenus,
+        `${interdit} est revenu dans le traçage : EP-294 l'embarque déjà dans le bundle — poids mort, et retour sous la loi du disque`,
       ).toEqual([])
     }
   })

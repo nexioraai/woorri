@@ -95,6 +95,32 @@ const MOTEUR_EMISSION = [
   '../../node_modules/acorn/**',
 ]
 
+// ── CE QU'UNE ROUTE QUI ASSEMBLE EMPORTE ENCORE, DEPUIS EP-294.
+//
+// La famille react est EMBARQUÉE dans le bundle du serveur (EP-294, mesuré
+// en production : la sonde de /api/generateur/direct assemble 485 Ko depuis
+// la mémoire) : le disque n'en a plus besoin. Restent DEUX choses :
+//   · le binaire natif de rolldown — chargement dynamique d'un `.node`, que
+//     le traceur ne suit pas ; liaison LINUX seule, celle que Vercel exécute
+//     (les huit plateformes feraient des centaines de méga-octets, pour un
+//     plafond de fonction à 250) ;
+//   · `scheduler/**`, le CANARI : ~30 petits fichiers visibles sur TOUTE
+//     plateforme. Le binding n'existe qu'au build Linux — sans canari, une
+//     clé morte serait INVISIBLE en local. `scripts/verifier-tracage.mjs`
+//     exige le canari partout, le binding sur Linux seulement.
+//
+// LES CLÉS À CROCHETS SONT MORTES — mesuré sur build propre le 2026-10-31 :
+// les crochets sont de la syntaxe glob, '/p/[jeton]' matche UN caractère
+// parmi j-e-t-o-n, jamais sa propre route (react-dom : 0 dans son nft,
+// pendant que /p répondait 200 par accident de groupement de lambdas). Une
+// clé ANCÊTRE LITTÉRALE s'applique à ses descendants (mesuré : scheduler 30
+// fichiers via '/p') — d'où '/p' et '/a', et AUCUNE clé à crochets nulle
+// part : le cliquet EP-295 les refuse.
+const BAC_A_SABLE = [
+  '../../node_modules/@rolldown/binding-linux-x64-gnu/**',
+  '../../node_modules/scheduler/**',
+]
+
 const nextConfig: NextConfig = {
   // ── LE MOTEUR ENTRE DANS LE SITE.
   //
@@ -190,47 +216,13 @@ const nextConfig: NextConfig = {
     // Quatre copies divergeraient à la cinquième route.
     // apercu-live (etage 4) : MEMES besoins que l'apercu synchrone — le
     // meme assembleur compile l'acquis d'une generation en cours.
-    // ── CE QU'UN ASSEMBLAGE EXIGE, ET C'EST MESURE DU 2026-10-30.
-    //
-    // Le binaire natif de rolldown NE SUFFIT PAS. L'assembleur doit aussi
-    // LIRE les sources de react, react-dom et scheduler pour les embarquer
-    // dans le bundle — or Next emploie SA copie vendue de React
-    // (next/dist/compiled) : le traceur n'embarque donc jamais
-    // node_modules/react-dom dans une fonction.
-    //
-    // Consequence, vue a l'ecran du proprietaire : rolldown ne resout pas
-    // `react-dom/client`, le laisse en import EXTERNE sans erreur, et le
-    // navigateur meurt sur « does not resolve to a valid URL ». Local :
-    // bundle de 955 839 caracteres, zero import restant — node_modules
-    // existe ici. Production : la meme oeuvre, cassee. Le defaut existait
-    // depuis le premier jour, masque par le binaire manquant puis par
-    // localStorage ; le filet d'erreur d'EP-280 l'a enfin montre.
-    //
-    // (La parade cote code existe aussi : l'assembleur refuse desormais tout
-    // bundle portant un import nu — fail-closed, quel que soit le milieu.)
-    '/api/generateur/apercu-live': [
-      ...MOTEUR_EMISSION,
-      '../../node_modules/@rolldown/binding-linux-x64-gnu/**',
-      '../../node_modules/react/**',
-      '../../node_modules/react-dom/**',
-      '../../node_modules/scheduler/**',
-    ],
-    '/api/generateur/apercu': [
-      ...MOTEUR_EMISSION,
-      // ── L'APERÇU A BESOIN, EN PLUS, DU BINAIRE NATIF DE `rolldown`.
-      //
-      // Le traceur ne suit pas le chargement dynamique d'un `.node`. On
-      // déclare donc la liaison LINUX — celle que Vercel exécute — et elle
-      // seule : les huit plateformes feraient plusieurs centaines de
-      // méga-octets, pour un plafond de fonction à 250.
-      //
-      // Le glob est résolu AU BUILD, sur Linux, où cette liaison existe. En
-      // local elle n'est pas installée, et c'est normal.
-      '../../node_modules/@rolldown/binding-linux-x64-gnu/**',
-      '../../node_modules/react/**',
-      '../../node_modules/react-dom/**',
-      '../../node_modules/scheduler/**',
-    ],
+    // (Du 2026-10-30 au 31, ces routes traçaient AUSSI react/react-dom :
+    // l'assembleur lisait leurs sources sur le disque de la fonction, et deux
+    // tirs payés sont morts quand ce disque ne les portait pas. EP-294 a
+    // embarqué ces sources dans le bundle du serveur — le traçage react est
+    // devenu du poids mort, retiré ici ; voir BAC_A_SABLE au-dessus.)
+    '/api/generateur/apercu-live': [...MOTEUR_EMISSION, ...BAC_A_SABLE],
+    '/api/generateur/apercu': [...MOTEUR_EMISSION, ...BAC_A_SABLE],
     // ── LA ROUTE DE L'ÉCRITURE DIRECTE, ET C'EST LA QUATRIÈME FOIS.
     //
     // MESURÉ EN PRODUCTION, 2026-10-19, sur le tir du propriétaire :
@@ -247,10 +239,7 @@ const nextConfig: NextConfig = {
     //
     // Cette route n'a PAS besoin de `MOTEUR_EMISSION` : elle ne touche pas
     // la chaîne AIR. Elle n'a besoin que de l'assembleur.
-    '/api/generateur/direct': ['../../node_modules/@rolldown/binding-linux-x64-gnu/**',
-      '../../node_modules/react/**',
-      '../../node_modules/react-dom/**',
-      '../../node_modules/scheduler/**'],
+    '/api/generateur/direct': BAC_A_SABLE,
     // ── LA ROUTE QUI REVOIT UNE APPLICATION ASSEMBLE, ELLE AUSSI.
     //
     // Elle recompile les fichiers stockes pour les rendre a l'ecran. Sans
@@ -258,10 +247,9 @@ const nextConfig: NextConfig = {
     // binding » — le defaut exact du 2026-10-19, qui a coute 0,11 $ et trois
     // tours avant que le compilateur ne lise une seule ligne. Le cliquet
     // EP-278 l'exige maintenant ; cette entree est la pour qu'il soit vert.
-    '/api/generateur/direct/[id]': ['../../node_modules/@rolldown/binding-linux-x64-gnu/**',
-      '../../node_modules/react/**',
-      '../../node_modules/react-dom/**',
-      '../../node_modules/scheduler/**'],
+    // (« /api/generateur/direct/[id] » n'a PAS sa propre clé : les crochets
+    // en feraient une clé morte — la clé ancêtre '/api/generateur/direct' la
+    // couvre, descendance mesurée au nft le 2026-10-31.)
     '/api/generateur/comprendre': MOTEUR_EMISSION,
     // LIRE AVANT DE DEMANDER : cette route importe `elicitation.mjs`
     // pour FILTRER sa sortie contre la table. Sans le tracage, le
@@ -291,21 +279,10 @@ const nextConfig: NextConfig = {
     // d'une oeuvre directe pour joindre un index.html autonome au zip. Le
     // cliquet EP-278 l'a attrapee UNE MINUTE apres la modification — c'est
     // sa raison d'etre : personne n'a eu a y penser.
-    '/api/generateur/livraison': [
-      '../../node_modules/@rolldown/binding-linux-x64-gnu/**',
-      '../../node_modules/react/**',
-      '../../node_modules/react-dom/**',
-      '../../node_modules/scheduler/**'
-    ],
+    '/api/generateur/livraison': BAC_A_SABLE,
     '/api/generateur/deposer': MOTEUR_EMISSION,
     '/api/generateur/produire': MOTEUR_EMISSION,
-    '/api/generateur/sonde': [
-      ...MOTEUR_EMISSION,
-      '../../node_modules/@rolldown/binding-linux-x64-gnu/**',
-      '../../node_modules/react/**',
-      '../../node_modules/react-dom/**',
-      '../../node_modules/scheduler/**',
-    ],
+    '/api/generateur/sonde': [...MOTEUR_EMISSION, ...BAC_A_SABLE],
     // ── LA ROUTE QUI FAIT TOUT LE TRAVAIL MANQUAIT A CETTE LISTE.
     //
     // MESURE EN PRODUCTION, 2026-10-14, sur la generation du proprietaire :
@@ -346,16 +323,8 @@ const nextConfig: NextConfig = {
     // mécanisme de complétude fiable.
     // ── L'ADRESSE NOMMEE ASSEMBLE, comme /p : tracee A LA CREATION de la
     // route, pour une fois AVANT que le cliquet EP-278 ne me rattrape.
-    '/a/[sous]': [
-      '../../node_modules/@rolldown/binding-linux-x64-gnu/**',
-      '../../node_modules/react/**',
-      '../../node_modules/react-dom/**',
-      '../../node_modules/scheduler/**'
-    ],
-    '/p/[jeton]': ['../../node_modules/@rolldown/binding-linux-x64-gnu/**',
-      '../../node_modules/react/**',
-      '../../node_modules/react-dom/**',
-      '../../node_modules/scheduler/**'],
+    '/a': BAC_A_SABLE,
+    '/p': BAC_A_SABLE,
     '/api/cron/photos-pro': [
       './public/modeles/u2netp.onnx',
       '../../node_modules/onnxruntime-web/dist/*.wasm',
