@@ -17,6 +17,29 @@ EXÉCUTÉES, jamais déclarées d'avance.
 | 2026-10-31 08:18 | `96768b7f` | direct/deepseek | [`9ee1ca86`](registre-tirs/9ee1ca86.demande.txt) — MÊME demande que 11:08 (SHA identique) | 3 | 631 s | 0,2511 $ | 116 169→88 084 | 30/15/15 (non stockés) | 🔴 refusée — « react non embarqué » ×3, disque de fonction amputé (fermé par EP-294/295) | — |
 | 2026-10-31 01:02 | `7d17287f` | direct/deepseek | [`03b9b664`](registre-tirs/03b9b664.demande.txt) | 3 | 363 s | 0,195 $ | — | 17/17/17 (non stockés) | 🔴 refusée — tour 1 : react-native/expo refusés (web), tours 2-3 : react non embarqué (même défaut de disque) | — |
 
+## Tir de validation — CRITÈRES FIXÉS AVANT LE DÉPART (2026-10-31, après-midi)
+
+Ordre du propriétaire : « fixe les critères avant, sinon on lira le résultat
+avec l'envie d'y voir une réussite. » Même cahier (`9ee1ca86`), même entrée à
+l'octet ; devise répondue : XAF. Les six points, dans l'ordre :
+
+1. ① Le rapport de couverture ACCOMPAGNE la génération (première fois).
+   Absent = l'étape ③ (juges) a échoué, quoi que dise le reste.
+2. ② Le NATIF est déclaré hors périmètre — le cahier dit « Application
+   mobile Android et iPhone » ; la génération doit le DIRE (web installable).
+   Un web silencieux = N3 n'a pas pris.
+3. ③ PAIEMENT (34 occurrences au cahier) : couvert, ou déclaré avec motif.
+   Le silence est l'échec.
+4. ④ FCFA partout, zéro EUR — la chaîne XAF de bout en bout.
+5. ⑤ L'AGENT IA : câblé, OU marqué démonstration visible, OU déclaré hors
+   périmètre. Une quatrième photo muette = le juge de vivacité ne tient pas.
+6. ⑥ LE COÛT, noté tel quel. Plus cher que 0,0355 $ attendu — couvrir coûte
+   plus cher que s'assembler. Ce chiffre est le premier vrai prix citable.
+
+Après la course : preuve zip (install/build/start, répertoire neuf) et
+vérification mécanique d'installabilité de la page publiée (manifeste,
+icônes, CSP) — le geste du téléphone appartient au propriétaire.
+
 ## Ce que le registre a déjà appris (2026-10-31)
 
 - **Même demande, trois issues** : `9ee1ca86` a coûté 0,2511 $ (refus
