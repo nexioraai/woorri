@@ -21,6 +21,8 @@
  * contraire livrerait une application qui se construit et plante à l'ouverture.
  */
 
+import { MODULES_EMBARQUES, PREFIXE_EMBARQUE } from './react-embarque'
+
 export type Verdict =
   | { readonly ok: true; readonly code: string; readonly ms: number }
   | { readonly ok: false; readonly erreur: string; readonly ms: number }
@@ -35,7 +37,7 @@ function resoudre(
   source: string,
   importateur: string | undefined,
   fichiers: ReadonlyMap<string, string>,
-): string | null {
+): string | false | null {
   if (source.startsWith('.')) {
     const pile = (importateur ?? '').split('/').slice(0, -1)
     for (const p of source.split('/')) {
@@ -55,7 +57,23 @@ function resoudre(
     // vert aveugle que ce chantier passe son temps à fermer.
     return null
   }
-  return fichiers.has(source) ? source : null
+  if (fichiers.has(source)) return source
+  // ── LA FAMILLE REACT VIENT DE LA MÉMOIRE, JAMAIS DU DISQUE.
+  //
+  // MESURÉ LE 2026-10-31 : deux tirs payés (0,45 $) morts sur « react non
+  // embarqué » parce que le disque de LA fonction n'avait pas
+  // node_modules/react — pendant que /p/[jeton] assemblait la même œuvre sur
+  // le sien. Les sources viennent désormais du module généré, embarqué par
+  // l'empaqueteur du serveur : l'assemblage est identique dans TOUTE
+  // fonction, tout environnement — le traçage ne décide plus de rien ici.
+  if (MODULES_EMBARQUES.has(source)) return PREFIXE_EMBARQUE + source
+  // ── TOUT AUTRE PAQUET EST REFUSÉ ICI MÊME, PAS LAISSÉ AU DISQUE.
+  //
+  // `false` dit « externe » à rolldown : l'import reste nu dans le bundle et
+  // le contrôle fail-closed le NOMME au modèle, qui se corrige au tour
+  // suivant. Avant, un paquet présent sur le disque LOCAL s'assemblait ici et
+  // mourait EN LIGNE — le même code doit échouer aux deux endroits.
+  return false
 }
 
 /**
@@ -82,7 +100,10 @@ export async function assembler(
           name: 'memoire',
           resolveId: (source: string, importateur: string | undefined) =>
             resoudre(source, importateur, fichiers),
-          load: (id: string) => fichiers.get(id) ?? null,
+          load: (id: string) =>
+            id.startsWith(PREFIXE_EMBARQUE)
+              ? (MODULES_EMBARQUES.get(id.slice(PREFIXE_EMBARQUE.length)) ?? null)
+              : (fichiers.get(id) ?? null),
         },
       ],
     })

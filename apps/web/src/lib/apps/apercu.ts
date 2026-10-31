@@ -26,6 +26,7 @@
  */
 import type { ProjectAir } from '@deribfy/air-schema'
 import { compileWeb } from '@deribfy/compiler'
+import { MODULES_EMBARQUES, PREFIXE_EMBARQUE } from './react-embarque'
 
 /** Résout un chemin relatif entre deux modules de la carte. */
 function resoudre(source: string, importateur: string | undefined, fichiers: ReadonlyMap<string, string>): string | null {
@@ -44,7 +45,16 @@ function resoudre(source: string, importateur: string | undefined, fichiers: Rea
       if (fichiers.has(chemin + suffixe)) return chemin + suffixe
     }
   }
-  return fichiers.has(source) ? source : null
+  if (fichiers.has(source)) return source
+  // ── LA FAMILLE REACT VIENT DE LA MÉMOIRE, comme dans le bac à sable.
+  //
+  // Même défaut, même fermeture que les tirs du 2026-10-31 : ce résolveur
+  // retombait sur le disque de la fonction pour react — l'aperçu d'une œuvre
+  // mourait donc selon la lambda qui le servait. Le reste du repli disque est
+  // conservé tel quel : l'option 2 est hors chantier, on ne change que ce
+  // que le défaut mesuré exige.
+  if (MODULES_EMBARQUES.has(source)) return PREFIXE_EMBARQUE + source
+  return null
 }
 
 export type Apercu = { html: string; octets: number; ms: number }
@@ -69,7 +79,10 @@ export async function construireApercu(air: ProjectAir): Promise<Apercu> {
         name: 'memoire',
         resolveId: (source: string, importateur: string | undefined) =>
           resoudre(source, importateur, fichiers),
-        load: (id: string) => fichiers.get(id) ?? null,
+        load: (id: string) =>
+          id.startsWith(PREFIXE_EMBARQUE)
+            ? (MODULES_EMBARQUES.get(id.slice(PREFIXE_EMBARQUE.length)) ?? null)
+            : (fichiers.get(id) ?? null),
       },
     ],
   })
