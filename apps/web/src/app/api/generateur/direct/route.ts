@@ -140,6 +140,9 @@ export async function GET(req: Request) {
     utilisable: boolean
     demarre: boolean
     ms: number
+    visites: number
+    decouverts: number
+    ecrans: number
   }[] = []
   for (const o of oeuvres.slice(1)) {
     const a = await assembler(o.fichiers)
@@ -151,6 +154,13 @@ export async function GET(req: Request) {
       utilisable: j.indisponible === undefined,
       demarre: j.demarre,
       ms: j.ms,
+      // LE DENOMINATEUR SE DIT TOUJOURS, ici aussi : la sonde rapportait
+      // « visites undefined » alors que le juge, lui, comptait — ma propre
+      // regle enfreinte a l'endroit ou elle compte le plus (mesure en
+      // production le 2026-10-31).
+      visites: j.ecransVisites ?? 0,
+      decouverts: j.ecransDecouverts ?? 0,
+      ecrans: j.ecransDistincts ?? 0,
     })
   }
 
@@ -190,6 +200,9 @@ export async function GET(req: Request) {
       execution: {
         surQuoi: surQuoi.nom,
         octets: v.ok ? v.code.length : 0,
+        visites: execution.ecransVisites ?? 0,
+        decouverts: execution.ecransDecouverts ?? 0,
+        ecrans: execution.ecransDistincts ?? 0,
         utilisable: execution.indisponible === undefined,
         demarre: execution.demarre,
         ms: execution.ms,
