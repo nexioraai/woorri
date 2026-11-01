@@ -85,6 +85,18 @@ describe('EP-301 · les jetons inventés sont refusés sans rien exécuter', () 
     }
   })
 
+  it('①quater LA RÈGLE className PORTE SA CONDITION DE RÉOUVERTURE', () => {
+    // Ce depot date ses dettes partout ailleurs ; celle-ci n'y echappe pas.
+    // Interdire TOUT className est plus large que la mesure ne l'exige —
+    // c'est juste tant qu'aucune feuille de style n'existe, et faux le jour
+    // ou l'une entrera. La condition doit etre LUE dans le juge, pas dans
+    // la memoire de celui qui l'a ecrite.
+    const source = readFileSync(join(__dirname, '..', 'juge-jetons.ts'), 'utf8')
+    expect(source, 'la condition de réouverture a disparu').toMatch(
+      /CETTE RÈGLE TOMBE LE JOUR OÙ UNE FEUILLE DE STYLE ENTRE DANS LA[\s\S]{0,40}CHAÎNE/u,
+    )
+  })
+
   it('② LES VRAIS JETONS PASSENT — contrôle négatif', () => {
     const bonne = new Map([
       [

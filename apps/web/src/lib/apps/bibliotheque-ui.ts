@@ -63,6 +63,9 @@ export const VARIABLES_CSS = `:root{
 --border:#e3e7ef;--input:#e3e7ef;--ring:#2a5bd7;
 --sidebar:#f7f8fb;--sidebar-foreground:#171c26;
 --sidebar-primary:#2a5bd7;--sidebar-primary-foreground:#ffffff;
+--sidebar-accent:#e7f0ff;--sidebar-accent-foreground:#1d3f96;
+--sidebar-border:#e3e7ef;--sidebar-ring:#2a5bd7;
+--chart-1:#2a5bd7;--chart-2:#1a7f4e;--chart-3:#9a6b00;--chart-4:#b3261e;--chart-5:#67718a;
 --radius:0.625rem;
 --radius-sm:calc(var(--radius) * 0.6);--radius-md:calc(var(--radius) * 0.8);
 --radius-lg:var(--radius);--radius-xl:calc(var(--radius) * 1.4);

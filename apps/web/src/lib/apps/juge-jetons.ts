@@ -161,6 +161,15 @@ export function jugerJetons(
 
     // ── ④ AUCUN className : il n'existe AUCUNE feuille de style.
     //
+    // CONDITION DE RÉOUVERTURE, datée comme toute dette de ce dépôt :
+    // CETTE RÈGLE TOMBE LE JOUR OÙ UNE FEUILLE DE STYLE ENTRE DANS LA
+    // CHAÎNE — qu'elle vienne d'un lot Tailwind, d'un fichier .css émis
+    // par le modèle, ou d'une feuille injectée par la bibliothèque. Elle
+    // interdit un DÉFAUT SILENCIEUX (une classe qui ne rend rien), pas le
+    // CSS. Le jour où `assembler` traitera une feuille, ce contrôle doit
+    // être rouvert et remplacé par « toute classe employée existe dans la
+    // feuille », et non supprimé.
+    //
     // MESURÉ sur l'œuvre eb7b62b5 : 55 attributs className dans un projet
     // sans le moindre fichier CSS — ils ne rendaient RIEN, sans la moindre
     // erreur. Et le risque s'aggrave avec le vocabulaire emprunté : un
