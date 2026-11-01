@@ -85,6 +85,43 @@ export type FichierEcrit = { readonly chemin: string; readonly contenu: string }
  */
 const SEPARATEUR = /^=== (.+?) ===$/gmu
 
+/**
+ * RETIRE LA CLÔTURE MARKDOWN QUI ENVELOPPE PARFOIS UN FICHIER.
+ *
+ * ── LE DÉFAUT, MESURÉ LE 2026-11-01, ET IL A COÛTÉ 0,147 $.
+ *
+ * Le tir b21cf508 a échoué en trois tours sur « react non embarqué », alors
+ * que le moteur assemblait parfaitement — local 485 Ko, production 521 Ko,
+ * toutes les formes d'import éprouvées. La cause n'était pas le moteur :
+ * le modèle avait enveloppé CHACUN de ses fichiers dans une clôture
+ * markdown, et notre lecteur la gardait dans le contenu :
+ *
+ *     === index.tsx ===
+ *     ```tsx
+ *     import React from 'react';
+ *     …
+ *     ```
+ *
+ * Le code ne commençait donc pas par un import mais par trois accents
+ * graves. DIX-HUIT fichiers sur dix-huit étaient concernés ; le tour 1
+ * rejoué sans les clôtures assemble en 543 968 octets.
+ *
+ * LE DÉFAUT EST DANS LE LECTEUR, PAS DANS LE MODÈLE : notre format dit
+ * « rends des fichiers », il ne dit pas « sans mise en forme ». Un modèle
+ * qui décore sa sortie est un modèle normal.
+ *
+ * Et il n'était trouvable QUE parce que les sources des tours refusés sont
+ * journalisées depuis EP-297 — sans elles, on aurait relancé en aveugle.
+ */
+export function sansClotureMarkdown(contenu: string): string {
+  const ouvrante = /^\s*```[a-zA-Z0-9]*[^\S\n]*\n/u
+  if (!ouvrante.test(contenu)) return contenu
+  const sansOuvrante = contenu.replace(ouvrante, '')
+  // La fermante n'est retirée que si elle clôt VRAIMENT le fichier : un
+  // bloc de code dans un commentaire ne doit pas faire perdre la fin.
+  return sansOuvrante.replace(/\n[^\S\n]*```[^\S\n]*$/u, '').trimEnd()
+}
+
 export function lireFichiers(texte: string): readonly FichierEcrit[] {
   const out: FichierEcrit[] = []
   const bornes: { chemin: string; debut: number }[] = []
@@ -101,7 +138,9 @@ export function lireFichiers(texte: string): readonly FichierEcrit[] {
     // La fin d'un fichier est le début du séparateur suivant. On recule
     // jusqu'au dernier saut de ligne pour ne pas emporter la ligne « === ».
     const fin = suivant === undefined ? texte.length : texte.lastIndexOf('\n', suivant.debut - 1)
-    const contenu = texte.slice(b.debut, fin < b.debut ? texte.length : fin).trim()
+    const contenu = sansClotureMarkdown(
+      texte.slice(b.debut, fin < b.debut ? texte.length : fin).trim(),
+    )
     if (contenu !== '') out.push({ chemin: b.chemin, contenu })
   }
   return out

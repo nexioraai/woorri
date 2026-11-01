@@ -23,6 +23,7 @@
  *    qu'elle borne, qu'elle refuse, qu'elle renvoie l'erreur utile.
  */
 import { describe, expect, it } from 'vitest'
+import { lireFichiers, sansClotureMarkdown } from '../ecriture-directe'
 import { boucleEcriture, CONSIGNE, pageAutonome, TOURS_MAX } from '../boucle-directe'
 import { PAQUETS_AUTORISES } from '../ecriture-directe'
 
@@ -53,6 +54,36 @@ const BON = [
   'export const facture = (kwh: number) =>',
   '  Math.min(kwh, 150) * 85 + Math.max(0, kwh - 150) * 125 + 402',
 ].join('\n')
+
+describe('EP-276 · le lecteur retire la clôture markdown', () => {
+  it('⑩ UN FICHIER ENVELOPPÉ DANS ```tsx EST LU QUAND MÊME', () => {
+    // MESURE DU 2026-11-01, tir b21cf508, 0,147 $ perdus : le modèle a
+    // enveloppé CHACUN de ses dix-huit fichiers dans une clôture markdown.
+    // Le code ne commençait plus par un import mais par trois accents
+    // graves, et l'assembleur laissait react dehors — trois tours, trois
+    // refus, sur un moteur qui assemblait parfaitement par ailleurs.
+    const texte =
+      '=== index.tsx ===\n```tsx\n' +
+      "import React from 'react';\nexport const a = 1;\n" +
+      '```\n=== autre.ts ===\n```\nexport const b = 2\n```'
+    const lus = lireFichiers(texte)
+    expect(lus.map((f) => f.chemin)).toEqual(['index.tsx', 'autre.ts'])
+    expect(lus[0]!.contenu.startsWith('import React'), 'la clôture est restée').toBe(true)
+    expect(lus[0]!.contenu.endsWith('export const a = 1;'), 'la fermante est restée').toBe(true)
+    expect(lus[1]!.contenu).toBe('export const b = 2')
+  })
+
+  it('⑪ UN FICHIER SANS CLÔTURE N’EST PAS ABÎMÉ — contrôle négatif', () => {
+    const lus = lireFichiers("=== a.ts ===\nexport const a = 1\n=== b.ts ===\nexport const b = 2")
+    expect(lus.map((f) => f.contenu)).toEqual(['export const a = 1', 'export const b = 2'])
+  })
+
+  it('⑫ UN BLOC DE CODE DANS UN COMMENTAIRE NE FAIT PAS PERDRE LA FIN', () => {
+    // La fermante n'est retirée que si elle clôt VRAIMENT le fichier.
+    const contenu = sansClotureMarkdown('const doc = `exemple :\n```\nx\n```\n`\nexport const z = 1')
+    expect(contenu.endsWith('export const z = 1')).toBe(true)
+  })
+})
 
 describe('EP-276 · la boucle', () => {
   it('① DU CODE QUI TIENT PASSE AU PREMIER TOUR', async () => {
