@@ -14,9 +14,24 @@
 name: sonde-apres-deploiement
 on:
   deployment_status:
+  # ── DECLENCHEMENT MANUEL, et il n'est pas un confort.
+  #
+  # Ce controle a ete modifie CINQ fois sans tourner UNE SEULE. Un controle
+  # dont personne n'a jamais vu l'execution n'est pas un controle — et celui
+  # dont on n'a jamais vu l'ECHEC encore moins. `epreuve: divergence_forcee`
+  # pointe le verificateur sur une page FORGEE : le run doit ECHOUER, et
+  # c'est ainsi qu'on prouve la croix rouge sans casser la production.
+  workflow_dispatch:
+    inputs:
+      epreuve:
+        description: "reelle (production) ou divergence_forcee (doit echouer)"
+        required: false
+        default: reelle
+        type: choice
+        options: [reelle, divergence_forcee]
 jobs:
   sonder:
-    if: github.event.deployment_status.state == 'success'
+    if: github.event_name == 'workflow_dispatch' || github.event.deployment_status.state == 'success'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -51,6 +66,14 @@ jobs:
             -H "Cache-Control: no-store" -H "Pragma: no-cache" \
             "https://www.deribfy.com/?anticache=${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" \
             > /tmp/page.html
+          # EPREUVE DE L'ECHEC : on remplace la page par une forgee qui
+          # porte l'AUTRE moteur. Le verificateur doit sortir en 1.
+          if [ "${{ inputs.epreuve }}" = "divergence_forcee" ]; then
+            srv=$(python3 -c "import json;print(json.load(open('/tmp/sonde.json'))['interrupteur']['serveur'])")
+            autre=air; [ "$srv" = "air" ] && autre=direct
+            echo "<html><head><meta name=\"deribfy-moteur-client\" content=\"$autre\" data-posee=\"oui\"/></head></html>" > /tmp/page.html
+            echo "EPREUVE : page forgee avec « $autre » face a un serveur « $srv » — ce run DOIT echouer."
+          fi
           node apps/web/scripts/verifier-sonde.mjs /tmp/page.html < /tmp/sonde.json
       - name: La chaîne générale (émission, compilation, aperçu)
         run: |

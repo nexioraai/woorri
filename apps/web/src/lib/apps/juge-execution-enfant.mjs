@@ -152,7 +152,10 @@ if (racineNav !== null) {
   // arrive par un chemin ou par un autre, et un bouton qui ne change rien ne
   // cree aucun ecran.
   const empreinte = () => {
-    const t = (racineNav.textContent ?? '').replace(/\s+/gu, ' ').trim().slice(0, 400)
+    const t =
+      (racineNav.textContent ?? '').replace(/\s+/gu, ' ').trim() +
+      '#' +
+      String(racineNav.innerHTML.length)
     let h = 0
     for (let i = 0; i < t.length; i += 1) h = (h * 31 + t.charCodeAt(i)) | 0
     return String(h)
