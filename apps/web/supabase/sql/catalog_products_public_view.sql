@@ -152,9 +152,19 @@ create or replace view public.catalog_products_public
 revoke all on public.catalog_products_public from anon, authenticated;
 grant select on public.catalog_products_public to anon;
 
--- ── CE QUI RESTE À FAIRE, ET PAS MAINTENANT (étape 3) :
+-- ── ÉTAPE 3, FAITE LE 2026-11-01 : LA RÉVOCATION.
 --
---   revoke select on public.catalog_products from anon, authenticated;
+-- Décommentée APRÈS que les onze mesures sont revenues identiques à l'octet
+-- (trois chemins + huit vitrines) et que la révocation a été prouvée par son
+-- CORPS : code 42501, « permission denied for table catalog_products ».
+--
+-- `anon` SEULEMENT, PAS `authenticated` : son cas n'est pas mesuré et
+-- l'éditeur marchand pourrait en dépendre. C'est une QUESTION au registre,
+-- pas une dette.
+revoke select on public.catalog_products from anon;
+--
+-- Retour arrière, si un cinquième chemin apparaissait un jour :
+--   grant select on public.catalog_products to anon;
 --
 -- À ne coller QU'APRÈS le déploiement du code qui lit la vue, et après que
 -- les quatre chemins anonymes ont été mesurés identiques avant/après :

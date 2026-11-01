@@ -767,3 +767,48 @@ gaspillage de calcul, pas une fuite.
 dans la fonction (`where array_length(ids, 1) <= 200`), et il attend son tour
 — bas de pile, consigné le 2026-11-01.
 
+## RÈGLE 10 DU PROTOCOLE — LE STATUT EST INDICATIF, LE CORPS EST LA PREUVE
+
+Le propriétaire avait posé « attendu : 403 ». Mesure : **Supabase mappe 42501
+sur 401**. Sa règle était fausse pour cet environnement, le principe
+sous-jacent a tenu, et voici la forme durable :
+
+> **Un code HTTP agrège plusieurs causes. `42501` plus le nom de l'objet
+> n'en agrège aucune.**
+
+**ET C'EST POURQUOI UNE DE MES MESURES ÉTAIT JUSTE PAR CHANCE** : j'avais
+conclu « ✅ refusé » d'un PATCH anonyme rendant 401, sans imprimer le corps.
+Même statut, deux causes possibles — clef non attachée, ou privilège refusé —
+et je n'avais pas mesuré laquelle. Refaite avec le corps :
+
+```
+PATCH catalog_products_public  401 · 42501 · permission denied for view  catalog_products_public
+PATCH catalog_products         401 · 42501 · permission denied for table catalog_products
+```
+
+## LOT A — CLOS LE 2026-11-01
+
+**Masse fermée, référence fournisseur toujours lisible à l'unité — voie 2
+reste due.**
+
+```
+① la révocation a pris     : 401 · code 42501 · permission denied for table catalog_products
+② les onze mesures         : identiques à l'octet (3 chemins + 8 vitrines)
+③ l'écriture anonyme       : 42501 sur la vue ET sur la table
+④ les pièces qui survivent : vue 200 · RPC 200 (security_invoker=false, security definer)
+```
+
+**Ce qui a fermé** : 40 832 lignes de catalogue fournisseur (`supplier_id`,
+`supplier_product_id`, `supplier_parent_id`) n'étaient lisibles par
+n'importe qui avec la clef publique. Reste accessible : **19 produits**, ceux
+que le marchand a approuvés et que sa vitrine affiche de toute façon.
+
+**CE QUI RESTE DÛ, et qui ne s'ouvre pas aujourd'hui :**
+- **voie 2** — la clef de substitution traduite côté serveur, pour que
+  `supplier_product_id` ne quitte plus jamais le serveur. Sans elle, la
+  référence reste lisible à l'unité sur chaque fiche produit ;
+- le tableau d'`ids` de `prix_publics`, non borné (bas de pile) ;
+- **le cas `authenticated`**, non mesuré — QUESTION, pas dette ;
+- et le lot B, dont l'entrée porte déjà son avertissement : fermer
+  `cj_margin_percent` ne fermera pas la marge.
+
