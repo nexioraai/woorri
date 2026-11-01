@@ -145,7 +145,30 @@ export async function POST(req: Request) {
     .eq('id', id)
     .eq('owner_id', garde.userId)
   if (efface.error !== null) {
-    return NextResponse.json({ error: 'la suppression a échoué — rien n’a changé' }, { status: 502 })
+    // ── LA CAUSE SE DIT. ELLE A COÛTÉ UNE JOURNÉE EN SE TAISANT.
+    //
+    // Cette branche rendait « la suppression a échoué — rien n'a changé » :
+    // vrai, et inutile. Postgres, lui, avait nommé le coupable —
+    // `violates check constraint "app_generations_statut_valide"` — et on
+    // le jetait. Le propriétaire a vu un bandeau rouge sans cause, et il a
+    // fallu sonder la base pour retrouver ce que la route savait déjà.
+    //
+    // CAS NOMMÉ : 23514, c'est la contrainte de statut, donc le SQL de
+    // `sqlPour` n'est pas appliqué. On le DIT, avec le geste à faire —
+    // sinon le message renverrait à un code d'erreur Postgres que
+    // personne n'a à connaître.
+    console.error('[supprimer] écriture refusée', efface.error)
+    const contrainte = efface.error.code === '23514'
+    return NextResponse.json(
+      {
+        error: contrainte
+          ? 'La base refuse le statut « supprimée » : la migration de ' +
+            '`sqlPour` (journal.ts) n’est pas appliquée. Rien n’a changé.'
+          : `La suppression a échoué (${efface.error.code}) — rien n’a changé.`,
+        detail: efface.error.message,
+      },
+      { status: 502, headers: { 'Cache-Control': 'no-store' } },
+    )
   }
 
   return NextResponse.json(

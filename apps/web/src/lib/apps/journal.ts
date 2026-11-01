@@ -514,6 +514,20 @@ alter table public.${nom} add column if not exists fournisseur text not null def
 -- La colonne publie_le dit QUAND, et sa seule raison d'etre est de pouvoir repondre
 -- plus tard a « depuis quand ce lien tourne-t-il ». Il ne commande rien.
 alter table public.${nom} add column if not exists publication_jeton text;
+-- ── LE NOM PUBLIC, ET IL MANQUAIT A CETTE SOURCE DE VERITE.
+--
+-- TROUVE LE 2026-11-01 en remettant la jumelle a niveau : quatre routes
+-- ECRIVENT « publication_slug » (publier, supprimer, renommer, sites/adresse)
+-- et une le LIT (« a/[sous] »), mais aucune ligne de ce DDL ne le declarait.
+-- La vraie table ne le porte que parce qu'il y a ete ajoute a la main, un
+-- jour, dans la console. Toute base reconstruite depuis ce fichier — la
+-- jumelle, un environnement neuf — serait donc nee SANS la colonne qui
+-- tient la quarantaine des noms.
+--
+-- Le cliquet voisin comparait pourtant le SQL au code depuis des mois : il
+-- ne regardait que l'INSERT du journal, et cette colonne ne s'ecrit qu'en
+-- UPDATE, depuis des routes. EP-310 ⑤ ferme l'angle.
+alter table public.${nom} add column if not exists publication_slug  text;
 alter table public.${nom} add column if not exists publie_le          timestamptz;
 do $$ begin
   create unique index ${nom}_publication_jeton_unique
@@ -521,11 +535,38 @@ do $$ begin
 exception when duplicate_table then null; end $$;
 
 -- ── Trois invariants par CONTRAINTE, pas par discipline de code.
-do $$ begin
-  alter table public.${nom}
-    add constraint ${nom}_statut_valide
-    check (statut in ('en_attente', 'en_cours', 'livree', 'refusee'));
-exception when duplicate_object then null; end $$;
+--
+-- ── POURQUOI UN DROP ICI, ET PAS LE «do $$ exception« DES VOISINS.
+--
+-- MESURÉ LE 2026-11-01, sur la vraie table, après qu'une suppression a
+-- échoué devant le propriétaire :
+--
+--   UPDATE {"statut":"supprimee"} → 23514, violates check constraint
+--     <table>_statut_valide
+--   UPDATE {"statut":"annulee"}   → 23514   (la MÊME contrainte)
+--
+-- Le nom de la table est écrit <table> ET PAS EN CLAIR : ce commentaire
+-- voyage dans le DDL de la JUMELLE aussi, et un cliquet exige que le SQL de
+-- la jumelle ne mentionne JAMAIS la table de production — pour qu'un
+-- copier-coller raté reste inoffensif.
+--
+-- La liste comptait quatre statuts ; le lot de suppression en avait inventé
+-- deux de plus sans jamais lire ce fichier. La route a donc refusé
+-- d'effacer — ce qui était la bonne décision, mais pour la mauvaise raison.
+--
+-- ET LE PIÈGE EST DANS LA FORME, PAS DANS LA LISTE : « exception when
+-- duplicate_object then null » ne crée la contrainte que si elle est ABSENTE.
+-- Allonger la liste ici et rejouer ce SQL ne changerait RIEN sur une base
+-- qui porte déjà l'ancienne version — le dépôt dirait six statuts, la base
+-- en refuserait toujours deux, et personne ne verrait l'écart. Une
+-- contrainte dont la DÉFINITION peut évoluer se remplace ; seules celles
+-- qui sont vraies une fois pour toutes supportent le «do $$ exception«.
+--
+-- « drop … if exists » puis « add » : rejouable, et il APPLIQUE vraiment.
+alter table public.${nom} drop constraint if exists ${nom}_statut_valide;
+alter table public.${nom}
+  add constraint ${nom}_statut_valide
+  check (statut in ('en_attente', 'en_cours', 'livree', 'refusee', 'annulee', 'supprimee'));
 
 -- Une ligne LIVREE sans document serait un mensonge structurel. Le redacteur
 -- synchrone stocke donc le document qu'il avait deja en main — sans quoi
@@ -557,6 +598,18 @@ do $$ begin
 exception when duplicate_object then null; end $$;
 
 -- ── Acces : ceux du lot d'origine, reaffirmes (no-ops si deja poses).
+-- ── LA LECTURE DES CONTRAINTES VIVANTES VIT AILLEURS, ET C'EST SA PLACE.
+--
+-- Elle etait ICI, dans le DDL des tables. Deux cliquets l'ont refusee :
+--   · « toute RPC appelee a un script versionne » — les fonctions se
+--     versionnent dans supabase/sql/<nom>.sql, une par fichier, et pas dans
+--     le DDL d'une table ;
+--   · et son commentaire citait le nom de la table de production, donc il
+--     VOYAGEAIT dans le DDL de la jumelle — qu'un autre cliquet interdit.
+--
+-- Deux refus pour une seule faute de rangement : une fonction n'est pas une
+-- table. Voir supabase/sql/contraintes_vivantes.sql.
+
 alter table public.${nom} enable row level security;
 revoke all on public.${nom} from anon, authenticated;
 
