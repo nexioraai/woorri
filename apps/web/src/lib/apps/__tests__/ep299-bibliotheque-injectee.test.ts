@@ -71,6 +71,41 @@ describe('EP-299 · la bibliothèque injectée', () => {
     expect(v.ok).toBe(true)
   })
 
+  it('⑥ AUCUNE PROP PRIVÉE SANS SA CONVENTION — le modèle réflexe React', () => {
+    // MESURE DU 2026-11-01, tir 52f34017 : le modele a ecrit
+    // <Bouton onClick={f}>Texte</Bouton> — la convention React. Notre
+    // composant ne lisait que `texte` et `surClic` : LIBELLE ET
+    // GESTIONNAIRE JETES, bouton rendu vide et inerte sur trois ecrans.
+    //
+    // LA DISTINCTION QUI GOUVERNE CE CLIQUET : les NOMS de nos props, le
+    // modele les LIT (mesure : valeur, libelle, icone, contexte, nom,
+    // titre — employes correctement, 3x chacun). Les CONVENTIONS, il les
+    // REFLEXE (onClick x5, onChange x5, value x8 sur du HTML brut). Ce
+    // controle ne touche donc pas aux noms francais : il exige que toute
+    // prop privee de type GESTIONNAIRE ou CONTENU accepte AUSSI la forme
+    // que React impose au doigt.
+    const ui = fichiersSysteme('XAF').get('systeme/ui.tsx') ?? ''
+    const CONVENTION_DE: Record<string, string> = {
+      texte: 'children', enfant: 'children', enfants: 'children',
+      surClic: 'onClick', surAction: 'onClick', onAction: 'onClick',
+      surChangement: 'onChange', surSoumission: 'onSubmit',
+    }
+    const manques: string[] = []
+    for (const m of ui.matchAll(/export function (\w+)\(\{([^}]*)\}/gu)) {
+      const props = m[2]!.split(',').map((x) => x.split(/[:=]/)[0]!.trim()).filter((x) => x !== '')
+      for (const prop of props) {
+        const convention = CONVENTION_DE[prop]
+        if (convention !== undefined && !props.includes(convention)) {
+          manques.push(`${m[1]!} : « ${prop} » sans « ${convention} »`)
+        }
+      }
+    }
+    expect(
+      manques,
+      'un composant porte une prop privée sans accepter la convention que le modèle écrit par réflexe',
+    ).toEqual([])
+  })
+
   it('⑤ LA CONSIGNE IMPOSE LA BIBLIOTHÈQUE, l’alignement et les données cohérentes', () => {
     expect(CONSIGNE).toContain('./systeme/ui')
     expect(CONSIGNE).toContain('formaterMontant')

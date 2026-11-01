@@ -210,9 +210,9 @@ export function CarteDeChiffre({ icone, libelle, valeur, contexte, ton = 'neutre
   )
 }
 
-export function EnTeteDeSection({ surtitre, titre, action, surAction, onAction }: {
+export function EnTeteDeSection({ surtitre, titre, action, surAction, onAction, onClick }: {
   surtitre?: string; titre: string; action?: string
-  surAction?: () => void; onAction?: () => void
+  surAction?: () => void; onAction?: () => void; onClick?: () => void
 }) {
   return (
     <div style={{ display: 'flex', alignItems: 'end', justifyContent: 'space-between',
@@ -221,8 +221,8 @@ export function EnTeteDeSection({ surtitre, titre, action, surAction, onAction }
         {surtitre !== undefined && <div style={ROLE.surtitre as React.CSSProperties}>{surtitre}</div>}
         <h2 style={{ margin: 0, fontSize: 'var(--text-xl)', fontWeight: 650, color: 'var(--foreground)' }}>{titre}</h2>
       </div>
-      {action !== undefined && (surAction ?? onAction) !== undefined && (
-        <button onClick={onAction ?? surAction} style={{ background: 'none', border: 'none', color: 'var(--primary)',
+      {action !== undefined && (onClick ?? onAction ?? surAction) !== undefined && (
+        <button onClick={onClick ?? onAction ?? surAction} style={{ background: 'none', border: 'none', color: 'var(--primary)',
           fontSize: 'var(--text-sm)', fontWeight: 600, cursor: 'pointer', padding: 0 }}>{action}</button>
       )}
     </div>
