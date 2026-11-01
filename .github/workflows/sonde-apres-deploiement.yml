@@ -75,6 +75,38 @@ jobs:
             echo "EPREUVE : page forgee avec « $autre » face a un serveur « $srv » — ce run DOIT echouer."
           fi
           node apps/web/scripts/verifier-sonde.mjs /tmp/page.html < /tmp/sonde.json
+      # ── LE SCHEMA VIVANT CONTRE LE DDL DU DEPOT (2026-11-01).
+      #
+      # Une suppression a echoue devant le proprietaire : la contrainte
+      # `app_generations_statut_valide` refusait un statut que le code
+      # ecrivait. Le depot etait coherent AVEC LUI-MEME, et rien ne
+      # comparait le depot a la base EN LIGNE. C'est la classe « vert en
+      # local, mort en ligne » appliquee au schema — la meme que le tracage
+      # ampute du 31 octobre.
+      #
+      # La route mesure les DEUX tables : toutes les colonnes (l'OpenAPI de
+      # PostgREST les porte) et toutes les contraintes (exercees, car
+      # PostgREST n'en expose aucune). Un ecart = croix rouge sur main.
+      - name: Le schéma vivant correspond au DDL du dépôt (les deux tables)
+        run: |
+          curl -fsS --max-time 90 \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "https://www.deribfy.com/api/generateur/schema" > /tmp/schema.json
+          # EPREUVE DE L'ECHEC : on ampute la mesure d'une colonne que le
+          # depot declare. C'est le defaut du jour, reproduit sans toucher a
+          # la base — et le verificateur DOIT sortir en 1.
+          if [ "${{ inputs.epreuve }}" = "divergence_forcee" ]; then
+            python3 - <<'PY'
+import json
+m = json.load(open('/tmp/schema.json'))
+m['ecarts'][0]['colonnesManquantes'] = ['publication_slug']
+json.dump(m, open('/tmp/schema.json', 'w'))
+print("EPREUVE : mesure amputee de publication_slug — ce run DOIT echouer.")
+PY
+          fi
+          # LE VERDICT EST CALCULE ICI, PAS DANS LA ROUTE : c'est ce qui rend
+          # l'epreuve ci-dessus possible sans abimer la production.
+          node apps/web/scripts/verifier-schema.mjs < /tmp/schema.json
       - name: La chaîne générale (émission, compilation, aperçu)
         run: |
           r=$(curl -fsS --max-time 120 \
