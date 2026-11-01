@@ -32,7 +32,7 @@ import { TABLE_GENERATIONS } from '@/lib/apps/journal'
 import { moteurChoisi } from '@/lib/apps/interrupteur-moteur'
 import { DOMAINE_PUBLIC, TEMOIN_GENERIQUE } from '@/lib/apps/sous-domaine'
 import { boucleEcriture, CONSIGNE, pageAutonome } from '@/lib/apps/boucle-directe'
-import { nomProduitValide } from '@/lib/apps/nom-produit'
+import { nomProduitValide, TITRE_SANS_NOM } from '@/lib/apps/nom-produit'
 import { proportionEprouvee } from '@/lib/apps/portee-epreuve'
 import { appelerFournisseur, CONFIGS, fournisseurChoisi } from '@/lib/apps/fournisseur'
 import { assembler } from '@/lib/apps/bac-a-sable'
@@ -324,15 +324,22 @@ export async function POST(req: Request) {
   const demande = typeof corps.demande === 'string' ? corps.demande.trim() : ''
   if (demande === '') return NextResponse.json({ error: 'demande requise' }, { status: 400 })
 
-  // ── LE NOM DU PRODUIT EST OBLIGATOIRE, ET C'EST LE POINT DU LOT.
+  // ── LE NOM EST FACULTATIF. IL A ÉTÉ OBLIGATOIRE, ET ÇA A CASSÉ LA
+  // PRODUCTION (2026-11-01).
   //
-  // Il ne reçoit PAS de valeur par défaut. Un défaut est précisément ce qui
-  // a produit neuf cartes « Application » : chaque appelant qui n'avait rien
-  // à dire disait « application », et personne ne voyait le trou. Ici le
-  // trou fait un 400 avec une phrase, donc il se voit tout de suite.
+  // J'avais rendu le 400 obligatoire « pour que le trou se voie ». Mesuré
+  // sur cinq captures : TROIS chemins appellent `construire` sans nom — le
+  // repli quand le pré-vol échoue, son `catch`, et la dernière ligne
+  // d'`envoyer`. Chacun recevait 400, l'écran affichait « Donnez un nom à
+  // votre application », l'utilisateur retapait, et le pré-vol REPARTAIT DE
+  // LA PREMIÈRE QUESTION. Plus personne ne pouvait générer.
+  //
+  // UNE VALIDATION QUI BLOQUE UN CHEMIN QU'ELLE NE CONTRÔLE PAS N'EST PAS UN
+  // CLIQUET, C'EST UNE PANNE. Le nom sans valeur devient `null` : la page
+  // retombe sur `TITRE_SANS_NOM` à la lecture, exactement comme les neuf
+  // œuvres nées avant ce chantier.
   const verdictNom = nomProduitValide(typeof corps.nom === 'string' ? corps.nom : '')
-  if (!verdictNom.ok) return NextResponse.json({ error: verdictNom.erreur }, { status: 400 })
-  const nom = verdictNom.nom
+  const nom = verdictNom.ok ? verdictNom.nom : null
   // ── LA CONFIGURATION DU PRÉ-VOL VOYAGE AVEC LA DEMANDE (EP-296).
   //
   // Mesuré le 2026-10-31 : l'écran n'envoyait que la demande — la devise
@@ -341,7 +348,7 @@ export async function POST(req: Request) {
   // chaîne : le bloc transmis au modèle est du texte, pas un objet.
   // Le nom rejoint le bloc qui PRIME sur le cahier : le modèle doit
   // l'écrire dans l'application, pas en déduire un autre.
-  const configuration: Record<string, string> = { nom_produit: nom }
+  const configuration: Record<string, string> = nom === null ? {} : { nom_produit: nom }
   if (typeof corps.configuration === 'object' && corps.configuration !== null) {
     for (const [cle, valeur] of Object.entries(corps.configuration as Record<string, unknown>)) {
       if (typeof valeur === 'string' && valeur.trim() !== '' && cle.length <= 40) {
@@ -462,7 +469,7 @@ export async function POST(req: Request) {
     // n'avait aucune raison d'y entrer.
     owner_id: proprietaire,
     demande,
-    nom,
+    ...(nom === null ? {} : { nom }),
     moteur: 'direct',
     // QUEL FOURNISSEUR a écrit, pour que la comparaison reste lisible.
     // Sa propre colonne : `nom` porte le nom de l'application, pas celui
@@ -569,7 +576,7 @@ export async function POST(req: Request) {
   return {
     ok: true as const,
     id: ecrit.data?.id ?? null,
-    html: pageAutonome(resultat.code, nom),
+    html: pageAutonome(resultat.code, nom ?? TITRE_SANS_NOM),
     fichiers: resultat.fichiers.size,
     tours: resultat.tours,
     // EP-297 : le rapport chiffré VOYAGE avec l'œuvre — l'écran le montre,

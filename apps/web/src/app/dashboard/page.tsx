@@ -10,6 +10,7 @@ import { useTranslation } from '@/lib/translations';
 import { oublierGeneration } from '@/lib/apps/suivi-generation';
 import {
   adresseProposee,
+  AVERTISSEMENT_MARQUE,
   CE_QUE_RENOMMER_CHANGE,
   nomProduitValide,
   TITRE_SANS_NOM,
@@ -77,8 +78,15 @@ export default function DashboardPage() {
    */
   const renommer = async (a: Application) => {
     setApercuErreur(null);
+    // ── L'AVERTISSEMENT SUIT L'ENDROIT OU LE NOM SE CHOISIT.
+    //
+    // Il vivait dans la question du pre-vol ; cette question a casse la
+    // production le 2026-11-01 et a ete retiree. Le nom se choisit donc ici,
+    // et c'est ici que la phrase doit etre lue -- « dite une fois, a
+    // l'endroit ou le nom se choisit ». Aucune liste n'empechera un nom
+    // d'etre une marque existante : on ne promet rien, on previent.
     const propose = window.prompt(
-      `Nom de votre application :\n\n${CE_QUE_RENOMMER_CHANGE}`,
+      `Nom de votre application :\n\n${CE_QUE_RENOMMER_CHANGE}\n\n${AVERTISSEMENT_MARQUE}`,
       a.nom ?? '',
     );
     if (propose === null) return;

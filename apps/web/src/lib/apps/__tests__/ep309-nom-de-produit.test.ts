@@ -121,8 +121,15 @@ describe('EP-309 — le nom du produit', () => {
     // se choisit. Aucune liste ne protégera d'une marque existante — on ne
     // promet donc rien, on prévient.
     expect(AVERTISSEMENT_MARQUE).toMatch(/marques/u)
-    const ecran = lire('components', 'onboarding', 'ConversationApplication.tsx')
-    expect(ecran.includes('AVERTISSEMENT_MARQUE'), 'l’écran de génération ne dit rien des marques').toBe(true)
+    // ── ELLE A CHANGÉ D'ÉCRAN, ET LA RÈGLE N'A PAS CHANGÉ.
+    //
+    // Elle vivait dans la question du pré-vol, retirée le 2026-11-01 parce
+    // qu'elle cassait la production. Le nom se choisit aujourd'hui dans
+    // « Renommer » — donc c'est là que la phrase doit se lire. La règle
+    // reste « dite une fois, à l'endroit où le nom se choisit » ; seul
+    // l'endroit a bougé.
+    const bord0 = lire('app', 'dashboard', 'page.tsx')
+    expect(bord0.includes('AVERTISSEMENT_MARQUE'), 'plus aucun écran ne dit rien des marques').toBe(true)
     // Ce que renommer NE change PAS : affiché par le tableau de bord.
     expect(CE_QUE_RENOMMER_CHANGE).toMatch(/INTERIEUR|intérieur/u)
     const bord = lire('app', 'dashboard', 'page.tsx')
@@ -203,48 +210,34 @@ describe('EP-309 — le nom du produit', () => {
     expect(adresseProposee('a.b.c')).toBe('a-b-c')
   })
 
-  it('⑫ LE MODÈLE PROPOSE, ET LA CITATION EST VÉRIFIÉE — pas crue', () => {
-    // ── LA BARRE POSÉE PAR LE PROPRIÉTAIRE (2026-11-01).
+  it('⑫ LA PIÈCE SERVEUR DU NOM PROPOSÉ EXISTE, ET ELLE DORT', () => {
+    // ── POURQUOI ELLE DORT (2026-11-01).
     //
-    // « Le modèle propose le nom en citant où il l'a lu dans le cahier ;
-    // la personne corrige avant que l'argent parte. » Avant ce lot, la
-    // question demandait d'inventer un nom À FROID alors que le cahier en
-    // porte souvent un — l'inverse de ce qui était décidé.
+    // `lire-brief` rend `nomProduit` avec sa citation VÉRIFIÉE : le modèle
+    // dit où il a lu le nom, et on cherche ce passage dans le brief. La
+    // pièce est prête et testée.
     //
-    // La chaîne tient en quatre maillons, et chacun peut se casser seul :
+    // MAIS L'ÉCRAN NE LA CONSOMME PLUS. La question du nom, posée à la fin
+    // du pré-vol, a cassé la production : toute réponse qui ne passait pas
+    // sa validation renvoyait l'utilisateur à la PREMIÈRE question. Elle
+    // reviendra pré-remplie et SANS POUVOIR BLOQUER, et elle sera exercée en
+    // production avant d'être déclarée en ligne.
+    //
+    // Ce cliquet garde la pièce serveur en vie : sans lui, quelqu'un la
+    // retirerait comme du code mort, et le lot ③ repartirait de zéro.
     const route = lire('app', 'api', 'generateur', 'lire-brief', 'route.ts')
-    const ecran = lire('components', 'onboarding', 'ConversationApplication.tsx')
-
-    // ① le modèle est À QUI ON DEMANDE le nom, et sa citation
-    expect(route, 'la consigne ne demande pas le nom').toContain('NOM_PRODUIT')
-    expect(route, 'la consigne ne demande pas la citation').toContain('NOM_CITATION')
-
-    // ② la citation est CHERCHÉE dans le brief, jamais crue. Sans cette
+    expect(route, 'la consigne ne demande plus le nom').toContain('NOM_PRODUIT')
+    expect(route, 'la consigne ne demande plus la citation').toContain('NOM_CITATION')
+    // LA CITATION EST CHERCHÉE DANS LE BRIEF, jamais crue : sans cette
     // vérification, l'écran dirait « je l'ai lu ici » sur une invention.
     expect(route).toMatch(/brief\.includes\(aplati\(citBrut\)\)/u)
-
-    // ③ le nom passe par la MÊME porte que partout : un « Application »
-    // rendu par le modèle est écarté comme s'il venait d'un écran.
     expect(route).toContain('nomProduitValide')
-
-    // ④ et la proposition arrive DANS LE CHAMP. « Corriger » veut dire
-    // modifier ce qui est là ; sans cette ligne, la personne retape.
-    expect(ecran, 'la proposition n’arrive pas dans le champ de saisie').toMatch(
-      /if \(nomPropose !== null\) setSaisie\(nomPropose\.nom\)/u,
-    )
-    // Et jamais par `suggestion` : ce champ est câblé à la devise dans le
-    // rendu (« j'afficherai vos montants en … »).
-    expect(ecran.includes('suggestion: nomPropose.nom')).toBe(false)
   })
 
-  it('⑬ « LU » ET « PROPOSÉ » NE SE DISENT PAS PAREIL', () => {
-    // Un nom inventé est légitime quand le document n'en porte aucun. Ce qui
-    // serait illégitime, c'est de faire croire qu'on l'a lu — la même
-    // distinction que `dansLeDocument` dans l'extraction.
+  it('⑬ LE PRÉ-VOL NE DEMANDE PLUS DE NOM — la panne ne revient pas', () => {
+    // La question vivait dans l'écran et bloquait. Tant que le lot ③ n'est
+    // pas exercé en production, elle n'y est pas.
     const ecran = lire('components', 'onboarding', 'ConversationApplication.tsx')
-    expect(ecran, 'la phrase « je l’ai lu ici » n’existe pas').toMatch(/je l’ai lu ici/u)
-    expect(ecran, 'rien ne dit qu’un nom peut être une suggestion').toMatch(
-      /je ne l’ai pas trouvé dans votre texte/u,
-    )
+    expect(ecran.includes("const NOM_PRODUIT = 'NOM_PRODUIT'"), 'la question du nom est revenue dans le pré-vol').toBe(false)
   })
 })

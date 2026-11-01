@@ -39,7 +39,6 @@ import {
 import { resumeDuJournal } from '@/lib/apps/journal-tirages';
 import type { EtatGeneration } from '@/lib/apps/service-generations';
 import type { EtatMagasin } from '@/lib/apps/exigences-magasin';
-import { AVERTISSEMENT_MARQUE, nomProduitValide } from '@/lib/apps/nom-produit';
 // DEPUIS LE MODULE PUR, JAMAIS DEPUIS LE JUGE : le juge lance un processus
 // enfant (`node:child_process`) et ne peut pas entrer dans ce paquet.
 import { proportionEprouvee } from '@/lib/apps/portee-epreuve';
@@ -116,19 +115,6 @@ type Configuration = {
  *  n'est pas une question de configuration, c'est du texte libre qui entre
  *  dans le brief avant son scellement. */
 const AUTRE_CHOSE = 'AUTRE_CHOSE';
-/**
- * LE NOM DU PRODUIT — demande ICI, et pas dans la table d'elicitation.
- *
- * La table vit dans `benchmarks/air-emission/elicitation.mjs`, partagee avec
- * le chemin du document. Le nom n'est pas une question de configuration du
- * client : c'est une donnee de Deribfy. L'y ajouter ferait porter a du code
- * partage un besoin qui n'est pas le sien — et la consigne du proprietaire
- * est que l'option 2 ne soit pas touchee sans arbitrage.
- *
- * C'est la DERNIERE question avant la depense : la personne lit le nom, le
- * corrige, et voit l'avertissement sur les marques au moment ou elle decide.
- */
-const NOM_PRODUIT = 'NOM_PRODUIT';
 type Intention = {
   brief: string;
   addendum: { rang: number; code: string; destination: string; question: string; reponse: string }[];
@@ -171,15 +157,6 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
   const [questionAvant, setQuestionAvant] = useState<QuestionAvant | null>(null);
   const [configuration, setConfiguration] = useState<Configuration>({});
   const [autreChose, setAutreChose] = useState('');
-  /**
-   * LE NOM QUE LE MODELE PROPOSE, et d'ou il l'a lu.
-   *
-   * La personne CORRIGE une proposition au lieu d'inventer a froid. Et la
-   * citation est VERIFIEE cote serveur : si le passage n'existe pas dans le
-   * brief, elle ne vient pas, et la question dit « propose » au lieu de
-   * « lu ». On ne fait jamais croire qu'on a lu ce qu'on a invente.
-   */
-  const [nomPropose, setNomPropose] = useState<{ nom: string; citation?: string; dansLeDocument: boolean } | null>(null);
   /** La demande d'origine, gardee pendant le pre-vol : le brief n'est compose
    *  qu'une fois toutes les reponses obtenues. */
   const [demandeEnAttente, setDemandeEnAttente] = useState('');
@@ -655,10 +632,7 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
           });
           const dl = (await rl.json().catch(() => ({}))) as {
             deduites?: Record<string, unknown>;
-            nomProduit?: { nom: string; citation?: string; dansLeDocument: boolean };
           };
-          // LE NOM PROPOSE PAR LE MODELE, garde pour pre-remplir la question.
-          if (dl.nomProduit !== undefined) setNomPropose(dl.nomProduit);
           const deduites = dl.deduites ?? {};
           if (Object.keys(deduites).length > 0) {
             lues = { ...deduites, ...reponses };
@@ -712,45 +686,20 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
         setMessages((m) => [...m, { role: 'avant', question: q }]);
         return;
       }
-      // ── ET LA DERNIERE QUESTION AVANT L'ARGENT : COMMENT CA S'APPELLE.
+      // ── LA QUESTION DU NOM A ETE RETIREE D'ICI (2026-11-01).
       //
-      // Elle est posee ici, apres tout le reste, parce que c'est le dernier
-      // ecran gratuit. Neuf oeuvres sont nees sans nom et leurs cartes
-      // disent « Application » : le moteur repliait sur ce mot a trois
-      // endroits au lieu de poser une question d'une ligne.
-      if (lues[NOM_PRODUIT] === undefined) {
-        // ── LE MODELE PROPOSE, LA PERSONNE CORRIGE -- jamais l'inverse.
-        //
-        // Sans `suggestion`, la question demandait d'inventer un nom a froid
-        // alors que le cahier en porte souvent un. La citation dit D'OU il
-        // vient, et elle a ete verifiee dans le brief cote serveur : si elle
-        // manque, on dit « proposé », pas « lu ».
-        const q: QuestionAvant = {
-          code: NOM_PRODUIT,
-          structure: 'nom',
-          // PAS `suggestion` : ce champ est CABLE A LA DEVISE dans le rendu
-          // (« Par défaut, j'afficherai vos montants en … »). Le poser ici
-          // aurait écrit « vos montants en Hayine ». On pré-remplit le champ
-          // de saisie à la place — mesuré avant d'écrire la ligne.
-          texte:
-            (nomPropose === null
-              ? 'Comment votre application s’appelle-t-elle ? '
-              : nomPropose.citation !== undefined
-                ? `Je propose « ${nomPropose.nom} » — je l’ai lu ici : « ${nomPropose.citation} ». Corrigez si ce n’est pas le bon nom. `
-                : `Je propose « ${nomPropose.nom} », mais je ne l’ai pas trouvé dans votre texte : c’est une suggestion. Corrigez-la. `) +
-            'Ce nom sera son titre, le nom qu’on verra en l’installant, et il ' +
-            'servira à proposer son adresse publique. ' +
-            AVERTISSEMENT_MARQUE,
-        };
-        setQuestionAvant(q);
-        setMessages((m) => [...m, { role: 'avant', question: q }]);
-        // ── LA PROPOSITION ARRIVE DANS LE CHAMP, PAS SEULEMENT DANS LA
-        // PHRASE : « corriger » veut dire modifier ce qui est là, pas
-        // retaper ce qu'on vient de lire. C'est la différence entre proposer
-        // et demander.
-        if (nomPropose !== null) setSaisie(nomPropose.nom);
-        return;
-      }
+      // Elle ajoutait une etape APRES l'echappatoire, et toute reponse qui
+      // ne passait pas sa validation faisait appeler `construire` sans nom
+      // par l'un des trois chemins de repli -> 400 -> l'ecran affichait
+      // « Donnez un nom a votre application » -> l'utilisateur retapait ->
+      // `questionAvant` etait nul -> LE PRE-VOL REPARTAIT DE LA PREMIERE
+      // QUESTION. Mesure du 2026-11-01, cinq captures : plus personne ne
+      // pouvait generer.
+      //
+      // Le nom reviendra, mais PRE-REMPLI PAR LE MODELE et sans pouvoir
+      // bloquer la generation -- et il sera exerce EN PRODUCTION avant
+      // d'etre declare en ligne. `lire-brief` rend deja `nomProduit` : la
+      // piece serveur est prete et dort, elle ne casse rien.
       // Tout est repondu : on passe la porte chere, une seule fois.
       setQuestionAvant(null);
       await construire({
@@ -762,9 +711,24 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
         // applique qu'au rendu suivant, et le relire ici le prendrait vide
         // d'un tour. C'est le defaut que le commentaire de `construire`
         // raconte deja — on ne le refait pas pour le nom.
-        nom: typeof lues[NOM_PRODUIT] === 'string' ? lues[NOM_PRODUIT] : '',
+        // Le pre-vol ne demande plus de nom : le champ part vide, et la
+        // route l'accepte. La page retombe sur `TITRE_SANS_NOM`.
+        nom: '',
       });
-    } catch {
+    } catch (erreur) {
+      // ── UNE ERREUR AVALEE A COUTE DEUX HEURES AU PROPRIETAIRE.
+      //
+      // Ce `catch` etait NU. Le 2026-11-01, le pre-vol bouclait en
+      // production -- il revenait a la premiere question apres la derniere
+      // -- et ni l'ecran ni la console ne disaient POURQUOI. La phrase
+      // affichee (« je n'ai pas pu poser mes questions ») est la meme quelle
+      // que soit la cause : reseau, 400, exception. Un repli qui ne nomme
+      // pas sa cause transforme un defaut d'une ligne en deux heures de
+      // recherche.
+      //
+      // La console du navigateur est le seul endroit ou cette cause peut
+      // etre lue par quelqu'un qui regarde l'ecran casser.
+      console.error('[pre-vol]', erreur);
       setAvis('Je n’ai pas pu poser mes questions préalables ; je construis avec votre phrase seule.');
       setQuestionAvant(null);
       await construire({ texte: demande, autre, config: {}, dejaAffiche: true });
@@ -809,39 +773,6 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
         setMessages((m) => [...m, { role: 'moi', texte }]);
         const suite = { ...reponsesAvant, [questionAvant.code]: texte };
         setReponsesAvant(suite);
-        if (questionAvant.code === NOM_PRODUIT) {
-          // MEME FONCTION QUE LA ROUTE : une seule source, deux usages. Un
-          // controle d'ecran plus permissif que le serveur ferait recevoir a
-          // la personne un refus qu'aucun ecran n'avait annonce.
-          const verdict = nomProduitValide(texte);
-          if (!verdict.ok) {
-            // ON NE PROGRESSE PAS : la question reste ouverte, et la raison
-            // s'affiche. Avancer avec un nom refuse reporterait l'erreur
-            // apres la depense.
-            // ON REPOSE LA QUESTION avec la raison : il n'existe pas de rôle
-            // de message « simple phrase de Deribfy », et `incompris` dirait
-            // « je ne construis rien » — faux, puisqu'on construira dès que
-            // le nom sera bon. La question rouverte EST la réponse.
-            const redemande: QuestionAvant = {
-              code: NOM_PRODUIT,
-              structure: 'nom',
-              texte: `${verdict.erreur} Comment votre application s’appelle-t-elle ?`,
-            };
-            setQuestionAvant(redemande);
-            setMessages((m) => [...m, { role: 'avant', question: redemande }]);
-            // VRAI RETOUR EN ARRIERE, pas un geste decoratif : `reponsesAvant`
-            // est ici la valeur D'AVANT `suite` (fermeture du rendu courant),
-            // donc ce setter annule l'enregistrement du nom refuse. Sans lui,
-            // le tour suivant trouverait la reponse « deja donnee » et ne
-            // reposerait jamais la question.
-            setReponsesAvant(reponsesAvant);
-            return;
-          }
-          const avecNom = { ...reponsesAvant, [NOM_PRODUIT]: verdict.nom };
-          setReponsesAvant(avecNom);
-          await lancerPreVol(demandeEnAttente, avecNom, autreChose);
-          return;
-        }
         if (questionAvant.code === AUTRE_CHOSE) {
           // « non » n'est pas une precision : on l'ecarte du brief plutot que
           // de faire lire a P0 une phrase qui ne dit rien.

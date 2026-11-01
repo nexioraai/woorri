@@ -15,7 +15,7 @@ import { creerTravailleur, type BaseGeneration, type MoteurContinuation } from '
 import { TABLE_GENERATIONS } from '@/lib/apps/journal'
 import { deposerGeneration } from '@/lib/apps/service-generations'
 import { intentionDepuis, premiereIntention, texteDe } from '@/lib/apps/dialogue'
-import { nomProduitValide } from '@/lib/apps/nom-produit'
+import { nomProduitValide, TITRE_SANS_NOM } from '@/lib/apps/nom-produit'
 
 export const runtime = 'nodejs'
 
@@ -53,11 +53,11 @@ export async function POST(req: Request) {
   // 'application'` par confort, la base le gardait, et la carte affichait
   // « Application ». Le repli etait silencieux, donc le trou etait
   // invisible. Il fait maintenant un 400 avec une phrase a lire.
+  // FACULTATIF : voir `direct/route.ts` — un 400 ici bloquait la generation
+  // pour les chemins qui n'envoient pas de nom, et renvoyait l'utilisateur a
+  // la premiere question du pre-vol.
   const verdictNom = nomProduitValide(typeof corps?.nom === 'string' ? corps.nom : '')
-  if (!verdictNom.ok) {
-    return NextResponse.json({ error: verdictNom.erreur }, { status: 400, headers: { 'Cache-Control': 'no-store' } })
-  }
-  const nom = verdictNom.nom
+  const nom = verdictNom.ok ? verdictNom.nom : TITRE_SANS_NOM
 
   // ── CE QU'ON DEPOSE EST LE TEXTE QUE P0 LIRA, PAS LE DERNIER MESSAGE.
   //

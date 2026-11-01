@@ -220,18 +220,31 @@ describe('EP-276 · la route de l’écriture directe', () => {
     expect(code, 'un appel non streamé subsiste').not.toContain('client.messages.create(')
   })
 
-  it('⑤bis SANS NOM DE PRODUIT, LA ROUTE REFUSE AVANT DE DÉPENSER', async () => {
-    // Neuf œuvres sont nées sans nom parce que chaque appelant qui n'avait
-    // rien à dire disait « application », et que la route l'acceptait. Elle
-    // refuse maintenant, AVANT le premier appel payant — et le refus porte
-    // une phrase, pas un code.
-    const sansNom = (await (await POST(appel('une appli de tontine', null))).json()) as { error?: string }
-    expect(sansNom.error, JSON.stringify(sansNom)).toContain('nom')
+  it('⑤bis SANS NOM, LA ROUTE CONSTRUIT QUAND MÊME — elle a bloqué, et ça a cassé', async () => {
+    // ── LA PANNE DU 2026-11-01, FIGÉE ICI POUR QU'ELLE NE REVIENNE PAS.
+    //
+    // J'avais rendu le nom OBLIGATOIRE « pour que le trou se voie ». Mesuré
+    // sur cinq captures de production : TROIS chemins appellent `construire`
+    // sans nom (le repli quand le pré-vol échoue, son `catch`, et la
+    // dernière ligne d'`envoyer`). Chacun recevait 400, l'écran affichait
+    // « Donnez un nom à votre application », l'utilisateur retapait, et le
+    // pré-vol REPARTAIT DE LA PREMIÈRE QUESTION. Plus personne ne pouvait
+    // générer.
+    //
+    // UNE VALIDATION QUI BLOQUE UN CHEMIN QU'ELLE NE CONTRÔLE PAS N'EST PAS
+    // UN CLIQUET, C'EST UNE PANNE.
+    const sansNom = (await (await POST(appel('une appli de tontine', null))).json()) as {
+      ok?: boolean; error?: string
+    }
+    expect(sansNom.error, `la route refuse encore sans nom : ${String(sansNom.error)}`).toBeUndefined()
+    expect(sansNom.ok, JSON.stringify(sansNom).slice(0, 120)).toBe(true)
 
-    // ET LE REMPLISSAGE EST REFUSÉ AUSSI : sans cela, l'écran contournerait
-    // la règle en envoyant le mot que le moteur employait lui-même.
-    const remplissage = (await (await POST(appel('une appli de tontine', 'application'))).json()) as { error?: string }
-    expect(remplissage.error, JSON.stringify(remplissage)).toContain('vrai nom')
+    // ET UN REMPLISSAGE NE DEVIENT PAS UN NOM : il est ignoré, pas stocké.
+    // La page retombera sur `TITRE_SANS_NOM`, comme les neuf œuvres d'avant.
+    const remplissage = (await (await POST(appel('une appli de tontine', 'application'))).json()) as {
+      ok?: boolean
+    }
+    expect(remplissage.ok).toBe(true)
   })
 
   it('⑥ UN ÉCHEC GARDE TOUT CE QU’IL FAUT POUR LE COMPRENDRE', async () => {

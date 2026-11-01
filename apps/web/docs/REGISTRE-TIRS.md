@@ -812,3 +812,49 @@ que le marchand a approuvés et que sa vitrine affiche de toute façon.
 - et le lot B, dont l'entrée porte déjà son avertissement : fermer
   `cj_margin_percent` ne fermera pas la marge.
 
+## LA PANNE DU 2026-11-01 — J'AI CASSÉ LE GÉNÉRATEUR EN PRODUCTION
+
+**Mesuré par le propriétaire sur cinq captures, pas déduit.** Après le lot du
+nom, le pré-vol BOUCLAIT : il atteignait la dernière question, l'utilisateur
+répondait, et l'écran revenait à la première. Le message jaune « Donnez un
+nom a votre application » était présent en permanence. **Plus personne ne
+pouvait générer.**
+
+**LA CAUSE** : j'avais rendu le nom OBLIGATOIRE dans les deux routes. Or
+TROIS chemins appellent `construire` sans nom — le repli quand le pré-vol
+échoue, son `catch`, et la dernière ligne d'`envoyer`. Chacun recevait 400,
+l'utilisateur retapait, `questionAvant` était nul, et le pré-vol repartait de
+la première question.
+
+> **UNE VALIDATION QUI BLOQUE UN CHEMIN QU'ELLE NE CONTRÔLE PAS N'EST PAS UN
+> CLIQUET, C'EST UNE PANNE.**
+
+Et trois choses que j'ai dites et qui étaient fausses :
+- **« la chaîne est en ligne »** — elle était déployée et pas branchée ;
+- **« le champ arrive pré-rempli »** — il n'y avait aucun champ de nom dans
+  l'interface, seulement la zone de conversation ;
+- **une gate verte** a accompagné tout cela, et n'a rien vu. C'est la règle ②
+  du protocole, payée une fois de plus : *ce qui vit en exécution se prouve
+  en exécution.*
+
+**CE QUI A COÛTÉ LES DEUX HEURES, ET CE N'EST PAS LE 400** : le `catch` du
+pré-vol était NU. La phrase affichée est la même quelle que soit la cause —
+réseau, 400, exception — et rien n'allait en console. Un repli qui ne nomme
+pas sa cause transforme un défaut d'une ligne en deux heures de recherche.
+Corrigé : `catch (erreur) { console.error('[pre-vol]', erreur) }`.
+
+## DEUX DÉFAUTS VOISINS, CONSIGNÉS, PAS OUVERTS
+
+**① `setQuestionAvant(null)` est posé AVANT `construire`** (lignes 663, 704,
+720 de `ConversationApplication.tsx`). Si `construire` échoue, le message
+suivant de l'utilisateur est lu comme une NOUVELLE demande, et le pré-vol
+repart de la première question. **Le serveur permissif masque ce défaut, il
+ne le corrige pas** — il reste entier le jour où `construire` échouera pour
+une autre raison.
+
+**② LE PRÉ-VOL NE LIT PAS LE DOCUMENT.** Le cahier CPA-Tchad est une
+plateforme institutionnelle qui écrit « Commande en ligne : Non » et « Stock
+temps réel / ERP : Non ». Le pré-vol lui demande quand même « Que fait votre
+application avec l'argent ? » avec trois options de commerce. **Il pose les
+questions de la boutique à tout le monde.** C'est le prochain vrai sujet.
+
