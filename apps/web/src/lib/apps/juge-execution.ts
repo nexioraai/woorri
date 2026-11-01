@@ -40,6 +40,11 @@ export type ErreurExecution = {
   readonly indice: string
 }
 
+/** Re-exportee : la phrase vit dans un module PUR (voir portee-epreuve.ts).
+ *  Le juge importe `node:child_process` — un composant client ne peut pas le
+ *  charger, et l'import a tue un build le 2026-11-01. */
+export { proportionEprouvee } from './portee-epreuve'
+
 export type VerdictExecution = {
   /**
    * MONTE DANS UN SIMULATEUR — ET RIEN DE PLUS (2026-11-01).

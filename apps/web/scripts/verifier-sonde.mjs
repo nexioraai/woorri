@@ -120,4 +120,24 @@ if (process.argv[1] && import.meta.url.endsWith(process.argv[1].split('/').pop()
       ', ' +
       `juge de démarrage utilisable sur ${String(e.surQuoi ?? '?')} en ${String(e.ms ?? '?')} ms.`,
   )
+  // ── CE QUE VAUT CE VERT, DIT EN PROPORTION ET PAS EN PAIRE BRUTE.
+  //
+  // Mesure du 2026-11-01 sur l'oeuvre f21071cf : 24 controles ouverts sur
+  // 113 decouverts. Un lecteur presse lit « 24 » et croit que c'est
+  // beaucoup : c'est 21 %. Et avec `verifieDansNavigateur: false` a cote,
+  // les deux disent exactement ce qu'une application « livree » a traverse.
+  //
+  // Ce n'est PAS une anomalie -- la sonde reste verte -- mais un vert qui
+  // taira la proportion se lira comme « eprouvee », et ce mot serait faux.
+  const vus = Number(e.visites ?? 0)
+  const trouves = Number(e.decouverts ?? 0)
+  const pour = trouves > 0 ? Math.round((vus / trouves) * 100) : null
+  console.log(
+    '   portée de l’épreuve : ' +
+      (pour === null
+        ? `${String(vus)} contrôle(s), dénominateur inconnu`
+        : `${String(vus)} contrôles sur ${String(trouves)} (${String(pour)} %) ` +
+          `des contrôles des ${String(e.ecrans ?? '?')} écran(s) atteint(s)`) +
+      ` · dans un navigateur réel : ${e.verifieDansNavigateur === true ? 'OUI' : 'NON'}`,
+  )
 }

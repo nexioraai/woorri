@@ -40,6 +40,9 @@ import { resumeDuJournal } from '@/lib/apps/journal-tirages';
 import type { EtatGeneration } from '@/lib/apps/service-generations';
 import type { EtatMagasin } from '@/lib/apps/exigences-magasin';
 import { AVERTISSEMENT_MARQUE, nomProduitValide } from '@/lib/apps/nom-produit';
+// DEPUIS LE MODULE PUR, JAMAIS DEPUIS LE JUGE : le juge lance un processus
+// enfant (`node:child_process`) et ne peut pas entrer dans ce paquet.
+import { proportionEprouvee } from '@/lib/apps/portee-epreuve';
 import { moteurChoisi } from '@/lib/apps/interrupteur-moteur';
 import {
   formatDuFichier,
@@ -981,7 +984,7 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
             ok?: boolean; html?: string; motif?: string; error?: string;
             tours?: unknown[]; dureeMs?: number;
             jetons?: { fichier: string; reference: string }[];
-            execution?: { monteDansSimulateur: boolean; indisponible?: string; ecransVisites?: number; ecransDecouverts?: number; erreurs: { quoi: string; message: string }[] };
+            execution?: { monteDansSimulateur: boolean; indisponible?: string; ecransVisites?: number; ecransDecouverts?: number; ecransDistincts?: number; erreurs: { quoi: string; message: string }[] };
             vivacite?: { fichier: string; manque: string }[];
             couverture?: {
               exigences?: { exigence: string; statut: string }[];
@@ -1040,9 +1043,13 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
                             // LE DÉNOMINATEUR SE DIT TOUJOURS : un rapport qui
                             // ne le donne que lorsqu'il est mauvais est un
                             // rapport qu'on apprend à ne plus lire.
+                            // LA PROPORTION, PAS LA PAIRE SEULE : « 24 » se
+                            // lit comme beaucoup, « 21 % » se lit comme ce
+                            // que c'est. Calculée par `proportionEprouvee`,
+                            // une seule source pour les trois affichages.
                             return trouves > vus
-                              ? `⚠ Montée dans un simulateur, PARTIELLEMENT éprouvée : ${String(vus)} contrôle(s) sur ${String(trouves)}. NON VÉRIFIÉE DANS UN NAVIGATEUR.`
-                              : `Montée dans un simulateur : ${String(vus)} contrôle(s) sur ${String(trouves)} ouverts. NON VÉRIFIÉE DANS UN NAVIGATEUR.`;
+                              ? `⚠ Montée dans un simulateur, PARTIELLEMENT éprouvée : ${proportionEprouvee(vus, trouves, exec.ecransDistincts ?? 0)}. NON VÉRIFIÉE DANS UN NAVIGATEUR.`
+                              : `Montée dans un simulateur : ${proportionEprouvee(vus, trouves, exec.ecransDistincts ?? 0)}. NON VÉRIFIÉE DANS UN NAVIGATEUR.`;
                           })()
                         : `⚠ L’application ne se monte pas (simulateur) : ${exec.erreurs[0]?.message ?? 'cause inconnue'}.`,
                   );

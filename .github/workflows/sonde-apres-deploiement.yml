@@ -24,11 +24,22 @@ on:
   workflow_dispatch:
     inputs:
       epreuve:
-        description: "reelle (production) ou divergence_forcee (doit echouer)"
+        description: "reelle, ou une divergence forcee QUI DOIT ECHOUER"
         required: false
         default: reelle
         type: choice
-        options: [reelle, divergence_forcee]
+        # ── UNE VALEUR PAR ETAPE, ET C'EST LA SORTIE REELLE QUI L'A EXIGE.
+        #
+        # Mesure du 2026-11-01, run 41335971632 : avec une seule valeur, les
+        # DEUX etapes forgeaient leur corps -- et le job s'arretant a la
+        # premiere en echec, l'etape de schema n'a JAMAIS tourne. On avait vu
+        # rougir la sonde du moteur, pas celle du schema, en croyant avoir
+        # prouve les deux. Une epreuve qui masque les suivantes ne prouve
+        # qu'elle-meme.
+        #
+        # « divergence_forcee » garde son nom : le registre le cite, et un
+        # nom d'epreuve qui change laisse les anciens rapports sans objet.
+        options: [reelle, divergence_forcee, divergence_schema]
 jobs:
   sonder:
     if: github.event_name == 'workflow_dispatch' || github.event.deployment_status.state == 'success'
@@ -88,6 +99,23 @@ jobs:
       # PostgREST les porte) et toutes les contraintes (exercees, car
       # PostgREST n'en expose aucune). Un ecart = croix rouge sur main.
       - name: Le schéma vivant correspond au DDL du dépôt (les deux tables)
+        # ── ELLE TOURNE MEME SI UNE PRECEDENTE A ROUGI, MAIS PAS SI LE
+        # RUN EST ANNULE.
+        #
+        # Sans condition du tout, une epreuve sur le moteur masque toutes les
+        # etapes suivantes : on croit avoir prouve la chaine, on n'a prouve
+        # que son premier maillon.
+        #
+        # MAIS PAS `always()`, ET C'EST LA REGLE 8bis QUI L'INTERDIT.
+        # `always()` est vrai AUSSI quand le run est ANNULE -- Ctrl-C,
+        # timeout, run remplace par un push plus recent. L'etape
+        # s'executerait alors et imprimerait un verdict ; s'il est vert,
+        # quelqu'un lit un vert sorti d'un run SANS verdict. C'est
+        # exactement le faux EXIT=0 qu'on vient d'interdire.
+        #
+        # `!cancelled()` survit a l'echec d'une etape precedente et PAS a
+        # l'annulation. (`success() || failure()` est identique en pratique.)
+        if: ${{ !cancelled() }}
         run: |
           curl -fsS --max-time 90 \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
@@ -100,7 +128,7 @@ jobs:
           # workflow invalide : « Implicit keys need to be on a single line ».
           # Mesure du 2026-11-01 — le run a echoue en 0 s, et GitHub a dit
           # « this run likely failed because of a workflow file issue ».
-          if [ "${{ inputs.epreuve }}" = "divergence_forcee" ]; then
+          if [ "${{ inputs.epreuve }}" = "divergence_schema" ]; then
             python3 -c "import json; m=json.load(open('/tmp/schema.json')); m['ecarts'][0]['colonnesManquantes']=['publication_slug']; json.dump(m, open('/tmp/schema.json','w')); print('EPREUVE : mesure amputee de publication_slug -- ce run DOIT echouer.')"
           fi
           # LE VERDICT EST CALCULE ICI, PAS DANS LA ROUTE : c'est ce qui rend

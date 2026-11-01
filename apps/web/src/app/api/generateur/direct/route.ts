@@ -33,6 +33,7 @@ import { moteurChoisi } from '@/lib/apps/interrupteur-moteur'
 import { DOMAINE_PUBLIC, TEMOIN_GENERIQUE } from '@/lib/apps/sous-domaine'
 import { boucleEcriture, CONSIGNE, pageAutonome } from '@/lib/apps/boucle-directe'
 import { nomProduitValide } from '@/lib/apps/nom-produit'
+import { proportionEprouvee } from '@/lib/apps/portee-epreuve'
 import { appelerFournisseur, CONFIGS, fournisseurChoisi } from '@/lib/apps/fournisseur'
 import { assembler } from '@/lib/apps/bac-a-sable'
 import { jugerExecution } from '@/lib/apps/juge-execution'
@@ -480,8 +481,12 @@ export async function POST(req: Request) {
           resultat.execution.indisponible === undefined &&
           (resultat.execution.ecransDecouverts ?? 0) > (resultat.execution.ecransVisites ?? 0)
             ? [
-                `Application PARTIELLEMENT éprouvée : ${String(resultat.execution.ecransVisites ?? 0)} ` +
-                  `contrôle(s) ouverts sur ${String(resultat.execution.ecransDecouverts ?? 0)} trouvés`,
+                'Application PARTIELLEMENT éprouvée : ' +
+                  proportionEprouvee(
+                    resultat.execution.ecransVisites ?? 0,
+                    resultat.execution.ecransDecouverts ?? 0,
+                    resultat.execution.ecransDistincts ?? 0,
+                  ),
               ]
             : []),
           ...(resultat.execution !== null && resultat.execution.indisponible !== undefined

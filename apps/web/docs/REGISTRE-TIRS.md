@@ -371,6 +371,28 @@ porte le SQL de `sqlPour` — erreur de syntaxe, trois cycles perdus. La
 consigne est maintenant écrite EN TÊTE du bloc concerné : dans ce fichier, des
 guillemets français, jamais d'accent grave.
 
+### LOT B — `sites_public` ET LA MARGE : EN ATTENTE, AVEC SA PRÉMISSE NON VÉRIFIÉE
+
+**ÉTAT MESURÉ** : 12 lectures de `sites_public`, **toutes avec la clef
+anonyme**. `shared.tsx:394` lit `'*'` et son résultat alimente `sitePricing`
+à la ligne 523 ; `fetchProduct.ts:80` de même via la ligne 162. Retirer
+`cj_margin_percent` de la vue ne casserait rien visiblement : `sitePricing`
+retomberait sur `DEFAULT_MARGIN_PERCENT` et **les prix affichés changeraient
+en silence sur huit boutiques en ligne**. Il n'y a donc PAS de fermeture
+gratuite.
+
+**L'ANALYSE DE RISQUE CI-DESSOUS REPOSE SUR UNE PRÉMISSE NON VÉRIFIÉE** :
+« basculer vers la clef de service est risqué parce qu'elle contourne la
+RLS ». ⚠ **À vérifier avant d'ouvrir B : `sites_public` porte-t-elle
+`security_invoker` ?** Si c'est une vue ordinaire, la RLS ne s'y applique
+DÉJÀ pas aujourd'hui, et le risque décrit n'existe pas — l'analyse est alors
+nulle, et B est peut-être beaucoup moins cher qu'écrit ici. Ne renoncez pas à
+B sur la foi de ce paragraphe sans avoir posé cette question.
+
+(Les deux comptes qui servent de filet, eux, restent vrais et se mesurent en
+exerçant : `blog_posts` à 2 lignes visibles sur 5, les sélections à 19 sur
+87.)
+
 ### DEUX DETTES SUR LE MÊME ÉCRAN — à faire ensemble (2026-11-01)
 
 Trouvées en passant, consignées sans être touchées. Elles concernent toutes
@@ -533,4 +555,162 @@ depuis zéro : **vérifier d'abord que rien d'autre ne tournait.**
 Et la CI, elle, exécute ses étapes **en série** (un seul job, aucune matrice,
 aucun `needs` — `spawnSync` côté gate) : la condition fidèle est donc bien
 « suite complète, rien d'autre ».
+
+## LE LOT SCHÉMA — MESURÉ LOCALEMENT, PREUVE CI EN VOL (2026-11-01)
+
+Mesuré contre la base vivante, code de sortie lu avant tout filtre :
+
+```
+VERIFICATEUR EXIT=0   ✅ SCHÉMA CONFORME au DDL du dépôt
+RPC ouverte à la clef anonyme : False
+app_generations      — 0 écart de contrainte · 0 de colonne · 0 non mesuré
+app_generations_test — 0 écart de contrainte · 0 de colonne · 0 non mesuré
+```
+
+Contraintes de production **lues et validées** (`convalidated`), index uniques
+vus (`pg_index` + `indisvalid`), `PUBLIC` révoqué sur la fonction de lecture.
+Les deux tables à 27 colonnes.
+
+**MAIS CE N'EST PAS « CLOS ».** La preuve CI — l'épreuve `divergence_schema`
+qui doit faire rougir CETTE étape, avec sa sortie brute — n'existe pas encore.
+On ne clôt pas avec la preuve en vol : c'est la règle 9 dans l'autre sens.
+Le statut sera mis à CLOS quand la sortie brute du run existera.
+
+## CE QUE VAUT UN « LIVRÉE » AUJOURD'HUI — le chiffre, en proportion
+
+Sortie brute de la sonde de production, œuvre `f21071cf`, 2026-11-01 :
+
+```
+visites 24 · decouverts 113   →  21 % de l'application réellement éprouvée
+verifieDansNavigateur : FALSE
+```
+
+**Les deux ensemble disent exactement ce qu'une application livrée a
+traversé** : un cinquième de ses contrôles, dans un simulateur, jamais dans
+un navigateur.
+
+**ET LE RAPPORT AFFICHE DÉSORMAIS LA PROPORTION, pas la paire brute.** Un
+lecteur pressé lit « 24 » et croit que c'est beaucoup. `proportionEprouvee`
+est calculée à UN seul endroit (le juge qui possède les nombres) et employée
+aux trois endroits où le chiffre se lit : l'écran de génération, les
+diagnostics de la route, et la sonde d'après-déploiement — qui dit en plus
+« dans un navigateur réel : NON » sur la même ligne.
+
+## UNE ÉPREUVE QUI MASQUE LES SUIVANTES NE PROUVE QU'ELLE-MÊME
+
+Run `41335971632`, `divergence_forcee` : la sonde du moteur a bien rougi, avec
+sa sortie et son `exit code 1`. Mais le job s'arrête à la première étape en
+échec — **l'étape de schéma n'a jamais tourné**, alors que l'épreuve forgeait
+aussi son corps. J'avais vu rougir un maillon en croyant avoir prouvé la
+chaîne.
+
+Corrigé : **une valeur d'épreuve par étape** (`divergence_forcee` pour le
+moteur, `divergence_schema` pour le schéma), et l'étape de schéma porte
+`if: always()` — sans quoi elle resterait invisible derrière la première.
+
+## LE PÉRIMÈTRE DU DÉNOMINATEUR — « 113 » N'EST PAS LE NOMBRE DE CONTRÔLES
+
+```
+oeuvre f21071cf : visites 24 · decouverts 113 · ecrans 10
+ECRANS DECLARES : 11  (LaCPA, Accueil, Clients, Contact, Produits, Activites,
+                       Actualites, AppelsOffres, Fournisseurs, SuiviDemandes,
+                       Administration)
+```
+
+Le juge accumule ce que `querySelectorAll` trouve APRÈS CHAQUE CLIC : seuls
+les contrôles des écrans **réellement atteints** y entrent. L'œuvre déclarait
+11 écrans, le juge en a ouvert 10 — les contrôles du onzième ne comptent
+nulle part, ni au numérateur ni au dénominateur.
+
+**Un pourcentage trop optimiste est pire qu'un pourcentage absent : il a l'air
+d'une mesure.** Les trois affichages portent donc le périmètre :
+« 24 sur 113 (21 %) des contrôles des 10 écran(s) atteint(s) ».
+
+## DEUX FILTRES QUI ONT COUPÉ MES MESURES
+
+**① `$?` après un tuyau** (déjà consigné) : l'état du filtre, pas de la
+commande.
+
+**② `head -8` sur un `grep`** : ma mesure de `cj_margin_percent` disait
+« employé seulement par l'écran d'édition ». Le `head` avait coupé la ligne
+de `themes/shared.tsx` — le rendu des vitrines. J'allais annoncer un retrait
+« qui ne casse rien » sur une colonne dont **le calcul des prix affichés
+dépend** (`sitePricing` → `calcSellPrice`). Huit boutiques en ligne.
+
+**La règle : un filtre qui tronque une mesure la falsifie.** Compter d'abord,
+tronquer ensuite — ou ne pas tronquer.
+
+## AVANT D'ÉCRIRE UN FICHIER NEUF, NOMMER SA PLACE — UNE LIGNE, TROIS SECONDES
+
+Trois fois le 2026-11-01, j'ai rangé une pièce là où elle ne va pas, et
+**trois fois le dépôt avait déjà la place prévue** :
+
+| la pièce | où je l'ai mise | où elle va | ce qui l'a dit |
+|---|---|---|---|
+| la fonction RPC `contraintes_vivantes` | dans le DDL des tables (`sqlPour`) | `supabase/sql/<nom>.sql` | le cliquet de versionnement des RPC |
+| le script qui retire ses témoins | `lib/apps/` | `scripts/` | le cliquet d'isolation du `delete(` |
+| la phrase `proportionEprouvee` | `juge-execution.ts` (qui importe `node:child_process`) | un module PUR | le build, en six lignes illisibles |
+
+**La règle du propriétaire** : avant d'écrire un fichier neuf, nommer sa place
+et pourquoi, en une ligne. **Si la phrase ne vient pas, c'est que la place
+n'est pas choisie.** Elle aurait attrapé les trois, pour trois secondes
+chacune, au lieu de trois gates et trois allers-retours.
+
+## ET LE RYTHME, PAS LA VIGILANCE
+
+Dix prises de cliquets sur un seul lot, zéro faux positif. Le propriétaire :
+« dix prises sur un seul lot ne mesure pas ta vigilance, ça mesure le rythme —
+le lot est écrit plus vite qu'il n'est pensé. Le remède n'est pas un onzième
+cliquet, c'est moins de choses par lot. » Chaque prise coûte huit minutes de
+gate et un aller-retour, et c'est du temps qui ne va pas au produit.
+
+## EP-314 — LE CRITÈRE DE PURETÉ EST TRANSITIF, ET MON PREMIER ÉTAIT FAUX
+
+J'avais écrit « ce fichier n'importe rien » — en commentaire, donc sans
+pouvoir. Refusé : *un garde qui signale doit faire échouer quelque chose.*
+
+Puis j'ai écrit le cliquet avec le critère « zéro ligne `import` ».
+`nom-produit.ts` a rougi aussitôt : il importe `sous-domaine.ts`, pur lui
+aussi. **Un module pur peut importer un module pur** — ce qui le tue, c'est
+d'ATTEINDRE du serveur, directement ou par un intermédiaire.
+
+Le critère est donc celui que le build applique : rien de `node:`, aucun
+client Supabase, **atteignable**. Deux mutations prouvées, dont la transitive
+qui nomme l'intermédiaire :
+
+```
+import direct    → « atteint depuis portee-epreuve.ts via lui-même »
+import transitif → « atteint depuis nom-produit.ts via sous-domaine.ts »
+```
+
+## LOT A — `catalog_products` : LE PROTOCOLE DU LOT, AVANT DE L'ÉCRIRE
+
+**CE QUI EST OUVERT, MESURÉ** : 40 832 lignes de sourcing lisibles sans
+compte. `supplier_product_id` permet de retrouver le produit chez CJ, donc
+son prix d'achat. La divulgation à l'unité est négligeable ; **le moissonnage
+est le sourcing entier**.
+
+**LES QUATRE CHEMINS ANONYMES, sur 27** (les 23 autres emploient déjà la clef
+de service) :
+
+| # | chemin | forme | ce que le `revoke` casse |
+|---|---|---|---|
+| ① | `themes/shared.tsx:487` | direct, `'id, price, currency'` | le prix des produits POD |
+| ② | `themes/shared.tsx:509` | imbriqué depuis `site_catalog_selections` | la vitrine entière d'un site |
+| ③ | `produits/[id]/fetchProduct.ts:134` | imbriqué | la fiche produit |
+| ④ | `sitemap.ts:159` | imbriqué, `catalog_products(supplier_id)` | **l'indexation des 8 boutiques** |
+
+**POURQUOI QUATRE LIGNES ET PAS UNE** : le `revoke` est GLOBAL — il coupe les
+quatre d'un coup. Et les trois imbriqués sont les dangereux, puisqu'ils
+exigent `SELECT` **sans nommer la table** : un lecteur du diff ne les verra
+pas.
+
+**④ EST LE PIÈGE DE LA FAMILLE DE LA MARGE SILENCIEUSE.** Un sitemap cassé ne
+lève rien, ne s'affiche nulle part, et huit boutiques perdent leur indexation
+pendant des semaines sans qu'un seul écran rougisse.
+
+**LA RÈGLE DU LOT, POSÉE AVANT DE COMMENCER** : une ligne par chemin,
+avant / après, **mesurée en exerçant l'URL** — pas en lisant le code. Un
+chemin sans sa sortie n'est pas basculé. Et les deux filets tiennent :
+`19/87` doit rester `19/87`, `2/5` doit rester `2/5`.
 
