@@ -53,7 +53,7 @@ describe('EP-302 · le juge d’exécution', () => {
       )
       const v = await jugerExecution(await assembleOuEchoue(oeuvre))
       expect(v.indisponible, 'le juge devait se prononcer').toBeUndefined()
-      expect(v.demarre, 'une application morte est déclarée vivante').toBe(false)
+      expect(v.monteDansSimulateur, 'une application morte est déclarée vivante').toBe(false)
       expect(v.erreurs.map((e) => e.message).join(' ')).toMatch(/fontSize/u)
     },
     60_000,
@@ -66,7 +66,7 @@ describe('EP-302 · le juge d’exécution', () => {
         page("function App() { return <main><h1>Bonjour</h1><p>25 000 FCFA</p></main> }"),
       )
       const v = await jugerExecution(code)
-      expect(v.demarre, v.erreurs.map((e) => e.message).join(' | ')).toBe(true)
+      expect(v.monteDansSimulateur, v.erreurs.map((e) => e.message).join(' | ')).toBe(true)
       expect(v.octetsRendus).toBeGreaterThan(10)
       expect(v.texte).toContain('Bonjour')
     },
@@ -89,7 +89,7 @@ describe('EP-302 · le juge d’exécution', () => {
         ),
       )
       const v = await jugerExecution(code)
-      expect(v.demarre, 'un écran mort est passé inaperçu').toBe(false)
+      expect(v.monteDansSimulateur, 'un écran mort est passé inaperçu').toBe(false)
       expect(v.erreurs.map((e) => e.quoi).join(' '), 'l’écran fautif n’est pas nommé').toMatch(
         /Paiements/u,
       )
@@ -129,7 +129,7 @@ describe('EP-302 · le juge d’exécution', () => {
         page('function App() { while (true) {} return <p>jamais</p> }'),
       )
       const v = await jugerExecution(code, { plafondMs: 600 })
-      expect(v.demarre).toBe(false)
+      expect(v.monteDansSimulateur).toBe(false)
       expect(v.erreurs[0]?.quoi).toBe('plafond')
     },
     60_000,
@@ -188,7 +188,7 @@ describe('EP-302 · le juge d’exécution', () => {
       const v = await jugerExecution(code)
       // Le contrôle fautif n'existe QU'APRÈS deux navigations : une
       // énumération unique ne l'aurait jamais ouvert.
-      expect(v.demarre, 'un écran de second niveau est passé inaperçu').toBe(false)
+      expect(v.monteDansSimulateur, 'un écran de second niveau est passé inaperçu').toBe(false)
       expect(v.erreurs.map((e) => e.quoi).join(' ')).toMatch(/second/u)
     },
     60_000,
@@ -247,6 +247,37 @@ describe('EP-302 · le juge d’exécution', () => {
     },
     60_000,
   )
+
+  it('⑭ AUCUNE SURFACE NE DIT « DÉMARRE » — le juge monte un SIMULATEUR', () => {
+    // MESURE DU 2026-11-01 : l'œuvre 950e1b9e rend « demarre = true,
+    // 0 erreur » dans happy-dom et affiche un écran d'erreur dans le Safari
+    // du propriétaire. Le juge a laissé LIVRER DU CASSÉ en annonçant que ça
+    // démarrait. Troisième écran de ce dépôt à dire le faux, après « TOUT
+    // ROULE » et « indisponible » — et celui-ci était le nôtre.
+    //
+    // CONDITION DE RÉOUVERTURE : ce contrôle tombe le jour où un VRAI
+    // NAVIGATEUR entre dans la chaîne de livraison. Alors seulement une
+    // surface pourra écrire « vérifié » sans mentir.
+    const nu = (p: string) =>
+      readFileSync(p, 'utf8').replace(/\/\*[\s\S]*?\*\//gu, ' ').replace(/^\s*\/\/.*$/gmu, ' ')
+    const surfaces = {
+      écran: nu(join(__dirname, '..', '..', '..', 'components', 'onboarding', 'ConversationApplication.tsx')),
+      route: nu(join(__dirname, '..', '..', '..', 'app', 'api', 'generateur', 'direct', 'route.ts')),
+      boucle: nu(join(__dirname, '..', 'boucle-directe.ts')),
+    }
+    for (const [nom, source] of Object.entries(surfaces)) {
+      expect(source, `${nom} annonce encore un « Démarrage vérifié »`).not.toMatch(
+        /Démarrage vérifié/u,
+      )
+      expect(source, `${nom} dit « ne démarre pas » au lieu de « ne se monte pas »`).not.toMatch(
+        /ne démarre pas/u,
+      )
+    }
+    // Et l'écran DIT la limite, il ne se contente pas de l'éviter.
+    expect(surfaces.écran, 'l’écran ne dit pas que rien n’a été vérifié dans un navigateur').toMatch(
+      /NON VÉRIFIÉE DANS UN NAVIGATEUR/u,
+    )
+  })
 
   it('⑥ LE PLAFOND VIENT DE LA PRODUCTION, et il est large À DESSEIN', () => {
     // MESURÉ DANS LA LAMBDA le 2026-10-31, cinq œuvres réelles : 858, 1035,

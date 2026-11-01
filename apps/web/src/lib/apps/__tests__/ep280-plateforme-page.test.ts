@@ -125,8 +125,18 @@ describe('EP-280 · la page offre une plateforme', () => {
     expect(debut, 'la constante PRELUDE a disparu : ce contrôle ne borne plus rien').toBeGreaterThan(
       -1,
     )
+    // DEUX ZONES EMISES, ET DEUX SEULEMENT : le prélude, et l'enveloppe du
+    // module (EP-307, 2026-11-01) qui capture l'erreur DANS le royaume du
+    // client — un iframe à origine opaque masque sinon tout en « Script
+    // error. ». Les deux sont du TEXTE, jamais exécuté ici ; tout appel de
+    // navigateur posé AILLEURS doit continuer de faire rougir.
+    const debutEnv = code.indexOf('const ENVELOPPE_MODULE = {')
+    const finEnv = debutEnv < 0 ? -1 : code.indexOf('} as const', debutEnv)
+    expect(debutEnv, 'l’enveloppe du module a disparu : l’erreur redeviendrait masquée').toBeGreaterThan(-1)
+    const dansUneZone = (i: number) =>
+      (i >= debut && i <= fin) || (debutEnv >= 0 && i >= debutEnv && i <= finEnv)
     const dehors = [...code.matchAll(NAVIGATEUR)]
-      .filter((m) => (m.index ?? 0) < debut || (m.index ?? 0) > fin)
+      .filter((m) => !dansUneZone(m.index ?? 0))
       .map((m) => m[0])
     expect(
       dehors,

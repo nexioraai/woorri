@@ -343,9 +343,9 @@ export async function boucleEcriture(o: {
               '\nLie chacun à une action réelle (état qui change, calcul exécuté), ou marque-le data-demonstration ET dis « Démonstration » à l’écran.',
           )
         }
-        if (execution !== null && execution.indisponible === undefined && !execution.demarre) {
+        if (execution !== null && execution.indisponible === undefined && !execution.monteDansSimulateur) {
           reproches.push(
-            "L'APPLICATION NE DÉMARRE PAS — montée dans un navigateur simulé, elle " +
+            "L'APPLICATION NE SE MONTE PAS — dans un navigateur SIMULÉ, elle " +
               'échoue avant de rendre quoi que ce soit :\n' +
               execution.erreurs
                 .slice(0, 8)
@@ -492,6 +492,9 @@ c.style.cssText="white-space:pre-wrap;font:12px ui-monospace,monospace;margin:8p
 c.textContent=detail;d.appendChild(r);d.appendChild(c);
 p.appendChild(h);p.appendChild(d);
 (document.body||document.documentElement).insertBefore(p,(document.body||document.documentElement).firstChild)}
+window.__deribfyErreur=function(e){
+montrer("Cette application s'est arretee en cours d'execution.",
+String((e&&e.message)||e)+"\\n\\n"+String((e&&e.stack)||""))};
 window.addEventListener("error",function(e){
 montrer("Cette application s'est arretee en cours d'execution.",
 String(e.message||"")+"\\n\\n"+String((e.error&&e.error.stack)||""))});
@@ -499,6 +502,25 @@ window.addEventListener("unhandledrejection",function(e){
 montrer("Cette application s'est arretee en cours d'execution.",
 String((e.reason&&e.reason.stack)||e.reason))});
 })()`
+
+/**
+ * L'ENVELOPPE DU MODULE — du texte ÉMIS, comme le prélude.
+ *
+ * Elle capture l'erreur DANS le module, donc dans le même royaume que le
+ * code du client : un `iframe sandbox="allow-scripts"` avec `srcDoc` a une
+ * ORIGINE OPAQUE, et le navigateur masque alors l'erreur d'un script qu'il
+ * juge d'une autre origine — « Script error. », sans fichier ni ligne.
+ * C'est l'écran que le propriétaire a vu le 2026-11-01.
+ *
+ * Elle est NOMMÉE pour que le cliquet EP-280 puisse la borner : comme
+ * `PRELUDE`, elle contient des appels de navigateur qui ne s'exécutent
+ * JAMAIS ici. Un `window.` posé ailleurs dans ce module doit continuer de
+ * faire rougir.
+ */
+const ENVELOPPE_MODULE = {
+  avant: 'try{\n',
+  apres: '\n}catch(e){window.__deribfyErreur&&window.__deribfyErreur(e)}',
+} as const
 
 /**
  * LA PAGE — autonome, comme celle de l'aperçu.
@@ -555,7 +577,7 @@ export function pageAutonome(code: string, titre: string): string {
     // différé, donc installé APRÈS que l'application a déjà échoué.
     `<script>${PRELUDE}</script>`,
     '</head><body><div id="racine"></div>',
-    `<script type="module">${code}</script>`,
+    `<script type="module">${ENVELOPPE_MODULE.avant}${code}${ENVELOPPE_MODULE.apres}</script>`,
     '</body></html>',
   ].join('')
 }

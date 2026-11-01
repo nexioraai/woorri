@@ -11,7 +11,7 @@
 import type { jugerExecution } from '../juge-execution'
 
 export const jugeMuet: typeof jugerExecution = async () => ({
-  demarre: true,
+  monteDansSimulateur: true,
   erreurs: [],
   octetsRendus: 1,
   texte: '',

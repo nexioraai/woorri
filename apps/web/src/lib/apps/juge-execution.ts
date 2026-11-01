@@ -41,7 +41,19 @@ export type ErreurExecution = {
 }
 
 export type VerdictExecution = {
-  readonly demarre: boolean
+  /**
+   * MONTE DANS UN SIMULATEUR — ET RIEN DE PLUS (2026-11-01).
+   *
+   * Ce juge monte l'œuvre dans happy-dom, pas dans un navigateur. MESURE
+   * QUI L'A PROUVÉ : l'œuvre 950e1b9e rend `demarre = true, 0 erreur` ici,
+   * et affiche un écran d'erreur dans le Safari du propriétaire. Le juge a
+   * donc laissé LIVRER DU CASSÉ en annonçant que ça démarrait.
+   *
+   * Le nom dit désormais ce qu'il mesure. Tant qu'un vrai navigateur n'est
+   * pas dans la chaîne, aucune surface — diagnostics, écran, sonde,
+   * registre — ne doit écrire « démarre » ni « vérifié » tout court.
+   */
+  readonly monteDansSimulateur: boolean
   readonly erreurs: readonly ErreurExecution[]
   readonly octetsRendus: number
   readonly texte: string
@@ -129,7 +141,7 @@ export async function jugerExecution(
   options: { readonly plafondMs?: number; readonly decantationMs?: number } = {},
 ): Promise<VerdictExecution> {
   const debut = Date.now()
-  const vide: VerdictExecution = { demarre: false, erreurs: [], octetsRendus: 0, texte: '', ms: 0 }
+  const vide: VerdictExecution = { monteDansSimulateur: false, erreurs: [], octetsRendus: 0, texte: '', ms: 0 }
   let dossier: string | null = null
   try {
     dossier = await mkdtemp(join(tmpdir(), 'deribfy-exec-'))
@@ -212,7 +224,7 @@ export async function jugerExecution(
       ecrans?: { texte: string; exerce: boolean }[]
     }
     return {
-      demarre: lu.monte && lu.erreurs.length === 0,
+      monteDansSimulateur: lu.monte && lu.erreurs.length === 0,
       erreurs: lu.erreurs,
       octetsRendus: lu.octetsRendus,
       texte: lu.texte,

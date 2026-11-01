@@ -41,6 +41,42 @@ Après la course : preuve zip (install/build/start, répertoire neuf) et
 vérification mécanique d'installabilité de la page publiée (manifeste,
 icônes, CSP) — le geste du téléphone appartient au propriétaire.
 
+## Le juge mesurait un simulateur, et disait « démarre » — 2026-11-01
+
+L'œuvre `950e1b9e` a été LIVRÉE avec, au journal :
+
+    monte dans happy-dom → demarre = true · 0 erreur
+
+Ouverte dans le Safari du propriétaire, elle affiche **« Cette application
+s'est arrêtée en cours d'exécution »**. Le juge a donc laissé livrer du
+cassé en annonçant que ça démarrait.
+
+**La cause** : il monte l'œuvre dans `happy-dom`, un simulateur, et non
+dans un navigateur. Le mot « démarre » promettait ce qu'il ne mesurait pas.
+Troisième écran de ce dépôt à dire le faux — après « TOUT ROULE » pendant
+qu'un maillon était mort, et « indisponible » en silence — et celui-ci
+était **le nôtre**.
+
+**Correction du mot, partout** (diagnostics, écran, sonde, registre) :
+`monteDansSimulateur`, et l'écran écrit en toutes lettres **« NON VÉRIFIÉE
+DANS UN NAVIGATEUR »**. Un cliquet interdit le retour de « Démarrage
+vérifié » et de « ne démarre pas ».
+
+**Condition de réouverture** : ce vocabulaire tombe le jour où un vrai
+navigateur entre dans la chaîne de livraison. L'arbitrage du propriétaire :
+la BOUCLE garde le simulateur (rapide, gratuit, il attrape déjà beaucoup) ;
+la PORTE DE LIVRAISON exigera un vrai navigateur, et aucune œuvre ne pourra
+être appelée « livrée » avant qu'il ait répondu — « en vérification »
+jusque-là. Mesures à produire avant : taille du paquet Chromium sans tête,
+démarrage à froid, durée d'un montage réel contre les 900–2300 ms de
+happy-dom.
+
+**Et l'aperçu ne masque plus** : il servait la page dans un `iframe
+sandbox="allow-scripts"` à **origine opaque**, où le navigateur réduit
+toute erreur à « Script error. ». L'erreur est désormais capturée DANS le
+module — même royaume, message et pile entiers. Mesuré sur un témoin :
+« Cannot read properties of undefined (reading 'montant') ».
+
 ## Leçon — 2026-11-01 : ce n'était pas le vocabulaire, c'était l'AXE
 
 Le tir 88c94164 a produit ONZE noms inventés — et AUCUN n'était un nom de

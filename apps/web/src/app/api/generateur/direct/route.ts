@@ -138,7 +138,7 @@ export async function GET(req: Request) {
     surQuoi: string
     octets: number
     utilisable: boolean
-    demarre: boolean
+    monteDansSimulateur: boolean
     ms: number
     visites: number
     decouverts: number
@@ -152,7 +152,7 @@ export async function GET(req: Request) {
       surQuoi: o.nom,
       octets: a.code.length,
       utilisable: j.indisponible === undefined,
-      demarre: j.demarre,
+      monteDansSimulateur: j.monteDansSimulateur,
       ms: j.ms,
       // LE DENOMINATEUR SE DIT TOUJOURS, ici aussi : la sonde rapportait
       // « visites undefined » alors que le juge, lui, comptait — ma propre
@@ -176,7 +176,7 @@ export async function GET(req: Request) {
   // Exigence du propriétaire : que la sonde l'atteste DANS la fonction réelle.
   const execution = v.ok
     ? await jugerExecution(v.code)
-    : { demarre: false, indisponible: 'témoin inassemblable', ms: 0, erreurs: [], octetsRendus: 0, texte: '' }
+    : { monteDansSimulateur: false, indisponible: 'témoin inassemblable', ms: 0, erreurs: [], octetsRendus: 0, texte: '' }
   // EP-306 : les deux reglages peuvent diverger chez l'hebergeur, et alors
   // l'ecran frappe a une porte que le serveur a fermee. Les deux portes
   // refusent bien, donc rien ne depense — mais l'impasse serait MUETTE, et
@@ -204,7 +204,9 @@ export async function GET(req: Request) {
         decouverts: execution.ecransDecouverts ?? 0,
         ecrans: execution.ecransDistincts ?? 0,
         utilisable: execution.indisponible === undefined,
-        demarre: execution.demarre,
+        monteDansSimulateur: execution.monteDansSimulateur,
+        // Le mot dit ce qu'il mesure : happy-dom, pas un navigateur.
+        verifieDansNavigateur: false,
         ms: execution.ms,
         ...(execution.indisponible === undefined ? {} : { indisponible: execution.indisponible }),
         ...(execution.erreurs.length === 0 ? {} : { erreurs: execution.erreurs.slice(0, 3) }),
@@ -428,9 +430,9 @@ export async function POST(req: Request) {
             : []),
           ...(resultat.execution !== null &&
           resultat.execution.indisponible === undefined &&
-          !resultat.execution.demarre
+          !resultat.execution.monteDansSimulateur
             ? [
-                "L’application ne démarre pas : " +
+                'L’application ne se monte pas (simulateur) : ' +
                   (resultat.execution.erreurs[0]?.message ?? 'cause inconnue'),
               ]
             : []),
