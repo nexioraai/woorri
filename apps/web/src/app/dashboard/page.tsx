@@ -7,6 +7,7 @@ import Sidebar from '@/components/Sidebar';
 import { supabase } from '@/lib/supabase';
 import { computeAiScore } from '@/app/lib/aiScore';
 import { useTranslation } from '@/lib/translations';
+import { oublierGeneration } from '@/lib/apps/suivi-generation';
 
 /**
  * UNE APPLICATION TELLE QUE LA LISTE LA MONTRE.
@@ -121,6 +122,56 @@ export default function DashboardPage() {
       if (!res.ok || !d?.lien) { setApercuErreur(d?.error ?? "L'adresse n'a pas pu être créée."); return; }
       setLienPublic({ id: site.slug, url: d.lien });
     } catch { setApercuErreur("L'adresse n'a pas pu être créée. Réessayez."); }
+  };
+
+  /**
+   * SUPPRIMER — doucement, et en disant ce qui disparaît.
+   *
+   * Le propriétaire a dû vider le stockage de son navigateur à la main pour
+   * se débarrasser d'une ligne morte : la suppression nettoie donc AUSSI
+   * la mémoire locale, sinon l'écran rouvrirait sur une œuvre effacée.
+   */
+  const supprimer = async (a: { id: string; nom: string | null }) => {
+    const quoi = a.nom !== null && a.nom !== '' ? `« ${a.nom} »` : 'cette application';
+    if (
+      !window.confirm(
+        `Supprimer ${quoi} ?\n\n` +
+          '· Son lien public cessera de répondre immédiatement.\n' +
+          '· Son adresse ne sera jamais réattribuée à quelqu’un d’autre.\n' +
+          '· Le projet que vous avez téléchargé reste à vous, sur votre ordinateur,\n' +
+          '  et continue de fonctionner.',
+      )
+    ) {
+      return;
+    }
+    setApercuErreur(null);
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) { setApercuErreur('Session expirée — reconnectez-vous.'); return; }
+    const res = await fetch('/api/generateur/supprimer', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+      body: JSON.stringify({ id: a.id }),
+    });
+    const d = (await res.json().catch(() => ({}))) as { error?: string; doitArreter?: boolean };
+    if (!res.ok) {
+      if (d.doitArreter === true) {
+        if (!window.confirm(`${String(d.error)}\n\nArrêter la génération puis supprimer ?`)) return;
+        const r2 = await fetch('/api/generateur/supprimer', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+          body: JSON.stringify({ id: a.id, confirmerArret: true }),
+        });
+        if (!r2.ok) {
+          setApercuErreur(String(((await r2.json().catch(() => ({}))) as { error?: string }).error ?? 'La suppression a échoué.'));
+          return;
+        }
+      } else {
+        setApercuErreur(String(d.error ?? 'La suppression a échoué.'));
+        return;
+      }
+    }
+    oublierGeneration(window.localStorage);
+    setApplications((liste) => liste.filter((x) => x.id !== a.id));
   };
 
   const telecharger = async (a: Application) => {
@@ -454,6 +505,15 @@ export default function DashboardPage() {
                           Télécharger
                         </button>
                       </div>
+                      {/* LA SUPPRESSION NOMME CE QU'ELLE FAIT. « Êtes-vous
+                          sûr ? » ne dit rien : la personne doit savoir que le
+                          lien cesse de répondre, et que le projet déjà
+                          téléchargé, lui, reste à elle et continue de
+                          fonctionner. */}
+                      <button type="button" onClick={() => { void supprimer(a); }}
+                        className="px-2 py-2 rounded-xl text-xs font-semibold border border-red-500/20 text-red-300/70 hover:text-red-200 hover:border-red-400/40 transition-all">
+                        Supprimer
+                      </button>
                       {lienPublic?.id === a.id && (
                         <div className="flex items-center gap-2 text-xs">
                           <a href={lienPublic.url} target="_blank" rel="noreferrer"

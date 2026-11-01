@@ -143,3 +143,61 @@ export async function creerSousDomaine(nom: string, clefs: Clefs): Promise<Resul
 
   return { ok: true, hote }
 }
+
+/**
+ * RETIRE L'ADRESSE D'UNE ŒUVRE — le DNS et le domaine, pas le NOM.
+ *
+ * ── CE QU'ELLE DÉFAIT, ET CE QU'ELLE NE DÉFAIT JAMAIS.
+ *
+ * Elle supprime le CNAME chez Cloudflare et détache le domaine de chez
+ * Vercel : l'adresse cesse de répondre. Elle ne libère PAS le nom —
+ * c'est la quarantaine (A1 du propriétaire, 2026-11-01), et elle est
+ * tenue ailleurs, par la pierre tombale laissée en base.
+ *
+ * ── ÉCHOUER SANS EFFACER.
+ *
+ * Si le DNS refuse, l'appelant NE DOIT PAS effacer la ligne : un nom resté
+ * pointé sur du vide, sans propriétaire connu, serait pire que l'échec
+ * lui-même. C'est la quatrième fois ce week-end que « échouer sans
+ * effacer » est la bonne réponse — après l'erreur de sous-domaine qui
+ * n'avale pas la publication, le juge indisponible qui se déclare, et le
+ * traçage amputé qui refuse le déploiement.
+ *
+ * Un enregistrement DÉJÀ absent est un SUCCÈS : supprimer deux fois doit
+ * pouvoir se faire sans conséquence.
+ */
+export async function retirerSousDomaine(nom: string, clefs: Clefs): Promise<ResultatSousDomaine> {
+  if (!nomValide(nom)) return { ok: false, erreur: 'nom invalide' }
+  const hote = `${nom}.${DOMAINE_PUBLIC}`
+  const cf = { Authorization: `Bearer ${clefs.cloudflareToken}`, 'content-type': 'application/json' }
+
+  const zr = (await (
+    await fetch(`https://api.cloudflare.com/client/v4/zones?name=${DOMAINE_PUBLIC}`, { headers: cf })
+  ).json()) as { result?: { id: string }[] }
+  const zone = zr.result?.[0]?.id
+  if (zone === undefined) return { ok: false, erreur: `zone ${DOMAINE_PUBLIC} introuvable chez Cloudflare` }
+
+  const existants = (await (
+    await fetch(
+      `https://api.cloudflare.com/client/v4/zones/${zone}/dns_records?type=CNAME&name=${hote}`,
+      { headers: cf },
+    )
+  ).json()) as { result?: { id: string }[] }
+  for (const enr of existants.result ?? []) {
+    const dr = await fetch(
+      `https://api.cloudflare.com/client/v4/zones/${zone}/dns_records/${enr.id}`,
+      { method: 'DELETE', headers: cf },
+    )
+    if (!dr.ok) return { ok: false, erreur: `le DNS refuse de retirer ${hote}` }
+  }
+
+  // 404 = déjà détaché : c'est un succès, comme 409 l'est à la création.
+  const vr = await fetch(
+    `https://api.vercel.com/v9/projects/${clefs.vercelProjectId}/domains/${hote}`,
+    { method: 'DELETE', headers: { Authorization: `Bearer ${clefs.vercelToken}` } },
+  )
+  if (!vr.ok && vr.status !== 404) {
+    return { ok: false, erreur: `Vercel refuse de détacher ${hote} (${String(vr.status)})` }
+  }
+  return { ok: true, hote }
+}

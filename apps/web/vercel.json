@@ -95,6 +95,10 @@
     {
       "path": "/api/cron/generations",
       "schedule": "* * * * *"
+    },
+    {
+      "path": "/api/cron/purge-supprimees",
+      "schedule": "30 4 * * *"
     }
   ]
 }

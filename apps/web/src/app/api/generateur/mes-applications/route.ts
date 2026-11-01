@@ -43,6 +43,10 @@ export async function GET(req: Request) {
   const lu = await supabaseAdmin
     .from(TABLE_GENERATIONS)
     .select('id, created_at, statut, moteur, fournisseur, cout_usd, duree_ms, nom, demande, document')
+    // Une œuvre supprimée n'apparaît plus : l'écran est le seul endroit où
+    // la suppression doit être totale et immédiate. La ligne, elle, survit
+    // trente jours (rattrapage) puis reste en pierre tombale (le nom).
+    .neq('statut', 'supprimee')
     .eq('owner_id', garde.userId)
     .order('created_at', { ascending: false })
     .limit(50)
