@@ -36,6 +36,7 @@ import { TABLE_GENERATIONS } from '@/lib/apps/journal'
 import { construireApercu } from '@/lib/apps/apercu'
 import { assembler } from '@/lib/apps/bac-a-sable'
 import { pageAutonome } from '@/lib/apps/boucle-directe'
+import { TITRE_SANS_NOM } from '@/lib/apps/nom-produit'
 import { ENTETES_PAGE_PUBLIEE, jetonValide } from '@/lib/apps/publication'
 
 export const runtime = 'nodejs'
@@ -61,7 +62,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ jeton: string 
 
   const lu = await supabaseAdmin
     .from(TABLE_GENERATIONS)
-    .select('document')
+    .select('document, nom')
     .eq('publication_jeton', jeton)
     .maybeSingle()
   if (lu.error !== null || lu.data === null) return introuvable()
@@ -73,11 +74,24 @@ export async function GET(_req: Request, ctx: { params: Promise<{ jeton: string 
   // application pourtant livrée et payée. On recompile les fichiers stockés,
   // comme « Revoir » : AUCUN modèle n'est appelé, publier reste gratuit.
   // Les en-têtes sont les mêmes : CSP `sandbox` (origine opaque), noindex.
+  // ── LE TITRE VIENT DE LA BASE, PLUS D'UN LITTÉRAL.
+  //
+  // Cette ligne disait « Application » à tout le monde : l'onglet, le nom
+  // d'installation du manifeste et le titre Apple. La page est recompilée à
+  // chaque lecture, donc renommer en base suffit à les corriger tous les
+  // trois — sans retoucher l'œuvre, sans rappeler un modèle.
+  //
+  // Le repli est NOMMÉ (`TITRE_SANS_NOM`) : les neuf œuvres nées avant ce
+  // lot n'ont pas de nom, et en inventer un ici serait mentir. Le littéral,
+  // lui, est interdit partout ailleurs par EP-309 ⑥.
+  const titre = typeof lu.data.nom === 'string' && lu.data.nom.trim() !== ''
+    ? lu.data.nom.trim()
+    : TITRE_SANS_NOM
   const doc = lu.data.document as { fichiers?: Record<string, string> } | null
   if (doc?.fichiers !== undefined && Object.keys(doc.fichiers).length > 0) {
     const v = await assembler(new Map(Object.entries(doc.fichiers)))
     if (!v.ok) return introuvable()
-    return new Response(pageAutonome(v.code, 'Application'), {
+    return new Response(pageAutonome(v.code, titre), {
       status: 200,
       headers: ENTETES_PAGE_PUBLIEE,
     })

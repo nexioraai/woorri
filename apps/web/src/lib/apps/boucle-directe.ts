@@ -187,6 +187,8 @@ export type ConfigurationClient = { readonly [cle: string]: unknown }
 export function texteDeConfiguration(configuration: ConfigurationClient): string {
   const lignes: string[] = []
   const libelles: Record<string, string> = {
+    nom_produit:
+      'NOM DU PRODUIT (c’est ainsi que l’application s’appelle : écris-le\n  tel quel dans le titre, la barre latérale et l’en-tête — n’invente pas\n  d’autre nom, n’écris jamais « Application »)',
     currency: 'DEVISE (tous les montants affichés l’emploient, aucune autre)',
     market: 'MARCHÉ VISÉ',
     collector_msisdn: 'NUMÉRO D’ENCAISSEMENT',

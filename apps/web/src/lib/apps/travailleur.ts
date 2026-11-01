@@ -51,6 +51,7 @@ import {
 import { estReprenable, etatDeReprise } from './reprise'
 // « Livrée » doit vouloir dire TÉLÉCHARGEABLE. Voir le verdict plus bas.
 import { projectAirSchema } from '@deribfy/air-schema'
+import { TITRE_SANS_NOM } from './nom-produit'
 
 type Lignes = { data: Record<string, unknown>[] | null; error: { message: string } | null }
 
@@ -446,7 +447,10 @@ export function creerTravailleur({
     if (demande.trim() === '') return 'introuvable'
     const neuf = await deposer({
       demande,
-      nom: typeof ligne.nom === 'string' ? ligne.nom : 'application',
+      // QUATRIEME COPIE DU MEME DEFAUT, trouvee en posant le cliquet.
+      // Rejouer une oeuvre sans nom lui recuisait « application » : le
+      // repli est maintenant NOMME et unique (EP-309).
+      nom: typeof ligne.nom === 'string' && ligne.nom.trim() !== '' ? ligne.nom : TITRE_SANS_NOM,
       email: typeof ligne.owner_email === 'string' ? ligne.owner_email : null,
       proprietaire,
     })

@@ -15,6 +15,7 @@ import { creerTravailleur, type BaseGeneration, type MoteurContinuation } from '
 import { TABLE_GENERATIONS } from '@/lib/apps/journal'
 import { deposerGeneration } from '@/lib/apps/service-generations'
 import { intentionDepuis, premiereIntention, texteDe } from '@/lib/apps/dialogue'
+import { nomProduitValide } from '@/lib/apps/nom-produit'
 
 export const runtime = 'nodejs'
 
@@ -46,7 +47,17 @@ export async function POST(req: Request) {
     intention?: unknown
     nom?: unknown
   } | null
-  const nom = typeof corps?.nom === 'string' && corps.nom.trim() !== '' ? corps.nom.trim() : 'application'
+  // ── PAS DE NOM PAR DEFAUT. C'ETAIT LA SOURCE DU DEFAUT.
+  //
+  // Cette ligne repliait sur `'application'` : l'ecran envoyait `nom:
+  // 'application'` par confort, la base le gardait, et la carte affichait
+  // « Application ». Le repli etait silencieux, donc le trou etait
+  // invisible. Il fait maintenant un 400 avec une phrase a lire.
+  const verdictNom = nomProduitValide(typeof corps?.nom === 'string' ? corps.nom : '')
+  if (!verdictNom.ok) {
+    return NextResponse.json({ error: verdictNom.erreur }, { status: 400, headers: { 'Cache-Control': 'no-store' } })
+  }
+  const nom = verdictNom.nom
 
   // ── CE QU'ON DEPOSE EST LE TEXTE QUE P0 LIRA, PAS LE DERNIER MESSAGE.
   //

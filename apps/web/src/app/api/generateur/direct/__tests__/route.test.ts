@@ -99,11 +99,23 @@ const BON = [
   'export const facture = (k: number) => Math.min(k,150)*85 + Math.max(0,k-150)*125 + 402',
 ].join('\n')
 
-const appel = (demande = 'calcule ma facture SNE') =>
+/**
+ * L'APPEL PORTE UN NOM DE PRODUIT (EP-309, 2026-11-01).
+ *
+ * La route le REFUSE s'il manque — aucune valeur par défaut, parce qu'un
+ * défaut est précisément ce qui a produit neuf cartes « Application ». Ce
+ * constructeur en donne un valide pour que les épreuves voisines mesurent ce
+ * qu'elles visent ; le refus, lui, a son propre test ci-dessous.
+ */
+// `null` DIT « n'envoie pas de nom », et pas `undefined` : passer `undefined`
+// à un paramètre à valeur par défaut RÉVEILLE le défaut. Ma première version
+// croyait omettre le nom et envoyait « Facture SNE » — l'épreuve du refus
+// mesurait donc un succès.
+const appel = (demande = 'calcule ma facture SNE', nom: string | null = 'Facture SNE') =>
   new Request('https://deribfy.test/api/generateur/direct', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: 'Bearer j' },
-    body: JSON.stringify({ demande }),
+    body: JSON.stringify({ demande, ...(nom === null ? {} : { nom }) }),
   })
 
 beforeEach(() => {
@@ -206,6 +218,20 @@ describe('EP-276 · la route de l’écriture directe', () => {
       'client.messages.stream(',
     )
     expect(code, 'un appel non streamé subsiste').not.toContain('client.messages.create(')
+  })
+
+  it('⑤bis SANS NOM DE PRODUIT, LA ROUTE REFUSE AVANT DE DÉPENSER', async () => {
+    // Neuf œuvres sont nées sans nom parce que chaque appelant qui n'avait
+    // rien à dire disait « application », et que la route l'acceptait. Elle
+    // refuse maintenant, AVANT le premier appel payant — et le refus porte
+    // une phrase, pas un code.
+    const sansNom = (await (await POST(appel('une appli de tontine', null))).json()) as { error?: string }
+    expect(sansNom.error, JSON.stringify(sansNom)).toContain('nom')
+
+    // ET LE REMPLISSAGE EST REFUSÉ AUSSI : sans cela, l'écran contournerait
+    // la règle en envoyant le mot que le moteur employait lui-même.
+    const remplissage = (await (await POST(appel('une appli de tontine', 'application'))).json()) as { error?: string }
+    expect(remplissage.error, JSON.stringify(remplissage)).toContain('vrai nom')
   })
 
   it('⑥ UN ÉCHEC GARDE TOUT CE QU’IL FAUT POUR LE COMPRENDRE', async () => {

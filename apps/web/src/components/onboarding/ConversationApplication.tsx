@@ -39,6 +39,7 @@ import {
 import { resumeDuJournal } from '@/lib/apps/journal-tirages';
 import type { EtatGeneration } from '@/lib/apps/service-generations';
 import type { EtatMagasin } from '@/lib/apps/exigences-magasin';
+import { AVERTISSEMENT_MARQUE, nomProduitValide } from '@/lib/apps/nom-produit';
 import { moteurChoisi } from '@/lib/apps/interrupteur-moteur';
 import {
   formatDuFichier,
@@ -112,6 +113,19 @@ type Configuration = {
  *  n'est pas une question de configuration, c'est du texte libre qui entre
  *  dans le brief avant son scellement. */
 const AUTRE_CHOSE = 'AUTRE_CHOSE';
+/**
+ * LE NOM DU PRODUIT — demande ICI, et pas dans la table d'elicitation.
+ *
+ * La table vit dans `benchmarks/air-emission/elicitation.mjs`, partagee avec
+ * le chemin du document. Le nom n'est pas une question de configuration du
+ * client : c'est une donnee de Deribfy. L'y ajouter ferait porter a du code
+ * partage un besoin qui n'est pas le sien — et la consigne du proprietaire
+ * est que l'option 2 ne soit pas touchee sans arbitrage.
+ *
+ * C'est la DERNIERE question avant la depense : la personne lit le nom, le
+ * corrige, et voit l'avertissement sur les marques au moment ou elle decide.
+ */
+const NOM_PRODUIT = 'NOM_PRODUIT';
 type Intention = {
   brief: string;
   addendum: { rang: number; code: string; destination: string; question: string; reponse: string }[];
@@ -683,9 +697,39 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
         setMessages((m) => [...m, { role: 'avant', question: q }]);
         return;
       }
+      // ── ET LA DERNIERE QUESTION AVANT L'ARGENT : COMMENT CA S'APPELLE.
+      //
+      // Elle est posee ici, apres tout le reste, parce que c'est le dernier
+      // ecran gratuit. Neuf oeuvres sont nees sans nom et leurs cartes
+      // disent « Application » : le moteur repliait sur ce mot a trois
+      // endroits au lieu de poser une question d'une ligne.
+      if (lues[NOM_PRODUIT] === undefined) {
+        const q: QuestionAvant = {
+          code: NOM_PRODUIT,
+          structure: 'nom',
+          texte:
+            'Comment votre application s’appelle-t-elle ? Ce nom sera son ' +
+            'titre, le nom qu’on verra en l’installant, et il servira à ' +
+            'proposer son adresse publique. ' +
+            AVERTISSEMENT_MARQUE,
+        };
+        setQuestionAvant(q);
+        setMessages((m) => [...m, { role: 'avant', question: q }]);
+        return;
+      }
       // Tout est repondu : on passe la porte chere, une seule fois.
       setQuestionAvant(null);
-      await construire({ texte: demande, autre, config, dejaAffiche: true });
+      await construire({
+        texte: demande,
+        autre,
+        config,
+        dejaAffiche: true,
+        // LE NOM VOYAGE, comme l'echappatoire : `reponsesAvant` ne sera
+        // applique qu'au rendu suivant, et le relire ici le prendrait vide
+        // d'un tour. C'est le defaut que le commentaire de `construire`
+        // raconte deja — on ne le refait pas pour le nom.
+        nom: typeof lues[NOM_PRODUIT] === 'string' ? lues[NOM_PRODUIT] : '',
+      });
     } catch {
       setAvis('Je n’ai pas pu poser mes questions préalables ; je construis avec votre phrase seule.');
       setQuestionAvant(null);
@@ -731,6 +775,39 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
         setMessages((m) => [...m, { role: 'moi', texte }]);
         const suite = { ...reponsesAvant, [questionAvant.code]: texte };
         setReponsesAvant(suite);
+        if (questionAvant.code === NOM_PRODUIT) {
+          // MEME FONCTION QUE LA ROUTE : une seule source, deux usages. Un
+          // controle d'ecran plus permissif que le serveur ferait recevoir a
+          // la personne un refus qu'aucun ecran n'avait annonce.
+          const verdict = nomProduitValide(texte);
+          if (!verdict.ok) {
+            // ON NE PROGRESSE PAS : la question reste ouverte, et la raison
+            // s'affiche. Avancer avec un nom refuse reporterait l'erreur
+            // apres la depense.
+            // ON REPOSE LA QUESTION avec la raison : il n'existe pas de rôle
+            // de message « simple phrase de Deribfy », et `incompris` dirait
+            // « je ne construis rien » — faux, puisqu'on construira dès que
+            // le nom sera bon. La question rouverte EST la réponse.
+            const redemande: QuestionAvant = {
+              code: NOM_PRODUIT,
+              structure: 'nom',
+              texte: `${verdict.erreur} Comment votre application s’appelle-t-elle ?`,
+            };
+            setQuestionAvant(redemande);
+            setMessages((m) => [...m, { role: 'avant', question: redemande }]);
+            // VRAI RETOUR EN ARRIERE, pas un geste decoratif : `reponsesAvant`
+            // est ici la valeur D'AVANT `suite` (fermeture du rendu courant),
+            // donc ce setter annule l'enregistrement du nom refuse. Sans lui,
+            // le tour suivant trouverait la reponse « deja donnee » et ne
+            // reposerait jamais la question.
+            setReponsesAvant(reponsesAvant);
+            return;
+          }
+          const avecNom = { ...reponsesAvant, [NOM_PRODUIT]: verdict.nom };
+          setReponsesAvant(avecNom);
+          await lancerPreVol(demandeEnAttente, avecNom, autreChose);
+          return;
+        }
         if (questionAvant.code === AUTRE_CHOSE) {
           // « non » n'est pas une precision : on l'ecarte du brief plutot que
           // de faire lire a P0 une phrase qui ne dit rien.
@@ -782,6 +859,8 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
     config?: Configuration;
     /** `true` quand la porte du pre-vol a deja affiche la demande. */
     dejaAffiche?: boolean;
+    /** Le nom du produit, PASSE et jamais relu — meme raison que `autre`. */
+    nom?: string;
   }) => {
     const texte = opts.texte;
     // La note du document joint est MISE DE COTE avant d'etre effacee : si le
@@ -886,7 +965,7 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
         const res = await fetch('/api/generateur/direct', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${await jeton()}` },
-          body: JSON.stringify({ demande: texte, configuration }),
+          body: JSON.stringify({ demande: texte, configuration, nom: opts.nom ?? '' }),
           signal: avorteur.signal,
         });
         // ── ON LIT UN FLUX QUI BAT, PAS UN JSON D'UN BLOC.
@@ -991,7 +1070,10 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
         const res = await fetch('/api/generateur/deposer', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${await jeton()}` },
-          body: JSON.stringify({ ...corps, nom: 'application' }),
+          // PLUS DE LITTERAL ICI : c'est cette ligne qui a produit neuf cartes
+          // « Application ». Le nom vient de la personne, et la route le
+          // refuse s'il est vide — le trou se voit au lieu de se combler.
+          body: JSON.stringify({ ...corps, nom: opts.nom ?? '' }),
           signal: avorteur.signal,
         });
         const d = (await res.json().catch(() => ({}))) as {

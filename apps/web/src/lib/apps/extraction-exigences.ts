@@ -43,6 +43,7 @@
  *   · L'HUMAIN — tous les motifs, puisque c'est lui qui parle.
  */
 import { decouperEnEnonces, enoncesNumerotes, type Enonce } from './enonces'
+import { nomProduitValide } from './nom-produit'
 
 /** Qui a le droit de poser ce motif. Un motif sans source est refusé. */
 export type Voix = 'moteur' | 'modele' | 'humain'
@@ -95,7 +96,28 @@ export type Exigence = {
 
 export type NonExigence = { readonly enonce: number; readonly motif: string }
 
+/**
+ * LE NOM DU PRODUIT, PROPOSÉ PAR LE DOCUMENT.
+ *
+ * `enonce` est un NUMÉRO, pas une phrase : la même discipline que les
+ * exigences. La personne lit le texte à côté du numéro et voit d'où le nom
+ * sort. Aucune paraphrase n'est possible, donc aucune provenance inventée.
+ *
+ * `dansLeDocument` est MESURÉ ici, jamais déclaré par le modèle : on
+ * cherche le nom dans le cahier. S'il y est, le document portait déjà son
+ * nom et on le REPREND ; s'il n'y est pas, c'est une PROPOSITION, et
+ * l'écran doit le dire autrement. Demander au modèle « l'as-tu inventé ? »
+ * serait lui demander de se juger.
+ */
+export type NomProduit = {
+  readonly nom: string
+  readonly enonce: number | null
+  readonly dansLeDocument: boolean
+}
+
 export type Extraction = {
+  /** Null quand le modèle n'en propose pas : on ne baptise pas à sa place. */
+  readonly nomProduit: NomProduit | null
   readonly exigences: readonly Exigence[]
   readonly nonExigences: readonly NonExigence[]
   /** Énoncés qu'aucune corbeille ne réclame. Cible : zéro. */
@@ -139,8 +161,16 @@ CHAQUE énoncé va dans EXACTEMENT UNE des deux corbeilles :
 Si une exigence ne peut pas être livrée, dis-le avec un motif parmi :
 ${motifs}. N'emploie aucun autre motif.
 
+Donne aussi le NOM DU PRODUIT, 2 à 40 signes :
+  · si le document en porte DÉJÀ un, reprends-le À L'IDENTIQUE — tu ne
+    rebaptises pas le produit de quelqu'un d'autre ;
+  · sinon seulement, propose-en un.
+  · dans les deux cas, cite le numéro de l'énoncé qui le porte ou l'inspire.
+  · n'écris pas « Application » ni « Projet » : ce ne sont pas des noms.
+
 Réponds UNIQUEMENT par un objet JSON de cette forme, sans rien avant ni après :
-{"exigences":[{"nom":"Moyens de paiement","enonces":[12,13,47]},
+{"nomProduit":{"nom":"Hayine","enonce":3},
+ "exigences":[{"nom":"Moyens de paiement","enonces":[12,13,47]},
               {"nom":"Notifications","enonces":[20],"horsPerimetre":{"motif":"service_externe_requis"}}],
  "nonExigences":[{"enonce":1,"motif":"metadonnee"}]}`
 }
@@ -157,6 +187,16 @@ function lireJson(texte: string): unknown {
   }
 }
 
+/** Aplatit accents et casse pour chercher un nom dans un document. */
+function aplati(texte: string): string {
+  return texte.toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '')
+}
+
+/** Le nom figure-t-il VRAIMENT dans le cahier ? Mesure, pas déclaration. */
+function contient(cahier: string, nom: string): boolean {
+  return aplati(cahier).includes(aplati(nom))
+}
+
 /**
  * Vérifie la réponse du modèle contre les énoncés réels, et rend l'extraction
  * assainie. Ne jette jamais : un refus est une DONNÉE, pas une panne.
@@ -166,11 +206,12 @@ export function verifierExtraction(reponse: string, cahier: string): Extraction 
   const valides = new Set(enonces.map((e) => e.id))
   const refus: string[] = []
   const lu = lireJson(reponse) as {
+    nomProduit?: { nom?: unknown; enonce?: unknown }
     exigences?: { nom?: unknown; enonces?: unknown; horsPerimetre?: { motif?: unknown } }[]
     nonExigences?: { enonce?: unknown; motif?: unknown }[]
   } | null
   if (lu === null) {
-    return { exigences: [], nonExigences: [], orphelins: [...valides], refus: ['réponse illisible : aucun objet JSON'], enonces }
+    return { nomProduit: null, exigences: [], nonExigences: [], orphelins: [...valides], refus: ['réponse illisible : aucun objet JSON'], enonces }
   }
 
   const pris = new Set<number>()
@@ -241,7 +282,26 @@ export function verifierExtraction(reponse: string, cahier: string): Extraction 
     return ex
   })
 
+  // ── LE NOM : validé par la même porte que partout, et MESURÉ contre le
+  // cahier. Un nom refusé devient un `refus` visible, pas un silence : la
+  // personne doit savoir que le modèle a proposé quelque chose
+  // d'inacceptable, sinon elle croira qu'il n'a rien proposé.
+  let nomProduit: NomProduit | null = null
+  const nomBrut = lu.nomProduit?.nom
+  if (typeof nomBrut === 'string' && nomBrut.trim() !== '') {
+    const verdict = nomProduitValide(nomBrut)
+    if (!verdict.ok) {
+      refus.push(`nom de produit refusé (« ${nomBrut.trim().slice(0, 40)} ») : ${verdict.erreur}`)
+    } else {
+      const idNom = typeof lu.nomProduit?.enonce === 'number' && valides.has(lu.nomProduit.enonce)
+        ? lu.nomProduit.enonce
+        : null
+      nomProduit = { nom: verdict.nom, enonce: idNom, dansLeDocument: contient(cahier, verdict.nom) }
+    }
+  }
+
   return {
+    nomProduit,
     exigences: final,
     nonExigences,
     orphelins: enonces.filter((e) => !pris.has(e.id)).map((e) => e.id),

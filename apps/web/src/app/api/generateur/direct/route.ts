@@ -32,6 +32,7 @@ import { TABLE_GENERATIONS } from '@/lib/apps/journal'
 import { moteurChoisi } from '@/lib/apps/interrupteur-moteur'
 import { DOMAINE_PUBLIC, TEMOIN_GENERIQUE } from '@/lib/apps/sous-domaine'
 import { boucleEcriture, CONSIGNE, pageAutonome } from '@/lib/apps/boucle-directe'
+import { nomProduitValide } from '@/lib/apps/nom-produit'
 import { appelerFournisseur, CONFIGS, fournisseurChoisi } from '@/lib/apps/fournisseur'
 import { assembler } from '@/lib/apps/bac-a-sable'
 import { jugerExecution } from '@/lib/apps/juge-execution'
@@ -317,16 +318,29 @@ export async function POST(req: Request) {
   const corps = (await req.json().catch(() => ({}))) as {
     demande?: unknown
     configuration?: unknown
+    nom?: unknown
   }
   const demande = typeof corps.demande === 'string' ? corps.demande.trim() : ''
   if (demande === '') return NextResponse.json({ error: 'demande requise' }, { status: 400 })
+
+  // ── LE NOM DU PRODUIT EST OBLIGATOIRE, ET C'EST LE POINT DU LOT.
+  //
+  // Il ne reçoit PAS de valeur par défaut. Un défaut est précisément ce qui
+  // a produit neuf cartes « Application » : chaque appelant qui n'avait rien
+  // à dire disait « application », et personne ne voyait le trou. Ici le
+  // trou fait un 400 avec une phrase, donc il se voit tout de suite.
+  const verdictNom = nomProduitValide(typeof corps.nom === 'string' ? corps.nom : '')
+  if (!verdictNom.ok) return NextResponse.json({ error: verdictNom.erreur }, { status: 400 })
+  const nom = verdictNom.nom
   // ── LA CONFIGURATION DU PRÉ-VOL VOYAGE AVEC LA DEMANDE (EP-296).
   //
   // Mesuré le 2026-10-31 : l'écran n'envoyait que la demande — la devise
   // validée par EP-293 n'atteignait jamais le moteur, et le tir livré
   // affichait EUR sur une base tchadienne. On ne garde que des champs
   // chaîne : le bloc transmis au modèle est du texte, pas un objet.
-  const configuration: Record<string, string> = {}
+  // Le nom rejoint le bloc qui PRIME sur le cahier : le modèle doit
+  // l'écrire dans l'application, pas en déduire un autre.
+  const configuration: Record<string, string> = { nom_produit: nom }
   if (typeof corps.configuration === 'object' && corps.configuration !== null) {
     for (const [cle, valeur] of Object.entries(corps.configuration as Record<string, unknown>)) {
       if (typeof valeur === 'string' && valeur.trim() !== '' && cle.length <= 40) {
@@ -447,6 +461,7 @@ export async function POST(req: Request) {
     // n'avait aucune raison d'y entrer.
     owner_id: proprietaire,
     demande,
+    nom,
     moteur: 'direct',
     // QUEL FOURNISSEUR a écrit, pour que la comparaison reste lisible.
     // Sa propre colonne : `nom` porte le nom de l'application, pas celui
@@ -549,7 +564,7 @@ export async function POST(req: Request) {
   return {
     ok: true as const,
     id: ecrit.data?.id ?? null,
-    html: pageAutonome(resultat.code, 'Votre application'),
+    html: pageAutonome(resultat.code, nom),
     fichiers: resultat.fichiers.size,
     tours: resultat.tours,
     // EP-297 : le rapport chiffré VOYAGE avec l'œuvre — l'écran le montre,
