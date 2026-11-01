@@ -48,31 +48,49 @@ const OEUVRE_CASSEE: ReadonlyMap<string, string> = new Map(
 )
 
 describe('EP-301 · les jetons inventés sont refusés sans rien exécuter', () => {
-  it('① L’ŒUVRE MORTE DU TIR 88c94164 EST NOMMÉE — TYPO.corps', () => {
+  it('① L’ŒUVRE MORTE DU TIR 88c94164 EST TOUJOURS REFUSÉE — à l’import', () => {
+    // Le vocabulaire a change le 2026-11-01 : GRIS, SEMANTIQUE, RAYON et
+    // TYPO n'existent plus — les couleurs, rayons et tailles sont des
+    // VARIABLES CSS aux noms de shadcn et de Tailwind. L'œuvre stockee, qui
+    // les importe, est donc refusee a l'IMPORT (4 refus) la ou elle l'etait
+    // au MEMBRE (11 refus). Meme defaut, grain plus grossier — et c'est
+    // precisement pourquoi re-rendre un code deja ecrit ne peut pas prouver
+    // le gain du nouveau vocabulaire : seul un tir le dira.
     const d = jugerJetons(OEUVRE_CASSEE, SYSTEME)
     const dits = d.map((x) => x.reference)
-    expect(dits, 'le jeton qui a tué l’application passe encore').toContain('TYPO.corps')
-    expect(dits).toContain('TYPO.petit')
-    expect(dits).toContain('TYPO.h1')
-    // Et ce n'est pas que TYPO : le modèle a inventé dans TOUS les espaces
-    // (GRIS.fond, SEMANTIQUE.attention, RAYON.moyen…). Onze références
-    // mortes dans une œuvre déclarée livrée — la famille, pas l'exemplaire.
-    expect(d.length, 'le juge n’attrape qu’une partie de la famille').toBeGreaterThanOrEqual(10)
-    expect(dits).toContain('GRIS.fond')
-    expect(dits).toContain('SEMANTIQUE.attention')
-    expect(dits).toContain('RAYON.moyen')
-    // Le reproche dit ce qui EXISTE : sinon le modèle devine au tour suivant.
-    const typo = d.find((x) => x.reference === 'TYPO.corps')
-    expect(typo?.connus).toContain('surtitre')
-    expect(typo?.connus).toContain('legende')
+    expect(d.length, 'l’œuvre morte passe desormais').toBeGreaterThan(0)
+    for (const disparu of ['jetons:GRIS', 'jetons:SEMANTIQUE', 'jetons:RAYON', 'jetons:TYPO']) {
+      expect(dits, `${disparu} n’est plus signale`).toContain(disparu)
+    }
+  })
+
+  it('①bis UNE VARIABLE CSS INVENTÉE EST REFUSÉE — elle rend du VIDE', () => {
+    // Pire qu'un jeton invente : var(--primaire) ne PLANTE pas, il ne rend
+    // rien. Defaut silencieux, et on sait ce que ca coute ici.
+    const d = jugerJetons(
+      new Map([['A.tsx', "export const s = { color: 'var(--primaire)', background: 'var(--primary)' }"]]),
+      SYSTEME,
+    )
+    expect(d.map((x) => x.reference)).toContain('var(--primaire)')
+    expect(d.map((x) => x.reference), '--primary existe pourtant').not.toContain('var(--primary)')
+  })
+
+  it('①ter AUCUN className — il n’existe AUCUNE feuille de style', () => {
+    // MESURE : 55 className dans l'œuvre eb7b62b5, zero fichier CSS. Elles
+    // ne rendaient rien, sans erreur. Classe maison ou classe Tailwind
+    // (« bg-primary »), le resultat est le meme.
+    for (const source of ['<div className="bg-primary">x</div>', '<div className={styles.a}>x</div>']) {
+      const d = jugerJetons(new Map([['A.tsx', source]]), SYSTEME)
+      expect(d.map((x) => x.reference), `« ${source} » est passe`).toContain('className')
+    }
   })
 
   it('② LES VRAIS JETONS PASSENT — contrôle négatif', () => {
     const bonne = new Map([
       [
         'App.tsx',
-        "import { TYPO, GRIS, ESPACE } from './systeme/jetons'\n" +
-          'export const s = { ...TYPO.surtitre, color: GRIS.g500, padding: ESPACE.m }\n',
+        "import { ROLE, ESPACE } from './systeme/jetons'\n" +
+          "export const s = { ...ROLE.surtitre, color: 'var(--muted-foreground)', padding: ESPACE.m }\n",
       ],
       ...SYSTEME,
     ])
@@ -111,11 +129,11 @@ describe('EP-301 · les jetons inventés sont refusés sans rien exécuter', () 
       'systeme/jetons.ts',
       (SYSTEME.get('systeme/jetons.ts') ?? '').replace(
         'legende: {',
-        "chapeau: { fontSize: 16 },\n  legende: {",
+        "chapeau: { fontSize: 'var(--text-lg)' },\n  legende: {",
       ),
     )
     const oeuvre = new Map([
-      ['A.tsx', "import { TYPO } from './systeme/jetons'\nexport const s = TYPO.chapeau\n"],
+      ['A.tsx', "import { ROLE } from './systeme/jetons'\nexport const s = ROLE.chapeau\n"],
       ...avecNeuf,
     ])
     expect(jugerJetons(oeuvre, avecNeuf)).toEqual([])

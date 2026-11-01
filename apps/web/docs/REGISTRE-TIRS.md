@@ -41,6 +41,77 @@ Après la course : preuve zip (install/build/start, répertoire neuf) et
 vérification mécanique d'installabilité de la page publiée (manifeste,
 icônes, CSP) — le geste du téléphone appartient au propriétaire.
 
+## Leçon — 2026-11-01 : ce n'était pas le vocabulaire, c'était l'AXE
+
+Le tir 88c94164 a produit ONZE noms inventés — et AUCUN n'était un nom de
+composant : GRIS 5, SEMANTIQUE 2, RAYON 1, TYPO 3. Le modèle n'a jamais
+inventé `CarteDeChiffre` ni `EtatVide` ; il a inventé des couleurs et des
+tailles de texte.
+
+LA CAUSE, lue dans les usages réels :
+
+    TYPO.corps → fontSize d'un bloc de texte courant
+    TYPO.petit → fontSize d'un message d'erreur
+    TYPO.h1    → titre de la barre latérale
+
+Notre échelle était par RÔLE (surtitre, libellé, valeur, légende). Le modèle
+cherchait des TAILLES — « du texte normal », « du petit texte », « un
+titre ». **Aucun rôle ne lui répondait.** Ce n'était donc pas seulement un
+vocabulaire qu'il ne connaissait pas : c'était le MAUVAIS AXE.
+
+Correction : les couleurs, rayons et tailles deviennent des VARIABLES CSS
+aux noms que le modèle a réellement vus — shadcn pour les couleurs et le
+rayon (`--background`, `--muted-foreground`, `--radius`…), Tailwind pour
+l'échelle de texte (`--text-sm`, `--text-2xl`…). On emprunte les NOMS, ni
+shadcn ni Tailwind ne sont installés. Les rôles survivent À L'INTÉRIEUR de
+la bibliothèque, avec une règle d'emploi dite dans la consigne : les rôles
+quand un composant décide, les tailles quand le modèle écrit lui-même.
+
+### « 11 sur 11 » DIT MOINS QUE ÇA N'EN A L'AIR
+
+Le chiffre signifie : **chacune des onze inventions passées a désormais un
+équivalent connu du modèle**. Il ne dit PAS que le modèle n'inventera plus.
+C'est une preuve de COUVERTURE, pas de COMPORTEMENT — et la preuve de
+comportement n'existe que par un tir.
+
+Au passage, une mesure qui a tué une preuve mal conçue : re-rendre le
+document stocké ne peut rien prouver, puisqu'il contient littéralement
+`TYPO.corps` et le contiendra toujours. Changer notre vocabulaire ne
+réécrit pas un fichier déjà écrit.
+
+### Et shadcn lui-même : refusé, pas enterré
+
+MESURÉ : licence MIT (donc livrable à des clients payants, avis de
+copyright à conserver) ; mais ses composants sont écrits en classes
+Tailwind et importent `radix-ui` et `class-variance-authority` — notre
+assembleur les REFUSE (fail-closed), notre liste blanche aussi, et la page
+autonome n'a AUCUNE feuille de style (mesuré : un seul `<style>` de remise
+à zéro, zéro classe Tailwind). shadcn est bloqué par Tailwind, pas par sa
+licence. À rouvrir si une mesure montre un jour que le modèle invente des
+COMPOSANTS — sur un échantillon de un, il n'en invente aucun.
+
+## Décision en attente — la couverture du juge de démarrage (2026-11-01)
+
+MESURÉ en production (`?oeuvres=5`), après correction de l'empreinte
+d'écran : l'œuvre `7be93be8` est éprouvée à **24 contrôles sur 155**
+découverts. Les autres : `eb7b62b5` 19/59, `4a6e160d` 8/12, `cbf1cb34` 8/8.
+
+Le rapport le DIT (« ⚠ Application PARTIELLEMENT éprouvée »), donc rien
+n'est tu. Mais la couverture reste faible sur les œuvres riches, et la
+cause est le budget de 24 visites — une borne de COÛT, pas de vérité :
+couvrir les 155 demanderait dix à quatorze secondes, soit le plafond de
+15 s lui-même.
+
+CE N'EST PAS UNE DETTE, C'EST UNE DÉCISION À PRENDRE : le parcours actuel
+visite des CONTRÔLES ; il faudrait qu'il visite des ÉCRANS d'abord (chaque
+écran distinct au moins une fois, puis ses contrôles), ce qui couvrirait
+l'essentiel pour une fraction du coût. Changement de stratégie de parcours,
+soumis à l'arbitrage du propriétaire — inscrit ici pour qu'il ne se perde
+pas, et à reprendre APRÈS le lot des jetons.
+
+À remesurer alors : le plafond du juge. Il monte à chaque fois que le juge
+voit davantage (1 777 → 1 850 → 2 367 ms).
+
 ## Leçon de méthode — 2026-10-31 : la discipline a évité deux correctifs faux
 
 Trois gates d'affilée ont rougi sur des étapes différentes (`test_marge`,

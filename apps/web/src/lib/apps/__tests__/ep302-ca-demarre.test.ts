@@ -38,14 +38,19 @@ describe('EP-302 · le juge d’exécution', () => {
   it(
     '① L’ŒUVRE MORTE DU TIR 88c94164 NE DÉMARRE PAS, et la cause est nommée',
     async () => {
-      const oeuvre = new Map([
-        ...Object.entries(
+      // L'OEUVRE EST JUGEE TELLE QU'ELLE A ETE LIVREE, avec SA bibliotheque.
+      // Y injecter la bibliotheque COURANTE la rendrait inassemblable des
+      // que le vocabulaire change — or ce n'est pas ce qui se passe en
+      // production : les routes de relecture assemblent les fichiers
+      // STOCKES, bibliotheque comprise (verifie le 2026-11-01). C'est ce
+      // qui garde revisibles les oeuvres deja livrees.
+      const oeuvre = new Map(
+        Object.entries(
           JSON.parse(
             readFileSync(join(__dirname, 'fixtures', 'tir-88c94164.json'), 'utf8'),
           ) as Record<string, string>,
         ),
-        ...fichiersSysteme('XAF'),
-      ])
+      )
       const v = await jugerExecution(await assembleOuEchoue(oeuvre))
       expect(v.indisponible, 'le juge devait se prononcer').toBeUndefined()
       expect(v.demarre, 'une application morte est déclarée vivante').toBe(false)

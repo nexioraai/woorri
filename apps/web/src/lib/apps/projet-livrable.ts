@@ -28,6 +28,7 @@
  *   README.md         en français : les DEUX façons d'utiliser le projet,
  *                     double-clic ou développement.
  */
+import { VARIABLES_CSS } from './bibliotheque-ui'
 
 /** Épinglées sur le dépôt : c'est CETTE version de react qui a compilé. */
 const VERSIONS = Object.freeze({
@@ -106,6 +107,7 @@ const DEV_HTML = `<!doctype html>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Développement</title>
+  <style>${VARIABLES_CSS}*{box-sizing:border-box}body{margin:0;background:var(--background);color:var(--foreground);font-family:system-ui,-apple-system,sans-serif}</style>
 </head>
 <body>
   <div id="racine"></div>

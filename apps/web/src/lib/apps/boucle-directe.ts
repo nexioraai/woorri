@@ -23,7 +23,7 @@ import { importsInterdits, lireFichiers, PAQUETS_AUTORISES } from './ecriture-di
 import { jugerVivacite, type DefautVivacite } from './juge-vivacite'
 import { FICHIER_PERIMETRE, jugerCouverture, type RapportCouverture } from './juge-couverture'
 import { jugerDevise, marqueRecommandee } from './juge-devise'
-import { CONSIGNE_BIBLIOTHEQUE, fichiersSysteme } from './bibliotheque-ui'
+import { CONSIGNE_BIBLIOTHEQUE, fichiersSysteme, VARIABLES_CSS } from './bibliotheque-ui'
 import { jugerJetons, type DefautJeton } from './juge-jetons'
 import { jugerExecution, type VerdictExecution } from './juge-execution'
 
@@ -529,7 +529,7 @@ export function pageAutonome(code: string, titre: string): string {
     '<meta name="apple-mobile-web-app-status-bar-style" content="default" />',
     `<meta name="apple-mobile-web-app-title" content="${sur}" />`,
     `<link rel="apple-touch-icon" href="data:image/png;base64,${ICONE_192}" />`,
-    '<style>*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,sans-serif}</style>',
+    `<style>${VARIABLES_CSS}*{box-sizing:border-box}body{margin:0;background:var(--background);color:var(--foreground);font-family:system-ui,-apple-system,sans-serif}</style>`,
     // LE PRÉLUDE PART EN PREMIER, et en script ORDINAIRE : un module serait
     // différé, donc installé APRÈS que l'application a déjà échoué.
     `<script>${PRELUDE}</script>`,

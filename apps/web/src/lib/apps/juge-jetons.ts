@@ -25,6 +25,8 @@
  * extrait ce qui existe.
  */
 
+import { NOMS_VARIABLES } from './bibliotheque-ui'
+
 export type DefautJeton = {
   readonly fichier: string
   /** `TYPO.corps`, `ui:Tableau`, `Icone nom="fusee"` — ce qui n'existe pas. */
@@ -110,6 +112,8 @@ export function jugerJetons(
   systeme: ReadonlyMap<string, string>,
 ): DefautJeton[] {
   const { espaces, exports, icones } = vocabulaireDe(systeme)
+  // Les variables déclarées par la page — source unique, lue au même endroit.
+  const variables = NOMS_VARIABLES
   const defauts: DefautJeton[] = []
   const vus = new Set<string>()
   const noter = (fichier: string, reference: string, connus: readonly string[]) => {
@@ -145,7 +149,34 @@ export function jugerJetons(
       }
     }
 
-    // ── ③ LES ICÔNES : une icône absente rend un glyphe par défaut muet.
+    // ── ③ LES VARIABLES CSS : un nom inventé rend du VIDE, en silence.
+    //
+    // Les noms viennent de shadcn (couleurs, rayon) et de Tailwind (texte),
+    // mais NI L'UN NI L'AUTRE n'est installé : seules les variables
+    // déclarées dans la page existent. `var(--primaire)` ne plante pas —
+    // il ne rend rien. C'est pire qu'une invention de jeton, qui plantait.
+    for (const m of source.matchAll(/var\(\s*(--[a-z0-9-]+)/gu)) {
+      if (!variables.includes(m[1]!)) noter(fichier, `var(${m[1]!})`, variables)
+    }
+
+    // ── ④ AUCUN className : il n'existe AUCUNE feuille de style.
+    //
+    // MESURÉ sur l'œuvre eb7b62b5 : 55 attributs className dans un projet
+    // sans le moindre fichier CSS — ils ne rendaient RIEN, sans la moindre
+    // erreur. Et le risque s'aggrave avec le vocabulaire emprunté : un
+    // modèle qui voit --primary peut en déduire que Tailwind est là et
+    // écrire « bg-primary ». Classe maison ou classe Tailwind, le résultat
+    // est le même : du HTML nu, en silence.
+    for (const m of source.matchAll(/className\s*=\s*["'{]/gu)) {
+      noter(
+        fichier,
+        'className',
+        ['aucune feuille de style n’existe : employez style={{ }} et var(--…)'],
+      )
+      void m
+    }
+
+    // ── ⑤ LES ICÔNES : une icône absente rend un glyphe par défaut muet.
     for (const m of source.matchAll(/<Icone[^>]*?\snom=["']([^"']+)["']/gu)) {
       if (!icones.includes(m[1]!)) noter(fichier, `Icone nom="${m[1]!}"`, icones)
     }

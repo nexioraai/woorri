@@ -24,26 +24,70 @@
 
 import { vocabulaireDe } from './juge-jetons'
 
+
+/**
+ * LES VARIABLES, ET D'OU VIENNENT LEURS NOMS.
+ *
+ * ── LE DEFAUT MESURE (tir 88c94164) : ONZE NOMS INVENTES.
+ *
+ * GRIS.fond, GRIS.carte, GRIS.bordure, GRIS.texte, GRIS.texteSecondaire,
+ * SEMANTIQUE.attention, SEMANTIQUE.information, RAYON.moyen, TYPO.corps,
+ * TYPO.petit, TYPO.h1 — ONZE, et AUCUN composant. Le modele avait les
+ * fichiers sous les yeux et inventait quand meme.
+ *
+ * LA CAUSE N'ETAIT PAS QUE LE VOCABULAIRE ETAIT INCONNU : C'ETAIT LE
+ * MAUVAIS AXE. Notre echelle etait par ROLE (surtitre, libelle, valeur,
+ * legende) ; le modele cherchait des TAILLES (« du texte normal », « du
+ * petit texte », « un titre »). Aucun role ne lui repondait.
+ *
+ * ── LES NOMS SONT CITES, PAS TRADUITS.
+ *
+ * Couleurs et rayon : `apps/v4/app/globals.css` du depot shadcn-ui/ui (MIT).
+ * Echelle de texte : `packages/tailwindcss/theme.css` — shadcn n'en definit
+ * AUCUNE (mesure : zero variable --text-* dans son globals.css).
+ *
+ * ON EMPRUNTE LES NOMS, PAS LES CHAINES : ni shadcn, ni Tailwind ne sont
+ * installes. Les valeurs sont les notres.
+ */
+export const VARIABLES_CSS = `:root{
+--background:#ffffff;--foreground:#171c26;
+--card:#ffffff;--card-foreground:#171c26;
+--popover:#ffffff;--popover-foreground:#171c26;
+--primary:#2a5bd7;--primary-foreground:#ffffff;
+--secondary:#eef0f5;--secondary-foreground:#3a4354;
+--muted:#f7f8fb;--muted-foreground:#67718a;
+--accent:#e7f0ff;--accent-foreground:#1d3f96;
+--destructive:#b3261e;--destructive-foreground:#ffffff;
+--success:#1a7f4e;--success-foreground:#ffffff;
+--warning:#9a6b00;--warning-foreground:#ffffff;
+--border:#e3e7ef;--input:#e3e7ef;--ring:#2a5bd7;
+--sidebar:#f7f8fb;--sidebar-foreground:#171c26;
+--sidebar-primary:#2a5bd7;--sidebar-primary-foreground:#ffffff;
+--radius:0.625rem;
+--radius-sm:calc(var(--radius) * 0.6);--radius-md:calc(var(--radius) * 0.8);
+--radius-lg:var(--radius);--radius-xl:calc(var(--radius) * 1.4);
+--text-xs:0.75rem;--text-sm:0.875rem;--text-base:1rem;--text-lg:1.125rem;
+--text-xl:1.25rem;--text-2xl:1.5rem;--text-3xl:1.875rem;
+}`
+
+/** Les noms declares ci-dessus — source unique du juge et de la CONSIGNE. */
+export const NOMS_VARIABLES: readonly string[] = [
+  ...new Set([...VARIABLES_CSS.matchAll(/(--[a-z0-9-]+)\s*:/gu)].map((m) => m[1]!)),
+]
+
 /** Les jetons : la seule source des couleurs, espaces, rayons et niveaux. */
-const JETONS = `/** JETONS DE DESIGN — fournis par Deribfy, ne pas modifier. */
-
-/** Gris à six crans, biaisés froid — jamais un gris pur d'imprimante. */
-export const GRIS = {
-  g900: '#171c26', g700: '#3a4354', g500: '#67718a',
-  g300: '#aab2c5', g150: '#e3e7ef', g50: '#f7f8fb',
-} as const
-
-export const SEMANTIQUE = {
-  succes: '#1a7f4e', succesFond: '#e7f5ee',
-  alerte: '#9a6b00', alerteFond: '#fdf3dd',
-  danger: '#b3261e', dangerFond: '#fbeae9',
-  neutre: '#3a4354', neutreFond: '#eef0f5',
-} as const
+const JETONS = `/** JETONS — fournis par Deribfy, ne pas modifier.
+ *
+ * LES COULEURS, LES RAYONS ET LES TAILLES DE TEXTE SONT DES VARIABLES CSS,
+ * et leurs noms sont ceux que tout le monde connaît : shadcn pour les
+ * couleurs et le rayon, Tailwind pour l'échelle de texte. Elles sont
+ * déclarées dans la page elle-même — AUCUNE bibliothèque n'est installée.
+ *
+ * Écris-les directement : style={{ color: 'var(--muted-foreground)' }}.
+ */
 
 /** Espacement en base 8 (4 pour les resserrements). */
 export const ESPACE = { xs: 4, s: 8, m: 16, l: 24, xl: 32, xxl: 48 } as const
-
-export const RAYON = { s: 6, m: 10, l: 14, rond: 999 } as const
 
 export const OMBRE = {
   carte: '0 1px 2px rgba(23,28,38,.06), 0 4px 12px rgba(23,28,38,.05)',
@@ -51,20 +95,18 @@ export const OMBRE = {
 } as const
 
 /**
- * L'échelle typographique, QUATRE niveaux nommés par leur rôle.
- * L'alignement est à GAUCHE partout : l'œil descend une colonne.
+ * LES RÔLES — employés PAR LES COMPOSANTS de cette bibliothèque.
+ *
+ * Deux vocabulaires, et une règle d'emploi : les RÔLES quand un composant
+ * décide (il sait quelle taille va où), les TAILLES quand tu écris
+ * toi-même. Deux vocabulaires sans règle seraient une invention de plus.
  */
-export const TYPO = {
-  surtitre: { fontSize: 11, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: GRIS.g500 },
-  libelle: { fontSize: 14, fontWeight: 500, color: GRIS.g700 },
-  valeur: { fontSize: 26, fontWeight: 700, color: GRIS.g900, fontVariantNumeric: 'tabular-nums' },
-  legende: { fontSize: 12.5, fontWeight: 400, color: GRIS.g500 },
+export const ROLE = {
+  surtitre: { fontSize: 'var(--text-xs)', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--muted-foreground)' },
+  libelle: { fontSize: 'var(--text-sm)', fontWeight: 500, color: 'var(--foreground)' },
+  valeur: { fontSize: 'var(--text-2xl)', fontWeight: 700, color: 'var(--foreground)', fontVariantNumeric: 'tabular-nums' },
+  legende: { fontSize: 'var(--text-sm)', fontWeight: 400, color: 'var(--muted-foreground)' },
 } as const
-
-/** La teinte primaire se décline : fond de pastille à ~10 %, texte lisible. */
-export function declinerTeinte(teinte: string): { vif: string; fond: string } {
-  return { vif: teinte, fond: teinte + '1a' }
-}
 `
 
 /** L'argent : la devise du client, cuite ici — une seule source. */
@@ -92,7 +134,7 @@ export function formaterMontant(montant: number, devise?: string): string {
 /** Les composants. Un seul fichier, pour que l'import du modèle soit court. */
 const UI = `/** BIBLIOTHÈQUE D'INTERFACE — fournie par Deribfy, ne pas réécrire. */
 import React from 'react'
-import { ESPACE, GRIS, OMBRE, RAYON, SEMANTIQUE, TYPO, declinerTeinte } from './jetons'
+import { ESPACE, OMBRE, ROLE } from './jetons'
 
 /** LE JEU D'ICÔNES — traits 24×24, cohérents, aucun emoji. */
 const TRACES: Record<string, string> = {
@@ -123,39 +165,44 @@ export function Icone({ nom, taille = 20, couleur = 'currentColor' }: {
   )
 }
 
+const CARTE: React.CSSProperties = {
+  background: 'var(--card)',
+  color: 'var(--card-foreground)',
+  border: '1px solid var(--border)',
+  borderRadius: 'var(--radius-lg)',
+  boxShadow: OMBRE.carte,
+  padding: ESPACE.l,
+  textAlign: 'left',
+}
+
 export function Carte({ enfants, children }: { enfants?: React.ReactNode; children?: React.ReactNode }) {
-  return (
-    <div style={{ background: '#fff', border: \`1px solid \${GRIS.g150}\`, borderRadius: RAYON.m,
-      boxShadow: OMBRE.carte, padding: ESPACE.l, textAlign: 'left' }}>
-      {enfants ?? children}
-    </div>
-  )
+  return <div style={CARTE}>{enfants ?? children}</div>
 }
 
 /**
  * LA CARTE DE CHIFFRE — icône teintée, surtitre, valeur, LIGNE DE CONTEXTE.
- * La ligne de contexte (delta, période, échéance) est ce qui sépare un
- * compte réel d'une maquette — exigée par le propriétaire, jamais omise.
+ * La ligne de contexte (delta, période, échéance) sépare un compte réel
+ * d'une maquette — exigée par le propriétaire, jamais omise.
  */
-export function CarteDeChiffre({ icone, libelle, valeur, contexte, teinte = '#2a5bd7', ton = 'neutre' }: {
+export function CarteDeChiffre({ icone, libelle, valeur, contexte, ton = 'neutre' }: {
   icone: string; libelle: string; valeur: string; contexte: string
-  teinte?: string; ton?: 'succes' | 'alerte' | 'danger' | 'neutre'
+  ton?: 'succes' | 'alerte' | 'danger' | 'neutre'
 }) {
-  const t = declinerTeinte(teinte)
-  const couleurContexte = ton === 'neutre' ? GRIS.g500 : SEMANTIQUE[ton]
+  const couleurs = {
+    succes: 'var(--success)', alerte: 'var(--warning)',
+    danger: 'var(--destructive)', neutre: 'var(--muted-foreground)',
+  } as const
   return (
-    <div style={{ background: '#fff', border: \`1px solid \${GRIS.g150}\`, borderRadius: RAYON.m,
-      boxShadow: OMBRE.carte, padding: ESPACE.l, textAlign: 'left', display: 'flex',
-      flexDirection: 'column', gap: ESPACE.s }}>
+    <div style={{ ...CARTE, display: 'flex', flexDirection: 'column', gap: ESPACE.s }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: ESPACE.s }}>
-        <span style={{ background: t.fond, color: t.vif, borderRadius: RAYON.s,
+        <span style={{ background: 'var(--accent)', color: 'var(--primary)', borderRadius: 'var(--radius-sm)',
           width: 32, height: 32, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
           <Icone nom={icone} taille={18} />
         </span>
-        <span style={TYPO.surtitre as React.CSSProperties}>{libelle}</span>
+        <span style={ROLE.surtitre as React.CSSProperties}>{libelle}</span>
       </div>
-      <div style={TYPO.valeur as React.CSSProperties}>{valeur}</div>
-      <div style={{ ...(TYPO.legende as React.CSSProperties), color: couleurContexte }}>{contexte}</div>
+      <div style={ROLE.valeur as React.CSSProperties}>{valeur}</div>
+      <div style={{ ...(ROLE.legende as React.CSSProperties), color: couleurs[ton] }}>{contexte}</div>
     </div>
   )
 }
@@ -167,12 +214,12 @@ export function EnTeteDeSection({ surtitre, titre, action, surAction }: {
     <div style={{ display: 'flex', alignItems: 'end', justifyContent: 'space-between',
       margin: \`\${ESPACE.xl}px 0 \${ESPACE.m}px\`, textAlign: 'left' }}>
       <div>
-        {surtitre !== undefined && <div style={TYPO.surtitre as React.CSSProperties}>{surtitre}</div>}
-        <h2 style={{ margin: 0, fontSize: 19, fontWeight: 650, color: GRIS.g900 }}>{titre}</h2>
+        {surtitre !== undefined && <div style={ROLE.surtitre as React.CSSProperties}>{surtitre}</div>}
+        <h2 style={{ margin: 0, fontSize: 'var(--text-xl)', fontWeight: 650, color: 'var(--foreground)' }}>{titre}</h2>
       </div>
       {action !== undefined && surAction !== undefined && (
-        <button onClick={surAction} style={{ background: 'none', border: 'none', color: '#2a5bd7',
-          fontSize: 13.5, fontWeight: 600, cursor: 'pointer', padding: 0 }}>{action}</button>
+        <button onClick={surAction} style={{ background: 'none', border: 'none', color: 'var(--primary)',
+          fontSize: 'var(--text-sm)', fontWeight: 600, cursor: 'pointer', padding: 0 }}>{action}</button>
       )}
     </div>
   )
@@ -181,10 +228,10 @@ export function EnTeteDeSection({ surtitre, titre, action, surAction }: {
 export function Pastille({ ton, enfant, children }: {
   ton: 'succes' | 'alerte' | 'danger' | 'neutre'; enfant?: React.ReactNode; children?: React.ReactNode
 }) {
+  const fonds = { succes: 'var(--success)', alerte: 'var(--warning)', danger: 'var(--destructive)', neutre: 'var(--secondary-foreground)' } as const
   return (
-    <span style={{ background: SEMANTIQUE[(ton + 'Fond') as keyof typeof SEMANTIQUE],
-      color: SEMANTIQUE[ton], borderRadius: RAYON.rond, fontSize: 12, fontWeight: 600,
-      padding: \`2px \${ESPACE.s}px\` }}>
+    <span style={{ background: 'var(--secondary)', color: fonds[ton], borderRadius: 999,
+      fontSize: 'var(--text-xs)', fontWeight: 600, padding: \`2px \${ESPACE.s}px\` }}>
       {enfant ?? children}
     </span>
   )
@@ -195,13 +242,13 @@ export function Bouton({ texte, surClic, genre = 'primaire', type = 'button' }: 
   texte: string; surClic?: () => void; genre?: 'primaire' | 'secondaire' | 'discret'
   type?: 'button' | 'submit'
 }) {
-  const fonds = { primaire: '#2a5bd7', secondaire: '#fff', discret: 'transparent' } as const
-  const textes = { primaire: '#fff', secondaire: GRIS.g900, discret: '#2a5bd7' } as const
+  const fonds = { primaire: 'var(--primary)', secondaire: 'var(--card)', discret: 'transparent' } as const
+  const textes = { primaire: 'var(--primary-foreground)', secondaire: 'var(--foreground)', discret: 'var(--primary)' } as const
   return (
     <button type={type} onClick={surClic} style={{ background: fonds[genre], color: textes[genre],
-      border: genre === 'secondaire' ? \`1px solid \${GRIS.g300}\` : 'none',
-      borderRadius: RAYON.s, padding: \`\${ESPACE.s + 2}px \${ESPACE.m}px\`, fontSize: 14,
-      fontWeight: 600, cursor: 'pointer', width: 'fit-content' }}>
+      border: genre === 'secondaire' ? '1px solid var(--border)' : 'none',
+      borderRadius: 'var(--radius-md)', padding: \`\${ESPACE.s + 2}px \${ESPACE.m}px\`,
+      fontSize: 'var(--text-sm)', fontWeight: 600, cursor: 'pointer', width: 'fit-content' }}>
       {texte}
     </button>
   )
@@ -211,13 +258,13 @@ export function EtatVide({ icone = 'document', message, detail }: {
   icone?: string; message: string; detail?: string
 }) {
   return (
-    <div style={{ textAlign: 'left', color: GRIS.g500, padding: ESPACE.xl,
-      border: \`1px dashed \${GRIS.g300}\`, borderRadius: RAYON.m, display: 'flex',
+    <div style={{ textAlign: 'left', color: 'var(--muted-foreground)', padding: ESPACE.xl,
+      border: '1px dashed var(--border)', borderRadius: 'var(--radius-lg)', display: 'flex',
       gap: ESPACE.m, alignItems: 'center' }}>
-      <Icone nom={icone} taille={24} couleur={GRIS.g300} />
+      <Icone nom={icone} taille={24} couleur="var(--border)" />
       <div>
-        <div style={TYPO.libelle as React.CSSProperties}>{message}</div>
-        {detail !== undefined && <div style={TYPO.legende as React.CSSProperties}>{detail}</div>}
+        <div style={ROLE.libelle as React.CSSProperties}>{message}</div>
+        {detail !== undefined && <div style={ROLE.legende as React.CSSProperties}>{detail}</div>}
       </div>
     </div>
   )
@@ -245,6 +292,18 @@ export function fichiersSysteme(deviseConfiguree: string | undefined): ReadonlyM
  * lui DIT, et la liste se dérive de la source : la recopier ici la ferait
  * diverger au premier jeton ajouté.
  */
+function vocabulaireIcones(): string {
+  return vocabulaireDe(fichiersSysteme(undefined)).icones.join(', ')
+}
+
+/** Les variables, en colonnes lisibles — dérivées du bloc :root lui-même. */
+function vocabulaireVariables(): string {
+  const n = NOMS_VARIABLES
+  const lignes: string[] = []
+  for (let i = 0; i < n.length; i += 4) lignes.push('     ' + n.slice(i, i + 4).join('  '))
+  return lignes.join('\n')
+}
+
 function vocabulaireEnumere(): string {
   const systeme = fichiersSysteme(undefined)
   const { espaces, icones } = vocabulaireDe(systeme)
@@ -255,24 +314,37 @@ function vocabulaireEnumere(): string {
 /** Ce que la CONSIGNE raconte de la bibliothèque — tenu au même endroit
  *  qu'elle, pour que le texte et les fichiers ne divergent jamais. */
 export const CONSIGNE_BIBLIOTHEQUE = `L'INTERFACE VIENT DE LA BIBLIOTHÈQUE FOURNIE — tu ne la réécris jamais.
-   Trois fichiers existent déjà dans le projet (ne les écris pas, ils te
-   sont fournis et seront écrasés si tu les écris) :
-   · ./systeme/jetons : GRIS, SEMANTIQUE, ESPACE, RAYON, OMBRE, TYPO —
-     toute couleur, espace ou taille vient de là, jamais en dur.
-     LES SEULS NOMS QUI EXISTENT, et tu n'en inventes AUCUN autre —
-     en inventer un lit undefined et PLANTE l'application au démarrage
-     (mesuré sur un tir réel : onze références mortes) :
-${vocabulaireEnumere()}
-   · ./systeme/argent : formaterMontant(montant) — TOUT montant affiché
-     passe par lui ; tu n'écris JAMAIS un code ou symbole de monnaie.
-   · ./systeme/ui : Icone (noms : accueil, recherche, calendrier, personne,
-     argent, graphique, message, reglages, fleche, plus, alerte, valide,
-     horloge, document), Carte, CarteDeChiffre (icône + libellé + valeur +
-     LIGNE DE CONTEXTE obligatoire : delta, période ou échéance), 
-     EnTeteDeSection, Pastille, Bouton (primaire/secondaire/discret),
-     EtatVide (toute liste vide l'affiche).
+   Trois fichiers existent déjà (ne les écris pas, ils seront écrasés) :
+   · ./systeme/jetons : ESPACE, OMBRE, ROLE.
+   · ./systeme/argent : formaterMontant(montant) — TOUT montant passe par
+     lui ; tu n'écris JAMAIS un code ou symbole de monnaie.
+   · ./systeme/ui : Icone (noms : ${vocabulaireIcones()}), Carte,
+     CarteDeChiffre (icône + libellé + valeur + LIGNE DE CONTEXTE
+     obligatoire), EnTeteDeSection, Pastille, Bouton, EtatVide.
+
+11. LES COULEURS, RAYONS ET TAILLES SONT DES VARIABLES CSS, déjà déclarées
+   dans la page. Tu les écris directement :
+       style={{ color: 'var(--muted-foreground)', borderRadius: 'var(--radius-lg)' }}
+   LES SEULES QUI EXISTENT, et tu n'en inventes AUCUNE autre :
+${vocabulaireVariables()}
+
+12. TAILWIND N'EXISTE PAS ICI, ET AUCUNE FEUILLE DE STYLE NON PLUS.
+   Les noms ci-dessus sont ceux de shadcn et de Tailwind, mais NI L'UN NI
+   L'AUTRE n'est installé : il n'y a que ces variables, déclarées à la main
+   dans la page. Donc tu N'ÉCRIS JAMAIS D'ATTRIBUT className — ni
+   « bg-primary », ni « flex gap-4 », ni un nom de classe à toi. Mesuré sur
+   une œuvre réelle : 55 className dans un projet sans la moindre feuille
+   de style — elles ne rendaient RIEN, et sans la moindre erreur. Un défaut
+   silencieux coûte plus cher qu'un défaut bruyant. Tout le style passe par
+   l'attribut style={{ }}.
+
+13. DEUX VOCABULAIRES, UNE RÈGLE D'EMPLOI :
+   · les RÔLES (ROLE.surtitre, ROLE.libelle, ROLE.valeur, ROLE.legende)
+     quand un composant de la bibliothèque décide — il sait quelle taille
+     va où ;
+   · les TAILLES (var(--text-sm), var(--text-2xl)…) quand TU écris
+     toi-même un style.
    L'alignement est à GAUCHE partout — jamais de carte au contenu centré.
-   Les données d'exemple RACONTENT une histoire cohérente : les totaux sont
-   la somme des lignes, les dates se suivent, et au moins un cas NON
-   NOMINAL existe (un retard, une alerte, un échec) — pas des nombres sans
-   lien.`
+   Les données d'exemple RACONTENT une histoire : les totaux sont la somme
+   des lignes, les dates se suivent, et au moins un cas NON NOMINAL existe
+   (un retard, une alerte, un échec) — pas des nombres sans lien.`
