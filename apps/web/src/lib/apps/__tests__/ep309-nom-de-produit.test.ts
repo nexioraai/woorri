@@ -202,4 +202,49 @@ describe('EP-309 — le nom du produit', () => {
     expect(adresseProposee('Tontine.Moundou')).toBe('tontine-moundou')
     expect(adresseProposee('a.b.c')).toBe('a-b-c')
   })
+
+  it('⑫ LE MODÈLE PROPOSE, ET LA CITATION EST VÉRIFIÉE — pas crue', () => {
+    // ── LA BARRE POSÉE PAR LE PROPRIÉTAIRE (2026-11-01).
+    //
+    // « Le modèle propose le nom en citant où il l'a lu dans le cahier ;
+    // la personne corrige avant que l'argent parte. » Avant ce lot, la
+    // question demandait d'inventer un nom À FROID alors que le cahier en
+    // porte souvent un — l'inverse de ce qui était décidé.
+    //
+    // La chaîne tient en quatre maillons, et chacun peut se casser seul :
+    const route = lire('app', 'api', 'generateur', 'lire-brief', 'route.ts')
+    const ecran = lire('components', 'onboarding', 'ConversationApplication.tsx')
+
+    // ① le modèle est À QUI ON DEMANDE le nom, et sa citation
+    expect(route, 'la consigne ne demande pas le nom').toContain('NOM_PRODUIT')
+    expect(route, 'la consigne ne demande pas la citation').toContain('NOM_CITATION')
+
+    // ② la citation est CHERCHÉE dans le brief, jamais crue. Sans cette
+    // vérification, l'écran dirait « je l'ai lu ici » sur une invention.
+    expect(route).toMatch(/brief\.includes\(aplati\(citBrut\)\)/u)
+
+    // ③ le nom passe par la MÊME porte que partout : un « Application »
+    // rendu par le modèle est écarté comme s'il venait d'un écran.
+    expect(route).toContain('nomProduitValide')
+
+    // ④ et la proposition arrive DANS LE CHAMP. « Corriger » veut dire
+    // modifier ce qui est là ; sans cette ligne, la personne retape.
+    expect(ecran, 'la proposition n’arrive pas dans le champ de saisie').toMatch(
+      /if \(nomPropose !== null\) setSaisie\(nomPropose\.nom\)/u,
+    )
+    // Et jamais par `suggestion` : ce champ est câblé à la devise dans le
+    // rendu (« j'afficherai vos montants en … »).
+    expect(ecran.includes('suggestion: nomPropose.nom')).toBe(false)
+  })
+
+  it('⑬ « LU » ET « PROPOSÉ » NE SE DISENT PAS PAREIL', () => {
+    // Un nom inventé est légitime quand le document n'en porte aucun. Ce qui
+    // serait illégitime, c'est de faire croire qu'on l'a lu — la même
+    // distinction que `dansLeDocument` dans l'extraction.
+    const ecran = lire('components', 'onboarding', 'ConversationApplication.tsx')
+    expect(ecran, 'la phrase « je l’ai lu ici » n’existe pas').toMatch(/je l’ai lu ici/u)
+    expect(ecran, 'rien ne dit qu’un nom peut être une suggestion').toMatch(
+      /je ne l’ai pas trouvé dans votre texte/u,
+    )
+  })
 })

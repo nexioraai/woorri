@@ -31,6 +31,7 @@ import { NextResponse } from 'next/server'
 import { requireAuthenticatedUser } from '@/lib/auth/require-authenticated-user'
 import { racineDepot } from '@/lib/apps/racine'
 import { clientIA, MODELE_LEGER } from '@/lib/ia/client'
+import { nomProduitValide } from '@/lib/apps/nom-produit'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -82,6 +83,16 @@ const CONSIGNE = [
   '',
   'Demande COURTE ou VAGUE (une phrase, une idée sans détail) ? Omets ce qui',
   'n’y figure pas — les questions se poseront, et elles seront légitimes.',
+  '',
+  '── ET LE NOM DU PRODUIT, deux clés de plus :',
+  '  NOM_PRODUIT : comment le produit s’appelle, 2 à 40 signes.',
+  '      S’il est NOMMÉ dans le texte, reprends-le À L’IDENTIQUE — tu ne',
+  '      rebaptises pas le produit de quelqu’un d’autre.',
+  '      Sinon seulement, propose-en un. N’écris jamais « Application » ni',
+  '      « Projet » : ce ne sont pas des noms.',
+  '  NOM_CITATION : le passage du texte, RECOPIÉ MOT POUR MOT (80 signes au',
+  '      plus), où ce nom se lit ou d’où il vient. Si tu l’as inventé, omets',
+  '      cette clé — ne fabrique pas une citation.',
 ].join('\n')
 
 export async function POST(req: Request) {
@@ -165,7 +176,42 @@ export async function POST(req: Request) {
       if (q.choix !== undefined && !q.choix.some((c) => c.valeur === valeur)) continue
       deduites[code] = valeur
     }
-    return NextResponse.json({ deduites })
+    // ── LE NOM DU PRODUIT, ET SA CITATION EST VERIFIEE, PAS CRUE.
+    //
+    // Le reste de cette route filtre contre la table : « la table decide,
+    // jamais le modele ». Le nom n'a pas de table -- c'est du texte libre, et
+    // c'est la seule chose ici que le modele peut inventer. Deux gardes :
+    //
+    //   · `nomProduitValide` refuse nos propres remplissages (EP-309) : un
+    //     « Application » rendu par le modele est ecarte comme s'il venait
+    //     d'un ecran.
+    //   · LA CITATION EST CHERCHEE DANS LE BRIEF. Le modele dit ou il a lu le
+    //     nom ; on VERIFIE que ce passage existe, accents et casse aplatis.
+    //     S'il n'existe pas, la citation tombe et le nom passe en
+    //     « propose » -- il n'est pas refuse pour autant : un nom invente est
+    //     legitime quand le document n'en porte aucun. Ce qui serait
+    //     illegitime, c'est de faire croire qu'on l'a lu.
+    //
+    // Meme discipline que `dansLeDocument` dans extraction-exigences :
+    // demander au modele « l'as-tu invente ? » serait lui demander de se
+    // juger.
+    const aplati = (t: string) => t.toLowerCase().normalize('NFD').replace(/\p{Diacritic}/gu, '').replace(/\s+/gu, ' ')
+    const brief = aplati(demande)
+    let nomProduit: { nom: string; citation?: string; dansLeDocument: boolean } | undefined
+    const nomBrut = lu.NOM_PRODUIT
+    if (typeof nomBrut === 'string') {
+      const verdict = nomProduitValide(nomBrut)
+      if (verdict.ok) {
+        const citBrut = typeof lu.NOM_CITATION === 'string' ? lu.NOM_CITATION.trim().slice(0, 80) : ''
+        const citTrouvee = citBrut !== '' && brief.includes(aplati(citBrut))
+        nomProduit = {
+          nom: verdict.nom,
+          ...(citTrouvee ? { citation: citBrut } : {}),
+          dansLeDocument: brief.includes(aplati(verdict.nom)),
+        }
+      }
+    }
+    return NextResponse.json({ deduites, ...(nomProduit === undefined ? {} : { nomProduit }) })
   } catch {
     // UNE LECTURE RATÉE NE BLOQUE RIEN : on retombe sur le questionnaire.
     return NextResponse.json({ deduites: {} })

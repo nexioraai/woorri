@@ -171,6 +171,15 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
   const [questionAvant, setQuestionAvant] = useState<QuestionAvant | null>(null);
   const [configuration, setConfiguration] = useState<Configuration>({});
   const [autreChose, setAutreChose] = useState('');
+  /**
+   * LE NOM QUE LE MODELE PROPOSE, et d'ou il l'a lu.
+   *
+   * La personne CORRIGE une proposition au lieu d'inventer a froid. Et la
+   * citation est VERIFIEE cote serveur : si le passage n'existe pas dans le
+   * brief, elle ne vient pas, et la question dit « propose » au lieu de
+   * « lu ». On ne fait jamais croire qu'on a lu ce qu'on a invente.
+   */
+  const [nomPropose, setNomPropose] = useState<{ nom: string; citation?: string; dansLeDocument: boolean } | null>(null);
   /** La demande d'origine, gardee pendant le pre-vol : le brief n'est compose
    *  qu'une fois toutes les reponses obtenues. */
   const [demandeEnAttente, setDemandeEnAttente] = useState('');
@@ -646,7 +655,10 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
           });
           const dl = (await rl.json().catch(() => ({}))) as {
             deduites?: Record<string, unknown>;
+            nomProduit?: { nom: string; citation?: string; dansLeDocument: boolean };
           };
+          // LE NOM PROPOSE PAR LE MODELE, garde pour pre-remplir la question.
+          if (dl.nomProduit !== undefined) setNomPropose(dl.nomProduit);
           const deduites = dl.deduites ?? {};
           if (Object.keys(deduites).length > 0) {
             lues = { ...deduites, ...reponses };
@@ -707,17 +719,36 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
       // disent « Application » : le moteur repliait sur ce mot a trois
       // endroits au lieu de poser une question d'une ligne.
       if (lues[NOM_PRODUIT] === undefined) {
+        // ── LE MODELE PROPOSE, LA PERSONNE CORRIGE -- jamais l'inverse.
+        //
+        // Sans `suggestion`, la question demandait d'inventer un nom a froid
+        // alors que le cahier en porte souvent un. La citation dit D'OU il
+        // vient, et elle a ete verifiee dans le brief cote serveur : si elle
+        // manque, on dit « proposé », pas « lu ».
         const q: QuestionAvant = {
           code: NOM_PRODUIT,
           structure: 'nom',
+          // PAS `suggestion` : ce champ est CABLE A LA DEVISE dans le rendu
+          // (« Par défaut, j'afficherai vos montants en … »). Le poser ici
+          // aurait écrit « vos montants en Hayine ». On pré-remplit le champ
+          // de saisie à la place — mesuré avant d'écrire la ligne.
           texte:
-            'Comment votre application s’appelle-t-elle ? Ce nom sera son ' +
-            'titre, le nom qu’on verra en l’installant, et il servira à ' +
-            'proposer son adresse publique. ' +
+            (nomPropose === null
+              ? 'Comment votre application s’appelle-t-elle ? '
+              : nomPropose.citation !== undefined
+                ? `Je propose « ${nomPropose.nom} » — je l’ai lu ici : « ${nomPropose.citation} ». Corrigez si ce n’est pas le bon nom. `
+                : `Je propose « ${nomPropose.nom} », mais je ne l’ai pas trouvé dans votre texte : c’est une suggestion. Corrigez-la. `) +
+            'Ce nom sera son titre, le nom qu’on verra en l’installant, et il ' +
+            'servira à proposer son adresse publique. ' +
             AVERTISSEMENT_MARQUE,
         };
         setQuestionAvant(q);
         setMessages((m) => [...m, { role: 'avant', question: q }]);
+        // ── LA PROPOSITION ARRIVE DANS LE CHAMP, PAS SEULEMENT DANS LA
+        // PHRASE : « corriger » veut dire modifier ce qui est là, pas
+        // retaper ce qu'on vient de lire. C'est la différence entre proposer
+        // et demander.
+        if (nomPropose !== null) setSaisie(nomPropose.nom);
         return;
       }
       // Tout est repondu : on passe la porte chere, une seule fois.
