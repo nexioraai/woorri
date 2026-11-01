@@ -95,14 +95,13 @@ jobs:
           # EPREUVE DE L'ECHEC : on ampute la mesure d'une colonne que le
           # depot declare. C'est le defaut du jour, reproduit sans toucher a
           # la base — et le verificateur DOIT sortir en 1.
+          # UN SEUL APPEL, SUR UNE SEULE LIGNE. Un heredoc dont le contenu
+          # commence colonne 0 TERMINE le scalaire « run: | » et rend le
+          # workflow invalide : « Implicit keys need to be on a single line ».
+          # Mesure du 2026-11-01 — le run a echoue en 0 s, et GitHub a dit
+          # « this run likely failed because of a workflow file issue ».
           if [ "${{ inputs.epreuve }}" = "divergence_forcee" ]; then
-            python3 - <<'PY'
-import json
-m = json.load(open('/tmp/schema.json'))
-m['ecarts'][0]['colonnesManquantes'] = ['publication_slug']
-json.dump(m, open('/tmp/schema.json', 'w'))
-print("EPREUVE : mesure amputee de publication_slug — ce run DOIT echouer.")
-PY
+            python3 -c "import json; m=json.load(open('/tmp/schema.json')); m['ecarts'][0]['colonnesManquantes']=['publication_slug']; json.dump(m, open('/tmp/schema.json','w')); print('EPREUVE : mesure amputee de publication_slug -- ce run DOIT echouer.')"
           fi
           # LE VERDICT EST CALCULE ICI, PAS DANS LA ROUTE : c'est ce qui rend
           # l'epreuve ci-dessus possible sans abimer la production.

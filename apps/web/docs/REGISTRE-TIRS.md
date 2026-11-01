@@ -482,3 +482,55 @@ avec les outils. **Un cliquet écrit il y a trois semaines m'a attrapé
 aujourd'hui sur un fichier qui n'existait pas alors.** C'est exactement ce
 qu'on attend d'eux.
 
+## NUANCE À LA RÈGLE 8bis (ajoutée le 2026-11-01, sur ordre du propriétaire)
+
+La règle 8 vise ce qui consomme le processeur **de façon mesurable** : un
+build, une suite de tests, une compilation. Elle ne vise pas la lecture d'un
+fichier. J'avais commencé à m'interdire un `grep` pendant neuf minutes de
+gate, ce qui rend le travail impossible sans rien protéger.
+
+**Le critère est l'ordre de grandeur** : si ce que je lance peut déplacer une
+mesure de plusieurs centaines de millisecondes, la règle s'applique. Quatre
+lectures de fichier, non.
+
+## `$?` APRÈS UN TUYAU N'EST PAS L'ÉTAT DE LA COMMANDE
+
+```
+git push … 2>&1 | tail -6; echo "PUSH EXIT=$?"     → 0
+git ls-remote origin -h refs/heads/main            → 8e8e218b (INCHANGÉ)
+```
+
+La commande entière avait avorté sur `timeout: command not found` — `timeout`
+n'existe pas sur macOS, c'est `gtimeout` (coreutils). Et dans un tuyau, `$?`
+rend l'état du **dernier maillon**, pas du premier : je lisais l'état du
+`tail`.
+
+**AUDIT DE MA PROPRE JOURNÉE** : au moins une sortie publiée était vide de
+sens — « corps forgé RPC ouverte → EXIT=0 », alors que le vérificateur sort
+en **1**. Le verdict rouge affiché était juste ; le code imprimé à côté ne
+disait rien. Reprise sans filtre, les cinq corps donnent bien `EXIT=1`.
+
+**LE REMÈDE, ET IL EST DÉJÀ EN PLACE POUR LES GATES** : rediriger vers un
+fichier, lire le code AVANT de filtrer. C'est pour cela que les verdicts de
+gate, eux, sont fiables. Ailleurs : `set -o pipefail`.
+
+## LA MARGE D'EP-302 ④ — CLASSÉE, MESURE À L'APPUI
+
+```
+dans quatre journaux de gate :  1771 · 1824 · 2078 · 2519 ms
+suite complète, machine au repos (vitest-results.json) :  735 ms
+l'étape de marge lancée seule :  🟢 tous les cas tiennent · EXIT=0
+```
+
+Les quatre dépassements ont eu lieu pendant des gates où je lançais autre
+chose. Au repos, le test tient sa marge à ×6,8 — très loin du ×3 exigé.
+
+**AUCUNE ACTION.** Ni alléger la fixture, ni inscrire le test au registre des
+lenteurs : il n'est pas lent. Ce qui était faux, c'est la condition de
+mesure. Consigné ici pour que le prochain dépassement ne soit pas re-débattu
+depuis zéro : **vérifier d'abord que rien d'autre ne tournait.**
+
+Et la CI, elle, exécute ses étapes **en série** (un seul job, aucune matrice,
+aucun `needs` — `spawnSync` côté gate) : la condition fidèle est donc bien
+« suite complète, rien d'autre ».
+
