@@ -27,7 +27,22 @@ export type ExigenceJugee = {
   readonly exigence: string
   readonly cahier: number
   readonly code: number
-  readonly statut: 'couverte' | 'declaree-hors-perimetre' | 'absente'
+  /**
+   * `couverte` — un écran portant cette exigence a été ATTEINT et EXERCÉ.
+   * `nommee` — le code en parle, mais aucun écran ouvert ne la porte : une
+   *   MENTION n'est pas une couverture (mesuré : « réservation » couverte
+   *   avec 2 occurrences pour 59 au cahier).
+   * `declaree-hors-perimetre` — dite, avec motif.
+   * `absente` — ni l'un ni l'autre : le silence, interdit.
+   * `declaree-mais-centrale` — déclarée alors que le cahier y insiste
+   *   au-delà du verrou : le modèle ne peut pas clore seul.
+   */
+  readonly statut:
+    | 'couverte'
+    | 'nommee'
+    | 'declaree-hors-perimetre'
+    | 'absente'
+    | 'declaree-mais-centrale'
 }
 
 export type RapportCouverture = {
@@ -40,6 +55,28 @@ export type RapportCouverture = {
 
 /** Une exigence n'est RETENUE que si le cahier y insiste. */
 const SEUIL_CAHIER = 3
+
+/**
+ * LE VERROU PAR INSISTANCE — au-delà, le modèle ne peut plus déclarer seul.
+ *
+ * MESURÉ LE 2026-11-01 sur le tir 52f34017 : « recherche », citée ONZE fois
+ * dans un cahier de plateforme de réservation, a été déclarée hors
+ * périmètre — une fonction centrale abandonnée poliment. Sept exigences sur
+ * treize hors périmètre, et l'œuvre appelée « livrée ».
+ *
+ * J'avais DÉCRIT ce verrou le 31 octobre sans jamais l'écrire : il n'a pas
+ * mordu parce qu'il n'existait pas. Mesuré : zéro occurrence dans le juge
+ * vivant comme dans le module d'extraction.
+ *
+ * CE QU'IL FAIT, ET CE QU'IL NE FAIT PAS. Il n'EXIGE pas la livraison — un
+ * cahier peut réclamer trois langues et une application ne pas les tenir en
+ * un tour ; exiger l'impossible ferait boucler le modèle sur de l'argent
+ * réel. Il retire au MODÈLE le droit de clore seul : l'exigence redevient
+ * RÉCLAMÉE au tour suivant, et si elle reste déclarée au dernier tour,
+ * l'œuvre est acceptée mais le rapport DIT qu'une exigence centrale a été
+ * écartée sans validation humaine.
+ */
+export const SEUIL_VERROU = 10
 
 /**
  * Le lexique : une exigence = une famille de termes. Les motifs s'appliquent
@@ -85,6 +122,8 @@ export const FICHIER_PERIMETRE = 'PERIMETRE.md'
 export function jugerCouverture(
   demande: string,
   fichiers: ReadonlyMap<string, string>,
+  /** Les écrans RÉELLEMENT ouverts par le juge d'exécution, avec leur texte. */
+  ecrans: readonly { readonly texte: string; readonly exerce: boolean }[] = [],
 ): RapportCouverture {
   const cahier = demande.toLowerCase()
   const perimetre = (fichiers.get(FICHIER_PERIMETRE) ?? '').toLowerCase()
@@ -102,14 +141,28 @@ export function jugerCouverture(
     if (dansCahier < SEUIL_CAHIER) continue
     const dansCode = compte(codeEntier, motif)
     const declaree = compte(perimetre, motif) > 0
-    exigences.push({
-      exigence,
-      cahier: dansCahier,
-      code: dansCode,
-      statut: dansCode > 0 ? 'couverte' : declaree ? 'declaree-hors-perimetre' : 'absente',
-    })
+    // ATTEINTE ET EXERCÉE : un écran OUVERT porte cette exigence, et un de
+    // ses contrôles a servi. C'est la définition à trois niveaux du
+    // 2026-10-31, enfin branchée — elle ne vivait que dans un rapport.
+    const atteinteEtExercee = ecrans.some((e) => e.exerce && compte(e.texte.toLowerCase(), motif) > 0)
+    const statut: ExigenceJugee['statut'] = atteinteEtExercee
+      ? 'couverte'
+      : declaree
+        ? dansCahier >= SEUIL_VERROU
+          ? 'declaree-mais-centrale'
+          : 'declaree-hors-perimetre'
+        : dansCode > 0 && ecrans.length === 0
+          ? 'couverte'
+          : dansCode > 0
+            ? 'nommee'
+            : 'absente'
+    exigences.push({ exigence, cahier: dansCahier, code: dansCode, statut })
   }
-  const absentes = exigences.filter((e) => e.statut === 'absente')
+  // Une MENTION et une exigence centrale déclarée seule comptent comme
+  // non réglées : elles reviennent au modèle, elles ne se taisent pas.
+  const absentes = exigences.filter(
+    (e) => e.statut === 'absente' || e.statut === 'nommee' || e.statut === 'declaree-mais-centrale',
+  )
   const taux =
     exigences.length === 0 ? 1 : (exigences.length - absentes.length) / exigences.length
   return { exigences, absentes, taux }

@@ -14,7 +14,7 @@ import { describe, expect, it } from 'vitest'
 import { jugeMuet } from './juge-muet'
 import { boucleEcriture } from '../boucle-directe'
 import { jugerVivacite } from '../juge-vivacite'
-import { FICHIER_PERIMETRE, jugerCouverture } from '../juge-couverture'
+import { FICHIER_PERIMETRE, jugerCouverture, SEUIL_VERROU } from '../juge-couverture'
 
 /** La PHOTO d'agent du tir réel, réduite à sa forme mesurée. */
 const AGENT_MORT = `export function AgentIA() {
@@ -119,6 +119,69 @@ describe('EP-297 · le juge de couverture', () => {
     const r = jugerCouverture(CAHIER, new Map([['App.tsx', '']]))
     expect(r.exigences.map((e) => e.exigence), 'une mention unique a été retenue').not.toContain(
       'notifications',
+    )
+  })
+})
+
+describe('EP-297 · « couverte » veut dire ATTEINTE ET EXERCÉE', () => {
+  it('⑪ UNE MENTION DANS LE CODE NE COUVRE PLUS RIEN', () => {
+    // MESURE DU 2026-11-01 : « réservation » etait declaree COUVERTE avec
+    // 2 occurrences pour 59 au cahier. Le juge disait « couverte » des
+    // qu'il voyait un mot. Une mention n'est pas une couverture.
+    const cahier = 'La recherche est centrale : recherche de vols, recherche d’hôtels.'
+    const code = new Map([['App.tsx', 'const titre = "recherche de vols"']])
+    const sansEcran = jugerCouverture(cahier, code, [])
+    expect(sansEcran.exigences.find((e) => e.exigence === 'recherche')?.statut).toBe('couverte')
+    // Des qu'un juge d'execution a parle, la mention ne suffit plus.
+    const avecEcrans = jugerCouverture(cahier, code, [{ texte: 'Accueil Paiements', exerce: true }])
+    expect(avecEcrans.exigences.find((e) => e.exigence === 'recherche')?.statut).toBe('nommee')
+    expect(avecEcrans.absentes.map((e) => e.exigence)).toContain('recherche')
+  })
+
+  it('⑫ UN ÉCRAN OUVERT ET EXERCÉ, LUI, COUVRE', () => {
+    const cahier = 'La recherche est centrale : recherche de vols, recherche d’hôtels.'
+    const r = jugerCouverture(cahier, new Map([['App.tsx', 'x']]), [
+      { texte: 'Recherche de vols — résultats', exerce: true },
+    ])
+    expect(r.exigences.find((e) => e.exigence === 'recherche')?.statut).toBe('couverte')
+  })
+
+  it('⑬ UN ÉCRAN ATTEINT MAIS JAMAIS EXERCÉ NE COUVRE PAS', () => {
+    const cahier = 'La recherche est centrale : recherche de vols, recherche d’hôtels.'
+    const r = jugerCouverture(cahier, new Map([['App.tsx', 'const t = "recherche"']]), [
+      { texte: 'Recherche de vols', exerce: false },
+    ])
+    expect(r.exigences.find((e) => e.exigence === 'recherche')?.statut).toBe('nommee')
+  })
+
+  it('⑭ LE VERROU PAR INSISTANCE : le modèle ne clôt pas seul une exigence centrale', () => {
+    // MESURE : « recherche », citee ONZE fois dans un cahier de plateforme
+    // de reservation, declaree hors perimetre — une fonction centrale
+    // abandonnee poliment. Le verrou etait DECRIT depuis le 31 octobre et
+    // n'avait jamais ete ECRIT : zero occurrence dans le juge vivant.
+    const cahier = Array.from({ length: 11 }, () => 'recherche').join(' ') + ' notification.'
+    const avec = new Map([
+      ['App.tsx', 'x'],
+      [FICHIER_PERIMETRE, '- recherche : non couverte dans cette version.'],
+    ])
+    const r = jugerCouverture(cahier, avec, [{ texte: 'Accueil', exerce: true }])
+    const e = r.exigences.find((x) => x.exigence === 'recherche')
+    expect(e?.cahier).toBeGreaterThanOrEqual(SEUIL_VERROU)
+    expect(e?.statut, 'une exigence centrale est close par le modele seul').toBe(
+      'declaree-mais-centrale',
+    )
+    expect(r.absentes.map((x) => x.exigence)).toContain('recherche')
+  })
+
+  it('⑮ SOUS LE SEUIL, LA DÉCLARATION RESTE RECEVABLE — contrôle négatif', () => {
+    const cahier = 'notification. notification. notification. notification.'
+    const r = jugerCouverture(
+      cahier,
+      new Map([['App.tsx', 'x'], [FICHIER_PERIMETRE, '- notifications : hors périmètre, prestataire requis.']]),
+      [{ texte: 'Accueil', exerce: true }],
+    )
+    expect(r.exigences.find((e) => e.exigence === 'notifications')?.statut).toBe(
+      'declaree-hors-perimetre',
     )
   })
 })

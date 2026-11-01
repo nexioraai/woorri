@@ -127,6 +127,14 @@ const BUDGET_VISITES = 24
 let visites = 0
 let decouverts = 0
 let ecransDistincts = 1
+const muets = []
+const muetsVus = new Set()
+/** Le texte de chaque ecran OUVERT, et s'il a ete EXERCE — base du juge de
+ *  couverture : « couverte » doit vouloir dire ATTEINTE ET EXERCEE.
+ *  DECLARE ICI, hors du bloc : il est lu a l'ecriture du verdict, et une
+ *  portee trop etroite faisait sortir l'enfant SANS verdict, l'erreur
+ *  avalee par le filet d'exceptions (mesure du 2026-11-01). */
+const ecransOuverts = new Map()
 if (racineNav !== null) {
   // ── ON RÉÉNUMÈRE APRÈS CHAQUE CLIC, et c'est la correction du défaut.
   //
@@ -161,11 +169,40 @@ if (racineNav !== null) {
     return String(h)
   }
   let ecranCourant = empreinte()
+  const texteEcran = () =>
+    racineNav.innerHTML
+      .replace(/<[^>]*>/gu, ' ')
+      .replace(/&nbsp;|&#160;/gu, ' ')
+      .replace(/\s+/gu, ' ')
+      .trim()
+      .slice(0, 1600)
+  ecransOuverts.set(ecranCourant, { texte: texteEcran(), exerce: false })
   const ecransVus = new Set([ecranCourant])
   const clef = (c) =>
     `${c.tagName}|${ecranCourant}|${(c.textContent ?? '').replace(/\s+/gu, ' ').trim().slice(0, 60)}`
   for (let tour = 0; tour < BUDGET_VISITES; tour += 1) {
     const presents = [...racineNav.querySelectorAll(SELECTEUR)]
+    // ── UN CONTRÔLE SANS NOM LISIBLE EST INUTILISABLE (2026-11-01).
+    //
+    // CLASSE NEUVE, vue sur trois écrans d'un tir réel : une pilule bleue
+    // sans texte. Le juge de démarrage disait vrai — ça démarre. Le juge de
+    // vivacité disait vrai — le contrôle est lié. Et pourtant personne ne
+    // peut s'en servir : on ne sait pas ce qu'il fait. RENDU + LIÉ + MUET,
+    // et aucun des cinq juges ne regardait ça. Le DOM est déjà là : la
+    // mesure ne coûte rien.
+    for (const c of presents) {
+      const nom =
+        (c.textContent ?? '').replace(/\s+/gu, ' ').trim() ||
+        (c.getAttribute('aria-label') ?? '').trim() ||
+        (c.getAttribute('title') ?? '').trim()
+      if (nom === '') {
+        const clefMuet = `${c.tagName}|${ecranCourant}|${c.outerHTML.slice(0, 60)}`
+        if (!muetsVus.has(clefMuet)) {
+          muetsVus.add(clefMuet)
+          muets.push({ balise: c.tagName.toLowerCase(), extrait: c.outerHTML.replace(/\s+/gu, ' ').slice(0, 110) })
+        }
+      }
+    }
     const cles = presents.map((c) => clef(c))
     for (const k of cles) connus.add(k)
     const rang = cles.findIndex((k) => !vus.has(k))
@@ -186,10 +223,15 @@ if (racineNav !== null) {
       erreurs[i] = { ...erreurs[i], quoi: `${erreurs[i].quoi} — écran « ${etiquette} »` }
     }
     visites += 1
+    const precedent = ecransOuverts.get(ecranCourant)
+    if (precedent !== undefined) precedent.exerce = true
     // L'ECRAN COURANT devient celui que ce controle vient d'ouvrir : c'est
     // lui qui distingue deux « Modifier » poses sur deux ecrans.
     ecranCourant = empreinte()
     ecransVus.add(ecranCourant)
+    if (!ecransOuverts.has(ecranCourant)) {
+      ecransOuverts.set(ecranCourant, { texte: texteEcran(), exerce: false })
+    }
   }
   // Ce qui reste connu mais non ouvert, le budget epuise : DIT, jamais taire.
   const restants = [...racineNav.querySelectorAll(SELECTEUR)].map((c) => clef(c))
@@ -213,6 +255,8 @@ writeFileSync(
     ecransVisites: visites,
     ecransDecouverts: decouverts,
     ecransDistincts: ecransDistincts,
+    controlesMuets: muets.slice(0, 12),
+    ecrans: [...ecransOuverts.values()].map((e) => ({ texte: e.texte, exerce: e.exerce })),
   }),
 )
 process.exit(0)

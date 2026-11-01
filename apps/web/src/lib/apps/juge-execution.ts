@@ -55,6 +55,18 @@ export type VerdictExecution = {
   readonly ecransDecouverts?: number
   /** Combien d ECRANS distincts ont ete atteints — la profondeur du parcours. */
   readonly ecransDistincts?: number
+  /**
+   * Les contrôles SANS NOM LISIBLE — ni texte, ni aria-label, ni title.
+   * Rendu, lié, et pourtant inutilisable : on ne sait pas ce qu'il fait.
+   */
+  readonly controlesMuets?: readonly { readonly balise: string; readonly extrait: string }[]
+  /**
+   * LES ÉCRANS RÉELLEMENT OUVERTS, avec leur texte et s'ils ont été
+   * EXERCÉS. C'est la matière qui manquait au juge de couverture : une
+   * mention dans le code n'est pas une couverture — il faut qu'un écran
+   * portant l'exigence ait été ATTEINT et qu'un de ses contrôles ait servi.
+   */
+  readonly ecrans?: readonly { readonly texte: string; readonly exerce: boolean }[]
   readonly ms: number
   /** Dit quand le juge n'a pas pu se prononcer — jamais confondu avec un refus. */
   readonly indisponible?: string
@@ -196,6 +208,8 @@ export async function jugerExecution(
       ecransVisites?: number
       ecransDecouverts?: number
       ecransDistincts?: number
+      controlesMuets?: { balise: string; extrait: string }[]
+      ecrans?: { texte: string; exerce: boolean }[]
     }
     return {
       demarre: lu.monte && lu.erreurs.length === 0,
@@ -205,6 +219,8 @@ export async function jugerExecution(
       ecransVisites: lu.ecransVisites ?? 0,
       ecransDecouverts: lu.ecransDecouverts ?? 0,
       ecransDistincts: lu.ecransDistincts ?? 0,
+      controlesMuets: lu.controlesMuets ?? [],
+      ecrans: lu.ecrans ?? [],
       ms: Date.now() - debut,
     }
   } catch (e) {

@@ -209,6 +209,45 @@ describe('EP-302 · le juge d’exécution', () => {
     60_000,
   )
 
+  it(
+    '⑫ UN CONTRÔLE SANS NOM LISIBLE EST UN DÉFAUT — rendu, lié, et muet',
+    async () => {
+      // CLASSE NEUVE, vue sur trois ecrans du tir 52f34017 : une pilule
+      // bleue sans texte. Le juge de demarrage disait vrai, le juge de
+      // vivacite disait vrai, et le bouton restait inutilisable — personne
+      // ne sait ce qu'il fait. Aucun des cinq juges ne regardait ca.
+      const code = await assembleOuEchoue(
+        page(
+          'function App() {\n' +
+            '  return <nav><button onClick={() => {}} /><button onClick={() => {}}>Payer</button>' +
+            '<button onClick={() => {}} aria-label="Fermer" /></nav>\n' +
+            '}',
+        ),
+      )
+      const v = await jugerExecution(code)
+      const muets = v.controlesMuets ?? []
+      expect(muets.length, 'le bouton sans texte passe encore').toBe(1)
+      expect(muets[0]!.balise).toBe('button')
+    },
+    60_000,
+  )
+
+  it(
+    '⑬ LES ÉCRANS OUVERTS REMONTENT AVEC LEUR TEXTE, séparateurs compris',
+    async () => {
+      // textContent COLLE les elements : « Agent IA » + « Reglages » donnait
+      // « agent iareglages », et toute frontiere de mot disparaissait. Le
+      // juge de couverture declarait alors manquant un ecran pourtant ouvert.
+      const code = await assembleOuEchoue(
+        page("function App() { return <nav><span>Agent IA</span><span>Réglages</span></nav> }"),
+      )
+      const v = await jugerExecution(code)
+      const textes = (v.ecrans ?? []).map((e) => e.texte).join(' ')
+      expect(textes, 'les mots sont recolles entre eux').toMatch(/Agent IA\s+Réglages/u)
+    },
+    60_000,
+  )
+
   it('⑥ LE PLAFOND VIENT DE LA PRODUCTION, et il est large À DESSEIN', () => {
     // MESURÉ DANS LA LAMBDA le 2026-10-31, cinq œuvres réelles : 858, 1035,
     // 1057, 1345, 1850 ms. Pire cas réel 1850 ms ; plafond 15 s = 8,1×.

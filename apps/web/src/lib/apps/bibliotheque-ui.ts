@@ -178,8 +178,8 @@ const CARTE: React.CSSProperties = {
   textAlign: 'left',
 }
 
-export function Carte({ enfants, children }: { enfants?: React.ReactNode; children?: React.ReactNode }) {
-  return <div style={CARTE}>{enfants ?? children}</div>
+export function Carte({ children, enfants }: { children?: React.ReactNode; enfants?: React.ReactNode }) {
+  return <div style={CARTE}>{children ?? enfants}</div>
 }
 
 /**
@@ -210,8 +210,9 @@ export function CarteDeChiffre({ icone, libelle, valeur, contexte, ton = 'neutre
   )
 }
 
-export function EnTeteDeSection({ surtitre, titre, action, surAction }: {
-  surtitre?: string; titre: string; action?: string; surAction?: () => void
+export function EnTeteDeSection({ surtitre, titre, action, surAction, onAction }: {
+  surtitre?: string; titre: string; action?: string
+  surAction?: () => void; onAction?: () => void
 }) {
   return (
     <div style={{ display: 'flex', alignItems: 'end', justifyContent: 'space-between',
@@ -220,39 +221,48 @@ export function EnTeteDeSection({ surtitre, titre, action, surAction }: {
         {surtitre !== undefined && <div style={ROLE.surtitre as React.CSSProperties}>{surtitre}</div>}
         <h2 style={{ margin: 0, fontSize: 'var(--text-xl)', fontWeight: 650, color: 'var(--foreground)' }}>{titre}</h2>
       </div>
-      {action !== undefined && surAction !== undefined && (
-        <button onClick={surAction} style={{ background: 'none', border: 'none', color: 'var(--primary)',
+      {action !== undefined && (surAction ?? onAction) !== undefined && (
+        <button onClick={onAction ?? surAction} style={{ background: 'none', border: 'none', color: 'var(--primary)',
           fontSize: 'var(--text-sm)', fontWeight: 600, cursor: 'pointer', padding: 0 }}>{action}</button>
       )}
     </div>
   )
 }
 
-export function Pastille({ ton, enfant, children }: {
-  ton: 'succes' | 'alerte' | 'danger' | 'neutre'; enfant?: React.ReactNode; children?: React.ReactNode
+export function Pastille({ ton, children, enfant }: {
+  ton: 'succes' | 'alerte' | 'danger' | 'neutre'; children?: React.ReactNode; enfant?: React.ReactNode
 }) {
   const fonds = { succes: 'var(--success)', alerte: 'var(--warning)', danger: 'var(--destructive)', neutre: 'var(--secondary-foreground)' } as const
   return (
     <span style={{ background: 'var(--secondary)', color: fonds[ton], borderRadius: 999,
       fontSize: 'var(--text-xs)', fontWeight: 600, padding: \`2px \${ESPACE.s}px\` }}>
-      {enfant ?? children}
+      {children ?? enfant}
     </span>
   )
 }
 
-/** LE FORMULAIRE A UNE GÉOMÉTRIE : le champ grandit, le bouton non. */
-export function Bouton({ texte, surClic, genre = 'primaire', type = 'button' }: {
-  texte: string; surClic?: () => void; genre?: 'primaire' | 'secondaire' | 'discret'
+/**
+ * LE FORMULAIRE A UNE GÉOMÉTRIE : le champ grandit, le bouton non.
+ *
+ * IL ACCEPTE LA CONVENTION REACT — children et onClick — parce que c'est
+ * ce que le modèle écrit (mesuré le 2026-11-01 : trois boutons rendus VIDES
+ * et INERTES, libellé et gestionnaire jetés). \`texte\` et \`surClic\`
+ * restent acceptés : aucune œuvre déjà livrée ne doit casser.
+ */
+export function Bouton({ texte, children, surClic, onClick, genre = 'primaire', type = 'button' }: {
+  texte?: string; children?: React.ReactNode
+  surClic?: () => void; onClick?: () => void
+  genre?: 'primaire' | 'secondaire' | 'discret'
   type?: 'button' | 'submit'
 }) {
   const fonds = { primaire: 'var(--primary)', secondaire: 'var(--card)', discret: 'transparent' } as const
   const textes = { primaire: 'var(--primary-foreground)', secondaire: 'var(--foreground)', discret: 'var(--primary)' } as const
   return (
-    <button type={type} onClick={surClic} style={{ background: fonds[genre], color: textes[genre],
+    <button type={type} onClick={onClick ?? surClic} style={{ background: fonds[genre], color: textes[genre],
       border: genre === 'secondaire' ? '1px solid var(--border)' : 'none',
       borderRadius: 'var(--radius-md)', padding: \`\${ESPACE.s + 2}px \${ESPACE.m}px\`,
       fontSize: 'var(--text-sm)', fontWeight: 600, cursor: 'pointer', width: 'fit-content' }}>
-      {texte}
+      {children ?? texte}
     </button>
   )
 }

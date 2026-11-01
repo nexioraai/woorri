@@ -295,7 +295,6 @@ export async function boucleEcriture(o: {
         // SEMANTIQUE.attention…) dans une œuvre pourtant livrée.
         const jetons = jugerJetons(carte, systeme)
         const vivacite = jugerVivacite(carte)
-        const couverture = jugerCouverture(o.demande, carte)
         // EP-298 : l'argent parle la devise configurée. EP-296 transmet,
         // celui-ci VÉRIFIE — une instruction sans contrôle est un vœu
         // (mesuré : 10× EUR sur une base tchadienne, devise validée).
@@ -308,6 +307,11 @@ export async function boucleEcriture(o: {
         // sait déjà qu'elle mourra, et un tour coûte de l'argent.
         const execution: VerdictExecution | null =
           jetons.length === 0 ? await (o.juger ?? jugerExecution)(v.code) : null
+        // La couverture se juge APRÈS l'exécution : elle a besoin des ÉCRANS
+        // RÉELLEMENT OUVERTS. Jugée avant, elle ne voyait que des mots — et
+        // « réservation couverte » avec 2 occurrences pour 59 au cahier
+        // était le prix exact de cet ordre-là (mesuré le 2026-11-01).
+        const couverture = jugerCouverture(o.demande, carte, execution?.ecrans ?? [])
         const reproches: string[] = []
         if (jetons.length > 0) {
           reproches.push(
@@ -350,11 +354,28 @@ export async function boucleEcriture(o: {
               '\nCorrige la cause : une application livrée doit s’ouvrir et afficher ses écrans.',
           )
         }
+        if ((execution?.controlesMuets ?? []).length > 0) {
+          reproches.push(
+            'DES CONTRÔLES SANS NOM LISIBLE — rendus, liés, et pourtant ' +
+              'inutilisables : personne ne sait ce qu’ils font :\n' +
+              (execution?.controlesMuets ?? [])
+                .slice(0, 8)
+                .map((m) => `- <${m.balise}> : ${m.extrait}`)
+                .join('\n') +
+              '\nDonne un texte visible à chacun (ou un aria-label s’il ne porte qu’une icône).',
+          )
+        }
         if (couverture.absentes.length > 0) {
           reproches.push(
             'DES EXIGENCES DU CAHIER SONT MUETTES — ni dans l’application, ni déclarées :\n' +
               couverture.absentes
-                .map((e) => `- ${e.exigence} (le cahier y insiste ${e.cahier} fois, le code n’en dit rien)`)
+                .map((e) =>
+                  e.statut === 'nommee'
+                    ? `- ${e.exigence} : le code en PARLE (${e.code} fois) mais aucun écran ouvert ne la porte — une mention n’est pas une couverture`
+                    : e.statut === 'declaree-mais-centrale'
+                      ? `- ${e.exigence} : déclarée hors périmètre alors que le cahier y insiste ${e.cahier} fois — trop central pour être écarté sans l’accord du client`
+                      : `- ${e.exigence} (le cahier y insiste ${e.cahier} fois, le code n’en dit rien)`,
+                )
                 .join('\n') +
               `\nCouvre-les, ou déclare-les dans ${FICHIER_PERIMETRE} avec un motif d’une ligne. Le silence est interdit.`,
           )
