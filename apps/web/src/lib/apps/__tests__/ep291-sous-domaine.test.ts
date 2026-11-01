@@ -19,7 +19,7 @@
  *     est lue par des humains, un escroc choisirait exactement ceux-là ;
  *   · l'échec du sous-domaine n'avale JAMAIS la publication par jeton.
  */
-import { readFileSync } from 'node:fs'
+import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
@@ -82,6 +82,39 @@ describe('EP-291 · la liste réservée ne contient QUE ce qui est à nous', () 
     // redevient « autorisé », et la liste se vérifie par LECTURE.
     expect(NOMS_RESERVES.size, 'la liste a regrossi : quelqu’un a réadopté une liste du monde').toBeLessThan(100)
     expect(NOMS_RESERVES.size).toBeGreaterThan(40)
+  })
+
+  it('⑩bis CHAQUE ROUTE DU PRODUIT EST RÉSERVÉE — lu, pas recopié', () => {
+    // C'ÉTAIT LE DERNIER RELEVÉ FIGÉ DE CE CHANTIER, et c'était le
+    // reproche exact que je faisais aux listes des autres : une liste
+    // écrite à la main là où une mesure était possible.
+    //
+    // Une route née demain — /facturation, /support — resterait publiable
+    // par un client, et son adresse `facturation.deribfy.app` ferait
+    // croire à une page de Deribfy. Personne ne le verrait.
+    //
+    // La liste reste LITTÉRALE dans le code (la fonction déployée n'a pas
+    // de système de fichiers à lire), mais la GATE la confronte au disque :
+    // une route ajoutée sans réservation fait rougir, et le message dit
+    // quoi écrire.
+    const APP = join(__dirname, '..', '..', '..', 'app')
+    const segments = readdirSync(APP, { withFileTypes: true })
+      .filter((e) => e.isDirectory())
+      .map((e) => e.name)
+      // Les groupes Next `(nom)` ne paraissent pas dans l'URL, et les
+      // segments dynamiques `[x]` ne sont pas des noms fixes.
+      .filter((n) => !n.startsWith('(') && !n.startsWith('[') && !n.startsWith('_'))
+      .filter((n) => n !== '__tests__' && n !== 'lib')
+      // Un segment doit être un nom de sous-domaine valide pour entrer en
+      // collision : `llms.txt` n'en est pas un.
+      .filter((n) => /^[a-z0-9](?:[a-z0-9-]{1,38})[a-z0-9]$/u.test(n) && !n.includes('--'))
+    expect(segments.length, 'le relevé des routes ne trouve plus rien').toBeGreaterThan(10)
+    const oubliees = segments.filter((n) => !NOMS_RESERVES.has(n))
+    expect(
+      oubliees,
+      'route(s) du produit publiables par un client — ajoutez-les au bloc ① de ' +
+        'NOMS_RESERVES dans sous-domaine.ts : ' + oubliees.join(', '),
+    ).toEqual([])
   })
 
   it('⑪ ELLE GARDE CE QUI IMITERAIT LA PLATEFORME', () => {
