@@ -68,6 +68,14 @@ export async function POST(req: Request) {
   //   · le nom public d'une APPLICATION (le proxy sert les sites d'abord —
   //     prendre le nom d'une app l'éclipserait) ;
   //   · le slug brut d'un autre site (servi en ②).
+  // ── NE FILTREZ JAMAIS PAR STATUT SUR `publication_slug`. C'EST VOLONTAIRE.
+  //
+  // Une application SUPPRIMEE garde son nom : la ligne survit en PIERRE
+  // TOMBALE, et c'est elle qui tient la quarantaine (EP-308). Ajouter
+  // `.eq('statut', 'livree')` ici rendrait ce nom disponible pour un SITE —
+  // et les anciens liens de l'application resoudraient vers autre chose,
+  // sans que personne le voie. Un nom publie ne se recycle pas, meme entre
+  // deux produits de la maison.
   const [parNom, parApp, parSlug] = await Promise.all([
     supabaseAdmin.from('sites_sous_domaines').select('site_slug').eq('nom', nom).maybeSingle(),
     supabaseAdmin.from(TABLE_GENERATIONS).select('id').eq('publication_slug', nom).maybeSingle(),

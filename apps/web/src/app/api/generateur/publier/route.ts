@@ -125,6 +125,19 @@ export async function POST(req: Request) {
   if (sous !== '') {
     // LE NOM EST UNIQUE, et l unicite se verifie contre les AUTRES oeuvres :
     // republier la sienne sous le meme nom doit rester possible.
+    //
+    // ── NE FILTREZ JAMAIS PAR STATUT ICI. C'EST VOLONTAIRE.
+    //
+    // Une oeuvre SUPPRIMEE garde son `publication_slug` : la ligne survit en
+    // PIERRE TOMBALE, et c'est ELLE qui tient la quarantaine du nom
+    // (EP-308). Ajouter `.eq('statut', 'livree')` — « pour ne regarder que
+    // les vraies applications » — rendrait la pierre tombale INVISIBLE et
+    // libererait le nom EN SILENCE.
+    //
+    // Ce que ca couterait : quelqu'un d'autre reprend `nom.deribfy.app`, et
+    // les anciens liens — partages par courriel, en signature, sur une carte
+    // de visite — resolvent vers l'application d'un INCONNU. Pas un 404 :
+    // une SUBSTITUTION SILENCIEUSE. Un nom publie ne se recycle pas.
     const pris = await supabaseAdmin
       .from(TABLE_GENERATIONS)
       .select('id')
