@@ -62,7 +62,7 @@ jobs:
       # « no file matched », c'est-à-dire avant toute mesure, pour une
       # optimisation. Le téléchargement de Spring Boot est donc payé à chaque
       # run ; c'est le prix d'un gabarit qui n'est pas versionné.
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: 21
