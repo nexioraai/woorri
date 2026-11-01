@@ -133,7 +133,7 @@ export async function fetchProduct(slug: string, rawId: string): Promise<Product
     const catalogProductId = rawId.replace(/^catalog-/, '').split('::')[0]
     const { data: sel } = await supabase
       .from('site_catalog_selections')
-      .select('sell_price, custom_name, custom_description, catalog_product_id, catalog_products(name, description, price, currency, images, in_stock, supplier_id, supplier_product_id, supplier_parent_id)')
+      .select('sell_price, custom_name, custom_description, catalog_product_id, catalog_products:catalog_products_public(name, description, price, currency, images, in_stock, supplier_id, supplier_product_id, supplier_parent_id)')
       .eq('site_id', (site as any).id)
       .eq('catalog_product_id', catalogProductId)
       .eq('merchant_approved', true)

@@ -484,21 +484,43 @@ designs
 ),
 ]
 if (ids.length === 0) return
+// Ce que `prix_publics` rend, nomme pour que le lint n'ait pas a deviner.
+type PrixPublic = { id: string; price: number; currency: string }
+
+// ── ① LES PRIX PAR UNE FONCTION, PAS PAR UNE TABLE NI UNE VUE.
+//
+// `catalog_products` rendait 40 832 lignes a la clef anonyme, references
+// fournisseur comprises -- le sourcing entier.
+//
+// PAS `catalog_products_public` : elle restreint aux produits SELECTIONNES
+// ET APPROUVES, et les maquettes POD ne passent pas par les selections (en
+// mode pod_brand elles ne sont meme pas chargees). Mesure du 2026-11-01 :
+// sur 3 ids demandes, la table en rend 3, cette vue-la 2. Ce chemin aurait
+// rendu ZERO prix au premier design d'un marchand.
+//
+// ET PAS UNE VUE A TROIS COLONNES NON PLUS : elle serait restee
+// ENUMERABLE (`select=*` sans filtre), donc la meme forme en plus petit.
+// Ce chemin lit PAR LISTE D'IDENTIFIANTS -- il les connait deja. Une
+// fonction prend ses ids en parametre et ne s'enumere pas du tout.
 const { data: rows, error } = await supabase
-.from('catalog_products')
-.select('id, price, currency')
-.in('id', ids)
+.rpc('prix_publics', { ids })
 if (error) {
 signalQueryFailure('loadPodBrandCatalogPrices/catalog_products', error.message, diagnostics)
 return
 }
-const parId = new Map((rows || []).map((r: any) => [String(r.id), r]))
+// La RPC rend `unknown` : le type se dit ici. PAS `any` -- le cliquet de
+// lint n'autorise la dette qu'a DIMINUER, et mon `as any[]` l'avait fait
+// passer de 951 a 952.
+const parId = new Map(((rows || []) as PrixPublic[]).map((r) => [String(r.id), r]))
 data.pod_designs = designs.map((d: any) => ({
 ...d,
 mockups: (Array.isArray(d?.mockups) ? d.mockups : [])
 .filter((m: any) => parId.has(String(m?.catalog_product_id)))
 .map((m: any) => {
-const r = parId.get(String(m.catalog_product_id))
+// `as PrixPublic` et pas `?.` : un identifiant de maquette absent des prix
+// levait deja avant ce lot, et changer ca modifierait le comportement de
+// huit boutiques en ligne pour une question de type.
+const r = parId.get(String(m.catalog_product_id)) as PrixPublic
 return { ...m, price: r.price, currency: r.currency }
 }),
 }))
@@ -508,7 +530,7 @@ async function loadCatalogSelections(data: any, diagnostics?: string[]) {
 if (data.mode === 3 && (data.dropship_type === 'reseller' || data.dropship_type === 'pod_custom')) {
 const { data: catSels, error: catSelsError } = await supabase
 .from('site_catalog_selections')
-.select('id, sell_price, custom_name, custom_description, catalog_product_id, catalog_products(name, description, price, currency, images, supplier_id, supplier_product_id, supplier_parent_id, shipping_days_min, shipping_days_max, in_stock, category)')
+.select('id, sell_price, custom_name, custom_description, catalog_product_id, catalog_products:catalog_products_public(name, description, price, currency, images, supplier_id, supplier_product_id, supplier_parent_id, shipping_days_min, shipping_days_max, in_stock, category)')
 .eq('site_id', data.id)
 .eq('merchant_approved', true)
 .order('sort_order', { ascending: true })

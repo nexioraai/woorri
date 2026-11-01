@@ -56,6 +56,13 @@ let catalogProductsResult: { data: any; error: any };
 
 vi.mock('@/lib/supabase', () => ({
   supabase: {
+    // ── LA FONCTION DES PRIX (lot A) : le chemin POD lit par liste d'ids,
+    // donc par RPC et non par table. Une vue serait restee enumerable.
+    rpc: (nom: string) => {
+      fromCalls.push('rpc:' + nom)
+      if (nom === 'prix_publics') return Promise.resolve(catalogProductsResult)
+      throw new Error('rpc inattendue : ' + nom)
+    },
     from: (table: string) => {
       fromCalls.push(table);
       if (table === 'sites_public') return makeQueryBuilder(siteResult);
@@ -63,7 +70,23 @@ vi.mock('@/lib/supabase', () => ({
       if (table === 'shop_products') return makeQueryBuilder(shopProductsResult);
       if (table === 'site_catalog_selections') return makeQueryBuilder(catalogSelectionsResult);
       // LOT 3 — `loadPodBrandCatalogPrices` relit prix et devise des maquettes.
-      if (table === 'catalog_products') return makeQueryBuilder(catalogProductsResult);
+      //
+      // ── LOT A (2026-11-01) : LA VUE ÉTROITE, PAS LA TABLE.
+      //
+      // `catalog_products` rendait 40 832 lignes à la clef anonyme, références
+      // fournisseur comprises. Les quatre chemins anonymes lisent désormais
+      // `catalog_products_public` — mêmes colonnes, lignes restreintes aux
+      // produits sélectionnés ET approuvés (19 mesurés).
+      //
+      // LA TABLE RESTE REFUSÉE ICI, ET C'EST VOULU : ce `throw` est ce qui a
+      // attrapé l'édition du lot A. Si quelqu'un revient à la table, ce test
+      // rougit — et la révocation prévue à l'étape 3 ferait mourir ce chemin
+      // en production, silencieusement, le jour du premier design d'un
+      // marchand.
+      // LES VITRINES lisent `catalog_products_public` (lignes restreintes
+      // aux selections approuvees). LE CHEMIN POD, lui, passe par la
+      // FONCTION `prix_publics` -- voir le `rpc` ci-dessous.
+      if (table === 'catalog_products_public') return makeQueryBuilder(catalogProductsResult);
       throw new Error('table inattendue : ' + table);
     },
   },

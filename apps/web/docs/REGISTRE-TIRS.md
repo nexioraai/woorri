@@ -381,6 +381,28 @@ retomberait sur `DEFAULT_MARGIN_PERCENT` et **les prix affichés changeraient
 en silence sur huit boutiques en ligne**. Il n'y a donc PAS de fermeture
 gratuite.
 
+**ET FERMER `cj_margin_percent` NE FERMERA PAS LA MARGE. MESURÉ.**
+
+```
+shared.tsx:559       const costPrice = cp.price ? Number(cp.price) : 0   ← cp = catalog_products
+shared.tsx:560       resolveDisplayPrice(costPrice, s.sell_price, margin, roundMode)
+fetchProduct.ts:163  const cost = cp.price ? Number(cp.price) : 0
+pricing.ts:86        roundMoney(costPrice * (1 + marginPercent / 100))
+```
+
+L'entrée de `calcSellPrice` est **`catalog_products.price`**, le prix
+fournisseur — et il reste lisible par `anon` (19 produits par
+`catalog_products_public`, et par la RPC `prix_publics` pour qui connaît les
+identifiants). **La marge se déduit donc du prix affiché et de `price`**,
+produit par produit : `affiché / price − 1`, à l'arrondi `apply99` près et
+hors `sell_price` saisi à la main. Avec dix-neuf produits et une marge unique
+par site, elle est trivialement récupérable.
+
+⚠ **Quelqu'un fermera `cj_margin_percent` en croyant fermer la marge, et la
+marge restera calculable.** C'est la même erreur que « facteur 470 = clos »,
+un étage plus bas. **La fermeture réelle est le prix de vente calculé côté
+serveur** — le client ne reçoit alors qu'un prix, sans son entrée.
+
 **L'ANALYSE DE RISQUE CI-DESSOUS REPOSE SUR UNE PRÉMISSE NON VÉRIFIÉE** :
 « basculer vers la clef de service est risqué parce qu'elle contourne la
 RLS ». ⚠ **À vérifier avant d'ouvrir B : `sites_public` porte-t-elle
@@ -556,7 +578,7 @@ Et la CI, elle, exécute ses étapes **en série** (un seul job, aucune matrice,
 aucun `needs` — `spawnSync` côté gate) : la condition fidèle est donc bien
 « suite complète, rien d'autre ».
 
-## LE LOT SCHÉMA — MESURÉ LOCALEMENT, PREUVE CI EN VOL (2026-11-01)
+## LE LOT SCHÉMA EST CLOS — PREUVE CI À L'APPUI (2026-11-01)
 
 Mesuré contre la base vivante, code de sortie lu avant tout filtre :
 
@@ -571,10 +593,27 @@ Contraintes de production **lues et validées** (`convalidated`), index uniques
 vus (`pg_index` + `indisvalid`), `PUBLIC` révoqué sur la fonction de lecture.
 Les deux tables à 27 colonnes.
 
-**MAIS CE N'EST PAS « CLOS ».** La preuve CI — l'épreuve `divergence_schema`
-qui doit faire rougir CETTE étape, avec sa sortie brute — n'existe pas encore.
-On ne clôt pas avec la preuve en vol : c'est la règle 9 dans l'autre sens.
-Le statut sera mis à CLOS quand la sortie brute du run existera.
+**ET LA PREUVE CI EXISTE** — run `41342141316`, `epreuve=divergence_schema`,
+`conclusion=failure`, sortie brute :
+
+```
+EPREUVE : mesure amputee de publication_slug -- ce run DOIT echouer.
+── app_generations
+   🔴 1 déclarée(s) au dépôt, ABSENTE(S) de la base :
+      - publication_slug
+── app_generations_test
+   ✅ conforme
+🔴 SCHÉMA EN ÉCART — 1 point(s).
+##[error]Process completed with exit code 1.
+```
+
+**TROIS CHOSES QUE CETTE SORTIE PROUVE, et qu'aucune gate ne pouvait prouver :**
+① l'épreuve PAR ÉTAPE fonctionne — la première étape n'a pas forgé, donc elle
+n'a pas masqué celle-ci ; ② `!cancelled()` laisse bien l'étape s'exécuter ;
+③ `app_generations_test ✅ conforme` signifie que la ROUTE a mesuré la base
+vivante DEPUIS LA LAMBDA — donc le chemin HTTP, la garde `CRON_SECRET`, la
+lecture de l'OpenAPI et la RPC ont tous tourné en production. C'était mon
+dernier point D ouvert sur ce lot.
 
 ## CE QUE VAUT UN « LIVRÉE » AUJOURD'HUI — le chiffre, en proportion
 
@@ -713,4 +752,18 @@ pendant des semaines sans qu'un seul écran rougisse.
 avant / après, **mesurée en exerçant l'URL** — pas en lisant le code. Un
 chemin sans sa sortie n'est pas basculé. Et les deux filets tiennent :
 `19/87` doit rester `19/87`, `2/5` doit rester `2/5`.
+
+## `prix_publics` — LE TABLEAU D'IDENTIFIANTS N'EST PAS BORNÉ (bas de pile)
+
+`where c.id = any(ids)` n'a pas de plafond. Un appelant anonyme peut poster
+un million d'identifiants et faire travailler la base pour rien.
+
+**CE QUI BORNE LES DÉGÂTS, ET POURQUOI CE N'EST PAS BLOQUANT** : l'énumération
+reste impossible (l'espace des uuid n'est pas parcourable), et le
+`statement_timeout` du rôle `anon` coupe la requête. La surface est donc un
+gaspillage de calcul, pas une fuite.
+
+**MAIS C'EST UNE SURFACE, ET ELLE EST ÉCRITE.** Le remède tient en une ligne
+dans la fonction (`where array_length(ids, 1) <= 200`), et il attend son tour
+— bas de pile, consigné le 2026-11-01.
 

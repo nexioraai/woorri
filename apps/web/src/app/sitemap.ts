@@ -158,7 +158,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // La jointure la ramene, et l'autorite tranche -- meme regle que la vitrine.
   const { data: catalogSels } = await supabase
     .from('site_catalog_selections')
-    .select('catalog_product_id, site_id, catalog_products(supplier_id)')
+    .select('catalog_product_id, site_id, catalog_products:catalog_products_public(supplier_id)')
     .eq('merchant_approved', true)
   const catalogProductRoutes: MetadataRoute.Sitemap = (catalogSels ?? [])
     .filter((c: any) => {
