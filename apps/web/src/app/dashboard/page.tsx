@@ -8,6 +8,12 @@ import { supabase } from '@/lib/supabase';
 import { computeAiScore } from '@/app/lib/aiScore';
 import { useTranslation } from '@/lib/translations';
 import { oublierGeneration } from '@/lib/apps/suivi-generation';
+import {
+  adresseProposee,
+  CE_QUE_RENOMMER_CHANGE,
+  nomProduitValide,
+  TITRE_SANS_NOM,
+} from '@/lib/apps/nom-produit';
 
 /**
  * UNE APPLICATION TELLE QUE LA LISTE LA MONTRE.
@@ -60,16 +66,61 @@ export default function DashboardPage() {
   // carte, copiable. Un seul à la fois : publier en remplace l'affichage.
   const [lienPublic, setLienPublic] = useState<{ id: string; url: string } | null>(null);
 
+  /**
+   * RENOMMER — pour les neuf oeuvres nees avant que le produit ait un nom.
+   *
+   * ON AFFICHE `CE_QUE_RENOMMER_CHANGE` APRES COUP, ET C'EST LE POINT.
+   * L'onglet, le manifeste et cette carte prennent le nouveau nom (la page
+   * est recompilee a chaque lecture) ; le nom ecrit DANS les ecrans par le
+   * modele, non. Sans cette phrase, la personne renomme, voit la carte
+   * changer, ouvre son application et y lit l'ancien nom.
+   */
+  const renommer = async (a: Application) => {
+    setApercuErreur(null);
+    const propose = window.prompt(
+      `Nom de votre application :\n\n${CE_QUE_RENOMMER_CHANGE}`,
+      a.nom ?? '',
+    );
+    if (propose === null) return;
+    const verdict = nomProduitValide(propose);
+    if (!verdict.ok) { setApercuErreur(verdict.erreur); return; }
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) { setApercuErreur('Session expiree — reconnectez-vous.'); return; }
+    const res = await fetch(`/api/generateur/renommer?id=${encodeURIComponent(a.id)}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+      body: JSON.stringify({ nom: verdict.nom }),
+    });
+    const d = (await res.json().catch(() => ({}))) as { nom?: string; error?: string };
+    if (!res.ok || typeof d.nom !== 'string') {
+      setApercuErreur(String(d.error ?? 'Le changement de nom a echoue.'));
+      return;
+    }
+    setApplications((liste) => liste.map((x) => (x.id === a.id ? { ...x, nom: d.nom ?? x.nom } : x)));
+  };
+
   const publier = async (a: Application) => {
     setApercuErreur(null);
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) { setApercuErreur('Session expirée — reconnectez-vous.'); return; }
-    // LE NOM PUBLIC : propose, jamais impose. Vide = publication par jeton.
-    const suggestion = (a.nom ?? a.demande).toLowerCase().normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '').slice(0, 30).replace(/-+$/g, '');
+    // ── L'ADRESSE EST PROPOSEE DEPUIS LE NOM, ET RESTE MODIFIABLE.
+    //
+    // Cette ligne portait une TROISIEME copie de la regle de nommage — un
+    // slug maison qui ignorait les noms reserves : proposer `admin` ou
+    // `support` faisait refuser la publication apres le clic, sans que
+    // l'ecran l'ait jamais annonce. `adresseProposee` est la meme fonction
+    // que la route emploie, et elle rend vide quand elle n'a rien d'honnete
+    // a proposer.
+    //
+    // DEUX CHAMPS, PAS UN : le nom est ce que le produit s'appelle,
+    // l'adresse est ou on le trouve. Qui veut distinguer deux tontines
+    // ecrira `tontine-moundou` plutot que de subir `tontine-2`.
+    const suggestion = adresseProposee(a.nom ?? a.demande);
     const sous = window.prompt(
-      'Adresse publique de votre application :\n<nom>.deribfy.app\n\nMinuscules, chiffres et tirets (laisser vide pour un lien simple).',
+      `Adresse publique de « ${a.nom ?? 'votre application'} » :\n` +
+        '<adresse>.deribfy.app\n\nMinuscules, chiffres et tirets. ' +
+        'Un seul niveau : les points sont refuses. ' +
+        'Laisser vide pour un lien simple.',
       suggestion,
     );
     if (sous === null) return; // la personne a annulé
@@ -210,7 +261,7 @@ export default function DashboardPage() {
         setApercuErreur(d?.error ?? `Impossible d'ouvrir cette application (HTTP ${res.status}).`);
         return;
       }
-      setApercuApp({ nom: a.nom ?? 'Votre application', html: await res.text() });
+      setApercuApp({ nom: a.nom ?? TITRE_SANS_NOM, html: await res.text() });
     } catch {
       setApercuErreur("Le chargement de l'application a échoué. Réessayez.");
     }
@@ -467,9 +518,12 @@ export default function DashboardPage() {
                   className="border border-white/[0.06] rounded-2xl p-5 flex flex-col gap-3"
                   style={{ background: 'rgba(255,255,255,0.02)' }}>
                   <div className="flex items-center justify-between gap-3">
-                    <span className="text-white/90 font-semibold text-sm truncate">
-                      {a.nom ?? 'Application'}
-                    </span>
+                    <button type="button"
+                      onClick={() => { void renommer(a); }}
+                      title="Renommer cette application"
+                      className="text-white/90 font-semibold text-sm truncate text-left hover:text-white">
+                      {a.nom ?? TITRE_SANS_NOM}
+                    </button>
                     <span className={`text-[11px] px-2 py-0.5 rounded-full border shrink-0 ${
                       a.statut === 'livree'
                         ? 'border-emerald-500/30 text-emerald-400 bg-emerald-500/10'
@@ -484,13 +538,23 @@ export default function DashboardPage() {
                     {a.fichiers > 0 && <span>{a.fichiers} fichier{a.fichiers > 1 ? 's' : ''}</span>}
                     {a.dureeMs > 0 && <span>{Math.round(a.dureeMs / 1000)} s</span>}
                   </div>
-                  {/* ── « REVOIR » N'APPARAIT QUE SI LA MATIERE EXISTE.
-                      Le statut dit ce que la machine a cru ; les fichiers
-                      disent ce qu'elle a garde. Offrir le lien sans la
-                      matiere, c'est promettre un 404 — et faire croire a la
-                      personne qu'elle a perdu son application une 2e fois. */}
-                  {a.revoyable ? (
-                    <div className="flex flex-col gap-2">
+                  {/* ── CE QUI DÉPEND DES FICHIERS, ET CE QUI N'EN DÉPEND PAS.
+                      ÇA S'EST PRODUIT QUATRE FOIS. Le 19 octobre, une
+                      génération refusée laissait l'écran SANS AUCUN BOUTON et
+                      le propriétaire a dû vider le stockage de son navigateur
+                      à la main. Le 1er novembre, rebelote : toute la rangée
+                      était conditionnée à `a.revoyable`, donc « Supprimer »
+                      disparaissait avec elle — alors que la suppression a été
+                      écrite POUR les lignes mortes, et que la plupart des
+                      cartes du propriétaire sont des refusées.
+
+                      LA RÈGLE QUI EN SORT : une action ne dépend jamais d'une
+                      condition qui ne la concerne pas. « Revoir », « Publier »
+                      et « Télécharger » ont besoin de la matière — sans elle
+                      ils promettraient un 404. « Supprimer » n'a besoin que du
+                      droit de supprimer. */}
+                  <div className="flex flex-col gap-2">
+                    {a.revoyable ? (
                       <div className="grid grid-cols-3 gap-2">
                         <button type="button" onClick={() => { void revoir(a); }}
                           className="px-2 py-2 rounded-xl text-sm font-semibold border border-white/10 text-white/70 hover:text-white hover:border-white/30 transition-all">
@@ -505,6 +569,14 @@ export default function DashboardPage() {
                           Télécharger
                         </button>
                       </div>
+                    ) : (
+                      /* L'INFORMATION RESTE, elle ne remplace plus l'action :
+                         la personne doit savoir qu'il n'y a rien à revoir, ET
+                         pouvoir retirer la ligne. */
+                      <span className="text-center px-3 py-2 rounded-xl text-xs text-white/25 border border-white/[0.04]">
+                        Aucun fichier conservé
+                      </span>
+                    )}
                       {/* LA SUPPRESSION NOMME CE QU'ELLE FAIT. « Êtes-vous
                           sûr ? » ne dit rien : la personne doit savoir que le
                           lien cesse de répondre, et que le projet déjà
@@ -514,23 +586,18 @@ export default function DashboardPage() {
                         className="px-2 py-2 rounded-xl text-xs font-semibold border border-red-500/20 text-red-300/70 hover:text-red-200 hover:border-red-400/40 transition-all">
                         Supprimer
                       </button>
-                      {lienPublic?.id === a.id && (
-                        <div className="flex items-center gap-2 text-xs">
-                          <a href={lienPublic.url} target="_blank" rel="noreferrer"
-                            className="flex-1 truncate text-emerald-400 underline">{lienPublic.url}</a>
-                          <button type="button"
-                            onClick={() => { void navigator.clipboard.writeText(lienPublic.url); }}
-                            className="shrink-0 px-2 py-1 rounded-lg border border-white/10 text-white/60 hover:text-white">
-                            Copier
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <span className="text-center px-3 py-2 rounded-xl text-xs text-white/25 border border-white/[0.04]">
-                      Aucun fichier conservé
-                    </span>
-                  )}
+                    {lienPublic?.id === a.id && (
+                      <div className="flex items-center gap-2 text-xs">
+                        <a href={lienPublic.url} target="_blank" rel="noreferrer"
+                          className="flex-1 truncate text-emerald-400 underline">{lienPublic.url}</a>
+                        <button type="button"
+                          onClick={() => { void navigator.clipboard.writeText(lienPublic.url); }}
+                          className="shrink-0 px-2 py-1 rounded-lg border border-white/10 text-white/60 hover:text-white">
+                          Copier
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
