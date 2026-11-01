@@ -65,6 +65,22 @@ export function jugerSonde(corps, html = undefined) {
       )
     }
   }
+  // Publier n'ecrit plus de DNS : tout repose sur le CNAME generique.
+  // Mort, il ne casse rien AUJOURD'HUI — il casse la PROCHAINE
+  // publication, et on l'apprendrait par un client.
+  const g = corps?.generique
+  if (g === undefined) out.push('la sonde ne rapporte pas l’état du CNAME générique')
+  else if (g.vivant !== true) {
+    out.push(
+      g.resout === false
+        ? `LE CNAME GÉNÉRIQUE EST MORT : « ${String(g.temoin)} » ne résout plus ` +
+          `(${String(g.detail)}). Toute publication future rendra un lien introuvable.`
+        : `LE CERTIFICAT NE S'ÉMET PLUS À LA DEMANDE : « ${String(g.temoin)} » résout ` +
+          `mais la poignée de main TLS échoue (${String(g.detail)}). Les adresses publiées ` +
+          'répondront « connexion non sécurisée ».',
+    )
+  }
+
   const e = corps?.execution
   if (e === undefined) out.push('la sonde ne rapporte pas le juge de démarrage')
   else if (e.utilisable !== true) {

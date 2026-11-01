@@ -30,6 +30,7 @@ import { requireAuthenticatedUser } from '@/lib/auth/require-authenticated-user'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { TABLE_GENERATIONS } from '@/lib/apps/journal'
 import { moteurChoisi } from '@/lib/apps/interrupteur-moteur'
+import { DOMAINE_PUBLIC, TEMOIN_GENERIQUE } from '@/lib/apps/sous-domaine'
 import { boucleEcriture, CONSIGNE, pageAutonome } from '@/lib/apps/boucle-directe'
 import { appelerFournisseur, CONFIGS, fournisseurChoisi } from '@/lib/apps/fournisseur'
 import { assembler } from '@/lib/apps/bac-a-sable'
@@ -177,6 +178,47 @@ export async function GET(req: Request) {
   const execution = v.ok
     ? await jugerExecution(v.code)
     : { monteDansSimulateur: false, indisponible: 'témoin inassemblable', ms: 0, erreurs: [], octetsRendus: 0, texte: '' }
+  // ── LE CNAME GÉNÉRIQUE EST-IL TOUJOURS VIVANT ? (2026-11-01)
+  //
+  // Publier n'écrit plus de DNS : tout repose sur l'enregistrement `*` de
+  // la zone. S'il disparaît — un ménage, une migration —, toutes les
+  // publications futures cesseront de résoudre, et PERSONNE ne l'apprendra
+  // avant qu'un client clique sur un lien mort. On interroge donc un nom
+  // JAMAIS CRÉÉ : s'il résout, le générique vit. Un commentaire pour qui
+  // lit le code, un contrôle ROUGE pour qui ne le lit pas.
+  //
+  // ET ON VA JUSQU'À LA POIGNÉE DE MAIN TLS, pas seulement la résolution :
+  // si Vercel cessait d'émettre les certificats à la demande, les adresses
+  // résoudraient et échoueraient en TLS — et une sonde qui s'arrête au DNS
+  // dirait vert. Mesuré le 2026-11-01 sur un nom neuf : TLS 0 en vingt
+  // secondes, donc l'exiger n'est pas une rigueur abstraite.
+  const temoinGenerique = `${TEMOIN_GENERIQUE}.${DOMAINE_PUBLIC}`
+  let generiqueResout = false
+  let generiqueTls = false
+  let generiqueDetail = ''
+  try {
+    const { resolveCname } = await import('node:dns/promises')
+    const cibles = await resolveCname(temoinGenerique)
+    generiqueResout = cibles.some((c) => c.includes('vercel-dns'))
+    generiqueDetail = cibles.join(', ')
+  } catch (e) {
+    generiqueDetail = e instanceof Error ? e.message.slice(0, 120) : String(e)
+  }
+  if (generiqueResout) {
+    try {
+      // Un nom jamais publié rend 404 — et c'est un SUCCÈS : la réponse
+      // prouve que le certificat a été accepté. Seul l'échec TLS compte.
+      const t = await fetch(`https://${temoinGenerique}/`, {
+        method: 'HEAD',
+        signal: AbortSignal.timeout(12_000),
+      })
+      generiqueTls = true
+      generiqueDetail += ` · HTTP ${String(t.status)}`
+    } catch (e) {
+      generiqueDetail += ` · TLS ÉCHOUE : ${e instanceof Error ? e.message.slice(0, 90) : String(e)}`
+    }
+  }
+
   // EP-306 : les deux reglages peuvent diverger chez l'hebergeur, et alors
   // l'ecran frappe a une porte que le serveur a fermee. Les deux portes
   // refusent bien, donc rien ne depense — mais l'impasse serait MUETTE, et
@@ -190,6 +232,13 @@ export async function GET(req: Request) {
   return NextResponse.json(
     {
       interrupteur: etat,
+      generique: {
+        vivant: generiqueResout && generiqueTls,
+        resout: generiqueResout,
+        tls: generiqueTls,
+        temoin: temoinGenerique,
+        detail: generiqueDetail,
+      },
       // Le détail par œuvre, et le pire cas — la base du plafond (EP-302).
       ...(mesures.length === 0
         ? {}

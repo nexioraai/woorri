@@ -22,7 +22,13 @@
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { creerSousDomaine, nomSuggere, nomValide, NOMS_RESERVES } from '../sous-domaine'
+import {
+  creerSousDomaine,
+  nomSuggere,
+  nomValide,
+  NOMS_RESERVES,
+  TEMOIN_GENERIQUE,
+} from '../sous-domaine'
 
 const SRC = join(__dirname, '..', '..', '..')
 const nu = (s: string) => s.replace(/\/\*[\s\S]*?\*\//gu, ' ').replace(/^\s*\/\/.*$/gmu, ' ')
@@ -63,6 +69,50 @@ describe('EP-291 · le nom', () => {
   })
 })
 
+describe('EP-291 · la liste des noms réservés est ADOPTÉE, pas rédigée', () => {
+  it('⑩ ELLE VIENT D’UNE SOURCE PUBLIÉE, citée et datée', () => {
+    // Une liste fermée qui grandit à chaque défaut révélé est la maladie
+    // que ce dépôt soigne partout ailleurs. On prend celle que le monde
+    // maintient (The Big Username Blacklist, MIT) et on n'écrit que le
+    // français — DÉRIVÉ, mot à mot, de ce qui est déjà réservé en anglais.
+    const brut = JSON.parse(
+      readFileSync(join(__dirname, '..', 'noms-reserves.genere.json'), 'utf8'),
+    ) as { source: string; licence: string; anglais: string[]; francais: string[] }
+    expect(brut.source).toMatch(/Big Username Blacklist/u)
+    expect(brut.licence).toMatch(/MIT/u)
+    expect(brut.anglais.length, 'la liste adoptée a fondu').toBeGreaterThan(400)
+    expect(brut.francais.length, 'le français a disparu').toBeGreaterThan(20)
+  })
+
+  it('⑪ LES MOTS DE CONFIANCE SONT COUVERTS DANS LES DEUX LANGUES', () => {
+    // Le propriétaire vise un produit mondial : une liste française ne
+    // protégerait que la moitié de ses utilisateurs, et l'inverse est vrai.
+    for (const en of ['login', 'secure', 'verify', 'account', 'payment', 'support']) {
+      expect(NOMS_RESERVES.has(en), `« ${en} » n’est plus réservé`).toBe(true)
+    }
+    for (const fr of ['connexion', 'securise', 'verification', 'compte', 'paiement', 'assistance']) {
+      expect(NOMS_RESERVES.has(fr), `« ${fr} » n’est plus réservé`).toBe(true)
+    }
+  })
+
+  it('⑫ LE TÉMOIN DE LA SONDE EST RÉSERVÉ — sinon elle mentirait', () => {
+    // S'il était publié, il résoudrait par SON propre enregistrement et la
+    // sonde dirait « générique vivant » alors qu'il serait mort.
+    expect(NOMS_RESERVES.has(TEMOIN_GENERIQUE)).toBe(true)
+    expect(nomValide(TEMOIN_GENERIQUE), 'le témoin est publiable').toBe(false)
+  })
+
+  it('⑬ CE QU’AUCUNE LISTE NE FERA — et c’est écrit là où on serait tenté', () => {
+    // `orange-money.deribfy.app` ou le nom d'une vraie banque passeront
+    // toujours : les marques du monde ne tiennent pas dans un fichier.
+    // Cela relève des conditions d'utilisation et du RETRAIT, qui existe.
+    const src = readFileSync(join(__dirname, '..', 'sous-domaine.ts'), 'utf8')
+    expect(src, 'l’avertissement a disparu : quelqu’un rallongera la liste').toMatch(
+      /n'allongez pas la\s+\*?\s*liste/u,
+    )
+  })
+})
+
 describe('EP-291 · la création, exécutée sur doublures réseau', () => {
   const doublure = (captures: { corpsDns?: unknown }) =>
     vi.stubGlobal('fetch', async (url: string | URL, init?: RequestInit) => {
@@ -85,13 +135,46 @@ describe('EP-291 · la création, exécutée sur doublures réseau', () => {
 
   const CLEFS = { cloudflareToken: 'cf', vercelToken: 'vc', vercelProjectId: 'prj' }
 
-  it('④ LE CNAME EST DNS-ONLY — derrière le proxy, c’est le 525 garanti', async () => {
-    const captures: { corpsDns?: { proxied?: boolean; content?: string } } = {}
+  it('④ PUBLIER N’ÉCRIT PLUS DE DNS — le générique s’en charge', async () => {
+    // MESURE DU 2026-11-01 : une publication a rendu un lien mort
+    // (ERR_NAME_NOT_RESOLVED). Le nom n'existait pas encore au premier
+    // clic, et le SOA met le NXDOMAIN en cache 1800 SECONDES — trente
+    // minutes sans recours.
+    //
+    // Un CNAME `*` supprime le problème au lieu de l'expliquer : tout nom
+    // résout, il n'y a plus de vide à mémoriser. Le certificat GÉNÉRIQUE,
+    // lui, est refusé par Vercel (mesuré : HTTP 449,
+    // dns_pretest_cns_not_using_vercel_ns_error — il exige ses propres
+    // nameservers) ; mais celui du nom PRÉCIS est émis à la demande dès
+    // qu'il est attaché, puisqu'il résout. Mesuré sur un nom créé vingt
+    // secondes plus tôt : TLS 0.
+    //
+    // Publier ne doit donc plus toucher au DNS. Ce contrôle l'exige : un
+    // appel à Cloudflare ici voudrait dire qu'on a réintroduit l'attente.
+    const appels: string[] = []
+    vi.stubGlobal('fetch', async (url: string | URL) => {
+      appels.push(String(url))
+      return { ok: true, status: 200, json: async () => ({}) }
+    })
+    const r = await creerSousDomaine('cpa-tchad', CLEFS)
+    expect(r.ok).toBe(true)
+    expect(
+      appels.filter((u) => u.includes('cloudflare')),
+      'publier écrit encore du DNS : l’attente de trente minutes revient',
+    ).toEqual([])
+    expect(appels.some((u) => u.includes('vercel.com')), 'le nom n’est pas attaché').toBe(true)
+  })
+
+  it('④bis L’ANCIEN CONTRÔLE DU CNAME — conservé, et il ne s’applique plus', async () => {
+    // Le CNAME par nom n'existe plus ; l'enregistrement `*` qui le remplace
+    // vit chez Cloudflare, hors du code. C'est la SONDE qui le surveille :
+    // elle interroge un nom jamais créé à chaque déploiement, et le
+    // contrôle d'après-déploiement rougit s'il a disparu.
+    const captures: { corpsDns?: { proxied?: boolean } } = {}
     doublure(captures)
     const r = await creerSousDomaine('cpa-tchad', CLEFS)
     expect(r.ok).toBe(true)
-    expect(captures.corpsDns?.proxied, 'proxied doit être false : Vercel ne peut pas émettre le certificat derrière le nuage orange').toBe(false)
-    expect(captures.corpsDns?.content).toBe('cname.vercel-dns.com')
+    expect(captures.corpsDns, 'aucun enregistrement DNS ne doit être écrit').toBeUndefined()
   })
 
   it('⑤ UN NOM RÉSERVÉ NE PART JAMAIS SUR LE RÉSEAU', async () => {

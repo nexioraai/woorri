@@ -142,6 +142,9 @@ describe('EP-306 · le contrôle d’après-déploiement ROUGIT', () => {
     }
     const sain = {
       interrupteur: { serveur: 'direct', serveurPresente: true },
+      // Le CNAME generique est desormais surveille : publier n'ecrit plus
+      // de DNS, tout repose sur lui (2026-11-01).
+      generique: { vivant: true, temoin: 'x.deribfy.app', detail: 'cname.vercel-dns.com' },
       execution: { utilisable: true },
       assemblage: { ok: true },
     }

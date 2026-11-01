@@ -29,6 +29,7 @@
  * peut rien faire d'autre, et il vit dans l'environnement, jamais dans une
  * réponse ni un journal.
  */
+import reservesGenerees from './noms-reserves.genere.json'
 
 /**
  * Les noms qu'une application ne peut PAS prendre.
@@ -41,11 +42,61 @@
 /** Le domaine du contenu client — jamais la marque. Achete le 2026-10-30. */
 export const DOMAINE_PUBLIC = 'deribfy.app'
 
+/** Le nom que la sonde interroge pour prouver que le CNAME générique vit. */
+export const TEMOIN_GENERIQUE = 'sonde-generique-jamais-creee'
+
+/**
+ * LES NOMS QU'UNE ŒUVRE NE PEUT PAS PRENDRE.
+ *
+ * ── CE QUE CETTE LISTE NE POURRA JAMAIS FAIRE, ET QU'IL FAUT LIRE AVANT
+ *    DE VOULOIR L'ALLONGER.
+ *
+ * Elle n'empêchera PAS quelqu'un de publier `orange-money.deribfy.app`, ni
+ * le nom d'une vraie banque, ni celui d'un concurrent. AUCUNE liste ne le
+ * peut : les marques du monde ne tiennent pas dans un fichier. Ce
+ * problème-là relève des CONDITIONS D'UTILISATION et du RETRAIT — et le
+ * retrait propre existe depuis le 2026-11-01 : suppression douce,
+ * quarantaine définitive du nom, lien mort dans la seconde.
+ *
+ * Si vous êtes ici parce qu'un nom gênant est passé, n'allongez pas la
+ * liste : retirez l'œuvre.
+ *
+ * ── CE QU'ELLE FAIT, ET POURQUOI ELLE A CHANGÉ DE STATUT.
+ *
+ * Elle empêche l'imitation des mots de CONFIANCE — `login`, `secure`,
+ * `verification`. Elle était cosmétique tant qu'un nom inexistant ne
+ * résolvait pas ; depuis que le CNAME générique fait répondre TOUT nom,
+ * elle protège vraiment.
+ *
+ * La vraie protection de fond reste la SÉPARATION DES DOMAINES : le
+ * produit vit sur deribfy.COM, les œuvres des clients sur deribfy.APP.
+ * Une page à `login.deribfy.app` n'imite pas la connexion du produit.
+ *
+ * ── ELLE EST ADOPTÉE, PAS RÉDIGÉE.
+ *
+ * Une liste fermée qui grandit à chaque défaut révélé est la maladie que
+ * ce dépôt soigne partout ailleurs. On prend donc celle que le monde
+ * maintient — The Big Username Blacklist, 528 mots, MIT — et on n'écrit
+ * que ce dont personne d'autre ne s'occupe : LE FRANÇAIS. Et même lui est
+ * DÉRIVÉ : pour chaque mot de confiance déjà réservé en anglais, son
+ * équivalent français. Mesuré le 2026-11-01 : sur vingt candidats
+ * français, DIX-NEUF étaient absents de la liste anglaise.
+ *
+ * Rafraîchir : `node scripts/rafraichir-noms-reserves.mjs`.
+ */
+const RESERVES = reservesGenerees as { anglais: string[]; francais: string[] }
+
 export const NOMS_RESERVES: ReadonlySet<string> = new Set([
-  'www', 'api', 'app', 'apps', 'admin', 'dashboard', 'mail', 'email',
-  'login', 'auth', 'compte', 'account', 'paiement', 'payment', 'pay',
-  'deribfy', 'support', 'aide', 'help', 'blog', 'docs', 'status', 'cdn',
-  'assets', 'static', 'staging', 'dev', 'test', 'demo', 'ns1', 'ns2',
+  ...RESERVES.anglais,
+  ...RESERVES.francais,
+  // Ce qui nous est PROPRE et qu'aucune liste du monde ne connaît.
+  'deribfy',
+  // LE TÉMOIN DE LA SONDE. Elle interroge ce nom à chaque déploiement pour
+  // prouver que le CNAME générique vit. Si quelqu'un le publiait, il
+  // résoudrait par son PROPRE enregistrement et la sonde dirait « vivant »
+  // alors que le générique serait mort — un faux vert, celui que ce dépôt
+  // passe ses journées à fermer.
+  TEMOIN_GENERIQUE,
 ])
 
 /**
@@ -87,50 +138,43 @@ export type ResultatSousDomaine =
  * Crée (ou retrouve) `<nom>.deribfy.com` : DNS chez Cloudflare, domaine chez
  * Vercel. Idempotent des deux côtés.
  */
+/**
+ * LE CNAME GÉNÉRIQUE — la pièce invisible dont tout dépend.
+ *
+ * MESURÉ LE 2026-11-01, après qu'une publication a rendu un lien mort
+ * (`ERR_NAME_NOT_RESOLVED`) : le nom n'existait pas encore au premier
+ * clic, et le SOA de la zone met le NXDOMAIN en cache **1800 secondes**.
+ * Trente minutes pendant lesquelles l'adresse qu'on vient de donner ne
+ * répond pas — et aucun rafraîchissement ne les raccourcit.
+ *
+ * Un enregistrement `*` chez Cloudflare supprime le problème au lieu de
+ * l'expliquer : TOUT nom résout immédiatement, il n'y a plus de vide à
+ * mettre en mémoire. Mesuré sur un nom créé vingt secondes plus tôt :
+ * `dig` → cname.vercel-dns.com, HTTPS → TLS 0 (certificat valide).
+ *
+ * ── POURQUOI PAS UN CERTIFICAT GÉNÉRIQUE : MESURÉ, ET REFUSÉ.
+ *
+ *     POST /v7/certs ["*.deribfy.app"] → HTTP 449
+ *     dns_pretest_cns_not_using_vercel_ns_error
+ *
+ * Vercel n'émet un certificat générique que si le domaine est sur SES
+ * nameservers. Le nôtre est chez Cloudflare, et déménager les NS serait un
+ * gros geste pour un petit gain : le certificat du nom PRÉCIS est émis à
+ * la demande dès qu'il est attaché au projet, puisqu'il résout.
+ *
+ * ── CONSÉQUENCE : PUBLIER N'ÉCRIT PLUS DE DNS.
+ *
+ * Un seul appel — attacher le nom chez Vercel — et l'adresse répond. Si
+ * quelqu'un supprime le `*`, toutes les publications futures cesseront de
+ * résoudre : la sonde d'après-déploiement interroge donc un nom JAMAIS
+ * CRÉÉ à chaque fois. Un commentaire pour qui lit, un contrôle rouge pour
+ * qui ne lit pas.
+ */
 export async function creerSousDomaine(nom: string, clefs: Clefs): Promise<ResultatSousDomaine> {
   if (!nomValide(nom)) return { ok: false, erreur: 'nom invalide ou réservé' }
   const hote = `${nom}.${DOMAINE_PUBLIC}`
-  const cf = { Authorization: `Bearer ${clefs.cloudflareToken}`, 'content-type': 'application/json' }
 
-  // ── LA ZONE, RETROUVÉE PAR SON NOM — jamais un id écrit en dur, qui
-  // survivrait à une migration de compte et pointerait dans le vide.
-  const zr = (await (
-    await fetch(`https://api.cloudflare.com/client/v4/zones?name=${DOMAINE_PUBLIC}`, { headers: cf })
-  ).json()) as { success?: boolean; result?: { id: string }[] }
-  const zone = zr.result?.[0]?.id
-  if (zone === undefined) return { ok: false, erreur: `zone ${DOMAINE_PUBLIC} introuvable chez Cloudflare` }
-
-  // ── ① LE CNAME, S'IL N'EXISTE PAS DÉJÀ.
-  const existants = (await (
-    await fetch(
-      `https://api.cloudflare.com/client/v4/zones/${zone}/dns_records?type=CNAME&name=${hote}`,
-      { headers: cf },
-    )
-  ).json()) as { result?: { id: string; content?: string }[] }
-  if ((existants.result ?? []).length === 0) {
-    const cr = (await (
-      await fetch(`https://api.cloudflare.com/client/v4/zones/${zone}/dns_records`, {
-        method: 'POST',
-        headers: cf,
-        body: JSON.stringify({
-          type: 'CNAME',
-          name: nom,
-          content: 'cname.vercel-dns.com',
-          // DNS ONLY, PAS DE PROXY : derrière le nuage orange, Vercel ne
-          // verrait pas l'hôte et ne pourrait pas émettre le certificat —
-          // c'est le 525 déjà vu sur ce domaine, recréé volontairement.
-          proxied: false,
-          ttl: 1,
-          comment: 'Application Deribfy — créé automatiquement à la publication',
-        }),
-      })
-    ).json()) as { success?: boolean; errors?: { message?: string }[] }
-    if (cr.success !== true) {
-      return { ok: false, erreur: `DNS refusé : ${cr.errors?.[0]?.message ?? 'inconnu'}` }
-    }
-  }
-
-  // ── ② LE DOMAINE CHEZ VERCEL. 409 = déjà attaché : c'est un succès.
+  // LE DOMAINE CHEZ VERCEL, ET RIEN D'AUTRE. 409 = déjà attaché : succès.
   const vr = await fetch(`https://api.vercel.com/v10/projects/${clefs.vercelProjectId}/domains`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${clefs.vercelToken}`, 'content-type': 'application/json' },
@@ -138,9 +182,8 @@ export async function creerSousDomaine(nom: string, clefs: Clefs): Promise<Resul
   })
   if (!vr.ok && vr.status !== 409) {
     const corps = (await vr.json().catch(() => null)) as { error?: { message?: string } } | null
-    return { ok: false, erreur: `Vercel refuse le domaine : ${corps?.error?.message ?? vr.status}` }
+    return { ok: false, erreur: `Vercel refuse ${hote} : ${corps?.error?.message ?? String(vr.status)}` }
   }
-
   return { ok: true, hote }
 }
 
@@ -169,28 +212,12 @@ export async function creerSousDomaine(nom: string, clefs: Clefs): Promise<Resul
 export async function retirerSousDomaine(nom: string, clefs: Clefs): Promise<ResultatSousDomaine> {
   if (!nomValide(nom)) return { ok: false, erreur: 'nom invalide' }
   const hote = `${nom}.${DOMAINE_PUBLIC}`
-  const cf = { Authorization: `Bearer ${clefs.cloudflareToken}`, 'content-type': 'application/json' }
 
-  const zr = (await (
-    await fetch(`https://api.cloudflare.com/client/v4/zones?name=${DOMAINE_PUBLIC}`, { headers: cf })
-  ).json()) as { result?: { id: string }[] }
-  const zone = zr.result?.[0]?.id
-  if (zone === undefined) return { ok: false, erreur: `zone ${DOMAINE_PUBLIC} introuvable chez Cloudflare` }
-
-  const existants = (await (
-    await fetch(
-      `https://api.cloudflare.com/client/v4/zones/${zone}/dns_records?type=CNAME&name=${hote}`,
-      { headers: cf },
-    )
-  ).json()) as { result?: { id: string }[] }
-  for (const enr of existants.result ?? []) {
-    const dr = await fetch(
-      `https://api.cloudflare.com/client/v4/zones/${zone}/dns_records/${enr.id}`,
-      { method: 'DELETE', headers: cf },
-    )
-    if (!dr.ok) return { ok: false, erreur: `le DNS refuse de retirer ${hote}` }
-  }
-
+  // ON NE TOUCHE PLUS AU DNS : le `*` sert TOUT LE MONDE, l'effacer
+  // casserait toutes les autres adresses. Détacher le nom chez Vercel
+  // suffit — le proxy rendra « application introuvable » à qui s'y rend,
+  // ce qui vaut mieux qu'une erreur de résolution pour un lien périmé.
+  //
   // 404 = déjà détaché : c'est un succès, comme 409 l'est à la création.
   const vr = await fetch(
     `https://api.vercel.com/v9/projects/${clefs.vercelProjectId}/domains/${hote}`,
