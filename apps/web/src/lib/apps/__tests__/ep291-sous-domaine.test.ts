@@ -55,7 +55,7 @@ describe('EP-291 · le nom', () => {
   it('② LES NOMS RÉSERVÉS SONT REFUSÉS — l’adresse est lue par des humains', () => {
     // admin.deribfy.com ou paiement.deribfy.com servi en page d'application :
     // c'est l'hameçonnage clé en main, signé par notre propre domaine.
-    for (const r of ['www', 'admin', 'login', 'paiement', 'api', 'support']) {
+    for (const r of ['www', 'admin', 'login', 'connexion', 'api', 'support']) {
       expect(NOMS_RESERVES.has(r), `« ${r} » doit être réservé`).toBe(true)
       expect(nomValide(r)).toBe(false)
     }
@@ -69,43 +69,49 @@ describe('EP-291 · le nom', () => {
   })
 })
 
-describe('EP-291 · la liste des noms réservés est ADOPTÉE, pas rédigée', () => {
-  it('⑩ ELLE VIENT D’UNE SOURCE PUBLIÉE, citée et datée', () => {
-    // Une liste fermée qui grandit à chaque défaut révélé est la maladie
-    // que ce dépôt soigne partout ailleurs. On prend celle que le monde
-    // maintient (The Big Username Blacklist, MIT) et on n'écrit que le
-    // français — DÉRIVÉ, mot à mot, de ce qui est déjà réservé en anglais.
-    const brut = JSON.parse(
-      readFileSync(join(__dirname, '..', 'noms-reserves.genere.json'), 'utf8'),
-    ) as { source: string; licence: string; anglais: string[]; francais: string[] }
-    expect(brut.source).toMatch(/Big Username Blacklist/u)
-    expect(brut.licence).toMatch(/MIT/u)
-    expect(brut.anglais.length, 'la liste adoptée a fondu').toBeGreaterThan(400)
-    expect(brut.francais.length, 'le français a disparu').toBeGreaterThan(20)
+describe('EP-291 · la liste réservée ne contient QUE ce qui est à nous', () => {
+  it('⑩ ELLE EST COURTE — on interdit ce qui nous appartient, pas le monde', () => {
+    // INVERSION DU 2026-11-01. On avait adopté une liste de 528 mots
+    // (« The Big Username Blacklist ») — mais elle protège des NOMS
+    // D'UTILISATEUR sur une plateforme sociale, où toute usurpation
+    // compte. Ce n'est pas notre problème : le nôtre est d'empêcher
+    // qu'une application se fasse passer pour DERIBFY, rien d'autre.
+    //
+    // Interdire 535 puis exempter 11 était DEUX LISTES FERMÉES EMPILÉES,
+    // et la seconde aurait grandi à chaque client refusé. Le défaut
+    // redevient « autorisé », et la liste se vérifie par LECTURE.
+    expect(NOMS_RESERVES.size, 'la liste a regrossi : quelqu’un a réadopté une liste du monde').toBeLessThan(100)
+    expect(NOMS_RESERVES.size).toBeGreaterThan(40)
   })
 
-  it('⑪ LES MOTS DE CONFIANCE SONT COUVERTS DANS LES DEUX LANGUES', () => {
-    // Le propriétaire vise un produit mondial : une liste française ne
-    // protégerait que la moitié de ses utilisateurs, et l'inverse est vrai.
-    for (const en of ['login', 'secure', 'verify', 'account', 'payment', 'support']) {
-      expect(NOMS_RESERVES.has(en), `« ${en} » n’est plus réservé`).toBe(true)
-    }
-    for (const fr of ['connexion', 'securise', 'verification', 'compte', 'paiement', 'assistance']) {
-      expect(NOMS_RESERVES.has(fr), `« ${fr} » n’est plus réservé`).toBe(true)
+  it('⑪ ELLE GARDE CE QUI IMITERAIT LA PLATEFORME', () => {
+    for (const garde of [
+      'www', 'api', 'admin', 'dashboard', 'login', 'connexion', 'securite',
+      'verification', 'motdepasse', 'compte', 'support', 'aide', 'deribfy',
+    ]) {
+      expect(nomValide(garde), `« ${garde} » n’est plus réservé`).toBe(false)
     }
   })
 
-  it('⑫ LE TÉMOIN DE LA SONDE EST RÉSERVÉ — sinon elle mentirait', () => {
-    // S'il était publié, il résoudrait par SON propre enregistrement et la
-    // sonde dirait « générique vivant » alors qu'il serait mort.
+  it('⑫ ELLE REND TOUT LE RESTE — le métier du client ne nous appartient pas', () => {
+    // MESURÉ : l'ancienne liste bloquait boutique, commande, facture — et
+    // en anglais shop, store, order, invoice, cart, checkout, product.
+    // Elle se retournait contre les utilisateurs qu'elle devait protéger.
+    for (const libre of [
+      'boutique', 'commande', 'facture', 'paiement', 'profil', 'panier',
+      'devis', 'stock', 'rendez-vous', 'shop', 'store', 'order', 'invoice',
+      'cart', 'checkout', 'product', 'tontine', 'pharmacie',
+    ]) {
+      expect(nomValide(libre), `« ${libre} » est refusé à un client honnête`).toBe(true)
+    }
+  })
+
+  it('⑬ LE TÉMOIN DE LA SONDE EST RÉSERVÉ — sinon elle mentirait', () => {
     expect(NOMS_RESERVES.has(TEMOIN_GENERIQUE)).toBe(true)
     expect(nomValide(TEMOIN_GENERIQUE), 'le témoin est publiable').toBe(false)
   })
 
-  it('⑬ CE QU’AUCUNE LISTE NE FERA — et c’est écrit là où on serait tenté', () => {
-    // `orange-money.deribfy.app` ou le nom d'une vraie banque passeront
-    // toujours : les marques du monde ne tiennent pas dans un fichier.
-    // Cela relève des conditions d'utilisation et du RETRAIT, qui existe.
+  it('⑭ CE QU’AUCUNE LISTE NE FERA — écrit là où on serait tenté', () => {
     const src = readFileSync(join(__dirname, '..', 'sous-domaine.ts'), 'utf8')
     expect(src, 'l’avertissement a disparu : quelqu’un rallongera la liste').toMatch(
       /n'allongez pas la\s+\*?\s*liste/u,

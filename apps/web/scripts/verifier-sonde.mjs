@@ -75,9 +75,12 @@ export function jugerSonde(corps, html = undefined) {
       g.resout === false
         ? `LE CNAME GÉNÉRIQUE EST MORT : « ${String(g.temoin)} » ne résout plus ` +
           `(${String(g.detail)}). Toute publication future rendra un lien introuvable.`
-        : `LE CERTIFICAT NE S'ÉMET PLUS À LA DEMANDE : « ${String(g.temoin)} » résout ` +
-          `mais la poignée de main TLS échoue (${String(g.detail)}). Les adresses publiées ` +
-          'répondront « connexion non sécurisée ».',
+        : `LA POIGNÉE DE MAIN TLS ÉCHOUE sur « ${String(g.temoin)} », qui résout pourtant ` +
+          `(${String(g.detail)}). DEUX CAUSES POSSIBLES, dans cet ordre :\n` +
+          `     1. le témoin a été DÉTACHÉ du projet chez Vercel — vérifiez-le d'abord, ` +
+          `c'est un domaine comme un autre et un ménage suffit à l'emporter ;\n` +
+          `     2. Vercel n'émet plus les certificats à la demande — alors les adresses ` +
+          'publiées répondront « connexion non sécurisée », et c\'est grave.',
     )
   }
 

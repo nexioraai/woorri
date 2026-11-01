@@ -29,7 +29,6 @@
  * peut rien faire d'autre, et il vit dans l'environnement, jamais dans une
  * réponse ni un journal.
  */
-import reservesGenerees from './noms-reserves.genere.json'
 
 /**
  * Les noms qu'une application ne peut PAS prendre.
@@ -42,7 +41,28 @@ import reservesGenerees from './noms-reserves.genere.json'
 /** Le domaine du contenu client — jamais la marque. Achete le 2026-10-30. */
 export const DOMAINE_PUBLIC = 'deribfy.app'
 
-/** Le nom que la sonde interroge pour prouver que le CNAME générique vit. */
+/**
+ * LE TÉMOIN DE LA SONDE — il prouve DEUX choses, et il a fallu une mesure
+ * en production pour comprendre ce qu'il lui fallait.
+ *
+ * Il est ATTACHÉ au projet chez Vercel, en permanence, et il n'a AUCUN
+ * enregistrement DNS propre. Donc :
+ *   · s'il résout, c'est que le CNAME `*` vit — lui seul peut le faire
+ *     répondre ;
+ *   · si la poignée de main TLS passe, c'est que Vercel émet toujours les
+ *     certificats à la demande.
+ *
+ * PREMIÈRE VERSION, FAUSSE, MESURÉE EN PRODUCTION LE 2026-11-01 : le témoin
+ * n'était attaché nulle part. Il résolvait (le générique faisait son
+ * travail) mais aucun certificat n'existait pour lui — `resout: true,
+ * tls: false`. La sonde accusait l'infrastructure d'une panne qui venait
+ * de MA conception du contrôle. Un contrôle faux est pire qu'un contrôle
+ * absent : il fait chercher au mauvais endroit.
+ *
+ * Il est aussi RÉSERVÉ à la publication : publié, il recevrait son propre
+ * nom chez Vercel et la sonde dirait « générique vivant » alors qu'il
+ * serait mort.
+ */
 export const TEMOIN_GENERIQUE = 'sonde-generique-jamais-creee'
 
 /**
@@ -84,18 +104,76 @@ export const TEMOIN_GENERIQUE = 'sonde-generique-jamais-creee'
  *
  * Rafraîchir : `node scripts/rafraichir-noms-reserves.mjs`.
  */
-const RESERVES = reservesGenerees as { anglais: string[]; francais: string[] }
-
+/**
+ * LES NOMS QUI SONT À NOUS — et rien d'autre.
+ *
+ * ── L'INVERSION, DÉCIDÉE LE 2026-11-01, ET POURQUOI ELLE COMPTE.
+ *
+ * On avait adopté « The Big Username Blacklist » : 528 mots. Mais cette
+ * liste protège des NOMS D'UTILISATEUR sur une plateforme sociale, où
+ * n'importe quelle usurpation compte — @admin, @support, @shop. Ce n'est
+ * PAS notre problème.
+ *
+ * Le nôtre est beaucoup plus petit : empêcher qu'une application publiée
+ * se fasse passer pour DERIBFY. Rien d'autre. `panier.deribfy.app` ne
+ * fait de mal à personne ; `connexion.deribfy.app`, si.
+ *
+ * Interdire 535 noms puis en exempter 11 était DEUX LISTES FERMÉES
+ * EMPILÉES — et la seconde aurait grandi indéfiniment, au fil des clients
+ * refusés (panier, devis, stock, rendez-vous…). La maladie était déplacée,
+ * pas fermée.
+ *
+ * DONC : on interdit CE QUI EST À NOUS, on autorise TOUT LE RESTE. Le
+ * défaut redevient « autorisé », et la question se vérifie par LECTURE —
+ * « cette liste contient-elle autre chose que ce qui nous appartient ? » —
+ * au lieu d'un échantillon de noms qu'on aurait choisis soi-même.
+ *
+ * ── ET ELLE EST DÉRIVÉE, PAS DEVINÉE.
+ *
+ * ① LES ROUTES DU PRODUIT, relevées dans `src/app/` le 2026-11-01 : un
+ *   nom qui désigne une page de Deribfy prêterait à confusion.
+ * ② LES SOUS-DOMAINES RÉELLEMENT POSÉS dans nos deux zones, relevés chez
+ *   Cloudflare : www, mail, webmail, autoconfig, send, mailboxes.
+ * ③ LES CONVENTIONS D'INFRASTRUCTURE qu'on pourrait employer demain.
+ * ④ LES MOTS QUI N'ONT DE SENS QU'EN TANT QUE FONCTION DE LA PLATEFORME —
+ *   seul endroit où l'on écrit, parce que personne ne peut le dériver.
+ *
+ * ── CE QU'AUCUNE LISTE NE FERA, et qu'il faut lire avant de l'allonger.
+ *
+ * Elle n'empêchera PAS `orange-money.deribfy.app`, ni le nom d'une vraie
+ * banque, ni celui d'un concurrent. Les marques du monde ne tiennent pas
+ * dans un fichier. Cela relève des CONDITIONS D'UTILISATION et du
+ * RETRAIT — qui existe : suppression douce, quarantaine définitive du nom,
+ * lien mort dans la seconde.
+ *
+ * Si vous êtes ici parce qu'un nom gênant est passé, n'allongez pas la
+ * liste : retirez l'œuvre.
+ */
 export const NOMS_RESERVES: ReadonlySet<string> = new Set([
-  ...RESERVES.anglais,
-  ...RESERVES.francais,
-  // Ce qui nous est PROPRE et qu'aucune liste du monde ne connaît.
+  // ① Les routes du produit (src/app/), relevées.
+  'a', 'about', 'admin', 'api', 'blog', 'cookies', 'dashboard', 'documentation',
+  'domaine', 'edit', 'login', 'onboarding-chat', 'p', 'parametres', 'preview',
+  'pricing', 'privacy', 'reset-password', 'sites', 'terms', 'visibilite-ia',
+  'welcome', 'cancel-order',
+
+  // ② Les sous-domaines réellement posés dans nos zones (Cloudflare).
+  'www', 'mail', 'webmail', 'mailboxes', 'autoconfig', 'send',
+
+  // ③ Les conventions d'infrastructure qu'on pourrait employer demain.
+  'app', 'apps', 'cdn', 'assets', 'static', 'staging', 'preprod', 'dev',
+  'test', 'demo', 'status', 'docs', 'ns1', 'ns2', 'smtp', 'imap', 'ftp',
+
+  // ④ Ce qui n'a de sens qu'en tant que FONCTION DE LA PLATEFORME.
+  'connexion', 'login', 'signin', 'signup', 'inscription', 'motdepasse',
+  'password', 'verification', 'verify', 'securite', 'secure', 'support',
+  'aide', 'help', 'compte', 'account', 'deconnexion', 'logout',
+  'confidentialite', 'mentions', 'auth', 'oauth', 'sso',
+
+  // La marque elle-même.
   'deribfy',
-  // LE TÉMOIN DE LA SONDE. Elle interroge ce nom à chaque déploiement pour
-  // prouver que le CNAME générique vit. Si quelqu'un le publiait, il
-  // résoudrait par son PROPRE enregistrement et la sonde dirait « vivant »
-  // alors que le générique serait mort — un faux vert, celui que ce dépôt
-  // passe ses journées à fermer.
+
+  // Le témoin de la sonde : publié, il résoudrait par son propre
+  // enregistrement et la sonde dirait « générique vivant » à tort.
   TEMOIN_GENERIQUE,
 ])
 
