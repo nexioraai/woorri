@@ -601,8 +601,126 @@ const SECRETS_INTERDITS: readonly (readonly [RegExp, string])[] = [
  *
  * C'est la leçon du zip du 2026-11-02 : on mesure ce qui PART.
  */
-export function pageAutonome(code: string, titre: string): string {
+/**
+ * CE QUE L'APPLICATION PUBLIÉE REÇOIT DE SA BASE.
+ *
+ * ── LE SEUL POINT D'INJECTION, ET IL EXISTAIT DÉJÀ.
+ *
+ * Mesuré le 2026-11-02 : la page autonome n'avait AUCUN endroit où poser une
+ * configuration. Le `PRELUDE` est le seul candidat — il part en premier, en
+ * script ordinaire (un module serait différé, donc installé APRÈS que
+ * l'application a déjà échoué).
+ *
+ * ── MÊME CODE, DEUX PROVENANCES.
+ *
+ * Publiée, Deribfy fournit l'adresse et la clé publiable. Téléchargée, les
+ * deux sont VIDES et le LISEZ-MOI dit quoi mettre. L'application lit le même
+ * objet dans les deux cas : elle n'a pas à savoir d'où elle vient.
+ *
+ * ── ET SEULEMENT CES DEUX VALEURS.
+ *
+ * La clé publiable est publique par conception — c'est ce qui ship dans tout
+ * client Supabase, et la porte ne s'ouvre qu'avec un jeton de session. Rien
+ * d'autre n'entre : EP-323 fait échouer l'émission d'un document portant une
+ * clé secrète, une chaîne de connexion ou un jeton d'administration.
+ */
+export type ConfigurationOeuvre = {
+  /** L'adresse du projet, ou '' quand l'archive part sans base. */
+  readonly url: string
+  /** La clé PUBLIABLE. Jamais la secrète — EP-323 refuserait le document. */
+  readonly clePubliable: string
+  /** Le schéma de cette œuvre. L'application ne le pose JAMAIS à la main. */
+  readonly schema: string
+}
+
+/**
+ * LES OPTIONS PRÊTES — pour retirer au modèle un choix qu'il rate.
+ *
+ * ── LE DÉFAUT, MESURÉ LE 2026-11-02 SUR LA VRAIE BASE.
+ *
+ * PostgREST emploie `Accept-Profile` pour LIRE et `Content-Profile` pour
+ * ÉCRIRE. Une application qui ne pose que le premier :
+ *
+ *     LECTURE  (Accept-Profile)       HTTP 200  [{"id":"m1"},{"id":"m2"}]
+ *     ÉCRITURE (Accept-Profile seul)  HTTP 404  PGRST205 « Could not find
+ *                                               the table 'public.membre' »
+ *
+ * Le symptôme est méchant : la lecture marche, donc tout a l'air branché, et
+ * la PREMIÈRE ÉCRITURE échoue sur une table introuvable — parce qu'elle est
+ * allée la chercher dans `public`.
+ *
+ * ── CE QUI FERME LA CLASSE : `db.schema`.
+ *
+ * L'option `db: { schema }` de `supabase-js` pose LES DEUX en-têtes. Mesuré
+ * dans les deux sens : lecture ET écriture passent.
+ *
+ * On injecte donc les options TOUTES FAITES. L'application écrit
+ * `createClient(b.url, b.clePubliable, b.options)` et n'a aucune décision à
+ * prendre — un choix qu'on ne lui laisse pas est un choix qu'elle ne rate
+ * pas.
+ */
+export function optionsPour(schema: string): Record<string, unknown> {
+  return { db: { schema }, auth: { persistSession: true } }
+}
+
+/**
+ * LA TROISIÈME ZONE ÉMISE — et elle est NOMMÉE, comme les deux autres.
+ *
+ * ── POURQUOI UNE CONSTANTE PLUTÔT QU'UN GABARIT EN PLACE.
+ *
+ * EP-280 n'autorise les appels de navigateur que dans des zones ÉMISES
+ * DÉCLARÉES : le prélude, et l'enveloppe du module. Mon injection en était
+ * une troisième, anonyme au milieu d'une fonction — et le cliquet l'a
+ * refusée, à raison.
+ *
+ * Élargir son exception à « tout ce qui est dans `pageAutonome` » aurait
+ * dissous la garde : c'est précisément là que le code émis s'assemble. Une
+ * zone nommée, en revanche, se compte — et le cliquet peut exiger que leur
+ * liste reste close.
+ *
+ * Ce texte n'est JAMAIS exécuté ici : il part dans la page et tourne chez la
+ * personne.
+ */
+/**
+ * LE BANDEAU DE L'APPLICATION NON RELIÉE.
+ *
+ * Il ne dit pas « erreur » — rien n'est cassé. Il dit ce qui manque et où
+ * lire la suite, dans les mots de quelqu'un qui vient de dézipper.
+ */
+const BANDEAU_SANS_BASE =
+  '<div role="status" style="background:#fff4e5;border-bottom:1px solid #f0c48a;' +
+  'color:#7a4a00;padding:10px 14px;font:14px/1.5 system-ui,-apple-system,sans-serif">' +
+  '<strong>Cette application n’est pas encore reliée à une base.</strong> ' +
+  'Ce que vous saisissez ne sera pas conservé. Voyez le fichier ' +
+  '<code>LISEZ-MOI.md</code> de l’archive — section « Vos données ».</div>'
+
+const CONFIGURATION_EMISE = (injectee: ConfigurationOeuvre): string =>
+  `<script>window.DERIBFY_BASE=Object.freeze(${JSON.stringify(injectee)});</script>`
+
+export function pageAutonome(
+  code: string,
+  titre: string,
+  configuration?: ConfigurationOeuvre,
+): string {
   const sur = titre.replace(/[<>&"]/gu, '')
+  // ── LA CONFIGURATION EST SÉRIALISÉE EN JSON, PAS INTERPOLÉE À LA MAIN.
+  //
+  // `JSON.stringify` échappe ce qu'il faut ; une concaténation de guillemets
+  // laisserait une adresse mal formée casser le script — et un script cassé
+  // en tête de page empêche l'application de démarrer, sans message.
+  //
+  // `Object.freeze` : l'application LIT cette configuration, elle ne la
+  // réécrit pas. Un code qui la modifierait travaillerait contre la porte.
+  const injectee = {
+    url: configuration?.url ?? '',
+    clePubliable: configuration?.clePubliable ?? '',
+    schema: configuration?.schema ?? '',
+    // LES OPTIONS PRÊTES : `db.schema` pose `Accept-Profile` ET
+    // `Content-Profile`. Sans elles, l'application lirait dans son schéma et
+    // écrirait dans `public` — la lecture marcherait, la première écriture
+    // échouerait sur une table introuvable.
+    options: optionsPour(configuration?.schema ?? ''),
+  }
   const morceaux = [
     '<!doctype html><html lang="fr"><head><meta charset="utf-8" />',
     '<meta name="viewport" content="width=device-width, initial-scale=1" />',
@@ -618,7 +736,24 @@ export function pageAutonome(code: string, titre: string): string {
     // LE PRÉLUDE PART EN PREMIER, et en script ORDINAIRE : un module serait
     // différé, donc installé APRÈS que l'application a déjà échoué.
     `<script>${PRELUDE}</script>`,
-    '</head><body><div id="racine"></div>',
+    // L'ADRESSE ET LA CLÉ, AVANT LE CODE DE L'APPLICATION : elle doit pouvoir
+    // les lire dès sa première ligne.
+    CONFIGURATION_EMISE(injectee),
+    '</head><body>',
+    // ── CE QUI NE MARCHE PAS ENCORE EXPLIQUE POURQUOI, LÀ OÙ ON LE DÉCOUVRE.
+    //
+    // L'archive part avec les trois valeurs VIDES. « Un emplacement, pas un
+    // trou » est juste côté code — mais celui qui dézippe, lance
+    // l'application et voit une liste vide ne saura pas si elle est cassée,
+    // si c'est normal, ou s'il a raté une étape.
+    //
+    // Le bandeau vit HORS de `#racine` : React monte dans la racine et
+    // effacerait tout ce qui s'y trouve. Et il n'apparaît QUE sans adresse —
+    // une application reliée ne porte aucun bandeau.
+    //
+    // Même discipline que « AUCUNE DONNÉE DÉCLARÉE » dans `schema.sql`.
+    injectee.url === '' ? BANDEAU_SANS_BASE : '',
+    '<div id="racine"></div>',
     `<script type="module">${ENVELOPPE_MODULE.avant}${code}${ENVELOPPE_MODULE.apres}</script>`,
     '</body></html>',
   ]

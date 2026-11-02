@@ -24,20 +24,19 @@
  *    posé la serrure. »
  */
 import { describe, expect, it } from 'vitest'
-import { readFileSync } from 'node:fs'
 import { execFileSync } from 'node:child_process'
 import { join } from 'node:path'
+import { lireSource } from './lire-source'
 import {
   CLE_VERROU_SCHEMAS,
   listeAvecSchema,
   nomSchemaOeuvre,
   OCTETS_MAX_IDENTIFIANT,
-  SCHEMAS_DE_BASE,
-} from '../poser-oeuvre'
+  SCHEMAS_DE_BASE } from '../poser-oeuvre'
 
 const RACINE = join(__dirname, '..', '..', '..', '..', '..', '..')
 const MODULE = (): string =>
-  readFileSync(join(RACINE, 'apps', 'web', 'src', 'lib', 'apps', 'poser-oeuvre.ts'), 'utf8')
+  lireSource(join(RACINE, 'apps', 'web', 'src', 'lib', 'apps', 'poser-oeuvre.ts'))
 
 /** L'uuid d'une œuvre réelle : stable toute sa vie. */
 const UUID = 'fa0ede2c-1111-4111-8111-111111111111'
@@ -229,7 +228,7 @@ describe('EP-322 · poser une œuvre', () => {
       .toBeGreaterThan(0)
 
     const clients = mentions.filter((rel) => {
-      const c = readFileSync(join(RACINE, rel), 'utf8')
+      const c = lireSource(join(RACINE, rel))
       // `'use client'` EN TÊTE : c'est la seule marque qui fasse d'un module
       // un morceau du paquet navigateur.
       return /^'use client'/u.test(c)

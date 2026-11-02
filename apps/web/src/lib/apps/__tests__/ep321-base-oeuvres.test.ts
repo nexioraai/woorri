@@ -12,17 +12,17 @@
  * Un nom ne protège de rien. La garde est une ÉGALITÉ DE VALEURS.
  */
 import { describe, expect, it } from 'vitest'
-import { readFileSync, readdirSync, statSync } from 'node:fs'
+import { readdirSync, statSync } from 'node:fs'
 import { execFileSync } from 'node:child_process'
 import { join } from 'node:path'
+import { lireSource } from './lire-source'
 import {
   configBaseOeuvres,
   NOM_PUBLIABLE_OEUVRES,
   NOM_SECRETE_OEUVRES,
   NOM_URL_DERIBFY,
   NOM_URL_OEUVRES,
-  PROVISIONNEMENT_EN_RESERVE,
-} from '../base-oeuvres'
+  PROVISIONNEMENT_EN_RESERVE } from '../base-oeuvres'
 
 const RACINE = join(__dirname, '..', '..', '..', '..', '..', '..')
 const WEB = join(RACINE, 'apps', 'web', 'src')
@@ -124,7 +124,7 @@ describe('EP-321 · les deux bases', () => {
     // et c'est le second qui poserait les tables au mauvais endroit. Le
     // dépôt a déjà payé trois copies de la règle de nommage, dont une
     // ignorait les noms réservés.
-    const lecteurs = sources().filter((f) => readFileSync(f, 'utf8').includes('OEUVRES_SUPABASE'))
+    const lecteurs = sources().filter((f) => lireSource(f).includes('OEUVRES_SUPABASE'))
     expect(
       lecteurs.map((f) => f.slice(RACINE.length + 1)),
       'une deuxième lecture des variables des œuvres est apparue',
@@ -198,7 +198,7 @@ describe('EP-321 · les deux bases', () => {
     const fautifs: string[] = []
     for (const rel of touches) {
       if (rel.endsWith('ep321-base-oeuvres.test.ts')) continue
-      const contenu = readFileSync(join(RACINE, rel), 'utf8')
+      const contenu = lireSource(join(RACINE, rel))
       for (const [aiguille, quoi] of AIGUILLES) {
         if (aiguille.test(contenu)) fautifs.push(`${rel} — ${quoi}`)
       }

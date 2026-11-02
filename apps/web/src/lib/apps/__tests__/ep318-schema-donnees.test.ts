@@ -18,8 +18,8 @@
  * déclarait. Le contrôle ④ tient les trois.
  */
 import { describe, expect, it } from 'vitest'
-import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { lireSource } from './lire-source'
 import {
   champsConserves,
   emettreSchemaSql,
@@ -27,12 +27,11 @@ import {
   nomTable,
   SANS_ENTITE,
   typeSqlDe,
-  type EntiteDonnees,
-} from '@deribfy/compiler'
+  type EntiteDonnees } from '@deribfy/compiler'
 import { projetLivrable, sectionSchema } from '../projet-livrable'
 
 const RACINE = join(__dirname, '..', '..', '..', '..', '..', '..')
-const lire = (...p: string[]): string => readFileSync(join(RACINE, ...p), 'utf8')
+const lire = (...p: string[]): string => lireSource(join(RACINE, ...p))
 const WEB = ['apps', 'web', 'src']
 
 /** Une tontine : l'exemple du propriétaire, et il porte les trois cas. */

@@ -133,8 +133,23 @@ describe('EP-280 · la page offre une plateforme', () => {
     const debutEnv = code.indexOf('const ENVELOPPE_MODULE = {')
     const finEnv = debutEnv < 0 ? -1 : code.indexOf('} as const', debutEnv)
     expect(debutEnv, 'l’enveloppe du module a disparu : l’erreur redeviendrait masquée').toBeGreaterThan(-1)
+    // ── TROISIÈME ZONE (2026-11-02, lot D4) : LA CONFIGURATION DE L'ŒUVRE.
+    //
+    // L'adresse de sa base, sa clé publiable et son schéma, posés avant le
+    // code de l'application pour qu'elle les lise dès sa première ligne.
+    //
+    // ELLE EST NOMMÉE, et c'est la condition de la dérogation. Ce contrôle a
+    // d'abord refusé l'injection parce qu'elle était un gabarit anonyme au
+    // milieu de `pageAutonome` — élargir l'exception à toute la fonction
+    // aurait dissous la garde, puisque c'est là que le code émis s'assemble.
+    const debutCfg = code.indexOf('const CONFIGURATION_EMISE = ')
+    const finCfg = debutCfg < 0 ? -1 : code.indexOf('\n\n', debutCfg)
+    expect(debutCfg, 'la configuration émise a disparu : l’application n’aurait plus de base')
+      .toBeGreaterThan(-1)
     const dansUneZone = (i: number) =>
-      (i >= debut && i <= fin) || (debutEnv >= 0 && i >= debutEnv && i <= finEnv)
+      (i >= debut && i <= fin) ||
+      (debutEnv >= 0 && i >= debutEnv && i <= finEnv) ||
+      (debutCfg >= 0 && i >= debutCfg && i <= finCfg)
     const dehors = [...code.matchAll(NAVIGATEUR)]
       .filter((m) => !dansUneZone(m.index ?? 0))
       .map((m) => m[0])
@@ -145,6 +160,26 @@ describe('EP-280 · la page offre une plateforme', () => {
     ).toEqual([])
     // Et le dénominateur est réel : un prélude vidé passerait aussi.
     expect([...code.slice(debut, fin).matchAll(NAVIGATEUR)].length).toBeGreaterThan(5)
+    // ── LA LISTE DES ZONES RESTE CLOSE : trois, pas « autant qu'il faudra ».
+    //
+    // Chaque zone est une dérogation. Si leur nombre grandit sans qu'on s'en
+    // aperçoive, la garde s'évapore un ajout à la fois — et c'est le chemin
+    // qu'on oublie qui sert.
+    //
+    // MA PREMIÈRE FORME NE MESURAIT RIEN : elle comparait 3 à 3. On COMPTE
+    // désormais les constantes de ce module qui portent une API de
+    // navigateur, et on exige qu'il y en ait exactement trois.
+    const constantes = [...code.matchAll(/^const ([A-Z_][A-Z0-9_]*)\s*(?:=|:)/gmu)].map((m) => m[1])
+    const zonesEmises = constantes.filter((nom) => {
+      const d = code.indexOf(`const ${nom}`)
+      const f = code.indexOf('\n\n', d)
+      return new RegExp(NAVIGATEUR.source, 'u').test(code.slice(d, f === -1 ? undefined : f))
+    })
+    expect(
+      zonesEmises.sort(),
+      'le nombre de zones émises portant une API de navigateur a changé : ' +
+        'chaque zone est une dérogation, leur liste doit rester close',
+    ).toEqual(['CONFIGURATION_EMISE', 'ENVELOPPE_MODULE', 'PRELUDE'])
   })
 
   it('⑤ LA PAGE RESTE AUTONOME — aucune demande à l’extérieur', () => {

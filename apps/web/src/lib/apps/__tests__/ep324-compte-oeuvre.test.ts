@@ -26,14 +26,14 @@
  * non-collision.
  */
 import { describe, expect, it } from 'vitest'
-import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { lireSource } from './lire-source'
 import { adresseCompteOeuvre, DOMAINE_COMPTES, engendrerMotDePasse } from '../compte-oeuvre'
 import { COSTUMES_CONNUS, REGLE_IDENTITES_DERIVEES } from '../identites-derivees'
 
 const RACINE = join(__dirname, '..', '..', '..', '..', '..', '..')
 const SOURCE = (): string =>
-  readFileSync(join(RACINE, 'apps', 'web', 'src', 'lib', 'apps', 'compte-oeuvre.ts'), 'utf8')
+  lireSource(join(RACINE, 'apps', 'web', 'src', 'lib', 'apps', 'compte-oeuvre.ts'))
 
 /**
  * LE CODE SANS SA PROSE — et c'est nécessaire, pas cosmétique.
@@ -48,10 +48,8 @@ const SOURCE = (): string =>
  * La règle qui en sort : UNE ASSERTION SUR DU CODE SE FAIT SUR DU CODE.
  * `travailleur-isolation.test.ts` le faisait déjà ; on fait pareil.
  */
-const sansCommentaires = (t: string): string =>
-  t.replace(/\/\*[\s\S]*?\*\//gu, '').replace(/(?<![:'"`])\/\/.*$/gmu, '')
 
-const MODULE = (): string => sansCommentaires(SOURCE())
+const MODULE = (): string => SOURCE()
 
 /**
  * LE CORPS D'UNE FONCTION, et pas le module entier.

@@ -28,7 +28,7 @@
  * On appelle donc `pageAutonome` et on juge CE QU'ELLE REND.
  */
 import { describe, expect, it } from 'vitest'
-import { pageAutonome } from '../boucle-directe'
+import { optionsPour, pageAutonome } from '../boucle-directe'
 
 /** Un peu de code d'application, comme le modèle en rend. */
 const CODE = 'const App=()=>null;export default App;'
@@ -110,6 +110,121 @@ describe('EP-323 · le document servi ne porte aucun secret', () => {
         `un titre a fait entrer ${quoi} dans le document servi`,
       ).toThrow(/PAGE_AUTONOME_SECRET/u)
     }
+  })
+
+  it('⑤ L’INJECTION PORTE L’ADRESSE ET LA CLÉ PUBLIABLE, ET RIEN D’AUTRE', () => {
+    // ── MÊME CODE, DEUX PROVENANCES.
+    //
+    // Publiée, Deribfy fournit les valeurs. Téléchargée, elles sont VIDES et
+    // le LISEZ-MOI dit quoi mettre. L'application lit le même objet dans les
+    // deux cas : elle n'a pas à savoir d'où elle vient.
+    const publiee = pageAutonome(CODE, 'Une application', {
+      url: 'https://psxbilpmnojtlzosokzz.supabase.co',
+      clePubliable: 'sb_' + 'publishable_' + 'K'.repeat(32),
+      schema: 'oeuvre_fa0ede2c_1111_4111_8111_111111111111',
+    })
+    expect(publiee, 'l’application ne reçoit pas l’adresse de sa base')
+      .toContain('psxbilpmnojtlzosokzz.supabase.co')
+    expect(publiee, 'l’application ne reçoit pas le nom de son schéma')
+      .toContain('oeuvre_fa0ede2c_1111_4111_8111_111111111111')
+    // ── ELLE ARRIVE AVANT LE CODE : l'application doit pouvoir la lire dès
+    // sa première ligne, sinon elle démarre sans base et affiche du vide.
+    const iConfig = publiee.indexOf('DERIBFY_BASE')
+    const iCode = publiee.indexOf(CODE)
+    expect(iConfig, 'la configuration n’est pas injectée').toBeGreaterThan(-1)
+    expect(iConfig, 'la configuration arrive APRÈS le code de l’application')
+      .toBeLessThan(iCode)
+
+    // TÉLÉCHARGÉE : les mêmes clés, vides. Pas d'absence — un emplacement.
+    const telechargee = pageAutonome(CODE, 'Une application')
+    expect(telechargee, 'l’archive ne porte pas l’emplacement de configuration')
+      .toContain('DERIBFY_BASE')
+    expect(telechargee, 'l’archive part avec une adresse en dur')
+      .not.toContain('supabase.co')
+
+    // ET LE DOCUMENT RESTE PROPRE : aucun des interdits n'est entré par là.
+    for (const [aiguille, quoi] of INTERDITS) {
+      expect(publiee, `l’injection a fait entrer ${quoi}`).not.toContain(aiguille)
+    }
+  })
+
+  it('⑦ LES OPTIONS INJECTÉES POSENT LES DEUX EN-TÊTES', () => {
+    // ── LE DÉFAUT QUE LE PROPRIÉTAIRE A VU AVANT MOI, mesuré ensuite.
+    //
+    // PostgREST emploie `Accept-Profile` pour LIRE, `Content-Profile` pour
+    // ÉCRIRE. Mesuré sur la vraie base le 2026-11-02 :
+    //
+    //   LECTURE  (Accept-Profile seul)  HTTP 200  deux lignes
+    //   ÉCRITURE (Accept-Profile seul)  HTTP 404  PGRST205 'public.membre'
+    //
+    // La lecture marche, donc tout a l'air branché — et la première écriture
+    // va chercher dans `public`. `db.schema` de supabase-js pose les deux.
+    //
+    // On injecte donc les options TOUTES FAITES : un choix qu'on ne laisse
+    // pas à l'application est un choix qu'elle ne rate pas.
+    const doc = pageAutonome(CODE, 'Une application', {
+      url: 'https://psxbilpmnojtlzosokzz.supabase.co',
+      clePubliable: 'sb_' + 'publishable_' + 'K'.repeat(32),
+      schema: 'oeuvre_fa0ede2c',
+    })
+    expect(doc, 'les options prêtes ne sont pas injectées').toContain('"options"')
+    expect(doc, 'les options ne portent pas `db.schema` : l’écriture irait dans public')
+      .toMatch(/"db":\s*\{\s*"schema":\s*"oeuvre_fa0ede2c"/u)
+    // ET LA FONCTION QUI LES FABRIQUE EST ÉPROUVÉE DIRECTEMENT.
+    expect(optionsPour('oeuvre_x')).toEqual({ db: { schema: 'oeuvre_x' }, auth: { persistSession: true } })
+  })
+
+  it('⑧ UNE APPLICATION NON RELIÉE LE DIT À L’ÉCRAN', () => {
+    // ── « UN EMPLACEMENT, PAS UN TROU » EST JUSTE CÔTÉ CODE, PAS CÔTÉ ÉCRAN.
+    //
+    // Celui qui dézippe, lance l'application et voit une liste vide ne saura
+    // pas si elle est cassée, si c'est normal, ou s'il a raté une étape. Ce
+    // qui ne marche pas encore explique pourquoi, LÀ OÙ LA PERSONNE LE
+    // DÉCOUVRE — même discipline que « AUCUNE DONNÉE DÉCLARÉE ».
+    const sansBase = pageAutonome(CODE, 'Une application')
+    expect(sansBase, 'l’application muette ne dit pas qu’elle n’est pas reliée')
+      .toMatch(/n’est pas encore reliée à une base/u)
+    expect(sansBase, 'le bandeau ne dit pas ce que ça implique pour la saisie')
+      .toMatch(/ne sera pas conservé/u)
+    expect(sansBase, 'le bandeau ne dit pas où lire la suite').toContain('LISEZ-MOI')
+
+    // ── IL VIT HORS DE `#racine` : React monte dans la racine et effacerait
+    // tout ce qui s'y trouve. Le bandeau survivrait à l'affichage mais pas au
+    // premier rendu — et personne ne le verrait jamais.
+    expect(
+      sansBase.indexOf('n’est pas encore reliée'),
+      'le bandeau est DANS la racine : le premier rendu de React l’effacera',
+    ).toBeLessThan(sansBase.indexOf('id="racine"'))
+
+    // ── ET UNE APPLICATION RELIÉE N'EN PORTE AUCUN.
+    const reliee = pageAutonome(CODE, 'Une application', {
+      url: 'https://psxbilpmnojtlzosokzz.supabase.co',
+      clePubliable: 'sb_' + 'publishable_' + 'K'.repeat(32),
+      schema: 'oeuvre_x',
+    })
+    expect(reliee, 'une application reliée porte un bandeau qui ment')
+      .not.toMatch(/n’est pas encore reliée/u)
+  })
+
+  it('⑥ UNE CLÉ SECRÈTE PASSÉE À L’INJECTION FAIT ÉCHOUER L’ÉMISSION', () => {
+    // ── LE CHEMIN LE PLUS PROBABLE DU DÉFAUT : une erreur de variable.
+    //
+    // `OEUVRES_SUPABASE_SECRET_KEY` et `OEUVRES_SUPABASE_PUBLISHABLE_KEY` se
+    // lisent presque pareil. Celui qui câblera la publication peut prendre
+    // l'une pour l'autre — et la page servie porterait alors la clé qui
+    // contourne la RLS.
+    //
+    // Un secret dans une page publiée ne se rattrape pas : elle est déjà
+    // servie. L'émission échoue donc, bruyamment.
+    expect(
+      () =>
+        pageAutonome(CODE, 'Une application', {
+          url: 'https://psxbilpmnojtlzosokzz.supabase.co',
+          clePubliable: 'sb_' + 'secret_' + 'S'.repeat(24),
+          schema: 'oeuvre_x',
+        }),
+      'une clé secrète injectée est SERVIE au lieu d’être refusée',
+    ).toThrow(/PAGE_AUTONOME_SECRET/u)
   })
 
   it('④ CE QUI A LE DROIT D’Y ÊTRE Y RESTE PERMIS', () => {
