@@ -41,7 +41,7 @@ void adaptateur.demarrer();
 // Session VÉRIFIÉE : le document déclare OÙ vérifier l'identité.
 // La clé anonyme est publiable par conception (protégée par RLS) —
 // c'est ce qui ship dans tout client Supabase ; aucun secret ici.
-const clientAuth = createClient("https://psxbilpmnojtlzosokzz.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBzeGJpbHBtbm9qdGx6b3Nva3p6Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg2NjM2OTcsImV4cCI6MjEwNDIzOTY5N30.Ea24JkCSgTHKaD613nWj0KE7nF728QP-4tocP9mn38w");
+const clientAuth = createClient("https://psxbilpmnojtlzosokzz.supabase.co", "provisionne_par_le_pipeline");
 const session = creerSessionSupabase(clientAuth);
 const capabilities = creerCapabilitesAuthVerifiee(session);
 const CHAMPS_SENSIBLES = ["fld_voyageur_mot_de_passe"] as const;
