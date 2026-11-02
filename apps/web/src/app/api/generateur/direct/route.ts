@@ -35,7 +35,7 @@ import { boucleEcriture, CONSIGNE, pageAutonome } from '@/lib/apps/boucle-direct
 import { nomProduitValide, TITRE_SANS_NOM } from '@/lib/apps/nom-produit'
 import { rangsAPurger, type VersionDocument } from '@/lib/apps/versions-oeuvre'
 import { proportionEprouvee } from '@/lib/apps/portee-epreuve'
-import { appelerFournisseur, CONFIGS, fournisseurChoisi } from '@/lib/apps/fournisseur'
+import { appelerFournisseur, CONFIGS, fournisseurChoisi, tarifDe } from '@/lib/apps/fournisseur'
 import { assembler } from '@/lib/apps/bac-a-sable'
 import { jugerExecution } from '@/lib/apps/juge-execution'
 
@@ -477,7 +477,14 @@ export async function POST(req: Request) {
     return { ok: false as const, error: message.slice(0, 200) }
   }
   const dureeMs = Date.now() - debut
-  const coutUsd = (entree * config.prix.entree + sortie * config.prix.sortie) / 1e6
+  // ── LE TARIF DE L'HEURE OÙ L'APPEL A EU LIEU (2026-11-02).
+  //
+  // Le dépôt ne portait qu'un couple de prix, et c'était celui HORS POINTE.
+  // Toute génération tombée dans une fenêtre de pointe — 01:00-04:00 et
+  // 06:00-10:00 UTC, du lundi au vendredi — a donc été enregistrée à la
+  // MOITIÉ de son coût réel.
+  const tarif = tarifDe(config.prix, new Date())
+  const coutUsd = (entree * tarif.entree + sortie * tarif.sortie) / 1e6
 
   // ── LA LIGNE EST ECRITE DANS LES DEUX CAS, SUCCES COMME ECHEC.
   //

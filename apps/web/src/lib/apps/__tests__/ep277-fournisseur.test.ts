@@ -25,7 +25,15 @@
  * Les oublier, c'est un tir perdu à chaque fois.
  */
 import { describe, expect, it, vi, beforeEach } from 'vitest'
-import { appelerFournisseur, CONFIGS, fournisseurChoisi, PLAFOND_API_DEEPSEEK } from '../fournisseur'
+import {
+  appelerFournisseur,
+  CONFIGS,
+  estPointe,
+  fournisseurChoisi,
+  PLAFOND_API_DEEPSEEK,
+  tarifDe,
+  tarifPlafond,
+} from '../fournisseur'
 
 const { anthropic } = vi.hoisted(() => ({ anthropic: { vus: null as unknown } }))
 
@@ -83,10 +91,25 @@ describe('EP-277 · l’interrupteur de fournisseur', () => {
       'cette borne a déjà coupé une application entière, trois fois',
     ).toBeGreaterThan(32_768)
 
-    // Les tarifs sont ceux du modèle RÉELLEMENT appelé. Faux, ils ne cassent
-    // rien — ils mentent seulement sur la dépense, ce qui est pire.
-    expect(CONFIGS.deepseek.prix).toEqual({ entree: 0.66, sortie: 1.98 })
-    expect(CONFIGS.anthropic.prix).toEqual({ entree: 5, sortie: 25 })
+    // ── LES TARIFS SONT CEUX DU MODÈLE RÉELLEMENT APPELÉ, ET DE L'HEURE.
+    //
+    // Ce cliquet figeait `{ entree: 0.66, sortie: 1.98 }` — et son propre
+    // commentaire disait déjà le danger : « faux, ils ne cassent rien, ils
+    // mentent seulement sur la dépense, ce qui est pire ».
+    //
+    // Mesuré le 2026-11-02 à la documentation : ce couple était le tarif
+    // HORS POINTE de `v4-pro`. Pendant les fenêtres de pointe, tout coût
+    // calculé valait LA MOITIÉ du vrai. Et le modèle LÉGER n'avait aucun
+    // tarif : ses appels étaient facturés au prix du lourd, quatre fois trop.
+    expect(CONFIGS.deepseek.prix.creuse).toEqual({ entree: 0.66, sortie: 1.98, entreeCache: 0.022 })
+    expect(CONFIGS.deepseek.prix.pointe).toEqual({ entree: 1.32, sortie: 3.96, entreeCache: 0.044 })
+    expect(CONFIGS.deepseek.prixLeger.creuse).toEqual({ entree: 0.15, sortie: 0.6, entreeCache: 0.003 })
+    expect(CONFIGS.deepseek.prixLeger.pointe).toEqual({ entree: 0.3, sortie: 1.2, entreeCache: 0.006 })
+    // Anthropic ne facture pas a l'heure : les deux periodes portent le
+    // MEME couple, et l'ecrire dit « j'y ai pense » au lieu de laisser
+    // deviner un oubli.
+    expect(CONFIGS.anthropic.prix.creuse).toEqual({ entree: 5, sortie: 25, entreeCache: 0.5 })
+    expect(CONFIGS.anthropic.prix.pointe).toEqual(CONFIGS.anthropic.prix.creuse)
     // Chaque fournisseur nomme SA variable : une clé croisée ne part jamais.
     expect(CONFIGS.deepseek.variableCle).toBe('DEEPSEEK_API_KEY')
     expect(CONFIGS.anthropic.variableCle).toBe('ANTHROPIC_API_KEY')
@@ -197,5 +220,59 @@ describe('EP-277 · les deux dialectes', () => {
     await expect(
       appelerFournisseur('deepseek', 'cle', 'c', [{ role: 'user', content: 'x' }]),
     ).rejects.toThrow(/400.*credit balance/u)
+  })
+
+  it('③ AUCUN MODÈLE N’A UN SEUL COUPLE DE PRIX', () => {
+    // ── LA RÈGLE GÉNÉRALE, exigée par le propriétaire le 2026-11-02.
+    //
+    // Un modèle qui n'a qu'un tarif fait croire que l'heure ne compte pas.
+    // Ce cliquet vaut pour les fournisseurs à venir : si l'un d'eux ne
+    // facture pas à l'heure, il écrit DEUX FOIS le même couple — et ce
+    // doublon dit « j'y ai pensé », au lieu de laisser deviner un oubli.
+    for (const [nom, c] of Object.entries(CONFIGS)) {
+      for (const [quel, m] of [['lourd', c.prix], ['leger', c.prixLeger]] as const) {
+        for (const periode of ['creuse', 'pointe'] as const) {
+          const t = m[periode]
+          expect(t, `${nom}/${quel} n’a pas de tarif ${periode}`).toBeDefined()
+          for (const champ of ['entree', 'sortie', 'entreeCache'] as const) {
+            expect(typeof t[champ], `${nom}/${quel}/${periode}.${champ}`).toBe('number')
+            expect(t[champ], `${nom}/${quel}/${periode}.${champ} est nul ou negatif`).toBeGreaterThan(0)
+          }
+        }
+        // LA POINTE N'EST JAMAIS MOINS CHÈRE QUE LA CREUSE : l'inverse
+        // signalerait deux colonnes interverties, et le plafond annoncé
+        // serait alors sous le vrai prix.
+        expect(m.pointe.entree, `${nom}/${quel} : pointe moins chère que creuse`).toBeGreaterThanOrEqual(m.creuse.entree)
+        expect(m.pointe.sortie).toBeGreaterThanOrEqual(m.creuse.sortie)
+      }
+      // Et le LÉGER est moins cher que le LOURD, sinon l'un des deux est faux.
+      expect(c.prixLeger.creuse.entree, `${nom} : le leger n’est pas moins cher`).toBeLessThan(c.prix.creuse.entree)
+    }
+  })
+
+  it('④ LES FENÊTRES DE POINTE SONT CELLES DE LA DOCUMENTATION', () => {
+    // 01:00-04:00 et 06:00-10:00 UTC, du lundi au vendredi. Le reste est
+    // hors pointe, WEEK-ENDS INCLUS EN ENTIER.
+    const d = (iso: string) => new Date(iso)
+    expect(estPointe(d('2026-11-02T01:00:00Z')), 'lundi 01:00 devrait être en pointe').toBe(true)
+    expect(estPointe(d('2026-11-02T03:59:00Z'))).toBe(true)
+    expect(estPointe(d('2026-11-02T04:00:00Z')), '04:00 est hors pointe').toBe(false)
+    expect(estPointe(d('2026-11-02T06:00:00Z'))).toBe(true)
+    expect(estPointe(d('2026-11-02T09:59:00Z'))).toBe(true)
+    expect(estPointe(d('2026-11-02T10:00:00Z'))).toBe(false)
+    expect(estPointe(d('2026-11-02T00:30:00Z'))).toBe(false)
+    // SAMEDI ET DIMANCHE EN ENTIER, même dans la fenêtre horaire.
+    expect(estPointe(d('2026-11-07T02:00:00Z')), 'samedi n’est jamais en pointe').toBe(false)
+    expect(estPointe(d('2026-11-08T08:00:00Z')), 'dimanche n’est jamais en pointe').toBe(false)
+  })
+
+  it('⑤ LE PLAFOND ANNONCÉ PREND LA POINTE — jamais l’heure creuse', () => {
+    // Un plafond qui suppose l'heure creuse n'est plus un plafond :
+    // l'opération peut démarrer à 00:59 et facturer à 01:00.
+    expect(tarifPlafond(CONFIGS.deepseek.prixLeger)).toEqual(CONFIGS.deepseek.prixLeger.pointe)
+    expect(tarifDe(CONFIGS.deepseek.prix, new Date('2026-11-02T02:00:00Z')))
+      .toEqual(CONFIGS.deepseek.prix.pointe)
+    expect(tarifDe(CONFIGS.deepseek.prix, new Date('2026-11-07T02:00:00Z')))
+      .toEqual(CONFIGS.deepseek.prix.creuse)
   })
 })

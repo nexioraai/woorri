@@ -74,8 +74,29 @@ export type Config = {
   readonly modele: string
   /** Plafond de sortie par appel — contrainte du dialecte, pas un réglage. */
   readonly maxJetons: number
-  /** Tarifs par million de jetons, tels que le dépôt les déclare déjà. */
-  readonly prix: { readonly entree: number; readonly sortie: number }
+  /**
+   * TARIFS PAR MILLION DE JETONS — DEUX PAR MODÈLE, ET L'HEURE DÉCIDE.
+   *
+   * ── LE DÉFAUT CORRIGÉ LE 2026-11-02.
+   *
+   * Le dépôt portait UN SEUL couple, `{ entree: 0.66, sortie: 1.98 }`, et
+   * c'était le tarif HORS POINTE de `v4-pro`. Pendant les deux fenêtres de
+   * pointe, tout coût que Deribfy a calculé, affiché ou enregistré vaut LA
+   * MOITIÉ du vrai.
+   *
+   * Et il n'y avait aucun tarif pour le modèle LÉGER, alors que le compte en
+   * emploie deux : la retouche tourne sur `flash`, quatre fois moins cher.
+   *
+   * ── L'ENTRÉE EN CACHE COÛTE CINQUANTE FOIS MOINS.
+   *
+   * 0,003 contre 0,15 pour `flash`. La retouche renvoie le même document à
+   * chaque passe : si le cache mord, la deuxième retouche d'une même
+   * application est presque gratuite en entrée. À mesurer en service.
+   */
+  readonly prix: TarifsModele
+  /** Tarifs du modèle LÉGER. Il n'en avait aucun : ses appels étaient
+   *  facturés au prix du lourd, soit quatre fois trop. */
+  readonly prixLeger: TarifsModele
   readonly variableCle: string
   /** Base REST du dialecte. Anthropic passe par son SDK : sans objet. */
   readonly baseURL?: string
@@ -84,13 +105,62 @@ export type Config = {
   readonly modeleLeger: string
 }
 
+/** Un tarif : par million de jetons, hors pointe et en pointe. */
+export type Tarif = {
+  readonly entree: number
+  readonly sortie: number
+  /** Entrée déjà vue par le fournisseur. Cinquante fois moins chère. */
+  readonly entreeCache: number
+}
+export type TarifsModele = { readonly creuse: Tarif; readonly pointe: Tarif }
+
+/**
+ * SOMMES-NOUS EN POINTE ? L'heure UTC décide, jamais l'heure locale.
+ *
+ * Fenêtres officielles DeepSeek : 01:00–04:00 et 06:00–10:00 UTC, du lundi
+ * au vendredi. Tout le reste est hors pointe, **week-ends inclus en entier**.
+ *
+ * La date est un PARAMÈTRE et pas `new Date()` lu dedans : une fonction qui
+ * lit l'horloge ne se teste qu'à l'heure qu'il est.
+ */
+export function estPointe(quand: Date): boolean {
+  const jour = quand.getUTCDay()
+  if (jour === 0 || jour === 6) return false
+  const h = quand.getUTCHours()
+  return (h >= 1 && h < 4) || (h >= 6 && h < 10)
+}
+
+/** Le tarif qui s'applique à cet instant. */
+export function tarifDe(modele: TarifsModele, quand: Date): Tarif {
+  return estPointe(quand) ? modele.pointe : modele.creuse
+}
+
+/**
+ * LE TARIF À ANNONCER AVANT UNE OPÉRATION — toujours le plus cher.
+ *
+ * Un plafond qui suppose l'heure creuse n'est plus un plafond : l'opération
+ * peut démarrer à 00:59 et facturer à 01:00. On annonce donc la pointe.
+ */
+export function tarifPlafond(modele: TarifsModele): Tarif {
+  return modele.pointe
+}
+
 export const CONFIGS: Readonly<Record<Fournisseur, Config>> = {
   anthropic: {
     modele: 'claude-opus-5',
     // Le flux lève la limite de durée ; 32 000 reste au-dessus de tout
     // document qu'on ait mesuré (le plus gros fait 10 609 jetons).
     maxJetons: 32_000,
-    prix: { entree: 5, sortie: 25 },
+    // Anthropic n'a pas de tarification horaire : les deux sont identiques,
+    // et l'écrire évite de faire croire qu'on l'a oublié.
+    prix: {
+      creuse: { entree: 5, sortie: 25, entreeCache: 0.5 },
+      pointe: { entree: 5, sortie: 25, entreeCache: 0.5 },
+    },
+    prixLeger: {
+      creuse: { entree: 1, sortie: 5, entreeCache: 0.1 },
+      pointe: { entree: 1, sortie: 5, entreeCache: 0.1 },
+    },
     variableCle: 'ANTHROPIC_API_KEY',
     baseURL: undefined,
     modeleLeger: 'claude-haiku-4-5-20251001',
@@ -113,8 +183,17 @@ export const CONFIGS: Readonly<Record<Fournisseur, Config>> = {
     // troncature est désormais LUE et NOMMÉE. C'est le vrai garde-fou — le
     // chiffre n'en est que la marge.
     maxJetons: 65_536,
-    // Tarifs deepseek-v4-pro, relevés à la documentation le 2026-10-19.
-    prix: { entree: 0.66, sortie: 1.98 },
+    // Tarifs relevés à la documentation DeepSeek le 2026-11-02, par million
+    // de jetons. Le dépôt ne portait que la colonne « hors pointe » de
+    // `v4-pro` : en pointe, tout coût calculé valait la moitié du vrai.
+    prix: {
+      creuse: { entree: 0.66, sortie: 1.98, entreeCache: 0.022 },
+      pointe: { entree: 1.32, sortie: 3.96, entreeCache: 0.044 },
+    },
+    prixLeger: {
+      creuse: { entree: 0.15, sortie: 0.6, entreeCache: 0.003 },
+      pointe: { entree: 0.3, sortie: 1.2, entreeCache: 0.006 },
+    },
     variableCle: 'DEEPSEEK_API_KEY',
     baseURL: 'https://api.deepseek.com',
     modeleLeger: 'deepseek-flash',
