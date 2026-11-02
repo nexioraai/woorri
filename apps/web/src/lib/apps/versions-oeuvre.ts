@@ -142,15 +142,58 @@ export function phraseVersion(v: {
   readonly creeIl: string
   readonly actuelle: boolean
 }): string {
-  const quand = v.creeIl === '' ? '' : ` le ${new Date(v.creeIl).toLocaleDateString('fr-FR')}`
+  // L'HEURE, PAS SEULEMENT LA DATE : mesuré sur une œuvre réelle, cinq de
+  // ses six versions datent du même jour. Une liste qui ne dit que le jour
+  // ne distingue rien.
+  const quand =
+    v.creeIl === ''
+      ? ''
+      : ` le ${new Date(v.creeIl).toLocaleString('fr-FR', {
+          day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit',
+        })}`
+  // ── « régénérée » MANQUAIT, et « construction » mentait à sa place.
+  //
+  // Défaut vu à l'usage le 2026-11-02 : une régénération s'affichait
+  // « construction », parce que ce libellé était le repli de tout ce que la
+  // fonction ne connaissait pas. Un repli qui attrape un cas RÉEL n'est plus
+  // un repli, c'est une erreur silencieuse.
   const retour = /^retour vers (\d+)$/u.exec(v.etape ?? '')
   const quoi =
     retour !== null
-      ? `retour à la version ${retour[1]}`
+      ? // ── LES RETOURS D'AVANT LE POINTEUR (2026-11-02). Ces lignes
+        // restent — on a promis à l'écran que rien ne serait perdu — mais
+        // elles portent leur libellé honnête : c'était une navigation, pas
+        // un travail. Plus aucune de cette sorte ne sera créée.
+        `retour à la version ${retour[1]} (ancien comportement)`
       : v.etape === 'livraison'
         ? 'livrée'
-        : // Les étapes du pipeline AIR (« p0 », « reparation »…) ne sont pas
-          // des mots de produit : on dit ce qu'elles sont, une construction.
-          'construction'
+        : v.etape === 'regeneration'
+          ? 'régénérée'
+          : // Les étapes du pipeline AIR (« p0 », « reparation »…) ne sont
+            // pas des mots de produit.
+            'construction'
   return `Version ${String(v.rang)} — ${quoi}${quand}${v.actuelle ? ' · actuelle' : ''}`
+}
+
+/**
+ * QUELLE VERSION EST LA COURANTE — le pointeur, pas la position.
+ *
+ * ── POURQUOI UN POINTEUR (défaut trouvé à l'usage le 2026-11-02).
+ *
+ * « Revenir à celle-ci » CRÉAIT une version. Six versions sur une œuvre,
+ * dont TROIS étaient des allers-retours : avec le plafond de dix, quelques
+ * clics auraient effacé de vraies générations.
+ *
+ * Une version est créée par un TRAVAIL — livraison, régénération, et demain
+ * modification. Jamais par une navigation.
+ *
+ * `null` veut dire « la plus haute » : les œuvres d'avant ce lot restent
+ * lisibles sans migration de données.
+ */
+export function rangCourant(pointeur: number | null, rangs: readonly number[]): number {
+  if (rangs.length === 0) return 0
+  // Un pointeur qui désigne une version purgée ne doit pas rendre l'œuvre
+  // illisible : on retombe sur la plus haute, qui est toujours là.
+  if (pointeur !== null && rangs.includes(pointeur)) return pointeur
+  return Math.max(...rangs)
 }

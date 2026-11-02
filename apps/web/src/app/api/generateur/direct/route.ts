@@ -634,6 +634,21 @@ export async function POST(req: Request) {
     if (vEcrit.error !== null) {
       console.error('[versions] rang', rangNeuf, 'non ecrit pour', ecrit.data.id, vEcrit.error)
     }
+    // ── LE POINTEUR SUIT LE TRAVAIL (2026-11-02).
+    //
+    // Sans cette ligne, régénérer DEPUIS une version ancienne laisserait le
+    // pointeur en arrière : l'écran dirait « actuelle » sur la version d'où
+    // l'on vient, pendant que `document` porte la neuve. Un écran qui dit
+    // une chose pendant qu'une autre est vraie — le défaut de la maison.
+    //
+    // L'HISTORIQUE RESTE LINÉAIRE : la neuve s'ajoute EN FIN de liste et le
+    // pointeur s'y place. Pas de branche.
+    await supabaseAdmin
+      .from(TABLE_GENERATIONS)
+      .update({ version_courante: rangNeuf })
+      .eq('id', ecrit.data.id)
+      .eq('owner_id', proprietaire)
+
     // LA PURGE EN DERNIER, ET LE RANG 1 N'EN FAIT JAMAIS PARTIE (EP-315).
     const aPurger = rangsAPurger([...rangsVus, rangNeuf])
     if (aPurger.length > 0) {

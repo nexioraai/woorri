@@ -528,6 +528,27 @@ alter table public.${nom} add column if not exists publication_jeton text;
 -- ne regardait que l'INSERT du journal, et cette colonne ne s'ecrit qu'en
 -- UPDATE, depuis des routes. EP-310 ⑤ ferme l'angle.
 alter table public.${nom} add column if not exists publication_slug  text;
+
+-- ── LE POINTEUR DE VERSION COURANTE (lot 1 de la modification, 2026-11-02).
+--
+-- DEFAUT TROUVE PAR L'USAGE, pas par un test : revenir a une version
+-- CREAIT une version. Six versions sur une oeuvre, dont TROIS etaient des
+-- allers-retours -- et avec le plafond de dix, quelques clics auraient
+-- efface de vraies generations.
+--
+-- Le « retour additif » levait l'ambiguite du double-clic sur un bouton
+-- unique « revenir ». Mais la liste « revenir a celle-ci » leve deja cette
+-- ambiguite : deux remedes pour un seul mal.
+--
+-- DESORMAIS : une version est creee par un TRAVAIL (livraison,
+-- regeneration, et demain modification), jamais par une navigation. Revenir
+-- recopie les fichiers et DEPLACE CE POINTEUR. Aucune ligne creee, rien
+-- d'efface, et l'on saute sur n'importe quelle version -- en arriere comme
+-- en avant. C'est l'inverse du defaut de v0, qui efface les suivantes.
+--
+-- NULL = la plus haute : les lignes d'avant ce lot restent lisibles sans
+-- migration de donnees.
+alter table public.${nom} add column if not exists version_courante integer;
 alter table public.${nom} add column if not exists publie_le          timestamptz;
 do $$ begin
   create unique index ${nom}_publication_jeton_unique

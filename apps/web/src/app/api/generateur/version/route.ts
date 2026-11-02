@@ -36,7 +36,7 @@ import { NextResponse } from 'next/server'
 import { requireAuthenticatedUser } from '@/lib/auth/require-authenticated-user'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { TABLE_GENERATIONS, TABLE_VERSIONS } from '@/lib/apps/journal'
-import { estRestaurable, rangsAPurger, type VersionDocument } from '@/lib/apps/versions-oeuvre'
+import { estRestaurable, rangCourant, type VersionDocument } from '@/lib/apps/versions-oeuvre'
 
 export const runtime = 'nodejs'
 
@@ -59,7 +59,7 @@ export async function GET(req: Request) {
 
   const oeuvre = await supabaseAdmin
     .from(TABLE_GENERATIONS)
-    .select('id')
+    .select('id, version_courante')
     .eq('id', id)
     .eq('owner_id', garde.userId)
     .maybeSingle()
@@ -87,7 +87,15 @@ export async function GET(req: Request) {
     // devine pas ce qu'on va prelever.
     coutUsd: Number(v.cout_usd ?? 0),
   }))
-  return NextResponse.json({ versions }, { headers: { 'Cache-Control': 'no-store' } })
+  // LA COURANTE SUIT LE POINTEUR, PAS LA POSITION : après un retour, elle
+  // n'est plus en haut de la liste, et l'écran ne doit pas le supposer.
+  const courante = rangCourant(
+    oeuvre.data.version_courante === null || oeuvre.data.version_courante === undefined
+      ? null
+      : Number(oeuvre.data.version_courante),
+    versions.map((v) => v.rang),
+  )
+  return NextResponse.json({ versions, courante }, { headers: { 'Cache-Control': 'no-store' } })
 }
 
 export async function POST(req: Request) {
@@ -132,48 +140,34 @@ export async function POST(req: Request) {
   }
   const etat = cible.data.etat as VersionDocument
 
-  // ── LE RANG SUIVANT, LU ET PAS SUPPOSÉ. La contrainte d'unicité
-  // (generation_id, rang) refuserait un doublon : mieux vaut le calculer.
-  const tous = await supabaseAdmin.from(TABLE_VERSIONS).select('rang').eq('generation_id', id)
-  const rangs = (tous.data ?? []).map((x: { rang: number }) => Number(x.rang))
-  const suivant = Math.max(0, ...rangs) + 1
-
-  // ① L'HISTORIQUE D'ABORD : si l'écriture de la version échoue, le document
-  // courant n'a pas bougé et rien n'est perdu. L'ordre inverse laisserait une
-  // œuvre modifiée sans trace de son retour.
-  const ajout = await supabaseAdmin.from(TABLE_VERSIONS).insert({
-    generation_id: id,
-    rang: suivant,
-    etape: `retour vers ${String(rang)}`,
-    cout_usd: 0,
-    etat: { ...etat, forme: 'document' },
-  })
-  if (ajout.error !== null) {
-    return NextResponse.json({ error: 'le retour n’a pas pu être enregistré — rien n’a changé' }, { status: 502 })
-  }
-
-  // ② PUIS LE DOCUMENT COURANT. La page publique est recompilée à la
-  // lecture : le lien ne change pas, son contenu oui.
+  // ── AUCUNE VERSION N'EST CRÉÉE. C'ÉTAIT LE DÉFAUT (2026-11-02).
+  //
+  // Ce retour ÉCRIVAIT un rang n+1. Mesuré à l'usage : six versions sur une
+  // œuvre, dont TROIS étaient des allers-retours — et avec le plafond de
+  // dix, quelques clics auraient effacé de vraies générations.
+  //
+  // Le « retour additif » levait l'ambiguïté du double-clic sur un bouton
+  // unique « revenir ». Mais la liste « revenir à celle-ci » lève déjà cette
+  // ambiguïté : c'étaient deux remèdes pour un seul mal.
+  //
+  // Désormais : on recopie les fichiers et on DÉPLACE LE POINTEUR. Rien
+  // n'est créé, rien n'est effacé, et l'on saute sur n'importe quelle
+  // version — en arrière comme en avant. C'est l'inverse du défaut de v0,
+  // qui efface les versions suivantes.
   const maj = await supabaseAdmin
     .from(TABLE_GENERATIONS)
-    .update({ document: { fichiers: etat.fichiers } })
+    .update({ document: { fichiers: etat.fichiers }, version_courante: rang })
     .eq('id', id)
     .eq('owner_id', garde.userId)
   if (maj.error !== null) {
     return NextResponse.json(
-      { error: 'la version est enregistrée mais l’application n’a pas changé — réessayez' },
+      { error: 'l’application n’a pas changé — réessayez' },
       { status: 502 },
     )
   }
 
-  // ③ LA PURGE EN DERNIER, ET LE RANG 1 N'EN FAIT JAMAIS PARTIE (EP-315).
-  const aPurger = rangsAPurger([...rangs, suivant])
-  if (aPurger.length > 0) {
-    await supabaseAdmin.from(TABLE_VERSIONS).delete().eq('generation_id', id).in('rang', aPurger)
-  }
-
   return NextResponse.json(
-    { ok: true, rang: suivant, revenuA: rang, purges: aPurger },
+    { ok: true, courante: rang },
     { headers: { 'Cache-Control': 'no-store' } },
   )
 }

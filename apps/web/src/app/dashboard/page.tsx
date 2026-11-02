@@ -64,6 +64,15 @@ export default function DashboardPage() {
   // que l'ecran de generation : l'app tourne, et ne voit rien de Deribfy.
   const [apercuApp, setApercuApp] = useState<{ nom: string; html: string } | null>(null);
   const [apercuErreur, setApercuErreur] = useState<string | null>(null);
+  /**
+   * LES SUCCÈS NE PASSENT PLUS PAR LE CANAL DES ERREURS.
+   *
+   * Défaut vu à l'usage le 2026-11-02 : « Nouvelle version créée » et
+   * « Régénération en cours » s'affichaient en ROUGE, parce que j'avais
+   * réemployé `setApercuErreur` faute d'un autre canal. Une bonne nouvelle
+   * dans la couleur du danger apprend à ne plus lire les couleurs.
+   */
+  const [avis, setAvis] = useState<string | null>(null);
   // Le lien public de l'application qu'on vient de publier — affiché sous la
   // carte, copiable. Un seul à la fois : publier en remplace l'affichage.
   const [lienPublic, setLienPublic] = useState<{ id: string; url: string } | null>(null);
@@ -76,6 +85,7 @@ export default function DashboardPage() {
    */
   const [versions, setVersions] = useState<{
     id: string;
+    courante: number;
     liste: { rang: number; etape: string | null; creeIl: string; restaurable: boolean; coutUsd: number }[];
   } | null>(null);
 
@@ -136,7 +146,21 @@ export default function DashboardPage() {
    */
   const regenerer = async (a: Application) => {
     setApercuErreur(null);
-    const prix = versions?.id === a.id ? prixEstime(versions.liste.map((v) => v.coutUsd)) : null;
+    // LE PRIX SE LIT AVANT DE DEMANDER, MÊME HISTORIQUE REPLIÉ. Il ne
+    // s'affichait que si le panneau était ouvert : la plupart des gens
+    // cliquaient donc « Régénérer » sans voir aucun prix.
+    const { data: { session: s0 } } = await supabase.auth.getSession();
+    if (!s0) { setApercuErreur('Session expiree — reconnectez-vous.'); return; }
+    let prix: string | null = null;
+    if (versions?.id === a.id) {
+      prix = prixEstime(versions.liste.map((v) => v.coutUsd));
+    } else {
+      const rv = await fetch(`/api/generateur/version?id=${encodeURIComponent(a.id)}`, {
+        headers: { Authorization: `Bearer ${s0.access_token}` },
+      });
+      const dv = (await rv.json().catch(() => ({}))) as { versions?: { coutUsd: number }[] };
+      prix = prixEstime((dv.versions ?? []).map((v) => v.coutUsd));
+    }
     if (!window.confirm(
       `Régénérer « ${a.nom ?? TITRE_SANS_NOM} » ?\n\n` +
       `Je rejoue VOTRE DEMANDE D'ORIGINE et j'en fais une nouvelle version. ` +
@@ -144,9 +168,13 @@ export default function DashboardPage() {
       `La version actuelle est conservée : si le résultat vous plaît moins, ` +
       `vous revenez dessus en un clic, gratuitement.`,
     )) return;
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) { setApercuErreur('Session expiree — reconnectez-vous.'); return; }
-    setApercuErreur('Régénération en cours — cela prend une à deux minutes.');
+    const session = s0;
+    // LA DURÉE VIENT DE LA LIGNE, PAS D'UNE PHRASE INVENTÉE. J'avais écrit
+    // « une à deux minutes » ; mesuré sur les deux œuvres livrées : 363 s et
+    // 638 s. La carte porte `duree_ms` — il suffisait de la lire.
+    const mn = Math.max(1, Math.round(Number(a.dureeMs ?? 0) / 60_000));
+    setApercuErreur(null);
+    setAvis(`Régénération en cours — la précédente a pris ${String(mn)} minute(s).`);
     const res = await fetch(`/api/generateur/direct?id=${encodeURIComponent(a.id)}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
@@ -154,11 +182,15 @@ export default function DashboardPage() {
     });
     const d = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string; motif?: string };
     if (!res.ok || d.ok !== true) {
+      setAvis(null);
       setApercuErreur(String(d.error ?? d.motif ?? 'La régénération a échoué — votre version actuelle n’a pas bougé.'));
       return;
     }
-    setApercuErreur('Nouvelle version créée.');
-    if (versions?.id === a.id) { setVersions(null); await voirVersions(a); }
+    // LE MESSAGE DE PROGRESSION S'EFFACE : il restait affiché après la fin,
+    // et un écran qui dit « en cours » sur un travail fini ment.
+    setAvis('Nouvelle version créée.');
+    if (versions?.id === a.id) setVersions(null);
+    await voirVersions(a);
   };
 
   const voirVersions = async (a: Application) => {
@@ -171,10 +203,11 @@ export default function DashboardPage() {
     });
     const d = (await res.json().catch(() => ({}))) as {
       versions?: { rang: number; etape: string | null; creeIl: string; restaurable: boolean; coutUsd: number }[];
+      courante?: number;
       error?: string;
     };
     if (!res.ok) { setApercuErreur(String(d.error ?? 'Historique illisible.')); return; }
-    setVersions({ id: a.id, liste: d.versions ?? [] });
+    setVersions({ id: a.id, liste: d.versions ?? [], courante: d.courante ?? 0 });
   };
 
   /**
@@ -201,8 +234,20 @@ export default function DashboardPage() {
       method: 'POST', headers: { Authorization: `Bearer ${session.access_token}` },
     });
     const d = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string };
-    if (!res.ok || d.ok !== true) { setApercuErreur(String(d.error ?? 'Le retour a echoue.')); return; }
-    await voirVersions(a); await voirVersions(a);
+    if (!res.ok || d.ok !== true) { setAvis(null); setApercuErreur(String(d.error ?? 'Le retour a echoue.')); return; }
+    setApercuErreur(null);
+    setAvis(`Vous êtes revenu à la version ${String(rang)}.`);
+    // UN SEUL RECHARGEMENT : `voirVersions` BASCULE l'affichage, donc
+    // l'appeler deux fois le repliait puis le rouvrait — la liste
+    // clignotait. On recharge en place.
+    const rv = await fetch(`/api/generateur/version?id=${encodeURIComponent(a.id)}`, {
+      headers: { Authorization: `Bearer ${session.access_token}` },
+    });
+    const dv = (await rv.json().catch(() => ({}))) as {
+      versions?: { rang: number; etape: string | null; creeIl: string; restaurable: boolean; coutUsd: number }[];
+      courante?: number;
+    };
+    setVersions({ id: a.id, liste: dv.versions ?? [], courante: dv.courante ?? rang });
   };
 
   const publier = async (a: Application) => {
@@ -596,6 +641,9 @@ export default function DashboardPage() {
             </button>
           </div>
         )}
+        {avis !== null && (
+          <p className="mt-6 text-sm text-emerald-400">{avis}</p>
+        )}
         {apercuErreur !== null && (
           <p className="mt-6 text-sm text-red-400">{apercuErreur}</p>
         )}
@@ -705,6 +753,43 @@ export default function DashboardPage() {
                           lien cesse de répondre, et que le projet déjà
                           téléchargé, lui, reste à elle et continue de
                           fonctionner. */}
+                    {versions?.id === a.id && (
+                      <div className="flex flex-col gap-1">
+                        {versions.liste.length === 0 && (
+                          <span className="text-xs text-white/50">Aucune version enregistrée.</span>
+                        )}
+                        {versions.liste.map((v) => (
+                          <div key={v.rang} className="flex items-center justify-between gap-2 text-xs">
+                            {/* LES MOTS VIENNENT DU MOTEUR, pas de l'ecran :
+                                deux ecrans diraient deux choses. */}
+                            <span className="text-white/60 truncate">
+                              {/* LE POINTEUR, PAS LA POSITION : après un
+                                  retour, la courante n'est plus en haut. */}
+                              {phraseVersion({ ...v, actuelle: v.rang === versions.courante })}
+                            </span>
+                            {/* La version actuelle n'a pas de retour vers
+                                elle-même, et une version de pipeline n'a pas
+                                de fichiers : le serveur l'a dit. */}
+                            {v.rang !== versions.courante && v.restaurable && (
+                              <button type="button"
+                                onClick={() => { void revenirA(a, v.rang, v.creeIl); }}
+                                className="shrink-0 px-2 py-0.5 rounded-lg border border-white/10 text-white/60 hover:text-white hover:border-white/30 transition-all">
+                                revenir à celle-ci
+                              </button>
+                            )}
+                            {v.rang !== versions.courante && !v.restaurable && (
+                              <span className="shrink-0 text-white/30" title="cette version ne contient pas les fichiers de l’application">
+                                retour impossible
+                              </span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                      {/* ── LA LISTE EST AU-DESSUS DE LA DESTRUCTION.
+                          Elle était rendue APRÈS « Supprimer » : pour la
+                          lire, il fallait passer le regard sur le bouton
+                          rouge. */}
                       <button type="button" onClick={() => { void supprimer(a); }}
                         className="px-2 py-2 rounded-xl text-xs font-semibold border border-red-500/20 text-red-300/70 hover:text-red-200 hover:border-red-400/40 transition-all">
                         Supprimer
@@ -715,37 +800,6 @@ export default function DashboardPage() {
                         recopierait le contenu d'avant le premier. La liste
                         supprime l'ambiguïté — on désigne la version voulue,
                         avec sa date. */}
-                    {versions?.id === a.id && (
-                      <div className="flex flex-col gap-1">
-                        {versions.liste.length === 0 && (
-                          <span className="text-xs text-white/50">Aucune version enregistrée.</span>
-                        )}
-                        {versions.liste.map((v, i) => (
-                          <div key={v.rang} className="flex items-center justify-between gap-2 text-xs">
-                            {/* LES MOTS VIENNENT DU MOTEUR, pas de l'ecran :
-                                deux ecrans diraient deux choses. */}
-                            <span className="text-white/60 truncate">
-                              {phraseVersion({ ...v, actuelle: i === 0 })}
-                            </span>
-                            {/* La version actuelle n'a pas de retour vers
-                                elle-même, et une version de pipeline n'a pas
-                                de fichiers : le serveur l'a dit. */}
-                            {i > 0 && v.restaurable && (
-                              <button type="button"
-                                onClick={() => { void revenirA(a, v.rang, v.creeIl); }}
-                                className="shrink-0 px-2 py-0.5 rounded-lg border border-white/10 text-white/60 hover:text-white hover:border-white/30 transition-all">
-                                revenir à celle-ci
-                              </button>
-                            )}
-                            {i > 0 && !v.restaurable && (
-                              <span className="shrink-0 text-white/30" title="cette version ne contient pas les fichiers de l’application">
-                                retour impossible
-                              </span>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
                     {lienPublic?.id === a.id && (
                       <div className="flex items-center gap-2 text-xs">
                         <a href={lienPublic.url} target="_blank" rel="noreferrer"
