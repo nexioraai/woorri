@@ -151,7 +151,13 @@ export const TEMOIN_GENERIQUE = 'sonde-generique-jamais-creee'
  */
 export const NOMS_RESERVES: ReadonlySet<string> = new Set([
   // ① Les routes du produit (src/app/), relevées.
-  'a', 'about', 'admin', 'api', 'blog', 'cookies', 'dashboard', 'documentation',
+  //
+  // `atelier` a été ajouté le 2026-11-02 — et c'est EP-291 qui l'a exigé, pas
+  // moi : il relève ce dossier à la gate au lieu de croire cette liste. La
+  // route a été écrite, la gate a rougi, le nom est réservé. Sans ça, un
+  // client aurait pu publier son application sur `atelier.deribfy.app`, par
+  // dessus l'écran de travail du produit.
+  'a', 'about', 'admin', 'api', 'atelier', 'blog', 'cookies', 'dashboard', 'documentation',
   'domaine', 'edit', 'login', 'onboarding-chat', 'p', 'parametres', 'preview',
   'pricing', 'privacy', 'reset-password', 'sites', 'terms', 'visibilite-ia',
   'welcome', 'cancel-order',

@@ -789,6 +789,21 @@ export default function DashboardPage() {
                       // l'action destructrice. Une fonctionnalite qu'on ne
                       // voit pas n'existe pas -- la meme erreur que les neuf
                       // « Application », un etage plus bas.
+                      <>
+                      {/* ── L'ATELIER EST L'ACTION PRINCIPALE, DONC IL EN A L'AIR.
+                          Leçon payée le 2026-11-01 : l'historique marchait
+                          de bout en bout et personne ne le trouvait, parce
+                          qu'il avait la typographie la plus pâle de la
+                          carte. Un atelier rangé comme un septième bouton
+                          gris n'existerait pas davantage. Il prend donc
+                          toute la largeur, la couleur d'accent, et la
+                          première place — avant « Revoir », qui ne montre
+                          l'application que dans un cadre court. */}
+                      <Link href={`/atelier/${a.id}`}
+                        className="mb-2 flex items-center justify-center gap-1.5 rounded-xl bg-[#FA5D1E] px-3 py-2.5 text-sm font-semibold text-white transition-all hover:bg-[#FA5D1E]/90">
+                        <Pencil size={14} strokeWidth={2} aria-hidden />
+                        Ouvrir dans l’atelier
+                      </Link>
                       <div className="grid grid-cols-3 gap-2">
                         <button type="button" onClick={() => { void revoir(a); }}
                           className="px-2 py-2 rounded-xl text-sm font-semibold border border-white/10 text-white/70 hover:text-white hover:border-white/30 transition-all">
@@ -812,6 +827,7 @@ export default function DashboardPage() {
                           Régénérer
                         </button>
                       </div>
+                      </>
                     ) : (
                       /* L'INFORMATION RESTE, elle ne remplace plus l'action :
                          la personne doit savoir qu'il n'y a rien à revoir, ET

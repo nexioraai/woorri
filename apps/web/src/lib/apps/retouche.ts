@@ -119,6 +119,16 @@ export function refusHorsPerimetre(texte: string): string | null {
   return raison === '' ? 'Cette demande sort de ce que je peux retoucher.' : raison
 }
 
+/**
+ * LE PRÉFIXE D'UNE ÉTAPE DE RETOUCHE — exporté, donc jamais recopié.
+ *
+ * Le fil de l'atelier le relit pour retrouver les mots de la personne dans
+ * l'étape stockée. Un littéral recopié là-bas se serait décorrélé d'ici au
+ * premier changement de formulation, et le fil aurait affiché
+ * « modifiée : mets les boutons en vert » comme si c'était notre phrase.
+ */
+export const PREFIXE_RETOUCHE = 'modifiée : '
+
 /** Ce qu'une retouche a changé, dit dans les mots de la personne. */
 export function etapeRetouche(demande: string): string {
   // ── LES MOTS DE L'UTILISATEUR, PAS LES NÔTRES.
@@ -127,7 +137,7 @@ export function etapeRetouche(demande: string): string {
   // six mois plus tard. La liste doit rester lisible, donc on borne — une
   // demande de trois lignes ne doit pas déformer la carte.
   const propre = demande.replace(/\s+/gu, ' ').trim()
-  return `modifiée : ${propre.length > 60 ? `${propre.slice(0, 57)}…` : propre}`
+  return `${PREFIXE_RETOUCHE}${propre.length > 60 ? `${propre.slice(0, 57)}…` : propre}`
 }
 
 /** Ce qu'un juge dit d'une version : vert, ou rouge avec son compte. */

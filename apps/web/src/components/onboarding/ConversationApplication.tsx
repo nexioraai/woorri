@@ -57,6 +57,7 @@ import {
   phraseAttente,
   retirerDernierEcho,
 } from '@/lib/apps/attente-comprehension';
+import Link from 'next/link';
 
 // ETAGE 4 — le drapeau : OFF (defaut), l'UX synchrone ci-dessous reste SEULE
 // au monde ; le chemin async n'existe qu'arme consciemment. L'ecran ne fait
@@ -1523,7 +1524,25 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
           </div>
           {/* `sandbox` SANS `allow-same-origin` : l'application tourne, et
               elle ne peut rien lire du site qui l'héberge. */}
-          <ApercuAppareil titre="Votre application" srcDoc={apercu} hauteur={420} />
+          {/* ── LA HAUTEUR N'EST PLUS UN NOMBRE EN DUR.
+              420 px coupaient l'application : sur les captures du
+              2026-11-02 elle occupait un quart de la fenêtre et finissait
+              tronquée en bas. Une mesure relative s'adapte à la fenêtre
+              qu'on a vraiment. */}
+          <ApercuAppareil titre="Votre application" srcDoc={apercu} hauteur="min(72vh, 900px)" />
+          {/* ── ET LE CHEMIN NATUREL S'OUVRE ICI.
+              Juger une application à côté du champ qui en crée une AUTRE
+              est le défaut de fond de cet écran. On ne l'arrache pas — il
+              sert encore à voir tout de suite ce qui vient de sortir — mais
+              on nomme la suite, et elle mène à l'atelier. */}
+          {generationId !== null && (
+            <Link
+              href={`/atelier/${generationId}`}
+              className="mt-2 flex items-center justify-center gap-1.5 rounded-xl bg-[#FA5D1E] px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-[#FA5D1E]/90"
+            >
+              Ouvrir dans l’atelier — pour la voir en grand et la modifier
+            </Link>
+          )}
         </div>
       )}
 

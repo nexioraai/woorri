@@ -34,7 +34,19 @@ import { describe, expect, it } from 'vitest'
  * client l'importe. L'allonger sans ce besoin ferait de la pureté une
  * esthétique au lieu d'une contrainte.
  */
-const PURS = ['portee-epreuve.ts', 'nom-produit.ts', 'versions-oeuvre.ts'] as const
+// `appareils.ts`, `retouche.ts` et `fil-atelier.ts` ont rejoint la liste le
+// 2026-11-02 : l'atelier est un composant CLIENT et les importe. Un import
+// de serveur qui s'y glisserait tirerait le SDK du fournisseur ou un client
+// Supabase dans le paquet navigateur — la classe de défaut que ce cliquet
+// garde, et qui a déjà tué un build.
+const PURS = [
+  'portee-epreuve.ts',
+  'nom-produit.ts',
+  'versions-oeuvre.ts',
+  'appareils.ts',
+  'retouche.ts',
+  'fil-atelier.ts',
+] as const
 
 describe('EP-314 — les modules purs le restent', () => {
   it('① RIEN DE SERVEUR N’EST ATTEIGNABLE — contrôle TRANSITIF', () => {

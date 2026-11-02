@@ -104,13 +104,37 @@ describe('EP-287 · revoir une application', () => {
       ECRAN.slice(Math.max(0, i - 400), i + 200),
       'le chargement ne porte pas le jeton de session',
     ).toContain('Authorization')
-    // Le bouton reste conditionné à l'existence des FICHIERS.
+    // ── LE BOUTON RESTE CONDITIONNÉ À L'EXISTENCE DES FICHIERS.
+    //
+    // CE CONTRÔLE REGARDAIT UNE FENÊTRE DE 300 CARACTÈRES avant le geste.
+    // Le 2026-11-02, l'ajout du bouton « Ouvrir dans l'atelier » DANS LA
+    // MÊME BRANCHE a repoussé la condition au-delà de la fenêtre : rouge,
+    // alors que la propriété tenait toujours.
+    //
+    // Une fenêtre en caractères est un proxy fragile de « dans la branche ».
+    // On mesure donc la branche elle-même : le geste doit tomber ENTRE le
+    // test `a.revoyable ?` et le `) : (` qui le referme. Cette forme
+    // survivra à tout ce qu'on ajoutera entre les deux, et elle rougira si
+    // quelqu'un sort le bouton de la branche — ce qui est le vrai défaut.
     const j = ECRAN.indexOf('revoir(a)')
     expect(j, 'le geste « revoir » a disparu').toBeGreaterThan(-1)
+    const ouvre = ECRAN.indexOf('a.revoyable ?')
+    expect(ouvre, 'la condition sur les fichiers a disparu de l’écran').toBeGreaterThan(-1)
+    const ferme = ECRAN.indexOf(') : (', ouvre)
+    expect(ferme, 'la branche conditionnelle ne se referme pas').toBeGreaterThan(ouvre)
     expect(
-      ECRAN.slice(Math.max(0, j - 300), j),
+      j > ouvre && j < ferme,
       'le bouton « Revoir » n’est plus conditionné à l’existence des fichiers',
-    ).toContain('revoyable')
+    ).toBe(true)
+    // ET L'ATELIER AUSSI : il a besoin de la matière, lui aussi. Ouvrir un
+    // atelier sur une œuvre sans fichiers afficherait un cadre vide et un
+    // fil muet — la même promesse de 404, dans un écran plus grand.
+    const atelier = ECRAN.indexOf('/atelier/${a.id}')
+    expect(atelier, 'la carte n’ouvre plus l’atelier').toBeGreaterThan(-1)
+    expect(
+      atelier > ouvre && atelier < ferme,
+      'l’atelier s’ouvre sur une œuvre qui n’a plus de fichiers',
+    ).toBe(true)
     // Et l'œuvre s'affiche dans le cadre isolé, sans allow-same-origin.
     const k = ECRAN.indexOf('srcDoc={apercuApp.html}')
     expect(k, 'l’œuvre ne passe plus par le cadre isolé').toBeGreaterThan(-1)

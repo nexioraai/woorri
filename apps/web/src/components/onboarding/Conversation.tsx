@@ -25,6 +25,7 @@
 import { ArrowUp, Monitor, Paperclip, Smartphone, Tablet } from 'lucide-react';
 import { useState } from 'react';
 import type { ReactNode } from 'react';
+import { APPAREILS, appareilDe, legendeAppareil, type Appareil } from '@/lib/apps/appareils';
 
 /** La hauteur de la conversation : elle REMPLIT l'ecran. Sans cela, une vue
  *  courte laisse le pied de page remonter au milieu de la page. */
@@ -137,26 +138,15 @@ export function ChoixFermes({
  * Jusqu'ici l'`iframe` était figé en pleine largeur : ces quatre seuils
  * existaient et PERSONNE ne pouvait les voir.
  *
- * ── POURQUOI CES TROIS LARGEURS.
- *
- * Elles traversent les quatre seuils, vérifié :
- *   390  → aucun seuil franchi            → barre du bas
- *   768  → 400 et 600 franchis            → barre du bas
- *   1280 → les quatre franchis            → RAIL latéral
- *
- * Deux largeurs auraient laissé un seuil sans témoin.
+ * Les trois largeurs et leurs libellés vivent dans `@/lib/apps/appareils` :
+ * l'atelier montre la même application dans les mêmes tailles, et deux
+ * listes auraient divergé au premier ajout.
  */
-// D2 (2026-10-31) : la note annonçait « barre du bas » pendant qu'un tir
-// réel rendait un rail latéral à 390 px — la loi (dispositionDe, seuil 840)
-// vit dans le moteur de rendu, pas dans les œuvres du moteur direct. La
-// légende ne dit donc QUE ce qui est vrai pour TOUTE œuvre : la largeur.
-// La disposition redeviendra une promesse quand la coquille injectée la
-// garantira — pas avant.
-const APPAREILS = [
-  { cle: 'telephone', libelle: 'Téléphone', largeur: 390, note: '390 px', Icone: Smartphone },
-  { cle: 'tablette', libelle: 'Tablette', largeur: 768, note: '768 px', Icone: Tablet },
-  { cle: 'bureau', libelle: 'Bureau', largeur: 1280, note: '1280 px', Icone: Monitor },
-] as const;
+const ICONES: Record<Appareil['cle'], typeof Smartphone> = {
+  telephone: Smartphone,
+  tablette: Tablet,
+  bureau: Monitor,
+};
 
 export function ApercuAppareil({
   titre,
@@ -166,13 +156,24 @@ export function ApercuAppareil({
 }: {
   titre: string;
   srcDoc: string;
-  /** Hauteur du cadre. L'aperçu en cours est plus court que le final. */
-  hauteur?: number;
+  /**
+   * HAUTEUR DU CADRE — un nombre de pixels, ou une mesure CSS.
+   *
+   * L'aperçu EN COURS reste court : il vit au milieu d'une conversation
+   * qu'on fait défiler, et il ne doit pas la chasser de l'écran.
+   *
+   * L'aperçu FINAL, lui, prend une mesure relative à la fenêtre. Une hauteur
+   * en dur y tronquait l'application — défaut vu sur les captures du
+   * 2026-11-02 : un nombre fixe ne peut pas savoir dans quelle fenêtre il
+   * s'affiche, donc il coupe toujours quelque part.
+   */
+  hauteur?: number | string;
   /** Ce qui s'affiche SOUS le cadre — le téléchargement partiel, par exemple. */
   children?: ReactNode;
 }) {
   const [largeur, setLargeur] = useState<number>(390);
-  const courant = APPAREILS.find((a) => a.largeur === largeur) ?? APPAREILS[0];
+  const courant = appareilDe(largeur);
+  const IconeCourante = ICONES[courant.cle];
   return (
     <div>
       <div className="flex items-center justify-between gap-3 mb-2">
@@ -204,12 +205,13 @@ export function ApercuAppareil({
         >
           {APPAREILS.map((a) => {
             const actif = a.largeur === largeur;
+            const Icone = ICONES[a.cle];
             return (
               <button
                 key={a.cle}
                 type="button"
                 aria-pressed={actif}
-                title={`${a.libelle} — ${String(a.largeur)} px · ${a.note}`}
+                title={legendeAppareil(a)}
                 onClick={() => { setLargeur(a.largeur); }}
                 className={`group flex w-[58px] flex-col items-center gap-1 rounded-xl border px-1 py-1.5 transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#FA5D1E] ${
                   actif
@@ -217,7 +219,7 @@ export function ApercuAppareil({
                     : 'border-white/10 bg-white/[0.03] hover:border-white/20 hover:bg-white/[0.07]'
                 }`}
               >
-                <a.Icone
+                <Icone
                   size={20}
                   strokeWidth={1.75}
                   aria-hidden
@@ -236,20 +238,24 @@ export function ApercuAppareil({
       {/* LA LARGEUR EST CELLE DU CADRE, pas une mise à l'échelle : c'est ce
           que l'application LIT. Une transformation `scale` tromperait —
           `window.innerWidth` resterait celui du conteneur. */}
-      <div className="overflow-x-auto rounded-2xl border border-white/[0.07] bg-black/25 p-2.5">
+      <div className="overflow-auto rounded-2xl border border-white/[0.07] bg-black/25 p-2.5">
         <iframe
           title={titre}
           srcDoc={srcDoc}
           sandbox="allow-scripts"
-          style={{ width: `${String(largeur)}px`, height: `${String(hauteur)}px` }}
+          style={{
+            width: `${String(largeur)}px`,
+            height: typeof hauteur === 'number' ? `${String(hauteur)}px` : hauteur,
+          }}
           className="mx-auto block max-w-full rounded-xl border border-white/10 bg-white shadow-2xl shadow-black/40"
         />
       </div>
+      {/* « 1280 px · 1280 px » s'affichait ici : deux fois le même nombre,
+          vu sur une capture. La légende vient maintenant d'une seule
+          fonction — voir `legendeAppareil`. */}
       <p className="mt-1.5 flex items-center gap-1.5 text-[11px] text-slate-500">
-        <courant.Icone size={12} strokeWidth={2} aria-hidden />
-        <span className="tabular-nums">{courant.largeur} px</span>
-        <span className="text-slate-600">·</span>
-        <span>{courant.note}</span>
+        <IconeCourante size={12} strokeWidth={2} aria-hidden />
+        <span className="tabular-nums">{legendeAppareil(courant)}</span>
       </p>
       {children}
     </div>

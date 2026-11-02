@@ -34,6 +34,7 @@
 import { describe, expect, it } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { APPAREILS, legendeAppareil } from '../appareils'
 
 const RACINE = join(__dirname, '..', '..', '..', '..', '..', '..')
 const lire = (...p: string[]): string => readFileSync(join(RACINE, ...p), 'utf8')
@@ -52,8 +53,17 @@ const seuilsDuMoteur = (): number[] => {
   return [...new Set([...css, Number(rail?.[1] ?? 0)])].filter((n) => n > 0).sort((a, b) => a - b)
 }
 
-const largeursProposees = (): number[] =>
-  [...CONVERSATION().matchAll(/largeur:\s*(\d+)/gu)].map((m) => Number(m[1])).sort((a, b) => a - b)
+// ── LES LARGEURS NE SE LISENT PLUS DANS L'ECRAN, MAIS A LEUR SOURCE.
+//
+// Elles vivaient dans `Conversation.tsx` ; depuis le 2026-11-02 elles vivent
+// dans `appareils.ts`, parce que l'ATELIER montre la meme application dans
+// les memes tailles et que deux listes auraient diverge au premier ajout.
+//
+// Ce controle s'en trouve RENFORCE : il ne lit plus une expression dans du
+// JSX, il importe les valeurs reelles. Une faute de frappe dans un libelle
+// ne peut plus le tromper, et un deuxieme tableau d'appareils ailleurs ne
+// passerait plus inapercu -- le point ⑥ l'interdit.
+const largeursProposees = (): number[] => APPAREILS.map((a) => a.largeur).sort((a, b) => a - b)
 
 describe('EP-260 · le sélecteur d’appareil', () => {
   it('① LES LARGEURS TRAVERSENT TOUS LES SEUILS DU MOTEUR', () => {
@@ -102,10 +112,17 @@ describe('EP-260 · le sélecteur d’appareil', () => {
     const c = CONVERSATION()
     const i = c.indexOf('export function ApercuAppareil')
     const bloc = c.slice(i, c.indexOf('export function', i + 40))
-    expect(bloc, 'la largeur du cadre n’est pas pilotée').toMatch(/style=\{\{ width:/u)
+    // La regex tolere la mise en forme : le style du cadre s'ecrit sur
+    // plusieurs lignes depuis que la hauteur peut etre relative. Ce qui est
+    // garde, c'est que la LARGEUR soit pilotee par un style en ligne.
+    expect(bloc, 'la largeur du cadre n’est pas pilotée').toMatch(/style=\{\{\s*width:/u)
     expect(bloc, 'une mise à l’échelle trompeuse est utilisée').not.toMatch(/scale\(/u)
+    // `overflow-auto` a remplace `overflow-x-auto` le 2026-11-02 : la
+    // hauteur du cadre final est devenue relative a la fenetre, et sans
+    // defilement VERTICAL un contenu plus haut que le cadre redeviendrait
+    // inatteignable. Les deux axes satisfont la propriete, un seul non.
     expect(bloc, 'le cadre ne peut pas déborder : les grandes largeurs seraient écrasées').toMatch(
-      /overflow-x-auto/u,
+      /overflow-(x-)?auto/u,
     )
   })
 
@@ -139,7 +156,10 @@ describe('EP-260 · le sélecteur d’appareil', () => {
         new RegExp(`\\b${icone}\\b.*lucide-react|lucide-react.*\\b${icone}\\b`, 'u'),
       )
     }
-    expect(bloc, 'les boutons n’affichent aucune icône').toMatch(/<a\.Icone/u)
+    // L'icône ne vient plus du tableau lui-même (`<a.Icone`) mais d'une
+    // table `clé → composant` tenue dans l'écran : le module des appareils
+    // doit rester PUR, et un composant React dedans l'aurait tué.
+    expect(bloc, 'les boutons n’affichent aucune icône').toMatch(/<Icone\b/u)
     // ── CETTE ASSERTION A ÉTÉ CORRIGÉE APRÈS AVOIR ÉTÉ VERTE À TORT.
     //
     // Elle cherchait d'abord `{a.libelle}` n'importe où dans le bloc. Mesuré
@@ -157,8 +177,28 @@ describe('EP-260 · le sélecteur d’appareil', () => {
     )
     // L'ÉTAT COURANT EST DIT EN TOUTES LETTRES sous le cadre : la couleur
     // seule ne porterait pas l'information pour qui ne la distingue pas.
-    expect(bloc, 'la taille courante n’est pas écrite').toMatch(/courant\.largeur/u)
-    expect(bloc, 'la disposition courante n’est pas dite').toMatch(/courant\.note/u)
+    expect(bloc, 'la taille courante n’est pas écrite').toMatch(/legendeAppareil\(courant\)/u)
+    // ── CETTE ASSERTION PORTAIT SUR LE CHAMP QUI CAUSAIT LE DEFAUT.
+    //
+    // Elle exigeait `courant.note`, « la disposition courante ». Or cette
+    // note a ete VIDEE de son sens le 2026-10-31 : elle promettait « barre
+    // du bas » la ou un tir reel rendait un rail lateral, parce que la loi
+    // de disposition vit dans le moteur de rendu et pas dans les oeuvres du
+    // moteur direct. Reduite a la seule largeur, elle REPETAIT la valeur
+    // d'a cote -- l'ecran affichait « 1280 px · 1280 px », vu sur une
+    // capture le 2026-11-02.
+    //
+    // UN CLIQUET QUI EXIGE UN CHAMP VIDE DE SENS PROTEGE LE DEFAUT. On
+    // controle donc ce qui compte vraiment : la legende nomme la taille, et
+    // n'ecrit le nombre QU'UNE FOIS.
+    for (const a of APPAREILS) {
+      const legende = legendeAppareil(a)
+      expect(legende, 'la légende ne nomme pas la taille').toContain(a.libelle)
+      expect(
+        [...legende.matchAll(new RegExp(String(a.largeur), 'gu'))].length,
+        `la légende répète le nombre : « ${legende} »`,
+      ).toBe(1)
+    }
   })
 
   it('⑥ LE BAC À SABLE RESTE FERMÉ — l’application ne lit rien du site hôte', () => {
