@@ -121,3 +121,36 @@ export function prixEstime(couts: readonly number[]): string | null {
   const moyen = reels.reduce((a, b) => a + b, 0) / reels.length
   return `environ ${moyen.toFixed(2)} $`
 }
+
+/**
+ * CE QU'UNE VERSION DIT À LA PERSONNE — pas ce qu'elle dit au moteur.
+ *
+ * ── LE DÉFAUT, RELEVÉ PAR LE PROPRIÉTAIRE LE 2026-11-01.
+ *
+ * La liste affichait « 1 · livraison » et « sans fichiers ». Ce sont nos
+ * mots : `etape` est une colonne, `forme` est une clef interne. Pour la
+ * personne qui lit sa carte, « livraison » ne veut rien dire et « sans
+ * fichiers » encore moins.
+ *
+ * Le serveur sait déjà tout ce qu'il faut — c'est une question de mots, et
+ * les mots se rangent ici, avec les règles, pas dans l'écran : deux écrans
+ * diraient deux choses.
+ */
+export function phraseVersion(v: {
+  readonly rang: number
+  readonly etape: string | null
+  readonly creeIl: string
+  readonly actuelle: boolean
+}): string {
+  const quand = v.creeIl === '' ? '' : ` le ${new Date(v.creeIl).toLocaleDateString('fr-FR')}`
+  const retour = /^retour vers (\d+)$/u.exec(v.etape ?? '')
+  const quoi =
+    retour !== null
+      ? `retour à la version ${retour[1]}`
+      : v.etape === 'livraison'
+        ? 'livrée'
+        : // Les étapes du pipeline AIR (« p0 », « reparation »…) ne sont pas
+          // des mots de produit : on dit ce qu'elles sont, une construction.
+          'construction'
+  return `Version ${String(v.rang)} — ${quoi}${quand}${v.actuelle ? ' · actuelle' : ''}`
+}

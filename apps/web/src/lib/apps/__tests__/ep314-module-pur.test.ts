@@ -34,7 +34,7 @@ import { describe, expect, it } from 'vitest'
  * client l'importe. L'allonger sans ce besoin ferait de la pureté une
  * esthétique au lieu d'une contrainte.
  */
-const PURS = ['portee-epreuve.ts', 'nom-produit.ts'] as const
+const PURS = ['portee-epreuve.ts', 'nom-produit.ts', 'versions-oeuvre.ts'] as const
 
 describe('EP-314 — les modules purs le restent', () => {
   it('① RIEN DE SERVEUR N’EST ATTEIGNABLE — contrôle TRANSITIF', () => {

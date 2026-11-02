@@ -15,6 +15,7 @@ import {
   nomProduitValide,
   TITRE_SANS_NOM,
 } from '@/lib/apps/nom-produit';
+import { phraseVersion } from '@/lib/apps/versions-oeuvre';
 
 /**
  * UNE APPLICATION TELLE QUE LA LISTE LA MONTRE.
@@ -613,7 +614,15 @@ export default function DashboardPage() {
                       droit de supprimer. */}
                   <div className="flex flex-col gap-2">
                     {a.revoyable ? (
-                      <div className="grid grid-cols-3 gap-2">
+                      // ── QUATRE ACTIONS, PAS TROIS PUIS UN MURMURE.
+                      //
+                      // « Historique » etait rendu APRES le bouton rouge
+                      // « Supprimer », en text-[11px] text-white/35 : la plus
+                      // petite et la plus pale typographie de la carte, sous
+                      // l'action destructrice. Une fonctionnalite qu'on ne
+                      // voit pas n'existe pas -- la meme erreur que les neuf
+                      // « Application », un etage plus bas.
+                      <div className="grid grid-cols-4 gap-2">
                         <button type="button" onClick={() => { void revoir(a); }}
                           className="px-2 py-2 rounded-xl text-sm font-semibold border border-white/10 text-white/70 hover:text-white hover:border-white/30 transition-all">
                           Revoir
@@ -625,6 +634,10 @@ export default function DashboardPage() {
                         <button type="button" onClick={() => { void telecharger(a); }}
                           className="px-2 py-2 rounded-xl text-sm font-semibold border border-white/10 text-white/70 hover:text-white hover:border-white/30 transition-all">
                           Télécharger
+                        </button>
+                        <button type="button" onClick={() => { void voirVersions(a); }}
+                          className="px-2 py-2 rounded-xl text-sm font-semibold border border-white/10 text-white/70 hover:text-white hover:border-white/30 transition-all">
+                          {versions?.id === a.id ? 'Masquer' : 'Historique'}
                         </button>
                       </div>
                     ) : (
@@ -650,22 +663,17 @@ export default function DashboardPage() {
                         recopierait le contenu d'avant le premier. La liste
                         supprime l'ambiguïté — on désigne la version voulue,
                         avec sa date. */}
-                    <button type="button"
-                      onClick={() => { void voirVersions(a); }}
-                      className="text-left text-[11px] text-white/35 hover:text-white/70 transition-colors">
-                      {versions?.id === a.id ? '▾ Historique' : '▸ Historique'}
-                    </button>
                     {versions?.id === a.id && (
                       <div className="flex flex-col gap-1">
                         {versions.liste.length === 0 && (
-                          <span className="text-[11px] text-white/25">Aucune version enregistrée.</span>
+                          <span className="text-xs text-white/50">Aucune version enregistrée.</span>
                         )}
                         {versions.liste.map((v, i) => (
-                          <div key={v.rang} className="flex items-center justify-between gap-2 text-[11px]">
-                            <span className="text-white/40 truncate">
-                              {`${String(v.rang)} · ${v.etape ?? '—'}`}
-                              {v.creeIl === '' ? '' : ` · ${new Date(v.creeIl).toLocaleDateString('fr-FR')}`}
-                              {i === 0 ? ' · actuelle' : ''}
+                          <div key={v.rang} className="flex items-center justify-between gap-2 text-xs">
+                            {/* LES MOTS VIENNENT DU MOTEUR, pas de l'ecran :
+                                deux ecrans diraient deux choses. */}
+                            <span className="text-white/60 truncate">
+                              {phraseVersion({ ...v, actuelle: i === 0 })}
                             </span>
                             {/* La version actuelle n'a pas de retour vers
                                 elle-même, et une version de pipeline n'a pas
@@ -678,8 +686,8 @@ export default function DashboardPage() {
                               </button>
                             )}
                             {i > 0 && !v.restaurable && (
-                              <span className="shrink-0 text-white/20" title="cette version ne contient pas de fichiers">
-                                sans fichiers
+                              <span className="shrink-0 text-white/30" title="cette version ne contient pas les fichiers de l’application">
+                                retour impossible
                               </span>
                             )}
                           </div>
