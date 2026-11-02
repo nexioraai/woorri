@@ -80,8 +80,30 @@ async function sonder(hote: string, port: number): Promise<string> {
 }
 
 export async function GET(req: Request) {
-  const garde = await requireAuthenticatedUser(req)
-  if (!garde.ok) return garde.response
+  // ── DEUX VOIES, ET C'EST LE MOTIF QUE LE DÉPÔT EMPLOIE DÉJÀ.
+  //
+  // Le propriétaire par sa session ; l'opérateur par `CRON_SECRET` — le même
+  // couple que `api/domains/provision`, mot pour mot. Je n'invente pas une
+  // troisième garde : trois façons de s'authentifier, c'est deux de trop à
+  // tenir d'accord.
+  //
+  // POURQUOI LA VOIE OPÉRATEUR ICI : cette sonde doit être lue depuis une
+  // ligne de commande, et l'alternative était de faire passer les
+  // identifiants du propriétaire par une conversation. Un secret de
+  // serveur à serveur vaut mieux qu'un mot de passe de personne.
+  //
+  // `CRON_SECRET` n'est pas une identité : aucune primitive de propriété ne
+  // s'y applique, et cette sonde n'en a pas besoin — elle ne lit aucune
+  // donnée, elle ouvre des sockets.
+  const jeton = req.headers.get('authorization')?.replace('Bearer ', '')
+  const operateur =
+    process.env.CRON_SECRET !== undefined &&
+    process.env.CRON_SECRET !== '' &&
+    jeton === process.env.CRON_SECRET
+  if (!operateur) {
+    const garde = await requireAuthenticatedUser(req)
+    if (!garde.ok) return garde.response
+  }
 
   const resultats: Record<string, string> = {}
   for (const c of CIBLES) resultats[c.nom] = await sonder(c.hote, c.port)

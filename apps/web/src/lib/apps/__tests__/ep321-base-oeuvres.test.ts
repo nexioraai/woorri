@@ -148,20 +148,6 @@ describe('EP-321 · les deux bases', () => {
     //
     // Les aiguilles sont ASSEMBLÉES, jamais écrites en entier : un contrôle
     // qui porte le motif qu'il interdit se déclenche sur lui-même.
-    // ── UNE AIGUILLE DOIT EXIGER UN CORPS, PAS SEULEMENT UN PRÉFIXE.
-    //
-    // Ma première forme cherchait la chaîne `sbp_` et accusait
-    // `slices/validation-appareil/provisionner.mjs`, qui fait exactement ce
-    // qu'il faut : `if (!token.startsWith("sbp_"))`. Un fichier qui VÉRIFIE
-    // un préfixe est le contraire d'un fichier qui écrit une clé.
-    //
-    // Chaque motif réclame donc assez de signes derrière le préfixe pour
-    // qu'il ne puisse s'agir que d'une valeur.
-    const AIGUILLES: readonly (readonly [RegExp, string])[] = [
-      [new RegExp('sb_' + 'secret_[A-Za-z0-9_-]{16,}', 'u'), 'clé SECRÈTE du nouveau modèle'],
-      [new RegExp('sb_' + 'publishable_[A-Za-z0-9_-]{16,}', 'u'), 'clé publiable du nouveau modèle'],
-      [new RegExp('sbp' + '_[A-Za-z0-9]{32,}', 'u'), 'jeton de Management API — crée et DÉTRUIT des projets'],
-    ]
     // ── MA PREMIÈRE PORTÉE N'AURAIT PAS ATTRAPÉ LE DÉFAUT RÉEL.
     //
     // Je ne balayais que `apps/web/src`. Or la clé vivait dans `slices/` —
@@ -172,61 +158,64 @@ describe('EP-321 · les deux bases', () => {
     // Une clé dans un `.env.local` ignoré est à sa place ; la même dans un
     // fichier suivi part chez tout le monde et reste dans l'historique.
     //
-    // ── ET C'EST `git grep` QUI BALAIE, PAS CE TEST.
+    // ── ET C'EST `git grep` QUI BALAIE, EN UN SEUL PASSAGE.
     //
     // Ma première forme lisait les 1 000+ fichiers suivis en JavaScript :
-    // 2 490 ms, et le cliquet de marge l'a refusée — « ×2.0 seulement, elle
-    // tombera sur un runner plus lent ». Il avait raison, et la réponse
-    // n'était pas de l'inscrire au registre : `git grep` fait le même
-    // balayage en C, ne lit que les fichiers suivis, et saute les binaires
-    // tout seul (`-I`).
+    // 2 490 ms, refusés par le cliquet de marge. Ma deuxième lançait CINQ
+    // `git grep` : 1 102 ms mesurés SEUL — mais 1 771 ms dans la suite
+    // complète, et refusés encore.
     //
-    // On ne décode ensuite que les RARES fichiers qu'il désigne.
-    const grepper = (motif: string): string[] => {
-      try {
-        return execFileSync('git', ['grep', '-I', '-l', '-E', motif], {
-          cwd: RACINE,
-          maxBuffer: 16 * 1024 * 1024,
-        })
-          .toString('utf8')
-          .split('\n')
-          .filter((f2) => f2 !== '' && !f2.endsWith('ep321-base-oeuvres.test.ts'))
-      } catch {
-        return [] // `git grep` sort en 1 quand il ne trouve rien
-      }
-    }
+    // LA LEÇON EST LÀ : une durée mesurée en isolation n'est pas la durée
+    // sous charge. Le cliquet mesure au bon endroit, mon essai non.
+    //
+    // UN SEUL passage, donc, et le TÉMOIN EST DANS LA MÊME ALTERNANCE : un
+    // mot banal du dépôt. S'il ne ressort pas, c'est `git grep` qui est
+    // cassé, pas le dépôt qui est propre — et on refuse de conclure.
+    const TEMOIN = 'createClient'
+    const AIGUILLES: readonly (readonly [RegExp, string])[] = [
+      [new RegExp('sb_' + 'secret_[A-Za-z0-9_-]{16,}', 'u'), 'clé SECRÈTE du nouveau modèle'],
+      [new RegExp('sb_' + 'publishable_[A-Za-z0-9_-]{16,}', 'u'), 'clé publiable du nouveau modèle'],
+      [new RegExp('sbp' + '_[A-Za-z0-9]{32,}', 'u'), 'jeton de Management API — crée et DÉTRUIT des projets'],
+    ]
+    const FORME_JWT = /eyJ[A-Za-z0-9_-]{8,}\.(eyJ[A-Za-z0-9_-]{8,})\.[A-Za-z0-9_-]{8,}/u
 
-    // LE TÉMOIN DANS LA MESURE : si `git grep` ne trouve même pas un mot
-    // banal, c'est lui qui est cassé, pas le dépôt qui est propre.
-    expect(grepper('createClient').length, 'git grep ne trouve rien : l’instrument est cassé')
+    const motifs = [TEMOIN, ...AIGUILLES.map(([r]) => r.source), FORME_JWT.source.replace(/[()]/gu, '')]
+    let touches: string[] = []
+    try {
+      touches = execFileSync('git', ['grep', '-I', '-l', '-E', motifs.join('|')], {
+        cwd: RACINE,
+        maxBuffer: 16 * 1024 * 1024,
+      })
+        .toString('utf8')
+        .split('\n')
+        .filter((f2) => f2 !== '')
+    } catch {
+      touches = [] // `git grep` sort en 1 quand il ne trouve rien
+    }
+    expect(touches.length, 'git grep ne trouve rien : l’instrument est cassé, pas le dépôt propre')
       .toBeGreaterThan(3)
 
     const fautifs: string[] = []
-    for (const [motif, quoi] of AIGUILLES) {
-      for (const f2 of grepper(motif.source)) fautifs.push(`${f2} — ${quoi}`)
-    }
-    // ── UN JWT SE JUGE SUR SA CHARGE, ET C'EST LA SEULE FAÇON JUSTE.
-    //
-    // Un motif de FORME accusait `docs/elite-protocol/evidence/
-    // gate-backend-vivant.mjs`, qui porte un jeton volontairement MAL SIGNÉ
-    // pour prouver qu'un jeton forgé est refusé — l'inverse d'un secret.
-    //
-    // Plutôt qu'une liste d'exemptions — qui aurait fini par exempter un
-    // vrai secret un jour de hâte — on DÉCODE : une clé Supabase porte
-    // `iss: supabase` et le `ref` du projet, un jeton bricolé n'a ni l'un
-    // ni l'autre.
-    const FORME_JWT = 'eyJ[A-Za-z0-9_-]{8,}[.]eyJ[A-Za-z0-9_-]{8,}[.][A-Za-z0-9_-]{8,}'
-    for (const rel of grepper(FORME_JWT)) {
+    for (const rel of touches) {
+      if (rel.endsWith('ep321-base-oeuvres.test.ts')) continue
       const contenu = readFileSync(join(RACINE, rel), 'utf8')
-      for (const m of contenu.matchAll(
-        /eyJ[A-Za-z0-9_-]{8,}\.(eyJ[A-Za-z0-9_-]{8,})\.[A-Za-z0-9_-]{8,}/gu,
-      )) {
+      for (const [aiguille, quoi] of AIGUILLES) {
+        if (aiguille.test(contenu)) fautifs.push(`${rel} — ${quoi}`)
+      }
+      // ── UN JWT SE JUGE SUR SA CHARGE, ET C'EST LA SEULE FAÇON JUSTE.
+      //
+      // Un motif de FORME accusait `gate-backend-vivant.mjs`, qui porte un
+      // jeton volontairement MAL SIGNÉ pour prouver qu'un faux est refusé —
+      // l'inverse d'un secret. Plutôt qu'une liste d'exemptions, qui aurait
+      // fini par exempter un vrai secret un jour de hâte, on DÉCODE : une
+      // clé Supabase porte `iss: supabase` et le `ref` du projet.
+      for (const m of contenu.matchAll(new RegExp(FORME_JWT.source, 'gu'))) {
         let charge: Record<string, unknown>
         try {
           const b = m[1].replace(/-/gu, '+').replace(/_/gu, '/')
           charge = JSON.parse(Buffer.from(b, 'base64').toString('utf8')) as Record<string, unknown>
         } catch {
-          continue // charge illisible : jeton bricolé, pas une clé de projet
+          continue
         }
         if (charge.iss === 'supabase' || typeof charge.ref === 'string') {
           fautifs.push(`${rel} — clé de projet Supabase (ref « ${String(charge.ref)} »)`)
