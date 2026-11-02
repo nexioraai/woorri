@@ -416,6 +416,22 @@ create table if not exists public.${nom} (
   demande           text not null,
   nom               text,
   ok                boolean not null default false,
+  -- COUT : LES VALEURS ECRITES AVANT cf4f09cf SONT SOUS-ESTIMEES, ET ON
+  -- NE PEUT PAS LES CORRIGER.
+  --
+  -- Jusqu'au 2026-11-02, le depot ne portait qu'UN couple de prix par
+  -- fournisseur, et c'etait le tarif HORS POINTE. DeepSeek en facture
+  -- DEUX : la pointe coute le double (01:00-04:00 et 06:00-10:00 UTC, du
+  -- lundi au vendredi ; les week-ends sont entierement hors pointe).
+  --
+  -- Toute operation lancee dans une fenetre de pointe a donc ete
+  -- enregistree a MOITIE de son prix reel. Le defaut est IRREPARABLE sur
+  -- l'existant : la colonne garde le montant, pas l'heure de l'appel au
+  -- modele, et duree_ms ne dit pas quand il a commence.
+  --
+  -- CE QU'IL FAUT EN FAIRE : ne jamais sommer cette colonne sur une
+  -- periode qui precede cf4f09cf pour en tirer une depense reelle. Un
+  -- total ainsi calcule est un PLANCHER, jamais un montant.
   cout_usd          numeric(10,4) not null default 0,
   duree_ms          integer not null default 0,
   jetons_entree     integer not null default 0,
