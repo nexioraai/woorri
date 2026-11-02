@@ -71,7 +71,7 @@ export async function GET(req: Request) {
   // une chaîne de huit signes, pas un document.
   const vs = await supabaseAdmin
     .from(TABLE_VERSIONS)
-    .select('rang, etape, cree_le, etat')
+    .select('rang, etape, cree_le, cout_usd, etat')
     .eq('generation_id', id)
     .order('rang', { ascending: false })
   if (vs.error !== null) {
@@ -82,6 +82,10 @@ export async function GET(req: Request) {
     etape: (v.etape ?? null) as string | null,
     creeIl: String(v.cree_le ?? ''),
     restaurable: estRestaurable(v.etat),
+    // LE COUT REEL DES VERSIONS PASSEES : c'est lui qui permet d'annoncer
+    // « environ X $ » avant de regenerer. Sans mesure, pas de prix -- on ne
+    // devine pas ce qu'on va prelever.
+    coutUsd: Number(v.cout_usd ?? 0),
   }))
   return NextResponse.json({ versions }, { headers: { 'Cache-Control': 'no-store' } })
 }

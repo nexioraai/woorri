@@ -15,7 +15,7 @@ import {
   nomProduitValide,
   TITRE_SANS_NOM,
 } from '@/lib/apps/nom-produit';
-import { phraseVersion } from '@/lib/apps/versions-oeuvre';
+import { phraseVersion, prixEstime } from '@/lib/apps/versions-oeuvre';
 
 /**
  * UNE APPLICATION TELLE QUE LA LISTE LA MONTRE.
@@ -76,7 +76,7 @@ export default function DashboardPage() {
    */
   const [versions, setVersions] = useState<{
     id: string;
-    liste: { rang: number; etape: string | null; creeIl: string; restaurable: boolean }[];
+    liste: { rang: number; etape: string | null; creeIl: string; restaurable: boolean; coutUsd: number }[];
   } | null>(null);
 
   /**
@@ -119,6 +119,48 @@ export default function DashboardPage() {
     setApplications((liste) => liste.map((x) => (x.id === a.id ? { ...x, nom: d.nom ?? x.nom } : x)));
   };
 
+  /**
+   * RÉGÉNÉRER — la même demande, une version de plus, et le prix AVANT.
+   *
+   * ── CE QU'ELLE N'EST PAS : une modification. Le lot 2 viendra.
+   *
+   * Elle rejoue la demande d'origine, stockée sur la ligne. Le résultat
+   * devient la version n+1 ; la version n garde ses fichiers, intacts. Donc
+   * le pire cas d'un clic de trop est un retour en arrière gratuit.
+   *
+   * ── LE PRIX EST ANNONCÉ, ET C'EST UNE ESTIMATION.
+   *
+   * « Annoncer 0,13 et prélever 0,20 abîme la confiance plus que l'écart
+   * lui-même. » Le mot « environ » dit ce que le chiffre est. Quand aucun
+   * coût n'est connu, on ne devine pas : on le dit.
+   */
+  const regenerer = async (a: Application) => {
+    setApercuErreur(null);
+    const prix = versions?.id === a.id ? prixEstime(versions.liste.map((v) => v.coutUsd)) : null;
+    if (!window.confirm(
+      `Régénérer « ${a.nom ?? TITRE_SANS_NOM} » ?\n\n` +
+      `Je rejoue VOTRE DEMANDE D'ORIGINE et j'en fais une nouvelle version. ` +
+      `${prix === null ? 'Cela coûte un appel au modèle.' : `Cela coûte ${prix}.`}\n\n` +
+      `La version actuelle est conservée : si le résultat vous plaît moins, ` +
+      `vous revenez dessus en un clic, gratuitement.`,
+    )) return;
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) { setApercuErreur('Session expiree — reconnectez-vous.'); return; }
+    setApercuErreur('Régénération en cours — cela prend une à deux minutes.');
+    const res = await fetch(`/api/generateur/direct?id=${encodeURIComponent(a.id)}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+      body: JSON.stringify({ demande: '' }),
+    });
+    const d = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string; motif?: string };
+    if (!res.ok || d.ok !== true) {
+      setApercuErreur(String(d.error ?? d.motif ?? 'La régénération a échoué — votre version actuelle n’a pas bougé.'));
+      return;
+    }
+    setApercuErreur('Nouvelle version créée.');
+    if (versions?.id === a.id) { setVersions(null); await voirVersions(a); }
+  };
+
   const voirVersions = async (a: Application) => {
     setApercuErreur(null);
     if (versions?.id === a.id) { setVersions(null); return; }
@@ -127,7 +169,10 @@ export default function DashboardPage() {
     const res = await fetch(`/api/generateur/version?id=${encodeURIComponent(a.id)}`, {
       headers: { Authorization: `Bearer ${session.access_token}` },
     });
-    const d = (await res.json().catch(() => ({}))) as { versions?: typeof versions extends null ? never : { rang: number; etape: string | null; creeIl: string; restaurable: boolean }[]; error?: string };
+    const d = (await res.json().catch(() => ({}))) as {
+      versions?: { rang: number; etape: string | null; creeIl: string; restaurable: boolean; coutUsd: number }[];
+      error?: string;
+    };
     if (!res.ok) { setApercuErreur(String(d.error ?? 'Historique illisible.')); return; }
     setVersions({ id: a.id, liste: d.versions ?? [] });
   };
@@ -146,7 +191,9 @@ export default function DashboardPage() {
     if (!window.confirm(
       `Revenir à ${quand} ?\n\nLes fichiers de cette version remplaceront ceux d'aujourd'hui. ` +
       `C'est GRATUIT — aucun appel au modèle, on recopie ce qui est déjà stocké.\n\n` +
-      `Rien n'est perdu : la version d'aujourd'hui reste dans la liste, et ce retour est lui-même annulable.`,
+      `Rien n'est perdu : la version d'aujourd'hui reste dans la liste, et ce retour est lui-même annulable.\n\n` +
+      `⚠ Cela ramène L'APPLICATION, pas les DONNÉES qu'elle contient. ` +
+      `Ce que vos utilisateurs y ont saisi depuis reste tel quel.`,
     )) return;
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) { setApercuErreur('Session expiree — reconnectez-vous.'); return; }
@@ -622,7 +669,7 @@ export default function DashboardPage() {
                       // l'action destructrice. Une fonctionnalite qu'on ne
                       // voit pas n'existe pas -- la meme erreur que les neuf
                       // « Application », un etage plus bas.
-                      <div className="grid grid-cols-4 gap-2">
+                      <div className="grid grid-cols-3 gap-2">
                         <button type="button" onClick={() => { void revoir(a); }}
                           className="px-2 py-2 rounded-xl text-sm font-semibold border border-white/10 text-white/70 hover:text-white hover:border-white/30 transition-all">
                           Revoir
@@ -638,6 +685,11 @@ export default function DashboardPage() {
                         <button type="button" onClick={() => { void voirVersions(a); }}
                           className="px-2 py-2 rounded-xl text-sm font-semibold border border-white/10 text-white/70 hover:text-white hover:border-white/30 transition-all">
                           {versions?.id === a.id ? 'Masquer' : 'Historique'}
+                        </button>
+                        <button type="button" onClick={() => { void regenerer(a); }}
+                          title="Rejoue votre demande d’origine et en fait une nouvelle version"
+                          className="px-2 py-2 rounded-xl text-sm font-semibold border border-white/10 text-white/70 hover:text-white hover:border-white/30 transition-all">
+                          Régénérer
                         </button>
                       </div>
                     ) : (

@@ -33,7 +33,7 @@ import { moteurChoisi } from '@/lib/apps/interrupteur-moteur'
 import { DOMAINE_PUBLIC, TEMOIN_GENERIQUE } from '@/lib/apps/sous-domaine'
 import { boucleEcriture, CONSIGNE, pageAutonome } from '@/lib/apps/boucle-directe'
 import { nomProduitValide, TITRE_SANS_NOM } from '@/lib/apps/nom-produit'
-import type { VersionDocument } from '@/lib/apps/versions-oeuvre'
+import { rangsAPurger, type VersionDocument } from '@/lib/apps/versions-oeuvre'
 import { proportionEprouvee } from '@/lib/apps/portee-epreuve'
 import { appelerFournisseur, CONFIGS, fournisseurChoisi } from '@/lib/apps/fournisseur'
 import { assembler } from '@/lib/apps/bac-a-sable'
@@ -322,7 +322,31 @@ export async function POST(req: Request) {
     configuration?: unknown
     nom?: unknown
   }
-  const demande = typeof corps.demande === 'string' ? corps.demande.trim() : ''
+  // ── RÉGÉNÉRER : LA MÊME DEMANDE, SUR LA MÊME LIGNE (lot 1, 2026-11-01).
+  //
+  // Avec `?id=`, on ne crée pas une œuvre neuve : on en écrit une VERSION de
+  // plus. La demande vient alors de la LIGNE, pas du corps — c'est la même
+  // demande qui a produit la version précédente, sinon « régénérer » ne
+  // régénérerait rien, il générerait autre chose.
+  //
+  // SANS `?id=`, ABSOLUMENT RIEN NE CHANGE : c'est le chemin qui porte tout
+  // l'argent de la maison, et il a déjà été cassé une fois aujourd'hui.
+  const idExistant = new URL(req.url).searchParams.get('id') ?? ''
+  let demande = typeof corps.demande === 'string' ? corps.demande.trim() : ''
+  let nomExistant: string | null = null
+  if (idExistant !== '') {
+    const lu = await supabaseAdmin
+      .from(TABLE_GENERATIONS)
+      .select('demande, nom')
+      .eq('id', idExistant)
+      .eq('owner_id', garde.userId)
+      .maybeSingle()
+    if (lu.error !== null || lu.data === null) {
+      return NextResponse.json({ error: 'application inconnue' }, { status: 404 })
+    }
+    demande = typeof lu.data.demande === 'string' ? lu.data.demande : ''
+    nomExistant = typeof lu.data.nom === 'string' ? lu.data.nom : null
+  }
   if (demande === '') return NextResponse.json({ error: 'demande requise' }, { status: 400 })
 
   // ── LE NOM EST FACULTATIF. IL A ÉTÉ OBLIGATOIRE, ET ÇA A CASSÉ LA
@@ -340,7 +364,7 @@ export async function POST(req: Request) {
   // retombe sur `TITRE_SANS_NOM` à la lecture, exactement comme les neuf
   // œuvres nées avant ce chantier.
   const verdictNom = nomProduitValide(typeof corps.nom === 'string' ? corps.nom : '')
-  const nom = verdictNom.ok ? verdictNom.nom : null
+  const nom = idExistant !== '' ? nomExistant : verdictNom.ok ? verdictNom.nom : null
   // ── LA CONFIGURATION DU PRÉ-VOL VOYAGE AVEC LA DEMANDE (EP-296).
   //
   // Mesuré le 2026-10-31 : l'écran n'envoyait que la demande — la devise
@@ -556,7 +580,21 @@ export async function POST(req: Request) {
       dernierTexte: resultat.ok ? null : resultat.dernierTexte.slice(0, 20_000),
     },
   }
-  const ecrit = await supabaseAdmin.from(TABLE_GENERATIONS).insert(ligne).select('id').maybeSingle()
+  // ── UNE ŒUVRE NEUVE S'INSÈRE ; UNE RÉGÉNÉRATION MET À JOUR.
+  //
+  // La version, elle, s'AJOUTE dans les deux cas — c'est ce qui rend le
+  // retour possible, et c'est pourquoi l'ancienne version n'est jamais
+  // écrasée : elle garde ses fichiers, intacts.
+  const ecrit =
+    idExistant === ''
+      ? await supabaseAdmin.from(TABLE_GENERATIONS).insert(ligne).select('id').maybeSingle()
+      : await supabaseAdmin
+          .from(TABLE_GENERATIONS)
+          .update(ligne)
+          .eq('id', idExistant)
+          .eq('owner_id', proprietaire)
+          .select('id')
+          .maybeSingle()
 
   // ── LA LIVRAISON EST UNE VERSION, ET C'EST CE QUI REND L'ANNULATION
   // POSSIBLE (lot 1 de la modification, 2026-11-01).
@@ -578,15 +616,28 @@ export async function POST(req: Request) {
       nom,
       coutUsd: Number(coutUsd.toFixed(4)),
     }
+    // LE RANG EST LU, PAS SUPPOSÉ : la contrainte d'unicité
+    // (generation_id, rang) refuserait un doublon.
+    const tous = await supabaseAdmin
+      .from(TABLE_VERSIONS)
+      .select('rang')
+      .eq('generation_id', ecrit.data.id)
+    const rangsVus = (tous.data ?? []).map((x: { rang: number }) => Number(x.rang))
+    const rangNeuf = Math.max(0, ...rangsVus) + 1
     const vEcrit = await supabaseAdmin.from(TABLE_VERSIONS).insert({
       generation_id: ecrit.data.id,
-      rang: 1,
-      etape: 'livraison',
+      rang: rangNeuf,
+      etape: rangNeuf === 1 ? 'livraison' : 'regeneration',
       cout_usd: Number(coutUsd.toFixed(4)),
       etat: version,
     })
     if (vEcrit.error !== null) {
-      console.error('[versions] rang 1 non ecrit pour', ecrit.data.id, vEcrit.error)
+      console.error('[versions] rang', rangNeuf, 'non ecrit pour', ecrit.data.id, vEcrit.error)
+    }
+    // LA PURGE EN DERNIER, ET LE RANG 1 N'EN FAIT JAMAIS PARTIE (EP-315).
+    const aPurger = rangsAPurger([...rangsVus, rangNeuf])
+    if (aPurger.length > 0) {
+      await supabaseAdmin.from(TABLE_VERSIONS).delete().eq('generation_id', ecrit.data.id).in('rang', aPurger)
     }
   }
 
