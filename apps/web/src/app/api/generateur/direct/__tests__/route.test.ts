@@ -22,7 +22,7 @@ import { join } from 'node:path'
 // LE NOM DE LA TABLE VIENT DE LA CONSTANTE, jamais écrit nu : un cliquet du
 // dépôt l'exige, et il a raison — un nom recopié survit au jour où la vraie
 // table change, et le test passerait au vert contre du vide.
-import { TABLE_GENERATIONS } from '@/lib/apps/journal'
+import { TABLE_GENERATIONS, TABLE_VERSIONS } from '@/lib/apps/journal'
 
 const { reponses, journal } = vi.hoisted(() => ({
   reponses: { texte: [] as string[], i: 0 },
@@ -54,7 +54,13 @@ vi.mock('@/lib/supabase-admin', async () => {
   return {
     supabaseAdmin: {
       from: creerFrom(
-        { [TABLE_GENERATIONS]: { reponse: { data: { id: 'g-1' }, error: null } } },
+        {
+          [TABLE_GENERATIONS]: { reponse: { data: { id: 'g-1' }, error: null } },
+          // LA LIVRAISON ECRIT SA VERSION : le harnais doit connaitre la
+          // table, sinon il jette « table non prevue » et le test accuse la
+          // route d'un defaut qui est le sien.
+          [TABLE_VERSIONS]: { reponse: { data: null, error: null } },
+        },
         j,
       ),
     },
@@ -121,7 +127,13 @@ const appel = (demande = 'calcule ma facture SNE', nom: string | null = 'Facture
 beforeEach(() => {
   reponses.texte = [BON]
   reponses.i = 0
-  if (journal.postgrest !== null) journal.postgrest.ecritures[TABLE_GENERATIONS] = []
+  if (journal.postgrest !== null) {
+    journal.postgrest.ecritures[TABLE_GENERATIONS] = []
+    // LA REMISE A ZERO COUVRE TOUTES LES TABLES ECRITES : sans cette ligne,
+    // les versions s'accumulaient d'un test a l'autre et le compte mesurait
+    // la suite, pas le tir.
+    journal.postgrest.ecritures[TABLE_VERSIONS] = []
+  }
   process.env.GENERATEUR_MOTEUR = 'direct'
   process.env.ANTHROPIC_API_KEY = 'cle-de-test'
 })
@@ -245,6 +257,32 @@ describe('EP-276 · la route de l’écriture directe', () => {
       ok?: boolean
     }
     expect(remplissage.ok).toBe(true)
+  })
+
+  it('⑤ter LA LIVRAISON ÉCRIT SA VERSION — sans quoi on ne peut rien annuler', async () => {
+    // ── « Avant de laisser modifier, il faut pouvoir annuler. »
+    //
+    // MESURÉ AVANT D'ÉCRIRE LE LOT : les deux œuvres livrées par ce moteur
+    // avaient ZÉRO version. `app_generation_versions` ne servait qu'au
+    // pipeline AIR, et son `etat` ne porte pas les fichiers — donc rien vers
+    // quoi revenir.
+    // LE CORPS DOIT ETRE CONSOMME : cette route rend un FLUX QUI BAT, et
+    // tant que personne ne le lit, le travail -- dont l'ecriture de la
+    // version -- n'a pas lieu. Un `await POST(...)` seul mesurait zero
+    // ecriture et accusait la route a tort.
+    await (await POST(appel())).json()
+    const versions = (journal.postgrest?.ecritures[TABLE_VERSIONS] ?? []) as {
+      charge?: { rang?: number; etape?: string; etat?: { forme?: string; fichiers?: Record<string, string> } }
+    }[]
+    expect(versions.length, 'la livraison n’écrit aucune version').toBe(1)
+    const v = versions[0].charge
+    expect(v?.rang, 'la première version n’est pas le rang 1').toBe(1)
+    expect(v?.etape).toBe('livraison')
+    // ET ELLE PORTE LES FICHIERS. Une version qui n'en contient pas n'est
+    // pas une version : c'est ce que les dix lignes du pipeline nous ont
+    // appris, et c'est ce que ce cliquet empêche de refaire.
+    expect(v?.etat?.forme).toBe('document')
+    expect(Object.keys(v?.etat?.fichiers ?? {}).length, 'la version ne porte aucun fichier').toBeGreaterThan(0)
   })
 
   it('⑥ UN ÉCHEC GARDE TOUT CE QU’IL FAUT POUR LE COMPRENDRE', async () => {

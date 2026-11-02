@@ -28,11 +28,12 @@
 import { NextResponse } from 'next/server'
 import { requireAuthenticatedUser } from '@/lib/auth/require-authenticated-user'
 import { supabaseAdmin } from '@/lib/supabase-admin'
-import { TABLE_GENERATIONS } from '@/lib/apps/journal'
+import { TABLE_GENERATIONS, TABLE_VERSIONS } from '@/lib/apps/journal'
 import { moteurChoisi } from '@/lib/apps/interrupteur-moteur'
 import { DOMAINE_PUBLIC, TEMOIN_GENERIQUE } from '@/lib/apps/sous-domaine'
 import { boucleEcriture, CONSIGNE, pageAutonome } from '@/lib/apps/boucle-directe'
 import { nomProduitValide, TITRE_SANS_NOM } from '@/lib/apps/nom-produit'
+import type { VersionDocument } from '@/lib/apps/versions-oeuvre'
 import { proportionEprouvee } from '@/lib/apps/portee-epreuve'
 import { appelerFournisseur, CONFIGS, fournisseurChoisi } from '@/lib/apps/fournisseur'
 import { assembler } from '@/lib/apps/bac-a-sable'
@@ -556,6 +557,38 @@ export async function POST(req: Request) {
     },
   }
   const ecrit = await supabaseAdmin.from(TABLE_GENERATIONS).insert(ligne).select('id').maybeSingle()
+
+  // ── LA LIVRAISON EST UNE VERSION, ET C'EST CE QUI REND L'ANNULATION
+  // POSSIBLE (lot 1 de la modification, 2026-11-01).
+  //
+  // Mesuré avant d'écrire : les deux œuvres livrées par ce moteur avaient
+  // ZÉRO version. `app_generation_versions` ne servait qu'au pipeline AIR,
+  // et son `etat` ne porte pas les fichiers — donc rien vers quoi revenir.
+  //
+  // UNE VERSION S'AJOUTE, ELLE NE REMPLACE JAMAIS. Ce rang 1 restera intact
+  // quoi qu'il arrive ensuite : le rang 1 ne se purge pas (EP-315).
+  //
+  // ET SON ÉCHEC NE FAIT PAS ÉCHOUER LA LIVRAISON : l'œuvre est payée et
+  // écrite ; perdre son historique est regrettable, perdre l'œuvre serait
+  // pire. On le DIT en journal plutôt que de le taire.
+  if (resultat.ok && ecrit.data?.id !== undefined) {
+    const version: VersionDocument = {
+      forme: 'document',
+      fichiers: Object.fromEntries(resultat.fichiers),
+      nom,
+      coutUsd: Number(coutUsd.toFixed(4)),
+    }
+    const vEcrit = await supabaseAdmin.from(TABLE_VERSIONS).insert({
+      generation_id: ecrit.data.id,
+      rang: 1,
+      etape: 'livraison',
+      cout_usd: Number(coutUsd.toFixed(4)),
+      etat: version,
+    })
+    if (vEcrit.error !== null) {
+      console.error('[versions] rang 1 non ecrit pour', ecrit.data.id, vEcrit.error)
+    }
+  }
 
   if (!resultat.ok) {
     // ── `error` EN PLUS DE `motif`, ET CE N'EST PAS DE LA REDONDANCE.

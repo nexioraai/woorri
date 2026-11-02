@@ -66,6 +66,17 @@ export default function DashboardPage() {
   // Le lien public de l'application qu'on vient de publier — affiché sous la
   // carte, copiable. Un seul à la fois : publier en remplace l'affichage.
   const [lienPublic, setLienPublic] = useState<{ id: string; url: string } | null>(null);
+  /**
+   * LES VERSIONS D'UNE ŒUVRE — chargées à la demande, jamais en masse.
+   *
+   * La liste ne porte QUE `rang`, `etape`, `creeIl` et `restaurable` : le
+   * document pèse 57 à 75 Ko et n'a rien à faire dans une carte. Il n'est lu
+   * que par la route, au moment du retour.
+   */
+  const [versions, setVersions] = useState<{
+    id: string;
+    liste: { rang: number; etape: string | null; creeIl: string; restaurable: boolean }[];
+  } | null>(null);
 
   /**
    * RENOMMER — pour les neuf oeuvres nees avant que le produit ait un nom.
@@ -105,6 +116,45 @@ export default function DashboardPage() {
       return;
     }
     setApplications((liste) => liste.map((x) => (x.id === a.id ? { ...x, nom: d.nom ?? x.nom } : x)));
+  };
+
+  const voirVersions = async (a: Application) => {
+    setApercuErreur(null);
+    if (versions?.id === a.id) { setVersions(null); return; }
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) { setApercuErreur('Session expiree — reconnectez-vous.'); return; }
+    const res = await fetch(`/api/generateur/version?id=${encodeURIComponent(a.id)}`, {
+      headers: { Authorization: `Bearer ${session.access_token}` },
+    });
+    const d = (await res.json().catch(() => ({}))) as { versions?: typeof versions extends null ? never : { rang: number; etape: string | null; creeIl: string; restaurable: boolean }[]; error?: string };
+    if (!res.ok) { setApercuErreur(String(d.error ?? 'Historique illisible.')); return; }
+    setVersions({ id: a.id, liste: d.versions ?? [] });
+  };
+
+  /**
+   * REVENIR À UNE VERSION — gratuit, et il DIT ce qu'il va faire avant.
+   *
+   * « Revenir à celle-ci » et pas « revenir » : un bouton qui recopie la
+   * précédente fait AVANCER au deuxième clic, parce que le second retour
+   * recopierait le contenu d'avant le premier. La liste supprime
+   * l'ambiguïté — on désigne la version qu'on veut.
+   */
+  const revenirA = async (a: Application, rang: number, creeIl: string) => {
+    setApercuErreur(null);
+    const quand = creeIl === '' ? `la version ${String(rang)}` : `la version ${String(rang)} du ${new Date(creeIl).toLocaleString('fr-FR')}`;
+    if (!window.confirm(
+      `Revenir à ${quand} ?\n\nLes fichiers de cette version remplaceront ceux d'aujourd'hui. ` +
+      `C'est GRATUIT — aucun appel au modèle, on recopie ce qui est déjà stocké.\n\n` +
+      `Rien n'est perdu : la version d'aujourd'hui reste dans la liste, et ce retour est lui-même annulable.`,
+    )) return;
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) { setApercuErreur('Session expiree — reconnectez-vous.'); return; }
+    const res = await fetch(`/api/generateur/version?id=${encodeURIComponent(a.id)}&rang=${String(rang)}`, {
+      method: 'POST', headers: { Authorization: `Bearer ${session.access_token}` },
+    });
+    const d = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string };
+    if (!res.ok || d.ok !== true) { setApercuErreur(String(d.error ?? 'Le retour a echoue.')); return; }
+    await voirVersions(a); await voirVersions(a);
   };
 
   const publier = async (a: Application) => {
@@ -594,6 +644,48 @@ export default function DashboardPage() {
                         className="px-2 py-2 rounded-xl text-xs font-semibold border border-red-500/20 text-red-300/70 hover:text-red-200 hover:border-red-400/40 transition-all">
                         Supprimer
                       </button>
+                    {/* ── L'HISTORIQUE, ET POURQUOI « REVENIR À CELLE-CI ».
+                        Un bouton « revenir » qui recopie la précédente fait
+                        AVANCER au deuxième clic : le second retour
+                        recopierait le contenu d'avant le premier. La liste
+                        supprime l'ambiguïté — on désigne la version voulue,
+                        avec sa date. */}
+                    <button type="button"
+                      onClick={() => { void voirVersions(a); }}
+                      className="text-left text-[11px] text-white/35 hover:text-white/70 transition-colors">
+                      {versions?.id === a.id ? '▾ Historique' : '▸ Historique'}
+                    </button>
+                    {versions?.id === a.id && (
+                      <div className="flex flex-col gap-1">
+                        {versions.liste.length === 0 && (
+                          <span className="text-[11px] text-white/25">Aucune version enregistrée.</span>
+                        )}
+                        {versions.liste.map((v, i) => (
+                          <div key={v.rang} className="flex items-center justify-between gap-2 text-[11px]">
+                            <span className="text-white/40 truncate">
+                              {`${String(v.rang)} · ${v.etape ?? '—'}`}
+                              {v.creeIl === '' ? '' : ` · ${new Date(v.creeIl).toLocaleDateString('fr-FR')}`}
+                              {i === 0 ? ' · actuelle' : ''}
+                            </span>
+                            {/* La version actuelle n'a pas de retour vers
+                                elle-même, et une version de pipeline n'a pas
+                                de fichiers : le serveur l'a dit. */}
+                            {i > 0 && v.restaurable && (
+                              <button type="button"
+                                onClick={() => { void revenirA(a, v.rang, v.creeIl); }}
+                                className="shrink-0 px-2 py-0.5 rounded-lg border border-white/10 text-white/60 hover:text-white hover:border-white/30 transition-all">
+                                revenir à celle-ci
+                              </button>
+                            )}
+                            {i > 0 && !v.restaurable && (
+                              <span className="shrink-0 text-white/20" title="cette version ne contient pas de fichiers">
+                                sans fichiers
+                              </span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                     {lienPublic?.id === a.id && (
                       <div className="flex items-center gap-2 text-xs">
                         <a href={lienPublic.url} target="_blank" rel="noreferrer"
