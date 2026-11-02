@@ -263,6 +263,18 @@ const nextConfig: NextConfig = {
     // Cette route n'a PAS besoin de `MOTEUR_EMISSION` : elle ne touche pas
     // la chaîne AIR. Elle n'a besoin que de l'assembleur.
     '/api/generateur/direct': [...BAC_A_SABLE, ...JUGE_EXECUTION],
+    // ── LA ROUTE QUI RETOUCHE ASSEMBLE, ET ELLE ASSEMBLE *APRÈS* AVOIR PAYÉ.
+    //
+    // C'est le pire ordre possible pour un défaut de traçage : elle appelle
+    // le modèle, donc DÉPENSE, puis fusionne, puis assemble. Sans cette
+    // ligne, la personne paierait sa retouche et recevrait « Cannot find
+    // native binding » — exactement le 2026-10-19, mais avec la facture.
+    //
+    // EP-278 l'a attrapée avant le premier tir, pas après.
+    //
+    // Pas besoin de `MOTEUR_EMISSION` : elle ne touche pas la chaîne AIR,
+    // elle recompile des fichiers qui existent déjà.
+    '/api/generateur/retoucher': [...BAC_A_SABLE, ...JUGE_EXECUTION],
     // ── LA ROUTE QUI REVOIT UNE APPLICATION ASSEMBLE, ELLE AUSSI.
     //
     // Elle recompile les fichiers stockes pour les rendre a l'ecran. Sans
