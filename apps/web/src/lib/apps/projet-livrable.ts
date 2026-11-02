@@ -170,24 +170,77 @@ statique.
  * La section ne promet donc rien. Elle dit : voici le schema de vos donnees,
  * les ecrans ne s'en servent pas ENCORE.
  */
-export const SECTION_SCHEMA = `
+export function sectionSchema(idOeuvre?: string): string {
+  // ── CELUI QUI TÉLÉCHARGE NE POURRAIT RIEN LIRE, ET NE SAURAIT PAS POURQUOI.
+  //
+  // La porte exige une revendication `app_metadata.oeuvre`. Chez nous,
+  // Deribfy la pose en créant le compte. CHEZ LUI, PERSONNE NE LA POSE.
+  //
+  // Il applique les deux fichiers, lance son application, et tout est vide.
+  // Pas une erreur — un REFUS SILENCIEUX, parce qu'une revendication absente
+  // rend NULL et que NULL fait une politique fausse. C'est la bonne
+  // conception pour la sécurité et la pire expérience possible pour qui
+  // découvre.
+  //
+  // On ne change donc pas la politique : on donne LA COMMANDE, avec
+  // l'identifiant déjà substitué. Pas une explication du principe — le SQL
+  // à coller. Même discipline que « AUCUNE DONNÉE DÉCLARÉE » : un fichier
+  // qui ne dit pas pourquoi il ne marche pas encore apprend qu'on ne le lit
+  // pas.
+  const id = idOeuvre ?? ''
+  const commande =
+    id === ''
+      ? [
+          '```sql',
+          '-- L’identifiant de cette application n’était pas connu au moment de',
+          '-- préparer cette archive. Il se lit dans `politiques.sql`, sur la',
+          '-- ligne « app_metadata.oeuvre = … ».',
+          '```',
+        ].join('\n')
+      : [
+          '```sql',
+          '-- Remplacez l’adresse par celle du compte à autoriser.',
+          'update auth.users',
+          "set raw_app_meta_data =",
+          "      coalesce(raw_app_meta_data, '{}'::jsonb)",
+          `      || jsonb_build_object('oeuvre', '${id}')`,
+          "where email = 'vous@exemple.com';",
+          '```',
+        ].join('\n')
+
+  return `
 ## 4. Vos données — \`schema.sql\` et \`politiques.sql\`
 
-Ce fichier décrit les tables que cette application utiliserait pour
-conserver ses données.
+Ces fichiers décrivent les tables que cette application utiliserait pour
+conserver ses données, et la porte qui les protège.
 
 **Les écrans ne s'en servent pas encore.** Cette version de l'application
 fonctionne entièrement en mémoire : ce que vous saisissez disparaît quand la
 page est rechargée. Le schéma est livré en avance, pour que vous sachiez à
-quoi vos données ressembleront et que vous puissiez préparer votre base —
-pas parce que l'application y écrit déjà.
+quoi vos données ressembleront et que vous puissiez préparer votre base.
 
-Quand le branchement sera livré, c'est ce fichier-là qui sera appliqué.
+Appliquez \`schema.sql\` d'abord, \`politiques.sql\` ensuite — et ne l'oubliez
+jamais : une base posée sans lui est lisible ET modifiable par quiconque
+connaît son adresse.
 
-\`politiques.sql\` est la PORTE : il n'autorise que les requêtes CONNECTÉES.
-Appliquez-le toujours APRÈS \`schema.sql\`, et ne l'oubliez jamais — une base
-posée sans lui est lisible ET modifiable par quiconque connaît son adresse.
+### Vos tables sont FERMÉES par défaut
+
+Une fois \`politiques.sql\` appliqué, **plus personne ne lit rien** — pas même
+vous. Ce n'est pas une panne : la porte n'autorise que les comptes qui
+portent la revendication de cette application. Un compte qui ne la porte pas
+voit des tables vides, sans message d'erreur.
+
+Pour autoriser un compte, sur une base **Supabase** :
+
+${commande}
+
+Si votre base n'est pas Supabase, c'est à votre serveur d'identité d'ajouter
+\`oeuvre\` dans le \`app_metadata\` des jetons qu'il émet.
+
+**Jamais \`user_metadata\`** : son porteur peut la réécrire lui-même, et il
+accéderait alors à n'importe quelle application.
 `
+}
 
 /**
  * Assemble le projet livrable : sources sous `src/`, outillage à la racine,
@@ -212,6 +265,11 @@ export function projetLivrable(
    * qui n'existent pas, et laisserait les autres ouvertes.
    */
   politiques?: string,
+  /**
+   * L'IDENTIFIANT DE L'ŒUVRE — pour que la note porte LA COMMANDE, et pas
+   * seulement le principe. Absent, la note dit où le lire.
+   */
+  idOeuvre?: string,
 ): Map<string, string> {
   const zip = new Map<string, string>()
   zip.set('index.html', pageAutonomeHtml)
@@ -228,7 +286,7 @@ export function projetLivrable(
     'politiques.sql',
     politiques !== undefined && politiques !== '' ? politiques : SANS_POLITIQUE,
   )
-  zip.set('README.md', README + SECTION_SCHEMA)
+  zip.set('README.md', README + sectionSchema(idOeuvre))
   zip.set('package.json', PACKAGE_JSON)
   zip.set('vite.config.ts', VITE_CONFIG)
   zip.set('tsconfig.json', TSCONFIG)

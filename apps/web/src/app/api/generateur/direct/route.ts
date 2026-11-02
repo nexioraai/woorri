@@ -25,6 +25,7 @@
  * garde-fou du harnais a arrete ». Ici : trois tours au plus, un plafond de
  * jetons par appel, et le cout REEL rendu a l'appelant.
  */
+import { randomUUID } from 'node:crypto'
 import { NextResponse } from 'next/server'
 import { requireAuthenticatedUser } from '@/lib/auth/require-authenticated-user'
 import { supabaseAdmin } from '@/lib/supabase-admin'
@@ -516,7 +517,19 @@ export async function POST(req: Request) {
   const schemaDeLOeuvre = emettreSchemaSql(entitesDeclarees)
   // LA PORTE SE DÉRIVE DES MÊMES ENTITÉS. Sans rôles ni droits fins, il n'y
   // a rien à déduire des écrans : une politique par table, toujours la même.
-  const politiquesDeLOeuvre = emettrePolitiquesSql(entitesDeclarees)
+  //
+  // ── ET L'IDENTIFIANT DE L'OEUVRE SE DECIDE ICI, PAS A L'INSERTION.
+  //
+  // La porte CUIT cet identifiant : le jeton devra porter
+  // `app_metadata.oeuvre = <id>` pour la franchir. Il faut donc le connaitre
+  // AVANT d'emettre les politiques, donc avant d'ecrire la ligne.
+  //
+  // La colonne garde son `default gen_random_uuid()` : on ne la contredit
+  // pas, on la precede. C'est le seul moyen que le document et la base
+  // portent le MEME identifiant -- sinon la porte d'une oeuvre nommerait une
+  // autre oeuvre, et personne n'entrerait jamais.
+  const idOeuvre = randomUUID()
+  const politiquesDeLOeuvre = emettrePolitiquesSql(entitesDeclarees, idOeuvre)
 
   // ── LE TARIF DE L'HEURE OÙ L'APPEL A EU LIEU (2026-11-02).
   //
@@ -540,6 +553,8 @@ export async function POST(req: Request) {
     // `ownerIdentityRatchets` tient la liste EXACTE des routes qui le portent
     // encore, pour qu'aucune nouvelle ne s'y ajoute en silence. Celle-ci
     // n'avait aucune raison d'y entrer.
+    // L'IDENTIFIANT EST FOURNI, PAS ATTENDU : la porte le porte deja.
+    id: idOeuvre,
     owner_id: proprietaire,
     demande,
     ...(nom === null ? {} : { nom }),

@@ -61,6 +61,47 @@ import { nomTable } from './schema-donnees.ts'
  */
 export const ROLE_PORTE = 'authenticated'
 
+/**
+ * LA REVENDICATION QUI DIT À QUELLE ŒUVRE ON APPARTIENT.
+ *
+ * ── LE DÉFAUT QUE CECI FERME, ET IL ÉTAIT GRAVE.
+ *
+ * La première version de cette porte disait `to authenticated using (true)`.
+ * Or les comptes de Supabase Auth sont par PROJET, pas par schéma : toutes
+ * les œuvres partagent le même `auth.users`.
+ *
+ * N'importe qui ayant un compte sur UNE œuvre obtenait donc le rôle
+ * `authenticated`, et `using (true)` le laissait lire ET écrire dans le
+ * schéma de n'importe quelle AUTRE œuvre. Il n'avait rien à pirater : il se
+ * connectait à sa propre application et changeait un en-tête
+ * `Accept-Profile`.
+ *
+ * Le client A pouvait lire les données du client B. Même classe que la fuite
+ * de `catalog_products`, en pire : ce ne sont pas nos données, ce sont
+ * celles de nos clients.
+ *
+ * ── ET POURQUOI `current_setting` PLUTÔT QUE `auth.jwt()`.
+ *
+ * `auth.jwt()` est une fonction de Supabase. Le zip part chez des gens qui
+ * brancheront peut-être un Postgres nu : la politique ne se créerait pas, et
+ * TOUT le fichier échouerait. `current_setting('request.jwt.claims', true)`
+ * est du Postgres de base, et c'est précisément ce que PostgREST renseigne —
+ * `auth.jwt()` n'en est qu'une enveloppe.
+ *
+ * Le second argument `true` rend NULL au lieu d'échouer quand la
+ * revendication est absente. NULL fait une politique FAUSSE, donc un refus :
+ * un jeton sans appartenance n'ouvre rien.
+ */
+export const CHEMIN_REVENDICATION = "current_setting('request.jwt.claims', true)::jsonb -> 'app_metadata' ->> 'oeuvre'"
+
+/** Un identifiant d'œuvre ne va dans du SQL qu'après avoir été vérifié. */
+function identifiantSur(id: string): string {
+  if (!/^[A-Za-z0-9_-]{1,64}$/u.test(id)) {
+    throw new Error(`PORTE_ID_OEUVRE_INVALIDE: « ${id} » n'est pas un identifiant d'œuvre sûr`)
+  }
+  return id
+}
+
 /** Les rôles qui ne doivent RIEN pouvoir, et `public` est le piège. */
 export const ROLES_REFUSES: readonly string[] = ['anon', 'public']
 
@@ -98,8 +139,20 @@ export const SANS_POLITIQUE = [
  * retouche : révoquer → activer → forcer → retirer l'ancienne politique →
  * la poser → accorder. Inversé, chaque geste défait le précédent.
  */
-export function emettrePolitiquesSql(entites: readonly EntiteDonnees[]): string {
+export function emettrePolitiquesSql(
+  entites: readonly EntiteDonnees[],
+  /**
+   * L'IDENTIFIANT DE L'ŒUVRE — celui que le jeton devra porter.
+   *
+   * Il est CUIT dans le fichier, et ça ne casse pas la règle du fichier
+   * unique : il y a déjà un fichier PAR ŒUVRE (le schéma vient de ses
+   * entités). La règle est « le même fichier pour les deux destinations »,
+   * pas « le même fichier pour toutes les œuvres ».
+   */
+  idOeuvre: string,
+): string {
   if (entites.length === 0) return SANS_POLITIQUE
+  const id = identifiantSur(idOeuvre)
   const l: string[] = [
     '-- ÉMIS PAR DERIBFY DEPUIS LES DONNÉES DÉCLARÉES — NE PAS ÉDITER À LA MAIN.',
     '--',
@@ -123,16 +176,29 @@ export function emettrePolitiquesSql(entites: readonly EntiteDonnees[]): string 
       `alter table ${t} force row level security;`,
       // ④ REJOUABLE : sans le `drop`, le second passage échoue sur un doublon.
       `drop policy if exists ${t}_porte on ${t};`,
-      `create policy ${t}_porte on ${t} for all to ${ROLE_PORTE} using (true) with check (true);`,
+      // ── LA PORTE VÉRIFIE L'APPARTENANCE, PAS SEULEMENT LE RÔLE.
+      //
+      // `to authenticated` ne dit que « connecté » — pas « connecté ICI ».
+      // La revendication dit à quelle œuvre le porteur du jeton appartient,
+      // et on la compare à CETTE œuvre.
+      `create policy ${t}_porte on ${t} for all to ${ROLE_PORTE}`,
+      `  using (${CHEMIN_REVENDICATION} = '${id}')`,
+      `  with check (${CHEMIN_REVENDICATION} = '${id}');`,
       `grant select, insert, update, delete on ${t} to ${ROLE_PORTE};`,
       '',
     )
   }
   l.push(
-    '-- `using (true)` POUR LE RÔLE CONNECTÉ EST LA DÉCISION, PAS UN OUBLI :',
-    '-- une seule porte, aucun droit fin. Ce qui serait un défaut, c’est la',
-    '-- même clause accordée à `anon` ou à `public` — et aucune ligne',
-    '-- ci-dessus ne le fait.',
+    '-- UNE SEULE PORTE, MAIS ELLE VÉRIFIE L’APPARTENANCE.',
+    '--',
+    '-- « Connecté » ne suffit pas : les comptes sont partagés par projet, et',
+    '-- une porte ouverte au seul ROLE laisserait l’utilisateur d’une autre',
+    '-- application lire celle-ci en changeant un en-tête. Le jeton doit porter',
+    `--   app_metadata.oeuvre = "${id}"`,
+    '--',
+    '-- SI VOUS BRANCHEZ VOTRE PROPRE BASE : c’est à votre serveur d’identité',
+    '-- de poser cette revendication dans les jetons qu’il émet. Un jeton qui',
+    '-- ne la porte pas n’ouvre rien — l’absence vaut refus.',
     '',
   )
   return l.join('\n')

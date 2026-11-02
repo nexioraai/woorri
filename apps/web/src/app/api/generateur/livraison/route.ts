@@ -111,6 +111,10 @@ export async function GET(req: Request) {
         pageAutonome(v.code, 'Application'),
         docDirect.schema,
         docDirect.politiques,
+        // L'IDENTIFIANT DE L'OEUVRE : la note porte alors LA COMMANDE qui
+        // autorise un compte, avec la valeur deja substituee -- pas une
+        // explication du principe.
+        id,
       ),
     )
     return new Response(new Uint8Array(archive), {

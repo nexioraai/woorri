@@ -29,7 +29,7 @@ import {
   typeSqlDe,
   type EntiteDonnees,
 } from '@deribfy/compiler'
-import { projetLivrable, SECTION_SCHEMA } from '../projet-livrable'
+import { projetLivrable, sectionSchema } from '../projet-livrable'
 
 const RACINE = join(__dirname, '..', '..', '..', '..', '..', '..')
 const lire = (...p: string[]): string => readFileSync(join(RACINE, ...p), 'utf8')
@@ -149,11 +149,36 @@ describe('EP-318 · le schéma des données', () => {
     // « Un livrable en avance qui se présente comme fini est un mensonge
     // poli. » Sans cette section, quelqu'un applique `schema.sql` sur une
     // base puis cherche une heure pourquoi l'application n'écrit rien.
-    expect(SECTION_SCHEMA, 'la note ne nomme pas le fichier').toContain('schema.sql')
-    expect(SECTION_SCHEMA, 'la note ne dit pas que rien ne s’en sert')
+    const ID = 'fa0ede2c-1111-4111-8111-111111111111'
+    const note = sectionSchema(ID)
+    expect(note, 'la note ne nomme pas le fichier').toContain('schema.sql')
+    expect(note, 'la note ne nomme pas la porte').toContain('politiques.sql')
+    expect(note, 'la note ne dit pas que rien ne s’en sert')
       .toMatch(/ne s[’']en servent pas encore/u)
-    expect(SECTION_SCHEMA, 'la note ne dit pas ce que ça fait à la personne')
+    expect(note, 'la note ne dit pas ce que ça fait à la personne')
       .toMatch(/disparaît quand la\s+page est rechargée/u)
+
+    // ── ET ELLE DONNE LA COMMANDE, PAS LE PRINCIPE.
+    //
+    // Celui qui télécharge applique les deux fichiers, lance son
+    // application, et tout est vide — un REFUS SILENCIEUX, parce qu'une
+    // revendication absente rend NULL. C'est la bonne sécurité et la pire
+    // découverte possible. La note doit donc porter le SQL à coller, avec
+    // l'identifiant déjà substitué.
+    expect(note, 'la note ne dit pas que les tables sont fermées')
+      .toMatch(/FERMÉES par défaut/u)
+    expect(note, 'la note ne donne pas la commande').toContain('update auth.users')
+    expect(note, 'la commande ne porte pas l’identifiant de CETTE œuvre').toContain(ID)
+    expect(note, 'la commande n’est pas dans un bloc de code').toContain('```sql')
+    // ET ELLE MET EN GARDE : les deux noms se ressemblent, et l'un rouvre le
+    // trou que l'autre ferme.
+    expect(note, 'la note ne met pas en garde contre `user_metadata`')
+      .toContain('user_metadata')
+    // SANS IDENTIFIANT, elle dit OÙ le lire plutôt que d'inventer.
+    expect(sectionSchema(), 'sans identifiant, la note ne dit pas où le lire')
+      .toMatch(/politiques\.sql/u)
+    expect(sectionSchema(), 'sans identifiant, une commande inapplicable est donnée')
+      .not.toContain('update auth.users')
     // Et elle est RÉELLEMENT dans le zip, pas seulement exportée.
     const zip = projetLivrable({ 'index.tsx': 'x' }, '<html></html>', 'create table x ();')
     // Les deux apostrophes existent dans ce depot : la droite et la

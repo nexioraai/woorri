@@ -46,6 +46,9 @@ const CPA: readonly EntiteDonnees[] = [
   'utilisateur',
   'unite_organigramme',
 ].map((n) => ({ id: `ent_${n}`, fields: [{ id: 'fld_nom', type: 'text' }] }))
+/** L'identifiant de l'oeuvre : c'est lui que le jeton devra porter. */
+const ID_OEUVRE = 'fa0ede2c-1111-4111-8111-111111111111'
+
 const AVEC_JOURNAL: readonly EntiteDonnees[] = [
   ...CPA,
   { id: 'ent_journal_audit', appendOnly: true, fields: [{ id: 'fld_acteur', type: 'text' }] },
@@ -56,7 +59,7 @@ describe('EP-320 · la porte', () => {
     // Une table sans politique, dans une base dont les privilèges par défaut
     // donnent tout à `anon`, est une table PUBLIQUE. La couverture n'est pas
     // un confort : c'est la protection elle-même.
-    const sql = emettrePolitiquesSql(AVEC_JOURNAL)
+    const sql = emettrePolitiquesSql(AVEC_JOURNAL, ID_OEUVRE)
     for (const e of AVEC_JOURNAL) {
       const t = e.id.replace(/^ent_/u, '')
       expect(sql, `${t} n’a pas de RLS`).toContain(`alter table ${t} enable row level security;`)
@@ -76,7 +79,7 @@ describe('EP-320 · la porte', () => {
     // `revoke … from anon` a été exécuté, et la lecture anonyme a continué
     // de fonctionner : PUBLIC porte les privilèges, `anon` en hérite. Un
     // contrôle qui n'exige que `anon` laisserait revenir exactement ça.
-    const sql = emettrePolitiquesSql(CPA)
+    const sql = emettrePolitiquesSql(CPA, ID_OEUVRE)
     expect(ROLES_REFUSES, 'le rôle `public` n’est plus refusé').toContain('public')
     expect(ROLES_REFUSES, 'le rôle `anon` n’est plus refusé').toContain('anon')
     for (const r of ROLES_REFUSES) {
@@ -87,7 +90,7 @@ describe('EP-320 · la porte', () => {
   })
 
   it('③ `enable` ET `force` — sinon le propriétaire contourne tout', () => {
-    const sql = emettrePolitiquesSql(CPA)
+    const sql = emettrePolitiquesSql(CPA, ID_OEUVRE)
     const enable = [...sql.matchAll(/enable row level security/gu)].length
     const force = [...sql.matchAll(/force row level security/gu)].length
     expect(enable, 'RLS n’est pas activée partout').toBe(CPA.length)
@@ -96,7 +99,7 @@ describe('EP-320 · la porte', () => {
   })
 
   it('④ L’ORDRE DES GESTES — chacun défait le précédent s’il est inversé', () => {
-    const sql = emettrePolitiquesSql([CPA[0]])
+    const sql = emettrePolitiquesSql([CPA[0]], ID_OEUVRE)
     // ── CE CONTRÔLE PASSAIT QUAND LE GESTE MANQUAIT, et c'est le pire
     // comportement possible pour un contrôle d'ordre.
     //
@@ -126,13 +129,86 @@ describe('EP-320 · la porte', () => {
       .toBeLessThan(rang('create policy'))
   })
 
+  it('⑨ LA PORTE VÉRIFIE L’APPARTENANCE, PAS SEULEMENT LE RÔLE', () => {
+    // ── LE DÉFAUT QUE J'AVAIS ÉCRIT, ET QUE CE CLIQUET AVAIT VALIDÉ.
+    //
+    // La première porte disait `to authenticated using (true)`. Or les
+    // comptes de Supabase Auth sont par PROJET : toutes les œuvres partagent
+    // le même `auth.users`.
+    //
+    // N'importe qui ayant un compte sur UNE œuvre obtenait donc le rôle
+    // `authenticated`, et `using (true)` le laissait lire ET écrire dans le
+    // schéma de n'importe quelle AUTRE. Sans rien pirater : il se connectait
+    // à sa propre application et changeait l'en-tête `Accept-Profile`.
+    //
+    // « Connecté » ne veut pas dire « connecté ICI ». Ni moi ni ce cliquet
+    // ne l'avions vu.
+    const sql = emettrePolitiquesSql(AVEC_JOURNAL, ID_OEUVRE)
+    expect(sql, 'la porte ne vérifie plus l’appartenance').not.toMatch(/using \(true\)/u)
+    expect(sql, 'la porte n’exige plus la revendication d’appartenance')
+      .toContain("'app_metadata' ->> 'oeuvre'")
+    expect(sql, 'la porte ne compare pas à CETTE œuvre').toContain(ID_OEUVRE)
+    // ── LES DEUX SENS : lire ET écrire.
+    //
+    // `using` filtre la lecture, `with check` l'écriture — n'en poser qu'un
+    // laisserait écrire chez le voisin.
+    //
+    // Mon premier motif était `using \([^)]*oeuvre[^)]*\)` : il ne pouvait
+    // pas franchir la parenthèse de `current_setting(...)`. On juge donc les
+    // LIGNES, au lieu de deviner la forme d'une clause imbriquée.
+    const lignes = sql.split('\n').map((l) => l.trim())
+    const ligneUsing = lignes.find((l) => l.startsWith('using ('))
+    const ligneCheck = lignes.find((l) => l.startsWith('with check ('))
+    expect(ligneUsing, 'aucune clause `using` : la lecture n’est pas filtrée').toBeDefined()
+    expect(ligneCheck, 'aucune clause `with check` : l’écriture n’est pas filtrée').toBeDefined()
+    expect(ligneUsing ?? '', 'la lecture ne vérifie pas l’appartenance').toContain('oeuvre')
+    expect(ligneCheck ?? '', 'l’écriture ne vérifie pas l’appartenance').toContain('oeuvre')
+
+    // ── ET LA REVENDICATION SE LIT EN POSTGRES NU, pas par `auth.jwt()`.
+    //
+    // Le zip part chez des gens qui brancheront peut-être un Postgres sans
+    // Supabase : `auth.jwt()` n'y existe pas, la politique ne se créerait
+    // pas, et TOUT le fichier échouerait. `current_setting` est du Postgres
+    // de base, et c'est ce que PostgREST renseigne.
+    expect(sql, 'la porte dépend d’une fonction Supabase').not.toContain('auth.jwt()')
+    expect(sql).toContain("current_setting('request.jwt.claims', true)")
+    // Le second argument `true` : NULL au lieu d'une erreur quand la
+    // revendication manque. NULL fait une politique fausse, donc un refus.
+    expect(sql, 'une revendication absente ferait une ERREUR au lieu d’un refus')
+      .not.toMatch(/current_setting\('request\.jwt\.claims'\)/u)
+
+    // ET LE FICHIER DIT À CELUI QUI LE REÇOIT ce que ses jetons doivent porter.
+    expect(sql, 'le fichier ne dit pas quelle revendication est exigée')
+      .toMatch(/app_metadata\.oeuvre/u)
+
+    // ── JAMAIS `user_metadata`, ET LES DEUX NOMS SE RESSEMBLENT.
+    //
+    // `app_metadata` n'est écrite que par le serveur : son porteur ne peut
+    // pas la changer. `user_metadata` est modifiable PAR L'UTILISATEUR
+    // LUI-MÊME — il y écrirait l'identifiant d'une autre œuvre et
+    // rouvrirait exactement le trou qu'on vient de fermer, sans rien
+    // pirater, avec l'API de son propre compte.
+    //
+    // Celui qui « simplifiera » la politique dans six mois n'y verra qu'un
+    // détail de nommage. Ce contrôle est là pour lui.
+    expect(sql, 'la porte lit `user_metadata`, que son porteur peut réécrire')
+      .not.toContain('user_metadata')
+    expect(sql, 'la porte ne lit plus la métadonnée du SERVEUR').toContain('app_metadata')
+
+    // UN IDENTIFIANT QUI N'EN EST PAS UN NE VA PAS DANS DU SQL.
+    for (const mauvais of ["x'; drop schema public; --", 'a b', '']) {
+      expect(() => emettrePolitiquesSql(AVEC_JOURNAL, mauvais), `« ${mauvais} » est accepté`)
+        .toThrow(/PORTE_ID_OEUVRE_INVALIDE/u)
+    }
+  })
+
   it('⑤ `using (true)` N’EST JAMAIS DONNÉ À `anon` NI À `public`', () => {
     // ── LA DÉCISION ET LA FUITE SE RESSEMBLENT À UN MOT PRÈS.
     //
     // Pour le rôle CONNECTÉ, `using (true)` EST la décision du propriétaire :
     // une seule porte, aucun droit fin. Pour tout autre rôle, c'est une base
     // de données publiée en écriture.
-    const sql = emettrePolitiquesSql(AVEC_JOURNAL)
+    const sql = emettrePolitiquesSql(AVEC_JOURNAL, ID_OEUVRE)
     // ── MON PREMIER CONTRÔLE CONFONDAIT DEUX CHOSES QUI S'ÉCRIVENT PAREIL.
     //
     // Il cherchait le mot `public` dans la ligne entière. Or `public` est
@@ -148,7 +224,7 @@ describe('EP-320 · la porte', () => {
     expect(politiques.length, 'aucune politique lue : le contrôle ne mesure rien')
       .toBe(AVEC_JOURNAL.length)
     for (const ligne of politiques) {
-      const roles = rolesDe(ligne.slice(0, ligne.indexOf(' using ')))
+      const roles = rolesDe(ligne)
       expect(roles, 'une politique ne nomme pas le rôle de la porte').toContain(ROLE_PORTE)
       for (const r of ROLES_REFUSES) {
         expect(roles, `une politique est accordée à ${r}`).not.toMatch(
@@ -178,7 +254,7 @@ describe('EP-320 · la porte', () => {
     // `search_path` avant de l'exécuter, celui qui télécharge l'exécute tel
     // quel. Qualifier aurait obligé à émettre deux variantes — et c'est
     // toujours la moins exercée qui finit par mentir.
-    const sql = emettrePolitiquesSql(AVEC_JOURNAL)
+    const sql = emettrePolitiquesSql(AVEC_JOURNAL, ID_OEUVRE)
     const instructions = sql.split('\n').filter((l) => l !== '' && !l.startsWith('--'))
     expect(instructions.length, 'aucune instruction lue : le contrôle ne mesure rien')
       .toBeGreaterThan(20)
@@ -192,7 +268,7 @@ describe('EP-320 · la porte', () => {
   it('⑥ AUCUNE DONNÉE DÉCLARÉE : LE FICHIER LE DIT', () => {
     // Même discipline que `schema.sql` : un fichier vide laisserait croire à
     // une base sans protection, un fichier absent à un oubli.
-    const sql = emettrePolitiquesSql([])
+    const sql = emettrePolitiquesSql([], ID_OEUVRE)
     expect(sql).toBe(SANS_POLITIQUE)
     expect(sql, 'le fichier ne dit pas pourquoi il est vide').toMatch(/AUCUNE DONNÉE DÉCLARÉE/u)
     expect(sql, 'il contient une politique alors qu’il n’y a pas de table')
@@ -209,7 +285,7 @@ describe('EP-320 · la porte', () => {
     //
     // Cette assertion existe pour que personne — moi compris — ne cite
     // EP-320 comme preuve que la porte tient.
-    const sql = emettrePolitiquesSql(CPA)
+    const sql = emettrePolitiquesSql(CPA, ID_OEUVRE)
     expect(sql, 'ce n’est que du texte : aucune base ne l’a exécuté').toContain('create policy')
     expect(
       sql.includes('create policy') && typeof sql === 'string',
