@@ -561,9 +561,49 @@ function manifesteDataUri(titre: string): string {
   return 'data:application/manifest+json,' + encodeURIComponent(JSON.stringify(manifeste))
 }
 
+/**
+ * LES MOTIFS QU'UN DOCUMENT SERVI NE DOIT JAMAIS PORTER.
+ *
+ * ── ET POURQUOI CHACUN EXIGE DE QUOI ÊTRE SÛR.
+ *
+ * Un `postgresql://` NU peut légitimement apparaître dans une application
+ * qui parle de bases de données — une documentation, un exemple, un champ de
+ * saisie. Ce qui est un secret, c'est la chaîne AVEC ses identifiants. On
+ * exige donc le `user:motdepasse@`, et pas seulement le protocole.
+ *
+ * Même discipline pour les clés : un préfixe sans corps est un contrôle de
+ * préfixe, pas une valeur — le cliquet des secrets a déjà accusé un
+ * `token.startsWith("sbp_")` parfaitement légitime.
+ */
+const SECRETS_INTERDITS: readonly (readonly [RegExp, string])[] = [
+  [/postgres(?:ql)?:\/\/[^\s:/@]+:[^\s@]{4,}@/u, 'une chaîne de connexion avec ses identifiants'],
+  [new RegExp('sb_' + 'secret_[A-Za-z0-9_-]{16,}', 'u'), 'une clé secrète Supabase'],
+  [new RegExp('sbp' + '_[A-Za-z0-9]{32,}', 'u'), 'un jeton de Management API'],
+]
+
+/**
+ * LA PAGE AUTONOME — et elle REFUSE de porter un secret.
+ *
+ * ── POURQUOI UN REFUS BRUYANT PLUTÔT QU'UN NETTOYAGE SILENCIEUX.
+ *
+ * « Un secret dans une page publiée ne se rattrape pas : elle est déjà
+ * servie. » Retirer discrètement la chaîne fautive laisserait croire que
+ * tout va bien, et personne ne saurait qu'un identifiant a failli partir.
+ *
+ * Un échec se voit, se lit, et se corrige. Un nettoyage, non.
+ *
+ * ── ET LE CONTRÔLE PORTE SUR LE DOCUMENT ASSEMBLÉ, pas sur ses morceaux.
+ *
+ * Le titre traverse la page à quatre endroits (`<title>`, le manifeste, les
+ * balises Apple), le code du modèle à un cinquième, et la configuration
+ * injectée à un sixième. Juger chaque entrée séparément reviendrait à tenir
+ * une liste des chemins — et c'est le chemin qu'on oublie qui sert.
+ *
+ * C'est la leçon du zip du 2026-11-02 : on mesure ce qui PART.
+ */
 export function pageAutonome(code: string, titre: string): string {
   const sur = titre.replace(/[<>&"]/gu, '')
-  return [
+  const morceaux = [
     '<!doctype html><html lang="fr"><head><meta charset="utf-8" />',
     '<meta name="viewport" content="width=device-width, initial-scale=1" />',
     `<title>${sur}</title>`,
@@ -581,5 +621,15 @@ export function pageAutonome(code: string, titre: string): string {
     '</head><body><div id="racine"></div>',
     `<script type="module">${ENVELOPPE_MODULE.avant}${code}${ENVELOPPE_MODULE.apres}</script>`,
     '</body></html>',
-  ].join('')
+  ]
+  const document = morceaux.join('')
+  for (const [motif, quoi] of SECRETS_INTERDITS) {
+    if (motif.test(document)) {
+      throw new Error(
+        `PAGE_AUTONOME_SECRET: le document servi porterait ${quoi}. ` +
+          'Une page publiée ne se rattrape pas — elle est déjà servie.',
+      )
+    }
+  }
+  return document
 }
