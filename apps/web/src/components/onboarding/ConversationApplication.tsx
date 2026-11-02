@@ -58,6 +58,12 @@ import {
   retirerDernierEcho,
 } from '@/lib/apps/attente-comprehension';
 import Link from 'next/link';
+import {
+  CE_QUE_DECLARER_CHANGE,
+  phraseTable,
+  resumeEntites,
+  type EntiteDeclaree,
+} from '@/lib/apps/entites-declarees';
 
 // ETAGE 4 — le drapeau : OFF (defaut), l'UX synchrone ci-dessous reste SEULE
 // au monde ; le chemin async n'existe qu'arme consciemment. L'ecran ne fait
@@ -155,6 +161,16 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
   // autant — une valeur hors de la table des choix ne compte pas comme une
   // reponse, et sa question revient.
   const [reponsesAvant, setReponsesAvant] = useState<Record<string, unknown>>({});
+  /**
+   * LES DONNÉES QUE LE MODÈLE A DÉCLARÉES, et ce qui a été écarté.
+   *
+   * Lues au pré-vol, montrées avant de payer, transmises à la génération.
+   * Cet écran ne les édite pas : un éditeur de schéma serait un écran de
+   * plus, et la personne a mieux — elle peut REFUSER l'ensemble et
+   * reformuler sa demande.
+   */
+  const [entites, setEntites] = useState<EntiteDeclaree[]>([]);
+  const [entitesRefusees, setEntitesRefusees] = useState<{ quoi: string; motif: string }[]>([]);
   const [questionAvant, setQuestionAvant] = useState<QuestionAvant | null>(null);
   const [configuration, setConfiguration] = useState<Configuration>({});
   const [autreChose, setAutreChose] = useState('');
@@ -633,7 +649,17 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
           });
           const dl = (await rl.json().catch(() => ({}))) as {
             deduites?: Record<string, unknown>;
+            entites?: EntiteDeclaree[];
+            entitesRefusees?: { quoi: string; motif: string }[];
           };
+          // ── LES DONNÉES DÉCLARÉES (lot D1, 2026-11-02).
+          //
+          // Elles sont retenues telles que le SERVEUR les a validées — cet
+          // écran ne juge rien : il affiche, et il transmet. La route de
+          // génération revalide de son côté, parce qu'une requête forgée
+          // contourne cet écran.
+          setEntites(dl.entites ?? []);
+          setEntitesRefusees(dl.entitesRefusees ?? []);
           const deduites = dl.deduites ?? {};
           if (Object.keys(deduites).length > 0) {
             lues = { ...deduites, ...reponses };
@@ -931,7 +957,15 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
         const res = await fetch('/api/generateur/direct', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${await jeton()}` },
-          body: JSON.stringify({ demande: texte, configuration, nom: opts.nom ?? '' }),
+          // LES ENTITÉS VOYAGENT : sans elles, `schema.sql` repartirait en
+          // « aucune donnée déclarée » alors que la lecture du brief en a
+          // trouvé. Le pré-vol les a montrées, la personne n'a pas refusé.
+          body: JSON.stringify({
+            demande: texte,
+            configuration,
+            nom: opts.nom ?? '',
+            entites,
+          }),
           signal: avorteur.signal,
         });
         // ── ON LIT UN FLUX QUI BAT, PAS UN JSON D'UN BLOC.
@@ -1663,6 +1697,46 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
               {questionAvant?.code === m.question.code && configuration.currency !== undefined && (
                 <span className="block mt-2 text-xs text-emerald-400/80">
                   Déjà noté : vos montants s’afficheront en {configuration.currency}.
+                </span>
+              )}
+              {/* ── LES DONNÉES DÉCLARÉES, MONTRÉES AVANT QUE L'ARGENT PARTE.
+                   (lot D1, 2026-11-02)
+
+                   PAS D'ÉDITEUR, et c'est un choix. Un éditeur de schéma
+                   serait un écran de plus, à construire et à maintenir, pour
+                   un geste que personne ne fera deux fois. La personne a
+                   mieux : elle VOIT les tables, et si ce n'est pas ça, elle
+                   reformule sa demande — le refus est global, et il est
+                   gratuit tant qu'on n'a pas construit.
+
+                   ET LA PHRASE DIT CE QUE ÇA NE FAIT PAS ENCORE. Montrer des
+                   tables sans dire que les écrans ne s'en servent pas
+                   laisserait croire que l'application conserve déjà ; la
+                   personne le découvrirait en rechargeant la page, après
+                   avoir payé. */}
+              {questionAvant?.code === m.question.code && entites.length > 0 && (
+                <span className="mt-3 block rounded-xl border border-white/10 bg-white/[0.03] p-3">
+                  <span className="block text-xs font-semibold text-slate-200">
+                    Ce que votre application devra conserver — {resumeEntites(entites)}
+                  </span>
+                  <span className="mt-1.5 block">
+                    {entites.map((e) => (
+                      <span key={e.id} className="block text-[11px] leading-relaxed text-slate-400">
+                        · {phraseTable(e)}
+                      </span>
+                    ))}
+                  </span>
+                  {entitesRefusees.length > 0 && (
+                    // UN REFUS MUET produirait une application à qui il
+                    // manque une table, sans que personne sache laquelle.
+                    <span className="mt-2 block text-[11px] leading-relaxed text-amber-300/80">
+                      Écarté :{' '}
+                      {entitesRefusees.map((r) => `${r.quoi} (${r.motif})`).join(' ; ')}
+                    </span>
+                  )}
+                  <span className="mt-2 block text-[11px] leading-relaxed text-white/40">
+                    {CE_QUE_DECLARER_CHANGE}
+                  </span>
                 </span>
               )}
               {m.question.choix !== undefined ? (

@@ -33,6 +33,8 @@ import { moteurChoisi } from '@/lib/apps/interrupteur-moteur'
 import { DOMAINE_PUBLIC, TEMOIN_GENERIQUE } from '@/lib/apps/sous-domaine'
 import { boucleEcriture, CONSIGNE, pageAutonome } from '@/lib/apps/boucle-directe'
 import { emettreSchemaSql, type EntiteDonnees } from '@deribfy/compiler'
+import { projectAirSchema } from '@deribfy/air-schema'
+import { lireEntites } from '@/lib/apps/entites-declarees'
 import { nomProduitValide, TITRE_SANS_NOM } from '@/lib/apps/nom-produit'
 import { rangsAPurger, type VersionDocument } from '@/lib/apps/versions-oeuvre'
 import { proportionEprouvee } from '@/lib/apps/portee-epreuve'
@@ -333,6 +335,23 @@ export async function POST(req: Request) {
   // SANS `?id=`, ABSOLUMENT RIEN NE CHANGE : c'est le chemin qui porte tout
   // l'argent de la maison, et il a déjà été cassé une fois aujourd'hui.
   const idExistant = new URL(req.url).searchParams.get('id') ?? ''
+  // ── LES DONNÉES DÉCLARÉES — REVALIDÉES ICI, pas crues (lot D1).
+  //
+  // `lire-brief` les a déjà jugées, mais ce qui arrive ici vient du
+  // NAVIGATEUR : une requête forgée contourne l'écran. L'invariant du dépôt
+  // s'applique — un contrôle fait en amont ne dispense jamais celui qui
+  // écrit en base. C'est la même leçon que la devise, transmise en EUR sur
+  // une plateforme tchadienne le 2026-10-31 parce que l'écran validait et
+  // que la route faisait confiance.
+  //
+  // Et c'est ce tableau qui nourrit `schema.sql` : une entité forgée
+  // deviendrait une table dans le fichier qu'on livre.
+  const schemaEntite = projectAirSchema.shape.entities.element
+  const entitesDeclarees = lireEntites(
+    (corps as { entites?: unknown }).entites,
+    (e) => schemaEntite.safeParse(e).success,
+  ).entites as readonly EntiteDonnees[]
+
   let demande = typeof corps.demande === 'string' ? corps.demande.trim() : ''
   let nomExistant: string | null = null
   if (idExistant !== '') {
@@ -490,7 +509,6 @@ export async function POST(req: Request) {
   // risque : `unique`, `required` et une relation entre entites n'existent
   // nulle part dans du React. On obtiendrait un schema valide et FAUX.
   // C'est pourquoi D1 les fait DECLARER avant les ecrans, pas deduire apres.
-  const entitesDeclarees: readonly EntiteDonnees[] = []
   const schemaDeLOeuvre = emettreSchemaSql(entitesDeclarees)
 
   // ── LE TARIF DE L'HEURE OÙ L'APPEL A EU LIEU (2026-11-02).

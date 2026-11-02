@@ -32,6 +32,8 @@ import { requireAuthenticatedUser } from '@/lib/auth/require-authenticated-user'
 import { racineDepot } from '@/lib/apps/racine'
 import { clientIA, MODELE_LEGER } from '@/lib/ia/client'
 import { nomProduitValide } from '@/lib/apps/nom-produit'
+import { projectAirSchema } from '@deribfy/air-schema'
+import { CONSIGNE_ENTITES, lireEntites } from '@/lib/apps/entites-declarees'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -93,6 +95,14 @@ const CONSIGNE = [
   '  NOM_CITATION : le passage du texte, RECOPIÉ MOT POUR MOT (80 signes au',
   '      plus), où ce nom se lit ou d’où il vient. Si tu l’as inventé, omets',
   '      cette clé — ne fabrique pas une citation.',
+  // ── LES DONNÉES À CONSERVER (lot D1, 2026-11-02).
+  //
+  // Le bloc vit dans son propre module, avec ses bornes et ses refus. Il
+  // entre ICI et pas dans la consigne de génération : celle-ci est passée
+  // de 1 363 à 5 904 signes en deux semaines, et on la soupçonne d'avoir
+  // coûté un tir. Cette route, elle, ne construit rien — elle LIT et rend
+  // du JSON, et elle filtre déjà sa propre sortie.
+  CONSIGNE_ENTITES,
 ].join('\n')
 
 export async function POST(req: Request) {
@@ -176,6 +186,19 @@ export async function POST(req: Request) {
       if (q.choix !== undefined && !q.choix.some((c) => c.valeur === valeur)) continue
       deduites[code] = valeur
     }
+    // ── LES DONNÉES DÉCLARÉES, JUGÉES PAR LE CONTRAT LUI-MÊME.
+    //
+    // `entitySchema` vit dans le paquet AIR ; on lui soumet chaque entité
+    // plutôt que de réécrire sa grammaire ici. Deux grammaires auraient
+    // divergé, et c'est la nôtre qui aurait eu tort — la sienne est celle
+    // que le compilateur applique.
+    //
+    // MESURÉ le 2026-11-02 : `{ id, name, fields:[{ id, name, type,
+    // required }] }` est accepté. C'est exactement la forme demandée au
+    // modèle, donc ce qu'il rend de bonne foi passe.
+    const schemaEntite = projectAirSchema.shape.entities.element
+    const declarees = lireEntites(lu.ENTITES, (e) => schemaEntite.safeParse(e).success)
+
     // ── LE NOM DU PRODUIT, ET SA CITATION EST VERIFIEE, PAS CRUE.
     //
     // Le reste de cette route filtre contre la table : « la table decide,
@@ -211,7 +234,15 @@ export async function POST(req: Request) {
         }
       }
     }
-    return NextResponse.json({ deduites, ...(nomProduit === undefined ? {} : { nomProduit }) })
+    return NextResponse.json({
+      deduites,
+      ...(nomProduit === undefined ? {} : { nomProduit }),
+      // LES REFUS VOYAGENT AVEC LES ENTITÉS. Un refus muet produirait une
+      // application à qui il manque une table, sans que personne sache
+      // laquelle ni pourquoi.
+      entites: declarees.entites,
+      entitesRefusees: declarees.refus,
+    })
   } catch {
     // UNE LECTURE RATÉE NE BLOQUE RIEN : on retombe sur le questionnaire.
     return NextResponse.json({ deduites: {} })
