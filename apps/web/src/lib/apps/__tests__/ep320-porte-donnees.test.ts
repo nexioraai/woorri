@@ -59,9 +59,9 @@ describe('EP-320 · la porte', () => {
     const sql = emettrePolitiquesSql(AVEC_JOURNAL)
     for (const e of AVEC_JOURNAL) {
       const t = e.id.replace(/^ent_/u, '')
-      expect(sql, `${t} n’a pas de RLS`).toContain(`alter table public.${t} enable row level security;`)
+      expect(sql, `${t} n’a pas de RLS`).toContain(`alter table ${t} enable row level security;`)
       expect(sql, `${t} n’a pas de politique`).toContain(`create policy ${t}_porte`)
-      expect(sql, `${t} ne révoque rien`).toContain(`revoke all on public.${t}`)
+      expect(sql, `${t} ne révoque rien`).toContain(`revoke all on ${t}`)
     }
     // ET LE COMPTE EST EXACT : une politique de plus que de tables voudrait
     // dire qu'une table en porte deux, une de moins qu'il en manque une.
@@ -81,7 +81,7 @@ describe('EP-320 · la porte', () => {
     expect(ROLES_REFUSES, 'le rôle `anon` n’est plus refusé').toContain('anon')
     for (const r of ROLES_REFUSES) {
       expect(sql, `le rôle ${r} n’est pas révoqué`).toMatch(
-        new RegExp(`revoke all on public\\.client from [^;]*\\b${r}\\b`, 'u'),
+        new RegExp(`revoke all on client from [^;]*\\b${r}\\b`, 'u'),
       )
     }
   })
@@ -164,6 +164,28 @@ describe('EP-320 · la porte', () => {
       for (const r of ROLES_REFUSES) {
         expect(roles, `un grant part vers ${r}`).not.toMatch(new RegExp(`\\b${r}\\b`, 'u'))
       }
+    }
+  })
+
+  it('⑧ LE SQL N’EST QUALIFIÉ PAR AUCUN SCHÉMA — un fichier, deux destinations', () => {
+    // ── LA DÉCISION DU PROPRIÉTAIRE, 2026-11-02, ET SA RAISON.
+    //
+    // « Si la plateforme range les tables dans `oeuvre_<id>` et que le zip
+    // les range dans `public`, tu as deux SQL à maintenir et ils
+    // divergeront. »
+    //
+    // Le fichier ne dit donc jamais `public.` : la plateforme pose un
+    // `search_path` avant de l'exécuter, celui qui télécharge l'exécute tel
+    // quel. Qualifier aurait obligé à émettre deux variantes — et c'est
+    // toujours la moins exercée qui finit par mentir.
+    const sql = emettrePolitiquesSql(AVEC_JOURNAL)
+    const instructions = sql.split('\n').filter((l) => l !== '' && !l.startsWith('--'))
+    expect(instructions.length, 'aucune instruction lue : le contrôle ne mesure rien')
+      .toBeGreaterThan(20)
+    for (const l of instructions) {
+      expect(l, `une instruction qualifie son schéma : « ${l} »`).not.toMatch(/\bpublic\./u)
+      expect(l, `une instruction qualifie un autre schéma : « ${l} »`)
+        .not.toMatch(/\b(oeuvre_[a-z0-9_]+|pg_catalog|auth|storage)\./u)
     }
   })
 

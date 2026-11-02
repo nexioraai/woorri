@@ -76,6 +76,24 @@ export const SANS_POLITIQUE = [
 /**
  * LES POLITIQUES, ÉMISES DEPUIS LES ENTITÉS ET RIEN D'AUTRE.
  *
+ * ── LE SQL N'EST QUALIFIÉ PAR AUCUN SCHÉMA, ET C'EST STRUCTUREL.
+ *
+ * Décision du propriétaire, 2026-11-02 : « si la plateforme range les tables
+ * dans `oeuvre_<id>` et que le zip les range dans `public`, tu as deux SQL à
+ * maintenir et ils divergeront. »
+ *
+ * Le fichier ne dit donc JAMAIS `public.`. Celui qui le reçoit décide où il
+ * atterrit :
+ *
+ *   · la plateforme fait `create schema oeuvre_x; set search_path to
+ *     oeuvre_x;` puis l'exécute ;
+ *   · celui qui télécharge l'exécute tel quel — il atterrit dans son
+ *     `public`, et c'est ce qu'il veut.
+ *
+ * UN SEUL FICHIER, DEUX DESTINATIONS. Qualifier aurait obligé à émettre deux
+ * variantes, donc à les tenir d'accord — et c'est toujours la variante la
+ * moins exercée qui finit par mentir.
+ *
  * L'ordre des instructions est la garantie, exactement comme pour la
  * retouche : révoquer → activer → forcer → retirer l'ancienne politique →
  * la poser → accorder. Inversé, chaque geste défait le précédent.
@@ -97,16 +115,16 @@ export function emettrePolitiquesSql(entites: readonly EntiteDonnees[]): string 
     l.push(
       `-- ── ${t}${e.appendOnly === true ? ' · journal' : ''}`,
       // ① RÉVOQUER À `public`, PAS SEULEMENT À `anon` : anon hérite de public.
-      `revoke all on public.${t} from ${ROLES_REFUSES.join(', ')};`,
+      `revoke all on ${t} from ${ROLES_REFUSES.join(', ')};`,
       // ② LA VRAIE PROTECTION : les privilèges par défaut d'un projet
       //    Supabase re-donnent l'accès à toute table créée après eux.
-      `alter table public.${t} enable row level security;`,
+      `alter table ${t} enable row level security;`,
       // ③ SANS `force`, le propriétaire de la table ignore les politiques.
-      `alter table public.${t} force row level security;`,
+      `alter table ${t} force row level security;`,
       // ④ REJOUABLE : sans le `drop`, le second passage échoue sur un doublon.
-      `drop policy if exists ${t}_porte on public.${t};`,
-      `create policy ${t}_porte on public.${t} for all to ${ROLE_PORTE} using (true) with check (true);`,
-      `grant select, insert, update, delete on public.${t} to ${ROLE_PORTE};`,
+      `drop policy if exists ${t}_porte on ${t};`,
+      `create policy ${t}_porte on ${t} for all to ${ROLE_PORTE} using (true) with check (true);`,
+      `grant select, insert, update, delete on ${t} to ${ROLE_PORTE};`,
       '',
     )
   }

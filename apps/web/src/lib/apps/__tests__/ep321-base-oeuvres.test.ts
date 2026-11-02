@@ -158,7 +158,6 @@ describe('EP-321 · les deux bases', () => {
     // Chaque motif réclame donc assez de signes derrière le préfixe pour
     // qu'il ne puisse s'agir que d'une valeur.
     const AIGUILLES: readonly (readonly [RegExp, string])[] = [
-      // LE JWT EST JUGÉ SUR SA CHARGE, pas sur sa forme — voir plus bas.
       [new RegExp('sb_' + 'secret_[A-Za-z0-9_-]{16,}', 'u'), 'clé SECRÈTE du nouveau modèle'],
       [new RegExp('sb_' + 'publishable_[A-Za-z0-9_-]{16,}', 'u'), 'clé publiable du nouveau modèle'],
       [new RegExp('sbp' + '_[A-Za-z0-9]{32,}', 'u'), 'jeton de Management API — crée et DÉTRUIT des projets'],
@@ -167,45 +166,58 @@ describe('EP-321 · les deux bases', () => {
     //
     // Je ne balayais que `apps/web/src`. Or la clé vivait dans `slices/` —
     // le contrôle aurait été vert en laissant la clé exactement là où elle
-    // était. Un cliquet qui ne regarde pas l'endroit du défaut ne garde
-    // rien.
+    // était. Un cliquet qui ne regarde pas l'endroit du défaut ne garde rien.
     //
     // LA BONNE DÉFINITION DE « ÉCRIT DANS LE DÉPÔT » EST : SUIVI PAR GIT.
     // Une clé dans un `.env.local` ignoré est à sa place ; la même dans un
     // fichier suivi part chez tout le monde et reste dans l'historique.
-    // C'est Git qui tranche, pas une liste de dossiers que j'aurais à
-    // tenir à jour.
-    const suivis = execFileSync('git', ['ls-files', '-z'], { cwd: RACINE, maxBuffer: 64 * 1024 * 1024 })
-      .toString('utf8')
-      .split('\0')
-      .filter((f) => f !== '')
-    expect(suivis.length, 'git ne rend aucun fichier : le contrôle ne mesure rien')
-      .toBeGreaterThan(500)
+    //
+    // ── ET C'EST `git grep` QUI BALAIE, PAS CE TEST.
+    //
+    // Ma première forme lisait les 1 000+ fichiers suivis en JavaScript :
+    // 2 490 ms, et le cliquet de marge l'a refusée — « ×2.0 seulement, elle
+    // tombera sur un runner plus lent ». Il avait raison, et la réponse
+    // n'était pas de l'inscrire au registre : `git grep` fait le même
+    // balayage en C, ne lit que les fichiers suivis, et saute les binaires
+    // tout seul (`-I`).
+    //
+    // On ne décode ensuite que les RARES fichiers qu'il désigne.
+    const grepper = (motif: string): string[] => {
+      try {
+        return execFileSync('git', ['grep', '-I', '-l', '-E', motif], {
+          cwd: RACINE,
+          maxBuffer: 16 * 1024 * 1024,
+        })
+          .toString('utf8')
+          .split('\n')
+          .filter((f2) => f2 !== '' && !f2.endsWith('ep321-base-oeuvres.test.ts'))
+      } catch {
+        return [] // `git grep` sort en 1 quand il ne trouve rien
+      }
+    }
+
+    // LE TÉMOIN DANS LA MESURE : si `git grep` ne trouve même pas un mot
+    // banal, c'est lui qui est cassé, pas le dépôt qui est propre.
+    expect(grepper('createClient').length, 'git grep ne trouve rien : l’instrument est cassé')
+      .toBeGreaterThan(3)
 
     const fautifs: string[] = []
-    for (const rel of suivis) {
-      // Ce fichier-ci porte les aiguilles par nécessité.
-      if (rel.endsWith('ep321-base-oeuvres.test.ts')) continue
-      let contenu: string
-      try {
-        contenu = readFileSync(join(RACINE, rel), 'utf8')
-      } catch {
-        continue // binaire ou lien : rien à lire
-      }
-      for (const [aiguille, quoi] of AIGUILLES) {
-        if (aiguille.test(contenu)) fautifs.push(`${rel} — ${quoi}`)
-      }
-      // ── UN JWT SE JUGE SUR SA CHARGE, ET C'EST LA SEULE FAÇON JUSTE.
-      //
-      // Mon motif de FORME accusait `docs/elite-protocol/evidence/
-      // gate-backend-vivant.mjs`, qui porte un jeton volontairement MAL
-      // SIGNÉ pour prouver qu'un jeton forgé est refusé. C'est un vecteur
-      // de test, l'inverse d'un secret.
-      //
-      // Plutôt qu'une liste d'exemptions à tenir à jour — qui aurait fini
-      // par exempter un vrai secret un jour de hâte — on DÉCODE la charge :
-      // une clé Supabase y porte `iss: supabase` et le `ref` du projet. Un
-      // jeton bricolé pour un test n'a ni l'un ni l'autre.
+    for (const [motif, quoi] of AIGUILLES) {
+      for (const f2 of grepper(motif.source)) fautifs.push(`${f2} — ${quoi}`)
+    }
+    // ── UN JWT SE JUGE SUR SA CHARGE, ET C'EST LA SEULE FAÇON JUSTE.
+    //
+    // Un motif de FORME accusait `docs/elite-protocol/evidence/
+    // gate-backend-vivant.mjs`, qui porte un jeton volontairement MAL SIGNÉ
+    // pour prouver qu'un jeton forgé est refusé — l'inverse d'un secret.
+    //
+    // Plutôt qu'une liste d'exemptions — qui aurait fini par exempter un
+    // vrai secret un jour de hâte — on DÉCODE : une clé Supabase porte
+    // `iss: supabase` et le `ref` du projet, un jeton bricolé n'a ni l'un
+    // ni l'autre.
+    const FORME_JWT = 'eyJ[A-Za-z0-9_-]{8,}[.]eyJ[A-Za-z0-9_-]{8,}[.][A-Za-z0-9_-]{8,}'
+    for (const rel of grepper(FORME_JWT)) {
+      const contenu = readFileSync(join(RACINE, rel), 'utf8')
       for (const m of contenu.matchAll(
         /eyJ[A-Za-z0-9_-]{8,}\.(eyJ[A-Za-z0-9_-]{8,})\.[A-Za-z0-9_-]{8,}/gu,
       )) {
