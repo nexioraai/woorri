@@ -32,6 +32,7 @@ import { TABLE_GENERATIONS, TABLE_VERSIONS } from '@/lib/apps/journal'
 import { moteurChoisi } from '@/lib/apps/interrupteur-moteur'
 import { DOMAINE_PUBLIC, TEMOIN_GENERIQUE } from '@/lib/apps/sous-domaine'
 import { boucleEcriture, CONSIGNE, pageAutonome } from '@/lib/apps/boucle-directe'
+import { emettreSchemaSql, type EntiteDonnees } from '@deribfy/compiler'
 import { nomProduitValide, TITRE_SANS_NOM } from '@/lib/apps/nom-produit'
 import { rangsAPurger, type VersionDocument } from '@/lib/apps/versions-oeuvre'
 import { proportionEprouvee } from '@/lib/apps/portee-epreuve'
@@ -477,6 +478,21 @@ export async function POST(req: Request) {
     return { ok: false as const, error: message.slice(0, 200) }
   }
   const dureeMs = Date.now() - debut
+
+  // ── LE SCHEMA DES DONNEES DE L'OEUVRE (lot D2, 2026-11-02).
+  //
+  // LA COUTURE OU LE LOT D1 SE BRANCHERA, et aujourd'hui elle rend la
+  // verite : AUCUNE entite n'est declaree, donc le schema le DIT au lieu
+  // d'etre vide ou absent. Un fichier vide laisserait croire a une base
+  // sans tables ; un fichier absent, que Deribfy n'en produit pas.
+  //
+  // Deriver les entites des fichiers rendus est IMPOSSIBLE, pas seulement
+  // risque : `unique`, `required` et une relation entre entites n'existent
+  // nulle part dans du React. On obtiendrait un schema valide et FAUX.
+  // C'est pourquoi D1 les fait DECLARER avant les ecrans, pas deduire apres.
+  const entitesDeclarees: readonly EntiteDonnees[] = []
+  const schemaDeLOeuvre = emettreSchemaSql(entitesDeclarees)
+
   // ── LE TARIF DE L'HEURE OÙ L'APPEL A EU LIEU (2026-11-02).
   //
   // Le dépôt ne portait qu'un couple de prix, et c'était celui HORS POINTE.
@@ -563,7 +579,16 @@ export async function POST(req: Request) {
       : [resultat.motif],
     // La colonne `document` porte l'oeuvre. Ici l'oeuvre est du CODE, pas un
     // document AIR : on range les fichiers, qui sont ce qui se recompile.
-    document: resultat.ok ? { fichiers: Object.fromEntries(resultat.fichiers) } : null,
+    //
+    // ── ET LE SCHEMA DES DONNEES Y VOYAGE AVEC EUX (lot D2, 2026-11-02).
+    //
+    // Un livrable de premier rang, pas un effet de bord : versionne avec les
+    // fichiers, donc un retour en arriere ramene le code ET le schema qui lui
+    // correspond. Les separer aurait produit du code d'hier sur des tables
+    // d'aujourd'hui, sans moyen de savoir laquelle des deux a bouge.
+    document: resultat.ok
+      ? { fichiers: Object.fromEntries(resultat.fichiers), schema: schemaDeLOeuvre }
+      : null,
     // ── LE DÉTAIL DE CHAQUE TOUR, ET LE BRUT DU DERNIER ESSAI.
     //
     // DÉFAUT MESURÉ LE 2026-10-18 : le premier tir direct a échoué en
@@ -622,6 +647,7 @@ export async function POST(req: Request) {
       fichiers: Object.fromEntries(resultat.fichiers),
       nom,
       coutUsd: Number(coutUsd.toFixed(4)),
+      schema: schemaDeLOeuvre,
     }
     // LE RANG EST LU, PAS SUPPOSÉ : la contrainte d'unicité
     // (generation_id, rang) refuserait un doublon.

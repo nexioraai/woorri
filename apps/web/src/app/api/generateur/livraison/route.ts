@@ -82,7 +82,7 @@ export async function GET(req: Request) {
   // ces sources telles quelles, plus un `index.html` autonome recompilé :
   // la personne repart avec son code ET une page qui s'ouvre en double-clic.
   // Rien n'est régénéré, rien n'est repayé.
-  const docDirect = source as { fichiers?: Record<string, string> }
+  const docDirect = source as { fichiers?: Record<string, string>; schema?: string }
   if (docDirect.fichiers !== undefined && Object.keys(docDirect.fichiers).length > 0) {
     const v = await assembler(new Map(Object.entries(docDirect.fichiers)))
     if (!v.ok) {
@@ -96,7 +96,18 @@ export async function GET(req: Request) {
     // tsconfig), README en francais, et la page autonome en index.html.
     // Exigence du proprietaire, 2026-10-30 : « de bonnes applis web
     // telechargeables, sinon je veux pas accepter ».
-    const archive = zipper(projetLivrable(docDirect.fichiers, pageAutonome(v.code, 'Application')))
+    // ── LE SCHEMA VIENT DU DOCUMENT, PAS D'UN RECALCUL (lot D2).
+    //
+    // Recalculer ici rendrait un schema d'AUJOURD'HUI pour du code d'HIER :
+    // apres un retour en arriere, le zip aurait melange deux versions. Le
+    // document porte le schema de SA version ; c'est lui qu'on livre.
+    const archive = zipper(
+      projetLivrable(
+        docDirect.fichiers,
+        pageAutonome(v.code, 'Application'),
+        docDirect.schema,
+      ),
+    )
     return new Response(new Uint8Array(archive), {
       headers: {
         'Content-Type': 'application/zip',

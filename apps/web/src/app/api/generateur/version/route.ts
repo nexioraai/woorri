@@ -156,7 +156,19 @@ export async function POST(req: Request) {
   // qui efface les versions suivantes.
   const maj = await supabaseAdmin
     .from(TABLE_GENERATIONS)
-    .update({ document: { fichiers: etat.fichiers }, version_courante: rang })
+    // ── LE SCHEMA DE *CETTE* VERSION, pas celui d'aujourd'hui (lot D2).
+    //
+    // Revenir a une version ramene son CODE ; il doit ramener le schema qui
+    // allait avec. Garder le schema courant produirait l'incoherence qu'on
+    // cherche precisement a interdire : du code d'hier sur des tables
+    // d'aujourd'hui, et aucune trace de laquelle des deux a bouge.
+    //
+    // `undefined` sur une version anterieure au lot : on transmet
+    // l'absence, on ne fabrique pas un schema qui n'a jamais ete emis.
+    .update({
+      document: { fichiers: etat.fichiers, schema: etat.schema },
+      version_courante: rang,
+    })
     .eq('id', id)
     .eq('owner_id', garde.userId)
   if (maj.error !== null) {

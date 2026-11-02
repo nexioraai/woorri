@@ -50,6 +50,18 @@ export type VersionDocument = {
   readonly nom: string | null
   /** Ce que CETTE version a coûté. Sert à annoncer un prix avant de dépenser. */
   readonly coutUsd: number
+  /**
+   * LE SCHÉMA DES DONNÉES DE CETTE VERSION — un livrable, pas un effet de bord.
+   *
+   * Il voyage AVEC les fichiers, dans la même version : revenir en arrière
+   * ramène le code ET le schéma qui lui correspond. Les séparer aurait créé
+   * la pire des incohérences — du code d'hier sur des tables d'aujourd'hui,
+   * et aucune façon de savoir laquelle des deux a bougé.
+   *
+   * `undefined` sur les versions écrites avant le 2026-11-02 : elles sont
+   * antérieures au lot, et le zip sait le dire au lieu de le taire.
+   */
+  readonly schema?: string
 }
 
 /** L'état interne du pipeline AIR. Ne permet PAS de revenir en arrière. */

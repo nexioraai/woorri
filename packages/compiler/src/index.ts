@@ -5,6 +5,20 @@ export type { ReleaseTrain } from "./release-train.ts";
 export { LockResolutionError, normalizeAir, resolveLock } from "./resolve-lock.ts";
 export type { LockDiagnostic } from "./resolve-lock.ts";
 export { EmitError, emitProject, WRAPPER_BY_BLOCK_TYPE } from "./emit-project.ts";
+// ── LE SCHEMA DES DONNEES, EXPORTE POUR LES DEUX MOTEURS.
+//
+// `apps/web` importe deja `@deribfy/compiler` (produire, livraison, sonde).
+// Le moteur DIRECT peut donc emettre le meme schema que le moteur AIR sans
+// construire un ProjectAir -- qui exige 19 clefs dont le DDL n'a que faire.
+export {
+  champsConserves,
+  emettreSchemaSql,
+  nomColonne,
+  nomTable,
+  SANS_ENTITE,
+  typeSqlDe,
+} from "./schema-donnees.ts";
+export type { ChampDonnees, EntiteDonnees } from "./schema-donnees.ts";
 export {
   planifierComposition,
   validerPlan,

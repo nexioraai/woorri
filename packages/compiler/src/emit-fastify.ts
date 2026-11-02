@@ -29,6 +29,7 @@ import type { ProjectAir } from "@deribfy/air-schema";
 import type { EnveloppeBackend } from "./emit-spring.ts";
 import { PRELUDE_EXPRESSION, emettreExpressionTs } from "./expression.ts";
 import { emettreBaremeTs } from "./bareme.ts";
+import { emettreSchemaSql } from "./schema-donnees.ts";
 
 /**
  * LES DERIVES DE LIGNE — « calcul » ET « bareme », DANS L'ORDRE.
@@ -171,25 +172,9 @@ const lisibles = (e: Entite): Champ[] => stockes(e).filter((f) => f.sensitive !=
  */
 const conserves = (e: Entite): Champ[] => stockes(e).filter((f) => f.sensitive !== true);
 
-/**
- * LE TYPE SQL D'UN CHAMP.
- *
- * Trois types seulement, et c'est voulu : ils ont le MÊME sens en SQLite et
- * en Postgres. Un `timestamp` natif aurait obligé à écrire deux schémas, puis
- * deux dépôts, puis à n'en vérifier qu'un. Les dates sont donc des chaînes
- * ISO — c'est déjà ce que le contrat transporte.
- */
-function typeSql(f: Champ): string {
-  switch (f.type) {
-    case "number":
-    case "decimal":
-      return "numeric";
-    case "boolean":
-      return "boolean";
-    default:
-      return "text";
-  }
-}
+// LE TYPE SQL A SUIVI LE DDL dans `schema-donnees.ts` : le garder mort ici
+// aurait fait croire qu'il sert, et il aurait diverge en silence de celui
+// qui sert vraiment.
 
 /**
  * LE SCHÉMA DES TABLES.
@@ -203,42 +188,21 @@ function typeSql(f: Champ): string {
  * chaque démarrage sans jamais détruire ce qui est déjà là.
  */
 function schemaSql(air: ProjectAir): string {
-  const l = [
-    "-- ÉMIS PAR DERIBFY DEPUIS LE CONTRAT — NE PAS ÉDITER À LA MAIN.",
-    "--",
-    "-- Appliqué à chaque démarrage. Rien n'y est détruit.",
-    "",
-  ];
-  for (const e of air.entities) {
-    l.push(
-      `-- « ${e.name} »${e.appendOnly === true ? " — JOURNAL : rien ne s'y réécrit ni s'y efface." : ""}`,
-      `create table if not exists ${table(e)} (`,
-      "  id text primary key",
-      // ── `unique` DU DOCUMENT DEVIENT UNE CONTRAINTE, PAS UN COMMENTAIRE.
-      //
-      // Mesuré le 2026-10-12 : 72 champs `unique` dans 28 documents, et le
-      // schéma émis n'en portait AUCUNE contrainte. Un cahier réel l'exige
-      // mot pour mot — « une référence de transaction ne peut être utilisée
-      // qu'une seule fois dans toute l'application ». Sans contrainte en
-      // base, deux écritures simultanées passent toutes les deux : la
-      // vérification applicative ne protège pas d'une course.
-      //
-      // Même mot-clé dans les deux moteurs.
-      ...conserves(e).map(
-        (f) => `, ${colonne(f)} ${typeSql(f)}${f.unique === true ? " unique" : ""}`,
-      ),
-      ");",
-      "",
-    );
-  }
-  l.push(
-    "-- `not null` n'est volontairement PAS posé : le contrat dit ce qui est",
-    "-- requis À LA SAISIE, et le serveur le fait respecter. Une colonne",
-    "-- obligatoire en base aurait bloqué la lecture des lignes déjà écrites",
-    "-- avant qu'un champ devienne requis — une migration déguisée en schéma.",
-  );
-  return l.join("\n") + "\n";
+  // ── LE DDL A QUITTE CE FICHIER, ET LA RAISON EST MESUREE.
+  //
+  // Il ne lisait que `air.entities`, et seulement sept proprietes dessus.
+  // Il etait soude au pipeline AIR par sa SIGNATURE, pas par sa logique :
+  // `ProjectAir` exige 19 clefs au sommet (mesure du 2026-11-02), dont
+  // `screens`, `design`, `compliance` -- dont le schema n'a jamais rien eu
+  // a faire.
+  //
+  // Le moteur DIRECT n'a pas de ProjectAir et n'en aura pas. En sortant le
+  // DDL ici, les DEUX moteurs emettent le meme schema depuis la meme
+  // fonction. La duplication est fermee avant d'exister, pas apres l'avoir
+  // payee.
+  return emettreSchemaSql(air.entities);
 }
+
 
 /**
  * LA BASE, ET LE SEUL ENDROIT QUI CONNAÎT LES DEUX MOTEURS.

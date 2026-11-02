@@ -119,7 +119,14 @@ export async function POST(req: Request) {
   if (lu.error !== null || lu.data === null) {
     return NextResponse.json({ error: 'application inconnue' }, { status: 404 })
   }
-  const avantObj = (lu.data.document as { fichiers?: Record<string, string> } | null)?.fichiers
+  const docAvant = lu.data.document as {
+    fichiers?: Record<string, string>
+    schema?: string
+  } | null
+  // Le schema de l'oeuvre, tel qu'il est AUJOURD'HUI. `undefined` sur une
+  // oeuvre anterieure au lot D2 : on ne le fabrique pas, on le transmet.
+  const schemaPrecedent = docAvant?.schema
+  const avantObj = docAvant?.fichiers
   if (avantObj === undefined || Object.keys(avantObj).length === 0) {
     return NextResponse.json(
       { error: 'Cette application n’a plus de fichiers — il n’y a rien à retoucher.' },
@@ -235,11 +242,22 @@ export async function POST(req: Request) {
   const tous = await supabaseAdmin.from(TABLE_VERSIONS).select('rang').eq('generation_id', id)
   const rangsVus = (tous.data ?? []).map((x: { rang: number }) => Number(x.rang))
   const rang = Math.max(0, ...rangsVus) + 1
+  // ── LE SCHEMA SUIT LA RETOUCHE, IL NE DISPARAIT PAS AVEC ELLE.
+  //
+  // DEFAUT ATTRAPE A L'ECRITURE DU LOT D2 : cette route ecrit une version
+  // neuve et REMPLACE la colonne `document`. Sans ces deux lignes, la
+  // premiere retouche d'une oeuvre effacait son schema -- le zip serait
+  // reparti en « aucune donnee declaree » alors que l'oeuvre en declarait.
+  //
+  // Une retouche change des textes, des couleurs, un champ sur un ecran qui
+  // existe : par definition elle ne redeclare AUCUNE donnee. Le schema de
+  // la version precedente est donc exactement le bon.
   const version: VersionDocument = {
     forme: 'document',
     fichiers: Object.fromEntries(apres),
     nom: typeof lu.data.nom === 'string' ? lu.data.nom : null,
     coutUsd: Number(coutUsd.toFixed(4)),
+    schema: schemaPrecedent,
   }
   const ecrit = await supabaseAdmin.from(TABLE_VERSIONS).insert({
     generation_id: id,
@@ -257,7 +275,10 @@ export async function POST(req: Request) {
 
   const maj = await supabaseAdmin
     .from(TABLE_GENERATIONS)
-    .update({ document: { fichiers: Object.fromEntries(apres) }, version_courante: rang })
+    .update({
+      document: { fichiers: Object.fromEntries(apres), schema: schemaPrecedent },
+      version_courante: rang,
+    })
     .eq('id', id)
     .eq('owner_id', proprietaire)
   if (maj.error !== null) {

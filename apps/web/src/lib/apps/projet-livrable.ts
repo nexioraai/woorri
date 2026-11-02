@@ -28,6 +28,11 @@
  *   README.md         en français : les DEUX façons d'utiliser le projet,
  *                     double-clic ou développement.
  */
+
+// LE SCHEMA VIENT DE L'EMETTEUR PARTAGE, jamais d'une copie locale : une
+// seconde formulation du cas « aucune entite » aurait diverge de la
+// premiere au premier changement de mot.
+import { SANS_ENTITE } from '@deribfy/compiler'
 import { VARIABLES_CSS } from './bibliotheque-ui'
 
 /** Épinglées sur le dépôt : c'est CETTE version de react qui a compilé. */
@@ -63,6 +68,7 @@ const PACKAGE_JSON = `{
 const VITE_CONFIG = `import { copyFileSync } from 'node:fs'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { SANS_ENTITE } from '@deribfy/compiler'
 
 // L'entrée de développement est dev.html : index.html est la page COMPILÉE,
 // autonome, qu'on ouvre en double-clic — elle n'a pas besoin de Vite.
@@ -153,16 +159,58 @@ statique.
 `
 
 /**
+ * LA SECTION DU SCHEMA DANS LE LISEZ-MOI — et elle dit ce qui n'est PAS fait.
+ *
+ * ── LE PIEGE QU'ELLE EVITE, NOMME PAR LE PROPRIETAIRE.
+ *
+ * « Un livrable en avance qui se presente comme fini est un mensonge poli. »
+ * Le fichier `schema.sql` part dans le zip avant que les ecrans sachent s'en
+ * servir : sans cette section, quelqu'un l'appliquerait sur une base, puis
+ * chercherait pendant une heure pourquoi l'application n'ecrit rien dedans.
+ *
+ * La section ne promet donc rien. Elle dit : voici le schema de vos donnees,
+ * les ecrans ne s'en servent pas ENCORE.
+ */
+export const SECTION_SCHEMA = `
+## 4. Le schéma de vos données — \`schema.sql\`
+
+Ce fichier décrit les tables que cette application utiliserait pour
+conserver ses données.
+
+**Les écrans ne s'en servent pas encore.** Cette version de l'application
+fonctionne entièrement en mémoire : ce que vous saisissez disparaît quand la
+page est rechargée. Le schéma est livré en avance, pour que vous sachiez à
+quoi vos données ressembleront et que vous puissiez préparer votre base —
+pas parce que l'application y écrit déjà.
+
+Quand le branchement sera livré, c'est ce fichier-là qui sera appliqué.
+`
+
+/**
  * Assemble le projet livrable : sources sous `src/`, outillage à la racine,
- * page autonome en `index.html`.
+ * page autonome en `index.html`, et le schéma des données.
  */
 export function projetLivrable(
   fichiers: Readonly<Record<string, string>>,
   pageAutonomeHtml: string,
+  /**
+   * LE SCHEMA TEL QU'IL A ETE VERSIONNE AVEC CES FICHIERS.
+   *
+   * Recalculer ici serait un defaut : le zip rendrait un schema d'aujourd'hui
+   * pour du code d'hier. On rend ce que la VERSION porte -- et quand elle ne
+   * porte rien (versions anterieures au lot D2), on le dit.
+   */
+  schema?: string,
 ): Map<string, string> {
   const zip = new Map<string, string>()
   zip.set('index.html', pageAutonomeHtml)
-  zip.set('README.md', README)
+  // ── LE SCHEMA EST UN LIVRABLE DE PREMIER RANG, pas une annexe.
+  //
+  // Il est TOUJOURS present, meme sans entite declaree : son contenu dit
+  // alors qu'il n'y a rien a appliquer, et pourquoi. Un fichier qui apparait
+  // et disparait selon l'etat du produit apprend a ne pas etre cherche.
+  zip.set('schema.sql', schema !== undefined && schema !== '' ? schema : SANS_ENTITE)
+  zip.set('README.md', README + SECTION_SCHEMA)
   zip.set('package.json', PACKAGE_JSON)
   zip.set('vite.config.ts', VITE_CONFIG)
   zip.set('tsconfig.json', TSCONFIG)
