@@ -65,8 +65,21 @@ echo
 echo "── ON RETIRE LES COMMENTAIRES DES SOURCES (jamais des tests)"
 python3 - <<'PY'
 import re, subprocess
+# ── ON NE RETIRE QUE CE QUI EST SANS AMBIGUITE.
+#
+# Ma premiere forme retirait tout `//` non precede de `: ' " \``. Elle a
+# casse du JSX : un texte d'ecran peut contenir `//`, et les numeros de
+# ligne de l'erreur portaient sur le fichier DEPOUILLE, donc introuvables.
+#
+# On ne retire donc que :
+#   · les blocs /* ... */ (les blocs de tete, qui portent l'essentiel) ;
+#   · les // qui COMMENCENT une ligne, seuls ou apres des espaces.
+#
+# UN COMMENTAIRE DE FIN DE LIGNE RESTE EN PLACE. L'audit sous-estime donc :
+# un cliquet qui s'appuierait sur `code; // phrase` passerait inapercu. Dit,
+# plutot que tu.
 BLOC = re.compile(r'/\*[\s\S]*?\*/')
-LIGNE = re.compile(r'(?<![:\'"`])//.*$', re.M)
+LIGNE = re.compile(r'^[ \t]*//.*$', re.M)
 suivis = subprocess.run(['git', 'ls-files', '-z'], capture_output=True).stdout.decode().split('\0')
 n = 0
 for f in suivis:
