@@ -84,7 +84,15 @@ suivis = subprocess.run(['git', 'ls-files', '-z'], capture_output=True).stdout.d
 n = 0
 for f in suivis:
     if not f or '__tests__' in f or '/tests/' in f: continue
-    if not re.search(r'^(apps/web/src|packages/[^/]+/src)/.*\.(ts|tsx)$', f): continue
+    # ── LES `.tsx` SONT HORS DE L'AUDIT, ET C'EST MESURE.
+    #
+    # Un commentaire JSX s'ecrit `{/* ... */}`. Le retirer laisse `{}`, ce qui
+    # casse l'arbre -- tsc l'a dit deux fois avant que je le localise.
+    #
+    # L'AUDIT NE COUVRE DONC PAS les cliquets qui lisent un ECRAN : EP-260
+    # (Conversation.tsx), EP-287 (dashboard), EP-317 (atelier). Dit, plutot
+    # que tu : ces trois-la restent a verifier a la main.
+    if not re.search(r'^(apps/web/src|packages/[^/]+/src)/.*\.ts$', f): continue
     s = open(f, encoding='utf-8').read()
     d = LIGNE.sub('', BLOC.sub('', s))
     if d != s:
