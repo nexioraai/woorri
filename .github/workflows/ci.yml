@@ -76,6 +76,30 @@ jobs:
       # est l'étape "Gate" tout en bas, qui échoue explicitement le job si
       # l'une de ces 3 étapes n'a pas réussi — le comportement bloquant du
       # Bloc 1 est donc préservé, pas affaibli.
+      # ── LES TYPES QU'ON VERIFIE SONT CEUX QU'ON VIENT DE PRODUIRE.
+      #
+      # DEFAUT MESURE LE 2026-11-02. Next ecrit deux jeux de definitions de
+      # routes : `.next/dev/types/` (ecrit par `next dev`) et `.next/types/`
+      # (ecrit par `next build`). Le validateur genere compare les deux. En
+      # ajoutant `src/app/atelier/layout.tsx`, la gate a rougi :
+      #
+      #   Type '"/atelier"' is not assignable to type 'LayoutRoutes'
+      #
+      # Le typecheck lisait les types du build PRECEDENT, qui ne connaissait
+      # pas encore ce layout. Le build de la MEME gate les a rafraichis deux
+      # minutes plus tard -- un tour de retard a chaque nouvelle route munie
+      # d'un layout, et un rouge qui ne designe aucun defaut du code.
+      #
+      # UNE GATE QUI CRIE AU LOUP APPREND A ETRE IGNOREE, et c'est comme ca
+      # qu'on rate le vrai rouge. `next typegen` regenere les definitions
+      # sans build complet (mesure : 1,5 s). Reproduit avant/apres : types
+      # perimes -> l'erreur ci-dessus ; apres typegen -> tsc EXIT=0.
+      #
+      # Sans `continue-on-error` : si la generation echoue, le typecheck qui
+      # suit n'aurait plus de base fiable et son verdict ne voudrait rien.
+      - name: Types de routes — ceux d'avant ne valent rien
+        run: npx next typegen
+
       - name: Type check
         id: typecheck
         continue-on-error: true

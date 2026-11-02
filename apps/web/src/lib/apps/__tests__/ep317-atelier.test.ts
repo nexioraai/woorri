@@ -213,6 +213,31 @@ describe('EP-317 · l’atelier', () => {
     expect(heureCourte('2026-11-02T09:00:00Z')).not.toBeNull()
   })
 
+  it('⑨ UN SEUL ENDROIT POUR LA RETOUCHE — plus de double', () => {
+    // ── LE DEFAUT, ET POURQUOI IL ETAIT GRAVE SANS RIEN CASSER.
+    //
+    // La carte du tableau de bord a porte sa propre zone de retouche
+    // pendant une journee : son plafond, son perimetre, sa gestion du refus
+    // hors perimetre, sa confirmation de baisse de couverture. Un DOUBLE de
+    // celle de l'atelier.
+    //
+    // Rien ne plantait. C'est exactement ce qui le rendait dangereux : au
+    // premier changement du moteur, il fallait se souvenir des DEUX, et le
+    // dépôt a déjà payé cette dette — trois copies de la règle de nommage,
+    // dont une ignorait les noms réservés.
+    //
+    // Le geste vit donc là où l'œuvre se voit : dans l'atelier.
+    const ecrivains = sources().filter((f) =>
+      /\/api\/generateur\/retoucher[^'"`]*`?,?\s*\n?\s*\{?[^;]{0,400}method:\s*'POST'/u.test(
+        readFileSync(f, 'utf8'),
+      ) || /method:\s*'POST'[^;]{0,400}\/api\/generateur\/retoucher/u.test(readFileSync(f, 'utf8')),
+    )
+    expect(
+      ecrivains.map((f) => f.replace(`${RACINE}/`, '')),
+      'deux écrans écrivent une retouche : au prochain changement du moteur, un des deux mentira',
+    ).toEqual(['apps/web/src/app/atelier/[id]/page.tsx'])
+  })
+
   it('⑧ LE PRIX S’ANNONCE AVANT, ET C’EST UN PLAFOND', () => {
     const a = ATELIER()
     // Le plafond vient du SERVEUR : le calculer ici importerait

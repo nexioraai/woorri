@@ -144,78 +144,6 @@ export default function DashboardPage() {
    * lui-même. » Le mot « environ » dit ce que le chiffre est. Quand aucun
    * coût n'est connu, on ne devine pas : on le dit.
    */
-  /** La demande de retouche en cours de saisie, par œuvre. */
-  const [retouche, setRetouche] = useState<{ id: string; texte: string; plafond: string; perimetre: string } | null>(null);
-  const [retoucheEnCours, setRetoucheEnCours] = useState(false);
-
-  /** Ouvre la zone en demandant au serveur le plafond de CETTE œuvre. */
-  const ouvrirRetouche = async (a: Application) => {
-    setApercuErreur(null);
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) { setApercuErreur('Session expiree — reconnectez-vous.'); return; }
-    const res = await fetch(`/api/generateur/retoucher?id=${encodeURIComponent(a.id)}`, {
-      headers: { Authorization: `Bearer ${session.access_token}` },
-    });
-    const d = (await res.json().catch(() => ({}))) as { plafond?: string; perimetre?: string; error?: string };
-    if (!res.ok) { setApercuErreur(String(d.error ?? 'Impossible d’ouvrir la modification.')); return; }
-    setRetouche({ id: a.id, texte: '', plafond: d.plafond ?? '', perimetre: d.perimetre ?? '' });
-  };
-
-  /**
-   * RETOUCHER — modifier sans régénérer, et ne rien écrire si ça rate.
-   *
-   * Le prix annoncé est un PLAFOND calculé sur CETTE œuvre : son document
-   * fait entre 50 et 107 Ko selon les cas, et le rapport mesuré est de 0,3
-   * jeton par octet. Il prend le tarif de POINTE — une opération peut
-   * démarrer à 00:59 et facturer à 01:00.
-   */
-  const retoucher = async (a: Application, confirme: boolean) => {
-    const texte = (retouche?.id === a.id ? retouche.texte : '').trim();
-    if (texte === '') return;
-    setApercuErreur(null);
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) { setApercuErreur('Session expiree — reconnectez-vous.'); return; }
-    setRetoucheEnCours(true);
-    setAvis('Modification en cours — une vingtaine de secondes.');
-    try {
-      const res = await fetch(
-        `/api/generateur/retoucher?id=${encodeURIComponent(a.id)}${confirme ? '&confirme=1' : ''}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
-          body: JSON.stringify({ demande: texte }),
-        },
-      );
-      const d = (await res.json().catch(() => ({}))) as {
-        ok?: boolean; error?: string; horsPerimetre?: boolean; raison?: string;
-        aConfirmer?: boolean; message?: string; fichiers?: string[]; coutUsd?: number; rang?: number;
-      };
-      const paye = d.coutUsd === undefined || d.coutUsd === 0 ? '' : ` (${d.coutUsd.toFixed(3)} $ dépensés)`;
-      setAvis(null);
-      // ── LA COUVERTURE QUI BAISSE : on DEMANDE, on ne bloque pas.
-      if (d.aConfirmer === true) {
-        if (window.confirm(`${String(d.message)}\n\nAppliquer quand même ?`)) {
-          setRetoucheEnCours(false);
-          await retoucher(a, true);
-          return;
-        }
-        setApercuErreur(`Modification abandonnée${paye}.`);
-        return;
-      }
-      if (d.horsPerimetre === true) {
-        setApercuErreur(`Hors de ce que je peux retoucher : ${String(d.raison)}${paye}`);
-        return;
-      }
-      if (!res.ok || d.ok !== true) { setApercuErreur(`${String(d.error ?? 'La modification a échoué.')}${paye}`); return; }
-      setRetouche(null);
-      setAvis(`Modifié — ${String((d.fichiers ?? []).length)} fichier(s) touché(s)${paye}. Version ${String(d.rang ?? '')}.`.replace(' Version .', ''));
-      if (versions?.id === a.id) setVersions(null);
-      await voirVersions(a);
-    } finally {
-      setRetoucheEnCours(false);
-    }
-  };
-
   const regenerer = async (a: Application) => {
     setApercuErreur(null);
     // LE PRIX SE LIT AVANT DE DEMANDER, MÊME HISTORIQUE REPLIÉ. Il ne
@@ -874,43 +802,17 @@ export default function DashboardPage() {
                         ))}
                       </div>
                     )}
-                      {/* ── LA ZONE DE RETOUCHE — le vrai produit.
-                          Elle dit son PÉRIMÈTRE avant qu'on écrive, et son
-                          PLAFOND de prix avant qu'on dépense. Le plafond
-                          est calculé sur CETTE œuvre (0,3 jeton/octet,
-                          mesuré) et au tarif de POINTE. */}
-                      {retouche?.id === a.id ? (
-                        <div className="flex flex-col gap-2">
-                          <textarea
-                            value={retouche.texte}
-                            onChange={(e) => { setRetouche({ ...retouche, texte: e.target.value }); }}
-                            rows={2}
-                            placeholder="mets les boutons en vert, renomme l’écran Accueil…"
-                            className="w-full px-3 py-2 rounded-xl text-sm bg-white/[0.03] border border-white/10 text-white/80 placeholder:text-white/25 focus:outline-none focus:border-white/30"
-                          />
-                          <p className="text-[11px] text-white/40 leading-relaxed">{retouche.perimetre}</p>
-                          <div className="flex items-center gap-2">
-                            <button type="button"
-                              onClick={() => { void retoucher(a, false); }}
-                              disabled={retoucheEnCours || retouche.texte.trim() === ''}
-                              className="px-3 py-2 rounded-xl text-sm font-semibold border border-white/10 text-white/70 hover:text-white hover:border-white/30 transition-all disabled:opacity-40">
-                              {retoucheEnCours ? 'Modification…' : `Modifier — ${retouche.plafond}`}
-                            </button>
-                            <button type="button"
-                              onClick={() => { setRetouche(null); }}
-                              disabled={retoucheEnCours}
-                              className="px-3 py-2 rounded-xl text-sm text-white/40 hover:text-white/70 transition-colors disabled:opacity-40">
-                              Annuler
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        <button type="button"
-                          onClick={() => { void ouvrirRetouche(a); }}
-                          className="px-2 py-2 rounded-xl text-sm font-semibold border border-emerald-500/20 text-emerald-300/80 hover:text-emerald-200 hover:border-emerald-400/40 transition-all">
-                          Modifier
-                        </button>
-                      )}
+                      {/* ── LA RETOUCHE N'EST PLUS ICI, ET C'ETAIT LE DEFAUT.
+                          Cette carte portait sa propre zone de saisie, avec
+                          son plafond, son perimetre et sa gestion du refus
+                          hors perimetre : un DOUBLE de celle de l'atelier.
+                          Deux endroits pour un seul geste, donc deux
+                          endroits a corriger quand le moteur change -- et la
+                          certitude qu'un des deux finirait par mentir.
+                          On modifie une application LA OU ON LA VOIT : dans
+                          l'atelier, en grand, avec le fil qui se souvient de
+                          ce qu'on a demande. Le bouton orange plus haut y
+                          mene. */}
                       {/* ── LA LISTE EST AU-DESSUS DE LA DESTRUCTION.
                           Elle était rendue APRÈS « Supprimer » : pour la
                           lire, il fallait passer le regard sur le bouton
