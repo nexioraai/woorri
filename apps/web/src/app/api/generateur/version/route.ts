@@ -166,7 +166,11 @@ export async function POST(req: Request) {
     // `undefined` sur une version anterieure au lot : on transmet
     // l'absence, on ne fabrique pas un schema qui n'a jamais ete emis.
     .update({
-      document: { fichiers: etat.fichiers, schema: etat.schema },
+      document: {
+        fichiers: etat.fichiers,
+        schema: etat.schema,
+        politiques: etat.politiques,
+      },
       version_courante: rang,
     })
     .eq('id', id)

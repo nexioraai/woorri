@@ -82,7 +82,11 @@ export async function GET(req: Request) {
   // ces sources telles quelles, plus un `index.html` autonome recompilé :
   // la personne repart avec son code ET une page qui s'ouvre en double-clic.
   // Rien n'est régénéré, rien n'est repayé.
-  const docDirect = source as { fichiers?: Record<string, string>; schema?: string }
+  const docDirect = source as {
+    fichiers?: Record<string, string>
+    schema?: string
+    politiques?: string
+  }
   if (docDirect.fichiers !== undefined && Object.keys(docDirect.fichiers).length > 0) {
     const v = await assembler(new Map(Object.entries(docDirect.fichiers)))
     if (!v.ok) {
@@ -106,6 +110,7 @@ export async function GET(req: Request) {
         docDirect.fichiers,
         pageAutonome(v.code, 'Application'),
         docDirect.schema,
+        docDirect.politiques,
       ),
     )
     return new Response(new Uint8Array(archive), {

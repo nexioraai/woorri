@@ -122,10 +122,12 @@ export async function POST(req: Request) {
   const docAvant = lu.data.document as {
     fichiers?: Record<string, string>
     schema?: string
+    politiques?: string
   } | null
   // Le schema de l'oeuvre, tel qu'il est AUJOURD'HUI. `undefined` sur une
   // oeuvre anterieure au lot D2 : on ne le fabrique pas, on le transmet.
   const schemaPrecedent = docAvant?.schema
+  const politiquesPrecedentes = docAvant?.politiques
   const avantObj = docAvant?.fichiers
   if (avantObj === undefined || Object.keys(avantObj).length === 0) {
     return NextResponse.json(
@@ -258,6 +260,7 @@ export async function POST(req: Request) {
     nom: typeof lu.data.nom === 'string' ? lu.data.nom : null,
     coutUsd: Number(coutUsd.toFixed(4)),
     schema: schemaPrecedent,
+    politiques: politiquesPrecedentes,
   }
   const ecrit = await supabaseAdmin.from(TABLE_VERSIONS).insert({
     generation_id: id,
@@ -276,7 +279,11 @@ export async function POST(req: Request) {
   const maj = await supabaseAdmin
     .from(TABLE_GENERATIONS)
     .update({
-      document: { fichiers: Object.fromEntries(apres), schema: schemaPrecedent },
+      document: {
+        fichiers: Object.fromEntries(apres),
+        schema: schemaPrecedent,
+        politiques: politiquesPrecedentes,
+      },
       version_courante: rang,
     })
     .eq('id', id)

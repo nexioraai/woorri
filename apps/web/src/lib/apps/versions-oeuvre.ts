@@ -62,6 +62,14 @@ export type VersionDocument = {
    * antérieures au lot, et le zip sait le dire au lieu de le taire.
    */
   readonly schema?: string
+  /**
+   * LA PORTE DE CETTE VERSION — dérivée des mêmes entités que son schéma.
+   *
+   * Elle voyage avec lui, et pour une raison plus dure : appliquer les
+   * politiques d'aujourd'hui sur les tables d'hier protégerait des colonnes
+   * qui n'existent pas et laisserait les autres ouvertes.
+   */
+  readonly politiques?: string
 }
 
 /** L'état interne du pipeline AIR. Ne permet PAS de revenir en arrière. */

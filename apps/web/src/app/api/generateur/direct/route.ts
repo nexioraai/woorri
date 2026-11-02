@@ -32,7 +32,11 @@ import { TABLE_GENERATIONS, TABLE_VERSIONS } from '@/lib/apps/journal'
 import { moteurChoisi } from '@/lib/apps/interrupteur-moteur'
 import { DOMAINE_PUBLIC, TEMOIN_GENERIQUE } from '@/lib/apps/sous-domaine'
 import { boucleEcriture, CONSIGNE, pageAutonome } from '@/lib/apps/boucle-directe'
-import { emettreSchemaSql, type EntiteDonnees } from '@deribfy/compiler'
+import {
+  emettrePolitiquesSql,
+  emettreSchemaSql,
+  type EntiteDonnees,
+} from '@deribfy/compiler'
 import { projectAirSchema } from '@deribfy/air-schema'
 import { lireEntites } from '@/lib/apps/entites-declarees'
 import { nomProduitValide, TITRE_SANS_NOM } from '@/lib/apps/nom-produit'
@@ -510,6 +514,9 @@ export async function POST(req: Request) {
   // nulle part dans du React. On obtiendrait un schema valide et FAUX.
   // C'est pourquoi D1 les fait DECLARER avant les ecrans, pas deduire apres.
   const schemaDeLOeuvre = emettreSchemaSql(entitesDeclarees)
+  // LA PORTE SE DÉRIVE DES MÊMES ENTITÉS. Sans rôles ni droits fins, il n'y
+  // a rien à déduire des écrans : une politique par table, toujours la même.
+  const politiquesDeLOeuvre = emettrePolitiquesSql(entitesDeclarees)
 
   // ── LE TARIF DE L'HEURE OÙ L'APPEL A EU LIEU (2026-11-02).
   //
@@ -605,7 +612,11 @@ export async function POST(req: Request) {
     // correspond. Les separer aurait produit du code d'hier sur des tables
     // d'aujourd'hui, sans moyen de savoir laquelle des deux a bouge.
     document: resultat.ok
-      ? { fichiers: Object.fromEntries(resultat.fichiers), schema: schemaDeLOeuvre }
+      ? {
+          fichiers: Object.fromEntries(resultat.fichiers),
+          schema: schemaDeLOeuvre,
+          politiques: politiquesDeLOeuvre,
+        }
       : null,
     // ── LE DÉTAIL DE CHAQUE TOUR, ET LE BRUT DU DERNIER ESSAI.
     //
@@ -666,6 +677,7 @@ export async function POST(req: Request) {
       nom,
       coutUsd: Number(coutUsd.toFixed(4)),
       schema: schemaDeLOeuvre,
+      politiques: politiquesDeLOeuvre,
     }
     // LE RANG EST LU, PAS SUPPOSÉ : la contrainte d'unicité
     // (generation_id, rang) refuserait un doublon.

@@ -135,6 +135,10 @@ describe('EP-318 · le schéma des données', () => {
         .toBeGreaterThan(0)
       for (const e of ecritures) {
         expect(e, `${nom} écrit le document SANS le schéma : il l’efface`).toContain('schema')
+        // LA PORTE SUIT LE MEME CHEMIN, et l'oublier est plus grave :
+        // un schema perdu se reemet, une base laissee sans politiques est
+        // ouverte en ecriture a qui connait son adresse.
+        expect(e, `${nom} écrit le document SANS la porte : il l’efface`).toContain('politiques')
       }
     }
   })
@@ -158,6 +162,60 @@ describe('EP-318 · le schéma des données', () => {
     expect(zip.get('README.md') ?? '', 'la section n’est pas dans le LISEZ-MOI livré')
       .toMatch(/ne s[’']en servent pas encore/u)
     expect(zip.get('schema.sql')).toBe('create table x ();')
+  })
+
+  it('⑨ LE PROJET LIVRÉ N’IMPORTE QUE CE QU’IL POSSÈDE', () => {
+    // ── DÉFAUT QUE J'AI INTRODUIT EN ÉCRIVANT D2, ET QUI A ÉTÉ LIVRÉ.
+    //
+    // Un de mes scripts a inséré `import { SANS_ENTITE } from
+    // '@deribfy/compiler'` À L'INTÉRIEUR du gabarit `vite.config.ts` — celui
+    // qui part dans chaque zip. `tsc` ne pouvait pas le voir : à l'intérieur
+    // d'un littéral de gabarit, c'est une CHAÎNE, pas du code.
+    //
+    // Conséquence pour la personne : `npm install && npm run build` échoue
+    // sur un paquet qui n'existe que dans notre dépôt. La page autonome
+    // s'ouvre encore en double-clic, mais le PROJET ne se construit plus —
+    // et c'est précisément ce que le propriétaire a exigé le 2026-10-30 :
+    // « de bonnes applis web téléchargeables, sinon je veux pas accepter ».
+    //
+    // CE CONTRÔLE LIT LE ZIP, pas la source : il résout chaque import des
+    // fichiers d'outillage contre les dépendances réellement déclarées.
+    const zip = projetLivrable({ 'index.tsx': 'x' }, '<html></html>', undefined, undefined)
+    const paquets = JSON.parse(zip.get('package.json') ?? '{}') as {
+      dependencies?: Record<string, string>
+      devDependencies?: Record<string, string>
+    }
+    const possede = new Set([
+      ...Object.keys(paquets.dependencies ?? {}),
+      ...Object.keys(paquets.devDependencies ?? {}),
+    ])
+    expect(possede.size, 'le projet livré ne déclare aucune dépendance').toBeGreaterThan(2)
+
+    // Les fichiers d'OUTILLAGE : ceux que la personne exécute avec npm.
+    for (const nom of ['vite.config.ts', 'package.json', 'tsconfig.json']) {
+      const contenu = zip.get(nom) ?? ''
+      expect(contenu, `${nom} manque au projet livré`).not.toBe('')
+      for (const m of contenu.matchAll(/^import .*?from '([^']+)'/gmu)) {
+        const source = m[1]
+        // Un chemin relatif et les modules de Node ne sont pas des paquets.
+        if (source.startsWith('.') || source.startsWith('node:')) continue
+        // Le nom du paquet : `@portee/nom` ou `nom`, sans sous-chemin.
+        const paquet = source.startsWith('@')
+          ? source.split('/').slice(0, 2).join('/')
+          : source.split('/')[0]
+        expect(
+          possede.has(paquet),
+          `${nom} importe « ${paquet} », que le projet livré ne possède pas : ` +
+            '`npm run build` échouera chez la personne',
+        ).toBe(true)
+      }
+    }
+    // ET AUCUN PAQUET DE NOTRE DÉPÔT NE DOIT S'Y TROUVER, sous aucune forme.
+    for (const [nom, contenu] of zip) {
+      if (nom.startsWith('src/')) continue // le code du modèle, jugé ailleurs
+      expect(contenu, `${nom} parle de @deribfy : ce paquet n’existe que chez nous`)
+        .not.toContain('@deribfy/')
+    }
   })
 
   it('⑥ UNE SEULE ÉMISSION DE DDL DANS TOUT LE DÉPÔT', () => {

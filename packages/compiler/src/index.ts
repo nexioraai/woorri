@@ -19,6 +19,15 @@ export {
   typeSqlDe,
 } from "./schema-donnees.ts";
 export type { ChampDonnees, EntiteDonnees } from "./schema-donnees.ts";
+// ── LA PORTE. Derivee de `entites` seule : sans roles ni droits fins, il
+// n'y a plus rien a deduire des ecrans ni des actions -- ce qui rendait
+// `derivePlanAcces` non portable vers le moteur direct.
+export {
+  emettrePolitiquesSql,
+  ROLE_PORTE,
+  ROLES_REFUSES,
+  SANS_POLITIQUE,
+} from "./politiques-donnees.ts";
 export {
   planifierComposition,
   validerPlan,

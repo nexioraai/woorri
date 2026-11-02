@@ -32,7 +32,7 @@
 // LE SCHEMA VIENT DE L'EMETTEUR PARTAGE, jamais d'une copie locale : une
 // seconde formulation du cas « aucune entite » aurait diverge de la
 // premiere au premier changement de mot.
-import { SANS_ENTITE } from '@deribfy/compiler'
+import { SANS_ENTITE, SANS_POLITIQUE } from '@deribfy/compiler'
 import { VARIABLES_CSS } from './bibliotheque-ui'
 
 /** Épinglées sur le dépôt : c'est CETTE version de react qui a compilé. */
@@ -68,7 +68,6 @@ const PACKAGE_JSON = `{
 const VITE_CONFIG = `import { copyFileSync } from 'node:fs'
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-import { SANS_ENTITE } from '@deribfy/compiler'
 
 // L'entrée de développement est dev.html : index.html est la page COMPILÉE,
 // autonome, qu'on ouvre en double-clic — elle n'a pas besoin de Vite.
@@ -172,7 +171,7 @@ statique.
  * les ecrans ne s'en servent pas ENCORE.
  */
 export const SECTION_SCHEMA = `
-## 4. Le schéma de vos données — \`schema.sql\`
+## 4. Vos données — \`schema.sql\` et \`politiques.sql\`
 
 Ce fichier décrit les tables que cette application utiliserait pour
 conserver ses données.
@@ -184,6 +183,10 @@ quoi vos données ressembleront et que vous puissiez préparer votre base —
 pas parce que l'application y écrit déjà.
 
 Quand le branchement sera livré, c'est ce fichier-là qui sera appliqué.
+
+\`politiques.sql\` est la PORTE : il n'autorise que les requêtes CONNECTÉES.
+Appliquez-le toujours APRÈS \`schema.sql\`, et ne l'oubliez jamais — une base
+posée sans lui est lisible ET modifiable par quiconque connaît son adresse.
 `
 
 /**
@@ -201,6 +204,14 @@ export function projetLivrable(
    * porte rien (versions anterieures au lot D2), on le dit.
    */
   schema?: string,
+  /**
+   * LA PORTE DE CETTE VERSION.
+   *
+   * Elle voyage avec le schéma, et pour une raison plus dure : appliquer les
+   * politiques d'aujourd'hui sur les tables d'hier protégerait des colonnes
+   * qui n'existent pas, et laisserait les autres ouvertes.
+   */
+  politiques?: string,
 ): Map<string, string> {
   const zip = new Map<string, string>()
   zip.set('index.html', pageAutonomeHtml)
@@ -210,6 +221,13 @@ export function projetLivrable(
   // alors qu'il n'y a rien a appliquer, et pourquoi. Un fichier qui apparait
   // et disparait selon l'etat du produit apprend a ne pas etre cherche.
   zip.set('schema.sql', schema !== undefined && schema !== '' ? schema : SANS_ENTITE)
+  // LA PORTE EST AUSSI UN LIVRABLE DE PREMIER RANG, et pour une raison plus
+  // dure que le schéma : une base posée sans elle est ouverte en écriture à
+  // qui connaît son adresse. Un fichier absent se prendrait pour un oubli.
+  zip.set(
+    'politiques.sql',
+    politiques !== undefined && politiques !== '' ? politiques : SANS_POLITIQUE,
+  )
   zip.set('README.md', README + SECTION_SCHEMA)
   zip.set('package.json', PACKAGE_JSON)
   zip.set('vite.config.ts', VITE_CONFIG)
