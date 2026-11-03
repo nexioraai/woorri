@@ -119,3 +119,47 @@ export const MODULES_EMBARQUES: ReadonlyMap<string, string> = new Map([
     pontSupabase(donnees.modules['@supabase/supabase-js/umd'] ?? ''),
   ],
 ])
+
+/**
+ * CE QUE L'ASSEMBLEUR PEUT RÉELLEMENT SERVIR — la liste qui dit vrai.
+ *
+ * ── LE DÉFAUT QUE CETTE LISTE FERME, et il coûtait de l'argent.
+ *
+ * `PAQUETS_AUTORISES` énumère les quinze paquets du train de release. La
+ * consigne les proposait TOUS au modèle. Mesure du 2026-11-03, par
+ * assemblage réel d'une œuvre d'une ligne par paquet :
+ *
+ *     autorisés : 15 · réellement assemblables : 3
+ *
+ * Douze refusés — `expo`, `react-native`, `@expo/vector-icons`… Un modèle
+ * qui prend `@expo/vector-icons` pour une icône, ou `react-native-svg` pour
+ * un graphique, obéit à la consigne et fait échouer l'assemblage. Trois
+ * tours payés, puis un refus.
+ *
+ * C'est le défaut de supabase-js à l'envers : là un paquet exigé et absent,
+ * ici douze paquets offerts et inatteignables. DANS LES DEUX CAS, DEUX
+ * LISTES QU'ON CROYAIT ÊTRE UNE.
+ *
+ * Celle-ci est DÉRIVÉE de ce qu'on sert : elle ne peut plus en diverger.
+ */
+export const PAQUETS_SERVIS: readonly string[] = [
+  ...new Set(
+    [...MODULES_EMBARQUES.keys()].map((k) =>
+      k.startsWith('@') ? k.split('/').slice(0, 2).join('/') : (k.split('/')[0] ?? k),
+    ),
+  ),
+].sort()
+
+/**
+ * CE QU'ON PROPOSE AU MODÈLE — servable, moins la plomberie.
+ *
+ * `scheduler` et `react/jsx-runtime` sont des rouages internes de react :
+ * servis pour que l'assemblage marche, jamais écrits à la main. Les offrir
+ * inviterait à les importer, et un import inutile est une ligne de plus à
+ * relire dans chaque œuvre.
+ */
+const PLOMBERIE: readonly string[] = ['scheduler']
+
+export const PAQUETS_PROPOSES: readonly string[] = PAQUETS_SERVIS.filter(
+  (p) => !PLOMBERIE.includes(p),
+)

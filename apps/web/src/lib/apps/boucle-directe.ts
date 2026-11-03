@@ -19,14 +19,23 @@
  * arrêté » — c'est écrit dans le moteur actuel.
  */
 import { assembler } from './bac-a-sable'
-import { importsInterdits, lireFichiers, PAQUETS_AUTORISES } from './ecriture-directe'
+import {
+  importsInterdits,
+  lireFichiers,
+  PAQUETS_AUTORISES,
+  PAQUETS_PROPOSES,
+} from './ecriture-directe'
 import { jugerVivacite, type DefautVivacite } from './juge-vivacite'
 import { FICHIER_PERIMETRE, jugerCouverture, type RapportCouverture } from './juge-couverture'
 import { jugerDevise, marqueRecommandee } from './juge-devise'
 import { CONSIGNE_BIBLIOTHEQUE, fichiersSysteme, VARIABLES_CSS } from './bibliotheque-ui'
 import { blocBase, type EntiteDeclaree } from './entites-declarees'
 import { jugerJetons, type DefautJeton } from './juge-jetons'
-import { jugerPersistance, reprochePersistance } from './juge-persistance'
+import {
+  jugerPersistance,
+  reprochePersistance,
+  type DefautPersistance,
+} from './juge-persistance'
 import { jugerExecution, type VerdictExecution } from './juge-execution'
 
 /**
@@ -63,7 +72,7 @@ RÈGLES, et chacune vient d'un défaut réel :
 1. \`index.tsx\` est le point d'entrée. Il monte l'application dans l'élément
    d'identifiant "racine" avec \`createRoot\`. Sans lui, rien ne s'affiche.
 
-2. TU N'IMPORTES QUE CES PAQUETS : ${PAQUETS_AUTORISES.join(', ')}.
+2. TU N'IMPORTES QUE CES PAQUETS : ${PAQUETS_PROPOSES.join(', ')}.
    Aucun autre, jamais, même pour une date ou un graphique. L'environnement
    d'assemblage ne fournit QUE ces paquets : un import hors liste casse la
    construction, ici même, à coup sûr. Écris la fonction toi-même.
@@ -140,6 +149,18 @@ export type Resultat =
       readonly vivacite: readonly DefautVivacite[]
       /** Le rapport chiffré qui accompagne toute génération (EP-297). */
       readonly couverture: RapportCouverture
+      /**
+       * CE QUI RESTE EN MÉMOIRE AU DERNIER TOUR — dit, jamais tu.
+       *
+       * ── LE DÉFAUT QUE CE CHAMP FERME, et il était le mien.
+       *
+       * Au dernier tour, les défauts restants n'empêchent pas la livraison
+       * (refuser re-brûlerait l'argent du propriétaire). Les quatre autres
+       * juges font voyager leur verdict ; le mien, non. Une œuvre amnésique
+       * partait donc SANS QU'UNE LIGNE NE LE DISE — exactement la famille
+       * de défaut que ce juge existe pour fermer.
+       */
+      readonly persistance: readonly DefautPersistance[]
     }
   | {
       readonly ok: false
@@ -306,7 +327,15 @@ export async function boucleEcriture(o: {
       if (interdits.length > 0) {
         motif =
           `Paquets interdits : ${interdits.join(', ')}. ` +
-          `Tu ne peux importer que : ${PAQUETS_AUTORISES.join(', ')}. Écris la fonction toi-même.`
+          // ── ON DIT POURQUOI, PAS SEULEMENT « NON ».
+          //
+          // `expo` n'est pas interdit : il n'existe pas ICI. Un refus qui
+          // ne dit pas « tu te trompes de cible » invite à réessayer avec
+          // un paquet natif voisin — un tour payé pour rien.
+          (interdits.some((i) => PAQUETS_AUTORISES.includes(i))
+            ? 'Ces paquets sont faits pour une application NATIVE ; celle-ci est une page web. '
+            : '') +
+            `Tu ne peux importer que : ${PAQUETS_PROPOSES.join(', ')}. Écris la fonction toi-même.`
       }
     }
 
@@ -447,7 +476,17 @@ export async function boucleEcriture(o: {
           // ils l'ACCOMPAGNENT, dits : refuser re-brûlerait l'argent du
           // propriétaire, taire referait le défaut fondateur.
           tours.push({ rang, fichiers: lus.length, ok: true, ms: Date.now() - debut })
-          return { ok: true, code: v.code, fichiers: carte, tours, jetons, execution, vivacite, couverture }
+          return {
+            ok: true,
+            code: v.code,
+            fichiers: carte,
+            tours,
+            jetons,
+            execution,
+            vivacite,
+            couverture,
+            persistance,
+          }
         }
       } else {
         motif = `La construction a échoué :\n${v.erreur}`

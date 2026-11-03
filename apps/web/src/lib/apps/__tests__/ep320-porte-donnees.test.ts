@@ -63,14 +63,46 @@ describe('EP-320 · la porte', () => {
     for (const e of AVEC_JOURNAL) {
       const t = e.id.replace(/^ent_/u, '')
       expect(sql, `${t} n’a pas de RLS`).toContain(`alter table ${t} enable row level security;`)
-      expect(sql, `${t} n’a pas de politique`).toContain(`create policy ${t}_porte`)
+      // ── UN JOURNAL A DEUX POLITIQUES, et la troisième manque exprès.
+      //
+      // Jusqu'au 2026-11-03, « journal » n'était qu'une ÉTIQUETTE : le
+      // commentaire disait « · journal », le schéma promettait « rien ne s'y
+      // réécrit ni s'y efface », et la politique était `for all`.
+      // L'application générée pouvait réécrire et effacer tout un journal de
+      // cotisations. Le moteur l'écrit maintenant.
+      if (e.appendOnly === true) {
+        expect(sql, `${t} journal : rien ne peut s’y lire`).toContain(
+          `create policy ${t}_lecture on ${t} for select`,
+        )
+        expect(sql, `${t} journal : rien ne peut s’y ajouter`).toContain(
+          `create policy ${t}_ajout on ${t} for insert`,
+        )
+        // CE QUI COMPTE EST CE QUI N'EST PAS LÀ : sans politique permissive,
+        // la RLS refuse — et `force row level security` l'applique même au
+        // propriétaire de la table.
+        expect(sql, `${t} journal : une porte \`for all\` le rend réécrivable`).not.toContain(
+          `create policy ${t}_porte on ${t} for all`,
+        )
+        expect(sql, `${t} journal : update/delete sont accordés`).not.toMatch(
+          new RegExp(`grant[^;]*(update|delete)[^;]*on ${t} `, 'u'),
+        )
+      } else {
+        expect(sql, `${t} n’a pas de politique`).toContain(`create policy ${t}_porte`)
+      }
       expect(sql, `${t} ne révoque rien`).toContain(`revoke all on ${t}`)
     }
-    // ET LE COMPTE EST EXACT : une politique de plus que de tables voudrait
-    // dire qu'une table en porte deux, une de moins qu'il en manque une.
+    // ET LE COMPTE EST EXACT : deux politiques par journal, une par table
+    // normale. Un écart voudrait dire qu'une table en porte trop — et deux
+    // politiques permissives s'ADDITIONNENT — ou qu'il en manque une.
+    const attendu = AVEC_JOURNAL.reduce((n, e) => n + (e.appendOnly === true ? 2 : 1), 0)
     const politiques = [...sql.matchAll(/create policy /gu)].length
-    expect(politiques, 'le compte des politiques ne suit pas celui des tables')
-      .toBe(AVEC_JOURNAL.length)
+    expect(politiques, 'le compte des politiques ne suit pas celui des tables').toBe(attendu)
+    // ── ET LE DÉNOMINATEUR : s'il n'y a plus de journal dans la fixture,
+    //    tout ce qui précède devient décoratif.
+    expect(
+      AVEC_JOURNAL.filter((e) => e.appendOnly === true).length,
+      'la fixture ne contient plus de journal : ce contrôle ne mesure plus rien',
+    ).toBeGreaterThan(0)
   })
 
   it('② LA RÉVOCATION VISE `public`, ET PAS SEULEMENT `anon`', () => {
@@ -221,8 +253,11 @@ describe('EP-320 · la porte', () => {
       ligne.slice(ligne.lastIndexOf(' to ') + 4).replace(/;.*$/u, '')
 
     const politiques = sql.split('\n').filter((x) => x.startsWith('create policy'))
-    expect(politiques.length, 'aucune politique lue : le contrôle ne mesure rien')
-      .toBe(AVEC_JOURNAL.length)
+    // Deux politiques par journal depuis le 2026-11-03 (select + insert, et
+    // PAS de update/delete) : le compte suit les tables, pas leur nombre.
+    expect(politiques.length, 'aucune politique lue : le contrôle ne mesure rien').toBe(
+      AVEC_JOURNAL.reduce((n, e) => n + (e.appendOnly === true ? 2 : 1), 0),
+    )
     for (const ligne of politiques) {
       const roles = rolesDe(ligne)
       expect(roles, 'une politique ne nomme pas le rôle de la porte').toContain(ROLE_PORTE)

@@ -19,7 +19,7 @@ import { describe, expect, it } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { projectAirSchema } from '@deribfy/air-schema'
-import { emettreSchemaSql, nomColonne } from '@deribfy/compiler'
+import { emettreSchemaSql, nomColonne, typeSqlDe } from '@deribfy/compiler'
 import {
   CE_QUE_DECLARER_CHANGE,
   CHAMPS_MAX,
@@ -138,8 +138,17 @@ describe('EP-319 · les données déclarées', () => {
   })
 
   it('⑤ L’ÉCRAN MONTRE LES TABLES, ET DIT CE QUE ÇA NE FAIT PAS ENCORE', () => {
+    // ── LA PHRASE PORTE LE TYPE DEPUIS LE 2026-11-03, et c'est le diff
+    //    schéma/consigne qui l'a imposé : `age numeric` et `actif boolean`
+    //    existaient en base, la phrase disait « age, actif », et le modèle
+    //    devait deviner. `actif: "oui"` dans une colonne booléenne est
+    //    refusé par la base — pas par nous.
     expect(phraseTable(table('membre', [champ('nom'), champ('tel', { unique: true })])))
-      .toBe('membre — nom, tel (unique)')
+      .toBe('membre — nom (texte), tel (texte, unique)')
+    expect(
+      phraseTable(table('m', [champ('age', { type: 'number' }), champ('actif', { type: 'boolean' })])),
+      'le type n’est pas dit au modèle : il l’inventera',
+    ).toBe('m — age (nombre), actif (vrai/faux)')
     expect(phraseTable(table('versement', [champ('montant')], { appendOnly: true })))
       .toContain('(journal)')
     expect(resumeEntites([table('a'), table('b', [champ('x'), champ('y')])]))
@@ -326,8 +335,38 @@ describe('EP-319 · les données déclarées', () => {
       const champ1 = { id, name: 'peu importe', type: 'text', required: true }
       // Ce que l'ÉCRAN affiche, extrait de la phrase qu'il rend.
       const vu = phraseTable({ id: 'ent_t', name: 't', fields: [champ1] }).split('— ')[1]
-      // Ce que le SCHÉMA crée, dit par la fonction du compilateur.
-      expect(vu, `l’écran et le schéma divergent sur « ${id} »`).toBe(nomColonne(champ1))
+      // Ce que le SCHÉMA crée, dit par la fonction du compilateur. La phrase
+      // porte désormais le type entre parenthèses : on compare le NOM, puis
+      // le type séparément — plutôt que d'assouplir la comparaison, ce qui
+      // aurait laissé passer n'importe quelle dérive du nom.
+      expect(vu?.replace(/ \(.*\)$/u, ''), `l’écran et le schéma divergent sur « ${id} »`).toBe(
+        nomColonne(champ1),
+      )
+    }
+
+    // ── ET LE TYPE AUSSI EST PROUVÉ ÉGAL, pas seulement le nom.
+    //
+    // Le mot de la consigne doit correspondre à ce que `typeSqlDe` émet,
+    // sinon on retombe exactement dans « vérité écran vs moteur » un cran
+    // plus bas : un nom juste, un type inventé.
+    const TYPES = [
+      ['text', 'texte', 'text'],
+      ['number', 'nombre', 'numeric'],
+      ['decimal', 'nombre', 'numeric'],
+      ['boolean', 'vrai/faux', 'boolean'],
+      ['date', 'texte, date ISO aaaa-mm-jj', 'text'],
+    ] as const
+    for (const [type, mot, sql] of TYPES) {
+      const f = { id: 'fld_x', name: 'x', type, required: true }
+      expect(typeSqlDe(f), `le compilateur a changé le type SQL de « ${type} »`).toBe(sql)
+      const vu = phraseTable({ id: 'ent_t', name: 't', fields: [f] })
+      expect(vu, `la consigne ne dit pas le type de « ${type} »`).toContain(`(${mot})`)
+      // Un mot qui annonce un nombre là où la base attend du texte (ou
+      // l'inverse) ferait écrire au modèle une valeur que la base refuse.
+      const annonceNombre = mot === 'nombre'
+      expect(annonceNombre, `« ${mot} » et « ${sql} » ne disent pas la même chose`).toBe(
+        sql === 'numeric',
+      )
     }
     // ET LA CONSIGNE POUSSE LE MODÈLE À NOMMER DROIT, pour que l'alignement
     // ne soit pas seulement exact mais aussi lisible.

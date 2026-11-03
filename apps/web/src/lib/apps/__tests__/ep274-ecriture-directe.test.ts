@@ -32,6 +32,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   PAQUETS_AUTORISES,
+  PAQUETS_SERVIS,
   importsDe,
   importsInterdits,
   lireFichiers,
@@ -126,28 +127,61 @@ describe('EP-274 · refuser ce qui casserait un build natif', () => {
     ])
     // Et un chargement différé LÉGITIME reste permis.
     expect(
-      importsInterdits([{ chemin: 'b.tsx', contenu: "const d = await import('react-native-svg')" }]),
+      importsInterdits([
+        { chemin: 'b.tsx', contenu: "const d = await import('@supabase/supabase-js')" },
+      ]),
     ).toEqual([])
   })
 
-  it('⑤ LES QUATORZE PAQUETS DU TRAIN PASSENT, et les fichiers voisins aussi', () => {
-    // Contrôle NÉGATIF : sans lui, le ④ passerait même si TOUT était refusé.
-    const fichiers = PAQUETS_AUTORISES.map((p, i) => ({
+  it('⑤ CE QUI EST SERVABLE PASSE, et les fichiers voisins aussi', () => {
+    // ── CE CONTRÔLE DISAIT « LES QUATORZE PAQUETS DU TRAIN PASSENT », et
+    //    c'était la croyance qui a failli coûter trois tours payés.
+    //
+    // Mesuré le 2026-11-03 : `importsInterdits` a UN SEUL APPELANT — la
+    // boucle d'écriture directe, qui monte une PAGE WEB. Les douze paquets
+    // natifs n'y sont pas servables ; exiger qu'ils « passent » obligeait à
+    // les laisser atteindre un assemblage qui les refuse ensuite, après
+    // qu'un tour a été payé.
+    //
+    // Le train garde son rôle (il épingle ce que les appareils construisent)
+    // et ce contrôle garde le sien : ce qu'on SERT ne doit jamais être
+    // refusé par erreur.
+    const fichiers = PAQUETS_SERVIS.map((p, i) => ({
       chemin: `f${String(i)}.tsx`,
       contenu: `import x from '${p}'`,
     }))
     fichiers.push({ chemin: 'g.tsx', contenu: "import y from './voisin'\nimport z from '../lib/a'" })
-    expect(importsInterdits(fichiers), 'un paquet légitime est refusé').toEqual([])
+    expect(importsInterdits(fichiers), 'un paquet réellement servi est refusé').toEqual([])
+    // ── ET LE SENS INVERSE, qui est le défaut lui-même : un paquet natif
+    //    est refusé AVANT l'assemblage, donc gratuitement.
+    expect(
+      importsInterdits(
+        PAQUETS_AUTORISES.filter((p) => !PAQUETS_SERVIS.includes(p)).map((p, i) => ({
+          chemin: `n${String(i)}.tsx`,
+          contenu: `import x from '${p}'`,
+        })),
+      ).length,
+      'un paquet inatteignable passe : il brûlerait un tour à l’assemblage',
+    ).toBe(PAQUETS_AUTORISES.filter((p) => !PAQUETS_SERVIS.includes(p)).length)
   })
 
   it('⑥ UN SOUS-CHEMIN D’UN PAQUET AUTORISÉ PASSE', () => {
-    // `expo-font/build/x` et `@expo/vector-icons/Ionicons` sont des usages
-    // réels du dépôt : les refuser interdirait ce que le moteur fait déjà.
+    // ── LA PROPRIÉTÉ EST INTACTE, LA FIXTURE A CHANGÉ DE CIBLE.
+    //
+    // Elle employait `expo-font/build/x` et `@expo/vector-icons/Ionicons`,
+    // « usages réels du dépôt ». Ils le restent — DU MOTEUR NATIF, qui ne
+    // passe pas par cette fonction (un seul appelant, mesuré : la boucle
+    // web). On éprouve donc le découpage sur des sous-chemins réellement
+    // servis, et la règle jugée est la même : c'est le PAQUET qui compte,
+    // pas le chemin dedans.
     expect(
       importsInterdits([
         {
           chemin: 'a.tsx',
-          contenu: "import a from 'expo-font/build/x'\nimport I from '@expo/vector-icons/Ionicons'",
+          contenu:
+            "import { createRoot } from 'react-dom/client'\n" +
+            "import { jsx } from 'react/jsx-runtime'\n" +
+            "import { createClient } from '@supabase/supabase-js'",
         },
       ]),
     ).toEqual([])

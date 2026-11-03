@@ -42,6 +42,50 @@ const MODULE = (): string =>
 const UUID = 'fa0ede2c-1111-4111-8111-111111111111'
 
 describe('EP-322 · poser une œuvre', () => {
+
+  it('⓪ LA LISTE EXPOSÉE CONVERGE — un schéma mort la casse EN ENTIER', () => {
+    // ── PANNE MESURÉE SUR LA VRAIE BASE LE 2026-11-03, causée par mes
+    //    propres mesures.
+    //
+    //   exposés : 6 · inexistants en base : 4
+    //   → PGRST002 « Could not query the database for the schema cache »
+    //
+    // PostgREST construit UN SEUL cache pour toute la liste. Un schéma
+    // absent le fait échouer en entier : toutes les œuvres publiées cessent
+    // de répondre, pour un schéma qui n'existe plus. Une liste qui ne fait
+    // que croître est une panne qui attend sa cause.
+    const porte = (l: string): string[] => [`pgrst.db_schemas=${l}`]
+
+    // ① LE MORT PART, le vivant reste, le nouveau entre.
+    expect(
+      listeAvecSchema(porte('public, graphql_public, oeuvre_morte'), 'oeuvre_neuve', [
+        'public',
+        'graphql_public',
+        'oeuvre_neuve',
+      ]),
+    ).toBe('public, graphql_public, oeuvre_neuve')
+
+    // ② ET ON RÉÉCRIT MÊME SI LE SCHÉMA DEMANDÉ EST DÉJÀ LÀ.
+    //
+    // C'était le piège : l'ancienne forme rendait `null` dès que le schéma
+    // y figurait, donc une liste pleine de morts n'était jamais nettoyée par
+    // une republication.
+    expect(
+      listeAvecSchema(porte('public, oeuvre_morte, oeuvre_a'), 'oeuvre_a', ['public', 'oeuvre_a']),
+      'une liste qui porte des morts n’est pas réécrite',
+    ).toBe('public, oeuvre_a')
+
+    // ③ RIEN À FAIRE RESTE RIEN À FAIRE : une écriture inutile notifie
+    //    PostgREST pour rien, et il relit tout son cache à chaque notify.
+    expect(listeAvecSchema(porte('public, oeuvre_a'), 'oeuvre_a', ['public', 'oeuvre_a'])).toBeNull()
+
+    // ④ ON N’ÉLAGUE JAMAIS SUR UNE SUPPOSITION : sans la liste réelle, on
+    //    ajoute et on ne retire rien. Retirer « au cas où » couperait une
+    //    œuvre vivante de sa base.
+    expect(listeAvecSchema(porte('public, oeuvre_inconnue'), 'oeuvre_b')).toBe(
+      'public, oeuvre_inconnue, oeuvre_b',
+    )
+  })
   it('① LES DEUX NOTIFICATIONS, et pas une', () => {
     const m = MODULE()
     // ── MON ASSERTION ÉTAIT SATISFAITE PAR LE COMMENTAIRE DU FICHIER.

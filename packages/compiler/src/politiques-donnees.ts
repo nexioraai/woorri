@@ -175,16 +175,48 @@ export function emettrePolitiquesSql(
       // ③ SANS `force`, le propriétaire de la table ignore les politiques.
       `alter table ${t} force row level security;`,
       // ④ REJOUABLE : sans le `drop`, le second passage échoue sur un doublon.
+      //    LES TROIS NOMS, toujours : une table passée de journal à normale
+      //    (ou l'inverse) laisserait sinon l'ancienne politique en place, et
+      //    deux politiques permissives s'ADDITIONNENT — le journal
+      //    redeviendrait réécrivable en silence.
       `drop policy if exists ${t}_porte on ${t};`,
+      `drop policy if exists ${t}_lecture on ${t};`,
+      `drop policy if exists ${t}_ajout on ${t};`,
       // ── LA PORTE VÉRIFIE L'APPARTENANCE, PAS SEULEMENT LE RÔLE.
       //
       // `to authenticated` ne dit que « connecté » — pas « connecté ICI ».
       // La revendication dit à quelle œuvre le porteur du jeton appartient,
       // et on la compare à CETTE œuvre.
-      `create policy ${t}_porte on ${t} for all to ${ROLE_PORTE}`,
-      `  using (${CHEMIN_REVENDICATION} = '${id}')`,
-      `  with check (${CHEMIN_REVENDICATION} = '${id}');`,
-      `grant select, insert, update, delete on ${t} to ${ROLE_PORTE};`,
+      // ── ET « JOURNAL » CESSE D'ÊTRE UNE ÉTIQUETTE (2026-11-03).
+      //
+      // Le commentaire de cette ligne disait « · journal » et le schéma
+      // promettait « rien ne s'y réécrit ni s'y efface ». La politique,
+      // elle, était `for all` : l'application générée pouvait réécrire et
+      // effacer toutes les lignes d'un journal de cotisations.
+      //
+      // « Vérité écran vs moteur » : on ne présente jamais une vérité de
+      // moteur autrement que le moteur ne l'écrit. Le moteur l'écrit
+      // maintenant — deux politiques au lieu d'une, et PAS de politique
+      // pour `update`/`delete`. En RLS, l'absence de politique permissive
+      // vaut refus, et `force row level security` l'applique même au
+      // propriétaire de la table.
+      ...(e.appendOnly === true
+        ? [
+            `create policy ${t}_lecture on ${t} for select to ${ROLE_PORTE}`,
+            `  using (${CHEMIN_REVENDICATION} = '${id}');`,
+            `create policy ${t}_ajout on ${t} for insert to ${ROLE_PORTE}`,
+            `  with check (${CHEMIN_REVENDICATION} = '${id}');`,
+            // LE PRIVILÈGE SUIT LA POLITIQUE : deux barrières qui disent la
+            // même chose. Sans le `grant`, la politique ne sert à rien ; sans
+            // la politique, le `grant` ouvrirait toutes les lignes.
+            `grant select, insert on ${t} to ${ROLE_PORTE};`,
+          ]
+        : [
+            `create policy ${t}_porte on ${t} for all to ${ROLE_PORTE}`,
+            `  using (${CHEMIN_REVENDICATION} = '${id}')`,
+            `  with check (${CHEMIN_REVENDICATION} = '${id}');`,
+            `grant select, insert, update, delete on ${t} to ${ROLE_PORTE};`,
+          ]),
       '',
     )
   }

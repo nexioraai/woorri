@@ -48,7 +48,24 @@
  *
  * Un import hors de cette liste est REFUSÉ avant même d'assembler : mieux
  * vaut un refus net et gratuit qu'un build EAS qui casse à 40 minutes.
+ *
+ * ── MAIS CE N'EST PAS CE QUE L'ASSEMBLEUR SERT, et la différence coûtait
+ *    de l'argent.
+ *
+ * Mesuré le 2026-11-03 par assemblage réel, un paquet par œuvre : 15
+ * autorisés, 3 assemblables. Les douze paquets natifs n'existent pas dans
+ * le bac à sable — qui monte une PAGE WEB. Un modèle qui prend
+ * `@expo/vector-icons` obéit à la consigne et fait échouer trois tours
+ * payés.
+ *
+ * `importsInterdits` juge donc `PAQUETS_SERVIS`, et la consigne propose
+ * `PAQUETS_PROPOSES` — tous deux DÉRIVÉS de ce qu'on sert vraiment. Cette
+ * liste-ci garde son rôle : dire ce que le train épingle, natif compris.
  */
+import { PAQUETS_PROPOSES, PAQUETS_SERVIS } from './react-embarque'
+
+export { PAQUETS_PROPOSES, PAQUETS_SERVIS }
+
 export const PAQUETS_AUTORISES: readonly string[] = [
   // ── le web
   'react',
@@ -208,7 +225,7 @@ export function importsInterdits(fichiers: readonly FichierEcrit[]): readonly st
     for (const i of importsDe(f.contenu)) {
       if (estRelatif(i)) continue
       const p = paquetDe(i)
-      if (!PAQUETS_AUTORISES.includes(p)) out.add(p)
+      if (!PAQUETS_SERVIS.includes(p)) out.add(p)
     }
   }
   return [...out].sort()

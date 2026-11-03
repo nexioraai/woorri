@@ -59,6 +59,8 @@ const TONTINE: readonly EntiteDonnees[] = [
 ]
 
 describe('EP-318 · le schéma des données', () => {
+
+
   it('① IL S’ÉMET DEPUIS LES ENTITÉS, ET DIT CE QU’IL CONSERVE', () => {
     const sql = emettreSchemaSql(TONTINE)
     expect(sql).toContain('create table if not exists membre (')
@@ -250,7 +252,20 @@ describe('EP-318 · le schéma des données', () => {
     const fastify = lire('packages', 'compiler', 'src', 'emit-fastify.ts')
     expect(fastify, 'emit-fastify a de nouveau son propre DDL')
       .not.toMatch(/create table if not exists \$\{/u)
-    expect(fastify, 'emit-fastify ne délègue plus').toContain('emettreSchemaSql(air.entities)')
+    expect(fastify, 'emit-fastify ne délègue plus').toContain(
+      'emettreSchemaSql(air.entities, "serveur")',
+    )
+    // ── ET IL DIT SON DIALECTE, au lieu de le supposer.
+    //
+    // La gate `backend_vivant` est tombée DEUX FOIS le 2026-11-03 : le
+    // serveur émis tourne sur sqlite ET sur PostgreSQL réel, et aucun
+    // dialecte ne couvre les deux. Il fabrique lui-même ses identifiants
+    // (`randomUUID()`), donc son schéma n'a PAS de défaut de clé — et c'est
+    // ce qui le garde portable. Une émission unique ne veut pas dire un
+    // porteur unique.
+    expect(fastify, 'le porteur de la clé n’est pas dit : ce serveur la fabrique lui-même').toMatch(
+      /emettreSchemaSql\([^)]*"serveur"\)/u,
+    )
     // L'émetteur partagé ne connaît PAS AIR : c'est ce qui le rend appelable
     // par le moteur direct, qui n'a pas de ProjectAir et n'en aura pas.
     const emetteur = lire('packages', 'compiler', 'src', 'schema-donnees.ts')

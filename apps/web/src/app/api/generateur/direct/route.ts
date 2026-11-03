@@ -625,6 +625,25 @@ export async function POST(req: Request) {
                   resultat.couverture.absentes.map((e) => e.exigence).join(', '),
               ]
             : []),
+          // ── ET CE QUI RESTE EN MEMOIRE SE DIT, parce que c'est le seul
+          //    defaut dont la consequence tombe APRES la livraison.
+          //
+          // Les jetons tuent au demarrage, un controle mort se voit, une
+          // couverture partielle se lit. Une table en memoire, elle, marche
+          // a l'ecran : c'est le rechargement qui l'apprend, a la personne
+          // qui vient de perdre sa saisie. Donc on le dit MAINTENANT.
+          ...(resultat.persistance.length > 0
+            ? [
+                'DONNEES NON CONSERVEES — ce qui y est saisi disparait au ' +
+                  'rechargement : ' +
+                  resultat.persistance
+                    .map(
+                      (d) =>
+                        `${d.table} (${d.lue ? 'lue, jamais ecrite' : d.ecrite ? 'ecrite, jamais lue' : 'ni lue ni ecrite'})`,
+                    )
+                    .join(', '),
+              ]
+            : []),
         ]
       : [resultat.motif],
     // La colonne `document` porte l'oeuvre. Ici l'oeuvre est du CODE, pas un
@@ -663,6 +682,7 @@ export async function POST(req: Request) {
       execution: resultat.ok ? resultat.execution : null,
       vivacite: resultat.ok ? resultat.vivacite : null,
       couverture: resultat.ok ? resultat.couverture : null,
+      persistance: resultat.ok ? resultat.persistance : null,
       dernierTexte: resultat.ok ? null : resultat.dernierTexte.slice(0, 20_000),
     },
   }
@@ -772,6 +792,7 @@ export async function POST(req: Request) {
     execution: resultat.execution,
     vivacite: resultat.vivacite,
     couverture: resultat.couverture,
+    persistance: resultat.persistance,
     coutUsd,
     dureeMs,
   }

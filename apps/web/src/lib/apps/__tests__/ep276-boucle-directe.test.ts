@@ -25,7 +25,7 @@
 import { describe, expect, it } from 'vitest'
 import { lireFichiers, sansClotureMarkdown } from '../ecriture-directe'
 import { boucleEcriture, CONSIGNE, pageAutonome, TOURS_MAX } from '../boucle-directe'
-import { PAQUETS_AUTORISES } from '../ecriture-directe'
+import { PAQUETS_PROPOSES, PAQUETS_AUTORISES } from '../ecriture-directe'
 
 /**
  * Un faux modèle : il rend les textes qu'on lui dicte, dans l'ordre.
@@ -220,11 +220,26 @@ describe('EP-276 · la consigne et la page', () => {
     expect(o.tours.every((t) => t.tronquee === false)).toBe(true)
   })
 
-  it('⑦ LA CONSIGNE NOMME LES PAQUETS AUTORISÉS, un par un', () => {
+  it('⑦ LA CONSIGNE NOMME CE QU’ON SERT, un par un — et RIEN D’AUTRE', () => {
     // Si la liste n'est pas DANS la consigne, le modèle importe ce qu'il veut
     // et on ne fait que le refuser après — un tour payé pour rien.
-    for (const p of PAQUETS_AUTORISES) {
-      expect(CONSIGNE, `« ${p} » manque à la consigne`).toContain(p)
+    //
+    // ── ET LA LISTE A CHANGÉ DE SOURCE LE 2026-11-03, pour la même raison.
+    //
+    // Ce contrôle exigeait les QUINZE paquets du train. Mesuré par
+    // assemblage réel : 3 sont servables. Nommer les douze autres faisait
+    // exactement ce que la première phrase redoute — sauf que le tour payé
+    // venait de notre propre consigne, pas du choix du modèle.
+    for (const p of PAQUETS_PROPOSES) {
+      expect(CONSIGNE, `« ${p} » est servable et manque à la consigne`).toContain(p)
+    }
+    const natifs = PAQUETS_AUTORISES.filter((x) => !PAQUETS_PROPOSES.includes(x))
+    expect(natifs.length, 'plus aucun paquet natif : ce contrôle ne mesure rien').toBeGreaterThan(5)
+    for (const p of natifs) {
+      expect(
+        CONSIGNE,
+        `« ${p} » est proposé au modèle et ne s’assemble pas : trois tours payés pour rien`,
+      ).not.toContain(p)
     }
     // Et elle exige le travail, pas la navigation : c'est le défaut mesuré
     // sur CONTERAK, dont le bouton « Calculer » naviguait vers un formulaire.

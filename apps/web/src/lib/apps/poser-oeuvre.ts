@@ -117,6 +117,26 @@ export const SCHEMAS_DE_BASE = 'public, graphql_public'
 export function listeAvecSchema(
   rolconfig: readonly string[] | null,
   schema: string,
+  /**
+   * LES SCHÉMAS QUI EXISTENT VRAIMENT — et sans eux la liste ne converge pas.
+   *
+   * ── LA PANNE MESURÉE LE 2026-11-03, sur la vraie base des œuvres.
+   *
+   * Quatre schémas de mesure avaient été posés puis SUPPRIMÉS. La liste
+   * exposée les gardait tous les quatre :
+   *
+   *   exposés : 6 · inexistants en base : 4
+   *   → PGRST002 « Could not query the database for the schema cache »
+   *
+   * Et ce refus ne touchait pas seulement les morts : PostgREST construit
+   * UN SEUL cache pour toute la liste. Un schéma absent le fait échouer en
+   * entier — donc TOUTES les œuvres publiées cessent de répondre, pour un
+   * schéma qui n'existe plus.
+   *
+   * Une liste qui ne fait que croître est une panne qui attend sa cause.
+   * Celle-ci converge : chaque pose élague ce qui n'existe pas.
+   */
+  existants?: readonly string[],
 ): string | null {
   const ligne = (rolconfig ?? []).find((x) => x.startsWith('pgrst.db_schemas='))
   const actuelle = ligne === undefined ? SCHEMAS_DE_BASE : ligne.slice('pgrst.db_schemas='.length)
@@ -124,8 +144,15 @@ export function listeAvecSchema(
     .split(',')
     .map((x) => x.trim())
     .filter((x) => x !== '')
-  if (deja.includes(schema)) return null
-  return [...deja, schema].join(', ')
+  // ── L'ÉLAGAGE N'EST PAS OPTIONNEL QUAND ON SAIT : sans `existants` on ne
+  //    sait pas, et on ne retire donc rien — jamais sur une supposition.
+  const vivants = existants === undefined ? deja : deja.filter((x) => existants.includes(x))
+  const voulue = vivants.includes(schema) ? vivants : [...vivants, schema]
+  // `null` veut dire « rien à écrire ». Il ne peut donc plus se déduire de la
+  // seule présence du schéma : une liste qui porte des morts doit être
+  // réécrite MÊME si le schéma demandé y est déjà.
+  if (voulue.length === deja.length && voulue.every((x, i) => x === deja[i])) return null
+  return voulue.join(', ')
 }
 
 export type Pose =
@@ -234,7 +261,13 @@ export async function poserOeuvre(o: {
       const lu = await client.query<{ rolconfig: string[] | null }>(
         "select rolconfig from pg_roles where rolname = 'authenticator'",
       )
-      const nouvelle = listeAvecSchema(lu.rows[0]?.rolconfig ?? null, schema)
+      // LA LISTE RÉELLE EST L'ARBITRE : on n'élague pas sur une supposition.
+      const reels = await client.query<{ nspname: string }>('select nspname from pg_namespace')
+      const nouvelle = listeAvecSchema(
+        lu.rows[0]?.rolconfig ?? null,
+        schema,
+        reels.rows.map((r) => r.nspname),
+      )
       if (nouvelle === null) {
         await client.query('commit')
         return { ok: true, schema, expose: false }

@@ -119,7 +119,66 @@ export const SANS_ENTITE = [
  * `if not exists` partout : le fichier s'applique autant de fois qu'on veut
  * sans jamais rien détruire de ce qui est déjà là.
  */
-export function emettreSchemaSql(entites: readonly EntiteDonnees[]): string {
+/**
+ * QUI REMPLIT LA CLÉ PRIMAIRE — et c'est la vraie question, pas le dialecte.
+ *
+ * ── DEUX MESURES, DANS CET ORDRE, LE 2026-11-03.
+ *
+ * ① Sur la base des œuvres publiées (PostgreSQL 17.6) :
+ *
+ *      insert into membre (nom) values ('Awa')
+ *      → null value in column "id" violates not-null constraint
+ *
+ *    L'application générée écrit DIRECTEMENT par PostgREST : personne ne
+ *    s'interpose pour fabriquer un identifiant. Sans défaut, la PREMIÈRE
+ *    inscription de chaque œuvre échouait, et rien ne le disait — ni le
+ *    schéma, ni la consigne, ni le LISEZ-MOI.
+ *
+ * ② J'ai donc posé `default gen_random_uuid()::text`, et la gate est tombée
+ *    DEUX FOIS de suite, chaque fois en m'apprenant quelque chose :
+ *
+ *      ERR_SQLITE_ERROR  near "(": syntax error      (pile sqlite)
+ *      42883  No function matches the given name     (pile postgres)
+ *
+ *    Le serveur Fastify émis par le moteur AIR tourne sur DEUX piles, et
+ *    aucun dialecte ne les couvre toutes les deux. Chercher la fonction
+ *    portable était la mauvaise question.
+ *
+ * ── LA BONNE QUESTION, ET ELLE A UNE RÉPONSE SIMPLE.
+ *
+ * Le serveur Fastify FABRIQUE DÉJÀ l'identifiant : `const id = brut ===
+ * undefined ? randomUUID() : String(brut)` (emit-fastify). Il n'a jamais eu
+ * besoin d'un défaut — c'est pour ça que ce schéma marchait depuis un an.
+ *
+ * Ce n'est donc pas « quel dialecte » mais QUI REMPLIT :
+ *
+ * · `base` — rien ne s'interpose (PostgREST). La base doit remplir, et elle
+ *   est toujours PostgreSQL : la base des œuvres et le `.sql` du zip.
+ * · `serveur` — le serveur émis remplit. Le schéma reste alors PORTABLE,
+ *   donc valable sur ses deux piles, et c'est ce qui le garde vrai.
+ */
+export type QuiRemplitLaCle = 'base' | 'serveur'
+
+const CLE_PAR_PORTEUR: Readonly<Record<QuiRemplitLaCle, string>> = {
+  // `gen_random_uuid` vit dans `pg_catalog` depuis PostgreSQL 13 (vérifié :
+  // présent dans `pg_catalog` ET `extensions` sur notre base). Le défaut se
+  // résout donc quel que soit le `search_path` de la session qui écrit — ce
+  // qui compte, car PostgREST n'a pas celui de la pose.
+  base: 'id text primary key default gen_random_uuid()::text',
+  // AUCUN DÉFAUT, ET C'EST VOULU : portable sur SQLite comme sur Postgres,
+  // parce que c'est le serveur qui fabrique l'identifiant.
+  serveur: 'id text primary key',
+}
+
+export function emettreSchemaSql(
+  entites: readonly EntiteDonnees[],
+  /**
+   * `base` par défaut : c'est la base des œuvres publiées ET le `.sql` du
+   * zip, où l'application écrit sans qu'un serveur s'interpose. Le moteur
+   * AIR, dont le serveur fabrique les identifiants, le dit.
+   */
+  quiRemplitLaCle: QuiRemplitLaCle = 'base',
+): string {
   if (entites.length === 0) return SANS_ENTITE
   const l: string[] = [
     '-- ÉMIS PAR DERIBFY DEPUIS LES DONNÉES DÉCLARÉES — NE PAS ÉDITER À LA MAIN.',
@@ -133,7 +192,7 @@ export function emettreSchemaSql(entites: readonly EntiteDonnees[]): string {
         e.appendOnly === true ? ' — JOURNAL : rien ne s’y réécrit ni s’y efface.' : ''
       }`,
       `create table if not exists ${nomTable(e)} (`,
-      '  id text primary key',
+      `  ${CLE_PAR_PORTEUR[quiRemplitLaCle]}`,
       // ── `unique` DEVIENT UNE CONTRAINTE, PAS UN COMMENTAIRE.
       //
       // Mesuré le 2026-10-12 : 72 champs `unique` dans 28 documents, et le

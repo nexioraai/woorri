@@ -241,6 +241,18 @@ export function blocBase(entites: readonly EntiteDeclaree[]): string {
     '   TES TABLES, avec leurs colonnes — ces noms exactement :',
     tables,
     '',
+    '   CHAQUE TABLE A EN PLUS une colonne `id` que la base remplit toute',
+    '   seule. NE L’ENVOIE PAS à l’écriture ; lis-la pour identifier une',
+    '   ligne (clé de liste React, suppression, modification).',
+    ...(entites.some((e) => e.appendOnly === true)
+      ? [
+          '',
+          '   UNE TABLE MARQUÉE (journal) N’ACCEPTE QUE DES AJOUTS. La base',
+          '   REFUSE d’y modifier ou d’y supprimer une ligne — n’écris donc',
+          '   aucun bouton qui le propose : il échouerait sans rien dire.',
+        ]
+      : []),
+    '',
     '   INTERDIT : des valeurs d’exemple écrites en dur. Ce qu’un écran',
     '   montre vient de la base, toujours. Une base vide donne une liste',
     '   vide, et c’est la bonne réponse — pas une raison d’inventer des',
@@ -269,6 +281,22 @@ export function blocBase(entites: readonly EntiteDeclaree[]): string {
  * divergent un jour, c'est lui qui le dira — pas un utilisateur qui cherche
  * une colonne qui n'existe pas.
  */
+/**
+ * LE TYPE DIT AU MODÈLE, dans les mots de ce que la base accepte.
+ *
+ * Aligné sur `typeSqlDe` du compilateur : `number`/`decimal` → `numeric`,
+ * `boolean` → `boolean`, tout le reste → `text`. Une date est donc du
+ * TEXTE, et le dire évite qu'un objet `Date` parte en base dans un format
+ * que la relecture ne saura pas trier.
+ */
+const MOT_DU_TYPE: Readonly<Record<string, string>> = {
+  number: 'nombre',
+  decimal: 'nombre',
+  boolean: 'vrai/faux',
+  date: 'texte, date ISO aaaa-mm-jj',
+  datetime: 'texte, date ISO',
+}
+
 const sansPrefixe = (id: string): string => id.replace(/^(ent_|fld_)/u, '')
 
 /**
@@ -367,8 +395,20 @@ export function phraseTable(e: EntiteDeclaree): string {
   // 2026-10-12, et les serveurs émis par le moteur AIR emploient ces
   // colonnes. La changer casserait ce qui est livré. C'est donc l'ÉCRAN qui
   // s'aligne — et la consigne qui, elle, pousse le modèle à nommer droit.
+  // ── LE TYPE AUSSI, et c'est le diff du 2026-11-03 qui l'a montré.
+  //
+  // La consigne disait « membre — nom, telephone (unique), age, actif ».
+  // Le schéma, lui, crée `age numeric` et `actif boolean`. Le modèle devait
+  // donc DEVINER — et `actif: "oui"` dans une colonne booléenne est refusé
+  // par la base, pas par nous.
+  //
+  // Depuis que la consigne dit « ces noms exactement », chaque chose
+  // qu'elle TAIT est une chose que le modèle invente.
   const champs = e.fields
-    .map((f) => `${sansPrefixe(f.id)}${f.unique === true ? ' (unique)' : ''}`)
+    .map(
+      (f) =>
+        `${sansPrefixe(f.id)} (${MOT_DU_TYPE[f.type] ?? 'texte'}${f.unique === true ? ', unique' : ''})`,
+    )
     .join(', ')
   // ── ET LE NOM DE LA TABLE AUSSI, ce qui manquait.
   //

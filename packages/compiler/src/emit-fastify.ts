@@ -200,7 +200,12 @@ function schemaSql(air: ProjectAir): string {
   // DDL ici, les DEUX moteurs emettent le meme schema depuis la meme
   // fonction. La duplication est fermee avant d'exister, pas apres l'avoir
   // payee.
-  return emettreSchemaSql(air.entities);
+  // CE SERVEUR FABRIQUE LUI-MEME LES IDENTIFIANTS (`randomUUID()` plus bas) :
+  // le schema n'a donc PAS de defaut de cle, et reste portable sur ses deux
+  // piles. La gate `backend_vivant` est tombee deux fois le 2026-11-03 —
+  // `near "(": syntax error` sur sqlite, `42883` sur postgres — parce que
+  // j'avais cherche un dialecte la ou la question etait « qui remplit ».
+  return emettreSchemaSql(air.entities, "serveur");
 }
 
 
