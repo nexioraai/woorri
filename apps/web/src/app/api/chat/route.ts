@@ -1437,7 +1437,21 @@ export async function POST(req: Request) {
         envoyer({ t: 'battement' })
       }, 5000)
       try {
+        const t0 = Date.now()
         const r = await traiter(req, (etape, rang) => {
+          // ── LE JALON PART AUSSI AU JOURNAL, et c'est une lacune mesurée.
+          //
+          // Le 2026-11-03 à 19h26, une génération a travaillé 96 SECONDES
+          // sans écrire UNE SEULE LIGNE de journal. Elle a abouti — site
+          // écrit à 19:28:28, modèle facturé à 19:28:29 — mais pendant ces
+          // 96 s, rien dans Vercel ne disait où elle en était.
+          //
+          // Les jalons partaient dans le FLUX, donc vers l'écran et nulle
+          // part ailleurs. Quand l'écran ment ou se fige, il ne reste rien
+          // à lire. Le même jalon part maintenant dans les deux sens.
+          console.log(
+            `[chat] jalon ${String(rang)} à ${String(Math.round((Date.now() - t0) / 1000))}s — ${etape}`,
+          )
           // LE RANG EST AUTORITAIRE, LE TEXTE EST POUR L'ŒIL.
           //
           // Mesuré le 2026-11-03 : le client cherchait le texte dans sa

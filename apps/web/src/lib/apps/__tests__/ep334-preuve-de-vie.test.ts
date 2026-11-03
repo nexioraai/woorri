@@ -158,4 +158,29 @@ describe('EP-334 · la preuve de vie', () => {
     )
     expect(bloc, 'le journal n’en garde aucune trace').toMatch(/alerter\(\{/u)
   })
+
+  it('⑦ CHAQUE JALON PART AUSSI AU JOURNAL — sinon on ne peut rien relire', () => {
+    // ── LA LACUNE MESURÉE LE 2026-11-03, une fois les journaux lisibles.
+    //
+    //   19:26:52.428  [Generation] Detected sector: shop | mode 2 | fr
+    //                 ·········· 96 secondes, AUCUNE ligne ··········
+    //   19:28:28.047  site écrit · 19:28:29.147  modèle facturé
+    //
+    // La génération a ABOUTI en 97 s. Mais pendant 96 d'entre elles, rien
+    // dans les journaux ne disait où elle en était : les jalons partaient
+    // dans le FLUX, donc vers l'écran et nulle part ailleurs.
+    //
+    // Quand l'écran se fige — ce qu'il faisait, à cause du -1 — il ne
+    // reste RIEN à relire. Un instrument qui ne parle qu'à l'écran meurt
+    // avec l'écran.
+    const iEnvoi = ROUTE.indexOf("envoyer({ t: 'etape', texte: etape, rang })")
+    expect(iEnvoi, 'le jalon ne part plus dans le flux').toBeGreaterThan(0)
+    const rappel = ROUTE.slice(ROUTE.indexOf('const r = await traiter(req,'), iEnvoi)
+    expect(rappel, 'le jalon ne part pas au journal : 96 s sans trace, c’est déjà arrivé')
+      .toMatch(/console\.log\(/u)
+    // ET IL PORTE LE TEMPS ÉCOULÉ : « jalon 1 » sans seconde ne dit pas si
+    // la génération rame ou si elle vient de commencer.
+    expect(rappel, 'le journal ne dit pas depuis combien de temps').toMatch(/Date\.now\(\) - t0/u)
+    expect(rappel, 'le journal ne dit pas quel rang').toMatch(/String\(rang\)/u)
+  })
 })
