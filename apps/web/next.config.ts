@@ -184,7 +184,10 @@ const nextConfig: NextConfig = {
   // accuse un bogue de npm alors que le fichier n'est simplement pas là.
   //
   // Mesuré en ligne au premier clic sur « Voir l'application ».
-  serverExternalPackages: ['onnxruntime-web', 'rolldown'],
+  // `pg` est un paquet NATIF (pg-native optionnel, sockets) : Turbopack ne
+  // doit pas l'empaqueter. Et il ne tourne QUE cote serveur — EP-322 interdit
+  // deja que le module qui le lit soit atteignable depuis un composant client.
+  serverExternalPackages: ['onnxruntime-web', 'rolldown', 'pg'],
 
   // LE MODÈLE DE DÉTOURAGE DOIT ENTRER DANS LA FONCTION SERVEUR.
   //
