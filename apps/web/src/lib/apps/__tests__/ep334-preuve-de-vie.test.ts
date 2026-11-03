@@ -195,4 +195,28 @@ describe('EP-334 · la preuve de vie', () => {
     expect(rappel, 'le journal ne dit pas depuis combien de temps').toMatch(/Date\.now\(\) - t0/u)
     expect(rappel, 'le journal ne dit pas quel rang').toMatch(/String\(rang\)/u)
   })
+
+  it('⑧ LES QUARANTE PREMIÈRES SECONDES NE SONT PLUS MUETTES', () => {
+    // ── MESURÉ DANS LES JOURNAUX DE PRODUCTION, 2026-11-03.
+    //
+    //   21:33:05  jalon 1 à 0s  — Rédaction de votre boutique…
+    //   21:33:51  jalon 1 à 46s — 2 signes écrits
+    //
+    // QUARANTE-SIX SECONDES avant le premier signe (41 s sur une autre
+    // génération). Le compteur n explique rien pendant ce temps : il n y a
+    // rien à compter. L écran affichait donc l étape, et RIEN dessous.
+    //
+    // Le modèle réfléchit avant d écrire. C est normal, c est long, et ça
+    // se dit — avec les secondes, qui viennent du serveur en train
+    // d attendre.
+    expect(ROUTE, 'l attente du modèle est muette').toMatch(/le modèle réfléchit/u)
+    expect(ROUTE, 'elle ne dit pas depuis combien de temps').toMatch(/debutModele/u)
+    // ET ELLE S ARRÊTE DÈS LE PREMIER SIGNE : deux messages concurrents
+    // seraient le clignotement qu on vient de supprimer.
+    expect(ROUTE, 'l attente continue pendant que le modèle écrit').toMatch(
+      /if \(signes > 0\) return/u,
+    )
+    // ET LE MINUTEUR S ÉTEINT, même si l appel lève.
+    expect(ROUTE, 'le minuteur d attente fuit').toMatch(/finally \{[\s\S]{0,80}clearInterval\(attente\)/u)
+  })
 })

@@ -33,7 +33,8 @@ import { racineDepot } from '@/lib/apps/racine'
 import { clientIA, MODELE_LEGER } from '@/lib/ia/client'
 import { nomProduitValide } from '@/lib/apps/nom-produit'
 import { projectAirSchema } from '@deribfy/air-schema'
-import { CONSIGNE_ENTITES, lireEntites } from '@/lib/apps/entites-declarees'
+import { lireEntites } from '@/lib/apps/entites-declarees'
+import { CONSIGNE } from '@/lib/apps/consigne-lire-brief'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -64,46 +65,7 @@ export const maxDuration = 60
  * « si aucune ne correspond, dites-le ») ; poser une question dont la
  * réponse est dans le document coûte la confiance de la personne.
  */
-const CONSIGNE = [
-  'Tu lis la demande d’une personne qui veut faire construire une application.',
-  'Tu ne construis rien. Tu relèves ce que le texte ÉNONCE — y compris par son silence.',
-  '',
-  'INTERDIT ABSOLU : deviner depuis la langue, le style ou un nom propre.',
-  'Le pays ne se déduit JAMAIS de la langue. Un numéro ne s’invente JAMAIS.',
-  '',
-  'Rends UN SEUL objet JSON, sans texte autour. Clés possibles, toutes facultatives :',
-  '  ARGENT_DANS_APP : "aucun" | "paiements" | "produits"',
-  '      paiements = le texte dit qu’elle encaisse (abonnement, cotisation, facture, vente de services payés dans l’application)',
-  '      produits  = le texte dit qu’elle vend des articles à livrer',
-  '      aucun     = AUSSI quand le document est un cahier des charges COMPLET',
-  '                  (sections, fonctionnalités détaillées) et qu’AUCUNE de ses',
-  '                  fonctions ne mentionne encaisser ou vendre. Le silence d’un',
-  '                  document complet est une réponse : elle n’encaisse rien.',
-  '                  Un refus explicite (« commande en ligne : non ») compte aussi.',
-  '  MARCHE_VISE : le pays NOMMÉ dans le texte, tel qu’il est écrit',
-  '  NUMERO_ENCAISSEUR : un numéro de téléphone écrit en toutes lettres dans le texte',
-  '',
-  'Demande COURTE ou VAGUE (une phrase, une idée sans détail) ? Omets ce qui',
-  'n’y figure pas — les questions se poseront, et elles seront légitimes.',
-  '',
-  '── ET LE NOM DU PRODUIT, deux clés de plus :',
-  '  NOM_PRODUIT : comment le produit s’appelle, 2 à 40 signes.',
-  '      S’il est NOMMÉ dans le texte, reprends-le À L’IDENTIQUE — tu ne',
-  '      rebaptises pas le produit de quelqu’un d’autre.',
-  '      Sinon seulement, propose-en un. N’écris jamais « Application » ni',
-  '      « Projet » : ce ne sont pas des noms.',
-  '  NOM_CITATION : le passage du texte, RECOPIÉ MOT POUR MOT (80 signes au',
-  '      plus), où ce nom se lit ou d’où il vient. Si tu l’as inventé, omets',
-  '      cette clé — ne fabrique pas une citation.',
-  // ── LES DONNÉES À CONSERVER (lot D1, 2026-11-02).
-  //
-  // Le bloc vit dans son propre module, avec ses bornes et ses refus. Il
-  // entre ICI et pas dans la consigne de génération : celle-ci est passée
-  // de 1 363 à 5 904 signes en deux semaines, et on la soupçonne d'avoir
-  // coûté un tir. Cette route, elle, ne construit rien — elle LIT et rend
-  // du JSON, et elle filtre déjà sa propre sortie.
-  CONSIGNE_ENTITES,
-].join('\n')
+
 
 export async function POST(req: Request) {
   const garde = await requireAuthenticatedUser(req)
@@ -186,6 +148,41 @@ export async function POST(req: Request) {
       if (q.choix !== undefined && !q.choix.some((c) => c.valeur === valeur)) continue
       deduites[code] = valeur
     }
+    // ── LES QUESTIONS DU MODÈLE, BORNÉES (2026-11-03).
+    //
+    // DEMANDE DU PROPRIÉTAIRE, après une capture : quelqu'un qui veut lire
+    // son compteur SNE s'est vu demander ce que son application « fait
+    // avec l'argent ». La table des questions ne connaît pas son métier —
+    // elle ne connaît que ses propres rubriques.
+    //
+    // Le modèle, lui, LIT la demande. On lui laisse donc poser ce qui
+    // manque VRAIMENT.
+    //
+    // ── ET ON LE BORNE, parce qu'un champ libre venu d'un modèle finit à
+    //    l'écran de quelqu'un.
+    //
+    // Trois questions au plus, quatre choix au plus, longueurs coupées. Ce
+    // ne sont pas des précautions de style : c'est du texte qui sera rendu
+    // dans une page, et dont la longueur n'est garantie par personne.
+    const questionsIA: { code: string; texte: string; choix: string[] }[] = []
+    if (Array.isArray(lu.QUESTIONS)) {
+      for (const [n, brute] of (lu.QUESTIONS as unknown[]).slice(0, 3).entries()) {
+        if (typeof brute !== 'object' || brute === null) continue
+        const o = brute as { texte?: unknown; choix?: unknown }
+        const texte = typeof o.texte === 'string' ? o.texte.trim().slice(0, 200) : ''
+        if (texte === '') continue
+        const choix = Array.isArray(o.choix)
+          ? o.choix
+              .filter((c): c is string => typeof c === 'string' && c.trim() !== '')
+              .slice(0, 4)
+              .map((c) => c.trim().slice(0, 80))
+          : []
+        // UNE QUESTION SANS CHOIX RESTE UNE QUESTION : la personne répond
+        // en texte libre. On ne la jette pas pour si peu.
+        questionsIA.push({ code: `IA_${String(n)}`, texte, choix })
+      }
+    }
+
     // ── LES DONNÉES DÉCLARÉES, JUGÉES PAR LE CONTRAT LUI-MÊME.
     //
     // `entitySchema` vit dans le paquet AIR ; on lui soumet chaque entité
@@ -235,6 +232,7 @@ export async function POST(req: Request) {
       }
     }
     return NextResponse.json({
+      questionsIA,
       deduites,
       ...(nomProduit === undefined ? {} : { nomProduit }),
       // LES REFUS VOYAGENT AVEC LES ENTITÉS. Un refus muet produirait une

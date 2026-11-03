@@ -161,6 +161,9 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
   // autant — une valeur hors de la table des choix ne compte pas comme une
   // reponse, et sa question revient.
   const [reponsesAvant, setReponsesAvant] = useState<Record<string, unknown>>({});
+  const [questionsIA, setQuestionsIA] = useState<
+    { code: string; texte: string; choix: string[] }[]
+  >([]);
   /**
    * LES DONNÉES QUE LE MODÈLE A DÉCLARÉES, et ce qui a été écarté.
    *
@@ -651,7 +654,14 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
             deduites?: Record<string, unknown>;
             entites?: EntiteDeclaree[];
             entitesRefusees?: { quoi: string; motif: string }[];
+            questionsIA?: { code: string; texte: string; choix: string[] }[];
           };
+          // ── LES QUESTIONS DU MODÈLE (2026-11-03).
+          //
+          // La table fixe ne connaît que ses rubriques : pour un compteur
+          // d'énergie, elle n'avait rien à dire et a quand même posé sa
+          // question sur l'argent. Celles-ci sortent de la demande elle-même.
+          setQuestionsIA(dl.questionsIA ?? []);
           // ── LES DONNÉES DÉCLARÉES (lot D1, 2026-11-02).
           //
           // Elles sont retenues telles que le SERVEUR les a validées — cet
@@ -699,6 +709,30 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
         setMessages((m) => [...m, { role: 'avant', question: suivante }]);
         return;
       }
+      // ── PUIS LES QUESTIONS DU MODÈLE (2026-11-03).
+      //
+      // Elles viennent APRÈS les questions de configuration, parce que
+      // celles-là décident du moteur (devise, encaissement) et que leurs
+      // réponses sont structurées. Celles-ci sont du CONTEXTE : elles
+      // enrichissent le brief, elles ne pilotent rien.
+      //
+      // Et elles viennent AVANT l'échappatoire : « autre chose d'important
+      // ? » n'a de sens qu'une fois qu'on a posé ce qu'on savait demander.
+      const ia = questionsIA.find((q) => lues[q.code] === undefined);
+      if (ia !== undefined) {
+        const q: QuestionAvant = {
+          code: ia.code,
+          structure: 'brief',
+          texte: ia.texte,
+          ...(ia.choix.length > 0
+            ? { choix: ia.choix.map((c) => ({ valeur: c, texte: c })) }
+            : {}),
+        };
+        setQuestionAvant(q);
+        setMessages((m) => [...m, { role: 'avant', question: q }]);
+        return;
+      }
+
       // ── PLUS AUCUNE QUESTION DE CONFIGURATION : L'ECHAPPATOIRE, UNE FOIS.
       if (lues[AUTRE_CHOSE] === undefined) {
         const q: QuestionAvant = {
@@ -767,14 +801,35 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
   /** Une reponse a un CHOIX FERME — un clic, pas une phrase a interpreter. */
   const choisirAvant = (valeur: string) => { void repondreAvant(valeur); };
 
+  /**
+   * CE QUE DEVIENT LA RÉPONSE À UNE QUESTION DU MODÈLE.
+   *
+   * `briefAvec` ne connaît que les codes de la table d'élicitation : un
+   * code `IA_*` y serait IGNORÉ. Une question posée dont la réponse se perd
+   * est pire que pas de question — c'est le défaut nommé ailleurs dans ce
+   * fichier, « une réponse récoltée et jetée ».
+   *
+   * Elles rejoignent donc le brief par le seul chemin qui accepte du texte
+   * libre : l'échappatoire. Question et réponse, dans les mots qui ont été
+   * lus et cliqués.
+   */
+  const avecReponseIA = (code: string, texte: string, reponse: string): string => {
+    if (!code.startsWith('IA_')) return autreChose;
+    const ligne = `${texte} → ${reponse}`;
+    return autreChose === '' ? ligne : `${autreChose}\n${ligne}`;
+  };
+
   const repondreAvant = async (valeur: string) => {
     const code = questionAvant?.code;
     if (enCours || code === undefined) return;
     const choisi = questionAvant?.choix?.find((c) => c.valeur === valeur);
-    setMessages((m) => [...m, { role: 'moi', texte: choisi?.texte ?? valeur }]);
+    const lu = choisi?.texte ?? valeur;
+    setMessages((m) => [...m, { role: 'moi', texte: lu }]);
     const suite = { ...reponsesAvant, [code]: valeur };
     setReponsesAvant(suite);
-    await lancerPreVol(demandeEnAttente, suite, autreChose);
+    const autre = avecReponseIA(code, questionAvant?.texte ?? '', lu);
+    if (autre !== autreChose) setAutreChose(autre);
+    await lancerPreVol(demandeEnAttente, suite, autre);
   };
 
   /** Un tour : soit une premiere demande, soit une reponse a la question ouverte. */
@@ -800,6 +855,15 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
         setMessages((m) => [...m, { role: 'moi', texte }]);
         const suite = { ...reponsesAvant, [questionAvant.code]: texte };
         setReponsesAvant(suite);
+        // Une question du modèle répondue au clavier suit le même chemin
+        // qu'un clic : sinon la moitié des réponses se perdrait.
+        if (questionAvant.code.startsWith('IA_')) {
+          const autre = avecReponseIA(questionAvant.code, questionAvant.texte, texte);
+          setAutreChose(autre);
+          setSaisie('');
+          await lancerPreVol(demandeEnAttente, suite, autre);
+          return;
+        }
         if (questionAvant.code === AUTRE_CHOSE) {
           // « non » n'est pas une precision : on l'ecarte du brief plutot que
           // de faire lire a P0 une phrase qui ne dit rien.

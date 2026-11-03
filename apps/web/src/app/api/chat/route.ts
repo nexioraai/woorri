@@ -826,6 +826,29 @@ Return ONLY valid JSON, no markdown:
       const fil = ia().messages.stream(mainCallParams);
       let signes = 0;
       let dernier = 0;
+      // ── LES QUARANTE PREMIÈRES SECONDES, MESURÉES DANS LES JOURNAUX.
+      //
+      //   21:33:05  jalon 1 à 0s  — Rédaction de votre boutique…
+      //   21:33:51  jalon 1 à 46s — 2 signes écrits
+      //
+      // QUARANTE-SIX SECONDES avant le premier signe, et quarante et une
+      // sur une autre génération. Pendant tout ce temps le compteur n'a
+      // rien à dire, donc l'écran n'affiche RIEN sous l'étape — le silence
+      // exact qu'on répare partout ailleurs.
+      //
+      // Le modèle réfléchit avant d'écrire : c'est normal, et c'est long.
+      // On le DIT, avec les secondes, et ça ne ment pas — ce compte vient
+      // du serveur, qui est bien en train d'attendre.
+      const debutModele = Date.now();
+      const attente = setInterval(() => {
+        if (signes > 0) return;
+        progres(
+          `Rédaction de votre boutique… le modèle réfléchit (${String(
+            Math.round((Date.now() - debutModele) / 1000),
+          )} s)`,
+          1,
+        );
+      }, 5000);
       // ── LE COMPTEUR EST UN CONFORT, LA GÉNÉRATION EST L'ESSENTIEL.
       //
       // `clientIA()` rend toujours un client Anthropic, qui expose `.on`.
@@ -862,7 +885,11 @@ Return ONLY valid JSON, no markdown:
           }
         });
       }
-      return fil.finalMessage();
+      try {
+        return await fil.finalMessage();
+      } finally {
+        clearInterval(attente);
+      }
     };
     let response = await ecrireAvecProgres();
 

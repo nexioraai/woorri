@@ -118,7 +118,17 @@ describe('EP-288 · aucune borne que la réflexion épuise', () => {
     // fragment ». Ce controle tient les DEUX moities : le silence structure
     // se lit, la demande vague continue de declencher les questions.
     const code = readFileSync(
-      join(SRC, 'app', 'api', 'generateur', 'lire-brief', 'route.ts'),
+    // ── LA CONSIGNE A DÉMÉNAGÉ, LA PROPRIÉTÉ N'A PAS BOUGÉ (2026-11-03).
+    //
+    // Elle vivait dans `lire-brief/route.ts`. Un fichier de route n'exporte
+    // que ses verbes HTTP — le validateur de Next refuse le reste — et un
+    // tir ne pouvait donc pas la rejouer. Or c'est ce texte-là qui a posé
+    // « Que fait votre application avec l'argent ? » à quelqu'un qui veut
+    // lire son compteur SNE.
+    //
+    // Quatrième cliquet de la journée à lire un EMPLACEMENT au lieu d'une
+    // règle. Celui-ci lit maintenant le module qui porte la consigne.
+      join(SRC, 'lib', 'apps', 'consigne-lire-brief.ts'),
       'utf8',
     )
     const bloc = code.slice(code.indexOf('const CONSIGNE'), code.indexOf('].join'))
@@ -127,8 +137,29 @@ describe('EP-288 · aucune borne que la réflexion épuise', () => {
     expect(bloc, 'la consigne ne lit plus le silence d’un document complet').toMatch(
       /aucun[\s\S]{0,120}cahier des charges COMPLET/u,
     )
-    expect(bloc, 'la moitié « fragment » a disparu : une demande vague cesserait de questionner').toMatch(
-      /COURTE ou VAGUE/u,
+    // ── LA RÈGLE « COURTE OU VAGUE » A ÉTÉ REMPLACÉE, PAS SUPPRIMÉE.
+    //
+    // Elle disait : « demande courte ou vague ? omets ce qui n'y figure
+    // pas ». Une demande d'une ligne y tombait TOUJOURS — et le
+    // 2026-11-03 à 23h48, quelqu'un qui veut lire son compteur SNE s'est
+    // vu demander ce que son application « fait avec l'argent ».
+    //
+    // Ce que ce contrôle gardait reste gardé, et plus précisément : on ne
+    // devine JAMAIS un fait sur la personne — son pays, son numéro. Ce
+    // qu'on autorise désormais, c'est de COMPRENDRE ce que l'application
+    // fait : « calculer ma consommation » n'encaisse rien, et le lire
+    // n'est pas une devinette.
+    expect(
+      bloc,
+      'la frontière a disparu : un fait sur la personne redeviendrait devinable',
+    ).toMatch(/FAIT SUR LA PERSONNE ne se devine JAMAIS/u)
+    expect(
+      bloc,
+      'rien n’oblige plus à omettre ce qui n’est pas écrit : le pays redeviendrait déduit',
+    ).toMatch(/S’ils ne sont pas écrits, omets-les/u)
+    // ET L'AUTRE MOITIÉ : comprendre ce que l'application FAIT.
+    expect(bloc, 'le modèle n’est plus autorisé à comprendre la demande').toMatch(
+      /CE QUE L’APPLICATION FAIT, tu le COMPRENDS/u,
     )
     // Et l'interdit de DEVINER reste entier — c'est lui qui sépare cette
     // lecture de l'erreur de v0 (pays déduit de la langue).

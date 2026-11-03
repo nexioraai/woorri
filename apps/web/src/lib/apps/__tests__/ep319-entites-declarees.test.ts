@@ -185,9 +185,17 @@ describe('EP-319 · les données déclarées', () => {
     // 1 363 signes il y a deux semaines, 5 904 aujourd'hui, et on soupçonne
     // cette croissance d'avoir coûté un tir. Le bloc des données entre donc
     // dans `lire-brief` — qui ne construit rien, LIT, et rend du JSON.
-    const brief = lire(...WEB, 'app', 'api', 'generateur', 'lire-brief', 'route.ts')
+    // La consigne de lecture a quitté la route pour son propre module le
+    // 2026-11-03 : un fichier de route n'exporte que ses verbes HTTP, et
+    // une consigne qu'on ne peut pas rejouer est une consigne dont on
+    // découvre les défauts sur l'écran d'un client.
+    const brief = lire(...WEB, 'lib', 'apps', 'consigne-lire-brief.ts')
     expect(brief, 'le bloc n’est pas dans la route de lecture').toContain('CONSIGNE_ENTITES')
-    expect(brief, 'la lecture n’emploie pas le vrai juge').toContain('projectAirSchema')
+    // LA VALIDATION EST RESTÉE DANS LA ROUTE, et c'est normal : la consigne
+    // DIT quoi rendre, la route JUGE ce qui revient. Les séparer n'a pas
+    // déplacé le juge — il n'a rien à faire dans un texte d'instructions.
+    const route = lire(...WEB, 'app', 'api', 'generateur', 'lire-brief', 'route.ts')
+    expect(route, 'la lecture n’emploie pas le vrai juge').toContain('projectAirSchema')
 
     // ── ON MESURE LA CONSIGNE RÉSOLUE, PAS UNE TRANCHE DE SOURCE.
     //
