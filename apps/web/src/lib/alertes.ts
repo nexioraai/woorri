@@ -23,7 +23,7 @@
  * Une alerte qui casse la requête qu'elle observe transforme un incident en
  * deux. Toute erreur ici part dans `console.error` et s'arrête là.
  */
-import { ADMIN_EMAILS } from '@/lib/admin-emails'
+import { DESTINATAIRE_ALERTES } from '@/lib/admin-emails'
 
 /**
  * LA CLÉ DE SERVICE SE CHARGE À L'USAGE, pas à l'import.
@@ -67,14 +67,15 @@ export type Alerte = {
  * DNS à faire. Une dépendance déjà là, un domaine déjà vérifié — le chemin
  * le plus court était sous la main.
  *
- * LA DESTINATION VIENT DE `ADMIN_EMAILS`, pas d'une variable de plus : la
- * liste des administrateurs existe déjà et a UNE source. En créer une
- * seconde, c'est la divergence que ce fichier-là existe pour empêcher.
- * `ALERTE_EMAIL` ne sert qu'à la détourner (essai, astreinte).
+ * LA DESTINATION VIENT DE `DESTINATAIRE_ALERTES`, pas d'une variable de
+ * plus : cette constante existe déjà, le watchdog s'en sert, et son bloc
+ * de tête distingue explicitement « qui est admin » de « qui reçoit les
+ * alertes ». J'avais pris `ADMIN_EMAILS[0]` — la mauvaise des deux.
+ * `ALERTE_EMAIL` ne sert qu'à détourner (essai, astreinte).
  */
 function canal(): { cle: string; vers: string } | null {
   const cle = process.env.RESEND_API_KEY ?? ''
-  const vers = process.env.ALERTE_EMAIL ?? ADMIN_EMAILS[0] ?? ''
+  const vers = process.env.ALERTE_EMAIL ?? DESTINATAIRE_ALERTES
   return cle === '' || vers === '' ? null : { cle, vers }
 }
 

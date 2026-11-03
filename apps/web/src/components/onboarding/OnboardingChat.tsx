@@ -399,6 +399,28 @@ export default function OnboardingChat() {
     return () => clearInterval(id);
   }, [generating, dernierSigne]);
 
+  /**
+   * CE QUI S'AFFICHE SOUS L'ESCALIER — une seule chose à la fois.
+   *
+   * ── LA RÈGLE, et elle vient d'un défaut observé.
+   *
+   * Deux messages alternaient toutes les deux secondes. Le diagnostic est
+   * pour QUAND ÇA VA MAL : il n'a pas à occuper l'écran quand tout va
+   * bien.
+   *
+   * · ça avance → la progression réelle, et elle seule.
+   * · plus rien depuis SILENCE_FRANC → le diagnostic, et il RESTE.
+   *
+   * SEIZE SECONDES, ET C'EST MESURÉ : le serveur bat toutes les cinq
+   * secondes et compte les signes toutes les deux. Trois battements
+   * manqués ne sont plus une hésitation du réseau — c'est un silence.
+   */
+  const SILENCE_FRANC = 16;
+  const silenceFranc = vuIlY >= SILENCE_FRANC;
+  const ligneAvancement = silenceFranc
+    ? `aucun signe depuis ${String(vuIlY)} s`
+    : detailVivant;
+
   const skip = () => { if (!loading && !generating) sendText('passer'); };
 
   /**
@@ -736,12 +758,26 @@ export default function OnboardingChat() {
                          repart à zéro à chaque signe reçu. S'il monte,
                          c'est que plus rien n'arrive — et c'est ce qu'il
                          faut voir, pas un rond qui tourne. */}
-                    {generating && (detailVivant !== null || dernierSigne !== null) ? (
-                      <p className="mt-2 text-center text-[11px] text-white/40 tabular-nums">
-                        {detailVivant !== null ? `${detailVivant} · ` : ''}
-                        {vuIlY <= 1
-                          ? 'serveur actif'
-                          : `dernier signe il y a ${String(vuIlY)} s`}
+                    {/* ── UNE LIGNE, UN SENS, AUCUNE ALTERNANCE.
+                         Observé le 2026-11-03 : « serveur actif »
+                         s'affichait moins d'une seconde, s'effaçait, puis
+                         « dernier signe il y a 2 s », et ainsi de suite —
+                         deux messages se disputant la même ligne toutes
+                         les deux secondes.
+                         C'était mon instrument de diagnostic devenu
+                         l'interface normale. Quelqu'un qui crée sa
+                         boutique n'a pas à lire de la télémétrie qui
+                         clignote.
+                         Désormais : la progression RÉELLE pendant que ça
+                         avance, et le diagnostic SEULEMENT après un
+                         silence franc — où il RESTE. */}
+                    {generating && ligneAvancement !== null ? (
+                      <p
+                        className={`mt-2 text-center text-[11px] tabular-nums ${
+                          silenceFranc ? 'text-amber-300/70' : 'text-white/40'
+                        }`}
+                      >
+                        {ligneAvancement}
                       </p>
                     ) : null}
                   </div>

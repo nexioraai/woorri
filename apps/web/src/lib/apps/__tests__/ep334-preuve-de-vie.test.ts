@@ -110,7 +110,19 @@ describe('EP-334 · la preuve de vie', () => {
     expect(rappelBattement, 'le battement ne prouve plus rien').toMatch(/setDernierSigne/u)
     expect(ECRAN, 'le battement n’est pas écouté').toMatch(/o\.t === 'battement'/u)
     // ET IL EST AFFICHÉ : une preuve de vie qu'on ne montre pas n'en est pas une.
-    expect(ECRAN, 'le silence du serveur n’est pas montré').toMatch(/dernier signe il y a/u)
+    // Le texte a change avec la regle « une ligne, un sens » : le
+    // diagnostic ne s'affiche plus qu'APRES un silence franc, et il reste.
+    expect(ECRAN, 'le silence du serveur n’est pas montré').toMatch(/aucun signe depuis/u)
+    // ── ET IL NE SE DISPUTE PLUS LA LIGNE AVEC LA PROGRESSION.
+    //
+    // Observe le 2026-11-03 : « serveur actif » s'affichait moins d'une
+    // seconde, s'effacait, puis « dernier signe il y a 2 s ». Deux
+    // messages alternant toutes les deux secondes — l'instrument de
+    // diagnostic devenu l'interface normale.
+    expect(ECRAN, 'les deux messages alternent encore').not.toMatch(/serveur actif/u)
+    expect(ECRAN, 'aucun seuil de silence : le diagnostic reviendra clignoter').toMatch(
+      /SILENCE_FRANC/u,
+    )
   })
 
   it('⑤ LE RANG VIENT DU SERVEUR — plus aucune correspondance de texte', () => {

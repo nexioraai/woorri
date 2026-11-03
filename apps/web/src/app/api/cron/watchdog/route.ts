@@ -253,6 +253,99 @@ export async function GET(req: NextRequest) {
     }
   }
 
+  // ── CE CONTROLE NE PEUT PAS TUER LE WATCHDOG.
+  //
+  // Il en porte huit autres. Une requete qui echoue ici — forme de chaine,
+  // colonne renommee, base lente — ne doit pas les emporter. Mesure du
+  // 2026-11-03 : la premiere version a fait rendre 500 a toute la route.
+  //
+  // ET L'ECHEC SE DIT : un controle de surveillance qui echoue en silence
+  // est exactement ce qu'on repare partout ailleurs aujourd'hui.
+  try {
+  // ── #2bis — LES BOUTIQUES ORPHELINES : reussies, jamais ouvertes.
+  //
+  // MESURE DU 2026-11-03 : huit sites sur trente-sept (22 %) ne portent
+  // AUCUNE trace d'interaction humaine, tous depuis le 2026-10-10, chez
+  // quatre proprietaires dont trois tiers. Et sept paires creees a moins
+  // de quinze minutes d'intervalle par la meme personne — quelqu'un qui
+  // reessaie parce que l'ecran lui a montre un echec.
+  //
+  // C'EST LE CAS QU'UNE ALERTE NAIVE RATE, et celui qui compte le plus :
+  // rien n'a « echoue ». La boutique a ete ecrite et FACTUREE, puis
+  // personne ne l'a vue.
+  //
+  // LES SIGNAUX SONT CEUX QU'UN HUMAIN PRODUIT, pas ceux du moteur :
+  // `score_history` et `shop_products` sont ecrits PAR LA GENERATION
+  // (mesure : score a +1 s de la creation), les prendre pour une visite
+  // etait ma premiere erreur. Restent : une modification, une
+  // publication, un domaine, une commande.
+  //
+  // ON NE REGARDE QUE LES DEUX DERNIERS JOURS : au-dela c'est de
+  // l'histoire, et la repeter a chaque passage ferait un courriel qu'on
+  // apprend a ignorer.
+  {
+    const depuis = new Date(Date.now() - 48 * 3600 * 1000).toISOString();
+    const { data: recents } = await supabaseAdmin
+      .from('sites')
+      .select('id, slug, created_at, updated_at, published')
+      .gte('created_at', depuis)
+      .is('archived_at', null);
+    const candidats = (recents ?? []).filter(
+      (x) => x.updated_at === null && x.published !== true,
+    );
+    const orphelines: typeof candidats = [];
+    for (const c of candidats) {
+      // Une boutique de moins de dix minutes n'est pas orpheline : son
+      // proprietaire est peut-etre encore devant son ecran.
+      if (Date.now() - new Date(c.created_at as string).getTime() < 10 * 60 * 1000) continue;
+      const { count: nDom } = await supabaseAdmin
+        .from('site_domains')
+        .select('id', { count: 'exact', head: true })
+        .eq('site_id', c.id);
+      const { count: nCmd } = await supabaseAdmin
+        .from('shop_orders')
+        .select('id', { count: 'exact', head: true })
+        .eq('site_id', c.id);
+      if ((nDom ?? 0) === 0 && (nCmd ?? 0) === 0) orphelines.push(c);
+    }
+    if (orphelines.length > 0) {
+      const { alerter } = await import('@/lib/alertes');
+      for (const o of orphelines) {
+        await alerter({
+          sujet: 'boutique',
+          sujetId: String(o.slug),
+          // ── PAS D'`owner_email` ICI, ET C'EST UN CLIQUET QUI ME L'A DIT.
+          //
+          // La dette 6a tient la liste EXACTE des routes qui portent encore
+          // un courriel de proprietaire, pour qu'aucune nouvelle ne s'y
+          // ajoute. J'allais l'elargir pour le confort d'une alerte : le
+          // `slug` suffit a retrouver le client, et il ne coute rien.
+          ownerEmail: null,
+          motif: 'boutique creee et jamais ouverte par son proprietaire',
+          etape: 'reponse-perdue',
+          detail:
+            'creee le ' + String(o.created_at).slice(0, 16) + ' — ni modification, ' +
+            'ni publication, ni domaine, ni commande. La reponse ne lui est ' +
+            'peut-etre jamais parvenue.',
+        });
+      }
+    }
+  }
+  } catch (e) {
+    console.error('[watchdog] controle des boutiques orphelines echoue :', e);
+    try {
+      const { alerter } = await import('@/lib/alertes');
+      await alerter({
+        sujet: 'boutique',
+        motif: 'le controle des boutiques orphelines a echoue',
+        etape: 'inconnue',
+        detail: e instanceof Error ? e.message.slice(0, 400) : String(e).slice(0, 400),
+      });
+    } catch {
+      /* l'alerte elle-meme ne doit rien emporter */
+    }
+  }
+
   // #2ter — Meme categorie, pour les domaines BYOD (colonnes sites.custom_domain_google_*,
   // jamais site_domains).
   const { data: byodGoogleFailed } = await supabaseAdmin

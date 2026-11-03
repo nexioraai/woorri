@@ -1438,7 +1438,16 @@ export async function POST(req: Request) {
       }, 5000)
       try {
         const t0 = Date.now()
+        // ── A-T-ON SEULEMENT COMMENCE A GENERER ?
+        //
+        // Sans ce temoin, alerter sur tout 4xx inonderait la boite au
+        // premier robot : un 401 « missing Bearer token » n'est pas une
+        // panne de generation, c'est un passant. Le premier jalon ne part
+        // qu'une fois la demande acceptee et le travail engage — c'est donc
+        // lui qui distingue « ca a rate » de « ca n'a jamais commence ».
+        let aCommence = false
         const r = await traiter(req, (etape, rang) => {
+          aCommence = true
           // ── LE JALON PART AUSSI AU JOURNAL, et c'est une lacune mesurée.
           //
           // Le 2026-11-03 à 19h26, une génération a travaillé 96 SECONDES
@@ -1462,7 +1471,45 @@ export async function POST(req: Request) {
           envoyer({ t: 'etape', texte: etape, rang })
         })
         const corps: unknown = await r.json()
+        const secondes = Math.round((Date.now() - t0) / 1000)
         envoyer({ t: 'fin', statut: r.status, corps })
+
+        // ── TOUT ÉCHEC ALERTE, ET D'UN SEUL ENDROIT.
+        //
+        // `traiter` attrape ses propres erreurs et rend une réponse 4xx/5xx :
+        // le `catch` plus bas ne les voit donc JAMAIS. Instrumenter chaque
+        // site d'échec un par un, c'est se promettre d'en oublier un — le
+        // défaut qui revient toute la journée. L'enveloppe, elle, voit
+        // TOUTES les réponses, quel que soit le chemin qui les produit.
+        if (r.status >= 400 && aCommence) {
+          const c = corps as { error?: string; slug?: string }
+          void alerter({
+            sujet: 'boutique',
+            sujetId: c.slug ?? null,
+            motif: c.error ?? `génération refusée (HTTP ${String(r.status)})`,
+            etape: r.status >= 500 ? 'inconnue' : 'validation',
+            detail: `HTTP ${String(r.status)} après ${String(secondes)} s`,
+          })
+        }
+
+        // ── ET UNE RÉUSSITE TROP LENTE ALERTE AUSSI.
+        //
+        // Mesuré le 2026-11-03 : 97 secondes pour une boutique qui a
+        // abouti. Personne n'a crié parce que rien n'avait « échoué » — et
+        // c'est exactement comme ça qu'une dérive s'installe. Le seuil est
+        // à deux minutes : au-delà, un téléphone en LTE a de bonnes
+        // chances de décrocher avant la fin, même avec le flux.
+        else if (secondes >= 120) {
+          const c = corps as { slug?: string }
+          void alerter({
+            sujet: 'boutique',
+            sujetId: c.slug ?? null,
+            motif: `génération anormalement lente : ${String(secondes)} s`,
+            etape: 'modele',
+            detail: 'a abouti, mais au-delà du seuil où un réseau faible décroche',
+          })
+        }
+
         if (ferme) {
           // RÉUSSI MAIS JAMAIS RÉCUPÉRÉ — l'alerte que la forme naïve rate.
           const c = corps as { slug?: string; error?: string }
