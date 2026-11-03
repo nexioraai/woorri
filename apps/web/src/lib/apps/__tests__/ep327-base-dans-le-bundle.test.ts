@@ -92,25 +92,46 @@ describe('EP-327 · la base dans le bundle', () => {
     if (!v.ok) expect(String(v.erreur)).toMatch(/non embarqué/u)
   })
 
-  it('③ LA PROSE D’UN PAQUET TIERS NE FAIT PLUS REFUSER UNE ŒUVRE SAINE', async () => {
+  it('③ UNE LIGNE D’IMPORT ÉCRITE DANS UNE CHAÎNE NE FAIT PAS REFUSER L’ŒUVRE', async () => {
     // ── LE DÉFAUT DE LA GARDE, et il venait d'une chaîne de caractères.
     //
-    // Le paquet de supabase écrit, DANS UN MESSAGE D'ERREUR, la phrase
-    // « Install and provide the "ws" package » suivie d'une ligne d'import
-    // donnée en exemple. La garde regexait le texte du bundle : elle a
-    // refusé une œuvre dont tout était embarqué, en citant `ws`.
+    // `bac-a-sable` regexait le texte du bundle pour trouver les imports
+    // restés externes. Le paquet de supabase écrivait, DANS UN MESSAGE
+    // D'ERREUR, « Install and provide the "ws" package » suivi d'une ligne
+    // d'import donnée en exemple. La garde a refusé une œuvre dont tout
+    // était embarqué, en citant `ws`.
     //
-    // La règle du 2026-11-02 appliquée à un instrument du PRODUIT : un
-    // cliquet qui lit du texte peut toujours être trompé — ici par la prose
-    // d'un tiers, dans du code fourni.
-    const v = await assembler(new Map([['index.tsx', OEUVRE]]))
-    expect(v.ok).toBe(true)
+    // ── ET CE CONTRÔLE FOURNIT SON PROPRE PIÈGE, depuis le 2026-11-03.
+    //
+    // Ma première forme vérifiait que la phrase de supabase était TOUJOURS
+    // dans le bundle, pour prouver qu'on avait cessé de l'écouter. Mesuré
+    // sur la montée 2.106 → 2.118 : la phrase a DISPARU (2 occurrences puis
+    // 0), et mon contrôle a rougi alors que rien de ce qu'il garde n'avait
+    // bougé.
+    //
+    // Un cliquet dont le dénominateur dépend de la PROSE D'UN TIERS casse
+    // le jour où ce tiers reformule un message d'erreur. Le piège est donc
+    // écrit ici, et il ne peut plus s'évaporer.
+    const PIEGE = [
+      'export const aide = `',
+      'Pour le temps réel hors navigateur, installez le paquet :',
+      "import ws from 'ws'",
+      "import quelqueChose from '@paquet/inexistant'",
+      '`',
+      'export function App() { return <div>{aide}</div> }',
+    ].join('\n')
+    const v = await assembler(new Map([['index.tsx', PIEGE]]))
+    expect(
+      v.ok,
+      `une ligne d’import écrite DANS une chaîne fait refuser l’œuvre : ${
+        v.ok ? '' : String('erreur' in v ? v.erreur : '').slice(0, 200)
+      }`,
+    ).toBe(true)
     if (!v.ok) return
-    // La phrase piégeuse est TOUJOURS dans le bundle — on prouve que c'est
-    // bien elle qu'on a cessé d'écouter, pas qu'elle a disparu.
-    expect(v.code, 'la prose piégeuse n’est plus là : ce contrôle ne mesure plus rien').toMatch(
-      /import ws from/u,
-    )
+    // LE DÉNOMINATEUR EST À NOUS : le piège est forcément dans le bundle,
+    // puisque c'est notre propre source qui le porte.
+    expect(v.code, 'le piège n’a pas survécu à l’assemblage : ce contrôle ne mesure rien')
+      .toMatch(/import ws from/u)
   })
 
   it('④ LE BUNDLE, EXÉCUTÉ, REND UN CLIENT QUI FONCTIONNE', async () => {

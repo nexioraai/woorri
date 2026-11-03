@@ -210,6 +210,19 @@ export async function POST(req: Request) {
       politiquesSql: docPublie?.politiques ?? '',
       connexion,
     })
+    // ── CE QUI A ETE ELAGUE SE DIT, meme quand tout va bien.
+    //
+    // Une entree morte dans la liste exposee ne casse pas son oeuvre : elle
+    // les casse TOUTES (PostgREST construit un seul cache pour toute la
+    // liste). L'elagage est donc une REPARATION, et une reparation muette
+    // ne s'explique pas le jour ou l'on cherche pourquoi une oeuvre a
+    // disparu de la liste.
+    if (pose.ok && pose.elagues.length > 0) {
+      console.warn(
+        `[publier] liste exposee elaguee : ${String(pose.elagues.length)} schema(s) ` +
+          `absent(s) de la base retires — ${pose.elagues.join(', ')}`,
+      )
+    }
     if (!pose.ok) {
       return NextResponse.json(
         { error: `les données n’ont pas pu être posées (${pose.etape})`, motif: pose.motif },

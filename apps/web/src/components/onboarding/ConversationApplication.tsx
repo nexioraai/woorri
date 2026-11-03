@@ -982,6 +982,7 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
             tours?: unknown[]; dureeMs?: number;
             jetons?: { fichier: string; reference: string }[];
             execution?: { monteDansSimulateur: boolean; indisponible?: string; ecransVisites?: number; ecransDecouverts?: number; ecransDistincts?: number; erreurs: { quoi: string; message: string }[] };
+            persistance?: { table: string; lue: boolean; ecrite: boolean }[];
             vivacite?: { fichier: string; manque: string }[];
             couverture?: {
               exigences?: { exigence: string; statut: string }[];
@@ -1021,6 +1022,24 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
                         ? `, ${String(declarees.length)} déclarée(s) hors périmètre (${declarees.map((x) => x.exigence).join(', ')})`
                         : '') +
                       '.',
+                  );
+                }
+                // ── CE QUI NE SE CONSERVE PAS, DIT À LA LIVRAISON.
+                //
+                // C'est le moment où la personne décide de garder l'œuvre ou
+                // de la faire corriger. Le verdict voyageait dans la réponse
+                // depuis le 2026-11-03 et AUCUN écran ne le lisait — une
+                // pièce détachée de plus, sur le seul défaut dont la
+                // conséquence tombe après la livraison.
+                const enMemoire = d.persistance ?? [];
+                if (enMemoire.length > 0) {
+                  lignes.push(
+                    `⚠ Données NON CONSERVÉES : ${enMemoire
+                      .map(
+                        (x) =>
+                          `${x.table} (${x.lue ? 'lue, jamais écrite' : x.ecrite ? 'écrite, jamais lue' : 'ni lue ni écrite'})`,
+                      )
+                      .join(', ')} — ce qui y est saisi disparaîtra au rechargement.`,
                   );
                 }
                 if (absentes.length > 0) {

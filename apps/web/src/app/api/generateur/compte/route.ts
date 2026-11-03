@@ -49,18 +49,32 @@ export const runtime = 'nodejs'
 async function oeuvreDe(
   id: string,
   proprietaire: string,
-): Promise<{ publiee: boolean; aDesDonnees: boolean } | null> {
+): Promise<{
+  publiee: boolean
+  aDesDonnees: boolean
+  enMemoire: readonly { table: string; lue: boolean; ecrite: boolean }[]
+} | null> {
   const lu = await supabaseAdmin
     .from(TABLE_GENERATIONS)
-    .select('publication_jeton, document')
+    .select('publication_jeton, document, sections_acquises')
     .eq('id', id)
     .eq('owner_id', proprietaire)
     .maybeSingle()
   if (lu.error !== null || lu.data === null) return null
   const doc = lu.data.document as { schema?: string } | null
+  // ── LE VERDICT DE PERSISTANCE VIT DANS `sections_acquises`, avec les
+  //    quatre autres juges. On le relit ici parce que c'est le SEUL défaut
+  //    dont la conséquence tombe APRÈS la livraison : les jetons tuent au
+  //    démarrage, un contrôle mort se voit, une couverture partielle se
+  //    lit. Une table en mémoire, elle, marche à l'écran — et c'est le
+  //    rechargement qui l'apprend, à la personne qui perd sa saisie.
+  const sections = lu.data.sections_acquises as {
+    persistance?: { table: string; lue: boolean; ecrite: boolean }[] | null
+  } | null
   return {
     publiee: typeof lu.data.publication_jeton === 'string' && lu.data.publication_jeton !== '',
     aDesDonnees: (doc?.schema ?? '').includes('create table'),
+    enMemoire: sections?.persistance ?? [],
   }
 }
 
@@ -82,13 +96,13 @@ export async function GET(req: Request) {
   // confondre ferait chercher une panne là où il n'y a qu'une étape.
   if (!oeuvre.aDesDonnees) {
     return NextResponse.json(
-      { etat: 'sans-donnees', explication: CE_QUE_LE_COMPTE_OUVRE },
+      { etat: 'sans-donnees', explication: CE_QUE_LE_COMPTE_OUVRE, enMemoire: oeuvre.enMemoire },
       { headers: { 'Cache-Control': 'no-store' } },
     )
   }
   if (!oeuvre.publiee) {
     return NextResponse.json(
-      { etat: 'non-publiee', explication: CE_QUE_LE_COMPTE_OUVRE },
+      { etat: 'non-publiee', explication: CE_QUE_LE_COMPTE_OUVRE, enMemoire: oeuvre.enMemoire },
       { headers: { 'Cache-Control': 'no-store' } },
     )
   }
@@ -96,6 +110,9 @@ export async function GET(req: Request) {
     {
       etat: 'actif',
       adresse: adresseCompteOeuvre(id),
+      // CE QUI NE SE CONSERVE PAS, dit sur l'écran des DONNÉES — là où la
+      // personne revient quand elle cherche ses données.
+      enMemoire: oeuvre.enMemoire,
       // LE MOT DE PASSE N'EST PAS RENDU : il ne se relit pas. L'écran dit
       // qu'il se renouvelle, plutôt que de laisser chercher où le lire.
       explication: CE_QUE_LE_COMPTE_OUVRE,

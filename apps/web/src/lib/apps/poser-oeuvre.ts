@@ -114,6 +114,26 @@ export const SCHEMAS_DE_BASE = 'public, graphql_public'
  * ajoute le schéma s'il manque, et on rend `null` quand il y est déjà :
  * réécrire pour rien ferait recharger PostgREST sans raison.
  */
+/**
+ * CE QUE LA PROCHAINE ÉCRITURE DE LA LISTE RETIRERAIT.
+ *
+ * Séparé de `listeAvecSchema` pour une raison : la liste rendue ne dit pas
+ * ce qu'elle a perdu. Un appelant qui veut JOURNALISER l'élagage doit
+ * pouvoir le nommer, et le déduire en comparant deux chaînes serait le
+ * refaire à l'envers.
+ */
+export function schemasMorts(
+  rolconfig: readonly string[] | null,
+  existants: readonly string[],
+): readonly string[] {
+  const ligne = (rolconfig ?? []).find((x) => x.startsWith('pgrst.db_schemas='))
+  const actuelle = ligne === undefined ? SCHEMAS_DE_BASE : ligne.slice('pgrst.db_schemas='.length)
+  return actuelle
+    .split(',')
+    .map((x) => x.trim())
+    .filter((x) => x !== '' && !existants.includes(x))
+}
+
 export function listeAvecSchema(
   rolconfig: readonly string[] | null,
   schema: string,
@@ -156,7 +176,19 @@ export function listeAvecSchema(
 }
 
 export type Pose =
-  | { readonly ok: true; readonly schema: string; readonly expose: boolean }
+  | {
+      readonly ok: true
+      readonly schema: string
+      readonly expose: boolean
+      /**
+       * LES SCHÉMAS MORTS RETIRÉS DE LA LISTE — jamais en silence.
+       *
+       * Un élagage muet est un élagage qu'on ne saura pas expliquer le jour
+       * où une œuvre disparaît. Si une entrée a été retirée parce que son
+       * schéma n'existe plus, on veut pouvoir le lire dans le journal.
+       */
+      readonly elagues: readonly string[]
+    }
   | { readonly ok: false; readonly etape: string; readonly motif: string }
 
 /**
@@ -174,6 +206,8 @@ export async function poserOeuvre(o: {
   /** La chaîne de connexion. Le pooleur suffit : le DDL y passe (mesuré). */
   readonly connexion: string
 }): Promise<Pose> {
+  // CE QUI A ÉTÉ RETIRÉ DE LA LISTE EXPOSÉE — porté jusqu'au journal.
+  let elagues: readonly string[] = []
   let schema: string
   try {
     schema = nomSchemaOeuvre(o.id)
@@ -263,14 +297,19 @@ export async function poserOeuvre(o: {
       )
       // LA LISTE RÉELLE EST L'ARBITRE : on n'élague pas sur une supposition.
       const reels = await client.query<{ nspname: string }>('select nspname from pg_namespace')
-      const nouvelle = listeAvecSchema(
-        lu.rows[0]?.rolconfig ?? null,
-        schema,
-        reels.rows.map((r) => r.nspname),
-      )
+      const existants = reels.rows.map((r) => r.nspname)
+      // ── ON NOMME CE QU'ON RETIRE AVANT DE LE RETIRER.
+      //
+      // « La disponibilité de CHAQUE œuvre dépend de la validité de TOUTES
+      // les autres entrées. » Une entrée morte ne casse pas son œuvre : elle
+      // les casse TOUTES, parce que PostgREST construit un seul cache pour
+      // toute la liste. L'élagage n'est donc pas un entretien, c'est une
+      // réparation — et une réparation muette ne s'explique pas.
+      elagues = schemasMorts(lu.rows[0]?.rolconfig ?? null, existants)
+      const nouvelle = listeAvecSchema(lu.rows[0]?.rolconfig ?? null, schema, existants)
       if (nouvelle === null) {
         await client.query('commit')
-        return { ok: true, schema, expose: false }
+        return { ok: true, schema, expose: false, elagues }
       }
       // La valeur est un littéral : aucun paramètre lié n'est possible dans
       // `alter role … set`. Les noms de schémas sont validés à la source
@@ -297,7 +336,7 @@ export async function poserOeuvre(o: {
       await client.query("notify pgrst, 'reload config'")
       await client.query("notify pgrst, 'reload schema'")
       await client.query('commit')
-      return { ok: true, schema, expose: true }
+      return { ok: true, schema, expose: true, elagues }
     } catch (e) {
       try {
         await client.query('rollback')

@@ -110,6 +110,7 @@ export default function AtelierPage() {
     adresse?: string;
     motDePasse?: string | null;
     explication?: string;
+    enMemoire?: { table: string; lue: boolean; ecrite: boolean }[];
   } | null>(null);
   const [renouvelle, setRenouvelle] = useState(false);
   const basDuFil = useRef<HTMLDivElement | null>(null);
@@ -573,6 +574,40 @@ export default function AtelierPage() {
                  « Pas de données déclarées » est un RÉSULTAT ; « pas encore
                  publiée » est une ÉTAPE. Les dire pareil ferait chercher une
                  panne là où il n'y en a pas. */}
+            {/* ── CE QUI NE SE CONSERVE PAS, DIT ICI ET PAS AILLEURS.
+                 Les quatre autres juges disent leur verdict à la livraison et
+                 c'est suffisant : des jetons inexistants tuent au démarrage,
+                 un contrôle mort se voit, une couverture partielle se lit.
+                 Celui-ci est le SEUL dont la conséquence tombe APRÈS — une
+                 table en mémoire marche à l'écran, et c'est le rechargement
+                 qui l'apprend, à la personne qui vient de perdre sa saisie.
+                 Il doit donc être là quand elle REVIENT, pas seulement quand
+                 elle part. Et il est dans le panneau des DONNÉES, à côté des
+                 identifiants : c'est l'endroit où l'on vient chercher ses
+                 données. */}
+            {(compte?.enMemoire ?? []).length > 0 && (
+              <div className="mb-2 rounded-xl border border-amber-500/25 bg-amber-500/[0.06] p-2.5">
+                <p className="text-[11px] font-semibold text-amber-300">
+                  Des données ne sont pas conservées
+                </p>
+                <ul className="mt-1 space-y-0.5">
+                  {(compte?.enMemoire ?? []).map((d) => (
+                    <li key={d.table} className="text-[11px] leading-relaxed text-amber-200/80">
+                      <span className="font-medium">{d.table}</span>
+                      {d.lue
+                        ? ' — lue, jamais écrite : la saisie ne part nulle part.'
+                        : d.ecrite
+                          ? ' — écrite, jamais lue : la donnée arrive en base et aucun écran ne la remontre.'
+                          : ' — ni lue ni écrite : ce qui y est saisi disparaît au rechargement.'}
+                    </li>
+                  ))}
+                </ul>
+                <p className="mt-1.5 text-[11px] leading-relaxed text-amber-200/60">
+                  Demandez la correction dans le fil : « enregistre les{' '}
+                  {(compte?.enMemoire ?? []).map((d) => d.table).join(' et les ')} en base ».
+                </p>
+              </div>
+            )}
             {compte?.etat === 'sans-donnees' && (
               <p className="mb-2 text-[11px] leading-relaxed text-white/40">
                 Cette application ne conserve aucune donnée : elle n’a donc pas
