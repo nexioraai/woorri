@@ -23,6 +23,15 @@ import path from 'path'
 export default defineConfig({
   test: {
     include: ['src/**/*.tir.ts'],
+    // ── UN TIR SE CIBLE, IL NE SE LANCE PAS EN BLOC.
+    //
+    // Lancee sans argument, cette configuration a rejoue le tir des entites
+    // -- un appel PAYANT que personne n'avait demande. Chaque tir coute ;
+    // les lancer tous parce qu'on en veut un est une depense par accident.
+    //
+    // `passWithNoTests` est donc FAUX : si le filtre ne designe rien, on veut
+    // le savoir, pas croire que le tir a passe.
+    passWithNoTests: false,
     environment: 'node',
     // ── PAS le preparatif commun : il interdit le reseau, et il a bloque
     // mes deux premiers tirs AVANT qu'ils depensent. Bonne regle, mauvaise
@@ -34,6 +43,11 @@ export default defineConfig({
     testTimeout: 300_000,
     alias: {
       '@': path.resolve(__dirname, './src'),
+      // Le meme talon que la configuration principale : `server-only` leve
+      // une erreur volontaire quel que soit le bundler, et un tir qui appelle
+      // une ROUTE l'atteint forcement. Sans cet alias, le tir echoue a
+      // l'import sans jamais mesurer.
+      'server-only': path.resolve(__dirname, './vitest.server-only-stub.ts'),
     },
   },
 })

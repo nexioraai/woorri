@@ -20,6 +20,34 @@
  * on le dit clairement — un tir qui échoue sur « Connection error » ferait
  * chercher une panne réseau là où il n'y a qu'une variable absente.
  */
+/**
+ * ── UN TIR PAYANT REFUSE DE PARTIR SANS ÊTRE NOMMÉ.
+ *
+ * Défaut commis le 2026-11-02 : j'ai lancé cette configuration SANS cibler
+ * de fichier pour mesurer le câblage de la publication. Elle a rejoué le tir
+ * des entités — un appel au modèle que personne n'avait demandé.
+ *
+ * `passWithNoTests: false` empêche un filtre vide de passer pour vert. ÇA NE
+ * PROTÈGE PAS LA DÉPENSE : la commande large, elle, facture.
+ *
+ * Ce qui la protège : `TIR_PAYANT=oui`. Un tir qui appelle le modèle le
+ * déclare (`exigerFeuVert()`), et sans la variable il ÉCHOUE au lieu de
+ * facturer. Les tirs gratuits — ceux qui n'appellent que nos bases — n'en
+ * ont pas besoin, et une commande large ne coûte alors rien.
+ *
+ * Le feu vert est donc EXPLICITE À CHAQUE FOIS, et il ne se donne pas par
+ * habitude : on le tape dans la commande.
+ */
+export function exigerFeuVert(quoi: string): void {
+  if ((process.env.TIR_PAYANT ?? '') !== 'oui') {
+    throw new Error(
+      `TIR_PAYANT_NON_AUTORISE: « ${quoi} » appelle le modèle et coûte de ` +
+        'l’argent. Relancez avec TIR_PAYANT=oui si le propriétaire l’a ' +
+        'autorisé — et ciblez le fichier, une commande large les lance tous.',
+    )
+  }
+}
+
 const MANQUANTES = ['NEXT_PUBLIC_SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY'].filter(
   (v) => (process.env[v] ?? '') === '',
 )

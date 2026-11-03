@@ -48,6 +48,55 @@ export type EntiteDeclaree = {
 export type RefusEntite = { readonly quoi: string; readonly motif: string }
 
 /**
+ * DEUX SILENCES QUI SE RESSEMBLENT, ET C'EST ÇA QUI EST CASSÉ.
+ *
+ * ── CE QUE LA FORMULATION JUSTE CHANGE.
+ *
+ * J'avais d'abord écrit « le chemin des entités n'a aucun filet contre
+ * l'humeur du fournisseur ». Le propriétaire a corrigé, et la correction est
+ * la leçon : « la phrase "pas de filet" fait réparer un filet. La vraie
+ * phrase fait réparer la DISTINCTION, qui est la seule chose qui compte et
+ * qui est beaucoup moins de travail. »
+ *
+ * ── LA VRAIE PHRASE.
+ *
+ *   `illisible: true` et `entites: []` arrivent en aval sous la MÊME
+ *   APPARENCE. Une application qui n'a pas besoin de base et une lecture de
+ *   cahier qui a ÉCHOUÉ sont indiscernables.
+ *
+ *   La première est un RÉSULTAT. La seconde est une PERTE.
+ *
+ *   Et c'est la confusion qui rend la perte silencieuse.
+ *
+ * ── CE QUE ÇA DONNE CONCRÈTEMENT.
+ *
+ * `lire-brief` rend `{ deduites: {}, illisible: true, motif: … }` quand la
+ * réponse du modèle ne porte aucun objet JSON. Mesuré le 2026-11-02 : le même
+ * cahier, la même consigne, une réussite puis un échec — l'humeur du
+ * fournisseur, vérifiée gratuitement par git (aucun des trois fichiers du
+ * chemin n'avait changé).
+ *
+ * En aval, l'écran et la publication ne voient qu'une chose : pas d'entités.
+ * Ils traitent donc une LECTURE PERDUE comme une application sans données —
+ * et l'œuvre se génère, se publie, et ne conserve rien. Personne ne voit
+ * d'erreur parce qu'il n'y en a pas : il y a une absence prise pour un choix.
+ *
+ * ── CE QU'IL FAUDRA RÉPARER, ET CE N'EST PAS UN FILET.
+ *
+ * Porter `illisible` jusqu'aux deux endroits qui décident, pour qu'ils
+ * puissent dire « je n'ai pas pu lire » au lieu de « rien à conserver ». Un
+ * réessai, une alerte ou une file sont des questions d'après ; la
+ * distinction vient d'abord, et sans elle aucun filet ne sait quand se
+ * déclencher.
+ */
+export const DEUX_SILENCES_INDISCERNABLES =
+  '`illisible: true` et `entites: []` arrivent en aval sous la même ' +
+  'apparence. Une application qui n’a pas besoin de base et une lecture de ' +
+  'cahier qui a échoué sont indiscernables. La première est un résultat, la ' +
+  'seconde est une perte — et c’est la confusion qui rend la perte ' +
+  'silencieuse.'
+
+/**
  * LES BORNES — et ce ne sont pas des précautions de style.
  *
  * ── LE NOMBRE DE TABLES.

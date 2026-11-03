@@ -176,6 +176,78 @@ describe('EP-324 · le compte d’une œuvre', () => {
     expect(MODULE()).toContain('app_metadata')
   })
 
+  it('⑧ L’ATELIER MONTRE LES IDENTIFIANTS, ET PERMET DE LES REFAIRE', () => {
+    // ── LE DÉFAUT ÉTAIT EN PRODUCTION, ET IL S'ACCUMULAIT.
+    //
+    // La publication créait un compte dont le mot de passe de 31 signes
+    // était rendu UNE FOIS dans une réponse JSON que personne ne lisait.
+    // Chaque œuvre publiée fabriquait donc une clé PERDUE à l'instant où
+    // elle était faite — et le propriétaire ne pouvait pas atteindre ses
+    // propres données.
+    const atelier = lireSource(
+      join(RACINE, 'apps', 'web', 'src', 'app', 'atelier', '[id]', 'page.tsx'),
+    )
+    expect(atelier, 'l’atelier ne lit pas l’état du compte')
+      .toContain('/api/generateur/compte?id=')
+    expect(atelier, 'l’adresse n’est pas affichée').toContain('compte.adresse')
+    // ── L'USAGE, PAS LA DÉFINITION.
+    //
+    // `toContain('renouvelerCle')` était satisfait par `const renouvelerCle
+    // = async () =>` : retirer le bouton laissait le contrôle vert. Même
+    // classe que la ligne d'import ce matin.
+    expect(atelier, 'le bouton de renouvellement n’appelle plus rien')
+      .toContain('void renouvelerCle()')
+
+    // ── IL DIT QUE LE MOT DE PASSE NE SE RELIT PAS.
+    //
+    // Sans cette phrase, le propriétaire chercherait où il est affiché. On
+    // ne relit pas un mot de passe ; prétendre le contraire serait mentir à
+    // l'écran.
+    // ── DEUX PHRASES, DEUX MOMENTS, ET IL FAUT LES DEUX.
+    //
+    // Mon motif en alternance était satisfait par l'une quand l'autre
+    // disparaissait. Or elles ne disent pas la même chose :
+    //
+    // · le PANNEAU dit « ne se relit pas » — pour qui revient plus tard et
+    //   cherche où le mot de passe est affiché ;
+    // · l'AVIS dit « ne se relira pas » — à l'instant où il vient de
+    //   s'afficher, pour qu'on le note TOUT DE SUITE.
+    //
+    // Perdre la seconde, c'est laisser quelqu'un fermer l'onglet sur un mot
+    // de passe qu'il croyait pouvoir retrouver.
+    expect(atelier, 'le panneau ne dit pas que le mot de passe ne se relit pas')
+      .toContain('ne se relit pas')
+    // La phrase vit DEUX FOIS — dans l'avis et sous le mot de passe affiché.
+    // Un motif sur la phrase seule était satisfait par l'autre occurrence :
+    // on assertionne donc sur L'APPEL.
+    expect(atelier, 'l’avis de renouvellement ne dit plus de le noter maintenant')
+      .toMatch(/setAvis\([^)]*se relira pas/u)
+    expect(atelier, 'le mot de passe affiché ne dit plus de le noter')
+      .toMatch(/Notez-le maintenant/u)
+
+    // ── ET LA ROUTE NE REND JAMAIS LE MOT DE PASSE EN LECTURE.
+    //
+    // C'est la propriété qui compte : un GET qui le rendrait signifierait
+    // qu'il est stocké en clair quelque part.
+    const route = lireSource(
+      join(RACINE, 'apps', 'web', 'src', 'app', 'api', 'generateur', 'compte', 'route.ts'),
+    )
+    const get = route.slice(route.indexOf('export async function GET'), route.indexOf('export async function POST'))
+    expect(get, 'le GET rend un mot de passe : il serait donc stocké en clair')
+      .not.toContain('motDePasse')
+    // Le POST, lui, le rend — une fois, celui qu'il vient d'écrire.
+    const post = route.slice(route.indexOf('export async function POST'))
+    expect(post, 'le renouvellement ne rend pas le nouveau mot de passe')
+      .toContain('motDePasse')
+
+    // ── TROIS ÉTATS, PAS DEUX. « Sans données » est un RÉSULTAT, « non
+    // publiée » est une ÉTAPE. Les confondre ferait chercher une panne.
+    for (const etat of ['sans-donnees', 'non-publiee', 'actif']) {
+      expect(route, `l’état « ${etat} » n’est plus distingué`).toContain(etat)
+      expect(atelier, `l’écran ne traite plus l’état « ${etat} »`).toContain(etat)
+    }
+  })
+
   it('⑦ LA RÈGLE DES IDENTITÉS DÉRIVÉES EST ÉCRITE', () => {
     // ── TROIS COSTUMES EN UNE JOURNÉE, et elle se présentera une quatrième.
     //

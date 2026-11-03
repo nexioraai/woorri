@@ -22,6 +22,9 @@
  * refusee ensuite. Meme forme que toutes les routes voisines.
  */
 import { NextResponse } from 'next/server'
+import { configBaseOeuvres } from '@/lib/apps/base-oeuvres'
+import { poserOeuvre } from '@/lib/apps/poser-oeuvre'
+import { assurerCompteOeuvre } from '@/lib/apps/compte-oeuvre'
 import { requireAuthenticatedUser } from '@/lib/auth/require-authenticated-user'
 import { creerSousDomaine, nomValide } from '@/lib/apps/sous-domaine'
 import { supabaseAdmin } from '@/lib/supabase-admin'
@@ -160,6 +163,79 @@ export async function POST(req: Request) {
     }
   }
 
+  // ── LES DONNÉES AVANT LE JETON, ET C'EST LA MÊME RÈGLE QUE LA SERRURE.
+  //
+  // Publier une application dont la couche de données est cassée, c'est
+  // laisser quelqu'un y saisir du travail qui disparaîtra. Un échec propre
+  // vaut mieux : rien n'est publié, et on dit à quelle étape ça a cédé.
+  //
+  // C'est l'inverse du sous-domaine, plus bas, qui vient APRÈS : lui est un
+  // confort, la publication par jeton tient sans lui. Les données, non.
+  //
+  // ── ET UNE ŒUVRE SANS DONNÉES DÉCLARÉES NE POSE RIEN.
+  //
+  // Tant que le modèle ne déclare pas d'entités, il n'y a ni table à créer
+  // ni porte à poser. Créer un schéma vide par œuvre ferait grossir la liste
+  // des schémas exposés pour rien — et PostgREST la relit à chaque
+  // rechargement.
+  const docPublie = lu.data.document as {
+    schema?: string
+    politiques?: string
+  } | null
+  const schemaSql = docPublie?.schema ?? ''
+  const aDesDonnees = schemaSql.includes('create table')
+  let compte: { adresse: string; motDePasse: string | null } | null = null
+
+  if (aDesDonnees) {
+    const cfg = configBaseOeuvres(process.env)
+    if (!cfg.ok) {
+      return NextResponse.json(
+        { error: `base des œuvres indisponible : ${cfg.refus.motif}`, quoiFaire: cfg.refus.quoiFaire },
+        { status: 503 },
+      )
+    }
+    const connexion = process.env.OEUVRES_DATABASE_URL_POOLER_TRANSACTION ?? ''
+    if (connexion === '') {
+      return NextResponse.json(
+        {
+          error:
+            'OEUVRES_DATABASE_URL_POOLER_TRANSACTION absente — le schéma ne peut pas être posé.',
+        },
+        { status: 503 },
+      )
+    }
+    const pose = await poserOeuvre({
+      id,
+      schemaSql,
+      politiquesSql: docPublie?.politiques ?? '',
+      connexion,
+    })
+    if (!pose.ok) {
+      return NextResponse.json(
+        { error: `les données n’ont pas pu être posées (${pose.etape})`, motif: pose.motif },
+        { status: 500 },
+      )
+    }
+    try {
+      const c = await assurerCompteOeuvre({
+        idOeuvre: id,
+        url: cfg.config.url,
+        cleSecrete: cfg.config.cleSecrete,
+      })
+      compte = { adresse: c.adresse, motDePasse: c.motDePasse }
+    } catch (e) {
+      // LE SCHÉMA EST POSÉ ET FERMÉ : rien ne fuit. Il manque la clé, et on
+      // le dit au lieu de publier une porte que personne ne peut franchir.
+      return NextResponse.json(
+        {
+          error: 'le compte de cette application n’a pas pu être préparé',
+          motif: e instanceof Error ? e.message : String(e),
+        },
+        { status: 500 },
+      )
+    }
+  }
+
   const jeton = jetonPour(lu.data.publication_jeton)
   const dejaPublie = jeton === lu.data.publication_jeton
 
@@ -192,14 +268,14 @@ export async function POST(req: Request) {
     }
     if (Object.values(clefs).some((v) => v === '')) {
       return NextResponse.json(
-        { lien: lienJeton, dejaPublie, erreurSousDomaine: 'cles de sous-domaine absentes du serveur' },
+        { lien: lienJeton, dejaPublie, compte, erreurSousDomaine: 'cles de sous-domaine absentes du serveur' },
         { headers: { 'Cache-Control': 'no-store' } },
       )
     }
     const sd = await creerSousDomaine(sous, clefs)
     if (!sd.ok) {
       return NextResponse.json(
-        { lien: lienJeton, dejaPublie, erreurSousDomaine: sd.erreur },
+        { lien: lienJeton, dejaPublie, compte, erreurSousDomaine: sd.erreur },
         { headers: { 'Cache-Control': 'no-store' } },
       )
     }
@@ -210,18 +286,18 @@ export async function POST(req: Request) {
       .eq('owner_id', garde.userId)
     if (ecritSlug.error !== null) {
       return NextResponse.json(
-        { lien: lienJeton, dejaPublie, erreurSousDomaine: 'adresse creee mais non enregistree — reessayez' },
+        { lien: lienJeton, dejaPublie, compte, erreurSousDomaine: 'adresse creee mais non enregistree — reessayez' },
         { headers: { 'Cache-Control': 'no-store' } },
       )
     }
     return NextResponse.json(
-      { lien: `https://${sd.hote}`, lienJeton, dejaPublie },
+      { lien: `https://${sd.hote}`, lienJeton, dejaPublie, compte },
       { headers: { 'Cache-Control': 'no-store' } },
     )
   }
 
   return NextResponse.json(
-    { lien: lienJeton, dejaPublie },
+    { lien: lienJeton, dejaPublie, compte },
     { headers: { 'Cache-Control': 'no-store' } },
   )
 }

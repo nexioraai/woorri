@@ -29,6 +29,7 @@ import {
   phraseTable,
   resumeEntites,
   TABLES_MAX,
+  DEUX_SILENCES_INDISCERNABLES,
 } from '../entites-declarees'
 import { CONSIGNE } from '../boucle-directe'
 
@@ -234,6 +235,24 @@ describe('EP-319 · les données déclarées', () => {
     // ne soit pas seulement exact mais aussi lisible.
     expect(CONSIGNE_ENTITES, 'la consigne ne dit pas de ne pas répéter la table')
       .toMatch(/fld_membre_nom/u)
+  })
+
+  it('⑧ LES DEUX SILENCES SONT CONSIGNÉS, dans les bons mots', () => {
+    // ── LA CORRECTION DU PROPRIÉTAIRE, ET POURQUOI ELLE COMPTE.
+    //
+    // J'avais écrit « pas de filet ». « La phrase pas de filet fait réparer
+    // un filet. La vraie phrase fait réparer la DISTINCTION, qui est la
+    // seule chose qui compte et qui est beaucoup moins de travail. »
+    expect(DEUX_SILENCES_INDISCERNABLES, 'la note ne nomme plus les deux états')
+      .toMatch(/illisible/u)
+    expect(DEUX_SILENCES_INDISCERNABLES, 'la note ne dit plus qu’ils sont indiscernables')
+      .toMatch(/indiscernables/u)
+    expect(DEUX_SILENCES_INDISCERNABLES, 'la note ne distingue plus le résultat de la perte')
+      // `[\s\S]` plutot que le drapeau `s` : le build cible une version de
+    // TypeScript ou ce drapeau n'existe pas, et il a refuse la suite.
+      .toMatch(/résultat[\s\S]*perte/u)
+    expect(DEUX_SILENCES_INDISCERNABLES, 'la note ne dit plus ce qui rend la perte silencieuse')
+      .toMatch(/confusion/u)
   })
 
   it('⑦ LE BLOC DEMANDÉ AU MODÈLE DIT SES BORNES ET SES REFUS', () => {

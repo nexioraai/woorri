@@ -24,6 +24,7 @@
  *    `vitest.tir.config.ts`, qui explique pourquoi.
  */
 import { describe, expect, it } from 'vitest'
+import { exigerFeuVert } from '../../../../vitest.tir.setup'
 import { projectAirSchema } from '@deribfy/air-schema'
 import { emettreSchemaSql } from '@deribfy/compiler'
 import { clientIA, MODELE_LEGER } from '@/lib/ia/client'
@@ -44,6 +45,12 @@ const CONSIGNE = [
 ].join('\n')
 
 async function tirer(nom: string, brief: string): Promise<void> {
+  // ── CE TIR DÉPENSE : il le déclare, et sans feu vert il échoue.
+  //
+  // Sans cette ligne, une commande large le facture sans que personne l'ait
+  // demandé — c'est arrivé le 2026-11-02, pour un demi-centime et une fausse
+  // alerte de régression.
+  exigerFeuVert(nom)
   const config = CONFIGS[fournisseurChoisi(process.env.GENERATEUR_FOURNISSEUR)]
   const t0 = Date.now()
   const r = await clientIA().messages.create({

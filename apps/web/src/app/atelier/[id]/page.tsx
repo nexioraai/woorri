@@ -88,6 +88,30 @@ export default function AtelierPage() {
   const [erreur, setErreur] = useState<string | null>(null);
   const [menu, setMenu] = useState(false);
   const [lienPublic, setLienPublic] = useState<string | null>(null);
+  /**
+   * LE COMPTE DE L'ŒUVRE — l'adresse TOUJOURS, le mot de passe UNE FOIS.
+   *
+   * ── LE DÉFAUT QUE CET ÉCRAN FERME.
+   *
+   * La publication créait un compte dont le mot de passe était rendu une
+   * seule fois, dans une réponse JSON que personne ne lisait. Chaque œuvre
+   * publiée fabriquait donc une clé PERDUE à l'instant où elle était faite,
+   * et le propriétaire ne pouvait pas atteindre ses propres données.
+   *
+   * ── ET POURQUOI L'ADRESSE EST TOUJOURS LÀ, MAIS PAS LE MOT DE PASSE.
+   *
+   * L'adresse se déduit de l'identifiant de l'œuvre : ce n'est pas un secret
+   * vis-à-vis du propriétaire, c'est SON application. Le mot de passe, lui,
+   * ne se relit pas — prétendre le contraire serait mentir à l'écran. Il se
+   * RENOUVELLE, et c'est ce qui rend sa perte réparable.
+   */
+  const [compte, setCompte] = useState<{
+    etat?: string;
+    adresse?: string;
+    motDePasse?: string | null;
+    explication?: string;
+  } | null>(null);
+  const [renouvelle, setRenouvelle] = useState(false);
   const basDuFil = useRef<HTMLDivElement | null>(null);
 
   /** Le jeton de session, ou `null` — et dans ce cas on le DIT. */
@@ -174,9 +198,51 @@ export default function AtelierPage() {
         }
       } catch { /* le bouton dira « Modifier » sans prix plutôt que rien */ }
 
+      // L'ÉTAT DU COMPTE : il se lit sans rien cliquer. Un identifiant qu'il
+      // faut aller chercher est un identifiant qu'on ne trouve pas.
+      try {
+        const res = await fetch(`/api/generateur/compte?id=${encodeURIComponent(id)}`, {
+          headers: { Authorization: `Bearer ${t}` },
+        });
+        if (res.ok) setCompte((await res.json()) as { etat?: string; adresse?: string });
+      } catch { /* la carte reste sans panneau de compte, le reste vit */ }
+
       await Promise.all([chargerVersions(), chargerApercu()]);
     })();
   }, [id, router, chargerApercu, chargerVersions]);
+
+  /** Refait le mot de passe. Le nouveau s'affiche, et il ne se relira pas. */
+  const renouvelerCle = async () => {
+    const t = await jeton();
+    if (t === null) return;
+    if (!window.confirm(
+      'Refaire le mot de passe de cette application ?\n\n' +
+      'L’ancien cessera de fonctionner immédiatement : les personnes qui ' +
+      's’en servent devront recevoir le nouveau.\n\nFaites-le si la clé a ' +
+      'circulé plus qu’elle ne devait, ou si vous ne savez plus qui l’a.',
+    )) return;
+    setErreur(null);
+    setRenouvelle(true);
+    try {
+      const res = await fetch(`/api/generateur/compte?id=${encodeURIComponent(id)}`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${t}` },
+      });
+      const d = (await res.json()) as {
+        adresse?: string; motDePasse?: string; error?: string; motif?: string;
+      };
+      if (!res.ok) {
+        setErreur(`${String(d.error ?? 'Le renouvellement a échoué.')} ${String(d.motif ?? '')}`.trim());
+        return;
+      }
+      setCompte({ etat: 'actif', adresse: d.adresse, motDePasse: d.motDePasse ?? null });
+      setAvis('Nouveau mot de passe — notez-le maintenant, il ne se relira pas.');
+    } catch {
+      setErreur('Le renouvellement a échoué. Réessayez.');
+    } finally {
+      setRenouvelle(false);
+    }
+  };
 
   // Le fil se lit vers le bas : après chaque échange, on descend.
   useEffect(() => {
@@ -462,6 +528,63 @@ export default function AtelierPage() {
           <div className="shrink-0 rounded-2xl border border-white/[0.07] bg-white/[0.02] p-2.5">
             {avis !== null && <p className="mb-2 text-[11px] text-emerald-400">{avis}</p>}
             {erreur !== null && <p className="mb-2 text-[11px] text-red-400">{erreur}</p>}
+            {/* ── LE COMPTE DE L'ŒUVRE, TOUJOURS VISIBLE.
+                 Ce n'est pas un secret vis-à-vis du propriétaire : c'est SON
+                 application. S'il perd le mot de passe, il doit voir une
+                 porte qu'il peut franchir, pas un formulaire qui le laisse
+                 chercher. */}
+            {compte?.etat === 'actif' && (
+              <div className="mb-2 rounded-xl border border-white/10 bg-white/[0.03] p-2.5">
+                <p className="text-[11px] font-semibold text-slate-200">
+                  Identifiants de l’application publiée
+                </p>
+                <p className="mt-1 break-all font-mono text-[11px] text-slate-300">
+                  {compte.adresse}
+                </p>
+                {/* LE MOT DE PASSE N'APPARAÎT QU'À L'INSTANT OÙ IL EST FAIT.
+                    On ne relit pas un mot de passe — l'écran le dit au lieu
+                    de laisser chercher où il se trouve. */}
+                {compte.motDePasse !== null && compte.motDePasse !== undefined ? (
+                  <>
+                    <p className="mt-1.5 break-all rounded-lg bg-[#FA5D1E]/[0.12] px-2 py-1.5 font-mono text-[12px] text-white">
+                      {compte.motDePasse}
+                    </p>
+                    <p className="mt-1 text-[10px] leading-relaxed text-amber-300/80">
+                      Notez-le maintenant : il ne se relira pas.
+                    </p>
+                  </>
+                ) : (
+                  <p className="mt-1 text-[10px] leading-relaxed text-white/40">
+                    Le mot de passe ne se relit pas. S’il a circulé plus qu’il ne
+                    devait, ou si vous ne savez plus qui l’a, refaites-le.
+                  </p>
+                )}
+                <button
+                  type="button"
+                  disabled={renouvelle}
+                  onClick={() => { void renouvelerCle(); }}
+                  className="mt-2 w-full rounded-lg border border-white/10 bg-white/[0.03] px-2 py-1.5 text-[11px] text-slate-300 transition hover:border-white/20 hover:text-white disabled:opacity-40"
+                >
+                  {renouvelle ? 'Renouvellement…' : 'Refaire le mot de passe'}
+                </button>
+              </div>
+            )}
+            {/* ── TROIS ÉTATS, ET L'ÉCRAN NE LES CONFOND PAS.
+                 « Pas de données déclarées » est un RÉSULTAT ; « pas encore
+                 publiée » est une ÉTAPE. Les dire pareil ferait chercher une
+                 panne là où il n'y en a pas. */}
+            {compte?.etat === 'sans-donnees' && (
+              <p className="mb-2 text-[11px] leading-relaxed text-white/40">
+                Cette application ne conserve aucune donnée : elle n’a donc pas
+                de compte. Ce que l’on y saisit disparaît au rechargement.
+              </p>
+            )}
+            {compte?.etat === 'non-publiee' && (
+              <p className="mb-2 text-[11px] leading-relaxed text-white/40">
+                Les identifiants d’accès aux données seront créés à la
+                publication.
+              </p>
+            )}
             {lienPublic !== null && (
               <a
                 href={lienPublic}
