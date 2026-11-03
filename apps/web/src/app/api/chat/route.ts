@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, after } from 'next/server';
 import { sansQuota } from '@/lib/admin-emails';
 import { z } from 'zod';
 import { clientIA, MODELE_LEGER, MODELE_LOURD } from '@/lib/ia/client';
@@ -1202,37 +1202,103 @@ Return ONLY valid JSON, no markdown:
     // etablie au LOT 2 et deja consommee par les sept couches du mecanisme.
     // Aucune autorite nouvelle, aucun doublon.
     // ============================================================
-    progres('Sélection et amélioration du catalogue…');
-    if (usesCatalogSelections(finalMode, persistedDropshipType)) {
+    // ── LE CATALOGUE TOURNE APRÈS LA RÉPONSE (décision du 2026-11-03).
+    //
+    // CE QUI SE PASSAIT : la boutique était écrite, puis la route ATTENDAIT
+    // encore deux appels IA en série — `catalog/curate` puis
+    // `catalog/enhance`. Le commentaire les disait « non bloquants » ; ils
+    // étaient pourtant `await`. C'est là que la connexion mourait : site
+    // écrit à 15:18:45, réponse jamais partie, « Load failed » à l'écran.
+    //
+    // RIEN NE S'Y OPPOSE, ET C'EST MESURÉ : la réponse rend
+    // `{...parsed, slug, gallery}` — le catalogue n'y figure pas. L'éditeur
+    // le lit en base quand il en a besoin. La page livrée en PROFITE ; elle
+    // n'en DÉPEND pas. (Et sur la boutique du 2026-11-03,
+    // `site_catalog_selections` comptait zéro ligne : la curation n'avait de
+    // toute façon pas abouti dans la requête.)
+    //
+    // `after` garde la fonction vivante après l'envoi : le travail se fait,
+    // l'utilisateur ne l'attend plus.
+    //
+    // ── ET SON ÉCHEC DEVIENT INVISIBLE, DONC IL S'ALERTE.
+    //
+    // Tant qu'il était dans la requête, un échec de curation partait au
+    // moins dans la réponse. Après la réponse, plus personne ne le voit —
+    // sauf l'alerte. Déplacer du travail hors de vue sans l'alerter
+    // reviendrait à fabriquer un silence de plus.
+    // ── `after` EST APPELÉ DEPUIS L'INTÉRIEUR DU FLUX, et ça mérite un filet.
+    //
+    // Il lit le contexte de la requête par un stockage asynchrone. Ici, le
+    // travail tourne dans le `start()` d'un `ReadableStream` : la
+    // propagation du contexte à travers cette frontière n'est pas garantie,
+    // et un `after()` qui lève ferait échouer LA GÉNÉRATION ELLE-MÊME —
+    // exactement ce qu'on répare.
+    //
+    // S'il refuse, on lance le travail sans l'attendre. Moins fiable qu'un
+    // `after` (la fonction peut être recyclée avant la fin), mais ça ne
+    // coûte rien à l'utilisateur et ça ne peut pas casser sa génération.
+    const apresLaReponse = async () => {
       try {
-        const { data: newSite } = await supabaseAdmin
-          .from('sites')
-          .select('id')
-          .eq('slug', slug)
-          .single();
-        if (newSite?.id) {
-          const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000';
-          // 1. Curate
-          await fetch(`${baseUrl}/api/catalog/curate`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-            body: JSON.stringify({ slug }),
+      if (usesCatalogSelections(finalMode, persistedDropshipType)) {
+        try {
+          const { data: newSite } = await supabaseAdmin
+            .from('sites')
+            .select('id')
+            .eq('slug', slug)
+            .single();
+          if (newSite?.id) {
+            const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000';
+            // 1. Curate
+            await fetch(`${baseUrl}/api/catalog/curate`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+              body: JSON.stringify({ slug }),
+            });
+            // 2. Enhance
+            await fetch(`${baseUrl}/api/catalog/enhance`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+              body: JSON.stringify({ slug }),
+            });
+            // 3. Approve all
+            await supabaseAdmin
+              .from('site_catalog_selections')
+              .update({ merchant_approved: true })
+              .eq('site_id', newSite.id);
+          }
+        } catch (e) {
+          // ── CE `catch` AVALAIT L'ERREUR AVANT QUE L'ALERTE LA VOIE.
+          //
+          // Tant que la curation vivait dans la requête, « non bloquant »
+          // suffisait : l'utilisateur voyait au moins sa boutique. Déplacée
+          // après la réponse, elle n'a plus aucun témoin — un
+          // `console.error` dans une fonction serverless est un silence.
+          console.error('Auto-curation failed (non-blocking):', e);
+          void alerter({
+            sujet: 'boutique',
+            sujetId: slug,
+            motif: 'curation du catalogue échouée après la réponse',
+            etape: 'publication',
+            detail: e instanceof Error ? e.message.slice(0, 500) : String(e).slice(0, 500),
           });
-          // 2. Enhance
-          await fetch(`${baseUrl}/api/catalog/enhance`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
-            body: JSON.stringify({ slug }),
-          });
-          // 3. Approve all
-          await supabaseAdmin
-            .from('site_catalog_selections')
-            .update({ merchant_approved: true })
-            .eq('site_id', newSite.id);
         }
-      } catch (e) {
-        console.error('Auto-curation failed (non-blocking):', e);
       }
+      } catch (e) {
+        // LE DERNIER FILET : ce qui échoue HORS du `try` interne. Sans lui,
+        // une exception ici tuerait la tâche d'arrière-plan sans un mot.
+        void alerter({
+          sujet: 'boutique',
+          sujetId: slug,
+          motif: 'travail d’après-réponse interrompu',
+          etape: 'publication',
+          detail: e instanceof Error ? e.message.slice(0, 500) : String(e).slice(0, 500),
+        })
+      }
+    }
+    try {
+      after(apresLaReponse)
+    } catch {
+      void apresLaReponse()
     }
     progres('Finalisation de votre système…');
     return NextResponse.json({ ...parsed, slug, gallery });

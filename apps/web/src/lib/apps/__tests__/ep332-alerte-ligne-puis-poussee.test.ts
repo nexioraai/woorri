@@ -9,8 +9,8 @@
  *
  * Et son addition : « l'alerte ÉCRIT D'ABORD UNE LIGNE, puis pousse la
  * notification. La ligne est la trace, la poussée est le signal. Si
- * Telegram est injoignable — et au Tchad l'accès aux réseaux sociaux a déjà
- * été restreint — rien n'est perdu, et une alerte non remise se voit. »
+ * le courriel ne part pas — et au Tchad l'accès aux réseaux sociaux a déjà
+ * été restreint, ce qui a écarté Telegram — rien n'est perdu, et une alerte non remise se voit. »
  *
  * ── POURQUOI CET ORDRE EST LA GARANTIE.
  *
@@ -29,7 +29,7 @@ const SQL = lireSource(join(__dirname, '..', '..', '..', '..', 'supabase', 'sql'
 describe('EP-332 · la ligne d’abord', () => {
   it('① L’ÉCRITURE PRÉCÈDE LA POUSSÉE, dans cet ordre et pas l’autre', () => {
     const iEcrit = SRC.indexOf(".from('alertes_generation').insert")
-    const iPousse = SRC.indexOf('api.telegram.org')
+    const iPousse = SRC.indexOf('api.resend.com')
     expect(iEcrit, 'l’alerte n’écrit aucune ligne').toBeGreaterThan(0)
     expect(iPousse, 'l’alerte ne pousse rien').toBeGreaterThan(0)
     expect(

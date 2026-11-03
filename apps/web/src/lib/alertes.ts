@@ -10,9 +10,9 @@
  * ── L'ORDRE DES DEUX GESTES EST LA GARANTIE.
  *
  * On ÉCRIT, puis on POUSSE. La ligne est la trace, la poussée est le
- * signal. Si Telegram est injoignable — et au Tchad l'accès aux réseaux
- * sociaux a déjà été restreint — rien n'est perdu, et la ligne porte
- * `remise = false` avec son motif : une alerte non remise SE VOIT.
+ * signal. Si le courriel ne part pas — quota, clé révoquée, panne du
+ * fournisseur — rien n'est perdu, et la ligne porte `remise = false` avec
+ * son motif : une alerte non remise SE VOIT.
  *
  * L'ordre inverse (pousser puis écrire) perdrait l'alerte à chaque fois que
  * l'écriture échoue, c'est-à-dire exactement quand la base va mal — le
@@ -23,6 +23,8 @@
  * Une alerte qui casse la requête qu'elle observe transforme un incident en
  * deux. Toute erreur ici part dans `console.error` et s'arrête là.
  */
+import { ADMIN_EMAILS } from '@/lib/admin-emails'
+
 /**
  * LA CLÉ DE SERVICE SE CHARGE À L'USAGE, pas à l'import.
  *
@@ -56,11 +58,24 @@ export type Alerte = {
   readonly coutUsd?: number | null
 }
 
-/** Le canal est configuré, ou il ne l'est pas — et on le dit. */
-function canal(): { jeton: string; salon: string } | null {
-  const jeton = process.env.TELEGRAM_BOT_TOKEN ?? ''
-  const salon = process.env.TELEGRAM_CHAT_ID ?? ''
-  return jeton === '' || salon === '' ? null : { jeton, salon }
+/**
+ * LE CANAL EST LE COURRIEL — décision du propriétaire, 2026-11-03.
+ *
+ * Telegram a été écarté. Resend était DÉJÀ installé et déjà employé par
+ * `contact` et `welcome`, qui envoient depuis `no-reply@deribfy.com` en
+ * production : le domaine est donc déjà vérifié, et il n'y a AUCUN travail
+ * DNS à faire. Une dépendance déjà là, un domaine déjà vérifié — le chemin
+ * le plus court était sous la main.
+ *
+ * LA DESTINATION VIENT DE `ADMIN_EMAILS`, pas d'une variable de plus : la
+ * liste des administrateurs existe déjà et a UNE source. En créer une
+ * seconde, c'est la divergence que ce fichier-là existe pour empêcher.
+ * `ALERTE_EMAIL` ne sert qu'à la détourner (essai, astreinte).
+ */
+function canal(): { cle: string; vers: string } | null {
+  const cle = process.env.RESEND_API_KEY ?? ''
+  const vers = process.env.ALERTE_EMAIL ?? ADMIN_EMAILS[0] ?? ''
+  return cle === '' || vers === '' ? null : { cle, vers }
 }
 
 /**
@@ -100,7 +115,7 @@ export async function alerter(a: Alerte): Promise<string | null> {
     etape: a.etape,
     detail: a.detail?.slice(0, 2000) ?? null,
     cout_usd: a.coutUsd ?? null,
-    canal: canal() === null ? null : 'telegram',
+    canal: canal() === null ? null : 'courriel',
   }
 
   let id: string | null = null
@@ -121,19 +136,27 @@ export async function alerter(a: Alerte): Promise<string | null> {
   // ② LE SIGNAL. Son échec ne retire rien à la trace.
   const c = canal()
   if (c === null) {
-    await noterRemise(id, false, 'canal non configuré (TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID)')
+    await noterRemise(id, false, 'canal non configuré (RESEND_API_KEY / destinataire)')
     return id
   }
   try {
-    const r = await fetch(`https://api.telegram.org/bot${c.jeton}/sendMessage`, {
+    const r = await fetch('https://api.resend.com/emails', {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ chat_id: c.salon, text: texteAlerte(a), disable_web_page_preview: true }),
+      headers: { authorization: `Bearer ${c.cle}`, 'content-type': 'application/json' },
+      body: JSON.stringify({
+        // La même adresse que `contact` et `welcome` : domaine déjà vérifié.
+        from: 'Deribfy <no-reply@deribfy.com>',
+        to: [c.vers],
+        // L'OBJET PORTE DÉJÀ L'ESSENTIEL : sur un téléphone, la
+        // notification n'affiche souvent que lui.
+        subject: `⚠️ Deribfy — ${a.sujet} : ${a.etape}`,
+        text: texteAlerte(a),
+      }),
       // Une alerte qui bloque la requête qu'elle observe aggrave l'incident.
       signal: AbortSignal.timeout(8000),
     })
     if (!r.ok) {
-      await noterRemise(id, false, `telegram HTTP ${String(r.status)} ${(await r.text()).slice(0, 200)}`)
+      await noterRemise(id, false, `resend HTTP ${String(r.status)} ${(await r.text()).slice(0, 200)}`)
       return id
     }
     await noterRemise(id, true, null)
