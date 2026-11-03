@@ -78,15 +78,43 @@ describe('EP-331 · l’écran ne ment plus sur l’échec', () => {
     expect(ECRAN, 'la tentative n’est pas retenue').toMatch(/setDerniereTentative\(\{ texte: text/u)
   })
 
-  it('④ LES COCHES SONT UN MINUTEUR, ET ON LE SAIT — dette nommée', () => {
-    // ── CE CONTRÔLE NE CORRIGE RIEN : il EMPÊCHE D'OUBLIER.
+  it('④ LE SERVEUR MÈNE LES COCHES, ET LE MINUTEUR NE LE DÉPASSE PAS', () => {
+    // ── CE CONTRÔLE A CHANGÉ DE SENS LE JOUR PRÉVU.
     //
-    // Tant que l'avancement n'est pas réel (lot chiffré, non commencé), ces
-    // coches restent décoratives. Ce contrôle échouera le jour où elles
-    // deviendront vraies — et ce jour-là, il faudra le réécrire, ce qui est
-    // exactement le bon moment pour relire cette prose.
-    expect(ECRAN, 'le minuteur des étapes a disparu : l’avancement est-il devenu réel ?').toMatch(
-      /setLoadingStep\(\(s\) => \(s < LOADING_STEPS\.length - 1 \? s \+ 1 : s\)\);[\s\S]{0,40}8000/u,
+    // Sa première forme EXIGEAIT le minuteur de huit secondes et disait :
+    // « le jour où l'avancement deviendra réel, ce contrôle rougira, et ce
+    // sera exactement le bon moment pour relire cette prose. » Ce jour est
+    // arrivé le même jour.
+    //
+    // Les coches sont maintenant pilotées par des jalons RÉELS envoyés dans
+    // le fil. Le minuteur subsiste pour que l'écran ne paraisse pas figé
+    // entre deux jalons distants — mais BORNÉ : jamais plus d'une étape
+    // au-delà de ce que le serveur a confirmé. Il dit « on y travaille »,
+    // plus jamais « c'est fait ».
+    expect(ECRAN, 'aucun jalon réel ne pilote les coches').toMatch(/etapeReelle/u)
+    expect(ECRAN, 'le plancher du serveur n’existe pas').toMatch(/const plancher = /u)
+    // LE PLAFOND EST LA PROPRIÉTÉ : sans lui, le minuteur rejoue le mensonge.
+    expect(ECRAN, 'le minuteur peut de nouveau dépasser le serveur').toMatch(
+      /Math\.min\(LOADING_STEPS\.length - 1, plancher \+ 1\)/u,
     )
+    // ET LE JALON SE REMET À ZÉRO AVEC LE RESTE : un plancher qui survit à
+    // l'échec rallumerait des coches au prochain essai.
+    expect(ECRAN, 'le jalon survit à l’échec').toMatch(/setEtapeReelle\(null\)/u)
+  })
+
+  it('⑤ LE FIL EST LU, ET UN FIL QUI SE TAIT N’EST PAS UN RÉSULTAT VIDE', () => {
+    // ── LA FAUTE QUI AURAIT FAIT PAYER DEUX FOIS.
+    //
+    // Si le fil s'arrête sans `fin`, c'est une COUPURE. Le traiter comme un
+    // résultat vide afficherait « Génération échouée » là où la boutique
+    // existe peut-être — et le 2026-11-03, elle existait.
+    expect(ECRAN, 'le client ne demande pas de flux').toMatch(/application\/x-ndjson/u)
+    expect(ECRAN, 'aucun lecteur de fil').toMatch(/async function lireLeFil/u)
+    expect(ECRAN, 'un fil interrompu n’est pas distingué d’un résultat').toMatch(
+      /if \(fin === null\) throw new Error\(CONNEXION_PERDUE\)/u,
+    )
+    // ET LE REPLI EXISTE : si un intermédiaire retire l'en-tête, on relit du
+    // JSON plutôt que d'échouer sur une réponse parfaitement valide.
+    expect(ECRAN, 'aucun repli si le flux n’arrive pas').toMatch(/includes\('application\/x-ndjson'\)/u)
   })
 })

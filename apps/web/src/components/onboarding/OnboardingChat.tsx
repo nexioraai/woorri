@@ -15,6 +15,63 @@ import { doitAiguillerVersApplication } from '@/lib/apps/aiguillage';
 const APPLICATION_PRETE = modeAsyncActif(process.env.NEXT_PUBLIC_GENERATION_ASYNC);
 
 /**
+ * LIT LE FIL LIGNE PAR LIGNE — et sait dire ce qui n'est jamais arrivé.
+ *
+ * Chaque ligne est un objet JSON : `battement` (la connexion vit),
+ * `etape` (un jalon RÉEL du serveur), `fin` (le résultat), `erreur`.
+ *
+ * SI LE FIL S'ARRÊTE SANS `fin`, c'est une coupure — pas un résultat vide.
+ * Les confondre ferait afficher « Génération échouée » là où la boutique
+ * existe peut-être, et c'est exactement la faute qui a failli faire payer
+ * deux fois le 2026-11-03.
+ */
+async function lireLeFil(
+  res: Response,
+  surEtape: (texte: string) => void,
+): Promise<{ ok: boolean; corps: Record<string, unknown> }> {
+  // La route ne diffuse que si on le demande. Si un intermédiaire a retiré
+  // l'en-tête, on retombe sur le JSON plutôt que d'échouer.
+  const type = res.headers.get('content-type') ?? '';
+  if (!type.includes('application/x-ndjson')) {
+    const corps = (await res.json()) as Record<string, unknown>;
+    return { ok: res.ok, corps };
+  }
+  const lecteur = res.body?.getReader();
+  if (!lecteur) throw new Error(CONNEXION_PERDUE);
+  const decodeur = new TextDecoder();
+  let reste = '';
+  let fin: { ok: boolean; corps: Record<string, unknown> } | null = null;
+  for (;;) {
+    const { done, value } = await lecteur.read();
+    if (done) break;
+    reste += decodeur.decode(value, { stream: true });
+    const lignes = reste.split('\n');
+    reste = lignes.pop() ?? '';
+    for (const l of lignes) {
+      if (l.trim() === '') continue;
+      let o: Record<string, unknown>;
+      try {
+        o = JSON.parse(l) as Record<string, unknown>;
+      } catch {
+        continue;
+      }
+      if (o.t === 'etape' && typeof o.texte === 'string') surEtape(o.texte);
+      else if (o.t === 'erreur') throw new Error(String(o.message ?? 'Génération échouée.'));
+      else if (o.t === 'fin') {
+        fin = {
+          ok: typeof o.statut === 'number' ? o.statut < 400 : true,
+          corps: (o.corps ?? {}) as Record<string, unknown>,
+        };
+      }
+    }
+  }
+  // LE FIL S'EST TU SANS CONCLURE : c'est une coupure, et on le dit comme
+  // telle — le travail a peut-être abouti côté serveur.
+  if (fin === null) throw new Error(CONNEXION_PERDUE);
+  return fin;
+}
+
+/**
  * CE QU'ON DIT QUAND LA CONNEXION LÂCHE — et pourquoi pas « réessayez ».
  *
  * ── MESURÉ EN PRODUCTION LE 2026-11-03, 16h18 au Tchad.
@@ -152,6 +209,7 @@ export default function OnboardingChat() {
       if (data.user?.email) setUserEmail(data.user.email);
     });
   }, []);
+  const [etapeReelle, setEtapeReelle] = useState<string | null>(null);
   const [derniereTentative, setDerniereTentative] = useState<{
     texte: string;
     mode?: number;
@@ -242,14 +300,49 @@ export default function OnboardingChat() {
   }, [messages, loading]);
   // Hors generation, l'etape vaut zero : c'est une consequence, pas un etat a
   // remettre. L'effet n'a plus qu'a faire avancer le compteur quand il tourne.
-  const etape = generating ? loadingStep : 0;
+  // ── LE PLANCHER EST DÉRIVÉ, PAS STOCKÉ.
+  //
+  // Ma première forme posait l'état dans un effet, et le lint l'a refusée :
+  // « Calling setState synchronously within an effect can trigger cascading
+  // renders ». Il avait raison, et la correction est meilleure que le
+  // contournement — une valeur qui se CALCULE n'a pas besoin d'être tenue
+  // à jour, donc elle ne peut pas diverger de sa source.
+  const plancher = etapeReelle === null ? -1 : LOADING_STEPS.indexOf(etapeReelle);
+  const etape = generating ? Math.max(loadingStep, plancher) : 0;
+
+  /**
+   * LE SERVEUR MÈNE, LE MINUTEUR SUIT — et ne le dépasse jamais.
+   *
+   * ── CE QUE CES COCHES FAISAIENT AVANT LE 2026-11-03.
+   *
+   * Elles avançaient sur un `setInterval` de huit secondes, quoi que fasse
+   * le serveur. Au bout de quarante secondes, cinq étapes étaient
+   * « réussies » même si la requête était morte à la première — c'est
+   * exactement ce que le propriétaire a vu, sous un « Load failed ».
+   *
+   * ── CE QU'ELLES FONT MAINTENANT.
+   *
+   * Le fil envoie des jalons RÉELS. Chacun fixe un plancher : les coches
+   * jusque-là sont vraies. Le minuteur n'a plus le droit d'aller au-delà
+   * de l'étape suivante — il dit « on y travaille », plus jamais « c'est
+   * fait ».
+   *
+   * Un minuteur seul mentait ; un plancher seul figerait l'écran entre deux
+   * jalons distants de trente secondes. Les deux ensemble disent la vérité
+   * sans donner l'impression d'un écran bloqué.
+   */
   useEffect(() => {
     if (!generating) return;
     const id = setInterval(() => {
-      setLoadingStep((s) => (s < LOADING_STEPS.length - 1 ? s + 1 : s));
+      setLoadingStep((s) => {
+        // LE PLAFOND : jamais plus d'une étape au-delà de ce que le serveur
+        // a confirmé. Sans jalon encore reçu, une seule étape est permise.
+        const haut = Math.min(LOADING_STEPS.length - 1, plancher + 1);
+        return s < haut ? s + 1 : s;
+      });
     }, 8000);
     return () => clearInterval(id);
-  }, [generating]);
+  }, [generating, plancher]);
 
   const skip = () => { if (!loading && !generating) sendText('passer'); };
 
@@ -306,17 +399,33 @@ export default function OnboardingChat() {
         setGenerating(true);
         const finalMessage = (data.mode ? `mode: ${data.mode}\n` : '') + data.summary;
         const effectiveDsType = data.dropshipType || dropshipType;
+        // ── ON DEMANDE UN FLUX, et c'est ce qui garde la connexion vivante.
+        //
+        // La route rend du JSON à qui n'en demande pas : les appels courts
+        // ne sont pas touchés. Ici on veut le fil, parce qu'une génération
+        // dure 40 à 90 s et qu'une connexion mobile silencieuse se fait
+        // tuer — c'est ce qui a produit « Load failed » le 2026-11-03,
+        // pendant que le serveur avait déjà fini et facturé.
         const genRes = await fetch('/api/chat', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            Accept: 'application/x-ndjson',
             Authorization: `Bearer ${session.access_token}`,
           },
           body: JSON.stringify({ message: finalMessage, location: '', ...(data.detectedLang ? { language: data.detectedLang } : {}), ...(effectiveDsType ? { dropshipType: effectiveDsType } : {}) }),
         });
-        const genData = await genRes.json();
-        if (!genRes.ok || !genData.slug) throw new Error(genData.error || 'Génération échouée.');
-        router.push(`/edit/${genData.slug}`);
+        const genData = await lireLeFil(genRes, (texte) => {
+          setEtapeReelle(texte);
+        });
+        if (!genData.ok || !genData.corps.slug) {
+          throw new Error(
+            typeof genData.corps.error === 'string' && genData.corps.error !== ''
+              ? genData.corps.error
+              : 'Génération échouée.',
+          );
+        }
+        router.push(`/edit/${String(genData.corps.slug)}`);
         return;
       }
       if (data.type === 'choose_mode' && Array.isArray(data.options)) {
@@ -361,6 +470,7 @@ export default function OnboardingChat() {
       // était morte. L'écran affirmait ce qu'il ne savait pas.
       setGenerating(false);
       setLoadingStep(0);
+      setEtapeReelle(null);
     }
   };
 

@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { clientIA, MODELE_LEGER, MODELE_LOURD } from '@/lib/ia/client';
 import { supabase as supabaseAnon } from '@/lib/supabase';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { alerter } from '@/lib/alertes';
 import { computeAiScore } from '@/app/lib/aiScore';
 import { logGenerationFailure } from '@/lib/generationFailures';
 import { logAiUsage } from '@/lib/ai-usage';
@@ -428,7 +429,15 @@ export function enforceModeProducts<T>(finalMode: number, rawProducts: T[]): T[]
   return (finalMode === 2 || finalMode === 3) ? [] : rawProducts;
 }
 
-export async function POST(req: Request) {
+/**
+ * CE QUI SE PASSE VRAIMENT — émis au fil de l'eau quand le client le demande.
+ *
+ * `progres` est optionnel et ne fait rien par défaut : les appels courts de
+ * cette route (questions, choix de mode) n'ont rien à diffuser.
+ */
+type Progres = (etape: string) => void
+
+async function traiter(req: Request, progres: Progres) {
   try {
     // ============ SÉCURITÉ : validation du Bearer token ============
     const authHeader = req.headers.get('authorization');
@@ -929,6 +938,7 @@ Return ONLY valid JSON, no markdown:
     // plus ce refus -- `api/onboarding` reclame desormais le sous-type
     // AVANT de declencher la generation (`need_dropship_type`).
     // ============================================================
+    progres('Conception des modules métier…');
     const subtype = resolvePersistedSubtype(finalMode, dropshipType);
     if (!subtype.ok) {
       return NextResponse.json(
@@ -1192,6 +1202,7 @@ Return ONLY valid JSON, no markdown:
     // etablie au LOT 2 et deja consommee par les sept couches du mecanisme.
     // Aucune autorite nouvelle, aucun doublon.
     // ============================================================
+    progres('Sélection et amélioration du catalogue…');
     if (usesCatalogSelections(finalMode, persistedDropshipType)) {
       try {
         const { data: newSite } = await supabaseAdmin
@@ -1223,9 +1234,126 @@ Return ONLY valid JSON, no markdown:
         console.error('Auto-curation failed (non-blocking):', e);
       }
     }
+    progres('Finalisation de votre système…');
     return NextResponse.json({ ...parsed, slug, gallery });
   } catch (error) {
     console.error('API ERROR:', error);
     return NextResponse.json({ error: 'Failed to generate business.' }, { status: 500 });
   }
+}
+
+/**
+ * LE FLUX — pour que la connexion ne reste jamais silencieuse.
+ *
+ * ── CE QUI EST ARRIVÉ LE 2026-11-03, 16h18 au Tchad.
+ *
+ * L'écran a affiché « Load failed » — WebKit quand un `fetch` est coupé en
+ * route. Mesuré en base pendant ce temps : la boutique était écrite à
+ * 15:18:45 et l'appel au modèle facturé à 15:18:46. Le serveur avait fini
+ * depuis plus de trois minutes. LE TRAVAIL A ÉTÉ FAIT ET PAYÉ ; SEULE LA
+ * RÉPONSE S'EST PERDUE.
+ *
+ * La cause n'est pas une fonction trop lente — elle avait fini. C'est une
+ * connexion tenue ouverte SANS UN OCTET pendant toute la génération :
+ * `NextResponse.json` ne diffuse rien, et 13 046 jetons de sortie font une
+ * quarantaine de secondes de silence, auxquelles s'ajoutent deux appels IA
+ * de catalogue encore attendus APRÈS l'écriture. Sur un lien mobile, ce
+ * silence se fait tuer.
+ *
+ * Allonger `maxDuration` ne touche pas ça : la fonction avait fini.
+ *
+ * ── CE QUE LE FLUX FERME, ET CE QU'IL NE FERME PAS.
+ *
+ * Il ferme le silence : un battement toutes les cinq secondes, et les
+ * étapes RÉELLES au lieu d'un minuteur de huit secondes.
+ *
+ * IL NE SAUVE PAS UN TÉLÉPHONE QUI SE VERROUILLE. Une génération dure 40 à
+ * 90 secondes ; les gens verrouillent leur écran, iOS suspend la page, et
+ * le flux meurt comme le reste. Au Tchad, sur téléphone, c'est un cas
+ * ordinaire — pas un cas limite.
+ *
+ * La forme juste — lancer, rendre un identifiant, interroger l'avancement —
+ * N'EST PAS ABANDONNÉE : elle est le lot suivant, et ce dépôt en a déjà la
+ * moitié des pièces (`cron/generations` avec son `maxDuration` de 1800 s,
+ * le compare-and-set du travailleur, `modeAsyncActif`). Personne ne doit
+ * croire la question close.
+ *
+ * ── ET LE CLIENT DEMANDE, IL NE SUBIT PAS.
+ *
+ * Seul un appelant qui envoie `Accept: application/x-ndjson` reçoit un
+ * flux. Les appels courts de cette route — questions, choix de mode —
+ * gardent leur JSON, et aucun autre appelant n'est cassé.
+ */
+const ENTETE_FLUX = 'application/x-ndjson'
+
+export async function POST(req: Request) {
+  if (!(req.headers.get('accept') ?? '').includes(ENTETE_FLUX)) {
+    return traiter(req, () => {})
+  }
+
+  const encodeur = new TextEncoder()
+  const flux = new ReadableStream<Uint8Array>({
+    async start(canal) {
+      let ferme = false
+      const envoyer = (o: unknown) => {
+        if (ferme) return
+        try {
+          canal.enqueue(encodeur.encode(JSON.stringify(o) + '\n'))
+        } catch {
+          // Le client est parti : on cesse d'écrire, et `fin` plus bas le
+          // saura — c'est ce qui permet d'alerter sur « réussi mais jamais
+          // récupéré », le cas exact du 2026-11-03.
+          ferme = true
+        }
+      }
+      // ── LE BATTEMENT, et c'est lui qui garde la connexion vivante.
+      const battement = setInterval(() => {
+        envoyer({ t: 'battement' })
+      }, 5000)
+      try {
+        const r = await traiter(req, (etape) => {
+          envoyer({ t: 'etape', texte: etape })
+        })
+        const corps: unknown = await r.json()
+        envoyer({ t: 'fin', statut: r.status, corps })
+        if (ferme) {
+          // RÉUSSI MAIS JAMAIS RÉCUPÉRÉ — l'alerte que la forme naïve rate.
+          const c = corps as { slug?: string; error?: string }
+          void alerter({
+            sujet: 'boutique',
+            sujetId: c.slug ?? null,
+            motif: 'travail terminé mais réponse jamais remise (client déconnecté)',
+            etape: 'reponse-perdue',
+            detail: `statut ${String(r.status)}`,
+          })
+        }
+      } catch (e) {
+        const message = e instanceof Error ? e.message : String(e)
+        envoyer({ t: 'erreur', message })
+        void alerter({
+          sujet: 'boutique',
+          motif: message.slice(0, 400),
+          etape: 'inconnue',
+          detail: e instanceof Error ? (e.stack ?? '').slice(0, 1000) : null,
+        })
+      } finally {
+        clearInterval(battement)
+        try {
+          canal.close()
+        } catch {
+          /* déjà fermé par le départ du client */
+        }
+      }
+    },
+  })
+
+  return new Response(flux, {
+    headers: {
+      'content-type': `${ENTETE_FLUX}; charset=utf-8`,
+      'cache-control': 'no-store, no-transform',
+      // Sans ça, un intermédiaire peut tamponner le flux et rendre le
+      // battement inutile — on aurait un flux qui n'en est pas un.
+      'x-accel-buffering': 'no',
+    },
+  })
 }
