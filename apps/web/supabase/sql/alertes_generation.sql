@@ -4,9 +4,12 @@
 --
 -- Décision du propriétaire, 2026-11-03 : « l'alerte ÉCRIT D'ABORD UNE
 -- LIGNE, puis pousse la notification. La ligne est la trace, la poussée est
--- le signal. Si Telegram est injoignable — et au Tchad l'accès aux réseaux
--- sociaux a déjà été restreint par le passé — rien n'est perdu, et une
--- alerte non remise se voit. »
+-- le signal. Si le canal est injoignable, rien n'est perdu, et une alerte
+-- non remise se voit. »
+--
+-- Le canal est le COURRIEL (Resend) depuis le 2026-11-03 : Telegram a été
+-- écarté par le propriétaire. Resend était déjà installé et `deribfy.com`
+-- déjà vérifié — aucun travail DNS.
 --
 -- D'où `remise` : une alerte écrite mais jamais remise est une ligne à
 -- `false`, pas un silence.

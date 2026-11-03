@@ -125,9 +125,25 @@ describe('EP-284 · la borne tient compte de la réflexion', () => {
     // J'avais tiré cette leçon le 2026-10-18 sur l'autre moteur, et j'y
     // avais posé un cliquet. Il ne regardait pas cette route. UN CLIQUET NE
     // PROTÈGE QUE CE QU'IL REGARDE.
-    expect(CODE, 'l’appel principal n’est pas en flux : au-delà de 21 312 le SDK refusera').toMatch(
-      /messages\.stream\(mainCallParams\)\.finalMessage\(\)/u,
-    )
+    // ── L'ANCRE JUGE LA PROPRIÉTÉ, PLUS LA MISE EN FORME (2026-11-03).
+    //
+    // Elle exigeait l'enchaînement exact
+    // `messages.stream(mainCallParams).finalMessage()`. En posant le
+    // compteur de signes, j'ai séparé les deux gestes — le flux est
+    // toujours là, et le contrôle a rougi sur la MISE EN LIGNE.
+    //
+    // Un cliquet qui lit une forme casse quand on reformate ; celui-ci doit
+    // garder « l'appel principal part en flux », et c'est tout. On vérifie
+    // donc les deux gestes séparément, dans le bon ordre.
+    const iStream = CODE.indexOf('messages.stream(mainCallParams)')
+    expect(
+      iStream,
+      'l’appel principal n’est pas en flux : au-delà de 21 312 le SDK refusera',
+    ).toBeGreaterThan(0)
+    expect(
+      CODE.slice(iStream),
+      'le flux n’est jamais consommé : `finalMessage()` manque',
+    ).toMatch(/finalMessage\(\)/u)
     expect(CODE, 'un appel non streamé subsiste sur le chemin principal').not.toMatch(
       /messages\.create\(mainCallParams\)/u,
     )

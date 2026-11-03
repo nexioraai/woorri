@@ -28,6 +28,7 @@ const APPLICATION_PRETE = modeAsyncActif(process.env.NEXT_PUBLIC_GENERATION_ASYN
 async function lireLeFil(
   res: Response,
   surEtape: (texte: string) => void,
+  surBattement: () => void = () => {},
 ): Promise<{ ok: boolean; corps: Record<string, unknown> }> {
   // La route ne diffuse que si on le demande. Si un intermédiaire a retiré
   // l'en-tête, on retombe sur le JSON plutôt que d'échouer.
@@ -56,6 +57,7 @@ async function lireLeFil(
         continue;
       }
       if (o.t === 'etape' && typeof o.texte === 'string') surEtape(o.texte);
+      else if (o.t === 'battement') surBattement();
       else if (o.t === 'erreur') throw new Error(String(o.message ?? 'Génération échouée.'));
       else if (o.t === 'fin') {
         fin = {
@@ -210,6 +212,25 @@ export default function OnboardingChat() {
     });
   }, []);
   const [etapeReelle, setEtapeReelle] = useState<string | null>(null);
+  /**
+   * CE QUI PROUVE QUE LE SERVEUR EST VIVANT — et qui ment si on le simule.
+   *
+   * Capture du 2026-11-03 : une étape allumée, plus rien pendant une
+   * minute. « Une étape figée ressemble à une panne même quand elle est
+   * honnête. »
+   *
+   * `detailVivant` porte le dernier mot du serveur (« 4 200 signes
+   * écrits »), et `vuIlY` le nombre de secondes écoulées DEPUIS LE DERNIER
+   * SIGNE REÇU. Ce compteur repart à zéro à chaque battement : s'il monte,
+   * c'est que plus rien n'arrive — et l'écran le montre au lieu de faire
+   * tourner un rond.
+   *
+   * Un rond qui tourne ne prouve rien : il tournait aussi quand c'était
+   * mort.
+   */
+  const [detailVivant, setDetailVivant] = useState<string | null>(null);
+  const [dernierSigne, setDernierSigne] = useState<number | null>(null);
+  const [vuIlY, setVuIlY] = useState(0);
   const [derniereTentative, setDerniereTentative] = useState<{
     texte: string;
     mode?: number;
@@ -344,6 +365,14 @@ export default function OnboardingChat() {
     return () => clearInterval(id);
   }, [generating, plancher]);
 
+  useEffect(() => {
+    if (!generating || dernierSigne === null) return;
+    const id = setInterval(() => {
+      setVuIlY(Math.round((Date.now() - dernierSigne) / 1000));
+    }, 1000);
+    return () => clearInterval(id);
+  }, [generating, dernierSigne]);
+
   const skip = () => { if (!loading && !generating) sendText('passer'); };
 
   /**
@@ -415,9 +444,24 @@ export default function OnboardingChat() {
           },
           body: JSON.stringify({ message: finalMessage, location: '', ...(data.detectedLang ? { language: data.detectedLang } : {}), ...(effectiveDsType ? { dropshipType: effectiveDsType } : {}) }),
         });
-        const genData = await lireLeFil(genRes, (texte) => {
-          setEtapeReelle(texte);
-        });
+        const genData = await lireLeFil(
+          genRes,
+          (texte) => {
+            // Le jalon porte parfois un détail (« … 4 200 signes écrits ») :
+            // l'étape est la partie stable, le détail la partie qui bouge.
+            const coupe = texte.indexOf('… ');
+            setEtapeReelle(coupe > 0 ? `${texte.slice(0, coupe)}…` : texte);
+            setDetailVivant(coupe > 0 ? texte.slice(coupe + 2) : null);
+            setDernierSigne(Date.now());
+            setVuIlY(0);
+          },
+          () => {
+            // UN BATTEMENT N'EST PAS UNE ÉTAPE : il ne fait pas avancer les
+            // coches, il prouve seulement que la connexion vit.
+            setDernierSigne(Date.now());
+            setVuIlY(0);
+          },
+        );
         if (!genData.ok || !genData.corps.slug) {
           throw new Error(
             typeof genData.corps.error === 'string' && genData.corps.error !== ''
@@ -471,6 +515,9 @@ export default function OnboardingChat() {
       setGenerating(false);
       setLoadingStep(0);
       setEtapeReelle(null);
+      setDetailVivant(null);
+      setDernierSigne(null);
+      setVuIlY(0);
     }
   };
 
@@ -651,6 +698,23 @@ export default function OnboardingChat() {
                         partagee) — DEPLACEMENT verbatim, pour que le suivi de
                         generation reutilise LA meme marche. */}
                     <Escalier etapes={LOADING_STEPS} courante={etape} />
+                    {/* ── LA PREUVE DE VIE, SOUS L'ESCALIER.
+                         Capture du 2026-11-03, LTE faible : une étape
+                         allumée, plus rien pendant une minute. L'écran
+                         était honnête et paraissait mort.
+                         Ce qui s'affiche ici ne bouge QUE si le serveur
+                         parle : le détail vient de lui, et le compteur
+                         repart à zéro à chaque signe reçu. S'il monte,
+                         c'est que plus rien n'arrive — et c'est ce qu'il
+                         faut voir, pas un rond qui tourne. */}
+                    {generating && (detailVivant !== null || dernierSigne !== null) ? (
+                      <p className="mt-2 text-center text-[11px] text-white/40 tabular-nums">
+                        {detailVivant !== null ? `${detailVivant} · ` : ''}
+                        {vuIlY <= 1
+                          ? 'serveur actif'
+                          : `dernier signe il y a ${String(vuIlY)} s`}
+                      </p>
+                    ) : null}
                   </div>
                 </div>
               ) : null}

@@ -511,6 +511,7 @@ async function traiter(req: Request, progres: Progres) {
     // Pre-check AI seulement si prompt court/ambigu
     if (trimmed.length < 40 || wordCount < 5) {
       try {
+        progres('Analyse de votre activité…');
         const preCheck = await ia().messages.create({
           // CLASSEMENT COURT — « est-ce une salutation, du charabia, ou une
           // vraie demande ? ». 250 jetons. C'est exactement le rôle que
@@ -805,7 +806,46 @@ Return ONLY valid JSON, no markdown:
     //
     // En flux, la borne n'est plus bridée par ce seuil — et `finalMessage()`
     // rend le même objet que `create()`, donc rien d'autre ne change.
-    let response = await ia().messages.stream(mainCallParams).finalMessage();
+    // ── CE QUI BOUGE PENDANT QUE LE MODÈLE ÉCRIT, et c'est VRAI.
+    //
+    // Capture du 2026-11-03, LTE faible : une seule étape allumée, les cinq
+    // autres éteintes, et plus rien pendant une minute. L'écran était enfin
+    // HONNÊTE — et une étape figée ressemble à une panne même quand elle
+    // est honnête.
+    //
+    // La cause : le premier jalon n'arrivait qu'APRÈS le modèle. Or l'appel
+    // est DÉJÀ un flux côté fournisseur ; on ne le regardait simplement
+    // pas. On compte donc les signes à mesure qu'ils arrivent, et on le dit
+    // toutes les deux secondes.
+    //
+    // CE N'EST PAS UNE ANIMATION : le nombre ne bouge que si le modèle
+    // écrit vraiment. S'il se bloque, le nombre se fige — et c'est la
+    // vérité qu'on veut, pas un rond qui tourne quoi qu'il arrive.
+    progres('Rédaction de votre boutique…');
+    const ecrireAvecProgres = async () => {
+      const fil = ia().messages.stream(mainCallParams);
+      let signes = 0;
+      let dernier = 0;
+      // ── LE COMPTEUR EST UN CONFORT, LA GÉNÉRATION EST L'ESSENTIEL.
+      //
+      // `clientIA()` rend toujours un client Anthropic, qui expose `.on`.
+      // Mais s'abonner sans vérifier ferait dépendre LA GÉNÉRATION d'une
+      // forme d'objet : le jour où ce client change — ou dans un double de
+      // test qui ne modélise pas l'API — l'appel lèverait et la boutique ne
+      // serait plus écrite. On perd le compteur, jamais la boutique.
+      if (typeof fil.on === 'function') {
+        fil.on('text', (bout: string) => {
+          signes += bout.length;
+          const maintenant = Date.now();
+          if (maintenant - dernier >= 2000) {
+            dernier = maintenant;
+            progres(`Rédaction de votre boutique… ${String(signes)} signes écrits`);
+          }
+        });
+      }
+      return fil.finalMessage();
+    };
+    let response = await ecrireAvecProgres();
 
     // Retry unique, strictement conditionne a une troncature reelle (audit
     // FUNC-04) : jamais sur end_turn, jamais sur une erreur reseau (qui leve
@@ -817,7 +857,8 @@ Return ONLY valid JSON, no markdown:
     // le relais normalement si la 2e tentative est encore tronquee.
     if (response.stop_reason === 'max_tokens') {
       console.warn('[chat] max_tokens atteint au 1er essai, retry unique', { sector, siteMode });
-      response = await ia().messages.stream(mainCallParams).finalMessage();
+      progres('Reprise : la réponse était trop longue…');
+      response = await ecrireAvecProgres();
     }
 
     const text = response.content.map((item: any) => item.type === 'text' ? item.text : '').join('');
@@ -938,7 +979,7 @@ Return ONLY valid JSON, no markdown:
     // plus ce refus -- `api/onboarding` reclame desormais le sous-type
     // AVANT de declencher la generation (`need_dropship_type`).
     // ============================================================
-    progres('Conception des modules métier…');
+    progres('Création des relations entre données…');
     const subtype = resolvePersistedSubtype(finalMode, dropshipType);
     if (!subtype.ok) {
       return NextResponse.json(
