@@ -13,6 +13,38 @@ import { doitAiguillerVersApplication } from '@/lib/apps/aiguillage';
 // asynchrone est armee — MEME interrupteur que l'ecran de suivi : un seul
 // geste proprietaire allume tout. D'ici la : « Bientot », message doux.
 const APPLICATION_PRETE = modeAsyncActif(process.env.NEXT_PUBLIC_GENERATION_ASYNC);
+
+/**
+ * CE QU'ON DIT QUAND LA CONNEXION LÂCHE — et pourquoi pas « réessayez ».
+ *
+ * ── MESURÉ EN PRODUCTION LE 2026-11-03, 16h18 au Tchad.
+ *
+ * L'écran a affiché « Load failed » — le message de WebKit quand un `fetch`
+ * est coupé en route, pas une erreur de l'application. Pendant ce temps le
+ * SERVEUR avait fini : la boutique `la-boutika-…` était écrite en base à
+ * 15:18:45 UTC et l'appel au modèle facturé à 15:18:46. L'écran tournait
+ * encore plus de trois minutes après.
+ *
+ * LE TRAVAIL A ÉTÉ FAIT ET PAYÉ ; SEULE LA RÉPONSE S'EST PERDUE.
+ *
+ * D'où cette formulation : dire « réessayez » tout court ferait refaire —
+ * et repayer — une boutique qui existe déjà. On envoie d'abord vérifier.
+ */
+const CONNEXION_PERDUE =
+  'La connexion a été interrompue pendant la création. Votre boutique a ' +
+  'peut-être été créée malgré tout : vérifiez dans « Mes boutiques » avant ' +
+  'de relancer.';
+
+/** Le message du navigateur n'est jamais montré tel quel. */
+function phraseLisible(err: unknown): string {
+  const brut = err instanceof Error ? err.message : String(err);
+  // Safari dit « Load failed », Chrome « Failed to fetch », Firefox
+  // « NetworkError… ». Aucun n'est une phrase pour la personne qui lit.
+  if (/load failed|failed to fetch|networkerror|network request failed/iu.test(brut)) {
+    return CONNEXION_PERDUE;
+  }
+  return brut === '' ? 'Une erreur est survenue.' : brut;
+}
 import { useTranslation } from '@/lib/translations';
 
 type Msg = { role: 'user' | 'assistant'; content: string };
@@ -120,6 +152,10 @@ export default function OnboardingChat() {
       if (data.user?.email) setUserEmail(data.user.email);
     });
   }, []);
+  const [derniereTentative, setDerniereTentative] = useState<{
+    texte: string;
+    mode?: number;
+  } | null>(null);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
@@ -217,6 +253,21 @@ export default function OnboardingChat() {
 
   const skip = () => { if (!loading && !generating) sendText('passer'); };
 
+  /**
+   * REJOUER CE QUI A ÉCHOUÉ — et seulement après vérification.
+   *
+   * Le bouton n'apparaît qu'en cas d'échec, à côté d'une phrase qui envoie
+   * d'abord regarder « Mes boutiques » : relancer à l'aveugle recréerait —
+   * et repaierait — une boutique déjà construite.
+   */
+  const reessayer = () => {
+    const t = derniereTentative;
+    if (t === null || loading || generating) return;
+    setError('');
+    setDerniereTentative(null);
+    void sendText(t.texte, t.mode);
+  };
+
   const send = () => sendText(input.trim());
 
   const sendText = async (text: string, chosenMode?: number) => {
@@ -296,9 +347,20 @@ export default function OnboardingChat() {
         throw new Error('Réponse inattendue.');
       }
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Une erreur est survenue.');
+      setError(phraseLisible(err));
+      // ── ET ON RETIENT QUOI REJOUER, pour que « Réessayer » existe.
+      setDerniereTentative({ texte: text, mode: chosenMode });
     } finally {
       setLoading(false);
+      // ── L'ÉCHEC ÉTEINT L'ANIMATION, et c'était le défaut.
+      //
+      // `setGenerating(false)` N'EXISTAIT NULLE PART : une fois lancée,
+      // l'animation ne s'arrêtait jamais. Le rond tournait, le minuteur de
+      // huit secondes continuait d'allumer les coches une à une, et la
+      // personne voyait cinq étapes « réussies » pendant que la requête
+      // était morte. L'écran affirmait ce qu'il ne savait pas.
+      setGenerating(false);
+      setLoadingStep(0);
     }
   };
 
@@ -489,7 +551,33 @@ export default function OnboardingChat() {
       </div>
       )}
 
-      {error && <p className="text-sm text-red-400 mt-3 text-center">{error}</p>}
+      {error && (
+        <div className="mt-3 text-center">
+          <p className="text-sm text-red-400">{error}</p>
+          {/* ── DEUX GESTES, DANS L'ORDRE QUI ÉVITE DE REPAYER.
+               « Mes boutiques » D'ABORD : le 2026-11-03, le serveur avait
+               fini et la boutique existait pendant que l'écran montrait un
+               échec. Relancer à l'aveugle en aurait créé une seconde, et
+               facturé un second appel au modèle. */}
+          {derniereTentative !== null && !loading && !generating && (
+            <div className="mt-2 flex flex-wrap items-center justify-center gap-3">
+              <a
+                href="/dashboard"
+                className="rounded-full border border-white/15 px-4 py-1.5 text-sm text-white/70 transition hover:text-white"
+              >
+                Voir mes boutiques
+              </a>
+              <button
+                type="button"
+                onClick={reessayer}
+                className="rounded-full bg-white/10 px-4 py-1.5 text-sm text-white transition hover:bg-white/15"
+              >
+                Réessayer
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       {showDropshipPicker && messages.length > 1 && !loading && !generating && (
         <div className="flex flex-wrap gap-3 justify-center mt-4">
