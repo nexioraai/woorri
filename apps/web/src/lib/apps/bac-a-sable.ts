@@ -123,9 +123,36 @@ export async function assembler(
     // morte avec un verdict vert. Local : zero import restant, mesure sur
     // 955 839 caracteres. Ce controle rend le defaut IMPOSSIBLE a livrer,
     // quel que soit le milieu.
-    const nus = [...new Set(
-      [...code.matchAll(/(?:^|\n)\s*import\s[^;]*?from\s*["']([^"'./][^"']*)["']/gu)].map((m) => m[1]),
-    )]
+    //
+    // ── ET C'EST L'EMPAQUETEUR QUI RÉPOND, PLUS LE TEXTE (2026-11-03).
+    //
+    // Cette garde regexait le bundle. Un paquet tiers l'a trompée : le
+    // paquet UMD de supabase écrit, DANS UN MESSAGE D'ERREUR, la phrase
+    // « Install and provide the "ws" package », suivie d'une ligne d'import
+    // en exemple. La garde a donc refusé une œuvre entièrement embarquée.
+    //
+    // Mesure comparée sur la même œuvre : rolldown déclare une liste VIDE,
+    // la regex criait « ws ». Contrôle négatif sur un paquet réellement
+    // laissé externe : rolldown dit « lodash », la regex aussi — la liste de
+    // l'empaqueteur voit donc tout ce que le texte voyait, et rien de ce
+    // qu'il inventait.
+    //
+    // C'est la règle du 2026-11-02 appliquée à un instrument du PRODUIT et
+    // pas d'un test : un cliquet qui lit du source peut toujours être
+    // trompé — par une prose, un gabarit, une chaîne reconstruite. Ici
+    // c'était la prose d'un tiers, dans du code fourni.
+    //
+    // LE REPLI RESTE FERMÉ : si le champ manquait (autre version de
+    // l'empaqueteur), on retombe sur la regex plutôt que sur « rien à
+    // signaler ». Une garde qui s'ouvre en silence ne garde plus.
+    const declares = output[0]?.imports
+    const nus = Array.isArray(declares)
+      ? [...new Set(declares.filter((d) => !d.startsWith('.') && !d.startsWith('/')))]
+      : [...new Set(
+          [...code.matchAll(/(?:^|\n)\s*import\s[^;]*?from\s*["']([^"'./][^"']*)["']/gu)].map(
+            (m) => m[1],
+          ),
+        )]
     if (nus.length > 0) {
       return {
         ok: false,

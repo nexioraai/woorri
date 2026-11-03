@@ -31,7 +31,8 @@ import {
   TABLES_MAX,
   DEUX_SILENCES_INDISCERNABLES,
 } from '../entites-declarees'
-import { CONSIGNE } from '../boucle-directe'
+import { CONSIGNE, consignePour, REGLE_6_SANS_BASE } from '../boucle-directe'
+import { lireSource } from './lire-source'
 
 const RACINE = join(__dirname, '..', '..', '..', '..', '..', '..')
 const lire = (...p: string[]): string => readFileSync(join(RACINE, ...p), 'utf8')
@@ -203,6 +204,103 @@ describe('EP-319 · les données déclarées', () => {
     // LA BORNE EST LA MESURE PLUS UNE MARGE ÉTROITE : assez pour une
     // correction de formulation, pas pour un chantier de plus.
     expect(CONSIGNE.length, 'la consigne de génération a grossi').toBeLessThan(6200)
+  })
+
+  it('⑥ter LA DÉROGATION DE PORTABILITÉ EST BORNÉE À `blocBase`', () => {
+    // ── POURQUOI UNE DÉROGATION, ET POURQUOI ELLE DOIT ÊTRE BORNÉE.
+    //
+    // `blocBase` ÉMET la ligne `const b = window.DERIBFY_BASE` dans la
+    // consigne. Le cliquet de portabilité a donc rougi — à raison : il lit
+    // du texte, et le texte dit `window`. Mais ce module n'APPELLE rien :
+    // un client natif qui l'invoque reçoit une chaîne de caractères.
+    //
+    // C'est le même cas que `PRELUDE` dans `boucle-directe.ts`, et la même
+    // discipline s'applique : une dérogation non bornée est un trou. Si un
+    // vrai `window` était posé un jour AILLEURS dans ce fichier, la ligne
+    // de dérogation le couvrirait en silence. Ce contrôle l'empêche.
+    const src = lireSource(join(RACINE, ...WEB, 'lib', 'apps', 'entites-declarees.ts'))
+    const debut = src.indexOf('export function blocBase')
+    expect(debut, 'blocBase a disparu : ce contrôle ne borne plus rien').toBeGreaterThan(0)
+    const fin = src.indexOf('\nexport ', debut + 10)
+    const bloc = src.slice(debut, fin < 0 ? src.length : fin)
+    const JETONS = /window|document\.|localStorage|sessionStorage|navigator\./gu
+    for (const t of src.matchAll(JETONS)) {
+      const dans = (t.index ?? 0) >= debut && (t.index ?? 0) < (fin < 0 ? src.length : fin)
+      expect(
+        dans,
+        `« ${t[0]} » est employé hors de blocBase (position ${String(t.index)}) : ` +
+          'la dérogation de portabilité ne couvre que le texte ÉMIS, pas un appel réel',
+      ).toBe(true)
+    }
+    // ET LE DÉNOMINATEUR EST RÉEL : zéro occurrence passerait aussi.
+    expect((bloc.match(JETONS) ?? []).length, 'blocBase ne nomme plus la base de la page')
+      .toBeGreaterThan(0)
+  })
+
+  it('⑥bis LA RÈGLE 6 NE S’ABROGE PAS : ELLE S’ÉCHANGE', () => {
+    // ── CE QUE CE CONTRÔLE GARDE, ET POURQUOI C'EST UN ÉCHANGE.
+    //
+    // La consigne cesse d'être universelle : avec des entités déclarées, le
+    // bloc de base PREND LA PLACE de la règle 6 ; sans entités, la règle 6
+    // telle quelle. JAMAIS LES DEUX.
+    //
+    // Si le bloc s'AJOUTAIT à côté de « écris des valeurs d'exemple
+    // plausibles », le modèle obéirait aux deux consignes — il brancherait
+    // la moitié des écrans sur la base et peuplerait l'autre moitié de
+    // valeurs en dur. L'application serait à moitié amnésique, et le défaut
+    // ressemblerait à un bug du modèle plutôt qu'à une consigne
+    // contradictoire.
+    //
+    // ── ON JUGE LA CHAÎNE RÉSOLUE, pas le source qui l'assemble.
+    //
+    // C'est exactement ce que le modèle reçoit — aucune prose, aucun
+    // gabarit, aucune concaténation ne peut tromper ce contrôle.
+    const sansBase = consignePour([])
+    const avecBase = consignePour([
+      {
+        id: 'ent_membre',
+        name: 'membre',
+        fields: [champ('nom', { required: true }), champ('telephone', { unique: true })],
+      },
+    ])
+
+    // ① SANS ENTITÉS : IDENTIQUE À L'OCTET. La branche des données n'a pas
+    //    le droit de modifier le chemin de ceux qui n'en déclarent pas.
+    expect(sansBase, 'la consigne sans base a changé').toBe(CONSIGNE)
+    expect(sansBase, 'la règle 6 a disparu du chemin sans base').toContain(REGLE_6_SANS_BASE)
+
+    // ② AVEC ENTITÉS : LA RÈGLE 6 N'EST PLUS LÀ. C'est le cœur : la
+    //    coexistence est ce qu'on interdit, pas l'absence du bloc.
+    expect(avecBase, 'la règle des valeurs d’exemple coexiste avec le bloc de base').not.toContain(
+      REGLE_6_SANS_BASE,
+    )
+    expect(
+      avecBase,
+      'les valeurs d’exemple survivent quelque part dans la consigne avec base',
+    ).not.toMatch(/valeurs d’exemple PLAUSIBLES/u)
+
+    // ③ ET LE BLOC A BIEN PRIS SA PLACE — au même rang, pas en annexe.
+    //    Un bloc ajouté à la fin serait lu après seize autres règles.
+    expect(avecBase, 'le bloc de base est absent').toContain('6. TES DONNÉES VIVENT EN BASE')
+    expect(avecBase, 'la consigne ne nomme pas les tables déclarées').toMatch(/membre/u)
+    expect(avecBase, 'le bloc n’interdit pas les valeurs en dur').toMatch(/INTERDIT/u)
+    expect(
+      avecBase,
+      'le bloc ne demande pas d’écran de connexion : la base n’ouvre qu’aux connectés, ' +
+        'donc une application sans écran de connexion lirait zéro ligne sans dire pourquoi',
+    ).toContain('signInWithPassword')
+    // UN SEUL RANG 6 : deux « 6. » voudraient dire que l'échange a échoué
+    // et que les deux textes se suivent.
+    expect(
+      (avecBase.match(/^6\. /gmu) ?? []).length,
+      'il y a deux règles numérotées 6 : l’échange n’a pas eu lieu',
+    ).toBe(1)
+
+    // ④ ET LA PROSE NE GROSSIT PAS PAR LA PORTE DES DONNÉES.
+    //
+    //    Mesuré le 2026-11-03. La borne vaut la mesure plus une marge
+    //    étroite : le bloc est structuré, il n'a pas à s'expliquer.
+    expect(avecBase.length, 'le bloc de base a enflé').toBeLessThan(7600)
   })
 
   it('⑧ L’ÉCRAN NOMME LES COLONNES COMME LE SCHÉMA LES CRÉE', () => {

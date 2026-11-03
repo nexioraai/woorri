@@ -108,8 +108,26 @@ describe('EP-294 · la famille react vit dans le bundle, pas sur le disque', () 
     expect(src, 'le préfixe commun n’est plus partagé').toContain('PREFIXE_EMBARQUE')
   })
 
-  it('⑤ LES CINQ SPÉCIFICATEURS SONT SERVIS, ET EUX SEULS', () => {
+  it('⑤ CES SPÉCIFICATEURS SONT SERVIS, ET EUX SEULS', () => {
+    // ── LA LISTE EST UNE DÉCLARATION, pas un constat.
+    //
+    // Ce contrôle a rougi le 2026-11-03 quand la base des œuvres est
+    // entrée, et c'était son travail : rien ne s'embarque en silence. Un
+    // paquet de plus, c'est du poids dans CHAQUE œuvre livrée, et la
+    // question « pourquoi celui-là » doit avoir sa réponse écrite ici.
     expect([...MODULES_EMBARQUES.keys()].sort()).toEqual([
+      // ── la base des œuvres générées (lot D5, 2026-11-03).
+      //
+      // Le nom réel du paquet : c'est ce qui permet au MÊME CODE de
+      // fonctionner dans les deux provenances — ici par la mémoire, dans le
+      // zip téléchargé par la vraie dépendance npm.
+      '@supabase/supabase-js',
+      // Le fichier d'un seul tenant, sous un nom INTERNE. Il ne déclare
+      // aucun export (c'est une IIFE à variable globale), donc le
+      // spécificateur public au-dessus est un pont — voir EP-327, qui
+      // l'exécute.
+      '@supabase/supabase-js/umd',
+      // ── la famille react
       'react',
       'react-dom',
       'react-dom/client',

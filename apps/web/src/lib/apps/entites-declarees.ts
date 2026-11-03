@@ -187,6 +187,70 @@ export const CONSIGNE_ENTITES = [
   '      pas « element » — le nom doit dire CE QUE la table conserve.',
 ].join('\n')
 
+/**
+ * LE BLOC DE BASE — il PREND LA PLACE de la règle 6, il ne s'y ajoute pas.
+ *
+ * ── LA TENSION QU'ON SUPPRIME AU LIEU DE LA GÉRER.
+ *
+ * La règle 6 de la consigne de génération dit : « tu écris des valeurs
+ * d'exemple PLAUSIBLES quand il en faut ». Elle décrit une application en
+ * mémoire, et c'était juste tant que les œuvres n'avaient pas de base.
+ *
+ * Ajouter un bloc de base À CÔTÉ d'elle produirait un code hybride : la
+ * moitié des écrans sur la base, l'autre sur des valeurs en dur. Le modèle
+ * obéirait aux deux, et aucun juge actuel ne le verrait.
+ *
+ * Décision du propriétaire : les deux branches NE COEXISTENT JAMAIS dans la
+ * même consigne. Avec entités, ce bloc REMPLACE la règle 6. Sans entités, la
+ * règle 6 reste telle quelle, inchangée. On échange du texte contre du
+ * texte — la consigne ne grossit pas.
+ *
+ * ── ET LE BLOC EST STRUCTURÉ, PAS DE LA PROSE.
+ *
+ * La liste des tables et de leurs colonnes est une DONNÉE, dérivée des
+ * entités déclarées. Ce qui l'entoure est le minimum pour qu'elle se lise :
+ * comment joindre la base, pourquoi il faut se connecter, et l'interdit qui
+ * remplace la règle 6.
+ *
+ * ── POURQUOI LA CONNEXION EST DANS LE BLOC.
+ *
+ * La porte n'autorise que les requêtes CONNECTÉES — mesuré : la clé publique
+ * seule reçoit `42501`. Une application qui ne propose pas de se connecter
+ * verrait des listes vides sans jamais savoir pourquoi. Le dire ici est
+ * moins cher que de le découvrir en production.
+ */
+export function blocBase(entites: readonly EntiteDeclaree[]): string {
+  const tables = entites.map((e) => `  ${phraseTable(e)}`).join('\n')
+  return [
+    '6. TES DONNÉES VIVENT EN BASE, PAS EN MÉMOIRE.',
+    '',
+    '   La page te donne sa base dans `window.DERIBFY_BASE` :',
+    '',
+    "     import { createClient } from '@supabase/supabase-js'",
+    '     const b = window.DERIBFY_BASE',
+    '     const base = createClient(b.url, b.clePubliable, b.options)',
+    '',
+    '   Emploie `b.options` TEL QUEL — il dirige lecture ET écriture vers le',
+    '   bon endroit. Ne pose aucun en-tête à la main.',
+    '',
+    '   LA BASE N’OUVRE QU’AUX PERSONNES CONNECTÉES. Écris donc un écran de',
+    '   connexion (adresse + mot de passe, `base.auth.signInWithPassword`),',
+    '   affiché tant que `base.auth.getSession()` ne rend rien. Sans lui,',
+    '   toutes tes listes seront vides et personne ne saura pourquoi.',
+    '',
+    '   TES TABLES, avec leurs colonnes — ces noms exactement :',
+    tables,
+    '',
+    '   INTERDIT : des valeurs d’exemple écrites en dur. Ce qu’un écran',
+    '   montre vient de la base, toujours. Une base vide donne une liste',
+    '   vide, et c’est la bonne réponse — pas une raison d’inventer des',
+    '   lignes.',
+    '',
+    '   CHAQUE TABLE SE LIT ET S’ÉCRIT quelque part : une table que personne',
+    '   n’interroge est une donnée perdue, et elle te sera renvoyée.',
+  ].join('\n')
+}
+
 /** Le nom lisible d'une table ou d'un champ, sans son préfixe. */
 /**
  * LE NOM LISIBLE D'UNE TABLE OU D'UN CHAMP — sans son préfixe.
@@ -206,6 +270,16 @@ export const CONSIGNE_ENTITES = [
  * une colonne qui n'existe pas.
  */
 const sansPrefixe = (id: string): string => id.replace(/^(ent_|fld_)/u, '')
+
+/**
+ * LE NOM DE LA TABLE, TEL QUE LE SCHÉMA LA CRÉE.
+ *
+ * Égal à `nomTable` de `@deribfy/compiler` — qu'on ne peut pas importer
+ * ici : il tire `node:sqlite`, donc du code de serveur dans le paquet
+ * navigateur (EP-314, un build déjà tué). L'égalité est donc PROUVÉE par
+ * cliquet, pas supposée.
+ */
+export const nomTable = (e: { readonly id: string }): string => sansPrefixe(e.id)
 
 /**
  * LIT ET FILTRE CE QUE LE MODÈLE A DÉCLARÉ.
@@ -296,7 +370,23 @@ export function phraseTable(e: EntiteDeclaree): string {
   const champs = e.fields
     .map((f) => `${sansPrefixe(f.id)}${f.unique === true ? ' (unique)' : ''}`)
     .join(', ')
-  return `${e.name}${e.appendOnly === true ? ' (journal)' : ''} — ${champs}`
+  // ── ET LE NOM DE LA TABLE AUSSI, ce qui manquait.
+  //
+  // La correction du 2026-11-02 n'a aligné que les COLONNES. Le nom de la
+  // table restait `e.name` pendant que le schéma écrivait `sansPrefixe(e.id)`
+  // — et `nomTable` du compilateur fait littéralement la même chose.
+  //
+  // Mesuré le 2026-11-03 sur `id: 'ent_membre_cotisant', name: 'membre'` :
+  // le SQL crée `membre_cotisant`, cette phrase annonçait `membre`.
+  //
+  // INOFFENSIF HIER, PORTEUR AUJOURD'HUI : cette phrase ne servait qu'à
+  // informer un écran. Depuis que la consigne la donne au modèle sous
+  // « ces noms exactement », elle DICTE le `base.from('…')` qu'il écrit —
+  // donc un `PGRST205 table introuvable` sur chaque écran, en production.
+  //
+  // `e.name` ne s'affiche PAS à côté : « ces noms exactement » suivi de deux
+  // noms rend le choix au modèle, et c'est le choix qu'on lui retire.
+  return `${sansPrefixe(e.id)}${e.appendOnly === true ? ' (journal)' : ''} — ${champs}`
 }
 
 /** « 3 tables · 11 champs », pour dire la taille d'un coup d'œil. */

@@ -36,6 +36,20 @@ export const SOURCES = [
   ['react-dom', 'react-dom', 'cjs/react-dom.production.js'],
   ['react-dom/client', 'react-dom', 'cjs/react-dom-client.production.js'],
   ['scheduler', 'scheduler', 'cjs/scheduler.production.js'],
+  // ── LA BASE DES OEUVRES GENEREES (lot D5, 2026-11-03).
+  //
+  // `@supabase/supabase-js` etait AUTORISE a l'import depuis longtemps et
+  // n'etait EMBARQUE nulle part : l'assemblage le refusait en « paquet non
+  // embarque ». Inoffensif tant qu'aucune oeuvre ne s'en servait -- la
+  // consigne de D5 l'emploie, donc chaque oeuvre a donnees aurait boucle
+  // jusqu'a epuiser ses tours, et paye pour ca.
+  //
+  // C'est le paquet UMD d'un seul tenant : ses cinq dependances (auth-js,
+  // postgrest-js, realtime-js, storage-js, functions-js) y sont deja
+  // fondues, donc une seule entree suffit la ou `dist/index.cjs` en
+  // exigerait six et laisserait le disque decider -- le defaut meme que ce
+  // fichier existe pour fermer.
+  ['@supabase/supabase-js/umd', '@supabase/supabase-js', 'dist/umd/supabase.js'],
 ]
 
 /** Construit le contenu du module généré — exporté pour que le cliquet EP-294

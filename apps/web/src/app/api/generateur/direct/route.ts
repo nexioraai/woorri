@@ -32,7 +32,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin'
 import { TABLE_GENERATIONS, TABLE_VERSIONS } from '@/lib/apps/journal'
 import { moteurChoisi } from '@/lib/apps/interrupteur-moteur'
 import { DOMAINE_PUBLIC, TEMOIN_GENERIQUE } from '@/lib/apps/sous-domaine'
-import { boucleEcriture, CONSIGNE, pageAutonome } from '@/lib/apps/boucle-directe'
+import { boucleEcriture, consignePour, pageAutonome } from '@/lib/apps/boucle-directe'
 import {
   emettrePolitiquesSql,
   emettreSchemaSql,
@@ -355,7 +355,7 @@ export async function POST(req: Request) {
   const entitesDeclarees = lireEntites(
     (corps as { entites?: unknown }).entites,
     (e) => schemaEntite.safeParse(e).success,
-  ).entites as readonly EntiteDonnees[]
+  ).entites
 
   let demande = typeof corps.demande === 'string' ? corps.demande.trim() : ''
   let nomExistant: string | null = null
@@ -424,7 +424,9 @@ export async function POST(req: Request) {
   const appeler = async (
     messages: readonly { role: 'user' | 'assistant'; content: string }[],
   ) => {
-    const r = await appelerFournisseur(fournisseur, cle, CONSIGNE, messages)
+    // LA CONSIGNE EST CELLE DE CETTE OEUVRE : avec entites, le bloc de base
+    // REMPLACE la regle des valeurs d'exemple. Les deux ne coexistent jamais.
+    const r = await appelerFournisseur(fournisseur, cle, consignePour(entitesDeclarees), messages)
     entree += r.usage.entree
     sortie += r.usage.sortie
     // LA TRONCATURE VOYAGE AVEC LE TEXTE. La boucle ne peut pas la deviner :
@@ -496,7 +498,15 @@ export async function POST(req: Request) {
   const debut = Date.now()
   let resultat
   try {
-    resultat = await boucleEcriture({ demande, configuration, appeler })
+    // LES ENTITES VONT AU JUGE DE PERSISTANCE : une table absente du code
+    // rendu est precisement ce qu'il cherche, donc elle ne peut pas s'en
+    // deduire. Elle vient du cahier, par la valeur qui a bati la consigne.
+    resultat = await boucleEcriture({
+      demande,
+      configuration,
+      appeler,
+      entites: entitesDeclarees,
+    })
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : String(e)
     return { ok: false as const, error: message.slice(0, 200) }

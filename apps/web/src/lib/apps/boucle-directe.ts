@@ -24,7 +24,9 @@ import { jugerVivacite, type DefautVivacite } from './juge-vivacite'
 import { FICHIER_PERIMETRE, jugerCouverture, type RapportCouverture } from './juge-couverture'
 import { jugerDevise, marqueRecommandee } from './juge-devise'
 import { CONSIGNE_BIBLIOTHEQUE, fichiersSysteme, VARIABLES_CSS } from './bibliotheque-ui'
+import { blocBase, type EntiteDeclaree } from './entites-declarees'
 import { jugerJetons, type DefautJeton } from './juge-jetons'
+import { jugerPersistance, reprochePersistance } from './juge-persistance'
 import { jugerExecution, type VerdictExecution } from './juge-execution'
 
 /**
@@ -34,6 +36,19 @@ import { jugerExecution, type VerdictExecution } from './juge-execution'
  * renvoyés à chacun des neuf appels. Ici le modèle écrit du code : il sait
  * déjà le faire, on n'a pas à le lui apprendre.
  */
+/**
+ * LA RÈGLE 6, TELLE QU'ELLE EST SANS BASE — et c'est son texte exact.
+ *
+ * Elle est extraite pour pouvoir être REMPLACÉE. Quand une œuvre déclare ses
+ * données, le bloc de base prend sa place : les deux branches ne coexistent
+ * jamais dans la même consigne, sinon le modèle produit un code hybride que
+ * personne ne verrait.
+ */
+export const REGLE_6_SANS_BASE = [
+  '6. Tu écris des valeurs d’exemple PLAUSIBLES quand il en faut — des montants',
+  '   et des dates qu’une personne du métier reconnaîtrait.',
+].join('\n')
+
 export const CONSIGNE = `Tu écris une application web complète, en React et TypeScript.
 
 RENDS UNIQUEMENT DES FICHIERS, dans ce format exact, sans rien avant ni après :
@@ -64,8 +79,7 @@ RÈGLES, et chacune vient d'un défaut réel :
 5. Tu restes SOBRE et complet : ce qui est demandé, entièrement, et rien de
    décoratif. Pas d'images d'illustration, pas d'écrans en plus.
 
-6. Tu écris des valeurs d'exemple PLAUSIBLES quand il en faut — des montants
-   et des dates qu'une personne du métier reconnaîtrait.
+${REGLE_6_SANS_BASE}
 
 7. LA NAVIGATION SUIT LA LOI DU PRODUIT, la même que son moteur de rendu :
    à partir de 840 px de largeur, une BARRE LATÉRALE GAUCHE fixe — jamais
@@ -208,6 +222,30 @@ export function texteDeConfiguration(configuration: ConfigurationClient): string
   )
 }
 
+/**
+ * LA CONSIGNE DE CETTE ŒUVRE — assemblée par œuvre, pas universelle.
+ *
+ * ── UN ÉCHANGE DE TEXTE, PAS UN AJOUT.
+ *
+ * Avec entités : le bloc de base PREND LA PLACE de la règle 6. Sans
+ * entités : `CONSIGNE` à l'octet près, inchangée depuis toujours.
+ *
+ * C'est ce qui supprime la tension au lieu de la gérer. Un bloc de base
+ * ajouté À CÔTÉ de « écris des valeurs d'exemple plausibles » produirait un
+ * code à moitié branché sur la base et à moitié sur des valeurs en dur — le
+ * modèle obéirait aux deux, et la moitié des écrans serait amnésique.
+ *
+ * ── ET ELLE NE GROSSIT PAS.
+ *
+ * Mesuré : la variante sans base fait 5 904 signes, exactement comme avant.
+ * La variante avec base échange deux lignes contre le bloc — EP-319 ⑥ borne
+ * les deux.
+ */
+export function consignePour(entites: readonly EntiteDeclaree[]): string {
+  if (entites.length === 0) return CONSIGNE
+  return CONSIGNE.replace(REGLE_6_SANS_BASE, blocBase(entites))
+}
+
 export async function boucleEcriture(o: {
   readonly demande: string
   readonly configuration?: ConfigurationClient
@@ -223,6 +261,14 @@ export async function boucleEcriture(o: {
    * réel qui tourne — fail-closed, comme tout le reste de cette boucle.
    */
   readonly juger?: typeof jugerExecution
+  /**
+   * LES ENTITÉS DÉCLARÉES — ce que le juge de persistance a besoin de savoir.
+   *
+   * Elles ne peuvent PAS se déduire du code rendu : une table absente du
+   * code est exactement ce qu'on cherche. Elles viennent donc du cahier,
+   * par la même valeur qui a construit la consigne.
+   */
+  readonly entites?: readonly EntiteDeclaree[]
 }): Promise<Resultat> {
   const toursMax = o.toursMax ?? TOURS_MAX
   const tours: Tour[] = []
@@ -314,6 +360,15 @@ export async function boucleEcriture(o: {
         // « réservation couverte » avec 2 occurrences pour 59 au cahier
         // était le prix exact de cet ordre-là (mesuré le 2026-11-01).
         const couverture = jugerCouverture(o.demande, carte, execution?.ecrans ?? [])
+        // ── LE JUGE DE LA PERSISTANCE (lot D5 ③, 2026-11-03).
+        //
+        // Il voit le défaut HYBRIDE qu'aucun autre ne voit : une œuvre
+        // moitié branchée sur la base, moitié sur un `useState`. Les cinq
+        // juges ci-dessus en sont CONTENTS — un écran alimenté par un
+        // tableau en mémoire vit, s'affiche et couvre son exigence. Seul le
+        // rechargement dit la vérité, et il la dit à la personne qui vient
+        // de perdre son travail.
+        const persistance = jugerPersistance(o.entites ?? [], carte)
         const reproches: string[] = []
         if (jetons.length > 0) {
           reproches.push(
@@ -366,6 +421,9 @@ export async function boucleEcriture(o: {
                 .join('\n') +
               '\nDonne un texte visible à chacun (ou un aria-label s’il ne porte qu’une icône).',
           )
+        }
+        if (persistance.length > 0) {
+          reproches.push(reprochePersistance(persistance))
         }
         if (couverture.absentes.length > 0) {
           reproches.push(
