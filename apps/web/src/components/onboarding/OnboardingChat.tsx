@@ -27,7 +27,7 @@ const APPLICATION_PRETE = modeAsyncActif(process.env.NEXT_PUBLIC_GENERATION_ASYN
  */
 async function lireLeFil(
   res: Response,
-  surEtape: (texte: string) => void,
+  surEtape: (texte: string, rang?: number) => void,
   surBattement: () => void = () => {},
 ): Promise<{ ok: boolean; corps: Record<string, unknown> }> {
   // La route ne diffuse que si on le demande. Si un intermédiaire a retiré
@@ -56,7 +56,9 @@ async function lireLeFil(
       } catch {
         continue;
       }
-      if (o.t === 'etape' && typeof o.texte === 'string') surEtape(o.texte);
+      if (o.t === 'etape' && typeof o.texte === 'string') {
+        surEtape(o.texte, typeof o.rang === 'number' ? o.rang : undefined);
+      }
       else if (o.t === 'battement') surBattement();
       else if (o.t === 'erreur') throw new Error(String(o.message ?? 'Génération échouée.'));
       else if (o.t === 'fin') {
@@ -328,7 +330,31 @@ export default function OnboardingChat() {
   // renders ». Il avait raison, et la correction est meilleure que le
   // contournement — une valeur qui se CALCULE n'a pas besoin d'être tenue
   // à jour, donc elle ne peut pas diverger de sa source.
-  const plancher = etapeReelle === null ? -1 : LOADING_STEPS.indexOf(etapeReelle);
+  /**
+   * LE PLANCHER VIENT DU SERVEUR, PLUS D'UNE RECHERCHE DE TEXTE.
+   *
+   * ── LE DÉFAUT MESURÉ LE 2026-11-03, 20h27, LTE faible.
+   *
+   * Une seule étape allumée, les cinq autres éteintes, « serveur actif »
+   * sous l'escalier. La connexion vivait ; l'escalier était MORT.
+   *
+   * La cause : ce plancher valait `LOADING_STEPS.indexOf(etapeReelle)`.
+   * Mesuré — trois jalons sur six n'étaient PAS dans cette liste
+   * (« Rédaction de votre boutique… », le compteur, la reprise). `indexOf`
+   * rendait -1, le plafond devenait `min(5, -1 + 1) = 0`, et l'escalier ne
+   * pouvait PLUS JAMAIS avancer.
+   *
+   * C'est le piège du -1 pour la troisième fois de la journée, et celui-ci
+   * est né DANS la correction du précédent.
+   *
+   * ── CE QUI LE FERME POUR DE BON.
+   *
+   * Le serveur envoie un RANG. Plus aucune chaîne à faire correspondre,
+   * donc plus de -1 possible. Et le plancher ne RECULE JAMAIS : un jalon
+   * inconnu ou plus ancien laisse l'escalier où il est, au lieu de le
+   * ramener à zéro.
+   */
+  const [plancher, setPlancher] = useState(-1);
   const etape = generating ? Math.max(loadingStep, plancher) : 0;
 
   /**
@@ -446,12 +472,14 @@ export default function OnboardingChat() {
         });
         const genData = await lireLeFil(
           genRes,
-          (texte) => {
+          (texte, rang) => {
             // Le jalon porte parfois un détail (« … 4 200 signes écrits ») :
             // l'étape est la partie stable, le détail la partie qui bouge.
             const coupe = texte.indexOf('… ');
             setEtapeReelle(coupe > 0 ? `${texte.slice(0, coupe)}…` : texte);
             setDetailVivant(coupe > 0 ? texte.slice(coupe + 2) : null);
+            // LE PLANCHER NE RECULE JAMAIS.
+            if (typeof rang === 'number') setPlancher((p) => (rang > p ? rang : p));
             setDernierSigne(Date.now());
             setVuIlY(0);
           },
@@ -515,6 +543,7 @@ export default function OnboardingChat() {
       setGenerating(false);
       setLoadingStep(0);
       setEtapeReelle(null);
+      setPlancher(-1);
       setDetailVivant(null);
       setDernierSigne(null);
       setVuIlY(0);

@@ -92,7 +92,26 @@ describe('EP-331 · l’écran ne ment plus sur l’échec', () => {
     // au-delà de ce que le serveur a confirmé. Il dit « on y travaille »,
     // plus jamais « c'est fait ».
     expect(ECRAN, 'aucun jalon réel ne pilote les coches').toMatch(/etapeReelle/u)
-    expect(ECRAN, 'le plancher du serveur n’existe pas').toMatch(/const plancher = /u)
+    // ── L'ANCRE JUGE LA PROPRIÉTÉ, PLUS LA DÉCLARATION (2026-11-03).
+    //
+    // Elle exigeait `const plancher = `. Le plancher est devenu un ÉTAT
+    // (`useState`) parce qu'il ne doit jamais reculer — la propriété s'est
+    // RENFORCÉE, et le contrôle a rougi sur la forme. Deuxième fois de la
+    // journée qu'un cliquet lit une mise en forme au lieu d'une règle.
+    expect(ECRAN, 'aucun plancher piloté par le serveur').toMatch(/plancher/u)
+    // ── ON DÉCOUPE LE RAPPEL D'ÉTAPE, pas le fichier entier.
+    //
+    // Ma première forme cherchait `setPlancher(` n'importe où. Une mutation
+    // qui le retirait du rappel restait verte : la remise à zéro
+    // (`setPlancher(-1)`) suffisait à satisfaire l'assertion, alors que le
+    // serveur ne pilotait plus rien.
+    const iRappel = ECRAN.indexOf('await lireLeFil(')
+    expect(iRappel, 'l’appel au lecteur de fil a disparu').toBeGreaterThan(0)
+    const rappelEtape = ECRAN.slice(iRappel, ECRAN.indexOf('if (!genData.ok', iRappel))
+    expect(
+      rappelEtape,
+      'le rang envoyé par le serveur n’alimente plus le plancher : l’escalier ne bougera pas',
+    ).toMatch(/setPlancher\(/u)
     // LE PLAFOND EST LA PROPRIÉTÉ : sans lui, le minuteur rejoue le mensonge.
     expect(ECRAN, 'le minuteur peut de nouveau dépasser le serveur').toMatch(
       /Math\.min\(LOADING_STEPS\.length - 1, plancher \+ 1\)/u,

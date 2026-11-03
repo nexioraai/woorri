@@ -38,7 +38,11 @@ const ECRAN = lireSource(
 
 describe('EP-334 · la preuve de vie', () => {
   it('① UN JALON PART AVANT LE MODÈLE, PAS SEULEMENT APRÈS', () => {
-    const iJalon = ROUTE.indexOf("progres('Rédaction de votre boutique…')")
+    // L'ancre ne porte PAS la parenthèse fermante : les jalons portent
+    // maintenant un rang (`…', 1)`), et cette ancre-là a rendu -1 — le
+    // piège du -1, dans mon propre cliquet. Il l'a dit, parce qu'il vérifie
+    // son ancre avant de s'en servir.
+    const iJalon = ROUTE.indexOf("progres('Rédaction de votre boutique…'")
     const iModele = ROUTE.indexOf('ia().messages.stream(mainCallParams)')
     expect(iJalon, 'aucun jalon avant la rédaction').toBeGreaterThan(0)
     expect(iModele, 'l’appel au modèle a changé de forme : ce contrôle ne situe plus rien')
@@ -107,5 +111,51 @@ describe('EP-334 · la preuve de vie', () => {
     expect(ECRAN, 'le battement n’est pas écouté').toMatch(/o\.t === 'battement'/u)
     // ET IL EST AFFICHÉ : une preuve de vie qu'on ne montre pas n'en est pas une.
     expect(ECRAN, 'le silence du serveur n’est pas montré').toMatch(/dernier signe il y a/u)
+  })
+
+  it('⑤ LE RANG VIENT DU SERVEUR — plus aucune correspondance de texte', () => {
+    // ── LE DÉFAUT MESURÉ LE 2026-11-03, 20h27, LTE faible.
+    //
+    // Une étape allumée, cinq éteintes, « serveur actif » sous l'escalier.
+    // La connexion vivait ; l'escalier était MORT.
+    //
+    // Le plancher valait `LOADING_STEPS.indexOf(etapeReelle)`. Mesuré :
+    // TROIS jalons sur six n'étaient pas dans cette liste. `indexOf`
+    // rendait -1, le plafond devenait `min(5, 0) = 0`, et l'escalier ne
+    // pouvait plus jamais avancer.
+    //
+    // Troisième fois du -1 dans la journée — et celui-ci est né DANS la
+    // correction du précédent. On supprime la classe : un RANG, pas une
+    // chaîne à retrouver.
+    expect(ROUTE, 'les jalons ne portent pas de rang').toMatch(/t: 'etape', texte: etape, rang/u)
+    expect(ROUTE, 'le type du rappel ne porte pas le rang').toMatch(
+      /type Progres = \(etape: string, rang: number\) => void/u,
+    )
+    // AUCUN JALON SANS RANG : un seul suffirait à refiger l'escalier.
+    const sansRang = [...ROUTE.matchAll(/progres\((?:'[^']*'|`[^`]*`)\)/gu)].map((m) => m[0])
+    expect(sansRang, 'un jalon est émis sans rang').toEqual([])
+
+    expect(ECRAN, 'le client cherche encore le texte dans sa liste').not.toMatch(
+      /LOADING_STEPS\.indexOf\(/u,
+    )
+    // ET LE PLANCHER NE RECULE JAMAIS : un jalon plus ancien, ou inconnu,
+    // laisse l'escalier où il est.
+    expect(ECRAN, 'le plancher peut reculer').toMatch(/rang > p \? rang : p/u)
+  })
+
+  it('⑥ L’INSTRUMENT QUI NE PEUT PAS SE BRANCHER LE HURLE', () => {
+    // ── « Une tolérance muette est la même faute que tout le reste. »
+    //
+    // Le compteur est protégé par `typeof fil.on === 'function'` pour ne
+    // jamais tuer la boutique. Mais se taire quand il saute fait perdre
+    // EXACTEMENT l'information qu'il existait pour donner : l'écran
+    // retombe sur « serveur actif » et on ne sait plus si le modèle écrit.
+    const iGarde = ROUTE.indexOf("typeof fil.on !== 'function'")
+    expect(iGarde, 'aucune branche ne traite l’instrument indisponible').toBeGreaterThan(0)
+    const bloc = ROUTE.slice(iGarde, iGarde + 900)
+    expect(bloc, 'l’écran n’apprend pas que le compteur est indisponible').toMatch(
+      /compteur indisponible/u,
+    )
+    expect(bloc, 'le journal n’en garde aucune trace').toMatch(/alerter\(\{/u)
   })
 })

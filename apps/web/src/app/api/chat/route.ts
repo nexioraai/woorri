@@ -435,7 +435,7 @@ export function enforceModeProducts<T>(finalMode: number, rawProducts: T[]): T[]
  * `progres` est optionnel et ne fait rien par défaut : les appels courts de
  * cette route (questions, choix de mode) n'ont rien à diffuser.
  */
-type Progres = (etape: string) => void
+type Progres = (etape: string, rang: number) => void
 
 async function traiter(req: Request, progres: Progres) {
   try {
@@ -511,7 +511,7 @@ async function traiter(req: Request, progres: Progres) {
     // Pre-check AI seulement si prompt court/ambigu
     if (trimmed.length < 40 || wordCount < 5) {
       try {
-        progres('Analyse de votre activité…');
+        progres('Analyse de votre activité…', 0);
         const preCheck = await ia().messages.create({
           // CLASSEMENT COURT — « est-ce une salutation, du charabia, ou une
           // vraie demande ? ». 250 jetons. C'est exactement le rôle que
@@ -821,7 +821,7 @@ Return ONLY valid JSON, no markdown:
     // CE N'EST PAS UNE ANIMATION : le nombre ne bouge que si le modèle
     // écrit vraiment. S'il se bloque, le nombre se fige — et c'est la
     // vérité qu'on veut, pas un rond qui tourne quoi qu'il arrive.
-    progres('Rédaction de votre boutique…');
+    progres('Rédaction de votre boutique…', 1);
     const ecrireAvecProgres = async () => {
       const fil = ia().messages.stream(mainCallParams);
       let signes = 0;
@@ -833,13 +833,32 @@ Return ONLY valid JSON, no markdown:
       // forme d'objet : le jour où ce client change — ou dans un double de
       // test qui ne modélise pas l'API — l'appel lèverait et la boutique ne
       // serait plus écrite. On perd le compteur, jamais la boutique.
+      // ── SI L'INSTRUMENT NE PEUT PAS SE BRANCHER, IL LE HURLE.
+      //
+      // Capture du 2026-11-03, 20h27 : l'écran disait « serveur actif » et
+      // AUCUN compteur. La tolérance avait peut-être sauté — impossible de
+      // le savoir, parce qu'elle se taisait. « Une tolérance muette est la
+      // même faute que tout le reste aujourd'hui. »
+      //
+      // Un instrument de mesure qui se désactive doit le DIRE : à l'écran,
+      // et au journal d'alertes. Sinon on perd exactement l'information
+      // qu'on avait construite pour savoir où ça casse.
+      if (typeof fil.on !== 'function') {
+        progres('Rédaction de votre boutique… compteur indisponible', 1);
+        void alerter({
+          sujet: 'boutique',
+          motif: 'le compteur de signes n’a pas pu se brancher sur le flux du modèle',
+          etape: 'modele',
+          detail: `le client IA n’expose pas .on() — type reçu : ${typeof fil.on}`,
+        });
+      }
       if (typeof fil.on === 'function') {
         fil.on('text', (bout: string) => {
           signes += bout.length;
           const maintenant = Date.now();
           if (maintenant - dernier >= 2000) {
             dernier = maintenant;
-            progres(`Rédaction de votre boutique… ${String(signes)} signes écrits`);
+            progres(`Rédaction de votre boutique… ${String(signes)} signes écrits`, 1);
           }
         });
       }
@@ -857,7 +876,7 @@ Return ONLY valid JSON, no markdown:
     // le relais normalement si la 2e tentative est encore tronquee.
     if (response.stop_reason === 'max_tokens') {
       console.warn('[chat] max_tokens atteint au 1er essai, retry unique', { sector, siteMode });
-      progres('Reprise : la réponse était trop longue…');
+      progres('Reprise : la réponse était trop longue…', 1);
       response = await ecrireAvecProgres();
     }
 
@@ -979,7 +998,7 @@ Return ONLY valid JSON, no markdown:
     // plus ce refus -- `api/onboarding` reclame desormais le sous-type
     // AVANT de declencher la generation (`need_dropship_type`).
     // ============================================================
-    progres('Création des relations entre données…');
+    progres('Création des relations entre données…', 2);
     const subtype = resolvePersistedSubtype(finalMode, dropshipType);
     if (!subtype.ok) {
       return NextResponse.json(
@@ -1341,7 +1360,7 @@ Return ONLY valid JSON, no markdown:
     } catch {
       void apresLaReponse()
     }
-    progres('Finalisation de votre système…');
+    progres('Finalisation de votre système…', 5);
     return NextResponse.json({ ...parsed, slug, gallery });
   } catch (error) {
     console.error('API ERROR:', error);
@@ -1418,8 +1437,15 @@ export async function POST(req: Request) {
         envoyer({ t: 'battement' })
       }, 5000)
       try {
-        const r = await traiter(req, (etape) => {
-          envoyer({ t: 'etape', texte: etape })
+        const r = await traiter(req, (etape, rang) => {
+          // LE RANG EST AUTORITAIRE, LE TEXTE EST POUR L'ŒIL.
+          //
+          // Mesuré le 2026-11-03 : le client cherchait le texte dans sa
+          // liste avec `indexOf`. Trois jalons sur six n'y figuraient pas,
+          // `indexOf` rendait -1, et l'escalier se figeait sur l'étape 0.
+          // Dériver une position d'une correspondance de chaîne, c'est la
+          // même faute que dériver une identité d'une troncature.
+          envoyer({ t: 'etape', texte: etape, rang })
         })
         const corps: unknown = await r.json()
         envoyer({ t: 'fin', statut: r.status, corps })
