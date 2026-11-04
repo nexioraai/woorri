@@ -251,8 +251,23 @@ describe('EP-276 · la route de l’écriture directe', () => {
     expect(sansNom.error, `la route refuse encore sans nom : ${String(sansNom.error)}`).toBeUndefined()
     expect(sansNom.ok, JSON.stringify(sansNom).slice(0, 120)).toBe(true)
 
-    // ET UN REMPLISSAGE NE DEVIENT PAS UN NOM : il est ignoré, pas stocké.
-    // La page retombera sur `TITRE_SANS_NOM`, comme les neuf œuvres d'avant.
+  })
+
+  it('⑤bis·2 UN REMPLISSAGE NE DEVIENT PAS UN NOM — il est ignoré, pas stocké', async () => {
+    // ── DÉCOUPÉ DE ⑤bis LE 2026-11-04, et pour une raison mesurée.
+    //
+    // Les deux assertions vivaient dans un seul test, qui faisait donc
+    // DEUX générations complètes : 1287 ms isolé, 1723 ms sous la charge
+    // de la gate — au-dessus du plafond de marge (×3 sur 5 s).
+    //
+    // Alléger la fixture aurait retiré ce que le test prouve : il
+    // exerce l'assemblage RÉEL et le juge d'exécution RÉEL à travers la
+    // route, et c'est précisément ce qui a attrapé la panne du 11-01.
+    // Un test ne doit pas porter deux générations ; deux tests le
+    // peuvent.
+    //
+    // La page retombera sur `TITRE_SANS_NOM`, comme les neuf œuvres
+    // d'avant.
     const remplissage = (await (await POST(appel('une appli de tontine', 'application'))).json()) as {
       ok?: boolean
     }

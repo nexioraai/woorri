@@ -145,6 +145,64 @@ describe('M2-09 — 🔒 le patron de privilege est tenu partout ailleurs', () =
     expect(sans, 'fonction(s) versionnee(s) sans REVOKE — PostgreSQL accorde EXECUTE a PUBLIC par defaut').toEqual([]);
   });
 
+  /**
+   * ── CE CONTROLE EXIGEAIT *UN* REVOKE, PAS LE BON (2026-11-04).
+   *
+   * Il a attrape quatre fonctions `security definer` nees ouvertes a tous
+   * — les gardes de migration. Mais `revoke all ... from public` seul
+   * l'aurait satisfait, et il NE SUFFIT PAS :
+   *
+   *   Supabase accorde `EXECUTE` a `anon` ET `authenticated` par defaut
+   *   sur tout ce qui nait dans `public`. Une fonction `security definer`
+   *   appelable par `anon`, c'est du code qui s'execute avec les droits
+   *   de son proprietaire, declenchable par n'importe quel visiteur.
+   *
+   * Mesure du 2026-11-04 sur les 27 fonctions du depot : aucune en
+   * defaut. La convention etait deja juste partout — c'est le CONTROLE
+   * qui ne la gardait pas.
+   *
+   * ── ET LE RE-GRANT DELIBERE RESTE POSSIBLE, mais il se VOIT.
+   *
+   * `prix_publics` revoque de `public` puis accorde a `anon` : c'est
+   * l'objet meme de la fonction — lire des prix par identifiants sans
+   * pouvoir les enumerer, arbitre par le proprietaire le 2026-11-01.
+   * Une exception qui s'ecrit en une ligne de `grant` dans le meme
+   * fichier est une decision ; une exception implicite est un oubli.
+   */
+  it('🔒 et il porte sur les TROIS roles, ou re-accorde explicitement', () => {
+    const roleRevoques = (f: string): ReadonlySet<string> => {
+      const out = new Set<string>();
+      const re = new RegExp(
+        `revoke\\s+(?:all|execute)[^;]*function[^;]*\\b${f}\\b[^;]*from([^;]*);`,
+        'gi',
+      );
+      for (const m of TOUT_LE_SQL.matchAll(re)) {
+        for (const r of (m[1] ?? '').split(',')) out.add(r.trim().toLowerCase());
+      }
+      return out;
+    };
+    const reAccordee = (f: string): boolean =>
+      new RegExp(`grant\\s+execute[^;]*function[^;]*\\b${f}\\b[^;]*to\\s+\\w+`, 'i').test(
+        TOUT_LE_SQL,
+      );
+
+    const defauts = [...VERSIONNEES]
+      .filter((f) => {
+        const r = roleRevoques(f);
+        // Les trois rôles nommés : le cas normal.
+        if (['public', 'anon', 'authenticated'].every((x) => r.has(x))) return false;
+        // Ou bien `public` retiré ET un grant délibéré, écrit et visible.
+        return !(r.has('public') && reAccordee(f));
+      })
+      .sort();
+    expect(
+      defauts,
+      'fonction(s) encore executables par `anon` ou `authenticated` — Supabase ' +
+        'les accorde par defaut, et une fonction `security definer` ouverte a ' +
+        '`anon` s’execute avec les droits de son proprietaire',
+    ).toEqual([]);
+  });
+
   it('le script d’extraction prepare existe et ne redefinit RIEN', () => {
     const sql = readFileSync(join(RACINE, 'supabase/sql/consume_promo_code_versioning.sql'), 'utf-8');
     // Il ne doit surtout pas reecrire une fonction qu'on ne peut pas relire.

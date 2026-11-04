@@ -36,7 +36,16 @@ const COMPLET = {
   [NOM_URL_DERIBFY]: URL_DERIBFY,
 }
 
-const sources = (): string[] => {
+// ── LE BALAYAGE EST MÉMORISÉ (2026-11-04).
+//
+// `sources()` marche TOUT l'arbre de `apps/web/src`. Ce fichier l'appelle
+// maintenant trois fois — ⑥, ⑥bis et ⑧ —, et la gate l'a dit : 2028 ms
+// sur ⑧, au-dessus du plafond de marge. Trois balayages identiques pour
+// trois questions différentes sur le MÊME arbre.
+let memoire: string[] | null = null
+const sources = (): string[] => (memoire ??= balayer())
+
+const balayer = (): string[] => {
   const out: string[] = []
   const marcher = (d: string): void => {
     for (const e of readdirSync(d)) {
@@ -129,6 +138,49 @@ describe('EP-321 · les deux bases', () => {
       lecteurs.map((f) => f.slice(RACINE.length + 1)),
       'une deuxième lecture des variables des œuvres est apparue',
     ).toEqual(['apps/web/src/lib/apps/base-oeuvres.ts'])
+  })
+
+  it('⑥bis ET LA CONNEXION DU MIGRATEUR AUSSI — un seul lecteur', () => {
+    // ── POURQUOI CELLE-CI MÉRITE LA MÊME GARDE, ET PLUS ENCORE.
+    //
+    // Les quatre étages de `garde-migration.sql` tiennent dans le moteur
+    // — SAUF le troisième, qui lit la requête. `rename` et `set not
+    // null` ne produisent NI `sql_drop` NI `table_rewrite` : mesuré le
+    // 2026-11-04 sur la vraie base, et `ddl_command_start` ne distingue
+    // pas les sous-commandes d'un `ALTER TABLE`.
+    //
+    // Pour ces deux formes, LA GARDE EST LA LISTE BLANCHE DE M2. Et une
+    // liste blanche qu'on contourne en ouvrant une seconde connexion
+    // n'est pas une liste blanche.
+    //
+    //   « N'importe quel chemin de code qui ouvre une connexion comme
+    //     `deribfy_migrateur` SANS passer par l'émetteur contourne la
+    //     seule garde qui existe pour ces deux formes. »
+    const lecteurs = sources().filter((f) =>
+      lireSource(f).includes('OEUVRES_DATABASE_URL_MIGRATEUR'),
+    )
+    expect(
+      lecteurs.map((f) => f.slice(RACINE.length + 1)),
+      'une deuxième lecture de la connexion du migrateur est apparue — elle ' +
+        'contournerait la liste blanche, seule garde de `rename` et `set not null`',
+    ).toEqual(['apps/web/src/lib/apps/connexion-migrateur.ts'])
+  })
+
+  it('⑥ter ET CE LECTEUR REFUSE AVANT D’OUVRIR', () => {
+    // Un SQL refusé ne doit pas coûter un aller-retour, et surtout ne
+    // doit jamais atteindre la base. L'ordre des gestes EST la garde :
+    // la liste blanche tourne sur le TEXTE, avant la connexion.
+    const src = lireSource(
+      join(RACINE, 'apps', 'web', 'src', 'lib', 'apps', 'connexion-migrateur.ts'),
+    )
+    const iVerif = src.indexOf('verifierMigration(o.sql)')
+    const iConn = src.indexOf("await import('pg')")
+    expect(iVerif, 'la liste blanche n’est plus appelée').toBeGreaterThan(0)
+    expect(iConn, 'plus aucune connexion : ce contrôle ne mesure rien').toBeGreaterThan(0)
+    expect(
+      iVerif < iConn,
+      'la connexion s’ouvre AVANT la vérification : un SQL refusé atteint la base',
+    ).toBe(true)
   })
 
   it('⑧ AUCUNE CLÉ N’EST ÉCRITE DANS LE DÉPÔT', () => {
