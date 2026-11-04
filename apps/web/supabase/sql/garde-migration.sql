@@ -163,6 +163,27 @@ revoke all on function public.deribfy_refus_reecriture() from public, anon, auth
 revoke all on function public.deribfy_refus_alter() from public, anon, authenticated;
 revoke all on function public.deribfy_refus_truncate() from public, anon, authenticated;
 
+-- ── F · LE NOMBRE DE COMPTES, SANS AUCUN ACCÈS AUX COMPTES ──────────
+--
+-- `auth.users` ne vit PAS dans notre schéma : ni la liste blanche ni les
+-- déclencheurs d'œuvre ne le couvrent. Notre promesse « ne jamais perdre
+-- les utilisateurs » ne reposait donc sur aucune de nos gardes.
+--
+-- MESURÉ : le migrateur reçoit « permission denied for table users ». Son
+-- incapacité EST une garantie — mais elle rend l'invariant immesurable,
+-- et un invariant qu'on ne peut pas lire n'est pas un invariant.
+--
+-- LUI DONNER `select` SUR `auth.users` SERAIT LE MAUVAIS PRIX : ce serait
+-- ouvrir les adresses de tous les clients à un rôle dont la chaîne vit
+-- dans un fichier d'environnement. Cette fonction rend LE NOMBRE, et
+-- rien d'autre — aucune ligne, aucune colonne.
+create or replace function public.deribfy_compte_utilisateurs() returns integer
+language sql security definer stable set search_path = '' as $fn$
+  select count(*)::int from auth.users;
+$fn$;
+revoke all on function public.deribfy_compte_utilisateurs() from public, anon, authenticated;
+grant execute on function public.deribfy_compte_utilisateurs() to deribfy_oeuvres;
+
 -- À POSER SUR CHAQUE TABLE CRÉÉE, par `poserOeuvre` et par la migration :
 --
 --   create trigger deribfy_sans_truncate before truncate on <table>

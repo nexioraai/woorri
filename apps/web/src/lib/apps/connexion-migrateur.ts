@@ -31,6 +31,15 @@
  * n'atteint jamais la base. Fail-closed.
  */
 import { verifierMigration, type RefusInstruction } from './migration-sql'
+import {
+  comparerInstantanes,
+  prendreInstantane,
+  verifierPorte,
+  type DefautPorte,
+  type Instantane,
+  type Interroge,
+  type PerteConstatee,
+} from './instantane-migration'
 
 /** Le nom de la variable, écrit UNE fois — personne d'autre ne le tape. */
 export const NOM_DSN_MIGRATEUR = 'OEUVRES_DATABASE_URL_MIGRATEUR'
@@ -104,6 +113,10 @@ export type ResultatMigration = {
   readonly ok: boolean
   readonly refus: readonly RefusInstruction[]
   readonly motif?: string
+  /** Ce que la comparaison avant/après a constaté — vide si rien. */
+  readonly pertes?: readonly PerteConstatee[]
+  /** Les tables dont la porte manque ou ne tient pas. */
+  readonly portes?: readonly DefautPorte[]
 }
 
 /**
@@ -204,16 +217,35 @@ export async function appliquerMigration(o: {
     }
   }
 
+  // ── D · L'INSTANTANÉ, HORS TRANSACTION ET AVANT LE DDL.
+  //
+  // `strong_migrations` interdit de lire ou remplir dans la transaction
+  // du changement de schéma : les verrous seraient tenus pendant tout le
+  // parcours, sur une base de production. L'instantané est une lecture ;
+  // il n'a rien à faire sous le verrou du DDL.
+  const interroge: Interroge = async (sql) =>
+    ((await client.query(sql)) as { rows?: Record<string, unknown>[] }).rows ?? []
+  let avant: Instantane
+  try {
+    avant = await prendreInstantane(interroge, o.schema)
+  } catch (e) {
+    await client.end().catch(() => undefined)
+    return {
+      ok: false,
+      refus: [],
+      motif: `instantané impossible : ${e instanceof Error ? e.message : String(e)}`,
+    }
+  }
+
   try {
     await client.query('begin')
-    // `noinherit` n'est plus posé, mais `set role` reste explicite : il
-    // dit dans le journal de la base QUI a écrit, et `session_user`
-    // continue de dénoncer le migrateur aux quatre gardes.
+    // `set role` reste explicite : il dit dans le journal de la base QUI
+    // a écrit, et `session_user` continue de dénoncer le migrateur aux
+    // quatre gardes.
     await client.query('set local role deribfy_oeuvres')
     await client.query(`set local search_path to ${o.schema}, extensions`)
     await client.query(o.sql)
     await client.query('commit')
-    return { ok: true, refus: [] }
   } catch (e) {
     try {
       await client.query('rollback')
@@ -224,6 +256,46 @@ export async function appliquerMigration(o: {
       ok: false,
       refus: [],
       motif: e instanceof Error ? e.message : String(e),
+    }
+  }
+
+  // ── D · LA VÉRIFICATION, APRÈS ET HORS TRANSACTION.
+  //
+  // Elle CONSTATE : elle est aveugle aux abandons, que M1 arrête. Une
+  // baisse ici veut dire qu'une forme destructrice a franchi la liste
+  // blanche ET les quatre étages du moteur — donc que trois gardes ont
+  // cédé ensemble, et qu'il faut tout arrêter.
+  try {
+    const apres = await prendreInstantane(interroge, o.schema)
+    const pertes = comparerInstantanes(avant, apres)
+    // ── E · LA PORTE DE CHAQUE TABLE, APRÈS.
+    //
+    // Une table AJOUTÉE que les politiques ne couvrent pas est une
+    // régression de confidentialité invisible à nos gardes : elle est
+    // additive, donc M1 l'accepte et M2 l'émet.
+    const portes = await verifierPorte(interroge, o.schema)
+    if (pertes.length > 0 || portes.length > 0) {
+      return {
+        ok: false,
+        refus: [],
+        pertes,
+        portes,
+        motif:
+          pertes.length > 0
+            ? 'DES DONNÉES ONT DISPARU pendant la migration — ' +
+              pertes.map((p) => `${p.quoi} : ${String(p.avant)} → ${String(p.apres)}`).join(' · ')
+            : 'une table est sans porte après la migration — ' +
+              portes.map((d) => `${d.table} : ${d.quoi}`).join(' · '),
+      }
+    }
+    return { ok: true, refus: [], pertes: [], portes: [] }
+  } catch (e) {
+    // La migration EST passée ; c'est la vérification qui a échoué. On le
+    // dit tel quel : taire une vérification ratée la rendrait verte.
+    return {
+      ok: false,
+      refus: [],
+      motif: `migration appliquée mais NON VÉRIFIÉE : ${e instanceof Error ? e.message : String(e)}`,
     }
   } finally {
     await client.end().catch(() => undefined)

@@ -96,9 +96,27 @@ const FORMES_PERMISES: readonly { readonly nom: string; readonly motif: RegExp }
     //
     //    Le corps réel ne contient que des identifiants, des types, des
     //    virgules et `gen_random_uuid()::text`. Aucun `=`, aucun `$`.
+    // ── LE CORPS EST UNE FORME, PLUS UN JEU DE CARACTÈRES (F, 2026-11-04).
+    //
+    // Mon jeu de caractères laissait passer
+    //
+    //     create table if not exists t ( id text primary key,
+    //                                    u text references users(id)
+    //                                      on delete cascade )
+    //
+    // — tout en lettres, donc permis. C'EST LA LIGNE QUI EFFACE LES
+    // DONNÉES D'UN CLIENT LE JOUR OÙ ON SUPPRIME SON COMPTE. (Seul le
+    // POINT de `auth.users` la refusait, par accident.)
+    //
+    // Le corps est donc exactement ce que `emettreSchemaSql` produit :
+    // la clé primaire, puis des colonnes `<nom> <type>` avec un `unique`
+    // facultatif. Aucune relation, cascadante ou non — et M1 n'en
+    // déclare pas.
     nom: 'create table if not exists',
     motif: new RegExp(
-      String.raw`^create table if not exists ${IDENT} \([a-z0-9_,\s:()']+\)$`,
+      String.raw`^create table if not exists ${IDENT} \( id text primary key ` +
+        String.raw`default gen_random_uuid\(\)::text` +
+        String.raw`(?: , ${IDENT} (?:text|numeric|boolean)(?: unique)?)* \)$`,
       'u',
     ),
   },
