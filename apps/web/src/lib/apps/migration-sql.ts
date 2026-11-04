@@ -32,6 +32,31 @@
  * L'émetteur se juge donc LUI-MÊME avant de rendre quoi que ce soit. Un
  * SQL refusé ne sort pas d'ici.
  *
+ * ── L'INDEX N'EST PAS DANS LA LISTE, ET C'EST UNE DÉCISION MESURÉE.
+ *
+ * `create index` prend un ShareLock sur la table : il BLOQUE LES
+ * ÉCRITURES pendant toute la construction. Son alternative,
+ * `create index concurrently`, NE PEUT PAS tourner dans une transaction
+ * — mesuré sur la vraie base, Postgres le refuse explicitement — et M3
+ * est transactionnel. Les deux ne se concilient pas sans sortir l'index
+ * de la transaction.
+ *
+ * Mesure du verrou, sur la base des œuvres :
+ *
+ *       500 lignes → 254 ms       5 000 → 245 ms       50 000 → 310 ms
+ *       verrou pris : ShareLock sur la table
+ *
+ * Ces 250 ms sont l'aller-retour réseau, pas la construction : à ces
+ * tailles l'index se bâtit en une fraction de milliseconde.
+ *
+ * LA DÉCISION : la forme SORT de la liste. Aucun émetteur ne la produit
+ * aujourd'hui, et une forme permise sans producteur est une surface
+ * élargie pour rien. Elle reviendra AVEC son émetteur, et ce jour-là la
+ * tension transaction/concurrently se tranchera sur des tailles réelles,
+ * pas sur une hypothèse. `unique` restera exclu dans tous les cas —
+ * c'est l'arrêt de M1 : un index unique sur une table qui a déjà des
+ * doublons échoue, donc précisément sur des données réelles.
+ *
  * ── CE MODULE EST CÔTÉ SERVEUR, et il importe le compilateur.
  *
  * Il ne doit JAMAIS entrer dans le paquet navigateur (EP-314 : le
@@ -78,24 +103,34 @@ const FORMES_PERMISES: readonly { readonly nom: string; readonly motif: RegExp }
     ),
   },
   {
+    // ── LE TYPE EST PRIS DANS UNE LISTE FERMÉE, et c'est délibéré.
+    //
+    // Mon premier motif acceptait `[a-z0-9_ ]+`. Il refusait bien le
+    // défaut volatile et le type `json` — PAR ACCIDENT : le jeu de
+    // caractères excluait les parenthèses. Une garde accidentelle se
+    // rouvre au premier élargissement, et personne ne saura qu'elle
+    // existait.
+    //
+    // LA DISTINCTION QUE strong_migrations NE FAIT PAS, et elle compte :
+    // un défaut volatile (`gen_random_uuid()`, `now()`) est SANS DANGER
+    // dans un `create table` — la table est neuve et vide, il n'y a rien
+    // à réécrire — et DANGEREUX dans un `add column`, où il réécrit la
+    // table entière en bloquant lectures ET écritures. Une règle
+    // uniforme casserait la création de tables neuves.
+    //
+    // L'ÉMETTEUR NE PRODUIT QUE TROIS TYPES SQL, mesuré : `text`,
+    // `numeric`, `boolean`. La liste fermée est donc plus stricte que la
+    // prescription « imposer jsonb » : ni `json` ni `jsonb` n'en sont.
+    // Elle refuse du même geste les colonnes générées, les clés
+    // étrangères et les contraintes CHECK — non pas en les nommant, mais
+    // parce qu'aucune ne peut s'écrire avec ces trois mots.
     nom: 'alter table … add column if not exists',
     motif: new RegExp(
-      String.raw`^alter table ${IDENT} add column if not exists ${IDENT} [a-z0-9_ ]+$`,
+      String.raw`^alter table ${IDENT} add column if not exists ${IDENT} (?:text|numeric|boolean)$`,
       'u',
     ),
   },
-  {
-    // ── `unique` EST EXCLU, et c'est l'arrêt de M1 qui le dit : un index
-    //    unique posé sur une table qui a déjà des doublons échoue — donc
-    //    précisément sur des données réelles, donc au pire moment.
-    //    (Aucun émetteur ne produit encore cette forme ; elle est permise
-    //    parce qu'elle le sera, et son exclusion doit être écrite AVANT.)
-    nom: 'create index if not exists',
-    motif: new RegExp(
-      String.raw`^create index if not exists ${IDENT} on ${IDENT} \([a-z0-9_, ]+\)$`,
-      'u',
-    ),
-  },
+
   {
     nom: 'drop policy if exists',
     motif: new RegExp(String.raw`^drop policy if exists ${IDENT} on ${IDENT}$`, 'u'),

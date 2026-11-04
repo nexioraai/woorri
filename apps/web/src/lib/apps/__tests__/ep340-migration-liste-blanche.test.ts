@@ -72,14 +72,78 @@ describe('EP-340 · M2, la liste blanche', () => {
     }
   })
 
-  it('③ UN INDEX UNIQUE EST REFUSÉ, un index simple non', () => {
-    // C'est l'arrêt de M1 qui le dit : un index unique posé sur une table
-    // qui a déjà des doublons échoue — donc précisément sur des données
-    // réelles, donc au pire moment.
+  it('③ AUCUN INDEX N’EST ÉMETTABLE — décision mesurée, pas oubli', () => {
+    // ── `create index` BLOQUE LES ÉCRITURES, mesuré sur la vraie base.
+    //
+    //       500 lignes → 254 ms · 5 000 → 245 ms · 50 000 → 310 ms
+    //       verrou pris : ShareLock sur la table
+    //
+    // Et `create index concurrently` NE PEUT PAS tourner dans une
+    // transaction — Postgres le refuse explicitement, mesuré — alors que
+    // M3 est transactionnel.
+    //
+    // La forme sort donc de la liste : aucun émetteur ne la produit, et
+    // une forme permise sans producteur est une surface élargie pour
+    // rien. Elle reviendra AVEC son émetteur.
+    expect(verifierMigration('create index if not exists i on releve (date);').ok).toBe(false)
     expect(verifierMigration('create unique index if not exists i on releve (date);').ok).toBe(
       false,
     )
-    expect(verifierMigration('create index if not exists i on releve (date);').ok).toBe(true)
+    expect(
+      verifierMigration('create index concurrently i on releve (date);').ok,
+      'la forme concurrente non plus : elle ne tient pas dans la transaction de M3',
+    ).toBe(false)
+  })
+
+  it('③bis LE DÉFAUT VOLATILE DÉPEND DE L’INSTRUCTION, pas du mot', () => {
+    // ── LA DISTINCTION QUE strong_migrations NE FAIT PAS.
+    //
+    // Un défaut volatile est SANS DANGER dans un `create table` — la
+    // table est neuve et vide — et DANGEREUX dans un `add column`, où il
+    // réécrit la table entière en bloquant lectures ET écritures.
+    //
+    // Une règle uniforme « défaut volatile interdit » casserait la
+    // création de toutes nos tables : leur clé primaire en porte un.
+    expect(
+      verifierMigration(
+        'create table if not exists t ( id text primary key default gen_random_uuid()::text );',
+      ).ok,
+      'la création d’une table neuve est cassée',
+    ).toBe(true)
+    for (const sql of [
+      'alter table t add column if not exists c text default gen_random_uuid()::text;',
+      'alter table t add column if not exists c text default now();',
+    ]) {
+      expect(verifierMigration(sql).ok, `« ${sql} » réécrirait la table entière`).toBe(false)
+    }
+  })
+
+  it('③ter LE TYPE D’UNE COLONNE AJOUTÉE VIENT D’UNE LISTE FERMÉE', () => {
+    // ── UNE GARDE ACCIDENTELLE SE ROUVRE AU PREMIER ÉLARGISSEMENT.
+    //
+    // Mon premier motif acceptait `[a-z0-9_ ]+`. Il refusait le défaut
+    // volatile, `json`, les colonnes générées et les clés étrangères —
+    // PAR ACCIDENT : le jeu de caractères excluait les parenthèses.
+    // Personne n'aurait su que la garde existait.
+    //
+    // L'émetteur ne produit que trois types SQL, mesuré. La liste fermée
+    // est donc plus stricte que la prescription « imposer jsonb » : ni
+    // `json` ni `jsonb` n'en sont.
+    for (const t of ['text', 'numeric', 'boolean']) {
+      expect(
+        verifierMigration(`alter table t add column if not exists c ${t};`).ok,
+        `le type « ${t} », que l’émetteur produit, est refusé`,
+      ).toBe(true)
+    }
+    for (const sql of [
+      'alter table t add column if not exists c json;',
+      'alter table t add column if not exists c jsonb;',
+      'alter table t add column if not exists c text generated always as (upper(d)) stored;',
+      'alter table t add constraint f foreign key (u) references a(id);',
+      'alter table t add constraint c check (x > 0);',
+    ]) {
+      expect(verifierMigration(sql).ok, `« ${sql} » est émettable`).toBe(false)
+    }
   })
 
   it('④ LES MOTIFS SONT ANCRÉS AUX DEUX BOUTS', () => {
