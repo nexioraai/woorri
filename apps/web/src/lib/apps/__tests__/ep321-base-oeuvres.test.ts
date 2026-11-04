@@ -183,6 +183,49 @@ describe('EP-321 · les deux bases', () => {
     ).toBe(true)
   })
 
+  it('⑥quater ET C’EST LA BASE QUI DIT QUI NOUS SOMMES', () => {
+    // ── LA PIRE FORME DU DÉFAUT : UN ÉCHEC SILENCIEUX VERS LE MOINS SÛR.
+    //
+    // `configMigrateur` cherche le nom du rôle DANS LA CHAÎNE. C'est une
+    // vérification de texte sur une valeur que personne ne relit — donc
+    // pas une garde. Mesuré le 2026-11-04 : une chaîne de `postgres`
+    // portant `?application_name=deribfy_migrateur` passe ce contrôle.
+    //
+    // Et elle désarmerait les QUATRE étages du moteur d'un coup, puisque
+    // tous ne regardent que `session_user = 'deribfy_migrateur'`. Tout
+    // continuerait de marcher, sans aucune protection.
+    //
+    // La seule garde qui tienne coûte une requête, à l'ouverture.
+    // Mesurée sur la vraie base :
+    //   vraie chaîne  → APPLIQUÉ
+    //   déguisée      → REFUSÉ, « s'ouvre comme postgres »
+    const src = lireSource(
+      join(RACINE, 'apps', 'web', 'src', 'lib', 'apps', 'connexion-migrateur.ts'),
+    )
+    const iQui = src.indexOf("'select session_user as u'")
+    const iSql = src.indexOf('await client.query(o.sql)')
+    expect(iQui, 'l’identité du rôle n’est plus demandée à la base').toBeGreaterThan(0)
+    expect(iSql, 'plus aucune exécution : ce contrôle ne mesure rien').toBeGreaterThan(0)
+    expect(
+      iQui < iSql,
+      'le SQL part AVANT qu’on sache sous quelle identité : les gardes du ' +
+        'moteur pourraient être toutes désarmées sans qu’on le voie',
+    ).toBe(true)
+    // ── ET LE REFUS FERME LA CONNEXION, dans SA branche.
+    //
+    // Ma première forme cherchait `client.end()` quelque part entre les
+    // deux repères : elle était satisfaite par le `end()` du `catch`
+    // voisin, et la mutation qui retirait celui du refus restait VERTE.
+    // On ancre donc sur la branche elle-même.
+    const iRefus = src.indexOf('if (role !== ROLE_MIGRATEUR)')
+    expect(iRefus, 'la branche de refus a disparu').toBeGreaterThan(0)
+    expect(
+      src.slice(iRefus, src.indexOf('return {', iRefus)),
+      'la connexion reste ouverte après un refus d’identité — une porte ' +
+        'entrebâillée sur une identité qu’on vient de refuser',
+    ).toMatch(/client\.end\(\)/u)
+  })
+
   it('⑧ AUCUNE CLÉ N’EST ÉCRITE DANS LE DÉPÔT', () => {
     // ── LA LEÇON, VERBATIM : « un secret périmé qui reste écrit apprend
     // qu'on écrit des secrets. »

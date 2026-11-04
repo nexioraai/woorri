@@ -35,6 +35,15 @@ import { verifierMigration, type RefusInstruction } from './migration-sql'
 /** Le nom de la variable, écrit UNE fois — personne d'autre ne le tape. */
 export const NOM_DSN_MIGRATEUR = 'OEUVRES_DATABASE_URL_MIGRATEUR'
 
+/**
+ * LE RÔLE SOUS LEQUEL ON DOIT S'OUVRIR — et c'est la base qui le dira.
+ *
+ * Les quatre étages de `garde-migration.sql` ne regardent que
+ * `session_user = 'deribfy_migrateur'`. Toute autre identité les désarme
+ * TOUS, sans un mot.
+ */
+export const ROLE_MIGRATEUR = 'deribfy_migrateur'
+
 export type RefusMigrateur = {
   readonly motif: string
   readonly quoiFaire: string
@@ -77,11 +86,11 @@ export function configMigrateur(env: NodeJS.ProcessEnv): ConfigMigrateur {
   // les gardes pour rien : les déclencheurs d'événement ne regardent que
   // `session_user = 'deribfy_migrateur'`. Une erreur de copie ici
   // désarmerait les quatre étages d'un coup, en silence.
-  if (!dsn.includes('deribfy_migrateur')) {
+  if (!dsn.includes(ROLE_MIGRATEUR)) {
     return {
       ok: false,
       refus: {
-        motif: `${NOM_DSN_MIGRATEUR} ne se connecte pas comme « deribfy_migrateur »`,
+        motif: `${NOM_DSN_MIGRATEUR} ne se connecte pas comme « ${ROLE_MIGRATEUR} »`,
         quoiFaire:
           'Les gardes du moteur ne regardent que ce rôle : une autre identité ' +
           'les désarme toutes. Corrigez l’adresse.',
@@ -155,6 +164,46 @@ export async function appliquerMigration(o: {
       motif: `connexion impossible : ${e instanceof Error ? e.message : String(e)}`,
     }
   }
+
+  // ── QUI SOMMES-NOUS VRAIMENT ? ON LE DEMANDE À LA BASE.
+  //
+  // `configMigrateur` lit le nom du rôle DANS LA CHAÎNE. C'est une
+  // vérification de texte sur une valeur que personne ne relit — donc
+  // pas une garde.
+  //
+  // LA PIRE FORME DU DÉFAUT, ET C'EST POURQUOI ELLE EST ICI : pointer la
+  // variable sur la chaîne de `postgres` désarmerait les QUATRE étages
+  // du moteur d'un coup, puisqu'ils ne regardent que
+  // `session_user = 'deribfy_migrateur'`. Et tout continuerait de
+  // marcher. L'échec serait SILENCIEUX ET VERS LE MOINS SÛR.
+  //
+  // Une requête, à l'ouverture. C'est le prix d'une propriété qui ne
+  // dépend plus d'une valeur que personne ne relit.
+  try {
+    const qui = (await client.query('select session_user as u')) as {
+      rows?: { u?: string }[]
+    }
+    const role = qui.rows?.[0]?.u ?? ''
+    if (role !== ROLE_MIGRATEUR) {
+      await client.end().catch(() => undefined)
+      return {
+        ok: false,
+        refus: [],
+        motif:
+          `la connexion s’ouvre comme « ${role} » et non « ${ROLE_MIGRATEUR} » : ` +
+          'les gardes du moteur ne regardent que ce rôle, et elles seraient ' +
+          `toutes désarmées. Corrigez ${NOM_DSN_MIGRATEUR}.`,
+      }
+    }
+  } catch (e) {
+    await client.end().catch(() => undefined)
+    return {
+      ok: false,
+      refus: [],
+      motif: `identité du rôle illisible : ${e instanceof Error ? e.message : String(e)}`,
+    }
+  }
+
   try {
     await client.query('begin')
     // `noinherit` n'est plus posé, mais `set role` reste explicite : il
