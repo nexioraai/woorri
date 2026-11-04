@@ -139,7 +139,25 @@ type Message =
   | { role: 'notre_faute'; raison: string }
   | { role: 'arrete'; raison: string };
 
-export default function ConversationApplication({ onRetour }: { onRetour: () => void }) {
+/**
+ * LA DEVISE PAR DÉFAUT.
+ *
+ * Le franc CFA : la plateforme sert d'abord le Tchad et l'Afrique
+ * centrale. Ce n'est pas une déduction sur la personne — ces déductions-là
+ * restent interdites — c'est un DÉFAUT annoncé, qui se change dans
+ * l'atelier.
+ */
+const DEVISE_PAR_DEFAUT = 'XAF'
+
+export default function ConversationApplication({
+  demandeInitiale = '',
+  onRetour,
+}: {
+  /** Ce que la personne venait d'écrire avant l'aiguillage. Elle ne le
+   *  retape pas : l'écran a changé dans son dos, pas elle d'avis. */
+  demandeInitiale?: string
+  onRetour: () => void
+}) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [saisie, setSaisie] = useState('');
   const [enCours, setEnCours] = useState(false);
@@ -613,191 +631,103 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
    * options n'etaient PAS les bonnes. On la pose donc toujours, apres les
    * choix fermes — et elle est passable : « non » suffit a l'ignorer.
    */
-  const lancerPreVol = async (
-    demande: string,
-    reponses: Record<string, unknown>,
-    // ── POURQUOI CECI EST UN ARGUMENT ET NON UNE LECTURE D'ETAT.
-    //
-    // DEFAUT QUE J'AI INTRODUIT PUIS CORRIGE ICI : `setAutreChose(x)` suivi
-    // de `envoyer()` dans le MEME tour fait lire a la fermeture l'ANCIENNE
-    // valeur — React n'applique l'etat qu'au rendu suivant. L'echappatoire
-    // qui a tout change chez Replit serait arrivee vide au brief, un tour
-    // trop tard, et personne ne l'aurait vu. Ce qui doit etre juste au moment
-    // de l'appel VOYAGE ; l'etat ne sert plus qu'a l'affichage.
-    autre: string,
-  ) => {
-    setEnCours(true);
+  /**
+   * LA DEVISE, DÉDUITE — et rien n'est demandé pour l'obtenir.
+   *
+   * ── CE QUI REMPLACE LE PRÉ-VOL (2026-11-04).
+   *
+   * `lire-brief` lit déjà la demande et en tire le pays QUAND IL Y EST
+   * ÉCRIT. `/avant` sait traduire ce pays en code ISO. On garde ces deux
+   * gestes — ils ne coûtent rien à la personne — et on JETTE les questions
+   * qu'ils renvoyaient.
+   *
+   * SANS PAYS : le franc CFA. Ce n'est pas une devinette sur la personne,
+   * c'est un DÉFAUT, et un défaut s'annonce et se change. Il se corrige
+   * dans l'atelier en deux secondes, comme le reste.
+   *
+   * ET SI LES DEUX APPELS ÉCHOUENT, on construit quand même avec le
+   * défaut : une déduction ratée ne doit jamais empêcher de construire.
+   */
+  /**
+   * LA DEMANDE QUI VIENT DE L'AIGUILLAGE PART TOUTE SEULE.
+   *
+   * Elle a déjà été écrite une fois. La faire retaper parce qu'on a changé
+   * d'écran dans son dos est exactement ce qu'on vient de réparer — la
+   * garder affichée sans rien en faire le serait tout autant.
+   *
+   * UNE SEULE FOIS : le drapeau empêche qu'un nouveau rendu relance une
+   * génération payante. C'est la précaution qui manque le plus souvent aux
+   * effets de ce genre.
+   */
+  const deduireConfiguration = async (texte: string): Promise<Configuration> => {
     try {
-      // ── LIRE AVANT DE DEMANDER (2026-10-19).
-      //
-      // DEFAUT MESURE : un cahier des charges de douze pages joint, et la
-      // premiere question posee etait « Que fait votre application avec
-      // l'argent ? » — ecrit page 7. `configurationADemander` ne recoit QUE
-      // les reponses : le brief ne lui parvient jamais.
-      //
-      // CE N'EST PAS LA DEVINETTE QU'EP-255 B INTERDIT. Deduire « France »
-      // de la langue francaise est une devinette ; lire « Tchad » ecrit en
-      // toutes lettres n'en est pas une. La route filtre sa propre sortie
-      // contre la table : le modele ne peut que la remplir, jamais l'elargir.
-      //
-      // UNE SEULE FOIS, AU PREMIER TOUR : ensuite les reponses humaines
-      // existent, et elles priment — la fusion les met en dernier.
-      let lues = reponses;
-      if (Object.keys(reponses).length === 0) {
-        try {
-          const rl = await fetch('/api/generateur/lire-brief', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${await jeton()}` },
-            body: JSON.stringify({ demande }),
-          });
-          const dl = (await rl.json().catch(() => ({}))) as {
-            deduites?: Record<string, unknown>;
-            entites?: EntiteDeclaree[];
-            entitesRefusees?: { quoi: string; motif: string }[];
-            questionsIA?: { code: string; texte: string; choix: string[] }[];
-          };
-          // ── LES QUESTIONS DU MODÈLE (2026-11-03).
-          //
-          // La table fixe ne connaît que ses rubriques : pour un compteur
-          // d'énergie, elle n'avait rien à dire et a quand même posé sa
-          // question sur l'argent. Celles-ci sortent de la demande elle-même.
-          setQuestionsIA(dl.questionsIA ?? []);
-          // ── LES DONNÉES DÉCLARÉES (lot D1, 2026-11-02).
-          //
-          // Elles sont retenues telles que le SERVEUR les a validées — cet
-          // écran ne juge rien : il affiche, et il transmet. La route de
-          // génération revalide de son côté, parce qu'une requête forgée
-          // contourne cet écran.
-          setEntites(dl.entites ?? []);
-          setEntitesRefusees(dl.entitesRefusees ?? []);
-          const deduites = dl.deduites ?? {};
-          if (Object.keys(deduites).length > 0) {
-            lues = { ...deduites, ...reponses };
-            setReponsesAvant(lues);
-          }
-        } catch {
-          // UNE LECTURE RATEE NE BLOQUE RIEN : on pose les questions comme avant.
-        }
-      }
+      const rl = await fetch('/api/generateur/lire-brief', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${await jeton()}` },
+        body: JSON.stringify({ demande: texte }),
+      });
+      const dl = (await rl.json().catch(() => ({}))) as {
+        deduites?: Record<string, unknown>;
+        entites?: EntiteDeclaree[];
+        entitesRefusees?: { quoi: string; motif: string }[];
+      };
+      setEntites(dl.entites ?? []);
+      setEntitesRefusees(dl.entitesRefusees ?? []);
       const res = await fetch('/api/generateur/avant', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${await jeton()}` },
-        body: JSON.stringify({ reponses: lues }),
+        body: JSON.stringify({ reponses: dl.deduites ?? {} }),
       });
-      const d = (await res.json().catch(() => ({}))) as {
-        questions?: QuestionAvant[];
-        configuration?: Configuration;
-        complet?: boolean;
-        error?: string;
-      };
-      if (!res.ok) {
-        // ── LE PRE-VOL NE DOIT JAMAIS BLOQUER LA CONSTRUCTION.
-        //
-        // Il AMELIORE le brief ; il n'en est pas la condition. Une panne ici
-        // ferait perdre une demande deja ecrite pour une etape qui ne coute
-        // rien — on le DIT, et on construit avec ce qu'on a.
-        setAvis('Je n’ai pas pu poser mes questions préalables ; je construis avec votre phrase seule.');
-        setQuestionAvant(null);
-        await construire({ texte: demande, autre, config: {}, dejaAffiche: true });
-        return;
-      }
-      const config = d.configuration ?? {};
-      setConfiguration(config);
-      const suivante = (d.questions ?? [])[0];
-      if (suivante !== undefined) {
-        setQuestionAvant(suivante);
-        setMessages((m) => [...m, { role: 'avant', question: suivante }]);
-        return;
-      }
-      // ── PUIS LES QUESTIONS DU MODÈLE (2026-11-03).
+      // ── LES QUESTIONS SONT IGNORÉES, ET C'EST LE CŒUR DU CHANGEMENT.
       //
-      // Elles viennent APRÈS les questions de configuration, parce que
-      // celles-là décident du moteur (devise, encaissement) et que leurs
-      // réponses sont structurées. Celles-ci sont du CONTEXTE : elles
-      // enrichissent le brief, elles ne pilotent rien.
-      //
-      // Et elles viennent AVANT l'échappatoire : « autre chose d'important
-      // ? » n'a de sens qu'une fois qu'on a posé ce qu'on savait demander.
-      const ia = questionsIA.find((q) => lues[q.code] === undefined);
-      if (ia !== undefined) {
-        const q: QuestionAvant = {
-          code: ia.code,
-          structure: 'brief',
-          texte: ia.texte,
-          ...(ia.choix.length > 0
-            ? { choix: ia.choix.map((c) => ({ valeur: c, texte: c })) }
-            : {}),
-        };
-        setQuestionAvant(q);
-        setMessages((m) => [...m, { role: 'avant', question: q }]);
-        return;
-      }
-
-      // ── PLUS AUCUNE QUESTION DE CONFIGURATION : L'ECHAPPATOIRE, UNE FOIS.
-      if (lues[AUTRE_CHOSE] === undefined) {
-        const q: QuestionAvant = {
-          code: AUTRE_CHOSE,
-          structure: 'brief',
-          texte:
-            'Autre chose d’important que je devrais savoir ? Si mes questions ' +
-            'sont passées à côté de l’essentiel, c’est le moment de le dire. ' +
-            'Écrivez « non » s’il n’y a rien.',
-        };
-        setQuestionAvant(q);
-        setMessages((m) => [...m, { role: 'avant', question: q }]);
-        return;
-      }
-      // ── LA QUESTION DU NOM A ETE RETIREE D'ICI (2026-11-01).
-      //
-      // Elle ajoutait une etape APRES l'echappatoire, et toute reponse qui
-      // ne passait pas sa validation faisait appeler `construire` sans nom
-      // par l'un des trois chemins de repli -> 400 -> l'ecran affichait
-      // « Donnez un nom a votre application » -> l'utilisateur retapait ->
-      // `questionAvant` etait nul -> LE PRE-VOL REPARTAIT DE LA PREMIERE
-      // QUESTION. Mesure du 2026-11-01, cinq captures : plus personne ne
-      // pouvait generer.
-      //
-      // Le nom reviendra, mais PRE-REMPLI PAR LE MODELE et sans pouvoir
-      // bloquer la generation -- et il sera exerce EN PRODUCTION avant
-      // d'etre declare en ligne. `lire-brief` rend deja `nomProduit` : la
-      // piece serveur est prete et dort, elle ne casse rien.
-      // Tout est repondu : on passe la porte chere, une seule fois.
-      setQuestionAvant(null);
-      await construire({
-        texte: demande,
-        autre,
-        config,
-        dejaAffiche: true,
-        // LE NOM VOYAGE, comme l'echappatoire : `reponsesAvant` ne sera
-        // applique qu'au rendu suivant, et le relire ici le prendrait vide
-        // d'un tour. C'est le defaut que le commentaire de `construire`
-        // raconte deja — on ne le refait pas pour le nom.
-        // Le pre-vol ne demande plus de nom : le champ part vide, et la
-        // route l'accepte. La page retombe sur `TITRE_SANS_NOM`.
-        nom: '',
-      });
-    } catch (erreur) {
-      // ── UNE ERREUR AVALEE A COUTE DEUX HEURES AU PROPRIETAIRE.
-      //
-      // Ce `catch` etait NU. Le 2026-11-01, le pre-vol bouclait en
-      // production -- il revenait a la premiere question apres la derniere
-      // -- et ni l'ecran ni la console ne disaient POURQUOI. La phrase
-      // affichee (« je n'ai pas pu poser mes questions ») est la meme quelle
-      // que soit la cause : reseau, 400, exception. Un repli qui ne nomme
-      // pas sa cause transforme un defaut d'une ligne en deux heures de
-      // recherche.
-      //
-      // La console du navigateur est le seul endroit ou cette cause peut
-      // etre lue par quelqu'un qui regarde l'ecran casser.
-      console.error('[pre-vol]', erreur);
-      setAvis('Je n’ai pas pu poser mes questions préalables ; je construis avec votre phrase seule.');
-      setQuestionAvant(null);
-      await construire({ texte: demande, autre, config: {}, dejaAffiche: true });
-    } finally {
-      setEnCours(false);
+      // `/avant` en renvoie toujours : la table ne sait pas se taire. On ne
+      // les lit plus. Seule la configuration nous intéresse.
+      const d = (await res.json().catch(() => ({}))) as { configuration?: Configuration };
+      const c = d.configuration ?? {};
+      return c.currency === undefined ? { ...c, currency: DEVISE_PAR_DEFAUT } : c;
+    } catch {
+      return { currency: DEVISE_PAR_DEFAUT };
     }
   };
 
+  /**
+   * LE PRÉ-VOL NE POSE PLUS AUCUNE QUESTION (2026-11-04).
+   *
+   * ── LA DÉCISION, DANS LES MOTS DU PROPRIÉTAIRE.
+   *
+   *   « ON ARRÊTE DE RENDRE LES QUESTIONS MEILLEURES. ON LES SUPPRIME. »
+   *   « Une hypothèse ratée se corrige. Une interrogation avant d'avoir
+   *     rien montré fait fuir. »
+   *
+   * Trois tours de suite on a amélioré leur pertinence. Ce n'était pas la
+   * demande.
+   *
+   * ── POURQUOI CETTE FONCTION SUBSISTE, VIDÉE.
+   *
+   * Elle est appelée par les gestionnaires de réponse, qui ne peuvent plus
+   * se déclencher puisqu'aucune question n'est affichée. La supprimer
+   * demanderait de démonter ces gestionnaires et leurs cliquets dans le
+   * même geste. Elle REFUSE donc de poser quoi que ce soit, et construit —
+   * un chemin mort qu'on laisse vivant redevient vivant au changement
+   * suivant.
+   */
+  const lancerPreVolSupprime = async (
+    demande: string,
+    _reponses: Record<string, unknown>,
+    autre: string,
+  ) => {
+    const config = await deduireConfiguration(demande);
+    await construire({ texte: demande, autre, config, dejaAffiche: true });
+  };
+
+  // ── `lancerPreVolAncien` A ÉTÉ SUPPRIMÉ (2026-11-04).
+  //
+  // Il portait encore les trois chemins qui AFFICHENT une question :
+  // la suivante de la table, l'échappatoire, et celles du modèle. Plus
+  // aucun appelant ne l'atteignait — et c'est exactement ce qui rend ce
+  // genre de code dangereux. EP-335 ② compte les `setQuestionAvant(q)` :
+  // il a refusé de passer tant que ces trois-là existaient, et il avait
+  // raison. Du code mort qui garde le comportement est une arme chargée.
   /** Une reponse a un CHOIX FERME — un clic, pas une phrase a interpreter. */
   const choisirAvant = (valeur: string) => { void repondreAvant(valeur); };
 
@@ -829,7 +759,7 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
     setReponsesAvant(suite);
     const autre = avecReponseIA(code, questionAvant?.texte ?? '', lu);
     if (autre !== autreChose) setAutreChose(autre);
-    await lancerPreVol(demandeEnAttente, suite, autre);
+    await lancerPreVolSupprime(demandeEnAttente, suite, autre);
   };
 
   /** Un tour : soit une premiere demande, soit une reponse a la question ouverte. */
@@ -861,7 +791,7 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
           const autre = avecReponseIA(questionAvant.code, questionAvant.texte, texte);
           setAutreChose(autre);
           setSaisie('');
-          await lancerPreVol(demandeEnAttente, suite, autre);
+          await lancerPreVolSupprime(demandeEnAttente, suite, autre);
           return;
         }
         if (questionAvant.code === AUTRE_CHOSE) {
@@ -870,10 +800,10 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
           const vide = /^(non|rien|aucun[e]?)\.?$/iu.test(texte.trim());
           const retenu = vide ? '' : texte;
           setAutreChose(retenu);
-          await lancerPreVol(demandeEnAttente, suite, retenu);
+          await lancerPreVolSupprime(demandeEnAttente, suite, retenu);
           return;
         }
-        await lancerPreVol(demandeEnAttente, suite, autreChose);
+        await lancerPreVolSupprime(demandeEnAttente, suite, autreChose);
         return;
       }
       if (!enQuestion && intention === null) {
@@ -882,7 +812,20 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
         setDemandeEnAttente(texte);
         setReponsesAvant({});
         setAutreChose('');
-        await lancerPreVol(texte, {}, '');
+        // ── ZÉRO QUESTION AVANT DE CONSTRUIRE (décision du 2026-11-04).
+        //
+        // Pendant trois tours on a rendu les questions du pré-vol plus
+        // pertinentes. Le propriétaire ne demandait pas des questions
+        // pertinentes : il demandait qu'il n'y en ait AUCUNE.
+        //
+        //   « Une hypothèse ratée se corrige. Une interrogation avant
+        //     d'avoir rien montré fait fuir. »
+        //
+        // La devise se DÉDUIT — pays nommé dans la demande, sinon le franc
+        // CFA — et se change dans l'atelier en deux secondes, comme le
+        // reste. `deduireConfiguration` ne pose rien et n'attend personne.
+        const config = await deduireConfiguration(texte);
+        await construire({ texte, autre: '', config, dejaAffiche: false });
         return;
       }
     }
@@ -1251,6 +1194,19 @@ export default function ConversationApplication({ onRetour }: { onRetour: () => 
   };
 
   /** LA SURVEILLANCE REMONTE A L'ECRAN : une anomalie ne reste pas dans un log. */
+  const demarrage = useRef(false);
+  useEffect(() => {
+    if (demarrage.current || demandeInitiale.trim() === '') return;
+    demarrage.current = true;
+    void (async () => {
+      const texte = demandeInitiale.trim();
+      setMessages((m) => [...m, { role: 'moi', texte }]);
+      const config = await deduireConfiguration(texte);
+      await construire({ texte, autre: '', config, dejaAffiche: true });
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [demandeInitiale]);
+
   const direAnomalies = (d: { surveillance?: { saine?: boolean; anomalies?: { message: string }[] } }) => {
     const a = d.surveillance?.anomalies ?? [];
     if (a.length > 0) setAvis(a.map((x) => x.message).join(' · '));

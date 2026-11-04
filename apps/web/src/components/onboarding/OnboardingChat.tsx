@@ -251,6 +251,7 @@ export default function OnboardingChat() {
   // une valeur de `siteMode` : si c'etait un mode, tout ce qui lit `siteMode`
   // devrait apprendre a le connaitre. Ici, rien ne le voit.
   const [cibleApplication, setCibleApplication] = useState(false);
+  const [demandeBasculee, setDemandeBasculee] = useState('');
   const [avisBientot, setAvisBientot] = useState(false);
   const typedText = messages.filter((m) => m.role === 'user').map((m) => m.content).join(' ');
   const browserLang = typeof navigator !== 'undefined'
@@ -543,7 +544,12 @@ export default function OnboardingChat() {
         // IL N'ARRIVE QU'APRES CONFIRMATION : le modele ne pose ce drapeau
         // qu'une fois la personne d'accord. Basculer quelqu'un qui voulait
         // une boutique serait pire que l'impasse qu'on repare.
-        if (doitAiguillerVersApplication(data, APPLICATION_PRETE)) setCibleApplication(true);
+        if (doitAiguillerVersApplication(data, APPLICATION_PRETE)) {
+          // LE TEXTE PART AVEC : c'est la phrase que la personne vient
+          // d'écrire, et l'écran suivant doit la recevoir, pas l'oublier.
+          setDemandeBasculee(text);
+          setCibleApplication(true);
+        }
       } else if (data.type === 'need_dropship_type') {
         setShowDropshipPicker(true);
       } else {
@@ -630,7 +636,16 @@ export default function OnboardingChat() {
           <Sparkles size={18} className="text-[#FA5D1E]" />
           <span className="text-sm font-medium tracking-wide" translate="no">{t('home.hero.badge')}</span>
         </div>
-        <ConversationApplication onRetour={() => setCibleApplication(false)} />
+        {/* ── LE TEXTE TAPÉ SUIT LA PERSONNE (2026-11-04).
+             Elle écrivait sa demande, l'aiguillage la basculait vers
+             l'application, et ELLE DEVAIT TOUT RETAPER : ce composant ne
+             recevait que `onRetour`. Faire retaper quelqu'un parce qu'on
+             a changé d'écran dans son dos est le genre de détail qui fait
+             abandonner avant le premier résultat. */}
+        <ConversationApplication
+          demandeInitiale={demandeBasculee}
+          onRetour={() => setCibleApplication(false)}
+        />
       </section>
     );
   }
@@ -685,6 +700,7 @@ export default function OnboardingChat() {
                     if (mode === 0) {
                       // L'aiguillage. `siteMode` reste INTACT : rien de ce
                       // qui suit ne passera par la generation de sites.
+                      setDemandeBasculee(input.trim());
                       setCibleApplication(true);
                     } else if (mode === 3) {
                       setShowDropshipPicker(true);

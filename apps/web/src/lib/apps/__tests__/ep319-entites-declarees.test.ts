@@ -161,10 +161,19 @@ describe('EP-319 · les données déclarées', () => {
     // découvrirait en rechargeant la page — après avoir payé.
     expect(CE_QUE_DECLARER_CHANGE, 'la phrase ne nomme pas le fichier')
       .toContain('schema.sql')
-    expect(CE_QUE_DECLARER_CHANGE, 'la phrase ne dit pas que rien ne s’en sert')
-      .toMatch(/ne s[’']en servent pas encore/u)
-    expect(CE_QUE_DECLARER_CHANGE, 'la phrase ne dit pas ce qui arrive à la saisie')
-      .toMatch(/disparaît quand la page est rechargée/u)
+    // ── CES DEUX ASSERTIONS EXIGEAIENT UN MENSONGE (corrigé le 2026-11-04).
+    //
+    // Elles imposaient « ne s’en servent pas encore » et « disparaît quand
+    // la page est rechargée ». C’était vrai le 2026-11-02 ; D5 ④ l’a rendu
+    // FAUX le 2026-11-03 — membre inscrit depuis le formulaire de l’œuvre,
+    // retrouvé après rechargement dans un processus neuf.
+    //
+    // Un cliquet qui exige une phrase sur l’état du produit la fige : il
+    // transforme une description périmée en obligation. EP-335 ⑤ garde
+    // désormais la règle — la phrase ne doit pas affirmer le contraire de
+    // ce qui est mesuré.
+    expect(CE_QUE_DECLARER_CHANGE, 'la phrase ne dit plus ce que deviennent les données')
+      .toMatch(/conserv/u)
 
     const ecran = lire(...WEB, 'components', 'onboarding', 'ConversationApplication.tsx')
     expect(ecran, 'l’écran ne montre pas les tables').toContain('phraseTable(e)')

@@ -445,6 +445,5 @@ export function resumeEntites(entites: readonly EntiteDeclaree[]): string {
  */
 export const CE_QUE_DECLARER_CHANGE =
   'Ces tables décrivent ce que votre application devra conserver. Elles ' +
-  'partent dans le fichier schema.sql de votre téléchargement. Les écrans ' +
-  'ne s’en servent pas encore : pour l’instant, ce que vous saisissez dans ' +
-  'l’application disparaît quand la page est rechargée.'
+  'partent dans le fichier schema.sql de votre téléchargement, ' +
+  'et les écrans s’en servent : ce que vous saisissez est conservé.'
