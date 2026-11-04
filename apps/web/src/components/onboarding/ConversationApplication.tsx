@@ -659,7 +659,9 @@ export default function ConversationApplication({
    * génération payante. C'est la précaution qui manque le plus souvent aux
    * effets de ce genre.
    */
-  const deduireConfiguration = async (texte: string): Promise<Configuration> => {
+  const deduireConfiguration = async (
+    texte: string,
+  ): Promise<{ config: Configuration; entites: EntiteDeclaree[] }> => {
     try {
       const rl = await fetch('/api/generateur/lire-brief', {
         method: 'POST',
@@ -684,9 +686,25 @@ export default function ConversationApplication({
       // les lit plus. Seule la configuration nous intéresse.
       const d = (await res.json().catch(() => ({}))) as { configuration?: Configuration };
       const c = d.configuration ?? {};
-      return c.currency === undefined ? { ...c, currency: DEVISE_PAR_DEFAUT } : c;
+      // ── LES ENTITÉS SONT RENDUES, PAS SEULEMENT POSÉES DANS L'ÉTAT.
+      //
+      // DÉFAUT MESURÉ LE 2026-11-04 : l'œuvre `8a2735f0` est partie avec
+      // « AUCUNE DONNÉE DÉCLARÉE » alors que la lecture du brief avait
+      // trouvé une table. `construire` lit `entites` dans l'état React, et
+      // cette fonction l'écrivait JUSTE AVANT l'appel — React n'applique
+      // l'état qu'au rendu SUIVANT.
+      //
+      // C'est exactement l'avertissement écrit dans ce fichier deux
+      // fonctions plus haut, et je l'ai rejoué. « Ce qui doit être juste
+      // au moment de l'appel VOYAGE ; l'état ne sert plus qu'à
+      // l'affichage. »
+      const lues = dl.entites ?? [];
+      return {
+        config: c.currency === undefined ? { ...c, currency: DEVISE_PAR_DEFAUT } : c,
+        entites: lues,
+      };
     } catch {
-      return { currency: DEVISE_PAR_DEFAUT };
+      return { config: { currency: DEVISE_PAR_DEFAUT }, entites: [] };
     }
   };
 
@@ -716,8 +734,14 @@ export default function ConversationApplication({
     _reponses: Record<string, unknown>,
     autre: string,
   ) => {
-    const config = await deduireConfiguration(demande);
-    await construire({ texte: demande, autre, config, dejaAffiche: true });
+    const lu = await deduireConfiguration(demande);
+    await construire({
+      texte: demande,
+      autre,
+      config: lu.config,
+      entites: lu.entites,
+      dejaAffiche: true,
+    });
   };
 
   // ── `lancerPreVolAncien` A ÉTÉ SUPPRIMÉ (2026-11-04).
@@ -824,8 +848,14 @@ export default function ConversationApplication({
         // La devise se DÉDUIT — pays nommé dans la demande, sinon le franc
         // CFA — et se change dans l'atelier en deux secondes, comme le
         // reste. `deduireConfiguration` ne pose rien et n'attend personne.
-        const config = await deduireConfiguration(texte);
-        await construire({ texte, autre: '', config, dejaAffiche: false });
+        const lu = await deduireConfiguration(texte);
+        await construire({
+          texte,
+          autre: '',
+          config: lu.config,
+          entites: lu.entites,
+          dejaAffiche: false,
+        });
         return;
       }
     }
@@ -860,6 +890,11 @@ export default function ConversationApplication({
     dejaAffiche?: boolean;
     /** Le nom du produit, PASSE et jamais relu — meme raison que `autre`. */
     nom?: string;
+    /** LES ENTITÉS AUSSI, et pour exactement la même raison.
+     *  Mesuré le 2026-11-04 : lues dans l'état, elles partaient VIDES —
+     *  l'œuvre `8a2735f0` a été livrée en « AUCUNE DONNÉE DÉCLARÉE »
+     *  alors que la lecture du brief avait trouvé une table. */
+    entites?: EntiteDeclaree[];
   }) => {
     const texte = opts.texte;
     // La note du document joint est MISE DE COTE avant d'etre effacee : si le
@@ -971,7 +1006,7 @@ export default function ConversationApplication({
             demande: texte,
             configuration,
             nom: opts.nom ?? '',
-            entites,
+            entites: opts.entites ?? entites,
           }),
           signal: avorteur.signal,
         });
@@ -1201,8 +1236,14 @@ export default function ConversationApplication({
     void (async () => {
       const texte = demandeInitiale.trim();
       setMessages((m) => [...m, { role: 'moi', texte }]);
-      const config = await deduireConfiguration(texte);
-      await construire({ texte, autre: '', config, dejaAffiche: true });
+      const lu = await deduireConfiguration(texte);
+      await construire({
+        texte,
+        autre: '',
+        config: lu.config,
+        entites: lu.entites,
+        dejaAffiche: true,
+      });
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [demandeInitiale]);

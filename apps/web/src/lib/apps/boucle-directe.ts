@@ -784,9 +784,35 @@ export function optionsPour(schema: string): Record<string, unknown> {
  * Il ne dit pas « erreur » — rien n'est cassé. Il dit ce qui manque et où
  * lire la suite, dans les mots de quelqu'un qui vient de dézipper.
  */
-const BANDEAU_SANS_BASE =
+/**
+ * DEUX CONTEXTES, DEUX PHRASES — l'une annonce, l'autre instruit.
+ *
+ * ── LE DÉFAUT DE FORMULATION, SIGNALÉ LE 2026-11-04.
+ *
+ * Cette phrase avait été écrite pour l'application TÉLÉCHARGÉE : là, le
+ * LISEZ-MOI existe vraiment et le propriétaire a quelque chose à faire.
+ *
+ * Dans l'APERÇU, elle tombe à côté. La personne vient de voir naître son
+ * application, et la première chose qu'elle lit est un avertissement en
+ * ambre qui parle d'un fichier qu'elle n'a pas encore. Ça ressemble à une
+ * panne alors que c'est une étape pas encore franchie.
+ *
+ *   « Dis ce qui va se passer, pas ce qui manque. »
+ */
+const CADRE_BANDEAU =
   '<div role="status" style="background:#fff4e5;border-bottom:1px solid #f0c48a;' +
-  'color:#7a4a00;padding:10px 14px;font:14px/1.5 system-ui,-apple-system,sans-serif">' +
+  'color:#7a4a00;padding:10px 14px;font:14px/1.5 system-ui,-apple-system,sans-serif">'
+
+/** L'APERÇU : ce qui va se passer. Rien n'est cassé, rien n'est à faire. */
+const BANDEAU_APERCU =
+  CADRE_BANDEAU +
+  '<strong>Votre base de données sera créée à la publication.</strong> ' +
+  'Pour l’instant c’est un aperçu : ce que vous saisissez ici ne sera pas ' +
+  'conservé.</div>'
+
+/** LE TÉLÉCHARGEMENT : ce qu'il reste à faire, et où c'est écrit. */
+const BANDEAU_TELECHARGE =
+  CADRE_BANDEAU +
   '<strong>Cette application n’est pas encore reliée à une base.</strong> ' +
   'Ce que vous saisissez ne sera pas conservé. Voyez le fichier ' +
   '<code>LISEZ-MOI.md</code> de l’archive — section « Vos données ».</div>'
@@ -798,6 +824,14 @@ export function pageAutonome(
   code: string,
   titre: string,
   configuration?: ConfigurationOeuvre,
+  /**
+   * OÙ CETTE PAGE SERA LUE.
+   *
+   * `apercu` par défaut : l'atelier et le lien public sont les deux
+   * endroits où quelqu'un REGARDE son application. `archive` est le zip,
+   * le seul endroit où le LISEZ-MOI existe et où il y a un geste à faire.
+   */
+  destination: 'apercu' | 'archive' = 'apercu',
 ): string {
   const sur = titre.replace(/[<>&"]/gu, '')
   // ── LA CONFIGURATION EST SÉRIALISÉE EN JSON, PAS INTERPOLÉE À LA MAIN.
@@ -849,7 +883,10 @@ export function pageAutonome(
     // une application reliée ne porte aucun bandeau.
     //
     // Même discipline que « AUCUNE DONNÉE DÉCLARÉE » dans `schema.sql`.
-    injectee.url === '' ? BANDEAU_SANS_BASE : '',
+    // LE BANDEAU DÉPEND DE LÀ OÙ LA PAGE EST LUE, pas seulement de l'état
+    // de sa base : la même absence se dit « ce sera créé » dans l'atelier
+    // et « voici ce qu'il reste à faire » dans l'archive.
+    injectee.url === '' ? (destination === 'archive' ? BANDEAU_TELECHARGE : BANDEAU_APERCU) : '',
     '<div id="racine"></div>',
     `<script type="module">${ENVELOPPE_MODULE.avant}${code}${ENVELOPPE_MODULE.apres}</script>`,
     '</body></html>',

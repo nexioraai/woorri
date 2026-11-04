@@ -181,20 +181,41 @@ describe('EP-323 · le document servi ne porte aucun secret', () => {
     // pas si elle est cassée, si c'est normal, ou s'il a raté une étape. Ce
     // qui ne marche pas encore explique pourquoi, LÀ OÙ LA PERSONNE LE
     // DÉCOUVRE — même discipline que « AUCUNE DONNÉE DÉCLARÉE ».
+    // ── DEUX CONTEXTES, DEUX PHRASES (2026-11-04).
+    //
+    // La phrase avait été écrite pour l'archive — là, le LISEZ-MOI existe
+    // et il y a un geste à faire. Dans l'APERÇU elle tombe à côté : la
+    // personne vient de voir naître son application et lit un
+    // avertissement qui renvoie à un fichier qu'elle n'a pas encore. Ça
+    // ressemble à une panne alors que c'est une étape pas encore franchie.
+    //
+    // La propriété gardée ne change pas : une application non reliée LE
+    // DIT. Ce qui change, c'est qu'elle le dit dans les mots de l'endroit.
     const sansBase = pageAutonome(CODE, 'Une application')
-    expect(sansBase, 'l’application muette ne dit pas qu’elle n’est pas reliée')
-      .toMatch(/n’est pas encore reliée à une base/u)
-    expect(sansBase, 'le bandeau ne dit pas ce que ça implique pour la saisie')
+    expect(sansBase, 'l’aperçu ne dit pas ce qui va se passer')
+      .toMatch(/sera créée à la publication/u)
+    expect(sansBase, 'l’aperçu ne dit pas ce que ça implique pour la saisie')
       .toMatch(/ne sera pas conservé/u)
-    expect(sansBase, 'le bandeau ne dit pas où lire la suite').toContain('LISEZ-MOI')
+    // ET IL NE RENVOIE PAS À UN FICHIER QUE LA PERSONNE N'A PAS.
+    expect(sansBase, 'l’aperçu renvoie au LISEZ-MOI d’une archive inexistante')
+      .not.toContain('LISEZ-MOI')
+
+    const archive = pageAutonome(CODE, 'Une application', undefined, 'archive')
+    expect(archive, 'l’archive ne dit pas que l’application n’est pas reliée')
+      .toMatch(/n’est pas encore reliée à une base/u)
+    expect(archive, 'l’archive ne dit pas où lire la suite').toContain('LISEZ-MOI')
 
     // ── IL VIT HORS DE `#racine` : React monte dans la racine et effacerait
     // tout ce qui s'y trouve. Le bandeau survivrait à l'affichage mais pas au
     // premier rendu — et personne ne le verrait jamais.
     expect(
-      sansBase.indexOf('n’est pas encore reliée'),
+      sansBase.indexOf('sera créée à la publication'),
       'le bandeau est DANS la racine : le premier rendu de React l’effacera',
     ).toBeLessThan(sansBase.indexOf('id="racine"'))
+    expect(
+      archive.indexOf('n’est pas encore reliée'),
+      'le bandeau de l’archive est DANS la racine',
+    ).toBeLessThan(archive.indexOf('id="racine"'))
 
     // ── ET UNE APPLICATION RELIÉE N'EN PORTE AUCUN.
     const reliee = pageAutonome(CODE, 'Une application', {

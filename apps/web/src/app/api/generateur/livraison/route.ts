@@ -108,7 +108,11 @@ export async function GET(req: Request) {
     const archive = zipper(
       projetLivrable(
         docDirect.fichiers,
-        pageAutonome(v.code, 'Application'),
+        // L'ARCHIVE EST LE SEUL ENDROIT OU LE LISEZ-MOI EXISTE : c'est donc
+        // la seule page qui a le droit d'y renvoyer. Partout ailleurs, le
+        // bandeau annonce ce qui va se passer au lieu de pointer un fichier
+        // que la personne n'a pas.
+        pageAutonome(v.code, 'Application', undefined, 'archive'),
         docDirect.schema,
         docDirect.politiques,
         // L'IDENTIFIANT DE L'OEUVRE : la note porte alors LA COMMANDE qui

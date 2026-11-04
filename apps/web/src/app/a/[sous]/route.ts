@@ -14,6 +14,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin'
 import { TABLE_GENERATIONS } from '@/lib/apps/journal'
 import { assembler } from '@/lib/apps/bac-a-sable'
 import { pageAutonome } from '@/lib/apps/boucle-directe'
+import { baseDeLOeuvre } from '@/lib/apps/base-de-l-oeuvre'
 import { ENTETES_PAGE_PUBLIEE } from '@/lib/apps/publication'
 import { nomValide } from '@/lib/apps/sous-domaine'
 
@@ -33,7 +34,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ sous: string }
 
   const lu = await supabaseAdmin
     .from(TABLE_GENERATIONS)
-    .select('document, nom, publication_jeton')
+    .select('id, document, nom, publication_jeton')
     .eq('publication_slug', sous)
     .maybeSingle()
   // UN NOM SANS PUBLICATION NE SERT RIEN : le slug peut préexister au jeton
@@ -49,5 +50,5 @@ export async function GET(_req: Request, ctx: { params: Promise<{ sous: string }
   if (!v.ok) return introuvable()
 
   const titre = typeof lu.data.nom === 'string' && lu.data.nom !== '' ? lu.data.nom : 'Application'
-  return new Response(pageAutonome(v.code, titre), { status: 200, headers: ENTETES_PAGE_PUBLIEE })
+  return new Response(pageAutonome(v.code, titre, baseDeLOeuvre(String(lu.data.id), lu.data.document)), { status: 200, headers: ENTETES_PAGE_PUBLIEE })
 }

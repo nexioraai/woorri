@@ -36,6 +36,7 @@ import { TABLE_GENERATIONS } from '@/lib/apps/journal'
 import { construireApercu } from '@/lib/apps/apercu'
 import { assembler } from '@/lib/apps/bac-a-sable'
 import { pageAutonome } from '@/lib/apps/boucle-directe'
+import { baseDeLOeuvre } from '@/lib/apps/base-de-l-oeuvre'
 import { TITRE_SANS_NOM } from '@/lib/apps/nom-produit'
 import { ENTETES_PAGE_PUBLIEE, jetonValide } from '@/lib/apps/publication'
 
@@ -62,7 +63,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ jeton: string 
 
   const lu = await supabaseAdmin
     .from(TABLE_GENERATIONS)
-    .select('document, nom')
+    .select('id, document, nom')
     .eq('publication_jeton', jeton)
     .maybeSingle()
   if (lu.error !== null || lu.data === null) return introuvable()
@@ -91,7 +92,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ jeton: string 
   if (doc?.fichiers !== undefined && Object.keys(doc.fichiers).length > 0) {
     const v = await assembler(new Map(Object.entries(doc.fichiers)))
     if (!v.ok) return introuvable()
-    return new Response(pageAutonome(v.code, titre), {
+    return new Response(pageAutonome(v.code, titre, baseDeLOeuvre(String(lu.data.id), lu.data.document)), {
       status: 200,
       headers: ENTETES_PAGE_PUBLIEE,
     })
