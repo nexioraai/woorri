@@ -43,6 +43,7 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { SQL_TABLE, SQL_TABLE_TEST, TABLE_GENERATIONS } from '@/lib/apps/journal'
+import { configMigrateur } from '@/lib/apps/connexion-migrateur'
 import {
   comparerSchema,
   type ColonneVivante,
@@ -247,8 +248,24 @@ export async function GET(req: Request) {
   // présenter un corps FORGÉ et de voir la croix rouge pour de vrai.
   // L'OUVERTURE AU PUBLIC VOYAGE AVEC LA MESURE : c'est le vérificateur qui
   // rougit, pas la route — pour qu'on puisse lui présenter un corps forgé.
+  // ── CE QUI ARRIVE AU CODE, PAS CE QUI EXISTE DANS UN TABLEAU DE BORD.
+  //
+  // QUATRE FOIS CETTE SEMAINE la différence a coûté une panne : `pg` absent
+  // du `package.json` (17 h de production gelée), les quatre `OEUVRES_*`
+  // jamais posées, celle du migrateur posée sous un nom COLLÉ DEUX FOIS.
+  // Chaque fois, « la variable est là » était vrai et sans rapport.
+  //
+  // On ne rend ni la valeur ni sa longueur — seulement SI le module qui la
+  // lit l'accepte, et le motif de son refus. Un secret ne se mesure pas en
+  // le montrant.
+  const mig = configMigrateur(process.env)
   return NextResponse.json(
-    { fantomesRetires: fantomes, rpcOuverteAuPublic: ouverte, ecarts },
+    {
+      fantomesRetires: fantomes,
+      rpcOuverteAuPublic: ouverte,
+      migrateur: mig.ok ? { recu: true } : { recu: false, motif: mig.refus.motif },
+      ecarts,
+    },
     { headers: { 'Cache-Control': 'no-store' } },
   )
 }
