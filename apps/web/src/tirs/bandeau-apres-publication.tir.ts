@@ -157,7 +157,25 @@ describe('tir · le bandeau après publication', () => {
       trace(`   window.DERIBFY_BASE.schema : ${String(injecte?.schema ?? '(pas de bloc)')}`)
       trace(`   BANDEAU « pas reliée »     : ${bandeau ? 'PRÉSENT' : 'absent'}`)
 
-      // ── LA QUESTION QUI COMPTE.
+      // ── LA QUESTION QUI COMPTE, ET ELLE N'EST PAS LE TEXTE.
+      //
+      // FAUX VERT DU 2026-11-04 : la premiere forme de ce tir ne cherchait
+      // que l'ancienne phrase. Apres correction elle a disparu — remplacee
+      // par celle de l'apercu — et le tir est passe au VERT alors que
+      // `window.DERIBFY_BASE.url` etait TOUJOURS VIDE.
+      //
+      // Le bandeau est une CONSEQUENCE. Ce qui compte est l'injection :
+      // une page sans adresse ne peut pas atteindre sa base, quel que soit
+      // le texte qu'elle affiche.
+      expect(
+        String(injecte?.url ?? ''),
+        'LA PAGE PUBLIEE NE RECOIT PAS SA BASE : le schema existe, le compte ' +
+          'existe, et window.DERIBFY_BASE.url est vide',
+      ).not.toBe('')
+      expect(
+        String(injecte?.schema ?? ''),
+        'la page ne recoit pas le schema de SON oeuvre',
+      ).toContain('oeuvre_')
       expect(
         bandeau,
         'LE BANDEAU MENT : le schéma existe, l’œuvre est publiée, et la page ' +

@@ -22,6 +22,7 @@
 // ============================================================
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
+import { IdentifiantsOeuvre, type EtatCompteOeuvre } from '@/components/apps/IdentifiantsOeuvre';
 import { ApercuAppareil, Attente, Bulle, ChoixFermes, Composeur, Escalier,
   JournalGeneration } from './Conversation';
 import {
@@ -214,6 +215,20 @@ export default function ConversationApplication({
   // la route, qui seule connaît le jeton. L'écran ne fabrique pas d'adresse —
   // il montre celle qui existe, et seulement après qu'elle existe.
   const [lienPublie, setLienPublie] = useState('');
+  /**
+   * LES IDENTIFIANTS DE L'APPLICATION PUBLIÉE — rendus UNE FOIS.
+   *
+   * Mesuré le 2026-11-04 : `/publier` rend `compte.motDePasse` À LA
+   * CRÉATION, et `null` à chaque republication. Ne lire que `lien` le
+   * jetait — et aucun chemin ne le relit, le domaine des comptes d'œuvre
+   * ne recevant aucun courriel. La seule issue était « Refaire le mot de
+   * passe » dans l'atelier, et encore fallait-il savoir qu'il en existait
+   * un.
+   *
+   * `null` signifie « cette application n'a pas de données » : la
+   * publication ne crée un compte que pour une œuvre qui a des tables.
+   */
+  const [compteOeuvre, setCompteOeuvre] = useState<EtatCompteOeuvre | null>(null);
   const [lienCopie, setLienCopie] = useState(false);
   // ── CE QUE LES MAGASINS EXIGENT ENCORE. Mesuré sur le projet natif
   // RÉELLEMENT émis, jamais une liste écrite ici : une liste dérive le jour
@@ -576,12 +591,17 @@ export default function ConversationApplication({
         method: 'POST',
         headers: { Authorization: `Bearer ${await jeton()}` },
       });
-      const d = (await res.json().catch(() => ({}))) as { lien?: string; error?: string };
+      const d = (await res.json().catch(() => ({}))) as {
+        lien?: string;
+        error?: string;
+        compte?: { adresse?: string; motDePasse?: string | null };
+      };
       if (!res.ok || typeof d.lien !== 'string') {
         setAvis(String(d.error ?? 'Publication impossible.'));
         return;
       }
       setLienPublie(d.lien);
+      setCompteOeuvre(d.compte ?? null);
       setLienCopie(false);
     } catch {
       setAvis('Publication impossible.');
@@ -1559,8 +1579,18 @@ export default function ConversationApplication({
 
               {lienPublie !== '' && (
                 <div className="mt-3 rounded-xl border border-white/15 bg-white/5 p-3">
+                  {/* ── CETTE PHRASE AFFIRMAIT UN ÉTAT DU PRODUIT, EN DUR.
+                      « il n'y a pas besoin de compte pour l'ouvrir » est FAUX
+                      dès que l'application a des données : la porte ne répond
+                      qu'aux requêtes connectées — la clé publique seule reçoit
+                      `42501`.
+                      Elle se déduit donc de la MÊME mesure que le bandeau de
+                      la page : la publication ne crée un compte que pour une
+                      œuvre qui a des tables. */}
                   <p className="text-xs text-slate-300">
-                    {'Votre application est en ligne. Envoyez ce lien à qui vous voulez — il n’y a pas besoin de compte pour l’ouvrir.'}
+                    {compteOeuvre === null
+                      ? 'Votre application est en ligne. Envoyez ce lien à qui vous voulez — il n’y a pas besoin de compte pour l’ouvrir.'
+                      : 'Votre application est en ligne. Elle garde ses données, et c’est pourquoi elle demande de se connecter : donnez les identifiants ci-dessous à qui doit y accéder.'}
                   </p>
                   <div className="mt-2 flex items-center gap-2">
                     <a
@@ -1590,6 +1620,11 @@ export default function ConversationApplication({
                   <p className="mt-2 text-xs text-slate-400">
                     {'Ce lien ne changera pas. Republiez autant de fois que vous voulez : les personnes qui l’ont déjà verront la nouvelle version.'}
                   </p>
+                  {compteOeuvre !== null && (
+                    <div className="mt-3">
+                      <IdentifiantsOeuvre compte={compteOeuvre} />
+                    </div>
+                  )}
                 </div>
               )}
 

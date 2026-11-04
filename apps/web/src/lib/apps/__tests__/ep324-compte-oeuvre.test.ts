@@ -28,7 +28,12 @@
 import { describe, expect, it } from 'vitest'
 import { join } from 'node:path'
 import { lireSource } from './lire-source'
-import { adresseCompteOeuvre, DOMAINE_COMPTES, engendrerMotDePasse } from '../compte-oeuvre'
+import {
+  adresseCompteOeuvre,
+  DOMAINE_COMPTES,
+  engendrerMotDePasse,
+  LONGUEUR_MOT_DE_PASSE,
+} from '../compte-oeuvre'
 import { COSTUMES_CONNUS, REGLE_IDENTITES_DERIVEES } from '../identites-derivees'
 
 const RACINE = join(__dirname, '..', '..', '..', '..', '..', '..')
@@ -151,7 +156,24 @@ describe('EP-324 · le compte d’une œuvre', () => {
       .toContain('randomBytes')
     const a = engendrerMotDePasse()
     const b = engendrerMotDePasse()
-    expect(a.length, 'le mot de passe est trop court').toBeGreaterThanOrEqual(28)
+    // ── LA LONGUEUR EST EXACTE, PAS UN PLANCHER.
+    //
+    // `>= 28` a laissé passer un générateur dont la longueur VARIAIT entre
+    // 25 et 32 signes — il a fallu un tirage malheureux (0,3 %) pour le
+    // découvrir, après vingt heures de production. Un plancher ne mesure
+    // pas une garantie : on assertionne donc l'égalité, mille fois, parce
+    // qu'un seul tirage ne dit rien d'une distribution.
+    expect(a.length, 'le mot de passe n’a pas la longueur annoncée').toBe(
+      LONGUEUR_MOT_DE_PASSE,
+    )
+    const longueurs = new Set(
+      Array.from({ length: 1000 }, () => engendrerMotDePasse().length),
+    )
+    expect(
+      [...longueurs],
+      'la longueur du mot de passe VARIE : ce n’est pas une garantie',
+    ).toEqual([LONGUEUR_MOT_DE_PASSE])
+    expect(LONGUEUR_MOT_DE_PASSE, 'le mot de passe est trop court').toBeGreaterThanOrEqual(28)
     expect(a, 'deux mots de passe identiques : le générateur ne tire rien').not.toBe(b)
     // Pas de signes qu'un double-clic coupe : la personne va le recopier.
     expect(a, 'le mot de passe porte des signes qu’un double-clic coupe')
@@ -189,7 +211,76 @@ describe('EP-324 · le compte d’une œuvre', () => {
     )
     expect(atelier, 'l’atelier ne lit pas l’état du compte')
       .toContain('/api/generateur/compte?id=')
-    expect(atelier, 'l’adresse n’est pas affichée').toContain('compte.adresse')
+    // ── LE PANNEAU A DÉMÉNAGÉ, ET LE CLIQUET SUIT LA PROPRIÉTÉ.
+    //
+    // Le 2026-11-04 le panneau est devenu un composant partagé, parce que
+    // TROIS écrans doivent dire la même chose. `toContain('compte.adresse')`
+    // sur l'atelier aurait rougi sur un DÉPLACEMENT — un cliquet qui lit un
+    // EMPLACEMENT plutôt qu'une propriété rougit quand on range, et ce
+    // rouge-là n'apprend rien à personne.
+    const panneau = lireSource(
+      join(RACINE, 'apps', 'web', 'src', 'components', 'apps', 'IdentifiantsOeuvre.tsx'),
+    )
+    expect(panneau, 'le panneau n’affiche plus l’adresse').toMatch(
+      /\{adresse\}|compte\.adresse/u,
+    )
+    expect(panneau, 'le panneau n’affiche plus le mot de passe').toContain('{compte.motDePasse}')
+    // ── LA FRONTIÈRE DU NOM FAIT PARTIE DE LA PROPRIÉTÉ.
+    //
+    // `toContain('<IdentifiantsOeuvre')` était satisfait par
+    // `<IdentifiantsOeuvreX` — mesuré : les trois mutations qui retiraient
+    // le panneau restaient VERTES. Un motif qui accepte un sur-ensemble du
+    // nom n'assertionne pas le nom.
+    expect(atelier, 'l’atelier n’emploie plus le panneau partagé').toMatch(
+      /<IdentifiantsOeuvre[\s/>]/u,
+    )
+
+    // ── ET LES TROIS ÉCRANS QUI PUBLIENT LE LISENT.
+    //
+    // LE DÉFAUT MESURÉ LE 2026-11-04, et il était complet : les trois
+    // appelants de `/publier` ne lisaient que `d.lien`. Le mot de passe
+    // était engendré, renvoyé, et jeté dans la même milliseconde — sans
+    // aucun chemin de relecture, le domaine des comptes d'œuvre ne recevant
+    // aucun courriel.
+    //
+    // QUATRIÈME FOIS QUE CE DÉPÔT VIT « UN MODULE PROUVÉ SANS APPELANT » :
+    // `extraction-exigences`, `poserOeuvre`, l'injection de la base, et
+    // maintenant `assurerCompteOeuvre`. La première dont l'auteur lui-même
+    // ne se souvenait plus vingt heures après l'avoir écrit.
+    for (const ecran of [
+      ['app', 'atelier', '[id]', 'page.tsx'],
+      ['app', 'dashboard', 'page.tsx'],
+      ['components', 'onboarding', 'ConversationApplication.tsx'],
+    ]) {
+      const src = lireSource(join(RACINE, 'apps', 'web', 'src', ...ecran))
+      // IL LE LIT dans la réponse de la publication — pas seulement dans un
+      // type, que TypeScript n'oblige personne à employer.
+      expect(src, `${ecran.join('/')} : la publication jette le mot de passe`).toMatch(
+        /d(\?)?\.compte/u,
+      )
+      // ET IL LE MONTRE.
+      expect(src, `${ecran.join('/')} : le mot de passe n’est affiché nulle part`).toMatch(
+        /<IdentifiantsOeuvre[\s/>]/u,
+      )
+    }
+
+    // ── LA PHRASE QUI AFFIRMAIT UN ÉTAT DU PRODUIT, EN DUR.
+    //
+    // « il n'y a pas besoin de compte pour l'ouvrir » est FAUX dès que
+    // l'application a des données. Elle se déduit désormais de la même
+    // mesure que le bandeau de la page — la présence d'un compte, que la
+    // publication ne crée que pour une œuvre qui a des tables.
+    const chat = lireSource(
+      join(RACINE, 'apps', 'web', 'src', 'components', 'onboarding', 'ConversationApplication.tsx'),
+    )
+    const phrase = chat.indexOf('pas besoin de compte pour l’ouvrir')
+    expect(phrase, 'la phrase a disparu : le contrôle ne mesure plus rien').toBeGreaterThan(0)
+    // ELLE EST SOUS CONDITION. Un ternaire sur `compteOeuvre` juste avant
+    // elle : si quelqu'un la remet en dur, il n'y a plus de condition.
+    expect(
+      chat.slice(Math.max(0, phrase - 400), phrase),
+      'la phrase « pas besoin de compte » est redevenue une affirmation en dur',
+    ).toMatch(/compteOeuvre === null/u)
     // ── L'USAGE, PAS LA DÉFINITION.
     //
     // `toContain('renouvelerCle')` était satisfait par `const renouvelerCle
@@ -215,14 +306,16 @@ describe('EP-324 · le compte d’une œuvre', () => {
     //
     // Perdre la seconde, c'est laisser quelqu'un fermer l'onglet sur un mot
     // de passe qu'il croyait pouvoir retrouver.
-    expect(atelier, 'le panneau ne dit pas que le mot de passe ne se relit pas')
+    // Les DEUX phrases vivent désormais dans le panneau partagé — même
+    // déplacement que l'adresse, même repointage.
+    expect(panneau, 'le panneau ne dit pas que le mot de passe ne se relit pas')
       .toContain('ne se relit pas')
     // La phrase vit DEUX FOIS — dans l'avis et sous le mot de passe affiché.
     // Un motif sur la phrase seule était satisfait par l'autre occurrence :
     // on assertionne donc sur L'APPEL.
     expect(atelier, 'l’avis de renouvellement ne dit plus de le noter maintenant')
       .toMatch(/setAvis\([^)]*se relira pas/u)
-    expect(atelier, 'le mot de passe affiché ne dit plus de le noter')
+    expect(panneau, 'le mot de passe affiché ne dit plus de le noter')
       .toMatch(/Notez-le maintenant/u)
 
     // ── ET LA ROUTE NE REND JAMAIS LE MOT DE PASSE EN LECTURE.

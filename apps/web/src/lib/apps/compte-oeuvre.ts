@@ -87,20 +87,45 @@ export function adresseCompteOeuvre(idOeuvre: string): string {
   return `${locale}@${DOMAINE_COMPTES}`
 }
 
+/** La longueur GARANTIE d'un mot de passe d'œuvre. */
+export const LONGUEUR_MOT_DE_PASSE = 30
+
 /**
- * UN MOT DE PASSE LONG ET ALÉATOIRE.
+ * UN MOT DE PASSE LONG ET ALÉATOIRE — DE LONGUEUR GARANTIE.
  *
- * 24 octets de `randomBytes` en base64url : 32 signes, environ 192 bits.
- * L'adresse étant déductible, c'est la seule chose qui protège l'œuvre —
- * elle n'a pas le droit d'être devinable.
+ * ── LE DÉFAUT MESURÉ LE 2026-11-04, PAR UN ROUGE DE GATE.
+ *
+ * La version précédente faisait `randomBytes(24).toString('base64url')`
+ * puis retirait les tirets et soulignés. Son commentaire annonçait
+ * « 32 signes, environ 192 bits ». Distribution réelle, 200 000 tirages :
+ *
+ *     32 signes 36,3 %   ·   31 → 37,4 %   ·   30 → 18,7 %
+ *     29 →  5,95 %       ·   28 →  1,36 %  ·   27 →  0,25 %
+ *     26 →  0,045 %      ·   25 →  0,005 %
+ *
+ * Le commentaire était donc faux 63,7 % du temps, et 0,3 % des tirages
+ * passaient sous le plancher qu'EP-324 ④ exige. La gate en a tiré un —
+ * c'est comme ça que ce défaut s'est découvert, après vingt heures de
+ * production et plusieurs comptes réellement créés.
+ *
+ * ── UNE SOUSTRACTION NE SE DOCUMENTE PAS, ELLE SE COMPENSE.
+ *
+ * Tirer plus d'octets rendrait l'échec improbable, pas impossible — et
+ * « improbable » est exactement ce que la version précédente croyait être.
+ * On tire donc JUSQU'À avoir assez de signes, puis on coupe net. La
+ * longueur est une GARANTIE, plus une espérance.
  *
  * Pas de signes ambigus : le propriétaire va recopier cette chaîne à la
  * main ou la coller depuis un message. `base64url` évite déjà `+` et `/` ;
  * on retire aussi les tirets et les soulignés pour qu'un double-clic la
- * sélectionne en entier.
+ * sélectionne en entier. 30 signes sur 62 valeurs ≈ 178 bits.
  */
 export function engendrerMotDePasse(): string {
-  return randomBytes(24).toString('base64url').replace(/[-_]/gu, '')
+  let chaine = ''
+  while (chaine.length < LONGUEUR_MOT_DE_PASSE) {
+    chaine += randomBytes(32).toString('base64url').replace(/[-_]/gu, '')
+  }
+  return chaine.slice(0, LONGUEUR_MOT_DE_PASSE)
 }
 
 export type Compte = {

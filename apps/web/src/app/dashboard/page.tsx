@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Plus, ExternalLink, Pencil, LogOut, Globe } from 'lucide-react';
 import Sidebar from '@/components/Sidebar';
 import { supabase } from '@/lib/supabase';
+import { IdentifiantsOeuvre, type EtatCompteOeuvre } from '@/components/apps/IdentifiantsOeuvre';
 import { computeAiScore } from '@/app/lib/aiScore';
 import { useTranslation } from '@/lib/translations';
 import { oublierGeneration } from '@/lib/apps/suivi-generation';
@@ -75,7 +76,9 @@ export default function DashboardPage() {
   const [avis, setAvis] = useState<string | null>(null);
   // Le lien public de l'application qu'on vient de publier — affiché sous la
   // carte, copiable. Un seul à la fois : publier en remplace l'affichage.
-  const [lienPublic, setLienPublic] = useState<{ id: string; url: string } | null>(null);
+  const [lienPublic, setLienPublic] = useState<
+    { id: string; url: string; compte?: EtatCompteOeuvre | null } | null
+  >(null);
   /**
    * LES VERSIONS D'UNE ŒUVRE — chargées à la demande, jamais en masse.
    *
@@ -291,6 +294,7 @@ export default function DashboardPage() {
       // deux : si la route renomme un jour, le bouton survit.
       const d = (await res.json().catch(() => null)) as {
         lien?: string; url?: string; error?: string; erreurSousDomaine?: string;
+        compte?: { adresse?: string; motDePasse?: string | null };
       } | null;
       const lien = d?.lien ?? d?.url;
       if (!res.ok || !lien) { setApercuErreur(d?.error ?? 'La publication a échoué.'); return; }
@@ -298,7 +302,10 @@ export default function DashboardPage() {
       // on montre le lien qui marche ET la raison de l'echec, jamais l'un
       // sans l'autre.
       if (d?.erreurSousDomaine) setApercuErreur(`Adresse nommée refusée : ${d.erreurSousDomaine}`);
-      setLienPublic({ id: a.id, url: lien });
+      // ── MESURÉ LE 2026-11-04 : la route rend le mot de passe À LA
+      //    CRÉATION et `null` ensuite. Ne lire que `lien` le jetait, et il
+      //    n'existe aucun chemin de relecture.
+      setLienPublic({ id: a.id, url: lien, compte: d?.compte ?? null });
     } catch { setApercuErreur('La publication a échoué. Réessayez.'); }
   };
 
@@ -633,12 +640,19 @@ export default function DashboardPage() {
             cadre vide sur un tableau de bord de sites ne dirait rien a qui
             n'a jamais genere d'application. */}
         {lienPublic !== null && (
-          <div className="mt-6 flex items-center gap-2 text-sm">
-            <a href={lienPublic.url} target="_blank" rel="noreferrer" className="text-emerald-400 underline truncate">{lienPublic.url}</a>
-            <button type="button" onClick={() => { void navigator.clipboard.writeText(lienPublic.url); }}
-              className="shrink-0 px-2 py-1 rounded-lg border border-white/10 text-white/60 hover:text-white text-xs">
-              Copier
-            </button>
+          <div className="mt-6">
+            <div className="flex items-center gap-2 text-sm">
+              <a href={lienPublic.url} target="_blank" rel="noreferrer" className="text-emerald-400 underline truncate">{lienPublic.url}</a>
+              <button type="button" onClick={() => { void navigator.clipboard.writeText(lienPublic.url); }}
+                className="shrink-0 px-2 py-1 rounded-lg border border-white/10 text-white/60 hover:text-white text-xs">
+                Copier
+              </button>
+            </div>
+            {lienPublic.compte != null && (
+              <div className="mt-2 max-w-md">
+                <IdentifiantsOeuvre compte={lienPublic.compte} />
+              </div>
+            )}
           </div>
         )}
         {avis !== null && (
@@ -837,6 +851,9 @@ export default function DashboardPage() {
                           Copier
                         </button>
                       </div>
+                    )}
+                    {lienPublic?.id === a.id && lienPublic.compte != null && (
+                      <IdentifiantsOeuvre compte={lienPublic.compte} />
                     )}
                   </div>
                 </div>

@@ -57,6 +57,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { CadreApercu } from '@/components/atelier/CadreApercu';
+import { IdentifiantsOeuvre } from '@/components/apps/IdentifiantsOeuvre';
 import { adresseProposee, TITRE_SANS_NOM } from '@/lib/apps/nom-produit';
 import { echangesDe, heureCourte, type VersionLue } from '@/lib/apps/fil-atelier';
 import { phraseVersion } from '@/lib/apps/versions-oeuvre';
@@ -364,11 +365,17 @@ export default function AtelierPage() {
       // 2026-10-30. On lit les deux : si la route renomme, le bouton survit.
       const d = (await res.json().catch(() => null)) as {
         lien?: string; url?: string; error?: string; erreurSousDomaine?: string;
+        compte?: { adresse?: string; motDePasse?: string | null };
       } | null;
       const lien = d?.lien ?? d?.url;
       if (!res.ok || lien === undefined) { setErreur(d?.error ?? 'La publication a échoué.'); return; }
       if (d?.erreurSousDomaine !== undefined) setErreur(`Adresse nommée refusée : ${d.erreurSousDomaine}`);
       setLienPublic(lien);
+      // ── LE MOT DE PASSE NE REVIENT JAMAIS, mesuré le 2026-11-04 : la
+      //    route le rend À LA CRÉATION, et republier rend `null`. Le jeter
+      //    ici obligeait à cliquer « Refaire » pour obtenir une clé qu'on
+      //    venait d'avoir.
+      if (d?.compte != null) setCompte({ etat: 'actif', ...d.compte });
     } catch { setErreur('La publication a échoué. Réessayez.'); }
   };
 
@@ -535,39 +542,12 @@ export default function AtelierPage() {
                  porte qu'il peut franchir, pas un formulaire qui le laisse
                  chercher. */}
             {compte?.etat === 'actif' && (
-              <div className="mb-2 rounded-xl border border-white/10 bg-white/[0.03] p-2.5">
-                <p className="text-[11px] font-semibold text-slate-200">
-                  Identifiants de l’application publiée
-                </p>
-                <p className="mt-1 break-all font-mono text-[11px] text-slate-300">
-                  {compte.adresse}
-                </p>
-                {/* LE MOT DE PASSE N'APPARAÎT QU'À L'INSTANT OÙ IL EST FAIT.
-                    On ne relit pas un mot de passe — l'écran le dit au lieu
-                    de laisser chercher où il se trouve. */}
-                {compte.motDePasse !== null && compte.motDePasse !== undefined ? (
-                  <>
-                    <p className="mt-1.5 break-all rounded-lg bg-[#FA5D1E]/[0.12] px-2 py-1.5 font-mono text-[12px] text-white">
-                      {compte.motDePasse}
-                    </p>
-                    <p className="mt-1 text-[10px] leading-relaxed text-amber-300/80">
-                      Notez-le maintenant : il ne se relira pas.
-                    </p>
-                  </>
-                ) : (
-                  <p className="mt-1 text-[10px] leading-relaxed text-white/40">
-                    Le mot de passe ne se relit pas. S’il a circulé plus qu’il ne
-                    devait, ou si vous ne savez plus qui l’a, refaites-le.
-                  </p>
-                )}
-                <button
-                  type="button"
-                  disabled={renouvelle}
-                  onClick={() => { void renouvelerCle(); }}
-                  className="mt-2 w-full rounded-lg border border-white/10 bg-white/[0.03] px-2 py-1.5 text-[11px] text-slate-300 transition hover:border-white/20 hover:text-white disabled:opacity-40"
-                >
-                  {renouvelle ? 'Renouvellement…' : 'Refaire le mot de passe'}
-                </button>
+              <div className="mb-2">
+                <IdentifiantsOeuvre
+                  compte={compte}
+                  onRenouveler={() => { void renouvelerCle(); }}
+                  renouvelle={renouvelle}
+                />
               </div>
             )}
             {/* ── TROIS ÉTATS, ET L'ÉCRAN NE LES CONFOND PAS.
