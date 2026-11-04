@@ -45,6 +45,22 @@ const COMPLET = {
 let memoire: string[] | null = null
 const sources = (): string[] => (memoire ??= balayer())
 
+// ── ET LE CONTENU AUSSI (2026-11-04, second tour).
+//
+// Mémoriser la LISTE a fait passer ⑧ de 2028 ms à 1034 ms. Mais trois
+// contrôles relisent encore le CONTENU des mêmes fichiers — ⑥, ⑥bis et
+// ⑧ — et la gate l'a redit : 1685 ms, marge ×3,0 tout juste.
+//
+// Trois lectures du même octet pour trois questions sur le même arbre.
+const lus = new Map<string, string>()
+const lire = (f: string): string => {
+  const v = lus.get(f)
+  if (v !== undefined) return v
+  const t = lireSource(f)
+  lus.set(f, t)
+  return t
+}
+
 const balayer = (): string[] => {
   const out: string[] = []
   const marcher = (d: string): void => {
@@ -133,7 +149,7 @@ describe('EP-321 · les deux bases', () => {
     // et c'est le second qui poserait les tables au mauvais endroit. Le
     // dépôt a déjà payé trois copies de la règle de nommage, dont une
     // ignorait les noms réservés.
-    const lecteurs = sources().filter((f) => lireSource(f).includes('OEUVRES_SUPABASE'))
+    const lecteurs = sources().filter((f) => lire(f).includes('OEUVRES_SUPABASE'))
     expect(
       lecteurs.map((f) => f.slice(RACINE.length + 1)),
       'une deuxième lecture des variables des œuvres est apparue',
@@ -156,9 +172,7 @@ describe('EP-321 · les deux bases', () => {
     //   « N'importe quel chemin de code qui ouvre une connexion comme
     //     `deribfy_migrateur` SANS passer par l'émetteur contourne la
     //     seule garde qui existe pour ces deux formes. »
-    const lecteurs = sources().filter((f) =>
-      lireSource(f).includes('OEUVRES_DATABASE_URL_MIGRATEUR'),
-    )
+    const lecteurs = sources().filter((f) => lire(f).includes('OEUVRES_DATABASE_URL_MIGRATEUR'))
     expect(
       lecteurs.map((f) => f.slice(RACINE.length + 1)),
       'une deuxième lecture de la connexion du migrateur est apparue — elle ' +

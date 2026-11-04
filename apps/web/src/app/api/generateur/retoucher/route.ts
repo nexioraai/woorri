@@ -143,6 +143,15 @@ export async function POST(req: Request) {
   const corpus = [...avant.entries()].map(([k, v]) => `=== ${k} ===\n${v}`).join('\n')
   let texte = ''
   let coutUsd = 0
+  // ── LA TRONCATURE VOYAGE AVEC LE TEXTE (2026-11-04).
+  //
+  // La boucle de génération la fait voyager depuis le 2026-10-18. Cette
+  // route, elle, l'IGNORAIT ENTIÈREMENT : aucune occurrence de
+  // `stop_reason` dans ce fichier. Une réponse coupée rendait des
+  // fichiers à moitié écrits, et la fusion les posait PAR-DESSUS LES
+  // BONS — en silence. Le propriétaire ne l'aurait découvert qu'en
+  // ouvrant son application.
+  let tronquee = false
   try {
     const r = await clientIA().messages.create({
       model: MODELE_LEGER,
@@ -151,6 +160,7 @@ export async function POST(req: Request) {
       messages: [{ role: 'user', content: `${corpus}\n\n=== DEMANDE ===\n${demande}` }],
     })
     texte = r.content.map((b) => (b.type === 'text' ? b.text : '')).join('')
+    tronquee = r.stop_reason === 'max_tokens'
     // LE TARIF DU MODÈLE LÉGER, À L'HEURE DE L'APPEL. Facturer une retouche
     // au prix du modèle lourd la rendait quatre fois plus chère qu'elle
     // n'est ; supposer l'heure creuse la rendait deux fois moins.
@@ -162,6 +172,33 @@ export async function POST(req: Request) {
     return NextResponse.json(
       { error: 'Le modèle n’a pas répondu. Votre application n’a pas changé.', coutUsd: 0 },
       { status: 502 },
+    )
+  }
+
+  // ── UNE RÉPONSE COUPÉE NE SE LIVRE PAS, ET NE SE REJOUE PAS.
+  //
+  // Elle arrive AVANT la lecture des fichiers : ce qu'une réponse
+  // tronquée contient ressemble à des fichiers valides jusqu'au dernier,
+  // qui s'arrête au milieu d'une ligne. `lireFichiers` le rendrait sans
+  // broncher, et la fusion l'écrirait par-dessus le bon.
+  //
+  // ON NE RÉESSAIE PAS EN ESPÉRANT MIEUX : la même demande sur la même
+  // application coupera au même endroit, et aura coûté deux fois.
+  //
+  // MESURÉ LE 2026-11-04 : 2,86 octets par jeton de sortie (médiane sur
+  // 17 générations réelles). Avec `SORTIE_MAX_RETOUCHE = 16 000`, une
+  // réponse porte au plus ~45 800 octets — contre une médiane d'œuvre à
+  // 49 525 octets. Le plafond n'est pas lointain : il est déjà là.
+  if (tronquee) {
+    return NextResponse.json(
+      {
+        error:
+          'Cette modification touche trop de fichiers à la fois pour être faite ' +
+          'd’un coup. Découpez-la en deux demandes. Votre application n’a pas changé.',
+        tronquee: true,
+        coutUsd,
+      },
+      { status: 409 },
     )
   }
 
