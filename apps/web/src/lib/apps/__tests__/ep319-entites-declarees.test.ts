@@ -314,7 +314,7 @@ describe('EP-319 · les données déclarées', () => {
 
     // ③ ET LE BLOC A BIEN PRIS SA PLACE — au même rang, pas en annexe.
     //    Un bloc ajouté à la fin serait lu après seize autres règles.
-    expect(avecBase, 'le bloc de base est absent').toContain('6. TES DONNÉES VIVENT EN BASE')
+    expect(avecBase, 'le bloc de base est absent').toContain('6. TES DONNÉES SE CONSERVENT EN BASE')
     expect(avecBase, 'la consigne ne nomme pas les tables déclarées').toMatch(/membre/u)
     expect(avecBase, 'le bloc n’interdit pas les valeurs en dur').toMatch(/INTERDIT/u)
     expect(

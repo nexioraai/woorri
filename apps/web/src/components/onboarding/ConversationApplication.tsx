@@ -1711,10 +1711,16 @@ export default function ConversationApplication({
       >
         {messages.length === 0 && (
           <>
+            {/* ── CE TEXTE PROMETTAIT CE QU'ON A SUPPRIMÉ LA VEILLE.
+                 « vous posera des questions sur ce qu'il ne peut pas
+                 deviner — rien n'est construit avant » : les questions de
+                 pré-vol ont été retirées le 2026-11-03, et ce texte a
+                 continué de les annoncer pendant une journée.
+                 Il dit maintenant ce qui se passe RÉELLEMENT. */}
             <p className="text-slate-400 text-[15px] leading-relaxed max-w-md mx-auto">
-              Décrivez l’application que vous voulez. Deribfy vous dira ce qu’il a compris,
-              et vous <strong className="text-slate-200">posera des questions</strong> sur ce
-              qu’il ne peut pas deviner — rien n’est construit avant. Elle sort en{' '}
+              Décrivez l’application que vous voulez, en vos mots. Deribfy la{' '}
+              <strong className="text-slate-200">construit directement</strong> — aucune
+              question avant, vous corrigez ensuite si besoin. Elle sort en{' '}
               <strong className="text-slate-200">application web</strong> — utilisable sur
               téléphone comme sur ordinateur, <strong className="text-slate-200">téléchargeable</strong>{' '}
               en projet complet et <strong className="text-slate-200">publiée à son adresse</strong>.

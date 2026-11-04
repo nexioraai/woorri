@@ -54,12 +54,19 @@ describe('EP-331 · l’écran ne ment plus sur l’échec', () => {
   })
 
   it('② LE MESSAGE DU NAVIGATEUR N’ARRIVE JAMAIS TEL QUEL À L’ÉCRAN', () => {
-    // « Load failed », « Failed to fetch », « NetworkError » : trois
-    // navigateurs, trois phrases anglaises, aucune destinée à être lue.
-    expect(ECRAN, 'aucune traduction des coupures réseau').toMatch(/load failed/iu)
-    expect(ECRAN, 'Chrome et Firefox ne sont pas couverts').toMatch(/failed to fetch/iu)
+    // ── LA TRADUCTION A DÉMÉNAGÉ, ET ELLE A CHANGÉ DE FORME (2026-11-04).
+    //
+    // Elle vivait ici, en LISTE NOIRE : trois phrases réseau reconnues,
+    // et le texte brut pour tout le reste. « terminated » — le mot
+    // d'undici quand la connexion amont lâche — s'est donc affiché seul,
+    // en anglais, à quelqu'un qui venait de décrire son application.
+    //
+    // Elle est maintenant une LISTE BLANCHE dans `phrase-erreur.ts`, et
+    // c'est EP-341 qui l'éprouve. Ici on garde la propriété de L'ÉCRAN :
+    // il passe par elle, et il n'affiche jamais un message brut.
+    expect(ECRAN, 'l’écran n’emploie plus la traduction').toMatch(/phraseErreur\(/u)
     expect(ECRAN, 'le message brut est encore affiché').not.toMatch(
-      /setError\(err instanceof Error \? err\.message/u,
+      /setError\((?:String\()?err(?: instanceof Error \? err\.message)?[),]/u,
     )
   })
 
@@ -129,8 +136,12 @@ describe('EP-331 · l’écran ne ment plus sur l’échec', () => {
     // existe peut-être — et le 2026-11-03, elle existait.
     expect(ECRAN, 'le client ne demande pas de flux').toMatch(/application\/x-ndjson/u)
     expect(ECRAN, 'aucun lecteur de fil').toMatch(/async function lireLeFil/u)
+    // LA CONSTANTE A ÉTÉ RENOMMÉE `CONNEXION_PERDUE_BOUTIQUE` : la
+    // générique vit désormais dans `phrase-erreur.ts`, et celle-ci garde
+    // son avertissement propre — « votre boutique a peut-être été créée
+    // malgré tout ». Les confondre ferait payer deux fois.
     expect(ECRAN, 'un fil interrompu n’est pas distingué d’un résultat').toMatch(
-      /if \(fin === null\) throw new Error\(CONNEXION_PERDUE\)/u,
+      /if \(fin === null\) throw new Error\(CONNEXION_PERDUE_BOUTIQUE\)/u,
     )
     // ET LE REPLI EXISTE : si un intermédiaire retire l'en-tête, on relit du
     // JSON plutôt que d'échouer sur une réponse parfaitement valide.

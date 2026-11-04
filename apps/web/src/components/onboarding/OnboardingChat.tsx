@@ -38,7 +38,7 @@ async function lireLeFil(
     return { ok: res.ok, corps };
   }
   const lecteur = res.body?.getReader();
-  if (!lecteur) throw new Error(CONNEXION_PERDUE);
+  if (!lecteur) throw new Error(CONNEXION_PERDUE_BOUTIQUE);
   const decodeur = new TextDecoder();
   let reste = '';
   let fin: { ok: boolean; corps: Record<string, unknown> } | null = null;
@@ -71,7 +71,7 @@ async function lireLeFil(
   }
   // LE FIL S'EST TU SANS CONCLURE : c'est une coupure, et on le dit comme
   // telle — le travail a peut-être abouti côté serveur.
-  if (fin === null) throw new Error(CONNEXION_PERDUE);
+  if (fin === null) throw new Error(CONNEXION_PERDUE_BOUTIQUE);
   return fin;
 }
 
@@ -91,21 +91,24 @@ async function lireLeFil(
  * D'où cette formulation : dire « réessayez » tout court ferait refaire —
  * et repayer — une boutique qui existe déjà. On envoie d'abord vérifier.
  */
-const CONNEXION_PERDUE =
+const CONNEXION_PERDUE_BOUTIQUE =
   'La connexion a été interrompue pendant la création. Votre boutique a ' +
   'peut-être été créée malgré tout : vérifiez dans « Mes boutiques » avant ' +
   'de relancer.';
 
 /** Le message du navigateur n'est jamais montré tel quel. */
-function phraseLisible(err: unknown): string {
-  const brut = err instanceof Error ? err.message : String(err);
-  // Safari dit « Load failed », Chrome « Failed to fetch », Firefox
-  // « NetworkError… ». Aucun n'est une phrase pour la personne qui lit.
-  if (/load failed|failed to fetch|networkerror|network request failed/iu.test(brut)) {
-    return CONNEXION_PERDUE;
-  }
-  return brut === '' ? 'Une erreur est survenue.' : brut;
-}
+// ── LA LISTE NOIRE EST PARTIE (2026-11-04).
+//
+// Cette fonction reconnaissait TROIS phrases réseau et rendait `brut`
+// pour tout le reste. « terminated » — le mot d'undici quand la
+// connexion amont lâche — s'est donc affiché seul, en jaune, à
+// quelqu'un qui venait de décrire son application. Troisième du genre
+// après « Load failed » et « The string did not match the expected
+// pattern ».
+//
+// `phraseErreur` est une liste BLANCHE : ce qui n'est pas reconnu ne
+// s'affiche pas, et le brut part au journal du navigateur.
+import { phraseErreur } from '@/lib/apps/phrase-erreur';
 import { useTranslation } from '@/lib/translations';
 
 type Msg = { role: 'user' | 'assistant'; content: string };
@@ -576,7 +579,7 @@ export default function OnboardingChat({
         throw new Error('Réponse inattendue.');
       }
     } catch (err: unknown) {
-      setError(phraseLisible(err));
+      setError(phraseErreur(err));
       // ── ET ON RETIENT QUOI REJOUER, pour que « Réessayer » existe.
       setDerniereTentative({ texte: text, mode: chosenMode });
     } finally {

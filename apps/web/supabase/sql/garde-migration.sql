@@ -146,6 +146,23 @@ begin
 end
 $fn$;
 
+-- ── PERSONNE D'AUTRE NE LES EXÉCUTE ────────────────────────────────
+--
+-- PostgreSQL accorde `EXECUTE` à PUBLIC par défaut sur toute fonction
+-- créée. Quatre fonctions `security definer` ouvertes à tous, c'est
+-- exactement ce qu'un cliquet du dépôt refuse — et il l'a refusé.
+--
+-- Elles n'ont aucun appelant légitime : le moteur les déclenche, jamais
+-- une requête.
+-- ET PAS SEULEMENT `public` : Supabase accorde `EXECUTE` à `anon` et
+-- `authenticated` par défaut sur ce qui naît dans `public`. Écrire
+-- « aucun appelant légitime » et laisser un visiteur anonyme les appeler
+-- serait la même phrase en dur qu'on corrige depuis deux jours.
+revoke all on function public.deribfy_refus_destruction() from public, anon, authenticated;
+revoke all on function public.deribfy_refus_reecriture() from public, anon, authenticated;
+revoke all on function public.deribfy_refus_alter() from public, anon, authenticated;
+revoke all on function public.deribfy_refus_truncate() from public, anon, authenticated;
+
 -- À POSER SUR CHAQUE TABLE CRÉÉE, par `poserOeuvre` et par la migration :
 --
 --   create trigger deribfy_sans_truncate before truncate on <table>

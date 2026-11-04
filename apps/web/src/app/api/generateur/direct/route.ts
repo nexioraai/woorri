@@ -30,6 +30,7 @@ import { NextResponse } from 'next/server'
 import { requireAuthenticatedUser } from '@/lib/auth/require-authenticated-user'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { TABLE_GENERATIONS, TABLE_VERSIONS } from '@/lib/apps/journal'
+import { alerter } from '@/lib/alertes'
 import { moteurChoisi } from '@/lib/apps/interrupteur-moteur'
 import { DOMAINE_PUBLIC, TEMOIN_GENERIQUE } from '@/lib/apps/sous-domaine'
 import { boucleEcriture, consignePour, pageAutonome } from '@/lib/apps/boucle-directe'
@@ -521,6 +522,39 @@ export async function POST(req: Request) {
     })
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : String(e)
+    // ── UNE GÉNÉRATION QUI JETTE NE LAISSAIT AUCUNE TRACE (2026-11-04).
+    //
+    // Mesuré sur la panne de 15:36 UTC : la personne a vu « terminated »
+    // en anglais, et il n'y avait RIEN. Pas de ligne au journal — ce
+    // `return` précède l'écriture — pas de ligne dans les logs, pas
+    // d'alerte. Le modèle avait peut-être été appelé et facturé ; on ne
+    // peut même pas le dire.
+    //
+    // Les quatre autres sorties de cette route écrivent leur ligne. Celle
+    // qui compte le plus, celle où ça casse, était la seule muette.
+    //
+    // ON ÉCRIT D'ABORD, ON PRÉVIENT ENSUITE — même ordre que l'alerte :
+    // une ligne écrite survit à un canal de notification en panne.
+    console.error(`[direct] la boucle a jete apres ${String(Date.now() - debut)} ms — ${message}`)
+    try {
+      await supabaseAdmin.from(TABLE_GENERATIONS).insert({
+        owner_id: proprietaire,
+        demande,
+        moteur: 'direct',
+        ok: false,
+        statut: 'refusee',
+        duree_ms: Date.now() - debut,
+        diagnostics: [`la construction a ete interrompue — ${message.slice(0, 300)}`],
+      })
+    } catch {
+      /* le journal peut manquer ; l'alerte, elle, doit partir quand meme */
+    }
+    await alerter({
+      sujet: 'oeuvre',
+      motif: `la boucle d’ecriture a jete apres ${String(Date.now() - debut)} ms`,
+      etape: 'modele',
+      detail: `${message}\n\nDemande : ${demande.slice(0, 400)}`,
+    }).catch(() => undefined)
     return { ok: false as const, error: message.slice(0, 200) }
   }
   // ── CE QUE LA BOUCLE A APPRIS REMPLACE CE QU'ELLE A REÇU.
