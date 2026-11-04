@@ -202,7 +202,26 @@ function renderBold(text: string) {
   return { __html: html };
 }
 
-export default function OnboardingChat() {
+export default function OnboardingChat({
+  /**
+   * UNE DEMANDE ARRIVÉE PAR L'ADRESSE — lue par la page, pas ici.
+   *
+   * L'atelier y envoie la demande d'origine AUGMENTÉE de ce que la retouche
+   * n'a pas pu faire, quand il propose une régénération après un refus.
+   * Sans ça, la personne devait recopier à la main un texte qu'elle venait
+   * d'écrire — après avoir payé pour un non.
+   *
+   * ── POURQUOI UNE PROPRIÉTÉ ET PAS UN EFFET.
+   *
+   * Un effet pose l'état APRÈS le premier rendu : la personne verrait
+   * l'accueil une fraction de seconde, puis l'écran basculerait sous ses
+   * yeux. Ici l'état NAÎT juste, et il n'y a rien à rejouer — donc pas de
+   * verrou à ne pas oublier.
+   */
+  demandeRecue = '',
+}: {
+  readonly demandeRecue?: string
+} = {}) {
   const router = useRouter();
   const { t } = useTranslation();
   const [messages, setMessages] = useState<Msg[]>([{ role: 'assistant', content: GREETING }]);
@@ -250,8 +269,9 @@ export default function OnboardingChat() {
   // L'AIGUILLAGE VERS L'APPLICATION. Volontairement un booleen a part, et non
   // une valeur de `siteMode` : si c'etait un mode, tout ce qui lit `siteMode`
   // devrait apprendre a le connaitre. Ici, rien ne le voit.
-  const [cibleApplication, setCibleApplication] = useState(false);
-  const [demandeBasculee, setDemandeBasculee] = useState('');
+  const [cibleApplication, setCibleApplication] = useState(demandeRecue.trim() !== '');
+  const [demandeBasculee, setDemandeBasculee] = useState(demandeRecue);
+
   const [avisBientot, setAvisBientot] = useState(false);
   const typedText = messages.filter((m) => m.role === 'user').map((m) => m.content).join(' ');
   const browserLang = typeof navigator !== 'undefined'

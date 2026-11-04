@@ -357,6 +357,14 @@ export async function POST(req: Request) {
     (e) => schemaEntite.safeParse(e).success,
   ).entites
 
+  // ── CE QUE LA BOUCLE A APPRIS EN CONSTRUISANT (2026-11-04).
+  //
+  // Le cahier amorce la liste ; le constructeur l'AJUSTE au moment où il
+  // dessine. La consigne du tour SUIVANT doit donc voir la table que le
+  // tour précédent vient de déclarer — sinon on lui reproche un écran sans
+  // base tout en continuant à lui dire qu'il n'en a pas.
+  let entitesCourantes = entitesDeclarees
+
   let demande = typeof corps.demande === 'string' ? corps.demande.trim() : ''
   let nomExistant: string | null = null
   if (idExistant !== '') {
@@ -426,7 +434,7 @@ export async function POST(req: Request) {
   ) => {
     // LA CONSIGNE EST CELLE DE CETTE OEUVRE : avec entites, le bloc de base
     // REMPLACE la regle des valeurs d'exemple. Les deux ne coexistent jamais.
-    const r = await appelerFournisseur(fournisseur, cle, consignePour(entitesDeclarees), messages)
+    const r = await appelerFournisseur(fournisseur, cle, consignePour(entitesCourantes), messages)
     entree += r.usage.entree
     sortie += r.usage.sortie
     // LA TRONCATURE VOYAGE AVEC LE TEXTE. La boucle ne peut pas la deviner :
@@ -506,11 +514,21 @@ export async function POST(req: Request) {
       configuration,
       appeler,
       entites: entitesDeclarees,
+      // LA MÊME GRAMMAIRE QUE LA LECTURE DU CAHIER, jamais une seconde :
+      // deux validateurs divergeraient, et la divergence se découvrirait
+      // sur une table posée de travers, en production.
+      validerEntite: (e) => schemaEntite.safeParse(e).success,
     })
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : String(e)
     return { ok: false as const, error: message.slice(0, 200) }
   }
+  // ── CE QUE LA BOUCLE A APPRIS REMPLACE CE QU'ELLE A REÇU.
+  //
+  // Sans cette ligne, `declaration-en-route` serait le CINQUIÈME module
+  // prouvé sans appelant de ce dépôt : la boucle déclarerait la table, et
+  // le schéma s'émettrait quand même depuis la liste d'entrée.
+  if (resultat.ok) entitesCourantes = resultat.entites
   const dureeMs = Date.now() - debut
 
   // ── LE SCHEMA DES DONNEES DE L'OEUVRE (lot D2, 2026-11-02).
@@ -524,7 +542,13 @@ export async function POST(req: Request) {
   // risque : `unique`, `required` et une relation entre entites n'existent
   // nulle part dans du React. On obtiendrait un schema valide et FAUX.
   // C'est pourquoi D1 les fait DECLARER avant les ecrans, pas deduire apres.
-  const schemaDeLOeuvre = emettreSchemaSql(entitesDeclarees)
+  // ── ÉMIS DEPUIS CE QUE LA BOUCLE SAIT, PAS DEPUIS CE QU'ELLE A REÇU.
+  //
+  // Émettre depuis l'entrée perdrait exactement les tables que le
+  // constructeur a découvert devoir exister — et l'application repartirait
+  // sans la base de l'écran qu'elle vient de dessiner. C'est le défaut du
+  // 2026-11-04, et c'est sa fermeture.
+  const schemaDeLOeuvre = emettreSchemaSql(entitesCourantes)
   // LA PORTE SE DÉRIVE DES MÊMES ENTITÉS. Sans rôles ni droits fins, il n'y
   // a rien à déduire des écrans : une politique par table, toujours la même.
   //
@@ -539,7 +563,7 @@ export async function POST(req: Request) {
   // portent le MEME identifiant -- sinon la porte d'une oeuvre nommerait une
   // autre oeuvre, et personne n'entrerait jamais.
   const idOeuvre = randomUUID()
-  const politiquesDeLOeuvre = emettrePolitiquesSql(entitesDeclarees, idOeuvre)
+  const politiquesDeLOeuvre = emettrePolitiquesSql(entitesCourantes, idOeuvre)
 
   // ── LE TARIF DE L'HEURE OÙ L'APPEL A EU LIEU (2026-11-02).
   //

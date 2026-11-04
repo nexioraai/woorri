@@ -112,7 +112,30 @@ export default function AtelierPage() {
     motDePasse?: string | null;
     explication?: string;
     enMemoire?: { table: string; lue: boolean; ecrite: boolean }[];
+    /** Ce que le code LIVRÉ range dans le navigateur — mesuré par la route. */
+    rangementNavigateur?: { fichier: string; quoi: string }[];
   } | null>(null);
+  /**
+   * CE QUE LA RETOUCHE N'A PAS PU FAIRE, ET CE QU'ON PROPOSE À LA PLACE.
+   *
+   * ── LE DÉFAUT MESURÉ LE 2026-11-04.
+   *
+   * Un propriétaire a décrit le barème de sa facture — 85 F jusqu'à
+   * 150 kWh, 125 F au-delà, plus 402 F fixes. Une vraie règle de métier,
+   * et son application calculait FAUX sans elle. Réponse reçue : « le
+   * document PERIMETRE.md exclut explicitement… », après paiement.
+   *
+   * Un document écrit par le générateur lui-même était devenu une LOI qui
+   * interdisait au propriétaire de corriger son application.
+   *
+   *   « Un périmètre protège contre la dérive. Il ne décide pas de ce dont
+   *     quelqu'un a besoin. »
+   *
+   * Un refus poli sur une application qui donne un mauvais montant n'est
+   * pas une limite : c'est une panne. L'écran ne s'arrête donc plus au
+   * non — il propose le geste qui marche, demande déjà écrite.
+   */
+  const [aRegenerer, setARegenerer] = useState<string | null>(null);
   const [renouvelle, setRenouvelle] = useState(false);
   const basDuFil = useRef<HTMLDivElement | null>(null);
 
@@ -294,7 +317,9 @@ export default function AtelierPage() {
         return;
       }
       if (d.horsPerimetre === true) {
-        setErreur(`Hors de ce que je peux retoucher : ${String(d.raison)}${paye}`);
+        // LA RAISON EST DITE, mais elle n'est plus la fin du chemin.
+        setARegenerer(demande);
+        setErreur(`${String(d.raison)}${paye}`);
         return;
       }
       if (!res.ok || d.ok !== true) {
@@ -536,6 +561,33 @@ export default function AtelierPage() {
           <div className="shrink-0 rounded-2xl border border-white/[0.07] bg-white/[0.02] p-2.5">
             {avis !== null && <p className="mb-2 text-[11px] text-emerald-400">{avis}</p>}
             {erreur !== null && <p className="mb-2 text-[11px] text-red-400">{erreur}</p>}
+            {/* ── LE REFUS N'EST PLUS LA FIN DU CHEMIN.
+                 Il dit ce qui marche, et le fait faire en un geste : la
+                 demande d'origine ET ce qu'on vient de décrire, déjà
+                 écrites. Rien à recopier, rien à comprendre de nos
+                 fichiers internes. */}
+            {aRegenerer !== null && (
+              <div className="mb-2 rounded-xl border border-[#FA5D1E]/30 bg-[#FA5D1E]/[0.07] p-2.5">
+                <p className="text-[11px] leading-relaxed text-slate-200">
+                  Ceci demande une régénération : la retouche ne change que
+                  des textes, des couleurs et des champs déjà là. Votre
+                  demande est prête — relancez-la avec cette précision en
+                  plus.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const complete = `${app?.demande ?? ''}\n\n${aRegenerer}`.trim();
+                    router.push(
+                      `/onboarding-chat?demande=${encodeURIComponent(complete)}`,
+                    );
+                  }}
+                  className="mt-2 w-full rounded-lg bg-[#FA5D1E] px-2 py-1.5 text-[11px] font-medium text-white transition hover:brightness-110"
+                >
+                  Refaire l’application avec cette règle
+                </button>
+              </div>
+            )}
             {/* ── LE COMPTE DE L'ŒUVRE, TOUJOURS VISIBLE.
                  Ce n'est pas un secret vis-à-vis du propriétaire : c'est SON
                  application. S'il perd le mot de passe, il doit voir une
@@ -588,12 +640,27 @@ export default function AtelierPage() {
                 </p>
               </div>
             )}
-            {compte?.etat === 'sans-donnees' && (
-              <p className="mb-2 text-[11px] leading-relaxed text-white/40">
-                Cette application ne conserve aucune donnée : elle n’a donc pas
-                de compte. Ce que l’on y saisit disparaît au rechargement.
-              </p>
-            )}
+            {/* ── DEUX VÉRITÉS DIFFÉRENTES, ET ELLES NE SE DISENT PAS PAREIL.
+                 La phrase unique mentait DANS L'AUTRE SENS, mesuré le
+                 2026-11-04 : une œuvre réelle rangeait ses relevés dans
+                 `localStorage` — quatre appels — et l'écran promettait une
+                 perte au rechargement qui n'avait pas lieu.
+                 Elle se déduit donc de ce que le code LIVRÉ fait. */}
+            {compte?.etat === 'sans-donnees' &&
+              ((compte.rangementNavigateur ?? []).length === 0 ? (
+                <p className="mb-2 text-[11px] leading-relaxed text-white/40">
+                  Cette application ne conserve aucune donnée : elle n’a donc
+                  pas de compte. Ce que l’on y saisit disparaît au
+                  rechargement.
+                </p>
+              ) : (
+                <p className="mb-2 text-[11px] leading-relaxed text-white/40">
+                  Cette application garde ses données dans le navigateur : ce
+                  que l’on y saisit survit au rechargement sur cet appareil,
+                  mais pas sur un autre, et pas à un vidage du cache. Elle n’a
+                  pas de base, donc pas de compte.
+                </p>
+              ))}
             {compte?.etat === 'non-publiee' && (
               <p className="mb-2 text-[11px] leading-relaxed text-white/40">
                 Les identifiants d’accès aux données seront créés à la

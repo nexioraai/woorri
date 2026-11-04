@@ -56,6 +56,96 @@ export type DefautPersistance = {
   readonly ecrite: boolean
 }
 
+/**
+ * CE QUI PROUVE QU'UNE APPLICATION VOULAIT SE SOUVENIR — et n'a pas de table.
+ *
+ * `fichier` nomme l'endroit ; `quoi` dit ce qui a été vu.
+ */
+export type PreuveMemoire = {
+  readonly fichier: string
+  readonly quoi: string
+}
+
+/**
+ * LES MOTS QUI DÉSIGNENT UN ÉCRAN DONT LE MÉTIER EST DE SE SOUVENIR.
+ *
+ * ── POURQUOI UN NOM DE FICHIER, ET PAS UNE OCCURRENCE DANS LE TEXTE.
+ *
+ * « historique » apparaît dans n'importe quel commentaire. Un COMPOSANT
+ * qui s'appelle `Historique.tsx` est une décision d'architecture : le
+ * modèle a dessiné un écran dont le travail entier est de remontrer ce qui
+ * a été saisi avant. Sans table, cet écran est un mensonge.
+ *
+ * La liste est volontairement courte et sans « liste » : une liste d'options
+ * fixes est légitime et n'a rien à conserver. On ne retient que les mots qui
+ * ne se comprennent que par le passé.
+ */
+const MOTS_DE_MEMOIRE = [
+  'historique',
+  'journal',
+  'archive',
+  'releves',
+  'enregistrements',
+  'antecedents',
+] as const
+
+/** Les appels qui ÉCRIVENT dans le navigateur — la preuve matérielle. */
+const RANGEMENTS_NAVIGATEUR = ['localStorage', 'sessionStorage', 'indexedDB'] as const
+
+/** Sans accents ni casse : `Relevés.tsx` doit se lire comme `releves`. */
+function aplati(x: string): string {
+  return x
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/gu, '')
+    .toLowerCase()
+}
+
+/**
+ * UNE ŒUVRE SANS TABLE A-T-ELLE QUAND MÊME VOULU CONSERVER QUELQUE CHOSE ?
+ *
+ * ── LE DÉFAUT QUE CE CONTRÔLE FERME, MESURÉ LE 2026-11-04.
+ *
+ * Une application livrée en production : `-- AUCUNE DONNÉE DÉCLARÉE`, et
+ * dans les fichiers un `composants/Historique.tsx` plus QUATRE appels à
+ * `localStorage` dans `App.tsx`. Le juge de persistance l'a trouvée
+ * PARFAITE — avec `entites: []` il n'avait rien à comparer.
+ *
+ *   « Une garde qui se tait précisément quand ce qu'elle garde échoue est
+ *     pire qu'une garde absente : son vert se lit comme une preuve. »
+ *
+ * C'est la garde silencieuse nommée deux jours plus tôt, et elle venait de
+ * laisser passer une vraie application. Zéro table n'est pas un cas sans
+ * objet : c'est une affirmation — « cette application n'a rien à
+ * conserver » — et elle se vérifie comme les autres.
+ */
+export function preuvesDeMemoire(
+  fichiers: ReadonlyMap<string, string>,
+): readonly PreuveMemoire[] {
+  const preuves: PreuveMemoire[] = []
+  for (const [chemin, contenu] of fichiers) {
+    // `systeme/` est NOTRE bibliothèque, pas le travail du modèle : un
+    // rangement qui y vivrait serait notre décision, pas la sienne.
+    if (chemin.startsWith('systeme/')) continue
+    const nom = aplati(chemin.split('/').pop() ?? '')
+    for (const mot of MOTS_DE_MEMOIRE) {
+      if (nom.includes(mot)) {
+        preuves.push({ fichier: chemin, quoi: `un écran « ${mot} »` })
+        break
+      }
+    }
+    for (const rangement of RANGEMENTS_NAVIGATEUR) {
+      const n = contenu.split(rangement).length - 1
+      if (n > 0) {
+        preuves.push({
+          fichier: chemin,
+          quoi: `${String(n)} appel(s) à ${rangement}`,
+        })
+      }
+    }
+  }
+  return preuves
+}
+
 /** Saute une parenthèse ouvrante et son contenu, chaînes comprises. */
 function finDArgument(src: string, debut: number): number {
   let i = debut
@@ -120,7 +210,18 @@ export function jugerPersistance(
   entites: readonly EntiteDeclaree[],
   fichiers: ReadonlyMap<string, string>,
 ): readonly DefautPersistance[] {
-  if (entites.length === 0) return []
+  // ── ZÉRO TABLE N'EST PAS UN CAS SANS OBJET.
+  //
+  // C'est l'affirmation « cette application n'a rien à conserver ». Elle se
+  // vérifie : si le code livré porte un écran de mémoire ou range quelque
+  // chose dans le navigateur, l'affirmation est fausse — et c'est au
+  // CONSTRUCTEUR de déclarer la table dont il a besoin, puisque c'est lui
+  // qui a décidé de l'écran.
+  if (entites.length === 0) {
+    return preuvesDeMemoire(fichiers).length === 0
+      ? []
+      : [{ table: '', lue: false, ecrite: false }]
+  }
   const src = [...fichiers.values()].join('\n')
   const variables = tablesParVariable(src)
 
@@ -155,7 +256,28 @@ export function jugerPersistance(
  * Un reproche vague fait recommencer au hasard. Celui-ci nomme la table et
  * ce qu'il faut écrire : une requête de lecture, une d'écriture, ou les deux.
  */
-export function reprochePersistance(defauts: readonly DefautPersistance[]): string {
+export function reprochePersistance(
+  defauts: readonly DefautPersistance[],
+  preuves: readonly PreuveMemoire[] = [],
+): string {
+  // ── LE CAS « AUCUNE TABLE », ET IL NE SE DIT PAS COMME LES AUTRES.
+  //
+  // Reprocher « la table X n'est pas lue » quand il n'y a AUCUNE table
+  // n'apprend rien. Ici le reproche demande une DÉCLARATION, pas une
+  // requête — et c'est ce qui le rend satisfaisable : le constructeur
+  // déclare les tables dont il a besoin dans le même geste que le code.
+  if (defauts.length === 1 && defauts[0]?.table === '') {
+    return (
+      'CETTE APPLICATION VEUT SE SOUVENIR ET N’A AUCUNE TABLE — ce qui y est ' +
+      'saisi DISPARAÎT, sans message :\n' +
+      preuves.map((p) => `- ${p.fichier} : ${p.quoi}`).join('\n') +
+      '\nUn rangement du navigateur N’EST PAS une base : il ne suit ni un autre ' +
+      'appareil, ni un vidage de cache, et il se perd sans prévenir.\n' +
+      'DÉCLARE LES TABLES DONT TU AS BESOIN, en tête de ta réponse, puis ' +
+      'emploie-les — ou bien retire l’écran qui promet de se souvenir. Les ' +
+      'deux se valent ; une promesse non tenue, non.'
+    )
+  }
   return (
     'DES DONNÉES VIVENT EN MÉMOIRE AU LIEU DE LA BASE — ce qui y est saisi ' +
     'DISPARAÎT au rechargement, sans message :\n' +

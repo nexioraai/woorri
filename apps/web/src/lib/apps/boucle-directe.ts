@@ -27,12 +27,18 @@ import {
 } from './ecriture-directe'
 import { jugerVivacite, type DefautVivacite } from './juge-vivacite'
 import { FICHIER_PERIMETRE, jugerCouverture, type RapportCouverture } from './juge-couverture'
+import {
+  FICHIER_DECLARATION,
+  fusionnerEntites,
+  lireDeclarationEnRoute,
+} from './declaration-en-route'
 import { jugerDevise, marqueRecommandee } from './juge-devise'
 import { CONSIGNE_BIBLIOTHEQUE, fichiersSysteme, VARIABLES_CSS } from './bibliotheque-ui'
-import { blocBase, type EntiteDeclaree } from './entites-declarees'
+import { blocBase, type EntiteDeclaree, type RefusEntite } from './entites-declarees'
 import { jugerJetons, type DefautJeton } from './juge-jetons'
 import {
   jugerPersistance,
+  preuvesDeMemoire,
   reprochePersistance,
   type DefautPersistance,
 } from './juge-persistance'
@@ -56,6 +62,17 @@ import { jugerExecution, type VerdictExecution } from './juge-execution'
 export const REGLE_6_SANS_BASE = [
   '6. Tu écris des valeurs d’exemple PLAUSIBLES quand il en faut — des montants',
   '   et des dates qu’une personne du métier reconnaîtrait.',
+  '',
+  '   MAIS SI ELLE DOIT CONSERVER quelque chose qu’on retrouve au prochain',
+  '   démarrage — historique, journal, relevés —, DIS-LE et tu auras une base.',
+  '   Rends ce fichier EN PLUS des autres (il ne part pas dans l’application) :',
+  '',
+  '   === DONNEES.json ===',
+  '   [{"name":"releve","fields":[{"name":"date","type":"date","required":true}]}]',
+  '',
+  '   Types : text, number, date, boolean.',
+  '   JAMAIS localStorage ni sessionStorage pour ça : ils ne suivent ni un',
+  '   autre appareil ni un vidage de cache, et la saisie se perd sans un mot.',
 ].join('\n')
 
 export const CONSIGNE = `Tu écris une application web complète, en React et TypeScript.
@@ -161,6 +178,18 @@ export type Resultat =
        * de défaut que ce juge existe pour fermer.
        */
       readonly persistance: readonly DefautPersistance[]
+      /**
+       * LES ENTITÉS TELLES QUE LA BOUCLE LES CONNAÎT À LA FIN.
+       *
+       * Le cahier les amorce, le CONSTRUCTEUR les complète. C'est cette
+       * liste-là qui émet le schéma : émettre depuis l'entrée perdrait
+       * exactement les tables que le constructeur a découvert devoir
+       * exister — et l'application repartirait sans la base de l'écran
+       * qu'elle vient de dessiner.
+       */
+      readonly entites: readonly EntiteDeclaree[]
+      /** Ce que la déclaration en route a refusé — jamais tu. */
+      readonly refusEntites: readonly RefusEntite[]
     }
   | {
       readonly ok: false
@@ -290,10 +319,26 @@ export async function boucleEcriture(o: {
    * par la même valeur qui a construit la consigne.
    */
   readonly entites?: readonly EntiteDeclaree[]
+  /**
+   * LA GRAMMAIRE DU CAHIER — celle qui valide les entités de la lecture.
+   *
+   * Elle est PASSÉE et non importée : elle vit dans le schéma AIR, que
+   * cette boucle n'a pas à connaître. Sans elle, la déclaration en route
+   * est ignorée — on ne valide pas une table avec une seconde grammaire,
+   * ce sont les deux qui divergeraient.
+   */
+  readonly validerEntite?: (e: unknown) => boolean
 }): Promise<Resultat> {
   const toursMax = o.toursMax ?? TOURS_MAX
   const tours: Tour[] = []
   let dernierTexte = ''
+  // ── CE QUE LA BOUCLE SAIT DES DONNÉES, ET ÇA GRANDIT.
+  //
+  // Le cahier amorce ; le constructeur AJOUTE ce qu'il découvre en
+  // construisant. « La vérité sur ce qu'il faut conserver n'est pas dans la
+  // demande, elle est dans ce qui a été CONSTRUIT. »
+  let entitesConnues: readonly EntiteDeclaree[] = o.entites ?? []
+  let refusEnRoute: readonly RefusEntite[] = []
   const messages: { role: 'user' | 'assistant'; content: string }[] = [
     { role: 'user', content: texteDeConfiguration(o.configuration ?? {}) + o.demande },
   ]
@@ -302,7 +347,24 @@ export async function boucleEcriture(o: {
     const debut = Date.now()
     const { texte, tronquee } = await o.appeler(messages)
     dernierTexte = texte
-    const lus = lireFichiers(texte)
+    let lus = lireFichiers(texte)
+
+    // ── LA DÉCLARATION EN ROUTE, LUE AVANT TOUT LE RESTE.
+    //
+    // Elle doit partir des fichiers AVANT qu'ils soient assemblés : livrer
+    // `DONNEES.json` mettrait un fichier mort dans l'archive, et le juge de
+    // couverture compterait un fichier qu'aucun écran n'ouvre.
+    if (o.validerEntite !== undefined) {
+      const carteBrute = new Map(lus.map((f) => [f.chemin, f.contenu]))
+      const dec = lireDeclarationEnRoute(carteBrute, o.validerEntite)
+      if (dec.entites.length > 0 || dec.refus.length > 0) {
+        entitesConnues = fusionnerEntites(entitesConnues, dec.entites)
+        refusEnRoute = [...refusEnRoute, ...dec.refus]
+      }
+      if (carteBrute.size !== dec.fichiers.size) {
+        lus = lus.filter((f) => f.chemin !== FICHIER_DECLARATION)
+      }
+    }
 
     // ── QUATRE REFUS, DANS CET ORDRE, DU MOINS CHER AU PLUS CHER.
     //
@@ -397,7 +459,7 @@ export async function boucleEcriture(o: {
         // tableau en mémoire vit, s'affiche et couvre son exigence. Seul le
         // rechargement dit la vérité, et il la dit à la personne qui vient
         // de perdre son travail.
-        const persistance = jugerPersistance(o.entites ?? [], carte)
+        const persistance = jugerPersistance(entitesConnues, carte)
         const reproches: string[] = []
         if (jetons.length > 0) {
           reproches.push(
@@ -452,7 +514,7 @@ export async function boucleEcriture(o: {
           )
         }
         if (persistance.length > 0) {
-          reproches.push(reprochePersistance(persistance))
+          reproches.push(reprochePersistance(persistance, preuvesDeMemoire(carte)))
         }
         if (couverture.absentes.length > 0) {
           reproches.push(
@@ -486,6 +548,8 @@ export async function boucleEcriture(o: {
             vivacite,
             couverture,
             persistance,
+            entites: entitesConnues,
+            refusEntites: refusEnRoute,
           }
         }
       } else {

@@ -118,8 +118,18 @@ describe('EP-280 · la page offre une plateforme', () => {
     const code = brut.replace(/\/\*[\s\S]*?\*\//gu, ' ').replace(/^\s*\/\/.*$/gmu, ' ')
     // LE MÊME MOTIF que le cliquet d'architecture : s'ils divergeaient, l'un
     // des deux mesurerait autre chose que ce qu'il prétend.
+    // ── RESSERRÉ LE 2026-11-04 : UN APPEL, PAS UNE MENTION.
+    //
+    // `\blocalStorage\b` rougissait sur le mot écrit dans une CONSIGNE qui
+    // interdit au modèle de s'en servir. Le contrôle dit « est APPELÉE » :
+    // il lisait un NOM. `window.` et `navigator.` exigeaient déjà l'accès ;
+    // les trois rangements, non. Ils l'exigent maintenant, comme les autres.
+    //
+    // CE QUE ÇA LAISSE PASSER, DIT PLUTÔT QUE CACHÉ : `const s =
+    // localStorage` puis `s.getItem(…)`. Le trou existait déjà pour
+    // `window` et `navigator` — on ne l'agrandit pas, on aligne.
     const NAVIGATEUR =
-      /\blocalStorage\b|\bsessionStorage\b|\bdocument\s*\.\s*(?:getElementById|querySelector|createElement|cookie|body|head)\b|\bwindow\s*\.\s*\w+|\bnavigator\s*\.\s*\w+|\bIndexedDB\b/gu
+      /\blocalStorage\s*[.[]|\bsessionStorage\s*[.[]|\bdocument\s*\.\s*(?:getElementById|querySelector|createElement|cookie|body|head)\b|\bwindow\s*\.\s*\w+|\bnavigator\s*\.\s*\w+|\bindexedDB\s*[.[]/giu
     const debut = code.indexOf('const PRELUDE = `')
     const fin = code.indexOf('`', debut + 17)
     expect(debut, 'la constante PRELUDE a disparu : ce contrôle ne borne plus rien').toBeGreaterThan(

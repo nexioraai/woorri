@@ -80,10 +80,25 @@ describe('EP-335 · zéro question', () => {
     // assertion qui se contente d une occurrence laissait passer la
     // mutation qui retirait la première — et c est justement celle du
     // défaut signalé.
+    // ── ET LA PROPRIÉTÉ, PAS LE NOMBRE (2026-11-04).
+    //
+    // `toBe(2)` a rougi en ajoutant un TROISIÈME chemin — celui qui reçoit
+    // la demande par l'adresse, quand l'atelier propose une régénération
+    // après un refus de retouche. La propriété n'était pas « il y a deux
+    // chemins » : c'était « aucun chemin ne bascule sans emporter le
+    // texte ». Un nombre gelé rougit quand on en ajoute un JUSTE, et reste
+    // vert si on en casse un.
+    //
+    // On compare donc les deux comptes. Ajouter une bascule muette fait
+    // rougir ; en ajouter une complète ne fait rien.
+    const bascules = (ACCUEIL.match(/setCibleApplication\(true\)/gu) ?? []).length
+    const textes = (ACCUEIL.match(/setDemandeBasculee\(/gu) ?? []).length
+    expect(bascules, 'plus aucun chemin ne bascule vers les applications').toBeGreaterThanOrEqual(2)
     expect(
-      (ACCUEIL.match(/setDemandeBasculee\(/gu) ?? []).length,
-      'un des deux chemins de basculement perd le texte tapé',
-    ).toBe(2)
+      textes,
+      `${String(bascules)} chemin(s) basculent et ${String(textes)} emportent le texte : ` +
+        'un chemin bascule sans la demande, et la personne doit tout retaper',
+    ).toBe(bascules)
     expect(ACCUEIL, 'le texte n’est pas transmis à l’écran suivant').toMatch(
       /demandeInitiale=\{demandeBasculee\}/u,
     )

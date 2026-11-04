@@ -66,6 +66,13 @@ describe('EP-319 · les données déclarées', () => {
     expect(entites.map((e) => e.name)).toEqual(['membre', 'cotisation'])
     // ET ELLE TRAVERSE JUSQU'AU SQL : c'est tout l'objet du lot. Déclarer
     // des tables qui n'atteignent pas `schema.sql` ne servirait à rien.
+    //
+    // ── LE NOM A CHANGÉ LE 2026-11-04, LA PROPRIÉTÉ NON.
+    //
+    // La route émet désormais depuis `entitesCourantes` : le cahier amorce
+    // la liste, et le CONSTRUCTEUR la complète quand il découvre, en
+    // dessinant, un écran que la liste ne couvrait pas. Émettre depuis
+    // l'entrée perdrait exactement ces tables-là.
     const sql = emettreSchemaSql(entites)
     expect(sql).toContain('create table if not exists membre (')
     expect(sql).toMatch(/telephone text unique/u)
@@ -134,7 +141,7 @@ describe('EP-319 · les données déclarées', () => {
     expect(src, 'la route n’emploie pas le vrai juge').toContain('projectAirSchema')
     // Elles doivent nourrir le schéma, pas dormir dans une variable.
     expect(src, 'les entités n’atteignent pas le schéma')
-      .toMatch(/emettreSchemaSql\(entitesDeclarees\)/u)
+      .toMatch(/emettreSchemaSql\(entitesCourantes\)/u)
   })
 
   it('⑤ L’ÉCRAN MONTRE LES TABLES, ET DIT CE QUE ÇA NE FAIT PAS ENCORE', () => {

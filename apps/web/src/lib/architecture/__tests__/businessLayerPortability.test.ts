@@ -50,9 +50,20 @@ const METIER = fichiers(SRC)
 /**
  * APIs de navigateur. Ancrees pour eviter les homonymes : `history.map` sur un
  * tableau de conversation est un faux positif mesure, `document.` ne l'est pas.
+ * ── RESSERRE LE 2026-11-04 : UN APPEL, PAS UNE MENTION.
+ *
+ * `\blocalStorage\b` rougissait sur `juge-persistance.ts`, qui porte ces
+ * trois noms comme CHAINES DE RECHERCHE : il cherche dans le code GENERE la
+ * preuve qu'une application a voulu conserver quelque chose sans table.
+ *
+ * Une derogation aurait ete un mensonge — elle dit « ce fichier depend du
+ * navigateur ET c'est acceptable », et ce fichier n'en appelle aucun.
+ * `window.` et `navigator.` exigeaient deja l'acces ; les trois rangements
+ * l'exigent maintenant comme les autres. Le jumeau d'EP-280 porte le MEME
+ * motif : s'ils divergeaient, l'un des deux mesurerait autre chose.
  */
 const NAVIGATEUR =
-  /\blocalStorage\b|\bsessionStorage\b|\bdocument\s*\.\s*(?:getElementById|querySelector|createElement|cookie|body|head)\b|\bwindow\s*\.\s*\w+|\bnavigator\s*\.\s*\w+|\bIndexedDB\b/
+  /\blocalStorage\s*[.[]|\bsessionStorage\s*[.[]|\bdocument\s*\.\s*(?:getElementById|querySelector|createElement|cookie|body|head)\b|\bwindow\s*\.\s*\w+|\bnavigator\s*\.\s*\w+|\bindexedDB\s*[.[]/i
 
 /**
  * DEROGATIONS, chacune avec sa raison ECRITE et sa portee.

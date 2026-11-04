@@ -260,6 +260,17 @@ export function blocBase(entites: readonly EntiteDeclaree[]): string {
     '',
     '   CHAQUE TABLE SE LIT ET S’ÉCRIT quelque part : une table que personne',
     '   n’interroge est une donnée perdue, et elle te sera renvoyée.',
+    '',
+    '   ET S’IL TE MANQUE UNE TABLE — parce que tu construis un écran que la',
+    '   liste ci-dessus ne couvre pas —, DÉCLARE-LA au lieu de t’en passer.',
+    '   Rends ce fichier EN PLUS des autres, au même format :',
+    '',
+    '   === DONNEES.json ===',
+    '   [{ "name": "releve",',
+    '      "fields": [{ "name": "date", "type": "date", "required": true }] }]',
+    '',
+    '   Types possibles : text, number, date, boolean. Ce fichier ne part PAS',
+    '   dans l’application : c’est une déclaration.',
   ].join('\n')
 }
 

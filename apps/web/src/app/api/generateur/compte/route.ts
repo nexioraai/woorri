@@ -30,6 +30,7 @@ import { NextResponse } from 'next/server'
 import { requireAuthenticatedUser } from '@/lib/auth/require-authenticated-user'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { TABLE_GENERATIONS } from '@/lib/apps/journal'
+import { preuvesDeMemoire } from '@/lib/apps/juge-persistance'
 import { configBaseOeuvres } from '@/lib/apps/base-oeuvres'
 import {
   adresseCompteOeuvre,
@@ -53,6 +54,8 @@ async function oeuvreDe(
   publiee: boolean
   aDesDonnees: boolean
   enMemoire: readonly { table: string; lue: boolean; ecrite: boolean }[]
+  /** Ce que le code LIVRÉ range dans le navigateur — mesuré, pas supposé. */
+  rangementNavigateur: readonly { fichier: string; quoi: string }[]
 } | null> {
   const lu = await supabaseAdmin
     .from(TABLE_GENERATIONS)
@@ -61,7 +64,10 @@ async function oeuvreDe(
     .eq('owner_id', proprietaire)
     .maybeSingle()
   if (lu.error !== null || lu.data === null) return null
-  const doc = lu.data.document as { schema?: string } | null
+  const doc = lu.data.document as {
+    schema?: string
+    fichiers?: Record<string, string>
+  } | null
   // ── LE VERDICT DE PERSISTANCE VIT DANS `sections_acquises`, avec les
   //    quatre autres juges. On le relit ici parce que c'est le SEUL défaut
   //    dont la conséquence tombe APRÈS la livraison : les jetons tuent au
@@ -75,6 +81,14 @@ async function oeuvreDe(
     publiee: typeof lu.data.publication_jeton === 'string' && lu.data.publication_jeton !== '',
     aDesDonnees: (doc?.schema ?? '').includes('create table'),
     enMemoire: sections?.persistance ?? [],
+    // ── ON RELIT LES FICHIERS, parce que la phrase porte sur EUX.
+    //
+    // `sections_acquises` date de la génération ; les fichiers sont ce qui
+    // a été livré. Pour dire ce qu'une application fait de ses saisies, on
+    // regarde ce qui part, pas ce qu'un juge a noté en passant.
+    rangementNavigateur: preuvesDeMemoire(new Map(Object.entries(doc?.fichiers ?? {}))).filter(
+      (p) => p.quoi.includes('appel'),
+    ),
   }
 }
 
@@ -96,7 +110,19 @@ export async function GET(req: Request) {
   // confondre ferait chercher une panne là où il n'y a qu'une étape.
   if (!oeuvre.aDesDonnees) {
     return NextResponse.json(
-      { etat: 'sans-donnees', explication: CE_QUE_LE_COMPTE_OUVRE, enMemoire: oeuvre.enMemoire },
+      {
+        etat: 'sans-donnees',
+        explication: CE_QUE_LE_COMPTE_OUVRE,
+        enMemoire: oeuvre.enMemoire,
+        // ── CE QUE LE CODE LIVRÉ FAIT VRAIMENT (2026-11-04).
+        //
+        // L'écran disait « ce que l'on y saisit disparaît au rechargement ».
+        // Mesuré sur une œuvre réelle : QUATRE appels à `localStorage` dans
+        // son `App.tsx`. Ses relevés survivaient au rechargement — la phrase
+        // mentait, dans l'autre sens, et promettait une perte qui n'avait
+        // pas lieu. On rend la mesure ; l'écran dira ce qu'elle dit.
+        rangementNavigateur: oeuvre.rangementNavigateur,
+      },
       { headers: { 'Cache-Control': 'no-store' } },
     )
   }

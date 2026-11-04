@@ -71,10 +71,23 @@ export function plafondRetouche(
  * est refusée clairement, jamais tentée à moitié : une tentative à moitié
  * produit une application à moitié, et c'est la personne qui la paie.
  */
+/**
+ * ── LA PROMESSE NON TENUE, RETIRÉE LE 2026-11-04.
+ *
+ * Cette phrase finissait par « dites-le-moi et je vous dirai si c'est
+ * possible autrement ». Un propriétaire a décrit le barème de sa facture
+ * — trois lignes, une vraie règle de métier —, a payé, et a reçu un refus
+ * SANS aucun « autrement ».
+ *
+ *   « Une promesse non tenue après paiement est pire qu'un silence. »
+ *
+ * Elle dit maintenant ce qui se passe RÉELLEMENT dans ce cas, et l'écran
+ * le fait : il propose la régénération, bouton compris.
+ */
 export const PERIMETRE_RETOUCHE =
   'Textes, couleurs, libellés, un champ sur un écran qui existe. ' +
-  'Pas de nouvel écran ni de nouvelle fonction — dites-le-moi et je vous ' +
-  'dirai si c’est possible autrement.'
+  'Pour une règle de calcul ou un écran nouveau, il faut régénérer — ' +
+  'l’écran vous le proposera, avec votre demande déjà écrite.'
 
 /** Le marqueur que le modèle rend quand la demande sort du périmètre. */
 export const HORS_PERIMETRE = 'HORS PERIMETRE'
@@ -100,6 +113,14 @@ export const CONSIGNE_RETOUCHE = [
   'Si la demande sort de ce périmètre — un écran nouveau, une fonction',
   `nouvelle, une connexion externe —, réponds « ${HORS_PERIMETRE} » suivi`,
   'de la raison en une phrase, et NE RENDS AUCUN FICHIER.',
+  '',
+  'TA RAISON NE CITE JAMAIS UN FICHIER NI UN DOCUMENT DE L’APPLICATION.',
+  'La personne ne sait pas qu’ils existent, et ils n’ont aucune autorité sur',
+  'ce dont elle a besoin. Dis ce que TU ne peux pas faire, dans SES mots.',
+  '',
+  'Exemple de ce qu’il ne faut PAS écrire : « le document X exclut cette',
+  'fonctionnalité ». Exemple juste : « changer la façon dont le montant est',
+  'calculé demande de refaire l’application. »',
   '',
   'Cherche l’endroit JUSTE : si tous les boutons passent par un composant',
   'partagé, retouche ce composant et lui seul.',
