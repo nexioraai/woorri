@@ -29,6 +29,7 @@ import {
   typeSqlDe,
   type EntiteDonnees } from '@deribfy/compiler'
 import { projetLivrable, sectionSchema } from '../projet-livrable'
+import { nomColonne as nomColonneWeb, nomTable as nomTableWeb } from '../entites-declarees'
 
 const RACINE = join(__dirname, '..', '..', '..', '..', '..', '..')
 const lire = (...p: string[]): string => lireSource(join(RACINE, ...p))
@@ -289,6 +290,21 @@ describe('EP-318 · le schéma des données', () => {
     expect(sql).toContain('create table if not exists x (')
     expect(sql).toContain('a text')
     expect(nomTable(minimal)).toBe('x')
+    // ── ET LES DEUX RÈGLES DE NOMMAGE DU CÔTÉ WEB SONT ÉGALES AUX SIENNES.
+    //
+    // `apps/web` ne peut pas importer le compilateur (il tire
+    // `node:sqlite`, donc du serveur dans le paquet navigateur — EP-314).
+    // Il en garde donc une COPIE, et l'égalité se prouve ici plutôt que
+    // de se supposer. M1 compare deux déclarations avec ces règles : si
+    // elles divergeaient, la comparaison se tromperait de table, sur les
+    // données réelles de quelqu'un.
+    expect(nomTableWeb(minimal), 'la règle de nommage des tables a divergé').toBe(
+      nomTable(minimal),
+    )
+    expect(
+      nomColonneWeb({ id: 'fld_a' }),
+      'la règle de nommage des colonnes a divergé',
+    ).toBe(nomColonne({ id: 'fld_a', type: 'text' }))
     expect(typeSqlDe({ id: 'fld_b', type: 'inconnu' }), 'un type inconnu doit retomber sur text')
       .toBe('text')
   })

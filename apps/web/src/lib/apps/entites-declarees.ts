@@ -321,6 +321,18 @@ const sansPrefixe = (id: string): string => id.replace(/^(ent_|fld_)/u, '')
 export const nomTable = (e: { readonly id: string }): string => sansPrefixe(e.id)
 
 /**
+ * LE NOM DE LA COLONNE, TEL QUE LE SCHÉMA LA CRÉE.
+ *
+ * Même règle, même raison, même cliquet que `nomTable` : égal à
+ * `nomColonne` de `@deribfy/compiler`, qu'on ne peut pas importer ici
+ * (EP-314). M1 en a besoin pour comparer deux déclarations — et comparer
+ * des noms AFFICHÉS plutôt que des identifiants ferait passer un
+ * changement de libellé pour un abandon de colonne, donc arrêterait une
+ * modification parfaitement sûre.
+ */
+export const nomColonne = (f: { readonly id: string }): string => sansPrefixe(f.id)
+
+/**
  * LIT ET FILTRE CE QUE LE MODÈLE A DÉCLARÉ.
  *
  * ── TROIS GARDES, ET AUCUNE N'EST REDONDANTE.
