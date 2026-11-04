@@ -26,6 +26,8 @@ import { NextResponse } from 'next/server'
 import { requireAuthenticatedUser } from '@/lib/auth/require-authenticated-user'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { TABLE_GENERATIONS, TABLE_VERSIONS } from '@/lib/apps/journal'
+import { declarationDe } from '@/lib/apps/declaration-depuis-schema'
+import { blocDeclaration } from '@/lib/apps/retouche'
 import { CONFIGS, fournisseurChoisi, tarifDe, tarifPlafond } from '@/lib/apps/fournisseur'
 import { clientIA, MODELE_LEGER } from '@/lib/ia/client'
 import { assembler } from '@/lib/apps/bac-a-sable'
@@ -156,7 +158,7 @@ export async function POST(req: Request) {
     const r = await clientIA().messages.create({
       model: MODELE_LEGER,
       max_tokens: SORTIE_MAX_RETOUCHE,
-      system: CONSIGNE_RETOUCHE,
+      system: `${CONSIGNE_RETOUCHE}\n\n${blocDeclaration(declarationDe(docAvant))}`,
       messages: [{ role: 'user', content: `${corpus}\n\n=== DEMANDE ===\n${demande}` }],
     })
     texte = r.content.map((b) => (b.type === 'text' ? b.text : '')).join('')

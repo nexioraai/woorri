@@ -718,6 +718,17 @@ export async function POST(req: Request) {
           fichiers: Object.fromEntries(resultat.fichiers),
           schema: schemaDeLOeuvre,
           politiques: politiquesDeLOeuvre,
+          // ── LA DÉCLARATION VOYAGE AVEC L'ŒUVRE (M4 a, 2026-11-04).
+          //
+          // MESURÉ AVANT D'ÉCRIRE : le document ne portait que trois
+          // clés — `fichiers`, `politiques`, `schema`. Le SQL émis,
+          // jamais les entités qui l'ont produit. Il n'y avait donc RIEN
+          // à montrer au modèle le jour d'une modification.
+          //
+          // Sans elle, il réinvente ses identifiants, toutes les tables
+          // paraissent abandonnées, et M1 arrête SYSTÉMATIQUEMENT. Le
+          // piège ne casse rien : il rend toute modification impossible.
+          entites: entitesCourantes,
         }
       : null,
     // ── LE DÉTAIL DE CHAQUE TOUR, ET LE BRUT DU DERNIER ESSAI.

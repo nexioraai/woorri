@@ -89,6 +89,49 @@ export const PERIMETRE_RETOUCHE =
   'Pour une règle de calcul ou un écran nouveau, il faut régénérer — ' +
   'l’écran vous le proposera, avec votre demande déjà écrite.'
 
+/**
+ * LA DÉCLARATION ACTUELLE, MONTRÉE AU MODÈLE (M4 a, 2026-11-04).
+ *
+ * ── LE PIÈGE QUI NE CASSE RIEN ET REND TOUT IMPOSSIBLE.
+ *
+ *   « La déclaration NOUVELLE doit être écrite par un modèle à qui l'on
+ *     a montré l'ANCIENNE. Sans ça il réinvente ses identifiants, toutes
+ *     les tables paraissent abandonnées, et la migration s'arrête
+ *     SYSTÉMATIQUEMENT : garde étanche, produit inutilisable. »
+ *
+ * Les identifiants sont donnés tels quels — `ent_releve`, `fld_date` —
+ * parce que c'est EXACTEMENT ce que M1 compare. Un modèle à qui on
+ * montrerait les jolis noms réinventerait les identifiants, et chaque
+ * table paraîtrait abandonnée.
+ *
+ * ── ET LE SILENCE EST UN CAS, PAS UN OUBLI.
+ *
+ * Une œuvre sans données reçoit la phrase qui le dit. Ne rien écrire
+ * laisserait le modèle croire qu'on a omis de lui montrer quelque
+ * chose — et il inventerait pour combler.
+ */
+export function blocDeclaration(entites: readonly { id: string; name: string; fields: readonly { id: string; name: string; type: string }[]; appendOnly?: boolean }[]): string {
+  if (entites.length === 0) {
+    return [
+      'DONNÉES DE CETTE APPLICATION : AUCUNE.',
+      'Elle ne conserve rien, et ce n’est pas un oubli de notre part.',
+    ].join('\n')
+  }
+  return [
+    'DONNÉES DE CETTE APPLICATION, telles qu’elles existent DÉJÀ.',
+    '',
+    'Emploie ces identifiants EXACTEMENT. En inventer d’autres ferait',
+    'croire que les tables actuelles sont abandonnées, et la modification',
+    'serait refusée pour protéger les données déjà saisies.',
+    '',
+    ...entites.map(
+      (e) =>
+        `- ${e.id} (« ${e.name} »${e.appendOnly === true ? ', journal' : ''}) : ` +
+        e.fields.map((f) => `${f.id} « ${f.name} » ${f.type}`).join(', '),
+    ),
+  ].join('\n')
+}
+
 /** Le marqueur que le modèle rend quand la demande sort du périmètre. */
 export const HORS_PERIMETRE = 'HORS PERIMETRE'
 
