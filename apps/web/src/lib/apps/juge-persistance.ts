@@ -259,6 +259,7 @@ export function jugerPersistance(
 export function reprochePersistance(
   defauts: readonly DefautPersistance[],
   preuves: readonly PreuveMemoire[] = [],
+  dernierAppel = false,
 ): string {
   // ── LE CAS « AUCUNE TABLE », ET IL NE SE DIT PAS COMME LES AUTRES.
   //
@@ -268,14 +269,35 @@ export function reprochePersistance(
   // déclare les tables dont il a besoin dans le même geste que le code.
   if (defauts.length === 1 && defauts[0]?.table === '') {
     return (
+      (dernierAppel ? 'DERNIER TOUR. ' : '') +
       'CETTE APPLICATION VEUT SE SOUVENIR ET N’A AUCUNE TABLE — ce qui y est ' +
       'saisi DISPARAÎT, sans message :\n' +
       preuves.map((p) => `- ${p.fichier} : ${p.quoi}`).join('\n') +
       '\nUn rangement du navigateur N’EST PAS une base : il ne suit ni un autre ' +
       'appareil, ni un vidage de cache, et il se perd sans prévenir.\n' +
-      'DÉCLARE LES TABLES DONT TU AS BESOIN, en tête de ta réponse, puis ' +
-      'emploie-les — ou bien retire l’écran qui promet de se souvenir. Les ' +
-      'deux se valent ; une promesse non tenue, non.'
+      // ── DEUX ISSUES, ET LA SECONDE EST AUSSI BONNE QUE LA PREMIÈRE.
+      //
+      // MESURÉ SUR L'ŒUVRE 60bf2c40 (2026-11-04) : le modèle a reçu DEUX
+      // FOIS « déclare la table », a refusé deux fois, et l'œuvre est
+      // partie amnésique. Un reproche à issue unique qu'on refuse deux
+      // fois est probablement un reproche MAL POSÉ.
+      //
+      // Le vrai défaut était en amont : il avait INVENTÉ un écran
+      // « historique » pour une demande qui n'en voulait pas — « calculer
+      // ma facture d'électricité SNE », rien de plus. Lui redire une
+      // troisième fois de déclarer une table ne lui donne toujours qu'une
+      // sortie, et c'est celle qu'il n'a pas prise.
+      (dernierAppel
+        ? 'DEUX SORTIES, ET LES DEUX SONT BONNES :\n' +
+          '① DÉCLARE la table que cet écran exige, en tête de ta réponse, et ' +
+          'emploie-la ;\n' +
+          '② ou RETIRE cet écran — regarde la demande : si elle ne réclamait ' +
+          'pas de conserver quoi que ce soit, l’écran est de trop.\n' +
+          'Livrer un écran qui promet de se souvenir et ne conserve rien n’est ' +
+          'PAS une troisième sortie.'
+        : 'DÉCLARE LES TABLES DONT TU AS BESOIN, en tête de ta réponse, puis ' +
+          'emploie-les — ou bien retire l’écran qui promet de se souvenir. Les ' +
+          'deux se valent ; une promesse non tenue, non.')
     )
   }
   return (

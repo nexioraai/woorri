@@ -89,7 +89,7 @@ export async function POST(req: Request) {
 
   const lu = await supabaseAdmin
     .from(TABLE_GENERATIONS)
-    .select('publication_jeton, document, statut')
+    .select('publication_jeton, document, statut, demande, sections_acquises')
     .eq('id', id)
     .eq('owner_id', garde.userId)
     .maybeSingle()
@@ -184,6 +184,51 @@ export async function POST(req: Request) {
   } | null
   const schemaSql = docPublie?.schema ?? ''
   const aDesDonnees = schemaSql.includes('create table')
+
+  // ── UNE ŒUVRE AMNÉSIQUE NE SE PUBLIE PAS (B, 2026-11-04).
+  //
+  // MESURÉ SUR L'ŒUVRE 60bf2c40 : le juge de persistance a tiré, a
+  // reproché DEUX FOIS, le modèle n'a pas corrigé, et la boucle a livré
+  // au dernier tour — le comportement voulu pour les quatre autres
+  // juges, parce que refuser re-brûlerait l'argent du propriétaire.
+  //
+  // MAIS CE DÉFAUT-LÀ N'EST PAS RATTRAPABLE. Une application mutilée
+  // visuellement se corrige ; une application qui oublie tout se
+  // découvre APRÈS que des clients y ont saisi leurs données.
+  //
+  // LE MAL NAÎT DONC À LA PUBLICATION, PAS À LA LIVRAISON. On laisse la
+  // personne garder ce qu'elle a payé — l'aperçu marche en mémoire, par
+  // conception — et on ferme la seule porte qui expose ses clients.
+  const persistance = (
+    lu.data.sections_acquises as { persistance?: { table: string }[] } | null
+  )?.persistance
+  if (
+    !aDesDonnees &&
+    Array.isArray(persistance) &&
+    persistance.length === 1 &&
+    persistance[0]?.table === ''
+  ) {
+    const demande = typeof lu.data.demande === 'string' ? lu.data.demande : ''
+    return NextResponse.json(
+      {
+        error:
+          'Cette application affiche un historique, mais elle ne conserve rien : ' +
+          'ce que vos clients y saisiront disparaîtra. Elle ne peut pas être ' +
+          'publiée en l’état.',
+        // ── UNE PUBLICATION BLOQUÉE SANS SORTIE EST UN MUR.
+        //
+        // Sans ça, la personne a payé, tient une application qu'elle ne
+        // peut pas publier, et n'a aucune idée de quoi faire. C'est pire
+        // que de l'avoir refusée à la livraison.
+        amnesique: true,
+        regenerer: `${demande}\n\nEt conserve les données : je veux les retrouver au prochain démarrage.`.trim(),
+        quoiFaire:
+          'Régénérez en précisant que vous voulez conserver les données, ou ' +
+          'demandez une modification qui retire cet écran.',
+      },
+      { status: 409 },
+    )
+  }
   let compte: { adresse: string; motDePasse: string | null } | null = null
 
   if (aDesDonnees) {

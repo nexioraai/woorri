@@ -391,8 +391,19 @@ export default function AtelierPage() {
       const d = (await res.json().catch(() => null)) as {
         lien?: string; url?: string; error?: string; erreurSousDomaine?: string;
         compte?: { adresse?: string; motDePasse?: string | null };
+        amnesique?: boolean; regenerer?: string; quoiFaire?: string;
       } | null;
       const lien = d?.lien ?? d?.url;
+      // ── UNE PUBLICATION REFUSÉE POUR AMNÉSIE DONNE SA SORTIE.
+      //
+      // Le serveur rend la demande DÉJÀ AUGMENTÉE : la personne n'a rien
+      // à recopier, et le bouton qui existe déjà pour le refus de
+      // retouche la porte telle quelle.
+      if (!res.ok && d?.amnesique === true) {
+        setARegenerer(String(d.regenerer ?? ''));
+        setErreur(`${String(d.error ?? '')} ${String(d.quoiFaire ?? '')}`.trim());
+        return;
+      }
       if (!res.ok || lien === undefined) { setErreur(d?.error ?? 'La publication a échoué.'); return; }
       if (d?.erreurSousDomaine !== undefined) setErreur(`Adresse nommée refusée : ${d.erreurSousDomaine}`);
       setLienPublic(lien);
@@ -577,7 +588,13 @@ export default function AtelierPage() {
                 <button
                   type="button"
                   onClick={() => {
-                    const complete = `${app?.demande ?? ''}\n\n${aRegenerer}`.trim();
+                    // Le refus de publication rend une demande DÉJÀ complète ;
+                    // celui de retouche rend seulement la correction. On ne
+                    // recolle l'origine que si elle n'y est pas déjà.
+                    const origine = app?.demande ?? '';
+                    const complete = aRegenerer.startsWith(origine.slice(0, 40))
+                      ? aRegenerer
+                      : `${origine}\n\n${aRegenerer}`.trim();
                     router.push(
                       `/onboarding-chat?demande=${encodeURIComponent(complete)}`,
                     );

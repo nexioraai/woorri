@@ -692,14 +692,28 @@ export async function POST(req: Request) {
           // qui vient de perdre sa saisie. Donc on le dit MAINTENANT.
           ...(resultat.persistance.length > 0
             ? [
-                'DONNEES NON CONSERVEES — ce qui y est saisi disparait au ' +
-                  'rechargement : ' +
-                  resultat.persistance
-                    .map(
-                      (d) =>
-                        `${d.table} (${d.lue ? 'lue, jamais ecrite' : d.ecrite ? 'ecrite, jamais lue' : 'ni lue ni ecrite'})`,
-                    )
-                    .join(', '),
+                // ── LE CAS « AUCUNE TABLE » NE SE DIT PAS COMME LES AUTRES.
+                //
+                // MESURÉ SUR L'ŒUVRE 60bf2c40 (2026-11-04, 18:52) : le
+                // diagnostic stocké était
+                //
+                //     « DONNEES NON CONSERVEES — …  (ni lue ni ecrite) »
+                //
+                // avec un nom de table VIDE, parce que le verdict
+                // sentinelle de `jugerPersistance` n'en porte pas. La
+                // seule trace de ce défaut en journal n'apprenait donc
+                // rien à qui la lisait.
+                resultat.persistance.length === 1 && resultat.persistance[0]?.table === ''
+                  ? 'DONNEES NON CONSERVEES — cette application veut se souvenir ' +
+                    'et n’a AUCUNE table : ce qui y est saisi disparait au rechargement'
+                  : 'DONNEES NON CONSERVEES — ce qui y est saisi disparait au ' +
+                    'rechargement : ' +
+                    resultat.persistance
+                      .map(
+                        (d) =>
+                          `${d.table} (${d.lue ? 'lue, jamais ecrite' : d.ecrite ? 'ecrite, jamais lue' : 'ni lue ni ecrite'})`,
+                      )
+                      .join(', '),
               ]
             : []),
         ]

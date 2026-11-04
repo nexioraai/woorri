@@ -514,7 +514,15 @@ export async function boucleEcriture(o: {
           )
         }
         if (persistance.length > 0) {
-          reproches.push(reprochePersistance(persistance, preuvesDeMemoire(carte)))
+          // ── LE DERNIER REPROCHE SE SAIT DERNIER.
+          //
+          // Les reproches partent aux tours 1..toursMax-1 ; la réponse au
+          // dernier est LIVRÉE telle quelle. Le modèle recevait donc trois
+          // fois la même phrase sans savoir laquelle était la dernière —
+          // une information qui lui manquait objectivement.
+          reproches.push(
+            reprochePersistance(persistance, preuvesDeMemoire(carte), rang === toursMax - 1),
+          )
         }
         if (couverture.absentes.length > 0) {
           reproches.push(
