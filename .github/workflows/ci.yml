@@ -460,6 +460,55 @@ jobs:
         working-directory: .
         run: npm run gate:invariants
 
+      # ── LE JUGE NAVIGATEUR MORD-IL ENCORE ? (EP-350, 2026-11-05)
+      #
+      # L'ANGLE MORT QU'IL FERME, MESURÉ : le paquet embarqué appelle
+      # `navigator.locks.request(…)` trois fois ; happy-dom N'A PAS cette
+      # API, donc le SDK prenait son chemin de repli et le juge de la gate
+      # ne voyait NI succès NI échec. Une API absente ne se teste pas.
+      #
+      # ── CE QUE CETTE ÉTAPE VÉRIFIE, ET CE QU'ELLE NE VÉRIFIE PAS.
+      #
+      # PAS les œuvres livrées : ce balayage lit la base et dépend de ce
+      # qui s'y trouve — c'est un TIR, lancé à la main
+      # (`src/tirs/juge-navigateur-vivant.tir.ts`), et il a produit sa
+      # première trouvaille le 2026-11-05 : l'œuvre cec8bddf émet une
+      # requête au démarrage, et WebKit la refuse.
+      #
+      # ICI on vérifie l'INSTRUMENT, sur trois témoins : le sain ne doit
+      # PAS rougir, le stockage et le réseau doivent être ATTRAPÉS. Sans
+      # les deux derniers, un juge devenu aveugle rendrait des verts et
+      # rien ne le dirait.
+      #
+      # ── ET IL N'EST PAS CÂBLÉ DANS LA ROUTE, POUR UNE RAISON MESURÉE.
+      #
+      # `playwright` est une devDependency et ses navigateurs vivent HORS
+      # `node_modules` (1,0 Go de cache local). Dans la lambda il rendrait
+      # « playwright est absent » à CHAQUE génération réelle : un juge
+      # câblé là où il ne peut structurellement pas tourner.
+      #
+      # ── LE CHIFFRAGE, MESURÉ LE 2026-11-05 (machine locale).
+      #
+      #   WebKit seul, cache vierge : 282 s · 302 Mo sur disque
+      #   les trois témoins          : 6,7 s (deux mesures : 6 761/6 674 ms)
+      #
+      # D'où le cache : sans lui on paierait les 282 s à chaque tour. La
+      # clef porte la version de playwright — une montée de version
+      # retéléchargera, ce qui est exactement ce qu'on veut.
+      - name: Cache des navigateurs du juge
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ms-playwright-webkit-${{ hashFiles('apps/web/package-lock.json') }}
+
+      - name: Juge navigateur — l'instrument mord (WebKit)
+        id: juge_navigateur
+        continue-on-error: true
+        working-directory: apps/web
+        run: |
+          npx playwright install --with-deps webkit
+          node scripts/verifier-juge-navigateur.mjs
+
       - name: Report system health
         if: always()
         env:
@@ -490,8 +539,8 @@ jobs:
           if [ "${FIDELITE_BLOQUANTE}" = "true" ] && [ "${{ steps.app_fidelite.outcome }}" != "success" ]; then
             fidelite_ko=true
           fi
-          if [ "$fidelite_ko" = "true" ] || [ "${{ steps.typecheck.outcome }}" != "success" ] || [ "${{ steps.test.outcome }}" != "success" ] || [ "${{ steps.test_marge.outcome }}" != "success" ] || [ "${{ steps.build.outcome }}" != "success" ] || [ "${{ steps.apidocs.outcome }}" != "success" ] || [ "${{ steps.pkg_typecheck.outcome }}" != "success" ] || [ "${{ steps.pkg_lint.outcome }}" != "success" ] || [ "${{ steps.pkg_test.outcome }}" != "success" ] || [ "${{ steps.app_compile.outcome }}" != "success" ] || [ "${{ steps.app_web.outcome }}" != "success" ] || [ "${{ steps.app_web_rendu.outcome }}" != "success" ] || [ "${{ steps.app_web_build.outcome }}" != "success" ] || [ "${{ steps.backend.outcome }}" != "success" ] || [ "${{ steps.backend_vivant.outcome }}" != "success" ] || [ "${{ steps.app_rendu.outcome }}" != "success" ] || [ "${{ steps.app_controles.outcome }}" != "success" ] || [ "${{ steps.app_regles.outcome }}" != "success" ] || [ "${{ steps.app_observations.outcome }}" != "success" ] || [ "${{ steps.app_livrable.outcome }}" != "success" ] || [ "${{ steps.app_donnees.outcome }}" != "success" ] || [ "${{ steps.app_session.outcome }}" != "success" ] || [ "${{ steps.app_remote.outcome }}" != "success" ] || [ "${{ steps.app_navigation.outcome }}" != "success" ] || [ "${{ steps.app_composition.outcome }}" != "success" ] || [ "${{ steps.app_invariants.outcome }}" != "success" ] || [ "${{ steps.lint_cliquet.outcome }}" != "success" ]; then
-            echo "Étape(s) en échec — typecheck=${{ steps.typecheck.outcome }} test=${{ steps.test.outcome }} test_marge=${{ steps.test_marge.outcome }} build=${{ steps.build.outcome }} apidocs=${{ steps.apidocs.outcome }} pkg_typecheck=${{ steps.pkg_typecheck.outcome }} pkg_lint=${{ steps.pkg_lint.outcome }} pkg_test=${{ steps.pkg_test.outcome }} app_compile=${{ steps.app_compile.outcome }} app_web=${{ steps.app_web.outcome }} app_web_rendu=${{ steps.app_web_rendu.outcome }} app_web_build=${{ steps.app_web_build.outcome }} backend=${{ steps.backend.outcome }} backend_vivant=${{ steps.backend_vivant.outcome }} app_rendu=${{ steps.app_rendu.outcome }} app_controles=${{ steps.app_controles.outcome }} app_regles=${{ steps.app_regles.outcome }} app_observations=${{ steps.app_observations.outcome }} app_livrable=${{ steps.app_livrable.outcome }} app_donnees=${{ steps.app_donnees.outcome }} app_session=${{ steps.app_session.outcome }} app_navigation=${{ steps.app_navigation.outcome }} app_composition=${{ steps.app_composition.outcome }} app_fidelite=${{ steps.app_fidelite.outcome }} app_invariants=${{ steps.app_invariants.outcome }} lint_cliquet=${{ steps.lint_cliquet.outcome }}"
+          if [ "$fidelite_ko" = "true" ] || [ "${{ steps.typecheck.outcome }}" != "success" ] || [ "${{ steps.test.outcome }}" != "success" ] || [ "${{ steps.test_marge.outcome }}" != "success" ] || [ "${{ steps.build.outcome }}" != "success" ] || [ "${{ steps.apidocs.outcome }}" != "success" ] || [ "${{ steps.pkg_typecheck.outcome }}" != "success" ] || [ "${{ steps.pkg_lint.outcome }}" != "success" ] || [ "${{ steps.pkg_test.outcome }}" != "success" ] || [ "${{ steps.app_compile.outcome }}" != "success" ] || [ "${{ steps.app_web.outcome }}" != "success" ] || [ "${{ steps.app_web_rendu.outcome }}" != "success" ] || [ "${{ steps.app_web_build.outcome }}" != "success" ] || [ "${{ steps.backend.outcome }}" != "success" ] || [ "${{ steps.backend_vivant.outcome }}" != "success" ] || [ "${{ steps.app_rendu.outcome }}" != "success" ] || [ "${{ steps.app_controles.outcome }}" != "success" ] || [ "${{ steps.app_regles.outcome }}" != "success" ] || [ "${{ steps.app_observations.outcome }}" != "success" ] || [ "${{ steps.app_livrable.outcome }}" != "success" ] || [ "${{ steps.app_donnees.outcome }}" != "success" ] || [ "${{ steps.app_session.outcome }}" != "success" ] || [ "${{ steps.app_remote.outcome }}" != "success" ] || [ "${{ steps.app_navigation.outcome }}" != "success" ] || [ "${{ steps.app_composition.outcome }}" != "success" ] || [ "${{ steps.app_invariants.outcome }}" != "success" ] || [ "${{ steps.lint_cliquet.outcome }}" != "success" ] || [ "${{ steps.juge_navigateur.outcome }}" != "success" ]; then
+            echo "Étape(s) en échec — typecheck=${{ steps.typecheck.outcome }} test=${{ steps.test.outcome }} test_marge=${{ steps.test_marge.outcome }} build=${{ steps.build.outcome }} apidocs=${{ steps.apidocs.outcome }} pkg_typecheck=${{ steps.pkg_typecheck.outcome }} pkg_lint=${{ steps.pkg_lint.outcome }} pkg_test=${{ steps.pkg_test.outcome }} app_compile=${{ steps.app_compile.outcome }} app_web=${{ steps.app_web.outcome }} app_web_rendu=${{ steps.app_web_rendu.outcome }} app_web_build=${{ steps.app_web_build.outcome }} backend=${{ steps.backend.outcome }} backend_vivant=${{ steps.backend_vivant.outcome }} app_rendu=${{ steps.app_rendu.outcome }} app_controles=${{ steps.app_controles.outcome }} app_regles=${{ steps.app_regles.outcome }} app_observations=${{ steps.app_observations.outcome }} app_livrable=${{ steps.app_livrable.outcome }} app_donnees=${{ steps.app_donnees.outcome }} app_session=${{ steps.app_session.outcome }} app_navigation=${{ steps.app_navigation.outcome }} app_composition=${{ steps.app_composition.outcome }} app_fidelite=${{ steps.app_fidelite.outcome }} app_invariants=${{ steps.app_invariants.outcome }} lint_cliquet=${{ steps.lint_cliquet.outcome }} juge_navigateur=${{ steps.juge_navigateur.outcome }}"
             exit 1
           fi
           echo "Toutes les étapes bloquantes ont réussi."

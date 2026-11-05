@@ -78,6 +78,33 @@ vi.mock('@/lib/supabase-admin', async () => {
   }
 })
 
+/**
+ * LE JUGE D'EXÉCUTION EST MUET ICI, ET C'EST MESURÉ.
+ *
+ * ── CE QUE CE FICHIER MESURE, ET CE QU'IL NE MESURE PAS.
+ *
+ * Il mesure LA GARDE : une réponse coupée est refusée, une réponse
+ * entière passe. Le démarrage de l'œuvre, lui, est éprouvé par EP-302 et
+ * EP-346 — qui paient leurs processus.
+ *
+ * ── LE CHIFFRE, parce que le registre de marge ne sert pas à taire.
+ *
+ * `noter()` tourne DEUX fois — avant et après — et chaque passage monte
+ * un processus. Mesuré sur ④, le seul cas qui atteigne le chemin
+ * heureux :
+ *
+ *   juge réel : 2 356 ms en suite · 1 400 ms isolé  (×2,1 de marge)
+ *   juge muet :                  42 ms isolé  (trois mesures : 42/42/41)
+ *
+ * « Le registre de marge sert à documenter un coût irréductible, pas à
+ *   taire un coût qu'on n'a pas cherché. » Celui-ci était réductible :
+ * deux processus qui n'éprouvent rien de ce qui est ici en jeu.
+ */
+vi.mock('@/lib/apps/juge-execution', async () => {
+  const { jugeMuet } = await import('@/lib/apps/__tests__/juge-muet')
+  return { jugerExecution: jugeMuet }
+})
+
 vi.mock('@anthropic-ai/sdk', () => ({
   default: class {
     messages = {
