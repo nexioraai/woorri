@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Sparkles } from 'lucide-react';
+import { Globe, Smartphone, Sparkles, Store, Truck } from 'lucide-react';
+import { PLACEHOLDER_BY_LANG, invitesPour, type Famille } from '@/lib/apps/invites-accueil';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import ConversationApplication from './ConversationApplication';
@@ -148,40 +149,6 @@ const LOADING_BY_LANG: Record<string, string[]> = {
   ],
 };
 
-const PLACEHOLDER_BY_LANG: Record<string, string[]> = {
-  fr: [
-    'Créer mon site web…',
-    'Ma marque de vêtements, sans un sou…',
-    'Vendre sans stock ni argent…',
-    'Ma boutique, zéro risque…',
-    'Vendre mes créations, sans avancer d\'argent…',
-    'Mes clients créent, je vends…',
-  ],
-  en: [
-    'Build my website…',
-    'My clothing brand, $0 down…',
-    'Sell with no stock, no cash…',
-    'My shop, zero risk…',
-    'Sell my creations, nothing upfront…',
-    'My customers design, I sell…',
-  ],
-  es: [
-    'Crear mi sitio web…',
-    'Lanzar mi marca de ropa, sin un peso…',
-    'Vender sin stock ni dinero…',
-    'Abrir mi tienda, cero riesgo…',
-    'Mi tienda, cero riesgo…',
-    'Mis clientes crean, yo vendo…',
-  ],
-  ar: [
-    'أنشئ موقعي الإلكتروني…',
-    'أطلق علامة ملابسي، بدون أي مال…',
-    'بِع بدون مخزون، بدون استثمار…',
-    'افتح متجري، دون أي مخاطرة…',
-    'بِع إبداعاتي، دون دفع مقدمًا…',
-    'عملائي يصممون، وأنا أبيع…',
-  ],
-};
 
 /** Detecte la langue depuis le texte saisi par l'utilisateur. */
 function detectUILang(text: string): string {
@@ -283,7 +250,18 @@ export default function OnboardingChat({
   const supportedLang = ['fr', 'en', 'es', 'ar'].includes(browserLang) ? browserLang : 'fr';
   const uiLang = typedText.trim() ? detectUILang(typedText) : supportedLang;
   const LOADING_STEPS = LOADING_BY_LANG[uiLang] || LOADING_BY_LANG.fr;
-  const PLACEHOLDERS = PLACEHOLDER_BY_LANG[uiLang] || PLACEHOLDER_BY_LANG.fr;
+  // ── LA TRADUCTION DU MODE EN FAMILLE SE FAIT ICI, ET NULLE PART AILLEURS.
+  //
+  // `invites-accueil.ts` ne connaît PAS `sites.mode` : un exemple
+  // appartient à un genre de projet, pas à une valeur de colonne. Le
+  // cliquet d'exhaustivité l'a refusé quand j'y avais mis les numéros,
+  // et il avait raison — c'était une surface de mode de plus pour rien.
+  const familleChoisie: Famille | null =
+    siteMode === 1 ? 'site' : siteMode === 2 ? 'boutique' : siteMode === 3 ? 'dropship' : null;
+  const PLACEHOLDERS = invitesPour(
+    PLACEHOLDER_BY_LANG[uiLang] ?? PLACEHOLDER_BY_LANG.fr ?? [],
+    familleChoisie,
+  );
   const [typed, setTyped] = useState('');
   const twPhrase = useRef(0);
   const twChar = useRef(0);
@@ -692,9 +670,15 @@ export default function OnboardingChat({
             {!showDropshipPicker ? (
               <>
               {[
-                { label: 'Site web', tkey: 'home.mode.website' as const, mode: 1 },
-                { label: 'Boutique en ligne', tkey: 'home.mode.store' as const, mode: 2 },
-                { label: 'Dropshipping', tkey: 'home.mode.dropshipping' as const, mode: 3 },
+                // ── UN PICTOGRAMME AU-DESSUS, LE LIBELLÉ DESSOUS.
+                //
+                // Quatre pastilles de texte nu se lisent mal sur un
+                // téléphone, où ce texte est petit. Le pictogramme se lit
+                // en un coup d'œil — mais SEUL il se devine mal, et le
+                // libellé reste donc sous lui, pas à sa place.
+                { label: 'Site web', tkey: 'home.mode.website' as const, mode: 1, Icone: Globe },
+                { label: 'Boutique en ligne', tkey: 'home.mode.store' as const, mode: 2, Icone: Store },
+                { label: 'Dropshipping', tkey: 'home.mode.dropshipping' as const, mode: 3, Icone: Truck },
                 // ── APPLICATION : MEME ENTREE, CHEMIN SEPARE.
                 //
                 // Ce n'est PAS un « mode 4 ». Les modes 1/2/3 produisent une
@@ -706,8 +690,8 @@ export default function OnboardingChat({
                 // demander quoi faire d'un site sans vitrine. On partage donc
                 // l'ENTREE — la conversation, la pastille — et le chemin se
                 // separe ICI, avant le moindre appel a `/api/chat`.
-                { label: 'Application', tkey: 'home.mode.application' as const, mode: 0 },
-              ].map(({ label, tkey, mode }) => (
+                { label: 'Application', tkey: 'home.mode.application' as const, mode: 0, Icone: Smartphone },
+              ].map(({ label, tkey, mode, Icone }) => (
                 <button
                   key={label}
                   onClick={async () => {
@@ -733,11 +717,14 @@ export default function OnboardingChat({
                     }
                   }}
                   className={
-                    mode === 0 && !APPLICATION_PRETE
-                      ? 'px-5 py-2.5 rounded-full border text-sm transition bg-white/[0.02] border-white/8 text-slate-500'
-                      : 'px-5 py-2.5 rounded-full border text-sm transition bg-white/[0.04] border-white/12 text-slate-200 hover:border-[#FA5D1E] hover:text-white hover:bg-white/[0.07]'
+                    `flex flex-col items-center gap-1.5 px-5 py-3 rounded-2xl border text-sm transition ${
+                      mode === 0 && !APPLICATION_PRETE
+                        ? 'bg-white/[0.02] border-white/8 text-slate-500'
+                        : 'bg-white/[0.04] border-white/12 text-slate-200 hover:border-[#FA5D1E] hover:text-white hover:bg-white/[0.07]'
+                    }`
                   }
                 >
+                  <Icone className="w-5 h-5" aria-hidden="true" />
                   {t(tkey)}
                   {mode === 0 && !APPLICATION_PRETE && (
                     <span className="ml-2 text-[10px] uppercase tracking-wide rounded-full border border-white/15 px-2 py-0.5 text-slate-400 align-middle">
