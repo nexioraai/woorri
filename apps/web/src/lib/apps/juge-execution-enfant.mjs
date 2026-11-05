@@ -45,6 +45,108 @@ const [, , cheminBundle, cheminSortie, attenteMs] = process.argv
 const { GlobalRegistrator } = await import('@happy-dom/global-registrator')
 GlobalRegistrator.register({ url: 'https://oeuvre.invalid/' })
 
+// ── ③ LES CONDITIONS DE L'APERÇU : ORIGINE OPAQUE, STOCKAGE REFUSÉ.
+//
+// ── LA FORME LA PLUS PURE DE CE QU'ON TRAQUE DEPUIS QUATRE JOURS.
+//
+//   « Le juge a un stockage qui marche. Il ne peut donc pas voir ce
+//     défaut, par construction. Même code, deux conditions. »
+//
+// MESURÉ LE 2026-11-05. L'aperçu de l'atelier tourne dans un
+// `<iframe sandbox="allow-scripts">` SANS `allow-same-origin` : son
+// origine est OPAQUE, et tout accès au stockage y est refusé par le
+// navigateur. happy-dom, lui, donnait au juge `origin: https://x` et un
+// `localStorage` qui répond.
+//
+// L'œuvre `snenak` prouve les deux faces : publiée — document de premier
+// niveau, vraie origine — elle marche ; son APERÇU plante avec
+// « s'est arrêtée en cours d'exécution » et `about:srcdoc` dans la pile.
+// MÊME CODE, DEUX CONDITIONS. Le juge ne pouvait pas le voir.
+//
+// ── ET CE N'EST PAS UN CAS, C'EST UNE CLASSE.
+//
+// Tout ce qui dépend des permissions du navigateur — stockage, origine,
+// politique de fonctionnalités — était invisible. Refuser le stockage
+// ici ne corrige pas UN appel : ça rend la classe entière visible, cette
+// fois et toutes les suivantes, avec sa pile.
+const interdit = (quoi) => {
+  const e = new Error(
+    `${quoi} est refusé dans un cadre isolé (origine opaque). ` +
+      'L’aperçu tourne en `sandbox="allow-scripts"` sans `allow-same-origin` : ' +
+      'aucune session ne peut y être rangée.',
+  )
+  e.name = 'SecurityError'
+  return e
+}
+for (const rangement of ['localStorage', 'sessionStorage']) {
+  const porte = new Proxy(
+    {},
+    {
+      get: () => {
+        throw interdit(rangement)
+      },
+      set: () => {
+        throw interdit(rangement)
+      },
+      has: () => {
+        throw interdit(rangement)
+      },
+    },
+  )
+  try {
+    Object.defineProperty(globalThis, rangement, { value: porte, configurable: true })
+    if (globalThis.window !== undefined && globalThis.window !== globalThis) {
+      Object.defineProperty(globalThis.window, rangement, { value: porte, configurable: true })
+    }
+  } catch {
+    /* si l'implémentation le gèle, on le DIT plutôt que de le taire */
+    console.error(`[juge] ${rangement} n'a pas pu être fermé : la condition de l'aperçu n'est PAS reproduite`)
+  }
+}
+
+// ── ③ (suite) LES VERROUS DU NAVIGATEUR : PRÉSENTS, ET REFUSANTS.
+//
+// ── LE JUGE ÉTAIT AVEUGLE PAR ABSENCE, PAS PAR PERMISSIVITÉ.
+//
+// MESURÉ LE 2026-11-05, et c'est pire que ce que je croyais :
+//
+//   le paquet embarqué  : `globalThis.navigator.locks.request(…)` — 3 fois
+//   happy-dom           : `navigator.locks` ABSENT
+//   un cadre isolé      : `navigator.locks` EXISTE, et `request()` refuse
+//   la pile de Safari   : `request@[native code]`
+//
+// Les Web Locks exigent une origine NON opaque. Dans
+// `sandbox="allow-scripts"` sans `allow-same-origin`, l'API est là et
+// elle refuse. Chez happy-dom elle n'existe pas du tout : le SDK prend
+// son chemin de repli, et le juge ne voyait NI succès NI échec.
+//
+// Une API absente ne se teste pas. On la pose donc, refusante — c'est la
+// seule façon que le juge rencontre ce que la personne rencontre.
+if (globalThis.navigator !== undefined) {
+  try {
+    Object.defineProperty(globalThis.navigator, 'locks', {
+      configurable: true,
+      value: {
+        request: () => {
+          const e = new Error(
+            'navigator.locks.request est refusé dans un cadre isolé (origine ' +
+              'opaque) : les Web Locks exigent une origine non opaque.',
+          )
+          e.name = 'SecurityError'
+          throw e
+        },
+        query: () => {
+          const e = new Error('navigator.locks.query est refusé en origine opaque.')
+          e.name = 'SecurityError'
+          throw e
+        },
+      },
+    })
+  } catch {
+    console.error('[juge] navigator.locks n’a pas pu être posé : la condition de l’aperçu n’est PAS reproduite')
+  }
+}
+
 // ── ② (suite) LES PORTES DU NAVIGATEUR, neutralisées avant tout code.
 const refus = () => {
   throw new Error('RESEAU_REFUSE')
