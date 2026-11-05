@@ -83,13 +83,29 @@ describe('EP-336 · la base injectée', () => {
     //
     // On lit les DEUX routes qui servent une œuvre publiée. Un appel à
     // `pageAutonome` qui n'emporte pas la base y est un retour en arrière.
+    // ── L'ANCRE LIT LA PROPRIÉTÉ, PLUS L'IMBRICAULATION DES DEUX APPELS.
+    //
+    // Mon premier motif exigeait `pageAutonome(… baseDeLOeuvre(` — donc que
+    // le second soit écrit DANS les parenthèses du premier. Le 2026-11-05
+    // les deux routes ont dû nommer la base (`const base = …`) pour en
+    // dériver l'en-tête, et ce contrôle a rougi sur un changement JUSTE.
+    // NEUVIÈME fois cette semaine qu'une ancre mesure un RANGEMENT.
+    //
+    // La propriété est : la route CALCULE la base, et elle la PASSE.
     for (const chemin of [
       ['app', 'p', '[jeton]', 'route.ts'],
       ['app', 'a', '[sous]', 'route.ts'],
     ]) {
+      const ou = chemin.join('/')
       const src = lireSource(join(SRC, ...chemin))
-      expect(src, `${chemin.join('/')} : la page servie ne reçoit pas sa base`).toMatch(
-        /pageAutonome\([^)]*baseDeLOeuvre\(/u,
+      expect(src, `${ou} : la base n’est pas calculée`).toMatch(
+        /baseDeLOeuvre\(String\(lu\.data\.id\), lu\.data\.document\)/u,
+      )
+      // ── ET ELLE ARRIVE À LA PAGE : « c'est calculé » et « ça arrive »
+      //    sont deux choses. Une base calculée puis oubliée laisserait
+      //    l'écran muet sans que rien ne rougisse.
+      expect(src, `${ou} : la base est calculée puis jamais passée`).toMatch(
+        /pageAutonome\([^)]*\bbase(\b|\?)/u,
       )
     }
   })

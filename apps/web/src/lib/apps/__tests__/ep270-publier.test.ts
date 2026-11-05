@@ -22,8 +22,11 @@
  * 🟠 Il ne prouve rien d'un magasin réel : aucune soumission n'a été faite.
  */
 import { describe, expect, it } from 'vitest'
+import { execFileSync } from 'node:child_process'
+import { join } from 'node:path'
 import {
   CSP_PAGE_PUBLIEE,
+  cspSousDomaine,
   ENTETES_PAGE_PUBLIEE,
   jetonPour,
   jetonValide,
@@ -31,6 +34,9 @@ import {
   nouveauJeton,
 } from '../publication'
 import { exigencesDuMagasin } from '../exigences-magasin'
+import { lireSource } from './lire-source'
+
+const SRC = join(__dirname, '..', '..', '..')
 
 describe('EP-270 · le web se publie', () => {
   it('① un jeton neuf est indevinable et ne porte aucun caractère ambigu', () => {
@@ -62,6 +68,110 @@ describe('EP-270 · le web se publie', () => {
     expect(lienDePublication(j, 'https://deribfy.com')).toBe(`https://deribfy.com/p/${j}`)
     expect(lienDePublication(j, 'https://deribfy.com/')).toBe(`https://deribfy.com/p/${j}`)
     expect(lienDePublication(j, 'https://deribfy.com///')).toBe(`https://deribfy.com/p/${j}`)
+  })
+
+  it('④bis L’INVARIANT EST CONDITIONNEL À LA ROUTE — et la raison est mesurée', () => {
+    // ── POURQUOI CET ASSOUPLISSEMENT, ET POURQUOI IL N'EN EST PAS UN.
+    //
+    // ④ a été écrit quand une œuvre publiée n'avait NI base NI réseau. On
+    // lui a donné une base le 2026-11-02. L'en-tête n'a pas été revue, et
+    // trois jours d'applications mortes ont suivi :
+    //
+    //   snenak.deribfy.app    HTTP 200 → ARRÊTÉE
+    //   cahier-…-technique    HTTP 200 → ARRÊTÉE
+    //   deribfy.com/p/juwcrs… HTTP 200 → ARRÊTÉE
+    //
+    //     webkit   : SecurityError: Context's origin is opaque
+    //     chromium : Access to the Locks API is denied in this context
+    //                at gi.Lr [as lock] (…/:14740:44)
+    //
+    // Un cliquet qui défend un passé devenu faux pour une MOITIÉ de son
+    // périmètre ne garde plus rien : il empêche la correction. Septième fois
+    // cette semaine. Donc on sépare les deux régimes, et on ratifie CHACUN.
+    //
+    // ── LA DISSYMÉTRIE, MESURÉE LE 2026-11-05.
+    //
+    // `*.deribfy.app` est un domaine ENREGISTRABLE DIFFÉRENT de
+    // `deribfy.com` : la session du produit y est hors d'atteinte avec ou
+    // sans bac à sable. Le bac à sable n'y achetait que l'isolation ENTRE
+    // applications — or `localStorage` est déjà cloisonné par origine.
+    //
+    // `/p/<jeton>` est servi par `www.deribfy.com`, MÊME ORIGINE que le
+    // produit. MESURÉ : `src/lib/supabase.ts` appelle `createClient` SANS
+    // options, donc `persistSession: true`, donc la session vit dans le
+    // `localStorage` de `www.deribfy.com`. Y lever le bac à sable donnerait
+    // à une application écrite par un modèle la lecture du jeton de session
+    // de son propriétaire.
+    const PRODUIT = lireSource(join(SRC, 'lib', 'supabase.ts'))
+    expect(
+      PRODUIT,
+      'le client du produit ne crée plus sa session par défaut : la raison ' +
+        'de l’asymétrie a changé, RELIS-LA avant de toucher aux régimes',
+    ).toMatch(/createClient\(supabaseUrl, supabaseAnonKey\);?$/mu)
+
+    // ── LE RÉGIME DU SOUS-DOMAINE : une vraie origine, un réseau borné.
+    const sd = cspSousDomaine('https://psxbilpmnojtlzosokzz.supabase.co')
+    expect(sd, 'le sous-domaine a perdu sa vraie origine — il remourra').toContain(
+      'sandbox allow-scripts allow-same-origin',
+    )
+    // ── ET LE RÉSEAU NE S'OUVRE QU'AU SEUL PROJET, `wss:` COMPRIS.
+    //
+    // MESURÉ : le paquet embarqué porte `realtime` ×22 et `wss://` ×1.
+    // `connect-src` avec une URL `https:` n'autorise PAS `wss:` — une œuvre
+    // qui s'abonne démarrerait et échouerait SANS RIEN DIRE. On aurait
+    // échangé un plantage franc contre une panne silencieuse.
+    expect(sd, 'le temps réel est bloqué : panne silencieuse').toContain(
+      'wss://psxbilpmnojtlzosokzz.supabase.co',
+    )
+    expect(sd, 'le réseau de l’application n’est plus borné à son projet').toMatch(
+      /connect-src https:\/\/psxbilpmnojtlzosokzz\.supabase\.co wss:\/\/psxbilpmnojtlzosokzz\.supabase\.co/u,
+    )
+    // ── ON COMPARE DES JETONS, PAS DES MORCEAUX.
+    //
+    // Mon premier jet cherchait la sous-chaîne ` https:` — que
+    // ` https://psxbilpmnojtlzosokzz…` contient. Le contrôle rougissait sur
+    // du code juste. Une assertion satisfaite par un PRÉFIXE ne mesure pas
+    // ce qu'elle prétend : c'est la famille déjà payée cinq fois cette
+    // semaine.
+    const sources = sd
+      .slice(sd.indexOf('connect-src'), sd.indexOf('; sandbox'))
+      .split(/\s+/u)
+      .slice(1)
+    expect(sources, 'connect-src ne nomme plus exactement deux sources').toEqual([
+      'https://psxbilpmnojtlzosokzz.supabase.co',
+      'wss://psxbilpmnojtlzosokzz.supabase.co',
+    ])
+    // ── SANS BASE, RIEN NE SORT. Le plus étroit est le défaut.
+    expect(cspSousDomaine(''), 'une œuvre sans base peut appeler le réseau').toContain(
+      "connect-src 'none'",
+    )
+
+    // ── ET LE RÉGIME PERMISSIF NE DOIT JAMAIS ATTEINDRE `deribfy.com`.
+    //
+    // C'est LÀ que vit le danger, et c'est la seule chose que la séparation
+    // des deux chaînes ne garantit pas toute seule : il suffirait qu'une
+    // route du produit importe la mauvaise.
+    const JETON = lireSource(join(SRC, 'app', 'p', '[jeton]', 'route.ts'))
+    expect(
+      JETON,
+      'la route servie depuis deribfy.com emploie le régime permissif : ' +
+        'une application écrite par un modèle lirait la session du produit',
+    ).not.toMatch(/entetesSousDomaine|cspSousDomaine/u)
+    const SOUS = lireSource(join(SRC, 'app', 'a', '[sous]', 'route.ts'))
+    expect(SOUS, 'le sous-domaine est retombé dans le régime opaque').toMatch(
+      /entetesSousDomaine\(/u,
+    )
+    // ── ET IL N'Y A QUE DEUX PORTEURS. Une troisième route héritant du
+    //    régime permissif passerait inaperçue.
+    const porteurs = execFileSync('git', ['grep', '-l', 'entetesSousDomaine', '--', 'src/app'], {
+      cwd: join(SRC, '..'),
+    })
+      .toString('utf8')
+      .split('\n')
+      .filter((f) => f !== '')
+    expect(porteurs, 'une route inattendue porte le régime permissif').toEqual([
+      'src/app/a/[sous]/route.ts',
+    ])
   })
 
   it('④ LA PAGE PUBLIÉE NE PEUT PAS TOUCHER DERIBFY — l’invariant dur', () => {

@@ -114,6 +114,120 @@ export function lienDePublication(jeton: string, base: string): string {
  * télémétrie, pas de police distante, pas d'appel sortant vers un domaine
  * qu'un modèle aurait inventé. Elle ne peut utiliser que ce qu'elle porte.
  */
+/**
+ * ── ET LA DISSYMÉTRIE DES DEUX ADRESSES EST LE CŒUR DE L'AFFAIRE
+ *    (2026-11-05, après trois jours d'applications mortes).
+ *
+ * Le raisonnement ci-dessus a été écrit quand une œuvre publiée n'avait NI
+ * base NI réseau. On lui a donné une base le 2026-11-02. L'en-tête n'a pas
+ * été revue, et le résultat est mesuré :
+ *
+ *   snenak.deribfy.app              HTTP 200 → ARRÊTÉE
+ *   cahier-…-technique.deribfy.app  HTTP 200 → ARRÊTÉE
+ *   deribfy.com/p/juwcrs…           HTTP 200 → ARRÊTÉE
+ *
+ *     webkit   : SecurityError: Context's origin is opaque
+ *     chromium : Access to the Locks API is denied in this context
+ *                at gi.Lr [as lock] (…/:14740:44)
+ *
+ * `sandbox` sans `allow-same-origin` rend l'origine opaque MÊME sur un
+ * document de premier niveau en https. `navigator.locks` existe alors
+ * (contexte sûr) mais REFUSE — et `@supabase/gotrue-js` l'appelle à son
+ * premier geste. Détail cruel : dans un CADRE opaque l'API est `undefined`,
+ * donc le SDK prend son repli et survit. La vraie page, elle, meurt.
+ *
+ * ── DEUX ROUTES, DEUX RÉGIMES. Et la raison est une mesure.
+ *
+ * `*.deribfy.app` est un domaine ENREGISTRABLE DIFFÉRENT de `deribfy.com` :
+ * la session du produit y est hors d'atteinte avec ou sans bac à sable. Le
+ * bac à sable n'y achetait que l'isolation ENTRE applications — or
+ * `localStorage` est déjà cloisonné par origine, donc par sous-domaine.
+ *
+ * `/p/<jeton>` est servi par `www.deribfy.com` : LA MÊME ORIGINE que le
+ * produit. MESURÉ le 2026-11-05 : `src/lib/supabase.ts` appelle
+ * `createClient` sans options, donc `persistSession: true` par défaut, donc
+ * la session vit dans le `localStorage` de `www.deribfy.com`. Y lever le bac
+ * à sable donnerait à une application écrite par un modèle la lecture du
+ * jeton de session de son propriétaire. Il reste, et il est PORTEUR.
+ *
+ * ── LE CANAL RÉSIDUEL, DIT AVEC SA FORME.
+ *
+ * Avec `allow-same-origin` sur `*.deribfy.app`, l'application d'un client
+ * peut poser un cookie sur `.deribfy.app` — que l'application d'un AUTRE
+ * client lira. Pas le SDK : il emploie `localStorage`, cloisonné par
+ * origine. Mais une application écrite par le modèle peut appeler
+ * `document.cookie` avec `domain=.deribfy.app`, et rien ne l'en empêche.
+ *
+ * LA PARADE CONNUE : inscrire `deribfy.app` à la PUBLIC SUFFIX LIST. Un
+ * cookie de domaine parent devient alors structurellement impossible — le
+ * navigateur refuse `domain=.deribfy.app` comme il refuse `domain=.com`.
+ * C'est LONG à obtenir (des mois), donc ça se demande TÔT. Non fait.
+ */
+const hoteDe = (url: string): string => {
+  try {
+    return new URL(url).host
+  } catch {
+    return ''
+  }
+}
+
+/**
+ * CE QUE L'APPLICATION PEUT JOINDRE : son projet, et rien d'autre.
+ *
+ * ── POURQUOI `wss://` Y FIGURE, ET C'EST MESURÉ.
+ *
+ * Le paquet embarqué porte `realtime` ×22 et `wss://` ×1. `connect-src`
+ * avec une URL `https:` n'autorise PAS `wss:` — une œuvre qui s'abonne
+ * démarrerait et échouerait SANS RIEN DIRE. On aurait échangé un plantage
+ * franc contre une panne silencieuse.
+ *
+ * ── ET L'ALLER-RETOUR EST PROUVÉ, pas supposé.
+ *
+ * Octets de production de `snenak`, servis sous cet en-tête, connexion
+ * tentée avec une adresse manifestement fausse :
+ *
+ *     POST /auth/v1/token → 400 → « Identifiants invalides. »
+ *
+ * La requête sort, le service répond, le SDK gère, et l'écran dit vrai.
+ *
+ * ── SANS BASE, RIEN NE SORT. C'est le plus étroit, et c'est le défaut.
+ */
+const connectSrcPour = (urlProjet: string): string => {
+  const h = hoteDe(urlProjet)
+  return h === '' ? "connect-src 'none'" : `connect-src https://${h} wss://${h}`
+}
+
+/** Le tronc commun : tout ce que les deux régimes partagent. */
+const CSP_TRONC: readonly string[] = [
+  "default-src 'none'",
+  "script-src 'unsafe-inline'",
+  "style-src 'unsafe-inline'",
+  'img-src data: blob:',
+  // N2 : le manifeste PWA est cuit dans la page (data:). Mesuré bloquant
+  // sous default-src 'none' — sans cette ligne, rien ne s'installe.
+  'manifest-src data:',
+  'font-src data:',
+  "form-action 'none'",
+  "base-uri 'none'",
+  "frame-ancestors 'none'",
+]
+
+/**
+ * LE RÉGIME DU SOUS-DOMAINE — une vraie origine, un réseau borné.
+ *
+ * `allow-same-origin` est ici indispensable et non dangereux : voir la
+ * dissymétrie ci-dessus. Il ne doit JAMAIS apparaître sur une route servie
+ * depuis `deribfy.com`.
+ */
+export const cspSousDomaine = (urlProjet: string): string =>
+  [...CSP_TRONC, connectSrcPour(urlProjet), 'sandbox allow-scripts allow-same-origin'].join('; ')
+
+/** Les en-têtes d'une page servie sous son propre sous-domaine. */
+export const entetesSousDomaine = (urlProjet: string): Readonly<Record<string, string>> => ({
+  ...ENTETES_PAGE_PUBLIEE,
+  'Content-Security-Policy': cspSousDomaine(urlProjet),
+})
+
 export const CSP_PAGE_PUBLIEE = [
   "default-src 'none'",
   "script-src 'unsafe-inline'",

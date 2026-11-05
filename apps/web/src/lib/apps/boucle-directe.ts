@@ -919,6 +919,30 @@ const BANDEAU_PUBLIEE = (adresse: string): string =>
   `données : <a href="${adresse}" target="_blank" rel="noopener noreferrer" ` +
   `style="color:#7a4a00;font-weight:600">${adresse.replace(/^https:\/\//u, '')}</a></div>`
 
+/**
+ * L'ŒUVRE SERVIE AU PUBLIC QUI NE CONSERVE RIEN (⑥, 2026-11-05).
+ *
+ * ── LE TROU QUE J'AVAIS LAISSÉ DANS A, et c'est moi qui l'ai signalé.
+ *
+ * A n'avait corrigé que l'ATELIER. Sur `/a/<sous>` et `/p/<jeton>`,
+ * `adressePubliee` valait `null` et le bandeau de l'aperçu partait tel quel.
+ *
+ * MESURÉ sur `sneapp.deribfy.app`, HTTP 200, publiée depuis le 2026-11-04 :
+ *
+ *     « Votre base de données sera créée à la publication. »
+ *
+ * Elle EST publiée. Et elle n'aura jamais de base : son schéma ne porte
+ * aucun `create table` (363 o de préambule), `jugerPersistance` rend `[]`,
+ * et `baseDeLOeuvre` n'injecte donc rien — à juste titre.
+ *
+ * La phrase juste n'est ni « ce sera créé » (faux) ni « ouvrez la version
+ * publiée » (on y est) : c'est que cette application ne garde rien.
+ */
+const BANDEAU_SANS_MEMOIRE =
+  CADRE_BANDEAU +
+  '<strong>Cette application ne conserve pas de données.</strong> ' +
+  'Ce que vous saisissez disparaît au rechargement de la page.</div>'
+
 /** LE TÉLÉCHARGEMENT : ce qu'il reste à faire, et où c'est écrit. */
 const BANDEAU_TELECHARGE =
   CADRE_BANDEAU +
@@ -940,7 +964,12 @@ export function pageAutonome(
    * endroits où quelqu'un REGARDE son application. `archive` est le zip,
    * le seul endroit où le LISEZ-MOI existe et où il y a un geste à faire.
    */
-  destination: 'apercu' | 'archive' = 'apercu',
+  /**
+   * `servie` : la page est lue par le PUBLIC, à son adresse. Ni un aperçu
+   * ni une archive — il n'y a rien à annoncer et rien à faire, seulement
+   * la vérité sur ce que l'application garde.
+   */
+  destination: 'apercu' | 'archive' | 'servie' = 'apercu',
   /**
    * L'ADRESSE PUBLIÉE DE CETTE ŒUVRE, quand elle en a une.
    *
@@ -1015,9 +1044,11 @@ export function pageAutonome(
       ? ''
       : destination === 'archive'
         ? BANDEAU_TELECHARGE
-        : adressePubliee !== null
-          ? BANDEAU_PUBLIEE(adressePubliee)
-          : BANDEAU_APERCU,
+        : destination === 'servie'
+          ? BANDEAU_SANS_MEMOIRE
+          : adressePubliee !== null
+            ? BANDEAU_PUBLIEE(adressePubliee)
+            : BANDEAU_APERCU,
     '<div id="racine"></div>',
     `<script type="module">${ENVELOPPE_MODULE.avant}${code}${ENVELOPPE_MODULE.apres}</script>`,
     '</body></html>',

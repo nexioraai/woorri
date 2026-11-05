@@ -175,6 +175,63 @@ describe('EP-351 · l’aperçu d’une œuvre publiée', () => {
     )
   })
 
+  it('⑦ ET UNE ŒUVRE SERVIE SANS BASE NE PROMET PLUS UNE BASE', () => {
+    // ── LE TROU QUE J'AVAIS LAISSÉ DANS A, et que j'ai signalé moi-même.
+    //
+    // A ne corrigeait que l'ATELIER. Sur `/a/<sous>` et `/p/<jeton>`,
+    // `adressePubliee` valait `null` et le bandeau de l'aperçu partait tel
+    // quel. MESURÉ sur `sneapp.deribfy.app`, HTTP 200, publiée :
+    //
+    //     « Votre base de données sera créée à la publication. »
+    //
+    // Elle EST publiée, et elle n'aura jamais de base : son schéma ne porte
+    // aucun `create table` (363 o de préambule), `jugerPersistance` rend
+    // `[]`, `baseDeLOeuvre` n'injecte donc rien — à juste titre.
+    const servie = pageAutonome(CODE, 'Sneapp', undefined, 'servie')
+    expect(servie, 'la page servie promet encore une base').not.toContain(
+      'sera créée à la publication',
+    )
+    expect(servie, 'elle ne dit pas ce qu’elle garde').toContain(
+      'Cette application ne conserve pas de données.',
+    )
+    expect(servie, 'elle ne dit pas la conséquence').toContain(
+      'disparaît au rechargement',
+    )
+    // ── ET ELLE NE PARLE PAS D'APERÇU : on y EST.
+    expect(servie, 'une page publique parle d’aperçu').not.toContain('aperçu')
+
+    // ── LES DEUX ROUTES PUBLIQUES LE DEMANDENT.
+    for (const route of [join('a', '[sous]'), join('p', '[jeton]')]) {
+      const src = lireSource(join(SRC, 'app', route, 'route.ts'))
+      expect(src, `${route} sert encore le bandeau d’aperçu`).toMatch(/'servie'/u)
+    }
+  })
+
+  it('⑧ ET `/p/<jeton>` NE SERT PLUS UNE PAGE MORTE', () => {
+    const src = lireSource(join(SRC, 'app', 'p', '[jeton]', 'route.ts'))
+    // ── AVEC UN SOUS-DOMAINE : on y envoie.
+    //
+    // Là-bas l'origine est vraie et les données sont joignables. MESURÉ :
+    // `deribfy.com/p/juwcrs…` rendait HTTP 200 et MOURAIT — « Context's
+    // origin is opaque » dès le premier verrou de gotrue-js.
+    expect(src, 'la redirection vers le sous-domaine a disparu').toMatch(
+      /status: 302[\s\S]{0,160}\$\{sous\}\.\$\{DOMAINE_PUBLIC\}/u,
+    )
+    // TEMPORAIRE et non mise en cache : la publication peut changer.
+    expect(src, 'un cache pourrait figer la redirection').toMatch(
+      /status: 302[\s\S]{0,200}'Cache-Control': 'no-store'/u,
+    )
+    // ── SANS SOUS-DOMAINE MAIS AVEC UNE BASE : on REFUSE, en disant quoi faire.
+    //
+    // Ni un 404 — l'application existe et a été payée — ni un 200 qui
+    // mourrait. Et SURTOUT pas en levant le bac à sable : ce serait ouvrir
+    // le `localStorage` du produit à du code écrit par un modèle.
+    expect(src, 'une œuvre à base sans sous-domaine est servie morte').toMatch(
+      /base !== undefined[\s\S]{0,200}status: 409/u,
+    )
+    expect(src, 'le refus ne dit pas quoi faire').toMatch(/Republiez-la en lui donnant un nom/u)
+  })
+
   it('⑥ L’ADRESSE SE CONSTRUIT EN UN SEUL ENDROIT', () => {
     // Trois appelants la voudraient ; trois exemplaires divergeraient au
     // premier changement de domaine. On exerce la fonction, on ne lit pas

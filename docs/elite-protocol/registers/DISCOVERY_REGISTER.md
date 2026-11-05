@@ -406,3 +406,61 @@ aucune information fournie comme défaut connu**.
 | **`CONCL.` 3** | **Le phénomène de `PROTOCOL-D015` n'est pas un phénomène de sévérité** : dans les deux configurations mesurées il y a **2 écarts critiques** ; seul le champ `owner` change, et le score ne l'agrège pas |
 | **Preuve** | `docs/elite-protocol/evidence/exp1b.mjs` |
 | **Statut** | 🔴 **OUVERT — non corrigé.** `E-11` interdit la correction prématurée ; `E-18` exige qu'un modèle retenu déclare explicitement la classe de comportements qu'il ne peut pas voir |
+
+---
+
+## GEN-D020 — Toute application publiée portant une base était MORTE : notre propre en-tête rendait son origine opaque
+
+| | |
+|---|---|
+| **Date** | 2026-11-05 |
+| **Type** | 🟢 **BLIND DISCOVERY** — la pile fournie par le propriétaire désignait la ligne ; la cause n'était dans aucun défaut connu |
+| **Instrument** | Playwright WebKit **et** Chromium, chargement de la VRAIE adresse ; puis octets de production servis localement, en-tête seul changé |
+| **`FACT` — l'écran** | `snenak.deribfy.app` **HTTP 200** → « Cette application s'est arrêtée en cours d'exécution » · **zéro requête sortie** |
+| **`FACT` — la trame** | webkit : `SecurityError: Context's origin is opaque` · chromium : `Access to the Locks API is denied in this context` à `gi.Lr [as lock] (…/:14740:44)` |
+| **`FACT` — la ligne 14740** | `return await globalThis.navigator.locks.request(e, t === 0 ? {` — colonne 51 = le `(` de l'appel. `Lr` est `navigatorLock` de `@supabase/gotrue-js` |
+| **`FACT` — le contexte** | `origin=null` sur un document de **premier niveau**, en https, `isSecureContext=true`, `navigator.locks=object` |
+| **Cause racine** | notre `Content-Security-Policy` portait `sandbox allow-scripts` **sans** `allow-same-origin` → origine opaque même hors cadre ; **et** `connect-src 'none'` → aucune requête possible. Deux murs **indépendants**. L'en-tête avait été écrite quand une œuvre publiée n'avait ni base ni réseau ; la base lui a été donnée le 2026-11-02 et l'en-tête n'a pas été revue |
+| **🔴 Pourquoi l'instrument ne le voyait pas** | dans un **cadre** opaque `navigator.locks` est `undefined` : le SDK prend son repli et SURVIT. Sur la **vraie page** opaque il est `object` : le SDK l'appelle et ça jette. *Le cadre était plus clément que la page, parce que l'API y manquait au lieu d'être refusée.* Mes quatre montages en cadre étaient donc verts sur une œuvre morte |
+| **Preuve du correctif** | octets de production, en-tête seul changé : ① actuelle → ARRÊTÉE · ② `connect-src` ouvert, bac à sable inchangé → **ARRÊTÉE** · ③ `+ allow-same-origin` → **DÉMARRE** · ④ sans bac à sable → DÉMARRE. Puis connexion tentée avec une adresse fausse : `POST /auth/v1/token → 400 → « Identifiants invalides. »` |
+| **Étendue mesurée** | 3 publications vivantes : 2 portant une base **mortes**, 1 sans base qui démarre et **mentit** (voir GEN-D021) |
+| **Impact** | 🔴 la promesse centrale du produit était inatteignable. Quatre tentatives de preuve du propriétaire ont échoué sur cette cause |
+| **Contre-mesure** | **deux routes, deux régimes.** `*.deribfy.app` (domaine enregistrable distinct) : `sandbox allow-scripts allow-same-origin` + `connect-src https://<projet> wss://<projet>`. `/p/<jeton>` (**même origine que le produit**) : en-tête inchangée, et la route **redirige** vers le sous-domaine |
+| **Pourquoi la dissymétrie** | MESURÉ : `src/lib/supabase.ts` appelle `createClient` sans options ⇒ `persistSession: true` ⇒ la session du propriétaire vit dans le `localStorage` de `www.deribfy.com`. Y lever le bac à sable donnerait à une application écrite par un modèle la lecture de son jeton de session |
+| **🟠 Canal résiduel, dit avec sa forme** | avec `allow-same-origin` sur `*.deribfy.app`, l'application d'un client peut poser un cookie sur `.deribfy.app` — **que l'application d'un AUTRE client lira**. Pas le SDK (il emploie `localStorage`, cloisonné par origine), mais une application écrite par le modèle peut appeler `document.cookie` avec `domain=.deribfy.app`, et rien ne l'en empêche |
+| **Parade connue, non faite** | inscrire **`deribfy.app` à la Public Suffix List** : un cookie de domaine parent devient structurellement impossible, le navigateur refusant `domain=.deribfy.app` comme il refuse `domain=.com`. **LONG à obtenir (des mois), donc à demander TÔT.** Non demandé au 2026-11-05 |
+| **`wss:` n'est pas un détail** | le paquet embarqué porte `realtime` ×22 et `wss://` ×1. `connect-src` avec une URL `https:` n'autorise PAS `wss:` : une œuvre qui s'abonne démarrerait et échouerait **sans rien dire** — un plantage franc échangé contre une panne silencieuse |
+| **Non-régression** | EP-270 ④bis — invariant **conditionnel à la route**, avec la mesure de `localStorage` écrite dedans, la borne `connect-src` comparée en **jetons** (pas en sous-chaînes), et la liste **close** des routes portant le régime permissif |
+| **Statut** | 🟢 **CORRIGÉ** — 9 mutations rouges |
+
+---
+
+## GEN-D021 — Une œuvre publiée sans table promettait une base à ses visiteurs
+
+| | |
+|---|---|
+| **Date** | 2026-11-05 |
+| **Type** | 🟠 défaut d'écran, trouvé en mesurant GEN-D020 — et **signalé par moi comme trou de mon propre correctif** |
+| **Instrument** | Playwright WebKit sur `sneapp.deribfy.app`, lecture du bandeau rendu |
+| **`FACT`** | HTTP 200, publiée depuis le 2026-11-04, et l'écran affiche « **Votre base de données sera créée à la publication.** » |
+| **Cause racine** | le bandeau d'aperçu s'affiche sur `url === ''`. `sneapp` n'a aucun `create table` (363 o de préambule), `jugerPersistance` rend `[]`, donc `baseDeLOeuvre` n'injecte rien — **à juste titre**. Mais la phrase d'un aperçu partait sur une page **servie au public** |
+| **Portée de mon premier correctif** | il ne touchait que l'atelier (`direct/[id]`). `/a/<sous>` et `/p/<jeton>` laissaient `adressePubliee` à `null` et servaient le bandeau d'aperçu tel quel |
+| **Contre-mesure** | quatrième destination `servie` : « Cette application ne conserve pas de données. Ce que vous saisissez disparaît au rechargement. » Ni « ce sera créé » (faux), ni « ouvrez la version publiée » (on y est) |
+| **Non-régression** | EP-351 ⑦ et ⑧ |
+| **Statut** | 🟢 **CORRIGÉ** |
+
+---
+
+## GEN-D022 — Un lien publié peut être mort pendant des heures, avec un avertissement de sécurité, et rien ne le dit
+
+| | |
+|---|---|
+| **Date** | 2026-11-05 |
+| **Type** | 🟠 défaut de parcours — signalé par le propriétaire (« Safari ne peut pas établir une connexion sécurisée »), cause mesurée ici |
+| **Instrument** | `openssl s_client` sur les certificats servis ; `curl` sur un nom jamais demandé |
+| **`FACT` — les deux délais** | `snenak` publiée **19:00:43** → certificat émis **19:01:56** = **73 s**. `cahier-des-charges-fonctionnel-technique` publiée **21:46:58** → certificat émis **10:04:39 le lendemain** = **12 h 18** |
+| **`FACT` — pas de générique** | un nom jamais demandé (`jamais-demande-<ts>.deribfy.app`) : **3 échecs TLS sur 3**, aucun certificat. Il n'existe **pas** de certificat `*.deribfy.app` — chaque sous-domaine attend le sien, émis à la demande par Let's Encrypt |
+| **Cause racine** | publier crée l'adresse (par le CNAME `*`) et **rend le lien immédiatement**, sans attendre l'émission du certificat. Le premier visiteur paie l'attente, et ce qu'il voit est un **avertissement de sécurité** — la pire formulation possible pour une attente |
+| **Impact** | 🔴 pendant 12 h 18 le lien donné par le propriétaire était mort, et **rien dans le produit ne le disait**. Ce n'est pas rare : 2 publications mesurées, 2 délais, de 73 s à 12 h 18 — la variance est le défaut |
+| **Contre-mesure** | **non faite, lot séparé** : la publication attend la poignée de main TLS avant de rendre le lien, ou le rend en disant son délai. La sonde `GET /api/generateur/direct` sait déjà mesurer TLS sur un nom neuf (mesuré le 2026-11-01) — la publication, elle, ne s'en sert pas |
+| **Statut** | 🔴 **OUVERT** |

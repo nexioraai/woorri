@@ -15,7 +15,7 @@ import { TABLE_GENERATIONS } from '@/lib/apps/journal'
 import { assembler } from '@/lib/apps/bac-a-sable'
 import { pageAutonome } from '@/lib/apps/boucle-directe'
 import { baseDeLOeuvre } from '@/lib/apps/base-de-l-oeuvre'
-import { ENTETES_PAGE_PUBLIEE } from '@/lib/apps/publication'
+import { entetesSousDomaine } from '@/lib/apps/publication'
 import { nomValide } from '@/lib/apps/sous-domaine'
 
 export const runtime = 'nodejs'
@@ -50,5 +50,24 @@ export async function GET(_req: Request, ctx: { params: Promise<{ sous: string }
   if (!v.ok) return introuvable()
 
   const titre = typeof lu.data.nom === 'string' && lu.data.nom !== '' ? lu.data.nom : 'Application'
-  return new Response(pageAutonome(v.code, titre, baseDeLOeuvre(String(lu.data.id), lu.data.document)), { status: 200, headers: ENTETES_PAGE_PUBLIEE })
+  // ── LE RÉGIME DU SOUS-DOMAINE (2026-11-05) — une vraie origine.
+  //
+  // MESURÉ : sous `sandbox allow-scripts` seul, cette page rendait HTTP 200
+  // et MOURAIT — « Context's origin is opaque » dès que gotrue-js demande
+  // son verrou. `*.deribfy.app` est un domaine enregistrable distinct de
+  // `deribfy.com` : la session du produit y est hors d'atteinte avec ou sans
+  // bac à sable, donc `allow-same-origin` ne coûte rien ici. Il resterait
+  // interdit sur une route servie depuis `deribfy.com` — voir `/p/<jeton>`.
+  //
+  // ET LE RÉSEAU EST BORNÉ AU SEUL PROJET DES ŒUVRES, `wss:` compris : le
+  // paquet embarqué porte le temps réel, et `connect-src https://…` seul
+  // l'aurait laissé démarrer pour échouer en silence.
+  const base = baseDeLOeuvre(String(lu.data.id), lu.data.document)
+  return new Response(
+    // ── `servie` ET NON `apercu` : sans base, la phrase juste n'est pas
+    //    « ce sera créé » — on y EST. Mesuré sur sneapp, publiée et sans
+    //    aucun `create table`.
+    pageAutonome(v.code, titre, base, 'servie'),
+    { status: 200, headers: entetesSousDomaine(base?.url ?? '') },
+  )
 }
