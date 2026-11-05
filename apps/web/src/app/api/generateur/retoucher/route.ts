@@ -27,6 +27,10 @@ import { requireAuthenticatedUser } from '@/lib/auth/require-authenticated-user'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { TABLE_GENERATIONS, TABLE_VERSIONS } from '@/lib/apps/journal'
 import { declarationDe } from '@/lib/apps/declaration-depuis-schema'
+import { jugerExecution } from '@/lib/apps/juge-execution'
+import { jugerDevise } from '@/lib/apps/juge-devise'
+import { jugerPersistance } from '@/lib/apps/juge-persistance'
+import type { EntiteDeclaree } from '@/lib/apps/entites-declarees'
 import { blocDeclaration } from '@/lib/apps/retouche'
 import { CONFIGS, fournisseurChoisi, tarifDe, tarifPlafond } from '@/lib/apps/fournisseur'
 import { clientIA, MODELE_LEGER } from '@/lib/ia/client'
@@ -53,13 +57,67 @@ export const maxDuration = 300
 /** La sortie autorisée : c'est elle qui borne le plafond annoncé à l'écran. */
 export const SORTIE_MAX_RETOUCHE = 16_000
 
-/** Les trois juges qui tournent sans processus enfant. */
-function noter(fichiers: ReadonlyMap<string, string>): NoteJuge[] {
+/**
+ * LES SIX JUGES, COMME LA GÉNÉRATION — et plus deux (b, 2026-11-04).
+ *
+ * ── POURQUOI DEUX SUFFISAIENT HIER, ET PLUS AUJOURD'HUI.
+ *
+ * La retouche était COSMÉTIQUE : textes, couleurs, un champ sur un écran
+ * existant. Jetons et contrôles muets couvraient ce qu'elle pouvait
+ * abîmer.
+ *
+ * Elle change désormais de la logique et ajoute des écrans. Deux juges
+ * ouvriraient alors un chemin qui LIVRE DU CODE MOINS JUGÉ que celui
+ * qu'on juge — et c'est précisément par là que passerait tout ce qu'on
+ * refuse à la génération.
+ *
+ * ── CE QUE CHACUN EXIGE, ET POURQUOI L'ORDRE EST CELUI-LÀ.
+ *
+ * · jetons, vivacité, devise — purs, aucun processus ;
+ * · exécution — monte l'œuvre dans un simulateur, donc un processus et
+ *   un assemblage ; c'est elle qui donne les ÉCRANS ;
+ * · couverture — a besoin de ces écrans pour dire autre chose qu'un
+ *   comptage d'exigences ;
+ * · persistance — a besoin de la DÉCLARATION, qu'on sait enfin retrouver.
+ *
+ * ── ET LA COMPARAISON RESTE UN AVANT/APRÈS.
+ *
+ * Une retouche n'a pas à réparer ce qu'elle n'a pas cassé : on refuse la
+ * RÉGRESSION, pas le défaut préexistant. Exiger zéro refuserait toute
+ * modification d'une œuvre imparfaite — c'est-à-dire presque toutes.
+ */
+async function noter(
+  fichiers: ReadonlyMap<string, string>,
+  o: {
+    readonly demande: string
+    readonly entites: readonly EntiteDeclaree[]
+    readonly devise: string | undefined
+  },
+): Promise<{ notes: NoteJuge[]; taux: number }> {
   const systeme = fichiersSysteme(undefined)
-  return [
-    { nom: 'jetons', defauts: jugerJetons(fichiers, systeme).length },
-    { nom: 'contrôles muets', defauts: jugerVivacite(fichiers).length },
-  ]
+  const bundle = await assembler(fichiers)
+  // ── UN DOCUMENT QUI NE S'ASSEMBLE PAS N'A PAS D'ÉCRANS.
+  //
+  // On ne peut alors ni l'exécuter ni mesurer sa couverture. On le dit
+  // par un défaut d'exécution plutôt que par un zéro silencieux : un
+  // zéro ressemblerait à « parfait ».
+  const execution = bundle.ok ? await jugerExecution(bundle.code) : null
+  const ecrans = execution?.ecrans ?? []
+  const couverture = jugerCouverture(o.demande, fichiers, ecrans)
+  return {
+    notes: [
+      { nom: 'jetons', defauts: jugerJetons(fichiers, systeme).length },
+      { nom: 'contrôles muets', defauts: jugerVivacite(fichiers).length },
+      { nom: 'devise', defauts: jugerDevise(fichiers, o.devise).length },
+      {
+        nom: 'exécution',
+        defauts: execution === null ? 1 : execution.erreurs.length,
+      },
+      { nom: 'exigences muettes', defauts: couverture.absentes.length },
+      { nom: 'persistance', defauts: jugerPersistance(o.entites, fichiers).length },
+    ],
+    taux: couverture.taux,
+  }
 }
 
 /**
@@ -237,14 +295,26 @@ export async function POST(req: Request) {
     )
   }
 
-  // ── LES JUGES, SUR L'AVANT ET SUR L'APRÈS. Les quatre prennent un
-  // document en entrée : la non-régression est un assemblage, pas un
-  // chantier (mesuré avant d'écrire ce lot).
-  const ecransAvant = jugerCouverture(demande, avant, []).exigences.length
-  const ecransApres = jugerCouverture(demande, apres, []).exigences.length
-  const verdict = comparerJuges(noter(avant), noter(apres), {
-    avant: ecransAvant,
-    apres: ecransApres,
+  // ── LES SIX JUGES, SUR L'AVANT ET SUR L'APRÈS.
+  //
+  // La couverture se compare sur son TAUX, pas sur un comptage
+  // d'exigences : l'ancien `exigences.length` ne bougeait jamais — il
+  // comptait ce que le CAHIER demande, qu'une retouche ne change pas.
+  // Il était donc un contrôle qui ne pouvait pas rougir.
+  const contexte = {
+    demande,
+    entites: declarationDe(docAvant),
+    devise:
+      typeof (docAvant as { configuration?: { currency?: unknown } } | null)?.configuration
+        ?.currency === 'string'
+        ? ((docAvant as { configuration: { currency: string } }).configuration.currency)
+        : undefined,
+  }
+  const noteAvant = await noter(avant, contexte)
+  const noteApres = await noter(apres, contexte)
+  const verdict = comparerJuges(noteAvant.notes, noteApres.notes, {
+    avant: noteAvant.taux,
+    apres: noteApres.taux,
   })
 
   if (verdict.regressions.length > 0) {

@@ -743,6 +743,16 @@ export async function POST(req: Request) {
           // paraissent abandonnées, et M1 arrête SYSTÉMATIQUEMENT. Le
           // piège ne casse rien : il rend toute modification impossible.
           entites: entitesCourantes,
+          // ── ET LA CONFIGURATION AVEC (b, 2026-11-04).
+          //
+          // MESURÉ : `sections_acquises.configuration` vaut `{}` sur les
+          // œuvres existantes. Le juge de devise de la RETOUCHE n'avait
+          // donc rien à comparer — il aurait été inerte, comme la
+          // couverture l'était en recevant zéro écran.
+          //
+          // Un juge inerte est pire qu'un juge absent : son zéro se lit
+          // comme « aucun défaut ».
+          configuration,
         }
       : null,
     // ── LE DÉTAIL DE CHAQUE TOUR, ET LE BRUT DU DERNIER ESSAI.
