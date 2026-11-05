@@ -31,6 +31,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin'
 import { TABLE_GENERATIONS } from '@/lib/apps/journal'
 import { assembler } from '@/lib/apps/bac-a-sable'
 import { pageAutonome } from '@/lib/apps/boucle-directe'
+import { adressePubliee } from '@/lib/apps/sous-domaine'
 
 export const runtime = 'nodejs'
 
@@ -47,7 +48,9 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
   // comparer ensuite laisse une fenêtre où l'on a déjà la donnée d'autrui.
   const lu = await supabaseAdmin
     .from(TABLE_GENERATIONS)
-    .select('statut, document, nom, demande')
+    // ── LA PUBLICATION EST LUE ICI, et une colonne non sélectionnée
+    //    n'arrive JAMAIS : l'écran resterait muet sans que rien ne rougisse.
+    .select('statut, document, nom, demande, publication_slug, publication_jeton')
     .eq('id', id)
     .eq('owner_id', garde.userId)
     .maybeSingle()
@@ -76,7 +79,21 @@ export async function GET(req: Request, ctx: { params: Promise<{ id: string }> }
   const titre =
     typeof lu.data.nom === 'string' && lu.data.nom !== '' ? lu.data.nom : 'Votre application'
 
-  return new Response(pageAutonome(v.code, titre), {
+  // ── L'APERÇU D'UNE ŒUVRE PUBLIÉE NE DOIT PLUS MENTIR (2026-11-05).
+  //
+  // Sans cette adresse, la page partait avec `url: ''` et affichait
+  // « Votre base de données sera créée à la publication » — sur une œuvre
+  // dont la base existe déjà, dont le schéma est posé, dont les données
+  // sont là.
+  //
+  // ET ON N'INJECTE PAS LA BASE POUR AUTANT : mesuré dans les deux
+  // moteurs, un cadre `sandbox="allow-scripts"` a `location.origin` à
+  // `null`, un `localStorage` qui jette et pas de `navigator.locks`. Une
+  // origine opaque envoie `Origin: null`, qu'aucun service n'autorise :
+  // l'injecter échangerait un mensonge contre un plantage.
+  const adresse = adressePubliee(lu.data.publication_slug, lu.data.publication_jeton)
+
+  return new Response(pageAutonome(v.code, titre, undefined, 'apercu', adresse), {
     headers: {
       'Content-Type': 'text/html; charset=utf-8',
       // PRIVÉ : cette page porte l'œuvre d'une personne. Aucun cache partagé

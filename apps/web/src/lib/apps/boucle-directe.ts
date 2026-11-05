@@ -882,6 +882,43 @@ const BANDEAU_APERCU =
   'Pour l’instant c’est un aperçu : ce que vous saisissez ici ne sera pas ' +
   'conservé.</div>'
 
+/**
+ * L'APERÇU D'UNE ŒUVRE DÉJÀ PUBLIÉE — et c'est le défaut mesuré le
+ * 2026-11-05.
+ *
+ * ── CE QUE L'ÉCRAN DISAIT, ET POURQUOI C'ÉTAIT FAUX.
+ *
+ * L'atelier appelle `pageAutonome(code, titre)` SANS configuration : la
+ * page part donc avec `url: ''`, et le bandeau de l'aperçu s'affiche —
+ *
+ *     « Votre base de données sera créée à la publication. »
+ *
+ * Sur une œuvre DÉJÀ publiée, cette phrase est un mensonge : la base
+ * existe, le schéma est posé, les données sont là. La personne lit qu'il
+ * reste une étape alors qu'elle l'a franchie.
+ *
+ * ── ET LA BASE NE PEUT PAS ÊTRE INJECTÉE ICI, C'EST STRUCTUREL.
+ *
+ * MESURÉ dans les deux moteurs, sur un cadre `sandbox="allow-scripts"` :
+ *
+ *     location.origin  = null        localStorage    → SecurityError
+ *     navigator.locks  = undefined   crypto.subtle   = undefined
+ *     isSecureContext  = false
+ *
+ * Une origine opaque envoie `Origin: null`, et aucun service ne
+ * l'autorise. L'aperçu NE PEUT PAS atteindre la base — injecter l'adresse
+ * ne ferait qu'échanger un mensonge contre un plantage.
+ *
+ * Donc on le DIT, et on donne le seul endroit où ça marche : l'adresse
+ * publiée.
+ */
+const BANDEAU_PUBLIEE = (adresse: string): string =>
+  CADRE_BANDEAU +
+  '<strong>Les données ne sont pas accessibles depuis cet aperçu.</strong> ' +
+  'Ouvrez votre application publiée pour vous connecter et voir vos ' +
+  `données : <a href="${adresse}" target="_blank" rel="noopener noreferrer" ` +
+  `style="color:#7a4a00;font-weight:600">${adresse.replace(/^https:\/\//u, '')}</a></div>`
+
 /** LE TÉLÉCHARGEMENT : ce qu'il reste à faire, et où c'est écrit. */
 const BANDEAU_TELECHARGE =
   CADRE_BANDEAU +
@@ -904,6 +941,14 @@ export function pageAutonome(
    * le seul endroit où le LISEZ-MOI existe et où il y a un geste à faire.
    */
   destination: 'apercu' | 'archive' = 'apercu',
+  /**
+   * L'ADRESSE PUBLIÉE DE CETTE ŒUVRE, quand elle en a une.
+   *
+   * Elle ne change RIEN à la page servie au public : elle ne sert qu'à
+   * l'aperçu, pour pointer vers l'endroit où les données sont joignables.
+   * Absente, le bandeau d'avant est rendu tel quel.
+   */
+  adressePubliee: string | null = null,
 ): string {
   const sur = titre.replace(/[<>&"]/gu, '')
   // ── LA CONFIGURATION EST SÉRIALISÉE EN JSON, PAS INTERPOLÉE À LA MAIN.
@@ -958,7 +1003,21 @@ export function pageAutonome(
     // LE BANDEAU DÉPEND DE LÀ OÙ LA PAGE EST LUE, pas seulement de l'état
     // de sa base : la même absence se dit « ce sera créé » dans l'atelier
     // et « voici ce qu'il reste à faire » dans l'archive.
-    injectee.url === '' ? (destination === 'archive' ? BANDEAU_TELECHARGE : BANDEAU_APERCU) : '',
+    // ── TROIS SITUATIONS, TROIS PHRASES. La deuxième était un mensonge.
+    //
+    //   l'archive          → ce qu'il reste à faire, et où c'est écrit
+    //   l'aperçu, publiée  → où les données sont joignables (2026-11-05)
+    //   l'aperçu, pas encore → ce qui va se passer
+    //
+    // Et une œuvre SERVIE au public ne porte aucun bandeau : sa base est
+    // là et son origine est la sienne.
+    injectee.url !== ''
+      ? ''
+      : destination === 'archive'
+        ? BANDEAU_TELECHARGE
+        : adressePubliee !== null
+          ? BANDEAU_PUBLIEE(adressePubliee)
+          : BANDEAU_APERCU,
     '<div id="racine"></div>',
     `<script type="module">${ENVELOPPE_MODULE.avant}${code}${ENVELOPPE_MODULE.apres}</script>`,
     '</body></html>',

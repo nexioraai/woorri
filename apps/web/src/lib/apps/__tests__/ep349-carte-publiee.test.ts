@@ -26,6 +26,7 @@
 import { describe, expect, it } from 'vitest'
 import { join } from 'node:path'
 import { lireSource } from './lire-source'
+import { adressePubliee } from '../sous-domaine'
 
 const SRC = join(__dirname, '..', '..', '..')
 const LISTE = join(SRC, 'app', 'api', 'generateur', 'mes-applications', 'route.ts')
@@ -39,13 +40,30 @@ describe('EP-349 · la carte d’une œuvre publiée', () => {
     expect(src, 'la publication n’est pas lue en base').toMatch(
       /\.select\([^)]*publication_slug[^)]*publication_jeton/u,
     )
-    expect(src, 'l’adresse n’est pas rendue').toMatch(/adresse:/u)
-    // ── LES DEUX FORMES D'ADRESSE, et le sous-domaine d'abord.
+    expect(src, 'l’adresse n’est pas rendue').toMatch(/adresse: adressePubliee\(/u)
+
+    // ── LES DEUX FORMES D'ADRESSE — ET ON LES EXERCE, on ne les lit pas.
+    //
+    // MON PREMIER JET ANCRAIT LE LITTÉRAL `.deribfy.app` DANS CETTE
+    // ROUTE. Le lendemain l'atelier a eu besoin de la même adresse, la
+    // construction est partie dans `sous-domaine.ts` — et ce contrôle a
+    // rougi sur un changement JUSTE. Huitième fois cette semaine qu'une
+    // ancre mesure un RANGEMENT au lieu d'une propriété.
     //
     // Une œuvre peut être publiée sous un sous-domaine OU sous son seul
     // jeton. N'en rendre qu'une laisserait la moitié des cartes muettes.
-    expect(src, 'le sous-domaine n’est pas construit').toMatch(/\.deribfy\.app/u)
-    expect(src, 'la publication par jeton est oubliée').toMatch(/\/p\/\$\{g\.publication_jeton\}/u)
+    expect(adressePubliee('snenak', 'jt-1'), 'le sous-domaine ne gagne pas').toBe(
+      'https://snenak.deribfy.app',
+    )
+    expect(adressePubliee('', 'jt-1'), 'la publication par jeton est oubliée')?.toMatch(
+      /\/p\/jt-1$/u,
+    )
+    // ── ET UNE ŒUVRE NON PUBLIÉE N'A PAS D'ADRESSE.
+    //
+    // `null`, pas une chaîne vide : une chaîne vide dans un `href`
+    // recharge la page courante, et la carte aurait l'air cliquable.
+    expect(adressePubliee('', ''), 'une œuvre non publiée reçoit une adresse').toBeNull()
+    expect(adressePubliee(undefined, null), 'des valeurs absentes passent').toBeNull()
   })
 
   it('② LA CARTE AFFICHE L’ADRESSE, EN CLAIR ET CLIQUABLE', () => {

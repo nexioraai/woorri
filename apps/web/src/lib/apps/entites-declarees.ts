@@ -250,8 +250,9 @@ export function blocBase(entites: readonly EntiteDeclaree[]): string {
     '',
     "     import { createClient } from '@supabase/supabase-js'",
     '     const b = window.DERIBFY_BASE',
-    '     const enBase = b.url !== \'\'   // vrai → la base, faux → un état',
+    "     const enBase = b.url !== '' && window.origin !== 'null'",
     '     const base = enBase ? createClient(b.url, b.clePubliable, b.options) : null',
+
     '',
     '   Emploie `b.options` TEL QUEL : il dirige lecture ET écriture vers le',
     '   bon endroit. Ne pose aucun en-tête à la main.',

@@ -27,6 +27,7 @@
  * une à la fois.
  */
 import { NextResponse } from 'next/server'
+import { adressePubliee } from '@/lib/apps/sous-domaine'
 import { requireAuthenticatedUser } from '@/lib/auth/require-authenticated-user'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { TABLE_GENERATIONS } from '@/lib/apps/journal'
@@ -90,12 +91,10 @@ export async function GET(req: Request) {
       // Livrée dit que la machine a fini. Publiée dit que des gens peuvent
       // l'ouvrir. Les confondre, c'est perdre la seule information qui
       // distingue une carte des cinq autres.
-      adresse:
-        typeof g.publication_slug === 'string' && g.publication_slug !== ''
-          ? `https://${g.publication_slug}.deribfy.app`
-          : typeof g.publication_jeton === 'string' && g.publication_jeton !== ''
-            ? `https://www.deribfy.com/p/${g.publication_jeton}`
-            : null,
+      // L'ADRESSE SORT D'UN SEUL ENDROIT (2026-11-05) : l'atelier en a
+      // besoin à son tour, et un deuxième exemplaire aurait divergé au
+      // premier changement de domaine.
+      adresse: adressePubliee(g.publication_slug, g.publication_jeton),
     }
   })
 

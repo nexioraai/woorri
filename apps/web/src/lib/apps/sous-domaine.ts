@@ -42,6 +42,34 @@
 export const DOMAINE_PUBLIC = 'deribfy.app'
 
 /**
+ * L'ADRESSE OÙ UNE ŒUVRE EST SERVIE — ou `null` si elle ne l'est pas.
+ *
+ * ── POURQUOI ELLE VIT ICI ET PLUS DANS UNE ROUTE.
+ *
+ * Elle était écrite à la main dans `mes-applications` ; l'atelier en a
+ * besoin à son tour pour dire « ouvrez votre application publiée », et
+ * un troisième exemplaire aurait divergé au premier changement de
+ * domaine. Deux formes, dans cet ordre :
+ *
+ *   le sous-domaine, quand il existe — c'est celle qu'un humain retient
+ *   le jeton sinon — toute publication en a un
+ *
+ * N'en rendre qu'une laisserait la moitié des œuvres sans adresse.
+ */
+export function adressePubliee(
+  slug: unknown,
+  jeton: unknown,
+  // L'ORIGINE DU PRODUIT, pas celle du contenu client : `/p/<jeton>` est
+  // servi par Deribfy lui-même. Le dépôt la lit dans l'environnement
+  // ailleurs (`handlePaidCheckout`), avec ce même repli.
+  origine = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://www.deribfy.com',
+): string | null {
+  if (typeof slug === 'string' && slug !== '') return `https://${slug}.${DOMAINE_PUBLIC}`
+  if (typeof jeton === 'string' && jeton !== '') return `${origine}/p/${jeton}`
+  return null
+}
+
+/**
  * LE TÉMOIN DE LA SONDE — il prouve DEUX choses, et il a fallu une mesure
  * en production pour comprendre ce qu'il lui fallait.
  *
