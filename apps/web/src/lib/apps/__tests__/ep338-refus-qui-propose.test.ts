@@ -63,8 +63,27 @@ describe('EP-338 · le refus qui propose', () => {
       PERIMETRE_RETOUCHE,
       'le texte gris promet encore de dire si c’est possible autrement',
     ).not.toMatch(/possible autrement/u)
-    // IL DIT CE QUI SE PASSE RÉELLEMENT — et l'écran le fait.
-    expect(PERIMETRE_RETOUCHE, 'le texte gris ne dit pas la sortie').toMatch(/régénérer/u)
+    // ── LA PROPRIÉTÉ, PAS LE MOT (2026-11-05).
+    //
+    // Ce contrôle exigeait « régénérer » — la sortie du périmètre FERMÉ.
+    // Le périmètre est ouvert depuis : la retouche change la logique et
+    // ajoute des écrans, et il n'y a plus de régénération à proposer.
+    //
+    // Exiger le mot aurait fait rougir sur l'amélioration même qu'on
+    // venait de livrer. C'est la quatrième fois cette semaine qu'une
+    // garde fige un état du produit : on lit la propriété.
+    //
+    // LA PROPRIÉTÉ : le texte gris annonce ce que le produit FAIT
+    // vraiment — ici, prévenir avant de toucher aux données. Et il le
+    // fait : `phraseAvantMigration` arrête la modification tant que la
+    // personne n'a pas lu ce qui arrivera.
+    expect(PERIMETRE_RETOUCHE, 'le texte gris ne dit pas ce qui se passe').toMatch(
+      /dira avant/u,
+    )
+    expect(
+      lireSource(join(SRC, 'app', 'api', 'generateur', 'retoucher', 'route.ts')),
+      'le texte gris promet un avertissement que la route ne donne pas',
+    ).toMatch(/phraseAvantMigration\(plan, instantaneAvant\)/u)
   })
 
   it('③ L’ÉCRAN PROPOSE LA RÉGÉNÉRATION, DEMANDE DÉJÀ ÉCRITE', () => {

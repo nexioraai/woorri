@@ -301,6 +301,7 @@ export default function AtelierPage() {
       const d = (await res.json().catch(() => ({}))) as {
         ok?: boolean; error?: string; horsPerimetre?: boolean; raison?: string;
         aConfirmer?: boolean; message?: string; fichiers?: string[]; coutUsd?: number; rang?: number;
+        migration?: string;
       };
       // CE QUI A ÉTÉ DÉPENSÉ SE DIT, MÊME QUAND ÇA RATE. Un refus gratuit et
       // un refus payé ne sont pas la même nouvelle.
@@ -328,8 +329,16 @@ export default function AtelierPage() {
       }
 
       setTexte('');
+      // ── CE QUI EST ARRIVÉ AUX DONNÉES PASSE DEVANT LE RESTE.
+      //
+      // La phrase vient des NOMBRES que le pipeline a comptés —
+      // `count(*)` avant, `count(*)` après — jamais d'un texte engendré.
+      // L'affaire Replit tient en une ligne : les données ÉTAIENT
+      // récupérables, et c'est l'agent qui a affirmé le contraire.
       setAvis(
-        `Modifié — ${String((d.fichiers ?? []).length)} fichier(s) touché(s)${paye}.`,
+        d.migration === undefined
+          ? `Modifié — ${String((d.fichiers ?? []).length)} fichier(s) touché(s)${paye}.`
+          : `${d.migration}${paye}`,
       );
       // ── LE CŒUR DE LA BOUCLE. On ne demande rien à la personne : le fil
       // et l'aperçu se remettent à jour, et le vert apparaît.

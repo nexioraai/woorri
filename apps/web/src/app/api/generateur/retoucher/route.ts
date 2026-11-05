@@ -27,6 +27,50 @@ import { requireAuthenticatedUser } from '@/lib/auth/require-authenticated-user'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { TABLE_GENERATIONS, TABLE_VERSIONS } from '@/lib/apps/journal'
 import { declarationDe } from '@/lib/apps/declaration-depuis-schema'
+import { projectAirSchema } from '@deribfy/air-schema'
+import {
+  fusionnerEntites,
+  lireDeclarationEnRoute,
+} from '@/lib/apps/declaration-en-route'
+import { comparerDeclarations, phraseArret } from '@/lib/apps/migration-oeuvre'
+import { phraseApresMigration, phraseAvantMigration } from '@/lib/apps/phrase-migration'
+import { emettreMigrationSql } from '@/lib/apps/migration-sql'
+import { appliquerMigration } from '@/lib/apps/connexion-migrateur'
+import { emettrePolitiquesSql, emettreSchemaSql } from '@deribfy/compiler'
+import { prendreInstantane, type Instantane } from '@/lib/apps/instantane-migration'
+import { configMigrateur } from '@/lib/apps/connexion-migrateur'
+import { nomSchemaOeuvre } from '@/lib/apps/poser-oeuvre'
+
+/**
+ * L'INSTANTANÉ D'UNE ŒUVRE — ou `null` si sa base n'est pas joignable.
+ *
+ * Une œuvre non publiée n'a PAS de schéma : il n'y a alors rien à
+ * compter, et c'est la vérité, pas un échec. On rend `null` et la phrase
+ * d'avant ne parle que de ce qu'elle ajoute.
+ */
+async function instantaneDeLOeuvre(id: string): Promise<Instantane | null> {
+  const cfg = configMigrateur(process.env)
+  if (!cfg.ok) return null
+  const { Client } = (await import('pg')) as unknown as {
+    Client: new (c: { connectionString: string; statement_timeout?: number }) => {
+      connect: () => Promise<void>
+      query: (q: string) => Promise<{ rows?: Record<string, unknown>[] }>
+      end: () => Promise<void>
+    }
+  }
+  const client = new Client({ connectionString: cfg.dsn, statement_timeout: 30_000 })
+  try {
+    await client.connect()
+    return await prendreInstantane(
+      async (sql) => (await client.query(sql)).rows ?? [],
+      nomSchemaOeuvre(id),
+    )
+  } catch {
+    return null
+  } finally {
+    await client.end().catch(() => undefined)
+  }
+}
 import { jugerExecution } from '@/lib/apps/juge-execution'
 import { jugerDevise } from '@/lib/apps/juge-devise'
 import { jugerPersistance } from '@/lib/apps/juge-persistance'
@@ -281,9 +325,38 @@ export async function POST(req: Request) {
   const apres = new Map(avant)
   for (const f of rendus) apres.set(f.chemin, f.contenu)
 
+  // ── LA DÉCLARATION QUE LA MODIFICATION APPORTE (M4, 2026-11-05).
+  //
+  // Le périmètre est ouvert : une modification peut avoir besoin d'une
+  // donnée de plus. Elle la DÉCLARE, dans la même grammaire que la
+  // génération — `DONNEES.json`, retiré des fichiers livrés.
+  const declaration = lireDeclarationEnRoute(
+    apres,
+    (e: unknown) => projectAirSchema.shape.entities.element.safeParse(e).success,
+  )
+  const fichiersLivres = declaration.fichiers
+  const entitesAvant = declarationDe(docAvant)
+  const plan = comparerDeclarations(
+    entitesAvant,
+    declaration.entites.length > 0
+      ? fusionnerEntites(entitesAvant, declaration.entites)
+      : entitesAvant,
+  )
+  // ── UN ARRÊT DE M1 NE SE DISCUTE PAS, ET NE SE CONFIRME PAS.
+  //
+  // Une table abandonnée, un type changé, une unicité ajoutée : ce sont
+  // les gestes qui perdent des données. On ne les propose pas à
+  // l'approbation — on les refuse, et on dit laquelle.
+  if (!plan.peutAvancer) {
+    return NextResponse.json(
+      { error: phraseArret(plan) ?? 'Cette modification toucherait à vos données.', coutUsd },
+      { status: 409 },
+    )
+  }
+
   // ── L'ASSEMBLAGE EST LE PREMIER JUGE : du code qui ne compile pas ne
   // mérite pas qu'on fasse tourner les autres.
-  const bundle = await assembler(apres)
+  const bundle = await assembler(fichiersLivres)
   if (!bundle.ok) {
     return NextResponse.json(
       {
@@ -311,7 +384,7 @@ export async function POST(req: Request) {
         : undefined,
   }
   const noteAvant = await noter(avant, contexte)
-  const noteApres = await noter(apres, contexte)
+  const noteApres = await noter(fichiersLivres, contexte)
   const verdict = comparerJuges(noteAvant.notes, noteApres.notes, {
     avant: noteAvant.taux,
     apres: noteApres.taux,
@@ -348,6 +421,88 @@ export async function POST(req: Request) {
     )
   }
 
+  // ── CE QUI VA ARRIVER AUX DONNÉES SE DIT AVANT, EN FRANÇAIS.
+  //
+  // Pas le SQL : les utilisateurs sont des commerçants. Leur montrer une
+  // migration, c'est leur demander d'approuver ce qu'ils ne peuvent pas
+  // lire — ils approuveraient toujours, et l'approbation ne vaudrait
+  // rien.
+  //
+  // ET LA PHRASE VIENT DU PLAN MESURÉ, jamais d'un texte du modèle.
+  // L'affaire Replit tient en une ligne : les données ÉTAIENT
+  // récupérables, et c'est l'agent qui a affirmé le contraire.
+  let instantaneAvant: Instantane | null = null
+  if (plan.ajouts.length > 0) {
+    instantaneAvant = await instantaneDeLOeuvre(id)
+    const phrase =
+      instantaneAvant === null ? null : phraseAvantMigration(plan, instantaneAvant)
+    if (phrase !== null && !confirme) {
+      return NextResponse.json(
+        { aConfirmer: true, message: phrase, migration: true, coutUsd },
+        { status: 409 },
+      )
+    }
+  }
+
+  // ── LA MIGRATION S'APPLIQUE AVANT L'ÉCRITURE.
+  //
+  // Si elle échoue, le document n'a pas bougé : l'application sert
+  // encore sa version d'avant, et les données sont intactes. L'inverse
+  // laisserait un document qui parle de colonnes que la base n'a pas.
+  const entitesApres =
+    declaration.entites.length > 0
+      ? fusionnerEntites(entitesAvant, declaration.entites)
+      : entitesAvant
+  let schemaApres = schemaPrecedent
+  let politiquesApres = politiquesPrecedentes
+  let apresMigration: string | null = null
+  if (plan.ajouts.length > 0) {
+    schemaApres = emettreSchemaSql([...entitesApres])
+    politiquesApres = emettrePolitiquesSql([...entitesApres], id)
+    // UNE ŒUVRE NON PUBLIÉE N'A PAS DE SCHÉMA À MIGRER : son SQL partira
+    // entier à la publication. On ne migre que ce qui existe.
+    if (instantaneAvant !== null) {
+      const m = emettreMigrationSql(plan, entitesApres, id)
+      if (m.refus.length > 0) {
+        return NextResponse.json(
+          {
+            error:
+              'Cette modification demande un changement de données que nous ne ' +
+              'savons pas faire sans risque. Votre application n’a pas changé.',
+            coutUsd,
+          },
+          { status: 409 },
+        )
+      }
+      const applique = await appliquerMigration({
+        schema: nomSchemaOeuvre(id),
+        sql: m.sql,
+        env: process.env,
+      })
+      if (!applique.ok) {
+        return NextResponse.json(
+          {
+            error:
+              'Le changement de données n’a pas pu être appliqué. Votre ' +
+              'application n’a pas changé et vos données sont intactes.',
+            motif: applique.motif,
+            coutUsd,
+          },
+          { status: 409 },
+        )
+      }
+      // ── ET CE QUI S'EST PASSÉ SE DIT AVEC LES NOMBRES QU'ON A COMPTÉS.
+      //
+      // Pas une narration : l'instantané d'avant et celui d'après, côte à
+      // côte. Si quelqu'un doute, il relit deux `count(*)`.
+      const instantaneApres = await instantaneDeLOeuvre(id)
+      apresMigration =
+        instantaneApres === null
+          ? null
+          : phraseApresMigration(plan, instantaneAvant, instantaneApres)
+    }
+  }
+
   // ── ET SEULEMENT MAINTENANT ON ÉCRIT. La version D'ABORD : si elle
   // échoue, le document courant n'a pas bougé.
   const tous = await supabaseAdmin.from(TABLE_VERSIONS).select('rang').eq('generation_id', id)
@@ -365,11 +520,11 @@ export async function POST(req: Request) {
   // la version precedente est donc exactement le bon.
   const version: VersionDocument = {
     forme: 'document',
-    fichiers: Object.fromEntries(apres),
+    fichiers: Object.fromEntries(fichiersLivres),
     nom: typeof lu.data.nom === 'string' ? lu.data.nom : null,
     coutUsd: Number(coutUsd.toFixed(4)),
-    schema: schemaPrecedent,
-    politiques: politiquesPrecedentes,
+    schema: schemaApres,
+    politiques: politiquesApres,
   }
   const ecrit = await supabaseAdmin.from(TABLE_VERSIONS).insert({
     generation_id: id,
@@ -390,8 +545,9 @@ export async function POST(req: Request) {
     .update({
       document: {
         fichiers: Object.fromEntries(apres),
-        schema: schemaPrecedent,
-        politiques: politiquesPrecedentes,
+        schema: schemaApres,
+        politiques: politiquesApres,
+        entites: entitesApres,
       },
       version_courante: rang,
     })
@@ -410,7 +566,9 @@ export async function POST(req: Request) {
   }
 
   return NextResponse.json(
-    { ok: true, rang, fichiers: rendus.map((f) => f.chemin), coutUsd: Number(coutUsd.toFixed(4)) },
+    { ok: true,
+      // CE QUI EST ARRIVÉ AUX DONNÉES, AVEC LES NOMBRES COMPTÉS.
+      ...(apresMigration === null ? {} : { migration: apresMigration }), rang, fichiers: rendus.map((f) => f.chemin), coutUsd: Number(coutUsd.toFixed(4)) },
     { headers: { 'Cache-Control': 'no-store' } },
   )
 }

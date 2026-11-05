@@ -85,9 +85,9 @@ export function plafondRetouche(
  * le fait : il propose la régénération, bouton compris.
  */
 export const PERIMETRE_RETOUCHE =
-  'Textes, couleurs, libellés, un champ sur un écran qui existe. ' +
-  'Pour une règle de calcul ou un écran nouveau, il faut régénérer — ' +
-  'l’écran vous le proposera, avec votre demande déjà écrite.'
+  'Décrivez ce que vous voulez changer ou ajouter : un calcul, un écran, ' +
+  'une donnée de plus. Votre application garde son adresse, sa base et ses ' +
+  'utilisateurs. Si des données doivent changer, on vous le dira avant.'
 
 /**
  * LA DÉCLARATION ACTUELLE, MONTRÉE AU MODÈLE (M4 a, 2026-11-04).
@@ -152,10 +152,25 @@ export const CONSIGNE_RETOUCHE = [
   'au format « === chemin === » suivi du contenu COMPLET du fichier.',
   'Un fichier que tu rends remplace l’ancien : ne rends jamais un extrait.',
   '',
-  'PÉRIMÈTRE : textes, couleurs, libellés, un champ sur un écran existant.',
-  'Si la demande sort de ce périmètre — un écran nouveau, une fonction',
-  `nouvelle, une connexion externe —, réponds « ${HORS_PERIMETRE} » suivi`,
-  'de la raison en une phrase, et NE RENDS AUCUN FICHIER.',
+  'TU PEUX CHANGER LA LOGIQUE ET AJOUTER DES ÉCRANS. Une règle de calcul,',
+  'un écran de plus, une donnée de plus : c’est le métier de cette',
+  'application qui grandit, et c’est ce qu’on te demande.',
+  '',
+  'CE QUI RESTE HORS DE TA PORTÉE, et c’est court : une connexion à un',
+  'service extérieur (paiement, courriel, API tierce), ou quoi que ce soit',
+  `qui exige une clé qu’on ne t’a pas donnée. Réponds alors « ${HORS_PERIMETRE} »`,
+  'suivi de la raison en une phrase, et NE RENDS AUCUN FICHIER.',
+  '',
+  'ET SI TA MODIFICATION A BESOIN D’UNE DONNÉE DE PLUS, DÉCLARE-LA — ne la',
+  'range ni dans un état React ni dans le navigateur. Rends ce fichier EN',
+  'PLUS des autres (il ne part pas dans l’application) :',
+  '',
+  '   === DONNEES.json ===',
+  '   [{"name":"releve","fields":[{"name":"tranche","type":"text"}]}]',
+  '',
+  'REPRENDS LA LISTE CI-DESSOUS TELLE QUELLE et ajoute à côté. Une table',
+  'que tu renommes ou que tu omets sera comprise comme ABANDONNÉE, et la',
+  'modification sera refusée pour protéger ce qui y est déjà saisi.',
   '',
   'TA RAISON NE CITE JAMAIS UN FICHIER NI UN DOCUMENT DE L’APPLICATION.',
   'La personne ne sait pas qu’ils existent, et ils n’ont aucune autorité sur',
