@@ -35,6 +35,10 @@
 import { describe, expect, it } from 'vitest'
 import { comparerInstantanes, type Instantane } from '../instantane-migration'
 import { verifierMigration } from '../migration-sql'
+import { emettreSchemaSql } from '@deribfy/compiler'
+import { declarationDepuisSchema } from '../declaration-depuis-schema'
+import { comparerDeclarations } from '../migration-oeuvre'
+import type { EntiteDeclaree } from '../entites-declarees'
 
 const vide: Instantane = { lignes: {}, remplies: {}, comptes: 0 }
 
@@ -97,6 +101,52 @@ describe('EP-342 · M3, la migration mesurée', () => {
     ]) {
       expect(verifierMigration(sql).ok, `« ${sql.slice(0, 60)}… » est émettable`).toBe(false)
     }
+  })
+
+  it('② LE FAUX ARRÊT SUR LE TYPE — il aurait bloqué TOUT M4', () => {
+    // ── LA MESURE, AVANT CORRECTION.
+    //
+    //   relue du SQL : fld_date:text   ·   du modèle : fld_date:date
+    //   → type-change:date → arrêts : 1 → peutAvancer : FALSE
+    //
+    // L'ancienne déclaration d'une œuvre d'avant vient de la RELECTURE
+    // de son SQL ; la nouvelle vient du MODÈLE. Toute œuvre portant un
+    // champ `date` se serait arrêtée à CHAQUE modification, pour
+    // toujours — garde étanche, produit inutilisable, la même famille
+    // que le piège des identifiants.
+    const duModele: EntiteDeclaree[] = [
+      {
+        id: 'ent_releve',
+        name: 'releve',
+        fields: [
+          { id: 'fld_date', name: 'date', type: 'date', required: true },
+          { id: 'fld_i', name: 'i', type: 'number', required: true },
+        ],
+      },
+    ]
+    const relue = declarationDepuisSchema(emettreSchemaSql(duModele))
+    expect(relue[0]?.fields[0]?.type, 'la relecture ne perd plus le type').toBe('text')
+    const plan = comparerDeclarations(relue, duModele)
+    expect(plan.arrets, `faux arrêt : ${JSON.stringify(plan.arrets)}`).toEqual([])
+    expect(plan.peutAvancer, 'une œuvre avec un champ date reste bloquée').toBe(true)
+  })
+
+  it('②bis MAIS UN VRAI CHANGEMENT DE TYPE ARRÊTE TOUJOURS', () => {
+    // Sinon on aurait échangé un faux arrêt contre une vraie perte :
+    // `alter column type` peut échouer ou tronquer.
+    const a: EntiteDeclaree[] = [
+      { id: 'ent_t', name: 't', fields: [{ id: 'fld_x', name: 'x', type: 'number', required: false }] },
+    ]
+    const b: EntiteDeclaree[] = [
+      { id: 'ent_t', name: 't', fields: [{ id: 'fld_x', name: 'x', type: 'text', required: false }] },
+    ]
+    expect(comparerDeclarations(a, b).arrets, 'number → text passe').toHaveLength(1)
+    // ET LES SYNONYMES SQL NE SONT PAS DES CHANGEMENTS : `date`, `email`,
+    // `url` s'écrivent tous `text` en base.
+    const c: EntiteDeclaree[] = [
+      { id: 'ent_t', name: 't', fields: [{ id: 'fld_x', name: 'x', type: 'email', required: false }] },
+    ]
+    expect(comparerDeclarations(b, c).arrets, 'text → email est pris pour un changement').toEqual([])
   })
 
   it('F③ ET LA FORME RÉELLE DU DÉPÔT PASSE TOUJOURS', () => {

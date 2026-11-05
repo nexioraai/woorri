@@ -51,7 +51,7 @@
  * règle divergerait, et la divergence se découvrirait sur les données de
  * quelqu'un.
  */
-import { nomColonne, nomTable, type EntiteDeclaree } from './entites-declarees'
+import { nomColonne, nomTable, typeSql, type EntiteDeclaree } from './entites-declarees'
 
 /** Un écart entre deux déclarations, et ce qu'il impliquerait. */
 export type EcartMigration =
@@ -175,8 +175,21 @@ export function comparerDeclarations(
         ecarts.push({ genre: 'champ-ajoute', table, champ })
         continue
       }
-      if (g.type !== f.type) {
-        ecarts.push({ genre: 'type-change', table, champ, avant: g.type, apres: f.type })
+      // ── ON COMPARE CE QUE LA BASE VERRA, PAS LE MOT DÉCLARÉ.
+      //
+      // L'ancienne déclaration d'une œuvre d'avant vient de la RELECTURE
+      // de son SQL — `date` en ressort `text`. La nouvelle vient du
+      // MODÈLE, qui écrit `date`. Comparer les mots produisait un
+      // `type-change` sur un champ qui n'a jamais bougé, donc un ARRÊT,
+      // donc une œuvre impossible à modifier pour toujours.
+      if (typeSql(g.type) !== typeSql(f.type)) {
+        ecarts.push({
+          genre: 'type-change',
+          table,
+          champ,
+          avant: typeSql(g.type),
+          apres: typeSql(f.type),
+        })
       }
       // L'unicité ne se RETIRE pas sans risque non plus : un index qu'on
       // laisse tomber est une contrainte que l'application croit tenir.

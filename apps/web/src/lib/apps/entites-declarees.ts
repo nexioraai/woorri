@@ -338,6 +338,32 @@ export const nomTable = (e: { readonly id: string }): string => sansPrefixe(e.id
 export const nomColonne = (f: { readonly id: string }): string => sansPrefixe(f.id)
 
 /**
+ * LE TYPE TEL QUE LA BASE LE VERRA — et c'est le seul qui se compare.
+ *
+ * ── LE FAUX ARRÊT QUI AURAIT BLOQUÉ TOUT M4 (2026-11-04).
+ *
+ * L'ancienne déclaration d'une œuvre d'avant vient de la RELECTURE de son
+ * SQL : un champ `date` en ressort `text`, parce que l'émetteur écrit les
+ * deux pareil. La nouvelle vient du MODÈLE, et lui écrit `date`.
+ *
+ * M1 classe un changement de type en ARRÊT. Mesuré :
+ *
+ *     relue du SQL : fld_date:text   ·   du modèle : fld_date:date
+ *     → type-change:date → peutAvancer : FALSE
+ *
+ * Toute œuvre portant un champ `date` se serait arrêtée à CHAQUE
+ * modification, pour toujours. Même famille que le piège des
+ * identifiants : garde étanche, produit inutilisable.
+ *
+ * On compare donc ce que la base verra, jamais le mot déclaré. Égal à
+ * `typeSqlDe` de `@deribfy/compiler`, qu'on ne peut pas importer ici
+ * (EP-314) — l'égalité est PROUVÉE par cliquet sur les 14 types connus,
+ * pas supposée.
+ */
+export const typeSql = (t: string): string =>
+  t === 'number' ? 'numeric' : t === 'boolean' ? 'boolean' : 'text'
+
+/**
  * LIT ET FILTRE CE QUE LE MODÈLE A DÉCLARÉ.
  *
  * ── TROIS GARDES, ET AUCUNE N'EST REDONDANTE.

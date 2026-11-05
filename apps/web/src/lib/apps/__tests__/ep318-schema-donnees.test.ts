@@ -29,7 +29,11 @@ import {
   typeSqlDe,
   type EntiteDonnees } from '@deribfy/compiler'
 import { projetLivrable, sectionSchema } from '../projet-livrable'
-import { nomColonne as nomColonneWeb, nomTable as nomTableWeb } from '../entites-declarees'
+import {
+  nomColonne as nomColonneWeb,
+  nomTable as nomTableWeb,
+  typeSql as typeSqlWeb,
+} from '../entites-declarees'
 
 const RACINE = join(__dirname, '..', '..', '..', '..', '..', '..')
 const lire = (...p: string[]): string => lireSource(join(RACINE, ...p))
@@ -305,6 +309,23 @@ describe('EP-318 · le schéma des données', () => {
       nomColonneWeb({ id: 'fld_a' }),
       'la règle de nommage des colonnes a divergé',
     ).toBe(nomColonne({ id: 'fld_a', type: 'text' }))
+    // ── ET LA RÈGLE DE TYPE, SUR LES QUATORZE TYPES CONNUS.
+    //
+    // M1 compare ce que la BASE verra, jamais le mot déclaré : une
+    // ancienne déclaration relue d'un SQL rend `text` là où le modèle
+    // écrit `date`. Comparer les mots produisait un `type-change` sur un
+    // champ qui n'a jamais bougé — donc un ARRÊT, donc une œuvre
+    // impossible à modifier pour toujours.
+    //
+    // Si cette copie divergeait, le faux arrêt reviendrait en silence.
+    for (const t of [
+      'text', 'number', 'date', 'boolean', 'json', 'email', 'url',
+      'image', 'money', 'integer', 'inconnu', 'phone', 'select', 'file',
+    ]) {
+      expect(typeSqlWeb(t), `la règle de type a divergé sur « ${t} »`).toBe(
+        typeSqlDe({ id: 'fld_x', type: t }),
+      )
+    }
     expect(typeSqlDe({ id: 'fld_b', type: 'inconnu' }), 'un type inconnu doit retomber sur text')
       .toBe('text')
   })
