@@ -34,6 +34,7 @@
 import { describe, expect, it } from 'vitest'
 import { join } from 'node:path'
 import { lireSource, lireSourceBrut } from './lire-source'
+import { litPublique } from '@deribfy/compiler'
 import { blocBase, lecturePubliqueDe, type EntiteDeclaree } from '../entites-declarees'
 
 const APPS = join(__dirname, '..')
@@ -136,6 +137,44 @@ describe('EP-352 · P1 · la lecture publique se déclare', () => {
     // ET UNE SORTIE EST DONNÉE : interdire sans dire quoi faire à la place
     // fait inventer autre chose.
     expect(bloc, 'aucune solution de rechange n’est proposée').toMatch(/lien vers un document/u)
+  })
+
+  it('⑥ LES DEUX LECTURES DU DRAPEAU SONT PROUVÉES ÉGALES', () => {
+    // ── UNE DUPLICATION QU'ON NE PEUT PAS SUPPRIMER SE PROUVE.
+    //
+    // `lecturePubliqueDe` vit ici ; `litPublique` vit dans le compilateur.
+    // Les joindre tirerait `node:sqlite` dans le paquet navigateur — le
+    // défaut qu'EP-314 garde et qui a déjà tué un build. C'est le même
+    // arrangement que `nomTable`/`nomColonne`, et la même obligation.
+    //
+    // SI ELLES DIVERGENT, LE DÉFAUT EST SILENCIEUX ET GRAVE : l'écran de
+    // P5 dirait « privée » pendant que le SQL émettrait une porte
+    // anonyme. Deux vérités, et c'est celle du moteur qui sert.
+    for (const v of [
+      true,
+      false,
+      undefined,
+      null,
+      'oui',
+      'non',
+      'true',
+      'false',
+      'public',
+      1,
+      0,
+      -1,
+      [],
+      {},
+      [true],
+      { valeur: true },
+      Number.NaN,
+      ' ',
+    ]) {
+      expect(
+        lecturePubliqueDe({ lecturePublique: v }),
+        `les deux lectures divergent sur ${JSON.stringify(v) ?? String(v)}`,
+      ).toBe(litPublique({ lecturePublique: v }))
+    }
   })
 
   it('⑤ LA PUBLICITÉ EST INCONNAISSABLE D’UN SQL DE SCHÉMA — et ça se dit', () => {

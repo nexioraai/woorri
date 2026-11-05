@@ -51,6 +51,21 @@ export interface EntiteDonnees {
   readonly fields: readonly ChampDonnees[]
   /** Un JOURNAL : rien ne s'y réécrit ni s'y efface. */
   readonly appendOnly?: boolean
+  /**
+   * SA LECTURE EST-ELLE PUBLIQUE ? (P2, 2026-11-05)
+   *
+   * `true` ⇒ une politique `select` pour `anon` s'ajoute, et SEULEMENT
+   * `select`. L'écriture n'est JAMAIS ouverte, quelle que soit la valeur.
+   *
+   * ABSENT ⇒ PRIVÉE : l'oubli va vers le sûr. Une table privée qu'on
+   * croyait publique se voit tout de suite — la page est vide. L'inverse
+   * ne se voit jamais.
+   *
+   * Ce drapeau ne change RIEN au schéma : il ne vit que dans les
+   * politiques. C'est pourquoi une déclaration relue d'un SQL de schéma
+   * ne peut pas le connaître (`publiciteInconnue`, côté apps/web).
+   */
+  readonly lecturePublique?: boolean
 }
 
 /** Le nom de table : l'identifiant, sans son préfixe. */

@@ -62,6 +62,32 @@ import { nomTable } from './schema-donnees.ts'
 export const ROLE_PORTE = 'authenticated'
 
 /**
+ * LE RÔLE DES VISITEURS SANS COMPTE.
+ *
+ * Supabase l'attribue à toute requête portant la clé publiable et AUCUN
+ * jeton de session. C'est lui qu'on ouvre, table par table, et seulement
+ * en lecture.
+ */
+export const ROLE_PUBLIC = 'anon'
+
+/**
+ * LA LECTURE DU DRAPEAU — stricte, et DUPLIQUÉE à dessein.
+ *
+ * `apps/web/entites-declarees.ts` porte la même règle : ce module-ci est
+ * importé par le compilateur, celui-là par un composant client. Les
+ * joindre tirerait `node:sqlite` dans le paquet navigateur — le défaut
+ * qu'EP-314 garde et qui a déjà tué un build. Une duplication qu'on ne
+ * peut pas supprimer doit être PROUVÉE ÉGALE, et EP-353 ⑥ les compare
+ * sur la même série de valeurs mal écrites.
+ *
+ * `=== true` et rien d'autre : `'non'` est VRAI par coercition en
+ * JavaScript, et c'est exactement ce qu'un modèle écrit quand on lui
+ * demande un booléen en français.
+ */
+export const litPublique = (e: { readonly lecturePublique?: unknown }): boolean =>
+  e.lecturePublique === true
+
+/**
  * LA REVENDICATION QUI DIT À QUELLE ŒUVRE ON APPARTIENT.
  *
  * ── LE DÉFAUT QUE CECI FERME, ET IL ÉTAIT GRAVE.
@@ -182,6 +208,17 @@ export function emettrePolitiquesSql(
       `drop policy if exists ${t}_porte on ${t};`,
       `drop policy if exists ${t}_lecture on ${t};`,
       `drop policy if exists ${t}_ajout on ${t};`,
+      // ── LE QUATRIÈME NOM TOMBE TOUJOURS, MÊME SUR UNE TABLE PRIVÉE.
+      //
+      // C'est la MÊME leçon que les trois précédents, et elle est plus
+      // grave ici. Une table déclarée publique puis REDEVENUE privée
+      // garderait sa politique `anon` : deux politiques permissives
+      // s'ADDITIONNENT en RLS, donc la table resterait lisible par
+      // n'importe qui — en silence, et sans qu'aucune déclaration ne le
+      // dise. Le `revoke all from anon` ci-dessus retire le privilège,
+      // mais une politique orpheline attendrait le premier `grant`
+      // suivant pour redevenir vivante.
+      `drop policy if exists ${t}_lecture_publique on ${t};`,
       // ── LA PORTE VÉRIFIE L'APPARTENANCE, PAS SEULEMENT LE RÔLE.
       //
       // `to authenticated` ne dit que « connecté » — pas « connecté ICI ».
@@ -217,6 +254,28 @@ export function emettrePolitiquesSql(
             `  with check (${CHEMIN_REVENDICATION} = '${id}');`,
             `grant select, insert, update, delete on ${t} to ${ROLE_PORTE};`,
           ]),
+      // ── ET LE SECOND RÉGIME, SEULEMENT SI LA TABLE LE DÉCLARE (P2).
+      //
+      // `for select` et rien d'autre. Pas de `with check` : une politique
+      // de lecture n'en prend pas, et en ajouter une ouvrirait l'écriture
+      // sans que le mot « insert » apparaisse nulle part.
+      //
+      // `using (true)` est VOLONTAIRE et il est borné par où il vit : la
+      // table est dans le schéma de CETTE œuvre, qu'aucune autre ne peut
+      // nommer. Comparer la revendication ici serait absurde — un visiteur
+      // sans compte n'a pas de jeton, donc pas de revendication, et la
+      // politique ne laisserait jamais passer personne.
+      //
+      // LE PRIVILÈGE SUIT LA POLITIQUE, et seulement `select` : sans le
+      // `grant`, la politique ne sert à rien ; avec `grant all`, le refus
+      // d'écriture ne tiendrait plus qu'à l'absence de politique.
+      ...(litPublique(e)
+        ? [
+            `create policy ${t}_lecture_publique on ${t} for select to ${ROLE_PUBLIC}`,
+            '  using (true);',
+            `grant select on ${t} to ${ROLE_PUBLIC};`,
+          ]
+        : []),
       '',
     )
   }

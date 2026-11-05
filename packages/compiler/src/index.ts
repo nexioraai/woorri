@@ -24,7 +24,12 @@ export type { ChampDonnees, EntiteDonnees } from "./schema-donnees.ts";
 // `derivePlanAcces` non portable vers le moteur direct.
 export {
   emettrePolitiquesSql,
+  // P2 : la lecture stricte du drapeau de publicite. Exportee pour que
+  // le cote web PROUVE que sa copie lui est egale -- une duplication
+  // qu'on ne peut pas supprimer doit etre prouvee egale (EP-352 ⑥).
+  litPublique,
   ROLE_PORTE,
+  ROLE_PUBLIC,
   ROLES_REFUSES,
   SANS_POLITIQUE,
 } from "./politiques-donnees.ts";
