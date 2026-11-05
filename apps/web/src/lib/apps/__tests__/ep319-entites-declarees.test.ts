@@ -358,9 +358,37 @@ describe('EP-319 · les données déclarées', () => {
     //      un modèle se trompe en ayant raison : « les appels d'offres
     //      sont publics » est vrai de l'appel, faux des offres reçues.
     //
-    // La borne reste une borne : 8 400, soit la mesure (8 260) plus la même
-    // marge étroite qu'avant. Une TROISIÈME règle devra se justifier aussi.
-    expect(avecBase.length, 'le bloc de base a enflé').toBeLessThan(8400)
+    // ── ET UNE TROISIÈME, LE MÊME JOUR : 8 400 → 9 000 (lot A1).
+    //
+    // MESURÉ : « administr » ×0 et « visiteur » ×0 dans les 8 226 signes
+    // émis. Conséquence pour TOUS les clients à données, pas pour un seul
+    // site — le corpus le dit :
+    //
+    //   faa9f0c3 · 4 tables · insert ×4 · update ×4 · delete ×1
+    //   15158240 · 1 table  · insert ×1 · update ×0 · delete ×0
+    //   a85966bc · 1 table  · insert ×1 · update ×0 · delete ×0
+    //
+    // Le modèle écrit spontanément un formulaire de création. MODIFIER et
+    // RETIRER manquent dans deux œuvres à tables sur trois : une faute de
+    // frappe y est définitive, et le propriétaire doit ouvrir la base
+    // lui-même pour la corriger.
+    //
+    // La borne reste une borne : 9 000, soit la mesure (8 885) plus la
+    // même marge étroite. Une QUATRIÈME règle devra se justifier aussi.
+    expect(avecBase.length, 'le bloc de base a enflé').toBeLessThan(9000)
+    // ── ET CE QU'ELLE LAISSE ENTRER EST EXIGÉ.
+    //
+    // Monter une borne sans exiger ce qu'elle laisse entrer, ce serait
+    // échanger une garde contre un budget. Les quatre gestes, nommés :
+    for (const geste of ['lister', 'AJOUTER', 'MODIFIER', 'RETIRER']) {
+      expect(avecBase, `« ${geste} » n’est plus demandé au modèle`).toContain(geste)
+    }
+    expect(avecBase, 'les deux faces ne sont plus distinguées').toMatch(
+      /DEUX FACES[\s\S]{0,200}LECTURE seule/u,
+    )
+    expect(avecBase, 'la conséquence d’un espace de gestion absent n’est pas dite').toMatch(
+      /ouvrir[\s\S]{0,20}la base lui-même/u,
+    )
     // ── ET LES DEUX RÈGLES SONT LÀ, pas seulement la place qu'elles prennent.
     //
     // Monter la borne sans exiger ce qu'elle laisse entrer, ce serait
