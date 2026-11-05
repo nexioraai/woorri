@@ -331,9 +331,51 @@ describe('EP-319 · les données déclarées', () => {
 
     // ④ ET LA PROSE NE GROSSIT PAS PAR LA PORTE DES DONNÉES.
     //
-    //    Mesuré le 2026-11-03. La borne vaut la mesure plus une marge
-    //    étroite : le bloc est structuré, il n'a pas à s'expliquer.
-    expect(avecBase.length, 'le bloc de base a enflé').toBeLessThan(7600)
+    //    Mesuré le 2026-11-03 : borne 7 600, soit la mesure plus une marge
+    //    étroite. Le bloc est structuré, il n'a pas à s'expliquer.
+    //
+    // ── POURQUOI LA BORNE MONTE À 8 400 LE 2026-11-05.
+    //
+    // Ce cliquet garde contre la PROSE, et il a fait son travail deux fois
+    // ce jour-là : il m'a refusé cinq lignes d'explication sur l'origine
+    // opaque, que j'ai retirées — la condition seule suffisait.
+    //
+    // Ce qui entre maintenant n'est pas de l'explication, ce sont DEUX
+    // RÈGLES, et chacune ferme un défaut mesuré :
+    //
+    //   ① AUCUN FICHIER. Le SDK est embarqué EN ENTIER dans chaque œuvre,
+    //      donc `base.storage.from(…).upload()` est APPELABLE. Mesuré le
+    //      2026-11-05 : aucun bucket par œuvre, aucune politique, zéro
+    //      mention dans `poser-oeuvre`. Le modèle peut donc écrire ce
+    //      code, il PARAÎTRA juste, et il mourra à l'exécution. Se taire
+    //      ici, c'est laisser le défaut arriver par le chemin le plus
+    //      coûteux : celui qui ressemble à du code correct.
+    //
+    //   ② LECTURE PUBLIQUE (P1). Sans elle, la porte reste à un seul
+    //      régime et un portail institutionnel est impossible — mesuré :
+    //      `revoke all from anon, public` et aucune politique `anon`.
+    //      Et l'exemple des SOUMISSIONS y est, parce que c'est le cas où
+    //      un modèle se trompe en ayant raison : « les appels d'offres
+    //      sont publics » est vrai de l'appel, faux des offres reçues.
+    //
+    // La borne reste une borne : 8 400, soit la mesure (8 260) plus la même
+    // marge étroite qu'avant. Une TROISIÈME règle devra se justifier aussi.
+    expect(avecBase.length, 'le bloc de base a enflé').toBeLessThan(8400)
+    // ── ET LES DEUX RÈGLES SONT LÀ, pas seulement la place qu'elles prennent.
+    //
+    // Monter la borne sans exiger ce qu'elle laisse entrer, ce serait
+    // échanger une garde contre un budget.
+    expect(avecBase, 'la règle du téléversement a disparu').toMatch(/AUCUN FICHIER/u)
+    expect(avecBase, 'le modèle peut croire que `storage` marche').toMatch(
+      /base\.storage[\s\S]{0,60}ÉCHOUERAIT/u,
+    )
+    expect(avecBase, 'la lecture publique n’est plus déclarable').toMatch(/lecturePublique/u)
+    expect(avecBase, 'le défaut n’est plus la fermeture').toMatch(
+      /OMETS par défaut[\s\S]{0,80}privée/u,
+    )
+    expect(avecBase, 'le cas des soumissions scellées a disparu').toMatch(
+      /SOUMISSIONS[\s\S]{0,120}scellées/u,
+    )
   })
 
   it('⑧ L’ÉCRAN NOMME LES COLONNES COMME LE SCHÉMA LES CRÉE', () => {

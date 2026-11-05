@@ -51,6 +51,62 @@ export type EntiteDeclaree = {
    * information ; déclarer non comparable, c'est dire ce qu'on sait.
    */
   readonly obligationInconnue?: boolean
+  /**
+   * SA LECTURE EST-ELLE PUBLIQUE ? (P1, 2026-11-05)
+   *
+   * ── CE QUE CE DRAPEAU OUVRE, ET CE QU'IL N'OUVRE JAMAIS.
+   *
+   * `true` ⇒ n'importe qui LIT cette table, sans compte et sans
+   * connexion. L'ÉCRITURE reste réservée au compte de l'œuvre, toujours,
+   * quelle que soit la valeur : ce drapeau ne commande que `select`, et
+   * aucune valeur ne peut lui faire commander autre chose.
+   *
+   * ── ABSENT ⇒ PRIVÉE. L'OUBLI VA VERS LE SÛR.
+   *
+   * Un portail institutionnel a besoin de l'inverse de ce qu'on a bâti :
+   * tout le monde lit les actualités, seul l'administrateur les publie.
+   * Mais le défaut doit rester la fermeture — une table privée qu'on
+   * croyait publique se voit tout de suite ; l'inverse ne se voit jamais.
+   *
+   * ── LE CAS QUI FAIT COMPRENDRE POURQUOI P5 EXISTE.
+   *
+   * Un modèle qui lit « les appels d'offres sont publics » dans un cahier
+   * peut déclarer publique la table des SOUMISSIONS des fournisseurs.
+   * Sur un marché public, ce serait une faute grave : les offres
+   * concurrentes doivent rester SCELLÉES jusqu'à l'ouverture des plis.
+   * Un appel d'offres est public ; ce qu'on y répond ne l'est pas.
+   *
+   * Rien dans la forme de la déclaration ne distingue ces deux tables —
+   * d'où l'écran de P5, qui nomme au propriétaire, AVANT que l'adresse
+   * existe, chaque table que n'importe qui pourra lire.
+   */
+  readonly lecturePublique?: boolean
+  /**
+   * SA PUBLICITÉ EST-ELLE INCONNAISSABLE ? — même raison qu'`obligation`.
+   *
+   * Une déclaration relue d'un SQL de schéma ne porte PAS ce drapeau : il
+   * ne vit que dans les POLITIQUES. Écrire `false` à sa place produirait
+   * un écart FAUX sur chaque table de chaque œuvre d'avant P1 — le défaut
+   * exact déjà payé sur `required` le 2026-11-04.
+   *
+   * Un champ qu'on ne peut pas récupérer ne se compare pas. Il s'exclut,
+   * et l'exclusion se dit UNE FOIS.
+   */
+  readonly publiciteInconnue?: boolean
+}
+
+/**
+ * LA LECTURE DU DRAPEAU — stricte, et c'est tout l'intérêt (P3).
+ *
+ * `=== true` et rien d'autre. `'oui'`, `'true'`, `1`, `'public'`, un objet :
+ * tout cela rend FAUX. Une déclaration qu'on ne comprend pas laisse la table
+ * PRIVÉE — jamais l'inverse.
+ *
+ * JavaScript rendrait `'non'` vrai par coercition. C'est exactement le genre
+ * de valeur qu'un modèle écrit quand on lui demande un booléen en français.
+ */
+export function lecturePubliqueDe(e: { readonly lecturePublique?: unknown }): boolean {
+  return e.lecturePublique === true
 }
 
 /**
@@ -292,6 +348,19 @@ export function blocBase(entites: readonly EntiteDeclaree[]): string {
     '',
     '   Types possibles : text, number, date, boolean. Ce fichier ne part PAS',
     '   dans l’application : c’est une déclaration.',
+    '',
+    '   AUCUN FICHIER : ni téléversement, ni PDF, ni image envoyée. ',
+    '   `base.storage` est atteignable et ÉCHOUERAIT — aucun espace de',
+    '   fichiers n’existe. Un lien vers un document se met en `text`.',
+    '',
+    '   LECTURE PUBLIQUE, si et seulement si le cahier la demande :',
+    '     { "name": "actualite", "lecturePublique": true, "fields": [...] }',
+    '   N’importe qui lit alors cette table, sans compte. L’écriture reste',
+    '   au seul compte de l’application. OMETS par défaut : sans ce mot, la',
+    '   table est privée.',
+    '   « Les appels d’offres sont publics » rend public l’APPEL, JAMAIS les',
+    '   SOUMISSIONS : des offres concurrentes restent scellées jusqu’à',
+    '   l’ouverture des plis. Si tu hésites, OMETS.',
   ].join('\n')
 }
 
