@@ -46,6 +46,32 @@
 /** Ce qu'une version du moteur direct porte : de quoi REVENIR, rien de plus. */
 export type VersionDocument = {
   readonly forme: 'document'
+  /**
+   * CETTE VERSION ATTEND UN ACCORD — elle n'est PAS la version servie.
+   *
+   * ── POURQUOI ELLE VIT ICI ET PAS AILLEURS (2026-11-05).
+   *
+   * Une modification qui touche aux données se fait approuver AVANT. Le
+   * mécanisme d'accord existant rejouait la demande, donc RAPPELAIT LE
+   * MODÈLE : confirmer coûtait un second ~0,04 $, précisément sur le
+   * geste qu'on veut que les gens prennent l'habitude de faire.
+   *
+   * L'état calculé se range donc dans une version, et l'accord
+   * l'APPLIQUE. La table des versions est déjà le mécanisme de retour en
+   * arrière : elle n'avait pas besoin d'être réinventée.
+   *
+   * ET UNE VERSION EN ATTENTE N'EST PAS RESTAURABLE : elle n'a jamais
+   * été servie, et y « revenir » n'aurait aucun sens.
+   */
+  readonly enAttente?: boolean
+  /**
+   * LA DÉCLARATION DE CETTE VERSION — elle voyage avec son schéma.
+   *
+   * Revenir en arrière ramène le code, le schéma ET la déclaration qui
+   * les décrit. Sans elle, la modification SUIVANTE comparerait la
+   * déclaration d'aujourd'hui à un schéma d'hier.
+   */
+  readonly entites?: readonly { readonly id: string; readonly name: string }[]
   readonly fichiers: Record<string, string>
   readonly nom: string | null
   /** Ce que CETTE version a coûté. Sert à annoncer un prix avant de dépenser. */
@@ -116,10 +142,13 @@ export function rangsAPurger(rangs: readonly number[]): readonly number[] {
 
 /** Une version du pipeline ne porte pas de fichiers : on n'y revient pas. */
 export function estRestaurable(etat: unknown): boolean {
-  const e = etat as { forme?: unknown; fichiers?: unknown } | null
+  const e = etat as { forme?: unknown; fichiers?: unknown; enAttente?: unknown } | null
   return (
     e !== null &&
     typeof e === 'object' &&
+    // UNE VERSION EN ATTENTE N'A JAMAIS ÉTÉ SERVIE : y « revenir »
+    // n'aurait aucun sens, et la proposer ferait croire qu'elle l'a été.
+    e.enAttente !== true &&
     e.forme === 'document' &&
     typeof e.fichiers === 'object' &&
     e.fichiers !== null &&

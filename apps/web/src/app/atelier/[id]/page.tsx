@@ -236,6 +236,42 @@ export default function AtelierPage() {
     })();
   }, [id, router, chargerApercu, chargerVersions]);
 
+  /**
+   * APPLIQUE UNE MODIFICATION MISE DE CÔTÉ — aucun appel au modèle.
+   *
+   * Le travail a déjà été fait et déjà payé ; l'accord ne fait que
+   * l'appliquer. C'est ce qui rend la prudence gratuite.
+   */
+  const appliquerEnAttente = async (rang: number) => {
+    const t = await jeton();
+    if (t === null) return;
+    setErreur(null);
+    setEnCours(true);
+    setAvis('Application en cours…');
+    try {
+      const res = await fetch(
+        `/api/generateur/retoucher?id=${encodeURIComponent(id)}&applique=${String(rang)}`,
+        { method: 'POST', headers: { Authorization: `Bearer ${t}` } },
+      );
+      const d = (await res.json().catch(() => ({}))) as {
+        ok?: boolean; migration?: string; error?: string; motif?: string;
+      };
+      if (!res.ok || d.ok !== true) {
+        setAvis(null);
+        setErreur(`${String(d.error ?? 'L’application a échoué.')} ${String(d.motif ?? '')}`.trim());
+        return;
+      }
+      setTexte('');
+      setAvis(d.migration ?? 'Modification appliquée.');
+      await Promise.all([chargerVersions(), chargerApercu()]);
+    } catch {
+      setAvis(null);
+      setErreur('L’application a échoué. Réessayez.');
+    } finally {
+      setEnCours(false);
+    }
+  };
+
   /** Refait le mot de passe. Le nouveau s'affiche, et il ne se relira pas. */
   const renouvelerCle = async () => {
     const t = await jeton();
@@ -301,7 +337,7 @@ export default function AtelierPage() {
       const d = (await res.json().catch(() => ({}))) as {
         ok?: boolean; error?: string; horsPerimetre?: boolean; raison?: string;
         aConfirmer?: boolean; message?: string; fichiers?: string[]; coutUsd?: number; rang?: number;
-        migration?: string;
+        migration?: string | boolean;
       };
       // CE QUI A ÉTÉ DÉPENSÉ SE DIT, MÊME QUAND ÇA RATE. Un refus gratuit et
       // un refus payé ne sont pas la même nouvelle.
@@ -310,7 +346,16 @@ export default function AtelierPage() {
 
       if (d.aConfirmer === true) {
         setEnCours(false);
-        if (window.confirm(`${String(d.message)}\n\nAppliquer quand même ?`)) {
+        if (window.confirm(`${String(d.message)}\n\nAppliquer ?`)) {
+          // ── UNE MODIFICATION MISE DE CÔTÉ S'APPLIQUE, ELLE NE SE REJOUE PAS.
+          //
+          // `envoyer(true)` repostait la demande, donc rappelait le
+          // modèle : confirmer coûtait un second ~0,04 $, précisément sur
+          // le geste qu'on veut que les gens prennent l'habitude de faire.
+          if (typeof d.rang === 'number' && d.migration === true) {
+            await appliquerEnAttente(d.rang);
+            return;
+          }
           await envoyer(true);
           return;
         }

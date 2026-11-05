@@ -164,6 +164,121 @@ async function noter(
   }
 }
 
+/** Le rang suivant d'une œuvre — deux appelants depuis la version en attente. */
+async function rangSuivant(id: string): Promise<number> {
+  const tous = await supabaseAdmin.from(TABLE_VERSIONS).select('rang').eq('generation_id', id)
+  const rangs = (tous.data ?? []).map((x: { rang: number }) => Number(x.rang))
+  return Math.max(0, ...rangs) + 1
+}
+
+/**
+ * APPLIQUE UNE VERSION MISE DE CÔTÉ — sans rappeler le modèle.
+ *
+ * ── CE QUE CETTE FONCTION NE FAIT PAS, ET C'EST TOUT L'INTÉRÊT.
+ *
+ * Aucun appel au fournisseur, aucun centime. Le travail a déjà été fait
+ * et déjà payé ; l'accord ne fait que l'appliquer.
+ *
+ * ── ET L'ORDRE RESTE LE MÊME : LA BASE D'ABORD, LE DOCUMENT ENSUITE.
+ *
+ * Si la migration échoue, l'application sert encore sa version d'avant
+ * et les données sont intactes. L'inverse laisserait un document qui
+ * parle de colonnes que la base n'a pas.
+ */
+async function appliquerEnAttente(
+  id: string,
+  proprietaire: string,
+  rang: number,
+): Promise<NextResponse> {
+  const lu = await supabaseAdmin
+    .from(TABLE_GENERATIONS)
+    .select('document, nom')
+    .eq('id', id)
+    .eq('owner_id', proprietaire)
+    .maybeSingle()
+  if (lu.error !== null || lu.data === null) {
+    return NextResponse.json({ error: 'application inconnue' }, { status: 404 })
+  }
+  const v = await supabaseAdmin
+    .from(TABLE_VERSIONS)
+    .select('etat')
+    .eq('generation_id', id)
+    .eq('rang', rang)
+    .maybeSingle()
+  const etat = v.data?.etat as (VersionDocument & { entites?: EntiteDeclaree[] }) | null
+  if (etat === null || etat === undefined || etat.enAttente !== true) {
+    return NextResponse.json(
+      { error: 'Cette modification n’attend plus votre accord.' },
+      { status: 409 },
+    )
+  }
+
+  const docAvant = lu.data.document as { schema?: string; entites?: unknown } | null
+  const entitesAvant = declarationDe(docAvant)
+  const entitesApres = etat.entites ?? entitesAvant
+  const plan = comparerDeclarations(entitesAvant, entitesApres)
+  const avant = await instantaneDeLOeuvre(id)
+
+  if (plan.ajouts.length > 0 && avant !== null) {
+    const m = emettreMigrationSql(plan, entitesApres, id)
+    const r =
+      m.refus.length > 0
+        ? { ok: false, motif: 'le SQL ne passe pas la liste des formes émettables' }
+        : await appliquerMigration({ schema: nomSchemaOeuvre(id), sql: m.sql, env: process.env })
+    if (!r.ok) {
+      return NextResponse.json(
+        {
+          error:
+            'Le changement de données n’a pas pu être appliqué. Votre ' +
+            'application n’a pas changé et vos données sont intactes.',
+          motif: r.motif,
+        },
+        { status: 409 },
+      )
+    }
+  }
+
+  const maj = await supabaseAdmin
+    .from(TABLE_GENERATIONS)
+    .update({
+      document: {
+        fichiers: etat.fichiers,
+        schema: etat.schema,
+        politiques: etat.politiques,
+        entites: entitesApres,
+      },
+      version_courante: rang,
+    })
+    .eq('id', id)
+    .eq('owner_id', proprietaire)
+  if (maj.error !== null) {
+    return NextResponse.json(
+      { error: 'La modification n’a pas pu être enregistrée.' },
+      { status: 502 },
+    )
+  }
+  // LA VERSION N'ATTEND PLUS : elle est servie.
+  await supabaseAdmin
+    .from(TABLE_VERSIONS)
+    .update({ etat: { ...etat, enAttente: false } })
+    .eq('generation_id', id)
+    .eq('rang', rang)
+
+  const apres = await instantaneDeLOeuvre(id)
+  return NextResponse.json(
+    {
+      ok: true,
+      rang,
+      // AUCUN CENTIME : le travail était déjà payé.
+      coutUsd: 0,
+      ...(avant !== null && apres !== null
+        ? { migration: phraseApresMigration(plan, avant, apres) }
+        : {}),
+    },
+    { headers: { 'Cache-Control': 'no-store' } },
+  )
+}
+
 /**
  * LE PLAFOND DE PRIX D'UNE ŒUVRE — demandé au serveur, et c'est voulu.
  *
@@ -208,6 +323,16 @@ export async function POST(req: Request) {
   const url = new URL(req.url)
   const id = url.searchParams.get('id') ?? ''
   const confirme = url.searchParams.get('confirme') === '1'
+  // ── L'ACCORD APPLIQUE L'ÉTAT DÉJÀ CALCULÉ — AUCUN APPEL AU MODÈLE.
+  //
+  // Le mécanisme d'accord rejouait la demande, donc repayait ~0,04 $ :
+  // confirmer coûtait un second appel, précisément sur le geste qu'on
+  // veut que les gens prennent l'habitude de faire.
+  const aAppliquer = Number(url.searchParams.get('applique') ?? '0')
+  if (Number.isInteger(aAppliquer) && aAppliquer > 0) {
+    return await appliquerEnAttente(id, proprietaire, aAppliquer)
+  }
+
   const corps = (await req.json().catch(() => ({}))) as { demande?: unknown }
   const demande = typeof corps.demande === 'string' ? corps.demande.trim() : ''
   if (id === '' || demande === '') {
@@ -437,8 +562,40 @@ export async function POST(req: Request) {
     const phrase =
       instantaneAvant === null ? null : phraseAvantMigration(plan, instantaneAvant)
     if (phrase !== null && !confirme) {
+      // ── L'ÉTAT CALCULÉ SE RANGE, IL NE SE JETTE PAS.
+      //
+      // Le modèle a déjà travaillé et déjà été payé. Perdre son travail
+      // pour le redemander à l'identique serait faire payer deux fois la
+      // prudence qu'on impose.
+      const rangAttente = await rangSuivant(id)
+      const enAttente: VersionDocument = {
+        forme: 'document',
+        enAttente: true,
+        fichiers: Object.fromEntries(declaration.fichiers),
+        nom: typeof lu.data.nom === 'string' ? lu.data.nom : null,
+        coutUsd: Number(coutUsd.toFixed(4)),
+        schema: emettreSchemaSql([...fusionnerEntites(entitesAvant, declaration.entites)]),
+        politiques: emettrePolitiquesSql(
+          [...fusionnerEntites(entitesAvant, declaration.entites)],
+          id,
+        ),
+        entites: [...fusionnerEntites(entitesAvant, declaration.entites)],
+      }
+      const pose = await supabaseAdmin.from(TABLE_VERSIONS).insert({
+        generation_id: id,
+        rang: rangAttente,
+        etape: `EN ATTENTE DE VOTRE ACCORD — ${etapeRetouche(demande)}`,
+        cout_usd: Number(coutUsd.toFixed(4)),
+        etat: enAttente,
+      })
+      if (pose.error !== null) {
+        return NextResponse.json(
+          { error: 'La modification n’a pas pu être mise de côté. Réessayez.', coutUsd },
+          { status: 502 },
+        )
+      }
       return NextResponse.json(
-        { aConfirmer: true, message: phrase, migration: true, coutUsd },
+        { aConfirmer: true, message: phrase, migration: true, rang: rangAttente, coutUsd },
         { status: 409 },
       )
     }
@@ -505,9 +662,7 @@ export async function POST(req: Request) {
 
   // ── ET SEULEMENT MAINTENANT ON ÉCRIT. La version D'ABORD : si elle
   // échoue, le document courant n'a pas bougé.
-  const tous = await supabaseAdmin.from(TABLE_VERSIONS).select('rang').eq('generation_id', id)
-  const rangsVus = (tous.data ?? []).map((x: { rang: number }) => Number(x.rang))
-  const rang = Math.max(0, ...rangsVus) + 1
+  const rang = await rangSuivant(id)
   // ── LE SCHEMA SUIT LA RETOUCHE, IL NE DISPARAIT PAS AVEC ELLE.
   //
   // DEFAUT ATTRAPE A L'ECRITURE DU LOT D2 : cette route ecrit une version
@@ -560,7 +715,15 @@ export async function POST(req: Request) {
     )
   }
 
-  const aPurger = rangsAPurger([...rangsVus, rang])
+  // LA PURGE RELIT LES RANGS : `rangSuivant` ne les rend plus, et les
+  // recalculer ici évite de porter une liste à travers trente lignes.
+  const tousRangs = await supabaseAdmin
+    .from(TABLE_VERSIONS)
+    .select('rang')
+    .eq('generation_id', id)
+  const aPurger = rangsAPurger(
+    (tousRangs.data ?? []).map((x: { rang: number }) => Number(x.rang)),
+  )
   if (aPurger.length > 0) {
     await supabaseAdmin.from(TABLE_VERSIONS).delete().eq('generation_id', id).in('rang', aPurger)
   }
