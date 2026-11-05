@@ -51,7 +51,7 @@
  * règle divergerait, et la divergence se découvrirait sur les données de
  * quelqu'un.
  */
-import { nomColonne, nomTable, typeSql, type EntiteDeclaree } from './entites-declarees'
+import { nomColonne, nomTable, typeSql, type EntiteDeclaree, lecturePubliqueDe } from './entites-declarees'
 
 /** Un écart entre deux déclarations, et ce qu'il impliquerait. */
 export type EcartMigration =
@@ -73,6 +73,30 @@ export type EcartMigration =
   | { readonly genre: 'unicite-changee'; readonly table: string; readonly champ: string }
   | { readonly genre: 'obligation-changee'; readonly table: string; readonly champ: string }
   | { readonly genre: 'porte-changee'; readonly table: string }
+  /**
+   * LA PUBLICITÉ D'UNE TABLE A CHANGÉ (P4, 2026-11-05).
+   *
+   * ── POURQUOI CE GENRE EST SÉPARÉ DE `porte-changee`.
+   *
+   * Mécaniquement les deux se ressemblent : les politiques font
+   * `drop policy if exists` avant `create policy`, donc les réappliquer
+   * suffit, et il n'y a RIEN à migrer.
+   *
+   * Mais `porte-changee` dit « ce journal accepte les réécritures ou
+   * non » — une règle de métier. Celui-ci dit « n'importe qui, sans
+   * compte, peut désormais lire cette table ». Les ranger ensemble
+   * ferait disparaître un changement de SÉCURITÉ dans une liste de
+   * changements de forme.
+   *
+   * `devientPublique` porte le SENS, parce que les deux directions ne se
+   * disent pas de la même façon : l'une ouvre à tous, l'autre referme
+   * une page que des gens lisaient peut-être déjà.
+   */
+  | {
+      readonly genre: 'publicite-changee'
+      readonly table: string
+      readonly devientPublique: boolean
+    }
   | {
       readonly genre: 'non-comparable'
       readonly propriete: string
@@ -116,6 +140,14 @@ export function sortDe(e: EcartMigration): SortEcart {
     // `create policy`, donc les réappliquer suffit. Rien à migrer.
     case 'obligation-changee':
     case 'porte-changee':
+    // ── LA PUBLICITÉ : RIEN À MIGRER, MAIS ÇA SE DIT. (P4)
+    //
+    // `sansEffet` ne veut pas dire « sans importance » : il veut dire
+    // « rien à faire en base ». La définition même de ce sort est « rien
+    // à faire, mais ça se DIT : un écart tu est un écart qu'on croira
+    // appliqué ». Pour un changement de sécurité, le taire serait pire
+    // que pour tous les autres.
+    case 'publicite-changee':
     // ── NI TAIRE NI GARDER : NE PAS COMPARER.
     //
     // Une propriété qu'on ne peut pas observer ne se compare pas. On le
@@ -180,6 +212,31 @@ export function comparerDeclarations(
     })
   }
 
+  // ── LA PUBLICITÉ NE SE COMPARE PAS SUR UNE ŒUVRE RELUE. (P4)
+  //
+  // Même raison exactement que l'obligation : `lecturePublique` ne vit
+  // PAS dans le schéma, il vit dans les POLITIQUES. Une déclaration
+  // reconstruite depuis un SQL de schéma ne le connaît pas — elle ne rend
+  // pas `false`, elle ne rend RIEN.
+  //
+  // La comparer quand même produirait un écart de SÉCURITÉ faux sur
+  // chaque table de chaque œuvre d'avant P1 : « cette table devient
+  // privée », alors que rien n'a changé. Et un avertissement de sécurité
+  // qui crie au loup apprend à être ignoré — c'est la pire des issues
+  // pour celui-ci précisément.
+  const publiciteIncomparable = [...ancienne, ...nouvelle].some(
+    (e) => e.publiciteInconnue === true,
+  )
+  if (publiciteIncomparable) {
+    ecarts.push({
+      genre: 'non-comparable',
+      propriete: 'lecture publique',
+      raison:
+        'non comparable sur une œuvre relue — cette propriété vit dans les ' +
+        'politiques, pas dans le schéma',
+    })
+  }
+
   // ── LA GARDE ÉTANCHE, EN PREMIER : toute table qui s'en va arrête.
   //
   // Seule, sans condition sur ce qui apparaît par ailleurs.
@@ -232,6 +289,18 @@ export function comparerDeclarations(
     }
     if ((vieille.appendOnly === true) !== (neuve.appendOnly === true)) {
       ecarts.push({ genre: 'porte-changee', table })
+    }
+    // ── LA LECTURE PUBLIQUE, DANS LES DEUX SENS. (P4)
+    //
+    // On emploie la MÊME lecture stricte que le reste de la chaîne : une
+    // comparaison qui lirait le drapeau autrement verrait un changement
+    // là où le SQL n'en voit pas, ou l'inverse — et l'inverse est muet.
+    if (!publiciteIncomparable && lecturePubliqueDe(vieille) !== lecturePubliqueDe(neuve)) {
+      ecarts.push({
+        genre: 'publicite-changee',
+        table,
+        devientPublique: lecturePubliqueDe(neuve),
+      })
     }
   }
 

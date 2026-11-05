@@ -1030,6 +1030,29 @@ const entitySchema = z.strictObject({
    * Absent vaut `false` : aucune entité existante ne se fige par surprise.
    */
   appendOnly: z.boolean().optional(),
+  /**
+   * SA LECTURE EST-ELLE PUBLIQUE ? (P3, 2026-11-05)
+   *
+   * `true` ⇒ le SQL émis ajoute une politique `select` pour `anon`, et
+   * SEULEMENT `select`. L'écriture reste au seul compte de l'œuvre,
+   * quelle que soit la valeur de ce drapeau.
+   *
+   * Absent vaut `false` : l'oubli va vers le sûr. Une table privée qu'on
+   * croyait publique se voit tout de suite — la page est vide. L'inverse
+   * ne se voit jamais.
+   *
+   * ── POURQUOI CETTE LIGNE EXISTE, ET CE QU'ELLE A ÉVITÉ.
+   *
+   * MESURÉ AVANT DE L'ÉCRIRE : ce contrat est STRICT, donc une entité
+   * portant `lecturePublique` était REFUSÉE EN ENTIER — « forme refusée
+   * par le contrat de données ». Déclarer le drapeau ne rendait pas la
+   * table publique : il SUPPRIMAIT la table de l'œuvre.
+   *
+   * Tout P1 et P2 étaient donc inertes, et pire qu'inertes. Un champ qui
+   * ne traverse pas son contrat n'existe pas, quel que soit le soin mis
+   * à ce qu'il y a des deux côtés.
+   */
+  lecturePublique: z.boolean().optional(),
   fields: z.array(fieldSchema).min(1),
 });
 

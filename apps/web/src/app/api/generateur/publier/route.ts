@@ -22,6 +22,7 @@
  * refusee ensuite. Meme forme que toutes les routes voisines.
  */
 import { NextResponse } from 'next/server'
+import { lecturePubliqueDe, nomTable, type EntiteDeclaree } from '@/lib/apps/entites-declarees'
 import { configBaseOeuvres } from '@/lib/apps/base-oeuvres'
 import { poserOeuvre } from '@/lib/apps/poser-oeuvre'
 import { assurerCompteOeuvre } from '@/lib/apps/compte-oeuvre'
@@ -181,6 +182,7 @@ export async function POST(req: Request) {
   const docPublie = lu.data.document as {
     schema?: string
     politiques?: string
+    entites?: readonly EntiteDeclaree[]
   } | null
   const schemaSql = docPublie?.schema ?? ''
   const aDesDonnees = schemaSql.includes('create table')
@@ -229,6 +231,62 @@ export async function POST(req: Request) {
       { status: 409 },
     )
   }
+  // ── P5 · L'ÉCRAN DIT CE QUI SERA PUBLIC, AVANT QUE L'ADRESSE EXISTE.
+  //
+  // ── POURQUOI CE REFUS EXISTE, ET POURQUOI P4 NE SUFFIT PAS.
+  //
+  // P4 fait voir à M1 une table qui DEVIENT publique dans une
+  // modification. Mais LA PREMIÈRE GÉNÉRATION N'A PAS DE DIFF : une table
+  // publique dès sa naissance ne passe devant personne. Sans ce refus,
+  // l'écran du propriétaire ne nommerait jamais ce qu'il ouvre.
+  //
+  // ── LE CAS QUI LE JUSTIFIE, ET IL N'EST PAS THÉORIQUE.
+  //
+  // Un modèle qui lit « les appels d'offres sont publics » dans un cahier
+  // peut déclarer publique la table des SOUMISSIONS des fournisseurs. Sur
+  // un marché public, ce serait une faute grave : les offres concurrentes
+  // doivent rester SCELLÉES jusqu'à l'ouverture des plis. Un appel
+  // d'offres est public ; ce qu'on y répond ne l'est pas.
+  //
+  // RIEN DANS LA FORME DE LA DÉCLARATION NE DISTINGUE CES DEUX TABLES.
+  // Aucune grammaire ne peut donc trancher — seul un humain qui lit la
+  // liste le peut, et il faut qu'il la lise AVANT, pas après.
+  //
+  // ── ET C'EST UN REFUS, PAS UN AVERTISSEMENT.
+  //
+  // « Un secret dans une page publiée ne se rattrape pas : elle est déjà
+  // servie. » Une liste affichée à côté d'un bouton qu'on peut presser
+  // sans la lire n'est pas une garde. Le second appel porte l'accord, et
+  // c'est lui qui prouve que la liste est passée devant quelqu'un.
+  const publiques = (docPublie?.entites ?? []).filter(lecturePubliqueDe).map(nomTable)
+  let accord = false
+  try {
+    const corps = (await req.clone().json()) as { lecturePubliqueAcceptee?: unknown }
+    accord = corps.lecturePubliqueAcceptee === true
+  } catch {
+    accord = false
+  }
+  if (publiques.length > 0 && !accord) {
+    const liste = publiques.map((t) => `« ${t} »`).join(', ')
+    return NextResponse.json(
+      {
+        error:
+          `${publiques.length > 1 ? 'Ces listes seront lisibles' : 'Cette liste sera lisible'} ` +
+          `PAR TOUT LE MONDE, sans compte : ${liste}. ` +
+          'Personne ne pourra y écrire ; tout le monde pourra y lire.',
+        // LE DRAPEAU ET LA LISTE VOYAGENT : l'écran doit pouvoir nommer
+        // chaque table, pas seulement répéter une phrase.
+        lecturePublique: true,
+        tables: publiques,
+        quoiFaire:
+          'Relisez cette liste. Si une de ces listes contient quelque chose ' +
+          'qui ne doit pas être lu par n’importe qui, demandez une ' +
+          'modification AVANT de publier — une page servie ne se rattrape pas.',
+      },
+      { status: 409 },
+    )
+  }
+
   let compte: { adresse: string; motDePasse: string | null } | null = null
 
   if (aDesDonnees) {
