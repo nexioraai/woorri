@@ -21,6 +21,7 @@ import { join } from 'node:path'
 import { projectAirSchema } from '@deribfy/air-schema'
 import { emettreSchemaSql, nomColonne, typeSqlDe } from '@deribfy/compiler'
 import {
+  blocBase,
   CE_QUE_DECLARER_CHANGE,
   CHAMPS_MAX,
   CONSIGNE_ENTITES,
@@ -373,9 +374,87 @@ describe('EP-319 · les données déclarées', () => {
     // frappe y est définitive, et le propriétaire doit ouvrir la base
     // lui-même pour la corriger.
     //
-    // La borne reste une borne : 9 000, soit la mesure (8 885) plus la
-    // même marge étroite. Une QUATRIÈME règle devra se justifier aussi.
-    expect(avecBase.length, 'le bloc de base a enflé').toBeLessThan(9000)
+    // ── ET LA BORNE MESURE CE QUI PART, PLUS SON GABARIT (2026-11-05).
+    //
+    // DÉFAUT TROUVÉ EN TIRANT LA GÉNÉRATION DE CONTRÔLE DE A1 : cette
+    // assertion lisait `avecBase`, une consigne à UNE table. La consigne
+    // réellement émise, à trois tables, faisait 9 238 signes — AU-DESSUS
+    // de la borne, et rien n'a rougi.
+    //
+    // Une garde qui mesure sa fixture au lieu de la production est pire
+    // qu'absente : elle rassure à tort. Le pire cas réel n'est pas une
+    // table, c'est TABLES_MAX × CHAMPS_MAX, et il est mesuré plus bas.
+    //
+    // DEUX BORNES, parce qu'il y a DEUX risques distincts :
+    //
+    //   ① LA PROSE, qui ne doit pas grossir — c'est la règle d'origine,
+    //      et elle se mesure sur la part FIXE, indépendante des données.
+    //   ② CE QUI PART AU PIRE, qui touche le plafond du modèle et le
+    //      coût de chaque tour.
+    //
+    // Mesuré le 2026-11-05 : part fixe ≈ 9 009 · une table 9 035 ·
+    // 12 tables × 3 champs 9 707 · 12 × 30 = 15 131.
+    expect(avecBase.length, 'la prose du bloc de base a enflé').toBeLessThan(9200)
+
+    // ── ET LE BANDEAU N'EST PLUS DEMANDÉ À L'ŒUVRE (2026-11-05).
+    //
+    // DÉFAUT MESURÉ sur la génération de contrôle de A1. La consigne
+    // disait : « SI `url` EST VIDE … l'application marche en mémoire …
+    // et LA PAGE LE DIT. » Elle demandait donc le bandeau, en laissant sa
+    // condition quatre lignes plus haut. Le modèle l'a écrit — et l'a
+    // rattaché à `enBase` au lieu de `!enBase` :
+    //
+    //   enBase && <div>« Mode aperçu – données en mémoire, non
+    //                    conservées. »</div>
+    //
+    // Un client aurait lu que son travail n'est pas sauvegardé ALORS
+    // QU'IL L'EST, sur les trois écrans.
+    //
+    // La correction n'est pas de mieux expliquer la condition : c'est de
+    // retirer la demande. `pageAutonome` pose DÉJÀ ce bandeau, et il dit
+    // vrai dans les trois cas (aperçu, archive, servie). Deux auteurs
+    // pour une même vérité, c'est une vérité qui se contredit.
+    expect(avecBase, 'la consigne redemande un bandeau à l’œuvre').not.toMatch(
+      /la page le dit/u,
+    )
+    expect(avecBase, 'l’interdiction du bandeau a disparu').toMatch(
+      /N’ÉCRIS AUCUN BANDEAU[\s\S]{0,120}La page en porte déjà un/u,
+    )
+
+    // ── ② LE PIRE CAS QUI PEUT PARTIR, et il part vraiment.
+    const unChamp = (i: number) => ({
+      id: `fld_champ${String(i)}`,
+      name: `champ${String(i)}`,
+      type: 'text',
+      required: true,
+    })
+    const pire = Array.from({ length: TABLES_MAX }, (_, t) => ({
+      id: `ent_table${String(t)}`,
+      name: `table${String(t)}`,
+      fields: Array.from({ length: CHAMPS_MAX }, (_, c) => unChamp(c)),
+    })) as unknown as Parameters<typeof blocBase>[0]
+    const auPire = consignePour(pire)
+    expect(
+      auPire.length,
+      `la consigne au pire cas (${String(TABLES_MAX)} tables × ${String(CHAMPS_MAX)} champs) a enflé`,
+    ).toBeLessThan(15400)
+
+    // ── ③ ET LA PORTE DES DONNÉES RESTE UNE PORTE ÉTROITE.
+    //
+    // Si une ligne de prose s'ajoutait PAR TABLE, les deux bornes
+    // ci-dessus monteraient ensemble sans que rien ne dise d'où ça vient.
+    // Le coût d'une table supplémentaire est mesuré : 26 signes.
+    const uneTable = consignePour([
+      { id: 'ent_a', name: 'a', fields: [unChamp(0)] },
+    ] as unknown as Parameters<typeof blocBase>[0])
+    const deuxTables = consignePour([
+      { id: 'ent_a', name: 'a', fields: [unChamp(0)] },
+      { id: 'ent_b', name: 'b', fields: [unChamp(0)] },
+    ] as unknown as Parameters<typeof blocBase>[0])
+    expect(
+      deuxTables.length - uneTable.length,
+      'une table coûte désormais plus qu’une ligne de description',
+    ).toBeLessThan(60)
     // ── ET CE QU'ELLE LAISSE ENTRER EST EXIGÉ.
     //
     // Monter une borne sans exiger ce qu'elle laisse entrer, ce serait
