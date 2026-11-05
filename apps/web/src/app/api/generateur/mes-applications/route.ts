@@ -42,7 +42,7 @@ export async function GET(req: Request) {
 
   const lu = await supabaseAdmin
     .from(TABLE_GENERATIONS)
-    .select('id, created_at, statut, moteur, fournisseur, cout_usd, duree_ms, nom, demande, document')
+    .select('id, created_at, statut, moteur, fournisseur, cout_usd, duree_ms, nom, demande, document, publication_slug, publication_jeton')
     // Une œuvre supprimée n'apparaît plus : l'écran est le seul endroit où
     // la suppression doit être totale et immédiate. La ligne, elle, survit
     // trente jours (rattrapage) puis reste en pierre tombale (le nom).
@@ -80,6 +80,22 @@ export async function GET(req: Request) {
       // son application une seconde fois.
       revoyable: fichiers !== undefined && Object.keys(fichiers).length > 0,
       fichiers: fichiers === undefined ? 0 : Object.keys(fichiers).length,
+      // ── « PUBLIÉE » N'EST PAS « LIVRÉE » (2026-11-05).
+      //
+      // DÉFAUT MESURÉ : six cartes, toutes titrées « Application », toutes
+      // marquées « livrée », AUCUNE ne portant son adresse. Le propriétaire
+      // devait DEVINER laquelle était `snenak.deribfy.app` pour faire la
+      // preuve qu'on attendait depuis trois jours.
+      //
+      // Livrée dit que la machine a fini. Publiée dit que des gens peuvent
+      // l'ouvrir. Les confondre, c'est perdre la seule information qui
+      // distingue une carte des cinq autres.
+      adresse:
+        typeof g.publication_slug === 'string' && g.publication_slug !== ''
+          ? `https://${g.publication_slug}.deribfy.app`
+          : typeof g.publication_jeton === 'string' && g.publication_jeton !== ''
+            ? `https://www.deribfy.com/p/${g.publication_jeton}`
+            : null,
     }
   })
 

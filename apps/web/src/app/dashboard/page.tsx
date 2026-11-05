@@ -33,6 +33,7 @@ type Application = {
   id: string;
   creeLe: string;
   statut: string;
+  adresse?: string | null;
   nom: string | null;
   demande: string;
   dureeMs: number;
@@ -692,15 +693,36 @@ export default function DashboardPage() {
                       className="text-white/90 font-semibold text-sm truncate text-left hover:text-white">
                       {a.nom ?? TITRE_SANS_NOM}
                     </button>
+                    {/* ── DEUX ÉTATS, DEUX MARQUES.
+                         « Livrée » dit que la machine a fini. « Publiée »
+                         dit que des gens peuvent l'ouvrir. Les six cartes
+                         portaient la même marque, et il fallait deviner
+                         laquelle était en ligne. */}
                     <span className={`text-[11px] px-2 py-0.5 rounded-full border shrink-0 ${
-                      a.statut === 'livree'
-                        ? 'border-emerald-500/30 text-emerald-400 bg-emerald-500/10'
-                        : 'border-white/10 text-white/50'
+                      a.adresse != null
+                        ? 'border-[#FA5D1E]/40 text-[#FA5D1E] bg-[#FA5D1E]/10'
+                        : a.statut === 'livree'
+                          ? 'border-emerald-500/30 text-emerald-400 bg-emerald-500/10'
+                          : 'border-white/10 text-white/50'
                     }`}>
-                      {a.statut === 'livree' ? 'livrée' : a.statut}
+                      {a.adresse != null ? 'publiée' : a.statut === 'livree' ? 'livrée' : a.statut}
                     </span>
                   </div>
                   <p className="text-white/40 text-xs leading-relaxed line-clamp-3">{a.demande}</p>
+                  {/* ── SON ADRESSE, EN CLAIR ET CLIQUABLE.
+                       C'est la seule information qui distingue une carte
+                       des cinq autres — et c'est celle qui manquait. */}
+                  {a.adresse != null && (
+                    <a
+                      href={a.adresse}
+                      target="_blank"
+                      rel="noreferrer"
+                      onClick={(e) => { e.stopPropagation(); }}
+                      className="text-[#FA5D1E] text-xs underline truncate hover:brightness-125"
+                    >
+                      {a.adresse.replace(/^https:\/\//u, '')}
+                    </a>
+                  )}
                   <div className="text-white/30 text-[11px] flex items-center gap-3 mt-auto pt-2">
                     <span>{new Date(a.creeLe).toLocaleDateString('fr-FR')}</span>
                     {a.fichiers > 0 && <span>{a.fichiers} fichier{a.fichiers > 1 ? 's' : ''}</span>}
