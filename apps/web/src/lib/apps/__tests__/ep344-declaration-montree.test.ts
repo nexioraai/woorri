@@ -86,7 +86,19 @@ describe('EP-344 · la déclaration retrouvée et montrée', () => {
     // sans rien casser — le pire genre de panne.
     const avant = declarationDepuisSchema(emettreSchemaSql([RELEVE, NOTE]))
     const plan = comparerDeclarations(avant, avant)
-    expect(plan.ecarts, 'une œuvre inchangée déclare des écarts').toEqual([])
+    // ── « VIDE » VEUT DIRE : RIEN À FAIRE, RIEN QUI ARRÊTE.
+    //
+    // La liste porte UNE ligne déclarative depuis le 2026-11-04 —
+    // « obligation : non comparable sur une œuvre relue ». Elle n'est ni
+    // un écart ni un arrêt : c'est l'énoncé de ce qu'on ne peut pas
+    // observer. Assertionner `ecarts === []` ferait rougir sur une phrase
+    // VRAIE, et pousserait à la taire.
+    expect(plan.arrets, 'une œuvre inchangée est arrêtée').toEqual([])
+    expect(plan.ajouts, 'une œuvre inchangée produirait du SQL').toEqual([])
+    expect(
+      plan.ecarts.filter((e) => e.genre !== 'non-comparable'),
+      'une œuvre inchangée déclare un écart réel',
+    ).toEqual([])
     expect(plan.peutAvancer).toBe(true)
     expect(phraseArret(plan), 'une œuvre inchangée est arrêtée').toBeNull()
   })

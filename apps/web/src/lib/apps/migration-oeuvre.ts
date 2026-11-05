@@ -73,6 +73,11 @@ export type EcartMigration =
   | { readonly genre: 'unicite-changee'; readonly table: string; readonly champ: string }
   | { readonly genre: 'obligation-changee'; readonly table: string; readonly champ: string }
   | { readonly genre: 'porte-changee'; readonly table: string }
+  | {
+      readonly genre: 'non-comparable'
+      readonly propriete: string
+      readonly raison: string
+    }
 
 /**
  * LES TROIS SORTS D'UN ÉCART, et ils ne se mélangent pas.
@@ -111,6 +116,13 @@ export function sortDe(e: EcartMigration): SortEcart {
     // `create policy`, donc les réappliquer suffit. Rien à migrer.
     case 'obligation-changee':
     case 'porte-changee':
+    // ── NI TAIRE NI GARDER : NE PAS COMPARER.
+    //
+    // Une propriété qu'on ne peut pas observer ne se compare pas. On le
+    // dit UNE FOIS, au lieu de rendre N écarts faux. Taire serait cacher
+    // une information ; déclarer non comparable, c'est dire ce qu'on
+    // sait.
+    case 'non-comparable':
       return 'sansEffet'
   }
 }
@@ -149,6 +161,24 @@ export function comparerDeclarations(
   const avant = new Map(ancienne.map((e) => [nomTable(e), e]))
   const apres = new Map(nouvelle.map((e) => [nomTable(e), e]))
   const ecarts: EcartMigration[] = []
+
+  // ── L'OBLIGATION SE COMPARE, OU NE SE COMPARE PAS. Jamais à moitié.
+  //
+  // Dès qu'UN côté vient d'une relecture, la propriété est inobservable
+  // pour toute la comparaison : la dire inconnue par endroits et la
+  // comparer ailleurs produirait un verdict mi-lu mi-inventé.
+  const obligationIncomparable = [...ancienne, ...nouvelle].some(
+    (e) => e.obligationInconnue === true,
+  )
+  if (obligationIncomparable) {
+    ecarts.push({
+      genre: 'non-comparable',
+      propriete: 'obligation',
+      raison:
+        'non comparable sur une œuvre relue — cette propriété n’est pas ' +
+        'récupérable depuis le SQL',
+    })
+  }
 
   // ── LA GARDE ÉTANCHE, EN PREMIER : toute table qui s'en va arrête.
   //
@@ -196,7 +226,7 @@ export function comparerDeclarations(
       if ((g.unique === true) !== (f.unique === true)) {
         ecarts.push({ genre: 'unicite-changee', table, champ })
       }
-      if (g.required !== f.required) {
+      if (!obligationIncomparable && g.required !== f.required) {
         ecarts.push({ genre: 'obligation-changee', table, champ })
       }
     }

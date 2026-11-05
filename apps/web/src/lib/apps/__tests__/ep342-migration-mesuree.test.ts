@@ -149,6 +149,89 @@ describe('EP-342 · M3, la migration mesurée', () => {
     expect(comparerDeclarations(b, c).arrets, 'text → email est pris pour un changement').toEqual([])
   })
 
+  it('②ter UNE PROPRIÉTÉ INOBSERVABLE NE SE COMPARE PAS — elle se DÉCLARE', () => {
+    // ── NI TAIRE NI GARDER.
+    //
+    // La relecture ne CONNAÎT pas `required` : elle ne rend pas `false`,
+    // elle ne rend RIEN — c'est nous qui écrivions `false` à la place.
+    // Comparer ce champ produisait N écarts FAUX sur toute œuvre
+    // d'avant.
+    //
+    // Taire serait cacher une information ; déclarer non comparable,
+    // c'est dire ce qu'on sait.
+    const duModele: EntiteDeclaree[] = [
+      {
+        id: 'ent_t',
+        name: 't',
+        fields: [
+          { id: 'fld_a', name: 'a', type: 'text', required: true },
+          { id: 'fld_b', name: 'b', type: 'text', required: true },
+        ],
+      },
+    ]
+    const relue = declarationDepuisSchema(emettreSchemaSql(duModele))
+    expect(relue[0]?.obligationInconnue, 'la relecture prétend connaître l’obligation').toBe(true)
+    const plan = comparerDeclarations(relue, duModele)
+    expect(
+      plan.ecarts.filter((e) => e.genre === 'obligation-changee'),
+      'des écarts d’obligation FAUX sont encore rendus',
+    ).toEqual([])
+    const dit = plan.ecarts.filter((e) => e.genre === 'non-comparable')
+    expect(dit, 'l’exclusion est tue — c’est cacher une information').toHaveLength(1)
+    expect(dit[0], 'l’exclusion ne dit pas pourquoi').toMatchObject({
+      propriete: 'obligation',
+    })
+    expect(plan.peutAvancer, 'une exclusion arrête la migration').toBe(true)
+  })
+
+  it('②quater ET ELLE SE COMPARE QUAND LES DEUX CÔTÉS LA CONNAISSENT', () => {
+    // L'exclusion ne vaut que pour une œuvre RELUE. Entre deux
+    // déclarations du modèle, l'obligation est observable des deux côtés.
+    const a: EntiteDeclaree[] = [
+      { id: 'ent_t', name: 't', fields: [{ id: 'fld_a', name: 'a', type: 'text', required: false }] },
+    ]
+    const b: EntiteDeclaree[] = [
+      { id: 'ent_t', name: 't', fields: [{ id: 'fld_a', name: 'a', type: 'text', required: true }] },
+    ]
+    const plan = comparerDeclarations(a, b)
+    expect(plan.ecarts.map((e) => e.genre), 'l’obligation n’est plus comparée du tout').toEqual([
+      'obligation-changee',
+    ])
+  })
+
+  it('②quinquies L’EXCLUSION EXPIRE AVEC SA JUSTIFICATION', () => {
+    // ── UNE EXCEPTION QUI SURVIT À SA RAISON DÉFEND LE PASSÉ CONTRE LE
+    //    PRODUIT.
+    //
+    // L'exclusion ne tient QUE parce que l'émetteur n'écrit jamais
+    // `not null` — c'est ce qui rend `required` irrécupérable depuis le
+    // SQL. Le jour où il l'écrira, la propriété deviendra observable, et
+    // l'exclusion deviendra un mensonge silencieux.
+    //
+    // Ce contrôle les attache : si le SQL émis porte une obligation,
+    // il rougit tant que `required` n'est pas redevenu comparable.
+    const avecObligation: EntiteDeclaree[] = [
+      { id: 'ent_t', name: 't', fields: [{ id: 'fld_a', name: 'a', type: 'text', required: true }] },
+    ]
+    // ── ON JUGE LE SQL, PAS SA PROSE.
+    //
+    // Mon premier motif rougissait sur le COMMENTAIRE émis — « `not null`
+    // n'est volontairement PAS posé » — qui dit exactement le contraire
+    // de ce qu'il cherchait. Même leçon que le découpage de M2 : les
+    // commentaires se retirent AVANT de juger.
+    const instructions = emettreSchemaSql(avecObligation)
+      .split('\n')
+      .filter((l) => !l.trimStart().startsWith('--'))
+      .join('\n')
+    expect(
+      instructions,
+      'l’émetteur écrit désormais `not null` : `required` est devenu ' +
+        'récupérable depuis le SQL, donc l’exclusion de `obligation` dans ' +
+        '`comparerDeclarations` n’a plus de raison d’être — retirez-la, et ' +
+        'retirez `obligationInconnue` de `declarationDepuisSchema`.',
+    ).not.toMatch(/not null/u)
+  })
+
   it('F③ ET LA FORME RÉELLE DU DÉPÔT PASSE TOUJOURS', () => {
     // Une garde étanche qui refuse le cas normal se fait désarmer.
     for (const sql of [

@@ -36,6 +36,21 @@ export type EntiteDeclaree = {
     readonly unique?: boolean
   }[]
   readonly appendOnly?: boolean
+  /**
+   * `required` N'EST PAS OBSERVABLE SUR CETTE DÉCLARATION.
+   *
+   * ── CE QU'ON PRÉTENDAIT COMPARER (2026-11-04).
+   *
+   * Une déclaration relue d'un SQL ne CONNAÎT pas l'obligation : elle ne
+   * rend pas `false`, elle ne rend RIEN — c'est nous qui écrivions
+   * `false` à la place. Comparer ce champ produisait alors N écarts
+   * FAUX sur toute œuvre d'avant.
+   *
+   * Un champ qu'on ne peut pas récupérer ne se compare pas. Il s'exclut,
+   * et l'exclusion se dit UNE FOIS. Taire serait cacher une
+   * information ; déclarer non comparable, c'est dire ce qu'on sait.
+   */
+  readonly obligationInconnue?: boolean
 }
 
 /**

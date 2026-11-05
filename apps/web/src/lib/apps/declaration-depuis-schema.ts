@@ -73,6 +73,11 @@ export function declarationDepuisSchema(schemaSql: string): readonly EntiteDecla
         id: `fld_${m[1] ?? ''}`,
         name: m[1] ?? '',
         type: TYPE_DECLARE[m[2] ?? 'text'] ?? 'text',
+        // ── CE `false` EST UNE ÉCRITURE DE NOTRE PART, PAS UNE LECTURE.
+        //
+        // Le SQL émis ne porte AUCUNE obligation — l'émetteur n'écrit
+        // jamais `not null`. On met donc la valeur que le type exige, et
+        // on MARQUE l'entité pour que la comparaison ne s'y trompe pas.
         required: false,
         ...(m[3] === undefined ? {} : { unique: true }),
       })
@@ -88,6 +93,9 @@ export function declarationDepuisSchema(schemaSql: string): readonly EntiteDecla
       id: `ent_${nom}`,
       name: nom,
       fields: champs,
+      // L'OBLIGATION N'EST PAS RÉCUPÉRABLE DEPUIS LE SQL. On le DIT,
+      // plutôt que de prétendre l'avoir lue.
+      obligationInconnue: true,
       ...(entete.includes('JOURNAL') ? { appendOnly: true } : {}),
     })
   }
