@@ -35,10 +35,24 @@
  * court-circuite avant d'atteindre les verrous. Ici on le laisse
  * joignable — c'est ce qui permet d'atteindre la ligne qui jette.
  *
- * Mais AUCUNE requête ne part vers un vrai service : la page est servie
- * depuis `about:blank` et toute requête sortante est INTERCEPTÉE et
- * refusée par le navigateur lui-même. On obtient donc l'échec RÉEL
- * d'une origine opaque, sans toucher à la base de personne.
+ * ── ET LE RÉSEAU VA À UN BOUCHON, PAS DANS LE VIDE.
+ *
+ * Ma première forme ABORTAIT toute requête. Le juge exécutait alors le
+ * chemin heureux dans un vrai navigateur — déjà mieux que happy-dom,
+ * mais il ne fermait PAS la chose pour laquelle il existe :
+ *
+ *   « le réseau coupé fait que l'application n'atteint jamais Supabase,
+ *     et c'est précisément là qu'un appel depuis une origine null
+ *     produirait cette trame. »
+ *
+ * Une requête ABORTÉE et une requête REFUSÉE PAR LE SERVEUR ne suivent
+ * pas le même chemin dans un SDK : la première meurt au transport, la
+ * seconde traverse jusqu'à la gestion d'erreur — là où les verrous, les
+ * relances et la session entrent en jeu.
+ *
+ * Toute requête sortante reçoit donc une VRAIE réponse, fabriquée ici.
+ * Aucune n'atteint un service réel : le bouchon répond à la place, et
+ * la base d'un client n'est jamais touchée.
  */
 import { readFile, writeFile } from 'node:fs/promises'
 
@@ -83,16 +97,38 @@ const erreurs = []
 try {
   const page = await navigateur.newPage()
 
-  // ── TOUTE SORTIE EST COUPÉE, AU NIVEAU DU NAVIGATEUR.
+  // ── LE BOUCHON : UNE VRAIE RÉPONSE, JAMAIS UN VRAI SERVICE.
   //
-  // On veut l'échec d'une origine opaque, pas une requête vers la base
-  // d'un client. Le refus vient du navigateur, donc l'application le
-  // rencontre exactement comme un réseau coupé — ce qui est aussi un
-  // cas réel.
-  await page.route('**/*', (r) => {
-    const u = r.request().url()
+  // Il répond comme PostgREST et comme GoTrue répondraient à une origine
+  // opaque : la requête part, traverse le SDK, et revient. C'est ce
+  // trajet complet qui atteint les verrous, la session et la gestion
+  // d'erreur — tout ce qu'un `abort()` court-circuite.
+  const vues = []
+  await page.route('**/*', async (r) => {
+    const req = r.request()
+    const u = req.url()
     if (u.startsWith('about:') || u.startsWith('data:')) return r.continue()
-    return r.abort()
+    vues.push(`${req.method()} ${u.slice(0, 120)}`)
+    const entetes = {
+      'content-type': 'application/json',
+      // UNE ORIGINE OPAQUE ENVOIE `Origin: null`. Un vrai service ne la
+      // reconnaît pas et ne renvoie PAS d'en-tête permissif : on refait
+      // ce refus, parce que c'est lui que la personne rencontre.
+      'access-control-allow-origin': 'https://deribfy.invalid',
+    }
+    // L'authentification répond comme un service qui refuse : le SDK
+    // prend alors son chemin d'erreur, celui qu'on veut éprouver.
+    if (/\/auth\/v1\//u.test(u)) {
+      return r.fulfill({
+        status: 400,
+        headers: entetes,
+        body: JSON.stringify({ error: 'invalid_grant', error_description: 'bouchon' }),
+      })
+    }
+    if (/\/rest\/v1\//u.test(u)) {
+      return r.fulfill({ status: 200, headers: entetes, body: '[]' })
+    }
+    return r.fulfill({ status: 404, headers: entetes, body: '{}' })
   })
 
   // L'erreur peut naître DANS le cadre : on écoute la page ET ses cadres.
@@ -141,7 +177,10 @@ try {
   // rouge coûte plus cher qu'un vert : il envoie chercher un défaut qui
   // n'existe pas. L'origine opaque est VOULUE — on ne la contourne pas
   // pour regarder dedans, on écoute ce que le cadre DIT.
-  await rendre({ aTourne: true, motif: null, erreurs })
+  // LES REQUÊTES VUES VOYAGENT : un juge qui n'en voit AUCUNE n'a pas
+  // exercé le chemin réseau, et son vert ne vaut alors que pour le
+  // démarrage. On le DIT plutôt que de le laisser croire.
+  await rendre({ aTourne: true, motif: null, erreurs, requetes: vues.slice(0, 20) })
 } catch (e) {
   await rendre({
     aTourne: false,
