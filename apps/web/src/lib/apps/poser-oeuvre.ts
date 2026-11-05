@@ -306,8 +306,55 @@ export async function poserOeuvre(o: {
       // toute la liste. L'élagage n'est donc pas un entretien, c'est une
       // réparation — et une réparation muette ne s'explique pas.
       elagues = schemasMorts(lu.rows[0]?.rolconfig ?? null, existants)
+      // ── « TENTER N'EST PAS RÉUSSIR » — ON RELIT, TOUJOURS.
+      //
+      // DÉFAUT MESURÉ LE 2026-11-05, sur `snenak` : le schéma existe en
+      // base avec sa table `releve`, la publication a réussi, la page est
+      // servie — et le schéma N'EST PAS dans la liste exposée. Toute
+      // requête de l'œuvre vers ses données rend :
+      //
+      //   PGRST106 — Invalid schema: oeuvre_15158240_…
+      //
+      // Même pour `service_role`. L'application démarre, affiche son écran
+      // de connexion, et ne pourra JAMAIS lire une ligne. Rien ne l'a dit.
+      //
+      // Ce qui a été écarté par la mesure : le code d'exposition existait
+      // (2026-11-02, l'œuvre est du 04) ; deux poses successives ne
+      // s'évincent pas (reproduit) ; et l'œuvre porte bien `create table`,
+      // donc `poserOeuvre` a bien été appelé. La cause exacte reste
+      // INCONNUE — l'état d'alors a été réécrit depuis.
+      //
+      // La garde, elle, ne dépend pas de la cause : après avoir écrit la
+      // liste, on la RELIT et on vérifie que le schéma y est. Une écriture
+      // qui n'aboutit pas, pour n'importe quelle raison — pooleur, droits,
+      // écrasement concurrent — cesse de passer pour un succès.
+      //
+      // Elle tourne AUSSI quand il n'y avait rien à écrire : « déjà
+      // présent » vient d'une lecture, et c'est cette lecture-là qu'on
+      // veut confirmer.
+      const verifier = async (): Promise<boolean> => {
+        const relu = await client.query<{ rolconfig: string[] | null }>(
+          "select rolconfig from pg_roles where rolname = 'authenticator'",
+        )
+        const l = (relu.rows[0]?.rolconfig ?? []).find((x) => x.startsWith('pgrst.db_schemas='))
+        const liste = (l === undefined ? '' : l.slice('pgrst.db_schemas='.length))
+          .split(',')
+          .map((x) => x.trim())
+        return liste.includes(schema)
+      }
+
       const nouvelle = listeAvecSchema(lu.rows[0]?.rolconfig ?? null, schema, existants)
       if (nouvelle === null) {
+        if (!(await verifier())) {
+          await client.query('rollback')
+          return {
+            ok: false,
+            etape: 'exposition',
+            motif:
+              `le schéma ${schema} est absent de la liste exposée alors que rien ` +
+              'n’était à écrire — la lecture précédente était périmée',
+          }
+        }
         await client.query('commit')
         return { ok: true, schema, expose: false, elagues }
       }
@@ -333,6 +380,22 @@ export async function poserOeuvre(o: {
       // Sans cette ligne, une œuvre publiée aurait répondu « table
       // introuvable » à ses propres écrans, et l'indice aurait désigné la
       // table qu'il disait ne pas trouver.
+      // ── ON RELIT AVANT DE NOTIFIER, ET AVANT DE COMMETTRE.
+      //
+      // Dans la transaction : ce qu'on relit est ce qu'on vient d'écrire,
+      // et un échec se défait par le rollback au lieu de laisser une œuvre
+      // à moitié posée. Notifier PostgREST d'une liste qu'on n'a pas
+      // vérifiée serait lui demander de recharger une panne.
+      if (!(await verifier())) {
+        await client.query('rollback')
+        return {
+          ok: false,
+          etape: 'exposition',
+          motif:
+            `le schéma ${schema} est absent de la liste exposée APRÈS l’écriture — ` +
+            'l’œuvre serait publiée et incapable de lire ses données (PGRST106)',
+        }
+      }
       await client.query("notify pgrst, 'reload config'")
       await client.query("notify pgrst, 'reload schema'")
       await client.query('commit')
