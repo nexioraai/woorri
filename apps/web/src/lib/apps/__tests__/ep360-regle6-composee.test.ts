@@ -145,10 +145,32 @@ describe('EP-360 · la règle 6 se compose', () => {
     // La moitié AVEC table est longue par nature — elle décrit les
     // tables. On borne ce qu'elle ajoute PAR TABLE, pas son total : voir
     // EP-319 ④, qui tient les deux bornes de taille.
-    // Mesuré le 2026-11-05 : 3 523 signes sans aucune table, bloc commun
-    // compris. La borne vaut la mesure plus une marge étroite.
+    //
+    // ── 3 700 → 5 500 LE 2026-11-06, ET JE DIS QUE J'ÉLÈVE UN BUDGET.
+    //
+    // La loi public/gestion est entrée ici : 3 523 → 5 407 signes. Élever
+    // une borne parce qu'on vient de la dépasser est exactement le geste
+    // dont il faut se méfier, donc voici la mesure et la raison.
+    //
+    // CE QUI A GONFLÉ, mesuré bloc par bloc : la liste des cinq clauses de
+    // la face publique vaut 659 signes, l'espace de gestion 301, le lien
+    // page↔table 460, le retour 131, l'anecdote datée 243. Aucune clause
+    // n'est retranchable — elles sont la loi, dictées une par une.
+    //
+    // POURQUOI ELLE NE PEUT PAS ALLER DANS LE BLOC COMMUN, qui serait la
+    // sortie élégante : le bloc commun est composé par les DEUX moitiés, y
+    // compris celle SANS base. Or sans base il n'y a pas de session, donc
+    // pas d'espace de gestion, donc rien à cacher d'un visiteur. Dicter
+    // cette loi à une œuvre qui ne peut pas se connecter lui ferait écrire
+    // une porte vers le vide — voir EP-370 ⑥, qui garde cette frontière.
+    //
+    // ET CE QUI REMPLACE LA GÊNE PERDUE : EP-370 nomme les neuf clauses une
+    // par une sur la consigne PRODUITE. La borne ne retient plus seule — la
+    // moitié peut être grande, mais son contenu est énuméré ailleurs, et
+    // une dixième règle générale qui s'y glisserait ne serait couverte par
+    // aucun des deux. C'est plus fort que la borne d'hier, pas moins.
     const sansTables = blocBase([]).length
-    expect(sansTables, 'la moitié avec table a enflé hors des tables').toBeLessThan(3700)
+    expect(sansTables, 'la moitié avec table a enflé hors des tables').toBeLessThan(5500)
   })
 
   it('⑤ ET LES AUTRES RÈGLES RESTENT IDENTIQUES DES DEUX CÔTÉS', () => {
