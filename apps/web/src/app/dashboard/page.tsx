@@ -1,4 +1,5 @@
 'use client';
+import { ADRESSE_GESTION } from '@/lib/apps/entites-declarees';
 import { publierAvecAccord } from '@/components/apps/accordLecturePublique';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -649,7 +650,7 @@ export default function DashboardPage() {
             </div>
             {lienPublic.compte != null && (
               <div className="mt-2 max-w-md">
-                <IdentifiantsOeuvre compte={lienPublic.compte} />
+                <IdentifiantsOeuvre compte={lienPublic.compte} lien={lienPublic.url} />
               </div>
             )}
           </div>
@@ -719,6 +720,24 @@ export default function DashboardPage() {
                       className="text-[#FA5D1E] text-xs underline truncate hover:brightness-125"
                     >
                       {a.adresse.replace(/^https:\/\//u, '')}
+                    </a>
+                  )}
+                  {/* ── LE CHEMIN PRINCIPAL VERS LA GESTION EST ICI, PAS DANS L'ŒUVRE.
+                       Vérifié chez Ghost, Shopify et Webflow : aucun ne met de
+                       lien d'administration sur le site publié. Ghost offre les
+                       deux mêmes chemins qu'ici — depuis le compte sur la
+                       plateforme, ou en ajoutant `/ghost` à l'adresse.
+                       Celui-ci compte plus que l'autre : le propriétaire n'a
+                       RIEN à retenir, il entre depuis chez nous. */}
+                  {a.adresse != null && (
+                    <a
+                      href={`${a.adresse}${ADRESSE_GESTION}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      onClick={(e) => { e.stopPropagation(); }}
+                      className="mt-1 inline-flex w-fit items-center gap-1 rounded-lg border border-white/10 bg-white/[0.03] px-2 py-1 text-[11px] text-slate-300 transition hover:border-white/20 hover:text-white"
+                    >
+                      Gestion
                     </a>
                   )}
                   <div className="text-white/30 text-[11px] flex items-center gap-3 mt-auto pt-2">
@@ -873,7 +892,7 @@ export default function DashboardPage() {
                       </div>
                     )}
                     {lienPublic?.id === a.id && lienPublic.compte != null && (
-                      <IdentifiantsOeuvre compte={lienPublic.compte} />
+                      <IdentifiantsOeuvre compte={lienPublic.compte} lien={lienPublic.url} />
                     )}
                   </div>
                 </div>

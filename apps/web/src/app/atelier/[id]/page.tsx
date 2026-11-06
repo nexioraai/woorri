@@ -680,6 +680,14 @@ export default function AtelierPage() {
                   compte={compte}
                   onRenouveler={() => { void renouvelerCle(); }}
                   renouvelle={renouvelle}
+                  /* ── L'ADRESSE DE GESTION N'APPARAÎT QUE SI ON LA CONNAÎT.
+                       `lienPublic` n'est posé qu'après une publication faite
+                       ICI : sur une œuvre publiée AVANT, cet écran ne la
+                       connaît pas, et le bloc ne s'affiche pas. Montrer une
+                       adresse devinée serait pire que ne rien montrer — le
+                       chemin principal reste le bouton « Gestion » de la
+                       carte, qui lui lit l'adresse réelle. */
+                  lien={lienPublic ?? undefined}
                 />
               </div>
             )}

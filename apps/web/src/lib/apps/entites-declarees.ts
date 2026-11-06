@@ -318,6 +318,33 @@ export const CONSIGNE_ENTITES = [
  * qui vaut dans les deux cas vit ICI, une fois, et les deux moitiés le
  * COMPOSENT. EP-360 vérifie la composition — c'est lui le vrai correctif.
  */
+/**
+ * L'ADRESSE DE L'ESPACE DE GESTION — UN SEUL ENDROIT POUR TOUT LE PRODUIT.
+ *
+ * ── POURQUOI UNE CONSTANTE, ET PAS UN LITTÉRAL RÉPÉTÉ.
+ *
+ * La consigne la dicte au modèle, le panneau des identifiants la montre au
+ * propriétaire, et les juges de la loi public/gestion la cherchent. Trois
+ * littéraux divergeraient, et le jour où N1 posera l'adressage — `/gestion`
+ * au lieu d'un fragment — il faut que ce soit UN CHANGEMENT, pas une
+ * réécriture. C'est le mot du propriétaire, le 2026-11-06.
+ *
+ * ── POURQUOI UN FRAGMENT AUJOURD'HUI.
+ *
+ * Tous les chemins d'une œuvre publiée servent le MÊME document : il n'y a
+ * pas encore de routage côté serveur. Un `/gestion` rendrait aujourd'hui la
+ * page d'accueil, en silence — le défaut de lien profond déjà consigné.
+ *
+ * ── ET CE N'EST PAS UN SECRET, C'EST UNE ABSENCE DE LIEN.
+ *
+ * Vérifié chez Ghost, Shopify et Webflow : aucun ne met de lien
+ * d'administration sur le site publié. Ghost offre les deux mêmes chemins
+ * qu'ici — depuis le compte sur la plateforme, ou en ajoutant `/ghost` à
+ * l'adresse. La barrière est la CONNEXION ; l'adresse n'a pas à être
+ * indevinable, elle a à ne pas être proposée à un visiteur.
+ */
+export const ADRESSE_GESTION = '#gestion'
+
 export const REGLE_6_COMMUN: readonly string[] = [
   '',
   '   N’ÉCRIS AUCUN BANDEAU sur l’état de la base : la page en porte déjà',
@@ -354,26 +381,57 @@ export function blocBase(entites: readonly EntiteDeclaree[]): string {
     '   Emploie `b.options` TEL QUEL : il dirige lecture ET écriture vers le',
     '   bon endroit. Ne pose aucun en-tête à la main.',
     '',
-    '   DEUX FACES, ET ELLES NE SE MÉLANGENT PAS.',
+    '   DEUX FACES, ET ELLES NE SE MÉLANGENT JAMAIS.',
     '',
-    '   · CE QUE TOUT LE MONDE VOIT : les listes déclarées publiques, en',
-    '     LECTURE seule. Aucun bouton qui écrit.',
-    '   · L’ESPACE DE GESTION, derrière la connexion : pour CHAQUE table,',
-    '     lister, AJOUTER, MODIFIER une ligne existante, et la RETIRER.',
-    '     Les quatre, pas seulement « ajouter ».',
+    '   LA FACE PUBLIQUE est ce qui s’affiche QUAND PERSONNE N’EST CONNECTÉ.',
+    '   C’est elle que voit un visiteur sans compte, et elle doit :',
     '',
-    '   Sans « modifier », une faute de frappe est définitive. Sans',
-    '   « retirer », une ligne de trop l’est aussi. Une application à',
-    '   données dont le propriétaire ne peut que REMPLIR l’oblige à ouvrir',
-    '   la base lui-même — écris donc toujours cet espace.',
+    '   · n’afficher QUE du contenu destiné à tout le monde ;',
+    '   · se lire SANS connexion et SANS AUCUNE ERREUR — ni bandeau rouge,',
+    '     ni « impossible de charger », ni zone vide alors qu’il y a du',
+    '     contenu. Un visiteur qui lit une erreur croit l’application',
+    '     cassée, et il ne revient pas ;',
+    '   · NE MONTRER AUCUN CHEMIN VERS LA GESTION : aucune entrée de menu,',
+    '     aucun lien, aucun bouton, aucun onglet. Un visiteur ne doit même',
+    '     pas savoir que cet espace existe ;',
+    '   · N’AFFICHER AUCUN FORMULAIRE DE CONNEXION. Il n’a rien à faire là ;',
+    '   · ne laisser filtrer AUCUNE donnée privée — pas même un tableau',
+    '     vide, pas même dans un message d’erreur.',
+    '',
+    `   L’ESPACE DE GESTION vit à l’adresse \`${ADRESSE_GESTION}\` et NULLE PART`,
+    '   ailleurs. On y arrive en tapant cette adresse, jamais par un lien',
+    '   affiché. C’est LÀ, et seulement là, que tu écris l’écran de',
+    '   connexion (`base.auth.signInWithPassword`), affiché tant que',
+    '   `base.auth.getSession()` ne rend rien.',
+    '',
+    '   Derrière cette connexion, pour CHAQUE table : lister, AJOUTER,',
+    '   MODIFIER une ligne existante, et la RETIRER. Les quatre, pas',
+    '   seulement « ajouter ». Sans « modifier », une faute de frappe est',
+    '   définitive ; sans « retirer », une ligne de trop l’est aussi. Une',
+    '   application dont le propriétaire ne peut que REMPLIR l’oblige à',
+    '   ouvrir la base lui-même — écris donc toujours cet espace.',
+    '',
+    '   ET UN RETOUR VERS LA FACE PUBLIQUE depuis la gestion : un lien qui',
+    '   ramène à l’accueil. Sans lui, on entre et on ne sort plus.',
     '',
     '   (Une table marquée (journal) est l’exception : voir plus bas.)',
     '',
-    '   LA BASE N’OUVRE QU’AUX PERSONNES CONNECTÉES : écris un écran de',
-    '   connexion (`base.auth.signInWithPassword`), affiché tant que',
-    '   `base.auth.getSession()` ne rend rien — sinon tes listes seront',
-    '   vides sans qu’on sache pourquoi. CET ÉCRAN NE S’AFFICHE QUE SI',
-    '   `enBase` : dans l’aperçu il n’y a personne à connecter.',
+    '   DANS L’APERÇU il n’y a personne à connecter : l’écran de connexion',
+    '   ne s’affiche que si `enBase`.',
+    '',
+    '   UNE PAGE PUBLIQUE LIT UNE TABLE DÉCLARÉE PUBLIQUE. TOUJOURS.',
+    '',
+    '   Si tu écris un écran que le visiteur voit sans compte, la table',
+    '   qu’il lit DOIT porter `"lecturePublique": true` — sinon la base',
+    '   refuse la lecture et ta page est vide chez tout le monde sauf toi.',
+    '   Les deux faits sortent de la MÊME réponse : l’écran et la',
+    '   déclaration. Une page publique sur une table privée n’est pas un',
+    '   choix discutable, c’est une contradiction, et elle se mesure.',
+    '',
+    '   C’est arrivé, le 2026-11-06 : une application d’association avec sa',
+    '   page d’annonces publique, et la table `annonce` laissée privée. Sur',
+    '   un téléphone en navigation privée : « Impossible de charger les',
+    '   annonces. » L’annonce existait.',
     '',
     '   TES TABLES, avec leurs colonnes — ces noms exactement :',
     tables,
@@ -406,11 +464,17 @@ export function blocBase(entites: readonly EntiteDeclaree[]): string {
     '   Types possibles : text, number, date, boolean. Ce fichier ne part PAS',
     '   dans l’application : c’est une déclaration.',
     '',
-    '   LECTURE PUBLIQUE, si et seulement si le cahier la demande :',
+    '   LECTURE PUBLIQUE — OBLIGATOIRE dès qu’un écran public la lit :',
     '     { "name": "chose", "lecturePublique": true, "fields": [...] }',
     '   N’importe qui lit alors cette table, sans compte. L’écriture reste',
-    '   au seul compte de l’application. OMETS par défaut : sans ce mot, la',
-    '   table est privée.',
+    '   au seul compte de l’application.',
+    '',
+    '   La règle est la même que plus haut, et elle vaut AUSSI pour une',
+    '   table déjà déclarée : si tu veux la rendre publique, redéclare-la',
+    '   ici avec ce mot — ta redéclaration est prise en compte.',
+    '',
+    '   Sans écran public pour cette table : OMETS. Sans ce mot elle est',
+    '   privée, et c’est le bon défaut.',
     '   « Les appels d’offres sont publics » rend public l’APPEL, JAMAIS les',
     '   SOUMISSIONS : des offres concurrentes restent scellées jusqu’à',
     '   l’ouverture des plis. Si tu hésites, OMETS.',

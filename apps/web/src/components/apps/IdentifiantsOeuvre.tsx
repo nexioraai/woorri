@@ -28,6 +28,8 @@
  */
 'use client';
 
+import { ADRESSE_GESTION } from '@/lib/apps/entites-declarees';
+
 export type EtatCompteOeuvre = {
   readonly adresse?: string;
   /** Présent SEULEMENT à l'instant où il vient d'être fait. */
@@ -38,11 +40,19 @@ export function IdentifiantsOeuvre({
   compte,
   onRenouveler,
   renouvelle = false,
+  lien,
 }: {
   readonly compte: EtatCompteOeuvre;
   /** Omis quand l'écran ne propose pas le renouvellement. */
   readonly onRenouveler?: () => void;
   readonly renouvelle?: boolean;
+  /**
+   * L'ADRESSE PUBLIÉE — pour montrer le SECOND chemin vers la gestion.
+   *
+   * Facultative : un écran qui ne la connaît pas n'affiche pas ce bloc,
+   * plutôt qu'une adresse fausse.
+   */
+  readonly lien?: string;
 }) {
   const adresse = compte.adresse ?? '';
   if (adresse === '') return null;
@@ -62,6 +72,26 @@ export function IdentifiantsOeuvre({
         saisir ses données.
       </p>
       <p className="mt-1.5 break-all font-mono text-[11px] text-slate-300">{adresse}</p>
+      {/* ── OÙ SE CONNECTER, ET POURQUOI CE N'EST PAS DANS L'APPLICATION.
+           Un identifiant sans l'endroit où le saisir ne sert à rien. Le
+           chemin PRINCIPAL est le bouton « Gestion » de la carte de projet ;
+           celui-ci est le second, pour quand on n'est pas sur Deribfy — le
+           même couple de chemins que Ghost. */}
+      {lien !== undefined && lien !== '' && (
+        <>
+          <p className="mt-2 text-[10px] leading-relaxed text-white/50">
+            L’espace de gestion s’ouvre à cette adresse :
+          </p>
+          <p className="mt-1 break-all font-mono text-[11px] text-slate-300">
+            {`${lien.replace(/^https:\/\//u, '')}${ADRESSE_GESTION}`}
+          </p>
+          <p className="mt-1 text-[10px] leading-relaxed text-white/40">
+            Elle n’apparaît nulle part dans votre application, et c’est voulu :
+            un visiteur ne doit pas même savoir que cet espace existe. C’est la
+            connexion qui protège vos données, pas le secret de l’adresse.
+          </p>
+        </>
+      )}
       {/* LE MOT DE PASSE N'APPARAÎT QU'À L'INSTANT OÙ IL EST FAIT.
           On ne relit pas un mot de passe — l'écran le dit au lieu de laisser
           chercher où il se trouve. */}

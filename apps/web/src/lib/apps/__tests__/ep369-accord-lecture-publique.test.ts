@@ -16,6 +16,33 @@
  * C'est la forme la plus coûteuse de « module prouvé sans appelant » : une
  * garde dont la porte manque ne se découvre qu'au moment où la garde se met
  * enfin à servir.
+ *
+ * ── UNE RÉSERVE, ET ELLE COMPTE AUTANT QUE LE RESTE.
+ *
+ * On a cherché les AUTRES portes de cette forme — une garde dont la
+ * condition d'entrée n'est fournie par aucun appelant. Le relevé du
+ * 2026-11-06 rend ZÉRO : sur 108 routes, 68 champs sont lus d'une requête
+ * près d'un refus, trois candidats sont sortis, et les trois ont été
+ * réfutés à l'inspection (un paramètre à défaut, un filtre nullable, et une
+ * COLONNE DE BASE que le motif avait prise pour un champ de requête).
+ *
+ * CE « ZÉRO » NE VEUT PAS DIRE ZÉRO, et il faut le lire comme ça :
+ *
+ *   · le balayage compare des NOMS, pas des chaînes d'appel réelles ;
+ *   · 58 des 66 « clés émises » portent un nom SIMPLE (`nom`, `sous`,
+ *     `rang`, `demande`…), qui apparaît côté client pour trente raisons
+ *     sans rapport — donc 58 sur 66 ne sont pas prouvées ;
+ *   · il ne produit donc pas de faux rouges, IL PRODUIT DES FAUX VERTS ;
+ *   · et `lecturePubliqueAcceptee` n'a été visible que par la chance de son
+ *     nom composé. S'il s'était appelé `accord`, ce relevé l'aurait manqué.
+ *
+ * Ce qui rendrait le chiffre sûr : suivre la vraie chaîne — quel `fetch`
+ * appelle quelle route, avec quel corps — au lieu de comparer des noms. Le
+ * résolveur d'imports d'EP-365 sait déjà faire cette traversée. ≈ 3 h,
+ * arbitré « pas maintenant » le 2026-11-06, la loi passant devant.
+ *
+ * C'est donc une DETTE NOMMÉE, pas un calme. Qui lira « zéro » ici doit
+ * lire aussi par quoi ce zéro a été mesuré.
  */
 import { describe, expect, it } from 'vitest'
 import { readFileSync, readdirSync, statSync } from 'node:fs'
