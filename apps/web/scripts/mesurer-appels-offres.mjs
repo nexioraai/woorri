@@ -183,12 +183,32 @@ try {
     issue(await anon.from('appels_offres').update({ objet: 'réécrit' }).like('reference_slug', `${MARQUE}%`)), '42501')
   point(12, 'anon DELETE sur la table → refusé',
     issue(await anon.from('appels_offres').delete().like('reference_slug', `${MARQUE}%`)), '42501')
-  point(13, 'anon INSERT sur la VUE → refusé (DEBT-073 : une vue naît ouverte)',
-    issue(await anon.from('appels_offres_public').insert({ site_id: publie.id, reference: 'x', reference_slug: 'x', etat: 'ouvert', objet: 'x' })), '42501')
+  // DEUX GARDES, ET LA MESURE DU 2026-11-06 DIT LAQUELLE RÉPOND.
+  //
+  // J'attendais `42501` (privilège refusé). La base rend `55000`
+  // (`object_not_in_prerequisite_state`) : la vue n'est pas AUTO-MODIFIABLE,
+  // parce que son `FROM` porte DEUX relations (la jointure sur `sites_public`).
+  // PostgreSQL refuse l'écriture par la STRUCTURE, avant toute question de
+  // privilège — il faudrait une règle `DO INSTEAD` ou un trigger `INSTEAD OF`.
+  //
+  // C'est plus fort que ce que j'attendais, et c'est exactement ce qui a
+  // manqué à `sites_public` : son `FROM` ne portait QU'UNE relation, donc elle
+  // ÉTAIT auto-modifiable, et le `GRANT ALL` par défaut suffisait à la rendre
+  // écrivable par un visiteur anonyme (DEBT-073, cinq jours).
+  //
+  // CE POINT N'ASSERTE DONC PAS LE CODE, MAIS LE REFUS — et il IMPRIME le
+  // mécanisme. Exiger `42501` ferait rougir un état MEILLEUR que l'attendu, et
+  // un cliquet qui rougit sur une amélioration finit par être désarmé.
+  // La garde de privilège, elle, se mesure ailleurs : `information_schema`
+  // doit ne donner que SELECT à anon (relevé du 2026-11-06, 16 lignes dont
+  // `anon · SELECT` et `authenticated · SELECT`, aucune autre).
+  const refus = (r) => (r.error ? `refusé (${r.error.code})` : 'ACCORDÉ')
+  point(13, 'anon INSERT sur la VUE → refusé',
+    refus(await anon.from('appels_offres_public').insert({ site_id: publie.id, reference: 'x', reference_slug: 'x', etat: 'ouvert', objet: 'x' })), 'refusé (55000)')
   point(14, 'anon UPDATE sur la vue → refusé',
-    issue(await anon.from('appels_offres_public').update({ objet: 'réécrit' }).like('reference_slug', `${MARQUE}%`)), '42501')
+    refus(await anon.from('appels_offres_public').update({ objet: 'réécrit' }).like('reference_slug', `${MARQUE}%`)), 'refusé (55000)')
   point(15, 'anon DELETE sur la vue → refusé',
-    issue(await anon.from('appels_offres_public').delete().like('reference_slug', `${MARQUE}%`)), '42501')
+    refus(await anon.from('appels_offres_public').delete().like('reference_slug', `${MARQUE}%`)), 'refusé (55000)')
 
   // ── C. L'INVARIANT DE VISIBILITÉ (6 points) ─────────────────────
   console.log('\n  C. L’INVARIANT DE VISIBILITÉ — avis publié ET site publié ET site non archivé\n')

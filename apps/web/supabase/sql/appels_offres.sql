@@ -81,8 +81,16 @@ begin;
 -- ------------------------------------------------------------
 -- 0/6 -- CONSTAT AVANT. A LIRE, PAS A CROIRE.
 -- ------------------------------------------------------------
--- ATTENDU au 2026-11-06, avant application : lignes = 0, contraintes = 3
--- (pkey, etat_check, reference_unique), policies = 1, vue = 0.
+-- ATTENDU au 2026-11-06, avant application : lignes = 0, contraintes = 4,
+-- policies = 1, vue = 0.
+--
+-- RECTIFICATION DU 2026-11-06, APRES APPLICATION. J'avais ecrit
+-- « contraintes = 3 ». MESURE : 4. Mon chiffre venait de la fonction
+-- `contraintes_vivantes`, qui rapporte les CHECK, la cle primaire, l'unicite
+-- et les index -- PAS les cles etrangeres. `pg_constraint`, qu'interroge la
+-- requete ci-dessous, compte AUSSI `appels_offres_site_id_fkey`. J'ai donc
+-- predit avec un instrument et verifie avec un autre : 3 et 4 ne comptaient
+-- pas les memes objets. Les quatre : pkey, etat_check, reference_unique, FK.
 -- Si `lignes` est > 0, ARRETER et relire : les bornes du bloc 2 n'ont jamais
 -- ete exercees sur des donnees existantes.
 select
@@ -288,7 +296,16 @@ commit;
 -- ------------------------------------------------------------
 -- 6/6 -- CONSTAT APRES. A LIRE LIGNE PAR LIGNE.
 -- ------------------------------------------------------------
--- ATTENDU : contraintes = 6 · policies = 0 · vue = 1 · invoker = false
+-- ATTENDU : contraintes = 7 · policies = 0 · vue = 1 ·
+--           invoker = {security_invoker=false}
+--
+-- 7 = les 4 d'avant + les 3 bornes du bloc 2. (Voir la rectification du bloc
+-- 0 : j'avais d'abord annonce 6, en partant d'un « avant » de 3 lu sur un
+-- AUTRE instrument que celui-ci.)
+-- MESURE DU 2026-11-06 apres application : 7 / 0 / 1 / {security_invoker=false}.
+-- La policy retiree par le bloc 4 se nommait `appels_offres_lecture_publique`
+-- -- nom confirme apres coup par la capture de sa creation a 13:30. Elle a ete
+-- trouvee par DECOUVERTE, sans que ce nom soit ecrit nulle part ici.
 select
   (select count(*) from pg_constraint
      where conrelid = 'public.appels_offres'::regclass)                  as contraintes,
@@ -306,9 +323,28 @@ from information_schema.role_table_grants
 where table_schema = 'public' and table_name = 'appels_offres'
   and grantee in ('anon', 'authenticated');
 
--- ATTENDU : exactement deux lignes, `anon` SELECT et `authenticated` SELECT.
--- Tout INSERT / UPDATE / DELETE ici est le defaut DEBT-073.
+-- ATTENDU : 16 lignes, et parmi elles `anon` n'a que SELECT et
+-- `authenticated` n'a que SELECT. Tout INSERT / UPDATE / DELETE porte par
+-- l'un de ces deux roles serait le defaut DEBT-073.
+--
+-- RECTIFICATION DU 2026-11-06, APRES APPLICATION. J'avais ecrit « exactement
+-- deux lignes ». MESURE : 16. Cette requete NE FILTRE PAS le beneficiaire --
+-- elle rend aussi `postgres` (7 privileges) et `service_role` (7), ce qui est
+-- l'etat normal du proprietaire et du role serveur. Mon attendu decrivait une
+-- requete que je n'avais pas ecrite, et il aurait fait passer une application
+-- REUSSIE pour un echec. Un attendu qui ne correspond pas a son instrument est
+-- un faux rouge, et un faux rouge coute la confiance qu'un vrai rouge exige.
+--
+-- 16 = anon 1 + authenticated 1 + postgres 7 + service_role 7.
 select grantee, privilege_type
 from information_schema.role_table_grants
 where table_schema = 'public' and table_name = 'appels_offres_public'
+order by grantee, privilege_type;
+
+-- ET LA MEME CHOSE, RESSERREE SUR LES DEUX ROLES QUI COMPTENT.
+-- ATTENDU : exactement deux lignes, `anon SELECT` et `authenticated SELECT`.
+select grantee, privilege_type
+from information_schema.role_table_grants
+where table_schema = 'public' and table_name = 'appels_offres_public'
+  and grantee in ('anon', 'authenticated')
 order by grantee, privilege_type;

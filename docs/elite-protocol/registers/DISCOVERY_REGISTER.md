@@ -272,6 +272,68 @@ CONTENU en base, retirables depuis le tableau de bord. Zéro heure.
 
 ---
 
+### GEN-D034 — Deux attendus faux dans MON bloc de vérification ont fait passer une application RÉUSSIE pour un échec
+
+Le 2026-11-06, le propriétaire applique `appels_offres.sql`. Les trois
+contrôles passent. Mais **deux de mes « ATTENDU » ne décrivaient pas la
+requête placée juste en dessous** :
+
+| contrôle | mon attendu | mesuré | pourquoi mon chiffre était faux |
+|---|---|---|---|
+| contraintes après | `6` | **7** | j'ai prédit l'« avant » (3) avec `contraintes_vivantes`, qui ne rapporte **pas les clés étrangères**, et vérifié avec `pg_constraint`, qui les compte (4). Deux instruments, deux dénominateurs, comparés l'un à l'autre |
+| privilèges de la vue | « exactement **deux** lignes » | **16** | ma requête **ne filtre pas le bénéficiaire**. 16 = anon 1 + authenticated 1 + postgres 7 + service_role 7. L'assertion juste n'est pas un compte de lignes, c'est « anon et authenticated n'ont que SELECT » |
+
+**Ce que ça coûte** : un faux rouge. Le propriétaire a vu `7` là où j'annonçais
+`6`, et `16 rows` là où j'annonçais `2`. Rien n'était cassé — **mon attendu
+l'était**. Un faux rouge dépense la confiance qu'un vrai rouge exige.
+
+**La règle** : un attendu se dérive de **l'instrument qui le vérifiera**,
+jamais d'un relevé pris avec un autre. Même famille que
+[[verification-qui-compte-les-ajouts]] et le relevé `DETTE_OPAQUE` du matin
+(361 écrit depuis un script jetable, 376 rendu par le cliquet embarqué).
+
+**Corrigé** : les deux attendus rectifiés **dans le fichier**, datés, avec leur
+cause. Et une quatrième requête ajoutée, resserrée sur `anon` et
+`authenticated` — celle dont « exactement deux lignes » était vrai.
+
+**Statut** : 🟢 **CORRIGÉ**
+
+### GEN-D035 — La vue refuse l'écriture par sa STRUCTURE, pas par son privilège — et c'est ce qui manquait à `sites_public`
+
+Mesuré le 2026-11-06, après application. J'attendais `42501` (privilège
+refusé) sur `INSERT`/`UPDATE`/`DELETE` d'`anon` dans `appels_offres_public`.
+La base rend **`55000`** — `object_not_in_prerequisite_state` :
+
+> cannot insert into view … You need an unconditional ON INSERT DO INSTEAD
+> rule or an INSTEAD OF INSERT trigger.
+
+**La vue n'est pas AUTO-MODIFIABLE**, parce que son `FROM` porte **deux
+relations** — la jointure sur `sites_public`. PostgreSQL refuse l'écriture
+**avant toute question de privilège**.
+
+**C'est exactement ce qui a manqué à `sites_public`.** Son `FROM` ne portait
+qu'**une** relation : elle *était* auto-modifiable, et le `GRANT ALL` posé par
+défaut suffisait à la rendre écrivable par un visiteur anonyme — DEBT-073,
+cinq jours.
+
+**Donc la jointure qui porte l'invariant de lecture ferme aussi l'écriture.**
+Un seul trait de conception, deux gardes. Ce n'était pas mon intention : je
+joignais `sites_public` pour hériter « site publié ET non archivé ». La
+seconde garde est un effet, mesuré après coup, pas un mérite.
+
+**Ce que ça change pour le cliquet** : le point n'asserte plus le **code**
+mais le **refus**, et il imprime le mécanisme. Exiger `42501` ferait rougir un
+état MEILLEUR que l'attendu — et un cliquet qui rougit sur une amélioration
+finit désarmé. La garde de privilège se mesure ailleurs, dans
+`information_schema`.
+
+**Reste ouvert** : combien des autres vues publiques du dépôt sont
+auto-modifiables ? `sites_public` l'était. `catalog_products_public_view` et
+`site_blog_posts_public` n'ont jamais été mesurées sous cet angle — seul leur
+privilège l'a été.
+
+**Statut** : 🟢 **MESURÉ** · 🟠 **question ouverte sur les autres vues**
+
 ### GEN-D031 — Mes 14 points verts mesuraient une convention, pas un invariant
 
 **La phrase est au registre telle quelle, à la demande du propriétaire.**
