@@ -191,8 +191,21 @@ export default function JsonLd({ site, url }: { site: Site; url: string }) {
   // Identite stable pour les IA
   data['@id'] = url
 
-  // Coordonnees reelles (Nominatim)
-  if (typeof site.geo_lat === 'number' && typeof site.geo_lng === 'number') {
+  // ── UNE POSITION SUR LA CARTE EST UNE AFFIRMATION DE LIEU PHYSIQUE.
+  //
+  // DÉFAUT MESURÉ LE 2026-11-06, APRÈS DÉPLOIEMENT : `isPhysical: false`
+  // retirait bien l'adresse, et laissait passer `geo` ET `priceRange`. Le
+  // site de la CPA, déclaré `GovernmentOrganization`, annonçait donc encore
+  // une position sur la carte et une fourchette de prix.
+  //
+  // Trouvé en REMESURANT l'écran après le déploiement, pas en relisant le
+  // code : la correction précédente paraissait complète, et elle ne l'était
+  // qu'au tiers.
+  //
+  // Rayon mesuré : 3 sites sur 43 sont en `isPhysical: false` — un
+  // établissement public, un restaurant de livraison, une plateforme SaaS.
+  // Le retrait est juste pour les trois.
+  if (isPhysical && typeof site.geo_lat === 'number' && typeof site.geo_lng === 'number') {
     data.geo = {
       '@type': 'GeoCoordinates',
       latitude: site.geo_lat,
@@ -200,11 +213,34 @@ export default function JsonLd({ site, url }: { site: Site; url: string }) {
     }
   }
 
-  // Zone desservie
+  // ── LA ZONE DESSERVIE RESTE, ET CE N'EST PAS UN OUBLI.
+  //
+  // `areaServed` est valide sur une `Organization` : un organisme peut
+  // desservir un territoire sans avoir de local ouvert au public. C'est
+  // précisément le cas de la CPA, qui approvisionne tout le Tchad.
   if (site.area_served) data.areaServed = site.area_served
 
-  // Niveau de prix
-  if (site.price_range) data.priceRange = site.price_range
+  // ── LE NIVEAU DE PRIX : RETIRÉ POUR UN ORGANISME PUBLIC, ET SEULEMENT LÀ.
+  //
+  // `priceRange` est une propriété de `LocalBusiness` ; un organisme public
+  // n'a pas de fourchette de prix, et l'annoncer est faux.
+  //
+  // ── MAIS MA PREMIÈRE GARDE SORTAIT DU CHEMIN CPA, et un cliquet l'a dit.
+  //
+  // J'avais écrit `isPhysical && site.price_range`. Quatre cas de
+  // `priceRange JsonLd` ont rougi : leur fixture est le site YIA,
+  // `type: 'import export'`, donc `isPhysical: false` — et le CHANTIER 5
+  // avait décidé exprès que ce négoce émette sa fourchette. Ma garde
+  // changeait le JSON-LD d'un AUTRE site pour réparer celui de la CPA.
+  //
+  // La règle du propriétaire du 2026-11-06 : le seul objectif est de finir
+  // le site CPA ; ce qui n'est pas sur ce chemin se note et attend. La
+  // question de fond — `priceRange` sur une `Organization` non physique
+  // est-il valide ? — part donc au registre, et la garde se limite au cas
+  // qui nous occupe.
+  if (schemaType !== 'GovernmentOrganization' && site.price_range) {
+    data.priceRange = site.price_range
+  }
 
   // Fraicheur du contenu -- DEBT-034 : la derniere MODIFICATION, plus la
   // creation. Repli sur `created_at` tant que la migration n'est pas passee.

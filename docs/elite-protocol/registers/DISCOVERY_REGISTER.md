@@ -192,6 +192,38 @@ cas CPA : c'est **tout le monde**.
 A2 réglera la destination des appels d'offres pour la CPA. **La forme reste à
 régler** : deux sources pour un même bouton.
 
+### GEN-D029 — `priceRange` émis sur une `Organization` non physique
+
+`JsonLd.tsx`. `priceRange` est une propriété de `LocalBusiness` en
+schema.org ; l'émettre sur une `Organization` n'est pas valide.
+
+**Mesuré** : la fixture du cliquet `priceRangeJsonLd` est le site YIA,
+`type: 'import export'` — donc `isPhysical: false` — et le CHANTIER 5 avait
+décidé **exprès** qu'il émette sa fourchette de prix. Quatre cas le gardent.
+
+**Comment c'est apparu** : en gardant `priceRange` derrière `isPhysical` pour
+la CPA, j'ai fait rougir ces quatre cas. Ma garde changeait le JSON-LD d'un
+AUTRE site pour réparer celui de la CPA. Resserrée au seul cas
+`GovernmentOrganization`, par la règle du 2026-11-06.
+
+**Reste ouvert** : faut-il retirer `priceRange` à toute `Organization` non
+physique — 3 sites sur 43 — et que devient alors la décision du CHANTIER 5 ?
+
+### GEN-D030 — `isPhysical: false` ne retirait que l'adresse
+
+Même fichier. Le drapeau gardait la ligne 184 (`address`) et laissait passer
+**`geo` et `priceRange`**. Le site de la CPA, déclaré
+`GovernmentOrganization`, annonçait donc encore une position sur la carte et
+une fourchette de prix.
+
+**TROUVÉ EN REMESURANT L'ÉCRAN APRÈS LE DÉPLOIEMENT, pas en relisant le
+code.** La correction de A1(c) paraissait complète ; elle ne l'était qu'au
+tiers — trois lignes vertes sur cinq. Sans la remesure, « corrigé » aurait été
+annoncé sur un tiers de correction.
+
+`geo` est désormais gardé (3 sites touchés, le retrait est juste pour les
+trois). `priceRange` ne l'est que pour un organisme public — voir GEN-D029.
+
 ### GEN-D026 — `sites_sous_domaines` : capacité construite, jamais employée
 
 La table existe. La route `api/sites/adresse` existe. Le proxy sert
