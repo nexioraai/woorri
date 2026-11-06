@@ -683,6 +683,18 @@ export async function POST(req: Request) {
                   resultat.couverture.absentes.map((e) => e.exigence).join(', '),
               ]
             : []),
+          // ── ET LE CAS OÙ LE JUGE N'A RIEN PU MESURER SE CONSIGNE AUSSI.
+          //
+          // Il rendait `taux: 1` — couverture parfaite sans avoir rien
+          // regarde. Un tir relu dans trois mois lirait 1,00 et conclurait
+          // que cette oeuvre couvrait son cahier. On l'ecrit donc LA OU
+          // l'enregistrement vit, pas seulement a l'ecran.
+          ...(resultat.couverture.taux === null
+            ? [
+                'Couverture NON MESUREE : la demande ne contient aucune des ' +
+                  'familles d exigences reconnues — ce controle n a rien verifie',
+              ]
+            : []),
           // ── ET CE QUI RESTE EN MEMOIRE SE DIT, parce que c'est le seul
           //    defaut dont la consequence tombe APRES la livraison.
           //

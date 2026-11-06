@@ -337,7 +337,7 @@ export default function AtelierPage() {
       const d = (await res.json().catch(() => ({}))) as {
         ok?: boolean; error?: string; horsPerimetre?: boolean; raison?: string;
         aConfirmer?: boolean; message?: string; fichiers?: string[]; coutUsd?: number; rang?: number;
-        migration?: string | boolean;
+        migration?: string | boolean; couvertureNonMesuree?: boolean;
       };
       // CE QUI A ÉTÉ DÉPENSÉ SE DIT, MÊME QUAND ÇA RATE. Un refus gratuit et
       // un refus payé ne sont pas la même nouvelle.
@@ -380,10 +380,19 @@ export default function AtelierPage() {
       // `count(*)` avant, `count(*)` après — jamais d'un texte engendré.
       // L'affaire Replit tient en une ligne : les données ÉTAIENT
       // récupérables, et c'est l'agent qui a affirmé le contraire.
+      // ── ET CE QUE LES JUGES N'ONT PAS PU REGARDER SE DIT ICI.
+      //
+      // La couverture du cahier n'est pas comparable quand le contrôle ne
+      // reconnaît aucune famille dans la demande — mesuré sur quatre
+      // demandes réalistes sur quatre. Son silence ressemblait à un vert.
+      const nonMesure =
+        d.couvertureNonMesuree === true
+          ? ' La couverture du cahier n’a pas pu être vérifiée sur cette demande.'
+          : '';
       setAvis(
-        d.migration === undefined
+        (d.migration === undefined
           ? `Modifié — ${String((d.fichiers ?? []).length)} fichier(s) touché(s)${paye}.`
-          : `${d.migration}${paye}`,
+          : `${d.migration}${paye}`) + nonMesure,
       );
       // ── LE CŒUR DE LA BOUCLE. On ne demande rien à la personne : le fil
       // et l'aperçu se remettent à jour, et le vert apparaît.

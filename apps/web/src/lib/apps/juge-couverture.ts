@@ -49,8 +49,29 @@ export type RapportCouverture = {
   readonly exigences: readonly ExigenceJugee[]
   /** Les absentes MUETTES : ni couvertes, ni déclarées. Le défaut. */
   readonly absentes: readonly ExigenceJugee[]
-  /** couvertes + déclarées, sur le total retenu. Entre 0 et 1. */
-  readonly taux: number
+  /**
+   * couvertes + déclarées, sur le total retenu. Entre 0 et 1 — ou `null`.
+   *
+   * ── `null` N'EST PAS UN DÉTAIL DE TYPE, C'EST UN AVEU.
+   *
+   * Ce champ valait `1` quand AUCUNE famille du lexique ne se trouvait dans
+   * la demande : une couverture parfaite rendue sans avoir rien mesuré.
+   * Mesuré le 2026-11-06 sur le module réel, code = `<div>bonjour</div>` :
+   *
+   *   salon de coiffure        0 famille → taux 1,00
+   *   site institutionnel CPA  0 famille → taux 1,00
+   *   boutique simple          0 famille → taux 1,00
+   *   carnet de notes          0 famille → taux 1,00
+   *
+   * Quatre demandes ordinaires sur quatre, dont celle qu'on s'apprête à
+   * construire. Et au seuil 1 au lieu de 3 : toujours zéro. Les dix-neuf
+   * familles sont l'INDEX D'UN SEUL DOCUMENT — le cahier fondateur en
+   * déclenche treize, une demande ordinaire aucune.
+   *
+   * `null` veut dire : CE CONTRÔLE N'A RIEN PU MESURER. Quiconque le lit
+   * doit le dire — pas le remplacer par un chiffre (voir EP-366).
+   */
+  readonly taux: number | null
 }
 
 /** Une exigence n'est RETENUE que si le cahier y insiste. */
@@ -163,7 +184,8 @@ export function jugerCouverture(
   const absentes = exigences.filter(
     (e) => e.statut === 'absente' || e.statut === 'nommee' || e.statut === 'declaree-mais-centrale',
   )
+  // AUCUNE FAMILLE RETENUE = RIEN MESURÉ, et ça ne se dit pas « 1 ».
   const taux =
-    exigences.length === 0 ? 1 : (exigences.length - absentes.length) / exigences.length
+    exigences.length === 0 ? null : (exigences.length - absentes.length) / exigences.length
   return { exigences, absentes, taux }
 }

@@ -247,20 +247,36 @@ export type VerdictRetouche = {
   readonly regressions: readonly { readonly juge: string; readonly avant: number; readonly apres: number }[]
   /** La couverture a baissé : à confirmer, pas à refuser. */
   readonly couvertureEnBaisse: { readonly avant: number; readonly apres: number } | null
+  /**
+   * LA COUVERTURE N'A PAS PU ÊTRE MESURÉE — ni avant, ni après, ni les deux.
+   *
+   * Ce champ existe parce qu'un `null` silencieux se lisait comme « pas de
+   * régression ». Une dimension non mesurée n'est pas une dimension saine :
+   * elle est MUETTE, et ça se dit à la personne qui décide.
+   */
+  readonly couvertureNonMesuree: boolean
 }
 
 export function comparerJuges(
   avant: readonly NoteJuge[],
   apres: readonly NoteJuge[],
-  couverture: { readonly avant: number; readonly apres: number } | null,
+  couverture: { readonly avant: number | null; readonly apres: number | null } | null,
 ): VerdictRetouche {
   const parNom = new Map(avant.map((n) => [n.nom, n.defauts]))
   const regressions = apres
     .filter((n) => n.defauts > (parNom.get(n.nom) ?? 0))
     .map((n) => ({ juge: n.nom, avant: parNom.get(n.nom) ?? 0, apres: n.defauts }))
+  // ── DEUX CAS QUI NE SE CONFONDENT PAS.
+  //
+  // `null` d'un côté = le juge n'a rien pu mesurer. Comparer un chiffre à
+  // rien ne donne pas « stable » : ça ne donne RIEN, et il faut le dire.
+  const mesure =
+    couverture !== null && couverture.avant !== null && couverture.apres !== null
+      ? { avant: couverture.avant, apres: couverture.apres }
+      : null
   return {
     regressions,
-    couvertureEnBaisse:
-      couverture !== null && couverture.apres < couverture.avant ? couverture : null,
+    couvertureEnBaisse: mesure !== null && mesure.apres < mesure.avant ? mesure : null,
+    couvertureNonMesuree: couverture === null || mesure === null,
   }
 }

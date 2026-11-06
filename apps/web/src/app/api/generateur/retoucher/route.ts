@@ -137,7 +137,7 @@ async function noter(
     readonly entites: readonly EntiteDeclaree[]
     readonly devise: string | undefined
   },
-): Promise<{ notes: NoteJuge[]; taux: number }> {
+): Promise<{ notes: NoteJuge[]; taux: number | null }> {
   const systeme = fichiersSysteme(undefined)
   const bundle = await assembler(fichiers)
   // ── UN DOCUMENT QUI NE S'ASSEMBLE PAS N'A PAS D'ÉCRANS.
@@ -731,7 +731,13 @@ export async function POST(req: Request) {
   return NextResponse.json(
     { ok: true,
       // CE QUI EST ARRIVÉ AUX DONNÉES, AVEC LES NOMBRES COMPTÉS.
-      ...(apresMigration === null ? {} : { migration: apresMigration }), rang, fichiers: rendus.map((f) => f.chemin), coutUsd: Number(coutUsd.toFixed(4)) },
+      ...(apresMigration === null ? {} : { migration: apresMigration }), rang, fichiers: rendus.map((f) => f.chemin), coutUsd: Number(coutUsd.toFixed(4)),
+      // ── UNE DIMENSION NON MESURÉE N'EST PAS UNE DIMENSION SAINE.
+      //
+      // `comparerJuges` ne pouvait pas comparer la couverture : elle valait
+      // `null` avant comme après. Sans ce drapeau, son silence se lisait
+      // comme « pas de régression » — et l'écran l'aurait répété.
+      couvertureNonMesuree: verdict.couvertureNonMesuree },
     { headers: { 'Cache-Control': 'no-store' } },
   )
 }

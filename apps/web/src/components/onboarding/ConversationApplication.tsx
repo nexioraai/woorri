@@ -1073,6 +1073,10 @@ export default function ConversationApplication({
             couverture?: {
               exigences?: { exigence: string; statut: string }[];
               absentes?: { exigence: string; cahier: number }[];
+              // `null` = le contrôle n'a RIEN PU MESURER sur cette demande.
+              // Sans ce champ, l'écran ne peut pas distinguer « rien à
+              // signaler » de « je n'ai pas regardé » (voir EP-366).
+              taux?: number | null;
             };
           }>(res).catch(() => null)) ?? {};
         if (!res.ok || d.ok !== true || typeof d.html !== 'string') {
@@ -1108,6 +1112,25 @@ export default function ConversationApplication({
                         ? `, ${String(declarees.length)} déclarée(s) hors périmètre (${declarees.map((x) => x.exigence).join(', ')})`
                         : '') +
                       '.',
+                  );
+                } else if (d.couverture !== undefined && d.couverture.taux === null) {
+                  // ── LE SILENCE ÉTAIT LE PIRE DES DEUX.
+                  //
+                  // La ligne au-dessus ne s'affichait que `si ex.length > 0`.
+                  // Sur une demande ordinaire, le contrôle ne retient AUCUNE
+                  // exigence — mesuré sur quatre demandes réalistes sur
+                  // quatre, dont un site institutionnel. La ligne disparaissait
+                  // donc entièrement, et la personne lisait « votre application
+                  // est prête en 34 secondes », rien d'autre.
+                  //
+                  // Un silence, à l'endroit exact où quelqu'un décide de garder
+                  // l'œuvre, se lit comme « rien à signaler ». C'est pour ça que
+                  // ceci est un AVEU et pas un score.
+                  lignes.push(
+                    '⚠ Couverture du cahier : NON MESURÉE. Votre demande ne contient aucune ' +
+                      'des familles d’exigences que ce contrôle sait reconnaître — il ne l’a ' +
+                      'donc PAS vérifiée sur ce point. Les autres contrôles ci-dessus, eux, ' +
+                      'ont bien tourné.',
                   );
                 }
                 // ── CE QUI NE SE CONSERVE PAS, DIT À LA LIVRAISON.
