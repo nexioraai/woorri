@@ -288,6 +288,60 @@ CONTENU en base, retirables depuis le tableau de bord. Zéro heure.
 
 ---
 
+### GEN-D037 — Un repli silencieux transforme une lecture ratée en preuve d'absence — trois occurrences, dont une dans une garde de la maison
+
+**Classe nommée par le propriétaire le 2026-11-06**, après que j'ai trouvé la
+première dans ma propre sonde d'écran : *« une mesure qui confond une absence
+et une impossibilité de mesurer »*. Sa consigne : chercher la forme ailleurs.
+Trois occurrences trouvées, toutes de la même structure —
+
+```
+(lecture.data ?? []).length   →  0   attendu « 0 »   →  VERT
+```
+
+Le repli `?? []` rend une longueur de 0 quand la lecture a **échoué**. Un
+point qui attend « 0 », « absent » ou « aucun » passe alors au vert **sans
+avoir rien lu**.
+
+| # | où | ce que le faux vert aurait annoncé |
+|---|---|---|
+| ① | `prouver-ecran-appels-offres.mjs`, l'échéance | « l'heure est absente » sur une page jamais servie. **Rougi par chance** : son attendu était « présent ». Quatre points voisins attendaient « absent » |
+| ② | `mesurer-appels-offres.mjs`, point 21 | « aucune fuite sur les autres sites » alors que la requête de contrôle avait échoué |
+| ③ | `scripts/temoin-en-base.mjs` — **fichier de la maison** | « témoin retiré » **sans relecture réussie**, sur une table de VRAIS CLIENTS |
+
+**Le cas ③ est le plus grave, et il est dans l'intention même du fichier.**
+Son commentaire dit : « il est VÉRIFIÉ : annoncer un retrait sans le relire
+serait exactement le genre d'affirmation que le protocole interdit. » Le code :
+
+```js
+const reste = await sb.from(table).select('id').eq('id', id).maybeSingle()
+if (del.error !== null || reste.data !== null) { /* RETRAIT RATÉ */ }
+else { journal('retiré', id) }
+```
+
+`reste.error` n'est **jamais** consulté — mesuré, aucune occurrence dans le
+fichier. Relecture en échec → `reste.data === null` → branche « retiré ». Un
+témoin peut survivre sur la table de production pendant que le journal jure
+qu'il a disparu.
+
+**Pourquoi la forme est si difficile à voir** : elle ne produit jamais
+d'erreur, jamais de rouge, jamais de ligne de log. Elle produit le résultat
+qu'on espérait. Et elle se niche précisément dans les assertions NÉGATIVES —
+celles qu'on écrit parce qu'on a compris que prouver l'absence est le travail
+difficile.
+
+**Corrigés** : ① et ② — les deux erreurs de lecture sont désormais nommées
+séparément et remontent comme valeur obtenue (`LECTURE RATÉE <code>`,
+`RELECTURE IMPOSSIBLE <code>`), jamais fondues dans un zéro.
+
+**NON corrigé, délibérément** : ③. `temoin-en-base.mjs` est une garde
+PARTAGÉE, posée sur arbitrage du propriétaire le 2026-11-01, et employée par
+d'autres mesures. La modifier au milieu du lot A2 serait exactement le geste
+unilatéral que ce protocole interdit. Le correctif tient en une ligne —
+consulter `reste.error` — et attend un arbitrage.
+
+**Statut** : 🟢 **①② CORRIGÉS** · 🔴 **③ OUVERT, dans une garde de production**
+
 ### DEBT-073 — FERMÉE PAR RICOCHET pour deux vues sur trois, et la mesure dit laquelle reste seule
 
 Fermeture consignée le 2026-11-06 sur demande du propriétaire, **avec sa

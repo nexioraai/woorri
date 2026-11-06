@@ -248,10 +248,22 @@ try {
     'absente')
 
   // ── LE FILTRE PAR SITE, DANS LES DEUX SENS ──────────────────────
+  // UN COMPTE DE ZÉRO N'EST PAS UNE ABSENCE S'IL VIENT D'UNE LECTURE RATÉE.
+  //
+  // DÉFAUT DE CE FICHIER, TROUVÉ LE 2026-11-06 EN CHERCHANT LA FORME QUE LE
+  // PROPRIÉTAIRE A NOMMÉE. Première rédaction :
+  //   `${(ailleurs.data ?? []).length}`   attendu « 0 »
+  // Si cette requête ÉCHOUAIT, `data` valait `null`, le repli `?? []` rendait
+  // une longueur de 0, et le point passait au VERT — en annonçant « aucune
+  // fuite ailleurs » alors que rien n'avait été lu. Le repli transformait une
+  // impossibilité de mesurer en preuve d'absence.
   const dUnSite = await anon.from('appels_offres_public').select('site_slug').eq('site_id', publie.id)
   const ailleurs = await anon.from('appels_offres_public').select('site_slug').neq('site_id', publie.id).eq('reference_slug', `${MARQUE}visible`)
+  const panne = dUnSite.error ? `LECTURE RATÉE ${dUnSite.error.code}`
+              : ailleurs.error ? `LECTURE RATÉE ${ailleurs.error.code}`
+              : null
   point(21, 'le témoin visible apparaît POUR SON SITE et pour AUCUN AUTRE',
-    `${(dUnSite.data ?? []).some((r) => r.site_slug === publie.slug) ? 'présent' : 'absent'}/${(ailleurs.data ?? []).length}`,
+    panne ?? `${dUnSite.data.some((r) => r.site_slug === publie.slug) ? 'présent' : 'absent'}/${ailleurs.data.length}`,
     'présent/0')
 } finally {
   console.log('')
