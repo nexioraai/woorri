@@ -18,8 +18,39 @@ aucune information fournie comme défaut connu**.
 > Ces trois mots s'emploient **sans exception** dans tout rapport, tout
 > commit et tout en-tête de cliquet.
 
-**MOTEUR** — l'unique générateur. Il n'y en a qu'un, et toute œuvre passe par
-lui.
+> ⚠️ **CORRIGÉ LE 2026-11-06, QUELQUES HEURES APRÈS AVOIR ÉTÉ POSÉ.**
+> La version d'origine disait « MOTEUR — l'unique générateur. Il n'y en a
+> qu'un ». **Mesuré : il y en a DEUX.** La définition de SITE comme « ce que
+> le moteur ne sait pas produire » était donc fausse — elle décrivait un
+> générateur en ignorant l'autre. Les deux versions sont conservées : c'est
+> la règle de tenue de ce registre.
+
+**MOTEUR D'APPLIS** — `src/lib/apps/` · génère une œuvre depuis une demande en
+langue naturelle, en un seul document servi sur tous les chemins. 55
+générations mesurées, 2 avec des tables.
+
+**MOTEUR DE SITES** — `src/app/sites/[slug]/` · **95 fichiers, 828 Ko**, en
+production, **42 sites en base** dont plusieurs sur domaine propre
+(`biyaminchine.com`, `yiaglobalcommodities.com`). Mesuré le 2026-11-06 sur un
+site vivant :
+
+| | |
+|---|---|
+| `/` | 200 · 35 047 o sur le fil |
+| `/blog` | 200 · une page **différente** |
+| `/nimportequoi` | **404** — un vrai |
+| `/robots.txt` | 200 |
+| métadonnées | `<title>`, `description`, `canonical`, `og:title`, **JSON-LD** — rendues côté SERVEUR |
+
+Il a aussi `/blog/[post]/` et `/produits/[id]/` — **une page adressable par
+ligne de table**, exactement ce que j'avais déclaré impossible. Et quatre
+routes de **téléversement de fichiers** qui tournent en production
+(`site-images`, `pod-designs`), avec un an de cache sur les fichiers déposés.
+
+**Ce que la version d'origine affirmait et qui est réfuté** : « le moteur ne
+sait pas produire une adresse par page, un rendu indexable, un 404 ». Le
+moteur d'APPLIS ne sait pas. **Le moteur de SITES le fait déjà, en
+production.**
 
 **APPLI** — ce que le moteur sait produire *aujourd'hui* : des écrans, une
 connexion, de la saisie, un menu latéral, **un seul document servi sur tous
@@ -58,13 +89,31 @@ enrichissement : elle produit un SITE qui ressemble à une APPLI.
 
 | | |
 |---|---|
-| le portail CPA | un **SITE** |
-| l'œuvre `asosa` | une **APPLI** |
-| le moteur | **le même** |
+| le portail CPA | un **SITE** → donc le moteur de SITES |
+| l'œuvre `asosa` | une **APPLI** → le moteur d'APPLIS |
+| les deux moteurs | **distincts, et tous deux en production** |
 
-C'est tout le problème, et c'est ce que la mesure de la frontière (≈ 2 h,
-accordée, à faire **après** la regénération) doit chiffrer : combien des règles
-du moteur diffèrent réellement entre les deux objets.
+La question n'est donc plus « faut-il un régime site dans le moteur ». Elle
+est : **que manque-t-il au moteur de SITES pour qu'il produise un portail
+institutionnel ?** C'est une question beaucoup plus petite, et elle se
+chiffre.
+
+### Ce que cette erreur a coûté, et comment elle s'est produite
+
+J'ai analysé le moteur d'APPLIS pendant une journée entière, conclu que « le
+moteur ne sait pas produire un SITE », chiffré un lot de 7 h 30 pour écrire
+une loi, puis un juge de refus — tout cela en ignorant 95 fichiers et 42
+sites en production dans le même dépôt.
+
+La cause n'est pas un manque de mesure : c'est d'avoir mesuré **le périmètre
+que j'avais supposé**. Les cinq modules que j'avais classés « morts » le
+2026-11-06 — `FamilyFilter`, `themeRegistry`, `ImageProduit`,
+`DesignUploader`, `checkSectionOrder` — appartiennent TOUS à ce générateur. Je
+les ai comptés comme dette sans me demander de quel produit ils étaient la
+dette.
+
+**La règle qui en sort** : avant de conclure qu'un dépôt ne sait pas faire une
+chose, énumérer ses générateurs. Pas ses modules — ses **produits**.
 
 ---
 

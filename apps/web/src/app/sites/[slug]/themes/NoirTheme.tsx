@@ -268,8 +268,8 @@ export default function NoirTheme({ site }: { site: Site }) {
             {!hidden('About') && <NavLink href="#about">{t.nav.about}</NavLink>}
             {!hidden('Services') && <NavLink href="#services">{sections[0]?.name || t.nav.services}</NavLink>}
             {hasShop && !hidden('Shop') && <NavLink href="#shop">{t.nav.shop}</NavLink>}
-            {!hidden('Gallery') && <NavLink href="#gallery">{t.nav.gallery}</NavLink>}
-            {!hidden('Reviews') && <NavLink href="#testimonials">{t.nav.reviews}</NavLink>}
+            {gallery.length > 0 && !hidden('Gallery') && <NavLink href="#gallery">{t.nav.gallery}</NavLink>}
+            {testimonials.length > 0 && !hidden('Reviews') && <NavLink href="#testimonials">{t.nav.reviews}</NavLink>}
             {(site.pages || []).filter((p: any) => p && p.title).map((page: any, pi: number) => (
               <NavLink key={`navpage-${pi}`} href={`#page-${pi}`}>{page.title}</NavLink>
             ))}

@@ -102,8 +102,8 @@ export default function VifTheme({ site }: { site: Site }) {
             {hasShop && !hidden('Shop') && (
               <a href="#shop" className="hover:opacity-100 transition-opacity">{t.nav.shop}</a>
             )}
-            {!hidden('Gallery') && <a href="#gallery" className="hover:opacity-100 transition-opacity">{t.nav.gallery}</a>}
-            {!hidden('Reviews') && <a href="#testimonials" className="hover:opacity-100 transition-opacity">{t.nav.reviews}</a>}
+            {gallery.length > 0 && !hidden('Gallery') && <a href="#gallery" className="hover:opacity-100 transition-opacity">{t.nav.gallery}</a>}
+            {testimonials.length > 0 && !hidden('Reviews') && <a href="#testimonials" className="hover:opacity-100 transition-opacity">{t.nav.reviews}</a>}
             {(site.pages || []).filter((p: any) => p && p.title).map((page: any, pi: number) => (
               <a key={`navpage-${pi}`} href={`#page-${pi}`} className="hover:opacity-100 transition-opacity">{page.title}</a>
             ))}
