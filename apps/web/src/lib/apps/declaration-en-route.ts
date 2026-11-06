@@ -84,18 +84,138 @@ export function lireDeclarationEnRoute(
   return { entites: lu.entites, refus: lu.refus, fichiers: restants }
 }
 
+/** Ce qu'une fusion a refusé de prendre. Jamais tu — c'est tout l'objet. */
+export type PerteFusion = {
+  readonly table: string
+  /** Ce que le constructeur demandait, nommé. */
+  readonly quoi: string
+  /** Pourquoi il ne l'a pas obtenu. */
+  readonly pourquoi: string
+}
+
+export type Fusion = {
+  readonly entites: readonly EntiteDeclaree[]
+  readonly pertes: readonly PerteFusion[]
+}
+
 /**
- * FUSIONNE LES DEUX SOURCES — le cahier d\u2019abord, la construction ensuite.
+ * FUSIONNE LES DEUX SOURCES — AU CHAMP PRÈS, ET SANS RIEN AVALER.
  *
- * Le cahier gagne sur un nom commun : il porte ce que la personne a
- * DEMANDÉ, et le constructeur n\u2019a pas à le redéfinir au passage. Le
- * constructeur n\u2019AJOUTE que ce que le cahier n\u2019avait pas vu.
+ * ── CE QUE CETTE FONCTION JETAIT EN SILENCE, MESURÉ LE 2026-11-06.
+ *
+ * Sa première forme ne gardait du constructeur que les tables dont le nom
+ * était NEUF. Sur un nom déjà vu, elle jetait l'entité ENTIÈRE — et sa
+ * signature n'avait aucun canal pour le dire. Éprouvé sur le cas réel
+ * d'`asso` :
+ *
+ *   lecturePublique: true           JETÉ
+ *   appendOnly: true  (journal)     JETÉ
+ *   UN CHAMP EN PLUS (telephone)    JETÉ — 1 champ au lieu de 2
+ *   required passé à false          JETÉ
+ *   unique sur un champ             JETÉ
+ *
+ * Le troisième est le vrai danger : le modèle comprend qu'il lui manque une
+ * colonne, la redéclare, et LA COLONNE N'EXISTE JAMAIS. L'application écrit
+ * dans un champ absent.
+ *
+ * Et le premier explique le défaut d'`asso.deribfy.app` : sa page publique
+ * ne pouvait pas marcher, et même si le modèle avait déclaré la table
+ * publique, cette fonction aurait jeté la déclaration. DEUX CAUSES
+ * EMPILÉES — écrire la loi dans la consigne seule n'aurait rien réparé.
+ *
+ * ── CE QUI CHANGE, ET CE QUI NE CHANGE PAS.
+ *
+ * Le cahier reste l'autorité sur ce qu'il a DIT : il porte la demande de la
+ * personne. Mais le silence n'est pas une parole. Là où le cahier ne dit
+ * rien, le constructeur peut AJOUTER — un champ, la publicité, le journal.
+ * Là où le cahier a parlé, il l'emporte, ET LA PERTE SE DIT.
  */
 export function fusionnerEntites(
   duCahier: readonly EntiteDeclaree[],
   duConstructeur: readonly EntiteDeclaree[],
-): readonly EntiteDeclaree[] {
+): Fusion {
+  const pertes: PerteFusion[] = []
+  const parNom = new Map(duConstructeur.map((e) => [e.name.toLowerCase(), e]))
+  const entites = duCahier.map((duC) => {
+    const duK = parNom.get(duC.name.toLowerCase())
+    if (duK === undefined) return duC
+    return fusionnerUne(duC, duK, pertes)
+  })
   const vues = new Set(duCahier.map((e) => e.name.toLowerCase()))
   const ajoutees = duConstructeur.filter((e) => !vues.has(e.name.toLowerCase()))
-  return [...duCahier, ...ajoutees]
+  return { entites: [...entites, ...ajoutees], pertes }
+}
+
+/** Un drapeau que le constructeur peut POSER quand le cahier se taît. */
+function drapeau(
+  table: string,
+  nom: 'lecturePublique' | 'appendOnly',
+  duCahier: boolean | undefined,
+  duConstructeur: boolean | undefined,
+  pertes: PerteFusion[],
+): boolean | undefined {
+  if (duConstructeur === undefined) return duCahier
+  if (duCahier === undefined) return duConstructeur
+  if (duCahier !== duConstructeur) {
+    pertes.push({
+      table,
+      quoi: `${nom}: ${String(duConstructeur)}`,
+      pourquoi: `le cahier dit déjà ${nom}: ${String(duCahier)}, et c'est lui qui porte la demande`,
+    })
+  }
+  return duCahier
+}
+
+function fusionnerUne(
+  duCahier: EntiteDeclaree,
+  duConstructeur: EntiteDeclaree,
+  pertes: PerteFusion[],
+): EntiteDeclaree {
+  const table = duCahier.name
+  const parNom = new Map(duConstructeur.fields.map((f) => [f.name.toLowerCase(), f]))
+  const champs = duCahier.fields.map((f) => {
+    const k = parNom.get(f.name.toLowerCase())
+    if (k === undefined) return f
+    // ── LE CAHIER L'EMPORTE SUR UN CHAMP QU'IL A DÉJÀ DÉCRIT.
+    //
+    // Mais on NOMME l'écart. Changer un type ou lever une contrainte
+    // d'unicité sur des lignes déjà écrites est une migration, pas une
+    // déclaration — et ça ne se décide pas au milieu d'une construction.
+    if (k.type !== f.type) {
+      pertes.push({ table, quoi: `${f.name}: ${k.type}`, pourquoi: `le cahier le déclare ${f.type}` })
+    }
+    if (k.required !== f.required) {
+      pertes.push({
+        table,
+        quoi: `${f.name} ${k.required ? 'requis' : 'facultatif'}`,
+        pourquoi: `le cahier le déclare ${f.required ? 'requis' : 'facultatif'}`,
+      })
+    }
+    if (k.unique === true && f.unique !== true) {
+      pertes.push({
+        table,
+        quoi: `${f.name} unique`,
+        pourquoi: 'une unicité posée après coup échouerait sur les lignes déjà écrites',
+      })
+    }
+    return f
+  })
+  // ── ET LES CHAMPS QUE LE CAHIER N'AVAIT PAS VUS SONT AJOUTÉS.
+  //
+  // C'est la perte la plus grave que l'ancienne forme causait : sans eux,
+  // l'application écrit dans une colonne qui n'existe pas.
+  const vus = new Set(duCahier.fields.map((f) => f.name.toLowerCase()))
+  const enPlus = duConstructeur.fields.filter((f) => !vus.has(f.name.toLowerCase()))
+  return {
+    ...duCahier,
+    fields: [...champs, ...enPlus],
+    lecturePublique: drapeau(
+      table,
+      'lecturePublique',
+      duCahier.lecturePublique,
+      duConstructeur.lecturePublique,
+      pertes,
+    ),
+    appendOnly: drapeau(table, 'appendOnly', duCahier.appendOnly, duConstructeur.appendOnly, pertes),
+  }
 }

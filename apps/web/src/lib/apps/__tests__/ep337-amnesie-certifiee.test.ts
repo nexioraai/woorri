@@ -142,11 +142,14 @@ describe('EP-337 · l’amnésie ne se certifie plus', () => {
       { ...ENTITE, id: 'ent_note', name: 'note', fields: [] },
     ]
     const f = fusionnerEntites(duCahier, duConstructeur)
-    expect(f.map((e) => e.name), 'la fusion perd ou duplique une table').toEqual([
+    expect(f.entites.map((e) => e.name), 'la fusion perd ou duplique une table').toEqual([
       'releve',
       'note',
     ])
-    expect(f[0]?.id, 'le constructeur a écrasé la table du cahier').toBe('ent_releve')
+    expect(f.entites[0]?.id, 'le constructeur a écrasé la table du cahier').toBe('ent_releve')
+    // Le constructeur rendait `fields: []` sur `releve` : rien à ajouter, donc
+    // aucune perte. La fusion ne parle que quand elle refuse QUELQUE CHOSE.
+    expect(f.pertes, 'une fusion sans conflit ne reproche rien').toEqual([])
   })
 
   it('⑧ UN JSON ILLISIBLE NE FAIT PAS ÉCHOUER LA CONSTRUCTION', () => {

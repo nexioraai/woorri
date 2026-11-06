@@ -1,4 +1,5 @@
 'use client';
+import { publierAvecAccord } from '@/components/apps/accordLecturePublique';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -280,12 +281,9 @@ export default function DashboardPage() {
     );
     if (sous === null) return; // la personne a annulé
     try {
-      const res = await fetch(
+      const res = await publierAvecAccord(
         `/api/generateur/publier?id=${encodeURIComponent(a.id)}${sous.trim() !== '' ? `&sous=${encodeURIComponent(sous.trim().toLowerCase())}` : ''}`,
-        {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${session.access_token}` },
-        },
+        `Bearer ${session.access_token}`,
       );
       // ── LE CHAMP S'APPELLE `lien`, PAS `url` — BUG ATTRAPÉ EN PROD.
       //

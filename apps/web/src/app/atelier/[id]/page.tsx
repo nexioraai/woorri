@@ -43,6 +43,7 @@
  * et « Télécharger » agiraient sur autre chose que ce que l'œil voit — et la
  * personne publierait ce qu'elle ne regarde pas. Un seul courant, partout.
  */
+import { publierAvecAccord } from '@/components/apps/accordLecturePublique';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
@@ -445,9 +446,9 @@ export default function AtelierPage() {
     );
     if (sous === null) return;
     try {
-      const res = await fetch(
+      const res = await publierAvecAccord(
         `/api/generateur/publier?id=${encodeURIComponent(id)}${sous.trim() !== '' ? `&sous=${encodeURIComponent(sous.trim().toLowerCase())}` : ''}`,
-        { method: 'POST', headers: { Authorization: `Bearer ${t}` } },
+        `Bearer ${t}`,
       );
       // Le champ s'appelle `lien`, pas `url` — bug attrapé en production le
       // 2026-10-30. On lit les deux : si la route renomme, le bouton survit.

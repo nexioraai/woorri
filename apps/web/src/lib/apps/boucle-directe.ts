@@ -377,8 +377,22 @@ export async function boucleEcriture(o: {
       const carteBrute = new Map(lus.map((f) => [f.chemin, f.contenu]))
       const dec = lireDeclarationEnRoute(carteBrute, o.validerEntite)
       if (dec.entites.length > 0 || dec.refus.length > 0) {
-        entitesConnues = fusionnerEntites(entitesConnues, dec.entites)
-        refusEnRoute = [...refusEnRoute, ...dec.refus]
+        const fusion = fusionnerEntites(entitesConnues, dec.entites)
+        entitesConnues = fusion.entites
+        // ── UNE PERTE DE FUSION PART PAR LE MÊME CANAL QU'UN REFUS.
+        //
+        // Elle en EST un : le modèle a déclaré quelque chose et ne l'a pas
+        // obtenu. Avant, cette fonction jetait l'entité entière sans un mot
+        // — y compris un CHAMP EN PLUS, donc une colonne qui n'existe
+        // jamais. Le canal existait déjà ; elle ne s'en servait pas.
+        refusEnRoute = [
+          ...refusEnRoute,
+          ...dec.refus,
+          ...fusion.pertes.map((pe) => ({
+            quoi: `${pe.table}.${pe.quoi}`,
+            motif: pe.pourquoi,
+          })),
+        ]
       }
       if (carteBrute.size !== dec.fichiers.size) {
         lus = lus.filter((f) => f.chemin !== FICHIER_DECLARATION)

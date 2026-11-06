@@ -461,12 +461,16 @@ export async function POST(req: Request) {
   )
   const fichiersLivres = declaration.fichiers
   const entitesAvant = declarationDe(docAvant)
-  const plan = comparerDeclarations(
-    entitesAvant,
+  // ── UNE SEULE FUSION, ET SES PERTES VOYAGENT.
+  //
+  // Elle était appelée QUATRE FOIS avec les mêmes arguments. Depuis qu'elle
+  // rend aussi ce qu'elle refuse de prendre, quatre appels rendraient quatre
+  // fois les mêmes pertes — et trois d'entre elles se perdraient.
+  const fusion =
     declaration.entites.length > 0
       ? fusionnerEntites(entitesAvant, declaration.entites)
-      : entitesAvant,
-  )
+      : { entites: entitesAvant, pertes: [] }
+  const plan = comparerDeclarations(entitesAvant, fusion.entites)
   // ── UN ARRÊT DE M1 NE SE DISCUTE PAS, ET NE SE CONFIRME PAS.
   //
   // Une table abandonnée, un type changé, une unicité ajoutée : ce sont
@@ -574,12 +578,9 @@ export async function POST(req: Request) {
         fichiers: Object.fromEntries(declaration.fichiers),
         nom: typeof lu.data.nom === 'string' ? lu.data.nom : null,
         coutUsd: Number(coutUsd.toFixed(4)),
-        schema: emettreSchemaSql([...fusionnerEntites(entitesAvant, declaration.entites)]),
-        politiques: emettrePolitiquesSql(
-          [...fusionnerEntites(entitesAvant, declaration.entites)],
-          id,
-        ),
-        entites: [...fusionnerEntites(entitesAvant, declaration.entites)],
+        schema: emettreSchemaSql([...fusion.entites]),
+        politiques: emettrePolitiquesSql([...fusion.entites], id),
+        entites: [...fusion.entites],
       }
       const pose = await supabaseAdmin.from(TABLE_VERSIONS).insert({
         generation_id: id,
@@ -606,10 +607,7 @@ export async function POST(req: Request) {
   // Si elle échoue, le document n'a pas bougé : l'application sert
   // encore sa version d'avant, et les données sont intactes. L'inverse
   // laisserait un document qui parle de colonnes que la base n'a pas.
-  const entitesApres =
-    declaration.entites.length > 0
-      ? fusionnerEntites(entitesAvant, declaration.entites)
-      : entitesAvant
+  const entitesApres = fusion.entites
   let schemaApres = schemaPrecedent
   let politiquesApres = politiquesPrecedentes
   let apresMigration: string | null = null

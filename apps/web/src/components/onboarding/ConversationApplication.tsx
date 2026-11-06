@@ -51,6 +51,7 @@ import {
   LONGUEUR_AVEC_DOCUMENT,
   MESSAGE_SCAN,
 } from '@/lib/apps/document-joint';
+import { publierAvecAccord } from '@/components/apps/accordLecturePublique';
 import { lireReponseQuiBat } from '@/lib/apps/flux-lignes';
 import {
   DELAI_MAX_MS,
@@ -611,10 +612,11 @@ export default function ConversationApplication({
     if (generationId === null) return;
     setTravail('publication');
     try {
-      const res = await fetch(`/api/generateur/publier?id=${encodeURIComponent(generationId)}`, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${await jeton()}` },
-      });
+      // ── LA LISTE PUBLIQUE PASSE DEVANT QUELQU'UN, OU ON NE PUBLIE PAS.
+      const res = await publierAvecAccord(
+        `/api/generateur/publier?id=${encodeURIComponent(generationId)}`,
+        `Bearer ${await jeton()}`,
+      );
       const d = (await res.json().catch(() => ({}))) as {
         lien?: string;
         error?: string;
