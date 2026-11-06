@@ -1,3 +1,9 @@
+/**
+ * APPELÉ PAR LES TESTS, PAR CONSTRUCTION — et c'est voulu (EP-365).
+ *
+ * C'est un contrôle d'architecture : il est EXÉCUTÉ PAR un test, et n'a rien
+ * à faire sur le chemin qui livre.
+ */
 // src/lib/architecture/checkDomainBoundaries.ts
 //
 // Moteur générique de vérification des frontières déclarées dans

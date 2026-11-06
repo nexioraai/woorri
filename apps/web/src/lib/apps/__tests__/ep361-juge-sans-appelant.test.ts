@@ -13,6 +13,18 @@
  * quatre premiers ont été trouvés un par un, par accident, en cherchant
  * autre chose. Ce fichier existe pour qu'il n'y ait pas de sixième.
  *
+ * ── ET CE FICHIER NOMMAIT CES CINQ SANS EN COUVRIR UN SEUL.
+ *
+ * Son balayage ne lit que `juge-*.ts` : une FORME de nom de fichier, pas
+ * la propriété « ce module est-il atteint depuis un chemin qui livre ? ».
+ * `extraction-exigences`, premier de la liste ci-dessus, n'a donc jamais
+ * été vu. EP-365 mesure la propriété, sur tout `src/`, par atteignabilité
+ * depuis les points d'entrée — et il en a trouvé VINGT-SIX.
+ *
+ * Celui-ci reste : il porte la règle de l'en-tête pour les JUGES, qui est
+ * plus stricte (un juge hors boucle doit le dire dans son propre
+ * fichier). EP-365 est le filet ; celui-ci est la règle de métier.
+ *
  * ── CE QU'IL MESURE, ET CE QU'IL PERMET.
  *
  * Tout `juge-*.ts` qui exporte un `jugerXxx` est appelé dans la boucle —

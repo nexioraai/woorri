@@ -1,3 +1,9 @@
+/**
+ * APPELÉ PAR LES TESTS, PAR CONSTRUCTION — et c'est voulu (EP-365).
+ *
+ * Ses 31 appelants SONT des tests : c'est un instrument de preuve, pas un
+ * morceau du produit. Aucun code de production ne doit l'importer.
+ */
 // ============================================================
 // LOT 6 / CHAINE D -- UN MOCK POSTGREST QUI NE MENT PAS.
 //

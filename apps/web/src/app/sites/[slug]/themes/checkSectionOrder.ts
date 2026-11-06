@@ -1,3 +1,9 @@
+/**
+ * APPELÉ PAR LES TESTS, PAR CONSTRUCTION — et c'est voulu (EP-365).
+ *
+ * C'est un contrôle d'ordre des sections : il est EXÉCUTÉ PAR un test, et n'a
+ * rien à faire sur le chemin qui livre.
+ */
 // src/app/sites/[slug]/themes/checkSectionOrder.ts
 //
 // Vérifie qu'un rendu HTML contient bien, dans l'ordre déclaré, les
