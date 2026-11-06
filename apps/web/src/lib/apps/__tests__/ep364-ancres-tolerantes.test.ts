@@ -43,6 +43,15 @@ const SRC = join(__dirname, '..', '..', '..')
 /** MESURÉ LE 2026-11-06. Ce nombre ne monte jamais. */
 const DETTE = 117
 
+/**
+ * LA SECONDE DETTE : les ancres dont le SUJET n'est pas traçable, dans un
+ * fichier qui lit du source. MESURÉ LE 2026-11-06, et il ne monte jamais.
+ *
+ * Sans elle, il suffisait de nommer sa variable `t` pour échapper au
+ * cliquet pour toujours — une porte de sortie permanente.
+ */
+const DETTE_OPAQUE = 361
+
 const fichiersDeControle = (dossier: string): string[] => {
   const out: string[] = []
   for (const n of readdirSync(dossier)) {
@@ -53,8 +62,32 @@ const fichiersDeControle = (dossier: string): string[] => {
   return out
 }
 
-/** Les ancres dont le sujet se TRACE jusqu'à une lecture de source. */
-function ancresTracables(src: string): { tolerantes: number; fragiles: string[] } {
+/**
+ * LES ANCRES D'UN FICHIER QUI LIT DU SOURCE — traçables ET opaques.
+ *
+ * ── LES OPAQUES SONT UNE PORTE DE SORTIE PERMANENTE.
+ *
+ * Le cliquet de dette empêche le 118ᵉ traçable. Mais il suffisait de
+ * nommer sa variable `t` pour qu'une ancre fragile lui échappe POUR
+ * TOUJOURS. Rien n'empêchait le 362ᵉ opaque.
+ *
+ * ── ET LA FERMETURE NE COÛTE RIEN, MESURÉ.
+ *
+ * On pouvait craindre qu'exiger la tolérance sur un sujet qui n'est PAS
+ * du source gêne des contrôles justes — `expect(html).toContain('Ajouter
+ * au panier')` sur une page rendue. Ça ne gêne pas : un HTML rendu se
+ * replie aussi, et `motifTexte('Ajouter au panier')` y est strictement
+ * meilleur. La demande est donc la même pour les deux, sans faux poids.
+ *
+ * Le périmètre reste les fichiers qui LISENT du source : un fichier qui
+ * n'en lit jamais ne peut pas porter d'ancre sur du source, et on ne lui
+ * demande rien.
+ */
+function ancresTracables(src: string): {
+  tolerantes: number
+  fragiles: string[]
+  opaquesFragiles: string[]
+} {
   const sans = src.replace(/\/\*[\s\S]*?\*\//gu, '').replace(/^[ \t]*\/\/.*$/gmu, '')
   const lecteurs = new Set<string>()
   for (const m of sans.matchAll(
@@ -62,8 +95,10 @@ function ancresTracables(src: string): { tolerantes: number; fragiles: string[] 
   )) {
     lecteurs.add(m[1] ?? '')
   }
+  const litSource = new RegExp('lireSource|lireSourceBrut|readFileSync', 'u').test(sans)
   let tolerantes = 0
   const fragiles: string[] = []
+  const opaquesFragiles: string[] = []
   for (const m of sans.matchAll(
     /expect\(\s*([A-Za-z_][A-Za-z0-9_.()]*)[^)]*\)[\s\S]{0,140}?\.(?:not\.)?(?:toMatch|toContain)\(\s*(\/(?:[^/\\\n]|\\.)+\/[a-z]*|['"`](?:[^'"`\\\n]|\\.)+['"`]|motifTexte|motifEntre)/gu,
   )) {
@@ -71,7 +106,7 @@ function ancresTracables(src: string): { tolerantes: number; fragiles: string[] 
     const lit = m[2] ?? ''
     const racine = sujet.split(/[.(]/u)[0] ?? ''
     const tracable = /^(?:lireSource|lireSourceBrut|readFileSync)/u.test(sujet) || lecteurs.has(racine)
-    if (!tracable) continue
+    if (!tracable && !litSource) continue
     const corps = lit.startsWith('/')
       ? lit.slice(1, lit.lastIndexOf('/'))
       : /^['"`]/u.test(lit)
@@ -85,21 +120,24 @@ function ancresTracables(src: string): { tolerantes: number; fragiles: string[] 
       corps.includes('\\s') ||
       !/[^\\] /u.test(corps)
     if (ok) tolerantes += 1
-    else fragiles.push(corps.slice(0, 60))
+    else if (tracable) fragiles.push(corps.slice(0, 60))
+    else opaquesFragiles.push(corps.slice(0, 60))
   }
-  return { tolerantes, fragiles }
+  return { tolerantes, fragiles, opaquesFragiles }
 }
 
 describe('EP-364 · les ancres sur du source tolèrent les replis', () => {
-  const tout = (): { tolerantes: number; fragiles: string[] } => {
+  const tout = (): { tolerantes: number; fragiles: string[]; opaquesFragiles: string[] } => {
     let tolerantes = 0
     const fragiles: string[] = []
+    const opaquesFragiles: string[] = []
     for (const f of fichiersDeControle(SRC)) {
       const r = ancresTracables(readFileSync(f, 'utf8'))
       tolerantes += r.tolerantes
       fragiles.push(...r.fragiles)
+      opaquesFragiles.push(...r.opaquesFragiles)
     }
-    return { tolerantes, fragiles }
+    return { tolerantes, fragiles, opaquesFragiles }
   }
 
   it('① L’INSTRUMENT TROUVE DES ANCRES — sinon il ne garde rien', () => {
