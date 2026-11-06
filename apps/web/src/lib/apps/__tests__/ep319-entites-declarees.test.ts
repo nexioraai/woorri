@@ -237,7 +237,17 @@ describe('EP-319 · les données déclarées', () => {
     ).not.toMatch(/ENTITES|entité|create table|table SQL|schema\.sql/u)
     // LA BORNE EST LA MESURE PLUS UNE MARGE ÉTROITE : assez pour une
     // correction de formulation, pas pour un chantier de plus.
-    expect(CONSIGNE.length, 'la consigne de génération a grossi').toBeLessThan(6200)
+    //
+    // ── 6 200 → 6 600 LE 2026-11-05, et la raison est une CORRECTION.
+    //
+    // Deux interdictions GÉNÉRALES ne vivaient que dans la moitié AVEC
+    // table : le bandeau et les fichiers. Une demande qui ne décrit rien
+    // ne déclare aucune table, recevait donc la moitié courte — et le
+    // modèle a écrit son propre bandeau en production. Elles entrent
+    // ici par `REGLE_6_COMMUN`, composé des deux côtés (EP-360).
+    //
+    // Mesuré : 6 478. La borne vaut la mesure plus la même marge étroite.
+    expect(CONSIGNE.length, 'la consigne de génération a grossi').toBeLessThan(6600)
   })
 
   it('⑥ter LA DÉROGATION DE PORTABILITÉ EST BORNÉE À `blocBase`', () => {
@@ -253,12 +263,24 @@ describe('EP-319 · les données déclarées', () => {
     // vrai `window` était posé un jour AILLEURS dans ce fichier, la ligne
     // de dérogation le couvrirait en silence. Ce contrôle l'empêche.
     const src = lireSource(join(RACINE, ...WEB, 'lib', 'apps', 'entites-declarees.ts'))
+    // ── LA DÉROGATION COUVRE DEUX ZONES DEPUIS C0a, et c'est la même.
+    //
+    // `REGLE_6_COMMUN` est du TEXTE ÉMIS, exactement comme `blocBase` :
+    // il dit au modèle de ne pas employer `localStorage`. Ce module
+    // n'appelle toujours aucune API de navigateur — la dérogation suit
+    // le texte, elle ne s'élargit pas.
+    const debutCommun = src.indexOf('export const REGLE_6_COMMUN')
+    const finCommun = src.indexOf('\n]', debutCommun)
+    const blocCommun = debutCommun < 0 ? '' : src.slice(debutCommun, finCommun)
     const debut = src.indexOf('export function blocBase')
     expect(debut, 'blocBase a disparu : ce contrôle ne borne plus rien').toBeGreaterThan(0)
     const fin = src.indexOf('\nexport ', debut + 10)
     const bloc = src.slice(debut, fin < 0 ? src.length : fin)
     const JETONS = /window|document\.|localStorage|sessionStorage|navigator\./gu
     for (const t of src.matchAll(JETONS)) {
+      const dansCommun =
+        debutCommun >= 0 && (t.index ?? 0) >= debutCommun && (t.index ?? 0) < finCommun
+      if (dansCommun) continue
       const dans = (t.index ?? 0) >= debut && (t.index ?? 0) < (fin < 0 ? src.length : fin)
       expect(
         dans,
@@ -417,9 +439,18 @@ describe('EP-319 · les données déclarées', () => {
     expect(avecBase, 'la consigne redemande un bandeau à l’œuvre').not.toMatch(
       /la page le dit/u,
     )
-    expect(avecBase, 'l’interdiction du bandeau a disparu').toMatch(
-      /N’ÉCRIS AUCUN BANDEAU[\s\S]{0,120}La page en porte déjà un/u,
-    )
+    // ── L'ANCRE LIT LA PROPRIÉTÉ, PLUS LA PHRASE.
+    //
+    // Mon motif exigeait « N'ÉCRIS AUCUN BANDEAU » suivi, à 120 signes,
+    // de « La page en porte déjà un ». Le texte a été resserré en
+    // déménageant dans `REGLE_6_COMMUN`, et le contrôle a rougi sur une
+    // correction JUSTE. Une ancre qui enjambe un retour à la ligne
+    // mesure la mise en page.
+    //
+    // La propriété est : l'interdiction est là, ET elle dit POURQUOI —
+    // sans quoi le modèle la prend pour une lubie et la contourne.
+    expect(avecBase, 'l’interdiction du bandeau a disparu').toMatch(/N’ÉCRIS AUCUN BANDEAU/u)
+    expect(avecBase, 'l’interdiction ne dit pas pourquoi').toMatch(/la page en porte déjà/u)
 
     // ── ② LE PIRE CAS QUI PEUT PARTIR, et il part vraiment.
     const unChamp = (i: number) => ({

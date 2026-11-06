@@ -1,4 +1,13 @@
 /**
+ * NON BRANCHÉ DANS LA BOUCLE — et c'est voulu (EP-361).
+ *
+ * Un lancement coûte ~4,2 s, plus du double du plafond de marge de la
+ * gate. Ce juge tourne dans une étape de CI dédiée
+ * (`scripts/verifier-juge-navigateur.mjs`) et dans un tir à la main
+ * (`src/tirs/juge-navigateur-vivant.tir.ts`). Il ne juge donc AUCUNE
+ * génération au moment où elle se fait.
+ */
+/**
  * (c) · LE JUGE NAVIGATEUR — à côté du simulateur, jamais à sa place.
  *
  * ── DEUX INSTRUMENTS, DEUX RÔLES.

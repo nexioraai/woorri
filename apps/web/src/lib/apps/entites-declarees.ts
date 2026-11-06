@@ -290,6 +290,48 @@ export const CONSIGNE_ENTITES = [
  * verrait des listes vides sans jamais savoir pourquoi. Le dire ici est
  * moins cher que de le découvrir en production.
  */
+/**
+ * CE QUI VAUT AVEC OU SANS TABLE — composé dans les DEUX moitiés (C0a).
+ *
+ * ── L'ANGLE MORT, MESURÉ LE 2026-11-05 : TROIS DÉFAUTS AU MÊME ENDROIT.
+ *
+ * La règle 6 a deux versions : 652 signes quand aucune table n'est
+ * déclarée, 3 489 quand il y en a. Les règles 1-5 et 7-13 sont
+ * IDENTIQUES — tout l'écart vit là. Et trois interdictions GÉNÉRALES
+ * s'étaient logées d'un seul côté :
+ *
+ *   « N'ÉCRIS AUCUN BANDEAU »   ×0 sans table · ×1 avec
+ *   « AUCUN FICHIER »           ×0 sans table · ×1 avec
+ *   « JAMAIS localStorage »     ×1 sans table · ×0 AVEC   ← l'autre sens
+ *
+ * La troisième est celle que personne n'avait cherchée : une œuvre AVEC
+ * tables n'était jamais prévenue de ne pas employer `localStorage`.
+ *
+ * Et la conséquence s'est vue en production : une demande qui ne décrit
+ * rien ne déclare aucune table, reçoit donc la moitié courte, et le
+ * modèle a écrit son propre bandeau — « Mode démonstration — les données
+ * ne sont pas persistées » — par-dessus celui de la plateforme.
+ *
+ * ── D'OÙ UN BLOC, ET PAS TROIS RUSTINES.
+ *
+ * Corriger les trois cas un par un laisserait le quatrième arriver. Ce
+ * qui vaut dans les deux cas vit ICI, une fois, et les deux moitiés le
+ * COMPOSENT. EP-360 vérifie la composition — c'est lui le vrai correctif.
+ */
+export const REGLE_6_COMMUN: readonly string[] = [
+  '',
+  '   N’ÉCRIS AUCUN BANDEAU sur l’état de la base : la page en porte déjà',
+  '   un, posé par nous, juste dans les trois cas.',
+  '',
+  '   AUCUN FICHIER : ni téléversement, ni PDF, ni image envoyée.',
+  '   `base.storage` est atteignable et ÉCHOUERAIT. Un lien vers un',
+  '   document se met en `text`.',
+  '',
+  '   JAMAIS localStorage ni sessionStorage pour conserver : ils ne suivent',
+  '   ni un autre appareil ni un vidage de cache, et la saisie se perd sans',
+  '   un mot.',
+]
+
 export function blocBase(entites: readonly EntiteDeclaree[]): string {
   const tables = entites.map((e) => `  ${phraseTable(e)}`).join('\n')
   return [
@@ -298,10 +340,6 @@ export function blocBase(entites: readonly EntiteDeclaree[]): string {
     '   SI `window.DERIBFY_BASE.url` EST VIDE, CE N’EST PAS UNE ERREUR :',
     '   c’est l’aperçu, avant publication. L’application marche ALORS',
     '   ENTIÈREMENT en mémoire — on saisit, on calcule, on navigue.',
-    '',
-    '   N’ÉCRIS AUCUN BANDEAU là-dessus. La page en porte déjà un, posé',
-    '   par nous, et il dit vrai dans les trois cas. Le tien ferait double',
-    '   emploi au mieux, et se tromperait de sens au pire.',
     '',
     '   N’AFFICHE JAMAIS « configuration manquante » ni aucun écran d’erreur',
     '   à sa place : on doit pouvoir l’ESSAYER avant de la publier. Écris',
@@ -367,10 +405,6 @@ export function blocBase(entites: readonly EntiteDeclaree[]): string {
     '   Types possibles : text, number, date, boolean. Ce fichier ne part PAS',
     '   dans l’application : c’est une déclaration.',
     '',
-    '   AUCUN FICHIER : ni téléversement, ni PDF, ni image envoyée. ',
-    '   `base.storage` est atteignable et ÉCHOUERAIT — aucun espace de',
-    '   fichiers n’existe. Un lien vers un document se met en `text`.',
-    '',
     '   LECTURE PUBLIQUE, si et seulement si le cahier la demande :',
     '     { "name": "actualite", "lecturePublique": true, "fields": [...] }',
     '   N’importe qui lit alors cette table, sans compte. L’écriture reste',
@@ -379,6 +413,8 @@ export function blocBase(entites: readonly EntiteDeclaree[]): string {
     '   « Les appels d’offres sont publics » rend public l’APPEL, JAMAIS les',
     '   SOUMISSIONS : des offres concurrentes restent scellées jusqu’à',
     '   l’ouverture des plis. Si tu hésites, OMETS.',
+    // ── ET CE QUI VAUT DANS LES DEUX CAS, COMPOSÉ, JAMAIS RECOPIÉ.
+    ...REGLE_6_COMMUN,
   ].join('\n')
 }
 

@@ -1,4 +1,22 @@
 /**
+ * NON BRANCHÉ DANS LA BOUCLE — et il ne protège donc RIEN aujourd'hui.
+ *
+ * ── CE QUE TU DOIS SAVOIR AVANT DE LE LIRE (EP-361).
+ *
+ * Il a été écrit, prouvé par huit mutations, et jamais appelé. Puis
+ * mesuré sur une vraie génération le 2026-11-05 : il n'a PAS vu « Mode
+ * démonstration — les données ne sont pas persistées », parce que ses
+ * motifs cherchent « non conservé » et « données en mémoire ». Une
+ * liste de mots est toujours en retard d'une formulation.
+ *
+ * Son remplaçant est décidé : monter l'œuvre DEUX FOIS — avec base et
+ * sans — et comparer les textes rendus. Un texte qui n'apparaît que
+ * lorsque la base marche est un mensonge par construction, et cette
+ * mesure ne nomme aucun mot.
+ *
+ * Le brancher d'ici là coûterait une heure pour un juge qu'on retire.
+ */
+/**
  * LE JUGE DU BANDEAU CONTREDIT — une œuvre en base ne dit pas le contraire.
  *
  * ── LE DÉFAUT, MESURÉ LE 2026-11-05 SUR LA GÉNÉRATION DE CONTRÔLE DE A1.

@@ -136,7 +136,12 @@ describe('EP-352 · P1 · la lecture publique se déclare', () => {
     )
     // ET UNE SORTIE EST DONNÉE : interdire sans dire quoi faire à la place
     // fait inventer autre chose.
-    expect(bloc, 'aucune solution de rechange n’est proposée').toMatch(/lien vers un document/u)
+    // ── MÊME LEÇON, LE MÊME JOUR : l'ancre enjambait un retour à la
+    //    ligne. « Un lien vers un » / « document se met en `text` » —
+    //    le texte n'a pas changé de sens, seulement de largeur.
+    expect(bloc, 'aucune solution de rechange n’est proposée').toMatch(
+      /lien vers un[\s\S]{0,12}document/u,
+    )
   })
 
   it('⑥ LES DEUX LECTURES DU DRAPEAU SONT PROUVÉES ÉGALES', () => {

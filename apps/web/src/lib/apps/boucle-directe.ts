@@ -35,7 +35,12 @@ import {
 } from './declaration-en-route'
 import { jugerDevise, marqueRecommandee } from './juge-devise'
 import { CONSIGNE_BIBLIOTHEQUE, fichiersSysteme, VARIABLES_CSS } from './bibliotheque-ui'
-import { blocBase, type EntiteDeclaree, type RefusEntite } from './entites-declarees'
+import {
+  blocBase,
+  REGLE_6_COMMUN,
+  type EntiteDeclaree,
+  type RefusEntite,
+} from './entites-declarees'
 import { jugerJetons, type DefautJeton } from './juge-jetons'
 import {
   jugerPersistance,
@@ -60,7 +65,19 @@ import { jugerExecution, type VerdictExecution } from './juge-execution'
  * jamais dans la même consigne, sinon le modèle produit un code hybride que
  * personne ne verrait.
  */
-export const REGLE_6_SANS_BASE = [
+/**
+ * LA TÊTE DE LA RÈGLE 6 QUAND AUCUNE TABLE N'EST DÉCLARÉE.
+ *
+ * Elle ne porte QUE ce qui dépend de cette situation. Tout ce qui vaut
+ * dans les deux cas vit dans `REGLE_6_COMMUN` et s'y compose — voir
+ * l'angle mort mesuré le 2026-11-05, et EP-360 qui le ferme.
+ *
+ * ── LA GARDER COURTE EST UNE GARDE, PAS UN GOÛT.
+ *
+ * Une tête courte ne peut pas cacher une règle générale : elle n'y tient
+ * pas. EP-360 borne sa taille pour cette raison, et pas pour la place.
+ */
+export const REGLE_6_TETE_SANS_BASE: readonly string[] = [
   '6. Tu écris des valeurs d’exemple PLAUSIBLES quand il en faut — des montants',
   '   et des dates qu’une personne du métier reconnaîtrait.',
   '',
@@ -72,9 +89,9 @@ export const REGLE_6_SANS_BASE = [
   '   [{"name":"releve","fields":[{"name":"date","type":"date","required":true}]}]',
   '',
   '   Types : text, number, date, boolean.',
-  '   JAMAIS localStorage ni sessionStorage pour ça : ils ne suivent ni un',
-  '   autre appareil ni un vidage de cache, et la saisie se perd sans un mot.',
-].join('\n')
+]
+
+export const REGLE_6_SANS_BASE = [...REGLE_6_TETE_SANS_BASE, ...REGLE_6_COMMUN].join('\n')
 
 export const CONSIGNE = `Tu écris une application web complète, en React et TypeScript.
 
