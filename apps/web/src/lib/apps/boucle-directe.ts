@@ -25,6 +25,7 @@ import {
   PAQUETS_AUTORISES,
   PAQUETS_PROPOSES,
 } from './ecriture-directe'
+import { jugerGestion, reprocheGestion } from './juge-gestion'
 import { jugerVivacite, type DefautVivacite } from './juge-vivacite'
 import { FICHIER_PERIMETRE, jugerCouverture, type RapportCouverture } from './juge-couverture'
 import {
@@ -460,6 +461,15 @@ export async function boucleEcriture(o: {
         // rechargement dit la vérité, et il la dit à la personne qui vient
         // de perdre son travail.
         const persistance = jugerPersistance(entitesConnues, carte)
+        // ── A2 · LA GESTION : « remplissable » n'est pas « tenable ».
+        //
+        // `jugerPersistance` dit si la table est lue ET écrite. Il disait
+        // « rien à redire » sur TROIS œuvres à tables sur QUATRE qui
+        // n'avaient ni `update` ni `delete` — une faute de frappe y était
+        // définitive. Celui-ci mesure ce qu'il ne mesure pas.
+        //
+        // Il refuse de juger si son hypothèse tombe : voir `juge-gestion`.
+        const gestion = jugerGestion(entitesConnues, carte)
         const reproches: string[] = []
         if (jetons.length > 0) {
           reproches.push(
@@ -523,6 +533,23 @@ export async function boucleEcriture(o: {
           reproches.push(
             reprochePersistance(persistance, preuvesDeMemoire(carte), rang === toursMax - 1),
           )
+        }
+        // ── A3 · LE REPROCHE DE GESTION, APRÈS LA PERSISTANCE.
+        //
+        // L'ordre compte : une table jamais écrite se reproche d'abord
+        // (`jugerPersistance`), et `jugerGestion` l'écarte précisément
+        // pour ne pas reprocher deux fois le même manque. Les reproches
+        // se lisent donc du plus grave au plus fin.
+        const quoiGestion = reprocheGestion(gestion)
+        if (quoiGestion !== null) reproches.push(quoiGestion)
+        // ── ET SI L'HYPOTHÈSE EST TOMBÉE, ON NE SE TAIT PAS.
+        //
+        // Ce n'est pas un reproche au modèle — il n'y peut rien. C'est un
+        // avertissement pour nous, dans le journal du tour, parce qu'un
+        // juge qui cesse de juger en silence est un juge qu'on croit
+        // encore actif. Il ne bloque pas la livraison.
+        if (gestion.hypotheseTombee !== null) {
+          console.warn(`[boucle] juge de gestion inactif — ${gestion.hypotheseTombee}`)
         }
         if (couverture.absentes.length > 0) {
           reproches.push(

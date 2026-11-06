@@ -206,6 +206,40 @@ function tablesParVariable(src: string): Map<string, string> {
  * Rend un défaut par table incomplète, avec le sens qui manque. Une œuvre
  * sans entité déclarée n'a rien à prouver : la liste est vide.
  */
+/**
+ * QUELLES MÉTHODES TOUCHENT QUELLE TABLE — extrait pour être PARTAGÉ.
+ *
+ * ── POURQUOI UNE FONCTION, ET PAS UNE SECONDE LECTURE.
+ *
+ * `jugerGestion` a besoin exactement de ça : savoir si une table reçoit un
+ * `update` et un `delete`. Le relire de son côté donnerait deux analyseurs
+ * du même source, qui divergeraient au premier cas tordu — une variable
+ * qui porte un nom de table, un `.from()` sur plusieurs lignes.
+ *
+ * Une duplication qu'on PEUT éviter doit l'être : les deux juges lisent
+ * désormais la même carte, et aucun des deux ne peut voir ce que l'autre
+ * ne voit pas.
+ */
+export function methodesParTable(
+  fichiers: ReadonlyMap<string, string>,
+): ReadonlyMap<string, ReadonlySet<string>> {
+  const src = [...fichiers.values()].join('\n')
+  const variables = tablesParVariable(src)
+  const carte = new Map<string, Set<string>>()
+  for (const t of src.matchAll(/\.from\s*\(/gu)) {
+    const ouvrante = (t.index ?? 0) + t[0].length - 1
+    const fin = finDArgument(src, ouvrante)
+    const brut = src.slice(ouvrante + 1, fin - 1).trim()
+    const litteral = /^['"`]([^'"`]*)['"`]$/u.exec(brut)
+    const table = litteral !== null ? (litteral[1] ?? '') : (variables.get(brut) ?? '')
+    if (table === '') continue
+    const vues = carte.get(table) ?? new Set<string>()
+    for (const methode of methodesChainees(src, fin)) vues.add(methode)
+    carte.set(table, vues)
+  }
+  return carte
+}
+
 export function jugerPersistance(
   entites: readonly EntiteDeclaree[],
   fichiers: ReadonlyMap<string, string>,
@@ -222,21 +256,13 @@ export function jugerPersistance(
       ? []
       : [{ table: '', lue: false, ecrite: false }]
   }
-  const src = [...fichiers.values()].join('\n')
-  const variables = tablesParVariable(src)
-
+  const parTable = methodesParTable(fichiers)
   const lues = new Set<string>()
   const ecrites = new Set<string>()
-  for (const t of src.matchAll(/\.from\s*\(/gu)) {
-    const ouvrante = (t.index ?? 0) + t[0].length - 1
-    const fin = finDArgument(src, ouvrante)
-    const brut = src.slice(ouvrante + 1, fin - 1).trim()
-    const litteral = /^['"`]([^'"`]*)['"`]$/u.exec(brut)
-    const table = litteral !== null ? (litteral[1] ?? '') : (variables.get(brut) ?? '')
-    if (table === '') continue
-    for (const methode of methodesChainees(src, fin)) {
-      if (LECTURE.has(methode)) lues.add(table)
-      if (ECRITURE.has(methode)) ecrites.add(table)
+  for (const [table, methodes] of parTable) {
+    for (const m of methodes) {
+      if (LECTURE.has(m)) lues.add(table)
+      if (ECRITURE.has(m)) ecrites.add(table)
     }
   }
 

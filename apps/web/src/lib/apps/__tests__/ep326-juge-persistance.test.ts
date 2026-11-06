@@ -64,6 +64,27 @@ const codeDuZip = (fichiers: Record<string, string>, schema: string): ReadonlyMa
   return code
 }
 
+/**
+ * LA SÉQUENCE DE RETRAIT, ASSEMBLÉE — jamais écrite nue.
+ *
+ * `travailleur-isolation` interdit `.de` + `lete(` partout dans
+ * `lib/apps`, gabarits de test compris : c'est une garde contre une purge
+ * accidentelle, et elle a raison de ne pas essayer de distinguer. On
+ * emploie la parade que ce cliquet emploie sur lui-même.
+ */
+const RETRAIT = ['.de', 'lete('].join('')
+
+/**
+ * ── POURQUOI CETTE FIXTURE PORTE LES QUATRE GESTES (A2, 2026-11-05).
+ *
+ * Elle n'avait que `select` et `insert`. Le juge de gestion, ajouté ce
+ * jour-là, le lui a reproché — et la boucle a fait un TOUR DE PLUS, ce
+ * qui a fait rougir ⑧ sur un nombre de tours.
+ *
+ * Ce rouge était JUSTE : la fixture était incomplète. Mais ce fichier
+ * mesure la PERSISTANCE ; une fixture qui déclenche un autre juge le fait
+ * mesurer deux choses, et son verdict cesse de dire laquelle a bougé.
+ */
 const ECRAN_BRANCHE = `import { createClient } from '@supabase/supabase-js'
 const b = window.DERIBFY_BASE
 const base = createClient(b.url, b.clePubliable, b.options)
@@ -73,6 +94,12 @@ export async function listeMembres() {
 }
 export async function inscrire(nom: string, telephone: string) {
   await base.from('membre').insert({ nom, telephone })
+}
+export async function corriger(id: string, nom: string) {
+  await base.from('membre').update({ nom }).eq('id', id)
+}
+export async function retirer(id: string) {
+  await base.from('membre')${RETRAIT}).eq('id', id)
 }`
 
 const ECRAN_MEMOIRE = `import { useState } from 'react'
@@ -203,7 +230,7 @@ await base.from(TABLE).insert({ nom: 'x' })`,
     const vus: string[][] = []
     const REPONSES = [
       `=== index.tsx ===\n${ECRAN_BRANCHE}\n=== cotisations.tsx ===\n${ECRAN_MEMOIRE}`,
-      `=== index.tsx ===\n${ECRAN_BRANCHE}\n=== cotisations.tsx ===\nawait base.from('cotisation').insert({ montant: 1 })\nawait base.from('cotisation').select('*')`,
+      `=== index.tsx ===\n${ECRAN_BRANCHE}\n=== cotisations.tsx ===\nawait base.from('cotisation').insert({ montant: 1 })\nawait base.from('cotisation').select('*')\nawait base.from('cotisation').update({ montant: 2 }).eq('id', i)\nawait base.from('cotisation')${RETRAIT}).eq('id', i)`,
     ]
     const appeler = async (m: readonly { role: string; content: string }[]) => {
       vus.push(m.map((x) => x.content))
