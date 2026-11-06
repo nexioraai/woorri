@@ -313,6 +313,64 @@ DE MARCHÉ… Ne pas y répondre » — conditions posées par le propriétaire.
 Les 43 comptent les non publiés et les archivés. La mesure de non-fuite porte
 donc sur 8 sites, et c'est le dénominateur réel.
 
+### GEN-D038 — Une mutation OU une injection dont on ne vérifie pas l'effet est un non-événement lu comme un verdict
+
+**Classe, pas incident** — consigne du propriétaire le 2026-11-06 : les deux
+occurrences ci-dessous sont la MÊME forme, et la seconde l'a prouvé en
+m'attrapant alors que je connaissais déjà la première.
+
+| | ce que je croyais faire | ce qui se passait | ce que j'allais conclure |
+|---|---|---|---|
+| **mutation à vide** | casser le code pour voir le cliquet rougir | mes chaînes de remplacement ne correspondaient à rien (apostrophe contre accent grave) — **le fichier n'a pas bougé** | « 0 rouge → le cliquet est inutile » |
+| **injection guérie** | tuer la relecture d'une garde avec un `503` | **supabase-js REJOUE un 5xx** : `#4` tuée, `#5` le même GET en `200`, `reste.status = 200` | « alerte muette → défaut confirmé » |
+
+Dans les deux cas, **l'absence d'effet se lit exactement comme l'effet
+attendu**. Et dans les deux cas la conclusion que j'allais tirer était
+*vraisemblable* — c'est ce qui rend la forme dangereuse : elle ne produit
+jamais d'anomalie, elle produit la réponse qu'on cherchait.
+
+**La règle** : toute mutation, toute injection, toute panne simulée se
+PROUVE AVANT d'être interprétée. La preuve n'est pas l'intention du geste,
+c'est une observation séparée — le diff du fichier, la trace des requêtes, le
+code d'erreur réellement reçu. Dans le cas de l'injection, la trace
+`#4 ← TUÉE (503)` suivie de `#5 … 200` était la seule chose qui disait la
+vérité ; sans elle j'aurais signé un défaut sur un instrument qui ne mesurait
+rien.
+
+**Corollaire pratique mesuré** : un **5xx ne simule pas une panne** côté
+Supabase — il est rejoué. Un **4xx** l'est fidèlement, et `403 / 42501` est en
+plus la panne réaliste (privilège retiré en cours de route).
+
+**Statut** : 🟢 **CLASSE POSÉE**, instrument versionné
+(`scripts/prouver-garde-temoin.mjs`)
+
+### GEN-D039 — Un relevé rouge dont on ne publie pas les lignes devient une capture d'écran qui fait peur trois heures plus tard
+
+**Règle de compte rendu, posée contre moi-même le 2026-11-06 et retenue par le
+propriétaire.**
+
+J'avais rapporté « 8/21 — l'instrument sait rougir » et rien de plus. Trois
+heures après, Youssouf montre au propriétaire la capture de ce relevé : onze
+lignes rouges, dont « anon SELECT sur la TABLE → **accordé** ». Il a fallu
+remesurer en direct, rétablir l'horodatage (EST contre UTC, cinq heures
+d'écart) et expliquer les onze lignes une par une pour établir que le relevé
+**précédait de treize minutes** la pose de la vue.
+
+**Aucune de ces onze lignes n'était fausse.** Elles étaient PÉRIMÉES, et rien
+dans ce que j'avais écrit ne permettait de le savoir.
+
+**La règle** : un relevé rouge se rend **en entier**, ou l'on dit
+explicitement *pourquoi* ses rouges sont attendus et *à quelle date* il se
+rapporte. Un résumé qui garde le score et jette les lignes transforme une
+mesure en rumeur.
+
+**Corollaire** : tout relevé porte un horodatage **non ambigu**. Ma sonde
+imprimait UTC, les captures de l'écran affichaient l'heure locale (EST) — deux
+séries qui semblaient sans rapport. L'instrument doit dire son fuseau, ou
+imprimer les deux.
+
+**Statut** : 🟢 **RÈGLE POSÉE**
+
 ### GEN-D037 — Un repli silencieux transforme une lecture ratée en preuve d'absence — trois occurrences, dont une dans une garde de la maison
 
 **Classe nommée par le propriétaire le 2026-11-06**, après que j'ai trouvé la
@@ -391,6 +449,25 @@ journal qui imprimait `retiré 40e17a7c…`. J'avais **resserré** une
 vérification correcte (`/retiré/`) et je l'avais rendue aveugle. Même famille
 que l'ancre de forme convertie en propriété sans vérifier qu'elle couvre la
 même perte.
+
+**LE CHIFFRE DEMANDÉ PAR LE PROPRIÉTAIRE** — « combien d'autres de tes motifs
+emploient `\b` sur du français ? » Balayage de `apps/web`, littéraux regex
+seulement, `node_modules` exclu :
+
+```
+fichiers contenant « \b »                          78
+occurrences de « \b » dans des littéraux regex    359
+AVEUGLES (\b adjacent à un caractère non-ASCII)     0
+\w adjacent à un caractère non-ASCII                0   (même racine)
+```
+
+**Le détecteur a été éprouvé avant d'être cru** : sur un cas témoin,
+`/\bretiré\b/` est détecté, `/\bpublie\b/` est correctement ignoré. Un
+détecteur qui n'a jamais rien trouvé ne prouve rien — c'est la leçon du
+cliquet jamais vu rouge, appliquée à un balayage.
+
+La seule occurrence aveugle du dépôt était la mienne, du jour même, et elle
+est corrigée.
 
 **Statut** : 🟢 **①②③ CORRIGÉS**, ③ démontré sur le code réel
 
@@ -481,7 +558,21 @@ supprimé emporte ses rattachements.
 jointure sur le chemin chaud de CHAQUE requête entrante. La FK obtient le même
 résultat sans toucher le proxy. **Non chiffrée, hors chantier A2.**
 
-**Statut** : 🟠 **OUVERT** — mesuré, conséquence nommée, correction non engagée
+**AMENDEMENT DE LA RÈGLE, PAR LE PROPRIÉTAIRE, 2026-11-06.** Acceptation
+explicite de l'argument, et précision de sa propre règle :
+
+> « Ma règle *on n'attache pas des données à un nom* portait sur des
+> **CONTENUS** — des articles, des avis. Une **table de routage** dont l'objet
+> même est de porter un nom est le cas où elle ne s'applique pas. »
+
+La règle n'est donc pas « identifiant partout », mais : **un contenu se
+rattache par identifiant ; une table dont la raison d'être EST le nom se
+rattache par le nom, et la clé étrangère `on update cascade` fait le reste.**
+`appels_offres` et `site_blog_posts` relèvent du premier cas, `sites_sous_domaines`
+du second.
+
+**Statut** : 🟠 **DIFFÉRÉ, confirmé** — réparation écrite ci-dessus, prête à
+poser le jour du renommage
 
 ### GEN-D034 — Deux attendus faux dans MON bloc de vérification ont fait passer une application RÉUSSIE pour un échec
 
