@@ -23,8 +23,14 @@ export type AvisLabels = {
   colObjet: string
   colRemise: string
   colEtat: string
-  /** Les trois etats. Jamais la valeur brute de la base a l'ecran. */
+  /** Les QUATRE etats VISIBLES. Jamais la valeur brute de la base a l'ecran.
+   *  `clos` n'existe PAS en base : il se derive de l'echeance (lot A2 b). */
   etats: Record<string, string>
+  /** Les deux sections de la liste -- en cours, puis clotures. */
+  sectionEnCours: string
+  sectionClotures: string
+  /** Dit pourquoi un avis cloture reste affiche. */
+  noteClotures: string
   /** Les dix-neuf rubriques du detail. */
   r: Record<string, string>
 }
@@ -90,7 +96,9 @@ const COPY: Record<string, AvisLabels> = {
     publieLe: 'Publié le',
     colReference: 'Référence', colObjet: 'Objet',
     colRemise: 'Date et heure limite', colEtat: 'État',
-    etats: { preparation: 'En préparation', ouvert: 'Ouvert', attribue: 'Attribué' },
+    etats: { preparation: 'En préparation', ouvert: 'Ouvert', clos: 'Clôturé', attribue: 'Attribué' },
+    sectionEnCours: 'Avis en cours', sectionClotures: 'Avis clôturés',
+    noteClotures: 'Ces avis ne sont plus ouverts aux offres. Ils restent publiés.',
     r: RUB_FR,
   },
   en: {
@@ -102,7 +110,9 @@ const COPY: Record<string, AvisLabels> = {
     publieLe: 'Published on',
     colReference: 'Reference', colObjet: 'Subject',
     colRemise: 'Deadline (date and time)', colEtat: 'Status',
-    etats: { preparation: 'In preparation', ouvert: 'Open', attribue: 'Awarded' },
+    etats: { preparation: 'In preparation', ouvert: 'Open', clos: 'Closed', attribue: 'Awarded' },
+    sectionEnCours: 'Open notices', sectionClotures: 'Closed notices',
+    noteClotures: 'These notices no longer accept bids. They remain published.',
     r: RUB_EN,
   },
   es: {
@@ -114,7 +124,9 @@ const COPY: Record<string, AvisLabels> = {
     publieLe: 'Publicado el',
     colReference: 'Referencia', colObjet: 'Objeto',
     colRemise: 'Fecha y hora límite', colEtat: 'Estado',
-    etats: { preparation: 'En preparación', ouvert: 'Abierta', attribue: 'Adjudicada' },
+    etats: { preparation: 'En preparación', ouvert: 'Abierta', clos: 'Cerrada', attribue: 'Adjudicada' },
+    sectionEnCours: 'Anuncios en curso', sectionClotures: 'Anuncios cerrados',
+    noteClotures: 'Estos anuncios ya no admiten ofertas. Siguen publicados.',
     r: RUB_ES,
   },
   ar: {
@@ -126,7 +138,9 @@ const COPY: Record<string, AvisLabels> = {
     publieLe: 'نُشر في',
     colReference: 'المرجع', colObjet: 'الموضوع',
     colRemise: 'تاريخ وساعة آخر أجل', colEtat: 'الحالة',
-    etats: { preparation: 'قيد الإعداد', ouvert: 'مفتوحة', attribue: 'مُسندة' },
+    etats: { preparation: 'قيد الإعداد', ouvert: 'مفتوحة', clos: 'مغلقة', attribue: 'مُسندة' },
+    sectionEnCours: 'الإعلانات الجارية', sectionClotures: 'الإعلانات المغلقة',
+    noteClotures: 'لم تعد هذه الإعلانات تقبل العروض. وتبقى منشورة.',
     r: RUB_AR,
   },
 }

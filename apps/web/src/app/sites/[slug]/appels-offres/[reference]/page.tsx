@@ -4,6 +4,7 @@ import { headers } from 'next/headers'
 import { notFound } from 'next/navigation'
 import { fetchAvis, type AvisDetail } from '../fetchAvis'
 import { getAvisLabels, formatDateHeure, formatValeur, libelleEtat, tronquer } from '../labels'
+import { etatVisible } from '../cycleDeVie'
 import { resolveSiteBaseUrl } from '../../themes/shared'
 import { ogLocaleFor } from '@/lib/i18n/supportedLanguages'
 import HtmlLang from '../../themes/HtmlLang'
@@ -81,10 +82,18 @@ export default async function AvisPage({ params }: Props) {
   const rtl = lang === 'ar'
 
   /** Rend une rubrique, ou `null` si l'acheteur ne l'a pas renseignee. */
+  // UNE SEULE LECTURE DE L'HEURE, COMME SUR LA LISTE. Si le détail lisait
+  // l'horloge à un autre instant que la liste, les deux surfaces pourraient
+  // annoncer deux états pour le même avis -- et c'est l'écran qu'on
+  // accuserait, pas la cause.
+  const maintenant = new Date()
+
   function valeurDe(cle: keyof AvisDetail): React.ReactNode | null {
     switch (cle) {
       case 'etat':
-        return libelleEtat(avis.etat, site.lang)
+        // DÉRIVÉ, PAS LU -- même règle que la liste (lot A2 b). La base garde
+        // `ouvert` ; l'écran dit « Clôturé » dès l'échéance passée.
+        return libelleEtat(etatVisible(avis, maintenant), site.lang)
       case 'valeur':
         return formatValeur(avis.valeur, avis.devise, site.lang)
       case 'remise_le':

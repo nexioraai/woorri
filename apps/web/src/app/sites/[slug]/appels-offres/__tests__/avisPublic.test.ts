@@ -37,6 +37,7 @@ vi.mock('@/lib/supabase', () => ({
 }))
 
 import { fetchAvisIndex, fetchAvis, fetchAvisEntries } from '../fetchAvis'
+import { getAvisLabels } from '../labels'
 
 const SITE = {
   id: 'aaaaaaaa-1111-4111-8111-111111111111',
@@ -235,17 +236,40 @@ describe('cliquet structurel — surface publique des avis', () => {
     readFileSync(f, 'utf-8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '')
   const rel = (f: string) => f.replace(RACINE, 'appels-offres')
 
-  it('les quatre fichiers de la surface sont bien vus par ce cliquet', () => {
+  it('les CINQ fichiers de la surface sont bien vus par ce cliquet', () => {
     // LE DÉNOMINATEUR EST RÉEL. Un fichier ajouté à la surface sans entrer
     // ici échapperait à tous les contrôles qui suivent — la classe GEN-D032.
+    // `cycleDeVie.ts` est entré le 2026-11-06 (lot A2 b) : ce cliquet a rougi
+    // le jour même, et c'est exactement ce qu'on lui demande.
     expect(fichiers.map(rel).sort()).toEqual(
       [
+        'appels-offres/cycleDeVie.ts',
         'appels-offres/fetchAvis.ts',
         'appels-offres/labels.ts',
         'appels-offres/page.tsx',
         'appels-offres/[reference]/page.tsx',
       ].sort()
     )
+  })
+
+  it('l’état affiché est DÉRIVÉ, jamais lu brut sur les deux pages', () => {
+    // `libelleEtat(avis.etat, …)` afficherait « Ouvert » sur un avis échu —
+    // une invitation à déposer une offre qui sera rejetée.
+    for (const f of fichiers.filter((x) => x.endsWith('page.tsx'))) {
+      expect(code(f), rel(f)).toMatch(/etatVisible\(/)
+      expect(code(f), rel(f)).not.toMatch(/libelleEtat\(\s*(a|avis)\.etat/)
+    }
+  })
+
+  it('l’heure est lue UNE SEULE FOIS par rendu', () => {
+    // Deux `new Date()` dans le même rendu peuvent tomber de part et d'autre
+    // d'une échéance : une ligne dirait « Ouvert » pendant que le tri la
+    // classerait close. Un écran qui se contredit lui-même est pire qu'un
+    // écran en retard.
+    for (const f of fichiers.filter((x) => x.endsWith('page.tsx'))) {
+      const n = (code(f).match(/new Date\(\)/g) ?? []).length
+      expect(n, `${rel(f)} : ${n} lectures d'horloge`).toBeLessThanOrEqual(1)
+    }
   })
 
   it('la TABLE `appels_offres` n’est JAMAIS interrogée — seule la VUE l’est', () => {
@@ -325,5 +349,108 @@ describe('cliquet structurel — surface publique des avis', () => {
     expect(l).toMatch(/hour:\s*['"]2-digit['"]/)
     expect(l).toMatch(/minute:\s*['"]2-digit['"]/)
     expect(l, 'une heure limite sans fuseau est ambiguë de plusieurs heures').toMatch(/timeZoneName/)
+  })
+})
+
+
+// ============================================================
+// A2 (b) — LE CYCLE DE VIE VISIBLE.
+//
+// `maintenant` EST INJECTÉ DANS CHAQUE CAS. Un test qui lirait l'horloge
+// passerait aujourd'hui et rougirait en décembre, et personne ne saurait
+// pourquoi — un cliquet dont le verdict dépend du jour n'est pas un cliquet.
+// ============================================================
+import { etatVisible, estEnCours, partager } from '../cycleDeVie'
+
+const T = (iso: string) => new Date(iso)
+const MAINTENANT = T('2026-11-06T12:00:00Z')
+
+describe('etatVisible — ce que la base stocke n’est pas ce que l’écran dit', () => {
+  it('`ouvert` dont l’échéance est PASSÉE devient `clos`', () => {
+    expect(etatVisible({ etat: 'ouvert', remise_le: '2026-11-06T11:59:59Z' }, MAINTENANT)).toBe('clos')
+  })
+
+  it('`ouvert` dont l’échéance est À VENIR reste `ouvert`', () => {
+    expect(etatVisible({ etat: 'ouvert', remise_le: '2026-11-06T12:00:01Z' }, MAINTENANT)).toBe('ouvert')
+  })
+
+  it('l’échéance À LA SECONDE PRÈS ferme — on ne dépose plus à l’heure dite', () => {
+    expect(etatVisible({ etat: 'ouvert', remise_le: '2026-11-06T12:00:00Z' }, MAINTENANT)).toBe('clos')
+  })
+
+  it('`ouvert` SANS échéance reste `ouvert` — absence ≠ dépassement', () => {
+    // Fermer un avis que l'acheteur a laissé ouvert exprès serait inventer
+    // une échéance qu'il n'a pas posée.
+    expect(etatVisible({ etat: 'ouvert', remise_le: null }, MAINTENANT)).toBe('ouvert')
+  })
+
+  it('une DATE ILLISIBLE ne ferme pas — « rien pu lire » ≠ « c’est passé »', () => {
+    expect(etatVisible({ etat: 'ouvert', remise_le: 'pas-une-date' }, MAINTENANT)).toBe('ouvert')
+  })
+
+  it('`attribue` reste `attribue`, échéance passée ou non', () => {
+    expect(etatVisible({ etat: 'attribue', remise_le: '2020-01-01T00:00:00Z' }, MAINTENANT)).toBe('attribue')
+    expect(etatVisible({ etat: 'attribue', remise_le: '2099-01-01T00:00:00Z' }, MAINTENANT)).toBe('attribue')
+  })
+
+  it('`preparation` ne « clôture » pas — on n’annonce pas la fin de ce qui n’a pas commencé', () => {
+    expect(etatVisible({ etat: 'preparation', remise_le: '2020-01-01T00:00:00Z' }, MAINTENANT)).toBe('preparation')
+  })
+
+  it('un état INCONNU se rend tel quel, au lieu d’être avalé', () => {
+    // Si la base gagnait un quatrième état, l'écran le montrerait.
+    expect(etatVisible({ etat: 'annule', remise_le: null }, MAINTENANT)).toBe('annule')
+  })
+
+  it('AUCUN état visible ne manque à `labels` — dans les QUATRE langues', () => {
+    for (const lang of ['fr', 'en', 'es', 'ar']) {
+      for (const e of ['preparation', 'ouvert', 'clos', 'attribue']) {
+        const l = getAvisLabels(lang).etats[e]
+        expect(l, `${lang}/${e}`).toBeTruthy()
+        expect(l, `${lang}/${e} : la valeur brute fuit à l’écran`).not.toBe(e)
+      }
+    }
+  })
+})
+
+describe('partager — deux sections, deux ordres opposés', () => {
+  const A = { reference_slug: 'a', etat: 'ouvert', remise_le: '2026-12-01T10:00:00Z' }
+  const B = { reference_slug: 'b', etat: 'ouvert', remise_le: '2026-11-20T10:00:00Z' }
+  const C = { reference_slug: 'c', etat: 'ouvert', remise_le: '2026-10-01T10:00:00Z' } // échu
+  const D = { reference_slug: 'd', etat: 'attribue', remise_le: '2026-09-01T10:00:00Z' }
+  const E = { reference_slug: 'e', etat: 'ouvert', remise_le: null }
+
+  it('les échus et les attribués quittent « en cours »', () => {
+    const { enCours, clotures } = partager([A, B, C, D, E], MAINTENANT)
+    expect(enCours.map((x) => x.reference_slug)).toEqual(['b', 'a', 'e'])
+    expect(clotures.map((x) => x.reference_slug)).toEqual(['c', 'd'])
+  })
+
+  it('en cours : échéance la plus PROCHE d’abord', () => {
+    expect(partager([A, B], MAINTENANT).enCours.map((x) => x.reference_slug)).toEqual(['b', 'a'])
+  })
+
+  it('clôturés : échéance la plus RÉCENTE d’abord', () => {
+    expect(partager([C, D], MAINTENANT).clotures.map((x) => x.reference_slug)).toEqual(['c', 'd'])
+  })
+
+  it('les avis SANS échéance ferment leur groupe — une absence ne se classe pas', () => {
+    expect(partager([E, B], MAINTENANT).enCours.map((x) => x.reference_slug)).toEqual(['b', 'e'])
+  })
+
+  it('AUCUN avis n’est perdu entre les deux groupes', () => {
+    // Un avis qui disparaîtrait du partage disparaîtrait de la page, sans
+    // erreur et sans trace. Le compte doit être conservé.
+    const tous = [A, B, C, D, E]
+    const { enCours, clotures } = partager(tous, MAINTENANT)
+    expect(enCours.length + clotures.length).toBe(tous.length)
+    expect([...enCours, ...clotures].map((x) => x.reference_slug).sort())
+      .toEqual(tous.map((x) => x.reference_slug).sort())
+  })
+
+  it('`estEnCours` et `partager` ne peuvent pas diverger', () => {
+    const { enCours, clotures } = partager([A, B, C, D, E], MAINTENANT)
+    for (const x of enCours) expect(estEnCours(etatVisible(x, MAINTENANT)), x.reference_slug).toBe(true)
+    for (const x of clotures) expect(estEnCours(etatVisible(x, MAINTENANT)), x.reference_slug).toBe(false)
   })
 })

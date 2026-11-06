@@ -4,6 +4,7 @@ import { headers } from 'next/headers'
 import { notFound } from 'next/navigation'
 import { fetchAvisIndex } from './fetchAvis'
 import { getAvisLabels, formatDateHeure, libelleEtat, tronquer } from './labels'
+import { partager, etatVisible } from './cycleDeVie'
 import { resolveSiteBaseUrl } from '../themes/shared'
 import { ogLocaleFor } from '@/lib/i18n/supportedLanguages'
 import HtmlLang from '../themes/HtmlLang'
@@ -89,6 +90,75 @@ export default async function AppelsOffresPage({ params }: Props) {
 
   const contact = site.contact ?? {}
 
+  // L'HEURE EST LUE UNE SEULE FOIS ET PASSÉE PARTOUT. Deux appels à
+  // `new Date()` dans le même rendu peuvent tomber de part et d'autre d'une
+  // échéance : une ligne dirait « Ouvert » pendant que le tri la classerait
+  // close. Un écran qui se contredit lui-même est pire qu'un écran en retard.
+  const maintenant = new Date()
+  const { enCours, clotures } = partager(avis, maintenant)
+
+  const entetes = [t.colReference, t.colObjet, t.colRemise, t.colEtat]
+
+  // Le tableau défile DANS SON PROPRE CONTENEUR : le corps de la page ne part
+  // jamais en défilement horizontal (WCAG 2.2 AA, 1.4.10).
+  const section = (lignes: typeof avis, titre: string, id: string, note?: string) => (
+    <section key={id} aria-labelledby={id} style={{ marginBottom: 48 }}>
+      <h2 id={id} style={{ fontSize: 20, fontWeight: 700, margin: '0 0 4px', letterSpacing: '-0.01em' }}>
+        {titre}
+      </h2>
+      {note && <p style={{ fontSize: 14, opacity: 0.6, margin: '0 0 16px', lineHeight: 1.5 }}>{note}</p>}
+      <div style={{ overflowX: 'auto' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 15 }}>
+          <caption style={{ position: 'absolute', left: -9999 }}>
+            {titre} — {site.name}
+          </caption>
+          <thead>
+            <tr style={{ borderBottom: '2px solid rgba(0,0,0,0.15)' }}>
+              {entetes.map((c) => (
+                <th key={c} scope="col" style={{
+                  textAlign: rtl ? 'right' : 'left', padding: '12px 14px',
+                  fontWeight: 700, whiteSpace: 'nowrap',
+                }}>{c}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {lignes.map((a) => {
+              const limite = formatDateHeure(a.remise_le, site.lang)
+              return (
+                <tr key={a.reference_slug} style={{ borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
+                  <th scope="row" style={{
+                    textAlign: rtl ? 'right' : 'left', padding: '14px',
+                    fontWeight: 600, whiteSpace: 'nowrap', verticalAlign: 'top',
+                  }}>
+                    <Link href={`${base}/appels-offres/${encodeURIComponent(a.reference_slug)}`}
+                      style={{ color: accent, textDecoration: 'none' }}>
+                      {a.reference}
+                    </Link>
+                  </th>
+                  <td style={{ padding: '14px', lineHeight: 1.5 }}>{a.objet}</td>
+                  {/* `tabular-nums` : des échéances qui ne s'alignent pas se
+                      comparent mal, et comparer des échéances est la raison
+                      d'être de cette colonne. */}
+                  <td style={{ padding: '14px', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' }}>
+                    {limite ?? <span aria-hidden="true">—</span>}
+                  </td>
+                  {/* L'ÉTAT AFFICHÉ EST DÉRIVÉ, PAS LU. Un avis `ouvert` dont
+                      l'échéance est passée affiche « Clôturé » : afficher
+                      « Ouvert » serait inviter à déposer une offre qui sera
+                      rejetée. Ce que la base STOCKE, lui, ne bouge pas. */}
+                  <td style={{ padding: '14px', whiteSpace: 'nowrap' }}>
+                    {libelleEtat(etatVisible(a, maintenant), site.lang)}
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  )
+
   return (
     <>
       <JsonLdScript data={jsonLd} />
@@ -110,16 +180,16 @@ export default async function AppelsOffresPage({ params }: Props) {
 
         {avis.length === 0 ? (
           // ============================================================
-          // LA SECTION VIDE INFORME, ELLE NE DECORE PAS. Loi du lot A2 ③ :
-          // les comptes ne mentent pas quand ils sont a zero.
+          // LA SECTION VIDE INFORME, ELLE NE DÉCORE PAS. Loi du lot A2 ③ :
+          // les comptes ne mentent pas quand ils sont à zéro.
           //
           // ET ELLE N'INVENTE AUCUN CANAL. Un avis porte sa propre
-          // `canal_officiel_url` ; a zero avis, il n'y a aucune URL a
-          // afficher, et le site ne declare nulle part de canal officiel --
+          // `canal_officiel_url` ; à zéro avis il n'y a aucune URL à
+          // afficher, et le site ne déclare nulle part de canal officiel --
           // mesure du 2026-11-06 sur les 40 champs non vides de la CPA. La
-          // regle du proprietaire tranche : « on ne met rien sur ce site que
-          // la CPA n'ait pas dit ». On renvoie donc au contact que l'acheteur
-          // a REELLEMENT donne, et a rien d'autre.
+          // règle du propriétaire tranche : « on ne met rien sur ce site que
+          // la CPA n'ait pas dit ». On renvoie au contact que l'acheteur a
+          // RÉELLEMENT donné, et à rien d'autre.
           // ============================================================
           <section
             aria-labelledby="avis-vide"
@@ -146,65 +216,13 @@ export default async function AppelsOffresPage({ params }: Props) {
             )}
           </section>
         ) : (
-          // Le tableau defile DANS SON PROPRE CONTENEUR : le corps de la page
-          // ne part jamais en defilement horizontal (WCAG 2.2 AA, 1.4.10).
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 15 }}>
-              <caption style={{ textAlign: rtl ? 'right' : 'left', paddingBottom: 12, opacity: 0.6, fontSize: 14 }}>
-                {t.sousTitre} — {site.name}
-              </caption>
-              <thead>
-                <tr style={{ borderBottom: '2px solid rgba(0,0,0,0.15)' }}>
-                  {[t.colReference, t.colObjet, t.colRemise, t.colEtat].map((c) => (
-                    <th
-                      key={c}
-                      scope="col"
-                      style={{
-                        textAlign: rtl ? 'right' : 'left', padding: '12px 14px',
-                        fontWeight: 700, whiteSpace: 'nowrap',
-                      }}
-                    >
-                      {c}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {avis.map((a) => {
-                  const limite = formatDateHeure(a.remise_le, site.lang)
-                  return (
-                    <tr key={a.reference_slug} style={{ borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
-                      <th
-                        scope="row"
-                        style={{
-                          textAlign: rtl ? 'right' : 'left', padding: '14px',
-                          fontWeight: 600, whiteSpace: 'nowrap', verticalAlign: 'top',
-                        }}
-                      >
-                        <Link
-                          href={`${base}/appels-offres/${encodeURIComponent(a.reference_slug)}`}
-                          style={{ color: accent, textDecoration: 'none' }}
-                        >
-                          {a.reference}
-                        </Link>
-                      </th>
-                      <td style={{ padding: '14px', lineHeight: 1.5 }}>{a.objet}</td>
-                      {/* `font-variant-numeric: tabular-nums` : des echeances
-                          qui ne s'alignent pas se comparent mal, et comparer
-                          des echeances est la raison d'etre de cette colonne. */}
-                      <td style={{ padding: '14px', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' }}>
-                        {limite ?? <span aria-hidden="true">—</span>}
-                        {!limite && <span style={{ position: 'absolute', left: -9999 }}>{t.colRemise}</span>}
-                      </td>
-                      <td style={{ padding: '14px', whiteSpace: 'nowrap' }}>
-                        {libelleEtat(a.etat, site.lang)}
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
+          // UNE SECTION VIDE NE S'AFFICHE PAS. Un titre « Avis clôturés »
+          // au-dessus d'un tableau sans ligne annoncerait une rubrique que
+          // l'acheteur ne tient pas -- la famille même qu'on corrige ici.
+          <>
+            {enCours.length > 0 && section(enCours, t.sectionEnCours, 'avis-en-cours')}
+            {clotures.length > 0 && section(clotures, t.sectionClotures, 'avis-clotures', t.noteClotures)}
+          </>
         )}
       </main>
     </>
