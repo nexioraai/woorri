@@ -67,14 +67,31 @@ const QUATRE: readonly (readonly [string, string])[] = [
 ]
 
 describe('EP-366 · une couverture non mesurée se dit', () => {
-  it('① les quatre demandes rendent `null`, plus jamais 1', () => {
+  /**
+   * ── CE CAS A CHANGÉ DE FORME QUAND ②β EST ARRIVÉ, ET C'EST CORRECT.
+   *
+   * Il gelait l'état du MENSONGE : les quatre demandes ne retenaient
+   * aucune exigence, donc le taux devait valoir `null`. ②β a supprimé la
+   * cause — elles en retiennent 18, 17, 10 et 7. Le `null` n'est donc plus
+   * leur cas ; il reste celui d'une demande qui ne dit RIEN, et la règle
+   * qu'il porte n'a pas changé d'un mot.
+   */
+  it('① une demande qui ne dit rien rend `null`, jamais 1', () => {
+    for (const vide of ['', '   ', 'ok']) {
+      const r = jugerCouverture(vide, CODE_MUET)
+      expect(r.exigences.length, `« ${vide} » : rien à retenir`).toBe(0)
+      expect(r.taux, `« ${vide} » : rien mesuré ne se dit pas par un chiffre`).toBeNull()
+    }
+  })
+
+  it('①bis et les quatre demandes, elles, sont MESURÉES maintenant (②β)', () => {
+    // Non-régression du défaut fondateur : ces quatre rendaient 1,00 avec un
+    // code qui ne dit rien. Le détail des verdicts est dans EP-367.
     for (const [nom, demande] of QUATRE) {
       const r = jugerCouverture(demande, CODE_MUET)
-      expect(r.exigences.length, `${nom} : le lexique ne reconnaît rien`).toBe(0)
-      expect(
-        r.taux,
-        `${nom} : rien n'a été mesuré, et ça ne se dit pas par un chiffre`,
-      ).toBeNull()
+      expect(r.exigences.length, `${nom} : la demande doit se mesurer`).toBeGreaterThan(5)
+      expect(r.taux, `${nom} : mesurée, donc un chiffre`).not.toBeNull()
+      expect(r.taux, `${nom} : un code qui ne dit rien ne couvre rien`).toBeLessThan(0.2)
     }
   })
 

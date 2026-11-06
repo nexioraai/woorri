@@ -23,6 +23,8 @@
  * centime, déterministe — rejouable sur tout tir passé.
  */
 
+import { exigencesDeLaDemande, motifTerme, texteCherchable } from './exigences-demande'
+
 export type ExigenceJugee = {
   readonly exigence: string
   readonly cahier: number
@@ -43,12 +45,37 @@ export type ExigenceJugee = {
     | 'declaree-hors-perimetre'
     | 'absente'
     | 'declaree-mais-centrale'
+  /**
+   * D'OÙ VIENT CETTE EXIGENCE — et ça décide si elle peut coûter de l'argent.
+   *
+   * `famille` : une des dix-neuf familles nommées. Éprouvées depuis le
+   *   31 octobre ; elles REPROCHENT, donc elles relancent un tour payant.
+   * `demande` : un terme tiré de la demande elle-même (②β). Elle MESURE et
+   *   RAPPORTE, elle ne reproche pas — arbitrage du propriétaire, le
+   *   2026-11-06 : « tant que je n'ai pas lu la distribution réelle, le
+   *   chiffre voyage dans le rapport, il ne relance aucun tour. »
+   */
+  readonly source: 'famille' | 'demande'
 }
 
 export type RapportCouverture = {
   readonly exigences: readonly ExigenceJugee[]
-  /** Les absentes MUETTES : ni couvertes, ni déclarées. Le défaut. */
+  /**
+   * LES ABSENTES QUI REPROCHENT — familles nommées seulement.
+   *
+   * Ce champ pilote le reproche de la boucle, donc il coûte de l'argent.
+   * Les termes dérivés de la demande n'y entrent PAS : ils vivent dans
+   * `muettesDerivees`, qui n'est lu par aucun reproche.
+   */
   readonly absentes: readonly ExigenceJugee[]
+  /**
+   * LES MUETTES DÉRIVÉES DE LA DEMANDE — mesurées, rapportées, gratuites.
+   *
+   * C'est ici que « fournisseur ×56 au cahier → 0 dans le code » apparaît.
+   * Aucun tour ne se relance pour elles tant que la distribution réelle
+   * n'a pas fixé la barre.
+   */
+  readonly muettesDerivees: readonly ExigenceJugee[]
   /**
    * couvertes + déclarées, sur le total retenu. Entre 0 et 1 — ou `null`.
    *
@@ -72,6 +99,14 @@ export type RapportCouverture = {
    * doit le dire — pas le remplacer par un chiffre (voir EP-366).
    */
   readonly taux: number | null
+  /**
+   * COMBIEN DE TERMES LE PLAFOND A ÉCARTÉS — jamais tu (②β).
+   *
+   * Un cahier de 22 866 caractères rend 672 termes. En juger 25 est un
+   * choix ; le taire ferait lire « tout est couvert » là où on a regardé
+   * une partie.
+   */
+  readonly ecartes: number
 }
 
 /** Une exigence n'est RETENUE que si le cahier y insiste. */
@@ -156,16 +191,49 @@ export function jugerCouverture(
     .join('\n')
     .toLowerCase()
 
+  // ── LES FAMILLES NOMMÉES, PUIS LES TERMES DE LA DEMANDE ELLE-MÊME.
+  //
+  // Les dix-neuf gardent leur valeur : une famille réunit des mots qu'un
+  // radical ne rapproche pas (« airtel », « moov », « orange money » = un
+  // seul moyen de paiement). Mais elles ne suffisaient pas, et ne pouvaient
+  // pas : elles sont l'index d'un seul document. Les termes dérivés
+  // viennent de la demande, donc la disjonction se ferme par construction.
+  const derives = exigencesDeLaDemande(demande)
+  const cahierNu = texteCherchable(demande)
+  const codeNu = texteCherchable(codeEntier)
+  const familles: (readonly [string, RegExp])[] = [...LEXIQUE]
+  for (const t of derives.termes) {
+    // Pas deux fois la même chose : si une famille nommée reconnaît déjà ce
+    // terme, elle le dit mieux — elle réunit ses synonymes.
+    if (LEXIQUE.some(([, m]) => { m.lastIndex = 0; return m.test(t.terme) })) continue
+    familles.push([t.terme, motifTerme(t.terme)])
+  }
+
   const exigences: ExigenceJugee[] = []
-  for (const [exigence, motif] of LEXIQUE) {
-    const dansCahier = compte(cahier, motif)
-    if (dansCahier < SEUIL_CAHIER) continue
-    const dansCode = compte(codeEntier, motif)
-    const declaree = compte(perimetre, motif) > 0
+  for (const [exigence, motif] of familles) {
+    const nomme = LEXIQUE.some(([e]) => e === exigence)
+    // ── UN TERME DÉRIVÉ SE CHERCHE DANS LE TEXTE NORMALISÉ COMME LUI.
+    //
+    // Les radicaux sortent sans accent : chercher `communique` dans un texte
+    // accentué ne trouve jamais « communiqué ». Les familles nommées, elles,
+    // portent leurs accents dans leurs motifs et gardent le texte brut.
+    const dansCahier = compte(nomme ? cahier : cahierNu, motif)
+    // ── LE SEUIL ABSOLU NE VAUT QUE POUR LES FAMILLES NOMMÉES.
+    //
+    // Les termes dérivés ont DÉJÀ passé le seuil relatif de la demande
+    // (`exigencesDeLaDemande`). Leur réappliquer 3 ici les éliminerait tous
+    // sur une demande de trois phrases — c'est-à-dire referait exactement
+    // le défaut qu'on ferme.
+    if (nomme && dansCahier < SEUIL_CAHIER) continue
+    if (dansCahier === 0) continue
+    const dansCode = compte(nomme ? codeEntier : codeNu, motif)
+    const declaree = compte(nomme ? perimetre : texteCherchable(perimetre), motif) > 0
     // ATTEINTE ET EXERCÉE : un écran OUVERT porte cette exigence, et un de
     // ses contrôles a servi. C'est la définition à trois niveaux du
     // 2026-10-31, enfin branchée — elle ne vivait que dans un rapport.
-    const atteinteEtExercee = ecrans.some((e) => e.exerce && compte(e.texte.toLowerCase(), motif) > 0)
+    const atteinteEtExercee = ecrans.some(
+      (e) => e.exerce && compte(nomme ? e.texte.toLowerCase() : texteCherchable(e.texte), motif) > 0,
+    )
     const statut: ExigenceJugee['statut'] = atteinteEtExercee
       ? 'couverte'
       : declaree
@@ -177,15 +245,36 @@ export function jugerCouverture(
           : dansCode > 0
             ? 'nommee'
             : 'absente'
-    exigences.push({ exigence, cahier: dansCahier, code: dansCode, statut })
+    exigences.push({
+      exigence,
+      cahier: dansCahier,
+      code: dansCode,
+      statut,
+      source: nomme ? 'famille' : 'demande',
+    })
   }
   // Une MENTION et une exigence centrale déclarée seule comptent comme
   // non réglées : elles reviennent au modèle, elles ne se taisent pas.
-  const absentes = exigences.filter(
-    (e) => e.statut === 'absente' || e.statut === 'nommee' || e.statut === 'declaree-mais-centrale',
-  )
+  const muette = (e: ExigenceJugee): boolean =>
+    e.statut === 'absente' || e.statut === 'nommee' || e.statut === 'declaree-mais-centrale'
+  // ── LE REPROCHE NE VOIT QUE LES FAMILLES NOMMÉES, ET C'EST VOULU.
+  //
+  // Brancher les termes dérivés ici ferait reprocher sur dix-sept exigences
+  // une demande qui n'en reprochait aucune : `TOURS_MAX = 3`, donc jusqu'à
+  // deux tours payants de plus PAR GÉNÉRATION. Le propriétaire a tranché :
+  // on mesure d'abord la distribution réelle sur le corpus, on fixe la barre
+  // ensuite. « Pas une intuition. »
+  const absentes = exigences.filter((e) => e.source === 'famille' && muette(e))
+  const muettesDerivees = exigences.filter((e) => e.source === 'demande' && muette(e))
   // AUCUNE FAMILLE RETENUE = RIEN MESURÉ, et ça ne se dit pas « 1 ».
-  const taux =
-    exigences.length === 0 ? null : (exigences.length - absentes.length) / exigences.length
-  return { exigences, absentes, taux }
+  // ── LE TAUX COMPTE TOUTES LES MUETTES, LE REPROCHE N'EN COMPTE QU'UNE PART.
+  //
+  // Ma première forme divisait par `absentes` seul. Comme `absentes` ne
+  // retient plus que les familles nommées, le salon de coiffure est repassé
+  // à 18/18 = 1,00 : LE MENSONGE EST REVENU PAR UNE AUTRE PORTE, dix minutes
+  // après l'avoir fermé. Séparer ce qui REPROCHE de ce qui MESURE ne veut pas
+  // dire cesser de mesurer.
+  const total = absentes.length + muettesDerivees.length
+  const taux = exigences.length === 0 ? null : (exigences.length - total) / exigences.length
+  return { exigences, absentes, muettesDerivees, taux, ecartes: derives.ecartes }
 }
