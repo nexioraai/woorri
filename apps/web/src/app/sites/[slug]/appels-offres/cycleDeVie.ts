@@ -70,6 +70,25 @@ export function etatVisible(avis: AvisCycle, maintenant: Date): EtatVisible | st
   return echeance.getTime() <= maintenant.getTime() ? 'clos' : 'ouvert'
 }
 
+/**
+ * LA DATE D'UN AVIS EN PRÉPARATION N'EST PAS UNE ÉCHÉANCE.
+ *
+ * Condition posée par le propriétaire le 2026-11-06, avec l'arbitrage B :
+ * « un fournisseur qui lit *remise le 15 novembre à 12h00* sur un avis non
+ * ouvert organisera son travail dessus. Si la date bouge, on lui a menti —
+ * avec les mêmes mots que pour un avis réel. »
+ *
+ * C'est le même piège que l'état qui ment APRÈS l'échéance, pris EN AMONT :
+ * la même valeur, le même libellé, deux significations opposées. Une date
+ * prévisionnelle se libelle comme telle, ou ne s'affiche pas.
+ *
+ * UNE SEULE AUTORITÉ. Deux surfaces décidant chacune si une date est ferme
+ * finiraient par diverger, et c'est l'écran le plus consulté qui aurait tort.
+ */
+export function estPrevisionnel(e: EtatVisible | string): boolean {
+  return e === 'preparation'
+}
+
 /** Un avis est-il ENCORE en cours pour un soumissionnaire ? */
 export function estEnCours(e: EtatVisible | string): boolean {
   return e === 'ouvert' || e === 'preparation'

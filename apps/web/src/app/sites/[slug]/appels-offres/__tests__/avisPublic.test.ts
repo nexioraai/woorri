@@ -37,7 +37,7 @@ vi.mock('@/lib/supabase', () => ({
 }))
 
 import { fetchAvisIndex, fetchAvis, fetchAvisEntries } from '../fetchAvis'
-import { getAvisLabels } from '../labels'
+import { getAvisLabels, echeanceAffichee } from '../labels'
 
 const SITE = {
   id: 'aaaaaaaa-1111-4111-8111-111111111111',
@@ -220,21 +220,33 @@ describe('fetchAvisEntries — surfaces dérivées', () => {
   })
 })
 
-describe('cliquet structurel — surface publique des avis', () => {
-  const RACINE = join(__dirname, '..')
-  const fichiers: string[] = []
-  ;(function walk(d: string) {
-    for (const e of readdirSync(d)) {
-      const f = join(d, e)
-      if (statSync(f).isDirectory()) {
-        if (e !== '__tests__') walk(f)
-      } else if (/\.tsx?$/.test(e)) fichiers.push(f)
-    }
-  })(RACINE)
+// ============================================================
+// LA SURFACE, ÉNUMÉRÉE UNE SEULE FOIS.
+//
+// Ces trois outils vivaient DANS le `describe` structurel. Les blocs ajoutés
+// ensuite ne les voyaient pas, et la réponse facile aurait été de les
+// recopier — donc d'avoir DEUX dénominateurs. Deux énumérations de la même
+// surface finissent par diverger, et c'est celle qu'on ne regarde pas qui
+// laisse passer le fichier non gardé. Un seul balayage, partagé.
+// ============================================================
+const RACINE = join(__dirname, '..')
+const fichiers: string[] = []
+;(function walk(d: string) {
+  for (const e of readdirSync(d)) {
+    const f = join(d, e)
+    if (statSync(f).isDirectory()) {
+      if (e !== '__tests__') walk(f)
+    } else if (/\.tsx?$/.test(e)) fichiers.push(f)
+  }
+})(RACINE)
 
-  const code = (f: string) =>
-    readFileSync(f, 'utf-8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '')
-  const rel = (f: string) => f.replace(RACINE, 'appels-offres')
+/** Le code SANS ses commentaires : une règle citée dans une explication n'est
+ *  pas une règle appliquée. */
+const code = (f: string) =>
+  readFileSync(f, 'utf-8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '')
+const rel = (f: string) => f.replace(RACINE, 'appels-offres')
+
+describe('cliquet structurel — surface publique des avis', () => {
 
   it('les CINQ fichiers de la surface sont bien vus par ce cliquet', () => {
     // LE DÉNOMINATEUR EST RÉEL. Un fichier ajouté à la surface sans entrer
@@ -360,7 +372,7 @@ describe('cliquet structurel — surface publique des avis', () => {
 // passerait aujourd'hui et rougirait en décembre, et personne ne saurait
 // pourquoi — un cliquet dont le verdict dépend du jour n'est pas un cliquet.
 // ============================================================
-import { etatVisible, estEnCours, partager } from '../cycleDeVie'
+import { etatVisible, estEnCours, estPrevisionnel, partager } from '../cycleDeVie'
 
 const T = (iso: string) => new Date(iso)
 const MAINTENANT = T('2026-11-06T12:00:00Z')
@@ -452,5 +464,129 @@ describe('partager — deux sections, deux ordres opposés', () => {
     const { enCours, clotures } = partager([A, B, C, D, E], MAINTENANT)
     for (const x of enCours) expect(estEnCours(etatVisible(x, MAINTENANT)), x.reference_slug).toBe(true)
     for (const x of clotures) expect(estEnCours(etatVisible(x, MAINTENANT)), x.reference_slug).toBe(false)
+  })
+})
+
+
+// ============================================================
+// A2 (b1) — ARBITRAGE B : `publie` EST LE SEUL INTERRUPTEUR.
+//
+// Mesuré sur la vue déployée le 2026-11-06 : les trois états avec
+// `publie = true` sont VISIBLES. La vue ne filtre que `publie`. Le
+// propriétaire a tranché B — annoncer un marché à venir est l'étape
+// `planning` d'OCDS, et ce n'est pas à la plateforme de décider ce qu'un
+// acheteur public a le droit de publier.
+//
+// B N'EST BON QU'À DEUX CONDITIONS, et ce bloc les garde.
+// ============================================================
+describe('b1 ② — la date d’un avis en préparation n’est PAS une échéance', () => {
+  it('`preparation` est prévisionnel, et lui seul', () => {
+    expect(estPrevisionnel('preparation')).toBe(true)
+    for (const e of ['ouvert', 'clos', 'attribue', 'annule']) {
+      expect(estPrevisionnel(e), e).toBe(false)
+    }
+  })
+
+  it('une seule autorité : `estPrevisionnel` suit `etatVisible`, jamais `avis.etat`', () => {
+    // Un avis STOCKÉ `ouvert` et échu est `clos` à l'écran — donc PAS
+    // prévisionnel. Brancher la marque sur l'état brut la poserait au mauvais
+    // endroit, et c'est le genre d'écart qu'on ne voit qu'en production.
+    const echu = { etat: 'ouvert', remise_le: '2026-10-01T10:00:00Z' }
+    expect(estPrevisionnel(etatVisible(echu, MAINTENANT))).toBe(false)
+    const prep = { etat: 'preparation', remise_le: '2026-10-01T10:00:00Z' }
+    expect(estPrevisionnel(etatVisible(prep, MAINTENANT))).toBe(true)
+  })
+
+  // ── LA RÈGLE SE TIENT PAR SON COMPORTEMENT, PLUS PAR SA PRÉSENCE ──
+  //
+  // La version précédente de ce bloc vérifiait que `t.previsionnel` FIGURE
+  // dans le fichier de la liste. MESURÉ le 2026-11-06 : muter le rendu en
+  // `{false && <span>{t.previsionnel}</span>}` laissait les 49 tests VERTS —
+  // le texte restait, le marqueur disparaissait de l'écran. Une ancre de
+  // forme qui ne couvre pas la perte qu'elle prétend garder.
+  //
+  // La règle vit désormais dans `echeanceAffichee`, et ces cas la tiennent.
+
+  it('une date d’avis EN PRÉPARATION porte la marque', () => {
+    const r = echeanceAffichee('2026-12-01T10:00:00Z', 'preparation', 'fr')
+    expect(r?.previsionnelle).toBe(true)
+    expect(r?.marque).toBe(getAvisLabels('fr').previsionnel)
+  })
+
+  it('une date d’avis OUVERT, CLOS ou ATTRIBUÉ ne la porte pas', () => {
+    for (const e of ['ouvert', 'clos', 'attribue']) {
+      const r = echeanceAffichee('2026-12-01T10:00:00Z', e, 'fr')
+      expect(r?.previsionnelle, e).toBe(false)
+      expect(r?.marque, e).toBeNull()
+    }
+  })
+
+  it('sans date → `null`, jamais une chaîne vide ni « — »', () => {
+    // L'écran décide comment rendre une absence ; cette fonction ne la
+    // maquille pas en date vide.
+    expect(echeanceAffichee(null, 'preparation', 'fr')).toBeNull()
+    expect(echeanceAffichee('pas-une-date', 'ouvert', 'fr')).toBeNull()
+  })
+
+  it('la marque existe et diffère dans les QUATRE langues', () => {
+    for (const lang of ['fr', 'en', 'es', 'ar']) {
+      const r = echeanceAffichee('2026-12-01T10:00:00Z', 'preparation', lang)
+      expect(r?.marque, lang).toBeTruthy()
+      expect(r?.texte, lang).toBeTruthy()
+    }
+  })
+
+  // ── CE QUE CE CLIQUET NE PEUT PAS GARDER, ET QUI L'EST AILLEURS ──
+  //
+  // MESURÉ le 2026-11-06 : muter le JSX de la liste en
+  // `{false && <span>{ech.marque}</span>}` laisse ces 53 tests VERTS. La
+  // règle est juste, la fonction la rend, et l'écran ne l'affiche pas.
+  //
+  // Aucun test lisant le SOURCE ne peut distinguer `{ech.marque && …}` de
+  // `{false && …}` autrement que par une ancre de forme — c'est-à-dire par
+  // la chose même qui vient de nous tromper. La frontière est ici : ce
+  // fichier garde la RÈGLE, la sonde d'écran garde le RENDU.
+  //
+  // `scripts/prouver-ecran-appels-offres.mjs` pose un témoin `preparation`
+  // et exige la marque DANS LE HTML SERVI. C'est le seul instrument qui voit
+  // cette dernière marche, et il est versionné avec cette note.
+
+  it('les DEUX surfaces passent par la fonction, aucune ne réimplémente', () => {
+    for (const f of fichiers.filter((x) => x.endsWith('page.tsx'))) {
+      expect(code(f), rel(f)).toMatch(/echeanceAffichee\(/)
+      // `formatDateHeure` en direct dans une page recréerait une seconde
+      // autorité sur l'affichage d'une échéance.
+      expect(code(f), rel(f)).not.toMatch(/formatDateHeure\(\s*a\.remise_le/)
+    }
+    // Et sur le détail, le LIBELLÉ change : « Date et heure limite de remise »
+    // est faux sur un avis non ouvert, un suffixe ne suffirait pas.
+    const detail = code(fichiers.find((f) => f.endsWith('[reference]/page.tsx'))!)
+    expect(detail).toMatch(/t\.rRemisePrevue/)
+  })
+
+  it('b1 ① — le détail DIT qu’aucune offre n’est encore recevable', () => {
+    const detail = code(fichiers.find((f) => f.endsWith('[reference]/page.tsx'))!)
+    expect(detail, 'condition non négociable du propriétaire').toMatch(/t\.pasEncoreRecevable/)
+  })
+
+  it('les trois intitulés existent dans les QUATRE langues, et disent quelque chose', () => {
+    for (const lang of ['fr', 'en', 'es', 'ar']) {
+      const l = getAvisLabels(lang)
+      for (const [cle, v] of [['previsionnel', l.previsionnel], ['pasEncoreRecevable', l.pasEncoreRecevable], ['rRemisePrevue', l.rRemisePrevue]] as const) {
+        expect(v, `${lang}/${cle}`).toBeTruthy()
+        expect(v.length, `${lang}/${cle} trop court pour informer`).toBeGreaterThan(3)
+      }
+      // Le libellé prévisionnel ne doit PAS être celui de l'échéance ferme :
+      // deux significations opposées sous les mêmes mots, c'est le défaut.
+      expect(l.rRemisePrevue, lang).not.toBe(l.r.remise_le)
+    }
+  })
+
+  it('AUCUNE surface ne décide elle-même qu’une date est ferme', () => {
+    // Un `etat === 'preparation'` écrit dans une page serait une SECONDE
+    // autorité. Deux autorités divergent toujours.
+    for (const f of fichiers.filter((x) => x.endsWith('page.tsx'))) {
+      expect(code(f), rel(f)).not.toMatch(/['"`]preparation['"`]/)
+    }
   })
 })

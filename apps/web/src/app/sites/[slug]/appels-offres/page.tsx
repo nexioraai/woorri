@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { headers } from 'next/headers'
 import { notFound } from 'next/navigation'
 import { fetchAvisIndex } from './fetchAvis'
-import { getAvisLabels, formatDateHeure, libelleEtat, tronquer } from './labels'
+import { getAvisLabels, echeanceAffichee, libelleEtat, tronquer } from './labels'
 import { partager, etatVisible } from './cycleDeVie'
 import { resolveSiteBaseUrl } from '../themes/shared'
 import { ogLocaleFor } from '@/lib/i18n/supportedLanguages'
@@ -124,7 +124,13 @@ export default async function AppelsOffresPage({ params }: Props) {
           </thead>
           <tbody>
             {lignes.map((a) => {
-              const limite = formatDateHeure(a.remise_le, site.lang)
+              const ech = echeanceAffichee(a.remise_le, etatVisible(a, maintenant), site.lang)
+              // L'ÉTAT EST CALCULÉ UNE FOIS PAR LIGNE, et il décide DEUX
+              // choses : le libellé de l'état, et si la date est ferme. Les
+              // calculer séparément laisserait une ligne annoncer
+              // « En préparation » à côté d'une échéance présentée comme
+              // ferme — le mensonge exact que b1 ② ferme.
+              const ev = etatVisible(a, maintenant)
               return (
                 <tr key={a.reference_slug} style={{ borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
                   <th scope="row" style={{
@@ -141,14 +147,26 @@ export default async function AppelsOffresPage({ params }: Props) {
                       comparent mal, et comparer des échéances est la raison
                       d'être de cette colonne. */}
                   <td style={{ padding: '14px', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' }}>
-                    {limite ?? <span aria-hidden="true">—</span>}
+                    {ech === null ? (
+                      <span aria-hidden="true">—</span>
+                    ) : (
+                      <>
+                        {ech.texte}
+                        {/* LA RÈGLE N'EST PAS ICI : elle est dans
+                            `echeanceAffichee`, où un test la tient par son
+                            comportement. Ce JSX ne décide rien, il rend. */}
+                        {ech.marque && (
+                          <span style={{ opacity: 0.7, fontWeight: 500 }}> {ech.marque}</span>
+                        )}
+                      </>
+                    )}
                   </td>
                   {/* L'ÉTAT AFFICHÉ EST DÉRIVÉ, PAS LU. Un avis `ouvert` dont
                       l'échéance est passée affiche « Clôturé » : afficher
                       « Ouvert » serait inviter à déposer une offre qui sera
                       rejetée. Ce que la base STOCKE, lui, ne bouge pas. */}
                   <td style={{ padding: '14px', whiteSpace: 'nowrap' }}>
-                    {libelleEtat(etatVisible(a, maintenant), site.lang)}
+                    {libelleEtat(ev, site.lang)}
                   </td>
                 </tr>
               )

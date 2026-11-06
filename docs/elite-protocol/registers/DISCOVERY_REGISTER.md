@@ -313,6 +313,67 @@ DE MARCHÉ… Ne pas y répondre » — conditions posées par le propriétaire.
 Les 43 comptent les non publiés et les archivés. La mesure de non-fuite porte
 donc sur 8 sites, et c'est le dénominateur réel.
 
+### GEN-D040 — Une branche qu'aucune mutation ne peut faire rougir est une branche qu'aucun test ne défend
+
+**Règle, pas incident** — retenue par le propriétaire le 2026-11-06.
+
+`cycleDeVie.ts`, première rédaction :
+
+```ts
+if (avis.etat === 'attribue' || avis.etat === 'preparation') return avis.etat
+if (avis.etat !== 'ouvert') return avis.etat
+```
+
+J'ai muté la première ligne pour éprouver le cliquet : **43 tests verts**. La
+conclusion facile était « le cliquet ne couvre pas `preparation` ». La vraie
+cause : la seconde ligne rendait déjà la même chose. **Il n'y avait rien à
+casser.**
+
+**La branche se supprime, elle ne se commente pas.** Une ligne qui documente
+sans décider appartient au commentaire ; laissée dans le code, elle se fait
+passer pour une garde, et une garde qu'on ne peut pas faire rougir se fait
+passer pour une garde éprouvée.
+
+**Corollaire opératoire** : une mutation VERTE a deux lectures — « le cliquet
+est aveugle » ou « la mutation n'a rien changé ». **Trancher avant de
+conclure.** Une fois la branche retirée, la vraie mutation (faire tomber
+`preparation` dans la logique d'échéance) a rougi en nommant sa règle.
+
+**Même famille que GEN-D038** — l'absence d'effet se lit comme l'effet
+attendu — mais la cause est inverse : là une substitution qui n'avait pas
+pris, ici un code qui n'avait rien à perdre.
+
+### GEN-D041 — Une ancre de forme qui ne couvre pas la perte laisse l'écran mentir
+
+Mesuré le 2026-11-06, lot A2 b1. Le cliquet gardait la marque
+« (prévisionnelle) » ainsi :
+
+```ts
+expect(liste).toMatch(/t\.previsionnel/)
+```
+
+Muter le rendu en `{false && <span>{t.previsionnel}</span>}` laissait **49
+tests verts** : le texte restait dans le fichier, le marqueur disparaissait de
+l'écran. L'assertion vérifiait une PRÉSENCE dans le source, jamais un
+AFFICHAGE.
+
+**Contre-mesure** : la règle a été déplacée dans une fonction pure —
+`echeanceAffichee(remiseLe, etatVisible, lang)` — que des cas tiennent par son
+COMPORTEMENT, et que les deux surfaces partagent. La muter fait désormais
+rougir. Bénéfice second, non cherché : liste et détail ne peuvent plus
+diverger sur ce que « prévisionnelle » veut dire.
+
+**ET LA FRONTIÈRE EST NOMMÉE, pas maquillée.** Muter le JSX lui-même
+(`{false && …}`) laisse encore les 53 tests verts, et **aucun test lisant le
+source ne peut faire mieux** : distinguer `{ech.marque && …}` de
+`{false && …}` demanderait précisément une ancre de forme — la chose qui vient
+de tromper. Donc : ce cliquet garde la **règle**, la sonde d'écran garde le
+**rendu**. La note est écrite dans le fichier de test, à l'endroit où
+quelqu'un la cherchera.
+
+**Statut** : 🟢 **RÈGLE DÉPLACÉE ET ÉPROUVÉE** · frontière documentée, rendu
+couvert par `prouver-ecran-appels-offres.mjs`
+
 ### GEN-D038 — Une mutation OU une injection dont on ne vérifie pas l'effet est un non-événement lu comme un verdict
 
 **Classe, pas incident** — consigne du propriétaire le 2026-11-06 : les deux

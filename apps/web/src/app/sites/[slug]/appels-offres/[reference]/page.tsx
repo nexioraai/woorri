@@ -3,8 +3,8 @@ import Link from 'next/link'
 import { headers } from 'next/headers'
 import { notFound } from 'next/navigation'
 import { fetchAvis, type AvisDetail } from '../fetchAvis'
-import { getAvisLabels, formatDateHeure, formatValeur, libelleEtat, tronquer } from '../labels'
-import { etatVisible } from '../cycleDeVie'
+import { getAvisLabels, echeanceAffichee, formatDateHeure, formatValeur, libelleEtat, tronquer } from '../labels'
+import { etatVisible, estPrevisionnel } from '../cycleDeVie'
 import { resolveSiteBaseUrl } from '../../themes/shared'
 import { ogLocaleFor } from '@/lib/i18n/supportedLanguages'
 import HtmlLang from '../../themes/HtmlLang'
@@ -87,19 +87,45 @@ export default async function AvisPage({ params }: Props) {
   // annoncer deux états pour le même avis -- et c'est l'écran qu'on
   // accuserait, pas la cause.
   const maintenant = new Date()
+  const ev = etatVisible(avis, maintenant)
+
+  // UN AVIS EN PRÉPARATION N'OPPOSE AUCUNE ÉCHÉANCE. Toutes ses dates sont
+  // PRÉVISIONNELLES — pas seulement celle de remise. Un lecteur qui descend
+  // jusqu'à « Ouverture des plis » sans avoir vu le bandeau doit quand même
+  // comprendre que rien n'est ferme : chaque ligne porte donc sa marque.
+  const prevu = estPrevisionnel(ev)
+
+  /** Le libellé d'une rubrique — corrigé quand il mentirait.
+   *
+   *  « Date et heure limite de remise » est FAUX sur un avis non ouvert : ce
+   *  n'est pas une limite, c'est une prévision. Le libellé change, il ne se
+   *  contente pas d'un suffixe. */
+  const libelleRubrique = (cle: string) =>
+    prevu && cle === 'remise_le' ? t.rRemisePrevue : (t.r[cle] ?? cle)
 
   function valeurDe(cle: keyof AvisDetail): React.ReactNode | null {
     switch (cle) {
       case 'etat':
         // DÉRIVÉ, PAS LU -- même règle que la liste (lot A2 b). La base garde
         // `ouvert` ; l'écran dit « Clôturé » dès l'échéance passée.
-        return libelleEtat(etatVisible(avis, maintenant), site.lang)
+        return libelleEtat(ev, site.lang)
       case 'valeur':
         return formatValeur(avis.valeur, avis.devise, site.lang)
       case 'remise_le':
       case 'questions_avant':
-      case 'ouverture_plis':
-        return formatDateHeure(avis[cle] as string | null, site.lang)
+      case 'ouverture_plis': {
+        // MÊME FONCTION QUE LA LISTE. Deux surfaces qui décideraient
+        // séparément de ce que « prévisionnelle » veut dire finiraient par
+        // diverger, et c'est la plus consultée qui aurait tort.
+        const d = echeanceAffichee(avis[cle] as string | null, ev, site.lang)
+        if (d === null) return null
+        return d.marque ? (
+          <>
+            {d.texte}
+            <span style={{ opacity: 0.7 }}> {d.marque}</span>
+          </>
+        ) : d.texte
+      }
       case 'local_validite_jours':
         return avis.local_validite_jours === null ? null : String(avis.local_validite_jours)
       case 'document_url':
@@ -163,6 +189,23 @@ export default async function AvisPage({ params }: Props) {
           )}
         </p>
 
+        {/* CONDITION ① DU PROPRIÉTAIRE, 2026-11-06, NON NÉGOCIABLE.
+            « Sans cette phrase, B fait perdre son temps à un fournisseur, et
+            c'est un tort qu'un portail d'État ne peut pas causer. »
+            Le bandeau précède les rubriques : on ne lit pas un avis avant de
+            savoir s'il est ouvert. */}
+        {prevu && (
+          <p
+            role="note"
+            style={{
+              margin: '0 0 32px', padding: '16px 18px', borderRadius: 12,
+              border: `1px solid ${accent}`, fontSize: 15, lineHeight: 1.6, fontWeight: 600,
+            }}
+          >
+            {t.pasEncoreRecevable}
+          </p>
+        )}
+
         <dl style={{ margin: 0, display: 'grid', gap: 0 }}>
           {rendues.map(([cle, valeur]) => (
             <div
@@ -175,7 +218,7 @@ export default async function AvisPage({ params }: Props) {
                 borderBottom: '1px solid rgba(0,0,0,0.08)',
               }}
             >
-              <dt style={{ fontWeight: 600, opacity: 0.7 }}>{t.r[String(cle)] ?? String(cle)}</dt>
+              <dt style={{ fontWeight: 600, opacity: 0.7 }}>{libelleRubrique(String(cle))}</dt>
               <dd style={{ margin: 0, lineHeight: 1.6, overflowWrap: 'anywhere' }}>{valeur}</dd>
             </div>
           ))}

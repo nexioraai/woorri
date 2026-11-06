@@ -120,7 +120,28 @@ create table if not exists public.appels_offres (
   reference            text not null,
   reference_slug       text not null,
 
-  -- TROIS ETATS, ET TROIS SEULEMENT. `preparation` n'est jamais public.
+  -- TROIS ETATS, ET TROIS SEULEMENT.
+  --
+  -- RECTIFICATION DATEE DU 2026-11-06. Cette ligne portait : « `preparation`
+  -- n'est jamais public. » C'ETAIT FAUX, et rien ne le tenait. MESURE sur la
+  -- vue DEPLOYEE, les trois etats avec `publie = true` :
+  --     preparation -> VISIBLE · ouvert -> VISIBLE · attribue -> VISIBLE
+  -- La vue ne filtre que `publie`. Trois endroits disaient trois choses : ce
+  -- commentaire, la vue, et `labels.ts` qui sait afficher « En preparation ».
+  --
+  -- ARBITRAGE DU PROPRIETAIRE, 2026-11-06 : `publie` EST LE SEUL
+  -- INTERRUPTEUR, `etat` EST INFORMATIF. Annoncer un marche a venir est une
+  -- pratique normale qui augmente la concurrence -- l'etape `planning` du
+  -- standard OCDS, et ce que fait UniHA avec son « recensement de besoins ».
+  -- Et ce n'est pas a la plateforme de decider ce qu'un acheteur public a le
+  -- droit de publier : c'est a lui.
+  --
+  -- CE QUE CELA EXIGE DE L'ECRAN, et qui est tenu dans `cycleDeVie.ts` :
+  --   * un avis en preparation DIT qu'aucune offre n'est encore recevable ;
+  --   * sa date de remise, s'il en porte une, est PREVISIONNELLE et se
+  --     libelle comme telle. Un fournisseur qui lit « remise le 15 novembre a
+  --     12h00 » sur un avis non ouvert organise son travail dessus ; si la
+  --     date bouge, on lui a menti avec les mots d'un avis reel.
   etat                 text not null
     constraint appels_offres_etat_check
     check (etat = any (array['preparation', 'ouvert', 'attribue'])),

@@ -1,3 +1,5 @@
+import { estPrevisionnel } from './cycleDeVie'
+
 // Intitules fabriques par les pages elles-memes. Ils suivent la langue DU
 // SITE, jamais une langue en dur -- meme regle que `getBlogLabels` et
 // `getLlmsTxtLabels`. Aucun contenu de l'acheteur n'est traduit ici : seuls
@@ -31,6 +33,12 @@ export type AvisLabels = {
   sectionClotures: string
   /** Dit pourquoi un avis cloture reste affiche. */
   noteClotures: string
+  /** Accole a une date PREVISIONNELLE. Lot A2 b1, condition ② du proprietaire. */
+  previsionnel: string
+  /** Dit qu'un avis en preparation n'accepte encore aucune offre. Condition ①. */
+  pasEncoreRecevable: string
+  /** Le libelle de `remise_le` QUAND la date n'est pas ferme. */
+  rRemisePrevue: string
   /** Les dix-neuf rubriques du detail. */
   r: Record<string, string>
 }
@@ -99,6 +107,9 @@ const COPY: Record<string, AvisLabels> = {
     etats: { preparation: 'En préparation', ouvert: 'Ouvert', clos: 'Clôturé', attribue: 'Attribué' },
     sectionEnCours: 'Avis en cours', sectionClotures: 'Avis clôturés',
     noteClotures: 'Ces avis ne sont plus ouverts aux offres. Ils restent publiés.',
+    previsionnel: '(prévisionnelle)',
+    pasEncoreRecevable: 'Avis en préparation — aucune offre n’est encore recevable.',
+    rRemisePrevue: 'Date de remise prévisionnelle',
     r: RUB_FR,
   },
   en: {
@@ -113,6 +124,9 @@ const COPY: Record<string, AvisLabels> = {
     etats: { preparation: 'In preparation', ouvert: 'Open', clos: 'Closed', attribue: 'Awarded' },
     sectionEnCours: 'Open notices', sectionClotures: 'Closed notices',
     noteClotures: 'These notices no longer accept bids. They remain published.',
+    previsionnel: '(provisional)',
+    pasEncoreRecevable: 'Notice in preparation — no bid can be submitted yet.',
+    rRemisePrevue: 'Expected submission date',
     r: RUB_EN,
   },
   es: {
@@ -127,6 +141,9 @@ const COPY: Record<string, AvisLabels> = {
     etats: { preparation: 'En preparación', ouvert: 'Abierta', clos: 'Cerrada', attribue: 'Adjudicada' },
     sectionEnCours: 'Anuncios en curso', sectionClotures: 'Anuncios cerrados',
     noteClotures: 'Estos anuncios ya no admiten ofertas. Siguen publicados.',
+    previsionnel: '(provisional)',
+    pasEncoreRecevable: 'Anuncio en preparación — todavía no se admite ninguna oferta.',
+    rRemisePrevue: 'Fecha de presentación prevista',
     r: RUB_ES,
   },
   ar: {
@@ -141,6 +158,9 @@ const COPY: Record<string, AvisLabels> = {
     etats: { preparation: 'قيد الإعداد', ouvert: 'مفتوحة', clos: 'مغلقة', attribue: 'مُسندة' },
     sectionEnCours: 'الإعلانات الجارية', sectionClotures: 'الإعلانات المغلقة',
     noteClotures: 'لم تعد هذه الإعلانات تقبل العروض. وتبقى منشورة.',
+    previsionnel: '(تقديري)',
+    pasEncoreRecevable: 'إعلان قيد الإعداد — لا يمكن تقديم أي عرض بعد.',
+    rRemisePrevue: 'تاريخ الإيداع المتوقع',
     r: RUB_AR,
   },
 }
@@ -184,6 +204,40 @@ export function formatDateHeure(iso: string | null, lang: string | null | undefi
     })
   } catch {
     return d.toISOString().slice(0, 16).replace('T', ' ') + ' UTC'
+  }
+}
+
+/**
+ * L'ÉCHÉANCE TELLE QU'ELLE DOIT PARAÎTRE — texte, et si elle est ferme.
+ *
+ * ── POURQUOI UNE FONCTION, ET PAS DEUX BOUTS DE JSX.
+ *
+ * La règle vivait dans les pages : `{prevu && <span>{t.previsionnel}</span>}`.
+ * MESURÉ le 2026-11-06 en la mutant en `{false && …}` — **49 tests verts**.
+ * Mes assertions vérifiaient que `t.previsionnel` FIGURE dans le fichier, pas
+ * qu'il S'AFFICHE. Une ancre de forme qui ne couvre pas la perte qu'elle
+ * prétend garder : le marqueur pouvait disparaître de l'écran sans qu'aucun
+ * cliquet ne bouge.
+ *
+ * La règle est donc ici, où un test la tient par son COMPORTEMENT. Et elle
+ * est UNE : la liste et le détail ne peuvent plus diverger sur ce que
+ * « prévisionnelle » veut dire.
+ *
+ * Rend `null` quand il n'y a pas de date — jamais « — », jamais une chaîne
+ * vide : l'écran décide comment rendre une absence, pas cette fonction.
+ */
+export function echeanceAffichee(
+  remiseLe: string | null,
+  etatVis: string,
+  lang: string | null | undefined
+): { texte: string; previsionnelle: boolean; marque: string | null } | null {
+  const texte = formatDateHeure(remiseLe, lang)
+  if (texte === null) return null
+  const previsionnelle = estPrevisionnel(etatVis)
+  return {
+    texte,
+    previsionnelle,
+    marque: previsionnelle ? getAvisLabels(lang).previsionnel : null,
   }
 }
 
