@@ -288,6 +288,31 @@ CONTENU en base, retirables depuis le tableau de bord. Zéro heure.
 
 ---
 
+### A2 (c) — MESURE DE CLÔTURE, à l'écran servi, dans les deux sens
+
+2026-11-06, `c5e36079` déployé. **19 / 19** sur
+`https://cpa-tchad.deribfy.app`, instrument versionné
+`scripts/prouver-ecran-appels-offres.mjs`.
+
+**Le relevé d'AVANT vaut autant que celui d'après** : l'adresse rendait
+**HTTP 404** six minutes plus tôt. C'est ce qui prouve que le 200 vient de ce
+déploiement et pas d'autre chose.
+
+| | mesuré |
+|---|---|
+| à zéro avis | la page se sert · dit qu'aucun avis n'est publié · **n'invente aucun canal** · donne le contact réellement déclaré |
+| avis publié | référence, objet, **heure**, état, adresse — tout paraît ; le détail porte une rubrique absente de la liste et DIT que les non renseignées ne l'ont pas été |
+| ailleurs | **aucune fuite sur les 8 autres sites servis**, tous RÉELLEMENT lus (compté à part) ; la même adresse rend 404 chez un autre acheteur |
+| retrait | vérifié **depuis l'adresse publique** : liste muette · adresse en 404 · base à 0. Confirmé une seconde fois à la main, hors de la sonde |
+
+**Le témoin a vécu 12 secondes** (21:23:00 → 21:23:12), référence
+`TEMOIN-JETABLE-20261106T212256`, objet en capitales « CECI N'EST PAS UN AVIS
+DE MARCHÉ… Ne pas y répondre » — conditions posées par le propriétaire.
+
+**Rectification d'un chiffre que j'avais donné** : **9 sites servis**, pas 43.
+Les 43 comptent les non publiés et les archivés. La mesure de non-fuite porte
+donc sur 8 sites, et c'est le dénominateur réel.
+
 ### GEN-D037 — Un repli silencieux transforme une lecture ratée en preuve d'absence — trois occurrences, dont une dans une garde de la maison
 
 **Classe nommée par le propriétaire le 2026-11-06**, après que j'ai trouvé la
