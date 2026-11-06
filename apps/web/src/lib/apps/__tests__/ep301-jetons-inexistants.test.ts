@@ -93,7 +93,7 @@ describe('EP-301 · les jetons inventés sont refusés sans rien exécuter', () 
     // la memoire de celui qui l'a ecrite.
     const source = readFileSync(join(__dirname, '..', 'juge-jetons.ts'), 'utf8')
     expect(source, 'la condition de réouverture a disparu').toMatch(
-      /CETTE RÈGLE TOMBE LE JOUR OÙ UNE FEUILLE DE STYLE ENTRE DANS LA[\s\S]{0,40}CHAÎNE/u,
+      /CETTE RÈGLE TOMBE LE JOUR OÙ UNE FEUILLE DE STYLE ENTRE DANS LA[\s/]+CHAÎNE/u,
     )
   })
 

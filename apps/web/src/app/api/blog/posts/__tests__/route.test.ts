@@ -214,7 +214,7 @@ describe('cliquet structurel', () => {
   });
 
   it('`site_id` n’est JAMAIS lu depuis le corps ni depuis l’URL', () => {
-    expect(CODE).not.toMatch(/body[\s\S]{0,20}site_id|searchParams\.get\(\s*['"]site_id/);
+    expect(CODE).not.toMatch(/body[\s\S]{0,400}site_id|searchParams\.get\(\s*['"]site_id/);
   });
 
   it('la propriété n’est pas réimplémentée : `requireSiteOwner` est la seule autorité', () => {

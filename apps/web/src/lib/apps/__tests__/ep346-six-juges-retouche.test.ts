@@ -79,7 +79,7 @@ describe('EP-346 · les six juges de la retouche', () => {
       /exigences\.length/u,
     )
     expect(src, 'le taux de couverture n’est pas comparé').toMatch(
-      /avant: noteAvant\.taux[\s\S]{0,40}apres: noteApres\.taux/u,
+      /avant: noteAvant\.taux[,\s]+apres: noteApres\.taux/u,
     )
   })
 

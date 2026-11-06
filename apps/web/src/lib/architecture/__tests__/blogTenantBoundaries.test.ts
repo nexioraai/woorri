@@ -78,8 +78,17 @@ describe('LOT BLOG 10 — `site_id` ne vient jamais du client', () => {
     for (const f of routes) {
       const c = code(f);
       expect(c, rel(f)).not.toMatch(/searchParams\.get\(\s*['"]site_id/);
-      expect(c, rel(f)).not.toMatch(/body[\s\S]{0,40}\.site_id/);
-      expect(c, rel(f)).not.toMatch(/formData[\s\S]{0,40}site_id/);
+      // ── UNE FENÊTRE NÉGATIVE ÉTROITE S'AFFAIBLIT EN SILENCE.
+      //
+      // Elle affirme qu'une chose n'est PAS près d'une autre. Quand le
+      // code grossit, les deux s'éloignent et l'assertion passe — elle
+      // ne rougit pas, elle cesse de garder. C'est l'inverse du risque
+      // des fenêtres positives, et c'est pire : un faux vert ne se
+      // remarque pas.
+      //
+      // Mesuré avant d'élargir : à 400, aucune des trois ne rougit.
+      expect(c, rel(f)).not.toMatch(/body[\s\S]{0,400}\.site_id/);
+      expect(c, rel(f)).not.toMatch(/formData[\s\S]{0,400}site_id/);
     }
   });
 

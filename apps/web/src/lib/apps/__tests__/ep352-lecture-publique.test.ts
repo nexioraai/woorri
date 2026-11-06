@@ -98,7 +98,7 @@ describe('EP-352 · P1 · la lecture publique se déclare', () => {
     // fermé produirait des tables publiques par imitation.
     expect(bloc, 'le défaut n’est plus la fermeture').toMatch(/OMETS par défaut/u)
     expect(bloc, 'la conséquence n’est pas dite').toMatch(
-      /N’importe qui lit alors cette table, sans[\s\S]{0,20}compte/u,
+      /N’importe qui lit alors cette table, sans\s+compte/u,
     )
     // ── ET L'ÉCRITURE N'EST JAMAIS OUVERTE, c'est dit au modèle aussi.
     expect(bloc, 'l’écriture pourrait sembler ouverte').toMatch(
@@ -140,7 +140,7 @@ describe('EP-352 · P1 · la lecture publique se déclare', () => {
     //    ligne. « Un lien vers un » / « document se met en `text` » —
     //    le texte n'a pas changé de sens, seulement de largeur.
     expect(bloc, 'aucune solution de rechange n’est proposée').toMatch(
-      /lien vers un[\s\S]{0,12}document/u,
+      /lien vers un\s+document/u,
     )
   })
 

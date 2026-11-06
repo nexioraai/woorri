@@ -234,6 +234,6 @@ describe('cliquet structurel', () => {
 
   it('`site_id` d’écriture vient de l’article, jamais du corps', () => {
     expect(CODE).toMatch(/article\.site_id/);
-    expect(CODE).not.toMatch(/body[\s\S]{0,20}site_id/);
+    expect(CODE).not.toMatch(/body[\s\S]{0,400}site_id/);
   });
 });

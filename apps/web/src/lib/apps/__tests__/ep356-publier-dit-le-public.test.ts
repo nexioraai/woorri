@@ -80,8 +80,16 @@ describe('EP-356 · P5 · publier nomme ce qui sera public', () => {
 
   it('③ LE REFUS NOMME LES TABLES, ET DIT CE QUI RESTE FERMÉ', () => {
     const s = src()
+    // ── ICI LE TROU N'EST PAS DU BLANC, ET `\s+` SERAIT FAUX.
+    //
+    // Le message est assemblé par morceaux :
+    //   `…sera lisible` + `PAR TOUT LE MONDE, sans compte : …`
+    // Entre les deux il y a de la ponctuation de gabarit — `' } \` +`.
+    // On vérifie donc les deux fragments, et que le second porte la
+    // conséquence entière : c'est elle qui compte pour la personne.
+    expect(s, 'le refus ne dit pas que c’est lisible').toMatch(/sera lisible/u)
     expect(s, 'le refus ne dit pas la conséquence').toMatch(
-      /lisible[\s\S]{0,30}PAR TOUT LE MONDE, sans compte/u,
+      /PAR TOUT LE MONDE, sans compte/u,
     )
     // Sans cette phrase, « publique » se lit comme « ouverte », et la
     // personne croit son site réécrivable par n'importe qui.

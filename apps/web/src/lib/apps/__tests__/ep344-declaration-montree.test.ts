@@ -138,7 +138,7 @@ describe('EP-344 · la déclaration retrouvée et montrée', () => {
       'utf8',
     )
     expect(src, 'la consigne ne porte pas la déclaration').toMatch(
-      /system: `\$\{CONSIGNE_RETOUCHE\}[\s\S]{0,40}blocDeclaration\(declarationDe\(/u,
+      /system: `\$\{CONSIGNE_RETOUCHE\}\\n\\n\$\{blocDeclaration\(declarationDe\(/u,
     )
   })
 

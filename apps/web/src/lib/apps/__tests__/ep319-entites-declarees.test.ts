@@ -497,7 +497,7 @@ describe('EP-319 · les données déclarées', () => {
       /DEUX FACES[\s\S]{0,200}LECTURE seule/u,
     )
     expect(avecBase, 'la conséquence d’un espace de gestion absent n’est pas dite').toMatch(
-      /ouvrir[\s\S]{0,20}la base lui-même/u,
+      /ouvrir\s+la base lui-même/u,
     )
     // ── ET LES DEUX RÈGLES SONT LÀ, pas seulement la place qu'elles prennent.
     //
