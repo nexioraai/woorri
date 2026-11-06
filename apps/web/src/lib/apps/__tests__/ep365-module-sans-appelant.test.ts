@@ -50,6 +50,7 @@
 import { describe, expect, it } from 'vitest'
 import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join, dirname, normalize, relative } from 'node:path'
+import { motifTexte } from './motif-texte'
 
 const SRC = join(__dirname, '..', '..', '..')
 
@@ -247,8 +248,11 @@ describe('EP-365 · un module prouvé sans appelant n’existe pas', () => {
   it('④ un EXEMPTÉ porte sa raison dans son propre fichier', () => {
     // La règle d'EP-361, gardée : « une exemption qui ne vit que dans ce test
     // ne prévient personne ». Elle doit être là où on ouvre le fichier.
+    // Dans un COMMENTAIRE, un reformatage replie la phrase sur deux lignes
+    // avec une étoile au milieu : `dansCommentaire = true` l'absorbe.
+    const motif = motifTexte(MARQUE_EXEMPT, true)
     const sans = Object.keys(EXEMPTES).filter(
-      (p) => !readFileSync(join(SRC, p), 'utf8').includes(MARQUE_EXEMPT),
+      (p) => !motif.test(readFileSync(join(SRC, p), 'utf8')),
     )
     expect(sans, `Écris « ${MARQUE_EXEMPT} » en tête de ces fichiers.`).toEqual([])
     for (const [p, raison] of Object.entries(EXEMPTES)) {
@@ -265,8 +269,10 @@ describe('EP-365 · un module prouvé sans appelant n’existe pas', () => {
       join(SRC, '..', '..', '..', 'node_modules', 'next', 'dist', 'lib', 'constants.js'),
       'utf8',
     )
-    expect(constantes).toContain("PROXY_FILENAME = 'proxy'")
-    expect(constantes).toContain("MIDDLEWARE_FILENAME = 'middleware'")
-    expect(constantes).toContain("INSTRUMENTATION_HOOK_FILENAME = 'instrumentation'")
+    // `motifTexte` et pas le littéral : dans un fichier COMPILÉ, l'espacement
+    // autour du `=` n'est pas une propriété du paquet (EP-363/364).
+    expect(constantes).toMatch(motifTexte("PROXY_FILENAME = 'proxy'"))
+    expect(constantes).toMatch(motifTexte("MIDDLEWARE_FILENAME = 'middleware'"))
+    expect(constantes).toMatch(motifTexte("INSTRUMENTATION_HOOK_FILENAME = 'instrumentation'"))
   })
 })

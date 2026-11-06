@@ -47,10 +47,20 @@ const DETTE = 117
  * LA SECONDE DETTE : les ancres dont le SUJET n'est pas traçable, dans un
  * fichier qui lit du source. MESURÉ LE 2026-11-06, et il ne monte jamais.
  *
+ * ── CE CHIFFRE A ÉTÉ FAUX PENDANT UNE HEURE, ET LA RAISON COMPTE.
+ *
+ * J'ai d'abord écrit 361 : un chiffre relevé par un script Python jetable,
+ * pas par l'instrument finalement livré ici. Les deux ne comptaient pas la
+ * même chose. Le vrai est 376 — et personne ne l'a vu, parce que le relevé
+ * était déclaré sans qu'AUCUN cas ne le lise.
+ *
+ * La règle : un relevé se mesure avec l'instrument qui le gardera, et il
+ * naît AVEC son cas. Sinon c'est un commentaire.
+ *
  * Sans elle, il suffisait de nommer sa variable `t` pour échapper au
  * cliquet pour toujours — une porte de sortie permanente.
  */
-const DETTE_OPAQUE = 361
+const DETTE_OPAQUE = 376
 
 const fichiersDeControle = (dossier: string): string[] => {
   const out: string[] = []
@@ -177,5 +187,43 @@ describe('EP-364 · les ancres sur du source tolèrent les replis', () => {
       `la dette est tombée à ${String(r.fragiles.length)} : abaissez DETTE, ` +
         'sinon le cliquet laisse de la place à des ancres neuves',
     ).toBeLessThanOrEqual(10)
+  })
+
+  /**
+   * ── ET CES DEUX CAS-LÀ MANQUAIENT, UNE HEURE DURANT.
+   *
+   * `DETTE_OPAQUE` a été mesuré, commenté, commité et POUSSÉ sans qu'aucun
+   * cas ne le lise. Le relevé existait ; le cliquet, non. Un juge inerte,
+   * écrit en fermant un trou de cette forme exacte.
+   *
+   * C'est pourquoi le cas ① compte `tolerantes + fragiles` : il n'a jamais
+   * regardé les opaques, donc il ne pouvait pas me prévenir.
+   */
+  it('④ LA DETTE OPAQUE NE GROSSIT PLUS NON PLUS', () => {
+    const r = tout()
+    expect(
+      r.opaquesFragiles.length,
+      `${String(r.opaquesFragiles.length)} ancres fragiles à sujet OPAQUE contre ` +
+        `${String(DETTE_OPAQUE)} au relevé. Sans ce cliquet, nommer sa variable ` +
+        '`t` suffisait à échapper au précédent pour toujours. Employez ' +
+        '`motifTexte(…)` : sur un HTML rendu comme sur du source, il est ' +
+        'strictement meilleur que le littéral.',
+    ).toBeLessThanOrEqual(DETTE_OPAQUE)
+  })
+
+  it('⑤ ET LE RELEVÉ OPAQUE SUIT LA RÉALITÉ', () => {
+    const r = tout()
+    expect(
+      DETTE_OPAQUE - r.opaquesFragiles.length,
+      `la dette opaque est tombée à ${String(r.opaquesFragiles.length)} : ` +
+        'abaissez DETTE_OPAQUE',
+    ).toBeLessThanOrEqual(10)
+  })
+
+  it('⑥ LE BALAYAGE VOIT VRAIMENT DES OPAQUES — sinon ④ garde le vide', () => {
+    // La leçon du cas ① appliquée à la seconde moitié : un `opaquesFragiles`
+    // toujours vide rendrait ④ vert pour toujours, et c'est exactement
+    // comment ce relevé est né inerte.
+    expect(tout().opaquesFragiles.length).toBeGreaterThan(100)
   })
 })
