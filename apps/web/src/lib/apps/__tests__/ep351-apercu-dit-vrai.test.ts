@@ -36,6 +36,7 @@
  * ② L'ŒUVRE ne tente pas la base et ne montre pas son écran de connexion,
  *    sur la JOIGNABILITÉ et non sur la publication.
  */
+import { motifEntre } from './motif-texte'
 import { describe, expect, it } from 'vitest'
 import { join } from 'node:path'
 import { lireSource } from './lire-source'
@@ -170,8 +171,12 @@ describe('EP-351 · l’aperçu d’une œuvre publiée', () => {
       /b\.url !== '' && window\.origin !== 'null'/u,
     )
     // ── ET L'ÉCRAN DE CONNEXION SUIT CETTE MÊME CONDITION.
-    expect(bloc, 'l’écran de connexion ne suit plus la joignabilité').toMatch(
-      /CET ÉCRAN NE S’AFFICHE QUE SI[\s\S]{0,80}`enBase`/u,
+    //
+    // La propriété, et non la casse : la loi public/gestion a reformulé ce
+    // fait en minuscules le 2026-11-06, et cette ancre a rougi sur une
+    // règle inchangée.
+    expect(bloc.toLowerCase(), 'l’écran de connexion ne suit plus la joignabilité').toMatch(
+      motifEntre('écran de connexion', 'enbase', 80),
     )
   })
 

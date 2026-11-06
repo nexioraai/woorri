@@ -18,6 +18,7 @@
 import { describe, expect, it } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { motifEntre, motifTexte } from './motif-texte'
 import { projectAirSchema } from '@deribfy/air-schema'
 import { emettreSchemaSql, nomColonne, typeSqlDe } from '@deribfy/compiler'
 import {
@@ -416,7 +417,20 @@ describe('EP-319 · les données déclarées', () => {
     //
     // Mesuré le 2026-11-05 : part fixe ≈ 9 009 · une table 9 035 ·
     // 12 tables × 3 champs 9 707 · 12 × 30 = 15 131.
-    expect(avecBase.length, 'la prose du bloc de base a enflé').toBeLessThan(9200)
+    //
+    // ── 9 200 → 11 100 LE 2026-11-06 : LA LOI PUBLIC/GESTION EST ENTRÉE.
+    //
+    // Mesuré après : une table 11 114 · au pire 12 × 30 = 17 194. La loi
+    // ajoute ~1 900 signes à la moitié AVEC base, soit ≈ 514 jetons PAR
+    // TOUR, donc ~1 500 par génération à trois tours. Sur une médiane
+    // mesurée de 0,07 $, c'est marginal — mais le chiffre se dit, parce
+    // que cette prose part à chaque tour de chaque génération.
+    //
+    // Ces bornes gardent la PROSE, pas le contenu. Le contenu de la loi
+    // est énuméré clause par clause dans EP-370, sur la consigne PRODUITE :
+    // une borne mesure un volume, une énumération mesure un contenu.
+    // Élever l'une en posant l'autre échange le faible contre le fort.
+    expect(avecBase.length, 'la prose du bloc de base a enflé').toBeLessThan(11300)
 
     // ── ET LE BANDEAU N'EST PLUS DEMANDÉ À L'ŒUVRE (2026-11-05).
     //
@@ -468,7 +482,18 @@ describe('EP-319 · les données déclarées', () => {
     expect(
       auPire.length,
       `la consigne au pire cas (${String(TABLES_MAX)} tables × ${String(CHAMPS_MAX)} champs) a enflé`,
-    ).toBeLessThan(15400)
+      // ── 15 400 → 17 200 le 2026-11-06, même dossier que la borne de
+      // prose ci-dessus. C'est CELLE-CI qui touche le plafond du modèle et
+      // le coût du tour : mesurée à 17 194, marge de 206 signes.
+      //
+      // ET J'AI D'ABORD ANNONCÉ 15 574, qui était faux. J'avais mesuré MA
+      // fixture — des noms de champs plus courts que `unChamp` — au lieu de
+      // celle du cliquet. C'est mot pour mot la faute que ce fichier
+      // dénonce douze lignes plus haut : « une garde qui mesure sa fixture
+      // au lieu de la production est pire qu'absente ». Le chiffre juste
+      // est celui que le cliquet rend lui-même, pas celui d'un script à
+      // côté.
+    ).toBeLessThan(17400)
 
     // ── ③ ET LA PORTE DES DONNÉES RESTE UNE PORTE ÉTROITE.
     //
@@ -493,8 +518,24 @@ describe('EP-319 · les données déclarées', () => {
     for (const geste of ['lister', 'AJOUTER', 'MODIFIER', 'RETIRER']) {
       expect(avecBase, `« ${geste} » n’est plus demandé au modèle`).toContain(geste)
     }
+    // ── DEUX FAITS, DEUX ASSERTIONS — la fenêtre était une forme.
+    //
+    // Cette ancre exigeait « DEUX FACES » puis « LECTURE seule » à moins de
+    // 200 signes. La loi public/gestion a inséré entre les deux la
+    // définition de la face publique : la règle était INTACTE, la distance
+    // dépassait la fenêtre. Élargir la fenêtre n'aurait fait que déplacer
+    // le seuil au prochain ajout.
+    //
+    // C'est pourtant cette ancre qui a attrapé une VRAIE perte : en
+    // réécrivant le bloc j'avais laissé tomber « en LECTURE seule, aucun
+    // bouton qui écrit ». Toutes les ancres de forme ne sont pas mauvaises
+    // — celle-ci lisait une phrase dont la disparition ÉTAIT la disparition
+    // de la règle. On garde donc le fait, séparé de sa mise en page.
     expect(avecBase, 'les deux faces ne sont plus distinguées').toMatch(
-      /DEUX FACES[\s\S]{0,200}LECTURE seule/u,
+      motifTexte('DEUX FACES'),
+    )
+    expect(avecBase, 'la face publique n’est plus en lecture seule').toMatch(
+      motifEntre('LECTURE', 'aucun bouton qui écrit', 60),
     )
     expect(avecBase, 'la conséquence d’un espace de gestion absent n’est pas dite').toMatch(
       /ouvrir\s+la base lui-même/u,
@@ -508,8 +549,10 @@ describe('EP-319 · les données déclarées', () => {
       /base\.storage[\s\S]{0,60}ÉCHOUERAIT/u,
     )
     expect(avecBase, 'la lecture publique n’est plus déclarable').toMatch(/lecturePublique/u)
-    expect(avecBase, 'le défaut n’est plus la fermeture').toMatch(
-      /OMETS par défaut[\s\S]{0,80}privée/u,
+    expect(avecBase.toLowerCase(), 'le défaut n’est plus la fermeture').toMatch(
+      // La propriété, pas la phrase : omettre est le défaut, et le défaut
+      // est privé. Même conversion qu'EP-352 ③ le 2026-11-06.
+      motifEntre('omets', 'privée', 120),
     )
     // ── BORNÉ AU BLOC DE LECTURE PUBLIQUE.
     //

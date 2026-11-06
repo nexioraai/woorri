@@ -32,6 +32,7 @@
  *
  * ③ LE TEXTE D'ACCUEIL PROMETTAIT DES QUESTIONS SUPPRIMÉES LA VEILLE.
  */
+import { motifEntre } from './motif-texte'
 import { describe, expect, it } from 'vitest'
 import { join } from 'node:path'
 import { blocBase, type EntiteDeclaree } from '../entites-declarees'
@@ -66,13 +67,20 @@ describe('EP-341 · l’aperçu et les mots bruts', () => {
   it('① bis L’ÉCRAN DE CONNEXION NE BARRE PAS L’APERÇU', () => {
     // Il n'y a personne à connecter avant publication : l'afficher
     // quand même remplacerait l'application par un formulaire inutile.
-    // L'ancre tient sur la PROPRIÉTÉ, pas sur la mise en page : le texte
-    // a été reflowé pour tenir sous le plafond de taille, et un motif
-    // collé aux retours à la ligne aurait rougi sur une reformulation.
-    expect(
-      blocBase([RELEVE]).replace(/\s+/gu, ' '),
-      'l’écran de connexion s’affiche aussi dans l’aperçu',
-    ).toMatch(/CET ÉCRAN NE S’AFFICHE QUE SI `enBase`/u)
+    // ── ET ELLE TENAIT ENCORE SUR UNE FORMULATION, mesuré le 2026-11-06.
+    //
+    // Elle exigeait la phrase exacte « CET ÉCRAN NE S'AFFICHE QUE SI
+    // `enBase` », en capitales. La loi public/gestion a reformulé le même
+    // fait en minuscules — la propriété INTACTE, l'ancre rouge. Une ancre
+    // qui lit une casse d'emphase lit une décision d'éditeur, pas une
+    // règle.
+    //
+    // La propriété : la consigne RELIE l'écran de connexion à `enBase`,
+    // dans une même phrase. Ce qui s'écrit entre les deux est libre.
+    const bloc = blocBase([RELEVE]).toLowerCase()
+    expect(bloc, 'l’écran de connexion s’affiche aussi dans l’aperçu').toMatch(
+      motifEntre('écran de connexion', 'enbase', 80),
+    )
   })
 
   it('① ter ET LE TITRE DE LA RÈGLE NE CONTREDIT PAS SON PARAGRAPHE', () => {

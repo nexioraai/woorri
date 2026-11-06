@@ -31,6 +31,7 @@
  * Une table privée qu'on croyait publique se voit tout de suite : la page
  * est vide. L'inverse ne se voit JAMAIS.
  */
+import { motifEntre } from './motif-texte'
 import { describe, expect, it } from 'vitest'
 import { join } from 'node:path'
 import { lireSource, lireSourceBrut } from './lire-source'
@@ -96,7 +97,16 @@ describe('EP-352 · P1 · la lecture publique se déclare', () => {
     //
     // Une consigne qui apprend à ouvrir sans apprendre que le défaut est
     // fermé produirait des tables publiques par imitation.
-    expect(bloc, 'le défaut n’est plus la fermeture').toMatch(/OMETS par défaut/u)
+    // ── LA PROPRIÉTÉ : OMETTRE EST LE DÉFAUT, ET LE DÉFAUT EST PRIVÉ.
+    //
+    // Cette ancre exigeait « OMETS par défaut », trois mots dans cet ordre.
+    // La loi public/gestion dit la même chose autrement — « Sans écran
+    // public pour cette table : OMETS. Sans ce mot elle est privée » — et
+    // l'ancre a rougi sur une règle intacte. Ce qui compte est que l'ordre
+    // d'omettre et la conséquence « privée » soient DANS LA MÊME phrase.
+    expect(bloc.toLowerCase(), 'le défaut n’est plus la fermeture').toMatch(
+      motifEntre('omets', 'privée', 120),
+    )
     expect(bloc, 'la conséquence n’est pas dite').toMatch(
       /N’importe qui lit alors cette table, sans\s+compte/u,
     )

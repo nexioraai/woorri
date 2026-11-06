@@ -170,7 +170,10 @@ describe('EP-360 · la règle 6 se compose', () => {
     // une dixième règle générale qui s'y glisserait ne serait couverte par
     // aucun des deux. C'est plus fort que la borne d'hier, pas moins.
     const sansTables = blocBase([]).length
-    expect(sansTables, 'la moitié avec table a enflé hors des tables').toBeLessThan(5500)
+    // 5 500 → 5 600 : la clause « en LECTURE seule, aucun bouton qui
+    // écrit » a été RESTITUÉE après qu'EP-319 l'ait vue disparaître de ma
+    // réécriture. 131 signes, et c'est une règle qui existait avant moi.
+    expect(sansTables, 'la moitié avec table a enflé hors des tables').toBeLessThan(5600)
   })
 
   it('⑤ ET LES AUTRES RÈGLES RESTENT IDENTIQUES DES DEUX CÔTÉS', () => {
