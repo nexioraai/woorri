@@ -334,6 +334,19 @@ export async function boucleEcriture(o: {
    */
   readonly juger?: typeof jugerExecution
   /**
+   * J1 INJECTABLE — même idiome que `juger`, et pour la même raison.
+   *
+   * Le vrai juge des faces monte l'œuvre TROIS fois dans des processus
+   * séparés : ~3,9 s. Un test qui éprouve un AUTRE juge n'a pas à payer ça,
+   * ni à voir son nombre de tours changer parce que sa fixture tombe aussi
+   * sur celui-ci (mesuré : EP-326 ⑧ passait de 2 tours à 3).
+   *
+   * Le vrai est éprouvé dans EP-371, et EP-371 ⑦ vérifie que la boucle
+   * appelle bien celui-là par défaut — sinon ce serait un juge prouvé sans
+   * appelant, et on en a compté vingt-six.
+   */
+  readonly jugerFaces?: typeof jugerFaces
+  /**
    * LES ENTITÉS DÉCLARÉES — ce que le juge de persistance a besoin de savoir.
    *
    * Elles ne peuvent PAS se déduire du code rendu : une table absente du
@@ -521,7 +534,7 @@ export async function boucleEcriture(o: {
         // une règle.
         const faces: VerdictFaces | null =
           entitesConnues.length > 0 && jetons.length === 0
-            ? await jugerFaces(v.code, entitesConnues)
+            ? await (o.jugerFaces ?? jugerFaces)(v.code, entitesConnues)
             : null
         const reproches: string[] = []
         if (jetons.length > 0) {

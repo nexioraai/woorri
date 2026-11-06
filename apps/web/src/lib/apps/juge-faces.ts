@@ -35,14 +35,14 @@ import { join } from 'node:path'
 import { lecturePubliqueDe, nomTable, type EntiteDeclaree } from './entites-declarees'
 
 export type Montage = {
-  readonly mode: 'refus' | 'vide' | 'temoin'
+  readonly regime: 'refus' | 'vide' | 'temoin'
   readonly monte: boolean
   /** Les tables que l'œuvre a RÉELLEMENT interrogées, sans session. */
   readonly tables: readonly string[]
   readonly requetes: readonly string[]
   readonly texte: string
   /**
-   * LES TABLES QUE L'ÉCRAN PUBLIC MONTRE VRAIMENT (mode `temoin`).
+   * LES TABLES QUE L'ÉCRAN PUBLIC MONTRE VRAIMENT (regime `temoin`).
    *
    * Une marque PAR TABLE, et c'est la correction qui compte : avec une
    * marque unique, `asosa` faisait conclure « membre est affichée » parce que
@@ -142,15 +142,15 @@ export function reprocheFaces(v: VerdictFaces): string | null {
 
 async function monter(
   code: string,
-  mode: Montage['mode'],
+  regime: Montage['regime'],
   dossier: string,
   attenteMs: number,
 ): Promise<Montage | null> {
   const bundle = join(dossier, 'oeuvre.js')
-  const sortie = join(dossier, `verdict-${mode}.json`)
+  const sortie = join(dossier, `verdict-${regime}.json`)
   await writeFile(bundle, code, 'utf8')
   const corps = new URL('./juge-faces-enfant.mjs', import.meta.url).pathname
-  const enfant = spawn(process.execPath, [corps, bundle, sortie, mode, String(attenteMs)], {
+  const enfant = spawn(process.execPath, [corps, bundle, sortie, regime, String(attenteMs)], {
     env: { PATH: process.env.PATH ?? '/usr/bin:/bin', NODE_ENV: 'production' } as NodeJS.ProcessEnv,
     stdio: ['ignore', 'ignore', 'pipe'],
   })
@@ -187,12 +187,12 @@ export async function jugerFaces(
     dossier = await mkdtemp(join(tmpdir(), 'deribfy-faces-'))
     const attente = options.attenteMs ?? 1200
     const montages: Montage[] = []
-    for (const mode of ['refus', 'vide', 'temoin'] as const) {
-      const m = await monter(code, mode, dossier, attente)
+    for (const regime of ['refus', 'vide', 'temoin'] as const) {
+      const m = await monter(code, regime, dossier, attente)
       if (m === null) {
         return {
           aTourne: false,
-          motif: `le montage « ${mode} » n’a pas rendu de verdict`,
+          motif: `le montage « ${regime} » n’a pas rendu de verdict`,
           defauts: [],
           silencesIndiscernables: false,
           montages,

@@ -137,8 +137,8 @@ describe('EP-371 · J1 · les deux faces, mesurées en montant', () => {
     expect(fautive.aTourne, fautive.motif ?? '').toBe(true)
     expect(fautive.montages.length, 'trois montages, tous sans session').toBe(3)
     for (const m of fautive.montages) {
-      expect(m.monte, `le montage ${m.mode} n’a pas monté`).toBe(true)
-      expect(m.tables, `le montage ${m.mode} n’a vu aucune table`).toContain('annonce')
+      expect(m.monte, `le montage ${m.regime} n’a pas monté`).toBe(true)
+      expect(m.tables, `le montage ${m.regime} n’a vu aucune table`).toContain('annonce')
     }
   })
 
@@ -196,7 +196,10 @@ describe('EP-371 · J1 · les deux faces, mesurées en montant', () => {
     // La leçon des 26 modules sans appelant : un juge qui ne refuse rien
     // n'existe pas. Et celui-ci est LE correctif, pas un signal de plus.
     const boucle = lireSource(join(SRC, 'lib', 'apps', 'boucle-directe.ts'))
-    expect(boucle).toMatch(motifTexte('jugerFaces(v.code, entitesConnues)'))
+    // La propriété : le juge est INJECTABLE pour les tests, et le DÉFAUT est
+    // le vrai. Un `??` dans l'autre sens ferait un juge prouvé sans appelant.
+    expect(boucle).toMatch(motifTexte('o.jugerFaces ?? jugerFaces'))
+    expect(boucle).toMatch(motifTexte('(v.code, entitesConnues)'))
     expect(boucle).toMatch(motifTexte('reproches.push(quoiFaces)'))
     // Et son reproche passe AVANT celui de la couverture.
     expect(boucle.indexOf('quoiFaces')).toBeLessThan(boucle.indexOf('couverture.absentes.length > 0'))

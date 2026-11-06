@@ -26,6 +26,22 @@ import { projetLivrable } from '../projet-livrable'
 import { boucleEcriture } from '../boucle-directe'
 import { jugeMuet } from './juge-muet'
 
+/**
+ * J1 NEUTRALISÉ — aucun défaut, et il DIT qu'il a tourné.
+ *
+ * Ce fichier mesure le juge de la PERSISTANCE. Sa fixture écrit
+ * `base.from('cotisation')` au montage sans la déclarer publique, donc J1 la
+ * reproche à juste titre — et le tour suivant s'ajoutait (mesuré : 2 tours
+ * → 3, plus 3,9 s de montages). J1 a son propre cliquet, EP-371.
+ */
+const facesMuettes = async () => ({
+  aTourne: true,
+  motif: null,
+  defauts: [],
+  silencesIndiscernables: false,
+  montages: [],
+})
+
 const champ = (id: string, extra: Record<string, unknown> = {}) => ({
   id,
   name: id.replace(/^fld_/u, ''),
@@ -240,6 +256,7 @@ await base.from(TABLE).insert({ nom: 'x' })`,
       demande: 'tontine : des membres et leurs cotisations',
       appeler: appeler as never,
       juger: jugeMuet,
+      jugerFaces: facesMuettes,
       entites: [MEMBRE, COTISATION],
     })
     expect(vus.length, 'le tour amnésique n’a pas été renvoyé au modèle').toBe(2)

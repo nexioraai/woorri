@@ -12,6 +12,62 @@ aucune information fournie comme défaut connu**.
 
 ---
 
+## VOCABULAIRE FIGÉ — MOTEUR · APPLI · SITE
+
+> **Posé le 2026-11-06, après une demi-journée perdue à les confondre.**
+> Ces trois mots s'emploient **sans exception** dans tout rapport, tout
+> commit et tout en-tête de cliquet.
+
+**MOTEUR** — l'unique générateur. Il n'y en a qu'un, et toute œuvre passe par
+lui.
+
+**APPLI** — ce que le moteur sait produire *aujourd'hui* : des écrans, une
+connexion, de la saisie, un menu latéral, **un seul document servi sur tous
+les chemins**. Son public est le **propriétaire**.
+
+**SITE** — ce que le moteur **ne sait pas** produire : une adresse par page,
+des pages imbriquées sur trois niveaux, une barre de menu en haut, un pied de
+page, un rendu indexable, une mise en cache. Son public est le **visiteur**.
+
+### La règle d'usage
+
+**Ne jamais dire « il n'y a pas de distinction ».** Dire toujours DEUX choses
+séparément :
+
+1. ce que le **moteur** fait ;
+2. quel **objet** il produit.
+
+**Quand les deux ne coïncident pas, c'est précisément l'information utile.**
+
+### Ce que la confusion a coûté
+
+La phrase fautive était : *« dans Deribfy il n'y a pas site et application, il
+y a une seule question : l'œuvre déclare-t-elle des tables ? »* Elle est
+**vraie du MOTEUR et fausse du PRODUIT**. Elle a été écrite, relayée, corrigée
+par le propriétaire — et les trois parties ont continué à mélanger les deux
+pendant des heures.
+
+La preuve de la distinction était déjà dans le tableau qui accompagnait la
+phrase fautive : les huit composants mesurés absents de la bibliothèque —
+`Menu`, `Tableau`, `FilAriane`, `Pied`, `Pagination`, `Recherche`, `Onglet`,
+`Accordeon` — sont **tous** des pièces de SITE. **Aucun** n'est une pièce
+d'APPLI. Une bibliothèque faite pour des APPLIS ne produit pas un SITE par
+enrichissement : elle produit un SITE qui ressemble à une APPLI.
+
+### L'état au 2026-11-06
+
+| | |
+|---|---|
+| le portail CPA | un **SITE** |
+| l'œuvre `asosa` | une **APPLI** |
+| le moteur | **le même** |
+
+C'est tout le problème, et c'est ce que la mesure de la frontière (≈ 2 h,
+accordée, à faire **après** la regénération) doit chiffrer : combien des règles
+du moteur diffèrent réellement entre les deux objets.
+
+---
+
 ## APP-D001 — `field.unique` déclaré mais jamais traduit en contrainte SQL
 
 | | |

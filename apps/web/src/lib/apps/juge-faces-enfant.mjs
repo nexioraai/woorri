@@ -29,7 +29,7 @@
  */
 import { readFileSync, writeFileSync } from 'node:fs'
 
-const [, , cheminBundle, cheminSortie, mode, attenteMs] = process.argv
+const [, , cheminBundle, cheminSortie, regime, attenteMs] = process.argv
 const attente = Number(attenteMs ?? '1200')
 
 const { GlobalRegistrator } = await import('@happy-dom/global-registrator')
@@ -125,11 +125,11 @@ const repondre = async (entree, init) => {
       // Une écriture depuis la face publique est refusée, toujours.
       return json(401, { code: '42501', message: `permission denied for table ${table}` })
     }
-    if (mode === 'refus') {
+    if (regime === 'refus') {
       // Le code et le message de PostgREST sur un refus de privilège.
       return json(401, { code: '42501', message: `permission denied for table ${table}`, details: null, hint: null })
     }
-    if (mode === 'vide') return json(200, [])
+    if (regime === 'vide') return json(200, [])
     // `temoin` : une ligne dont chaque champ texte porte la marque DE CETTE
     // TABLE. C'est ce qui permet de dire laquelle est montrée.
     const mq = marqueDe(table)
@@ -199,7 +199,7 @@ const texte = (racine?.textContent ?? '').replace(/\s+/gu, ' ').trim()
 writeFileSync(
   cheminSortie,
   JSON.stringify({
-    mode,
+    regime,
     monte,
     erreurs,
     // Les tables interrogées, dédoublonnées : c'est la base de J1.
