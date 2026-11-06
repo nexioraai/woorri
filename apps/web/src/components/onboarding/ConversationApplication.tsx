@@ -21,6 +21,7 @@
 // une application, et c'est la garantie que rien de ce qui marche ne casse.
 // ============================================================
 import { useState, useRef, useEffect, useCallback } from 'react';
+import { demandeDuFil, type FilAccueil } from '@/lib/apps/fil-accueil'
 import { supabase } from '@/lib/supabase';
 import { IdentifiantsOeuvre, type EtatCompteOeuvre } from '@/components/apps/IdentifiantsOeuvre';
 import { ApercuAppareil, Attente, Bulle, ChoixFermes, Composeur, Escalier,
@@ -150,14 +151,37 @@ type Message =
  */
 const DEVISE_PAR_DEFAUT = 'XAF'
 
+/**
+ * LE FIL QUI ARRIVE DE L'ACCUEIL — tout ce qui s'y est dit, dans l'ordre.
+ *
+ * ── LE DÉFAUT, MESURÉ LE 2026-11-05 EN PRODUCTION.
+ *
+ * Ce composant ne recevait qu'une CHAÎNE : le dernier message. Et
+ * l'aiguillage ne se déclenche QU'APRÈS confirmation — le modèle ne pose
+ * son drapeau qu'une fois la personne d'accord. Le dernier message était
+ * donc STRUCTURELLEMENT la confirmation :
+ *
+ *   « une appli de gestion d'association, membres avec nom, téléphone… »
+ *   « est-ce bien une application ? »
+ *   « oui c'est bien une application »      ← le SEUL texte transmis
+ *
+ * Le chemin applicatif recevait « oui c'est bien une application » comme
+ * cahier des charges entier, et a généré une application de relevés de
+ * compteur électrique que personne n'avait demandée.
+ *
+ * Le fil existait à SIX LIGNES du point de passage et n'était pas employé.
+ */
 export default function ConversationApplication({
   demandeInitiale = '',
+  filInitial,
   onRetour,
 }: {
-  /** Ce que la personne venait d'écrire avant l'aiguillage. Elle ne le
-   *  retape pas : l'écran a changé dans son dos, pas elle d'avis. */
+  /** Le dernier message, quand l'appelant n'a pas de fil à donner. */
   demandeInitiale?: string
-  onRetour: () => void
+  /** TOUT ce qui s'est dit à l'accueil. Préféré à `demandeInitiale`. */
+  filInitial?: FilAccueil
+  /** Ce qui s'est dit ICI repart avec : revenir ne doit rien effacer. */
+  onRetour: (fil: FilAccueil) => void
 }) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [saisie, setSaisie] = useState('');
@@ -1251,10 +1275,16 @@ export default function ConversationApplication({
   /** LA SURVEILLANCE REMONTE A L'ECRAN : une anomalie ne reste pas dans un log. */
   const demarrage = useRef(false);
   useEffect(() => {
-    if (demarrage.current || demandeInitiale.trim() === '') return;
+    // ── LE FIL PASSE DEVANT LA CHAÎNE.
+    //
+    // `demandeInitiale` reste pour l'appelant qui n'a qu'un champ de
+    // saisie. Dès qu'un fil existe, c'est lui qui fait le cahier.
+    const duFil = filInitial === undefined ? '' : demandeDuFil(filInitial);
+    const depart = duFil !== '' ? duFil : demandeInitiale.trim();
+    if (demarrage.current || depart === '') return;
     demarrage.current = true;
     void (async () => {
-      const texte = demandeInitiale.trim();
+      const texte = depart;
       setMessages((m) => [...m, { role: 'moi', texte }]);
       const lu = await deduireConfiguration(texte);
       await construire({
@@ -1266,7 +1296,7 @@ export default function ConversationApplication({
       });
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [demandeInitiale]);
+  }, [demandeInitiale, filInitial]);
 
   const direAnomalies = (d: { surveillance?: { saine?: boolean; anomalies?: { message: string }[] } }) => {
     const a = d.surveillance?.anomalies ?? [];
@@ -1743,7 +1773,22 @@ export default function ConversationApplication({
                 trompe de pastille — avant d'avoir ecrit quoi que ce soit. */}
             <button
               type="button"
-              onClick={onRetour}
+              // ── C2 · CE QUI S'EST DIT ICI REPART AVEC.
+              //
+              // `onRetour` ne prenait aucun argument : revenir à
+              // l'accueil effaçait tout ce qu'on venait d'échanger, et
+              // la personne retapait. C'est le même défaut que la
+              // bascule, dans l'autre sens.
+              onClick={() => {
+                const repart: { role: 'user' | 'assistant'; content: string }[] = []
+                for (const m of messages) {
+                  if (m.role === 'moi') repart.push({ role: 'user', content: m.texte })
+                  else if (m.role === 'deribfy') {
+                    repart.push({ role: 'assistant', content: m.compris.join(' · ') })
+                  }
+                }
+                onRetour(repart)
+              }}
               className="mt-5 text-xs text-slate-500 hover:text-slate-300 underline underline-offset-4 transition"
             >
               Revenir aux sites et boutiques

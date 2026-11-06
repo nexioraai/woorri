@@ -244,8 +244,24 @@ describe('EP-276 · la consigne et la page', () => {
     // Et elle exige le travail, pas la navigation : c'est le défaut mesuré
     // sur CONTERAK, dont le bouton « Calculer » naviguait vers un formulaire.
     expect(CONSIGNE).toContain('tu écris le calcul')
-    expect(CONSIGNE, 'rien n’interdit les noms techniques à l’écran').toContain(
-      'releve_index_precedent',
+    // ── L'ANCRE PRENAIT L'EXEMPLE POUR LA RÈGLE (2026-11-05).
+    //
+    // Elle exigeait le littéral `releve_index_precedent`. C'était
+    // l'ILLUSTRATION de la règle 4, et cette illustration a dû partir :
+    // privé de cahier, le modèle l'a recopiée et a produit une
+    // application de relevés de compteur que personne n'avait demandée.
+    //
+    // Une ancre qui prend l'exemple pour preuve de la règle empêche de
+    // retirer l'exemple. La propriété est : la consigne INTERDIT qu'un
+    // identifiant de base paraisse dans un libellé.
+    //
+    // ET MON PREMIER REMPLACEMENT A REFAIT LE DÉFAUT : le motif
+    // enjambait le retour à la ligne entre « identifiant de » et « base
+    // de données ». Quatrième fois le même jour. Les espaces du motif
+    // tolèrent donc un saut de ligne — c'est la seule forme qui mesure
+    // le texte et non sa largeur.
+    expect(CONSIGNE, 'rien n’interdit les noms techniques à l’écran').toMatch(
+      /identifiant\s+de\s+base\s+de\s+données/u,
     )
   })
 

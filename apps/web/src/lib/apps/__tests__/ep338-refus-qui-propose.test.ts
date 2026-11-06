@@ -128,8 +128,18 @@ describe('EP-338 · le refus qui propose', () => {
     expect(chat, 'l’écran ne bascule pas : la demande arrive et rien ne change').toMatch(
       /useState\(demandeRecue\.trim\(\) !== ''\)/u,
     )
+    // ── LA DEMANDE VENUE DE L'ADRESSE DEVIENT UN FIL (C1, 2026-11-05).
+    //
+    // Elle naissait dans un `useState(demandeRecue)`, une CHAÎNE. Le
+    // chemin applicatif ne recevait donc qu'un message — et au
+    // basculement automatique, ce message était la confirmation
+    // (« oui c'est bien une application »), jamais la demande.
+    //
+    // La propriété est la même : ce qui arrive par l'adresse atteint
+    // l'écran suivant. Elle naît maintenant comme le premier message
+    // d'un fil.
     expect(chat, 'la demande reçue n’atteint pas l’écran suivant').toMatch(
-      /useState\(demandeRecue\)/u,
+      /content: demandeRecue/u,
     )
     // ET LA PAGE LA LIT VRAIMENT — sinon la propriété vaut toujours ''.
     const page = lireSource(join(SRC, 'app', 'onboarding-chat', 'page.tsx'))

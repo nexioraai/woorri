@@ -92,7 +92,18 @@ describe('EP-335 · zéro question', () => {
     // On compare donc les deux comptes. Ajouter une bascule muette fait
     // rougir ; en ajouter une complète ne fait rien.
     const bascules = (ACCUEIL.match(/setCibleApplication\(true\)/gu) ?? []).length
-    const textes = (ACCUEIL.match(/setDemandeBasculee\(/gu) ?? []).length
+    //
+    // ── ET LE NOM A CHANGÉ LE 2026-11-05 : CE N'EST PLUS UN TEXTE,
+    //    C'EST LE FIL (C1).
+    //
+    // `setDemandeBasculee(text)` transmettait le DERNIER message. Or
+    // l'aiguillage ne se déclenche qu'APRÈS confirmation : le dernier
+    // message était donc structurellement « oui c'est bien une
+    // application », et le chemin applicatif a généré sur cette phrase.
+    //
+    // La propriété n'a pas bougé — « aucun chemin ne bascule sans
+    // emporter ce qui a été dit » — seul ce qu'on emporte a grandi.
+    const textes = (ACCUEIL.match(/setFilBascule\(/gu) ?? []).length
     expect(bascules, 'plus aucun chemin ne bascule vers les applications').toBeGreaterThanOrEqual(2)
     expect(
       textes,
@@ -100,7 +111,7 @@ describe('EP-335 · zéro question', () => {
         'un chemin bascule sans la demande, et la personne doit tout retaper',
     ).toBe(bascules)
     expect(ACCUEIL, 'le texte n’est pas transmis à l’écran suivant').toMatch(
-      /demandeInitiale=\{demandeBasculee\}/u,
+      /filInitial=\{filBascule\}/u,
     )
     expect(ECRAN, 'l’écran des applications ne reçoit pas la demande').toMatch(
       /demandeInitiale\?: string/u,

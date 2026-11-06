@@ -116,7 +116,19 @@ describe('EP-360 · la règle 6 se compose', () => {
     // Ce n'est donc PAS une preuve — c'est une gêne mesurée, et elle
     // oblige à passer par le bloc commun, qui est le chemin juste.
     //
-    // MESURÉ : 8 lignes utiles, et la borne vaut EXACTEMENT 8.
+    // ── 8 → 9 LE 2026-11-05, et la raison est écrite (C4).
+    //
+    // Le gabarit `DONNEES.json` de la tête nommait une table `releve`
+    // avec un champ `date`. Privé de cahier, le modèle a recopié ce seul
+    // exemple concret qu'on lui donnait et a produit une application de
+    // relevés de compteur électrique que personne n'avait demandée.
+    //
+    // Le gabarit nomme désormais `chose`, que `NOMS_REFUSES` écarte : le
+    // recopier fait tomber la table, avec un motif qui dit quoi faire.
+    // La ligne qui l'explique est la NEUVIÈME, et elle est propre à la
+    // tête — elle ne porte aucune règle générale.
+    //
+    // MESURÉ : 9 lignes utiles, et la borne vaut EXACTEMENT 9.
     //
     // Deux essais m'ont amené là. À 12, une mutation de trois lignes
     // passait au vert. À 9, UNE ligne passait encore — et une ligne
@@ -129,7 +141,7 @@ describe('EP-360 · la règle 6 se compose', () => {
     expect(
       utiles(REGLE_6_TETE_SANS_BASE).length,
       'la tête sans base a grossi : une règle générale peut s’y cacher',
-    ).toBe(8)
+    ).toBe(9)
     // La moitié AVEC table est longue par nature — elle décrit les
     // tables. On borne ce qu'elle ajoute PAR TABLE, pas son total : voir
     // EP-319 ④, qui tient les deux bornes de taille.

@@ -254,7 +254,18 @@ describe('CLIQUET — IL N Y A QU UNE CONVERSATION, PAS DEUX', () => {
     // route identique ne remonte pas le composant, donc l etat survivrait.
     // L APPEL dans le rendu, pas la signature du composant — celle-ci est
     // en tete de fichier et ferait passer le test pour de mauvaises raisons.
-    const i = CONVERSATION.indexOf('onClick={onRetour}')
+    //
+    // ── L'ANCRE LISAIT LA FORME DE L'APPEL (C2, 2026-11-05).
+    //
+    // Elle cherchait `onClick={onRetour}`. Le retour prend maintenant un
+    // argument — il rend le fil de ce qui s'est dit, parce que revenir
+    // effaçait l'échange et la personne retapait. La forme a changé,
+    // l'emplacement non, et c'est l'emplacement qui est la propriété.
+    //
+    // ON ANCRE SUR LE LIBELLÉ VISIBLE, pas sur la forme de l'appel : mon
+    // premier motif attrapait un `onClick={() => {` bien plus haut dans
+    // le fichier et mesurait alors n'importe quoi.
+    const i = CONVERSATION.indexOf('Revenir aux sites et boutiques')
     expect(i, 'le retour doit exister quelque part').toBeGreaterThan(0)
     expect(CONVERSATION.slice(0, i)).toContain('messages.length === 0')
   })

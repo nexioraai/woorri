@@ -240,7 +240,23 @@ export default function OnboardingChat({
   // une valeur de `siteMode` : si c'etait un mode, tout ce qui lit `siteMode`
   // devrait apprendre a le connaitre. Ici, rien ne le voit.
   const [cibleApplication, setCibleApplication] = useState(demandeRecue.trim() !== '');
-  const [demandeBasculee, setDemandeBasculee] = useState(demandeRecue);
+  // ── CE QUI PART AU CHEMIN APPLICATIF : LE FIL, PLUS UNE CHAÎNE (C1).
+  //
+  // DÉFAUT MESURÉ EN PRODUCTION LE 2026-11-05. L'aiguillage ne se
+  // déclenche QU'APRÈS confirmation — le modèle ne pose son drapeau
+  // qu'une fois la personne d'accord. Le dernier message était donc
+  // STRUCTURELLEMENT la confirmation :
+  //
+  //   « une appli de gestion d'association, membres avec nom… »
+  //   « est-ce bien une application ? »
+  //   « oui c'est bien une application »   ← le SEUL texte transmis
+  //
+  // Le chemin applicatif a reçu « oui c'est bien une application » comme
+  // cahier entier, et a généré une application de relevés de compteur
+  // électrique. Le fil vivait à six lignes de là.
+  const [filBascule, setFilBascule] = useState<readonly Msg[]>(
+    demandeRecue.trim() === '' ? [] : [{ role: 'user', content: demandeRecue }],
+  );
 
   const [avisBientot, setAvisBientot] = useState(false);
   const typedText = messages.filter((m) => m.role === 'user').map((m) => m.content).join(' ');
@@ -546,9 +562,12 @@ export default function OnboardingChat({
         // qu'une fois la personne d'accord. Basculer quelqu'un qui voulait
         // une boutique serait pire que l'impasse qu'on repare.
         if (doitAiguillerVersApplication(data, APPLICATION_PRETE)) {
-          // LE TEXTE PART AVEC : c'est la phrase que la personne vient
-          // d'écrire, et l'écran suivant doit la recevoir, pas l'oublier.
-          setDemandeBasculee(text);
+          // ── LE FIL PART AVEC, PAS LA DERNIÈRE PHRASE.
+          //
+          // `newMessages` porte tout l'échange, cette réponse comprise.
+          // Transmettre `text` seul revenait à transmettre la
+          // confirmation — voir le commentaire de `filBascule`.
+          setFilBascule(newMessages);
           setCibleApplication(true);
         }
       } else if (data.type === 'need_dropship_type') {
@@ -644,8 +663,18 @@ export default function OnboardingChat({
              a changé d'écran dans son dos est le genre de détail qui fait
              abandonner avant le premier résultat. */}
         <ConversationApplication
-          demandeInitiale={demandeBasculee}
-          onRetour={() => setCibleApplication(false)}
+          filInitial={filBascule}
+          onRetour={(fil) => {
+            // ── C2 · CE QUI S'EST DIT LÀ-BAS REVIENT ICI.
+            //
+            // Le retour effaçait l'échange : la personne revenait sur un
+            // écran vierge et retapait. Même défaut que la bascule, dans
+            // l'autre sens.
+            if (fil.length > 0) {
+              setMessages((m) => [...m, ...fil.map((x) => ({ role: x.role, content: x.content }))]);
+            }
+            setCibleApplication(false);
+          }}
         />
       </section>
     );
@@ -707,7 +736,15 @@ export default function OnboardingChat({
                     if (mode === 0) {
                       // L'aiguillage. `siteMode` reste INTACT : rien de ce
                       // qui suit ne passera par la generation de sites.
-                      setDemandeBasculee(input.trim());
+                      //
+                      // ICI le fil est tout l'échange DÉJÀ tenu, plus ce
+                      // que le champ porte — la personne a pu écrire,
+                      // discuter, puis cliquer sur le bouton.
+                      setFilBascule(
+                        input.trim() === ''
+                          ? messages
+                          : [...messages, { role: 'user', content: input.trim() }],
+                      );
                       setCibleApplication(true);
                     } else if (mode === 3) {
                       setShowDropshipPicker(true);

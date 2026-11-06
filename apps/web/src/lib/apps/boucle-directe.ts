@@ -86,8 +86,9 @@ export const REGLE_6_TETE_SANS_BASE: readonly string[] = [
   '   Rends ce fichier EN PLUS des autres (il ne part pas dans l’application) :',
   '',
   '   === DONNEES.json ===',
-  '   [{"name":"releve","fields":[{"name":"date","type":"date","required":true}]}]',
+  '   [{"name":"chose","fields":[{"name":"champ","type":"text","required":true}]}]',
   '',
+  '   `chose` est REFUSÉ exprès : recopie ce gabarit et ta table sera écartée.',
   '   Types : text, number, date, boolean.',
 ]
 
@@ -116,9 +117,9 @@ RÈGLES, et chacune vient d'un défaut réel :
    et tu l'exécutes à l'écran. Un bouton qui mène à un formulaire sans jamais
    calculer n'est pas une réponse.
 
-4. Tu écris du français correct dans l'interface. Jamais un nom technique
-   sous les yeux de quelqu'un : pas de \`releve_index_precedent\`, mais
-   « Index précédent ».
+4. Tu écris du français correct dans l'interface. Jamais un identifiant de
+   base de données sous les yeux de quelqu'un : le libellé se lit, il ne se
+   décode pas.
 
 5. Tu restes SOBRE et complet : ce qui est demandé, entièrement, et rien de
    décoratif. Pas d'images d'illustration, pas d'écrans en plus.
