@@ -60,6 +60,19 @@ describe('EP-370 · la loi public/gestion est dite', () => {
       'NE MONTRER AUCUN CHEMIN VERS LA GESTION',
       'N’AFFICHER AUCUN FORMULAIRE DE CONNEXION',
       'ne laisser filtrer AUCUNE donnée privée',
+      // ── ET CELLE-CI EXISTAIT AVANT LA LOI, mesuré le 2026-11-06.
+      //
+      // Elle manquait à cette liste, et c'est la classe qui compte plus que
+      // la clause : UNE VÉRIFICATION QUI COMPTE CE QU'ON A AJOUTÉ NE VOIT
+      // JAMAIS CE QU'ON A RETIRÉ. J'avais annoncé « neuf sur neuf » en
+      // vérifiant mes neuf présences ; « en LECTURE seule, aucun bouton qui
+      // écrit » avait disparu dans la même réécriture, et aucune de mes
+      // assertions ne pouvait la voir. Seul un cliquet ANTÉRIEUR l'a vue.
+      'en LECTURE',
+      'aucun bouton qui écrit',
+      // Et la conséquence de ne pas écrire la connexion, trouvée par le
+      // diff bidirectionnel : sans elle le modèle n'a pas de raison d'obéir.
+      'seront vides sans qu’on sache pourquoi',
     ]) {
       expect(t, `la face publique ne dit pas : « ${phrase} »`).toMatch(motifTexte(phrase))
     }

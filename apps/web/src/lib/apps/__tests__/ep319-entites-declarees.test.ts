@@ -420,7 +420,7 @@ describe('EP-319 · les données déclarées', () => {
     //
     // ── 9 200 → 11 100 LE 2026-11-06 : LA LOI PUBLIC/GESTION EST ENTRÉE.
     //
-    // Mesuré après : une table 11 114 · au pire 12 × 30 = 17 194. La loi
+    // Mesuré après restitution : une table 11 183 · au pire 17 263. La loi
     // ajoute ~1 900 signes à la moitié AVEC base, soit ≈ 514 jetons PAR
     // TOUR, donc ~1 500 par génération à trois tours. Sur une médiane
     // mesurée de 0,07 $, c'est marginal — mais le chiffre se dit, parce
@@ -430,7 +430,7 @@ describe('EP-319 · les données déclarées', () => {
     // est énuméré clause par clause dans EP-370, sur la consigne PRODUITE :
     // une borne mesure un volume, une énumération mesure un contenu.
     // Élever l'une en posant l'autre échange le faible contre le fort.
-    expect(avecBase.length, 'la prose du bloc de base a enflé').toBeLessThan(11300)
+    expect(avecBase.length, 'la prose du bloc de base a enflé').toBeLessThan(11400)
 
     // ── ET LE BANDEAU N'EST PLUS DEMANDÉ À L'ŒUVRE (2026-11-05).
     //
@@ -493,7 +493,7 @@ describe('EP-319 · les données déclarées', () => {
       // au lieu de la production est pire qu'absente ». Le chiffre juste
       // est celui que le cliquet rend lui-même, pas celui d'un script à
       // côté.
-    ).toBeLessThan(17400)
+    ).toBeLessThan(17500)
 
     // ── ③ ET LA PORTE DES DONNÉES RESTE UNE PORTE ÉTROITE.
     //

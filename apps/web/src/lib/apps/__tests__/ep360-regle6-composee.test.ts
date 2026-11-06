@@ -170,10 +170,22 @@ describe('EP-360 · la règle 6 se compose', () => {
     // une dixième règle générale qui s'y glisserait ne serait couverte par
     // aucun des deux. C'est plus fort que la borne d'hier, pas moins.
     const sansTables = blocBase([]).length
-    // 5 500 → 5 600 : la clause « en LECTURE seule, aucun bouton qui
-    // écrit » a été RESTITUÉE après qu'EP-319 l'ait vue disparaître de ma
-    // réécriture. 131 signes, et c'est une règle qui existait avant moi.
-    expect(sansTables, 'la moitié avec table a enflé hors des tables').toBeLessThan(5600)
+    // ── 5 500 → 5 700, ET LES DEUX HAUSSES SONT DES RESTITUTIONS.
+    //
+    // Ni l'une ni l'autre n'ajoute une règle neuve : toutes deux RENDENT
+    // une règle que ma réécriture avait fait disparaître, et que le diff
+    // bidirectionnel de la consigne produite a retrouvée.
+    //
+    //   « en LECTURE seule, aucun bouton qui écrit »      131 signes
+    //   « sinon tes listes privées seront vides sans       69 signes
+    //     qu'on sache pourquoi »
+    //
+    // La seconde est la CONSÉQUENCE de ne pas écrire la connexion. Sans
+    // elle, le modèle a l'ordre et pas la raison — et un ordre sans raison
+    // se suit moins bien qu'un ordre motivé.
+    //
+    // Mesuré : 5 600 exactement. La borne vaut la mesure plus 100.
+    expect(sansTables, 'la moitié avec table a enflé hors des tables').toBeLessThan(5700)
   })
 
   it('⑤ ET LES AUTRES RÈGLES RESTENT IDENTIQUES DES DEUX CÔTÉS', () => {
