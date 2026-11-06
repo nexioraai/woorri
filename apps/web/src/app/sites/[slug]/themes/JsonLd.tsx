@@ -9,6 +9,42 @@ function resolveSchemaType(rawType?: string): {
 } {
   const t = (rawType ?? '').toLowerCase()
 
+  // ── UN ÉTABLISSEMENT PUBLIC N'EST PAS UN COMMERCE, ET PASSE EN PREMIER.
+  //
+  // MESURÉ LE 2026-11-06 sur le site de la Centrale Pharmaceutique d'Achats
+  // du Tchad : son type est « Institution publique de santé », aucun mot de
+  // commerce ne l'attrape, et elle tombait dans le repli `LocalBusiness` —
+  // un commerce de proximité, avec `isPhysical: true` et une adresse
+  // affirmée. Déclaré à GOOGLE, pas à nous.
+  //
+  // `GovernmentOrganization` est un sous-type direct d'`Organization`, et
+  // schema.org n'en porte aucun de plus précis pour un organisme d'achat
+  // public — vérifié, pas supposé.
+  //
+  // ── POURQUOI CETTE BRANCHE EST SÛRE, et c'est mesuré.
+  //
+  // Elle ne touche AUCUN des 42 autres sites : un relevé sur les 43 types en
+  // base rend UN seul site attrapé — celui de la CPA. La porter ne change
+  // donc le verdict de personne d'autre.
+  //
+  // ── ET ELLE NE CORRIGE PAS LE DÉFAUT DE FOND, qui est noté ailleurs.
+  //
+  // Cette dérivation entière LIT DES MOTS dans un champ de texte libre, et
+  // le premier mot trouvé gagne sans regarder le reste de la phrase : cinq
+  // sites portent « en ligne » et sont déclarés commerces physiques. Voir
+  // GEN-D023 et GEN-D024 au registre. Le propriétaire a tranché le
+  // 2026-11-06 : le seul objectif est de finir le site CPA, le reste est
+  // noté et attend.
+  if (
+    t.includes('institution publique') ||
+    t.includes('établissement public') ||
+    t.includes('etablissement public') ||
+    t.includes('organisme public') ||
+    t.includes('service public')
+  ) {
+    return { schemaType: 'GovernmentOrganization', isPhysical: false }
+  }
+
   // Activités en ligne (pas de lieu physique)
   if (
     t.includes('saas') ||

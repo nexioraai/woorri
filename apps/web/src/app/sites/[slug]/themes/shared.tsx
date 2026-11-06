@@ -196,6 +196,28 @@ export function resolveSiteBaseUrl(
   if (site.custom_domain && normalizedHost === site.custom_domain.toLowerCase()) {
     return `https://${site.custom_domain}`
   }
+  // ── UN NOM PUBLIC `*.deribfy.app` FAIT FOI AUTANT QU'UN DOMAINE PROPRE.
+  //
+  // DÉFAUT MESURÉ LE 2026-11-06 sur le site de la CPA : servi sur
+  // `www.woorri.com/sites/<slug>`, il se déclarait canonique sur
+  // `www.deribfy.com/sites/<slug>`. Deux domaines différents — et le
+  // `canonical` est précisément la balise qui dit à Google quelle adresse
+  // fait foi. Un portail d'État qui s'annonce sur un slug horodaté d'un
+  // autre domaine ne s'indexe pas sous son nom.
+  //
+  // ── POURQUOI AUCUNE RELECTURE EN BASE N'EST NÉCESSAIRE, et c'est ce qui
+  //    garde cette fonction SYNCHRONE (ses six appelants en dépendent).
+  //
+  // `proxy.ts` ne réécrit vers `/sites/<slug>` que si le nom du sous-domaine
+  // APPARTIENT à ce site — il l'a vérifié dans `sites_sous_domaines` avant
+  // de réécrire. Si nous rendons cette page avec cet hôte, la correspondance
+  // est donc déjà prouvée en amont. L'hôte fait foi.
+  //
+  // L'apex et `www` sont exclus : le proxy les redirige vers la plateforme,
+  // ils ne servent jamais un site.
+  if (normalizedHost.endsWith('.deribfy.app') && normalizedHost !== 'www.deribfy.app') {
+    return `https://${normalizedHost}`
+  }
   return `${WOORRI_SITE_URL}/sites/${site.slug}`
 }
 

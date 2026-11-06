@@ -117,6 +117,129 @@ chose, énumérer ses générateurs. Pas ses modules — ses **produits**.
 
 ---
 
+## HORS-CHANTIER DU 2026-11-06 — MESURÉ, NOTÉ, NON CORRIGÉ
+
+> **RÈGLE DU PROPRIÉTAIRE, 2026-11-06** : le seul objectif est de finir le
+> site CPA. Tout défaut trouvé en chemin qui ne le concerne pas se note ici,
+> daté, avec sa mesure — et on passe. On y revient quand le site CPA est fini.
+>
+> Ces entrées sont donc **ouvertes et volontairement non traitées**. Aucune
+> n'est une supposition : chacune porte la commande qui l'a produite.
+
+### GEN-D023 — La dérivation du type schema.org LIT DES MOTS
+
+`src/app/sites/[slug]/themes/JsonLd.tsx` · `resolveSchemaType(site.type)`
+classe 43 sites en cherchant des mots dans un champ de **texte libre** :
+
+```
+24 × Store          12 × LocalBusiness (repli)
+ 3 × AutoPartsStore  2 × Organization      2 × Restaurant
+```
+
+**LE PREMIER MOT TROUVÉ GAGNE, sans regarder le reste de la phrase.** Mesuré :
+cinq sites portent « en ligne » ou « Online » dans leur type, et le mot
+`boutique` ou `store` les attrape avant — dans la **même phrase**.
+
+**Le quasi-accident** : `t.includes('pharmaci') → Pharmacy`. Le type de la CPA
+est « Institution publique de santé » ; s'il avait porté « pharmaceutique »,
+nous aurions déclaré à Google un **établissement public d'État comme une
+officine de quartier**, et personne ne l'aurait vu.
+
+**Et la dérivation n'est pas à jeter** : 24 des 29 attrapes sont franchement
+justes. Elle est juste à **83 %**. Ce qui doit tomber est ailleurs — voir
+GEN-D024.
+
+### GEN-D024 — `isPhysical: true` affirmé sur 9 sites qui n'ont aucun local
+
+Même fichier. Le drapeau commande l'émission de l'adresse et de la position.
+Mesuré : **9 sites sur 43** déclarent à Google des locaux qui n'existent pas,
+alors que **leur propre type dit explicitement le contraire** :
+
+```
+Online Beauty & Cosmetics Retailer          → LocalBusiness · isPhysical:true
+Dropshipping Electronics Retailer           → LocalBusiness · isPhysical:true
+Marque de vêtements … imprimés à la demande → LocalBusiness · isPhysical:true
+Plateforme de personnalisation d'articles   → LocalBusiness · isPhysical:true
+Children's Clothing Dropshipping Store      → Store         · isPhysical:true
+Boutique en ligne - Articles tendance       → Store         · isPhysical:true
+Boutique de Mode en Ligne                   → Store         · isPhysical:true
+Online Sportswear Dropshipping Store        → Store         · isPhysical:true
+Boutique de vêtements en ligne              → Store         · isPhysical:true
+```
+
+**LA RÈGLE QUI EN SORT** : un local physique ne se déduit pas d'un nom de
+métier. Il se déduit d'une adresse vérifiée, ou **il ne s'affirme pas**. Même
+discipline que partout ailleurs ce jour-là : le silence vaut mieux qu'une
+affirmation fausse — et ici l'affirmation est tournée vers l'EXTÉRIEUR, vers
+Google, pas vers nous.
+
+`schema.org` porte **`OnlineStore`** depuis 2022 : c'est le type juste pour
+cinq d'entre eux.
+
+### GEN-D025 — Le libellé vient du site, la destination l'ignore
+
+`EditorialTheme.tsx` et ses trois jumeaux :
+
+```ts
+const cta = site.cta || t.labels.contactCta      // le LIBELLÉ vient du site
+const ctaHref = hasShop ? '#shop' : '#contact'   // la DESTINATION l'ignore
+```
+
+**43 sites sur 43** portent un `cta` propre. Mesuré : « Commander maintenant »
+→ `#contact`. « Consulter les appels d'offres » → `#contact`. Ce n'est pas un
+cas CPA : c'est **tout le monde**.
+
+A2 réglera la destination des appels d'offres pour la CPA. **La forme reste à
+régler** : deux sources pour un même bouton.
+
+### GEN-D026 — `sites_sous_domaines` : capacité construite, jamais employée
+
+La table existe. La route `api/sites/adresse` existe. Le proxy sert
+`*.deribfy.app` **SITE d'abord, application ensuite**, avec ce commentaire :
+« les slugs portent un horodatage, personne n'imprime ça sur une carte ».
+
+**Mesuré : la table est VIDE — zéro ligne sur 43 sites.** Vingt-huitième cas
+de la famille « prouvé sans appelant », et c'est précisément la capacité dont
+le site CPA a besoin. Traité dans A1(d), pour la CPA seulement.
+
+### GEN-D027 — `getVideo()` chez Pexels, zéro appelant
+
+`src/lib/pexels.ts` expose une recherche de vidéos — qualité HD/SD. Aucun
+appelant. Vingt-neuvième cas. Et il ne servira pas : la règle du propriétaire
+interdit les médias par défaut.
+
+### GEN-D028 — Les images d'agence sont injectées PAR NOUS, délibérément
+
+`api/chat/route.ts`. Le modèle rend `gallery: []` — la consigne le lui ordonne
+à la ligne 610 : « Gallery images are selected automatically from a stock
+photo library after your response ». Puis **notre route remplit** :
+
+```
+ligne  995  fetchPexelsPhotos(pexelsQuery, parsed.primaryColor)
+ligne 1000  heroImage = pioche.choisir(heroPhotos, true) || …
+ligne 1100  hero_image: heroImage
+ligne 1108  gallery
+```
+
+Le site CPA en porte **31**. Un établissement public illustré par des photos
+d'agence n'est pas crédible.
+
+**Le lot, chiffré le 2026-11-06, NON ENGAGÉ** : P1 injection conditionnelle
+2 h · P2 emplacements visiblement vides dans les 4 thèmes 4 h · P3 le tableau
+de bord nomme ce qui manque 2 h · P4 la condition — **non chiffrable**, aucune
+propriété ne distingue un établissement public d'une boutique.
+
+**Deux voies**, l'arbitrage reste ouvert : **A** jamais pour un institutionnel,
+emplacement invitant ailleurs — 8 h, bloquée par P4. **B** emplacement
+visiblement vide pour tous, jamais d'image d'agence — **6 h, zéro décision**.
+Les sites existants gardent leurs photos ; seules les générations futures
+naissent vides.
+
+**Et pour le site CPA, ce lot n'est pas requis** : ses 31 photos sont du
+CONTENU en base, retirables depuis le tableau de bord. Zéro heure.
+
+---
+
 ## APP-D001 — `field.unique` déclaré mais jamais traduit en contrainte SQL
 
 | | |
