@@ -29,6 +29,39 @@
  *
  * ── CE QUE CE CLIQUET EST, ET CE QU'IL N'EST PAS.
  *
+ * ── ET LA LOI A ÉTÉ SUIVIE À LA LETTRE, PAS DANS L'INTENTION (asosa).
+ *
+ * Mesuré le 2026-11-06 sur la première œuvre générée AVEC cette loi :
+ * l'adresse `#gestion` est employée, l'écran de connexion y vit et nulle
+ * part ailleurs, la face publique ne montre AUCUN chemin vers la gestion.
+ * Quatre clauses sur neuf obéies.
+ *
+ * Mais la table n'a pas été déclarée publique, et la clause qui interdisait
+ * d'en montrer le vide a été contournée. Elle disait TROIS choses :
+ *
+ *   « ni bandeau rouge, ni "impossible de charger",
+ *     ni zone vide alors qu'il y a du contenu »
+ *
+ * Le modèle a évité les deux premières EN CAUSANT LA TROISIÈME : l'erreur
+ * est avalée (`if (!error && data)`) et l'écran rend son état vide. UNE
+ * LISTE DE TROIS INTERDITS SE SATISFAIT EN EN CHOISISSANT UN.
+ *
+ * ── LES CINQ AUTRES LISTES DE MÊME RISQUE, CONSIGNÉES D'AVANCE.
+ *
+ * Mesuré : la consigne porte 36 interdits contre 5 obligations, dont 12
+ * listes empilées. Celles-ci sont les prochaines à céder, et quand l'une
+ * cédera ce ne sera pas une surprise :
+ *
+ *   · « AUCUN FICHIER : ni téléversement, ni PDF, ni image envoyée »
+ *   · « aucune entrée de menu, aucun lien, aucun bouton, aucun onglet »
+ *   · « Jamais un nom vide de sens : pas "donnees", pas "table" »
+ *   · « aucun bouton qui le propose : il échouerait sans rien dire »
+ *   · « Jamais plus de N tables, jamais plus de N champs par table »
+ *
+ * Une interdiction se contourne, une obligation se vérifie.
+ *
+ * ── CE QUE CE CLIQUET EST, ET CE QU'IL N'EST PAS.
+ *
  * Il garde que la loi est DITE. Il ne garde pas qu'elle est SUIVIE : une
  * consigne est une demande, pas une garantie. Ce sont J1 et J3 — le montage
  * sans session — qui refusent l'œuvre. Confondre les deux serait croire

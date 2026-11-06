@@ -26,6 +26,7 @@ import {
   PAQUETS_PROPOSES,
 } from './ecriture-directe'
 import { jugerGestion, reprocheGestion } from './juge-gestion'
+import { jugerFaces, reprocheFaces, type VerdictFaces } from './juge-faces'
 import { jugerVivacite, type DefautVivacite } from './juge-vivacite'
 import { FICHIER_PERIMETRE, jugerCouverture, type RapportCouverture } from './juge-couverture'
 import {
@@ -185,6 +186,8 @@ export type Resultat =
       readonly vivacite: readonly DefautVivacite[]
       /** Le rapport chiffré qui accompagne toute génération (EP-297). */
       readonly couverture: RapportCouverture
+      /** J1 · les deux faces, `null` quand l'œuvre n'a aucune table. */
+      readonly faces: VerdictFaces | null
       /**
        * CE QUI RESTE EN MÉMOIRE AU DERNIER TOUR — dit, jamais tu.
        *
@@ -502,6 +505,24 @@ export async function boucleEcriture(o: {
         //
         // Il refuse de juger si son hypothèse tombe : voir `juge-gestion`.
         const gestion = jugerGestion(entitesConnues, carte)
+        // ── J1 · LES DEUX FACES, MESURÉES EN MONTANT SANS SESSION.
+        //
+        // Il ne tourne QUE s'il y a des tables : sans table il n'y a pas de
+        // face publique à tromper, et trois montages coûteraient ~4,5 s pour
+        // rien.
+        //
+        // ── POURQUOI IL REFUSE, ET PAS SEULEMENT SIGNALE.
+        //
+        // La loi a été écrite dans la consigne, dans les deux branches,
+        // vérifiée clause par clause sur la consigne produite. La première
+        // œuvre générée avec elle (`asosa`, 2026-11-06) a obéi à quatre
+        // clauses sur neuf et laissé ses TROIS tables non déclarées. La
+        // prose a échoué deux fois ; une règle que rien ne mesure n'est pas
+        // une règle.
+        const faces: VerdictFaces | null =
+          entitesConnues.length > 0 && jetons.length === 0
+            ? await jugerFaces(v.code, entitesConnues)
+            : null
         const reproches: string[] = []
         if (jetons.length > 0) {
           reproches.push(
@@ -583,6 +604,18 @@ export async function boucleEcriture(o: {
         if (gestion.hypotheseTombee !== null) {
           console.warn(`[boucle] juge de gestion inactif — ${gestion.hypotheseTombee}`)
         }
+        // ── ET SON REPROCHE PASSE DEVANT LA COUVERTURE.
+        //
+        // Une page publique vide chez tout le monde est plus grave qu'une
+        // exigence muette : la première rend l'œuvre invendable, la seconde
+        // la rend incomplète.
+        const quoiFaces = faces === null ? null : reprocheFaces(faces)
+        if (quoiFaces !== null) reproches.push(quoiFaces)
+        // Un juge qui n'a pas pu tourner le DIT : son silence se lirait comme
+        // un vert, et c'est la faute qu'il existe pour fermer.
+        if (faces !== null && !faces.aTourne) {
+          console.warn(`[boucle] juge des faces inactif — ${faces.motif ?? 'motif inconnu'}`)
+        }
         if (couverture.absentes.length > 0) {
           reproches.push(
             'DES EXIGENCES DU CAHIER SONT MUETTES — ni dans l’application, ni déclarées :\n' +
@@ -615,6 +648,7 @@ export async function boucleEcriture(o: {
             vivacite,
             couverture,
             persistance,
+            faces,
             entites: entitesConnues,
             refusEntites: refusEnRoute,
           }
