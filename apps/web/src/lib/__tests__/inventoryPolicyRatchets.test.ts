@@ -117,6 +117,14 @@ describe("AUCUNE écriture directe de la politique d'inventaire en TypeScript", 
     );
     expect(autres.length).toBeGreaterThan(0);
     for (const f of autres) {
+    // ── UNE FENÊTRE NÉGATIVE ÉTROITE SE PÉRIME EN SILENCE.
+    //
+    // Elle affirme qu'une chose n'est PAS près d'une autre. Quand le code
+    // grossit entre les deux, l'assertion PASSE : elle ne rougit pas,
+    // elle cesse de garder. C'est l'inverse du risque d'une fenêtre
+    // positive — et c'est pire, parce qu'un faux vert ne se remarque pas.
+    //
+    // Mesuré avant d'élargir : aucune des six ne rougit à 600/900.
       expect(chargesEcrites(f).join('|'), relatif(f)).not.toMatch(/track_inventory|stock_counted_at/);
     }
   });
@@ -310,7 +318,7 @@ describe("ÉTAPE 6 — les allowlists génériques restent fermées", () => {
     // Le refus reste FUSIONNÉ dans le 403 existant : aucun code, aucun
     // message, aucune journalisation propres à l'invendable.
     expect(s.match(/status: 403/g) ?? []).toHaveLength(1);
-    expect(s).not.toMatch(/for_sale[\s\S]{0,200}logAnomaly/);
+    expect(s).not.toMatch(/for_sale[\s\S]{0,600}logAnomaly/);
   });
 
   it("DETTE 6b — la garde précède le compteur et tout appel fournisseur", () => {

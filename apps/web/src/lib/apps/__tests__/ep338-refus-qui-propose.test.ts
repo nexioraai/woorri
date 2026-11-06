@@ -55,7 +55,13 @@ describe('EP-338 · le refus qui propose', () => {
     expect(
       CONSIGNE_RETOUCHE,
       'l’interdiction n’est pas montrée : elle se contournera par accident',
-    ).toMatch(/Exemple juste/u)
+      // ── LA PROPRIÉTÉ : L'INTERDICTION EST MONTRÉE DES DEUX CÔTÉS.
+      //
+      // Le motif épinglait le libellé « Exemple juste ». La consigne
+      // oppose ce qu'il NE FAUT PAS écrire à ce qu'il faut : c'est cette
+      // OPPOSITION qui empêche le contournement par accident, pas le mot
+      // choisi pour l'annoncer.
+    ).toMatch(/ne faut PAS écrire[\s\S]{0,400}Exemple/u)
   })
 
   it('② LE PÉRIMÈTRE NE PROMET PLUS UN « AUTREMENT » QU’IL N’OFFRE PAS', () => {

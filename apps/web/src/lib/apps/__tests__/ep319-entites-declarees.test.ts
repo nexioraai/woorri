@@ -511,9 +511,20 @@ describe('EP-319 · les données déclarées', () => {
     expect(avecBase, 'le défaut n’est plus la fermeture').toMatch(
       /OMETS par défaut[\s\S]{0,80}privée/u,
     )
-    expect(avecBase, 'le cas des soumissions scellées a disparu').toMatch(
-      /SOUMISSIONS[\s\S]{0,120}scellées/u,
-    )
+    // ── BORNÉ AU BLOC DE LECTURE PUBLIQUE.
+    //
+    // Mesuré : un `JAMAIS` vit ailleurs dans la consigne, donc chercher
+    // dans le tout laissait passer la disparition du contre-exemple.
+    //
+    // ET LA FIN EST BORNÉE AUSSI : le bloc commun qui suit porte
+    // « JAMAIS localStorage ». Sans cette borne, retirer le
+    // contre-exemple restait VERT — mesuré deux fois.
+    const debutPublic = avecBase.indexOf('LECTURE PUBLIQUE')
+    const finPublic = avecBase.indexOf('N’ÉCRIS AUCUN BANDEAU', debutPublic)
+    const regimePublic = avecBase.slice(debutPublic, finPublic < 0 ? undefined : finPublic)
+    expect(regimePublic.length, 'le bloc de lecture publique a disparu').toBeGreaterThan(80)
+    expect(regimePublic, 'le contre-exemple du voisin a disparu').toMatch(/\bJAMAIS\b/u)
+
   })
 
   it('⑧ L’ÉCRAN NOMME LES COLONNES COMME LE SCHÉMA LES CRÉE', () => {

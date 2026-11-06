@@ -1,0 +1,143 @@
+/**
+ * EP-364 · P-b — UNE NOUVELLE ANCRE SUR DU SOURCE TOLÈRE LES REPLIS.
+ *
+ * ── LA FAMILLE, ET POURQUOI UN CLIQUET PLUTÔT QUE DE LA DISCIPLINE.
+ *
+ * Quatre fois le 2026-11-05, un contrôle a rougi sur un texte dont le
+ * sens n'avait pas bougé — seulement la largeur. Dont UNE écrite en
+ * corrigeant les trois autres. La discipline ne tient pas : il faut que
+ * la tolérance vienne de la construction.
+ *
+ * `motifTexte` (EP-363) la donne. Ce cliquet-ci empêche qu'on s'en passe.
+ *
+ * ── CE QU'IL COUVRE, ET CE QU'IL NE COUVRE PAS. MESURÉ.
+ *
+ * Sur 2 156 assertions `toMatch`/`toContain` du dépôt :
+ *
+ *   321  sujet TRAÇABLE jusqu'à une lecture de source
+ *  1549  sujet manifestement autre (une valeur calculée)
+ *   286  AMBIGU — un nom d'habitude (`t`, `src`, `CODE`), aucune trace
+ *
+ * Les 286 sont la raison pour laquelle ce cliquet ne prétend PAS tout
+ * couvrir. Les réclamer produirait 286 demandes sur des contrôles
+ * justes, et une garde qui gêne le chemin ordinaire est une garde qu'on
+ * retire. Il tient donc la ligne sur ce qu'il peut PROUVER.
+ *
+ * ── ET C'EST UN CLIQUET DE DETTE, PAS UNE MIGRATION.
+ *
+ * 117 ancres traçables sont fragiles aujourd'hui, et ce sont surtout des
+ * motifs de CODE (`const diagnostics: string[] = []`,
+ * `type: 'storefront_query_failed'`). Les convertir toutes serait un
+ * chantier, pas une garde — et sans valeur : elles cassent sur un
+ * reformatage automatique, pas sur une reformulation humaine.
+ *
+ * Le nombre ne peut donc que DESCENDRE. Comme `lint_cliquet` : « la dette
+ * ne grossit plus ».
+ */
+import { describe, expect, it } from 'vitest'
+import { readdirSync, readFileSync, statSync } from 'node:fs'
+import { join } from 'node:path'
+
+const SRC = join(__dirname, '..', '..', '..')
+
+/** MESURÉ LE 2026-11-06. Ce nombre ne monte jamais. */
+const DETTE = 117
+
+const fichiersDeControle = (dossier: string): string[] => {
+  const out: string[] = []
+  for (const n of readdirSync(dossier)) {
+    const p = join(dossier, n)
+    if (statSync(p).isDirectory()) out.push(...fichiersDeControle(p))
+    else if (/\.test\.tsx?$/u.test(n)) out.push(p)
+  }
+  return out
+}
+
+/** Les ancres dont le sujet se TRACE jusqu'à une lecture de source. */
+function ancresTracables(src: string): { tolerantes: number; fragiles: string[] } {
+  const sans = src.replace(/\/\*[\s\S]*?\*\//gu, '').replace(/^[ \t]*\/\/.*$/gmu, '')
+  const lecteurs = new Set<string>()
+  for (const m of sans.matchAll(
+    /(?:const|let)\s+([A-Za-z_][A-Za-z0-9_]*)\s*(?::[^=]+)?=\s*(?:\(\)\s*(?::[^=]+)?=>\s*)?(?:lireSource|lireSourceBrut|readFileSync)/gu,
+  )) {
+    lecteurs.add(m[1] ?? '')
+  }
+  let tolerantes = 0
+  const fragiles: string[] = []
+  for (const m of sans.matchAll(
+    /expect\(\s*([A-Za-z_][A-Za-z0-9_.()]*)[^)]*\)[\s\S]{0,140}?\.(?:not\.)?(?:toMatch|toContain)\(\s*(\/(?:[^/\\\n]|\\.)+\/[a-z]*|['"`](?:[^'"`\\\n]|\\.)+['"`]|motifTexte|motifEntre)/gu,
+  )) {
+    const sujet = m[1] ?? ''
+    const lit = m[2] ?? ''
+    const racine = sujet.split(/[.(]/u)[0] ?? ''
+    const tracable = /^(?:lireSource|lireSourceBrut|readFileSync)/u.test(sujet) || lecteurs.has(racine)
+    if (!tracable) continue
+    const corps = lit.startsWith('/')
+      ? lit.slice(1, lit.lastIndexOf('/'))
+      : /^['"`]/u.test(lit)
+        ? lit.slice(1, -1)
+        : lit
+    // TOLÉRANTE : construite par l'utilitaire, ou portant déjà une
+    // tolérance au blanc, ou sans aucun espace à replier.
+    const ok =
+      lit === 'motifTexte' ||
+      lit === 'motifEntre' ||
+      corps.includes('\\s') ||
+      !/[^\\] /u.test(corps)
+    if (ok) tolerantes += 1
+    else fragiles.push(corps.slice(0, 60))
+  }
+  return { tolerantes, fragiles }
+}
+
+describe('EP-364 · les ancres sur du source tolèrent les replis', () => {
+  const tout = (): { tolerantes: number; fragiles: string[] } => {
+    let tolerantes = 0
+    const fragiles: string[] = []
+    for (const f of fichiersDeControle(SRC)) {
+      const r = ancresTracables(readFileSync(f, 'utf8'))
+      tolerantes += r.tolerantes
+      fragiles.push(...r.fragiles)
+    }
+    return { tolerantes, fragiles }
+  }
+
+  it('① L’INSTRUMENT TROUVE DES ANCRES — sinon il ne garde rien', () => {
+    // « Vert qui ne mesure rien » : un balayage à vide passerait tout.
+    const r = tout()
+    expect(
+      r.tolerantes + r.fragiles.length,
+      'aucune ancre traçable trouvée : le balayage est cassé',
+    ).toBeGreaterThan(200)
+  })
+
+  it('② LA DETTE NE GROSSIT PLUS', () => {
+    // ── LE CHIFFRE NE MONTE JAMAIS.
+    //
+    // Les 117 d'aujourd'hui sont surtout des motifs de CODE, qui cassent
+    // sur un reformatage automatique et non sur une reformulation. Les
+    // convertir serait un chantier sans valeur. Mais une ancre NEUVE n'a
+    // aucune excuse : `motifTexte` existe.
+    const r = tout()
+    expect(
+      r.fragiles.length,
+      `${String(r.fragiles.length)} ancres fragiles contre ${String(DETTE)} au relevé : ` +
+        'une nouvelle ancre sur du source a été écrite sans tolérance au repli. ' +
+        'Employez `motifTexte(…)` — voir EP-363, et les quatre rouges du 2026-11-05.',
+    ).toBeLessThanOrEqual(DETTE)
+  })
+
+  it('③ ET LE RELEVÉ SUIT LA RÉALITÉ — un chiffre périmé ne garde rien', () => {
+    // ── UN CLIQUET DE DETTE SE DÉSARME TOUT SEUL S'IL NE SE RESSERRE PAS.
+    //
+    // Si la dette descend à 90 et que `DETTE` reste à 117, il reste 27
+    // places libres pour en écrire de nouvelles — et il dira vert.
+    // L'écart toléré est étroit, et le resserrer est le geste normal.
+    const r = tout()
+    expect(
+      DETTE - r.fragiles.length,
+      `la dette est tombée à ${String(r.fragiles.length)} : abaissez DETTE, ` +
+        'sinon le cliquet laisse de la place à des ancres neuves',
+    ).toBeLessThanOrEqual(10)
+  })
+})

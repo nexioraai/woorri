@@ -508,6 +508,14 @@ describe('LE REPLI EXISTE À DEUX ENDROITS, ET ILS SONT IDENTIQUES', () => {
     const { join } = await import('path');
     const code = readFileSync(join(__dirname, '../shared.tsx'), 'utf-8')
       .replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+    // ── UNE FENÊTRE NÉGATIVE ÉTROITE SE PÉRIME EN SILENCE.
+    //
+    // Elle affirme qu'une chose n'est PAS près d'une autre. Quand le code
+    // grossit entre les deux, l'assertion PASSE : elle ne rougit pas,
+    // elle cesse de garder. C'est l'inverse du risque d'une fenêtre
+    // positive — et c'est pire, parce qu'un faux vert ne se remarque pas.
+    //
+    // Mesuré avant d'élargir : aucune des six ne rougit à 600/900.
     expect(code).toContain('canTransact(data?.mode)');
     expect(code).not.toMatch(/mode === 2 \|\| .*mode === 3/);
   });
@@ -733,8 +741,8 @@ describe('DETTE 3 — `shared.tsx` ne franchit JAMAIS la frontière serveur', ()
     expect([...code.matchAll(/if \(catSelsError\)/g)]).toHaveLength(1);
     // Le signal n'est JAMAIS déclenché par l'absence de données : ni `!data`,
     // ni `.length === 0`. Un résultat vide légitime doit rester muet.
-    expect(code).not.toMatch(/if \(!shopProducts\)[\s\S]{0,120}signalQueryFailure/);
-    expect(code).not.toMatch(/if \(!catSels\)[\s\S]{0,120}signalQueryFailure/);
+    expect(code).not.toMatch(/if \(!shopProducts\)[\s\S]{0,600}signalQueryFailure/);
+    expect(code).not.toMatch(/if \(!catSels\)[\s\S]{0,600}signalQueryFailure/);
     // LOT 3 — RELEVEMENT DELIBERE : 4 -> 5. Une requête instrumentée de plus,
     // `loadPodBrandCatalogPrices`, qui relit prix et devise des maquettes POD
     // BRAND depuis `catalog_products` (le JSON `pod_designs` est écrit par le
@@ -767,12 +775,12 @@ describe('DETTE 3 — `shared.tsx` ne franchit JAMAIS la frontière serveur', ()
     expect(pageCode).toMatch(/if \(!site\) notFound\(\)/);
     // UN SEUL appel, et il ne dépend que de `!site`.
     expect([...pageCode.matchAll(/notFound\(\)/g)]).toHaveLength(1);
-    expect(pageCode).not.toMatch(/diagnostics\.length[\s\S]{0,60}notFound/);
+    expect(pageCode).not.toMatch(/diagnostics\.length[\s\S]{0,600}notFound/);
 
     for (const rel of ['../../llms.txt/route.ts', '../../../../api/internal/site-sitemap/[slug]/route.ts']) {
       const SRC = await lire(rel);
       expect(SRC, rel).toMatch(/if \(!site\) \{\s*\n\s*return new Response\('Not found', \{ status: 404 \}\)/);
-      expect(SRC, rel).not.toMatch(/diagnostics\.length[\s\S]{0,60}404/);
+      expect(SRC, rel).not.toMatch(/diagnostics\.length[\s\S]{0,600}404/);
     }
   });
 });

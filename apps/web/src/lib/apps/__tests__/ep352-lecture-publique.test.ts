@@ -109,10 +109,31 @@ describe('EP-352 · P1 · la lecture publique se déclare', () => {
     // C'est le seul endroit du dépôt où ce piège est expliqué au modèle.
     // Le retirer rendrait la consigne muette là où elle se trompe en ayant
     // raison.
-    expect(bloc, 'le piège des soumissions n’est plus enseigné').toMatch(
-      /appels d’offres sont publics[\s\S]{0,140}SOUMISSIONS/u,
-    )
-    expect(bloc, 'la raison du scellé a disparu').toMatch(/ouverture des plis/u)
+    // ── ON EXIGE LE CONTRE-EXEMPLE, PAS CELUI-CI (2026-11-06).
+    //
+    // Deux cliquets épinglaient « appels d'offres … SOUMISSIONS » et
+    // « ouverture des plis » : le marché public, mot pour mot. Tant
+    // qu'ils le tiennent, cet exemple est INCHANGEABLE — et c'est le
+    // mécanisme qui a maintenu `releve_index_precedent` en vie jusqu'à
+    // ce qu'un modèle le recopie et en fasse un produit.
+    //
+    // La propriété est qu'un contre-exemple existe : une chose publique
+    // présentée À CÔTÉ d'une chose voisine qui ne l'est pas. Le
+    // « JAMAIS » porte ce contraste.
+    //
+    // ET ON CHERCHE DANS LE BLOC, PAS DANS TOUTE LA CONSIGNE : un
+    // `JAMAIS` vit ailleurs (« N'AFFICHE JAMAIS », « JAMAIS
+    // localStorage »). Mesuré : sans cette borne, retirer le
+    // contre-exemple restait VERT.
+    //
+    // ET LA FIN EST BORNÉE AUSSI : le bloc commun qui suit porte
+    // « JAMAIS localStorage ». Sans cette borne, retirer le
+    // contre-exemple restait VERT — mesuré deux fois.
+    const debutPublic = bloc.indexOf('LECTURE PUBLIQUE')
+    const finPublic = bloc.indexOf('N’ÉCRIS AUCUN BANDEAU', debutPublic)
+    const regime = bloc.slice(debutPublic, finPublic < 0 ? undefined : finPublic)
+    expect(regime.length, 'le bloc de lecture publique a disparu').toBeGreaterThan(80)
+    expect(regime, 'le contre-exemple du voisin n’est plus enseigné').toMatch(/\bJAMAIS\b/u)
     expect(bloc, 'le modèle n’a plus de consigne en cas de doute').toMatch(/hésites, OMETS/u)
   })
 

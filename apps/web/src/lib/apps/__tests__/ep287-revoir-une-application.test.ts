@@ -72,8 +72,16 @@ describe('EP-287 · revoir une application', () => {
     // Un `document` pèse des dizaines de milliers de caractères. En rendre
     // cinquante pour afficher des noms rendrait la page inutilisable — et
     // ferait voyager l'œuvre là où seul son titre est nécessaire.
+    // ── UNE FENÊTRE NÉGATIVE ÉTROITE SE PÉRIME EN SILENCE.
+    //
+    // Elle affirme qu'une chose n'est PAS près d'une autre. Quand le code
+    // grossit entre les deux, l'assertion PASSE : elle ne rougit pas,
+    // elle cesse de garder. C'est l'inverse du risque d'une fenêtre
+    // positive — et c'est pire, parce qu'un faux vert ne se remarque pas.
+    //
+    // Mesuré avant d'élargir : aucune des six ne rougit à 600/900.
     expect(LISTE, 'la liste rend le document entier').not.toMatch(
-      /applications[\s\S]{0,400}document:\s*(?:g\.)?document/u,
+      /applications[\s\S]{0,900}document:\s*(?:g\.)?document/u,
     )
     // Elle rend le COMPTE de fichiers, pas leur contenu.
     expect(LISTE).toContain('revoyable')
