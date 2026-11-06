@@ -234,6 +234,22 @@ La table existe. La route `api/sites/adresse` existe. Le proxy sert
 de la famille « prouvé sans appelant », et c'est précisément la capacité dont
 le site CPA a besoin. Traité dans A1(d), pour la CPA seulement.
 
+**RECTIFICATION DATÉE DU 2026-11-06 — LA CAPACITÉ EST EMPLOYÉE.** Une ligne,
+posée à **17:07 UTC** par A1(d) :
+
+```
+nom = cpa-tchad  ·  site_slug = centrale-pharmaceutique-d-achats-cpa-1793979506814
+```
+
+Mesuré à l'écran le même jour : `https://cpa-tchad.deribfy.app/` rend
+**HTTP 200, 145 943 o**, titre « Centrale Pharmaceutique d'Achats (CPA) —
+Approvisionner la santé publique au Tchad ». Le slug long, lui, rend
+**HTTP 000** : aucun certificat n'a jamais été émis pour ce nom (GEN-D022 — un
+sous-domaine jamais demandé n'en a pas). L'adresse publique **n'est donc pas**
+le slug : c'est `sites_sous_domaines` qui la porte. Le vingt-huitième cas de
+« prouvé sans appelant » est fermé. Voir **GEN-D036** pour ce que cette
+jointure ne garantit pas.
+
 ### GEN-D027 — `getVideo()` chez Pexels, zéro appelant
 
 `src/lib/pexels.ts` expose une recherche de vidéos — qualité HD/SD. Aucun
@@ -271,6 +287,74 @@ naissent vides.
 CONTENU en base, retirables depuis le tableau de bord. Zéro heure.
 
 ---
+
+### DEBT-073 — FERMÉE PAR RICOCHET pour deux vues sur trois, et la mesure dit laquelle reste seule
+
+Fermeture consignée le 2026-11-06 sur demande du propriétaire, **avec sa
+mesure et avec sa borne**. DEBT-073 : `ALTER DEFAULT PRIVILEGES … GRANT ALL ON
+TABLES` couvre aussi les VUES ; une vue de `public` naît écrivable par `anon`,
+et un `GRANT SELECT` n'annule rien — il ajoute.
+
+Jusqu'ici une seule garde existait : **retirer le privilège**. Elle est
+réparable, donc oubliable. La mesure du 2026-11-06 en révèle une seconde,
+**structurelle**, et dit exactement où elle s'applique — une tentative
+d'`INSERT` anonyme sur chaque vue publique du dépôt :
+
+| vue | code | ce qui refuse |
+|---|---|---|
+| `appels_offres_public` | **55000** | **la STRUCTURE** — `FROM` à deux relations, vue non auto-modifiable |
+| `site_blog_posts_public` | **55000** | **la STRUCTURE** — même patron, même jointure sur `sites_public` |
+| `sites_public` | **42501** | **le PRIVILÈGE SEUL** — `FROM` à une relation, la vue EST auto-modifiable |
+| `catalog_products_public_view` | `PGRST205` | absente de l'API — non exposée à `anon` |
+
+**Ce que ça veut dire.** Toute vue qui **joint `sites_public` pour hériter
+l'invariant de lecture** devient, par le même trait, **impossible à écrire** :
+PostgreSQL exige une règle `DO INSTEAD` ou un trigger `INSTEAD OF`, et refuse
+**avant** de regarder le moindre privilège. Un trait de conception, deux
+gardes.
+
+**Et ce que ça ne veut pas dire.** `sites_public` — la vue sur laquelle le
+défaut s'est réellement produit, cinq jours durant — **n'a toujours qu'une
+seule garde**. Son `FROM` ne porte qu'une relation ; elle est auto-modifiable ;
+seul le `REVOKE` la protège. Déclarer « DEBT-073 fermée » sans cette ligne
+serait exactement le genre de fermeture qui ne mesure rien.
+
+**Statut** : 🟢 **FERMÉE PAR RICOCHET** sur les deux vues jointes ·
+🟠 **une garde unique subsiste sur `sites_public`**, et elle est versionnée
+(`views_privileges_hardening.sql` + le cliquet `sqlViewPrivileges.test.ts`)
+
+### GEN-D036 — L'adresse publique de la CPA dépend du SLUG, et rien ne tient ce lien
+
+`sites_sous_domaines` rattache `nom` → **`site_slug`**, pas `site_id`.
+
+**Mesuré le 2026-11-06** : une ligne dont `site_slug` vaut
+`slug-qui-nexiste-absolument-pas` est **ACCEPTÉE**. Il n'y a **aucune clé
+étrangère** sur cette colonne.
+
+**Conséquence.** Renommer `sites.slug` orphelinerait la ligne **en silence** —
+pas d'erreur, pas de contrainte violée — et `cpa-tchad.deribfy.app`
+cesserait de résoudre. L'adresse que la CPA imprimera tomberait sans que rien
+ne le signale.
+
+**Pourquoi c'est noté maintenant.** Le propriétaire a arbitré de différer le
+renommage du slug, sur la prémisse « depuis la bascule vers `site_id` un
+renommage ne casserait plus rien ». La bascule a couvert `appels_offres` et le
+blog multi-tenant. **Elle n'a jamais touché `sites_sous_domaines`.** La
+prémisse est donc vraie pour les deux tables migrées et fausse pour celle qui
+porte l'adresse.
+
+**L'arbitrage ne change pas** : différer reste bon, et c'est même *plus* vrai
+maintenant — tant que le slug ne bouge pas, rien ne casse. Ce qui change, c'est
+que le renommage n'est **pas gratuit** : il exige de mettre à jour cette ligne
+dans le même geste.
+
+**Contre-mesure non engagée** : FK `site_slug` → `sites(slug)` en
+`ON UPDATE CASCADE`, ou bascule vers `site_id` comme pour les deux autres
+tables. La seconde est la bonne par la règle du propriétaire — « un
+identifiant ne change jamais, un nom change » — mais elle touche le proxy, qui
+résout par slug. **Non chiffrée, hors chantier A2.**
+
+**Statut** : 🟠 **OUVERT** — mesuré, conséquence nommée, correction non engagée
 
 ### GEN-D034 — Deux attendus faux dans MON bloc de vérification ont fait passer une application RÉUSSIE pour un échec
 
