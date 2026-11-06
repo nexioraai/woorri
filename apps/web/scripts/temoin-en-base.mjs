@@ -110,10 +110,34 @@ export async function avecTemoin({ table = 'app_generations', champs = {}, mesur
     // ② LE RETRAIT A LIEU MÊME SI LA MESURE A JETÉ — et il est VÉRIFIÉ :
     // annoncer un retrait sans le relire serait exactement le genre
     // d'affirmation que le protocole interdit.
+    //
+    // ── CORRECTION DU 2026-11-06 (GEN-D037 ③). CE BLOC MENTAIT.
+    //
+    // `reste.error` n'était JAMAIS consulté. Une relecture en ÉCHEC rend
+    // `data: null` — exactement comme une relecture RÉUSSIE sur une ligne
+    // disparue. Les deux états empruntaient donc la branche « retiré ».
+    //
+    // DÉMONTRÉ, pas raisonné : `fetch` intercepté pour rendre 503 sur la
+    // seule relecture de vérification, sur CE code, le 2026-11-06 à
+    // 21:29:26Z. Résultat AVANT correction : alerte muette, et le journal
+    // imprimant « retiré 4fcb7d4f-… » sans avoir rien vérifié. Un témoin
+    // pouvait donc survivre sur une table de VRAIS CLIENTS pendant que la
+    // trace jurait le contraire.
+    //
+    // La règle derrière : une absence CONSTATÉE et une absence FAUTE DE
+    // LECTURE ne doivent jamais se ressembler. Cette garde ne peut être que
+    // plus bruyante, jamais plus silencieuse.
     const del = await sb.from(table).delete().eq('id', id).eq('owner_id', PROPRIETAIRE_TEMOIN)
     const reste = await sb.from(table).select('id').eq('id', id).maybeSingle()
-    if (del.error !== null || reste.data !== null) {
-      journal('⚠ RETRAIT RATÉ — LIGNE SURVIVANTE', `${id} : ${del.error?.message ?? 'relecture non nulle'}`)
+
+    const cause =
+      del.error !== null ? `SUPPRESSION REFUSÉE : ${del.error.message}`
+      : reste.error !== null ? `VÉRIFICATION IMPOSSIBLE — la relecture a échoué (${reste.error.code ?? '?'} ${reste.error.message}). LA LIGNE EST D'ÉTAT INCONNU.`
+      : reste.data !== null ? 'LIGNE TOUJOURS PRÉSENTE après suppression'
+      : null
+
+    if (cause !== null) {
+      journal('⚠ RETRAIT RATÉ — VÉRIFIER À LA MAIN', `${table} / ${id} : ${cause}`)
     } else {
       journal('retiré', id)
     }

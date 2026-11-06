@@ -359,13 +359,40 @@ difficile.
 séparément et remontent comme valeur obtenue (`LECTURE RATÉE <code>`,
 `RELECTURE IMPOSSIBLE <code>`), jamais fondues dans un zéro.
 
-**NON corrigé, délibérément** : ③. `temoin-en-base.mjs` est une garde
-PARTAGÉE, posée sur arbitrage du propriétaire le 2026-11-01, et employée par
-d'autres mesures. La modifier au milieu du lot A2 serait exactement le geste
-unilatéral que ce protocole interdit. Le correctif tient en une ligne —
-consulter `reste.error` — et attend un arbitrage.
+**③ CORRIGÉ le 2026-11-06 sur ordre du propriétaire** — « la correction ne
+peut rendre cette garde que plus bruyante, jamais plus silencieuse. Mais ne la
+corrige pas par raisonnement : force une relecture en échec et montre que
+l'alerte se déclenche vraiment. »
 
-**Statut** : 🟢 **①② CORRIGÉS** · 🔴 **③ OUVERT, dans une garde de production**
+Instrument versionné avec la mesure : `scripts/prouver-garde-temoin.mjs`.
+`fetch` intercepté, la suppression passe, **seule la relecture reçoit une
+erreur**.
+
+```
+code d'origine (HEAD)  →  alerte MUETTE, et le journal imprime « retiré »
+code corrigé           →  alerte, avec la cause exacte
+```
+
+#### Deux trouvailles DANS la démonstration, et la première l'invalidait
+
+**(a) UN 5xx NE SIMULE PAS UNE PANNE : supabase-js REJOUE.** Première
+injection, 503. La trace montre `#4 GET … ← TUÉE (503)` puis **`#5` le MÊME
+GET en 200**, et `reste.status = 200`. L'alerte restait muette **pour une
+autre raison que le défaut**. Ma première « démonstration » ne démontrait
+rien — le client guérissait la panne que je croyais injecter. Une injection
+dont on ne vérifie pas l'effet est une mutation sans `assert`. Un **4xx** n'est
+pas rejoué : `403 / 42501`, qui est aussi la panne réaliste (privilège retiré
+en cours de route).
+
+**(b) `\b` NE BORNE PAS UN MOT ACCENTUÉ.** En JavaScript, `\b` se fonde sur
+`[A-Za-z0-9_]` ; **`é` n'en fait pas partie**, donc `/\bretiré\b/` est
+TOUJOURS faux. Mon indicateur annonçait « le journal ne dit pas retiré » sur un
+journal qui imprimait `retiré 40e17a7c…`. J'avais **resserré** une
+vérification correcte (`/retiré/`) et je l'avais rendue aveugle. Même famille
+que l'ancre de forme convertie en propriété sans vérifier qu'elle couvre la
+même perte.
+
+**Statut** : 🟢 **①②③ CORRIGÉS**, ③ démontré sur le code réel
 
 ### DEBT-073 — FERMÉE PAR RICOCHET pour deux vues sur trois, et la mesure dit laquelle reste seule
 
@@ -427,11 +454,32 @@ maintenant — tant que le slug ne bouge pas, rien ne casse. Ce qui change, c'es
 que le renommage n'est **pas gratuit** : il exige de mettre à jour cette ligne
 dans le même geste.
 
-**Contre-mesure non engagée** : FK `site_slug` → `sites(slug)` en
-`ON UPDATE CASCADE`, ou bascule vers `site_id` comme pour les deux autres
-tables. La seconde est la bonne par la règle du propriétaire — « un
-identifiant ne change jamais, un nom change » — mais elle touche le proxy, qui
-résout par slug. **Non chiffrée, hors chantier A2.**
+**LA RÉPARATION, ÉCRITE ICI POUR QUE PERSONNE N'AIT À LA REDÉRIVER.**
+Arbitrage du propriétaire, 2026-11-06 : **différer, confirmé** — et la
+réparation se note à côté du défaut.
+
+```sql
+-- Posable tant que la table est petite ; `on update cascade` fait suivre
+-- l'adresse quand le slug change, au lieu de l'orpheliner en silence.
+alter table public.sites_sous_domaines
+  add constraint sites_sous_domaines_site_slug_fkey
+  foreign key (site_slug) references public.sites (slug)
+  on update cascade on delete cascade;
+```
+
+`ON UPDATE CASCADE` est le point qui compte : sans lui, le renommage serait
+soit REFUSÉ (et l'on croirait à un bug), soit permis en laissant l'adresse
+morte. Avec lui, le renommage devient réellement gratuit — ce que la prémisse
+du propriétaire supposait déjà.
+
+`ON DELETE CASCADE` reprend la sémantique déjà en place ailleurs : un site
+supprimé emporte ses rattachements.
+
+**Pourquoi PAS la bascule vers `site_id`**, pourtant plus conforme à la règle
+« un identifiant ne change jamais » : le proxy résout par **slug** (mesuré :
+`url.pathname = /sites/${slug}${pathname}`). Basculer la table imposerait une
+jointure sur le chemin chaud de CHAQUE requête entrante. La FK obtient le même
+résultat sans toucher le proxy. **Non chiffrée, hors chantier A2.**
 
 **Statut** : 🟠 **OUVERT** — mesuré, conséquence nommée, correction non engagée
 

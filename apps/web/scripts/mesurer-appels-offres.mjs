@@ -117,6 +117,42 @@ for (const [role, s] of [['publié', publie], ['non publié', brouillon], ['arch
 }
 if (!publie) { console.error('\naucun site publié : rien de mesurable'); process.exit(1) }
 
+// ── PRÉALABLE : LA VUE EXISTE-T-ELLE POUR L'API, ET PAS SEULEMENT EN BASE ?
+//
+// `pg_views` dit la vérité du MOTEUR. PostgREST, lui, sert depuis un CACHE DE
+// SCHÉMA : une vue créée et non rechargée existe en base et reste
+// INATTEIGNABLE par tout client — PGRST205. Le bloc de vérification SQL de
+// `appels_offres.sql` compte `pg_views` et ne peut donc PAS voir ce cas.
+//
+// Mesuré le 2026-11-06 : avant la création de la vue, les points 13 à 19
+// rendaient tous PGRST205. Ils étaient rouges pour la bonne raison — mais le
+// même code serait rendu par une vue EXISTANTE et non publiée par l'API, et
+// rien ne distinguerait les deux. D'où ce préalable, qui échoue BRUYAMMENT
+// plutôt que de laisser sept points rougir en désignant la mauvaise cause.
+{
+  const { createClient } = await import('@supabase/supabase-js')
+  const { readFileSync: lire } = await import('node:fs')
+  const ev = {}
+  for (const l of lire('.env.local', 'utf8').split('\n')) {
+    const m = /^([A-Z0-9_]+)=(.*)$/.exec(l.trim()); if (m) ev[m[1]] = m[2].replace(/^["']|["']$/g, '')
+  }
+  const cli = createClient(ev.NEXT_PUBLIC_SUPABASE_URL, ev.NEXT_PUBLIC_SUPABASE_ANON_KEY, { auth: { persistSession: false } })
+  const sonde = await cli.from('appels_offres_public').select('reference').limit(1)
+  if (sonde.error?.code === 'PGRST205') {
+    console.log('\n' + '█'.repeat(66))
+    console.log('█  LA VUE N’EST PAS VUE PAR L’API — PGRST205.')
+    console.log('█  Elle peut exister en base : aucun client ne peut l’atteindre.')
+    console.log('█  Recharger le cache de schéma PostgREST, puis relancer.')
+    console.log('█'.repeat(66) + '\n')
+    process.exit(1)
+  }
+  if (sonde.error) {
+    console.log(`\n⚠ la vue répond ${sonde.error.code} — ${sonde.error.message.slice(0, 60)}\n`)
+  } else {
+    console.log('\n  préalable : la vue est ATTEIGNABLE PAR L’API (pas seulement présente en base)')
+  }
+}
+
 await balayer()
 console.log('\n═══ 21 POINTS ═══\n')
 try {
