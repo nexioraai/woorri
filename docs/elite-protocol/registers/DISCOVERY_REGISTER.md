@@ -272,6 +272,141 @@ CONTENU en base, retirables depuis le tableau de bord. Zéro heure.
 
 ---
 
+### GEN-D031 — Mes 14 points verts mesuraient une convention, pas un invariant
+
+**La phrase est au registre telle quelle, à la demande du propriétaire.**
+
+`appels_offres`. J'ai bâti la lecture publique sur **une policy de table** :
+`grant select to anon` + `using (publie = true)`. Puis j'ai annoncé 14 points
+verts. Les 14 étaient justes sur ce qu'ils testaient. Aucun ne testait le
+**site**.
+
+**Mesuré le 2026-11-06**, sur un site réel non publié (`eclat-style`,
+`published = false`, non archivé) : un avis `publie = true` rattaché à ce site
+est **lu par `anon`**. Le blog du même site, interrogé en même temps par le
+même client : **0 article**.
+
+| | `appels_offres` (mon patron) | `site_blog_posts` (patron de la maison) |
+|---|---|---|
+| `anon` sur la TABLE | `SELECT` accordé | `42501` sur les quatre verbes |
+| l'invariant | `publie = true`, écrit dans une policy | « article publié **ET** site publié **ET** site non archivé », écrit dans la **définition de la vue** |
+| un site non publié | ses avis sont **visibles** | ses articles sont **invisibles** |
+
+**La cause n'est pas l'oubli d'une clause** — c'est l'endroit où l'invariant
+vit. `sites_public` n'expose **ni `published` ni `archived_at`** : une vue qui
+s'y joint **hérite** la clause et il devient *syntaxiquement impossible* de la
+réécrire en aval. Une policy, elle, se recopie — donc s'oublie. La phrase du
+fichier de la maison le dit : « Une régression de ce fichier ne peut pas
+exposer un brouillon ni le contenu d'un site archivé : **la base ne les rend
+pas**. C'est ce qui distingue un invariant d'une convention. »
+
+**Ce qui tenait quand même** : `INSERT`, `UPDATE`, `DELETE` → `42501` les
+trois. Le trou était exactement, et seulement, le chemin de lecture.
+
+**Contre-mesure** : `appels_offres.sql` — plus aucun privilège à `anon` sur la
+table, vue `appels_offres_public` en `security_invoker = false` jointe à
+`sites_public`. Écrit, **non encore appliqué**.
+
+**Statut** : 🟠 **TROU MESURÉ, CORRECTIF ÉCRIT, APPLICATION EN ATTENTE**
+
+### GEN-D032 — Une table qui n'est pas un fichier est hors de portée de TOUS les cliquets
+
+**C'est la découverte qui explique GEN-D031**, et elle vaut plus que lui.
+
+**Mesuré le 2026-11-06** : `grep -rl "appels_offres" .` sur tout le dépôt
+(suivi et non suivi, hors `node_modules`) → **aucun fichier**. `git status`
+→ **propre**. Aucun commit local non poussé.
+
+Donc : la table existe **en base et nulle part ailleurs**. Le SQL qui l'a
+créée n'a jamais été un fichier — il n'a existé que comme **texte dans mes
+messages**, que le propriétaire a collé dans l'éditeur Supabase. Et les
+14 points étaient un **script jetable**, aujourd'hui disparu : *il n'y a rien
+à rejouer*.
+
+**Pourquoi aucun instrument ne pouvait le voir.** La maison a construit les
+bons cliquets — et ils lisent tous des **fichiers** :
+
+- `sqlViewPrivileges.test.ts` (DEBT-073) énumère `supabase/sql/*.sql` et exige
+  `REVOKE` avant `GRANT` sur chaque vue. Son propre en-tête le dit : « il ne
+  lit pas la base — il lit les FICHIERS de `supabase/sql/`, **qui sont la
+  seule source versionnée de ce que le projet déclare déployer** » ;
+- `siteFreshness.test.ts` compare `security_invoker` à `sites_public_view.sql` ;
+- `staleSqlObsolescence.test.ts`, `views_privileges_hardening.sql`, idem.
+
+Aucun n'a failli. `appels_offres` **n'était dans le dénominateur d'aucun**.
+Un objet hors fichier est hors mesure, par construction — pas par défaut
+d'instrument.
+
+**La maison avait déjà nommé cette dette** : `site_blog_posts.sql` porte en
+en-tête « rien de ce lot n'était versionné — c'est précisément la lacune que
+**DEBT-074** nommait, et que ce fichier ferme. » Je l'ai rouverte.
+
+**Corollaire, et c'est la règle à garder** : un relevé ne vaut que si
+l'instrument qui le produit **entre dans le dépôt avec lui**. Un chiffre
+annoncé depuis un script écrit à côté n'est pas un relevé, c'est un souvenir.
+
+**Contre-mesure** : deux fichiers dans `supabase/sql/` — ce qui les fait
+entrer d'office dans le dénominateur de DEBT-073 — et un cliquet versionné qui
+remplace le script perdu.
+
+**Reste ouvert** : rien ne compare la **base en ligne** à `supabase/sql/`. Un
+objet créé à la main resterait invisible. `contraintes_vivantes.sql` fait
+exactement cela pour les contraintes d'**une** table nommée ; personne ne
+l'exécute sur l'ensemble.
+
+**Statut** : 🟠 **CLASSE OUVERTE** — la cause est traitée pour `appels_offres`,
+pas pour la prochaine table
+
+### GEN-D033 — Une projection étroite sur une colonne absente servait 2 articles en `noindex` — réparé PAR ACCIDENT
+
+`src/app/blog/[slug]/page.tsx:23`, blog de la **plateforme** (`blog_posts`).
+
+```ts
+.select("title, excerpt, content, cover_image")
+```
+
+**Mesuré** : PostgREST rend **`42703`** sur une colonne inexistante — il ne la
+rend pas nulle, il refuse la requête entière. Vérifié en nommant une colonne
+inventée sur cette table même.
+
+Donc tant que `excerpt` n'existait pas sur `blog_posts`, `article` valait
+`null`, et `generateMetadata` renvoyait, pour **chaque** article publié :
+`title: "Article introuvable — Deribfy"` et `robots: { index: false }`. Le
+corps de la page, lui, fait son propre `select("*")` et s'affichait
+normalement — **l'article était lisible, et son en-tête disait qu'il n'existait
+pas.**
+
+**Comment la colonne est arrivée** : par **mon erreur du 2026-11-06**. Je
+visais le blog multi-tenant et j'ai fait appliquer mon SQL à `blog_posts`, la
+mauvaise table. Trois colonnes inutilisées ont été retirées ; `excerpt` a été
+gardée *parce qu'un lecteur réel la nommait*. Je n'avais pas vu que ce lecteur
+**échouait** faute d'elle.
+
+**Mesuré à l'écran le 2026-11-06**, `https://www.deribfy.com/blog/creer-un-site-dropshipping-rapidement` :
+HTTP 200 · `<title>Créer un site dropshipping rapidement : le guide complet
+pour entrepreneurs — Blog Deribfy</title>` · `robots: index, follow` ·
+**0 occurrence de `noindex`**. `excerpt` est `NULL` sur les 2 articles, et le
+repli en cascade (`?? content`) écrit la description — comportement voulu.
+
+**Ce que je ne peux pas prouver** : l'état d'avant. Je n'ai pas d'observation
+de l'écran antérieure à mon ajout. Le mécanisme (`42703`) est **mesuré** ;
+l'état d'avant en est **déduit**, pas constaté.
+
+**Même famille que DEBT-068**, que le fichier cite déjà en commentaire : une
+garde lisant une colonne jamais demandée. Ici le miroir — un lecteur demandant
+une colonne jamais créée.
+
+**Reste ouvert** : combien d'autres projections étroites nomment une colonne
+absente ? Un `42703` ne casse pas l'écran, il vide une variable — et le repli
+le masque. Aucun cliquet ne compare les colonnes nommées dans un `.select()`
+aux colonnes réelles. `contextResolvesRealColumns.test.ts` le fait pour **une**
+route.
+
+**Statut** : 🟢 **FERMÉ pour les 2 articles** (mesuré à l'écran) · 🟠 **classe
+ouverte**
+
+---
+
 ## APP-D001 — `field.unique` déclaré mais jamais traduit en contrainte SQL
 
 | | |

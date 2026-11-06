@@ -54,6 +54,9 @@ describe('DEBT-073 — toute vue publique de `supabase/sql/` est bornée en écr
     expect(CREATIONS.length).toBeGreaterThanOrEqual(3);
     expect(CREATIONS.map((c) => c.vue)).toContain('sites_public');
     expect(CREATIONS.map((c) => c.vue)).toContain('site_blog_posts_public');
+    // Ajout du 2026-11-06 (GEN-D032) : une vue ABSENTE du denominateur est une
+    // vue non gardee, et le vert ne le dirait pas. Verifie par mutation.
+    expect(CREATIONS.map((c) => c.vue)).toContain('appels_offres_public');
   });
 
   it('chaque création de vue est accompagnée d’un `REVOKE … FROM anon, authenticated`', () => {
