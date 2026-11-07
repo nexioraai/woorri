@@ -8,6 +8,8 @@ import {
   type Site,
 } from '@/app/sites/[slug]/themes/shared';
 import EditorialTheme from '@/app/sites/[slug]/themes/EditorialTheme';
+import { avisDuSite } from '@/app/sites/[slug]/themes/avisDuSite';
+import { fetchAvisEntries } from '@/app/sites/[slug]/appels-offres/fetchAvis';
 import NoirTheme from '@/app/sites/[slug]/themes/NoirTheme';
 import VifTheme from '@/app/sites/[slug]/themes/VifTheme';
 import AuroraTheme from '@/app/sites/[slug]/themes/AuroraTheme';
@@ -35,6 +37,21 @@ export default function PreviewPage() {
   const { slug } = useParams<{ slug: string }>();
   const router = useRouter();
   const [site, setSite] = useState<Site | null>(null);
+  // ── A2 d2 — L'APERÇU NE DOIT PAS MENTIR.
+  //
+  // Arbitrage du propriétaire, 2026-11-06 : « un écart entre l'aperçu et le
+  // servi nous a coûté deux heures ce matin — l'aperçu affichait une barre du
+  // bas que l'œuvre servie n'avait pas, et j'ai accusé le mauvais composant.
+  // Fail-closed ou pas, un aperçu qui ment est un instrument de plus qui
+  // ment. »
+  //
+  // MÊME LECTEUR QUE LE RENDEUR PUBLIC. `fetchAvisEntries` passe par la VUE
+  // `appels_offres_public`, jointe à `sites_public` : l'aperçu d'un site NON
+  // PUBLIÉ ne verra donc aucun avis, et n'affichera pas la section. Ce n'est
+  // pas un écart de plus — c'est le MÊME invariant appliqué, et le servi se
+  // comporterait pareil. Écrit ici pour que personne ne le prenne pour un
+  // bogue.
+  const [hasAvis, setHasAvis] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -46,6 +63,9 @@ export default function PreviewPage() {
       fetchSitePreview(slug, data.user.email!).then((s) => {
         setSite(s);
         setLoading(false);
+        // L'identifiant n'existe qu'une fois le site résolu. Une panne de
+        // lecture laisse `hasAvis` à `false` : fail-closed, comme le défaut.
+        if (s?.id) fetchAvisEntries(s.id).then((e) => setHasAvis(avisDuSite(e).hasAvis));
       });
     });
   }, [slug, router]);
@@ -85,7 +105,11 @@ export default function PreviewPage() {
       </div>
       <PromoBanner slug={site.slug} primary={primary} mode={site.mode} labels={cartLabels} currency={resolveShopCurrency(site.products)} />
       <CartShell primary={primary} labels={cartLabels} slug={site.slug} mode={site.mode} products={site.products} shippingFlat={site.shipping_flat} variant={key === 'noir' ? 'dark' : 'light'}>
-        <Theme site={site} />
+        <Theme
+          site={site}
+          hasAvis={hasAvis}
+          host={typeof window === 'undefined' ? null : window.location.host}
+        />
         {site.mode === 3 && showsVisitorCatalogSearch(site.dropship_type) && site.theme !== 'aurora' && <CatalogSearch slug={site.slug} primary={primary} lang={site.lang} theme={key as ThemeKey} dropshipType={site.dropship_type} />}
       </CartShell>
       <ScrollRevealInit />
