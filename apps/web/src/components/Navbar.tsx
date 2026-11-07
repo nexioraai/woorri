@@ -169,12 +169,12 @@ export default function Navbar() {
   const removeSectionItem = (si: number, ii: number) => {
     if (!site) return;
     const sections = [...(site.sections || [])];
-    sections[si] = { ...sections[si], items: (sections[si].items || []).filter((_: any, i: number) => i !== ii) };
+    sections[si] = { ...sections[si], items: (sections[si].items || []).filter((_: unknown, i: number) => i !== ii) };
     setSite({ ...site, sections });
   };
   const removeSection = (si: number) => {
     if (!site) return;
-    setSite({ ...site, sections: (site.sections || []).filter((_: any, i: number) => i !== si) });
+    setSite({ ...site, sections: (site.sections || []).filter((_: unknown, i: number) => i !== si) });
     setCurrentSection(null);
   };
 
