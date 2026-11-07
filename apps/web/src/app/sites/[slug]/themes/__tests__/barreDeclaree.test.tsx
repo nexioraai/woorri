@@ -43,6 +43,7 @@ function makeSite(): Site {
     sections: [{ name: 'Nos activités', items: [{ title: 'Approvisionnement', description: 'd' }] }],
     products: [], gallery: ['/g1.jpg'],
     faq: [{ question: 'Comment commander ?', answer: 'Par bon de commande.' }],
+    publishes_tenders: true,
   } as unknown as Site;
 }
 
@@ -82,6 +83,20 @@ describe('LOT 3 — la barre du haut quand le site déclare ses pages', () => {
       expect(barre).toContain('#contact');
       expect(barre).toContain('Qui sommes-nous');
       expect(barre).toContain('Nos activités');
+    });
+
+    it(`${nom} : « Appels d'offres » vient APRÈS les pages déclarées`, () => {
+      // Ordre arrêté avec le propriétaire le 7 novembre 2026 :
+      // Accueil · pages déclarées ▾ · Appels d'offres · Contact.
+      const barre = barreDuHaut(rendre(makeSite(), MENU_CPA));
+      const accueil = barre.indexOf('#home');
+      const declaree = barre.indexOf('Qui sommes-nous');
+      const appels = barre.indexOf('appels-offres');
+      const contact = barre.indexOf('#contact');
+      expect(appels, "le lien appels d'offres doit être servi").toBeGreaterThan(-1);
+      expect(accueil).toBeLessThan(declaree);
+      expect(declaree).toBeLessThan(appels);
+      expect(appels).toBeLessThan(contact);
     });
 
     it(`${nom} : les SECTIONS masquées de la barre restent sur la page`, () => {

@@ -121,10 +121,10 @@ export default function VifTheme({ site, hasAvis = false, host = null, menu = []
             ))}
             {site.faq && site.faq.length > 0 && !hidden('FAQ') && <a href="#faq" className="hover:opacity-100 transition-opacity">{t.nav.faq}</a>}
           </>)}
-            {!hidden('AppelsOffres') && <LienAppelsOffres site={site} host={host} className={"hover:opacity-100 transition-opacity"} />}
             {/* LOT 2 — les pages DÉCLARÉES, avec leurs sous-menus. Elles
                 précèdent Contact, qui reste la dernière entrée. */}
             <MenuDeclare site={site} host={host} entrees={menu} className={"hover:opacity-100 transition-opacity"} />
+            {!hidden('AppelsOffres') && <LienAppelsOffres site={site} host={host} className={"hover:opacity-100 transition-opacity"} />}
             {!hidden('Contact') && <a href="#contact" className="hover:opacity-100 transition-opacity">{t.nav.contact}</a>}
           </nav>
         </div>

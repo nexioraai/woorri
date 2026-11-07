@@ -198,8 +198,8 @@ derniers échouent en silence. Voir GEN-D042 et GEN-D043.
 | ✅ | **L'éditeur de pages** est servi sur `/edit` (commit `2c4cf42b`, déployé, `/api/version` = `2c4cf42`) |
 | ✅ | **Le fond blanc** des sous-pages — mesuré à l'adresse publique : `background:#ffffff` sur `/catalogue/commander` |
 | ✅ | **Le menu mobile** liste les pages déclarées — 5 occurrences de chaque entrée dans le HTML servi |
-| 🔄 | **La barre réduite aux 7 entrées** — écrite et prouvée par cliquet bidirectionnel (16 points, mutation rougit), **pas encore déployée** |
-| ⬜ | **TPA** — en attente de la réponse de la CPA ; bloque `/qui-sommes-nous/etablissements` |
+| 🔄 | **La barre réduite aux 7 entrées** — écrite et prouvée par cliquet bidirectionnel (16 points, mutation rougit), **pas encore déployée** · ordre arrêté : `Accueil · pages déclarées ▾ · Appels d'offres · Contact` |
+| ✅ | **TPA abandonné** — 7 novembre 2026, le propriétaire a reverifié auprès de la CPA : sigle mal compris par l'agent, aucune conséquence sur le contenu. `/qui-sommes-nous/etablissements` n'est plus bloqué. |
 
 **Ce qui n'a PAS été employé, et pourquoi.** `hidden_sections` existait déjà,
 mais `hidden('About')` est lu deux fois par thème : il retire le lien *et la
@@ -209,3 +209,8 @@ GEN-D046 au registre.
 **Une dette ouverte par nous, ce matin.** Le retrait de l'ancien bloc « pages »
 de `/edit` n'a pas retiré sa LECTURE : 127 blocs sur 34 sites sont encore
 affichés et ne sont plus retirables. Voir GEN-D045. La CPA n'est pas touchée.
+
+**Les dettes GEN-D044 / GEN-D045 sont REPORTÉES par décision du propriétaire**
+(7 novembre 2026) : « fais les seulement si c'est nécessaire, on reste
+concentré ». Elles restent ouvertes au registre, non traitées. Aucune n'affecte
+la CPA.

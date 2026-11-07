@@ -287,10 +287,10 @@ export default function NoirTheme({ site, hasAvis = false, host = null, menu = [
             ))}
             {site.faq && site.faq.length > 0 && !hidden('FAQ') && <NavLink href="#faq">{t.nav.faq}</NavLink>}
           </>)}
-            {!hidden('AppelsOffres') && <LienAppelsOffres site={site} host={host} />}
             {/* LOT 2 — les pages DÉCLARÉES, avec leurs sous-menus. Elles
                 précèdent Contact, qui reste la dernière entrée. */}
             <MenuDeclare site={site} host={host} entrees={menu} />
+            {!hidden('AppelsOffres') && <LienAppelsOffres site={site} host={host} />}
             {!hidden('Contact') && <NavLink href="#contact">{t.nav.contact}</NavLink>}
           </nav>
         </div>
