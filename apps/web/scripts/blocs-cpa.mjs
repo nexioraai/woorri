@@ -19,9 +19,7 @@ const P = {
    "Contrôler la qualité de chaque lot avant sa mise en stock",
    "Conserver les produits dans des conditions maîtrisées, chaîne du froid comprise",
    "Distribuer vers les structures sanitaires selon un calendrier connu à l'avance"]},
- {type:'liens',titre:'Aller plus loin',items:[
-   {libelle:'Notre histoire',chemin:'qui-sommes-nous/histoire'},{libelle:'Nos missions',chemin:'qui-sommes-nous/missions'},
-   {libelle:'Organisation et gouvernance',chemin:'qui-sommes-nous/gouvernance'},{libelle:'Chiffres clés',chemin:'qui-sommes-nous/chiffres-cles'}]}],
+],
 
 'activites': [
  {type:'texte',texte:"Les activités de la Centrale forment une chaîne continue : ce qui est acheté doit être contrôlé, ce qui est contrôlé doit être conservé, et ce qui est conservé doit arriver à temps. Une rupture à n'importe quel maillon se voit au comptoir d'une pharmacie de district."},
@@ -31,10 +29,7 @@ const P = {
    {titre:"Contrôle qualité",texte:"Vérification documentaire et analyse des lots avant acceptation."},
    {titre:"Stockage",texte:"Mise en stock sous conditions maîtrisées, chaîne du froid séparée."},
    {titre:"Distribution",texte:"Préparation des commandes et livraison selon le calendrier régional."}]},
- {type:'liens',titre:'Le détail de chaque activité',items:[
-   {libelle:'Approvisionnement et achats',chemin:'activites/approvisionnement'},{libelle:'Assurance qualité',chemin:'activites/qualite'},
-   {libelle:'Stockage et conservation',chemin:'activites/stockage'},{libelle:'Distribution et logistique',chemin:'activites/distribution'},
-   {libelle:'Programmes de santé publique',chemin:'activites/programmes'}]}],
+],
 
 'catalogue': [
  {type:'texte',texte:"Le catalogue rassemble les produits que la Centrale met à disposition des structures sanitaires agréées. Il suit la liste nationale des médicaments essentiels et il est révisé à chaque campagne d'achat."},
@@ -46,7 +41,7 @@ const P = {
    ['Solutés et perfusions','Sérum physiologique, Ringer','Poche, flacon']],
    note:"Le catalogue détaillé, avec références et conditionnements, est remis aux structures agréées."},
  {type:'encadre',titre:'Qui peut commander',texte:"Les commandes sont réservées aux structures sanitaires agréées. Une structure non référencée doit d'abord se faire enregistrer auprès de la direction des achats."},
- {type:'appel',libelle:'Passer une commande',chemin:'catalogue/commander',texte:"La marche à suivre, les pièces à joindre et les délais de traitement."}],
+ {type:'encadre',titre:'Pour commander',texte:"La marche à suivre, les pièces à joindre et les délais de traitement sont détaillés sur la page « Passer une commande » ci-dessous."}],
 
 'fournisseurs': [
  {type:'texte',texte:"La Centrale achète par mise en concurrence. Tout fournisseur qui remplit les conditions techniques et réglementaires peut se porter candidat aux consultations publiées."},
@@ -55,9 +50,7 @@ const P = {
    {titre:"Déposer la demande d'enregistrement",texte:"Auprès de la direction des achats, qui en accuse réception."},
    {titre:"Instruction du dossier",texte:"Vérification de la conformité réglementaire des produits proposés."},
    {titre:"Répondre aux consultations",texte:"Un fournisseur enregistré est informé des appels d'offres de son domaine."}]},
- {type:'liens',titre:'Les pages utiles',items:[
-   {libelle:'Devenir fournisseur',chemin:'fournisseurs/enregistrement'},{libelle:"Conditions générales d'achat",chemin:'fournisseurs/conditions'},
-   {libelle:'Documents à télécharger',chemin:'fournisseurs/documents'},{libelle:'Questions fréquentes',chemin:'fournisseurs/faq'}]},
+
  {type:'appel',libelle:"Voir les appels d'offres en cours",chemin:'appels-offres'}],
 
 'qui-sommes-nous/histoire': [
@@ -94,6 +87,18 @@ for (const [depuis, blocs] of Object.entries(P))
   for (const b of blocs)
     for (const c of b.type === 'appel' ? [b.chemin] : (b.type === 'liens' ? b.items.map((i) => i.chemin) : []))
       if (!EXISTE.has(c) && !HORS_PAGES.has(c)) morts.push(`/${depuis} → /${c}`)
+// GARDE — LE MOTEUR LISTE DEJA LES SOUS-PAGES EN BAS DE CHAQUE PAGE.
+// Un bloc « liens » ou « appel » qui vise un ENFANT DIRECT le repete : sur
+// /qui-sommes-nous on lisait « Notre histoire » DEUX FOIS. Le defaut a ete vu
+// a l'ecran par le proprietaire, pas par un test — d'ou cette garde.
+const doublons = []
+for (const [depuis, blocs] of Object.entries(P))
+  for (const b of blocs)
+    for (const c of b.type === 'appel' ? [b.chemin] : (b.type === 'liens' ? b.items.map((i) => i.chemin) : []))
+      if (c.startsWith(depuis + '/') && !c.slice(depuis.length + 1).includes('/')) doublons.push(`/${depuis} → /${c}`)
+if (doublons.length) { console.log('🔴 LIENS QUI REPETENT UNE SOUS-PAGE DEJA LISTEE :'); doublons.forEach((d) => console.log('   ' + d)); process.exit(1) }
+console.log('🟢 aucun lien ne repete une sous-page')
+
 if (morts.length) { console.log('🔴 LIENS MORTS, rien n’a été écrit :'); morts.forEach((m) => console.log('   ' + m)); process.exit(1) }
 console.log(`🟢 tous les liens désignent une page réelle (${EXISTE.size} pages en base)\n`)
 

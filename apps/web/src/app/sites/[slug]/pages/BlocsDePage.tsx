@@ -32,8 +32,8 @@ export default function BlocsDePage({ blocs, base, primary = '#1e4d8c' }: { bloc
         switch (b.type) {
           case 'titre':
             return b.niveau === 3
-              ? <h3 key={k} style={{ fontSize: 21, fontWeight: 700, color: ENCRE, margin: '10px 0 0' }}>{b.texte}</h3>
-              : <h2 key={k} style={{ fontSize: 27, fontWeight: 700, color: ENCRE, margin: '18px 0 0', paddingBottom: 10, borderBottom: `2px solid ${primary}` }}>{b.texte}</h2>
+              ? <h3 key={k} style={{ fontSize: 21, fontWeight: 700, color: primary, margin: '10px 0 0' }}>{b.texte}</h3>
+              : <h2 key={k} style={{ fontSize: 27, fontWeight: 700, color: primary, margin: '18px 0 0', paddingBottom: 10, borderBottom: `2px solid ${primary}` }}>{b.texte}</h2>
 
           case 'texte':
             return <p key={k} style={{ fontSize: 17, lineHeight: 1.75, color: ENCRE, margin: 0 }}>{b.texte}</p>
