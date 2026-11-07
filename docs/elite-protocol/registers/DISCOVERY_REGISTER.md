@@ -345,6 +345,53 @@ hors de la sonde qui venait de nettoyer. Témoins vivants **12 secondes**
 
 **Non-fuite** : 8 autres sites servis, **tous réellement lus**, zéro illisible.
 
+### PRINCIPE P-02 — La meilleure garantie n'est pas une règle respectée, c'est une impossibilité
+
+**Posé par le propriétaire le 2026-11-06 : « c'est le seul type de garantie
+qu'on n'ait pas à surveiller. »**
+
+> Un composant **synchrone** ne PEUT PAS apprendre un fait qui exige une
+> requête. Ce n'est pas une convention qu'on respecte — **le langage
+> l'interdit.**
+
+**Le cas qui l'a produit (A2 d0/e0)** : faire parvenir aux thèmes « ce site
+publie des avis ». Les quatre thèmes sont
+`export default function X({ site }: { site: Site })` — synchrones. Connaître
+les avis exige un `await` ; appeler `headers()` aussi. **Un thème ne peut donc
+que RECEVOIR ces deux faits.** La route est unique sans qu'aucun cliquet n'ait
+à la surveiller, et sans qu'un développeur pressé puisse en ouvrir une
+seconde par mégarde.
+
+#### L'échelle des garanties, de la plus faible à la plus forte
+
+| | forme | ce qu'il faut pour qu'elle tienne |
+|---|---|---|
+| 1 | un **commentaire** | que quelqu'un le lise — `appels_offres.sql:123` affirmait un invariant que rien ne tenait |
+| 2 | une **convention** | que personne ne l'oublie — `ctaHref` recopié dans 4 thèmes, divergence déjà survenue |
+| 3 | un **cliquet** | qu'il voie ce qu'il prétend garder (P-01) et qu'on l'ait vu rougir |
+| 4 | une **impossibilité** | **rien** |
+
+**Deux autres impossibilités déjà posées ce jour-là**, reconnues après coup :
+
+- `sites_public` n'expose **ni `published` ni `archived_at`** : une vue qui s'y
+  joint hérite l'invariant et il devient *syntaxiquement impossible* de le
+  réécrire en aval (GEN-D031) ;
+- `appels_offres_public` a **deux relations dans son `FROM`** : PostgreSQL
+  refuse l'écriture **avant** tout privilège, et aucun `GRANT` égaré ne peut
+  l'ouvrir (GEN-D035, DEBT-073).
+
+Aucune des trois n'a demandé de surveillance.
+
+#### Comment l'appliquer
+
+**Avant d'écrire une règle, chercher la forme qui la rend impossible à
+enfreindre.** Un type qui refuse, une signature qui ne permet pas, une
+jointure qui bloque, une colonne qu'on n'expose pas. Quand on n'en trouve pas,
+descendre d'un cran **en le sachant** — et consigner qu'on a choisi le cran
+inférieur, au lieu de laisser croire que la garde est structurelle.
+
+**Statut** : 🟢 **PRINCIPE POSÉ**
+
 ### PRINCIPE P-01 — Un cliquet garde la règle, une sonde d'écran garde le rendu
 
 **Posé par le propriétaire le 2026-11-06, comme principe général et non comme
