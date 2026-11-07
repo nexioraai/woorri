@@ -112,16 +112,35 @@ un avis · un article · un produit · une province
 
 ---
 
-## 3 · DÉJÀ FAIT — au 2026-11-07
+## 3 · ÉTAT RÉEL — au 2026-11-07
 
-| | |
-|---|---|
-| ✅ | `/appels-offres` — liste, deux sections, états dérivés |
-| ✅ | `/appels-offres/<référence>` — 19 rubriques, dates prévisionnelles marquées |
-| ✅ | sécurité : vue `appels_offres_public`, aucune fuite inter-site, prouvée dans les deux sens |
-| ✅ | section d'accueil des avis (conditionnelle) + lien de menu (`publishes_tenders`) |
-| ✅ | suppression d'éléments et de sections dans `/edit` — **n'existait pas** |
-| ✅ | relevé de base du routage : 63 mesures sur 9 sites (27×200 / 36×404) |
+### La convention de cochage — elle n'est pas décorative
+
+| | sens | ce qu'il faut pour y avoir droit |
+|---|---|---|
+| ⬜ | **pas fait** | — |
+| 🔄 | **écrit, pas prouvé** | le code existe ; il n'est pas déployé, ou pas mesuré à l'écran servi |
+| ✅ | **FAIT, VÉRIFIÉ, REVÉRIFIÉ** | déployé · mesuré à l'adresse publique · **et confirmé une seconde fois, par un autre geste que celui qui l'a produit** |
+
+**Écrire du code ne coche rien.** Un cliquet vert ne coche rien non plus :
+il garde la RÈGLE, pas le RENDU (principe P-01). Une case ✅ exige la mesure
+à l'écran **servi**, puis sa confirmation indépendante.
+
+### L'état, honnêtement
+
+| | quoi | preuve |
+|---|---|---|
+| ✅ | `/appels-offres` — liste, deux sections, états dérivés | 26/26 à l'écran servi, et retrait reconfirmé à la main |
+| ✅ | `/appels-offres/<référence>` — 19 rubriques, dates prévisionnelles marquées | idem, 6 points sur le témoin « en préparation » |
+| ✅ | sécurité — vue `appels_offres_public`, aucune fuite inter-site | 21/21 en base **et** 26/26 à l'écran, dans les deux sens, 8 autres sites tous RÉELLEMENT lus |
+| ✅ | lien de menu `publishes_tenders` | 6/6 à l'écran servi, après les cinq gestes de la colonne |
+| ✅ | relevé de base du routage | 63 mesures sur 9 sites — 27×200 / 36×404 |
+| 🔄 | **section d'accueil des avis** | écrite et mesurée **en local**. Jamais vue en production : elle ne s'affiche qu'avec des avis, et il y en a **0**. |
+| 🔄 | **suppression d'éléments et de sections dans `/edit`** | écrite, `tsc` propre, **non poussée, non cliquée**. La preuve exige un clic sur du contenu réel et une relecture en base. |
+
+**Deux cases viennent d'être DÉCOCHÉES** en appliquant la convention : je les
+avais marquées faites alors qu'elles n'étaient qu'écrites. C'est exactement la
+confusion qui a fait croire pendant deux jours que le site avançait.
 
 ---
 
@@ -166,3 +185,4 @@ derniers échouent en silence. Voir GEN-D042 et GEN-D043.
 | date | quoi |
 |---|---|
 | 2026-11-07 | Création. Plan établi après lecture du cahier des charges et analyse en profondeur d'EPSS (8 pages, 3 niveaux). |
+| 2026-11-07 | **Convention de cochage posée** : ✅ = fait + vérifié + revérifié à l'écran servi. Deux cases décochées en l'appliquant — la section d'accueil et la suppression dans `/edit` étaient écrites, pas prouvées. |
