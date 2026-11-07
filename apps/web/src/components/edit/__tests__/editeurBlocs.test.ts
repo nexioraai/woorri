@@ -31,7 +31,7 @@ describe('l’éditeur de blocs ferme GEN-D044', () => {
   });
 
   it('🔴 la route accepte bien le champ `blocs`', () => {
-    expect(ROUTE).toMatch(/CHAMPS = \[[^\]]*'blocs'/s);
+    expect(ROUTE).toMatch(/CHAMPS = \[[\s\S]*?'blocs'/);
   });
 
   it('🔴 la route RELIT `blocs` après écriture', () => {

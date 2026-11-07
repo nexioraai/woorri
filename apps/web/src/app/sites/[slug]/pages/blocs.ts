@@ -16,6 +16,7 @@
 export const TYPES_DE_BLOC = [
   'titre', 'texte', 'liste', 'etapes', 'frise', 'chiffres',
   'tableau', 'documents', 'questions', 'encadre', 'liens', 'appel',
+  'image', 'galerie', 'citation',
 ] as const
 
 export type TypeDeBloc = (typeof TYPES_DE_BLOC)[number]
@@ -33,6 +34,9 @@ export type Bloc =
   | { type: 'encadre'; texte: string; ton?: 'info' | 'attention'; titre?: string }
   | { type: 'liens'; items: { libelle: string; chemin: string }[]; titre?: string }
   | { type: 'appel'; libelle: string; chemin: string; texte?: string }
+  | { type: 'image'; url: string; alt: string; legende?: string }
+  | { type: 'galerie'; items: { url: string; alt: string; legende?: string }[]; titre?: string }
+  | { type: 'citation'; texte: string; auteur?: string; fonction?: string }
 
 /**
  * Lit ce qui vient de la base. La base a DÉJÀ refusé les types inconnus, mais
@@ -89,5 +93,11 @@ function estBienForme(t: TypeDeBloc, b: Record<string, unknown>): boolean {
       return tableauDe(b.items, (o) => txt(o.libelle) && txt(o.chemin))
     case 'appel':
       return txt(b.libelle) && txt(b.chemin)
+    case 'image':
+      return txt(b.url) && txt(b.alt)       // `alt` EXIGE : une image sans texte de remplacement est invisible aux lecteurs d'ecran
+    case 'galerie':
+      return tableauDe(b.items, (o) => txt(o.url) && txt(o.alt))
+    case 'citation':
+      return txt(b.texte)
   }
 }

@@ -52,6 +52,30 @@ describe('A. le vocabulaire ne peut pas diverger entre la base et le code', () =
   });
 });
 
+describe('A bis. ce que l’écran exige en plus du texte', () => {
+  it('🔴 une image SANS texte de remplacement est écartée', () => {
+    expect(lireBlocs([{ type: 'image', url: '/x.jpg' }])).toEqual([]);
+    expect(lireBlocs([{ type: 'image', url: '/x.jpg', alt: '  ' }])).toEqual([]);
+  });
+
+  it('🔴 l’animation respecte `prefers-reduced-motion`', () => {
+    const html = renderToStaticMarkup(<BlocsDePage base="" blocs={[{ type: 'texte', texte: 'x' }]} />);
+    expect(html).toContain('prefers-reduced-motion');
+  });
+
+  it('🔴 les tailles de texte suivent la largeur de l’écran', () => {
+    // Ce que je lis sur un écran de bureau n'est PAS ce que le propriétaire
+    // lit sur son téléphone — les tailles doivent être fluides, pas fixes.
+    const html = renderToStaticMarkup(<BlocsDePage base="" blocs={[{ type: 'titre', texte: 'x' }]} />);
+    expect(html).toContain('clamp(');
+  });
+
+  it('🔴 une image est chargée paresseusement', () => {
+    const html = renderToStaticMarkup(<BlocsDePage base="" blocs={[EXEMPLES.image]} />);
+    expect(html).toContain('loading="lazy"');
+  });
+});
+
 describe('B. aucun chemin vers du HTML', () => {
   it('🔴 `dangerouslySetInnerHTML` est absent du rendu des blocs', () => {
     expect(RENDU).not.toContain('dangerouslySetInnerHTML');
@@ -79,7 +103,10 @@ const EXEMPLES: Record<string, Bloc> = {
   questions: { type: 'questions', items: [{ question: 'Qui peut commander ?', reponse: 'Les structures agréées.' }] },
   encadre: { type: 'encadre', texte: 'Les commandes se font par bon signé.' },
   liens: { type: 'liens', items: [{ libelle: 'Catalogue', chemin: 'catalogue' }] },
-  appel: { type: 'appel', libelle: 'Devenir fournisseur', chemin: 'fournisseurs/devenir-fournisseur' },
+  appel: { type: 'appel', libelle: 'Devenir fournisseur', chemin: 'fournisseurs/enregistrement' },
+  image: { type: 'image', url: '/entrepot.jpg', alt: "L'entrepôt central", legende: 'Entrepôt central' },
+  galerie: { type: 'galerie', items: [{ url: '/g1.jpg', alt: 'Zone de stockage' }] },
+  citation: { type: 'citation', texte: 'Un médicament qui arrive en retard ne soigne personne.', auteur: 'Direction générale' },
 };
 
 describe('C. chaque type du vocabulaire est réellement dessiné', () => {
@@ -96,6 +123,7 @@ describe('C. chaque type du vocabulaire est réellement dessiné', () => {
         etapes: 'Déposer le dossier', frise: '1994', chiffres: 'références au catalogue',
         tableau: 'Paracétamol', documents: 'Conditions générales', questions: 'structures agréées',
         encadre: 'bon signé', liens: 'Catalogue', appel: 'Devenir fournisseur',
+        image: 'Entrepôt central', galerie: 'Zone de stockage', citation: 'ne soigne personne',
       };
       expect(html).toContain(attendu[t]);
     });

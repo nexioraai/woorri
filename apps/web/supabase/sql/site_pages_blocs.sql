@@ -1,6 +1,11 @@
 -- ============================================================================
 -- LOT 4 — LE CORPS D'UNE PAGE DEVIENT STRUCTURÉ
 --
+-- CE FICHIER EST LA SEULE VÉRITÉ DU VOCABULAIRE. Les fichiers `..._images.sql`
+-- et suivants sont des MIGRATIONS à exécuter ; celui-ci décrit l'état COURANT,
+-- et c'est lui que lit le cliquet `blocsDePage.test.tsx`. Tout ajout de type
+-- se fait ICI en plus de sa migration, sinon le cliquet rougit.
+--
 -- LE DÉFAUT, MESURÉ. Une page déclarée ne savait rendre qu'UN bloc de texte
 -- brut (`[...rest]/page.tsx`, whiteSpace: pre-wrap). Mesuré sur les 30 pages
 -- de la CPA : corps moyen 242 caractères, et aucun moyen de faire mieux —
@@ -49,7 +54,10 @@ as $$
                'questions',  -- des questions dépliables
                'encadre',    -- un encadré d'avertissement
                'liens',      -- des pages liées
-               'appel'       -- un bouton d'action
+               'appel',      -- un bouton d'action
+               'image',      -- une photo, avec son texte de remplacement
+               'galerie',    -- plusieurs photos
+               'citation'    -- une citation attribuée
              )
      );
 $$;

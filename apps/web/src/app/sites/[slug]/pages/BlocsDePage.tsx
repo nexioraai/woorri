@@ -26,7 +26,25 @@ function TitreDeBloc({ texte }: { texte?: string }) {
 export default function BlocsDePage({ blocs, base, primary = '#1e4d8c' }: { blocs: Bloc[]; base: string; primary?: string }) {
   if (blocs.length === 0) return null
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 34 }}>
+    <div className="blocs-page" style={{ display: 'flex', flexDirection: 'column', gap: 34 }}>
+      {/* L'ANIMATION ET LE MOBILE, SANS JAVASCRIPT.
+          Chaque bloc apparait avec un leger decalage ; `prefers-reduced-motion`
+          coupe tout. Les tailles passent en `clamp()` : ce que je lis sur un
+          ecran de bureau n'est PAS ce que le proprietaire lit sur son telephone. */}
+      <style>{`
+        .blocs-page > * { animation: blocEntre .55s cubic-bezier(.22,.8,.3,1) both; }
+        ${blocs.map((_, i) => `.blocs-page > *:nth-child(${i + 2}) { animation-delay: ${Math.min(i * 70, 560)}ms; }`).join('')}
+        @keyframes blocEntre { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+        @media (prefers-reduced-motion: reduce) { .blocs-page > * { animation: none !important; } }
+        .blocs-page h2 { font-size: clamp(21px, 5.2vw, 27px); }
+        .blocs-page h3 { font-size: clamp(18px, 4.4vw, 21px); }
+        .blocs-page p, .blocs-page li, .blocs-page td { font-size: clamp(15.5px, 3.9vw, 17px); }
+        @media (max-width: 520px) { .blocs-page { gap: 26px; } }
+        .blocs-page .bloc-photo { transition: transform .45s cubic-bezier(.22,.8,.3,1), filter .45s ease; }
+        .blocs-page a:hover .bloc-photo, .blocs-page a:focus-visible .bloc-photo { transform: scale(1.025); filter: brightness(1.04); }
+        .blocs-page a:focus-visible { outline: 3px solid ${primary}; outline-offset: 3px; border-radius: 12px; }
+        @media (prefers-reduced-motion: reduce) { .blocs-page .bloc-photo { transition: none; } }
+      `}</style>
       {blocs.map((b, i) => {
         const k = `bloc-${i}`
         switch (b.type) {
@@ -176,6 +194,50 @@ export default function BlocsDePage({ blocs, base, primary = '#1e4d8c' }: { bloc
                   ))}
                 </ul>
               </div>
+            )
+
+          case 'image':
+            return (
+              <figure key={k} style={{ margin: 0 }}>
+                {/* CLIQUABLE — l'image s'ouvre en grand dans un nouvel onglet.
+                    Pas de visionneuse JavaScript : la page reste entiere sans
+                    script, et le lecteur garde son bouton « retour ». */}
+                <a href={b.url} target="_blank" rel="noopener noreferrer" aria-label={`Agrandir : ${b.alt}`} style={{ display: 'block' }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element -- une URL fournie par le client ne passe pas par le loader d'images */}
+                  <img src={b.url} alt={b.alt} loading="lazy" className="bloc-photo" style={{ width: '100%', height: 'auto', borderRadius: 12, display: 'block' }} />
+                </a>
+                {b.legende && <figcaption style={{ fontSize: 14, color: SOURDINE, marginTop: 8 }}>{b.legende}</figcaption>}
+              </figure>
+            )
+
+          case 'galerie':
+            return (
+              <div key={k}>
+                <TitreDeBloc texte={b.titre} />
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: 12 }}>
+                  {b.items.map((it, j) => (
+                    <figure key={j} style={{ margin: 0 }}>
+                      <a href={it.url} target="_blank" rel="noopener noreferrer" aria-label={`Agrandir : ${it.alt}`} style={{ display: 'block' }}>
+                        {/* eslint-disable-next-line @next/next/no-img-element -- idem */}
+                        <img src={it.url} alt={it.alt} loading="lazy" className="bloc-photo" style={{ width: '100%', aspectRatio: '4 / 3', objectFit: 'cover', borderRadius: 10, display: 'block' }} />
+                      </a>
+                      {it.legende && <figcaption style={{ fontSize: 13, color: SOURDINE, marginTop: 6 }}>{it.legende}</figcaption>}
+                    </figure>
+                  ))}
+                </div>
+              </div>
+            )
+
+          case 'citation':
+            return (
+              <blockquote key={k} style={{ margin: 0, padding: '18px 22px', borderLeft: `4px solid ${primary}`, background: FOND_DOUX, borderRadius: '0 12px 12px 0' }}>
+                <p style={{ fontSize: 19, lineHeight: 1.6, color: ENCRE, margin: 0, fontStyle: 'italic' }}>{b.texte}</p>
+                {b.auteur && (
+                  <footer style={{ fontSize: 14, color: SOURDINE, marginTop: 10 }}>
+                    {b.auteur}{b.fonction ? ` · ${b.fonction}` : ''}
+                  </footer>
+                )}
+              </blockquote>
             )
 
           case 'appel':
