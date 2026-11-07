@@ -210,8 +210,13 @@ export default function BlocsDePage({ blocs, base, primary = '#1e4d8c' }: { bloc
               </figure>
             )
 
-          case 'galerie':
-            return (
+          case 'galerie': {
+            // TROIS PHOTOS OU PLUS → DIAPORAMA QUI TOURNE SEUL.
+            // Entierement en CSS : pas de JavaScript, donc la page reste
+            // entiere sans script et le diaporama demarre meme si le script
+            // echoue. `prefers-reduced-motion` fige la premiere photo.
+            const n = b.items.length
+            if (n < 3) return (
               <div key={k}>
                 <TitreDeBloc texte={b.titre} />
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: 12 }}>
@@ -227,6 +232,38 @@ export default function BlocsDePage({ blocs, base, primary = '#1e4d8c' }: { bloc
                 </div>
               </div>
             )
+            const duree = n * 4.5
+            const part = 100 / n
+            return (
+              <div key={k}>
+                <TitreDeBloc texte={b.titre} />
+                <style>{`
+                  @keyframes diapo${i} {
+                    0% { opacity: 0 } 3% { opacity: 1 }
+                    ${(part - 3).toFixed(2)}% { opacity: 1 }
+                    ${part.toFixed(2)}% { opacity: 0 } 100% { opacity: 0 }
+                  }
+                  .diapo${i} > * { animation: diapo${i} ${duree}s linear infinite; }
+                  @media (prefers-reduced-motion: reduce) {
+                    .diapo${i} > * { animation: none; opacity: 0 }
+                    .diapo${i} > *:first-child { opacity: 1 }
+                  }
+                `}</style>
+                <div className={`diapo${i}`} style={{ position: 'relative', width: '100%', aspectRatio: '16 / 9', borderRadius: 12, overflow: 'hidden', background: FOND_DOUX }}>
+                  {b.items.map((it, j) => (
+                    <a key={j} href={it.url} target="_blank" rel="noopener noreferrer" aria-label={`Agrandir : ${it.alt}`}
+                      style={{ position: 'absolute', inset: 0, animationDelay: `${(j * duree / n).toFixed(2)}s`, display: 'block' }}>
+                      {/* eslint-disable-next-line @next/next/no-img-element -- une URL fournie par le client ne passe pas par le loader */}
+                      <img src={it.url} alt={it.alt} loading={j === 0 ? 'eager' : 'lazy'} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                      {it.legende && (
+                        <span style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: '28px 16px 12px', color: '#fff', fontSize: 14, background: 'linear-gradient(transparent, rgba(0,0,0,.62))' }}>{it.legende}</span>
+                      )}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )
+          }
 
           case 'citation':
             return (

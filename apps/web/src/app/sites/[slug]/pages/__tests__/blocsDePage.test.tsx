@@ -134,6 +134,29 @@ describe('C. chaque type du vocabulaire est réellement dessiné', () => {
     expect(html).toContain('<th scope="col"');
   });
 
+  it('🔴 trois photos ou plus deviennent un DIAPORAMA qui tourne seul', () => {
+    const trois = { type: 'galerie', items: [
+      { url: '/a.jpg', alt: 'a' }, { url: '/b.jpg', alt: 'b' }, { url: '/c.jpg', alt: 'c' }] } as Bloc;
+    const html = renderToStaticMarkup(<BlocsDePage base="" blocs={[trois]} />);
+    expect(html).toContain('@keyframes diapo');
+    expect(html).toContain('infinite');
+    expect(html).toContain('animation-delay');
+  });
+
+  it('🔴 le diaporama se fige si le lecteur demande un mouvement réduit', () => {
+    const trois = { type: 'galerie', items: [
+      { url: '/a.jpg', alt: 'a' }, { url: '/b.jpg', alt: 'b' }, { url: '/c.jpg', alt: 'c' }] } as Bloc;
+    const html = renderToStaticMarkup(<BlocsDePage base="" blocs={[trois]} />);
+    const d = html.indexOf('@keyframes diapo');
+    expect(html.slice(d)).toContain('prefers-reduced-motion');
+  });
+
+  it('🔴 DEUX photos restent une grille, pas un diaporama', () => {
+    const deux = { type: 'galerie', items: [{ url: '/a.jpg', alt: 'a' }, { url: '/b.jpg', alt: 'b' }] } as Bloc;
+    const html = renderToStaticMarkup(<BlocsDePage base="" blocs={[deux]} />);
+    expect(html).not.toContain('@keyframes diapo');
+  });
+
   it('les questions se déplient SANS JavaScript (<details> natif)', () => {
     const html = renderToStaticMarkup(<BlocsDePage base="" blocs={[EXEMPLES.questions]} />);
     expect(html).toContain('<details');
