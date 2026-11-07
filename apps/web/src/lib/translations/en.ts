@@ -373,6 +373,8 @@ export const en: Record<TranslationKey, string> = {
   'naved.sections': 'Sections',
   'naved.goToSite': 'Open one of your sites from the Dashboard to edit it',
   'naved.showOnSite': 'Show on site',
+  'naved.publishesTenders': 'This organisation publishes tenders',
+  'naved.publishesTendersHint': 'True even in a week with no notice published. Adds the link to the site menu.',
   'naved.hideFromSite': 'Hide from site',
   'naved.untitledPage': 'Untitled page',
   'naved.custom': 'Custom',

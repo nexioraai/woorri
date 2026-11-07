@@ -372,6 +372,8 @@ export const ar: Record<TranslationKey, string> = {
   'naved.sections': 'الأقسام',
   'naved.goToSite': 'افتح أحد مواقعك من لوحة التحكم لتحريره',
   'naved.showOnSite': 'إظهار في الموقع',
+  'naved.publishesTenders': 'هذه الهيئة تنشر مناقصات',
+  'naved.publishesTendersHint': 'صحيح حتى في الأسبوع الذي لا يُنشر فيه أي إعلان. يضيف الرابط إلى قائمة الموقع.',
   'naved.hideFromSite': 'إخفاء من الموقع',
   'naved.untitledPage': 'صفحة بلا عنوان',
   'naved.custom': 'مخصّصة',

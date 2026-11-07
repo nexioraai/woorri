@@ -237,6 +237,36 @@ export default function Navbar() {
                     💡 {t('naved.goToSite')}
                   </div>
                 )}
+                {/* ── A2 d3b — UNE CAPACITÉ DÉCLARÉE, PAS UN ÉTAT DÉDUIT.
+                    « Cet organisme publie des appels d'offres » n'est pas
+                    « ce site a des avis en ce moment » : la CPA passe des
+                    marchés même la semaine où elle n'en publie aucun. Le
+                    LIBELLÉ dit ce que la case fait, jamais le nom de la
+                    colonne — l'informaticien de la CPA la lira une fois.
+
+                    ET LE CONTRÔLE EST STRUCTURELLEMENT INERTE AVANT LE SQL.
+                    La sauvegarde envoie l'objet site ENTIER (`{...site}`) :
+                    poser `publishes_tenders` avant que la colonne existe
+                    ferait échouer TOUTES les sauvegardes de ce site, en
+                    silence (`console.error` seul). La case n'apparaît donc
+                    que si la clé est DÉJÀ sur l'objet chargé — ce qui n'est
+                    vrai qu'une fois la colonne en base. Pas une précaution :
+                    une impossibilité. */}
+                {site && 'publishes_tenders' in site && (
+                  <label className="flex items-start gap-3 px-4 py-3 mb-3 rounded-xl bg-white/5 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={!!site.publishes_tenders}
+                      onChange={() => setSite({ ...site, publishes_tenders: !site.publishes_tenders })}
+                      disabled={!slug}
+                      className="mt-1"
+                    />
+                    <span className="text-sm">
+                      <span className="text-white/90 font-medium">{t('naved.publishesTenders')}</span>
+                      <span className="block text-white/50 text-xs mt-1">{t('naved.publishesTendersHint')}</span>
+                    </span>
+                  </label>
+                )}
                 <div className="space-y-2">
                   {(() => {
                     const sections = ['Home', 'About', 'Services'];

@@ -383,6 +383,8 @@ export const fr = {
   'naved.sections': 'Sections',
   'naved.goToSite': "Va sur un de tes sites depuis le Dashboard pour l'éditer",
   'naved.showOnSite': 'Afficher sur le site',
+  'naved.publishesTenders': 'Cet organisme publie des appels d\'offres',
+  'naved.publishesTendersHint': 'Vrai même la semaine où aucun avis n\'est publié. Ajoute le lien dans le menu du site.',
   'naved.hideFromSite': 'Masquer du site',
   'naved.untitledPage': 'Page sans titre',
   'naved.custom': 'Perso',

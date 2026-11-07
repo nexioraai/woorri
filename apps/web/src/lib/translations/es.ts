@@ -371,6 +371,8 @@ export const es = {
   'naved.sections': 'Secciones',
   'naved.goToSite': 'Abre uno de tus sitios desde el Panel para editarlo',
   'naved.showOnSite': 'Mostrar en el sitio',
+  'naved.publishesTenders': 'Este organismo publica licitaciones',
+  'naved.publishesTendersHint': 'Verdadero incluso la semana en que no se publica ningún anuncio. Añade el enlace al menú del sitio.',
   'naved.hideFromSite': 'Ocultar del sitio',
   'naved.untitledPage': 'Página sin título',
   'naved.custom': 'Personalizada',
