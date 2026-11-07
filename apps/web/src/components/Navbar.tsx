@@ -860,27 +860,16 @@ export default function Navbar() {
                   </div>
                 )}
 
-                {/* PAGES */}
-                {currentSection === 'Pages' && site && (
-                  <div className="space-y-4">
-                    {(site.pages || []).map((page: any, idx: number) => (
-                      <div key={idx} className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-3">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs text-slate-400">{t('naved.page')} #{idx + 1}</span>
-                          <button onClick={() => removeArrayItem('pages', idx)} className="text-red-400 hover:text-red-300 p-1"><Trash2 size={16} /></button>
-                        </div>
-                        <input value={page.title || ''} onChange={(e) => updateArrayItem('pages', idx, 'title', e.target.value)} placeholder={t('naved.phPageTitleEx')} className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#FA5D1E]" />
-                        <textarea value={page.content || ''} onChange={(e) => updateArrayItem('pages', idx, 'content', e.target.value)} placeholder={t('naved.content')} rows={4} className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#FA5D1E] resize-y" />
-                      </div>
-                    ))}
-                    {/* UN TITRE PAR DÉFAUT, ET CE N'EST PAS UN DÉTAIL : une page sans
-                          titre ni contenu était FILTRÉE par les vitrines. Le marchand
-                          cliquait, et rien n'apparaissait sur son site. */}
-                    <button onClick={() => addArrayItem('pages', { title: t('naved.newPage'), content: '', productIds: [] })} className="w-full px-4 py-3 rounded-xl bg-[#FA5D1E]/10 hover:bg-[#FA5D1E]/20 text-[#FA5D1E] font-semibold transition border border-[#FA5D1E]/20 flex items-center justify-center gap-2">
-                      <Plus size={18} /> {t('naved.addPage')}
-                    </button>
-                  </div>
-                )}
+                {/* ── L'ANCIEN BLOC « PAGES » A ÉTÉ RETIRÉ LE 2026-11-07.
+                    Il écrivait dans `sites.pages`, une colonne qui ne produit
+                    AUCUNE adresse : le bloc créé n'était servi nulle part.
+                    Mesuré — 127 valeurs sur 34 sites, toutes des chaînes, et
+                    pas une n'a jamais donné d'URL.
+                    Deux blocs « pages » coexistaient dans cet écran, l'un
+                    promettant une page qu'il ne livrait pas. Le propriétaire
+                    de la CPA en a créé une et ne l'a jamais vue sur son site.
+                    Les vraies adresses se créent dans « PAGES DU SITE »
+                    ci-dessus, qui écrit dans `site_pages`. */}
               </>
             )}
           </div>
