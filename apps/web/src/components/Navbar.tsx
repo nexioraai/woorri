@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
+import EditeurPages from './EditeurPages';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
@@ -260,6 +261,34 @@ export default function Navbar() {
                     💡 {t('naved.goToSite')}
                   </div>
                 )}
+                {/* ── LOT 3b — LES PAGES DU SITE, c'est-à-dire ses ADRESSES.
+                    Distinct de la liste des SECTIONS juste en dessous : une
+                    section est un bloc de l'accueil, une page est une adresse
+                    propre avec son fil d'Ariane et ses sous-pages.
+                    Cet écran n'écrit pas en base : `site_pages` ne rend aucun
+                    privilège au navigateur. Tout passe par la route serveur,
+                    où `requireSiteOwner` est la seule porte. */}
+                {slug && (
+                  <div className="mb-4">
+                    <h3 className="text-xs uppercase tracking-wider text-white/40 mb-2 px-1">
+                      {t('naved.pgTitre')}
+                    </h3>
+                    <EditeurPages
+                      slug={slug}
+                      labels={{
+                        titre: t('naved.pgTitre'), aide: t('naved.pgAide'),
+                        ajouter: t('naved.pgAjouter'), vide: t('naved.pgVide'),
+                        supprimer: t('naved.pgSupprimer'), publiee: t('naved.pgPubliee'),
+                        brouillon: t('naved.pgBrouillon'), adresse: t('naved.pgAdresse'),
+                        intitule: t('naved.pgIntitule'), parent: t('naved.pgParent'),
+                        chapeau: t('naved.pgChapeau'), corps: t('naved.pgCorps'),
+                        ordre: t('naved.pgOrdre'), menu: t('naved.pgMenu'),
+                        chargement: t('naved.pgChargement'),
+                      }}
+                    />
+                  </div>
+                )}
+
                 {/* ── A2 d3b — UNE CAPACITÉ DÉCLARÉE, PAS UN ÉTAT DÉDUIT.
                     « Cet organisme publie des appels d'offres » n'est pas
                     « ce site a des avis en ce moment » : la CPA passe des
