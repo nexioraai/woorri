@@ -21,6 +21,7 @@ import { socialUrl } from '@/lib/social'
 import { getModeCapabilities } from './modeCapabilities'
 import type { AvisDuSite } from './avisDuSite'
 import SectionAppelsOffres from './SectionAppelsOffres'
+import LienAppelsOffres from './LienAppelsOffres'
 import NoirShopSection from './NoirShopSection'
 import SectionKicker from './SectionKicker'
 import { useSpotlightXY, SpotlightGlow, SpotlightSheen } from './NoirSpotlight'
@@ -276,6 +277,7 @@ export default function NoirTheme({ site, hasAvis = false, host = null }: { site
               <NavLink key={`navpage-${pi}`} href={`#page-${pi}`}>{page.title}</NavLink>
             ))}
             {site.faq && site.faq.length > 0 && !hidden('FAQ') && <NavLink href="#faq">{t.nav.faq}</NavLink>}
+            {!hidden('AppelsOffres') && <LienAppelsOffres site={site} host={host} />}
             {!hidden('Contact') && <NavLink href="#contact">{t.nav.contact}</NavLink>}
           </nav>
         </div>

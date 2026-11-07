@@ -72,6 +72,9 @@ faq?: { question: string; answer: string }[]
   price_range?: string
   pages?: { title: string; content: string }[]
   hidden_sections?: string[]
+  /** A2 d3 — CE QUE L'ORGANISATION FAIT, pas ce qu'elle a publie cette
+   *  semaine. Pilote le LIEN DE MENU ; la SECTION suit les avis reels. */
+  publishes_tenders?: boolean
   section_label?: string
   created_at?: string
   /**
@@ -162,7 +165,7 @@ rating: number
 // ---------- Supabase ----------
 
 export const PUBLIC_COLS =
-'id,slug,name,slogan,type,mode,custom_domain,primary_color,hero_title,hero_subtitle,about,services,testimonials,gallery,products,contact,menu,team,hours,social_links,address,pages,cta,theme,hero_image,lang,faq,whyus,mission,vision,geo_lat,geo_lng,area_served,price_range,hidden_sections,section_label,sections,created_at,dropship_type,pod_designs,product_families,cj_margin_percent,cj_round_mode,shipping_flat,updated_at,logo_url'
+'id,slug,name,slogan,type,mode,custom_domain,primary_color,hero_title,hero_subtitle,about,services,testimonials,gallery,products,contact,menu,team,hours,social_links,address,pages,cta,theme,hero_image,lang,faq,whyus,mission,vision,geo_lat,geo_lng,area_served,price_range,hidden_sections,section_label,sections,created_at,dropship_type,pod_designs,product_families,cj_margin_percent,cj_round_mode,shipping_flat,updated_at,logo_url,publishes_tenders'
 
 // ---------- Resolution d'URL multi-domaines ----------
 //

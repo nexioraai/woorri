@@ -29,6 +29,7 @@ import TiltCard from './TiltCard'
 import { getModeCapabilities } from './modeCapabilities'
 import type { AvisDuSite } from './avisDuSite'
 import SectionAppelsOffres from './SectionAppelsOffres'
+import LienAppelsOffres from './LienAppelsOffres'
 import EditorialShopSection from './EditorialShopSection'
 import { socialUrl } from '@/lib/social'
 import ClickableProductCard from './ClickableProductCard'
@@ -145,6 +146,7 @@ export default function EditorialTheme({ site, hasAvis = false, host = null }: {
               <a key={`navpage-${pi}`} href={`#page-${pi}`} className="hover:text-black transition-colors">{page.title}</a>
             ))}
             {site.faq && site.faq.length > 0 && !hidden('FAQ') && <a href="#faq" className="hover:text-black transition-colors">{t.nav.faq}</a>}
+            {!hidden('AppelsOffres') && <LienAppelsOffres site={site} host={host} className={"hover:text-black transition-colors"} />}
             {!hidden('Contact') && <a href="#contact" className="hover:text-black transition-colors">{t.nav.contact}</a>}
           </nav>
         </div>

@@ -29,6 +29,7 @@ import { showsVisitorCatalogSearch } from './catalogSearchVisibility'
 import { getModeCapabilities } from './modeCapabilities'
 import type { AvisDuSite } from './avisDuSite'
 import SectionAppelsOffres from './SectionAppelsOffres'
+import LienAppelsOffres from './LienAppelsOffres'
 import EnseigneDuSite from './EnseigneDuSite'
 import PageProduits, { produitsDeLaPage } from './PageProduits'
 
@@ -133,6 +134,7 @@ export default function AuroraTheme({ site, hasAvis = false, host = null }: { si
             {isShop && <a href="#shop" className="hover:text-neutral-900 transition-colors">{t.nav.shop}</a>}
             {testimonials.length > 0 && !hidden('Reviews') && <a href="#testimonials" className="hover:text-neutral-900 transition-colors">{t.nav.reviews}</a>}
             {site.faq && site.faq.length > 0 && !hidden('FAQ') && <a href="#faq" className="hover:text-neutral-900 transition-colors">{t.nav.faq}</a>}
+            {!hidden('AppelsOffres') && <LienAppelsOffres site={site} host={host} className={"hover:text-neutral-900 transition-colors"} />}
             {!hidden('Contact') && <a href="#contact" className="hover:text-neutral-900 transition-colors">{t.nav.contact}</a>}
           </nav>
           <a
