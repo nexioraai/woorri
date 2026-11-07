@@ -92,7 +92,7 @@ un avis · un article · un produit · une province
 
 | # | lot | h | statut |
 |---|---|---|---|
-| 1 | **Routage** — le verrou | 18 | ⬜ |
+| 1 | **Routage** — le verrou | 18 | 🔄 **écrit, 15/15 en LOCAL — reste le déploiement et le relevé d'après** |
 | 2 | Menu à plusieurs niveaux + pied de page | 6 | ⬜ |
 | 3 | Gabarit de page + les 20 pages de contenu | 12 | ⬜ |
 | 4 | **Organigramme interactif + alternative 2D** | 16 | ⬜ |
@@ -185,4 +185,5 @@ derniers échouent en silence. Voir GEN-D042 et GEN-D043.
 | date | quoi |
 |---|---|
 | 2026-11-07 | Création. Plan établi après lecture du cahier des charges et analyse en profondeur d'EPSS (8 pages, 3 niveaux). |
+| 2026-11-07 | **Lot 1 — table `site_pages` + vue en production, route `[...rest]` qui résout. 15/15 en local**, dont les deux refus (adresse inventée → 404, page non publiée → 404) et l'absence de fuite inter-site. Les 3 adresses existantes intactes. Reste : déploiement et relevé d'après. |
 | 2026-11-07 | **Convention de cochage posée** : ✅ = fait + vérifié + revérifié à l'écran servi. Deux cases décochées en l'appliquant — la section d'accueil et la suppression dans `/edit` étaient écrites, pas prouvées. |
