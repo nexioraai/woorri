@@ -30,10 +30,11 @@ import { getModeCapabilities } from './modeCapabilities'
 import type { AvisDuSite } from './avisDuSite'
 import SectionAppelsOffres from './SectionAppelsOffres'
 import LienAppelsOffres from './LienAppelsOffres'
+import MenuDeclare from './MenuDeclare'
 import EnseigneDuSite from './EnseigneDuSite'
 import PageProduits, { produitsDeLaPage } from './PageProduits'
 
-export default function AuroraTheme({ site, hasAvis = false, host = null }: { site: Site } & AvisDuSite) {
+export default function AuroraTheme({ site, hasAvis = false, host = null, menu = [] }: { site: Site } & AvisDuSite) {
   const hidden = (name: string) => (site.hidden_sections || []).includes(name)
   const primary = site.primary_color || '#6366f1'
   const t = getDict(site.lang)
@@ -135,6 +136,9 @@ export default function AuroraTheme({ site, hasAvis = false, host = null }: { si
             {testimonials.length > 0 && !hidden('Reviews') && <a href="#testimonials" className="hover:text-neutral-900 transition-colors">{t.nav.reviews}</a>}
             {site.faq && site.faq.length > 0 && !hidden('FAQ') && <a href="#faq" className="hover:text-neutral-900 transition-colors">{t.nav.faq}</a>}
             {!hidden('AppelsOffres') && <LienAppelsOffres site={site} host={host} className={"hover:text-neutral-900 transition-colors"} />}
+            {/* LOT 2 — les pages DÉCLARÉES, avec leurs sous-menus. Elles
+                précèdent Contact, qui reste la dernière entrée. */}
+            <MenuDeclare site={site} host={host} entrees={menu} className={"hover:text-neutral-900 transition-colors"} />
             {!hidden('Contact') && <a href="#contact" className="hover:text-neutral-900 transition-colors">{t.nav.contact}</a>}
           </nav>
           <a

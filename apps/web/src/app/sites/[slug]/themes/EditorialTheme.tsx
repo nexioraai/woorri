@@ -30,6 +30,7 @@ import { getModeCapabilities } from './modeCapabilities'
 import type { AvisDuSite } from './avisDuSite'
 import SectionAppelsOffres from './SectionAppelsOffres'
 import LienAppelsOffres from './LienAppelsOffres'
+import MenuDeclare from './MenuDeclare'
 import EditorialShopSection from './EditorialShopSection'
 import { socialUrl } from '@/lib/social'
 import ClickableProductCard from './ClickableProductCard'
@@ -75,7 +76,7 @@ function PremiumButton({
 }
 
 // ---------- Theme ----------
-export default function EditorialTheme({ site, hasAvis = false, host = null }: { site: Site } & AvisDuSite) {
+export default function EditorialTheme({ site, hasAvis = false, host = null, menu = [] }: { site: Site } & AvisDuSite) {
   // ── LES PRODUITS, POUR LES PAGES PERSONNALISÉES.
   //
   // Les sections boutique calculent déjà cette liste chacune de leur côté ;
@@ -147,6 +148,9 @@ export default function EditorialTheme({ site, hasAvis = false, host = null }: {
             ))}
             {site.faq && site.faq.length > 0 && !hidden('FAQ') && <a href="#faq" className="hover:text-black transition-colors">{t.nav.faq}</a>}
             {!hidden('AppelsOffres') && <LienAppelsOffres site={site} host={host} className={"hover:text-black transition-colors"} />}
+            {/* LOT 2 — les pages DÉCLARÉES, avec leurs sous-menus. Elles
+                précèdent Contact, qui reste la dernière entrée. */}
+            <MenuDeclare site={site} host={host} entrees={menu} className={"hover:text-black transition-colors"} />
             {!hidden('Contact') && <a href="#contact" className="hover:text-black transition-colors">{t.nav.contact}</a>}
           </nav>
         </div>

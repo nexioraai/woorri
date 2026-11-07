@@ -9,6 +9,7 @@ import HtmlLang from './themes/HtmlLang'
 import EditorialTheme from './themes/EditorialTheme'
 import { avisDuSite } from './themes/avisDuSite'
 import { fetchAvisEntries } from './appels-offres/fetchAvis'
+import { fetchMenu } from './pages/fetchPage'
 import NoirTheme from './themes/NoirTheme'
 import VifTheme from './themes/VifTheme'
 import AuroraTheme from './themes/AuroraTheme'
@@ -169,7 +170,11 @@ export default async function SitePage({ params, searchParams }: Props) {
   // `fetchAvisEntries` est le SEUL lecteur d'avis du dépôt pour une surface
   // dérivée, et il passe par la VUE `appels_offres_public` — jamais par la
   // table. Ce fichier ne réécrit pas sa requête : il l'appelle.
-  const { hasAvis } = avisDuSite(await fetchAvisEntries(site.id))
+  // LOT 1 + 2 — les deux faits serveur, par la MÊME route unique.
+  const [{ hasAvis }, menu] = await Promise.all([
+    fetchAvisEntries(site.id).then(avisDuSite),
+    fetchMenu(site.id),
+  ])
 
   const key = (site.theme as keyof typeof themes) || 'editorial'
   const Theme = themes[key] ?? EditorialTheme
@@ -183,7 +188,7 @@ export default async function SitePage({ params, searchParams }: Props) {
       <JsonLd site={site} url={url} />
       <PromoBanner slug={site.slug} primary={primary} mode={site.mode} labels={cartLabels} currency={resolveShopCurrency(site.products)} />
       <CartShell primary={primary} labels={cartLabels} slug={site.slug} mode={site.mode} products={site.products} shippingFlat={site.shipping_flat} variant={key === 'noir' ? 'dark' : 'light'}>
-        <Theme site={site} hasAvis={hasAvis} host={host} />
+        <Theme site={site} hasAvis={hasAvis} host={host} menu={menu} />
         {site.mode === 3 && showsVisitorCatalogSearch(site.dropship_type) && site.theme !== 'aurora' && <CatalogSearch slug={site.slug} primary={primary} lang={site.lang} theme={key as ThemeKey} dropshipType={site.dropship_type} />}
       </CartShell>
       <ScrollRevealInit />

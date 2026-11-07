@@ -45,6 +45,8 @@
  * loi A2 ③ interdit. Le jour ou une surface aura besoin du compte, elle le
  * demandera -- et ce sera une decision, pas une derive.
  */
+import type { EntreeMenu } from '../pages/fetchPage'
+
 export type AvisDuSite = {
   /** `true` si ce site publie au moins un avis VISIBLE du public. */
   hasAvis?: boolean
@@ -69,6 +71,22 @@ export type AvisDuSite = {
    * plateforme, qui est correcte par defaut.
    */
   host?: string | null
+
+  /**
+   * LES ENTREES DE MENU DECLAREES par le site (lot 2).
+   *
+   * Ici pour la MEME raison que les deux precedentes : les lire exige une
+   * requete, et un theme SYNCHRONE ne peut pas `await`. Ce type ne nomme pas
+   * « les avis » -- il nomme **ce qu'un theme ne peut pas atteindre seul**.
+   *
+   * Deja ordonnees par le lecteur (`ordre` puis `titre`) : un theme ne doit
+   * pas retrier, sinon deux themes afficheraient deux ordres differents pour
+   * le meme site.
+   *
+   * `[]` par defaut -- fail-closed : un rendeur qui l'oublie affiche la
+   * navigation d'avant, jamais un menu faux.
+   */
+  menu?: EntreeMenu[]
 }
 
 /**
