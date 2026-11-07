@@ -121,7 +121,7 @@ export default function VifTheme({ site, hasAvis = false, host = null, menu = []
         </div>
       </header>
 
-      <MobileNav site={site} cta={cta} ctaHref={ctaHref} />
+      <MobileNav site={site} cta={cta} ctaHref={ctaHref} pagesDeclarees={menu} host={host} />
 
       <main>
         {/* =================== HERO (Gusto scroll-driven) =================== */}

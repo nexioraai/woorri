@@ -1,6 +1,8 @@
 'use client'
 
 import { useState } from 'react'
+import type { EntreeMenu } from '../pages/fetchPage';
+import { resolveSiteBaseUrl } from './shared';
 import { Menu, X, ArrowRight } from 'lucide-react'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { getDict } from './i18n'
@@ -31,7 +33,11 @@ interface MobileNavProps {
   variant?: 'light' | 'dark'
 }
 
-export default function MobileNav({ site, cta, ctaHref, variant = 'light' }: MobileNavProps) {
+export default function MobileNav({ site, cta, ctaHref, variant = 'light', pagesDeclarees = [], host = null }: MobileNavProps & { pagesDeclarees?: EntreeMenu[]; host?: string | null }) {
+  // L'adresse de base, résolue comme partout ailleurs : un chemin plateforme
+  // en dur serait re-préfixé par le proxy sur un sous-domaine et tomberait
+  // en 404.
+  const baseDeclaree = resolveSiteBaseUrl(site, host);
   const [isOpen, setIsOpen] = useState(false)
   const isDark = variant === 'dark'
   const primary = site.primary_color || '#111111'
@@ -49,6 +55,20 @@ export default function MobileNav({ site, cta, ctaHref, variant = 'light' }: Mob
     ...(hasShop && !hidden('Shop') ? [{ href: '#shop', label: t.nav.shop }] : []),
     ...(!hidden('Gallery') ? [{ href: '#gallery', label: t.nav.gallery }] : []),
     ...(!hidden('Reviews') ? [{ href: '#testimonials', label: t.nav.reviews }] : []),
+    // ── LES PAGES DÉCLARÉES, AVANT Contact.
+    //
+    // Mesuré à l'écran le 2026-11-07 : elles paraissaient dans le menu de
+    // bureau et PAS dans le hamburger. Un site dont la moitié des pages est
+    // invisible sur téléphone n'est pas un site — et c'est sur téléphone que
+    // la plupart des visiteurs d'un portail tchadien arriveront.
+    //
+    // Les sous-pages sont incluses à plat, décalées par un tiret : un menu
+    // déroulant dans un panneau déjà déroulant se replie mal au doigt.
+    ...(pagesDeclarees ?? []).flatMap((p) =>
+      p.parent
+        ? [{ href: `${baseDeclaree}/${p.chemin}`, label: `— ${p.titre}` }]
+        : [{ href: `${baseDeclaree}/${p.chemin}`, label: p.titre }]
+    ),
     ...(!hidden('Contact') ? [{ href: '#contact', label: t.nav.contact }] : []),
   ]
 

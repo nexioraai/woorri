@@ -287,7 +287,7 @@ export default function NoirTheme({ site, hasAvis = false, host = null, menu = [
         </div>
       </motion.header>
 
-      <MobileNav site={site} cta={cta} ctaHref={ctaHref} variant="dark" />
+      <MobileNav site={site} cta={cta} ctaHref={ctaHref} variant="dark" pagesDeclarees={menu} host={host} />
 
       <main>
         {/* =================== HERO — l'objet qui deborde =================== */}

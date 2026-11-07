@@ -125,6 +125,15 @@ export default async function PageDeclaree({ params }: Props) {
     <>
       <JsonLdScript data={jsonLd} />
       <HtmlLang lang={site.lang} />
+      {/* ── LA PAGE PEINT SON PROPRE FOND, ET CE N'EST PAS UN DÉTAIL.
+          `globals.css` pose `body { background: #0a050e }` — un fond quasi
+          noir. Les thèmes peignent le leur sur leur conteneur ; cette page
+          est AUTONOME, elle n'en a pas. Rendue en `color: inherit`, elle
+          affichait du texte sombre sur fond sombre : ILLISIBLE.
+          Mesuré à l'écran le 2026-11-07, sur le site servi.
+          Règle : un écran autonome déclare SON fond et SA couleur, il ne les
+          hérite jamais. */}
+      <div style={{ minHeight: '100vh', background: '#ffffff', color: '#111111' }}>
       <main
         dir={rtl ? 'rtl' : 'ltr'}
         style={{ maxWidth: 820, margin: '0 auto', padding: '64px 24px' }}
@@ -187,6 +196,7 @@ export default async function PageDeclaree({ params }: Props) {
           </nav>
         )}
       </main>
+      </div>
     </>
   )
 }

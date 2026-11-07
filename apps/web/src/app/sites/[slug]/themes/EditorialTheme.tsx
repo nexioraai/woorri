@@ -157,7 +157,7 @@ export default function EditorialTheme({ site, hasAvis = false, host = null, men
       </header>
 
       {/* Mobile Navigation */}
-      <MobileNav site={site} cta={cta} ctaHref={ctaHref} />
+      <MobileNav site={site} cta={cta} ctaHref={ctaHref} pagesDeclarees={menu} host={host} />
 
       {/* =================== HERO =================== */}
       <main>
