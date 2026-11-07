@@ -169,6 +169,7 @@ function HeroObject({
 
 export default function NoirTheme({ site, hasAvis = false, host = null, menu = [] }: { site: Site } & AvisDuSite) {
   const hidden = (name: string) => (site.hidden_sections || []).includes(name)
+  const ancresEnBarre = menu.length === 0
   const t = getDict(site.lang)
   const sections = site.sections || []
   const testimonials = (site.testimonials || []).map(normalizeTestimonial)
@@ -259,7 +260,7 @@ export default function NoirTheme({ site, hasAvis = false, host = null, menu = [
         className="fixed top-0 left-0 right-0 z-50"
         style={{ backgroundColor: headerBg, borderBottom: `1px solid`, borderBottomColor: headerBorder, backdropFilter: 'blur(10px)' }}
       >
-        <div className="max-w-7xl mx-auto px-6 md:px-10 h-20 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-6 md:px-10 h-20 flex items-center justify-between gap-6 lg:gap-10">
           <EnseigneDuSite
             nom={site.name}
             logo={site.logo_url}
@@ -269,6 +270,13 @@ export default function NoirTheme({ site, hasAvis = false, host = null, menu = [
           />
           <nav className="hidden md:flex items-center gap-10 text-sm font-medium" style={{ color: 'rgba(245,243,238,0.72)' }}>
             {!hidden('Home') && <NavLink href="#home">{t.nav.home}</NavLink>}
+          {/* LOT 3 — 7 novembre 2026. Quand le site DÉCLARE ses pages, la barre
+              du haut leur appartient. Les ancres (#about, #faq…) encombraient
+              le menu et collaient l'enseigne. Elles ne DISPARAISSENT pas : les
+              sections restent sur l'accueil et le menu mobile continue de les
+              lister — seule la barre se vide. Un site sans page déclarée ne
+              voit aucun changement. */}
+          {ancresEnBarre && (<>
             {!hidden('About') && <NavLink href="#about">{t.nav.about}</NavLink>}
             {!hidden('Services') && <NavLink href="#services">{sections[0]?.name || t.nav.services}</NavLink>}
             {hasShop && !hidden('Shop') && <NavLink href="#shop">{t.nav.shop}</NavLink>}
@@ -278,6 +286,7 @@ export default function NoirTheme({ site, hasAvis = false, host = null, menu = [
               <NavLink key={`navpage-${pi}`} href={`#page-${pi}`}>{page.title}</NavLink>
             ))}
             {site.faq && site.faq.length > 0 && !hidden('FAQ') && <NavLink href="#faq">{t.nav.faq}</NavLink>}
+          </>)}
             {!hidden('AppelsOffres') && <LienAppelsOffres site={site} host={host} />}
             {/* LOT 2 — les pages DÉCLARÉES, avec leurs sous-menus. Elles
                 précèdent Contact, qui reste la dernière entrée. */}

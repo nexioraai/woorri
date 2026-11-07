@@ -36,6 +36,7 @@ import PageProduits, { produitsDeLaPage } from './PageProduits'
 
 export default function AuroraTheme({ site, hasAvis = false, host = null, menu = [] }: { site: Site } & AvisDuSite) {
   const hidden = (name: string) => (site.hidden_sections || []).includes(name)
+  const ancresEnBarre = menu.length === 0
   const primary = site.primary_color || '#6366f1'
   const t = getDict(site.lang)
   const cartT = getCartLabels(site.lang)
@@ -112,7 +113,7 @@ export default function AuroraTheme({ site, hasAvis = false, host = null, menu =
 
       {/* HEADER (delivery tag integrated, no full-width top bar) */}
       <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/70 border-b border-black/5">
-        <div className="max-w-[1400px] mx-auto px-4 md:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
+        <div className="max-w-[1400px] mx-auto px-4 md:px-6 lg:px-8 h-16 flex items-center justify-between gap-6 lg:gap-10">
           <div className="flex items-center gap-4 min-w-0">
             <EnseigneDuSite
               nom={site.name}
@@ -131,10 +132,18 @@ export default function AuroraTheme({ site, hasAvis = false, host = null, menu =
           </div>
           <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-neutral-600">
             {!hidden('Home') && <a href="#home" className="hover:text-neutral-900 transition-colors">{t.nav.home}</a>}
+          {/* LOT 3 — 7 novembre 2026. Quand le site DÉCLARE ses pages, la barre
+              du haut leur appartient. Les ancres (#about, #faq…) encombraient
+              le menu et collaient l'enseigne. Elles ne DISPARAISSENT pas : les
+              sections restent sur l'accueil et le menu mobile continue de les
+              lister — seule la barre se vide. Un site sans page déclarée ne
+              voit aucun changement. */}
+          {ancresEnBarre && (<>
             {!hidden('About') && <a href="#about" className="hover:text-neutral-900 transition-colors">{t.nav.about}</a>}
             {isShop && <a href="#shop" className="hover:text-neutral-900 transition-colors">{t.nav.shop}</a>}
             {testimonials.length > 0 && !hidden('Reviews') && <a href="#testimonials" className="hover:text-neutral-900 transition-colors">{t.nav.reviews}</a>}
             {site.faq && site.faq.length > 0 && !hidden('FAQ') && <a href="#faq" className="hover:text-neutral-900 transition-colors">{t.nav.faq}</a>}
+          </>)}
             {!hidden('AppelsOffres') && <LienAppelsOffres site={site} host={host} className={"hover:text-neutral-900 transition-colors"} />}
             {/* LOT 2 — les pages DÉCLARÉES, avec leurs sous-menus. Elles
                 précèdent Contact, qui reste la dernière entrée. */}

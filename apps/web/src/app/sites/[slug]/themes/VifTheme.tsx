@@ -44,6 +44,7 @@ export default function VifTheme({ site, hasAvis = false, host = null, menu = []
   const products = [...(site.products || []).map(normalizeProduct), ...mockupsToProducts(site)]
 
   const hidden = (name: string) => (site.hidden_sections || []).includes(name)
+  const ancresEnBarre = menu.length === 0
   const t = getDict(site.lang)
   const sections = site.sections || []
   const testimonials = (site.testimonials || []).map(normalizeTestimonial)
@@ -91,7 +92,7 @@ export default function VifTheme({ site, hasAvis = false, host = null, menu = []
         className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md"
         style={{ backgroundColor: 'rgba(246,241,231,0.78)', borderBottom: `1px solid rgba(20,18,16,0.08)` }}
       >
-        <div className="max-w-7xl mx-auto px-6 md:px-10 h-20 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-6 md:px-10 h-20 flex items-center justify-between gap-6 lg:gap-10">
           <EnseigneDuSite
             nom={site.name}
             logo={site.logo_url}
@@ -101,6 +102,13 @@ export default function VifTheme({ site, hasAvis = false, host = null, menu = []
           />
           <nav className="hidden md:flex items-center gap-10 text-sm font-medium" style={{ color: 'rgba(20,18,16,0.7)' }}>
             {!hidden('Home') && <a href="#home" className="hover:opacity-100 transition-opacity">{t.nav.home}</a>}
+          {/* LOT 3 — 7 novembre 2026. Quand le site DÉCLARE ses pages, la barre
+              du haut leur appartient. Les ancres (#about, #faq…) encombraient
+              le menu et collaient l'enseigne. Elles ne DISPARAISSENT pas : les
+              sections restent sur l'accueil et le menu mobile continue de les
+              lister — seule la barre se vide. Un site sans page déclarée ne
+              voit aucun changement. */}
+          {ancresEnBarre && (<>
             {!hidden('About') && <a href="#about" className="hover:opacity-100 transition-opacity">{t.nav.about}</a>}
             {!hidden('Services') && <a href="#services" className="hover:opacity-100 transition-opacity">{sections[0]?.name || t.nav.services}</a>}
             {hasShop && !hidden('Shop') && (
@@ -112,6 +120,7 @@ export default function VifTheme({ site, hasAvis = false, host = null, menu = []
               <a key={`navpage-${pi}`} href={`#page-${pi}`} className="hover:opacity-100 transition-opacity">{page.title}</a>
             ))}
             {site.faq && site.faq.length > 0 && !hidden('FAQ') && <a href="#faq" className="hover:opacity-100 transition-opacity">{t.nav.faq}</a>}
+          </>)}
             {!hidden('AppelsOffres') && <LienAppelsOffres site={site} host={host} className={"hover:opacity-100 transition-opacity"} />}
             {/* LOT 2 — les pages DÉCLARÉES, avec leurs sous-menus. Elles
                 précèdent Contact, qui reste la dernière entrée. */}
