@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { headers } from 'next/headers'
 import { notFound } from 'next/navigation'
 import { fetchSite, resolveSiteBaseUrl } from '../themes/shared'
+import BlocsDePage from '../pages/BlocsDePage'
 import { fetchPage, fetchFilDAriane, fetchEnfants } from '../pages/fetchPage'
 import { ogLocaleFor } from '@/lib/i18n/supportedLanguages'
 import HtmlLang from '../themes/HtmlLang'
@@ -172,6 +173,12 @@ export default async function PageDeclaree({ params }: Props) {
           <div style={{ fontSize: 17, lineHeight: 1.75, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
             {page.corps}
           </div>
+        )}
+
+        {/* LOT 4 — LE CORPS STRUCTURE. Il vient APRES le corps libre : une page
+            qui portait deja du texte ne le perd pas en gagnant ses blocs. */}
+        {page.blocs.length > 0 && (
+          <BlocsDePage blocs={page.blocs} base={base} primary={site.primary_color || undefined} />
         )}
 
         {/* LES ENFANTS -- une page d'entree ne porte qu'un chapeau et des

@@ -1,3 +1,4 @@
+import { lireBlocs, type Bloc } from './blocs'
 import { supabase } from '@/lib/supabase'
 
 // ============================================================
@@ -32,6 +33,8 @@ export type PageSite = {
   chapeau: string | null
   corps: string | null
   maj_le: string | null
+  /** LOT 4 — le corps STRUCTURE. `[]` tant que la colonne n'est pas posee. */
+  blocs: Bloc[]
 }
 
 /** Le strict necessaire pour le menu -- jamais le corps des pages. */
@@ -45,7 +48,8 @@ export type EntreeMenu = {
 // Colonnes reellement consommees -- jamais `select('*')`. Une projection large
 // ferait transiter des champs que l'ecran n'affiche pas, et un champ qui
 // transite sans etre affiche finit par etre affiche sans etre decide.
-const COLS_PAGE = 'chemin,parent,titre,chapeau,corps,maj_le'
+const COLS_SANS_BLOCS = 'chemin,parent,titre,chapeau,corps,maj_le'
+const COLS_PAGE = `${COLS_SANS_BLOCS},blocs`
 const COLS_MENU = 'chemin,parent,titre,ordre'
 
 /**
@@ -57,13 +61,33 @@ const COLS_MENU = 'chemin,parent,titre,ordre'
  * code de retour.
  */
 export async function fetchPage(siteId: string, chemin: string): Promise<PageSite | null> {
-  const { data } = await supabase
-    .from('site_pages_public')
-    .select(COLS_PAGE)
-    .eq('site_id', siteId)
-    .eq('chemin', chemin)
-    .maybeSingle()
-  return (data as PageSite) ?? null
+  const lire = (cols: string) =>
+    supabase
+      .from('site_pages_public')
+      .select(cols)
+      .eq('site_id', siteId)
+      .eq('chemin', chemin)
+      .maybeSingle()
+
+  let { data, error } = await lire(COLS_PAGE)
+
+  // LOT 4 — LE REPLI EST ETROIT ET IL EST BRUYANT.
+  //
+  // `42703` = la colonne `blocs` n'est pas (encore) dans la vue. C'est le seul
+  // code qui declenche une seconde lecture, et elle rend une page SANS corps
+  // structure plutot qu'une page absente. Tout autre code remonte tel quel :
+  // un repli large transformerait une panne de lecture en preuve d'absence
+  // (GEN-D037), ce qu'on a deja paye une fois.
+  //
+  // Ce repli disparait quand `site_pages_blocs.sql` est applique partout.
+  if (error?.code === '42703') {
+    console.warn('[site_pages] colonne `blocs` absente de la vue — page servie sans corps structure')
+    ;({ data } = await lire(COLS_SANS_BLOCS))
+  }
+
+  if (!data) return null
+  const brut = data as unknown as Record<string, unknown>
+  return { ...(brut as unknown as PageSite), blocs: lireBlocs(brut.blocs) }
 }
 
 /**
