@@ -345,6 +345,47 @@ hors de la sonde qui venait de nettoyer. Témoins vivants **12 secondes**
 
 **Non-fuite** : 8 autres sites servis, **tous réellement lus**, zéro illisible.
 
+### GEN-D043 — GEN-D042 comptait QUATRE gestes. Il en faut CINQ, et le cinquième est une VUE
+
+Mesuré le 2026-11-07, d3d rouge sur un vrai défaut.
+
+`publishes_tenders` : colonne posee ✅ · type ✅ · projection ✅ · `GRANT
+UPDATE` ✅ · case cochee, **ecrite en base** ✅ (`true`, 09:31:22Z). Et le lien
+de menu **n'apparait pas**.
+
+```
+anon → sites_public.publishes_tenders
+  42703 — column sites_public.publishes_tenders does not exist
+```
+
+La page publique lit par `fetchSite`, qui interroge **la VUE `sites_public`**
+— dont la definition porte une **liste de colonnes explicite**
+(`sites_public_view.sql`). La colonne n'y est pas, et ne pouvait pas y etre :
+la vue est anterieure.
+
+**L'echelle complete pour une colonne qui doit atteindre un ecran public :**
+
+| | geste | se remarque ? |
+|---|---|---|
+| ① | `ALTER TABLE` | **bruyant** — SQL en erreur |
+| ② | le type TypeScript | **bruyant** — compilation |
+| ③ | la projection du `select` | **silencieux** — rend `undefined` |
+| ④ | le `GRANT UPDATE` colonne | **silencieux a l'ecran**, et casse TOUTES les ecritures de la table |
+| ⑤ | **la VUE publique** | se voit en `42703`… mais seulement si quelqu'un interroge la vue en la nommant |
+
+**Ce qui rend ⑤ particulierement trompeur** : les trois premiers gestes
+etaient faits, le quatrieme venait d'etre repare apres une chasse, et la base
+disait `true`. Tout donnait a croire que la chaine etait entiere. **Le defaut
+s'est encore presente sous le visage d'un autre** — septieme fois.
+
+**Et c'est le cliquet d3d qui l'a trouve**, pas une inspection : il attendait
+`present` parce que la base declarait, il a obtenu `absent`. Une sonde dont
+l'attendu SUIT la base trouve un ecart que ni un attendu fige ni une relecture
+de code n'auraient vu.
+
+**NON REPARE, sur consigne du proprietaire** : « toute erreur trouvee en
+chemin est notee au registre, pas reparee ».
+
 ### GEN-D042 — Une colonne neuve n'existe pour personne tant qu'elle n'est pas dans la projection, et le symptôme ressemblera toujours à un bogue de l'écran
 
 **Règle posée par le propriétaire le 2026-11-06.** Sixième fois ce jour-là
