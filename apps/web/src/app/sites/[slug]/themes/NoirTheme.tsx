@@ -19,6 +19,8 @@ import { getDict } from './i18n'
 import Reveal from './Reveal'
 import { socialUrl } from '@/lib/social'
 import { getModeCapabilities } from './modeCapabilities'
+import type { AvisDuSite } from './avisDuSite'
+import SectionAppelsOffres from './SectionAppelsOffres'
 import NoirShopSection from './NoirShopSection'
 import SectionKicker from './SectionKicker'
 import { useSpotlightXY, SpotlightGlow, SpotlightSheen } from './NoirSpotlight'
@@ -163,7 +165,7 @@ function HeroObject({
   )
 }
 
-export default function NoirTheme({ site }: { site: Site }) {
+export default function NoirTheme({ site, hasAvis = false, host = null }: { site: Site } & AvisDuSite) {
   const hidden = (name: string) => (site.hidden_sections || []).includes(name)
   const t = getDict(site.lang)
   const sections = site.sections || []
@@ -735,6 +737,15 @@ export default function NoirTheme({ site }: { site: Site }) {
         </a>
       )}
 
+
+      {/* A2 d1 — LA SECTION NE S'AFFICHE JAMAIS VIDE. La garde est ICI, chez
+          l'appelant : `hasAvis` vient de la seule route posée en d0/e0, et le
+          composant n'a pas d'état vide — en lui en donnant un, on finirait
+          par l'afficher. « Une section d'accueil VIDE est pire qu'une section
+          absente » (arbitrage du propriétaire, 2026-11-06). */}
+      {hasAvis && !hidden('AppelsOffres') && (
+        <SectionAppelsOffres site={site} primary={goldBright} host={host} />
+      )}
       <style>{`
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }

@@ -27,10 +27,12 @@ import StorefrontDense from './StorefrontDense'
 import CatalogSearch from './CatalogSearch'
 import { showsVisitorCatalogSearch } from './catalogSearchVisibility'
 import { getModeCapabilities } from './modeCapabilities'
+import type { AvisDuSite } from './avisDuSite'
+import SectionAppelsOffres from './SectionAppelsOffres'
 import EnseigneDuSite from './EnseigneDuSite'
 import PageProduits, { produitsDeLaPage } from './PageProduits'
 
-export default function AuroraTheme({ site }: { site: Site }) {
+export default function AuroraTheme({ site, hasAvis = false, host = null }: { site: Site } & AvisDuSite) {
   const hidden = (name: string) => (site.hidden_sections || []).includes(name)
   const primary = site.primary_color || '#6366f1'
   const t = getDict(site.lang)
@@ -403,6 +405,15 @@ export default function AuroraTheme({ site }: { site: Site }) {
           <div>© {new Date().getFullYear()} {site.name}. {t.labels.rightsReserved}</div>
         </div>
       </footer>
+
+      {/* A2 d1 — LA SECTION NE S'AFFICHE JAMAIS VIDE. La garde est ICI, chez
+          l'appelant : `hasAvis` vient de la seule route posée en d0/e0, et le
+          composant n'a pas d'état vide — en lui en donnant un, on finirait
+          par l'afficher. « Une section d'accueil VIDE est pire qu'une section
+          absente » (arbitrage du propriétaire, 2026-11-06). */}
+      {hasAvis && !hidden('AppelsOffres') && (
+        <SectionAppelsOffres site={site} primary={primary} host={host} />
+      )}
     </div>
   )
 }

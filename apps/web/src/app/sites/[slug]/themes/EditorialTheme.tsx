@@ -27,6 +27,8 @@ import { getDict } from './i18n'
 import Reveal from './Reveal'
 import TiltCard from './TiltCard'
 import { getModeCapabilities } from './modeCapabilities'
+import type { AvisDuSite } from './avisDuSite'
+import SectionAppelsOffres from './SectionAppelsOffres'
 import EditorialShopSection from './EditorialShopSection'
 import { socialUrl } from '@/lib/social'
 import ClickableProductCard from './ClickableProductCard'
@@ -72,7 +74,7 @@ function PremiumButton({
 }
 
 // ---------- Theme ----------
-export default function EditorialTheme({ site }: { site: Site }) {
+export default function EditorialTheme({ site, hasAvis = false, host = null }: { site: Site } & AvisDuSite) {
   // ── LES PRODUITS, POUR LES PAGES PERSONNALISÉES.
   //
   // Les sections boutique calculent déjà cette liste chacune de leur côté ;
@@ -392,6 +394,16 @@ export default function EditorialTheme({ site }: { site: Site }) {
 
       {/* =================== SHOP =================== */}
       {hasShop && !hidden('Shop') && <EditorialShopSection site={site} primary={primary} />}
+
+      {/* A2 d1 — LA SECTION NE S'AFFICHE JAMAIS VIDE. La garde est ICI, chez
+          l'appelant : `hasAvis` vient de la seule route posée en d0/e0, et le
+          composant n'a pas d'état vide — en lui en donnant un, on finirait
+          par l'afficher. « Une section d'accueil VIDE est pire qu'une section
+          absente » (arbitrage du propriétaire, 2026-11-06). */}
+      {hasAvis && !hidden('AppelsOffres') && (
+        <SectionAppelsOffres site={site} primary={primary} host={host} />
+      )}
+
 
       {/* =================== GALLERY =================== */}
       {gallery.length > 0 && !hidden('Gallery') && (

@@ -7,6 +7,8 @@ import { logAnomaly } from '@/lib/anomaly'
 import JsonLd from './themes/JsonLd'
 import HtmlLang from './themes/HtmlLang'
 import EditorialTheme from './themes/EditorialTheme'
+import { avisDuSite } from './themes/avisDuSite'
+import { fetchAvisEntries } from './appels-offres/fetchAvis'
 import NoirTheme from './themes/NoirTheme'
 import VifTheme from './themes/VifTheme'
 import AuroraTheme from './themes/AuroraTheme'
@@ -157,6 +159,18 @@ export default async function SitePage({ params, searchParams }: Props) {
   const host = (await headers()).get('host')
   const url = resolveSiteBaseUrl(site, host)
 
+  // ── A2 d0/e0 — LA SEULE ROUTE PAR LAQUELLE UN THÈME APPREND LES AVIS.
+  //
+  // Un thème est SYNCHRONE : il ne peut ni `await` une requête ni appeler
+  // `headers()`. Ces deux faits ne peuvent donc lui parvenir QUE d'ici. Ce
+  // n'est pas une convention — c'est une impossibilité, et c'est ce qui rend
+  // la route unique.
+  //
+  // `fetchAvisEntries` est le SEUL lecteur d'avis du dépôt pour une surface
+  // dérivée, et il passe par la VUE `appels_offres_public` — jamais par la
+  // table. Ce fichier ne réécrit pas sa requête : il l'appelle.
+  const { hasAvis } = avisDuSite(await fetchAvisEntries(site.id))
+
   const key = (site.theme as keyof typeof themes) || 'editorial'
   const Theme = themes[key] ?? EditorialTheme
 
@@ -169,7 +183,7 @@ export default async function SitePage({ params, searchParams }: Props) {
       <JsonLd site={site} url={url} />
       <PromoBanner slug={site.slug} primary={primary} mode={site.mode} labels={cartLabels} currency={resolveShopCurrency(site.products)} />
       <CartShell primary={primary} labels={cartLabels} slug={site.slug} mode={site.mode} products={site.products} shippingFlat={site.shipping_flat} variant={key === 'noir' ? 'dark' : 'light'}>
-        <Theme site={site} />
+        <Theme site={site} hasAvis={hasAvis} host={host} />
         {site.mode === 3 && showsVisitorCatalogSearch(site.dropship_type) && site.theme !== 'aurora' && <CatalogSearch slug={site.slug} primary={primary} lang={site.lang} theme={key as ThemeKey} dropshipType={site.dropship_type} />}
       </CartShell>
       <ScrollRevealInit />
