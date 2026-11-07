@@ -345,6 +345,39 @@ hors de la sonde qui venait de nettoyer. Témoins vivants **12 secondes**
 
 **Non-fuite** : 8 autres sites servis, **tous réellement lus**, zéro illisible.
 
+### GEN-D042 — Une colonne neuve n'existe pour personne tant qu'elle n'est pas dans la projection, et le symptôme ressemblera toujours à un bogue de l'écran
+
+**Règle posée par le propriétaire le 2026-11-06.** Sixième fois ce jour-là
+qu'un défaut se serait présenté **sous le visage d'un autre**.
+
+`sites.publishes_tenders` appliquée en base, lue, vue par PostgREST, case
+écrite dans `/edit`, lien écrit dans les quatre thèmes. **Et le thème ne
+l'aurait jamais vue** : `shared.tsx:165` porte une **liste de colonnes
+explicite** pour le `select` public, et la colonne n'y était pas.
+
+```
+'id,slug,name,…,shipping_flat,updated_at,logo_url'     ← elle manquait ici
+```
+
+**Le symptôme qu'on aurait eu** : la case se coche, `/edit` dit « enregistré »,
+la base contient `true`, et **le lien n'apparaît pas**. Toutes les pistes
+naturelles mènent à l'écran d'édition — alors que tout y fonctionne.
+
+**La règle** : poser une colonne, c'est **trois gestes**, pas un.
+`ALTER TABLE` · le **type** · la **projection**. Les deux premiers se
+remarquent (SQL en erreur, TypeScript en erreur) ; **le troisième est
+silencieux** — une projection incomplète ne produit ni erreur ni
+avertissement, elle rend simplement `undefined`.
+
+**Corollaire** : chercher la cause **à l'étage le plus bas d'abord**. Le lot
+blog avait déjà nommé la discipline de la projection explicite
+(`COLS_CARTE`, `COLS_ARTICLE`, « jamais `select('*')` ») — elle a un coût, et
+ce coût est exactement celui-ci : une colonne ajoutée doit être **demandée**.
+
+**Trouvée AVANT qu'elle ne morde**, en relisant le type et la projection avant
+d'écrire le lien. C'est la deuxième fois de la journée qu'une relecture
+préalable évite une chasse — après le préalable `PGRST205`.
+
 ### PRINCIPE P-02 — La meilleure garantie n'est pas une règle respectée, c'est une impossibilité
 
 **Posé par le propriétaire le 2026-11-06 : « c'est le seul type de garantie
