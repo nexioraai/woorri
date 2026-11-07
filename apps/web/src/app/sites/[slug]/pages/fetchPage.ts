@@ -69,7 +69,8 @@ export async function fetchPage(siteId: string, chemin: string): Promise<PageSit
       .eq('chemin', chemin)
       .maybeSingle()
 
-  let { data, error } = await lire(COLS_PAGE)
+  const premiere = await lire(COLS_PAGE)
+  let data = premiere.data
 
   // LOT 4 — LE REPLI EST ETROIT ET IL EST BRUYANT.
   //
@@ -80,9 +81,9 @@ export async function fetchPage(siteId: string, chemin: string): Promise<PageSit
   // (GEN-D037), ce qu'on a deja paye une fois.
   //
   // Ce repli disparait quand `site_pages_blocs.sql` est applique partout.
-  if (error?.code === '42703') {
+  if (premiere.error?.code === '42703') {
     console.warn('[site_pages] colonne `blocs` absente de la vue — page servie sans corps structure')
-    ;({ data } = await lire(COLS_SANS_BLOCS))
+    data = (await lire(COLS_SANS_BLOCS)).data
   }
 
   if (!data) return null

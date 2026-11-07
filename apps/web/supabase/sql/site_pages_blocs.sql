@@ -54,6 +54,12 @@ as $$
      );
 $$;
 
+-- PostgreSQL accorde EXECUTE a PUBLIC par defaut sur toute fonction neuve.
+-- Le patron maison l'annule et ne re-accorde rien : cette fonction n'est
+-- appelee que par la CHECK, jamais par un client. Le cliquet
+-- `rpcVersioning.test.ts` exige ce REVOKE sur les TROIS roles.
+revoke all on function public.site_pages_blocs_valides(jsonb) from public, anon, authenticated;
+
 comment on function public.site_pages_blocs_valides(jsonb) is
   'LOT 4 — le vocabulaire FERMÉ du corps structuré. Tout type hors liste est refusé par la base, pas par le code.';
 
