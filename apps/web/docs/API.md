@@ -92,6 +92,7 @@ ci-dessous par domaine. Légende authentification :
 | POST | `/api/agent/[slug]/chat` | Assistant conversationnel sur le site publié — propose des modifications via un jeu d'outils whitelistés (`ALLOWED_TOOLS`). | Utilisateur |
 | POST | `/api/agent/[slug]/apply` | Applique une proposition de l'assistant préalablement approuvée par le marchand. | Utilisateur |
 | PATCH | `/api/sites/[slug]` | Modification directe des champs du site (mapping camelCase→snake_case). | Utilisateur |
+| GET · POST · PATCH · DELETE | `/api/sites/[slug]/pages` | **LOT 3** — les ADRESSES d'un site (`site_pages`), distinctes des sections de l'accueil : chaque page a son chemin, son parent, son rang de menu et son état de publication. Existe parce que `site_pages` ne rend **aucun** privilège à `anon` ni à `authenticated` — le navigateur ne PEUT pas écrire, et `requireSiteOwner` est la seule porte. `site_id` vient toujours de la garde, **jamais du corps** : un `site_id` accepté du client permettrait d'écrire chez un autre locataire avec une session légitime. `PATCH` et `DELETE` filtrent par site **même avec un `id`**. Liste blanche des champs écrivables ; les bornes du chemin restent dans la contrainte `CHECK` et ne sont pas recopiées ici. | Utilisateur propriétaire du site |
 | GET | `/api/ai-visibility` | Score de visibilité IA (interroge un LLM avec une question type sur le commerce, mesure la présence dans la réponse). | Cron |
 | GET | `/api/backfill-hero` | Tâche ponctuelle : attribue une image hero (Pexels) aux sites qui n'en ont pas. | Cron |
 
