@@ -313,6 +313,38 @@ DE MARCHÉ… Ne pas y répondre » — conditions posées par le propriétaire.
 Les 43 comptent les non publiés et les archivés. La mesure de non-fuite porte
 donc sur 8 sites, et c'est le dénominateur réel.
 
+### A2 (b) — MESURE DE CLÔTURE, à l'écran servi, trois témoins
+
+2026-11-06, `7ba57af1` déployé en 64 s. **26 / 26** sur
+`https://cpa-tchad.deribfy.app`, instrument versionné
+`scripts/prouver-ecran-appels-offres.mjs`. Relevé d'avant : `/api/version`
+rendait `c7d8625` — c'est lui qui donne sa valeur au `7ba57af` d'après.
+
+**P-01 PROUVÉ PAR LA MESURE, et c'est la pièce maîtresse de ce lot.** Les deux
+mutations que le cliquet unitaire ne peut PAS voir :
+
+| mutation | cliquet unitaire | sonde d'écran |
+|---|---|---|
+| le JSX cesse de rendre `(prévisionnelle)` | **53/53 VERT** | 🔴 point 12 |
+| le bandeau « aucune offre recevable » retiré | **53/53 VERT** | 🔴 point 14 |
+
+Chaque instrument attrape exactement ce que l'autre ne voit pas. Le principe
+n'est pas une intention : il est mesuré.
+
+**Le témoin EN PRÉPARATION, désigné par le propriétaire comme la pièce à
+regarder** — « le seul des trois dont le faux vert serait invisible ; les deux
+autres se voient à l'œil ». Six points lui sont consacrés, dont **deux de
+contrôle inverse** (17, 18) : prouver que la marque apparaît ne dit rien tant
+qu'on n'a pas prouvé qu'elle n'apparaît **pas ailleurs**. Un avis échu garde
+bien le libellé « limite » et ne porte ni bandeau ni marque.
+
+**Retrait** : vérifié depuis l'adresse publique pour les trois témoins (liste
+muette · trois 404 · base à 0), puis **confirmé une seconde fois à la main**,
+hors de la sonde qui venait de nettoyer. Témoins vivants **12 secondes**
+(03:00:40Z → 03:00:52Z).
+
+**Non-fuite** : 8 autres sites servis, **tous réellement lus**, zéro illisible.
+
 ### PRINCIPE P-01 — Un cliquet garde la règle, une sonde d'écran garde le rendu
 
 **Posé par le propriétaire le 2026-11-06, comme principe général et non comme
