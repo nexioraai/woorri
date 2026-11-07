@@ -37,7 +37,11 @@ type Params = { params: Promise<{ slug: string }> }
 
 /** Les seuls champs qu'un client peut ecrire. Liste BLANCHE : un champ ajoute
  *  a la table n'est pas ecrivable tant qu'il n'est pas nomme ici. */
-const CHAMPS = ['chemin', 'parent', 'titre', 'chapeau', 'corps', 'ordre', 'menu', 'publie'] as const
+// `blocs` est dans la liste blanche, mais sa FORME n'est pas recopiee ici :
+// la CHECK `site_pages_blocs_valides` la tient en base. Recopier le
+// vocabulaire dans la route creerait deux verites qui divergeraient.
+// La route se contente de traduire le 23514 en message lisible.
+const CHAMPS = ['chemin', 'parent', 'titre', 'chapeau', 'corps', 'ordre', 'menu', 'publie', 'blocs'] as const
 
 function filtrer(corps: Record<string, unknown>): Record<string, unknown> {
   const net: Record<string, unknown> = {}
@@ -67,7 +71,7 @@ export async function GET(req: Request, { params }: Params) {
 
   const { data, error } = await supabaseAdmin
     .from('site_pages')
-    .select('id,chemin,parent,titre,chapeau,corps,ordre,menu,publie,maj_le')
+    .select('id,chemin,parent,titre,chapeau,corps,ordre,menu,publie,maj_le,blocs')
     .eq('site_id', garde.site.id)
     .order('ordre', { ascending: true })
     .order('titre', { ascending: true })

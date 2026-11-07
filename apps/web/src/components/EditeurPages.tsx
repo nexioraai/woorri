@@ -1,6 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import EditeurBlocs from './EditeurBlocs'
+import { lireBlocs, type Bloc } from '@/app/sites/[slug]/pages/blocs'
 import { Plus, Trash2, Eye, EyeOff } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
@@ -30,7 +32,7 @@ import { supabase } from '@/lib/supabase';
 
 type Page = {
   id: string; chemin: string; parent: string | null; titre: string;
-  chapeau: string | null; corps: string | null;
+  chapeau: string | null; corps: string | null; blocs?: Bloc[];
   ordre: number; menu: boolean; publie: boolean;
 };
 
@@ -196,6 +198,16 @@ export default function EditeurPages({ slug, labels }: {
                   <input type="checkbox" defaultChecked={p.menu} onChange={(e) => void modifier(p.id, 'menu', e.target.checked)} />
                   {labels.menu}
                 </label>
+
+              {/* LOT 4 — LES BLOCS. Sans cet ecran, le client voit du contenu
+                  GENERE qu'il ne peut pas remplacer : c'est GEN-D044. */}
+              <div className="mt-3">
+                <span className="block text-xs text-white/50 mb-2">Contenu structure de la page</span>
+                <EditeurBlocs
+                  blocs={lireBlocs(p.blocs)}
+                  onChange={(b) => { void modifier(p.id, 'blocs', b as unknown as string); }}
+                />
+              </div>
                 <label className="flex items-center gap-2 text-sm text-white/70">
                   {labels.ordre}
                   <input
