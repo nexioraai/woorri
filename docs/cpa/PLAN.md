@@ -190,3 +190,22 @@ derniers échouent en silence. Voir GEN-D042 et GEN-D043.
 | 2026-11-07 | Le **cliquet de lint** a attrapé 2 `any` de mon lot (963 contre 961). Corrigés plutôt que gelés. J'ignorais que ce dépôt interdit à la dette de lint de GROSSIR — je l'avais traitée comme une dette abandonnée. |
 | 2026-11-07 | **Lot 1 — table `site_pages` + vue en production, route `[...rest]` qui résout. 15/15 en local**, dont les deux refus (adresse inventée → 404, page non publiée → 404) et l'absence de fuite inter-site. Les 3 adresses existantes intactes. Reste : déploiement et relevé d'après. |
 | 2026-11-07 | **Convention de cochage posée** : ✅ = fait + vérifié + revérifié à l'écran servi. Deux cases décochées en l'appliquant — la section d'accueil et la suppression dans `/edit` étaient écrites, pas prouvées. |
+
+### 7 novembre 2026 — LOT 3, la barre du haut
+
+| | |
+|---|---|
+| ✅ | **L'éditeur de pages** est servi sur `/edit` (commit `2c4cf42b`, déployé, `/api/version` = `2c4cf42`) |
+| ✅ | **Le fond blanc** des sous-pages — mesuré à l'adresse publique : `background:#ffffff` sur `/catalogue/commander` |
+| ✅ | **Le menu mobile** liste les pages déclarées — 5 occurrences de chaque entrée dans le HTML servi |
+| 🔄 | **La barre réduite aux 7 entrées** — écrite et prouvée par cliquet bidirectionnel (16 points, mutation rougit), **pas encore déployée** |
+| ⬜ | **TPA** — en attente de la réponse de la CPA ; bloque `/qui-sommes-nous/etablissements` |
+
+**Ce qui n'a PAS été employé, et pourquoi.** `hidden_sections` existait déjà,
+mais `hidden('About')` est lu deux fois par thème : il retire le lien *et la
+section*. Désencombrer la barre aurait effacé la présentation du site. Voir
+GEN-D046 au registre.
+
+**Une dette ouverte par nous, ce matin.** Le retrait de l'ancien bloc « pages »
+de `/edit` n'a pas retiré sa LECTURE : 127 blocs sur 34 sites sont encore
+affichés et ne sont plus retirables. Voir GEN-D045. La CPA n'est pas touchée.

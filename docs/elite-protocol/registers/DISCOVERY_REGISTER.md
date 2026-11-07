@@ -1528,3 +1528,51 @@ ouverte**
 | **Impact** | 🔴 pendant 12 h 18 le lien donné par le propriétaire était mort, et **rien dans le produit ne le disait**. Ce n'est pas rare : 2 publications mesurées, 2 délais, de 73 s à 12 h 18 — la variance est le défaut |
 | **Contre-mesure** | **non faite, lot séparé** : la publication attend la poignée de main TLS avant de rendre le lien, ou le rend en disant son délai. La sonde `GET /api/generateur/direct` sait déjà mesurer TLS sur un nom neuf (mesuré le 2026-11-01) — la publication, elle, ne s'en sert pas |
 | **Statut** | 🔴 **OUVERT** |
+
+---
+
+## GEN-D045 — retirer l'écriture sans retirer la lecture refait GEN-D044 à l'envers
+
+**7 novembre 2026 · P2 · trouvé en travaillant sur la barre de menu, pas cherché**
+
+Ce matin j'ai retiré de `/edit` le bloc « pages » hérité (commit `2c4cf42b`,
+poussé et déployé) parce qu'il promettait une page qu'il ne livrait pas.
+
+**Je n'ai vérifié que la moitié du circuit.** Mesuré après coup sur les quatre
+thèmes : `site.pages` est TOUJOURS lu par le rendu — il produit une ancre dans
+la barre (`#page-N`) **et une `<section>` entière sur l'accueil**
+(`AuroraTheme.tsx:316`, `EditorialTheme.tsx:556`, `NoirTheme.tsx:625`,
+`VifTheme.tsx:434`).
+
+Conséquence : les **127 blocs répartis sur 34 sites** sont encore servis à
+l'écran, et leurs propriétaires n'ont plus **aucun moyen de les retirer**.
+
+C'est exactement GEN-D044 retourné : là le marchand pouvait écrire sans pouvoir
+retirer ; ici il ne peut plus ni écrire ni retirer, et ça reste affiché.
+
+**La règle qui en sort :** un bloc d'édition ne se retire qu'après avoir mesuré
+ce que le RENDU fait encore de la colonne. Retirer l'écriture d'une donnée
+toujours lue ne la supprime pas — ça la fige.
+
+*(La CPA n'est pas touchée : `sites.pages = []` depuis ce matin.)*
+
+---
+
+## GEN-D046 — une propriété qui pilote deux choses n'en pilote aucune proprement
+
+**7 novembre 2026 · P3 · mesuré avant d'agir, et c'est ce qui a évité la faute**
+
+Pour désencombrer la barre du haut, `hidden_sections` semblait l'instrument
+tout trouvé — il existait déjà, il était testé, et c'était la cinquième fois
+que la solution était déjà dans le dépôt.
+
+**Mesure avant emploi :** `hidden('About')` apparaît **deux fois** par thème.
+La même clé retire le lien **et la section de la page d'accueil**. Masquer
+« À propos » du menu aurait effacé le texte de présentation du site.
+
+`hidden_sections` ne distingue pas *« pas dans le menu »* de *« pas sur la
+page »*. Employé pour le premier, il exécute le second en silence.
+
+**La règle :** avant de réemployer une propriété existante, compter ses points
+d'usage. Une propriété lue à un seul endroit fait une chose. Lue à deux, elle
+en fait deux — et l'appelant n'en voulait qu'une.
