@@ -155,6 +155,29 @@ export default function Navbar() {
   const addArrayItem = (field: string, template: any) => { if (!site) return; setSite({ ...site, [field]: [...(site[field] || []), template] }); };
   const removeArrayItem = (field: string, idx: number) => { if (!site) return; setSite({ ...site, [field]: site[field].filter((_: any, i: number) => i !== idx) }); };
 
+  // ── GEN-D044 — L'ÉDITEUR SAVAIT ÉCRIRE, PAS RETIRER.
+  //
+  // `removeArrayItem` existait pour whyus, services, testimonials, pages,
+  // products, faq, gallery — JAMAIS pour les sections engendrées par le
+  // modèle. Un client ne pouvait donc pas défaire ce que le générateur avait
+  // inventé : le seul « retrait » offert était le masquage, qui ne retire
+  // rien. Mesuré le 2026-11-07 sur le portail CPA, où le modèle avait écrit
+  // quatre appels d'offres et quatre rapports qui n'existent pas.
+  //
+  // `sections` EST dans le GRANT UPDATE du LOT G (« section_label, sections ») :
+  // le chemin d'écriture était ouvert, seul le bouton manquait.
+  const removeSectionItem = (si: number, ii: number) => {
+    if (!site) return;
+    const sections = [...(site.sections || [])];
+    sections[si] = { ...sections[si], items: (sections[si].items || []).filter((_: any, i: number) => i !== ii) };
+    setSite({ ...site, sections });
+  };
+  const removeSection = (si: number) => {
+    if (!site) return;
+    setSite({ ...site, sections: (site.sections || []).filter((_: any, i: number) => i !== si) });
+    setCurrentSection(null);
+  };
+
   // Nested section item helpers (sections[si].items[ii].key)
   const updateSectionItem = (si: number, ii: number, key: string, value: any) => {
     if (!site) return;
@@ -665,9 +688,24 @@ export default function Navbar() {
                 {site && (site.sections || []).map((sec: any, si: number) => (
                   currentSection === sec.name && (
                     <div key={si} className="space-y-4">
+                      <button
+                        onClick={() => { if (confirm(`${t('naved.delete')} « ${sec.name} » ?`)) removeSection(si); }}
+                        className="w-full px-4 py-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 text-sm font-medium transition border border-red-500/20 flex items-center justify-center gap-2"
+                      >
+                        <Trash2 size={14} /> {t('naved.delete')} « {sec.name} »
+                      </button>
                       {(sec.items || []).map((item: any, ii: number) => (
                         <div key={ii} className="p-4 rounded-xl bg-white/5 border border-white/10 space-y-3">
-                          <span className="text-xs text-slate-400">Item #{ii + 1}</span>
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs text-slate-400">Item #{ii + 1}</span>
+                            <button
+                              onClick={() => removeSectionItem(si, ii)}
+                              className="text-red-400 hover:text-red-300 p-1"
+                              title={t('naved.delete')}
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
                           {item.image ? (
                             <div className="relative group rounded-lg overflow-hidden">
                               <img src={item.image} alt="" className="w-full h-32 object-cover" />

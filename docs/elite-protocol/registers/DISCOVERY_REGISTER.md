@@ -345,6 +345,47 @@ hors de la sonde qui venait de nettoyer. Témoins vivants **12 secondes**
 
 **Non-fuite** : 8 autres sites servis, **tous réellement lus**, zéro illisible.
 
+### GEN-D044 — L'éditeur savait écrire, pas retirer : un client ne pouvait pas défaire ce que le générateur avait inventé
+
+**Signalé par Youssouf le 2026-11-07** — « aucun bouton pour supprimer un
+élément de section ». **Mesuré, et il avait raison.**
+
+`removeArrayItem` est appelé dans `components/Navbar.tsx` pour **sept**
+champs : `whyus` · `services` · `testimonials` · `pages` · `products` ·
+`faq` · `gallery`. **Jamais pour `sections`** — les blocs écrits par le
+modèle à la génération.
+
+| geste | offert ? |
+|---|---|
+| supprimer UN élément d'une section | **non** |
+| supprimer UNE section entière | **non** |
+| réordonner | **non** |
+| masquer (`hidden_sections`) | oui — **et ce n'est pas un retrait** |
+
+**La conséquence est la pire de ce chantier.** Le portail CPA porte **huit
+faits inventés** par le modèle — quatre appels d'offres et quatre rapports qui
+n'existent pas. Le propriétaire du site **ne pouvait pas les retirer**. Le seul
+geste disponible, le masquage, laisse le contenu en base : il ressort à la
+première regénération, au premier thème qui oublierait le `!hidden()`, au
+premier export.
+
+**Un moteur qui écrit sans permettre de retirer rend ses inventions
+définitives.** Ce n'est pas un manque d'ergonomie — c'est l'asymétrie qui
+transforme une erreur de génération en fait permanent.
+
+**Et le chemin d'écriture était ouvert.** `sections` figure dans le
+`GRANT UPDATE` du LOT G (« section_label, sections ») — mesuré avant d'écrire,
+précisément parce que c'est le geste manquant qui a coûté la journée du
+2026-11-06. **Seul le bouton manquait.**
+
+**Corrigé le 2026-11-07**, en moins d'une heure : suppression d'un élément, et
+suppression d'une section entière avec confirmation nommée. Même chemin
+d'écriture que les sept autres — `setSite` puis la sauvegarde différée.
+
+**La preuve de persistance n'est PAS écrite ici, et c'est délibéré** : elle
+exige un clic sur du contenu réel, et le contenu appartient au client. Youssouf
+clique, la base est relue — mesurée, jamais lue à l'écran.
+
 ### GEN-D043 — GEN-D042 comptait QUATRE gestes. Il en faut CINQ, et le cinquième est une VUE
 
 Mesuré le 2026-11-07, d3d rouge sur un vrai défaut.
