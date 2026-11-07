@@ -313,6 +313,56 @@ DE MARCHÉ… Ne pas y répondre » — conditions posées par le propriétaire.
 Les 43 comptent les non publiés et les archivés. La mesure de non-fuite porte
 donc sur 8 sites, et c'est le dénominateur réel.
 
+### PRINCIPE P-01 — Un cliquet garde la règle, une sonde d'écran garde le rendu
+
+**Posé par le propriétaire le 2026-11-06, comme principe général et non comme
+note de lot. C'est la synthèse de la journée.**
+
+> **Un cliquet qui lit le source garde la RÈGLE.**
+> **Une sonde d'écran garde le RENDU.**
+> **Aucun des deux ne fait le travail de l'autre, et prétendre le contraire
+> produit un vert qui ne mesure rien.**
+
+**La forme générale du défaut** : *un instrument qui prétend couvrir ce qu'il
+ne peut pas voir.* Il ne tombe jamais en panne — il rend le résultat qu'on
+espérait, et le vert se lit comme une preuve.
+
+#### Ce que ce principe explique, dans la journée du 2026-11-06
+
+| l'instrument | ce qu'il voyait | ce qu'il prétendait couvrir |
+|---|---|---|
+| `expect(liste).toMatch(/t\.previsionnel/)` | une **présence** dans le source | que la marque **s'affiche** (GEN-D041) |
+| le bloc SQL comptant `pg_views` | la vérité du **moteur** | que la vue soit **atteignable par l'API** — `PGRST205` |
+| `(lecture.data ?? []).length === 0` | un **repli** | une **absence constatée** (GEN-D037) |
+| une substitution `python3` sans `assert` | **rien** | qu'une mutation ait eu lieu (GEN-D038) |
+| une injection `503` | une requête **rejouée** | une panne **subie** (GEN-D038) |
+| une branche redondante mutée | **rien** | une règle **défendue** (GEN-D040) |
+| `/\bretiré\b/` | **jamais vrai** | un journal **relu** |
+
+Sept instruments, un seul défaut. Aucun n'était cassé ; tous mesuraient à côté
+de ce qu'ils annonçaient.
+
+#### Comment l'appliquer
+
+**① Avant d'écrire une assertion, dire ce qu'elle NE peut pas voir.** Si la
+phrase est difficile, l'assertion couvre probablement moins qu'on croit.
+
+**② Quand la frontière est irréductible, la NOMMER dans le fichier** plutôt
+que de la combler par une ancre de forme. Exemple tenu le même jour :
+distinguer `{ech.marque && …}` de `{false && …}` dans un source **demanderait
+exactement l'ancre de forme qui vient de tromper**. La note vit donc dans le
+cliquet, et la sonde d'écran prend le relais — versionnée, pas promise.
+
+**③ Un vert ne vaut que lié à son geste.** Une mutation verte a deux lectures,
+et il faut trancher : cliquet aveugle, ou mutation sans effet (GEN-D040).
+
+**④ Appairer les instruments.** Toute règle qui finit à l'écran a DEUX
+gardiens : un cliquet pour la règle, une sonde pour le rendu. L'absence du
+second se consigne ; elle ne se suppose pas comblée par le premier.
+
+**Statut** : 🟢 **PRINCIPE POSÉ** — il gouverne les cliquets et les sondes du
+dépôt
+
 ### GEN-D040 — Une branche qu'aucune mutation ne peut faire rougir est une branche qu'aucun test ne défend
 
 **Règle, pas incident** — retenue par le propriétaire le 2026-11-06.
