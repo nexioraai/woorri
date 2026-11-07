@@ -92,7 +92,7 @@ un avis · un article · un produit · une province
 
 | # | lot | h | statut |
 |---|---|---|---|
-| 1 | **Routage** — le verrou | 18 | 🔄 **écrit, 15/15 en LOCAL — reste le déploiement et le relevé d'après** |
+| 1 | **Routage** — le verrou | 18 | ✅ **FERMÉ** — déployé `5d711a9` · 13/13 en production · relevé d'après : **0 écart** sur 63 mesures |
 | 2 | Menu à plusieurs niveaux + pied de page | 6 | ⬜ |
 | 3 | Gabarit de page + les 20 pages de contenu | 12 | ⬜ |
 | 4 | **Organigramme interactif + alternative 2D** | 16 | ⬜ |
@@ -185,5 +185,7 @@ derniers échouent en silence. Voir GEN-D042 et GEN-D043.
 | date | quoi |
 |---|---|
 | 2026-11-07 | Création. Plan établi après lecture du cahier des charges et analyse en profondeur d'EPSS (8 pages, 3 niveaux). |
+| 2026-11-07 | **LOT 1 ✅ FERMÉ.** Déployé `5d711a9`. **13/13 en production** sur `cpa-tchad.deribfy.app` — page servie, 2ᵉ niveau, fil d'Ariane, JSON-LD, les trois refus (non publiée · inventée · autre site), et le témoin qui rend 404 APRÈS retrait. **Relevé d'après : 0 écart** sur 63 mesures — les 42 autres sites intacts, code et titre. Le moteur sert désormais autant d'adresses qu'un site en déclare. |
+| 2026-11-07 | Le **cliquet de lint** a attrapé 2 `any` de mon lot (963 contre 961). Corrigés plutôt que gelés. J'ignorais que ce dépôt interdit à la dette de lint de GROSSIR — je l'avais traitée comme une dette abandonnée. |
 | 2026-11-07 | **Lot 1 — table `site_pages` + vue en production, route `[...rest]` qui résout. 15/15 en local**, dont les deux refus (adresse inventée → 404, page non publiée → 404) et l'absence de fuite inter-site. Les 3 adresses existantes intactes. Reste : déploiement et relevé d'après. |
 | 2026-11-07 | **Convention de cochage posée** : ✅ = fait + vérifié + revérifié à l'écran servi. Deux cases décochées en l'appliquant — la section d'accueil et la suppression dans `/edit` étaient écrites, pas prouvées. |
