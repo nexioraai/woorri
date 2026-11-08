@@ -260,7 +260,7 @@ const rel = (f: string) => f.replace(RACINE, 'appels-offres')
 
 describe('cliquet structurel — surface publique des avis', () => {
 
-  it('les HUIT fichiers de la surface sont bien vus par ce cliquet', () => {
+  it('les DIX fichiers de la surface sont bien vus par ce cliquet', () => {
     // LE DÉNOMINATEUR EST RÉEL. Un fichier ajouté à la surface sans entrer
     // ici échapperait à tous les contrôles qui suivent — la classe GEN-D032.
     // `cycleDeVie.ts` est entré le 2026-11-06 (lot A2 b) : ce cliquet a rougi
@@ -277,8 +277,14 @@ describe('cliquet structurel — surface publique des avis', () => {
         // `archiver.ts` décide la coupure, `archive/page.tsx` la sert. Les
         // deux entrent ici le jour même : un fichier de la surface qui
         // n'y figure pas échappe à TOUS les contrôles qui suivent.
+        'appels-offres/EnTeteAvis.tsx',
         'appels-offres/archive/page.tsx',
         'appels-offres/archiver.ts',
+        // Entrés le 2026-11-08 (lot 5bis) — le bandeau coloré et les quatre
+        // compteurs. `comptesAvis.ts` les DÉDUIT des avis réels : aucun
+        // n'est saisissable, parce qu'un compteur qu'on écrit à la main
+        // ment le jour où personne ne le met à jour.
+        'appels-offres/comptesAvis.ts',
         'appels-offres/labels.ts',
         'appels-offres/page.tsx',
         'appels-offres/[reference]/page.tsx',

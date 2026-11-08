@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase'
+import { lireBlocs, type Bloc } from '../pages/blocs'
 
 // ============================================================
 // A2 -- LECTURE PUBLIQUE DES AVIS DE MARCHE.
@@ -173,18 +174,34 @@ export function lirePieces(brut: unknown): PieceJointe[] {
     })
   }
   return out
+
 }
 
 /**
- * Un avis. `null` couvre indistinctement : site absent, avis absent, avis
- * d'un AUTRE acheteur, avis en preparation, site archive.
+ * LES TEXTES EDITABLES DE LA PAGE DES AVIS.
  *
- * L'INDISTINCTION EST VOULUE. Distinguer « cet avis n'existe pas » de « cet
- * avis existe mais n'est pas encore public » dirait a un concurrent qu'une
- * procedure se prepare, et sous quelle reference. Une absence et un refus ne
- * doivent pas se ressembler POUR L'EXPLOITANT ; vis-a-vis du public ils
- * doivent etre indiscernables.
+ * Ils vivent dans une page DECLAREE au chemin `appels-offres` -- la meme
+ * table que les 30 autres pages, le meme editeur, le meme vocabulaire de
+ * blocs. Aucun ecran neuf, aucune colonne neuve : construire un second
+ * editeur pour quatre phrases referait le piege paye le 7 novembre.
+ *
+ * Cette page n'est JAMAIS servie telle quelle : la route moteur
+ * `/appels-offres` passe avant le chemin libre. Elle ne porte donc que du
+ * texte, et c'est voulu.
+ *
+ * Rend `[]` si elle n'existe pas : un site qui n'a rien declare garde la
+ * page telle qu'elle est aujourd'hui.
  */
+export async function fetchTextesAvis(siteId: string): Promise<Bloc[]> {
+  const { data } = await supabase
+    .from('site_pages_public')
+    .select('blocs')
+    .eq('site_id', siteId)
+    .eq('chemin', 'appels-offres')
+    .maybeSingle()
+  return lireBlocs((data as { blocs?: unknown } | null)?.blocs)
+}
+
 export async function fetchAvis(
   slug: string,
   referenceSlug: string

@@ -7,6 +7,10 @@ import { getAvisLabels, echeanceAffichee, libelleEtat, tronquer } from './labels
 import { partager, etatVisible } from './cycleDeVie'
 import { lireFiltre, compter, filtrer, FILTRES } from './filtrerAvis'
 import { partagerArchive } from './archiver'
+import { compterAvis } from './comptesAvis'
+import EnTeteAvis from './EnTeteAvis'
+import { fetchTextesAvis } from './fetchAvis'
+import BlocsDePage from '../pages/BlocsDePage'
 import { resolveSiteBaseUrl } from '../themes/shared'
 import { ogLocaleFor } from '@/lib/i18n/supportedLanguages'
 import HtmlLang from '../themes/HtmlLang'
@@ -73,6 +77,7 @@ export default async function AppelsOffresPage({ params, searchParams }: Props) 
   // les lectures d'horloge ; il m'a repris sur ce fichier meme.
   const maintenant = new Date()
   const filtreActif = lireFiltre((await searchParams)?.etat)
+  const textes = await fetchTextesAvis(site.id)
   const comptes = compter(tousLesAvis, maintenant)
   const avis = filtrer(tousLesAvis, filtreActif, maintenant)
   const base = resolveSiteBaseUrl(site, (await headers()).get('host'))
@@ -203,16 +208,29 @@ export default async function AppelsOffresPage({ params, searchParams }: Props) 
         dir={rtl ? 'rtl' : 'ltr'}
         style={{ maxWidth: 1040, margin: '0 auto', padding: '64px 24px' }}
       >
-        <Link href={base} style={{ fontSize: 14, color: accent, textDecoration: 'none' }}>
-          {t.accueil}
-        </Link>
+        {/* LOT 5bis — LE BANDEAU, LES COMPTEURS, PUIS LES TEXTES DU CLIENT.
+            Les quatre nombres sont DÉDUITS des avis réels ; les textes
+            viennent d'une page déclarée au chemin `appels-offres`, éditée
+            avec l'éditeur qui existe déjà. Aucun écran neuf. */}
+        <EnTeteAvis
+          titre={t.titre}
+          phrase={`${t.sousTitre} — ${site.name}`}
+          filDAriane={
+            <Link href={base} style={{ color: 'inherit', textDecoration: 'underline' }}>
+              {t.accueil}
+            </Link>
+          }
+          comptes={compterAvis(tousLesAvis, maintenant)}
+          libelles={t.comptes}
+          primary={accent}
+          rtl={rtl}
+        />
 
-        <h1 style={{ fontSize: 40, fontWeight: 800, margin: '24px 0 8px', letterSpacing: '-0.02em' }}>
-          {t.titre}
-        </h1>
-        <p style={{ fontSize: 15, opacity: 0.6, margin: '0 0 48px' }}>
-          {t.sousTitre} — {site.name}
-        </p>
+        {textes.length > 0 && (
+          <div style={{ marginBottom: 32 }}>
+            <BlocsDePage blocs={textes} base={base} primary={accent} lang={site.lang} />
+          </div>
+        )}
 
         {/* LOT 5 — LA BARRE DE FILTRE.
             Des LIENS, pas des boutons : l'adresse porte le filtre, donc elle

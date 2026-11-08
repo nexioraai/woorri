@@ -44,6 +44,10 @@ export type AvisLabels = {
   /** Le libelle de `remise_le` QUAND la date n'est pas ferme. */
   rRemisePrevue: string
   /** LOT 5d — le lien vers l'archive. Il porte son compte a l'ecran. */
+  /** LOT 5bis — les quatre compteurs. Une langue qui en manque un rougit
+   *  à la compilation : un compteur non traduit paraîtrait en français. */
+  comptes: { actifs: string; ouverts: string; clotureProchaine: string; archives: string }
+  joursRestants: string
   lienArchive: string
   titreArchive: string
   sousTitreArchive: string
@@ -116,6 +120,8 @@ const RUB_AR: Record<string, string> = {
 
 const COPY: Record<string, AvisLabels> = {
   fr: {
+    comptes: { actifs: 'Appels d’offres actifs', ouverts: 'Ouverts aux offres', clotureProchaine: 'Clôture prochaine', archives: 'Archivés' },
+    joursRestants: 'jours restants',
     lienArchive: 'Consulter l’archive des consultations closes',
     titreArchive: 'Archive des consultations',
     sousTitreArchive: 'Avis clôturés des années précédentes',
@@ -139,6 +145,8 @@ const COPY: Record<string, AvisLabels> = {
     r: RUB_FR,
   },
   en: {
+    comptes: { actifs: 'Active tenders', ouverts: 'Open for bids', clotureProchaine: 'Closing soon', archives: 'Archived' },
+    joursRestants: 'days left',
     lienArchive: 'Browse the archive of closed tenders',
     titreArchive: 'Tender archive',
     sousTitreArchive: 'Closed notices from previous years',
@@ -161,6 +169,8 @@ const COPY: Record<string, AvisLabels> = {
     r: RUB_EN,
   },
   es: {
+    comptes: { actifs: 'Licitaciones activas', ouverts: 'Abiertas a ofertas', clotureProchaine: 'Cierre próximo', archives: 'Archivadas' },
+    joursRestants: 'días restantes',
     lienArchive: 'Consultar el archivo de licitaciones cerradas',
     titreArchive: 'Archivo de licitaciones',
     sousTitreArchive: 'Avisos cerrados de años anteriores',
@@ -183,6 +193,8 @@ const COPY: Record<string, AvisLabels> = {
     r: RUB_ES,
   },
   ar: {
+    comptes: { actifs: 'مناقصات نشطة', ouverts: 'مفتوحة للعروض', clotureProchaine: 'تغلق قريبا', archives: 'مؤرشفة' },
+    joursRestants: 'يوم متبقٍ',
     lienArchive: 'الاطلاع على أرشيف المناقصات المغلقة',
     titreArchive: 'أرشيف المناقصات',
     sousTitreArchive: 'إعلانات مغلقة من سنوات سابقة',
