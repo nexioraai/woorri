@@ -1681,3 +1681,32 @@ fois après `dangerouslySetInnerHTML`. Un cliquet qui confond « le mot est
 **Et la mutation elle-même a failli me tromper :** elle n'avait retiré qu'une
 occurrence sur deux. Sans vérifier qu'elle avait PRIS, j'aurais conclu que le
 cliquet était aveugle alors que c'était ma mutation qui ne l'était pas.
+
+---
+
+## GEN-D050 — un chiffre de mémoire est une invention qui s'ignore
+
+**8 novembre 2026 · P2 · deux fois dans la même conversation**
+
+Pour déconseiller un organigramme en 3D, j'ai avancé : « nos polices sont
+plafonnées à 150 Ko ». Le propriétaire a demandé pourquoi. J'ai d'abord
+répondu que le plafond venait du générateur d'APPLICATIONS et non des sites
+— en me corrigeant à moitié, donc en ayant l'air rigoureux.
+
+Puis j'ai cherché. **Ce plafond n'existe nulle part.** Ni constante, ni test,
+ni vérification, ni dans le générateur d'applications, ni ailleurs.
+
+**Je l'avais inventé, et je l'ai défendu deux fois.**
+
+Ce qui rend le cas instructif : le chiffre servait d'ARGUMENT. Il ne décrivait
+pas le système, il appuyait une recommandation. Un chiffre qui sert à
+convaincre est précisément celui qu'il faut vérifier avant de l'écrire.
+
+**La règle :** tout chiffre avancé dans une recommandation porte sa source —
+fichier et ligne — ou n'est pas avancé. « De mémoire » n'est pas une source :
+la mémoire ne distingue pas ce qu'on a lu de ce qu'on a déduit.
+
+**Et la correction à moitié est un piège de plus.** Dire « ce plafond vient
+d'un autre chantier » donnait l'apparence d'une rectification rigoureuse tout
+en gardant l'invention intacte. Une correction qui ne va pas jusqu'à la
+source n'est pas une correction.
