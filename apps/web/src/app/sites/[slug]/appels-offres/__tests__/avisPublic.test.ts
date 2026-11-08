@@ -184,7 +184,7 @@ describe('fetchAvis — résolution par le COUPLE (site_id, reference_slug)', ()
     expect(journal.projections.appels_offres_public).toBeUndefined()
   })
 
-  it('le détail projette les 19 rubriques AFFICHÉES, plus trois colonnes nommées', async () => {
+  it('le détail projette les 19 rubriques AFFICHÉES, plus quatre colonnes nommées', async () => {
     // RECTIFICATION DU 2026-11-06 — MON PREMIER ATTENDU DISAIT « 19 » ET
     // MESURAIT 22. Les dix-neuf sont les RUBRIQUES À L'ÉCRAN ; la projection
     // en porte trois de plus, et chacune a sa raison. Écrire « 19 » sans les
@@ -201,6 +201,12 @@ describe('fetchAvis — résolution par le COUPLE (site_id, reference_slug)', ()
       reference_slug: "porte l'URL, jamais affichée comme rubrique",
       devise: 'rendue AVEC la valeur, pas comme rubrique propre',
       cree_le: 'date de publication, en tête de page, pas une rubrique',
+      // AJOUT DU 2026-11-08 (LOT 5b) — `pieces` n'est PAS une vingtième
+      // rubrique : elle est rendue DANS la rubrique `document_url`, qui
+      // cesse d'être un lien pour devenir le dossier de consultation.
+      // `document_url` reste projetée et affichée — des avis ne portent
+      // qu'elle, et la retirer aurait cassé ce qui marche.
+      pieces: 'le dossier de consultation, rendu DANS la rubrique document_url',
     }
     avisTable = { data: AVIS, error: null }
     await fetchAvis(SITE.slug, AVIS.reference_slug)

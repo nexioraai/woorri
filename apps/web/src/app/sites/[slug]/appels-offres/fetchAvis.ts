@@ -41,6 +41,15 @@ import { supabase } from '@/lib/supabase'
 // ============================================================
 
 /** Le strict necessaire pour brander la page. Jamais d'email prive, jamais d'owner_id. */
+/**
+ * Une piece du dossier de consultation.
+ *
+ * `nom` et `url` sont EXIGES en base (CHECK `appels_offres_pieces_chk`) : un
+ * lien mort annonce comme un dossier de consultation est pire qu'une absence,
+ * parce que le fournisseur croit avoir le dossier et ne le reclame pas.
+ */
+export type PieceJointe = { nom: string; url: string; format?: string; poids?: string }
+
 export type AvisSite = {
   id: string
   slug: string
@@ -80,6 +89,8 @@ export type AvisDetail = AvisCarte & {
   local_validite_jours: number | null
   canal_officiel_url: string | null
   document_url: string | null
+  /** LOT 5b — le dossier de consultation, plusieurs pieces. `[]` si aucune. */
+  pieces: PieceJointe[]
   cree_le: string | null
 }
 
@@ -93,7 +104,7 @@ export type AvisDetail = AvisCarte & {
 // `GenericStringError` -- mesure du 2026-11-06, `TS2352`. Le confort de mise
 // en page coutait le typage de la requete.
 const COLS_LISTE = 'reference,reference_slug,objet,remise_le,etat'
-const COLS_DETAIL = `${COLS_LISTE},description,methode,methode_detail,valeur,devise,questions_avant,ouverture_plis,criteres_elim,criteres_notes,soumission,allotissement,local_prix_dossier,local_caution,local_validite_jours,canal_officiel_url,document_url,cree_le`
+const COLS_DETAIL = `${COLS_LISTE},description,methode,methode_detail,valeur,devise,questions_avant,ouverture_plis,criteres_elim,criteres_notes,soumission,allotissement,local_prix_dossier,local_caution,local_validite_jours,canal_officiel_url,document_url,cree_le,pieces`
 
 /** Resout le site public. `sites_public` applique deja `published = true AND archived_at IS NULL`. */
 async function fetchAvisSite(slug: string): Promise<AvisSite | null> {
@@ -133,6 +144,33 @@ export async function fetchAvisIndex(
 }
 
 /**
+ * Ne garde que les pieces REELLEMENT utilisables. Une piece a moitie formee
+ * n'est pas affichee a moitie : elle est ecartee. Afficher un nom sans
+ * adresse, c'est promettre un telechargement qui n'existe pas -- et le
+ * fournisseur ne reclame pas un dossier qu'il croit avoir.
+ *
+ * La base a DEJA refuse les pieces mal formees (CHECK). Ce filtre existe
+ * parce qu'une vue peut etre relue par un code plus recent que sa contrainte.
+ */
+export function lirePieces(brut: unknown): PieceJointe[] {
+  if (!Array.isArray(brut)) return []
+  const out: PieceJointe[] = []
+  for (const e of brut) {
+    if (!e || typeof e !== 'object') continue
+    const o = e as Record<string, unknown>
+    const nom = typeof o.nom === 'string' ? o.nom.trim() : ''
+    const url = typeof o.url === 'string' ? o.url.trim() : ''
+    if (!nom || !url) continue
+    out.push({
+      nom, url,
+      ...(typeof o.format === 'string' && o.format.trim() ? { format: o.format.trim() } : {}),
+      ...(typeof o.poids === 'string' && o.poids.trim() ? { poids: o.poids.trim() } : {}),
+    })
+  }
+  return out
+}
+
+/**
  * Un avis. `null` couvre indistinctement : site absent, avis absent, avis
  * d'un AUTRE acheteur, avis en preparation, site archive.
  *
@@ -157,7 +195,8 @@ export async function fetchAvis(
     .maybeSingle()
 
   if (!data) return null
-  return { site, avis: data as AvisDetail }
+  const brut = data as unknown as Record<string, unknown>
+  return { site, avis: { ...(brut as unknown as AvisDetail), pieces: lirePieces(brut.pieces) } }
 }
 
 /**

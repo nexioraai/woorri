@@ -128,7 +128,34 @@ export default async function AvisPage({ params }: Props) {
       }
       case 'local_validite_jours':
         return avis.local_validite_jours === null ? null : String(avis.local_validite_jours)
-      case 'document_url':
+      case 'document_url': {
+        // LOT 5b — LE DOSSIER, PAS UN LIEN.
+        // `document_url` portait UNE adresse pour UN document. Un dossier de
+        // consultation, c'est le reglement, le cahier des charges, le
+        // bordereau de prix et les annexes. On affiche les pieces si l'avis
+        // en porte, et l'ancienne adresse SEULEMENT si elle ne fait pas
+        // doublon -- retirer `document_url` aurait casse les avis qui ne
+        // portent qu'elle.
+        const u = avis.document_url
+        const pieces = avis.pieces ?? []
+        const deja = new Set(pieces.map((x) => x.url))
+        const tout = [...pieces, ...(u && !deja.has(u) ? [{ nom: 'Dossier de consultation', url: u }] : [])]
+        if (tout.length === 0) return null
+        return (
+          <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {tout.map((pj) => (
+              <li key={pj.url} style={{ display: 'flex', gap: 10, alignItems: 'baseline', flexWrap: 'wrap' }}>
+                <a href={pj.url} target="_blank" rel="noopener noreferrer" style={{ color: accent, fontWeight: 600 }}>
+                  {pj.nom}
+                </a>
+                <span style={{ fontSize: 13, opacity: 0.6, fontVariantNumeric: 'tabular-nums' }}>
+                  {[('format' in pj ? pj.format : null), ('poids' in pj ? pj.poids : null)].filter(Boolean).join(' · ')}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )
+      }
       case 'canal_officiel_url': {
         const u = avis[cle] as string | null
         if (!u) return null
