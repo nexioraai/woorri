@@ -1640,3 +1640,44 @@ ne décrit pas son instrument — après `contraintes_vivantes` qui ne rapporte
 pas les clés étrangères, la requête de privilèges qui ne filtre pas le
 bénéficiaire, et le `200` d'un CDN pris pour une preuve d'existence. La forme
 est toujours la même : **on croit mesurer la chose, on mesure l'outil.**
+
+---
+
+## GEN-D049 — corriger à la page, c'est corriger pour une fois
+
+**8 novembre 2026 · P1 · vu à l'écran par le propriétaire, deuxième fois**
+
+`/appels-offres` servait du texte presque noir sur fond presque noir.
+Illisible. Le propriétaire l'avait DÉJÀ signalé le 7 novembre sur les
+sous-pages, et je l'avais corrigé **sur cette page-là**.
+
+**La racine, mesurée.** `globals.css` bascule `--background` en `#0a0a0a`
+sous `@media (prefers-color-scheme: dark)`. Un visiteur dont le SYSTÈME est
+en mode sombre recevait donc un site institutionnel en noir — alors que
+l'apparence d'un site généré appartient à son THÈME, jamais aux préférences
+du visiteur pour le tableau de bord.
+
+**Et il n'existait AUCUN `layout` pour `sites/[slug]`.** Chaque page devait
+peindre son fond elle-même. Mesuré : **2 sur 8** le faisaient — les deux que
+j'avais corrigées à la main. Les six autres, dont `/blog` et `/produits`,
+étaient noires pour tout visiteur en mode sombre.
+
+**La règle :** quand un défaut touche un SEGMENT de routes, la correction se
+pose à la racine du segment. Corriger la page signalée, c'est garantir que la
+neuvième page aura le même défaut — et que c'est encore le propriétaire qui
+le trouvera.
+
+`globals.css` n'a PAS été modifié : son segment est engendré depuis
+`packages/design-tokens/tokens.json` et un cliquet CI rougit s'il diverge.
+La bascule sombre doit rester pour le tableau de bord. On corrige au bon
+endroit, pas au plus commode.
+
+**Corollaire payé dans la foulée** — mon cliquet lisait le fichier
+commentaires compris, et mon propre commentaire citait `colorScheme: 'light'`
+pour l'expliquer : retirer la ligne de CODE laissait le test vert. Deuxième
+fois après `dangerouslySetInnerHTML`. Un cliquet qui confond « le mot est
+écrit » et « le mot est employé » mesure la prose.
+
+**Et la mutation elle-même a failli me tromper :** elle n'avait retiré qu'une
+occurrence sur deux. Sans vérifier qu'elle avait PRIS, j'aurais conclu que le
+cliquet était aveugle alors que c'était ma mutation qui ne l'était pas.
