@@ -239,6 +239,43 @@ describe('C ter. un organigramme est un ARBRE', () => {
     expect(html).toMatch(/Service\s+perdu/);
   });
 
+  it('🔴 l’effet visuel ne coûte AUCUN JavaScript', () => {
+    // La 3D a été écartée pour trois raisons vérifiables. En voici une :
+    // tout l'effet est en CSS, donc l'arbre reste entier si le script
+    // échoue. Un canevas 3D ne s'afficherait pas du tout.
+    const html = renderToStaticMarkup(<BlocsDePage base="" blocs={[EXEMPLES.organigramme]} />);
+    expect(html).not.toMatch(/<script/);
+    expect(html).not.toMatch(/onclick/i);
+    expect(html).toMatch(/@keyframes\s+brancheOuvre/);
+  });
+
+  it('🔴 le mouvement de l’ARBRE se coupe si le lecteur le demande', () => {
+    // MON PREMIER CLIQUET ÉTAIT AVEUGLE. Il cherchait
+    // « prefers-reduced-motion » n'importe où — et `BlocsDePage` pose SA
+    // PROPRE règle. Retirer celle de l'organigramme le laissait vert :
+    // il trouvait celle du parent. La mutation l'a démasqué.
+    //
+    // On vise donc la règle QUI DÉSARME L'ARBRE, pas le mot.
+    const html = renderToStaticMarkup(<BlocsDePage base="" blocs={[EXEMPLES.organigramme]} />);
+    const d = html.indexOf('.organigramme');
+    expect(d, 'le style de l’organigramme doit exister').toBeGreaterThan(-1);
+    const styleArbre = html.slice(d);
+    expect(styleArbre).toMatch(/prefers-reduced-motion/);
+    expect(styleArbre).toMatch(/\.organigramme\s+details\[open\]\s*>\s*ul\s*\{\s*animation:\s*none/);
+  });
+
+  it('🔴 un arbre large se fait glisser, il ne pousse PAS la page de côté', () => {
+    // Sans ce cadre, un organigramme à six colonnes ferait défiler la page
+    // entière horizontalement sur téléphone.
+    const html = renderToStaticMarkup(<BlocsDePage base="" blocs={[EXEMPLES.organigramme]} />);
+    expect(html).toMatch(/overflow-x:\s*auto/);
+  });
+
+  it('🔴 le focus CLAVIER se voit, pas seulement le survol', () => {
+    const html = renderToStaticMarkup(<BlocsDePage base="" blocs={[EXEMPLES.organigramme]} />);
+    expect(html).toMatch(/focus-visible/);
+  });
+
   it('🔴 une entrée qui se désigne elle-même ne boucle pas', () => {
     const boucle = { type: 'organigramme', items: [
       { cle: 'a', parent: 'a', fonction: 'Service circulaire' },
