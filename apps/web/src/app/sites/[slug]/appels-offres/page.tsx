@@ -10,6 +10,7 @@ import { partagerArchive } from './archiver'
 import { compterAvis } from './comptesAvis'
 import EnTeteAvis from './EnTeteAvis'
 import CarteAvis from './CarteAvis'
+import { methodesPresentes, SIGNE_FILTRE } from './legendeMethodes'
 import { fetchTextesAvis } from './fetchAvis'
 import BlocsDePage from '../pages/BlocsDePage'
 import { resolveSiteBaseUrl } from '../themes/shared'
@@ -79,6 +80,7 @@ export default async function AppelsOffresPage({ params, searchParams }: Props) 
   const maintenant = new Date()
   const filtreActif = lireFiltre((await searchParams)?.etat)
   const textes = await fetchTextesAvis(site.id)
+  const methodes = methodesPresentes(tousLesAvis)
   const comptes = compter(tousLesAvis, maintenant)
   const avis = filtrer(tousLesAvis, filtreActif, maintenant)
   const base = resolveSiteBaseUrl(site, (await headers()).get('host'))
@@ -220,6 +222,7 @@ export default async function AppelsOffresPage({ params, searchParams }: Props) 
                     color: actif ? '#fff' : 'inherit',
                     textDecoration: 'none', fontWeight: actif ? 600 : 400,
                   }}>
+                  <span aria-hidden style={{ marginInlineEnd: 6, opacity: 0.8 }}>{SIGNE_FILTRE[f]}</span>
                   {t.filtres[f]} <span style={{ opacity: 0.75, fontVariantNumeric: 'tabular-nums' }}>{comptes[f]}</span>
                 </a>
               )
@@ -276,6 +279,37 @@ export default async function AppelsOffresPage({ params, searchParams }: Props) 
                 s'il y a quelque chose derriere, et a zero archive il n'y a
                 AUCUN lien : proposer une archive vide, c'est promettre un
                 contenu qu'on ne livre pas. */}
+            {/* LOT 5bis — LA LÉGENDE DES TYPES DE MARCHÉ, DÉDUITE.
+                Elle ne montre que les méthodes RÉELLEMENT employées par les
+                avis du site. Zéro méthode → aucun encart : une légende vide
+                est une promesse non tenue. Ce que chaque sigle VEUT DIRE
+                vient des blocs éditables, parce que seule la Centrale sait
+                ce que recouvre sa propre nomenclature. */}
+            {methodes.length > 0 && (
+              <aside aria-label={t.legendeMethodes} style={{
+                border: '1px solid #e3e3e3', borderRadius: 14, padding: '16px 18px',
+                background: '#f7f7f8', marginTop: 28,
+              }}>
+                <h2 style={{
+                  fontSize: 13, fontWeight: 700, letterSpacing: '0.04em',
+                  textTransform: 'uppercase', color: '#5b5b5b', margin: '0 0 12px',
+                }}>{t.legendeMethodes}</h2>
+                <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                  {methodes.map((m) => (
+                    <li key={m.code} style={{ display: 'flex', gap: 7, alignItems: 'center' }}>
+                      <span style={{
+                        fontSize: 12, fontWeight: 700, borderRadius: 999, padding: '3px 10px',
+                        background: `color-mix(in srgb, ${accent} 12%, white)`, color: accent,
+                      }}>{m.code}</span>
+                      <span style={{ fontSize: 13, color: '#5b5b5b', fontVariantNumeric: 'tabular-nums' }}>
+                        {m.nombre}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </aside>
+            )}
+
             {archives.length > 0 && (
               <p style={{ margin: '28px 0 0', fontSize: 15 }}>
                 <a href="/appels-offres/archive" style={{ color: accent, fontWeight: 600 }}>

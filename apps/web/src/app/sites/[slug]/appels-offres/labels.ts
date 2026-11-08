@@ -48,6 +48,8 @@ export type AvisLabels = {
    *  à la compilation : un compteur non traduit paraîtrait en français. */
   comptes: { actifs: string; ouverts: string; clotureProchaine: string; archives: string }
   joursRestants: string
+  /** LOT 5bis — l'encart de légende des types de marché. */
+  legendeMethodes: string
   lienArchive: string
   titreArchive: string
   sousTitreArchive: string
@@ -120,6 +122,7 @@ const RUB_AR: Record<string, string> = {
 
 const COPY: Record<string, AvisLabels> = {
   fr: {
+    legendeMethodes: 'Types de marché',
     comptes: { actifs: 'Appels d’offres actifs', ouverts: 'Ouverts aux offres', clotureProchaine: 'Clôture prochaine', archives: 'Archivés' },
     joursRestants: 'jours restants',
     lienArchive: 'Consulter l’archive des consultations closes',
@@ -145,6 +148,7 @@ const COPY: Record<string, AvisLabels> = {
     r: RUB_FR,
   },
   en: {
+    legendeMethodes: 'Tender types',
     comptes: { actifs: 'Active tenders', ouverts: 'Open for bids', clotureProchaine: 'Closing soon', archives: 'Archived' },
     joursRestants: 'days left',
     lienArchive: 'Browse the archive of closed tenders',
@@ -169,6 +173,7 @@ const COPY: Record<string, AvisLabels> = {
     r: RUB_EN,
   },
   es: {
+    legendeMethodes: 'Tipos de licitación',
     comptes: { actifs: 'Licitaciones activas', ouverts: 'Abiertas a ofertas', clotureProchaine: 'Cierre próximo', archives: 'Archivadas' },
     joursRestants: 'días restantes',
     lienArchive: 'Consultar el archivo de licitaciones cerradas',
@@ -193,6 +198,7 @@ const COPY: Record<string, AvisLabels> = {
     r: RUB_ES,
   },
   ar: {
+    legendeMethodes: 'أنواع المناقصات',
     comptes: { actifs: 'مناقصات نشطة', ouverts: 'مفتوحة للعروض', clotureProchaine: 'تغلق قريبا', archives: 'مؤرشفة' },
     joursRestants: 'يوم متبقٍ',
     lienArchive: 'الاطلاع على أرشيف المناقصات المغلقة',

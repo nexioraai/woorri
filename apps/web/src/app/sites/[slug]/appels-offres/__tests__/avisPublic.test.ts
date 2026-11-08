@@ -263,7 +263,7 @@ const rel = (f: string) => f.replace(RACINE, 'appels-offres')
 
 describe('cliquet structurel — surface publique des avis', () => {
 
-  it('les ONZE fichiers de la surface sont bien vus par ce cliquet', () => {
+  it('les DOUZE fichiers de la surface sont bien vus par ce cliquet', () => {
     // LE DÉNOMINATEUR EST RÉEL. Un fichier ajouté à la surface sans entrer
     // ici échapperait à tous les contrôles qui suivent — la classe GEN-D032.
     // `cycleDeVie.ts` est entré le 2026-11-06 (lot A2 b) : ce cliquet a rougi
@@ -276,6 +276,11 @@ describe('cliquet structurel — surface publique des avis', () => {
         // l'état VISIBLE, pas sur la colonne — et ce cliquet a rougi le jour
         // même, comme pour `cycleDeVie.ts`. C'est ce qu'on lui demande.
         'appels-offres/filtrerAvis.ts',
+        // Entré le 2026-11-08 (lot 5bis) — la légende des types de marché.
+        // Elle se DÉDUIT des méthodes réellement employées : une légende
+        // écrite en dur afficherait des sigles que la Centrale n'emploie
+        // pas, et un sigle inconnu fait douter de toute la page.
+        'appels-offres/legendeMethodes.ts',
         // Entrés le 2026-11-08 (lot 5d) — l'archive des consultations closes.
         // `archiver.ts` décide la coupure, `archive/page.tsx` la sert. Les
         // deux entrent ici le jour même : un fichier de la surface qui
