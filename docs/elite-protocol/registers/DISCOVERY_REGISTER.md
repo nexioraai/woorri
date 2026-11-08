@@ -1771,3 +1771,22 @@ relit pas qui afficherait faux.
 **Et le refus reste UNIQUE :** ni produit ni page → le même 404 qu'une
 référence inexistante. Deux refus différents révéleraient qu'une référence
 existe en préparation.
+
+**SUITE, LE MÊME JOUR — LE DÉFAUT ÉTAIT DANS QUATRE ROUTES, PAS UNE.**
+
+Un cliquet de FORME a été écrit : il énumère toutes les routes `[x]` du
+segment et exige que chacune délègue. Il en a trouvé **deux de plus** que
+celles mesurées — `blog/[post]` et `produits/[id]`. La CPA n'a pas de
+sous-pages sous ces chemins ; **le moteur sert 42 sites, et le prochain en
+aura.**
+
+C'est la différence entre corriger un cas et corriger une classe. Les deux
+premières, je les ai trouvées parce que le propriétaire a regardé le site.
+Les deux autres, parce que le cliquet énumère au lieu de supposer.
+
+**ET MON PROPRE GABARIT A INVERSÉ UNE GARDE.** Pour appliquer la correction
+aux deux dernières routes, j'ai construit la condition par découpe de
+chaîne : `'if (!donnees) notFound()'.split(') ')[0][5:]` rend `donnees`, pas
+`!donnees`. Le blog aurait délégué quand l'article EXISTE. `tsc` l'a
+attrapé — mais une condition construite par découpe est une condition qu'on
+n'a pas relue.

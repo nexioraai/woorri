@@ -3,6 +3,9 @@ import Link from 'next/link'
 import { headers } from 'next/headers'
 import { notFound } from 'next/navigation'
 import { fetchAvis, type AvisDetail } from '../fetchAvis'
+import PageDeclaree from '../../[...rest]/page'
+import { fetchPage } from '../../pages/fetchPage'
+import { fetchSiteCatalogue as fetchSitePourPage } from '../../catalogue/fetchCatalogue'
 import { getAvisLabels, echeanceAffichee, formatDateHeure, formatValeur, libelleEtat, tronquer } from '../labels'
 import { etatVisible, estPrevisionnel } from '../cycleDeVie'
 import { resolveSiteBaseUrl } from '../../themes/shared'
@@ -78,7 +81,25 @@ const ORDRE: (keyof AvisDetail)[] = [
 export default async function AvisPage({ params }: Props) {
   const { slug, reference } = await params
   const donnees = await fetchAvis(slug, reference)
-  if (!donnees) notFound()
+  // ── CE SEGMENT CAPTURE AUSSI LES SOUS-PAGES DECLAREES.
+  //
+  // Meme defaut que `/catalogue/<reference>` (GEN-D052) :
+  // `/appels-offres/calendrier` et `/appels-offres/comment-repondre` sont
+  // des PAGES de la CPA, pas des references d'avis. Un segment dynamique
+  // passe avant le catch-all, donc elles rendaient 404 -- mesure le
+  // 2026-11-08, deux pages publiees de plus.
+  //
+  // On delegue au rendu de la page declaree, qu'on REEMPLOIE.
+  if (!donnees) {
+    const site = await fetchSitePourPage(slug)
+    const declaree = site ? await fetchPage(site.id, `appels-offres/${reference}`) : null
+    if (declaree) {
+      return PageDeclaree({ params: Promise.resolve({ slug, rest: ['appels-offres', reference] }) })
+    }
+    // REFUS UNIQUE : ni avis, ni page -- meme 404, pour ne pas reveler
+    // un brouillon par son code de retour.
+    notFound()
+  }
 
   const { site, avis } = donnees
   const base = resolveSiteBaseUrl(site, (await headers()).get('host'))

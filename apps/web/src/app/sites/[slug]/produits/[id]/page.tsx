@@ -1,4 +1,7 @@
 import type { Metadata } from 'next'
+import PageDeclaree from '../../[...rest]/page'
+import { fetchPage } from '../../pages/fetchPage'
+import { fetchSiteCatalogue as fetchSitePourPage } from '../../catalogue/fetchCatalogue'
 import { headers } from 'next/headers'
 import { notFound } from 'next/navigation'
 import { fetchProduct } from './fetchProduct'
@@ -60,7 +63,24 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function ProductPage({ params }: Props) {
   const { slug, id } = await params
   const product = await fetchProduct(slug, decodeURIComponent(id))
-  if (!product) notFound()
+  // ── CE SEGMENT CAPTURE AUSSI LES SOUS-PAGES DECLAREES (GEN-D052).
+  //
+  // Un segment dynamique passe AVANT le catch-all : toute page declaree au
+  // chemin `produits/<x>` arriverait ici et rendrait 404. Mesure le
+  // 2026-11-08 sur `/catalogue` et `/appels-offres`, ou quatre pages
+  // publiees sont tombees. Ce site-ci n'en a pas sous `produits/` -- mais
+  // le moteur sert 42 sites, et le prochain en aura.
+  //
+  // On delegue au rendu de la page declaree, qu'on REEMPLOIE.
+  if (!product) {
+    const siteDecl = await fetchSitePourPage(slug)
+    const declaree = siteDecl ? await fetchPage(siteDecl.id, `produits/${id}`) : null
+    if (declaree) {
+      return PageDeclaree({ params: Promise.resolve({ slug, rest: ['produits', id] }) })
+    }
+    // REFUS UNIQUE : ni contenu, ni page -- meme 404.
+    notFound()
+  }
 
   const host = (await headers()).get('host')
   const base = resolveSiteBaseUrl(
