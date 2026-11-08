@@ -184,7 +184,7 @@ describe('fetchAvis — résolution par le COUPLE (site_id, reference_slug)', ()
     expect(journal.projections.appels_offres_public).toBeUndefined()
   })
 
-  it('le détail projette les 19 rubriques AFFICHÉES, plus quatre colonnes nommées', async () => {
+  it('le détail projette les 22 rubriques AFFICHÉES, plus quatre colonnes nommées', async () => {
     // RECTIFICATION DU 2026-11-06 — MON PREMIER ATTENDU DISAIT « 19 » ET
     // MESURAIT 22. Les dix-neuf sont les RUBRIQUES À L'ÉCRAN ; la projection
     // en porte trois de plus, et chacune a sa raison. Écrire « 19 » sans les
@@ -196,6 +196,12 @@ describe('fetchAvis — résolution par le COUPLE (site_id, reference_slug)', ()
       'criteres_elim', 'criteres_notes', 'soumission', 'allotissement',
       'local_prix_dossier', 'local_caution', 'local_validite_jours',
       'document_url', 'canal_officiel_url',
+      // AJOUT DU 2026-11-08 (LOT 5c) — le RÉSULTAT. Ces trois rubriques ne
+      // paraissent que sur un avis attribué : la base interdit leurs valeurs
+      // sur tout autre état, donc elles sont `null` et la rubrique s'efface
+      // d'elle-même. Un portail qui annonce « Attribué » sans dire à qui,
+      // c'est de l'opacité avec l'apparence de la transparence.
+      'attributaire', 'montant_attribue', 'attribue_le',
     ]
     const EN_PLUS = {
       reference_slug: "porte l'URL, jamais affichée comme rubrique",
@@ -212,7 +218,7 @@ describe('fetchAvis — résolution par le COUPLE (site_id, reference_slug)', ()
     await fetchAvis(SITE.slug, AVIS.reference_slug)
     const cols = journal.projections.appels_offres_public.split(',')
 
-    expect(RUBRIQUES).toHaveLength(19)
+    expect(RUBRIQUES).toHaveLength(22)
     expect(cols.sort()).toEqual([...RUBRIQUES, ...Object.keys(EN_PLUS)].sort())
     expect(cols).not.toContain('publie')
   })

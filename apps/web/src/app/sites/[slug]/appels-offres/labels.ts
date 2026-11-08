@@ -48,6 +48,9 @@ export type AvisLabels = {
 }
 
 const RUB_FR: Record<string, string> = {
+  attributaire: 'Attributaire',
+  montant_attribue: 'Montant attribué',
+  attribue_le: "Date d'attribution",
   reference: 'Référence', objet: 'Objet du marché', etat: 'État',
   description: 'Description', methode: 'Méthode de passation',
   methode_detail: 'Précisions sur la méthode', valeur: 'Valeur estimée',
@@ -61,6 +64,9 @@ const RUB_FR: Record<string, string> = {
   canal_officiel_url: 'Publication officielle', document_url: "Dossier d'appel d'offres",
 }
 const RUB_EN: Record<string, string> = {
+  attributaire: 'Awarded to',
+  montant_attribue: 'Awarded amount',
+  attribue_le: 'Award date',
   reference: 'Reference', objet: 'Subject of the contract', etat: 'Status',
   description: 'Description', methode: 'Procurement method',
   methode_detail: 'Method details', valeur: 'Estimated value',
@@ -73,6 +79,9 @@ const RUB_EN: Record<string, string> = {
   canal_officiel_url: 'Official publication', document_url: 'Tender documents',
 }
 const RUB_ES: Record<string, string> = {
+  attributaire: 'Adjudicatario',
+  montant_attribue: 'Importe adjudicado',
+  attribue_le: 'Fecha de adjudicación',
   reference: 'Referencia', objet: 'Objeto del contrato', etat: 'Estado',
   description: 'Descripción', methode: 'Método de contratación',
   methode_detail: 'Detalles del método', valeur: 'Valor estimado',
@@ -85,6 +94,9 @@ const RUB_ES: Record<string, string> = {
   canal_officiel_url: 'Publicación oficial', document_url: 'Pliego de condiciones',
 }
 const RUB_AR: Record<string, string> = {
+  attributaire: 'الجهة الفائزة',
+  montant_attribue: 'قيمة الإسناد',
+  attribue_le: 'تاريخ الإسناد',
   reference: 'المرجع', objet: 'موضوع الصفقة', etat: 'الحالة',
   description: 'الوصف', methode: 'طريقة الإبرام',
   methode_detail: 'تفاصيل الطريقة', valeur: 'القيمة التقديرية',

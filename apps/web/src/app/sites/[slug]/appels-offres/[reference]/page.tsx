@@ -67,6 +67,12 @@ const ORDRE: (keyof AvisDetail)[] = [
   'criteres_elim', 'criteres_notes', 'soumission', 'allotissement',
   'local_prix_dossier', 'local_caution', 'local_validite_jours',
   'document_url', 'canal_officiel_url',
+  // LOT 5c — LE RESULTAT, EN DERNIER.
+  // Il ne parait que si l'avis est attribue : la base interdit ces trois
+  // valeurs sur tout autre etat, donc elles sont `null` et la rubrique
+  // s'efface d'elle-meme. Aucune condition a ecrire ici -- l'invariant
+  // est en base, pas dans le rendu.
+  'attributaire', 'montant_attribue', 'attribue_le',
 ]
 
 export default async function AvisPage({ params }: Props) {
@@ -125,6 +131,24 @@ export default async function AvisPage({ params }: Props) {
             <span style={{ opacity: 0.7 }}> {d.marque}</span>
           </>
         ) : d.texte
+      }
+      case 'montant_attribue': {
+        // Le montant est rendu AVEC la devise de l'avis, comme `valeur`.
+        // Un nombre sans unite sur un marche public n'informe personne.
+        const m = avis.montant_attribue
+        if (m === null || m === undefined) return null
+        const d = avis.devise ? ` ${avis.devise}` : ''
+        return `${new Intl.NumberFormat(site.lang === 'ar' ? 'ar' : site.lang || 'fr').format(m)}${d}`
+      }
+      case 'attribue_le': {
+        // Une date d'attribution n'est PAS une echeance : elle est passee et
+        // ferme. On ne passe donc pas par `echeanceAffichee`, qui parle de
+        // « previsionnelle » et n'aurait aucun sens ici.
+        if (!avis.attribue_le) return null
+        const d = new Date(avis.attribue_le)
+        if (Number.isNaN(d.getTime())) return null
+        return new Intl.DateTimeFormat(site.lang === 'ar' ? 'ar' : site.lang || 'fr',
+          { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' }).format(d)
       }
       case 'local_validite_jours':
         return avis.local_validite_jours === null ? null : String(avis.local_validite_jours)

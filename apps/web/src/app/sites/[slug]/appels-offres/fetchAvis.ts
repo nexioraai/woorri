@@ -91,6 +91,11 @@ export type AvisDetail = AvisCarte & {
   document_url: string | null
   /** LOT 5b — le dossier de consultation, plusieurs pieces. `[]` si aucune. */
   pieces: PieceJointe[]
+  /** LOT 5c — le RESULTAT. Les trois sont `null` tant que l'avis n'est pas
+   *  attribue : la base le refuse autrement (appels_offres_attribution_chk). */
+  attributaire: string | null
+  montant_attribue: number | null
+  attribue_le: string | null
   cree_le: string | null
 }
 
@@ -104,7 +109,7 @@ export type AvisDetail = AvisCarte & {
 // `GenericStringError` -- mesure du 2026-11-06, `TS2352`. Le confort de mise
 // en page coutait le typage de la requete.
 const COLS_LISTE = 'reference,reference_slug,objet,remise_le,etat'
-const COLS_DETAIL = `${COLS_LISTE},description,methode,methode_detail,valeur,devise,questions_avant,ouverture_plis,criteres_elim,criteres_notes,soumission,allotissement,local_prix_dossier,local_caution,local_validite_jours,canal_officiel_url,document_url,cree_le,pieces`
+const COLS_DETAIL = `${COLS_LISTE},description,methode,methode_detail,valeur,devise,questions_avant,ouverture_plis,criteres_elim,criteres_notes,soumission,allotissement,local_prix_dossier,local_caution,local_validite_jours,canal_officiel_url,document_url,cree_le,pieces,attributaire,montant_attribue,attribue_le`
 
 /** Resout le site public. `sites_public` applique deja `published = true AND archived_at IS NULL`. */
 async function fetchAvisSite(slug: string): Promise<AvisSite | null> {
