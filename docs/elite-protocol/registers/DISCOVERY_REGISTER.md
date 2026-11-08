@@ -1710,3 +1710,27 @@ la mémoire ne distingue pas ce qu'on a lu de ce qu'on a déduit.
 d'un autre chantier » donnait l'apparence d'une rectification rigoureuse tout
 en gardant l'invention intacte. Une correction qui ne va pas jusqu'à la
 source n'est pas une correction.
+
+---
+
+## GEN-D051 — une sonde d'écran attend le déploiement, elle ne le suppose pas
+
+**8 novembre 2026 · P2 · symétrique d'une faute déjà corrigée le matin**
+
+La sonde du lot 4 a rendu **5 rouges sur un moteur correct**. J'ai poussé,
+lancé la sonde, PUIS vérifié `/api/version`. Dans cet ordre. La sonde lisait
+la version précédente pendant que le déploiement finissait.
+
+Ce qui l'a démasqué : un point VERT au milieu des rouges — le style en ligne
+du composant était servi alors que son bloc `<style>` manquait. Un composant
+à moitié rendu n'existe pas ; c'était donc deux versions différentes, pas un
+bogue.
+
+**La symétrie est ce qui rend le cas grave.** Le matin même, GEN-D047 notait
+qu'un commit figé APRÈS la gate n'est pas le commit mesuré, et j'avais corrigé
+la forme. J'ai refait l'erreur **dans l'autre sens**, sur l'autre instrument :
+mesurer AVANT que l'objet mesuré existe.
+
+**La règle :** une sonde d'écran commence par attendre que `/api/version`
+rende le commit attendu. Pas après, pas en parallèle — avant la première
+mesure. Un `curl` qui part trop tôt mesure le passé et l'appelle présent.
