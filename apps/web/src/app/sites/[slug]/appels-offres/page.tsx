@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation'
 import { fetchAvisIndex } from './fetchAvis'
 import { getAvisLabels, echeanceAffichee, libelleEtat, tronquer } from './labels'
 import { partager, etatVisible } from './cycleDeVie'
+import { lireFiltre, compter, filtrer, FILTRES } from './filtrerAvis'
 import { resolveSiteBaseUrl } from '../themes/shared'
 import { ogLocaleFor } from '@/lib/i18n/supportedLanguages'
 import HtmlLang from '../themes/HtmlLang'
@@ -28,7 +29,7 @@ import JsonLdScript from '../themes/JsonLdScript'
 // dur serait re-prefixe par le proxy sur un sous-domaine et tomberait en 404.
 // ============================================================
 
-type Props = { params: Promise<{ slug: string }> }
+type Props = { params: Promise<{ slug: string }>; searchParams?: Promise<Record<string, string | string[] | undefined>> }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params
@@ -53,12 +54,26 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
-export default async function AppelsOffresPage({ params }: Props) {
+export default async function AppelsOffresPage({ params, searchParams }: Props) {
   const { slug } = await params
   const donnees = await fetchAvisIndex(slug)
   if (!donnees) notFound()
 
-  const { site, avis } = donnees
+  const { site, avis: tousLesAvis } = donnees
+
+  // LOT 5 — LE FILTRE. Il se decide sur l'etat VISIBLE : un avis « ouvert »
+  // dont l'echeance est passee se range dans « clos », sinon un fournisseur
+  // croit pouvoir encore repondre. Le moment est pris UNE fois et passe,
+  // pour que toutes les lignes soient jugees au meme instant.
+  // L'HEURE EST LUE UNE SEULE FOIS ET PASSEE PARTOUT -- filtre compris.
+  // Deux appels a `new Date()` dans le meme rendu peuvent tomber de part et
+  // d'autre d'une echeance : la barre compterait un avis dans « En cours »
+  // pendant que le tableau le classerait clos. Le cliquet de ce depot compte
+  // les lectures d'horloge ; il m'a repris sur ce fichier meme.
+  const maintenant = new Date()
+  const filtreActif = lireFiltre((await searchParams)?.etat)
+  const comptes = compter(tousLesAvis, maintenant)
+  const avis = filtrer(tousLesAvis, filtreActif, maintenant)
   const base = resolveSiteBaseUrl(site, (await headers()).get('host'))
   const t = getAvisLabels(site.lang)
   const accent = site.primary_color || '#111111'
@@ -90,11 +105,6 @@ export default async function AppelsOffresPage({ params }: Props) {
 
   const contact = site.contact ?? {}
 
-  // L'HEURE EST LUE UNE SEULE FOIS ET PASSÉE PARTOUT. Deux appels à
-  // `new Date()` dans le même rendu peuvent tomber de part et d'autre d'une
-  // échéance : une ligne dirait « Ouvert » pendant que le tri la classerait
-  // close. Un écran qui se contredit lui-même est pire qu'un écran en retard.
-  const maintenant = new Date()
   const { enCours, clotures } = partager(avis, maintenant)
 
   const entetes = [t.colReference, t.colObjet, t.colRemise, t.colEtat]
@@ -195,6 +205,32 @@ export default async function AppelsOffresPage({ params }: Props) {
         <p style={{ fontSize: 15, opacity: 0.6, margin: '0 0 48px' }}>
           {t.sousTitre} — {site.name}
         </p>
+
+        {/* LOT 5 — LA BARRE DE FILTRE.
+            Des LIENS, pas des boutons : l'adresse porte le filtre, donc elle
+            se partage, se met en favori, et fonctionne sans JavaScript. Les
+            comptes ne mentent pas a zero — une case vide affiche 0 au lieu
+            de disparaitre, sinon l'absence et l'inexistence se confondent. */}
+        {tousLesAvis.length > 0 && (
+          <nav aria-label={t.titre} style={{ display: 'flex', gap: 8, flexWrap: 'wrap', margin: '0 0 28px' }}>
+            {FILTRES.map((f) => {
+              const actif = f === filtreActif
+              return (
+                <a key={f} href={f === 'tous' ? '?' : `?etat=${f}`}
+                  aria-current={actif ? 'page' : undefined}
+                  style={{
+                    padding: '7px 14px', borderRadius: 999, fontSize: 14,
+                    border: `1px solid ${actif ? accent : 'rgba(127,127,127,0.35)'}`,
+                    background: actif ? accent : 'transparent',
+                    color: actif ? '#fff' : 'inherit',
+                    textDecoration: 'none', fontWeight: actif ? 600 : 400,
+                  }}>
+                  {t.filtres[f]} <span style={{ opacity: 0.75, fontVariantNumeric: 'tabular-nums' }}>{comptes[f]}</span>
+                </a>
+              )
+            })}
+          </nav>
+        )}
 
         {avis.length === 0 ? (
           // ============================================================

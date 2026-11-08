@@ -13,6 +13,10 @@ import { estPrevisionnel } from './cycleDeVie'
 export type AvisLabels = {
   titre: string
   sousTitre: string
+  /** LOT 5 — les cases du filtre. Une langue qui en manque une rougit a la
+   *  compilation : un filtre non traduit paraitrait en francais sur un
+   *  site anglophone, et c'est le genre de defaut que personne ne signale. */
+  filtres: { tous: string; ouvert: string; clos: string; attribue: string; preparation: string }
   vide: string
   videSuite: string
   retour: string
@@ -97,6 +101,7 @@ const COPY: Record<string, AvisLabels> = {
   fr: {
     titre: "Appels d'offres",
     sousTitre: 'Avis de marché publiés',
+    filtres: { tous: 'Tous', ouvert: 'En cours', clos: 'Clos', attribue: 'Attribués', preparation: 'En préparation' },
     vide: "Aucun avis d'appel d'offres n'est publié actuellement.",
     videSuite: 'Les avis paraissent sur cette page dès leur publication.',
     retour: '← Tous les avis', accueil: "← Retour à l'accueil",
@@ -113,6 +118,7 @@ const COPY: Record<string, AvisLabels> = {
     r: RUB_FR,
   },
   en: {
+    filtres: { tous: 'All', ouvert: 'Open', clos: 'Closed', attribue: 'Awarded', preparation: 'In preparation' },
     titre: 'Tenders', sousTitre: 'Published contract notices',
     vide: 'No tender notice is currently published.',
     videSuite: 'Notices appear on this page as soon as they are published.',
@@ -130,6 +136,7 @@ const COPY: Record<string, AvisLabels> = {
     r: RUB_EN,
   },
   es: {
+    filtres: { tous: 'Todos', ouvert: 'Abiertos', clos: 'Cerrados', attribue: 'Adjudicados', preparation: 'En preparación' },
     titre: 'Licitaciones', sousTitre: 'Anuncios de contratos publicados',
     vide: 'No hay ningún anuncio de licitación publicado actualmente.',
     videSuite: 'Los anuncios aparecen en esta página en cuanto se publican.',
@@ -147,6 +154,7 @@ const COPY: Record<string, AvisLabels> = {
     r: RUB_ES,
   },
   ar: {
+    filtres: { tous: 'الكل', ouvert: 'مفتوحة', clos: 'مغلقة', attribue: 'تم إسنادها', preparation: 'قيد الإعداد' },
     titre: 'المناقصات', sousTitre: 'إعلانات الصفقات المنشورة',
     vide: 'لا يوجد حاليا أي إعلان عن مناقصة منشور.',
     videSuite: 'تُنشر الإعلانات في هذه الصفحة فور صدورها.',
