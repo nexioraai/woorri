@@ -100,7 +100,7 @@ un avis · un article · un produit · une province
 | 6 | Catalogue public | 12 | ✅ **FERMÉ** — **26/26 à l'adresse publique**. Ni prix ni stock par CONSTRUCTION : la table n'en porte pas (PGRST204 mesuré). Un brouillon rend le MÊME 404 qu'une référence inexistante. |
 | 7 | Actualités — événements, communiqués, filtres | 8 | ✅ **FERMÉ** — le moteur avait déjà son fonds d'articles ; il manquait la CATÉGORIE. Bloc « articles » (16ᵉ type), **21/21 à l'adresse publique**, et `/blog` ne perd rien. |
 | 8 | Contact et demandes — référence générée automatiquement, et suivi de la demande | 10 | ✅ **FERMÉ** — **20/20 à l'adresse publique**. Les deux échecs rendent mot pour mot la même réponse ; le texte du demandeur ne sort jamais. |
-| 9 | Pages légales + plan du site engendré | 4 | ⬜ |
+| 9 | Pages légales + plan du site engendré | 4 | ✅ **FERMÉ** — **20/20 à l'adresse publique**. Un brouillon ne laisse ni titre ni chemin dans le plan ; une route moteur s'efface si une page déclarée porte son chemin. |
 | 10 | **Authentification, rôles, habilitations** | 16 | ⬜ |
 | 11 | **Espace établissement** | 24 | ⬜ |
 | 12 | **Espace fournisseur + dépôt de pièces** | 30 | ⬜ |

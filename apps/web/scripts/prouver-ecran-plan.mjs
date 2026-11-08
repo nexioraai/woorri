@@ -27,7 +27,12 @@ p('les sous-pages aussi', true, h.html.includes('Notre histoire'))
 p('chaque entrée montre son chemin', true, h.html.includes('/qui-sommes-nous/histoire'))
 
 console.log('② UNE ADRESSE SANS CONTENU N’EST PAS ANNONCÉE')
-p('le catalogue est ABSENT (zéro produit publié)', false, /\/catalogue<|>Catalogue</.test(h.html))
+// MA PREMIÈRE SONDE CHERCHAIT « Catalogue » et trouvait la PAGE DÉCLARÉE
+// « Catalogue des produits », qui y figure légitimement. Elle visait la
+// route MOTEUR et mesurait autre chose. On vise donc le libellé exact de
+// la route, qui n'existe que si le moteur l'annonce.
+const routeCatalogue = (html) => />Catalogue<\/a>/.test(html)
+p('la route catalogue est ABSENTE (zéro produit publié)', false, routeCatalogue(h.html))
 p("les appels d'offres sont là (le site le DÉCLARE)", true, h.html.includes('Appels d’offres'))
 p('le suivi d’une demande est là', true, h.html.includes('Suivre une demande'))
 
@@ -54,7 +59,11 @@ await srv.from('catalogue_produits').insert([{
 }])
 await new Promise((r) => setTimeout(r, 3000))
 const h4 = await page()
-p('le catalogue est annoncé', true, h4.html.includes('>Catalogue<'))
+// ET MÊME AVEC UN PRODUIT, elle reste absente : une page DÉCLARÉE porte
+// déjà le chemin `catalogue`. Annoncer la même adresse deux fois ferait
+// douter le lecteur de laquelle est la vraie.
+p('la route reste absente — la page déclarée porte déjà ce chemin', false, routeCatalogue(h4.html))
+p('et la page déclarée, elle, est bien là', true, h4.html.includes('Catalogue des produits'))
 
 console.log('⑥ TOUT EST RETIRÉ, L’ÉTAT D’AVANT EST RÉTABLI')
 p('page retirée', 1, (await net().select('chemin')).data?.length ?? 0)
@@ -62,7 +71,7 @@ p('produit retiré', 1, (await netCat().select('reference')).data?.length ?? 0)
 await new Promise((r) => setTimeout(r, 4000))
 const h5 = await page()
 p('plus de page témoin', false, h5.html.includes('PAGE TÉMOIN NON PUBLIÉE'))
-p('le catalogue redisparaît', false, /\/catalogue<|>Catalogue</.test(h5.html))
+p('la route catalogue est toujours absente', false, routeCatalogue(h5.html))
 
 console.log(`\n${ko === 0 ? '🟢' : '🔴'} ${n - ko}/${n}`)
 process.exit(ko === 0 ? 0 : 1)
