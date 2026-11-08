@@ -106,7 +106,7 @@ un avis · un article · un produit · une province
 | 12 | **Espace fournisseur + dépôt de pièces** | 30 | ⬜ |
 | 13 | **Soumission électronique des offres** | 30 | ⬜ |
 | 14 | **Administration — workflow, audit, tableau de bord** | 30 | ⬜ |
-| **5bis** | **La page des appels d'offres, RICHE** — voir §8 | 14 | ⬜ **AVANT LE LOT 8** |
+| **5bis** | **La page des appels d'offres, RICHE** — voir §8 | 14 | ✅ **FERMÉ** — neuf points, **30/30 à l'adresse publique**, dont deux pièges volontaires : la légende ne montre pas « ICB », et un bloc mal positionné ne disparaît pas. |
 | **15** | **Finitions d'interface relevées sur EPSS** — voir §7 | 18 | ⬜ **DERNIER LOT** |
 | **16** | **Assistant de site (IA)** — voir §9 | 20 | ⬜ **APRÈS LE 15** |
 
