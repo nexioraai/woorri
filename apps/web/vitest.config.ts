@@ -129,6 +129,10 @@ export default defineConfig({
       // passe en isolation mais n'est JAMAIS collecte par `vitest run` -- le
       // piege deja documente plus bas dans ce fichier.
       'src/app/api/contact/**/*.test.ts',
+      // LOT 8 — le suivi d'une demande. Ajouté le 2026-11-08 : cette liste
+      // est une ALLOWLIST, et un dossier qui n'y figure pas voit ses tests
+      // rester verts sans jamais s'exécuter.
+      'src/app/api/demandes/**/*.test.ts',
       // Passe de cloture (reporting) : src/app/api/admin/ ajoute -- aucune
       // route admin n'etait couverte, et le prefixe n'etait pas inclus ici :
       // un test ecrit sans cette ligne passe en isolation mais n'est JAMAIS
