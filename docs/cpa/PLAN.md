@@ -110,7 +110,20 @@ un avis · un article · un produit · une province
 | **15** | **Finitions d'interface relevées sur EPSS** — voir §7 | 18 | ⬜ **DERNIER LOT** |
 | **16** | **Assistant de site (IA)** — voir §9 | 20 | ⬜ **APRÈS LE 15** |
 
-**Ordre** : 1 → 2 → 3 → 5 → 7 → 8 → 4 → 6 → 9, puis 10 → 11 → 12 → 13 → 14.
+**LES NUMÉROS NE SONT PAS L'ORDRE.** Ils nomment un sujet ; l'ordre est
+celui-ci, et c'est lui qui fait foi :
+
+> **1 → 2 → 3 → 5bis → 5 → 7 → 8 → 4 → 6 → 9**, puis **10 → 11 → 12 → 13 → 14**,
+> puis **15** et **16**.
+
+**Pourquoi le 4 passe après le 8.** L'organigramme est long et ne débloque
+rien. Les appels d'offres, les actualités et le contact sont ce qu'un
+fournisseur vient chercher : l'utile d'abord.
+
+**Ce qui vient ensuite, à tout instant, est la PREMIÈRE case non fermée de
+cette ligne.** Écrit ici pour que personne n'ait à s'en souvenir — le
+propriétaire a demandé le 8 novembre pourquoi on passait du 8 au 4, et la
+réponse n'était visible nulle part.
 **Premier résultat visible : 24 h** (lots 1+2).
 
 ---
