@@ -38,9 +38,26 @@ html, body {
   background: #0a050e;
   min-height: 100dvh;
 }
+/* UN FOND FIGÉ EXIGE UN TEXTE FIGÉ (2026-11-08).
+ *
+ * LE DÉFAUT, VU À L'ÉCRAN : le blog de la plateforme servait du texte
+ * presque noir sur fond presque noir. La racine n'était PAS le blog.
+ *
+ * `background` est figé à #0a050e — c'est l'identité de marque, et c'est
+ * voulu. Mais `color` lisait `var(--foreground)`, que le segment engendré
+ * bascule à #171717 sous `prefers-color-scheme: LIGHT`. Un visiteur en mode
+ * CLAIR recevait donc #171717 sur #0a050e : illisible.
+ *
+ * Le fond ne suit pas le réglage du visiteur ; le texte ne doit pas le
+ * suivre non plus. La divergence entre les deux EST le défaut.
+ *
+ * Le segment engendré depuis packages/design-tokens/tokens.json s'arrête
+ * ligne 30 et n'est PAS touché : `--foreground` garde sa valeur pour qui
+ * voudrait s'en servir sur un fond qui, lui, suit le réglage.
+ * Mesuré avant d'agir : `var(--foreground)` n'avait aucun autre usage. */
 body {
   background: #0a050e;
-  color: var(--foreground);
+  color: #ededed;
   font-family: Arial, Helvetica, sans-serif;
 }
 
