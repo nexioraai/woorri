@@ -32,11 +32,11 @@ describe('la référence arrive jusqu’à l’écran', () => {
   it('🔴 elle survit au retour à l’état initial', () => {
     // Quatre secondes ne suffisent pas pour recopier un code à la main :
     // le message de succès part, la référence reste.
-    expect(FORM).toMatch(/status === 'success' && !reference/);
+    expect(FORM).toMatch(/status\s*===\s*'success'\s*&&\s*!reference/);
   });
 
   it('🔴 elle est sélectionnable d’un geste', () => {
-    expect(FORM).toContain('select-all');
+    expect(FORM).toMatch(/select-all/);
   });
 });
 
