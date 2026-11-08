@@ -72,7 +72,7 @@ describe('l’écran est utilisable et branché', () => {
   });
 
   it('🔴 la liste est RECHARGÉE depuis la route après chaque écriture', () => {
-    expect(ECRAN).toMatch(/await recharger\(\)/);
+    expect(ECRAN).toMatch(/await\s+recharger\(\)/);
   });
 
   it('🔴 l’écran est monté dans /edit — sinon il n’existe pas', () => {
