@@ -66,6 +66,10 @@ export type ThemeDict = {
     send: string
     sending: string
     sent: string
+    /** LOT 8 — la référence de la demande, affichée après l'envoi. Sans
+     *  elle le demandeur n'a rien à noter, donc rien à citer. */
+    reference: string
+    referenceAide: string
     error: string
   }
   bold: {
@@ -164,6 +168,8 @@ const en: ThemeDict = {
     send: 'Send message',
     sending: 'Sending…',
     sent: 'Message sent! We will get back to you shortly.',
+    reference: 'Your request reference:',
+    referenceAide: 'Keep this reference to track your request.',
     error: 'Error',
     title: 'Send us a message',
   },
@@ -263,6 +269,8 @@ const fr: ThemeDict = {
     send: 'Envoyer le message',
     sending: 'Envoi en cours…',
     sent: 'Message envoyé ! Nous vous répondrons dans les plus brefs délais.',
+    reference: 'Référence de votre demande :',
+    referenceAide: 'Conservez cette référence pour suivre votre demande.',
     error: 'Erreur',
     title: 'Envoyez-nous un message',
   },
@@ -362,6 +370,8 @@ const es: ThemeDict = {
     send: 'Enviar mensaje',
     sending: 'Enviando…',
     sent: '¡Mensaje enviado!',
+    reference: 'Referencia de su solicitud:',
+    referenceAide: 'Conserve esta referencia para seguir su solicitud.',
     error: 'Error',
     title: 'Envíanos un mensaje',
   },
@@ -461,6 +471,8 @@ const ar: ThemeDict = {
     send: 'إرسال الرسالة',
     sending: 'جارٍ الإرسال…',
     sent: 'تم إرسال الرسالة!',
+    reference: 'مرجع طلبك:',
+    referenceAide: 'احتفظ بهذا المرجع لمتابعة طلبك.',
     error: 'خطأ',
     title: 'أرسل لنا رسالة',
   },

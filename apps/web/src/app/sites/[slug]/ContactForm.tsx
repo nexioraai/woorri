@@ -31,6 +31,13 @@ export default function ContactForm({ slug, brand = '#111111', lang, variant = '
   const [email, setEmail] = useState('')
   const [message, setMessage] = useState('')
   const [status, setStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle')
+  // LOT 8 — LA REFERENCE DE LA DEMANDE.
+  //
+  // Le formulaire disait « envoye » et rien d'autre : le demandeur n'avait
+  // RIEN a noter, donc rien a citer en rappelant la Centrale, et la Centrale
+  // n'avait rien a chercher. Une trace que personne ne peut designer n'est
+  // pas une trace.
+  const [reference, setReference] = useState<string | null>(null)
   const [errorMsg, setErrorMsg] = useState('')
 
   async function handleSubmit(e: React.FormEvent) {
@@ -47,9 +54,13 @@ export default function ContactForm({ slug, brand = '#111111', lang, variant = '
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Failed')
       setStatus('success')
+      setReference(typeof data.reference === 'string' ? data.reference : null)
       setName('')
       setEmail('')
       setMessage('')
+      // LE RETOUR A L'ETAT INITIAL N'EFFACE PAS LA REFERENCE TANT QU'ELLE
+      // EST LA. Quatre secondes ne suffisent pas pour recopier un code a la
+      // main : le message de succes part, la reference reste affichee.
       setTimeout(() => setStatus('idle'), 4000)
     } catch (err: unknown) {
       // `unknown`, pas `any` : une erreur attrapee peut etre n'importe quoi,
@@ -120,9 +131,22 @@ export default function ContactForm({ slug, brand = '#111111', lang, variant = '
         </span>
       </button>
 
-      {status === 'success' && (
+      {status === 'success' && !reference && (
         <div className="text-sm text-green-600 px-1 text-center">
           {t.form.sent}
+        </div>
+      )}
+
+      {/* LOT 8 — LA REFERENCE RESTE A L'ECRAN.
+          Elle est selectionnable (`select-all`) pour se copier d'un geste,
+          et en chasse fixe pour que O et 0 ne se confondent pas -- meme si
+          l'alphabet des references les exclut deja. */}
+      {reference && (
+        <div className="text-sm px-3 py-3 rounded-xl border border-green-600/30 bg-green-600/10 text-center space-y-1">
+          <div className="text-green-700 font-medium">{t.form.sent}</div>
+          <div className="opacity-80">{t.form.reference}</div>
+          <div className="font-mono text-base font-bold tracking-wider select-all">{reference}</div>
+          <div className="text-xs opacity-70">{t.form.referenceAide}</div>
         </div>
       )}
 
