@@ -98,7 +98,7 @@ un avis · un article · un produit · une province
 | 4 | **Organigramme interactif + alternative 2D** | 16 | ⬜ |
 | 5 | Appels d'offres enrichis | 20 | 🔄 **ENTAMÉ** — dossier de consultation ✅ (14/14 en base) · filtre par état ✅ (**28/28 à l'adresse publique**, témoins posés puis retirés, retrait vérifié depuis l'écran) ; restent l'archive des consultations closes et les avis d'attribution |
 | 6 | Catalogue public | 12 | ⬜ |
-| 7 | Actualités — événements, communiqués, filtres | 8 | ⬜ |
+| 7 | Actualités — événements, communiqués, filtres | 8 | ✅ **FERMÉ** — le moteur avait déjà son fonds d'articles ; il manquait la CATÉGORIE. Bloc « articles » (16ᵉ type), **21/21 à l'adresse publique**, et `/blog` ne perd rien. |
 | 8 | Contact et demandes — référence auto, suivi | 10 | ⬜ |
 | 9 | Pages légales + plan du site engendré | 4 | ⬜ |
 | 10 | **Authentification, rôles, habilitations** | 16 | ⬜ |
