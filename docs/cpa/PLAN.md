@@ -94,9 +94,9 @@ un avis · un article · un produit · une province
 |---|---|---|---|
 | 1 | **Routage** — le verrou | 18 | ✅ **FERMÉ** — déployé `5d711a9` · 13/13 en production · relevé d'après : **0 écart** sur 63 mesures |
 | 2 | Menu à plusieurs niveaux | 6 | ✅ **FERMÉ** — déployé `dab372c` · 9/9 en production |
-| 3 | Gabarit de page + les 20 pages de contenu | 12 | ⬜ |
+| 3 | Gabarit de page + les 20 pages de contenu | 12 | ✅ **FERMÉ** — 30/30 pages, 146 blocs, 15 types · déployé `f1f5f5b` |
 | 4 | **Organigramme interactif + alternative 2D** | 16 | ⬜ |
-| 5 | Appels d'offres enrichis | 20 | ⬜ |
+| 5 | Appels d'offres enrichis | 20 | 🔄 **ENTAMÉ** — le dossier de consultation (plusieurs pièces) est posé et mesuré 14/14 ; restent le filtrage, l'archive et les avis d'attribution |
 | 6 | Catalogue public | 12 | ⬜ |
 | 7 | Actualités — événements, communiqués, filtres | 8 | ⬜ |
 | 8 | Contact et demandes — référence auto, suivi | 10 | ⬜ |
@@ -214,3 +214,23 @@ affichés et ne sont plus retirables. Voir GEN-D045. La CPA n'est pas touchée.
 (7 novembre 2026) : « fais les seulement si c'est nécessaire, on reste
 concentré ». Elles restent ouvertes au registre, non traitées. Aucune n'affecte
 la CPA.
+
+### 8 novembre 2026 — ce qui a été fermé depuis le 7
+
+| | |
+|---|---|
+| ✅ | **Le corps structuré** — 15 types de bloc, vocabulaire tenu par la BASE (`site_pages_blocs_valides`), `dangerouslySetInnerHTML` impossible par construction |
+| ✅ | **Les 30 pages** portent 146 blocs ; aucune sous 700 caractères (la plus maigre était à 396) |
+| ✅ | **Les photos** — 10 pages illustrées, 4 diaporamas CSS, accueil à plusieurs photos |
+| ✅ | **Le stockage de fichiers** — compartiment `site-fichiers` cloisonné, route `GET/POST/DELETE`, écran de téléversement dans `/edit` · 10/10 mesurés |
+| ✅ | **Le dossier d'appel d'offres** — colonne `pieces`, forme fermée · 14/14 mesurés ; `document_url` conservée |
+| ✅ | **Le menu du téléphone** — hiérarchique, 7 entrées au lieu de 30 |
+
+**La duplication menu / cartes a été MESURÉE et n'en est pas une.** En écartant
+la charge d'hydratation Next.js, chaque sous-page apparaît UNE fois dans le
+corps de `/qui-sommes-nous` : sa carte. Le menu déroulant est le second
+endroit, et c'est voulu — EPSS fait de même. Ma première mesure, qui comptait
+le HTML de rendu et la charge d'hydratation, était fausse.
+
+**Prochaine étape autorisée par l'ordre du plan** (1→2→3→5→7→8→4→6→9) :
+finir le **lot 5** — filtrage des avis, archive, avis d'attribution.
