@@ -5,6 +5,8 @@ import { notFound } from 'next/navigation'
 import { resolveSiteBaseUrl } from '../../themes/shared'
 import HtmlLang from '../../themes/HtmlLang'
 import { fetchSiteCatalogue, fetchFicheProduit } from '../fetchCatalogue'
+import PageDeclaree from '../../[...rest]/page'
+import { fetchPage } from '../../pages/fetchPage'
 
 // ============================================================================
 // LOT 6 — LA FICHE D'UN PRODUIT.
@@ -30,6 +32,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const s = await fetchSiteCatalogue(slug)
   if (!s) return {}
   const p = await fetchFicheProduit(s.id, decodeURIComponent(reference))
+  // PAS UN PRODUIT : c'est peut-etre une SOUS-PAGE declaree. On ne rend
+  // alors aucune metadonnee ici -- la page declaree pose les siennes.
   if (!p) return {}
   const base = resolveSiteBaseUrl(s, (await headers()).get('host'))
   const title = `${p.denomination} — ${s.name}`
@@ -45,9 +49,27 @@ export default async function FicheProduitPage({ params }: Props) {
   const s = await fetchSiteCatalogue(slug)
   if (!s) notFound()
 
-  const p = await fetchFicheProduit(s.id, decodeURIComponent(reference))
-  // REFUS UNIQUE : absent, d'un autre site, ou non publié — même 404.
-  if (!p) notFound()
+  const ref = decodeURIComponent(reference)
+  const p = await fetchFicheProduit(s.id, ref)
+
+  // ── CE SEGMENT CAPTURE AUSSI LES SOUS-PAGES DECLAREES.
+  //
+  // `/catalogue/categories` et `/catalogue/commander` sont des PAGES de la
+  // CPA, pas des references. Un segment dynamique passe avant le catch-all,
+  // donc elles arrivaient ici et rendaient 404 -- mesure le 2026-11-08,
+  // deux pages publiees tombees par le lot 6.
+  //
+  // On delegue au rendu de la page declaree, qu'on REEMPLOIE au lieu de le
+  // recopier : deux rendus de la meme page divergeraient.
+  if (!p) {
+    const declaree = await fetchPage(s.id, `catalogue/${ref}`)
+    if (declaree) {
+      return PageDeclaree({ params: Promise.resolve({ slug, rest: ['catalogue', ref] }) })
+    }
+    // REFUS UNIQUE : ni produit, ni page — meme 404 qu'une reference
+    // inexistante, pour ne pas reveler un brouillon par son code.
+    notFound()
+  }
 
   const base = resolveSiteBaseUrl(s, (await headers()).get('host'))
   const accent = s.primary_color || '#1e4d8c'

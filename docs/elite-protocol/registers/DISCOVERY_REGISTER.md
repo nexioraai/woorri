@@ -1734,3 +1734,40 @@ mesurer AVANT que l'objet mesuré existe.
 **La règle :** une sonde d'écran commence par attendre que `/api/version`
 rende le commit attendu. Pas après, pas en parallèle — avant la première
 mesure. Un `curl` qui part trop tôt mesure le passé et l'appelle présent.
+
+---
+
+## GEN-D052 — un segment dynamique mange les sous-pages, et aucun test ne le voit
+
+**8 novembre 2026 · P1 · trouvé par le propriétaire, pas par la suite**
+
+Le lot 6 a ajouté la route `/catalogue/<référence>`. Un segment dynamique
+passe AVANT le catch-all des pages déclarées. Résultat, mesuré à l'adresse
+publique :
+
+```
+/catalogue              HTTP 200
+/catalogue/categories   HTTP 404   ← page PUBLIÉE de la CPA
+/catalogue/commander    HTTP 404   ← page PUBLIÉE de la CPA
+```
+
+**Deux pages publiées sont tombées, et aucun des 5 816 tests ne l'a vu.**
+
+**Pourquoi aucun test ne pouvait le voir.** Chaque lot a ses cliquets, et
+chacun mesure SON lot. Le lot 3 vérifie que les pages déclarées se servent ;
+le lot 6 vérifie que la fiche produit rend 404 sur une référence inconnue.
+Les deux passent. Le défaut n'est dans aucun des deux lots — il est dans leur
+COLLISION.
+
+**La règle :** quand un lot ajoute un segment dynamique sous un chemin
+existant, il doit mesurer ce que ce segment CAPTURE en plus de ce qu'il sert.
+Un segment `[x]` ne prend pas une adresse : il prend toutes les adresses de
+sa profondeur.
+
+**La correction REMPLOIE le rendu de la page déclarée** au lieu de le
+recopier. Deux rendus de la même page divergeraient, et c'est celui qu'on ne
+relit pas qui afficherait faux.
+
+**Et le refus reste UNIQUE :** ni produit ni page → le même 404 qu'une
+référence inexistante. Deux refus différents révéleraient qu'une référence
+existe en préparation.

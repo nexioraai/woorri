@@ -49,14 +49,24 @@ describe('ni prix, ni stock, ni achat', () => {
 
 describe('un produit non publié ne fuite pas', () => {
   it('🔴 la fiche rend 404, jamais une page vide', () => {
-    expect(FICHE).toMatch(/if\s*\(!p\)\s*notFound\(\)/);
+    // RÉÉCRIT LE 2026-11-08. La route délègue désormais aux SOUS-PAGES
+    // déclarées quand aucune référence ne correspond : `/catalogue/
+    // categories` et `/catalogue/commander` sont des pages de la CPA, pas
+    // des références, et elles rendaient 404 depuis le lot 6.
+    //
+    // Ce que ce point garde n'a pas changé : ni produit NI page → 404.
+    const depart = FICHE.indexOf('export default async function');
+    const bloc = FICHE.slice(FICHE.indexOf('if (!p)', depart), FICHE.indexOf('const base', depart));
+    expect(bloc).toMatch(/notFound\(\)/);
+    expect(bloc).toMatch(/fetchPage\(/);
   });
 
   it('🔴 un seul refus — « absent » et « non publié » sont indistinguables', () => {
     // Deux refus différents révéleraient la référence d'un produit en
     // préparation par le code de retour.
     const refus = FICHE.match(/notFound\(\)/gu) ?? [];
-    expect(refus.length).toBe(2);   // site absent, produit absent — rien de plus
+    // site absent · ni produit ni page — rien de plus.
+    expect(refus.length).toBe(2);
     expect(FICHE).not.toMatch(/publie/);
   });
 

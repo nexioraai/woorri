@@ -81,6 +81,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
+/**
+ * LE RENDU D'UNE PAGE DECLAREE, REEMPLOYABLE.
+ *
+ * Existe parce que la route `/catalogue/<reference>` du LOT 6 capture les
+ * sous-pages declarees `/catalogue/categories` et `/catalogue/commander` :
+ * un segment dynamique passe AVANT le catch-all. Mesure le 2026-11-08 :
+ * les deux rendaient 404 alors qu'elles etaient publiees.
+ *
+ * La route produit delegue donc ICI quand aucune reference ne correspond.
+ * Elle REEMPLOIE ce composant au lieu d'en recopier le rendu : deux rendus
+ * de la meme page finiraient par diverger, et c'est celui qu'on ne relit
+ * pas qui afficherait faux.
+ */
 export default async function PageDeclaree({ params }: Props) {
   const { slug, rest } = await params
   const site = await fetchSite(slug)
