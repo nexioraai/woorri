@@ -13,6 +13,7 @@ import CarteAvis from './CarteAvis'
 import { methodesPresentes, SIGNE_FILTRE } from './legendeMethodes'
 import { fetchTextesAvis } from './fetchAvis'
 import BlocsDePage from '../pages/BlocsDePage'
+import { lirePosition } from '../pages/blocs'
 import { resolveSiteBaseUrl } from '../themes/shared'
 import { ogLocaleFor } from '@/lib/i18n/supportedLanguages'
 import HtmlLang from '../themes/HtmlLang'
@@ -81,6 +82,18 @@ export default async function AppelsOffresPage({ params, searchParams }: Props) 
   const filtreActif = lireFiltre((await searchParams)?.etat)
   const textes = await fetchTextesAvis(site.id)
   const methodes = methodesPresentes(tousLesAvis)
+
+  // LOT 5bis — LA COLONNE LATÉRALE.
+  //
+  // Elle ne porte AUCUN type de bloc neuf : un « Besoin d'aide ? » est un
+  // encadré, des liens rapides sont un bloc `liens`. Ce qui manquait n'était
+  // pas un vocabulaire, c'était une POSITION.
+  //
+  // PAS DE COLONNE VIDE : si aucun bloc ne demande `cote`, la page reste sur
+  // une seule colonne pleine largeur. Une colonne droite vide mangerait un
+  // tiers de l'écran pour ne rien dire.
+  const blocsCote = textes.filter((b) => lirePosition(b.position) === 'cote')
+  const blocsHaut = textes.filter((b) => lirePosition(b.position) !== 'cote')
   const comptes = compter(tousLesAvis, maintenant)
   const avis = filtrer(tousLesAvis, filtreActif, maintenant)
   const base = resolveSiteBaseUrl(site, (await headers()).get('host'))
@@ -123,7 +136,6 @@ export default async function AppelsOffresPage({ params, searchParams }: Props) 
   // autre adresse, pas une disparition.
   const { recents: clotures, archives } = partagerArchive(tousClos, maintenant)
 
-  const entetes = [t.colReference, t.colObjet, t.colRemise, t.colEtat]
 
   // Le tableau défile DANS SON PROPRE CONTENEUR : le corps de la page ne part
   // jamais en défilement horizontal (WCAG 2.2 AA, 1.4.10).
@@ -197,9 +209,9 @@ export default async function AppelsOffresPage({ params, searchParams }: Props) 
           rtl={rtl}
         />
 
-        {textes.length > 0 && (
+        {blocsHaut.length > 0 && (
           <div style={{ marginBottom: 32 }}>
-            <BlocsDePage blocs={textes} base={base} primary={accent} lang={site.lang} />
+            <BlocsDePage blocs={blocsHaut} base={base} primary={accent} lang={site.lang} />
           </div>
         )}
 
@@ -271,7 +283,23 @@ export default async function AppelsOffresPage({ params, searchParams }: Props) 
           // UNE SECTION VIDE NE S'AFFICHE PAS. Un titre « Avis clôturés »
           // au-dessus d'un tableau sans ligne annoncerait une rubrique que
           // l'acheteur ne tient pas -- la famille même qu'on corrige ici.
-          <>
+          <div style={{
+            // LA COLONNE N'EXISTE QUE SI QUELQU'UN LA DEMANDE.
+            // Et sur téléphone elle passe DESSOUS, APRÈS les avis : un
+            // fournisseur sur mobile cherche les marchés, pas les liens
+            // rapides.
+            display: 'grid',
+            gridTemplateColumns: blocsCote.length > 0 ? 'minmax(0, 1fr)' : 'minmax(0, 1fr)',
+            gap: 28,
+          }} className={blocsCote.length > 0 ? 'avecCote' : undefined}>
+            {blocsCote.length > 0 && (
+              <style>{`
+                @media (min-width: 900px) {
+                  .avecCote { grid-template-columns: minmax(0, 1fr) 300px; align-items: start; }
+                }
+              `}</style>
+            )}
+            <div>
             {enCours.length > 0 && section(enCours, t.sectionEnCours, 'avis-en-cours')}
             {clotures.length > 0 && section(clotures, t.sectionClotures, 'avis-clotures', t.noteClotures)}
 
@@ -317,7 +345,14 @@ export default async function AppelsOffresPage({ params, searchParams }: Props) 
                 </a>
               </p>
             )}
-          </>
+            </div>
+
+            {blocsCote.length > 0 && (
+              <aside style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <BlocsDePage blocs={blocsCote} base={base} primary={accent} lang={site.lang} />
+              </aside>
+            )}
+          </div>
         )}
       </main>
     </>

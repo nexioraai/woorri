@@ -381,11 +381,22 @@ describe('cliquet structurel — surface publique des avis', () => {
     }
   })
 
-  it('la liste affiche QUATRE en-têtes de colonne, et pas un de plus', () => {
+  it('la liste ne montre QUE les quatre informations de la loi A2 ①', () => {
+    // RÉÉCRIT LE 2026-11-08 (LOT 5bis). La liste n'est plus un TABLEAU :
+    // ce sont des cartes, parce qu'un tableau met la référence, l'objet, la
+    // date et l'état sur le même plan alors qu'un fournisseur cherche
+    // d'abord « est-ce ouvert » et « combien de temps me reste-t-il ».
+    //
+    // Ce que ce cliquet garde n'a PAS changé : aucune information de plus
+    // ne doit paraître sans avoir été décidée. Seule la forme a changé —
+    // et c'est l'ARCHIVE qui porte désormais les quatre en-têtes, parce
+    // qu'un historique SE consulte en tableau.
     const liste = code(fichiers.find((f) => f.endsWith('appels-offres/page.tsx'))!)
-    const m = liste.match(/\[t\.colReference,\s*t\.colObjet,\s*t\.colRemise,\s*t\.colEtat\]/)
-    expect(m, 'les quatre colonnes de la loi A2 ①, dans cet ordre').toBeTruthy()
     expect(liste).not.toMatch(/t\.col(?!Reference|Objet|Remise|Etat)[A-Z]/)
+
+    const archive = code(fichiers.find((f) => f.endsWith('archive/page.tsx'))!)
+    expect(archive, 'les quatre colonnes de la loi A2 ①, dans cet ordre')
+      .toMatch(/\[t\.colReference,\s*t\.colObjet,\s*t\.colRemise,\s*t\.colEtat\]/)
   })
 
   it('l’échéance est rendue avec l’HEURE, jamais par la fonction date du blog', () => {

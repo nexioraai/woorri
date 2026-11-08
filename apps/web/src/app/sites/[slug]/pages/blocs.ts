@@ -22,7 +22,23 @@ export const TYPES_DE_BLOC = [
 
 export type TypeDeBloc = (typeof TYPES_DE_BLOC)[number]
 
-export type Bloc =
+/**
+ * OU un bloc se place. Absent = au-dessus, pleine largeur : c'est le defaut,
+ * et c'est ce que voient les 42 sites qui n'ont rien demande.
+ *
+ * UNE VALEUR INCONNUE NE FAIT PAS DISPARAITRE LE BLOC. `position: 'bas-
+ * gauche'` le rend au-dessus, comme s'il n'avait rien demande. Un bloc qui
+ * s'evapore parce qu'on a mal tape un mot est pire qu'un bloc mal place :
+ * personne ne comprend pourquoi son texte a disparu.
+ */
+export type PositionBloc = 'cote'
+
+/** Rend la position SURE. Tout ce qui n'est pas connu vaut « au-dessus ». */
+export function lirePosition(brut: unknown): PositionBloc | null {
+  return brut === 'cote' ? 'cote' : null
+}
+
+export type Bloc = { position?: string } & (
   | { type: 'titre'; texte: string; niveau?: 2 | 3 }
   | { type: 'texte'; texte: string }
   | { type: 'liste'; items: string[]; titre?: string }
@@ -41,6 +57,7 @@ export type Bloc =
   /** LOT 7 — la LISTE d'une catégorie d'articles. Ne porte aucun contenu :
    *  le fonds reste dans `site_blog_posts`, un seul endroit où écrire. */
   | { type: 'articles'; categorie: 'article' | 'communique' | 'evenement'; titre?: string; limite?: number }
+)
 
 /**
  * Lit ce qui vient de la base. La base a DÉJÀ refusé les types inconnus, mais
