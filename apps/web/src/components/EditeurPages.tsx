@@ -205,6 +205,7 @@ export default function EditeurPages({ slug, labels }: {
                 <span className="block text-xs text-white/50 mb-2">Contenu structure de la page</span>
                 <EditeurBlocs
                   blocs={lireBlocs(p.blocs)}
+                  slug={slug}
                   onChange={(b) => { void modifier(p.id, 'blocs', b as unknown as string); }}
                 />
               </div>

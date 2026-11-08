@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { TYPES_DE_BLOC, type Bloc } from '@/app/sites/[slug]/pages/blocs'
+import TeleverseurFichiers from './TeleverseurFichiers'
 
 // ============================================================================
 // LOT 4 — L'ÉDITEUR DES BLOCS.
@@ -67,9 +68,11 @@ function poser(obj: unknown, chemin: Chemin, valeur: string): unknown {
 }
 
 export default function EditeurBlocs({
-  blocs, onChange,
-}: { blocs: Bloc[]; onChange: (b: Bloc[]) => void }) {
+  blocs, onChange, slug,
+}: { blocs: Bloc[]; onChange: (b: Bloc[]) => void; slug?: string }) {
   const [ouvert, setOuvert] = useState<number | null>(null)
+  /** Quel champ `url` attend qu'on lui choisisse un fichier. */
+  const [choix, setChoix] = useState<string | null>(null)
   const maj = (i: number, chemin: Chemin, valeur: string) =>
     onChange(blocs.map((b, j) => (j === i ? (poser(b, chemin, valeur) as Bloc) : b)))
   const bouger = (i: number, d: number) => {
@@ -105,8 +108,15 @@ export default function EditeurBlocs({
           </div>
           {ouvert === i && (
             <div className="px-3 pb-3 space-y-2">
-              {champs(b).map(({ chemin, valeur }) => (
-                <label key={chemin.join('.')} className="block">
+              {champs(b).map(({ chemin, valeur }) => {
+                const cle = `${i}.${chemin.join('.')}`
+                // UN CHAMP `url` N'EST PAS UN CHAMP TEXTE.
+                // Demander une adresse à un client, c'est lui demander
+                // d'héberger son PDF ailleurs — c'est-à-dire de ne pas le
+                // faire. Ici il téléverse, et l'adresse se remplit seule.
+                const estFichier = chemin[chemin.length - 1] === 'url'
+                return (
+                <label key={cle} className="block">
                   <span className="text-[11px] uppercase tracking-wide opacity-55">{chemin.filter((s) => typeof s === 'string').join(' · ') || 'texte'}</span>
                   {valeur.length > 70 ? (
                     <textarea value={valeur} rows={3} onChange={(e) => maj(i, chemin, e.target.value)}
@@ -115,8 +125,23 @@ export default function EditeurBlocs({
                     <input value={valeur} onChange={(e) => maj(i, chemin, e.target.value)}
                       className="w-full mt-0.5 px-2.5 py-1.5 rounded-lg bg-black/25 border border-white/15 text-sm" />
                   )}
+                  {estFichier && slug && (
+                    <div className="mt-1.5">
+                      <button type="button" onClick={() => setChoix(choix === cle ? null : cle)}
+                        className="text-[11px] px-2 py-1 rounded-md border border-white/15 hover:bg-white/10">
+                        {choix === cle ? 'fermer' : 'téléverser ou choisir un fichier'}
+                      </button>
+                      {choix === cle && (
+                        <div className="mt-2 rounded-lg border border-white/12 p-2">
+                          <TeleverseurFichiers slug={slug}
+                            dossier={b.type === 'documents' ? 'documents' : 'photos'}
+                            onChoisir={(f) => { maj(i, chemin, f.url); setChoix(null) }} />
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </label>
-              ))}
+              )})}
             </div>
           )}
         </div>
