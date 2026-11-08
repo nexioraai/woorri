@@ -97,7 +97,7 @@ un avis · un article · un produit · une province
 | 3 | Gabarit de page + les 20 pages de contenu | 12 | ✅ **FERMÉ** — 30/30 pages, 146 blocs, 15 types · déployé `f1f5f5b` |
 | 4 | **Organigramme interactif + alternative 2D** | 16 | ⬜ |
 | 5 | Appels d'offres enrichis | 20 | 🔄 **ENTAMÉ** — dossier de consultation ✅ (14/14 en base) · filtre par état ✅ (**28/28 à l'adresse publique**, témoins posés puis retirés, retrait vérifié depuis l'écran) ; restent l'archive des consultations closes et les avis d'attribution |
-| 6 | Catalogue public | 12 | ⬜ |
+| 6 | Catalogue public | 12 | ✅ **FERMÉ** — **26/26 à l'adresse publique**. Ni prix ni stock par CONSTRUCTION : la table n'en porte pas (PGRST204 mesuré). Un brouillon rend le MÊME 404 qu'une référence inexistante. |
 | 7 | Actualités — événements, communiqués, filtres | 8 | ✅ **FERMÉ** — le moteur avait déjà son fonds d'articles ; il manquait la CATÉGORIE. Bloc « articles » (16ᵉ type), **21/21 à l'adresse publique**, et `/blog` ne perd rien. |
 | 8 | Contact et demandes — référence générée automatiquement, et suivi de la demande | 10 | ✅ **FERMÉ** — **20/20 à l'adresse publique**. Les deux échecs rendent mot pour mot la même réponse ; le texte du demandeur ne sort jamais. |
 | 9 | Pages légales + plan du site engendré | 4 | ⬜ |
