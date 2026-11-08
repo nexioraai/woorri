@@ -21,6 +21,7 @@ import type { AvisDuSite } from './avisDuSite'
 import SectionAppelsOffres from './SectionAppelsOffres'
 import LienAppelsOffres from './LienAppelsOffres'
 import MenuDeclare from './MenuDeclare'
+import { HeroDiapoLibre, photosDAccueil } from './HeroDiapo'
 import VifShopSection from './VifShopSection'
 import { socialUrl } from '@/lib/social'
 import ClickableProductCard from './ClickableProductCard'
@@ -204,10 +205,10 @@ export default function VifTheme({ site, hasAvis = false, host = null, menu = []
                   {/* ombre douce sous l'image */}
                   <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-[70%] h-8 rounded-full blur-2xl opacity-40" style={{ backgroundColor: 'rgba(20,18,16,0.35)' }} />
                   {site.hero_image ? (
-                    <img
-                      src={site.hero_image}
+                    <HeroDiapoLibre
+                      photos={photosDAccueil(site)}
                       alt={site.name}
-                      className="relative w-full h-full object-contain drop-shadow-2xl hero-float"
+                      className="object-contain drop-shadow-2xl hero-float"
                       style={{ filter: 'drop-shadow(0 30px 40px rgba(20,18,16,0.25))' }}
                     />
                   ) : (

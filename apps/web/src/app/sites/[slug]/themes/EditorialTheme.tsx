@@ -31,6 +31,7 @@ import type { AvisDuSite } from './avisDuSite'
 import SectionAppelsOffres from './SectionAppelsOffres'
 import LienAppelsOffres from './LienAppelsOffres'
 import MenuDeclare from './MenuDeclare'
+import HeroDiapo, { photosDAccueil } from './HeroDiapo'
 import EditorialShopSection from './EditorialShopSection'
 import { socialUrl } from '@/lib/social'
 import ClickableProductCard from './ClickableProductCard'
@@ -174,7 +175,7 @@ export default function EditorialTheme({ site, hasAvis = false, host = null, men
       <section id="home" className="relative min-h-[92vh] flex items-center pt-20 overflow-hidden">
         {site.hero_image ? (
           <>
-            <Image src={site.hero_image} alt="" fill priority sizes="100vw" className="object-cover hero-float" />
+            <HeroDiapo photos={photosDAccueil(site)} className="object-cover hero-float" />
             <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/55 to-black/80" />
           </>
         ) : (
