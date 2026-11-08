@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import EditeurPages from './EditeurPages';
+import EditeurCatalogue from './EditeurCatalogue';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
@@ -286,6 +287,23 @@ export default function Navbar() {
                         chargement: t('naved.pgChargement'),
                       }}
                     />
+                  </div>
+                )}
+
+                {/* ── LOT 6 — LE CATALOGUE PUBLIC.
+                    Sans cet écran, `catalogue_produits` est une table que
+                    personne ne peut remplir : poser une fonction sans le
+                    geste qui la rend utilisable, c'est GEN-D044.
+
+                    IL N'Y A NI PRIX NI STOCK À SAISIR, et ce n'est pas un
+                    oubli : la table n'en porte pas. Sur un marché d'État,
+                    un prix public engage. */}
+                {slug && (
+                  <div className="mb-4">
+                    <h3 className="text-xs uppercase tracking-wider text-white/40 mb-2 px-1">
+                      Catalogue public
+                    </h3>
+                    <EditeurCatalogue slug={slug} />
                   </div>
                 )}
 
