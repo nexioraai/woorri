@@ -65,6 +65,8 @@ export type AvisSite = {
 
 /** LES QUATRE COLONNES DE LA LISTE, ET PAS UNE DE PLUS (loi du lot A2 ①). */
 export type AvisCarte = {
+  /** LOT 5bis — le type de marche, affiche en etiquette sur la carte. */
+  methode: string | null
   reference: string
   reference_slug: string
   objet: string
@@ -109,8 +111,15 @@ export type AvisDetail = AvisCarte & {
 // concatenation l'efface en `string` et `.select()` rend alors
 // `GenericStringError` -- mesure du 2026-11-06, `TS2352`. Le confort de mise
 // en page coutait le typage de la requete.
-const COLS_LISTE = 'reference,reference_slug,objet,remise_le,etat'
-const COLS_DETAIL = `${COLS_LISTE},description,methode,methode_detail,valeur,devise,questions_avant,ouverture_plis,criteres_elim,criteres_notes,soumission,allotissement,local_prix_dossier,local_caution,local_validite_jours,canal_officiel_url,document_url,cree_le,pieces,attributaire,montant_attribue,attribue_le`
+// LOT 5bis — `methode` entre dans la projection de LISTE : la carte porte
+// l'etiquette du type de marche, et la legende des sigles se deduit des
+// methodes REELLEMENT employees par les avis du site. Une legende ecrite en
+// dur afficherait des sigles que la Centrale n'emploie pas.
+const COLS_LISTE = 'reference,reference_slug,objet,remise_le,etat,methode'
+// `methode` n'est PAS reprise ici : elle vient deja de COLS_LISTE depuis le
+// lot 5bis. La projeter deux fois ne casse rien cote base, mais l'attendu
+// exact du cliquet l'attrape -- et c'est exactement son travail.
+const COLS_DETAIL = `${COLS_LISTE},description,methode_detail,valeur,devise,questions_avant,ouverture_plis,criteres_elim,criteres_notes,soumission,allotissement,local_prix_dossier,local_caution,local_validite_jours,canal_officiel_url,document_url,cree_le,pieces,attributaire,montant_attribue,attribue_le`
 
 /** Resout le site public. `sites_public` applique deja `published = true AND archived_at IS NULL`. */
 async function fetchAvisSite(slug: string): Promise<AvisSite | null> {

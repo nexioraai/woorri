@@ -9,6 +9,7 @@ import { lireFiltre, compter, filtrer, FILTRES } from './filtrerAvis'
 import { partagerArchive } from './archiver'
 import { compterAvis } from './comptesAvis'
 import EnTeteAvis from './EnTeteAvis'
+import CarteAvis from './CarteAvis'
 import { fetchTextesAvis } from './fetchAvis'
 import BlocsDePage from '../pages/BlocsDePage'
 import { resolveSiteBaseUrl } from '../themes/shared'
@@ -124,78 +125,46 @@ export default async function AppelsOffresPage({ params, searchParams }: Props) 
 
   // Le tableau défile DANS SON PROPRE CONTENEUR : le corps de la page ne part
   // jamais en défilement horizontal (WCAG 2.2 AA, 1.4.10).
+  // LOT 5bis — DES CARTES, PLUS UN TABLEAU.
+  //
+  // Un tableau met la reference, l'objet, la date et l'etat sur le meme
+  // plan. Un fournisseur cherche d'abord DEUX choses : est-ce encore
+  // ouvert, et combien de temps lui reste-t-il. Une carte hierarchise ;
+  // une ligne ne le peut pas.
+  //
+  // La grille se replie seule sur telephone -- aucune mise en page
+  // horizontale a faire defiler du doigt.
   const section = (lignes: typeof avis, titre: string, id: string, note?: string) => (
-    <section key={id} aria-labelledby={id} style={{ marginBottom: 48 }}>
+    <section key={id} aria-labelledby={id} style={{ marginBottom: 44 }}>
       <h2 id={id} style={{ fontSize: 20, fontWeight: 700, margin: '0 0 4px', letterSpacing: '-0.01em' }}>
         {titre}
       </h2>
       {note && <p style={{ fontSize: 14, opacity: 0.6, margin: '0 0 16px', lineHeight: 1.5 }}>{note}</p>}
-      <div style={{ overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 15 }}>
-          <caption style={{ position: 'absolute', left: -9999 }}>
-            {titre} — {site.name}
-          </caption>
-          <thead>
-            <tr style={{ borderBottom: '2px solid rgba(0,0,0,0.15)' }}>
-              {entetes.map((c) => (
-                <th key={c} scope="col" style={{
-                  textAlign: rtl ? 'right' : 'left', padding: '12px 14px',
-                  fontWeight: 700, whiteSpace: 'nowrap',
-                }}>{c}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {lignes.map((a) => {
-              const ech = echeanceAffichee(a.remise_le, etatVisible(a, maintenant), site.lang)
-              // L'ÉTAT EST CALCULÉ UNE FOIS PAR LIGNE, et il décide DEUX
-              // choses : le libellé de l'état, et si la date est ferme. Les
-              // calculer séparément laisserait une ligne annoncer
-              // « En préparation » à côté d'une échéance présentée comme
-              // ferme — le mensonge exact que b1 ② ferme.
-              const ev = etatVisible(a, maintenant)
-              return (
-                <tr key={a.reference_slug} style={{ borderBottom: '1px solid rgba(0,0,0,0.08)' }}>
-                  <th scope="row" style={{
-                    textAlign: rtl ? 'right' : 'left', padding: '14px',
-                    fontWeight: 600, whiteSpace: 'nowrap', verticalAlign: 'top',
-                  }}>
-                    <Link href={`${base}/appels-offres/${encodeURIComponent(a.reference_slug)}`}
-                      style={{ color: accent, textDecoration: 'none' }}>
-                      {a.reference}
-                    </Link>
-                  </th>
-                  <td style={{ padding: '14px', lineHeight: 1.5 }}>{a.objet}</td>
-                  {/* `tabular-nums` : des échéances qui ne s'alignent pas se
-                      comparent mal, et comparer des échéances est la raison
-                      d'être de cette colonne. */}
-                  <td style={{ padding: '14px', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' }}>
-                    {ech === null ? (
-                      <span aria-hidden="true">—</span>
-                    ) : (
-                      <>
-                        {ech.texte}
-                        {/* LA RÈGLE N'EST PAS ICI : elle est dans
-                            `echeanceAffichee`, où un test la tient par son
-                            comportement. Ce JSX ne décide rien, il rend. */}
-                        {ech.marque && (
-                          <span style={{ opacity: 0.7, fontWeight: 500 }}> {ech.marque}</span>
-                        )}
-                      </>
-                    )}
-                  </td>
-                  {/* L'ÉTAT AFFICHÉ EST DÉRIVÉ, PAS LU. Un avis `ouvert` dont
-                      l'échéance est passée affiche « Clôturé » : afficher
-                      « Ouvert » serait inviter à déposer une offre qui sera
-                      rejetée. Ce que la base STOCKE, lui, ne bouge pas. */}
-                  <td style={{ padding: '14px', whiteSpace: 'nowrap' }}>
-                    {libelleEtat(ev, site.lang)}
-                  </td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
+        gap: 14,
+      }}>
+        {lignes.map((a) => {
+          const ev = etatVisible(a, maintenant)
+          const ech = echeanceAffichee(a.remise_le, ev, site.lang)
+          return (
+            <CarteAvis
+              key={a.reference_slug}
+              reference={a.reference}
+              objet={a.objet}
+              methode={a.methode ?? null}
+              echeance={ech?.texte ?? null}
+              etatVisible={ev}
+              libelleEtat={libelleEtat(ev, site.lang)}
+              href={`${base}/appels-offres/${a.reference_slug}`}
+              remiseLe={a.remise_le}
+              maintenant={maintenant}
+              libelles={{ remise: t.colRemise, joursRestants: t.joursRestants, nonRenseigne: t.nonRenseigne }}
+              primary={accent}
+            />
+          )
+        })}
       </div>
     </section>
   )

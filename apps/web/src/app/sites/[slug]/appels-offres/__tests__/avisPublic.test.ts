@@ -105,14 +105,16 @@ describe('fetchAvisIndex', () => {
     expect(ordre[0][2]).toMatchObject({ ascending: true, nullsFirst: false })
   })
 
-  it('la liste ne projette QUE les quatre colonnes de l’écran, plus l’adresse', async () => {
+  it('la liste ne projette QUE les CINQ colonnes de l’écran, plus l’adresse', async () => {
     // Loi du lot A2 ① : référence, objet, date ET heure limite, état. La
-    // cinquième colonne projetée est `reference_slug`, qui n'est PAS affichée
-    // -- elle porte l'URL. Toute colonne de plus serait un champ qui transite
-    // sans être décidé.
+    // colonne `reference_slug` n'est PAS affichée -- elle porte l'URL.
+    // `methode` entre le 2026-11-08 (lot 5bis) : la CARTE porte l'étiquette
+    // du type de marché, et la légende des sigles se déduit des méthodes
+    // RÉELLEMENT employées. Toute colonne de plus serait un champ qui
+    // transite sans être décidé.
     await fetchAvisIndex(SITE.slug)
     expect(journal.projections.appels_offres_public.split(',').sort()).toEqual(
-      ['etat', 'objet', 'reference', 'reference_slug', 'remise_le']
+      ['etat', 'methode', 'objet', 'reference', 'reference_slug', 'remise_le']
     )
   })
 
@@ -207,6 +209,7 @@ describe('fetchAvis — résolution par le COUPLE (site_id, reference_slug)', ()
       reference_slug: "porte l'URL, jamais affichée comme rubrique",
       devise: 'rendue AVEC la valeur, pas comme rubrique propre',
       cree_le: 'date de publication, en tête de page, pas une rubrique',
+
       // AJOUT DU 2026-11-08 (LOT 5b) — `pieces` n'est PAS une vingtième
       // rubrique : elle est rendue DANS la rubrique `document_url`, qui
       // cesse d'être un lien pour devenir le dossier de consultation.
@@ -260,7 +263,7 @@ const rel = (f: string) => f.replace(RACINE, 'appels-offres')
 
 describe('cliquet structurel — surface publique des avis', () => {
 
-  it('les DIX fichiers de la surface sont bien vus par ce cliquet', () => {
+  it('les ONZE fichiers de la surface sont bien vus par ce cliquet', () => {
     // LE DÉNOMINATEUR EST RÉEL. Un fichier ajouté à la surface sans entrer
     // ici échapperait à tous les contrôles qui suivent — la classe GEN-D032.
     // `cycleDeVie.ts` est entré le 2026-11-06 (lot A2 b) : ce cliquet a rougi
@@ -277,6 +280,7 @@ describe('cliquet structurel — surface publique des avis', () => {
         // `archiver.ts` décide la coupure, `archive/page.tsx` la sert. Les
         // deux entrent ici le jour même : un fichier de la surface qui
         // n'y figure pas échappe à TOUS les contrôles qui suivent.
+        'appels-offres/CarteAvis.tsx',
         'appels-offres/EnTeteAvis.tsx',
         'appels-offres/archive/page.tsx',
         'appels-offres/archiver.ts',
