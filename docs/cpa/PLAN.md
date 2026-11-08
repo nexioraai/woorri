@@ -106,7 +106,9 @@ un avis · un article · un produit · une province
 | 12 | **Espace fournisseur + dépôt de pièces** | 30 | ⬜ |
 | 13 | **Soumission électronique des offres** | 30 | ⬜ |
 | 14 | **Administration — workflow, audit, tableau de bord** | 30 | ⬜ |
+| **5bis** | **La page des appels d'offres, RICHE** — voir §8 | 14 | ⬜ **AVANT LE LOT 8** |
 | **15** | **Finitions d'interface relevées sur EPSS** — voir §7 | 18 | ⬜ **DERNIER LOT** |
+| **16** | **Assistant de site (IA)** — voir §9 | 20 | ⬜ **APRÈS LE 15** |
 
 **Ordre** : 1 → 2 → 3 → 5 → 7 → 8 → 4 → 6 → 9, puis 10 → 11 → 12 → 13 → 14.
 **Premier résultat visible : 24 h** (lots 1+2).
@@ -289,3 +291,55 @@ plusieurs niveaux, le filtre des avis, l'archive.
 **Les réseaux sociaux (15.4) ont peut-être déjà leur place en base** :
 `sites.social_links` existe. À mesurer avant d'écrire quoi que ce soit —
 c'est la sixième fois que la solution serait déjà dans le dépôt.
+
+
+---
+
+## §8 — LOT 5bis · LA PAGE DES APPELS D'OFFRES N'EST PAS UNE LISTE
+
+Relevé sur les captures d'epss.gov.et le 8 novembre 2026. **Notre page sert
+un tableau nu sur fond blanc.** Celle d'EPSS sert la même information, et un
+fournisseur y trouve en trois secondes ce qu'il cherche.
+
+| | ce qui manque chez nous | ce qu'EPSS en fait |
+|---|---|---|
+| **5b.1** | **Un bandeau de tête coloré** avec le fil d'Ariane, un titre, une phrase et un bouton d'action | dégradé bleu, « Parcourir les appels d'offres » |
+| **5b.2** | **Quatre compteurs** — actifs · ouverts aux offres · clôture prochaine · archivés | cartes à pictogramme coloré |
+| **5b.3** | **Les filtres en pastilles**, avec pictogramme et état actif marqué | « Tous · ouvrir · Fermeture prochaine · FERMÉ » |
+| **5b.4** | **Des cartes d'avis** au lieu de lignes de tableau — référence en étiquette, catégorie, date, état, jours restants | carte avec pastille d'état |
+| **5b.5** | **Le compte à rebours** — « 32 jours restants » | sous la date de clôture |
+| **5b.6** | **Une colonne latérale** — liens rapides, « Besoin d'aide ? », assistance | colonne de droite |
+| **5b.7** | **La légende des types de marché** — ce que veut dire chaque sigle | encart « Types d'offres » |
+| **5b.8** | **Une animation au survol** des cartes et des pastilles | élévation douce |
+| **5b.9** | **La couleur du site employée partout** — la CPA a son vert et ne s'en sert presque pas | pictogrammes et fonds teintés |
+
+**TOUT DOIT ÊTRE ÉDITABLE.** La phrase du bandeau, le texte d'aide, la
+légende des sigles, les liens rapides : la CPA efface ce que le moteur a
+généré et met le sien. Aucun de ces textes ne doit vivre en dur dans le code.
+
+**Un chiffre affiché est un chiffre MESURÉ.** Les quatre compteurs se
+déduisent des avis réels, jamais d'une valeur saisie : un compteur qu'on
+peut écrire à la main est un compteur qui ment le jour où personne ne le
+met à jour.
+
+---
+
+## §9 — LOT 16 · L'ASSISTANT DE SITE
+
+EPSS porte un assistant en bas à droite. Demandé par le propriétaire le
+8 novembre 2026, **après le lot 15**.
+
+**Ce qu'il doit faire :** répondre sur le contenu DU SITE — les pages, les
+avis en cours, les documents — et renvoyer vers l'adresse exacte.
+
+**Ce qu'il ne doit PAS faire, et c'est le coeur du lot :**
+— **ne jamais inventer un fait** sur un établissement public. Une réponse
+  fausse sur une date de clôture ou une pièce à fournir fait perdre un
+  marché à un fournisseur ;
+— **ne répondre qu'à partir du contenu publié**, et dire « je ne sais pas »
+  plutôt que de combler ;
+— **ne pas envoyer la question à un tiers sans le dire** — c'est une donnée
+  qui sort du site, et `/confidentialite` affirme aujourd'hui le contraire.
+
+**Il a un COÛT par question.** Aucune dépense n'est engagée sans accord
+explicite, et le lot devra chiffrer avant d'écrire.
