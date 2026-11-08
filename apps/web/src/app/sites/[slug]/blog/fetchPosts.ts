@@ -158,3 +158,24 @@ export async function fetchBlogEntries(siteId: string): Promise<
     .order('published_at', { ascending: false })
   return (data as { slug: string; title: string; published_at: string | null; updated_at: string | null }[]) ?? []
 }
+
+/**
+ * COMBIEN d'articles publies, sans en rapatrier un seul.
+ *
+ * Existe parce que le plan du site a besoin du NOMBRE, pas des articles :
+ * une page qui telecharge tout le blog pour savoir s'il est vide coute cher
+ * a afficher.
+ *
+ * ET PARCE QUE LA VUE N'EST LUE QUE D'ICI. Le cliquet
+ * `blogTenantBoundaries` exige qu'un SEUL module touche
+ * `site_blog_posts_public` : deux lecteurs finiraient par appliquer deux
+ * regles de propriete differentes, et celle qu'on relit ne serait pas celle
+ * qui decide.
+ */
+export async function compterArticlesPublies(siteId: string): Promise<number> {
+  const { count } = await supabase
+    .from('site_blog_posts_public')
+    .select('slug', { count: 'exact', head: true })
+    .eq('site_id', siteId)
+  return count ?? 0
+}
