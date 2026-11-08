@@ -57,7 +57,8 @@ as $$
                'appel',      -- un bouton d'action
                'image',      -- une photo, avec son texte de remplacement
                'galerie',    -- plusieurs photos
-               'citation'    -- une citation attribuée
+               'citation',   -- une citation attribuée
+               'articles'    -- LOT 7 : la liste d'une catégorie d'articles
              )
      );
 $$;

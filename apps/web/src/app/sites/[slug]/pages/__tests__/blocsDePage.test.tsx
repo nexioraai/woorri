@@ -107,6 +107,7 @@ const EXEMPLES: Record<string, Bloc> = {
   image: { type: 'image', url: '/entrepot.jpg', alt: "L'entrepôt central", legende: 'Entrepôt central' },
   galerie: { type: 'galerie', items: [{ url: '/g1.jpg', alt: 'Zone de stockage' }] },
   citation: { type: 'citation', texte: 'Un médicament qui arrive en retard ne soigne personne.', auteur: 'Direction générale' },
+  articles: { type: 'articles', categorie: 'communique', titre: 'Derniers communiqués' },
 };
 
 describe('C. chaque type du vocabulaire est réellement dessiné', () => {
@@ -124,6 +125,10 @@ describe('C. chaque type du vocabulaire est réellement dessiné', () => {
         tableau: 'Paracétamol', documents: 'Conditions générales', questions: 'structures agréées',
         encadre: 'bon signé', liens: 'Catalogue', appel: 'Devenir fournisseur',
         image: 'Entrepôt central', galerie: 'Zone de stockage', citation: 'ne soigne personne',
+        // Sans articles fournis, le bloc affiche son titre ET dit pourquoi
+        // la liste est vide. Une section qui disparaît ferait croire à une
+        // page cassée.
+        articles: 'Derniers communiqués',
       };
       expect(html).toContain(attendu[t]);
     });
@@ -161,6 +166,41 @@ describe('C. chaque type du vocabulaire est réellement dessiné', () => {
     const html = renderToStaticMarkup(<BlocsDePage base="" blocs={[EXEMPLES.questions]} />);
     expect(html).toContain('<details');
     expect(html).toContain('<summary');
+  });
+});
+
+describe('C bis. le bloc « articles » ne porte aucun contenu', () => {
+  it('🔴 une catégorie INVENTÉE est écartée à la lecture', () => {
+    // Un bloc qui vise une catégorie inconnue n'afficherait jamais rien, et
+    // personne ne saurait pourquoi.
+    expect(lireBlocs([{ type: 'articles', categorie: 'rubrique-inventee' }])).toEqual([]);
+    expect(lireBlocs([{ type: 'articles' }])).toEqual([]);
+  });
+
+  it('🔴 les trois catégories réelles passent', () => {
+    for (const c of ['article', 'communique', 'evenement']) {
+      expect(lireBlocs([{ type: 'articles', categorie: c }])).toHaveLength(1);
+    }
+  });
+
+  it('🔴 sans article, la section DIT pourquoi au lieu de disparaître', () => {
+    const html = renderToStaticMarkup(
+      <BlocsDePage base="" blocs={[EXEMPLES.articles]} videArticles="Aucun communiqué pour l’instant." />,
+    );
+    expect(html).toContain('Aucun communiqué');
+    expect(html).toContain('Derniers communiqués');
+  });
+
+  it('🔴 avec des articles, chacun porte son lien et sa date', () => {
+    const posts = [{ slug: 'rappel-de-lot', title: 'Rappel de lot', excerpt: null,
+      cover_image: null, published_at: '2026-10-02T00:00:00Z', categorie: 'communique' as const }];
+    const html = renderToStaticMarkup(
+      <BlocsDePage base="https://x.test" blocs={[EXEMPLES.articles]} lang="fr"
+        articles={new Map([['communique' as const, posts]])} videArticles="vide" />,
+    );
+    expect(html).toContain('Rappel de lot');
+    expect(html).toContain('/blog/rappel-de-lot');
+    expect(html).toContain('2026');
   });
 });
 

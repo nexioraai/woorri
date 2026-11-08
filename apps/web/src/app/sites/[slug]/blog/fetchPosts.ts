@@ -39,6 +39,33 @@ export type BlogPostCard = {
   excerpt: string | null
   cover_image: string | null
   published_at: string | null
+  /** LOT 7 — vocabulaire FERME, tenu par la base. `article` est le defaut. */
+  categorie: CategorieArticle
+}
+
+/**
+ * Les trois categories d'article.
+ *
+ * MIROIR EXACT de la CHECK `site_blog_posts_categorie_chk`. La base refuse un
+ * mot hors liste ; ici le code refuse de le ranger. Le cliquet
+ * `categoriesArticles.test.ts` lit le fichier SQL pour que les deux ne
+ * puissent pas diverger.
+ */
+export const CATEGORIES_ARTICLE = ['article', 'communique', 'evenement'] as const
+export type CategorieArticle = (typeof CATEGORIES_ARTICLE)[number]
+
+/**
+ * Range un article sur une categorie SURE.
+ *
+ * La base a deja refuse les mots inconnus. Ce filtre existe parce qu'une vue
+ * peut etre relue par un code plus recent que sa contrainte -- et parce qu'un
+ * article range sous une categorie inventee disparaitrait de TOUTES les
+ * pages, y compris de celle qui devait le montrer.
+ */
+export function lireCategorie(brut: unknown): CategorieArticle {
+  return (CATEGORIES_ARTICLE as readonly string[]).includes(String(brut))
+    ? (brut as CategorieArticle)
+    : 'article'
 }
 
 export type BlogPostPage = BlogPostCard & {
@@ -47,7 +74,7 @@ export type BlogPostPage = BlogPostCard & {
 }
 
 /** Colonnes reellement consommees par les deux pages -- jamais `select('*')`. */
-const COLS_CARTE = 'slug,title,excerpt,cover_image,published_at'
+const COLS_CARTE = 'slug,title,excerpt,cover_image,published_at,categorie'
 const COLS_ARTICLE = `${COLS_CARTE},content,updated_at`
 
 /**
@@ -65,18 +92,26 @@ async function fetchBlogSite(slug: string): Promise<BlogSite | null> {
 
 /** Index du blog d'un site. `null` = le site n'est pas une surface publique. */
 export async function fetchBlogIndex(
-  slug: string
+  slug: string,
+  /** `null` rend TOUT le fonds — c'est ce que fait `/blog`. */
+  categorie: CategorieArticle | null = null
 ): Promise<{ site: BlogSite; posts: BlogPostCard[] } | null> {
   const site = await fetchBlogSite(slug)
   if (!site) return null
 
-  const { data } = await supabase
+  // LOT 7 — LE FILTRE PAR CATEGORIE EST FAIT PAR LA BASE, pas apres coup.
+  // Lire tout le fonds pour n'en garder qu'un tiers ferait grossir chaque
+  // page d'actualites avec le blog entier du site. L'index
+  // `site_blog_posts_categorie_idx` porte exactement ce tri.
+  let q = supabase
     .from('site_blog_posts_public')
     .select(COLS_CARTE)
     .eq('site_id', site.id)
-    .order('published_at', { ascending: false })
+  if (categorie) q = q.eq('categorie', categorie)
+  const { data } = await q.order('published_at', { ascending: false })
 
-  return { site, posts: (data as BlogPostCard[]) ?? [] }
+  const posts = ((data as BlogPostCard[]) ?? []).map((p) => ({ ...p, categorie: lireCategorie(p.categorie) }))
+  return { site, posts }
 }
 
 /** Un article. `null` couvre indistinctement : site absent, article absent,
@@ -96,7 +131,8 @@ export async function fetchBlogPost(
     .maybeSingle()
 
   if (!data) return null
-  return { site, post: data as BlogPostPage }
+  const brut = data as unknown as Record<string, unknown>
+  return { site, post: { ...(brut as unknown as BlogPostPage), categorie: lireCategorie(brut.categorie) } }
 }
 
 /**

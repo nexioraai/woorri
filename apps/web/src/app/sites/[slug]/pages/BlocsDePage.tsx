@@ -1,5 +1,7 @@
 import Link from 'next/link'
 import type { Bloc } from './blocs'
+import ListeArticles from './ListeArticles'
+import type { BlogPostCard, CategorieArticle } from '../blog/fetchPosts'
 
 // ============================================================================
 // LOT 4 — LE RENDU DU CORPS STRUCTURÉ.
@@ -23,7 +25,17 @@ function TitreDeBloc({ texte }: { texte?: string }) {
   return <h3 style={{ fontSize: 15, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', color: SOURDINE, margin: '0 0 14px' }}>{texte}</h3>
 }
 
-export default function BlocsDePage({ blocs, base, primary = '#1e4d8c' }: { blocs: Bloc[]; base: string; primary?: string }) {
+export default function BlocsDePage({
+  blocs, base, primary = '#1e4d8c', articles, lang, videArticles = 'Aucune publication pour l’instant.',
+}: {
+  blocs: Bloc[]
+  base: string
+  primary?: string
+  /** LOT 7 — les articles DÉJÀ chargés par la page, par catégorie. */
+  articles?: Map<CategorieArticle, BlogPostCard[]>
+  lang?: string | null
+  videArticles?: string
+}) {
   if (blocs.length === 0) return null
   return (
     <div className="blocs-page" style={{ display: 'flex', flexDirection: 'column', gap: 34 }}>
@@ -275,6 +287,22 @@ export default function BlocsDePage({ blocs, base, primary = '#1e4d8c' }: { bloc
                   </footer>
                 )}
               </blockquote>
+            )
+
+          case 'articles':
+            // UNE LISTE VIDE DIT POURQUOI. Faire disparaître la section
+            // laisserait croire que la page est cassée — les comptes ne
+            // mentent pas quand ils sont à zéro.
+            return (
+              <ListeArticles
+                key={k}
+                articles={articles?.get(b.categorie) ?? []}
+                base={base}
+                lang={lang}
+                primary={primary}
+                titre={b.titre}
+                vide={videArticles}
+              />
             )
 
           case 'appel':

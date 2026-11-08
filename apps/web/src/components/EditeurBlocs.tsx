@@ -24,6 +24,7 @@ const ETIQUETTES: Record<string, string> = {
   frise: 'Frise datée', chiffres: 'Chiffres clés', tableau: 'Tableau', documents: 'Documents',
   questions: 'Questions', encadre: 'Encadré', liens: 'Pages liées', appel: "Bouton d'action",
   image: 'Photo', galerie: 'Galerie photos', citation: 'Citation',
+  articles: 'Liste d’articles',
 }
 
 /** Les squelettes neufs — un par type, tous valides dès la création. */
@@ -43,6 +44,9 @@ const NEUF: Record<string, Bloc> = {
   image: { type: 'image', url: 'https://', alt: 'Décrivez la photo' },
   galerie: { type: 'galerie', items: [{ url: 'https://', alt: 'Décrivez la photo' }] },
   citation: { type: 'citation', texte: 'Votre citation.', auteur: '' },
+  // Le bloc ne porte AUCUN contenu : il dit quelle catégorie montrer. Les
+  // articles s'écrivent au seul endroit prévu pour ça.
+  articles: { type: 'articles', categorie: 'communique', titre: 'Derniers communiqués' },
 }
 
 type Chemin = (string | number)[]

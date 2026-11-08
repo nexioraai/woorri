@@ -4,6 +4,7 @@ import { headers } from 'next/headers'
 import { notFound } from 'next/navigation'
 import { fetchSite, resolveSiteBaseUrl } from '../themes/shared'
 import BlocsDePage from '../pages/BlocsDePage'
+import { fetchBlogIndex, type BlogPostCard, type CategorieArticle } from '../blog/fetchPosts'
 import { fetchPage, fetchFilDAriane, fetchEnfants } from '../pages/fetchPage'
 import { ogLocaleFor } from '@/lib/i18n/supportedLanguages'
 import HtmlLang from '../themes/HtmlLang'
@@ -95,6 +96,28 @@ export default async function PageDeclaree({ params }: Props) {
     fetchEnfants(site.id, chemin),
   ])
 
+  // LOT 7 — LES ARTICLES DES BLOCS « articles ».
+  //
+  // Ils sont chargés ICI, pas dans le composant de rendu : un composant qui
+  // irait chercher ses propres données rendrait le nombre de requêtes d'une
+  // page imprévisible -- trois blocs « articles » feraient trois allers-
+  // retours sans que personne ne le voie.
+  //
+  // On DÉDUPLIQUE par catégorie : deux blocs visant la même catégorie ne
+  // doivent faire qu'UNE lecture.
+  const categories = [
+    ...new Set(
+      page.blocs
+        .filter((b): b is Extract<typeof b, { type: 'articles' }> => b.type === 'articles')
+        .map((b) => b.categorie),
+    ),
+  ]
+  const parCategorie = new Map<CategorieArticle, BlogPostCard[]>()
+  if (categories.length > 0) {
+    const lots = await Promise.all(categories.map((c) => fetchBlogIndex(slug, c)))
+    categories.forEach((c, i) => parCategorie.set(c, lots[i]?.posts ?? []))
+  }
+
   const host = (await headers()).get('host')
   const base = resolveSiteBaseUrl(site, host)
   const accent = site.primary_color || '#111111'
@@ -178,7 +201,13 @@ export default async function PageDeclaree({ params }: Props) {
         {/* LOT 4 — LE CORPS STRUCTURE. Il vient APRES le corps libre : une page
             qui portait deja du texte ne le perd pas en gagnant ses blocs. */}
         {page.blocs.length > 0 && (
-          <BlocsDePage blocs={page.blocs} base={base} primary={site.primary_color || undefined} />
+          <BlocsDePage
+            blocs={page.blocs}
+            base={base}
+            primary={site.primary_color || undefined}
+            articles={parCategorie}
+            lang={site.lang}
+          />
         )}
 
         {/* LES ENFANTS -- une page d'entree ne porte qu'un chapeau et des

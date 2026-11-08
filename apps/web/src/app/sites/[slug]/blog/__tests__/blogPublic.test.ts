@@ -95,7 +95,13 @@ describe('fetchBlogIndex', () => {
     await fetchBlogIndex('mon-site-1780000000000')
     const cols = journal.projections.site_blog_posts_public
     expect(cols).not.toContain('*')
-    expect(cols).toBe('slug,title,excerpt,cover_image,published_at')
+    // AJOUT DU 2026-11-08 (LOT 7) — `categorie` entre dans la projection
+    // de LISTE parce que le filtre se fait EN BASE, et parce qu'une carte
+    // doit pouvoir dire de quelle rubrique elle vient. `content` reste
+    // dehors : une liste qui charge le corps de chaque article transporte
+    // le blog entier pour afficher des titres.
+    expect(cols).toBe('slug,title,excerpt,cover_image,published_at,categorie')
+    expect(cols).not.toContain('content')
     expect(cols).not.toContain('content')
   })
 

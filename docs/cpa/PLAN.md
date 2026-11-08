@@ -106,6 +106,7 @@ un avis · un article · un produit · une province
 | 12 | **Espace fournisseur + dépôt de pièces** | 30 | ⬜ |
 | 13 | **Soumission électronique des offres** | 30 | ⬜ |
 | 14 | **Administration — workflow, audit, tableau de bord** | 30 | ⬜ |
+| **15** | **Finitions d'interface relevées sur EPSS** — voir §7 | 18 | ⬜ **DERNIER LOT** |
 
 **Ordre** : 1 → 2 → 3 → 5 → 7 → 8 → 4 → 6 → 9, puis 10 → 11 → 12 → 13 → 14.
 **Premier résultat visible : 24 h** (lots 1+2).
@@ -249,3 +250,42 @@ VISIBLE et non la colonne. Un fournisseur ne peut pas croire qu'il lui reste
 du temps sur une consultation fermée.
 
 Le site est revenu à son état d'avant : zéro avis, barre de filtre masquée.
+
+
+---
+
+## §7 — LOT 15 · LES FINITIONS RELEVÉES SUR EPSS (8 novembre 2026)
+
+Relevées sur les captures d'epss.gov.et par le propriétaire. **Aucune ne
+modifie les lots 6 à 14** : elles arrivent en dernier, parce qu'une finition
+posée sur une fonction qui n'existe pas encore se refait deux fois.
+
+| | ce qui manque | où ça se voit sur EPSS |
+|---|---|---|
+| **15.1** | **Un pictogramme par entrée de menu** — maison, bâtiment, mégaphone, document, dossier, journal, téléphone | barre du haut, bureau et téléphone |
+| **15.2** | **Deux flèches sur la photo d'accueil** pour passer d'une photo à l'autre à la main | bords gauche et droit du bandeau |
+| **15.3** | **Les points de progression** sous le diaporama — combien de photos, laquelle est affichée | bas du bandeau |
+| **15.4** | **Les réseaux sociaux en pied de page** — Facebook, X, Telegram, YouTube, et au-delà | bloc « Connect With Us » |
+| **15.5** | **Le bandeau des partenaires**, qui défile — logos d'organisations | section « Our Partners » |
+| **15.6** | **Le bouton « revenir en haut »**, flottant | coin bas droit |
+| **15.7** | **L'inscription à la lettre d'information** | pied de page |
+| **15.8** | **Le compteur de visiteurs du jour** | pied de page |
+| **15.9** | **Le bandeau « information importante »** en évidence | page des actualités, colonne de droite |
+| **15.10** | **L'accès rapide** — liens vers les avis en cours, les attributions, l'assistance | page des actualités, colonne de droite |
+
+**Ce qui est DÉJÀ au moteur et n'a pas besoin du lot 15 :** le diaporama
+d'accueil (il tourne, il manque juste ses commandes manuelles), le menu à
+plusieurs niveaux, le filtre des avis, l'archive.
+
+**Deux points que je ne traiterai PAS sans décision :**
+— **la bulle de discussion** d'EPSS : c'est un service tiers, donc une
+  dépendance externe et une donnée qui sort du site. Elle ne se pose pas
+  sans accord explicite.
+— **le compteur de visiteurs** : il suppose de compter les passages, donc
+  de traiter une donnée de connexion. La page `/confidentialite` dit
+  aujourd'hui qu'aucun profil n'est constitué — poser un compteur sans
+  mettre cette page à jour serait un mensonge d'interface.
+
+**Les réseaux sociaux (15.4) ont peut-être déjà leur place en base** :
+`sites.social_links` existe. À mesurer avant d'écrire quoi que ce soit —
+c'est la sixième fois que la solution serait déjà dans le dépôt.

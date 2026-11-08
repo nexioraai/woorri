@@ -17,6 +17,7 @@ export const TYPES_DE_BLOC = [
   'titre', 'texte', 'liste', 'etapes', 'frise', 'chiffres',
   'tableau', 'documents', 'questions', 'encadre', 'liens', 'appel',
   'image', 'galerie', 'citation',
+  'articles',
 ] as const
 
 export type TypeDeBloc = (typeof TYPES_DE_BLOC)[number]
@@ -37,6 +38,9 @@ export type Bloc =
   | { type: 'image'; url: string; alt: string; legende?: string }
   | { type: 'galerie'; items: { url: string; alt: string; legende?: string }[]; titre?: string }
   | { type: 'citation'; texte: string; auteur?: string; fonction?: string }
+  /** LOT 7 — la LISTE d'une catégorie d'articles. Ne porte aucun contenu :
+   *  le fonds reste dans `site_blog_posts`, un seul endroit où écrire. */
+  | { type: 'articles'; categorie: 'article' | 'communique' | 'evenement'; titre?: string; limite?: number }
 
 /**
  * Lit ce qui vient de la base. La base a DÉJÀ refusé les types inconnus, mais
@@ -99,5 +103,9 @@ function estBienForme(t: TypeDeBloc, b: Record<string, unknown>): boolean {
       return tableauDe(b.items, (o) => txt(o.url) && txt(o.alt))
     case 'citation':
       return txt(b.texte)
+    case 'articles':
+      // La catégorie doit être CONNUE : un bloc qui vise une catégorie
+      // inventée n'afficherait jamais rien, et personne ne saurait pourquoi.
+      return ['article', 'communique', 'evenement'].includes(String(b.categorie))
   }
 }
