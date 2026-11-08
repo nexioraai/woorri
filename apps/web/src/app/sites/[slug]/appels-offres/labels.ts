@@ -43,6 +43,11 @@ export type AvisLabels = {
   pasEncoreRecevable: string
   /** Le libelle de `remise_le` QUAND la date n'est pas ferme. */
   rRemisePrevue: string
+  /** LOT 5d — le lien vers l'archive. Il porte son compte a l'ecran. */
+  lienArchive: string
+  titreArchive: string
+  sousTitreArchive: string
+  toutesAnnees: string
   /** Les dix-neuf rubriques du detail. */
   r: Record<string, string>
 }
@@ -111,6 +116,10 @@ const RUB_AR: Record<string, string> = {
 
 const COPY: Record<string, AvisLabels> = {
   fr: {
+    lienArchive: 'Consulter l’archive des consultations closes',
+    titreArchive: 'Archive des consultations',
+    sousTitreArchive: 'Avis clôturés des années précédentes',
+    toutesAnnees: 'Toutes les années',
     titre: "Appels d'offres",
     sousTitre: 'Avis de marché publiés',
     filtres: { tous: 'Tous', ouvert: 'En cours', clos: 'Clos', attribue: 'Attribués', preparation: 'En préparation' },
@@ -130,6 +139,10 @@ const COPY: Record<string, AvisLabels> = {
     r: RUB_FR,
   },
   en: {
+    lienArchive: 'Browse the archive of closed tenders',
+    titreArchive: 'Tender archive',
+    sousTitreArchive: 'Closed notices from previous years',
+    toutesAnnees: 'All years',
     filtres: { tous: 'All', ouvert: 'Open', clos: 'Closed', attribue: 'Awarded', preparation: 'In preparation' },
     titre: 'Tenders', sousTitre: 'Published contract notices',
     vide: 'No tender notice is currently published.',
@@ -148,6 +161,10 @@ const COPY: Record<string, AvisLabels> = {
     r: RUB_EN,
   },
   es: {
+    lienArchive: 'Consultar el archivo de licitaciones cerradas',
+    titreArchive: 'Archivo de licitaciones',
+    sousTitreArchive: 'Avisos cerrados de años anteriores',
+    toutesAnnees: 'Todos los años',
     filtres: { tous: 'Todos', ouvert: 'Abiertos', clos: 'Cerrados', attribue: 'Adjudicados', preparation: 'En preparación' },
     titre: 'Licitaciones', sousTitre: 'Anuncios de contratos publicados',
     vide: 'No hay ningún anuncio de licitación publicado actualmente.',
@@ -166,6 +183,10 @@ const COPY: Record<string, AvisLabels> = {
     r: RUB_ES,
   },
   ar: {
+    lienArchive: 'الاطلاع على أرشيف المناقصات المغلقة',
+    titreArchive: 'أرشيف المناقصات',
+    sousTitreArchive: 'إعلانات مغلقة من سنوات سابقة',
+    toutesAnnees: 'كل السنوات',
     filtres: { tous: 'الكل', ouvert: 'مفتوحة', clos: 'مغلقة', attribue: 'تم إسنادها', preparation: 'قيد الإعداد' },
     titre: 'المناقصات', sousTitre: 'إعلانات الصفقات المنشورة',
     vide: 'لا يوجد حاليا أي إعلان عن مناقصة منشور.',

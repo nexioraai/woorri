@@ -260,7 +260,7 @@ const rel = (f: string) => f.replace(RACINE, 'appels-offres')
 
 describe('cliquet structurel — surface publique des avis', () => {
 
-  it('les SIX fichiers de la surface sont bien vus par ce cliquet', () => {
+  it('les HUIT fichiers de la surface sont bien vus par ce cliquet', () => {
     // LE DÉNOMINATEUR EST RÉEL. Un fichier ajouté à la surface sans entrer
     // ici échapperait à tous les contrôles qui suivent — la classe GEN-D032.
     // `cycleDeVie.ts` est entré le 2026-11-06 (lot A2 b) : ce cliquet a rougi
@@ -273,6 +273,12 @@ describe('cliquet structurel — surface publique des avis', () => {
         // l'état VISIBLE, pas sur la colonne — et ce cliquet a rougi le jour
         // même, comme pour `cycleDeVie.ts`. C'est ce qu'on lui demande.
         'appels-offres/filtrerAvis.ts',
+        // Entrés le 2026-11-08 (lot 5d) — l'archive des consultations closes.
+        // `archiver.ts` décide la coupure, `archive/page.tsx` la sert. Les
+        // deux entrent ici le jour même : un fichier de la surface qui
+        // n'y figure pas échappe à TOUS les contrôles qui suivent.
+        'appels-offres/archive/page.tsx',
+        'appels-offres/archiver.ts',
         'appels-offres/labels.ts',
         'appels-offres/page.tsx',
         'appels-offres/[reference]/page.tsx',
@@ -340,9 +346,9 @@ describe('cliquet structurel — surface publique des avis', () => {
     }
   })
 
-  it('les DEUX pages exposent `generateMetadata`, avec un canonical résolu', () => {
+  it('les TROIS pages exposent `generateMetadata`, avec un canonical résolu', () => {
     const pages = fichiers.filter((x) => x.endsWith('page.tsx'))
-    expect(pages).toHaveLength(2)
+    expect(pages).toHaveLength(3)
     for (const f of pages) {
       expect(code(f), rel(f)).toMatch(/export\s+async\s+function\s+generateMetadata/)
       expect(code(f), rel(f)).toMatch(/alternates:\s*\{\s*canonical/)

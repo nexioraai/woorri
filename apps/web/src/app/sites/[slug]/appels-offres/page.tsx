@@ -6,6 +6,7 @@ import { fetchAvisIndex } from './fetchAvis'
 import { getAvisLabels, echeanceAffichee, libelleEtat, tronquer } from './labels'
 import { partager, etatVisible } from './cycleDeVie'
 import { lireFiltre, compter, filtrer, FILTRES } from './filtrerAvis'
+import { partagerArchive } from './archiver'
 import { resolveSiteBaseUrl } from '../themes/shared'
 import { ogLocaleFor } from '@/lib/i18n/supportedLanguages'
 import HtmlLang from '../themes/HtmlLang'
@@ -105,7 +106,14 @@ export default async function AppelsOffresPage({ params, searchParams }: Props) 
 
   const contact = site.contact ?? {}
 
-  const { enCours, clotures } = partager(avis, maintenant)
+  const { enCours, clotures: tousClos } = partager(avis, maintenant)
+
+  // LOT 5d — L'ARCHIVE. Les avis clos de l'ANNEE COURANTE restent ici ; les
+  // plus anciens passent sur /appels-offres/archive. Au bout de deux ans,
+  // tout garder noierait ce qu'un fournisseur vient chercher -- ce a quoi il
+  // peut encore repondre -- sous ce qui est fini. Rien n'est supprime : une
+  // autre adresse, pas une disparition.
+  const { recents: clotures, archives } = partagerArchive(tousClos, maintenant)
 
   const entetes = [t.colReference, t.colObjet, t.colRemise, t.colEtat]
 
@@ -276,6 +284,18 @@ export default async function AppelsOffresPage({ params, searchParams }: Props) 
           <>
             {enCours.length > 0 && section(enCours, t.sectionEnCours, 'avis-en-cours')}
             {clotures.length > 0 && section(clotures, t.sectionClotures, 'avis-clotures', t.noteClotures)}
+
+            {/* LE LIEN PORTE SON COMPTE. « Archive » sans chiffre ne dit pas
+                s'il y a quelque chose derriere, et a zero archive il n'y a
+                AUCUN lien : proposer une archive vide, c'est promettre un
+                contenu qu'on ne livre pas. */}
+            {archives.length > 0 && (
+              <p style={{ margin: '28px 0 0', fontSize: 15 }}>
+                <a href="/appels-offres/archive" style={{ color: accent, fontWeight: 600 }}>
+                  {t.lienArchive} <span style={{ fontVariantNumeric: 'tabular-nums' }}>({archives.length})</span>
+                </a>
+              </p>
+            )}
           </>
         )}
       </main>
