@@ -1610,3 +1610,33 @@ git push origin "$C:main"        # le même objet, par construction
 
 Corriger une forme sans l'écrire quelque part, c'est la corriger pour une
 fois. C'est pour ça que cette entrée existe.
+
+---
+
+## GEN-D048 — React coupe son texte, et le motif ne le sait pas
+
+**8 novembre 2026 · P3 · dixième erreur d'instrument du chantier**
+
+La sonde d'écran de l'archive a rendu 24/25. Le point rouge : « le lien porte
+le compte (2) ». Le moteur était correct — c'est le motif qui ne pouvait pas
+correspondre.
+
+React insère des marqueurs entre les morceaux de texte d'un même nœud. Un
+`{'('}{n}{')'}` arrive dans le HTML sous la forme :
+
+```html
+<span>(<!-- -->2<!-- -->)</span>
+```
+
+Un motif `\(2\)` n'y correspond jamais. **Le défaut n'était pas dans ce qui
+est servi, mais dans ce qui le lit.**
+
+**La règle :** une sonde qui lit du HTML rendu par React retire d'abord les
+commentaires. Sinon elle mesure la façon dont React découpe ses chaînes, pas
+ce que le lecteur voit.
+
+C'est la dixième fois sur ce chantier qu'un faux rouge vient d'un attendu qui
+ne décrit pas son instrument — après `contraintes_vivantes` qui ne rapporte
+pas les clés étrangères, la requête de privilèges qui ne filtre pas le
+bénéficiaire, et le `200` d'un CDN pris pour une preuve d'existence. La forme
+est toujours la même : **on croit mesurer la chose, on mesure l'outil.**
