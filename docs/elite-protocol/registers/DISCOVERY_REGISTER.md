@@ -1576,3 +1576,37 @@ page »*. Employé pour le premier, il exécute le second en silence.
 **La règle :** avant de réemployer une propriété existante, compter ses points
 d'usage. Une propriété lue à un seul endroit fait une chose. Lue à deux, elle
 en fait deux — et l'appelant n'en voulait qu'une.
+
+---
+
+## GEN-D047 — un commit figé APRÈS la mesure n'est pas le commit mesuré
+
+**8 novembre 2026 · P2 · défaut commis DEUX FOIS le même jour**
+
+J'enchaîne gate et push dans une seule commande. La première version lisait
+`git rev-parse HEAD` **après** le retour de la gate : si je commitais pendant
+qu'elle tournait, le push emportait un commit qu'elle n'avait jamais vu.
+C'est arrivé sur `0c4fb18d`, je l'ai reconnu, j'ai corrigé en passant le
+commit en littéral — puis je l'ai **réintroduit** quelques heures plus tard
+sur `9ad5f20d` en remettant `$(git rev-parse HEAD)` après la ligne de gate.
+
+Les deux fois, la gate a rendu vert et le déploiement a tenu. **Ce n'est pas
+ce qui compte :** l'énoncé « gate verte sur ce qui est déployé » était faux,
+et il n'y avait aucun moyen de le savoir en lisant la sortie — elle affiche
+`GATE_EXIT=0` puis `main -> main`, et rien ne dit que les deux ne parlent pas
+du même objet.
+
+**La règle :** l'identité de ce qu'on mesure se FIGE avant la mesure, jamais
+après. Un `$(…)` placé après la commande longue capture l'état du monde à la
+fin, pas celui qu'on croyait tenir au début.
+
+**La forme qui le rend impossible :**
+
+```sh
+C=$(git rev-parse HEAD)          # figé AVANT
+node scripts/verifier-comme-le-ci.mjs || exit 1
+git push origin "$C:main"        # le même objet, par construction
+```
+
+Corriger une forme sans l'écrire quelque part, c'est la corriger pour une
+fois. C'est pour ça que cette entrée existe.
