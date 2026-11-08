@@ -33,6 +33,61 @@ interface MobileNavProps {
   variant?: 'light' | 'dark'
 }
 
+
+/** Une entree du menu du telephone. Un parent porte ses enfants. */
+export type EntreeTelephone = { href: string; label: string; enfants?: { href: string; label: string }[] }
+
+/**
+ * LE MENU DU TELEPHONE EST HIERARCHIQUE, COMME CELUI DU BUREAU.
+ *
+ * Vu a l'ecran le 2026-11-08 : le hamburger servait TRENTE entrees a plat,
+ * les sous-pages decalees par un tiret. J'avais ecrit ici qu'un menu
+ * deroulant « se replierait mal au doigt » -- une supposition, et elle etait
+ * fausse : trente lignes a faire defiler se replient bien plus mal.
+ *
+ * Cette fonction est PURE et EXPORTEE parce que le panneau ne se rend que
+ * s'il est ouvert : un test qui rend le composant ferme ne mesure rien.
+ */
+export function construireMenuTelephone({
+  pages, base, hidden, hasShop, t,
+}: {
+  pages: EntreeMenu[]
+  base: string
+  hidden: (nom: string) => boolean
+  hasShop: boolean
+  t: { nav: { about: string; services: string; shop: string; gallery: string; reviews: string; contact: string } }
+}): EntreeTelephone[] {
+  // Meme regle que la barre du bureau : quand le site DECLARE ses pages, les
+  // ancres d'une page unique quittent le menu. Un site sans page declaree ne
+  // change pas -- c'est ce qui protege les 41 autres.
+  const ancres = pages.length === 0
+  const racines = pages.filter((p) => !p.parent)
+
+  return [
+    ...(ancres && !hidden('About') ? [{ href: '#about', label: t.nav.about }] : []),
+    ...(ancres && !hidden('Services') ? [{ href: '#services', label: t.nav.services }] : []),
+    ...(ancres && hasShop && !hidden('Shop') ? [{ href: '#shop', label: t.nav.shop }] : []),
+    ...(ancres && !hidden('Gallery') ? [{ href: '#gallery', label: t.nav.gallery }] : []),
+    ...(ancres && !hidden('Reviews') ? [{ href: '#testimonials', label: t.nav.reviews }] : []),
+    ...racines.map((p): EntreeTelephone => {
+      const kids = pages.filter((k) => k.parent === p.chemin)
+      return {
+        href: `${base}/${p.chemin}`,
+        label: p.titre,
+        // La page d'entree reste atteignable DEPUIS son propre sous-menu :
+        // replier un parent ne doit pas le rendre inaccessible.
+        ...(kids.length > 0
+          ? { enfants: [
+              { href: `${base}/${p.chemin}`, label: p.titre },
+              ...kids.map((k) => ({ href: `${base}/${k.chemin}`, label: k.titre })),
+            ] }
+          : {}),
+      }
+    }),
+    ...(!hidden('Contact') ? [{ href: '#contact', label: t.nav.contact }] : []),
+  ]
+}
+
 export default function MobileNav({ site, cta, ctaHref, variant = 'light', pagesDeclarees = [], host = null }: MobileNavProps & { pagesDeclarees?: EntreeMenu[]; host?: string | null }) {
   // L'adresse de base, résolue comme partout ailleurs : un chemin plateforme
   // en dur serait re-préfixé par le proxy sur un sous-domaine et tomberait
@@ -49,28 +104,24 @@ export default function MobileNav({ site, cta, ctaHref, variant = 'light', pages
   const closeMenu = () => setIsOpen(false)
   const reduceMotion = useReducedMotion()
 
-  const navLinks = [
-    ...(!hidden('About') ? [{ href: '#about', label: t.nav.about }] : []),
-    ...(!hidden('Services') ? [{ href: '#services', label: t.nav.services }] : []),
-    ...(hasShop && !hidden('Shop') ? [{ href: '#shop', label: t.nav.shop }] : []),
-    ...(!hidden('Gallery') ? [{ href: '#gallery', label: t.nav.gallery }] : []),
-    ...(!hidden('Reviews') ? [{ href: '#testimonials', label: t.nav.reviews }] : []),
-    // ── LES PAGES DÉCLARÉES, AVANT Contact.
-    //
-    // Mesuré à l'écran le 2026-11-07 : elles paraissaient dans le menu de
-    // bureau et PAS dans le hamburger. Un site dont la moitié des pages est
-    // invisible sur téléphone n'est pas un site — et c'est sur téléphone que
-    // la plupart des visiteurs d'un portail tchadien arriveront.
-    //
-    // Les sous-pages sont incluses à plat, décalées par un tiret : un menu
-    // déroulant dans un panneau déjà déroulant se replie mal au doigt.
-    ...(pagesDeclarees ?? []).flatMap((p) =>
-      p.parent
-        ? [{ href: `${baseDeclaree}/${p.chemin}`, label: `— ${p.titre}` }]
-        : [{ href: `${baseDeclaree}/${p.chemin}`, label: p.titre }]
-    ),
-    ...(!hidden('Contact') ? [{ href: '#contact', label: t.nav.contact }] : []),
-  ]
+  // ── LE MENU DU TÉLÉPHONE EST HIÉRARCHIQUE, COMME CELUI DU BUREAU.
+  //
+  // Mesuré à l'écran le 2026-11-08 par le propriétaire : le hamburger servait
+  // TRENTE entrées à plat, les sous-pages décalées par un tiret. J'avais écrit
+  // ici qu'« un menu déroulant dans un panneau déjà déroulant se replie mal au
+  // doigt » — c'était une supposition, et elle était fausse : trente lignes à
+  // faire défiler se replient bien plus mal.
+  //
+  // Même règle que la barre du bureau : quand le site DÉCLARE ses pages, les
+  // ancres d'une page unique quittent le menu. Les sections restent sur
+  // l'accueil. Un site sans page déclarée ne change pas.
+  const navLinks = construireMenuTelephone({
+    pages: pagesDeclarees ?? [],
+    base: baseDeclaree,
+    hidden,
+    hasShop,
+    t,
+  })
 
   return (
     <div className="md:hidden">
@@ -105,17 +156,43 @@ export default function MobileNav({ site, cta, ctaHref, variant = 'light', pages
             >
               <nav className="flex-1 overflow-y-auto pt-24 px-2 pb-6">
                 {navLinks.map((link, i) => (
-                  <motion.a
+                  <motion.div
                     key={link.href}
-                    href={link.href}
-                    onClick={closeMenu}
-                    className={`block px-5 py-4 rounded-2xl text-base font-medium transition-colors ${isDark ? 'text-white/90 hover:bg-white/10' : 'text-neutral-800 hover:bg-neutral-100'}`}
                     initial={{ opacity: 0, x: reduceMotion ? 0 : 16 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: reduceMotion ? 0 : 0.05 + i * 0.04, duration: 0.25 }}
                   >
-                    {link.label}
-                  </motion.a>
+                    {link.enfants ? (
+                      // `<details>` natif : il se replie sans JavaScript, et
+                      // la zone de toucher fait toute la largeur.
+                      <details className="group">
+                        <summary className={`flex items-center justify-between px-5 py-4 rounded-2xl text-base font-medium cursor-pointer list-none transition-colors ${isDark ? 'text-white/90 hover:bg-white/10' : 'text-neutral-800 hover:bg-neutral-100'}`}>
+                          <span>{link.label}</span>
+                          <span aria-hidden className="ml-3 text-sm opacity-60 transition-transform group-open:rotate-180">▾</span>
+                        </summary>
+                        <div className="pl-4">
+                          {link.enfants.map((e) => (
+                            <a
+                              key={e.href}
+                              href={e.href}
+                              onClick={closeMenu}
+                              className={`block px-5 py-3 rounded-2xl text-[15px] transition-colors ${isDark ? 'text-white/75 hover:bg-white/10' : 'text-neutral-600 hover:bg-neutral-100'}`}
+                            >
+                              {e.label}
+                            </a>
+                          ))}
+                        </div>
+                      </details>
+                    ) : (
+                      <a
+                        href={link.href}
+                        onClick={closeMenu}
+                        className={`block px-5 py-4 rounded-2xl text-base font-medium transition-colors ${isDark ? 'text-white/90 hover:bg-white/10' : 'text-neutral-800 hover:bg-neutral-100'}`}
+                      >
+                        {link.label}
+                      </a>
+                    )}
+                  </motion.div>
                 ))}
               </nav>
               <div className="p-5 pt-0">
