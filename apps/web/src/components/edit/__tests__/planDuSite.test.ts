@@ -73,3 +73,22 @@ describe('une adresse annoncée est une adresse qui a du contenu', () => {
     expect((SRC.match(/head:\s*true/gu) ?? []).length).toBe(1);
   });
 });
+
+describe('une adresse n’est jamais annoncée DEUX fois', () => {
+  it('🔴 une route moteur s’efface si une page déclarée porte son chemin', () => {
+    // MESURÉ le 2026-11-08 : la CPA a une page déclarée au chemin
+    // `catalogue`. Sans cette garde, le plan listait la MÊME adresse deux
+    // fois — « Catalogue des produits » puis « Catalogue ». Un plan qui
+    // répète une adresse n'est plus un plan : le lecteur ne sait pas
+    // laquelle est la vraie.
+    expect(SRC).toMatch(/dejaDeclares/);
+    expect(SRC).toMatch(/\.filter\(\(r\)\s*=>\s*!dejaDeclares\.has\(r\.chemin\)\)/);
+  });
+
+  it('🔴 et c’est la page DÉCLARÉE qui gagne', () => {
+    // C'est le client qui l'a nommée : son intitulé dit mieux ce qu'elle
+    // contient que le nôtre.
+    const d = SRC.indexOf('dejaDeclares');
+    expect(SRC.slice(d)).toMatch(/menu\.map/);
+  });
+});

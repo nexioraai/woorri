@@ -80,12 +80,25 @@ export default async function PlanDuSitePage({ params }: Props) {
   // par appliquer deux regles de propriete differentes.
   const nbArticles = await compterArticlesPublies(s.id)
 
+  // ── UNE ROUTE MOTEUR NE S'ANNONCE PAS SI UNE PAGE DÉCLARÉE PORTE DÉJÀ
+  //    SON CHEMIN.
+  //
+  // Mesuré le 8 novembre : la CPA a une page déclarée au chemin
+  // `catalogue`. Sans cette garde, le plan listait la MÊME adresse deux
+  // fois — « Catalogue des produits » puis « Catalogue ». Un plan du site
+  // qui répète une adresse n'est plus un plan : le lecteur ne sait pas
+  // laquelle des deux est la vraie.
+  //
+  // La page déclarée GAGNE, et c'est volontaire : c'est le client qui l'a
+  // nommée, et son intitulé dit mieux ce qu'elle contient que le nôtre.
+  const dejaDeclares = new Set(menu.map((m) => m.chemin))
+
   const moteur: { chemin: string; libelle: string }[] = [
     ...(s.publishes_tenders === true ? [{ chemin: 'appels-offres', libelle: 'Appels d’offres' }] : []),
     ...((nbProduits ?? 0) > 0 ? [{ chemin: 'catalogue', libelle: 'Catalogue' }] : []),
     ...(nbArticles > 0 ? [{ chemin: 'blog', libelle: 'Actualités' }] : []),
     { chemin: 'demandes/suivi', libelle: 'Suivre une demande' },
-  ]
+  ].filter((r) => !dejaDeclares.has(r.chemin))
 
   const lien = (chemin: string, libelle: string, petit = false) => (
     <li key={chemin} style={{ marginBottom: petit ? 4 : 8 }}>
