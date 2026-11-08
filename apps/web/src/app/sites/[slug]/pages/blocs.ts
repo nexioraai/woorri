@@ -18,6 +18,7 @@ export const TYPES_DE_BLOC = [
   'tableau', 'documents', 'questions', 'encadre', 'liens', 'appel',
   'image', 'galerie', 'citation',
   'articles',
+  'organigramme',
 ] as const
 
 export type TypeDeBloc = (typeof TYPES_DE_BLOC)[number]
@@ -57,6 +58,17 @@ export type Bloc = { position?: string } & (
   /** LOT 7 — la LISTE d'une catégorie d'articles. Ne porte aucun contenu :
    *  le fonds reste dans `site_blog_posts`, un seul endroit où écrire. */
   | { type: 'articles'; categorie: 'article' | 'communique' | 'evenement'; titre?: string; limite?: number }
+  /**
+   * LOT 4 — UN ARBRE DE FONCTIONS, JAMAIS DE PERSONNES PAR DÉFAUT.
+   *
+   * Le JSON reste PLAT : chaque entrée porte son `parent`, exactement comme
+   * `site_pages`. Un arbre imbriqué ne se valide pas en SQL sans récursion,
+   * et une contrainte qu'on ne peut pas écrire simplement s'écrit mal.
+   *
+   * `cle` identifie une entrée ; `parent` désigne la clé du supérieur, ou
+   * est absent pour la racine.
+   */
+  | { type: 'organigramme'; titre?: string; items: { cle: string; parent?: string | null; fonction: string; nom?: string; detail?: string }[] }
 )
 
 /**
@@ -124,5 +136,10 @@ function estBienForme(t: TypeDeBloc, b: Record<string, unknown>): boolean {
       // La catégorie doit être CONNUE : un bloc qui vise une catégorie
       // inventée n'afficherait jamais rien, et personne ne saurait pourquoi.
       return ['article', 'communique', 'evenement'].includes(String(b.categorie))
+    case 'organigramme':
+      // Chaque entrée a une CLÉ et une FONCTION. Le nom est facultatif :
+      // un organigramme nominatif faux sur un site d'État est pire qu'un
+      // organigramme sans noms.
+      return tableauDe(b.items, (o) => txt(o.cle) && txt(o.fonction))
   }
 }

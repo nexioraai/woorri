@@ -25,6 +25,7 @@ const ETIQUETTES: Record<string, string> = {
   questions: 'Questions', encadre: 'Encadré', liens: 'Pages liées', appel: "Bouton d'action",
   image: 'Photo', galerie: 'Galerie photos', citation: 'Citation',
   articles: 'Liste d’articles',
+  organigramme: 'Organigramme',
 }
 
 /** Les squelettes neufs — un par type, tous valides dès la création. */
@@ -47,6 +48,12 @@ const NEUF: Record<string, Bloc> = {
   // Le bloc ne porte AUCUN contenu : il dit quelle catégorie montrer. Les
   // articles s'écrivent au seul endroit prévu pour ça.
   articles: { type: 'articles', categorie: 'communique', titre: 'Derniers communiqués' },
+  // Un squelette à DEUX niveaux : un organigramme à une seule entrée ne
+  // montre rien de ce qu'un organigramme sert à montrer.
+  organigramme: { type: 'organigramme', titre: 'Organisation', items: [
+    { cle: 'dg', fonction: 'Direction générale' },
+    { cle: 'd1', parent: 'dg', fonction: 'Première direction' },
+  ] },
 }
 
 type Chemin = (string | number)[]

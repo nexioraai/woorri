@@ -58,7 +58,8 @@ as $$
                'image',      -- une photo, avec son texte de remplacement
                'galerie',    -- plusieurs photos
                'citation',   -- une citation attribuée
-               'articles'    -- LOT 7 : la liste d'une catégorie d'articles
+               'articles',   -- LOT 7 : la liste d'une catégorie d'articles
+               'organigramme' -- LOT 4 : un arbre de fonctions
              )
      );
 $$;

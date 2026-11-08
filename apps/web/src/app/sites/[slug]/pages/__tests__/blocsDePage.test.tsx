@@ -108,6 +108,11 @@ const EXEMPLES: Record<string, Bloc> = {
   galerie: { type: 'galerie', items: [{ url: '/g1.jpg', alt: 'Zone de stockage' }] },
   citation: { type: 'citation', texte: 'Un médicament qui arrive en retard ne soigne personne.', auteur: 'Direction générale' },
   articles: { type: 'articles', categorie: 'communique', titre: 'Derniers communiqués' },
+  organigramme: { type: 'organigramme', titre: 'Organisation', items: [
+    { cle: 'ca', fonction: 'Conseil d’administration' },
+    { cle: 'dg', parent: 'ca', fonction: 'Direction générale' },
+    { cle: 'aq', parent: 'dg', fonction: 'Direction de l’assurance qualité' },
+  ] },
 };
 
 describe('C. chaque type du vocabulaire est réellement dessiné', () => {
@@ -129,6 +134,7 @@ describe('C. chaque type du vocabulaire est réellement dessiné', () => {
         // la liste est vide. Une section qui disparaît ferait croire à une
         // page cassée.
         articles: 'Derniers communiqués',
+        organigramme: 'Conseil d’administration',
       };
       expect(html).toContain(attendu[t]);
     });
@@ -201,6 +207,44 @@ describe('C bis. le bloc « articles » ne porte aucun contenu', () => {
     expect(html).toContain('Rappel de lot');
     expect(html).toContain('/blog/rappel-de-lot');
     expect(html).toContain('2026');
+  });
+});
+
+describe('C ter. un organigramme est un ARBRE', () => {
+  it('🔴 une entrée SANS clé ou SANS fonction est écartée', () => {
+    expect(lireBlocs([{ type: 'organigramme', items: [{ fonction: 'Direction' }] }])).toEqual([]);
+    expect(lireBlocs([{ type: 'organigramme', items: [{ cle: 'd' }] }])).toEqual([]);
+  });
+
+  it('🔴 le NOM reste facultatif — pas de nom inventé sur un site d’État', () => {
+    expect(lireBlocs([EXEMPLES.organigramme])).toHaveLength(1);
+  });
+
+  it('🔴 la hiérarchie est RENDUE, pas aplatie', () => {
+    const html = renderToStaticMarkup(<BlocsDePage base="" blocs={[EXEMPLES.organigramme]} />);
+    // Trois niveaux → au moins deux listes imbriquées, et un dépliant natif.
+    expect((html.match(/<ul/g) ?? []).length).toBeGreaterThanOrEqual(2);
+    expect(html).toContain('<details');
+    expect(html).toMatch(/Direction\s+de\s+l’assurance\s+qualité/);
+  });
+
+  it('🔴 une entrée ORPHELINE remonte à la racine au lieu de disparaître', () => {
+    // Un responsable qui s'évapore parce qu'on a mal tapé une clé est pire
+    // qu'un responsable mal placé : personne ne comprend sa disparition.
+    const orphelin = { type: 'organigramme', items: [
+      { cle: 'dg', fonction: 'Direction générale' },
+      { cle: 'x', parent: 'cle-inexistante', fonction: 'Service perdu' },
+    ] } as Bloc;
+    const html = renderToStaticMarkup(<BlocsDePage base="" blocs={[orphelin]} />);
+    expect(html).toMatch(/Service\s+perdu/);
+  });
+
+  it('🔴 une entrée qui se désigne elle-même ne boucle pas', () => {
+    const boucle = { type: 'organigramme', items: [
+      { cle: 'a', parent: 'a', fonction: 'Service circulaire' },
+    ] } as Bloc;
+    const html = renderToStaticMarkup(<BlocsDePage base="" blocs={[boucle]} />);
+    expect(html).toMatch(/Service\s+circulaire/);
   });
 });
 

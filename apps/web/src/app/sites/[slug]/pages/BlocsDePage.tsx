@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import type { Bloc } from './blocs'
 import ListeArticles from './ListeArticles'
+import Organigramme from './Organigramme'
 import type { BlogPostCard, CategorieArticle } from '../blog/fetchPosts'
 
 // ============================================================================
@@ -288,6 +289,9 @@ export default function BlocsDePage({
                 )}
               </blockquote>
             )
+
+          case 'organigramme':
+            return <Organigramme key={k} items={b.items} titre={b.titre} primary={primary} />
 
           case 'articles':
             // UNE LISTE VIDE DIT POURQUOI. Faire disparaître la section
