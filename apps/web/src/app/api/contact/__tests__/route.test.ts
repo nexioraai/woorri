@@ -20,13 +20,29 @@ function tableChain(response: { data?: unknown; error?: unknown; count?: number 
   chain.single = vi.fn(async () => response);
   chain.maybeSingle = vi.fn(async () => response);
   chain.gte = vi.fn(async () => response);
-  chain.insert = vi.fn(async () => ({ error: null }));
+  // LOT 8 — `insert` REND UNE CHAÎNE, plus une promesse.
+  // La route enregistre AVANT d'envoyer le courriel, et elle RELIT la ligne
+  // (`.select().single()`) : annoncer « envoyé » sans avoir vu l'écriture
+  // laissait croire à une trace qui n'existait pas.
+  chain.insert = vi.fn(() => ({
+    select: vi.fn(() => ({
+      single: vi.fn(async () =>
+        insertionEchoue.value
+          ? { data: null, error: { code: '23502', message: 'refusé' } }
+          : { data: { id: 'm1', reference: 'TST-2026-ABCDEF' }, error: null }),
+    })),
+  }));
   return chain;
 }
 
-const { fromMock, recent } = vi.hoisted(() => ({ fromMock: vi.fn(), recent: { value: 0 } }));
+const { fromMock, recent, insertionEchoue } = vi.hoisted(() => ({ fromMock: vi.fn(), recent: { value: 0 }, insertionEchoue: { value: false } }));
 vi.mock('@supabase/supabase-js', () => ({
-  createClient: () => ({ from: (...a: unknown[]) => fromMock(...(a as [string])) }),
+  createClient: () => ({
+    from: (...a: unknown[]) => fromMock(...(a as [string])),
+    // La référence est TIRÉE EN BASE, pas calculée dans la route : une
+    // seconde implémentation divergerait de la première.
+    rpc: vi.fn(async () => ({ data: 'TST-2026-ABCDEF', error: null })),
+  }),
 }));
 
 const sendMock = vi.fn();
@@ -41,6 +57,7 @@ beforeEach(() => {
   fromMock.mockReset();
   sendMock.mockReset();
   recent.value = 0;
+  insertionEchoue.value = false;
   fromMock.mockImplementation((table: string) => {
     if (table === 'sites') return tableChain({ data: SITE, error: null });
     if (table === 'checkout_anomalies') return tableChain({ count: recent.value });
@@ -141,5 +158,48 @@ describe('M1-02 — borne de débit', () => {
     const res = await POST(req(OK));
     expect(res.status).toBe(503);
     expect(sendMock).not.toHaveBeenCalled();
+  });
+});
+
+// ============================================================
+// LOT 8 — UN MESSAGE ANNONCÉ EST UN MESSAGE ENREGISTRÉ.
+//
+// LE DÉFAUT, MESURÉ le 2026-11-08 : le courriel partait D'ABORD, puis
+// `insert()` s'exécutait sans `.select()` et son erreur n'était JAMAIS
+// consultée. Si la base refusait, l'écran annonçait « envoyé » et le message
+// n'existait nulle part — la Centrale croyait avoir une trace.
+//
+// C'est GEN-D037 : un repli silencieux transforme une écriture ratée en
+// preuve de succès.
+// ============================================================
+
+describe('LOT 8 — l’enregistrement passe avant le courriel, et il est relu', () => {
+  it('🔴 une écriture REFUSÉE n’annonce pas « envoyé »', async () => {
+    insertionEchoue.value = true;
+    const r = await POST(req(OK));
+    expect(r.status).toBe(503);
+    expect(await r.json()).not.toHaveProperty('ok', true);
+  });
+
+  it('🔴 et AUCUN courriel ne part dans ce cas', async () => {
+    // Un courriel parti sans trace est pire qu'un échec visible : le
+    // demandeur croit avoir écrit, la Centrale n'a rien à retrouver.
+    insertionEchoue.value = true;
+    sendMock.mockClear();
+    await POST(req(OK));
+    expect(sendMock).not.toHaveBeenCalled();
+  });
+
+  it('🔴 la réponse rend la RÉFÉRENCE — sans elle, rien à citer', async () => {
+    const r = await POST(req(OK));
+    expect(await r.json()).toMatchObject({ ok: true, reference: 'TST-2026-ABCDEF' });
+  });
+
+  it('🔴 la référence figure DANS le courriel — l’ordre le permet', async () => {
+    sendMock.mockClear();
+    await POST(req(OK));
+    const envoi = sendMock.mock.calls[0]?.[0] as { subject: string; html: string };
+    expect(envoi.subject).toContain('TST-2026-ABCDEF');
+    expect(envoi.html).toContain('TST-2026-ABCDEF');
   });
 });

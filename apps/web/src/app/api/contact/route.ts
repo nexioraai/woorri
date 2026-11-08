@@ -92,6 +92,34 @@ export async function POST(req: NextRequest) {
     }
     await logAnomaly({ type: 'contact_message_sent', severity: 'info', siteId: site.id, details: { slug } })
 
+    // ── LOT 8 — L'ENREGISTREMENT PASSE AVANT LE COURRIEL, ET IL EST RELU.
+    //
+    // LE DEFAUT, MESURE le 2026-11-08 : le courriel partait D'ABORD, puis
+    // `insert()` s'executait sans `.select()` et son erreur n'etait JAMAIS
+    // consultee. Si la base refusait, l'ecran annoncait quand meme « envoye »
+    // et le message n'existait NULLE PART. La Centrale croyait avoir une
+    // trace ; elle n'en avait pas. C'est GEN-D037 : un repli silencieux
+    // transforme une ecriture ratee en preuve de succes.
+    //
+    // Et l'ordre comptait doublement : une reference posee APRES l'envoi ne
+    // pouvait pas figurer dans le courriel deja parti.
+    const { data: refData } = await supabase.rpc('reference_demande', { nom_site: site.name })
+    const reference: string | null = typeof refData === 'string' ? refData : null
+
+    const { data: enregistre, error: erreurEnregistrement } = await supabase
+      .from('messages')
+      .insert({ site_slug: slug, name, email, message, reference })
+      .select('id,reference')
+      .single()
+
+    // RELECTURE, pas confiance dans l'absence d'erreur : on exige la LIGNE.
+    if (erreurEnregistrement || !enregistre) {
+      return NextResponse.json(
+        { error: 'Your message could not be saved. Please try again.' },
+        { status: 503 },
+      )
+    }
+
     await resend.emails.send({
       from: 'no-reply@deribfy.com',
       to: merchantEmail,
@@ -99,9 +127,11 @@ export async function POST(req: NextRequest) {
       // Sujet : texte pur, jamais interprete comme HTML -- mais les sauts de
       // ligne y sont un vecteur d'injection d'en-tetes, deja ecartes par EMAIL_RE
       // et neutralises ici pour `name`.
-      subject: name.replace(/[\r\n]+/g, ' ') + ' — ' + email + ' — ' + site.name,
+      subject: (enregistre.reference ? '[' + enregistre.reference + '] ' : '')
+        + name.replace(/[\r\n]+/g, ' ') + ' — ' + email + ' — ' + site.name,
       html: '<div style="font-family:sans-serif;max-width:600px;margin:0 auto">' +
         '<h2 style="color:#111">New message via ' + esc(site.name) + '</h2>' +
+        (enregistre.reference ? '<p style="margin:0 0 12px;font-family:monospace;font-size:13px;color:#555">' + esc(enregistre.reference) + '</p>' : '') +
         '<div style="background:#f5f5f5;padding:16px;border-radius:8px;margin:16px 0">' +
         '<p style="margin:0 0 8px"><strong>Name:</strong> ' + esc(name) + '</p>' +
         '<p style="margin:0 0 8px"><strong>Email:</strong> <a href="mailto:' + esc(email) + '">' + esc(email) + '</a></p>' +
@@ -112,14 +142,7 @@ export async function POST(req: NextRequest) {
         '</div>',
     })
 
-    await supabase.from('messages').insert({
-      site_slug: slug,
-      name,
-      email,
-      message,
-    })
-
-    return NextResponse.json({ ok: true })
+    return NextResponse.json({ ok: true, reference: enregistre.reference })
   } catch (err: any) {
     return NextResponse.json({ error: err.message || 'Server error' }, { status: 500 })
   }
