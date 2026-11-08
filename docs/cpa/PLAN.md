@@ -96,7 +96,7 @@ un avis · un article · un produit · une province
 | 2 | Menu à plusieurs niveaux | 6 | ✅ **FERMÉ** — déployé `dab372c` · 9/9 en production |
 | 3 | Gabarit de page + les 20 pages de contenu | 12 | ✅ **FERMÉ** — 30/30 pages, 146 blocs, 15 types · déployé `f1f5f5b` |
 | 4 | **Organigramme interactif + alternative 2D** | 16 | ⬜ |
-| 5 | Appels d'offres enrichis | 20 | 🔄 **ENTAMÉ** — le dossier de consultation (plusieurs pièces) est posé et mesuré 14/14 ; restent le filtrage, l'archive et les avis d'attribution |
+| 5 | Appels d'offres enrichis | 20 | 🔄 **ENTAMÉ** — dossier de consultation ✅ (14/14 en base) · filtre par état ✅ (**28/28 à l'adresse publique**, témoins posés puis retirés, retrait vérifié depuis l'écran) ; restent l'archive des consultations closes et les avis d'attribution |
 | 6 | Catalogue public | 12 | ⬜ |
 | 7 | Actualités — événements, communiqués, filtres | 8 | ⬜ |
 | 8 | Contact et demandes — référence auto, suivi | 10 | ⬜ |
@@ -234,3 +234,18 @@ le HTML de rendu et la charge d'hydratation, était fausse.
 
 **Prochaine étape autorisée par l'ordre du plan** (1→2→3→5→7→8→4→6→9) :
 finir le **lot 5** — filtrage des avis, archive, avis d'attribution.
+
+### 8 novembre 2026 — le filtre prouvé à l'écran
+
+Le filtre ne pouvait pas être coché sur ses seuls points unitaires : une barre
+au-dessus d'une liste vide ne prouve rien, et la CPA a zéro avis publié. Trois
+témoins inconfondables ont donc été posés quelques minutes, mesurés, puis
+retirés — le retrait vérifié DEPUIS L'ADRESSE PUBLIQUE.
+
+**Le point qui justifiait l'opération :** un avis marqué `ouvert` EN BASE dont
+l'échéance est passée paraît dans « Clos » à l'écran, et PAS dans « En cours ».
+Aucun test unitaire ne pouvait garantir que la page servie applique l'état
+VISIBLE et non la colonne. Un fournisseur ne peut pas croire qu'il lui reste
+du temps sur une consultation fermée.
+
+Le site est revenu à son état d'avant : zéro avis, barre de filtre masquée.
