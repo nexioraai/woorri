@@ -242,6 +242,24 @@ export default async function AppelsOffresPage({ params, searchParams }: Props) 
           </nav>
         )}
 
+        {/* LA COLONNE LATÉRALE VIT AUTOUR DE LA LISTE, PAS DEDANS.
+            Mesuré le 2026-11-08 : elle était enfermée dans la branche
+            « il y a des avis », donc invisible sur un site qui n'en publie
+            aucun — alors que c'est PRÉCISÉMENT là qu'un fournisseur a
+            besoin des liens rapides et du « Besoin d'aide ? ».
+
+            Sur téléphone elle passe DESSOUS : on cherche les marchés
+            d'abord, les liens ensuite. */}
+        {blocsCote.length > 0 && (
+          <style>{`
+            @media (min-width: 900px) {
+              .avecCote { grid-template-columns: minmax(0, 1fr) 300px }
+            }
+          `}</style>
+        )}
+        <div className={blocsCote.length > 0 ? 'avecCote' : undefined}
+          style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: 28, alignItems: 'start' }}>
+          <div>
         {avis.length === 0 ? (
           // ============================================================
           // LA SECTION VIDE INFORME, ELLE NE DÉCORE PAS. Loi du lot A2 ③ :
@@ -283,23 +301,7 @@ export default async function AppelsOffresPage({ params, searchParams }: Props) 
           // UNE SECTION VIDE NE S'AFFICHE PAS. Un titre « Avis clôturés »
           // au-dessus d'un tableau sans ligne annoncerait une rubrique que
           // l'acheteur ne tient pas -- la famille même qu'on corrige ici.
-          <div style={{
-            // LA COLONNE N'EXISTE QUE SI QUELQU'UN LA DEMANDE.
-            // Et sur téléphone elle passe DESSOUS, APRÈS les avis : un
-            // fournisseur sur mobile cherche les marchés, pas les liens
-            // rapides.
-            display: 'grid',
-            gridTemplateColumns: blocsCote.length > 0 ? 'minmax(0, 1fr)' : 'minmax(0, 1fr)',
-            gap: 28,
-          }} className={blocsCote.length > 0 ? 'avecCote' : undefined}>
-            {blocsCote.length > 0 && (
-              <style>{`
-                @media (min-width: 900px) {
-                  .avecCote { grid-template-columns: minmax(0, 1fr) 300px; align-items: start; }
-                }
-              `}</style>
-            )}
-            <div>
+          <>
             {enCours.length > 0 && section(enCours, t.sectionEnCours, 'avis-en-cours')}
             {clotures.length > 0 && section(clotures, t.sectionClotures, 'avis-clotures', t.noteClotures)}
 
@@ -345,15 +347,17 @@ export default async function AppelsOffresPage({ params, searchParams }: Props) 
                 </a>
               </p>
             )}
-            </div>
-
-            {blocsCote.length > 0 && (
-              <aside style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                <BlocsDePage blocs={blocsCote} base={base} primary={accent} lang={site.lang} />
-              </aside>
-            )}
-          </div>
+          </>
         )}
+          </div>
+
+          {/* ELLE EST SERVIE DANS LES DEUX CAS, avec ou sans avis. */}
+          {blocsCote.length > 0 && (
+            <aside style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+              <BlocsDePage blocs={blocsCote} base={base} primary={accent} lang={site.lang} />
+            </aside>
+          )}
+        </div>
       </main>
     </>
   )
