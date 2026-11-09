@@ -433,6 +433,23 @@ disparaître l'agrément qu'un fournisseur lui a remis.
 
 ---
 
+## §11ter — LA SONDE DU SEAU PRIVÉ NE TOURNE PAS DANS LA GATE
+
+`apps/web/scripts/prouver-seau-prive.mjs` prouve que le seau des documents
+refuse la lecture publique. Elle exige la **clé de service** : elle ne peut
+donc pas tourner dans le CI, et aucun cliquet ne la remplace.
+
+**Ce qu'elle mesure, et que rien d'autre ne mesure :** un objet RÉEL, posé
+dans les deux seaux, lu par l'adresse publique. Sans le témoin du seau
+PUBLIC, le 400 du seau privé ne prouve rien — il veut dire « objet
+introuvable », et une adresse inexistante rend 400 des deux côtés. C'est
+exactement l'erreur que j'ai failli publier comme preuve.
+
+**À relancer à la main** après toute migration touchant `storage.buckets` ou
+les politiques de `storage.objects`.
+
+---
+
 ## §11bis — CE QUI RESTE OUVERT SUR LES DOCUMENTS
 
 Une diffusion **collective** — « ce formulaire pour tous les fournisseurs » —
