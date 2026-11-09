@@ -20,6 +20,7 @@ import { computeAiScore } from '@/app/lib/aiScore';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Trash2 } from 'lucide-react';
 import EditeurPartenaires from '@/components/edit/EditeurPartenaires';
+import EditeurPiecesFournisseur from '@/components/edit/EditeurPiecesFournisseur';
 
 export default function EditPage() {
   const params = useParams();
@@ -279,6 +280,7 @@ export default function EditPage() {
       // donne un ecran qui modifie et ne garde rien -- le defaut le plus
       // decourageant qui soit, parce qu'il ne previent pas.
       partenaires: Array.isArray(site.partenaires) ? site.partenaires : [],
+      pieces_fournisseur: Array.isArray(site.pieces_fournisseur) ? site.pieces_fournisseur : [],
       pod_designs: podDesigns.length > 0
         ? podDesigns.map((d: any, i: number) => i === 0 ? { ...d, selected_products: selectedProducts } : d)
         : podDesigns,
@@ -858,6 +860,20 @@ export default function EditPage() {
               posee le meme jour par le proprietaire se lit dans les deux
               sens — ce qui s'affiche s'edite ici, ce qui s'administre va
               la-bas. */}
+          {/* ── LOT 12.2 — CE QUE LA CENTRALE EXIGE D'UN FOURNISSEUR.
+              Ça SE VOIT sur le site — dans l'espace du fournisseur — donc ça
+              s'édite ici. La frontière posée par le propriétaire se lit dans
+              les deux sens : ce qui s'affiche s'édite ici, ce qui
+              s'administre va au tableau de bord. */}
+          {site.ouvre_des_comptes === true && (
+            <FieldSection label="Pièces exigées d’un fournisseur (espace fournisseur)">
+              <EditeurPiecesFournisseur
+                items={Array.isArray(site.pieces_fournisseur) ? site.pieces_fournisseur : []}
+                onChange={(p) => setSite({ ...site, pieces_fournisseur: p })}
+              />
+            </FieldSection>
+          )}
+
           <FieldSection label="Partenaires (accueil, juste avant Contact)">
             <EditeurPartenaires
               items={Array.isArray(site.partenaires) ? site.partenaires : []}

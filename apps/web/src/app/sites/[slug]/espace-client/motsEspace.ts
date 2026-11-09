@@ -23,7 +23,7 @@ const FR: MotsEspace = {
   role: 'Qualité', deconnexion: 'Se déconnecter',
   erreur: 'Service momentanément indisponible. Réessayez plus tard.',
   suivreDemande: 'Suivre une demande par sa référence',
-  mesDemandes: 'Mes demandes', mesReclamations: 'Mes réclamations', mesDocuments: 'Mes documents', monProfil: 'Mon profil',
+  mesDemandes: 'Mes demandes', mesReclamations: 'Mes réclamations', mesDocuments: 'Mes documents', monDossier: 'Mon dossier', monProfil: 'Mon profil',
 }
 
 const EN: MotsEspace = {
@@ -39,7 +39,7 @@ const EN: MotsEspace = {
   role: 'Capacity', deconnexion: 'Sign out',
   erreur: 'Service temporarily unavailable. Try again later.',
   suivreDemande: 'Track a request by its reference',
-  mesDemandes: 'My requests', mesReclamations: 'My complaints', mesDocuments: 'My documents', monProfil: 'My profile',
+  mesDemandes: 'My requests', mesReclamations: 'My complaints', mesDocuments: 'My documents', monDossier: 'My file', monProfil: 'My profile',
 }
 
 const AR: MotsEspace = {
@@ -55,7 +55,7 @@ const AR: MotsEspace = {
   role: 'الصفة', deconnexion: 'تسجيل الخروج',
   erreur: 'الخدمة غير متاحة مؤقتاً. حاول لاحقاً.',
   suivreDemande: 'تتبّع طلباً بمرجعه',
-  mesDemandes: 'طلباتي', mesReclamations: 'شكاواي', mesDocuments: 'مستنداتي', monProfil: 'ملفي',
+  mesDemandes: 'طلباتي', mesReclamations: 'شكاواي', mesDocuments: 'مستنداتي', monDossier: 'ملف اعتمادي', monProfil: 'ملفي',
 }
 
 const ES: MotsEspace = {
@@ -71,7 +71,7 @@ const ES: MotsEspace = {
   role: 'Calidad', deconnexion: 'Cerrar sesión',
   erreur: 'Servicio no disponible momentáneamente. Inténtelo más tarde.',
   suivreDemande: 'Seguir una solicitud por su referencia',
-  mesDemandes: 'Mis solicitudes', mesReclamations: 'Mis reclamaciones', mesDocuments: 'Mis documentos', monProfil: 'Mi perfil',
+  mesDemandes: 'Mis solicitudes', mesReclamations: 'Mis reclamaciones', mesDocuments: 'Mis documentos', monDossier: 'Mi expediente', monProfil: 'Mi perfil',
 }
 
 const PAR_LANGUE: Record<string, MotsEspace> = { fr: FR, en: EN, ar: AR, es: ES }

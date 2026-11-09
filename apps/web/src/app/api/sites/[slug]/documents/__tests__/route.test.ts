@@ -19,7 +19,7 @@ import { creerFrom, journalVierge, type ReponseTable, type Filtre } from '@/lib/
 
 const journal = journalVierge()
 let sitesPublic: ReponseTable = { data: null, error: null }
-let sitesTable: ReponseTable = { data: { ouvre_des_comptes: true }, error: null }
+let sitesTable: ReponseTable = { data: { ouvre_des_comptes: true, pieces_fournisseur: [] }, error: null }
 let comptes: ReponseTable = { data: null, error: null }
 let documents: ReponseTable = { data: [], error: null }
 
@@ -100,7 +100,7 @@ beforeEach(() => {
   porteur = { id: 'u-moi', email: 'fournisseur@labo.td' }
   estProprietaire = false
   sitesPublic = { data: { id: 'site-1' }, error: null }
-  sitesTable = { data: { ouvre_des_comptes: true }, error: null }
+  sitesTable = { data: { ouvre_des_comptes: true, pieces_fournisseur: [{ cle: 'agrement', libelle: 'Agrément', obligatoire: true }] }, error: null }
   comptes = { data: { id: 'c-moi', etat: 'actif' }, error: null }
   documents = { data: [DOC], error: null }
   insere = null; modifie = null; filtresMaj = []
@@ -162,11 +162,12 @@ describe('le titulaire ne voit QUE son dossier', () => {
 })
 
 describe('déposer', () => {
-  const depot = (nom = 'piece.pdf', compte?: string, sens?: string) => {
+  const depot = (nom = 'piece.pdf', compte?: string, sens?: string, piece?: string) => {
     const f = new FormData()
     f.append('fichier', new File(['x'], nom, { type: 'application/pdf' }))
     if (compte) f.append('compte', compte)
     if (sens) f.append('sens', sens)
+    if (piece) f.append('piece', piece)
     return new Request('https://x.test/api/sites/cpa/documents', { method: 'POST', headers: JETON, body: f })
   }
 
@@ -191,6 +192,29 @@ describe('déposer', () => {
     // continuerait de prétendre qu'elle existe.
     await POST(depot(), params)
     expect(optionsDepot[0]).toMatchObject({ upsert: false })
+  })
+
+  it('🔴 une pièce DÉCLARÉE par la Centrale se rattache', async () => {
+    await POST(depot('agrement.pdf', undefined, undefined, 'agrement'), params)
+    expect(insere).toMatchObject({ piece: 'agrement' })
+  })
+
+  it('🔴 une pièce NON DEMANDÉE est refusée, et RIEN n’est déposé', async () => {
+    // Le vocabulaire est fermé, mais il n'est pas écrit dans la route : il
+    // est DÉCLARÉ par la Centrale. Accepter une clé inconnue poserait un
+    // rattachement qui n'honore rien — le dossier resterait incomplet pour
+    // toujours, et personne ne comprendrait pourquoi.
+    const r = await POST(depot('x.pdf', undefined, undefined, 'inventee'), params)
+    expect(r.status).toBe(400)
+    expect(insere).toBeNull()
+    // ET LE REFUS ARRIVE AVANT LE DÉPÔT : refuser après avoir écrit dans le
+    // seau laisserait un octet payé que plus rien ne nomme.
+    expect(deposes).toHaveLength(0)
+  })
+
+  it('🔴 sans pièce, le dépôt reste LIBRE — c’est le cas courant', async () => {
+    await POST(depot(), params)
+    expect(insere).toMatchObject({ piece: null })
   })
 
   it('🔴 côté Centrale, le sens est l’autre', async () => {

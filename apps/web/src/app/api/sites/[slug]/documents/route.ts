@@ -4,6 +4,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin'
 import { requireSiteOwner } from '@/lib/auth/require-site-owner'
 import { nomPropre } from '@/lib/fichiers/nomPropre'
 import { ouvreDesComptes } from '@/app/sites/[slug]/acces/ouvreDesComptes'
+import { lirePieces } from '@/app/sites/[slug]/espace/piecesFournisseur'
 
 // ============================================================================
 // LOT 12.1 — LES DOCUMENTS D'UN COMPTE, DANS LES DEUX SENS.
@@ -42,7 +43,7 @@ import { ouvreDesComptes } from '@/app/sites/[slug]/acces/ouvreDesComptes'
 type Params = { params: Promise<{ slug: string }> }
 
 const SEAU = 'comptes-documents'
-const VU = 'id,compte_id,sens,depose_par,nom,chemin,octets,type_mime,depose_le,retire_le,retire_par'
+const VU = 'id,compte_id,sens,depose_par,nom,chemin,octets,type_mime,depose_le,retire_le,retire_par,piece'
 /** Soixante secondes : le temps de cliquer, pas celui de faire suivre. */
 const SIGNATURE_SECONDES = 60
 
@@ -163,7 +164,7 @@ export async function GET(req: Request, { params }: Params) {
   // rien à l'écran et donne une prise à qui chercherait à deviner.
   const documents = ((data ?? []) as Record<string, unknown>[]).map((d) => ({
     id: d.id, sens: d.sens, nom: d.nom, octets: d.octets, type_mime: d.type_mime,
-    depose_le: d.depose_le, retire_le: d.retire_le,
+    depose_le: d.depose_le, retire_le: d.retire_le, piece: d.piece ?? null,
     // « est-ce moi qui l'ai déposé ? » — l'écran en a besoin pour savoir
     // s'il peut proposer le retrait, et ça ne révèle l'identité de personne.
     parMoi: d.depose_par === qui.userId,
@@ -202,6 +203,27 @@ export async function POST(req: Request, { params }: Params) {
   // fournisseur de déposer « de la part de la Centrale ».
   const sens = qui.role === 'centrale' ? 'vers_le_compte' : 'vers_la_centrale'
 
+  // ── LA PIÈCE HONORÉE, VALIDÉE CONTRE CE QUE LE SITE EXIGE VRAIMENT.
+  //
+  // Le vocabulaire est FERMÉ, mais il n'est pas écrit dans ce fichier : il
+  // est DÉCLARÉ par la Centrale. Accepter une clé inconnue poserait un
+  // rattachement qui n'honore rien — le dossier resterait incomplet pour
+  // toujours, et personne ne comprendrait pourquoi.
+  const pieceDemandee = typeof form.get('piece') === 'string' ? String(form.get('piece')) : ''
+  let piece: string | null = null
+  if (pieceDemandee) {
+    const { data: siteLigne } = await supabaseAdmin
+      .from('sites').select('pieces_fournisseur').eq('id', qui.siteId).maybeSingle()
+    const exigees = lirePieces((siteLigne as { pieces_fournisseur?: unknown } | null)?.pieces_fournisseur)
+    if (!exigees.some((x) => x.cle === pieceDemandee)) {
+      // RIEN À RETIRER : cette vérification passe AVANT le dépôt, exprès.
+      // Refuser après avoir écrit dans le seau laisserait un octet payé que
+      // plus rien ne nomme, à chaque clé mal tapée.
+      return NextResponse.json({ error: 'Cette pièce n’est pas demandée.' }, { status: 400 })
+    }
+    piece = pieceDemandee
+  }
+
   // UN CHEMIN UNIQUE PAR DÉPÔT. Deux fichiers du même nom ne doivent pas
   // s'écraser : le second effacerait silencieusement le premier, dont la
   // ligne continuerait de prétendre qu'il existe.
@@ -231,6 +253,7 @@ export async function POST(req: Request, { params }: Params) {
       depose_par: qui.userId,
       nom: fichier.name.slice(0, 200),
       chemin, octets: fichier.size, type_mime: fichier.type || 'application/octet-stream',
+      piece,
     })
     .select(VU)
     .single()
@@ -246,7 +269,8 @@ export async function POST(req: Request, { params }: Params) {
   return NextResponse.json({
     document: {
       id: d.id, sens: d.sens, nom: d.nom, octets: d.octets,
-      type_mime: d.type_mime, depose_le: d.depose_le, retire_le: null, parMoi: true,
+      type_mime: d.type_mime, depose_le: d.depose_le, retire_le: null,
+      piece: d.piece ?? null, parMoi: true,
     },
   }, { status: 201 })
 }

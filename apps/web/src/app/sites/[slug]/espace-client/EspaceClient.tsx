@@ -65,6 +65,7 @@ export type MotsEspace = {
   mesDemandes: string
   mesReclamations: string
   mesDocuments: string
+  monDossier: string
   monProfil: string
 }
 
@@ -244,6 +245,7 @@ export default function EspaceClient({
             [`${base}/mes-demandes`, mots.mesDemandes],
             [`${base}/mes-reclamations`, mots.mesReclamations],
             [`${base}/mes-documents`, mots.mesDocuments],
+            [`${base}/mon-dossier`, mots.monDossier],
             [`${base}/mon-profil`, mots.monProfil],
             [`${base}/demandes/suivi`, mots.suivreDemande],
           ] as const).map(([href, libelle]) => (
