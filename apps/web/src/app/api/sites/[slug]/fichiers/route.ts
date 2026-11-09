@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { requireSiteOwner } from '@/lib/auth/require-site-owner'
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { nomPropre } from '@/lib/fichiers/nomPropre'
 
 // ============================================================
 // LOT 5 -- LES FICHIERS D'UN SITE.
@@ -42,14 +43,6 @@ const COMPARTIMENT = 'site-fichiers'
  * construit serveur. C'est une hygiene d'adresse : un nom accentue ou espace
  * produit une URL illisible que personne ne peut recopier dans un courriel.
  */
-function nomPropre(nom: string): string {
-  const pt = nom.lastIndexOf('.')
-  const base = (pt > 0 ? nom.slice(0, pt) : nom)
-    .normalize('NFD').replace(/[̀-ͯ]/g, '')
-    .toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 80)
-  const ext = (pt > 0 ? nom.slice(pt + 1) : '').toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 8)
-  return `${base || 'fichier'}${ext ? '.' + ext : ''}`
-}
 
 /** GET -- la liste des fichiers d'un dossier du site. */
 export async function GET(req: Request, { params }: Params) {

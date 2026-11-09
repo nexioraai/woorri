@@ -4,6 +4,8 @@ import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { use } from 'react'
 import { supabase } from '@/lib/supabase'
+import DocumentsDuCompte from '@/app/sites/[slug]/espace/DocumentsDuCompte'
+import { motsDocuments } from '@/app/sites/[slug]/espace/motsDocuments'
 
 // ============================================================================
 // LOT 11 — APPROUVER UN COMPTE. DANS LE TABLEAU DE BORD, PAS DANS `/edit`.
@@ -50,6 +52,9 @@ export default function ComptesDuSite({ params }: { params: Promise<{ slug: stri
   const [comptes, setComptes] = useState<Compte[] | null>(null)
   const [erreur, setErreur] = useState<string | null>(null)
   const [occupe, setOccupe] = useState<string | null>(null)
+  // QUEL DOSSIER EST OUVERT. Un seul à la fois : afficher les dossiers de
+  // trente comptes ferait trente appels pour une page qu'on survole.
+  const [dossier, setDossier] = useState<string | null>(null)
 
   const jeton = useCallback(async () => {
     const { data } = await supabase.auth.getSession()
@@ -130,6 +135,15 @@ export default function ComptesDuSite({ params }: { params: Promise<{ slug: stri
       </div>
 
       <div style={{ display: 'flex', gap: 8, marginTop: 14, flexWrap: 'wrap' }}>
+        {/* LE DOSSIER NE S'OUVRE QUE POUR UN COMPTE ACTIF. Déposer une pièce
+            à quelqu'un qui n'est pas encore admis, c'est agir avant d'avoir
+            décidé — et la route le refuserait de toute façon. */}
+        {c.etat === 'actif' && (
+          <button type="button" onClick={() => setDossier(dossier === c.id ? null : c.id)}
+            style={{ padding: '8px 16px', borderRadius: 999, cursor: 'pointer', fontWeight: 600, fontSize: 13.5, background: 'transparent', color: 'rgba(255,255,255,0.78)', border: '1px solid rgba(255,255,255,0.18)' }}>
+            {dossier === c.id ? 'Fermer le dossier' : 'Documents'}
+          </button>
+        )}
         {c.etat !== 'actif' && (
           <button type="button" disabled={occupe === c.id} onClick={() => void changer(c, 'actif')}
             style={{ padding: '8px 16px', borderRadius: 999, border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: 13.5, background: '#16794a', color: '#fff' }}>
@@ -143,6 +157,12 @@ export default function ComptesDuSite({ params }: { params: Promise<{ slug: stri
           </button>
         )}
       </div>
+
+      {dossier === c.id && (
+        <div style={{ marginTop: 14, padding: 14, borderRadius: 12, background: '#ffffff', color: '#111111' }}>
+          <DocumentsDuCompte slug={slug} compte={c.id} primary="#1F6B4A" mots={motsDocuments('fr')} />
+        </div>
+      )}
     </li>
   )
 

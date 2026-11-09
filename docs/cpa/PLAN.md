@@ -102,8 +102,8 @@ un avis · un article · un produit · une province
 | 8 | Contact et demandes — référence générée automatiquement, et suivi de la demande | 10 | ✅ **FERMÉ** — **20/20 à l'adresse publique**. Les deux échecs rendent mot pour mot la même réponse ; le texte du demandeur ne sort jamais. |
 | 9 | Pages légales + plan du site engendré | 4 | ✅ **FERMÉ** — **20/20 à l'adresse publique**. Un brouillon ne laisse ni titre ni chemin dans le plan ; une route moteur s'efface si une page déclarée porte son chemin. |
 | 10 | **Authentification, rôles, habilitations** | 16 | ✅ **FERMÉ** — mécanique posée et mesurée (17 + 7 + 11 points). **Pas de preuve à l'écran** : rien n'est encore visible, c'est le lot 11 qui construit l'espace. Une dette nommée, voir §10. |
-| 11 | **Espace établissement** | 24 | 🔄 **ENTAMÉ** — tranche B : `/mes-demandes`, `/mes-reclamations`, `/mon-profil` (colonne `messages.type`, vocabulaire fermé). **`/mes-documents` NON FAIT** — voir §11. Tranche A bis : `/comptes/[slug]` au TABLEAU DE BORD (jamais dans `/edit`), pastille du nombre de demandes en attente. Tranche A : `/connexion`, `/inscription`, `/mot-de-passe-oublie`, `/espace-client` ; capacité `ouvre_des_comptes` (CPA seule, 1/42 vérifié) ; **dette §10 FERMÉE**. Restent `/mes-demandes`, `/mon-profil`, `/mes-documents`, `/mes-reclamations`. |
-| 12 | **Espace fournisseur + dépôt de pièces** | 30 | ⬜ |
+| 11 | **Espace établissement** | 24 | ✅ **FERMÉ** — `/mes-documents` livré au lot 12.1 (table `comptes_documents`, seau PRIVÉ). Tranche B : `/mes-demandes`, `/mes-reclamations`, `/mon-profil` (colonne `messages.type`, vocabulaire fermé). **`/mes-documents` NON FAIT** — voir §11. Tranche A bis : `/comptes/[slug]` au TABLEAU DE BORD (jamais dans `/edit`), pastille du nombre de demandes en attente. Tranche A : `/connexion`, `/inscription`, `/mot-de-passe-oublie`, `/espace-client` ; capacité `ouvre_des_comptes` (CPA seule, 1/42 vérifié) ; **dette §10 FERMÉE**. Restent `/mes-demandes`, `/mon-profil`, `/mes-documents`, `/mes-reclamations`. |
+| 12 | **Espace fournisseur + dépôt de pièces** | 30 | 🔄 **ENTAMÉ** — 12.1 : les documents d'un compte DANS LES DEUX SENS, seau privé, liens signés 60 s, retrait qui laisse une trace. Restent la préqualification et le dossier fournisseur. |
 | 13 | **Soumission électronique des offres** | 30 | ⬜ |
 | 14 | **Administration — workflow, audit, tableau de bord** | 30 | ⬜ |
 | **5bis** | **La page des appels d'offres, RICHE** — voir §8 | 14 | ✅ **FERMÉ** — neuf points, **30/30 à l'adresse publique**, dont deux pièges volontaires : la légende ne montre pas « ICB », et un bloc mal positionné ne disparaît pas. |
@@ -412,7 +412,33 @@ déjà dans le dépôt et j'ai failli écrire un second système.
 
 ---
 
-## §11 — QUESTION OUVERTE : `/mes-documents` N'A AUCUN MODÈLE DE DONNÉES
+## §11 — ~~QUESTION OUVERTE~~ **TRANCHÉE** : `/mes-documents`
+
+### ✅ TRANCHÉE LE 9 NOVEMBRE 2026 par le propriétaire
+
+« le cpa depose les documents et les fournisseurs ou les etablissement ou
+hopitaux peuvent upload, et de leur coté fournisseurs et les etablissements
+peuvent upload pour le cpa, c de 2 cotés pas un coté. »
+
+**Les trois autres questions, je les ai tranchées et elles sont renversables :**
+
+| question | décision | raison |
+|---|---|---|
+| qui voit | un document concerne **UN** compte : son titulaire et la Centrale | diffuser à « tous les fournisseurs » est une AUTRE forme, avec ses règles de retrait ; l'inventer en passant produirait une table qu'on n'oserait plus toucher |
+| combien de temps | **aucune suppression automatique** | effacer seule une pièce de marché public serait une décision que personne n'a prise |
+| un retiré | la **ligne reste** (« retiré le… par… »), le **fichier part** | « ce document a existé et a été retiré le 12 » est une information, et une disparition sans trace permettrait de nier un dépôt |
+
+Et **chacun ne retire que ce qu'il a déposé** : la Centrale ne fait pas
+disparaître l'agrément qu'un fournisseur lui a remis.
+
+---
+
+## §11bis — CE QUI RESTE OUVERT SUR LES DOCUMENTS
+
+Une diffusion **collective** — « ce formulaire pour tous les fournisseurs » —
+n'existe pas. La Centrale qui veut atteindre dix structures dépose dix fois :
+visible, dénombrable, retirable une par une. Si le volume le rend pénible, la
+forme se décidera alors, avec ses propres règles de retrait.
 
 **Inscrite le 9 novembre 2026, en livrant la tranche B du lot 11.**
 
