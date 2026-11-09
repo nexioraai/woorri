@@ -38,7 +38,6 @@ export default function HeroDiapo({
   className?: string
   priority?: boolean
   sizes?: string
-  /** Traduits par l'appelant : rien d'ecrit en dur ici. */
   libelles?: { precedente: string; suivante: string; aller: string }
 }) {
   if (photos.length === 0) return null
@@ -50,15 +49,34 @@ export default function HeroDiapo({
   const part = 100 / n
   const L = libelles ?? { precedente: 'Photo precedente', suivante: 'Photo suivante', aller: 'Aller a la photo' }
 
+  // ── LES FLECHES SONT RELATIVES, DONC IL EN FAUT UNE PAIRE PAR ETAT.
+  //
+  // Un `label` vise une cible FIXE. Ma premiere version faisait pointer
+  // « suivante » sur la photo 2, toujours : un clic la cochait, un second ne
+  // changeait rien -- elle l'etait deja. Le proprietaire l'a vu tout de
+  // suite : « je clique mais rien ne se passe ».
+  //
+  // On rend donc n+1 paires -- une par photo cochee, plus celle d'avant tout
+  // clic -- et `:has()` n'affiche que la bonne. Chacune vise i-1 et i+1, en
+  // boucle.
+  const paires = [
+    { etat: null as number | null, prec: n - 1, suiv: 1 },
+    ...photos.map((_, i) => ({ etat: i, prec: (i - 1 + n) % n, suiv: (i + 1) % n })),
+  ]
+
+  const styleFleche = (cote: 'debut' | 'fin') => ({
+    position: 'absolute' as const,
+    ...(cote === 'debut' ? { insetInlineStart: 14 } : { insetInlineEnd: 14 }),
+    top: '50%', transform: 'translateY(-50%)',
+    width: 44, height: 44, borderRadius: 999, cursor: 'pointer', zIndex: 3,
+    background: 'rgba(255,255,255,.92)', color: '#111',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    fontSize: 21, lineHeight: 1, userSelect: 'none' as const,
+    boxShadow: '0 4px 14px -6px rgba(0,0,0,.5)',
+  })
+
   return (
     <>
-      {/* LOT 15.2 et 15.3 — LES COMMANDES, SANS JAVASCRIPT.
-          Des boutons radio caches portent le choix ; `:has()` le lit. La
-          page reste entiere sans script, et les commandes fonctionnent au
-          clavier comme au doigt.
-
-          L'ENCHAINEMENT S'ARRETE DES QU'ON TOUCHE UNE COMMANDE. Sans ca la
-          photo changerait sous le doigt, et choisir ne servirait a rien. */}
       <style>{`
         @keyframes heroDiapo {
           0% { opacity: 0 } 4% { opacity: 1 }
@@ -66,22 +84,49 @@ export default function HeroDiapo({
           ${part.toFixed(2)}% { opacity: 0 } 100% { opacity: 0 }
         }
         .heroDiapo > .vue { animation: heroDiapo ${duree}s linear infinite; }
-        .heroCadre:has(input:checked) .heroDiapo > .vue { animation: none; opacity: 0 }
-        ${photos.map((_, i) => `.heroCadre:has(#hp${i}:checked) .heroDiapo > .vue:nth-child(${i + 1}) { opacity: 1 }`).join('\n        ')}
-        ${photos.map((_, i) => `.heroCadre:has(#hp${i}:checked) .heroPoints label:nth-child(${i + 1}) { opacity: 1; width: 26px }`).join('\n        ')}
-        .heroFleche { opacity: 0; transition: opacity .25s ease }
+
+        /* ── LES POINTS SUIVENT L'ENCHAINEMENT.
+           Chaque point porte la MEME animation et le MEME decalage que sa
+           photo : il s'allume exactement quand elle parait. Sans ca, aucun
+           point n'etait allume tant qu'on n'avait rien clique, et le lecteur
+           ne savait pas ou il en etait. */
+        @keyframes heroPoint {
+          0% { opacity: .45; width: 9px } 4% { opacity: 1; width: 26px }
+          ${(part - 4).toFixed(2)}% { opacity: 1; width: 26px }
+          ${part.toFixed(2)}% { opacity: .45; width: 9px } 100% { opacity: .45; width: 9px }
+        }
+        .heroPoints > label { animation: heroPoint ${duree}s linear infinite; }
+
+        /* DES QU'UNE COMMANDE EST TOUCHEE, tout s'arrete et c'est le choix
+           qui decide -- photo comme point. */
+        .heroCadre:has(input:checked) .heroDiapo > .vue,
+        .heroCadre:has(input:checked) .heroPoints > label { animation: none }
+        .heroCadre:has(input:checked) .heroDiapo > .vue { opacity: 0 }
+        .heroCadre:has(input:checked) .heroPoints > label { opacity: .45; width: 9px }
+${photos.map((_, i) => `        .heroCadre:has(#hp${i}:checked) .heroDiapo > .vue:nth-of-type(${i + 1}) { opacity: 1 }
+        .heroCadre:has(#hp${i}:checked) .heroPoints > label:nth-of-type(${i + 1}) { opacity: 1; width: 26px }`).join('\n')}
+
+        /* ── LES FLECHES : une seule paire visible a la fois. */
+        .heroPaire { display: none }
+        .heroCadre:not(:has(input:checked)) .heroPaire[data-etat="initial"] { display: contents }
+${photos.map((_, i) => `        .heroCadre:has(#hp${i}:checked) .heroPaire[data-etat="${i}"] { display: contents }`).join('\n')}
+
+        /* Elles PARAISSENT au survol de l'image, et restent visibles au
+           doigt : sur telephone il n'y a pas de survol. */
+        .heroFleche { opacity: 0; transition: opacity .2s ease }
         .heroCadre:hover .heroFleche, .heroCadre:focus-within .heroFleche { opacity: 1 }
-        @media (hover: none) { .heroFleche { opacity: .85 } }
+        @media (hover: none) { .heroFleche { opacity: .9 } }
+
         @media (prefers-reduced-motion: reduce) {
-          .heroDiapo > .vue { animation: none; opacity: 0 }
-          .heroDiapo > .vue:first-child { opacity: 1 }
+          .heroDiapo > .vue, .heroPoints > label { animation: none }
+          .heroDiapo > .vue { opacity: 0 }
+          .heroDiapo > .vue:first-of-type { opacity: 1 }
+          .heroPoints > label { opacity: .45; width: 9px }
+          .heroPoints > label:first-of-type { opacity: 1; width: 26px }
         }
       `}</style>
 
       <span className="heroCadre" style={{ position: 'absolute', inset: 0, display: 'block' }}>
-        {/* Les radios portent le choix. Ils sont HORS de l'ecran, jamais
-            `display:none` : un element masque n'est pas focusable, et le
-            clavier perdrait les commandes. */}
         {photos.map((_, i) => (
           <input key={`r${i}`} type="radio" name="heroDiapo" id={`hp${i}`} readOnly
             style={{ position: 'absolute', width: 1, height: 1, opacity: 0, pointerEvents: 'none' }} />
@@ -95,28 +140,21 @@ export default function HeroDiapo({
           ))}
         </span>
 
-        {/* 15.2 — LES DEUX FLECHES. Ce sont des `label` : elles cochent un
-            radio, donc aucun script. */}
-        <label htmlFor={`hp${n - 1}`} className="heroFleche" aria-label={L.precedente}
-          style={{ position: 'absolute', insetInlineStart: 14, top: '50%', transform: 'translateY(-50%)',
-            width: 42, height: 42, borderRadius: 999, cursor: 'pointer', zIndex: 2,
-            background: 'rgba(255,255,255,.88)', color: '#111', display: 'flex',
-            alignItems: 'center', justifyContent: 'center', fontSize: 20, lineHeight: 1, userSelect: 'none' }}>‹</label>
-        <label htmlFor="hp1" className="heroFleche" aria-label={L.suivante}
-          style={{ position: 'absolute', insetInlineEnd: 14, top: '50%', transform: 'translateY(-50%)',
-            width: 42, height: 42, borderRadius: 999, cursor: 'pointer', zIndex: 2,
-            background: 'rgba(255,255,255,.88)', color: '#111', display: 'flex',
-            alignItems: 'center', justifyContent: 'center', fontSize: 20, lineHeight: 1, userSelect: 'none' }}>›</label>
+        {paires.map(({ etat, prec, suiv }) => (
+          <span key={`pr${etat ?? 'i'}`} className="heroPaire" data-etat={etat === null ? 'initial' : String(etat)}>
+            <label htmlFor={`hp${prec}`} className="heroFleche" aria-label={L.precedente} style={styleFleche('debut')}>‹</label>
+            <label htmlFor={`hp${suiv}`} className="heroFleche" aria-label={L.suivante} style={styleFleche('fin')}>›</label>
+          </span>
+        ))}
 
-        {/* 15.3 — LES POINTS. Ils disent COMBIEN de photos il y a : sans
-            eux, le lecteur ne sait pas si le bandeau a fini de tourner. */}
         <span className="heroPoints" style={{ position: 'absolute', insetInline: 0, bottom: 16,
-          display: 'flex', gap: 7, justifyContent: 'center', zIndex: 2 }}>
+          display: 'flex', gap: 7, justifyContent: 'center', zIndex: 3 }}>
           {photos.map((_, i) => (
             <label key={`p${i}`} htmlFor={`hp${i}`} aria-label={`${L.aller} ${i + 1}`}
               style={{ width: 9, height: 9, borderRadius: 999, cursor: 'pointer',
-                background: '#ffffff', opacity: 0.55,
-                transition: 'opacity .25s ease, width .25s ease' }} />
+                background: '#ffffff', opacity: 0.45,
+                animationDelay: `${(i * duree / n).toFixed(2)}s`,
+                boxShadow: '0 1px 4px rgba(0,0,0,.5)' }} />
           ))}
         </span>
       </span>

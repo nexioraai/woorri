@@ -115,3 +115,64 @@ describe('on peut avancer à la main, sans JavaScript', () => {
     expect(h).not.toMatch(/type="radio"/);
   });
 });
+
+// ============================================================
+// LES COMMANDES DOIVENT RÉELLEMENT COMMANDER.
+//
+// LE DÉFAUT, VU À L'ÉCRAN par le propriétaire le 2026-11-09 : « je clique
+// sur les flèches mais rien ne se passe ». Elles visaient des photos FIXES —
+// « suivante » pointait toujours sur la photo 2. Un clic la cochait, un
+// second ne changeait rien : elle l'était déjà.
+//
+// Et les points n'indiquaient rien pendant l'enchaînement : aucun radio
+// n'étant coché, aucun point n'était allumé.
+// ============================================================
+
+describe('les flèches avancent VRAIMENT, de proche en proche', () => {
+  const html = () => renderToStaticMarkup(<HeroDiapo photos={['/a.jpg', '/b.jpg', '/c.jpg']} />);
+
+  it('🔴 il y a une paire de flèches PAR ÉTAT, plus celle d’avant tout clic', () => {
+    // Un `label` vise une cible fixe : une seule paire ne peut pas être
+    // relative. Trois photos → quatre paires.
+    expect((html().match(/class="heroPaire"/gu) ?? []).length).toBe(4);
+  });
+
+  it('🔴 chaque paire vise le PRÉCÉDENT et le SUIVANT, en boucle', () => {
+    const h = html();
+    // Sur la photo 1 (index 0), « précédent » boucle sur la dernière.
+    // La fenêtre est large : les styles en ligne font plusieurs centaines
+    // de caractères, et mon premier motif de 400 les sous-estimait.
+    expect(h).toMatch(/data-etat="0"[\s\S]{0,1200}for="hp2"/);
+    // Sur la dernière, « suivant » boucle sur la première.
+    expect(h).toMatch(/data-etat="2"[\s\S]{0,1200}for="hp0"/);
+  });
+
+  it('🔴 une seule paire est visible à la fois', () => {
+    const h = html();
+    expect(h).toMatch(/\.heroPaire\s*\{\s*display:\s*none/);
+    expect(h).toMatch(/:not\(:has\(input:checked\)\)[^}]*data-etat="initial"/);
+  });
+});
+
+describe('les points suivent l’enchaînement', () => {
+  const html = () => renderToStaticMarkup(<HeroDiapo photos={['/a.jpg', '/b.jpg', '/c.jpg']} />);
+
+  it('🔴 chaque point est ANIMÉ — sinon aucun n’est allumé avant le premier clic', () => {
+    expect(html()).toMatch(/@keyframes\s+heroPoint/);
+    expect(html()).toMatch(/\.heroPoints\s*>\s*label\s*\{\s*animation:\s*heroPoint/);
+  });
+
+  it('🔴 le décalage d’un point est celui de SA photo', () => {
+    // Un point qui s'allume au mauvais moment est pire qu'un point éteint :
+    // il désigne la mauvaise photo.
+    const h = html();
+    const retards = [...h.matchAll(/animation-delay:([0-9.]+)s/gu)].map((m) => m[1]);
+    // Trois photos ET trois points → chaque retard apparaît deux fois.
+    expect(new Set(retards).size).toBe(3);
+    expect(retards.filter((r) => r === retards[0]).length).toBe(2);
+  });
+
+  it('🔴 dès qu’on choisit, l’animation des points S’ARRÊTE', () => {
+    expect(html()).toMatch(/:has\(input:checked\)[^}]*\.heroPoints\s*>\s*label\s*\{\s*animation:\s*none/);
+  });
+});
