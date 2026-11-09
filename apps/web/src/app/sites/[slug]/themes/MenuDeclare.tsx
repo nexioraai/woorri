@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import type { Site } from './shared'
+import { pictogrammeDe } from './pictogrammeMenu'
 import { resolveSiteBaseUrl } from './shared'
 import type { EntreeMenu } from '../pages/fetchPage'
 
@@ -28,6 +29,26 @@ import type { EntreeMenu } from '../pages/fetchPage'
 // connexion lente, ni un moteur. Le cahier des charges exige WCAG 2.2 AA et
 // « performante sur mobile ou connexion lente ».
 // ============================================================
+
+/**
+ * LOT 15.1 — LE PICTOGRAMME D'UNE RUBRIQUE.
+ *
+ * `aria-hidden` : le libellé dit déjà la rubrique, et un lecteur d'écran
+ * qui annoncerait « losange noir Nos activités » ajouterait du bruit, pas
+ * de l'information.
+ *
+ * Rien ne s'affiche si le chemin est inconnu : aucun pictogramme vaut mieux
+ * qu'un faux, parce que le lecteur croira le faux.
+ */
+function Pictogramme({ chemin }: { chemin: string }) {
+  const signe = pictogrammeDe(chemin)
+  if (!signe) return null
+  return (
+    <span aria-hidden="true" style={{ marginInlineEnd: 6, opacity: 0.65, fontSize: '0.95em' }}>
+      {signe}
+    </span>
+  )
+}
 
 export default function MenuDeclare({
   site,
@@ -58,6 +79,7 @@ export default function MenuDeclare({
         if (!enfants.length) {
           return (
             <Link key={r.chemin} href={`${base}/${r.chemin}`} className={className}>
+              <Pictogramme chemin={r.chemin} />
               {r.titre}
             </Link>
           )
@@ -66,6 +88,7 @@ export default function MenuDeclare({
         return (
           <details key={r.chemin} style={{ position: 'relative', display: 'inline-block' }}>
             <summary className={className} style={{ cursor: 'pointer', listStyle: 'none' }}>
+              <Pictogramme chemin={r.chemin} />
               {r.titre}
               <span aria-hidden="true" style={{ fontSize: '0.75em', marginInlineStart: 4 }}>▾</span>
             </summary>
