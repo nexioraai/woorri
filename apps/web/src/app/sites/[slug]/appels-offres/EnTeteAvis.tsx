@@ -1,4 +1,5 @@
 import { type ComptesAvis } from './comptesAvis'
+import PictoCompte, { type CleDeCompte } from './PictoCompte'
 
 // ============================================================================
 // LOT 5bis — LE BANDEAU ET LES QUATRE COMPTEURS.
@@ -35,11 +36,14 @@ export default function EnTeteAvis({
   primary: string
   rtl?: boolean
 }) {
-  const cartes = [
-    { n: comptes.actifs, l: libelles.actifs, c: primary },
-    { n: comptes.ouverts, l: libelles.ouverts, c: '#16794a' },
-    { n: comptes.clotureProchaine, l: libelles.clotureProchaine, c: '#b45309' },
-    { n: comptes.archives, l: libelles.archives, c: '#5b5b5b' },
+  // LA CLÉ VOYAGE AVEC LA CARTE. Sans elle, le dessin se choisirait sur le
+  // LIBELLÉ — traduit, donc différent dans chaque langue, donc faux dès la
+  // deuxième. Les quatre clés sont celles de `ComptesAvis`.
+  const cartes: { k: CleDeCompte; n: number; l: string; c: string }[] = [
+    { k: 'actifs', n: comptes.actifs, l: libelles.actifs, c: primary },
+    { k: 'ouverts', n: comptes.ouverts, l: libelles.ouverts, c: '#16794a' },
+    { k: 'clotureProchaine', n: comptes.clotureProchaine, l: libelles.clotureProchaine, c: '#b45309' },
+    { k: 'archives', n: comptes.archives, l: libelles.archives, c: '#5b5b5b' },
   ]
 
   return (
@@ -85,6 +89,7 @@ export default function EnTeteAvis({
             border: '1px solid #e3e3e3', borderRadius: 14, padding: '18px 18px',
             background: '#ffffff',
           }}>
+            <PictoCompte cle={c.k} couleur={c.c} />
             <div style={{
               fontSize: 30, fontWeight: 800, lineHeight: 1.05,
               color: c.c, fontVariantNumeric: 'tabular-nums',

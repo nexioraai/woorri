@@ -10,7 +10,7 @@
 | | |
 |---|---|
 | **Créé** | 2026-11-07 |
-| **Dernière mise à jour** | 2026-11-07 |
+| **Dernière mise à jour** | 2026-11-09 — lots 15.11 et 15.12 |
 | **Source du besoin** | `~/Downloads/CPA.pdf` — Cahier des charges v2.0, Mahamat Saleh Zene, agent informaticien CPA-Tchad, octobre 2026, 12 pages |
 | **Références visuelles** | `epss.gov.et` (centrale pharmaceutique éthiopienne, analogue direct) · `uniha.org` |
 | **Site** | `cpa-tchad.deribfy.app` · slug `centrale-pharmaceutique-d-achats-cpa-1793979506814` · thème `editorial` |
@@ -287,10 +287,35 @@ posée sur une fonction qui n'existe pas encore se refait deux fois.
 | **15.8** | **Le compteur de visiteurs du jour** | pied de page |
 | **15.9** | **Le bandeau « information importante »** en évidence | page des actualités, colonne de droite |
 | **15.10** | **L'accès rapide** — liens vers les avis en cours, les attributions, l'assistance | page des actualités, colonne de droite |
+| **15.11** | **Les pictogrammes deviennent des dessins, et la barre tient sur une ligne** | barre du haut — livré le 2026-11-09 |
+| **15.12** | **Un dessin sur chaque compteur d'avis** — carré teinté, comme les cartes d'EPSS | page des appels d'offres |
+
+> ### ⚠ COLLISION DE NUMÉROS — à lire avant de citer un « lot 15.7 »
+>
+> Le commit **`ea7e6095`**, déjà poussé le 2026-11-09, s'intitule
+> « LOT 15.7 ». **Ce n'est pas la lettre d'information** de la ligne 15.7
+> ci-dessus : c'est le travail décrit en **15.11**. J'ai repris un numéro
+> déjà pris sans relire ce tableau.
+>
+> Le commit ne se réécrit pas — il est public. La table fait foi :
+> **15.7 = lettre d'information (écartée)**, **15.11 = les pictogrammes
+> dessinés**. Le lot suivant porte **15.12**, pas 15.8, pour que la même
+> confusion ne se produise pas deux fois.
+
 
 **Ce qui est DÉJÀ au moteur et n'a pas besoin du lot 15 :** le diaporama
 d'accueil (il tourne, il manque juste ses commandes manuelles), le menu à
 plusieurs niveaux, le filtre des avis, l'archive.
+
+**CE QUE LE 2026-11-09 A APPRIS SUR LE 15.1.** Les pictogrammes du 15.1
+étaient des CARACTÈRES — ▣ ◈ ▤ ◆ ◉ ✆ — confiés à la police de la vitrine.
+Mesuré dans le HTML servi : les quatre premiers s'affichaient en carrés gris,
+et les deux derniers n'étaient pas dans la page du tout. Trois entrées sur
+sept n'avaient aucune icône, parce qu'elles ne passent pas par le menu
+déclaré. Et la barre ne tenait pas : le conteneur plafonne à 1200 px utiles,
+l'enseigne en prend 182, la barre doit donc tenir dans 978 — elle en
+réclamait 1053. Le 15.11 reprend tout cela et le mesure au navigateur à six
+largeurs, à l'adresse publique.
 
 **Deux points que je ne traiterai PAS sans décision :**
 — **la bulle de discussion** d'EPSS : c'est un service tiers, donc une

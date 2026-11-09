@@ -263,13 +263,17 @@ const rel = (f: string) => f.replace(RACINE, 'appels-offres')
 
 describe('cliquet structurel — surface publique des avis', () => {
 
-  it('les DOUZE fichiers de la surface sont bien vus par ce cliquet', () => {
+  it('les TREIZE fichiers de la surface sont bien vus par ce cliquet', () => {
     // LE DÉNOMINATEUR EST RÉEL. Un fichier ajouté à la surface sans entrer
     // ici échapperait à tous les contrôles qui suivent — la classe GEN-D032.
     // `cycleDeVie.ts` est entré le 2026-11-06 (lot A2 b) : ce cliquet a rougi
     // le jour même, et c'est exactement ce qu'on lui demande.
     expect(fichiers.map(rel).sort()).toEqual(
       [
+        // Entré le 2026-11-09 (lot 15.8) — le dessin d'un compteur d'avis.
+        // Il NOMME l'état qu'il illustre : une horloge sur « archivés »
+        // contredirait le libellé, et le lecteur croirait le dessin.
+        'appels-offres/PictoCompte.tsx',
         'appels-offres/cycleDeVie.ts',
         'appels-offres/fetchAvis.ts',
         // Entré le 2026-11-08 (lot 5) : le filtre des avis. Il se décide sur

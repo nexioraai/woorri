@@ -23,8 +23,14 @@ const p = (t, ok, detail = '') => {
 if (ATTENDU) {
   const r = await fetch(`${BASE}/api/version`, { cache: 'no-store' }).catch(() => null)
   const servi = r ? (await r.json().catch(() => ({}))).commit : null
-  if (!servi || !String(servi).startsWith(ATTENDU.slice(0, 8))) {
-    console.log(`⏳ servi « ${servi} », attendu « ${ATTENDU.slice(0, 8)} » — on ne mesure pas un ancien déploiement.`)
+  // ON COMPARE SUR LA LONGUEUR LA PLUS COURTE DES DEUX.
+  // `/api/version` rend SEPT caractères. Comparer un préfixe de huit à une
+  // chaîne de sept ne peut jamais être vrai : le garde-fou refusait un
+  // déploiement correct et aurait attendu pour toujours. Un verrou qui ne
+  // peut pas s'ouvrir n'est pas un verrou prudent, c'est un verrou cassé.
+  const court = Math.min(String(servi ?? '').length, ATTENDU.length, 12)
+  if (!servi || court < 7 || String(servi).slice(0, court) !== ATTENDU.slice(0, court)) {
+    console.log(`⏳ servi « ${servi} », attendu « ${ATTENDU} » — on ne mesure pas un ancien déploiement.`)
     process.exit(2)
   }
 }
