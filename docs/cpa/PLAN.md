@@ -101,7 +101,7 @@ un avis · un article · un produit · une province
 | 7 | Actualités — événements, communiqués, filtres | 8 | ✅ **FERMÉ** — le moteur avait déjà son fonds d'articles ; il manquait la CATÉGORIE. Bloc « articles » (16ᵉ type), **21/21 à l'adresse publique**, et `/blog` ne perd rien. |
 | 8 | Contact et demandes — référence générée automatiquement, et suivi de la demande | 10 | ✅ **FERMÉ** — **20/20 à l'adresse publique**. Les deux échecs rendent mot pour mot la même réponse ; le texte du demandeur ne sort jamais. |
 | 9 | Pages légales + plan du site engendré | 4 | ✅ **FERMÉ** — **20/20 à l'adresse publique**. Un brouillon ne laisse ni titre ni chemin dans le plan ; une route moteur s'efface si une page déclarée porte son chemin. |
-| 10 | **Authentification, rôles, habilitations** | 16 | ⬜ |
+| 10 | **Authentification, rôles, habilitations** | 16 | ✅ **FERMÉ** — mécanique posée et mesurée (17 + 7 + 11 points). **Pas de preuve à l'écran** : rien n'est encore visible, c'est le lot 11 qui construit l'espace. Une dette nommée, voir §10. |
 | 11 | **Espace établissement** | 24 | ⬜ |
 | 12 | **Espace fournisseur + dépôt de pièces** | 30 | ⬜ |
 | 13 | **Soumission électronique des offres** | 30 | ⬜ |
@@ -382,3 +382,33 @@ route : impossible de savoir si j'avance dans le plan ou si j'invente.
 
 Le ④ n'est pas une formalité : **six fois** sur ce chantier, la solution était
 déjà dans le dépôt et j'ai failli écrire un second système.
+
+
+---
+
+## §10 — DETTE OUVERTE DU LOT 10 : `user_id` N'EST PAS VÉRIFIÉ
+
+**Inscrite le 9 novembre 2026, avant de passer au lot 11.**
+
+La route `/api/sites/[slug]/comptes` accepte un `user_id` du propriétaire
+**sans vérifier que cette personne existe dans `auth.users`**.
+
+**Ce que ça produit :** un compte fantôme — une ligne qui ne correspond à
+personne. Inoffensif aujourd'hui, puisque nul ne peut s'authentifier avec un
+identifiant inventé et que `requireSiteCompte` lit l'identité depuis le
+jeton, jamais depuis la table. Mais sale, et le genre de chose qui devient
+dangereuse quand une deuxième route la croit.
+
+**Pourquoi ce n'est pas corrigé maintenant :** il n'existe pas encore
+d'inscription. Le propriétaire ne peut admettre que des personnes déjà
+inscrites, et ce chemin-là s'écrit au lot 11. Fermer la vérification avant
+d'avoir le flux d'inscription reviendrait à garder une porte qui ne s'ouvre
+sur rien.
+
+**Ce qui la ferme :** au lot 11, l'admission se fera par l'adresse
+électronique, et `user_id` sera résolu côté serveur depuis `auth.users` —
+jamais reçu du client.
+
+**Elle est inscrite ici parce qu'une dette non écrite entre deux lots est une
+dette perdue.** C'est exactement ce qui s'est passé avec `/fournisseurs/
+documents`, qui a promis quatre téléchargements pendant deux jours.
