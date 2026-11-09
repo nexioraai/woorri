@@ -19,6 +19,7 @@ import { fetchOwnedSite, updateOwnedSite } from '@/lib/supabase-owned-site';
 import { computeAiScore } from '@/app/lib/aiScore';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Trash2 } from 'lucide-react';
+import EditeurPartenaires from '@/components/edit/EditeurPartenaires';
 
 export default function EditPage() {
   const params = useParams();
@@ -274,6 +275,10 @@ export default function EditPage() {
       theme: site.theme,
       cj_margin_percent: site.cj_margin_percent,
       cj_round_mode: site.cj_round_mode,
+      // LA COLONNE EST ENREGISTREE COMME LES AUTRES. L'oublier ici aurait
+      // donne un ecran qui modifie et ne garde rien -- le defaut le plus
+      // decourageant qui soit, parce qu'il ne previent pas.
+      partenaires: Array.isArray(site.partenaires) ? site.partenaires : [],
       pod_designs: podDesigns.length > 0
         ? podDesigns.map((d: any, i: number) => i === 0 ? { ...d, selected_products: selectedProducts } : d)
         : podDesigns,
@@ -846,6 +851,21 @@ export default function EditPage() {
               </div>
             </FieldSection>
           )}
+
+          {/* ── LOT 15.13 — LES PARTENAIRES DE L'ACCUEIL.
+              Ils SE VOIENT sur le site : leur place est donc bien ici, dans
+              l'editeur de contenu, et non au tableau de bord. La frontiere
+              posee le meme jour par le proprietaire se lit dans les deux
+              sens — ce qui s'affiche s'edite ici, ce qui s'administre va
+              la-bas. */}
+          <FieldSection label="Partenaires (accueil, juste avant Contact)">
+            <EditeurPartenaires
+              items={Array.isArray(site.partenaires) ? site.partenaires : []}
+              slug={slug}
+              primary={site.primary_color || '#FA5D1E'}
+              onChange={(p) => setSite({ ...site, partenaires: p })}
+            />
+          </FieldSection>
 
           <button
             onClick={handleSave}

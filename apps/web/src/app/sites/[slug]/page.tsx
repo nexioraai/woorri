@@ -27,6 +27,7 @@ import CatalogSearch, { type ThemeKey } from './themes/CatalogSearch'
 import { showsVisitorCatalogSearch } from '@/app/sites/[slug]/themes/catalogSearchVisibility'
 import PromoBanner from './themes/PromoBanner'
 import { empreinteDuLogo } from '@/lib/images/favicon'
+import { lirePartenaires } from './themes/lirePartenaires'
 
 // M1-08 : `revalidate` retire, il etait TROMPEUR. Cette page appelle
 // `headers()` (resolution du domaine perso pour le canonical), ce qui la
@@ -171,9 +172,11 @@ export default async function SitePage({ params, searchParams }: Props) {
   // dérivée, et il passe par la VUE `appels_offres_public` — jamais par la
   // table. Ce fichier ne réécrit pas sa requête : il l'appelle.
   // LOT 1 + 2 — les deux faits serveur, par la MÊME route unique.
-  const [{ hasAvis }, menu] = await Promise.all([
+  // LOT 1 + 2 + 15.13 — les faits serveur, par la MÊME route unique.
+  const [{ hasAvis }, menu, partenaires] = await Promise.all([
     fetchAvisEntries(site.id).then(avisDuSite),
     fetchMenu(site.id),
+    lirePartenaires(site.id),
   ])
 
   const key = (site.theme as keyof typeof themes) || 'editorial'
@@ -188,7 +191,7 @@ export default async function SitePage({ params, searchParams }: Props) {
       <JsonLd site={site} url={url} />
       <PromoBanner slug={site.slug} primary={primary} mode={site.mode} labels={cartLabels} currency={resolveShopCurrency(site.products)} />
       <CartShell primary={primary} labels={cartLabels} slug={site.slug} mode={site.mode} products={site.products} shippingFlat={site.shipping_flat} variant={key === 'noir' ? 'dark' : 'light'}>
-        <Theme site={site} hasAvis={hasAvis} host={host} menu={menu} />
+        <Theme site={site} hasAvis={hasAvis} host={host} menu={menu} partenaires={partenaires} />
         {site.mode === 3 && showsVisitorCatalogSearch(site.dropship_type) && site.theme !== 'aurora' && <CatalogSearch slug={site.slug} primary={primary} lang={site.lang} theme={key as ThemeKey} dropshipType={site.dropship_type} />}
       </CartShell>
       <ScrollRevealInit />

@@ -289,6 +289,7 @@ posée sur une fonction qui n'existe pas encore se refait deux fois.
 | **15.10** | **L'accès rapide** — liens vers les avis en cours, les attributions, l'assistance | page des actualités, colonne de droite |
 | **15.11** | **Les pictogrammes deviennent des dessins, et la barre tient sur une ligne** | barre du haut — livré le 2026-11-09 |
 | **15.12** | **Un dessin sur chaque compteur d'avis** — carré teinté, comme les cartes d'EPSS | page des appels d'offres |
+| **15.13** | **Les partenaires passent sur l'ACCUEIL**, juste avant Contact, logos téléversables · **l'animation au survol partout**, posée à la racine du segment | accueil et toutes les sous-pages — livré le 2026-11-09 |
 
 > ### ⚠ COLLISION DE NUMÉROS — à lire avant de citer un « lot 15.7 »
 >

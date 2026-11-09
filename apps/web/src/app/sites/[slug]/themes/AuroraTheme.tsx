@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import { Instagram, Facebook, TikTok, WhatsApp } from './BrandIcons'
 import MobileNav from './MobileNav'
+import SectionPartenaires from './SectionPartenaires'
 import DessinDeMenu from './DessinDeMenu'
 import ContactForm from '../ContactForm'
 import {
@@ -37,7 +38,7 @@ import MenuDeclare from './MenuDeclare'
 import EnseigneDuSite from './EnseigneDuSite'
 import PageProduits, { produitsDeLaPage } from './PageProduits'
 
-export default function AuroraTheme({ site, hasAvis = false, host = null, menu = [] }: { site: Site } & AvisDuSite) {
+export default function AuroraTheme({ site, hasAvis = false, host = null, menu = [], partenaires = [] }: { site: Site } & AvisDuSite) {
   const hidden = (name: string) => (site.hidden_sections || []).includes(name)
   const ancresEnBarre = menu.length === 0
   const primary = site.primary_color || '#6366f1'
@@ -372,6 +373,20 @@ export default function AuroraTheme({ site, hasAvis = false, host = null, menu =
         )}
 
         {/* CONTACT */}
+        {/* LOT 15.13 - LES PARTENAIRES, JUSTE AVANT CONTACT.
+            Mesure a l'ecran par le proprietaire, capture a l'appui : au bas
+            d'une SOUS-PAGE, personne ne les voyait. Sur EPSS la section est
+            sur l'accueil, en bas - on la rencontre sans la chercher.
+            ELLE NE PARAIT PAS SI ELLE EST VIDE : un titre au-dessus d'une
+            bande blanche dit qu'il manque quelque chose. */}
+        <SectionPartenaires
+          items={partenaires}
+          primary={primary}
+          surtitre={t.labels.partenairesSurtitre}
+          titre={t.labels.partenairesTitre}
+          phrase={t.labels.partenairesPhrase}
+        />
+
         {!hidden('Contact') && (
           <section id="contact" className="py-20 md:py-28 relative overflow-hidden">
             <div className="au-blob absolute bottom-0 right-0 w-[36rem] h-[36rem] rounded-full opacity-20 blur-3xl pointer-events-none" style={{ background: `radial-gradient(circle, ${auraB}, transparent 60%)` }} />

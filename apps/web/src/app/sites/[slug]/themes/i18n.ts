@@ -42,6 +42,9 @@ export type ThemeDict = {
     followUs: string
     /** LOT 15.6 — le bouton « revenir en haut ». */
     revenirHaut: string
+    partenairesSurtitre: string
+    partenairesTitre: string
+    partenairesPhrase: string
     poweredBy: string
     rightsReserved: string
     estimatedDelivery: string
@@ -154,6 +157,9 @@ const en: ThemeDict = {
     address: 'Address',
     followUs: 'Follow us',
     revenirHaut: 'Back to top',
+    partenairesSurtitre: 'Collaboration',
+    partenairesTitre: 'Our partners',
+    partenairesPhrase: 'The institutions and organisations we work with every day.',
     poweredBy: 'Powered by',
     rightsReserved: 'All rights reserved.',
     contactCta: 'Contact us',
@@ -256,6 +262,9 @@ const fr: ThemeDict = {
     address: 'Adresse',
     followUs: 'Suivez-nous',
     revenirHaut: 'Revenir en haut',
+    partenairesSurtitre: 'Collaboration',
+    partenairesTitre: 'Nos partenaires',
+    partenairesPhrase: 'Les institutions et organisations avec lesquelles nous travaillons au quotidien.',
     poweredBy: 'Propulsé par',
     rightsReserved: 'Tous droits réservés.',
     contactCta: 'Contactez-nous',
@@ -358,6 +367,9 @@ const es: ThemeDict = {
     address: 'Dirección',
     followUs: 'Síguenos',
     revenirHaut: 'Volver arriba',
+    partenairesSurtitre: 'Colaboración',
+    partenairesTitre: 'Nuestros socios',
+    partenairesPhrase: 'Las instituciones y organizaciones con las que trabajamos a diario.',
     poweredBy: 'Desarrollado por',
     rightsReserved: 'Todos los derechos reservados.',
     contactCta: 'Contáctanos',
@@ -460,6 +472,9 @@ const ar: ThemeDict = {
     address: 'العنوان',
     followUs: 'تابعنا',
     revenirHaut: 'العودة إلى الأعلى',
+    partenairesSurtitre: 'شراكة',
+    partenairesTitre: 'شركاؤنا',
+    partenairesPhrase: 'المؤسسات والمنظمات التي نعمل معها يومياً.',
     poweredBy: 'مشغّل بواسطة',
     rightsReserved: 'جميع الحقوق محفوظة.',
     contactCta: 'تواصل معنا',

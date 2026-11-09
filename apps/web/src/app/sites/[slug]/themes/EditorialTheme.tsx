@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 import { Instagram, Facebook, TikTok, WhatsApp } from './BrandIcons'
 import MobileNav from './MobileNav'
+import SectionPartenaires from './SectionPartenaires'
 import DessinDeMenu from './DessinDeMenu'
 import ContactForm from '../ContactForm'
 import {
@@ -80,7 +81,7 @@ function PremiumButton({
 }
 
 // ---------- Theme ----------
-export default function EditorialTheme({ site, hasAvis = false, host = null, menu = [] }: { site: Site } & AvisDuSite) {
+export default function EditorialTheme({ site, hasAvis = false, host = null, menu = [], partenaires = [] }: { site: Site } & AvisDuSite) {
   // ── LES PRODUITS, POUR LES PAGES PERSONNALISÉES.
   //
   // Les sections boutique calculent déjà cette liste chacune de leur côté ;
@@ -581,6 +582,20 @@ export default function EditorialTheme({ site, hasAvis = false, host = null, men
       ))}
 
       {/* =================== CONTACT =================== */}
+      {/* LOT 15.13 - LES PARTENAIRES, JUSTE AVANT CONTACT.
+          Mesure a l'ecran par le proprietaire, capture a l'appui : au bas
+          d'une SOUS-PAGE, personne ne les voyait. Sur EPSS la section est
+          sur l'accueil, en bas - on la rencontre sans la chercher.
+          ELLE NE PARAIT PAS SI ELLE EST VIDE : un titre au-dessus d'une
+          bande blanche dit qu'il manque quelque chose. */}
+      <SectionPartenaires
+        items={partenaires}
+        primary={primary}
+        surtitre={t.labels.partenairesSurtitre}
+        titre={t.labels.partenairesTitre}
+        phrase={t.labels.partenairesPhrase}
+      />
+
       {!hidden('Contact') && (
       <section id="contact" className="reveal py-28 md:py-36">
         <div className="max-w-7xl mx-auto px-6 md:px-10">

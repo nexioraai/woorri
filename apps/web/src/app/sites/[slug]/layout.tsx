@@ -1,4 +1,6 @@
 import type { ReactNode } from 'react'
+import { supabase } from '@/lib/supabase'
+import SurvolVivant from './themes/SurvolVivant'
 
 // ============================================================================
 // LOT 3c — UN SITE GÉNÉRÉ N'EST PAS LE TABLEAU DE BORD.
@@ -28,10 +30,38 @@ import type { ReactNode } from 'react'
 // de sa source. On corrige au bon endroit, pas au plus commode.
 // ============================================================================
 
-export default function SiteLayout({ children }: { children: ReactNode }) {
+// ============================================================================
+// LOT 15.13 — ET C'EST AUSSI ICI QUE VIT L'ANIMATION AU SURVOL.
+//
+// MÊME RAISON QUE LE FOND BLANC, à deux mois d'intervalle. Le propriétaire a
+// demandé que « chaque bouton anime quand on place le curseur », sur
+// l'accueil ET sur chaque sous-page. Retoucher les boutons un par un, c'est
+// la correction « page par page, donc jamais » que ce fichier existe pour
+// éviter. La règle est posée une fois, à la racine du segment, et tout écran
+// à venir en hérite sans rien écrire.
+//
+// LA COULEUR VIENT DU SITE. Le halo du survol et le liseré du clavier
+// prennent sa teinte : un accent en dur donnerait le même bleu à quarante-
+// deux sites qui n'ont pas la même identité.
+// ============================================================================
+
+export default async function SiteLayout({
+  children, params,
+}: { children: ReactNode; params: Promise<{ slug: string }> }) {
+  const { slug } = await params
+  const { data } = await supabase
+    .from('sites_public').select('primary_color').eq('slug', slug).maybeSingle()
+  // `#111111` quand le site n'en déclare pas : le survol reste visible, il
+  // n'emprunte simplement aucune couleur qui ne serait pas la sienne.
+  const primary = (data as { primary_color?: string | null } | null)?.primary_color || '#111111'
+
   return (
     <div
       data-surface="site-genere"
+      // `vivant` : la classe que lit `SurvolVivant`. Elle enveloppe TOUT ce
+      // que ce segment rend — accueil, pages déclarées, espace, appels
+      // d'offres — donc aucune page ne peut l'oublier.
+      className="vivant"
       style={{
         minHeight: '100vh',
         background: '#ffffff',
@@ -43,6 +73,7 @@ export default function SiteLayout({ children }: { children: ReactNode }) {
         colorScheme: 'light',
       }}
     >
+      <SurvolVivant primary={primary} />
       {children}
     </div>
   )

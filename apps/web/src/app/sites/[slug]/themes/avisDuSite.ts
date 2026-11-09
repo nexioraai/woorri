@@ -47,7 +47,21 @@
  */
 import type { EntreeMenu } from '../pages/fetchPage'
 
+import type { Partenaire } from '../pages/Partenaires'
+
 export type AvisDuSite = {
+  /**
+   * LOT 15.13 — LES PARTENAIRES DE L'ACCUEIL.
+   *
+   * Ils sont ICI pour la MÊME raison que `hasAvis` et `host` : un thème est
+   * SYNCHRONE, il ne peut pas lire la base. Et ils ne viennent pas de
+   * `sites_public` — la vue ne porte pas la colonne, et la recréer pour l'y
+   * ajouter demanderait de réécrire ses 48 colonnes ET sa clause `where`,
+   * donc d'effacer en silence ce qui aurait été ajouté entre-temps. La route
+   * les lit avec le rôle de service, qui voit la table directement.
+   */
+  partenaires?: Partenaire[]
+
   /** `true` si ce site publie au moins un avis VISIBLE du public. */
   hasAvis?: boolean
 
