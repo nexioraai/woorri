@@ -51,7 +51,7 @@ type RoleDemandable = (typeof ROLES_DEMANDABLES)[number]
 const REFUS = () => NextResponse.json({ error: 'Accès refusé.' }, { status: 403 })
 
 /** Ce qu'on rend d'un compte. Jamais `user_id` : le porteur le connaît déjà. */
-const VU = 'id,email,role,etat,organisation,reference,cree_le'
+const VU = 'id,email,role,etat,organisation,reference,cree_le,qualification,qualification_le'
 
 /**
  * Qui appelle, d'après SON jeton.

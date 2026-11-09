@@ -23,6 +23,7 @@ let proprietaire: unknown = { site: { id: 'site-1', slug: 'cpa' } }
 let resolu: { data: unknown; error: unknown } = { data: null, error: null }
 let insere: Record<string, unknown> | null = null
 let rpcAppele: { nom: string; args: unknown } | null = null
+let modifie: Record<string, unknown> | null = null
 
 vi.mock('@/lib/auth/require-site-owner', () => ({
   requireSiteOwner: async () => proprietaire,
@@ -49,6 +50,14 @@ vi.mock('@/lib/supabase-admin', () => ({
       // `insert` n'est pas du ressort du harnais : on CAPTURE ce qui part,
       // parce que c'est exactement ce que la dette §10 concerne.
       return Object.assign(base, {
+        update: (ligne: Record<string, unknown>) => {
+          modifie = ligne
+          const c: Record<string, unknown> = {
+            eq: () => c, select: () => c,
+            maybeSingle: async () => ({ data: { id: 'c1', ...ligne }, error: null }),
+          }
+          return c
+        },
         insert: (ligne: Record<string, unknown>) => {
           insere = ligne
           return { select: () => ({ single: async () => ({ data: { id: 'c1', ...ligne }, error: null }) }) }
@@ -58,7 +67,7 @@ vi.mock('@/lib/supabase-admin', () => ({
   },
 }))
 
-import { POST } from '../route'
+import { POST, PATCH } from '../route'
 
 const params = { params: Promise.resolve({ slug: 'cpa' }) }
 const envoi = (corps: unknown) =>
@@ -71,6 +80,7 @@ beforeEach(() => {
   resolu = { data: 'user-77', error: null }
   insere = null
   rpcAppele = null
+  modifie = null
 })
 
 describe('l’identité ne se fournit pas', () => {
@@ -131,5 +141,59 @@ describe('seul le propriétaire admet', () => {
     expect(r.status).toBe(403)
     expect(insere).toBeNull()
     expect(rpcAppele).toBeNull()
+  })
+})
+
+// ============================================================
+// LOT 12.3 — LE VERDICT N'EST PAS L'ÉTAT.
+//
+// `etat` dit si le compte ENTRE (actif, suspendu) ; `qualification` dit ce
+// que la Centrale PENSE du fournisseur. Les confondre ferait qu'activer un
+// compte vaudrait le qualifier — deux décisions, deux examens, deux dates.
+//
+// ET LA DATE ACCOMPAGNE LE VERDICT, SEULEMENT LUI. La poser sur un
+// changement d'état raconterait un examen qui n'a pas eu lieu.
+// ============================================================
+
+describe('prononcer une qualification', () => {
+  const patch = (corps: unknown) =>
+    new Request('https://x.test/api/sites/cpa/comptes', {
+      method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify(corps),
+    })
+
+  it('🔴 le verdict s’écrit AVEC sa date', async () => {
+    await PATCH(patch({ id: 'c1', qualification: 'qualifie' }), params)
+    expect(modifie).toMatchObject({ qualification: 'qualifie' })
+    expect(String(modifie?.qualification_le ?? '').length).toBeGreaterThan(0)
+  })
+
+  it('🔴 changer l’ÉTAT ne pose AUCUNE date de qualification', async () => {
+    // Elle raconterait un examen qui n'a pas eu lieu.
+    await PATCH(patch({ id: 'c1', etat: 'actif' }), params)
+    expect(modifie).toMatchObject({ etat: 'actif' })
+    expect(modifie).not.toHaveProperty('qualification_le')
+    expect(modifie).not.toHaveProperty('qualification')
+  })
+
+  it('🔴 revenir à « non examinée » EFFACE la date', async () => {
+    // Garder celle d'un verdict retiré ferait lire « examiné le 12 » sur un
+    // compte qui ne l'est plus.
+    await PATCH(patch({ id: 'c1', qualification: 'non_examinee' }), params)
+    expect(modifie).toMatchObject({ qualification: 'non_examinee', qualification_le: null })
+  })
+
+  it('🔴 un envoi qui ne change RIEN est refusé', async () => {
+    // Sans ce refus, un corps vide toucherait `maj_le` et ferait croire à
+    // une décision.
+    const r = await PATCH(patch({ id: 'c1' }), params)
+    expect(r.status).toBe(400)
+    expect(modifie).toBeNull()
+  })
+
+  it('🔴 un non-propriétaire ne prononce rien', async () => {
+    proprietaire = { response: new Response(null, { status: 403 }) }
+    const r = await PATCH(patch({ id: 'c1', qualification: 'qualifie' }), params)
+    expect(r.status).toBe(403)
+    expect(modifie).toBeNull()
   })
 })

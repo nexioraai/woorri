@@ -31,7 +31,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin'
 
 type Params = { params: Promise<{ slug: string }> }
 
-const COLS = 'id,user_id,email,role,etat,organisation,reference,cree_le,maj_le'
+const COLS = 'id,user_id,email,role,etat,organisation,reference,cree_le,maj_le,qualification,qualification_le'
 
 const LISIBLE: Record<string, string> = {
   '23514': 'Rôle ou état inconnu, ou adresse électronique invalide.',
@@ -147,9 +147,31 @@ export async function PATCH(req: Request, { params }: Params) {
   // SEUL L'ETAT CHANGE. Le role ne se modifie pas : changer le role d'un
   // compte actif deplacerait ses droits sans nouvel examen. On suspend, on
   // supprime, on recree -- trois gestes visibles plutot qu'un invisible.
+  // ── LOT 12.3 — LE VERDICT, PRONONCÉ PAR LA CENTRALE ET PAR ELLE SEULE.
+  //
+  // `etat` dit si le compte ENTRE (actif, suspendu) ; `qualification` dit ce
+  // que la Centrale PENSE du fournisseur. Les confondre ferait qu'activer un
+  // compte vaudrait le qualifier — deux décisions, deux examens, deux dates.
+  //
+  // LA DATE ACCOMPAGNE LE VERDICT, et seulement lui : la poser sur un
+  // changement d'état raconterait un examen qui n'a pas eu lieu.
+  const changements: Record<string, unknown> = { maj_le: new Date().toISOString() }
+  if (typeof corps.etat === 'string') changements.etat = corps.etat
+  if (typeof corps.qualification === 'string') {
+    changements.qualification = corps.qualification
+    changements.qualification_le = corps.qualification === 'non_examinee'
+      // REVENIR À « NON EXAMINÉ » EFFACE LA DATE. Garder celle d'un verdict
+      // retiré ferait lire « examiné le 12 » sur un compte qui ne l'est plus.
+      ? null
+      : new Date().toISOString()
+  }
+  if (!('etat' in changements) && !('qualification' in changements)) {
+    return NextResponse.json({ error: 'Rien à modifier.' }, { status: 400 })
+  }
+
   const { data, error } = await supabaseAdmin
     .from('site_comptes')
-    .update({ etat: corps.etat, maj_le: new Date().toISOString() })
+    .update(changements)
     .eq('id', id)
     // LE FILTRE PAR SITE RESTE, MEME AVEC UN `id`.
     .eq('site_id', garde.site.id)

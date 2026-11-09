@@ -37,6 +37,8 @@ type Compte = {
   email: string
   role: 'fournisseur' | 'structure' | 'agent'
   etat: 'en_attente' | 'actif' | 'suspendu'
+  qualification: keyof typeof QUALIF
+  qualification_le: string | null
   organisation: string | null
   reference: string | null
   cree_le: string
@@ -45,6 +47,20 @@ type Compte = {
 
 const ROLE = { fournisseur: 'Fournisseur', structure: 'Structure sanitaire', agent: 'Agent de la Centrale' }
 const ETAT = { en_attente: 'En attente', actif: 'Actif', suspendu: 'Suspendu' }
+// LOT 12.3 — LE VERDICT, QUI N'EST PAS L'ÉTAT.
+//
+// `etat` dit si le compte ENTRE ; `qualification` dit ce que la Centrale
+// PENSE du fournisseur. Les confondre ferait qu'activer un compte vaudrait
+// le qualifier — deux décisions, deux examens, deux dates.
+const QUALIF = {
+  non_examinee: 'Pas encore examinée',
+  prequalifie: 'Préqualifié',
+  qualifie: 'Qualifié',
+  rejete: 'Rejeté',
+} as const
+const TEINTE_Q: Record<string, string> = {
+  non_examinee: '#b45309', prequalifie: '#1d4ed8', qualifie: '#16794a', rejete: '#9b1c1c',
+}
 const TEINTE = { en_attente: '#b45309', actif: '#16794a', suspendu: '#9b1c1c' }
 
 export default function ComptesDuSite({ params }: { params: Promise<{ slug: string }> }) {
@@ -94,14 +110,14 @@ export default function ComptesDuSite({ params }: { params: Promise<{ slug: stri
     return () => { vivant = false }
   }, [relire])
 
-  async function changer(c: Compte, etat: Compte['etat']) {
+  async function changer(c: Compte, corps: { etat?: Compte['etat']; qualification?: Compte['qualification'] }) {
     setOccupe(c.id)
     try {
       const j = await jeton()
       const r = await fetch(`/api/sites/${encodeURIComponent(slug)}/comptes`, {
         method: 'PATCH',
         headers: { Authorization: `Bearer ${j}`, 'content-type': 'application/json' },
-        body: JSON.stringify({ id: c.id, etat }),
+        body: JSON.stringify({ id: c.id, ...corps }),
       })
       if (!r.ok) { setErreur('Le changement a été refusé.'); return }
       // ON RELIT. Le PATCH rend la ligne, mais la relecture prouve l'état
@@ -134,6 +150,32 @@ export default function ComptesDuSite({ params }: { params: Promise<{ slug: stri
         }}>{ETAT[c.etat]}</span>
       </div>
 
+      {/* LE VERDICT, SÉPARÉ DE L'ÉTAT ET DIT COMME TEL. */}
+      {c.role === 'fournisseur' && (
+        <div style={{ marginTop: 14, paddingTop: 14, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+          <p style={{ margin: '0 0 9px', fontSize: 13, opacity: 0.6 }}>
+            Qualification :{' '}
+            <strong style={{ color: TEINTE_Q[c.qualification] ?? 'inherit' }}>
+              {QUALIF[c.qualification] ?? c.qualification}
+            </strong>
+            {c.qualification_le ? ` · prononcée le ${c.qualification_le.slice(0, 10)}` : ''}
+          </p>
+          <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap' }}>
+            {(Object.keys(QUALIF) as (keyof typeof QUALIF)[])
+              .filter((q) => q !== c.qualification)
+              .map((q) => (
+                <button key={q} type="button" disabled={occupe === c.id}
+                  onClick={() => void changer(c, { qualification: q })}
+                  style={{
+                    padding: '6px 13px', borderRadius: 999, cursor: 'pointer', fontSize: 12.5,
+                    fontWeight: 600, background: 'transparent',
+                    color: TEINTE_Q[q], border: `1px solid ${TEINTE_Q[q]}55`,
+                  }}>{QUALIF[q]}</button>
+              ))}
+          </div>
+        </div>
+      )}
+
       <div style={{ display: 'flex', gap: 8, marginTop: 14, flexWrap: 'wrap' }}>
         {/* LE DOSSIER NE S'OUVRE QUE POUR UN COMPTE ACTIF. Déposer une pièce
             à quelqu'un qui n'est pas encore admis, c'est agir avant d'avoir
@@ -145,13 +187,13 @@ export default function ComptesDuSite({ params }: { params: Promise<{ slug: stri
           </button>
         )}
         {c.etat !== 'actif' && (
-          <button type="button" disabled={occupe === c.id} onClick={() => void changer(c, 'actif')}
+          <button type="button" disabled={occupe === c.id} onClick={() => void changer(c, { etat: 'actif' })}
             style={{ padding: '8px 16px', borderRadius: 999, border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: 13.5, background: '#16794a', color: '#fff' }}>
             Activer
           </button>
         )}
         {c.etat !== 'suspendu' && (
-          <button type="button" disabled={occupe === c.id} onClick={() => void changer(c, 'suspendu')}
+          <button type="button" disabled={occupe === c.id} onClick={() => void changer(c, { etat: 'suspendu' })}
             style={{ padding: '8px 16px', borderRadius: 999, cursor: 'pointer', fontWeight: 600, fontSize: 13.5, background: 'transparent', color: 'rgba(255,255,255,0.75)', border: '1px solid rgba(255,255,255,0.18)' }}>
             Suspendre
           </button>
