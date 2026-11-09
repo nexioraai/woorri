@@ -67,7 +67,24 @@ export async function GET(req: Request, { params }: Params) {
   })
 }
 
-/** POST — le propriétaire ADMET quelqu'un. Le compte naît en attente. */
+/**
+ * POST — le propriétaire ADMET quelqu'un, PAR SON ADRESSE.
+ *
+ * ── LA DETTE §10, FERMÉE ICI.
+ *
+ * Cette route acceptait un `user_id` ENVOYÉ PAR LE CLIENT, sans vérifier que
+ * cette personne existe. Elle fabriquait des comptes fantômes : des lignes
+ * qui ne correspondent à personne. Inoffensif tant que rien ne les croit —
+ * et c'est précisément le genre de chose qui devient dangereuse le jour où
+ * une deuxième route les croit.
+ *
+ * Désormais le propriétaire donne une ADRESSE, et l'identifiant est résolu
+ * en base par `identifiant_par_courriel()`. Si personne n'est inscrit à
+ * cette adresse, il n'y a pas de compte à créer : la personne s'inscrit
+ * d'abord, puis demande son accès depuis l'espace. Un `user_id` reçu dans le
+ * corps est REFUSÉ, pas ignoré — ignorer silencieusement laisserait croire
+ * à l'appelant que son envoi a été pris en compte.
+ */
 export async function POST(req: Request, { params }: Params) {
   const { slug } = await params
   const garde = await requireSiteOwner(req, slug)
@@ -76,9 +93,25 @@ export async function POST(req: Request, { params }: Params) {
   let corps: Record<string, unknown>
   try { corps = await req.json() } catch { return NextResponse.json({ error: 'Envoi illisible.' }, { status: 400 }) }
 
-  const user_id = typeof corps.user_id === 'string' ? corps.user_id : ''
+  if ('user_id' in corps) {
+    return NextResponse.json({
+      error: 'L’identité ne se fournit pas : indiquez l’adresse électronique de la personne.',
+    }, { status: 400 })
+  }
+
   const email = typeof corps.email === 'string' ? corps.email.trim().toLowerCase() : ''
-  if (!user_id || !email) return NextResponse.json({ error: LISIBLE['23502'] }, { status: 400 })
+  if (!email) return NextResponse.json({ error: LISIBLE['23502'] }, { status: 400 })
+
+  const { data: resolu, error: eResolu } = await supabaseAdmin
+    .rpc('identifiant_par_courriel', { courriel: email })
+  if (eResolu) return NextResponse.json({ error: eResolu.message }, { status: 500 })
+
+  const user_id = typeof resolu === 'string' ? resolu : ''
+  if (!user_id) {
+    return NextResponse.json({
+      error: 'Personne n’est inscrit à cette adresse. Elle doit créer son accès avant d’être admise.',
+    }, { status: 404 })
+  }
 
   const { data, error } = await supabaseAdmin
     .from('site_comptes')

@@ -102,7 +102,7 @@ un avis · un article · un produit · une province
 | 8 | Contact et demandes — référence générée automatiquement, et suivi de la demande | 10 | ✅ **FERMÉ** — **20/20 à l'adresse publique**. Les deux échecs rendent mot pour mot la même réponse ; le texte du demandeur ne sort jamais. |
 | 9 | Pages légales + plan du site engendré | 4 | ✅ **FERMÉ** — **20/20 à l'adresse publique**. Un brouillon ne laisse ni titre ni chemin dans le plan ; une route moteur s'efface si une page déclarée porte son chemin. |
 | 10 | **Authentification, rôles, habilitations** | 16 | ✅ **FERMÉ** — mécanique posée et mesurée (17 + 7 + 11 points). **Pas de preuve à l'écran** : rien n'est encore visible, c'est le lot 11 qui construit l'espace. Une dette nommée, voir §10. |
-| 11 | **Espace établissement** | 24 | ⬜ |
+| 11 | **Espace établissement** | 24 | 🔄 **ENTAMÉ** — tranche A : `/connexion`, `/inscription`, `/mot-de-passe-oublie`, `/espace-client` ; capacité `ouvre_des_comptes` (CPA seule, 1/42 vérifié) ; **dette §10 FERMÉE**. Restent `/mes-demandes`, `/mon-profil`, `/mes-documents`, `/mes-reclamations`. |
 | 12 | **Espace fournisseur + dépôt de pièces** | 30 | ⬜ |
 | 13 | **Soumission électronique des offres** | 30 | ⬜ |
 | 14 | **Administration — workflow, audit, tableau de bord** | 30 | ⬜ |
@@ -411,7 +411,7 @@ déjà dans le dépôt et j'ai failli écrire un second système.
 
 ---
 
-## §10 — DETTE OUVERTE DU LOT 10 : `user_id` N'EST PAS VÉRIFIÉ
+## §10 — DETTE ~~OUVERTE~~ **FERMÉE** DU LOT 10 : `user_id` N'EST PAS VÉRIFIÉ
 
 **Inscrite le 9 novembre 2026, avant de passer au lot 11.**
 
@@ -433,6 +433,25 @@ sur rien.
 **Ce qui la ferme :** au lot 11, l'admission se fera par l'adresse
 électronique, et `user_id` sera résolu côté serveur depuis `auth.users` —
 jamais reçu du client.
+
+### ✅ FERMÉE LE 9 NOVEMBRE 2026, au lot 11 — et tenue par un cliquet
+
+Ce qui a été fait, exactement comme annoncé ci-dessus :
+
+- `identifiant_par_courriel()` résout l'identifiant **en base**, depuis
+  `auth.users`, et n'est exécutable que par le rôle de service — une
+  fonction `security definer` laissée à `anon` serait un oracle d'existence.
+- La route du propriétaire **REFUSE** un `user_id` reçu dans le corps : elle
+  ne l'ignore pas en silence, ce qui laisserait croire qu'il a été pris en
+  compte.
+- Une adresse à laquelle personne n'est inscrit ne crée **rien** : 404.
+- Le chemin d'inscription promis existe : `/inscription` puis la demande de
+  rattachement depuis `/espace-client`, où `user_id` vient **du jeton**.
+
+**ET ELLE A UN CLIQUET, cette fois.** La route du lot 10 avait vécu un jour
+sans aucun test : ni appelant, ni vitest, ni script versionné — ses
+« 17 + 7 + 11 points » étaient des mesures de séance, perdues le soir même.
+Trois mutations prouvées rouges tiennent désormais la fermeture.
 
 **Elle est inscrite ici parce qu'une dette non écrite entre deux lots est une
 dette perdue.** C'est exactement ce qui s'est passé avec `/fournisseurs/
