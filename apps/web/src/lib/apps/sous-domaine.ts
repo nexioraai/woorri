@@ -185,9 +185,14 @@ export const NOMS_RESERVES: ReadonlySet<string> = new Set([
   // route a été écrite, la gate a rougi, le nom est réservé. Sans ça, un
   // client aurait pu publier son application sur `atelier.deribfy.app`, par
   // dessus l'écran de travail du produit.
-  'a', 'about', 'admin', 'api', 'atelier', 'blog', 'cookies', 'dashboard', 'documentation',
-  'domaine', 'edit', 'login', 'onboarding-chat', 'p', 'parametres', 'preview',
-  'pricing', 'privacy', 'reset-password', 'sites', 'terms', 'visibilite-ia',
+  // `comptes` a été ajouté le 2026-11-09 — et c'est EP-291 qui l'a exigé, pas
+  // moi, exactement comme pour `atelier` : la route `/comptes/[slug]` a été
+  // écrite pour approuver les accès d'un site, la gate a rougi dans la foulée,
+  // le nom est réservé. Sans ça, un client aurait pu publier son application
+  // sur `comptes.deribfy.app`, par dessus l'écran qui approuve les comptes.
+  'a', 'about', 'admin', 'api', 'atelier', 'blog', 'comptes', 'cookies', 'dashboard',
+  'documentation', 'domaine', 'edit', 'login', 'onboarding-chat', 'p', 'parametres',
+  'preview', 'pricing', 'privacy', 'reset-password', 'sites', 'terms', 'visibilite-ia',
   'welcome', 'cancel-order',
 
   // ② Les sous-domaines réellement posés dans nos zones (Cloudflare).

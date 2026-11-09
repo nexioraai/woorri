@@ -4,7 +4,7 @@ import { publierAvecAccord } from '@/components/apps/accordLecturePublique';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Plus, ExternalLink, Pencil, LogOut, Globe } from 'lucide-react';
+import { Plus, ExternalLink, Pencil, LogOut, Globe, Users } from 'lucide-react';
 import Sidebar from '@/components/Sidebar';
 import { supabase } from '@/lib/supabase';
 import { IdentifiantsOeuvre, type EtatCompteOeuvre } from '@/components/apps/IdentifiantsOeuvre';
@@ -44,6 +44,12 @@ type Application = {
 };
 
 export default function DashboardPage() {
+  // ── COMBIEN DE DEMANDES ATTENDENT, PAR SITE.
+  //
+  // Vide tant que rien n'est charge : une pastille « 0 » affichee par defaut
+  // dirait « rien a faire » avant d'avoir regarde. On ne montre un nombre
+  // qu'une fois qu'il a ete MESURE.
+  const [demandesEnAttente, setDemandesEnAttente] = useState<Record<string, number>>({});
   const router = useRouter();
   const { t } = useTranslation();
   const [user, setUser] = useState<any>(null);
@@ -457,6 +463,43 @@ export default function DashboardPage() {
           .then(({ data: sitesData }) => {
             setSites(sitesData || []);
             setLoading(false);
+
+            // ── LES DEMANDES EN ATTENTE, POUR LES SEULS SITES QUI OUVRENT
+            //    DES COMPTES.
+            //
+            // On n'interroge pas les 41 autres : ils n'ont pas de comptes, et
+            // 41 appels pour 41 zeros est du bruit paye.
+            //
+            // CET APPEL NE DOIT RIEN CASSER. S'il echoue -- session expiree,
+            // reseau -- le tableau de bord reste entier et la pastille
+            // n'apparait simplement pas. Une pastille absente dit « je ne sais
+            // pas » ; une pastille « 0 » dirait « rien a faire », ce qui serait
+            // une affirmation qu'on n'a pas mesuree.
+            void (async () => {
+              // ON TYPE CE QU'ON LIT. `sitesData` arrive non type de la
+              // requete ; declarer ici les DEUX champs qu'on utilise suffit, et
+              // evite d'ajouter deux `any` a une dette qui n'a le droit que de
+              // diminuer.
+              const ouverts = ((sitesData || []) as { slug: string; ouvre_des_comptes?: boolean }[])
+                .filter((x) => x.ouvre_des_comptes === true);
+              if (ouverts.length === 0) return;
+              const { data: sess } = await supabase.auth.getSession();
+              const jeton = sess.session?.access_token;
+              if (!jeton) return;
+              const compte: Record<string, number> = {};
+              await Promise.all(ouverts.map(async (x) => {
+                try {
+                  const r = await fetch(`/api/sites/${encodeURIComponent(x.slug)}/comptes`, {
+                    headers: { Authorization: `Bearer ${jeton}` }, cache: 'no-store',
+                  });
+                  if (!r.ok) return;
+                  const d = await r.json();
+                  compte[x.slug] = ((d.comptes ?? []) as { etat?: string }[])
+                    .filter((c) => c.etat === 'en_attente').length;
+                } catch { /* ce site reste sans pastille, les autres vivent */ }
+              }));
+              setDemandesEnAttente(compte);
+            })();
             const slugs = (sitesData || []).map((s: any) => s.slug);
             if (slugs.length > 0) {
               supabase.from('score_history')
@@ -612,6 +655,31 @@ export default function DashboardPage() {
                       <Pencil className="w-3.5 h-3.5" />
                       {t('dashboard.edit')}
                     </Link>
+                    {/* ── LES COMPTES, DANS LE TABLEAU DE BORD ET PAS DANS `/edit`.
+                        Arbitrage du proprietaire, 2026-11-09 : « dans edit on met
+                        seulement les trucs qu'on edite qui seront visibles sur le
+                        site, le reste il faut mettre dans dashboard ». Approuver un
+                        fournisseur ne se voit nulle part sur le site.
+
+                        LE BOUTON N'APPARAIT QUE SI LE SITE OUVRE DES COMPTES. Les
+                        41 autres sites n'en ont pas, et un bouton qui mene a une
+                        liste toujours vide use la confiance.
+
+                        LA PASTILLE PORTE LE NOMBRE EN ATTENTE. Sans elle il faut
+                        PENSER a venir regarder -- et un fournisseur attendrait des
+                        semaines sans que personne le sache. */}
+                    {site.ouvre_des_comptes === true && (
+                      <Link href={`/comptes/${site.slug}`}
+                        className="relative flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-sm font-semibold border border-white/10 text-white/70 hover:text-white hover:border-white/30 transition-all"
+                        title="Comptes et demandes d'acces">
+                        <Users className="w-3.5 h-3.5" />
+                        {(demandesEnAttente[site.slug] ?? 0) > 0 && (
+                          <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#b45309] text-white text-[11px] font-bold flex items-center justify-center">
+                            {demandesEnAttente[site.slug]}
+                          </span>
+                        )}
+                      </Link>
+                    )}
                     {site.published && (<>
                     <button type="button" onClick={() => { void adresseSite(site); }}
                       title="Adresse gratuite <nom>.deribfy.app"
