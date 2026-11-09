@@ -22,7 +22,8 @@ const FR: MotsEspace = {
   bienvenue: 'Bienvenue dans votre espace.',
   role: 'Qualité', deconnexion: 'Se déconnecter',
   erreur: 'Service momentanément indisponible. Réessayez plus tard.',
-  suivreDemande: 'Suivre une demande →',
+  suivreDemande: 'Suivre une demande par sa référence',
+  mesDemandes: 'Mes demandes', mesReclamations: 'Mes réclamations', monProfil: 'Mon profil',
 }
 
 const EN: MotsEspace = {
@@ -37,7 +38,8 @@ const EN: MotsEspace = {
   bienvenue: 'Welcome to your space.',
   role: 'Capacity', deconnexion: 'Sign out',
   erreur: 'Service temporarily unavailable. Try again later.',
-  suivreDemande: 'Track a request →',
+  suivreDemande: 'Track a request by its reference',
+  mesDemandes: 'My requests', mesReclamations: 'My complaints', monProfil: 'My profile',
 }
 
 const AR: MotsEspace = {
@@ -52,7 +54,8 @@ const AR: MotsEspace = {
   bienvenue: 'مرحباً بك في مساحتك.',
   role: 'الصفة', deconnexion: 'تسجيل الخروج',
   erreur: 'الخدمة غير متاحة مؤقتاً. حاول لاحقاً.',
-  suivreDemande: 'تتبّع طلباً ←',
+  suivreDemande: 'تتبّع طلباً بمرجعه',
+  mesDemandes: 'طلباتي', mesReclamations: 'شكاواي', monProfil: 'ملفي',
 }
 
 const ES: MotsEspace = {
@@ -67,7 +70,8 @@ const ES: MotsEspace = {
   bienvenue: 'Bienvenido a su espacio.',
   role: 'Calidad', deconnexion: 'Cerrar sesión',
   erreur: 'Servicio no disponible momentáneamente. Inténtelo más tarde.',
-  suivreDemande: 'Seguir una solicitud →',
+  suivreDemande: 'Seguir una solicitud por su referencia',
+  mesDemandes: 'Mis solicitudes', mesReclamations: 'Mis reclamaciones', monProfil: 'Mi perfil',
 }
 
 const PAR_LANGUE: Record<string, MotsEspace> = { fr: FR, en: EN, ar: AR, es: ES }

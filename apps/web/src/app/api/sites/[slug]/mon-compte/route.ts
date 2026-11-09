@@ -176,3 +176,68 @@ export async function POST(req: Request, { params }: Params) {
   }
   return NextResponse.json({ compte: data, nouvelle: true }, { status: 201 })
 }
+
+/**
+ * PATCH — je corrige MON organisation, tant que ma demande attend.
+ *
+ * ── POURQUOI ELLE SE FIGE À L'ACTIVATION.
+ *
+ * L'organisation est ce que la Centrale a EXAMINÉ avant d'admettre. La
+ * laisser changer après coup déplacerait silencieusement qui l'on
+ * représente, sans nouvel examen — exactement la raison pour laquelle le
+ * RÔLE ne se modifie jamais. Avant l'examen, c'est une faute de frappe qu'on
+ * corrige ; après, c'est un changement de nature, et il se demande.
+ *
+ * ── CE REFUS-LÀ DIT POURQUOI, ET C'EST VOULU.
+ *
+ * La personne est authentifiée et c'est SA ligne : lui cacher la raison la
+ * ferait réessayer sans comprendre. Un inconnu, lui, n'arrive jamais ici.
+ */
+export async function PATCH(req: Request, { params }: Params) {
+  const { slug } = await params
+  const moi = await quiAppelle(req)
+  if (!moi) return REFUS()
+
+  const site = await siteDe(slug)
+  if (!site) return REFUS()
+
+  let corps: Record<string, unknown>
+  try { corps = await req.json() } catch {
+    return NextResponse.json({ error: 'Envoi illisible.' }, { status: 400 })
+  }
+
+  const organisation = typeof corps.organisation === 'string' ? corps.organisation.trim() : ''
+  if (organisation.length < 2) {
+    return NextResponse.json({ error: 'Indiquez l’organisation que vous représentez.' }, { status: 400 })
+  }
+
+  const { data: deja } = await supabaseAdmin
+    .from('site_comptes').select('id,etat')
+    .eq('site_id', site.id).eq('user_id', moi.userId).maybeSingle()
+  const ligne = deja as { id: string; etat: string } | null
+  if (!ligne) return REFUS()
+
+  if (ligne.etat !== 'en_attente') {
+    return NextResponse.json({
+      error: 'Votre compte a déjà été examiné : l’organisation ne se modifie plus ici. Écrivez à la Centrale.',
+    }, { status: 409 })
+  }
+
+  // NI `role`, NI `etat`, NI `reference` : la liste des colonnes écrites est
+  // posée ici, en entier. Reprendre `corps` tel quel laisserait passer
+  // n'importe quelle colonne qu'on ajouterait un jour.
+  const { data, error } = await supabaseAdmin
+    .from('site_comptes')
+    .update({ organisation, maj_le: new Date().toISOString() })
+    .eq('id', ligne.id)
+    // LE FILTRE PAR PERSONNE RESTE, MÊME AVEC UN `id` : il vient de notre
+    // propre lecture, mais l'écrire dit que cette route ne touche jamais la
+    // ligne d'autrui.
+    .eq('user_id', moi.userId)
+    .select(VU)
+    .maybeSingle()
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 400 })
+  if (!data) return REFUS()
+  return NextResponse.json({ compte: data })
+}

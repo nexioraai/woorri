@@ -59,6 +59,12 @@ export type MotsEspace = {
   deconnexion: string
   erreur: string
   suivreDemande: string
+  // LOT 11 — les trois pages de l'espace. Une page qu'aucun lien n'atteint
+  // n'existe pas : c'est le defaut qui avait laisse `/appels-offres` hors du
+  // rideau du telephone pendant deux jours.
+  mesDemandes: string
+  mesReclamations: string
+  monProfil: string
 }
 
 export default function EspaceClient({
@@ -232,9 +238,18 @@ export default function EspaceClient({
           {mots.role} : {compte.role === 'fournisseur' ? mots.fournisseur : mots.structure}
           {compte.reference ? ` · ${compte.reference}` : ''}
         </p>
-        <a href={`${base}/demandes/suivi`} style={{ color: primary, fontWeight: 600 }}>
-          {mots.suivreDemande}
-        </a>
+        <nav style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {([
+            [`${base}/mes-demandes`, mots.mesDemandes],
+            [`${base}/mes-reclamations`, mots.mesReclamations],
+            [`${base}/mon-profil`, mots.monProfil],
+            [`${base}/demandes/suivi`, mots.suivreDemande],
+          ] as const).map(([href, libelle]) => (
+            <a key={href} href={href} style={{ color: primary, fontWeight: 600, textDecoration: 'none' }}>
+              {libelle} →
+            </a>
+          ))}
+        </nav>
       </div>
       {deconnexion}
     </div>

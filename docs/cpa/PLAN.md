@@ -102,7 +102,7 @@ un avis · un article · un produit · une province
 | 8 | Contact et demandes — référence générée automatiquement, et suivi de la demande | 10 | ✅ **FERMÉ** — **20/20 à l'adresse publique**. Les deux échecs rendent mot pour mot la même réponse ; le texte du demandeur ne sort jamais. |
 | 9 | Pages légales + plan du site engendré | 4 | ✅ **FERMÉ** — **20/20 à l'adresse publique**. Un brouillon ne laisse ni titre ni chemin dans le plan ; une route moteur s'efface si une page déclarée porte son chemin. |
 | 10 | **Authentification, rôles, habilitations** | 16 | ✅ **FERMÉ** — mécanique posée et mesurée (17 + 7 + 11 points). **Pas de preuve à l'écran** : rien n'est encore visible, c'est le lot 11 qui construit l'espace. Une dette nommée, voir §10. |
-| 11 | **Espace établissement** | 24 | 🔄 **ENTAMÉ** — tranche A bis : `/comptes/[slug]` au TABLEAU DE BORD (jamais dans `/edit`), pastille du nombre de demandes en attente. Tranche A : `/connexion`, `/inscription`, `/mot-de-passe-oublie`, `/espace-client` ; capacité `ouvre_des_comptes` (CPA seule, 1/42 vérifié) ; **dette §10 FERMÉE**. Restent `/mes-demandes`, `/mon-profil`, `/mes-documents`, `/mes-reclamations`. |
+| 11 | **Espace établissement** | 24 | 🔄 **ENTAMÉ** — tranche B : `/mes-demandes`, `/mes-reclamations`, `/mon-profil` (colonne `messages.type`, vocabulaire fermé). **`/mes-documents` NON FAIT** — voir §11. Tranche A bis : `/comptes/[slug]` au TABLEAU DE BORD (jamais dans `/edit`), pastille du nombre de demandes en attente. Tranche A : `/connexion`, `/inscription`, `/mot-de-passe-oublie`, `/espace-client` ; capacité `ouvre_des_comptes` (CPA seule, 1/42 vérifié) ; **dette §10 FERMÉE**. Restent `/mes-demandes`, `/mon-profil`, `/mes-documents`, `/mes-reclamations`. |
 | 12 | **Espace fournisseur + dépôt de pièces** | 30 | ⬜ |
 | 13 | **Soumission électronique des offres** | 30 | ⬜ |
 | 14 | **Administration — workflow, audit, tableau de bord** | 30 | ⬜ |
@@ -408,6 +408,36 @@ route : impossible de savoir si j'avance dans le plan ou si j'invente.
 Le ④ n'est pas une formalité : **six fois** sur ce chantier, la solution était
 déjà dans le dépôt et j'ai failli écrire un second système.
 
+
+---
+
+## §11 — QUESTION OUVERTE : `/mes-documents` N'A AUCUN MODÈLE DE DONNÉES
+
+**Inscrite le 9 novembre 2026, en livrant la tranche B du lot 11.**
+
+Le plan prévoit `/mes-documents` dans l'espace établissement. **Je ne l'ai
+pas construite, et c'est délibéré :** aucune table ne dit « ce document est
+destiné à ce compte ». Le seau `site_fichiers` sert les documents PUBLICS du
+site — dossiers de consultation, formulaires. Rien n'y rattache un fichier à
+une structure ou à un fournisseur.
+
+**Ce qu'il faudrait décider AVANT d'écrire une ligne**, et qui appartient à
+la CPA :
+
+1. **Qui dépose ?** La Centrale seule, ou la structure aussi (un bon de
+   commande signé, par exemple) ?
+2. **Qui voit ?** Un document est-il adressé à UN compte, à tous les comptes
+   d'un rôle, ou à toute une catégorie d'établissements ?
+3. **Combien de temps ?** Une facture de 2024 reste-t-elle consultable en
+   2030 ? La réponse change le stockage autant que l'écran.
+4. **Un document retiré disparaît-il, ou devient-il « retiré le … » ?** Les
+   deux sont défendables ; ils ne se rattrapent pas l'un l'autre après coup.
+
+**Pourquoi ne pas « commencer simple » :** un modèle posé au hasard se
+remplit, et se remplir le rend coûteux à défaire. Le catalogue public du lot
+6 n'a ni prix ni stock PAR CONSTRUCTION, et c'est ce qui le rend sûr. Un
+dossier de documents mal cadré produirait l'inverse : une table qu'on
+n'oserait plus toucher.
 
 ---
 

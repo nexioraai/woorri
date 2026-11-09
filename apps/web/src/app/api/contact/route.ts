@@ -36,7 +36,19 @@ const EMAIL_RE = /^[^\s@<>"']+@[^\s@<>"']+\.[^\s@<>"']+$/;
 
 export async function POST(req: NextRequest) {
   try {
-    const { slug, name, email, message } = await req.json()
+    const { slug, name, email, message, type } = await req.json()
+
+    // ── LOT 11 — UNE RÉCLAMATION N'EST PAS UNE DEMANDE.
+    //
+    // VOCABULAIRE FERMÉ, et fermé ICI autant qu'en base. La CHECK refuserait
+    // un mot inconnu (23514), mais la route rendrait alors une erreur de base
+    // à quelqu'un qui remplit un formulaire. On tranche avant.
+    //
+    // ET TOUT CE QUI N'EST PAS « reclamation » EST UNE DEMANDE : un champ
+    // absent, vide ou inventé ne doit pas empêcher un message de partir.
+    // Refuser l'envoi parce qu'une case cochée est mal orthographiée
+    // perdrait le message, et c'est le message qui compte.
+    const typeDemande = type === 'reclamation' ? 'reclamation' : 'demande'
 
     if (!slug || !name || !email || !message) {
       return NextResponse.json({ error: 'Missing fields' }, { status: 400 })
@@ -108,7 +120,7 @@ export async function POST(req: NextRequest) {
 
     const { data: enregistre, error: erreurEnregistrement } = await supabase
       .from('messages')
-      .insert({ site_slug: slug, name, email, message, reference })
+      .insert({ site_slug: slug, name, email, message, reference, type: typeDemande })
       .select('id,reference')
       .single()
 

@@ -22,6 +22,8 @@ let sitesPublic: ReponseTable = { data: null, error: null }
 let sitesTable: ReponseTable = { data: { ouvre_des_comptes: true }, error: null }
 let comptes: ReponseTable = { data: null, error: null }
 let insere: Record<string, unknown> | null = null
+let modifie: Record<string, unknown> | null = null
+let filtresMaj: string[] = []
 
 /** Qui le jeton désigne. `null` = jeton absent ou invalide. */
 let porteur: { id: string; email: string } | null = null
@@ -46,6 +48,19 @@ vi.mock('@/lib/supabase-admin', () => ({
       // `insert` n'est pas simulé par le harnais : on CAPTURE ce qui part,
       // parce que c'est exactement ce que la dette §10 concerne.
       return Object.assign(base, {
+        // `update` n'est pas simule par le harnais : on CAPTURE ce qui part
+        // ET les filtres poses -- c'est la regle « jamais la ligne d'autrui »
+        // qu'il faut rendre observable.
+        update: (ligne: Record<string, unknown>) => {
+          modifie = ligne
+          filtresMaj = []
+          const chaine: Record<string, unknown> = {
+            eq: (col: string) => { filtresMaj.push(col); return chaine },
+            select: () => chaine,
+            maybeSingle: async () => ({ data: { id: 'c1', ...ligne }, error: null }),
+          }
+          return chaine
+        },
         insert: (ligne: Record<string, unknown>) => {
           insere = ligne
           return {
@@ -59,7 +74,7 @@ vi.mock('@/lib/supabase-admin', () => ({
   },
 }))
 
-import { GET, POST } from '../route'
+import { GET, POST, PATCH } from '../route'
 
 const SITE = { id: 'site-1', slug: 'cpa' }
 const params = { params: Promise.resolve({ slug: 'cpa' }) }
@@ -76,6 +91,8 @@ beforeEach(() => {
   sitesTable = { data: { ouvre_des_comptes: true }, error: null }
   comptes = { data: null, error: null }
   insere = null
+  modifie = null
+  filtresMaj = []
   for (const k of Object.keys(journal.filtres)) delete journal.filtres[k]
 })
 
@@ -225,5 +242,76 @@ describe('demander un accès', () => {
     const r = await POST(new Request('https://x.test/', { method: 'POST', body: '{}' }), params)
     expect(r.status).toBe(403)
     expect(insere).toBeNull()
+  })
+})
+
+// ============================================================
+// LOT 11 — L'ORGANISATION SE FIGE À L'EXAMEN.
+//
+// Avant l'examen, c'est une faute de frappe qu'on corrige. Après, c'est ce
+// que la Centrale a APPROUVÉ : la changer déplacerait silencieusement qui
+// l'on représente, sans nouvel examen — exactement la raison pour laquelle
+// le rôle ne se modifie jamais.
+// ============================================================
+
+describe('corriger son organisation', () => {
+  const patch = (corps: unknown) =>
+    new Request('https://x.test/api/sites/cpa/mon-compte', {
+      method: 'PATCH',
+      headers: { authorization: 'Bearer jeton-valable', 'content-type': 'application/json' },
+      body: JSON.stringify(corps),
+    })
+
+  it('🔴 tant que la demande ATTEND, elle se corrige', async () => {
+    comptes = { data: { id: 'c1', etat: 'en_attente' }, error: null }
+    const r = await PATCH(patch({ organisation: 'Hôpital général de Moundou' }), params)
+    expect(r.status).toBe(200)
+    expect(modifie).toMatchObject({ organisation: 'Hôpital général de Moundou' })
+  })
+
+  it('🔴 une fois le compte ACTIF, elle ne bouge plus — et on dit pourquoi', async () => {
+    comptes = { data: { id: 'c1', etat: 'actif' }, error: null }
+    const r = await PATCH(patch({ organisation: 'Autre chose' }), params)
+    expect(r.status).toBe(409)
+    expect(modifie).toBeNull()
+    // La personne est authentifiée et c'est SA ligne : lui cacher la raison
+    // la ferait réessayer sans comprendre.
+    expect(String((await r.json()).error).length).toBeGreaterThan(30)
+  })
+
+  it('🔴 un compte SUSPENDU ne se corrige pas non plus', async () => {
+    // L'ORGANISATION DOIT ÊTRE VALABLE pour que ce test mesure l'ÉTAT.
+    // Premier jet : « X », un seul signe — refusé en 400 par la validation,
+    // bien avant la règle que ce test prétend tenir. Il mesurait la longueur
+    // en croyant mesurer la suspension.
+    comptes = { data: { id: 'c1', etat: 'suspendu' }, error: null }
+    expect((await PATCH(patch({ organisation: 'Clinique du Centre' }), params)).status).toBe(409)
+    expect(modifie).toBeNull()
+  })
+
+  it('🔴 NI le rôle, NI l’état, NI la référence ne partent', async () => {
+    // Reprendre le corps tel quel laisserait passer n'importe quelle colonne
+    // qu'on ajouterait un jour.
+    comptes = { data: { id: 'c1', etat: 'en_attente' }, error: null }
+    await PATCH(patch({ organisation: 'Hôpital', role: 'agent', etat: 'actif', reference: 'F-001' }), params)
+    expect(Object.keys(modifie ?? {}).sort()).toEqual(['maj_le', 'organisation'])
+  })
+
+  it('🔴 l’écriture est filtrée par PERSONNE, jamais par le seul `id`', async () => {
+    comptes = { data: { id: 'c1', etat: 'en_attente' }, error: null }
+    await PATCH(patch({ organisation: 'Hôpital' }), params)
+    expect(filtresMaj).toContain('user_id')
+  })
+
+  it('🔴 sans jeton, rien n’est modifié', async () => {
+    const r = await PATCH(new Request('https://x.test/', { method: 'PATCH', body: '{}' }), params)
+    expect(r.status).toBe(403)
+    expect(modifie).toBeNull()
+  })
+
+  it('🔴 une organisation vide est refusée', async () => {
+    comptes = { data: { id: 'c1', etat: 'en_attente' }, error: null }
+    expect((await PATCH(patch({ organisation: ' ' }), params)).status).toBe(400)
+    expect(modifie).toBeNull()
   })
 })
