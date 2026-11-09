@@ -35,13 +35,21 @@ const DESSINS: Record<CleDeCompte, React.ReactNode> = {
     </>
   ),
 
-  // CE QUI EST OUVERT AUX OFFRES — la porte ouverte, pas une coche : une
-  // coche dit « validé », et un avis ouvert n'est validé de rien.
+  // CE QUI EST OUVERT AUX OFFRES — le cadenas OUVERT.
+  //
+  // PAS UNE COCHE : une coche dit « validé », et un avis ouvert aux offres
+  // n'est validé de rien.
+  //
+  // ET PLUS UNE PORTE. Premier jet, le 2026-11-09 : une porte entrebâillée.
+  // Vu sur la capture de la page en ligne, à 20 px, elle se lisait comme un
+  // fanion. Un pictogramme qu'on doit deviner coûte plus d'attention qu'il
+  // n'en fait gagner — autant n'en mettre aucun. L'anse relevée sur le côté
+  // se lit à n'importe quelle taille, et elle dit littéralement « ouvert ».
   ouverts: (
     <>
-      <path d="M3.4 20.6h17.2" />
-      <path d="M5.6 20.6V4.9a1.4 1.4 0 0 1 1.7-1.4l8 1.6a1.4 1.4 0 0 1 1.1 1.4v14.1" />
-      <path d="M13.6 12.3v1.6" />
+      <path d="M6.3 11.2h10.4a1.5 1.5 0 0 1 1.5 1.5v6.4a1.5 1.5 0 0 1-1.5 1.5H6.3a1.5 1.5 0 0 1-1.5-1.5v-6.4a1.5 1.5 0 0 1 1.5-1.5z" />
+      <path d="M14.2 11.2V8a3.4 3.4 0 0 1 6.8 0v1.5" />
+      <path d="M11.5 14.5v2.3" />
     </>
   ),
 
