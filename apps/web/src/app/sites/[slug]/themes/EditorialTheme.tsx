@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 import { Instagram, Facebook, TikTok, WhatsApp } from './BrandIcons'
 import MobileNav from './MobileNav'
+import DessinDeMenu from './DessinDeMenu'
 import ContactForm from '../ContactForm'
 import {
   WOORRI_SITE_URL,
@@ -135,11 +136,15 @@ export default function EditorialTheme({ site, hasAvis = false, host = null, men
             nom={site.name}
             logo={site.logo_url}
           slug={site.slug}
-            className="font-serif text-2xl tracking-tight font-medium"
+            className={ancresEnBarre
+              ? "font-serif text-2xl tracking-tight font-medium"
+              : "font-serif text-xl leading-tight tracking-tight font-medium"}
             style={{ fontFamily: 'var(--font-fraunces), serif' }}
           />
-          <nav className="hidden md:flex items-center gap-10 text-sm font-medium text-neutral-700">
-            {!hidden('Home') && <a href="#home" className="hover:text-black transition-colors">{t.nav.home}</a>}
+          <nav className={ancresEnBarre
+              ? "hidden md:flex items-center gap-10 text-sm font-medium text-neutral-700"
+              : "hidden xl:flex items-center gap-4 text-[13px] font-medium text-neutral-700"}>
+            {!hidden('Home') && <a href="#home" className="hover:text-black transition-colors inline-flex items-center gap-[7px] whitespace-nowrap"><DessinDeMenu chemin="accueil" couleur={primary} />{t.nav.home}</a>}
           {/* LOT 3 — 7 novembre 2026. Quand le site DÉCLARE ses pages, la barre
               du haut leur appartient. Les ancres (#about, #faq…) encombraient
               le menu et collaient l'enseigne. Elles ne DISPARAISSENT pas : les
@@ -161,15 +166,15 @@ export default function EditorialTheme({ site, hasAvis = false, host = null, men
           </>)}
             {/* LOT 2 — les pages DÉCLARÉES, avec leurs sous-menus. Elles
                 précèdent Contact, qui reste la dernière entrée. */}
-            <MenuDeclare site={site} host={host} entrees={menu} className={"hover:text-black transition-colors"} />
-            {!hidden('AppelsOffres') && <LienAppelsOffres site={site} host={host} className={"hover:text-black transition-colors"} />}
-            {!hidden('Contact') && <a href="#contact" className="hover:text-black transition-colors">{t.nav.contact}</a>}
+            <MenuDeclare site={site} host={host} entrees={menu} className={"hover:text-black transition-colors"} couleur={primary} />
+            {!hidden('AppelsOffres') && <LienAppelsOffres site={site} host={host} className={"hover:text-black transition-colors"} couleur={primary} />}
+            {!hidden('Contact') && <a href="#contact" className="hover:text-black transition-colors inline-flex items-center gap-[7px] whitespace-nowrap"><DessinDeMenu chemin="contact" couleur={primary} />{t.nav.contact}</a>}
           </nav>
         </div>
       </header>
 
       {/* Mobile Navigation */}
-      <MobileNav site={site} cta={cta} ctaHref={ctaHref} pagesDeclarees={menu} host={host} />
+      <MobileNav site={site} seuil={ancresEnBarre ? "md" : "xl"} cta={cta} ctaHref={ctaHref} pagesDeclarees={menu} host={host} />
 
       {/* =================== HERO =================== */}
       <main>

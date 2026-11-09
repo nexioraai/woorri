@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import { Instagram, Facebook, TikTok, WhatsApp } from './BrandIcons'
 import MobileNav from './MobileNav'
+import DessinDeMenu from './DessinDeMenu'
 import ContactForm from '../ContactForm'
 import {
   type Site,
@@ -123,7 +124,9 @@ export default function AuroraTheme({ site, hasAvis = false, host = null, menu =
               slug={site.slug}
               /* En-tête plus bas que les autres (h-16) : le logo suit. */
               hauteur={30}
-              className="text-xl md:text-2xl font-semibold tracking-tight shrink-0"
+              className={ancresEnBarre
+                ? "text-xl md:text-2xl font-semibold tracking-tight shrink-0"
+                : "text-base leading-tight font-semibold tracking-tight"}
             />
             {isShop && (
               <span className="hidden sm:inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1 rounded-full" style={{ backgroundColor: `color-mix(in srgb, ${primary} 10%, white)`, color: primary }}>
@@ -132,8 +135,10 @@ export default function AuroraTheme({ site, hasAvis = false, host = null, menu =
               </span>
             )}
           </div>
-          <nav className="hidden md:flex items-center gap-8 text-sm font-medium text-neutral-600">
-            {!hidden('Home') && <a href="#home" className="hover:text-neutral-900 transition-colors">{t.nav.home}</a>}
+          <nav className={ancresEnBarre
+              ? "hidden md:flex items-center gap-8 text-sm font-medium text-neutral-600"
+              : "hidden xl:flex items-center gap-4 text-[13px] font-medium text-neutral-600"}>
+            {!hidden('Home') && <a href="#home" className="hover:text-neutral-900 transition-colors inline-flex items-center gap-[7px] whitespace-nowrap"><DessinDeMenu chemin="accueil" couleur={primary} />{t.nav.home}</a>}
           {/* LOT 3 — 7 novembre 2026. Quand le site DÉCLARE ses pages, la barre
               du haut leur appartient. Les ancres (#about, #faq…) encombraient
               le menu et collaient l'enseigne. Elles ne DISPARAISSENT pas : les
@@ -148,9 +153,9 @@ export default function AuroraTheme({ site, hasAvis = false, host = null, menu =
           </>)}
             {/* LOT 2 — les pages DÉCLARÉES, avec leurs sous-menus. Elles
                 précèdent Contact, qui reste la dernière entrée. */}
-            <MenuDeclare site={site} host={host} entrees={menu} className={"hover:text-neutral-900 transition-colors"} />
-            {!hidden('AppelsOffres') && <LienAppelsOffres site={site} host={host} className={"hover:text-neutral-900 transition-colors"} />}
-            {!hidden('Contact') && <a href="#contact" className="hover:text-neutral-900 transition-colors">{t.nav.contact}</a>}
+            <MenuDeclare site={site} host={host} entrees={menu} className={"hover:text-neutral-900 transition-colors"} couleur={primary} />
+            {!hidden('AppelsOffres') && <LienAppelsOffres site={site} host={host} className={"hover:text-neutral-900 transition-colors"} couleur={primary} />}
+            {!hidden('Contact') && <a href="#contact" className="hover:text-neutral-900 transition-colors inline-flex items-center gap-[7px] whitespace-nowrap"><DessinDeMenu chemin="contact" couleur={primary} />{t.nav.contact}</a>}
           </nav>
           <a
             href={ctaHref}
@@ -162,7 +167,7 @@ export default function AuroraTheme({ site, hasAvis = false, host = null, menu =
         </div>
       </header>
 
-      <MobileNav site={site} cta={cta} ctaHref={ctaHref} pagesDeclarees={menu} host={host} />
+      <MobileNav site={site} seuil={ancresEnBarre ? "md" : "xl"} cta={cta} ctaHref={ctaHref} pagesDeclarees={menu} host={host} />
 
       <main id="home">
         {isShop ? (

@@ -2,6 +2,7 @@ import Link from 'next/link'
 import type { Site } from './shared'
 import { resolveSiteBaseUrl } from './shared'
 import { getAvisLabels } from '../appels-offres/labels'
+import DessinDeMenu from './DessinDeMenu'
 
 // ============================================================
 // A2 d3c -- LE LIEN DE MENU VERS LES APPELS D'OFFRES.
@@ -31,10 +32,20 @@ export default function LienAppelsOffres({
   site,
   host,
   className,
+  couleur,
 }: {
   site: Site
   host: string | null
   className?: string
+  /**
+   * LOT 15.7 — la teinte du pictogramme, decidee par le theme.
+   *
+   * Cette entree ne passe PAS par le menu declare : elle avait donc ete
+   * oubliee par le lot 15.1, et la barre montrait quatre icones sur sept.
+   * Une barre ou une entree sur deux porte une icone se lit comme un oubli,
+   * pas comme un choix.
+   */
+  couleur?: string | null
 }) {
   // `!== true` et non `!x` : une valeur absente et une valeur fausse se
   // valent ici, mais l'ecrire ainsi dit que seule une declaration EXPLICITE
@@ -43,7 +54,12 @@ export default function LienAppelsOffres({
 
   const base = resolveSiteBaseUrl(site, host)
   return (
-    <Link href={`${base}/appels-offres`} className={className}>
+    <Link
+      href={`${base}/appels-offres`}
+      className={className}
+      style={{ display: 'inline-flex', alignItems: 'center', gap: 7, whiteSpace: 'nowrap' }}
+    >
+      <DessinDeMenu chemin="appels-offres" couleur={couleur} />
       {getAvisLabels(site.lang).titre}
     </Link>
   )

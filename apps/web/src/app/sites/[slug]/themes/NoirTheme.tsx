@@ -6,6 +6,7 @@ import { ArrowRight, Phone, Mail, MapPin, ShoppingBag } from 'lucide-react'
 import { motion, useReducedMotion, useScroll, useTransform, useMotionTemplate, type MotionValue } from 'framer-motion'
 import { Instagram, Facebook, TikTok, WhatsApp } from './BrandIcons'
 import MobileNav from './MobileNav'
+import DessinDeMenu from './DessinDeMenu'
 import ClickableProductCard from './ClickableProductCard'
 import ContactForm from '../ContactForm'
 import {
@@ -267,11 +268,15 @@ export default function NoirTheme({ site, hasAvis = false, host = null, menu = [
             nom={site.name}
             logo={site.logo_url}
           slug={site.slug}
-            className="text-2xl tracking-tight font-medium"
+            className={ancresEnBarre
+              ? "text-2xl tracking-tight font-medium"
+              : "text-xl leading-tight tracking-tight font-medium"}
             style={{ fontFamily: 'var(--font-fraunces), serif' }}
           />
-          <nav className="hidden md:flex items-center gap-10 text-sm font-medium" style={{ color: 'rgba(245,243,238,0.72)' }}>
-            {!hidden('Home') && <NavLink href="#home">{t.nav.home}</NavLink>}
+          <nav className={ancresEnBarre
+              ? "hidden md:flex items-center gap-10 text-sm font-medium"
+              : "hidden xl:flex items-center gap-4 text-[13px] font-medium"} style={{ color: 'rgba(245,243,238,0.72)' }}>
+            {!hidden('Home') && <NavLink href="#home"><span className="inline-flex items-center gap-[7px] whitespace-nowrap"><DessinDeMenu chemin="accueil" />{t.nav.home}</span></NavLink>}
           {/* LOT 3 — 7 novembre 2026. Quand le site DÉCLARE ses pages, la barre
               du haut leur appartient. Les ancres (#about, #faq…) encombraient
               le menu et collaient l'enseigne. Elles ne DISPARAISSENT pas : les
@@ -293,12 +298,12 @@ export default function NoirTheme({ site, hasAvis = false, host = null, menu = [
                 précèdent Contact, qui reste la dernière entrée. */}
             <MenuDeclare site={site} host={host} entrees={menu} />
             {!hidden('AppelsOffres') && <LienAppelsOffres site={site} host={host} />}
-            {!hidden('Contact') && <NavLink href="#contact">{t.nav.contact}</NavLink>}
+            {!hidden('Contact') && <NavLink href="#contact"><span className="inline-flex items-center gap-[7px] whitespace-nowrap"><DessinDeMenu chemin="contact" />{t.nav.contact}</span></NavLink>}
           </nav>
         </div>
       </motion.header>
 
-      <MobileNav site={site} cta={cta} ctaHref={ctaHref} variant="dark" pagesDeclarees={menu} host={host} />
+      <MobileNav site={site} seuil={ancresEnBarre ? "md" : "xl"} cta={cta} ctaHref={ctaHref} variant="dark" pagesDeclarees={menu} host={host} />
 
       <main>
         {/* =================== HERO — l'objet qui deborde =================== */}

@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import type { Site } from './shared'
-import { pictogrammeDe } from './pictogrammeMenu'
+import DessinDeMenu from './DessinDeMenu'
 import { resolveSiteBaseUrl } from './shared'
 import type { EntreeMenu } from '../pages/fetchPage'
 
@@ -30,36 +30,26 @@ import type { EntreeMenu } from '../pages/fetchPage'
 // « performante sur mobile ou connexion lente ».
 // ============================================================
 
-/**
- * LOT 15.1 — LE PICTOGRAMME D'UNE RUBRIQUE.
- *
- * `aria-hidden` : le libellé dit déjà la rubrique, et un lecteur d'écran
- * qui annoncerait « losange noir Nos activités » ajouterait du bruit, pas
- * de l'information.
- *
- * Rien ne s'affiche si le chemin est inconnu : aucun pictogramme vaut mieux
- * qu'un faux, parce que le lecteur croira le faux.
- */
-function Pictogramme({ chemin }: { chemin: string }) {
-  const signe = pictogrammeDe(chemin)
-  if (!signe) return null
-  return (
-    <span aria-hidden="true" style={{ marginInlineEnd: 6, opacity: 0.65, fontSize: '0.95em' }}>
-      {signe}
-    </span>
-  )
-}
-
 export default function MenuDeclare({
   site,
   host,
   entrees,
   className,
+  couleur,
 }: {
   site: Site
   host: string | null
   entrees: EntreeMenu[]
   className?: string
+  /**
+   * LOT 15.7 — la teinte des pictogrammes.
+   *
+   * Seul le thème sait sur quel fond il pose sa barre. Celui qui la pose sur
+   * du clair passe la couleur du site ; un thème sombre ne passe rien, et le
+   * dessin reprend la couleur du texte. Décider ici aurait rendu les
+   * pictogrammes invisibles sur le thème noir.
+   */
+  couleur?: string | null
 }) {
   if (!entrees.length) return null
 
@@ -78,8 +68,17 @@ export default function MenuDeclare({
         // fleche qui n'ouvre rien -- la promesse d'un contenu absent.
         if (!enfants.length) {
           return (
-            <Link key={r.chemin} href={`${base}/${r.chemin}`} className={className}>
-              <Pictogramme chemin={r.chemin} />
+            <Link
+              key={r.chemin}
+              href={`${base}/${r.chemin}`}
+              className={className}
+              // LOT 15.7 — `nowrap`. Sans lui, « Qui sommes-nous » se coupe en
+              // deux lignes dès que la barre est serrée, et la dernière entrée
+              // sort du cadre : mesuré en ligne le 2026-11-09, « Contact »
+              // tranché par le bord de l'en-tête.
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 7, whiteSpace: 'nowrap' }}
+            >
+              <DessinDeMenu chemin={r.chemin} couleur={couleur} />
               {r.titre}
             </Link>
           )
@@ -87,10 +86,23 @@ export default function MenuDeclare({
 
         return (
           <details key={r.chemin} style={{ position: 'relative', display: 'inline-block' }}>
-            <summary className={className} style={{ cursor: 'pointer', listStyle: 'none' }}>
-              <Pictogramme chemin={r.chemin} />
+            <summary
+              className={className}
+              style={{
+                cursor: 'pointer', listStyle: 'none',
+                display: 'inline-flex', alignItems: 'center', gap: 7, whiteSpace: 'nowrap',
+              }}
+            >
+              <DessinDeMenu chemin={r.chemin} couleur={couleur} />
               {r.titre}
-              <span aria-hidden="true" style={{ fontSize: '0.75em', marginInlineStart: 4 }}>▾</span>
+              {/* LE CHEVRON EST UN DESSIN LUI AUSSI. En caractère, il hérite
+                  du même pari de police que les pictogrammes du 15.1. */}
+              <svg aria-hidden="true" focusable="false" width="10" height="10" viewBox="0 0 24 24"
+                fill="none" stroke="currentColor" strokeWidth={2.6}
+                strokeLinecap="round" strokeLinejoin="round"
+                style={{ flexShrink: 0, opacity: 0.55 }}>
+                <path d="M5 8.5 12 15.5l7-7" />
+              </svg>
             </summary>
             <div
               style={{

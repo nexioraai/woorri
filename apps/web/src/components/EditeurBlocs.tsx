@@ -29,6 +29,8 @@ const ETIQUETTES: Record<string, string> = {
   partenaires: 'Partenaires',
 }
 
+import { champsDuBloc, champEstUnFichier, poser, type Chemin } from './edit/champsDeBloc'
+
 /** Les squelettes neufs — un par type, tous valides dès la création. */
 const NEUF: Record<string, Bloc> = {
   titre: { type: 'titre', texte: 'Nouveau sous-titre' },
@@ -62,28 +64,8 @@ const NEUF: Record<string, Bloc> = {
   ] },
 }
 
-type Chemin = (string | number)[]
 
 /** Parcourt un bloc et rend un champ par TEXTE trouvé, quelle que soit sa profondeur. */
-function champs(v: unknown, base: Chemin = []): { chemin: Chemin; valeur: string }[] {
-  if (typeof v === 'string') return [{ chemin: base, valeur: v }]
-  if (Array.isArray(v)) return v.flatMap((e, i) => champs(e, [...base, i]))
-  if (v && typeof v === 'object')
-    return Object.entries(v as Record<string, unknown>)
-      .filter(([k]) => k !== 'type')
-      .flatMap(([k, e]) => champs(e, [...base, k]))
-  return []
-}
-
-function poser(obj: unknown, chemin: Chemin, valeur: string): unknown {
-  if (chemin.length === 0) return valeur
-  const [t, ...reste] = chemin
-  if (Array.isArray(obj)) {
-    const c = [...obj]; c[t as number] = poser(c[t as number], reste, valeur); return c
-  }
-  return { ...(obj as object), [t as string]: poser((obj as Record<string, unknown>)[t as string], reste, valeur) }
-}
-
 export default function EditeurBlocs({
   blocs, onChange, slug,
 }: { blocs: Bloc[]; onChange: (b: Bloc[]) => void; slug?: string }) {
@@ -125,13 +107,19 @@ export default function EditeurBlocs({
           </div>
           {ouvert === i && (
             <div className="px-3 pb-3 space-y-2">
-              {champs(b).map(({ chemin, valeur }) => {
+              {champsDuBloc(b).map(({ chemin, valeur }) => {
                 const cle = `${i}.${chemin.join('.')}`
-                // UN CHAMP `url` N'EST PAS UN CHAMP TEXTE.
+                // UN CHAMP DE FICHIER N'EST PAS UN CHAMP TEXTE.
                 // Demander une adresse à un client, c'est lui demander
                 // d'héberger son PDF ailleurs — c'est-à-dire de ne pas le
                 // faire. Ici il téléverse, et l'adresse se remplit seule.
-                const estFichier = chemin[chemin.length - 1] === 'url'
+                //
+                // MAIS LE NOM DU CHAMP NE SUFFIT PAS À DÉCIDER. Deux défauts
+                // mesurés le 2026-11-09 sur le bloc « partenaires » : son
+                // `logo` — un vrai fichier — n'avait aucun téléverseur, et son
+                // `url` — l'adresse du SITE du partenaire, chez le partenaire —
+                // s'en voyait proposer un. Le type du bloc décide avec le nom.
+                const estFichier = champEstUnFichier(b.type, chemin[chemin.length - 1])
                 return (
                 <label key={cle} className="block">
                   <span className="text-[11px] uppercase tracking-wide opacity-55">{chemin.filter((s) => typeof s === 'string').join(' · ') || 'texte'}</span>

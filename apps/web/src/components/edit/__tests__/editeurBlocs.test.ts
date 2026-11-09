@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { TYPES_DE_BLOC } from '../../../app/sites/[slug]/pages/blocs';
+import { champEstUnFichier, champsDuBloc } from '../champsDeBloc';
 
 const SRC = readFileSync(join(__dirname, '..', '..', 'EditeurBlocs.tsx'), 'utf-8');
 const PAGES = readFileSync(join(__dirname, '..', '..', 'EditeurPages.tsx'), 'utf-8');
@@ -122,8 +123,85 @@ describe('l’écran de téléversement', () => {
     expect(rech.length).toBeGreaterThanOrEqual(3);
   });
 
-  it('🔴 un champ `url` ouvre le téléversement au lieu d’exiger une adresse', () => {
+  it('🔴 un champ de fichier ouvre le téléversement au lieu d’exiger une adresse', () => {
+    // L'ASSERTION DE FORME EST REMPLACÉE, PAS SUPPRIMÉE. Elle reconnaissait
+    // l'expression `chemin[chemin.length - 1] === 'url'` dans la source :
+    // elle mesurait l'orthographe du code, et elle serait restée verte le
+    // jour où cette règle aurait eu raison de changer. La perte qu'elle
+    // couvrait — plus de téléverseur du tout — est couverte ci-dessous en
+    // APPELANT la règle, plus la présence du composant.
     expect(SRC).toContain('TeleverseurFichiers');
-    expect(SRC).toMatch(/chemin\[chemin\.length\s*-\s*1\]\s*===\s*'url'/);
+    expect(champEstUnFichier('documents', 'url')).toBe(true);
+    expect(champEstUnFichier('galerie', 'url')).toBe(true);
+    expect(champEstUnFichier('image', 'url')).toBe(true);
+  });
+});
+
+// ============================================================
+// LOT 15.7 — LE NOM DU CHAMP NE SUFFIT PAS À DÉCIDER.
+//
+// Deux défauts mesurés le 2026-11-09 sur le bloc « partenaires », tous deux
+// causés par une règle qui ne regardait que le nom du champ.
+// ============================================================
+
+describe('le téléverseur se pose sur les fichiers, et seulement eux', () => {
+  it('🔴 le LOGO d’un partenaire se téléverse', () => {
+    // Sans ça, le client doit l'héberger ailleurs — c'est-à-dire renoncer.
+    expect(champEstUnFichier('partenaires', 'logo')).toBe(true);
+  });
+
+  it('🔴 l’ADRESSE d’un partenaire ne se téléverse PAS', () => {
+    // C'est le site du partenaire, chez le partenaire. Proposer un
+    // téléverseur lui ferait croire qu'il doit nous confier le site d'autrui.
+    expect(champEstUnFichier('partenaires', 'url')).toBe(false);
+  });
+
+  it('🔴 un champ quelconque n’ouvre rien', () => {
+    for (const [t, c] of [['partenaires', 'nom'], ['texte', 'texte'], ['documents', 'format']]) {
+      expect(champEstUnFichier(t, c), `${t}.${c} ouvre un téléverseur`).toBe(false);
+    }
+  });
+
+  it('🔴 aucun type n’ouvre un téléverseur sans être au registre', () => {
+    // La correspondance est FERMÉE dans les deux sens : un type absent du
+    // registre ne reçoit rien, quel que soit le nom de ses champs.
+    for (const t of TYPES_DE_BLOC) {
+      for (const c of ['url', 'logo', 'src']) {
+        const attendu = ['documents', 'image', 'galerie'].includes(t) && c === 'url'
+          || t === 'partenaires' && c === 'logo';
+        expect(champEstUnFichier(t, c), `${t}.${c}`).toBe(attendu);
+      }
+    }
+  });
+});
+
+describe('un champ facultatif absent reste ATTEIGNABLE', () => {
+  it('🔴 un partenaire sans logo se voit quand même proposer logo ET adresse', () => {
+    // `champs()` ne marche que sur les clés qui EXISTENT : le client voyait
+    // un bloc modifiable et une fonction inatteignable.
+    const bloc = { type: 'partenaires', items: [{ nom: 'OMS' }] } as unknown as Parameters<typeof champsDuBloc>[0];
+    const chemins = champsDuBloc(bloc).map((c) => c.chemin.join('.'));
+    expect(chemins).toContain('items.0.logo');
+    expect(chemins).toContain('items.0.url');
+  });
+
+  it('🔴 un partenaire qui a déjà son logo ne le voit pas proposé DEUX fois', () => {
+    const bloc = { type: 'partenaires', items: [{ nom: 'OMS', logo: '/oms.png' }] } as unknown as Parameters<typeof champsDuBloc>[0];
+    const chemins = champsDuBloc(bloc).map((c) => c.chemin.join('.'));
+    expect(chemins.filter((c) => c === 'items.0.logo')).toHaveLength(1);
+  });
+
+  it('🔴 les champs remplis passent AVANT les champs vides', () => {
+    // Un champ vide en tête d'un bloc déjà rempli se lit comme une erreur de
+    // chargement.
+    const bloc = { type: 'partenaires', items: [{ nom: 'OMS' }] } as unknown as Parameters<typeof champsDuBloc>[0];
+    const chemins = champsDuBloc(bloc).map((c) => c.chemin.join('.'));
+    expect(chemins.indexOf('items.0.nom')).toBeLessThan(chemins.indexOf('items.0.logo'));
+  });
+
+  it('🔴 un type SANS champ facultatif déclaré n’en gagne aucun', () => {
+    const bloc = { type: 'documents', items: [{ nom: 'Doc', url: '/d.pdf' }] } as unknown as Parameters<typeof champsDuBloc>[0];
+    expect(champsDuBloc(bloc).map((c) => c.chemin.join('.')).sort())
+      .toEqual(['items.0.nom', 'items.0.url']);
   });
 });

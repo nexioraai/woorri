@@ -1,5 +1,5 @@
 // ============================================================================
-// LOT 15.1 — UN PICTOGRAMME PAR ENTRÉE DE MENU.
+// LOT 15.1 / 15.7 — UN PICTOGRAMME PAR ENTRÉE DE MENU.
 //
 // EPSS en pose un devant chaque rubrique : maison, bâtiment, mégaphone,
 // document, dossier, journal, téléphone. Ça aide à retrouver une rubrique
@@ -13,8 +13,18 @@
 // icône de téléphone sur une page qui n'est pas « contact » trompe le
 // lecteur plus qu'elle ne l'aide, et il la croira.
 //
-// CE SONT DES CARACTÈRES, jamais une image à charger : rien à télécharger,
-// rien qui manque si le réseau est lent.
+// CE FICHIER NOMME, IL NE DESSINE PAS. Le tracé est dans
+// `PictogrammeMenu.tsx`. La séparation n'est pas de la mise en ordre : elle
+// permet au cliquet d'énumérer les DEUX listes et d'exiger qu'elles
+// coïncident — un nom sans dessin ne rendrait rien, et personne ne le
+// verrait.
+//
+// ── CE QUI A CHANGÉ LE 2026-11-09, ET POURQUOI (LOT 15.7).
+//
+// La version du 15.1 renvoyait des CARACTÈRES — ▣ ◈ ▤ ◆. Mesuré en ligne,
+// rendu Safari : des carrés gris. La police de la vitrine n'a pas de glyphe
+// pour ces signes et sert sa forme la plus pauvre. Un pictogramme confié à
+// la police du lecteur est un pari, pas un pictogramme.
 // ============================================================================
 
 /**
@@ -33,57 +43,77 @@ function racine(chemin: string): string {
     .trim()
 }
 
+/** Les dessins disponibles. Ajouter un nom ici EXIGE d'ajouter son tracé. */
+export type NomDePictogramme =
+  | 'maison'
+  | 'immeuble'
+  | 'activite'
+  | 'colis'
+  | 'camion'
+  | 'document'
+  | 'journal'
+  | 'dossier'
+  | 'telephone'
+  | 'ecusson'
+  | 'plan'
+
 /**
  * La correspondance, FERMÉE.
  *
  * Les clés sont les racines de chemin que le générateur produit lui-même
  * pour un site institutionnel. Tout le reste ne reçoit rien.
  */
-const PICTOGRAMMES: Record<string, string> = {
+const PICTOGRAMMES: Record<string, NomDePictogramme> = {
+  // L'accueil. Il n'est pas une page déclarée — c'est une ancre — mais les
+  // quatre vitrines l'affichent dans la même barre, et une barre où une
+  // entrée sur sept n'a pas d'icône se lit comme un oubli.
+  accueil: 'maison',
+  home: 'maison',
+
   // Qui l'organisation est
-  'qui-sommes-nous': '▣',
-  'a-propos': '▣',
-  presentation: '▣',
+  'qui-sommes-nous': 'immeuble',
+  'a-propos': 'immeuble',
+  presentation: 'immeuble',
 
   // Ce qu'elle fait
-  activites: '◈',
-  services: '◈',
-  missions: '◈',
+  activites: 'activite',
+  services: 'activite',
+  missions: 'activite',
 
   // Ce qu'elle fournit
-  catalogue: '▤',
-  produits: '▤',
+  catalogue: 'colis',
+  produits: 'colis',
 
-  // Ce qu'elle achète
-  'appels-offres': '◉',
-  marches: '◉',
-  fournisseurs: '◆',
+  // Ce qu'elle achète, et auprès de qui
+  'appels-offres': 'document',
+  marches: 'document',
+  fournisseurs: 'camion',
 
   // Ce qu'elle publie
-  actualites: '◰',
-  blog: '◰',
-  publications: '◰',
-  documents: '▥',
-  ressources: '▥',
+  actualites: 'journal',
+  blog: 'journal',
+  publications: 'journal',
+  documents: 'dossier',
+  ressources: 'dossier',
 
   // Comment la joindre
-  contact: '✆',
-  'nous-contacter': '✆',
+  contact: 'telephone',
+  'nous-contacter': 'telephone',
 
   // Les pages de pied
-  'mentions-legales': '§',
-  confidentialite: '§',
-  accessibilite: '§',
-  'plan-du-site': '⌗',
+  'mentions-legales': 'ecusson',
+  confidentialite: 'ecusson',
+  accessibilite: 'ecusson',
+  'plan-du-site': 'plan',
 }
 
 /**
- * Le pictogramme d'une entrée, ou `null`.
+ * Le nom du pictogramme d'une entrée, ou `null`.
  *
  * `null` est une réponse, pas un échec : l'appelant n'affiche alors rien,
  * et l'entrée garde son libellé seul.
  */
-export function pictogrammeDe(chemin: string): string | null {
+export function pictogrammeDe(chemin: string): NomDePictogramme | null {
   return PICTOGRAMMES[racine(chemin)] ?? null
 }
 

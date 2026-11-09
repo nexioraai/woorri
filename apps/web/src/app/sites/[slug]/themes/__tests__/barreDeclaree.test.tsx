@@ -54,9 +54,21 @@ const THEMES: Array<[string, (s: Site, m: EntreeMenu[]) => string]> = [
   ['Aurora', (s, m) => renderToStaticMarkup(<CartProvider><AuroraTheme site={s} menu={m} /></CartProvider>)],
 ];
 
-/** La barre du haut seule — `<nav class="hidden md:flex …">…</nav>`. */
+/**
+ * La barre du haut seule — `<nav class="hidden md:flex …">…</nav>`, ou
+ * `hidden xl:flex` depuis le lot 15.7.
+ *
+ * POURQUOI DEUX SEUILS. Sept entrées déclarées ne tiennent pas dans 768 px :
+ * mesuré en ligne le 2026-11-09, la barre se repliait sur deux lignes et
+ * « Contact » sortait du cadre. Un site SANS page déclarée garde `md` — sa
+ * barre a trois entrées, et rien ne change pour les 41 autres.
+ *
+ * Ce localisateur suit les DEUX formes. Le laisser sur `md` seul aurait
+ * rendu les quatre assertions suivantes aveugles sur le cas qui compte.
+ */
 function barreDuHaut(html: string): string {
-  const d = html.indexOf('<nav class="hidden md:flex');
+  const m = /<nav class="hidden (?:md|xl):flex/.exec(html);
+  const d = m ? m.index : -1;
   expect(d, 'la barre du haut doit exister dans le rendu').toBeGreaterThan(-1);
   return html.slice(d, html.indexOf('</nav>', d));
 }

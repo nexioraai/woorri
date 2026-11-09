@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import type { EntreeMenu } from '../pages/fetchPage';
 import { resolveSiteBaseUrl } from './shared';
+import { getAvisLabels } from '../appels-offres/labels'
+import DessinDeMenu from './DessinDeMenu'
 import { Menu, X, ArrowRight } from 'lucide-react'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { getDict } from './i18n'
@@ -17,6 +19,14 @@ interface MobileNavProps {
     lang?: string
     hidden_sections?: string[]
     mode?: number | null
+    /**
+     * LOT 15.7 — la capacite declaree, lue ici comme ailleurs.
+     *
+     * `undefined` si la colonne n est pas en base : donc faux, donc aucune
+     * entree. La projection de `shared.tsx` ne peut pas rendre une colonne
+     * absente, et ce type ne doit pas pretendre le contraire.
+     */
+    publishes_tenders?: boolean
   }
   cta: string
   ctaHref: string
@@ -35,7 +45,20 @@ interface MobileNavProps {
 
 
 /** Une entree du menu du telephone. Un parent porte ses enfants. */
-export type EntreeTelephone = { href: string; label: string; enfants?: { href: string; label: string }[] }
+export type EntreeTelephone = {
+  href: string
+  label: string
+  /**
+   * LOT 15.7 — LA RACINE DE LA RUBRIQUE, pour en deduire le pictogramme.
+   *
+   * On ne la devine PAS depuis `href` : une ancre (`#contact`) et une page
+   * declaree (`https://.../contact`) n ont pas la meme forme, et le jour ou
+   * une troisieme forme apparait la deduction se tromperait en silence.
+   * L endroit qui CONSTRUIT l entree est le seul qui sache de quoi il parle.
+   */
+  chemin?: string
+  enfants?: { href: string; label: string }[]
+}
 
 /**
  * LE MENU DU TELEPHONE EST HIERARCHIQUE, COMME CELUI DU BUREAU.
@@ -49,13 +72,25 @@ export type EntreeTelephone = { href: string; label: string; enfants?: { href: s
  * s'il est ouvert : un test qui rend le composant ferme ne mesure rien.
  */
 export function construireMenuTelephone({
-  pages, base, hidden, hasShop, t,
+  pages, base, hidden, hasShop, t, avisTitre = null,
 }: {
   pages: EntreeMenu[]
   base: string
   hidden: (nom: string) => boolean
   hasShop: boolean
   t: { nav: { about: string; services: string; shop: string; gallery: string; reviews: string; contact: string } }
+  /**
+   * LOT 15.7 — LE TITRE DES APPELS D OFFRES, ou `null` si le site n en publie pas.
+   *
+   * MESURE LE 2026-11-09 : la barre du bureau portait « Appels d offres », le
+   * rideau du telephone ne la portait PAS. La page existait, elle etait
+   * simplement inatteignable au doigt. Le propietaire l avait dit des le
+   * 2026-11-08 : « ce que je vois sur ordi est different de telephone ».
+   *
+   * Le theme passe le titre quand `publishes_tenders` est vrai, et rien
+   * sinon : la REGLE d ouverture reste a un seul endroit, `LienAppelsOffres`.
+   */
+  avisTitre?: string | null
 }): EntreeTelephone[] {
   // Meme regle que la barre du bureau : quand le site DECLARE ses pages, les
   // ancres d'une page unique quittent le menu. Un site sans page declaree ne
@@ -74,6 +109,7 @@ export function construireMenuTelephone({
       return {
         href: `${base}/${p.chemin}`,
         label: p.titre,
+        chemin: p.chemin,
         // La page d'entree reste atteignable DEPUIS son propre sous-menu :
         // replier un parent ne doit pas le rendre inaccessible.
         ...(kids.length > 0
@@ -84,11 +120,23 @@ export function construireMenuTelephone({
           : {}),
       }
     }),
-    ...(!hidden('Contact') ? [{ href: '#contact', label: t.nav.contact }] : []),
+    ...(avisTitre ? [{ href: `${base}/appels-offres`, label: avisTitre, chemin: 'appels-offres' }] : []),
+    ...(!hidden('Contact') ? [{ href: '#contact', label: t.nav.contact, chemin: 'contact' }] : []),
   ]
 }
 
-export default function MobileNav({ site, cta, ctaHref, variant = 'light', pagesDeclarees = [], host = null }: MobileNavProps & { pagesDeclarees?: EntreeMenu[]; host?: string | null }) {
+export default function MobileNav({ site, cta, ctaHref, variant = 'light', pagesDeclarees = [], host = null, seuil = 'md' }: MobileNavProps & {
+  pagesDeclarees?: EntreeMenu[];
+  host?: string | null;
+  /**
+   * LOT 15.7 — A PARTIR DE QUELLE LARGEUR LA BARRE DU BUREAU PREND LE RELAIS.
+   *
+   * Sept entrees declarees ne tiennent pas dans 768 px. Le theme recule donc
+   * sa barre a `xl` — et le rideau doit reculer AVEC, sinon il reste une
+   * bande entre 768 et 1280 px ou le site n a plus aucun menu du tout.
+   */
+  seuil?: 'md' | 'xl';
+}) {
   // L'adresse de base, résolue comme partout ailleurs : un chemin plateforme
   // en dur serait re-préfixé par le proxy sur un sous-domaine et tomberait
   // en 404.
@@ -116,6 +164,10 @@ export default function MobileNav({ site, cta, ctaHref, variant = 'light', pages
   // ancres d'une page unique quittent le menu. Les sections restent sur
   // l'accueil. Un site sans page déclarée ne change pas.
   const navLinks = construireMenuTelephone({
+    // `!== true` et non `!x` : meme lecture que `LienAppelsOffres`, parce que
+    // c est la MEME regle. Deux lectures differentes de la meme colonne, c est
+    // deux comportements qui divergeront un jour.
+    avisTitre: site.publishes_tenders === true ? getAvisLabels(site.lang).titre : null,
     pages: pagesDeclarees ?? [],
     base: baseDeclaree,
     hidden,
@@ -124,7 +176,7 @@ export default function MobileNav({ site, cta, ctaHref, variant = 'light', pages
   })
 
   return (
-    <div className="md:hidden">
+    <div className={seuil === 'xl' ? 'xl:hidden' : 'md:hidden'}>
       <button
         onClick={() => setIsOpen(!isOpen)}
         className={`fixed top-5 right-5 z-[60] flex items-center justify-center w-11 h-11 rounded-full backdrop-blur-md border shadow-sm transition-transform active:scale-95 ${isDark ? 'bg-black/50 border-white/15' : 'bg-white/80 border-black/10'}`}
@@ -167,7 +219,10 @@ export default function MobileNav({ site, cta, ctaHref, variant = 'light', pages
                       // la zone de toucher fait toute la largeur.
                       <details className="group">
                         <summary className={`flex items-center justify-between px-5 py-4 rounded-2xl text-base font-medium cursor-pointer list-none transition-colors ${isDark ? 'text-white/90 hover:bg-white/10' : 'text-neutral-800 hover:bg-neutral-100'}`}>
-                          <span>{link.label}</span>
+                          <span className="inline-flex items-center gap-3">
+                            <DessinDeMenu chemin={link.chemin ?? ''} couleur={isDark ? null : primary} taille={19} />
+                            {link.label}
+                          </span>
                           <span aria-hidden className="ml-3 text-sm opacity-60 transition-transform group-open:rotate-180">▾</span>
                         </summary>
                         <div className="pl-4">
@@ -187,8 +242,9 @@ export default function MobileNav({ site, cta, ctaHref, variant = 'light', pages
                       <a
                         href={link.href}
                         onClick={closeMenu}
-                        className={`block px-5 py-4 rounded-2xl text-base font-medium transition-colors ${isDark ? 'text-white/90 hover:bg-white/10' : 'text-neutral-800 hover:bg-neutral-100'}`}
+                        className={`flex items-center gap-3 px-5 py-4 rounded-2xl text-base font-medium transition-colors ${isDark ? 'text-white/90 hover:bg-white/10' : 'text-neutral-800 hover:bg-neutral-100'}`}
                       >
+                        <DessinDeMenu chemin={link.chemin ?? ''} couleur={isDark ? null : primary} taille={19} />
                         {link.label}
                       </a>
                     )}

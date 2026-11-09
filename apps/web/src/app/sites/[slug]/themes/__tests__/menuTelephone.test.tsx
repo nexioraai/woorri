@@ -36,8 +36,8 @@ const MENU: EntreeMenu[] = [
 ] as unknown as EntreeMenu[];
 
 const T = { nav: { about: 'À propos', services: 'Services', shop: 'Boutique', gallery: 'Galerie', reviews: 'Avis', contact: 'Contact' } };
-const bati = (pages: EntreeMenu[]) =>
-  construireMenuTelephone({ pages, base: 'https://cpa-tchad.deribfy.app', hidden: () => false, hasShop: true, t: T });
+const bati = (pages: EntreeMenu[], avisTitre: string | null = null) =>
+  construireMenuTelephone({ pages, base: 'https://cpa-tchad.deribfy.app', hidden: () => false, hasShop: true, t: T, avisTitre });
 
 describe('le hamburger ne sert plus une liste à plat', () => {
   it('🔴 cinq pages déclarées donnent DEUX entrées de premier niveau, pas cinq', () => {
@@ -82,4 +82,39 @@ describe('le hamburger ne sert plus une liste à plat', () => {
     expect(bati(seule).find((e) => e.label === 'Contact direct')?.enfants).toBeUndefined();
   });
 
+});
+
+// ============================================================
+// LOT 15.7 — CE QUE LE BUREAU SERT, LE TÉLÉPHONE LE SERT AUSSI.
+//
+// MESURÉ LE 2026-11-09 : la barre du bureau portait « Appels d'offres », le
+// rideau du téléphone ne la portait PAS. La page existait et était publiée,
+// elle était simplement inatteignable au doigt. Le propriétaire l'avait dit
+// la veille : « ce que je vois sur ordi est différent de téléphone ».
+// ============================================================
+
+describe('les appels d’offres sont au téléphone comme au bureau', () => {
+  it('🔴 le site qui en publie a son entrée, AVANT Contact', () => {
+    const e = bati(MENU, 'Appels d’offres');
+    const i = e.findIndex((x) => x.href.endsWith('/appels-offres'));
+    expect(i, 'le rideau n’a pas d’entrée appels d’offres').toBeGreaterThan(-1);
+    expect(i).toBeLessThan(e.length - 1);
+    expect(e[e.length - 1].href).toBe('#contact');
+  });
+
+  it('🔴 le site qui n’en publie pas n’en a AUCUNE', () => {
+    // La règle d’ouverture reste à un seul endroit : le thème lit
+    // `publishes_tenders`, ce calcul ne fait que suivre. Deux lectures de la
+    // même colonne, c’est deux comportements qui divergeront un jour.
+    expect(bati(MENU, null).some((x) => x.href.endsWith('/appels-offres'))).toBe(false);
+  });
+
+  it('🔴 chaque entrée porte sa RACINE, pour en déduire son pictogramme', () => {
+    // On ne la devine pas depuis `href` : une ancre et une page déclarée
+    // n’ont pas la même forme, et la déduction se tromperait en silence.
+    const e = bati(MENU, 'Appels d’offres');
+    for (const attendu of ['qui-sommes-nous', 'activites', 'appels-offres', 'contact']) {
+      expect(e.some((x) => x.chemin === attendu), `« ${attendu} » n’a pas de racine`).toBe(true);
+    }
+  });
 });
