@@ -25,6 +25,7 @@ import { HeroDiapoLibre, photosDAccueil } from './HeroDiapo'
 import VifShopSection from './VifShopSection'
 import { socialUrl } from '@/lib/social'
 import ReseauxSociaux from './ReseauxSociaux'
+import RevenirEnHaut from './RevenirEnHaut'
 import ClickableProductCard from './ClickableProductCard'
 import EnseigneDuSite from './EnseigneDuSite'
 import PageProduits, { produitsDeLaPage } from './PageProduits'
@@ -553,6 +554,9 @@ export default function VifTheme({ site, hasAvis = false, host = null, menu = []
           </div>
         </div>
       </footer>
+      {/* LOT 15.6 — un lien, pas un bouton : le navigateur sait
+          remonter depuis toujours, et sans script. */}
+      <RevenirEnHaut libelle={t.labels.revenirHaut} couleur={site.primary_color || undefined} />
       {social.whatsapp && (
         <a
           href={socialUrl('whatsapp', social.whatsapp)!}

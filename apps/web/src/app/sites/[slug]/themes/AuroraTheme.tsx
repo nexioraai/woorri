@@ -24,6 +24,7 @@ import { getDict } from './i18n'
 import { getCartLabels } from './cartLabels'
 import { socialUrl } from '@/lib/social'
 import ReseauxSociaux from './ReseauxSociaux'
+import RevenirEnHaut from './RevenirEnHaut'
 import StorefrontDense from './StorefrontDense'
 import CatalogSearch from './CatalogSearch'
 import { showsVisitorCatalogSearch } from './catalogSearchVisibility'
@@ -419,6 +420,9 @@ export default function AuroraTheme({ site, hasAvis = false, host = null, menu =
           <div>© {new Date().getFullYear()} {site.name}. {t.labels.rightsReserved}</div>
         </div>
       </footer>
+      {/* LOT 15.6 — un lien, pas un bouton : le navigateur sait
+          remonter depuis toujours, et sans script. */}
+      <RevenirEnHaut libelle={t.labels.revenirHaut} couleur={primary} />
 
       {/* A2 d1 — LA SECTION NE S'AFFICHE JAMAIS VIDE. La garde est ICI, chez
           l'appelant : `hasAvis` vient de la seule route posée en d0/e0, et le

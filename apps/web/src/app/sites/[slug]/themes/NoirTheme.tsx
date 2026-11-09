@@ -19,6 +19,7 @@ import { getDict } from './i18n'
 import Reveal from './Reveal'
 import { socialUrl } from '@/lib/social'
 import ReseauxSociaux from './ReseauxSociaux'
+import RevenirEnHaut from './RevenirEnHaut'
 import { getModeCapabilities } from './modeCapabilities'
 import type { AvisDuSite } from './avisDuSite'
 import SectionAppelsOffres from './SectionAppelsOffres'
@@ -738,6 +739,9 @@ export default function NoirTheme({ site, hasAvis = false, host = null, menu = [
           </div>
         </div>
       </footer>
+      {/* LOT 15.6 — un lien, pas un bouton : le navigateur sait
+          remonter depuis toujours, et sans script. */}
+      <RevenirEnHaut libelle={t.labels.revenirHaut} couleur={site.primary_color || undefined} />
       {social.whatsapp && (
         <a
           href={socialUrl('whatsapp', social.whatsapp)!}

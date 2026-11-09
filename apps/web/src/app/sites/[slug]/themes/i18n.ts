@@ -40,6 +40,8 @@ export type ThemeDict = {
     email: string
     address: string
     followUs: string
+    /** LOT 15.6 — le bouton « revenir en haut ». */
+    revenirHaut: string
     poweredBy: string
     rightsReserved: string
     estimatedDelivery: string
@@ -151,6 +153,7 @@ const en: ThemeDict = {
     email: 'Email',
     address: 'Address',
     followUs: 'Follow us',
+    revenirHaut: 'Back to top',
     poweredBy: 'Powered by',
     rightsReserved: 'All rights reserved.',
     contactCta: 'Contact us',
@@ -252,6 +255,7 @@ const fr: ThemeDict = {
     email: 'Email',
     address: 'Adresse',
     followUs: 'Suivez-nous',
+    revenirHaut: 'Revenir en haut',
     poweredBy: 'Propulsé par',
     rightsReserved: 'Tous droits réservés.',
     contactCta: 'Contactez-nous',
@@ -353,6 +357,7 @@ const es: ThemeDict = {
     email: 'Correo',
     address: 'Dirección',
     followUs: 'Síguenos',
+    revenirHaut: 'Volver arriba',
     poweredBy: 'Desarrollado por',
     rightsReserved: 'Todos los derechos reservados.',
     contactCta: 'Contáctanos',
@@ -454,6 +459,7 @@ const ar: ThemeDict = {
     email: 'البريد الإلكتروني',
     address: 'العنوان',
     followUs: 'تابعنا',
+    revenirHaut: 'العودة إلى الأعلى',
     poweredBy: 'مشغّل بواسطة',
     rightsReserved: 'جميع الحقوق محفوظة.',
     contactCta: 'تواصل معنا',

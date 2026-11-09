@@ -35,6 +35,7 @@ import HeroDiapo, { photosDAccueil } from './HeroDiapo'
 import EditorialShopSection from './EditorialShopSection'
 import { socialUrl } from '@/lib/social'
 import ReseauxSociaux from './ReseauxSociaux'
+import RevenirEnHaut from './RevenirEnHaut'
 import ClickableProductCard from './ClickableProductCard'
 import EnseigneDuSite from './EnseigneDuSite'
 import PageProduits, { produitsDeLaPage } from './PageProduits'
@@ -687,6 +688,9 @@ export default function EditorialTheme({ site, hasAvis = false, host = null, men
           </div>
         </div>
       </footer>
+      {/* LOT 15.6 — un lien, pas un bouton : le navigateur sait
+          remonter depuis toujours, et sans script. */}
+      <RevenirEnHaut libelle={t.labels.revenirHaut} couleur={primary} />
 
       {/* Floating WhatsApp */}
       {social.whatsapp && (
