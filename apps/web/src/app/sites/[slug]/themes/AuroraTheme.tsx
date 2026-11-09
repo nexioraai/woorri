@@ -23,6 +23,7 @@ import {
 import { getDict } from './i18n'
 import { getCartLabels } from './cartLabels'
 import { socialUrl } from '@/lib/social'
+import ReseauxSociaux from './ReseauxSociaux'
 import StorefrontDense from './StorefrontDense'
 import CatalogSearch from './CatalogSearch'
 import { showsVisitorCatalogSearch } from './catalogSearchVisibility'
@@ -394,10 +395,8 @@ export default function AuroraTheme({ site, hasAvis = false, host = null, menu =
                     )}
                   </div>
                   <div className="flex items-center gap-3">
-                    {social.instagram && <a href={socialUrl('instagram', social.instagram)!} target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-2xl border border-black/10 flex items-center justify-center hover:-translate-y-0.5 transition" style={{ color: primary }}><Instagram /></a>}
-                    {social.facebook && <a href={socialUrl('facebook', social.facebook)!} target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-2xl border border-black/10 flex items-center justify-center hover:-translate-y-0.5 transition" style={{ color: primary }}><Facebook /></a>}
-                    {social.tiktok && <a href={socialUrl('tiktok', social.tiktok)!} target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-2xl border border-black/10 flex items-center justify-center hover:-translate-y-0.5 transition" style={{ color: primary }}><TikTok /></a>}
-                    {social.whatsapp && <a href={socialUrl('whatsapp', social.whatsapp)!} target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-2xl border border-black/10 flex items-center justify-center hover:-translate-y-0.5 transition" style={{ color: primary }}><WhatsApp /></a>}
+                    {/* LOT 15.4 — huit réseaux, une seule liste (ReseauxSociaux). */}
+                    <ReseauxSociaux social={social} variante="traits" couleur={primary} />
                   </div>
                   {typeof site.geo_lat === 'number' && typeof site.geo_lng === 'number' && (
                     <div className="mt-8 rounded-3xl overflow-hidden border border-black/5">

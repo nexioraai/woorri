@@ -18,6 +18,7 @@ import {
 import { getDict } from './i18n'
 import Reveal from './Reveal'
 import { socialUrl } from '@/lib/social'
+import ReseauxSociaux from './ReseauxSociaux'
 import { getModeCapabilities } from './modeCapabilities'
 import type { AvisDuSite } from './avisDuSite'
 import SectionAppelsOffres from './SectionAppelsOffres'
@@ -732,10 +733,8 @@ export default function NoirTheme({ site, hasAvis = false, host = null, menu = [
         <div className="max-w-7xl mx-auto px-6 md:px-10 flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="text-xl" style={{ fontFamily: 'var(--font-fraunces), serif' }}>{site.name}</div>
           <div className="flex items-center gap-5">
-            {socialUrl('instagram', social.instagram) && <a href={socialUrl('instagram', social.instagram)!} target="_blank" rel="noreferrer" className="transition-colors hover:opacity-70"><Instagram className="w-5 h-5" /></a>}
-            {socialUrl('facebook', social.facebook) && <a href={socialUrl('facebook', social.facebook)!} target="_blank" rel="noreferrer" className="transition-colors hover:opacity-70"><Facebook className="w-5 h-5" /></a>}
-            {socialUrl('tiktok', social.tiktok) && <a href={socialUrl('tiktok', social.tiktok)!} target="_blank" rel="noreferrer" className="transition-colors hover:opacity-70"><TikTok className="w-5 h-5" /></a>}
-            {socialUrl('whatsapp', social.whatsapp) && <a href={socialUrl('whatsapp', social.whatsapp)!} target="_blank" rel="noreferrer" className="transition-colors hover:opacity-70"><WhatsApp className="w-5 h-5" /></a>}
+            {/* LOT 15.4 — huit réseaux, une seule liste (ReseauxSociaux). */}
+            <ReseauxSociaux social={social} variante="traits" />
           </div>
         </div>
       </footer>

@@ -24,6 +24,7 @@ import MenuDeclare from './MenuDeclare'
 import { HeroDiapoLibre, photosDAccueil } from './HeroDiapo'
 import VifShopSection from './VifShopSection'
 import { socialUrl } from '@/lib/social'
+import ReseauxSociaux from './ReseauxSociaux'
 import ClickableProductCard from './ClickableProductCard'
 import EnseigneDuSite from './EnseigneDuSite'
 import PageProduits, { produitsDeLaPage } from './PageProduits'
@@ -547,10 +548,8 @@ export default function VifTheme({ site, hasAvis = false, host = null, menu = []
         <div className="max-w-7xl mx-auto px-6 md:px-10 flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="text-xl" style={{ fontFamily: 'var(--font-fraunces), serif' }}>{site.name}</div>
           <div className="flex items-center gap-5" style={{ color: INK }}>
-            {socialUrl('instagram', social.instagram) && <a href={socialUrl('instagram', social.instagram)!} target="_blank" rel="noreferrer"><Instagram className="w-5 h-5" /></a>}
-            {socialUrl('facebook', social.facebook) && <a href={socialUrl('facebook', social.facebook)!} target="_blank" rel="noreferrer"><Facebook className="w-5 h-5" /></a>}
-            {socialUrl('tiktok', social.tiktok) && <a href={socialUrl('tiktok', social.tiktok)!} target="_blank" rel="noreferrer"><TikTok className="w-5 h-5" /></a>}
-            {socialUrl('whatsapp', social.whatsapp) && <a href={socialUrl('whatsapp', social.whatsapp)!} target="_blank" rel="noreferrer"><WhatsApp className="w-5 h-5" /></a>}
+            {/* LOT 15.4 — huit réseaux, une seule liste (ReseauxSociaux). */}
+            <ReseauxSociaux social={social} variante="traits" />
           </div>
         </div>
       </footer>

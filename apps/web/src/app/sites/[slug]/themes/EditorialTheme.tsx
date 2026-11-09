@@ -34,6 +34,7 @@ import MenuDeclare from './MenuDeclare'
 import HeroDiapo, { photosDAccueil } from './HeroDiapo'
 import EditorialShopSection from './EditorialShopSection'
 import { socialUrl } from '@/lib/social'
+import ReseauxSociaux from './ReseauxSociaux'
 import ClickableProductCard from './ClickableProductCard'
 import EnseigneDuSite from './EnseigneDuSite'
 import PageProduits, { produitsDeLaPage } from './PageProduits'
@@ -646,35 +647,12 @@ export default function EditorialTheme({ site, hasAvis = false, host = null, men
 
               <ContactMap lat={site.geo_lat} lng={site.geo_lng} accent={primary} dark={false} />
 
-              {(social.instagram || social.facebook || social.whatsapp || social.tiktok) && (
-                <div className="pt-4">
-                  <div className="text-xs uppercase tracking-wider text-neutral-500 mb-4 px-2">
-                    {t.labels.followUs}
-                  </div>
-                  <div className="flex gap-3 flex-wrap">
-                    {socialUrl('instagram', social.instagram) && (
-                      <a href={socialUrl('instagram', social.instagram)!} target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="flex items-center justify-center w-12 h-12 rounded-xl text-white bg-gradient-to-br from-[#F58529] via-[#DD2A7B] to-[#8134AF] hover:-translate-y-0.5 transition-all">
-                        <Instagram className="w-5 h-5" />
-                      </a>
-                    )}
-                    {socialUrl('facebook', social.facebook) && (
-                      <a href={socialUrl('facebook', social.facebook)!} target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="flex items-center justify-center w-12 h-12 rounded-xl text-white bg-[#1877F2] hover:-translate-y-0.5 transition-all">
-                        <Facebook className="w-5 h-5" />
-                      </a>
-                    )}
-                    {socialUrl('tiktok', social.tiktok) && (
-                      <a href={socialUrl('tiktok', social.tiktok)!} target="_blank" rel="noopener noreferrer" aria-label="TikTok" className="flex items-center justify-center w-12 h-12 rounded-xl text-white bg-black hover:-translate-y-0.5 transition-all">
-                        <TikTok className="w-5 h-5" />
-                      </a>
-                    )}
-                    {social.whatsapp && (
-                      <a href={socialUrl('whatsapp', social.whatsapp)!} target="_blank" rel="noopener noreferrer" aria-label="WhatsApp" className="flex items-center justify-center w-12 h-12 rounded-xl text-white bg-[#25D366] hover:-translate-y-0.5 transition-all">
-                        <WhatsApp className="w-5 h-5" />
-                      </a>
-                    )}
-                  </div>
-                </div>
-              )}
+              {/* LOT 15.4 — huit réseaux, une seule liste (ReseauxSociaux).
+                  Ce bloc recopiait quatre réseaux écrits à la main ; trois
+                  autres thèmes faisaient de même. Ajouter X, YouTube,
+                  LinkedIn ou Telegram demandait de toucher quatre fichiers,
+                  donc d'en oublier un. */}
+              <ReseauxSociaux social={social} libelle={t.labels.followUs} className="pt-4" />
             </div>
           </div>
         </div>

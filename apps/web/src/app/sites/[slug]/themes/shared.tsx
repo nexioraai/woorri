@@ -57,6 +57,13 @@ instagram?: string
 facebook?: string
 whatsapp?: string
 tiktok?: string
+// LOT 15.4 — les réseaux d'une INSTITUTION. Les quatre ci-dessus sont la
+// panoplie d'un marchand ; une centrale d'achats publique communique sur
+// ceux-ci. Tous facultatifs : un marchand n'en remplit aucun.
+x?: string
+youtube?: string
+linkedin?: string
+telegram?: string
 }
 hero_image?: string
 cta?: string

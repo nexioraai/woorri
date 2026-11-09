@@ -8,7 +8,16 @@ const BASES: Record<string, string> = {
   youtube: 'https://www.youtube.com/@',
   linkedin: 'https://www.linkedin.com/in/',
   pinterest: 'https://www.pinterest.com/',
+  // LOT 15.4 — Telegram manquait. Il est très employé au Tchad pour les
+  // annonces institutionnelles, et EPSS l'affiche.
+  telegram: 'https://t.me/',
 };
+
+// NOTE SUR LINKEDIN. La base est `/in/`, celle d'une PERSONNE. Une
+// institution a une page `/company/`. On ne change PAS la base : 41 sites
+// l'emploient déjà, et une URL complète est acceptée telle quelle — une
+// centrale colle donc son adresse `/company/...` et tout fonctionne.
+// Changer la base casserait les sites existants pour en servir un.
 
 export function socialUrl(platform: string, value?: string | null): string | null {
   if (!value) return null;
