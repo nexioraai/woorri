@@ -1790,3 +1790,30 @@ chaîne : `'if (!donnees) notFound()'.split(') ')[0][5:]` rend `donnees`, pas
 `!donnees`. Le blog aurait délégué quand l'article EXISTE. `tsc` l'a
 attrapé — mais une condition construite par découpe est une condition qu'on
 n'a pas relue.
+
+---
+
+## GEN-D053 — `jsonb` réordonne les clés, et `JSON.stringify` ne le sait pas
+
+**9 novembre 2026 · P3 · faux rouge sur une écriture réussie**
+
+Mes scripts de contenu vérifiaient une écriture ainsi :
+
+```js
+JSON.stringify(relu) === JSON.stringify(envoye)
+```
+
+C'est faux. PostgreSQL stocke `jsonb` sous forme normalisée : les clés d'un
+objet sont **réordonnées**, et les blancs disparaissent. Deux objets
+identiques rendent donc deux chaînes différentes.
+
+**L'écriture avait réussi** — 7 blocs attendus, 7 relus, 6 partenaires
+présents. Mon contrôle a crié rouge sur un succès.
+
+**La règle :** un contrôle d'écriture compare ce qu'on a VOULU — un compte,
+une présence, une valeur précise — jamais la représentation textuelle d'une
+structure que la base a le droit de normaliser.
+
+**C'est la deuxième fois le même jour** qu'un vérificateur d'écriture ment :
+le précédent comptait « perdu » tout bloc MODIFIÉ, alors que le modifier
+était le but. Les deux fois, le code était bon et l'instrument faux.

@@ -108,6 +108,10 @@ const EXEMPLES: Record<string, Bloc> = {
   galerie: { type: 'galerie', items: [{ url: '/g1.jpg', alt: 'Zone de stockage' }] },
   citation: { type: 'citation', texte: 'Un médicament qui arrive en retard ne soigne personne.', auteur: 'Direction générale' },
   articles: { type: 'articles', categorie: 'communique', titre: 'Derniers communiqués' },
+  partenaires: { type: 'partenaires', titre: 'Nos partenaires', items: [
+    { nom: 'Ministère de la Santé publique' },
+    { nom: 'Agence du médicament', logo: '/l.png', url: 'https://exemple.td' },
+  ] },
   organigramme: { type: 'organigramme', titre: 'Organisation', items: [
     { cle: 'ca', fonction: 'Conseil d’administration' },
     { cle: 'dg', parent: 'ca', fonction: 'Direction générale' },
@@ -135,6 +139,7 @@ describe('C. chaque type du vocabulaire est réellement dessiné', () => {
         // page cassée.
         articles: 'Derniers communiqués',
         organigramme: 'Conseil d’administration',
+        partenaires: 'Ministère de la Santé publique',
       };
       expect(html).toContain(attendu[t]);
     });

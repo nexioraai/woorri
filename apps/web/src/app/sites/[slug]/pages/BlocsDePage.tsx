@@ -2,6 +2,7 @@ import Link from 'next/link'
 import type { Bloc } from './blocs'
 import ListeArticles from './ListeArticles'
 import Organigramme from './Organigramme'
+import Partenaires from './Partenaires'
 import type { BlogPostCard, CategorieArticle } from '../blog/fetchPosts'
 
 // ============================================================================
@@ -289,6 +290,9 @@ export default function BlocsDePage({
                 )}
               </blockquote>
             )
+
+          case 'partenaires':
+            return <Partenaires key={k} items={b.items} titre={b.titre} primary={primary} />
 
           case 'organigramme':
             return <Organigramme key={k} items={b.items} titre={b.titre} primary={primary} />

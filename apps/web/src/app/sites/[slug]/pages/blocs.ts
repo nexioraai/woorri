@@ -19,6 +19,7 @@ export const TYPES_DE_BLOC = [
   'image', 'galerie', 'citation',
   'articles',
   'organigramme',
+  'partenaires',
 ] as const
 
 export type TypeDeBloc = (typeof TYPES_DE_BLOC)[number]
@@ -68,6 +69,14 @@ export type Bloc = { position?: string } & (
    * `cle` identifie une entrée ; `parent` désigne la clé du supérieur, ou
    * est absent pour la racine.
    */
+  /**
+   * LOT 15.5 — LES PARTENAIRES.
+   *
+   * `logo` est FACULTATIF : sans fichier, le NOM s'affiche dans une tuile.
+   * Exiger un logo rendrait le bloc inutilisable jusqu'à ce que quelqu'un
+   * trouve les fichiers — c'est-à-dire jamais.
+   */
+  | { type: 'partenaires'; titre?: string; items: { nom: string; logo?: string; url?: string }[] }
   | { type: 'organigramme'; titre?: string; items: { cle: string; parent?: string | null; fonction: string; nom?: string; detail?: string }[] }
 )
 
@@ -136,6 +145,10 @@ function estBienForme(t: TypeDeBloc, b: Record<string, unknown>): boolean {
       // La catégorie doit être CONNUE : un bloc qui vise une catégorie
       // inventée n'afficherait jamais rien, et personne ne saurait pourquoi.
       return ['article', 'communique', 'evenement'].includes(String(b.categorie))
+    case 'partenaires':
+      // Le NOM est obligatoire : un logo sans nom est illisible au lecteur
+      // d'ecran et indechiffrable pour qui ne connait pas l'organisation.
+      return tableauDe(b.items, (o) => txt(o.nom))
     case 'organigramme':
       // Chaque entrée a une CLÉ et une FONCTION. Le nom est facultatif :
       // un organigramme nominatif faux sur un site d'État est pire qu'un

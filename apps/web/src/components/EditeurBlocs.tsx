@@ -26,6 +26,7 @@ const ETIQUETTES: Record<string, string> = {
   image: 'Photo', galerie: 'Galerie photos', citation: 'Citation',
   articles: 'Liste d’articles',
   organigramme: 'Organigramme',
+  partenaires: 'Partenaires',
 }
 
 /** Les squelettes neufs — un par type, tous valides dès la création. */
@@ -50,6 +51,11 @@ const NEUF: Record<string, Bloc> = {
   articles: { type: 'articles', categorie: 'communique', titre: 'Derniers communiqués' },
   // Un squelette à DEUX niveaux : un organigramme à une seule entrée ne
   // montre rien de ce qu'un organigramme sert à montrer.
+  // Le logo est FACULTATIF : sans fichier, le nom s'affiche. Le bloc est
+  // donc utilisable dès sa création, sans rien téléverser.
+  partenaires: { type: 'partenaires', titre: 'Nos partenaires', items: [
+    { nom: 'Premier partenaire' },
+  ] },
   organigramme: { type: 'organigramme', titre: 'Organisation', items: [
     { cle: 'dg', fonction: 'Direction générale' },
     { cle: 'd1', parent: 'dg', fonction: 'Première direction' },

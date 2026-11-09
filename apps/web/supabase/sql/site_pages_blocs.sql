@@ -59,7 +59,8 @@ as $$
                'galerie',    -- plusieurs photos
                'citation',   -- une citation attribuée
                'articles',   -- LOT 7 : la liste d'une catégorie d'articles
-               'organigramme' -- LOT 4 : un arbre de fonctions
+               'organigramme', -- LOT 4 : un arbre de fonctions
+               'partenaires'  -- LOT 15.5 : avec qui l'organisation travaille
              )
      );
 $$;
