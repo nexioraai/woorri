@@ -65,3 +65,53 @@ describe('ce que l’accueil rend', () => {
     expect(renderToStaticMarkup(<HeroDiapoLibre photos={[]} alt="x" />)).toBe('');
   });
 });
+
+// ============================================================
+// LOT 15.2 et 15.3 — LES COMMANDES DU DIAPORAMA.
+//
+// Il tournait tout seul depuis le 8 novembre, mais on ne pouvait ni
+// l'avancer ni savoir où on en était. Les commandes sont en CSS : des
+// radios cachés que `:has()` lit. Aucun script.
+// ============================================================
+
+describe('on peut avancer à la main, sans JavaScript', () => {
+  const html = () => renderToStaticMarkup(<HeroDiapo photos={['/a.jpg', '/b.jpg', '/c.jpg']} />);
+
+  it('🔴 deux flèches, nommées pour le lecteur d’écran', () => {
+    expect(html()).toContain('aria-label="Photo precedente"');
+    expect(html()).toContain('aria-label="Photo suivante"');
+  });
+
+  it('🔴 un point par photo — le lecteur sait combien il y en a', () => {
+    const n = (html().match(/aria-label="Aller a la photo \d"/gu) ?? []).length;
+    expect(n).toBe(3);
+  });
+
+  it('🔴 les commandes sont des LABELS sur des radios — aucun script', () => {
+    const h = html();
+    expect(h).toMatch(/type="radio"/);
+    expect(h).toMatch(/<label/);
+    expect(h).not.toMatch(/onclick/i);
+    expect(h).not.toMatch(/<script/);
+  });
+
+  it('🔴 l’enchaînement S’ARRÊTE dès qu’une commande est touchée', () => {
+    // Sans ça la photo changerait sous le doigt, et choisir ne servirait
+    // à rien.
+    expect(html()).toMatch(/:has\(input:checked\)[^}]*animation:\s*none/);
+  });
+
+  it('🔴 les radios restent FOCUSABLES — jamais `display:none`', () => {
+    // Un élément masqué n'est pas focusable, et le clavier perdrait les
+    // commandes.
+    const h = html();
+    expect(h).not.toMatch(/type="radio"[^>]*display:none/);
+    expect(h).toMatch(/type="radio"[^>]*opacity:0/);
+  });
+
+  it('🔴 UNE seule photo n’a ni flèches ni points', () => {
+    const h = renderToStaticMarkup(<HeroDiapo photos={['/a.jpg']} />);
+    expect(h).not.toContain('aria-label="Photo suivante"');
+    expect(h).not.toMatch(/type="radio"/);
+  });
+});
