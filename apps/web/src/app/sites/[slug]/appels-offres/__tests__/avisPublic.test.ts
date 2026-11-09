@@ -210,6 +210,13 @@ describe('fetchAvis — résolution par le COUPLE (site_id, reference_slug)', ()
       devise: 'rendue AVEC la valeur, pas comme rubrique propre',
       cree_le: 'date de publication, en tête de page, pas une rubrique',
 
+      // AJOUT DU 2026-11-09 (LOT 13.1) — `id` n'est pas une rubrique : il ne
+      // s'affiche nulle part. Il sert à DÉSIGNER l'avis quand une offre s'y
+      // rattache. Le résoudre par une seconde requête sur la référence ferait
+      // deux lectures là où une suffit — et la LISTE, elle, garde ses quatre
+      // colonnes : la loi du lot A2 ① tient.
+      id: "designe l'avis pour y rattacher une offre, jamais affiche",
+
       // AJOUT DU 2026-11-08 (LOT 5b) — `pieces` n'est PAS une vingtième
       // rubrique : elle est rendue DANS la rubrique `document_url`, qui
       // cesse d'être un lien pour devenir le dossier de consultation.
@@ -263,7 +270,7 @@ const rel = (f: string) => f.replace(RACINE, 'appels-offres')
 
 describe('cliquet structurel — surface publique des avis', () => {
 
-  it('les TREIZE fichiers de la surface sont bien vus par ce cliquet', () => {
+  it('les QUINZE fichiers de la surface sont bien vus par ce cliquet', () => {
     // LE DÉNOMINATEUR EST RÉEL. Un fichier ajouté à la surface sans entrer
     // ici échapperait à tous les contrôles qui suivent — la classe GEN-D032.
     // `cycleDeVie.ts` est entré le 2026-11-06 (lot A2 b) : ce cliquet a rougi
@@ -273,6 +280,13 @@ describe('cliquet structurel — surface publique des avis', () => {
         // Entré le 2026-11-09 (lot 15.8) — le dessin d'un compteur d'avis.
         // Il NOMME l'état qu'il illustre : une horloge sur « archivés »
         // contredirait le libellé, et le lecteur croirait le dessin.
+        // Entrés le 2026-11-09 (lot 13.1) — le dépôt d'une offre.
+        // IL EXIGE UN COMPTE ACTIF : « postuler doit exiger création d'un
+        // compte auprès de cpa, car cpa doit savoir c'est qui ». L'écran dit
+        // l'état du compte AVANT le formulaire — faire remplir six champs à
+        // quelqu'un qui sera refusé à l'envoi est une perte sèche.
+        'appels-offres/Postuler.tsx',
+        'appels-offres/motsPostuler.ts',
         'appels-offres/PictoCompte.tsx',
         'appels-offres/cycleDeVie.ts',
         'appels-offres/fetchAvis.ts',

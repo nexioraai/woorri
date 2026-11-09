@@ -12,6 +12,9 @@ import { resolveSiteBaseUrl } from '../../themes/shared'
 import { ogLocaleFor } from '@/lib/i18n/supportedLanguages'
 import HtmlLang from '../../themes/HtmlLang'
 import JsonLdScript from '../../themes/JsonLdScript'
+import Postuler from '../Postuler'
+import { motsPostuler } from '../motsPostuler'
+import { ouvreDesComptes } from '../../acces/ouvreDesComptes'
 
 // ============================================================
 // A2 (c) -- UN AVIS DE MARCHE, LES DIX-NEUF RUBRIQUES.
@@ -102,6 +105,9 @@ export default async function AvisPage({ params }: Props) {
   }
 
   const { site, avis } = donnees
+  // LA CAPACITÉ SE LIT CÔTÉ SERVEUR : un site qui n'ouvre pas de comptes
+  // n'a pas de dépôt d'offre, et la route le refuserait de toute façon.
+  const comptesOuverts = await ouvreDesComptes(site.id)
   const base = resolveSiteBaseUrl(site, (await headers()).get('host'))
   const t = getAvisLabels(site.lang)
   const accent = site.primary_color || '#111111'
@@ -300,6 +306,38 @@ export default async function AvisPage({ params }: Props) {
           <p style={{ fontSize: 14, opacity: 0.55, margin: '24px 0 0', lineHeight: 1.6 }}>
             {t.nonRenseigne}
           </p>
+        )}
+
+        {/* ── LOT 13.1 — DÉPOSER UNE OFFRE.
+            Le formulaire vient APRÈS les conditions : on ne répond pas à un
+            marché qu'on n'a pas lu. L'ouverture est calculée ICI, côté
+            serveur — l'écran ne redécide rien, il affiche. */}
+        {comptesOuverts && (
+          <Postuler
+            slug={site.slug}
+            base={base}
+            avisId={avis.id}
+            // `publie` N'EST PAS TESTÉ ICI, et ce n'est pas un oubli : la VUE
+            // `appels_offres_public` filtre déjà dessus. Un avis rendu par
+            // `fetchAvis` est publié par construction — le revérifier créerait
+            // une seconde vérité, et c'est celle qu'on ne regarde pas qui
+            // finit par diverger.
+            //
+            // ── ET L'HEURE N'EST PAS LUE ICI NON PLUS.
+            //
+            // Premier jet : `Date.now()` dans ce JSX. `react-hooks/purity` l'a
+            // refusé, et il visait juste — cette page peut être mise en cache,
+            // et « ouvert » serait alors resté affiché après la date limite.
+            // L'écran reçoit la DATE ; c'est le navigateur qui la compare,
+            // au moment où quelqu'un regarde.
+            //
+            // La route, elle, refuse déjà après l'échéance : l'écran est une
+            // commodité, le verrou est côté serveur.
+            etatAvis={avis.etat}
+            remiseLe={avis.remise_le}
+            primary={accent}
+            mots={motsPostuler(site.lang)}
+          />
         )}
       </main>
     </>

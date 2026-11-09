@@ -223,6 +223,17 @@ const LECTEURS_TRANSITIFS: Record<string, string> = {
   // non-chevauchement ajoute ci-dessous, qui l'aurait trouvee.
   'src/app/api/stripe/webhook/route.ts': 'homonyme — `session.mode` est un champ Stripe (« payment »), pas le mode du site.',
   'src/components/edit/CatalogSelections.tsx': 'DEBT-054 — homonyme camelCase : `roundMode` y vaut « up » ou « down », un mode d’arrondi de prix ; le composant ne lit jamais `sites.mode`.',
+  // LOT 13.1 — HOMONYME IMPOSÉ PAR LE NAVIGATEUR, pas par moi.
+  //
+  // `inputMode="decimal"` est un attribut HTML : il donne le clavier
+  // NUMÉRIQUE sur téléphone, et on soumissionne au Tchad depuis un
+  // téléphone. Contrairement au faux positif du matin — où j'avais appelé
+  // `mode` ce qui désignait un écran, et que j'ai RENOMMÉ — ce jeton-là ne
+  // se renomme pas : il appartient à la plateforme.
+  //
+  // Ce fichier ne lit `sites.mode` NULLE PART : il parle à
+  // `/api/sites/[slug]/mon-compte` et `/offres`, et n'en reçoit aucun mode.
+  'src/app/sites/[slug]/appels-offres/Postuler.tsx': 'homonyme HTML — `inputMode="decimal"` donne le clavier numérique sur téléphone ; le composant ne lit jamais `sites.mode`.',
 
   // — le registre lui-même —
   'src/lib/architecture/domainRegistry.ts': 'porte les MOTIFS de détection ; il décrit les frontières, il n’en franchit aucune.',
@@ -273,7 +284,22 @@ const LECTEURS_TRANSITIFS: Record<string, string> = {
 // que les cinq routes shop voisines (canTransact décide, la route transmet).
 // Le plafond monte d'exactement UN, pour exactement UNE entrée justifiée —
 // c'est la décision que ce cliquet exige de rendre visible en diff.
-const PLAFOND_ALLOWLIST = 21
+// LOT 13.1 — RELEVEMENT DELIBERE : 21 -> 22.
+//
+// Le plafond a joue son role : il a fait de cette inscription un acte
+// VISIBLE EN DIFF au lieu d'une ligne de plus passee inapercue. C'est
+// exactement ce pour quoi il existe.
+//
+// L'entree ajoutee est un HOMONYME IMPOSE PAR LA PLATEFORME :
+// `inputMode="decimal"` est un attribut HTML, et il donne le clavier
+// numerique sur telephone — on soumissionne au Tchad depuis un telephone.
+// Le matin meme, un faux positif de la meme famille s'etait resolu par un
+// RENOMMAGE, parce que le mot etait le mien. Celui-ci ne se renomme pas.
+//
+// Et ce n'est PAS un affaiblissement : le fichier declare ne lit `sites.mode`
+// nulle part. La raison ecrite le dit, et le test « les HOMONYMES ne sont
+// jamais des decideurs » le verifie independamment.
+const PLAFOND_ALLOWLIST = 22
 
 const TOUS = fichiersSource(SRC)
 const rel = (p: string) => relative(RACINE, p).split(sep).join('/')

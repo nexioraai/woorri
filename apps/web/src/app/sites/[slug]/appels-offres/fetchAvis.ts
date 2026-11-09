@@ -74,8 +74,17 @@ export type AvisCarte = {
   etat: string
 }
 
-/** Les dix-neuf rubriques du detail. */
+/** Les dix-neuf rubriques du detail, plus l'identifiant. */
 export type AvisDetail = AvisCarte & {
+  /**
+   * LOT 13.1 — AJOUTE A LA PROJECTION DU DETAIL, PAS A CELLE DE LA LISTE.
+   *
+   * La loi du lot A2 ① tient : la LISTE garde ses quatre colonnes. Le detail,
+   * lui, doit pouvoir etre DESIGNE — une offre se rattache a un avis par son
+   * identifiant, et le resoudre par une seconde requete sur la reference
+   * ferait deux lectures la ou une suffit.
+   */
+  id: string
   description: string | null
   methode: string | null
   methode_detail: string | null
@@ -119,7 +128,7 @@ const COLS_LISTE = 'reference,reference_slug,objet,remise_le,etat,methode'
 // `methode` n'est PAS reprise ici : elle vient deja de COLS_LISTE depuis le
 // lot 5bis. La projeter deux fois ne casse rien cote base, mais l'attendu
 // exact du cliquet l'attrape -- et c'est exactement son travail.
-const COLS_DETAIL = `${COLS_LISTE},description,methode_detail,valeur,devise,questions_avant,ouverture_plis,criteres_elim,criteres_notes,soumission,allotissement,local_prix_dossier,local_caution,local_validite_jours,canal_officiel_url,document_url,cree_le,pieces,attributaire,montant_attribue,attribue_le`
+const COLS_DETAIL = `${COLS_LISTE},id,description,methode_detail,valeur,devise,questions_avant,ouverture_plis,criteres_elim,criteres_notes,soumission,allotissement,local_prix_dossier,local_caution,local_validite_jours,canal_officiel_url,document_url,cree_le,pieces,attributaire,montant_attribue,attribue_le`
 
 /** Resout le site public. `sites_public` applique deja `published = true AND archived_at IS NULL`. */
 async function fetchAvisSite(slug: string): Promise<AvisSite | null> {

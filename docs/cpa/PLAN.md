@@ -104,7 +104,7 @@ un avis · un article · un produit · une province
 | 10 | **Authentification, rôles, habilitations** | 16 | ✅ **FERMÉ** — mécanique posée et mesurée (17 + 7 + 11 points). **Pas de preuve à l'écran** : rien n'est encore visible, c'est le lot 11 qui construit l'espace. Une dette nommée, voir §10. |
 | 11 | **Espace établissement** | 24 | ✅ **FERMÉ** — `/mes-documents` livré au lot 12.1 (table `comptes_documents`, seau PRIVÉ). Tranche B : `/mes-demandes`, `/mes-reclamations`, `/mon-profil` (colonne `messages.type`, vocabulaire fermé). **`/mes-documents` NON FAIT** — voir §11. Tranche A bis : `/comptes/[slug]` au TABLEAU DE BORD (jamais dans `/edit`), pastille du nombre de demandes en attente. Tranche A : `/connexion`, `/inscription`, `/mot-de-passe-oublie`, `/espace-client` ; capacité `ouvre_des_comptes` (CPA seule, 1/42 vérifié) ; **dette §10 FERMÉE**. Restent `/mes-demandes`, `/mon-profil`, `/mes-documents`, `/mes-reclamations`. |
 | 12 | **Espace fournisseur + dépôt de pièces** | 30 | 🔄 **ENTAMÉ** — 12.3 : `/ma-prequalification`, verdict de la Centrale (vocabulaire fermé, JAMAIS visible d'un autre fournisseur). Reste `/espace-fournisseur` et `/mes-consultations`. 12.2 : `/mon-dossier`, pièces exigées DÉCLARÉES par la Centrale depuis `/edit` (clé stable, libellé corrigible), rattachement validé contre la liste réelle. Restent `/espace-fournisseur`, `/ma-prequalification`, `/mes-consultations`. 12.1 : les documents d'un compte DANS LES DEUX SENS, seau privé, liens signés 60 s, retrait qui laisse une trace. Restent la préqualification et le dossier fournisseur. |
-| 13 | **Soumission électronique des offres** | 30 | ⬜ |
+| 13 | **Soumission électronique des offres** | 30 | 🔄 **ENTAMÉ** — 13.1 : portée d'un avis (national/international/tous), table `offres` + seau PRIVÉ, écran « Déposer une offre » avec compte ACTIF obligatoire, refus après la date limite. Reste l'écran où la Centrale reçoit et répond. |
 | 14 | **Administration — workflow, audit, tableau de bord** | 30 | ⬜ |
 | **5bis** | **La page des appels d'offres, RICHE** — voir §8 | 14 | ✅ **FERMÉ** — neuf points, **30/30 à l'adresse publique**, dont deux pièges volontaires : la légende ne montre pas « ICB », et un bloc mal positionné ne disparaît pas. |
 | **15** | **Finitions d'interface relevées sur EPSS** — voir §7 | 18 | ⬜ **DERNIER LOT** |
@@ -430,6 +430,34 @@ peuvent upload pour le cpa, c de 2 cotés pas un coté. »
 
 Et **chacun ne retire que ce qu'il a déposé** : la Centrale ne fait pas
 disparaître l'agrément qu'un fournisseur lui a remis.
+
+---
+
+## §13 — LE SECRET DES PLIS N'EST PAS TECHNIQUE, PAR DÉCISION
+
+**J'avais proposé que la base REFUSE de rendre une offre avant l'heure
+d'ouverture des plis — même à la Centrale, même au service.** Dans un
+marché public, une offre lisible avant la clôture rend la procédure
+attaquable.
+
+**Arbitrage du propriétaire, 2026-11-09 :** « cpa ne mettra pas avant
+heure, si ça arrive c'est leur responsabilité, pas la nôtre. »
+
+**La décision est enregistrée, et sa conséquence aussi** : le secret des
+plis repose sur la discipline de la Centrale, pas sur une impossibilité.
+Rien dans le code n'empêche la lecture anticipée par le propriétaire du
+site.
+
+**CE QUI EST FERMÉ malgré tout**, et qui ne dépend de personne :
+`offres` ne rend aucun privilège à `anon` ni `authenticated` — mesuré,
+`42501` en lecture comme en écriture. Un fournisseur ne voit QUE ses
+offres et ne signe QUE les siennes : sans cela il lirait le prix de ses
+concurrents. Le seau est privé, les liens durent 60 secondes.
+
+**ET UNE RÈGLE QUE J'AI APPLIQUÉE SANS QU'ELLE SOIT DEMANDÉE** : on ne
+dépose plus après la date limite. Une date limite qui n'arrête rien n'est
+pas une date limite, et une offre arrivée après coup rendrait la procédure
+attaquable par tous les autres soumissionnaires. Le refus dit la date.
 
 ---
 
