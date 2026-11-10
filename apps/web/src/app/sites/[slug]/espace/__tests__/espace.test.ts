@@ -119,3 +119,14 @@ describe('la page dit ce qu’elle ne peut pas montrer', () => {
     }
   })
 })
+
+describe('aucune redirection ne s’écrit en dur', () => {
+  it('🔴 `/espace-fournisseur` résout son adresse — jamais `/sites/…` en dur', () => {
+    // Mesuré en ligne le 2026-11-10 : le chemin en dur tombait en 404 sur le
+    // sous-domaine, le proxy le re-préfixant.
+    const src = readFileSync(join(__dirname, '..', '..', 'espace-fournisseur', 'page.tsx'), 'utf-8')
+      .replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '')
+    expect(src).toMatch(/resolveSiteBaseUrl\(/)
+    expect(src).not.toMatch(/['`]\/sites\//)
+  })
+})
