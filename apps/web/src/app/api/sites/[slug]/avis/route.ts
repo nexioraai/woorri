@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { requireSiteOwner } from '@/lib/auth/require-site-owner'
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { journaliser } from '@/lib/audit/journaliser'
 
 // ============================================================================
 // LOT 14.1 — LA CENTRALE ÉCRIT SES AVIS ELLE-MÊME.
@@ -161,6 +162,8 @@ export async function POST(req: Request, { params }: Params) {
     .select(COLS).single()
 
   if (error) return NextResponse.json({ error: LISIBLE[error.code] ?? error.message }, { status: 400 })
+  await journaliser({ siteId: garde.site.id, acteur: garde.email, viaAdmin: garde.viaAdmin,
+    action: 'avis.creer', cible: reference })
   return NextResponse.json({ avis: data }, { status: 201 })
 }
 
@@ -193,5 +196,8 @@ export async function PATCH(req: Request, { params }: Params) {
 
   if (error) return NextResponse.json({ error: LISIBLE[error.code] ?? error.message }, { status: 400 })
   if (!data) return NextResponse.json({ error: 'Avis introuvable.' }, { status: 404 })
+  await journaliser({ siteId: garde.site.id, acteur: garde.email, viaAdmin: garde.viaAdmin,
+    action: 'publie' in lus ? 'avis.publier' : 'etat' in lus ? 'avis.etat' : 'avis.modifier',
+    cible: (data as { reference?: string }).reference ?? id, details: lus })
   return NextResponse.json({ avis: data })
 }

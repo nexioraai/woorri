@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { requireSiteOwner } from '@/lib/auth/require-site-owner'
 import { requireSiteCompte, type RoleSite } from '@/lib/auth/require-site-compte'
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { journaliser } from '@/lib/audit/journaliser'
 
 // ============================================================
 // LOT 10 — LES COMPTES D'UN SITE.
@@ -180,6 +181,9 @@ export async function PATCH(req: Request, { params }: Params) {
 
   if (error) return NextResponse.json({ error: LISIBLE[error.code] ?? error.message }, { status: 400 })
   if (!data) return NextResponse.json({ error: 'Compte introuvable.' }, { status: 404 })
+  await journaliser({ siteId: garde.site.id, acteur: garde.email, viaAdmin: garde.viaAdmin,
+    action: 'qualification' in changements ? 'compte.qualifier' : 'compte.etat', cible: (data as { email?: string }).email ?? id,
+    details: changements })
   return NextResponse.json({ compte: data })
 }
 

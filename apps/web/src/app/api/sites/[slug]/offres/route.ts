@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { journaliser } from '@/lib/audit/journaliser'
 import { requireSiteOwner } from '@/lib/auth/require-site-owner'
 import { nomPropre } from '@/lib/fichiers/nomPropre'
 import { ouvreDesComptes } from '@/app/sites/[slug]/acces/ouvreDesComptes'
@@ -55,7 +56,7 @@ const ETATS = ['recue', 'retenue', 'non_retenue'] as const
 const REFUS = () => NextResponse.json({ error: 'Accès refusé.' }, { status: 403 })
 
 type Qui =
-  | { role: 'centrale'; siteId: string }
+  | { role: 'centrale'; siteId: string; email?: string; viaAdmin?: boolean }
   | { role: 'fournisseur'; siteId: string; compteId: string }
 
 /** Le jeton du porteur, et l'identité que l'authentification lui reconnaît. */
@@ -80,7 +81,9 @@ async function porteur(req: Request): Promise<{ userId: string } | null> {
  */
 async function quiAppelle(req: Request, slug: string): Promise<Qui | null> {
   const proprietaire = await requireSiteOwner(req, slug)
-  if (!('response' in proprietaire)) return { role: 'centrale', siteId: proprietaire.site.id }
+  if (!('response' in proprietaire)) {
+    return { role: 'centrale', siteId: proprietaire.site.id, email: proprietaire.email, viaAdmin: proprietaire.viaAdmin }
+  }
 
   const moi = await porteur(req)
   if (!moi) return null
@@ -337,5 +340,8 @@ export async function PATCH(req: Request, { params }: Params) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 })
   if (!data) return NextResponse.json({ error: 'Offre introuvable.' }, { status: 404 })
+  await journaliser({ siteId: qui.siteId, acteur: qui.email, viaAdmin: qui.viaAdmin,
+    action: 'reponse' in changements ? 'offre.repondre' : 'offre.decider',
+    cible: String((data as { nom?: string }).nom ?? id), details: { etat: changements.etat, offre: id } })
   return NextResponse.json({ offre: vue(data as Record<string, unknown>, false) })
 }

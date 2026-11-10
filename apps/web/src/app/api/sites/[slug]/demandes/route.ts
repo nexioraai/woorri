@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { requireSiteOwner } from '@/lib/auth/require-site-owner'
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { journaliser } from '@/lib/audit/journaliser'
 
 // ============================================================================
 // LOT 14.2 — LA CENTRALE TRAITE LES DEMANDES ET RÉCLAMATIONS.
@@ -83,5 +84,8 @@ export async function PATCH(req: Request, { params }: Params) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 })
   if (!data) return NextResponse.json({ error: 'Demande introuvable.' }, { status: 404 })
+  await journaliser({ siteId: garde.site.id, acteur: garde.email, viaAdmin: garde.viaAdmin,
+    action: 'reponse' in changements ? 'demande.repondre' : 'demande.etat',
+    cible: (data as { reference?: string | null }).reference ?? id, details: { etat: changements.etat } })
   return NextResponse.json({ demande: data })
 }
