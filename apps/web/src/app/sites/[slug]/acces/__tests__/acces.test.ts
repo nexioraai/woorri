@@ -162,3 +162,12 @@ describe('l’inscription passe par UNE route, et l’écran ne décide de rien'
     expect(ESPACE.slice(d)).toMatch(/const\s+d\s*=\s*await\s+r\.json\(\)[\s\S]{0,120}setCompte\(d\.compte/)
   })
 })
+
+describe('LOT 19 — une structure sanitaire ne voit pas les écrans du fournisseur', () => {
+  it('🔴 dossier, préqualification et consultations sont sous la condition « fournisseur »', () => {
+    const i = ESPACE.indexOf("compte.role === 'fournisseur' ? [")
+    expect(i, 'condition de rôle absente').toBeGreaterThan(-1)
+    const bloc = ESPACE.slice(i, ESPACE.indexOf('] as const : []', i))
+    for (const c of ['mon-dossier', 'ma-prequalification', 'mes-consultations']) expect(bloc, c).toContain(c)
+  })
+})

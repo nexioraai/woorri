@@ -31,6 +31,8 @@ type Compte = {
   role: 'structure' | 'fournisseur' | 'agent'
   etat: 'en_attente' | 'actif' | 'suspendu'
   organisation: string | null
+  /** LOT 17 — saisi à l'inscription ; absent des comptes plus anciens. */
+  nom?: string | null
   reference: string | null
   cree_le: string
 }
@@ -224,7 +226,7 @@ export default function EspaceClient({
         <div style={{ ...carte, background: `color-mix(in srgb, ${primary} 5%, #ffffff)` }}>
           <p style={{ margin: 0 }}>{compte.etat === 'en_attente' ? mots.enAttente : mots.suspendu}</p>
           <p style={{ margin: '14px 0 0', fontSize: 14.5, opacity: 0.8 }}>
-            {compte.organisation} · {compte.email}
+            {compte.nom ? `${compte.nom} · ` : ''}{compte.organisation} · {compte.email}
           </p>
         </div>
         {deconnexion}
@@ -247,9 +249,14 @@ export default function EspaceClient({
             [`${base}/mes-demandes`, mots.mesDemandes],
             [`${base}/mes-reclamations`, mots.mesReclamations],
             [`${base}/mes-documents`, mots.mesDocuments],
-            [`${base}/mon-dossier`, mots.monDossier],
-            [`${base}/ma-prequalification`, mots.maPrequalification],
-            [`${base}/mes-consultations`, mots.mesConsultations],
+            // LOT 19 — les trois écrans du FOURNISSEUR (dossier, préqualification,
+            // consultations) ne s'affichent qu'à un fournisseur : une structure
+            // sanitaire n'a ni dossier fournisseur ni offre à déposer.
+            ...(compte.role === 'fournisseur' ? [
+              [`${base}/mon-dossier`, mots.monDossier],
+              [`${base}/ma-prequalification`, mots.maPrequalification],
+              [`${base}/mes-consultations`, mots.mesConsultations],
+            ] as const : []),
             [`${base}/mon-profil`, mots.monProfil],
             [`${base}/demandes/suivi`, mots.suivreDemande],
           ] as const).map(([href, libelle]) => (
