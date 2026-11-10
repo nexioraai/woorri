@@ -108,7 +108,8 @@ export default function FormulaireAcces({
         })
         const d = await r.json().catch(() => ({}))
         if (!r.ok) {
-          setMessage(r.status === 409 && champs ? champs.deja : String(d.error ?? libelles.refus))
+          // Le serveur dit QUOI faire (mot de passe déjà utilisé, champ à corriger).
+          setMessage(String(d.error ?? (r.status === 409 && champs ? champs.deja : libelles.refus)))
           setEtat('refus'); return
         }
         // LE COMPTE EST CRÉÉ : on entre avec le mot de passe saisi.

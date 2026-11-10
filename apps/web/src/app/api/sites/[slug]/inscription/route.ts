@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { createClient } from '@supabase/supabase-js'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { ouvreDesComptes } from '@/app/sites/[slug]/acces/ouvreDesComptes'
 import { journaliser } from '@/lib/audit/journaliser'
@@ -27,10 +28,17 @@ import { journaliser } from '@/lib/audit/journaliser'
 // PERDRE : la preuve que l'adresse appartient à celui qui s'inscrit. C'est
 // la décision du propriétaire ; elle est consignée au PLAN §17.
 //
-// ── UNE ADRESSE DÉJÀ CONNUE N'EST JAMAIS REPRISE. On répond « connectez-
-// vous », on ne change ni son mot de passe ni rien d'autre. Reprendre un
-// accès existant — même jamais confirmé — donnerait à n'importe qui le
-// moyen de s'installer dans l'accès d'un autre.
+// ── UNE ADRESSE DÉJÀ CONNUE N'EST JAMAIS REPRISE. On ne change ni son mot
+// de passe ni rien d'autre. Reprendre un accès existant — même jamais
+// confirmé — donnerait à n'importe qui le moyen de s'installer dans
+// l'accès d'un autre.
+//
+// ── MAIS SON TITULAIRE EST RATTACHÉ, S'IL PROUVE QUI IL EST. Mesuré le
+// 2026-11-10 : l'accès est COMMUN à tous les sites Deribfy. Le marchand
+// d'un autre site s'inscrivant à la CPA lisait « un compte existe déjà »
+// pour un site où il n'avait jamais rien créé. S'il a saisi le BON mot de
+// passe de cet accès (vérifié par l'authentification elle-même, comme une
+// connexion), son compte CPA est créé ; sinon, un refus qui dit quoi faire.
 //
 // ── LE PIÈGE À ROBOTS. Un champ invisible (`site_web`) qu'un humain ne
 // remplit jamais : rempli, la réponse est un succès apparent et rien n'est
@@ -84,25 +92,39 @@ export async function POST(req: Request, { params }: Params) {
   if (eAcces || !userId) {
     const { data: existant } = await supabaseAdmin.rpc('identifiant_par_courriel', { courriel: email })
     if (typeof existant === 'string' && existant) {
-      return NextResponse.json({ error: 'Un compte existe déjà avec cette adresse. Connectez-vous.', code: 'deja' }, { status: 409 })
+      const verificateur = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, { auth: { persistSession: false } })
+      const { data: preuve } = await verificateur.auth.signInWithPassword({ email, password: motDePasse })
+      if (preuve?.user?.id !== existant) {
+        return NextResponse.json({ error: 'Cette adresse est déjà utilisée. Saisissez le mot de passe que vous utilisez déjà avec elle, ou choisissez « Mot de passe oublié ».', code: 'deja' }, { status: 409 })
+      }
+      return creerCompteDeSite(site.id, existant, { email, role, organisation, nom, telephone }, false)
     }
     console.error('[inscription] création de l’accès refusée', eAcces?.message)
     return NON('Création impossible pour le moment. Réessayez plus tard.', 500)
   }
 
-  // 2. LE COMPTE DE SITE — colonnes nommées ; `etat` n'est pas envoyé, la
-  // base le pose (défaut `actif`).
+  return creerCompteDeSite(site.id, userId, { email, role, organisation, nom, telephone }, true)
+}
+
+/**
+ * 2. LE COMPTE DE SITE — colonnes nommées ; `etat` n'est pas envoyé, la base
+ * le pose (défaut `actif`). `accesNeuf` : l'accès vient d'être créé pour CE
+ * compte ; en cas d'échec on le retire, pour ne pas laisser un accès orphelin
+ * qui bloquerait la prochaine tentative. Un accès EXISTANT n'est jamais retiré.
+ */
+async function creerCompteDeSite(
+  siteId: string, userId: string,
+  f: { email: string; role: string; organisation: string; nom: string; telephone: string },
+  accesNeuf: boolean,
+) {
   const { error: eCompte } = await supabaseAdmin.from('site_comptes').insert({
-    site_id: site.id, user_id: userId, email, role, organisation, nom, telephone,
+    site_id: siteId, user_id: userId, email: f.email, role: f.role, organisation: f.organisation, nom: f.nom, telephone: f.telephone,
   })
   if (eCompte && eCompte.code !== '23505') {
-    // L'accès vient d'être créé pour CE compte : on ne laisse pas un accès
-    // orphelin qui bloquerait la prochaine tentative avec « déjà connu ».
-    await supabaseAdmin.auth.admin.deleteUser(userId)
+    if (accesNeuf) await supabaseAdmin.auth.admin.deleteUser(userId)
     console.error('[inscription] compte de site refusé', eCompte.message)
     return NON('Création impossible pour le moment. Réessayez plus tard.', 500)
   }
-
-  await journaliser({ siteId: site.id, acteur: email, action: 'compte.inscrire', cible: email, details: { role, organisation } })
+  await journaliser({ siteId, acteur: f.email, action: 'compte.inscrire', cible: f.email, details: { role: f.role, organisation: f.organisation, accesExistant: !accesNeuf } })
   return NextResponse.json({ ok: true }, { status: 201 })
 }

@@ -31,6 +31,10 @@ vi.mock('@/lib/supabase-admin', () => ({
     auth: { admin: { createUser: (a: unknown) => createUser(a), deleteUser: (id: string) => deleteUser(id), updateUserById: (...a: unknown[]) => updateUserById(...(a as [])) } },
   },
 }))
+let preuveUserId: string | null = null
+vi.mock('@supabase/supabase-js', () => ({
+  createClient: () => ({ auth: { signInWithPassword: async () => ({ data: { user: preuveUserId ? { id: preuveUserId } : null }, error: preuveUserId ? null : { message: 'invalid' } }) } }),
+}))
 vi.mock('@/app/sites/[slug]/acces/ouvreDesComptes', () => ({ ouvreDesComptes: async () => ouvre }))
 vi.mock('@/lib/audit/journaliser', () => ({ journaliser: (e: unknown) => journaliser(e) }))
 
@@ -42,7 +46,7 @@ const inscrire = (corps: Record<string, unknown> = BON) =>
   POST(new Request('https://x.test/', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(corps) }), params)
 
 beforeEach(() => {
-  journal = journalVierge(); ouvre = true; siteTrouve = { id: 'site-1' }; erreurCompte = null; existant = null
+  journal = journalVierge(); ouvre = true; siteTrouve = { id: 'site-1' }; erreurCompte = null; existant = null; preuveUserId = null
   createUser.mockReset(); createUser.mockImplementation(async () => ({ data: { user: { id: 'u-1' } }, error: null }))
   deleteUser.mockClear(); updateUserById.mockClear(); journaliser.mockClear()
 })
@@ -108,13 +112,30 @@ describe('ce qui est refusé', () => {
 })
 
 describe('une adresse déjà connue n’est jamais reprise', () => {
-  it('🔴 409 « connectez-vous », sans toucher à l’accès existant', async () => {
+  it('🔴 mot de passe FAUX : 409, sans toucher à l’accès existant', async () => {
     createUser.mockImplementation(async () => ({ data: { user: null }, error: { message: 'already registered' } }))
     existant = 'u-autre'
     const r = await inscrire()
     expect(r.status).toBe(409)
     expect(updateUserById).not.toHaveBeenCalled()
     expect(journal.ecritures['site_comptes'] ?? []).toHaveLength(0)
+  })
+
+  it('🔴 le BON mot de passe d’un accès existant (autre site Deribfy) : rattaché, sans rien changer à l’accès', async () => {
+    createUser.mockImplementation(async () => ({ data: { user: null }, error: { message: 'already registered' } }))
+    existant = 'u-autre'; preuveUserId = 'u-autre'
+    const r = await inscrire()
+    expect(r.status).toBe(201)
+    expect(updateUserById).not.toHaveBeenCalled()
+    const e = journal.ecritures['site_comptes'] as { charge: Record<string, unknown> }[]
+    expect(e[0].charge).toMatchObject({ user_id: 'u-autre', nom: 'Amina Mahamat' })
+  })
+
+  it('🔴 un accès existant n’est JAMAIS supprimé, même si le compte de site échoue', async () => {
+    createUser.mockImplementation(async () => ({ data: { user: null }, error: { message: 'already registered' } }))
+    existant = 'u-autre'; preuveUserId = 'u-autre'; erreurCompte = { code: '23514', message: 'check' }
+    expect((await inscrire()).status).toBe(500)
+    expect(deleteUser).not.toHaveBeenCalled()
   })
 
   it('🔴 si le compte de site échoue, l’accès tout juste créé est retiré — pas d’orphelin', async () => {
