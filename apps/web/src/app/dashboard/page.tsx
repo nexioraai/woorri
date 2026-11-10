@@ -4,7 +4,7 @@ import { publierAvecAccord } from '@/components/apps/accordLecturePublique';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Plus, ExternalLink, Pencil, LogOut, Globe, Users, Inbox } from 'lucide-react';
+import { Plus, ExternalLink, Pencil, LogOut, Globe, Users, Inbox, BookOpen } from 'lucide-react';
 import Sidebar from '@/components/Sidebar';
 import { supabase } from '@/lib/supabase';
 import { IdentifiantsOeuvre, type EtatCompteOeuvre } from '@/components/apps/IdentifiantsOeuvre';
@@ -727,6 +727,15 @@ export default function DashboardPage() {
                             {demandesEnAttente[site.slug]}
                           </span>
                         )}
+                      </Link>
+                    )}
+                    {/* Le GUIDE D'EXPLOITATION — pour les sites-portails (comptes,
+                        offres) : c'est là qu'il y a quelque chose à administrer. */}
+                    {site.ouvre_des_comptes === true && (
+                      <Link href={`/guide/${site.slug}`}
+                        className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-sm font-semibold border border-white/10 text-white/70 hover:text-white hover:border-white/30 transition-all"
+                        title="Guide d’exploitation">
+                        <BookOpen className="w-3.5 h-3.5" />
                       </Link>
                     )}
                     {site.published && (<>
