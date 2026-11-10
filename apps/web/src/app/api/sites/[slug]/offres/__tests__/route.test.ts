@@ -227,6 +227,26 @@ describe('ce qui est écrit', () => {
 })
 
 describe('ce qui sort', () => {
+  it('🔴 le titre de l’avis accompagne l’offre', async () => {
+    // Sans lui, la Centrale verrait une liste d'IDENTIFIANTS et ne saurait
+    // pas à quel marché chaque offre répond.
+    avisTable = { data: [{ id: 'a1', reference: '004/AONO/CPA/2026', objet: 'Antipaludiques' }], error: null }
+    const d = await (await GET(req(), params)).json()
+    expect(d.offres[0].avis).toMatchObject({ reference: '004/AONO/CPA/2026', objet: 'Antipaludiques' })
+  })
+
+  it('🔴 un titre ABSENT ne casse pas la liste', async () => {
+    // Le titre est une commodité. Premier jet : la lecture levait si elle
+    // rendait autre chose qu'un tableau, et TOUT l'écran des offres tombait
+    // pour un libellé manquant.
+    avisTable = { data: null, error: null }
+    const r = await GET(req(), params)
+    expect(r.status).toBe(200)
+    const d = await r.json()
+    expect(d.offres).toHaveLength(1)
+    expect(d.offres[0].avis).toBeNull()
+  })
+
   it('🔴 `chemin` ne sort JAMAIS', async () => {
     const d = await (await GET(req(), params)).json()
     expect(JSON.stringify(d)).not.toContain('chemin')

@@ -155,8 +155,37 @@ export async function GET(req: Request, { params }: Params) {
   const { data, error } = await q
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  const offres = ((data ?? []) as Record<string, unknown>[])
-    .map((d) => vue(d, qui.role === 'fournisseur' || d.compte_id === undefined))
+  const lignes = (data ?? []) as Record<string, unknown>[]
+
+  // ── DE QUEL AVIS RELÈVE CHAQUE OFFRE.
+  //
+  // Sans cette lecture, l'écran afficherait une liste d'IDENTIFIANTS : la
+  // Centrale ne saurait pas à quel marché elle répond. On la fait en UNE
+  // requête sur les avis réellement présents, pas une par offre.
+  //
+  // ON LIT LA TABLE, PAS LA VUE PUBLIQUE : un avis dépublié après coup
+  // garderait ses offres, et la Centrale doit pouvoir les retrouver. Le
+  // filtre par site reste, lui.
+  const ids = [...new Set(lignes.map((d) => String(d.avis_id)))]
+  const titres = new Map<string, { reference: string; objet: string }>()
+  if (ids.length > 0) {
+    const { data: avis } = await supabaseAdmin
+      .from('appels_offres').select('id,reference,objet')
+      .eq('site_id', qui.siteId)
+      .in('id', ids)
+    // UN TITRE EST UNE COMMODITÉ : son absence ne doit pas casser la liste.
+    // Premier jet : `for (const a of (avis ?? []))` — qui lève si la lecture
+    // rend autre chose qu'un tableau, et fait tomber TOUT l'écran des offres
+    // pour un libellé manquant.
+    for (const a of (Array.isArray(avis) ? avis : []) as Record<string, unknown>[]) {
+      titres.set(String(a.id), { reference: String(a.reference ?? ''), objet: String(a.objet ?? '') })
+    }
+  }
+
+  const offres = lignes.map((d) => ({
+    ...vue(d, qui.role === 'fournisseur' || d.compte_id === undefined),
+    avis: titres.get(String(d.avis_id)) ?? null,
+  }))
   return NextResponse.json({ offres, role: qui.role })
 }
 

@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { motifTexte } from '@/lib/apps/__tests__/motif-texte'
 
 // ============================================================
 // LOT 11 — APPROUVER UN COMPTE SE FAIT DANS LE TABLEAU DE BORD.
@@ -23,6 +24,7 @@ const src = (...p: string[]) =>
 
 const PAGE = src('comptes', '[slug]', 'page.tsx')
 const BORD = src('dashboard', 'page.tsx')
+const OFFRES = src('offres', '[slug]', 'page.tsx')
 
 describe('l’administration n’est pas dans `/edit`', () => {
   it('🔴 la page des comptes vit sous `/comptes`, hors de `/edit`', () => {
@@ -94,5 +96,50 @@ describe('l’écran ne décide rien', () => {
       expect(PAGE, `${verbe} absent`).toMatch(new RegExp(`method:\\s*'${verbe}'`, 'u'))
     }
     expect(PAGE).toMatch(/Authorization:\s*`Bearer/)
+  })
+})
+
+// ============================================================
+// LOT 13.2 — LES OFFRES REÇUES SONT AU TABLEAU DE BORD AUSSI.
+//
+// Même frontière, même raison : ouvrir les plis d'un marché public ne se
+// voit nulle part sur le site. Ce n'est pas du contenu.
+// ============================================================
+
+describe('l’écran des offres suit la même frontière', () => {
+  it('🔴 il vit sous `/offres`, et `/edit` n’en gagne aucun', () => {
+    expect(OFFRES).toContain('/api/sites/')
+    const edit = readFileSync(join(__dirname, '..', 'edit', '[slug]', 'page.tsx'), 'utf-8')
+    expect(edit).not.toMatch(/\/offres\/|from\('offres'\)/)
+  })
+
+  it('🔴 le bouton exige `publishes_tenders === true`', () => {
+    // Ailleurs il mènerait à une liste toujours vide, et un bouton qui ne
+    // mène à rien use la confiance.
+    expect(BORD).toMatch(/site\.publishes_tenders\s*===\s*true\s*&&/)
+    expect(BORD).toMatch(/href=\{`\/offres\/\$\{site\.slug\}`\}/)
+  })
+
+  it('🔴 les sites qui ne passent PAS de marchés ne sont pas interrogés', () => {
+    expect(BORD).toMatch(/filter\(\(x\)\s*=>\s*x\.publishes_tenders === true\)/)
+  })
+
+  it('🔴 la pastille ne paraît qu’au-dessus de zéro', () => {
+    // Une offre qu'on oublie, c'est un marché contesté ; une pastille « 0 »
+    // dirait « rien à faire » avant d'avoir regardé.
+    expect(BORD).toMatch(/\(offresEnAttente\[site\.slug\]\s*\?\?\s*0\)\s*>\s*0\s*&&/)
+  })
+
+  it('🔴 l’écran RELIT après chaque décision', () => {
+    const d = OFFRES.indexOf('async function decider')
+    expect(d).toBeGreaterThan(-1)
+    expect(OFFRES.slice(d)).toMatch(/await\s+relire\(\)/)
+  })
+
+  it('🔴 il DIT que le secret des plis n’est pas protégé techniquement', () => {
+    // Arbitrage du propriétaire : rien ne l'empêche. Le taire ferait croire
+    // à une protection qui n'existe pas, et c'est pire que l'absence.
+    expect(OFFRES).toMatch(motifTexte('ouverture'))
+    expect(OFFRES).toMatch(motifTexte('vous appartient'))
   })
 })

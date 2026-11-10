@@ -190,8 +190,12 @@ export const NOMS_RESERVES: ReadonlySet<string> = new Set([
   // écrite pour approuver les accès d'un site, la gate a rougi dans la foulée,
   // le nom est réservé. Sans ça, un client aurait pu publier son application
   // sur `comptes.deribfy.app`, par dessus l'écran qui approuve les comptes.
+  //
+  // `offres` a suivi le 2026-11-09, et par anticipation cette fois : la
+  // route `/offres/[slug]` ouvre les plis d'un marché public. Un client qui
+  // aurait pris ce sous-domaine se serait posé par dessus.
   'a', 'about', 'admin', 'api', 'atelier', 'blog', 'comptes', 'cookies', 'dashboard',
-  'documentation', 'domaine', 'edit', 'login', 'onboarding-chat', 'p', 'parametres',
+  'documentation', 'domaine', 'edit', 'login', 'offres', 'onboarding-chat', 'p', 'parametres',
   'preview', 'pricing', 'privacy', 'reset-password', 'sites', 'terms', 'visibilite-ia',
   'welcome', 'cancel-order',
 

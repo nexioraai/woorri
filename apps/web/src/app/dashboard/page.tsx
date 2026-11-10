@@ -4,7 +4,7 @@ import { publierAvecAccord } from '@/components/apps/accordLecturePublique';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Plus, ExternalLink, Pencil, LogOut, Globe, Users } from 'lucide-react';
+import { Plus, ExternalLink, Pencil, LogOut, Globe, Users, Inbox } from 'lucide-react';
 import Sidebar from '@/components/Sidebar';
 import { supabase } from '@/lib/supabase';
 import { IdentifiantsOeuvre, type EtatCompteOeuvre } from '@/components/apps/IdentifiantsOeuvre';
@@ -50,6 +50,12 @@ export default function DashboardPage() {
   // dirait « rien a faire » avant d'avoir regarde. On ne montre un nombre
   // qu'une fois qu'il a ete MESURE.
   const [demandesEnAttente, setDemandesEnAttente] = useState<Record<string, number>>({});
+  // ── LOT 13.2 — COMBIEN D'OFFRES ATTENDENT UNE DÉCISION, PAR SITE.
+  //
+  // Même règle que la pastille des comptes : vide tant que rien n'est
+  // chargé. Une pastille « 0 » dirait « rien à faire » avant d'avoir
+  // regardé — et une offre qu'on oublie, c'est un marché contesté.
+  const [offresEnAttente, setOffresEnAttente] = useState<Record<string, number>>({});
   const router = useRouter();
   const { t } = useTranslation();
   const [user, setUser] = useState<any>(null);
@@ -500,6 +506,31 @@ export default function DashboardPage() {
               }));
               setDemandesEnAttente(compte);
             })();
+
+            // ── LES OFFRES NON DÉCIDÉES, pour les seuls sites qui passent
+            //    des marchés. Les autres ne sont pas interrogés.
+            void (async () => {
+              type SiteAMarches = { slug: string; publishes_tenders?: boolean };
+              const acheteurs = ((sitesData || []) as SiteAMarches[])
+                .filter((x) => x.publishes_tenders === true);
+              if (acheteurs.length === 0) return;
+              const { data: sess } = await supabase.auth.getSession();
+              const jeton = sess.session?.access_token;
+              if (!jeton) return;
+              const compte: Record<string, number> = {};
+              await Promise.all(acheteurs.map(async (x) => {
+                try {
+                  const r = await fetch(`/api/sites/${encodeURIComponent(x.slug)}/offres`, {
+                    headers: { Authorization: `Bearer ${jeton}` }, cache: 'no-store',
+                  });
+                  if (!r.ok) return;
+                  const d = await r.json();
+                  compte[x.slug] = ((d.offres ?? []) as { etat?: string }[])
+                    .filter((o) => o.etat === 'recue').length;
+                } catch { /* ce site reste sans pastille, les autres vivent */ }
+              }));
+              setOffresEnAttente(compte);
+            })();
             const slugs = (sitesData || []).map((s: any) => s.slug);
             if (slugs.length > 0) {
               supabase.from('score_history')
@@ -668,6 +699,24 @@ export default function DashboardPage() {
                         LA PASTILLE PORTE LE NOMBRE EN ATTENTE. Sans elle il faut
                         PENSER a venir regarder -- et un fournisseur attendrait des
                         semaines sans que personne le sache. */}
+                    {/* ── LOT 13.2 — LES OFFRES REÇUES.
+                        Ouvrir les plis d'un marché ne se voit nulle part sur
+                        le site : c'est de l'administration, donc ici. Le
+                        bouton n'apparaît que pour un site qui PASSE des
+                        marchés — ailleurs il mènerait à une liste toujours
+                        vide. */}
+                    {site.publishes_tenders === true && (
+                      <Link href={`/offres/${site.slug}`}
+                        className="relative flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-sm font-semibold border border-white/10 text-white/70 hover:text-white hover:border-white/30 transition-all"
+                        title="Offres reçues sur vos appels d'offres">
+                        <Inbox className="w-3.5 h-3.5" />
+                        {(offresEnAttente[site.slug] ?? 0) > 0 && (
+                          <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#b45309] text-white text-[11px] font-bold flex items-center justify-center">
+                            {offresEnAttente[site.slug]}
+                          </span>
+                        )}
+                      </Link>
+                    )}
                     {site.ouvre_des_comptes === true && (
                       <Link href={`/comptes/${site.slug}`}
                         className="relative flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-sm font-semibold border border-white/10 text-white/70 hover:text-white hover:border-white/30 transition-all"
