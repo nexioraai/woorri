@@ -13,6 +13,7 @@ const code = (r: string) => readFileSync(join(RACINE, r, 'route.ts'), 'utf-8')
 const ATTENDU: [string, string[]][] = [
   ['comptes', ['compte.etat', 'compte.qualifier']],
   ['inscription', ['compte.inscrire']],
+  ['mon-compte', ['compte.supprimer']],
   ['avis', ['avis.creer', 'avis.modifier', 'avis.publier', 'avis.etat']],
   ['offres', ['offre.decider', 'offre.repondre']],
   ['demandes', ['demande.etat', 'demande.repondre']],

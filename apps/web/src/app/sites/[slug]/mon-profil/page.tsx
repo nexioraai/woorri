@@ -12,8 +12,8 @@ export const generateMetadata = (p: PropsEspace) => metadonneesEspace('mon-profi
 export default function Page(p: PropsEspace) {
   return PageEspace({
     chemin: 'mon-profil', titre, phrase, ...p,
-    rendu: ({ slug, accent, lang }) => (
-      <MonProfil slug={slug} primary={accent} mots={motsProfil(lang)} />
+    rendu: ({ slug, base, accent, lang }) => (
+      <MonProfil slug={slug} primary={accent} mots={motsProfil(lang)} accueil={base} />
     ),
   })
 }

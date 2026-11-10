@@ -269,14 +269,14 @@ describe('corriger son organisation', () => {
     expect(modifie).toMatchObject({ organisation: 'Hôpital général de Moundou' })
   })
 
-  it('🔴 une fois le compte ACTIF, elle ne bouge plus — et on dit pourquoi', async () => {
+  it('🔴 LOT 19 — un compte ACTIF corrige ses coordonnées (plus aucun examen ne les fige)', async () => {
+    // Règle INVERSÉE le 2026-11-10 : depuis l'inscription directe (lot 17),
+    // personne n'examine plus un compte ; l'écran affirmait à tort « votre
+    // compte a été examiné ». Seule la SUSPENSION fige encore (test suivant).
     comptes = { data: { id: 'c1', etat: 'actif' }, error: null }
     const r = await PATCH(patch({ organisation: 'Autre chose' }), params)
-    expect(r.status).toBe(409)
-    expect(modifie).toBeNull()
-    // La personne est authentifiée et c'est SA ligne : lui cacher la raison
-    // la ferait réessayer sans comprendre.
-    expect(String((await r.json()).error).length).toBeGreaterThan(30)
+    expect(r.status).toBe(200)
+    expect(modifie).toMatchObject({ organisation: 'Autre chose' })
   })
 
   it('🔴 un compte SUSPENDU ne se corrige pas non plus', async () => {
@@ -294,7 +294,8 @@ describe('corriger son organisation', () => {
     // qu'on ajouterait un jour.
     comptes = { data: { id: 'c1', etat: 'en_attente' }, error: null }
     await PATCH(patch({ organisation: 'Hôpital', role: 'agent', etat: 'actif', reference: 'F-001' }), params)
-    expect(Object.keys(modifie ?? {}).sort()).toEqual(['maj_le', 'organisation'])
+    // LOT 19 — nom et téléphone se corrigent aussi ; rôle, état et référence JAMAIS.
+    expect(Object.keys(modifie ?? {}).sort()).toEqual(['maj_le', 'nom', 'organisation', 'telephone'])
   })
 
   it('🔴 l’écriture est filtrée par PERSONNE, jamais par le seul `id`', async () => {

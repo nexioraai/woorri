@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { ouvreDesComptes } from '@/app/sites/[slug]/acces/ouvreDesComptes'
+import { journaliser } from '@/lib/audit/journaliser'
+import { requireAuthenticatedUser } from '@/lib/auth/require-authenticated-user'
 
 // ============================================================================
 // LOT 11 — « OÙ EN EST MON COMPTE ? »
@@ -51,7 +53,7 @@ type RoleDemandable = (typeof ROLES_DEMANDABLES)[number]
 const REFUS = () => NextResponse.json({ error: 'Accès refusé.' }, { status: 403 })
 
 /** Ce qu'on rend d'un compte. Jamais `user_id` : le porteur le connaît déjà. */
-const VU = 'id,email,role,etat,organisation,nom,reference,cree_le,qualification,qualification_le'
+const VU = 'id,email,role,etat,organisation,nom,telephone,reference,cree_le,qualification,qualification_le'
 
 /**
  * Qui appelle, d'après SON jeton.
@@ -206,9 +208,23 @@ export async function PATCH(req: Request, { params }: Params) {
     return NextResponse.json({ error: 'Envoi illisible.' }, { status: 400 })
   }
 
-  const organisation = typeof corps.organisation === 'string' ? corps.organisation.trim() : ''
-  if (organisation.length < 2) {
+  // LOT 19 — NOM, ORGANISATION ET TÉLÉPHONE se corrigent par la personne
+  // elle-même. Depuis l'inscription directe (lot 17), personne n'« examine »
+  // plus un compte : figer l'organisation après un examen qui n'a pas lieu
+  // n'avait plus de sens, et l'écran l'affirmait à tort. Seul un compte
+  // SUSPENDU ne se modifie plus : la sanction vient de la Centrale.
+  const texte = (v: unknown) => (typeof v === 'string' ? v.trim() : '')
+  const organisation = texte(corps.organisation)
+  const nom = texte(corps.nom)
+  const telephone = texte(corps.telephone)
+  if (organisation.length < 2 || organisation.length > 300) {
     return NextResponse.json({ error: 'Indiquez l’organisation que vous représentez.' }, { status: 400 })
+  }
+  if (nom && (nom.length < 2 || nom.length > 120)) {
+    return NextResponse.json({ error: 'Indiquez votre nom complet.' }, { status: 400 })
+  }
+  if (telephone && !/^[+0-9 ().-]{6,30}$/.test(telephone)) {
+    return NextResponse.json({ error: 'Indiquez un numéro de téléphone valable.' }, { status: 400 })
   }
 
   const { data: deja } = await supabaseAdmin
@@ -217,9 +233,9 @@ export async function PATCH(req: Request, { params }: Params) {
   const ligne = deja as { id: string; etat: string } | null
   if (!ligne) return REFUS()
 
-  if (ligne.etat !== 'en_attente') {
+  if (ligne.etat === 'suspendu') {
     return NextResponse.json({
-      error: 'Votre compte a déjà été examiné : l’organisation ne se modifie plus ici. Écrivez à la Centrale.',
+      error: 'Votre compte est suspendu : écrivez à la Centrale pour toute modification.',
     }, { status: 409 })
   }
 
@@ -228,7 +244,7 @@ export async function PATCH(req: Request, { params }: Params) {
   // n'importe quelle colonne qu'on ajouterait un jour.
   const { data, error } = await supabaseAdmin
     .from('site_comptes')
-    .update({ organisation, maj_le: new Date().toISOString() })
+    .update({ organisation, nom: nom || null, telephone: telephone || null, maj_le: new Date().toISOString() })
     .eq('id', ligne.id)
     // LE FILTRE PAR PERSONNE RESTE, MÊME AVEC UN `id` : il vient de notre
     // propre lecture, mais l'écrire dit que cette route ne touche jamais la
@@ -240,4 +256,65 @@ export async function PATCH(req: Request, { params }: Params) {
   if (error) return NextResponse.json({ error: error.message }, { status: 400 })
   if (!data) return REFUS()
   return NextResponse.json({ compte: data })
+}
+
+/**
+ * DELETE — JE SUPPRIME MON COMPTE SUR CE SITE (LOT 19).
+ *
+ * « Ce n'est pas une prison » (propriétaire, 2026-11-10). La personne retire
+ * elle-même son compte, ses documents et leurs FICHIERS (un document retiré
+ * dont le fichier resterait au seau serait une donnée gardée sans le dire).
+ *
+ * ── SAUF S'IL A DÉPOSÉ UNE OFFRE. Dans un marché public on n'efface pas un
+ * soumissionnaire : la base l'interdit (`offres.compte_id on delete
+ * restrict`), et la route le dit avant d'essayer.
+ *
+ * ── L'ACCÈS (l'adresse et le mot de passe) n'est supprimé que s'il ne sert
+ * à RIEN d'autre : l'accès est commun à toute la plateforme Deribfy. Un
+ * marchand qui quitte la CPA garde sa boutique ; un compte d'un autre site
+ * reste.
+ */
+export async function DELETE(req: Request, { params }: Params) {
+  const { slug } = await params
+  // LA GARDE STANDARD DU DÉPÔT : cette route retire des FICHIERS du stockage,
+  // et le cliquet `ecrituresStockageGardees` exige une garde reconnue.
+  const qui = await requireAuthenticatedUser(req)
+  if (!qui.ok) return REFUS()
+  const moi = { userId: qui.userId, email: qui.email }
+  const site = await siteDe(slug)
+  if (!site) return REFUS()
+
+  const { data: c } = await supabaseAdmin
+    .from('site_comptes').select('id')
+    .eq('site_id', site.id).eq('user_id', moi.userId).maybeSingle()
+  const compte = c as { id: string } | null
+  if (!compte) return REFUS()
+
+  const { count: offres } = await supabaseAdmin
+    .from('offres').select('id', { count: 'exact', head: true }).eq('compte_id', compte.id)
+  if ((offres ?? 0) > 0) {
+    return NextResponse.json({
+      error: 'Vous avez déposé une offre : votre compte doit rester, pour la trace du marché. Écrivez à la Centrale.',
+    }, { status: 409 })
+  }
+
+  const { data: docs } = await supabaseAdmin
+    .from('comptes_documents').select('chemin').eq('compte_id', compte.id)
+  const chemins = ((docs as { chemin: string }[] | null) ?? []).map((d) => d.chemin).filter(Boolean)
+  if (chemins.length > 0) await supabaseAdmin.storage.from('comptes-documents').remove(chemins)
+
+  const { error } = await supabaseAdmin
+    .from('site_comptes').delete().eq('id', compte.id).eq('user_id', moi.userId)
+  if (error) return NextResponse.json({ error: 'Suppression impossible pour le moment.' }, { status: 500 })
+
+  await journaliser({ siteId: site.id, acteur: moi.email, action: 'compte.supprimer', cible: moi.email, details: { documents: chemins.length } })
+
+  // L'ACCÈS, SEULEMENT S'IL NE SERT PLUS À RIEN.
+  const [{ count: autres }, { count: sites }] = await Promise.all([
+    supabaseAdmin.from('site_comptes').select('id', { count: 'exact', head: true }).eq('user_id', moi.userId),
+    supabaseAdmin.from('sites').select('id', { count: 'exact', head: true }).eq('owner_id', moi.userId),
+  ])
+  if ((autres ?? 0) === 0 && (sites ?? 0) === 0) await supabaseAdmin.auth.admin.deleteUser(moi.userId)
+
+  return NextResponse.json({ supprime: true })
 }

@@ -29,6 +29,8 @@ type Compte = {
   role: 'structure' | 'fournisseur' | 'agent'
   etat: 'en_attente' | 'actif' | 'suspendu'
   organisation: string | null
+  nom?: string | null
+  telephone?: string | null
   reference: string | null
   cree_le: string
 }
@@ -50,14 +52,20 @@ export type MotsProfil = {
   motDePasse: string
   changerMotDePasse: string
   courrielEnvoye: string
+  coordonnees: string; nom: string; telephone: string
+  supprimerTitre: string; supprimerTexte: string; supprimerBouton: string; supprimerConfirmer: string; supprime: string
 }
 
 export default function MonProfil({
-  slug, mots, primary,
-}: { slug: string; mots: MotsProfil; primary: string }) {
+  slug, mots, primary, accueil = '/',
+}: { slug: string; mots: MotsProfil; primary: string; accueil?: string }) {
   const [compte, setCompte] = useState<Compte | null>(null)
   const [refus, setRefus] = useState(false)
   const [organisation, setOrganisation] = useState('')
+  const [nom, setNom] = useState('')
+  const [telephone, setTelephone] = useState('')
+  const [suppression, setSuppression] = useState<'repos' | 'envoi' | 'fait'>('repos')
+  const [messageSuppr, setMessageSuppr] = useState<string | null>(null)
   const [etat, setEtat] = useState<'repos' | 'envoi' | 'fait' | 'erreur'>('repos')
   const [message, setMessage] = useState<string | null>(null)
   const [courrielEnvoye, setCourrielEnvoye] = useState(false)
@@ -82,6 +90,8 @@ export default function MonProfil({
       const c = (d.compte ?? null) as Compte | null
       setCompte(c)
       setOrganisation(c?.organisation ?? '')
+      setNom(c?.nom ?? '')
+      setTelephone(c?.telephone ?? '')
     } catch { if (encoreLa()) setRefus(true) }
   }, [slug, jeton])
 
@@ -101,7 +111,7 @@ export default function MonProfil({
       const r = await fetch(`/api/sites/${encodeURIComponent(slug)}/mon-compte`, {
         method: 'PATCH',
         headers: { Authorization: `Bearer ${j}`, 'content-type': 'application/json' },
-        body: JSON.stringify({ organisation }),
+        body: JSON.stringify({ organisation, nom, telephone }),
       })
       const d = await r.json().catch(() => ({}))
       if (!r.ok) {
@@ -112,7 +122,7 @@ export default function MonProfil({
       }
       // ON RELIT CE QUE LA ROUTE A RENDU, jamais ce qu'on a envoyé.
       const c = (d.compte ?? null) as Compte | null
-      setCompte(c); setOrganisation(c?.organisation ?? '')
+      setCompte(c); setOrganisation(c?.organisation ?? ''); setNom(c?.nom ?? ''); setTelephone(c?.telephone ?? '')
       setEtat('fait')
     } catch { setEtat('erreur'); setMessage(mots.refus) }
   }
@@ -130,7 +140,25 @@ export default function MonProfil({
   if (refus) return <p role="alert" style={{ color: '#9b1c1c' }}>{mots.refus}</p>
   if (!compte) return <p style={{ opacity: 0.6 }}>{mots.chargement}</p>
 
-  const modifiable = compte.etat === 'en_attente'
+  // LOT 19 — tout compte non suspendu corrige ses coordonnées : depuis
+  // l'inscription directe, plus aucun examen ne « fige » l'organisation.
+  const modifiable = compte.etat !== 'suspendu'
+
+  async function supprimer() {
+    if (suppression === 'envoi' || !window.confirm(mots.supprimerConfirmer)) return
+    setSuppression('envoi'); setMessageSuppr(null)
+    try {
+      const j = await jeton()
+      const r = await fetch(`/api/sites/${encodeURIComponent(slug)}/mon-compte`, {
+        method: 'DELETE', headers: { Authorization: `Bearer ${j}` },
+      })
+      const d = await r.json().catch(() => ({}))
+      if (!r.ok) { setMessageSuppr(typeof d.error === 'string' ? d.error : mots.refus); setSuppression('repos'); return }
+      setSuppression('fait')
+      await supabase.auth.signOut()
+      window.location.assign(accueil)
+    } catch { setMessageSuppr(mots.refus); setSuppression('repos') }
+  }
 
   return (
     <div>
@@ -143,11 +171,16 @@ export default function MonProfil({
       </section>
 
       <section style={{ padding: '20px 22px', border: '1px solid #e6e6e6', borderRadius: 14, background: '#fff', marginBottom: 22 }}>
-        <h2 style={{ fontSize: 17, fontWeight: 700, margin: '0 0 6px' }}>{mots.organisation}</h2>
+        <h2 style={{ fontSize: 17, fontWeight: 700, margin: '0 0 6px' }}>{mots.coordonnees}</h2>
         {modifiable ? (
           <form onSubmit={enregistrer}>
-            <input required minLength={2} value={organisation} style={champ}
-              onChange={(e) => { setOrganisation(e.target.value); if (etat !== 'repos') setEtat('repos') }} />
+            {([[mots.nom, nom, setNom, 'name', 'text'], [mots.organisation, organisation, setOrganisation, 'organization', 'text'], [mots.telephone, telephone, setTelephone, 'tel', 'tel']] as const).map(([libelle, valeur, poser, auto, type]) => (
+              <label key={libelle} style={{ display: 'block', marginTop: 12, fontSize: 14, fontWeight: 600 }}>
+                {libelle}
+                <input type={type} autoComplete={auto} required={auto === 'organization'} minLength={2} value={valeur} style={{ ...champ, display: 'block' }}
+                  onChange={(e) => { poser(e.target.value); if (etat !== 'repos') setEtat('repos') }} />
+              </label>
+            ))}
             <div style={{ marginTop: 14 }}>
               <button type="submit" disabled={etat === 'envoi'} style={{
                 padding: '11px 20px', borderRadius: 999, border: 'none', cursor: 'pointer',
@@ -178,8 +211,11 @@ export default function MonProfil({
             // adresse connue comme pour une adresse inconnue. Ici elle est
             // forcément connue, mais écrire deux comportements selon le cas
             // ferait diverger ce bouton de l'écran « mot de passe oublié ».
-            await supabase.auth.resetPasswordForEmail(compte.email, {
-              redirectTo: `${window.location.origin}/connexion`,
+            // LOT 19 — par la route du site (Resend) : l'envoi de
+            // l'authentification n'arrivait pas aux visiteurs.
+            await fetch(`/api/sites/${encodeURIComponent(slug)}/mot-de-passe-oublie`, {
+              method: 'POST', headers: { 'content-type': 'application/json' },
+              body: JSON.stringify({ email: compte.email }),
             })
             setCourrielEnvoye(true)
           }} style={{
@@ -187,6 +223,19 @@ export default function MonProfil({
             fontSize: 14.5, background: 'transparent', color: primary, border: `1px solid ${primary}`,
           }}>{mots.changerMotDePasse}</button>
         )}
+      </section>
+
+      {/* LOT 19 — « ce n'est pas une prison » : la personne peut partir. */}
+      <section style={{ padding: '20px 22px', border: '1px solid #f1d5d5', borderRadius: 14, background: '#fff', marginTop: 22 }}>
+        <h2 style={{ fontSize: 17, fontWeight: 700, margin: '0 0 8px' }}>{mots.supprimerTitre}</h2>
+        <p style={{ margin: '0 0 14px', fontSize: 14.5, opacity: 0.75, lineHeight: 1.6 }}>{mots.supprimerTexte}</p>
+        {suppression === 'fait' ? <p role="status">{mots.supprime}</p> : (
+          <button type="button" onClick={() => void supprimer()} disabled={suppression === 'envoi'} style={{
+            padding: '11px 20px', borderRadius: 999, cursor: 'pointer', fontWeight: 600, fontSize: 14.5,
+            background: 'transparent', color: '#9b1c1c', border: '1px solid #9b1c1c', opacity: suppression === 'envoi' ? 0.6 : 1,
+          }}>{mots.supprimerBouton}</button>
+        )}
+        {messageSuppr && <p role="alert" style={{ color: '#9b1c1c', fontSize: 14, marginTop: 12, lineHeight: 1.55 }}>{messageSuppr}</p>}
       </section>
     </div>
   )
