@@ -181,7 +181,7 @@ export default function Assistant({ slug, base, primary, nom }: { slug: string; 
               <Avatar primary={primary} taille={30} />
               <p style={bulleBot}>
                 Bonjour, bienvenue sur le site de la <strong>{nomCourt}</strong>.{'\n\n'}
-                Je peux vous renseigner sur les appels d’offres, la création d’un compte, les conditions pour devenir fournisseur et les moyens de nous contacter. Comment puis-je vous aider ?
+                Comment puis-je vous aider ?
               </p>
             </div>
             {tours.map((t, i) => t.role === 'user' ? (
