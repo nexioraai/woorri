@@ -1,5 +1,5 @@
 // src/app/sites/[slug]/themes/EditorialTheme.tsx
-import { destinationDuBouton } from './destinationBouton'
+import { destinationDuBouton, lienContact } from './destinationBouton'
 import Image from 'next/image'
 import Link from 'next/link'
 import {
@@ -171,7 +171,7 @@ export default function EditorialTheme({ site, hasAvis = false, host = null, men
                 précèdent Contact, qui reste la dernière entrée. */}
             <MenuDeclare site={site} host={host} entrees={menu} className={"hover:text-black transition-colors"} couleur={primary} />
             {!hidden('AppelsOffres') && <LienAppelsOffres site={site} host={host} className={"hover:text-black transition-colors"} couleur={primary} />}
-            {!hidden('Contact') && <a href="#contact" className="hover:text-black transition-colors inline-flex items-center gap-[7px] whitespace-nowrap"><DessinDeMenu chemin="contact" couleur={primary} />{t.nav.contact}</a>}
+            {!hidden('Contact') && <a href={lienContact(site, host)} className="hover:text-black transition-colors inline-flex items-center gap-[7px] whitespace-nowrap"><DessinDeMenu chemin="contact" couleur={primary} />{t.nav.contact}</a>}
           </nav>
         </div>
       </header>
@@ -696,7 +696,7 @@ export default function EditorialTheme({ site, hasAvis = false, host = null, men
             <nav className="flex gap-8 text-sm text-white/70">
               <a href="#about" className="hover:text-white transition-colors">{t.nav.about}</a>
               <a href="#services" className="hover:text-white transition-colors">{sections[0]?.name || t.nav.services}</a>
-              <a href="#contact" className="hover:text-white transition-colors">{t.nav.contact}</a>
+              <a href={lienContact(site, host)} className="hover:text-white transition-colors">{t.nav.contact}</a>
             </nav>
           </div>
           <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row md:items-center md:justify-between gap-4 text-sm text-white/40">

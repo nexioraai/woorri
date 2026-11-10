@@ -1,5 +1,5 @@
 // src/app/sites/[slug]/themes/AuroraTheme.tsx
-import { destinationDuBouton } from './destinationBouton'
+import { destinationDuBouton, lienContact } from './destinationBouton'
 import Image from 'next/image'
 import Link from 'next/link'
 import {
@@ -158,7 +158,7 @@ export default function AuroraTheme({ site, hasAvis = false, host = null, menu =
                 précèdent Contact, qui reste la dernière entrée. */}
             <MenuDeclare site={site} host={host} entrees={menu} className={"hover:text-neutral-900 transition-colors"} couleur={primary} />
             {!hidden('AppelsOffres') && <LienAppelsOffres site={site} host={host} className={"hover:text-neutral-900 transition-colors"} couleur={primary} />}
-            {!hidden('Contact') && <a href="#contact" className="hover:text-neutral-900 transition-colors inline-flex items-center gap-[7px] whitespace-nowrap"><DessinDeMenu chemin="contact" couleur={primary} />{t.nav.contact}</a>}
+            {!hidden('Contact') && <a href={lienContact(site, host)} className="hover:text-neutral-900 transition-colors inline-flex items-center gap-[7px] whitespace-nowrap"><DessinDeMenu chemin="contact" couleur={primary} />{t.nav.contact}</a>}
           </nav>
           <a
             href={ctaHref}

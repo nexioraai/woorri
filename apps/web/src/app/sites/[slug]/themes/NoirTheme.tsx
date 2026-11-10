@@ -1,6 +1,6 @@
 'use client'
 
-import { destinationDuBouton } from './destinationBouton'
+import { destinationDuBouton, lienContact } from './destinationBouton'
 import { useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { ArrowRight, Phone, Mail, MapPin, ShoppingBag } from 'lucide-react'
@@ -301,7 +301,7 @@ export default function NoirTheme({ site, hasAvis = false, host = null, menu = [
                 précèdent Contact, qui reste la dernière entrée. */}
             <MenuDeclare site={site} host={host} entrees={menu} />
             {!hidden('AppelsOffres') && <LienAppelsOffres site={site} host={host} />}
-            {!hidden('Contact') && <NavLink href="#contact"><span className="inline-flex items-center gap-[7px] whitespace-nowrap"><DessinDeMenu chemin="contact" />{t.nav.contact}</span></NavLink>}
+            {!hidden('Contact') && <NavLink href={lienContact(site, host)}><span className="inline-flex items-center gap-[7px] whitespace-nowrap"><DessinDeMenu chemin="contact" />{t.nav.contact}</span></NavLink>}
           </nav>
         </div>
       </motion.header>

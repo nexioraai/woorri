@@ -73,7 +73,7 @@ describe('le hamburger ne sert plus une liste à plat', () => {
 
   it('🔴 Contact est servi, et toujours en dernier', () => {
     for (const m of [bati(MENU), bati([])]) {
-      expect(m[m.length - 1].href).toBe('#contact');
+      expect(m[m.length - 1].href).toMatch(/\/contact$/);
     }
   });
 
@@ -99,7 +99,7 @@ describe('les appels d’offres sont au téléphone comme au bureau', () => {
     const i = e.findIndex((x) => x.href.endsWith('/appels-offres'));
     expect(i, 'le rideau n’a pas d’entrée appels d’offres').toBeGreaterThan(-1);
     expect(i).toBeLessThan(e.length - 1);
-    expect(e[e.length - 1].href).toBe('#contact');
+    expect(e[e.length - 1].href).toMatch(/\/contact$/);
   });
 
   it('🔴 le site qui n’en publie pas n’en a AUCUNE', () => {

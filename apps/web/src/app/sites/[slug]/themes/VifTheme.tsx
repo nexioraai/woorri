@@ -1,6 +1,6 @@
 'use client'
 
-import { destinationDuBouton } from './destinationBouton'
+import { destinationDuBouton, lienContact } from './destinationBouton'
 import Link from 'next/link'
 import { ArrowRight, Sparkles, Phone, Mail, MapPin } from 'lucide-react'
 import { useEffect, useRef } from 'react'
@@ -137,7 +137,7 @@ export default function VifTheme({ site, hasAvis = false, host = null, menu = []
                 précèdent Contact, qui reste la dernière entrée. */}
             <MenuDeclare site={site} host={host} entrees={menu} className={"hover:opacity-100 transition-opacity"} couleur={teinteMenu} />
             {!hidden('AppelsOffres') && <LienAppelsOffres site={site} host={host} className={"hover:opacity-100 transition-opacity"} couleur={teinteMenu} />}
-            {!hidden('Contact') && <a href="#contact" className="hover:opacity-100 transition-opacity inline-flex items-center gap-[7px] whitespace-nowrap"><DessinDeMenu chemin="contact" couleur={teinteMenu} />{t.nav.contact}</a>}
+            {!hidden('Contact') && <a href={lienContact(site, host)} className="hover:opacity-100 transition-opacity inline-flex items-center gap-[7px] whitespace-nowrap"><DessinDeMenu chemin="contact" couleur={teinteMenu} />{t.nav.contact}</a>}
           </nav>
         </div>
       </header>

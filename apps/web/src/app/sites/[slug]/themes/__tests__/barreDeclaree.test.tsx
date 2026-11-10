@@ -92,7 +92,8 @@ describe('LOT 3 — la barre du haut quand le site déclare ses pages', () => {
     it(`${nom} : les pages déclarées, Accueil et Contact restent servis`, () => {
       const barre = barreDuHaut(rendre(makeSite(), MENU_CPA));
       expect(barre).toContain('#home');
-      expect(barre).toContain('#contact');
+      // LOT 18 — Contact est une vraie page, plus l'ancre de l'accueil.
+      expect(barre).toContain('/contact"');
       expect(barre).toContain('Qui sommes-nous');
       expect(barre).toContain('Nos activités');
     });
@@ -104,7 +105,7 @@ describe('LOT 3 — la barre du haut quand le site déclare ses pages', () => {
       const accueil = barre.indexOf('#home');
       const declaree = barre.indexOf('Qui sommes-nous');
       const appels = barre.indexOf('appels-offres');
-      const contact = barre.indexOf('#contact');
+      const contact = barre.indexOf('/contact"');
       expect(appels, "le lien appels d'offres doit être servi").toBeGreaterThan(-1);
       expect(accueil).toBeLessThan(declaree);
       expect(declaree).toBeLessThan(appels);

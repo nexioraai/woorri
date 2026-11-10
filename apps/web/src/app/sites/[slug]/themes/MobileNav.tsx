@@ -121,7 +121,8 @@ export function construireMenuTelephone({
       }
     }),
     ...(avisTitre ? [{ href: `${base}/appels-offres`, label: avisTitre, chemin: 'appels-offres' }] : []),
-    ...(!hidden('Contact') ? [{ href: '#contact', label: t.nav.contact, chemin: 'contact' }] : []),
+    // LOT 18 — la vraie page `/contact`, pas l'ancre de l'accueil.
+    ...(!hidden('Contact') ? [{ href: `${base}/contact`, label: t.nav.contact, chemin: 'contact' }] : []),
   ]
 }
 

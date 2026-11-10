@@ -27,3 +27,11 @@ export function destinationDuBouton(
   }
   return boutique ? '#shop' : '#contact'
 }
+
+/**
+ * LOT 18 — l'entrée « Contact » du menu mène à la VRAIE page `/contact`
+ * (indexable, avec son titre et sa canonique), plus à l'ancre de l'accueil.
+ */
+export function lienContact(site: Parameters<typeof resolveSiteBaseUrl>[0], host: string | null): string {
+  return `${resolveSiteBaseUrl(site, host)}/contact`
+}
