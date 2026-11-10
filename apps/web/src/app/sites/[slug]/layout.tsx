@@ -4,6 +4,9 @@ import SurvolVivant from './themes/SurvolVivant'
 import Assistant from './themes/Assistant'
 import PiedLegal from './themes/PiedLegal'
 import { lirePagesLegales } from './themes/pagesLegales'
+import { CHEMIN_ASSISTANT, textesDepuisPage, type TextesAssistant } from './themes/textesAssistant'
+import { ECRANS_DU_COMPTE } from '@/lib/assistant/liens'
+import { lireBlocs } from './pages/blocs'
 import { headers } from 'next/headers'
 import { resolveSiteBaseUrl } from './themes/shared'
 
@@ -76,6 +79,23 @@ export default async function SiteLayout({
   const site = data as { id?: string; lang?: string | null } | null
   const liensLegaux = site?.id ? await lirePagesLegales(site.id, base, site.lang) : []
 
+  // LOT 17 — les textes de la bulle, depuis la page NON PUBLIÉE de l'éditeur.
+  let textesAssistant: TextesAssistant = {}
+  if (assistant && r) {
+    const [{ data: pageA }, { data: publiees }] = await Promise.all([
+      supabaseAdmin.from('site_pages').select('titre,chapeau,blocs')
+        .eq('site_id', (site?.id ?? '')).eq('chemin', CHEMIN_ASSISTANT).maybeSingle(),
+      supabase.from('site_pages_public').select('chemin,titre').eq('site_id', (site?.id ?? '')),
+    ])
+    const connus = new Map<string, string>([
+      ...Object.entries(ECRANS_DU_COMPTE),
+      ['/#contact', 'Contact'],
+      ...((publiees as { chemin: string; titre: string }[] | null) ?? []).map((p) => [`/${p.chemin}`, p.titre] as [string, string]),
+    ])
+    const pa = pageA as { titre?: string | null; chapeau?: string | null; blocs?: unknown } | null
+    textesAssistant = textesDepuisPage(pa ? { titre: pa.titre, chapeau: pa.chapeau, blocs: lireBlocs(pa.blocs) } : null, connus)
+  }
+
   return (
     <div
       data-surface="site-genere"
@@ -97,7 +117,7 @@ export default async function SiteLayout({
       <SurvolVivant primary={primary} />
       {children}
       <PiedLegal liens={liensLegaux} />
-      {assistant && <Assistant slug={slug} base={base} primary={primary} nom={nomDuSite} />}
+      {assistant && <Assistant slug={slug} base={base} primary={primary} nom={nomDuSite} textes={textesAssistant} />}
     </div>
   )
 }

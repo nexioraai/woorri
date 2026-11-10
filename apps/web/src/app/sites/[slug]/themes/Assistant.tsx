@@ -80,7 +80,11 @@ function Avatar({ primary, taille }: { primary: string; taille: number }) {
   )
 }
 
-export default function Assistant({ slug, base, primary, nom }: { slug: string; base: string; primary: string; nom: string }) {
+export default function Assistant({ slug, base, primary, nom, textes = {} }: {
+  slug: string; base: string; primary: string; nom: string
+  /** LOT 17 — les textes écrits dans l'éditeur ; absents, les mots par défaut. */
+  textes?: { titre?: string; accueil?: string; sujets?: { label: string; reponse: string; liens: Lien[] }[] }
+}) {
   const [ouvert, setOuvert] = useState(false)
   const [vu, setVu] = useState(false)
   const [tours, setTours] = useState<Tour[]>([])
@@ -89,7 +93,8 @@ export default function Assistant({ slug, base, primary, nom }: { slug: string; 
   const fil = useRef<HTMLDivElement>(null)
 
   const sigle = /\(([^)]+)\)/.exec(nom)?.[1]
-  const titre = sigle ? `Assistant ${sigle}` : 'Assistant du site'
+  const titre = textes.titre || (sigle ? `Assistant ${sigle}` : 'Assistant du site')
+  const sujets = textes.sujets ?? SUJETS
   const nomCourt = nom.replace(/\s*\([^)]*\)\s*$/, '')
   // Seules les questions TAPÉES comptent : les sujets ne partent pas.
   const posees = tours.filter((t) => t.role === 'user' && !t.local).length
@@ -98,7 +103,7 @@ export default function Assistant({ slug, base, primary, nom }: { slug: string; 
 
   function ouvrir() { setOuvert(!ouvert); setVu(true) }
 
-  function sujet(s: (typeof SUJETS)[number]) {
+  function sujet(s: { label: string; reponse: string; liens: Lien[] }) {
     setTours((t) => [...t,
       { role: 'user', content: s.label, local: true },
       { role: 'assistant', content: s.reponse, liens: s.liens, local: true }])
@@ -180,8 +185,8 @@ export default function Assistant({ slug, base, primary, nom }: { slug: string; 
             <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
               <Avatar primary={primary} taille={30} />
               <p style={bulleBot}>
-                Bonjour, bienvenue sur le site de la <strong>{nomCourt}</strong>.{'\n\n'}
-                Comment puis-je vous aider ?
+                {textes.accueil ?? <>Bonjour, bienvenue sur le site de la <strong>{nomCourt}</strong>.{'\n\n'}
+                Comment puis-je vous aider ?</>}
               </p>
             </div>
             {tours.map((t, i) => t.role === 'user' ? (
@@ -217,7 +222,7 @@ export default function Assistant({ slug, base, primary, nom }: { slug: string; 
 
           {/* LES SUJETS — réponse immédiate, sans question dépensée */}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, padding: '10px 14px 4px', borderTop: '1px solid #f0f0f0' }}>
-            {SUJETS.map((s) => (
+            {sujets.map((s) => (
               <button key={s.label} type="button" className="assistant-sujet" onClick={() => sujet(s)} style={{
                 padding: '7px 13px', borderRadius: 999, border: `1px solid color-mix(in srgb, ${primary} 35%, #fff)`,
                 background: '#fff', color: primary, fontSize: 13.5, fontWeight: 500, cursor: 'pointer' }}>{s.label}</button>

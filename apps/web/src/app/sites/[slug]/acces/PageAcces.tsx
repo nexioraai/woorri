@@ -9,6 +9,7 @@ import { lireBlocs } from '../pages/blocs'
 import BlocsDePage from '../pages/BlocsDePage'
 import FormulaireAcces, { type EcranAcces } from './FormulaireAcces'
 import { motsAcces } from './libelles'
+import { CHEMIN_INTITULES, lireIntitules } from './intitulesFormulaire'
 import { ouvreDesComptes } from './ouvreDesComptes'
 
 // ============================================================================
@@ -95,6 +96,31 @@ export default async function PageAcces({ ecran, params }: { ecran: EcranAcces }
   // 2026-11-10). Le titre et la phrase d'introduction viennent de la page
   // déclarée au même chemin quand elle les porte ; sinon, les mots par défaut.
   const titreVu = decl?.titre?.trim() || m.titre
+
+  // LES INTITULÉS DU FORMULAIRE — page NON PUBLIÉE, donc lue avec le rôle de
+  // service (la vue publique ne la rend pas). Import tardif, comme le gabarit.
+  let intitules: ReturnType<typeof lireIntitules> = {}
+  if (ecran === 'inscription') {
+    const { supabaseAdmin } = await import('@/lib/supabase-admin')
+    const { data: page } = await supabaseAdmin.from('site_pages').select('blocs')
+      .eq('site_id', s.id).eq('chemin', CHEMIN_INTITULES).maybeSingle()
+    intitules = lireIntitules(lireBlocs((page as { blocs?: unknown } | null)?.blocs))
+  }
+  const libellesVus = {
+    ...m.libelles,
+    ...(intitules.courriel ? { courriel: intitules.courriel } : {}),
+    ...(intitules.motDePasse ? { motDePasse: intitules.motDePasse } : {}),
+    ...(intitules.bouton ? { envoyer: intitules.bouton } : {}),
+  }
+  const champsVus = ecran === 'inscription' ? {
+    ...mots.inscription.champs,
+    ...(intitules.nom ? { nom: intitules.nom } : {}),
+    ...(intitules.organisation ? { organisation: intitules.organisation } : {}),
+    ...(intitules.role ? { role: intitules.role } : {}),
+    ...(intitules.fournisseur ? { fournisseur: intitules.fournisseur } : {}),
+    ...(intitules.structure ? { structure: intitules.structure } : {}),
+    ...(intitules.telephone ? { telephone: intitules.telephone } : {}),
+  } : undefined
   const phraseVue = decl?.chapeau?.trim() || m.phrase
 
   // APRÈS LA CONNEXION, L'ESPACE — jamais l'accueil. Renvoyer à l'accueil
@@ -126,8 +152,8 @@ export default async function PageAcces({ ecran, params }: { ecran: EcranAcces }
           </div>
         )}
 
-        <FormulaireAcces ecran={ecran} destination={destination} libelles={m.libelles} primary={accent}
-          slug={slug} champs={ecran === 'inscription' ? mots.inscription.champs : undefined} />
+        <FormulaireAcces ecran={ecran} destination={destination} libelles={libellesVus} primary={accent}
+          slug={slug} champs={champsVus} />
 
         <p style={{ fontSize: 14.5, lineHeight: 1.7, marginTop: 26, opacity: 0.85 }}>
           {ecran === 'connexion' && (<>

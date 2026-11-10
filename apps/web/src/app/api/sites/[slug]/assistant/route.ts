@@ -58,23 +58,8 @@ export const HORS_SUJET =
  * adresse inventée par le modèle reste du texte : jamais un lien mort, jamais
  * un lien vers une page qu'il n'a pas lue.
  */
-export const ECRANS_DU_COMPTE: Record<string, string> = {
-  '/inscription': 'Créer un compte',
-  '/connexion': 'Se connecter',
-  '/espace-client': 'Mon espace',
-}
-export function liensCites(texte: string, connus: Map<string, string>): { chemin: string; titre: string }[] {
-  const vus = new Set<string>()
-  const out: { chemin: string; titre: string }[] = []
-  for (const m of texte.match(/\/[a-z0-9#][a-z0-9\-/#]*/gi) ?? []) {
-    const chemin = m.replace(/[.)]+$/, '')
-    const titre = connus.get(chemin)
-    if (!titre || vus.has(chemin)) continue
-    vus.add(chemin); out.push({ chemin, titre })
-    if (out.length >= 3) break
-  }
-  return out
-}
+export { ECRANS_DU_COMPTE, liensCites } from '@/lib/assistant/liens'
+import { ECRANS_DU_COMPTE, liensCites } from '@/lib/assistant/liens'
 
 const PORTEES: Record<string, string> = { national: 'nationale (Tchad)', international: 'internationale', tous: 'ouverte à tous' }
 

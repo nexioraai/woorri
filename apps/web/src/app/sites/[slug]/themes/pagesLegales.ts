@@ -12,7 +12,7 @@ const PLAN: Record<string, string> = { fr: 'Plan du site', en: 'Site map', ar: '
 export async function lirePagesLegales(siteId: string, base: string, lang: string | null | undefined): Promise<LienLegal[]> {
   const { data } = await supabase
     .from('site_pages_public').select('chemin,titre').eq('site_id', siteId)
-    .in('chemin', PAGES_LEGALES as unknown as string[])
+    .in('chemin', [...PAGES_LEGALES, 'plan-du-site'])
   const lignes = (data as { chemin: string; titre: string }[] | null) ?? []
   const pages = PAGES_LEGALES
     .map((c) => lignes.find((p) => p.chemin === c))
@@ -21,6 +21,8 @@ export async function lirePagesLegales(siteId: string, base: string, lang: strin
   if (pages.length === 0) return []
   return [
     ...pages.map((p) => ({ href: `${base}/${p.chemin}`, titre: p.titre })),
-    { href: `${base}/plan-du-site`, titre: PLAN[(lang ?? 'fr').slice(0, 2)] ?? PLAN.fr },
+    // Le libellé du plan vient de la page déclarée `plan-du-site` si elle
+    // existe (modifiable dans l'éditeur), sinon du mot par défaut.
+    { href: `${base}/plan-du-site`, titre: lignes.find((p) => p.chemin === 'plan-du-site')?.titre?.trim() || (PLAN[(lang ?? 'fr').slice(0, 2)] ?? PLAN.fr) },
   ]
 }

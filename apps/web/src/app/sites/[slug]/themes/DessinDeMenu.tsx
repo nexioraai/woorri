@@ -123,6 +123,14 @@ const DESSINS: Record<NomDePictogramme, React.ReactNode> = {
       <path d="M12 7.3v3.3M5.5 16.7v-3.3h13v3.3M12 10.6v2.8" />
     </>
   ),
+
+  // LE COMPTE DU VISITEUR — un buste : une tête, des épaules.
+  personne: (
+    <>
+      <circle cx="12" cy="8.2" r="3.7" />
+      <path d="M4.6 20.2c.7-3.9 3.7-6.1 7.4-6.1s6.7 2.2 7.4 6.1" />
+    </>
+  ),
 }
 
 /** Les noms qui ont un tracé. Exportée pour que le cliquet énumère. */

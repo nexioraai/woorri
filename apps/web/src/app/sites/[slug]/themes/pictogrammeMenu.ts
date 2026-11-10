@@ -56,6 +56,7 @@ export type NomDePictogramme =
   | 'telephone'
   | 'ecusson'
   | 'plan'
+  | 'personne'
 
 /**
  * La correspondance, FERMÉE.
@@ -105,6 +106,12 @@ const PICTOGRAMMES: Record<string, NomDePictogramme> = {
   confidentialite: 'ecusson',
   accessibilite: 'ecusson',
   'plan-du-site': 'plan',
+
+  // LOT 17 — le compte du visiteur. Un buste : « moi, ici ».
+  'espace-client': 'personne',
+  'mon-compte': 'personne',
+  connexion: 'personne',
+  inscription: 'personne',
 }
 
 /**
