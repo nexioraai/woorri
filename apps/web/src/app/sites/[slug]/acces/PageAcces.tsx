@@ -85,11 +85,17 @@ export default async function PageAcces({ ecran, params }: { ecran: EcranAcces }
 
   const { data: declaree } = await supabase
     .from('site_pages_public')
-    .select('blocs')
+    .select('titre,chapeau,blocs')
     .eq('site_id', s.id)
     .eq('chemin', CHEMIN[ecran])
     .maybeSingle()
-  const textes = lireBlocs((declaree as { blocs?: unknown } | null)?.blocs)
+  const decl = declaree as { titre?: string | null; chapeau?: string | null; blocs?: unknown } | null
+  const textes = lireBlocs(decl?.blocs)
+  // LOT 17 — « tout ce qui est visible doit être éditable » (propriétaire,
+  // 2026-11-10). Le titre et la phrase d'introduction viennent de la page
+  // déclarée au même chemin quand elle les porte ; sinon, les mots par défaut.
+  const titreVu = decl?.titre?.trim() || m.titre
+  const phraseVue = decl?.chapeau?.trim() || m.phrase
 
   // APRÈS LA CONNEXION, L'ESPACE — jamais l'accueil. Renvoyer à l'accueil
   // obligerait la personne à retrouver elle-même où elle allait.
@@ -108,10 +114,10 @@ export default async function PageAcces({ ecran, params }: { ecran: EcranAcces }
         </p>
 
         <h1 style={{ fontSize: 'clamp(26px, 6vw, 36px)', fontWeight: 700, margin: '0 0 10px' }}>
-          {m.titre}
+          {titreVu}
         </h1>
         <p style={{ fontSize: 16, lineHeight: 1.6, opacity: 0.78, margin: '0 0 28px', maxWidth: '58ch' }}>
-          {m.phrase}
+          {phraseVue}
         </p>
 
         {textes.length > 0 && (
