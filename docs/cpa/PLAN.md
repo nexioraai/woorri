@@ -450,6 +450,16 @@ définition, et compare les routes dynamiques segment par segment (plus par
 préfixe). Prouvé : retirer le jeton de `GestionDemandes` ou de `GestionAvis`
 le fait rougir.
 
+## §18bis — UN SEUL COMPTE PAR ADRESSE, POUR TOUTE LA PLATEFORME (décision, 2026-11-10)
+
+L'accès est commun à tous les sites Deribfy. Une adresse déjà connue de
+Deribfy (marchand d'un autre site) se rattache à la CPA en donnant SON mot
+de passe ; sinon, refus qui renvoie à « Mot de passe oublié ». Des comptes
+séparés par site ont été proposés et **écartés par le propriétaire** :
+nouveau système de connexion, plusieurs jours, sécurité à re-prouver.
+
+---
+
 ## §18 — LOT 18 · RÉFÉRENCEMENT ET DÉFAUTS DU MOTEUR (2026-11-10)
 
 Demande du propriétaire (prompt en 8 points, sauf le numéro de téléphone que
