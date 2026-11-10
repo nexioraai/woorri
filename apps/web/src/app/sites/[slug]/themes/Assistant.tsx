@@ -13,14 +13,20 @@ import { useState } from 'react'
 // elle : aucune mémoire entre deux visites.
 // ============================================================================
 
-type Tour = { role: 'user' | 'assistant'; content: string }
+type Lien = { chemin: string; titre: string }
+type Tour = { role: 'user' | 'assistant'; content: string; liens?: Lien[] }
 const MAX = 10
 
-/** Les adresses citées `(voir : /chemin)` deviennent des liens vers le site. */
-function avecLiens(texte: string, base: string) {
-  const morceaux = texte.split(/(\/[a-z0-9][a-z0-9\-/#]*)/gi)
+/**
+ * Seules les adresses que le SERVEUR a reconnues deviennent des liens : le
+ * serveur ne rend que des pages lues ou les écrans du compte. Une adresse
+ * inventée par le modèle reste du texte.
+ */
+function avecLiens(texte: string, base: string, liens: Lien[]) {
+  const connus = new Set(liens.map((l) => l.chemin))
+  const morceaux = texte.split(/(\/[a-z0-9#][a-z0-9\-/#]*)/gi)
   return morceaux.map((m, i) =>
-    /^\/[a-z0-9]/i.test(m)
+    connus.has(m)
       ? <a key={i} href={`${base}${m}`} style={{ color: 'inherit', fontWeight: 600 }}>{m}</a>
       : <span key={i}>{m}</span>)
 }
@@ -47,7 +53,11 @@ export default function Assistant({ slug, base, primary }: { slug: string; base:
         body: JSON.stringify({ question: q, historique }),
       })
       const d = await r.json().catch(() => ({}))
-      setTours((t) => [...t, { role: 'assistant', content: String(d.reponse ?? 'L’assistant est momentanément indisponible.') }])
+      const liens: Lien[] = Array.isArray(d.liens)
+        ? d.liens.filter((l: unknown): l is Lien => !!l && typeof (l as Lien).chemin === 'string'
+            && (l as Lien).chemin.startsWith('/') && !(l as Lien).chemin.startsWith('//') && typeof (l as Lien).titre === 'string')
+        : []
+      setTours((t) => [...t, { role: 'assistant', content: String(d.reponse ?? 'L’assistant est momentanément indisponible.'), liens }])
     } catch {
       setTours((t) => [...t, { role: 'assistant', content: 'L’assistant est momentanément indisponible.' }])
     } finally { setEnvoi(false) }
@@ -82,11 +92,20 @@ export default function Assistant({ slug, base, primary }: { slug: string; base:
               <>
                 {tours.length === 0 && <p style={{ opacity: 0.6, margin: 0 }}>Posez votre question.</p>}
                 {tours.map((t, i) => (
-                  <p key={i} style={{
-                    margin: '0 0 10px', padding: '9px 12px', borderRadius: 12, whiteSpace: 'pre-wrap',
-                    background: t.role === 'user' ? `color-mix(in srgb, ${primary} 10%, #fff)` : '#f4f4f5',
-                    marginInlineStart: t.role === 'user' ? 30 : 0, marginInlineEnd: t.role === 'user' ? 0 : 30,
-                  }}>{t.role === 'assistant' ? avecLiens(t.content, base) : t.content}</p>
+                  <div key={i} style={{ margin: '0 0 10px' }}>
+                    <p style={{
+                      margin: 0, padding: '9px 12px', borderRadius: 12, whiteSpace: 'pre-wrap',
+                      background: t.role === 'user' ? `color-mix(in srgb, ${primary} 10%, #fff)` : '#f4f4f5',
+                      marginInlineStart: t.role === 'user' ? 30 : 0, marginInlineEnd: t.role === 'user' ? 0 : 30,
+                    }}>{t.role === 'assistant' ? avecLiens(t.content, base, t.liens ?? []) : t.content}</p>
+                    {/* LE LIEN EN BOUTON : plus facile à toucher qu'une adresse dans le texte. */}
+                    {(t.liens ?? []).map((l) => (
+                      <a key={l.chemin} href={`${base}${l.chemin}`} style={{
+                        display: 'inline-block', marginTop: 6, marginInlineEnd: 6, padding: '7px 12px',
+                        borderRadius: 999, background: primary, color: '#fff', fontSize: 13.5,
+                        fontWeight: 600, textDecoration: 'none' }}>{l.titre} →</a>
+                    ))}
+                  </div>
                 ))}
                 {envoi && <p style={{ opacity: 0.6, margin: 0 }}>…</p>}
               </>

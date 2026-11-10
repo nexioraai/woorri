@@ -58,7 +58,7 @@ vi.mock('@/lib/supabase-admin', () => ({
   },
 }))
 
-import { POST, PAR_JOUR, PAR_HEURE, PAR_CONVERSATION, PAGES_PERMISES, HORS_SUJET } from '../route'
+import { POST, PAR_JOUR, PAR_HEURE, PAR_CONVERSATION, PAGES_PERMISES, HORS_SUJET, liensCites, ECRANS_DU_COMPTE } from '../route'
 
 const params = { params: Promise.resolve({ slug: 'cpa' }) }
 const poser = (question = 'Que fait la Centrale ?', historique: unknown[] = []) =>
@@ -141,7 +141,7 @@ describe('ce qui part, et ce qui est gardé', () => {
     const sys = String((appels[0] as { system: string }).system)
     expect(sys).toMatch(/Je ne trouve pas cette information sur le site/)
     expect(sys).toMatch(/N'invente jamais/)
-    expect(sys).toMatch(/voir : \/adresse/)
+    expect(sys).toMatch(/Voici le lien : \/adresse/)
   })
 
   it('🔴 la sortie est bornée', async () => {
@@ -188,5 +188,34 @@ describe('ce qu’il répond est une liste FERMÉE', () => {
 
   it('🔴 le refus renvoie vers le contact, il ne laisse pas sans issue', () => {
     expect(HORS_SUJET).toMatch(/Contact/)
+  })
+})
+
+// ============================================================
+// LOT 16 ter — « il envoie le lien en disant voilà le lien » (propriétaire,
+// 2026-11-10). Un bouton, mais SEULEMENT vers une adresse connue : un lien
+// inventé par le modèle serait un lien mort, ou pire, un lien vers ailleurs.
+// ============================================================
+
+describe('les liens donnés au visiteur', () => {
+  const connus = new Map<string, string>([...Object.entries(ECRANS_DU_COMPTE), ['/fournisseurs/conditions', 'Conditions'], ['/#contact', 'Contact']])
+
+  it('🔴 une adresse connue devient un bouton, avec un nom lisible', () => {
+    expect(liensCites('Voici le lien : /inscription.', connus)).toEqual([{ chemin: '/inscription', titre: 'Créer un compte' }])
+  })
+
+  it('🔴 une adresse INVENTÉE ne devient jamais un lien', () => {
+    expect(liensCites('Voici le lien : /admin/direction', connus)).toEqual([])
+  })
+
+  it('🔴 le contact et les sous-pages sont reconnus, sans doublon, trois au plus', () => {
+    const l = liensCites('/#contact puis /fournisseurs/conditions, /inscription, /connexion et /inscription', connus)
+    expect(l.map((x) => x.chemin)).toEqual(['/#contact', '/fournisseurs/conditions', '/inscription'])
+  })
+
+  it('🔴 la réponse du serveur porte les liens reconnus', async () => {
+    const r = await poser()
+    const d = await r.json()
+    expect(d.liens).toEqual([{ chemin: '/qui-sommes-nous', titre: 'Qui sommes-nous' }])
   })
 })
