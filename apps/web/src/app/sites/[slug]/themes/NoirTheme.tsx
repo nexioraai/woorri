@@ -1,5 +1,6 @@
 'use client'
 
+import { lienTel } from '@/lib/telephone'
 import { destinationDuBouton, lienContact } from './destinationBouton'
 import { useRef, useEffect } from 'react'
 import Link from 'next/link'
@@ -711,7 +712,7 @@ export default function NoirTheme({ site, hasAvis = false, host = null, menu = [
 
               <div className="grid sm:grid-cols-3 gap-4 mt-10 text-left">
                 {contact.phone && (
-                  <a href={`tel:${contact.phone}`} className="flex items-center gap-4 p-5 rounded-2xl border transition-all duration-300 hover:-translate-y-0.5" style={{ borderColor: LINE, backgroundColor: 'rgba(245,243,238,0.03)' }}>
+                  <a href={lienTel(contact.phone) ?? undefined} className="flex items-center gap-4 p-5 rounded-2xl border transition-all duration-300 hover:-translate-y-0.5" style={{ borderColor: LINE, backgroundColor: 'rgba(245,243,238,0.03)' }}>
                     <div className="flex items-center justify-center w-10 h-10 rounded-xl shrink-0" style={{ backgroundColor: `${gold}20` }}>
                       <Phone className="w-4 h-4" style={{ color: gold }} />
                     </div>

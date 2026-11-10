@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { lienTel } from '@/lib/telephone'
 import { ogDePage } from '../themes/metadonneesDuSite'
 import { fetchSite } from '../themes/shared'
 import { filDAriane } from '../themes/filDAriane'
@@ -294,7 +295,7 @@ export default async function AppelsOffresPage({ params, searchParams }: Props) 
                 )}
                 {contact.email && contact.phone && <span style={{ opacity: 0.4 }}> · </span>}
                 {contact.phone && (
-                  <a href={`tel:${contact.phone.replace(/\s/g, '')}`} style={{ color: accent }}>
+                  <a href={lienTel(contact.phone) ?? undefined} style={{ color: accent }}>
                     {contact.phone}
                   </a>
                 )}

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { lienTel } from '@/lib/telephone'
 import Link from 'next/link'
 import { headers } from 'next/headers'
 import { notFound } from 'next/navigation'
@@ -50,7 +51,7 @@ export default async function PageContact({ params }: Props) {
   const t = getDict(site.lang)
   const accent = site.primary_color || '#111111'
   const contact = (site.contact || {}) as { phone?: string; email?: string; address?: string }
-  const tel = contact.phone ? contact.phone.replace(/[^+\d]/g, '') : ''
+  const tel = lienTel(contact.phone)
 
   const ligne = (libelle: string, valeur: string, href?: string) => (
     <div style={{ padding: '16px 18px', borderRadius: 14, background: '#f6f6f7' }}>
@@ -74,7 +75,7 @@ export default async function PageContact({ params }: Props) {
             <ContactForm slug={site.slug} brand={accent} lang={site.lang} />
           </div>
           <div style={{ display: 'grid', gap: 12 }}>
-            {contact.phone && ligne(t.labels.phone, contact.phone, tel ? `tel:${tel}` : undefined)}
+            {contact.phone && ligne(t.labels.phone, contact.phone, tel ?? undefined)}
             {contact.email && ligne(t.labels.email, contact.email, `mailto:${contact.email}`)}
             {contact.address && ligne(t.labels.address, contact.address)}
           </div>

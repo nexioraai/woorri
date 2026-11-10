@@ -1,4 +1,5 @@
 import { NextResponse, after } from 'next/server';
+import { indicatifDuPays, corrigerIndicatif } from '@/lib/telephone';
 import { sansQuota } from '@/lib/admin-emails';
 import { z } from 'zod';
 import { clientIA, MODELE_LEGER, MODELE_LOURD } from '@/lib/ia/client';
@@ -157,20 +158,6 @@ function generateSlug(name: string): string {
     .slice(0, 60);
   // Filet de securite : si l'ecriture n'est pas translitterable (chinois, cyrillique...)
   return (base || 'site') + '-' + Date.now();
-}
-
-function getPhonePrefix(location: string): string {
-  const l = location.toLowerCase();
-  if (l.includes('tchad') || l.includes('chad')) return '+235';
-  if (l.includes('cameroun') || l.includes('cameroon')) return '+237';
-  if (l.includes('sénégal') || l.includes('senegal')) return '+221';
-  if (l.includes('mali')) return '+223';
-  if (l.includes('niger')) return '+227';
-  if (l.includes('burkina')) return '+226';
-  if (l.includes('côte d\'ivoire') || l.includes('ivory coast')) return '+225';
-  if (l.includes('canada')) return '+1';
-  if (l.includes('france')) return '+33';
-  return '+1';
 }
 
 function getCurrency(location: string): string {
@@ -580,7 +567,8 @@ Return ONLY the JSON.`
     const sectorPrompt = getSectorPrompt(sector, siteMode);
     console.log('[Generation] Detected sector:', sector, '| knownMode:', siteMode, '| Lang:', detectedLang);
 
-    const phonePrefix = location ? getPhonePrefix(location) : '+1';
+    // LOT 20 — un indicatif CONNU, ou aucun : jamais « +1 » par défaut.
+    const phonePrefix = indicatifDuPays(location);
     const currency = location ? getCurrency(location) : 'USD';
     const langName = language === 'fr' ? 'French' : language === 'ar' ? 'Arabic' : 'English';
 
@@ -589,7 +577,7 @@ Return ONLY the JSON.`
 IMPORTANT CONTEXT:
 - Location: ${location || 'Not specified'}
 - LANGUAGE (CRITICAL): write ALL text content in ${detectedLang === 'ar' ? 'ARABIC' : detectedLang === 'fr' ? 'FRENCH' : detectedLang === 'es' ? 'SPANISH' : 'ENGLISH'}. This is the language the merchant used, so it is the language their customers speak. Every single string you produce — name, slogan, hero, about, FAQ, buttons, section names — must be in that language. The business description below may be written in English for internal purposes: do NOT copy its language, use the one specified here.
-- Phone format: start with ${phonePrefix}
+- Phone format: ${phonePrefix ? `start with ${phonePrefix} (the country calling code), and NEVER add another prefix in front of it` : 'international format with the calling code of the business country (e.g. +235 for Chad, +33 for France) — never invent +1'}
 - Currency: use ${currency}
 - Dropship type: ${dropshipType || 'none'} (none = not a dropshipping site, reseller = resale imported goods, pod_brand = merchant's own designs printed on demand, pod_custom = visitor uploads their own design)
 - Address: write a realistic address in ${location || 'the city'}
@@ -964,6 +952,9 @@ Return ONLY valid JSON, no markdown:
         { status: 502 }
       );
     }
+
+    // LOT 20 — le filet : « +1 235 … » pour le Tchad devient « +235 … ».
+    if (parsed.contact?.phone) parsed.contact.phone = corrigerIndicatif(parsed.contact.phone, phonePrefix);
 
     const slug = generateSlug(parsed.name);
 

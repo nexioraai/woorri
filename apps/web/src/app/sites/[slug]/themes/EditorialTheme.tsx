@@ -1,4 +1,5 @@
 // src/app/sites/[slug]/themes/EditorialTheme.tsx
+import { lienTel } from '@/lib/telephone'
 import { destinationDuBouton, lienContact } from './destinationBouton'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -626,7 +627,7 @@ export default function EditorialTheme({ site, hasAvis = false, host = null, men
 
             <div className="space-y-4">
               {contact.phone && (
-                <a href={`tel:${contact.phone}`} className="flex items-center gap-5 p-6 rounded-2xl bg-neutral-50 hover:bg-white hover:shadow-md border border-transparent hover:border-neutral-200 transition-all">
+                <a href={lienTel(contact.phone) ?? undefined} className="flex items-center gap-5 p-6 rounded-2xl bg-neutral-50 hover:bg-white hover:shadow-md border border-transparent hover:border-neutral-200 transition-all">
                   <div
                     className="flex items-center justify-center w-12 h-12 rounded-xl shrink-0"
                     style={{ backgroundColor: `color-mix(in srgb, ${primary} 12%, white)` }}

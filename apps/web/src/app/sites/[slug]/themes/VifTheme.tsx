@@ -1,5 +1,6 @@
 'use client'
 
+import { lienTel } from '@/lib/telephone'
 import { destinationDuBouton, lienContact } from './destinationBouton'
 import Link from 'next/link'
 import { ArrowRight, Sparkles, Phone, Mail, MapPin } from 'lucide-react'
@@ -527,7 +528,7 @@ export default function VifTheme({ site, hasAvis = false, host = null, menu = []
 
               <div className="grid sm:grid-cols-3 gap-4 mt-10 text-left">
                 {contact.phone && (
-                  <a href={`tel:${contact.phone}`} className="flex items-center gap-4 p-5 rounded-2xl border transition-all" style={{ borderColor: 'rgba(20,18,16,0.1)', backgroundColor: 'rgba(20,18,16,0.02)' }}>
+                  <a href={lienTel(contact.phone) ?? undefined} className="flex items-center gap-4 p-5 rounded-2xl border transition-all" style={{ borderColor: 'rgba(20,18,16,0.1)', backgroundColor: 'rgba(20,18,16,0.02)' }}>
                     <div className="flex items-center justify-center w-10 h-10 rounded-xl shrink-0" style={{ backgroundColor: `${GOLD}20` }}>
                       <Phone className="w-4 h-4" style={{ color: GOLD }} />
                     </div>

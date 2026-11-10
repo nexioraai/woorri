@@ -1,4 +1,5 @@
 // src/app/sites/[slug]/themes/AuroraTheme.tsx
+import { lienTel } from '@/lib/telephone'
 import { destinationDuBouton, lienContact } from './destinationBouton'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -399,7 +400,7 @@ export default function AuroraTheme({ site, hasAvis = false, host = null, menu =
                   <h2 className="text-4xl md:text-5xl font-semibold leading-tight mb-8">{t.sections.contactTitle}</h2>
                   <div className="space-y-5 mb-8">
                     {contact.phone && (
-                      <a href={`tel:${contact.phone}`} className="flex items-center gap-3 text-neutral-700 hover:text-neutral-900 transition">
+                      <a href={lienTel(contact.phone) ?? undefined} className="flex items-center gap-3 text-neutral-700 hover:text-neutral-900 transition">
                         <span className="w-10 h-10 rounded-2xl flex items-center justify-center" style={{ backgroundColor: `color-mix(in srgb, ${primary} 12%, white)`, color: primary }}><Phone className="w-4 h-4" /></span>
                         {contact.phone}
                       </a>
