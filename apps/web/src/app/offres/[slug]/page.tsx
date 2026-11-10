@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState, use } from 'react'
 import Link from 'next/link'
 import { supabase } from '@/lib/supabase'
+import GestionAvis from './GestionAvis'
 
 // ============================================================================
 // LOT 13.2 — LES OFFRES REÇUES, VUES PAR LA CENTRALE.
@@ -147,6 +148,9 @@ export default function OffresDuSite({ params }: { params: Promise<{ slug: strin
         procédure défendable.
       </p>
 
+      <GestionAvis slug={slug} />
+
+      <h2 style={{ fontSize: 20, fontWeight: 800, margin: '0 0 12px' }}>Offres reçues</h2>
       {erreur && <p role="alert" style={{ color: '#f87171' }}>{erreur}</p>}
       {!offres && !erreur && <p style={{ opacity: 0.6 }}>Chargement…</p>}
       {offres && offres.length === 0 && (
