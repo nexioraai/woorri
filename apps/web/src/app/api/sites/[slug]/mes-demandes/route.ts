@@ -46,7 +46,7 @@ const TYPES = ['demande', 'reclamation'] as const
  * le lui cacher ne protège personne. Ce qu'on évite en le coupant, c'est
  * d'envoyer deux cents corps entiers pour afficher une liste.
  */
-const VU = 'id,reference,subject,type,etat,created_at,maj_le,message'
+const VU = 'id,reference,subject,type,etat,created_at,maj_le,message,reponse,repondu_le'
 
 /** Cent signes suffisent à reconnaître son propre message dans une liste. */
 const EXTRAIT = 100
@@ -121,6 +121,8 @@ export async function GET(req: Request, { params }: Params) {
       etat: d.etat,
       created_at: d.created_at,
       maj_le: d.maj_le,
+      // LOT 14.2 — LA RÉPONSE DE LA CENTRALE, que le demandeur lit enfin.
+      reponse: d.reponse ?? null, repondu_le: d.repondu_le ?? null,
       extrait: corps.length > EXTRAIT ? corps.slice(0, EXTRAIT).trimEnd() + '…' : corps,
     }
   })

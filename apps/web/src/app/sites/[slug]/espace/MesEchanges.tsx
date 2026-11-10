@@ -32,6 +32,8 @@ export type Echange = {
   created_at: string
   maj_le: string | null
   extrait: string
+  reponse?: string | null
+  repondu_le?: string | null
 }
 
 export type MotsEchanges = {
@@ -114,6 +116,12 @@ export default function MesEchanges({
               <p style={{ margin: '10px 0 0', fontSize: 15, lineHeight: 1.55, color: '#1c1c1c' }}>
                 {e.subject || e.extrait}
               </p>
+              {e.reponse && (
+                <p style={{ margin: '10px 0 0', padding: '10px 12px', borderRadius: 10, fontSize: 14.5, lineHeight: 1.55,
+                  background: `color-mix(in srgb, ${primary} 7%, #ffffff)`, borderInlineStart: `3px solid ${primary}` }}>
+                  {e.reponse}
+                </p>
+              )}
               <p style={{ margin: '8px 0 0', fontSize: 13, opacity: 0.6 }}>
                 {mots.deposee} {date(e.created_at)}
                 {e.maj_le && e.maj_le !== e.created_at ? ` · ${mots.majLe} ${date(e.maj_le)}` : ''}

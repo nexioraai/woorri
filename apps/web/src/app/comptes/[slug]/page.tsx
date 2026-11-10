@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { use } from 'react'
 import { supabase } from '@/lib/supabase'
+import GestionDemandes from './GestionDemandes'
 import DocumentsDuCompte from '@/app/sites/[slug]/espace/DocumentsDuCompte'
 import { motsDocuments } from '@/app/sites/[slug]/espace/motsDocuments'
 
@@ -242,6 +243,7 @@ export default function ComptesDuSite({ params }: { params: Promise<{ slug: stri
             : <ul style={{ padding: 0, margin: 0 }}>{reste.map(carte)}</ul>}
         </>
       )}
+      <GestionDemandes slug={slug} />
     </main>
   )
 }
