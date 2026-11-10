@@ -130,14 +130,16 @@ describe('CHANTIER 8 — première couverture : le contrat de la route tient', (
     siteRow = site({ mode: 2, products: [{ id: 'p1' }, { id: null }, {}] });
     const { texte } = await xml();
     expect(texte).toContain('/produits/p1');
-    expect([...texte.matchAll(/<url>/g)]).toHaveLength(2);
+    // accueil + /contact (LOT 18, écran du moteur) + le seul produit qui a un id
+    expect([...texte.matchAll(/<url>/g)]).toHaveLength(3);
   });
 
   it('INVARIANT MODE 1 — une vitrine n’expose AUCUNE URL de produit', async () => {
     siteRow = site({ mode: 1, products: [] });
     const { texte } = await xml();
     expect(texte).not.toContain('/produits/');
-    expect([...texte.matchAll(/<url>/g)]).toHaveLength(1);
+    // accueil + /contact (LOT 18) — et rien d'autre
+    expect([...texte.matchAll(/<url>/g)]).toHaveLength(2);
   });
 });
 
@@ -229,6 +231,11 @@ describe('LOT 18 — toutes les pages publiques, aucune page privée', () => {
     siteRow = site({ publishes_tenders: true });
     const { texte } = await xml();
     expect(texte.split(`<loc>${B}/appels-offres</loc>`).length - 1).toBe(1);
+  });
+
+  it('🔴 la page Contact, écran du moteur, est toujours annoncée', async () => {
+    const { texte } = await xml();
+    expect(texte).toContain(`<loc>${B}/contact</loc>`);
   });
 
   it('🔴 une boutique d’une page n’annonce pas de plan du site', async () => {

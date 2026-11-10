@@ -152,6 +152,8 @@ export async function GET(
   // Le plan du site n'est annoncé que si le site a des pages déclarées : sur
   // une boutique d'une page, il ne montrerait que l'accueil.
   if (((pages as unknown[] | null) ?? []).length > 0) ajouter(`${base}/plan-du-site`, null, 'monthly', '0.3')
+  // La page Contact est un écran du moteur, servi pour tout site.
+  ajouter(`${base}/contact`, null, 'monthly', '0.7')
 
   for (const product of site.products ?? []) {
     if (!product.id) continue

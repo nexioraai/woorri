@@ -30,7 +30,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const base = resolveSiteBaseUrl(site, (await headers()).get('host'))
   const t = getDict(site.lang)
   const title = `${t.nav.contact} — ${site.name}`
-  const description = `${t.sections.contactSubtitle}`.slice(0, 160)
+  // La description dit ce que la page CONTIENT ; le sous-titre générique du
+  // thème (« un devis ? réponse sous 24h ») promettrait ce que le site n'a
+  // pas décidé. Coordonnées réelles seulement, dans la langue du site.
+  const contact = (site.contact || {}) as { phone?: string; email?: string; address?: string }
+  const description = [t.nav.contact, site.name, contact.address, contact.email].filter(Boolean).join(' — ').slice(0, 160)
   return {
     title, description,
     alternates: { canonical: `${base}/contact` },

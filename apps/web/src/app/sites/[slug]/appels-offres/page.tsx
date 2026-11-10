@@ -1,4 +1,6 @@
 import type { Metadata } from 'next'
+import { ogDePage } from '../themes/metadonneesDuSite'
+import { fetchSite } from '../themes/shared'
 import { filDAriane } from '../themes/filDAriane'
 import Link from 'next/link'
 import { headers } from 'next/headers'
@@ -16,7 +18,6 @@ import { fetchTextesAvis } from './fetchAvis'
 import BlocsDePage from '../pages/BlocsDePage'
 import { lirePosition } from '../pages/blocs'
 import { resolveSiteBaseUrl } from '../themes/shared'
-import { ogLocaleFor } from '@/lib/i18n/supportedLanguages'
 import HtmlLang from '../themes/HtmlLang'
 import JsonLdScript from '../themes/JsonLdScript'
 
@@ -48,18 +49,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { site } = donnees
   const t = getAvisLabels(site.lang)
   const title = `${t.titre} — ${site.name}`
-  const description = tronquer(site.slogan ?? site.about)
+  // LOT 18 — la description PROPRE à cette page (le slogan était aussi celui
+  // de l'accueil : deux pages, une description, c'est un doublon pour Google).
+  const description = tronquer(`${t.sousTitre} — ${site.name}`)
   const url = `${resolveSiteBaseUrl(site, (await headers()).get('host'))}/appels-offres`
+  const complet = await fetchSite(slug)
 
   return {
     title,
     description,
     alternates: { canonical: url },
-    openGraph: {
-      title, description, url, siteName: site.name,
-      type: 'website', locale: ogLocaleFor(site.lang),
-    },
-    twitter: { card: 'summary', title, description },
+    // LOT 18 — avec l'image du site : aucune page ne se partage sans visuel.
+    ...(complet ? ogDePage(complet, url, title, description, 'website') : {}),
   }
 }
 
