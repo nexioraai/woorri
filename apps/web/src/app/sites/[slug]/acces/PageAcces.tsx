@@ -153,7 +153,7 @@ export default async function PageAcces({ ecran, params }: { ecran: EcranAcces }
         )}
 
         <FormulaireAcces ecran={ecran} destination={destination} libelles={libellesVus} primary={accent}
-          slug={slug} champs={champsVus} />
+          slug={slug} champs={champsVus} voir={mots.voir} />
 
         <p style={{ fontSize: 14.5, lineHeight: 1.7, marginTop: 26, opacity: 0.85 }}>
           {ecran === 'connexion' && (<>

@@ -17,6 +17,8 @@ export type MotsAcces = {
   inscription: { titre: string; phrase: string; libelles: LibellesAcces; champs: ChampsInscription; dejaInscrit: string; seConnecter: string }
   oubli: { titre: string; phrase: string; libelles: LibellesAcces; retour: string }
   accueil: string
+  /** L'œil du mot de passe (LOT 18). */
+  voir: { afficher: string; masquer: string }
 }
 
 const REFUS_FR = 'Ces informations ne permettent pas d’entrer. Vérifiez l’adresse et le mot de passe.'
@@ -26,6 +28,7 @@ const REFUS_ES = 'Estos datos no permiten el acceso. Compruebe la dirección y l
 
 const FR: MotsAcces = {
   accueil: '← Accueil',
+  voir: { afficher: 'Afficher le mot de passe', masquer: 'Masquer le mot de passe' },
   connexion: {
     titre: 'Se connecter',
     phrase: 'Entrez avec l’adresse électronique que vous avez enregistrée.',
@@ -68,6 +71,7 @@ const FR: MotsAcces = {
 
 const EN: MotsAcces = {
   accueil: '← Home',
+  voir: { afficher: 'Show password', masquer: 'Hide password' },
   connexion: {
     titre: 'Sign in', phrase: 'Sign in with the address you registered.',
     pasDeCompte: 'No access yet?', creer: 'Create access', oublie: 'Forgotten password',
@@ -90,6 +94,7 @@ const EN: MotsAcces = {
 
 const AR: MotsAcces = {
   accueil: '← الصفحة الرئيسية',
+  voir: { afficher: 'إظهار كلمة المرور', masquer: 'إخفاء كلمة المرور' },
   connexion: {
     titre: 'تسجيل الدخول', phrase: 'ادخل بالعنوان الإلكتروني الذي سجّلته.',
     pasDeCompte: 'ليس لديك وصول بعد؟', creer: 'إنشاء وصول', oublie: 'نسيت كلمة المرور',
@@ -112,6 +117,7 @@ const AR: MotsAcces = {
 
 const ES: MotsAcces = {
   accueil: '← Inicio',
+  voir: { afficher: 'Mostrar la contraseña', masquer: 'Ocultar la contraseña' },
   connexion: {
     titre: 'Iniciar sesión', phrase: 'Entre con la dirección que registró.',
     pasDeCompte: '¿Aún no tiene acceso?', creer: 'Crear acceso', oublie: 'Contraseña olvidada',

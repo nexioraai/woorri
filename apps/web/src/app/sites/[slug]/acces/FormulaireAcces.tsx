@@ -57,7 +57,7 @@ export type ChampsInscription = {
 }
 
 export default function FormulaireAcces({
-  ecran, destination, libelles, primary, slug, champs,
+  ecran, destination, libelles, primary, slug, champs, voir,
 }: {
   ecran: EcranAcces
   /** Où aller une fois entré. Toujours une adresse DE CE SITE. */
@@ -67,7 +67,10 @@ export default function FormulaireAcces({
   /** Pour l'inscription : le site à qui s'adresser. */
   slug?: string
   champs?: ChampsInscription
+  /** Les mots de l'œil du mot de passe. */
+  voir?: { afficher: string; masquer: string }
 }) {
+  const [visible, setVisible] = useState(false)
   const [courriel, setCourriel] = useState('')
   const [motDePasse, setMotDePasse] = useState('')
   const [etat, setEtat] = useState<'repos' | 'envoi' | 'fait' | 'refus'>('repos')
@@ -198,9 +201,24 @@ export default function FormulaireAcces({
       {demandeUnMotDePasse && (
         <label style={{ display: 'block', marginBottom: 14 }}>
           <span style={{ fontSize: 14, fontWeight: 600 }}>{libelles.motDePasse}</span>
-          <input type="password" required minLength={8} value={motDePasse} style={champ}
-            autoComplete={ecran === 'inscription' ? 'new-password' : 'current-password'}
-            onChange={(e) => { setMotDePasse(e.target.value); effacer() }} />
+          {/* L'ŒIL : voir ce qu'on tape, surtout sur un téléphone. */}
+          <span style={{ position: 'relative', display: 'block' }}>
+            <input type={visible ? 'text' : 'password'} required minLength={8} value={motDePasse}
+              style={{ ...champ, paddingRight: 48 }}
+              autoComplete={ecran === 'inscription' ? 'new-password' : 'current-password'}
+              onChange={(e) => { setMotDePasse(e.target.value); effacer() }} />
+            <button type="button" onClick={() => setVisible(!visible)}
+              aria-label={visible ? (voir?.masquer ?? 'Masquer le mot de passe') : (voir?.afficher ?? 'Afficher le mot de passe')}
+              aria-pressed={visible}
+              style={{ position: 'absolute', right: 6, top: 'calc(50% + 3px)', transform: 'translateY(-50%)',
+                width: 38, height: 38, border: 'none', background: 'transparent', cursor: 'pointer', color: '#555' }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ display: 'block', margin: 'auto' }}>
+                <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z" /><circle cx="12" cy="12" r="3" />
+                {visible && <path d="M3 3l18 18" />}
+              </svg>
+            </button>
+          </span>
           <span style={{ fontSize: 13, opacity: 0.65, display: 'block', marginTop: 5 }}>{libelles.minimum}</span>
         </label>
       )}
