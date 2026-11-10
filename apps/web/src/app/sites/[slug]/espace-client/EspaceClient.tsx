@@ -67,6 +67,7 @@ export type MotsEspace = {
   mesDocuments: string
   monDossier: string
   maPrequalification: string
+  mesConsultations: string
   monProfil: string
 }
 
@@ -248,6 +249,7 @@ export default function EspaceClient({
             [`${base}/mes-documents`, mots.mesDocuments],
             [`${base}/mon-dossier`, mots.monDossier],
             [`${base}/ma-prequalification`, mots.maPrequalification],
+            [`${base}/mes-consultations`, mots.mesConsultations],
             [`${base}/mon-profil`, mots.monProfil],
             [`${base}/demandes/suivi`, mots.suivreDemande],
           ] as const).map(([href, libelle]) => (

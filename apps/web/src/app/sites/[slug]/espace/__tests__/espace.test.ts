@@ -28,7 +28,7 @@ const lire = (...p: string[]) =>
 
 const GABARIT = lire('PageEspace.tsx')
 const ESPACE = lire('..', 'espace-client', 'EspaceClient.tsx')
-const PAGES = ['mes-demandes', 'mes-reclamations', 'mon-profil', 'mes-documents', 'mon-dossier', 'ma-prequalification']
+const PAGES = ['mes-demandes', 'mes-reclamations', 'mon-profil', 'mes-documents', 'mon-dossier', 'ma-prequalification', 'mes-consultations']
 
 describe('les quatre langues, partout', () => {
   it('🔴 QUATRE langues, dans les trois jeux de mots', () => {
@@ -95,7 +95,7 @@ describe('aucune page n’est inatteignable', () => {
   it('🔴 et leurs libellés existent dans les quatre langues', () => {
     for (const l of LANGUES_ESPACE) {
       const m = motsEspace(l)
-      for (const k of ['mesDemandes', 'mesReclamations', 'mesDocuments', 'monDossier', 'maPrequalification', 'monProfil'] as const) {
+      for (const k of ['mesDemandes', 'mesReclamations', 'mesDocuments', 'monDossier', 'maPrequalification', 'mesConsultations', 'monProfil'] as const) {
         expect(String(m[k]).length, `${l}.${k}`).toBeGreaterThan(0)
       }
     }
