@@ -450,6 +450,22 @@ définition, et compare les routes dynamiques segment par segment (plus par
 préfixe). Prouvé : retirer le jeton de `GestionDemandes` ou de `GestionAvis`
 le fait rougir.
 
+## §19 — LOT 19 · « MOT DE PASSE OUBLIÉ » ENVOYÉ PAR RESEND (2026-11-10)
+
+Route `/api/sites/[slug]/mot-de-passe-oublie` (lien à jeton haché, envoyé
+par Resend au nom du site) + page `/nouveau-mot-de-passe` (verifyOtp à la
+validation, œil, quatre langues). Réponse identique que l'adresse existe ou
+non ; aucun envoi à une adresse sans accès ; un envoi par deux minutes.
+
+**Mesuré** : parcours complet sur compte de test (lien → session → nouveau
+mot de passe → connexion OK) ; en production, appel 200, `recovery_sent_at`
+mis à jour, clé Resend présente en Production, **0 ligne d'erreur** de la
+route dans les journaux (filtre validé sur une autre route).
+**Non mesuré** : la RÉCEPTION dans une vraie boîte — la clé Resend ne
+permet pas de relire les envois. À confirmer par un essai du propriétaire.
+
+---
+
 ## §18bis — UN SEUL COMPTE PAR ADRESSE, POUR TOUTE LA PLATEFORME (décision, 2026-11-10)
 
 L'accès est commun à tous les sites Deribfy. Une adresse déjà connue de
