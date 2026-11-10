@@ -2,7 +2,8 @@ import type { ReactNode } from 'react'
 import { supabase } from '@/lib/supabase'
 import SurvolVivant from './themes/SurvolVivant'
 import Assistant from './themes/Assistant'
-import PiedLegal, { PAGES_LEGALES } from './themes/PiedLegal'
+import PiedLegal from './themes/PiedLegal'
+import { lirePagesLegales } from './themes/pagesLegales'
 import { headers } from 'next/headers'
 import { resolveSiteBaseUrl } from './themes/shared'
 
@@ -71,16 +72,9 @@ export default async function SiteLayout({
   const assistant = r?.assistant_actif === true
   const base = r ? resolveSiteBaseUrl(r as never, (await headers()).get('host')) : ''
 
-  // LOT 17 — les pages légales que le site a réellement déclarées.
+  // LOT 17 — les pages légales déclarées (bandeau des pages sans pied de thème).
   const site = data as { id?: string; lang?: string | null } | null
-  const { data: legales } = site?.id ? await supabase
-    .from('site_pages_public').select('chemin,titre').eq('site_id', site.id)
-    .in('chemin', PAGES_LEGALES as unknown as string[]) : { data: [] }
-  const planDuSite = ({ en: 'Site map', ar: 'خريطة الموقع', es: 'Mapa del sitio' } as Record<string, string>)[
-    (site?.lang ?? 'fr').slice(0, 2)] ?? 'Plan du site'
-  const pagesLegales = PAGES_LEGALES
-    .map((c) => (legales as { chemin: string; titre: string }[] | null)?.find((p) => p.chemin === c))
-    .filter((p): p is { chemin: string; titre: string } => !!p)
+  const liensLegaux = site?.id ? await lirePagesLegales(site.id, base, site.lang) : []
 
   return (
     <div
@@ -102,7 +96,7 @@ export default async function SiteLayout({
     >
       <SurvolVivant primary={primary} />
       {children}
-      <PiedLegal base={base} pages={pagesLegales} planDuSite={planDuSite} />
+      <PiedLegal liens={liensLegaux} />
       {assistant && <Assistant slug={slug} base={base} primary={primary} nom={nomDuSite} />}
     </div>
   )

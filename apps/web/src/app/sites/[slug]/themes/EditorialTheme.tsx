@@ -81,7 +81,7 @@ function PremiumButton({
 }
 
 // ---------- Theme ----------
-export default function EditorialTheme({ site, hasAvis = false, host = null, menu = [], partenaires = [] }: { site: Site } & AvisDuSite) {
+export default function EditorialTheme({ site, hasAvis = false, host = null, menu = [], partenaires = [], liensLegaux = [] }: { site: Site } & AvisDuSite) {
   // ── LES PRODUITS, POUR LES PAGES PERSONNALISÉES.
   //
   // Les sections boutique calculent déjà cette liste chacune de leur côté ;
@@ -682,7 +682,7 @@ export default function EditorialTheme({ site, hasAvis = false, host = null, men
 
       </main>
       {/* =================== FOOTER =================== */}
-      <footer className="bg-neutral-950 text-white py-16">
+      <footer className="bg-neutral-950 text-white py-16" {...(liensLegaux.length > 0 ? { 'data-pied-legal': '' } : {})}>
         <div className="max-w-7xl mx-auto px-6 md:px-10">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8 mb-12">
             <div>
@@ -698,7 +698,17 @@ export default function EditorialTheme({ site, hasAvis = false, host = null, men
             </nav>
           </div>
           <div className="pt-8 border-t border-white/10 flex flex-col md:flex-row md:items-center md:justify-between gap-4 text-sm text-white/40">
-            <div>© {new Date().getFullYear()} {site.name}. {t.labels.rightsReserved}</div>
+            <div className="flex flex-col gap-3">
+              <div>© {new Date().getFullYear()} {site.name}. {t.labels.rightsReserved}</div>
+              {/* LOT 17 — les pages légales, à côté du « © ». */}
+              {liensLegaux.length > 0 && (
+                <nav aria-label="Informations légales" className="flex flex-wrap gap-x-5 gap-y-2">
+                  {liensLegaux.map((l) => (
+                    <a key={l.href} href={l.href} className="text-white/60 hover:text-white transition-colors">{l.titre}</a>
+                  ))}
+                </nav>
+              )}
+            </div>
             <div className="flex items-center gap-2">
               <span>{t.labels.poweredBy}</span>
               <a href={WOORRI_SITE_URL} target="_blank" rel="noopener noreferrer" className="font-medium text-white/70 hover:text-white transition-colors">

@@ -48,6 +48,7 @@
 import type { EntreeMenu } from '../pages/fetchPage'
 
 import type { Partenaire } from '../pages/Partenaires'
+import type { LienLegal } from './pagesLegales'
 
 export type AvisDuSite = {
   /**
@@ -61,6 +62,9 @@ export type AvisDuSite = {
    * les lit avec le rôle de service, qui voit la table directement.
    */
   partenaires?: Partenaire[]
+
+  /** LOT 17 — les liens légaux, posés dans le pied de page du thème. `[]` si le site n'en a pas. */
+  liensLegaux?: LienLegal[]
 
   /** `true` si ce site publie au moins un avis VISIBLE du public. */
   hasAvis?: boolean
