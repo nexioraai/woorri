@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import type { Metadata } from 'next'
-import { metadonneesDuSite } from './themes/metadonneesDuSite'
+import { metadonneesDuSite, descriptionDuSite } from './themes/metadonneesDuSite'
 import { supabase } from '@/lib/supabase'
 import SurvolVivant from './themes/SurvolVivant'
 import Assistant from './themes/Assistant'
@@ -65,7 +65,16 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const site = await fetchSite(slug)
   if (!site) return {}
   const base = resolveSiteBaseUrl(site, (await headers()).get('host'))
-  return metadonneesDuSite(site, base, slug)
+  return {
+    // LE FILET : une page qui ne pose pas son titre, sa description ou sa
+    // canonique héritait de ceux de DERIBFY (gabarit racine) — mesuré le
+    // 2026-11-10 sur trois sous-pages. Par défaut : le nom et la description
+    // DU SITE, et AUCUNE canonique plutôt qu'une canonique vers deribfy.com.
+    title: site.name,
+    description: descriptionDuSite(site),
+    alternates: { canonical: null },
+    ...metadonneesDuSite(site, base, slug),
+  }
 }
 
 export default async function SiteLayout({

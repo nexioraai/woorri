@@ -1,4 +1,5 @@
 import { ogDePage } from '../themes/metadonneesDuSite'
+import { lireBlocs } from '../pages/blocs'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { headers } from 'next/headers'
@@ -68,7 +69,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const base = resolveSiteBaseUrl(site, (await headers()).get('host'))
   const url = `${base}/${page.chemin}`
-  const description = (page.chapeau ?? '').trim().slice(0, 157) || undefined
+  // LOT 18 — sans introduction, le premier paragraphe ; à défaut, le titre et
+  // le site. Une page sans description laissait Google en inventer une.
+  const premierTexte = lireBlocs(page.blocs).find((b): b is Extract<ReturnType<typeof lireBlocs>[number], { type: 'texte' }> => b.type === 'texte')?.texte
+  const description = ((page.chapeau ?? '').trim() || (premierTexte ?? '').trim() || `${page.titre} — ${site.name}`).slice(0, 157)
 
   return {
     title: `${page.titre} — ${site.name}`,

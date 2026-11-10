@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { headers } from 'next/headers'
 import { notFound } from 'next/navigation'
 import { fetchAvis, type AvisDetail } from '../fetchAvis'
-import PageDeclaree from '../../[...rest]/page'
+import PageDeclaree, { generateMetadata as metadonneesPageDeclaree } from '../../[...rest]/page'
 import { fetchPage } from '../../pages/fetchPage'
 import { fetchSiteCatalogue as fetchSitePourPage } from '../../catalogue/fetchCatalogue'
 import { getAvisLabels, echeanceAffichee, formatDateHeure, formatValeur, libelleEtat, tronquer } from '../labels'
@@ -42,7 +42,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   // Pas de `robots: noindex` ici : la page rend 404 par `notFound()`, et une
   // 404 est deja le signal correct. Annoncer `noindex` sur une page servie en
   // 200 serait le defaut GEN-D033 a l'envers.
-  if (!donnees) return { title: 'Avis introuvable' }
+  // LOT 18 — PAS UN AVIS : peut-être une SOUS-PAGE déclarée (`calendrier`,
+  // `comment-repondre`), que le rendu sert déjà par `PageDeclaree`. Mesuré le
+  // 2026-11-10 : ses métadonnées, elles, n'étaient pas déléguées — titre
+  // « Avis introuvable », description et canonique de deribfy.com.
+  if (!donnees) return metadonneesPageDeclaree({ params: Promise.resolve({ slug, rest: ['appels-offres', reference] }) })
 
   const { site, avis } = donnees
   const t = getAvisLabels(site.lang)
