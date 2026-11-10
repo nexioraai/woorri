@@ -29,6 +29,8 @@ export type MotsPostuler = {
   chargement: string
   connectezVous: string
   seConnecter: string
+  /** LOT 19 — le visiteur sans compte doit pouvoir en CRÉER un, pas seulement se connecter. */
+  creerCompte: string
   demandezAcces: string
   versEspace: string
   enAttente: string
@@ -53,10 +55,12 @@ export type MotsPostuler = {
 type Compte = { etat: 'en_attente' | 'actif' | 'suspendu' } | null
 
 export default function Postuler({
-  slug, base, avisId, etatAvis, remiseLe, mots, primary,
+  slug, base, avisId, etatAvis, remiseLe, mots, primary, chemin = '',
 }: {
   slug: string
   base: string
+  /** LOT 19 — le chemin de CET avis, pour y revenir après l'inscription. */
+  chemin?: string
   avisId: string
   /** L'état déclaré de l'avis. Le serveur le lit, il ne l'interprète pas. */
   etatAvis: string
@@ -170,9 +174,15 @@ export default function Postuler({
       <section style={cadre}>
         {titre}
         <p style={{ margin: '0 0 16px', lineHeight: 1.65 }}>{mots.connectezVous}</p>
-        <a href={`${base}/connexion`} style={{ ...bouton, display: 'inline-block', textDecoration: 'none' }}>
-          {mots.seConnecter}
-        </a>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <a href={`${base}/inscription${chemin ? `?retour=${encodeURIComponent(chemin)}` : ''}`} style={{ ...bouton, display: 'inline-block', textDecoration: 'none' }}>
+            {mots.creerCompte}
+          </a>
+          <a href={`${base}/connexion${chemin ? `?retour=${encodeURIComponent(chemin)}` : ''}`} style={{ ...bouton, display: 'inline-block', textDecoration: 'none',
+            background: 'transparent', color: primary, border: `1.5px solid ${primary}` }}>
+            {mots.seConnecter}
+          </a>
+        </div>
       </section>
     )
   }

@@ -320,6 +320,7 @@ export default async function AvisPage({ params }: Props) {
           <Postuler
             slug={site.slug}
             base={base}
+            chemin={`/appels-offres/${avis.reference_slug}`}
             avisId={avis.id}
             // `publie` N'EST PAS TESTÉ ICI, et ce n'est pas un oubli : la VUE
             // `appels_offres_public` filtre déjà dessus. Un avis rendu par

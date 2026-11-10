@@ -11,7 +11,8 @@ import type { MotsPostuler } from './Postuler'
 const FR: MotsPostuler = {
   titre: 'Déposer une offre',
   chargement: 'Chargement…',
-  connectezVous: 'Pour déposer une offre, connectez-vous avec votre accès fournisseur. La Centrale doit savoir qui soumet.',
+  connectezVous: 'Pour déposer une offre, il faut un compte : la Centrale doit savoir qui soumet. Créez le vôtre en une minute, ou connectez-vous si vous en avez déjà un.',
+  creerCompte: 'Créer un compte',
   seConnecter: 'Se connecter',
   demandezAcces: 'Vous êtes connecté, mais vous n’êtes pas encore rattaché à la Centrale. Demandez votre rattachement depuis votre espace.',
   versEspace: 'Aller à mon espace',
@@ -31,7 +32,8 @@ const FR: MotsPostuler = {
 
 const EN: MotsPostuler = {
   titre: 'Submit a bid', chargement: 'Loading…',
-  connectezVous: 'To submit a bid, sign in with your supplier access. The Centrale must know who is bidding.',
+  connectezVous: 'To submit a bid you need an account: the Centrale must know who is bidding. Create yours in a minute, or sign in if you already have one.',
+  creerCompte: 'Create an account',
   seConnecter: 'Sign in',
   demandezAcces: 'You are signed in, but not yet attached to the Centrale. Request attachment from your space.',
   versEspace: 'Go to my space',
@@ -51,7 +53,8 @@ const EN: MotsPostuler = {
 
 const AR: MotsPostuler = {
   titre: 'تقديم عرض', chargement: 'جارٍ التحميل…',
-  connectezVous: 'لتقديم عرض، سجّل الدخول بحساب المورّد. يجب أن تعرف المركزية من يقدّم.',
+  connectezVous: 'لتقديم عرض يلزمك حساب: يجب أن تعرف المركزية من يقدّم. أنشئ حسابك في دقيقة، أو سجّل الدخول إن كان لديك حساب.',
+  creerCompte: 'إنشاء حساب',
   seConnecter: 'تسجيل الدخول',
   demandezAcces: 'أنت متصل، لكنك غير مرتبط بالمركزية بعد. اطلب الربط من مساحتك.',
   versEspace: 'الذهاب إلى مساحتي',
@@ -71,7 +74,8 @@ const AR: MotsPostuler = {
 
 const ES: MotsPostuler = {
   titre: 'Presentar una oferta', chargement: 'Cargando…',
-  connectezVous: 'Para presentar una oferta, inicie sesión con su acceso de proveedor. La Central debe saber quién oferta.',
+  connectezVous: 'Para presentar una oferta necesita una cuenta: la Central debe saber quién oferta. Cree la suya en un minuto, o inicie sesión si ya tiene una.',
+  creerCompte: 'Crear una cuenta',
   seConnecter: 'Iniciar sesión',
   demandezAcces: 'Ha iniciado sesión, pero aún no está vinculado a la Central. Solicite la vinculación desde su espacio.',
   versEspace: 'Ir a mi espacio',

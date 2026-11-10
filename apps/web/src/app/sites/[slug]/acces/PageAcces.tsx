@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { retourValable } from './retour'
 import Link from 'next/link'
 import { headers } from 'next/headers'
 import { notFound } from 'next/navigation'
@@ -33,7 +34,7 @@ import { ouvreDesComptes } from './ouvreDesComptes'
 // depuis `/edit`, sans que personne écrive une ligne.
 // ============================================================================
 
-export type PropsAcces = { params: Promise<{ slug: string }> }
+export type PropsAcces = { params: Promise<{ slug: string }>; searchParams?: Promise<{ retour?: string }> }
 
 type SitePublic = {
   id: string; slug: string; name: string
@@ -71,7 +72,7 @@ export async function metadonneesAcces(ecran: EcranAcces, { params }: PropsAcces
   }
 }
 
-export default async function PageAcces({ ecran, params }: { ecran: EcranAcces } & PropsAcces) {
+export default async function PageAcces({ ecran, params, searchParams }: { ecran: EcranAcces } & PropsAcces) {
   const { slug } = await params
   const s = await siteDe(slug)
   if (!s) notFound()
@@ -125,9 +126,11 @@ export default async function PageAcces({ ecran, params }: { ecran: EcranAcces }
 
   // APRÈS LA CONNEXION, L'ESPACE — jamais l'accueil. Renvoyer à l'accueil
   // obligerait la personne à retrouver elle-même où elle allait.
-  const destination = ecran === 'connexion'
-    ? `${base}/espace-client`
-    : ecran === 'inscription' ? `${base}/espace-client` : `${base}/connexion`
+  const retour = retourValable((await searchParams)?.retour)
+  const suite = retour ? `?retour=${encodeURIComponent(retour)}` : ''
+  const destination = ecran === 'connexion' || ecran === 'inscription'
+    ? `${base}${retour ?? '/espace-client'}`
+    : `${base}/connexion`
 
   const lien: React.CSSProperties = { color: accent, fontWeight: 600 }
 
@@ -158,13 +161,13 @@ export default async function PageAcces({ ecran, params }: { ecran: EcranAcces }
         <p style={{ fontSize: 14.5, lineHeight: 1.7, marginTop: 26, opacity: 0.85 }}>
           {ecran === 'connexion' && (<>
             {mots.connexion.pasDeCompte}{' '}
-            <Link href={`${base}/inscription`} style={lien}>{mots.connexion.creer}</Link>
+            <Link href={`${base}/inscription${suite}`} style={lien}>{mots.connexion.creer}</Link>
             {' · '}
             <Link href={`${base}/mot-de-passe-oublie`} style={lien}>{mots.connexion.oublie}</Link>
           </>)}
           {ecran === 'inscription' && (<>
             {mots.inscription.dejaInscrit}{' '}
-            <Link href={`${base}/connexion`} style={lien}>{mots.inscription.seConnecter}</Link>
+            <Link href={`${base}/connexion${suite}`} style={lien}>{mots.inscription.seConnecter}</Link>
           </>)}
           {ecran === 'oubli' && (
             <Link href={`${base}/connexion`} style={lien}>{mots.oubli.retour}</Link>
