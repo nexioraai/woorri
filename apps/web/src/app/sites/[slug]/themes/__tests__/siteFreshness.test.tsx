@@ -102,13 +102,14 @@ describe('DEBT-034 — 🔴 les trois surfaces, dans les DEUX etats du schema', 
         const html = renderToStaticMarkup(
           <JsonLd site={siteRow as never} url="https://cafeducoin.ca" />
         );
-        const bloc = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)![1];
-        const data = JSON.parse(bloc.replace(/\\u003c/g, '<').replace(/\\u003e/g, '>').replace(/\\u0026/g, '&'));
-        // LOT 21 — la date est portée par le nœud WebPage du @graph (schema.org
-        // ne l'admet pas sur une organisation).
-        const page = (data['@graph'] as Record<string, unknown>[]).find((n) => n['@type'] === 'WebPage')!
+        const blocs = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)]
+          .map((m) => JSON.parse(m[1].replace(/\\u003c/g, '<').replace(/\\u003e/g, '>').replace(/\\u0026/g, '&')) as Record<string, unknown>);
+        // LOT 21 — la date est portée par un bloc WebPage DISTINCT (schema.org ne
+        // l'admet pas sur une organisation), et l'organisation reste un bloc à part.
+        const page = blocs.find((n) => n['@type'] === 'WebPage')!
         expect(page.dateModified).toBe(attendu);
-        expect((data['@graph'] as Record<string, unknown>[]).some((n) => n['@type'] !== 'WebPage' && 'dateModified' in n)).toBe(false);
+        expect(blocs.some((n) => n['@type'] !== 'WebPage' && 'dateModified' in n)).toBe(false);
+        expect(blocs.some((n) => /Organization|LocalBusiness|Store|Restaurant/.test(String(n['@type'])))).toBe(true);
       });
 
       it('llms.txt publie cette date', async () => {
