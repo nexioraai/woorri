@@ -117,7 +117,7 @@ export async function POST(req: Request, { params }: Params) {
 
   // ① PAR CONVERSATION — vérifié d'abord : ça ne coûte rien.
   if (historique.filter((t) => t.role === 'user').length >= PAR_CONVERSATION) {
-    return PEU('Cette conversation a atteint 10 questions. Ouvrez-en une nouvelle si besoin.')
+    return PEU('Merci pour vos questions. Pour aller plus loin, écrivez-nous depuis la page Contact.')
   }
 
   const { supabaseAdmin } = await import('@/lib/supabase-admin')
@@ -147,7 +147,7 @@ export async function POST(req: Request, { params }: Params) {
     .select('*', { count: 'exact', head: true })
     .eq('site_id', s.id).eq('ip_hache', ipHache).gte('pose_le', ilYaUneHeure)
   if ((deLHeure ?? 0) >= PAR_HEURE) {
-    return PEU('Vous avez posé 10 questions en une heure. Réessayez un peu plus tard.')
+    return PEU('Merci pour vos questions. Réessayez un peu plus tard, ou écrivez-nous depuis la page Contact.')
   }
 
   // ON COMPTE AVANT D'APPELER : une question qui échoue chez DeepSeek a pu

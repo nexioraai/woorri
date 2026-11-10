@@ -53,10 +53,11 @@ export default async function SiteLayout({
 }: { children: ReactNode; params: Promise<{ slug: string }> }) {
   const { slug } = await params
   const { data } = await supabase
-    .from('sites_public').select('primary_color').eq('slug', slug).maybeSingle()
+    .from('sites_public').select('primary_color,name').eq('slug', slug).maybeSingle()
   // `#111111` quand le site n'en déclare pas : le survol reste visible, il
   // n'emprunte simplement aucune couleur qui ne serait pas la sienne.
   const primary = (data as { primary_color?: string | null } | null)?.primary_color || '#111111'
+  const nomDuSite = (data as { name?: string | null } | null)?.name || ''
 
   // ── LOT 16 — LA BULLE N'EXISTE QUE SI LE SITE L'A ALLUMÉE.
   // L'interrupteur se lit côté serveur (la vue publique ne le porte pas) ;
@@ -89,7 +90,7 @@ export default async function SiteLayout({
     >
       <SurvolVivant primary={primary} />
       {children}
-      {assistant && <Assistant slug={slug} base={base} primary={primary} />}
+      {assistant && <Assistant slug={slug} base={base} primary={primary} nom={nomDuSite} />}
     </div>
   )
 }
