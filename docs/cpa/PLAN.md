@@ -450,6 +450,37 @@ définition, et compare les routes dynamiques segment par segment (plus par
 préfixe). Prouvé : retirer le jeton de `GestionDemandes` ou de `GestionAvis`
 le fait rougir.
 
+## §18 — LOT 18 · RÉFÉRENCEMENT ET DÉFAUTS DU MOTEUR (2026-11-10)
+
+Demande du propriétaire (prompt en 8 points, sauf le numéro de téléphone que
+la CPA fournira). **Tout au MOTEUR**, vérifié sur la CPA ET sur deux autres
+sites (yiaglobalcommodities.com, biyaminchine.com) : plan de site 200, 0
+titre en double, 0 description en double, 0 canonique fausse, 0 Deribfy.
+
+- `/sitemap.xml` et `/favicon.ico` : 404 sur `*.deribfy.app` → servis
+  (routeur : une seule fonction `adresseInterneDuSite` pour les deux hôtes).
+- Plan de site : accueil + blog seulement → toutes les pages publiques
+  (37 sur la CPA), jamais les écrans privés.
+- Cartes de partage / titres / canoniques de Deribfy sur `/catalogue`,
+  `/plan-du-site`, `/catalogue/commander`, `/catalogue/categories`,
+  `/appels-offres/calendrier`, `/appels-offres/comment-repondre` → identité
+  du site par le gabarit du segment (`metadonneesDuSite`) + filet (aucune
+  canonique plutôt qu'une canonique vers deribfy.com).
+- Bouton principal : suit son libellé (`destinationBouton.ts`).
+- `<html lang>` réécrit par la langue du NAVIGATEUR (site français → `en`)
+  et bandeau de témoins en anglais → langue du site imposée.
+- « 1 » de la pastille : dessiné, plus écrit. « --- » : 0 occurrence mesurée.
+- Partenaires : la copie du défilement ne porte plus aucun texte.
+- `/catalogue` montre ses sous-pages (« ci-dessous » ne renvoie plus à vide).
+- « Contact » : vraie page `/contact`, indexable ; fil d'Ariane déclaré sur
+  catalogue, appels d'offres, plan du site, contact.
+
+**Non traité, par décision** : le préfixe `+1` du téléphone (donnée, pas
+code — la CPA mettra son numéro). **Reste ouvert** : « Mot de passe
+oublié » (courriel non distribué), 15.8 / 15.9 / 15.10.
+
+---
+
 ## §17 — L'INSCRIPTION DIRECTE, ET LES PAGES LÉGALES TROUVABLES
 
 **Décision du propriétaire, 2026-11-10** : « la création de compte ne
