@@ -1,6 +1,6 @@
 // src/app/sites/[slug]/themes/AuroraTheme.tsx
 import { lienTel } from '@/lib/telephone'
-import { destinationDuBouton, lienContact } from './destinationBouton'
+import { destinationDuBouton, lienContact, lienAccueil, lienSection } from './destinationBouton'
 import Image from 'next/image'
 import Link from 'next/link'
 import {
@@ -122,7 +122,7 @@ export default function AuroraTheme({ site, hasAvis = false, host = null, menu =
       <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/70 border-b border-black/5">
         <div className="max-w-[1400px] mx-auto px-4 md:px-6 lg:px-8 h-16 flex items-center justify-between gap-6 lg:gap-10">
           <div className="flex items-center gap-4 min-w-0">
-            <EnseigneDuSite
+            <EnseigneDuSite href={lienAccueil(site, host)}
               nom={site.name}
               logo={site.logo_url}
               slug={site.slug}
@@ -142,7 +142,7 @@ export default function AuroraTheme({ site, hasAvis = false, host = null, menu =
           <nav className={ancresEnBarre
               ? "hidden md:flex items-center gap-8 text-sm font-medium text-neutral-600"
               : "hidden xl:flex items-center gap-4 text-[13px] font-medium text-neutral-600"}>
-            {!hidden('Home') && <a href="#home" className="hover:text-neutral-900 transition-colors inline-flex items-center gap-[7px] whitespace-nowrap"><DessinDeMenu chemin="accueil" couleur={primary} />{t.nav.home}</a>}
+            {!hidden('Home') && <a href={lienAccueil(site, host)} className="hover:text-neutral-900 transition-colors inline-flex items-center gap-[7px] whitespace-nowrap"><DessinDeMenu chemin="accueil" couleur={primary} />{t.nav.home}</a>}
           {/* LOT 3 — 7 novembre 2026. Quand le site DÉCLARE ses pages, la barre
               du haut leur appartient. Les ancres (#about, #faq…) encombraient
               le menu et collaient l'enseigne. Elles ne DISPARAISSENT pas : les
@@ -150,7 +150,7 @@ export default function AuroraTheme({ site, hasAvis = false, host = null, menu =
               lister — seule la barre se vide. Un site sans page déclarée ne
               voit aucun changement. */}
           {ancresEnBarre && (<>
-            {!hidden('About') && <a href="#about" className="hover:text-neutral-900 transition-colors">{t.nav.about}</a>}
+            {!hidden('About') && (site.about || site.mission || site.vision) && <a href={lienSection(site, host, 'a-propos')} className="hover:text-neutral-900 transition-colors">{t.nav.about}</a>}
             {isShop && <a href="#shop" className="hover:text-neutral-900 transition-colors">{t.nav.shop}</a>}
             {testimonials.length > 0 && !hidden('Reviews') && <a href="#testimonials" className="hover:text-neutral-900 transition-colors">{t.nav.reviews}</a>}
             {site.faq && site.faq.length > 0 && !hidden('FAQ') && <a href="#faq" className="hover:text-neutral-900 transition-colors">{t.nav.faq}</a>}

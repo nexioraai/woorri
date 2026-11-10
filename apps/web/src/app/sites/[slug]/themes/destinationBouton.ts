@@ -35,3 +35,13 @@ export function destinationDuBouton(
 export function lienContact(site: Parameters<typeof resolveSiteBaseUrl>[0], host: string | null): string {
   return `${resolveSiteBaseUrl(site, host)}/contact`
 }
+
+/** LOT 21 — « Accueil » mène à l'adresse du site, plus à l'ancre `#home`. */
+export function lienAccueil(site: Parameters<typeof resolveSiteBaseUrl>[0], host: string | null): string {
+  return resolveSiteBaseUrl(site, host)
+}
+
+/** LOT 21 — « À propos » et « Services » sont de vraies pages, plus des ancres. */
+export function lienSection(site: Parameters<typeof resolveSiteBaseUrl>[0], host: string | null, quoi: 'a-propos' | 'services'): string {
+  return `${resolveSiteBaseUrl(site, host)}/${quoi}`
+}

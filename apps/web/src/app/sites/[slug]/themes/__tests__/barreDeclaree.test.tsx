@@ -77,13 +77,16 @@ describe('LOT 3 — la barre du haut quand le site déclare ses pages', () => {
   for (const [nom, rendre] of THEMES) {
     it(`${nom} : SANS page déclarée, les ancres RESTENT dans la barre`, () => {
       const barre = barreDuHaut(rendre(makeSite(), []));
-      expect(barre).toContain('#about');
+      // LOT 21 — « À propos » est une vraie page ; les autres ancres restent.
+      expect(barre).toContain('/a-propos"');
+      expect(barre).not.toContain('"#about"');
       expect(barre).toContain('#faq');
     });
 
     it(`${nom} : AVEC des pages déclarées, les ancres QUITTENT la barre`, () => {
       const barre = barreDuHaut(rendre(makeSite(), MENU_CPA));
       expect(barre).not.toContain('#about');
+      expect(barre).not.toContain('/a-propos"');
       expect(barre).not.toContain('#faq');
       expect(barre).not.toContain('#gallery');
       expect(barre).not.toContain('#testimonials');
@@ -91,7 +94,9 @@ describe('LOT 3 — la barre du haut quand le site déclare ses pages', () => {
 
     it(`${nom} : les pages déclarées, Accueil et Contact restent servis`, () => {
       const barre = barreDuHaut(rendre(makeSite(), MENU_CPA));
-      expect(barre).toContain('#home');
+      // LOT 21 — « Accueil » mène à l'adresse du site, plus à l'ancre #home.
+      expect(barre).toContain('Accueil');
+      expect(barre).not.toContain('#home');
       // LOT 18 — Contact est une vraie page, plus l'ancre de l'accueil.
       expect(barre).toContain('/contact"');
       expect(barre).toContain('Qui sommes-nous');
@@ -102,7 +107,7 @@ describe('LOT 3 — la barre du haut quand le site déclare ses pages', () => {
       // Ordre arrêté avec le propriétaire le 7 novembre 2026 :
       // Accueil · pages déclarées ▾ · Appels d'offres · Contact.
       const barre = barreDuHaut(rendre(makeSite(), MENU_CPA));
-      const accueil = barre.indexOf('#home');
+      const accueil = barre.indexOf('Accueil');
       const declaree = barre.indexOf('Qui sommes-nous');
       const appels = barre.indexOf('appels-offres');
       const contact = barre.indexOf('/contact"');

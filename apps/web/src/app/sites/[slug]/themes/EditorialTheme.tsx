@@ -1,6 +1,6 @@
 // src/app/sites/[slug]/themes/EditorialTheme.tsx
 import { lienTel } from '@/lib/telephone'
-import { destinationDuBouton, lienContact } from './destinationBouton'
+import { destinationDuBouton, lienContact, lienAccueil, lienSection } from './destinationBouton'
 import Image from 'next/image'
 import Link from 'next/link'
 import {
@@ -136,7 +136,7 @@ export default function EditorialTheme({ site, hasAvis = false, host = null, men
       {/* =================== HEADER =================== */}
       <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-white/70 border-b border-black/5">
         <div className="max-w-7xl mx-auto px-6 md:px-10 h-20 flex items-center justify-between gap-6 lg:gap-10">
-          <EnseigneDuSite
+          <EnseigneDuSite href={lienAccueil(site, host)}
             nom={site.name}
             logo={site.logo_url}
           slug={site.slug}
@@ -148,7 +148,7 @@ export default function EditorialTheme({ site, hasAvis = false, host = null, men
           <nav className={ancresEnBarre
               ? "hidden md:flex items-center gap-10 text-sm font-medium text-neutral-700"
               : "hidden xl:flex items-center gap-4 text-[13px] font-medium text-neutral-700"}>
-            {!hidden('Home') && <a href="#home" className="hover:text-black transition-colors inline-flex items-center gap-[7px] whitespace-nowrap"><DessinDeMenu chemin="accueil" couleur={primary} />{t.nav.home}</a>}
+            {!hidden('Home') && <a href={lienAccueil(site, host)} className="hover:text-black transition-colors inline-flex items-center gap-[7px] whitespace-nowrap"><DessinDeMenu chemin="accueil" couleur={primary} />{t.nav.home}</a>}
           {/* LOT 3 — 7 novembre 2026. Quand le site DÉCLARE ses pages, la barre
               du haut leur appartient. Les ancres (#about, #faq…) encombraient
               le menu et collaient l'enseigne. Elles ne DISPARAISSENT pas : les
@@ -156,8 +156,8 @@ export default function EditorialTheme({ site, hasAvis = false, host = null, men
               lister — seule la barre se vide. Un site sans page déclarée ne
               voit aucun changement. */}
           {ancresEnBarre && (<>
-            {!hidden('About') && <a href="#about" className="hover:text-black transition-colors">{t.nav.about}</a>}
-            {!hidden('Services') && <a href="#services" className="hover:text-black transition-colors">{sections[0]?.name || t.nav.services}</a>}
+            {!hidden('About') && (site.about || site.mission || site.vision) && <a href={lienSection(site, host, 'a-propos')} className="hover:text-black transition-colors">{t.nav.about}</a>}
+            {!hidden('Services') && sections.length > 0 && <a href={lienSection(site, host, 'services')} className="hover:text-black transition-colors">{sections[0]?.name || t.nav.services}</a>}
             {hasShop && !hidden('Shop') && (
               <a href="#shop" className="hover:text-black transition-colors">{t.nav.shop}</a>
             )}
@@ -695,8 +695,9 @@ export default function EditorialTheme({ site, hasAvis = false, host = null, men
               {site.slogan && <div className="text-white/60 text-sm">{site.slogan}</div>}
             </div>
             <nav className="flex gap-8 text-sm text-white/70">
-              <a href="#about" className="hover:text-white transition-colors">{t.nav.about}</a>
-              <a href="#services" className="hover:text-white transition-colors">{sections[0]?.name || t.nav.services}</a>
+              {/* LOT 21 — de vraies pages, plus des ancres de l'accueil. */}
+              {!hidden('About') && (site.about || site.mission || site.vision) && <a href={lienSection(site, host, 'a-propos')} className="hover:text-white transition-colors">{t.nav.about}</a>}
+              {!hidden('Services') && sections.length > 0 && <a href={lienSection(site, host, 'services')} className="hover:text-white transition-colors">{sections[0]?.name || t.nav.services}</a>}
               <a href={lienContact(site, host)} className="hover:text-white transition-colors">{t.nav.contact}</a>
             </nav>
           </div>

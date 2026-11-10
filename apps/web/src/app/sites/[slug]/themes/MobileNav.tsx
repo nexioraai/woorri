@@ -27,6 +27,11 @@ interface MobileNavProps {
      * absente, et ce type ne doit pas pretendre le contraire.
      */
     publishes_tenders?: boolean
+    /** LOT 21 — pour savoir si « À propos » / « Services » ont une page. */
+    about?: string | null
+    mission?: string | null
+    vision?: string | null
+    sections?: unknown[] | null
   }
   cta: string
   ctaHref: string
@@ -72,8 +77,11 @@ export type EntreeTelephone = {
  * s'il est ouvert : un test qui rend le composant ferme ne mesure rien.
  */
 export function construireMenuTelephone({
-  pages, base, hidden, hasShop, t, avisTitre = null,
+  pages, base, hidden, hasShop, t, avisTitre = null, aPropos = true, services = true,
 }: {
+  /** LOT 21 — les pages « À propos » / « Services » n'existent que si le site a ce contenu. */
+  aPropos?: boolean
+  services?: boolean
   pages: EntreeMenu[]
   base: string
   hidden: (nom: string) => boolean
@@ -99,8 +107,9 @@ export function construireMenuTelephone({
   const racines = pages.filter((p) => !p.parent)
 
   return [
-    ...(ancres && !hidden('About') ? [{ href: '#about', label: t.nav.about }] : []),
-    ...(ancres && !hidden('Services') ? [{ href: '#services', label: t.nav.services }] : []),
+    // LOT 21 — de vraies pages, plus des ancres.
+    ...(ancres && aPropos && !hidden('About') ? [{ href: `${base}/a-propos`, label: t.nav.about }] : []),
+    ...(ancres && services && !hidden('Services') ? [{ href: `${base}/services`, label: t.nav.services }] : []),
     ...(ancres && hasShop && !hidden('Shop') ? [{ href: '#shop', label: t.nav.shop }] : []),
     ...(ancres && !hidden('Gallery') ? [{ href: '#gallery', label: t.nav.gallery }] : []),
     ...(ancres && !hidden('Reviews') ? [{ href: '#testimonials', label: t.nav.reviews }] : []),
@@ -165,6 +174,8 @@ export default function MobileNav({ site, cta, ctaHref, variant = 'light', pages
   // ancres d'une page unique quittent le menu. Les sections restent sur
   // l'accueil. Un site sans page déclarée ne change pas.
   const navLinks = construireMenuTelephone({
+    aPropos: !!(site.about || site.mission || site.vision),
+    services: (site.sections ?? []).length > 0,
     // `!== true` et non `!x` : meme lecture que `LienAppelsOffres`, parce que
     // c est la MEME regle. Deux lectures differentes de la meme colonne, c est
     // deux comportements qui divergeront un jour.

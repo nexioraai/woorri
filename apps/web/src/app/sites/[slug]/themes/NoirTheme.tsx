@@ -1,7 +1,7 @@
 'use client'
 
 import { lienTel } from '@/lib/telephone'
-import { destinationDuBouton, lienContact } from './destinationBouton'
+import { destinationDuBouton, lienContact, lienAccueil, lienSection } from './destinationBouton'
 import { useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { ArrowRight, Phone, Mail, MapPin, ShoppingBag } from 'lucide-react'
@@ -268,7 +268,7 @@ export default function NoirTheme({ site, hasAvis = false, host = null, menu = [
         style={{ backgroundColor: headerBg, borderBottom: `1px solid`, borderBottomColor: headerBorder, backdropFilter: 'blur(10px)' }}
       >
         <div className="max-w-7xl mx-auto px-6 md:px-10 h-20 flex items-center justify-between gap-6 lg:gap-10">
-          <EnseigneDuSite
+          <EnseigneDuSite href={lienAccueil(site, host)}
             nom={site.name}
             logo={site.logo_url}
           slug={site.slug}
@@ -280,7 +280,7 @@ export default function NoirTheme({ site, hasAvis = false, host = null, menu = [
           <nav className={ancresEnBarre
               ? "hidden md:flex items-center gap-10 text-sm font-medium"
               : "hidden xl:flex items-center gap-4 text-[13px] font-medium"} style={{ color: 'rgba(245,243,238,0.72)' }}>
-            {!hidden('Home') && <NavLink href="#home"><span className="inline-flex items-center gap-[7px] whitespace-nowrap"><DessinDeMenu chemin="accueil" />{t.nav.home}</span></NavLink>}
+            {!hidden('Home') && <NavLink href={lienAccueil(site, host)}><span className="inline-flex items-center gap-[7px] whitespace-nowrap"><DessinDeMenu chemin="accueil" />{t.nav.home}</span></NavLink>}
           {/* LOT 3 — 7 novembre 2026. Quand le site DÉCLARE ses pages, la barre
               du haut leur appartient. Les ancres (#about, #faq…) encombraient
               le menu et collaient l'enseigne. Elles ne DISPARAISSENT pas : les
@@ -288,8 +288,8 @@ export default function NoirTheme({ site, hasAvis = false, host = null, menu = [
               lister — seule la barre se vide. Un site sans page déclarée ne
               voit aucun changement. */}
           {ancresEnBarre && (<>
-            {!hidden('About') && <NavLink href="#about">{t.nav.about}</NavLink>}
-            {!hidden('Services') && <NavLink href="#services">{sections[0]?.name || t.nav.services}</NavLink>}
+            {!hidden('About') && (site.about || site.mission || site.vision) && <NavLink href={lienSection(site, host, 'a-propos')}>{t.nav.about}</NavLink>}
+            {!hidden('Services') && sections.length > 0 && <NavLink href={lienSection(site, host, 'services')}>{sections[0]?.name || t.nav.services}</NavLink>}
             {hasShop && !hidden('Shop') && <NavLink href="#shop">{t.nav.shop}</NavLink>}
             {gallery.length > 0 && !hidden('Gallery') && <NavLink href="#gallery">{t.nav.gallery}</NavLink>}
             {testimonials.length > 0 && !hidden('Reviews') && <NavLink href="#testimonials">{t.nav.reviews}</NavLink>}

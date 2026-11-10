@@ -238,6 +238,17 @@ describe('LOT 18 — toutes les pages publiques, aucune page privée', () => {
     expect(texte).toContain(`<loc>${B}/contact</loc>`);
   });
 
+  it('🔴 LOT 21 — « À propos » et « Services » sont annoncés quand ils ont un contenu, jamais masqués', async () => {
+    siteRow = site({ about: 'Qui nous sommes', sections: [{ name: 'Nos activités', items: [] }] });
+    let { texte } = await xml();
+    expect(texte).toContain(`<loc>${B}/a-propos</loc>`);
+    expect(texte).toContain(`<loc>${B}/services</loc>`);
+    siteRow = site({ about: 'Qui nous sommes', sections: [{ name: 'x' }], hidden_sections: ['About', 'Services'] });
+    ({ texte } = await xml());
+    expect(texte).not.toContain('/a-propos');
+    expect(texte).not.toContain('/services');
+  });
+
   it('🔴 une boutique d’une page n’annonce pas de plan du site', async () => {
     const { texte } = await xml();
     expect(texte).not.toContain('plan-du-site');

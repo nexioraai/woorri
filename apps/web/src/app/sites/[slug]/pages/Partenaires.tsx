@@ -83,9 +83,14 @@ function Tuile({ p, primary, fantome = false }: { p: Partenaire; primary: string
       border: `1px solid ${TRAIT}`, borderRadius: 14, background: '#ffffff',
       boxSizing: 'border-box',
     }}>
-      {p.logo ? (
+      {p.logo && fantome ? (
+        // LOT 21 — DANS LA COPIE, LE LOGO EST UN FOND, PAS UNE IMAGE. Une
+        // seconde <img> du même logo se lisait comme un doublon dans le HTML
+        // (relevé par la vérification indépendante du 2026-11-10).
+        <span aria-hidden="true" style={{ display: 'block', width: '100%', height: 56, backgroundImage: `url("${p.logo.replace(/"/g, '%22')}")`, backgroundSize: 'contain', backgroundRepeat: 'no-repeat', backgroundPosition: 'center' }} />
+      ) : p.logo ? (
         // eslint-disable-next-line @next/next/no-img-element -- l'URL vient du site, pas du loader
-        <img className="logoPartenaire" src={p.logo} alt={fantome ? '' : p.nom} loading="lazy"
+        <img className="logoPartenaire" src={p.logo} alt={p.nom} loading="lazy"
           style={{ maxWidth: '100%', maxHeight: 56, margin: '0 auto', objectFit: 'contain', display: 'block' }} />
       ) : (
         <>

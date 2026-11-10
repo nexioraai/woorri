@@ -154,6 +154,12 @@ export async function GET(
   if (((pages as unknown[] | null) ?? []).length > 0) ajouter(`${base}/plan-du-site`, null, 'monthly', '0.3')
   // La page Contact est un écran du moteur, servi pour tout site.
   ajouter(`${base}/contact`, null, 'monthly', '0.7')
+  // LOT 21 — « À propos » et « Services », quand le site a ce contenu et ne
+  // l'a pas masqué (même règle que les pages, qui rendent 404 sinon).
+  const masquees = ((site as { hidden_sections?: string[] }).hidden_sections ?? [])
+  const s2 = site as { about?: string | null; mission?: string | null; vision?: string | null; sections?: unknown[] | null }
+  if (!masquees.includes('About') && (s2.about || s2.mission || s2.vision)) ajouter(`${base}/a-propos`, null, 'monthly', '0.7')
+  if (!masquees.includes('Services') && (s2.sections ?? []).length > 0) ajouter(`${base}/services`, null, 'monthly', '0.7')
 
   for (const product of site.products ?? []) {
     if (!product.id) continue

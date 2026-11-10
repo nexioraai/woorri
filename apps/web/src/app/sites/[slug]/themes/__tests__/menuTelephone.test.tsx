@@ -67,7 +67,9 @@ describe('le hamburger ne sert plus une liste à plat', () => {
 
   it('🔴 SANS page déclarée, les ancres RESTENT — les 41 autres sites', () => {
     const h = bati([]).map((e) => e.href);
-    expect(h).toContain('#about');
+    // LOT 21 — « À propos » devient une vraie page ; la galerie reste une ancre.
+    expect(h.some((x) => x.endsWith('/a-propos'))).toBe(true)
+    expect(h).not.toContain('#about');
     expect(h).toContain('#gallery');
   });
 

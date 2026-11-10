@@ -1,7 +1,7 @@
 'use client'
 
 import { lienTel } from '@/lib/telephone'
-import { destinationDuBouton, lienContact } from './destinationBouton'
+import { destinationDuBouton, lienContact, lienAccueil, lienSection } from './destinationBouton'
 import Link from 'next/link'
 import { ArrowRight, Sparkles, Phone, Mail, MapPin } from 'lucide-react'
 import { useEffect, useRef } from 'react'
@@ -102,7 +102,7 @@ export default function VifTheme({ site, hasAvis = false, host = null, menu = []
         style={{ backgroundColor: 'rgba(246,241,231,0.78)', borderBottom: `1px solid rgba(20,18,16,0.08)` }}
       >
         <div className="max-w-7xl mx-auto px-6 md:px-10 h-20 flex items-center justify-between gap-6 lg:gap-10">
-          <EnseigneDuSite
+          <EnseigneDuSite href={lienAccueil(site, host)}
             nom={site.name}
             logo={site.logo_url}
           slug={site.slug}
@@ -114,7 +114,7 @@ export default function VifTheme({ site, hasAvis = false, host = null, menu = []
           <nav className={ancresEnBarre
               ? "hidden md:flex items-center gap-10 text-sm font-medium"
               : "hidden xl:flex items-center gap-4 text-[13px] font-medium"} style={{ color: 'rgba(20,18,16,0.7)' }}>
-            {!hidden('Home') && <a href="#home" className="hover:opacity-100 transition-opacity inline-flex items-center gap-[7px] whitespace-nowrap"><DessinDeMenu chemin="accueil" couleur={teinteMenu} />{t.nav.home}</a>}
+            {!hidden('Home') && <a href={lienAccueil(site, host)} className="hover:opacity-100 transition-opacity inline-flex items-center gap-[7px] whitespace-nowrap"><DessinDeMenu chemin="accueil" couleur={teinteMenu} />{t.nav.home}</a>}
           {/* LOT 3 — 7 novembre 2026. Quand le site DÉCLARE ses pages, la barre
               du haut leur appartient. Les ancres (#about, #faq…) encombraient
               le menu et collaient l'enseigne. Elles ne DISPARAISSENT pas : les
@@ -122,8 +122,8 @@ export default function VifTheme({ site, hasAvis = false, host = null, menu = []
               lister — seule la barre se vide. Un site sans page déclarée ne
               voit aucun changement. */}
           {ancresEnBarre && (<>
-            {!hidden('About') && <a href="#about" className="hover:opacity-100 transition-opacity">{t.nav.about}</a>}
-            {!hidden('Services') && <a href="#services" className="hover:opacity-100 transition-opacity">{sections[0]?.name || t.nav.services}</a>}
+            {!hidden('About') && (site.about || site.mission || site.vision) && <a href={lienSection(site, host, 'a-propos')} className="hover:opacity-100 transition-opacity">{t.nav.about}</a>}
+            {!hidden('Services') && sections.length > 0 && <a href={lienSection(site, host, 'services')} className="hover:opacity-100 transition-opacity">{sections[0]?.name || t.nav.services}</a>}
             {hasShop && !hidden('Shop') && (
               <a href="#shop" className="hover:opacity-100 transition-opacity">{t.nav.shop}</a>
             )}

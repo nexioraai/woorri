@@ -244,8 +244,24 @@ export default function JsonLd({ site, url }: { site: Site; url: string }) {
 
   // Fraicheur du contenu -- DEBT-034 : la derniere MODIFICATION, plus la
   // creation. Repli sur `created_at` tant que la migration n'est pas passee.
+  //
+  // LOT 21 — mesuré le 2026-11-10 par le validateur de schémas de Google :
+  // « dateModified n'est pas reconnu pour un objet de type
+  // GovernmentOrganization » (ni pour une Organization ou un LocalBusiness :
+  // c'est une propriété de PAGE). La date part donc sur un nœud `WebPage`,
+  // relié à l'organisation dans le même `@graph`.
   const fraicheur = resolveSiteFreshness(site)
-  if (fraicheur) data.dateModified = fraicheur
+  const organisation: Record<string, unknown> = { ...data }
+  delete organisation['@context']
+  const pageAccueil = {
+    '@type': 'WebPage',
+    '@id': `${url}#accueil`,
+    url,
+    name: site.name,
+    about: { '@id': organisation['@id'] ?? url },
+    ...(fraicheur ? { dateModified: fraicheur } : {}),
+  }
+  const graphe = { '@context': 'https://schema.org', '@graph': [organisation, pageAccueil] }
 
   const faqData =
     site.faq && site.faq.length > 0
@@ -263,7 +279,7 @@ export default function JsonLd({ site, url }: { site: Site; url: string }) {
   // M1-01 : la serialisation appartient a JsonLdScript, jamais a l'appelant.
   return (
     <>
-      <JsonLdScript data={data} />
+      <JsonLdScript data={graphe} />
       {faqData && <JsonLdScript data={faqData} />}
     </>
   )

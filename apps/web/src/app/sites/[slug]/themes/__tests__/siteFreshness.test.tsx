@@ -104,7 +104,11 @@ describe('DEBT-034 — 🔴 les trois surfaces, dans les DEUX etats du schema', 
         );
         const bloc = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)![1];
         const data = JSON.parse(bloc.replace(/\\u003c/g, '<').replace(/\\u003e/g, '>').replace(/\\u0026/g, '&'));
-        expect(data.dateModified).toBe(attendu);
+        // LOT 21 — la date est portée par le nœud WebPage du @graph (schema.org
+        // ne l'admet pas sur une organisation).
+        const page = (data['@graph'] as Record<string, unknown>[]).find((n) => n['@type'] === 'WebPage')!
+        expect(page.dateModified).toBe(attendu);
+        expect((data['@graph'] as Record<string, unknown>[]).some((n) => n['@type'] !== 'WebPage' && 'dateModified' in n)).toBe(false);
       });
 
       it('llms.txt publie cette date', async () => {

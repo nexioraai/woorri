@@ -185,3 +185,13 @@ describe('LOT 18 — une seule liste, même quand le bandeau défile', () => {
     expect(html.split('alt="Organisation mondiale de la Santé (OMS)"').length - 1).toBe(1);
   });
 });
+
+describe('LOT 21 — un logo n’est présent qu’UNE fois comme image', () => {
+  it('🔴 la copie du défilement ne contient aucune <img>', () => {
+    const items = [1, 2, 3, 4].map((i) => ({ nom: `Partenaire ${i}`, logo: `/logo-${i}.png` }));
+    const html = renderToStaticMarkup(<Partenaires items={items} />);
+    for (const it of items) expect(html.split(`src="${it.logo}"`).length - 1, it.logo).toBe(1);
+    const copie = html.slice(html.indexOf('aria-hidden="true" style="display:flex'));
+    expect(copie.includes('<img')).toBe(false);
+  });
+});

@@ -36,7 +36,10 @@ const siteDe = (p: Partial<Site> = {}): Site =>
 const lire = (site: Site): Record<string, unknown> => {
   const html = renderToStaticMarkup(<JsonLd site={site} url={URL_SITE} />)
   const corps = html.replace(/^[\s\S]*?>/u, '').replace(/<\/script>[\s\S]*$/u, '')
-  return JSON.parse(corps.replace(/\\u003c/gu, '<')) as Record<string, unknown>
+  const brut = JSON.parse(corps.replace(/\\u003c/gu, '<')) as Record<string, unknown>
+  // LOT 21 — l'organisation vit dans un `@graph`, à côté du nœud WebPage.
+  const graphe = brut['@graph'] as Record<string, unknown>[] | undefined
+  return graphe ? graphe.find((n) => n['@type'] !== 'WebPage')! : brut
 }
 
 describe('CLIQUET — le logo de marque est déclaré', () => {
