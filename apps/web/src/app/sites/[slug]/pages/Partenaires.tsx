@@ -66,7 +66,16 @@ export function monogrammeDe(nom: string): string {
   return mots.slice(0, 3).map((m) => m[0]).join('').toUpperCase()
 }
 
-function Tuile({ p, primary }: { p: Partenaire; primary: string }) {
+/**
+ * `fantome` — LA COPIE DU DÉFILEMENT (LOT 18). Mesuré le 2026-11-10 : la
+ * copie qui rend la boucle invisible portait les MÊMES noms, liens et textes
+ * alternatifs que l'original ; pour un moteur ou un lecteur de texte, chaque
+ * partenaire apparaissait deux fois. La copie fantôme montre le même dessin,
+ * mais ses textes sont DESSINÉS par la feuille de style (`attr(data-texte)`)
+ * et ses logos n'ont pas de texte alternatif : il n'y a plus qu'une liste.
+ */
+function Tuile({ p, primary, fantome = false }: { p: Partenaire; primary: string; fantome?: boolean }) {
+  const texte = (t: string) => fantome ? <span className="texteFantome" data-texte={t} /> : t
   const dedans = (
     <span className="tuilePartenaire" style={{
       display: 'flex', alignItems: 'center', gap: 11,
@@ -76,7 +85,7 @@ function Tuile({ p, primary }: { p: Partenaire; primary: string }) {
     }}>
       {p.logo ? (
         // eslint-disable-next-line @next/next/no-img-element -- l'URL vient du site, pas du loader
-        <img className="logoPartenaire" src={p.logo} alt={p.nom} loading="lazy"
+        <img className="logoPartenaire" src={p.logo} alt={fantome ? '' : p.nom} loading="lazy"
           style={{ maxWidth: '100%', maxHeight: 56, margin: '0 auto', objectFit: 'contain', display: 'block' }} />
       ) : (
         <>
@@ -89,20 +98,20 @@ function Tuile({ p, primary }: { p: Partenaire; primary: string }) {
             background: `color-mix(in srgb, ${primary} 12%, #ffffff)`,
             color: primary,
             fontSize: 13, fontWeight: 700, letterSpacing: '0.04em',
-          }}>{monogrammeDe(p.nom)}</span>
+          }}>{texte(monogrammeDe(p.nom))}</span>
           {/* LE NOM ENTIER RESTE LISIBLE. Le monogramme abrège pour l'œil ;
               il ne remplace pas ce que l'organisation s'appelle. */}
           <span style={{
             fontSize: 12.5, fontWeight: 600, lineHeight: 1.32, color: ENCRE,
             display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical',
             overflow: 'hidden',
-          }}>{p.nom}</span>
+          }}>{texte(p.nom)}</span>
         </>
       )}
     </span>
   )
 
-  if (!p.url) return dedans
+  if (!p.url || fantome) return dedans
   return (
     <a href={p.url} target="_blank" rel="noopener noreferrer" aria-label={p.nom}
       style={{ display: 'block', textDecoration: 'none' }}>
@@ -125,6 +134,7 @@ export default function Partenaires({
   // fois, c'est deux endroits où le survol divergera.
   const styleTuiles = `
     .tuilePartenaire { transition: border-color .25s, box-shadow .25s, transform .25s }
+    .texteFantome::after { content: attr(data-texte) }
     a:hover > .tuilePartenaire, a:focus-visible > .tuilePartenaire {
       border-color: color-mix(in srgb, ${primary} 45%, #ffffff);
       box-shadow: 0 8px 22px color-mix(in srgb, ${primary} 14%, transparent);
@@ -176,7 +186,7 @@ export default function Partenaires({
               {/* LA COPIE, MASQUÉE AU LECTEUR D'ÉCRAN : elle n'existe que
                   pour que la boucle soit invisible. */}
               <span aria-hidden="true" style={{ display: 'flex', gap: 14 }}>
-                {items.map((p) => <Tuile key={`bis-${p.nom}`} p={p} primary={primary} />)}
+                {items.map((p) => <Tuile key={`bis-${p.nom}`} p={p} primary={primary} fantome />)}
               </span>
             </div>
           </div>

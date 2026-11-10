@@ -3,6 +3,7 @@ import type { Metadata } from 'next'
 import { headers } from 'next/headers'
 import { notFound } from 'next/navigation'
 import { fetchSite, resolveSiteBaseUrl } from './themes/shared'
+import { metadonneesDuSite } from './themes/metadonneesDuSite'
 import { logAnomaly } from '@/lib/anomaly'
 import JsonLd from './themes/JsonLd'
 import HtmlLang from './themes/HtmlLang'
@@ -16,7 +17,6 @@ import AuroraTheme from './themes/AuroraTheme'
 import CartShell from './themes/CartShell'
 import { getCartLabels } from './themes/cartLabels'
 import { resolveShopCurrency } from './themes/shopCurrency'
-import { ogLocaleFor } from '@/lib/i18n/supportedLanguages'
 import ScrollRevealInit from './themes/ScrollRevealInit'
 import CatalogSearch, { type ThemeKey } from './themes/CatalogSearch'
 // LOT 1 / L1-02 -- la montee de la barre de recherche etait une NEGATION
@@ -26,7 +26,6 @@ import CatalogSearch, { type ThemeKey } from './themes/CatalogSearch'
 // base ne porte pas.
 import { showsVisitorCatalogSearch } from '@/app/sites/[slug]/themes/catalogSearchVisibility'
 import PromoBanner from './themes/PromoBanner'
-import { empreinteDuLogo } from '@/lib/images/favicon'
 import { lirePartenaires } from './themes/lirePartenaires'
 import { lirePagesLegales } from './themes/pagesLegales'
 
@@ -65,72 +64,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const host = (await headers()).get('host')
   const url = resolveSiteBaseUrl(site, host)
-  const images = site.hero_image ? [{ url: site.hero_image }] : undefined
-
-  // ── ICÔNES DU MARCHAND — « plus jamais de globe par défaut ».
-  //
-  // Les balises `<link rel="icon">` sont le canal que les navigateurs ET Google
-  // consultent EN PREMIER ; `/favicon.ico` n'est que leur repli (lui aussi
-  // servi, via `proxy.ts`). Poser les deux, c'est fermer les deux chemins.
-  //
-  // URL ABSOLUE sur le domaine réellement servi : une icône déclarée en
-  // relatif sur un domaine personnalisé serait résolue par le navigateur, mais
-  // les moteurs qui lisent le balisage sans le résoudre la manqueraient.
-  //
-  // ── L'EMPREINTE DU LOGO DANS L'URL, ET POURQUOI ELLE EST NÉCESSAIRE.
-  //
-  // Sans elle, l'URL de l'icône ne bouge jamais : le marchand remplace son
-  // logo, et navigateurs, téléphones et moteurs continuent de montrer
-  // l'ancien tant que leur cache tient. Avec elle, l'URL change EXACTEMENT
-  // quand le logo change — et jamais autrement, car les moteurs demandent
-  // une adresse d'icône stable.
-  const v = empreinteDuLogo((site as { logo_url?: string | null }).logo_url)
-  const racine = url.replace(/\/$/, '')
-  const icone = (t: number) => `${racine}/api/internal/site-icon/${slug}?t=${String(t)}&v=${v}`
-
+  // LOT 18 — icônes, manifeste et carte de partage viennent de la MÊME
+  // fonction que le gabarit du segment : une seule écriture de l'identité.
   return {
     title,
     description,
     alternates: { canonical: url },
-    icons: {
-      icon: [
-        // Les tailles ANNONCÉES doivent être celles que l'ICO porte vraiment :
-        // un navigateur qui demande du 144 et reçoit du 48 affiche du flou.
-        { url: `${racine}/favicon.ico`, sizes: '16x16 32x32 48x48 96x96 144x144' },
-        { url: icone(192), sizes: '192x192', type: 'image/png' },
-        { url: icone(512), sizes: '512x512', type: 'image/png' },
-      ],
-      apple: [{ url: icone(180), sizes: '180x180', type: 'image/png' }],
-    },
-    // ── LE MANIFESTE DU MARCHAND, PAS CELUI DE LA PLATEFORME.
-    //
-    // Sans cette ligne, la page héritait de `<link rel="manifest"
-    // href="/manifest.webmanifest">` — qui, sur un domaine personnalisé,
-    // répondait une PAGE D'ERREUR. « Ajouter à l'écran d'accueil » n'avait
-    // donc ni nom ni icône à lire. Et s'il avait répondu, il aurait installé
-    // la boutique du marchand sous l'enseigne de Deribfy.
-    manifest: `${racine}/api/internal/site-manifest/${slug}?v=${v}`,
-    openGraph: {
-      title,
-      description,
-      url,
-      siteName: site.name,
-      images,
-      type: 'website',
-      // CHANTIER 3 -- `locale` valait `'fr_FR'` EN DUR. Mesure sur
-      // yiaglobalcommodities.com : contenu anglais, `og:locale fr_FR`
-      // servi a Facebook et LinkedIn. Ce n'etait pas propre a ce site --
-      // TOUS les sites annoncaient le francais, y compris ceux generes en
-      // arabe. La locale suit desormais la meme regle que `getDict()`,
-      // seule autorite de ce que la page rend reellement.
-      locale: ogLocaleFor(site.lang),
-    },
-    twitter: {
-      card: images ? 'summary_large_image' : 'summary',
-      title,
-      description,
-      images: site.hero_image ? [site.hero_image] : undefined,
-    },
+    ...metadonneesDuSite(site, url, slug),
   }
 }
 

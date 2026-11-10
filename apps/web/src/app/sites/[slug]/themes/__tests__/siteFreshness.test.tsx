@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { creerFrom, journalVierge } from '@/lib/testing/postgrest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { readFileSync } from 'fs';
 import { join } from 'path';
@@ -23,7 +24,12 @@ import { resolveSiteFreshness } from '../siteFreshness';
 let siteRow: Record<string, unknown> | null;
 // LOT BLOG 8 -- ces surfaces annoncent desormais le blog : elles importent
 // `fetchBlogEntries`, qui charge le client anon au chargement du module.
-vi.mock('@/lib/supabase', () => ({ supabase: { from: () => ({}) } }));
+// LOT 18 — le plan lit aussi les pages déclarées, les avis et le catalogue :
+// aucun ici, ce test ne regarde que la date de l'accueil.
+const journal = journalVierge();
+vi.mock('@/lib/supabase', () => ({ supabase: { from: (t: string) => creerFrom({ site_pages_public: { reponse: { data: [], error: null } } }, journal)(t) } }));
+vi.mock('@/app/sites/[slug]/appels-offres/fetchAvis', () => ({ fetchAvisEntries: async () => [] }));
+vi.mock('@/app/sites/[slug]/catalogue/fetchCatalogue', () => ({ fetchCatalogue: async () => [] }));
 vi.mock('@/app/sites/[slug]/blog/fetchPosts', () => ({ fetchBlogEntries: async () => [] }));
 
 vi.mock('../shared', () => ({

@@ -1,3 +1,7 @@
+import { ogDePage } from '../themes/metadonneesDuSite'
+import { pageWeb } from '../themes/filDAriane'
+import JsonLdScript from '../themes/JsonLdScript'
+import { fetchSite } from '../themes/shared'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { headers } from 'next/headers'
@@ -6,6 +10,8 @@ import { resolveSiteBaseUrl } from '../themes/shared'
 import HtmlLang from '../themes/HtmlLang'
 import { lireBlocs } from '../pages/blocs'
 import BlocsDePage from '../pages/BlocsDePage'
+import SousPages from '../pages/SousPages'
+import { fetchEnfants } from '../pages/fetchPage'
 import { supabase } from '@/lib/supabase'
 import {
   fetchSiteCatalogue, fetchCatalogue, famillesPresentes, parFamille, lireFamille, chercher,
@@ -38,10 +44,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!s) return {}
   const base = resolveSiteBaseUrl(s, (await headers()).get('host'))
   const title = `Catalogue — ${s.name}`
+  const description = `Les produits mis à disposition des structures sanitaires par ${s.name}.`
+  const complet = await fetchSite(slug)
   return {
     title,
-    description: `Les produits mis à disposition des structures sanitaires par ${s.name}.`,
+    description,
     alternates: { canonical: `${base}/catalogue` },
+    // LOT 18 — SA carte de partage, jamais celle de Deribfy.
+    ...(complet ? ogDePage(complet, `${base}/catalogue`, title, description) : {}),
   }
 }
 
@@ -64,10 +74,13 @@ export default async function CataloguePage({ params, searchParams }: Props) {
     .from('site_pages_public').select('blocs')
     .eq('site_id', s.id).eq('chemin', 'catalogue').maybeSingle()
   const textes = lireBlocs((declaree as { blocs?: unknown } | null)?.blocs)
+  // LOT 18 — les sous-pages déclarées sous `catalogue` (« Passer une commande »…).
+  const enfants = await fetchEnfants(s.id, 'catalogue')
 
   return (
     <div lang={s.lang ?? 'fr'}>
       <HtmlLang lang={s.lang ?? 'fr'} />
+      <JsonLdScript data={pageWeb(s.name, base, s.lang, 'Catalogue', `${base}/catalogue`, [{ nom: 'Catalogue', url: `${base}/catalogue` }])} />
       <main style={{ maxWidth: 1040, margin: '0 auto', padding: '56px 20px 80px' }}>
         <p style={{ fontSize: 14, margin: '0 0 18px' }}>
           <Link href={base} style={{ color: accent }}>← Accueil</Link>
@@ -184,6 +197,7 @@ export default async function CataloguePage({ params, searchParams }: Props) {
             )}
           </>
         )}
+        <SousPages enfants={enfants} base={base} accent={accent} rtl={s.lang === 'ar'} />
       </main>
     </div>
   )

@@ -117,7 +117,9 @@ describe('l’empreinte du logo — l’URL change quand, et seulement quand, le
     // deux copies finiraient par diverger, et le téléphone installerait une
     // icône pendant que l'onglet en montrerait une autre.
     for (const [nom, src] of [
-      ['page marchande', lire('app', 'sites', '[slug]', 'page.tsx')],
+      // LOT 18 — l'identité du site (icônes, manifeste) est posée par UNE
+      // fonction, partagée par l'accueil et le gabarit de toutes les pages.
+      ['page marchande', lire('app', 'sites', '[slug]', 'themes', 'metadonneesDuSite.ts')],
       ['manifeste', lire('app', 'api', 'internal', 'site-manifest', '[slug]', 'route.ts')],
     ] as const) {
       expect(
@@ -130,7 +132,11 @@ describe('l’empreinte du logo — l’URL change quand, et seulement quand, le
 })
 
 describe('le manifeste servi est celui du MARCHAND', () => {
-  const PAGE = lire('app', 'sites', '[slug]', 'page.tsx')
+  const PAGE = lire('app', 'sites', '[slug]', 'themes', 'metadonneesDuSite.ts')
+  it('l’accueil ET le gabarit de toutes les pages passent par cette fonction', () => {
+    expect(lire('app', 'sites', '[slug]', 'page.tsx')).toMatch(/metadonneesDuSite\(/u)
+    expect(lire('app', 'sites', '[slug]', 'layout.tsx')).toMatch(/metadonneesDuSite\(/u)
+  })
 
   it('la page marchande déclare SON manifeste, pas celui de la plateforme', () => {
     expect(

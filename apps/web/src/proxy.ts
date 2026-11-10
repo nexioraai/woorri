@@ -80,16 +80,12 @@ export async function proxy(req: NextRequest) {
     // portent un horodatage, personne n'imprime ça sur une carte.
     const parNom = await fetchSiteParNomPublic(nom)
     if (parNom !== null) {
-      const url = req.nextUrl.clone()
-      url.pathname = pathname === '/' ? `/sites/${parNom.slug}` : `/sites/${parNom.slug}${pathname}`
-      return NextResponse.rewrite(url, avecLangue(req, parNom.lang))
+      return NextResponse.rewrite(adresseInterneDuSite(req, parNom.slug, pathname), avecLangue(req, parNom.lang))
     }
     // ② Le slug brut d'un site, s'il tient dans un hôte.
     const site = await fetchSiteParSlug(nom)
     if (site !== null) {
-      const url = req.nextUrl.clone()
-      url.pathname = pathname === '/' ? `/sites/${nom}` : `/sites/${nom}${pathname}`
-      return NextResponse.rewrite(url, avecLangue(req, site.lang))
+      return NextResponse.rewrite(adresseInterneDuSite(req, nom, pathname), avecLangue(req, site.lang))
     }
     // ③ Sinon, une application publiée.
     const url = req.nextUrl.clone()
@@ -189,27 +185,39 @@ export async function proxy(req: NextRequest) {
     return NextResponse.next()
   }
 
-  // Favicon du domaine personnalise : l'icone du MARCHAND, jamais celle de la
-  // plateforme. Sans cette reecriture, la boutique porte l'enseigne de son
-  // fournisseur dans l'onglet du navigateur et dans les resultats Google.
+  // Réécriture interne : le visiteur garde son domaine, on sert /sites/{slug}
+  // — sauf l'icône et le plan de site, qui ont leurs propres routes.
+  return NextResponse.rewrite(adresseInterneDuSite(req, slug, pathname), avecLangue(req, langue))
+}
+
+/**
+ * L'ADRESSE INTERNE D'UNE REQUÊTE ADRESSÉE À UN SITE, quel que soit l'hôte
+ * qui l'a reçue (domaine personnalisé OU sous-domaine `*.deribfy.app`).
+ *
+ * MESURÉ le 2026-11-10 : sur `cpa-tchad.deribfy.app`, `/sitemap.xml` et
+ * `/favicon.ico` répondaient 404. Les deux cas spéciaux n'existaient que dans
+ * la branche des domaines personnalisés ; la branche `*.deribfy.app`,
+ * ajoutée plus tard, les envoyait au site comme des pages — et le site n'en
+ * a pas. `robots.txt` annonçait donc un plan de site introuvable. Une seule
+ * fonction pour les deux branches : un cas spécial ne peut plus manquer à
+ * l'une d'elles.
+ */
+function adresseInterneDuSite(req: NextRequest, slug: string, pathname: string) {
+  const url = req.nextUrl.clone()
+  // L'icône du MARCHAND, jamais celle de la plateforme : sans cette
+  // réécriture, la boutique porte l'enseigne de son fournisseur dans l'onglet
+  // du navigateur et dans les résultats Google.
   if (pathname === '/favicon.ico') {
-    const url = req.nextUrl.clone()
     url.pathname = `/api/internal/site-icon/${slug}`
     url.search = '?f=ico'
-    return NextResponse.rewrite(url)
+    return url
   }
-
-  // Sitemap du domaine personnalise (ex. mondomaine.com/sitemap.xml)
   if (pathname === '/sitemap.xml') {
-    const url = req.nextUrl.clone()
     url.pathname = `/api/internal/site-sitemap/${slug}`
-    return NextResponse.rewrite(url)
+    return url
   }
-
-  // Réécriture interne : le visiteur garde son domaine, on sert /sites/{slug}
-  const url = req.nextUrl.clone()
-  url.pathname = url.pathname === '/' ? `/sites/${slug}` : `/sites/${slug}${url.pathname}`
-  return NextResponse.rewrite(url, avecLangue(req, langue))
+  url.pathname = pathname === '/' ? `/sites/${slug}` : `/sites/${slug}${pathname}`
+  return url
 }
 
 export const config = {

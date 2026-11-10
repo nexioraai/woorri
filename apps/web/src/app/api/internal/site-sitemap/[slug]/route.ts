@@ -26,6 +26,23 @@ import { fetchSite, resolveSiteBaseUrl } from '@/app/sites/[slug]/themes/shared'
 import { resolveSiteFreshness } from '@/app/sites/[slug]/themes/siteFreshness'
 import { fetchBlogEntries } from '@/app/sites/[slug]/blog/fetchPosts'
 import { logAnomaly } from '@/lib/anomaly'
+import { supabase } from '@/lib/supabase'
+import { fetchAvisEntries } from '@/app/sites/[slug]/appels-offres/fetchAvis'
+import { fetchCatalogue } from '@/app/sites/[slug]/catalogue/fetchCatalogue'
+
+/**
+ * LES ÉCRANS PRIVÉS DU MOTEUR — jamais annoncés aux moteurs de recherche.
+ *
+ * Ils portent `noindex` (écrans d'accès, espace d'un compte) ; les lister
+ * dans le plan de site serait contradictoire. Une page DÉCLARÉE à l'un de
+ * ces chemins (elle ne fait que porter le libellé du menu) n'y entre pas
+ * non plus : c'est l'écran du moteur qui est servi à cette adresse.
+ */
+export const SEGMENTS_PRIVES = new Set([
+  'connexion', 'inscription', 'mot-de-passe-oublie', 'espace-client', 'espace-fournisseur',
+  'mes-demandes', 'mes-documents', 'mes-reclamations', 'mon-profil', 'mon-dossier',
+  'ma-prequalification', 'mes-consultations', 'demandes',
+])
 
 function escapeXml(value: string): string {
   return value
@@ -102,6 +119,39 @@ export async function GET(
       })
     }
   }
+
+  // ============================================================
+  // LOT 18 -- LES PAGES DU SITE ENTRENT DANS LE PLAN DE SITE.
+  //
+  // MESURÉ le 2026-11-10 sur le site de la CPA : le plan ne listait que
+  // l'accueil et le blog. Ni les 30 pages déclarées, ni les appels d'offres,
+  // ni le catalogue, ni le plan du site — les moteurs ne les connaissaient
+  // que par les liens. MÊME SOURCE QUE LES PAGES PUBLIQUES (les vues
+  // publiques) : rien n'est annoncé que la page refuserait de servir.
+  const siteId = (site as { id: string }).id
+  const ajoutees = new Set(urls.map((u) => u.loc))
+  const ajouter = (loc: string, mod: string | null | undefined, changefreq: string, priority: string) => {
+    if (ajoutees.has(loc)) return
+    ajoutees.add(loc)
+    urls.push({ loc, lastmod: mod ? new Date(mod).toISOString() : lastmod, changefreq, priority })
+  }
+  const [{ data: pages }, avis, catalogue] = await Promise.all([
+    supabase.from('site_pages_public').select('chemin,maj_le').eq('site_id', siteId),
+    fetchAvisEntries(siteId),
+    fetchCatalogue(siteId),
+  ])
+  for (const p of (pages as { chemin: string; maj_le: string | null }[] | null) ?? []) {
+    if (SEGMENTS_PRIVES.has(p.chemin.split('/')[0])) continue
+    ajouter(`${base}/${p.chemin}`, p.maj_le, 'monthly', p.chemin.includes('/') ? '0.6' : '0.8')
+  }
+  if ((site as { publishes_tenders?: boolean }).publishes_tenders || avis.length > 0) {
+    ajouter(`${base}/appels-offres`, null, 'daily', '0.9')
+  }
+  for (const a of avis) ajouter(`${base}/appels-offres/${encodeURIComponent(a.reference_slug)}`, a.cree_le, 'weekly', '0.7')
+  for (const c of catalogue) ajouter(`${base}/catalogue/${encodeURIComponent(c.reference)}`, (c as { maj_le?: string | null }).maj_le, 'monthly', '0.5')
+  // Le plan du site n'est annoncé que si le site a des pages déclarées : sur
+  // une boutique d'une page, il ne montrerait que l'accueil.
+  if (((pages as unknown[] | null) ?? []).length > 0) ajouter(`${base}/plan-du-site`, null, 'monthly', '0.3')
 
   for (const product of site.products ?? []) {
     if (!product.id) continue

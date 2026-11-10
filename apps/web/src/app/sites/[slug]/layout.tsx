@@ -1,4 +1,6 @@
 import type { ReactNode } from 'react'
+import type { Metadata } from 'next'
+import { metadonneesDuSite } from './themes/metadonneesDuSite'
 import { supabase } from '@/lib/supabase'
 import SurvolVivant from './themes/SurvolVivant'
 import Assistant from './themes/Assistant'
@@ -8,7 +10,7 @@ import { CHEMIN_ASSISTANT, textesDepuisPage, type TextesAssistant } from './them
 import { ECRANS_DU_COMPTE } from '@/lib/assistant/liens'
 import { lireBlocs } from './pages/blocs'
 import { headers } from 'next/headers'
-import { resolveSiteBaseUrl } from './themes/shared'
+import { resolveSiteBaseUrl, fetchSite } from './themes/shared'
 
 // ============================================================================
 // LOT 3c — UN SITE GÉNÉRÉ N'EST PAS LE TABLEAU DE BORD.
@@ -52,6 +54,19 @@ import { resolveSiteBaseUrl } from './themes/shared'
 // prennent sa teinte : un accent en dur donnerait le même bleu à quarante-
 // deux sites qui n'ont pas la même identité.
 // ============================================================================
+
+/**
+ * LOT 18 — l'identité du SITE par défaut, pour TOUTES ses pages : carte de
+ * partage, icônes, manifeste. Sans elle, une page qui ne les pose pas hérite
+ * de celles de Deribfy (gabarit racine). Voir `metadonneesDuSite`.
+ */
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params
+  const site = await fetchSite(slug)
+  if (!site) return {}
+  const base = resolveSiteBaseUrl(site, (await headers()).get('host'))
+  return metadonneesDuSite(site, base, slug)
+}
 
 export default async function SiteLayout({
   children, params,

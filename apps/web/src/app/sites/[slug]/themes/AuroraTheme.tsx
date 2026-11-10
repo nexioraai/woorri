@@ -1,4 +1,5 @@
 // src/app/sites/[slug]/themes/AuroraTheme.tsx
+import { destinationDuBouton } from './destinationBouton'
 import Image from 'next/image'
 import Link from 'next/link'
 import {
@@ -60,7 +61,8 @@ export default function AuroraTheme({ site, hasAvis = false, host = null, menu =
   const cta = site.cta || t.labels.contactCta
   const { hasShop } = getModeCapabilities(site)
   const isShop = hasShop && !hidden('Shop')
-  const ctaHref = isShop ? '#shop' : '#contact'
+  // LOT 18 — la destination suit le libellé (voir destinationBouton.ts).
+  const ctaHref = destinationDuBouton(site, host, cta, isShop)
   const auraB = `color-mix(in srgb, ${primary} 45%, #ffffff)`
 
   const L = (fr: string, en: string, es: string, ar: string, pt: string, de: string, it: string) =>

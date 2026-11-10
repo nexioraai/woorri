@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { SUPPORTED_LANGUAGE_CODES } from '@/lib/i18n/supportedLanguages';
+import { creerFrom, journalVierge } from '@/lib/testing/postgrest';
 
 // ============================================================
 // CHANTIER 8 (MODE 1) — LE SITEMAP : MESURE, PAS SUPPOSITION.
@@ -35,7 +36,17 @@ vi.mock('@/app/sites/[slug]/themes/shared', () => ({
 // donc `fetchBlogEntries`, qui charge le client anon au chargement du module.
 // Ce double le neutralise ET permet d'asserter ce qui est annonce.
 let articlesBlog: { slug: string; title: string; published_at: string | null; updated_at: string | null }[] = [];
-vi.mock('@/lib/supabase', () => ({ supabase: { from: () => ({}) } }));
+// LOT 18 -- le plan lit aussi les pages déclarées, les avis et le catalogue.
+// Harnais fidèle à PostgREST (`creerFrom`) : la projection est honorée.
+let pagesDeclarees: { chemin: string; maj_le: string | null }[] = [];
+let avisPublies: { reference_slug: string; objet: string; cree_le: string | null }[] = [];
+let catalogue: { reference: string; maj_le: string | null }[] = [];
+const journal = journalVierge();
+vi.mock('@/lib/supabase', () => ({ supabase: { from: (t: string) => creerFrom({
+  site_pages_public: { reponse: () => ({ data: pagesDeclarees, error: null }) },
+}, journal)(t) } }));
+vi.mock('@/app/sites/[slug]/appels-offres/fetchAvis', () => ({ fetchAvisEntries: async () => avisPublies }));
+vi.mock('@/app/sites/[slug]/catalogue/fetchCatalogue', () => ({ fetchCatalogue: async () => catalogue }));
 vi.mock('@/app/sites/[slug]/blog/fetchPosts', () => ({ fetchBlogEntries: async () => articlesBlog }));
 
 vi.mock('@/lib/anomaly', () => ({ logAnomaly: vi.fn() }));
@@ -56,7 +67,7 @@ async function xml() {
   return { statut: res.status, texte: await res.text(), type: res.headers.get('Content-Type') };
 }
 
-beforeEach(() => { siteRow = site(); });
+beforeEach(() => { siteRow = site(); pagesDeclarees = []; avisPublies = []; catalogue = []; });
 
 describe('CHANTIER 8 — 🔒 CLIQUET : le sitemap est INVARIANT par la langue', () => {
   it('les quatre langues produisent un XML RIGOUREUSEMENT identique', async () => {
@@ -174,5 +185,54 @@ describe('LOT BLOG 8 — le blog entre dans le sitemap du site', () => {
     const bloc = doc.split('<url>').find((u) => u.includes('/blog/x'))!;
     expect(bloc).toMatch(/<lastmod>\d{4}-\d{2}-\d{2}T/);
     expect(bloc).not.toContain('undefined');
+  });
+});
+
+// ============================================================
+// LOT 18 — LES PAGES DU SITE SONT ANNONCÉES (mesuré le 2026-11-10 : le plan
+// de la CPA ne listait que l'accueil et le blog, sur 30 pages publiées).
+// ============================================================
+describe('LOT 18 — toutes les pages publiques, aucune page privée', () => {
+  const B = 'https://yiaglobalcommodities.com';
+
+  it('🔴 chaque page déclarée publiée est annoncée, avec son adresse réelle', async () => {
+    pagesDeclarees = [{ chemin: 'qui-sommes-nous', maj_le: '2026-11-01T00:00:00Z' }, { chemin: 'qui-sommes-nous/missions', maj_le: null }];
+    const { texte } = await xml();
+    expect(texte).toContain(`<loc>${B}/qui-sommes-nous</loc>`);
+    expect(texte).toContain(`<loc>${B}/qui-sommes-nous/missions</loc>`);
+    expect(texte).toContain(`<loc>${B}/plan-du-site</loc>`);
+  });
+
+  it('🔴 les écrans privés (connexion, inscription, espace) ne sont JAMAIS annoncés, même déclarés', async () => {
+    pagesDeclarees = [{ chemin: 'connexion', maj_le: null }, { chemin: 'inscription', maj_le: null }, { chemin: 'espace-client', maj_le: null }, { chemin: 'contact', maj_le: null }];
+    const { texte } = await xml();
+    for (const c of ['connexion', 'inscription', 'espace-client']) expect(texte).not.toContain(`${B}/${c}<`);
+    expect(texte).toContain(`<loc>${B}/contact</loc>`);
+  });
+
+  it('🔴 un site qui publie des appels d’offres annonce la liste ET chaque avis', async () => {
+    siteRow = site({ publishes_tenders: true });
+    avisPublies = [{ reference_slug: 'aoi-001-2026', objet: 'x', cree_le: '2026-11-02T00:00:00Z' }];
+    const { texte } = await xml();
+    expect(texte).toContain(`<loc>${B}/appels-offres</loc>`);
+    expect(texte).toContain(`<loc>${B}/appels-offres/aoi-001-2026</loc>`);
+  });
+
+  it('🔴 chaque référence du catalogue public est annoncée', async () => {
+    catalogue = [{ reference: 'MED 001', maj_le: null }];
+    const { texte } = await xml();
+    expect(texte).toContain(`<loc>${B}/catalogue/MED%20001</loc>`);
+  });
+
+  it('🔴 une adresse n’est jamais annoncée deux fois', async () => {
+    pagesDeclarees = [{ chemin: 'appels-offres', maj_le: null }];
+    siteRow = site({ publishes_tenders: true });
+    const { texte } = await xml();
+    expect(texte.split(`<loc>${B}/appels-offres</loc>`).length - 1).toBe(1);
+  });
+
+  it('🔴 une boutique d’une page n’annonce pas de plan du site', async () => {
+    const { texte } = await xml();
+    expect(texte).not.toContain('plan-du-site');
   });
 });

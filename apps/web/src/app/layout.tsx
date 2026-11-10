@@ -113,11 +113,18 @@ export default async function RootLayout({
         {/* L'identité de la plateforme, pour les moteurs — jamais sur la
             boutique d'un marchand (voir `estPagePlateforme`). */}
         {plateforme && <JsonLdScript data={donneesPlateforme()} />}
-        <LanguageProvider>
+        {/* LOT 18 — sur un site généré, SA langue ; la plateforme garde la détection. */}
+        <LanguageProvider langueImposee={plateforme ? null : langueDInterface(lang)}>
           {children}
           <CookieConsent />
         </LanguageProvider>
       </body>
     </html>
   );
+}
+
+/** La langue d'interface la plus proche de celle du site ; le français sinon. */
+function langueDInterface(lang: string): 'fr' | 'en' | 'ar' | 'es' {
+  const l = lang.slice(0, 2).toLowerCase()
+  return l === 'en' || l === 'ar' || l === 'es' ? l : 'fr'
 }

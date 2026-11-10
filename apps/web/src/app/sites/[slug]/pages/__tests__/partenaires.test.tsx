@@ -168,3 +168,20 @@ describe('un vrai logo se comporte comme un logo de partenaire', () => {
     expect(html.slice(d)).toMatch(/transform:\s*none/);
   });
 });
+
+describe('LOT 18 — une seule liste, même quand le bandeau défile', () => {
+  it('🔴 chaque nom, chaque lien et chaque texte alternatif n’apparaissent qu’UNE fois', () => {
+    const items = [
+      { nom: 'Organisation mondiale de la Santé (OMS)', logo: '/oms.png', url: 'https://who.int' },
+      { nom: 'UNICEF', url: 'https://unicef.org' },
+      { nom: 'Banque mondiale' },
+      { nom: 'Union européenne' },
+    ];
+    const html = renderToStaticMarkup(<Partenaires items={items} />);
+    const texte = html.replace(/<style>[\s\S]*?<\/style>/g, '').replace(/<[^>]+>/g, '|');
+    // Avec un logo, le nom vit dans le texte alternatif ; sans logo, dans le texte.
+    for (const p of items.filter((i) => !i.logo)) expect(texte.split(p.nom).length - 1, p.nom).toBe(1);
+    expect(html.split('href="https://who.int"').length - 1).toBe(1);
+    expect(html.split('alt="Organisation mondiale de la Santé (OMS)"').length - 1).toBe(1);
+  });
+});

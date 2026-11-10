@@ -1,5 +1,6 @@
 'use client'
 
+import { destinationDuBouton } from './destinationBouton'
 import Link from 'next/link'
 import { ArrowRight, Sparkles, Phone, Mail, MapPin } from 'lucide-react'
 import { useEffect, useRef } from 'react'
@@ -61,7 +62,8 @@ export default function VifTheme({ site, hasAvis = false, host = null, menu = []
   const social = site.social_links || {}
   const cta = site.cta || t.labels.contactCta
   const { hasShop } = getModeCapabilities(site)
-  const ctaHref = hasShop ? '#shop' : '#contact'
+  // LOT 18 — la destination suit le libellé (voir destinationBouton.ts).
+  const ctaHref = destinationDuBouton(site, host, cta, hasShop)
 
   const heroTitle = site.hero_title || site.name
   const heroWords = heroTitle.trim().split(/\s+/)

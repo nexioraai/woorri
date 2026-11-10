@@ -1,4 +1,5 @@
 // src/app/sites/[slug]/themes/EditorialTheme.tsx
+import { destinationDuBouton } from './destinationBouton'
 import Image from 'next/image'
 import Link from 'next/link'
 import {
@@ -108,7 +109,8 @@ export default function EditorialTheme({ site, hasAvis = false, host = null, men
   const visionWord = visionWords[site.lang || 'fr'] || visionWords.en
   const cta = site.cta || t.labels.contactCta
   const { hasShop } = getModeCapabilities(site)
-  const ctaHref = hasShop ? '#shop' : '#contact'
+  // LOT 18 — la destination suit le libellé (voir destinationBouton.ts).
+  const ctaHref = destinationDuBouton(site, host, cta, hasShop)
 
   return (
     <div

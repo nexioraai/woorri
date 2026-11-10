@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { filDAriane } from '../themes/filDAriane'
 import Link from 'next/link'
 import { headers } from 'next/headers'
 import { notFound } from 'next/navigation'
@@ -113,6 +114,8 @@ export default async function AppelsOffresPage({ params, searchParams }: Props) 
     url: `${base}/appels-offres`,
     inLanguage: site.lang || undefined,
     isPartOf: { '@type': 'WebSite', name: site.name, url: base },
+    // LOT 18 — le fil d'Ariane déclaré aux moteurs.
+    breadcrumb: filDAriane(site.name, base, [{ nom: t.titre, url: `${base}/appels-offres` }]),
     mainEntity: {
       '@type': 'ItemList',
       numberOfItems: avis.length,

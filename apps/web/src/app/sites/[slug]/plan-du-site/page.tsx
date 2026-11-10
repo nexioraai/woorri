@@ -1,3 +1,7 @@
+import { ogDePage } from '../themes/metadonneesDuSite'
+import { pageWeb } from '../themes/filDAriane'
+import JsonLdScript from '../themes/JsonLdScript'
+import { fetchSite } from '../themes/shared'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { headers } from 'next/headers'
@@ -49,10 +53,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const s = await site(slug)
   if (!s) return {}
   const base = resolveSiteBaseUrl(s, (await headers()).get('host'))
+  const title = `Plan du site — ${s.name}`
+  const description = `Toutes les pages publiées de ${s.name}, en une seule page.`
+  const complet = await fetchSite(slug)
   return {
-    title: `Plan du site — ${s.name}`,
-    description: `Toutes les pages publiées de ${s.name}, en une seule page.`,
+    title,
+    description,
     alternates: { canonical: `${base}/plan-du-site` },
+    // LOT 18 — SA carte de partage, jamais celle de Deribfy.
+    ...(complet ? ogDePage(complet, `${base}/plan-du-site`, title, description) : {}),
   }
 }
 
@@ -116,6 +125,8 @@ export default async function PlanDuSitePage({ params }: Props) {
   return (
     <div lang={s.lang ?? 'fr'}>
       <HtmlLang lang={s.lang ?? 'fr'} />
+      {/* LOT 18 — le fil d'Ariane déclaré aux moteurs. */}
+      <JsonLdScript data={pageWeb(s.name, base, s.lang, 'Plan du site', `${base}/plan-du-site`, [{ nom: 'Plan du site', url: `${base}/plan-du-site` }])} />
       <main style={{ maxWidth: 820, margin: '0 auto', padding: '56px 20px 80px' }}>
         <p style={{ fontSize: 14, margin: '0 0 18px' }}>
           <Link href={base} style={{ color: accent }}>← Accueil</Link>

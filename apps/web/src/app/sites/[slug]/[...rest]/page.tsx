@@ -1,12 +1,13 @@
+import { ogDePage } from '../themes/metadonneesDuSite'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { headers } from 'next/headers'
 import { notFound } from 'next/navigation'
 import { fetchSite, resolveSiteBaseUrl } from '../themes/shared'
 import BlocsDePage from '../pages/BlocsDePage'
+import SousPages from '../pages/SousPages'
 import { fetchBlogIndex, type BlogPostCard, type CategorieArticle } from '../blog/fetchPosts'
 import { fetchPage, fetchFilDAriane, fetchEnfants } from '../pages/fetchPage'
-import { ogLocaleFor } from '@/lib/i18n/supportedLanguages'
 import HtmlLang from '../themes/HtmlLang'
 import JsonLdScript from '../themes/JsonLdScript'
 
@@ -73,11 +74,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: `${page.titre} — ${site.name}`,
     description,
     alternates: { canonical: url },
-    openGraph: {
-      title: page.titre, description, url,
-      siteName: site.name, type: 'article', locale: ogLocaleFor(site.lang),
-    },
-    twitter: { card: 'summary', title: page.titre, description },
+    // LOT 18 — l'image du site, pour qu'aucune page ne se partage sans visuel.
+    ...ogDePage(site, url, page.titre, description),
   }
 }
 
@@ -226,24 +224,7 @@ export default async function PageDeclaree({ params }: Props) {
         {/* LES ENFANTS -- une page d'entree ne porte qu'un chapeau et des
             cartes vers ses sous-pages. C'est le principe de la page dans la
             page. Aucune carte si aucun enfant : pas de section vide. */}
-        {enfants.length > 0 && (
-          <nav aria-label="Sous-pages" style={{ marginTop: 56, display: 'grid', gap: 12 }}>
-            {enfants.map((e) => (
-              <Link
-                key={e.chemin}
-                href={`${base}/${e.chemin}`}
-                style={{
-                  display: 'block', padding: '18px 20px', borderRadius: 14,
-                  border: '1px solid rgba(0,0,0,0.12)', textDecoration: 'none',
-                  color: 'inherit', fontWeight: 600,
-                }}
-              >
-                {e.titre}
-                <span aria-hidden="true" style={{ color: accent }}>{rtl ? ' ←' : ' →'}</span>
-              </Link>
-            ))}
-          </nav>
-        )}
+        <SousPages enfants={enfants} base={base} accent={accent} rtl={rtl} />
       </main>
       </div>
     </>

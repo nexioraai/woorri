@@ -1,5 +1,6 @@
 'use client'
 
+import { destinationDuBouton } from './destinationBouton'
 import { useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { ArrowRight, Phone, Mail, MapPin, ShoppingBag } from 'lucide-react'
@@ -185,7 +186,8 @@ export default function NoirTheme({ site, hasAvis = false, host = null, menu = [
   const social = site.social_links || {}
   const cta = site.cta || t.labels.contactCta
   const { hasShop } = getModeCapabilities(site)
-  const ctaHref = hasShop ? '#shop' : '#contact'
+  // LOT 18 — la destination suit le libellé (voir destinationBouton.ts).
+  const ctaHref = destinationDuBouton(site, host, cta, hasShop)
   const heroTitle = site.hero_title || site.name
   const heroWords = heroTitle.trim().split(/\s+/)
   const heroLead = heroWords.slice(0, Math.max(1, heroWords.length - 2)).join(' ')

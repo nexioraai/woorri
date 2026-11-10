@@ -148,6 +148,10 @@ export default function Assistant({ slug, base, primary, nom, textes = {} }: {
         .assistant-panneau { animation: assistant-entree .18s ease-out }
         @keyframes assistant-entree { from { opacity: 0; transform: translateY(8px) } to { opacity: 1; transform: none } }
         @media (prefers-reduced-motion: reduce) { .assistant-point, .assistant-panneau { animation: none } }
+        /* LOT 18 — le « 1 » est DESSINÉ, pas écrit : écrit, il apparaissait
+           comme un « 1 » isolé à la fin du texte de chaque page (mesuré le
+           2026-11-10), pour les lecteurs de texte et les moteurs. */
+        .assistant-pastille::after { content: '1' }
       `}</style>
 
       {ouvert && (
@@ -261,7 +265,7 @@ export default function Assistant({ slug, base, primary, nom, textes = {} }: {
         {!vu && (
           <span aria-hidden="true" style={{ position: 'absolute', top: -2, insetInlineEnd: -2, minWidth: 20, height: 20,
             borderRadius: 999, background: '#ef4444', color: '#fff', fontSize: 12, fontWeight: 700,
-            display: 'grid', placeItems: 'center', border: '2px solid #fff' }}>1</span>
+            display: 'grid', placeItems: 'center', border: '2px solid #fff' }} className="assistant-pastille" />
         )}
       </button>
     </div>

@@ -1,3 +1,6 @@
+import { ogDePage } from '../../themes/metadonneesDuSite'
+import { fetchSite } from '../../themes/shared'
+import { generateMetadata as metadonneesPageDeclaree } from '../../[...rest]/page'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { headers } from 'next/headers'
@@ -32,15 +35,22 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const s = await fetchSiteCatalogue(slug)
   if (!s) return {}
   const p = await fetchFicheProduit(s.id, decodeURIComponent(reference))
-  // PAS UN PRODUIT : c'est peut-etre une SOUS-PAGE declaree. On ne rend
-  // alors aucune metadonnee ici -- la page declaree pose les siennes.
-  if (!p) return {}
+  // PAS UN PRODUIT : c'est peut-etre une SOUS-PAGE declaree. LOT 18 --
+  // mesuré le 2026-11-10 : rendre `{}` ici laissait `/catalogue/commander`
+  // et `/catalogue/categories` porter le titre ET la canonique de
+  // deribfy.com, car le rendu delegue a la page declaree mais PAS ses
+  // metadonnees. On delegue donc aussi les metadonnees.
+  if (!p) return metadonneesPageDeclaree({ params: Promise.resolve({ slug, rest: ['catalogue', decodeURIComponent(reference)] }) })
   const base = resolveSiteBaseUrl(s, (await headers()).get('host'))
   const title = `${p.denomination} — ${s.name}`
+  const description = [p.denomination, p.dosage, p.forme, p.conditionnement].filter(Boolean).join(' · ')
+  const url = `${base}/catalogue/${encodeURIComponent(p.reference)}`
+  const complet = await fetchSite(slug)
   return {
     title,
-    description: [p.denomination, p.dosage, p.forme, p.conditionnement].filter(Boolean).join(' · '),
-    alternates: { canonical: `${base}/catalogue/${encodeURIComponent(p.reference)}` },
+    description,
+    alternates: { canonical: url },
+    ...(complet ? ogDePage(complet, url, title, description) : {}),
   }
 }
 
