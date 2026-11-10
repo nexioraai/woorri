@@ -1,4 +1,4 @@
-import type { LibellesAcces } from './FormulaireAcces'
+import type { LibellesAcces, ChampsInscription } from './FormulaireAcces'
 
 // ============================================================================
 // LOT 11 — LES MOTS DES ÉCRANS D'ACCÈS, EN UN SEUL ENDROIT.
@@ -14,7 +14,7 @@ import type { LibellesAcces } from './FormulaireAcces'
 
 export type MotsAcces = {
   connexion: { titre: string; phrase: string; libelles: LibellesAcces; pasDeCompte: string; creer: string; oublie: string }
-  inscription: { titre: string; phrase: string; libelles: LibellesAcces; dejaInscrit: string; seConnecter: string }
+  inscription: { titre: string; phrase: string; libelles: LibellesAcces; champs: ChampsInscription; dejaInscrit: string; seConnecter: string }
   oubli: { titre: string; phrase: string; libelles: LibellesAcces; retour: string }
   accueil: string
 }
@@ -29,7 +29,7 @@ const FR: MotsAcces = {
   connexion: {
     titre: 'Se connecter',
     phrase: 'Entrez avec l’adresse électronique que vous avez enregistrée.',
-    pasDeCompte: 'Pas encore d’accès ?', creer: 'Créer un accès',
+    pasDeCompte: 'Pas encore de compte ?', creer: 'Créer un compte',
     oublie: 'Mot de passe oublié',
     libelles: {
       courriel: 'Adresse électronique', motDePasse: 'Mot de passe',
@@ -39,13 +39,14 @@ const FR: MotsAcces = {
     },
   },
   inscription: {
-    titre: 'Créer un accès',
-    phrase: 'Créez d’abord votre accès. Vous demanderez ensuite votre rattachement à la Centrale — s’inscrire ne donne aucun droit.',
+    titre: 'Créer un compte',
+    phrase: 'Remplissez ce formulaire : votre compte est créé tout de suite, sans attente.',
+    champs: { nom: 'Nom complet', organisation: 'Organisation ou entreprise', role: 'Vous êtes', fournisseur: 'Fournisseur', structure: 'Structure sanitaire', telephone: 'Téléphone', deja: 'Un compte existe déjà avec cette adresse. Connectez-vous.' },
     dejaInscrit: 'Vous avez déjà un accès ?', seConnecter: 'Se connecter',
     libelles: {
       courriel: 'Adresse électronique', motDePasse: 'Mot de passe',
-      envoyer: 'Créer mon accès', envoi: 'Création…',
-      succes: 'Un courriel de confirmation vous a été envoyé. Ouvrez-le pour activer votre accès, puis revenez demander votre rattachement.',
+      envoyer: 'Créer mon compte', envoi: 'Création…',
+      succes: 'Votre compte est créé.',
       refus: REFUS_FR, minimum: 'Huit caractères au minimum.',
     },
   },
@@ -73,10 +74,11 @@ const EN: MotsAcces = {
     libelles: { courriel: 'Email address', motDePasse: 'Password', envoyer: 'Sign in', envoi: 'Signing in…', succes: 'You are signed in.', refus: REFUS_EN, minimum: 'Eight characters minimum.' },
   },
   inscription: {
-    titre: 'Create access',
-    phrase: 'Create your access first. You will then request to be attached to the Centrale — registering grants no rights.',
+    titre: 'Create an account',
+    phrase: 'Fill in this form: your account is created straight away, with no waiting.',
+    champs: { nom: 'Full name', organisation: 'Organisation or company', role: 'You are', fournisseur: 'Supplier', structure: 'Health facility', telephone: 'Phone', deja: 'An account already exists with this address. Please sign in.' },
     dejaInscrit: 'Already have access?', seConnecter: 'Sign in',
-    libelles: { courriel: 'Email address', motDePasse: 'Password', envoyer: 'Create my access', envoi: 'Creating…', succes: 'A confirmation email has been sent. Open it to activate your access, then come back to request attachment.', refus: REFUS_EN, minimum: 'Eight characters minimum.' },
+    libelles: { courriel: 'Email address', motDePasse: 'Password', envoyer: 'Create my account', envoi: 'Creating…', succes: 'Your account is created.', refus: REFUS_EN, minimum: 'Eight characters minimum.' },
   },
   oubli: {
     titre: 'Forgotten password',
@@ -94,10 +96,11 @@ const AR: MotsAcces = {
     libelles: { courriel: 'العنوان الإلكتروني', motDePasse: 'كلمة المرور', envoyer: 'تسجيل الدخول', envoi: 'جارٍ الدخول…', succes: 'تم تسجيل دخولك.', refus: REFUS_AR, minimum: 'ثمانية أحرف على الأقل.' },
   },
   inscription: {
-    titre: 'إنشاء وصول',
-    phrase: 'أنشئ وصولك أولاً. ثم اطلب ربطك بالمركزية — التسجيل لا يمنح أي حقوق.',
+    titre: 'إنشاء حساب',
+    phrase: 'املأ هذا النموذج: يُنشأ حسابك فوراً، دون انتظار.',
+    champs: { nom: 'الاسم الكامل', organisation: 'الهيئة أو الشركة', role: 'أنت', fournisseur: 'مورّد', structure: 'مؤسسة صحية', telephone: 'الهاتف', deja: 'يوجد حساب بهذا العنوان بالفعل. سجّل الدخول.' },
     dejaInscrit: 'لديك وصول بالفعل؟', seConnecter: 'تسجيل الدخول',
-    libelles: { courriel: 'العنوان الإلكتروني', motDePasse: 'كلمة المرور', envoyer: 'إنشاء وصولي', envoi: 'جارٍ الإنشاء…', succes: 'أُرسلت رسالة تأكيد. افتحها لتفعيل وصولك ثم عد لطلب الربط.', refus: REFUS_AR, minimum: 'ثمانية أحرف على الأقل.' },
+    libelles: { courriel: 'العنوان الإلكتروني', motDePasse: 'كلمة المرور', envoyer: 'إنشاء حسابي', envoi: 'جارٍ الإنشاء…', succes: 'تم إنشاء حسابك.', refus: REFUS_AR, minimum: 'ثمانية أحرف على الأقل.' },
   },
   oubli: {
     titre: 'نسيت كلمة المرور',
@@ -115,10 +118,11 @@ const ES: MotsAcces = {
     libelles: { courriel: 'Dirección electrónica', motDePasse: 'Contraseña', envoyer: 'Iniciar sesión', envoi: 'Entrando…', succes: 'Ha iniciado sesión.', refus: REFUS_ES, minimum: 'Ocho caracteres como mínimo.' },
   },
   inscription: {
-    titre: 'Crear acceso',
-    phrase: 'Cree primero su acceso. Después solicitará su vinculación a la Central — registrarse no otorga ningún derecho.',
+    titre: 'Crear una cuenta',
+    phrase: 'Rellene este formulario: su cuenta se crea al instante, sin espera.',
+    champs: { nom: 'Nombre completo', organisation: 'Organización o empresa', role: 'Usted es', fournisseur: 'Proveedor', structure: 'Centro sanitario', telephone: 'Teléfono', deja: 'Ya existe una cuenta con esta dirección. Inicie sesión.' },
     dejaInscrit: '¿Ya tiene acceso?', seConnecter: 'Iniciar sesión',
-    libelles: { courriel: 'Dirección electrónica', motDePasse: 'Contraseña', envoyer: 'Crear mi acceso', envoi: 'Creando…', succes: 'Se le ha enviado un correo de confirmación. Ábralo para activar su acceso y vuelva a solicitar la vinculación.', refus: REFUS_ES, minimum: 'Ocho caracteres como mínimo.' },
+    libelles: { courriel: 'Dirección electrónica', motDePasse: 'Contraseña', envoyer: 'Crear mi cuenta', envoi: 'Creando…', succes: 'Su cuenta está creada.', refus: REFUS_ES, minimum: 'Ocho caracteres como mínimo.' },
   },
   oubli: {
     titre: 'Contraseña olvidada',

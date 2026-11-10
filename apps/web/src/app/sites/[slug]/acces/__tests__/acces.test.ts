@@ -124,11 +124,24 @@ describe('une page d’entrée ne s’indexe pas', () => {
   })
 })
 
-describe('s’inscrire ne donne aucun droit', () => {
-  it('🔴 le formulaire d’accès ne touche à AUCUNE route de compte', () => {
-    // Il parle à l'authentification, et à elle seule. Demander un
-    // rattachement est un autre geste, sur un autre écran.
-    expect(FORMULAIRE).not.toMatch(/mon-compte|site_comptes|\/api\//)
+describe('l’inscription passe par UNE route, et l’écran ne décide de rien', () => {
+  // LOT 17 — décision du propriétaire, 2026-11-10 : l'inscription crée le
+  // compte directement, sans courriel ni examen. L'ancien cliquet (« le
+  // formulaire ne touche à AUCUNE route de compte ») gardait la règle
+  // inverse ; il est remplacé, pas supprimé : le formulaire n'a toujours
+  // pas le droit d'écrire un compte LUI-MÊME.
+  it('🔴 le formulaire appelle la route d’inscription, et aucune autre route de compte', () => {
+    expect(FORMULAIRE).toMatch(/\/api\/sites\/\$\{[^}]+\}\/inscription/)
+    expect(FORMULAIRE).not.toMatch(/mon-compte|site_comptes|\/comptes\b/)
+  })
+
+  it('🔴 plus d’inscription par courriel de confirmation', () => {
+    expect(FORMULAIRE).not.toMatch(/auth\.signUp\(/)
+  })
+
+  it('🔴 le formulaire n’envoie jamais d’état de compte', () => {
+    const i = FORMULAIRE.indexOf('/inscription`')
+    expect(FORMULAIRE.slice(i, i + 400)).not.toMatch(/\betat\b/)
   })
 
   it('🔴 l’espace ne décide JAMAIS qu’un compte est actif', () => {

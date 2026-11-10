@@ -39,7 +39,7 @@ const SUJETS: { label: string; reponse: string; liens: Lien[] }[] = [
     reponse: 'Les conditions et les pièces demandées pour devenir fournisseur sont détaillées ici, ainsi que la marche à suivre pour vous enregistrer.',
     liens: [{ chemin: '/fournisseurs/enregistrement', titre: 'Devenir fournisseur' }, { chemin: '/fournisseurs/conditions', titre: 'Conditions d’achat' }] },
   { label: 'Créer un compte',
-    reponse: 'Pour créer un compte : inscrivez-vous avec votre adresse électronique et un mot de passe, confirmez par le courriel reçu, puis connectez-vous et demandez votre rattachement depuis votre espace. La Centrale examine la demande avant d’ouvrir vos droits.',
+    reponse: 'Remplissez le formulaire d’inscription : nom, organisation, téléphone, adresse électronique et mot de passe. Votre compte est créé tout de suite, sans attente.',
     liens: [{ chemin: '/inscription', titre: 'Créer un compte' }, { chemin: '/connexion', titre: 'Se connecter' }] },
   { label: 'Actualités',
     reponse: 'Les communiqués, l’agenda et les dernières nouvelles de la Centrale sont publiés ici.',

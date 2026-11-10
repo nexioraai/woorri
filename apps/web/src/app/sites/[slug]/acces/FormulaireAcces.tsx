@@ -14,12 +14,16 @@ import { supabase } from '@/lib/supabase'
 // recopié dans quatre thèmes jusqu'à ce que deux d'entre eux ne disent plus
 // la même chose.
 //
-// ── CE COMPOSANT NE CRÉE AUCUN COMPTE DE SITE.
+// ── L'INSCRIPTION PASSE PAR UNE SEULE ROUTE, ET C'EST ELLE QUI CRÉE TOUT.
 //
-// Il parle à l'authentification, et à elle seule. Demander un accès À LA
-// CENTRALE est un autre geste, sur un autre écran, avec une autre route :
-// s'inscrire ne donne aucun droit, et l'écran ne doit pas laisser croire le
-// contraire.
+// LOT 17, décision du propriétaire (2026-11-10) : pas de courriel de
+// confirmation, pas d'examen par la Centrale. L'écran envoie nom,
+// organisation, type, téléphone, adresse et mot de passe à
+// `/api/sites/<slug>/inscription` ; la route crée l'accès ET le compte de
+// site. L'écran, lui, ne décide de rien : il se connecte ensuite avec le mot
+// de passe saisi, comme n'importe quelle connexion.
+//
+// La connexion et l'oubli, eux, parlent toujours à l'authentification seule.
 //
 // ── « UN COURRIEL VOUS A ÉTÉ ENVOYÉ », MÊME QUAND NON.
 //
@@ -44,18 +48,37 @@ export type LibellesAcces = {
   minimum: string
 }
 
+/** Les champs propres à l'inscription (LOT 17). */
+export type ChampsInscription = {
+  nom: string; organisation: string; role: string; fournisseur: string; structure: string
+  telephone: string
+  /** Quand l'adresse a déjà un compte. */
+  deja: string
+}
+
 export default function FormulaireAcces({
-  ecran, destination, libelles, primary,
+  ecran, destination, libelles, primary, slug, champs,
 }: {
   ecran: EcranAcces
   /** Où aller une fois entré. Toujours une adresse DE CE SITE. */
   destination: string
   libelles: LibellesAcces
   primary: string
+  /** Pour l'inscription : le site à qui s'adresser. */
+  slug?: string
+  champs?: ChampsInscription
 }) {
   const [courriel, setCourriel] = useState('')
   const [motDePasse, setMotDePasse] = useState('')
   const [etat, setEtat] = useState<'repos' | 'envoi' | 'fait' | 'refus'>('repos')
+  const [nom, setNom] = useState('')
+  const [organisation, setOrganisation] = useState('')
+  const [role, setRole] = useState<'fournisseur' | 'structure'>('fournisseur')
+  const [telephone, setTelephone] = useState('')
+  const [piege, setPiege] = useState('')
+  // Le refus de l'inscription dit SA cause : la personne doit savoir quel
+  // champ corriger. (La connexion, elle, garde son refus unique.)
+  const [message, setMessage] = useState('')
 
   const demandeUnMotDePasse = ecran !== 'oubli'
 
@@ -78,16 +101,20 @@ export default function FormulaireAcces({
       }
 
       if (ecran === 'inscription') {
-        const { error } = await supabase.auth.signUp({
-          email: courriel.trim(),
-          password: motDePasse,
-          // LE RETOUR SE FAIT SUR CE SITE, jamais sur la plateforme. Une
-          // confirmation qui ramènerait sur `deribfy.app` sortirait la
-          // personne du site de la Centrale sans qu'elle comprenne pourquoi.
-          options: { emailRedirectTo: `${window.location.origin}${destination}` },
+        const site = encodeURIComponent(String(slug))
+        const r = await fetch(`/api/sites/${site}/inscription`, {
+          method: 'POST', headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ nom, organisation, role, telephone, email: courriel.trim(), motDePasse, site_web: piege }),
         })
-        if (error) { setEtat('refus'); return }
-        setEtat('fait')
+        const d = await r.json().catch(() => ({}))
+        if (!r.ok) {
+          setMessage(r.status === 409 && champs ? champs.deja : String(d.error ?? libelles.refus))
+          setEtat('refus'); return
+        }
+        // LE COMPTE EST CRÉÉ : on entre avec le mot de passe saisi.
+        const { error } = await supabase.auth.signInWithPassword({ email: courriel.trim(), password: motDePasse })
+        if (error) { setEtat('fait'); return }
+        window.location.assign(destination)
         return
       }
 
@@ -119,12 +146,52 @@ export default function FormulaireAcces({
     )
   }
 
+  const inscription = ecran === 'inscription' && champs
+  const effacer = () => { if (etat === 'refus') { setEtat('repos'); setMessage('') } }
+
   return (
     <form onSubmit={envoyer} style={{ maxWidth: 420 }}>
+      {inscription && (<>
+        <label style={{ display: 'block', marginBottom: 14 }}>
+          <span style={{ fontSize: 14, fontWeight: 600 }}>{champs.nom}</span>
+          <input type="text" required minLength={2} maxLength={120} autoComplete="name" value={nom} style={champ}
+            onChange={(e) => { setNom(e.target.value); effacer() }} />
+        </label>
+        <label style={{ display: 'block', marginBottom: 14 }}>
+          <span style={{ fontSize: 14, fontWeight: 600 }}>{champs.organisation}</span>
+          <input type="text" required minLength={2} maxLength={300} autoComplete="organization" value={organisation} style={champ}
+            onChange={(e) => { setOrganisation(e.target.value); effacer() }} />
+        </label>
+        <fieldset style={{ border: 'none', padding: 0, margin: '0 0 14px' }}>
+          <legend style={{ fontSize: 14, fontWeight: 600, marginBottom: 8 }}>{champs.role}</legend>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            {(['fournisseur', 'structure'] as const).map((r) => (
+              <label key={r} style={{
+                display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 10, cursor: 'pointer',
+                border: `1.5px solid ${role === r ? primary : '#d9d9d9'}`,
+                background: role === r ? `color-mix(in srgb, ${primary} 8%, #fff)` : '#fff', fontSize: 15,
+              }}>
+                <input type="radio" name="role" value={r} checked={role === r} onChange={() => setRole(r)} />
+                {r === 'fournisseur' ? champs.fournisseur : champs.structure}
+              </label>
+            ))}
+          </div>
+        </fieldset>
+        <label style={{ display: 'block', marginBottom: 14 }}>
+          <span style={{ fontSize: 14, fontWeight: 600 }}>{champs.telephone}</span>
+          <input type="tel" required autoComplete="tel" value={telephone} style={champ} placeholder="+235 …"
+            onChange={(e) => { setTelephone(e.target.value); effacer() }} />
+        </label>
+        {/* LE PIÈGE À ROBOTS : invisible, jamais rempli par un humain. */}
+        <input type="text" name="site_web" tabIndex={-1} autoComplete="off" aria-hidden="true" value={piege}
+          onChange={(e) => setPiege(e.target.value)}
+          style={{ position: 'absolute', left: '-10000px', width: 1, height: 1, opacity: 0 }} />
+      </>)}
+
       <label style={{ display: 'block', marginBottom: 14 }}>
         <span style={{ fontSize: 14, fontWeight: 600 }}>{libelles.courriel}</span>
         <input type="email" required autoComplete="email" value={courriel} style={champ}
-          onChange={(e) => { setCourriel(e.target.value); if (etat === 'refus') setEtat('repos') }} />
+          onChange={(e) => { setCourriel(e.target.value); effacer() }} />
       </label>
 
       {demandeUnMotDePasse && (
@@ -132,14 +199,14 @@ export default function FormulaireAcces({
           <span style={{ fontSize: 14, fontWeight: 600 }}>{libelles.motDePasse}</span>
           <input type="password" required minLength={8} value={motDePasse} style={champ}
             autoComplete={ecran === 'inscription' ? 'new-password' : 'current-password'}
-            onChange={(e) => { setMotDePasse(e.target.value); if (etat === 'refus') setEtat('repos') }} />
+            onChange={(e) => { setMotDePasse(e.target.value); effacer() }} />
           <span style={{ fontSize: 13, opacity: 0.65, display: 'block', marginTop: 5 }}>{libelles.minimum}</span>
         </label>
       )}
 
       {etat === 'refus' && (
         <p role="alert" style={{ fontSize: 14, color: '#9b1c1c', margin: '0 0 14px', lineHeight: 1.5 }}>
-          {libelles.refus}
+          {message || libelles.refus}
         </p>
       )}
 

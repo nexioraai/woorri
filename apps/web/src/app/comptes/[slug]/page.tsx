@@ -42,6 +42,9 @@ type Compte = {
   qualification: keyof typeof QUALIF
   qualification_le: string | null
   organisation: string | null
+  /** LOT 17 — saisis à l'inscription ; `null` pour les comptes plus anciens. */
+  nom: string | null
+  telephone: string | null
   reference: string | null
   cree_le: string
   maj_le: string
@@ -130,6 +133,8 @@ export default function ComptesDuSite({ params }: { params: Promise<{ slug: stri
 
   const enAttente = (comptes ?? []).filter((c) => c.etat === 'en_attente')
   const reste = (comptes ?? []).filter((c) => c.etat !== 'en_attente')
+  const fournisseurs = (comptes ?? []).filter((c) => c.role === 'fournisseur').length
+  const structures = (comptes ?? []).filter((c) => c.role === 'structure').length
 
   const carte = (c: Compte) => (
     <li key={c.id} style={{
@@ -139,10 +144,16 @@ export default function ComptesDuSite({ params }: { params: Promise<{ slug: stri
     }}>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'baseline', justifyContent: 'space-between' }}>
         <div>
-          <p style={{ margin: 0, fontWeight: 700, fontSize: 15.5 }}>{c.organisation || '—'}</p>
+          <p style={{ margin: 0, fontWeight: 700, fontSize: 15.5 }}>{c.nom || c.organisation || '—'}</p>
+          {c.nom && c.organisation && (
+            <p style={{ margin: '3px 0 0', fontSize: 14, opacity: 0.85 }}>{c.organisation}</p>
+          )}
           <p style={{ margin: '4px 0 0', fontSize: 13.5, opacity: 0.6 }}>
-            {c.email} · {ROLE[c.role]}
+            <a href={`mailto:${c.email}`} style={{ color: 'inherit' }}>{c.email}</a>
+            {c.telephone ? <> · <a href={`tel:${c.telephone.replace(/[^+0-9]/g, '')}`} style={{ color: 'inherit' }}>{c.telephone}</a></> : ''}
+            {' · '}{ROLE[c.role]}
             {c.reference ? ` · ${c.reference}` : ''}
+            {` · inscrit le ${c.cree_le.slice(0, 10)}`}
           </p>
         </div>
         <span style={{
@@ -219,8 +230,8 @@ export default function ComptesDuSite({ params }: { params: Promise<{ slug: stri
         Comptes du site
       </h1>
       <p style={{ fontSize: 15.5, lineHeight: 1.65, opacity: 0.7, margin: '0 0 30px', maxWidth: '62ch' }}>
-        Les personnes qui ont demandé un accès à ce site. Un compte naît toujours
-        <strong> en attente</strong> : c’est ici, et seulement ici, qu’il s’active.
+        Les personnes qui se sont inscrites sur votre site. Leur compte est actif dès
+        l’inscription ; vous pouvez le <strong>suspendre</strong> ici à tout moment.
       </p>
 
       {erreur && <p role="alert" style={{ color: '#f87171' }}>{erreur}</p>}
@@ -228,17 +239,26 @@ export default function ComptesDuSite({ params }: { params: Promise<{ slug: stri
 
       {comptes && (
         <>
-          <h2 style={{ fontSize: 17, fontWeight: 700, margin: '0 0 12px' }}>
-            En attente {enAttente.length > 0 && <span style={{ color: '#b45309' }}>({enAttente.length})</span>}
-          </h2>
-          {enAttente.length === 0
-            // UNE LISTE VIDE SE DIT. Un espace blanc laisserait croire que la
-            // page n'a pas chargé — c'est le défaut qu'on vient de corriger
-            // sur le bandeau des partenaires.
-            ? <p style={{ opacity: 0.55, margin: '0 0 30px' }}>Aucune demande en attente.</p>
-            : <ul style={{ padding: 0, margin: '0 0 30px' }}>{enAttente.map(carte)}</ul>}
+          {/* LOT 17 — « combien de comptes sont créés, qui sont ces gens ». */}
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', margin: '0 0 26px' }}>
+            {[['Comptes', comptes.length], ['Fournisseurs', fournisseurs], ['Structures sanitaires', structures]].map(([l, n]) => (
+              <div key={String(l)} style={{ flex: '1 1 150px', padding: '14px 16px', borderRadius: 14,
+                border: '1px solid rgba(255,255,255,0.10)', background: 'rgba(255,255,255,0.03)' }}>
+                <div style={{ fontSize: 26, fontWeight: 800, fontVariantNumeric: 'tabular-nums' }}>{n}</div>
+                <div style={{ fontSize: 13, opacity: 0.6 }}>{l}</div>
+              </div>
+            ))}
+          </div>
 
-          <h2 style={{ fontSize: 17, fontWeight: 700, margin: '0 0 12px' }}>Comptes examinés</h2>
+          {/* Les comptes d'avant le lot 17 qui attendaient encore — vide une fois la SQL passée. */}
+          {enAttente.length > 0 && (<>
+            <h2 style={{ fontSize: 17, fontWeight: 700, margin: '0 0 12px' }}>
+              En attente <span style={{ color: '#b45309' }}>({enAttente.length})</span>
+            </h2>
+            <ul style={{ padding: 0, margin: '0 0 30px' }}>{enAttente.map(carte)}</ul>
+          </>)}
+
+          <h2 style={{ fontSize: 17, fontWeight: 700, margin: '0 0 12px' }}>Comptes inscrits</h2>
           {reste.length === 0
             ? <p style={{ opacity: 0.55 }}>Aucun compte pour l’instant.</p>
             : <ul style={{ padding: 0, margin: 0 }}>{reste.map(carte)}</ul>}

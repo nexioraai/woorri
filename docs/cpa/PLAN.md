@@ -450,6 +450,40 @@ définition, et compare les routes dynamiques segment par segment (plus par
 préfixe). Prouvé : retirer le jeton de `GestionDemandes` ou de `GestionAvis`
 le fait rougir.
 
+## §17 — L'INSCRIPTION DIRECTE, ET LES PAGES LÉGALES TROUVABLES
+
+**Décision du propriétaire, 2026-11-10** : « la création de compte ne
+devrait pas être compliquée, ça ne devrait pas être confirmé par la CPA ;
+ça doit juste être visible sur le tableau de bord — combien de comptes, qui
+sont ces gens, leur nom, email. »
+
+**Constat qui l'a déclenchée** : le courriel de confirmation n'arrivait pas
+(le service d'envoi par défaut de l'authentification ne distribue pas aux
+adresses extérieures) — personne ne pouvait finir son inscription.
+
+**Ce qui change** : un formulaire, une route (`/inscription`). L'accès est
+créé confirmé, le compte naît ACTIF (`site_comptes_inscription_directe.sql` :
+défaut `actif`, déclencheur « en attente » retiré, nom et téléphone ajoutés),
+la personne est connectée tout de suite. Le tableau de bord montre le
+nombre de comptes, nom, organisation, courriel, téléphone, date. La
+Centrale garde la main APRÈS coup : elle peut suspendre.
+
+**Ce que l'on accepte de perdre, sciemment** : la preuve que l'adresse
+appartient à celui qui s'inscrit ; l'examen avant de pouvoir déposer une
+offre. **Ce qui reste fermé** : une adresse déjà connue n'est jamais
+reprise ; `agent` ne se réclame pas ; un site sans comptes refuse.
+
+**Reste ouvert** : « mot de passe oublié » envoie toujours par le service
+par défaut — même défaut de distribution. À régler par un envoi propre
+(une clé Resend existe déjà dans le projet), à décider.
+
+**Pages légales** : `/mentions-legales`, `/confidentialite`,
+`/accessibilite`, `/plan-du-site` répondaient 200 mais aucun lien n'y
+menait. Un bandeau de liens est posé dans le gabarit commun à toutes les
+pages ; seules les pages déclarées y figurent.
+
+---
+
 ## §16bis — L'ASSISTANT EST LIMITÉ À QUATRE SUJETS
 
 **Demande du propriétaire, 2026-11-10 :** « il répond seulement de choses

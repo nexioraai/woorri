@@ -175,7 +175,7 @@ export async function POST(req: Request, { params }: Params) {
     // COMMENT CRÉER UN COMPTE — ce sont des écrans du moteur, pas des pages
     // déclarées : leur mode d'emploi est écrit ici, une fois.
     { chemin: '/inscription', titre: 'Créer un compte sur le site',
-      texte: 'Pour créer un compte : ouvrir /inscription, saisir son adresse électronique et un mot de passe, confirmer par le courriel reçu, puis se connecter sur /connexion et, dans /espace-client, demander son rattachement en indiquant si l’on représente un fournisseur ou une structure sanitaire. La Centrale examine la demande avant d’ouvrir les droits ; il faut un compte actif pour déposer une offre.' },
+      texte: 'Pour créer un compte : ouvrir /inscription et remplir un seul formulaire — nom complet, organisation, fournisseur ou structure sanitaire, téléphone, adresse électronique et mot de passe. Le compte est créé immédiatement, sans courriel de confirmation ni attente ; on est connecté directement. Ensuite on se connecte sur /connexion. Il faut un compte pour déposer une offre.' },
     // COMMENT CONTACTER LA CENTRALE — les coordonnées PUBLIÉES, et elles seules.
     { chemin: '/#contact', titre: 'Contacter la Centrale et sa direction',
       texte: `Coordonnées publiées de la Centrale : ${texteDe((coord as { contact?: unknown } | null)?.contact ?? {})}. Le formulaire de contact est sur la page d’accueil.` },

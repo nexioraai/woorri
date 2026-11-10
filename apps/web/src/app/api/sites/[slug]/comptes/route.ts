@@ -32,7 +32,7 @@ import { journaliser } from '@/lib/audit/journaliser'
 
 type Params = { params: Promise<{ slug: string }> }
 
-const COLS = 'id,user_id,email,role,etat,organisation,reference,cree_le,maj_le,qualification,qualification_le'
+const COLS = 'id,user_id,email,role,etat,organisation,nom,telephone,reference,cree_le,maj_le,qualification,qualification_le'
 
 const LISIBLE: Record<string, string> = {
   '23514': 'Rôle ou état inconnu, ou adresse électronique invalide.',
