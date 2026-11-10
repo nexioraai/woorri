@@ -87,8 +87,11 @@ describe('le refus n’apprend rien', () => {
   it('🔴 et le code NE REGARDE PAS la réponse de la réinitialisation', () => {
     // Un `if (error)` ici distinguerait les deux cas quoi qu'en dise le
     // libellé — c'est le code qui ferait l'oracle, pas la traduction.
-    expect(FORMULAIRE).toMatch(/await\s+supabase\.auth\.resetPasswordForEmail\(/)
-    expect(FORMULAIRE).not.toMatch(/=\s*await\s+supabase\.auth\.resetPasswordForEmail/)
+    // LOT 19 — l'envoi passe par la route du site (Resend) ; la règle est la
+    // même : l'appel est fait, sa réponse n'est JAMAIS lue.
+    expect(FORMULAIRE).toMatch(/await\s+fetch\(`\/api\/sites\/\$\{site\}\/mot-de-passe-oublie`/)
+    expect(FORMULAIRE).not.toMatch(/=\s*await\s+fetch\(`\/api\/sites\/\$\{site\}\/mot-de-passe-oublie`/)
+    expect(FORMULAIRE).not.toMatch(/resetPasswordForEmail/)
   })
 })
 

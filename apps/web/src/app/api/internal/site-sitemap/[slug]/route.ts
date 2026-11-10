@@ -41,7 +41,7 @@ import { fetchCatalogue } from '@/app/sites/[slug]/catalogue/fetchCatalogue'
 export const SEGMENTS_PRIVES = new Set([
   'connexion', 'inscription', 'mot-de-passe-oublie', 'espace-client', 'espace-fournisseur',
   'mes-demandes', 'mes-documents', 'mes-reclamations', 'mon-profil', 'mon-dossier',
-  'ma-prequalification', 'mes-consultations', 'demandes',
+  'ma-prequalification', 'mes-consultations', 'demandes', 'nouveau-mot-de-passe',
 ])
 
 function escapeXml(value: string): string {

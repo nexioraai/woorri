@@ -124,8 +124,12 @@ export default function FormulaireAcces({
 
       // OUBLI — on ne regarde même pas la réponse. Elle est la même pour
       // une adresse connue et pour une adresse inventée.
-      await supabase.auth.resetPasswordForEmail(courriel.trim(), {
-        redirectTo: `${window.location.origin}${destination}`,
+      // LOT 19 — par la route du site, qui envoie le lien par Resend : le
+      // courriel de l'authentification n'arrivait pas aux visiteurs.
+      const site = encodeURIComponent(String(slug))
+      await fetch(`/api/sites/${site}/mot-de-passe-oublie`, {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ email: courriel.trim() }),
       })
       setEtat('fait')
     } catch {
