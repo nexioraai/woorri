@@ -33,6 +33,7 @@ vi.mock('@supabase/supabase-js', () => ({
     from: (t: string) => { lectureAnonyme++; return creerFrom({
       site_pages_public: { reponse: () => ({ data: [{ chemin: 'qui-sommes-nous', titre: 'Qui sommes-nous', corps: 'La Centrale achète des médicaments.' }], error: null }) },
       appels_offres_public: { reponse: () => ({ data: [], error: null }) },
+      sites_public: { reponse: () => ({ data: { contact: { email: 'contact@cpa.td', phone: '+235 22 51 00 00' } }, error: null }) },
     }, journal)(t) },
   }),
 }))
@@ -57,7 +58,7 @@ vi.mock('@/lib/supabase-admin', () => ({
   },
 }))
 
-import { POST, PAR_JOUR, PAR_HEURE, PAR_CONVERSATION } from '../route'
+import { POST, PAR_JOUR, PAR_HEURE, PAR_CONVERSATION, PAGES_PERMISES, HORS_SUJET } from '../route'
 
 const params = { params: Promise.resolve({ slug: 'cpa' }) }
 const poser = (question = 'Que fait la Centrale ?', historique: unknown[] = []) =>
@@ -146,5 +147,46 @@ describe('ce qui part, et ce qui est gardé', () => {
   it('🔴 la sortie est bornée', async () => {
     await poser()
     expect((appels[0] as { max_tokens: number }).max_tokens).toBeLessThanOrEqual(600)
+  })
+})
+
+// ============================================================
+// LOT 16 bis — L'ASSISTANT NE SAIT QUE CE QU'ON LUI PERMET.
+// Décision du propriétaire, 2026-11-10 : appels d'offres, création de
+// compte, conditions pour être fournisseur, portée, contact. « Le reste il
+// doit rien savoir, il répond seulement de chose visible publiquement. »
+// ============================================================
+
+describe('ce qu’il lit est une liste FERMÉE', () => {
+  it('🔴 les pages lues sont filtrées sur la liste permise', async () => {
+    await poser()
+    const f = journal.filtres['site_pages_public'] ?? []
+    expect(f.some((x) => x[0] === 'in' && x[1] === 'chemin'), 'aucun filtre sur les chemins').toBe(true)
+  })
+
+  it('🔴 la liste ne contient QUE les sujets permis', () => {
+    // Ni direction, ni équipes, ni chiffres, ni catalogue, ni histoire.
+    for (const c of PAGES_PERMISES) expect(c, c).toMatch(/^(appels-offres|fournisseurs)(\/|$)/)
+  })
+
+  it('🔴 aucune page interne ou privée n’y figure', () => {
+    for (const interdite of ['qui-sommes-nous/direction', 'qui-sommes-nous/equipes', 'catalogue', 'qui-sommes-nous/chiffres-cles']) {
+      expect((PAGES_PERMISES as readonly string[]).includes(interdite), interdite).toBe(false)
+    }
+  })
+})
+
+describe('ce qu’il répond est une liste FERMÉE', () => {
+  it('🔴 les consignes nomment les quatre sujets et la phrase de refus', async () => {
+    await poser()
+    const sys = String((appels[0] as { system: string }).system)
+    expect(sys).toContain(HORS_SUJET)
+    for (const sujet of ['appels d\'offres', 'créer un compte', 'devenir fournisseur', 'contacter la Centrale']) {
+      expect(sys, sujet).toContain(sujet)
+    }
+  })
+
+  it('🔴 le refus renvoie vers le contact, il ne laisse pas sans issue', () => {
+    expect(HORS_SUJET).toMatch(/Contact/)
   })
 })

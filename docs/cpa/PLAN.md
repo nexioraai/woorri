@@ -445,6 +445,28 @@ Prouvé : retirer le jeton de `GestionDemandes` laisse le cliquet vert.
 À fermer en suivant la variable jusqu'à sa définition — pas fait en passant,
 pour ne pas élargir un instrument de sécurité au détour d'un autre lot.
 
+**FERMÉE le 2026-11-10.** Le cliquet suit désormais la variable jusqu'à sa
+définition, et compare les routes dynamiques segment par segment (plus par
+préfixe). Prouvé : retirer le jeton de `GestionDemandes` ou de `GestionAvis`
+le fait rougir.
+
+## §16bis — L'ASSISTANT EST LIMITÉ À QUATRE SUJETS
+
+**Demande du propriétaire, 2026-11-10 :** « il répond seulement de choses
+visibles publiquement » — appels d'offres (y en a-t-il, date de clôture,
+national ou international), créer un compte, conditions pour devenir
+fournisseur, contacter la Centrale. Le reste : il ne sait rien.
+
+Tenu par ce qu'il LIT, pas seulement par ce qu'on lui dit : 9 pages
+permises (`PAGES_PERMISES`), les avis publiés avec leur portée, les étapes
+du compte, les coordonnées publiées. Toute autre question reçoit une
+phrase fixe (`HORS_SUJET`) qui renvoie à la page Contact. Prouvé : retirer
+le filtre, ou ajouter une page de direction, fait rougir les tests.
+
+La portée n'était pas publique : vue `appels_offres_public` refaite à
+l'identique plus `portee` (`appels_offres_public_portee.sql`, exécutée le
+2026-11-10 : 30 colonnes, `portee` visible, `publie` toujours absente).
+
 ---
 
 ## §13 — LE SECRET DES PLIS N'EST PAS TECHNIQUE, PAR DÉCISION

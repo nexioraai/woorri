@@ -124,7 +124,18 @@ describe('les appels clients vers les routes marchandes portent leur jeton', () 
         // routes VISITEUR. Une comparaison par préfixe les confondrait et
         // exigerait un jeton d'un acheteur non connecté — donc casserait
         // l'achat pour « corriger » une sécurité qui n'avait rien.
-        const url = /['"`]([^'"`]*\/api\/[^'"`?]*)/u.exec(appel)?.[1]
+        // ── L'ADRESSE PEUT ÊTRE DANS UNE VARIABLE — ON LA SUIT.
+        //
+        // Dette PLAN §14, trouvée au lot 16 : `fetch(base, …)` échappait à ce
+        // cliquet, parce qu'il ne lisait que l'adresse écrite DANS l'appel.
+        // Retirer le jeton de `GestionDemandes` le laissait vert. On remonte
+        // désormais à `const base = \`…/api/…\`` dans le même fichier.
+        const direct = /['"`]([^'"`]*\/api\/[^'"`?]*)/u.exec(appel)?.[1]
+        const variable = /fetch\(\s*([A-Za-z_$][\w$]*)\s*[,)]/u.exec(appel)?.[1]
+        const definie = variable
+          ? new RegExp(`(?:const|let)\\s+${variable}\\s*=\\s*['"\`]([^'"\`]*\\/api\\/[^'"\`?]*)`, 'u').exec(source)?.[1]
+          : undefined
+        const url = direct ?? definie
         if (!url) continue
         // ── UN SEGMENT DYNAMIQUE SE COMPARE SEGMENT PAR SEGMENT.
         //
