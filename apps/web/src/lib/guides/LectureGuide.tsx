@@ -12,7 +12,9 @@ import type { ReactNode } from 'react'
 
 function enLigne(texte: string): ReactNode[] {
   const out: ReactNode[] = []
-  const motif = /\*\*([^*]+)\*\*|`([^`]+)`|(https?:\/\/[^\s)]+)/g
+  // L'adresse s'arrête AVANT une ponctuation finale (« …/dashboard, avec ») :
+  // la virgule n'appartient pas au lien.
+  const motif = /\*\*([^*]+)\*\*|`([^`]+)`|(https?:\/\/[^\s)]*[^\s).,;:!?»])/g
   let dernier = 0
   let m: RegExpExecArray | null
   while ((m = motif.exec(texte))) {
@@ -89,11 +91,11 @@ export default function LectureGuide({ md }: { md: string }) {
           case 'ol': {
             const Liste = e.t
             return (
-              <Liste key={k} style={{ margin: '0 0 16px', paddingInlineStart: 22, opacity: 0.88 }}>
+              <Liste key={k} style={{ margin: '0 0 16px', paddingInlineStart: 22, opacity: 0.88, listStyle: e.t === 'ol' ? 'decimal' : 'disc' }}>
                 {e.items.map((it, j) => (
                   <li key={j} style={{ marginBottom: 6 }}>
                     {enLigne(it.texte)}
-                    {it.sous.length > 0 && <ul style={{ marginTop: 6, paddingInlineStart: 20 }}>{it.sous.map((s, n) => <li key={n} style={{ marginBottom: 4 }}>{enLigne(s)}</li>)}</ul>}
+                    {it.sous.length > 0 && <ul style={{ marginTop: 6, paddingInlineStart: 20, listStyle: 'circle' }}>{it.sous.map((s, n) => <li key={n} style={{ marginBottom: 4 }}>{enLigne(s)}</li>)}</ul>}
                   </li>
                 ))}
               </Liste>
