@@ -108,7 +108,7 @@ un avis · un article · un produit · une province
 | 14 | **Administration — workflow, audit, tableau de bord** | 30 | ✅ **FERMÉ** — 14.1 la Centrale écrit, publie et attribue ses avis (aucun fichier n'écrivait dans `appels_offres` : d'où zéro avis) · 14.2 elle traite demandes et réclamations, le demandeur lit la réponse · 14.3 journal d'audit en AJOUT SEUL, immuable même au service (42501 prouvé), branché sur les quatre routes d'administration et tenu par un cliquet. Une entrée témoin `sonde.temoin` y reste pour toujours : c'est le prix d'un journal que personne ne peut effacer. |
 | **5bis** | **La page des appels d'offres, RICHE** — voir §8 | 14 | ✅ **FERMÉ** — neuf points, **30/30 à l'adresse publique**, dont deux pièges volontaires : la légende ne montre pas « ICB », et un bloc mal positionné ne disparaît pas. |
 | **15** | **Finitions d'interface relevées sur EPSS** — voir §7 | 18 | ⬜ **DERNIER LOT** |
-| **16** | **Assistant de site (IA)** — voir §9 | 20 | ⬜ **APRÈS LE 15** |
+| **16** | **Assistant de site (IA)** — voir §9 | 20 | ✅ **FERMÉ** — DeepSeek `flash` via le client partagé ; répond depuis les vues PUBLIQUES (clé anonyme), cite la page, dit « je ne trouve pas » ; plafonds validés 10/conversation · 10/heure/adresse · 200/jour/site, vérifiés AVANT l'appel et comptés avant de partir (≤ 0,60 $/jour, tarif sourcé) ; interrupteur `assistant_actif` allumé pour la CPA SEULE ; `/confidentialite` corrigée AVANT l'allumage. |
 
 **LES NUMÉROS NE SONT PAS L'ORDRE.** Ils nomment un sujet ; l'ordre est
 celui-ci, et c'est lui qui fait foi :
@@ -430,6 +430,20 @@ peuvent upload pour le cpa, c de 2 cotés pas un coté. »
 
 Et **chacun ne retire que ce qu'il a déposé** : la Centrale ne fait pas
 disparaître l'agrément qu'un fournisseur lui a remis.
+
+---
+
+## §14 — DETTE : LE CLIQUET DES APPELS AUTHENTIFIÉS NE VOIT PAS `fetch(base, …)`
+
+**Trouvée le 2026-11-10 au lot 16.** `appelsAuthentifies.test.ts` n'examine
+que les appels dont l'adresse est écrite DANS le `fetch(…)`. Un appel dont
+l'adresse est dans une variable (`fetch(base, …)`) lui échappe. Les écrans
+`GestionAvis`, `GestionDemandes`, `MonDossier`, `/offres/[slug]` sont écrits
+ainsi : ils portent bien le jeton, mais AUCUN cliquet ne le garantit.
+
+Prouvé : retirer le jeton de `GestionDemandes` laisse le cliquet vert.
+À fermer en suivant la variable jusqu'à sa définition — pas fait en passant,
+pour ne pas élargir un instrument de sécurité au détour d'un autre lot.
 
 ---
 

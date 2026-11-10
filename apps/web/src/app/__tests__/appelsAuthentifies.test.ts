@@ -126,10 +126,18 @@ describe('les appels clients vers les routes marchandes portent leur jeton', () 
         // l'achat pour « corriger » une sécurité qui n'avait rien.
         const url = /['"`]([^'"`]*\/api\/[^'"`?]*)/u.exec(appel)?.[1]
         if (!url) continue
-        const segmentDynamique = (p: string) => p.includes('/[')
-        const touche = PROTEGES.some((p) =>
-          segmentDynamique(p) ? url.startsWith(p.slice(0, p.indexOf('/['))) : url === p,
-        )
+        // ── UN SEGMENT DYNAMIQUE SE COMPARE SEGMENT PAR SEGMENT.
+        //
+        // Premier jet : le chemin jusqu'au premier `/[`, comparé en PRÉFIXE.
+        // Toute route sous `/api/sites/[slug]/` devenait « protégée » dès
+        // qu'UNE d'elles l'était — y compris `/assistant`, publique PAR
+        // CONSTRUCTION (un visiteur n'a pas de compte). Mesuré au lot 16. On
+        // compare désormais la FORME : `[slug]` vaut un segment, une
+        // interpolation `${…}` aussi, et le reste doit être identique.
+        const forme = (p: string) => new RegExp(
+          '^' + p.split('/').map((x) => /^\[.+\]$/u.test(x) ? '[^/]+' : x.replace(/[.*+?^$()|{}\\]/gu, '\\$&')).join('/') + '$', 'u')
+        const urlNormalisee = url.replace(/\$\{[^}]*\}/gu, 'X')
+        const touche = PROTEGES.some((p) => forme(p).test(urlNormalisee))
         if (!touche) continue
         // Le jeton peut être posé dans l'appel, ou porté par une variable du
         // fichier (`headers`, `authHeaders`). On exige alors qu'il existe

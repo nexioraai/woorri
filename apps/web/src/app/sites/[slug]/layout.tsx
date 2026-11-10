@@ -1,6 +1,9 @@
 import type { ReactNode } from 'react'
 import { supabase } from '@/lib/supabase'
 import SurvolVivant from './themes/SurvolVivant'
+import Assistant from './themes/Assistant'
+import { headers } from 'next/headers'
+import { resolveSiteBaseUrl } from './themes/shared'
 
 // ============================================================================
 // LOT 3c — UN SITE GÉNÉRÉ N'EST PAS LE TABLEAU DE BORD.
@@ -55,6 +58,17 @@ export default async function SiteLayout({
   // n'emprunte simplement aucune couleur qui ne serait pas la sienne.
   const primary = (data as { primary_color?: string | null } | null)?.primary_color || '#111111'
 
+  // ── LOT 16 — LA BULLE N'EXISTE QUE SI LE SITE L'A ALLUMÉE.
+  // L'interrupteur se lit côté serveur (la vue publique ne le porte pas) ;
+  // import tardif, pour que la seule présence du lecteur ne fasse pas tomber
+  // ce qui importe ce gabarit quand la clé manque.
+  const { supabaseAdmin } = await import('@/lib/supabase-admin')
+  const { data: reglage } = await supabaseAdmin
+    .from('sites').select('assistant_actif,slug,custom_domain').eq('slug', slug).maybeSingle()
+  const r = reglage as { assistant_actif?: boolean; slug: string; custom_domain: string | null } | null
+  const assistant = r?.assistant_actif === true
+  const base = r ? resolveSiteBaseUrl(r as never, (await headers()).get('host')) : ''
+
   return (
     <div
       data-surface="site-genere"
@@ -75,6 +89,7 @@ export default async function SiteLayout({
     >
       <SurvolVivant primary={primary} />
       {children}
+      {assistant && <Assistant slug={slug} base={base} primary={primary} />}
     </div>
   )
 }
