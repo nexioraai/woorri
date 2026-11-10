@@ -125,13 +125,11 @@ export default function Partenaires({
   // fois, c'est deux endroits où le survol divergera.
   const styleTuiles = `
     .tuilePartenaire { transition: border-color .25s, box-shadow .25s, transform .25s }
-    .logoPartenaire { filter: grayscale(1); opacity: .72; transition: filter .25s, opacity .25s }
     a:hover > .tuilePartenaire, a:focus-visible > .tuilePartenaire {
       border-color: color-mix(in srgb, ${primary} 45%, #ffffff);
       box-shadow: 0 8px 22px color-mix(in srgb, ${primary} 14%, transparent);
       transform: translateY(-2px);
     }
-    a:hover .logoPartenaire, a:focus-visible .logoPartenaire { filter: none; opacity: 1 }
     @media (prefers-reduced-motion: reduce) {
       .tuilePartenaire { transition: none }
       a:hover > .tuilePartenaire, a:focus-visible > .tuilePartenaire { transform: none }

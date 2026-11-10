@@ -24,6 +24,9 @@ export default function PiedLegal({ base, pages, planDuSite }: {
   pages: { chemin: string; titre: string }[]
   planDuSite: string
 }) {
+  // UN SITE SANS PAGE LÉGALE N'A PAS DE BANDEAU : les 42 autres sites ne
+  // changent pas d'apparence parce que la CPA a des mentions légales.
+  if (pages.length === 0) return null
   const liens = [...pages, { chemin: 'plan-du-site', titre: planDuSite }]
   return (
     <nav aria-label="Informations légales" style={{

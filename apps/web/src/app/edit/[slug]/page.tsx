@@ -136,7 +136,7 @@ export default function EditPage() {
     const { data } = supabase.storage.from('site-images').getPublicUrl(path);
     setSite({ ...site, hero_image: data.publicUrl });
     setUploading(false);
-    setMessage('Image uploaded! Click Save Changes to keep it.');
+    setMessage(`Image déposée. Cliquez sur « ${t('naved.save')} » pour la conserver.`);
   };
 
   // ── LE LOGO DU MARCHAND.
@@ -176,7 +176,7 @@ export default function EditPage() {
       setAvisLogo(
         ((data.avertissements ?? []) as { code: string; message: string }[]).map((a) => a.message),
       );
-      setMessage('Logo déposé. Cliquez sur « Save Changes » pour le conserver.');
+      setMessage(`Logo déposé. Cliquez sur « ${t('naved.save')} » pour le conserver.`);
     } catch {
       setMessage('Dépôt du logo impossible.');
     } finally {
@@ -468,7 +468,7 @@ export default function EditPage() {
             {site.logo_url && (
               <button
                 type="button"
-                onClick={() => { setSite({ ...site, logo_url: null }); setAvisLogo([]); setMessage('Logo retiré. Cliquez sur « Save Changes ».') }}
+                onClick={() => { setSite({ ...site, logo_url: null }); setAvisLogo([]); setMessage(`Logo retiré. Cliquez sur « ${t('naved.save')} ».`) }}
                 className="mt-2 text-xs text-white/40 hover:text-white/70 underline"
               >
                 Retirer le logo et revenir à la lettre
@@ -888,7 +888,7 @@ export default function EditPage() {
             disabled={saving || (site?.mode === 3 && (site?.dropship_type === 'reseller' || site?.dropship_type === 'pod_custom' || site?.dropship_type === 'pod_brand') && Number(site.cj_margin_percent ?? DEFAULT_MARGIN_PERCENT) < MIN_MARGIN_PERCENT)}
             className="w-full btn-nexiora py-4 rounded-2xl font-semibold text-lg transition disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            {saving ? 'Saving…' : 'Save Changes'}
+            {saving ? t('naved.saving') : t('naved.save')}
           </button>
 
           {message && (

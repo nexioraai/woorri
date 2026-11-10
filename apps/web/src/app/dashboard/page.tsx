@@ -720,7 +720,7 @@ export default function DashboardPage() {
                     {site.ouvre_des_comptes === true && (
                       <Link href={`/comptes/${site.slug}`}
                         className="relative flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-sm font-semibold border border-white/10 text-white/70 hover:text-white hover:border-white/30 transition-all"
-                        title="Comptes et demandes d'acces">
+                        title="Comptes inscrits">
                         <Users className="w-3.5 h-3.5" />
                         {(demandesEnAttente[site.slug] ?? 0) > 0 && (
                           <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#b45309] text-white text-[11px] font-bold flex items-center justify-center">

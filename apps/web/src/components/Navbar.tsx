@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 import { fetchOwnedSite, updateOwnedSite } from '@/lib/supabase-owned-site';
 import { useTranslation } from '@/lib/translations';
+import type { TranslationKey } from '@/lib/translations/fr';
 import LanguageSwitcher from './LanguageSwitcher';
 import { SUPPORTED_LANGUAGES } from '@/lib/i18n/supportedLanguages';
 import { Menu as MenuIcon, X, ArrowLeft, Plus, Trash2, Check, Loader2, Upload, Eye, EyeOff, MapPin } from 'lucide-react';
@@ -350,7 +351,7 @@ export default function Navbar() {
                     <div key={section} className={`flex items-center gap-2 rounded-xl bg-white/5 transition ${isHidden ? 'opacity-40' : ''}`}>
                       <button onClick={() => setCurrentSection(section)} disabled={!slug}
                         className="flex-1 text-left px-4 py-3 text-white/80 hover:text-white transition font-medium disabled:cursor-not-allowed">
-                        {section}
+                        {(() => { const k = `naved.section.${section}` as TranslationKey; const l = t(k); return l === k ? section : l })()}
                       </button>
                       <button onClick={() => toggleSection(section)} disabled={!slug} title={isHidden ? t('naved.showOnSite') : t('naved.hideFromSite')}
                         className="px-3 py-3 text-white/50 hover:text-white transition disabled:opacity-40">

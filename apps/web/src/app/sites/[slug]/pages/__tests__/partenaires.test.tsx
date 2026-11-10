@@ -147,15 +147,16 @@ describe('la tuile sans logo tient debout toute seule', () => {
 });
 
 describe('un vrai logo se comporte comme un logo de partenaire', () => {
-  it('🔴 il est en gris au repos, et reprend ses couleurs au survol', () => {
-    // Sept logos en couleurs pleines dans un bandeau se battent entre eux et
-    // avec la page ; en gris ils forment une ligne, et celui qu’on survole
-    // se détache.
+  it('🔴 il garde SES couleurs, toujours — jamais grisé ni pâli', () => {
+    // INVERSÉ le 2026-11-10 à la demande du propriétaire : le logo de l'OMS,
+    // sans lien, restait gris à jamais — le survol qui le recolorait n'existe
+    // que sur une tuile cliquable. Un logo d'institution se montre tel qu'il
+    // est.
     const html = renderToStaticMarkup(
-      <Partenaires items={[{ nom: 'OMS', logo: '/oms.png', url: 'https://who.int' }]} />,
+      <Partenaires items={[{ nom: 'OMS', logo: '/oms.png' }, { nom: 'UE', logo: '/ue.png', url: 'https://europa.eu' }]} />,
     );
-    expect(html).toMatch(/\.logoPartenaire\s*\{[^}]*grayscale\(1\)/);
-    expect(html).toMatch(/:hover[^{]*\.logoPartenaire\s*\{[^}]*filter:\s*none/);
+    expect(html).not.toMatch(/grayscale/);
+    expect(html).not.toMatch(/\.logoPartenaire\s*\{[^}]*opacity/);
   });
 
   it('🔴 le relief du survol se coupe si le lecteur le demande', () => {
