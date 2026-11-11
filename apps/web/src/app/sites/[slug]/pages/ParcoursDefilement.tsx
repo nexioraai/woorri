@@ -23,17 +23,16 @@ export type EtapeParcours = { titre: string; texte?: string; image?: string; lib
 const imageSure = (u?: string) => (typeof u === 'string' && /^https?:\/\//.test(u) ? u : undefined)
 
 // LECTURE « auto » (accueil CPA, 2026-11-11) : un seul écran, la photo change
-// d'elle-même toutes les AUTO_MS, en fondu ; la ligne d'étapes reste cliquable ;
-// pause au survol et au clavier ; aucun changement automatique si le visiteur
-// a demandé moins de mouvement. Sans JavaScript : la première étape, fixe.
-const AUTO_MS = 5500
+// d'elle-même toutes les AUTO_MS, en fondu, en boucle ; la ligne d'étapes reste
+// cliquable ; aucun changement automatique si le visiteur a demandé moins de
+// mouvement. Sans JavaScript : la première étape, fixe.
+const AUTO_MS = 2000   // demande CPA : une photo toutes les 2 secondes, en boucle
 
 export default function ParcoursDefilement({
   etapes, surtitre, accent, lecture = 'defilement',
 }: { etapes: EtapeParcours[]; surtitre?: string; accent: string; lecture?: 'defilement' | 'auto' }) {
   const auto = lecture === 'auto'
   const [rendu, setRendu] = useState<'empile' | 'defile'>(auto ? 'defile' : 'empile')
-  const pause = useRef(false)
   const [tic, setTic] = useState(0)          // relance le minuteur après un clic
   const [actif, setActif] = useState(0)
   // OÙ EST L'IMAGE : avant la section, épinglée à l'écran, ou après.
@@ -54,7 +53,10 @@ export default function ParcoursDefilement({
   // LECTURE AUTOMATIQUE : une étape toutes les AUTO_MS, sauf en pause.
   useEffect(() => {
     if (!auto || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return
-    const h = setInterval(() => { if (!pause.current) setActif((a) => (a + 1) % etapes.length) }, AUTO_MS)
+    // PAS de pause au survol : le hero remplit l'écran, la souris y est presque
+    // toujours — la lecture paraissait bloquée. Pas de pause au focus non plus :
+    // après un clic sur une étape, le bouton garde le focus et figeait tout.
+    const h = setInterval(() => setActif((a) => (a + 1) % etapes.length), AUTO_MS)
     return () => clearInterval(h)
   }, [auto, etapes.length, tic])
 
@@ -90,13 +92,13 @@ export default function ParcoursDefilement({
     /* Une animation d'apparition pose un transform sur les blocs ; un parent
        transformé ferait de l'image épinglée une image ABSOLUE dans la section. */
     .parcours.defile { transform: none !important; animation: none !important }
-    .parcours .scene { position: absolute; inset: 0; opacity: 0; transition: opacity .9s ease }
+    .parcours .scene { position: absolute; inset: 0; opacity: 0; transition: opacity ${auto ? '.55s' : '.9s'} ease }
     .parcours .scene.on { opacity: 1 }
-    .parcours .scene img { width: 100%; height: 100%; object-fit: cover; display: block; transform: scale(1.1); transition: transform 7s cubic-bezier(.2,.6,.2,1) }
+    .parcours .scene img { width: 100%; height: 100%; object-fit: cover; display: block; transform: scale(1.1); transition: transform ${auto ? '2.4s' : '7s'} cubic-bezier(.2,.6,.2,1) }
     .parcours .scene.on img { transform: scale(1) }
     .parcours .voile { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(5,12,8,.78) 0%, rgba(5,12,8,.45) 38%, rgba(5,12,8,0) 68%) }
     .parcours .voileBas { position: absolute; inset: 0; background: linear-gradient(0deg, rgba(5,12,8,.65), rgba(5,12,8,0) 45%) }
-    .parcours .texte { transition: opacity .6s ease, transform .6s ease }
+    .parcours .texte { transition: opacity ${auto ? '.35s' : '.6s'} ease, transform ${auto ? '.35s' : '.6s'} ease }
     /* Un fond sombre translucide : la ligne restait illisible sur un ciel clair. */
     .parcours .rail { background: rgba(5,12,8,.38); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); padding: 14px 18px; border-radius: 16px }
     .parcours .rail button { all: unset; cursor: pointer; display: flex; align-items: center; gap: 12px; padding: 6px 0; color: rgba(255,255,255,.62); font-size: 14px; font-weight: 600 }
@@ -142,8 +144,6 @@ export default function ParcoursDefilement({
   return (
     <section ref={zone} className="parcours defile" aria-label={surtitre || 'Parcours'}
       aria-roledescription={auto ? 'carrousel' : undefined}
-      onMouseEnter={() => { pause.current = true }} onMouseLeave={() => { pause.current = false }}
-      onFocus={() => { pause.current = true }} onBlur={() => { pause.current = false }}
       style={{ height: auto ? 'max(100vh, 620px)' : `${etapes.length * 100}vh` }}>
       <style>{css}</style>
       <div style={{
