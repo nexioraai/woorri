@@ -112,6 +112,22 @@ export default function ParcoursDefilement({
     .parcours .segments .plein { display: block; height: 100%; background: #fff; border-radius: 99px; transform-origin: left center }
     .parcours .segments .plein.court { animation: parcours-remplir ${AUTO_MS}ms linear forwards }
     @keyframes parcours-remplir { from { transform: scaleX(0) } to { transform: scaleX(1) } }
+    /* TÉLÉPHONE, LECTURE AUTO (CPA, 2026-11-11 : « ça n'a aucun sens »). Les
+       photos sont en 3:2 ; recadrées en plein écran portrait, il n'en restait
+       qu'un quart — un mur, une épaule. Ici : la photo ENTIÈRE en haut, le
+       texte dessous sur le bleu du site. L'ordinateur ne change pas. */
+    /* Aussi la tablette en PORTRAIT : en 768×1024, le recadrage gardait la
+       moitié de la photo. La barre du haut est fixe (80 px + liseré) : la
+       bande commence sous elle, sinon elle mange le haut de la photo. */
+    @media (max-width: 760px), (orientation: portrait) and (max-width: 1100px) {
+      .parcours.auto { height: auto !important; padding-top: 81px; background: color-mix(in srgb, var(--acc) 88%, #000) }
+      .parcours.auto .rail { display: none !important }
+      .parcours.auto .corps { height: auto !important }
+      .parcours.auto .cadre { position: relative !important; inset: auto !important; aspect-ratio: 3 / 2; width: 100% }
+      .parcours.auto .scene img { transform: none }
+      .parcours.auto .voile, .parcours.auto .voileBas { display: none }
+      .parcours.auto .bloc { height: auto !important; justify-content: flex-start !important; padding-top: 26px !important; padding-bottom: 64px !important; min-height: 330px }
+    }
     @media (max-width: 760px) {
       .parcours .rail { display: none !important }
       .parcours .voile { background: linear-gradient(0deg, rgba(5,12,8,.88) 0%, rgba(5,12,8,.5) 45%, rgba(5,12,8,.1) 75%) }
@@ -149,22 +165,27 @@ export default function ParcoursDefilement({
 
   const e = etapes[actif]
   return (
-    <section ref={zone} className="parcours defile" aria-label={surtitre || 'Parcours'}
+    <section ref={zone} className={`parcours defile${auto ? ' auto' : ''}`} aria-label={surtitre || 'Parcours'}
       aria-roledescription={auto ? 'carrousel' : undefined}
       style={{ height: auto ? 'max(100vh, 620px)' : `${etapes.length * 100}vh` }}>
       <style>{css}</style>
-      <div style={{
+      <div className="corps" style={{
         height: auto ? '100%' : '100vh', overflow: 'hidden', left: 0, width: '100%',
         ...(auto ? { position: 'relative' } : epingle === 'fixe' ? { position: 'fixed', top: 0 } : epingle === 'apres' ? { position: 'absolute', bottom: 0 } : { position: 'absolute', top: 0 }),
       }}>
-        {etapes.map((x, i) => imageSure(x.image) && (
-          <div key={i} className={`scene${i === actif ? ' on' : ''}`} aria-hidden={i !== actif}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={imageSure(x.image)} alt="" loading={i === 0 ? 'eager' : 'lazy'} />
-          </div>
-        ))}
-        <div className="voile" />
-        <div className="voileBas" />
+        {/* LE CADRE DES PHOTOS. Sur ordinateur il couvre tout le hero ; sur
+            téléphone (lecture auto) il devient une bande au format des photos
+            (3:2), posée AU-DESSUS du texte : la photo se voit en entier. */}
+        <div className="cadre" style={{ position: 'absolute', inset: 0 }}>
+          {etapes.map((x, i) => imageSure(x.image) && (
+            <div key={i} className={`scene${i === actif ? ' on' : ''}`} aria-hidden={i !== actif}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={imageSure(x.image)} alt="" loading={i === 0 ? 'eager' : 'lazy'} />
+            </div>
+          ))}
+          <div className="voile" />
+          <div className="voileBas" />
+        </div>
 
         <div className="bloc" style={{ position: 'relative', height: '100%', maxWidth: 1180, margin: '0 auto', padding: '0 24px', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
           {surtitre && (
