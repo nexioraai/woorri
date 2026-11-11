@@ -27,6 +27,13 @@ export default function ParcoursDefilement({
 }: { etapes: EtapeParcours[]; surtitre?: string; accent: string }) {
   const [rendu, setRendu] = useState<'empile' | 'defile'>('empile')
   const [actif, setActif] = useState(0)
+  // OÙ EST L'IMAGE : avant la section, épinglée à l'écran, ou après.
+  // Pas de `position: sticky` : le <body> du site a `overflow-x: hidden`, ce
+  // qui en fait le conteneur de défilement de toute la page — or c'est la
+  // FENÊTRE qui défile. Un sticky collé à un <body> qui ne défile pas ne colle
+  // jamais (mesuré dans WebKit et Chromium le 2026-11-11). On épingle donc
+  // nous-mêmes, à partir de la position déjà suivie.
+  const [epingle, setEpingle] = useState<'avant' | 'fixe' | 'apres'>('avant')
   const zone = useRef<HTMLElement>(null)
 
   useEffect(() => {
@@ -43,6 +50,7 @@ export default function ParcoursDefilement({
       const course = r.height - window.innerHeight
       const p = course > 0 ? Math.min(0.9999, Math.max(0, -r.top / course)) : 0
       setActif(Math.floor(p * etapes.length))
+      setEpingle(r.top > 0 ? 'avant' : r.bottom < window.innerHeight ? 'apres' : 'fixe')
     }
     // Premier calcul au prochain rafraîchissement, pas dans le corps de l'effet.
     const premier = requestAnimationFrame(calculer)
@@ -61,6 +69,9 @@ export default function ParcoursDefilement({
 
   const css = `
     .parcours { --acc: ${accent}; position: relative; width: 100vw; margin-left: calc(50% - 50vw); color: #fff; background: #0c1410 }
+    /* Une animation d'apparition pose un transform sur les blocs ; un parent
+       transformé ferait de l'image épinglée une image ABSOLUE dans la section. */
+    .parcours.defile { transform: none !important; animation: none !important }
     .parcours .scene { position: absolute; inset: 0; opacity: 0; transition: opacity .9s ease }
     .parcours .scene.on { opacity: 1 }
     .parcours .scene img { width: 100%; height: 100%; object-fit: cover; display: block; transform: scale(1.1); transition: transform 7s cubic-bezier(.2,.6,.2,1) }
@@ -109,9 +120,12 @@ export default function ParcoursDefilement({
 
   const e = etapes[actif]
   return (
-    <section ref={zone} className="parcours" aria-label={surtitre || 'Parcours'} style={{ height: `${etapes.length * 100}vh` }}>
+    <section ref={zone} className="parcours defile" aria-label={surtitre || 'Parcours'} style={{ height: `${etapes.length * 100}vh` }}>
       <style>{css}</style>
-      <div style={{ position: 'sticky', top: 0, height: '100vh', overflow: 'hidden' }}>
+      <div style={{
+        height: '100vh', overflow: 'hidden', left: 0, width: '100%',
+        ...(epingle === 'fixe' ? { position: 'fixed', top: 0 } : epingle === 'apres' ? { position: 'absolute', bottom: 0 } : { position: 'absolute', top: 0 }),
+      }}>
         {etapes.map((x, i) => imageSure(x.image) && (
           <div key={i} className={`scene${i === actif ? ' on' : ''}`} aria-hidden={i !== actif}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
