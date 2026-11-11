@@ -36,6 +36,7 @@ import SectionAppelsOffres from './SectionAppelsOffres'
 import LienAppelsOffres from './LienAppelsOffres'
 import MenuDeclare from './MenuDeclare'
 import HeroDiapo, { photosDAccueil } from './HeroDiapo'
+import TexteQuiSEcrit from './TexteQuiSEcrit'
 import EditorialShopSection from './EditorialShopSection'
 import { socialUrl } from '@/lib/social'
 import ReseauxSociaux from './ReseauxSociaux'
@@ -216,11 +217,12 @@ export default function EditorialTheme({ site, hasAvis = false, host = null, men
               className="font-serif text-5xl md:text-7xl lg:text-8xl leading-[0.95] tracking-tight mb-8"
               style={{ fontFamily: 'var(--font-fraunces), serif' }}
             >
-              {site.hero_title || site.name}
+              <TexteQuiSEcrit texte={site.hero_title || site.name} msParLettre={38} />
             </h1>
             {site.hero_subtitle && (
               <p className="text-lg md:text-xl text-white/80 max-w-xl mb-10 leading-relaxed">
-                {site.hero_subtitle}
+                {/* Le sous-titre s'écrit APRÈS le titre, comme sur anie.td. */}
+                <TexteQuiSEcrit texte={site.hero_subtitle} msParLettre={16} delaiMs={(site.hero_title || site.name).length * 38 + 250} />
               </p>
             )}
             <div className="flex flex-wrap gap-4">
