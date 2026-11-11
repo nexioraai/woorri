@@ -7,6 +7,7 @@ import { notFound } from 'next/navigation'
 import { fetchSite, resolveSiteBaseUrl } from '../themes/shared'
 import BlocsDePage from '../pages/BlocsDePage'
 import SousPages from '../pages/SousPages'
+import FicheResponsable, { estUneFiche } from '../pages/FicheResponsable'
 import { fetchBlogIndex, type BlogPostCard, type CategorieArticle } from '../blog/fetchPosts'
 import { fetchPage, fetchFilDAriane, fetchEnfants } from '../pages/fetchPage'
 import HtmlLang from '../themes/HtmlLang'
@@ -106,9 +107,13 @@ export default async function PageDeclaree({ params }: Props) {
   // REFUS ① : rien de declare a cette adresse -> 404, jamais une page vide.
   if (!page) notFound()
 
-  const [fil, enfants] = await Promise.all([
+  // UNE FICHE (premier bloc = le mot d'un responsable, photo comprise) charge
+  // aussi ses SŒURS : ce sont ses « pages liées ».
+  const fiche = estUneFiche(page.blocs)
+  const [fil, enfants, freres] = await Promise.all([
     fetchFilDAriane(site.id, chemin),
     fetchEnfants(site.id, chemin),
+    fiche && page.parent ? fetchEnfants(site.id, page.parent) : Promise.resolve([]),
   ])
 
   // LOT 7 — LES ARTICLES DES BLOCS « articles ».
@@ -175,7 +180,7 @@ export default async function PageDeclaree({ params }: Props) {
       <div style={{ minHeight: '100vh', background: '#ffffff', color: '#111111' }}>
       <main
         dir={rtl ? 'rtl' : 'ltr'}
-        style={{ maxWidth: 820, margin: '0 auto', padding: '64px 24px' }}
+        style={{ maxWidth: fiche ? 1180 : 820, margin: '0 auto', padding: '64px 24px' }}
       >
         {/* FIL D'ARIANE -- derive du chemin, et seuls les ancetres REELLEMENT
             publies y figurent. Un ancetre non publie n'y devient pas un lien
@@ -194,6 +199,19 @@ export default async function PageDeclaree({ params }: Props) {
           <span aria-current="page">{page.titre}</span>
         </nav>
 
+        {fiche ? (
+          <FicheResponsable
+            site={site}
+            titre={page.titre}
+            chapeau={page.chapeau}
+            blocs={page.blocs}
+            base={base}
+            accent={accent}
+            parent={fil.length ? fil[fil.length - 1] : null}
+            freres={freres}
+            cheminCourant={page.chemin}
+          />
+        ) : (<>
         <h1 style={{ fontSize: 40, fontWeight: 800, margin: '0 0 16px', letterSpacing: '-0.02em', lineHeight: 1.15 }}>
           {page.titre}
         </h1>
@@ -224,6 +242,7 @@ export default async function PageDeclaree({ params }: Props) {
             lang={site.lang}
           />
         )}
+        </>)}
 
         {/* LES ENFANTS -- une page d'entree ne porte qu'un chapeau et des
             cartes vers ses sous-pages. C'est le principe de la page dans la
