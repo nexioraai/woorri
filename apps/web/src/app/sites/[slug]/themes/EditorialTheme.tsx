@@ -389,6 +389,13 @@ export default function EditorialTheme({ site, hasAvis = false, host = null, men
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {(sec.items || []).map((s: any, i: number) => {
                 const featured = i === 0 && sec.items.length >= 3
+                // UNE CARTE QUI PORTE UN LIEN MÈNE À SA PAGE (CPA, 2026-11-11 :
+                // « ils sont cliquables mais mènent nulle part »). `lien` = chemin
+                // d'une page du site (« qui-sommes-nous/missions ») ou ancre de
+                // l'accueil (« #partenaires »). Sans lien : la fiche d'avant.
+                const lien = typeof s.lien === 'string' && /^#?[a-z0-9][a-z0-9\-/]*$/i.test(s.lien)
+                  ? `${lienAccueil(site, host)}/${s.lien}`
+                  : null
                 // M2-207 — LA CARTE DE COLLECTION EST CLIQUABLE (Youssouf :
                 // « nos collections doivent être cliquables, la fiche
                 // s'affiche, avec les boutons WhatsApp et appel »). Elle
@@ -397,22 +404,7 @@ export default function EditorialTheme({ site, hasAvis = false, host = null, men
                 // sans carte elle fait parler au vendeur. Le numéro suit le
                 // même repli que partout : social_links.whatsapp, sinon
                 // contact.phone.
-                return (
-                  <ClickableProductCard
-                    key={i}
-                    slug={site.slug}
-                    lang={site.lang}
-                    primary={primary}
-                    product={{
-                      name: s.title,
-                      description: s.description || '',
-                      price: s.price || '',
-                      image: s.image,
-                      whatsapp: social.whatsapp || contact.phone || null,
-                      mobileMoney: Array.isArray((contact as any).mobile_money) ? (contact as any).mobile_money : [],
-                      hasProductPage: false,
-                    }}
-                  >
+                const carte = (
                   <TiltCard
                     className={`group relative p-8 md:p-10 rounded-3xl transition-all duration-500 ${
                       featured
@@ -448,8 +440,8 @@ export default function EditorialTheme({ site, hasAvis = false, host = null, men
                     >
                       {s.description}
                     </p>
-                    {featured && (
-                      <span
+                    {(featured || lien) && (
+                      <span style={featured ? undefined : { color: primary }}
                         className="inline-flex items-center gap-2 mt-8 text-sm font-medium group/link"
                       >
                         {t.labels.learnMore}
@@ -457,6 +449,29 @@ export default function EditorialTheme({ site, hasAvis = false, host = null, men
                       </span>
                     )}
                   </TiltCard>
+                )
+                if (lien) return (
+                  <a key={i} href={lien} className="block rounded-3xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4" style={{ textDecoration: 'none', color: 'inherit' }}>
+                    {carte}
+                  </a>
+                )
+                return (
+                  <ClickableProductCard
+                    key={i}
+                    slug={site.slug}
+                    lang={site.lang}
+                    primary={primary}
+                    product={{
+                      name: s.title,
+                      description: s.description || '',
+                      price: s.price || '',
+                      image: s.image,
+                      whatsapp: social.whatsapp || contact.phone || null,
+                      mobileMoney: Array.isArray((contact as any).mobile_money) ? (contact as any).mobile_money : [],
+                      hasProductPage: false,
+                    }}
+                  >
+                  {carte}
                   </ClickableProductCard>
                 )
               })}
