@@ -79,6 +79,8 @@ export default function ParcoursDefilement({
     .parcours .voile { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(5,12,8,.78) 0%, rgba(5,12,8,.45) 38%, rgba(5,12,8,0) 68%) }
     .parcours .voileBas { position: absolute; inset: 0; background: linear-gradient(0deg, rgba(5,12,8,.65), rgba(5,12,8,0) 45%) }
     .parcours .texte { transition: opacity .6s ease, transform .6s ease }
+    /* Un fond sombre translucide : la ligne restait illisible sur un ciel clair. */
+    .parcours .rail { background: rgba(5,12,8,.38); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); padding: 14px 18px; border-radius: 16px }
     .parcours .rail button { all: unset; cursor: pointer; display: flex; align-items: center; gap: 12px; padding: 6px 0; color: rgba(255,255,255,.62); font-size: 14px; font-weight: 600 }
     .parcours .rail button:focus-visible { outline: 2px solid #fff; outline-offset: 4px; border-radius: 4px }
     .parcours .rail button[aria-current="step"] { color: #fff }

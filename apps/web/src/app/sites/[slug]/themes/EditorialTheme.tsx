@@ -38,6 +38,7 @@ import MenuDeclare from './MenuDeclare'
 import HeroDiapo, { photosDAccueil } from './HeroDiapo'
 import TexteQuiSEcrit from './TexteQuiSEcrit'
 import HeroVitrine from '../pages/HeroVitrine'
+import ParcoursDefilement from '../pages/ParcoursDefilement'
 import EditorialShopSection from './EditorialShopSection'
 import { socialUrl } from '@/lib/social'
 import ReseauxSociaux from './ReseauxSociaux'
@@ -188,9 +189,17 @@ export default function EditorialTheme({ site, hasAvis = false, host = null, men
           le hero d'avant, inchangé. */}
       {!hidden('Home') && heroVitrine && (
         <div id="home">
-          <HeroVitrine pieces={heroVitrine.pieces} surtitre={heroVitrine.surtitre} accent={primary}
-            bouton={heroVitrine.bouton} lienBouton={heroVitrine.lienBouton} badge={heroVitrine.badge}
-            titrePage={site.hero_title || site.name} />
+          {heroVitrine.affichage === 'parcours' ? (
+            <>
+              {/* Le h1 de l'accueil reste le titre du site : stable, lu par les moteurs. */}
+              <h1 style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)', whiteSpace: 'nowrap' }}>{site.hero_title || site.name}</h1>
+              <ParcoursDefilement etapes={heroVitrine.pieces} surtitre={heroVitrine.surtitre} accent={primary} />
+            </>
+          ) : (
+            <HeroVitrine pieces={heroVitrine.pieces} surtitre={heroVitrine.surtitre} accent={primary}
+              bouton={heroVitrine.bouton} lienBouton={heroVitrine.lienBouton} badge={heroVitrine.badge}
+              titrePage={site.hero_title || site.name} />
+          )}
         </div>
       )}
       {!hidden('Home') && !heroVitrine && (

@@ -125,8 +125,10 @@ export default async function SitePage({ params, searchParams }: Props) {
     fetchPage(site.id, 'accueil-hero').catch(() => null),
   ])
   const premierBloc = pageHero?.blocs?.[0] as (Record<string, unknown> & { items?: unknown[] }) | undefined
-  const heroVitrine = premierBloc?.type === 'etapes' && premierBloc.affichage === 'vitrine' && Array.isArray(premierBloc.items) && premierBloc.items.length >= 4
+  const affichageHero: 'vitrine' | 'parcours' | null = premierBloc?.affichage === 'vitrine' ? 'vitrine' : premierBloc?.affichage === 'parcours' ? 'parcours' : null
+  const heroVitrine = premierBloc?.type === 'etapes' && affichageHero && Array.isArray(premierBloc.items) && premierBloc.items.length >= 4
     ? {
+        affichage: affichageHero,
         surtitre: typeof premierBloc.titre === 'string' ? premierBloc.titre : undefined,
         bouton: typeof premierBloc.bouton === 'string' ? premierBloc.bouton : undefined,
         lienBouton: typeof premierBloc.lien === 'string' && /^[a-z0-9][a-z0-9\-/]*$/i.test(premierBloc.lien) ? `${url}/${premierBloc.lien}` : undefined,

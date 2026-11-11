@@ -72,6 +72,8 @@ export type AvisDuSite = {
    * thème garde alors son hero d'avant. Lu par la route, comme le reste.
    */
   heroVitrine?: {
+    /** 'vitrine' (objet qui s'assemble) ou 'parcours' (photos au défilement). */
+    affichage?: 'vitrine' | 'parcours'
     surtitre?: string; bouton?: string; lienBouton?: string; badge?: string
     pieces: { titre: string; texte?: string; image?: string; libelle?: string }[]
   } | null
