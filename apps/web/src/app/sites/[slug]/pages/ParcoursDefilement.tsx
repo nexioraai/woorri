@@ -26,7 +26,7 @@ const imageSure = (u?: string) => (typeof u === 'string' && /^https?:\/\//.test(
 // d'elle-même toutes les AUTO_MS, en fondu, en boucle ; la ligne d'étapes reste
 // cliquable ; aucun changement automatique si le visiteur a demandé moins de
 // mouvement. Sans JavaScript : la première étape, fixe.
-const AUTO_MS = 2000   // demande CPA : une photo toutes les 2 secondes, en boucle
+const AUTO_MS = 4000   // demande CPA : une photo toutes les 4 secondes, en boucle (2 s auparavant)
 
 export default function ParcoursDefilement({
   etapes, surtitre, accent, lecture = 'defilement',
