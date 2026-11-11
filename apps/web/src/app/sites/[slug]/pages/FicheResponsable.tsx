@@ -1,7 +1,8 @@
 import Link from 'next/link'
-import { Quote, Phone, Mail, MapPin, ChevronRight, ShieldCheck, Network, ArrowLeft } from 'lucide-react'
+import { Quote, Phone, Mail, MapPin, ChevronRight, ShieldCheck, Network, ArrowLeft, UserRound } from 'lucide-react'
 import type { Bloc } from './blocs'
 import BlocsDePage from './BlocsDePage'
+import { photoValable } from './photoValable'
 import type { EntreeMenu } from './fetchPage'
 
 // ============================================================================
@@ -26,9 +27,14 @@ import type { EntreeMenu } from './fetchPage'
 
 type Mot = Extract<Bloc, { type: 'citation' }> & { photo: string }
 
+// PHOTO VIDE = PHOTO À VENIR (CPA, 2026-11-11). Une citation dont le champ
+// `photo` EXISTE mais est vide est aussi une fiche : la mise en page est là,
+// un médaillon d'attente tient la place, et l'équipe pose sa photo dans /edit.
+// Le bloc citation par défaut de l'éditeur ne porte PAS de champ `photo` :
+// une citation ordinaire reste une citation ordinaire.
 export function estUneFiche(blocs: Bloc[]): boolean {
   const b = blocs[0]
-  return !!b && b.type === 'citation' && typeof b.photo === 'string' && /^https?:\/\//.test(b.photo)
+  return !!b && b.type === 'citation' && typeof b.photo === 'string' && (b.photo.trim() === '' || /^https?:\/\//.test(b.photo))
 }
 
 export default function FicheResponsable({
@@ -85,8 +91,15 @@ export default function FicheResponsable({
           {/* ── L'EN-TÊTE (epss) : portrait rond, badge, fonction, établissement. */}
           <section className="carte">
             <div className="entete">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img className="portrait" src={mot.photo} alt={mot.auteur ? `Portrait — ${mot.auteur}` : `Portrait — ${titre}`} />
+              {photoValable(mot.photo) ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img className="portrait" src={mot.photo} alt={mot.auteur ? `Portrait — ${mot.auteur}` : `Portrait — ${titre}`} />
+              ) : (
+                <div className="portrait" role="img" aria-label="Photo à venir"
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'color-mix(in srgb, var(--acc) 10%, #fff)', color: 'var(--acc)' }}>
+                  <UserRound size={96} strokeWidth={1.4} aria-hidden />
+                </div>
+              )}
               <div>
                 <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '7px 14px', borderRadius: 999,
                   background: 'color-mix(in srgb, var(--acc) 12%, #fff)', color: 'var(--acc)', fontSize: 14, fontWeight: 600 }}>

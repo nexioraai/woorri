@@ -3,6 +3,7 @@ import type { Bloc } from './blocs'
 import ListeArticles from './ListeArticles'
 import Organigramme from './Organigramme'
 import MotPortrait from './MotPortrait'
+import { photoValable } from './photoValable'
 import ParcoursDefilement from './ParcoursDefilement'
 import AssemblageDefilement from './AssemblageDefilement'
 import HeroVitrine from './HeroVitrine'
@@ -225,6 +226,10 @@ export default function BlocsDePage({
             )
 
           case 'image':
+            // UN BLOC PHOTO SANS PHOTO NE S'AFFICHE PAS. L'éditeur pose `https://`
+            // et « Décrivez la photo » en attendant le fichier : mesuré le
+            // 2026-11-11 sur une fiche CPA, le public voyait ce gabarit.
+            if (!photoValable(b.url)) return null
             return (
               <figure key={k} style={{ margin: 0 }}>
                 {/* CLIQUABLE — l'image s'ouvre en grand dans un nouvel onglet.
@@ -239,16 +244,19 @@ export default function BlocsDePage({
             )
 
           case 'galerie': {
+            // Mêmes gabarits vides : écartés avant de compter.
+            const photos = b.items.filter((it) => photoValable(it.url))
+            if (photos.length === 0) return null
             // TROIS PHOTOS OU PLUS → DIAPORAMA QUI TOURNE SEUL.
             // Entierement en CSS : pas de JavaScript, donc la page reste
             // entiere sans script et le diaporama demarre meme si le script
             // echoue. `prefers-reduced-motion` fige la premiere photo.
-            const n = b.items.length
+            const n = photos.length
             if (n < 3) return (
               <div key={k}>
                 <TitreDeBloc texte={b.titre} />
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: 12 }}>
-                  {b.items.map((it, j) => (
+                  {photos.map((it, j) => (
                     <figure key={j} style={{ margin: 0 }}>
                       <a href={it.url} target="_blank" rel="noopener noreferrer" aria-label={`Agrandir : ${it.alt}`} style={{ display: 'block' }}>
                         {/* eslint-disable-next-line @next/next/no-img-element -- idem */}
@@ -278,7 +286,7 @@ export default function BlocsDePage({
                   }
                 `}</style>
                 <div className={`diapo${i}`} style={{ position: 'relative', width: '100%', aspectRatio: '16 / 9', borderRadius: 12, overflow: 'hidden', background: FOND_DOUX }}>
-                  {b.items.map((it, j) => (
+                  {photos.map((it, j) => (
                     <a key={j} href={it.url} target="_blank" rel="noopener noreferrer" aria-label={`Agrandir : ${it.alt}`}
                       style={{ position: 'absolute', inset: 0, animationDelay: `${(j * duree / n).toFixed(2)}s`, display: 'block' }}>
                       {/* eslint-disable-next-line @next/next/no-img-element -- une URL fournie par le client ne passe pas par le loader */}
