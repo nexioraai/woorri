@@ -162,6 +162,7 @@ export default function DessinDeMenu({
     <svg
       aria-hidden="true"
       focusable="false"
+      data-dessin-menu=""
       width={taille}
       height={taille}
       viewBox="0 0 24 24"

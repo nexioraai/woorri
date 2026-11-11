@@ -143,6 +143,16 @@ export default function EditorialTheme({ site, hasAvis = false, host = null, men
           to   { opacity: 1; transform: translateY(0); }
         }
         .ed-rise { animation: ed-rise 0.9s ease-out both; }
+        /* LA BARRE TIENT SUR TOUT ÉCRAN (HP Elite x2, 2026-11-11). Entre 1280 et
+           1535 px — tablettes Windows mises à l'échelle, petits portables — le
+           menu déclaré débordait de 15 px et « Contact » sortait de l'écran
+           (la barre de défilement Windows en retire encore 17). À ces largeurs
+           seulement : pictogrammes masqués, espacement resserré. */
+        @media (min-width: 1280px) and (max-width: 1535.98px) {
+          header nav.barre-declaree { gap: 12px; }
+          header:has(nav.barre-declaree) > div { padding-left: 24px; padding-right: 24px; column-gap: 24px; }
+          header nav.barre-declaree [data-dessin-menu] { display: none !important; } /* le dessin porte un display en ligne */
+        }
       `}</style>
 
       {/* =================== HEADER =================== */}
@@ -159,7 +169,7 @@ export default function EditorialTheme({ site, hasAvis = false, host = null, men
           />
           <nav style={encre ? { color: '#ffffff' } : undefined} className={ancresEnBarre
               ? "hidden md:flex items-center gap-10 text-sm font-medium text-neutral-700"
-              : "hidden xl:flex items-center gap-4 text-[13px] font-medium text-neutral-700"}>
+              : "barre-declaree hidden xl:flex items-center gap-4 text-[13px] font-medium text-neutral-700"}>
             {!hidden('Home') && <a href={lienAccueil(site, host)} className={`${survolMenu} inline-flex items-center gap-[7px] whitespace-nowrap`}><DessinDeMenu chemin="accueil" couleur={dessinMenu} />{t.nav.home}</a>}
           {/* LOT 3 — 7 novembre 2026. Quand le site DÉCLARE ses pages, la barre
               du haut leur appartient. Les ancres (#about, #faq…) encombraient
