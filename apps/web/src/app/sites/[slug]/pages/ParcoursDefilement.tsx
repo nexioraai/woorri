@@ -14,7 +14,7 @@ import { useEffect, useRef, useState } from 'react'
 // → distribution.
 //
 // SANS JAVASCRIPT : les étapes s'affichent l'une sous l'autre, chacune avec
-// son image — rien n'est caché. Le mode « défilement » n'est activé qu'une
+// son image — rien n'est caché. Le rendu « défilement » n'est activé qu'une
 // fois le script en place. `prefers-reduced-motion` : ni zoom ni fondu lent.
 // ============================================================================
 
@@ -25,17 +25,17 @@ const imageSure = (u?: string) => (typeof u === 'string' && /^https?:\/\//.test(
 export default function ParcoursDefilement({
   etapes, surtitre, accent,
 }: { etapes: EtapeParcours[]; surtitre?: string; accent: string }) {
-  const [mode, setMode] = useState<'empile' | 'defile'>('empile')
+  const [rendu, setRendu] = useState<'empile' | 'defile'>('empile')
   const [actif, setActif] = useState(0)
   const zone = useRef<HTMLElement>(null)
 
   useEffect(() => {
-    const t = setTimeout(() => setMode('defile'), 0)
+    const t = setTimeout(() => setRendu('defile'), 0)
     return () => clearTimeout(t)
   }, [])
 
   useEffect(() => {
-    if (mode !== 'defile') return
+    if (rendu !== 'defile') return
     const calculer = () => {
       const z = zone.current
       if (!z) return
@@ -49,7 +49,7 @@ export default function ParcoursDefilement({
     window.addEventListener('scroll', calculer, { passive: true })
     window.addEventListener('resize', calculer)
     return () => { cancelAnimationFrame(premier); window.removeEventListener('scroll', calculer); window.removeEventListener('resize', calculer) }
-  }, [mode, etapes.length])
+  }, [rendu, etapes.length])
 
   const allerA = (i: number) => {
     const z = zone.current
@@ -85,7 +85,7 @@ export default function ParcoursDefilement({
   `
 
   // ── SANS SCRIPT (et au premier rendu) : les étapes empilées, rien de caché.
-  if (mode === 'empile') {
+  if (rendu === 'empile') {
     return (
       <section className="parcours" aria-label={surtitre || 'Parcours'}>
         <style>{css}</style>
