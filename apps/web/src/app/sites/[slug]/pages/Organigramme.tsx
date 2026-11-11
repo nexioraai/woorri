@@ -223,8 +223,12 @@ export default function Organigramme({
            organigramme se lit en largeur, la colonne de lecture est trop
            étroite pour lui. Jamais plus large que l'écran moins ses marges. */
         .orgSeulementLarge {
-          display: block; position: relative; left: 50%; transform: translateX(-50%);
+          display: block;
+          /* Une MARGE calculée, pas un décalage transformé : la boîte occupe
+             réellement sa place, donc aucun ancêtre ne devient défilant de
+             côté (un translate laissait une zone fantôme à droite). */
           width: min(1180px, calc(100vw - 48px));
+          margin-left: calc(50% - min(590px, calc(50vw - 24px)));
         }
         .orgSeulementEtroit { display: none }
         @media (max-width: 1023px) {
