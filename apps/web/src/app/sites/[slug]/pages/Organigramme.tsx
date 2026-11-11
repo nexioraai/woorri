@@ -181,12 +181,12 @@ function OrganigrammeBoites({ items, titre }: { items: EntreeOrg[]; titre?: stri
         .organigrammeBoites .boiteOrg {
           background: #ffffff; border: 1px solid #d6d6d6; border-radius: 4px;
           box-shadow: 0 2px 6px rgba(0,0,0,.12);
-          padding: 16px 14px; width: 170px; min-height: 92px; box-sizing: border-box;
+          padding: 14px 10px; width: 144px; min-height: 92px; box-sizing: border-box;
           display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;
         }
-        .organigrammeBoites .arbreOrg > ul > li > .boiteOrg { width: 240px }
+        .organigrammeBoites .arbreOrg > ul > li > .boiteOrg { width: 220px }
         .organigrammeBoites .boiteFonction {
-          font-size: 12.5px; line-height: 1.55; letter-spacing: .02em; color: #444444; text-transform: uppercase;
+          font-size: 12px; line-height: 1.55; letter-spacing: .02em; color: #444444; text-transform: uppercase;
         }
         .organigrammeBoites .boiteNom { font-size: 13px; color: #111111; margin-top: 8px; font-weight: 600 }
       `}</style>
@@ -219,9 +219,15 @@ export default function Organigramme({
   return (
     <>
       <style>{`
-        .orgSeulementLarge { display: block }
+        /* Le schéma SORT de la colonne de texte, centré sur la page : un
+           organigramme se lit en largeur, la colonne de lecture est trop
+           étroite pour lui. Jamais plus large que l'écran moins ses marges. */
+        .orgSeulementLarge {
+          display: block; position: relative; left: 50%; transform: translateX(-50%);
+          width: min(1180px, calc(100vw - 48px));
+        }
         .orgSeulementEtroit { display: none }
-        @media (max-width: 760px) {
+        @media (max-width: 1023px) {
           .orgSeulementLarge { display: none }
           .orgSeulementEtroit { display: block }
         }
