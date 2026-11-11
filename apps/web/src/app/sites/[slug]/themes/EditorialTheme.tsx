@@ -169,7 +169,7 @@ export default function EditorialTheme({ site, hasAvis = false, host = null, men
           />
           <nav style={encre ? { color: '#ffffff' } : undefined} className={ancresEnBarre
               ? "hidden md:flex items-center gap-10 text-sm font-medium text-neutral-700"
-              : "barre-declaree hidden xl:flex items-center gap-4 text-[13px] font-medium text-neutral-700"}>
+              : "hidden xl:flex items-center gap-4 text-[13px] font-medium text-neutral-700 barre-declaree"}>
             {!hidden('Home') && <a href={lienAccueil(site, host)} className={`${survolMenu} inline-flex items-center gap-[7px] whitespace-nowrap`}><DessinDeMenu chemin="accueil" couleur={dessinMenu} />{t.nav.home}</a>}
           {/* LOT 3 — 7 novembre 2026. Quand le site DÉCLARE ses pages, la barre
               du haut leur appartient. Les ancres (#about, #faq…) encombraient
