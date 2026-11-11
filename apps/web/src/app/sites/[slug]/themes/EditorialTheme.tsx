@@ -105,6 +105,9 @@ export default function EditorialTheme({ site, hasAvis = false, host = null, men
   // pas. Sans déclaration (`undefined`), chaque ligne garde son rendu d'avant.
   const encre = encreDeMarque ? primary : undefined
   const enEncre = encre ? { color: encre } : undefined
+  // LA BARRE DU HAUT EN BLEU, TEXTE BLANC (modèle anie.td, 2026-11-11).
+  const survolMenu = encre ? 'hover:opacity-75 transition-opacity' : 'hover:text-black transition-colors'
+  const dessinMenu = encre ? '#ffffff' : primary
   const t = getDict(site.lang)
   const sections = site.sections || []
   const testimonials = (site.testimonials || []).map(normalizeTestimonial)
@@ -143,7 +146,7 @@ export default function EditorialTheme({ site, hasAvis = false, host = null, men
       `}</style>
 
       {/* =================== HEADER =================== */}
-      <header className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-white/70 border-b border-black/5">
+      <header className={`fixed top-0 left-0 right-0 z-50 ${encre ? 'bg-[color:var(--encre)] border-b border-white/10 shadow-lg' : 'backdrop-blur-md bg-white/70 border-b border-black/5'}`}>
         <div className="max-w-7xl mx-auto px-6 md:px-10 h-20 flex items-center justify-between gap-6 lg:gap-10">
           <EnseigneDuSite href={lienAccueil(site, host)}
             nom={site.name}
@@ -152,12 +155,12 @@ export default function EditorialTheme({ site, hasAvis = false, host = null, men
             className={ancresEnBarre
               ? "font-serif text-2xl tracking-tight font-medium"
               : "font-serif text-xl leading-tight tracking-tight font-medium"}
-            style={{ fontFamily: 'var(--font-fraunces), serif', ...enEncre }}
+            style={{ fontFamily: 'var(--font-fraunces), serif', ...(encre ? { color: '#ffffff' } : {}) }}
           />
-          <nav style={enEncre} className={ancresEnBarre
+          <nav style={encre ? { color: '#ffffff' } : undefined} className={ancresEnBarre
               ? "hidden md:flex items-center gap-10 text-sm font-medium text-neutral-700"
               : "hidden xl:flex items-center gap-4 text-[13px] font-medium text-neutral-700"}>
-            {!hidden('Home') && <a href={lienAccueil(site, host)} className="hover:text-black transition-colors inline-flex items-center gap-[7px] whitespace-nowrap"><DessinDeMenu chemin="accueil" couleur={primary} />{t.nav.home}</a>}
+            {!hidden('Home') && <a href={lienAccueil(site, host)} className={`${survolMenu} inline-flex items-center gap-[7px] whitespace-nowrap`}><DessinDeMenu chemin="accueil" couleur={dessinMenu} />{t.nav.home}</a>}
           {/* LOT 3 — 7 novembre 2026. Quand le site DÉCLARE ses pages, la barre
               du haut leur appartient. Les ancres (#about, #faq…) encombraient
               le menu et collaient l'enseigne. Elles ne DISPARAISSENT pas : les
@@ -165,23 +168,23 @@ export default function EditorialTheme({ site, hasAvis = false, host = null, men
               lister — seule la barre se vide. Un site sans page déclarée ne
               voit aucun changement. */}
           {ancresEnBarre && (<>
-            {!hidden('About') && (site.about || site.mission || site.vision) && <a href={lienSection(site, host, 'a-propos')} className="hover:text-black transition-colors">{t.nav.about}</a>}
-            {!hidden('Services') && sections.length > 0 && <a href={lienSection(site, host, 'services')} className="hover:text-black transition-colors">{sections[0]?.name || t.nav.services}</a>}
+            {!hidden('About') && (site.about || site.mission || site.vision) && <a href={lienSection(site, host, 'a-propos')} className={survolMenu}>{t.nav.about}</a>}
+            {!hidden('Services') && sections.length > 0 && <a href={lienSection(site, host, 'services')} className={survolMenu}>{sections[0]?.name || t.nav.services}</a>}
             {hasShop && !hidden('Shop') && (
-              <a href="#shop" className="hover:text-black transition-colors">{t.nav.shop}</a>
+              <a href="#shop" className={survolMenu}>{t.nav.shop}</a>
             )}
-            {gallery.length > 0 && !hidden('Gallery') && <a href="#gallery" className="hover:text-black transition-colors">{t.nav.gallery}</a>}
-            {testimonials.length > 0 && !hidden('Reviews') && <a href="#testimonials" className="hover:text-black transition-colors">{t.nav.reviews}</a>}
+            {gallery.length > 0 && !hidden('Gallery') && <a href="#gallery" className={survolMenu}>{t.nav.gallery}</a>}
+            {testimonials.length > 0 && !hidden('Reviews') && <a href="#testimonials" className={survolMenu}>{t.nav.reviews}</a>}
             {(site.pages || []).filter((p: any) => p && p.title).map((page: any, pi: number) => (
-              <a key={`navpage-${pi}`} href={`#page-${pi}`} className="hover:text-black transition-colors">{page.title}</a>
+              <a key={`navpage-${pi}`} href={`#page-${pi}`} className={survolMenu}>{page.title}</a>
             ))}
-            {site.faq && site.faq.length > 0 && !hidden('FAQ') && <a href="#faq" className="hover:text-black transition-colors">{t.nav.faq}</a>}
+            {site.faq && site.faq.length > 0 && !hidden('FAQ') && <a href="#faq" className={survolMenu}>{t.nav.faq}</a>}
           </>)}
             {/* LOT 2 — les pages DÉCLARÉES, avec leurs sous-menus. Elles
                 précèdent Contact, qui reste la dernière entrée. */}
-            <MenuDeclare site={site} host={host} entrees={menu} className={"hover:text-black transition-colors"} couleur={primary} />
-            {!hidden('AppelsOffres') && <LienAppelsOffres site={site} host={host} className={"hover:text-black transition-colors"} couleur={primary} />}
-            {!hidden('Contact') && <a href={lienContact(site, host)} className="hover:text-black transition-colors inline-flex items-center gap-[7px] whitespace-nowrap"><DessinDeMenu chemin="contact" couleur={primary} />{t.nav.contact}</a>}
+            <MenuDeclare site={site} host={host} entrees={menu} className={survolMenu} couleur={dessinMenu} encrePanneau={encre} />
+            {!hidden('AppelsOffres') && <LienAppelsOffres site={site} host={host} className={survolMenu} couleur={dessinMenu} />}
+            {!hidden('Contact') && <a href={lienContact(site, host)} className={`${survolMenu} inline-flex items-center gap-[7px] whitespace-nowrap`}><DessinDeMenu chemin="contact" couleur={dessinMenu} />{t.nav.contact}</a>}
           </nav>
         </div>
       </header>

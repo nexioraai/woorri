@@ -38,6 +38,7 @@ export default function MenuDeclare({
   entrees,
   className,
   couleur,
+  encrePanneau,
 }: {
   site: Site
   host: string | null
@@ -52,6 +53,12 @@ export default function MenuDeclare({
    * pictogrammes invisibles sur le thème noir.
    */
   couleur?: string | null
+  /**
+   * La couleur du texte DANS le panneau blanc des sous-menus. Absente : il
+   * hérite de la barre, comme avant. Nécessaire quand la barre est en texte
+   * blanc (encre de marque) — sinon blanc sur blanc.
+   */
+  encrePanneau?: string
 }) {
   if (!entrees.length) return null
 
@@ -111,6 +118,7 @@ export default function MenuDeclare({
                 position: 'absolute', insetInlineStart: 0, top: '100%', zIndex: 50,
                 minWidth: 240, padding: 8, marginTop: 8,
                 background: '#fff', borderRadius: 14,
+                ...(encrePanneau ? { color: encrePanneau } : {}),
                 border: '1px solid rgba(0,0,0,0.10)',
                 boxShadow: '0 12px 32px rgba(0,0,0,0.12)',
               }}
