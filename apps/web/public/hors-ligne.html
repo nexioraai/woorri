@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Deribfy — hors connexion</title>
+<style>
+  :root { color-scheme: dark }
+  html, body { margin: 0; height: 100% }
+  body { background: #0A050E; color: #f4f1f6; font: 16px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+         display: flex; align-items: center; justify-content: center; padding: 24px; box-sizing: border-box; text-align: center }
+  main { max-width: 360px }
+  .logo { width: 72px; height: 72px; border-radius: 18px; background: #160d1c; display: inline-flex; align-items: center; justify-content: center;
+          color: #FA5D1E; font-weight: 800; font-size: 40px; margin-bottom: 22px }
+  h1 { font-size: 22px; margin: 0 0 10px }
+  p { margin: 0 0 26px; color: #b9b2bf }
+  button { all: unset; cursor: pointer; background: #FA5D1E; color: #fff; font-weight: 700; padding: 13px 26px; border-radius: 999px }
+  button:focus-visible { outline: 2px solid #fff; outline-offset: 3px }
+</style>
+</head>
+<body>
+<main>
+  <div class="logo" aria-hidden="true">D</div>
+  <h1>Pas de connexion</h1>
+  <p>Deribfy a besoin d’internet pour afficher cette page. Vérifiez votre réseau, puis réessayez.</p>
+  <button type="button" onclick="location.reload()">Réessayer</button>
+</main>
+<script>window.addEventListener('online', function () { location.reload() })</script>
+</body>
+</html>

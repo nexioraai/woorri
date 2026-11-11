@@ -127,7 +127,11 @@ async function principal() {
 
   // ── Conventions de fichier Next : Next émet lui-même les <link>.
   writeFileSync(join(PUBLIC, "icon.png"), await png(512));
-  writeFileSync(join(PUBLIC, "apple-icon.png"), await png(180));
+  // L'icône Apple est PLEINE, sans transparence : l'iPhone remplit les zones
+  // transparentes en NOIR et pose lui-même ses coins arrondis. Mesuré le
+  // 2026-11-11 : 1 735 pixels transparents (les coins du monogramme, rx=112).
+  writeFileSync(join(PUBLIC, "apple-icon.png"),
+    await sharp(base).flatten({ background: FOND }).resize(180, 180).png({ compressionLevel: 9 }).toBuffer());
   console.log("  icon.png             512×512");
   console.log("  apple-icon.png       180×180");
 

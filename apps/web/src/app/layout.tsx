@@ -8,6 +8,7 @@ import JsonLdScript from "@/app/sites/[slug]/themes/JsonLdScript";
 import CookieConsent from "@/components/CookieConsent";
 import "./globals.css";
 import { MarqueurMoteur } from '@/components/MarqueurMoteur';
+import InstallerDeribfy from "@/components/InstallerDeribfy";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -77,6 +78,10 @@ export const metadata: Metadata = {
     ],
     apple: [{ url: "/apple-icon.png", sizes: "180x180", type: "image/png" }],
   },
+  // L'APP INSTALLÉE SUR IPHONE (2026-11-11) : le nom sous l'icône et l'ouverture
+  // en plein écran. Un site de marchand REMPLACE ce bloc par le sien
+  // (`metadonneesDuSite`) : jamais « Deribfy » sous l'icône d'une boutique.
+  appleWebApp: { capable: true, title: "Deribfy", statusBarStyle: "black" },
 };
 
 export default async function RootLayout({
@@ -117,6 +122,8 @@ export default async function RootLayout({
         <LanguageProvider langueImposee={plateforme ? null : langueDInterface(lang)}>
           {children}
           <CookieConsent />
+          {/* Installer Deribfy sur tout téléphone, iPhone compris — plateforme seulement. */}
+          {plateforme && <InstallerDeribfy />}
         </LanguageProvider>
       </body>
     </html>

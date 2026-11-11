@@ -45,6 +45,9 @@ export function metadonneesDuSite(site: SitePourMeta, base: string, slug: string
       apple: [{ url: icone(180), sizes: '180x180', type: 'image/png' }],
     },
     manifest: `${racine}/api/internal/site-manifest/${slug}?v=${v}`,
+    // Sur iPhone, le nom sous l'icône est CELUI DU SITE : sans ce bloc, la
+    // boutique héritait de « Deribfy » posé par le gabarit racine.
+    appleWebApp: { capable: true, title: site.name },
     ...ogDePage(site, base, titre, description, 'website'),
   }
 }
