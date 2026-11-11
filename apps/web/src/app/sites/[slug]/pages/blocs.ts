@@ -77,7 +77,7 @@ export type Bloc = { position?: string } & (
    * trouve les fichiers — c'est-à-dire jamais.
    */
   | { type: 'partenaires'; titre?: string; items: { nom: string; logo?: string; url?: string }[] }
-  | { type: 'organigramme'; titre?: string; affichage?: string; items: { cle: string; parent?: string | null; fonction: string; nom?: string; detail?: string }[] }
+  | { type: 'organigramme'; titre?: string; affichage?: string; items: { cle: string; parent?: string | null; fonction: string; nom?: string; detail?: string; lien?: string; couleur?: string; cote?: string }[] }
 )
 
 /**

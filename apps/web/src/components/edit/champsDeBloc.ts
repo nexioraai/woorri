@@ -53,6 +53,10 @@ export function champEstUnFichier(typeDeBloc: string, champ: unknown): boolean {
  */
 const CHAMPS_FACULTATIFS: Record<string, readonly string[]> = {
   partenaires: ['logo', 'url'],
+  // Une boîte d'organigramme peut devenir CLIQUABLE (`lien` : le chemin d'une
+  // page du site) et prendre une COULEUR (bleu, orange, vert). Sans ces cases,
+  // le client ne pourrait ni ouvrir une fiche ni recolorer un poste.
+  organigramme: ['nom', 'lien', 'couleur'],
 }
 
 /** Tout ce qui est une chaîne dans un bloc, avec son chemin. */

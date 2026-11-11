@@ -295,7 +295,7 @@ export default function BlocsDePage({
             return <Partenaires key={k} items={b.items} titre={b.titre} primary={primary} />
 
           case 'organigramme':
-            return <Organigramme key={k} items={b.items} titre={b.titre} affichage={b.affichage} primary={primary} />
+            return <Organigramme key={k} items={b.items} titre={b.titre} affichage={b.affichage} primary={primary} base={base} />
 
           case 'articles':
             // UNE LISTE VIDE DIT POURQUOI. Faire disparaître la section

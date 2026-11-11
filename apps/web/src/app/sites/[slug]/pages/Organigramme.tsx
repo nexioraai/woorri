@@ -20,16 +20,33 @@
 // placé — personne ne comprend pourquoi il a disparu.
 // ============================================================================
 
+import CadreAjuste from './CadreAjuste'
+
 export type EntreeOrg = {
   cle: string
   parent?: string | null
   fonction: string
   nom?: string
   detail?: string
+  /** Chemin d'une page DU SITE (« qui-sommes-nous/… ») : la boîte devient
+   *  cliquable. Tout autre chose (adresse externe, `javascript:`…) est ignoré. */
+  lien?: string
+  /** Affichage « boîtes » : 'bleu' | 'orange' | 'vert'. Autre valeur : blanc. */
+  couleur?: string
+  /** Affichage « boîtes » : 'lateral' place l'entrée À CÔTÉ de son supérieur
+   *  (un poste d'appui, pas un échelon). Dans l'arbre replié, c'est un
+   *  subordonné comme les autres. */
+  cote?: string
 }
 
-/** Profondeur maximale rendue. Au-delà, un organigramme ne se lit plus. */
-export const PROFONDEUR_MAX = 4
+/** Profondeur maximale rendue. Au-delà, un organigramme ne se lit plus. Six
+ *  niveaux : l'organigramme réel de la CPA en compte six (2026-11-11). */
+export const PROFONDEUR_MAX = 6
+
+/** Un lien de boîte n'est suivi que s'il désigne une page DU SITE. */
+export function lienValable(lien: unknown): lien is string {
+  return typeof lien === 'string' && /^[a-z0-9][a-z0-9\-/]*$/i.test(lien) && !lien.includes('//')
+}
 
 const ENCRE = '#111111'
 const SOURDINE = '#5b5b5b'
@@ -49,8 +66,8 @@ export function enfantsDe(items: EntreeOrg[], parent: string | null): EntreeOrg[
 }
 
 function Branche({
-  items, parent, niveau, primary,
-}: { items: EntreeOrg[]; parent: string | null; niveau: number; primary: string }) {
+  items, parent, niveau, primary, base,
+}: { items: EntreeOrg[]; parent: string | null; niveau: number; primary: string; base: string }) {
   const enfants = enfantsDe(items, parent)
   if (enfants.length === 0 || niveau > PROFONDEUR_MAX) return null
 
@@ -73,7 +90,11 @@ function Branche({
             border: `1px solid ${niveau === 1 ? primary : TRAIT}`, borderRadius: 12,
             padding: '12px 14px', background: niveau === 1 ? `color-mix(in srgb, ${primary} 8%, white)` : '#ffffff',
           }}>
-            <div style={{ fontSize: 16, fontWeight: 600, color: ENCRE, lineHeight: 1.35 }}>{e.fonction}</div>
+            <div style={{ fontSize: 16, fontWeight: 600, color: ENCRE, lineHeight: 1.35 }}>
+              {lienValable(e.lien)
+                ? <a href={`${base}/${e.lien}`} style={{ color: primary, textDecoration: 'underline', textUnderlineOffset: 3 }}>{e.fonction} →</a>
+                : e.fonction}
+            </div>
             {/* LE NOM EST FACULTATIF. Un organigramme nominatif faux sur un
                 site d'État est pire qu'un organigramme sans noms. */}
             {e.nom && <div style={{ fontSize: 15, color: primary, marginTop: 2 }}>{e.nom}</div>}
@@ -109,7 +130,7 @@ function Branche({
                     <span aria-hidden style={{ fontSize: 13, color: SOURDINE, paddingTop: 14 }}>▾</span>
                   </span>
                 </summary>
-                <Branche items={items} parent={e.cle} niveau={niveau + 1} primary={primary} />
+                <Branche items={items} parent={e.cle} niveau={niveau + 1} primary={primary} base={base} />
               </details>
             )}
           </li>
@@ -128,43 +149,75 @@ function Branche({
 //
 // TOUJOURS UNE LISTE IMBRIQUÉE `<ul>/<li>` : les traits sont du CSS posé sur la
 // même structure. Le lecteur d'écran lit le même arbre que dans l'autre rendu.
-// Un schéma large se fait glisser de côté dans son cadre, jamais la page.
+//
+// CHAQUE BOÎTE PEUT ÊTRE UNE PORTE (`lien`) : un clic mène à la page du poste
+// (membres, photo, mot du responsable). Une boîte sans lien reste une boîte.
 // ============================================================================
 
 export const AFFICHAGE_BOITES = 'boites'
 
-function BrancheBoites({ items, parent, niveau }: { items: EntreeOrg[]; parent: string | null; niveau: number }) {
-  const enfants = enfantsDe(items, parent)
+/** Les teintes de l'organigramme fourni par la CPA, à l'identique. */
+const COULEURS: Record<string, { fond: string; bord: string }> = {
+  bleu: { fond: '#00B0F0', bord: '#0089BB' },
+  orange: { fond: '#FFC000', bord: '#C99700' },
+  vert: { fond: '#92D050', bord: '#6FA735' },
+}
+
+const estLateral = (e: EntreeOrg) => e.cote === 'lateral'
+
+function Boite({ e, base }: { e: EntreeOrg; base: string }) {
+  const teinte = e.couleur ? COULEURS[e.couleur] : undefined
+  const style = teinte ? { background: teinte.fond, borderColor: teinte.bord } : undefined
+  const contenu = (
+    <>
+      <span className="boiteFonction" lang="fr">{e.fonction}</span>
+      {e.nom && <span className="boiteNom">{e.nom}</span>}
+    </>
+  )
+  return lienValable(e.lien)
+    ? <a className="boiteOrg boiteLien" style={style} href={`${base}/${e.lien}`} title="Voir la fiche">{contenu}</a>
+    : <div className="boiteOrg" style={style}>{contenu}</div>
+}
+
+function BrancheBoites({ items, parent, niveau, base }: { items: EntreeOrg[]; parent: string | null; niveau: number; base: string }) {
+  const enfants = enfantsDe(items, parent).filter((e) => !estLateral(e) || parent === null)
   if (enfants.length === 0 || niveau > PROFONDEUR_MAX) return null
   return (
     <ul>
-      {enfants.map((e) => (
-        <li key={e.cle}>
-          <div className="boiteOrg">
-            <div className="boiteFonction">{e.fonction}</div>
-            {e.nom && <div className="boiteNom">{e.nom}</div>}
-          </div>
-          <BrancheBoites items={items} parent={e.cle} niveau={niveau + 1} />
-        </li>
-      ))}
+      {enfants.map((e) => {
+        const lateraux = enfantsDe(items, e.cle).filter(estLateral)
+        return (
+          <li key={e.cle}>
+            <div className="porteurOrg">
+              <Boite e={e} base={base} />
+              {lateraux.length > 0 && (
+                <div className="laterauxOrg" role="list">
+                  {lateraux.map((l) => <div key={l.cle} role="listitem"><Boite e={l} base={base} /></div>)}
+                </div>
+              )}
+            </div>
+            <BrancheBoites items={items} parent={e.cle} niveau={niveau + 1} base={base} />
+          </li>
+        )
+      })}
     </ul>
   )
 }
 
-function OrganigrammeBoites({ items, titre }: { items: EntreeOrg[]; titre?: string }) {
+function OrganigrammeBoites({ items, titre, base }: { items: EntreeOrg[]; titre?: string; base: string }) {
   return (
     <div className="organigramme organigrammeBoites">
       <style>{`
         .organigrammeBoites .cadreOrg { overflow-x: auto; overscroll-behavior-x: contain; padding: 4px 0 10px }
-        .organigrammeBoites .arbreOrg { display: flex; justify-content: center; min-width: max-content; margin: 0 auto }
-        .organigrammeBoites ul { display: flex; justify-content: center; margin: 0; padding: 22px 0 0; list-style: none; position: relative }
+        .organigrammeBoites .arbreOrg { display: flex; justify-content: center; min-width: max-content; margin: 0 auto; padding: 0 8px }
+        .organigrammeBoites ul { display: flex; justify-content: center; margin: 0; padding: 20px 0 0; list-style: none; position: relative }
         .organigrammeBoites .arbreOrg > ul { padding-top: 0 }
-        .organigrammeBoites li { position: relative; padding: 22px 6px 0; display: flex; flex-direction: column; align-items: center }
+        .organigrammeBoites li { position: relative; padding: 20px 3px 0; display: flex; flex-direction: column; align-items: center }
         .organigrammeBoites .arbreOrg > ul > li { padding-top: 0 }
         /* Les traits : une moitié de barre horizontale de chaque côté, plus la
            descente vers la boîte. */
         .organigrammeBoites li::before, .organigrammeBoites li::after {
-          content: ''; position: absolute; top: 0; width: 50%; height: 22px; border-top: 1.5px solid ${TRAIT_BOITES};
+          content: ''; position: absolute; top: 0; width: 50%; height: 20px; border-top: 1.5px solid ${TRAIT_BOITES};
         }
         .organigrammeBoites li::before { right: 50% }
         .organigrammeBoites li::after { left: 50%; border-left: 1.5px solid ${TRAIT_BOITES} }
@@ -176,19 +229,40 @@ function OrganigrammeBoites({ items, titre }: { items: EntreeOrg[]; titre?: stri
         .organigrammeBoites .arbreOrg > ul > li::before, .organigrammeBoites .arbreOrg > ul > li::after { display: none }
         /* La descente du supérieur vers la barre de ses subordonnés. */
         .organigrammeBoites ul ul::before {
-          content: ''; position: absolute; top: 0; left: 50%; height: 22px; border-left: 1.5px solid ${TRAIT_BOITES};
+          content: ''; position: absolute; top: 0; left: 50%; height: 20px; border-left: 1.5px solid ${TRAIT_BOITES};
+        }
+        /* Le poste d'appui, À CÔTÉ de son supérieur, relié par un trait. Il ne
+           décale pas le supérieur : le schéma reste centré sur la hiérarchie. */
+        .organigrammeBoites .porteurOrg { position: relative }
+        .organigrammeBoites .laterauxOrg {
+          position: absolute; left: calc(100% + 36px); top: 50%; margin-top: -32px;
+          display: flex; gap: 8px;
+        }
+        .organigrammeBoites .laterauxOrg::before {
+          content: ''; position: absolute; right: 100%; top: 32px; width: 36px; border-top: 1.5px solid ${TRAIT_BOITES};
         }
         .organigrammeBoites .boiteOrg {
-          background: #ffffff; border: 1px solid #d6d6d6; border-radius: 4px;
-          box-shadow: 0 2px 6px rgba(0,0,0,.12);
-          padding: 14px 10px; width: 144px; min-height: 92px; box-sizing: border-box;
+          background: #ffffff; border: 1px solid #3c3c3c; border-radius: 10px;
+          box-shadow: 0 2px 5px rgba(0,0,0,.14);
+          padding: 8px 4px; width: 100px; min-height: 60px; box-sizing: border-box;
           display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;
+          color: #111111; text-decoration: none;
         }
-        .organigrammeBoites .arbreOrg > ul > li > .boiteOrg { width: 220px }
+        .organigrammeBoites .arbreOrg > ul > li > .porteurOrg > .boiteOrg { width: 180px; border-radius: 6px }
         .organigrammeBoites .boiteFonction {
-          font-size: 12px; line-height: 1.55; letter-spacing: .02em; color: #444444; text-transform: uppercase;
+          display: block; font-size: 10px; line-height: 1.35; letter-spacing: 0; text-transform: uppercase; font-weight: 600;
+          overflow-wrap: break-word;
         }
-        .organigrammeBoites .boiteNom { font-size: 13px; color: #111111; margin-top: 8px; font-weight: 600 }
+        .organigrammeBoites .boiteNom { display: block; font-size: 11.5px; margin-top: 6px; font-weight: 400; text-transform: none }
+        /* Une boîte cliquable SE MONTRE cliquable : elle se soulève, et le
+           clavier la voit. */
+        .organigrammeBoites .boiteLien { cursor: pointer; transition: transform .18s ease, box-shadow .18s ease }
+        .organigrammeBoites .boiteLien:hover { transform: translateY(-2px); box-shadow: 0 8px 18px -8px rgba(0,0,0,.45) }
+        .organigrammeBoites .boiteLien:focus-visible { outline: 3px solid #1F6B4A; outline-offset: 2px }
+        @media (prefers-reduced-motion: reduce) {
+          .organigrammeBoites .boiteLien { transition: none }
+          .organigrammeBoites .boiteLien:hover { transform: none }
+        }
       `}</style>
       {titre && (
         <h3 style={{
@@ -196,22 +270,22 @@ function OrganigrammeBoites({ items, titre }: { items: EntreeOrg[]; titre?: stri
           textTransform: 'uppercase', color: SOURDINE, margin: '0 0 18px', textAlign: 'center',
         }}>{titre}</h3>
       )}
-      <div className="cadreOrg">
+      <CadreAjuste>
         <div className="arbreOrg">
-          <BrancheBoites items={items} parent={null} niveau={1} />
+          <BrancheBoites items={items} parent={null} niveau={1} base={base} />
         </div>
-      </div>
+      </CadreAjuste>
     </div>
   )
 }
 
-const TRAIT_BOITES = '#9a9a9a'
+const TRAIT_BOITES = '#555555'
 
 export default function Organigramme({
-  items, titre, affichage, primary = '#1e4d8c',
-}: { items: EntreeOrg[]; titre?: string; affichage?: string; primary?: string }) {
+  items, titre, affichage, primary = '#1e4d8c', base = '',
+}: { items: EntreeOrg[]; titre?: string; affichage?: string; primary?: string; base?: string }) {
   if (items.length === 0) return null
-  if (affichage !== AFFICHAGE_BOITES) return <OrganigrammeArbre items={items} titre={titre} primary={primary} />
+  if (affichage !== AFFICHAGE_BOITES) return <OrganigrammeArbre items={items} titre={titre} primary={primary} base={base} />
   // Les boîtes sur écran large ; sur écran étroit, le schéma ne tient pas et
   // son sommet sortirait du cadre : l'arbre replié prend le relais. Une seule
   // des deux formes est AFFICHÉE, donc une seule est lue (display:none retire
@@ -227,8 +301,8 @@ export default function Organigramme({
           /* Une MARGE calculée, pas un décalage transformé : la boîte occupe
              réellement sa place, donc aucun ancêtre ne devient défilant de
              côté (un translate laissait une zone fantôme à droite). */
-          width: min(1180px, calc(100vw - 48px));
-          margin-left: calc(50% - min(590px, calc(50vw - 24px)));
+          width: min(1400px, calc(100vw - 48px));
+          margin-left: calc(50% - min(700px, calc(50vw - 24px)));
         }
         .orgSeulementEtroit { display: none }
         @media (max-width: 1023px) {
@@ -236,15 +310,15 @@ export default function Organigramme({
           .orgSeulementEtroit { display: block }
         }
       `}</style>
-      <div className="orgSeulementLarge"><OrganigrammeBoites items={items} titre={titre} /></div>
-      <div className="orgSeulementEtroit"><OrganigrammeArbre items={items} titre={titre} primary={primary} /></div>
+      <div className="orgSeulementLarge"><OrganigrammeBoites items={items} titre={titre} base={base} /></div>
+      <div className="orgSeulementEtroit"><OrganigrammeArbre items={items} titre={titre} primary={primary} base={base} /></div>
     </>
   )
 }
 
 function OrganigrammeArbre({
-  items, titre, primary,
-}: { items: EntreeOrg[]; titre?: string; primary: string }) {
+  items, titre, primary, base,
+}: { items: EntreeOrg[]; titre?: string; primary: string; base: string }) {
   return (
     <div className="organigramme">
       {/* ① CONNECTEURS · ② PROFONDEUR · ③ DÉPLIAGE ANIMÉ · ④ DÉPLACEMENT.
@@ -302,7 +376,7 @@ function OrganigrammeArbre({
         }}>{titre}</h3>
       )}
       <div className="cadreOrg">
-        <Branche items={items} parent={null} niveau={1} primary={primary} />
+        <Branche items={items} parent={null} niveau={1} primary={primary} base={base} />
       </div>
     </div>
   )
