@@ -27,6 +27,7 @@ import CatalogSearch, { type ThemeKey } from './themes/CatalogSearch'
 import { showsVisitorCatalogSearch } from '@/app/sites/[slug]/themes/catalogSearchVisibility'
 import PromoBanner from './themes/PromoBanner'
 import { lirePartenaires } from './themes/lirePartenaires'
+import { lireEncreDeMarque } from './themes/lireEncreDeMarque'
 import { lirePagesLegales } from './themes/pagesLegales'
 
 // M1-08 : `revalidate` retire, il etait TROMPEUR. Cette page appelle
@@ -114,7 +115,7 @@ export default async function SitePage({ params, searchParams }: Props) {
   // table. Ce fichier ne réécrit pas sa requête : il l'appelle.
   // LOT 1 + 2 — les deux faits serveur, par la MÊME route unique.
   // LOT 1 + 2 + 15.13 — les faits serveur, par la MÊME route unique.
-  const [{ hasAvis }, menu, partenaires, liensLegaux, pageHero] = await Promise.all([
+  const [{ hasAvis }, menu, partenaires, liensLegaux, pageHero, encreDeMarque] = await Promise.all([
     fetchAvisEntries(site.id).then(avisDuSite),
     fetchMenu(site.id),
     lirePartenaires(site.id),
@@ -123,6 +124,8 @@ export default async function SitePage({ params, searchParams }: Props) {
     // `accueil-hero` dont le premier bloc est un bloc « etapes » en affichage
     // « vitrine ». Sans elle, l'accueil reste exactement celui d'avant.
     fetchPage(site.id, 'accueil-hero').catch(() => null),
+    // L'encre de marque : opt-in par une page non publiée (voir lireEncreDeMarque).
+    lireEncreDeMarque(site.id),
   ])
   const premierBloc = pageHero?.blocs?.[0] as (Record<string, unknown> & { items?: unknown[] }) | undefined
   const affichageHero: 'vitrine' | 'parcours' | null = premierBloc?.affichage === 'vitrine' ? 'vitrine' : premierBloc?.affichage === 'parcours' ? 'parcours' : null
@@ -149,7 +152,7 @@ export default async function SitePage({ params, searchParams }: Props) {
       <JsonLd site={site} url={url} />
       <PromoBanner slug={site.slug} primary={primary} mode={site.mode} labels={cartLabels} currency={resolveShopCurrency(site.products)} />
       <CartShell primary={primary} labels={cartLabels} slug={site.slug} mode={site.mode} products={site.products} shippingFlat={site.shipping_flat} variant={key === 'noir' ? 'dark' : 'light'}>
-        <Theme site={site} hasAvis={hasAvis} host={host} menu={menu} partenaires={partenaires} liensLegaux={liensLegaux} heroVitrine={heroVitrine} />
+        <Theme site={site} hasAvis={hasAvis} host={host} menu={menu} partenaires={partenaires} liensLegaux={liensLegaux} heroVitrine={heroVitrine} encreDeMarque={encreDeMarque} />
         {site.mode === 3 && showsVisitorCatalogSearch(site.dropship_type) && site.theme !== 'aurora' && <CatalogSearch slug={site.slug} primary={primary} lang={site.lang} theme={key as ThemeKey} dropshipType={site.dropship_type} />}
       </CartShell>
       <ScrollRevealInit />

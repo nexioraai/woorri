@@ -33,10 +33,12 @@ import SectionKicker from './SectionKicker'
 // ============================================================================
 
 export default function SectionPartenaires({
-  items, primary, surtitre, titre, phrase, sombre = false,
+  items, primary, surtitre, titre, phrase, sombre = false, encre,
 }: {
   items: Partenaire[]
   primary: string
+  /** L'encre de marque du site, si déclarée : remplace le noir du titre. */
+  encre?: string
   surtitre: string
   titre: string
   phrase?: string | null
@@ -51,7 +53,7 @@ export default function SectionPartenaires({
         <div className="text-center mb-12">
           <SectionKicker color={primary}>{surtitre}</SectionKicker>
           <h2 className="text-3xl md:text-4xl font-semibold tracking-tight mt-4"
-            style={{ color: sombre ? '#f5f3ee' : '#111111' }}>
+            style={{ color: sombre ? '#f5f3ee' : (encre ?? '#111111') }}>
             {titre}
           </h2>
           {phrase && (

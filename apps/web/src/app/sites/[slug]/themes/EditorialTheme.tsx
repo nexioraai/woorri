@@ -86,7 +86,7 @@ function PremiumButton({
 }
 
 // ---------- Theme ----------
-export default function EditorialTheme({ site, hasAvis = false, host = null, menu = [], partenaires = [], liensLegaux = [], heroVitrine = null }: { site: Site } & AvisDuSite) {
+export default function EditorialTheme({ site, hasAvis = false, host = null, menu = [], partenaires = [], liensLegaux = [], heroVitrine = null, encreDeMarque = false }: { site: Site } & AvisDuSite) {
   // ── LES PRODUITS, POUR LES PAGES PERSONNALISÉES.
   //
   // Les sections boutique calculent déjà cette liste chacune de leur côté ;
@@ -99,6 +99,12 @@ export default function EditorialTheme({ site, hasAvis = false, host = null, men
   const hidden = (name: string) => (site.hidden_sections || []).includes(name)
   const ancresEnBarre = menu.length === 0
   const primary = site.primary_color || '#111111'
+  // L'ENCRE DE MARQUE (CPA, 2026-11-11 — « la couleur bleu d'anie »). Quand le
+  // site la déclare, la couleur du site remplace le NOIR du thème : menu,
+  // enseigne, titres, carte mise en avant, pied de page. Le blanc ne bouge
+  // pas. Sans déclaration (`undefined`), chaque ligne garde son rendu d'avant.
+  const encre = encreDeMarque ? primary : undefined
+  const enEncre = encre ? { color: encre } : undefined
   const t = getDict(site.lang)
   const sections = site.sections || []
   const testimonials = (site.testimonials || []).map(normalizeTestimonial)
@@ -119,7 +125,7 @@ export default function EditorialTheme({ site, hasAvis = false, host = null, men
   return (
     <div
       className="min-h-screen bg-white text-neutral-900 antialiased"
-      style={{ ['--brand' as any]: primary }}
+      style={{ ['--brand' as any]: primary, ...(encre ? ({ '--encre': encre } as Record<string, string>) : {}) }}
     >
       {/* Scroll reveal keyframes (pure CSS, no JS) */}
       <style>{`
@@ -146,9 +152,9 @@ export default function EditorialTheme({ site, hasAvis = false, host = null, men
             className={ancresEnBarre
               ? "font-serif text-2xl tracking-tight font-medium"
               : "font-serif text-xl leading-tight tracking-tight font-medium"}
-            style={{ fontFamily: 'var(--font-fraunces), serif' }}
+            style={{ fontFamily: 'var(--font-fraunces), serif', ...enEncre }}
           />
-          <nav className={ancresEnBarre
+          <nav style={enEncre} className={ancresEnBarre
               ? "hidden md:flex items-center gap-10 text-sm font-medium text-neutral-700"
               : "hidden xl:flex items-center gap-4 text-[13px] font-medium text-neutral-700"}>
             {!hidden('Home') && <a href={lienAccueil(site, host)} className="hover:text-black transition-colors inline-flex items-center gap-[7px] whitespace-nowrap"><DessinDeMenu chemin="accueil" couleur={primary} />{t.nav.home}</a>}
@@ -282,7 +288,7 @@ export default function EditorialTheme({ site, hasAvis = false, host = null, men
 
                 {Array.isArray(site.whyus) && site.whyus.length > 0 && (
                   <div className="mt-12">
-                    <h3 className="text-2xl font-serif mb-8 text-neutral-900" style={{ fontFamily: 'var(--font-fraunces), serif' }}>
+                    <h3 className="text-2xl font-serif mb-8 text-neutral-900" style={{ fontFamily: 'var(--font-fraunces), serif', ...enEncre }}>
                       {whyWord} {site.name} ?
                     </h3>
                     <div className="space-y-8">
@@ -294,7 +300,7 @@ export default function EditorialTheme({ site, hasAvis = false, host = null, men
                         >
                           {String(i + 1).padStart(2, '0')}
                         </div>
-                        <h3 className="font-medium text-neutral-900 mb-1">
+                        <h3 className="font-medium text-neutral-900 mb-1" style={enEncre}>
                           {item.title}
                         </h3>
                         <p className="text-sm leading-relaxed text-neutral-600">
@@ -334,7 +340,7 @@ export default function EditorialTheme({ site, hasAvis = false, host = null, men
               <div>
                 <h2
                   className="font-serif text-4xl md:text-5xl leading-tight mb-8"
-                  style={{ fontFamily: 'var(--font-fraunces), serif' }}
+                  style={{ fontFamily: 'var(--font-fraunces), serif', ...enEncre }}
                 >
                   {t.sections.aboutTitle}
                 </h2>
@@ -361,7 +367,7 @@ export default function EditorialTheme({ site, hasAvis = false, host = null, men
               </div>
               <h2
                 className="font-serif text-4xl md:text-5xl leading-tight"
-                style={{ fontFamily: 'var(--font-fraunces), serif' }}
+                style={{ fontFamily: 'var(--font-fraunces), serif', ...enEncre }}
               >
                 {sec.name}
               </h2>
@@ -397,7 +403,7 @@ export default function EditorialTheme({ site, hasAvis = false, host = null, men
                   <TiltCard
                     className={`group relative p-8 md:p-10 rounded-3xl transition-all duration-500 ${
                       featured
-                        ? 'bg-neutral-900 text-white shadow-2xl lg:row-span-2'
+                        ? `${encre ? 'bg-[color:var(--encre)]' : 'bg-neutral-900'} text-white shadow-2xl lg:row-span-2`
                         : 'bg-white border border-neutral-200/70 hover:border-transparent hover:shadow-xl'
                     }`}
                   >
@@ -409,7 +415,7 @@ export default function EditorialTheme({ site, hasAvis = false, host = null, men
                     <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
                       <h3
                         className="font-serif text-2xl md:text-3xl leading-tight min-w-0"
-                        style={{ fontFamily: 'var(--font-fraunces), serif' }}
+                        style={{ fontFamily: 'var(--font-fraunces), serif', ...(featured ? undefined : enEncre) }}
                       >
                         {s.title}
                       </h3>
@@ -473,7 +479,7 @@ export default function EditorialTheme({ site, hasAvis = false, host = null, men
                 </div>
                 <h2
                   className="font-serif text-4xl md:text-5xl leading-tight"
-                  style={{ fontFamily: 'var(--font-fraunces), serif' }}
+                  style={{ fontFamily: 'var(--font-fraunces), serif', ...enEncre }}
                 >
                   {t.sections.galleryTitle}
                 </h2>
@@ -500,7 +506,7 @@ export default function EditorialTheme({ site, hasAvis = false, host = null, men
 
       {/* =================== TESTIMONIALS =================== */}
       {testimonials.length > 0 && !hidden('Reviews') && (
-        <section id="testimonials" className="reveal py-28 md:py-36 bg-neutral-950 text-white relative overflow-hidden">
+        <section id="testimonials" className="reveal py-28 md:py-36 bg-neutral-950 text-white relative overflow-hidden" style={encre ? { backgroundColor: encre } : undefined}>
           <div
             className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full opacity-20 blur-3xl"
             style={{ backgroundColor: primary }}
@@ -571,7 +577,7 @@ export default function EditorialTheme({ site, hasAvis = false, host = null, men
               <div className="text-xs font-medium tracking-[0.2em] uppercase mb-4" style={{ color: primary }}>
                 {({ fr: 'Questions fréquentes', en: 'FAQ', es: 'Preguntas frecuentes', ar: 'الأسئلة الشائعة' } as Record<string, string>)[site.lang || 'en'] || 'FAQ'}
               </div>
-              <h2 className="font-serif text-4xl md:text-5xl leading-tight" style={{ fontFamily: 'var(--font-fraunces), serif' }}>
+              <h2 className="font-serif text-4xl md:text-5xl leading-tight" style={{ fontFamily: 'var(--font-fraunces), serif', ...enEncre }}>
                 {({ fr: 'Vos questions, nos réponses', en: 'Your questions, answered', es: 'Tus preguntas, respondidas', ar: 'أسئلتك، إجاباتنا' } as Record<string, string>)[site.lang || 'en'] || 'Your questions, answered'}
               </h2>
             </div>
@@ -594,7 +600,7 @@ export default function EditorialTheme({ site, hasAvis = false, host = null, men
       {(site.pages || []).filter((p: any) => p && (p.title || p.content || p.image || (p.productIds?.length ?? 0) > 0)).map((page: any, pi: number) => (
         <section key={`page-${pi}`} id={`page-${pi}`} className={`reveal py-28 md:py-36 ${pi % 2 === 0 ? "bg-neutral-50" : "bg-white"}`}>
           <div className="max-w-4xl mx-auto px-6 md:px-10">
-            <h2 className="text-3xl md:text-5xl font-semibold tracking-tight text-neutral-900 mb-10">{page.title}</h2>
+            <h2 className="text-3xl md:text-5xl font-semibold tracking-tight text-neutral-900 mb-10" style={enEncre}>{page.title}</h2>
             {page.image && (
               <div className="relative w-full rounded-3xl overflow-hidden mb-10 aspect-[16/9]">
                 <Image src={page.image} alt={page.title || ''} fill sizes="(max-width:768px) 100vw, 900px" className="object-cover" />
@@ -621,6 +627,7 @@ export default function EditorialTheme({ site, hasAvis = false, host = null, men
       <SectionPartenaires
         items={partenaires}
         primary={primary}
+        encre={encre}
         surtitre={t.labels.partenairesSurtitre}
         titre={t.labels.partenairesTitre}
         phrase={t.labels.partenairesPhrase}
@@ -638,7 +645,7 @@ export default function EditorialTheme({ site, hasAvis = false, host = null, men
             </div>
             <h2
               className="font-serif text-4xl md:text-5xl leading-tight mb-4"
-              style={{ fontFamily: 'var(--font-fraunces), serif' }}
+              style={{ fontFamily: 'var(--font-fraunces), serif', ...enEncre }}
             >
               {t.sections.contactTitle}
             </h2>
@@ -712,7 +719,7 @@ export default function EditorialTheme({ site, hasAvis = false, host = null, men
 
       </main>
       {/* =================== FOOTER =================== */}
-      <footer className="bg-neutral-950 text-white py-16" {...(liensLegaux.length > 0 ? { 'data-pied-legal': '' } : {})}>
+      <footer className="bg-neutral-950 text-white py-16" style={encre ? { backgroundColor: encre } : undefined} {...(liensLegaux.length > 0 ? { 'data-pied-legal': '' } : {})}>
         <div className="max-w-7xl mx-auto px-6 md:px-10">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8 mb-12">
             <div>

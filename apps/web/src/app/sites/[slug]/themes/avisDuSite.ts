@@ -78,6 +78,13 @@ export type AvisDuSite = {
     pieces: { titre: string; texte?: string; image?: string; libelle?: string }[]
   } | null
 
+  /**
+   * L'ENCRE DE MARQUE (CPA, 2026-11-11). `true` quand le site déclare une page
+   * NON PUBLIÉE `couleur-de-marque` : la couleur du site remplace alors le noir
+   * du thème (menu, titres, pied de page). `false` par défaut : rendu d'avant.
+   */
+  encreDeMarque?: boolean
+
   /** `true` si ce site publie au moins un avis VISIBLE du public. */
   hasAvis?: boolean
 
