@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import type { Site } from './shared'
 import DessinDeMenu from './DessinDeMenu'
+import MenuSurvol, { ATTRIBUT_SURVOL } from './MenuSurvol'
 import { resolveSiteBaseUrl } from './shared'
 import type { EntreeMenu } from '../pages/fetchPage'
 
@@ -85,7 +86,7 @@ export default function MenuDeclare({
         }
 
         return (
-          <details key={r.chemin} style={{ position: 'relative', display: 'inline-block' }}>
+          <details key={r.chemin} {...{ [ATTRIBUT_SURVOL]: '' }} style={{ position: 'relative', display: 'inline-block' }}>
             <summary
               className={className}
               style={{
@@ -135,6 +136,9 @@ export default function MenuDeclare({
           </details>
         )
       })}
+      {/* Le survol ouvre les sous-menus (souris seulement) : une amélioration,
+          le menu marche sans elle. */}
+      <MenuSurvol />
     </>
   )
 }
