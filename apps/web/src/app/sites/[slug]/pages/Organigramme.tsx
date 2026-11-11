@@ -119,10 +119,122 @@ function Branche({
   )
 }
 
+// ============================================================================
+// AFFICHAGE « BOÎTES » (demande CPA, 2026-11-11) : le schéma classique, de haut
+// en bas, des boîtes reliées par des traits, les subordonnés côte à côte.
+//
+// FACULTATIF. Sans `affichage: 'boites'` sur le bloc, rien ne change : l'arbre
+// replié ci-dessus reste le rendu par défaut de tous les sites.
+//
+// TOUJOURS UNE LISTE IMBRIQUÉE `<ul>/<li>` : les traits sont du CSS posé sur la
+// même structure. Le lecteur d'écran lit le même arbre que dans l'autre rendu.
+// Un schéma large se fait glisser de côté dans son cadre, jamais la page.
+// ============================================================================
+
+export const AFFICHAGE_BOITES = 'boites'
+
+function BrancheBoites({ items, parent, niveau }: { items: EntreeOrg[]; parent: string | null; niveau: number }) {
+  const enfants = enfantsDe(items, parent)
+  if (enfants.length === 0 || niveau > PROFONDEUR_MAX) return null
+  return (
+    <ul>
+      {enfants.map((e) => (
+        <li key={e.cle}>
+          <div className="boiteOrg">
+            <div className="boiteFonction">{e.fonction}</div>
+            {e.nom && <div className="boiteNom">{e.nom}</div>}
+          </div>
+          <BrancheBoites items={items} parent={e.cle} niveau={niveau + 1} />
+        </li>
+      ))}
+    </ul>
+  )
+}
+
+function OrganigrammeBoites({ items, titre }: { items: EntreeOrg[]; titre?: string }) {
+  return (
+    <div className="organigramme organigrammeBoites">
+      <style>{`
+        .organigrammeBoites .cadreOrg { overflow-x: auto; overscroll-behavior-x: contain; padding: 4px 0 10px }
+        .organigrammeBoites .arbreOrg { display: flex; justify-content: center; min-width: max-content; margin: 0 auto }
+        .organigrammeBoites ul { display: flex; justify-content: center; margin: 0; padding: 22px 0 0; list-style: none; position: relative }
+        .organigrammeBoites .arbreOrg > ul { padding-top: 0 }
+        .organigrammeBoites li { position: relative; padding: 22px 6px 0; display: flex; flex-direction: column; align-items: center }
+        .organigrammeBoites .arbreOrg > ul > li { padding-top: 0 }
+        /* Les traits : une moitié de barre horizontale de chaque côté, plus la
+           descente vers la boîte. */
+        .organigrammeBoites li::before, .organigrammeBoites li::after {
+          content: ''; position: absolute; top: 0; width: 50%; height: 22px; border-top: 1.5px solid ${TRAIT_BOITES};
+        }
+        .organigrammeBoites li::before { right: 50% }
+        .organigrammeBoites li::after { left: 50%; border-left: 1.5px solid ${TRAIT_BOITES} }
+        .organigrammeBoites li:only-child::before { display: none }
+        .organigrammeBoites li:only-child::after { border-top: none }
+        .organigrammeBoites li:first-child::before, .organigrammeBoites li:last-child::after { border-top: none }
+        .organigrammeBoites li:last-child::before { border-right: 1.5px solid ${TRAIT_BOITES}; border-top: 1.5px solid ${TRAIT_BOITES} }
+        .organigrammeBoites li:last-child:first-child::before { display: none }
+        .organigrammeBoites .arbreOrg > ul > li::before, .organigrammeBoites .arbreOrg > ul > li::after { display: none }
+        /* La descente du supérieur vers la barre de ses subordonnés. */
+        .organigrammeBoites ul ul::before {
+          content: ''; position: absolute; top: 0; left: 50%; height: 22px; border-left: 1.5px solid ${TRAIT_BOITES};
+        }
+        .organigrammeBoites .boiteOrg {
+          background: #ffffff; border: 1px solid #d6d6d6; border-radius: 4px;
+          box-shadow: 0 2px 6px rgba(0,0,0,.12);
+          padding: 16px 14px; width: 170px; min-height: 92px; box-sizing: border-box;
+          display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;
+        }
+        .organigrammeBoites .arbreOrg > ul > li > .boiteOrg { width: 240px }
+        .organigrammeBoites .boiteFonction {
+          font-size: 12.5px; line-height: 1.55; letter-spacing: .02em; color: #444444; text-transform: uppercase;
+        }
+        .organigrammeBoites .boiteNom { font-size: 13px; color: #111111; margin-top: 8px; font-weight: 600 }
+      `}</style>
+      {titre && (
+        <h3 style={{
+          fontSize: 15, fontWeight: 700, letterSpacing: '0.04em',
+          textTransform: 'uppercase', color: SOURDINE, margin: '0 0 18px', textAlign: 'center',
+        }}>{titre}</h3>
+      )}
+      <div className="cadreOrg">
+        <div className="arbreOrg">
+          <BrancheBoites items={items} parent={null} niveau={1} />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+const TRAIT_BOITES = '#9a9a9a'
+
 export default function Organigramme({
-  items, titre, primary = '#1e4d8c',
-}: { items: EntreeOrg[]; titre?: string; primary?: string }) {
+  items, titre, affichage, primary = '#1e4d8c',
+}: { items: EntreeOrg[]; titre?: string; affichage?: string; primary?: string }) {
   if (items.length === 0) return null
+  if (affichage !== AFFICHAGE_BOITES) return <OrganigrammeArbre items={items} titre={titre} primary={primary} />
+  // Les boîtes sur écran large ; sur écran étroit, le schéma ne tient pas et
+  // son sommet sortirait du cadre : l'arbre replié prend le relais. Une seule
+  // des deux formes est AFFICHÉE, donc une seule est lue (display:none retire
+  // l'autre de l'arbre d'accessibilité).
+  return (
+    <>
+      <style>{`
+        .orgSeulementLarge { display: block }
+        .orgSeulementEtroit { display: none }
+        @media (max-width: 760px) {
+          .orgSeulementLarge { display: none }
+          .orgSeulementEtroit { display: block }
+        }
+      `}</style>
+      <div className="orgSeulementLarge"><OrganigrammeBoites items={items} titre={titre} /></div>
+      <div className="orgSeulementEtroit"><OrganigrammeArbre items={items} titre={titre} primary={primary} /></div>
+    </>
+  )
+}
+
+function OrganigrammeArbre({
+  items, titre, primary,
+}: { items: EntreeOrg[]; titre?: string; primary: string }) {
   return (
     <div className="organigramme">
       {/* ① CONNECTEURS · ② PROFONDEUR · ③ DÉPLIAGE ANIMÉ · ④ DÉPLACEMENT.
