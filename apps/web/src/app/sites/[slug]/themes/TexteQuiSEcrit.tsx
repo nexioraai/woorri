@@ -29,8 +29,9 @@ export default function TexteQuiSEcrit({
   const [n, setN] = useState(0)
 
   useEffect(() => {
-    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) { setEtat('fixe'); return }
-    setEtat('frappe')
+    // Tout changement d'état passe par un minuteur, jamais directement dans
+    // le corps de l'effet (règle react-hooks/set-state-in-effect).
+    const sansMouvement = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
     let i = 0
     let minuteur: ReturnType<typeof setTimeout>
     const taper = () => {
@@ -39,7 +40,11 @@ export default function TexteQuiSEcrit({
       if (i < texte.length) minuteur = setTimeout(taper, msParLettre)
       else minuteur = setTimeout(() => setEtat('fixe'), 1200)
     }
-    minuteur = setTimeout(taper, delaiMs)
+    minuteur = setTimeout(() => {
+      if (sansMouvement) { setEtat('fixe'); return }
+      setEtat('frappe')
+      minuteur = setTimeout(taper, delaiMs)
+    }, 0)
     return () => clearTimeout(minuteur)
   }, [texte, msParLettre, delaiMs])
 
