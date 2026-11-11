@@ -22,10 +22,19 @@ export type EtapeParcours = { titre: string; texte?: string; image?: string; lib
 
 const imageSure = (u?: string) => (typeof u === 'string' && /^https?:\/\//.test(u) ? u : undefined)
 
+// LECTURE « auto » (accueil CPA, 2026-11-11) : un seul écran, la photo change
+// d'elle-même toutes les AUTO_MS, en fondu ; la ligne d'étapes reste cliquable ;
+// pause au survol et au clavier ; aucun changement automatique si le visiteur
+// a demandé moins de mouvement. Sans JavaScript : la première étape, fixe.
+const AUTO_MS = 5500
+
 export default function ParcoursDefilement({
-  etapes, surtitre, accent,
-}: { etapes: EtapeParcours[]; surtitre?: string; accent: string }) {
-  const [rendu, setRendu] = useState<'empile' | 'defile'>('empile')
+  etapes, surtitre, accent, lecture = 'defilement',
+}: { etapes: EtapeParcours[]; surtitre?: string; accent: string; lecture?: 'defilement' | 'auto' }) {
+  const auto = lecture === 'auto'
+  const [rendu, setRendu] = useState<'empile' | 'defile'>(auto ? 'defile' : 'empile')
+  const pause = useRef(false)
+  const [tic, setTic] = useState(0)          // relance le minuteur après un clic
   const [actif, setActif] = useState(0)
   // OÙ EST L'IMAGE : avant la section, épinglée à l'écran, ou après.
   // Pas de `position: sticky` : le <body> du site a `overflow-x: hidden`, ce
@@ -37,12 +46,20 @@ export default function ParcoursDefilement({
   const zone = useRef<HTMLElement>(null)
 
   useEffect(() => {
+    if (auto) return
     const t = setTimeout(() => setRendu('defile'), 0)
     return () => clearTimeout(t)
-  }, [])
+  }, [auto])
+
+  // LECTURE AUTOMATIQUE : une étape toutes les AUTO_MS, sauf en pause.
+  useEffect(() => {
+    if (!auto || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return
+    const h = setInterval(() => { if (!pause.current) setActif((a) => (a + 1) % etapes.length) }, AUTO_MS)
+    return () => clearInterval(h)
+  }, [auto, etapes.length, tic])
 
   useEffect(() => {
-    if (rendu !== 'defile') return
+    if (auto || rendu !== 'defile') return
     const calculer = () => {
       const z = zone.current
       if (!z) return
@@ -57,9 +74,10 @@ export default function ParcoursDefilement({
     window.addEventListener('scroll', calculer, { passive: true })
     window.addEventListener('resize', calculer)
     return () => { cancelAnimationFrame(premier); window.removeEventListener('scroll', calculer); window.removeEventListener('resize', calculer) }
-  }, [rendu, etapes.length])
+  }, [auto, rendu, etapes.length])
 
   const allerA = (i: number) => {
+    if (auto) { setActif(i); setTic((t) => t + 1); return }
     const z = zone.current
     if (!z) return
     const course = z.offsetHeight - window.innerHeight
@@ -122,11 +140,15 @@ export default function ParcoursDefilement({
 
   const e = etapes[actif]
   return (
-    <section ref={zone} className="parcours defile" aria-label={surtitre || 'Parcours'} style={{ height: `${etapes.length * 100}vh` }}>
+    <section ref={zone} className="parcours defile" aria-label={surtitre || 'Parcours'}
+      aria-roledescription={auto ? 'carrousel' : undefined}
+      onMouseEnter={() => { pause.current = true }} onMouseLeave={() => { pause.current = false }}
+      onFocus={() => { pause.current = true }} onBlur={() => { pause.current = false }}
+      style={{ height: auto ? 'max(100vh, 620px)' : `${etapes.length * 100}vh` }}>
       <style>{css}</style>
       <div style={{
-        height: '100vh', overflow: 'hidden', left: 0, width: '100%',
-        ...(epingle === 'fixe' ? { position: 'fixed', top: 0 } : epingle === 'apres' ? { position: 'absolute', bottom: 0 } : { position: 'absolute', top: 0 }),
+        height: auto ? '100%' : '100vh', overflow: 'hidden', left: 0, width: '100%',
+        ...(auto ? { position: 'relative' } : epingle === 'fixe' ? { position: 'fixed', top: 0 } : epingle === 'apres' ? { position: 'absolute', bottom: 0 } : { position: 'absolute', top: 0 }),
       }}>
         {etapes.map((x, i) => imageSure(x.image) && (
           <div key={i} className={`scene${i === actif ? ' on' : ''}`} aria-hidden={i !== actif}>

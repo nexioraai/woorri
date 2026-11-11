@@ -193,7 +193,7 @@ export default function EditorialTheme({ site, hasAvis = false, host = null, men
             <>
               {/* Le h1 de l'accueil reste le titre du site : stable, lu par les moteurs. */}
               <h1 style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)', whiteSpace: 'nowrap' }}>{site.hero_title || site.name}</h1>
-              <ParcoursDefilement etapes={heroVitrine.pieces} surtitre={heroVitrine.surtitre} accent={primary} />
+              <ParcoursDefilement etapes={heroVitrine.pieces} surtitre={heroVitrine.surtitre} accent={primary} lecture="auto" />
             </>
           ) : (
             <HeroVitrine pieces={heroVitrine.pieces} surtitre={heroVitrine.surtitre} accent={primary}
