@@ -106,6 +106,12 @@ export default function ParcoursDefilement({
     .parcours .rail button[aria-current="step"] { color: #fff }
     .parcours .rail .pt { width: 10px; height: 10px; border-radius: 99px; border: 2px solid currentColor; transition: all .3s ease }
     .parcours .rail button[aria-current="step"] .pt { background: var(--acc); border-color: #fff; width: 26px }
+    .parcours .segments button { all: unset; cursor: pointer; padding: 10px 0 }
+    .parcours .segments button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; border-radius: 4px }
+    .parcours .segments .piste { display: block; height: 3px; border-radius: 99px; background: rgba(255,255,255,.28); overflow: hidden }
+    .parcours .segments .plein { display: block; height: 100%; background: #fff; border-radius: 99px; transform-origin: left center }
+    .parcours .segments .plein.court { animation: parcours-remplir ${AUTO_MS}ms linear forwards }
+    @keyframes parcours-remplir { from { transform: scaleX(0) } to { transform: scaleX(1) } }
     @media (max-width: 760px) {
       .parcours .rail { display: none !important }
       .parcours .voile { background: linear-gradient(0deg, rgba(5,12,8,.88) 0%, rgba(5,12,8,.5) 45%, rgba(5,12,8,.1) 75%) }
@@ -114,6 +120,7 @@ export default function ParcoursDefilement({
     @media (prefers-reduced-motion: reduce) {
       .parcours .scene, .parcours .scene img, .parcours .texte { transition: none }
       .parcours .scene img, .parcours .scene.on img { transform: none }
+      .parcours .segments .plein.court { animation: none; transform: scaleX(1) !important }
     }
   `
 
@@ -183,7 +190,22 @@ export default function ParcoursDefilement({
           ))}
         </nav>
 
-        <div aria-hidden style={{ position: 'absolute', left: 0, bottom: 0, height: 3, width: `${((actif + 1) / etapes.length) * 100}%`, background: accent, transition: 'width .5s ease' }} />
+        {/* LES SEGMENTS (façon « stories », demande CPA 2026-11-11 : la ligne
+            pleine largeur qui se remplissait par paliers est retirée). Un
+            segment par photo : celle à l'écran se remplit pendant ses AUTO_MS,
+            les précédentes sont pleines. Cliquables : seul moyen d'aller à une
+            étape sur téléphone, où le rail est masqué. */}
+        <div className="segments" style={{ position: 'absolute', left: 0, right: 0, bottom: 22, maxWidth: 1180, margin: '0 auto', padding: '0 24px', display: 'grid', gridTemplateColumns: `repeat(${etapes.length}, 1fr)`, gap: 8 }}>
+          {etapes.map((x, i) => (
+            <button key={i} type="button" onClick={() => allerA(i)} aria-label={`Étape ${i + 1} : ${x.libelle || x.titre}`}>
+              <span className="piste">
+                <span key={i === actif ? `${actif}-${tic}` : i}
+                  className={`plein${i === actif && auto ? ' court' : ''}`}
+                  style={{ transform: i < actif || (i === actif && !auto) ? 'scaleX(1)' : 'scaleX(0)' }} />
+              </span>
+            </button>
+          ))}
+        </div>
       </div>
     </section>
   )
