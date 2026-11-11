@@ -35,6 +35,8 @@ const CHAMPS_FICHIER: Record<string, readonly string[]> = {
   partenaires: ['logo'],
   // Le portrait du « mot d'un responsable » : un vrai fichier, téléversable.
   citation: ['photo'],
+  // Le parcours au défilement : une image par étape, téléversable.
+  etapes: ['image'],
 }
 
 export function champEstUnFichier(typeDeBloc: string, champ: unknown): boolean {

@@ -177,7 +177,10 @@ export default async function PageDeclaree({ params }: Props) {
           Mesuré à l'écran le 2026-11-07, sur le site servi.
           Règle : un écran autonome déclare SON fond et SA couleur, il ne les
           hérite jamais. */}
-      <div style={{ minHeight: '100vh', background: '#ffffff', color: '#111111' }}>
+      {/* `overflow-x: clip` : un bloc pleine largeur (100vw) déborderait de la
+          largeur de la barre de défilement sous Windows. `clip` coupe sans
+          créer de zone défilante : l'image collante du parcours tient. */}
+      <div style={{ minHeight: '100vh', background: '#ffffff', color: '#111111', overflowX: 'clip' }}>
       <main
         dir={rtl ? 'rtl' : 'ltr'}
         style={{ maxWidth: fiche ? 1180 : 820, margin: '0 auto', padding: '64px 24px' }}

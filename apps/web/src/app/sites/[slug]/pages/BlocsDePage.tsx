@@ -3,6 +3,7 @@ import type { Bloc } from './blocs'
 import ListeArticles from './ListeArticles'
 import Organigramme from './Organigramme'
 import MotPortrait from './MotPortrait'
+import ParcoursDefilement from './ParcoursDefilement'
 import Partenaires from './Partenaires'
 import type { BlogPostCard, CategorieArticle } from '../blog/fetchPosts'
 
@@ -82,6 +83,10 @@ export default function BlocsDePage({
             )
 
           case 'etapes':
+            // AFFICHAGE « parcours » : l'image fixe qui change d'étape au
+            // défilement. Sans lui, la marche à suivre d'avant, inchangée.
+            if (b.affichage === 'parcours')
+              return <ParcoursDefilement key={k} etapes={b.items} surtitre={b.titre} accent={primary} />
             return (
               <div key={k}>
                 <TitreDeBloc texte={b.titre} />
