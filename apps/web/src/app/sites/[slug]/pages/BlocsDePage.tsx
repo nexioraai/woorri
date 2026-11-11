@@ -2,6 +2,7 @@ import Link from 'next/link'
 import type { Bloc } from './blocs'
 import ListeArticles from './ListeArticles'
 import Organigramme from './Organigramme'
+import MotPortrait from './MotPortrait'
 import Partenaires from './Partenaires'
 import type { BlogPostCard, CategorieArticle } from '../blog/fetchPosts'
 
@@ -280,6 +281,10 @@ export default function BlocsDePage({
           }
 
           case 'citation':
+            // AVEC PHOTO : le mot d'un responsable, portrait à gauche. SANS
+            // photo : le rendu d'avant, inchangé.
+            if (typeof b.photo === 'string' && /^https?:\/\//.test(b.photo))
+              return <MotPortrait key={k} photo={b.photo} titre={b.titre} texte={b.texte} auteur={b.auteur} fonction={b.fonction} primary={primary} />
             return (
               <blockquote key={k} style={{ margin: 0, padding: '18px 22px', borderLeft: `4px solid ${primary}`, background: FOND_DOUX, borderRadius: '0 12px 12px 0' }}>
                 <p style={{ fontSize: 19, lineHeight: 1.6, color: ENCRE, margin: 0, fontStyle: 'italic' }}>{b.texte}</p>

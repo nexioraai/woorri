@@ -55,7 +55,7 @@ export type Bloc = { position?: string } & (
   | { type: 'appel'; libelle: string; chemin: string; texte?: string }
   | { type: 'image'; url: string; alt: string; legende?: string }
   | { type: 'galerie'; items: { url: string; alt: string; legende?: string }[]; titre?: string }
-  | { type: 'citation'; texte: string; auteur?: string; fonction?: string }
+  | { type: 'citation'; texte: string; auteur?: string; fonction?: string; photo?: string; titre?: string }
   /** LOT 7 — la LISTE d'une catégorie d'articles. Ne porte aucun contenu :
    *  le fonds reste dans `site_blog_posts`, un seul endroit où écrire. */
   | { type: 'articles'; categorie: 'article' | 'communique' | 'evenement'; titre?: string; limite?: number }

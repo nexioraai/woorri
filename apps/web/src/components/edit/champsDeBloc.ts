@@ -33,6 +33,8 @@ const CHAMPS_FICHIER: Record<string, readonly string[]> = {
   image: ['url'],
   galerie: ['url'],
   partenaires: ['logo'],
+  // Le portrait du « mot d'un responsable » : un vrai fichier, téléversable.
+  citation: ['photo'],
 }
 
 export function champEstUnFichier(typeDeBloc: string, champ: unknown): boolean {
@@ -57,6 +59,9 @@ const CHAMPS_FACULTATIFS: Record<string, readonly string[]> = {
   // page du site) et prendre une COULEUR (bleu, orange, vert). Sans ces cases,
   // le client ne pourrait ni ouvrir une fiche ni recolorer un poste.
   organigramme: ['nom', 'lien', 'couleur'],
+  // Une citation peut porter un PORTRAIT et un titre : elle devient alors le
+  // « mot » d'un responsable, photo à gauche.
+  citation: ['photo', 'titre'],
 }
 
 /** Tout ce qui est une chaîne dans un bloc, avec son chemin. */
