@@ -65,7 +65,10 @@ export default function TexteQuiSEcrit({
       {etat === 'frappe' && (
         <span aria-hidden="true" style={{ position: 'absolute', inset: 0 }}>
           {texte.slice(0, n)}
-          <span style={{ display: 'inline-block', width: '0.08em', height: '0.9em', marginInlineStart: '0.04em', background: 'currentColor', verticalAlign: '-0.08em', animation: 'tqeCurseur 0.9s steps(1) infinite' }} />
+          {/* Le curseur ne doit PAS prendre de largeur : sinon le texte en
+              cours de frappe passe à la ligne là où le texte réservé ne le
+              fait pas, et chevauche ce qui suit (mesuré sur téléphone). */}
+          <span style={{ display: 'inline-block', width: '0.08em', height: '0.9em', marginInlineStart: '0.04em', marginInlineEnd: '-0.12em', background: 'currentColor', verticalAlign: '-0.08em', animation: 'tqeCurseur 0.9s steps(1) infinite' }} />
         </span>
       )}
     </span>
