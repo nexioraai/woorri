@@ -37,6 +37,7 @@ import LienAppelsOffres from './LienAppelsOffres'
 import MenuDeclare from './MenuDeclare'
 import HeroDiapo, { photosDAccueil } from './HeroDiapo'
 import TexteQuiSEcrit from './TexteQuiSEcrit'
+import HeroVitrine from '../pages/HeroVitrine'
 import EditorialShopSection from './EditorialShopSection'
 import { socialUrl } from '@/lib/social'
 import ReseauxSociaux from './ReseauxSociaux'
@@ -84,7 +85,7 @@ function PremiumButton({
 }
 
 // ---------- Theme ----------
-export default function EditorialTheme({ site, hasAvis = false, host = null, menu = [], partenaires = [], liensLegaux = [] }: { site: Site } & AvisDuSite) {
+export default function EditorialTheme({ site, hasAvis = false, host = null, menu = [], partenaires = [], liensLegaux = [], heroVitrine = null }: { site: Site } & AvisDuSite) {
   // ── LES PRODUITS, POUR LES PAGES PERSONNALISÉES.
   //
   // Les sections boutique calculent déjà cette liste chacune de leur côté ;
@@ -183,7 +184,16 @@ export default function EditorialTheme({ site, hasAvis = false, host = null, men
 
       {/* =================== HERO =================== */}
       <main>
-      {!hidden('Home') && (
+      {/* LE HERO « VITRINE », s'il est déclaré (page `accueil-hero`). Sinon,
+          le hero d'avant, inchangé. */}
+      {!hidden('Home') && heroVitrine && (
+        <div id="home">
+          <HeroVitrine pieces={heroVitrine.pieces} surtitre={heroVitrine.surtitre} accent={primary}
+            bouton={heroVitrine.bouton} lienBouton={heroVitrine.lienBouton} badge={heroVitrine.badge}
+            titrePage={site.hero_title || site.name} />
+        </div>
+      )}
+      {!hidden('Home') && !heroVitrine && (
       <section id="home" className="relative min-h-[92vh] flex items-center pt-20 overflow-hidden">
         {site.hero_image ? (
           <>

@@ -66,6 +66,16 @@ export type AvisDuSite = {
   /** LOT 17 — les liens légaux, posés dans le pied de page du thème. `[]` si le site n'en a pas. */
   liensLegaux?: LienLegal[]
 
+  /**
+   * LE HERO « VITRINE » DE L'ACCUEIL (CPA, 2026-11-11). Absent pour tous les
+   * sites qui n'ont pas de page `accueil-hero` en affichage « vitrine » : le
+   * thème garde alors son hero d'avant. Lu par la route, comme le reste.
+   */
+  heroVitrine?: {
+    surtitre?: string; bouton?: string; lienBouton?: string; badge?: string
+    pieces: { titre: string; texte?: string; image?: string; libelle?: string }[]
+  } | null
+
   /** `true` si ce site publie au moins un avis VISIBLE du public. */
   hasAvis?: boolean
 

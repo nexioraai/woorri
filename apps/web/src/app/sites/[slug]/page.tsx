@@ -10,7 +10,7 @@ import HtmlLang from './themes/HtmlLang'
 import EditorialTheme from './themes/EditorialTheme'
 import { avisDuSite } from './themes/avisDuSite'
 import { fetchAvisEntries } from './appels-offres/fetchAvis'
-import { fetchMenu } from './pages/fetchPage'
+import { fetchMenu, fetchPage } from './pages/fetchPage'
 import NoirTheme from './themes/NoirTheme'
 import VifTheme from './themes/VifTheme'
 import AuroraTheme from './themes/AuroraTheme'
@@ -114,12 +114,26 @@ export default async function SitePage({ params, searchParams }: Props) {
   // table. Ce fichier ne réécrit pas sa requête : il l'appelle.
   // LOT 1 + 2 — les deux faits serveur, par la MÊME route unique.
   // LOT 1 + 2 + 15.13 — les faits serveur, par la MÊME route unique.
-  const [{ hasAvis }, menu, partenaires, liensLegaux] = await Promise.all([
+  const [{ hasAvis }, menu, partenaires, liensLegaux, pageHero] = await Promise.all([
     fetchAvisEntries(site.id).then(avisDuSite),
     fetchMenu(site.id),
     lirePartenaires(site.id),
     lirePagesLegales(site.id, url, site.lang),
+    // Le hero « vitrine » est OPTIONNEL et DÉCLARÉ PAR LES DONNÉES : une page
+    // `accueil-hero` dont le premier bloc est un bloc « etapes » en affichage
+    // « vitrine ». Sans elle, l'accueil reste exactement celui d'avant.
+    fetchPage(site.id, 'accueil-hero').catch(() => null),
   ])
+  const premierBloc = pageHero?.blocs?.[0] as (Record<string, unknown> & { items?: unknown[] }) | undefined
+  const heroVitrine = premierBloc?.type === 'etapes' && premierBloc.affichage === 'vitrine' && Array.isArray(premierBloc.items) && premierBloc.items.length >= 4
+    ? {
+        surtitre: typeof premierBloc.titre === 'string' ? premierBloc.titre : undefined,
+        bouton: typeof premierBloc.bouton === 'string' ? premierBloc.bouton : undefined,
+        lienBouton: typeof premierBloc.lien === 'string' && /^[a-z0-9][a-z0-9\-/]*$/i.test(premierBloc.lien) ? `${url}/${premierBloc.lien}` : undefined,
+        badge: typeof premierBloc.badge === 'string' ? premierBloc.badge : undefined,
+        pieces: premierBloc.items as { titre: string; texte?: string; image?: string; libelle?: string }[],
+      }
+    : null
 
   const key = (site.theme as keyof typeof themes) || 'editorial'
   const Theme = themes[key] ?? EditorialTheme
@@ -133,7 +147,7 @@ export default async function SitePage({ params, searchParams }: Props) {
       <JsonLd site={site} url={url} />
       <PromoBanner slug={site.slug} primary={primary} mode={site.mode} labels={cartLabels} currency={resolveShopCurrency(site.products)} />
       <CartShell primary={primary} labels={cartLabels} slug={site.slug} mode={site.mode} products={site.products} shippingFlat={site.shipping_flat} variant={key === 'noir' ? 'dark' : 'light'}>
-        <Theme site={site} hasAvis={hasAvis} host={host} menu={menu} partenaires={partenaires} liensLegaux={liensLegaux} />
+        <Theme site={site} hasAvis={hasAvis} host={host} menu={menu} partenaires={partenaires} liensLegaux={liensLegaux} heroVitrine={heroVitrine} />
         {site.mode === 3 && showsVisitorCatalogSearch(site.dropship_type) && site.theme !== 'aurora' && <CatalogSearch slug={site.slug} primary={primary} lang={site.lang} theme={key as ThemeKey} dropshipType={site.dropship_type} />}
       </CartShell>
       <ScrollRevealInit />

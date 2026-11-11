@@ -5,6 +5,7 @@ import Organigramme from './Organigramme'
 import MotPortrait from './MotPortrait'
 import ParcoursDefilement from './ParcoursDefilement'
 import AssemblageDefilement from './AssemblageDefilement'
+import HeroVitrine from './HeroVitrine'
 import Partenaires from './Partenaires'
 import type { BlogPostCard, CategorieArticle } from '../blog/fetchPosts'
 
@@ -91,6 +92,9 @@ export default function BlocsDePage({
             // AFFICHAGE « assemblage » : des pièces détourées qui s'assemblent.
             if (b.affichage === 'assemblage')
               return <AssemblageDefilement key={k} pieces={b.items} surtitre={b.titre} accent={primary} />
+            // AFFICHAGE « vitrine » : le hero d'accueil, vu ici en aperçu.
+            if (b.affichage === 'vitrine')
+              return <div key={k} style={{ width: '100vw', marginLeft: 'calc(50% - 50vw)' }}><HeroVitrine pieces={b.items} surtitre={b.titre} accent={primary} /></div>
             return (
               <div key={k}>
                 <TitreDeBloc texte={b.titre} />
