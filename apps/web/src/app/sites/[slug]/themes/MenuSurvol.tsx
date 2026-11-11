@@ -19,7 +19,7 @@ import { useEffect } from 'react'
 // Sur téléphone et tablette tactile, rien ne change.
 // ============================================================================
 
-export const ATTRIBUT_SURVOL = 'data-menu-survol'
+import { ATTRIBUT_SURVOL } from './menuSurvolAttribut'
 const DELAI_MS = 220
 
 export default function MenuSurvol() {

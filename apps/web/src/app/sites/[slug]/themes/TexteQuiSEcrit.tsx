@@ -50,7 +50,10 @@ export default function TexteQuiSEcrit({
 
   return (
     <span style={{ position: 'relative', display: 'inline-block' }}>
-      <style>{`
+      {/* `href` + `precedence` : React 19 range ce style dans <head>, une seule
+          fois. Posé ici, dans le titre, son texte (« @keyframes… ») faisait
+          partie du <h1> lu par les moteurs (mesuré en ligne le 2026-11-11). */}
+      <style href="texte-qui-s-ecrit" precedence="default">{`
         @keyframes tqeRelais { to { color: inherit } }
         @keyframes tqeCurseur { 50% { opacity: 0 } }
         .tqeAttente { color: transparent; animation: tqeRelais 0s ${RELAIS_SANS_JS} forwards }

@@ -1,7 +1,8 @@
 import Link from 'next/link'
 import type { Site } from './shared'
 import DessinDeMenu from './DessinDeMenu'
-import MenuSurvol, { ATTRIBUT_SURVOL } from './MenuSurvol'
+import MenuSurvol from './MenuSurvol'
+import { ATTRIBUT_SURVOL } from './menuSurvolAttribut'
 import { resolveSiteBaseUrl } from './shared'
 import type { EntreeMenu } from '../pages/fetchPage'
 

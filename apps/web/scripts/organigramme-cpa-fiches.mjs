@@ -139,7 +139,7 @@ for (const [slug, blocs] of Object.entries(FICHES)) {
   const chemin = `${PARENT}/${slug}`
   const { data: page } = await srv.from('site_pages').select('blocs').eq('site_id', site.id).eq('chemin', chemin).maybeSingle()
   if (!page) { ko++; console.log(`  🔴 /${chemin} absente`); continue }
-  const provisoire = page.blocs.length === 2 && page.blocs[0].type === 'encadre' && /seront? publiée?s? ici/.test(page.blocs[0].texte) && page.blocs[1].type === 'appel'
+  const provisoire = page.blocs.length === 2 && page.blocs[0].type === 'encadre' && /ser(a|ont) publiée?s? ici/.test(page.blocs[0].texte) && page.blocs[1].type === 'appel'
   if (!provisoire) { console.log(`  ⚪ /${chemin} déjà retouchée : non écrasée`); continue }
   const { data, error } = await srv.from('site_pages').update({ blocs, maj_le: new Date().toISOString() })
     .eq('site_id', site.id).eq('chemin', chemin).select('blocs')
