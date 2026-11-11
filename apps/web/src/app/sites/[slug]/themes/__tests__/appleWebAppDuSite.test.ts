@@ -6,6 +6,7 @@ import { describe, it, expect } from 'vitest'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { metadonneesDuSite } from '../metadonneesDuSite'
+import { motifTexte } from '@/lib/apps/__tests__/motif-texte'
 
 describe('appleWebApp', () => {
   it('un site de marchand porte SON nom sous l’icône iPhone', () => {
@@ -15,6 +16,6 @@ describe('appleWebApp', () => {
 
   it('le guide d’installation de Deribfy n’est rendu que sur les pages de la plateforme', () => {
     const layout = readFileSync(join(__dirname, '../../../../layout.tsx'), 'utf8')
-    expect(layout).toMatch(/\{plateforme && <InstallerDeribfy \/>\}/)
+    expect(layout).toMatch(motifTexte('{plateforme && <InstallerDeribfy />}'))
   })
 })
