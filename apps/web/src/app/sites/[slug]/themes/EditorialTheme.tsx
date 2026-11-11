@@ -188,14 +188,20 @@ export default function EditorialTheme({ site, hasAvis = false, host = null, men
         {site.hero_image ? (
           <>
             <HeroDiapo photos={photosDAccueil(site)} className="object-cover hero-float" />
-            <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/55 to-black/80" />
+            {/* LE VOILE NE COUVRE QUE LE TEXTE (modèle anie.td, 2026-11-11).
+                Avant : un voile noir sur TOUTE la photo (40 → 80 %), qui la
+                rendait terne. Maintenant : sombre à gauche, sous le texte,
+                transparent à droite — la photo respire. Sur téléphone, où le
+                texte prend toute la largeur, un second dégradé part du bas. */}
+            <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/35 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/40 to-transparent md:from-black/45 md:via-transparent md:to-transparent" />
           </>
         ) : (
           <div className="absolute inset-0 bg-gradient-to-br from-neutral-900 via-neutral-800 to-neutral-950" />
         )}
 
         <div
-          className="absolute inset-0 opacity-[0.08] mix-blend-overlay pointer-events-none"
+          className="absolute inset-0 opacity-[0.04] mix-blend-overlay pointer-events-none"
           style={{
             backgroundImage:
               "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")",
@@ -214,13 +220,13 @@ export default function EditorialTheme({ site, hasAvis = false, host = null, men
               </div>
             )}
             <h1
-              className="font-serif text-5xl md:text-7xl lg:text-8xl leading-[0.95] tracking-tight mb-8"
+              className="font-serif text-5xl md:text-7xl lg:text-8xl leading-[0.95] tracking-tight mb-8 [text-shadow:0_2px_28px_rgba(0,0,0,.45)]"
               style={{ fontFamily: 'var(--font-fraunces), serif' }}
             >
               <TexteQuiSEcrit texte={site.hero_title || site.name} msParLettre={38} />
             </h1>
             {site.hero_subtitle && (
-              <p className="text-lg md:text-xl text-white/80 max-w-xl mb-10 leading-relaxed">
+              <p className="text-lg md:text-xl text-white/90 max-w-xl mb-10 leading-relaxed [text-shadow:0_1px_14px_rgba(0,0,0,.55)]">
                 {/* Le sous-titre s'écrit APRÈS le titre, comme sur anie.td. */}
                 <TexteQuiSEcrit texte={site.hero_subtitle} msParLettre={16} delaiMs={(site.hero_title || site.name).length * 38 + 250} />
               </p>
