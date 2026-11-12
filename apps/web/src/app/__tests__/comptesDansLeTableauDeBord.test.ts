@@ -23,7 +23,11 @@ const src = (...p: string[]) =>
     .replace(/\{\/\*[\s\S]*?\*\/\}/g, '')
 
 const PAGE = src('comptes', '[slug]', 'page.tsx')
-const BORD = src('dashboard', 'page.tsx')
+// Depuis l'accueil du projet (2026-11-12), la carte du site vit dans un
+// composant : le tableau de bord, c'est la page ET ce composant.
+const BORD = src('dashboard', 'page.tsx') + '\n' +
+  readFileSync(join(__dirname, '..', '..', 'components', 'dashboard', 'AccueilProjet.tsx'), 'utf-8')
+    .replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '').replace(/\{\/\*[\s\S]*?\*\/\}/g, '')
 const OFFRES = src('offres', '[slug]', 'page.tsx')
 
 describe('l’administration n’est pas dans `/edit`', () => {
@@ -63,7 +67,11 @@ describe('la pastille ne dit jamais ce qu’elle n’a pas mesuré', () => {
     // Une pastille « 0 » affirmerait « rien à faire » ; une pastille absente
     // dit « je ne sais pas ». Les deux ne se valent pas quand un fournisseur
     // attend.
-    expect(BORD).toMatch(/\(demandesEnAttente\[site\.slug\]\s*\?\?\s*0\)\s*>\s*0\s*&&/)
+    // La pastille ne paraît qu'au-dessus de zéro, et un nombre NON LU
+    // (undefined) n'en produit aucune.
+    expect(BORD).toMatch(/pastille\s*!==\s*undefined\s*&&\s*pastille\s*>\s*0\s*&&/)
+    expect(BORD).toMatch(/pastille=\{comptesEnAttente\}/)
+    expect(BORD).toMatch(/comptesEnAttente=\{site\.ouvre_des_comptes === true \? demandesEnAttente\[site\.slug\] : undefined\}/)
   })
 
   it('🔴 un échec de lecture laisse le tableau de bord ENTIER', () => {
@@ -127,7 +135,9 @@ describe('l’écran des offres suit la même frontière', () => {
   it('🔴 la pastille ne paraît qu’au-dessus de zéro', () => {
     // Une offre qu'on oublie, c'est un marché contesté ; une pastille « 0 »
     // dirait « rien à faire » avant d'avoir regardé.
-    expect(BORD).toMatch(/\(offresEnAttente\[site\.slug\]\s*\?\?\s*0\)\s*>\s*0\s*&&/)
+    expect(BORD).toMatch(/pastille\s*!==\s*undefined\s*&&\s*pastille\s*>\s*0\s*&&/)
+    expect(BORD).toMatch(/pastille=\{offresRecues\}/)
+    expect(BORD).toMatch(/offresRecues=\{site\.publishes_tenders === true \? offresEnAttente\[site\.slug\] : undefined\}/)
   })
 
   it('🔴 l’écran RELIT après chaque décision', () => {

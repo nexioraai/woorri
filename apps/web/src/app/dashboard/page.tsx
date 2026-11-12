@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Plus, ExternalLink, Pencil, LogOut, Globe, Users, Inbox, BookOpen } from 'lucide-react';
 import Sidebar from '@/components/Sidebar';
+import AccueilProjet from '@/components/dashboard/AccueilProjet';
 import { supabase } from '@/lib/supabase';
 import { IdentifiantsOeuvre, type EtatCompteOeuvre } from '@/components/apps/IdentifiantsOeuvre';
 import { computeAiScore } from '@/app/lib/aiScore';
@@ -44,6 +45,7 @@ type Application = {
 };
 
 export default function DashboardPage() {
+  const [projetChoisi, setProjetChoisi] = useState<string | null>(null);
   // ── COMBIEN DE DEMANDES ATTENDENT, PAR SITE.
   //
   // Vide tant que rien n'est charge : une pastille « 0 » affichee par defaut
@@ -630,134 +632,34 @@ export default function DashboardPage() {
             </Link>
           </div>
         ) : (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {sites.map((site) => (
-              <div key={site.slug}
-                className="group border border-white/[0.06] rounded-2xl overflow-hidden hover:border-white/[0.12] transition-all duration-300 hover:-translate-y-1"
-                style={{
-                  background: 'rgba(255,255,255,0.02)',
-                  backdropFilter: 'blur(20px) saturate(1.2)',
-                  WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
-                  boxShadow: `inset 0 2px 0 ${site.primary_color || '#FA5D1E'}, inset 0 1px 0 rgba(255,255,255,0.10), 0 0 40px ${site.primary_color || '#FA5D1E'}18`,
-                }}>
-                <div className="h-28 relative flex items-center justify-center overflow-hidden">
-                  <div className="absolute inset-0"
-                    style={{ background: `radial-gradient(ellipse at 50% 50%, ${site.primary_color || '#FA5D1E'}45 0%, transparent 70%)` }} />
-
-                  <div className="relative text-center px-4">
-                    <h2 className="text-xl font-black text-white">{site.name}</h2>
-                    <span className="text-xs px-3 py-1 rounded-full mt-2 inline-block font-medium"
-                      style={{ background: `${site.primary_color || '#FA5D1E'}25`, color: site.primary_color || '#FA5D1E' }}>
-                      {site.type}
-                    </span>
-                  </div>
-                </div>
-                <div className="p-5">
-                  {site.slogan && (
-                    <p className="text-white/40 text-sm mb-4 line-clamp-2">{site.slogan}</p>
-                  )}
-                  {(() => {
-                    const { score, missing } = computeAiScore(site);
-                    const color = score >= 80 ? '#34d399' : score >= 50 ? '#FA5D1E' : '#f87171';
-                    return (
-                      <div className="mb-4">
-                        <div className="flex items-center justify-between mb-1.5">
-                          <span className="text-xs font-semibold text-white/60">{t('dashboard.aiVisibility')}</span>
-                          <span className="text-sm font-black" style={{ color }}>{score}<span className="text-white/30 text-xs font-medium">/100</span></span>
-                        </div>
-                        <div className="h-1.5 w-full rounded-full bg-white/10 overflow-hidden">
-                          <div className="h-full rounded-full transition-all duration-500" style={{ width: `${score}%`, background: color }} />
-                        </div>
-                        {missing.length > 0 && (
-                          <p className="text-[11px] text-white/40 mt-1.5">{t('dashboard.actionsToReach').replace('{n}', String(missing.length))}</p>
-                        )}
-                      </div>
-                    );
-                  })()}
-                  <div className="flex flex-wrap gap-2">
-                    <Link href={site.published ? `/sites/${site.slug}` : `/preview/${site.slug}`}
-                      className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-white text-sm font-semibold transition-opacity hover:opacity-80"
-                      style={{ background: site.primary_color || '#FA5D1E' }}>
-                      <ExternalLink className="w-3.5 h-3.5" />
-                      {t('dashboard.view')}
-                    </Link>
-                    <Link href={`/edit/${site.slug}`}
-                      className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-sm font-semibold border border-white/10 text-white/70 hover:text-white hover:border-white/30 transition-all">
-                      <Pencil className="w-3.5 h-3.5" />
-                      {t('dashboard.edit')}
-                    </Link>
-                    {/* ── LES COMPTES, DANS LE TABLEAU DE BORD ET PAS DANS `/edit`.
-                        Arbitrage du proprietaire, 2026-11-09 : « dans edit on met
-                        seulement les trucs qu'on edite qui seront visibles sur le
-                        site, le reste il faut mettre dans dashboard ». Approuver un
-                        fournisseur ne se voit nulle part sur le site.
-
-                        LE BOUTON N'APPARAIT QUE SI LE SITE OUVRE DES COMPTES. Les
-                        41 autres sites n'en ont pas, et un bouton qui mene a une
-                        liste toujours vide use la confiance.
-
-                        LA PASTILLE PORTE LE NOMBRE EN ATTENTE. Sans elle il faut
-                        PENSER a venir regarder -- et un fournisseur attendrait des
-                        semaines sans que personne le sache. */}
-                    {/* ── LOT 13.2 — LES OFFRES REÇUES.
-                        Ouvrir les plis d'un marché ne se voit nulle part sur
-                        le site : c'est de l'administration, donc ici. Le
-                        bouton n'apparaît que pour un site qui PASSE des
-                        marchés — ailleurs il mènerait à une liste toujours
-                        vide. */}
-                    {site.publishes_tenders === true && (
-                      <Link href={`/offres/${site.slug}`}
-                        className="relative flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-sm font-semibold border border-white/10 text-white/70 hover:text-white hover:border-white/30 transition-all"
-                        title="Offres reçues sur vos appels d'offres">
-                        <Inbox className="w-3.5 h-3.5" />
-                        {(offresEnAttente[site.slug] ?? 0) > 0 && (
-                          <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#b45309] text-white text-[11px] font-bold flex items-center justify-center">
-                            {offresEnAttente[site.slug]}
-                          </span>
-                        )}
-                      </Link>
-                    )}
-                    {site.ouvre_des_comptes === true && (
-                      <Link href={`/comptes/${site.slug}`}
-                        className="relative flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-sm font-semibold border border-white/10 text-white/70 hover:text-white hover:border-white/30 transition-all"
-                        title="Comptes inscrits">
-                        <Users className="w-3.5 h-3.5" />
-                        {(demandesEnAttente[site.slug] ?? 0) > 0 && (
-                          <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 rounded-full bg-[#b45309] text-white text-[11px] font-bold flex items-center justify-center">
-                            {demandesEnAttente[site.slug]}
-                          </span>
-                        )}
-                      </Link>
-                    )}
-                    {/* Le GUIDE D'EXPLOITATION — pour les sites-portails (comptes,
-                        offres) : c'est là qu'il y a quelque chose à administrer. */}
-                    {site.ouvre_des_comptes === true && (
-                      <Link href={`/guide/${site.slug}`}
-                        className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-sm font-semibold border border-white/10 text-white/70 hover:text-white hover:border-white/30 transition-all"
-                        title="Guide d’exploitation">
-                        <BookOpen className="w-3.5 h-3.5" />
-                      </Link>
-                    )}
-                    {site.published && (<>
-                    <button type="button" onClick={() => { void adresseSite(site); }}
-                      title="Adresse gratuite <nom>.deribfy.app"
-                      className="flex items-center justify-center px-3 py-2.5 rounded-xl text-sm font-semibold border border-white/10 text-white/70 hover:text-white hover:border-white/30 transition-all">
-                      .app
+          <div className="flex flex-col gap-5">
+            {/* ── L'ACCUEIL DU PROJET (maquette validée, 2026-11-12). Il remplace
+                la grille de cartes à icônes muettes ; toutes leurs fonctions y
+                sont, nommées. Plusieurs sites : on choisit lequel afficher. */}
+            {sites.length > 1 && (
+              <div role="tablist" aria-label={t('projet.vosProjets')} className="flex flex-wrap gap-2">
+                {sites.map((s) => {
+                  const actif = s.slug === (projetChoisi ?? sites[0].slug);
+                  return (
+                    <button key={s.slug} type="button" role="tab" aria-selected={actif}
+                      onClick={() => setProjetChoisi(s.slug)}
+                      className={`rounded-xl px-4 py-2 text-sm font-semibold border transition-colors ${actif ? 'border-[#FA5D1E]/50 bg-[#FA5D1E]/10 text-[#FFB08F]' : 'border-white/10 text-white/70 hover:text-white hover:border-white/25'}`}>
+                      {s.name}
                     </button>
-                    <Link href={`/domaine/${site.slug}`}
-                      className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-sm font-semibold border border-white/10 text-white/70 hover:text-white hover:border-white/30 transition-all">
-                      <Globe className="w-3.5 h-3.5" />
-                    </Link>
-                    </>)}
-                    <button onClick={() => handlePublish(site.slug, site.published)}
-                      className={`flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-sm font-semibold border transition-all ${site.published ? 'border-emerald-500/30 text-emerald-400 bg-emerald-500/10' : 'border-white/10 text-white/70 hover:text-white hover:border-white/30'}`}>
-                      <span className={`w-2 h-2 rounded-full nexiora-pulse-dot ${site.published ? 'bg-emerald-400' : 'bg-[#FA5D1E]'}`} />
-                      {site.published ? t('dashboard.online') : t('dashboard.publish')}
-                    </button>
-                  </div>
-                </div>
+                  );
+                })}
               </div>
-            ))}
+            )}
+            {(() => {
+              const site = sites.find((s) => s.slug === projetChoisi) ?? sites[0];
+              return (
+                <AccueilProjet key={site.slug} site={site}
+                  comptesEnAttente={site.ouvre_des_comptes === true ? demandesEnAttente[site.slug] : undefined}
+                  offresRecues={site.publishes_tenders === true ? offresEnAttente[site.slug] : undefined}
+                  onPublier={() => { void handlePublish(site.slug, site.published); }}
+                  onAdresseApp={() => { void adresseSite(site); }} />
+              );
+            })()}
           </div>
         )}
 

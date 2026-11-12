@@ -27,11 +27,33 @@
  */
 import { NextResponse } from 'next/server'
 import { requireAuthenticatedUser } from '@/lib/auth/require-authenticated-user'
+import { requireSiteOwner } from '@/lib/auth/require-site-owner'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { TABLE_GENERATIONS } from '@/lib/apps/journal'
 import { creerSousDomaine, nomValide, DOMAINE_PUBLIC } from '@/lib/apps/sous-domaine'
 
 export const runtime = 'nodejs'
+
+/**
+ * GET — L'ADRESSE PUBLIQUE DÉJÀ ATTRIBUÉE (tableau de bord, 2026-11-12).
+ *
+ * L'accueil du projet affiche le lien réel du site (`cpa-tchad.deribfy.app`),
+ * pas le chemin technique. Le mapping vit dans `sites_sous_domaines`, que le
+ * navigateur ne lit pas : cette lecture est réservée au PROPRIÉTAIRE du site
+ * (`requireSiteOwner`, par `owner_id`). `lien: null` = aucune adresse encore.
+ */
+export async function GET(req: Request) {
+  const slug = new URL(req.url).searchParams.get('slug') ?? ''
+  if (!slug) return NextResponse.json({ error: 'slug manquant' }, { status: 400 })
+  const garde = await requireSiteOwner(req, slug)
+  if (!garde.ok) return garde.response
+  const { data, error } = await supabaseAdmin
+    .from('sites_sous_domaines').select('nom').eq('site_slug', slug)
+    .order('nom', { ascending: true }).limit(1).maybeSingle()
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  const nom = (data as { nom?: string } | null)?.nom
+  return NextResponse.json({ lien: nom ? `https://${nom}.${DOMAINE_PUBLIC}` : null })
+}
 
 export async function POST(req: Request) {
   const garde = await requireAuthenticatedUser(req)

@@ -35,7 +35,10 @@ const lire = (...p: string[]) => readFileSync(join(process.cwd(), 'src', ...p), 
 const sansCommentaires = (s: string) =>
   s.replace(/\/\*[\s\S]*?\*\//gu, '').replace(/^[ \t]*\/\/.*$/gmu, '')
 
-const DASHBOARD = sansCommentaires(lire('app', 'dashboard', 'page.tsx'))
+// Le tableau de bord = la page ET l'accueil du projet (2026-11-12) : la
+// règle « aucune suppression » couvre les deux.
+const DASHBOARD = sansCommentaires(lire('app', 'dashboard', 'page.tsx')) + '\n' +
+  sansCommentaires(lire('components', 'dashboard', 'AccueilProjet.tsx'))
 const EDIT = sansCommentaires(lire('app', 'edit', '[slug]', 'page.tsx'))
 
 describe('le tableau de bord ne peut plus supprimer quoi que ce soit', () => {
@@ -54,7 +57,9 @@ describe('le tableau de bord ne peut plus supprimer quoi que ce soit', () => {
 
   it('les actions utiles y sont TOUTES restées — on n’a rien perdu', () => {
     // La moitié qui empêche de « corriger » en vidant la carte.
-    for (const attendu of ['dashboard.view', 'dashboard.edit', 'handlePublish']) {
+    // Voir / Modifier sont nommés « projet.voir » / « projet.modifier »
+    // depuis l'accueil du projet ; la mise en ligne reste `handlePublish`.
+    for (const attendu of ['projet.voir', 'projet.modifier', 'handlePublish', 'onPublier']) {
       expect(DASHBOARD.includes(attendu), `${attendu} a disparu de la carte`).toBe(true)
     }
   })
