@@ -33,6 +33,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { readFileSync } from 'node:fs'
+import { motifTexte } from '@/lib/apps/__tests__/motif-texte'
 
 const getUserMock = vi.fn()
 vi.mock('@/lib/supabase', () => ({
@@ -227,6 +228,19 @@ describe('EP-273 · la CONSIGNE elle-même ne peut plus se contredire', () => {
       posReply,
     )
     expect(posApp).toBeGreaterThan(posType)
+  })
+
+  // 2026-11-12 — MESURÉ SUR LE PROPRIÉTAIRE : « Un restaurant à N'Djamena :
+  // les plats…, les commandes (plat, quantité, date, payée ou non) et les
+  // clients. Un espace de gestion derrière connexion… » → réponse « un site ».
+  // Le mot « application » n'y était pas ; la consigne n'écoutait que lui.
+  // Ce cliquet tient la RÈGLE ; ce que le modèle en fait se juge sur le vrai
+  // modèle (2/2 « c'est une application » puis bascule après « oui », et le
+  // témoin « un site pour mon menu » resté un site).
+  it('⑨ ELLE RECONNAÎT UNE APPLICATION DÉCRITE SANS LE MOT', () => {
+    expect(CONSIGNE).toMatch(motifTexte('OR DESCRIBES ONE WITHOUT THE WORD'))
+    expect(CONSIGNE).toMatch(motifTexte("THE SIGNAL is what they want to MANAGE, not the word they use"))
+    expect(CONSIGNE).toMatch(motifTexte('A public page next to it does not make it a website'))
   })
 })
 
