@@ -1,0 +1,20 @@
+{
+ "tours": [
+  {
+   "rang": 1,
+   "ok": false,
+   "motif": [
+    "DES RÉGLAGES QUE LES COMPOSANTS FOURNIS NE CONNAISSENT PAS — ignorés en silence (graphique vide, menu qui ne répond pas,",
+    "DES EXIGENCES DU CAHIER SONT MUETTES — ni dans l’application, ni déclarées :"
+   ]
+  },
+  {
+   "rang": 2,
+   "ok": true,
+   "motif": [
+    ""
+   ]
+  }
+ ],
+ "fichiersSha256": "855df5a8620a02ab9bb8c74232ecc5a5ac1d6683c883eddc5c60b81a7ae7daf8"
+}

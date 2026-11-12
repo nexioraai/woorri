@@ -1,7 +1,7 @@
 {
  "instantane_sha256": "145c4107d4cb24a175d2b4943978462f64a5663f81ff7ab33e66bc0cca98bffe",
- "plafond": 0.5,
- "depense": 0.2285,
+ "depense": 0.3636,
+ "plafondDerniereExecution": 0.5185,
  "generations": [
   {
    "etat": "a",
@@ -38,6 +38,32 @@
    ],
    "fichiersSha256": "f7bcbcf004b1c8f3a09bf233319ed8f6cfea2a5aac801c6c5440823b3e80f498",
    "ms": 342673
+  },
+  {
+   "etat": "a",
+   "tentative": 2,
+   "plafond": 0.5185,
+   "copie": "53424b25",
+   "modifie": "M src/lib/apps/bibliotheque-ui.ts\n?? node_modules",
+   "debut": "2026-11-12T22:32:28.664Z",
+   "livree": false,
+   "interrompu": false,
+   "erreur": "Cannot read properties of undefined (reading 'replace')",
+   "pile": "TypeError: Cannot read properties of undefined (reading 'replace')\n    at sansPrefixe (/private/tmp/claude-501/-Users-yia/ff75a295-8a63-42d9-bfc9-972db4a904a4/scratchpad/bissection/a/apps/web/src/lib/apps/entites-declarees.ts:523:48)\n    at nomTable (/private/tmp/claude-501/-Users-yia/ff75a295-8a63-42d9-bfc9-972db4a904a4/scratchpad/bissection/a/apps/web/src/lib/apps/entites-declarees.ts:533:65)\n    at jugerPersistance (/private/tmp/claude-501/-Users-yia/ff75a295-8a63-42d9-bfc9-972db4a904a4/scratchpad/bissection/a/apps/web/src/lib/apps/juge-persistance.ts:271:15)\n    at boucleEcriture (/private/tmp/claude-501/-Users-yia/ff75a295-8a63-42d9-bfc9-972db4a904a4/scratchpad/bissection/a/apps/web/src/lib/apps/boucle-directe.ts:544:29)\n    at async <anonymous> (/Users/yia/dev/woorri/docs/elite-protocol/evidence/generateur-2026-11-12/m8-generer.mts:94:15)",
+   "ms": 148532
+  },
+  {
+   "etat": "a",
+   "tentative": 3,
+   "plafond": 0.5185,
+   "copie": "53424b25",
+   "modifie": "M src/lib/apps/bibliotheque-ui.ts\n?? node_modules",
+   "debut": "2026-11-12T22:36:06.477Z",
+   "livree": false,
+   "interrompu": true,
+   "erreur": "INTERROMPU — budget : 0.364 $ + 0.157 $ au pire > 0.5185 $",
+   "pile": "Error: INTERROMPU — budget : 0.364 $ + 0.157 $ au pire > 0.5185 $\n    at Object.appeler (/Users/yia/dev/woorri/docs/elite-protocol/evidence/generateur-2026-11-12/m8-generer.mts:91:59)\n    at boucleEcriture (/private/tmp/claude-501/-Users-yia/ff75a295-8a63-42d9-bfc9-972db4a904a4/scratchpad/bissection/a/apps/web/src/lib/apps/boucle-directe.ts:385:41)\n    at async <anonymous> (/Users/yia/dev/woorri/docs/elite-protocol/evidence/generateur-2026-11-12/m8-generer.mts:103:15)",
+   "ms": 187020
   }
  ]
 }

@@ -480,7 +480,9 @@ n'est **pas** rejouée.
 | état | ce qu'il contient | résultat | démarre | erreurs | écrans distincts | signes de l'accueil | « Section inconnue » | écrans vides |
 |---|---|---|---|---|---|---|---|---|
 | **octobre** `7be93be8` | code livré le 2026-10-30 | accepté au tour 1 | **oui** | 0 | **13** | 857 | 0 | 1 |
-| **a)** | HEAD d'aujourd'hui, `bibliotheque-ui.ts` remise à `9cb89380` (avant mes 5 commits) | **ARRÊTÉ sans livrer** après 143 s : `Cannot read properties of undefined (reading 'replace')` | — | — | — | — | — | — |
+| **a)** tentatives 1-2 | HEAD d'aujourd'hui, `bibliotheque-ui.ts` remise à `9cb89380` (avant mes 5 commits) | **ARRÊTÉ sans livrer** : `reading 'replace'` — **défaut de MON instrument** (voir ci-dessous) | — | — | — | — | — | — |
+| **a)** tentative 3 (relance accordée, 0,29 $) | idem, **validateur de production** | **INTERROMPU par la garde de budget** avant le tour 3 (0,364 $ + 0,157 $ au pire > 0,5185 $) | — | — | — | — | — | — |
+| *a), tour 2 rejoué* | réponse brute conservée du tour 2, rejouée gratuitement comme **dernier** tour (`m8-a-partiel.mts`) | indication, **pas** la ligne a) | **oui** | 0 | **6** | 1 377 | 0 | 1 |
 | **b)** | tout le dépôt à `158bac74` (2026-11-03 23:52 UTC) | livré au tour 3 (2 refus de couverture) | **oui** | 0 | **10** | 609 | 0 | 0 |
 | *rappel M5* | pipeline d'aujourd'hui complet | livré au tour 3 | **non** (`CarteVedette`) | 3 | 1 | 251 | 0 | 0 |
 
@@ -489,7 +491,29 @@ dans a) et b) (`5edfd815…`). Aucun commit n'a touché la bibliothèque entre l
 2026-11-03 et mes 5 commits. **a) et b) ne diffèrent donc que par les 48
 autres commits.**
 
-**L'arrêt de a), examiné gratuitement** (`m8-pile-a.mts`). La même copie,
+**Cause de l'arrêt de a), LUE (étape 0 du 2026-11-12).** Pile :
+`sansPrefixe` (`entites-declarees.ts:523`) ← `nomTable` ← `jugerPersistance`
+← `boucleEcriture`. Le modèle avait déclaré en cours de route des tables mal
+formées ; **la production les filtre** (`schemaEntite.safeParse`), **mon script
+passait `validerEntite: () => true`** et les laissait entrer. Rejeu gratuit de
+la même réponse (`m8-validateur-a.mts`) : `() => true` → arrêt ;
+validateur de production → pas d'arrêt, tables refusées (`appels_offres`,
+`clients`, `fournisseurs`…). **Le générateur n'y était pour rien.**
+⚠ Défaut d'instrument déclaré : les réponses brutes n'étaient pas nommées par
+tentative ; la 3ᵉ exécution a **écrasé** la réponse qui a servi à cette
+preuve. Son résultat imprimé est rapporté ici, mais **n'est plus rejouable**
+depuis `brut/m8/`. Nommage corrigé.
+
+**Tentative 3, validateur corrigé** : tour 1 refusé (réglages inconnus —
+`juge-contrat` — et exigences muettes), tour 2 refusé à son tour (la boucle a
+voulu un tour 3), tour 3 **non appelé** : budget accordé atteint. Dépense M8
+totale : **0,3636 $**.
+
+**Lecture selon la règle — inchangée** : la ligne a) n'existe toujours pas. Le
+tour 2 de a) rejoué démarre (6 écrans) : c'est une **indication** compatible
+avec M7, pas la mesure demandée.
+
+**L'arrêt de a), premier examen gratuit** (`m8-pile-a.mts`). La même copie,
 nourrie d'une réponse connue (les fichiers de b) à la place du modèle), **ne
 plante pas** et livre. L'arrêt dépend donc du **contenu de la réponse** du
 modèle pendant a). Cette réponse **n'a pas été conservée** : c'est une lacune
@@ -544,7 +568,8 @@ Le reste du budget M8 (0,27 $) **ne suffit pas** à la garde au tarif de pointe
 - Si l'écart octobre → aujourd'hui de M5 est une régression ou le hasard d'un seul tirage par cahier.
 - ~~Le point de départ de `object is not iterable`~~ → **levé par M7** : `CarteVedette`, `details.map(([l, v]))`, commits `6f870335` / `1a73ce63`.
 - Le résultat de la lecture du brief pour les 34 générations (jamais enregistré, M6).
-- La cause de l'arrêt de l'état a) en M8 (réponse du modèle non conservée).
+- ~~La cause de l'arrêt de l'état a)~~ → **lue** : le validateur de mon instrument (`() => true`).
+- La ligne a) complète de M8 (interrompue par le budget au tour 3).
 - Le comportement du pipeline actuel **avec des tables** sur un cahier riche : non exercé par M5.
 - Tout ce qui précède le 2026-10-18 : la base ne contient pas de génération directe plus ancienne.
 

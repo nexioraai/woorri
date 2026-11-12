@@ -1,6 +1,6 @@
 {
  "instantane_sha256": "145c4107d4cb24a175d2b4943978462f64a5663f81ff7ab33e66bc0cca98bffe",
- "depense": 0.2285,
+ "depense": 0.3636,
  "lignes": [
   {
    "nom": "octobre (7be93be8)",
@@ -14,8 +14,8 @@
   },
   {
    "nom": "a)",
-   "statut": "NON LIVRÉ",
-   "erreur": "Cannot read properties of undefined (reading 'replace')"
+   "statut": "INTERROMPU (budget)",
+   "erreur": "INTERROMPU — budget : 0.364 $ + 0.157 $ au pire > 0.5185 $"
   },
   {
    "nom": "b)",

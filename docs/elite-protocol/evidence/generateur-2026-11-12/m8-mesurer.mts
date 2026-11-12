@@ -37,7 +37,8 @@ async function mesurer(nom: string, fichiers: Map<string, string> | null, extra:
 
 await mesurer('octobre (7be93be8)', new Map(Object.entries(lignes.find((l) => l.id.startsWith('7be93be8'))!.document!.fichiers!)), {})
 for (const etat of ['a', 'b']) {
-  const g = gen.generations.find((x) => x.etat === etat)
+  // La DERNIÈRE tentative de l'état (a) a été relancée ; la 1re reste dans le JSON).
+  const g = [...gen.generations].reverse().find((x) => x.etat === etat)
   if (!g) { await mesurer(`${etat})`, null, { statut: 'PAS LANCÉ' }); continue }
   if (!g.livree) { await mesurer(`${etat})`, null, { statut: g.interrompu ? 'INTERROMPU (budget)' : 'NON LIVRÉ', tours: g.tours, erreur: g.erreur }); continue }
   const f = join(ICI, 'brut', 'm8', `${etat}.json.gz`)
