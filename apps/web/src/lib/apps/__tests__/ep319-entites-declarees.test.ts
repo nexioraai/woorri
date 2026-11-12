@@ -259,7 +259,10 @@ describe('EP-319 · les données déclarées', () => {
     // génération à trois tours — marginal sur une médiane de 0,07 $, et dit).
     // ── 7 650 → 7 900 le 2026-11-12 : le STYLE choisi par activité (quatre
     // mises en page, « pas la même pour tous »). Mesuré : 7 781 (+257 signes).
-    expect(CONSIGNE.length, 'la consigne de génération a grossi').toBeLessThan(7900)
+    // ── 7 900 → 8 800 le 2026-11-12 : les RÉGLAGES EXACTS de chaque pièce,
+    // lus dans la bibliothèque (pharmacie : data=, onSelect=, serie="…"
+    // inventés, gestion plantée). Mesuré : 8 674 (+893 signes ≈ 250 jetons).
+    expect(CONSIGNE.length, 'la consigne de génération a grossi').toBeLessThan(8800)
   })
 
   it('⑥ter LA DÉROGATION DE PORTABILITÉ EST BORNÉE À `blocBase`', () => {
@@ -444,7 +447,8 @@ describe('EP-319 · les données déclarées', () => {
     // ── 11 400 → 12 300 LE 2026-11-12 : la même règle du tableau de bord
     // (voir ⑥). Mesuré : 12 155.
     // ── 12 300 → 12 550 le 2026-11-12 : le style par activité (⑥). Mesuré : 12 412.
-    expect(avecBase.length, 'la prose du bloc de base a enflé').toBeLessThan(12550)
+    // ── 12 550 → 13 450 le 2026-11-12 : les réglages exacts (⑥). Mesuré : 13 305.
+    expect(avecBase.length, 'la prose du bloc de base a enflé').toBeLessThan(13450)
 
     // ── ET LE BANDEAU N'EST PLUS DEMANDÉ À L'ŒUVRE (2026-11-05).
     //
@@ -511,7 +515,8 @@ describe('EP-319 · les données déclarées', () => {
       // ── 17 500 → 18 400 le 2026-11-12 : la règle du tableau de bord (⑥).
       // Mesurée PAR CE CLIQUET : 18 227 — la même hausse de 1 046 signes.
       // ── 18 400 → 18 650 le 2026-11-12 : le style par activité (+257 signes).
-    ).toBeLessThan(18650)
+      // ── 18 650 → 19 550 le 2026-11-12 : les réglages exacts (+893 signes).
+    ).toBeLessThan(19550)
 
     // ── ③ ET LA PORTE DES DONNÉES RESTE UNE PORTE ÉTROITE.
     //

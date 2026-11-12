@@ -22,6 +22,7 @@
  * feuille, et un style inline ne peut pas pointer dans le vide.
  */
 
+import { signaturesDe } from './juge-contrat'
 import { vocabulaireDe } from './juge-jetons'
 
 
@@ -215,8 +216,32 @@ const CARTE: React.CSSProperties = {
   textAlign: 'left',
 }
 
-export function Carte({ children, enfants }: { children?: React.ReactNode; enfants?: React.ReactNode }) {
-  return <div style={CARTE}>{children ?? enfants}</div>
+export function Carte({ children, enfants, style }: { children?: React.ReactNode; enfants?: React.ReactNode; style?: React.CSSProperties }) {
+  // style= COMPLÈTE la carte (mesuré : le modèle y met son padding ou sa grille, 2 fois sur 2).
+  return <div style={style === undefined ? CARTE : { ...CARTE, ...style }}>{children ?? enfants}</div>
+}
+
+/** UN MORCEAU QUI PLANTE NE FAIT PLUS TOMBER L'ÉCRAN ENTIER.
+ *
+ * MESURÉ le 2026-11-12 : une seule carte mal réglée (serie= en texte) et
+ * TOUT l'espace de gestion devenait blanc — barre latérale comprise, donc
+ * plus aucun moyen d'aller ailleurs. L'erreur reste ÉCRITE dans la console :
+ * le juge d'exécution la voit et la reproche ; la personne, elle, garde son
+ * menu et un message clair. */
+class Protection extends React.Component<{ children?: React.ReactNode; cle?: string }, { erreur: string | null }> {
+  state = { erreur: null as string | null }
+  static getDerivedStateFromError(e: unknown) { return { erreur: e instanceof Error ? e.message : String(e) } }
+  componentDidCatch(e: unknown) { console.error('[section en erreur]', e) }
+  componentDidUpdate(avant: { cle?: string }) { if (avant.cle !== this.props.cle && this.state.erreur !== null) this.setState({ erreur: null }) }
+  render() {
+    if (this.state.erreur === null) return this.props.children
+    return (
+      <div role="alert" style={{ padding: ESPACE.l, borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)', background: 'var(--card)', color: 'var(--foreground)' }}>
+        <div style={{ fontWeight: 700 }}>Cette section n’a pas pu s’afficher.</div>
+        <div style={{ ...(ROLE.legende as React.CSSProperties), marginTop: 4 }}>Les autres sections restent disponibles dans le menu.</div>
+      </div>
+    )
+  }
 }
 
 /**
@@ -560,7 +585,7 @@ export function CoqueGestion({ nom: n, sousTitre = 'Espace de gestion', style: s
     )
   }
   const marge = large ? (style === 'chaleureux' ? ESPACE.xxl : style === 'institutionnel' ? ESPACE.l : ESPACE.xl) : ESPACE.m
-  const contenu = <main style={{ padding: marge + 'px', paddingTop: style === 'chaleureux' && large ? ESPACE.l : marge, display: 'flex', flexDirection: 'column', gap: style === 'institutionnel' ? ESPACE.m : ESPACE.l, paddingBottom: large ? ESPACE.xl : 96 }}>{children ?? enfants}</main>
+  const contenu = <main style={{ padding: marge + 'px', paddingTop: style === 'chaleureux' && large ? ESPACE.l : marge, display: 'flex', flexDirection: 'column', gap: style === 'institutionnel' ? ESPACE.m : ESPACE.l, paddingBottom: large ? ESPACE.xl : 96 }}><Protection cle={active}>{children ?? enfants}</Protection></main>
 
   if (!large) {
     const visibles = sections.slice(0, 5)
@@ -1074,6 +1099,23 @@ function vocabulaireEnumere(): string {
   return lignes.join('\n') + `\n     Icone nom= : ${icones.join(', ')}`
 }
 
+/** LES RÉGLAGES DE CHAQUE PIÈCE, LUS dans sa signature — jamais recopiés.
+ *
+ * MESURÉ le 2026-11-12 (pharmacie du propriétaire) : la consigne nommait les
+ * pièces sans leurs réglages ; le modèle les a devinés — data=, onSelect=,
+ * legende=, serie="30 derniers jours" — et l'espace de gestion a planté.
+ * La liste vient du même lecteur que le juge du contrat : ce qu'on enseigne
+ * et ce qu'on exige ne peuvent pas diverger. */
+function reglagesEnumeres(): string {
+  const lignes: string[] = []
+  for (const [piece, s] of signaturesDe(fichiersSysteme(undefined))) {
+    if (s.acceptes === null) continue
+    const r = s.acceptes.filter((a) => a !== 'children' && a !== 'enfants' && a !== 'enfant')
+    lignes.push(`     ${piece}(${r.map((a) => (s.listes.includes(a) ? a + '[]' : a)).join(', ')})`)
+  }
+  return lignes.join('\n')
+}
+
 /** Ce que la CONSIGNE raconte de la bibliothèque — tenu au même endroit
  *  qu'elle, pour que le texte et les fichiers ne divergent jamais. */
 export const CONSIGNE_BIBLIOTHEQUE = `L'INTERFACE VIENT DE LA BIBLIOTHÈQUE FOURNIE — tu ne la réécris jamais.
@@ -1081,12 +1123,11 @@ export const CONSIGNE_BIBLIOTHEQUE = `L'INTERFACE VIENT DE LA BIBLIOTHÈQUE FOUR
    · ./systeme/jetons : ESPACE, OMBRE, ROLE.
    · ./systeme/argent : formaterMontant(montant) — TOUT montant passe par
      lui ; tu n'écris JAMAIS un code ou symbole de monnaie.
-   · ./systeme/ui : Icone (noms : ${vocabulaireIcones()}), Carte,
-     CarteDeChiffre (icône + libellé + valeur + LIGNE DE CONTEXTE
-     obligatoire ; tendance=, serie=), EnTeteDeSection, Pastille, Bouton,
-     EtatVide (message=, detail=), et le TABLEAU DE BORD : CoqueGestion,
-     GrilleTableau, CarteVedette, Courbe, Barres, Anneau, Classement,
-     ListeRecente, ChoixApparence.
+   · ./systeme/ui : Icone (noms : ${vocabulaireIcones()}) ; CarteDeChiffre
+     porte une LIGNE DE CONTEXTE obligatoire. RÉGLAGES EXACTS de chaque
+     pièce — aucun autre n'existe, un nom inventé est REFUSÉ ; « [] » = une
+     LISTE, jamais un texte :
+${reglagesEnumeres()}
    · ./systeme/donnees : parMois, parJour, sommeParMois, compterPar, somme,
      recents, tendance, plusRecents, ilYA.
 

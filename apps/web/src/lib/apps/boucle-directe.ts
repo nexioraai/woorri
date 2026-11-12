@@ -36,6 +36,7 @@ import {
 } from './declaration-en-route'
 import { jugerDevise, marqueRecommandee } from './juge-devise'
 import { CONSIGNE_BIBLIOTHEQUE, fichiersSysteme, VARIABLES_CSS } from './bibliotheque-ui'
+import { jugerContrat, reprocheContrat } from './juge-contrat'
 import {
   ADRESSE_GESTION,
   blocBase,
@@ -483,6 +484,10 @@ export async function boucleEcriture(o: {
         // 88c94164 : onze références inventées (TYPO.corps, GRIS.fond,
         // SEMANTIQUE.attention…) dans une œuvre pourtant livrée.
         const jetons = jugerJetons(carte, systeme)
+        // ── LE CONTRAT DES PIÈCES (2026-11-12) : un réglage inventé est
+        // ignoré en silence ou fait planter l'écran. Lu dans les signatures
+        // de la bibliothèque, donc toujours à jour — voir juge-contrat.
+        const contrat = jugerContrat(carte, systeme)
         const vivacite = jugerVivacite(carte)
         // EP-298 : l'argent parle la devise configurée. EP-296 transmet,
         // celui-ci VÉRIFIE — une instruction sans contrôle est un vœu
@@ -576,6 +581,8 @@ export async function boucleEcriture(o: {
               '\nEmploie EXACTEMENT les noms fournis par la bibliothèque, aucun autre.',
           )
         }
+        const quoiContrat = reprocheContrat(contrat)
+        if (quoiContrat !== null) reproches.push(quoiContrat)
         if (devises.length > 0 && deviseConfiguree !== undefined) {
           reproches.push(
             `LA DEVISE DU CLIENT EST ${deviseConfiguree} (affichée « ${marqueRecommandee(deviseConfiguree)} ») — le code montre d'autres monnaies :\n` +
