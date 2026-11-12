@@ -75,6 +75,8 @@ export type AvisDuSite = {
     /** 'vitrine' (objet qui s'assemble) ou 'parcours' (photos au défilement). */
     affichage?: 'vitrine' | 'parcours'
     surtitre?: string; bouton?: string; lienBouton?: string; badge?: string
+    /** Secondes par photo (parcours), réglées dans l'éditeur visuel. */
+    duree?: number
     pieces: { titre: string; texte?: string; image?: string; libelle?: string }[]
   } | null
 

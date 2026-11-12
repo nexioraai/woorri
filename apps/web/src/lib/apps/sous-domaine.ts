@@ -195,7 +195,7 @@ export const NOMS_RESERVES: ReadonlySet<string> = new Set([
   // route `/offres/[slug]` ouvre les plis d'un marché public. Un client qui
   // aurait pris ce sous-domaine se serait posé par dessus.
   'a', 'about', 'admin', 'api', 'atelier', 'blog', 'comptes', 'cookies', 'dashboard',
-  'documentation', 'domaine', 'edit', 'guide', 'login', 'offres', 'onboarding-chat', 'p', 'parametres',
+  'documentation', 'domaine', 'edit', 'guide', 'login', 'modifier', 'offres', 'onboarding-chat', 'p', 'parametres',
   'preview', 'pricing', 'privacy', 'reset-password', 'sites', 'terms', 'visibilite-ia',
   'welcome', 'cancel-order',
 

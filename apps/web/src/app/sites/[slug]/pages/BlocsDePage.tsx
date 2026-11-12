@@ -51,10 +51,10 @@ export default function BlocsDePage({
           coupe tout. Les tailles passent en `clamp()` : ce que je lis sur un
           ecran de bureau n'est PAS ce que le proprietaire lit sur son telephone. */}
       <style>{`
-        .blocs-page > * { animation: blocEntre .55s cubic-bezier(.22,.8,.3,1) both; }
-        ${blocs.map((_, i) => `.blocs-page > *:nth-child(${i + 2}) { animation-delay: ${Math.min(i * 70, 560)}ms; }`).join('')}
+        .blocs-page > [data-bloc] > * { animation: blocEntre .55s cubic-bezier(.22,.8,.3,1) both; }
+        ${blocs.map((_, i) => `.blocs-page > [data-bloc="${i}"] > * { animation-delay: ${Math.min(i * 70, 560)}ms; }`).join('')}
         @keyframes blocEntre { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
-        @media (prefers-reduced-motion: reduce) { .blocs-page > * { animation: none !important; } }
+        @media (prefers-reduced-motion: reduce) { .blocs-page > [data-bloc] > * { animation: none !important; } }
         .blocs-page h2 { font-size: clamp(21px, 5.2vw, 27px); }
         .blocs-page h3 { font-size: clamp(18px, 4.4vw, 21px); }
         .blocs-page p, .blocs-page li, .blocs-page td { font-size: clamp(15.5px, 3.9vw, 17px); }
@@ -65,6 +65,19 @@ export default function BlocsDePage({
         @media (prefers-reduced-motion: reduce) { .blocs-page .bloc-photo { transition: none; } }
       `}</style>
       {blocs.map((b, i) => {
+        // CHAQUE BLOC DANS UN REPÈRE INVISIBLE (éditeur visuel, 2026-11-12).
+        // `display: contents` : le repère n'a pas de boîte, la mise en page
+        // est identique — mais un bloc rendu en plusieurs éléments
+        // (organigramme : style + deux vues) reste UN bloc pour l'éditeur,
+        // qui le retrouve par `data-bloc`. Un bloc qui ne dessine rien
+        // (photo vide) n'a pas de repère.
+        const dessin = rendreBloc(b, i)
+        return dessin == null ? null : <div key={`bloc-${i}`} data-bloc={i} style={{ display: 'contents' }}>{dessin}</div>
+      })}
+    </div>
+  )
+
+  function rendreBloc(b: Bloc, i: number): React.ReactNode {
         const k = `bloc-${i}`
         switch (b.type) {
           case 'titre':
@@ -349,7 +362,5 @@ export default function BlocsDePage({
               </div>
             )
         }
-      })}
-    </div>
-  )
+  }
 }

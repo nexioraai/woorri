@@ -143,7 +143,7 @@ export default function AccueilProjet({ site, comptesEnAttente, offresRecues, on
               className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/15 px-4 py-2.5 text-sm font-semibold text-white hover:bg-white/5">
               <ExternalLink className="h-4 w-4" aria-hidden />{t('projet.voir')}
             </a>
-            <Link href={`/edit/${site.slug}`}
+            <Link href={`/modifier/${site.slug}`}
               className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#FA5D1E] px-4 py-2.5 text-sm font-bold text-[#1A0A03] hover:brightness-110">
               <Pencil className="h-4 w-4" aria-hidden />{t('projet.modifier')}
             </Link>

@@ -29,9 +29,11 @@ const imageSure = (u?: string) => (typeof u === 'string' && /^https?:\/\//.test(
 const AUTO_MS = 4000   // demande CPA : une photo toutes les 4 secondes, en boucle (2 s auparavant)
 
 export default function ParcoursDefilement({
-  etapes, surtitre, accent, lecture = 'defilement',
-}: { etapes: EtapeParcours[]; surtitre?: string; accent: string; lecture?: 'defilement' | 'auto' }) {
+  etapes, surtitre, accent, lecture = 'defilement', dureeMs,
+}: { etapes: EtapeParcours[]; surtitre?: string; accent: string; lecture?: 'defilement' | 'auto'; dureeMs?: number }) {
   const auto = lecture === 'auto'
+  // La durée réglée dans l'éditeur (2, 4 ou 6 s) ; sinon AUTO_MS.
+  const AUTO = dureeMs && dureeMs >= 1000 && dureeMs <= 15000 ? dureeMs : AUTO_MS
   const [rendu, setRendu] = useState<'empile' | 'defile'>(auto ? 'defile' : 'empile')
   const [tic, setTic] = useState(0)          // relance le minuteur après un clic
   const [actif, setActif] = useState(0)
@@ -56,9 +58,9 @@ export default function ParcoursDefilement({
     // PAS de pause au survol : le hero remplit l'écran, la souris y est presque
     // toujours — la lecture paraissait bloquée. Pas de pause au focus non plus :
     // après un clic sur une étape, le bouton garde le focus et figeait tout.
-    const h = setInterval(() => setActif((a) => (a + 1) % etapes.length), AUTO_MS)
+    const h = setInterval(() => setActif((a) => (a + 1) % etapes.length), AUTO)
     return () => clearInterval(h)
-  }, [auto, etapes.length, tic])
+  }, [auto, etapes.length, tic, AUTO])
 
   useEffect(() => {
     if (auto || rendu !== 'defile') return
@@ -110,7 +112,7 @@ export default function ParcoursDefilement({
     .parcours .segments button:focus-visible { outline: 2px solid #fff; outline-offset: 2px; border-radius: 4px }
     .parcours .segments .piste { display: block; height: 2px; border-radius: 99px; background: rgba(255,255,255,.28); overflow: hidden }
     .parcours .segments .plein { display: block; height: 100%; background: #fff; border-radius: 99px; transform-origin: left center }
-    .parcours .segments .plein.court { animation: parcours-remplir ${AUTO_MS}ms linear forwards }
+    .parcours .segments .plein.court { animation: parcours-remplir ${AUTO}ms linear forwards }
     @keyframes parcours-remplir { from { transform: scaleX(0) } to { transform: scaleX(1) } }
     /* TÉLÉPHONE, LECTURE AUTO (CPA, 2026-11-11 : « ça n'a aucun sens »). Les
        photos sont en 3:2 ; recadrées en plein écran portrait, il n'en restait

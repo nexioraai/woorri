@@ -58,13 +58,15 @@ export function compterFiches(pages: { blocs?: unknown }[]): { fiches: number; s
 }
 
 export function prochainesActions(d: DonneesProjet): ActionProjet[] {
+  // Logo et coordonnées : la page des réglages ; les photos : l'éditeur visuel.
   const edit = `/edit/${d.slug}`
+  const visuel = `/modifier/${d.slug}`
   const a: ActionProjet[] = []
   a.push({ cle: 'enLigne', faite: d.published, vers: 'publier' })
   a.push({ cle: 'contacts', faite: !!(d.contact?.email && d.contact?.phone), vers: edit })
   a.push({ cle: 'logo', faite: !!d.logo_url, vers: edit })
   if (d.fiches !== null && d.fichesSansPhoto !== null && d.fiches > 0) {
-    a.push({ cle: 'photos', faite: d.fichesSansPhoto === 0, n: d.fichesSansPhoto, vers: edit })
+    a.push({ cle: 'photos', faite: d.fichesSansPhoto === 0, n: d.fichesSansPhoto, vers: visuel })
   }
   if (d.publishes_tenders === true && d.avisPublie !== null) {
     a.push({ cle: 'avis', faite: d.avisPublie, vers: `/offres/${d.slug}` })

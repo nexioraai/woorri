@@ -19,7 +19,7 @@ import TeleverseurFichiers from './TeleverseurFichiers'
 // route — qui, elle, vérifie la propriété du site.
 // ============================================================================
 
-const ETIQUETTES: Record<string, string> = {
+export const ETIQUETTES: Record<string, string> = {
   titre: 'Sous-titre', texte: 'Paragraphe', liste: 'Liste à puces', etapes: 'Marche à suivre',
   frise: 'Frise datée', chiffres: 'Chiffres clés', tableau: 'Tableau', documents: 'Documents',
   questions: 'Questions', encadre: 'Encadré', liens: 'Pages liées', appel: "Bouton d'action",
@@ -32,7 +32,7 @@ const ETIQUETTES: Record<string, string> = {
 import { champsDuBloc, champEstUnFichier, poser, type Chemin } from './edit/champsDeBloc'
 
 /** Les squelettes neufs — un par type, tous valides dès la création. */
-const NEUF: Record<string, Bloc> = {
+export const NEUF: Record<string, Bloc> = {
   titre: { type: 'titre', texte: 'Nouveau sous-titre' },
   texte: { type: 'texte', texte: 'Votre texte.' },
   liste: { type: 'liste', items: ['Premier point'] },

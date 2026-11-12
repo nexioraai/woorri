@@ -136,6 +136,7 @@ export default async function SitePage({ params, searchParams }: Props) {
         bouton: typeof premierBloc.bouton === 'string' ? premierBloc.bouton : undefined,
         lienBouton: typeof premierBloc.lien === 'string' && /^[a-z0-9][a-z0-9\-/]*$/i.test(premierBloc.lien) ? `${url}/${premierBloc.lien}` : undefined,
         badge: typeof premierBloc.badge === 'string' ? premierBloc.badge : undefined,
+        duree: typeof premierBloc.duree === 'number' ? premierBloc.duree : undefined,
         pieces: premierBloc.items as { titre: string; texte?: string; image?: string; libelle?: string }[],
       }
     : null

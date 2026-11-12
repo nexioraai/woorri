@@ -44,7 +44,7 @@ export type Bloc = { position?: string } & (
   | { type: 'titre'; texte: string; niveau?: 2 | 3 }
   | { type: 'texte'; texte: string }
   | { type: 'liste'; items: string[]; titre?: string }
-  | { type: 'etapes'; items: { titre: string; texte?: string; image?: string; libelle?: string }[]; titre?: string; affichage?: string }
+  | { type: 'etapes'; items: { titre: string; texte?: string; image?: string; libelle?: string }[]; titre?: string; affichage?: string; /** Hero parcours : secondes par photo (éditeur visuel). */ duree?: number }
   | { type: 'frise'; items: { date: string; titre: string; texte?: string }[]; titre?: string }
   | { type: 'chiffres'; items: { valeur: string; libelle: string }[]; titre?: string }
   | { type: 'tableau'; entetes: string[]; lignes: string[][]; titre?: string; note?: string }
