@@ -73,6 +73,24 @@ export const VARIABLES_CSS = `:root{
 --text-xl:1.25rem;--text-2xl:1.5rem;--text-3xl:1.875rem;
 --vedette:#22303a;--vedette-foreground:#f4f1ea;
 }
+html:root[data-style="chaleureux"]{
+--radius:1rem;--primary:#c8552f;--ring:#c8552f;--sidebar-primary:#c8552f;--chart-1:#c8552f;--chart-2:#3e8a60;
+--accent:#f6e3d8;--accent-foreground:#8e3a1f;--sidebar-accent:#eadfd2;--sidebar-accent-foreground:#2b2620;--vedette:#2f3a33;
+}
+html:root[data-style="institutionnel"]{
+--radius:0.375rem;--primary:#1d3a6e;--ring:#1d3a6e;--sidebar-primary:#1d3a6e;--chart-1:#1d3a6e;--chart-2:#b8901f;
+--accent:#e6edf7;--accent-foreground:#13284d;--sidebar:#13284d;--sidebar-foreground:#e8eef8;--sidebar-accent:#26487f;
+--sidebar-accent-foreground:#ffffff;--sidebar-border:#13284d;--vedette:#13284d;
+}
+html:root[data-style="nature"]{
+--radius:1.25rem;--primary:#2f7d4f;--ring:#2f7d4f;--sidebar-primary:#2f7d4f;--chart-1:#2f7d4f;--chart-2:#c7902b;
+--accent:#e3f1e8;--accent-foreground:#1f5a37;--sidebar:#eef6f0;--sidebar-accent:#d5ebdd;--sidebar-accent-foreground:#1f5a37;
+--sidebar-border:#dcebe1;--vedette:#1f4d34;
+}
+html:root[data-fond="nuit"][data-style]{
+--accent:#233250;--accent-foreground:#c7d6ff;--sidebar:#171a21;--sidebar-foreground:#e9ecf2;
+--sidebar-accent:#233250;--sidebar-accent-foreground:#c7d6ff;--sidebar-border:#2c313d;--vedette:#2a3550;
+}
 :root[data-fond="beige"]{
 --background:#f6f1ea;--card:#fbf8f3;--popover:#fbf8f3;--muted:#efe8de;
 --secondary:#ede5da;--accent:#f4e4d8;--border:#e6ddd1;--input:#e6ddd1;
@@ -339,66 +357,121 @@ function useLargeur(): number {
   return l
 }
 
-/** L'APPARENCE CHOISIE : fond (blanc, beige, gris, nuit) et couleur. */
+/** L'APPARENCE : un STYLE (une mise en page), un fond, une couleur.
+ *
+ * DEUX APPLICATIONS NE DOIVENT PAS SE RESSEMBLER (exigence du propriétaire,
+ * 2026-11-12 : « il ne faut pas qu'elles partagent la même mise en page,
+ * sauf si c'est obligé »). La barre latérale à gauche EST obligée (règle du
+ * produit) ; tout le reste change d'un style à l'autre. Le modèle choisit le
+ * style selon l'activité ; à défaut il se déduit du NOM de l'application ;
+ * le propriétaire en change dans Réglages. */
 const CLE_APPARENCE = 'deribfy-apparence:' + (typeof location === 'undefined' ? '' : location.host + location.pathname)
+export const STYLES = { net: 'Net', chaleureux: 'Chaleureux', institutionnel: 'Institutionnel', nature: 'Nature' } as const
 export const FONDS = { blanc: 'Blanc', beige: 'Beige', gris: 'Gris clair', nuit: 'Nuit' } as const
 export const COULEURS = { bleu: '#2a5bd7', vert: '#1f8a5b', corail: '#d2603a', violet: '#6b46c1', bordeaux: '#9b2c4a', ardoise: '#334155' } as const
-function appliquerApparence(fond: string, couleur: string | null) {
-  if (typeof document === 'undefined') return
-  document.documentElement.dataset.fond = fond
-  const r = document.documentElement.style
-  if (couleur) { r.setProperty('--primary', couleur); r.setProperty('--ring', couleur); r.setProperty('--sidebar-primary', couleur); r.setProperty('--chart-1', couleur) }
-  else { r.removeProperty('--primary'); r.removeProperty('--ring'); r.removeProperty('--sidebar-primary'); r.removeProperty('--chart-1') }
+type CleStyle = keyof typeof STYLES
+const FOND_DU_STYLE: Record<CleStyle, string> = { net: 'blanc', chaleureux: 'beige', institutionnel: 'gris', nature: 'blanc' }
+type Apparence = { style: string | null; fond: string | null; couleur: string | null }
+let STYLE_PAR_DEFAUT: CleStyle = 'net'
+
+function estStyle(s: unknown): s is CleStyle { return typeof s === 'string' && s in STYLES }
+/** Le style déduit du nom : deux applications sans choix ne tombent pas toujours sur le même. */
+function styleDuNom(nom: string): CleStyle {
+  let h = 0
+  for (let i = 0; i < nom.length; i++) h = (h * 31 + nom.charCodeAt(i)) | 0
+  const cles = Object.keys(STYLES) as CleStyle[]
+  return cles[Math.abs(h) % cles.length]!
 }
-function lireApparence(): { fond: string; couleur: string | null } {
+function lireApparence(): Apparence {
   try {
     const v = JSON.parse(localStorage.getItem(CLE_APPARENCE) ?? 'null')
-    if (v && typeof v.fond === 'string') return { fond: v.fond, couleur: typeof v.couleur === 'string' ? v.couleur : null }
+    if (v && typeof v === 'object') return {
+      style: estStyle(v.style) ? v.style : null,
+      fond: typeof v.fond === 'string' && v.fond in FONDS ? v.fond : null,
+      couleur: typeof v.couleur === 'string' ? v.couleur : null,
+    }
   } catch { /* stockage indisponible : l'apparence par défaut */ }
-  return { fond: 'blanc', couleur: null }
+  return { style: null, fond: null, couleur: null }
 }
-if (typeof window !== 'undefined') { const a = lireApparence(); appliquerApparence(a.fond, a.couleur) }
+function styleEffectif(a: Apparence): CleStyle { return estStyle(a.style) ? a.style : STYLE_PAR_DEFAUT }
+function appliquerApparence(a: Apparence) {
+  if (typeof document === 'undefined') return
+  const style = styleEffectif(a)
+  const racine = document.documentElement
+  racine.dataset.style = style
+  racine.dataset.fond = a.fond ?? FOND_DU_STYLE[style]
+  const r = racine.style
+  if (a.couleur) { r.setProperty('--primary', a.couleur); r.setProperty('--ring', a.couleur); r.setProperty('--sidebar-primary', a.couleur); r.setProperty('--chart-1', a.couleur) }
+  else { r.removeProperty('--primary'); r.removeProperty('--ring'); r.removeProperty('--sidebar-primary'); r.removeProperty('--chart-1') }
+}
+const EVT_APPARENCE = 'deribfy-apparence'
+function useApparence(): Apparence {
+  const [a, setA] = React.useState(lireApparence)
+  React.useEffect(() => {
+    const f = () => setA(lireApparence())
+    window.addEventListener(EVT_APPARENCE, f)
+    return () => window.removeEventListener(EVT_APPARENCE, f)
+  }, [])
+  return a
+}
+if (typeof window !== 'undefined') appliquerApparence(lireApparence())
 
 /** Le panneau des réglages d'apparence — à poser dans la section Réglages. */
 export function ChoixApparence() {
-  const [a, setA] = React.useState(lireApparence)
-  const choisir = (fond: string, couleur: string | null) => {
-    const n = { fond, couleur }
-    setA(n); appliquerApparence(fond, couleur)
+  const a = useApparence()
+  const style = styleEffectif(a)
+  const enregistrer = (n: Apparence) => {
+    appliquerApparence(n)
     try { localStorage.setItem(CLE_APPARENCE, JSON.stringify(n)) } catch { /* navigation privée */ }
+    window.dispatchEvent(new Event(EVT_APPARENCE))
   }
   const pastille = (actif: boolean): React.CSSProperties => ({ display: 'flex', alignItems: 'center', gap: ESPACE.s,
     padding: ESPACE.m, borderRadius: 'var(--radius-lg)', cursor: 'pointer', background: 'var(--card)', color: 'var(--foreground)',
     border: actif ? '2px solid var(--primary)' : '1px solid var(--border)', fontSize: 'var(--text-sm)', fontWeight: 600, textAlign: 'left' })
   const apercus: Record<string, string> = { blanc: '#ffffff', beige: '#f6f1ea', gris: '#eef0f4', nuit: '#14161c' }
+  const descriptions: Record<CleStyle, string> = { net: 'Clair et aéré', chaleureux: 'Tons chauds, accueil personnalisé', institutionnel: 'Sobre, barre bleu nuit', nature: 'Arrondi, barre d’icônes' }
+  const fondActif = a.fond ?? FOND_DU_STYLE[style]
   return (
     <Carte>
-      <div style={ROLE.libelle as React.CSSProperties}>Fond de l'application</div>
+      <div style={ROLE.libelle as React.CSSProperties}>Style de l'application</div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: ESPACE.s, margin: ESPACE.s + 'px 0 ' + ESPACE.l + 'px' }}>
+        {(Object.keys(STYLES) as CleStyle[]).map((cle) => (
+          <button key={cle} type="button" onClick={() => enregistrer({ style: cle, fond: null, couleur: a.couleur })} aria-pressed={style === cle} style={{ ...pastille(style === cle), flexDirection: 'column', alignItems: 'flex-start', gap: 2 }}>
+            <span>{STYLES[cle]}</span><span style={{ ...(ROLE.legende as React.CSSProperties), fontWeight: 400 }}>{descriptions[cle]}</span>
+          </button>
+        ))}
+      </div>
+      <div style={ROLE.libelle as React.CSSProperties}>Fond</div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: ESPACE.s, margin: ESPACE.s + 'px 0 ' + ESPACE.l + 'px' }}>
         {Object.entries(FONDS).map(([cle, nom]) => (
-          <button key={cle} type="button" onClick={() => choisir(cle, a.couleur)} aria-pressed={a.fond === cle} style={pastille(a.fond === cle)}>
+          <button key={cle} type="button" onClick={() => enregistrer({ ...a, style, fond: cle })} aria-pressed={fondActif === cle} style={pastille(fondActif === cle)}>
             <span style={{ width: 22, height: 22, borderRadius: 6, background: apercus[cle], border: '1px solid var(--border)' }} />{nom}
           </button>
         ))}
       </div>
       <div style={ROLE.libelle as React.CSSProperties}>Couleur principale</div>
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: ESPACE.s, marginTop: ESPACE.s }}>
+        <button type="button" onClick={() => enregistrer({ ...a, style, couleur: null })} aria-pressed={a.couleur === null}
+          style={{ ...pastille(a.couleur === null), padding: '8px 12px' }}>Celle du style</button>
         {Object.entries(COULEURS).map(([cle, hex]) => (
           <button key={cle} type="button" aria-label={'Couleur ' + cle} aria-pressed={a.couleur === hex}
-            onClick={() => choisir(a.fond, cle === 'bleu' ? null : hex)}
+            onClick={() => enregistrer({ ...a, style, couleur: hex })}
             style={{ width: 36, height: 36, borderRadius: 10, background: hex, cursor: 'pointer',
-              border: (a.couleur ?? COULEURS.bleu) === hex ? '3px solid var(--foreground)' : '3px solid transparent' }} />
+              border: a.couleur === hex ? '3px solid var(--foreground)' : '3px solid transparent' }} />
         ))}
       </div>
     </Carte>
   )
 }
 
-/** LA COQUE DE L'ESPACE DE GESTION : barre latérale (≥ 840 px) ou barre du bas. */
+/** LA COQUE DE L'ESPACE DE GESTION — quatre mises en page, barre latérale (≥ 840 px) ou barre du bas. */
 export type SectionGestion = { cle?: string; id?: string; libelle: string; icone?: string; nombre?: number }
-export function CoqueGestion({ nom: n, sousTitre = 'Espace de gestion', sections: secs, active: a1, actif, surChoix, onChange, onNavigate,
+export function CoqueGestion({ nom: n, sousTitre = 'Espace de gestion', style: styleDemande, sections: secs, active: a1, actif, surChoix, onChange, onNavigate,
   titre, description, action, surAction, onAction, onClick, utilisateur, surDeconnexion, children, enfants }: {
-  nom?: string; sousTitre?: string; sections?: SectionGestion[]; active?: string; actif?: string
+  nom?: string; sousTitre?: string
+  /** net · chaleureux · institutionnel · nature — choisi selon l'activité. */
+  style?: string
+  sections?: SectionGestion[]; active?: string; actif?: string
   surChoix?: (cle: string) => void; onChange?: (cle: string) => void; onNavigate?: (cle: string) => void
   titre?: string; description?: string; action?: string; surAction?: () => void; onAction?: () => void; onClick?: () => void
   utilisateur?: string; surDeconnexion?: () => void
@@ -409,6 +482,10 @@ export function CoqueGestion({ nom: n, sousTitre = 'Espace de gestion', sections
   // onNavigate= à la place d'active= et onChange= — un « ? » à la place de
   // l'initiale. Le nom retombe sur le titre de la page, que Deribfy pose.
   const nom = n ?? (typeof document === 'undefined' ? '' : document.title)
+  STYLE_PAR_DEFAUT = estStyle(styleDemande) ? styleDemande : styleDuNom(nom)
+  const apparence = useApparence()
+  const style = styleEffectif(apparence)
+  React.useEffect(() => { appliquerApparence(apparence) }, [apparence, style])
   // id= est lu comme cle= (mesuré : le modèle écrit id=, un clic menait à une page vide).
   const sections = (secs ?? []).map((s) => ({ ...s, cle: s.cle ?? s.id ?? s.libelle }))
   const active = a1 ?? actif ?? sections[0]?.cle ?? ''
@@ -416,33 +493,83 @@ export function CoqueGestion({ nom: n, sousTitre = 'Espace de gestion', sections
   const agir = onClick ?? surAction ?? onAction
   const courante = sections.find((s) => s.cle === active)
   const initiale = (nom || '?').trim().charAt(0).toUpperCase()
+  const titreVu = titre ?? courante?.libelle ?? nom
+  const date = new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+  const logo = (taille: number) => (
+    <span style={{ width: taille, height: taille, borderRadius: style === 'nature' ? 999 : style === 'institutionnel' ? 6 : 10, flexShrink: 0,
+      background: style === 'institutionnel' ? 'var(--sidebar-accent)' : 'var(--primary)', color: 'var(--primary-foreground)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800, fontSize: taille > 34 ? 'var(--text-lg)' : 'var(--text-base)' }}>{initiale}</span>
+  )
+  const compteur = (s: SectionGestion, sombre: boolean) => typeof s.nombre === 'number' && (
+    <span style={{ fontSize: 'var(--text-xs)', padding: '1px 8px', borderRadius: 999, fontVariantNumeric: 'tabular-nums',
+      background: s.cle === active ? 'var(--primary)' : sombre ? 'rgba(255,255,255,.12)' : 'var(--secondary)',
+      color: s.cle === active ? 'var(--primary-foreground)' : sombre ? 'var(--sidebar-foreground)' : 'var(--muted-foreground)' }}>{s.nombre}</span>
+  )
   const bouton = (s: SectionGestion): React.CSSProperties => ({ display: 'flex', alignItems: 'center', gap: ESPACE.s + 2,
-    width: '100%', padding: (ESPACE.s + 2) + 'px ' + (ESPACE.s + 4) + 'px', borderRadius: 'var(--radius-md)', border: 'none', cursor: 'pointer',
+    width: '100%', padding: (style === 'institutionnel' ? 9 : 10) + 'px ' + (ESPACE.s + 4) + 'px', borderRadius: 'var(--radius-md)', border: 'none', cursor: 'pointer',
     fontSize: 'var(--text-sm)', textAlign: 'left', background: s.cle === active ? 'var(--sidebar-accent)' : 'transparent',
     color: s.cle === active ? 'var(--sidebar-accent-foreground)' : 'var(--sidebar-foreground)', fontWeight: s.cle === active ? 650 : 500 })
-  const enTete = (
-    <header style={{ display: 'flex', alignItems: 'center', gap: ESPACE.m, flexWrap: 'wrap', padding: (large ? ESPACE.l : ESPACE.m) + 'px ' + (large ? ESPACE.xl : ESPACE.m) + 'px',
-      borderBottom: '1px solid var(--border)', background: 'var(--card)' }}>
-      <div style={{ minWidth: 0 }}>
-        <h1 style={{ margin: 0, fontSize: large ? 'var(--text-2xl)' : 'var(--text-xl)', fontWeight: 750, letterSpacing: '-0.02em', color: 'var(--foreground)' }}>{titre ?? courante?.libelle ?? nom}</h1>
-        {description !== undefined && <div style={ROLE.legende as React.CSSProperties}>{description}</div>}
+  const etat = (
+    <div style={{ marginTop: 'auto', padding: ESPACE.s + 4, borderRadius: 'var(--radius-lg)', background: style === 'institutionnel' ? 'rgba(255,255,255,.06)' : 'var(--card)',
+      border: style === 'institutionnel' ? '1px solid rgba(255,255,255,.12)' : '1px solid var(--border)', color: style === 'institutionnel' ? 'var(--sidebar-foreground)' : 'var(--foreground)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: ESPACE.s, fontSize: 'var(--text-xs)' }}>
+        <span style={{ width: 8, height: 8, borderRadius: 99, background: 'var(--success)' }} />Données à jour
       </div>
-      {action !== undefined && agir !== undefined && <div style={{ marginLeft: 'auto' }}><Bouton onClick={agir}>{'+ ' + action}</Bouton></div>}
-    </header>
+      {utilisateur !== undefined && <div style={{ fontSize: 'var(--text-xs)', opacity: 0.75, marginTop: 4, overflowWrap: 'anywhere' }}>{utilisateur}</div>}
+      {surDeconnexion !== undefined && <button type="button" onClick={surDeconnexion} style={{ marginTop: ESPACE.s, border: 'none', background: 'none', padding: 0, cursor: 'pointer', color: style === 'institutionnel' ? 'var(--sidebar-foreground)' : 'var(--primary)', fontSize: 'var(--text-xs)', fontWeight: 600, textDecoration: 'underline' }}>Se déconnecter</button>}
+    </div>
   )
-  // L'en-tête n'apparaît que s'il a quelque chose à dire : sinon une bande
-  // vide, ou un second « Accueil » au-dessus de celui que l'écran pose.
-  const aEnTete = titre !== undefined || description !== undefined || (action !== undefined && agir !== undefined)
-  const contenu = <main style={{ padding: large ? ESPACE.xl : ESPACE.m, display: 'flex', flexDirection: 'column', gap: ESPACE.l, paddingBottom: large ? ESPACE.xl : 96 }}>{children ?? enfants}</main>
+  const boutonAction = action !== undefined && agir !== undefined ? <div style={{ marginLeft: 'auto' }}><Bouton onClick={agir}>{'+ ' + action}</Bouton></div> : null
+
+  // ── L'EN-TÊTE, propre à chaque style.
+  let enTete: React.ReactNode = null
+  if (style === 'chaleureux') {
+    enTete = (
+      <header style={{ display: 'flex', alignItems: 'flex-end', gap: ESPACE.m, flexWrap: 'wrap', padding: (large ? ESPACE.xl : ESPACE.m) + 'px ' + (large ? ESPACE.xxl : ESPACE.m) + 'px ' + ESPACE.s + 'px' }}>
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontSize: 'var(--text-xs)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--muted-foreground)', fontWeight: 600 }}>{date}</div>
+          <h1 style={{ margin: '8px 0 2px', fontSize: large ? 'var(--text-3xl)' : 'var(--text-2xl)', fontWeight: 800, letterSpacing: '-0.035em', color: 'var(--foreground)' }}>{titre ?? 'Bonjour'}<span style={{ color: 'var(--primary)' }}>.</span></h1>
+          <div style={ROLE.legende as React.CSSProperties}>{description ?? 'Voici où en est ' + nom + ' aujourd’hui.'}</div>
+        </div>
+        {boutonAction}
+      </header>
+    )
+  } else if (style === 'institutionnel') {
+    enTete = (
+      <header style={{ display: 'flex', alignItems: 'center', gap: ESPACE.m, flexWrap: 'wrap', padding: ESPACE.m + 'px ' + (large ? ESPACE.xl : ESPACE.m) + 'px', borderBottom: '1px solid var(--border)', background: 'var(--card)' }}>
+        <nav aria-label="Fil d'Ariane" style={{ fontSize: 'var(--text-sm)', color: 'var(--muted-foreground)', minWidth: 0 }}>
+          {nom}<span style={{ margin: '0 8px' }}>/</span><b style={{ color: 'var(--foreground)' }}>{titreVu}</b>
+          {description !== undefined && <div style={ROLE.legende as React.CSSProperties}>{description}</div>}
+        </nav>
+        <span style={{ marginLeft: 'auto', fontSize: 'var(--text-xs)', color: 'var(--muted-foreground)' }}>{date}</span>
+        {boutonAction}
+      </header>
+    )
+  } else if (titre !== undefined || description !== undefined || boutonAction !== null || style === 'nature') {
+    // net et nature : un en-tête seulement s'il a quelque chose à dire (nature affiche toujours le nom, la barre n'en ayant pas la place).
+    enTete = (
+      <header style={{ display: 'flex', alignItems: 'center', gap: ESPACE.m, flexWrap: 'wrap', padding: (large ? ESPACE.l : ESPACE.m) + 'px ' + (large ? ESPACE.xl : ESPACE.m) + 'px',
+        borderBottom: style === 'nature' ? 'none' : '1px solid var(--border)', background: style === 'nature' ? 'transparent' : 'var(--card)' }}>
+        <div style={{ minWidth: 0 }}>
+          {style === 'nature' && <div style={{ fontSize: 'var(--text-sm)', fontWeight: 700, color: 'var(--primary)' }}>{nom}</div>}
+          {(titre !== undefined || style === 'net') && <h1 style={{ margin: 0, fontSize: large ? 'var(--text-2xl)' : 'var(--text-xl)', fontWeight: 750, letterSpacing: '-0.02em', color: 'var(--foreground)' }}>{titreVu}</h1>}
+          {description !== undefined && <div style={ROLE.legende as React.CSSProperties}>{description}</div>}
+        </div>
+        {boutonAction}
+      </header>
+    )
+  }
+  const marge = large ? (style === 'chaleureux' ? ESPACE.xxl : style === 'institutionnel' ? ESPACE.l : ESPACE.xl) : ESPACE.m
+  const contenu = <main style={{ padding: marge + 'px', paddingTop: style === 'chaleureux' && large ? ESPACE.l : marge, display: 'flex', flexDirection: 'column', gap: style === 'institutionnel' ? ESPACE.m : ESPACE.l, paddingBottom: large ? ESPACE.xl : 96 }}>{children ?? enfants}</main>
+
   if (!large) {
     const visibles = sections.slice(0, 5)
     return (
       <div style={{ minHeight: '100vh', background: 'var(--background)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: ESPACE.s, padding: ESPACE.m, background: 'var(--card)', borderBottom: '1px solid var(--border)' }}>
-          <span style={{ width: 34, height: 34, borderRadius: 10, background: 'var(--primary)', color: 'var(--primary-foreground)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 750 }}>{initiale}</span>
-          <div style={{ fontWeight: 700, fontSize: 'var(--text-base)', color: 'var(--foreground)' }}>{nom}</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: ESPACE.s, padding: ESPACE.m, background: style === 'institutionnel' ? 'var(--sidebar)' : 'var(--card)', borderBottom: '1px solid var(--border)' }}>
+          {logo(34)}<div style={{ fontWeight: 700, fontSize: 'var(--text-base)', color: style === 'institutionnel' ? 'var(--sidebar-foreground)' : 'var(--foreground)' }}>{nom}</div>
         </div>
-        {aEnTete && enTete}{contenu}
+        {enTete}{contenu}
         <nav aria-label="Navigation" style={{ position: 'fixed', left: 0, right: 0, bottom: 0, display: 'grid', gridTemplateColumns: 'repeat(' + visibles.length + ', minmax(0, 1fr))',
           background: 'var(--card)', borderTop: '1px solid var(--border)', padding: '6px 4px 12px' }}>
           {visibles.map((s) => (
@@ -456,38 +583,58 @@ export function CoqueGestion({ nom: n, sousTitre = 'Espace de gestion', sections
       </div>
     )
   }
-  return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--background)' }}>
-      <aside style={{ width: 248, flexShrink: 0, background: 'var(--sidebar)', borderRight: '1px solid var(--sidebar-border)', padding: ESPACE.m + 'px ' + (ESPACE.s + 4) + 'px',
+
+  // ── LA BARRE LATÉRALE, propre à chaque style.
+  let barre: React.ReactNode
+  if (style === 'nature') {
+    barre = (
+      <aside style={{ width: 92, flexShrink: 0, background: 'var(--sidebar)', borderRight: '1px solid var(--sidebar-border)', padding: ESPACE.m + 'px 8px',
+        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, position: 'sticky', top: 0, height: '100vh', boxSizing: 'border-box' }}>
+        <div style={{ marginBottom: ESPACE.m }} title={nom}>{logo(44)}</div>
+        {sections.map((s) => (
+          <button key={s.cle} type="button" onClick={() => choisir(s.cle)} aria-current={s.cle === active ? 'page' : undefined}
+            style={{ width: 76, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, padding: '10px 4px', border: 'none', cursor: 'pointer', borderRadius: 18,
+              background: s.cle === active ? 'var(--sidebar-accent)' : 'transparent', color: s.cle === active ? 'var(--sidebar-accent-foreground)' : 'var(--sidebar-foreground)',
+              fontSize: 11, fontWeight: s.cle === active ? 700 : 500, position: 'relative' }}>
+            <Icone nom={s.icone ?? 'document'} taille={22} />
+            <span style={{ maxWidth: 72, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.libelle}</span>
+            {typeof s.nombre === 'number' && s.nombre > 0 && <span style={{ position: 'absolute', top: 4, right: 10, minWidth: 18, padding: '0 5px', borderRadius: 99, fontSize: 10, lineHeight: '18px', background: 'var(--primary)', color: 'var(--primary-foreground)' }}>{s.nombre}</span>}
+          </button>
+        ))}
+        {surDeconnexion !== undefined && <button type="button" onClick={surDeconnexion} aria-label="Se déconnecter" style={{ marginTop: 'auto', border: 'none', background: 'none', cursor: 'pointer', color: 'var(--sidebar-foreground)', fontSize: 11 }}>Quitter</button>}
+      </aside>
+    )
+  } else {
+    const sombre = style === 'institutionnel'
+    barre = (
+      <aside style={{ width: style === 'chaleureux' ? 264 : 248, flexShrink: 0, background: 'var(--sidebar)', borderRight: '1px solid var(--sidebar-border)', padding: ESPACE.m + 'px ' + (ESPACE.s + 4) + 'px',
         display: 'flex', flexDirection: 'column', gap: 4, position: 'sticky', top: 0, height: '100vh', boxSizing: 'border-box' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: ESPACE.s + 2, padding: '4px 8px ' + ESPACE.l + 'px' }}>
-          <span style={{ width: 36, height: 36, borderRadius: 10, background: 'var(--primary)', color: 'var(--primary-foreground)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 750, fontSize: 'var(--text-lg)' }}>{initiale}</span>
+          {logo(style === 'chaleureux' ? 40 : 36)}
           <div style={{ minWidth: 0 }}>
-            <div style={{ fontWeight: 700, fontSize: 'var(--text-sm)', color: 'var(--sidebar-foreground)' }}>{nom}</div>
-            <div style={ROLE.legende as React.CSSProperties}>{sousTitre}</div>
+            <div style={{ fontWeight: style === 'chaleureux' ? 800 : 700, fontSize: style === 'chaleureux' ? 'var(--text-base)' : 'var(--text-sm)', color: 'var(--sidebar-foreground)', letterSpacing: style === 'chaleureux' ? '-0.02em' : 0 }}>{nom}</div>
+            <div style={{ fontSize: 'var(--text-xs)', color: 'var(--sidebar-foreground)', opacity: 0.7 }}>{sousTitre}</div>
           </div>
         </div>
+        {style !== 'net' && <div style={{ fontSize: 11, letterSpacing: '0.16em', fontWeight: 700, color: 'var(--sidebar-foreground)', opacity: 0.6, padding: '4px 12px 6px' }}>{sombre ? 'MENU' : 'GESTION'}</div>}
         {sections.map((s) => (
           <button key={s.cle} type="button" onClick={() => choisir(s.cle)} aria-current={s.cle === active ? 'page' : undefined} style={bouton(s)}>
             <Icone nom={s.icone ?? 'document'} taille={18} />
             <span style={{ flex: 1 }}>{s.libelle}</span>
-            {typeof s.nombre === 'number' && (
-              <span style={{ fontSize: 'var(--text-xs)', padding: '1px 8px', borderRadius: 999, fontVariantNumeric: 'tabular-nums',
-                background: s.cle === active ? 'var(--primary)' : 'var(--secondary)', color: s.cle === active ? 'var(--primary-foreground)' : 'var(--muted-foreground)' }}>{s.nombre}</span>
-            )}
+            {compteur(s, sombre)}
           </button>
         ))}
-        <div style={{ marginTop: 'auto', padding: ESPACE.s + 4, borderRadius: 'var(--radius-lg)', background: 'var(--card)', border: '1px solid var(--border)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: ESPACE.s, fontSize: 'var(--text-xs)', color: 'var(--foreground)' }}>
-            <span style={{ width: 8, height: 8, borderRadius: 99, background: 'var(--success)' }} />Données à jour
-          </div>
-          {utilisateur !== undefined && <div style={{ ...(ROLE.legende as React.CSSProperties), marginTop: 4, overflowWrap: 'anywhere' }}>{utilisateur}</div>}
-          {surDeconnexion !== undefined && <button type="button" onClick={surDeconnexion} style={{ marginTop: ESPACE.s, border: 'none', background: 'none', padding: 0, cursor: 'pointer', color: 'var(--primary)', fontSize: 'var(--text-xs)', fontWeight: 600 }}>Se déconnecter</button>}
-        </div>
+        {etat}
       </aside>
-      <div style={{ flex: 1, minWidth: 0 }}>{aEnTete && enTete}{contenu}</div>
+    )
+  }
+  return (
+    <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--background)' }}>
+      {barre}
+      <div style={{ flex: 1, minWidth: 0 }}>{enTete}{contenu}</div>
     </div>
   )
+
 }
 
 /** Une grille qui range les cartes : 4 par ligne sur ordinateur, 2 ou 1 sur téléphone. */
@@ -951,7 +1098,11 @@ export const CONSIGNE_BIBLIOTHEQUE = `L'INTERFACE VIENT DE LA BIBLIOTHÈQUE FOUR
    un état → Anneau(compterPar) ; une catégorie ou un lieu →
    Classement(compterPar) ; puis ListeRecente. Seulement les blocs qui ont
    un sens ici. AUCUN chiffre en dur : tout sort de ./systeme/donnees.
-   « Réglages » contient <ChoixApparence /> (fond et couleur).
+   « Réglages » contient <ChoixApparence /> (style, fond, couleur).
+   STYLE selon l'activité, pas toujours le même : <CoqueGestion style=…>
+   « chaleureux » (commerce, restauration, beauté), « institutionnel »
+   (administration, école, finance), « nature » (santé, agriculture,
+   environnement), « net » (le reste).
 
 11. LES COULEURS, RAYONS ET TAILLES SONT DES VARIABLES CSS, déjà déclarées
    dans la page. Tu les écris directement :

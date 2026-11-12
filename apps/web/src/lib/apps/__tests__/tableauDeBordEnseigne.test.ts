@@ -7,6 +7,7 @@
 //      chiffres en dur ;
 //   ③ les fonds (blanc par défaut, beige, gris, nuit) existent ;
 //   ④ l'état vide ne perd plus son texte (défaut mesuré en ligne, « asosa ») ;
+//   ⑥ quatre styles de mise en page (net, chaleureux, institutionnel, nature) ;
 //   ⑤ la dérogation « navigateur » de bibliotheque-ui.ts reste BORNÉE aux
 //      chaînes émises.
 import { describe, it, expect } from 'vitest'
@@ -36,9 +37,22 @@ describe('le tableau de bord enseigné à Deribfy', () => {
     expect(CONSIGNE).toMatch(motifTexte('<ChoixApparence />'))
   })
 
-  it('③ quatre fonds, blanc par défaut', () => {
+  it('③ quatre fonds, clairs par défaut (le noir seulement sur choix)', () => {
     for (const fond of ['beige', 'gris', 'nuit']) expect(VARIABLES_CSS).toContain(`:root[data-fond="${fond}"]`)
-    expect(ui).toMatch(motifTexte("fond: 'blanc', couleur: null"))
+    expect(ui).toMatch(motifTexte("{ net: 'blanc', chaleureux: 'beige', institutionnel: 'gris', nature: 'blanc' }"))
+  })
+
+  // 2026-11-12 — « il ne faut pas qu'elles partagent la même mise en page,
+  // sauf si c'est obligé ». Ce cliquet tient la RÈGLE (quatre styles, chacun
+  // sa variante de coque, choisi par le modèle, à défaut par le nom) ; il ne
+  // voit pas le RENDU — celui-là se juge à l'écran (banc, 4 styles × 2 moteurs).
+  it('⑥ quatre styles, quatre mises en page, choisis par activité', () => {
+    for (const style of ['chaleureux', 'institutionnel', 'nature']) expect(VARIABLES_CSS).toContain(`html:root[data-style="${style}"]`)
+    expect(ui).toMatch(motifTexte("STYLE_PAR_DEFAUT = estStyle(styleDemande) ? styleDemande : styleDuNom(nom)"))
+    expect(ui).toMatch(motifTexte("if (style === 'nature') {"))
+    expect(ui).toMatch(motifTexte("} else if (style === 'institutionnel') {"))
+    expect(ui).toMatch(motifTexte("if (style === 'chaleureux') {"))
+    expect(CONSIGNE).toMatch(motifTexte('<CoqueGestion style=…>'))
   })
 
   it('④ l’état vide accepte titre= et description=', () => {
