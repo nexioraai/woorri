@@ -248,7 +248,16 @@ describe('EP-319 · les données déclarées', () => {
     // ici par `REGLE_6_COMMUN`, composé des deux côtés (EP-360).
     //
     // Mesuré : 6 478. La borne vaut la mesure plus la même marge étroite.
-    expect(CONSIGNE.length, 'la consigne de génération a grossi').toBeLessThan(6600)
+    //
+    // ── 6 600 → 7 650 LE 2026-11-12 : LE TABLEAU DE BORD EST ENSEIGNÉ.
+    //
+    // Ordre du propriétaire : « il faut apprendre à Deribfy à faire ce genre
+    // de dashboard ». La bibliothèque fournit les pièces (CoqueGestion,
+    // CarteVedette, Courbe, Anneau…) et ./systeme/donnees les calculs ; la
+    // consigne dit QUAND les employer, en une règle compressée au minimum.
+    // Mesuré : 7 524 (+1 046 signes ≈ 280 jetons par tour, ~850 par
+    // génération à trois tours — marginal sur une médiane de 0,07 $, et dit).
+    expect(CONSIGNE.length, 'la consigne de génération a grossi').toBeLessThan(7650)
   })
 
   it('⑥ter LA DÉROGATION DE PORTABILITÉ EST BORNÉE À `blocBase`', () => {
@@ -430,7 +439,9 @@ describe('EP-319 · les données déclarées', () => {
     // est énuméré clause par clause dans EP-370, sur la consigne PRODUITE :
     // une borne mesure un volume, une énumération mesure un contenu.
     // Élever l'une en posant l'autre échange le faible contre le fort.
-    expect(avecBase.length, 'la prose du bloc de base a enflé').toBeLessThan(11400)
+    // ── 11 400 → 12 300 LE 2026-11-12 : la même règle du tableau de bord
+    // (voir ⑥). Mesuré : 12 155.
+    expect(avecBase.length, 'la prose du bloc de base a enflé').toBeLessThan(12300)
 
     // ── ET LE BANDEAU N'EST PLUS DEMANDÉ À L'ŒUVRE (2026-11-05).
     //
@@ -493,7 +504,10 @@ describe('EP-319 · les données déclarées', () => {
       // au lieu de la production est pire qu'absente ». Le chiffre juste
       // est celui que le cliquet rend lui-même, pas celui d'un script à
       // côté.
-    ).toBeLessThan(17500)
+      //
+      // ── 17 500 → 18 400 le 2026-11-12 : la règle du tableau de bord (⑥).
+      // Mesurée PAR CE CLIQUET : 18 227 — la même hausse de 1 046 signes.
+    ).toBeLessThan(18400)
 
     // ── ③ ET LA PORTE DES DONNÉES RESTE UNE PORTE ÉTROITE.
     //

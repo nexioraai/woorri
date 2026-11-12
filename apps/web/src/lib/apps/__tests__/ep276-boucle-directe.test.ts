@@ -95,7 +95,8 @@ describe('EP-276 · la boucle', () => {
       // Les 2 fichiers du modèle + les 3 de la bibliothèque injectée
       // (EP-299 : systeme/jetons, systeme/argent, systeme/ui — fournis par
       // Deribfy dans TOUTE œuvre, jamais écrits par le modèle).
-      expect(r.fichiers.size).toBe(5)
+      // + systeme/donnees (2026-11-12) : les calculs du tableau de bord.
+      expect(r.fichiers.size).toBe(6)
       expect(r.fichiers.has('systeme/ui.tsx'), 'la bibliothèque manque à l’œuvre').toBe(true)
       expect(r.code.length, 'rien n’est assemblé').toBeGreaterThan(0)
     }
