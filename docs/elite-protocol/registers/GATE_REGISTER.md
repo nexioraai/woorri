@@ -89,6 +89,13 @@ modèle. Décision du propriétaire : elle sera **remplacée par une réparation
 déterministe entre les tours**. Aucune modification de `boucle-directe.ts`
 n'est autorisée par cette note.
 
+**Cas réel rattaché à cette note (M8, état a), tentative 3 — 2026-11-12).**
+Tours 1 et 2 refusés pour les mêmes classes (« réglages inconnus » —
+`juge-contrat` — et « exigences muettes ») ; le modèle avait en outre déclaré
+une table **sans nom**, filtrée par le validateur de production. Le tour 3 n'a
+pas été appelé (budget). C'est la boucle qui redemande sans réparer. Source :
+`evidence/generateur-2026-11-12/sortie/m8-a-partiel.json`. Noté sans agir.
+
 ## GATES SUR LE PROTOCOLE
 
 | Gate | Propriété | Validité | État |

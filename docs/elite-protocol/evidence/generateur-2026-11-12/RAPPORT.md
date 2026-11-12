@@ -509,6 +509,11 @@ depuis `brut/m8/`. Nommage corrigé.
 voulu un tour 3), tour 3 **non appelé** : budget accordé atteint. Dépense M8
 totale : **0,3636 $**.
 
+**Statut retenu par le propriétaire (2026-11-12) : ligne a) « PARTIELLE,
+COHÉRENTE AVEC M7 ».** Aucune dépense supplémentaire : M7 a lu la cause
+jusqu'au commit. Le défaut d'instrument (réponse brute écrasée) est accepté
+tel que déclaré.
+
 **Lecture selon la règle — inchangée** : la ligne a) n'existe toujours pas. Le
 tour 2 de a) rejoué démarre (6 écrans) : c'est une **indication** compatible
 avec M7, pas la mesure demandée.
