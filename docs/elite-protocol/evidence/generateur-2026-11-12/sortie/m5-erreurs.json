@@ -1,0 +1,125 @@
+{
+ "instantane_sha256": "145c4107d4cb24a175d2b4943978462f64a5663f81ff7ab33e66bc0cca98bffe",
+ "sortie": [
+  {
+   "quand": "octobre",
+   "secteur": "7be93be8",
+   "id": "7be93be8",
+   "bibliothequeFournie": false,
+   "monte": true,
+   "erreurs": []
+  },
+  {
+   "quand": "octobre",
+   "secteur": "cbf1cb34",
+   "id": "cbf1cb34",
+   "bibliothequeFournie": false,
+   "monte": false,
+   "erreurs": [
+    {
+     "quoi": "console",
+     "message": "Erreur de stockage localStorage est refusé dans un cadre isolé (origine opaque). L’aperçu tourne en `sandbox=\"allow-scripts\"` sans `allow-same-origin` : aucune session ne peut y être rangée.",
+     "indice": ""
+    },
+    {
+     "quoi": "console",
+     "message": "Erreur de stockage localStorage est refusé dans un cadre isolé (origine opaque). L’aperçu tourne en `sandbox=\"allow-scripts\"` sans `allow-same-origin` : aucune session ne peut y être rangée.",
+     "indice": ""
+    }
+   ]
+  },
+  {
+   "quand": "octobre",
+   "secteur": "4a6e160d",
+   "id": "4a6e160d",
+   "bibliothequeFournie": false,
+   "monte": false,
+   "erreurs": [
+    {
+     "quoi": "console",
+     "message": "localStorage est refusé dans un cadre isolé (origine opaque). L’aperçu tourne en `sandbox=\"allow-scripts\"` sans `allow-same-origin` : aucune session ne peut y être rangée.",
+     "indice": ""
+    }
+   ]
+  },
+  {
+   "quand": "octobre",
+   "secteur": "eb7b62b5",
+   "id": "eb7b62b5",
+   "bibliothequeFournie": false,
+   "monte": true,
+   "erreurs": []
+  },
+  {
+   "quand": "octobre",
+   "secteur": "88c94164",
+   "id": "88c94164",
+   "bibliothequeFournie": true,
+   "monte": false,
+   "erreurs": [
+    {
+     "quoi": "import",
+     "message": "Cannot read properties of undefined (reading 'fontSize')",
+     "indice": "at data:text/javascript;base64,Ly8jcmVnaW9uIFwwcm9sbGRvd24vcnVudGltZS5qcwp2YXIgX19jcmVhdGUgPSBPYmplY3QuY3JlYXRlOwp2YXIgX19kZWZQcm9wID0gT2JqZWN0LmRlZmluZVByb3Blc"
+    }
+   ]
+  },
+  {
+   "quand": "aujourd’hui",
+   "secteur": "énergie / compteurs",
+   "id": "03b9b66485cd",
+   "bibliothequeFournie": true,
+   "monte": false,
+   "erreurs": [
+    {
+     "quoi": "import",
+     "message": "supabaseUrl is required.",
+     "indice": "at Sn (data:text/javascript;base64,Ly8jcmVnaW9uIFwwcm9sbGRvd24vcnVudGltZS5qcwp2YXIgX19jcmVhdGUgPSBPYmplY3QuY3JlYXRlOwp2YXIgX19kZWZQcm9wID0gT2JqZWN0LmRlZmluZVByb"
+    }
+   ]
+  },
+  {
+   "quand": "aujourd’hui",
+   "secteur": "réservation / tourisme",
+   "id": "9ee1ca865053",
+   "bibliothequeFournie": true,
+   "monte": false,
+   "erreurs": [
+    {
+     "quoi": "console",
+     "message": "object is not iterable (cannot read property Symbol(Symbol.iterator))",
+     "indice": ""
+    },
+    {
+     "quoi": "console",
+     "message": "[section en erreur] object is not iterable (cannot read property Symbol(Symbol.iterator))",
+     "indice": ""
+    }
+   ]
+  },
+  {
+   "quand": "aujourd’hui",
+   "secteur": "institution / marchés publics",
+   "id": "88fc434f0e76",
+   "bibliothequeFournie": true,
+   "monte": false,
+   "erreurs": [
+    {
+     "quoi": "console",
+     "message": "object is not iterable (cannot read property Symbol(Symbol.iterator))",
+     "indice": ""
+    },
+    {
+     "quoi": "console",
+     "message": "[section en erreur] object is not iterable (cannot read property Symbol(Symbol.iterator))",
+     "indice": ""
+    },
+    {
+     "quoi": "console — écran « Se déconnecter »",
+     "message": "alert is not defined",
+     "indice": ""
+    }
+   ]
+  }
+ ]
+}

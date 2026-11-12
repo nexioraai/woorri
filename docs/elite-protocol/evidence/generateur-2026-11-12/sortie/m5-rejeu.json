@@ -1,0 +1,164 @@
+{
+ "instantane_sha256": "145c4107d4cb24a175d2b4943978462f64a5663f81ff7ab33e66bc0cca98bffe",
+ "plafond": 1,
+ "depense": 0.5115,
+ "rejeu": [
+  {
+   "tentative": 1,
+   "cahier": "88fc434f0e76",
+   "secteur": "institution / marchés publics",
+   "debut": "2026-11-12T21:47:13.244Z",
+   "livree": false,
+   "interrompu": false,
+   "erreur": "Expected ',' or ']' after array element in JSON at position 2731 (line 50 column 106)",
+   "ms": 36287,
+   "depenseCumulee": 0.0056
+  },
+  {
+   "tentative": 1,
+   "cahier": "03b9b66485cd",
+   "secteur": "énergie / compteurs",
+   "debut": "2026-11-12T21:47:49.532Z",
+   "lireBrief": {
+    "illisible": true,
+    "entites": [],
+    "configuration": {
+     "currency": "XAF"
+    }
+   },
+   "tours": [
+    {
+     "rang": 1,
+     "ok": false,
+     "motif": "La construction a échoué :"
+    },
+    {
+     "rang": 2,
+     "ok": false,
+     "motif": "DES JETONS QUI N’EXISTENT PAS — l’application MOURRAIT au démarrage (mesuré : undefined.fontSize sur un tir réel) :"
+    },
+    {
+     "rang": 3,
+     "ok": true,
+     "motif": ""
+    }
+   ],
+   "livree": true,
+   "fichiersSha256": "cfb573c395b4f3e47d7078ab700d499c8b266e4b6126f278447c49872c08144a",
+   "mesure": {
+    "assemble": true,
+    "accueil": {
+     "monte": false,
+     "erreurs": 1,
+     "ecransDistincts": 1,
+     "ecransVisites": 0,
+     "ecransEnregistres": 1,
+     "signesAccueil": 0,
+     "ecransSectionInconnue": 0,
+     "ecransVides": 0,
+     "debutAccueil": ""
+    }
+   },
+   "ms": 364835,
+   "depenseCumulee": 0.2058
+  },
+  {
+   "tentative": 1,
+   "cahier": "9ee1ca865053",
+   "secteur": "réservation / tourisme",
+   "debut": "2026-11-12T21:53:54.368Z",
+   "lireBrief": {
+    "illisible": false,
+    "entites": [],
+    "configuration": {
+     "encaissement": "paiements",
+     "currency": "XAF"
+    }
+   },
+   "tours": [
+    {
+     "rang": 1,
+     "ok": false,
+     "motif": "DES JETONS QUI N’EXISTENT PAS — l’application MOURRAIT au démarrage (mesuré : undefined.fontSize sur un tir réel) :"
+    },
+    {
+     "rang": 2,
+     "ok": false,
+     "motif": "L'APPLICATION NE SE MONTE PAS — dans un navigateur SIMULÉ, elle échoue avant de rendre quoi que ce soit :"
+    },
+    {
+     "rang": 3,
+     "ok": true,
+     "motif": ""
+    }
+   ],
+   "livree": true,
+   "fichiersSha256": "26f39fbd6ef20b0bed6316f63a67d654ae3d11f9049a2455039687991a9b146f",
+   "mesure": {
+    "assemble": true,
+    "accueil": {
+     "monte": false,
+     "erreurs": 2,
+     "ecransDistincts": 4,
+     "ecransVisites": 9,
+     "ecransEnregistres": 4,
+     "signesAccueil": 298,
+     "ecransSectionInconnue": 0,
+     "ecransVides": 2,
+     "debutAccueil": "H Hayine Encaissement Gestion des paiements MENU 5 Données à jour Administrateur Se déconnecter Hayine Encaissement / Tableau de bord Vue d'ensemble des encaiss"
+    }
+   },
+   "ms": 218077,
+   "depenseCumulee": 0.3129
+  },
+  {
+   "tentative": 2,
+   "cahier": "88fc434f0e76",
+   "secteur": "institution / marchés publics",
+   "debut": "2026-11-12T21:58:45.016Z",
+   "lireBrief": {
+    "illisible": true,
+    "jsonMalForme": true,
+    "entites": [],
+    "configuration": {
+     "currency": "XAF"
+    }
+   },
+   "tours": [
+    {
+     "rang": 1,
+     "ok": false,
+     "motif": "DES JETONS QUI N’EXISTENT PAS — l’application MOURRAIT au démarrage (mesuré : undefined.fontSize sur un tir réel) :"
+    },
+    {
+     "rang": 2,
+     "ok": false,
+     "motif": "DES RÉGLAGES QUE LES COMPOSANTS FOURNIS NE CONNAISSENT PAS — ignorés en silence (graphique vide, menu qui ne répond pas, titre disparu) ou fatals (une liste don"
+    },
+    {
+     "rang": 3,
+     "ok": true,
+     "motif": ""
+    }
+   ],
+   "livree": true,
+   "fichiersSha256": "f46d4007a0e158f69b3ba80b5c992053e86cea1f962ebc958ebbc84cd762ad22",
+   "mesure": {
+    "assemble": true,
+    "accueil": {
+     "monte": false,
+     "erreurs": 3,
+     "ecransDistincts": 1,
+     "ecransVisites": 7,
+     "ecransEnregistres": 1,
+     "signesAccueil": 251,
+     "ecransSectionInconnue": 0,
+     "ecransVides": 0,
+     "debutAccueil": "C CPA-Tchad Centrale Pharmaceutique d’Achat MENU 0 5 4 5 2 5 3 7 0 Données à jour Mahamat Saleh Zene Se déconnecter CPA-Tchad / CPA-Tchad jeudi 12 novembre 2026"
+    }
+   },
+   "ms": 376386,
+   "depenseCumulee": 0.5115
+  }
+ ]
+}

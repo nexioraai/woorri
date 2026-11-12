@@ -1,0 +1,635 @@
+{
+ "regle": "voir en-tête",
+ "total": 53,
+ "parFichier": {
+  "lib/apps/entites-declarees.ts": 15,
+  "app/api/generateur/livraison/route.ts": 1,
+  "lib/apps/base-de-l-oeuvre.ts": 1,
+  "lib/apps/boucle-directe.ts": 13,
+  "lib/apps/compte-oeuvre.ts": 1,
+  "app/api/generateur/compte/route.ts": 1,
+  "app/api/generateur/direct/route.ts": 6,
+  "lib/apps/declaration-en-route.ts": 2,
+  "lib/apps/juge-persistance.ts": 3,
+  "lib/apps/retouche.ts": 5,
+  "lib/apps/migration-oeuvre.ts": 4,
+  "lib/apps/migration-sql.ts": 3,
+  "lib/apps/phrase-erreur.ts": 1,
+  "lib/apps/connexion-migrateur.ts": 3,
+  "app/api/generateur/schema/route.ts": 1,
+  "lib/apps/instantane-migration.ts": 1,
+  "app/api/generateur/retoucher/route.ts": 7,
+  "lib/apps/declaration-depuis-schema.ts": 2,
+  "app/api/generateur/publier/route.ts": 2,
+  "lib/apps/phrase-migration.ts": 2,
+  "lib/apps/versions-oeuvre.ts": 1,
+  "lib/apps/invites-accueil.ts": 1,
+  "lib/apps/juge-execution-enfant.mjs": 2,
+  "app/api/generateur/mes-applications/route.ts": 2,
+  "lib/apps/juge-navigateur-enfant.mjs": 2,
+  "lib/apps/juge-navigateur.ts": 2,
+  "app/api/generateur/direct/[id]/route.ts": 1,
+  "lib/apps/sous-domaine.ts": 5,
+  "lib/apps/publication.ts": 1,
+  "lib/apps/poser-oeuvre.ts": 1,
+  "lib/apps/juge-bandeau.ts": 2,
+  "lib/apps/juge-gestion.ts": 1,
+  "lib/apps/fil-accueil.ts": 1,
+  "lib/apps/juge-couverture.ts": 2,
+  "lib/apps/exigences-demande.ts": 1,
+  "lib/apps/juge-faces-enfant.mjs": 2,
+  "lib/apps/juge-faces.ts": 2,
+  "lib/apps/bibliotheque-ui.ts": 5,
+  "lib/apps/juge-execution.ts": 1,
+  "lib/apps/juge-contrat.ts": 1
+ },
+ "commits": [
+  {
+   "hash": "83a7261e",
+   "date": "2026-11-04T05:25:11-05:00",
+   "sujet": "Zero question avant de construire — et la phrase qui mentait est partie",
+   "fichiers": [
+    "lib/apps/entites-declarees.ts"
+   ],
+   "ajouts": 2,
+   "retraits": 3
+  },
+  {
+   "hash": "17a95453",
+   "date": "2026-11-04T06:23:59-05:00",
+   "sujet": "Le bandeau mentait : la page publiee ne recevait jamais sa base",
+   "fichiers": [
+    "app/api/generateur/livraison/route.ts",
+    "lib/apps/base-de-l-oeuvre.ts",
+    "lib/apps/boucle-directe.ts"
+   ],
+   "ajouts": 96,
+   "retraits": 4
+  },
+  {
+   "hash": "78d6b589",
+   "date": "2026-11-04T07:59:33-05:00",
+   "sujet": "La cle etait fabriquee, renvoyee, et jetee dans la meme milliseconde",
+   "fichiers": [
+    "lib/apps/compte-oeuvre.ts"
+   ],
+   "ajouts": 31,
+   "retraits": 6
+  },
+  {
+   "hash": "7d4a3777",
+   "date": "2026-11-04T09:16:39-05:00",
+   "sujet": "Le constructeur declare ce dont il a besoin, et le refus propose",
+   "fichiers": [
+    "app/api/generateur/compte/route.ts",
+    "app/api/generateur/direct/route.ts",
+    "lib/apps/boucle-directe.ts",
+    "lib/apps/declaration-en-route.ts",
+    "lib/apps/entites-declarees.ts",
+    "lib/apps/juge-persistance.ts",
+    "lib/apps/retouche.ts"
+   ],
+   "ajouts": 382,
+   "retraits": 13
+  },
+  {
+   "hash": "631a362f",
+   "date": "2026-11-04T09:37:30-05:00",
+   "sujet": "M1 — ce qu'une modification n'a pas le droit de faire",
+   "fichiers": [
+    "lib/apps/entites-declarees.ts",
+    "lib/apps/migration-oeuvre.ts"
+   ],
+   "ajouts": 252,
+   "retraits": 0
+  },
+  {
+   "hash": "d242de5f",
+   "date": "2026-11-04T09:56:28-05:00",
+   "sujet": "M2 — la liste des formes emettables est BLANCHE, et elle a trouve deux trous",
+   "fichiers": [
+    "lib/apps/migration-sql.ts"
+   ],
+   "ajouts": 301,
+   "retraits": 0
+  },
+  {
+   "hash": "5a27dc36",
+   "date": "2026-11-04T10:29:23-05:00",
+   "sujet": "M2 complete — A, B, C, et la regle du jour",
+   "fichiers": [
+    "lib/apps/migration-sql.ts"
+   ],
+   "ajouts": 48,
+   "retraits": 13
+  },
+  {
+   "hash": "f33cd699",
+   "date": "2026-11-04T11:40:32-05:00",
+   "sujet": "L'apercu s'apercoit, et aucun mot brut n'atteint l'ecran",
+   "fichiers": [
+    "app/api/generateur/direct/route.ts",
+    "lib/apps/entites-declarees.ts",
+    "lib/apps/phrase-erreur.ts"
+   ],
+   "ajouts": 176,
+   "retraits": 19
+  },
+  {
+   "hash": "6a37e52d",
+   "date": "2026-11-04T13:36:48-05:00",
+   "sujet": "D — la connexion du migrateur n'a qu'un lecteur, et la classe security definer est fermee",
+   "fichiers": [
+    "lib/apps/connexion-migrateur.ts"
+   ],
+   "ajouts": 182,
+   "retraits": 0
+  },
+  {
+   "hash": "dde8eb1a",
+   "date": "2026-11-04T14:10:12-05:00",
+   "sujet": "La base dit qui nous sommes — et la variable de production porte un nom double",
+   "fichiers": [
+    "lib/apps/connexion-migrateur.ts"
+   ],
+   "ajouts": 51,
+   "retraits": 2
+  },
+  {
+   "hash": "b1b34297",
+   "date": "2026-11-04T15:18:07-05:00",
+   "sujet": "La sonde dit si la variable ARRIVE, pas si elle existe",
+   "fichiers": [
+    "app/api/generateur/schema/route.ts"
+   ],
+   "ajouts": 18,
+   "retraits": 1
+  },
+  {
+   "hash": "091aeef9",
+   "date": "2026-11-04T15:41:34-05:00",
+   "sujet": "M3 — l'instantane hors transaction, la porte eprouvee, et les comptes",
+   "fichiers": [
+    "lib/apps/connexion-migrateur.ts",
+    "lib/apps/instantane-migration.ts",
+    "lib/apps/migration-sql.ts"
+   ],
+   "ajouts": 308,
+   "retraits": 5
+  },
+  {
+   "hash": "0cea6e52",
+   "date": "2026-11-04T16:24:32-05:00",
+   "sujet": "Une retouche coupee ne s'ecrit plus par-dessus la bonne",
+   "fichiers": [
+    "app/api/generateur/retoucher/route.ts"
+   ],
+   "ajouts": 37,
+   "retraits": 0
+  },
+  {
+   "hash": "1d2df026",
+   "date": "2026-11-04T17:20:44-05:00",
+   "sujet": "M4 (a) — la declaration existe, et elle est montree",
+   "fichiers": [
+    "app/api/generateur/direct/route.ts",
+    "app/api/generateur/retoucher/route.ts",
+    "lib/apps/declaration-depuis-schema.ts",
+    "lib/apps/retouche.ts"
+   ],
+   "ajouts": 168,
+   "retraits": 1
+  },
+  {
+   "hash": "fa1150ea",
+   "date": "2026-11-04T17:47:03-05:00",
+   "sujet": "B et C — l'oeuvre amnesique ne se publie plus, et le dernier tour offre deux sorties",
+   "fichiers": [
+    "app/api/generateur/direct/route.ts",
+    "app/api/generateur/publier/route.ts",
+    "lib/apps/boucle-directe.ts",
+    "lib/apps/juge-persistance.ts"
+   ],
+   "ajouts": 102,
+   "retraits": 13
+  },
+  {
+   "hash": "6643ca5b",
+   "date": "2026-11-04T23:28:51-05:00",
+   "sujet": "Le faux arret sur le type — il aurait bloque tout M4",
+   "fichiers": [
+    "lib/apps/entites-declarees.ts",
+    "lib/apps/migration-oeuvre.ts"
+   ],
+   "ajouts": 42,
+   "retraits": 3
+  },
+  {
+   "hash": "7ea15ead",
+   "date": "2026-11-04T23:56:17-05:00",
+   "sujet": "Ni taire ni garder — ne pas comparer",
+   "fichiers": [
+    "lib/apps/declaration-depuis-schema.ts",
+    "lib/apps/entites-declarees.ts",
+    "lib/apps/migration-oeuvre.ts"
+   ],
+   "ajouts": 54,
+   "retraits": 1
+  },
+  {
+   "hash": "20f866cd",
+   "date": "2026-11-05T00:13:13-05:00",
+   "sujet": "(b) — la retouche passe les six juges, et deux etaient inertes",
+   "fichiers": [
+    "app/api/generateur/direct/route.ts",
+    "app/api/generateur/retoucher/route.ts"
+   ],
+   "ajouts": 94,
+   "retraits": 14
+  },
+  {
+   "hash": "017b61c5",
+   "date": "2026-11-05T00:33:40-05:00",
+   "sujet": "Le perimetre est ouvert — et ce qui arrive aux donnees se dit avant, en francais",
+   "fichiers": [
+    "app/api/generateur/retoucher/route.ts",
+    "lib/apps/phrase-migration.ts",
+    "lib/apps/retouche.ts"
+   ],
+   "ajouts": 282,
+   "retraits": 15
+  },
+  {
+   "hash": "4da2c45e",
+   "date": "2026-11-05T02:44:00-05:00",
+   "sujet": "La prudence ne se paie pas deux fois",
+   "fichiers": [
+    "app/api/generateur/retoucher/route.ts",
+    "lib/apps/versions-oeuvre.ts"
+   ],
+   "ajouts": 198,
+   "retraits": 6
+  },
+  {
+   "hash": "07904438",
+   "date": "2026-11-05T04:46:59-05:00",
+   "sujet": "L'accueil parle des quatre choix, pas de trois",
+   "fichiers": [
+    "lib/apps/invites-accueil.ts"
+   ],
+   "ajouts": 99,
+   "retraits": 0
+  },
+  {
+   "hash": "22459094",
+   "date": "2026-11-05T05:15:12-05:00",
+   "sujet": "(b) — le juge rencontre enfin ce que la personne rencontre",
+   "fichiers": [
+    "lib/apps/juge-execution-enfant.mjs"
+   ],
+   "ajouts": 102,
+   "retraits": 0
+  },
+  {
+   "hash": "9aacbd0d",
+   "date": "2026-11-05T05:31:26-05:00",
+   "sujet": "Une oeuvre publiee porte son adresse — et « publiee » n'est pas « livree »",
+   "fichiers": [
+    "app/api/generateur/mes-applications/route.ts"
+   ],
+   "ajouts": 17,
+   "retraits": 1
+  },
+  {
+   "hash": "e730aa4d",
+   "date": "2026-11-05T05:47:37-05:00",
+   "sujet": "(c) — un vrai navigateur dans la chaine, et il dit la verite",
+   "fichiers": [
+    "lib/apps/juge-navigateur-enfant.mjs"
+   ],
+   "ajouts": 153,
+   "retraits": 0
+  },
+  {
+   "hash": "a83ba8e3",
+   "date": "2026-11-05T05:57:22-05:00",
+   "sujet": "Le bouchon — et la racine n'est pas une ligne de code",
+   "fichiers": [
+    "lib/apps/juge-navigateur-enfant.mjs"
+   ],
+   "ajouts": 52,
+   "retraits": 13
+  },
+  {
+   "hash": "a450c71e",
+   "date": "2026-11-05T06:27:25-05:00",
+   "sujet": "(c) fini — le juge navigateur branche la ou il peut tourner",
+   "fichiers": [
+    "lib/apps/juge-navigateur.ts"
+   ],
+   "ajouts": 131,
+   "retraits": 0
+  },
+  {
+   "hash": "ab824dd0",
+   "date": "2026-11-05T06:40:14-05:00",
+   "sujet": "A — l'apercu d'une oeuvre publiee ne mente plus",
+   "fichiers": [
+    "app/api/generateur/direct/[id]/route.ts",
+    "app/api/generateur/mes-applications/route.ts",
+    "lib/apps/boucle-directe.ts",
+    "lib/apps/entites-declarees.ts",
+    "lib/apps/sous-domaine.ts"
+   ],
+   "ajouts": 114,
+   "retraits": 10
+  },
+  {
+   "hash": "54b0d4b9",
+   "date": "2026-11-05T07:37:34-05:00",
+   "sujet": "Deux routes, deux regimes — les applications publiees redemarrent",
+   "fichiers": [
+    "lib/apps/boucle-directe.ts",
+    "lib/apps/publication.ts"
+   ],
+   "ajouts": 149,
+   "retraits": 4
+  },
+  {
+   "hash": "28d201ed",
+   "date": "2026-11-05T15:02:59-05:00",
+   "sujet": "P1 — une table declare si sa lecture est publique",
+   "fichiers": [
+    "lib/apps/entites-declarees.ts"
+   ],
+   "ajouts": 69,
+   "retraits": 0
+  },
+  {
+   "hash": "51699028",
+   "date": "2026-11-05T15:49:23-05:00",
+   "sujet": "P3 P4 P5 — le drapeau traverse, le diff le nomme, l'ecran le dit avant",
+   "fichiers": [
+    "app/api/generateur/publier/route.ts",
+    "lib/apps/migration-oeuvre.ts",
+    "lib/apps/phrase-migration.ts"
+   ],
+   "ajouts": 169,
+   "retraits": 2
+  },
+  {
+   "hash": "e1d49b4f",
+   "date": "2026-11-05T16:16:38-05:00",
+   "sujet": "La garde d'exposition — tenter n'est pas reussir",
+   "fichiers": [
+    "lib/apps/poser-oeuvre.ts"
+   ],
+   "ajouts": 63,
+   "retraits": 0
+  },
+  {
+   "hash": "854a9d5a",
+   "date": "2026-11-05T17:10:01-05:00",
+   "sujet": "A1 — le modele apprend qu'une oeuvre a donnees a un espace de gestion",
+   "fichiers": [
+    "lib/apps/entites-declarees.ts"
+   ],
+   "ajouts": 15,
+   "retraits": 0
+  },
+  {
+   "hash": "726d4415",
+   "date": "2026-11-05T18:45:39-05:00",
+   "sujet": "Le bandeau inverse, et une borne qui ne bornait rien",
+   "fichiers": [
+    "lib/apps/entites-declarees.ts",
+    "lib/apps/juge-bandeau.ts"
+   ],
+   "ajouts": 120,
+   "retraits": 2
+  },
+  {
+   "hash": "f6a9ff4b",
+   "date": "2026-11-05T19:00:07-05:00",
+   "sujet": "A2 A3 — le juge de la gestion, et son hypothese dite a voix haute",
+   "fichiers": [
+    "lib/apps/boucle-directe.ts",
+    "lib/apps/juge-gestion.ts",
+    "lib/apps/juge-persistance.ts"
+   ],
+   "ajouts": 254,
+   "retraits": 13
+  },
+  {
+   "hash": "1be52a6c",
+   "date": "2026-11-05T20:25:21-05:00",
+   "sujet": "C0 — l'angle mort du chemin sans table, ferme par construction",
+   "fichiers": [
+    "lib/apps/boucle-directe.ts",
+    "lib/apps/entites-declarees.ts",
+    "lib/apps/juge-bandeau.ts",
+    "lib/apps/juge-navigateur.ts"
+   ],
+   "ajouts": 93,
+   "retraits": 13
+  },
+  {
+   "hash": "59d53645",
+   "date": "2026-11-05T21:35:47-05:00",
+   "sujet": "C4 C1 C2 — l'exemple ne peut plus devenir un produit, et le fil passe",
+   "fichiers": [
+    "lib/apps/boucle-directe.ts",
+    "lib/apps/entites-declarees.ts",
+    "lib/apps/fil-accueil.ts",
+    "lib/apps/retouche.ts"
+   ],
+   "ajouts": 60,
+   "retraits": 8
+  },
+  {
+   "hash": "543d04a4",
+   "date": "2026-11-06T04:58:49-05:00",
+   "sujet": "EP-366 — « je n'ai rien mesure » ne se dit pas « 1,00 »",
+   "fichiers": [
+    "app/api/generateur/direct/route.ts",
+    "app/api/generateur/retoucher/route.ts",
+    "lib/apps/juge-couverture.ts",
+    "lib/apps/retouche.ts"
+   ],
+   "ajouts": 64,
+   "retraits": 8
+  },
+  {
+   "hash": "8e8a6a25",
+   "date": "2026-11-06T05:35:40-05:00",
+   "sujet": "EP-367 ②beta — le juge MESURE, il ne reproche pas",
+   "fichiers": [
+    "lib/apps/exigences-demande.ts",
+    "lib/apps/juge-couverture.ts"
+   ],
+   "ajouts": 283,
+   "retraits": 14
+  },
+  {
+   "hash": "bb88f640",
+   "date": "2026-11-06T06:55:54-05:00",
+   "sujet": "La loi public/gestion ① — la chaîne avant la consigne",
+   "fichiers": [
+    "app/api/generateur/retoucher/route.ts",
+    "lib/apps/boucle-directe.ts",
+    "lib/apps/declaration-en-route.ts"
+   ],
+   "ajouts": 154,
+   "retraits": 22
+  },
+  {
+   "hash": "16a6efd5",
+   "date": "2026-11-06T07:08:49-05:00",
+   "sujet": "La loi public/gestion ② — la loi dite, et les deux chemins vers la gestion",
+   "fichiers": [
+    "lib/apps/entites-declarees.ts"
+   ],
+   "ajouts": 82,
+   "retraits": 18
+  },
+  {
+   "hash": "3293ab9c",
+   "date": "2026-11-06T07:38:08-05:00",
+   "sujet": "La loi public/gestion ③ — quatre cliquets rouges, et ce qu'ils disaient",
+   "fichiers": [
+    "lib/apps/entites-declarees.ts"
+   ],
+   "ajouts": 3,
+   "retraits": 1
+  },
+  {
+   "hash": "67e26f79",
+   "date": "2026-11-06T07:55:10-05:00",
+   "sujet": "La loi public/gestion ④ — deux restitutions, trouvées par un diff dans les DEUX sens",
+   "fichiers": [
+    "lib/apps/entites-declarees.ts"
+   ],
+   "ajouts": 2,
+   "retraits": 1
+  },
+  {
+   "hash": "29d082c9",
+   "date": "2026-11-06T09:22:48-05:00",
+   "sujet": "J1 + ② — les deux faces se mesurent en montant, et le juge REFUSE",
+   "fichiers": [
+    "lib/apps/boucle-directe.ts",
+    "lib/apps/juge-faces-enfant.mjs",
+    "lib/apps/juge-faces.ts"
+   ],
+   "ajouts": 495,
+   "retraits": 0
+  },
+  {
+   "hash": "7aad0835",
+   "date": "2026-11-06T09:39:19-05:00",
+   "sujet": "J1 — trois rouges de gate, et le vocabulaire fige au registre",
+   "fichiers": [
+    "lib/apps/boucle-directe.ts",
+    "lib/apps/juge-faces-enfant.mjs",
+    "lib/apps/juge-faces.ts"
+   ],
+   "ajouts": 26,
+   "retraits": 13
+  },
+  {
+   "hash": "40b7e193",
+   "date": "2026-11-09T09:10:27-05:00",
+   "sujet": "LOT 11 A bis — approuver un compte, dans le tableau de bord",
+   "fichiers": [
+    "lib/apps/sous-domaine.ts"
+   ],
+   "ajouts": 8,
+   "retraits": 3
+  },
+  {
+   "hash": "d2680578",
+   "date": "2026-11-09T22:31:29-05:00",
+   "sujet": "LOT 13.2 — la Centrale ouvre les plis, retient et répond",
+   "fichiers": [
+    "lib/apps/sous-domaine.ts"
+   ],
+   "ajouts": 5,
+   "retraits": 1
+  },
+  {
+   "hash": "faf87ca2",
+   "date": "2026-11-10T14:42:04-05:00",
+   "sujet": "Sous-domaines : « guide » réservé (nouvelle route du produit, cliquet EP-291)",
+   "fichiers": [
+    "lib/apps/sous-domaine.ts"
+   ],
+   "ajouts": 1,
+   "retraits": 1
+  },
+  {
+   "hash": "5eec5a55",
+   "date": "2026-11-12T05:24:54-05:00",
+   "sujet": "feat(editeur): l'éditeur visuel en 3 colonnes — structure, aperçu réel, réglages",
+   "fichiers": [
+    "lib/apps/sous-domaine.ts"
+   ],
+   "ajouts": 1,
+   "retraits": 1
+  },
+  {
+   "hash": "6f870335",
+   "date": "2026-11-12T07:13:37-05:00",
+   "sujet": "feat(generateur): Deribfy apprend à faire un tableau de bord pour les applis qu'il génère",
+   "fichiers": [
+    "lib/apps/bibliotheque-ui.ts"
+   ],
+   "ajouts": 567,
+   "retraits": 9
+  },
+  {
+   "hash": "1a73ce63",
+   "date": "2026-11-12T08:00:53-05:00",
+   "sujet": "fix(generateur): le tableau de bord tient face à ce que le modèle écrit vraiment — mesuré sur une vraie génération",
+   "fichiers": [
+    "lib/apps/bibliotheque-ui.ts"
+   ],
+   "ajouts": 72,
+   "retraits": 16
+  },
+  {
+   "hash": "3b8a5a93",
+   "date": "2026-11-12T08:09:23-05:00",
+   "sujet": "fix(generateur): le juge monte l'espace de gestion ; champs nommés ; tendances honnêtes",
+   "fichiers": [
+    "lib/apps/bibliotheque-ui.ts",
+    "lib/apps/boucle-directe.ts",
+    "lib/apps/juge-execution-enfant.mjs",
+    "lib/apps/juge-execution.ts"
+   ],
+   "ajouts": 66,
+   "retraits": 6
+  },
+  {
+   "hash": "8eedc275",
+   "date": "2026-11-12T08:21:19-05:00",
+   "sujet": "feat(generateur): quatre mises en page pour l'espace de gestion des applis générées",
+   "fichiers": [
+    "lib/apps/bibliotheque-ui.ts"
+   ],
+   "ajouts": 209,
+   "retraits": 58
+  },
+  {
+   "hash": "3e9856c7",
+   "date": "2026-11-12T15:38:46-05:00",
+   "sujet": "fix(generateur): le contrat des pièces — enseigné, jugé, et un plantage ne blanchit plus l'écran",
+   "fichiers": [
+    "lib/apps/bibliotheque-ui.ts",
+    "lib/apps/boucle-directe.ts",
+    "lib/apps/juge-contrat.ts"
+   ],
+   "ajouts": 295,
+   "retraits": 9
+  }
+ ]
+}

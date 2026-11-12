@@ -1,0 +1,225 @@
+{
+ "instantane_sha256": "145c4107d4cb24a175d2b4943978462f64a5663f81ff7ab33e66bc0cca98bffe",
+ "regle": "voir en-tête",
+ "cahiers": [
+  {
+   "hash": "03b9b66485cd",
+   "signes": 26028,
+   "secteur": "énergie / compteurs",
+   "scores": {
+    "énergie / compteurs": 141,
+    "institution / marchés publics": 2,
+    "réservation / tourisme": 0
+   },
+   "plusRecente": "2026-10-31T01:02:15.387114+00:00",
+   "coutMedianOctobre": 0.0865,
+   "essais": [
+    "2abfdb08-2768-4592-b9fe-59a7312ec1a0",
+    "2ef5f1d3-b1e1-41c3-b191-c41cb5d0d226",
+    "6f7c9499-6a06-4d77-8645-c3de01a65464",
+    "4a6e160d-1867-463b-8e99-d0fb4f2c8270",
+    "cbf1cb34-f806-4c8c-8723-5702ff730ae0",
+    "7d17287f-9a89-4ace-adb3-85607745375d"
+   ]
+  },
+  {
+   "hash": "88fc434f0e76",
+   "signes": 20658,
+   "secteur": "institution / marchés publics",
+   "scores": {
+    "institution / marchés publics": 55,
+    "énergie / compteurs": 0,
+    "réservation / tourisme": 0
+   },
+   "plusRecente": "2026-10-30T16:30:09.432247+00:00",
+   "coutMedianOctobre": 0.0374,
+   "essais": [
+    "7be93be8-2a0f-41f0-aa95-fecc191d94a5"
+   ]
+  },
+  {
+   "hash": "9ee1ca865053",
+   "signes": 22866,
+   "secteur": "réservation / tourisme",
+   "scores": {
+    "réservation / tourisme": 59,
+    "énergie / compteurs": 0,
+    "institution / marchés publics": 0
+   },
+   "plusRecente": "2026-10-31T14:55:41.98615+00:00",
+   "coutMedianOctobre": 0.0991,
+   "essais": [
+    "96768b7f-f52b-43da-b543-c92448e651bc",
+    "eb7b62b5-0614-48f4-852e-bbc164e4bab4",
+    "88c94164-b9fa-441f-9b2d-f7b93308c4ea"
+   ]
+  }
+ ],
+ "retenus": [
+  {
+   "hash": "88fc434f0e76",
+   "secteur": "institution / marchés publics",
+   "signes": 20658,
+   "coutMedianOctobre": 0.0374
+  },
+  {
+   "hash": "03b9b66485cd",
+   "secteur": "énergie / compteurs",
+   "signes": 26028,
+   "coutMedianOctobre": 0.0865
+  },
+  {
+   "hash": "9ee1ca865053",
+   "secteur": "réservation / tourisme",
+   "signes": 22866,
+   "coutMedianOctobre": 0.0991
+  }
+ ],
+ "reference": [
+  {
+   "cahier": "88fc434f0e76",
+   "secteur": "institution / marchés publics",
+   "generation": "7be93be8-2a0f-41f0-aa95-fecc191d94a5",
+   "date": "2026-10-30T16:30",
+   "livree": true,
+   "mesure": {
+    "assemble": true,
+    "accueil": {
+     "monte": true,
+     "erreurs": 0,
+     "ecransDistincts": 13,
+     "ecransVisites": 24,
+     "ecransEnregistres": 13,
+     "signesAccueil": 857,
+     "ecransSectionInconnue": 0,
+     "ecransVides": 1,
+     "debutAccueil": "CPA-Tchad Accueil La CPA Nos activités Produits Clients Fournisseurs Appels d'offres Actualités Contact Espace Admin Centrale Pharmaceutique d'Achat du Tchad Ga"
+    }
+   }
+  },
+  {
+   "cahier": "03b9b66485cd",
+   "secteur": "énergie / compteurs",
+   "generation": "2abfdb08-2768-4592-b9fe-59a7312ec1a0",
+   "date": "2026-10-18T23:43",
+   "livree": false,
+   "mesure": null
+  },
+  {
+   "cahier": "03b9b66485cd",
+   "secteur": "énergie / compteurs",
+   "generation": "2ef5f1d3-b1e1-41c3-b191-c41cb5d0d226",
+   "date": "2026-10-19T04:53",
+   "livree": false,
+   "mesure": null
+  },
+  {
+   "cahier": "03b9b66485cd",
+   "secteur": "énergie / compteurs",
+   "generation": "6f7c9499-6a06-4d77-8645-c3de01a65464",
+   "date": "2026-10-19T05:26",
+   "livree": false,
+   "mesure": null
+  },
+  {
+   "cahier": "03b9b66485cd",
+   "secteur": "énergie / compteurs",
+   "generation": "4a6e160d-1867-463b-8e99-d0fb4f2c8270",
+   "date": "2026-10-19T08:28",
+   "livree": true,
+   "mesure": {
+    "assemble": true,
+    "accueil": {
+     "monte": false,
+     "erreurs": 1,
+     "ecransDistincts": 1,
+     "ecransVisites": 0,
+     "ecransEnregistres": 1,
+     "signesAccueil": 0,
+     "ecransSectionInconnue": 0,
+     "ecransVides": 0,
+     "debutAccueil": ""
+    }
+   }
+  },
+  {
+   "cahier": "03b9b66485cd",
+   "secteur": "énergie / compteurs",
+   "generation": "cbf1cb34-f806-4c8c-8723-5702ff730ae0",
+   "date": "2026-10-19T15:32",
+   "livree": true,
+   "mesure": {
+    "assemble": true,
+    "accueil": {
+     "monte": false,
+     "erreurs": 2,
+     "ecransDistincts": 4,
+     "ecransVisites": 8,
+     "ecransEnregistres": 4,
+     "signesAccueil": 179,
+     "ecransSectionInconnue": 1,
+     "ecransVides": 2,
+     "debutAccueil": "Conterak Suivi des compteurs électriques au Tchad Connexion Numéro de compteur, téléphone ou e-mail Code personnel à 4 chiffres Se connecter Pas encore de compt"
+    }
+   }
+  },
+  {
+   "cahier": "03b9b66485cd",
+   "secteur": "énergie / compteurs",
+   "generation": "7d17287f-9a89-4ace-adb3-85607745375d",
+   "date": "2026-10-31T01:02",
+   "livree": false,
+   "mesure": null
+  },
+  {
+   "cahier": "9ee1ca865053",
+   "secteur": "réservation / tourisme",
+   "generation": "96768b7f-f52b-43da-b543-c92448e651bc",
+   "date": "2026-10-31T08:18",
+   "livree": false,
+   "mesure": null
+  },
+  {
+   "cahier": "9ee1ca865053",
+   "secteur": "réservation / tourisme",
+   "generation": "eb7b62b5-0614-48f4-852e-bbc164e4bab4",
+   "date": "2026-10-31T11:08",
+   "livree": true,
+   "mesure": {
+    "assemble": true,
+    "accueil": {
+     "monte": true,
+     "erreurs": 0,
+     "ecransDistincts": 7,
+     "ecransVisites": 19,
+     "ecransEnregistres": 7,
+     "signesAccueil": 1600,
+     "ecransSectionInconnue": 0,
+     "ecransVides": 1,
+     "debutAccueil": "× Hayine Accueil Recherche Réservations Agent IA Profil Administration .sidebar { width: 260px; background: #1a2238; color: white; position: fixed; left: 0; top"
+    }
+   }
+  },
+  {
+   "cahier": "9ee1ca865053",
+   "secteur": "réservation / tourisme",
+   "generation": "88c94164-b9fa-441f-9b2d-f7b93308c4ea",
+   "date": "2026-10-31T14:55",
+   "livree": true,
+   "mesure": {
+    "assemble": true,
+    "accueil": {
+     "monte": false,
+     "erreurs": 1,
+     "ecransDistincts": 1,
+     "ecransVisites": 0,
+     "ecransEnregistres": 1,
+     "signesAccueil": 0,
+     "ecransSectionInconnue": 0,
+     "ecransVides": 0,
+     "debutAccueil": ""
+    }
+   }
+  }
+ ]
+}

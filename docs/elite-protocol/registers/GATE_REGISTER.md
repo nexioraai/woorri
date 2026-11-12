@@ -71,6 +71,22 @@ propriété) · `COMPLÉTUDE` (tous les défauts de la catégorie) · `RÉSISTAN
 | **G14** distance de nouveauté | mesurée et publiée sur 10 axes | ❓ | 🟢 calculable |
 | **G15** auto-diagnostic | le générateur signale ses propres écarts | ❓ | 🟢 |
 
+### Décidées par le propriétaire le 2026-11-12 — NON IMPLÉMENTÉES
+
+> Notées sur ordre, **sans implémentation**. Source des chiffres :
+> `evidence/generateur-2026-11-12/` (instantané `145c4107…`, M1 et M4).
+
+| Gate | Propriété | Validité | Observabilité | État |
+|---|---|---|---|---|
+| **G25** juge de navigation | **chaque entrée de menu mène à un écran valide ; aucun « Section inconnue » livré** | ❓ — n'existe pas | 🟢 les écrans visités sont déjà enregistrés par le juge d'exécution (`sections_acquises.execution.ecrans`) | ⏳ **premier juge à ajouter, après M5**. Cas-tueur **réel** disponible (règle de composition n° 3) : `f1b753a6`, livrée avec **6 écrans sur 8** disant « Section inconnue » (M4, `ecransNavigation`). Il l'aurait refusée. |
+
+**Note d'architecture — la boucle de trois tours (non implémentée, « pas
+maintenant »).** M1 mesure que **27 transitions sur 48 (56 %)** gardent
+uniquement les mêmes classes d'erreur : la boucle redemande la même chose au
+modèle. Décision du propriétaire : elle sera **remplacée par une réparation
+déterministe entre les tours**. Aucune modification de `boucle-directe.ts`
+n'est autorisée par cette note.
+
 ## GATES SUR LE PROTOCOLE
 
 | Gate | Propriété | Validité | État |
