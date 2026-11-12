@@ -242,6 +242,15 @@ describe('EP-273 · la CONSIGNE elle-même ne peut plus se contredire', () => {
     expect(CONSIGNE).toMatch(motifTexte("THE SIGNAL is what they want to MANAGE, not the word they use"))
     expect(CONSIGNE).toMatch(motifTexte('A public page next to it does not make it a website'))
   })
+
+  // 2026-11-12 — le propriétaire : « il faut qu'il arrête de dire ça » (le
+  // rappel « pas de version native App Store / Google Play » servi à qui ne
+  // l'avait pas demandé). Vrai modèle : 0/2 sur la phrase du restaurant,
+  // 2/2 quand on demande l'App Store. La vérité reste due À QUI LA DEMANDE.
+  it('⑩ LE NATIF N’EST ÉVOQUÉ QUE SI LA PERSONNE EN PARLE', () => {
+    expect(CONSIGNE).toMatch(motifTexte('Speak of the App Store / Google Play ONLY IF THE USER BROUGHT THEM UP'))
+    expect(CONSIGNE).not.toMatch(motifTexte('with the two truths above'))
+  })
 })
 
 describe('EP-273 · la décision refuse tout ce qui n’est pas un oui franc', () => {
